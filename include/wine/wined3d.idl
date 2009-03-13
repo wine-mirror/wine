@@ -1911,9 +1911,6 @@ typedef struct glDescriptor
     UINT textureName, srgbTextureName;
     int level;
     int /*GLenum*/ target;
-    int /*GLenum*/ glFormat;
-    int /*GLenum*/ glFormatInternal;
-    int /*GLenum*/ glType;
 } glDescriptor;
 
 typedef struct WineDirect3DStridedData

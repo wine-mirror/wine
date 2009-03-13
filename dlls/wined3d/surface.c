@@ -138,11 +138,15 @@ static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
 /* This call just downloads data, the caller is responsible for activating the
  * right context and binding the correct texture. */
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
+    const struct GlPixelFormatDesc *format_desc;
+
     /* Only support read back of converted P8 surfaces */
     if(This->Flags & SFLAG_CONVERTED && (This->resource.format != WINED3DFMT_P8)) {
         FIXME("Read back converted textures unsupported, format=%s\n", debug_d3dformat(This->resource.format));
         return;
     }
+
+    format_desc = This->resource.format_desc;
 
     ENTER_GL();
 
@@ -153,8 +157,9 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) { /* We can assume this as the texture would not have been created otherwise */
             FIXME("(%p) : Attempting to lock a compressed texture when texture compression isn't supported by opengl\n", This);
         } else {
-            TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
-                This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
+            TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p\n",
+                    This, This->glDescription.level, format_desc->glFormat, format_desc->glType,
+                    This->resource.allocatedMemory);
 
             if(This->Flags & SFLAG_PBO) {
                 GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
@@ -171,8 +176,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         LEAVE_GL();
     } else {
         void *mem;
-        GLenum format = This->glDescription.glFormat;
-        GLenum type = This->glDescription.glType;
+        GLenum format = format_desc->glFormat;
+        GLenum type = format_desc->glType;
         int src_pitch = 0;
         int dst_pitch = 0;
 
@@ -829,8 +834,8 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
 
         default:
             mem = dest;
-            fmt = This->glDescription.glFormat;
-            type = This->glDescription.glType;
+            fmt = This->resource.format_desc->glFormat;
+            type = This->resource.format_desc->glType;
             bpp = This->bytesPerPixel;
     }
 
@@ -2557,20 +2562,13 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, c
 static HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     HRESULT hr;
-    const struct GlPixelFormatDesc *glDesc;
-    getFormatDescEntry(format, &GLINFO_LOCATION, &glDesc);
 
     TRACE("(%p) : Calling base function first\n", This);
     hr = IWineD3DBaseSurfaceImpl_SetFormat(iface, format);
     if(SUCCEEDED(hr)) {
-        /* Setup some glformat defaults */
-        This->glDescription.glFormat         = glDesc->glFormat;
-        This->glDescription.glFormatInternal = glDesc->glInternal;
-        This->glDescription.glType           = glDesc->glType;
-
         This->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
-        TRACE("(%p) : glFormat %d, glFotmatInternal %d, glType %d\n", This,
-              This->glDescription.glFormat, This->glDescription.glFormatInternal, This->glDescription.glType);
+        TRACE("(%p) : glFormat %d, glFormatInternal %d, glType %d\n", This, This->resource.format_desc->glFormat,
+                This->resource.format_desc->glInternal, This->resource.format_desc->glType);
     }
     return hr;
 }
@@ -3837,13 +3835,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
 static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     /** Check against the maximum texture sizes supported by the video card **/
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    const struct GlPixelFormatDesc *glDesc = This->resource.format_desc;
     unsigned int pow2Width, pow2Height;
-
-    /* Setup some glformat defaults */
-    This->glDescription.glFormat         = glDesc->glFormat;
-    This->glDescription.glFormatInternal = glDesc->glInternal;
-    This->glDescription.glType           = glDesc->glType;
 
     This->glDescription.textureName      = 0;
     This->glDescription.target           = GL_TEXTURE_2D;
@@ -4126,7 +4118,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             glBindTexture(bind_target, device->depth_blt_texture);
             glCopyTexImage2D(bind_target,
                     This->glDescription.level,
-                    This->glDescription.glFormatInternal,
+                    This->resource.format_desc->glInternal,
                     0,
                     0,
                     This->currentDesc.Width,

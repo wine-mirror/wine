@@ -6028,6 +6028,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     int offset    = 0;
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
     glDescriptor *glDescription = NULL;
+    const struct GlPixelFormatDesc *dst_format_desc;
     GLenum dummy;
     int sampler;
     int bpp;
@@ -6091,6 +6092,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
     IWineD3DSurface_GetGlDesc(pDestinationSurface, &glDescription);
 
+    dst_format_desc = ((IWineD3DSurfaceImpl *)pDestinationSurface)->resource.format_desc;
+
     /* this needs to be done in lines if the sourceRect != the sourceWidth */
     srcWidth   = pSourceRect ? pSourceRect->right - pSourceRect->left   : srcSurfaceWidth;
     srcHeight  = pSourceRect ? pSourceRect->bottom - pSourceRect->top   : srcSurfaceHeight;
@@ -6112,8 +6115,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
        offset +=  pSourceRect->top * srcSurfaceWidth * pSrcSurface->bytesPerPixel;
     }
     TRACE("(%p) glTexSubImage2D, level %d, left %d, top %d, width %d, height %d, fmt %#x, type %#x, memory %p+%#x\n",
-            This, glDescription->level, destLeft, destTop, srcWidth, srcHeight, glDescription->glFormat,
-            glDescription->glType, IWineD3DSurface_GetData(pSourceSurface), offset);
+            This, glDescription->level, destLeft, destTop, srcWidth, srcHeight, dst_format_desc->glFormat,
+            dst_format_desc->glType, IWineD3DSurface_GetData(pSourceSurface), offset);
 
     /* Sanity check */
     if (IWineD3DSurface_GetData(pSourceSurface) == NULL) {
@@ -6132,18 +6135,10 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         /* hopefully using pointer addition will be quicker than using a point + j * rowoffset */
         const unsigned char* data =((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
 
-        for(j = destTop ; j < (srcHeight + destTop) ; j++){
-
-                glTexSubImage2D(glDescription->target
-                    ,glDescription->level
-                    ,destLeft
-                    ,j
-                    ,srcWidth
-                    ,1
-                    ,glDescription->glFormat
-                    ,glDescription->glType
-                    ,data /* could be quicker using */
-                );
+        for (j = destTop; j < (srcHeight + destTop); ++j)
+        {
+            glTexSubImage2D(glDescription->target, glDescription->level, destLeft, j,
+                    srcWidth, 1, dst_format_desc->glFormat, dst_format_desc->glType,data);
             data += rowoffset;
         }
 
@@ -6163,7 +6158,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
                     FIXME("Updating mixed format compressed texture is not curretly support\n");
                 } else {
                     GL_EXTCALL(glCompressedTexImage2DARB(glDescription->target, glDescription->level,
-                            glDescription->glFormatInternal, srcWidth, srcHeight, 0, destSize, data));
+                            dst_format_desc->glInternal, srcWidth, srcHeight, 0, destSize, data));
                 }
             } else {
                 FIXME("Attempting to update a DXT compressed texture without hardware support\n");
@@ -6172,7 +6167,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
         } else {
             glTexSubImage2D(glDescription->target, glDescription->level, destLeft, destTop,
-                    srcWidth, srcHeight, glDescription->glFormat, glDescription->glType, data);
+                    srcWidth, srcHeight, dst_format_desc->glFormat, dst_format_desc->glType, data);
         }
      }
     checkGLcall("glTexSubImage2D");
