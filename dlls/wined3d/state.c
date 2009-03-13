@@ -236,7 +236,6 @@ static void state_ambient(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD
 static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     int srcBlend = GL_ZERO;
     int dstBlend = GL_ZERO;
-    const StaticPixelFormatDesc *rtFormat;
     IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0];
 
     /* GL_LINE_SMOOTH needs GL_BLEND to work, according to the red book, and special blending params */
@@ -278,12 +277,10 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
          * returns 1.0, so D3DBLEND_DESTALPHA is GL_ONE, and D3DBLEND_INVDESTALPHA is GL_ZERO
          */
         case WINED3DBLEND_DESTALPHA          :
-            rtFormat = getFormatDescEntry(target->resource.format, NULL, NULL);
-            dstBlend = rtFormat->alphaMask ? GL_DST_ALPHA : GL_ONE;
+            dstBlend = target->resource.format_desc->alpha_mask ? GL_DST_ALPHA : GL_ONE;
             break;
         case WINED3DBLEND_INVDESTALPHA       :
-            rtFormat = getFormatDescEntry(target->resource.format, NULL, NULL);
-            dstBlend = rtFormat->alphaMask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
+            dstBlend = target->resource.format_desc->alpha_mask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
             break;
 
         case WINED3DBLEND_SRCALPHASAT        :
@@ -322,12 +319,10 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         case WINED3DBLEND_SRCALPHASAT        : srcBlend = GL_SRC_ALPHA_SATURATE;  break;
 
         case WINED3DBLEND_DESTALPHA          :
-            rtFormat = getFormatDescEntry(target->resource.format, NULL, NULL);
-            srcBlend = rtFormat->alphaMask ? GL_DST_ALPHA : GL_ONE;
+            srcBlend = target->resource.format_desc->alpha_mask ? GL_DST_ALPHA : GL_ONE;
             break;
         case WINED3DBLEND_INVDESTALPHA       :
-            rtFormat = getFormatDescEntry(target->resource.format, NULL, NULL);
-            srcBlend = rtFormat->alphaMask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
+            srcBlend = target->resource.format_desc->alpha_mask ? GL_ONE_MINUS_DST_ALPHA : GL_ZERO;
             break;
 
         case WINED3DBLEND_BOTHSRCALPHA       : srcBlend = GL_SRC_ALPHA;
@@ -488,11 +483,10 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
             if (surf->CKeyFlags & WINEDDSD_CKSRCBLT)
             {
-                const StaticPixelFormatDesc *fmt = getFormatDescEntry(surf->resource.format, NULL, NULL);
                 /* The surface conversion does not do color keying conversion for surfaces that have an alpha
                  * channel on their own. Likewise, the alpha test shouldn't be set up for color keying if the
                  * surface has alpha bits */
-                if (fmt->alphaMask == 0x00000000) enable_ckey = TRUE;
+                if (!surf->resource.format_desc->alpha_mask) enable_ckey = TRUE;
             }
         }
     }
@@ -2930,8 +2924,7 @@ void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext
 
             surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
 
-            if (surf->CKeyFlags & WINEDDSD_CKSRCBLT
-                    && getFormatDescEntry(surf->resource.format, NULL, NULL)->alphaMask == 0x00000000)
+            if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format_desc->alpha_mask)
             {
                 /* Color keying needs to pass alpha values from the texture through to have the alpha test work
                  * properly. On the other hand applications can still use texture combiners apparently. This code

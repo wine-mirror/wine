@@ -705,8 +705,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int Size       = 1;
-    const struct GlPixelFormatDesc *glDesc;
-    const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(Format, &GLINFO_LOCATION, &glDesc);
+    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(Format, &GLINFO_LOCATION);
     UINT mul_4w, mul_4h;
     HRESULT hr;
 
@@ -731,15 +730,15 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
         Size = 0;
     } else if (Format == WINED3DFMT_DXT1) {
         /* DXT1 is half byte per pixel */
-        Size = (mul_4w * tableEntry->bpp * mul_4h) >> 1;
+        Size = (mul_4w * glDesc->byte_count * mul_4h) >> 1;
 
     } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
                Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5 ||
                Format == WINED3DFMT_ATI2N) {
-        Size = (mul_4w * tableEntry->bpp * mul_4h);
+        Size = (mul_4w * glDesc->byte_count * mul_4h);
     } else {
        /* The pitch is a multiple of 4 bytes */
-        Size = ((Width * tableEntry->bpp) + This->surface_alignment - 1) & ~(This->surface_alignment - 1);
+        Size = ((Width * glDesc->byte_count) + This->surface_alignment - 1) & ~(This->surface_alignment - 1);
         Size *= Height;
     }
 
@@ -812,7 +811,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
 
 
     if (WINED3DFMT_UNKNOWN != Format) {
-        object->bytesPerPixel = tableEntry->bpp;
+        object->bytesPerPixel = glDesc->byte_count;
     } else {
         object->bytesPerPixel = 0;
     }
@@ -1200,7 +1199,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
 
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl        *object; /** NOTE: impl ref allowed since this is a create function **/
-    const StaticPixelFormatDesc *formatDesc  = getFormatDescEntry(Format, NULL, NULL);
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &GLINFO_LOCATION);
     HRESULT hr;
 
     if(!GL_SUPPORT(EXT_TEXTURE3D)) {
@@ -1218,7 +1217,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
 
     object->lpVtbl = &IWineD3DVolume_Vtbl;
     hr = resource_init(&object->resource, WINED3DRTYPE_VOLUME, This,
-            Width * Height * Depth * formatDesc->bpp, Usage, Format, Pool, parent);
+            Width * Height * Depth * format_desc->byte_count, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -1239,7 +1238,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     object->currentDesc.Width   = Width;
     object->currentDesc.Height  = Height;
     object->currentDesc.Depth   = Depth;
-    object->bytesPerPixel       = formatDesc->bpp;
+    object->bytesPerPixel       = format_desc->byte_count;
 
     /** Note: Volume textures cannot be dxtn, hence no need to check here **/
     object->lockable            = TRUE;
@@ -1630,7 +1629,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     IUnknown               *bufferParent;
     BOOL                    displaymode_set = FALSE;
     WINED3DDISPLAYMODE      Mode;
-    const StaticPixelFormatDesc *formatDesc;
+    const struct GlPixelFormatDesc *format_desc;
 
     TRACE("(%p) : Created Additional Swap Chain\n", This);
 
@@ -1701,7 +1700,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
     object->orig_width = Mode.Width;
     object->orig_height = Mode.Height;
     object->orig_fmt = Mode.Format;
-    formatDesc  = getFormatDescEntry(Mode.Format, NULL, NULL);
+    format_desc = getFormatDescEntry(Mode.Format, &GLINFO_LOCATION);
 
     if (pPresentationParameters->Windowed &&
         ((pPresentationParameters->BackBufferWidth == 0) ||
@@ -1877,7 +1876,7 @@ error:
         memset(&devmode, 0, sizeof(devmode));
         devmode.dmSize       = sizeof(devmode);
         devmode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-        devmode.dmBitsPerPel = formatDesc->bpp * 8;
+        devmode.dmBitsPerPel = format_desc->byte_count * 8;
         devmode.dmPelsWidth  = object->orig_width;
         devmode.dmPelsHeight = object->orig_height;
         ChangeDisplaySettingsExW(This->adapter->DeviceName, &devmode, NULL, CDS_FULLSCREEN, NULL);
@@ -2737,7 +2736,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     DEVMODEW devmode;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     LONG ret;
-    const StaticPixelFormatDesc *formatDesc  = getFormatDescEntry(pMode->Format, NULL, NULL);
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(pMode->Format, &GLINFO_LOCATION);
     RECT clip_rc;
 
     TRACE("(%p)->(%d,%p) Mode=%dx%dx@%d, %s\n", This, iSwapChain, pMode, pMode->Width, pMode->Height, pMode->RefreshRate, debug_d3dformat(pMode->Format));
@@ -2751,7 +2750,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     memset(&devmode, 0, sizeof(devmode));
     devmode.dmSize = sizeof(devmode);
     devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-    devmode.dmBitsPerPel = formatDesc->bpp * 8;
+    devmode.dmBitsPerPel = format_desc->byte_count * 8;
     devmode.dmPelsWidth  = pMode->Width;
     devmode.dmPelsHeight = pMode->Height;
 
@@ -6981,15 +6980,14 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
             This->cursorHeight = pSur->currentDesc.Height;
             if (SUCCEEDED(IWineD3DSurface_LockRect(pCursorBitmap, &rect, NULL, WINED3DLOCK_READONLY)))
             {
-                const struct GlPixelFormatDesc *glDesc;
-                const StaticPixelFormatDesc *tableEntry = getFormatDescEntry(WINED3DFMT_A8R8G8B8, &GLINFO_LOCATION, &glDesc);
+                const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(WINED3DFMT_A8R8G8B8, &GLINFO_LOCATION);
                 char *mem, *bits = rect.pBits;
                 GLint intfmt = glDesc->glInternal;
                 GLint format = glDesc->glFormat;
                 GLint type = glDesc->glType;
                 INT height = This->cursorHeight;
                 INT width = This->cursorWidth;
-                INT bpp = tableEntry->bpp;
+                INT bpp = glDesc->byte_count;
                 INT i, sampler;
 
                 /* Reformat the texture memory (pitch and width can be

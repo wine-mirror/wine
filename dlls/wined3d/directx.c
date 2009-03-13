@@ -1709,14 +1709,17 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
     return WINED3D_OK;
 }
 
-static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format) {
+static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_GL_Info *gl_info,
+        const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format)
+{
     short redSize, greenSize, blueSize, alphaSize, colorBits;
 
     if(!cfg)
         return FALSE;
 
     if(cfg->iPixelType == WGL_TYPE_RGBA_ARB) { /* Integer RGBA formats */
-        if(!getColorBits(Format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits)) {
+        if (!getColorBits(gl_info, Format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
+        {
             ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(Format));
             return FALSE;
         }
@@ -1755,14 +1758,17 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_Pixe
     return FALSE;
 }
 
-static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format) {
+static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_GL_Info *gl_info,
+        const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format)
+{
     short depthSize, stencilSize;
     BOOL lockable = FALSE;
 
     if(!cfg)
         return FALSE;
 
-    if(!getDepthStencilBits(Format, &depthSize, &stencilSize)) {
+    if (!getDepthStencilBits(gl_info, Format, &depthSize, &stencilSize))
+    {
         ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(Format));
         return FALSE;
     }
@@ -1791,6 +1797,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     int nCfgs;
     const WineD3D_PixelFormat *cfgs;
+    const struct WineD3DAdapter *adapter;
     int it;
 
     WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n",
@@ -1805,11 +1812,14 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
-    cfgs = This->adapters[Adapter].cfgs;
-    nCfgs = This->adapters[Adapter].nCfgs;
+    adapter = &This->adapters[Adapter];
+    cfgs = adapter->cfgs;
+    nCfgs = adapter->nCfgs;
     for (it = 0; it < nCfgs; ++it) {
-        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&cfgs[it], RenderTargetFormat)) {
-            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&cfgs[it], DepthStencilFormat)) {
+        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, &cfgs[it], RenderTargetFormat))
+        {
+            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[it], DepthStencilFormat))
+            {
                 TRACE_(d3d_caps)("(%p) : Formats matched\n", This);
                 return WINED3D_OK;
             }
@@ -1826,7 +1836,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     const struct GlPixelFormatDesc *glDesc;
-    const StaticPixelFormatDesc *desc;
+    const struct WineD3DAdapter *adapter;
 
     TRACE_(d3d_caps)("(%p)-> (Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x, pQual:%p)\n",
           This,
@@ -1851,22 +1861,21 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
     if(!wined3d_settings.allow_multisampling)
         return WINED3DERR_NOTAVAILABLE;
 
-    desc = getFormatDescEntry(SurfaceFormat, &This->adapters[Adapter].gl_info, &glDesc);
-    if(!desc || !glDesc) {
-        return WINED3DERR_INVALIDCALL;
-    }
+    adapter = &This->adapters[Adapter];
+    glDesc = getFormatDescEntry(SurfaceFormat, &adapter->gl_info);
+    if (!glDesc) return WINED3DERR_INVALIDCALL;
 
     if(glDesc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)) {
         int i, nCfgs;
         const WineD3D_PixelFormat *cfgs;
 
-        cfgs = This->adapters[Adapter].cfgs;
-        nCfgs = This->adapters[Adapter].nCfgs;
+        cfgs = adapter->cfgs;
+        nCfgs = adapter->nCfgs;
         for(i=0; i<nCfgs; i++) {
             if(cfgs[i].numSamples != MultiSampleType)
                 continue;
 
-            if(!IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&cfgs[i], SurfaceFormat))
+            if (!IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[i], SurfaceFormat))
                 continue;
 
             TRACE("Found iPixelFormat=%d to support MultiSampleType=%d for format %s\n", cfgs[i].iPixelFormat, MultiSampleType, debug_d3dformat(SurfaceFormat));
@@ -1881,13 +1890,14 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
         int i, nCfgs;
         const WineD3D_PixelFormat *cfgs;
 
-        if(!getColorBits(SurfaceFormat, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits)) {
+        if (!getColorBits(&adapter->gl_info, SurfaceFormat, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
+        {
             ERR("Unable to color bits for format %#x, can't check multisampling capability!\n", SurfaceFormat);
             return WINED3DERR_NOTAVAILABLE;
         }
 
-        cfgs = This->adapters[Adapter].cfgs;
-        nCfgs = This->adapters[Adapter].nCfgs;
+        cfgs = adapter->cfgs;
+        nCfgs = adapter->nCfgs;
         for(i=0; i<nCfgs; i++) {
             if(cfgs[i].numSamples != MultiSampleType)
                 continue;
@@ -2011,7 +2021,7 @@ static BOOL CheckBumpMapCapability(struct WineD3DAdapter *adapter,
             /* Ask the fixed function pipeline implementation if it can deal
              * with the conversion. If we've got a GL extension giving native
              * support this will be an identity conversion. */
-            getFormatDescEntry(CheckFormat, &adapter->gl_info, &glDesc);
+            glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
             fp = select_fragment_implementation(adapter, DeviceType);
             if (fp->color_fixup_supported(glDesc->color_fixup))
             {
@@ -2032,12 +2042,10 @@ static BOOL CheckDepthStencilCapability(struct WineD3DAdapter *adapter,
         WINED3DFORMAT DisplayFormat, WINED3DFORMAT DepthStencilFormat)
 {
     int it=0;
-    const struct GlPixelFormatDesc *glDesc;
-    const StaticPixelFormatDesc *desc = getFormatDescEntry(DepthStencilFormat, &adapter->gl_info, &glDesc);
+    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(DepthStencilFormat, &adapter->gl_info);
 
     /* Fail if we weren't able to get a description of the format */
-    if(!desc || !glDesc)
-        return FALSE;
+    if (!glDesc) return FALSE;
 
     /* Only allow depth/stencil formats */
     if(!(glDesc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
@@ -2047,8 +2055,10 @@ static BOOL CheckDepthStencilCapability(struct WineD3DAdapter *adapter,
     for (it = 0; it < adapter->nCfgs; ++it)
     {
         WineD3D_PixelFormat *cfg = &adapter->cfgs[it];
-        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(cfg, DisplayFormat)) {
-            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(cfg, DepthStencilFormat)) {
+        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, cfg, DisplayFormat))
+        {
+            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, cfg, DepthStencilFormat))
+            {
                 return TRUE;
             }
         }
@@ -2059,12 +2069,10 @@ static BOOL CheckDepthStencilCapability(struct WineD3DAdapter *adapter,
 
 static BOOL CheckFilterCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT CheckFormat)
 {
-    const struct GlPixelFormatDesc *glDesc;
-    const StaticPixelFormatDesc *desc = getFormatDescEntry(CheckFormat, &adapter->gl_info, &glDesc);
+    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
 
     /* Fail if we weren't able to get a description of the format */
-    if(!desc || !glDesc)
-        return FALSE;
+    if (!glDesc) return FALSE;
 
     /* The flags entry of a format contains the filtering capability */
     if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING)
@@ -2077,12 +2085,10 @@ static BOOL CheckFilterCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT 
 static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
         WINED3DFORMAT AdapterFormat, WINED3DFORMAT CheckFormat)
 {
-    const struct GlPixelFormatDesc *glDesc;
-    const StaticPixelFormatDesc *desc = getFormatDescEntry(CheckFormat, &adapter->gl_info, &glDesc);
+    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
 
     /* Fail if we weren't able to get a description of the format */
-    if(!desc || !glDesc)
-        return FALSE;
+    if (!glDesc) return FALSE;
 
     /* Filter out non-RT formats */
     if(!(glDesc->Flags & WINED3DFMT_FLAG_RENDERTARGET))
@@ -2094,8 +2100,10 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
         short AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
         short CheckRed, CheckGreen, CheckBlue, CheckAlpha, CheckTotalSize;
 
-        getColorBits(AdapterFormat, &AdapterRed, &AdapterGreen, &AdapterBlue, &AdapterAlpha, &AdapterTotalSize);
-        getColorBits(CheckFormat, &CheckRed, &CheckGreen, &CheckBlue, &CheckAlpha, &CheckTotalSize);
+        getColorBits(&adapter->gl_info, AdapterFormat,
+                &AdapterRed, &AdapterGreen, &AdapterBlue, &AdapterAlpha, &AdapterTotalSize);
+        getColorBits(&adapter->gl_info, CheckFormat,
+                &CheckRed, &CheckGreen, &CheckBlue, &CheckAlpha, &CheckTotalSize);
 
         /* In backbuffer mode the front and backbuffer share the same WGL pixelformat.
          * The format must match in RGB, alpha is allowed to be different. (Only the backbuffer can have alpha) */
@@ -2108,7 +2116,9 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
          * drawable (not offscreen; e.g. Nvidia offers R5G6B5 for pbuffers even when X is running at 24bit) */
         for (it = 0; it < adapter->nCfgs; ++it)
         {
-            if (cfgs[it].windowDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&cfgs[it], CheckFormat)) {
+            if (cfgs[it].windowDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info,
+                    &cfgs[it], CheckFormat))
+            {
                 TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n", cfgs[it].iPixelFormat, debug_d3dformat(CheckFormat));
                 return TRUE;
             }
@@ -2121,7 +2131,9 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
         /* Check if there is a WGL pixel format matching the requirements, the pixel format should also be usable with pbuffers */
         for (it = 0; it < adapter->nCfgs; ++it)
         {
-            if (cfgs[it].pbufferDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&cfgs[it], CheckFormat)) {
+            if (cfgs[it].pbufferDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info,
+                    &cfgs[it], CheckFormat))
+            {
                 TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n", cfgs[it].iPixelFormat, debug_d3dformat(CheckFormat));
                 return TRUE;
             }
@@ -2189,12 +2201,10 @@ static BOOL CheckSrgbWriteCapability(struct WineD3DAdapter *adapter,
 /* Check if a format support blending in combination with pixel shaders */
 static BOOL CheckPostPixelShaderBlendingCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT CheckFormat)
 {
-    const struct GlPixelFormatDesc *glDesc;
-    const StaticPixelFormatDesc *desc = getFormatDescEntry(CheckFormat, &adapter->gl_info, &glDesc);
+    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
 
     /* Fail if we weren't able to get a description of the format */
-    if(!desc || !glDesc)
-        return FALSE;
+    if (!glDesc) return FALSE;
 
     /* The flags entry of a format contains the post pixel shader blending capability */
     if(glDesc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
@@ -2301,7 +2311,7 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
             /* Ask the shader backend if it can deal with the conversion. If
              * we've got a GL extension giving native support this will be an
              * identity conversion. */
-            getFormatDescEntry(CheckFormat, &adapter->gl_info, &glDesc);
+            glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
             shader_backend = select_shader_backend(adapter, DeviceType);
             if (shader_backend->shader_color_fixup_supported(glDesc->color_fixup))
             {
@@ -2419,7 +2429,7 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
         /* Vendor specific formats */
         case WINED3DFMT_ATI2N:
             if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC) || GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
-                getFormatDescEntry(CheckFormat, &adapter->gl_info, &glDesc);
+                glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
                 shader_backend = select_shader_backend(adapter, DeviceType);
                 fp = select_fragment_implementation(adapter, DeviceType);
                 if (shader_backend->shader_color_fixup_supported(glDesc->color_fixup)
@@ -2496,7 +2506,7 @@ static BOOL CheckSurfaceCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT
     if(CheckDepthStencilCapability(adapter, AdapterFormat, CheckFormat)) return TRUE;
 
     /* If opengl can't process the format natively, the blitter may be able to convert it */
-    getFormatDescEntry(CheckFormat, &adapter->gl_info, &format_desc);
+    format_desc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
     blitter = select_blit_implementation(adapter, DeviceType);
     if (blitter->color_fixup_supported(format_desc->color_fixup))
     {

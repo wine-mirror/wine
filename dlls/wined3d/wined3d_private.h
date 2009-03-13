@@ -2096,8 +2096,9 @@ void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int wi
 void surface_set_texture_name(IWineD3DSurface *iface, GLuint name, BOOL srgb_name);
 void surface_set_texture_target(IWineD3DSurface *iface, GLenum target);
 
-BOOL getColorBits(WINED3DFORMAT fmt, short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize);
-BOOL getDepthStencilBits(WINED3DFORMAT fmt, short *depthSize, short *stencilSize);
+BOOL getColorBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt,
+        short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize);
+BOOL getDepthStencilBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt, short *depthSize, short *stencilSize);
 
 /* Math utils */
 void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2);
@@ -2499,16 +2500,7 @@ struct GlPixelFormatDesc
     struct color_fixup_desc color_fixup;
 };
 
-typedef struct {
-    WINED3DFORMAT           format;
-    DWORD                   alphaMask, redMask, greenMask, blueMask;
-    UINT                    bpp;
-    short                   depthSize, stencilSize;
-    BOOL                    isFourcc;
-} StaticPixelFormatDesc;
-
-const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt,
-        const WineD3D_GL_Info *gl_info, const struct GlPixelFormatDesc **glDesc);
+const struct GlPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const WineD3D_GL_Info *gl_info);
 
 static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
 {

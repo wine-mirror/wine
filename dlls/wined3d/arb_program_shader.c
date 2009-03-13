@@ -3674,7 +3674,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
     const struct GlPixelFormatDesc *glDesc;
     enum yuv_fixup yuv_fixup;
 
-    getFormatDescEntry(fmt, &GLINFO_LOCATION, &glDesc);
+    glDesc = getFormatDescEntry(fmt, &GLINFO_LOCATION);
 
     if (!is_yuv_fixup(glDesc->color_fixup))
     {

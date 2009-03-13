@@ -477,7 +477,8 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
     TRACE("ColorFormat=%s, DepthStencilFormat=%s, auxBuffers=%d, numSamples=%d, pbuffer=%d, findCompatible=%d\n",
           debug_d3dformat(ColorFormat), debug_d3dformat(DepthStencilFormat), auxBuffers, numSamples, pbuffer, findCompatible);
 
-    if(!getColorBits(ColorFormat, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits)) {
+    if (!getColorBits(&This->adapter->gl_info, ColorFormat, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits))
+    {
         ERR("Unable to get color bits for format %s (%#x)!\n", debug_d3dformat(ColorFormat), ColorFormat);
         return 0;
     }
@@ -499,7 +500,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc, WINED3DF
     DepthStencilFormat = WINED3DFMT_D24S8;
 
     if(DepthStencilFormat) {
-        getDepthStencilBits(DepthStencilFormat, &depthBits, &stencilBits);
+        getDepthStencilBits(&This->adapter->gl_info, DepthStencilFormat, &depthBits, &stencilBits);
     }
 
     for(matchtry = 0; matchtry < (sizeof(matches) / sizeof(matches[0])) && !iPixelFormat; matchtry++) {
@@ -1256,20 +1257,19 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
     WineD3DContext *context = This->activeContext;
     BOOL oldRenderOffscreen = This->render_offscreen;
-    const WINED3DFORMAT oldFmt = ((IWineD3DSurfaceImpl *) This->lastActiveRenderTarget)->resource.format;
-    const WINED3DFORMAT newFmt = ((IWineD3DSurfaceImpl *) target)->resource.format;
+    const struct GlPixelFormatDesc *old = ((IWineD3DSurfaceImpl *)This->lastActiveRenderTarget)->resource.format_desc;
+    const struct GlPixelFormatDesc *new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
     const struct StateEntry *StateTable = This->StateTable;
 
     /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
      * the alpha blend state changes with different render target formats
      */
-    if(oldFmt != newFmt) {
-        const struct GlPixelFormatDesc *glDesc;
-        const StaticPixelFormatDesc *old = getFormatDescEntry(oldFmt, NULL, NULL);
-        const StaticPixelFormatDesc *new = getFormatDescEntry(newFmt, &GLINFO_LOCATION, &glDesc);
-
-        /* Disable blending when the alphaMask has changed and when a format doesn't support blending */
-        if((old->alphaMask && !new->alphaMask) || (!old->alphaMask && new->alphaMask) || !(glDesc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)) {
+    if (old->format != new->format)
+    {
+        /* Disable blending when the alpha mask has changed and when a format doesn't support blending */
+        if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
+                || !(new->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+        {
             Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
         }
     }

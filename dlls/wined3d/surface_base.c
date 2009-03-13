@@ -508,9 +508,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWin
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    const struct GlPixelFormatDesc *format_desc;
-    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(format,
-            &This->resource.wineD3DDevice->adapter->gl_info, &format_desc);
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format,
+            &This->resource.wineD3DDevice->adapter->gl_info);
 
     if (This->resource.format != WINED3DFMT_UNKNOWN) {
         FIXME("(%p) : The format of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
@@ -522,19 +521,19 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3D
         This->resource.size = 0;
     } else if (format == WINED3DFMT_DXT1) {
         /* DXT1 is half byte per pixel */
-        This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4)) >> 1;
+        This->resource.size = ((max(This->pow2Width, 4) * format_desc->byte_count) * max(This->pow2Height, 4)) >> 1;
 
     } else if (format == WINED3DFMT_DXT2 || format == WINED3DFMT_DXT3 ||
                format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5) {
-        This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4));
+        This->resource.size = ((max(This->pow2Width, 4) * format_desc->byte_count) * max(This->pow2Height, 4));
     } else {
         unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
-        This->resource.size = ((This->pow2Width * formatEntry->bpp) + alignment - 1) & ~(alignment - 1);
+        This->resource.size = ((This->pow2Width * format_desc->byte_count) + alignment - 1) & ~(alignment - 1);
         This->resource.size *= This->pow2Height;
     }
 
     if (format != WINED3DFMT_UNKNOWN) {
-        This->bytesPerPixel = formatEntry->bpp;
+        This->bytesPerPixel = format_desc->byte_count;
     } else {
         This->bytesPerPixel = 0;
     }
@@ -551,12 +550,12 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3D
 
 HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
     int extraline = 0;
     SYSTEM_INFO sysInfo;
     BITMAPINFO* b_info;
     HDC ddc;
     DWORD *masks;
-    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(This->resource.format, NULL, NULL);
     UINT usage;
 
     switch (This->bytesPerPixel) {
@@ -628,9 +627,9 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
         case WINED3DFMT_R16G16B16A16_UNORM:
             usage = 0;
             b_info->bmiHeader.biCompression = BI_BITFIELDS;
-            masks[0] = formatEntry->redMask;
-            masks[1] = formatEntry->greenMask;
-            masks[2] = formatEntry->blueMask;
+            masks[0] = format_desc->red_mask;
+            masks[1] = format_desc->green_mask;
+            masks[2] = format_desc->blue_mask;
             break;
 
         default:
@@ -919,8 +918,8 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     WINED3DLOCKED_RECT  dlock, slock;
     WINED3DFORMAT       dfmt = WINED3DFMT_UNKNOWN, sfmt = WINED3DFMT_UNKNOWN;
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
+    const struct GlPixelFormatDesc *sEntry, *dEntry;
     int x, y;
-    const StaticPixelFormatDesc *sEntry, *dEntry;
     const BYTE *sbuf;
     BYTE *dbuf;
     TRACE("(%p)->(%p,%p,%p,%x,%p)\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
@@ -1099,13 +1098,13 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         dfmt = This->resource.format;
         slock = dlock;
         sfmt = dfmt;
-        sEntry = getFormatDescEntry(sfmt, NULL, NULL);
+        sEntry = This->resource.format_desc;
         dEntry = sEntry;
     }
     else
     {
         dfmt = This->resource.format;
-        dEntry = getFormatDescEntry(dfmt, NULL, NULL);
+        dEntry = This->resource.format_desc;
         if (Src)
         {
             if(This->resource.format != Src->resource.format) {
@@ -1118,8 +1117,12 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
             }
             IWineD3DSurface_LockRect((IWineD3DSurface *) Src, &slock, NULL, WINED3DLOCK_READONLY);
             sfmt = Src->resource.format;
+            sEntry = Src->resource.format_desc;
         }
-        sEntry = getFormatDescEntry(sfmt, NULL, NULL);
+        else
+        {
+            sEntry = dEntry;
+        }
         if (DestRect)
             IWineD3DSurface_LockRect(iface, &dlock, &xdst, 0);
         else
@@ -1128,7 +1131,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
 
     if (!DDBltFx || !(DDBltFx->dwDDFX)) Flags &= ~WINEDDBLT_DDFX;
 
-    if (sEntry->isFourcc && dEntry->isFourcc)
+    if (sEntry->Flags & dEntry->Flags & WINED3DFMT_FLAG_FOURCC)
     {
         if (!DestRect || Src == This)
         {
@@ -1369,9 +1372,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
                 }
                 else
                 {
-                    keymask = sEntry->redMask   |
-                            sEntry->greenMask |
-                            sEntry->blueMask;
+                    keymask = sEntry->red_mask
+                            | sEntry->green_mask
+                            | sEntry->blue_mask;
                 }
                 Flags &= ~(WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE);
             }
@@ -1563,7 +1566,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     RECT                lock_src, lock_dst, lock_union;
     const BYTE          *sbuf;
     BYTE                *dbuf;
-    const StaticPixelFormatDesc *sEntry, *dEntry;
+    const struct GlPixelFormatDesc *sEntry, *dEntry;
 
     if (TRACE_ON(d3d_surface))
     {
@@ -1649,7 +1652,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         assert(This->resource.allocatedMemory != NULL);
         sbuf = This->resource.allocatedMemory + lock_src.top * pitch + lock_src.left * bpp;
         dbuf = This->resource.allocatedMemory + lock_dst.top * pitch + lock_dst.left * bpp;
-        sEntry = getFormatDescEntry(Src->resource.format, NULL, NULL);
+        sEntry = Src->resource.format_desc;
         dEntry = sEntry;
     }
     else
@@ -1663,12 +1666,12 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         dbuf = dlock.pBits;
         TRACE("Dst is at %p, Src is at %p\n", dbuf, sbuf);
 
-        sEntry = getFormatDescEntry(Src->resource.format, NULL, NULL);
-        dEntry = getFormatDescEntry(This->resource.format, NULL, NULL);
+        sEntry = Src->resource.format_desc;
+        dEntry = This->resource.format_desc;
     }
 
     /* Handle first the FOURCC surfaces... */
-    if (sEntry->isFourcc && dEntry->isFourcc)
+    if (sEntry->Flags & dEntry->Flags & WINED3DFMT_FLAG_FOURCC)
     {
         TRACE("Fourcc -> Fourcc copy\n");
         if (trans)
@@ -1685,7 +1688,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         memcpy(dbuf, sbuf, This->resource.size);
         goto error;
     }
-    if (sEntry->isFourcc && !dEntry->isFourcc)
+    if ((sEntry->Flags & WINED3DFMT_FLAG_FOURCC) && !(dEntry->Flags & WINED3DFMT_FLAG_FOURCC))
     {
         /* TODO: Use the libtxc_dxtn.so shared library to do
          * software decompression

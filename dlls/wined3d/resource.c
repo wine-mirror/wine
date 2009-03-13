@@ -35,7 +35,7 @@ HRESULT resource_init(struct IWineD3DResourceClass *resource, WINED3DRESOURCETYP
     resource->ref = 1;
     resource->pool = pool;
     resource->format = format;
-    getFormatDescEntry(format, &device->adapter->gl_info, &resource->format_desc);
+    resource->format_desc = getFormatDescEntry(format, &device->adapter->gl_info);
     resource->usage = usage;
     resource->size = size;
     resource->priority = 0;

@@ -28,6 +28,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+struct StaticPixelFormatDesc
+{
+    WINED3DFORMAT format;
+    DWORD alphaMask, redMask, greenMask, blueMask;
+    UINT bpp;
+    short depthSize, stencilSize;
+    BOOL isFourcc;
+};
+
 /*****************************************************************************
  * Pixel format array
  *
@@ -38,7 +47,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
  * setting a mask like 0x1 for those surfaces is correct. The 64 and 128 bit
  * formats are not usable in 2D rendering because ddraw doesn't support them.
  */
-static const StaticPixelFormatDesc formats[] = {
+static const struct StaticPixelFormatDesc formats[] =
+{
   /* WINED3DFORMAT               alphamask    redmask    greenmask    bluemask     bpp    depth  stencil   isFourcc */
     {WINED3DFMT_UNKNOWN,            0x0,        0x0,        0x0,        0x0,        1,      0,      0,      FALSE},
     /* FourCC formats, kept here to have WINED3DFMT_R8G8B8(=20) at position 20 */
@@ -633,8 +643,7 @@ void init_type_lookup(WineD3D_GL_Info *gl_info) {
 
 #define GLINFO_LOCATION This->adapter->gl_info
 
-const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const WineD3D_GL_Info *gl_info,
-        const struct GlPixelFormatDesc **glDesc)
+const struct GlPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const WineD3D_GL_Info *gl_info)
 {
     int idx = getFmtIdx(fmt);
 
@@ -643,19 +652,8 @@ const StaticPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const WineD3D
         /* Get the caller a valid pointer */
         idx = getFmtIdx(WINED3DFMT_UNKNOWN);
     }
-    if(glDesc) {
-        if(!gl_info->gl_formats) {
-            /* If we do not have gl format information, provide a dummy NULL format. This is an easy way to make
-             * all gl caps check return "unsupported" than catching the lack of gl all over the code. ANSI C requires
-             * static variables to be initialized to 0.
-             */
-            static const struct GlPixelFormatDesc dummyFmt;
-            *glDesc = &dummyFmt;
-        } else {
-            *glDesc = &gl_info->gl_formats[idx];
-        }
-    }
-    return &formats[idx];
+
+    return &gl_info->gl_formats[idx];
 }
 
 /*****************************************************************************
@@ -1573,9 +1571,10 @@ unsigned int count_bits(unsigned int mask)
 
 /* Helper function for retrieving color info for ChoosePixelFormat and wglChoosePixelFormatARB.
  * The later function requires individual color components. */
-BOOL getColorBits(WINED3DFORMAT fmt, short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize)
+BOOL getColorBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt,
+        short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize)
 {
-    const StaticPixelFormatDesc *desc;
+    const struct GlPixelFormatDesc *format_desc;
 
     TRACE("fmt: %s\n", debug_d3dformat(fmt));
     switch(fmt)
@@ -1599,16 +1598,16 @@ BOOL getColorBits(WINED3DFORMAT fmt, short *redSize, short *greenSize, short *bl
             return FALSE;
     }
 
-    desc = getFormatDescEntry(fmt, NULL, NULL);
-    if(!desc)
+    format_desc = getFormatDescEntry(fmt, gl_info);
+    if (!format_desc)
     {
         ERR("Unable to look up format: 0x%x\n", fmt);
         return FALSE;
     }
-    *redSize = count_bits(desc->redMask);
-    *greenSize = count_bits(desc->greenMask);
-    *blueSize = count_bits(desc->blueMask);
-    *alphaSize = count_bits(desc->alphaMask);
+    *redSize = count_bits(format_desc->red_mask);
+    *greenSize = count_bits(format_desc->green_mask);
+    *blueSize = count_bits(format_desc->blue_mask);
+    *alphaSize = count_bits(format_desc->alpha_mask);
     *totalSize = *redSize + *greenSize + *blueSize + *alphaSize;
 
     TRACE("Returning red:  %d, green: %d, blue: %d, alpha: %d, total: %d for fmt=%s\n", *redSize, *greenSize, *blueSize, *alphaSize, *totalSize, debug_d3dformat(fmt));
@@ -1616,9 +1615,9 @@ BOOL getColorBits(WINED3DFORMAT fmt, short *redSize, short *greenSize, short *bl
 }
 
 /* Helper function for retrieving depth/stencil info for ChoosePixelFormat and wglChoosePixelFormatARB */
-BOOL getDepthStencilBits(WINED3DFORMAT fmt, short *depthSize, short *stencilSize)
+BOOL getDepthStencilBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt, short *depthSize, short *stencilSize)
 {
-    const StaticPixelFormatDesc *desc;
+    const struct GlPixelFormatDesc *format_desc;
 
     TRACE("fmt: %s\n", debug_d3dformat(fmt));
     switch(fmt)
@@ -1638,14 +1637,14 @@ BOOL getDepthStencilBits(WINED3DFORMAT fmt, short *depthSize, short *stencilSize
             return FALSE;
     }
 
-    desc = getFormatDescEntry(fmt, NULL, NULL);
-    if(!desc)
+    format_desc = getFormatDescEntry(fmt, gl_info);
+    if (!format_desc)
     {
         ERR("Unable to look up format: 0x%x\n", fmt);
         return FALSE;
     }
-    *depthSize = desc->depthSize;
-    *stencilSize = desc->stencilSize;
+    *depthSize = format_desc->depth_size;
+    *stencilSize = format_desc->stencil_size;
 
     TRACE("Returning depthSize: %d and stencilSize: %d for fmt=%s\n", *depthSize, *stencilSize, debug_d3dformat(fmt));
     return TRUE;
@@ -2212,8 +2211,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
                 IWineD3DSurfaceImpl *surf;
                 surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
 
-                if (surf->CKeyFlags & WINEDDSD_CKSRCBLT
-                        && getFormatDescEntry(surf->resource.format, NULL, NULL)->alphaMask == 0x00000000)
+                if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format_desc->alpha_mask)
                 {
                     if (aop == WINED3DTOP_DISABLE)
                     {
