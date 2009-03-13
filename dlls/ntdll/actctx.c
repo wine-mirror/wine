@@ -496,17 +496,19 @@ static WCHAR *build_assembly_dir(struct assembly_identity* ai)
     static const WCHAR noneW[] = {'n','o','n','e',0};
     static const WCHAR mskeyW[] = {'d','e','a','d','b','e','e','f',0};
 
+    const WCHAR *arch = ai->arch ? ai->arch : noneW;
     const WCHAR *key = ai->public_key ? ai->public_key : noneW;
     const WCHAR *lang = ai->language ? ai->language : noneW;
-    SIZE_T size = (strlenW(ai->arch) + 1 + strlenW(ai->name) + 1 + strlenW(key) + 24 + 1 +
-                   strlenW(lang) + 1) * sizeof(WCHAR) + sizeof(mskeyW);
+    const WCHAR *name = ai->name ? ai->name : noneW;
+    SIZE_T size = (strlenW(arch) + 1 + strlenW(name) + 1 + strlenW(key) + 24 + 1 +
+		    strlenW(lang) + 1) * sizeof(WCHAR) + sizeof(mskeyW);
     WCHAR *ret;
 
     if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, size ))) return NULL;
 
-    strcpyW( ret, ai->arch );
+    strcpyW( ret, arch );
     strcatW( ret, undW );
-    strcatW( ret, ai->name );
+    strcatW( ret, name );
     strcatW( ret, undW );
     strcatW( ret, key );
     strcatW( ret, undW );
