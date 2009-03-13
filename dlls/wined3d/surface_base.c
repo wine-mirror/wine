@@ -508,7 +508,9 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetContainer(IWineD3DSurface *iface, IWin
 
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORMAT format) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(format, NULL, NULL);
+    const struct GlPixelFormatDesc *format_desc;
+    const StaticPixelFormatDesc *formatEntry = getFormatDescEntry(format,
+            &This->resource.wineD3DDevice->adapter->gl_info, &format_desc);
 
     if (This->resource.format != WINED3DFMT_UNKNOWN) {
         FIXME("(%p) : The format of the surface must be WINED3DFORMAT_UNKNOWN\n", This);
@@ -540,6 +542,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3D
     This->Flags |= (WINED3DFMT_D16_LOCKABLE == format) ? SFLAG_LOCKABLE : 0;
 
     This->resource.format = format;
+    This->resource.format_desc = format_desc;
 
     TRACE("(%p) : Size %d, bytesPerPixel %d\n", This, This->resource.size, This->bytesPerPixel);
 
