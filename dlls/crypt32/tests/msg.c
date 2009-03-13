@@ -29,7 +29,8 @@
 
 #include "wine/test.h"
 
-static BOOL have_nt;
+static BOOL have_nt = TRUE;
+static BOOL old_crypt32 = FALSE;
 static char oid_rsa_md5[] = szOID_RSA_MD5;
 
 static BOOL (WINAPI * pCryptAcquireContextA)
@@ -196,7 +197,7 @@ static void test_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_DATA, "Expected CMSG_DATA, got %d\n", value);
-    for (i = CMSG_CONTENT_PARAM; have_nt && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
+    for (i = CMSG_CONTENT_PARAM; !old_crypt32 && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
     {
         size = 0;
         ret = CryptMsgGetParam(msg, i, 0, NULL, &size);
@@ -211,7 +212,7 @@ static void test_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_ENVELOPED, "Expected CMSG_ENVELOPED, got %d\n", value);
-    for (i = CMSG_CONTENT_PARAM; have_nt && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
+    for (i = CMSG_CONTENT_PARAM; !old_crypt32 && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
     {
         size = 0;
         ret = CryptMsgGetParam(msg, i, 0, NULL, &size);
@@ -226,7 +227,7 @@ static void test_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_HASHED, "Expected CMSG_HASHED, got %d\n", value);
-    for (i = CMSG_CONTENT_PARAM; have_nt && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
+    for (i = CMSG_CONTENT_PARAM; !old_crypt32 && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
     {
         size = 0;
         ret = CryptMsgGetParam(msg, i, 0, NULL, &size);
@@ -241,7 +242,7 @@ static void test_msg_get_param(void)
     ret = CryptMsgGetParam(msg, CMSG_TYPE_PARAM, 0, &value, &size);
     ok(ret, "CryptMsgGetParam failed: %x\n", GetLastError());
     ok(value == CMSG_SIGNED, "Expected CMSG_SIGNED, got %d\n", value);
-    for (i = CMSG_CONTENT_PARAM; have_nt && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
+    for (i = CMSG_CONTENT_PARAM; !old_crypt32 && (i <= CMSG_CMS_SIGNER_INFO_PARAM); i++)
     {
         size = 0;
         ret = CryptMsgGetParam(msg, i, 0, NULL, &size);
@@ -428,7 +429,7 @@ static void test_data_msg_update(void)
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 
-    if (have_nt)
+    if (!old_crypt32)
     {
         /* Calling update after opening with an empty stream info (with a bogus
          * output function) yields an error:
@@ -2070,7 +2071,7 @@ static void test_decode_msg_update(void)
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
 
-    if (have_nt)
+    if (!old_crypt32)
     {
         msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0, 0, NULL, &streamInfo);
         /* Updating a message that has a NULL stream callback fails */
@@ -2656,14 +2657,6 @@ static void test_msg_control(void)
     CMSG_HASHED_ENCODE_INFO hashInfo = { 0 };
     CMSG_SIGNED_ENCODE_INFO signInfo = { sizeof(signInfo), 0 };
     CMSG_CTRL_DECRYPT_PARA decryptPara = { sizeof(decryptPara), 0 };
-    BOOL old_crypt32 = FALSE;
-
-    /* I_CertUpdateStore can be used for verification if crypt32 is new enough */
-    if (!GetProcAddress(GetModuleHandleA("crypt32.dll"), "I_CertUpdateStore"))
-    {
-        win_skip("Some tests will crash on older crypt32 implementations\n");
-        old_crypt32 = TRUE;
-    }
 
     /* Crashes
     ret = CryptMsgControl(NULL, 0, 0, NULL);
@@ -2763,7 +2756,7 @@ static void test_msg_control(void)
      "Expected CRYPT_E_INVALID_MSG_TYPE, got %08x\n", GetLastError());
     CryptMsgClose(msg);
 
-    if (have_nt)
+    if (!old_crypt32)
     {
         msg = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, CMSG_HASHED, 0, NULL,
          NULL);
@@ -3176,6 +3169,13 @@ START_TEST(msg)
     have_nt = detect_nt();
     if (!have_nt)
         win_skip("Win9x crashes on some parameter checks\n");
+
+    /* I_CertUpdateStore can be used for verification if crypt32 is new enough */
+    if (!GetProcAddress(GetModuleHandleA("crypt32.dll"), "I_CertUpdateStore"))
+    {
+        win_skip("Some tests will crash on older crypt32 implementations\n");
+        old_crypt32 = TRUE;
+    }
 
     /* Basic parameter checking tests */
     test_msg_open_to_encode();
