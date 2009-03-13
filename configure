@@ -3901,41 +3901,9 @@ if test "x$enable_win16" != "xyes"
 then
     WIN16_FILES=""
     WIN16_INSTALL=""
-    enable_comm_drv16=${enable_comm_drv16:-no}
-    enable_compobj_dll16=${enable_compobj_dll16:-no}
-    enable_dispdib_dll16=${enable_dispdib_dll16:-no}
-    enable_display_drv16=${enable_display_drv16:-no}
-    enable_ifsmgr_vxd=${enable_ifsmgr_vxd:-no}
-    enable_keyboard_drv16=${enable_keyboard_drv16:-no}
-    enable_lzexpand_dll16=${enable_lzexpand_dll16:-no}
-    enable_mmdevldr_vxd=${enable_mmdevldr_vxd:-no}
-    enable_monodebg_vxd=${enable_monodebg_vxd:-no}
-    enable_mouse_drv16=${enable_mouse_drv16:-no}
-    enable_msacm_dll16=${enable_msacm_dll16:-no}
-    enable_ole2_dll16=${enable_ole2_dll16:-no}
-    enable_ole2conv_dll16=${enable_ole2conv_dll16:-no}
-    enable_ole2disp_dll16=${enable_ole2disp_dll16:-no}
-    enable_ole2nls_dll16=${enable_ole2nls_dll16:-no}
-    enable_ole2prox_dll16=${enable_ole2prox_dll16:-no}
-    enable_ole2thk_dll16=${enable_ole2thk_dll16:-no}
-    enable_olecli_dll16=${enable_olecli_dll16:-no}
-    enable_olesvr_dll16=${enable_olesvr_dll16:-no}
-    enable_storage_dll16=${enable_storage_dll16:-no}
-    enable_stress_dll16=${enable_stress_dll16:-no}
-    enable_typelib_dll16=${enable_typelib_dll16:-no}
-    enable_vdhcp_vxd=${enable_vdhcp_vxd:-no}
-    enable_vmm_vxd=${enable_vmm_vxd:-no}
-    enable_vnbt_vxd=${enable_vnbt_vxd:-no}
-    enable_vnetbios_vxd=${enable_vnetbios_vxd:-no}
-    enable_vtdapi_vxd=${enable_vtdapi_vxd:-no}
-    enable_vwin32_vxd=${enable_vwin32_vxd:-no}
     enable_w32skrnl=${enable_w32skrnl:-no}
-    enable_win87em_dll16=${enable_win87em_dll16:-no}
-    enable_windebug_dll16=${enable_windebug_dll16:-no}
     enable_winedos=${enable_winedos:-no}
     enable_winevdm=${enable_winevdm:-no}
-    enable_winhelp_exe16=${enable_winhelp_exe16:-no}
-    enable_winoldap_mod16=${enable_winoldap_mod16:-no}
 fi
 
 { $as_echo "$as_me:$LINENO: checking for the directory containing the Wine tools" >&5
@@ -24769,7 +24737,7 @@ ac_config_files="$ac_config_files dlls/comdlg32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/comm.drv16/Makefile"
-test "x$enable_comm_drv16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	comm.drv16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/comm.drv16/Makefile: dlls/comm.drv16/Makefile.in dlls/Makedll.rules"
@@ -24777,7 +24745,7 @@ ac_config_files="$ac_config_files dlls/comm.drv16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/compobj.dll16/Makefile"
-test "x$enable_compobj_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	compobj.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/compobj.dll16/Makefile: dlls/compobj.dll16/Makefile.in dlls/Makedll.rules"
@@ -25241,7 +25209,7 @@ ac_config_files="$ac_config_files dlls/dinput8/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dispdib.dll16/Makefile"
-test "x$enable_dispdib_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	dispdib.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/dispdib.dll16/Makefile: dlls/dispdib.dll16/Makefile.in dlls/Makedll.rules"
@@ -25249,7 +25217,7 @@ ac_config_files="$ac_config_files dlls/dispdib.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/display.drv16/Makefile"
-test "x$enable_display_drv16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	display.drv16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/display.drv16/Makefile: dlls/display.drv16/Makefile.in dlls/Makedll.rules"
@@ -25649,7 +25617,7 @@ ac_config_files="$ac_config_files dlls/icmp/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ifsmgr.vxd/Makefile"
-test "x$enable_ifsmgr_vxd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ifsmgr.vxd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ifsmgr.vxd/Makefile: dlls/ifsmgr.vxd/Makefile.in dlls/Makedll.rules"
@@ -25833,7 +25801,7 @@ ac_config_files="$ac_config_files dlls/kernel32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/keyboard.drv16/Makefile"
-test "x$enable_keyboard_drv16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	keyboard.drv16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/keyboard.drv16/Makefile: dlls/keyboard.drv16/Makefile.in dlls/Makedll.rules"
@@ -25897,7 +25865,7 @@ ac_config_files="$ac_config_files dlls/lz32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/lzexpand.dll16/Makefile"
-test "x$enable_lzexpand_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	lzexpand.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/lzexpand.dll16/Makefile: dlls/lzexpand.dll16/Makefile.in dlls/Makedll.rules"
@@ -25985,7 +25953,7 @@ ac_config_files="$ac_config_files dlls/mlang/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mmdevldr.vxd/Makefile"
-test "x$enable_mmdevldr_vxd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	mmdevldr.vxd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mmdevldr.vxd/Makefile: dlls/mmdevldr.vxd/Makefile.in dlls/Makedll.rules"
@@ -25993,7 +25961,7 @@ ac_config_files="$ac_config_files dlls/mmdevldr.vxd/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/monodebg.vxd/Makefile"
-test "x$enable_monodebg_vxd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	monodebg.vxd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/monodebg.vxd/Makefile: dlls/monodebg.vxd/Makefile.in dlls/Makedll.rules"
@@ -26009,7 +25977,7 @@ ac_config_files="$ac_config_files dlls/mountmgr.sys/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mouse.drv16/Makefile"
-test "x$enable_mouse_drv16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	mouse.drv16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/mouse.drv16/Makefile: dlls/mouse.drv16/Makefile.in dlls/Makedll.rules"
@@ -26033,7 +26001,7 @@ ac_config_files="$ac_config_files dlls/mprapi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msacm.dll16/Makefile"
-test "x$enable_msacm_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	msacm.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/msacm.dll16/Makefile: dlls/msacm.dll16/Makefile.in dlls/Makedll.rules"
@@ -26497,7 +26465,7 @@ ac_config_files="$ac_config_files dlls/odbccp32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole2.dll16/Makefile"
-test "x$enable_ole2_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ole2.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole2.dll16/Makefile: dlls/ole2.dll16/Makefile.in dlls/Makedll.rules"
@@ -26505,7 +26473,7 @@ ac_config_files="$ac_config_files dlls/ole2.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole2conv.dll16/Makefile"
-test "x$enable_ole2conv_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ole2conv.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole2conv.dll16/Makefile: dlls/ole2conv.dll16/Makefile.in dlls/Makedll.rules"
@@ -26513,7 +26481,7 @@ ac_config_files="$ac_config_files dlls/ole2conv.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole2disp.dll16/Makefile"
-test "x$enable_ole2disp_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ole2disp.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole2disp.dll16/Makefile: dlls/ole2disp.dll16/Makefile.in dlls/Makedll.rules"
@@ -26521,7 +26489,7 @@ ac_config_files="$ac_config_files dlls/ole2disp.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole2nls.dll16/Makefile"
-test "x$enable_ole2nls_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ole2nls.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole2nls.dll16/Makefile: dlls/ole2nls.dll16/Makefile.in dlls/Makedll.rules"
@@ -26529,7 +26497,7 @@ ac_config_files="$ac_config_files dlls/ole2nls.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole2prox.dll16/Makefile"
-test "x$enable_ole2prox_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ole2prox.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole2prox.dll16/Makefile: dlls/ole2prox.dll16/Makefile.in dlls/Makedll.rules"
@@ -26537,7 +26505,7 @@ ac_config_files="$ac_config_files dlls/ole2prox.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ole2thk.dll16/Makefile"
-test "x$enable_ole2thk_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ole2thk.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ole2thk.dll16/Makefile: dlls/ole2thk.dll16/Makefile.in dlls/Makedll.rules"
@@ -26593,7 +26561,7 @@ ac_config_files="$ac_config_files dlls/oleaut32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/olecli.dll16/Makefile"
-test "x$enable_olecli_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	olecli.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/olecli.dll16/Makefile: dlls/olecli.dll16/Makefile.in dlls/Makedll.rules"
@@ -26625,7 +26593,7 @@ ac_config_files="$ac_config_files dlls/olepro32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/olesvr.dll16/Makefile"
-test "x$enable_olesvr_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	olesvr.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/olesvr.dll16/Makefile: dlls/olesvr.dll16/Makefile.in dlls/Makedll.rules"
@@ -27169,7 +27137,7 @@ ac_config_files="$ac_config_files dlls/sti/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/storage.dll16/Makefile"
-test "x$enable_storage_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	storage.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/storage.dll16/Makefile: dlls/storage.dll16/Makefile.in dlls/Makedll.rules"
@@ -27177,7 +27145,7 @@ ac_config_files="$ac_config_files dlls/storage.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/stress.dll16/Makefile"
-test "x$enable_stress_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	stress.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/stress.dll16/Makefile: dlls/stress.dll16/Makefile.in dlls/Makedll.rules"
@@ -27241,7 +27209,7 @@ ac_config_files="$ac_config_files dlls/twain_32/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/typelib.dll16/Makefile"
-test "x$enable_typelib_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	typelib.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/typelib.dll16/Makefile: dlls/typelib.dll16/Makefile.in dlls/Makedll.rules"
@@ -27361,7 +27329,7 @@ ac_config_files="$ac_config_files dlls/uxtheme/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/vdhcp.vxd/Makefile"
-test "x$enable_vdhcp_vxd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	vdhcp.vxd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/vdhcp.vxd/Makefile: dlls/vdhcp.vxd/Makefile.in dlls/Makedll.rules"
@@ -27393,7 +27361,7 @@ ac_config_files="$ac_config_files dlls/version/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/vmm.vxd/Makefile"
-test "x$enable_vmm_vxd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	vmm.vxd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/vmm.vxd/Makefile: dlls/vmm.vxd/Makefile.in dlls/Makedll.rules"
@@ -27401,7 +27369,7 @@ ac_config_files="$ac_config_files dlls/vmm.vxd/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/vnbt.vxd/Makefile"
-test "x$enable_vnbt_vxd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	vnbt.vxd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/vnbt.vxd/Makefile: dlls/vnbt.vxd/Makefile.in dlls/Makedll.rules"
@@ -27409,7 +27377,7 @@ ac_config_files="$ac_config_files dlls/vnbt.vxd/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/vnetbios.vxd/Makefile"
-test "x$enable_vnetbios_vxd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	vnetbios.vxd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/vnetbios.vxd/Makefile: dlls/vnetbios.vxd/Makefile.in dlls/Makedll.rules"
@@ -27417,7 +27385,7 @@ ac_config_files="$ac_config_files dlls/vnetbios.vxd/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/vtdapi.vxd/Makefile"
-test "x$enable_vtdapi_vxd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	vtdapi.vxd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/vtdapi.vxd/Makefile: dlls/vtdapi.vxd/Makefile.in dlls/Makedll.rules"
@@ -27425,7 +27393,7 @@ ac_config_files="$ac_config_files dlls/vtdapi.vxd/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/vwin32.vxd/Makefile"
-test "x$enable_vwin32_vxd" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	vwin32.vxd"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/vwin32.vxd/Makefile: dlls/vwin32.vxd/Makefile.in dlls/Makedll.rules"
@@ -27441,7 +27409,7 @@ ac_config_files="$ac_config_files dlls/w32skrnl/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/win87em.dll16/Makefile"
-test "x$enable_win87em_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	win87em.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/win87em.dll16/Makefile: dlls/win87em.dll16/Makefile.in dlls/Makedll.rules"
@@ -27449,7 +27417,7 @@ ac_config_files="$ac_config_files dlls/win87em.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/windebug.dll16/Makefile"
-test "x$enable_windebug_dll16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	windebug.dll16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/windebug.dll16/Makefile: dlls/windebug.dll16/Makefile.in dlls/Makedll.rules"
@@ -28273,7 +28241,7 @@ ac_config_files="$ac_config_files programs/winevdm/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winhelp.exe16/Makefile"
-test "x$enable_winhelp_exe16" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+test "x$enable_win16" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	winhelp.exe16" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
 	winhelp.exe16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
@@ -28291,7 +28259,7 @@ ac_config_files="$ac_config_files programs/winhlp32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/winoldap.mod16/Makefile"
-test "x$enable_winoldap_mod16" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+test "x$enable_win16" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	winoldap.mod16" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
 	winoldap.mod16"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
