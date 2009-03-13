@@ -232,7 +232,8 @@ static BOOL check_live_target(struct process* pcs)
 {
     if (!GetProcessId(pcs->handle)) return FALSE;
     if (GetEnvironmentVariableA("DBGHELP_NOLIVE", NULL, 0)) return FALSE;
-    elf_read_wine_loader_dbg_info(pcs);
+    if (!elf_read_wine_loader_dbg_info(pcs))
+        macho_read_wine_loader_dbg_info(pcs);
     return TRUE;
 }
 
@@ -327,6 +328,7 @@ BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeP
         if (fInvadeProcess)
             EnumerateLoadedModules(hProcess, process_invade_cb, hProcess);
         elf_synchronize_module_list(pcs);
+        macho_synchronize_module_list(pcs);
     }
     else if (fInvadeProcess)
     {

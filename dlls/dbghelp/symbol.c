@@ -1013,7 +1013,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
         {
             for (pair.requested = pair.pcs->lmodules; pair.requested; pair.requested = pair.requested->next)
             {
-                if (pair.requested->type == DMT_ELF &&
+                if ((pair.requested->type == DMT_ELF || pair.requested->type == DMT_MACHO) &&
                     !module_get_containee(pair.pcs, pair.requested) &&
                     module_get_debug(&pair))
                 {
@@ -1340,7 +1340,8 @@ BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
     {
         for (module = pcs->lmodules; module; module = module->next)
         {
-            if (module->type == DMT_ELF && !module_get_containee(pcs, module) &&
+            if ((module->type == DMT_ELF || module->type == DMT_MACHO) &&
+                !module_get_containee(pcs, module) &&
                 find_name(pcs, module, Name, Symbol))
                 return TRUE;
         }

@@ -303,6 +303,7 @@ enum module_type
     DMT_UNKNOWN,        /* for lookup, not actually used for a module */
     DMT_ELF,            /* a real ELF shared module */
     DMT_PE,             /* a native or builtin PE module */
+    DMT_MACHO,          /* a real Mach-O shared module */
     DMT_PDB,            /* .PDB file */
     DMT_DBG,            /* .DBG file */
 };
@@ -321,6 +322,8 @@ struct module
     /* specific information for debug types */
     struct elf_module_info*	elf_info;
     struct dwarf2_module_info_s*dwarf2_info;
+
+    struct macho_module_info*	macho_info;
 
     /* memory allocation pool */
     struct pool                 pool;
@@ -419,7 +422,7 @@ extern DWORD calc_crc32(int fd);
 typedef BOOL (*enum_modules_cb)(const WCHAR*, unsigned long addr, void* user);
 
 /* elf_module.c */
-#define ELF_NO_MAP      ((const void*)0xffffffff)
+#define ELF_NO_MAP      ((const void*)-1)
 extern BOOL         elf_enum_modules(HANDLE hProc, enum_modules_cb, void*);
 extern BOOL         elf_fetch_file_info(const WCHAR* name, DWORD* base, DWORD* size, DWORD* checksum);
 struct elf_file_map;
@@ -431,6 +434,17 @@ extern BOOL         elf_synchronize_module_list(struct process* pcs);
 struct elf_thunk_area;
 extern int          elf_is_in_thunk_area(unsigned long addr, const struct elf_thunk_area* thunks);
 extern DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr);
+
+/* macho_module.c */
+#define MACHO_NO_MAP    ((const void*)-1)
+extern BOOL         macho_enum_modules(HANDLE hProc, enum_modules_cb, void*);
+extern BOOL         macho_fetch_file_info(const WCHAR* name, DWORD* base, DWORD* size, DWORD* checksum);
+struct macho_file_map;
+extern BOOL         macho_load_debug_info(struct module* module, struct macho_file_map* fmap);
+extern struct module*
+                    macho_load_module(struct process* pcs, const WCHAR* name, unsigned long);
+extern BOOL         macho_read_wine_loader_dbg_info(struct process* pcs);
+extern BOOL         macho_synchronize_module_list(struct process* pcs);
 
 /* module.c */
 extern const WCHAR      S_ElfW[];

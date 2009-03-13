@@ -522,6 +522,21 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
             return FALSE;
         }
         break;
+    case DMT_MACHO:
+        if (macho_fetch_file_info(buffer, 0, &size, &checksum))
+        {
+            matched++;
+            if (checksum == mf->dw1) matched++;
+            else
+                WARN("Found %s, but wrong checksums: %08x %08x\n",
+                     debugstr_w(buffer), checksum, mf->dw1);
+        }
+        else
+        {
+            WARN("Couldn't read %s\n", debugstr_w(buffer));
+            return FALSE;
+        }
+        break;
     case DMT_PDB:
         {
             struct pdb_lookup   pdb_lookup;

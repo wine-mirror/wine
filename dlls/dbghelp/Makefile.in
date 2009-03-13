@@ -15,6 +15,7 @@ C_SRCS = \
 	dwarf.c \
 	elf_module.c \
 	image.c \
+	macho_module.c \
 	memory.c \
 	minidump.c \
 	module.c \
