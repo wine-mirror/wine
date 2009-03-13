@@ -416,11 +416,15 @@ static void test_data_msg_update(void)
          */
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-        ok(!ret && GetLastError() == E_INVALIDARG,
+        ok(!ret &&
+         (GetLastError() == E_INVALIDARG ||
+          broken(GetLastError() == ERROR_SUCCESS)), /* Older NT4 */
          "Expected E_INVALIDARG, got %x\n", GetLastError());
         SetLastError(0xdeadbeef);
         ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-        ok(!ret && GetLastError() == E_INVALIDARG,
+        ok(!ret &&
+         (GetLastError() == E_INVALIDARG ||
+          broken(GetLastError() == ERROR_SUCCESS)), /* Older NT4 */
          "Expected E_INVALIDARG, got %x\n", GetLastError());
     }
     else
