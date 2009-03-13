@@ -261,7 +261,6 @@ IMPORT_LIBS = \
 	vdmdbg/libvdmdbg.$(IMPLIBEXT) \
 	version/libversion.$(IMPLIBEXT) \
 	wined3d/libwined3d.$(IMPLIBEXT) \
-	winedos/libwinedos.$(IMPLIBEXT) \
 	winhttp/libwinhttp.$(IMPLIBEXT) \
 	wininet/libwininet.$(IMPLIBEXT) \
 	winmm/libwinmm.$(IMPLIBEXT) \
@@ -405,7 +404,6 @@ CROSS_IMPLIBS = \
 	vdmdbg/libvdmdbg.a \
 	version/libversion.a \
 	wined3d/libwined3d.a \
-	winedos/libwinedos.a \
 	winhttp/libwinhttp.a \
 	wininet/libwininet.a \
 	winmm/libwinmm.a \
@@ -804,9 +802,6 @@ version/libversion.def version/libversion.a: version/version.spec $(WINEBUILD)
 
 wined3d/libwined3d.def wined3d/libwined3d.a: wined3d/wined3d.spec $(WINEBUILD)
 	@cd wined3d && $(MAKE) `basename $@`
-
-winedos/libwinedos.def winedos/libwinedos.a: winedos/winedos.spec $(WINEBUILD)
-	@cd winedos && $(MAKE) `basename $@`
 
 winhttp/libwinhttp.def winhttp/libwinhttp.a: winhttp/winhttp.spec $(WINEBUILD)
 	@cd winhttp && $(MAKE) `basename $@`
