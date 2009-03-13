@@ -120,7 +120,8 @@ void cubetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB s
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     }
 
-    if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) {
+    if (This->resource.format_desc->format == WINED3DFMT_P8 || This->resource.format_desc->format == WINED3DFMT_A8P8)
+    {
         for (i = 0; i < This->baseTexture.levels; i++) {
             for (j = WINED3DCUBEMAP_FACE_POSITIVE_X; j <= WINED3DCUBEMAP_FACE_NEGATIVE_Z ; j++) {
                 if(palette9_changed((IWineD3DSurfaceImpl *)This->surfaces[j][i])) {

@@ -915,7 +915,7 @@ static HRESULT STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DVE
 
     TRACE("(%p)\n", This);
 
-    desc->Format = This->resource.format;
+    desc->Format = This->resource.format_desc->format;
     desc->Type = This->resource.resourceType;
     desc->Usage = This->resource.usage;
     desc->Pool = This->resource.pool;
@@ -1166,7 +1166,7 @@ static HRESULT STDMETHODCALLTYPE IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBu
 
     TRACE("(%p)\n", This);
 
-    pDesc->Format = This->resource.format;
+    pDesc->Format = This->resource.format_desc->format;
     pDesc->Type   = This->resource.resourceType;
     pDesc->Usage  = This->resource.usage;
     pDesc->Pool   = This->resource.pool;

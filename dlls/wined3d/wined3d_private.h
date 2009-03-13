@@ -1236,7 +1236,6 @@ typedef struct IWineD3DResourceClass
     WINED3DPOOL             pool;
     UINT                    size;
     DWORD                   usage;
-    WINED3DFORMAT           format;
     const struct GlPixelFormatDesc *format_desc;
     DWORD                   priority;
     BYTE                   *allocatedMemory; /* Pointer to the real data location */
@@ -1261,7 +1260,8 @@ DWORD resource_get_priority(IWineD3DResource *iface);
 HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID guid,
         void *data, DWORD *data_size);
 HRESULT resource_init(struct IWineD3DResourceClass *resource, WINED3DRESOURCETYPE resource_type,
-        IWineD3DDeviceImpl *device, UINT size, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent);
+        IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct GlPixelFormatDesc *format_desc,
+        WINED3DPOOL pool, IUnknown *parent);
 WINED3DRESOURCETYPE resource_get_type(IWineD3DResource *iface);
 DWORD resource_set_priority(IWineD3DResource *iface, DWORD new_priority);
 HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID guid,

@@ -129,7 +129,8 @@ static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
 {
     if (device->render_targets && device->render_targets[0]) {
         IWineD3DSurfaceImpl* render_target = (IWineD3DSurfaceImpl*)device->render_targets[0];
-        if((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET) && (render_target->resource.format == WINED3DFMT_P8))
+        if ((render_target->resource.usage & WINED3DUSAGE_RENDERTARGET)
+                && (render_target->resource.format_desc->format == WINED3DFMT_P8))
             return TRUE;
     }
     return FALSE;
@@ -138,22 +139,21 @@ static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
 /* This call just downloads data, the caller is responsible for activating the
  * right context and binding the correct texture. */
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
-    const struct GlPixelFormatDesc *format_desc;
+    const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
 
     /* Only support read back of converted P8 surfaces */
-    if(This->Flags & SFLAG_CONVERTED && (This->resource.format != WINED3DFMT_P8)) {
-        FIXME("Read back converted textures unsupported, format=%s\n", debug_d3dformat(This->resource.format));
+    if (This->Flags & SFLAG_CONVERTED && format_desc->format != WINED3DFMT_P8)
+    {
+        FIXME("Read back converted textures unsupported, format=%s\n", debug_d3dformat(format_desc->format));
         return;
     }
 
-    format_desc = This->resource.format_desc;
-
     ENTER_GL();
 
-    if (This->resource.format == WINED3DFMT_DXT1 ||
-            This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
-            This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5 ||
-            This->resource.format == WINED3DFMT_ATI2N) {
+    if (format_desc->format == WINED3DFMT_DXT1 || format_desc->format == WINED3DFMT_DXT2
+            || format_desc->format == WINED3DFMT_DXT3 || format_desc->format == WINED3DFMT_DXT4
+            || format_desc->format == WINED3DFMT_DXT5 || format_desc->format == WINED3DFMT_ATI2N)
+    {
         if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) { /* We can assume this as the texture would not have been created otherwise */
             FIXME("(%p) : Attempting to lock a compressed texture when texture compression isn't supported by opengl\n", This);
         } else {
@@ -182,7 +182,8 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         int dst_pitch = 0;
 
         /* In case of P8 the index is stored in the alpha component if the primary render target uses P8 */
-        if(This->resource.format == WINED3DFMT_P8 && primary_render_target_is_p8(This->resource.wineD3DDevice)) {
+        if (format_desc->format == WINED3DFMT_P8 && primary_render_target_is_p8(This->resource.wineD3DDevice))
+        {
             format = GL_ALPHA;
             type = GL_UNSIGNED_BYTE;
         }
@@ -296,10 +297,10 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
 
     if (format_desc->heightscale != 1.0 && format_desc->heightscale != 0.0) height *= format_desc->heightscale;
 
-    if (This->resource.format == WINED3DFMT_DXT1 ||
-            This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
-            This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5 ||
-            This->resource.format == WINED3DFMT_ATI2N) {
+    if (format_desc->format == WINED3DFMT_DXT1 || format_desc->format == WINED3DFMT_DXT2
+            || format_desc->format == WINED3DFMT_DXT3 || format_desc->format == WINED3DFMT_DXT4
+            || format_desc->format == WINED3DFMT_DXT5 || format_desc->format == WINED3DFMT_ATI2N)
+    {
         if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
             FIXME("Using DXT1/3/5 without advertized support\n");
         } else {
@@ -361,13 +362,14 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
 
     if (format_desc->heightscale != 1.0 && format_desc->heightscale != 0.0) height *= format_desc->heightscale;
 
-    TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n", This,
-            This->glDescription.target, This->glDescription.level, debug_d3dformat(This->resource.format), internal, width, height, format, type);
+    TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n",
+            This, This->glDescription.target, This->glDescription.level, debug_d3dformat(format_desc->format),
+            internal, width, height, format, type);
 
-    if (This->resource.format == WINED3DFMT_DXT1 ||
-            This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
-            This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5 ||
-            This->resource.format == WINED3DFMT_ATI2N) {
+    if (format_desc->format == WINED3DFMT_DXT1 || format_desc->format == WINED3DFMT_DXT2
+            || format_desc->format == WINED3DFMT_DXT3 || format_desc->format == WINED3DFMT_DXT4
+            || format_desc->format == WINED3DFMT_DXT5 || format_desc->format == WINED3DFMT_ATI2N)
+    {
         /* glCompressedTexImage2D does not accept NULL pointers, so we cannot allocate a compressed texture without uploading data */
         TRACE("Not allocating compressed surfaces, surface_upload_data will specify them\n");
 
@@ -609,7 +611,9 @@ void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb)
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         }
 
-        if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) {
+        if (This->resource.format_desc->format == WINED3DFMT_P8
+                || This->resource.format_desc->format == WINED3DFMT_A8P8)
+        {
             if(palette9_changed(This)) {
                 TRACE("Reloading surface because the d3d8/9 palette was changed\n");
                 /* TODO: This is not necessarily needed with hw palettized texture support */
@@ -798,7 +802,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
     }
     /* TODO: Get rid of the extra GetPitch call, LockRect does that too. Cache the pitch */
 
-    switch(This->resource.format)
+    switch(This->resource.format_desc->format)
     {
         case WINED3DFMT_P8:
         {
@@ -906,7 +910,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
         row = HeapAlloc(GetProcessHeap(), 0, len);
         if(!row) {
             ERR("Out of memory\n");
-            if(This->resource.format == WINED3DFMT_P8) HeapFree(GetProcessHeap(), 0, mem);
+            if (This->resource.format_desc->format == WINED3DFMT_P8) HeapFree(GetProcessHeap(), 0, mem);
             LEAVE_GL();
             return;
         }
@@ -936,7 +940,8 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
      * the same color but we have no choice.
      * In case of P8 render targets, the index is stored in the alpha component so no conversion is needed.
      */
-    if((This->resource.format == WINED3DFMT_P8) && !primary_render_target_is_p8(myDevice)) {
+    if ((This->resource.format_desc->format == WINED3DFMT_P8) && !primary_render_target_is_p8(myDevice))
+    {
         const PALETTEENTRY *pal = NULL;
         DWORD width = pitch / 3;
         int x, y, c;
@@ -1503,10 +1508,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
 
     /* According to Direct3D9 docs, only these formats are supported */
     if (((IWineD3DImpl *)This->resource.wineD3DDevice->wineD3D)->dxVersion > 7) {
-        if (This->resource.format != WINED3DFMT_R5G6B5 &&
-            This->resource.format != WINED3DFMT_X1R5G5B5 &&
-            This->resource.format != WINED3DFMT_R8G8B8 &&
-            This->resource.format != WINED3DFMT_X8R8G8B8) return WINED3DERR_INVALIDCALL;
+        if (This->resource.format_desc->format != WINED3DFMT_R5G6B5
+                && This->resource.format_desc->format != WINED3DFMT_X1R5G5B5
+                && This->resource.format_desc->format != WINED3DFMT_R8G8B8
+                && This->resource.format_desc->format != WINED3DFMT_X8R8G8B8)
+            return WINED3DERR_INVALIDCALL;
     }
 
     memset(&lock, 0, sizeof(lock)); /* To be sure */
@@ -1540,8 +1546,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHD
         return hr;
     }
 
-    if(This->resource.format == WINED3DFMT_P8 ||
-        This->resource.format == WINED3DFMT_A8P8) {
+    if (This->resource.format_desc->format == WINED3DFMT_P8
+            || This->resource.format_desc->format == WINED3DFMT_A8P8)
+    {
         /* GetDC on palettized formats is unsupported in D3D9, and the method is missing in
             D3D8, so this should only be used for DX <=7 surfaces (with non-device palettes) */
         unsigned int n;
@@ -1627,7 +1634,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     }
 
     /* Ok, now look if we have to do any conversion */
-    switch(This->resource.format) {
+    switch(This->resource.format_desc->format)
+    {
         case WINED3DFMT_P8:
             /* ****************
                 Paletted Texture
@@ -2271,7 +2279,9 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
 BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
-    if(This->palette || (This->resource.format != WINED3DFMT_P8 && This->resource.format != WINED3DFMT_A8P8)) {
+    if (This->palette || (This->resource.format_desc->format != WINED3DFMT_P8
+            && This->resource.format_desc->format != WINED3DFMT_A8P8))
+    {
         /* If a ddraw-style palette is attached assume no d3d9 palette change.
          * Also the palette isn't interesting if the surface format isn't P8 or A8P8
          */
@@ -2508,7 +2518,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, c
         return WINED3DERR_INVALIDCALL;
     }
 /* Save the data out to a TGA file because 1: it's an easy raw format, 2: it supports an alpha channel */
-    TRACE("(%p) opened %s with format %s\n", This, filename, debug_d3dformat(This->resource.format));
+    TRACE("(%p) opened %s with format %s\n", This, filename, debug_d3dformat(This->resource.format_desc->format));
 /* TGA header */
     fputc(0,f);
     fputc(0,f);
@@ -3315,7 +3325,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
 
         /* When blitting from a render target a texture, the texture isn't required to have a palette.
          * In this case grab the palette from the render target. */
-        if((This->resource.format == WINED3DFMT_P8) && (This->palette == NULL)) {
+        if ((This->resource.format_desc->format == WINED3DFMT_P8) && (This->palette == NULL))
+        {
             paletteOverride = TRUE;
             TRACE("Source surface (%p) lacks palette, overriding palette with palette %p of destination surface (%p)\n", Src, This->palette, This);
             This->palette = Src->palette;
@@ -3391,7 +3402,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
          * surface is not required to have a palette. Our rendering / conversion
          * code further down the road retrieves the palette from the surface, so
          * it must have a palette set. */
-        if((Src->resource.format == WINED3DFMT_P8) && (Src->palette == NULL)) {
+        if ((Src->resource.format_desc->format == WINED3DFMT_P8) && (Src->palette == NULL))
+        {
             paletteOverride = TRUE;
             TRACE("Source surface (%p) lacks palette, overriding palette with palette %p of destination surface (%p)\n", Src, This->palette, This);
             Src->palette = This->palette;
@@ -3462,7 +3474,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             rect.y1 += This->currentDesc.Height - h; rect.y2 += This->currentDesc.Height - h;
         }
 
-        myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format,
+        myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format_desc->format,
                                        Src->glDescription.target, Src->pow2Width, Src->pow2Height);
 
         ENTER_GL();
@@ -3578,7 +3590,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             /* The color as given in the Blt function is in the format of the frame-buffer...
              * 'clear' expect it in ARGB format => we need to do some conversion :-)
              */
-            if (This->resource.format == WINED3DFMT_P8) {
+            if (This->resource.format_desc->format == WINED3DFMT_P8)
+            {
                 DWORD alpha;
 
                 if (primary_render_target_is_p8(myDevice)) alpha = DDBltFx->u5.dwFillColor << 24;
@@ -3593,7 +3606,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                     color = alpha;
                 }
             }
-            else if (This->resource.format == WINED3DFMT_R5G6B5) {
+            else if (This->resource.format_desc->format == WINED3DFMT_R5G6B5)
+            {
                 if (DDBltFx->u5.dwFillColor == 0xFFFF) {
                     color = 0xFFFFFFFF;
                 } else {
@@ -3603,11 +3617,13 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                             ((DDBltFx->u5.dwFillColor & 0x001F) << 3));
                 }
             }
-            else if ((This->resource.format == WINED3DFMT_R8G8B8) ||
-                    (This->resource.format == WINED3DFMT_X8R8G8B8) ) {
+            else if ((This->resource.format_desc->format == WINED3DFMT_R8G8B8)
+                    || (This->resource.format_desc->format == WINED3DFMT_X8R8G8B8))
+            {
                 color = 0xFF000000 | DDBltFx->u5.dwFillColor;
             }
-            else if (This->resource.format == WINED3DFMT_A8R8G8B8) {
+            else if (This->resource.format_desc->format == WINED3DFMT_A8R8G8B8)
+            {
                 color = DDBltFx->u5.dwFillColor;
             }
             else {
@@ -3637,7 +3653,8 @@ static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *D
     float depth;
 
     if (Flags & WINEDDBLT_DEPTHFILL) {
-        switch(This->resource.format) {
+        switch(This->resource.format_desc->format)
+        {
             case WINED3DFMT_D16_UNORM:
                 depth = (float) DDBltFx->u5.dwFillDepth / (float) 0x0000ffff;
                 break;
@@ -3653,7 +3670,7 @@ static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *D
                 break;
             default:
                 depth = 0.0;
-                ERR("Unexpected format for depth fill: %s\n", debug_d3dformat(This->resource.format));
+                ERR("Unexpected format for depth fill: %s\n", debug_d3dformat(This->resource.format_desc->format));
         }
 
         return IWineD3DDevice_Clear((IWineD3DDevice *) myDevice,
@@ -3781,8 +3798,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
 
     if (!pal) return WINED3D_OK;
 
-    if(This->resource.format == WINED3DFMT_P8 ||
-       This->resource.format == WINED3DFMT_A8P8)
+    if (This->resource.format_desc->format == WINED3DFMT_P8
+            || This->resource.format_desc->format == WINED3DFMT_A8P8)
     {
         int bpp;
         GLenum format, internal, type;
@@ -3854,11 +3871,12 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     This->pow2Height = pow2Height;
 
     if (pow2Width > This->currentDesc.Width || pow2Height > This->currentDesc.Height) {
-        WINED3DFORMAT Format = This->resource.format;
+        WINED3DFORMAT Format = This->resource.format_desc->format;
         /** TODO: add support for non power two compressed textures **/
         if (Format == WINED3DFMT_DXT1 || Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3
             || Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5
-            || This->resource.format == WINED3DFMT_ATI2N) {
+            || Format == WINED3DFMT_ATI2N)
+        {
             FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
                   This, This->currentDesc.Width, This->currentDesc.Height);
             return WINED3DERR_NOTAVAILABLE;
@@ -3893,8 +3911,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
            is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
            doesn't work in combination with ARB_TEXTURE_RECTANGLE.
         */
-        if(This->Flags & SFLAG_NONPOW2 && GL_SUPPORT(ARB_TEXTURE_RECTANGLE) &&
-           !((This->resource.format == WINED3DFMT_P8) && GL_SUPPORT(EXT_PALETTED_TEXTURE) && (wined3d_settings.rendertargetlock_mode == RTL_READTEX || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX)))
+        if(This->Flags & SFLAG_NONPOW2 && GL_SUPPORT(ARB_TEXTURE_RECTANGLE)
+                && !((This->resource.format_desc->format == WINED3DFMT_P8) && GL_SUPPORT(EXT_PALETTED_TEXTURE)
+                && (wined3d_settings.rendertargetlock_mode == RTL_READTEX
+                || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX)))
         {
             This->glDescription.target = GL_TEXTURE_RECTANGLE_ARB;
             This->pow2Width  = This->currentDesc.Width;
@@ -4617,7 +4637,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
 
                 This->Flags |= SFLAG_CONVERTED;
-            } else if( (This->resource.format == WINED3DFMT_P8) && (GL_SUPPORT(EXT_PALETTED_TEXTURE) || GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) ) {
+            }
+            else if ((This->resource.format_desc->format == WINED3DFMT_P8)
+                    && (GL_SUPPORT(EXT_PALETTED_TEXTURE) || GL_SUPPORT(ARB_FRAGMENT_PROGRAM)))
+            {
                 d3dfmt_p8_upload_palette(iface, convert);
                 This->Flags &= ~SFLAG_CONVERTED;
                 mem = This->resource.allocatedMemory;

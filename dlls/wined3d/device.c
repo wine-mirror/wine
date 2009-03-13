@@ -251,7 +251,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
     IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     TRACE("size %#x, usage=%#x, format %s, memory @ %p, iface @ %p\n", object->resource.size, object->resource.usage,
-            debug_d3dformat(object->resource.format), object->resource.allocatedMemory, object);
+            debug_d3dformat(object->resource.format_desc->format), object->resource.allocatedMemory, object);
 
     *buffer = (IWineD3DBuffer *)object;
 
@@ -262,8 +262,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         DWORD FVF, WINED3DPOOL Pool, IWineD3DBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    /* Dummy format for now */
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(WINED3DFMT_VERTEXDATA, &This->adapter->gl_info);
     struct wined3d_buffer *object;
-    WINED3DFORMAT Format = WINED3DFMT_VERTEXDATA; /* Dummy format for now */
     int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
     HRESULT hr;
     BOOL conv;
@@ -290,7 +291,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     }
 
     object->vtbl = &wined3d_buffer_vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_VERTEXBUFFER, This, Size, Usage, Format, Pool, parent);
+    hr = resource_init(&object->resource, WINED3DRTYPE_VERTEXBUFFER, This, Size, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -392,6 +393,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
                                                     WINED3DFORMAT Format, WINED3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer,
                                                     HANDLE *sharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
     IWineD3DIndexBufferImpl *object;
     HRESULT hr;
 
@@ -407,7 +409,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
     }
 
     object->lpVtbl = &IWineD3DIndexBuffer_Vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_INDEXBUFFER, This, Length, Usage, Format, Pool, parent);
+    hr = resource_init(&object->resource, WINED3DRTYPE_INDEXBUFFER, This, Length, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -778,7 +780,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
             return WINED3DERR_INVALIDCALL;
     }
 
-    hr = resource_init(&object->resource, WINED3DRTYPE_SURFACE, This, Size, Usage, Format, Pool, parent);
+    hr = resource_init(&object->resource, WINED3DRTYPE_SURFACE, This, Size, Usage, glDesc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -902,6 +904,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         IWineD3DTexture **ppTexture, HANDLE *pSharedHandle, IUnknown *parent)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
     IWineD3DTextureImpl *object;
     unsigned int i;
     UINT tmpW;
@@ -977,7 +980,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     }
 
     object->lpVtbl = &IWineD3DTexture_Vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_TEXTURE, This, 0, Usage, Format, Pool, parent);
+    hr = resource_init(&object->resource, WINED3DRTYPE_TEXTURE, This, 0, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -1074,6 +1077,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         IWineD3DVolumeTexture **ppVolumeTexture, HANDLE *pSharedHandle, IUnknown *parent)
 {
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
     IWineD3DVolumeTextureImpl *object;
     unsigned int               i;
     UINT                       tmpW;
@@ -1124,7 +1128,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     }
 
     object->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_VOLUMETEXTURE, This, 0, Usage, Format, Pool, parent);
+    hr = resource_init(&object->resource, WINED3DRTYPE_VOLUMETEXTURE, This, 0, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -1217,7 +1221,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
 
     object->lpVtbl = &IWineD3DVolume_Vtbl;
     hr = resource_init(&object->resource, WINED3DRTYPE_VOLUME, This,
-            Width * Height * Depth * format_desc->byte_count, Usage, Format, Pool, parent);
+            Width * Height * Depth * format_desc->byte_count, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -1256,6 +1260,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         IWineD3DCubeTexture **ppCubeTexture, HANDLE *pSharedHandle, IUnknown *parent)
 {
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
     IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
     unsigned int             i, j;
     UINT                     tmpW;
@@ -1306,7 +1311,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     }
 
     object->lpVtbl = &IWineD3DCubeTexture_Vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_CUBETEXTURE, This, 0, Usage, Format, Pool, parent);
+    hr = resource_init(&object->resource, WINED3DRTYPE_CUBETEXTURE, This, 0, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -5840,7 +5845,9 @@ static void dirtify_p8_texture_samplers(IWineD3DDeviceImpl *device)
 
     for (i = 0; i < MAX_COMBINED_SAMPLERS; i++) {
             IWineD3DBaseTextureImpl *texture = (IWineD3DBaseTextureImpl*)device->stateBlock->textures[i];
-            if (texture && (texture->resource.format == WINED3DFMT_P8 || texture->resource.format == WINED3DFMT_A8P8)) {
+            if (texture && (texture->resource.format_desc->format == WINED3DFMT_P8
+                    || texture->resource.format_desc->format == WINED3DFMT_A8P8))
+            {
                 IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(i));
             }
         }
@@ -6507,7 +6514,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = argb_to_fmt(color, surface->resource.format);
+        BltFx.u5.dwFillColor = argb_to_fmt(color, surface->resource.format_desc->format);
         return IWineD3DSurface_Blt(pSurface, (const RECT *)pRect, NULL, NULL,
                 WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
     }
@@ -6555,7 +6562,7 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
-        BltFx.u5.dwFillColor = argb_to_fmt(c, ((IWineD3DSurfaceImpl *)surface)->resource.format);
+        BltFx.u5.dwFillColor = argb_to_fmt(c, ((IWineD3DSurfaceImpl *)surface)->resource.format_desc->format);
         hr = IWineD3DSurface_Blt(surface, NULL, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
         if (FAILED(hr))
         {
@@ -6955,7 +6962,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
         WINED3DLOCKED_RECT rect;
 
         /* MSDN: Cursor must be A8R8G8B8 */
-        if (WINED3DFMT_A8R8G8B8 != pSur->resource.format) {
+        if (WINED3DFMT_A8R8G8B8 != pSur->resource.format_desc->format)
+        {
             ERR("(%p) : surface(%p) has an invalid format\n", This, pCursorBitmap);
             return WINED3DERR_INVALIDCALL;
         }

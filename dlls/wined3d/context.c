@@ -200,14 +200,16 @@ static void context_check_fbo_status(IWineD3DDevice *iface)
             attachment = (IWineD3DSurfaceImpl *)This->activeContext->current_fbo->render_targets[i];
             if (attachment)
             {
-                FIXME("\tColor attachment %d: (%p) %s %ux%u\n", i, attachment, debug_d3dformat(attachment->resource.format),
+                FIXME("\tColor attachment %d: (%p) %s %ux%u\n",
+                        i, attachment, debug_d3dformat(attachment->resource.format_desc->format),
                         attachment->pow2Width, attachment->pow2Height);
             }
         }
         attachment = (IWineD3DSurfaceImpl *)This->activeContext->current_fbo->depth_stencil;
         if (attachment)
         {
-            FIXME("\tDepth attachment: (%p) %s %ux%u\n", attachment, debug_d3dformat(attachment->resource.format),
+            FIXME("\tDepth attachment: (%p) %s %ux%u\n",
+                    attachment, debug_d3dformat(attachment->resource.format_desc->format),
                     attachment->pow2Width, attachment->pow2Height);
         }
     }
@@ -644,16 +646,21 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         int iPixelFormat = 0;
 
         IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
-        WINED3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IWineD3DSurfaceImpl *) StencilSurface)->resource.format : 0;
+        WINED3DFORMAT StencilBufferFormat = StencilSurface ?
+                ((IWineD3DSurfaceImpl *)StencilSurface)->resource.format_desc->format : 0;
 
         /* Try to find a pixel format with pbuffer support. */
-        iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format, StencilBufferFormat, FALSE /* auxBuffers */, 0 /* numSamples */, TRUE /* PBUFFER */, FALSE /* findCompatible */);
+        iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format_desc->format,
+                StencilBufferFormat, FALSE /* auxBuffers */, 0 /* numSamples */, TRUE /* PBUFFER */,
+                FALSE /* findCompatible */);
         if(!iPixelFormat) {
             TRACE("Trying to locate a compatible pixel format because an exact match failed.\n");
 
             /* For some reason we weren't able to find a format, try to find something instead of crashing.
              * A reason for failure could have been wglChoosePixelFormatARB strictness. */
-            iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format, StencilBufferFormat, FALSE /* auxBuffer */, 0 /* numSamples */, TRUE /* PBUFFER */, TRUE /* findCompatible */);
+            iPixelFormat = WineD3D_ChoosePixelFormat(This, hdc_parent, target->resource.format_desc->format,
+                    StencilBufferFormat, FALSE /* auxBuffer */, 0 /* numSamples */, TRUE /* PBUFFER */,
+                    TRUE /* findCompatible */);
         }
 
         /* This shouldn't happen as ChoosePixelFormat always returns something */
@@ -684,7 +691,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         PIXELFORMATDESCRIPTOR pfd;
         int iPixelFormat;
         int res;
-        WINED3DFORMAT ColorFormat = target->resource.format;
+        WINED3DFORMAT ColorFormat = target->resource.format_desc->format;
         WINED3DFORMAT DepthStencilFormat = 0;
         BOOL auxBuffers = FALSE;
         int numSamples = 0;
@@ -699,9 +706,9 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         if(wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
             auxBuffers = TRUE;
 
-            if(target->resource.format == WINED3DFMT_X4R4G4B4)
+            if (target->resource.format_desc->format == WINED3DFMT_X4R4G4B4)
                 ColorFormat = WINED3DFMT_A4R4G4B4;
-            else if(target->resource.format == WINED3DFMT_X8R8G8B8)
+            else if(target->resource.format_desc->format == WINED3DFMT_X8R8G8B8)
                 ColorFormat = WINED3DFMT_A8R8G8B8;
         }
 
