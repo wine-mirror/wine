@@ -338,6 +338,7 @@ static void free_assembly_identity(struct assembly_identity *ai)
     RtlFreeHeap( GetProcessHeap(), 0, ai->arch );
     RtlFreeHeap( GetProcessHeap(), 0, ai->public_key );
     RtlFreeHeap( GetProcessHeap(), 0, ai->language );
+    RtlFreeHeap( GetProcessHeap(), 0, ai->type );
 }
 
 static struct entity* add_entity(struct entity_array *array, DWORD kind)
