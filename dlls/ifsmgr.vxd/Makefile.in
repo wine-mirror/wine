@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ifsmgr.vxd
-IMPORTS   = winedos kernel32
+IMPORTS   = kernel32
 
 C_SRCS = \
 	ifsmgr.c
