@@ -284,7 +284,7 @@ static char* get_temp_file(const char* prefix, const char* suffix)
 
 static const strarray* get_translator(struct options *opts)
 {
-    const char *str;
+    const char *str = NULL;
     strarray *ret;
 
     switch(opts->processor)
