@@ -1838,7 +1838,9 @@ static void D3D1_ViewportClearTest(void)
     red =   (color & 0x00ff0000) >> 16;
     green = (color & 0x0000ff00) >>  8;
     blue =  (color & 0x000000ff);
-    ok(red == 0xff && green == 0 && blue == 0, "Got color %08x, expected 00ff0000\n", color);
+    ok((red == 0xff && green == 0 && blue == 0) ||
+       broken(red == 0 && green == 0 && blue == 0xff), /* VMware and some native boxes */
+       "Got color %08x, expected 00ff0000\n", color);
 
     color = D3D1_getPixelColor(DirectDraw1, Surface1, 205, 205);
     red =   (color & 0x00ff0000) >> 16;
