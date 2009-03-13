@@ -316,6 +316,27 @@ static BOOL fetch_elf_module_info_cb(const WCHAR* name, unsigned long base,
     return TRUE;
 }
 
+/******************************************************************
+ *		fetch_macho_module_info_cb
+ *
+ * Callback for accumulating in dump_context a Mach-O modules set
+ */
+static BOOL fetch_macho_module_info_cb(const WCHAR* name, unsigned long base,
+                                       void* user)
+{
+    struct dump_context*        dc = (struct dump_context*)user;
+    DWORD                       rbase, size, checksum;
+
+    /* FIXME: there's no relevant timestamp on Mach-O modules */
+    /* NB: if we have a non-null base from the live-target use it.  If we have
+     * a null base, then grab its base address from Mach-O file.
+     */
+    if (!macho_fetch_file_info(name, &rbase, &size, &checksum))
+        size = checksum = 0;
+    add_module(dc, name, base ? base : rbase, size, 0 /* FIXME */, checksum, TRUE);
+    return TRUE;
+}
+
 static void fetch_modules_info(struct dump_context* dc)
 {
     EnumerateLoadedModulesW64(dc->hProcess, fetch_pe_module_info_cb, dc);
@@ -325,6 +346,7 @@ static void fetch_modules_info(struct dump_context* dc)
      * a given application in a post mortem debugging condition.
      */
     elf_enum_modules(dc->hProcess, fetch_elf_module_info_cb, dc);
+    macho_enum_modules(dc->hProcess, fetch_macho_module_info_cb, dc);
 }
 
 static void fetch_module_versioninfo(LPCWSTR filename, VS_FIXEDFILEINFO* ffi)
