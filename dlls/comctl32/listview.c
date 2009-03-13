@@ -3170,8 +3170,10 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	iterator_destroy(&i);
     }
 
+    /* disable per item notifications on LVS_OWNERDATA style
+       FIXME: single LVN_ODSTATECHANGED should be used */
     bOldChange = infoPtr->bDoChangeNotify;
-    infoPtr->bDoChangeNotify = FALSE;
+    if (infoPtr->dwStyle & LVS_OWNERDATA) infoPtr->bDoChangeNotify = FALSE;
 
     LISTVIEW_DeselectAllSkipItems(infoPtr, selection);
 
