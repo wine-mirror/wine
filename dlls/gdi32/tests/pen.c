@@ -93,7 +93,9 @@ static void test_logpen(void)
 
         ok(lp.lopnStyle == pen[i].ret_style, "expected %u, got %u\n", pen[i].ret_style, lp.lopnStyle);
         ok(lp.lopnWidth.x == pen[i].ret_width, "expected %u, got %d\n", pen[i].ret_width, lp.lopnWidth.x);
-        ok(lp.lopnWidth.y == 0, "expected 0, got %d\n", lp.lopnWidth.y);
+        ok(lp.lopnWidth.y == 0 ||
+            broken(lp.lopnWidth.y == 0xb), /* Win9x */
+            "expected 0, got %d\n", lp.lopnWidth.y);
         ok(lp.lopnColor == pen[i].ret_color, "expected %08x, got %08x\n", pen[i].ret_color, lp.lopnColor);
 
         DeleteObject(hpen);
@@ -114,7 +116,9 @@ static void test_logpen(void)
         memset(&lp, 0xb0, sizeof(lp));
         SetLastError(0xdeadbeef);
         size = GetObject(hpen, sizeof(lp.lopnStyle), &lp);
-        ok(!size, "GetObject should fail: size %d, error %d\n", size, GetLastError());
+        ok(!size ||
+            broken(size == sizeof(lp.lopnStyle)), /* Win9x */
+            "GetObject should fail: size %d, error %d\n", size, GetLastError());
 
         /* see how larger buffer sizes are handled */
         memset(&lp, 0xb0, sizeof(lp));
@@ -226,12 +230,17 @@ static void test_logpen(void)
             break;
 
         case PS_USERSTYLE:
-            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry) + sizeof(user_style),
+            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry) + sizeof(user_style) ||
+               broken(size == 0 && GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
                "GetObject returned %d, error %d\n", size, GetLastError());
             break;
 
         default:
-            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry),
+            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry) ||
+               broken(size == sizeof(LOGPEN)) || /* Win9x */
+               broken(pen[i].style == PS_ALTERNATE &&
+                      size == 0 &&
+                      GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
                "GetObject returned %d, error %d\n", size, GetLastError());
             break;
         }
@@ -240,7 +249,9 @@ static void test_logpen(void)
         memset(&elp, 0xb0, sizeof(elp));
         SetLastError(0xdeadbeef);
         size = GetObject(hpen, sizeof(elp.elpPenStyle), &elp);
-        ok(!size, "GetObject should fail: size %d, error %d\n", size, GetLastError());
+        ok(!size ||
+            broken(size == sizeof(elp.elpPenStyle)), /* Win9x */
+            "GetObject should fail: size %d, error %d\n", size, GetLastError());
 
         /* see how larger buffer sizes are handled */
         memset(&ext_pen, 0xb0, sizeof(ext_pen));
@@ -278,7 +289,11 @@ static void test_logpen(void)
             break;
 
         default:
-            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry),
+            ok(size == sizeof(EXTLOGPEN) - sizeof(elp.elpStyleEntry) ||
+               broken(size == sizeof(LOGPEN)) || /* Win9x */
+               broken(pen[i].style == PS_ALTERNATE &&
+                      size == 0 &&
+                      GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
                "GetObject returned %d, error %d\n", size, GetLastError());
             ok(ext_pen.elp.elpHatch == HS_CROSS, "expected HS_CROSS, got %p\n", (void *)ext_pen.elp.elpHatch);
             ok(ext_pen.elp.elpNumEntries == 0, "expected 0, got %x\n", ext_pen.elp.elpNumEntries);
