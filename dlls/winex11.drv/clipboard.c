@@ -1124,7 +1124,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedBitmap(Display *display)
  *
  *  Import XA_STRING, converting the string to CF_TEXT.
  */
-HANDLE X11DRV_CLIPBOARD_ImportXAString(Display *display, Window w, Atom prop)
+static HANDLE X11DRV_CLIPBOARD_ImportXAString(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -1168,7 +1168,7 @@ HANDLE X11DRV_CLIPBOARD_ImportXAString(Display *display, Window w, Atom prop)
  *
  *  Import XA_STRING, converting the string to CF_UNICODE.
  */
-HANDLE X11DRV_CLIPBOARD_ImportUTF8(Display *display, Window w, Atom prop)
+static HANDLE X11DRV_CLIPBOARD_ImportUTF8(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -1290,7 +1290,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *display, Window w, At
  *
  *  Import XA_PIXMAP, converting the image to CF_DIB.
  */
-HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom prop)
+static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom prop)
 {
     HWND hwnd;
     HDC hdc;
@@ -1322,7 +1322,7 @@ HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom prop)
  *
  *  Import MetaFilePict.
  */
-HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Display *display, Window w, Atom prop)
+static HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -1346,7 +1346,7 @@ HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Display *display, Window w, Atom prop
  *
  *  Import EnhMetaFile.
  */
-HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *display, Window w, Atom prop)
+static HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *display, Window w, Atom prop)
 {
     LPBYTE lpdata;
     unsigned long cbytes;
@@ -1370,7 +1370,7 @@ HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *display, Window w, Atom prop)
  *
  *  Generic import clipboard data routine.
  */
-HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *display, Window w, Atom prop)
+static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *display, Window w, Atom prop)
 {
     LPVOID lpClipData;
     LPBYTE lpdata;
@@ -1411,7 +1411,7 @@ HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *display, Window w, Atom pro
  *
  *  Generic export clipboard data routine.
  */
-HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Display *display, Window requestor, Atom aTarget,
+static HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Display *display, Window requestor, Atom aTarget,
                                             Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     LPVOID lpClipData;
@@ -1596,7 +1596,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Display *display, Window reque
  *
  *  Export string
  */
-HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, Atom aTarget, Atom rprop,
+static HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, Atom aTarget, Atom rprop,
                                      LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     if (X11DRV_CLIPBOARD_RenderFormat(display, lpData))
@@ -1624,7 +1624,7 @@ HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, Atom aT
  *
  *  Export CF_DIB to XA_PIXMAP.
  */
-HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor, Atom aTarget, Atom rprop,
+static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor, Atom aTarget, Atom rprop,
     LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     HDC hdc;
@@ -1662,7 +1662,7 @@ HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor, Atom 
  *
  *  Export MetaFilePict.
  */
-HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Display *display, Window requestor, Atom aTarget, Atom rprop,
+static HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Display *display, Window requestor, Atom aTarget, Atom rprop,
                                            LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
@@ -1680,7 +1680,7 @@ HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Display *display, Window requestor, A
  *
  *  Export EnhMetaFile.
  */
-HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Display *display, Window requestor, Atom aTarget, Atom rprop,
+static HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Display *display, Window requestor, Atom aTarget, Atom rprop,
                                           LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
 {
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
