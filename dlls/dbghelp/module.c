@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 const WCHAR        S_ElfW[]         = {'<','e','l','f','>','\0'};
 const WCHAR        S_WineLoaderW[]  = {'<','w','i','n','e','-','l','o','a','d','e','r','>','\0'};
 static const WCHAR S_DotSoW[]       = {'.','s','o','\0'};
+static const WCHAR S_DotDylibW[]    = {'.','d','y','l','i','b','\0'};
 static const WCHAR S_DotPdbW[]      = {'.','p','d','b','\0'};
 static const WCHAR S_DotDbgW[]      = {'.','d','b','g','\0'};
 const WCHAR        S_WineW[]        = {'w','i','n','e',0};
@@ -429,6 +430,9 @@ enum module_type module_get_type_by_name(const WCHAR* name)
 #else
         return DMT_ELF;
 #endif
+
+    if (len > 6 && !strncmpiW(name + len - 6, S_DotDylibW, 6))
+        return DMT_MACHO;
 
     if (len > 4 && !strncmpiW(name + len - 4, S_DotPdbW, 4))
         return DMT_PDB;
