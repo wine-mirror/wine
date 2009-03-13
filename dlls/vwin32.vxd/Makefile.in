@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = vwin32.vxd
-IMPORTS   = winedos kernel32
+IMPORTS   = kernel32
 
 C_SRCS = \
 	vwin32.c
