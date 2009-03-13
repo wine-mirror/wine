@@ -2210,6 +2210,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(LPDIRECT3DDEVICE8 ifac
         hrc = IWineD3DPixelShader_GetParent(object, (IUnknown **)&d3d8_shader);
         IWineD3DPixelShader_Release(object);
         *ppShader = d3d8_shader->handle;
+        IDirect3DPixelShader8_Release((IDirect3DPixelShader8 *)d3d8_shader);
     } else {
         *ppShader = 0;
     }
