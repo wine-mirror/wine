@@ -834,7 +834,9 @@ static void rhw_zero_test(IDirect3DDevice7 *device)
     }
 
     color = getPixelColor(device, 5, 5);
-    ok(color == 0xffffff, "Got color %08x, expected 00ffffff\n", color);
+    ok(color == 0xffffff ||
+       broken(color == 0), /* VMware */
+       "Got color %08x, expected 00ffffff\n", color);
 
     color = getPixelColor(device, 105, 105);
     ok(color == 0, "Got color %08x, expected 00000000\n", color);
@@ -2289,7 +2291,9 @@ static void p8_primary_test(void)
     ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_PALETTEINDEXED8;
     U1(ddsd.ddpfPixelFormat).dwRGBBitCount      = 8;
     hr = IDirectDraw_CreateSurface(DirectDraw1, &ddsd, &offscreen, NULL);
-    ok(hr == DD_OK, "IDirectDraw_CreateSurface returned %08x\n", hr);
+    ok(hr == DD_OK ||
+       broken(hr == DDERR_INVALIDPIXELFORMAT), /* VMware */
+       "IDirectDraw_CreateSurface returned %08x\n", hr);
     if (FAILED(hr)) goto out;
 
     memset(entries, 0, sizeof(entries));
