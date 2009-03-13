@@ -939,6 +939,7 @@ struct WineD3DAdapter
 };
 
 extern BOOL initPixelFormats(WineD3D_GL_Info *gl_info);
+BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info);
 extern long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram);
 extern void add_gl_compat_wrappers(WineD3D_GL_Info *gl_info);
 
@@ -2479,6 +2480,15 @@ extern WINED3DFORMAT pixelformat_for_depth(DWORD depth);
 
 struct GlPixelFormatDesc
 {
+    WINED3DFORMAT format;
+    DWORD red_mask;
+    DWORD green_mask;
+    DWORD blue_mask;
+    DWORD alpha_mask;
+    UINT byte_count;
+    WORD depth_size;
+    WORD stencil_size;
+
     GLint glInternal;
     GLint glGammaInternal;
     GLint rtInternal;

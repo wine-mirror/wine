@@ -4458,6 +4458,8 @@ nogl_adapter:
         This->adapters[0].TextureRam = 8 * 1024 * 1024; /* This is plenty for a DDraw-only card */
     }
 
+    initPixelFormatsNoGL(&This->adapters[0].gl_info);
+
     This->adapter_count = 1;
     return FALSE;
 }

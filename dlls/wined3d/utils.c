@@ -365,6 +365,35 @@ static inline int getFmtIdx(WINED3DFORMAT fmt) {
     return -1;
 }
 
+BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
+{
+    UINT format_count = sizeof(formats) / sizeof(*formats);
+    UINT i;
+
+    gl_info->gl_formats = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, format_count * sizeof(*gl_info->gl_formats));
+    if (!gl_info->gl_formats)
+    {
+        ERR("Failed to allocate memory.\n");
+        return FALSE;
+    }
+
+    for (i = 0; i < format_count; ++i)
+    {
+        struct GlPixelFormatDesc *desc = &gl_info->gl_formats[i];
+        desc->format = formats[i].format;
+        desc->red_mask = formats[i].redMask;
+        desc->green_mask = formats[i].greenMask;
+        desc->blue_mask = formats[i].blueMask;
+        desc->alpha_mask = formats[i].alphaMask;
+        desc->byte_count = formats[i].bpp;
+        desc->depth_size = formats[i].depthSize;
+        desc->stencil_size = formats[i].stencilSize;
+        if (formats[i].isFourcc) desc->Flags |= WINED3DFMT_FLAG_FOURCC;
+    }
+
+    return TRUE;
+}
+
 #define GLINFO_LOCATION (*gl_info)
 BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 {
@@ -379,14 +408,27 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
      * after this loop
      */
     for(src = 0; src < sizeof(gl_formats_template) / sizeof(gl_formats_template[0]); src++) {
+        struct GlPixelFormatDesc *desc;
         dst = getFmtIdx(gl_formats_template[src].fmt);
-        gl_info->gl_formats[dst].glInternal      = gl_formats_template[src].glInternal;
-        gl_info->gl_formats[dst].glGammaInternal = gl_formats_template[src].glGammaInternal;
-        gl_info->gl_formats[dst].glFormat        = gl_formats_template[src].glFormat;
-        gl_info->gl_formats[dst].glType          = gl_formats_template[src].glType;
-        gl_info->gl_formats[dst].color_fixup     = COLOR_FIXUP_IDENTITY;
-        gl_info->gl_formats[dst].Flags           = gl_formats_template[src].Flags;
-        gl_info->gl_formats[dst].heightscale     = 1.0;
+        desc = &gl_info->gl_formats[dst];
+
+        desc->format = formats[dst].format;
+        desc->red_mask = formats[dst].redMask;
+        desc->green_mask = formats[dst].greenMask;
+        desc->blue_mask = formats[dst].blueMask;
+        desc->alpha_mask = formats[dst].alphaMask;
+        desc->byte_count = formats[dst].bpp;
+        desc->depth_size = formats[dst].depthSize;
+        desc->stencil_size = formats[dst].stencilSize;
+        if (formats[dst].isFourcc) desc->Flags |= WINED3DFMT_FLAG_FOURCC;
+
+        desc->glInternal = gl_formats_template[src].glInternal;
+        desc->glGammaInternal = gl_formats_template[src].glGammaInternal;
+        desc->glFormat = gl_formats_template[src].glFormat;
+        desc->glType = gl_formats_template[src].glType;
+        desc->color_fixup = COLOR_FIXUP_IDENTITY;
+        desc->Flags |= gl_formats_template[src].Flags;
+        desc->heightscale = 1.0;
 
         if(wined3d_settings.offscreen_rendering_mode == ORM_FBO &&
            gl_formats_template[src].rtInternal != 0) {

@@ -29,6 +29,7 @@
 #define WINED3DFMT_FLAG_DEPTH                    0x4
 #define WINED3DFMT_FLAG_STENCIL                  0x8
 #define WINED3DFMT_FLAG_RENDERTARGET             0x10
+#define WINED3DFMT_FLAG_FOURCC                   0x20
 
 /** DCL usage masks **/
 #define WINED3DSP_DCL_USAGE_SHIFT 0
