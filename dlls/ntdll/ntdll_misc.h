@@ -45,6 +45,7 @@ struct drive_info
 extern void wait_suspend( CONTEXT *context );
 extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 extern void set_cpu_context( const CONTEXT *context );
+extern void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags );
 
 /* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );

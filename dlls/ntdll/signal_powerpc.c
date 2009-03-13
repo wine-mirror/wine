@@ -289,6 +289,95 @@ void set_cpu_context( const CONTEXT *context )
 }
 
 
+/***********************************************************************
+ *           copy_context
+ *
+ * Copy a register context according to the flags.
+ */
+void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
+{
+    if (flags & CONTEXT_CONTROL)
+    {
+        to->Msr = from->Msr;
+        to->Ctr = from->Ctr;
+        to->Iar = from->Iar;
+    }
+    if (flags & CONTEXT_INTEGER)
+    {
+        to->Gpr0  = from->Gpr0;
+        to->Gpr1  = from->Gpr1;
+        to->Gpr2  = from->Gpr2;
+        to->Gpr3  = from->Gpr3;
+        to->Gpr4  = from->Gpr4;
+        to->Gpr5  = from->Gpr5;
+        to->Gpr6  = from->Gpr6;
+        to->Gpr7  = from->Gpr7;
+        to->Gpr8  = from->Gpr8;
+        to->Gpr9  = from->Gpr9;
+        to->Gpr10 = from->Gpr10;
+        to->Gpr11 = from->Gpr11;
+        to->Gpr12 = from->Gpr12;
+        to->Gpr13 = from->Gpr13;
+        to->Gpr14 = from->Gpr14;
+        to->Gpr15 = from->Gpr15;
+        to->Gpr16 = from->Gpr16;
+        to->Gpr17 = from->Gpr17;
+        to->Gpr18 = from->Gpr18;
+        to->Gpr19 = from->Gpr19;
+        to->Gpr20 = from->Gpr20;
+        to->Gpr21 = from->Gpr21;
+        to->Gpr22 = from->Gpr22;
+        to->Gpr23 = from->Gpr23;
+        to->Gpr24 = from->Gpr24;
+        to->Gpr25 = from->Gpr25;
+        to->Gpr26 = from->Gpr26;
+        to->Gpr27 = from->Gpr27;
+        to->Gpr28 = from->Gpr28;
+        to->Gpr29 = from->Gpr29;
+        to->Gpr30 = from->Gpr30;
+        to->Gpr31 = from->Gpr31;
+        to->Xer   = from->Xer;
+        to->Cr    = from->Cr;
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->Fpr0  = from->Fpr0;
+        to->Fpr1  = from->Fpr1;
+        to->Fpr2  = from->Fpr2;
+        to->Fpr3  = from->Fpr3;
+        to->Fpr4  = from->Fpr4;
+        to->Fpr5  = from->Fpr5;
+        to->Fpr6  = from->Fpr6;
+        to->Fpr7  = from->Fpr7;
+        to->Fpr8  = from->Fpr8;
+        to->Fpr9  = from->Fpr9;
+        to->Fpr10 = from->Fpr10;
+        to->Fpr11 = from->Fpr11;
+        to->Fpr12 = from->Fpr12;
+        to->Fpr13 = from->Fpr13;
+        to->Fpr14 = from->Fpr14;
+        to->Fpr15 = from->Fpr15;
+        to->Fpr16 = from->Fpr16;
+        to->Fpr17 = from->Fpr17;
+        to->Fpr18 = from->Fpr18;
+        to->Fpr19 = from->Fpr19;
+        to->Fpr20 = from->Fpr20;
+        to->Fpr21 = from->Fpr21;
+        to->Fpr22 = from->Fpr22;
+        to->Fpr23 = from->Fpr23;
+        to->Fpr24 = from->Fpr24;
+        to->Fpr25 = from->Fpr25;
+        to->Fpr26 = from->Fpr26;
+        to->Fpr27 = from->Fpr27;
+        to->Fpr28 = from->Fpr28;
+        to->Fpr29 = from->Fpr29;
+        to->Fpr30 = from->Fpr30;
+        to->Fpr31 = from->Fpr31;
+        to->Fpscr = from->Fpscr;
+    }
+}
+
+
 /**********************************************************************
  *		get_fpu_code
  *

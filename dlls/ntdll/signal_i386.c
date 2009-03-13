@@ -978,6 +978,59 @@ void set_cpu_context( const CONTEXT *context )
 
 
 /***********************************************************************
+ *           copy_context
+ *
+ * Copy a register context according to the flags.
+ */
+void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
+{
+    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
+    if (flags & CONTEXT_INTEGER)
+    {
+        to->Eax = from->Eax;
+        to->Ebx = from->Ebx;
+        to->Ecx = from->Ecx;
+        to->Edx = from->Edx;
+        to->Esi = from->Esi;
+        to->Edi = from->Edi;
+    }
+    if (flags & CONTEXT_CONTROL)
+    {
+        to->Ebp    = from->Ebp;
+        to->Esp    = from->Esp;
+        to->Eip    = from->Eip;
+        to->SegCs  = from->SegCs;
+        to->SegSs  = from->SegSs;
+        to->EFlags = from->EFlags;
+    }
+    if (flags & CONTEXT_SEGMENTS)
+    {
+        to->SegDs = from->SegDs;
+        to->SegEs = from->SegEs;
+        to->SegFs = from->SegFs;
+        to->SegGs = from->SegGs;
+    }
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        to->Dr0 = from->Dr0;
+        to->Dr1 = from->Dr1;
+        to->Dr2 = from->Dr2;
+        to->Dr3 = from->Dr3;
+        to->Dr6 = from->Dr6;
+        to->Dr7 = from->Dr7;
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->FloatSave = from->FloatSave;
+    }
+    if (flags & CONTEXT_EXTENDED_REGISTERS)
+    {
+        memcpy( to->ExtendedRegisters, from->ExtendedRegisters, sizeof(to->ExtendedRegisters) );
+    }
+}
+
+
+/***********************************************************************
  *           is_privileged_instr
  *
  * Check if the fault location is a privileged instruction.

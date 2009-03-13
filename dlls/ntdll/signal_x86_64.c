@@ -269,6 +269,64 @@ void set_cpu_context( const CONTEXT *context )
 }
 
 
+/***********************************************************************
+ *           copy_context
+ *
+ * Copy a register context according to the flags.
+ */
+void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
+{
+    flags &= ~CONTEXT_AMD64;  /* get rid of CPU id */
+    if (flags & CONTEXT_CONTROL)
+    {
+        to->Rbp    = from->Rbp;
+        to->Rip    = from->Rip;
+        to->Rsp    = from->Rsp;
+        to->SegCs  = from->SegCs;
+        to->SegSs  = from->SegSs;
+        to->EFlags = from->EFlags;
+        to->MxCsr  = from->MxCsr;
+    }
+    if (flags & CONTEXT_INTEGER)
+    {
+        to->Rax = from->Rax;
+        to->Rcx = from->Rcx;
+        to->Rdx = from->Rdx;
+        to->Rbx = from->Rbx;
+        to->Rsi = from->Rsi;
+        to->Rdi = from->Rdi;
+        to->R8  = from->R8;
+        to->R9  = from->R9;
+        to->R10 = from->R10;
+        to->R11 = from->R11;
+        to->R12 = from->R12;
+        to->R13 = from->R13;
+        to->R14 = from->R14;
+        to->R15 = from->R15;
+    }
+    if (flags & CONTEXT_SEGMENTS)
+    {
+        to->SegDs = from->SegDs;
+        to->SegEs = from->SegEs;
+        to->SegFs = from->SegFs;
+        to->SegGs = from->SegGs;
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        to->u.FltSave = from->u.FltSave;
+    }
+    if (flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        to->Dr0 = from->Dr0;
+        to->Dr1 = from->Dr1;
+        to->Dr2 = from->Dr2;
+        to->Dr3 = from->Dr3;
+        to->Dr6 = from->Dr6;
+        to->Dr7 = from->Dr7;
+    }
+}
+
+
 /**********************************************************************
  *		segv_handler
  *

@@ -171,6 +171,65 @@ void set_cpu_context( const CONTEXT *context )
 }
 
 
+/***********************************************************************
+ *           copy_context
+ *
+ * Copy a register context according to the flags.
+ */
+void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags )
+{
+    flags &= ~CONTEXT_SPARC;  /* get rid of CPU id */
+    if (flags & CONTEXT_CONTROL)
+    {
+        to->psr = from->psr;
+        to->pc  = from->pc;
+        to->npc = from->npc;
+        to->y   = from->y;
+        to->wim = from->wim;
+        to->tbr = from->tbr;
+    }
+    if (flags & CONTEXT_INTEGER)
+    {
+        to->g0 = from->g0;
+        to->g1 = from->g1;
+        to->g2 = from->g2;
+        to->g3 = from->g3;
+        to->g4 = from->g4;
+        to->g5 = from->g5;
+        to->g6 = from->g6;
+        to->g7 = from->g7;
+        to->o0 = from->o0;
+        to->o1 = from->o1;
+        to->o2 = from->o2;
+        to->o3 = from->o3;
+        to->o4 = from->o4;
+        to->o5 = from->o5;
+        to->o6 = from->o6;
+        to->o7 = from->o7;
+        to->l0 = from->l0;
+        to->l1 = from->l1;
+        to->l2 = from->l2;
+        to->l3 = from->l3;
+        to->l4 = from->l4;
+        to->l5 = from->l5;
+        to->l6 = from->l6;
+        to->l7 = from->l7;
+        to->i0 = from->i0;
+        to->i1 = from->i1;
+        to->i2 = from->i2;
+        to->i3 = from->i3;
+        to->i4 = from->i4;
+        to->i5 = from->i5;
+        to->i6 = from->i6;
+        to->i7 = from->i7;
+    }
+    if (flags & CONTEXT_FLOATING_POINT)
+    {
+        /* FIXME */
+    }
+}
+
+
 /**********************************************************************
  *		segv_handler
  *
