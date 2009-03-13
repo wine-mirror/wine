@@ -60,10 +60,10 @@
 64 stdcall MsiGetMode(long long)
 65 stdcall MsiGetProductCodeA(str str)
 66 stdcall MsiGetProductCodeW(wstr wstr)
-67 stdcall MsiGetProductInfoA(str str str long)
+67 stdcall MsiGetProductInfoA(str str ptr long)
 68 stub MsiGetProductInfoFromScriptA
 69 stub MsiGetProductInfoFromScriptW
-70 stdcall MsiGetProductInfoW(wstr wstr wstr long)
+70 stdcall MsiGetProductInfoW(wstr wstr ptr long)
 71 stdcall MsiGetProductPropertyA(long str ptr ptr)
 72 stdcall MsiGetProductPropertyW(long wstr ptr ptr)
 73 stdcall MsiGetPropertyA(ptr str ptr ptr)
