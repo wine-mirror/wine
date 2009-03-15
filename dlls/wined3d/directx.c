@@ -1434,6 +1434,10 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     gl_info->supported[WGL_ARB_PBUFFER] = TRUE;
                     TRACE_(d3d_caps)("FOUND: WGL_ARB_pbuffer support\n");
                 }
+                if (!strcmp(ThisExtn, "WGL_ARB_pixel_format")) {
+                    gl_info->supported[WGL_ARB_PIXEL_FORMAT] = TRUE;
+                    TRACE_(d3d_caps)("FOUND: WGL_ARB_pixel_format support\n");
+                }
                 if (!strcmp(ThisExtn, "WGL_WINE_pixel_format_passthrough")) {
                     gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH] = TRUE;
                     TRACE_(d3d_caps)("FOUND: WGL_WINE_pixel_format_passthrough support\n");
