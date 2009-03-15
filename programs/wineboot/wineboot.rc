@@ -34,6 +34,7 @@
 #include "wineboot_Fr.rc"
 #include "wineboot_Ja.rc"
 #include "wineboot_Ko.rc"
+#include "wineboot_Lt.rc"
 #include "wineboot_Nl.rc"
 #include "wineboot_No.rc"
 #include "wineboot_Pl.rc"
