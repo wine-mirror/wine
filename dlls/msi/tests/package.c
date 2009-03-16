@@ -1072,6 +1072,15 @@ static void test_condition(void)
     r = MsiEvaluateCondition(hpkg, "not LicView");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
+    r = MsiEvaluateCondition(hpkg, "\"Testing\" ~<< \"Testing\"");
+    ok (r == MSICONDITION_TRUE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "LicView ~<< \"Testing\"");
+    ok (r == MSICONDITION_FALSE, "wrong return val\n");
+
+    r = MsiEvaluateCondition(hpkg, "Not LicView ~<< \"Testing\"");
+    ok (r == MSICONDITION_TRUE, "wrong return val\n");
+
     r = MsiEvaluateCondition(hpkg, "not \"A\"");
     ok( r == MSICONDITION_FALSE, "wrong return val\n");
 
