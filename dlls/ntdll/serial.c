@@ -946,7 +946,7 @@ static DWORD check_events(int fd, DWORD mask,
  */
 static DWORD CALLBACK wait_for_event(LPVOID arg)
 {
-    async_commio *commio = (async_commio*) arg;
+    async_commio *commio = arg;
     int fd, needs_close;
 
     if (!server_get_unix_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
@@ -1129,7 +1129,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_BAUD_RATE:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_BAUD_RATE))
         {
-            if (!(status = get_baud_rate(fd, (SERIAL_BAUD_RATE*)lpOutBuffer)))
+            if (!(status = get_baud_rate(fd, lpOutBuffer)))
                 sz = sizeof(SERIAL_BAUD_RATE);
         }
         else
@@ -1138,7 +1138,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_CHARS:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_CHARS))
         {
-            if (!(status = get_special_chars(fd, (SERIAL_CHARS*)lpOutBuffer)))
+            if (!(status = get_special_chars(fd, lpOutBuffer)))
                 sz = sizeof(SERIAL_CHARS);
         }
         else
@@ -1147,7 +1147,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
      case IOCTL_SERIAL_GET_COMMSTATUS:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_STATUS))
         {
-            if (!(status = get_status(fd, (SERIAL_STATUS*)lpOutBuffer)))
+            if (!(status = get_status(fd, lpOutBuffer)))
                 sz = sizeof(SERIAL_STATUS);
         }
         else status = STATUS_INVALID_PARAMETER;
@@ -1155,7 +1155,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_HANDFLOW:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_HANDFLOW))
         {
-            if (!(status = get_hand_flow(fd, (SERIAL_HANDFLOW*)lpOutBuffer)))
+            if (!(status = get_hand_flow(fd, lpOutBuffer)))
                 sz = sizeof(SERIAL_HANDFLOW);
         }
         else
@@ -1164,7 +1164,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_LINE_CONTROL:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_LINE_CONTROL))
         {
-            if (!(status = get_line_control(fd, (SERIAL_LINE_CONTROL*)lpOutBuffer)))
+            if (!(status = get_line_control(fd, lpOutBuffer)))
                 sz = sizeof(SERIAL_LINE_CONTROL);
         }
         else
@@ -1173,7 +1173,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_MODEMSTATUS:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
-            if (!(status = get_modem_status(fd, (DWORD*)lpOutBuffer)))
+            if (!(status = get_modem_status(fd, lpOutBuffer)))
                 sz = sizeof(DWORD);
         }
         else status = STATUS_INVALID_PARAMETER;
@@ -1181,7 +1181,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_TIMEOUTS:
         if (lpOutBuffer && nOutBufferSize == sizeof(SERIAL_TIMEOUTS))
         {
-            if (!(status = get_timeouts(hDevice, (SERIAL_TIMEOUTS*)lpOutBuffer)))
+            if (!(status = get_timeouts(hDevice, lpOutBuffer)))
                 sz = sizeof(SERIAL_TIMEOUTS);
         }
         else
@@ -1190,7 +1190,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_WAIT_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
-            if (!(status = get_wait_mask(hDevice, (DWORD*)lpOutBuffer)))
+            if (!(status = get_wait_mask(hDevice, lpOutBuffer)))
                 sz = sizeof(DWORD);
         }
         else
@@ -1213,7 +1213,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
         break;
     case IOCTL_SERIAL_SET_BAUD_RATE:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_BAUD_RATE))
-            status = set_baud_rate(fd, (const SERIAL_BAUD_RATE*)lpInBuffer);
+            status = set_baud_rate(fd, lpInBuffer);
         else
             status = STATUS_INVALID_PARAMETER;
         break;
@@ -1243,7 +1243,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
         break;
     case IOCTL_SERIAL_SET_CHARS:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_CHARS))
-            status = set_special_chars(fd, (const SERIAL_CHARS*)lpInBuffer);
+            status = set_special_chars(fd, lpInBuffer);
         else
             status = STATUS_INVALID_PARAMETER;
         break;
@@ -1256,19 +1256,19 @@ static inline NTSTATUS io_control(HANDLE hDevice,
         break;
     case IOCTL_SERIAL_SET_HANDFLOW:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_HANDFLOW))
-            status = set_handflow(fd, (const SERIAL_HANDFLOW*)lpInBuffer);
+            status = set_handflow(fd, lpInBuffer);
         else
             status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_SET_LINE_CONTROL:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_LINE_CONTROL))
-            status = set_line_control(fd, (const SERIAL_LINE_CONTROL*)lpInBuffer);
+            status = set_line_control(fd, lpInBuffer);
         else
             status = STATUS_INVALID_PARAMETER;
         break;
     case IOCTL_SERIAL_SET_QUEUE_SIZE:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_QUEUE_SIZE))
-            status = set_queue_size(fd, (const SERIAL_QUEUE_SIZE*)lpInBuffer);
+            status = set_queue_size(fd, lpInBuffer);
         else
             status = STATUS_INVALID_PARAMETER;
         break;
@@ -1281,7 +1281,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
         break;
     case IOCTL_SERIAL_SET_TIMEOUTS:
         if (lpInBuffer && nInBufferSize == sizeof(SERIAL_TIMEOUTS))
-            status = set_timeouts(hDevice, (const SERIAL_TIMEOUTS*)lpInBuffer);
+            status = set_timeouts(hDevice, lpInBuffer);
         else
             status = STATUS_INVALID_PARAMETER;
         break;
@@ -1301,7 +1301,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_WAIT_ON_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
-            if (!(status = wait_on(hDevice, fd, hEvent, (DWORD*)lpOutBuffer)))
+            if (!(status = wait_on(hDevice, fd, hEvent, lpOutBuffer)))
                 sz = sizeof(DWORD);
         }
         else

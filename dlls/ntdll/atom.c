@@ -198,7 +198,7 @@ NTSTATUS WINAPI RtlCreateAtomTable( ULONG size, RTL_ATOM_TABLE* table )
 NTSTATUS WINAPI RtlDestroyAtomTable( RTL_ATOM_TABLE table )
 {
     if (!table) return STATUS_INVALID_PARAMETER;
-    return NtClose( (HANDLE)table );
+    return NtClose( table );
 }
 
 /******************************************************************
@@ -385,7 +385,7 @@ NTSTATUS WINAPI NtQueryInformationAtom( RTL_ATOM atom, ATOM_INFORMATION_CLASS cl
     case AtomBasicInformation:
         {
             ULONG name_len;
-            ATOM_BASIC_INFORMATION* abi = (ATOM_BASIC_INFORMATION*)ptr;
+            ATOM_BASIC_INFORMATION* abi = ptr;
 
             if (size < sizeof(ATOM_BASIC_INFORMATION))
                 return STATUS_INVALID_PARAMETER;

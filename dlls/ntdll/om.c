@@ -65,7 +65,7 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
     {
     case ObjectBasicInformation:
         {
-            POBJECT_BASIC_INFORMATION p = (POBJECT_BASIC_INFORMATION)ptr;
+            POBJECT_BASIC_INFORMATION p = ptr;
 
             if (len < sizeof(*p)) return STATUS_INVALID_BUFFER_SIZE;
 
@@ -87,7 +87,7 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
         break;
     case ObjectDataInformation:
         {
-            OBJECT_DATA_INFORMATION* p = (OBJECT_DATA_INFORMATION*)ptr;
+            OBJECT_DATA_INFORMATION* p = ptr;
 
             if (len < sizeof(*p)) return STATUS_INVALID_BUFFER_SIZE;
 
@@ -133,7 +133,7 @@ NTSTATUS WINAPI NtSetInformationObject(IN HANDLE handle,
     {
     case ObjectDataInformation:
         {
-            OBJECT_DATA_INFORMATION* p = (OBJECT_DATA_INFORMATION*)ptr;
+            OBJECT_DATA_INFORMATION* p = ptr;
 
             if (len < sizeof(*p)) return STATUS_INVALID_BUFFER_SIZE;
 

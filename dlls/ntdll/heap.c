@@ -388,7 +388,7 @@ static void HEAP_DumpEntry( LPPROCESS_HEAP_ENTRY entry )
 static HEAP *HEAP_GetPtr(
              HANDLE heap /* [in] Handle to the heap */
 ) {
-    HEAP *heapPtr = (HEAP *)heap;
+    HEAP *heapPtr = heap;
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
         ERR("Invalid heap %p!\n", heap );
@@ -442,7 +442,7 @@ static SUBHEAP *HEAP_FindSubHeap(
 {
     SUBHEAP *sub;
     LIST_FOR_EACH_ENTRY( sub, &heap->subheap_list, SUBHEAP, entry )
-        if (((const char *)ptr >= (const char *)sub->base) &&
+        if ((ptr >= sub->base) &&
             ((const char *)ptr < (const char *)sub->base + sub->size - sizeof(ARENA_INUSE)))
             return sub;
     return NULL;
@@ -517,7 +517,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
 
     /* Create a free arena */
     mark_block_uninitialized( ptr, sizeof( ARENA_FREE ) );
-    pFree = (ARENA_FREE *)ptr;
+    pFree = ptr;
     pFree->magic = ARENA_FREE_MAGIC;
 
     /* If debugging, erase the freed block content */
@@ -709,7 +709,7 @@ static ARENA_LARGE *find_large_block( HEAP *heap, const void *ptr )
     ARENA_LARGE *arena;
 
     LIST_FOR_EACH_ENTRY( arena, &heap->large_list, ARENA_LARGE, entry )
-        if (ptr == (const void *)(arena + 1)) return arena;
+        if (ptr == arena + 1) return arena;
 
     return NULL;
 }
@@ -793,7 +793,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
     {
         /* If this is a secondary subheap, insert it into list */
 
-        subheap = (SUBHEAP *)address;
+        subheap = address;
         subheap->base       = address;
         subheap->heap       = heap;
         subheap->size       = totalSize;
@@ -806,7 +806,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
     {
         /* If this is a primary subheap, initialize main heap */
 
-        heap = (HEAP *)address;
+        heap = address;
         heap->flags         = flags;
         heap->magic         = HEAP_MAGIC;
         heap->grow_size     = max( HEAP_DEF_SIZE, totalSize );
@@ -946,7 +946,7 @@ static BOOL HEAP_IsValidArenaPtr( const HEAP *heap, const ARENA_FREE *ptr )
     if ((const char *)ptr >= (const char *)subheap->base + subheap->headerSize) return TRUE;
     if (subheap != &heap->subheap) return FALSE;
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
-        if (ptr == (const void *)&heap->freeList[i].arena) return TRUE;
+        if (ptr == &heap->freeList[i].arena) return TRUE;
     return FALSE;
 }
 
@@ -1266,7 +1266,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
         assert( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
     }
 
-    return (HANDLE)subheap->heap;
+    return subheap->heap;
 }
 
 
@@ -1418,7 +1418,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
     TRACE("(%p,%08x,%08lx): returning %p\n", heap, flags, size, pInUse + 1 );
-    return (LPVOID)(pInUse + 1);
+    return pInUse + 1;
 }
 
 

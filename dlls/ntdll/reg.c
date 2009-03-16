@@ -910,8 +910,8 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
 
     if (pQuery->Flags & RTL_QUERY_REGISTRY_DIRECT)
     {
-        str = (PUNICODE_STRING)pQuery->EntryContext;
- 
+        str = pQuery->EntryContext;
+
         switch(pInfo->Type)
         {
         case REG_EXPAND_SZ:
@@ -953,7 +953,7 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
             break;
 
         default:
-            bin = (LONG*)pQuery->EntryContext;
+            bin = pQuery->EntryContext;
             if (pInfo->DataLength <= sizeof(ULONG))
                 memcpy(bin, ((CHAR*)pInfo) + pInfo->DataOffset,
                     pInfo->DataLength);

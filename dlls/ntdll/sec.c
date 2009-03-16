@@ -117,7 +117,7 @@ static NTSTATUS add_access_ace(PACL pAcl, DWORD dwAceRevision, DWORD dwAceFlags,
 
     /* skip past ACE->Mask */
     pSidStart = pAccessMask + 1;
-    RtlCopySid(dwLengthSid, (PSID)pSidStart, pSid);
+    RtlCopySid(dwLengthSid, pSidStart, pSid);
 
     pAcl->AclRevision = max(pAcl->AclRevision, dwAceRevision);
     pAcl->AceCount++;
@@ -451,8 +451,8 @@ NTSTATUS WINAPI RtlCreateSecurityDescriptor(
  */
 NTSTATUS WINAPI RtlCopySecurityDescriptor(PSECURITY_DESCRIPTOR pSourceSD, PSECURITY_DESCRIPTOR pDestinationSD)
 {
-    SECURITY_DESCRIPTOR *srcSD = (SECURITY_DESCRIPTOR *)pSourceSD;
-    SECURITY_DESCRIPTOR *destSD = (SECURITY_DESCRIPTOR *)pDestinationSD;
+    SECURITY_DESCRIPTOR *srcSD = pSourceSD;
+    SECURITY_DESCRIPTOR *destSD = pDestinationSD;
     PSID Owner, Group;
     PACL Dacl, Sacl;
     BOOLEAN defaulted, present;
@@ -1177,7 +1177,7 @@ NTSTATUS WINAPI RtlAddAce(
 	}
 	if ((BYTE *)targetace + acelen > (BYTE *)acl + acl->AclSize) /* too much aces */
 		return STATUS_INVALID_PARAMETER;
-	memcpy((LPBYTE)targetace,acestart,acelen);
+	memcpy(targetace,acestart,acelen);
 	acl->AceCount+=nrofaces;
 	return STATUS_SUCCESS;
 }
@@ -1369,7 +1369,7 @@ NTSTATUS WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 	for (;dwAceIndex;dwAceIndex--)
 		ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
 
-	*pAce = (LPVOID) ace;
+	*pAce = ace;
 
 	return STATUS_SUCCESS;
 }
@@ -1720,7 +1720,7 @@ NTSTATUS WINAPI RtlConvertSidToUnicodeString(
     static const WCHAR formatW[] = {'-','%','u',0};
     WCHAR buffer[2 + 10 + 10 + 10 * SID_MAX_SUB_AUTHORITIES];
     WCHAR *p = buffer;
-    const SID *sid = (const SID *)pSid;
+    const SID *sid = pSid;
     DWORD i, len;
 
     *p++ = 'S';
@@ -1765,7 +1765,7 @@ NTSTATUS WINAPI RtlQueryInformationAcl(
     {
         case AclRevisionInformation:
         {
-            PACL_REVISION_INFORMATION paclrev = (PACL_REVISION_INFORMATION) pAclInformation;
+            PACL_REVISION_INFORMATION paclrev = pAclInformation;
 
             if (nAclInformationLength < sizeof(ACL_REVISION_INFORMATION))
                 status = STATUS_INVALID_PARAMETER;
@@ -1777,7 +1777,7 @@ NTSTATUS WINAPI RtlQueryInformationAcl(
 
         case AclSizeInformation:
         {
-            PACL_SIZE_INFORMATION paclsize = (PACL_SIZE_INFORMATION) pAclInformation;
+            PACL_SIZE_INFORMATION paclsize = pAclInformation;
 
             if (nAclInformationLength < sizeof(ACL_SIZE_INFORMATION))
                 status = STATUS_INVALID_PARAMETER;

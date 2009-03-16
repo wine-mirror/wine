@@ -471,7 +471,7 @@ static NTSTATUS CDROM_SyncCache(int dev, int fd)
         } else {
             entry.starting_track = i;
         }
-	memset((char *)&toc_buffer, 0, sizeof(toc_buffer));
+        memset(&toc_buffer, 0, sizeof(toc_buffer));
 	entry.address_format = CD_MSF_FORMAT;
 	entry.data_len = sizeof(toc_buffer);
 	entry.data = &toc_buffer;
@@ -2211,7 +2211,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 	CDROM_ClearCacheEntry(dev);
         if (lpOutBuffer != NULL || nOutBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nInBufferSize < sizeof(PREVENT_MEDIA_REMOVAL)) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_ControlEjection(fd, (const PREVENT_MEDIA_REMOVAL*)lpInBuffer);
+        else status = CDROM_ControlEjection(fd, lpInBuffer);
         break;
 
 /* EPP     case IOCTL_STORAGE_GET_MEDIA_TYPES: */
@@ -2220,7 +2220,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         sz = sizeof(STORAGE_DEVICE_NUMBER);
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_GetDeviceNumber(dev, (STORAGE_DEVICE_NUMBER*)lpOutBuffer);
+        else status = CDROM_GetDeviceNumber(dev, lpOutBuffer);
         break;
 
     case IOCTL_STORAGE_RESET_DEVICE:
@@ -2235,14 +2235,14 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         sz = sizeof(CDROM_AUDIO_CONTROL);
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_GetControl(dev, (CDROM_AUDIO_CONTROL*)lpOutBuffer);
+        else status = CDROM_GetControl(dev, lpOutBuffer);
         break;
 
     case IOCTL_CDROM_GET_DRIVE_GEOMETRY:
         sz = sizeof(DISK_GEOMETRY);
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_GetDriveGeometry(dev, fd, (DISK_GEOMETRY*)lpOutBuffer);
+        else status = CDROM_GetDriveGeometry(dev, fd, lpOutBuffer);
         break;
 
     case IOCTL_CDROM_DISK_TYPE:
@@ -2250,7 +2250,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 	/* CDROM_ClearCacheEntry(dev); */
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_GetDiskData(dev, fd, (CDROM_DISK_DATA*)lpOutBuffer);
+        else status = CDROM_GetDiskData(dev, fd, lpOutBuffer);
         break;
 
 /* EPP     case IOCTL_CDROM_GET_LAST_SESSION: */
@@ -2260,15 +2260,14 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         if (lpInBuffer == NULL || nInBufferSize < sizeof(CDROM_SUB_Q_DATA_FORMAT))
             status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_ReadQChannel(dev, fd, (const CDROM_SUB_Q_DATA_FORMAT*)lpInBuffer,
-                                        (SUB_Q_CHANNEL_DATA*)lpOutBuffer);
+        else status = CDROM_ReadQChannel(dev, fd, lpInBuffer, lpOutBuffer);
         break;
 
     case IOCTL_CDROM_READ_TOC:
         sz = sizeof(CDROM_TOC);
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_ReadTOC(dev, fd, (CDROM_TOC*)lpOutBuffer);
+        else status = CDROM_ReadTOC(dev, fd, lpOutBuffer);
         break;
 
 /* EPP     case IOCTL_CDROM_READ_TOC_EX: */
@@ -2283,7 +2282,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         sz = 0;
         if (lpOutBuffer != NULL || nOutBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nInBufferSize < sizeof(CDROM_PLAY_AUDIO_MSF)) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_PlayAudioMSF(fd, (const CDROM_PLAY_AUDIO_MSF*)lpInBuffer);
+        else status = CDROM_PlayAudioMSF(fd, lpInBuffer);
         break;
     case IOCTL_CDROM_RESUME_AUDIO:
         sz = 0;
@@ -2295,7 +2294,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         sz = 0;
         if (lpOutBuffer != NULL || nOutBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nInBufferSize < sizeof(CDROM_SEEK_AUDIO_MSF)) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_SeekAudioMSF(dev, fd, (const CDROM_SEEK_AUDIO_MSF*)lpInBuffer);
+        else status = CDROM_SeekAudioMSF(dev, fd, lpInBuffer);
         break;
     case IOCTL_CDROM_STOP_AUDIO:
         sz = 0;
@@ -2308,45 +2307,45 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         sz = sizeof(VOLUME_CONTROL);
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_GetVolume(fd, (VOLUME_CONTROL*)lpOutBuffer);
+        else status = CDROM_GetVolume(fd, lpOutBuffer);
         break;
     case IOCTL_CDROM_SET_VOLUME:
         sz = 0;
 	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer == NULL || nInBufferSize < sizeof(VOLUME_CONTROL) || lpOutBuffer != NULL)
             status = STATUS_INVALID_PARAMETER;
-        else status = CDROM_SetVolume(fd, (const VOLUME_CONTROL*)lpInBuffer);
+        else status = CDROM_SetVolume(fd, lpInBuffer);
         break;
     case IOCTL_CDROM_RAW_READ:
         sz = 0;
         if (nInBufferSize < sizeof(RAW_READ_INFO)) status = STATUS_INVALID_PARAMETER;
         else if (lpOutBuffer == NULL) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_RawRead(fd, (const RAW_READ_INFO*)lpInBuffer,
-                                   lpOutBuffer, nOutBufferSize, &sz);
+        else status = CDROM_RawRead(fd, lpInBuffer, lpOutBuffer,
+                                    nOutBufferSize, &sz);
         break;
     case IOCTL_SCSI_GET_ADDRESS:
         sz = sizeof(SCSI_ADDRESS);
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_GetAddress(fd, (SCSI_ADDRESS*)lpOutBuffer);
+        else status = CDROM_GetAddress(fd, lpOutBuffer);
         break;
     case IOCTL_SCSI_PASS_THROUGH_DIRECT:
         sz = sizeof(SCSI_PASS_THROUGH_DIRECT);
         if (lpOutBuffer == NULL) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sizeof(SCSI_PASS_THROUGH_DIRECT)) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_ScsiPassThroughDirect(fd, (PSCSI_PASS_THROUGH_DIRECT)lpOutBuffer);
+        else status = CDROM_ScsiPassThroughDirect(fd, lpOutBuffer);
         break;
     case IOCTL_SCSI_PASS_THROUGH:
         sz = sizeof(SCSI_PASS_THROUGH);
         if (lpOutBuffer == NULL) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sizeof(SCSI_PASS_THROUGH)) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_ScsiPassThrough(fd, (PSCSI_PASS_THROUGH)lpOutBuffer);
+        else status = CDROM_ScsiPassThrough(fd, lpOutBuffer);
         break;
     case IOCTL_SCSI_GET_CAPABILITIES:
         sz = sizeof(IO_SCSI_CAPABILITIES);
         if (lpOutBuffer == NULL) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sizeof(IO_SCSI_CAPABILITIES)) status = STATUS_BUFFER_TOO_SMALL;
-        else status = CDROM_ScsiGetCaps((PIO_SCSI_CAPABILITIES)lpOutBuffer);
+        else status = CDROM_ScsiGetCaps(lpOutBuffer);
         break;
     case IOCTL_DVD_START_SESSION:
         sz = sizeof(DVD_SESSION_ID);
@@ -2356,7 +2355,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         {
             TRACE("before in 0x%08x out 0x%08x\n",(lpInBuffer)?*(PDVD_SESSION_ID)lpInBuffer:0,
                   *(PDVD_SESSION_ID)lpOutBuffer);
-            status = DVD_StartSession(fd, (PDVD_SESSION_ID)lpInBuffer, (PDVD_SESSION_ID)lpOutBuffer);
+            status = DVD_StartSession(fd, lpInBuffer, lpOutBuffer);
             TRACE("before in 0x%08x out 0x%08x\n",(lpInBuffer)?*(PDVD_SESSION_ID)lpInBuffer:0,
                   *(PDVD_SESSION_ID)lpOutBuffer);
         }
@@ -2364,7 +2363,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
     case IOCTL_DVD_END_SESSION:
         sz = sizeof(DVD_SESSION_ID);
         if ((lpInBuffer == NULL) ||  (nInBufferSize < sz))status = STATUS_INVALID_PARAMETER;
-        else status = DVD_EndSession(fd, (PDVD_SESSION_ID)lpInBuffer);
+        else status = DVD_EndSession(fd, lpInBuffer);
         break;
     case IOCTL_DVD_SEND_KEY:
         sz = 0;
@@ -2374,7 +2373,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         else
         {
             TRACE("doing DVD_SendKey\n");
-            status = DVD_SendKey(fd, (PDVD_COPY_PROTECT_KEY)lpInBuffer);
+            status = DVD_SendKey(fd, lpInBuffer);
         }
         break;
     case IOCTL_DVD_READ_KEY:
@@ -2386,7 +2385,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         {
             TRACE("doing DVD_READ_KEY\n");
             sz = ((PDVD_COPY_PROTECT_KEY)lpInBuffer)->KeyLength;
-            status = DVD_ReadKey(fd, (PDVD_COPY_PROTECT_KEY)lpInBuffer);
+            status = DVD_ReadKey(fd, lpInBuffer);
         }
         break;
     case IOCTL_DVD_GET_REGION:
@@ -2394,7 +2393,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         if (lpInBuffer != NULL || nInBufferSize != 0) status = STATUS_INVALID_PARAMETER;
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
         TRACE("doing DVD_Get_REGION\n");
-        status = DVD_GetRegion(fd, (PDVD_REGION)lpOutBuffer);
+        status = DVD_GetRegion(fd, lpOutBuffer);
         break;
     case IOCTL_DVD_READ_STRUCTURE:
         sz = sizeof(DVD_LAYER_DESCRIPTOR);
@@ -2403,13 +2402,13 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         else
         {
             TRACE("doing DVD_READ_STRUCTURE\n");
-            status = DVD_ReadStructure(fd, (PDVD_READ_STRUCTURE)lpInBuffer, (PDVD_LAYER_DESCRIPTOR)lpOutBuffer);
+            status = DVD_ReadStructure(fd, lpInBuffer, lpOutBuffer);
         }
         break;
 
     case IOCTL_SCSI_GET_INQUIRY_DATA:
         sz = INQ_REPLY_LEN;
-        status = GetInquiryData(fd, (PSCSI_ADAPTER_BUS_INFO)lpOutBuffer, nOutBufferSize);
+        status = GetInquiryData(fd, lpOutBuffer, nOutBufferSize);
         break;
 
     default:

@@ -1924,7 +1924,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
     case FileCompletionInformation:
         if (len >= sizeof(FILE_COMPLETION_INFORMATION))
         {
-            FILE_COMPLETION_INFORMATION *info = (FILE_COMPLETION_INFORMATION *)ptr;
+            FILE_COMPLETION_INFORMATION *info = ptr;
 
             SERVER_START_REQ( set_completion_info )
             {

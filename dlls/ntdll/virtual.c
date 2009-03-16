@@ -598,8 +598,8 @@ static BOOL VIRTUAL_SetProt( FILE_VIEW *view, /* [in] Pointer to view */
     /* if setting stack guard pages, store the permissions first, as the guard may be
      * triggered at any point after mprotect and change the permissions again */
     if ((vprot & VPROT_GUARD) &&
-        ((char *)base >= (char *)NtCurrentTeb()->DeallocationStack) &&
-        ((char *)base < (char *)NtCurrentTeb()->Tib.StackBase))
+        (base >= NtCurrentTeb()->DeallocationStack) &&
+        (base < NtCurrentTeb()->Tib.StackBase))
     {
         memset( p, vprot, size >> page_shift );
         mprotect( base, size, unix_prot );

@@ -1225,13 +1225,13 @@ NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* pmod)
     for (entry = mark->Flink; entry != mark; entry = entry->Flink)
     {
         mod = CONTAINING_RECORD(entry, LDR_MODULE, InMemoryOrderModuleList);
-        if ((const void *)mod->BaseAddress <= addr &&
+        if (mod->BaseAddress <= addr &&
             (const char *)addr < (char*)mod->BaseAddress + mod->SizeOfImage)
         {
             *pmod = mod;
             return STATUS_SUCCESS;
         }
-        if ((const void *)mod->BaseAddress > addr) break;
+        if (mod->BaseAddress > addr) break;
     }
     return STATUS_NO_MORE_ENTRIES;
 }

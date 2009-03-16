@@ -2324,7 +2324,7 @@ static NTSTATUS read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, NTSTATUS st
     {
         PFILE_NOTIFY_INFORMATION pfni;
 
-        pfni = (PFILE_NOTIFY_INFORMATION) info->Buffer;
+        pfni = info->Buffer;
 
         /* convert to an NT style path */
         for (i=0; i<len; i++)

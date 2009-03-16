@@ -535,38 +535,38 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
     switch (io_control)
     {
     case IOCTL_TAPE_CREATE_PARTITION:
-        status = TAPE_CreatePartition( fd, (TAPE_CREATE_PARTITION *)in_buffer );
+        status = TAPE_CreatePartition( fd, in_buffer );
         break;
     case IOCTL_TAPE_ERASE:
-        status = TAPE_Erase( fd, (TAPE_ERASE *)in_buffer );
+        status = TAPE_Erase( fd, in_buffer );
         break;
     case IOCTL_TAPE_GET_DRIVE_PARAMS:
-        status = TAPE_GetDriveParams( fd, (TAPE_GET_DRIVE_PARAMETERS *)out_buffer );
+        status = TAPE_GetDriveParams( fd, out_buffer );
         break;
     case IOCTL_TAPE_GET_MEDIA_PARAMS:
-        status = TAPE_GetMediaParams( fd, (TAPE_GET_MEDIA_PARAMETERS *)out_buffer );
+        status = TAPE_GetMediaParams( fd, out_buffer );
         break;
     case IOCTL_TAPE_GET_POSITION:
         status = TAPE_GetPosition( fd, ((TAPE_GET_POSITION *)in_buffer)->Type,
-                                   (TAPE_GET_POSITION *)out_buffer );
+                                   out_buffer );
         break;
     case IOCTL_TAPE_GET_STATUS:
         status = FILE_GetNtStatus();
         break;
     case IOCTL_TAPE_PREPARE:
-        status = TAPE_Prepare( fd, (TAPE_PREPARE *)in_buffer );
+        status = TAPE_Prepare( fd, in_buffer );
         break;
     case IOCTL_TAPE_SET_DRIVE_PARAMS:
-        status = TAPE_SetDriveParams( fd, (TAPE_SET_DRIVE_PARAMETERS *)in_buffer );
+        status = TAPE_SetDriveParams( fd, in_buffer );
         break;
     case IOCTL_TAPE_SET_MEDIA_PARAMS:
-        status = TAPE_SetMediaParams( fd, (TAPE_SET_MEDIA_PARAMETERS *)in_buffer );
+        status = TAPE_SetMediaParams( fd, in_buffer );
         break;
     case IOCTL_TAPE_SET_POSITION:
-        status = TAPE_SetPosition( fd, (TAPE_SET_POSITION *)in_buffer );
+        status = TAPE_SetPosition( fd, in_buffer );
         break;
     case IOCTL_TAPE_WRITE_MARKS:
-        status = TAPE_WriteMarks( fd, (TAPE_WRITE_MARKS *)in_buffer );
+        status = TAPE_WriteMarks( fd, in_buffer );
         break;
 
     case IOCTL_TAPE_CHECK_VERIFY:

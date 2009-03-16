@@ -728,7 +728,7 @@ NTSTATUS WINAPI NtQueryTimer(
     ULONG Length,
     PULONG ReturnLength)
 {
-    TIMER_BASIC_INFORMATION * basic_info = (TIMER_BASIC_INFORMATION *)TimerInformation;
+    TIMER_BASIC_INFORMATION * basic_info = TimerInformation;
     NTSTATUS status;
     LARGE_INTEGER now;
 
@@ -1429,7 +1429,7 @@ NTSTATUS WINAPI NtQueryIoCompletion( HANDLE CompletionPort, IO_COMPLETION_INFORM
     {
         case IoCompletionBasicInformation:
             {
-                ULONG *info = (ULONG *)CompletionInformation;
+                ULONG *info = CompletionInformation;
 
                 if (RequiredLength) *RequiredLength = sizeof(*info);
                 if (BufferLength != sizeof(*info))

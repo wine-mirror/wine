@@ -207,8 +207,8 @@ RTL_HANDLE * WINAPI RtlAllocateHandle(RTL_HANDLE_TABLE * HandleTable, ULONG * Ha
 
     if (!HandleTable->NextFree && RtlpAllocateSomeHandles(HandleTable) != STATUS_SUCCESS)
         return NULL;
-    
-    ret = (RTL_HANDLE *)HandleTable->NextFree;
+
+    ret = HandleTable->NextFree;
     HandleTable->NextFree = ret->Next;
 
     if (HandleIndex)
@@ -241,7 +241,7 @@ BOOLEAN WINAPI RtlFreeHandle(RTL_HANDLE_TABLE * HandleTable, RTL_HANDLE * Handle
      * effect of setting Handle->Next to the previously next free handle in
      * the handle table */
     memset(Handle, 0, HandleTable->HandleSize);
-    Handle->Next = (RTL_HANDLE *)HandleTable->NextFree;
+    Handle->Next = HandleTable->NextFree;
     HandleTable->NextFree = Handle;
     return TRUE;
 }
