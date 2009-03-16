@@ -111,7 +111,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
         }
         argv[0]=(LPWSTR)(argv+1);
         if (numargs)
-            *numargs=2;
+            *numargs=1;
 
         return argv;
     }

@@ -1616,6 +1616,7 @@ static void test_commandline(void)
     static const WCHAR fmt3[] = {'%','s','=','%','s',' ','%','s','=','\"','%','s','\"',0};
     static const WCHAR fmt4[] = {'\"','%','s','\"',' ','\"','%','s',' ','%','s','\"',' ','%','s',0};
     static const WCHAR fmt5[] = {'\\','\"','%','s','\"',' ','%','s','=','\"','%','s','\\','\"',' ','\"','%','s','\\','\"',0};
+    static const WCHAR fmt6[] = {0};
 
     static const WCHAR chkfmt1[] = {'%','s','=','%','s',0};
     static const WCHAR chkfmt2[] = {'%','s',' ','%','s',0};
@@ -1670,6 +1671,10 @@ static void test_commandline(void)
     todo_wine ok(lstrcmpW(args[0],cmdline)==0,"arg0 is not as expected\n");
     wsprintfW(cmdline,chkfmt4,two,three,four);
     todo_wine ok(lstrcmpW(args[1],cmdline)==0,"arg1 is not as expected\n");
+
+    wsprintfW(cmdline,fmt6);
+    args=CommandLineToArgvW(cmdline,&numargs);
+    ok(numargs == 1, "expected 1 args, got %i\n",numargs);
 }
 
 START_TEST(shlexec)
