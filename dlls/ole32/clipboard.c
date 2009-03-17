@@ -150,6 +150,8 @@ static ole_clipbrd* theOleClipboard;
  */
 static const CHAR OLEClipbrd_WNDCLASS[] = "CLIPBRDWNDCLASS";
 
+static UINT dataobject_clipboard_format;
+
 /*
  *  If we need to store state info we can store it here.
  *  For now we don't need this functionality.
@@ -1175,15 +1177,22 @@ static ole_clipbrd* OLEClipbrd_Construct(void)
     return This;
 }
 
+static void register_clipboard_formats(void)
+{
+    static const WCHAR DataObjectW[] = { 'D','a','t','a','O','b','j','e','c','t',0 };
+
+    if(!dataobject_clipboard_format)
+        dataobject_clipboard_format = RegisterClipboardFormatW(DataObjectW);
+}
+
 /***********************************************************************
  * OLEClipbrd_Initialize()
  * Initializes the OLE clipboard.
  */
 void OLEClipbrd_Initialize(void)
 {
-  /*
-   * Create the clipboard if necessary
-   */
+  register_clipboard_formats();
+
   if ( !theOleClipboard )
   {
     TRACE("()\n");
