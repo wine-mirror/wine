@@ -231,7 +231,6 @@ static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_AddRef(LPENUMFORMATETC iface)
 static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_Release(LPENUMFORMATETC iface)
 {
   IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
-  LPMALLOC pIMalloc;
   ULONG ref;
 
   TRACE("(%p)->(count=%u)\n",This, This->ref);
@@ -243,12 +242,7 @@ static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_Release(LPENUMFORMATETC iface)
   if (!ref)
   {
     TRACE("() - destroying IEnumFORMATETC(%p)\n",This);
-    if (SUCCEEDED(CoGetMalloc(MEMCTX_TASK, &pIMalloc)))
-    {
-      IMalloc_Free(pIMalloc, This->pFmt);
-      IMalloc_Release(pIMalloc);
-    }
-
+    HeapFree(GetProcessHeap(), 0, This->pFmt);
     HeapFree(GetProcessHeap(),0,This);
   }
   return ref;
@@ -379,9 +373,8 @@ static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORM
 {
   IEnumFORMATETCImpl* ef;
   DWORD size=cfmt * sizeof(FORMATETC);
-  LPMALLOC pIMalloc;
 
-  ef = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IEnumFORMATETCImpl));
+  ef = HeapAlloc(GetProcessHeap(), 0, sizeof(IEnumFORMATETCImpl));
   if (!ef)
     return NULL;
 
@@ -391,15 +384,14 @@ static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORM
 
   ef->posFmt = 0;
   ef->countFmt = cfmt;
-  if (FAILED(CoGetMalloc(MEMCTX_TASK, &pIMalloc))) {
+  ef->pFmt = HeapAlloc(GetProcessHeap(), 0, size);
+  if (ef->pFmt)
+    memcpy(ef->pFmt, afmt, size);
+  else
+  {
     HeapFree(GetProcessHeap(), 0, ef);
     return NULL;
   }
-  ef->pFmt = IMalloc_Alloc(pIMalloc, size);
-  IMalloc_Release(pIMalloc);
-
-  if (ef->pFmt)
-    memcpy(ef->pFmt, afmt, size);
 
   TRACE("(%p)->()\n",ef);
   return (LPENUMFORMATETC)ef;
