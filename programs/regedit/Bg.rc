@@ -287,18 +287,4 @@ BEGIN
     "resource.h\0"
 END
 
-
-
-/*
- * String Table
- */
-
-/*
- *STRINGTABLE DISCARDABLE
- *BEGIN
- *    ID_HELP_HELPTOPICS      "Opens Registry Editor Help."
- *    ID_HELP_ABOUT           "Displays program information, version number, and copyright."
- *END
- */
-
 /*****************************************************************/

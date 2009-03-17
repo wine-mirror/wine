@@ -328,20 +328,6 @@ BEGIN
     "resource.h\0"
 END
 
-
-
-/*
- * String Table
- */
-
-/*
- *STRINGTABLE DISCARDABLE
- *BEGIN
- *    ID_HELP_HELPTOPICS      "レジストリエディタのヘルプを開く"
- *    ID_HELP_ABOUT           "プログラムの情報、バージョン、著作者を表示"
- *END
- */
-
 /*****************************************************************/
 
 #pragma code_page(default)

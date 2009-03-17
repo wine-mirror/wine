@@ -393,32 +393,4 @@ BEGIN
     "resource.h\0"
 END
 
-
-/*
- * String Table
- */
-
-
-
-/*
- *LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
- *
- *STRINGTABLE DISCARDABLE
- *BEGIN
- *    ID_HELP_HELPTOPICS      "Opens Registry Editor Help."
- *    ID_HELP_ABOUT           "Displays program information, version number, and copyright."
- *END
- */
-
-
-/*
- *LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
- *
- *STRINGTABLE DISCARDABLE
- *BEGIN
- *    ID_HELP_HELPTOPICS      "Abre a ajuda do Editor de Registos."
- *    ID_HELP_ABOUT           "Mostra informação do programa, número da versão, e direitos de autor."
- *END
- */
-
 /*****************************************************************/

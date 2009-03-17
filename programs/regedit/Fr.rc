@@ -327,18 +327,4 @@ BEGIN
     "resource.h\0"
 END
 
-
-
-/*
- * String Table
- */
-
-/*
- *STRINGTABLE DISCARDABLE
- *BEGIN
- *    ID_HELP_HELPTOPICS      "Ouvre l'aide de l'éditeur de registres."
- *    ID_HELP_ABOUT           "Affiche de l'information sur le programme, le numéro de version et le copyright."
- *END
- */
-
 /*****************************************************************/

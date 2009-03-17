@@ -249,18 +249,4 @@ BEGIN
     "resource.h\0"
 END
 
-
-
-/*
- * String Table
- */
-
-/*
- *STRINGTABLE DISCARDABLE
- *BEGIN
- *    ID_HELP_HELPTOPICS      "Megnyitja a Regisztrációs adatbázis szerkesztõ súgóját."
- *    ID_HELP_ABOUT           "Megjeleníti a program információkat, verziószámot, és a szerzõi jogot."
- *END
- */
-
 /*****************************************************************/

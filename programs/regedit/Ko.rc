@@ -332,18 +332,4 @@ BEGIN
     "resource.h\0"
 END
 
-
-
-/*
- * String Table
- */
-
-/*
- *STRINGTABLE DISCARDABLE
- *BEGIN
- *    ID_HELP_HELPTOPICS      "레지스트리 편집기 도움말 열기."
- *    ID_HELP_ABOUT           "풀그림 정보,버젼, 저작권 보여주기."
- *END
- */
-
 /*****************************************************************/

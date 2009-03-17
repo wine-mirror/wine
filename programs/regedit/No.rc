@@ -325,18 +325,4 @@ BEGIN
     "resource.h\0"
 END
 
-
-
-/*
- * String Table
- */
-
-/*
- *STRINGTABLE DISCARDABLE
- *BEGIN
- *    ID_HELP_HELPTOPICS      "Viser hjelp til Registerredigering."
- *    ID_HELP_ABOUT           "Viser programinformasjon, versjonnummer og kopirett."
- *END
- */
-
 /*****************************************************************/
