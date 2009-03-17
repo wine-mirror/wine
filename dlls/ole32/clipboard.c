@@ -730,40 +730,24 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_QueryInterface(
             void**           ppvObject)
 {
   ole_clipbrd *This = impl_from_IDataObject(iface);
-  TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObject);
+  TRACE("(%p)->(IID:%s, %p)\n", This, debugstr_guid(riid), ppvObject);
 
-  /*
-   * Perform a sanity check on the parameters.
-   */
   if ( (This==0) || (ppvObject==0) )
     return E_INVALIDARG;
 
-  /*
-   * Initialize the return parameter.
-   */
   *ppvObject = 0;
 
-  /*
-   * Compare the riid with the interface IDs implemented by this object.
-   */
-  if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
+  if (IsEqualIID(&IID_IUnknown, riid) ||
+      IsEqualIID(&IID_IDataObject, riid))
   {
     *ppvObject = iface;
   }
-  else if (memcmp(&IID_IDataObject, riid, sizeof(IID_IDataObject)) == 0)
-  {
-    *ppvObject = &This->lpvtbl;
-  }
-  else  /* We only support IUnknown and IDataObject */
+  else
   {
     WARN( "() : asking for unsupported interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
   }
 
-  /*
-   * Query Interface always increases the reference count by one when it is
-   * successful.
-   */
   IUnknown_AddRef((IUnknown*)*ppvObject);
 
   return S_OK;
