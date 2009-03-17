@@ -108,16 +108,6 @@ struct OLEClipbrd
   IDataObject*               pIDataObjectSrc;
 
   /*
-   * The registered DataObject clipboard format
-   */
-  UINT                       cfDataObj;
-
-  /*
-   * The handle to ourself
-   */
-  HGLOBAL                    hSelf;
-
-  /*
    * Reference count of this object
    */
   LONG                       ref;
@@ -647,68 +637,33 @@ void OLEClipbrd_UnInitialize(void)
  */
 static OLEClipbrd* OLEClipbrd_Construct(void)
 {
-  OLEClipbrd* newObject = NULL;
-  HGLOBAL hNewObject = 0;
+    OLEClipbrd* This;
 
-  /*
-   * Allocate space for the object. We use GlobalAlloc since we need
-   * an HGLOBAL to expose our DataObject as a registered clipboard type.
-   */
-  hNewObject = GlobalAlloc( GMEM_DDESHARE|GMEM_MOVEABLE|GMEM_ZEROINIT,
-                           sizeof(OLEClipbrd));
-  if (hNewObject==0)
-    return NULL;
+    This = HeapAlloc( GetProcessHeap(), 0, sizeof(*This) );
+    if (!This) return NULL;
 
-  /*
-   * Lock the handle for the entire lifetime of the clipboard.
-   */
-  newObject = GlobalLock(hNewObject);
+    This->lpvtbl1 = &OLEClipbrd_IDataObject_VTable;
+    This->ref = 1;
 
-  /*
-   * Initialize the virtual function table.
-   */
-  newObject->lpvtbl1 = &OLEClipbrd_IDataObject_VTable;
+    This->hWndClipboard = NULL;
+    This->pIDataObjectSrc = NULL;
 
-  /*
-   * Start with one reference count. The caller of this function
-   * must release the interface pointer when it is done.
-   */
-  newObject->ref = 1;
-
-  newObject->hSelf = hNewObject;
-
-  /*
-   * The Ole clipboard is a singleton - save the global handle and pointer
-   */
-  theOleClipboard = newObject;
-
-  return theOleClipboard;
+    theOleClipboard = This;
+    return This;
 }
 
-static void OLEClipbrd_Destroy(OLEClipbrd* ptrToDestroy)
+static void OLEClipbrd_Destroy(OLEClipbrd* This)
 {
-  TRACE("()\n");
+    TRACE("()\n");
 
-  if ( !ptrToDestroy )
-    return;
+    if (!This) return;
 
-  /*
-   * Destroy the Ole clipboard window
-   */
-  if ( ptrToDestroy->hWndClipboard )
-    OLEClipbrd_DestroyWindow(ptrToDestroy->hWndClipboard);
+    theOleClipboard = NULL;
 
-  /*
-   * Free the actual OLE Clipboard structure.
-   */
-  TRACE("() - Destroying clipboard data object.\n");
-  GlobalUnlock(ptrToDestroy->hSelf);
-  GlobalFree(ptrToDestroy->hSelf);
+    if ( This->hWndClipboard )
+        OLEClipbrd_DestroyWindow(This->hWndClipboard);
 
-  /*
-   * The Ole clipboard is a singleton (ptrToDestroy == theOleClipboard)
-   */
-  theOleClipboard = NULL;
+    HeapFree(GetProcessHeap(), 0, This);
 }
 
 
