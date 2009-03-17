@@ -20,6 +20,8 @@
 
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
+#pragma code_page(65001)
+
 /*
  * Menu
  */
@@ -47,22 +49,22 @@ BEGIN
     END
     POPUP "&Bearbeiten"
     BEGIN
-        MENUITEM "&Ändern",                        ID_EDIT_MODIFY
+        MENUITEM "&Ã„ndern",                        ID_EDIT_MODIFY
         MENUITEM SEPARATOR
         POPUP "&Neu"
         BEGIN
-            MENUITEM "&Schlüssel",                 ID_EDIT_NEW_KEY
+            MENUITEM "&SchlÃ¼ssel",                 ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
             MENUITEM "&Zeichenfolge",              ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&Binärwert",                 ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&BinÃ¤rwert",                 ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD-Wert",                ID_EDIT_NEW_DWORDVALUE
             MENUITEM "&Mehrteilige Zeichenfolge",  ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Löschen\tEntf",                 ID_EDIT_DELETE
+        MENUITEM "&LÃ¶schen\tEntf",                 ID_EDIT_DELETE
         MENUITEM "&Umbenennen",                    ID_EDIT_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "Schlüsselnamen &kopieren",       ID_EDIT_COPYKEYNAME
+        MENUITEM "SchlÃ¼sselnamen &kopieren",       ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Suchen\tStrg+F",                ID_EDIT_FIND, GRAYED
         MENUITEM "&Weitersuchen\tF3",              ID_EDIT_FINDNEXT, GRAYED
@@ -77,14 +79,14 @@ BEGIN
     END
     POPUP "&Favoriten"
     BEGIN
-        MENUITEM "Zu den Favoriten &hinzufügen...",   ID_FAVORITES_ADDTOFAVORITES
-        MENUITEM "Von den Favoriten &löschen...",     ID_FAVORITES_REMOVEFAVORITE
+        MENUITEM "Zu den Favoriten &hinzufÃ¼gen...",   ID_FAVORITES_ADDTOFAVORITES
+        MENUITEM "Von den Favoriten &lÃ¶schen...",     ID_FAVORITES_REMOVEFAVORITE
     END
     POPUP "&Hilfe"
     BEGIN
         MENUITEM "&Hilfethemen\tF1",               ID_HELP_HELPTOPICS
         MENUITEM SEPARATOR
-        MENUITEM "&Über Registry Editor",          ID_HELP_ABOUT
+        MENUITEM "&Ãœber Registry Editor",          ID_HELP_ABOUT
     END
 END
 
@@ -92,29 +94,29 @@ IDR_POPUP_MENUS MENU DISCARDABLE
 BEGIN
   POPUP ""
   BEGIN
-	MENUITEM "&Ändern",                        ID_EDIT_MODIFY
-	MENUITEM "Binäre Daten ändern",            ID_EDIT_MODIFY_BIN
+	MENUITEM "&Ã„ndern",                        ID_EDIT_MODIFY
+	MENUITEM "BinÃ¤re Daten Ã¤ndern",            ID_EDIT_MODIFY_BIN
 	MENUITEM SEPARATOR
-	MENUITEM "&Löschen\tEntf",                 ID_EDIT_DELETE
+	MENUITEM "&LÃ¶schen\tEntf",                 ID_EDIT_DELETE
 	MENUITEM "&Umbennenen",                    ID_EDIT_RENAME
   END
   POPUP ""
   BEGIN
         POPUP "&Neu"
         BEGIN
-            MENUITEM "&Schlüssel",                 ID_EDIT_NEW_KEY
+            MENUITEM "&SchlÃ¼ssel",                 ID_EDIT_NEW_KEY
             MENUITEM SEPARATOR
             MENUITEM "&Zeichenfolge",              ID_EDIT_NEW_STRINGVALUE
-            MENUITEM "&Binärwert",                 ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&BinÃ¤rwert",                 ID_EDIT_NEW_BINARYVALUE
             MENUITEM "&DWORD Wert",                ID_EDIT_NEW_DWORDVALUE
             MENUITEM "&Mehrteilige Zeichenfolge",  ID_EDIT_NEW_MULTI_STRINGVALUE
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Löschen\tEntf",                 ID_EDIT_DELETE
+        MENUITEM "&LÃ¶schen\tEntf",                 ID_EDIT_DELETE
         MENUITEM "&Umbenennen",                    ID_EDIT_RENAME
         MENUITEM SEPARATOR
         MENUITEM "&Exportieren...",                ID_EDIT_EXPORT
-        MENUITEM "Schlüsselnamen &kopieren",       ID_EDIT_COPYKEYNAME
+        MENUITEM "SchlÃ¼sselnamen &kopieren",       ID_EDIT_COPYKEYNAME
         MENUITEM SEPARATOR
         MENUITEM "&Suchen\tStrg+F",                ID_EDIT_FIND, GRAYED
   END
@@ -132,7 +134,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX "Registry &exportieren", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
     AUTORADIOBUTTON "&Alles", IDC_EXPORT_ALL, 12, 15, 244, 12
-    AUTORADIOBUTTON "Ausgewählter &Zweig:", IDC_EXPORT_SELECTED, 12, 30, 90, 12
+    AUTORADIOBUTTON "AusgewÃ¤hlter &Zweig:", IDC_EXPORT_SELECTED, 12, 30, 90, 12
     EDITTEXT IDC_EXPORT_PATH, 102, 30, 164, 12
 END
 
@@ -144,7 +146,7 @@ BEGIN
     LTEXT           "Suchen:",IDC_STATIC,5,7,119,8
     EDITTEXT        IDC_VALUE_NAME,40,5,110,12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     LTEXT           "Suchen nach:",IDC_STATIC,5, 22, 119, 8
-    CHECKBOX        "Schlüsseln", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX        "SchlÃ¼sseln", IDC_FIND_KEYS, 5, 34, 90, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
     CHECKBOX        "Werten", IDC_FIND_VALUES, 5, 46, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
     CHECKBOX        "Daten", IDC_FIND_CONTENT, 5, 58, 90, 10, WS_TABSTOP | BS_AUTOCHECKBOX
     CHECKBOX        "Komplette Zeichenfolge vergleichen", IDC_FIND_WHOLE, 5, 70, 150, 10, WS_TABSTOP | BS_AUTOCHECKBOX
@@ -154,7 +156,7 @@ END
 
 IDD_ADDFAVORITE DIALOG DISCARDABLE  22,17, 210, 55
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Zu den Favoriten hinzufügen"
+CAPTION "Zu den Favoriten hinzufÃ¼gen"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT          "NAME:",IDC_STATIC,5,5,119,8
@@ -176,7 +178,7 @@ END
 
 IDD_EDIT_STRING DIALOG DISCARDABLE  22, 17, 210, 75
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Zeichenfolge ändern"
+CAPTION "Zeichenfolge Ã¤ndern"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Name:",IDC_STATIC,5,5,119,8
@@ -205,7 +207,7 @@ END
 
 IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "Binären Wert editieren"
+CAPTION "BinÃ¤ren Wert editieren"
 FONT 8, "MS Shell Dlg"
 BEGIN
     LTEXT           "Name:",IDC_STATIC,5,5,119,8
@@ -248,21 +250,21 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_MENU        "Befehle zum Bearbeiten der ganzen Registry"
-    ID_EDIT_MENU            "Befehle zum Ändern von Schlüsseln oder Werten"
+    ID_EDIT_MENU            "Befehle zum Ã„ndern von SchlÃ¼sseln oder Werten"
     ID_VIEW_MENU            "Befehle zum Anpassen des Fensters"
-    ID_FAVORITES_MENU       "Befehle für die Favoriten"
-    ID_HELP_MENU            "Befehle zum Anzeigen von Hilfe oder Informationen über das Programm"
-    ID_EDIT_NEW_MENU        "Befehle zum Erstellen von neuen Schlüsseln oder Daten"
+    ID_FAVORITES_MENU       "Befehle fÃ¼r die Favoriten"
+    ID_HELP_MENU            "Befehle zum Anzeigen von Hilfe oder Informationen Ã¼ber das Programm"
+    ID_EDIT_NEW_MENU        "Befehle zum Erstellen von neuen SchlÃ¼sseln oder Daten"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_EDIT_MODIFY          "Ändert die Daten eines Wertes"
-    ID_EDIT_NEW_KEY         "Fügt einen neuen Schlüssel hinzu"
-    ID_EDIT_NEW_STRINGVALUE "Fügt eine neue Zeichenfolge hinzu "
-    ID_EDIT_NEW_BINARYVALUE "Fügt einen neuen Binärwert hinzu"
-    ID_EDIT_NEW_DWORDVALUE  "Fügt einen neuen DWORD-Wert hinzu"
-    ID_EDIT_NEW_MULTI_STRINGVALUE "Fügt eine neue mehrteilige Zeichenfolge hinzu"
+    ID_EDIT_MODIFY          "Ã„ndert die Daten eines Wertes"
+    ID_EDIT_NEW_KEY         "FÃ¼gt einen neuen SchlÃ¼ssel hinzu"
+    ID_EDIT_NEW_STRINGVALUE "FÃ¼gt eine neue Zeichenfolge hinzu "
+    ID_EDIT_NEW_BINARYVALUE "FÃ¼gt einen neuen BinÃ¤rwert hinzu"
+    ID_EDIT_NEW_DWORDVALUE  "FÃ¼gt einen neuen DWORD-Wert hinzu"
+    ID_EDIT_NEW_MULTI_STRINGVALUE "FÃ¼gt eine neue mehrteilige Zeichenfolge hinzu"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importiert eine Textdatei in die Registry"
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exportiert Teile oder die ganze Registry in eine Textdatei"
@@ -271,36 +273,36 @@ BEGIN
     ID_REGISTRY_DISCONNECTNETWORKREGISTRY
                             "Trennt die Verbindung zu der Registry eines Fremdcomputers"
     ID_REGISTRY_PRINT       "Druckt Teile oder die gesamte Registry aus"
-/*    ID_HELP_HELPTOPICS      "Öffnet die Hilfe" */
+/*    ID_HELP_HELPTOPICS      "Ã–ffnet die Hilfe" */
     ID_HELP_ABOUT           "Zeigt Programmname, Version und Copyright an"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Beendet den Registry-Editor"
-    ID_FAVORITES_ADDTOFAVORITES "Fügt Schlüssel zu den Favoriten hinzu"
-    ID_FAVORITES_REMOVEFAVORITE "Löscht Schlüssel von den Favoriten"
+    ID_FAVORITES_ADDTOFAVORITES "FÃ¼gt SchlÃ¼ssel zu den Favoriten hinzu"
+    ID_FAVORITES_REMOVEFAVORITE "LÃ¶scht SchlÃ¼ssel von den Favoriten"
     ID_VIEW_STATUSBAR       "Zeigt oder versteckt die Statusleiste"
-    ID_VIEW_SPLIT           "Ändert die Position das Fensterteilers"
+    ID_VIEW_SPLIT           "Ã„ndert die Position das Fensterteilers"
     ID_VIEW_REFRESH         "Aktualisiert das Fenster"
-    ID_EDIT_DELETE          "Löscht die Auswahl"
+    ID_EDIT_DELETE          "LÃ¶scht die Auswahl"
     ID_EDIT_RENAME          "Benennt die Auswahl um"
-    ID_EDIT_COPYKEYNAME     "Kopiert den Schlüsselnamen in die Zwischenablage"
-    ID_EDIT_FIND            "Findet eine Zeichenfolge in einem Schlüssel, einem Namen oder in Daten"
-    ID_EDIT_FINDNEXT        "Findet die nächste Zeichenfolge"
+    ID_EDIT_COPYKEYNAME     "Kopiert den SchlÃ¼sselnamen in die Zwischenablage"
+    ID_EDIT_FIND            "Findet eine Zeichenfolge in einem SchlÃ¼ssel, einem Namen oder in Daten"
+    ID_EDIT_FINDNEXT        "Findet die nÃ¤chste Zeichenfolge"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR               "Fehler"
-    IDS_BAD_KEY             "Kann den Schlüssel '%s' nicht lesen"
+    IDS_BAD_KEY             "Kann den SchlÃ¼ssel '%s' nicht lesen"
     IDS_BAD_VALUE           "Kann den Wert '%s' nicht lesen"
-    IDS_UNSUPPORTED_TYPE    "Kann Schlüssel von diesem Typ (%u) nicht ändern"
-    IDS_TOO_BIG_VALUE       "Der Wert ist zu groß (%u)"
-    IDS_DELETE_BOX_TITLE    "Bitte bestätigen"
-    IDS_DELETE_BOX_TEXT     "Wollen Sie '%s' wirklich löschen?"
-    IDS_DELETE_BOX_TEXT_MULTIPLE "Wollen Sie diese Werte wirklich löschen?"
-    IDS_NEWKEY              "Neuer Schlüssel #%d"
+    IDS_UNSUPPORTED_TYPE    "Kann SchlÃ¼ssel von diesem Typ (%u) nicht Ã¤ndern"
+    IDS_TOO_BIG_VALUE       "Der Wert ist zu groÃŸ (%u)"
+    IDS_DELETE_BOX_TITLE    "Bitte bestÃ¤tigen"
+    IDS_DELETE_BOX_TEXT     "Wollen Sie '%s' wirklich lÃ¶schen?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Wollen Sie diese Werte wirklich lÃ¶schen?"
+    IDS_NEWKEY              "Neuer SchlÃ¼ssel #%d"
     IDS_NEWVALUE            "Neuer Wert #%d"
     IDS_NOTFOUND            "Suchfolge '%s' wurde nicht gefunden."
 END
@@ -333,3 +335,5 @@ BEGIN
 END
 
 /*****************************************************************/
+
+#pragma code_page(default)
