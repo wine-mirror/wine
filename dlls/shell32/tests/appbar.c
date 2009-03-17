@@ -340,14 +340,12 @@ static void test_setpos(void)
     test_window_rects(1, 2);
 
     /* remove the other windows */
-    SetWindowLongPtr(windows[1].hwnd, GWLP_USERDATA, 0);
     abd.hWnd = windows[1].hwnd;
     ret = SHAppBarMessage(ABM_REMOVE, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
     windows[1].registered = FALSE;
     DestroyWindow(windows[1].hwnd);
 
-    SetWindowLongPtr(windows[2].hwnd, GWLP_USERDATA, 0);
     abd.hWnd = windows[2].hwnd;
     ret = SHAppBarMessage(ABM_REMOVE, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
