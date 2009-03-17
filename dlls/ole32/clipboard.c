@@ -86,35 +86,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 
 /****************************************************************************
- * OLEClipbrd
- * DO NOT add any members before the VTables declaration!
+ * ole_clipbrd
  */
-struct OLEClipbrd
+struct ole_clipbrd
 {
-  /*
-   * List all interface VTables here
-   */
-  const IDataObjectVtbl*  lpvtbl1;  /* IDataObject VTable */
+    const IDataObjectVtbl* lpvtbl;  /* Exposed IDataObject vtable */
 
-  /*
-   * The hidden OLE clipboard window. This window is used as the bridge between the
-   * the OLE and windows clipboard API. (Windows creates one such window per process)
-   */
-  HWND                       hWndClipboard;
+    LONG ref;
 
-  /*
-   * Pointer to the source data object (via OleSetClipboard)
-   */
-  IDataObject*               pIDataObjectSrc;
-
-  /*
-   * Reference count of this object
-   */
-  LONG                       ref;
+    HWND hWndClipboard;              /* Hidden clipboard window */
+    IDataObject* pIDataObjectSrc;    /* Source object passed to OleSetClipboard */
 };
 
-typedef struct OLEClipbrd OLEClipbrd;
+typedef struct ole_clipbrd ole_clipbrd;
 
+static inline ole_clipbrd *impl_from_IDataObject(IDataObject *iface)
+{
+    return (ole_clipbrd*)((char*)iface - FIELD_OFFSET(ole_clipbrd, lpvtbl));
+}
 
 /****************************************************************************
 *   IEnumFORMATETC implementation
@@ -151,9 +140,9 @@ typedef struct PresentationDataHeader
 } PresentationDataHeader;
 
 /*
- * The one and only OLEClipbrd object which is created by OLEClipbrd_Initialize()
+ * The one and only ole_clipbrd object which is created by OLEClipbrd_Initialize()
  */
-static OLEClipbrd* theOleClipboard;
+static ole_clipbrd* theOleClipboard;
 
 
 /*
@@ -161,8 +150,8 @@ static OLEClipbrd* theOleClipboard;
  */
 void OLEClipbrd_Initialize(void);
 void OLEClipbrd_UnInitialize(void);
-static OLEClipbrd* OLEClipbrd_Construct(void);
-static void OLEClipbrd_Destroy(OLEClipbrd* ptrToDestroy);
+static ole_clipbrd* OLEClipbrd_Construct(void);
+static void OLEClipbrd_Destroy(ole_clipbrd* ptrToDestroy);
 static HWND OLEClipbrd_CreateWindow(void);
 static void OLEClipbrd_DestroyWindow(HWND hwnd);
 static LRESULT CALLBACK OLEClipbrd_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -467,7 +456,7 @@ HRESULT WINAPI OleGetClipboard(IDataObject** ppDataObj)
     return E_OUTOFMEMORY;
 
   /* Return a reference counted IDataObject */
-  hr = IDataObject_QueryInterface( (IDataObject*)&(theOleClipboard->lpvtbl1),
+  hr = IDataObject_QueryInterface( (IDataObject*)&(theOleClipboard->lpvtbl),
                                    &IID_IDataObject,  (void**)ppDataObj);
   return hr;
 }
@@ -635,14 +624,14 @@ void OLEClipbrd_UnInitialize(void)
 /*********************************************************
  * Construct the OLEClipbrd class.
  */
-static OLEClipbrd* OLEClipbrd_Construct(void)
+static ole_clipbrd* OLEClipbrd_Construct(void)
 {
-    OLEClipbrd* This;
+    ole_clipbrd* This;
 
     This = HeapAlloc( GetProcessHeap(), 0, sizeof(*This) );
     if (!This) return NULL;
 
-    This->lpvtbl1 = &OLEClipbrd_IDataObject_VTable;
+    This->lpvtbl = &OLEClipbrd_IDataObject_VTable;
     This->ref = 1;
 
     This->hWndClipboard = NULL;
@@ -652,7 +641,7 @@ static OLEClipbrd* OLEClipbrd_Construct(void)
     return This;
 }
 
-static void OLEClipbrd_Destroy(OLEClipbrd* This)
+static void OLEClipbrd_Destroy(ole_clipbrd* This)
 {
     TRACE("()\n");
 
@@ -665,7 +654,6 @@ static void OLEClipbrd_Destroy(OLEClipbrd* This)
 
     HeapFree(GetProcessHeap(), 0, This);
 }
-
 
 /***********************************************************************
  * OLEClipbrd_CreateWindow()
@@ -773,7 +761,7 @@ static LRESULT CALLBACK OLEClipbrd_WndProc
        * Render the clipboard data.
        * (We must have a source data object or we wouldn't be in this WndProc)
        */
-      OLEClipbrd_RenderFormat( (IDataObject*)&(theOleClipboard->lpvtbl1), &rgelt );
+      OLEClipbrd_RenderFormat( (IDataObject*)&(theOleClipboard->lpvtbl), &rgelt );
 
       break;
     }
@@ -799,7 +787,7 @@ static LRESULT CALLBACK OLEClipbrd_WndProc
        * Render all HGLOBAL formats supported by the source into
        * the windows clipboard.
        */
-      if ( FAILED( IDataObject_EnumFormatEtc( (IDataObject*)&(theOleClipboard->lpvtbl1),
+      if ( FAILED( IDataObject_EnumFormatEtc( (IDataObject*)&(theOleClipboard->lpvtbl),
                                  DATADIR_GET, &penumFormatetc) ) )
       {
         WARN("(): WM_RENDERALLFORMATS failed to retrieve EnumFormatEtc!\n");
@@ -813,7 +801,7 @@ static LRESULT CALLBACK OLEClipbrd_WndProc
           /*
            * Render the clipboard data.
            */
-          if ( FAILED(OLEClipbrd_RenderFormat( (IDataObject*)&(theOleClipboard->lpvtbl1), &rgelt )) )
+          if ( FAILED(OLEClipbrd_RenderFormat( (IDataObject*)&(theOleClipboard->lpvtbl), &rgelt )) )
             continue;
 
           TRACE("(): WM_RENDERALLFORMATS(cfFormat=%d)\n", rgelt.cfFormat);
@@ -1064,10 +1052,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_QueryInterface(
             REFIID           riid,
             void**           ppvObject)
 {
-  /*
-   * Declare "This" pointer
-   */
-  OLEClipbrd *This = (OLEClipbrd *)iface;
+  ole_clipbrd *This = impl_from_IDataObject(iface);
   TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObject);
 
   /*
@@ -1090,7 +1075,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_QueryInterface(
   }
   else if (memcmp(&IID_IDataObject, riid, sizeof(IID_IDataObject)) == 0)
   {
-    *ppvObject = &This->lpvtbl1;
+    *ppvObject = &This->lpvtbl;
   }
   else  /* We only support IUnknown and IDataObject */
   {
@@ -1115,15 +1100,11 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_QueryInterface(
 static ULONG WINAPI OLEClipbrd_IDataObject_AddRef(
             IDataObject*     iface)
 {
-  /*
-   * Declare "This" pointer
-   */
-  OLEClipbrd *This = (OLEClipbrd *)iface;
+  ole_clipbrd *This = impl_from_IDataObject(iface);
 
   TRACE("(%p)->(count=%u)\n",This, This->ref);
 
   return InterlockedIncrement(&This->ref);
-
 }
 
 /************************************************************************
@@ -1134,22 +1115,13 @@ static ULONG WINAPI OLEClipbrd_IDataObject_AddRef(
 static ULONG WINAPI OLEClipbrd_IDataObject_Release(
             IDataObject*     iface)
 {
-  /*
-   * Declare "This" pointer
-   */
-  OLEClipbrd *This = (OLEClipbrd *)iface;
+  ole_clipbrd *This = impl_from_IDataObject(iface);
   ULONG ref;
 
   TRACE("(%p)->(count=%u)\n",This, This->ref);
 
-  /*
-   * Decrease the reference count on this object.
-   */
   ref = InterlockedDecrement(&This->ref);
 
-  /*
-   * If the reference count goes down to 0, perform suicide.
-   */
   if (ref == 0)
   {
     OLEClipbrd_Destroy(This);
@@ -1176,11 +1148,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
   BOOL bClipboardOpen = FALSE;
   HRESULT hr = S_OK;
   LPVOID src;
-
-  /*
-   * Declare "This" pointer
-   */
-  OLEClipbrd *This = (OLEClipbrd *)iface;
+  ole_clipbrd *This = impl_from_IDataObject(iface);
 
   TRACE("(%p,%p,%p)\n", iface, pformatetcIn, pmedium);
 
@@ -1346,11 +1314,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
   int cfmt, i;
   UINT format;
   BOOL bClipboardOpen;
-
-  /*
-   * Declare "This" pointer
-   */
-  OLEClipbrd *This = (OLEClipbrd *)iface;
+  ole_clipbrd *This = impl_from_IDataObject(iface);
 
   TRACE("(%p, %x, %p)\n", iface, dwDirection, ppenumFormatEtc);
 
