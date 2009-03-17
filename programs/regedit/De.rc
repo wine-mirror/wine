@@ -290,6 +290,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Kopiert den Schlüsselnamen in die Zwischenablage"
     ID_EDIT_FIND            "Findet eine Zeichenfolge in einem Schlüssel, einem Namen oder in Daten"
     ID_EDIT_FINDNEXT        "Findet die nächste Zeichenfolge"
+    ID_EDIT_EXPORT          "Exportiert den ausgewählten Zweig der Registry in eine Textdatei"
 END
 
 STRINGTABLE DISCARDABLE
