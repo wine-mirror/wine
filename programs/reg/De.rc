@@ -21,10 +21,14 @@
 
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
+#pragma code_page(65001)
+
 STRINGTABLE
 {
     STRING_USAGE, "Die Syntax von diesem Befehl ist:\n\nREG [ ADD | DELETE | QUERY ]\nREG Befehl /?\n"
-    STRING_ADD_USAGE, "REG ADD Schlüssel [/v Wert | /ve] [/t Typ] [/s Trenner] [/d Daten] [/f]\n"
-    STRING_DELETE_USAGE, "REG DELETE Schlüssel [/v Wert | /ve | /va] [/f]\n"
-    STRING_QUERY_USAGE, "REG QUERY Schlüssel [/v Wert | /ve] [/s]\n"
+    STRING_ADD_USAGE, "REG ADD SchlÃ¼ssel [/v Wert | /ve] [/t Typ] [/s Trenner] [/d Daten] [/f]\n"
+    STRING_DELETE_USAGE, "REG DELETE SchlÃ¼ssel [/v Wert | /ve | /va] [/f]\n"
+    STRING_QUERY_USAGE, "REG QUERY SchlÃ¼ssel [/v Wert | /ve] [/s]\n"
 }
+
+#pragma code_page(default)
