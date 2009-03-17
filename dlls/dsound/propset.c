@@ -405,7 +405,7 @@ static HRESULT DSPROPERTY_Description1(
     PULONG pcbReturned )
 {
     HRESULT err;
-    GUID guid, dev_guid;
+    GUID dev_guid;
     PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA ppd;
     TRACE("(pPropData=%p,cbPropData=%d,pcbReturned=%p)\n",
 	pPropData,cbPropData,pcbReturned);
@@ -474,7 +474,7 @@ static HRESULT DSPROPERTY_Description1(
 	ppd->DataFlow = DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE;
 	widn = waveInGetNumDevs();
 	for (wid = 0; wid < widn; wid++) {
-            if (IsEqualGUID( &dev_guid, &guid) ) {
+            if (IsEqualGUID( &dev_guid, &DSOUND_capture_guids[wid] ) ) {
                 DSDRIVERDESC desc;
                 ppd->WaveDeviceId = wid;
                 ppd->Devnode = wid;
