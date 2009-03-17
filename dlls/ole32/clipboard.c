@@ -183,11 +183,8 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_QueryInterface
 
   *ppvObj = NULL;
 
-  if(IsEqualIID(riid, &IID_IUnknown))
-  {
-    *ppvObj = This;
-  }
-  else if(IsEqualIID(riid, &IID_IEnumFORMATETC))
+  if(IsEqualIID(riid, &IID_IUnknown) ||
+     IsEqualIID(riid, &IID_IEnumFORMATETC))
   {
     *ppvObj = This;
   }
