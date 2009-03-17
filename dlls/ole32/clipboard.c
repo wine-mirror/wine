@@ -163,8 +163,7 @@ typedef struct PresentationDataHeader
 /*
  * The one and only OLEClipbrd object which is created by OLEClipbrd_Initialize()
  */
-static HGLOBAL hTheOleClipboard = 0;
-static OLEClipbrd* theOleClipboard = NULL;
+static OLEClipbrd* theOleClipboard;
 
 
 /*
@@ -682,7 +681,6 @@ static OLEClipbrd* OLEClipbrd_Construct(void)
    * The Ole clipboard is a singleton - save the global handle and pointer
    */
   theOleClipboard = newObject;
-  hTheOleClipboard = hNewObject;
 
   return theOleClipboard;
 }
@@ -711,7 +709,6 @@ static void OLEClipbrd_Destroy(OLEClipbrd* ptrToDestroy)
    * The Ole clipboard is a singleton (ptrToDestroy == theOleClipboard)
    */
   theOleClipboard = NULL;
-  hTheOleClipboard = 0;
 }
 
 
