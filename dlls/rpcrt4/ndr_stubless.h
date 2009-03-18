@@ -240,3 +240,4 @@ void client_do_args_old_format(PMIDL_STUB_MESSAGE pStubMsg,
     PFORMAT_STRING pFormat, int phase, unsigned char *args,
     unsigned short stack_size, unsigned char *pRetVal, BOOL object_proc,
     BOOL ignore_retval);
+RPC_STATUS NdrpCompleteAsyncClientCall(RPC_ASYNC_STATE *pAsync, void *Reply);
