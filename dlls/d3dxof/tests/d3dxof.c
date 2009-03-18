@@ -61,7 +61,7 @@ static void init_function_pointers(void)
     pDirectXFileCreate = (void *)GetProcAddress(hd3dxof, "DirectXFileCreate");
 }
 
-static unsigned long getRefcount(IUnknown *iface)
+static ULONG getRefcount(IUnknown *iface)
 {
     IUnknown_AddRef(iface);
     return IUnknown_Release(iface);
@@ -70,7 +70,7 @@ static unsigned long getRefcount(IUnknown *iface)
 static void test_refcount(void)
 {
     HRESULT hr;
-    unsigned long ref;
+    ULONG ref;
     LPDIRECTXFILE lpDirectXFile = NULL;
     LPDIRECTXFILEENUMOBJECT lpdxfeo;
     LPDIRECTXFILEDATA lpdxfd;
@@ -91,11 +91,11 @@ static void test_refcount(void)
     }
 
     ref = getRefcount( (IUnknown *) lpDirectXFile);
-    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
     ref = IDirectXFile_AddRef(lpDirectXFile);
-    ok(ref == 2, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 2, "Got refcount %d, expected 1\n", ref);
     ref = IDirectXFile_Release(lpDirectXFile);
-    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, strlen(template));
     ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
@@ -105,36 +105,36 @@ static void test_refcount(void)
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
     ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
     ref = getRefcount( (IUnknown *) lpDirectXFile);
-    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
     ref = getRefcount( (IUnknown *) lpdxfeo);
-    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
 
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
     ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
     ref = getRefcount( (IUnknown *) lpDirectXFile);
-    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
     ref = getRefcount( (IUnknown *) lpdxfeo);
-    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
     /* Enum object gets references to all top level objects */
     ref = getRefcount( (IUnknown *) lpdxfd);
-    ok(ref == 2, "Got refcount %ld, expected 2\n", ref);
+    ok(ref == 2, "Got refcount %d, expected 2\n", ref);
 
     ref = IDirectXFile_Release(lpDirectXFile);
-    ok(ref == 0, "Got refcount %ld, expected 0\n", ref);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
     /* Nothing changes for all other objects */
     ref = getRefcount( (IUnknown *) lpdxfeo);
-    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
     ref = getRefcount( (IUnknown *) lpdxfd);
-    ok(ref == 2, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 2, "Got refcount %d, expected 1\n", ref);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
-    ok(ref == 0, "Got refcount %ld, expected 0\n", ref);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
     /* Enum object releases references to all top level objects */
     ref = getRefcount( (IUnknown *) lpdxfd);
-    ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
+    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
 
     ref = IDirectXFileData_Release(lpdxfd);
-    ok(ref == 0, "Got refcount %ld, expected 0\n", ref);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
 }
 
 /* Set it to 1 to expand the string when dumping the object. This is useful when there is
@@ -236,7 +236,7 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
 static void test_dump(void)
 {
     HRESULT hr;
-    unsigned long ref;
+    ULONG ref;
     LPDIRECTXFILE lpDirectXFile = NULL;
     LPDIRECTXFILEENUMOBJECT lpDirectXFileEnumObject = NULL;
     LPDIRECTXFILEDATA lpDirectXFileData = NULL;
@@ -294,10 +294,10 @@ static void test_dump(void)
     ok(hr == DXFILE_OK || hr == DXFILEERR_NOMOREOBJECTS, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
 
     ref = IDirectXFile_Release(lpDirectXFileEnumObject);
-    ok(ref == 0, "Got refcount %ld, expected 0\n", ref);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
 
     ref = IDirectXFile_Release(lpDirectXFile);
-    ok(ref == 0, "Got refcount %ld, expected 0\n", ref);
+    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
 
     CloseHandle(hFile);
 
