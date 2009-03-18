@@ -43,7 +43,7 @@ static HWND create_window(void)
     return ret;
 }
 
-static unsigned long getref(IUnknown *obj) {
+static ULONG getref(IUnknown *obj) {
     IUnknown_AddRef(obj);
     return IUnknown_Release(obj);
 }
@@ -108,7 +108,7 @@ static void test_qi_ex_to_base(void)
     HRESULT hr;
     HWND window = create_window();
     D3DPRESENT_PARAMETERS present_parameters;
-    unsigned long ref;
+    ULONG ref;
 
     hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex);
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Direct3DCreate9Ex returned %08x\n", hr);
@@ -124,9 +124,9 @@ static void test_qi_ex_to_base(void)
     ok(d3d9 != NULL && d3d9 != (void *) 0xdeadbeef,
        "QueryInterface returned interface %p, expected != NULL && != 0xdeadbeef\n", d3d9);
     ref = getref((IUnknown *) d3d9ex);
-    ok(ref == 2, "IDirect3D9Ex refcount is %ld, expected 2\n", ref);
+    ok(ref == 2, "IDirect3D9Ex refcount is %d, expected 2\n", ref);
     ref = getref((IUnknown *) d3d9);
-    ok(ref == 2, "IDirect3D9 refcount is %ld, expected 2\n", ref);
+    ok(ref == 2, "IDirect3D9 refcount is %d, expected 2\n", ref);
 
     memset(&present_parameters, 0, sizeof(present_parameters));
     present_parameters.Windowed = TRUE;
@@ -151,9 +151,9 @@ static void test_qi_ex_to_base(void)
     ok(deviceEx != NULL && deviceEx != (void *) 0xdeadbeef,
        "QueryInterface returned interface %p, expected != NULL && != 0xdeadbeef\n", deviceEx);
     ref = getref((IUnknown *) device);
-    ok(ref == 2, "IDirect3DDevice9 refcount is %ld, expected 2\n", ref);
+    ok(ref == 2, "IDirect3DDevice9 refcount is %d, expected 2\n", ref);
     ref = getref((IUnknown *) deviceEx);
-    ok(ref == 2, "IDirect3DDevice9Ex refcount is %ld, expected 2\n", ref);
+    ok(ref == 2, "IDirect3DDevice9Ex refcount is %d, expected 2\n", ref);
     if(deviceEx) IDirect3DDevice9Ex_Release(deviceEx);
     IDirect3DDevice9_Release(device);
 
@@ -171,9 +171,9 @@ static void test_qi_ex_to_base(void)
     ok(deviceEx != NULL && deviceEx != (void *) 0xdeadbeef,
        "QueryInterface returned interface %p, expected != NULL && != 0xdeadbeef\n", deviceEx);
     ref = getref((IUnknown *) device);
-    ok(ref == 2, "IDirect3DDevice9 refcount is %ld, expected 2\n", ref);
+    ok(ref == 2, "IDirect3DDevice9 refcount is %d, expected 2\n", ref);
     ref = getref((IUnknown *) deviceEx);
-    ok(ref == 2, "IDirect3DDevice9Ex refcount is %ld, expected 2\n", ref);
+    ok(ref == 2, "IDirect3DDevice9Ex refcount is %d, expected 2\n", ref);
     if(deviceEx) IDirect3DDevice9Ex_Release(deviceEx);
     IDirect3DDevice9_Release(device);
 

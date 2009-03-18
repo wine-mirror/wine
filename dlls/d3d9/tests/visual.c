@@ -2856,7 +2856,7 @@ static void release_buffer_test(IDirect3DDevice9 *device)
     IDirect3DIndexBuffer9 *ib = NULL;
     HRESULT hr;
     BYTE *data;
-    long ref;
+    LONG ref;
 
     static const struct vertex quad[] = {
         {-1.0,      -1.0,       0.1,        0xffff0000},
@@ -2905,7 +2905,7 @@ static void release_buffer_test(IDirect3DDevice9 *device)
 
     /* Now destroy the bound index buffer and draw again */
     ref = IDirect3DIndexBuffer9_Release(ib);
-    ok(ref == 0, "Index Buffer reference count is %08ld\n", ref);
+    ok(ref == 0, "Index Buffer reference count is %08d\n", ref);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
