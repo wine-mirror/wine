@@ -220,7 +220,7 @@ static LPWSTR get_fusion_filename(MSIPACKAGE *package)
 {
     HKEY netsetup;
     LONG res;
-    LPWSTR file;
+    LPWSTR file = NULL;
     DWORD index = 0, size;
     WCHAR ver[MAX_PATH];
     WCHAR name[MAX_PATH];
@@ -243,34 +243,46 @@ static LPWSTR get_fusion_filename(MSIPACKAGE *package)
     if (res != ERROR_SUCCESS)
         return NULL;
 
+    GetWindowsDirectoryW(windir, MAX_PATH);
+
     ver[0] = '\0';
     size = MAX_PATH;
     while (RegEnumKeyExW(netsetup, index, name, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
     {
         index++;
+
+        /* verify existence of fusion.dll .Net 3.0 does not install a new one */
         if (lstrcmpW(ver, name) < 0)
-            lstrcpyW(ver, name);
+        {
+            LPWSTR check;
+            size = lstrlenW(windir) + lstrlenW(subdir) + lstrlenW(name) +lstrlenW(fusion) + 3;
+            check = msi_alloc(size * sizeof(WCHAR));
+
+            if (!check)
+            {
+                if (file) msi_free(file);
+                return NULL;
+            }
+
+            lstrcpyW(check, windir);
+            lstrcatW(check, backslash);
+            lstrcatW(check, subdir);
+            lstrcatW(check, name);
+            lstrcatW(check, backslash);
+            lstrcatW(check, fusion);
+
+            if(GetFileAttributesW(check) != INVALID_FILE_ATTRIBUTES)
+            {
+                msi_free(file);
+                file = check;
+                lstrcpyW(ver, name);
+            }
+            else
+                msi_free(check);
+        }
     }
 
     RegCloseKey(netsetup);
-
-    if (!index)
-        return NULL;
-
-    GetWindowsDirectoryW(windir, MAX_PATH);
-
-    size = lstrlenW(windir) + lstrlenW(subdir) + lstrlenW(ver) +lstrlenW(fusion) + 3;
-    file = msi_alloc(size * sizeof(WCHAR));
-    if (!file)
-        return NULL;
-
-    lstrcpyW(file, windir);
-    lstrcatW(file, backslash);
-    lstrcatW(file, subdir);
-    lstrcatW(file, ver);
-    lstrcatW(file, backslash);
-    lstrcatW(file, fusion);
-
     return file;
 }
 
