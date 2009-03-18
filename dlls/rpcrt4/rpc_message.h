@@ -30,10 +30,21 @@ RpcPktHdr *RPCRT4_BuildResponseHeader(unsigned long DataRepresentation, unsigned
 RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation, unsigned short MaxTransmissionSize, unsigned short MaxReceiveSize, unsigned long AssocGroupId, const RPC_SYNTAX_IDENTIFIER *AbstractId, const RPC_SYNTAX_IDENTIFIER *TransferId);
 RpcPktHdr *RPCRT4_BuildBindNackHeader(unsigned long DataRepresentation, unsigned char RpcVersion, unsigned char RpcVersionMinor);
 RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation, unsigned short MaxTransmissionSize, unsigned short MaxReceiveSize, unsigned long AssocGroupId, LPCSTR ServerAddress, unsigned long Result, unsigned long Reason, const RPC_SYNTAX_IDENTIFIER *TransferId);
+RpcPktHdr *RPCRT4_BuildHttpHeader(unsigned long DataRepresentation, unsigned short flags, unsigned short num_data_items, unsigned int payload_size);
+RpcPktHdr *RPCRT4_BuildHttpConnectHeader(unsigned short flags, int out_pipe, const UUID *connection_uuid, const UUID *pipe_uuid, const UUID *association_uuid);
+RpcPktHdr *RPCRT4_BuildHttpFlowControlHeader(BOOL server, ULONG bytes_transmitted, ULONG flow_control_increment, const UUID *pipe_uuid);
 VOID RPCRT4_FreeHeader(RpcPktHdr *Header);
 RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header, void *Buffer, unsigned int BufferLength);
 RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header, PRPC_MESSAGE pMsg);
 RPC_STATUS RPCRT4_ReceiveWithAuth(RpcConnection *Connection, RpcPktHdr **Header, PRPC_MESSAGE pMsg, unsigned char **auth_data_out, unsigned long *auth_length_out);
+DWORD RPCRT4_GetHeaderSize(const RpcPktHdr *Header);
+RPC_STATUS RPCRT4_ValidateCommonHeader(const RpcPktCommonHdr *hdr);
+
+BOOL RPCRT4_IsValidHttpPacket(RpcPktHdr *hdr, unsigned char *data, unsigned short data_len);
+unsigned char *RPCRT4_NextHttpHeaderField(unsigned char *data);
+RPC_STATUS RPCRT4_ParseHttpPrepareHeader1(RpcPktHdr *header, unsigned char *data, ULONG *field1);
+RPC_STATUS RPCRT4_ParseHttpPrepareHeader2(RpcPktHdr *header, unsigned char *data, ULONG *field1, ULONG *bytes_until_next_packet, ULONG *field3);
+RPC_STATUS RPCRT4_ParseHttpFlowControlHeader(RpcPktHdr *header, unsigned char *data, BOOL server, ULONG *bytes_transmitted, ULONG *flow_control_increment, UUID *pipe_uuid);
 NCA_STATUS RPC2NCA_STATUS(RPC_STATUS status);
 RPC_STATUS RPCRT4_AuthorizeConnection(RpcConnection* conn, BYTE *challenge, ULONG count);
 

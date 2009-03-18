@@ -394,6 +394,7 @@ RPC_STATUS RpcAssoc_GetClientConnection(RpcAssoc *assoc,
     if (status != RPC_S_OK)
         return status;
 
+    NewConnection->assoc = assoc;
     status = RPCRT4_OpenClientConnection(NewConnection);
     if (status != RPC_S_OK)
     {

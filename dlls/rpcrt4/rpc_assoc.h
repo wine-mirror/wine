@@ -34,6 +34,7 @@ typedef struct _RpcAssoc
 
     /* id of this association group */
     ULONG assoc_group_id;
+    UUID http_uuid;
 
     CRITICAL_SECTION cs;
 
