@@ -256,7 +256,7 @@ static void test_lockrect_invalid(IDirect3DDevice8 *device)
     IDirect3DSurface8_Release(surface);
 }
 
-static unsigned long getref(IUnknown *iface)
+static ULONG getref(IUnknown *iface)
 {
     IUnknown_AddRef(iface);
     return IUnknown_Release(iface);
