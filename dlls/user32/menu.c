@@ -2841,7 +2841,7 @@ static BOOL MENU_SuspendPopup( MTRACKER* pmt, UINT16 uMsg )
 
     msg.hwnd = pmt->hOwnerWnd;
 
-    PeekMessageW( &msg, 0, 0, 0, PM_NOYIELD | PM_REMOVE);
+    PeekMessageW( &msg, 0, uMsg, uMsg, PM_NOYIELD | PM_REMOVE);
     pmt->trackFlags |= TF_SKIPREMOVE;
 
     switch( uMsg )
