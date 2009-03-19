@@ -693,7 +693,7 @@ static void QueryInterface(void)
  * partially in the refcount test
  */
 
-static unsigned long getref(IUnknown *iface)
+static ULONG getref(IUnknown *iface)
 {
     IUnknown_AddRef(iface);
     return IUnknown_Release(iface);
@@ -708,7 +708,7 @@ static void GetDDInterface_1(void)
     IDirectDraw2 *dd2;
     IDirectDraw4 *dd4;
     IDirectDraw7 *dd7;
-    unsigned long ref1, ref2, ref4, ref7;
+    ULONG ref1, ref2, ref4, ref7;
     void *dd;
 
     /* Create a surface */
@@ -733,21 +733,21 @@ static void GetDDInterface_1(void)
     ok(ret == DD_OK, "IDirectDraw7_QueryInterface returned %08x\n", ret);
 
     ref1 = getref((IUnknown *) lpDD);
-    ok(ref1 == 1, "IDirectDraw refcount is %ld\n", ref1);
+    ok(ref1 == 1, "IDirectDraw refcount is %d\n", ref1);
     ref2 = getref((IUnknown *) dd2);
-    ok(ref2 == 1, "IDirectDraw2 refcount is %ld\n", ref2);
+    ok(ref2 == 1, "IDirectDraw2 refcount is %d\n", ref2);
     ref4 = getref((IUnknown *) dd4);
-    ok(ref4 == 1, "IDirectDraw4 refcount is %ld\n", ref4);
+    ok(ref4 == 1, "IDirectDraw4 refcount is %d\n", ref4);
     ref7 = getref((IUnknown *) dd7);
-    ok(ref7 == 1, "IDirectDraw7 refcount is %ld\n", ref7);
+    ok(ref7 == 1, "IDirectDraw7 refcount is %d\n", ref7);
 
 
     ret = IDirectDrawSurface2_GetDDInterface(dsurface2, &dd);
     ok(ret == DD_OK, "IDirectDrawSurface7_GetDDInterface returned %08x\n", ret);
-    ok(getref((IUnknown *) lpDD) == ref1 + 1, "IDirectDraw refcount was increased by %ld\n", getref((IUnknown *) lpDD) - ref1);
-    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %ld\n", getref((IUnknown *) dd2) - ref2);
-    ok(getref((IUnknown *) dd4) == ref4 + 0, "IDirectDraw4 refcount was increased by %ld\n", getref((IUnknown *) dd4) - ref4);
-    ok(getref((IUnknown *) dd7) == ref7 + 0, "IDirectDraw7 refcount was increased by %ld\n", getref((IUnknown *) dd7) - ref7);
+    ok(getref((IUnknown *) lpDD) == ref1 + 1, "IDirectDraw refcount was increased by %d\n", getref((IUnknown *) lpDD) - ref1);
+    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %d\n", getref((IUnknown *) dd2) - ref2);
+    ok(getref((IUnknown *) dd4) == ref4 + 0, "IDirectDraw4 refcount was increased by %d\n", getref((IUnknown *) dd4) - ref4);
+    ok(getref((IUnknown *) dd7) == ref7 + 0, "IDirectDraw7 refcount was increased by %d\n", getref((IUnknown *) dd7) - ref7);
 
     ok(dd == lpDD, "Returned interface pointer is not equal to the creation interface\n");
     IUnknown_Release((IUnknown *) dd);
@@ -772,7 +772,7 @@ static void GetDDInterface_2(void)
     IDirectDraw2 *dd2;
     IDirectDraw4 *dd4;
     IDirectDraw7 *dd7;
-    unsigned long ref1, ref2, ref4, ref7;
+    ULONG ref1, ref2, ref4, ref7;
     void *dd;
 
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw2, (void **) &dd2);
@@ -798,21 +798,21 @@ static void GetDDInterface_2(void)
     ok(ret == DD_OK, "IDirectDrawSurface_QueryInterface returned %08x\n", ret);
 
     ref1 = getref((IUnknown *) lpDD);
-    ok(ref1 == 1, "IDirectDraw refcount is %ld\n", ref1);
+    ok(ref1 == 1, "IDirectDraw refcount is %d\n", ref1);
     ref2 = getref((IUnknown *) dd2);
-    ok(ref2 == 1, "IDirectDraw2 refcount is %ld\n", ref2);
+    ok(ref2 == 1, "IDirectDraw2 refcount is %d\n", ref2);
     ref4 = getref((IUnknown *) dd4);
-    ok(ref4 == 1, "IDirectDraw4 refcount is %ld\n", ref4);
+    ok(ref4 == 1, "IDirectDraw4 refcount is %d\n", ref4);
     ref7 = getref((IUnknown *) dd7);
-    ok(ref7 == 1, "IDirectDraw7 refcount is %ld\n", ref7);
+    ok(ref7 == 1, "IDirectDraw7 refcount is %d\n", ref7);
 
 
     ret = IDirectDrawSurface2_GetDDInterface(dsurface2, &dd);
     ok(ret == DD_OK, "IDirectDrawSurface7_GetDDInterface returned %08x\n", ret);
-    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %ld\n", getref((IUnknown *) lpDD) - ref1);
-    ok(getref((IUnknown *) dd2) == ref2 + 1, "IDirectDraw2 refcount was increased by %ld\n", getref((IUnknown *) dd2) - ref2);
-    ok(getref((IUnknown *) dd4) == ref4 + 0, "IDirectDraw4 refcount was increased by %ld\n", getref((IUnknown *) dd4) - ref4);
-    ok(getref((IUnknown *) dd7) == ref7 + 0, "IDirectDraw7 refcount was increased by %ld\n", getref((IUnknown *) dd7) - ref7);
+    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %d\n", getref((IUnknown *) lpDD) - ref1);
+    ok(getref((IUnknown *) dd2) == ref2 + 1, "IDirectDraw2 refcount was increased by %d\n", getref((IUnknown *) dd2) - ref2);
+    ok(getref((IUnknown *) dd4) == ref4 + 0, "IDirectDraw4 refcount was increased by %d\n", getref((IUnknown *) dd4) - ref4);
+    ok(getref((IUnknown *) dd7) == ref7 + 0, "IDirectDraw7 refcount was increased by %d\n", getref((IUnknown *) dd7) - ref7);
 
     ok(dd == dd2, "Returned interface pointer is not equal to the creation interface\n");
     IUnknown_Release((IUnknown *) dd);
@@ -833,7 +833,7 @@ static void GetDDInterface_4(void)
     IDirectDraw2 *dd2;
     IDirectDraw4 *dd4;
     IDirectDraw7 *dd7;
-    unsigned long ref1, ref2, ref4, ref7;
+    ULONG ref1, ref2, ref4, ref7;
     void *dd;
 
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw2, (void **) &dd2);
@@ -859,20 +859,20 @@ static void GetDDInterface_4(void)
     ok(ret == DD_OK, "IDirectDrawSurface_QueryInterface returned %08x\n", ret);
 
     ref1 = getref((IUnknown *) lpDD);
-    ok(ref1 == 1, "IDirectDraw refcount is %ld\n", ref1);
+    ok(ref1 == 1, "IDirectDraw refcount is %d\n", ref1);
     ref2 = getref((IUnknown *) dd2);
-    ok(ref2 == 1, "IDirectDraw2 refcount is %ld\n", ref2);
+    ok(ref2 == 1, "IDirectDraw2 refcount is %d\n", ref2);
     ref4 = getref((IUnknown *) dd4);
-    ok(ref4 == 2, "IDirectDraw4 refcount is %ld\n", ref4);
+    ok(ref4 == 2, "IDirectDraw4 refcount is %d\n", ref4);
     ref7 = getref((IUnknown *) dd7);
-    ok(ref7 == 1, "IDirectDraw7 refcount is %ld\n", ref7);
+    ok(ref7 == 1, "IDirectDraw7 refcount is %d\n", ref7);
 
     ret = IDirectDrawSurface4_GetDDInterface(dsurface4, &dd);
     ok(ret == DD_OK, "IDirectDrawSurface7_GetDDInterface returned %08x\n", ret);
-    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %ld\n", getref((IUnknown *) lpDD) - ref1);
-    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %ld\n", getref((IUnknown *) dd2) - ref2);
-    ok(getref((IUnknown *) dd4) == ref4 + 1, "IDirectDraw4 refcount was increased by %ld\n", getref((IUnknown *) dd4) - ref4);
-    ok(getref((IUnknown *) dd7) == ref7 + 0, "IDirectDraw7 refcount was increased by %ld\n", getref((IUnknown *) dd7) - ref7);
+    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %d\n", getref((IUnknown *) lpDD) - ref1);
+    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %d\n", getref((IUnknown *) dd2) - ref2);
+    ok(getref((IUnknown *) dd4) == ref4 + 1, "IDirectDraw4 refcount was increased by %d\n", getref((IUnknown *) dd4) - ref4);
+    ok(getref((IUnknown *) dd7) == ref7 + 0, "IDirectDraw7 refcount was increased by %d\n", getref((IUnknown *) dd7) - ref7);
 
     ok(dd == dd4, "Returned interface pointer is not equal to the creation interface\n");
     IUnknown_Release((IUnknown *) dd);
@@ -880,10 +880,10 @@ static void GetDDInterface_4(void)
     /* Now test what happens if we QI the surface for some other version - It should still return the creation interface */
     ret = IDirectDrawSurface2_GetDDInterface(dsurface2, &dd);
     ok(ret == DD_OK, "IDirectDrawSurface7_GetDDInterface returned %08x\n", ret);
-    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %ld\n", getref((IUnknown *) lpDD) - ref1);
-    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %ld\n", getref((IUnknown *) dd2) - ref2);
-    ok(getref((IUnknown *) dd4) == ref4 + 1, "IDirectDraw4 refcount was increased by %ld\n", getref((IUnknown *) dd4) - ref4);
-    ok(getref((IUnknown *) dd7) == ref7 + 0, "IDirectDraw7 refcount was increased by %ld\n", getref((IUnknown *) dd7) - ref7);
+    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %d\n", getref((IUnknown *) lpDD) - ref1);
+    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %d\n", getref((IUnknown *) dd2) - ref2);
+    ok(getref((IUnknown *) dd4) == ref4 + 1, "IDirectDraw4 refcount was increased by %d\n", getref((IUnknown *) dd4) - ref4);
+    ok(getref((IUnknown *) dd7) == ref7 + 0, "IDirectDraw7 refcount was increased by %d\n", getref((IUnknown *) dd7) - ref7);
 
     ok(dd == dd4, "Returned interface pointer is not equal to the creation interface\n");
     IUnknown_Release((IUnknown *) dd);
@@ -904,7 +904,7 @@ static void GetDDInterface_7(void)
     IDirectDraw2 *dd2;
     IDirectDraw4 *dd4;
     IDirectDraw7 *dd7;
-    unsigned long ref1, ref2, ref4, ref7;
+    ULONG ref1, ref2, ref4, ref7;
     void *dd;
 
     ret = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw2, (void **) &dd2);
@@ -930,20 +930,20 @@ static void GetDDInterface_7(void)
     ok(ret == DD_OK, "IDirectDrawSurface_QueryInterface returned %08x\n", ret);
 
     ref1 = getref((IUnknown *) lpDD);
-    ok(ref1 == 1, "IDirectDraw refcount is %ld\n", ref1);
+    ok(ref1 == 1, "IDirectDraw refcount is %d\n", ref1);
     ref2 = getref((IUnknown *) dd2);
-    ok(ref2 == 1, "IDirectDraw2 refcount is %ld\n", ref2);
+    ok(ref2 == 1, "IDirectDraw2 refcount is %d\n", ref2);
     ref4 = getref((IUnknown *) dd4);
-    ok(ref4 == 1, "IDirectDraw4 refcount is %ld\n", ref4);
+    ok(ref4 == 1, "IDirectDraw4 refcount is %d\n", ref4);
     ref7 = getref((IUnknown *) dd7);
-    ok(ref7 == 2, "IDirectDraw7 refcount is %ld\n", ref7);
+    ok(ref7 == 2, "IDirectDraw7 refcount is %d\n", ref7);
 
     ret = IDirectDrawSurface7_GetDDInterface(dsurface7, &dd);
     ok(ret == DD_OK, "IDirectDrawSurface7_GetDDInterface returned %08x\n", ret);
-    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %ld\n", getref((IUnknown *) lpDD) - ref1);
-    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %ld\n", getref((IUnknown *) dd2) - ref2);
-    ok(getref((IUnknown *) dd4) == ref4 + 0, "IDirectDraw4 refcount was increased by %ld\n", getref((IUnknown *) dd4) - ref4);
-    ok(getref((IUnknown *) dd7) == ref7 + 1, "IDirectDraw7 refcount was increased by %ld\n", getref((IUnknown *) dd7) - ref7);
+    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %d\n", getref((IUnknown *) lpDD) - ref1);
+    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %d\n", getref((IUnknown *) dd2) - ref2);
+    ok(getref((IUnknown *) dd4) == ref4 + 0, "IDirectDraw4 refcount was increased by %d\n", getref((IUnknown *) dd4) - ref4);
+    ok(getref((IUnknown *) dd7) == ref7 + 1, "IDirectDraw7 refcount was increased by %d\n", getref((IUnknown *) dd7) - ref7);
 
     ok(dd == dd7, "Returned interface pointer is not equal to the creation interface\n");
     IUnknown_Release((IUnknown *) dd);
@@ -951,10 +951,10 @@ static void GetDDInterface_7(void)
     /* Now test what happens if we QI the surface for some other version - It should still return the creation interface */
     ret = IDirectDrawSurface4_GetDDInterface(dsurface4, &dd);
     ok(ret == DD_OK, "IDirectDrawSurface7_GetDDInterface returned %08x\n", ret);
-    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %ld\n", getref((IUnknown *) lpDD) - ref1);
-    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %ld\n", getref((IUnknown *) dd2) - ref2);
-    ok(getref((IUnknown *) dd4) == ref4 + 0, "IDirectDraw4 refcount was increased by %ld\n", getref((IUnknown *) dd4) - ref4);
-    ok(getref((IUnknown *) dd7) == ref7 + 1, "IDirectDraw7 refcount was increased by %ld\n", getref((IUnknown *) dd7) - ref7);
+    ok(getref((IUnknown *) lpDD) == ref1 + 0, "IDirectDraw refcount was increased by %d\n", getref((IUnknown *) lpDD) - ref1);
+    ok(getref((IUnknown *) dd2) == ref2 + 0, "IDirectDraw2 refcount was increased by %d\n", getref((IUnknown *) dd2) - ref2);
+    ok(getref((IUnknown *) dd4) == ref4 + 0, "IDirectDraw4 refcount was increased by %d\n", getref((IUnknown *) dd4) - ref4);
+    ok(getref((IUnknown *) dd7) == ref7 + 1, "IDirectDraw7 refcount was increased by %d\n", getref((IUnknown *) dd7) - ref7);
 
     ok(dd == dd7, "Returned interface pointer is not equal to the creation interface\n");
     IUnknown_Release((IUnknown *) dd);
