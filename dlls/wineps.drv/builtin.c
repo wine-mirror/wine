@@ -424,10 +424,11 @@ BOOL CDECL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
 	}
 	if(family) {
 	    for(afmle = family->afmlist; afmle; afmle = afmle->next) {
+	        UINT fm;
+
 	        TRACE("Got '%s'\n", afmle->afm->FontName);
-		if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm,
-			PSDRV_GetFontMetric( physDev->hdc, afmle->afm, &tm, &lf ),
-				  lp )) )
+	        fm = PSDRV_GetFontMetric( physDev->hdc, afmle->afm, &tm, &lf );
+		if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp )) )
 		     bRet = b;
 		else break;
 	    }
@@ -436,11 +437,12 @@ BOOL CDECL PSDRV_EnumDeviceFonts( PSDRV_PDEVICE *physDev, LPLOGFONTW plf,
 
         TRACE("lfFaceName = NULL\n");
         for(family = physDev->pi->Fonts; family; family = family->next) {
+	    UINT fm;
+
 	    afmle = family->afmlist;
 	    TRACE("Got '%s'\n", afmle->afm->FontName);
-	    if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm,
-		   PSDRV_GetFontMetric( physDev->hdc, afmle->afm, &tm, &lf ),
-			      lp )) )
+	    fm = PSDRV_GetFontMetric( physDev->hdc, afmle->afm, &tm, &lf );
+	    if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, fm, lp )) )
 	        bRet = b;
 	    else break;
 	}
