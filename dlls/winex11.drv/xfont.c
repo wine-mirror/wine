@@ -3318,11 +3318,11 @@ BOOL CDECL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
 		/* Note: XFONT_GetFontMetric() will have to
 		   release the crit section, font list will
 		   have to be retraversed on return */
-
 	        if(plf->lfCharSet == DEFAULT_CHARSET ||
 		   plf->lfCharSet == pfi->df.dfCharSet) {
-		    if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm,
-			       XFONT_GetFontMetric( pfi, &lf, &tm ), lp )) )
+		    UINT xfm = XFONT_GetFontMetric( pfi, &lf, &tm );
+
+		    if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, xfm, lp )) )
 		        bRet = b;
 		    else break;
 		}
@@ -3334,8 +3334,9 @@ BOOL CDECL X11DRV_EnumDeviceFonts( X11DRV_PDEVICE *physDev, LPLOGFONTW plf,
 	{
             if(pfr->fi)
             {
-	        if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm,
-			   XFONT_GetFontMetric( pfr->fi, &lf, &tm ), lp )) )
+	        UINT xfm = XFONT_GetFontMetric( pfr->fi, &lf, &tm );
+
+	        if( (b = (*proc)( &lf.elfLogFont, (TEXTMETRICW *)&tm, xfm, lp )) )
 		    bRet = b;
 		else break;
             }
