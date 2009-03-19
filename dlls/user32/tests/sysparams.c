@@ -734,6 +734,11 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     rc=SystemParametersInfoA( SPI_GETBORDER, 0, &old_border, 0 );
     if (!test_error_msg(rc,"SPI_{GET,SET}BORDER"))
         return;
+    /* FIXME: include new PaddedBorderWidth parameter */
+    if( old_border != ncmsave.iBorderWidth){
+        win_skip( "Can not reliable restore border width yet\n");
+        return;
+    }
     /* This will restore sane values if the test hang previous run. */
     if ( old_border == 7 || old_border == 20 )
         old_border = 1;
@@ -1346,7 +1351,7 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
 }
 
 #define TEST_NONCLIENTMETRICS_REG( ncm) \
-test_reg_metric2( SPI_SETBORDER_REGKEY2, SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, (ncm).iBorderWidth);\
+/*FIXME: test_reg_metric2( SPI_SETBORDER_REGKEY2, SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, (ncm).iBorderWidth);*/\
 test_reg_metric( SPI_METRIC_REGKEY, SPI_SCROLLWIDTH_VALNAME, (ncm).iScrollWidth);\
 test_reg_metric( SPI_METRIC_REGKEY, SPI_SCROLLHEIGHT_VALNAME, (ncm).iScrollHeight);\
 /*FIXME: test_reg_metric( SPI_METRIC_REGKEY, SPI_CAPTIONWIDTH_VALNAME, (ncm).iCaptionWidth);*/\
