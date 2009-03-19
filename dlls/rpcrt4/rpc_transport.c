@@ -1597,8 +1597,8 @@ static RPC_STATUS rpcrt4_http_check_response(HINTERNET hor)
     DWORD status_code;
     DWORD size;
     DWORD index;
-    WCHAR status_text[32];
-
+    WCHAR buf[32];
+    WCHAR *status_text = buf;
     TRACE("\n");
 
     index = 0;
@@ -1609,11 +1609,17 @@ static RPC_STATUS rpcrt4_http_check_response(HINTERNET hor)
     if (status_code < 400)
         return RPC_S_OK;
     index = 0;
-    size = sizeof(status_text);
+    size = sizeof(buf);
     ret = HttpQueryInfoW(hor, HTTP_QUERY_STATUS_TEXT, status_text, &size, &index);
-    if (!ret)
-        return GetLastError();
-    ERR("server returned: %d %s\n", status_code, debugstr_w(status_text));
+    if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        status_text = HeapAlloc(GetProcessHeap(), 0, size);
+        ret = HttpQueryInfoW(hor, HTTP_QUERY_STATUS_TEXT, status_text, &size, &index);
+    }
+
+    ERR("server returned: %d %s\n", status_code, ret ? debugstr_w(status_text) : "<status text unavailable>");
+    if(status_text != buf) HeapFree(GetProcessHeap(), 0, status_text);
+
     if (status_code == HTTP_STATUS_DENIED)
         return ERROR_ACCESS_DENIED;
     return RPC_S_SERVER_UNAVAILABLE;
