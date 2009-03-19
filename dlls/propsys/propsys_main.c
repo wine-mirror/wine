@@ -54,3 +54,10 @@ HRESULT WINAPI PSRegisterPropertySchema(PCWSTR path)
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI PSUnregisterPropertySchema(PCWSTR pszPath)
+{
+    FIXME("stub\n");
+
+    return E_NOTIMPL;
+}

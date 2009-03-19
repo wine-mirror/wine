@@ -92,7 +92,7 @@
 @ stdcall PSRegisterPropertySchema(wstr)
 @ stub PSSetPropertyValue
 @ stub PSStringFromPropertyKey
-@ stub PSUnregisterPropertySchema
+@ stdcall PSUnregisterPropertySchema(wstr)
 @ stdcall PropVariantChangeType(ptr ptr long long)
 @ stub PropVariantCompareEx
 @ stub PropVariantGetBooleanElem
