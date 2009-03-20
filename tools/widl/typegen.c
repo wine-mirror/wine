@@ -3243,7 +3243,7 @@ static void write_parameter_conf_or_var_exprs(FILE *file, int indent, const char
             break;
         else if (type_is_alias(type))
             type = type_alias_get_aliasee(type);
-        else if (is_array(type) || is_string_type(var->attrs, type))
+        else if (is_array(type))
         {
             if (is_conformance_needed_for_phase(phase) && is_array(type))
             {
@@ -3376,9 +3376,17 @@ static void write_remoting_arg(FILE *file, int indent, const var_t *func, const 
         if (phase == PHASE_FREE || pass == PASS_RETURN ||
             pointer_type != RPC_FC_RP)
         {
+            if (pointer_type == RPC_FC_RP && phase == PHASE_FREE &&
+                !in_attr && is_conformant_array(type))
+            {
+                print_file(file, indent, "if (%s%s)\n", local_var_prefix, var->name);
+                indent++;
+                print_file(file, indent, "__frame->_StubMsg.pfnFree(%s%s);\n", local_var_prefix, var->name);
+            }
             /* strings returned are assumed to be global and hence don't
              * need freeing */
-            if (phase != PHASE_FREE || pass != PASS_RETURN)
+            else if (is_declptr(type) &&
+                     !(phase == PHASE_FREE && pass == PASS_RETURN))
                 print_phase_function(file, indent, "Pointer", local_var_prefix,
                                      phase, var, start_offset);
         }
@@ -3724,8 +3732,6 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
 
     LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
     {
-        int is_string = is_string_type(var->attrs, var->type);
-
         in_attr = is_attr(var->attrs, ATTR_IN);
         out_attr = is_attr(var->attrs, ATTR_OUT);
         if (!out_attr && !in_attr)
@@ -3735,7 +3741,7 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
             print_file(file, indent, "NDR_SCONTEXT %s;\n", var->name);
         else
         {
-            if (!in_attr && !is_conformant_array(var->type) && !is_string)
+            if (!in_attr && !is_conformant_array(var->type))
             {
                 type_t *type_to_print;
                 char name[16];
@@ -3779,7 +3785,6 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
 
     LIST_FOR_EACH_ENTRY( var, type_get_function_args(func->type), const var_t, entry )
     {
-        int is_string = is_string_type(var->attrs, var->type);
         in_attr = is_attr(var->attrs, ATTR_IN);
         out_attr = is_attr(var->attrs, ATTR_OUT);
         if (!out_attr && !in_attr)
@@ -3814,7 +3819,7 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
                 size = type_memsize(type, &align);
                 fprintf(file, "%u);\n", size);
             }
-            else if (!is_string)
+            else
             {
                 fprintf(file, " = &%s_W%u;\n", local_var_prefix, i);
                 if (is_ptr(var->type) && !last_ptr(var->type))
