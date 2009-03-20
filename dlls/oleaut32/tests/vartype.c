@@ -4983,6 +4983,8 @@ static void test_VarBstrCmp(void)
     static const WCHAR s2[] = { 'a',0,'b' };
     static const char sb1[] = {1,0,1};
     static const char sb2[] = {1,0,2};
+    static const char sbchr0[] = {0,0};
+    static const char sbchr00[] = {0,0,0};
     BSTR bstr, bstrempty, bstr2;
 
     CHECKPTR(VarBstrCmp);
@@ -5021,6 +5023,15 @@ static void test_VarBstrCmp(void)
 
     SysFreeString(bstr);
 
+    bstr = SysAllocStringByteLen(sbchr0, sizeof(sbchr0));
+    bstr2 = SysAllocStringByteLen(sbchr0, sizeof(sbchr00));
+    VARBSTRCMP(bstr,bstrempty,0,VARCMP_GT);
+    VARBSTRCMP(bstrempty,bstr,0,VARCMP_LT);
+    VARBSTRCMP(bstr2,bstrempty,0,VARCMP_GT);
+    VARBSTRCMP(bstr2,bstr,0,VARCMP_EQ);
+    SysFreeString(bstr2);
+    SysFreeString(bstr);
+
     /* When (LCID == 0) it should be a binary comparison
      * so these two strings could not match.
      */
@@ -5028,6 +5039,15 @@ static void test_VarBstrCmp(void)
     bstr2 = SysAllocStringByteLen(sb2, sizeof(sb2));
     lcid = 0;
     VARBSTRCMP(bstr,bstr2,0,VARCMP_LT);
+    SysFreeString(bstr2);
+    SysFreeString(bstr);
+
+    bstr = SysAllocStringByteLen(sbchr0, sizeof(sbchr0));
+    bstr2 = SysAllocStringByteLen(sbchr0, sizeof(sbchr00));
+    VARBSTRCMP(bstr,bstrempty,0,VARCMP_GT);
+    VARBSTRCMP(bstrempty,bstr,0,VARCMP_LT);
+    VARBSTRCMP(bstr2,bstrempty,0,VARCMP_GT);
+    VARBSTRCMP(bstr2,bstr,0,VARCMP_GT);
     SysFreeString(bstr2);
     SysFreeString(bstr);
 }
