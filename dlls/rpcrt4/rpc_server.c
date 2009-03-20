@@ -449,27 +449,23 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
 
     /* start waiting */
     res = cps->ops->wait_for_new_connection(cps, count, objs);
-    if (res == -1)
-      break;
-    else if (res == 0)
+
+    if (res == -1 || (res == 0 && !std_listen))
     {
-      if (!std_listen)
-      {
+      /* cleanup */
+      cps->ops->free_wait_array(cps, objs);
+      EnterCriticalSection(&cps->cs);
+      for (conn = cps->conn; conn; conn = conn->Next)
+        RPCRT4_CloseConnection(conn);
+      LeaveCriticalSection(&cps->cs);
+
+      if (res == 0 && !std_listen)
         SetEvent(cps->server_ready_event);
-        break;
-      }
-      set_ready_event = TRUE;
+      break;
     }
+    else if (res == 0)
+      set_ready_event = TRUE;
   }
-  cps->ops->free_wait_array(cps, objs);
-  EnterCriticalSection(&cps->cs);
-  /* close connections */
-  conn = cps->conn;
-  while (conn) {
-    RPCRT4_CloseConnection(conn);
-    conn = conn->Next;
-  }
-  LeaveCriticalSection(&cps->cs);
   return 0;
 }
 
@@ -711,6 +707,17 @@ static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, char *Protseq, RpcServerPr
   return RPC_S_OK;
 }
 
+/* must be called with server_cs held */
+static void destroy_serverprotoseq(RpcServerProtseq *ps)
+{
+    RPCRT4_strfree(ps->Protseq);
+    DeleteCriticalSection(&ps->cs);
+    CloseHandle(ps->mgr_mutex);
+    CloseHandle(ps->server_ready_event);
+    list_remove(&ps->entry);
+    HeapFree(GetProcessHeap(), 0, ps);
+}
+
 /* Finds a given protseq or creates a new one if one doesn't already exist */
 static RPC_STATUS RPCRT4_get_or_create_serverprotseq(UINT MaxCalls, char *Protseq, RpcServerProtseq **ps)
 {
@@ -796,6 +803,23 @@ RPC_STATUS WINAPI RpcServerUseProtseqW(RPC_WSTR Protseq, unsigned int MaxCalls, 
 {
   TRACE("Protseq == %s, MaxCalls == %d, SecurityDescriptor == ^%p)\n", debugstr_w(Protseq), MaxCalls, SecurityDescriptor);
   return RpcServerUseProtseqEpW(Protseq, MaxCalls, NULL, SecurityDescriptor);
+}
+
+void RPCRT4_destroy_all_protseqs(void)
+{
+    RpcServerProtseq *cps, *cursor2;
+
+    if (listen_count != 0)
+        std_listen = FALSE;
+
+    EnterCriticalSection(&server_cs);
+    LIST_FOR_EACH_ENTRY_SAFE(cps, cursor2, &protseqs, RpcServerProtseq, entry)
+    {
+        if (listen_count != 0)
+            RPCRT4_sync_with_server_thread(cps);
+        destroy_serverprotoseq(cps);
+    }
+    LeaveCriticalSection(&server_cs);
 }
 
 /***********************************************************************

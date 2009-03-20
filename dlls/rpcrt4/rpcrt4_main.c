@@ -52,6 +52,7 @@
 #include "rpcproxy.h"
 
 #include "rpc_binding.h"
+#include "rpc_server.h"
 
 #include "wine/debug.h"
 
@@ -125,6 +126,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         break;
 
     case DLL_PROCESS_DETACH:
+        RPCRT4_destroy_all_protseqs();
         break;
     }
 
