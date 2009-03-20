@@ -604,11 +604,8 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
   count = 0;
   LIST_FOR_EACH_ENTRY(ps, &protseqs, RpcServerProtseq, entry) {
     EnterCriticalSection(&ps->cs);
-    conn = ps->conn;
-    while (conn) {
+    for (conn = ps->conn; conn; conn = conn->Next)
       count++;
-      conn = conn->Next;
-    }
     LeaveCriticalSection(&ps->cs);
   }
   if (count) {
@@ -620,12 +617,10 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
     count = 0;
     LIST_FOR_EACH_ENTRY(ps, &protseqs, RpcServerProtseq, entry) {
       EnterCriticalSection(&ps->cs);
-      conn = ps->conn;
-      while (conn) {
+      for (conn = ps->conn; conn; conn = conn->Next) {
        RPCRT4_MakeBinding((RpcBinding**)&(*BindingVector)->BindingH[count],
                           conn);
        count++;
-       conn = conn->Next;
       }
       LeaveCriticalSection(&ps->cs);
     }
