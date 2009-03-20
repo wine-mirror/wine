@@ -6456,7 +6456,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawRectPatch(IWineD3DDevice *iface, UI
     This->currentPatch = patch;
     old_primitive_type = This->stateBlock->gl_primitive_type;
     This->stateBlock->gl_primitive_type = GL_TRIANGLES;
-    IWineD3DDevice_DrawPrimitiveStrided(iface, patch->numSegs[0] * patch->numSegs[1] * 2, &patch->strided);
+    IWineD3DDevice_DrawPrimitiveStrided(iface, patch->numSegs[0] * patch->numSegs[1] * 2 * 3, &patch->strided);
     This->stateBlock->gl_primitive_type = old_primitive_type;
     This->currentPatch = NULL;
 
