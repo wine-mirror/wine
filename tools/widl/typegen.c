@@ -3822,8 +3822,25 @@ void assign_stub_out_args( FILE *file, int indent, const var_t *func, const char
             else
             {
                 fprintf(file, " = &%s_W%u;\n", local_var_prefix, i);
-                if (is_ptr(var->type) && !last_ptr(var->type))
+                switch (typegen_detect_type(type_pointer_get_ref(var->type), var->attrs, TDT_IGNORE_STRINGS))
+                {
+                case TGT_BASIC:
+                case TGT_ENUM:
+                case TGT_POINTER:
                     print_file(file, indent, "%s_W%u = 0;\n", local_var_prefix, i);
+                    break;
+                case TGT_STRUCT:
+                case TGT_UNION:
+                case TGT_USER_TYPE:
+                case TGT_IFACE_POINTER:
+                case TGT_ARRAY:
+                case TGT_CTXT_HANDLE:
+                case TGT_CTXT_HANDLE_POINTER:
+                case TGT_INVALID:
+                case TGT_STRING:
+                    /* not initialised */
+                    break;
+                }
                 i++;
             }
 
