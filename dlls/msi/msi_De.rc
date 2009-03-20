@@ -24,10 +24,10 @@ LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 {
-	4 "The specified installation package could not be opened.  Please check the file path and try again."
+	4 "Das angegebene Installationspaket konnte nicht geöffnet werden. Bitte überprüfen Sie den Pfadnamen und versuchen Sie es noch einmal."
 	5 "Der Pfad %s wurde nicht gefunden."
 	9 "Bitte Disk %s einlegen."
-	10 "schlechte Parameter"
+	10 "Falsche Parameter"
 	11 "Geben Sie das Verzeichnis ein, dass %s enthält."
 	12 "Die Installationsquelle für das Feature fehlt."
 	13 "Das Netzwerklaufwerk für das Feature fehlt."
