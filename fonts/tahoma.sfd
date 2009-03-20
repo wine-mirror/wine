@@ -10465,8 +10465,51 @@ SplineSet
  152 0 l 1
 EndSplineSet
 EndChar
+
+StartChar: afii10050
+Encoding: 1168 1168 432
+Width: 1039
+Flags: W
+HStem: 0 21G<151 349> 1327 166<349 890> 1328 290<890 1032>
+VStem: 151 198<0 1327> 890 142<1492 1618>
+LayerCount: 2
+Fore
+SplineSet
+349 0 m 1xd8
+ 151 0 l 1
+ 151 1493 l 1
+ 590 1493 l 2xd8
+ 890 1492 l 1
+ 890 1618 l 1
+ 1032 1618 l 5
+ 1033 1328 l 9xb8
+ 349 1327 l 17
+ 349 0 l 1xd8
+EndSplineSet
+EndChar
+
+StartChar: afii10098
+Encoding: 1169 1169 433
+Width: 850
+Flags: HW
+HStem: 961 159<319 841>
+VStem: 136 183<1 961>
+LayerCount: 2
+Fore
+SplineSet
+841 961 m 1
+ 319 961 l 1
+ 320 0 l 1
+ 136 1 l 1
+ 136 1119 l 1
+ 696 1119 l 1
+ 696 1250 l 1
+ 840 1250 l 1
+ 841 961 l 1
+EndSplineSet
+EndChar
 EndChars
-BitmapFont: 9 433 7 2 1
+BitmapFont: 9 434 7 2 1
 BDFChar: 0 0 9 1 7 0 6
 rdo`RJqEt%
 BDFChar: 1 32 3 0 0 0 0
@@ -11331,8 +11374,12 @@ BDFChar: 430 160 3 0 0 0 0
 z
 BDFChar: 431 8470 7 0 6 0 6
 QIaFVYcs2h
+BDFChar: 432 1168 5 0 3 0 7
+&Fb4#J:N0#
+BDFChar: 433 1169 4 0 2 0 5
++Q.d#J:IV"
 EndBitmapFont
-BitmapFont: 11 433 9 2 1 FontForge
+BitmapFont: 11 434 9 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--11-80-96-96-P-62-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 11 0 -2"
@@ -12232,8 +12279,12 @@ BDFChar: 430 160 3 0 0 0 0
 z
 BDFChar: 431 8470 7 0 6 0 7
 QIaF6Yct?n
+BDFChar: 432 1168 6 0 4 0 8
+#l&q#J:N0#J,fQL
+BDFChar: 433 1169 5 0 3 0 6
+&Fb4#J:N.M
 EndBitmapFont
-BitmapFont: 12 433 10 2 1 FontForge
+BitmapFont: 12 434 10 2 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--12-90-96-96-P-70-ISO10646-1"
 FONTBOUNDINGBOX 1 "16 12 0 -2"
@@ -12929,8 +12980,12 @@ BDFChar: 430 160 4 0 0 0 0
 z
 BDFChar: 431 8470 8 0 7 0 8
 Mp'2BW2Q)NL]@DT
+BDFChar: 432 1168 6 0 4 0 9
+#l&q#J:N0#J:IV"
+BDFChar: 433 1169 5 0 3 0 7
+&Fb4#J:N0#
 EndBitmapFont
-BitmapFont: 13 433 10 3 1 FontForge
+BitmapFont: 13 434 10 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--13-100-96-96-P-73-ISO10646-1"
 FONTBOUNDINGBOX 1 "15 13 0 -3"
@@ -13626,8 +13681,12 @@ BDFChar: 430 160 4 0 0 0 0
 z
 BDFChar: 431 8470 8 0 7 0 8
 Mp'2BW2Q)NL]@DT
+BDFChar: 432 1168 7 0 5 0 9
+"T3e#J:N0#J:IV"
+BDFChar: 433 1169 5 0 3 0 7
+&Fb4#J:N0#
 EndBitmapFont
-BitmapFont: 15 433 12 3 1 FontForge
+BitmapFont: 15 434 12 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--15-110-96-96-P-85-ISO10646-1"
 FONTBOUNDINGBOX 1 "19 15 0 -3"
@@ -14323,8 +14382,12 @@ BDFChar: 430 160 5 0 0 0 0
 z
 BDFChar: 431 8470 10 0 8 0 10
 Kn.-m_uQWaU]@b%PQ6pJMu\e:KE(uP
+BDFChar: 432 1168 8 0 6 0 11
+!rd_#J:N0#J:N0#
+BDFChar: 433 1169 6 0 4 0 8
+#l&q#J:N0#J,fQL
 EndBitmapFont
-BitmapFont: 16 433 13 3 1 FontForge
+BitmapFont: 16 434 13 3 1 FontForge
 BDFStartProperties: 36
 FONT 1 "-FontForge-Tahoma-Normal-R-Normal--16-120-96-96-P-93-ISO10646-1"
 FONTBOUNDINGBOX 1 "21 16 0 -3"
@@ -15020,5 +15083,9 @@ BDFChar: 430 160 0 0 0 0 0
 z
 BDFChar: 431 8470 11 0 9 0 11
 KE0!,`B^98U]@7,PQ6pJPQ6XBMu\M2
+BDFChar: 432 1168 8 0 6 0 12
+!rd_#J:N0#J:N0#J,fQL
+BDFChar: 433 1169 7 1 5 0 9
+#l&q#J:N0#J:IV"
 EndBitmapFont
 EndSplineFont
