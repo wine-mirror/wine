@@ -6189,68 +6189,68 @@ unsigned char *WINAPI NdrRangeUnmarshall(
     TRACE("base_type = 0x%02x, low_value = %d, high_value = %d\n",
         base_type, pRange->low_value, pRange->high_value);
 
-#define RANGE_UNMARSHALL(type, format_spec) \
+#define RANGE_UNMARSHALL(mem_type, wire_type, format_spec) \
     do \
     { \
-        ALIGN_POINTER(pStubMsg->Buffer, sizeof(type)); \
+        ALIGN_POINTER(pStubMsg->Buffer, sizeof(wire_type)); \
         if (!fMustAlloc && !*ppMemory) \
             fMustAlloc = TRUE; \
         if (fMustAlloc) \
-            *ppMemory = NdrAllocate(pStubMsg, sizeof(type)); \
-        if (pStubMsg->Buffer + sizeof(type) > pStubMsg->BufferEnd) \
+            *ppMemory = NdrAllocate(pStubMsg, sizeof(mem_type)); \
+        if (pStubMsg->Buffer + sizeof(wire_type) > pStubMsg->BufferEnd) \
         { \
             ERR("buffer overflow - Buffer = %p, BufferEnd = %p\n", \
                 pStubMsg->Buffer, (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength); \
             RpcRaiseException(RPC_X_BAD_STUB_DATA); \
         } \
-        if ((*(type *)pStubMsg->Buffer < (type)pRange->low_value) || \
-            (*(type *)pStubMsg->Buffer > (type)pRange->high_value)) \
+        if ((*(wire_type *)pStubMsg->Buffer < (mem_type)pRange->low_value) || \
+            (*(wire_type *)pStubMsg->Buffer > (mem_type)pRange->high_value)) \
         { \
             ERR("value exceeded bounds: " format_spec ", low: " format_spec ", high: " format_spec "\n", \
-                *(type *)pStubMsg->Buffer, (type)pRange->low_value, \
-                (type)pRange->high_value); \
+                *(wire_type *)pStubMsg->Buffer, (mem_type)pRange->low_value, \
+                (mem_type)pRange->high_value); \
             RpcRaiseException(RPC_S_INVALID_BOUND); \
             return NULL; \
         } \
         TRACE("*ppMemory: %p\n", *ppMemory); \
-        **(type **)ppMemory = *(type *)pStubMsg->Buffer; \
-        pStubMsg->Buffer += sizeof(type); \
+        **(mem_type **)ppMemory = *(wire_type *)pStubMsg->Buffer; \
+        pStubMsg->Buffer += sizeof(wire_type); \
     } while (0)
 
     switch(base_type)
     {
     case RPC_FC_CHAR:
     case RPC_FC_SMALL:
-        RANGE_UNMARSHALL(UCHAR, "%d");
+        RANGE_UNMARSHALL(UCHAR, UCHAR, "%d");
         TRACE("value: 0x%02x\n", **ppMemory);
         break;
     case RPC_FC_BYTE:
     case RPC_FC_USMALL:
-        RANGE_UNMARSHALL(CHAR, "%u");
+        RANGE_UNMARSHALL(CHAR, CHAR, "%u");
         TRACE("value: 0x%02x\n", **ppMemory);
         break;
     case RPC_FC_WCHAR: /* FIXME: valid? */
     case RPC_FC_USHORT:
-        RANGE_UNMARSHALL(USHORT, "%u");
+        RANGE_UNMARSHALL(USHORT, USHORT, "%u");
         TRACE("value: 0x%04x\n", **(USHORT **)ppMemory);
         break;
     case RPC_FC_SHORT:
-        RANGE_UNMARSHALL(SHORT, "%d");
+        RANGE_UNMARSHALL(SHORT, SHORT, "%d");
         TRACE("value: 0x%04x\n", **(USHORT **)ppMemory);
         break;
     case RPC_FC_LONG:
-        RANGE_UNMARSHALL(LONG, "%d");
+    case RPC_FC_ENUM32:
+        RANGE_UNMARSHALL(LONG, LONG, "%d");
         TRACE("value: 0x%08x\n", **(ULONG **)ppMemory);
         break;
     case RPC_FC_ULONG:
-        RANGE_UNMARSHALL(ULONG, "%u");
+        RANGE_UNMARSHALL(ULONG, ULONG, "%u");
         TRACE("value: 0x%08x\n", **(ULONG **)ppMemory);
         break;
     case RPC_FC_ENUM16:
-    case RPC_FC_ENUM32:
-        FIXME("Unhandled enum type\n");
+        RANGE_UNMARSHALL(UINT, USHORT, "%u");
+        TRACE("value: 0x%08x\n", **(UINT **)ppMemory);
         break;
-    case RPC_FC_ERROR_STATUS_T: /* FIXME: valid? */
     case RPC_FC_FLOAT:
     case RPC_FC_DOUBLE:
     case RPC_FC_HYPER:
