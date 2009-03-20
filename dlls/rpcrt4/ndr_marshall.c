@@ -5557,7 +5557,6 @@ static unsigned char *union_arm_unmarshall(PMIDL_STUB_MESSAGE pStubMsg,
             case RPC_FC_UP:
             case RPC_FC_OP:
             case RPC_FC_FP:
-                **(void***)ppMemory = NULL;
                 ALIGN_POINTER(pStubMsg->Buffer, 4);
                 saved_buffer = pStubMsg->Buffer;
                 if (pStubMsg->PointerBufferMark)
@@ -5792,10 +5791,18 @@ unsigned char *  WINAPI NdrEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pStubM
     if (fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, size);
 
+    /* we can't pass fMustAlloc=TRUE into the marshaller for the arm
+     * since the arm is part of the memory block that is encompassed by
+     * the whole union. Memory is forced to allocate when pointers
+     * are set to NULL, so we emulate that part of fMustAlloc=TRUE by
+     * clearing the memory we pass in to the unmarshaller */
+    if (fMustAlloc)
+        memset(*ppMemory, 0, size);
+
     NdrBaseTypeUnmarshall(pStubMsg, ppMemory, &switch_type, FALSE);
     pMemoryArm = *ppMemory + increment;
 
-    return union_arm_unmarshall(pStubMsg, &pMemoryArm, switch_value, pFormat, fMustAlloc);
+    return union_arm_unmarshall(pStubMsg, &pMemoryArm, switch_value, pFormat, FALSE);
 }
 
 /***********************************************************************
@@ -5974,7 +5981,15 @@ unsigned char *  WINAPI NdrNonEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pSt
     if (fMustAlloc)
         *ppMemory = NdrAllocate(pStubMsg, size);
 
-    return union_arm_unmarshall(pStubMsg, ppMemory, discriminant, pFormat, fMustAlloc);
+    /* we can't pass fMustAlloc=TRUE into the marshaller for the arm
+     * since the arm is part of the memory block that is encompassed by
+     * the whole union. Memory is forced to allocate when pointers
+     * are set to NULL, so we emulate that part of fMustAlloc=TRUE by
+     * clearing the memory we pass in to the unmarshaller */
+    if (fMustAlloc)
+        memset(*ppMemory, 0, size);
+
+    return union_arm_unmarshall(pStubMsg, ppMemory, discriminant, pFormat, FALSE);
 }
 
 /***********************************************************************
