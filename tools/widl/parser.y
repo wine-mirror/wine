@@ -2513,8 +2513,9 @@ static statement_t *make_statement_declaration(var_t *var)
         if (var->eval)
             reg_const(var);
     }
-    else if ((var->stgclass == STG_NONE || var->stgclass == STG_REGISTER) &&
-	     type_get_type(var->type) != TYPE_FUNCTION)
+    else if (type_get_type(var->type) == TYPE_FUNCTION)
+        check_function_attrs(var->name, var->attrs);
+    else if (var->stgclass == STG_NONE || var->stgclass == STG_REGISTER)
         error_loc("instantiation of data is illegal\n");
     return stmt;
 }
