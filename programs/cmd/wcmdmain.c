@@ -699,8 +699,8 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
       WCHAR *searchIn;
       WCHAR *searchFor;
 
-      s = WCMD_strdupW(endOfVar + 1);
       if (equalspos == NULL) return start+1;
+      s = WCMD_strdupW(endOfVar + 1);
 
       /* Null terminate both strings */
       thisVar[strlenW(thisVar)-1] = 0x00;
@@ -712,7 +712,6 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
       searchFor = WCMD_strdupW(colonpos+1);
       CharUpperBuff(searchFor, strlenW(colonpos+1));
 
-
       /* Handle wildcard case */
       if (*(colonpos+1) == '*') {
         /* Search for string to replace */
@@ -723,7 +722,6 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
           strcpyW(start, replacewith);
           strcatW(start, thisVarContents + (found-searchIn) + strlenW(searchFor+1));
           strcatW(start, s);
-          free(s);
         } else {
           /* Copy as it */
           strcpyW(start, thisVarContents);
@@ -749,6 +747,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
                 thisVarContents + (lastFound-searchIn));
         strcatW(outputposn, s);
       }
+      free(s);
       free(searchIn);
       free(searchFor);
       return start;
