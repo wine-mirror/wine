@@ -322,7 +322,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
     TRACE("%p\n", hFile);
     
     dwFileSize = GetFileSize(hFile, NULL);
-    if (dwFileSize == INVALID_FILE_SIZE)
+    if (dwFileSize == INVALID_FILE_SIZE || dwFileSize == 0)
         return NULL;
 
     buffer_base = HeapAlloc(GetProcessHeap(), 0 , dwFileSize);
