@@ -1446,8 +1446,7 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
     else if (PROFILE_Open( filename, TRUE ))
     {
         if (!section) {
-            FIXME("(NULL?,%s,%s,%s)?\n",
-                  debugstr_w(entry), debugstr_w(string), debugstr_w(filename));
+            SetLastError(ERROR_FILE_NOT_FOUND);
         } else {
             ret = PROFILE_SetString( section, entry, string, FALSE);
             PROFILE_FlushFile();

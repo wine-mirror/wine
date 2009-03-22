@@ -855,11 +855,8 @@ static void test_WritePrivateProfileString(void)
     SetLastError(0xdeadbeef);
     ret = WritePrivateProfileStringA(NULL, "key", "string", path);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-           "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     ok(check_file_data(path, data), "File doesn't match\n");
     DeleteFileA(path);
 
