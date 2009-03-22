@@ -202,31 +202,31 @@ static void PROFILE_Save( HANDLE hFile, const PROFILESECTION *section, ENCODING 
 
     for ( ; section; section = section->next)
     {
-        int len = 0;
+        int len = 4;
 
-        if (section->name[0]) len += strlenW(section->name) + 6;
+        if (section->name[0]) len += strlenW(section->name);
 
         for (key = section->key; key; key = key->next)
         {
-            len += strlenW(key->name) + 2;
-            if (key->value) len += strlenW(key->value) + 1;
+            len += strlenW(key->name);
+            if (key->value && key->value[0]) len += strlenW(key->value);
+            len += 3; /* '=' and "\r\n" */
         }
 
         buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         if (!buffer) return;
 
         p = buffer;
+        *p++ = '[';
         if (section->name[0])
         {
-            *p++ = '\r';
-            *p++ = '\n';
-            *p++ = '[';
             strcpyW( p, section->name );
             p += strlenW(p);
-            *p++ = ']';
-            *p++ = '\r';
-            *p++ = '\n';
         }
+        *p++ = ']';
+        *p++ = '\r';
+        *p++ = '\n';
+
         for (key = section->key; key; key = key->next)
         {
             strcpyW( p, key->name );
@@ -587,12 +587,20 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section, LPCWSTR section_name,
     int seclen, keylen;
 
     while (PROFILE_isspaceW(*section_name)) section_name++;
-    p = section_name + strlenW(section_name) - 1;
+    if (*section_name)
+        p = section_name + strlenW(section_name) - 1;
+    else
+        p = section_name;
+
     while ((p > section_name) && PROFILE_isspaceW(*p)) p--;
     seclen = p - section_name + 1;
 
     while (PROFILE_isspaceW(*key_name)) key_name++;
-    p = key_name + strlenW(key_name) - 1;
+    if (*key_name)
+        p = key_name + strlenW(key_name) - 1;
+    else
+        p = key_name;
+
     while ((p > key_name) && PROFILE_isspaceW(*p)) p--;
     keylen = p - key_name + 1;
 

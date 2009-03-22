@@ -930,10 +930,7 @@ static void test_WritePrivateProfileString(void)
            "key=string\r\n";
     ret = WritePrivateProfileStringA("App", "key", "string", "win1.tmp");
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine
-    {
-        ok(check_file_data(path, data), "File doesn't match\n");
-    }
+    ok(check_file_data(path, data), "File doesn't match\n");
     DeleteFileA(path);
 
     GetTempPathA(MAX_PATH, temp);
