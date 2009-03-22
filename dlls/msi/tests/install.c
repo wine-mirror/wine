@@ -1721,6 +1721,21 @@ static void test_MsiInstallProduct(void)
         return;
     }
 
+    /* szPackagePath is NULL */
+    r = MsiInstallProductA(NULL, "INSTALL=ALL");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* both szPackagePath and szCommandLine are NULL */
+    r = MsiInstallProductA(NULL, NULL);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* szPackagePath is empty */
+    r = MsiInstallProductA("", "INSTALL=ALL");
+    ok(r == ERROR_PATH_NOT_FOUND,
+       "Expected ERROR_PATH_NOT_FOUND, got %d\n", r);
+
     create_test_files();
     create_database(msifile, tables, sizeof(tables) / sizeof(msi_table));
 

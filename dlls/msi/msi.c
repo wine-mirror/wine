@@ -231,6 +231,12 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
 
     TRACE("%s %s\n",debugstr_w(szPackagePath), debugstr_w(szCommandLine));
 
+    if (!szPackagePath)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!*szPackagePath)
+        return ERROR_PATH_NOT_FOUND;
+
     r = MSI_OpenPackageW( szPackagePath, &package );
     if (r == ERROR_SUCCESS)
     {
