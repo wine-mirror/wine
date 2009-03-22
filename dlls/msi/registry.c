@@ -1883,7 +1883,14 @@ static UINT msi_enum_patches(LPCWSTR szProductCode, LPCWSTR szUserSid,
         MSIINSTALLCONTEXT *pdwTargetProductContext, LPWSTR szTargetUserSid,
         LPDWORD pcchTargetUserSid, LPWSTR *szTransforms)
 {
+    LPWSTR usersid = NULL;
     UINT r = ERROR_INVALID_PARAMETER;
+
+    if (!szUserSid)
+    {
+        get_user_sid(&usersid);
+        szUserSid = usersid;
+    }
 
     if (dwContext & MSIINSTALLCONTEXT_USERMANAGED)
     {
@@ -1922,6 +1929,7 @@ static UINT msi_enum_patches(LPCWSTR szProductCode, LPCWSTR szUserSid,
     }
 
 done:
+    LocalFree(usersid);
     return r;
 }
 
