@@ -487,6 +487,7 @@ struct shader_caps {
 
     DWORD               PixelShaderVersion;
     float               PixelShader1xMaxValue;
+    DWORD               MaxPixelShaderConst;
 
     WINED3DVSHADERCAPS2_0   VS20Caps;
     WINED3DPSHADERCAPS2_0   PS20Caps;
@@ -1216,6 +1217,7 @@ struct IWineD3DDeviceImpl
     const struct blit_shader *blitter;
 
     unsigned int max_ffp_textures, max_ffp_texture_stages;
+    DWORD d3d_vshader_constantF, d3d_pshader_constantF; /* Advertised d3d caps, not GL ones */
 
     WORD view_ident : 1;                /* true iff view matrix is identity */
     WORD untransformed : 1;

@@ -4070,7 +4070,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
             iface, srcData, start, count);
 
     /* Specifically test start > limit to catch MAX_UINT overflows when adding start + count */
-    if (srcData == NULL || start + count > GL_LIMITS(vshader_constantsF) || start > GL_LIMITS(vshader_constantsF))
+    if (srcData == NULL || start + count > This->d3d_vshader_constantF || start > This->d3d_vshader_constantF)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->vertexShaderConstantF[start * 4], srcData, count * sizeof(float) * 4);
@@ -4099,7 +4099,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, GL_LIMITS(vshader_constantsF) - start);
+    int cnt = min(count, This->d3d_vshader_constantF - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);
@@ -4462,7 +4462,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
             iface, srcData, start, count);
 
     /* Specifically test start > limit to catch MAX_UINT overflows when adding start + count */
-    if (srcData == NULL || start + count > GL_LIMITS(pshader_constantsF) || start > GL_LIMITS(pshader_constantsF))
+    if (srcData == NULL || start + count > This->d3d_pshader_constantF || start > This->d3d_pshader_constantF)
         return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->pixelShaderConstantF[start * 4], srcData, count * sizeof(float) * 4);
@@ -4491,7 +4491,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int cnt = min(count, GL_LIMITS(pshader_constantsF) - start);
+    int cnt = min(count, This->d3d_pshader_constantF - start);
 
     TRACE("(iface %p, dstData %p, start %d, count %d)\n",
             iface, dstData, start, count);

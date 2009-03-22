@@ -698,8 +698,15 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
 
     /* Declare the constants (aka uniforms) */
     if (This->baseShader.limits.constant_float > 0) {
-        unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
-                (pshader ? GL_LIMITS(pshader_constantsF) : GL_LIMITS(vshader_constantsF)));
+        unsigned max_constantsF;
+        if(pshader) {
+            max_constantsF = GL_LIMITS(pshader_constantsF) - (MAX_CONST_B / 4) - MAX_CONST_I - 2;
+            max_constantsF = min(This->baseShader.limits.constant_float, max_constantsF);
+        } else {
+            /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix) */
+            max_constantsF = GL_LIMITS(vshader_constantsF) - (MAX_CONST_B / 4) - MAX_CONST_I - 1;
+            max_constantsF = min(This->baseShader.limits.constant_float, max_constantsF);
+        }
         shader_addline(buffer, "uniform vec4 %cC[%u];\n", prefix, max_constantsF);
     }
 
@@ -4118,7 +4125,8 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *
     else
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
     TRACE_(d3d_caps)("Hardware vertex shader version %d.%d enabled (GLSL)\n", (pCaps->VertexShaderVersion >> 8) & 0xff, pCaps->VertexShaderVersion & 0xff);
-    pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
+    /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix) */
+    pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF) - (MAX_CONST_B / 4) - MAX_CONST_I - 1;
 
     /* Older DX9-class videocards (GeforceFX / Radeon >9500/X*00) only support pixel shader 2.0/2.0a/2.0b.
      * In OpenGL the extensions related to GLSL abstract lowlevel GL info away which is needed
@@ -4135,6 +4143,13 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *
         pCaps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
     else
         pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
+
+    /* Subtract the other potential uniforms from the max available (bools & ints), and 2 states for fog.
+     * In theory the texbem instruction may need one more shader constant too. But lets assume
+     * that a sm <= 1.3 shader does not need all the uniforms provided by a glsl-capable card,
+     * and lets not take away a uniform needlessly from all other shaders.
+     */
+    pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF) - (MAX_CONST_B / 4) - MAX_CONST_I - 2;
 
     /* FIXME: The following line is card dependent. -8.0 to 8.0 is the
      * Direct3D minimum requirement.

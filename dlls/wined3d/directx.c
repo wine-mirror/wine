@@ -424,14 +424,10 @@ static void select_shader_max_constants(
 
     switch (vs_selected_mode) {
         case SHADER_GLSL:
-            /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix) */
-            gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - (MAX_CONST_B / 4) - MAX_CONST_I - 1;
+            gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF;
             break;
         case SHADER_ARB:
-            /* We have to subtract any other PARAMs that we might use in our shader programs.
-             * ATI seems to count 2 implicit PARAMs when we use fog and NVIDIA counts 1,
-             * and we reference one row of the PROJECTION matrix which counts as 1 PARAM. */
-            gl_info->max_vshader_constantsF = gl_info->vs_arb_constantsF - 3;
+            gl_info->max_vshader_constantsF = gl_info->vs_arb_constantsF;
             break;
         default:
             gl_info->max_vshader_constantsF = 0;
@@ -440,18 +436,10 @@ static void select_shader_max_constants(
 
     switch (ps_selected_mode) {
         case SHADER_GLSL:
-            /* Subtract the other potential uniforms from the max available (bools & ints), and 2 states for fog.
-             * In theory the texbem instruction may need one more shader constant too. But lets assume
-             * that a sm <= 1.3 shader does not need all the uniforms provided by a glsl-capable card,
-             * and lets not take away a uniform needlessly from all other shaders.
-             */
-            gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF - (MAX_CONST_B / 4) - MAX_CONST_I - 2;
+            gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF;
             break;
         case SHADER_ARB:
-            /* The arb shader only loads the bump mapping environment matrix into the shader if it finds
-             * a free constant to do that, so only reduce the number of available constants by 2 for the fog states.
-             */
-            gl_info->max_pshader_constantsF = gl_info->ps_arb_constantsF - 2;
+            gl_info->max_pshader_constantsF = gl_info->ps_arb_constantsF;
             break;
         default:
             gl_info->max_pshader_constantsF = 0;
@@ -3734,6 +3722,7 @@ static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter,
     const struct fragment_pipeline *frag_pipeline = NULL;
     int i;
     struct fragment_caps ffp_caps;
+    struct shader_caps shader_caps;
     HRESULT hr;
 
     /* Validate the adapter number. If no adapters are available(no GL), ignore the adapter
@@ -3788,6 +3777,11 @@ static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter,
     select_shader_mode(&adapter->gl_info, DeviceType,
             &object->ps_selected_mode, &object->vs_selected_mode);
     object->shader_backend = select_shader_backend(adapter, DeviceType);
+
+    memset(&shader_caps, 0, sizeof(shader_caps));
+    object->shader_backend->shader_get_caps(DeviceType, &adapter->gl_info, &shader_caps);
+    object->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
+    object->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
 
     memset(&ffp_caps, 0, sizeof(ffp_caps));
     frag_pipeline = select_fragment_implementation(adapter, DeviceType);

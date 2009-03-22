@@ -40,10 +40,20 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION      (*gl_info)
 
+/* We have to subtract any other PARAMs that we might use in our shader programs.
+ * ATI seems to count 2 implicit PARAMs when we use fog and NVIDIA counts 1,
+ * and we reference one row of the PROJECTION matrix which counts as 1 PARAM. */
+#define ARB_SHADER_RESERVED_VS_CONSTS 3
+
+/* The arb shader only loads the bump mapping environment matrix into the shader if it finds
+ * a free constant to do that, so only reduce the number of available constants by 2 for the fog states.
+ */
+#define ARB_SHADER_RESERVED_PS_CONSTS 2
+
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
  * so upload them above that
  */
-#define ARB_SHADER_PRIVCONST_BASE GL_LIMITS(vshader_constantsF)
+#define ARB_SHADER_PRIVCONST_BASE (GL_LIMITS(vshader_constantsF) - ARB_SHADER_RESERVED_VS_CONSTS)
 #define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
 
 /* ARB_program_shader private data */
@@ -258,7 +268,8 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
     DWORD i, cur;
     char pshader = shader_is_pshader_version(reg_maps->shader_version);
     unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
-            (pshader ? GL_LIMITS(pshader_constantsF) : GL_LIMITS(vshader_constantsF)));
+            (pshader ? GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS :
+                       GL_LIMITS(vshader_constantsF) - ARB_SHADER_RESERVED_VS_CONSTS));
     UINT extra_constants_needed = 0;
     const local_constant *lconst;
 
@@ -300,13 +311,13 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
          * the stateblock into the shader. If no constant is available don't load, texbem will then just sample the texture without applying
          * bump mapping.
          */
-        if(max_constantsF + extra_constants_needed < GL_LIMITS(pshader_constantsF)) {
+        if(max_constantsF + extra_constants_needed < GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS) {
             ps->bumpenvmatconst[cur].const_num = max_constantsF + extra_constants_needed;
             shader_addline(buffer, "PARAM bumpenvmat%d = program.env[%d];\n",
                            i, ps->bumpenvmatconst[cur].const_num);
             extra_constants_needed++;
 
-            if(reg_maps->luminanceparams && max_constantsF + extra_constants_needed < GL_LIMITS(pshader_constantsF)) {
+            if(reg_maps->luminanceparams && max_constantsF + extra_constants_needed < GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS) {
                 ((IWineD3DPixelShaderImpl *)This)->luminanceconst[cur].const_num = max_constantsF + extra_constants_needed;
                 shader_addline(buffer, "PARAM luminance%d = program.env[%d];\n",
                                i, ps->luminanceconst[cur].const_num);
@@ -2170,13 +2181,14 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
     if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
         TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
-        pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
+        pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF) - ARB_SHADER_RESERVED_VS_CONSTS;
     }
 
     if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
         pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
         pCaps->PixelShader1xMaxValue = 8.0;
         TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
+        pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS;
     }
 }
 
