@@ -504,11 +504,11 @@ UINT MSIREG_DeleteUninstallKey(LPCWSTR szProduct)
     return RegDeleteTreeW(HKEY_LOCAL_MACHINE, keypath);
 }
 
-UINT MSIREG_OpenProductKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context,
-                           HKEY *key, BOOL create)
+UINT MSIREG_OpenProductKey(LPCWSTR szProduct, LPCWSTR szUserSid,
+                           MSIINSTALLCONTEXT context, HKEY *key, BOOL create)
 {
     UINT r;
-    LPWSTR usersid;
+    LPWSTR usersid = NULL;
     HKEY root = HKEY_LOCAL_MACHINE;
     WCHAR squished_pc[GUID_SIZE];
     WCHAR keypath[MAX_PATH];
@@ -531,14 +531,20 @@ UINT MSIREG_OpenProductKey(LPCWSTR szProduct, MSIINSTALLCONTEXT context,
     }
     else
     {
-        r = get_user_sid(&usersid);
-        if (r != ERROR_SUCCESS || !usersid)
+        if (!szUserSid)
         {
-            ERR("Failed to retrieve user SID: %d\n", r);
-            return r;
+            r = get_user_sid(&usersid);
+            if (r != ERROR_SUCCESS || !usersid)
+            {
+                ERR("Failed to retrieve user SID: %d\n", r);
+                return r;
+            }
+
+            szUserSid = usersid;
         }
 
-        sprintfW(keypath, szInstaller_LocalManagedProd_fmt, usersid, squished_pc);
+        sprintfW(keypath, szInstaller_LocalManagedProd_fmt,
+                 szUserSid, squished_pc);
         LocalFree(usersid);
     }
 
@@ -1659,6 +1665,7 @@ done:
 }
 
 static UINT msi_get_patch_state(LPCWSTR prodcode, LPCWSTR usersid,
+                                MSIINSTALLCONTEXT context,
                                 LPWSTR patch, MSIPATCHSTATE *state)
 {
     DWORD type, val, size;
@@ -1672,9 +1679,8 @@ static UINT msi_get_patch_state(LPCWSTR prodcode, LPCWSTR usersid,
 
     *state = MSIPATCHSTATE_INVALID;
 
-    /* FIXME: usersid might not be current user */
-    r = MSIREG_OpenUserDataProductKey(prodcode, MSIINSTALLCONTEXT_USERUNMANAGED,
-                                      NULL, &prod, FALSE);
+    r = MSIREG_OpenUserDataProductKey(prodcode, context,
+                                      usersid, &prod, FALSE);
     if (r != ERROR_SUCCESS)
         return ERROR_NO_MORE_ITEMS;
 
@@ -1723,7 +1729,8 @@ static UINT msi_check_product_patches(LPCWSTR prodcode, LPCWSTR usersid,
     static const WCHAR szState[] = {'S','t','a','t','e',0};
     static const WCHAR szEmpty[] = {0};
 
-    if (MSIREG_OpenProductKey(prodcode, context, &prod, FALSE) != ERROR_SUCCESS)
+    if (MSIREG_OpenProductKey(prodcode, usersid, context,
+                              &prod, FALSE) != ERROR_SUCCESS)
         return ERROR_NO_MORE_ITEMS;
 
     size = 0;
@@ -1784,7 +1791,8 @@ static UINT msi_check_product_patches(LPCWSTR prodcode, LPCWSTR usersid,
         {
             if (!(filter & MSIPATCHSTATE_APPLIED))
             {
-                temp = msi_get_patch_state(prodcode, usersid, ptr, &state);
+                temp = msi_get_patch_state(prodcode, usersid, context,
+                                           ptr, &state);
                 if (temp == ERROR_BAD_CONFIGURATION)
                 {
                     r = ERROR_BAD_CONFIGURATION;
@@ -1799,7 +1807,8 @@ static UINT msi_check_product_patches(LPCWSTR prodcode, LPCWSTR usersid,
         {
             if (!(filter & MSIPATCHSTATE_APPLIED))
             {
-                temp = msi_get_patch_state(prodcode, usersid, ptr, &state);
+                temp = msi_get_patch_state(prodcode, usersid, context,
+                                           ptr, &state);
                 if (temp == ERROR_BAD_CONFIGURATION)
                 {
                     r = ERROR_BAD_CONFIGURATION;
@@ -2061,11 +2070,11 @@ UINT WINAPI MsiEnumPatchesW(LPCWSTR szProduct, DWORD iPatchIndex,
     if (!lpPatchBuf || !lpTransformsBuf || !pcchTransformsBuf)
         return ERROR_INVALID_PARAMETER;
 
-    if (MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERMANAGED,
+    if (MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED,
                               &prod, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_USERUNMANAGED,
+        MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_USERUNMANAGED,
                               &prod, FALSE) != ERROR_SUCCESS &&
-        MSIREG_OpenProductKey(szProduct, MSIINSTALLCONTEXT_MACHINE,
+        MSIREG_OpenProductKey(szProduct, NULL, MSIINSTALLCONTEXT_MACHINE,
                               &prod, FALSE) != ERROR_SUCCESS)
         return ERROR_UNKNOWN_PRODUCT;
 

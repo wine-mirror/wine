@@ -3675,7 +3675,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (!msi_check_publish(package))
         return ERROR_SUCCESS;
 
-    rc = MSIREG_OpenProductKey(package->ProductCode, package->Context,
+    rc = MSIREG_OpenProductKey(package->ProductCode, NULL, package->Context,
                                &hukey, TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
