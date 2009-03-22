@@ -804,7 +804,7 @@ UINT MSIREG_OpenUserDataProductKey(LPCWSTR szProduct, MSIINSTALLCONTEXT dwContex
     if (dwContext == MSIINSTALLCONTEXT_MACHINE)
         sprintfW(keypath, szUserDataProd_fmt, szLocalSid, squished_pc);
     else if (szUserSid)
-        sprintfW(keypath, szUserDataProd_fmt, usersid, squished_pc);
+        sprintfW(keypath, szUserDataProd_fmt, szUserSid, squished_pc);
     else
     {
         rc = get_user_sid(&usersid);
