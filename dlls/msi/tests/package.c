@@ -11374,6 +11374,115 @@ static void test_MsiGetProductProperty(void)
     DeleteFileA(msifile);
 }
 
+static void test_MsiSetProperty(void)
+{
+    MSIHANDLE hpkg, hdb, hrec;
+    CHAR buf[MAX_PATH];
+    LPCSTR query;
+    DWORD size;
+    UINT r;
+
+    hpkg = package_from_db(create_package_db());
+    ok(hpkg != 0, "Expected a valid package\n");
+
+    /* invalid hInstall */
+    r = MsiSetPropertyA(0, "Prop", "Val");
+    ok(r == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", r);
+
+    /* invalid hInstall */
+    r = MsiSetPropertyA(0xdeadbeef, "Prop", "Val");
+    ok(r == ERROR_INVALID_HANDLE,
+       "Expected ERROR_INVALID_HANDLE, got %d\n", r);
+
+    /* szName is NULL */
+    r = MsiSetPropertyA(hpkg, NULL, "Val");
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* both szName and szValue are NULL */
+    r = MsiSetPropertyA(hpkg, NULL, NULL);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+
+    /* szName is empty */
+    r = MsiSetPropertyA(hpkg, "", "Val");
+    ok(r == ERROR_FUNCTION_FAILED,
+       "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
+
+    /* szName is empty and szValue is NULL */
+    r = MsiSetPropertyA(hpkg, "", NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* set a property */
+    r = MsiSetPropertyA(hpkg, "Prop", "Val");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* get the property */
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "Prop", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "Val"), "Expected \"Val\", got \"%s\"\n", buf);
+    ok(size == 3, "Expected 3, got %d\n", size);
+
+    /* update the property */
+    r = MsiSetPropertyA(hpkg, "Prop", "Nuvo");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* get the property */
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "Prop", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "Nuvo"), "Expected \"Nuvo\", got \"%s\"\n", buf);
+    ok(size == 4, "Expected 4, got %d\n", size);
+
+    hdb = MsiGetActiveDatabase(hpkg);
+    ok(hdb != 0, "Expected a valid database handle\n");
+
+    /* set prop is not in the _Property table */
+    query = "SELECT * FROM `_Property` WHERE `Property` = 'Prop'";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    /* set prop is not in the Property table */
+    query = "SELECT * FROM `Property` WHERE `Property` = 'Prop'";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    MsiCloseHandle(hdb);
+
+    /* szValue is an empty string */
+    r = MsiSetPropertyA(hpkg, "Prop", "");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* try to get the property */
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "Prop", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    /* reset the property */
+    r = MsiSetPropertyA(hpkg, "Prop", "BlueTap");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* delete the property */
+    r = MsiSetPropertyA(hpkg, "Prop", NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* try to get the property */
+    size = MAX_PATH;
+    r = MsiGetPropertyA(hpkg, "Prop", buf, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    MsiCloseHandle(hpkg);
+    DeleteFileA(msifile);
+}
+
 START_TEST(package)
 {
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
@@ -11406,4 +11515,5 @@ START_TEST(package)
     test_access();
     test_emptypackage();
     test_MsiGetProductProperty();
+    test_MsiSetProperty();
 }
