@@ -7405,263 +7405,20 @@ static void test_MsiOpenProduct(void)
     DeleteFileA(msifile);
 }
 
-static void test_MsiEnumPatchesEx(void)
+static void test_MsiEnumPatchesEx_usermanaged(LPCSTR usersid, LPCSTR expectedsid)
 {
+    MSIINSTALLCONTEXT context;
     CHAR keypath[MAX_PATH], patch[MAX_PATH];
     CHAR patch_squashed[MAX_PATH], patchcode[MAX_PATH];
     CHAR targetsid[MAX_PATH], targetprod[MAX_PATH];
     CHAR prodcode[MAX_PATH], prod_squashed[MAX_PATH];
-    HKEY prodkey, patches, udprod, udpatch;
-    HKEY userkey, hpatch;
-    MSIINSTALLCONTEXT context;
+    HKEY prodkey, patches, udprod, udpatch, hpatch;
     DWORD size, data;
-    LPSTR usersid;
     LONG res;
     UINT r;
 
-    if (!pMsiEnumPatchesExA)
-    {
-        win_skip("MsiEnumPatchesExA not implemented\n");
-        return;
-    }
-
     create_test_guid(prodcode, prod_squashed);
     create_test_guid(patch, patch_squashed);
-    get_user_sid(&usersid);
-
-    /* empty szProductCode */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod, &context,
-                           targetsid, &size);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* garbage szProductCode */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod, &context,
-                           targetsid, &size);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* guid without brackets */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D", usersid,
-                           MSIINSTALLCONTEXT_USERUNMANAGED, MSIPATCHSTATE_ALL,
-                           0, patchcode, targetprod, &context,
-                           targetsid, &size);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* guid with brackets */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA("{6700E8CF-95AB-4D9C-BC2C-15840DDA7A5D}", usersid,
-                           MSIINSTALLCONTEXT_USERUNMANAGED, MSIPATCHSTATE_ALL,
-                           0, patchcode, targetprod, &context,
-                           targetsid, &size);
-    ok(r == ERROR_NO_MORE_ITEMS,
-       "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* szUserSid is S-1-5-18 */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA(prodcode, "S-1-5-18",
-                           MSIINSTALLCONTEXT_USERUNMANAGED, MSIPATCHSTATE_ALL,
-                           0, patchcode, targetprod, &context,
-                           targetsid, &size);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* dwContext is MSIINSTALLCONTEXT_MACHINE, but szUserSid is non-NULL */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_MACHINE,
-                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod,
-                           &context, targetsid, &size);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* dwContext is out of bounds */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA(prodcode, usersid, 0,
-                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod,
-                           &context, targetsid, &size);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* dwContext is out of bounds */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_ALL + 1,
-                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod,
-                           &context, targetsid, &size);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* dwFilter is out of bounds */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                           MSIPATCHSTATE_INVALID, 0, patchcode, targetprod,
-                           &context, targetsid, &size);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* dwFilter is out of bounds */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    size = MAX_PATH;
-    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                           MSIPATCHSTATE_ALL + 1, 0, patchcode, targetprod,
-                           &context, targetsid, &size);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
-
-    /* pcchTargetUserSid is NULL while szTargetUserSid is non-NULL */
-    lstrcpyA(patchcode, "apple");
-    lstrcpyA(targetprod, "banana");
-    context = 0xdeadbeef;
-    lstrcpyA(targetsid, "kiwi");
-    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
-                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod,
-                           &context, targetsid, NULL);
-    ok(r == ERROR_INVALID_PARAMETER,
-       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-    ok(!lstrcmpA(patchcode, "apple"),
-       "Expected patchcode to be unchanged, got %s\n", patchcode);
-    ok(!lstrcmpA(targetprod, "banana"),
-       "Expected targetprod to be unchanged, got %s\n", targetprod);
-    ok(context == 0xdeadbeef,
-       "Expected context to be unchanged, got %d\n", context);
-    ok(!lstrcmpA(targetsid, "kiwi"),
-       "Expected targetsid to be unchanged, got %s\n", targetsid);
-
-    /* MSIINSTALLCONTEXT_USERMANAGED */
 
     /* MSIPATCHSTATE_APPLIED */
 
@@ -7685,7 +7442,7 @@ static void test_MsiEnumPatchesEx(void)
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
-    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, expectedsid);
     lstrcatA(keypath, "\\Installer\\Products\\");
     lstrcatA(keypath, prod_squashed);
 
@@ -7771,7 +7528,7 @@ static void test_MsiEnumPatchesEx(void)
     context = 0xdeadbeef;
     lstrcpyA(targetsid, "kiwi");
     size = MAX_PATH;
-    r = pMsiEnumPatchesExA(prodcode, NULL, MSIINSTALLCONTEXT_USERMANAGED,
+    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
                            MSIPATCHSTATE_APPLIED, 0, patchcode, targetprod,
                            &context, targetsid, &size);
     ok(r == ERROR_BAD_CONFIGURATION,
@@ -7832,10 +7589,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* increase the index */
     lstrcpyA(patchcode, "apple");
@@ -7891,10 +7648,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* szTargetProductCode is NULL */
     lstrcpyA(patchcode, "apple");
@@ -7909,10 +7666,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", patch, patchcode);
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* pdwTargetProductContext is NULL */
     lstrcpyA(patchcode, "apple");
@@ -7927,10 +7684,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", patch, patchcode);
     ok(!lstrcmpA(targetprod, prodcode),
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* szTargetUserSid is NULL */
     lstrcpyA(patchcode, "apple");
@@ -7947,15 +7704,15 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
-    ok(size == lstrlenA(usersid) * sizeof(WCHAR),
-       "Got %d\n", size);
+    ok(size == lstrlenA(expectedsid) * sizeof(WCHAR),
+       "Expected %d, got %d\n", lstrlenA(expectedsid) * sizeof(WCHAR), size);
 
     /* pcchTargetUserSid is exactly the length of szTargetUserSid */
     lstrcpyA(patchcode, "apple");
     lstrcpyA(targetprod, "banana");
     context = 0xdeadbeef;
     lstrcpyA(targetsid, "kiwi");
-    size = lstrlenA(usersid);
+    size = lstrlenA(expectedsid);
     r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
                            MSIPATCHSTATE_APPLIED, 0, patchcode, targetprod,
                            &context, targetsid, &size);
@@ -7966,17 +7723,17 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
-    ok(!strncmp(targetsid, usersid, lstrlenA(usersid) - 1),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid) * sizeof(WCHAR),
-       "Got %d\n", size);
+    ok(!strncmp(targetsid, expectedsid, lstrlenA(expectedsid) - 1),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid) * sizeof(WCHAR),
+       "Expected %d, got %d\n", lstrlenA(expectedsid) * sizeof(WCHAR), size);
 
     /* pcchTargetUserSid has enough room for NULL terminator */
     lstrcpyA(patchcode, "apple");
     lstrcpyA(targetprod, "banana");
     context = 0xdeadbeef;
     lstrcpyA(targetsid, "kiwi");
-    size = lstrlenA(usersid) + 1;
+    size = lstrlenA(expectedsid) + 1;
     r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERMANAGED,
                            MSIPATCHSTATE_APPLIED, 0, patchcode, targetprod,
                            &context, targetsid, &size);
@@ -7987,10 +7744,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* both szTargetuserSid and pcchTargetUserSid are NULL */
     lstrcpyA(patchcode, "apple");
@@ -8029,7 +7786,7 @@ static void test_MsiEnumPatchesEx(void)
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
-    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, expectedsid);
     lstrcatA(keypath, "\\Products\\");
     lstrcatA(keypath, prod_squashed);
 
@@ -8124,10 +7881,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* MSIPATCHSTATE_OBSOLETED */
 
@@ -8171,10 +7928,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* MSIPATCHSTATE_REGISTERED */
     /* FIXME */
@@ -8197,10 +7954,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* same patch in multiple places, only one is enumerated */
     lstrcpyA(patchcode, "apple");
@@ -8234,8 +7991,23 @@ static void test_MsiEnumPatchesEx(void)
     RegCloseKey(patches);
     RegDeleteKeyA(prodkey, "");
     RegCloseKey(prodkey);
+}
 
-    /* MSIINSTALLCONTEXT_USERUNMANAGED */
+static void test_MsiEnumPatchesEx_userunmanaged(LPCSTR usersid, LPCSTR expectedsid)
+{
+    MSIINSTALLCONTEXT context;
+    CHAR keypath[MAX_PATH], patch[MAX_PATH];
+    CHAR patch_squashed[MAX_PATH], patchcode[MAX_PATH];
+    CHAR targetsid[MAX_PATH], targetprod[MAX_PATH];
+    CHAR prodcode[MAX_PATH], prod_squashed[MAX_PATH];
+    HKEY prodkey, patches, udprod, udpatch;
+    HKEY userkey, hpatch;
+    DWORD size, data;
+    LONG res;
+    UINT r;
+
+    create_test_guid(prodcode, prod_squashed);
+    create_test_guid(patch, patch_squashed);
 
     /* MSIPATCHSTATE_APPLIED */
 
@@ -8408,7 +8180,7 @@ static void test_MsiEnumPatchesEx(void)
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
-    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, expectedsid);
     lstrcatA(keypath, "\\Patches\\");
     lstrcatA(keypath, patch_squashed);
 
@@ -8431,10 +8203,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERUNMANAGED,
        "Expected MSIINSTALLCONTEXT_USERUNMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* MSIPATCHSTATE_SUPERSEDED */
 
@@ -8458,7 +8230,7 @@ static void test_MsiEnumPatchesEx(void)
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
     lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
-    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, expectedsid);
     lstrcatA(keypath, "\\Products\\");
     lstrcatA(keypath, prod_squashed);
 
@@ -8553,10 +8325,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERUNMANAGED,
        "Expected MSIINSTALLCONTEXT_USERUNMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* MSIPATCHSTATE_OBSOLETED */
 
@@ -8600,10 +8372,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERUNMANAGED,
        "Expected MSIINSTALLCONTEXT_USERUNMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* MSIPATCHSTATE_REGISTERED */
     /* FIXME */
@@ -8626,10 +8398,10 @@ static void test_MsiEnumPatchesEx(void)
        "Expected \"%s\", got \"%s\"\n", prodcode, targetprod);
     ok(context == MSIINSTALLCONTEXT_USERUNMANAGED,
        "Expected MSIINSTALLCONTEXT_USERUNMANAGED, got %d\n", context);
-    ok(!lstrcmpA(targetsid, usersid),
-       "Expected \"%s\", got \"%s\"\n", usersid, targetsid);
-    ok(size == lstrlenA(usersid),
-       "Expected %d, got %d\n", lstrlenA(usersid), size);
+    ok(!lstrcmpA(targetsid, expectedsid),
+       "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
+    ok(size == lstrlenA(expectedsid),
+       "Expected %d, got %d\n", lstrlenA(expectedsid), size);
 
     /* same patch in multiple places, only one is enumerated */
     lstrcpyA(patchcode, "apple");
@@ -8656,6 +8428,8 @@ static void test_MsiEnumPatchesEx(void)
     RegCloseKey(hpatch);
     RegDeleteKeyA(udpatch, "");
     RegCloseKey(udpatch);
+    RegDeleteKeyA(udprod, "");
+    RegCloseKey(udprod);
     RegDeleteKeyA(userkey, "");
     RegCloseKey(userkey);
     RegDeleteValueA(patches, patch_squashed);
@@ -8664,8 +8438,23 @@ static void test_MsiEnumPatchesEx(void)
     RegCloseKey(patches);
     RegDeleteKeyA(prodkey, "");
     RegCloseKey(prodkey);
+}
 
-    /* MSIINSTALLCONTEXT_MACHINE */
+static void test_MsiEnumPatchesEx_machine()
+{
+    CHAR keypath[MAX_PATH], patch[MAX_PATH];
+    CHAR patch_squashed[MAX_PATH], patchcode[MAX_PATH];
+    CHAR targetsid[MAX_PATH], targetprod[MAX_PATH];
+    CHAR prodcode[MAX_PATH], prod_squashed[MAX_PATH];
+    HKEY prodkey, patches, udprod, udpatch;
+    HKEY hpatch;
+    MSIINSTALLCONTEXT context;
+    DWORD size, data;
+    LONG res;
+    UINT r;
+
+    create_test_guid(prodcode, prod_squashed);
+    create_test_guid(patch, patch_squashed);
 
     /* MSIPATCHSTATE_APPLIED */
 
@@ -9082,6 +8871,266 @@ static void test_MsiEnumPatchesEx(void)
     RegCloseKey(udprod);
     RegDeleteKeyA(prodkey, "");
     RegCloseKey(prodkey);
+}
+
+static void test_MsiEnumPatchesEx(void)
+{
+    CHAR targetsid[MAX_PATH], targetprod[MAX_PATH];
+    CHAR prodcode[MAX_PATH], prod_squashed[MAX_PATH];
+    CHAR patchcode[MAX_PATH];
+    MSIINSTALLCONTEXT context;
+    LPSTR usersid;
+    DWORD size;
+    UINT r;
+
+    if (!pMsiEnumPatchesExA)
+    {
+        win_skip("MsiEnumPatchesExA not implemented\n");
+        return;
+    }
+
+    create_test_guid(prodcode, prod_squashed);
+    get_user_sid(&usersid);
+
+    /* empty szProductCode */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA("", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod, &context,
+                           targetsid, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* garbage szProductCode */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA("garbage", usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod, &context,
+                           targetsid, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* guid without brackets */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA("6700E8CF-95AB-4D9C-BC2C-15840DEA7A5D", usersid,
+                           MSIINSTALLCONTEXT_USERUNMANAGED, MSIPATCHSTATE_ALL,
+                           0, patchcode, targetprod, &context,
+                           targetsid, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* guid with brackets */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA("{6700E8CF-95AB-4D9C-BC2C-15840DDA7A5D}", usersid,
+                           MSIINSTALLCONTEXT_USERUNMANAGED, MSIPATCHSTATE_ALL,
+                           0, patchcode, targetprod, &context,
+                           targetsid, &size);
+    ok(r == ERROR_NO_MORE_ITEMS,
+       "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* szUserSid is S-1-5-18 */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA(prodcode, "S-1-5-18",
+                           MSIINSTALLCONTEXT_USERUNMANAGED, MSIPATCHSTATE_ALL,
+                           0, patchcode, targetprod, &context,
+                           targetsid, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* dwContext is MSIINSTALLCONTEXT_MACHINE, but szUserSid is non-NULL */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_MACHINE,
+                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod,
+                           &context, targetsid, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* dwContext is out of bounds */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA(prodcode, usersid, 0,
+                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod,
+                           &context, targetsid, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* dwContext is out of bounds */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_ALL + 1,
+                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod,
+                           &context, targetsid, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* dwFilter is out of bounds */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                           MSIPATCHSTATE_INVALID, 0, patchcode, targetprod,
+                           &context, targetsid, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* dwFilter is out of bounds */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    size = MAX_PATH;
+    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                           MSIPATCHSTATE_ALL + 1, 0, patchcode, targetprod,
+                           &context, targetsid, &size);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* pcchTargetUserSid is NULL while szTargetUserSid is non-NULL */
+    lstrcpyA(patchcode, "apple");
+    lstrcpyA(targetprod, "banana");
+    context = 0xdeadbeef;
+    lstrcpyA(targetsid, "kiwi");
+    r = pMsiEnumPatchesExA(prodcode, usersid, MSIINSTALLCONTEXT_USERUNMANAGED,
+                           MSIPATCHSTATE_ALL, 0, patchcode, targetprod,
+                           &context, targetsid, NULL);
+    ok(r == ERROR_INVALID_PARAMETER,
+       "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
+    ok(!lstrcmpA(patchcode, "apple"),
+       "Expected patchcode to be unchanged, got %s\n", patchcode);
+    ok(!lstrcmpA(targetprod, "banana"),
+       "Expected targetprod to be unchanged, got %s\n", targetprod);
+    ok(context == 0xdeadbeef,
+       "Expected context to be unchanged, got %d\n", context);
+    ok(!lstrcmpA(targetsid, "kiwi"),
+       "Expected targetsid to be unchanged, got %s\n", targetsid);
+
+    test_MsiEnumPatchesEx_usermanaged(usersid, usersid);
+    test_MsiEnumPatchesEx_usermanaged(NULL, usersid);
+    test_MsiEnumPatchesEx_usermanaged("S-1-2-34", "S-1-2-34");
+    test_MsiEnumPatchesEx_userunmanaged(usersid, usersid);
+    test_MsiEnumPatchesEx_userunmanaged(NULL, usersid);
+    /* FIXME: Successfully test userunmanaged with a different user */
+    test_MsiEnumPatchesEx_machine();
 }
 
 static void test_MsiEnumPatches(void)
