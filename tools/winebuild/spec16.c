@@ -549,6 +549,7 @@ static void output_module16( DLLSPEC *spec )
 
     if (!spec->ordinals)
     {
+        assert(spec->limit == 0);
         spec->ordinals = xmalloc( sizeof(spec->ordinals[0]) );
         spec->ordinals[0] = NULL;
     }
