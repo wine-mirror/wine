@@ -791,8 +791,15 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         if (!lstrcmpW(szAttribute, INSTALLPROPERTY_PACKAGENAMEW))
         {
             res = RegOpenKeyW(prodkey, sourcelist, &source);
-            if (res == ERROR_SUCCESS)
-                val = msi_reg_get_value(source, szAttribute, &type);
+            if (res != ERROR_SUCCESS)
+            {
+                r = ERROR_UNKNOWN_PRODUCT;
+                goto done;
+            }
+
+            val = msi_reg_get_value(source, szAttribute, &type);
+            if (!val)
+                val = empty;
 
             RegCloseKey(source);
         }

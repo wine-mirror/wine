@@ -3649,12 +3649,31 @@ static void test_MsiGetProductInfo(void)
     ok(!lstrcmpA(buf, "42"), "Expected \"42\", got \"%s\"\n", buf);
     ok(sz == 2, "Expected 2, got %d\n", sz);
 
+    /* SourceList key does not exist */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PACKAGENAME, buf, &sz);
+    ok(r == ERROR_UNKNOWN_PRODUCT,
+       "Expected ERROR_UNKNOWN_PRODUCT, got %d\n", r);
+    ok(!lstrcmpA(buf, "apple"),
+       "Expected buf to be unchanged, got \"%s\"\n", buf);
+    ok(sz == MAX_PATH, "Expected sz to be unchanged, got %d\n", sz);
+
     res = RegCreateKeyA(prodkey, "SourceList", &source);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    /* SourceList key exists, but PackageName val does not exist */
+    sz = MAX_PATH;
+    lstrcpyA(buf, "apple");
+    r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PACKAGENAME, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    ok(sz == 0, "Expected 0, got %d\n", sz);
 
     res = RegSetValueExA(source, "PackageName", 0, REG_SZ, (LPBYTE)"packname", 9);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    /* PackageName val exists */
     sz = MAX_PATH;
     lstrcpyA(buf, "apple");
     r = MsiGetProductInfoA(prodcode, INSTALLPROPERTY_PACKAGENAME, buf, &sz);
