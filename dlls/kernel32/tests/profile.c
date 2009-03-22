@@ -802,6 +802,232 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     DeleteFileA(filename);
 }
 
+static BOOL check_file_data(LPCSTR path, LPCSTR data)
+{
+    HANDLE file;
+    CHAR buf[MAX_PATH];
+    DWORD size;
+    BOOL ret;
+
+    file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    if (file == INVALID_HANDLE_VALUE)
+      return FALSE;
+
+    size = GetFileSize(file, NULL);
+    buf[size] = '\0';
+    ret = ReadFile(file, buf, size, &size, NULL);
+    CloseHandle(file);
+    if (!ret)
+      return FALSE;
+
+    if (!*data && size != 0)
+        return FALSE;
+
+    return !lstrcmpA(buf, data);
+}
+
+static void test_WritePrivateProfileString(void)
+{
+    BOOL ret;
+    LPCSTR data;
+    CHAR path[MAX_PATH];
+    CHAR temp[MAX_PATH];
+
+    GetTempPathA(MAX_PATH, temp);
+    GetTempFileNameA(temp, "wine", 0, path);
+    DeleteFileA(path);
+
+    /* path is not created yet */
+
+    /* NULL lpAppName */
+    SetLastError(0xdeadbeef);
+    ret = WritePrivateProfileStringA(NULL, "key", "string", path);
+    ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    ok(GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES,
+       "Expected path to not exist\n");
+
+    GetTempFileNameA(temp, "wine", 0, path);
+
+    /* NULL lpAppName, path exists */
+    data = "";
+    SetLastError(0xdeadbeef);
+    ret = WritePrivateProfileStringA(NULL, "key", "string", path);
+    ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+    todo_wine
+    {
+        ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+           "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    }
+    ok(check_file_data(path, data), "File doesn't match\n");
+    DeleteFileA(path);
+
+    /* empty lpAppName */
+    data = "[]\r\n"
+           "key=string\r\n";
+    ret = WritePrivateProfileStringA("", "key", "string", path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+    DeleteFileA(path);
+
+    /* NULL lpKeyName */
+    data = "";
+    ret = WritePrivateProfileStringA("App", NULL, "string", path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+    DeleteFileA(path);
+
+    /* empty lpKeyName */
+    data = "[App]\r\n"
+           "=string\r\n";
+    ret = WritePrivateProfileStringA("App", "", "string", path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+    DeleteFileA(path);
+
+    /* NULL lpString */
+    data = "";
+    ret = WritePrivateProfileStringA("App", "key", NULL, path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+    DeleteFileA(path);
+
+    /* empty lpString */
+    data = "[App]\r\n"
+           "key=\r\n";
+    ret = WritePrivateProfileStringA("App", "key", "", path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+    DeleteFileA(path);
+
+    /* empty lpFileName */
+    SetLastError(0xdeadbeef);
+    ret = WritePrivateProfileStringA("App", "key", "string", "");
+    ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
+    ok(GetLastError() == ERROR_ACCESS_DENIED,
+       "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+
+    /* The resulting file will be  X:\\%WINDIR%\\win1.tmp */
+    GetWindowsDirectoryA(temp, MAX_PATH);
+    GetTempFileNameA(temp, "win", 1, path);
+    DeleteFileA(path);
+
+    /* relative path in lpFileName */
+    data = "[App]\r\n"
+           "key=string\r\n";
+    ret = WritePrivateProfileStringA("App", "key", "string", "win1.tmp");
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+    DeleteFileA(path);
+
+    GetTempPathA(MAX_PATH, temp);
+    GetTempFileNameA(temp, "wine", 0, path);
+
+    /* build up an INI file */
+    WritePrivateProfileStringA("App1", "key1", "string1", path);
+    WritePrivateProfileStringA("App1", "key2", "string2", path);
+    WritePrivateProfileStringA("App1", "key3", "string3", path);
+    WritePrivateProfileStringA("App2", "key4", "string4", path);
+
+    /* make an addition and verify the INI */
+    data = "[App1]\r\n"
+           "key1=string1\r\n"
+           "key2=string2\r\n"
+           "key3=string3\r\n"
+           "[App2]\r\n"
+           "key4=string4\r\n"
+           "[App3]\r\n"
+           "key5=string5\r\n";
+    ret = WritePrivateProfileStringA("App3", "key5", "string5", path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+
+    /* lpString is NULL, key2 key is deleted */
+    data = "[App1]\r\n"
+           "key1=string1\r\n"
+           "key3=string3\r\n"
+           "[App2]\r\n"
+           "key4=string4\r\n"
+           "[App3]\r\n"
+           "key5=string5\r\n";
+    ret = WritePrivateProfileStringA("App1", "key2", NULL, path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+
+    /* try to delete key2 again */
+    data = "[App1]\r\n"
+           "key1=string1\r\n"
+           "key3=string3\r\n"
+           "[App2]\r\n"
+           "key4=string4\r\n"
+           "[App3]\r\n"
+           "key5=string5\r\n";
+    ret = WritePrivateProfileStringA("App1", "key2", NULL, path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+
+    /* lpKeyName is NULL, App1 section is deleted */
+    data = "[App2]\r\n"
+           "key4=string4\r\n"
+           "[App3]\r\n"
+           "key5=string5\r\n";
+    ret = WritePrivateProfileStringA("App1", NULL, "string1", path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+
+    /* lpString is not needed to delete a section */
+    data = "[App3]\r\n"
+           "key5=string5\r\n";
+    ret = WritePrivateProfileStringA("App2", NULL, NULL, path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+
+    /* leave just the section */
+    data = "[App3]\r\n";
+    ret = WritePrivateProfileStringA("App3", "key5", NULL, path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    {
+        ok(check_file_data(path, data), "File doesn't match\n");
+    }
+
+    DeleteFileA(path);
+}
+
 START_TEST(profile)
 {
     test_profile_int();
@@ -827,4 +1053,5 @@ START_TEST(profile)
         "name4=a\r"
         "[section2]\r",
         "CR only");
+    test_WritePrivateProfileString();
 }
