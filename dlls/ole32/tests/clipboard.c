@@ -423,6 +423,36 @@ static void test_get_clipboard(void)
     IDataObject_Release(data_obj);
 }
 
+static void test_cf_dataobject(BOOL dataobject_active)
+{
+    UINT cf = 0;
+    UINT cf_dataobject = RegisterClipboardFormatA("DataObject");
+    BOOL found_dataobject = FALSE;
+
+    OpenClipboard(NULL);
+    do
+    {
+        cf = EnumClipboardFormats(cf);
+        if(cf == cf_dataobject)
+        {
+            HGLOBAL h = GetClipboardData(cf);
+            HWND *ptr = GlobalLock(h);
+            DWORD size = GlobalSize(h);
+            HWND clip_owner = GetClipboardOwner();
+
+            found_dataobject = TRUE;
+            ok(size >= sizeof(*ptr), "size %d\n", size);
+            if(dataobject_active)
+                ok(*ptr == clip_owner, "hwnd %p clip_owner %p\n", *ptr, clip_owner);
+            else /* ole clipboard flushed */
+                ok(*ptr == NULL, "hwnd %p\n", *ptr);
+            GlobalUnlock(h);
+        }
+    } while(cf);
+    CloseClipboard();
+    ok(found_dataobject, "didn't find cf_dataobject\n");
+}
+
 static void test_set_clipboard(void)
 {
     HRESULT hr;
@@ -453,6 +483,9 @@ static void test_set_clipboard(void)
 
     hr = OleSetClipboard(data1);
     ok(hr == S_OK, "failed to set clipboard to data1, hr = 0x%08x\n", hr);
+
+    test_cf_dataobject(TRUE);
+
     hr = OleIsCurrentClipboard(data1);
     ok(hr == S_OK, "expected current clipboard to be data1, hr = 0x%08x\n", hr);
     hr = OleIsCurrentClipboard(data2);
@@ -479,6 +512,8 @@ static void test_set_clipboard(void)
     ok(hr == S_FALSE, "did not expect current clipboard to be data2, hr = 0x%08x\n", hr);
     hr = OleIsCurrentClipboard(NULL);
     ok(hr == S_FALSE, "expect S_FALSE, hr = 0x%08x\n", hr);
+
+    test_cf_dataobject(FALSE);
 
     ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard, hr = 0x%08x\n", hr);
 

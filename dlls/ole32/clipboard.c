@@ -1271,6 +1271,26 @@ static HWND OLEClipbrd_CreateWindow(void)
   return hwnd;
 }
 
+static HRESULT set_dataobject_format(HWND hwnd)
+{
+    HGLOBAL h = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, sizeof(hwnd));
+    HWND *data;
+
+    if(!h) return E_OUTOFMEMORY;
+
+    data = GlobalLock(h);
+    *data = hwnd;
+    GlobalUnlock(h);
+
+    if(!SetClipboardData(dataobject_clipboard_format, h))
+    {
+        GlobalFree(h);
+        return CLIPBRD_E_CANT_SET;
+    }
+
+    return S_OK;
+}
+
 /*---------------------------------------------------------------------*
  *           Win32 OLE clipboard API
  *---------------------------------------------------------------------*/
@@ -1296,10 +1316,6 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
   FORMATETC rgelt;
   BOOL bClipboardOpen = FALSE;
   struct oletls *info = COM_CurrentInfo();
-/*
-  HGLOBAL hDataObject = 0;
-  OLEClipbrd **ppDataObject;
-*/
 
   TRACE("(%p)\n", pDataObj);
 
@@ -1391,27 +1407,9 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
 
   /*
    * Windows additionally creates a new "DataObject" clipboard format
-   * and stores in on the clipboard. We could possibly store a pointer
-   * to our internal IDataObject interface on the clipboard. I'm not
-   * sure what the use of this is though.
-   * Enable the code below for this functionality.
+   * and stores the clipboard window's HWND in it
    */
-/*
-   theOleClipboard->cfDataObj = RegisterClipboardFormatA("DataObject");
-   hDataObject = GlobalAlloc( GMEM_DDESHARE|GMEM_MOVEABLE|GMEM_ZEROINIT,
-                             sizeof(OLEClipbrd *));
-   if (hDataObject==0)
-     HANDLE_ERROR( E_OUTOFMEMORY );
-
-   ppDataObject = GlobalLock(hDataObject);
-   *ppDataObject = theOleClipboard;
-   GlobalUnlock(hDataObject);
-
-   if ( !SetClipboardData( theOleClipboard->cfDataObj, hDataObject ) )
-     HANDLE_ERROR( CLIPBRD_E_CANT_SET );
-*/
-
-  hr = S_OK;
+  hr = set_dataobject_format(theOleClipboard->hWndClipboard);
 
 CLEANUP:
 
@@ -1540,6 +1538,8 @@ HRESULT WINAPI OleFlushClipboard(void)
   }
 
   IEnumFORMATETC_Release(penumFormatetc);
+
+  hr = set_dataobject_format(NULL);
 
   /*
    * Release the source data object we are holding on to
