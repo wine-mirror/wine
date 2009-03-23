@@ -71,7 +71,9 @@ static ULONG WINAPI IDirect3D8Impl_Release(LPDIRECT3D8 iface) {
 
     if (ref == 0) {
         TRACE("Releasing wined3d %p\n", This->WineD3D);
+        EnterCriticalSection(&d3d8_cs);
         IWineD3D_Release(This->WineD3D);
+        LeaveCriticalSection(&d3d8_cs);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -389,7 +391,9 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
     object->decls = HeapAlloc(GetProcessHeap(), 0, object->declArraySize * sizeof(*object->decls));
     if(!object->decls) {
         ERR("Out of memory\n");
+        EnterCriticalSection(&d3d8_cs);
         IWineD3DDevice_Release(object->WineD3DDevice);
+        LeaveCriticalSection(&d3d8_cs);
         HeapFree(GetProcessHeap(), 0, object);
         *ppReturnedDeviceInterface = NULL;
         hr = E_OUTOFMEMORY;
