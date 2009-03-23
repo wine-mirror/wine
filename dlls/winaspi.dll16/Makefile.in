@@ -2,13 +2,13 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = wnaspi32.dll
-IMPORTLIB = wnaspi32
+MODULE    = winaspi.dll16
 IMPORTS   = advapi32 kernel32
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,wnaspi32.dll
 
-C_SRCS = \
-	aspi.c \
-	winaspi32.c
+SPEC_SRCS = winaspi.dll16.spec
+
+C_SRCS = winaspi.c
 
 @MAKE_DLL_RULES@
 

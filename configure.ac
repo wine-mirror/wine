@@ -2244,6 +2244,7 @@ WINE_CONFIG_MAKEFILE([dlls/vtdapi.vxd/Makefile],[dlls/Makedll.rules],[dlls],[ALL
 WINE_CONFIG_MAKEFILE([dlls/vwin32.vxd/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/w32skrnl/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/win87em.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
+WINE_CONFIG_MAKEFILE([dlls/winaspi.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/windebug.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/winealsa.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/wineaudioio.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])

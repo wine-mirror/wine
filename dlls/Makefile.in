@@ -36,7 +36,6 @@ WIN16_FILES = \
 	ver.dll16 \
 	w32sys.dll16 \
 	win32s16.dll16 \
-	winaspi.dll16 \
 	wineps16.drv16 \
 	wing.dll16 \
 	winnls.dll16 \
@@ -98,9 +97,6 @@ mmsystem.dll16 sound.drv16:
 
 winnls.dll16:
 	echo "winnls32.dll" >$@
-
-winaspi.dll16:
-	echo "wnaspi32.dll" >$@
 
 winsock.dll16:
 	echo "ws2_32.dll" >$@

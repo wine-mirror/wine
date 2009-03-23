@@ -37,7 +37,6 @@
 #include "winreg.h"
 #include "wownt32.h"
 #include "aspi.h"
-#include "winescsi.h"
 #include "wine/winaspi.h"
 #include "wine/debug.h"
 
@@ -50,10 +49,44 @@
 
 #ifdef linux
 
+/* Copy of info from 2.2.x kernel */
+#define SG_MAX_SENSE 16   /* too little, unlikely to change in 2.2.x */
+
+struct sg_header
+{
+    int pack_len;    /* [o] reply_len (ie useless), ignored as input */
+    int reply_len;   /* [i] max length of expected reply (inc. sg_header) */
+    int pack_id;     /* [io] id number of packet (use ints >= 0) */
+    int result;      /* [o] 0==ok, else (+ve) Unix errno (best ignored) */
+    unsigned int twelve_byte:1;
+        /* [i] Force 12 byte command length for group 6 & 7 commands  */
+    unsigned int target_status:5;   /* [o] scsi status from target */
+    unsigned int host_status:8;     /* [o] host status (see "DID" codes) */
+    unsigned int driver_status:8;   /* [o] driver status+suggestion */
+    unsigned int other_flags:10;    /* unused */
+    unsigned char sense_buffer[SG_MAX_SENSE]; /* [o] Output in 3 cases:
+           when target_status is CHECK_CONDITION or
+           when target_status is COMMAND_TERMINATED or
+           when (driver_status & DRIVER_SENSE) is true. */
+};      /* This structure is 36 bytes long on i386 */
+
+#define SCSI_OFF sizeof(struct sg_header)
+
 #define PTR_TO_LIN(ptr,mode) \
   ((mode) == ASPI_DOS ? ((void*)(((unsigned int)SELECTOROF(ptr) << 4) + OFFSETOF(ptr))) : MapSL(ptr))
 
 WINE_DEFAULT_DEBUG_CHANNEL(aspi);
+
+/* Just a container for seeing what devices are open */
+struct ASPI_DEVICE_INFO {
+    struct ASPI_DEVICE_INFO *   next;
+    int                         fd;
+    int                         hostId;
+    int                         target;
+    int                         lun;
+};
+
+typedef struct ASPI_DEVICE_INFO ASPI_DEVICE_INFO;
 
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
 
