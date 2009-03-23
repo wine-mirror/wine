@@ -2571,6 +2571,25 @@ static void test_BindToStorage_fail(void)
     test_ReportResult(S_FALSE);
 }
 
+static void test_StdURLMoniker(void)
+{
+    IMoniker *mon, *async_mon;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&IID_IInternet, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IMoniker, (void**)&mon);
+    ok(hres == S_OK, "Could not create IInternet instance: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IMoniker_QueryInterface(mon, &IID_IAsyncMoniker, (void**)&async_mon);
+    ok(hres == S_OK, "Could not get IAsyncMoniker iface: %08x\n", hres);
+    ok(mon == async_mon, "mon != async_mon\n");
+    IMoniker_Release(async_mon);
+
+    IMoniker_Release(mon);
+}
+
 static void gecko_installer_workaround(BOOL disable)
 {
     HKEY hkey;
@@ -2621,6 +2640,9 @@ START_TEST(url)
         test_BindToStorage(HTTP_TEST, FALSE, TYMED_ISTREAM);
 
         CoInitialize(NULL);
+
+        trace("test StdURLMoniker...");
+        test_StdURLMoniker();
 
         trace("synchronous http test...\n");
         test_BindToStorage(HTTP_TEST, FALSE, TYMED_ISTREAM);

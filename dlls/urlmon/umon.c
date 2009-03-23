@@ -376,7 +376,7 @@ static HRESULT WINAPI URLMoniker_GetDisplayName(IMoniker *iface, IBindCtx *pbc, 
     
     if(!ppszDisplayName)
         return E_INVALIDARG;
-    
+
     /* FIXME: If this is a partial URL, try and get a URL moniker from SZ_URLCONTEXT in the bind context,
         then look at pmkToLeft to try and complete the URL
     */
@@ -436,18 +436,27 @@ static const IMonikerVtbl URLMonikerVtbl =
     URLMoniker_IsSystemMoniker
 };
 
-/******************************************************************************
- *         URLMoniker_Construct (local function)
- *******************************************************************************/
-static HRESULT URLMoniker_Construct(URLMoniker *This, LPCOLESTR lpszLeftURLName, LPCOLESTR lpszURLName)
+static URLMoniker *alloc_moniker(void)
+{
+    URLMoniker *ret;
+
+    ret = heap_alloc(sizeof(URLMoniker));
+    if(!ret)
+        return NULL;
+
+    ret->lpIMonikerVtbl = &URLMonikerVtbl;
+    ret->ref = 1;
+    ret->URLName = NULL;
+
+    return ret;
+}
+
+static HRESULT URLMoniker_Init(URLMoniker *This, LPCOLESTR lpszLeftURLName, LPCOLESTR lpszURLName)
 {
     HRESULT hres;
     DWORD sizeStr = 0;
 
     TRACE("(%p,%s,%s)\n",This,debugstr_w(lpszLeftURLName),debugstr_w(lpszURLName));
-
-    This->lpIMonikerVtbl = &URLMonikerVtbl;
-    This->ref = 0;
 
     This->URLName = heap_alloc(INTERNET_MAX_URL_LENGTH*sizeof(WCHAR));
 
@@ -471,6 +480,14 @@ static HRESULT URLMoniker_Construct(URLMoniker *This, LPCOLESTR lpszLeftURLName,
     TRACE("URLName = %s\n", debugstr_w(This->URLName));
 
     return S_OK;
+}
+
+HRESULT StdURLMoniker_Construct(IUnknown *outer, void **ppv)
+{
+    TRACE("(%p %p)\n", outer, ppv);
+
+    *ppv = alloc_moniker();
+    return *ppv ? S_OK : E_OUTOFMEMORY;
 }
 
 /***********************************************************************
@@ -499,7 +516,7 @@ HRESULT WINAPI CreateURLMonikerEx(IMoniker *pmkContext, LPCWSTR szURL, IMoniker 
 
     if (dwFlags & URL_MK_UNIFORM) FIXME("ignoring flag URL_MK_UNIFORM\n");
 
-    if(!(obj = heap_alloc(sizeof(*obj))))
+    if(!(obj = alloc_moniker()))
 	return E_OUTOFMEMORY;
 
     if(pmkContext) {
@@ -513,12 +530,11 @@ HRESULT WINAPI CreateURLMonikerEx(IMoniker *pmkContext, LPCWSTR szURL, IMoniker 
         }
     }
         
-    hres = URLMoniker_Construct(obj, lefturl, szURL);
+    hres = URLMoniker_Init(obj, lefturl, szURL);
     CoTaskMemFree(lefturl);
     if(SUCCEEDED(hres))
 	hres = URLMoniker_QueryInterface((IMoniker*)obj, &IID_IMoniker, (void**)ppmk);
-    else
-	heap_free(obj);
+    IMoniker_Release((IMoniker*)obj);
     return hres;
 }
 
