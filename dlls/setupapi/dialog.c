@@ -108,13 +108,12 @@ static void promptdisk_ok(HWND hwnd, struct promptdisk_params *params)
         *params->PathRequiredSize = requiredSize;
         TRACE("returning PathRequiredSize=%d\n",*params->PathRequiredSize);
     }
-    if(!params->PathBuffer && !params->PathBufferSize)
+    if(!params->PathBuffer)
     {
         EndDialog(hwnd, NO_ERROR);
         return;
     }
-    if(params->PathBuffer && (requiredSize > params->PathBufferSize
-        || params->PathBufferSize < MAX_PATH))
+    if(requiredSize > params->PathBufferSize)
     {
         EndDialog(hwnd, DPROMPT_BUFFERTOOSMALL);
         return;
