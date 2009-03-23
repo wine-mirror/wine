@@ -43,6 +43,7 @@
 @ stdcall lineGetCountryA(long long ptr)
 @ stdcall lineGetDevCaps(long long long long ptr) lineGetDevCapsA
 @ stdcall lineGetDevCapsA(long long long long ptr)
+@ stdcall lineGetDevCapsW(long long long long ptr)
 @ stdcall lineGetDevConfig(long ptr str) lineGetDevConfigA
 @ stdcall lineGetDevConfigA(long ptr str)
 @ stdcall lineGetID(long long long long ptr str) lineGetIDA

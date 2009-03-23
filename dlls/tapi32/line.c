@@ -466,12 +466,25 @@ DWORD WINAPI lineGetCountryA(DWORD dwCountryID, DWORD dwAPIVersion, LPLINECOUNTR
 }
 
 /***********************************************************************
- *		lineGetDevCaps (TAPI32.@)
+ *		lineGetDevCapsW (TAPI32.@)
  */
-DWORD WINAPI lineGetDevCapsA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVersion, DWORD dwExtVersion, LPLINEDEVCAPS lpLineDevCaps)
+DWORD WINAPI lineGetDevCapsW(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVersion,
+                             DWORD dwExtVersion, LPLINEDEVCAPS lpLineDevCaps)
 {
-    FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion, dwExtVersion, lpLineDevCaps);
-    return 0;
+    FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion,
+                                                 dwExtVersion, lpLineDevCaps);
+    return LINEERR_OPERATIONFAILED;
+}
+
+/***********************************************************************
+ *		lineGetDevCapsA (TAPI32.@)
+ */
+DWORD WINAPI lineGetDevCapsA(HLINEAPP hLineApp, DWORD dwDeviceID, DWORD dwAPIVersion,
+                             DWORD dwExtVersion, LPLINEDEVCAPS lpLineDevCaps)
+{
+    FIXME("(%p, %08x, %08x, %08x, %p): stub.\n", hLineApp, dwDeviceID, dwAPIVersion,
+                                                 dwExtVersion, lpLineDevCaps);
+    return LINEERR_OPERATIONFAILED;
 }
 
 /***********************************************************************
