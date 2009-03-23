@@ -2271,6 +2271,7 @@ WINE_CONFIG_MAKEFILE([dlls/winnls32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_D
 WINE_CONFIG_MAKEFILE([dlls/winscard/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/winspool.drv/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/winspool.drv/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
+WINE_CONFIG_MAKEFILE([dlls/wintab.dll16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/wintab32/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/wintrust/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/wintrust/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])

@@ -102,7 +102,6 @@ dlls/wineps16.drv16
 dlls/wing.dll16
 dlls/winnls.dll16
 dlls/winsock.dll16
-dlls/wintab.dll16
 dlls/wprocs.dll16
 include/activaut.h
 include/activdbg.h

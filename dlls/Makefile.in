@@ -41,7 +41,6 @@ WIN16_FILES = \
 	wing.dll16 \
 	winnls.dll16 \
 	winsock.dll16 \
-	wintab.dll16 \
 	wprocs.dll16
 
 @MAKE_RULES@
@@ -99,9 +98,6 @@ mmsystem.dll16 sound.drv16:
 
 winnls.dll16:
 	echo "winnls32.dll" >$@
-
-wintab.dll16:
-	echo "wintab32.dll" >$@
 
 winaspi.dll16:
 	echo "wnaspi32.dll" >$@

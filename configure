@@ -27656,6 +27656,14 @@ dlls/winspool.drv/tests/Makefile: dlls/winspool.drv/tests/Makefile.in dlls/Maket
 ac_config_files="$ac_config_files dlls/winspool.drv/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/wintab.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	wintab.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wintab.dll16/Makefile: dlls/wintab.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/wintab.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wintab32/Makefile"
 test "x$enable_wintab32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	wintab32"
@@ -29408,6 +29416,7 @@ do
     "dlls/winscard/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winscard/Makefile" ;;
     "dlls/winspool.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winspool.drv/Makefile" ;;
     "dlls/winspool.drv/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winspool.drv/tests/Makefile" ;;
+    "dlls/wintab.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintab.dll16/Makefile" ;;
     "dlls/wintab32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintab32/Makefile" ;;
     "dlls/wintrust/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintrust/Makefile" ;;
     "dlls/wintrust/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wintrust/tests/Makefile" ;;
