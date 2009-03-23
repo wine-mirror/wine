@@ -75,7 +75,10 @@ static ULONG STDMETHODCALLTYPE d3d10_device_inner_Release(IUnknown *iface)
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
-    if (This->wined3d_device) IWineD3DDevice_Release(This->wined3d_device);
+    if (!refcount)
+    {
+        if (This->wined3d_device) IWineD3DDevice_Release(This->wined3d_device);
+    }
 
     return refcount;
 }
