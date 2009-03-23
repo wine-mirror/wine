@@ -62,6 +62,9 @@ static HRESULT WINAPI URLMoniker_QueryInterface(IMoniker *iface, REFIID riid, vo
     }else if(IsEqualIID(&IID_IMoniker, riid)) {
         TRACE("(%p)->(IID_IMoniker %p)\n", This, ppv);
         *ppv = iface;
+    }else if(IsEqualIID(&IID_IAsyncMoniker, riid)) {
+        TRACE("(%p)->(IID_IAsyncMoniker %p)\n", This, ppv);
+        *ppv = iface;
     }else {
         WARN("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
