@@ -588,12 +588,26 @@ static void test_page_size(HWND hWndTrackbar){
 
     /* test TBM_GETPAGESIZE */
     r = SendMessage(hWndTrackbar, TBM_GETPAGESIZE, 0,0);
-    todo_wine{
-        expect(20, r);
-    }
+    expect(20, r);
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, page_size_test_seq, "page size test sequence", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_empty_test_seq, "parent page size test sequence", FALSE);
+
+    /* check for zero page size */
+    r = SendMessage(hWndTrackbar, TBM_SETPAGESIZE, 0, 0);
+    expect(20, r);
+    r = SendMessage(hWndTrackbar, TBM_GETPAGESIZE, 0, 0);
+    expect(0, r);
+    /* revert to default */
+    r = SendMessage(hWndTrackbar, TBM_SETPAGESIZE, 0, -1);
+    expect(0, r);
+    r = SendMessage(hWndTrackbar, TBM_GETPAGESIZE, 0, 0);
+    expect(20, r);
+    /* < -1 */
+    r = SendMessage(hWndTrackbar, TBM_SETPAGESIZE, 0, -2);
+    expect(20, r);
+    r = SendMessage(hWndTrackbar, TBM_GETPAGESIZE, 0, 0);
+    expect(-2, r);
 }
 
 static void test_position(HWND hWndTrackbar){
