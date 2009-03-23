@@ -24856,12 +24856,28 @@ dlls/ctapi32/Makefile: dlls/ctapi32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/ctapi32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/ctl3d.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	ctl3d.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ctl3d.dll16/Makefile: dlls/ctl3d.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/ctl3d.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/ctl3d32/Makefile"
 test "x$enable_ctl3d32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	ctl3d32"
 ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
 dlls/ctl3d32/Makefile: dlls/ctl3d32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/ctl3d32/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/ctl3dv2.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	ctl3dv2.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/ctl3dv2.dll16/Makefile: dlls/ctl3dv2.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/ctl3dv2.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/d3d10/Makefile"
@@ -29034,7 +29050,9 @@ do
     "dlls/cryptui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptui/Makefile" ;;
     "dlls/cryptui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cryptui/tests/Makefile" ;;
     "dlls/ctapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctapi32/Makefile" ;;
+    "dlls/ctl3d.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctl3d.dll16/Makefile" ;;
     "dlls/ctl3d32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctl3d32/Makefile" ;;
+    "dlls/ctl3dv2.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ctl3dv2.dll16/Makefile" ;;
     "dlls/d3d10/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10/Makefile" ;;
     "dlls/d3d10/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10/tests/Makefile" ;;
     "dlls/d3d10core/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/d3d10core/Makefile" ;;
