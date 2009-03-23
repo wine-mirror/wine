@@ -1222,6 +1222,62 @@ static void test_multiselect(void)
     DestroyWindow(hwnd);
 }
 
+static void test_subitem_rect(void)
+{
+    HWND hwnd;
+    DWORD r;
+    LVCOLUMN col;
+    RECT rect;
+
+    /* test LVM_GETSUBITEMRECT for header */
+    hwnd = create_listview_control();
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    /* add some columns */
+    memset(&col, 0, sizeof(LVCOLUMN));
+    col.mask = LVCF_WIDTH;
+    col.cx = 100;
+    r = -1;
+    r = SendMessage(hwnd, LVM_INSERTCOLUMN, 0, (LPARAM)&col);
+    expect(0, r);
+    col.cx = 150;
+    r = -1;
+    r = SendMessage(hwnd, LVM_INSERTCOLUMN, 1, (LPARAM)&col);
+    expect(1, r);
+    col.cx = 200;
+    r = -1;
+    r = SendMessage(hwnd, LVM_INSERTCOLUMN, 2, (LPARAM)&col);
+    expect(2, r);
+    /* item = -1 means header, subitem index is 1 based */
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 0;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
+    expect(0, r);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
+todo_wine{
+    ok(r != 0, "Expected not-null LRESULT\n");
+    expect(100, rect.left);
+    expect(250, rect.right);
+    expect(3, rect.top);
+}
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 2;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
+todo_wine{
+    ok(r != 0, "Expected not-null LRESULT\n");
+    expect(250, rect.left);
+    expect(450, rect.right);
+    expect(3, rect.top);
+}
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -1259,4 +1315,5 @@ START_TEST(listview)
     test_columns();
     test_getorigin();
     test_multiselect();
+    test_subitem_rect();
 }
