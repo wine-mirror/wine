@@ -768,12 +768,10 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
         /* Testing Flat Separators */
         extendedStyle = SendMessage(hTab, TCM_GETEXTENDEDSTYLE, 0, 0);
         prevExtendedStyle = SendMessage(hTab, TCM_SETEXTENDEDSTYLE, 0, TCS_EX_FLATSEPARATORS);
-            expect(extendedStyle, prevExtendedStyle);
+        expect(extendedStyle, prevExtendedStyle);
 
         extendedStyle = SendMessage(hTab, TCM_GETEXTENDEDSTYLE, 0, 0);
-        todo_wine{
-            expect(TCS_EX_FLATSEPARATORS, extendedStyle);
-        }
+        expect(TCS_EX_FLATSEPARATORS, extendedStyle);
 
         /* Testing Register Drop */
         prevExtendedStyle = SendMessage(hTab, TCM_SETEXTENDEDSTYLE, 0, TCS_EX_REGISTERDROP);

@@ -40,7 +40,6 @@
  *   TCIF_RTLREADING
  *
  *  Extended Styles:
- *   TCS_EX_FLATSEPARATORS
  *   TCS_EX_REGISTERDROP
  *
  *  States:
@@ -54,8 +53,6 @@
  *
  *  Messages:
  *   TCM_DESELECTALL
- *   TCM_GETEXTENDEDSTYLE
- *   TCM_SETEXTENDEDSTYLE
  *
  *  Macros:
  *   TabCtrl_AdjustRect
@@ -126,6 +123,9 @@ typedef struct
   BOOL       bUnicode;        /* Unicode control? */
   HWND       hwndUpDown;      /* Updown control used for scrolling */
   INT        cbInfo;          /* Number of bytes of caller supplied info per tab */
+
+  DWORD      exStyle;         /* Extended style used, currently:
+                                 TCS_EX_FLATSEPARATORS, TCS_EX_REGISTERDROP */
 } TAB_INFO;
 
 /******************************************************************************
@@ -1947,7 +1947,7 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
       r = itemRect;
 
       /* Separators between flat buttons */
-      if (lStyle & TCS_FLATBUTTONS)
+      if ((lStyle & TCS_FLATBUTTONS) && (infoPtr->exStyle & TCS_EX_FLATSEPARATORS))
       {
 	r1 = r;
 	r1.right += (FLAT_BTN_SPACINGX -2);
@@ -2978,6 +2978,8 @@ static LRESULT TAB_Create (HWND hwnd, LPARAM lParam)
   dwStyle = GetWindowLongW(hwnd, GWL_STYLE);
   SetWindowLongW(hwnd, GWL_STYLE, dwStyle|WS_CLIPSIBLINGS);
 
+  infoPtr->exStyle = (dwStyle & TCS_FLATBUTTONS) ? TCS_EX_FLATSEPARATORS : 0;
+
   if (dwStyle & TCS_TOOLTIPS) {
     /* Create tooltip control */
     infoPtr->hwndToolTip =
@@ -3129,6 +3131,39 @@ static LRESULT TAB_RemoveImage (TAB_INFO *infoPtr, INT image)
   return 0;
 }
 
+static LRESULT
+TAB_SetExtendedStyle (TAB_INFO *infoPtr, DWORD exMask, DWORD exStyle)
+{
+  DWORD prevstyle = infoPtr->exStyle;
+
+  /* zero mask means all styles */
+  if (exMask == 0) exMask = ~0;
+
+  if (exMask & TCS_EX_REGISTERDROP)
+  {
+    FIXME("TCS_EX_REGISTERDROP style unimplemented\n");
+    exMask  &= ~TCS_EX_REGISTERDROP;
+    exStyle &= ~TCS_EX_REGISTERDROP;
+  }
+
+  if (exMask & TCS_EX_FLATSEPARATORS)
+  {
+    if ((prevstyle ^ exStyle) & TCS_EX_FLATSEPARATORS)
+    {
+        infoPtr->exStyle ^= TCS_EX_FLATSEPARATORS;
+        TAB_InvalidateTabArea(infoPtr);
+    }
+  }
+
+  return prevstyle;
+}
+
+static inline LRESULT
+TAB_GetExtendedStyle (TAB_INFO *infoPtr)
+{
+  return infoPtr->exStyle;
+}
+
 static LRESULT WINAPI
 TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -3226,12 +3261,10 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return 0;
 
     case TCM_GETEXTENDEDSTYLE:
-      FIXME("Unimplemented msg TCM_GETEXTENDEDSTYLE\n");
-      return 0;
+      return TAB_GetExtendedStyle (infoPtr);
 
     case TCM_SETEXTENDEDSTYLE:
-      FIXME("Unimplemented msg TCM_SETEXTENDEDSTYLE\n");
-      return 0;
+      return TAB_SetExtendedStyle (infoPtr, wParam, lParam);
 
     case WM_GETFONT:
       return TAB_GetFont (infoPtr);
