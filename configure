@@ -27128,6 +27128,14 @@ dlls/softpub/Makefile: dlls/softpub/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/softpub/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/sound.drv16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	sound.drv16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/sound.drv16/Makefile: dlls/sound.drv16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/sound.drv16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/spoolss/Makefile"
 test "x$enable_spoolss" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	spoolss"
@@ -29374,6 +29382,7 @@ do
     "dlls/snmpapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/snmpapi/Makefile" ;;
     "dlls/snmpapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/snmpapi/tests/Makefile" ;;
     "dlls/softpub/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/softpub/Makefile" ;;
+    "dlls/sound.drv16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sound.drv16/Makefile" ;;
     "dlls/spoolss/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/spoolss/Makefile" ;;
     "dlls/spoolss/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/spoolss/tests/Makefile" ;;
     "dlls/stdole2.tlb/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/stdole2.tlb/Makefile" ;;

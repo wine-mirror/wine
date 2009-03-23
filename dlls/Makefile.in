@@ -27,7 +27,6 @@ WIN16_FILES = \
 	msvideo.dll16 \
 	setupx.dll16 \
 	shell.dll16 \
-	sound.drv16 \
 	system.drv16 \
 	toolhelp.dll16 \
 	user.exe16 \
@@ -84,7 +83,7 @@ wprocs.dll16:
 wineps16.drv16:
 	echo "wineps.drv" >$@
 
-mmsystem.dll16 sound.drv16:
+mmsystem.dll16:
 	echo "winmm.dll" >$@
 
 winnls.dll16:

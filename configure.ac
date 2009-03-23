@@ -2205,6 +2205,7 @@ WINE_CONFIG_MAKEFILE([dlls/slc/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DI
 WINE_CONFIG_MAKEFILE([dlls/snmpapi/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/snmpapi/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/softpub/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/sound.drv16/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS],[enable_win16])
 WINE_CONFIG_MAKEFILE([dlls/spoolss/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/spoolss/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/stdole2.tlb/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
