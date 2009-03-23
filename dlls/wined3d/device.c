@@ -2568,6 +2568,13 @@ err_out:
     return hr;
 }
 
+static HRESULT WINAPI device_unload_resource(IWineD3DResource *resource, void *ctx)
+{
+    IWineD3DResource_UnLoad(resource);
+    IWineD3DResource_Release(resource);
+    return WINED3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyDepthStencilSurface, D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     int sampler;
@@ -2582,6 +2589,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
 
     if(This->logo_surface) IWineD3DSurface_Release(This->logo_surface);
+
+    /* Unload resources */
+    IWineD3DDevice_EnumResources(iface, device_unload_resource, NULL);
 
     TRACE("Deleting high order patches\n");
     for(i = 0; i < PATCHMAP_SIZE; i++) {
