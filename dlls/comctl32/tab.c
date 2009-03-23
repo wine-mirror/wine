@@ -1433,7 +1433,6 @@ TAB_EraseTabInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
     BOOL     deleteBrush = TRUE;
     RECT     rTemp = *drawRect;
 
-    InflateRect(&rTemp, -2, -2);
     if (lStyle & TCS_BUTTONS)
     {
 	if (iItem == infoPtr->iSelected)
@@ -1473,6 +1472,7 @@ TAB_EraseTabInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
     }
     else /* !TCS_BUTTONS */
     {
+        InflateRect(&rTemp, -2, -2);
         if (!GetWindowTheme (infoPtr->hwnd))
 	    FillRect(hdc, &rTemp, hbr);
     }
