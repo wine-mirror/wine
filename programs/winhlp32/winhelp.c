@@ -136,7 +136,7 @@ static void WINHELP_SetupText(HWND hTextWnd, WINHELP_WINDOW* win, ULONG relative
         SendMessage(hTextWnd, EM_SETSCROLLPOS, 0, (LPARAM)&pt);
     }
     SendMessage(hTextWnd, WM_SETREDRAW, TRUE, 0);
-    InvalidateRect(hTextWnd, NULL, TRUE);
+    RedrawWindow(hTextWnd, NULL, NULL, RDW_FRAME|RDW_INVALIDATE);
 }
 
 /***********************************************************************
