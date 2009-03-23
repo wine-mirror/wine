@@ -45,9 +45,13 @@ wine: $(MAIN_OBJS) Makefile.in
 wine-installed: $(MAIN_OBJS) Makefile.in
 	$(CC) -o $@ $(LDEXECFLAGS) $(MAIN_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
-install install-lib:: wine-installed $(EXTRA_BINARIES) $(MANPAGES) $(INSTALLDIRS)
+$(EXTRA_BINARIES:%=__install__%): $(DESTDIR)$(bindir) dummy
+	f=`expr $@ : '__install__\(.*\)'` && $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f
+
+.PHONY: $(EXTRA_BINARIES:%=__install__%)
+
+install install-lib:: wine-installed $(EXTRA_BINARIES:%=__install__%) $(MANPAGES) $(INSTALLDIRS)
 	$(INSTALL_PROGRAM) wine-installed $(DESTDIR)$(bindir)/$(MODULE)
-	for f in $(EXTRA_BINARIES); do $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f; done
 	$(INSTALL_DATA) wine.man $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) wine.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) wine.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
