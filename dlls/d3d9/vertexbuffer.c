@@ -87,8 +87,15 @@ static HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDevice(LPDIRECT3DVERTEXBUFFE
 
 static HRESULT WINAPI IDirect3DVertexBuffer9Impl_SetPrivateData(LPDIRECT3DVERTEXBUFFER9 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
+    HRESULT hr;
+
     TRACE("(%p) Relay\n", This);
-    return IWineD3DBuffer_SetPrivateData(This->wineD3DVertexBuffer, refguid, pData, SizeOfData, Flags);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DBuffer_SetPrivateData(This->wineD3DVertexBuffer, refguid, pData, SizeOfData, Flags);
+    LeaveCriticalSection(&d3d9_cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetPrivateData(LPDIRECT3DVERTEXBUFFER9 iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {

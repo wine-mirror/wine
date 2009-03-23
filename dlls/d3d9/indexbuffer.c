@@ -239,9 +239,11 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(LPDIRECT3DDEVICE9EX iface,
     object->lpVtbl = &Direct3DIndexBuffer9_Vtbl;
     object->ref = 1;
     TRACE("Calling wined3d create index buffer\n");
+    EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage & WINED3DUSAGE_MASK,
             wined3dformat_from_d3dformat(Format), (WINED3DPOOL)Pool, &object->wineD3DIndexBuffer,
             pSharedHandle, (IUnknown *)object);
+    LeaveCriticalSection(&d3d9_cs);
     if (hrc != D3D_OK) {
 
         /* free up object */

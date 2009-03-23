@@ -513,6 +513,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
      * Unsetting them is no problem, because the states are supposed to be reset anyway. If the validation
      * below fails, the device is considered "lost", and _Reset and _Release are the only allowed calls
      */
+    EnterCriticalSection(&d3d9_cs);
+
     IWineD3DDevice_SetIndices(This->WineD3DDevice, NULL);
     for(i = 0; i < 16; i++) {
         IWineD3DDevice_SetStreamSource(This->WineD3DDevice, i, NULL, 0, 0);
@@ -525,6 +527,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
     if(!resources_ok) {
         WARN("The application is holding D3DPOOL_DEFAULT resources, rejecting reset\n");
         This->notreset = TRUE;
+        LeaveCriticalSection(&d3d9_cs);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -544,9 +547,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
     localParameters.PresentationInterval                = pPresentationParameters->PresentationInterval;
     localParameters.AutoRestoreDisplayMode              = TRUE;
 
-    EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_Reset(This->WineD3DDevice, &localParameters);
-    LeaveCriticalSection(&d3d9_cs);
     if(FAILED(hr)) {
         This->notreset = TRUE;
 
@@ -567,6 +568,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
     } else {
         This->notreset = FALSE;
     }
+
+    LeaveCriticalSection(&d3d9_cs);
 
     return hr;
 }
@@ -672,9 +675,11 @@ static HRESULT IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9EX iface, UIN
 
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p\n", This, Width, Height, Format, *ppSurface);
 
+    EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, wined3dformat_from_d3dformat(Format),
             Lockable, Discard, Level, &object->wineD3DSurface, Type, Usage & WINED3DUSAGE_MASK, (WINED3DPOOL)Pool,
             MultiSample, MultisampleQuality, pSharedHandle, SURFACE_OPENGL, (IUnknown *)object);
+    LeaveCriticalSection(&d3d9_cs);
 
     if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
 
@@ -699,10 +704,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_CreateRenderTarget(LPDIRECT3DDEVICE
     HRESULT hr;
     TRACE("Relay\n");
 
-   /* Is this correct? */
-   EnterCriticalSection(&d3d9_cs);
    hr = IDirect3DDevice9Impl_CreateSurface(iface,Width,Height,Format,Lockable,FALSE/*Discard*/, 0/*Level*/, ppSurface,D3DRTYPE_SURFACE,D3DUSAGE_RENDERTARGET,D3DPOOL_DEFAULT,MultiSample,MultisampleQuality,pSharedHandle);
-   LeaveCriticalSection(&d3d9_cs);
    return hr;
 }
 
@@ -713,11 +715,9 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_CreateDepthStencilSurface(LPDIRECT3
     HRESULT hr;
     TRACE("Relay\n");
 
-     EnterCriticalSection(&d3d9_cs);
      hr = IDirect3DDevice9Impl_CreateSurface(iface,Width,Height,Format,TRUE/* Lockable */,Discard, 0/* Level */
                                                ,ppSurface,D3DRTYPE_SURFACE,D3DUSAGE_DEPTHSTENCIL,
                                                 D3DPOOL_DEFAULT,MultiSample,MultisampleQuality,pSharedHandle);
-     LeaveCriticalSection(&d3d9_cs);
      return hr;
 }
 
@@ -796,19 +796,21 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9EX iface
     desc.Usage = &usage;
     desc.Pool = &pool;
     desc.Type = &restype;
+
+    EnterCriticalSection(&d3d9_cs);
     IWineD3DSurface_GetDesc(surface->wineD3DSurface, &desc);
 
     /* This method is only allowed with surfaces that are render targets, or offscreen plain surfaces
      * in D3DPOOL_DEFAULT
      */
     if(!(usage & WINED3DUSAGE_RENDERTARGET) && (pool != D3DPOOL_DEFAULT || restype != D3DRTYPE_SURFACE)) {
+        LeaveCriticalSection(&d3d9_cs);
         WARN("Surface is not a render target, or not a stand-alone D3DPOOL_DEFAULT surface\n");
         return D3DERR_INVALIDCALL;
     }
 
     /* Colorfill can only be used on rendertarget surfaces, or offscreen plain surfaces in D3DPOOL_DEFAULT */
     /* Note: D3DRECT is compatible with WINED3DRECT */
-    EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_ColorFill(This->WineD3DDevice, surface->wineD3DSurface, (CONST WINED3DRECT*)pRect, color);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
@@ -828,9 +830,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(LPDIREC
         Why, their always lockable?
         should I change the usage to dynamic?        
         */
-    EnterCriticalSection(&d3d9_cs);
     hr = IDirect3DDevice9Impl_CreateSurface(iface,Width,Height,Format,TRUE/*Loackable*/,FALSE/*Discard*/,0/*Level*/ , ppSurface,D3DRTYPE_SURFACE, 0/*Usage (undefined/none)*/,(WINED3DPOOL) Pool,D3DMULTISAMPLE_NONE,0/*MultisampleQuality*/,pSharedHandle);
-    LeaveCriticalSection(&d3d9_cs);
+
     return hr;
 }
 
@@ -958,10 +959,16 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_SetTransform(LPDIRECT3DDEVICE9EX if
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTransform(LPDIRECT3DDEVICE9EX iface, D3DTRANSFORMSTATETYPE State, D3DMATRIX* pMatrix) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    HRESULT hr;
+
     TRACE("(%p) Relay\n" , This);
 
+    EnterCriticalSection(&d3d9_cs);
     /* Note: D3DMATRIX is compatible with WINED3DMATRIX */
-    return IWineD3DDevice_GetTransform(This->WineD3DDevice, State, (WINED3DMATRIX*) pMatrix);
+    hr = IWineD3DDevice_GetTransform(This->WineD3DDevice, State, (WINED3DMATRIX*) pMatrix);
+    LeaveCriticalSection(&d3d9_cs);
+
+    return hr;
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_MultiplyTransform(LPDIRECT3DDEVICE9EX iface, D3DTRANSFORMSTATETYPE State, CONST D3DMATRIX* pMatrix) {
@@ -1519,20 +1526,18 @@ static HRESULT WINAPI IDirect3DDevice9Impl_SetFVF(LPDIRECT3DDEVICE9EX iface, DWO
     }
 
     EnterCriticalSection(&d3d9_cs);
-
     decl = getConvertedDecl(This, FVF);
+    LeaveCriticalSection(&d3d9_cs);
+
     if (!decl)
     {
          /* Any situation when this should happen, except out of memory? */
          ERR("Failed to create a converted vertex declaration\n");
-         LeaveCriticalSection(&d3d9_cs);
          return D3DERR_DRIVERINTERNALERROR;
     }
 
     hr = IDirect3DDevice9Impl_SetVertexDeclaration(iface, decl);
     if (FAILED(hr)) ERR("Failed to set vertex declaration\n");
-
-    LeaveCriticalSection(&d3d9_cs);
 
     return hr;
 }

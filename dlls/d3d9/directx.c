@@ -165,7 +165,10 @@ static HRESULT WINAPI IDirect3D9Impl_GetAdapterDisplayMode(LPDIRECT3D9EX iface, 
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
     HRESULT hr;
 
+    EnterCriticalSection(&d3d9_cs);
     hr = IWineD3D_GetAdapterDisplayMode(This->WineD3D, Adapter, (WINED3DDISPLAYMODE *) pMode);
+    LeaveCriticalSection(&d3d9_cs);
+
     if (SUCCEEDED(hr)) pMode->Format = d3dformat_from_wined3dformat(pMode->Format);
 
     return hr;

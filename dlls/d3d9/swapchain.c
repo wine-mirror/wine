@@ -74,8 +74,15 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_Release(LPDIRECT3DSWAPCHAIN9 iface) 
 /* IDirect3DSwapChain9 parts follow: */
 static HRESULT WINAPI IDirect3DSwapChain9Impl_Present(LPDIRECT3DSWAPCHAIN9 iface, CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion, DWORD dwFlags) {
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
+    HRESULT hr;
+
     TRACE("(%p) Relay\n", This);
-    return IWineD3DSwapChain_Present(This->wineD3DSwapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+
+    EnterCriticalSection(&d3d9_cs);
+    hr = IWineD3DSwapChain_Present(This->wineD3DSwapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+    LeaveCriticalSection(&d3d9_cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DSwapChain9Impl_GetFrontBufferData(LPDIRECT3DSWAPCHAIN9 iface, IDirect3DSurface9* pDestSurface) {
