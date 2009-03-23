@@ -189,7 +189,6 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 {
     HGLOBAL16 hRet = 0;
     HICON16 *RetPtr = NULL;
-    OFSTRUCT ofs;
 
 	TRACE("(%04x,file %s,start %d,extract %d\n",
 		       hInstance, lpszExeFileName, nIconIndex, n);
@@ -202,7 +201,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 
 	if (nIconIndex == (UINT16)-1)  /* get number of icons */
 	{
-	  RetPtr[0] = PrivateExtractIconsA(ofs.szPathName, 0, 0, 0, NULL, NULL, 0, LR_DEFAULTCOLOR);
+	  RetPtr[0] = PrivateExtractIconsA(lpszExeFileName, 0, 0, 0, NULL, NULL, 0, LR_DEFAULTCOLOR);
 	}
 	else
 	{
@@ -210,7 +209,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	  HICON *icons;
 
 	  icons = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*icons));
-	  ret = PrivateExtractIconsA(ofs.szPathName, nIconIndex,
+	  ret = PrivateExtractIconsA(lpszExeFileName, nIconIndex,
 	                             GetSystemMetrics(SM_CXICON),
 	                             GetSystemMetrics(SM_CYICON),
 	                             icons, NULL, n, LR_DEFAULTCOLOR);
