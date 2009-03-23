@@ -1420,6 +1420,46 @@ static void test_EM_GETTEXTRANGE(void)
     ok(result == 7, "EM_GETTEXTRANGE returned %ld\n", result);
     ok(!strcmp(expect, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
 
+    /* cpMax of text length is used instead of -1 in this case */
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = 0;
+    textRange.chrg.cpMax = -1;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == strlen(text2), "EM_GETTEXTRANGE returned %ld\n", result);
+    ok(!strcmp(text2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    /* cpMin < 0 causes no text to be copied, and 0 to be returned */
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = -1;
+    textRange.chrg.cpMax = 1;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == 0, "EM_GETTEXTRANGE returned %ld\n", result);
+    ok(!strcmp(text2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    /* cpMax of -1 is not replaced with text length if cpMin != 0 */
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = 1;
+    textRange.chrg.cpMax = -1;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == 0, "EM_GETTEXTRANGE returned %ld\n", result);
+    ok(!strcmp(text2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    /* no end character is copied if cpMax - cpMin < 0 */
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = 5;
+    textRange.chrg.cpMax = 5;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == 0, "EM_GETTEXTRANGE returned %ld\n", result);
+    ok(!strcmp(text2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
+    /* cpMax of text length is used if cpMax > text length*/
+    textRange.lpstrText = buffer;
+    textRange.chrg.cpMin = 0;
+    textRange.chrg.cpMax = 1000;
+    result = SendMessage(hwndRichEdit, EM_GETTEXTRANGE, 0, (LPARAM)&textRange);
+    ok(result == strlen(text2), "EM_GETTEXTRANGE returned %ld\n", result);
+    ok(!strcmp(text2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+
     DestroyWindow(hwndRichEdit);
 }
 

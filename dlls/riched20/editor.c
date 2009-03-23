@@ -1906,20 +1906,16 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
     }
 }
 
-static int ME_GetTextRange(ME_TextEditor *editor, TEXTRANGEW *rng, BOOL unicode)
+static int ME_GetTextRange(ME_TextEditor *editor, WCHAR *strText,
+                           int start, int nLen, BOOL unicode)
 {
-    if (unicode)
-      return ME_GetTextW(editor, rng->lpstrText, rng->chrg.cpMin,
-                         rng->chrg.cpMax-rng->chrg.cpMin, 0);
-    else
-    {
-      int nLen = rng->chrg.cpMax-rng->chrg.cpMin;
+    if (unicode) {
+      return ME_GetTextW(editor, strText, start, nLen, 0);
+    } else {
       WCHAR *p = ALLOC_N_OBJ(WCHAR, nLen+1);
-      int nChars = ME_GetTextW(editor, p, rng->chrg.cpMin, nLen, 0);
-      /* FIXME this is a potential security hole (buffer overrun)
-         if you know more about wchar->mbyte conversion please explain
-      */
-      WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)rng->lpstrText, nLen+1, NULL, NULL);
+      int nChars = ME_GetTextW(editor, p, start, nLen, 0);
+      WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)strText,
+                          nLen+1, NULL, NULL);
       FREE_OBJ(p);
       return nChars;
     }
@@ -3580,12 +3576,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETSELTEXT:
   {
     int from, to;
-    TEXTRANGEW tr; /* W and A differ only by rng->lpstrText */
     ME_GetSelection(editor, &from, &to);
-    tr.chrg.cpMin = from;
-    tr.chrg.cpMax = to;
-    tr.lpstrText = (WCHAR *)lParam;
-    return ME_GetTextRange(editor, &tr, unicode);
+    return ME_GetTextRange(editor, (WCHAR *)lParam, from,
+                           to - from, unicode);
   }
   case EM_GETSCROLLPOS:
   {
@@ -3597,10 +3590,17 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETTEXTRANGE:
   {
     TEXTRANGEW *rng = (TEXTRANGEW *)lParam;
+    int start = rng->chrg.cpMin;
+    int end = rng->chrg.cpMax;
+    int textlength = ME_GetTextLength(editor);
     TRACE("EM_GETTEXTRANGE min=%d max=%d unicode=%d emul1.0=%d length=%d\n",
       rng->chrg.cpMin, rng->chrg.cpMax, unicode,
       editor->bEmulateVersion10, ME_GetTextLength(editor));
-    return ME_GetTextRange(editor, rng, unicode);
+    if (start < 0) return 0;
+    if ((start == 0 && end == -1) || end > textlength)
+      end = textlength;
+    if (start >= end) return 0;
+    return ME_GetTextRange(editor, rng->lpstrText, start, end - start, unicode);
   }
   case EM_GETLINE:
   {
