@@ -25656,6 +25656,14 @@ dlls/imagehlp/Makefile: dlls/imagehlp/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/imagehlp/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/imm.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	imm.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/imm.dll16/Makefile: dlls/imm.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/imm.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/imm32/Makefile"
 test "x$enable_imm32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	imm32"
@@ -29150,6 +29158,7 @@ do
     "dlls/ifsmgr.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ifsmgr.vxd/Makefile" ;;
     "dlls/imaadp32.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imaadp32.acm/Makefile" ;;
     "dlls/imagehlp/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imagehlp/Makefile" ;;
+    "dlls/imm.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imm.dll16/Makefile" ;;
     "dlls/imm32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imm32/Makefile" ;;
     "dlls/imm32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/imm32/tests/Makefile" ;;
     "dlls/inetcomm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/inetcomm/Makefile" ;;

@@ -22,7 +22,6 @@ WIN16_FILES = \
 	commdlg.dll16 \
 	ddeml.dll16 \
 	gdi.exe16 \
-	imm.dll16 \
 	krnl386.exe16 \
 	mmsystem.dll16 \
 	msvideo.dll16 \
@@ -61,9 +60,6 @@ commdlg.dll16:
 
 gdi.exe16 wing.dll16:
 	echo "gdi32.dll" >$@
-
-imm.dll16:
-	echo "imm32.dll" >$@
 
 krnl386.exe16 system.drv16 toolhelp.dll16:
 	echo "kernel32.dll" >$@

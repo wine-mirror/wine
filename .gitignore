@@ -29,7 +29,6 @@ dlls/avifile.dll16
 dlls/commdlg.dll16
 dlls/ddeml.dll16
 dlls/gdi.exe16
-dlls/imm.dll16
 dlls/jscript/jsglobal.tlb
 dlls/jscript/parser.tab.c
 dlls/jscript/parser.tab.h

@@ -2,14 +2,11 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = imm32.dll
-IMPORTLIB = imm32
-IMPORTS   = user32 gdi32 advapi32 kernel32
+MODULE    = imm.dll16
+IMPORTS   = kernel32
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,imm32.dll
 
-C_SRCS = \
-	imm.c
-
-RC_SRCS = version.rc
+SPEC_SRCS = imm.dll16.spec
 
 @MAKE_DLL_RULES@
 
