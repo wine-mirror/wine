@@ -3592,15 +3592,71 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
 GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
                                         GpCoordinateSpace src_space, GpPointF *points, INT count)
 {
+    GpMatrix *matrix;
+    GpStatus stat;
+    REAL unitscale;
+
     if(!graphics || !points || count <= 0)
         return InvalidParameter;
 
     if(graphics->busy)
         return ObjectBusy;
 
-    FIXME("(%p, %d, %d, %p, %d): stub\n", graphics, dst_space, src_space, points, count);
+    TRACE("(%p, %d, %d, %p, %d)\n", graphics, dst_space, src_space, points, count);
 
-    return NotImplemented;
+    if (src_space == dst_space) return Ok;
+
+    stat = GdipCreateMatrix(&matrix);
+    if (stat == Ok)
+    {
+        unitscale = convert_unit(graphics->hdc, graphics->unit);
+
+        if(graphics->unit != UnitDisplay)
+            unitscale *= graphics->scale;
+
+        /* transform from src_space to CoordinateSpacePage */
+        switch (src_space)
+        {
+        case CoordinateSpaceWorld:
+            GdipMultiplyMatrix(matrix, graphics->worldtrans, MatrixOrderAppend);
+            break;
+        case CoordinateSpacePage:
+            break;
+        case CoordinateSpaceDevice:
+            GdipScaleMatrix(matrix, 1.0/unitscale, 1.0/unitscale, MatrixOrderAppend);
+            break;
+        }
+
+        /* transform from CoordinateSpacePage to dst_space */
+        switch (dst_space)
+        {
+        case CoordinateSpaceWorld:
+            {
+                GpMatrix *inverted_transform;
+                stat = GdipCloneMatrix(graphics->worldtrans, &inverted_transform);
+                if (stat == Ok)
+                {
+                    stat = GdipInvertMatrix(inverted_transform);
+                    if (stat == Ok)
+                        GdipMultiplyMatrix(matrix, inverted_transform, MatrixOrderAppend);
+                    GdipDeleteMatrix(inverted_transform);
+                }
+                break;
+            }
+        case CoordinateSpacePage:
+            break;
+        case CoordinateSpaceDevice:
+            GdipScaleMatrix(matrix, unitscale, unitscale, MatrixOrderAppend);
+            break;
+        }
+
+        if (stat == Ok)
+            stat = GdipTransformMatrixPoints(matrix, points, count);
+
+        GdipDeleteMatrix(matrix);
+    }
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipTransformPointsI(GpGraphics *graphics, GpCoordinateSpace dst_space,
