@@ -53,7 +53,6 @@
  *   TCN_KEYDOWN
  *
  *  Messages:
- *   TCM_REMOVEIMAGE
  *   TCM_DESELECTALL
  *   TCM_GETEXTENDEDSTYLE
  *   TCM_SETEXTENDEDSTYLE
@@ -3099,6 +3098,37 @@ TAB_SetItemExtra (TAB_INFO *infoPtr, INT cbInfo)
   return TRUE;
 }
 
+static LRESULT TAB_RemoveImage (TAB_INFO *infoPtr, INT image)
+{
+  if (!infoPtr)
+    return 0;
+
+  if (ImageList_Remove (infoPtr->himl, image))
+  {
+    INT i, *idx;
+    RECT r;
+
+    /* shift indices, repaint items if needed */
+    for (i = 0; i < infoPtr->uNumItem; i++)
+    {
+      idx = &infoPtr->items[i].iImage;
+      if (*idx >= image)
+      {
+        if (*idx == image)
+          *idx = -1;
+        else
+          (*idx)--;
+
+        /* repaint item */
+        if (TAB_InternalGetItemRect (infoPtr, i, &r, NULL))
+          InvalidateRect (infoPtr->hwnd, &r, TRUE);
+      }
+    }
+  }
+
+  return 0;
+}
+
 static LRESULT WINAPI
 TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -3159,8 +3189,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_SetItemSize (infoPtr, lParam);
 
     case TCM_REMOVEIMAGE:
-      FIXME("Unimplemented msg TCM_REMOVEIMAGE\n");
-      return 0;
+      return TAB_RemoveImage (infoPtr, wParam);
 
     case TCM_SETPADDING:
       return TAB_SetPadding (infoPtr, lParam);
