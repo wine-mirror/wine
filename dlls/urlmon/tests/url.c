@@ -2574,6 +2574,7 @@ static void test_BindToStorage_fail(void)
 static void test_StdURLMoniker(void)
 {
     IMoniker *mon, *async_mon;
+    LPOLESTR display_name;
     HRESULT hres;
 
     hres = CoCreateInstance(&IID_IInternet, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -2586,6 +2587,9 @@ static void test_StdURLMoniker(void)
     ok(hres == S_OK, "Could not get IAsyncMoniker iface: %08x\n", hres);
     ok(mon == async_mon, "mon != async_mon\n");
     IMoniker_Release(async_mon);
+
+    hres = IMoniker_GetDisplayName(mon, NULL, NULL, &display_name);
+    ok(hres == E_OUTOFMEMORY, "GetDisplayName failed: %08x, expected E_OUTOFMEMORY\n", hres);
 
     IMoniker_Release(mon);
 }
@@ -2641,7 +2645,7 @@ START_TEST(url)
 
         CoInitialize(NULL);
 
-        trace("test StdURLMoniker...");
+        trace("test StdURLMoniker...\n");
         test_StdURLMoniker();
 
         trace("synchronous http test...\n");

@@ -377,6 +377,9 @@ static HRESULT WINAPI URLMoniker_GetDisplayName(IMoniker *iface, IBindCtx *pbc, 
     if(!ppszDisplayName)
         return E_INVALIDARG;
 
+    if(!This->URLName)
+        return E_OUTOFMEMORY;
+
     /* FIXME: If this is a partial URL, try and get a URL moniker from SZ_URLCONTEXT in the bind context,
         then look at pmkToLeft to try and complete the URL
     */
