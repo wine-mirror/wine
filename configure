@@ -26800,6 +26800,14 @@ dlls/query/Makefile: dlls/query/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/query/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/rasapi16.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	rasapi16.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/rasapi16.dll16/Makefile: dlls/rasapi16.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/rasapi16.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/rasapi32/Makefile"
 test "x$enable_rasapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	rasapi32"
@@ -29325,6 +29333,7 @@ do
     "dlls/quartz/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/quartz/Makefile" ;;
     "dlls/quartz/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/quartz/tests/Makefile" ;;
     "dlls/query/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/query/Makefile" ;;
+    "dlls/rasapi16.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi16.dll16/Makefile" ;;
     "dlls/rasapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi32/Makefile" ;;
     "dlls/rasapi32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasapi32/tests/Makefile" ;;
     "dlls/rasdlg/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rasdlg/Makefile" ;;

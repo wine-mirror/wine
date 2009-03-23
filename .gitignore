@@ -78,7 +78,6 @@ dlls/qmgr/qmgr_local_i.c
 dlls/qmgrprxy/qmgrprxy.h
 dlls/qmgrprxy/qmgrprxy_i.c
 dlls/qmgrprxy/qmgrprxy_p.c
-dlls/rasapi16.dll16
 dlls/rpcrt4/epm.h
 dlls/rpcrt4/epm_c.c
 dlls/rpcrt4/tests/server.h

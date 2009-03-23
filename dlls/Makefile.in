@@ -25,7 +25,6 @@ WIN16_FILES = \
 	krnl386.exe16 \
 	mmsystem.dll16 \
 	msvideo.dll16 \
-	rasapi16.dll16 \
 	setupx.dll16 \
 	shell.dll16 \
 	sound.drv16 \
@@ -63,9 +62,6 @@ krnl386.exe16 system.drv16 toolhelp.dll16:
 
 msvideo.dll16:
 	echo "msvfw32.dll" >$@
-
-rasapi16.dll16:
-	echo "rasapi32.dll" >$@
 
 setupx.dll16:
 	echo "setupapi.dll" >$@
