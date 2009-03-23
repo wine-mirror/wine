@@ -296,6 +296,13 @@ static void testcooperativelevels_normal(void)
     /* Set the focus window */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
+
+    if (rc == DDERR_INVALIDPARAMS)
+    {
+        win_skip("NT4/Win95 do not support cooperative levels DDSCL_SETDEVICEWINDOW and DDSCL_SETFOCUSWINDOW\n");
+        return;
+    }
+
     ok(rc==DD_OK,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
     /* Set the focus window a second time*/
@@ -379,7 +386,8 @@ static void testcooperativelevels_exclusive(void)
     /* Set the focus window. Should fail */
     rc = IDirectDraw_SetCooperativeLevel(lpDD,
         hwnd, DDSCL_SETFOCUSWINDOW);
-    ok(rc==DDERR_HWNDALREADYSET,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
+    ok(rc==DDERR_HWNDALREADYSET ||
+       broken(rc==DDERR_INVALIDPARAMS) /* NT4/Win95 */,"SetCooperativeLevel(DDSCL_SETFOCUSWINDOW) returned: %x\n",rc);
 
 
     /* All done */
