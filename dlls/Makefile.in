@@ -31,7 +31,6 @@ WIN16_FILES = \
 	sound.drv16 \
 	system.drv16 \
 	toolhelp.dll16 \
-	twain.dll16 \
 	user.exe16 \
 	ver.dll16 \
 	w32sys.dll16 \
@@ -73,9 +72,6 @@ setupx.dll16:
 
 shell.dll16:
 	echo "shell32.dll" >$@
-
-twain.dll16:
-	echo "twain_32.dll" >$@
 
 ddeml.dll16 user.exe16:
 	echo "user32.dll" >$@

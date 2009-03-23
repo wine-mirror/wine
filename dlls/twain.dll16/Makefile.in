@@ -2,12 +2,13 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = twain_32.dll
+MODULE    = twain.dll16
 IMPORTS   = kernel32
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,twain_32.dll
 
-C_SRCS = \
-	dsm_ctrl.c \
-	twain32_main.c
+SPEC_SRCS = twain.dll16.spec
+
+C_SRCS = twain.c
 
 @MAKE_DLL_RULES@
 

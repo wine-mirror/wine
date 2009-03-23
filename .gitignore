@@ -92,7 +92,6 @@ dlls/stdole2.tlb/std_ole_v2.tlb
 dlls/stdole32.tlb/std_ole_v1.tlb
 dlls/system.drv16
 dlls/toolhelp.dll16
-dlls/twain.dll16
 dlls/user.exe16
 dlls/ver.dll16
 dlls/w32sys.dll16
