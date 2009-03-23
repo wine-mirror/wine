@@ -176,7 +176,7 @@ static DWORD WINAPI IDirect3DCubeTexture9Impl_GetLOD(LPDIRECT3DCUBETEXTURE9 ifac
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d9_cs);
-    ret = IDirect3DBaseTexture9Impl_GetLOD((LPDIRECT3DBASETEXTURE9) This);
+    ret = IWineD3DCubeTexture_GetLOD(This->wineD3DCubeTexture);
     LeaveCriticalSection(&d3d9_cs);
     return ret;
 }

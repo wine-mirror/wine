@@ -389,8 +389,6 @@ typedef struct IDirect3DBaseTexture9Impl
     
 } IDirect3DBaseTexture9Impl;
 
-extern DWORD    WINAPI        IDirect3DBaseTexture9Impl_GetLOD(LPDIRECT3DBASETEXTURE9 iface);
-
 /* --------------------- */
 /* IDirect3DCubeTexture9 */
 /* --------------------- */
