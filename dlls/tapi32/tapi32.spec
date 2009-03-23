@@ -48,6 +48,7 @@
 @ stdcall lineGetDevConfigA(long ptr str)
 @ stdcall lineGetID(long long long long ptr str) lineGetIDA
 @ stdcall lineGetIDA(long long long long ptr str)
+@ stdcall lineGetIDW(long long long long ptr wstr)
 @ stdcall lineGetIcon(long str ptr) lineGetIconA
 @ stdcall lineGetIconA(long str ptr)
 @ stdcall lineGetLineDevStatus(long ptr) lineGetLineDevStatusA

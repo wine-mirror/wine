@@ -497,12 +497,26 @@ DWORD WINAPI lineGetDevConfigA(DWORD dwDeviceID, LPVARSTRING lpDeviceConfig, LPC
 }
 
 /***********************************************************************
- *		lineGetID (TAPI32.@)
+ *		lineGetIDW (TAPI32.@)
  */
-DWORD WINAPI lineGetIDA(HLINE hLine, DWORD dwAddressID, HCALL hCall, DWORD dwSelect, LPVARSTRING lpDeviceID, LPCSTR lpszDeviceClass)
+DWORD WINAPI lineGetIDW(HLINE hLine, DWORD dwAddressID, HCALL hCall, DWORD dwSelect,
+                        LPVARSTRING lpDeviceID, LPCWSTR lpszDeviceClass)
 {
-    FIXME("(%p, %08x, %p, %08x, %p, %s): stub.\n", hLine, dwAddressID, hCall, dwSelect, lpDeviceID, lpszDeviceClass);
-    return 0;
+    FIXME("(%p, %08x, %p, %08x, %p, %s): stub.\n", hLine, dwAddressID, hCall,
+                                                   dwSelect, lpDeviceID,
+                                                   debugstr_w(lpszDeviceClass));
+    return LINEERR_OPERATIONFAILED;
+}
+
+/***********************************************************************
+ *		lineGetIDA (TAPI32.@)
+ */
+DWORD WINAPI lineGetIDA(HLINE hLine, DWORD dwAddressID, HCALL hCall, DWORD dwSelect,
+                        LPVARSTRING lpDeviceID, LPCSTR lpszDeviceClass)
+{
+    FIXME("(%p, %08x, %p, %08x, %p, %s): stub.\n", hLine, dwAddressID, hCall,
+                                                   dwSelect, lpDeviceID, lpszDeviceClass);
+    return LINEERR_OPERATIONFAILED;
 }
 
 /***********************************************************************
