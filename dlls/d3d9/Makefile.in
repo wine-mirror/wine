@@ -14,7 +14,6 @@ C_SRCS = \
 	indexbuffer.c \
 	pixelshader.c \
 	query.c \
-	resource.c \
 	stateblock.c \
 	surface.c \
 	swapchain.c \
