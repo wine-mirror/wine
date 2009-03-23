@@ -1005,12 +1005,25 @@ LONG WINAPI lineInitializeExA(LPHLINEAPP lphLineApp, HINSTANCE hInstance, LINECA
 }
 
 /***********************************************************************
- *		lineMakeCall (TAPI32.@)
+ *		lineMakeCallW (TAPI32.@)
  */
-DWORD WINAPI lineMakeCallA(HLINE hLine, LPHCALL lphCall, LPCSTR lpszDestAddress, DWORD dwCountryCode, LPLINECALLPARAMS lpCallParams)
+DWORD WINAPI lineMakeCallW(HLINE hLine, LPHCALL lphCall, LPCWSTR lpszDestAddress,
+                           DWORD dwCountryCode, LPLINECALLPARAMS lpCallParams)
 {
-    FIXME("(%p, %p, %s, %08x, %p): stub.\n", hLine, lphCall, lpszDestAddress, dwCountryCode, lpCallParams);
-    return 1;
+    FIXME("(%p, %p, %s, %08x, %p): stub.\n", hLine, lphCall, debugstr_w(lpszDestAddress),
+                                             dwCountryCode, lpCallParams);
+    return LINEERR_OPERATIONFAILED;
+}
+
+/***********************************************************************
+ *		lineMakeCallA (TAPI32.@)
+ */
+DWORD WINAPI lineMakeCallA(HLINE hLine, LPHCALL lphCall, LPCSTR lpszDestAddress,
+                           DWORD dwCountryCode, LPLINECALLPARAMS lpCallParams)
+{
+    FIXME("(%p, %p, %s, %08x, %p): stub.\n", hLine, lphCall, lpszDestAddress,
+                                             dwCountryCode, lpCallParams);
+    return LINEERR_OPERATIONFAILED;
 }
 
 /***********************************************************************

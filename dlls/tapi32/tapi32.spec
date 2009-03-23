@@ -69,6 +69,7 @@
 @ stdcall lineInitializeExA(ptr long ptr str ptr ptr ptr)
 @ stdcall lineMakeCall(long ptr str long ptr) lineMakeCallA
 @ stdcall lineMakeCallA(long ptr str long ptr)
+@ stdcall lineMakeCallW(long ptr wstr long ptr)
 @ stdcall lineMonitorDigits(long long)
 @ stdcall lineMonitorMedia(long long)
 @ stdcall lineMonitorTones(long ptr long)
