@@ -1010,6 +1010,12 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
 
     LEAVE_GL();
 
+    if (This->activeContext == context)
+    {
+        This->activeContext = NULL;
+        TRACE("Destroying the active context.\n");
+    }
+
     /* Cleanup the GL context */
     pwglMakeCurrent(NULL, NULL);
     if(context->isPBuffer) {
