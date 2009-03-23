@@ -1539,7 +1539,7 @@ static void test_render_filter_priority(void)
        no preference given to exact match. */
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
     ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
-    if (!pgraph2) goto out;
+    if (!pgraph2) return;
 
     hr = TestFilter_Create(&GUID_NULL, PinData1, (LPVOID)&ptestfilter);
     ok(hr == S_OK, "TestFilter_Create failed with %08x\n", hr);
