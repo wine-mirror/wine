@@ -1105,7 +1105,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         dEntry = This->resource.format_desc;
         if (Src)
         {
-            if(This->resource.format_desc != Src->resource.format_desc)
+            if (This->resource.format_desc->format != Src->resource.format_desc->format)
             {
                 Src = surface_convert_format(Src, dEntry->format);
                 if(!Src) {
@@ -1676,7 +1676,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
             FIXME("trans arg not supported when a FOURCC surface is involved\n");
         if (dstx || dsty)
             FIXME("offset for destination surface is not supported\n");
-        if (Src->resource.format_desc != This->resource.format_desc)
+        if (Src->resource.format_desc->format != This->resource.format_desc->format)
         {
             FIXME("FOURCC->FOURCC copy only supported for the same type of surface\n");
             ret = WINED3DERR_WRONGTEXTUREFORMAT;
