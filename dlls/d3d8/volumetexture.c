@@ -69,11 +69,17 @@ static ULONG WINAPI IDirect3DVolumeTexture8Impl_Release(LPDIRECT3DVOLUMETEXTURE8
 /* IDirect3DVolumeTexture8 IDirect3DResource8 Interface follow: */
 static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetDevice(LPDIRECT3DVOLUMETEXTURE8 iface, IDirect3DDevice8 **ppDevice) {
     IDirect3DVolumeTexture8Impl *This = (IDirect3DVolumeTexture8Impl *)iface;
+    IWineD3DDevice *wined3d_device;
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IDirect3DResource8Impl_GetDevice((LPDIRECT3DRESOURCE8) This, ppDevice);
+    hr = IWineD3DVolumeTexture_GetDevice(This->wineD3DVolumeTexture, &wined3d_device);
+    if (SUCCEEDED(hr))
+    {
+        IWineD3DDevice_GetParent(wined3d_device, (IUnknown **)ppDevice);
+        IWineD3DDevice_Release(wined3d_device);
+    }
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }

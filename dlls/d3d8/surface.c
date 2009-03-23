@@ -90,11 +90,17 @@ static ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
 /* IDirect3DSurface8 IDirect3DResource8 Interface follow: */
 static HRESULT WINAPI IDirect3DSurface8Impl_GetDevice(LPDIRECT3DSURFACE8 iface, IDirect3DDevice8 **ppDevice) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
+    IWineD3DDevice *wined3d_device;
     HRESULT hr;
     TRACE("(%p)->(%p)\n", This, ppDevice);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IDirect3DResource8Impl_GetDevice((LPDIRECT3DRESOURCE8) This, ppDevice);
+    hr = IWineD3DSurface_GetDevice(This->wineD3DSurface, &wined3d_device);
+    if (SUCCEEDED(hr))
+    {
+        IWineD3DDevice_GetParent(wined3d_device, (IUnknown **)ppDevice);
+        IWineD3DDevice_Release(wined3d_device);
+    }
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }

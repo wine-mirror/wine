@@ -70,11 +70,17 @@ static ULONG WINAPI IDirect3DVertexBuffer8Impl_Release(LPDIRECT3DVERTEXBUFFER8 i
 /* IDirect3DVertexBuffer8 IDirect3DResource8 Interface follow: */
 static HRESULT WINAPI IDirect3DVertexBuffer8Impl_GetDevice(LPDIRECT3DVERTEXBUFFER8 iface, IDirect3DDevice8 **ppDevice) {
     IDirect3DVertexBuffer8Impl *This = (IDirect3DVertexBuffer8Impl *)iface;
+    IWineD3DDevice *wined3d_device;
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IDirect3DResource8Impl_GetDevice((LPDIRECT3DRESOURCE8) This, ppDevice);
+    hr = IWineD3DBuffer_GetDevice(This->wineD3DVertexBuffer, &wined3d_device);
+    if (SUCCEEDED(hr))
+    {
+        IWineD3DDevice_GetParent(wined3d_device, (IUnknown **)ppDevice);
+        IWineD3DDevice_Release(wined3d_device);
+    }
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }

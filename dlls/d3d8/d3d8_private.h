@@ -302,7 +302,6 @@ struct IDirect3DResource8Impl
     /* IDirect3DResource8 fields */
     IWineD3DResource             *wineD3DResource;
 };
-extern HRESULT WINAPI IDirect3DResource8Impl_GetDevice(LPDIRECT3DRESOURCE8 iface, IDirect3DDevice8** ppDevice);
 
 /* ---------------------- */
 /* IDirect3DVertexBuffer8 */
