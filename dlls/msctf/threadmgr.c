@@ -32,6 +32,7 @@
 #include "shlwapi.h"
 #include "winerror.h"
 #include "objbase.h"
+#include "olectl.h"
 
 #include "wine/unicode.h"
 #include "wine/list.h"
@@ -51,7 +52,7 @@ typedef struct tagThreadMgrSink {
         /* ITfKeyTraceEventSink *pITfKeyTraceEventSink; */
         /* ITfPreservedKeyNotifySink *pITfPreservedKeyNotifySink; */
         /* ITfThreadFocusSink *pITfThreadFocusSink; */
-        /* ITfThreadMgrEventSink *pITfThreadMgrEventSink; */
+        ITfThreadMgrEventSink *pITfThreadMgrEventSink;
     } interfaces;
 } ThreadMgrSink;
 
@@ -327,9 +328,36 @@ static ULONG WINAPI Source_Release(ITfSource *iface)
 static WINAPI HRESULT ThreadMgrSource_AdviseSink(ITfSource *iface,
         REFIID riid, IUnknown *punk, DWORD *pdwCookie)
 {
+    ThreadMgrSink *tms;
     ThreadMgr *This = impl_from_ITfSourceVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %s %p %p\n",This,debugstr_guid(riid),punk,pdwCookie);
+
+    if (!riid || !punk || !pdwCookie)
+        return E_INVALIDARG;
+
+    if (IsEqualIID(riid, &IID_ITfThreadMgrEventSink))
+    {
+        tms = HeapAlloc(GetProcessHeap(),0,sizeof(ThreadMgrSink));
+        if (!tms)
+            return E_OUTOFMEMORY;
+        if (!SUCCEEDED(IUnknown_QueryInterface(punk, riid, (LPVOID*)&tms->interfaces.pITfThreadMgrEventSink)))
+        {
+            HeapFree(GetProcessHeap(),0,tms);
+            return CONNECT_E_CANNOTCONNECT;
+        }
+        list_add_head(&This->ThreadMgrEventSink,&tms->entry);
+        *pdwCookie = (DWORD)tms;
+    }
+    else
+    {
+        FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
+        return E_NOTIMPL;
+    }
+
+    TRACE("cookie %x\n",*pdwCookie);
+
+    return S_OK;
 }
 
 static WINAPI HRESULT ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
