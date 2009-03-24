@@ -482,8 +482,8 @@ static void test_supported_sizes(TW_IDENTITY *appid, TW_IDENTITY *source, TW_INT
     TW_UINT32 val;
     TW_UINT16 type;
     TW_INT32 actual_support;
-    TW_UINT32 orig_value;
-    TW_UINT32 default_value;
+    TW_UINT32 orig_value = TWSS_NONE;
+    TW_UINT32 default_value = TWSS_NONE;
     TW_UINT32 new_value = TWSS_NONE;
 
 
