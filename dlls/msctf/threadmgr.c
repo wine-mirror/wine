@@ -61,6 +61,8 @@ typedef struct tagACLMulti {
     const ITfSourceVtbl *SourceVtbl;
     LONG refCount;
 
+    const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl; /* internal */
+
     ITfDocumentMgr *focus;
 
     /* kept as separate lists to reduce unnecessary iterations */
@@ -75,6 +77,11 @@ typedef struct tagACLMulti {
 static inline ThreadMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
 {
     return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,SourceVtbl));
+}
+
+static inline ThreadMgr *impl_from_ITfThreadMgrEventSink(ITfThreadMgrEventSink *iface)
+{
+    return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,ThreadMgrEventSinkVtbl));
 }
 
 static void free_sink(ThreadMgrSink *sink)
@@ -195,8 +202,9 @@ static HRESULT WINAPI ThreadMgr_fnDeactivate( ITfThreadMgr* iface)
 static HRESULT WINAPI ThreadMgr_CreateDocumentMgr( ITfThreadMgr* iface, ITfDocumentMgr
 **ppdim)
 {
+    ThreadMgr *This = (ThreadMgr *)iface;
     TRACE("(%p)\n",iface);
-    return DocumentMgr_Constructor(ppdim);
+    return DocumentMgr_Constructor((ITfThreadMgrEventSink*)&This->ThreadMgrEventSinkVtbl, ppdim);
 }
 
 static HRESULT WINAPI ThreadMgr_EnumDocumentMgrs( ITfThreadMgr* iface, IEnumTfDocumentMgrs
@@ -237,6 +245,8 @@ static HRESULT WINAPI ThreadMgr_SetFocus( ITfThreadMgr* iface, ITfDocumentMgr *p
 
     if (!pdimFocus || FAILED(IUnknown_QueryInterface(pdimFocus,&IID_ITfDocumentMgr,(LPVOID*) &check)))
         return E_INVALIDARG;
+
+    ITfThreadMgrEventSink_OnSetFocus((ITfThreadMgrEventSink*)&This->ThreadMgrEventSinkVtbl, This->focus, check);
 
     if (This->focus)
         ITfDocumentMgr_Release(This->focus);
@@ -377,6 +387,127 @@ static const ITfSourceVtbl ThreadMgr_SourceVtbl =
     ThreadMgrSource_UnadviseSink,
 };
 
+/*****************************************************
+ * ITfThreadMgrEventSink functions  (internal)
+ *****************************************************/
+static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *iface, REFIID iid, LPVOID *ppvOut)
+{
+    ThreadMgr *This = impl_from_ITfThreadMgrEventSink(iface);
+    return ThreadMgr_QueryInterface((ITfThreadMgr *)This, iid, *ppvOut);
+}
+
+static ULONG WINAPI ThreadMgrEventSink_AddRef(ITfThreadMgrEventSink *iface)
+{
+    ThreadMgr *This = impl_from_ITfThreadMgrEventSink(iface);
+    return ThreadMgr_AddRef((ITfThreadMgr*)This);
+}
+
+static ULONG WINAPI ThreadMgrEventSink_Release(ITfThreadMgrEventSink *iface)
+{
+    ThreadMgr *This = impl_from_ITfThreadMgrEventSink(iface);
+    return ThreadMgr_Release((ITfThreadMgr *)This);
+}
+
+
+static WINAPI HRESULT ThreadMgrEventSink_OnInitDocumentMgr(
+        ITfThreadMgrEventSink *iface,ITfDocumentMgr *pdim)
+{
+    struct list *cursor;
+    ThreadMgr *This = impl_from_ITfThreadMgrEventSink(iface);
+
+    TRACE("(%p) %p\n",This,pdim);
+
+    LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        ITfThreadMgrEventSink_OnInitDocumentMgr(sink->interfaces.pITfThreadMgrEventSink,pdim);
+    }
+
+    return S_OK;
+}
+
+static WINAPI HRESULT ThreadMgrEventSink_OnUninitDocumentMgr(
+        ITfThreadMgrEventSink *iface, ITfDocumentMgr *pdim)
+{
+    struct list *cursor;
+    ThreadMgr *This = impl_from_ITfThreadMgrEventSink(iface);
+
+    TRACE("(%p) %p\n",This,pdim);
+
+    LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        ITfThreadMgrEventSink_OnUninitDocumentMgr(sink->interfaces.pITfThreadMgrEventSink,pdim);
+    }
+
+    return S_OK;
+}
+
+static WINAPI HRESULT ThreadMgrEventSink_OnSetFocus(
+        ITfThreadMgrEventSink *iface, ITfDocumentMgr *pdimFocus,
+        ITfDocumentMgr *pdimPrevFocus)
+{
+    struct list *cursor;
+    ThreadMgr *This = impl_from_ITfThreadMgrEventSink(iface);
+
+    TRACE("(%p) %p %p\n",This,pdimFocus, pdimPrevFocus);
+
+    LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        ITfThreadMgrEventSink_OnSetFocus(sink->interfaces.pITfThreadMgrEventSink, pdimFocus, pdimPrevFocus);
+    }
+
+    return S_OK;
+}
+
+static WINAPI HRESULT ThreadMgrEventSink_OnPushContext(
+        ITfThreadMgrEventSink *iface, ITfContext *pic)
+{
+    struct list *cursor;
+    ThreadMgr *This = impl_from_ITfThreadMgrEventSink(iface);
+
+    TRACE("(%p) %p\n",This,pic);
+
+    LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        ITfThreadMgrEventSink_OnPushContext(sink->interfaces.pITfThreadMgrEventSink,pic);
+    }
+
+    return S_OK;
+}
+
+static WINAPI HRESULT ThreadMgrEventSink_OnPopContext(
+        ITfThreadMgrEventSink *iface, ITfContext *pic)
+{
+    struct list *cursor;
+    ThreadMgr *This = impl_from_ITfThreadMgrEventSink(iface);
+
+    TRACE("(%p) %p\n",This,pic);
+
+    LIST_FOR_EACH(cursor, &This->ThreadMgrEventSink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        ITfThreadMgrEventSink_OnPopContext(sink->interfaces.pITfThreadMgrEventSink,pic);
+    }
+
+    return S_OK;
+}
+
+static const ITfThreadMgrEventSinkVtbl ThreadMgr_ThreadMgrEventSinkVtbl =
+{
+    ThreadMgrEventSink_QueryInterface,
+    ThreadMgrEventSink_AddRef,
+    ThreadMgrEventSink_Release,
+
+    ThreadMgrEventSink_OnInitDocumentMgr,
+    ThreadMgrEventSink_OnUninitDocumentMgr,
+    ThreadMgrEventSink_OnSetFocus,
+    ThreadMgrEventSink_OnPushContext,
+    ThreadMgrEventSink_OnPopContext
+};
+
 HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 {
     ThreadMgr *This;
@@ -398,6 +529,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 
     This->ThreadMgrVtbl= &ThreadMgr_ThreadMgrVtbl;
     This->SourceVtbl = &ThreadMgr_SourceVtbl;
+    This->ThreadMgrEventSinkVtbl = &ThreadMgr_ThreadMgrEventSinkVtbl;
     This->refCount = 1;
     TlsSetValue(tlsIndex,This);
 
