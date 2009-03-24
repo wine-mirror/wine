@@ -42,8 +42,6 @@
 #define MAX_SUBOBJECTS 500
 #define MAX_STRINGS_BUFFER 10000
 
-#define MAX_DATA_SIZE 400000
-
 typedef struct {
     DWORD type;
     LONG idx_template;
@@ -108,7 +106,6 @@ typedef struct {
     int cur_enum_object;
     BOOL from_ref;
     ULONG level;
-    LPBYTE pdata;
     LPBYTE pstrings;
 } IDirectXFileDataImpl;
 
@@ -143,6 +140,7 @@ typedef struct {
   xtemplate* pxt[MAX_SUBOBJECTS];
   ULONG level;
   LPBYTE pdata;
+  ULONG capacity;
   LPBYTE pstrings;
 } parse_buffer;
 

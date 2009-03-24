@@ -628,10 +628,11 @@ static ULONG WINAPI IDirectXFileDataImpl_Release(IDirectXFileData* iface)
 
   if (!ref)
   {
-    if (!This->level)
+    if (!This->level && !This->from_ref)
     {
-      HeapFree(GetProcessHeap(), 0, This->pdata);
       HeapFree(GetProcessHeap(), 0, This->pstrings);
+      HeapFree(GetProcessHeap(), 0, This->pobj->pdata);
+      HeapFree(GetProcessHeap(), 0, This->pobj);
     }
     HeapFree(GetProcessHeap(), 0, This);
   }
@@ -1000,10 +1001,7 @@ static ULONG WINAPI IDirectXFileEnumObjectImpl_Release(IDirectXFileEnumObject* i
   {
     int i;
     for (i = 0; i < This->nb_xobjects; i++)
-    {
       IDirectXFileData_Release(This->pRefObjects[i]);
-      HeapFree(GetProcessHeap(), 0, This->xobjects[i]);
-    }
     if (This->source == DXFILELOAD_FROMFILE)
     {
       UnmapViewOfFile(This->buffer);
@@ -1024,7 +1022,6 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   IDirectXFileEnumObjectImpl *This = (IDirectXFileEnumObjectImpl *)iface;
   IDirectXFileDataImpl* object;
   HRESULT hr;
-  LPBYTE pdata = NULL;
   LPBYTE pstrings = NULL;
 
   TRACE("(%p/%p)->(%p)\n", This, iface, ppDataObj);
@@ -1056,14 +1053,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
   }
   This->buf.pxo = This->xobjects[This->nb_xobjects] = This->buf.pxo_tab;
 
-  pdata = HeapAlloc(GetProcessHeap(), 0, MAX_DATA_SIZE);
-  if (!pdata)
-  {
-    ERR("Out of memory\n");
-    hr = DXFILEERR_BADALLOC;
-    goto error;
-  }
-  This->buf.pxo->pdata = This->buf.pdata = object->pdata = pdata;
+  This->buf.pxo->pdata = This->buf.pdata = NULL;
+  This->buf.capacity = 0;
   This->buf.cur_pos_data = 0;
 
   pstrings = HeapAlloc(GetProcessHeap(), 0, MAX_STRINGS_BUFFER);
@@ -1109,8 +1100,9 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 error:
 
   HeapFree(GetProcessHeap(), 0, This->buf.pxo_tab);
-  HeapFree(GetProcessHeap(), 0, pdata);
   HeapFree(GetProcessHeap(), 0, pstrings);
+  if (This->buf.pxo->pdata)
+    HeapFree(GetProcessHeap(), 0, This->buf.pxo->pdata);
 
   return hr;
 }

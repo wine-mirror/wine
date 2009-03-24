@@ -995,6 +995,25 @@ BOOL parse_template(parse_buffer * buf)
   return TRUE;
 }
 
+static BOOL check_buffer(parse_buffer * buf, ULONG size)
+{
+  if ((buf->cur_pos_data + size) > buf->capacity)
+  {
+    LPBYTE pdata;
+    ULONG new_capacity = buf->capacity ? 2 * buf->capacity : 100000;
+
+    pdata = HeapAlloc(GetProcessHeap(), 0, new_capacity);
+    if (!pdata)
+      return FALSE;
+    memcpy(pdata, buf->pdata, buf->cur_pos_data);
+    HeapFree(GetProcessHeap(), 0, buf->pdata);
+    buf->capacity = new_capacity;
+    buf->pdata = pdata;
+    buf->pxo->root->pdata = pdata;
+  }
+  return TRUE;
+}
+
 static BOOL parse_object_parts(parse_buffer * buf, BOOL allow_optional);
 static BOOL parse_object_members_list(parse_buffer * buf)
 {
@@ -1076,11 +1095,8 @@ static BOOL parse_object_members_list(parse_buffer * buf)
           last_dword = *(DWORD*)buf->value;
           TRACE("%s = %d\n", pt->members[i].name, *(DWORD*)buf->value);
           /* Assume larger size */
-          if ((buf->cur_pos_data + 4) > MAX_DATA_SIZE)
-          {
-            FIXME("Buffer too small\n");
+          if (!check_buffer(buf, 4))
             return FALSE;
-          }
           if (pt->members[i].type == TOKEN_WORD)
           {
             *(((WORD*)(buf->cur_pos_data + buf->pdata))) = (WORD)(*(DWORD*)buf->value);
@@ -1101,12 +1117,8 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         {
           get_TOKEN(buf);
           TRACE("%s = %f\n", pt->members[i].name, *(float*)buf->value);
-          /* Assume larger size */
-          if ((buf->cur_pos_data + 4) > MAX_DATA_SIZE)
-          {
-            FIXME("Buffer too small\n");
+          if (!check_buffer(buf, 4))
             return FALSE;
-          }
           if (pt->members[i].type == TOKEN_FLOAT)
           {
             *(((float*)(buf->cur_pos_data + buf->pdata))) = (float)(*(float*)buf->value);
@@ -1122,12 +1134,8 @@ static BOOL parse_object_members_list(parse_buffer * buf)
         {
           get_TOKEN(buf);
           TRACE("%s = %s\n", pt->members[i].name, (char*)buf->value);
-          /* Assume larger size */
-          if ((buf->cur_pos_data + 4) > MAX_DATA_SIZE)
-          {
-            FIXME("Buffer too small\n");
+          if (!check_buffer(buf, 4))
             return FALSE;
-          }
           if (pt->members[i].type == TOKEN_LPSTR)
           {
             int len = strlen((char*)buf->value) + 1;
