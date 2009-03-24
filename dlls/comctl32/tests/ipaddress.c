@@ -69,12 +69,13 @@ static int init(void)
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
     if (!pInitCommonControlsEx)
     {
-        skip("InitCommonControlsEx() is missing. Skipping the tests\n");
+        win_skip("InitCommonControlsEx() is missing.\n");
         return 0;
     }
 
     iccex.dwSize = sizeof(iccex);
-    iccex.dwICC  = ICC_USEREX_CLASSES;
+    /* W2K and below need ICC_INTERNET_CLASSES for the IP Address Control */
+    iccex.dwICC  = ICC_INTERNET_CLASSES;
     pInitCommonControlsEx(&iccex);
 
     return 1;
