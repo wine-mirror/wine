@@ -257,17 +257,15 @@ typedef [switch_type(DWORD)] union
     DWORD svcctl_GetServiceDisplayNameW(
         [in] SC_RPC_HANDLE hSCManager,
         [in] LPCWSTR lpServiceName,
-        [out,size_is(cchBufSize)] WCHAR lpBuffer[],
-        [in] DWORD cchBufSize,
-        [in,out] DWORD *cchLength);
+        [out,string,size_is(*cchBufSize+1)] WCHAR lpBuffer[],
+        [in,out] DWORD *cchBufSize);
 
     /* Compatible with Windows function 0x15 */
     DWORD svcctl_GetServiceKeyNameW(
         [in] SC_RPC_HANDLE hSCManager,
         [in] LPCWSTR lpServiceDisplayName,
-        [out,size_is(cchBufSize)] WCHAR lpBuffer[],
-        [in] DWORD cchBufSize,
-        [in,out] DWORD *cchLength);
+        [out,string,size_is(*cchBufSize+1)] WCHAR lpBuffer[],
+        [in,out] DWORD *cchBufSize);
 
     /* Not compatible with Windows function 0x16 */
     DWORD svcctl_SCSetServiceBitsA(/* FIXME */);

@@ -1568,6 +1568,7 @@ BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
 {
     DWORD err;
     WCHAR buffer[2];
+    DWORD size;
 
     TRACE("%p %s %p %p\n", hSCManager,
           debugstr_w(lpDisplayName), lpServiceName, lpcchBuffer);
@@ -1588,16 +1589,24 @@ BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
         *lpcchBuffer = 2;
     }
 
+    /* RPC call takes size excluding nul-terminator, whereas *lpcchBuffer
+     * includes the nul-terminator on input. */
+    size = *lpcchBuffer - 1;
+
     __TRY
     {
         err = svcctl_GetServiceKeyNameW(hSCManager, lpDisplayName, lpServiceName,
-                                        *lpcchBuffer, lpcchBuffer);
+                                        &size);
     }
     __EXCEPT(rpc_filter)
     {
         err = map_exception_code(GetExceptionCode());
     }
     __ENDTRY
+
+    /* The value of *lpcchBuffer excludes nul-terminator on output. */
+    if (err == ERROR_SUCCESS || err == ERROR_INSUFFICIENT_BUFFER)
+        *lpcchBuffer = size;
 
     if (err)
         SetLastError(err);
@@ -1682,6 +1691,7 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
   LPWSTR lpDisplayName, LPDWORD lpcchBuffer)
 {
     DWORD err;
+    DWORD size;
     WCHAR buffer[2];
 
     TRACE("%p %s %p %p\n", hSCManager,
@@ -1703,16 +1713,24 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         *lpcchBuffer = 2;
     }
 
+    /* RPC call takes size excluding nul-terminator, whereas *lpcchBuffer
+     * includes the nul-terminator on input. */
+    size = *lpcchBuffer - 1;
+
     __TRY
     {
         err = svcctl_GetServiceDisplayNameW(hSCManager, lpServiceName, lpDisplayName,
-                                            *lpcchBuffer, lpcchBuffer);
+                                            &size);
     }
     __EXCEPT(rpc_filter)
     {
         err = map_exception_code(GetExceptionCode());
     }
     __ENDTRY
+
+    /* The value of *lpcchBuffer excludes nul-terminator on output. */
+    if (err == ERROR_SUCCESS || err == ERROR_INSUFFICIENT_BUFFER)
+        *lpcchBuffer = size;
 
     if (err)
         SetLastError(err);
