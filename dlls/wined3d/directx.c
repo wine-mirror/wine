@@ -1714,7 +1714,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
 }
 
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_GL_Info *gl_info,
-        const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format)
+        const WineD3D_PixelFormat *cfg, const struct GlPixelFormatDesc *format_desc)
 {
     short redSize, greenSize, blueSize, alphaSize, colorBits;
 
@@ -1722,9 +1722,9 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_GL_I
         return FALSE;
 
     if(cfg->iPixelType == WGL_TYPE_RGBA_ARB) { /* Integer RGBA formats */
-        if (!getColorBits(gl_info, Format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
+        if (!getColorBits(gl_info, format_desc->format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
         {
-            ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(Format));
+            ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(format_desc->format));
             return FALSE;
         }
 
@@ -1742,17 +1742,17 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_GL_I
 
         return TRUE;
     } else if(cfg->iPixelType == WGL_TYPE_RGBA_FLOAT_ARB) { /* Float RGBA formats; TODO: WGL_NV_float_buffer */
-        if(Format == WINED3DFMT_R16_FLOAT)
+        if (format_desc->format == WINED3DFMT_R16_FLOAT)
             return (cfg->redSize == 16 && cfg->greenSize == 0 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if(Format == WINED3DFMT_R16G16_FLOAT)
+        if (format_desc->format == WINED3DFMT_R16G16_FLOAT)
             return (cfg->redSize == 16 && cfg->greenSize == 16 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if(Format == WINED3DFMT_R16G16B16A16_FLOAT)
+        if (format_desc->format == WINED3DFMT_R16G16B16A16_FLOAT)
             return (cfg->redSize == 16 && cfg->greenSize == 16 && cfg->blueSize == 16 && cfg->alphaSize == 16);
-        if(Format == WINED3DFMT_R32_FLOAT)
+        if (format_desc->format == WINED3DFMT_R32_FLOAT)
             return (cfg->redSize == 32 && cfg->greenSize == 0 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if(Format == WINED3DFMT_R32G32_FLOAT)
+        if (format_desc->format == WINED3DFMT_R32G32_FLOAT)
             return (cfg->redSize == 32 && cfg->greenSize == 32 && cfg->blueSize == 0 && cfg->alphaSize == 0);
-        if(Format == WINED3DFMT_R32G32B32A32_FLOAT)
+        if (format_desc->format == WINED3DFMT_R32G32B32A32_FLOAT)
             return (cfg->redSize == 32 && cfg->greenSize == 32 && cfg->blueSize == 32 && cfg->alphaSize == 32);
     } else {
         /* Probably a color index mode */
@@ -1763,7 +1763,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_GL_I
 }
 
 static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_GL_Info *gl_info,
-        const WineD3D_PixelFormat *cfg, WINED3DFORMAT Format)
+        const WineD3D_PixelFormat *cfg, const struct GlPixelFormatDesc *format_desc)
 {
     short depthSize, stencilSize;
     BOOL lockable = FALSE;
@@ -1771,13 +1771,13 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_GL_In
     if(!cfg)
         return FALSE;
 
-    if (!getDepthStencilBits(gl_info, Format, &depthSize, &stencilSize))
+    if (!getDepthStencilBits(gl_info, format_desc->format, &depthSize, &stencilSize))
     {
-        ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(Format));
+        ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(format_desc->format));
         return FALSE;
     }
 
-    if((Format == WINED3DFMT_D16_LOCKABLE) || (Format == WINED3DFMT_D32F_LOCKABLE))
+    if ((format_desc->format == WINED3DFMT_D16_LOCKABLE) || (format_desc->format == WINED3DFMT_D32F_LOCKABLE))
         lockable = TRUE;
 
     /* On some modern cards like the Geforce8/9 GLX doesn't offer some dephthstencil formats which D3D9 reports.
@@ -1802,6 +1802,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     int nCfgs;
     const WineD3D_PixelFormat *cfgs;
     const struct WineD3DAdapter *adapter;
+    const struct GlPixelFormatDesc *rt_format_desc;
+    const struct GlPixelFormatDesc *ds_format_desc;
     int it;
 
     WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n",
@@ -1817,12 +1819,14 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
     }
 
     adapter = &This->adapters[Adapter];
+    rt_format_desc = getFormatDescEntry(RenderTargetFormat, &adapter->gl_info);
+    ds_format_desc = getFormatDescEntry(DepthStencilFormat, &adapter->gl_info);
     cfgs = adapter->cfgs;
     nCfgs = adapter->nCfgs;
     for (it = 0; it < nCfgs; ++it) {
-        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, &cfgs[it], RenderTargetFormat))
+        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, &cfgs[it], rt_format_desc))
         {
-            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[it], DepthStencilFormat))
+            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[it], ds_format_desc))
             {
                 TRACE_(d3d_caps)("(%p) : Formats matched\n", This);
                 return WINED3D_OK;
@@ -1879,7 +1883,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
             if(cfgs[i].numSamples != MultiSampleType)
                 continue;
 
-            if (!IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[i], SurfaceFormat))
+            if (!IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, &cfgs[i], glDesc))
                 continue;
 
             TRACE("Found iPixelFormat=%d to support MultiSampleType=%d for format %s\n", cfgs[i].iPixelFormat, MultiSampleType, debug_d3dformat(SurfaceFormat));
@@ -2011,12 +2015,12 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
 
 /* Check if we support bumpmapping for a format */
 static BOOL CheckBumpMapCapability(struct WineD3DAdapter *adapter,
-        WINED3DDEVTYPE DeviceType, WINED3DFORMAT CheckFormat)
+        WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
 {
     const struct fragment_pipeline *fp;
-    const struct GlPixelFormatDesc *glDesc;
 
-    switch(CheckFormat) {
+    switch(format_desc->format)
+    {
         case WINED3DFMT_R8G8_SNORM:
         case WINED3DFMT_R16G16_SNORM:
         case WINED3DFMT_L6V5U5:
@@ -2025,9 +2029,8 @@ static BOOL CheckBumpMapCapability(struct WineD3DAdapter *adapter,
             /* Ask the fixed function pipeline implementation if it can deal
              * with the conversion. If we've got a GL extension giving native
              * support this will be an identity conversion. */
-            glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
             fp = select_fragment_implementation(adapter, DeviceType);
-            if (fp->color_fixup_supported(glDesc->color_fixup))
+            if (fp->color_fixup_supported(format_desc->color_fixup))
             {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
@@ -2043,25 +2046,20 @@ static BOOL CheckBumpMapCapability(struct WineD3DAdapter *adapter,
 
 /* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */
 static BOOL CheckDepthStencilCapability(struct WineD3DAdapter *adapter,
-        WINED3DFORMAT DisplayFormat, WINED3DFORMAT DepthStencilFormat)
+        const struct GlPixelFormatDesc *display_format_desc, const struct GlPixelFormatDesc *ds_format_desc)
 {
     int it=0;
-    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(DepthStencilFormat, &adapter->gl_info);
-
-    /* Fail if we weren't able to get a description of the format */
-    if (!glDesc) return FALSE;
 
     /* Only allow depth/stencil formats */
-    if(!(glDesc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
-        return FALSE;
+    if (!(ds_format_desc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))) return FALSE;
 
     /* Walk through all WGL pixel formats to find a match */
     for (it = 0; it < adapter->nCfgs; ++it)
     {
         WineD3D_PixelFormat *cfg = &adapter->cfgs[it];
-        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, cfg, DisplayFormat))
+        if (IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info, cfg, display_format_desc))
         {
-            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, cfg, DepthStencilFormat))
+            if (IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(&adapter->gl_info, cfg, ds_format_desc))
             {
                 return TRUE;
             }
@@ -2071,32 +2069,20 @@ static BOOL CheckDepthStencilCapability(struct WineD3DAdapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckFilterCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT CheckFormat)
+static BOOL CheckFilterCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
 {
-    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
-
-    /* Fail if we weren't able to get a description of the format */
-    if (!glDesc) return FALSE;
-
     /* The flags entry of a format contains the filtering capability */
-    if(glDesc->Flags & WINED3DFMT_FLAG_FILTERING)
-        return TRUE;
+    if (format_desc->Flags & WINED3DFMT_FLAG_FILTERING) return TRUE;
 
     return FALSE;
 }
 
 /* Check the render target capabilities of a format */
 static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
-        WINED3DFORMAT AdapterFormat, WINED3DFORMAT CheckFormat)
+        const struct GlPixelFormatDesc *adapter_format_desc, const struct GlPixelFormatDesc *check_format_desc)
 {
-    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
-
-    /* Fail if we weren't able to get a description of the format */
-    if (!glDesc) return FALSE;
-
     /* Filter out non-RT formats */
-    if(!(glDesc->Flags & WINED3DFMT_FLAG_RENDERTARGET))
-        return FALSE;
+    if (!(check_format_desc->Flags & WINED3DFMT_FLAG_RENDERTARGET)) return FALSE;
 
     if(wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER) {
         WineD3D_PixelFormat *cfgs = adapter->cfgs;
@@ -2104,9 +2090,9 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
         short AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
         short CheckRed, CheckGreen, CheckBlue, CheckAlpha, CheckTotalSize;
 
-        getColorBits(&adapter->gl_info, AdapterFormat,
+        getColorBits(&adapter->gl_info, adapter_format_desc->format,
                 &AdapterRed, &AdapterGreen, &AdapterBlue, &AdapterAlpha, &AdapterTotalSize);
-        getColorBits(&adapter->gl_info, CheckFormat,
+        getColorBits(&adapter->gl_info, check_format_desc->format,
                 &CheckRed, &CheckGreen, &CheckBlue, &CheckAlpha, &CheckTotalSize);
 
         /* In backbuffer mode the front and backbuffer share the same WGL pixelformat.
@@ -2121,9 +2107,10 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
         for (it = 0; it < adapter->nCfgs; ++it)
         {
             if (cfgs[it].windowDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info,
-                    &cfgs[it], CheckFormat))
+                    &cfgs[it], check_format_desc))
             {
-                TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n", cfgs[it].iPixelFormat, debug_d3dformat(CheckFormat));
+                TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n",
+                        cfgs[it].iPixelFormat, debug_d3dformat(check_format_desc->format));
                 return TRUE;
             }
         }
@@ -2136,9 +2123,10 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
         for (it = 0; it < adapter->nCfgs; ++it)
         {
             if (cfgs[it].pbufferDrawable && IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(&adapter->gl_info,
-                    &cfgs[it], CheckFormat))
+                    &cfgs[it], check_format_desc))
             {
-                TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n", cfgs[it].iPixelFormat, debug_d3dformat(CheckFormat));
+                TRACE_(d3d_caps)("iPixelFormat=%d is compatible with CheckFormat=%s\n",
+                        cfgs[it].iPixelFormat, debug_d3dformat(check_format_desc->format));
                 return TRUE;
             }
         }
@@ -2150,7 +2138,7 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
     return FALSE;
 }
 
-static BOOL CheckSrgbReadCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT CheckFormat)
+static BOOL CheckSrgbReadCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
 {
     const WineD3D_GL_Info *gl_info = &adapter->gl_info;
 
@@ -2160,7 +2148,8 @@ static BOOL CheckSrgbReadCapability(struct WineD3DAdapter *adapter, WINED3DFORMA
         return FALSE;
     }
 
-    switch (CheckFormat) {
+    switch (format_desc->format)
+    {
         case WINED3DFMT_A8R8G8B8:
         case WINED3DFMT_X8R8G8B8:
         case WINED3DFMT_A4R4G4B4:
@@ -2175,19 +2164,20 @@ static BOOL CheckSrgbReadCapability(struct WineD3DAdapter *adapter, WINED3DFORMA
             return TRUE;
 
         default:
-            TRACE_(d3d_caps)("[FAILED] Gamma texture format %s not supported.\n", debug_d3dformat(CheckFormat));
+            TRACE_(d3d_caps)("[FAILED] Gamma texture format %s not supported.\n", debug_d3dformat(format_desc->format));
             return FALSE;
     }
     return FALSE;
 }
 
 static BOOL CheckSrgbWriteCapability(struct WineD3DAdapter *adapter,
-        WINED3DDEVTYPE DeviceType, WINED3DFORMAT CheckFormat)
+        WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
 {
     /* Only offer SRGB writing on X8R8G8B8/A8R8G8B8 when we use ARB or GLSL shaders as we are
      * doing the color fixup in shaders.
      * Note Windows drivers (at least on the Geforce 8800) also offer this on R5G6B5. */
-    if((CheckFormat == WINED3DFMT_X8R8G8B8) || (CheckFormat == WINED3DFMT_A8R8G8B8)) {
+    if ((format_desc->format == WINED3DFMT_X8R8G8B8) || (format_desc->format == WINED3DFMT_A8R8G8B8))
+    {
         int vs_selected_mode;
         int ps_selected_mode;
         select_shader_mode(&adapter->gl_info, DeviceType, &ps_selected_mode, &vs_selected_mode);
@@ -2198,26 +2188,22 @@ static BOOL CheckSrgbWriteCapability(struct WineD3DAdapter *adapter,
         }
     }
 
-    TRACE_(d3d_caps)("[FAILED] - no SRGB writing support on format=%s\n", debug_d3dformat(CheckFormat));
+    TRACE_(d3d_caps)("[FAILED] - no SRGB writing support on format=%s\n", debug_d3dformat(format_desc->format));
     return FALSE;
 }
 
 /* Check if a format support blending in combination with pixel shaders */
-static BOOL CheckPostPixelShaderBlendingCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT CheckFormat)
+static BOOL CheckPostPixelShaderBlendingCapability(struct WineD3DAdapter *adapter,
+        const struct GlPixelFormatDesc *format_desc)
 {
-    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
-
-    /* Fail if we weren't able to get a description of the format */
-    if (!glDesc) return FALSE;
-
     /* The flags entry of a format contains the post pixel shader blending capability */
-    if(glDesc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
-        return TRUE;
+    if (format_desc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING) return TRUE;
 
     return FALSE;
 }
 
-static BOOL CheckWrapAndMipCapability(UINT Adapter, WINED3DFORMAT CheckFormat) {
+static BOOL CheckWrapAndMipCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
+{
     /* OpenGL supports mipmapping on all formats basically. Wrapping is unsupported,
      * but we have to report mipmapping so we cannot reject this flag. Tests show that
      * windows reports WRAPANDMIP on unfilterable surfaces as well, apparently to show
@@ -2232,15 +2218,14 @@ static BOOL CheckWrapAndMipCapability(UINT Adapter, WINED3DFORMAT CheckFormat) {
 
 /* Check if a texture format is supported on the given adapter */
 static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
-        WINED3DDEVTYPE DeviceType, WINED3DFORMAT CheckFormat)
+        WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
 {
     const WineD3D_GL_Info *gl_info = &adapter->gl_info;
     const shader_backend_t *shader_backend;
     const struct fragment_pipeline *fp;
-    const struct GlPixelFormatDesc *glDesc;
 
-    switch (CheckFormat) {
-
+    switch (format_desc->format)
+    {
         /*****
          *  supported: RGB(A) formats
          */
@@ -2315,9 +2300,8 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
             /* Ask the shader backend if it can deal with the conversion. If
              * we've got a GL extension giving native support this will be an
              * identity conversion. */
-            glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
             shader_backend = select_shader_backend(adapter, DeviceType);
-            if (shader_backend->shader_color_fixup_supported(glDesc->color_fixup))
+            if (shader_backend->shader_color_fixup_supported(format_desc->color_fixup))
             {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
@@ -2433,11 +2417,10 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
         /* Vendor specific formats */
         case WINED3DFMT_ATI2N:
             if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC) || GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
-                glDesc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
                 shader_backend = select_shader_backend(adapter, DeviceType);
                 fp = select_fragment_implementation(adapter, DeviceType);
-                if (shader_backend->shader_color_fixup_supported(glDesc->color_fixup)
-                        && fp->color_fixup_supported(glDesc->color_fixup))
+                if (shader_backend->shader_color_fixup_supported(format_desc->color_fixup)
+                        && fp->color_fixup_supported(format_desc->color_fixup))
                 {
                     TRACE_(d3d_caps)("[OK]\n");
                     return TRUE;
@@ -2464,20 +2447,20 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
             return FALSE;
 
         default:
-            ERR("Unhandled format=%s\n", debug_d3dformat(CheckFormat));
+            ERR("Unhandled format=%s\n", debug_d3dformat(format_desc->format));
             break;
     }
     return FALSE;
 }
 
-static BOOL CheckSurfaceCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT AdapterFormat,
-        WINED3DDEVTYPE DeviceType, WINED3DFORMAT CheckFormat, WINED3DSURFTYPE SurfaceType)
+static BOOL CheckSurfaceCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *adapter_format_desc,
+        WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *check_format_desc, WINED3DSURFTYPE SurfaceType)
 {
-    const struct GlPixelFormatDesc *format_desc;
     const struct blit_shader *blitter;
 
     if(SurfaceType == SURFACE_GDI) {
-        switch(CheckFormat) {
+        switch(check_format_desc->format)
+        {
             case WINED3DFMT_R8G8B8:
             case WINED3DFMT_A8R8G8B8:
             case WINED3DFMT_X8R8G8B8:
@@ -2505,14 +2488,13 @@ static BOOL CheckSurfaceCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT
     }
 
     /* All format that are supported for textures are supported for surfaces as well */
-    if(CheckTextureCapability(adapter, DeviceType, CheckFormat)) return TRUE;
+    if (CheckTextureCapability(adapter, DeviceType, check_format_desc)) return TRUE;
     /* All depth stencil formats are supported on surfaces */
-    if(CheckDepthStencilCapability(adapter, AdapterFormat, CheckFormat)) return TRUE;
+    if (CheckDepthStencilCapability(adapter, adapter_format_desc, check_format_desc)) return TRUE;
 
     /* If opengl can't process the format natively, the blitter may be able to convert it */
-    format_desc = getFormatDescEntry(CheckFormat, &adapter->gl_info);
     blitter = select_blit_implementation(adapter, DeviceType);
-    if (blitter->color_fixup_supported(format_desc->color_fixup))
+    if (blitter->color_fixup_supported(check_format_desc->color_fixup))
     {
         TRACE_(d3d_caps)("[OK]\n");
         return TRUE;
@@ -2523,7 +2505,7 @@ static BOOL CheckSurfaceCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT
     return FALSE;
 }
 
-static BOOL CheckVertexTextureCapability(struct WineD3DAdapter *adapter, WINED3DFORMAT CheckFormat)
+static BOOL CheckVertexTextureCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
 {
     const WineD3D_GL_Info *gl_info = &adapter->gl_info;
 
@@ -2532,7 +2514,8 @@ static BOOL CheckVertexTextureCapability(struct WineD3DAdapter *adapter, WINED3D
         return FALSE;
     }
 
-    switch (CheckFormat) {
+    switch (format_desc->format)
+    {
         case WINED3DFMT_R32G32B32A32_FLOAT:
             if (!GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
                 TRACE_(d3d_caps)("[FAILED]\n");
@@ -2554,6 +2537,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     struct WineD3DAdapter *adapter = &This->adapters[Adapter];
     const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(CheckFormat, gl_info);
+    const struct GlPixelFormatDesc *adapter_format_desc = getFormatDescEntry(AdapterFormat, gl_info);
     DWORD UsageCaps = 0;
 
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%u,%s,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s))\n",
@@ -2587,7 +2572,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          */
         if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
             /* Check if the texture format is around */
-            if (CheckTextureCapability(adapter, DeviceType, CheckFormat))
+            if (CheckTextureCapability(adapter, DeviceType, format_desc))
             {
                 if(Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
                     /* Check for automatic mipmap generation support */
@@ -2604,7 +2589,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                     UsageCaps |= WINED3DUSAGE_DYNAMIC;
 
                 if(Usage & WINED3DUSAGE_RENDERTARGET) {
-                    if(CheckRenderTargetCapability(adapter, AdapterFormat, CheckFormat))
+                    if(CheckRenderTargetCapability(adapter, adapter_format_desc, format_desc))
                     {
                         UsageCaps |= WINED3DUSAGE_RENDERTARGET;
                     } else {
@@ -2619,7 +2604,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
                 /* Check QUERY_FILTER support */
                 if(Usage & WINED3DUSAGE_QUERY_FILTER) {
-                    if (CheckFilterCapability(adapter, CheckFormat))
+                    if (CheckFilterCapability(adapter, format_desc))
                     {
                         UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
                     } else {
@@ -2630,7 +2615,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
                 /* Check QUERY_POSTPIXELSHADER_BLENDING support */
                 if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
-                    if (CheckPostPixelShaderBlendingCapability(adapter, CheckFormat))
+                    if (CheckPostPixelShaderBlendingCapability(adapter, format_desc))
                     {
                         UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
                     } else {
@@ -2641,7 +2626,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
                 /* Check QUERY_SRGBREAD support */
                 if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
-                    if (CheckSrgbReadCapability(adapter, CheckFormat))
+                    if (CheckSrgbReadCapability(adapter, format_desc))
                     {
                         UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
                     } else {
@@ -2652,7 +2637,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
                 /* Check QUERY_SRGBWRITE support */
                 if(Usage & WINED3DUSAGE_QUERY_SRGBWRITE) {
-                    if (CheckSrgbWriteCapability(adapter, DeviceType, CheckFormat))
+                    if (CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
                     {
                         UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
                     } else {
@@ -2663,7 +2648,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
                 /* Check QUERY_VERTEXTEXTURE support */
                 if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
-                    if (CheckVertexTextureCapability(adapter, CheckFormat))
+                    if (CheckVertexTextureCapability(adapter, format_desc))
                     {
                         UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
                     } else {
@@ -2674,7 +2659,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
                 /* Check QUERY_WRAPANDMIP support */
                 if(Usage & WINED3DUSAGE_QUERY_WRAPANDMIP) {
-                    if(CheckWrapAndMipCapability(Adapter, CheckFormat)) {
+                    if (CheckWrapAndMipCapability(adapter, format_desc))
+                    {
                         UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
                     } else {
                         TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
@@ -2696,10 +2682,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
          *                - D3DUSAGE_RENDERTARGET
          */
 
-        if (CheckSurfaceCapability(adapter, AdapterFormat, DeviceType, CheckFormat, SurfaceType))
+        if (CheckSurfaceCapability(adapter, adapter_format_desc, DeviceType, format_desc, SurfaceType))
         {
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
-                if (CheckDepthStencilCapability(adapter, AdapterFormat, CheckFormat))
+                if (CheckDepthStencilCapability(adapter, adapter_format_desc, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
                 } else {
@@ -2709,7 +2695,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             }
 
             if(Usage & WINED3DUSAGE_RENDERTARGET) {
-                if (CheckRenderTargetCapability(adapter, AdapterFormat, CheckFormat))
+                if (CheckRenderTargetCapability(adapter, adapter_format_desc, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_RENDERTARGET;
                 } else {
@@ -2720,7 +2706,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_POSTPIXELSHADER_BLENDING support */
             if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
-                if (CheckPostPixelShaderBlendingCapability(adapter, CheckFormat))
+                if (CheckPostPixelShaderBlendingCapability(adapter, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
                 } else {
@@ -2752,7 +2738,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         }
 
         /* Check if the texture format is around */
-        if (CheckTextureCapability(adapter, DeviceType, CheckFormat))
+        if (CheckTextureCapability(adapter, DeviceType, format_desc))
         {
             if(Usage & WINED3DUSAGE_AUTOGENMIPMAP) {
                 /* Check for automatic mipmap generation support */
@@ -2769,7 +2755,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 UsageCaps |= WINED3DUSAGE_DYNAMIC;
 
             if(Usage & WINED3DUSAGE_RENDERTARGET) {
-                if (CheckRenderTargetCapability(adapter, AdapterFormat, CheckFormat))
+                if (CheckRenderTargetCapability(adapter, adapter_format_desc, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_RENDERTARGET;
                 } else {
@@ -2784,7 +2770,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_FILTER support */
             if(Usage & WINED3DUSAGE_QUERY_FILTER) {
-                if (CheckFilterCapability(adapter, CheckFormat))
+                if (CheckFilterCapability(adapter, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
                 } else {
@@ -2795,7 +2781,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_LEGACYBUMPMAP support */
             if(Usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP) {
-                if (CheckBumpMapCapability(adapter, DeviceType, CheckFormat))
+                if (CheckBumpMapCapability(adapter, DeviceType, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_LEGACYBUMPMAP;
                 } else {
@@ -2806,7 +2792,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_POSTPIXELSHADER_BLENDING support */
             if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
-                if (CheckPostPixelShaderBlendingCapability(adapter, CheckFormat))
+                if (CheckPostPixelShaderBlendingCapability(adapter, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
                 } else {
@@ -2817,7 +2803,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_SRGBREAD support */
             if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
-                if (CheckSrgbReadCapability(adapter, CheckFormat))
+                if (CheckSrgbReadCapability(adapter, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
                 } else {
@@ -2828,7 +2814,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_SRGBWRITE support */
             if(Usage & WINED3DUSAGE_QUERY_SRGBWRITE) {
-                if (CheckSrgbWriteCapability(adapter, DeviceType, CheckFormat))
+                if (CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
                 } else {
@@ -2839,7 +2825,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_VERTEXTEXTURE support */
             if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
-                if (CheckVertexTextureCapability(adapter, CheckFormat))
+                if (CheckVertexTextureCapability(adapter, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
                 } else {
@@ -2850,7 +2836,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_WRAPANDMIP support */
             if(Usage & WINED3DUSAGE_QUERY_WRAPANDMIP) {
-                if(CheckWrapAndMipCapability(Adapter, CheckFormat)) {
+                if (CheckWrapAndMipCapability(adapter, format_desc))
+                {
                     UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
                 } else {
                     TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
@@ -2859,7 +2846,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             }
 
             if(Usage & WINED3DUSAGE_DEPTHSTENCIL) {
-                if (CheckDepthStencilCapability(adapter, AdapterFormat, CheckFormat))
+                if (CheckDepthStencilCapability(adapter, adapter_format_desc, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_DEPTHSTENCIL;
                 } else {
@@ -2889,7 +2876,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
         /* Check volume texture and volume usage caps */
         if(GL_SUPPORT(EXT_TEXTURE3D)) {
-            if (!CheckTextureCapability(adapter, DeviceType, CheckFormat))
+            if (!CheckTextureCapability(adapter, DeviceType, format_desc))
             {
                 TRACE_(d3d_caps)("[FAILED] - Format not supported\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -2905,7 +2892,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_FILTER support */
             if(Usage & WINED3DUSAGE_QUERY_FILTER) {
-                if (CheckFilterCapability(adapter, CheckFormat))
+                if (CheckFilterCapability(adapter, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_FILTER;
                 } else {
@@ -2916,7 +2903,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_POSTPIXELSHADER_BLENDING support */
             if(Usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING) {
-                if (CheckPostPixelShaderBlendingCapability(adapter, CheckFormat))
+                if (CheckPostPixelShaderBlendingCapability(adapter, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
                 } else {
@@ -2927,7 +2914,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_SRGBREAD support */
             if(Usage & WINED3DUSAGE_QUERY_SRGBREAD) {
-                if (CheckSrgbReadCapability(adapter, CheckFormat))
+                if (CheckSrgbReadCapability(adapter, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_SRGBREAD;
                 } else {
@@ -2938,7 +2925,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_SRGBWRITE support */
             if(Usage & WINED3DUSAGE_QUERY_SRGBWRITE) {
-                if (CheckSrgbWriteCapability(adapter, DeviceType, CheckFormat))
+                if (CheckSrgbWriteCapability(adapter, DeviceType, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_SRGBWRITE;
                 } else {
@@ -2949,7 +2936,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_VERTEXTEXTURE support */
             if(Usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE) {
-                if (CheckVertexTextureCapability(adapter, CheckFormat))
+                if (CheckVertexTextureCapability(adapter, format_desc))
                 {
                     UsageCaps |= WINED3DUSAGE_QUERY_VERTEXTEXTURE;
                 } else {
@@ -2960,7 +2947,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
 
             /* Check QUERY_WRAPANDMIP support */
             if(Usage & WINED3DUSAGE_QUERY_WRAPANDMIP) {
-                if(CheckWrapAndMipCapability(Adapter, CheckFormat)) {
+                if (CheckWrapAndMipCapability(adapter, format_desc))
+                {
                     UsageCaps |= WINED3DUSAGE_QUERY_WRAPANDMIP;
                 } else {
                     TRACE_(d3d_caps)("[FAILED] - No wrapping and mipmapping support\n");
