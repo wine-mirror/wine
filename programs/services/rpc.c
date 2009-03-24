@@ -654,6 +654,8 @@ DWORD svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
     struct sc_service_handle *service;
     DWORD err;
 
+    memset(buffer, 0, size);
+
     if ((err = validate_service_handle(hService, SERVICE_QUERY_STATUS, &service)) != 0)
         return err;
 
@@ -700,6 +702,8 @@ DWORD svcctl_QueryServiceStatusEx(
     struct sc_service_handle *service;
     DWORD err;
     LPSERVICE_STATUS_PROCESS pSvcStatusData;
+
+    memset(lpBuffer, 0, cbBufSize);
 
     if ((err = validate_service_handle(hService, SERVICE_QUERY_STATUS, &service)) != 0)
         return err;
