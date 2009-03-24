@@ -1,11 +1,6 @@
 /*
- * Uninstaller (rsrc.rc)
- *
- * Copyright 2000 Andreas Mohr
- * Copyright 2003 Vincent B�ron
- * Copyright 2003 Ivan Leo Puoti
- * Copyright 2004 David Kredba
  * Copyright 2005 Jonathan Ernst
+ * Copyright 2009 Michael Stefaniuc
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,30 +17,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
-#include <winuser.h>
+LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
-#include "resource.h"
-#include "Bg.rc"
-#include "Cs.rc"
-#include "Da.rc"
-#include "De.rc"
-#include "En.rc"
-#include "Eo.rc"
-#include "Es.rc"
-#include "Fi.rc"
-#include "Fr.rc"
-#include "It.rc"
-#include "Hu.rc"
-#include "Ko.rc"
-#include "Lt.rc"
-#include "Nl.rc"
-#include "No.rc"
-#include "Pl.rc"
-#include "Pt.rc"
-#include "Ro.rc"
-#include "Ru.rc"
-#include "Si.rc"
-#include "Sv.rc"
-#include "Tr.rc"
-#include "Zh.rc"
+#pragma code_page(65001)
+
+STRINGTABLE DISCARDABLE {
+     IDS_APPNAME, "Programul de dezinstalare de aplicații Wine"
+     IDS_UNINSTALLFAILED, "Execuția comenzi de dezinstalare '%s' a eșuat, probabil din lipsa fișierului executabil.\r\nDoriți să ștergeți înregistrarea de dezinstalare din registru?"
+}
+
+#pragma code_page(default)
