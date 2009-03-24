@@ -24619,6 +24619,14 @@ dlls/avifil32/Makefile: dlls/avifil32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/avifil32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/avifile.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	avifile.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/avifile.dll16/Makefile: dlls/avifile.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/avifile.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/browseui/Makefile"
 test "x$enable_browseui" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	browseui"
@@ -29088,6 +29096,7 @@ do
     "dlls/authz/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/authz/Makefile" ;;
     "dlls/avicap32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avicap32/Makefile" ;;
     "dlls/avifil32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avifil32/Makefile" ;;
+    "dlls/avifile.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/avifile.dll16/Makefile" ;;
     "dlls/browseui/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/browseui/Makefile" ;;
     "dlls/browseui/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/browseui/tests/Makefile" ;;
     "dlls/cabinet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/cabinet/Makefile" ;;

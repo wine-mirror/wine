@@ -18,7 +18,6 @@ DOCSUBDIRS     = $(DLLSUBDIRS)
 # 16-bit dlls
 
 WIN16_FILES = \
-	avifile.dll16 \
 	commdlg.dll16 \
 	ddeml.dll16 \
 	gdi.exe16 \
@@ -43,9 +42,6 @@ WIN16_FILES = \
 all: $(BUILDSUBDIRS) @WIN16_FILES@
 
 # Placeholders for 16-bit libraries
-
-avifile.dll16:
-	echo "avifil32.dll" >$@
 
 commdlg.dll16:
 	echo "comdlg32.dll" >$@

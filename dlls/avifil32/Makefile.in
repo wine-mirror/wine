@@ -19,8 +19,6 @@ C_SRCS = \
 	tmpfile.c \
 	wavfile.c
 
-SPEC_SRCS16 = avifile.spec
-
 RC_SRCS = \
 	rsrc.rc
 

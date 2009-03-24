@@ -25,7 +25,6 @@ dlls/actxprxy/actxprxy_servprov_p.c
 dlls/advapi32/svcctl.h
 dlls/advapi32/svcctl_c.c
 dlls/atl/atliface.h
-dlls/avifile.dll16
 dlls/commdlg.dll16
 dlls/ddeml.dll16
 dlls/gdi.exe16
