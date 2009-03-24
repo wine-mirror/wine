@@ -1222,6 +1222,11 @@ static void test_EnumPrinterDrivers(void)
         skip("no printer drivers found\n");
         return;
     }
+    if (GetLastError() == ERROR_INVALID_ENVIRONMENT)
+    {
+        win_skip("NT4 and below don't support the 'all' environment value\n");
+        return;
+    }
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "unexpected error %u\n", GetLastError());
 
     buffer = HeapAlloc(GetProcessHeap(), 0, pcbNeeded);
