@@ -782,7 +782,8 @@ HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_
 struct blit_shader {
     HRESULT (*alloc_private)(IWineD3DDevice *iface);
     void (*free_private)(IWineD3DDevice *iface);
-    HRESULT (*set_shader)(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum textype, UINT width, UINT height);
+    HRESULT (*set_shader)(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
+            GLenum textype, UINT width, UINT height);
     void (*unset_shader)(IWineD3DDevice *iface);
     BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
 };

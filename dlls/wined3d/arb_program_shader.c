@@ -3666,20 +3666,19 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
     return shader;
 }
 
-static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum textype, UINT width, UINT height) {
+static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
+        GLenum textype, UINT width, UINT height)
+{
     GLenum shader;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
     float size[4] = {width, height, 1, 1};
     struct arbfp_blit_priv *priv = device->blit_priv;
-    const struct GlPixelFormatDesc *glDesc;
     enum yuv_fixup yuv_fixup;
 
-    glDesc = getFormatDescEntry(fmt, &GLINFO_LOCATION);
-
-    if (!is_yuv_fixup(glDesc->color_fixup))
+    if (!is_yuv_fixup(format_desc->color_fixup))
     {
         TRACE("Fixup:\n");
-        dump_color_fixup_desc(glDesc->color_fixup);
+        dump_color_fixup_desc(format_desc->color_fixup);
         /* Don't bother setting up a shader for unconverted formats */
         ENTER_GL();
         glEnable(textype);
@@ -3688,7 +3687,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum t
         return WINED3D_OK;
     }
 
-    yuv_fixup = get_yuv_fixup(glDesc->color_fixup);
+    yuv_fixup = get_yuv_fixup(format_desc->color_fixup);
 
     switch(yuv_fixup)
     {

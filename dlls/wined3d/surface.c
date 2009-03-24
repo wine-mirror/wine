@@ -3474,8 +3474,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             rect.y1 += This->currentDesc.Height - h; rect.y2 += This->currentDesc.Height - h;
         }
 
-        myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format_desc->format,
-                                       Src->glDescription.target, Src->pow2Width, Src->pow2Height);
+        myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format_desc,
+                Src->glDescription.target, Src->pow2Width, Src->pow2Height);
 
         ENTER_GL();
 
@@ -4812,7 +4812,9 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 static HRESULT ffp_blit_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
 static void ffp_blit_free(IWineD3DDevice *iface) { }
 
-static HRESULT ffp_blit_set(IWineD3DDevice *iface, WINED3DFORMAT fmt, GLenum textype, UINT width, UINT height) {
+static HRESULT ffp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
+        GLenum textype, UINT width, UINT height)
+{
     glEnable(textype);
     checkGLcall("glEnable(textype)");
     return WINED3D_OK;
