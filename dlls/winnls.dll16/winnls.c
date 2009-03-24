@@ -21,36 +21,21 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls32.h"
+#include "wownt32.h"
+#include "wine/winuser16.h"
 
 /***********************************************************************
- *		DllMain  (WINNLS.@)
+ *		WINNLSEnableIME (WINNLS.16)
  */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+BOOL WINAPI WINNLSEnableIME16( HWND16 hwnd, BOOL enable )
 {
-    switch(reason)
-    {
-    case DLL_WINE_PREATTACH:
-        return FALSE;  /* prefer native version */
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( inst );
-        break;
-    }
-    return TRUE;
+    return WINNLSEnableIME( HWND_32(hwnd), enable );
 }
 
 /***********************************************************************
- *		WINNLSGetEnableStatus (WINNLS32.2)
+ *		WINNLSGetEnableStatus (WINNLS.18)
  */
-BOOL WINAPI WINNLSGetEnableStatus(HWND hWnd)
+BOOL WINAPI WINNLSGetEnableStatus16( HWND16 hwnd )
 {
-    return FALSE;
-}
-
-/***********************************************************************
- *		WINNLSEnableIME (WINNLS32.1)
- */
-BOOL WINAPI WINNLSEnableIME(HWND hWnd, BOOL fEnable)
-{
-    /* fake return of previous status. is this what this function should do ? */
-    return !fEnable;
+    return WINNLSGetEnableStatus( HWND_32(hwnd) );
 }

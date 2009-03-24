@@ -96,7 +96,6 @@ dlls/w32sys.dll16
 dlls/win32s16.dll16
 dlls/wineps16.drv16
 dlls/wing.dll16
-dlls/winnls.dll16
 dlls/winsock.dll16
 dlls/wprocs.dll16
 include/activaut.h

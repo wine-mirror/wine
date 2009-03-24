@@ -27656,6 +27656,14 @@ dlls/winmm/tests/Makefile: dlls/winmm/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/winmm/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/winnls.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	winnls.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/winnls.dll16/Makefile: dlls/winnls.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/winnls.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winnls32/Makefile"
 test "x$enable_winnls32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	winnls32"
@@ -29448,6 +29456,7 @@ do
     "dlls/wininet/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wininet/tests/Makefile" ;;
     "dlls/winmm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winmm/Makefile" ;;
     "dlls/winmm/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winmm/tests/Makefile" ;;
+    "dlls/winnls.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winnls.dll16/Makefile" ;;
     "dlls/winnls32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winnls32/Makefile" ;;
     "dlls/winscard/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winscard/Makefile" ;;
     "dlls/winspool.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winspool.drv/Makefile" ;;

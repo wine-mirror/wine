@@ -35,7 +35,6 @@ WIN16_FILES = \
 	win32s16.dll16 \
 	wineps16.drv16 \
 	wing.dll16 \
-	winnls.dll16 \
 	winsock.dll16 \
 	wprocs.dll16
 
@@ -85,9 +84,6 @@ wineps16.drv16:
 
 mmsystem.dll16:
 	echo "winmm.dll" >$@
-
-winnls.dll16:
-	echo "winnls32.dll" >$@
 
 winsock.dll16:
 	echo "ws2_32.dll" >$@
