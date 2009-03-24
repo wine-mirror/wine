@@ -70,6 +70,22 @@ HPEN CDECL PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
         if(physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     }
 
+    switch (logpen.lopnStyle & PS_JOIN_MASK)
+    {
+    default:
+    case PS_JOIN_ROUND: physDev->pen.join = 1; break;
+    case PS_JOIN_BEVEL: physDev->pen.join = 2; break;
+    case PS_JOIN_MITER: physDev->pen.join = 0; break;
+    }
+
+    switch (logpen.lopnStyle & PS_ENDCAP_MASK)
+    {
+    default:
+    case PS_ENDCAP_ROUND:  physDev->pen.endcap = 1; break;
+    case PS_ENDCAP_SQUARE: physDev->pen.endcap = 2; break;
+    case PS_ENDCAP_FLAT:   physDev->pen.endcap = 0; break;
+    }
+
     PSDRV_CreateColor(physDev, &physDev->pen.color, logpen.lopnColor);
     physDev->pen.style = logpen.lopnStyle & PS_STYLE_MASK;
 

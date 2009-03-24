@@ -326,7 +326,9 @@ typedef struct {
 
 typedef struct {
     INT                 style;
-    INT		width;
+    INT                 width;
+    BYTE                join;
+    BYTE                endcap;
     const char*		dash;
     PSCOLOR		color;
     BOOL		set;

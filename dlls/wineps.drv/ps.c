@@ -129,8 +129,8 @@ static const char pssetfont[] = /* fontname, xscale, yscale, ascent, escapement 
 "matrix concatmatrix\n"
 "makefont setfont\n";
 
-static const char pssetlinewidth[] = /* width */
-"%d setlinewidth\n";
+static const char pssetline[] = /* width, join, endcap */
+"%d setlinewidth %u setlinejoin %u setlinecap\n";
 
 static const char pssetdash[] = /* dash, offset */
 "[%s] %d setdash\n";
@@ -581,7 +581,7 @@ BOOL PSDRV_WriteSetPen(PSDRV_PDEVICE *physDev)
 {
     char buf[256];
 
-    sprintf(buf, pssetlinewidth, physDev->pen.width);
+    sprintf(buf, pssetline, physDev->pen.width, physDev->pen.join, physDev->pen.endcap);
     PSDRV_WriteSpool(physDev, buf, strlen(buf));
 
     if(physDev->pen.dash) {
