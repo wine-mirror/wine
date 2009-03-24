@@ -471,6 +471,8 @@ static	LRESULT	MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
  */
 static	LRESULT MPEG3_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE adss)
 {
+    DWORD nblocks;
+
     switch (adss->fdwSize)
     {
     case ACM_STREAMSIZEF_DESTINATION:
@@ -478,14 +480,19 @@ static	LRESULT MPEG3_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ad
 	if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
 	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
         {
-	    /* don't take block overhead into account, doesn't matter too much */
-	    adss->cbSrcLength = adss->cbDstLength * 12;
+            nblocks = (adsi->pwfxDst->nAvgBytesPerSec * 8 * 144 / adsi->pwfxDst->nSamplesPerSec);
+            nblocks = (adss->cbDstLength - 3002 - nblocks) / nblocks;
+            if (nblocks == 0)
+                return ACMERR_NOTPOSSIBLE;
+            adss->cbSrcLength = nblocks * 1152 * adsi->pwfxSrc->nBlockAlign;
 	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
                  adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
-	    FIXME("misses the block header overhead\n");
-	    adss->cbSrcLength = 256 + adss->cbDstLength / 12;
+            nblocks = adss->cbDstLength / (adsi->pwfxDst->nBlockAlign * 1152);
+            if (nblocks == 0)
+                return ACMERR_NOTPOSSIBLE;
+            adss->cbSrcLength = nblocks * (DWORD)(adsi->pwfxSrc->nAvgBytesPerSec * 8 * 144 / adsi->pwfxSrc->nSamplesPerSec);
 	}
         else
         {
@@ -497,14 +504,19 @@ static	LRESULT MPEG3_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ad
 	if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
 	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
         {
-	    FIXME("misses the block header overhead\n");
-	    adss->cbDstLength = 256 + adss->cbSrcLength / 12;
+            nblocks = adss->cbSrcLength / (adsi->pwfxSrc->nBlockAlign * 1152);
+            if (nblocks == 0)
+                return ACMERR_NOTPOSSIBLE;
+            adss->cbDstLength = nblocks * (DWORD)(adsi->pwfxDst->nAvgBytesPerSec * 8 * 144 / adsi->pwfxDst->nSamplesPerSec);
 	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
                  adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
-	    /* don't take block overhead into account, doesn't matter too much */
-	    adss->cbDstLength = adss->cbSrcLength * 12;
+            nblocks = (adsi->pwfxSrc->nAvgBytesPerSec * 8 * 144 / adsi->pwfxSrc->nSamplesPerSec);
+            nblocks = (adss->cbSrcLength - 3002 - nblocks) / nblocks;
+            if (nblocks == 0)
+                return ACMERR_NOTPOSSIBLE;
+            adss->cbDstLength = nblocks * 1152 * adsi->pwfxDst->nBlockAlign;
 	}
         else
         {
