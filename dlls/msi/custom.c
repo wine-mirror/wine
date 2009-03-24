@@ -695,8 +695,6 @@ static DWORD ACTION_CallDllFunction( const GUID *guid )
             TRACE("calling %s\n", debugstr_w( function ) );
             handle_msi_break( function );
 
-            CoInitializeEx(NULL, COINIT_MULTITHREADED);
-
             __TRY
             {
                 r = fn( hPackage );
@@ -708,8 +706,6 @@ static DWORD ACTION_CallDllFunction( const GUID *guid )
                 r = ERROR_SUCCESS;
             }
             __ENDTRY;
-
-            CoUninitialize();
 
             MsiCloseHandle( hPackage );
         }
