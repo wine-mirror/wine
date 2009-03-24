@@ -309,7 +309,7 @@ DWORD svcctl_OpenServiceW(
     scmdatabase_lock_shared(manager->db);
     entry = scmdatabase_find_service(manager->db, lpServiceName);
     if (entry != NULL)
-        entry->ref_count++;
+        InterlockedIncrement(&entry->ref_count);
     scmdatabase_unlock(manager->db);
 
     if (entry == NULL)
@@ -358,6 +358,7 @@ DWORD svcctl_CreateServiceW(
     err = service_create(lpServiceName, &entry);
     if (err != ERROR_SUCCESS)
         return err;
+    entry->ref_count = 1;
     entry->config.dwServiceType = entry->status.dwServiceType = dwServiceType;
     entry->config.dwStartType = dwStartType;
     entry->config.dwErrorControl = dwErrorControl;
