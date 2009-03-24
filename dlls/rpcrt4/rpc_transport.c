@@ -257,6 +257,17 @@ static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq
   RPC_STATUS r;
   LPSTR pname;
   RpcConnection *Connection;
+  char generated_endpoint[22];
+
+  if (!endpoint)
+  {
+    static LONG lrpc_nameless_id;
+    DWORD process_id = GetCurrentProcessId();
+    ULONG id = InterlockedIncrement(&lrpc_nameless_id);
+    snprintf(generated_endpoint, sizeof(generated_endpoint),
+             "LRPC%08x.%08x", process_id, id);
+    endpoint = generated_endpoint;
+  }
 
   r = RPCRT4_CreateConnection(&Connection, TRUE, protseq->Protseq, NULL,
                               endpoint, NULL, NULL, NULL);
@@ -304,6 +315,17 @@ static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protse
   RPC_STATUS r;
   LPSTR pname;
   RpcConnection *Connection;
+  char generated_endpoint[21];
+
+  if (!endpoint)
+  {
+    static LONG np_nameless_id;
+    DWORD process_id = GetCurrentProcessId();
+    ULONG id = InterlockedExchangeAdd(&np_nameless_id, 1 );
+    snprintf(generated_endpoint, sizeof(generated_endpoint),
+             "\\\\pipe\\\\%08x.%03x", process_id, id);
+    endpoint = generated_endpoint;
+  }
 
   r = RPCRT4_CreateConnection(&Connection, TRUE, protseq->Protseq, NULL,
                               endpoint, NULL, NULL, NULL);
