@@ -249,14 +249,26 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
 
 UINT WINAPI MsiReinstallProductA(LPCSTR szProduct, DWORD dwReinstallMode)
 {
-    FIXME("%s %08x\n", debugstr_a(szProduct), dwReinstallMode);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    LPWSTR wszProduct;
+    UINT rc;
+
+    TRACE("%s %08x\n", debugstr_a(szProduct), dwReinstallMode);
+
+    wszProduct = strdupAtoW(szProduct);
+
+    rc = MsiReinstallProductW(wszProduct, dwReinstallMode);
+
+    msi_free(wszProduct);
+    return rc;
 }
 
 UINT WINAPI MsiReinstallProductW(LPCWSTR szProduct, DWORD dwReinstallMode)
 {
-    FIXME("%s %08x\n", debugstr_w(szProduct), dwReinstallMode);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    static const WCHAR szAll[] = {'A','L','L',0};
+
+    TRACE("%s %08x\n", debugstr_w(szProduct), dwReinstallMode);
+
+    return MsiReinstallFeatureW(szProduct, szAll, dwReinstallMode);
 }
 
 UINT WINAPI MsiApplyPatchA(LPCSTR szPatchPackage, LPCSTR szInstallPackage,
