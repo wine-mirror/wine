@@ -2090,9 +2090,9 @@ void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int wi
 void surface_set_texture_name(IWineD3DSurface *iface, GLuint name, BOOL srgb_name);
 void surface_set_texture_target(IWineD3DSurface *iface, GLenum target);
 
-BOOL getColorBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt,
+BOOL getColorBits(const struct GlPixelFormatDesc *format_desc,
         short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize);
-BOOL getDepthStencilBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt, short *depthSize, short *stencilSize);
+BOOL getDepthStencilBits(const struct GlPixelFormatDesc *format_desc, short *depthSize, short *stencilSize);
 
 /* Math utils */
 void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2);

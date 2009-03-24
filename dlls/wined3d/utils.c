@@ -1571,13 +1571,11 @@ unsigned int count_bits(unsigned int mask)
 
 /* Helper function for retrieving color info for ChoosePixelFormat and wglChoosePixelFormatARB.
  * The later function requires individual color components. */
-BOOL getColorBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt,
+BOOL getColorBits(const struct GlPixelFormatDesc *format_desc,
         short *redSize, short *greenSize, short *blueSize, short *alphaSize, short *totalSize)
 {
-    const struct GlPixelFormatDesc *format_desc;
-
-    TRACE("fmt: %s\n", debug_d3dformat(fmt));
-    switch(fmt)
+    TRACE("fmt: %s\n", debug_d3dformat(format_desc->format));
+    switch(format_desc->format)
     {
         case WINED3DFMT_X8R8G8B8:
         case WINED3DFMT_R8G8B8:
@@ -1594,33 +1592,26 @@ BOOL getColorBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt,
         case WINED3DFMT_P8:
             break;
         default:
-            ERR("Unsupported format: %s\n", debug_d3dformat(fmt));
+            ERR("Unsupported format: %s\n", debug_d3dformat(format_desc->format));
             return FALSE;
     }
 
-    format_desc = getFormatDescEntry(fmt, gl_info);
-    if (!format_desc)
-    {
-        ERR("Unable to look up format: 0x%x\n", fmt);
-        return FALSE;
-    }
     *redSize = count_bits(format_desc->red_mask);
     *greenSize = count_bits(format_desc->green_mask);
     *blueSize = count_bits(format_desc->blue_mask);
     *alphaSize = count_bits(format_desc->alpha_mask);
     *totalSize = *redSize + *greenSize + *blueSize + *alphaSize;
 
-    TRACE("Returning red:  %d, green: %d, blue: %d, alpha: %d, total: %d for fmt=%s\n", *redSize, *greenSize, *blueSize, *alphaSize, *totalSize, debug_d3dformat(fmt));
+    TRACE("Returning red:  %d, green: %d, blue: %d, alpha: %d, total: %d for fmt=%s\n",
+            *redSize, *greenSize, *blueSize, *alphaSize, *totalSize, debug_d3dformat(format_desc->format));
     return TRUE;
 }
 
 /* Helper function for retrieving depth/stencil info for ChoosePixelFormat and wglChoosePixelFormatARB */
-BOOL getDepthStencilBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt, short *depthSize, short *stencilSize)
+BOOL getDepthStencilBits(const struct GlPixelFormatDesc *format_desc, short *depthSize, short *stencilSize)
 {
-    const struct GlPixelFormatDesc *format_desc;
-
-    TRACE("fmt: %s\n", debug_d3dformat(fmt));
-    switch(fmt)
+    TRACE("fmt: %s\n", debug_d3dformat(format_desc->format));
+    switch(format_desc->format)
     {
         case WINED3DFMT_D16_LOCKABLE:
         case WINED3DFMT_D16_UNORM:
@@ -1633,20 +1624,15 @@ BOOL getDepthStencilBits(const WineD3D_GL_Info *gl_info, WINED3DFORMAT fmt, shor
         case WINED3DFMT_D32F_LOCKABLE:
             break;
         default:
-            FIXME("Unsupported stencil format: %s\n", debug_d3dformat(fmt));
+            FIXME("Unsupported stencil format: %s\n", debug_d3dformat(format_desc->format));
             return FALSE;
     }
 
-    format_desc = getFormatDescEntry(fmt, gl_info);
-    if (!format_desc)
-    {
-        ERR("Unable to look up format: 0x%x\n", fmt);
-        return FALSE;
-    }
     *depthSize = format_desc->depth_size;
     *stencilSize = format_desc->stencil_size;
 
-    TRACE("Returning depthSize: %d and stencilSize: %d for fmt=%s\n", *depthSize, *stencilSize, debug_d3dformat(fmt));
+    TRACE("Returning depthSize: %d and stencilSize: %d for fmt=%s\n",
+            *depthSize, *stencilSize, debug_d3dformat(format_desc->format));
     return TRUE;
 }
 

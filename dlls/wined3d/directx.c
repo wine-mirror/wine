@@ -1722,7 +1722,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_GL_I
         return FALSE;
 
     if(cfg->iPixelType == WGL_TYPE_RGBA_ARB) { /* Integer RGBA formats */
-        if (!getColorBits(gl_info, format_desc->format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
+        if (!getColorBits(format_desc, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
         {
             ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(format_desc->format));
             return FALSE;
@@ -1771,7 +1771,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_GL_In
     if(!cfg)
         return FALSE;
 
-    if (!getDepthStencilBits(gl_info, format_desc->format, &depthSize, &stencilSize))
+    if (!getDepthStencilBits(format_desc, &depthSize, &stencilSize))
     {
         ERR("Unable to check compatibility for Format=%s\n", debug_d3dformat(format_desc->format));
         return FALSE;
@@ -1898,7 +1898,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
         int i, nCfgs;
         const WineD3D_PixelFormat *cfgs;
 
-        if (!getColorBits(&adapter->gl_info, SurfaceFormat, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
+        if (!getColorBits(glDesc, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
         {
             ERR("Unable to color bits for format %#x, can't check multisampling capability!\n", SurfaceFormat);
             return WINED3DERR_NOTAVAILABLE;
@@ -2090,10 +2090,8 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
         short AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
         short CheckRed, CheckGreen, CheckBlue, CheckAlpha, CheckTotalSize;
 
-        getColorBits(&adapter->gl_info, adapter_format_desc->format,
-                &AdapterRed, &AdapterGreen, &AdapterBlue, &AdapterAlpha, &AdapterTotalSize);
-        getColorBits(&adapter->gl_info, check_format_desc->format,
-                &CheckRed, &CheckGreen, &CheckBlue, &CheckAlpha, &CheckTotalSize);
+        getColorBits(adapter_format_desc, &AdapterRed, &AdapterGreen, &AdapterBlue, &AdapterAlpha, &AdapterTotalSize);
+        getColorBits(check_format_desc, &CheckRed, &CheckGreen, &CheckBlue, &CheckAlpha, &CheckTotalSize);
 
         /* In backbuffer mode the front and backbuffer share the same WGL pixelformat.
          * The format must match in RGB, alpha is allowed to be different. (Only the backbuffer can have alpha) */
