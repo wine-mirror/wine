@@ -2171,14 +2171,23 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 ifac
 
     EnterCriticalSection(&d3d8_cs);
 
+    if (!pShader)
+    {
+        hr = IWineD3DDevice_SetPixelShader(This->WineD3DDevice, NULL);
+        LeaveCriticalSection(&d3d8_cs);
+        return hr;
+    }
+
     shader = d3d8_get_object(&This->handle_table, pShader - (VS_HIGHESTFIXEDFXF + 1));
     if (!shader)
     {
         WARN("Invalid handle (%#x) passed.\n", pShader);
+        LeaveCriticalSection(&d3d8_cs);
+        return D3DERR_INVALIDCALL;
     }
 
     TRACE("(%p) : Setting shader %p\n", This, shader);
-    hr = IWineD3DDevice_SetPixelShader(This->WineD3DDevice, shader == NULL ? NULL :shader->wineD3DPixelShader);
+    hr = IWineD3DDevice_SetPixelShader(This->WineD3DDevice, shader->wineD3DPixelShader);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
