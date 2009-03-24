@@ -530,7 +530,8 @@ GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_
 
     TRACE("No matching GL shader found, compiling a new shader\n");
     if(shader->shader_array_size == shader->num_gl_shaders) {
-        if(shader->gl_shaders) {
+        if (shader->num_gl_shaders)
+        {
             new_size = shader->shader_array_size + max(1, shader->shader_array_size / 2);
             new_array = HeapReAlloc(GetProcessHeap(), 0, shader->gl_shaders,
                                     new_size * sizeof(*shader->gl_shaders));
