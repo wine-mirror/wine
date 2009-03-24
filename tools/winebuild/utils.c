@@ -465,6 +465,7 @@ DLLSPEC *alloc_dll_spec(void)
     spec->file_name          = NULL;
     spec->dll_name           = NULL;
     spec->init_func          = NULL;
+    spec->main_module        = NULL;
     spec->type               = SPEC_WIN32;
     spec->base               = MAX_ORDINALS;
     spec->limit              = 0;
