@@ -214,8 +214,6 @@ typedef struct {
     ESD_MSG_RING		msgRing;
 } WINE_WAVEIN;
 
-static char* esd_host;	/* the esd host */
-
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
 static WINE_WAVEIN	WInDev    [MAX_WAVEINDRV];
 
@@ -439,15 +437,12 @@ LONG		ESD_WaveClose(void)
 LONG ESD_WaveInit(void)
 {
     int 	i;
-	int 	fd;
+    int 	fd;
 
     TRACE("called\n");
 
-    /* FIXME: Maybe usefully to set the esd host. */
-    esd_host = NULL;
-
     /* Testing whether the esd host is alive. */
-    if ((fd = esd_open_sound(esd_host)) < 0)
+    if ((fd = esd_open_sound(NULL)) < 0)
     {
 	WARN("esd_open_sound() failed (%d)\n", errno);
 	return -1;
@@ -1257,7 +1252,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     out_rate = (int) wwo->waveFormat.Format.nSamplesPerSec;
 	TRACE("esd output format = 0x%08x, rate = %d\n", out_format, out_rate);
 
-    wwo->esd_fd = esd_play_stream(out_format, out_rate, esd_host, "wineesd");
+    wwo->esd_fd = esd_play_stream(out_format, out_rate, NULL, "wineesd");
 
     /* clear these so we don't have any confusion ;-) */
     wwo->sound_buffer = 0;
@@ -1912,9 +1907,9 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	TRACE("esd input format = 0x%08x, rate = %d\n", in_format, in_rate);
 
 #ifdef WID_USE_ESDMON
-    wwi->esd_fd = esd_monitor_stream(in_format, in_rate, esd_host, "wineesd");
+    wwi->esd_fd = esd_monitor_stream(in_format, in_rate, NULL, "wineesd");
 #else
-    wwi->esd_fd = esd_record_stream(in_format, in_rate, esd_host, "wineesd");
+    wwi->esd_fd = esd_record_stream(in_format, in_rate, NULL, "wineesd");
 #endif
     TRACE("(wwi->esd_fd=%d)\n",wwi->esd_fd);
     wwi->state = WINE_WS_STOPPED;
