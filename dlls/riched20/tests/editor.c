@@ -4746,46 +4746,95 @@ static void test_WM_PASTE(void)
 
 static void test_EM_FORMATRANGE(void)
 {
-  int r;
-  FORMATRANGE fr;
+  int i, tpp_x, tpp_y;
   HDC hdc;
   HWND hwndRichEdit = new_richedit(NULL);
-
-  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) haystack);
+  static const struct {
+    const char *string; /* The string */
+    int first;          /* First 'pagebreak', 0 for don't care */
+    int second;         /* Second 'pagebreak', 0 for don't care */
+  } fmtstrings[] = {
+    {"WINE wine", 0, 0},
+    {"WINE wineWine", 0, 0},
+    {"WINE\r\nwine\r\nwine", 5, 10},
+    {"WINE\r\nWINEwine\r\nWINEwine", 5, 14},
+    {"WINE\r\n\r\nwine\r\nwine", 5, 6}
+  };
 
   hdc = GetDC(hwndRichEdit);
   ok(hdc != NULL, "Could not get HDC\n");
 
-  fr.hdc = fr.hdcTarget = hdc;
-  fr.rc.top = fr.rcPage.top = fr.rc.left = fr.rcPage.left = 0;
-  fr.rc.right = fr.rcPage.right = GetDeviceCaps(hdc, HORZRES);
-  fr.rc.bottom = fr.rcPage.bottom = GetDeviceCaps(hdc, VERTRES);
-  fr.chrg.cpMin = 0;
-  fr.chrg.cpMax = 20;
+  /* Calculate the twips per pixel */
+  tpp_x = 1440 / GetDeviceCaps(hdc, LOGPIXELSX);
+  tpp_y = 1440 / GetDeviceCaps(hdc, LOGPIXELSY);
 
-  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, 0);
-  todo_wine {
-    ok(r == 31, "EM_FORMATRANGE expect %d, got %d\n", 31, r);
+  SendMessage(hwndRichEdit, EM_FORMATRANGE, FALSE, 0);
+
+  for (i = 0; i < sizeof(fmtstrings)/sizeof(fmtstrings[0]); i++)
+  {
+    FORMATRANGE fr;
+    GETTEXTLENGTHEX gtl;
+    SIZE stringsize;
+    int r, len;
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) fmtstrings[i].string);
+
+    gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
+    gtl.codepage = CP_ACP;
+    len = SendMessageA(hwndRichEdit, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
+
+    /* Get some size information for the string */
+    GetTextExtentPoint32(hdc, fmtstrings[i].string, strlen(fmtstrings[i].string), &stringsize);
+
+    /* Define the box to be half the width needed and a bit larger than the height.
+     * Changes to the width means we have at least 2 pages. Changes to the height
+     * is done so we can check the changing of fr.rc.bottom.
+     */
+    fr.hdc = fr.hdcTarget = hdc;
+    fr.rc.top = fr.rcPage.top = fr.rc.left = fr.rcPage.left = 0;
+    fr.rc.right = fr.rcPage.right = (stringsize.cx / 2) * tpp_x;
+    fr.rc.bottom = fr.rcPage.bottom = (stringsize.cy + 10) * tpp_y;
+
+    r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, 0);
+    todo_wine {
+    ok(r == len, "Expected %d, got %d\n", len, r);
+    }
+
+    /* We know that the page can't hold the full string. See how many characters
+     * are on the first one
+     */
+    fr.chrg.cpMin = 0;
+    fr.chrg.cpMax = -1;
+    r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) &fr);
+    todo_wine {
+    ok(fr.rc.bottom == (stringsize.cy * tpp_y), "Expected bottom to be %d, got %d\n", (stringsize.cy * tpp_y), fr.rc.bottom);
+    }
+    if (fmtstrings[i].first)
+      todo_wine {
+      ok(r == fmtstrings[i].first, "Expected %d, got %d\n", fmtstrings[i].first, r);
+      }
+    else
+      ok(r < len, "Expected < %d, got %d\n", len, r);
+
+    /* Do another page */
+    fr.chrg.cpMin = r;
+    r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) &fr);
+    if (fmtstrings[i].second)
+      todo_wine {
+      ok(r == fmtstrings[i].second, "Expected %d, got %d\n", fmtstrings[i].second, r);
+      }
+    else
+      ok (r < len, "Expected < %d, got %d\n", len, r);
+
+    /* There is at least on more page, but we don't care */
+
+    r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, 0);
+    todo_wine {
+    ok(r == len, "Expected %d, got %d\n", len, r);
+    }
   }
 
-  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) &fr);
-  todo_wine {
-    ok(r == 20 || r == 9, "EM_FORMATRANGE expect 20 or 9, got %d\n", r);
-  }
-
-  fr.chrg.cpMin = 0;
-  fr.chrg.cpMax = 10;
-
-  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, (LPARAM) &fr);
-  todo_wine {
-    ok(r == 10, "EM_FORMATRANGE expect %d, got %d\n", 10, r);
-  }
-
-  r = SendMessage(hwndRichEdit, EM_FORMATRANGE, TRUE, 0);
-  todo_wine {
-    ok(r == 31, "EM_FORMATRANGE expect %d, got %d\n", 31, r);
-  }
-
+  ReleaseDC(NULL, hdc);
   DestroyWindow(hwndRichEdit);
 }
 
