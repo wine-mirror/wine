@@ -1320,6 +1320,28 @@ UINT WINAPI MsiSourceListClearAllW( LPCWSTR szProduct, LPCWSTR szUserName, DWORD
 }
 
 /******************************************************************
+ *  MsiSourceListClearAllExA (MSI.@)
+ */
+UINT WINAPI MsiSourceListClearAllExA( LPCSTR szProduct, LPCSTR szUserSid,
+    MSIINSTALLCONTEXT dwContext, DWORD dwOptions )
+{
+    FIXME("(%s %s %d %08x)\n", debugstr_a(szProduct), debugstr_a(szUserSid),
+          dwContext, dwOptions);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************
+ *  MsiSourceListClearAllExW (MSI.@)
+ */
+UINT WINAPI MsiSourceListClearAllExW( LPCWSTR szProduct, LPCWSTR szUserSid,
+    MSIINSTALLCONTEXT dwContext, DWORD dwOptions )
+{
+    FIXME("(%s %s %d %08x)\n", debugstr_w(szProduct), debugstr_w(szUserSid),
+          dwContext, dwOptions);
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************
  *  MsiSourceListClearSourceA (MSI.@)
  */
 UINT WINAPI MsiSourceListClearSourceA(LPCSTR szProductCodeOrPatchCode, LPCSTR szUserSid,
