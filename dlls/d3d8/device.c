@@ -2122,7 +2122,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, I
 static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pFunction, DWORD* ppShader) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DPixelShader8Impl *object;
-    HRESULT hrc = D3D_OK;
+    DWORD handle;
+    HRESULT hr;
 
     TRACE("(%p) : pFunction(%p), ppShader(%p)\n", This, pFunction, ppShader);
 
@@ -2130,36 +2131,42 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 i
         TRACE("(%p) Invalid call\n", This);
         return D3DERR_INVALIDCALL;
     }
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-
-    if (NULL == object) {
+    if (!object)
+    {
+        ERR("Failed to allocate memmory.\n");
         return E_OUTOFMEMORY;
-    } else {
-        EnterCriticalSection(&d3d8_cs);
-
-        object->ref    = 1;
-        object->lpVtbl = &Direct3DPixelShader8_Vtbl;
-        hrc = IWineD3DDevice_CreatePixelShader(This->WineD3DDevice, pFunction, &object->wineD3DPixelShader , (IUnknown *)object);
-        if (D3D_OK != hrc) {
-            FIXME("(%p) call to IWineD3DDevice_CreatePixelShader failed\n", This);
-            HeapFree(GetProcessHeap(), 0 , object);
-            *ppShader = 0;
-        } else {
-            DWORD handle = d3d8_allocate_handle(&This->handle_table, object);
-            if (handle == D3D8_INVALID_HANDLE)
-            {
-                ERR("Failed to allocate shader handle\n");
-                IDirect3DVertexShader8_Release((IUnknown *)object);
-                hrc = E_OUTOFMEMORY;
-            } else {
-                *ppShader = object->handle = handle + VS_HIGHESTFIXEDFXF + 1;
-                TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
-            }
-        }
-        LeaveCriticalSection(&d3d8_cs);
     }
 
-    return hrc;
+    object->ref    = 1;
+    object->lpVtbl = &Direct3DPixelShader8_Vtbl;
+
+    EnterCriticalSection(&d3d8_cs);
+    hr = IWineD3DDevice_CreatePixelShader(This->WineD3DDevice, pFunction,
+            &object->wineD3DPixelShader, (IUnknown *)object);
+    if (FAILED(hr))
+    {
+        LeaveCriticalSection(&d3d8_cs);
+        FIXME("(%p) call to IWineD3DDevice_CreatePixelShader failed\n", This);
+        HeapFree(GetProcessHeap(), 0 , object);
+        *ppShader = 0;
+        return hr;
+    }
+
+    handle = d3d8_allocate_handle(&This->handle_table, object);
+    LeaveCriticalSection(&d3d8_cs);
+    if (handle == D3D8_INVALID_HANDLE)
+    {
+        ERR("Failed to allocate shader handle\n");
+        IDirect3DVertexShader8_Release((IUnknown *)object);
+        return E_OUTOFMEMORY;
+    }
+
+    *ppShader = object->handle = handle + VS_HIGHESTFIXEDFXF + 1;
+    TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_SetPixelShader(LPDIRECT3DDEVICE8 iface, DWORD pShader) {
@@ -2223,6 +2230,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShader(LPDIRECT3DDEVICE8 ifac
 static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 iface, DWORD pShader) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DPixelShader8Impl *shader;
+    IWineD3DPixelShader *cur = NULL;
 
     TRACE("(%p) : pShader %#x\n", This, pShader);
 
@@ -2234,21 +2242,22 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 i
         WARN("Invalid handle (%#x) passed.\n", pShader);
         LeaveCriticalSection(&d3d8_cs);
         return D3DERR_INVALIDCALL;
-    } else {
-        IWineD3DPixelShader *cur = NULL;
-
-        IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &cur);
-        if(cur) {
-            if(cur == shader->wineD3DPixelShader) IDirect3DDevice8_SetPixelShader(iface, 0);
-            IWineD3DPixelShader_Release(cur);
-        }
-
-        if (IUnknown_Release((IUnknown *)shader))
-        {
-            ERR("Shader %p has references left, this shouldn't happen.\n", shader);
-        }
     }
+
+    IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &cur);
+
+    if (cur)
+    {
+        if (cur == shader->wineD3DPixelShader) IDirect3DDevice8_SetPixelShader(iface, 0);
+        IWineD3DPixelShader_Release(cur);
+    }
+
     LeaveCriticalSection(&d3d8_cs);
+
+    if (IUnknown_Release((IUnknown *)shader))
+    {
+        ERR("Shader %p has references left, this shouldn't happen.\n", shader);
+    }
 
     return D3D_OK;
 }
