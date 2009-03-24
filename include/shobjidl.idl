@@ -1479,6 +1479,8 @@ interface ITaskbarList : IUnknown
         [in] HWND hwnd);
 }
 
+cpp_quote("EXTERN_C const CLSID CLSID_TaskbarList;")
+
 /*****************************************************************************
  *    IAutoCompleteDropDown interface
  */

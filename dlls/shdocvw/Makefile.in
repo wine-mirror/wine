@@ -23,6 +23,7 @@ C_SRCS = \
 	persist.c \
 	shdocvw_main.c \
 	shlinstobj.c \
+	taskbarlist.c \
 	urlhist.c \
 	view.c \
 	webbrowser.c
