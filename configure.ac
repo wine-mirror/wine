@@ -1403,12 +1403,6 @@ case $build_os in
     ;;
   darwin*|macosx*)
     ;;
-  linux*|solaris*)  dnl FIXME: What other platforms support $ORIGIN?
-    if test -z "$LDRPATH_LOCAL"
-    then
-      LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\""
-    fi
-    ;;
   *)
     LDPATH="LD_LIBRARY_PATH=\"\$(TOOLSDIR)/libs/wine:\$\$LD_LIBRARY_PATH\""
     ;;
