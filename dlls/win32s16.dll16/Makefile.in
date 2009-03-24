@@ -2,15 +2,13 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = w32skrnl.dll
-IMPORTS   = kernel32 ntdll
+MODULE    = win32s16.dll16
+IMPORTS   = kernel32
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,w32skrnl.dll
 
-C_SRCS = \
-	w32skernel.c \
-	w32sys.c
+SPEC_SRCS = win32s16.dll16.spec
 
-SPEC_SRCS16 = \
-	w32sys.spec
+C_SRCS = win32s16.c
 
 @MAKE_DLL_RULES@
 

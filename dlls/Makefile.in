@@ -32,7 +32,6 @@ WIN16_FILES = \
 	user.exe16 \
 	ver.dll16 \
 	w32sys.dll16 \
-	win32s16.dll16 \
 	wineps16.drv16 \
 	wing.dll16 \
 	winsock.dll16 \
@@ -73,7 +72,7 @@ ddeml.dll16 user.exe16:
 ver.dll16:
 	echo "version.dll" >$@
 
-w32sys.dll16 win32s16.dll16:
+w32sys.dll16:
 	echo "w32skrnl.dll" >$@
 
 wprocs.dll16:
