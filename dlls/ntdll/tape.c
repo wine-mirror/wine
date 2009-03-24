@@ -66,7 +66,7 @@ static const char *io2str( DWORD io )
 {
     switch (io)
     {
-#define X(x)    case (x): return #x;
+#define X(x)    case (x): return #x
     X(IOCTL_TAPE_CHECK_VERIFY);
     X(IOCTL_TAPE_CREATE_PARTITION);
     X(IOCTL_TAPE_ERASE);
