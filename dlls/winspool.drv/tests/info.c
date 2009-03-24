@@ -1107,6 +1107,8 @@ static void test_EnumPorts(void)
 
 static void test_EnumPrinterDrivers(void)
 {
+    static char env_all[] = "all";
+
     DWORD   res;
     LPBYTE  buffer;
     DWORD   cbBuf;
@@ -1210,6 +1212,23 @@ static void test_EnumPrinterDrivers(void)
 
         HeapFree(GetProcessHeap(), 0, buffer);
     } /* for(level ... */
+
+    pcbNeeded = 0;
+    pcReturned = 0;
+    SetLastError(0xdeadbeef);
+    res = EnumPrinterDriversA(NULL, env_all, 1, NULL, 0, &pcbNeeded, &pcReturned);
+    if (res)
+    {
+        skip("no printer drivers found\n");
+        return;
+    }
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "unexpected error %u\n", GetLastError());
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, pcbNeeded);
+    res = EnumPrinterDriversA(NULL, env_all, 1, buffer, pcbNeeded, &pcbNeeded, &pcReturned);
+    ok(res, "EnumPrinterDriversA failed %u\n", GetLastError());
+
+    HeapFree(GetProcessHeap(), 0, buffer);
 }
 
 /* ########################### */

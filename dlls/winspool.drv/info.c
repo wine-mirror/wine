@@ -267,6 +267,12 @@ static const DWORD pi_sizeof[] = {0, sizeof(PRINTER_INFO_1W), sizeof(PRINTER_INF
                                      sizeof(PRINTER_INFO_7W), sizeof(PRINTER_INFO_8W),
                                      sizeof(PRINTER_INFO_9W)};
 
+static const printenv_t env_x64 = {envname_x64W, subdir_x64W, 3, Version3_RegPathW, Version3_SubdirW};
+static const printenv_t env_x86 = {envname_x86W, subdir_x86W, 3, Version3_RegPathW, Version3_SubdirW};
+static const printenv_t env_win40 = {envname_win40W, subdir_win40W, 0, Version0_RegPathW, Version0_SubdirW};
+
+static const printenv_t * const all_printenv[] = {&env_x86, &env_x64, &env_win40};
+
 /******************************************************************
  *  validate the user-supplied printing-environment [internal]
  *
@@ -285,15 +291,6 @@ static const DWORD pi_sizeof[] = {0, sizeof(PRINTER_INFO_1W), sizeof(PRINTER_INF
 
 static const  printenv_t * validate_envW(LPCWSTR env)
 {
-    static const printenv_t env_x64 =   {envname_x64W, subdir_x64W,
-                                         3, Version3_RegPathW, Version3_SubdirW};
-    static const printenv_t env_x86 =   {envname_x86W, subdir_x86W,
-                                         3, Version3_RegPathW, Version3_SubdirW};
-    static const printenv_t env_win40 = {envname_win40W, subdir_win40W,
-                                         0, Version0_RegPathW, Version0_SubdirW};
-
-    static const printenv_t * const all_printenv[]={&env_x86, &env_x64, &env_win40};
-
     const printenv_t *result = NULL;
     unsigned int i;
 
@@ -5169,7 +5166,7 @@ static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
             RegCloseKey(hkeyDrivers);
             return FALSE;
         }
-	(*pcbNeeded) += needed;
+        *pcbNeeded += needed;
     }
 
     RegCloseKey(hkeyDrivers);
@@ -5192,6 +5189,29 @@ BOOL WINAPI EnumPrinterDriversW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
                                 LPBYTE pDriverInfo, DWORD cbBuf,
                                 LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
+    static const WCHAR allW[] = {'a','l','l',0};
+
+    if (pEnvironment && !strcmpW(pEnvironment, allW))
+    {
+        BOOL ret;
+        DWORD i, needed, returned, bufsize = cbBuf;
+
+        for (i = 0; i < sizeof(all_printenv)/sizeof(all_printenv[0]); i++)
+        {
+            needed = returned = 0;
+            ret = WINSPOOL_EnumPrinterDrivers(pName, all_printenv[i]->envname, Level,
+                                              pDriverInfo, bufsize, &needed, &returned, TRUE);
+            if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
+            else if (ret)
+            {
+                bufsize -= needed;
+                if (pDriverInfo) pDriverInfo += needed;
+                if (pcReturned) *pcReturned += returned;
+            }
+            if (pcbNeeded) *pcbNeeded += needed;
+        }
+        return ret;
+    }
     return WINSPOOL_EnumPrinterDrivers(pName, pEnvironment, Level, pDriverInfo,
                                        cbBuf, pcbNeeded, pcReturned, TRUE);
 }
@@ -5204,16 +5224,36 @@ BOOL WINAPI EnumPrinterDriversW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
 BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
                                 LPBYTE pDriverInfo, DWORD cbBuf,
                                 LPDWORD pcbNeeded, LPDWORD pcReturned)
-{   BOOL ret;
+{
+    BOOL ret;
     UNICODE_STRING pNameW, pEnvironmentW;
     PWSTR pwstrNameW, pwstrEnvironmentW;
 
     pwstrNameW = asciitounicode(&pNameW, pName);
     pwstrEnvironmentW = asciitounicode(&pEnvironmentW, pEnvironment);
 
-    ret = WINSPOOL_EnumPrinterDrivers(pwstrNameW, pwstrEnvironmentW,
-                                      Level, pDriverInfo, cbBuf, pcbNeeded,
-                                      pcReturned, FALSE);
+    if (pEnvironment && !strcmp(pEnvironment, "all"))
+    {
+        DWORD i, needed, returned, bufsize = cbBuf;
+
+        for (i = 0; i < sizeof(all_printenv)/sizeof(all_printenv[0]); i++)
+        {
+            needed = returned = 0;
+            ret = WINSPOOL_EnumPrinterDrivers(pwstrNameW, all_printenv[i]->envname, Level,
+                                              pDriverInfo, bufsize, &needed, &returned, FALSE);
+            if (!ret && GetLastError() != ERROR_INSUFFICIENT_BUFFER) break;
+            else if (ret)
+            {
+                bufsize -= needed;
+                if (pDriverInfo) pDriverInfo += needed;
+                if (pcReturned) *pcReturned += returned;
+            }
+            if (pcbNeeded) *pcbNeeded += needed;
+        }
+    }
+    else ret = WINSPOOL_EnumPrinterDrivers(pwstrNameW, pwstrEnvironmentW,
+                                           Level, pDriverInfo, cbBuf, pcbNeeded,
+                                           pcReturned, FALSE);
     RtlFreeUnicodeString(&pNameW);
     RtlFreeUnicodeString(&pEnvironmentW);
 
