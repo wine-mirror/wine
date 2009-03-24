@@ -346,7 +346,7 @@ DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
         ret = ((This->currentDesc.Width + 3) >> 2) << 4;
     else {
         unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
-        ret = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
+        ret = This->resource.format_desc->byte_count * This->currentDesc.Width;  /* Bytes / row */
         ret = (ret + alignment - 1) & ~(alignment - 1);
     }
     TRACE("(%p) Returning %d\n", This, ret);
@@ -534,17 +534,11 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3D
         This->resource.size *= This->pow2Height;
     }
 
-    if (format != WINED3DFMT_UNKNOWN) {
-        This->bytesPerPixel = format_desc->byte_count;
-    } else {
-        This->bytesPerPixel = 0;
-    }
-
     This->Flags |= (WINED3DFMT_D16_LOCKABLE == format) ? SFLAG_LOCKABLE : 0;
 
     This->resource.format_desc = format_desc;
 
-    TRACE("(%p) : Size %d, bytesPerPixel %d\n", This, This->resource.size, This->bytesPerPixel);
+    TRACE("(%p) : Size %d, bytesPerPixel %d\n", This, This->resource.size, format_desc->byte_count);
 
     return WINED3D_OK;
 }
@@ -559,7 +553,8 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
     DWORD *masks;
     UINT usage;
 
-    switch (This->bytesPerPixel) {
+    switch (format_desc->byte_count)
+    {
         case 2:
         case 4:
             /* Allocate extra space to store the RGB bit masks. */
@@ -573,9 +568,7 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
         default:
             /* Allocate extra space for a palette. */
             b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                               sizeof(BITMAPINFOHEADER)
-                               + sizeof(RGBQUAD)
-                               * (1 << (This->bytesPerPixel * 8)));
+                    sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (1 << (format_desc->byte_count * 8)));
             break;
     }
 
@@ -595,11 +588,11 @@ HRESULT IWineD3DBaseSurfaceImpl_CreateDIBSection(IWineD3DSurface *iface) {
 
     b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     /* TODO: Is there a nicer way to force a specific alignment? (8 byte for ddraw) */
-    b_info->bmiHeader.biWidth = IWineD3DSurface_GetPitch(iface) / This->bytesPerPixel;
+    b_info->bmiHeader.biWidth = IWineD3DSurface_GetPitch(iface) / format_desc->byte_count;
     b_info->bmiHeader.biHeight = -This->currentDesc.Height -extraline;
     b_info->bmiHeader.biSizeImage = ( This->currentDesc.Height + extraline) * IWineD3DSurface_GetPitch(iface);
     b_info->bmiHeader.biPlanes = 1;
-    b_info->bmiHeader.biBitCount = This->bytesPerPixel * 8;
+    b_info->bmiHeader.biBitCount = format_desc->byte_count * 8;
 
     b_info->bmiHeader.biXPelsPerMeter = 0;
     b_info->bmiHeader.biYPelsPerMeter = 0;
@@ -1138,7 +1131,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
         }
     }
 
-    bpp = This->bytesPerPixel;
+    bpp = This->resource.format_desc->byte_count;
     srcheight = xsrc.bottom - xsrc.top;
     srcwidth = xsrc.right - xsrc.left;
     dstheight = xdst.bottom - xdst.top;
@@ -1630,7 +1623,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     lock_dst.right = dstx + w;
     lock_dst.bottom = dsty + h;
 
-    bpp = This->bytesPerPixel;
+    bpp = This->resource.format_desc->byte_count;
 
     /* We need to lock the surfaces, or we won't get refreshes when done. */
     if (Src == This)
@@ -1854,7 +1847,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
         {
             pLockedRect->pBits = This->resource.allocatedMemory +
                     (pLockedRect->Pitch * pRect->top) +
-                    (pRect->left * This->bytesPerPixel);
+                    (pRect->left * This->resource.format_desc->byte_count);
         }
         This->lockedRect.left   = pRect->left;
         This->lockedRect.top    = pRect->top;

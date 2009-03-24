@@ -333,7 +333,7 @@ const char* filename)
     } else {
         int red_shift, green_shift, blue_shift, pix_width, alpha_shift;
 
-        pix_width = This->bytesPerPixel;
+        pix_width = format_desc->byte_count;
 
         red_shift = get_shift(format_desc->red_mask);
         green_shift = get_shift(format_desc->green_mask);

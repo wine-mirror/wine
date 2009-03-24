@@ -190,7 +190,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
 
         if (This->Flags & SFLAG_NONPOW2) {
             unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
-            src_pitch = This->bytesPerPixel * This->pow2Width;
+            src_pitch = format_desc->byte_count * This->pow2Width;
             dst_pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);
             src_pitch = (src_pitch + alignment - 1) & ~(alignment - 1);
             mem = HeapAlloc(GetProcessHeap(), 0, src_pitch * This->pow2Height);
@@ -811,7 +811,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
                 fmt = GL_ALPHA;
                 type = GL_UNSIGNED_BYTE;
                 mem = dest;
-                bpp = This->bytesPerPixel;
+                bpp = This->resource.format_desc->byte_count;
             } else {
                 /* GL can't return palettized data, so read ARGB pixels into a
                  * separate block of memory and convert them into palettized format
@@ -831,7 +831,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
                     LEAVE_GL();
                     return;
                 }
-                bpp = This->bytesPerPixel * 3;
+                bpp = This->resource.format_desc->byte_count * 3;
             }
         }
         break;
@@ -840,7 +840,7 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
             mem = dest;
             fmt = This->resource.format_desc->glFormat;
             type = This->resource.format_desc->glType;
-            bpp = This->bytesPerPixel;
+            bpp = This->resource.format_desc->byte_count;
     }
 
     if(This->Flags & SFLAG_PBO) {
@@ -1623,7 +1623,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     *format = glDesc->glFormat;
     *type = glDesc->glType;
     *convert = NO_CONVERSION;
-    *target_bpp = This->bytesPerPixel;
+    *target_bpp = glDesc->byte_count;
 
     if(srgb_mode) {
         *internal = glDesc->glGammaInternal;

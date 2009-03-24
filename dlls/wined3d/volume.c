@@ -218,8 +218,9 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DL
     /* fixme: should we really lock as such? */
     TRACE("(%p) : box=%p, output pbox=%p, allMem=%p\n", This, pBox, pLockedVolume, This->resource.allocatedMemory);
 
-    pLockedVolume->RowPitch   = This->bytesPerPixel * This->currentDesc.Width;                        /* Bytes / row   */
-    pLockedVolume->SlicePitch = This->bytesPerPixel * This->currentDesc.Width * This->currentDesc.Height;  /* Bytes / slice */
+    pLockedVolume->RowPitch = This->resource.format_desc->byte_count * This->currentDesc.Width; /* Bytes / row   */
+    pLockedVolume->SlicePitch = This->resource.format_desc->byte_count
+            * This->currentDesc.Width * This->currentDesc.Height;                               /* Bytes / slice */
     if (!pBox) {
         TRACE("No box supplied - all is ok\n");
         pLockedVolume->pBits = This->resource.allocatedMemory;
@@ -231,10 +232,10 @@ static HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, WINED3DL
         This->lockedBox.Back   = This->currentDesc.Depth;
     } else {
         TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n", pBox, pBox->Left, pBox->Top, pBox->Right, pBox->Bottom, pBox->Front, pBox->Back);
-        pLockedVolume->pBits = This->resource.allocatedMemory +
-          (pLockedVolume->SlicePitch * pBox->Front) + /* FIXME: is front < back or vica versa? */
-          (pLockedVolume->RowPitch * pBox->Top) +
-          (pBox->Left * This->bytesPerPixel);
+        pLockedVolume->pBits = This->resource.allocatedMemory
+                + (pLockedVolume->SlicePitch * pBox->Front)     /* FIXME: is front < back or vica versa? */
+                + (pLockedVolume->RowPitch * pBox->Top)
+                + (pBox->Left * This->resource.format_desc->byte_count);
         This->lockedBox.Left   = pBox->Left;
         This->lockedBox.Top    = pBox->Top;
         This->lockedBox.Front  = pBox->Front;

@@ -1428,15 +1428,11 @@ typedef struct IWineD3DVolumeImpl
     /* WineD3DVolume Information */
     WINED3DVOLUMET_DESC      currentDesc;
     IWineD3DBase            *container;
-    UINT                    bytesPerPixel;
-
     BOOL                    lockable;
     BOOL                    locked;
     WINED3DBOX              lockedBox;
     WINED3DBOX              dirtyBox;
     BOOL                    dirty;
-
-
 } IWineD3DVolumeImpl;
 
 extern const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl;
@@ -1521,8 +1517,6 @@ struct IWineD3DSurfaceImpl
     WINED3DSURFACET_DESC      currentDesc;
     IWineD3DPaletteImpl       *palette; /* D3D7 style palette handling */
     PALETTEENTRY              *palette9; /* D3D8/9 style palette handling */
-
-    UINT                      bytesPerPixel;
 
     /* TODO: move this off into a management class(maybe!) */
     DWORD                      Flags;

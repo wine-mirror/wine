@@ -811,15 +811,6 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     object->Flags     |= (WINED3DFMT_D16_LOCKABLE == Format) ? SFLAG_LOCKABLE : 0;
     object->Flags     |= Lockable ? SFLAG_LOCKABLE : 0;
 
-
-    if (WINED3DFMT_UNKNOWN != Format) {
-        object->bytesPerPixel = glDesc->byte_count;
-    } else {
-        object->bytesPerPixel = 0;
-    }
-
-    /** TODO: change this into a texture transform matrix so that it's processed in hardware **/
-
     TRACE("Pool %d %d %d %d\n",Pool, WINED3DPOOL_DEFAULT, WINED3DPOOL_MANAGED, WINED3DPOOL_SYSTEMMEM);
 
     /** Quick lockable sanity check TODO: remove this after surfaces, usage and lockability have been debugged properly
@@ -1242,7 +1233,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     object->currentDesc.Width   = Width;
     object->currentDesc.Height  = Height;
     object->currentDesc.Depth   = Depth;
-    object->bytesPerPixel       = format_desc->byte_count;
 
     /** Note: Volume textures cannot be dxtn, hence no need to check here **/
     object->lockable            = TRUE;
@@ -6042,7 +6032,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     int offset    = 0;
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
     glDescriptor *glDescription = NULL;
-    const struct GlPixelFormatDesc *dst_format_desc;
+    const struct GlPixelFormatDesc *src_format_desc, *dst_format_desc;
     GLenum dummy;
     int sampler;
     int bpp;
@@ -6106,6 +6096,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
     IWineD3DSurface_GetGlDesc(pDestinationSurface, &glDescription);
 
+    src_format_desc = ((IWineD3DSurfaceImpl *)pSrcSurface)->resource.format_desc;
     dst_format_desc = ((IWineD3DSurfaceImpl *)pDestinationSurface)->resource.format_desc;
 
     /* this needs to be done in lines if the sourceRect != the sourceWidth */
@@ -6119,14 +6110,14 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     /* This function doesn't support compressed textures
     the pitch is just bytesPerPixel * width */
     if(srcWidth != srcSurfaceWidth  || srcLeft ){
-        rowoffset = srcSurfaceWidth * pSrcSurface->bytesPerPixel;
-        offset   += srcLeft * pSrcSurface->bytesPerPixel;
+        rowoffset = srcSurfaceWidth * src_format_desc->byte_count;
+        offset   += srcLeft * src_format_desc->byte_count;
         /* TODO: do we ever get 3bpp?, would a shift and an add be quicker than a mul (well maybe a cycle or two) */
     }
     /* TODO DXT formats */
 
     if(pSourceRect != NULL && pSourceRect->top != 0){
-       offset +=  pSourceRect->top * srcSurfaceWidth * pSrcSurface->bytesPerPixel;
+       offset +=  pSourceRect->top * srcSurfaceWidth * src_format_desc->byte_count;
     }
     TRACE("(%p) glTexSubImage2D, level %d, left %d, top %d, width %d, height %d, fmt %#x, type %#x, memory %p+%#x\n",
             This, glDescription->level, destLeft, destTop, srcWidth, srcHeight, dst_format_desc->glFormat,
