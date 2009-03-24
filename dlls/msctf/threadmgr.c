@@ -34,11 +34,26 @@
 #include "objbase.h"
 
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 #include "msctf.h"
 #include "msctf_internal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
+
+typedef struct tagThreadMgrSink {
+    struct list         entry;
+    union {
+        /* ThreadMgr Sinks */
+        IUnknown            *pIUnknown;
+        /* ITfActiveLanguageProfileNotifySink *pITfActiveLanguageProfileNotifySink; */
+        /* ITfDisplayAttributeNotifySink *pITfDisplayAttributeNotifySink; */
+        /* ITfKeyTraceEventSink *pITfKeyTraceEventSink; */
+        /* ITfPreservedKeyNotifySink *pITfPreservedKeyNotifySink; */
+        /* ITfThreadFocusSink *pITfThreadFocusSink; */
+        /* ITfThreadMgrEventSink *pITfThreadMgrEventSink; */
+    } interfaces;
+} ThreadMgrSink;
 
 typedef struct tagACLMulti {
     const ITfThreadMgrVtbl *ThreadMgrVtbl;
@@ -46,6 +61,14 @@ typedef struct tagACLMulti {
     LONG refCount;
 
     ITfDocumentMgr *focus;
+
+    /* kept as separate lists to reduce unnecessary iterations */
+    struct list     ActiveLanguageProfileNotifySink;
+    struct list     DisplayAttributeNotifySink;
+    struct list     KeyTraceEventSink;
+    struct list     PreservedKeyNotifySink;
+    struct list     ThreadFocusSink;
+    struct list     ThreadMgrEventSink;
 } ThreadMgr;
 
 static inline ThreadMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
@@ -53,12 +76,59 @@ static inline ThreadMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
     return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,SourceVtbl));
 }
 
+static void free_sink(ThreadMgrSink *sink)
+{
+        IUnknown_Release(sink->interfaces.pIUnknown);
+        HeapFree(GetProcessHeap(),0,sink);
+}
+
 static void ThreadMgr_Destructor(ThreadMgr *This)
 {
+    struct list *cursor, *cursor2;
+
     TlsSetValue(tlsIndex,NULL);
     TRACE("destroying %p\n", This);
     if (This->focus)
         ITfDocumentMgr_Release(This->focus);
+
+    /* free sinks */
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->ActiveLanguageProfileNotifySink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->DisplayAttributeNotifySink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->KeyTraceEventSink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->PreservedKeyNotifySink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->ThreadFocusSink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->ThreadMgrEventSink)
+    {
+        ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
+
     HeapFree(GetProcessHeap(),0,This);
 }
 
@@ -302,6 +372,13 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->SourceVtbl = &ThreadMgr_SourceVtbl;
     This->refCount = 1;
     TlsSetValue(tlsIndex,This);
+
+    list_init(&This->ActiveLanguageProfileNotifySink);
+    list_init(&This->DisplayAttributeNotifySink);
+    list_init(&This->KeyTraceEventSink);
+    list_init(&This->PreservedKeyNotifySink);
+    list_init(&This->ThreadFocusSink);
+    list_init(&This->ThreadMgrEventSink);
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)This;
