@@ -1570,7 +1570,7 @@ BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
     WCHAR buffer[2];
 
     TRACE("%p %s %p %p\n", hSCManager,
-          debugstr_w(lpServiceName), lpDisplayName, lpcchBuffer);
+          debugstr_w(lpDisplayName), lpServiceName, lpcchBuffer);
 
     if (!hSCManager)
     {
