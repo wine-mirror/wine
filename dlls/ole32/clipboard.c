@@ -1271,6 +1271,46 @@ static HWND OLEClipbrd_CreateWindow(void)
   return hwnd;
 }
 
+/*********************************************************************
+ *          set_clipboard_formats
+ *
+ * Enumerate all HGLOBAL formats supported by the source and make
+ * those formats available using delayed rendering using SetClipboardData.
+ *
+ * TODO: We need to additionally handle TYMED_IStorage and
+ * TYMED_IStream data by copying into global memory.
+ */
+static HRESULT set_clipboard_formats(IDataObject *data)
+{
+    HRESULT hr;
+    FORMATETC fmt;
+    IEnumFORMATETC *enum_fmt;
+
+    hr = IDataObject_EnumFormatEtc(data, DATADIR_GET, &enum_fmt);
+    if(FAILED(hr)) return hr;
+
+    while(IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL) == S_OK)
+    {
+        if (fmt.tymed == TYMED_HGLOBAL)
+        {
+            char fmt_name[80];
+            TRACE("(cfFormat=%d:%s)\n", fmt.cfFormat,
+                  GetClipboardFormatNameA(fmt.cfFormat, fmt_name, sizeof(fmt_name)-1) ? fmt_name : "");
+
+            SetClipboardData(fmt.cfFormat, NULL);
+        }
+    }
+
+    IEnumFORMATETC_Release(enum_fmt);
+    return S_OK;
+}
+
+/*********************************************************************
+ *          set_dataobject_format
+ *
+ * Windows creates a 'DataObject' clipboard format that contains the
+ * clipboard window's HWND or NULL if the Ole clipboard has been flushed.
+ */
 static HRESULT set_dataobject_format(HWND hwnd)
 {
     HGLOBAL h = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, sizeof(hwnd));
@@ -1312,8 +1352,6 @@ static HRESULT set_dataobject_format(HWND hwnd)
 HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
 {
   HRESULT hr = S_OK;
-  IEnumFORMATETC* penumFormatetc = NULL;
-  FORMATETC rgelt;
   BOOL bClipboardOpen = FALSE;
   struct oletls *info = COM_CurrentInfo();
 
@@ -1361,54 +1399,15 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
     theOleClipboard->pIDataObjectSrc = NULL;
   }
 
-  /*
-   * AddRef the data object passed in and save its pointer.
-   * A NULL value indicates that the clipboard should be emptied.
-   */
+  /* A NULL value indicates that the clipboard should be emptied. */
   theOleClipboard->pIDataObjectSrc = pDataObj;
   if ( pDataObj )
   {
     IDataObject_AddRef(theOleClipboard->pIDataObjectSrc);
+    hr = set_clipboard_formats(pDataObj);
+    if(FAILED(hr)) goto CLEANUP;
   }
 
-  /*
-   * Enumerate all HGLOBAL formats supported by the source and make
-   * those formats available using delayed rendering using SetClipboardData.
-   * Only global memory based data items may be made available to non-OLE
-   * applications via the standard Windows clipboard API. Data based on other
-   * mediums(non TYMED_HGLOBAL) can only be accessed via the Ole Clipboard API.
-   *
-   * TODO: Do we need to additionally handle TYMED_IStorage media by copying
-   * the storage into global memory?
-   */
-  if ( pDataObj )
-  {
-    if ( FAILED(hr = IDataObject_EnumFormatEtc( pDataObj,
-                                                DATADIR_GET,
-                                                &penumFormatetc )))
-    {
-      HANDLE_ERROR( hr );
-    }
-
-    while ( S_OK == IEnumFORMATETC_Next(penumFormatetc, 1, &rgelt, NULL) )
-    {
-      if ( rgelt.tymed == TYMED_HGLOBAL )
-      {
-        CHAR szFmtName[80];
-        TRACE("(cfFormat=%d:%s)\n", rgelt.cfFormat,
-              GetClipboardFormatNameA(rgelt.cfFormat, szFmtName, sizeof(szFmtName)-1)
-                ? szFmtName : "");
-
-        SetClipboardData( rgelt.cfFormat, NULL);
-      }
-    }
-    IEnumFORMATETC_Release(penumFormatetc);
-  }
-
-  /*
-   * Windows additionally creates a new "DataObject" clipboard format
-   * and stores the clipboard window's HWND in it
-   */
   hr = set_dataobject_format(theOleClipboard->hWndClipboard);
 
 CLEANUP:
