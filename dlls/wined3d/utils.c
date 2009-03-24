@@ -50,7 +50,7 @@ struct StaticPixelFormatDesc
 static const struct StaticPixelFormatDesc formats[] =
 {
   /* WINED3DFORMAT               alphamask    redmask    greenmask    bluemask     bpp    depth  stencil   isFourcc */
-    {WINED3DFMT_UNKNOWN,            0x0,        0x0,        0x0,        0x0,        1,      0,      0,      FALSE},
+    {WINED3DFMT_UNKNOWN,            0x0,        0x0,        0x0,        0x0,        0,      0,      0,      FALSE},
     /* FourCC formats, kept here to have WINED3DFMT_R8G8B8(=20) at position 20 */
     {WINED3DFMT_UYVY,               0x0,        0x0,        0x0,        0x0,        2,      0,      0,      TRUE },
     {WINED3DFMT_YUY2,               0x0,        0x0,        0x0,        0x0,        2,      0,      0,      TRUE },
