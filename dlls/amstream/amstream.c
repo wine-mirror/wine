@@ -238,9 +238,17 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilterGraph(IAMMultiMediaStream
 {
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, ppGraphBuilder);
+    TRACE("(%p/%p)->(%p)\n", This, iface, ppGraphBuilder);
 
-    return E_NOTIMPL;
+    if (!ppGraphBuilder)
+        return E_POINTER;
+
+    if (This->pFilterGraph)
+        return IFilterGraph_QueryInterface(This->pFilterGraph, &IID_IGraphBuilder, (void**)ppGraphBuilder);
+    else
+        *ppGraphBuilder = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IAMMultiMediaStreamImpl_GetFilter(IAMMultiMediaStream* iface, IMediaStreamFilter** ppFilter)
