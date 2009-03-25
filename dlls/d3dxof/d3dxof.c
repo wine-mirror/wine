@@ -1100,9 +1100,8 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetNextDataObject(IDirectXFileE
 error:
 
   HeapFree(GetProcessHeap(), 0, This->buf.pxo_tab);
+  HeapFree(GetProcessHeap(), 0, This->buf.pxo->pdata);
   HeapFree(GetProcessHeap(), 0, pstrings);
-  if (This->buf.pxo->pdata)
-    HeapFree(GetProcessHeap(), 0, This->buf.pxo->pdata);
 
   return hr;
 }
