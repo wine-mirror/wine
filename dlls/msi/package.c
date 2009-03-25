@@ -260,7 +260,7 @@ static LPWSTR get_fusion_filename(MSIPACKAGE *package)
 
             if (!check)
             {
-                if (file) msi_free(file);
+                msi_free(file);
                 return NULL;
             }
 
