@@ -372,9 +372,14 @@ static WINAPI HRESULT ThreadMgrSource_AdviseSink(ITfSource *iface,
 
 static WINAPI HRESULT ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
 {
+    ThreadMgrSink *sink = (ThreadMgrSink*)pdwCookie;
     ThreadMgr *This = impl_from_ITfSourceVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %x\n",This,pdwCookie);
+
+    list_remove(&sink->entry);
+    free_sink(sink);
+
+    return S_OK;
 }
 
 static const ITfSourceVtbl ThreadMgr_SourceVtbl =
