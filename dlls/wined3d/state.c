@@ -3118,26 +3118,22 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
      * state. We do not (yet) support the WINED3DRENDERSTATE_WRAPx values, nor tie them up
      * to the TEXCOORDINDEX value
      */
+    switch (stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX] & 0xffff0000)
+    {
+        case WINED3DTSS_TCI_PASSTHRU:
+            /* Use the specified texture coordinates contained within the
+             * vertex format. This value resolves to zero. */
+            glDisable(GL_TEXTURE_GEN_S);
+            glDisable(GL_TEXTURE_GEN_T);
+            glDisable(GL_TEXTURE_GEN_R);
+            glDisable(GL_TEXTURE_GEN_Q);
+            checkGLcall("glDisable(GL_TEXTURE_GEN_S,T,R,Q)");
+            break;
 
-    /*
-     * Be careful the value of the mask 0xF0000 come from d3d8types.h infos
-     */
-    switch (stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) {
-    case WINED3DTSS_TCI_PASSTHRU:
-        /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
-        glDisable(GL_TEXTURE_GEN_R);
-        glDisable(GL_TEXTURE_GEN_Q);
-        checkGLcall("glDisable(GL_TEXTURE_GEN_S,T,R,Q)");
-        break;
-
-    case WINED3DTSS_TCI_CAMERASPACEPOSITION:
-        /* CameraSpacePosition means use the vertex position, transformed to camera space,
-         * as the input texture coordinates for this stage's texture transformation. This
-         * equates roughly to EYE_LINEAR
-         */
-        {
+        case WINED3DTSS_TCI_CAMERASPACEPOSITION:
+            /* CameraSpacePosition means use the vertex position, transformed to camera space,
+             * as the input texture coordinates for this stage's texture transformation. This
+             * equates roughly to EYE_LINEAR */
             TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
 
             glMatrixMode(GL_MODELVIEW);
@@ -3162,42 +3158,46 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             checkGLcall("glEnable(GL_TEXTURE_GEN_R)");
             glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
             checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-        }
-        break;
+            break;
 
-    case WINED3DTSS_TCI_CAMERASPACENORMAL:
-        {
-            if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
-                TRACE("WINED3DTSS_TCI_CAMERASPACENORMAL - Set eye plane\n");
-
-                glMatrixMode(GL_MODELVIEW);
-                glPushMatrix();
-                glLoadIdentity();
-                glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
-                glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
-                glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
-                glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
-                glPopMatrix();
-
-                glEnable(GL_TEXTURE_GEN_S);
-                checkGLcall("glEnable(GL_TEXTURE_GEN_S)");
-                glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
-                checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
-                glEnable(GL_TEXTURE_GEN_T);
-                checkGLcall("glEnable(GL_TEXTURE_GEN_T)");
-                glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
-                checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
-                glEnable(GL_TEXTURE_GEN_R);
-                checkGLcall("glEnable(GL_TEXTURE_GEN_R)");
-                glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
-                checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+        case WINED3DTSS_TCI_CAMERASPACENORMAL:
+            if (!GL_SUPPORT(NV_TEXGEN_REFLECTION))
+            {
+                break;
             }
-        }
-        break;
 
-    case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
-        {
-            if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
+            TRACE("WINED3DTSS_TCI_CAMERASPACENORMAL - Set eye plane\n");
+
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+            glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+            glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+            glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+            glPopMatrix();
+
+            glEnable(GL_TEXTURE_GEN_S);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_S)");
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+            checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+            glEnable(GL_TEXTURE_GEN_T);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_T)");
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+            checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+            glEnable(GL_TEXTURE_GEN_R);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_R)");
+            glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+            checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+
+            break;
+
+        case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
+            if (!GL_SUPPORT(NV_TEXGEN_REFLECTION))
+            {
+                break;
+            }
+
             TRACE("WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR - Set eye plane\n");
 
             glMatrixMode(GL_MODELVIEW);
@@ -3221,20 +3221,16 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             checkGLcall("glEnable(GL_TEXTURE_GEN_R)");
             glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
             checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
-            }
-        }
-        break;
 
-    /* Unhandled types: */
-    default:
-        /* Todo: */
-        /* ? disable GL_TEXTURE_GEN_n ? */
-        glDisable(GL_TEXTURE_GEN_S);
-        glDisable(GL_TEXTURE_GEN_T);
-        glDisable(GL_TEXTURE_GEN_R);
-        glDisable(GL_TEXTURE_GEN_Q);
-        FIXME("Unhandled WINED3DTSS_TEXCOORDINDEX %x\n", stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX]);
-        break;
+            break;
+
+        default:
+            glDisable(GL_TEXTURE_GEN_S);
+            glDisable(GL_TEXTURE_GEN_T);
+            glDisable(GL_TEXTURE_GEN_R);
+            glDisable(GL_TEXTURE_GEN_Q);
+            FIXME("Unhandled WINED3DTSS_TEXCOORDINDEX %x\n", stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX]);
+            break;
     }
 
     /* Update the texture matrix */
