@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+typedef void (*FN_PROGRESS)(LPWSTR,DWORD,PPROG_INVOKE_SETTING,PVOID,BOOL);
+
 WINADVAPI DWORD  WINAPI GetExplicitEntriesFromAclA( PACL, PULONG, PEXPLICIT_ACCESS_A* );
 WINADVAPI DWORD  WINAPI GetExplicitEntriesFromAclW( PACL, PULONG, PEXPLICIT_ACCESS_W* );
 #define                 GetExplicitEntriesFromAcl WINELIB_NAME_AW(GetExplicitEntriesFromAcl)

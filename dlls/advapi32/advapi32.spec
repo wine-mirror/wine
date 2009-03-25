@@ -640,7 +640,7 @@
 @ stub TraceMessage
 @ stub TraceMessageVa
 # @ stub TreeResetNamedSecurityInfoA
-# @ stub TreeResetNamedSecurityInfoW
+@ stdcall TreeResetNamedSecurityInfoW(wstr long long ptr ptr ptr ptr long ptr long ptr)
 # @ stub TrusteeAccessToObjectA
 # @ stub TrusteeAccessToObjectW
 # @ stub UninstallApplication

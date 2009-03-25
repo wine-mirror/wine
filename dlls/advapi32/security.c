@@ -5207,3 +5207,16 @@ BOOL WINAPI SaferCreateLevel(DWORD ScopeId, DWORD LevelId, DWORD OpenFlags,
     FIXME("(%u, %x, %u, %p, %p) stub\n", ScopeId, LevelId, OpenFlags, LevelHandle, lpReserved);
     return FALSE;
 }
+
+DWORD WINAPI TreeResetNamedSecurityInfoW( LPWSTR pObjectName,
+                SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
+                PSID pOwner, PSID pGroup, PACL pDacl, PACL pSacl,
+                BOOL KeepExplicit, FN_PROGRESS fnProgress,
+                PROG_INVOKE_SETTING ProgressInvokeSetting, PVOID Args)
+{
+    FIXME("(%s, %i, %i, %p, %p, %p, %p, %i, %p, %i, %p  Stub\n",
+        debugstr_w(pObjectName), ObjectType, SecurityInfo, pOwner, pGroup,
+        pDacl, pSacl, KeepExplicit, fnProgress, ProgressInvokeSetting, Args);
+
+    return ERROR_SUCCESS;
+}
