@@ -860,13 +860,16 @@ static void test_WritePrivateProfileString(void)
     ok(check_file_data(path, data), "File doesn't match\n");
     DeleteFileA(path);
 
-    /* empty lpAppName */
+    if (0)
+    {
+    /* empty lpAppName, crashes on NT4 and higher */
     data = "[]\r\n"
            "key=string\r\n";
     ret = WritePrivateProfileStringA("", "key", "string", path);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     ok(check_file_data(path, data), "File doesn't match\n");
     DeleteFileA(path);
+    }
 
     /* NULL lpKeyName */
     data = "";
@@ -878,7 +881,9 @@ static void test_WritePrivateProfileString(void)
     }
     DeleteFileA(path);
 
-    /* empty lpKeyName */
+    if (0)
+    {
+    /* empty lpKeyName, crashes on NT4 and higher */
     data = "[App]\r\n"
            "=string\r\n";
     ret = WritePrivateProfileStringA("App", "", "string", path);
@@ -888,6 +893,7 @@ static void test_WritePrivateProfileString(void)
         ok(check_file_data(path, data), "File doesn't match\n");
     }
     DeleteFileA(path);
+    }
 
     /* NULL lpString */
     data = "";
@@ -904,10 +910,7 @@ static void test_WritePrivateProfileString(void)
            "key=\r\n";
     ret = WritePrivateProfileStringA("App", "key", "", path);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine
-    {
-        ok(check_file_data(path, data), "File doesn't match\n");
-    }
+    ok(check_file_data(path, data), "File doesn't match\n");
     DeleteFileA(path);
 
     /* empty lpFileName */
