@@ -757,10 +757,8 @@ static const char table_enc85[] =
 /*
  *  Encodes a base85 guid given a GUID pointer
  *  Caller should provide a 21 character buffer for the encoded string.
- *
- *  returns TRUE if successful, FALSE if not
  */
-static BOOL encode_base85_guid( GUID *guid, LPWSTR str )
+static void encode_base85_guid( GUID *guid, LPWSTR str )
 {
     unsigned int x, *p, i;
 
@@ -779,8 +777,6 @@ static BOOL encode_base85_guid( GUID *guid, LPWSTR str )
         *str++ = table_enc85[x%85];
     }
     *str = 0;
-
-    return TRUE;
 }
 
 static void compose_base85_guid(LPSTR component, LPSTR comp_base85, LPSTR squashed)
@@ -807,12 +803,12 @@ static void compose_base85_guid(LPSTR component, LPSTR comp_base85, LPSTR squash
 
 static void test_MsiQueryFeatureState(void)
 {
-    HKEY userkey, localkey, compkey;
+    HKEY userkey, localkey, compkey, compkey2;
     CHAR prodcode[MAX_PATH];
     CHAR prod_squashed[MAX_PATH];
     CHAR component[MAX_PATH];
     CHAR comp_base85[MAX_PATH];
-    CHAR comp_squashed[MAX_PATH];
+    CHAR comp_squashed[MAX_PATH], comp_squashed2[MAX_PATH];
     CHAR keypath[MAX_PATH*2];
     INSTALLSTATE state;
     LPSTR usersid;
@@ -820,6 +816,7 @@ static void test_MsiQueryFeatureState(void)
 
     create_test_guid(prodcode, prod_squashed);
     compose_base85_guid(component, comp_base85, comp_squashed);
+    compose_base85_guid(component, comp_base85 + 20, comp_squashed2);
     get_user_sid(&usersid);
 
     /* NULL prodcode */
@@ -908,7 +905,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)comp_base85, 21);
+    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)comp_base85, 41);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
@@ -922,6 +919,14 @@ static void test_MsiQueryFeatureState(void)
     res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &compkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Components\\");
+    lstrcatA(keypath, comp_squashed2);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &compkey2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
@@ -929,9 +934,15 @@ static void test_MsiQueryFeatureState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
-    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 1);
+    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+
+    res = RegSetValueExA(compkey2, prod_squashed, 0, REG_SZ, (const BYTE *)"orange", 7);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* INSTALLSTATE_LOCAL */
@@ -967,11 +978,14 @@ static void test_MsiQueryFeatureState(void)
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     RegDeleteValueA(compkey, prod_squashed);
+    RegDeleteValueA(compkey2, prod_squashed);
     RegDeleteKeyA(compkey, "");
+    RegDeleteKeyA(compkey2, "");
     RegDeleteValueA(localkey, "feature");
     RegDeleteValueA(userkey, "feature");
     RegDeleteKeyA(userkey, "");
     RegCloseKey(compkey);
+    RegCloseKey(compkey2);
     RegCloseKey(localkey);
     RegCloseKey(userkey);
 
@@ -989,7 +1003,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
-    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 2);
+    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 1);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* feature value exists */
@@ -1027,7 +1041,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)comp_base85, 21);
+    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)comp_base85, 41);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
@@ -1041,6 +1055,14 @@ static void test_MsiQueryFeatureState(void)
     res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &compkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, usersid);
+    lstrcatA(keypath, "\\Components\\");
+    lstrcatA(keypath, comp_squashed2);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &compkey2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
@@ -1048,20 +1070,29 @@ static void test_MsiQueryFeatureState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
-    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 1);
+    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+
+    res = RegSetValueExA(compkey2, prod_squashed, 0, REG_SZ, (const BYTE *)"orange", 7);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     RegDeleteValueA(compkey, prod_squashed);
+    RegDeleteValueA(compkey2, prod_squashed);
     RegDeleteKeyA(compkey, "");
+    RegDeleteKeyA(compkey2, "");
     RegDeleteValueA(localkey, "feature");
     RegDeleteValueA(userkey, "feature");
     RegDeleteKeyA(userkey, "");
     RegCloseKey(compkey);
+    RegCloseKey(compkey2);
     RegCloseKey(localkey);
     RegCloseKey(userkey);
 
@@ -1077,7 +1108,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
 
-    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 2);
+    res = RegSetValueExA(userkey, "feature", 0, REG_SZ, (const BYTE *)"", 1);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* feature value exists */
@@ -1114,7 +1145,7 @@ static void test_MsiQueryFeatureState(void)
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)comp_base85, 21);
+    res = RegSetValueExA(localkey, "feature", 0, REG_SZ, (const BYTE *)comp_base85, 41);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
@@ -1127,6 +1158,13 @@ static void test_MsiQueryFeatureState(void)
     res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &compkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
+    lstrcpyA(keypath, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\UserData\\");
+    lstrcatA(keypath, "S-1-5-18\\Components\\");
+    lstrcatA(keypath, comp_squashed2);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath, &compkey2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
@@ -1134,20 +1172,29 @@ static void test_MsiQueryFeatureState(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
-    ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
 
-    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 1);
+    res = RegSetValueExA(compkey, prod_squashed, 0, REG_SZ, (const BYTE *)"apple", 6);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    state = MsiQueryFeatureStateA(prodcode, "feature");
+    ok(state == INSTALLSTATE_ADVERTISED, "Expected INSTALLSTATE_ADVERTISED, got %d\n", state);
+
+    res = RegSetValueExA(compkey2, prod_squashed, 0, REG_SZ, (const BYTE *)"orange", 7);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     state = MsiQueryFeatureStateA(prodcode, "feature");
     ok(state == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", state);
 
     RegDeleteValueA(compkey, prod_squashed);
+    RegDeleteValueA(compkey2, prod_squashed);
     RegDeleteKeyA(compkey, "");
+    RegDeleteKeyA(compkey2, "");
     RegDeleteValueA(localkey, "feature");
     RegDeleteValueA(userkey, "feature");
     RegDeleteKeyA(userkey, "");
     RegCloseKey(compkey);
+    RegCloseKey(compkey2);
     RegCloseKey(localkey);
     RegCloseKey(userkey);
 }
