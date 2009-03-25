@@ -3161,8 +3161,11 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             break;
 
         case WINED3DTSS_TCI_CAMERASPACENORMAL:
+            /* Note that NV_TEXGEN_REFLECTION support is implied when
+             * ARB_TEXTURE_CUBE_MAP is supported */
             if (!GL_SUPPORT(NV_TEXGEN_REFLECTION))
             {
+                FIXME("WINED3DTSS_TCI_CAMERASPACENORMAL not supported.\n");
                 break;
             }
 
@@ -3193,8 +3196,11 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             break;
 
         case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
+            /* Note that NV_TEXGEN_REFLECTION support is implied when
+             * ARB_TEXTURE_CUBE_MAP is supported */
             if (!GL_SUPPORT(NV_TEXGEN_REFLECTION))
             {
+                FIXME("WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR not supported.\n");
                 break;
             }
 
