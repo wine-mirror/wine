@@ -162,10 +162,23 @@ void primitiveDeclarationConvertToStridedData(
         TRACE("Offset %d Stream %d UsageIndex %d\n", element->Offset, element->Stream, element->UsageIndex);
 
         if (useVertexShaderFunction)
+        {
             stride_used = vshader_get_input(This->stateBlock->vertexShader,
                 element->Usage, element->UsageIndex, &idx);
+        }
         else
-            stride_used = fixed_get_input(element->Usage, element->UsageIndex, &idx);
+        {
+            if (!vertexDeclaration->ffp_valid[i])
+            {
+                WARN("Skipping unsupported fixed function element of type %s and usage %s\n",
+                    debug_d3ddecltype(element->Type), debug_d3ddeclusage(element->Usage));
+                stride_used = FALSE;
+            }
+            else
+            {
+                stride_used = fixed_get_input(element->Usage, element->UsageIndex, &idx);
+            }
+        }
 
         if (stride_used) {
             TRACE("Load %s array %u [usage=%s, usage_idx=%u, "
@@ -174,21 +187,16 @@ void primitiveDeclarationConvertToStridedData(
                     debug_d3ddeclusage(element->Usage), element->UsageIndex,
                     element->Stream, element->Offset, stride, debug_d3ddecltype(element->Type), streamVBO);
 
-            if (!useVertexShaderFunction && !vertexDeclaration->ffp_valid[i]) {
-                WARN("Skipping unsupported fixed function element of type %s and usage %s\n",
-                    debug_d3ddecltype(element->Type), debug_d3ddeclusage(element->Usage));
-            } else {
-                strided->u.input[idx].lpData = data;
-                strided->u.input[idx].dwType = element->Type;
-                strided->u.input[idx].dwStride = stride;
-                strided->u.input[idx].VBO = streamVBO;
-                strided->u.input[idx].streamNo = element->Stream;
-                if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->Type == WINED3DDECLTYPE_D3DCOLOR)
-                {
-                    strided->swizzle_map |= 1 << idx;
-                }
-                strided->use_map |= 1 << idx;
+            strided->u.input[idx].lpData = data;
+            strided->u.input[idx].dwType = element->Type;
+            strided->u.input[idx].dwStride = stride;
+            strided->u.input[idx].VBO = streamVBO;
+            strided->u.input[idx].streamNo = element->Stream;
+            if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->Type == WINED3DDECLTYPE_D3DCOLOR)
+            {
+                strided->swizzle_map |= 1 << idx;
             }
+            strided->use_map |= 1 << idx;
         }
     }
     /* Now call PreLoad on all the vertex buffers. In the very rare case
