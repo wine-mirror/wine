@@ -1120,7 +1120,6 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
 static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
-    IWineD3DSwapChain *swapchain = NULL;
 
     TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
 
@@ -1157,8 +1156,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
      * Use the render target readback if the surface is on a swapchain(=onscreen render target) or the current primary target
      * Offscreen targets which are not active at the moment or are higher targets(FBOs) can be locked with the texture path
      */
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    if(swapchain || iface == myDevice->render_targets[0]) {
+    if ((This->Flags & SFLAG_SWAPCHAIN) || iface == myDevice->render_targets[0])
+    {
         const RECT *pass_rect = pRect;
 
         /* IWineD3DSurface_LoadLocation does not check if the rectangle specifies the full surfaces
@@ -1194,8 +1193,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             case RTL_DISABLE:
                 break;
         }
-        if(swapchain) IWineD3DSwapChain_Release(swapchain);
-
     } else if(iface == myDevice->stencilBufferTarget) {
         /** the depth stencil in openGL has a format of GL_FLOAT
          * which should be good for WINED3DFMT_D16_LOCKABLE
@@ -1376,7 +1373,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
 static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
-    IWineD3DSwapChainImpl *swapchain = NULL;
     BOOL fullsurface;
 
     if (!(This->Flags & SFLAG_LOCKED)) {
@@ -1403,10 +1399,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         goto unlock_end;
     }
 
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    if(swapchain || (myDevice->render_targets && iface == myDevice->render_targets[0])) {
-        if(swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-
+    if ((This->Flags & SFLAG_SWAPCHAIN) || (myDevice->render_targets && iface == myDevice->render_targets[0]))
+    {
         if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
             static BOOL warned = FALSE;
             if(!warned) {
@@ -4220,12 +4214,9 @@ static void WINAPI IWineD3DSurfaceImpl_ModifyLocation(IWineD3DSurface *iface, DW
           persistent ? "TRUE" : "FALSE");
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        IWineD3DSwapChain *swapchain = NULL;
-
-        if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
+        if (This->Flags & SFLAG_SWAPCHAIN)
+        {
             TRACE("Surface %p is an onscreen surface\n", iface);
-
-            IWineD3DSwapChain_Release(swapchain);
         } else {
             /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets. */
             if (flag & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) flag |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);
@@ -4478,7 +4469,6 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, DWORD flag, const RECT *rect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-    IWineD3DSwapChain *swapchain = NULL;
     GLenum format, internal, type;
     CONVERT_TYPES convert;
     int bpp;
@@ -4487,10 +4477,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
     BOOL drawable_read_ok = TRUE;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        if (SUCCEEDED(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
+        if (This->Flags & SFLAG_SWAPCHAIN)
+        {
             TRACE("Surface %p is an onscreen surface\n", iface);
-
-            IWineD3DSwapChain_Release(swapchain);
         } else {
             /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets.
              * Prefer SFLAG_INTEXTURE. */
@@ -4691,7 +4680,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
         This->Flags |= flag;
     }
 
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !swapchain
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !(This->Flags & SFLAG_SWAPCHAIN)
             && (This->Flags & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE))) {
         /* With ORM_FBO, SFLAG_INTEXTURE and SFLAG_INDRAWABLE are the same for offscreen targets. */
         This->Flags |= (SFLAG_INTEXTURE | SFLAG_INDRAWABLE);

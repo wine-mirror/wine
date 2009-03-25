@@ -1730,6 +1730,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
             object->presentParms.MultiSampleQuality, TRUE /* Lockable */, &object->frontBuffer);
     if (SUCCEEDED(hr)) {
         IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
+        ((IWineD3DSurfaceImpl *)object->frontBuffer)->Flags |= SFLAG_SWAPCHAIN;
         if(surface_type == SURFACE_OPENGL) {
             IWineD3DSurface_ModifyLocation(object->frontBuffer, SFLAG_INDRAWABLE, TRUE);
         }
@@ -1812,6 +1813,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSwapChain(IWineD3DDevice *iface,
                     object->presentParms.MultiSampleQuality, TRUE /* Lockable */, &object->backBuffer[i]);
             if(SUCCEEDED(hr)) {
                 IWineD3DSurface_SetContainer(object->backBuffer[i], (IWineD3DBase *)object);
+                ((IWineD3DSurfaceImpl *)object->backBuffer[i])->Flags |= SFLAG_SWAPCHAIN;
             } else {
                 ERR("Cannot create new back buffer\n");
                 goto error;
@@ -6618,11 +6620,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         TRACE("Changing the front buffer from %p to %p\n", Swapchain->frontBuffer, Front);
 
         if(Swapchain->frontBuffer)
+        {
             IWineD3DSurface_SetContainer(Swapchain->frontBuffer, NULL);
+            ((IWineD3DSurfaceImpl *)Swapchain->frontBuffer)->Flags &= ~SFLAG_SWAPCHAIN;
+        }
         Swapchain->frontBuffer = Front;
 
         if(Swapchain->frontBuffer) {
             IWineD3DSurface_SetContainer(Swapchain->frontBuffer, (IWineD3DBase *) Swapchain);
+            ((IWineD3DSurfaceImpl *)Swapchain->frontBuffer)->Flags |= SFLAG_SWAPCHAIN;
         }
     }
 
@@ -6660,11 +6666,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         LEAVE_GL();
 
         if(Swapchain->backBuffer[0])
+        {
             IWineD3DSurface_SetContainer(Swapchain->backBuffer[0], NULL);
+            ((IWineD3DSurfaceImpl *)Swapchain->backBuffer[0])->Flags &= ~SFLAG_SWAPCHAIN;
+        }
         Swapchain->backBuffer[0] = Back;
 
         if(Swapchain->backBuffer[0]) {
             IWineD3DSurface_SetContainer(Swapchain->backBuffer[0], (IWineD3DBase *) Swapchain);
+            ((IWineD3DSurfaceImpl *)Swapchain->backBuffer[0])->Flags |= SFLAG_SWAPCHAIN;
         } else {
             HeapFree(GetProcessHeap(), 0, Swapchain->backBuffer);
             Swapchain->backBuffer = NULL;
