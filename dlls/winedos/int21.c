@@ -2182,6 +2182,7 @@ static BOOL INT21_FileAttributes( CONTEXT86 *context,
         else
         {
             TRACE( "SET FILE CREATION DATE AND TIME, file %s\n", fileA );
+            MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
 
             handle = CreateFileW( fileW, GENERIC_WRITE,
                                   FILE_SHARE_READ | FILE_SHARE_WRITE, 
@@ -2207,8 +2208,8 @@ static BOOL INT21_FileAttributes( CONTEXT86 *context,
             INT_BARF( context, 0x21 );
         else
         {
-            TRACE( "GET FILE CREATION DATE AND TIME, handle %d\n",
-                   BX_reg(context) );
+            TRACE( "GET FILE CREATION DATE AND TIME, file %s\n", fileA );
+            MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
 
             handle = CreateFileW( fileW, GENERIC_READ, 
                                   FILE_SHARE_READ | FILE_SHARE_WRITE, 
