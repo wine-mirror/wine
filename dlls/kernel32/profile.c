@@ -208,9 +208,8 @@ static void PROFILE_Save( HANDLE hFile, const PROFILESECTION *section, ENCODING 
 
         for (key = section->key; key; key = key->next)
         {
-            len += strlenW(key->name);
-            if (key->value && key->value[0]) len += strlenW(key->value);
-            len += 3; /* '=' and "\r\n" */
+            len += strlenW(key->name) + 2;
+            if (key->value) len += strlenW(key->value) + 1;
         }
 
         buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
