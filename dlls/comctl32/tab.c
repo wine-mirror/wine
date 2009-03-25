@@ -1962,8 +1962,13 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
       }
       else  /* ! selected */
       {
-	if (!(lStyle & TCS_FLATBUTTONS))
-	  DrawEdge(hdc, &r, EDGE_RAISED, BF_SOFT|BF_RECT);
+        DWORD state = infoPtr->items[iItem].dwState;
+
+        if (state & TCIS_BUTTONPRESSED)
+          DrawEdge(hdc, &r, EDGE_SUNKEN, BF_SOFT|BF_RECT);
+        else
+          if (!(lStyle & TCS_FLATBUTTONS))
+            DrawEdge(hdc, &r, EDGE_RAISED, BF_SOFT|BF_RECT);
       }
     }
     else /* !TCS_BUTTONS */
