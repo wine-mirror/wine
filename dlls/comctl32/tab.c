@@ -252,6 +252,9 @@ static inline LRESULT TAB_SetCurSel (TAB_INFO *infoPtr, INT iItem)
       return -1;
   else {
       if (infoPtr->iSelected != iItem) {
+          infoPtr->items[prevItem].dwState &= ~TCIS_BUTTONPRESSED;
+          infoPtr->items[iItem].dwState |= TCIS_BUTTONPRESSED;
+
           infoPtr->iSelected=iItem;
           infoPtr->uFocus=iItem;
           TAB_EnsureSelectionVisible(infoPtr);
@@ -489,12 +492,8 @@ static LRESULT TAB_KeyUp(TAB_INFO* infoPtr, WPARAM keyCode)
   {
     if (!TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))
     {
-      infoPtr->iSelected = newItem;
-      infoPtr->uFocus    = newItem;
+      TAB_SetCurSel(infoPtr, newItem);
       TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
-
-      TAB_EnsureSelectionVisible(infoPtr);
-      TAB_InvalidateTabArea(infoPtr);
     }
   }
 
@@ -615,13 +614,8 @@ TAB_LButtonDown (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
   {
     if (!TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))
     {
-      infoPtr->iSelected = newItem;
-      infoPtr->uFocus    = newItem;
+      TAB_SetCurSel(infoPtr, newItem);
       TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
-
-      TAB_EnsureSelectionVisible(infoPtr);
-
-      TAB_InvalidateTabArea(infoPtr);
     }
   }
   return 0;

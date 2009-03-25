@@ -727,6 +727,7 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
     {
         INT selectionIndex;
         INT focusIndex;
+        TCITEM tcItem;
 
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -756,6 +757,15 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
 
         ok_sequence(sequences, TAB_SEQ_INDEX, getset_cur_sel_seq, "Getset curSel test sequence", FALSE);
         ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Getset curSel test parent sequence", FALSE);
+
+        /* selected item should have TCIS_BUTTONPRESSED state
+           It doesn't depend on button state */
+        memset(&tcItem, 0, sizeof(TCITEM));
+        tcItem.mask = TCIF_STATE;
+        tcItem.dwStateMask = TCIS_BUTTONPRESSED;
+        selectionIndex = SendMessage(hTab, TCM_GETCURSEL, 0, 0);
+        SendMessage(hTab, TCM_GETITEM, selectionIndex, (LPARAM) &tcItem);
+        ok (tcItem.dwState & TCIS_BUTTONPRESSED, "Selected item should have TCIS_BUTTONPRESSED\n");
     }
 
     /* Testing ExtendedStyle */
