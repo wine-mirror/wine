@@ -831,6 +831,29 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
 
         ok_sequence(sequences, TAB_SEQ_INDEX, getset_item_seq, "Getset item test sequence", FALSE);
         ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "Getset item test parent sequence", FALSE);
+
+        /* TCIS_BUTTONPRESSED doesn't depend on tab style */
+        memset(&tcItem, 0, sizeof(tcItem));
+        tcItem.mask = TCIF_STATE;
+        tcItem.dwStateMask = TCIS_BUTTONPRESSED;
+        tcItem.dwState = TCIS_BUTTONPRESSED;
+        ok ( SendMessage(hTab, TCM_SETITEM, 0, (LPARAM) &tcItem), "Setting new item failed.\n");
+        tcItem.dwState = 0;
+        ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
+        ok (tcItem.dwState == TCIS_BUTTONPRESSED, "TCIS_BUTTONPRESSED should be set.\n");
+        /* next highlight item, test that dwStateMask actually masks */
+        tcItem.mask = TCIF_STATE;
+        tcItem.dwStateMask = TCIS_HIGHLIGHTED;
+        tcItem.dwState = TCIS_HIGHLIGHTED;
+        ok ( SendMessage(hTab, TCM_SETITEM, 0, (LPARAM) &tcItem), "Setting new item failed.\n");
+        tcItem.dwState = 0;
+        ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
+        ok (tcItem.dwState == TCIS_HIGHLIGHTED, "TCIS_HIGHLIGHTED should be set.\n");
+        tcItem.mask = TCIF_STATE;
+        tcItem.dwStateMask = TCIS_BUTTONPRESSED;
+        tcItem.dwState = 0;
+        ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
+        ok (tcItem.dwState == TCIS_BUTTONPRESSED, "TCIS_BUTTONPRESSED should be set.\n");
     }
 
     /* Testing GetSet ToolTip */

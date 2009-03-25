@@ -2719,7 +2719,8 @@ TAB_SetItemT (TAB_INFO *infoPtr, INT iItem, LPTCITEMW tabItem, BOOL bUnicode)
     FIXME("TCIF_RTLREADING\n");
 
   if (tabItem->mask & TCIF_STATE)
-    wineItem->dwState = tabItem->dwState;
+    wineItem->dwState = (wineItem->dwState & ~tabItem->dwStateMask) |
+                        ( tabItem->dwState &  tabItem->dwStateMask);
 
   if (tabItem->mask & TCIF_TEXT)
   {
@@ -2766,7 +2767,7 @@ TAB_GetItemT (TAB_INFO *infoPtr, INT iItem, LPTCITEMW tabItem, BOOL bUnicode)
     FIXME("TCIF_RTLREADING\n");
 
   if (tabItem->mask & TCIF_STATE)
-    tabItem->dwState = wineItem->dwState;
+    tabItem->dwState = wineItem->dwState & tabItem->dwStateMask;
 
   if (tabItem->mask & TCIF_TEXT)
   {
