@@ -6070,9 +6070,24 @@ static UINT load_assembly(MSIRECORD *rec, LPVOID param)
     assembly->manifest = strdupW(MSI_RecordGetString(rec, 3));
     assembly->application = strdupW(MSI_RecordGetString(rec, 4));
     assembly->attributes = MSI_RecordGetInteger(rec, 5);
-    assembly->installed = check_assembly_installed(list->package->db,
-                                                   list->cache,
-                                                   assembly->component);
+
+    if (assembly->application)
+    {
+        WCHAR version[24];
+        DWORD size = sizeof(version)/sizeof(WCHAR);
+
+        /* FIXME: we should probably check the manifest file here */
+
+        if (!MsiGetFileVersionW(assembly->file->TargetPath, version, &size, NULL, NULL) &&
+            strcmpW(version, assembly->file->Version) >= 0)
+        {
+            assembly->installed = TRUE;
+        }
+    }
+    else
+        assembly->installed = check_assembly_installed(list->package->db,
+                                                       list->cache,
+                                                       assembly->component);
 
     list_add_head(list->assemblies, &assembly->entry);
     return ERROR_SUCCESS;
