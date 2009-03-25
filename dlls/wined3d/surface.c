@@ -1621,7 +1621,10 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
 
     if(srgb_mode) {
         *internal = glDesc->glGammaInternal;
-    } else if(This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+    }
+    else if (This->resource.usage & WINED3DUSAGE_RENDERTARGET
+            && !(This->Flags & SFLAG_SWAPCHAIN))
+    {
         *internal = glDesc->rtInternal;
     } else {
         *internal = glDesc->glInternal;
