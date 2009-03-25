@@ -95,15 +95,15 @@ struct glsl_shader_prog_link {
     struct list                 vshader_entry;
     struct list                 pshader_entry;
     GLhandleARB                 programId;
-    GLhandleARB                 *vuniformF_locations;
-    GLhandleARB                 *puniformF_locations;
-    GLhandleARB                 vuniformI_locations[MAX_CONST_I];
-    GLhandleARB                 puniformI_locations[MAX_CONST_I];
-    GLhandleARB                 posFixup_location;
-    GLhandleARB                 bumpenvmat_location[MAX_TEXTURES];
-    GLhandleARB                 luminancescale_location[MAX_TEXTURES];
-    GLhandleARB                 luminanceoffset_location[MAX_TEXTURES];
-    GLhandleARB                 ycorrection_location;
+    GLint                       *vuniformF_locations;
+    GLint                       *puniformF_locations;
+    GLint                       vuniformI_locations[MAX_CONST_I];
+    GLint                       puniformI_locations[MAX_CONST_I];
+    GLint                       posFixup_location;
+    GLint                       bumpenvmat_location[MAX_TEXTURES];
+    GLint                       luminancescale_location[MAX_TEXTURES];
+    GLint                       luminanceoffset_location[MAX_TEXTURES];
+    GLint                       ycorrection_location;
     GLenum                      vertex_color_clamp;
     IWineD3DVertexShader        *vshader;
     IWineD3DPixelShader         *pshader;
@@ -180,7 +180,7 @@ static void print_glsl_info_log(const WineD3D_GL_Info *gl_info, GLhandleARB obj)
  */
 static void shader_glsl_load_psamplers(const WineD3D_GL_Info *gl_info, DWORD *tex_unit_map, GLhandleARB programId)
 {
-    GLhandleARB name_loc;
+    GLint name_loc;
     int i;
     char sampler_name[20];
 
@@ -203,7 +203,7 @@ static void shader_glsl_load_psamplers(const WineD3D_GL_Info *gl_info, DWORD *te
 
 static void shader_glsl_load_vsamplers(const WineD3D_GL_Info *gl_info, DWORD *tex_unit_map, GLhandleARB programId)
 {
-    GLhandleARB name_loc;
+    GLint name_loc;
     char sampler_name[20];
     int i;
 
@@ -225,7 +225,7 @@ static void shader_glsl_load_vsamplers(const WineD3D_GL_Info *gl_info, DWORD *te
 }
 
 static inline void walk_constant_heap(const WineD3D_GL_Info *gl_info, const float *constants,
-        const GLhandleARB *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
+        const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
     int stack_idx = 0;
     unsigned int heap_idx = 1;
@@ -300,7 +300,7 @@ static inline void apply_clamped_constant(const WineD3D_GL_Info *gl_info, GLint 
 }
 
 static inline void walk_constant_heap_clamped(const WineD3D_GL_Info *gl_info, const float *constants,
-        const GLhandleARB *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
+        const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
     int stack_idx = 0;
     unsigned int heap_idx = 1;
@@ -360,7 +360,7 @@ static inline void walk_constant_heap_clamped(const WineD3D_GL_Info *gl_info, co
 
 /* Loads floating point constants (aka uniforms) into the currently set GLSL program. */
 static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl *This, const WineD3D_GL_Info *gl_info,
-        const float *constants, const GLhandleARB *constant_locations, const struct constant_heap *heap,
+        const float *constants, const GLint *constant_locations, const struct constant_heap *heap,
         unsigned char *stack, UINT version)
 {
     const local_constant *lconst;
@@ -381,7 +381,7 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl *This, const Wine
     /* Immediate constants are clamped to [-1;1] at shader creation time if needed */
     LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry)
     {
-        GLhandleARB location = constant_locations[lconst->idx];
+        GLint location = constant_locations[lconst->idx];
         /* We found this uniform name in the program - go ahead and send the data */
         if (location != -1) GL_EXTCALL(glUniform4fvARB(location, 1, (const GLfloat *)lconst->value));
     }
@@ -390,7 +390,7 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl *This, const Wine
 
 /* Loads integer constants (aka uniforms) into the currently set GLSL program. */
 static void shader_glsl_load_constantsI(IWineD3DBaseShaderImpl *This, const WineD3D_GL_Info *gl_info,
-        const GLhandleARB locations[MAX_CONST_I], const int *constants, WORD constants_set)
+        const GLint locations[MAX_CONST_I], const int *constants, WORD constants_set)
 {
     unsigned int i;
     struct list* ptr;
@@ -428,7 +428,7 @@ static void shader_glsl_load_constantsI(IWineD3DBaseShaderImpl *This, const Wine
 static void shader_glsl_load_constantsB(IWineD3DBaseShaderImpl *This, const WineD3D_GL_Info *gl_info,
         GLhandleARB programId, const BOOL *constants, WORD constants_set)
 {
-    GLhandleARB tmp_loc;
+    GLint tmp_loc;
     unsigned int i;
     char tmp_name[8];
     char is_pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version);
@@ -3032,7 +3032,9 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const struct semantic *seman
         if (in_idx >= (in_count + 2)) {
             FIXME("More input varyings declared than supported, expect issues\n");
             continue;
-        } else if(map[i] == -1) {
+        }
+        else if (map[i] == ~0U)
+        {
             /* Declared, but not read register */
             continue;
         }
@@ -3310,7 +3312,7 @@ static void hardcode_local_constants(IWineD3DBaseShaderImpl *shader, const WineD
         GLhandleARB programId, char prefix)
 {
     const local_constant *lconst;
-    GLuint tmp_loc;
+    GLint tmp_loc;
     const float *value;
     char glsl_name[8];
 
@@ -3340,7 +3342,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     struct glsl_shader_prog_link *entry    = NULL;
     GLhandleARB programId                  = 0;
     GLhandleARB reorder_shader_id          = 0;
-    int i;
+    unsigned int i;
     char glsl_name[8];
     GLhandleARB vshader_id, pshader_id;
     struct ps_compile_args ps_compile_args;
@@ -3390,7 +3392,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
 
     /* Attach GLSL vshader */
     if (vshader_id) {
-        int max_attribs = 16;   /* TODO: Will this always be the case? It is at the moment... */
+        const unsigned int max_attribs = 16;   /* TODO: Will this always be the case? It is at the moment... */
         char tmp_name[10];
 
         reorder_shader_id = generate_param_reorder_function(vshader, pshader, gl_info);
@@ -3635,7 +3637,7 @@ static void shader_glsl_select_depth_blt(IWineD3DDevice *iface, enum tex_types t
     GLhandleARB *blt_program = &priv->depth_blt_program[tex_type];
 
     if (!*blt_program) {
-        GLhandleARB loc;
+        GLint loc;
         *blt_program = create_glsl_blt_shader(gl_info, tex_type);
         loc = GL_EXTCALL(glGetUniformLocationARB(*blt_program, "sampler"));
         GL_EXTCALL(glUseProgramObjectARB(*blt_program));

@@ -2424,7 +2424,7 @@ typedef struct IWineD3DPixelShaderImpl {
 
     /* Some information about the shader behavior */
     struct stb_const_desc       bumpenvmatconst[MAX_TEXTURES];
-    char                        numbumpenvmatconsts;
+    unsigned char               numbumpenvmatconsts;
     struct stb_const_desc       luminanceconst[MAX_TEXTURES];
     char                        vpos_uniform;
 

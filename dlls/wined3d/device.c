@@ -437,7 +437,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
 
     IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
-    int i, j;
+    unsigned int i, j;
     HRESULT temp_result;
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -3756,13 +3756,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_CONST_B - start);
+    unsigned int i, cnt = min(count, MAX_CONST_B - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
 
-    if (srcData == NULL || cnt < 0)
-        return WINED3DERR_INVALIDCALL;
+    if (!srcData || start >= MAX_CONST_B) return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->vertexShaderConstantB[start], srcData, cnt * sizeof(BOOL));
     for (i = 0; i < cnt; i++)
@@ -3803,13 +3802,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_CONST_I - start);
+    unsigned int i, cnt = min(count, MAX_CONST_I - start);
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
 
-    if (srcData == NULL || cnt < 0)
-        return WINED3DERR_INVALIDCALL;
+    if (!srcData || start >= MAX_CONST_I) return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->vertexShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
     for (i = 0; i < cnt; i++)
@@ -3956,7 +3954,7 @@ static void device_update_fixed_function_usage_map(IWineD3DDeviceImpl *This) {
 }
 
 static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
-    int i, tex;
+    unsigned int i, tex;
     WORD ffu_map;
 
     device_update_fixed_function_usage_map(This);
@@ -3996,7 +3994,7 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
 static void device_map_psamplers(IWineD3DDeviceImpl *This) {
     const DWORD *sampler_tokens =
             ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.reg_maps.samplers;
-    int i;
+    unsigned int i;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
         if (sampler_tokens[i] && This->texUnitMap[i] != i) {
@@ -4150,13 +4148,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_CONST_B - start);
+    unsigned int i, cnt = min(count, MAX_CONST_B - start);
 
-    TRACE("(iface %p, srcData %p, start %d, count %d)\n",
+    TRACE("(iface %p, srcData %p, start %u, count %u)\n",
             iface, srcData, start, count);
 
-    if (srcData == NULL || cnt < 0)
-        return WINED3DERR_INVALIDCALL;
+    if (!srcData || start >= MAX_CONST_B) return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->pixelShaderConstantB[start], srcData, cnt * sizeof(BOOL));
     for (i = 0; i < cnt; i++)
@@ -4197,13 +4194,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, MAX_CONST_I - start);
+    unsigned int i, cnt = min(count, MAX_CONST_I - start);
 
-    TRACE("(iface %p, srcData %p, start %d, count %d)\n",
+    TRACE("(iface %p, srcData %p, start %u, count %u)\n",
             iface, srcData, start, count);
 
-    if (srcData == NULL || cnt < 0)
-        return WINED3DERR_INVALIDCALL;
+    if (!srcData || start >= MAX_CONST_I) return WINED3DERR_INVALIDCALL;
 
     memcpy(&This->updateStateBlock->pixelShaderConstantI[start * 4], srcData, cnt * sizeof(int) * 4);
     for (i = 0; i < cnt; i++)
@@ -4758,7 +4754,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
     }
 
     if(Type == WINED3DTSS_COLOROP) {
-        int i;
+        unsigned int i;
 
         if(Value == WINED3DTOP_DISABLE && oldValue != WINED3DTOP_DISABLE) {
             /* Previously enabled stage disabled now. Make sure to dirtify all enabled stages above Stage,
@@ -4767,11 +4763,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
              * The current stage is dirtified below.
              */
             for(i = Stage + 1; i < This->stateBlock->lowest_disabled_stage; i++) {
-                TRACE("Additionally dirtifying stage %d\n", i);
+                TRACE("Additionally dirtifying stage %u\n", i);
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
             }
             This->stateBlock->lowest_disabled_stage = Stage;
-            TRACE("New lowest disabled: %d\n", Stage);
+            TRACE("New lowest disabled: %u\n", Stage);
         } else if(Value != WINED3DTOP_DISABLE && oldValue == WINED3DTOP_DISABLE) {
             /* Previously disabled stage enabled. Stages above it may need enabling
              * stage must be lowest_disabled_stage here, if it's bigger success is returned above,
@@ -4784,11 +4780,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
                 if(This->updateStateBlock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
                     break;
                 }
-                TRACE("Additionally dirtifying stage %d due to enable\n", i);
+                TRACE("Additionally dirtifying stage %u due to enable\n", i);
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
             }
             This->stateBlock->lowest_disabled_stage = i;
-            TRACE("New lowest disabled: %d\n", i);
+            TRACE("New lowest disabled: %u\n", i);
         }
     }
 

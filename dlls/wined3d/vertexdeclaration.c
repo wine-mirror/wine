@@ -211,7 +211,7 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
         const WINED3DVERTEXELEMENT *elements, UINT element_count) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     HRESULT hr = WINED3D_OK;
-    int i;
+    unsigned int i;
     char isPreLoaded[MAX_STREAMS];
 
     TRACE("(%p) : d3d version %d\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);

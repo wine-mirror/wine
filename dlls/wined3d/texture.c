@@ -283,7 +283,7 @@ static void WINAPI IWineD3DTextureImpl_ApplyStateChanges(IWineD3DTexture *iface,
    ******************************************* */
 static void WINAPI IWineD3DTextureImpl_Destroy(IWineD3DTexture *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroySurface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
-    int i;
+    unsigned int i;
 
     TRACE("(%p) : Cleaning up\n",This);
     for (i = 0; i < This->baseTexture.levels; i++) {

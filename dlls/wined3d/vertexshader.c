@@ -368,7 +368,7 @@ static void WINAPI IWineD3DVertexShaderImpl_FakeSemantics(IWineD3DVertexShader *
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
     IWineD3DVertexDeclarationImpl* vdecl = (IWineD3DVertexDeclarationImpl*)vertex_declaration;
 
-    int i;
+    unsigned int i;
     for (i = 0; i < vdecl->declarationWNumElements - 1; ++i) {
         const WINED3DVERTEXELEMENT *element = vdecl->pDeclarationWine + i;
         vshader_set_input(This, element->Reg, element->Usage, element->UsageIndex);

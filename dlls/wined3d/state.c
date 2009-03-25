@@ -3034,7 +3034,7 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 }
 
 static void unloadTexCoords(IWineD3DStateBlockImpl *stateblock) {
-    int texture_idx;
+    unsigned int texture_idx;
 
     for (texture_idx = 0; texture_idx < GL_LIMITS(texture_stages); ++texture_idx) {
         GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
@@ -3579,7 +3579,7 @@ static void state_vertexblend(DWORD state, IWineD3DStateBlockImpl *stateblock, W
             GL_EXTCALL(glVertexBlendARB(stateblock->renderState[WINED3DRS_VERTEXBLEND] + 1));
 
             if(!stateblock->wineD3DDevice->vertexBlendUsed) {
-                int i;
+                unsigned int i;
                 for(i = 1; i < GL_LIMITS(blends); i++) {
                     if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i)))) {
                         transform_worldex(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(i)), stateblock, context);
@@ -4434,7 +4434,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         }
     } else {
         if(!context->last_was_vshader) {
-            int i;
+            unsigned int i;
             static BOOL warned = FALSE;
             /* Disable all clip planes to get defined results on all drivers. See comment in the
              * state_clipping state handler

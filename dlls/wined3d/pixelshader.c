@@ -354,7 +354,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
         for (i = 0; i < MAX_REG_INPUT; ++i)
         {
             if (This->input_reg_used[i]) This->input_reg_map[i] = This->declared_in_count++;
-            else This->input_reg_map[i] = -1;
+            else This->input_reg_map[i] = ~0U;
         }
     }
 

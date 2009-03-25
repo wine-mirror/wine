@@ -55,7 +55,7 @@ void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo)
 
 static void context_destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
 {
-    int i = 0;
+    unsigned int i;
 
     GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, *fbo));
     checkGLcall("glBindFramebuffer()");
@@ -641,7 +641,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     HPBUFFERARB pbuffer = NULL;
     HGLRC ctx = NULL, oldCtx;
     WineD3DContext *ret = NULL;
-    int s;
+    unsigned int s;
 
     TRACE("(%p): Creating a %s context for render target %p\n", This, create_pbuffer ? "offscreen" : "onscreen", target);
 

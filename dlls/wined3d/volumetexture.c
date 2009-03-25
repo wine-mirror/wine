@@ -92,7 +92,7 @@ static DWORD WINAPI IWineD3DVolumeTextureImpl_GetPriority(IWineD3DVolumeTexture 
 
 void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb) {
     /* Overrider the IWineD3DResource Preload method */
-    int i;
+    unsigned int i;
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
     BOOL srgb_mode = This->baseTexture.is_srgb;
@@ -225,7 +225,7 @@ static void WINAPI IWineD3DVolumeTextureImpl_ApplyStateChanges(IWineD3DVolumeTex
    ******************************************* */
 static void WINAPI IWineD3DVolumeTextureImpl_Destroy(IWineD3DVolumeTexture *iface, D3DCB_DESTROYVOLUMEFN D3DCB_DestroyVolume) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    int i;
+    unsigned int i;
     TRACE("(%p) : Cleaning up\n",This);
     for (i = 0; i < This->baseTexture.levels; i++) {
         if (This->volumes[i] != NULL) {
