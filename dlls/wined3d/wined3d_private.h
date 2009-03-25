@@ -438,7 +438,7 @@ enum vertexprocessing_mode {
 #define WINED3D_CONST_NUM_UNUSED ~0U
 
 struct stb_const_desc {
-    char                    texunit;
+    unsigned char           texunit;
     UINT                    const_num;
 };
 
