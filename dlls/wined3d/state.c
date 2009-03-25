@@ -3219,6 +3219,18 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
             break;
 
+        case WINED3DTSS_TCI_SPHEREMAP:
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+            checkGLcall("WINED3DTSS_TCI_SPHEREMAP - Set texgen mode.");
+
+            glEnable(GL_TEXTURE_GEN_S);
+            glEnable(GL_TEXTURE_GEN_T);
+            glDisable(GL_TEXTURE_GEN_R);
+            checkGLcall("WINED3DTSS_TCI_SPHEREMAP - Enable texgen.");
+
+            break;
+
         default:
             FIXME("Unhandled WINED3DTSS_TEXCOORDINDEX %#x\n",
                     stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX]);
