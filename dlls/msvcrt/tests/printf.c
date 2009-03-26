@@ -726,6 +726,48 @@ static void test_vsnwprintf(void)
     ok( !strcmp(buf, "onetwothree"), "got %s expected 'onetwothree'\n", buf );
 }
 
+static int (*p__vscprintf)(const char *format, __ms_va_list valist);
+static int (*p__vscwprintf)(const wchar_t *format, __ms_va_list valist);
+
+static int __cdecl _vscprintf_wrapper(const char *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p__vscprintf(format, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static void test_vscprintf(void)
+{
+    int ret;
+
+    ret = _vscprintf_wrapper( "%s %d", "number", 1 );
+    ok( ret == 8, "got %d expected 8\n", ret );
+}
+
+static int __cdecl _vscwprintf_wrapper(const wchar_t *format, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, format);
+    ret = p__vscwprintf(format, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+
+static void test_vscwprintf(void)
+{
+    const wchar_t format[] = {'%','s',' ','%','d',0};
+    const wchar_t number[] = {'n','u','m','b','e','r',0};
+
+    int ret;
+
+    ret = _vscwprintf_wrapper( format, number, 1 );
+    ok( ret == 8, "got %d expected 8\n", ret );
+}
+
 START_TEST(printf)
 {
     test_sprintf();
@@ -733,4 +775,10 @@ START_TEST(printf)
     test_snprintf();
     test_fcvt();
     test_vsnwprintf();
+
+    p__vscprintf = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vscprintf");
+    p__vscwprintf = (void *)GetProcAddress(GetModuleHandle("msvcrt.dll"), "_vscwprintf");
+
+    if (p__vscprintf) test_vscprintf();
+    if (p__vscwprintf) test_vscwprintf();
 }
