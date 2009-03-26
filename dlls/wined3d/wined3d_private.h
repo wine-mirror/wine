@@ -446,11 +446,15 @@ enum fogmode {
  */
 struct ps_compile_args {
     struct color_fixup_desc     color_fixup[MAX_FRAGMENT_SAMPLERS];
-    BOOL                        srgb_correction;
     enum vertexprocessing_mode  vp_mode;
     enum fogmode                fog;
     /* Projected textures(ps 1.0-1.3) */
     /* Texture types(2D, Cube, 3D) in ps 1.x */
+    BOOL                        srgb_correction;
+    WORD                        texrect_fixup;
+    /* Bitmap for texture rect coord fixups (16 samplers max currently).
+       D3D9 has a limit of 16 samplers and the fixup is superfluous
+       in D3D10 (unconditional NP2 support mandatory). */
 };
 
 #define MAX_ATTRIBS 16
