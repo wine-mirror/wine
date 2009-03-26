@@ -740,7 +740,7 @@ static void test_reset(void)
     d3dpp.Windowed         = FALSE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
@@ -804,7 +804,7 @@ static void test_reset(void)
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed         = FALSE;
     d3dpp.BackBufferWidth  = 640;
-    d3dpp.BackBufferHeight  = 480;
+    d3dpp.BackBufferHeight = 480;
     d3dpp.BackBufferFormat = d3ddm.Format;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
@@ -848,7 +848,7 @@ static void test_reset(void)
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed         = TRUE;
     d3dpp.BackBufferWidth  = 400;
-    d3dpp.BackBufferHeight  = 300;
+    d3dpp.BackBufferHeight = 300;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
@@ -891,7 +891,7 @@ static void test_reset(void)
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed         = TRUE;
     d3dpp.BackBufferWidth  = 400;
-    d3dpp.BackBufferHeight  = 300;
+    d3dpp.BackBufferHeight = 300;
 
     /* _Reset fails if there is a resource in the default pool */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 16, 16, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &surface, NULL);
@@ -1006,7 +1006,7 @@ static void test_reset(void)
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed         = FALSE;
     d3dpp.BackBufferWidth  = 32;
-    d3dpp.BackBufferHeight  = 32;
+    d3dpp.BackBufferHeight = 32;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=32, h=32, windowed=FALSE failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
@@ -1016,7 +1016,7 @@ static void test_reset(void)
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed         = FALSE;
     d3dpp.BackBufferWidth  = 801;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_Reset to w=801, h=600, windowed=FALSE failed with %08x\n", hr);
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
@@ -1141,7 +1141,7 @@ static void test_scene(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
@@ -1294,7 +1294,7 @@ static void test_limits(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
@@ -1362,7 +1362,7 @@ static void test_depthstenciltest(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
@@ -1431,7 +1431,7 @@ static void test_depthstenciltest(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
     d3dpp.EnableAutoDepthStencil = FALSE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_UNKNOWN;
@@ -1465,7 +1465,7 @@ static void test_depthstenciltest(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
     d3dpp.EnableAutoDepthStencil = FALSE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
