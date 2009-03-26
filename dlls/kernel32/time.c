@@ -1013,3 +1013,23 @@ BOOL WINAPI FileTimeToDosDateTime( const FILETIME *ft, LPWORD fatdate,
                    + tm->tm_mday;
     return TRUE;
 }
+
+/*********************************************************************
+ *      GetSystemTimes                                  (KERNEL32.@)
+ *
+ * Retrieves system timing information
+ *
+ * PARAMS
+ *  lpIdleTime [O] Destination for idle time.
+ *  lpKernelTime [O] Destination for kernel time.
+ *  lpUserTime [O] Destination for user time.
+ *
+ * RETURNS
+ *  TRUE if success, FALSE otherwise.
+ */
+BOOL WINAPI GetSystemTimes(LPFILETIME lpIdleTime, LPFILETIME lpKernelTime, LPFILETIME lpUserTime)
+{
+    FIXME("(%p,%p,%p): Stub!\n", lpIdleTime, lpKernelTime, lpUserTime);
+
+    return FALSE;
+}

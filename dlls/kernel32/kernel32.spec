@@ -628,7 +628,7 @@
 @ stdcall GetSystemTime(ptr)
 @ stdcall GetSystemTimeAdjustment(ptr ptr ptr)
 @ stdcall GetSystemTimeAsFileTime(ptr)
-# @ stub GetSystemTimes
+@ stdcall GetSystemTimes(ptr ptr ptr)
 @ stdcall GetSystemWindowsDirectoryA(ptr long)
 @ stdcall GetSystemWindowsDirectoryW(ptr long)
 @ stdcall GetSystemWow64DirectoryA(ptr long)
