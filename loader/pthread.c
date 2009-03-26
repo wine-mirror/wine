@@ -39,6 +39,12 @@
 #include <sys/ucontext.h>
 #include <sys/thr.h>
 #endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+#ifdef HAVE_PTHREAD_NP_H
+#include <pthread_np.h>
+#endif
 
 #include "wine/library.h"
 #include "wine/pthread.h"

@@ -1151,10 +1151,6 @@ then
     AC_DEFINE(HAVE_PPDEV, 1, [Define if we can use ppdev.h for parallel port access])
 fi
 
-dnl **** Check for pthread_rwlock_t ****
-AC_CHECK_TYPES([pthread_rwlock_t, pthread_rwlockattr_t],,,[#define _GNU_SOURCE
-#include <pthread.h>])
-
 dnl **** Check for pthread functions ****
 WINE_CHECK_LIB_FUNCS(\
         pthread_attr_get_np \

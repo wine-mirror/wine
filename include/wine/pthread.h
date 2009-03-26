@@ -30,57 +30,6 @@ struct sigset_t;
 typedef struct sigset_t sigset_t;
 #endif
 
-#ifdef HAVE_PTHREAD_H
-
-#define _GNU_SOURCE
-#include <pthread.h>
-#ifdef HAVE_PTHREAD_NP_H
-#include <pthread_np.h>
-#endif
-
-#ifndef HAVE_PTHREAD_RWLOCK_T
-typedef void *pthread_rwlock_t;
-#endif
-#ifndef HAVE_PTHREAD_RWLOCKATTR_T
-typedef void *pthread_rwlockattr_t;
-#endif
-
-struct wine_pthread_callbacks
-{
-    void *    (*ptr_get_thread_data)(void);
-    void      (*ptr_set_thread_data)(void *data);
-    pthread_t (*ptr_pthread_self)(void);
-    int       (*ptr_pthread_equal)(pthread_t thread1, pthread_t thread2);
-    int       (*ptr_pthread_create)(pthread_t* thread, const pthread_attr_t* attr,
-                                    void* (*start_routine)(void *), void* arg);
-    int       (*ptr_pthread_cancel)(pthread_t thread);
-    int       (*ptr_pthread_join)(pthread_t thread, void **value_ptr);
-    int       (*ptr_pthread_detach)(pthread_t thread);
-    void      (*ptr_pthread_exit)(void *retval, char *currentframe);
-    int       (*ptr_pthread_mutex_init)(pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr);
-    int       (*ptr_pthread_mutex_lock)(pthread_mutex_t *mutex);
-    int       (*ptr_pthread_mutex_trylock)(pthread_mutex_t *mutex);
-    int       (*ptr_pthread_mutex_unlock)(pthread_mutex_t *mutex);
-    int       (*ptr_pthread_mutex_destroy)(pthread_mutex_t *mutex);
-    int       (*ptr_pthread_rwlock_init)(pthread_rwlock_t *rwlock,
-                                         const pthread_rwlockattr_t *rwlock_attr);
-    int       (*ptr_pthread_rwlock_destroy)(pthread_rwlock_t *rwlock);
-    int       (*ptr_pthread_rwlock_rdlock)(pthread_rwlock_t *rwlock);
-    int       (*ptr_pthread_rwlock_tryrdlock)(pthread_rwlock_t *rwlock);
-    int       (*ptr_pthread_rwlock_wrlock)(pthread_rwlock_t *rwlock);
-    int       (*ptr_pthread_rwlock_trywrlock)(pthread_rwlock_t *rwlock);
-    int       (*ptr_pthread_rwlock_unlock)(pthread_rwlock_t *rwlock);
-    int       (*ptr_pthread_cond_init)(pthread_cond_t *cond, const pthread_condattr_t *cond_attr);
-    int       (*ptr_pthread_cond_destroy)(pthread_cond_t *cond);
-    int       (*ptr_pthread_cond_signal)(pthread_cond_t *cond);
-    int       (*ptr_pthread_cond_broadcast)(pthread_cond_t *cond);
-    int       (*ptr_pthread_cond_wait)(pthread_cond_t *cond, pthread_mutex_t *mutex);
-    int       (*ptr_pthread_cond_timedwait)(pthread_cond_t *cond, pthread_mutex_t *mutex,
-                                            const struct timespec *abstime);
-};
-
-#endif /* HAVE_PTHREAD_H */
-
 /* thread information used to creating and exiting threads */
 struct wine_pthread_thread_info
 {

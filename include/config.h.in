@@ -594,12 +594,6 @@
 /* Define to 1 if you have the <pthread_np.h> header file. */
 #undef HAVE_PTHREAD_NP_H
 
-/* Define to 1 if the system has the type `pthread_rwlockattr_t'. */
-#undef HAVE_PTHREAD_RWLOCKATTR_T
-
-/* Define to 1 if the system has the type `pthread_rwlock_t'. */
-#undef HAVE_PTHREAD_RWLOCK_T
-
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
