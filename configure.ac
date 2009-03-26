@@ -1482,7 +1482,6 @@ AC_CHECK_FUNCS(\
 	sigaltstack \
 	sigprocmask \
 	snprintf \
-	socketpair \
 	spawnvp \
 	statfs \
 	statvfs \
@@ -1536,6 +1535,7 @@ AC_CHECK_FUNCS(\
 	getservbyport \
 	inet_network \
 	sendmsg \
+	socketpair \
 )
 
 dnl **** Check for OpenLDAP ***
