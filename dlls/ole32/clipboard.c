@@ -156,7 +156,7 @@ typedef struct enum_fmtetc
     const IEnumFORMATETCVtbl *lpVtbl;
     LONG ref;
 
-    UINT                         posFmt;    /* current enumerator position */
+    UINT pos;    /* current enumerator position */
     UINT                         countFmt;  /* number of EnumFORMATETC's in array */
     LPFORMATETC                  pFmt;      /* array of EnumFORMATETC's */
 
@@ -261,19 +261,19 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Next
   UINT cfetch;
   HRESULT hres = S_FALSE;
 
-  TRACE("(%p)->(pos=%u)\n", This, This->posFmt);
+  TRACE("(%p)->(pos=%u)\n", This, This->pos);
 
-  if (This->posFmt < This->countFmt)
+  if (This->pos < This->countFmt)
   {
-    cfetch = This->countFmt - This->posFmt;
+    cfetch = This->countFmt - This->pos;
     if (cfetch >= celt)
     {
       cfetch = celt;
       hres = S_OK;
     }
 
-    memcpy(rgelt, &This->pFmt[This->posFmt], cfetch * sizeof(FORMATETC));
-    This->posFmt += cfetch;
+    memcpy(rgelt, &This->pFmt[This->pos], cfetch * sizeof(FORMATETC));
+    This->pos += cfetch;
   }
   else
   {
@@ -298,10 +298,10 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Skip(LPENUMFORMATETC iface, ULON
   enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   TRACE("(%p)->(num=%u)\n", This, celt);
 
-  This->posFmt += celt;
-  if (This->posFmt > This->countFmt)
+  This->pos += celt;
+  if (This->pos > This->countFmt)
   {
-    This->posFmt = This->countFmt;
+    This->pos = This->countFmt;
     return S_FALSE;
   }
   return S_OK;
@@ -317,7 +317,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Reset(LPENUMFORMATETC iface)
   enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   TRACE("(%p)->()\n", This);
 
-  This->posFmt = 0;
+  This->pos = 0;
   return S_OK;
 }
 
@@ -344,6 +344,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone
                                                 This->pFmt,
                                                 This->pUnkDataObj);
 
+  /* FIXME: This is wrong! */
   if (FAILED( hr = IEnumFORMATETC_AddRef(*ppenum)))
     return ( hr );
 
@@ -383,7 +384,7 @@ static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORM
   ef->lpVtbl = &efvt;
   ef->pUnkDataObj = pUnkDataObj;
 
-  ef->posFmt = 0;
+  ef->pos = 0;
   ef->countFmt = cfmt;
   ef->pFmt = HeapAlloc(GetProcessHeap(), 0, size);
   if (ef->pFmt)
