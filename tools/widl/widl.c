@@ -196,6 +196,36 @@ static char *dup_basename_token(const char *name, const char *ext)
     return ret;
 }
 
+static void add_widl_version_define(void)
+{
+    unsigned int version;
+    const char *p = PACKAGE_VERSION;
+
+    /* major */
+    version = atoi(p) * 0x10000;
+    p = strchr(p, '.');
+
+    /* minor */
+    if (p)
+    {
+        version += atoi(p + 1) * 0x100;
+        p = strchr(p + 1, '.');
+    }
+
+    /* build */
+    if (p)
+        version += atoi(p + 1);
+
+    if (version != 0)
+    {
+        char version_str[11];
+        snprintf(version_str, sizeof(version_str), "0x%x", version);
+        wpp_add_define("__WIDL__", version_str);
+    }
+    else
+        wpp_add_define("__WIDL__", NULL);
+}
+
 /* clean things up when aborting on a signal */
 static void exit_on_signal( int sig )
 {
@@ -596,7 +626,7 @@ int main(int argc,char *argv[])
   if (do_client) client_token = dup_basename_token(client_name,"_c.c");
   if (do_server) server_token = dup_basename_token(server_name,"_s.c");
 
-  wpp_add_cmdline_define("__WIDL__");
+  add_widl_version_define();
 
   atexit(rm_tempfile);
   if (!no_preprocess)
