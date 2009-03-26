@@ -616,7 +616,6 @@ static void test_cf_dataobject(IDataObject *data)
     } while(cf);
     CloseClipboard();
     ok(found_dataobject, "didn't find cf_dataobject\n");
-todo_wine
     ok(found_priv_data, "didn't find cf_ole_priv_data\n");
 }
 

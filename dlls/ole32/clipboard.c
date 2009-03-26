@@ -151,15 +151,26 @@ static ole_clipbrd* theOleClipboard;
 static const CHAR OLEClipbrd_WNDCLASS[] = "CLIPBRDWNDCLASS";
 
 static UINT dataobject_clipboard_format;
+static UINT ole_priv_data_clipboard_format;
 
-/*
- *  If we need to store state info we can store it here.
- *  For now we don't need this functionality.
- *
-typedef struct tagClipboardWindowInfo
+/* Structure of 'Ole Private Data' clipboard format */
+typedef struct
 {
-} ClipboardWindowInfo;
- */
+    FORMATETC fmtetc;
+    DWORD first_use;  /* Has this cf been added to the list already */
+    DWORD unk[2];
+} ole_priv_data_entry;
+
+typedef struct
+{
+    DWORD unk1;
+    DWORD size; /* in bytes of the entire structure */
+    DWORD unk2;
+    DWORD count; /* no. of format entries */
+    DWORD unk3[2];
+    ole_priv_data_entry entries[1]; /* array of size count */
+    /* then follows any DVTARGETDEVICE structures referenced in the FORMATETCs */
+} ole_priv_data;
 
 /*---------------------------------------------------------------------*
  *  Implementation of the internal IEnumFORMATETC interface returned by
@@ -1180,9 +1191,12 @@ static ole_clipbrd* OLEClipbrd_Construct(void)
 static void register_clipboard_formats(void)
 {
     static const WCHAR DataObjectW[] = { 'D','a','t','a','O','b','j','e','c','t',0 };
+    static const WCHAR OlePrivateDataW[] = { 'O','l','e',' ','P','r','i','v','a','t','e',' ','D','a','t','a',0 };
 
     if(!dataobject_clipboard_format)
         dataobject_clipboard_format = RegisterClipboardFormatW(DataObjectW);
+    if(!ole_priv_data_clipboard_format)
+        ole_priv_data_clipboard_format = RegisterClipboardFormatW(OlePrivateDataW);
 }
 
 /***********************************************************************
@@ -1271,6 +1285,16 @@ static HWND OLEClipbrd_CreateWindow(void)
   return hwnd;
 }
 
+static inline BOOL is_format_in_list(ole_priv_data_entry *entries, DWORD num, UINT cf)
+{
+    DWORD i;
+    for(i = 0; i < num; i++)
+        if(entries[i].fmtetc.cfFormat == cf)
+            return TRUE;
+
+    return FALSE;
+}
+
 /*********************************************************************
  *          set_clipboard_formats
  *
@@ -1285,9 +1309,44 @@ static HRESULT set_clipboard_formats(IDataObject *data)
     HRESULT hr;
     FORMATETC fmt;
     IEnumFORMATETC *enum_fmt;
+    HGLOBAL priv_data_handle;
+    DWORD target_offset;
+    ole_priv_data *priv_data;
+    DWORD count = 0, needed = sizeof(*priv_data), idx;
 
     hr = IDataObject_EnumFormatEtc(data, DATADIR_GET, &enum_fmt);
     if(FAILED(hr)) return hr;
+
+    while(IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL) == S_OK)
+    {
+        count++;
+        needed += sizeof(priv_data->entries[0]);
+        if(fmt.ptd)
+        {
+            needed += fmt.ptd->tdSize;
+            CoTaskMemFree(fmt.ptd);
+        }
+    }
+
+    /* Windows pads the list with two empty ole_priv_data_entries, one
+     * after the entries array and one after the target device data.
+     * Allocating with zero init to zero these pads. */
+
+    needed += sizeof(priv_data->entries[0]); /* initialisation of needed includes one of these. */
+    priv_data_handle = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, needed);
+    priv_data = GlobalLock(priv_data_handle);
+
+    priv_data->unk1 = 0;
+    priv_data->size = needed;
+    priv_data->unk2 = 1;
+    priv_data->count = count;
+    priv_data->unk3[0] = 0;
+    priv_data->unk3[1] = 0;
+
+    IEnumFORMATETC_Reset(enum_fmt);
+
+    idx = 0;
+    target_offset = FIELD_OFFSET(ole_priv_data, entries[count + 1]); /* count entries + one pad. */
 
     while(IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL) == S_OK)
     {
@@ -1299,9 +1358,28 @@ static HRESULT set_clipboard_formats(IDataObject *data)
 
             SetClipboardData(fmt.cfFormat, NULL);
         }
+
+        priv_data->entries[idx].fmtetc = fmt;
+        if(fmt.ptd)
+        {
+            memcpy((char*)priv_data + target_offset, fmt.ptd, fmt.ptd->tdSize);
+            priv_data->entries[idx].fmtetc.ptd = (DVTARGETDEVICE*)target_offset;
+            target_offset += fmt.ptd->tdSize;
+            CoTaskMemFree(fmt.ptd);
+        }
+
+        priv_data->entries[idx].first_use = !is_format_in_list(priv_data->entries, idx, fmt.cfFormat);
+        priv_data->entries[idx].unk[0] = 0;
+        priv_data->entries[idx].unk[1] = 0;
+
+        idx++;
     }
 
     IEnumFORMATETC_Release(enum_fmt);
+
+    GlobalUnlock(priv_data_handle);
+    SetClipboardData(ole_priv_data_clipboard_format, priv_data_handle);
+
     return S_OK;
 }
 
