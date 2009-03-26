@@ -3290,8 +3290,7 @@ static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 }
 
 static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL texIsPow2 = FALSE;
-    DWORD sampler = state - STATE_SAMPLER(0);
+    const DWORD sampler = state - STATE_SAMPLER(0);
     IWineD3DBaseTexture *texture = stateblock->textures[sampler];
 
     TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
@@ -3305,21 +3304,7 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, W
      * misc pipeline
      */
     if(sampler < MAX_TEXTURES) {
-        UINT texture_dimensions = IWineD3DBaseTexture_GetTextureDimensions(texture);
-
-        if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
-        {
-            if(((IWineD3DTextureImpl *)texture)->baseTexture.pow2Matrix[0] != 1.0 ||
-               ((IWineD3DTextureImpl *)texture)->baseTexture.pow2Matrix[5] != 1.0 ) {
-                texIsPow2 = TRUE;
-            }
-        }
-        else if (texture_dimensions == GL_TEXTURE_CUBE_MAP_ARB)
-        {
-            if(((IWineD3DCubeTextureImpl *)texture)->baseTexture.pow2Matrix[0] != 1.0) {
-                texIsPow2 = TRUE;
-            }
-        }
+        const BOOL texIsPow2 = !((IWineD3DBaseTextureImpl *)texture)->baseTexture.pow2Matrix_identity;
 
         if (texIsPow2 || (context->lastWasPow2Texture & (1 << sampler)))
         {
