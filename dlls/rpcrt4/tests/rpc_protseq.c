@@ -46,7 +46,6 @@ static void test_RpcServerUseProtseq(void)
     /* show that RpcServerUseProtseqEp(..., NULL, ...) isn't the same as
      * RpcServerUseProtseq(...) */
     status = RpcServerUseProtseqEp(ncalrpc, 0, NULL, NULL);
-    todo_wine
     ok(status == RPC_S_INVALID_ENDPOINT_FORMAT,
        "RpcServerUseProtseqEp with NULL endpoint should have failed with "
        "RPC_S_INVALID_ENDPOINT_FORMAT instead of %d\n", status);
@@ -111,7 +110,6 @@ static void test_RpcServerUseProtseq(void)
     status = RpcServerInqBindings(&bindings);
     ok(status == RPC_S_OK, "RpcServerInqBindings failed with status %d\n", status);
     binding_count_after2 = bindings->Count;
-    todo_wine
     ok(binding_count_after2 == binding_count_after1,
        "bindings should have been re-used - after1: %u after2: %u\n",
        binding_count_after1, binding_count_after2);
