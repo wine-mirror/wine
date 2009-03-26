@@ -100,6 +100,7 @@ struct glsl_shader_prog_link {
     GLint                       vuniformI_locations[MAX_CONST_I];
     GLint                       puniformI_locations[MAX_CONST_I];
     GLint                       posFixup_location;
+    GLint                       rectFixup_location[MAX_FRAGMENT_SAMPLERS];
     GLint                       bumpenvmat_location[MAX_TEXTURES];
     GLint                       luminancescale_location[MAX_TEXTURES];
     GLint                       luminanceoffset_location[MAX_TEXTURES];
@@ -587,6 +588,24 @@ static void shader_glsl_load_constants(
             }
             GL_EXTCALL(glUniform4fvARB(prog->ycorrection_location, 1, correction_params));
         }
+
+        /* Constant loading for texture rect coord fixup. */
+        if (prog->ps_args.texrect_fixup) {
+            UINT fixup = prog->ps_args.texrect_fixup;
+
+            for (i = 0; fixup; fixup >>= 1, ++i) {
+                if (-1 != prog->rectFixup_location[i]) {
+                    const IWineD3DBaseTextureImpl* const tex = (const IWineD3DBaseTextureImpl*) stateBlock->textures[i];
+                    if (!tex) {
+                        FIXME("Non-existant texture is flagged for NP2 texcoord fixup\n");
+                        continue;
+                    } else {
+                        const float tex_dim[2] = {tex->baseTexture.pow2Matrix[0], tex->baseTexture.pow2Matrix[5]};
+                        GL_EXTCALL(glUniform2fvARB(prog->rectFixup_location[i], 1, tex_dim));
+                    }
+                }
+            }
+        }
     }
 
     if (priv->next_constant_version == UINT_MAX)
@@ -773,6 +792,14 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
                         shader_addline(buffer, "uniform sampler2DRect %csampler%u;\n", prefix, i);
                     } else {
                         shader_addline(buffer, "uniform sampler2D %csampler%u;\n", prefix, i);
+                    }
+
+                    if(ps_args->texrect_fixup & (1 << i)) {
+                        /* RECT textures in OpenGL use texcoords in the range [0,width]x[0,height]
+                         * while D3D has them in the (normalized) [0,1]x[0,1] range.
+                         * samplerRectFixup stores texture dimensions and is updated through
+                         * shader_glsl_load_constants when the sampler changes. */
+                        shader_addline(buffer, "uniform vec2 %csamplerRectFixup%u;\n", prefix, i);
                     }
                     break;
                 case WINED3DSTT_CUBE:
@@ -1475,6 +1502,7 @@ static void PRINTF_ATTR(6, 7) shader_glsl_gen_sample_code(const SHADER_OPCODE_AR
     const char *sampler_base;
     char dst_swizzle[6];
     struct color_fixup_desc fixup;
+    BOOL rect_fixup = FALSE;
     va_list args;
 
     shader_glsl_get_swizzle(swizzle, FALSE, arg->dst, dst_swizzle);
@@ -1483,6 +1511,14 @@ static void PRINTF_ATTR(6, 7) shader_glsl_gen_sample_code(const SHADER_OPCODE_AR
         IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) arg->shader;
         fixup = This->cur_args->color_fixup[sampler];
         sampler_base = "Psampler";
+
+        if(This->cur_args->texrect_fixup & (1 << sampler)) {
+            if(bias) {
+                FIXME("Biased sampling from RECT textures is unsupported\n");
+            } else {
+                rect_fixup = TRUE;
+            }
+        }
     } else {
         sampler_base = "Vsampler";
         fixup = COLOR_FIXUP_IDENTITY; /* FIXME: Vshader color fixup */
@@ -1499,7 +1535,11 @@ static void PRINTF_ATTR(6, 7) shader_glsl_gen_sample_code(const SHADER_OPCODE_AR
     if(bias) {
         shader_addline(arg->buffer, ", %s)%s);\n", bias, dst_swizzle);
     } else {
-        shader_addline(arg->buffer, ")%s);\n", dst_swizzle);
+        if (rect_fixup) {
+            shader_addline(arg->buffer, " * PsamplerRectFixup%u)%s);\n", sampler, dst_swizzle);
+        } else {
+            shader_addline(arg->buffer, ")%s);\n", dst_swizzle);
+        }
     }
 
     if(!is_identity_fixup(fixup)) {
@@ -3479,6 +3519,17 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
         }
     }
 
+    if (use_ps && ps_compile_args.texrect_fixup) {
+        char name[32];
+        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
+            if (ps_compile_args.texrect_fixup & (1 << i)) {
+                sprintf(name, "PsamplerRectFixup%u", i);
+                entry->rectFixup_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
+            } else {
+                entry->rectFixup_location[i] = -1;
+            }
+        }
+    }
 
     entry->posFixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "posFixup"));
     entry->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(programId, "ycorrection"));
