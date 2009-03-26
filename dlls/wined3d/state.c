@@ -81,8 +81,6 @@ static void state_fillmode(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 }
 
 static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL transformed;
-
     /* Lighting is not enabled if transformed vertices are drawn
      * but lighting does not affect the stream sources, so it is not grouped for performance reasons.
      * This state reads the decoded vertex declaration, so if it is dirty don't do anything. The
@@ -93,11 +91,9 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
         return;
     }
 
-    transformed = ((stateblock->wineD3DDevice->strided_streams.u.s.position.lpData != NULL ||
-                    stateblock->wineD3DDevice->strided_streams.u.s.position.VBO != 0) &&
-                    stateblock->wineD3DDevice->strided_streams.position_transformed) ? TRUE : FALSE;
-
-    if (stateblock->renderState[WINED3DRS_LIGHTING] && !transformed) {
+    if (stateblock->renderState[WINED3DRS_LIGHTING]
+            && !stateblock->wineD3DDevice->strided_streams.position_transformed)
+    {
         glEnable(GL_LIGHTING);
         checkGLcall("glEnable GL_LIGHTING");
     } else {
