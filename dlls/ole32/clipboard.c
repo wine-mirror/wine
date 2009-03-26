@@ -303,7 +303,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Reset(LPENUMFORMATETC iface)
   return S_OK;
 }
 
-static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC afmt[]);
+static HRESULT enum_fmtetc_construct(UINT cfmt, const FORMATETC afmt[], IEnumFORMATETC **obj);
 
 /************************************************************************
  * OLEClipbrd_IEnumFORMATETC_Clone (IEnumFORMATETC)
@@ -321,8 +321,8 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone
   if ( !ppenum )
     return E_INVALIDARG;
 
-  *ppenum = OLEClipbrd_IEnumFORMATETC_Construct(This->countFmt,
-                                                This->pFmt);
+  hr = enum_fmtetc_construct(This->countFmt, This->pFmt, ppenum);
+  if (FAILED(hr)) return hr;
 
   /* FIXME: This is wrong! */
   if (FAILED( hr = IEnumFORMATETC_AddRef(*ppenum)))
@@ -343,21 +343,20 @@ static const IEnumFORMATETCVtbl efvt =
 };
 
 /************************************************************************
- * OLEClipbrd_IEnumFORMATETC_Construct
+ * enum_fmtetc_construct
  *
  * Creates an IEnumFORMATETC enumerator from an array of FORMATETC
  * Structures.
  * NOTE: this does not AddRef the interface.
  */
-
-static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC afmt[])
+static HRESULT enum_fmtetc_construct(UINT cfmt, const FORMATETC afmt[], IEnumFORMATETC **obj)
 {
   enum_fmtetc* ef;
   DWORD size=cfmt * sizeof(FORMATETC);
 
+  *obj = NULL;
   ef = HeapAlloc(GetProcessHeap(), 0, sizeof(*ef));
-  if (!ef)
-    return NULL;
+  if (!ef) return E_OUTOFMEMORY;
 
   ef->ref = 0;
   ef->lpVtbl = &efvt;
@@ -370,11 +369,12 @@ static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORM
   else
   {
     HeapFree(GetProcessHeap(), 0, ef);
-    return NULL;
+    return E_OUTOFMEMORY;
   }
 
   TRACE("(%p)->()\n",ef);
-  return (LPENUMFORMATETC)ef;
+  *obj = (IEnumFORMATETC *)ef;
+  return S_OK;
 }
 
 /***********************************************************************
@@ -1042,14 +1042,11 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
     afmt[i].tymed = TYMED_HGLOBAL;
   }
 
-  /*
-   * Create an EnumFORMATETC enumerator and return an
-   * EnumFORMATETC after bumping up its ref count
-   */
-  *ppenumFormatEtc = OLEClipbrd_IEnumFORMATETC_Construct( cfmt, afmt );
-  if (!(*ppenumFormatEtc))
-    HANDLE_ERROR( E_OUTOFMEMORY );
+  hr = enum_fmtetc_construct( cfmt, afmt, ppenumFormatEtc );
+  if (FAILED(hr))
+    HANDLE_ERROR( hr );
 
+  /* FIXME: This is wrong! */
   if (FAILED( hr = IEnumFORMATETC_AddRef(*ppenumFormatEtc)))
     HANDLE_ERROR( hr );
 
