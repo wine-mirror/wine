@@ -4680,30 +4680,24 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
          *
          * Also get the start index in, but only loop over all elements if there's something to add at all.
          */
-#define FIXSRC(type) \
-        if(strided.u.s.type.VBO) { \
-            struct wined3d_buffer *vb = (struct wined3d_buffer *)This->stateBlock->streamSource[strided.u.s.type.streamNo]; \
-            strided.u.s.type.VBO = 0; \
-            strided.u.s.type.lpData = (BYTE *) ((unsigned long) strided.u.s.type.lpData + (unsigned long) vb->resource.allocatedMemory); \
-            ENTER_GL(); \
-            GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object)); \
-            vb->buffer_object = 0; \
-            LEAVE_GL(); \
-        } \
-        if(strided.u.s.type.lpData) { \
-            strided.u.s.type.lpData += strided.u.s.type.dwStride * SrcStartIndex; \
+        for (i = 0; i < (sizeof(strided.u.input) / sizeof(*strided.u.input)); ++i)
+        {
+            if (strided.u.input[i].VBO)
+            {
+                struct wined3d_buffer *vb =
+                        (struct wined3d_buffer *)This->stateBlock->streamSource[strided.u.input[i].streamNo];
+                strided.u.input[i].VBO = 0;
+                strided.u.input[i].lpData = (BYTE *)((unsigned long)strided.u.input[i].lpData + (unsigned long)vb->resource.allocatedMemory);
+                ENTER_GL();
+                GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
+                vb->buffer_object = 0;
+                LEAVE_GL();
+            }
+            if (strided.u.input[i].lpData)
+            {
+                strided.u.input[i].lpData += strided.u.input[i].dwStride * SrcStartIndex;
+            }
         }
-        FIXSRC(position);
-        FIXSRC(blendWeights);
-        FIXSRC(blendMatrixIndices);
-        FIXSRC(normal);
-        FIXSRC(pSize);
-        FIXSRC(diffuse);
-        FIXSRC(specular);
-        for(i = 0; i < WINED3DDP_MAXTEXCOORD; i++) {
-            FIXSRC(texCoords[i]);
-        }
-#undef FIXSRC
     }
 
     return process_vertices_strided(This, DestIndex, VertexCount, &strided,
