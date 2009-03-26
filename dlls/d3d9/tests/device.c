@@ -794,7 +794,7 @@ static void test_reset(void)
         ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
     vp.X = 10;
-    vp.X = 20;
+    vp.Y = 20;
     vp.MinZ = 2;
     vp.MaxZ = 3;
     hr = IDirect3DDevice9_SetViewport(pDevice, &vp);
