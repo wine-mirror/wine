@@ -7771,7 +7771,7 @@ static void test_MsiEnumPatchesEx_usermanaged(LPCSTR usersid, LPCSTR expectedsid
     ok(context == MSIINSTALLCONTEXT_USERMANAGED,
        "Expected MSIINSTALLCONTEXT_USERMANAGED, got %d\n", context);
     ok(size == lstrlenA(expectedsid) * sizeof(WCHAR),
-       "Expected %d, got %d\n", lstrlenA(expectedsid) * sizeof(WCHAR), size);
+       "Expected %d*sizeof(WCHAR), got %d\n", lstrlenA(expectedsid), size);
 
     /* pcchTargetUserSid is exactly the length of szTargetUserSid */
     lstrcpyA(patchcode, "apple");
@@ -7792,7 +7792,7 @@ static void test_MsiEnumPatchesEx_usermanaged(LPCSTR usersid, LPCSTR expectedsid
     ok(!strncmp(targetsid, expectedsid, lstrlenA(expectedsid) - 1),
        "Expected \"%s\", got \"%s\"\n", expectedsid, targetsid);
     ok(size == lstrlenA(expectedsid) * sizeof(WCHAR),
-       "Expected %d, got %d\n", lstrlenA(expectedsid) * sizeof(WCHAR), size);
+       "Expected %d*sizeof(WCHAR), got %d\n", lstrlenA(expectedsid), size);
 
     /* pcchTargetUserSid has enough room for NULL terminator */
     lstrcpyA(patchcode, "apple");
