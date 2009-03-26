@@ -340,7 +340,7 @@ static DWORD service_handle_start(service_data *service, const WCHAR *data, DWOR
 /******************************************************************************
  * service_handle_control
  */
-static DWORD service_handle_control(service_data *service, DWORD dwControl)
+static DWORD service_handle_control(const service_data *service, DWORD dwControl)
 {
     DWORD ret = ERROR_INVALID_SERVICE_CONTROL;
 
@@ -1264,7 +1264,7 @@ static DWORD move_string_to_buffer(BYTE **buf, LPWSTR *string_ptr)
     return cb;
 }
 
-static DWORD size_string(LPWSTR string)
+static DWORD size_string(LPCWSTR string)
 {
     return (string ? (strlenW(string) + 1)*sizeof(WCHAR) : sizeof(WCHAR));
 }
