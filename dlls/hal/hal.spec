@@ -15,7 +15,7 @@
 @ stub KeTryToAcquireQueuedSpinLockRaiseToSynch
 @ stdcall -norelay KfAcquireSpinLock(ptr)
 @ stdcall -norelay KfLowerIrql(long)
-@ stdcall -norelay KfRaiseIrql()
+@ stdcall -norelay KfRaiseIrql(long)
 @ stdcall -norelay KfReleaseSpinLock(ptr long)
 @ stub HalAcquireDisplayOwnership
 @ stub HalAdjustResourceList
