@@ -335,7 +335,6 @@ HANDLE thread_init(void)
     user_shared_data->TickCountLowDeprecated = user_shared_data->u.TickCount.LowPart;
     user_shared_data->TickCountMultiplier = 1 << 24;
 
-    pthread_init();
     return exe_file;
 }
 

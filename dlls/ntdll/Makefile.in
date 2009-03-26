@@ -31,7 +31,6 @@ C_SRCS = \
 	path.c \
 	printf.c \
 	process.c \
-	pthread.c \
 	reg.c \
 	relay.c \
 	resource.c \
