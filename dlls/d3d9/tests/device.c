@@ -725,9 +725,14 @@ static void test_reset(void)
     IDirect3DSurface9            *surface;
     IDirect3DTexture9            *texture;
     IDirect3DVertexShader9       *shader;
-    BOOL                         support_800x600 = FALSE;
-    UINT                         i;
+    UINT                         i, adapter_mode_count;
     D3DLOCKED_RECT               lockrect;
+    struct
+    {
+        UINT w;
+        UINT h;
+    } *modes = NULL;
+    UINT mode_count = 0;
 
     pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
@@ -736,23 +741,27 @@ static void test_reset(void)
     if (!pD3d || !hwnd) goto cleanup;
 
     IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
-    ZeroMemory( &d3dpp, sizeof(d3dpp) );
-    d3dpp.Windowed         = FALSE;
-    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
-    d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight = 600;
-    d3dpp.BackBufferFormat = d3ddm.Format;
-    d3dpp.EnableAutoDepthStencil = TRUE;
-    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
-
-    for(i = 0; i < IDirect3D9_GetAdapterModeCount(pD3d, D3DADAPTER_DEFAULT, d3ddm.Format); i++) {
+    adapter_mode_count = IDirect3D9_GetAdapterModeCount(pD3d, D3DADAPTER_DEFAULT, d3ddm.Format);
+    modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*modes) * adapter_mode_count);
+    for(i = 0; i < adapter_mode_count; ++i)
+    {
+        int j;
         ZeroMemory( &d3ddm2, sizeof(d3ddm2) );
         hr = IDirect3D9_EnumAdapterModes(pD3d, D3DADAPTER_DEFAULT, d3ddm.Format, i, &d3ddm2);
         ok(hr == D3D_OK, "IDirect3D9_EnumAdapterModes returned %#x\n", hr);
 
-        if(d3ddm2.Width == 800 && d3ddm2.Height == 600) {
-            support_800x600 = TRUE;
+        for (j = 0; j < mode_count; ++j)
+        {
+            if (modes[j].w == d3ddm2.Width && modes[j].h == d3ddm2.Height)
+                break;
         }
+        if (j == mode_count)
+        {
+            modes[j].w = d3ddm2.Width;
+            modes[j].h = d3ddm2.Height;
+            ++mode_count;
+        }
+
         /* We use them as invalid modes */
         if((d3ddm2.Width == 801 && d3ddm2.Height == 600) ||
            (d3ddm2.Width == 32 && d3ddm2.Height == 32)) {
@@ -761,10 +770,24 @@ static void test_reset(void)
             goto cleanup;
         }
     }
-    if(!support_800x600) {
-        skip("Mode 800x600 not supported, skipping mode tests\n");
+
+    if (mode_count < 2)
+    {
+        skip("Less than 2 modes supported, skipping mode tests\n");
         goto cleanup;
     }
+
+    i = 0;
+    if (modes[i].w == orig_width && modes[i].h == orig_height) ++i;
+
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = FALSE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = modes[i].w;
+    d3dpp.BackBufferHeight = modes[i].h;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
@@ -779,8 +802,8 @@ static void test_reset(void)
 
     width = GetSystemMetrics(SM_CXSCREEN);
     height = GetSystemMetrics(SM_CYSCREEN);
-    ok(width == 800, "Screen width is %d\n", width);
-    ok(height == 600, "Screen height is %d\n", height);
+    ok(width == modes[i].w, "Screen width is %u, expected %u\n", width, modes[i].w);
+    ok(height == modes[i].h, "Screen height is %u, expected %u\n", height, modes[i].h);
 
     hr = IDirect3DDevice9_GetViewport(pDevice, &vp);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
@@ -788,11 +811,13 @@ static void test_reset(void)
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
         ok(vp.Y == 0, "D3DVIEWPORT->Y = %d\n", vp.Y);
-        ok(vp.Width == 800, "D3DVIEWPORT->Width = %d\n", vp.Width);
-        ok(vp.Height == 600, "D3DVIEWPORT->Height = %d\n", vp.Height);
+        ok(vp.Width == modes[i].w, "D3DVIEWPORT->Width = %u, expected %u\n", vp.Width, modes[i].w);
+        ok(vp.Height == modes[i].h, "D3DVIEWPORT->Height = %u, expected %u\n", vp.Height, modes[i].h);
         ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %f\n", vp.MinZ);
         ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
+
+    i = 1;
     vp.X = 10;
     vp.Y = 20;
     vp.MinZ = 2;
@@ -803,8 +828,8 @@ static void test_reset(void)
     ZeroMemory( &d3dpp, sizeof(d3dpp) );
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.Windowed         = FALSE;
-    d3dpp.BackBufferWidth  = 640;
-    d3dpp.BackBufferHeight = 480;
+    d3dpp.BackBufferWidth  = modes[i].w;
+    d3dpp.BackBufferHeight = modes[i].h;
     d3dpp.BackBufferFormat = d3ddm.Format;
     hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
     ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with %08x\n", hr);
@@ -818,16 +843,16 @@ static void test_reset(void)
     {
         ok(vp.X == 0, "D3DVIEWPORT->X = %d\n", vp.X);
         ok(vp.Y == 0, "D3DVIEWPORT->Y = %d\n", vp.Y);
-        ok(vp.Width == 640, "D3DVIEWPORT->Width = %d\n", vp.Width);
-        ok(vp.Height == 480, "D3DVIEWPORT->Height = %d\n", vp.Height);
+        ok(vp.Width == modes[i].w, "D3DVIEWPORT->Width = %u, expected %u\n", vp.Width, modes[i].w);
+        ok(vp.Height == modes[i].h, "D3DVIEWPORT->Height = %u, expected %u\n", vp.Height, modes[i].h);
         ok(vp.MinZ == 0, "D3DVIEWPORT->MinZ = %f\n", vp.MinZ);
         ok(vp.MaxZ == 1, "D3DVIEWPORT->MaxZ = %f\n", vp.MaxZ);
     }
 
     width = GetSystemMetrics(SM_CXSCREEN);
     height = GetSystemMetrics(SM_CYSCREEN);
-    ok(width == 640, "Screen width is %d\n", width);
-    ok(height == 480, "Screen height is %d\n", height);
+    ok(width == modes[i].w, "Screen width is %u, expected %u\n", width, modes[i].w);
+    ok(height == modes[i].h, "Screen height is %u, expected %u\n", height, modes[i].h);
 
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &pSwapchain);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetSwapChain returned %08x\n", hr);
@@ -838,8 +863,10 @@ static void test_reset(void)
         ok(hr == D3D_OK, "IDirect3DSwapChain9_GetPresentParameters returned %08x\n", hr);
         if(SUCCEEDED(hr))
         {
-            ok(d3dpp.BackBufferWidth == 640, "Back buffer width is %d\n", d3dpp.BackBufferWidth);
-            ok(d3dpp.BackBufferHeight == 480, "Back buffer height is %d\n", d3dpp.BackBufferHeight);
+            ok(d3dpp.BackBufferWidth == modes[i].w, "Back buffer width is %u, expected %u\n",
+                    d3dpp.BackBufferWidth, modes[i].w);
+            ok(d3dpp.BackBufferHeight == modes[i].h, "Back buffer height is %u, expected %u\n",
+                    d3dpp.BackBufferHeight, modes[i].h);
         }
         IDirect3DSwapChain9_Release(pSwapchain);
     }
@@ -1023,6 +1050,7 @@ static void test_reset(void)
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
 
 cleanup:
+    HeapFree(GetProcessHeap(), 0, modes);
     if(pD3d) IDirect3D9_Release(pD3d);
     if(pDevice) IDirect3D9_Release(pDevice);
 }
