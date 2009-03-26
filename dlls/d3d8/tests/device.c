@@ -715,7 +715,7 @@ static void test_states(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 640;
-    d3dpp.BackBufferHeight  = 480;
+    d3dpp.BackBufferHeight = 480;
     d3dpp.BackBufferFormat = d3ddm.Format;
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
@@ -808,7 +808,7 @@ static void test_scene(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
 
 
@@ -914,7 +914,7 @@ static void test_shader(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
 
 
@@ -1111,7 +1111,7 @@ static void test_limits(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
@@ -1174,7 +1174,7 @@ static void test_lights(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
@@ -1256,7 +1256,7 @@ static void test_render_zero_triangles(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferWidth  = 800;
-    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferHeight = 600;
     d3dpp.BackBufferFormat = d3ddm.Format;
     d3dpp.EnableAutoDepthStencil = TRUE;
     d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
