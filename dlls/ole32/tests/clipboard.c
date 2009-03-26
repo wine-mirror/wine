@@ -625,6 +625,7 @@ static void test_set_clipboard(void)
     HRESULT hr;
     ULONG ref;
     LPDATAOBJECT data1, data2, data_cmpl;
+    HGLOBAL hblob, h;
 
     cf_stream = RegisterClipboardFormatA("stream format");
     cf_storage = RegisterClipboardFormatA("storage format");
@@ -681,6 +682,16 @@ static void test_set_clipboard(void)
     hr = OleIsCurrentClipboard(NULL);
     ok(hr == S_FALSE, "expect S_FALSE, hr = 0x%08x\n", hr);
 
+    /* put a format directly onto the clipboard to show
+       OleFlushClipboard doesn't empty the clipboard */
+    hblob = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE|GMEM_ZEROINIT, 10);
+    OpenClipboard(NULL);
+    h = SetClipboardData(cf_onemore, hblob);
+    ok(h == hblob, "got %p\n", h);
+    h = GetClipboardData(cf_onemore);
+    ok(h == hblob, "got %p\n", h);
+    CloseClipboard();
+
     hr = OleFlushClipboard();
     ok(hr == S_OK, "failed to flush clipboard, hr = 0x%08x\n", hr);
     hr = OleIsCurrentClipboard(data1);
@@ -690,9 +701,20 @@ static void test_set_clipboard(void)
     hr = OleIsCurrentClipboard(NULL);
     ok(hr == S_FALSE, "expect S_FALSE, hr = 0x%08x\n", hr);
 
+    /* format should survive the flush */
+    OpenClipboard(NULL);
+    h = GetClipboardData(cf_onemore);
+    ok(h == hblob, "got %p\n", h);
+    CloseClipboard();
+
     test_cf_dataobject(NULL);
 
     ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard, hr = 0x%08x\n", hr);
+
+    OpenClipboard(NULL);
+    h = GetClipboardData(cf_onemore);
+    ok(h == NULL, "got %p\n", h);
+    CloseClipboard();
 
     hr = OleSetClipboard(data_cmpl);
     ok(hr == S_OK, "failed to set clipboard to complex data, hr = 0x%08x\n", hr);

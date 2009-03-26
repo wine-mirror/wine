@@ -1474,13 +1474,9 @@ HRESULT WINAPI OleFlushClipboard(void)
   FORMATETC rgelt;
   HRESULT hr = S_OK;
   BOOL bClipboardOpen = FALSE;
-  IDataObject* pIDataObjectSrc = NULL;
 
   TRACE("()\n");
 
-  /*
-   * Make sure we have a clipboard object
-   */
   OLEClipbrd_Initialize();
 
   /*
@@ -1489,30 +1485,14 @@ HRESULT WINAPI OleFlushClipboard(void)
   if (!theOleClipboard->pIDataObjectSrc)
     return S_OK;
 
-  /*
-   * Addref and save the source data object we are holding on to temporarily,
-   * since it will be released when we empty the clipboard.
-   */
-  pIDataObjectSrc = theOleClipboard->pIDataObjectSrc;
-  IDataObject_AddRef(pIDataObjectSrc);
-
-  /*
-   * Open the Windows clipboard
-   */
   if ( !(bClipboardOpen = OpenClipboard(theOleClipboard->hWndClipboard)) )
     HANDLE_ERROR( CLIPBRD_E_CANT_OPEN );
-
-  /*
-   * Empty the current clipboard
-   */
-  if ( !EmptyClipboard() )
-    HANDLE_ERROR( CLIPBRD_E_CANT_EMPTY );
 
   /*
    * Render all HGLOBAL formats supported by the source into
    * the windows clipboard.
    */
-  if ( FAILED( hr = IDataObject_EnumFormatEtc( pIDataObjectSrc,
+  if ( FAILED( hr = IDataObject_EnumFormatEtc( theOleClipboard->pIDataObjectSrc,
                                                DATADIR_GET,
                                                &penumFormatetc) ))
   {
@@ -1528,10 +1508,7 @@ HRESULT WINAPI OleFlushClipboard(void)
             GetClipboardFormatNameA(rgelt.cfFormat, szFmtName, sizeof(szFmtName)-1)
               ? szFmtName : "");
 
-      /*
-       * Render the clipboard data
-       */
-      if ( FAILED(OLEClipbrd_RenderFormat( pIDataObjectSrc, &rgelt )) )
+      if ( FAILED(OLEClipbrd_RenderFormat( theOleClipboard->pIDataObjectSrc, &rgelt )) )
         continue;
     }
   }
@@ -1540,16 +1517,11 @@ HRESULT WINAPI OleFlushClipboard(void)
 
   hr = set_dataobject_format(NULL);
 
-  /*
-   * Release the source data object we are holding on to
-   */
-  IDataObject_Release(pIDataObjectSrc);
+  IDataObject_Release(theOleClipboard->pIDataObjectSrc);
+  theOleClipboard->pIDataObjectSrc = NULL;
 
 CLEANUP:
 
-  /*
-   * Close Windows clipboard (It remains associated with our window)
-   */
   if ( bClipboardOpen && !CloseClipboard() )
     hr = CLIPBRD_E_CANT_CLOSE;
 
