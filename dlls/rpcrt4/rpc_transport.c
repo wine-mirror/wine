@@ -884,7 +884,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
     hints.ai_canonname      = NULL;
     hints.ai_next           = NULL;
 
-    ret = getaddrinfo(NULL, endpoint, &hints, &ai);
+    ret = getaddrinfo(NULL, endpoint ? endpoint : "0", &hints, &ai);
     if (ret)
     {
         ERR("getaddrinfo for port %s failed: %s\n", endpoint,
@@ -898,11 +898,13 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
     {
         RpcConnection_tcp *tcpc;
         RPC_STATUS create_status;
+        struct sockaddr_storage sa;
+        socklen_t sa_len;
+        char service[NI_MAXSERV];
 
         if (TRACE_ON(rpc))
         {
             char host[256];
-            char service[256];
             getnameinfo(ai_cur->ai_addr, ai_cur->ai_addrlen,
                         host, sizeof(host), service, sizeof(service),
                         NI_NUMERICHOST | NI_NUMERICSERV);
@@ -928,9 +930,28 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
               status = RPC_S_CANT_CREATE_ENDPOINT;
             continue;
         }
+
+        sa_len = sizeof(sa);
+        if (getsockname(sock, (struct sockaddr *)&sa, &sa_len))
+        {
+            WARN("getsockname() failed: %s\n", strerror(errno));
+            status = RPC_S_CANT_CREATE_ENDPOINT;
+            continue;
+        }
+
+        ret = getnameinfo((struct sockaddr *)&sa, sa_len,
+                          NULL, 0, service, sizeof(service),
+                          NI_NUMERICSERV);
+        if (ret)
+        {
+            WARN("getnameinfo failed: %s\n", gai_strerror(ret));
+            status = RPC_S_CANT_CREATE_ENDPOINT;
+            continue;
+        }
+
         create_status = RPCRT4_CreateConnection((RpcConnection **)&tcpc, TRUE,
                                                 protseq->Protseq, NULL,
-                                                endpoint, NULL, NULL, NULL);
+                                                service, NULL, NULL, NULL);
         if (create_status != RPC_S_OK)
         {
             closesocket(sock);
@@ -962,6 +983,10 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
 
         tcpc->common.Next = first_connection;
         first_connection = &tcpc->common;
+
+        /* since IPv4 and IPv6 share the same port space, we only need one
+         * successful bind to listen for both */
+        break;
     }
 
     freeaddrinfo(ai);

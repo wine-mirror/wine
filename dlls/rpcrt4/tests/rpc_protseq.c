@@ -69,7 +69,6 @@ static void test_RpcServerUseProtseq(void)
     if (status == RPC_S_OK) endpoints_registered++;
 
     status = RpcServerUseProtseq(iptcp, 0, NULL);
-    todo_wine
     ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_ip_tcp) failed with status %d\n", status);
     if (status == RPC_S_OK) endpoints_registered++;
 
@@ -101,7 +100,6 @@ static void test_RpcServerUseProtseq(void)
         ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_np) failed with status %d\n", status);
 
     status = RpcServerUseProtseq(iptcp, 0, NULL);
-    todo_wine
     ok(status == RPC_S_OK, "RpcServerUseProtseq(ncacn_ip_tcp) failed with status %d\n", status);
 
     status = RpcServerUseProtseq(ncalrpc, 0, NULL);
