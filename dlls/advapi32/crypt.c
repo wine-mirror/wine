@@ -2243,7 +2243,7 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, CONST BYTE *pbSignature, DW
  *  TRUE  if blocks are the same
  *  FALSE if blocks are different
  */
-BOOL WINAPI SystemFunction030(PVOID b1, PVOID b2)
+BOOL WINAPI SystemFunction030(LPCVOID b1, LPCVOID b2)
 {
     return !memcmp(b1, b2, 0x10);
 }

@@ -94,7 +94,7 @@ static void arc4_ProcessString(arc4_info *a4i, BYTE *inoutString, unsigned int l
  * NOTES
  *  see http://web.it.kth.se/~rom/ntsec.html#crypto-strongavail
  */
-NTSTATUS WINAPI SystemFunction032(struct ustring *data, struct ustring *key)
+NTSTATUS WINAPI SystemFunction032(struct ustring *data, const struct ustring *key)
 {
     arc4_info a4i;
 

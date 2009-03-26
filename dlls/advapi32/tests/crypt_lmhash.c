@@ -43,8 +43,8 @@ typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
 typedef NTSTATUS (WINAPI *fnSystemFunction008)(const BYTE *, const BYTE *, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction009)(const BYTE *, const BYTE *, LPBYTE);
 typedef int (WINAPI *descrypt)(unsigned char *, unsigned char *, unsigned char *);
-typedef NTSTATUS (WINAPI *fnSystemFunction030)(void*, void*);
-typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);
+typedef NTSTATUS (WINAPI *fnSystemFunction030)(const void*, const void*);
+typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, const struct ustring *);
 
 fnSystemFunction001 pSystemFunction001;
 fnSystemFunction002 pSystemFunction002;
