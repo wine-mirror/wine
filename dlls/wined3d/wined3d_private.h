@@ -1384,6 +1384,7 @@ typedef struct IWineD3DBaseTextureClass
     LONG                    bindCount;
     DWORD                   sampler;
     BOOL                    is_srgb;
+    BOOL                    pow2Matrix_identity;
     const struct min_lookup *minMipLookup;
     const GLenum            *magLookup;
     void                    (*internal_preload)(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);

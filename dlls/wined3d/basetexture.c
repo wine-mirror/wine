@@ -35,6 +35,7 @@ void basetexture_init(struct IWineD3DBaseTextureClass *texture, UINT levels, DWO
     texture->dirty = TRUE;
     texture->srgbDirty = TRUE;
     texture->is_srgb = FALSE;
+    texture->pow2Matrix_identity = TRUE;
 }
 
 void basetexture_cleanup(IWineD3DBaseTexture *iface)

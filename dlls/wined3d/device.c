@@ -1233,6 +1233,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
        (Width != pow2Width || Height != pow2Height) &&
        !((Format == WINED3DFMT_P8) && GL_SUPPORT(EXT_PALETTED_TEXTURE) && (wined3d_settings.rendertargetlock_mode == RTL_READTEX || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX)))
     {
+        if ((Width != 1) || (Height != 1)) {
+            object->baseTexture.pow2Matrix_identity = FALSE;
+        }
+
         object->baseTexture.pow2Matrix[0] =  (float)Width;
         object->baseTexture.pow2Matrix[5] =  (float)Height;
         object->baseTexture.pow2Matrix[10] = 1.0;
@@ -1241,8 +1245,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         object->cond_np2 = TRUE;
         object->baseTexture.minMipLookup = minMipLookup_noFilter;
     } else {
-        object->baseTexture.pow2Matrix[0] =  (((float)Width)  / ((float)pow2Width));
-        object->baseTexture.pow2Matrix[5] =  (((float)Height) / ((float)pow2Height));
+        if ((Width != pow2Width) || (Height != pow2Height)) {
+            object->baseTexture.pow2Matrix_identity = FALSE;
+            object->baseTexture.pow2Matrix[0] =  (((float)Width)  / ((float)pow2Width));
+            object->baseTexture.pow2Matrix[5] =  (((float)Height) / ((float)pow2Height));
+        } else {
+            object->baseTexture.pow2Matrix[0] =  1.0;
+            object->baseTexture.pow2Matrix[5] =  1.0;
+        }
+
         object->baseTexture.pow2Matrix[10] = 1.0;
         object->baseTexture.pow2Matrix[15] = 1.0;
         object->target = GL_TEXTURE_2D;
@@ -1540,7 +1551,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     pow2EdgeLength = 1;
     while (pow2EdgeLength < EdgeLength) pow2EdgeLength <<= 1;
 
-    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
+    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) || (EdgeLength == pow2EdgeLength)) {
         /* Precalculated scaling for 'faked' non power of two texture coords */
         object->baseTexture.pow2Matrix[ 0] = 1.0;
         object->baseTexture.pow2Matrix[ 5] = 1.0;
@@ -1552,6 +1563,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         object->baseTexture.pow2Matrix[ 5] = ((float)EdgeLength) / ((float)pow2EdgeLength);
         object->baseTexture.pow2Matrix[10] = ((float)EdgeLength) / ((float)pow2EdgeLength);
         object->baseTexture.pow2Matrix[15] = 1.0;
+        object->baseTexture.pow2Matrix_identity = FALSE;
     }
 
     if (object->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
