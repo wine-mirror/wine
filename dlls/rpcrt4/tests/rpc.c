@@ -335,7 +335,7 @@ static void test_towers(void)
     if (ret == RPC_S_INVALID_RPC_PROTSEQ)
     {
         /* Windows Vista fails with this error and crashes if we continue */
-        skip("TowerConstruct failed, we are most likely on Windows Vista\n");
+        win_skip("TowerConstruct failed, we are most likely on Windows Vista\n");
         return;
     }
 
