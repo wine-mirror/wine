@@ -4243,14 +4243,6 @@ static inline void drawPrimitiveTraceDataLocations(const WineDirect3DVertexStrid
     TRACE_STRIDED((dataLocations), texCoords[5]);
     TRACE_STRIDED((dataLocations), texCoords[6]);
     TRACE_STRIDED((dataLocations), texCoords[7]);
-    TRACE_STRIDED((dataLocations), position2);
-    TRACE_STRIDED((dataLocations), normal2);
-    TRACE_STRIDED((dataLocations), tangent);
-    TRACE_STRIDED((dataLocations), binormal);
-    TRACE_STRIDED((dataLocations), tessFactor);
-    TRACE_STRIDED((dataLocations), fog);
-    TRACE_STRIDED((dataLocations), depth);
-    TRACE_STRIDED((dataLocations), sample);
 
     return;
 }
@@ -4333,20 +4325,6 @@ static void streamsrc(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         loadVertexData(stateblock, dataLocations);
         context->namedArraysLoaded = TRUE;
     }
-
-/* Generate some fixme's if unsupported functionality is being used */
-#define BUFFER_OR_DATA(_attribute) dataLocations->u.s._attribute.lpData
-    /* TODO: Either support missing functionality in fixupVertices or by creating a shader to replace the pipeline. */
-    if (!useVertexShaderFunction && (BUFFER_OR_DATA(position2) || BUFFER_OR_DATA(normal2))) {
-        FIXME("Tweening is only valid with vertex shaders\n");
-    }
-    if (!useVertexShaderFunction && BUFFER_OR_DATA(binormal)) {
-        FIXME("Binormal bump mapping is only valid with vertex shaders\n");
-    }
-    if (!useVertexShaderFunction && (BUFFER_OR_DATA(tessFactor) || BUFFER_OR_DATA(fog) || BUFFER_OR_DATA(depth) || BUFFER_OR_DATA(sample))) {
-        FIXME("Extended attributes are only valid with vertex shaders\n");
-    }
-#undef BUFFER_OR_DATA
 }
 
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {

@@ -4703,14 +4703,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
         for(i = 0; i < WINED3DDP_MAXTEXCOORD; i++) {
             FIXSRC(texCoords[i]);
         }
-        FIXSRC(position2);
-        FIXSRC(normal2);
-        FIXSRC(tangent);
-        FIXSRC(binormal);
-        FIXSRC(tessFactor);
-        FIXSRC(fog);
-        FIXSRC(depth);
-        FIXSRC(sample);
 #undef FIXSRC
     }
 

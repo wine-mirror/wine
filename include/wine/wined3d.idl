@@ -1945,15 +1945,6 @@ typedef struct WineDirect3DVertexStridedData
             WineDirect3DStridedData diffuse;
             WineDirect3DStridedData specular;
             WineDirect3DStridedData texCoords[WINED3DDP_MAXTEXCOORD];
-            WineDirect3DStridedData position2;  /* tween data */
-            WineDirect3DStridedData normal2;    /* tween data */
-            WineDirect3DStridedData tangent;
-            WineDirect3DStridedData binormal;
-            WineDirect3DStridedData tessFactor;
-            WineDirect3DStridedData fog;
-            WineDirect3DStridedData depth;
-            WineDirect3DStridedData sample;
-
             /* Add fields here */
         } s;
         WineDirect3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */

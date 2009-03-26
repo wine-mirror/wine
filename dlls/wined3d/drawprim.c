@@ -57,22 +57,6 @@ static BOOL fixed_get_input(
         *regnum = 6;
     else if (usage == WINED3DDECLUSAGE_TEXCOORD && usage_idx < WINED3DDP_MAXTEXCOORD)
         *regnum = 7 + usage_idx;
-    else if ((usage == WINED3DDECLUSAGE_POSITION || usage == WINED3DDECLUSAGE_POSITIONT) && usage_idx == 1)
-        *regnum = 7 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == WINED3DDECLUSAGE_NORMAL && usage_idx == 1)
-        *regnum = 8 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == WINED3DDECLUSAGE_TANGENT && usage_idx == 0)
-        *regnum = 9 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == WINED3DDECLUSAGE_BINORMAL && usage_idx == 0)
-        *regnum = 10 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == WINED3DDECLUSAGE_TESSFACTOR && usage_idx == 0)
-        *regnum = 11 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == WINED3DDECLUSAGE_FOG && usage_idx == 0)
-        *regnum = 12 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == WINED3DDECLUSAGE_DEPTH && usage_idx == 0)
-        *regnum = 13 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == WINED3DDECLUSAGE_SAMPLE && usage_idx == 0)
-        *regnum = 14 + WINED3DDP_MAXTEXCOORD;
 
     if (*regnum == -1) {
         FIXME("Unsupported input stream [usage=%s, usage_idx=%u]\n",
@@ -741,46 +725,6 @@ static inline void remove_vbos(IWineD3DDeviceImpl *This, WineDirect3DVertexStrid
             s->u.s.texCoords[i].VBO = 0;
             s->u.s.texCoords[i].lpData = (BYTE *) ((unsigned long) s->u.s.texCoords[i].lpData + (unsigned long) vb->resource.allocatedMemory);
         }
-    }
-    if(s->u.s.position2.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.position2.streamNo];
-        s->u.s.position2.VBO = 0;
-        s->u.s.position2.lpData = (BYTE *) ((unsigned long) s->u.s.position2.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.normal2.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.normal2.streamNo];
-        s->u.s.normal2.VBO = 0;
-        s->u.s.normal2.lpData = (BYTE *) ((unsigned long) s->u.s.normal2.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.tangent.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.tangent.streamNo];
-        s->u.s.tangent.VBO = 0;
-        s->u.s.tangent.lpData = (BYTE *) ((unsigned long) s->u.s.tangent.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.binormal.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.binormal.streamNo];
-        s->u.s.binormal.VBO = 0;
-        s->u.s.binormal.lpData = (BYTE *) ((unsigned long) s->u.s.binormal.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.tessFactor.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.tessFactor.streamNo];
-        s->u.s.tessFactor.VBO = 0;
-        s->u.s.tessFactor.lpData = (BYTE *) ((unsigned long) s->u.s.tessFactor.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.fog.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.fog.streamNo];
-        s->u.s.fog.VBO = 0;
-        s->u.s.fog.lpData = (BYTE *) ((unsigned long) s->u.s.fog.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.depth.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.depth.streamNo];
-        s->u.s.depth.VBO = 0;
-        s->u.s.depth.lpData = (BYTE *) ((unsigned long) s->u.s.depth.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.sample.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.sample.streamNo];
-        s->u.s.sample.VBO = 0;
-        s->u.s.sample.lpData = (BYTE *) ((unsigned long) s->u.s.sample.lpData + (unsigned long) vb->resource.allocatedMemory);
     }
 }
 
