@@ -4026,13 +4026,13 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, const WineDirect3
         (sd->u.s.blendMatrixIndices.lpData) || (sd->u.s.blendMatrixIndices.VBO) ) {
 
         if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-            TRACE("Blend %d %p %d\n", WINED3D_ATR_FORMAT(sd->u.s.blendWeights.dwType),
+            TRACE("Blend %d %p %d\n", WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
                 sd->u.s.blendWeights.lpData + stateblock->loadBaseVertexIndex * sd->u.s.blendWeights.dwStride, sd->u.s.blendWeights.dwStride + offset[sd->u.s.blendWeights.streamNo]);
 
             glEnableClientState(GL_WEIGHT_ARRAY_ARB);
             checkGLcall("glEnableClientState(GL_WEIGHT_ARRAY_ARB)");
 
-            GL_EXTCALL(glVertexBlendARB(WINED3D_ATR_FORMAT(sd->u.s.blendWeights.dwType) + 1));
+            GL_EXTCALL(glVertexBlendARB(WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) + 1));
 
             VTRACE(("glWeightPointerARB(%d, GL_FLOAT, %d, %p)\n",
                 WINED3D_ATR_FORMAT(sd->u.s.blendWeights.dwType) ,
