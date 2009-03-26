@@ -322,13 +322,8 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone
     return E_INVALIDARG;
 
   hr = enum_fmtetc_construct(This->countFmt, This->pFmt, ppenum);
-  if (FAILED(hr)) return hr;
 
-  /* FIXME: This is wrong! */
-  if (FAILED( hr = IEnumFORMATETC_AddRef(*ppenum)))
-    return ( hr );
-
-  return (*ppenum) ? S_OK : E_OUTOFMEMORY;
+  return hr;
 }
 
 static const IEnumFORMATETCVtbl efvt =
@@ -347,7 +342,6 @@ static const IEnumFORMATETCVtbl efvt =
  *
  * Creates an IEnumFORMATETC enumerator from an array of FORMATETC
  * Structures.
- * NOTE: this does not AddRef the interface.
  */
 static HRESULT enum_fmtetc_construct(UINT cfmt, const FORMATETC afmt[], IEnumFORMATETC **obj)
 {
@@ -358,7 +352,7 @@ static HRESULT enum_fmtetc_construct(UINT cfmt, const FORMATETC afmt[], IEnumFOR
   ef = HeapAlloc(GetProcessHeap(), 0, sizeof(*ef));
   if (!ef) return E_OUTOFMEMORY;
 
-  ef->ref = 0;
+  ef->ref = 1;
   ef->lpVtbl = &efvt;
 
   ef->pos = 0;
@@ -1045,12 +1039,6 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
   hr = enum_fmtetc_construct( cfmt, afmt, ppenumFormatEtc );
   if (FAILED(hr))
     HANDLE_ERROR( hr );
-
-  /* FIXME: This is wrong! */
-  if (FAILED( hr = IEnumFORMATETC_AddRef(*ppenumFormatEtc)))
-    HANDLE_ERROR( hr );
-
-  hr = S_OK;
 
 CLEANUP:
   /*
