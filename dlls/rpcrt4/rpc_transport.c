@@ -822,6 +822,12 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
   {
     int val;
 
+    if (ai_cur->ai_family != AF_INET && ai_cur->ai_family != AF_INET6)
+    {
+      TRACE("skipping non-IP/IPv6 address family\n");
+      continue;
+    }
+
     if (TRACE_ON(rpc))
     {
       char host[256];
@@ -901,6 +907,12 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         struct sockaddr_storage sa;
         socklen_t sa_len;
         char service[NI_MAXSERV];
+
+        if (ai_cur->ai_family != AF_INET && ai_cur->ai_family != AF_INET6)
+        {
+            TRACE("skipping non-IP/IPv6 address family\n");
+            continue;
+        }
 
         if (TRACE_ON(rpc))
         {
