@@ -681,49 +681,16 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const WineDirect3
 }
 
 static inline void remove_vbos(IWineD3DDeviceImpl *This, WineDirect3DVertexStridedData *s) {
-    unsigned char i;
-    struct wined3d_buffer *vb;
+    unsigned int i;
 
-    if(s->u.s.position.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.position.streamNo];
-        s->u.s.position.VBO = 0;
-        s->u.s.position.lpData = (BYTE *) ((unsigned long) s->u.s.position.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.blendWeights.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.blendWeights.streamNo];
-        s->u.s.blendWeights.VBO = 0;
-        s->u.s.blendWeights.lpData = (BYTE *) ((unsigned long) s->u.s.blendWeights.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.blendMatrixIndices.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.blendMatrixIndices.streamNo];
-        s->u.s.blendMatrixIndices.VBO = 0;
-        s->u.s.blendMatrixIndices.lpData = (BYTE *) ((unsigned long) s->u.s.blendMatrixIndices.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.normal.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.normal.streamNo];
-        s->u.s.normal.VBO = 0;
-        s->u.s.normal.lpData = (BYTE *) ((unsigned long) s->u.s.normal.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.pSize.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.pSize.streamNo];
-        s->u.s.pSize.VBO = 0;
-        s->u.s.pSize.lpData = (BYTE *) ((unsigned long) s->u.s.pSize.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.diffuse.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.diffuse.streamNo];
-        s->u.s.diffuse.VBO = 0;
-        s->u.s.diffuse.lpData = (BYTE *) ((unsigned long) s->u.s.diffuse.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    if(s->u.s.specular.VBO) {
-        vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.specular.streamNo];
-        s->u.s.specular.VBO = 0;
-        s->u.s.specular.lpData = (BYTE *) ((unsigned long) s->u.s.specular.lpData + (unsigned long) vb->resource.allocatedMemory);
-    }
-    for(i = 0; i < WINED3DDP_MAXTEXCOORD; i++) {
-        if(s->u.s.texCoords[i].VBO) {
-            vb = (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.s.texCoords[i].streamNo];
-            s->u.s.texCoords[i].VBO = 0;
-            s->u.s.texCoords[i].lpData = (BYTE *) ((unsigned long) s->u.s.texCoords[i].lpData + (unsigned long) vb->resource.allocatedMemory);
+    for (i = 0; i < (sizeof(s->u.input) / sizeof(*s->u.input)); ++i)
+    {
+        if (s->u.input[i].VBO)
+        {
+            struct wined3d_buffer *vb =
+                    (struct wined3d_buffer *)This->stateBlock->streamSource[s->u.input[i].streamNo];
+            s->u.input[i].VBO = 0;
+            s->u.input[i].lpData = (BYTE *)((unsigned long)s->u.input[i].lpData + (unsigned long)vb->resource.allocatedMemory);
         }
     }
 }
