@@ -105,32 +105,6 @@ static inline ole_clipbrd *impl_from_IDataObject(IDataObject *iface)
     return (ole_clipbrd*)((char*)iface - FIELD_OFFSET(ole_clipbrd, lpvtbl));
 }
 
-/****************************************************************************
-*   IEnumFORMATETC implementation
-*   DO NOT add any members before the VTables declaration!
-*/
-typedef struct
-{
-  /* IEnumFORMATETC VTable */
-  const IEnumFORMATETCVtbl          *lpVtbl;
-
-  /* IEnumFORMATETC fields */
-  UINT                         posFmt;    /* current enumerator position */
-  UINT                         countFmt;  /* number of EnumFORMATETC's in array */
-  LPFORMATETC                  pFmt;      /* array of EnumFORMATETC's */
-
-  /*
-   * Reference count of this object
-   */
-  LONG                         ref;
-
-  /*
-   * IUnknown implementation of the parent data object.
-   */
-  IUnknown*                    pUnkDataObj;
-
-} IEnumFORMATETCImpl;
-
 typedef struct PresentationDataHeader
 {
   BYTE unknown1[28];
@@ -177,6 +151,28 @@ typedef struct
  *  the OLE clipboard's IDataObject.
  *---------------------------------------------------------------------*/
 
+typedef struct enum_fmtetc
+{
+    const IEnumFORMATETCVtbl *lpVtbl;
+    LONG ref;
+
+    UINT                         posFmt;    /* current enumerator position */
+    UINT                         countFmt;  /* number of EnumFORMATETC's in array */
+    LPFORMATETC                  pFmt;      /* array of EnumFORMATETC's */
+
+
+    /*
+     * IUnknown implementation of the parent data object.
+     */
+    IUnknown*                    pUnkDataObj;
+
+} enum_fmtetc;
+
+static inline enum_fmtetc *impl_from_IEnumFORMATETC(IEnumFORMATETC *iface)
+{
+    return (enum_fmtetc*)((char*)iface - FIELD_OFFSET(enum_fmtetc, lpVtbl));
+}
+
 /************************************************************************
  * OLEClipbrd_IEnumFORMATETC_QueryInterface (IUnknown)
  *
@@ -185,21 +181,16 @@ typedef struct
 static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_QueryInterface
   (LPENUMFORMATETC iface, REFIID riid, LPVOID* ppvObj)
 {
-  IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
+  enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
 
-  TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
-
-  /*
-   * Since enumerators are separate objects from the parent data object
-   * we only need to support the IUnknown and IEnumFORMATETC interfaces
-   */
+  TRACE("(%p)->(IID: %s, %p)\n", This, debugstr_guid(riid), ppvObj);
 
   *ppvObj = NULL;
 
   if(IsEqualIID(riid, &IID_IUnknown) ||
      IsEqualIID(riid, &IID_IEnumFORMATETC))
   {
-    *ppvObj = This;
+    *ppvObj = iface;
   }
 
   if(*ppvObj)
@@ -224,7 +215,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_QueryInterface
  */
 static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_AddRef(LPENUMFORMATETC iface)
 {
-  IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
+  enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   TRACE("(%p)->(count=%u)\n",This, This->ref);
 
   if (This->pUnkDataObj)
@@ -240,7 +231,7 @@ static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_AddRef(LPENUMFORMATETC iface)
  */
 static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_Release(LPENUMFORMATETC iface)
 {
-  IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
+  enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   ULONG ref;
 
   TRACE("(%p)->(count=%u)\n",This, This->ref);
@@ -266,7 +257,7 @@ static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_Release(LPENUMFORMATETC iface)
 static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Next
   (LPENUMFORMATETC iface, ULONG celt, FORMATETC *rgelt, ULONG *pceltFethed)
 {
-  IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
+  enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   UINT cfetch;
   HRESULT hres = S_FALSE;
 
@@ -304,7 +295,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Next
  */
 static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Skip(LPENUMFORMATETC iface, ULONG celt)
 {
-  IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
+  enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   TRACE("(%p)->(num=%u)\n", This, celt);
 
   This->posFmt += celt;
@@ -323,7 +314,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Skip(LPENUMFORMATETC iface, ULON
  */
 static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Reset(LPENUMFORMATETC iface)
 {
-  IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
+  enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   TRACE("(%p)->()\n", This);
 
   This->posFmt = 0;
@@ -341,7 +332,7 @@ static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORM
 static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone
   (LPENUMFORMATETC iface, LPENUMFORMATETC* ppenum)
 {
-  IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
+  enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   HRESULT hr = S_OK;
 
   TRACE("(%p)->(ppenum=%p)\n", This, ppenum);
@@ -381,10 +372,10 @@ static const IEnumFORMATETCVtbl efvt =
 static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC afmt[],
                                                     LPUNKNOWN pUnkDataObj)
 {
-  IEnumFORMATETCImpl* ef;
+  enum_fmtetc* ef;
   DWORD size=cfmt * sizeof(FORMATETC);
 
-  ef = HeapAlloc(GetProcessHeap(), 0, sizeof(IEnumFORMATETCImpl));
+  ef = HeapAlloc(GetProcessHeap(), 0, sizeof(*ef));
   if (!ef)
     return NULL;
 
