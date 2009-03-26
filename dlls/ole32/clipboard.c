@@ -159,13 +159,6 @@ typedef struct enum_fmtetc
     UINT pos;    /* current enumerator position */
     UINT                         countFmt;  /* number of EnumFORMATETC's in array */
     LPFORMATETC                  pFmt;      /* array of EnumFORMATETC's */
-
-
-    /*
-     * IUnknown implementation of the parent data object.
-     */
-    IUnknown*                    pUnkDataObj;
-
 } enum_fmtetc;
 
 static inline enum_fmtetc *impl_from_IEnumFORMATETC(IEnumFORMATETC *iface)
@@ -207,19 +200,11 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_QueryInterface
 /************************************************************************
  * OLEClipbrd_IEnumFORMATETC_AddRef (IUnknown)
  *
- * Since enumerating formats only makes sense when our data object is around,
- * we insure that it stays as long as we stay by calling our parents IUnknown
- * for AddRef and Release. But since we are not controlled by the lifetime of
- * the outer object, we still keep our own reference count in order to
- * free ourselves.
  */
 static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_AddRef(LPENUMFORMATETC iface)
 {
   enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   TRACE("(%p)->(count=%u)\n",This, This->ref);
-
-  if (This->pUnkDataObj)
-    IUnknown_AddRef(This->pUnkDataObj);
 
   return InterlockedIncrement(&This->ref);
 }
@@ -235,9 +220,6 @@ static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_Release(LPENUMFORMATETC iface)
   ULONG ref;
 
   TRACE("(%p)->(count=%u)\n",This, This->ref);
-
-  if (This->pUnkDataObj)
-    IUnknown_Release(This->pUnkDataObj);  /* Release parent data object */
 
   ref = InterlockedDecrement(&This->ref);
   if (!ref)
@@ -321,8 +303,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Reset(LPENUMFORMATETC iface)
   return S_OK;
 }
 
-static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC afmt[],
-                                                           LPUNKNOWN pUnkDataObj);
+static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC afmt[]);
 
 /************************************************************************
  * OLEClipbrd_IEnumFORMATETC_Clone (IEnumFORMATETC)
@@ -341,8 +322,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone
     return E_INVALIDARG;
 
   *ppenum = OLEClipbrd_IEnumFORMATETC_Construct(This->countFmt,
-                                                This->pFmt,
-                                                This->pUnkDataObj);
+                                                This->pFmt);
 
   /* FIXME: This is wrong! */
   if (FAILED( hr = IEnumFORMATETC_AddRef(*ppenum)))
@@ -363,15 +343,14 @@ static const IEnumFORMATETCVtbl efvt =
 };
 
 /************************************************************************
- * OLEClipbrd_IEnumFORMATETC_Construct (UINT, const FORMATETC, LPUNKNOWN)
+ * OLEClipbrd_IEnumFORMATETC_Construct
  *
  * Creates an IEnumFORMATETC enumerator from an array of FORMATETC
- * Structures. pUnkOuter is the outer unknown for reference counting only.
+ * Structures.
  * NOTE: this does not AddRef the interface.
  */
 
-static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC afmt[],
-                                                    LPUNKNOWN pUnkDataObj)
+static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORMATETC afmt[])
 {
   enum_fmtetc* ef;
   DWORD size=cfmt * sizeof(FORMATETC);
@@ -382,7 +361,6 @@ static LPENUMFORMATETC OLEClipbrd_IEnumFORMATETC_Construct(UINT cfmt, const FORM
 
   ef->ref = 0;
   ef->lpVtbl = &efvt;
-  ef->pUnkDataObj = pUnkDataObj;
 
   ef->pos = 0;
   ef->countFmt = cfmt;
@@ -1068,7 +1046,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
    * Create an EnumFORMATETC enumerator and return an
    * EnumFORMATETC after bumping up its ref count
    */
-  *ppenumFormatEtc = OLEClipbrd_IEnumFORMATETC_Construct( cfmt, afmt, (LPUNKNOWN)iface);
+  *ppenumFormatEtc = OLEClipbrd_IEnumFORMATETC_Construct( cfmt, afmt );
   if (!(*ppenumFormatEtc))
     HANDLE_ERROR( E_OUTOFMEMORY );
 
