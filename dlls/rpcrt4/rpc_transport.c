@@ -1414,8 +1414,6 @@ static int rpcrt4_protseq_sock_wait_for_new_connection(RpcServerProtseq *protseq
     return 1;
 }
 
-#endif  /* HAVE_SOCKETPAIR */
-
 static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *tower_data,
                                                          size_t tower_size,
                                                          char **networkaddr,
@@ -2364,6 +2362,7 @@ static RPC_STATUS rpcrt4_ncacn_http_parse_top_of_tower(const unsigned char *towe
                                             networkaddr, EPM_PROTOCOL_HTTP,
                                             endpoint);
 }
+#endif  /* HAVE_SOCKETPAIR */
 
 static const struct connection_ops conn_protseq_list[] = {
   { "ncacn_np",
@@ -2409,7 +2408,6 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_ncacn_ip_tcp_parse_top_of_tower,
     NULL,
   },
-#endif
   { "ncacn_http",
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_HTTP },
     rpcrt4_ncacn_http_alloc,
@@ -2424,6 +2422,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_ncacn_http_parse_top_of_tower,
     rpcrt4_ncacn_http_receive_fragment,
   },
+#endif
 };
 
 
