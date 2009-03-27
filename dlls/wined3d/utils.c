@@ -429,6 +429,133 @@ static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_form
     return status == GL_FRAMEBUFFER_COMPLETE_EXT;
 }
 
+static void apply_format_fixups(WineD3D_GL_Info *gl_info)
+{
+    int idx;
+
+    idx = getFmtIdx(WINED3DFMT_R16_FLOAT);
+    gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+    /* When ARB_texture_rg is supported we only require 16-bit for R16F instead of 64-bit RGBA16F */
+    if (GL_SUPPORT(ARB_TEXTURE_RG))
+    {
+        gl_info->gl_formats[idx].glInternal = GL_R16F;
+        gl_info->gl_formats[idx].glGammaInternal = GL_R16F;
+    }
+
+    idx = getFmtIdx(WINED3DFMT_R32_FLOAT);
+    gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+    /* When ARB_texture_rg is supported we only require 32-bit for R32F instead of 128-bit RGBA32F */
+    if (GL_SUPPORT(ARB_TEXTURE_RG))
+    {
+        gl_info->gl_formats[idx].glInternal = GL_R32F;
+        gl_info->gl_formats[idx].glGammaInternal = GL_R32F;
+    }
+
+    idx = getFmtIdx(WINED3DFMT_R16G16_UNORM);
+    gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+
+    idx = getFmtIdx(WINED3DFMT_R16G16_FLOAT);
+    gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+
+    idx = getFmtIdx(WINED3DFMT_R32G32_FLOAT);
+    gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
+
+    /* V8U8 is supported natively by GL_ATI_envmap_bumpmap and GL_NV_texture_shader.
+     * V16U16 is only supported by GL_NV_texture_shader. The formats need fixup if
+     * their extensions are not available. GL_ATI_envmap_bumpmap is not used because
+     * the only driver that implements it(fglrx) has a buggy implementation.
+     *
+     * V8U8 and V16U16 need a fixup of the undefined blue channel. OpenGL
+     * returns 0.0 when sampling from it, DirectX 1.0. So we always have in-shader
+     * conversion for this format.
+     */
+    if (!GL_SUPPORT(NV_TEXTURE_SHADER))
+    {
+        idx = getFmtIdx(WINED3DFMT_R8G8_SNORM);
+        gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+        idx = getFmtIdx(WINED3DFMT_R16G16_SNORM);
+        gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+    }
+    else
+    {
+        idx = getFmtIdx(WINED3DFMT_R8G8_SNORM);
+        gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+        idx = getFmtIdx(WINED3DFMT_R16G16_SNORM);
+        gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+    }
+
+    if (!GL_SUPPORT(NV_TEXTURE_SHADER))
+    {
+        /* If GL_NV_texture_shader is not supported, those formats are converted, incompatibly
+         * with each other
+         */
+        idx = getFmtIdx(WINED3DFMT_L6V5U5);
+        gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE);
+        idx = getFmtIdx(WINED3DFMT_X8L8V8U8);
+        gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_W);
+        idx = getFmtIdx(WINED3DFMT_R8G8B8A8_SNORM);
+        gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 1, CHANNEL_SOURCE_Z, 1, CHANNEL_SOURCE_W);
+    }
+    else
+    {
+        /* If GL_NV_texture_shader is supported, WINED3DFMT_L6V5U5 and WINED3DFMT_X8L8V8U8
+         * are converted at surface loading time, but they do not need any modification in
+         * the shader, thus they are compatible with all WINED3DFMT_UNKNOWN group formats.
+         * WINED3DFMT_Q8W8V8U8 doesn't even need load-time conversion
+         */
+    }
+
+    if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC))
+    {
+        idx = getFmtIdx(WINED3DFMT_ATI2N);
+        gl_info->gl_formats[idx].glInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+        gl_info->gl_formats[idx].glGammaInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+        gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
+                0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+    }
+    else if (GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC))
+    {
+        idx = getFmtIdx(WINED3DFMT_ATI2N);
+        gl_info->gl_formats[idx].glInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
+        gl_info->gl_formats[idx].glGammaInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
+        gl_info->gl_formats[idx].color_fixup= create_color_fixup_desc(
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_W, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
+    }
+
+    if (!GL_SUPPORT(APPLE_YCBCR_422))
+    {
+        idx = getFmtIdx(WINED3DFMT_YUY2);
+        gl_info->gl_formats[idx].glInternal = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[idx].glGammaInternal = GL_LUMINANCE_ALPHA; /* not srgb */
+        gl_info->gl_formats[idx].glFormat = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[idx].glType = GL_UNSIGNED_BYTE;
+        gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YUY2);
+
+        idx = getFmtIdx(WINED3DFMT_UYVY);
+        gl_info->gl_formats[idx].glInternal = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[idx].glGammaInternal = GL_LUMINANCE_ALPHA; /* not srgb */
+        gl_info->gl_formats[idx].glFormat = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[idx].glType = GL_UNSIGNED_BYTE;
+        gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_UYVY);
+    }
+
+    idx = getFmtIdx(WINED3DFMT_YV12);
+    gl_info->gl_formats[idx].heightscale = 1.5;
+    gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YV12);
+}
+
 BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
 {
     return init_format_base_info(gl_info);
@@ -437,16 +564,15 @@ BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
 BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 {
     unsigned int src;
-    int dst;
 
     if (!init_format_base_info(gl_info)) return FALSE;
 
     /* If a format depends on some extensions, remove them from the table above and initialize them
-     * after this loop
-     */
-    for(src = 0; src < sizeof(gl_formats_template) / sizeof(gl_formats_template[0]); src++) {
+     * after this loop */
+    for (src = 0; src < sizeof(gl_formats_template) / sizeof(gl_formats_template[0]); ++src)
+    {
         struct GlPixelFormatDesc *desc;
-        dst = getFmtIdx(gl_formats_template[src].fmt);
+        int dst = getFmtIdx(gl_formats_template[src].fmt);
         desc = &gl_info->gl_formats[dst];
 
         desc->glInternal = gl_formats_template[src].glInternal;
@@ -462,136 +588,26 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
             /* Check if the default internal format is supported as a frame buffer target, otherwise
              * fall back to the render target internal.
              *
-             * Try to stick to the standard format if possible, this limits precision differences
-             */
+             * Try to stick to the standard format if possible, this limits precision differences */
             if (!check_fbo_compat(gl_info, gl_formats_template[src].glInternal))
             {
                 TRACE("Internal format of %s not supported as FBO target, using render target internal instead\n",
                         debug_d3dformat(gl_formats_template[src].fmt));
                 gl_info->gl_formats[dst].rtInternal = gl_formats_template[src].rtInternal;
-            } else {
+            }
+            else
+            {
                 TRACE("Format %s is supported as fbo target\n", debug_d3dformat(gl_formats_template[src].fmt));
                 gl_info->gl_formats[dst].rtInternal = gl_formats_template[src].glInternal;
             }
-        } else {
+        }
+        else
+        {
             gl_info->gl_formats[dst].rtInternal = gl_formats_template[src].glInternal;
         }
     }
 
-    dst = getFmtIdx(WINED3DFMT_R16_FLOAT);
-    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
-    /* When ARB_texture_rg is supported we only require 16-bit for R16F instead of 64-bit RGBA16F */
-    if(GL_SUPPORT(ARB_TEXTURE_RG))
-    {
-        gl_info->gl_formats[dst].glInternal = GL_R16F;
-        gl_info->gl_formats[dst].glGammaInternal = GL_R16F;
-    }
-
-    dst = getFmtIdx(WINED3DFMT_R32_FLOAT);
-    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
-    /* When ARB_texture_rg is supported we only require 32-bit for R32F instead of 128-bit RGBA32F */
-    if(GL_SUPPORT(ARB_TEXTURE_RG))
-    {
-        gl_info->gl_formats[dst].glInternal = GL_R32F;
-        gl_info->gl_formats[dst].glGammaInternal = GL_R32F;
-    }
-
-    dst = getFmtIdx(WINED3DFMT_R16G16_UNORM);
-    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
-
-    dst = getFmtIdx(WINED3DFMT_R16G16_FLOAT);
-    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
-
-    dst = getFmtIdx(WINED3DFMT_R32G32_FLOAT);
-    gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-            0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
-
-    /* V8U8 is supported natively by GL_ATI_envmap_bumpmap and GL_NV_texture_shader.
-     * V16U16 is only supported by GL_NV_texture_shader. The formats need fixup if
-     * their extensions are not available. GL_ATI_envmap_bumpmap is not used because
-     * the only driver that implements it(fglrx) has a buggy implementation.
-     *
-     * V8U8 and V16U16 need a fixup of the undefined blue channel. OpenGL
-     * returns 0.0 when sampling from it, DirectX 1.0. So we always have in-shader
-     * conversion for this format.
-     */
-    if (!GL_SUPPORT(NV_TEXTURE_SHADER))
-    {
-        dst = getFmtIdx(WINED3DFMT_R8G8_SNORM);
-        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-        dst = getFmtIdx(WINED3DFMT_R16G16_SNORM);
-        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-    }
-    else
-    {
-        dst = getFmtIdx(WINED3DFMT_R8G8_SNORM);
-        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-        dst = getFmtIdx(WINED3DFMT_R16G16_SNORM);
-        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-    }
-
-    if(!GL_SUPPORT(NV_TEXTURE_SHADER)) {
-        /* If GL_NV_texture_shader is not supported, those formats are converted, incompatibly
-         * with each other
-         */
-        dst = getFmtIdx(WINED3DFMT_L6V5U5);
-        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE);
-        dst = getFmtIdx(WINED3DFMT_X8L8V8U8);
-        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_W);
-        dst = getFmtIdx(WINED3DFMT_R8G8B8A8_SNORM);
-        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-                1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 1, CHANNEL_SOURCE_Z, 1, CHANNEL_SOURCE_W);
-    } else {
-        /* If GL_NV_texture_shader is supported, WINED3DFMT_L6V5U5 and WINED3DFMT_X8L8V8U8
-         * are converted at surface loading time, but they do not need any modification in
-         * the shader, thus they are compatible with all WINED3DFMT_UNKNOWN group formats.
-         * WINED3DFMT_Q8W8V8U8 doesn't even need load-time conversion
-         */
-    }
-
-    if(GL_SUPPORT(EXT_TEXTURE_COMPRESSION_RGTC)) {
-        dst = getFmtIdx(WINED3DFMT_ATI2N);
-        gl_info->gl_formats[dst].glInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
-        gl_info->gl_formats[dst].glGammaInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
-        gl_info->gl_formats[dst].color_fixup = create_color_fixup_desc(
-                0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-    } else if(GL_SUPPORT(ATI_TEXTURE_COMPRESSION_3DC)) {
-        dst = getFmtIdx(WINED3DFMT_ATI2N);
-        gl_info->gl_formats[dst].glInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
-        gl_info->gl_formats[dst].glGammaInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
-        gl_info->gl_formats[dst].color_fixup= create_color_fixup_desc(
-                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_W, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-    }
-
-    if(!GL_SUPPORT(APPLE_YCBCR_422)) {
-        dst = getFmtIdx(WINED3DFMT_YUY2);
-        gl_info->gl_formats[dst].glInternal = GL_LUMINANCE_ALPHA;
-        gl_info->gl_formats[dst].glGammaInternal = GL_LUMINANCE_ALPHA; /* not srgb */
-        gl_info->gl_formats[dst].glFormat = GL_LUMINANCE_ALPHA;
-        gl_info->gl_formats[dst].glType = GL_UNSIGNED_BYTE;
-        gl_info->gl_formats[dst].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YUY2);
-
-        dst = getFmtIdx(WINED3DFMT_UYVY);
-        gl_info->gl_formats[dst].glInternal = GL_LUMINANCE_ALPHA;
-        gl_info->gl_formats[dst].glGammaInternal = GL_LUMINANCE_ALPHA; /* not srgb */
-        gl_info->gl_formats[dst].glFormat = GL_LUMINANCE_ALPHA;
-        gl_info->gl_formats[dst].glType = GL_UNSIGNED_BYTE;
-        gl_info->gl_formats[dst].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_UYVY);
-    }
-
-    dst = getFmtIdx(WINED3DFMT_YV12);
-    gl_info->gl_formats[dst].heightscale = 1.5;
-    gl_info->gl_formats[dst].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YV12);
+    apply_format_fixups(gl_info);
 
     return TRUE;
 }
