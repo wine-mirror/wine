@@ -375,7 +375,7 @@ static inline int getFmtIdx(WINED3DFORMAT fmt) {
     return -1;
 }
 
-BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
+static BOOL init_format_base_info(WineD3D_GL_Info *gl_info)
 {
     UINT format_count = sizeof(formats) / sizeof(*formats);
     UINT i;
@@ -404,15 +404,18 @@ BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
     return TRUE;
 }
 
+BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
+{
+    return init_format_base_info(gl_info);
+}
+
 #define GLINFO_LOCATION (*gl_info)
 BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 {
     unsigned int src;
     int dst;
 
-    gl_info->gl_formats = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                    sizeof(formats) / sizeof(formats[0]) * sizeof(gl_info->gl_formats[0]));
-    if(!gl_info->gl_formats) return FALSE;
+    if (!init_format_base_info(gl_info)) return FALSE;
 
     /* If a format depends on some extensions, remove them from the table above and initialize them
      * after this loop
@@ -421,16 +424,6 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         struct GlPixelFormatDesc *desc;
         dst = getFmtIdx(gl_formats_template[src].fmt);
         desc = &gl_info->gl_formats[dst];
-
-        desc->format = formats[dst].format;
-        desc->red_mask = formats[dst].redMask;
-        desc->green_mask = formats[dst].greenMask;
-        desc->blue_mask = formats[dst].blueMask;
-        desc->alpha_mask = formats[dst].alphaMask;
-        desc->byte_count = formats[dst].bpp;
-        desc->depth_size = formats[dst].depthSize;
-        desc->stencil_size = formats[dst].stencilSize;
-        if (formats[dst].isFourcc) desc->Flags |= WINED3DFMT_FLAG_FOURCC;
 
         desc->glInternal = gl_formats_template[src].glInternal;
         desc->glGammaInternal = gl_formats_template[src].glGammaInternal;
