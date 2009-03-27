@@ -516,15 +516,19 @@ static void create_test_guid(LPSTR prodcode, LPSTR squashed)
 static void get_user_sid(LPSTR *usersid)
 {
     HANDLE token;
-    BYTE buf[1024];
     DWORD size;
     PTOKEN_USER user;
 
     OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
-    size = sizeof(buf);
-    GetTokenInformation(token, TokenUser, buf, size, &size);
-    user = (PTOKEN_USER)buf;
+
+    size = 0;
+    GetTokenInformation(token, TokenUser, NULL, size, &size);
+    user = HeapAlloc(GetProcessHeap(), 0, size);
+
+    GetTokenInformation(token, TokenUser, user, size, &size);
     pConvertSidToStringSidA(user->User.Sid, usersid);
+
+    HeapFree(GetProcessHeap(), 0, user);
     CloseHandle(token);
 }
 
