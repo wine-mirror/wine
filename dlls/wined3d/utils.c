@@ -429,6 +429,49 @@ static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_form
     return status == GL_FRAMEBUFFER_COMPLETE_EXT;
 }
 
+static void init_format_texture_info(WineD3D_GL_Info *gl_info)
+{
+    unsigned int i;
+
+    for (i = 0; i < sizeof(gl_formats_template) / sizeof(gl_formats_template[0]); ++i)
+    {
+        int fmt_idx = getFmtIdx(gl_formats_template[i].fmt);
+        struct GlPixelFormatDesc *desc;
+
+        desc = &gl_info->gl_formats[fmt_idx];
+        desc->glInternal = gl_formats_template[i].glInternal;
+        desc->glGammaInternal = gl_formats_template[i].glGammaInternal;
+        desc->glFormat = gl_formats_template[i].glFormat;
+        desc->glType = gl_formats_template[i].glType;
+        desc->color_fixup = COLOR_FIXUP_IDENTITY;
+        desc->Flags |= gl_formats_template[i].Flags;
+        desc->heightscale = 1.0;
+
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && gl_formats_template[i].rtInternal)
+        {
+            /* Check if the default internal format is supported as a frame buffer target, otherwise
+             * fall back to the render target internal.
+             *
+             * Try to stick to the standard format if possible, this limits precision differences */
+            if (!check_fbo_compat(gl_info, gl_formats_template[i].glInternal))
+            {
+                TRACE("Internal format of %s not supported as FBO target, using render target internal instead\n",
+                        debug_d3dformat(gl_formats_template[i].fmt));
+                desc->rtInternal = gl_formats_template[i].rtInternal;
+            }
+            else
+            {
+                TRACE("Format %s is supported as fbo target\n", debug_d3dformat(gl_formats_template[i].fmt));
+                desc->rtInternal = gl_formats_template[i].glInternal;
+            }
+        }
+        else
+        {
+            desc->rtInternal = gl_formats_template[i].glInternal;
+        }
+    }
+}
+
 static void apply_format_fixups(WineD3D_GL_Info *gl_info)
 {
     int idx;
@@ -563,49 +606,9 @@ BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
 
 BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 {
-    unsigned int src;
-
     if (!init_format_base_info(gl_info)) return FALSE;
 
-    /* If a format depends on some extensions, remove them from the table above and initialize them
-     * after this loop */
-    for (src = 0; src < sizeof(gl_formats_template) / sizeof(gl_formats_template[0]); ++src)
-    {
-        struct GlPixelFormatDesc *desc;
-        int dst = getFmtIdx(gl_formats_template[src].fmt);
-        desc = &gl_info->gl_formats[dst];
-
-        desc->glInternal = gl_formats_template[src].glInternal;
-        desc->glGammaInternal = gl_formats_template[src].glGammaInternal;
-        desc->glFormat = gl_formats_template[src].glFormat;
-        desc->glType = gl_formats_template[src].glType;
-        desc->color_fixup = COLOR_FIXUP_IDENTITY;
-        desc->Flags |= gl_formats_template[src].Flags;
-        desc->heightscale = 1.0;
-
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && gl_formats_template[src].rtInternal)
-        {
-            /* Check if the default internal format is supported as a frame buffer target, otherwise
-             * fall back to the render target internal.
-             *
-             * Try to stick to the standard format if possible, this limits precision differences */
-            if (!check_fbo_compat(gl_info, gl_formats_template[src].glInternal))
-            {
-                TRACE("Internal format of %s not supported as FBO target, using render target internal instead\n",
-                        debug_d3dformat(gl_formats_template[src].fmt));
-                gl_info->gl_formats[dst].rtInternal = gl_formats_template[src].rtInternal;
-            }
-            else
-            {
-                TRACE("Format %s is supported as fbo target\n", debug_d3dformat(gl_formats_template[src].fmt));
-                gl_info->gl_formats[dst].rtInternal = gl_formats_template[src].glInternal;
-            }
-        }
-        else
-        {
-            gl_info->gl_formats[dst].rtInternal = gl_formats_template[src].glInternal;
-        }
-    }
+    init_format_texture_info(gl_info);
 
     apply_format_fixups(gl_info);
 
