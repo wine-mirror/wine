@@ -129,12 +129,12 @@ fail:
 
 static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
         const enum wined3d_buffer_conversion_type conversion_type,
-        const WineDirect3DStridedData *attrib, DWORD *stride_this_run, const DWORD type)
+        const struct wined3d_stream_info_element *attrib, DWORD *stride_this_run, const DWORD type)
 {
     DWORD attrib_size;
     BOOL ret = FALSE;
     unsigned int i;
-    DWORD offset = This->resource.wineD3DDevice->stateBlock->streamOffset[attrib->streamNo];
+    DWORD offset = This->resource.wineD3DDevice->stateBlock->streamOffset[attrib->stream_idx];
     DWORD_PTR data;
 
     /* Check for some valid situations which cause us pain. One is if the buffer is used for
@@ -142,18 +142,18 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
      * with different strides. In the 2nd case we might have to drop conversion entirely,
      * it is possible that the same bytes are once read as FLOAT2 and once as UBYTE4N.
      */
-    if (attrib->dwStride == 0)
+    if (!attrib->stride)
     {
         FIXME("%s used with stride 0, let's hope we get the vertex stride from somewhere else\n",
                 debug_d3ddecltype(type));
     }
-    else if(attrib->dwStride != *stride_this_run && *stride_this_run)
+    else if(attrib->stride != *stride_this_run && *stride_this_run)
     {
-        FIXME("Got two concurrent strides, %d and %d\n", attrib->dwStride, *stride_this_run);
+        FIXME("Got two concurrent strides, %d and %d\n", attrib->stride, *stride_this_run);
     }
     else
     {
-        *stride_this_run = attrib->dwStride;
+        *stride_this_run = attrib->stride;
         if (This->stride != *stride_this_run)
         {
             /* We rely that this happens only on the first converted attribute that is found,
@@ -168,7 +168,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
         }
     }
 
-    data = (((DWORD_PTR) attrib->lpData) + offset) % This->stride;
+    data = (((DWORD_PTR)attrib->data) + offset) % This->stride;
     attrib_size = WINED3D_ATR_SIZE(type) * WINED3D_ATR_TYPESIZE(type);
     for (i = 0; i < attrib_size; ++i)
     {
@@ -185,18 +185,18 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
 }
 
 static BOOL buffer_check_attribute(struct wined3d_buffer *This,
-        const WineDirect3DStridedData *attrib, const BOOL check_d3dcolor, const BOOL is_ffp_position,
+        const struct wined3d_stream_info_element *attrib, const BOOL check_d3dcolor, const BOOL is_ffp_position,
         const BOOL is_ffp_color, DWORD *stride_this_run, BOOL *float16_used)
 {
     BOOL ret = FALSE;
-    DWORD type;
+    WINED3DDECLTYPE type;
 
     /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
      * there, on nonexistent attribs the vbo is 0.
      */
-    if (attrib->VBO != This->buffer_object) return FALSE;
+    if (attrib->buffer_object != This->buffer_object) return FALSE;
 
-    type = attrib->dwType;
+    type = attrib->d3d_type;
     /* Look for newly appeared conversion */
     if (!GL_SUPPORT(NV_HALF_FLOAT) && (type == WINED3DDECLTYPE_FLOAT16_2 || type == WINED3DDECLTYPE_FLOAT16_4))
     {
@@ -228,7 +228,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This,
 }
 
 static UINT *find_conversion_shift(struct wined3d_buffer *This,
-        const WineDirect3DVertexStridedData *strided, UINT stride)
+        const struct wined3d_stream_info *strided, UINT stride)
 {
     UINT *ret, i, j, shift, orig_type_size;
     DWORD type;
@@ -243,9 +243,9 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
     ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DWORD) * stride);
     for (i = 0; i < MAX_ATTRIBS; ++i)
     {
-        if (strided->u.input[i].VBO != This->buffer_object) continue;
+        if (strided->elements[i].buffer_object != This->buffer_object) continue;
 
-        type = strided->u.input[i].dwType;
+        type = strided->elements[i].d3d_type;
         if (type == WINED3DDECLTYPE_FLOAT16_2)
         {
             shift = 4;
@@ -258,7 +258,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
              */
             for (j = 4; j < 8; ++j)
             {
-                ret[(DWORD_PTR)strided->u.input[i].lpData + j] += 4;
+                ret[(DWORD_PTR)strided->elements[i].data + j] += 4;
             }
         }
         else
@@ -270,7 +270,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
         if (shift)
         {
             orig_type_size = WINED3D_ATR_TYPESIZE(type) * WINED3D_ATR_SIZE(type);
-            for (j = (DWORD_PTR)strided->u.input[i].lpData + orig_type_size; j < stride; ++j)
+            for (j = (DWORD_PTR)strided->elements[i].data + orig_type_size; j < stride; ++j)
             {
                 ret[j] += shift;
             }
@@ -371,7 +371,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
         }
         for (i = 0; i < MAX_ATTRIBS; ++i)
         {
-            ret = buffer_check_attribute(This, &device->strided_streams.u.input[i],
+            ret = buffer_check_attribute(This, &device->strided_streams.elements[i],
                     FALSE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
         }
 
@@ -391,29 +391,29 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
          * the attributes that our current fixed function pipeline implementation cares for.
          */
         BOOL support_d3dcolor = GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA);
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.position,
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_POSITION],
                 TRUE, TRUE,  FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.normal,
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_NORMAL],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.diffuse,
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_DIFFUSE],
                 !support_d3dcolor, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.specular,
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_SPECULAR],
                 !support_d3dcolor, FALSE, TRUE,  &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[0],
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD0],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[1],
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD1],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[2],
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD2],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[3],
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD3],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[4],
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD4],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[5],
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD5],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[6],
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD6],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
-        ret = buffer_check_attribute(This, &device->strided_streams.u.s.texCoords[7],
+        ret = buffer_check_attribute(This, &device->strided_streams.elements[WINED3D_FFP_TEXCOORD7],
                 TRUE, FALSE, FALSE, &stride_this_run, &float16_used) || ret;
 
         if (float16_used) FIXME("Float16 conversion used with fixed function vertex processing\n");

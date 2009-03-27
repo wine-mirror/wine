@@ -591,8 +591,9 @@ do {                                          \
 
 /* Trace vector and strided data information */
 #define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
-#define TRACE_STRIDED(sd,name) TRACE( #name "=(data:%p, stride:%d, type:%d, vbo %d, stream %u)\n", \
-        sd->u.s.name.lpData, sd->u.s.name.dwStride, sd->u.s.name.dwType, sd->u.s.name.VBO, sd->u.s.name.streamNo);
+#define TRACE_STRIDED(si, name) TRACE( #name "=(data:%p, stride:%d, type:%d, vbo %d, stream %u)\n", \
+        si->elements[name].data, si->elements[name].stride, si->elements[name].d3d_type, \
+        si->elements[name].buffer_object, si->elements[name].stream_idx);
 
 /* Defines used for optimizations */
 
@@ -650,6 +651,47 @@ extern BOOL isDumpingFrames;
 extern LONG primCounter;
 #endif
 
+enum wined3d_ffp_idx
+{
+    WINED3D_FFP_POSITION = 0,
+    WINED3D_FFP_BLENDWEIGHT = 1,
+    WINED3D_FFP_BLENDINDICES = 2,
+    WINED3D_FFP_NORMAL = 3,
+    WINED3D_FFP_PSIZE = 4,
+    WINED3D_FFP_DIFFUSE = 5,
+    WINED3D_FFP_SPECULAR = 6,
+    WINED3D_FFP_TEXCOORD0 = 7,
+    WINED3D_FFP_TEXCOORD1 = 8,
+    WINED3D_FFP_TEXCOORD2 = 9,
+    WINED3D_FFP_TEXCOORD3 = 10,
+    WINED3D_FFP_TEXCOORD4 = 11,
+    WINED3D_FFP_TEXCOORD5 = 12,
+    WINED3D_FFP_TEXCOORD6 = 13,
+    WINED3D_FFP_TEXCOORD7 = 14,
+};
+
+struct wined3d_stream_info_element
+{
+    WINED3DDECLTYPE d3d_type;
+    GLint size;
+    GLint format;
+    GLenum type;
+    GLsizei stride;
+    GLboolean normalized;
+    const BYTE *data;
+    int type_size;
+    UINT stream_idx;
+    GLuint buffer_object;
+};
+
+struct wined3d_stream_info
+{
+    struct wined3d_stream_info_element elements[MAX_ATTRIBS];
+    BOOL position_transformed;
+    WORD swizzle_map; /* MAX_ATTRIBS, 16 */
+    WORD use_map; /* MAX_ATTRIBS, 16 */
+};
+
 /*****************************************************************************
  * Prototypes
  */
@@ -657,13 +699,6 @@ extern LONG primCounter;
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertices,
         UINT start_idx, UINT idxBytes, const void *idxData, UINT minIndex);
-
-void primitiveDeclarationConvertToStridedData(
-     IWineD3DDevice *iface,
-     BOOL useVertexShaderFunction,
-     WineDirect3DVertexStridedData *strided,
-     BOOL *fixup);
-
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 
 typedef void (WINE_GLAPI *glAttribFunc)(const void *data);
@@ -1174,7 +1209,7 @@ struct IWineD3DDeviceImpl
     DWORD                     rev_tex_unit_map[MAX_COMBINED_SAMPLERS];
 
     /* Stream source management */
-    WineDirect3DVertexStridedData strided_streams;
+    struct wined3d_stream_info strided_streams;
     const WineDirect3DVertexStridedData *up_strided;
 
     /* Context management */
@@ -1194,6 +1229,10 @@ struct IWineD3DDeviceImpl
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
 
+void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
+        BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup);
+void device_stream_info_from_strided(IWineD3DDeviceImpl *This,
+        const struct WineDirect3DVertexStridedData *strided, struct wined3d_stream_info *stream_info);
 HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfaceImpl *target, DWORD Count,
                                         CONST WINED3DRECT* pRects, DWORD Flags, WINED3DCOLOR Color,
                                         float Z, DWORD Stencil);

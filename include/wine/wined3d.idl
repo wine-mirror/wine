@@ -1918,41 +1918,16 @@ typedef struct WineDirect3DStridedData
     const BYTE *lpData; /* Pointer to start of data */
     DWORD dwStride;     /* Stride between occurrences of this data */
     DWORD dwType;       /* Type (as in D3DVSDT_TYPE) */
-    unsigned int VBO;   /* Vertex buffer object this data is in */
-    UINT streamNo;      /* D3D stream number */
 } WineDirect3DStridedData;
 
 typedef struct WineDirect3DVertexStridedData
 {
-    /*
-     * IMPORTANT:
-     * This structure can be accessed in two ways: Named access, and array
-     * access. Please note that named access is only valid with the fixed
-     * function vertex pipeline, and the arrays are only valid with the
-     * programmable vertex pipeline(vertex shaders).
-     */
-    union
-    {
-        struct
-        {
-            /* Do not add or reorder fields here,
-             * so this can be indexed as an array */
-            WineDirect3DStridedData position;
-            WineDirect3DStridedData blendWeights;
-            WineDirect3DStridedData blendMatrixIndices;
-            WineDirect3DStridedData normal;
-            WineDirect3DStridedData pSize;
-            WineDirect3DStridedData diffuse;
-            WineDirect3DStridedData specular;
-            WineDirect3DStridedData texCoords[WINED3DDP_MAXTEXCOORD];
-            /* Add fields here */
-        } s;
-        WineDirect3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
-    } u;
-
+    WineDirect3DStridedData position;
+    WineDirect3DStridedData normal;
+    WineDirect3DStridedData diffuse;
+    WineDirect3DStridedData specular;
+    WineDirect3DStridedData texCoords[WINED3DDP_MAXTEXCOORD];
     BOOL position_transformed;
-    WORD swizzle_map;       /* MAX_ATTRIBS, 16 */
-    WORD use_map;           /* MAX_ATTRIBS, 16 */
 } WineDirect3DVertexStridedData;
 
 typedef struct _WINED3DVSHADERCAPS2_0

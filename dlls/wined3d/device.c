@@ -141,6 +141,221 @@ static WINED3DPRIMITIVETYPE d3d_primitive_type_from_gl(GLenum primitive_type)
     }
 }
 
+static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
+{
+    if ((usage == WINED3DDECLUSAGE_POSITION || usage == WINED3DDECLUSAGE_POSITIONT) && usage_idx == 0)
+        *regnum = WINED3D_FFP_POSITION;
+    else if (usage == WINED3DDECLUSAGE_BLENDWEIGHT && usage_idx == 0)
+        *regnum = WINED3D_FFP_BLENDWEIGHT;
+    else if (usage == WINED3DDECLUSAGE_BLENDINDICES && usage_idx == 0)
+        *regnum = WINED3D_FFP_BLENDINDICES;
+    else if (usage == WINED3DDECLUSAGE_NORMAL && usage_idx == 0)
+        *regnum = WINED3D_FFP_NORMAL;
+    else if (usage == WINED3DDECLUSAGE_PSIZE && usage_idx == 0)
+        *regnum = WINED3D_FFP_PSIZE;
+    else if (usage == WINED3DDECLUSAGE_COLOR && usage_idx == 0)
+        *regnum = WINED3D_FFP_DIFFUSE;
+    else if (usage == WINED3DDECLUSAGE_COLOR && usage_idx == 1)
+        *regnum = WINED3D_FFP_SPECULAR;
+    else if (usage == WINED3DDECLUSAGE_TEXCOORD && usage_idx < WINED3DDP_MAXTEXCOORD)
+        *regnum = WINED3D_FFP_TEXCOORD0 + usage_idx;
+    else
+    {
+        FIXME("Unsupported input stream [usage=%s, usage_idx=%u]\n", debug_d3ddeclusage(usage), usage_idx);
+        *regnum = ~0U;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
+        BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup)
+{
+    /* We need to deal with frequency data! */
+    IWineD3DVertexDeclarationImpl *declaration = (IWineD3DVertexDeclarationImpl *)This->stateBlock->vertexDecl;
+    UINT stream_count = This->stateBlock->streamIsUP ? 0 : declaration->num_streams;
+    const DWORD *streams = declaration->streams;
+    unsigned int i;
+
+    memset(stream_info, 0, sizeof(*stream_info));
+
+    /* Check for transformed vertices, disable vertex shader if present. */
+    stream_info->position_transformed = declaration->position_transformed;
+    if (declaration->position_transformed) use_vshader = FALSE;
+
+    /* Translate the declaration into strided data. */
+    for (i = 0; i < declaration->declarationWNumElements - 1; ++i)
+    {
+        const WINED3DVERTEXELEMENT *element = declaration->pDeclarationWine + i;
+        GLuint buffer_object = 0;
+        const BYTE *data = NULL;
+        BOOL stride_used;
+        unsigned int idx;
+        DWORD stride;
+
+        TRACE("%p Element %p (%u of %u)\n", declaration->pDeclarationWine,
+                element, i + 1, declaration->declarationWNumElements - 1);
+
+        if (!This->stateBlock->streamSource[element->Stream]) continue;
+
+        stride = This->stateBlock->streamStride[element->Stream];
+        if (This->stateBlock->streamIsUP)
+        {
+            TRACE("Stream is up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
+            buffer_object = 0;
+            data = (BYTE *)This->stateBlock->streamSource[element->Stream];
+        }
+        else
+        {
+            TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
+            data = buffer_get_memory(This->stateBlock->streamSource[element->Stream], 0, &buffer_object);
+
+            /* Can't use vbo's if the base vertex index is negative. OpenGL doesn't accept negative offsets
+             * (or rather offsets bigger than the vbo, because the pointer is unsigned), so use system memory
+             * sources. In most sane cases the pointer - offset will still be > 0, otherwise it will wrap
+             * around to some big value. Hope that with the indices, the driver wraps it back internally. If
+             * not, drawStridedSlow is needed, including a vertex buffer path. */
+            if (This->stateBlock->loadBaseVertexIndex < 0)
+            {
+                WARN("loadBaseVertexIndex is < 0 (%d), not using vbos\n", This->stateBlock->loadBaseVertexIndex);
+                buffer_object = 0;
+                data = ((struct wined3d_buffer *)This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
+                if ((UINT_PTR)data < -This->stateBlock->loadBaseVertexIndex * stride)
+                {
+                    FIXME("System memory vertex data load offset is negative!\n");
+                }
+            }
+
+            if (fixup)
+            {
+                if (buffer_object) *fixup = TRUE;
+                else if (*fixup && !use_vshader
+                        && (element->Usage == WINED3DDECLUSAGE_COLOR
+                        || element->Usage == WINED3DDECLUSAGE_POSITIONT))
+                {
+                    static BOOL warned = FALSE;
+                    if (!warned)
+                    {
+                        /* This may be bad with the fixed function pipeline. */
+                        FIXME("Missing vbo streams with unfixed colors or transformed position, expect problems\n");
+                        warned = TRUE;
+                    }
+                }
+            }
+        }
+        data += element->Offset;
+
+        TRACE("Offset %d Stream %d UsageIndex %d\n", element->Offset, element->Stream, element->UsageIndex);
+
+        if (use_vshader)
+        {
+            stride_used = vshader_get_input(This->stateBlock->vertexShader, element->Usage, element->UsageIndex, &idx);
+        }
+        else
+        {
+            if (!declaration->ffp_valid[i])
+            {
+                WARN("Skipping unsupported fixed function element of type %s and usage %s\n",
+                        debug_d3ddecltype(element->Type), debug_d3ddeclusage(element->Usage));
+                stride_used = FALSE;
+            }
+            else
+            {
+                stride_used = fixed_get_input(element->Usage, element->UsageIndex, &idx);
+            }
+        }
+
+        if (stride_used)
+        {
+            TRACE("Load %s array %u [usage %s, usage_idx %u, "
+                    "stream %u, offset %u, stride %u, type %s, buffer_object %u]\n",
+                    use_vshader ? "shader": "fixed function", idx,
+                    debug_d3ddeclusage(element->Usage), element->UsageIndex,
+                    element->Stream, element->Offset, stride, debug_d3ddecltype(element->Type), buffer_object);
+
+            stream_info->elements[idx].d3d_type = element->Type;
+            stream_info->elements[idx].size = WINED3D_ATR_SIZE(element->Type);
+            stream_info->elements[idx].format = WINED3D_ATR_FORMAT(element->Type);
+            stream_info->elements[idx].type = WINED3D_ATR_GLTYPE(element->Type);
+            stream_info->elements[idx].stride = stride;
+            stream_info->elements[idx].normalized = WINED3D_ATR_NORMALIZED(element->Type);
+            stream_info->elements[idx].data = data;
+            stream_info->elements[idx].type_size = WINED3D_ATR_TYPESIZE(element->Type);
+            stream_info->elements[idx].stream_idx = element->Stream;
+            stream_info->elements[idx].buffer_object = buffer_object;
+
+            if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->Type == WINED3DDECLTYPE_D3DCOLOR)
+            {
+                stream_info->swizzle_map |= 1 << idx;
+            }
+            stream_info->use_map |= 1 << idx;
+        }
+    }
+
+    /* Now call PreLoad on all the vertex buffers. In the very rare case
+     * that the buffers stopps converting PreLoad will dirtify the VDECL again.
+     * The vertex buffer can now use the strided structure in the device instead of finding its
+     * own again.
+     *
+     * NULL streams won't be recorded in the array, UP streams won't be either. A stream is only
+     * once in there. */
+    for (i = 0; i < stream_count; ++i)
+    {
+        IWineD3DBuffer *vb = This->stateBlock->streamSource[streams[i]];
+        if (vb) IWineD3DBuffer_PreLoad(vb);
+    }
+}
+
+static void stream_info_element_from_strided(IWineD3DDeviceImpl *This,
+        const struct WineDirect3DStridedData *strided, struct wined3d_stream_info_element *e)
+{
+    e->d3d_type = strided->dwType;
+    e->size = WINED3D_ATR_SIZE(strided->dwType);
+    e->format = WINED3D_ATR_FORMAT(strided->dwType);
+    e->type = WINED3D_ATR_GLTYPE(strided->dwType);
+    e->stride = strided->dwStride;
+    e->normalized = WINED3D_ATR_NORMALIZED(strided->dwType);
+    e->data = strided->lpData;
+    e->type_size = WINED3D_ATR_TYPESIZE(strided->dwType);
+    e->stream_idx = 0;
+    e->buffer_object = 0;
+}
+
+void device_stream_info_from_strided(IWineD3DDeviceImpl *This,
+        const struct WineDirect3DVertexStridedData *strided, struct wined3d_stream_info *stream_info)
+{
+    unsigned int i;
+
+    memset(stream_info, 0, sizeof(*stream_info));
+
+    if (strided->position.lpData)
+        stream_info_element_from_strided(This, &strided->position, &stream_info->elements[WINED3D_FFP_POSITION]);
+    if (strided->normal.lpData)
+        stream_info_element_from_strided(This, &strided->normal, &stream_info->elements[WINED3D_FFP_NORMAL]);
+    if (strided->diffuse.lpData)
+        stream_info_element_from_strided(This, &strided->diffuse, &stream_info->elements[WINED3D_FFP_DIFFUSE]);
+    if (strided->specular.lpData)
+        stream_info_element_from_strided(This, &strided->specular, &stream_info->elements[WINED3D_FFP_SPECULAR]);
+
+    for (i = 0; i < WINED3DDP_MAXTEXCOORD; ++i)
+    {
+        if (strided->texCoords[i].lpData)
+            stream_info_element_from_strided(This, &strided->texCoords[i],
+                    &stream_info->elements[WINED3D_FFP_TEXCOORD0 + i]);
+    }
+
+    stream_info->position_transformed = strided->position_transformed;
+
+    for (i = 0; i < sizeof(stream_info->elements) / sizeof(*stream_info->elements); ++i)
+    {
+        if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && stream_info->elements[i].d3d_type == WINED3DDECLTYPE_D3DCOLOR)
+        {
+            stream_info->swizzle_map |= 1 << i;
+        }
+        stream_info->use_map |= 1 << i;
+    }
+}
 
 /**********************************************************
  * IUnknown parts follows
@@ -4292,7 +4507,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
 
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount,
-        const WineDirect3DVertexStridedData *lpStrideData, struct wined3d_buffer *dest, DWORD dwFlags)
+        const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD dwFlags)
 {
     char *dest_ptr, *dest_conv = NULL, *dest_conv_addr = NULL;
     unsigned int i;
@@ -4302,11 +4517,13 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
     BOOL doClip;
     DWORD numTextures;
 
-    if (lpStrideData->u.s.normal.lpData) {
+    if (stream_info->elements[WINED3D_FFP_NORMAL].data)
+    {
         WARN(" lighting state not saved yet... Some strange stuff may happen !\n");
     }
 
-    if (lpStrideData->u.s.position.lpData == NULL) {
+    if (!stream_info->elements[WINED3D_FFP_POSITION].data)
+    {
         ERR("Source has no position mask\n");
         return WINED3DERR_INVALIDCALL;
     }
@@ -4429,8 +4646,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
         if ( ((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZ ) ||
              ((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW ) ) {
             /* The position first */
-            const float *p =
-                    (const float *)(lpStrideData->u.s.position.lpData + i * lpStrideData->u.s.position.dwStride);
+            const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_POSITION];
+            const float *p = (const float *)(element->data + i * element->stride);
             float x, y, z, rhw;
             TRACE("In: ( %06.2f %06.2f %06.2f )\n", p[0], p[1], p[2]);
 
@@ -4545,8 +4762,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
             if(dest_conv) dest_conv += sizeof(DWORD);
         }
         if (DestFVF & WINED3DFVF_NORMAL) {
-            const float *normal =
-                    (const float *)(lpStrideData->u.s.normal.lpData + i * lpStrideData->u.s.normal.dwStride);
+            const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_NORMAL];
+            const float *normal = (const float *)(element->data + i * element->stride);
             /* AFAIK this should go into the lighting information */
             FIXME("Didn't expect the destination to have a normal\n");
             copy_and_next(dest_ptr, normal, 3 * sizeof(float));
@@ -4556,8 +4773,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
         }
 
         if (DestFVF & WINED3DFVF_DIFFUSE) {
-            const DWORD *color_d =
-                    (const DWORD *)(lpStrideData->u.s.diffuse.lpData + i * lpStrideData->u.s.diffuse.dwStride);
+            const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_DIFFUSE];
+            const DWORD *color_d = (const DWORD *)(element->data + i * element->stride);
             if(!color_d) {
                 static BOOL warned = FALSE;
 
@@ -4587,8 +4804,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
 
         if (DestFVF & WINED3DFVF_SPECULAR) { 
             /* What's the color value in the feedback buffer? */
-            const DWORD *color_s =
-                    (const DWORD *)(lpStrideData->u.s.specular.lpData + i * lpStrideData->u.s.specular.dwStride);
+            const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_SPECULAR];
+            const DWORD *color_s = (const DWORD *)(element->data + i * element->stride);
             if(!color_s) {
                 static BOOL warned = FALSE;
 
@@ -4617,9 +4834,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
         }
 
         for (tex_index = 0; tex_index < numTextures; tex_index++) {
-            const float *tex_coord =
-                    (const float *)(lpStrideData->u.s.texCoords[tex_index].lpData +
-                            i * lpStrideData->u.s.texCoords[tex_index].dwStride);
+            const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_TEXCOORD0 + tex_index];
+            const float *tex_coord = (const float *)(element->data + i * element->stride);
             if(!tex_coord) {
                 ERR("No source texture, but destination requests one\n");
                 dest_ptr+=GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
@@ -4654,7 +4870,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
         UINT VertexCount, IWineD3DBuffer *pDestBuffer, IWineD3DVertexDeclaration *pVertexDecl, DWORD Flags)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WineDirect3DVertexStridedData strided;
+    struct wined3d_stream_info stream_info;
     BOOL vbo = FALSE, streamWasUP = This->stateBlock->streamIsUP;
     TRACE("(%p)->(%d,%d,%d,%p,%p,%d\n", This, SrcStartIndex, DestIndex, VertexCount, pDestBuffer, pVertexDecl, Flags);
 
@@ -4669,38 +4885,34 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
      * control the streamIsUP flag, thus restore it afterwards.
      */
     This->stateBlock->streamIsUP = FALSE;
-    memset(&strided, 0, sizeof(strided));
-    primitiveDeclarationConvertToStridedData(iface, FALSE, &strided, &vbo);
+    device_stream_info_from_declaration(This, FALSE, &stream_info, &vbo);
     This->stateBlock->streamIsUP = streamWasUP;
 
     if(vbo || SrcStartIndex) {
         unsigned int i;
         /* ProcessVertices can't convert FROM a vbo, and vertex buffers used to source into ProcessVertices are
-         * unlikely to ever be used for drawing. Release vbos in those buffers and fix up the strided structure
+         * unlikely to ever be used for drawing. Release vbos in those buffers and fix up the stream_info structure
          *
          * Also get the start index in, but only loop over all elements if there's something to add at all.
          */
-        for (i = 0; i < (sizeof(strided.u.input) / sizeof(*strided.u.input)); ++i)
+        for (i = 0; i < (sizeof(stream_info.elements) / sizeof(*stream_info.elements)); ++i)
         {
-            if (strided.u.input[i].VBO)
+            struct wined3d_stream_info_element *e = &stream_info.elements[i];
+            if (e->buffer_object)
             {
-                struct wined3d_buffer *vb =
-                        (struct wined3d_buffer *)This->stateBlock->streamSource[strided.u.input[i].streamNo];
-                strided.u.input[i].VBO = 0;
-                strided.u.input[i].lpData = (BYTE *)((unsigned long)strided.u.input[i].lpData + (unsigned long)vb->resource.allocatedMemory);
+                struct wined3d_buffer *vb = (struct wined3d_buffer *)This->stateBlock->streamSource[e->stream_idx];
+                e->buffer_object = 0;
+                e->data = (BYTE *)((unsigned long)e->data + (unsigned long)vb->resource.allocatedMemory);
                 ENTER_GL();
                 GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
                 vb->buffer_object = 0;
                 LEAVE_GL();
             }
-            if (strided.u.input[i].lpData)
-            {
-                strided.u.input[i].lpData += strided.u.input[i].dwStride * SrcStartIndex;
-            }
+            if (e->data) e->data += e->stride * SrcStartIndex;
         }
     }
 
-    return process_vertices_strided(This, DestIndex, VertexCount, &strided,
+    return process_vertices_strided(This, DestIndex, VertexCount, &stream_info,
             (struct wined3d_buffer *)pDestBuffer, Flags);
 }
 
