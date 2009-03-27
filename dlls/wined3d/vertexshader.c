@@ -369,9 +369,10 @@ static void WINAPI IWineD3DVertexShaderImpl_FakeSemantics(IWineD3DVertexShader *
     IWineD3DVertexDeclarationImpl* vdecl = (IWineD3DVertexDeclarationImpl*)vertex_declaration;
 
     unsigned int i;
-    for (i = 0; i < vdecl->declarationWNumElements - 1; ++i) {
-        const WINED3DVERTEXELEMENT *element = vdecl->pDeclarationWine + i;
-        vshader_set_input(This, element->Reg, element->Usage, element->UsageIndex);
+    for (i = 0; i < vdecl->element_count; ++i)
+    {
+        const struct wined3d_vertex_declaration_element *e = &vdecl->elements[i];
+        vshader_set_input(This, e->output_slot, e->usage, e->usage_idx);
     }
 }
 

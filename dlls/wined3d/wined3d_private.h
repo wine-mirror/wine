@@ -1745,6 +1745,18 @@ BOOL palette9_changed(IWineD3DSurfaceImpl *This);
  */
 #define MAX_ATTRIBS 16
 
+struct wined3d_vertex_declaration_element
+{
+    WINED3DDECLTYPE type;
+    BOOL ffp_valid;
+    WORD input_slot;
+    WORD offset;
+    UINT output_slot;
+    BYTE method;
+    BYTE usage;
+    BYTE usage_idx;
+};
+
 typedef struct IWineD3DVertexDeclarationImpl {
     /* IUnknown  Information */
     const IWineD3DVertexDeclarationVtbl *lpVtbl;
@@ -1753,9 +1765,8 @@ typedef struct IWineD3DVertexDeclarationImpl {
     IUnknown                *parent;
     IWineD3DDeviceImpl      *wineD3DDevice;
 
-    WINED3DVERTEXELEMENT    *pDeclarationWine;
-    BOOL                    *ffp_valid;
-    UINT                    declarationWNumElements;
+    struct wined3d_vertex_declaration_element *elements;
+    UINT element_count;
 
     DWORD                   streams[MAX_STREAMS];
     UINT                    num_streams;

@@ -185,31 +185,31 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
     if (declaration->position_transformed) use_vshader = FALSE;
 
     /* Translate the declaration into strided data. */
-    for (i = 0; i < declaration->declarationWNumElements - 1; ++i)
+    for (i = 0; i < declaration->element_count; ++i)
     {
-        const WINED3DVERTEXELEMENT *element = declaration->pDeclarationWine + i;
+        const struct wined3d_vertex_declaration_element *element = &declaration->elements[i];
         GLuint buffer_object = 0;
         const BYTE *data = NULL;
         BOOL stride_used;
         unsigned int idx;
         DWORD stride;
 
-        TRACE("%p Element %p (%u of %u)\n", declaration->pDeclarationWine,
-                element, i + 1, declaration->declarationWNumElements - 1);
+        TRACE("%p Element %p (%u of %u)\n", declaration->elements,
+                element, i + 1, declaration->element_count);
 
-        if (!This->stateBlock->streamSource[element->Stream]) continue;
+        if (!This->stateBlock->streamSource[element->input_slot]) continue;
 
-        stride = This->stateBlock->streamStride[element->Stream];
+        stride = This->stateBlock->streamStride[element->input_slot];
         if (This->stateBlock->streamIsUP)
         {
-            TRACE("Stream is up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
+            TRACE("Stream %u is UP, %p\n", element->input_slot, This->stateBlock->streamSource[element->input_slot]);
             buffer_object = 0;
-            data = (BYTE *)This->stateBlock->streamSource[element->Stream];
+            data = (BYTE *)This->stateBlock->streamSource[element->input_slot];
         }
         else
         {
-            TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
-            data = buffer_get_memory(This->stateBlock->streamSource[element->Stream], 0, &buffer_object);
+            TRACE("Stream %u isn't UP, %p\n", element->input_slot, This->stateBlock->streamSource[element->input_slot]);
+            data = buffer_get_memory(This->stateBlock->streamSource[element->input_slot], 0, &buffer_object);
 
             /* Can't use vbo's if the base vertex index is negative. OpenGL doesn't accept negative offsets
              * (or rather offsets bigger than the vbo, because the pointer is unsigned), so use system memory
@@ -220,7 +220,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             {
                 WARN("loadBaseVertexIndex is < 0 (%d), not using vbos\n", This->stateBlock->loadBaseVertexIndex);
                 buffer_object = 0;
-                data = ((struct wined3d_buffer *)This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
+                data = ((struct wined3d_buffer *)This->stateBlock->streamSource[element->input_slot])->resource.allocatedMemory;
                 if ((UINT_PTR)data < -This->stateBlock->loadBaseVertexIndex * stride)
                 {
                     FIXME("System memory vertex data load offset is negative!\n");
@@ -231,8 +231,8 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             {
                 if (buffer_object) *fixup = TRUE;
                 else if (*fixup && !use_vshader
-                        && (element->Usage == WINED3DDECLUSAGE_COLOR
-                        || element->Usage == WINED3DDECLUSAGE_POSITIONT))
+                        && (element->usage == WINED3DDECLUSAGE_COLOR
+                        || element->usage == WINED3DDECLUSAGE_POSITIONT))
                 {
                     static BOOL warned = FALSE;
                     if (!warned)
@@ -244,48 +244,48 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
                 }
             }
         }
-        data += element->Offset;
+        data += element->offset;
 
-        TRACE("Offset %d Stream %d UsageIndex %d\n", element->Offset, element->Stream, element->UsageIndex);
+        TRACE("offset %u input_slot %u usage_idx %d\n", element->offset, element->input_slot, element->usage_idx);
 
         if (use_vshader)
         {
-            stride_used = vshader_get_input(This->stateBlock->vertexShader, element->Usage, element->UsageIndex, &idx);
+            stride_used = vshader_get_input(This->stateBlock->vertexShader, element->usage, element->usage_idx, &idx);
         }
         else
         {
-            if (!declaration->ffp_valid[i])
+            if (!element->ffp_valid)
             {
                 WARN("Skipping unsupported fixed function element of type %s and usage %s\n",
-                        debug_d3ddecltype(element->Type), debug_d3ddeclusage(element->Usage));
+                        debug_d3ddecltype(element->type), debug_d3ddeclusage(element->usage));
                 stride_used = FALSE;
             }
             else
             {
-                stride_used = fixed_get_input(element->Usage, element->UsageIndex, &idx);
+                stride_used = fixed_get_input(element->usage, element->usage_idx, &idx);
             }
         }
 
         if (stride_used)
         {
             TRACE("Load %s array %u [usage %s, usage_idx %u, "
-                    "stream %u, offset %u, stride %u, type %s, buffer_object %u]\n",
+                    "input_slot %u, offset %u, stride %u, type %s, buffer_object %u]\n",
                     use_vshader ? "shader": "fixed function", idx,
-                    debug_d3ddeclusage(element->Usage), element->UsageIndex,
-                    element->Stream, element->Offset, stride, debug_d3ddecltype(element->Type), buffer_object);
+                    debug_d3ddeclusage(element->usage), element->usage_idx,
+                    element->input_slot, element->offset, stride, debug_d3ddecltype(element->type), buffer_object);
 
-            stream_info->elements[idx].d3d_type = element->Type;
-            stream_info->elements[idx].size = WINED3D_ATR_SIZE(element->Type);
-            stream_info->elements[idx].format = WINED3D_ATR_FORMAT(element->Type);
-            stream_info->elements[idx].type = WINED3D_ATR_GLTYPE(element->Type);
+            stream_info->elements[idx].d3d_type = element->type;
+            stream_info->elements[idx].size = WINED3D_ATR_SIZE(element->type);
+            stream_info->elements[idx].format = WINED3D_ATR_FORMAT(element->type);
+            stream_info->elements[idx].type = WINED3D_ATR_GLTYPE(element->type);
             stream_info->elements[idx].stride = stride;
-            stream_info->elements[idx].normalized = WINED3D_ATR_NORMALIZED(element->Type);
+            stream_info->elements[idx].normalized = WINED3D_ATR_NORMALIZED(element->type);
             stream_info->elements[idx].data = data;
-            stream_info->elements[idx].type_size = WINED3D_ATR_TYPESIZE(element->Type);
-            stream_info->elements[idx].stream_idx = element->Stream;
+            stream_info->elements[idx].type_size = WINED3D_ATR_TYPESIZE(element->type);
+            stream_info->elements[idx].stream_idx = element->input_slot;
             stream_info->elements[idx].buffer_object = buffer_object;
 
-            if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->Type == WINED3DDECLTYPE_D3DCOLOR)
+            if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->type == WINED3DDECLTYPE_D3DCOLOR)
             {
                 stream_info->swizzle_map |= 1 << idx;
             }

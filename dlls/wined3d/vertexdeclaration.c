@@ -73,8 +73,7 @@ static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclarat
             IWineD3DDeviceImpl_MarkStateDirty(This->wineD3DDevice, STATE_VDECL);
         }
 
-        HeapFree(GetProcessHeap(), 0, This->pDeclarationWine);
-        HeapFree(GetProcessHeap(), 0, This->ffp_valid);
+        HeapFree(GetProcessHeap(), 0, This->elements);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -207,14 +206,15 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *This,
         }
     }
 
-    This->declarationWNumElements = element_count;
-    This->pDeclarationWine = HeapAlloc(GetProcessHeap(), 0, sizeof(WINED3DVERTEXELEMENT) * element_count);
-    This->ffp_valid = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->ffp_valid) * element_count);
-    if (!This->pDeclarationWine || !This->ffp_valid) {
+    /* Skip the END element. */
+    --element_count;
+
+    This->element_count = element_count;
+    This->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->elements) * element_count);
+    if (!This->elements)
+    {
         ERR("Memory allocation failed\n");
         return WINED3DERR_OUTOFVIDEOMEMORY;
-    } else {
-        CopyMemory(This->pDeclarationWine, elements, sizeof(WINED3DVERTEXELEMENT) * element_count);
     }
 
     /* Do some static analysis on the elements to make reading the declaration more comfortable
@@ -223,36 +223,45 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *This,
     This->num_streams = 0;
     This->position_transformed = FALSE;
     for (i = 0; i < element_count; ++i) {
-        This->ffp_valid[i] = declaration_element_valid_ffp(&This->pDeclarationWine[i]);
+        struct wined3d_vertex_declaration_element *e = &This->elements[i];
 
-        if(This->pDeclarationWine[i].Usage == WINED3DDECLUSAGE_POSITIONT) {
-            This->position_transformed = TRUE;
-        }
+        e->type = elements[i].Type;
+        e->ffp_valid = declaration_element_valid_ffp(&elements[i]);
+        e->input_slot = elements[i].Stream;
+        e->offset = elements[i].Offset;
+        e->output_slot = elements[i].Reg;
+        e->method = elements[i].Method;
+        e->usage = elements[i].Usage;
+        e->usage_idx = elements[i].UsageIndex;
+
+        if (e->usage == WINED3DDECLUSAGE_POSITIONT) This->position_transformed = TRUE;
 
         /* Find the Streams used in the declaration. The vertex buffers have to be loaded
          * when drawing, but filter tesselation pseudo streams
          */
-        if(This->pDeclarationWine[i].Stream >= MAX_STREAMS) continue;
+        if (e->input_slot >= MAX_STREAMS) continue;
 
-        if(This->pDeclarationWine[i].Type == WINED3DDECLTYPE_UNUSED) {
+        if (e->type == WINED3DDECLTYPE_UNUSED)
+        {
             WARN("The application tries to use WINED3DDECLTYPE_UNUSED, returning E_FAIL\n");
-            /* The caller will release the vdecl, which will free This->pDeclarationWine */
+            /* The caller will release the vdecl, which will free This->elements */
             return E_FAIL;
         }
 
-        if(This->pDeclarationWine[i].Offset & 0x3) {
-            WARN("Declaration element %d is not 4 byte aligned(%d), returning E_FAIL\n", i, This->pDeclarationWine[i].Offset);
+        if (e->offset & 0x3)
+        {
+            WARN("Declaration element %u is not 4 byte aligned(%u), returning E_FAIL\n", i, e->offset);
             return E_FAIL;
         }
 
-        if(!isPreLoaded[This->pDeclarationWine[i].Stream]) {
-            This->streams[This->num_streams] = This->pDeclarationWine[i].Stream;
+        if (!isPreLoaded[e->input_slot])
+        {
+            This->streams[This->num_streams] = e->input_slot;
             This->num_streams++;
-            isPreLoaded[This->pDeclarationWine[i].Stream] = 1;
+            isPreLoaded[e->input_slot] = 1;
         }
 
-        if (This->pDeclarationWine[i].Type == WINED3DDECLTYPE_FLOAT16_2
-                || This->pDeclarationWine[i].Type == WINED3DDECLTYPE_FLOAT16_4)
+        if (e->type == WINED3DDECLTYPE_FLOAT16_2 || e->type == WINED3DDECLTYPE_FLOAT16_4)
         {
             if (!GL_SUPPORT(NV_HALF_FLOAT)) This->half_float_conv_needed = TRUE;
         }
