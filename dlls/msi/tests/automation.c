@@ -2022,7 +2022,7 @@ static void test_Installer_Products(BOOL bProductInstalled)
             }
         }
 
-        if (bProductInstalled) todo_wine
+        if (bProductInstalled)
         {
             ok(bProductInstalled == bProductFound, "Product expected to %s installed but product code was %s\n",
                bProductInstalled ? "be" : "not be",

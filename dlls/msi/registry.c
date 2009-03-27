@@ -103,6 +103,12 @@ static const WCHAR szUninstall_fmt[] = {
 'U','n','i','n','s','t','a','l','l','\\',
 '%','s',0 };
 
+static const WCHAR szUserProduct[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'P','r','o','d','u','c','t','s',0};
+
 static const WCHAR szUserProduct_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -187,6 +193,12 @@ static const WCHAR szInstallProperties_fmt[] = {
 '%','s','\\','P','r','o','d','u','c','t','s','\\','%','s','\\',
 'I','n','s','t','a','l','l','P','r','o','p','e','r','t','i','e','s',0};
 
+static const WCHAR szInstaller_LocalClassesProd[] = {
+'S','o','f','t','w','a','r','e','\\',
+'C','l','a','s','s','e','s','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'P','r','o','d','u','c','t','s',0};
+
 static const WCHAR szInstaller_LocalClassesProd_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'C','l','a','s','s','e','s','\\',
@@ -198,6 +210,16 @@ static const WCHAR szInstaller_LocalClassesFeat_fmt[] = {
 'C','l','a','s','s','e','s','\\',
 'I','n','s','t','a','l','l','e','r','\\',
 'F','e','a','t','u','r','e','s','\\','%','s',0};
+
+static const WCHAR szInstaller_LocalManaged_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'M','a','n','a','g','e','d','\\','%','s','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'P','r','o','d','u','c','t','s',0};
 
 static const WCHAR szInstaller_LocalManagedProd_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
@@ -1198,25 +1220,108 @@ UINT WINAPI MsiEnumProductsA(DWORD index, LPSTR lpguid)
 
 UINT WINAPI MsiEnumProductsW(DWORD index, LPWSTR lpguid)
 {
-    HKEY hkeyProducts = 0;
-    DWORD r;
+    UINT r;
     WCHAR szKeyName[SQUISH_GUID_SIZE];
+    HKEY key;
+    DWORD machine_count, managed_count, unmanaged_count;
+    WCHAR keypath[MAX_PATH];
+    LPWSTR usersid = NULL;
+
+    static DWORD last_index;
 
     TRACE("%d %p\n", index, lpguid);
 
     if (NULL == lpguid)
         return ERROR_INVALID_PARAMETER;
 
-    r = RegCreateKeyW(HKEY_LOCAL_MACHINE, szInstaller_Products, &hkeyProducts);
+    if (index && index - last_index != 1)
+        return ERROR_INVALID_PARAMETER;
+
+    r = RegCreateKeyW(HKEY_LOCAL_MACHINE, szInstaller_LocalClassesProd, &key);
     if( r != ERROR_SUCCESS )
         return ERROR_NO_MORE_ITEMS;
 
-    r = RegEnumKeyW(hkeyProducts, index, szKeyName, SQUISH_GUID_SIZE);
-    if( r == ERROR_SUCCESS )
-        unsquash_guid(szKeyName, lpguid);
-    RegCloseKey(hkeyProducts);
+    r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &machine_count, NULL, NULL,
+                         NULL, NULL, NULL, NULL, NULL);
+    if( r != ERROR_SUCCESS )
+    {
+        RegCloseKey(key);
+        return ERROR_NO_MORE_ITEMS;
+    }
 
-    return r;
+    if (machine_count && index <= machine_count)
+    {
+        r = RegEnumKeyW(key, index, szKeyName, SQUISH_GUID_SIZE);
+        if( r == ERROR_SUCCESS )
+        {
+            unsquash_guid(szKeyName, lpguid);
+            last_index = index;
+            RegCloseKey(key);
+            return ERROR_SUCCESS;
+        }
+    }
+    RegCloseKey(key);
+
+    r = get_user_sid(&usersid);
+    if (r != ERROR_SUCCESS || !usersid)
+    {
+        ERR("Failed to retrieve user SID: %d\n", r);
+        return r;
+    }
+    sprintfW(keypath, szInstaller_LocalManaged_fmt, usersid);
+    LocalFree(usersid);
+
+    r = RegCreateKeyW(HKEY_LOCAL_MACHINE, keypath, &key);
+    if( r != ERROR_SUCCESS )
+        return ERROR_NO_MORE_ITEMS;
+
+    r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &managed_count, NULL, NULL,
+                         NULL, NULL, NULL, NULL, NULL);
+    if( r != ERROR_SUCCESS )
+    {
+        RegCloseKey(key);
+        return ERROR_NO_MORE_ITEMS;
+    }
+
+    if (managed_count && index <= machine_count + managed_count)
+    {
+        r = RegEnumKeyW(key, index - machine_count, szKeyName, SQUISH_GUID_SIZE);
+        if( r == ERROR_SUCCESS )
+        {
+            unsquash_guid(szKeyName, lpguid);
+            last_index = index;
+            RegCloseKey(key);
+            return ERROR_SUCCESS;
+        }
+    }
+    RegCloseKey(key);
+
+    r = RegCreateKeyW(HKEY_CURRENT_USER, szUserProduct, &key);
+    if( r != ERROR_SUCCESS )
+        return ERROR_NO_MORE_ITEMS;
+
+    r = RegQueryInfoKeyW(key, NULL, NULL, NULL, &unmanaged_count, NULL, NULL,
+                         NULL, NULL, NULL, NULL, NULL);
+    if( r != ERROR_SUCCESS )
+    {
+        RegCloseKey(key);
+        return ERROR_NO_MORE_ITEMS;
+    }
+
+    if (unmanaged_count && index <= machine_count + managed_count + unmanaged_count)
+    {
+        r = RegEnumKeyW(key, index - machine_count - managed_count, szKeyName, SQUISH_GUID_SIZE);
+        if( r == ERROR_SUCCESS )
+        {
+            unsquash_guid(szKeyName, lpguid);
+            last_index = index;
+            RegCloseKey(key);
+            return ERROR_SUCCESS;
+        }
+    }
+    RegCloseKey(key);
+
+    return ERROR_NO_MORE_ITEMS;
 }
 
 UINT WINAPI MsiEnumFeaturesA(LPCSTR szProduct, DWORD index, 
