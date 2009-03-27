@@ -1700,6 +1700,40 @@ static void get_sid_info(PSID psid, LPSTR *user, LPSTR *dom)
     LookupAccountSidA(NULL, psid, account, &size, domain, &dom_size, &use);
 }
 
+static void check_wellknown_name(const char* name, const char* exp_account, int exp_size, SID_NAME_USE exp_use, BOOL exp_succ)
+{
+    DWORD sid_size, domain_size;
+    SID_NAME_USE sid_use;
+    LPSTR domain, account, sid_dom;
+    PSID psid;
+    BOOL ret;
+
+    sid_size = 0;
+    domain_size = 0;
+    ret = LookupAccountNameA(NULL, name, NULL, &sid_size, NULL, &domain_size, &sid_use);
+    psid = HeapAlloc(GetProcessHeap(),0,sid_size);
+    domain = HeapAlloc(GetProcessHeap(),0,domain_size);
+    ret = LookupAccountNameA(NULL, name, psid, &sid_size, domain, &domain_size, &sid_use);
+
+    get_sid_info(psid, &account, &sid_dom);
+
+    if (!exp_succ)
+    {
+        ok(!ret, " %s Should have failed to lookup account name\n",name);
+        return;
+    }
+    ok(ret, "Failed to lookup account name %s\n",name);
+    ok(sid_size != 0, "sid_size was zero\n");
+    ok(!lstrcmp(account, exp_account), "Expected %s , got %s\n", exp_account, account);
+    ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
+    ok(domain_size == exp_size, "Expected %i, got %d\n", exp_size, domain_size);
+    ok(lstrlen(domain) == domain_size, "Expected %d, got %d\n", lstrlen(domain), domain_size);
+    ok(sid_use == exp_use, "Expected (%d), got %d\n", exp_use, sid_use);
+
+    HeapFree(GetProcessHeap(),0,psid);
+    HeapFree(GetProcessHeap(),0,domain);
+}
+
 static void test_LookupAccountName(void)
 {
     DWORD sid_size, domain_size, user_size;
@@ -1898,6 +1932,28 @@ static void test_LookupAccountName(void)
         HeapFree(GetProcessHeap(), 0, domain);
         HeapFree(GetProcessHeap(), 0, psid);
     }
+
+    /* Well Known names */
+    check_wellknown_name("LocalService", "LOCAL SERVICE", 12, SidTypeWellKnownGroup, TRUE);
+    check_wellknown_name("Local Service", "LOCAL SERVICE", 12, SidTypeWellKnownGroup, TRUE);
+    /* 2 spaces */
+    check_wellknown_name("Local  Service", "", 0, 0, FALSE);
+    check_wellknown_name("NetworkService", "NETWORK SERVICE", 12, SidTypeWellKnownGroup, TRUE);
+    check_wellknown_name("Network Service", "NETWORK SERVICE", 12, SidTypeWellKnownGroup, TRUE);
+
+    /* example of some names where the spaces are not optional */
+    check_wellknown_name("Terminal Server User", "TERMINAL SERVER USER", 12, SidTypeWellKnownGroup, TRUE);
+    check_wellknown_name("TerminalServer User", "", 0, 0, FALSE);
+    check_wellknown_name("TerminalServerUser", "", 0, 0, FALSE);
+    check_wellknown_name("Terminal ServerUser", "", 0, 0, FALSE);
+
+    check_wellknown_name("enterprise domain controllers", "ENTERPRISE DOMAIN CONTROLLERS", 12, SidTypeWellKnownGroup, TRUE);
+    check_wellknown_name("enterprisedomain controllers", "", 0, 0, FALSE);
+    check_wellknown_name("enterprise domaincontrollers", "", 0, 0, FALSE);
+    check_wellknown_name("enterprisedomaincontrollers", "", 0, 0, FALSE);
+
+    /* case insensitivity */
+    check_wellknown_name("lOCAlServICE", "LOCAL SERVICE", 12, SidTypeWellKnownGroup, TRUE);
 }
 
 static void test_security_descriptor(void)

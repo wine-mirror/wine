@@ -167,6 +167,7 @@ typedef struct _AccountSid {
     LPCWSTR account;
     LPCWSTR domain;
     SID_NAME_USE name_use;
+    LPCWSTR alias;
 } AccountSid;
 
 static const WCHAR Account_Operators[] = { 'A','c','c','o','u','n','t',' ','O','p','e','r','a','t','o','r','s',0 };
@@ -200,9 +201,11 @@ static const WCHAR Guests[] = { 'G','u','e','s','t','s',0 };
 static const WCHAR INTERACTIVE[] = { 'I','N','T','E','R','A','C','T','I','V','E',0 };
 static const WCHAR LOCAL[] = { 'L','O','C','A','L',0 };
 static const WCHAR LOCAL_SERVICE[] = { 'L','O','C','A','L',' ','S','E','R','V','I','C','E',0 };
+static const WCHAR LOCAL_SERVICE2[] = { 'L','O','C','A','L','S','E','R','V','I','C','E',0 };
 static const WCHAR NETWORK[] = { 'N','E','T','W','O','R','K',0 };
 static const WCHAR Network_Configuration_Operators[] = { 'N','e','t','w','o','r','k',' ','C','o','n','f','i','g','u','r','a','t','i','o','n',' ','O','p','e','r','a','t','o','r','s',0 };
 static const WCHAR NETWORK_SERVICE[] = { 'N','E','T','W','O','R','K',' ','S','E','R','V','I','C','E',0 };
+static const WCHAR NETWORK_SERVICE2[] = { 'N','E','T','W','O','R','K','S','E','R','V','I','C','E',0 };
 static const WCHAR NT_AUTHORITY[] = { 'N','T',' ','A','U','T','H','O','R','I','T','Y',0 };
 static const WCHAR NT_Pseudo_Domain[] = { 'N','T',' ','P','s','e','u','d','o',' ','D','o','m','a','i','n',0 };
 static const WCHAR NTML_Authentication[] = { 'N','T','M','L',' ','A','u','t','h','e','n','t','i','c','a','t','i','o','n',0 };
@@ -252,8 +255,8 @@ static const AccountSid ACCOUNT_SIDS[] = {
     { WinTerminalServerSid, TERMINAL_SERVER_USER, NT_AUTHORITY, SidTypeWellKnownGroup },
     { WinRemoteLogonIdSid, REMOTE_INTERACTIVE_LOGON, NT_AUTHORITY, SidTypeWellKnownGroup },
     { WinLocalSystemSid, SYSTEM, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinLocalServiceSid, LOCAL_SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup },
-    { WinNetworkServiceSid, NETWORK_SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup },
+    { WinLocalServiceSid, LOCAL_SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup, LOCAL_SERVICE2 },
+    { WinNetworkServiceSid, NETWORK_SERVICE, NT_AUTHORITY, SidTypeWellKnownGroup , NETWORK_SERVICE2},
     { WinBuiltinDomainSid, BUILTIN, BUILTIN, SidTypeDomain },
     { WinBuiltinAdministratorsSid, Administrators, BUILTIN, SidTypeAlias },
     { WinBuiltinUsersSid, Users, BUILTIN, SidTypeAlias },
@@ -2667,7 +2670,8 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
 
     for (i = 0; i < (sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0])); i++)
     {
-        if (!strcmpW(lpAccountName, ACCOUNT_SIDS[i].account))
+        if (!strcmpiW(lpAccountName, ACCOUNT_SIDS[i].account) ||
+            (ACCOUNT_SIDS[i].alias && !strcmpiW(lpAccountName, ACCOUNT_SIDS[i].alias)))
         {
             DWORD sidLen = SECURITY_MAX_SID_SIZE;
 
