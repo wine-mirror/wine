@@ -290,6 +290,105 @@ static void test_menu_locked_by_window(void)
     DestroyWindow(hwnd);
 }
 
+/* demonstrates that subpopup's are locked
+ * even after a client calls DestroyMenu on it */
+static LRESULT WINAPI subpopuplocked_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    HWND hwndmenu;
+    switch (msg)
+    {
+    case WM_ENTERIDLE:
+        hwndmenu = GetCapture();
+        if( hwndmenu) {
+            PostMessage( hwndmenu, WM_KEYDOWN, VK_DOWN, 0);
+            PostMessage( hwndmenu, WM_KEYDOWN, VK_RIGHT, 0);
+            PostMessage( hwndmenu, WM_KEYDOWN, VK_RETURN, 0);
+        }
+    }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+static void test_subpopup_locked_by_menu(void)
+{
+    DWORD gle;
+    BOOL ret;
+    HMENU hmenu, hsubmenu;
+    MENUINFO mi = { sizeof( MENUINFO)};
+    MENUITEMINFO mii = { sizeof( MENUITEMINFO)};
+    HWND hwnd;
+    const int itemid = 0x1234567;
+    if( !pGetMenuInfo)
+    {
+        win_skip("GetMenuInfo is not available\n");
+        return;
+    }
+    /* create window, popupmenu with one subpopup */
+    hwnd = CreateWindowEx(0, MAKEINTATOM(atomMenuCheckClass), NULL,
+            WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
+            NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+    SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG_PTR) subpopuplocked_wnd_proc);
+    hmenu = CreatePopupMenu();
+    ok(hmenu != NULL, "CreateMenu failed with error %d\n", GetLastError());
+    hsubmenu = CreatePopupMenu();
+    ok(hsubmenu != NULL, "CreateMenu failed with error %d\n", GetLastError());
+    ret = InsertMenu(hmenu, 0, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)hsubmenu,
+            TEXT("PopUpLockTest"));
+    ok(ret, "InsertMenu failed with error %d\n", GetLastError());
+    ret = InsertMenu(hsubmenu, 0, MF_BYPOSITION | MF_STRING, itemid, TEXT("PopUpMenu"));
+    ok(ret, "InsertMenu failed with error %d\n", GetLastError());
+    /* first some tests that all this functions properly */
+    mii.fMask = MIIM_SUBMENU;
+    ret = GetMenuItemInfo( hmenu, 0, TRUE, &mii);
+    ok( ret, "GetMenuItemInfo failed error %d\n", GetLastError());
+    ok( mii.hSubMenu == hsubmenu, "submenu is %p\n", mii.hSubMenu);
+    mi.fMask |= MIM_STYLE;
+    ret = pGetMenuInfo( hsubmenu, &mi);
+    ok( ret , "GetMenuInfo returned 0 with error %d\n", GetLastError());
+    ret = IsMenu( hsubmenu);
+    ok( ret , "Menu handle is not valid\n");
+    SetLastError( 0xdeadbeef);
+    ret = TrackPopupMenu( hmenu, 0x100, 100,100, 0, hwnd, NULL);
+    if( ret == (itemid & 0xffff)) {
+        win_skip("not on 16 bit menu subsystem\n");
+        DestroyMenu( hsubmenu);
+    } else {
+        gle = GetLastError();
+        ok( ret == itemid , "TrackPopupMenu returned %d error is %d\n", ret, gle);
+        ok( gle == 0 ||
+                broken( gle == 0xdeadbeef), /* win2k0 */
+                "Last error is %d\n", gle);
+        /* then destroy the sub-popup */
+        ret = DestroyMenu( hsubmenu);
+        ok(ret, "DestroyMenu failed with error %d\n", GetLastError());
+        /* and repeat the tests */
+        mii.fMask = MIIM_SUBMENU;
+        ret = GetMenuItemInfo( hmenu, 0, TRUE, &mii);
+        ok( ret, "GetMenuItemInfo failed error %d\n", GetLastError());
+        /* GetMenuInfo fails now */
+        ok( mii.hSubMenu == hsubmenu, "submenu is %p\n", mii.hSubMenu);
+        mi.fMask |= MIM_STYLE;
+        ret = pGetMenuInfo( hsubmenu, &mi);
+        ok( !ret , "GetMenuInfo should have failed\n");
+        /* IsMenu says it is not */
+        ret = IsMenu( hsubmenu);
+        ok( !ret , "Menu handle should be invalid\n");
+        /* but TrackPopupMenu still works! */
+        SetLastError( 0xdeadbeef);
+        ret = TrackPopupMenu( hmenu, 0x100, 100,100, 0, hwnd, NULL);
+        gle = GetLastError();
+        todo_wine {
+            ok( ret == itemid , "TrackPopupMenu returned %d error is %d\n", ret, gle);
+        }
+        ok( gle == 0 ||
+                broken( gle ==  ERROR_INVALID_PARAMETER), /* win2k0 */
+                "Last error is %d\n", gle);
+    }
+    /* clean up */
+    DestroyMenu( hmenu);
+    DestroyWindow(hwnd);
+}
+
 static void test_menu_ownerdraw(void)
 {
     int i,j,k;
@@ -2768,6 +2867,7 @@ START_TEST(menu)
     register_menu_check_class();
 
     test_menu_locked_by_window();
+    test_subpopup_locked_by_menu();
     test_menu_ownerdraw();
     test_menu_bmp_and_string();
     /* test Get/SetMenuInfo if available */
