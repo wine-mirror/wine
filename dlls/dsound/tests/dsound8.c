@@ -874,39 +874,6 @@ static void dsound8_tests(void)
     ok(rc==DS_OK,"DirectSoundEnumerateA() failed: %08x\n",rc);
 }
 
-const char * get_file_version(const char * file_name)
-{
-    static char version[32];
-    static char backslash[] = "\\";
-    DWORD size;
-    DWORD handle;
-
-    size = GetFileVersionInfoSizeA("dsound.dll", &handle);
-    if (size) {
-        char * data = HeapAlloc(GetProcessHeap(), 0, size);
-        if (data) {
-            if (GetFileVersionInfoA("dsound.dll", handle, size, data)) {
-                VS_FIXEDFILEINFO *pFixedVersionInfo;
-                UINT len;
-                if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
-                    sprintf(version, "%d.%d.%d.%d",
-                            pFixedVersionInfo->dwFileVersionMS >> 16,
-                            pFixedVersionInfo->dwFileVersionMS & 0xffff,
-                            pFixedVersionInfo->dwFileVersionLS >> 16,
-                            pFixedVersionInfo->dwFileVersionLS & 0xffff);
-                } else
-                    sprintf(version, "not available");
-            } else
-                sprintf(version, "failed");
-
-            HeapFree(GetProcessHeap(), 0, data);
-        } else
-            sprintf(version, "failed");
-    } else
-        sprintf(version, "not available");
-
-    return version;
-}
 
 START_TEST(dsound8)
 {
@@ -917,7 +884,6 @@ START_TEST(dsound8)
     hDsound = LoadLibrary("dsound.dll");
     if (hDsound)
     {
-        trace("DLL Version: %s\n", get_file_version("dsound.dll"));
 
         pDirectSoundEnumerateA = (void*)GetProcAddress(hDsound,
             "DirectSoundEnumerateA");

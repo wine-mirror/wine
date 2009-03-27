@@ -687,7 +687,6 @@ START_TEST(capture)
     hDsound = LoadLibrary("dsound.dll");
     if (hDsound)
     {
-        trace("DLL Version: %s\n", get_file_version("dsound.dll"));
 
         pDirectSoundCaptureCreate=(void*)GetProcAddress(hDsound,
             "DirectSoundCaptureCreate");

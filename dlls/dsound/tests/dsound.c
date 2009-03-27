@@ -1083,7 +1083,6 @@ START_TEST(dsound)
     hDsound = LoadLibrary("dsound.dll");
     if (hDsound)
     {
-        trace("DLL Version: %s\n", get_file_version("dsound.dll"));
 
         pDirectSoundEnumerateA = (void*)GetProcAddress(hDsound,
             "DirectSoundEnumerateA");

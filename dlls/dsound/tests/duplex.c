@@ -231,7 +231,6 @@ START_TEST(duplex)
     hDsound = LoadLibrary("dsound.dll");
     if (hDsound)
     {
-        trace("DLL Version: %s\n", get_file_version("dsound.dll"));
 
         pDirectSoundFullDuplexCreate=(void*)GetProcAddress(hDsound,
             "DirectSoundFullDuplexCreate");
