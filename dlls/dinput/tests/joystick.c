@@ -29,7 +29,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "dinput.h"
-#include "dinput_test.h"
 
 #define numObjects(x) (sizeof(x) / sizeof(x[0]))
 
@@ -634,8 +633,6 @@ static void joystick_tests(DWORD version)
 START_TEST(joystick)
 {
     CoInitialize(NULL);
-
-    trace("DLL Version: %s\n", get_file_version("dinput.dll"));
 
     joystick_tests(0x0700);
     joystick_tests(0x0500);

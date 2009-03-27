@@ -29,7 +29,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "dinput.h"
-#include "dinput_test.h"
 
 static const HRESULT SetCoop_null_window[16] =  {
     E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG,
@@ -144,8 +143,6 @@ static void mouse_tests(void)
 START_TEST(mouse)
 {
     CoInitialize(NULL);
-
-    trace("DLL Version: %s\n", get_file_version("dinput.dll"));
 
     mouse_tests();
 

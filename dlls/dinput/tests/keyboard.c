@@ -29,41 +29,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "dinput.h"
-#include "dinput_test.h"
-
-const char * get_file_version(const char * file_name)
-{
-    static char version[32];
-    static char backslash[] = "\\";
-    DWORD size;
-    DWORD handle;
-
-    size = GetFileVersionInfoSizeA(file_name, &handle);
-    if (size) {
-        char * data = HeapAlloc(GetProcessHeap(), 0, size);
-        if (data) {
-            if (GetFileVersionInfoA(file_name, handle, size, data)) {
-                VS_FIXEDFILEINFO *pFixedVersionInfo;
-                UINT len;
-                if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
-                    sprintf(version, "%d.%d.%d.%d",
-                            pFixedVersionInfo->dwFileVersionMS >> 16,
-                            pFixedVersionInfo->dwFileVersionMS & 0xffff,
-                            pFixedVersionInfo->dwFileVersionLS >> 16,
-                            pFixedVersionInfo->dwFileVersionLS & 0xffff);
-                } else
-                    sprintf(version, "not available");
-            } else
-                sprintf(version, "failed");
-
-            HeapFree(GetProcessHeap(), 0, data);
-        } else
-            sprintf(version, "failed");
-    } else
-        sprintf(version, "not available");
-
-    return version;
-}
 
 static void acquire_tests(LPDIRECTINPUT pDI, HWND hwnd)
 {
@@ -200,8 +165,6 @@ static void keyboard_tests(DWORD version)
 START_TEST(keyboard)
 {
     CoInitialize(NULL);
-
-    trace("DLL Version: %s\n", get_file_version("dinput.dll"));
 
     keyboard_tests(0x0700);
 
