@@ -429,7 +429,7 @@ static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_form
     return status == GL_FRAMEBUFFER_COMPLETE_EXT;
 }
 
-static void init_format_texture_info(WineD3D_GL_Info *gl_info)
+static BOOL init_format_texture_info(WineD3D_GL_Info *gl_info)
 {
     unsigned int i;
 
@@ -437,6 +437,13 @@ static void init_format_texture_info(WineD3D_GL_Info *gl_info)
     {
         int fmt_idx = getFmtIdx(gl_formats_template[i].fmt);
         struct GlPixelFormatDesc *desc;
+
+        if (fmt_idx == -1)
+        {
+            ERR("Format %s (%#x) not found.\n",
+                    debug_d3dformat(gl_formats_template[i].fmt), gl_formats_template[i].fmt);
+            return FALSE;
+        }
 
         desc = &gl_info->gl_formats[fmt_idx];
         desc->glInternal = gl_formats_template[i].glInternal;
@@ -470,6 +477,8 @@ static void init_format_texture_info(WineD3D_GL_Info *gl_info)
             desc->rtInternal = gl_formats_template[i].glInternal;
         }
     }
+
+    return TRUE;
 }
 
 static void apply_format_fixups(WineD3D_GL_Info *gl_info)
@@ -608,7 +617,11 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 {
     if (!init_format_base_info(gl_info)) return FALSE;
 
-    init_format_texture_info(gl_info);
+    if (!init_format_texture_info(gl_info))
+    {
+        HeapFree(GetProcessHeap(), 0, gl_info->gl_formats);
+        return FALSE;
+    }
 
     apply_format_fixups(gl_info);
 
