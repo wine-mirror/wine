@@ -843,7 +843,9 @@ static void test_WritePrivateProfileString(void)
     SetLastError(0xdeadbeef);
     ret = WritePrivateProfileStringA(NULL, "key", "string", path);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       broken(GetLastError() == ERROR_INVALID_PARAMETER) || /* NT4 */
+       broken(GetLastError() == 0xdeadbeef), /* Win9x and WinME */
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     ok(GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES,
        "Expected path to not exist\n");
@@ -855,7 +857,9 @@ static void test_WritePrivateProfileString(void)
     SetLastError(0xdeadbeef);
     ret = WritePrivateProfileStringA(NULL, "key", "string", path);
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       broken(GetLastError() == ERROR_INVALID_PARAMETER) || /* NT4 */
+       broken(GetLastError() == 0xdeadbeef), /* Win9x and WinME */
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     ok(check_file_data(path, data), "File doesn't match\n");
     DeleteFileA(path);
