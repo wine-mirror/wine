@@ -129,7 +129,7 @@ fail:
 
 static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
         const enum wined3d_buffer_conversion_type conversion_type,
-        const struct wined3d_stream_info_element *attrib, DWORD *stride_this_run, const DWORD type)
+        const struct wined3d_stream_info_element *attrib, DWORD *stride_this_run)
 {
     DWORD attrib_size;
     BOOL ret = FALSE;
@@ -145,7 +145,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
     if (!attrib->stride)
     {
         FIXME("%s used with stride 0, let's hope we get the vertex stride from somewhere else\n",
-                debug_d3ddecltype(type));
+                debug_d3dformat(attrib->d3d_format));
     }
     else if(attrib->stride != *stride_this_run && *stride_this_run)
     {
@@ -169,7 +169,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
     }
 
     data = (((DWORD_PTR)attrib->data) + offset) % This->stride;
-    attrib_size = WINED3D_ATR_SIZE(type) * WINED3D_ATR_TYPESIZE(type);
+    attrib_size = attrib->size * attrib->type_size;
     for (i = 0; i < attrib_size; ++i)
     {
         if (This->conversion_map[data + i] != conversion_type)
@@ -189,39 +189,36 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This,
         const BOOL is_ffp_color, DWORD *stride_this_run, BOOL *float16_used)
 {
     BOOL ret = FALSE;
-    WINED3DDECLTYPE type;
+    WINED3DFORMAT format;
 
     /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
      * there, on nonexistent attribs the vbo is 0.
      */
     if (attrib->buffer_object != This->buffer_object) return FALSE;
 
-    type = attrib->d3d_type;
+    format = attrib->d3d_format;
     /* Look for newly appeared conversion */
-    if (!GL_SUPPORT(NV_HALF_FLOAT) && (type == WINED3DDECLTYPE_FLOAT16_2 || type == WINED3DDECLTYPE_FLOAT16_4))
+    if (!GL_SUPPORT(NV_HALF_FLOAT) && (format == WINED3DFMT_R16G16_FLOAT || format == WINED3DFMT_R16G16B16A16_FLOAT))
     {
-        ret = buffer_process_converted_attribute(This, CONV_FLOAT16_2, attrib, stride_this_run, type);
+        ret = buffer_process_converted_attribute(This, CONV_FLOAT16_2, attrib, stride_this_run);
 
         if (is_ffp_position) FIXME("Test FLOAT16 fixed function processing positions\n");
         else if (is_ffp_color) FIXME("test FLOAT16 fixed function processing colors\n");
         *float16_used = TRUE;
     }
-    else if (check_d3dcolor && type == WINED3DDECLTYPE_D3DCOLOR)
+    else if (check_d3dcolor && format == WINED3DFMT_A8R8G8B8)
     {
-        ret = buffer_process_converted_attribute(This, CONV_D3DCOLOR,
-                attrib, stride_this_run, WINED3DDECLTYPE_D3DCOLOR);
+        ret = buffer_process_converted_attribute(This, CONV_D3DCOLOR, attrib, stride_this_run);
 
-        if (!is_ffp_color) FIXME("Test for non-color fixed function D3DCOLOR type\n");
+        if (!is_ffp_color) FIXME("Test for non-color fixed function WINED3DFMT_A8R8G8B8 format\n");
     }
-    else if (is_ffp_position && type == WINED3DDECLTYPE_FLOAT4)
+    else if (is_ffp_position && format == WINED3DFMT_R32G32B32A32_FLOAT)
     {
-        ret = buffer_process_converted_attribute(This, CONV_POSITIONT,
-                attrib, stride_this_run, WINED3DDECLTYPE_FLOAT4);
+        ret = buffer_process_converted_attribute(This, CONV_POSITIONT, attrib, stride_this_run);
     }
     else if (This->conversion_map)
     {
-        ret = buffer_process_converted_attribute(This, CONV_NONE,
-                attrib, stride_this_run, type);
+        ret = buffer_process_converted_attribute(This, CONV_NONE, attrib, stride_this_run);
     }
 
     return ret;
@@ -231,7 +228,6 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
         const struct wined3d_stream_info *strided, UINT stride)
 {
     UINT *ret, i, j, shift, orig_type_size;
-    DWORD type;
 
     if (!stride)
     {
@@ -243,14 +239,16 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
     ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DWORD) * stride);
     for (i = 0; i < MAX_ATTRIBS; ++i)
     {
+        WINED3DFORMAT format;
+
         if (strided->elements[i].buffer_object != This->buffer_object) continue;
 
-        type = strided->elements[i].d3d_type;
-        if (type == WINED3DDECLTYPE_FLOAT16_2)
+        format = strided->elements[i].d3d_format;
+        if (format == WINED3DFMT_R16G16_FLOAT)
         {
             shift = 4;
         }
-        else if (type == WINED3DDECLTYPE_FLOAT16_4)
+        else if (format == WINED3DFMT_R16G16B16A16_FLOAT)
         {
             shift = 8;
             /* Pre-shift the last 4 bytes in the FLOAT16_4 by 4 bytes - this makes FLOAT16_2 and FLOAT16_4 conversions
@@ -269,7 +267,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
 
         if (shift)
         {
-            orig_type_size = WINED3D_ATR_TYPESIZE(type) * WINED3D_ATR_SIZE(type);
+            orig_type_size = strided->elements[i].type_size * strided->elements[i].size;
             for (j = (DWORD_PTR)strided->elements[i].data + orig_type_size; j < stride; ++j)
             {
                 ret[j] += shift;

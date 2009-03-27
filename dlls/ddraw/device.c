@@ -3827,12 +3827,12 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
      */
     if(VertexType & D3DFVF_POSITION_MASK)
     {
+        WineD3DStrided.position.format = WINED3DFMT_R32G32B32_FLOAT;
         WineD3DStrided.position.lpData = D3DDrawPrimStrideData->position.lpvData;
         WineD3DStrided.position.dwStride = D3DDrawPrimStrideData->position.dwStride;
-        WineD3DStrided.position.dwType = WINED3DDECLTYPE_FLOAT3;
         if (VertexType & D3DFVF_XYZRHW)
         {
-            WineD3DStrided.position.dwType = WINED3DDECLTYPE_FLOAT4;
+            WineD3DStrided.position.format = WINED3DFMT_R32G32B32A32_FLOAT;
             WineD3DStrided.position_transformed = TRUE;
         } else
             WineD3DStrided.position_transformed = FALSE;
@@ -3840,38 +3840,38 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
 
     if(VertexType & D3DFVF_NORMAL)
     {
+        WineD3DStrided.normal.format = WINED3DFMT_R32G32B32_FLOAT;
         WineD3DStrided.normal.lpData = D3DDrawPrimStrideData->normal.lpvData;
         WineD3DStrided.normal.dwStride = D3DDrawPrimStrideData->normal.dwStride;
-        WineD3DStrided.normal.dwType = WINED3DDECLTYPE_FLOAT3;
     }
 
     if(VertexType & D3DFVF_DIFFUSE)
     {
+        WineD3DStrided.diffuse.format = WINED3DFMT_A8R8G8B8;
         WineD3DStrided.diffuse.lpData = D3DDrawPrimStrideData->diffuse.lpvData;
         WineD3DStrided.diffuse.dwStride = D3DDrawPrimStrideData->diffuse.dwStride;
-        WineD3DStrided.diffuse.dwType = WINED3DDECLTYPE_D3DCOLOR;
     }
 
     if(VertexType & D3DFVF_SPECULAR)
     {
+        WineD3DStrided.specular.format = WINED3DFMT_A8R8G8B8;
         WineD3DStrided.specular.lpData = D3DDrawPrimStrideData->specular.lpvData;
         WineD3DStrided.specular.dwStride = D3DDrawPrimStrideData->specular.dwStride;
-        WineD3DStrided.specular.dwType = WINED3DDECLTYPE_D3DCOLOR;
     }
 
     for( i = 0; i < GET_TEXCOUNT_FROM_FVF(VertexType); i++)
     {
-        WineD3DStrided.texCoords[i].lpData = D3DDrawPrimStrideData->textureCoords[i].lpvData;
-        WineD3DStrided.texCoords[i].dwStride = D3DDrawPrimStrideData->textureCoords[i].dwStride;
         switch(GET_TEXCOORD_SIZE_FROM_FVF(VertexType, i))
         {
-            case 1: WineD3DStrided.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT1; break;
-            case 2: WineD3DStrided.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT2; break;
-            case 3: WineD3DStrided.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT3; break;
-            case 4: WineD3DStrided.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT4; break;
+            case 1: WineD3DStrided.texCoords[i].format = WINED3DFMT_R32_FLOAT; break;
+            case 2: WineD3DStrided.texCoords[i].format = WINED3DFMT_R32G32_FLOAT; break;
+            case 3: WineD3DStrided.texCoords[i].format = WINED3DFMT_R32G32B32_FLOAT; break;
+            case 4: WineD3DStrided.texCoords[i].format = WINED3DFMT_R32G32B32A32_FLOAT; break;
             default: ERR("Unexpected texture coordinate size %d\n",
                          GET_TEXCOORD_SIZE_FROM_FVF(VertexType, i));
         }
+        WineD3DStrided.texCoords[i].lpData = D3DDrawPrimStrideData->textureCoords[i].lpvData;
+        WineD3DStrided.texCoords[i].dwStride = D3DDrawPrimStrideData->textureCoords[i].dwStride;
     }
 
     /* WineD3D doesn't need the FVF here */
@@ -3968,12 +3968,12 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
      */
     if(VertexType & D3DFVF_POSITION_MASK)
     {
+        WineD3DStrided.position.format = WINED3DFMT_R32G32B32_FLOAT;
         WineD3DStrided.position.lpData = D3DDrawPrimStrideData->position.lpvData;
         WineD3DStrided.position.dwStride = D3DDrawPrimStrideData->position.dwStride;
-        WineD3DStrided.position.dwType = WINED3DDECLTYPE_FLOAT3;
         if (VertexType & D3DFVF_XYZRHW)
         {
-            WineD3DStrided.position.dwType = WINED3DDECLTYPE_FLOAT4;
+            WineD3DStrided.position.format = WINED3DFMT_R32G32B32A32_FLOAT;
             WineD3DStrided.position_transformed = TRUE;
         } else
             WineD3DStrided.position_transformed = FALSE;
@@ -3981,38 +3981,38 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
 
     if(VertexType & D3DFVF_NORMAL)
     {
+        WineD3DStrided.normal.format = WINED3DFMT_R32G32B32_FLOAT;
         WineD3DStrided.normal.lpData = D3DDrawPrimStrideData->normal.lpvData;
         WineD3DStrided.normal.dwStride = D3DDrawPrimStrideData->normal.dwStride;
-        WineD3DStrided.normal.dwType = WINED3DDECLTYPE_FLOAT3;
     }
 
     if(VertexType & D3DFVF_DIFFUSE)
     {
+        WineD3DStrided.diffuse.format = WINED3DFMT_A8R8G8B8;
         WineD3DStrided.diffuse.lpData = D3DDrawPrimStrideData->diffuse.lpvData;
         WineD3DStrided.diffuse.dwStride = D3DDrawPrimStrideData->diffuse.dwStride;
-        WineD3DStrided.diffuse.dwType = WINED3DDECLTYPE_D3DCOLOR;
     }
 
     if(VertexType & D3DFVF_SPECULAR)
     {
+        WineD3DStrided.specular.format = WINED3DFMT_A8R8G8B8;
         WineD3DStrided.specular.lpData = D3DDrawPrimStrideData->specular.lpvData;
         WineD3DStrided.specular.dwStride = D3DDrawPrimStrideData->specular.dwStride;
-        WineD3DStrided.specular.dwType = WINED3DDECLTYPE_D3DCOLOR;
     }
 
     for( i = 0; i < GET_TEXCOUNT_FROM_FVF(VertexType); i++)
     {
-        WineD3DStrided.texCoords[i].lpData = D3DDrawPrimStrideData->textureCoords[i].lpvData;
-        WineD3DStrided.texCoords[i].dwStride = D3DDrawPrimStrideData->textureCoords[i].dwStride;
         switch(GET_TEXCOORD_SIZE_FROM_FVF(VertexType, i))
         {
-            case 1: WineD3DStrided.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT1; break;
-            case 2: WineD3DStrided.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT2; break;
-            case 3: WineD3DStrided.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT3; break;
-            case 4: WineD3DStrided.texCoords[i].dwType = WINED3DDECLTYPE_FLOAT4; break;
+            case 1: WineD3DStrided.texCoords[i].format = WINED3DFMT_R32_FLOAT; break;
+            case 2: WineD3DStrided.texCoords[i].format = WINED3DFMT_R32G32_FLOAT; break;
+            case 3: WineD3DStrided.texCoords[i].format = WINED3DFMT_R32G32B32_FLOAT; break;
+            case 4: WineD3DStrided.texCoords[i].format = WINED3DFMT_R32G32B32A32_FLOAT; break;
             default: ERR("Unexpected texture coordinate size %d\n",
                          GET_TEXCOORD_SIZE_FROM_FVF(VertexType, i));
         }
+        WineD3DStrided.texCoords[i].lpData = D3DDrawPrimStrideData->textureCoords[i].lpvData;
+        WineD3DStrided.texCoords[i].dwStride = D3DDrawPrimStrideData->textureCoords[i].dwStride;
     }
 
     /* WineD3D doesn't need the FVF here */

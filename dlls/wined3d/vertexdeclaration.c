@@ -29,13 +29,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_decl);
 #define GLINFO_LOCATION This->wineD3DDevice->adapter->gl_info
 
 static void dump_wined3dvertexelement(const WINED3DVERTEXELEMENT *element) {
-    TRACE("     Stream: %d\n", element->Stream);
-    TRACE("     Offset: %d\n", element->Offset);
-    TRACE("       Type: %s (%#x)\n", debug_d3ddecltype(element->Type), element->Type);
-    TRACE("     Method: %s (%#x)\n", debug_d3ddeclmethod(element->Method), element->Method);
-    TRACE("      Usage: %s (%#x)\n", debug_d3ddeclusage(element->Usage), element->Usage);
-    TRACE("Usage index: %d\n", element->UsageIndex);
-    TRACE("   Register: %d\n", element->Reg);
+    TRACE("     format: %s (%#x)\n", debug_d3dformat(element->format), element->format);
+    TRACE(" input_slot: %u\n", element->input_slot);
+    TRACE("     offset: %u\n", element->offset);
+    TRACE("output_slot: %u\n", element->output_slot);
+    TRACE("     method: %s (%#x)\n", debug_d3ddeclmethod(element->method), element->method);
+    TRACE("      usage: %s (%#x)\n", debug_d3ddeclusage(element->usage), element->usage);
+    TRACE("  usage_idx: %u\n", element->usage_idx);
 }
 
 /* *******************************************
@@ -104,82 +104,82 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDecl
 
 static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
 {
-    switch(element->Usage)
+    switch(element->usage)
     {
         case WINED3DDECLUSAGE_POSITION:
         case WINED3DDECLUSAGE_POSITIONT:
-            switch(element->Type)
+            switch(element->format)
             {
-                case WINED3DDECLTYPE_FLOAT2:
-                case WINED3DDECLTYPE_FLOAT3:
-                case WINED3DDECLTYPE_FLOAT4:
-                case WINED3DDECLTYPE_SHORT2:
-                case WINED3DDECLTYPE_SHORT4:
-                case WINED3DDECLTYPE_FLOAT16_2:
-                case WINED3DDECLTYPE_FLOAT16_4:
+                case WINED3DFMT_R32G32_FLOAT:
+                case WINED3DFMT_R32G32B32_FLOAT:
+                case WINED3DFMT_R32G32B32A32_FLOAT:
+                case WINED3DFMT_R16G16_SINT:
+                case WINED3DFMT_R16G16B16A16_SINT:
+                case WINED3DFMT_R16G16_FLOAT:
+                case WINED3DFMT_R16G16B16A16_FLOAT:
                     return TRUE;
                 default:
                     return FALSE;
             }
 
         case WINED3DDECLUSAGE_BLENDWEIGHT:
-            switch(element->Type)
+            switch(element->format)
             {
-                case WINED3DDECLTYPE_FLOAT1:
-                case WINED3DDECLTYPE_FLOAT2:
-                case WINED3DDECLTYPE_FLOAT3:
-                case WINED3DDECLTYPE_FLOAT4:
-                case WINED3DDECLTYPE_D3DCOLOR:
-                case WINED3DDECLTYPE_UBYTE4:
-                case WINED3DDECLTYPE_SHORT2:
-                case WINED3DDECLTYPE_SHORT4:
-                case WINED3DDECLTYPE_FLOAT16_2:
-                case WINED3DDECLTYPE_FLOAT16_4:
+                case WINED3DFMT_R32_FLOAT:
+                case WINED3DFMT_R32G32_FLOAT:
+                case WINED3DFMT_R32G32B32_FLOAT:
+                case WINED3DFMT_R32G32B32A32_FLOAT:
+                case WINED3DFMT_A8R8G8B8:
+                case WINED3DFMT_R8G8B8A8_UINT:
+                case WINED3DFMT_R16G16_SINT:
+                case WINED3DFMT_R16G16B16A16_SINT:
+                case WINED3DFMT_R16G16_FLOAT:
+                case WINED3DFMT_R16G16B16A16_FLOAT:
                     return TRUE;
                 default:
                     return FALSE;
             }
 
         case WINED3DDECLUSAGE_NORMAL:
-            switch(element->Type)
+            switch(element->format)
             {
-                case WINED3DDECLTYPE_FLOAT3:
-                case WINED3DDECLTYPE_FLOAT4:
-                case WINED3DDECLTYPE_SHORT4:
-                case WINED3DDECLTYPE_FLOAT16_4:
+                case WINED3DFMT_R32G32B32_FLOAT:
+                case WINED3DFMT_R32G32B32A32_FLOAT:
+                case WINED3DFMT_R16G16B16A16_SINT:
+                case WINED3DFMT_R16G16B16A16_FLOAT:
                     return TRUE;
                 default:
                     return FALSE;
             }
 
         case WINED3DDECLUSAGE_TEXCOORD:
-            switch(element->Type)
+            switch(element->format)
             {
-                case WINED3DDECLTYPE_FLOAT1:
-                case WINED3DDECLTYPE_FLOAT2:
-                case WINED3DDECLTYPE_FLOAT3:
-                case WINED3DDECLTYPE_FLOAT4:
-                case WINED3DDECLTYPE_SHORT2:
-                case WINED3DDECLTYPE_SHORT4:
-                case WINED3DDECLTYPE_FLOAT16_2:
-                case WINED3DDECLTYPE_FLOAT16_4:
+                case WINED3DFMT_R32_FLOAT:
+                case WINED3DFMT_R32G32_FLOAT:
+                case WINED3DFMT_R32G32B32_FLOAT:
+                case WINED3DFMT_R32G32B32A32_FLOAT:
+                case WINED3DFMT_R16G16_SINT:
+                case WINED3DFMT_R16G16B16A16_SINT:
+                case WINED3DFMT_R16G16_FLOAT:
+                case WINED3DFMT_R16G16B16A16_FLOAT:
                     return TRUE;
                 default:
                     return FALSE;
             }
 
         case WINED3DDECLUSAGE_COLOR:
-            switch(element->Type)
+            switch(element->format)
             {
-                case WINED3DDECLTYPE_FLOAT3:
-                case WINED3DDECLTYPE_FLOAT4:
-                case WINED3DDECLTYPE_D3DCOLOR:
-                case WINED3DDECLTYPE_UBYTE4:
-                case WINED3DDECLTYPE_SHORT4:
-                case WINED3DDECLTYPE_UBYTE4N:
-                case WINED3DDECLTYPE_SHORT4N:
-                case WINED3DDECLTYPE_USHORT4N:
-                case WINED3DDECLTYPE_FLOAT16_4:
+                case WINED3DFMT_R32G32B32_FLOAT:
+                case WINED3DFMT_R32G32B32A32_FLOAT:
+                case WINED3DFMT_A8R8G8B8:
+                case WINED3DFMT_R8G8B8A8_UINT:
+                case WINED3DFMT_R16G16B16A16_SINT:
+                case WINED3DFMT_R8G8B8A8_UNORM:
+                case WINED3DFMT_R16G16B16A16_SNORM:
+                case WINED3DFMT_R16G16B16A16_UNORM:
+                case WINED3DFMT_R16G16B16A16_FLOAT:
                     return TRUE;
                 default:
                     return FALSE;
@@ -222,14 +222,14 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *This,
     for (i = 0; i < element_count; ++i) {
         struct wined3d_vertex_declaration_element *e = &This->elements[i];
 
-        e->type = elements[i].Type;
+        e->format_desc = getFormatDescEntry(elements[i].format, &This->wineD3DDevice->adapter->gl_info);
         e->ffp_valid = declaration_element_valid_ffp(&elements[i]);
-        e->input_slot = elements[i].Stream;
-        e->offset = elements[i].Offset;
-        e->output_slot = elements[i].Reg;
-        e->method = elements[i].Method;
-        e->usage = elements[i].Usage;
-        e->usage_idx = elements[i].UsageIndex;
+        e->input_slot = elements[i].input_slot;
+        e->offset = elements[i].offset;
+        e->output_slot = elements[i].output_slot;
+        e->method = elements[i].method;
+        e->usage = elements[i].usage;
+        e->usage_idx = elements[i].usage_idx;
 
         if (e->usage == WINED3DDECLUSAGE_POSITIONT) This->position_transformed = TRUE;
 
@@ -238,9 +238,10 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *This,
          */
         if (e->input_slot >= MAX_STREAMS) continue;
 
-        if (e->type == WINED3DDECLTYPE_UNUSED)
+        if (!e->format_desc->gl_vtx_format)
         {
-            WARN("The application tries to use WINED3DDECLTYPE_UNUSED, returning E_FAIL\n");
+            FIXME("The application tries to use an unsupported format (%s), returning E_FAIL\n",
+                    debug_d3dformat(elements[i].format));
             /* The caller will release the vdecl, which will free This->elements */
             return E_FAIL;
         }
@@ -258,7 +259,7 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *This,
             isPreLoaded[e->input_slot] = 1;
         }
 
-        if (e->type == WINED3DDECLTYPE_FLOAT16_2 || e->type == WINED3DDECLTYPE_FLOAT16_4)
+        if (elements[i].format == WINED3DFMT_R16G16_FLOAT || elements[i].format == WINED3DFMT_R16G16B16A16_FLOAT)
         {
             if (!GL_SUPPORT(NV_HALF_FLOAT)) This->half_float_conv_needed = TRUE;
         }

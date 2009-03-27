@@ -66,17 +66,20 @@ static const struct StaticPixelFormatDesc formats[] =
     /* IEEE formats */
     {WINED3DFMT_R32_FLOAT,          0x0,        0x0,        0x0,        0x0,        4,      0,      0,      FALSE},
     {WINED3DFMT_R32G32_FLOAT,       0x0,        0x0,        0x0,        0x0,        8,      0,      0,      FALSE},
+    {WINED3DFMT_R32G32B32_FLOAT,    0x0,        0x0,        0x0,        0x0,        12,     0,      0,      FALSE},
     {WINED3DFMT_R32G32B32A32_FLOAT, 0x1,        0x0,        0x0,        0x0,        16,     0,      0,      FALSE},
     /* Hmm? */
     {WINED3DFMT_CxV8U8,             0x0,        0x0,        0x0,        0x0,        2,      0,      0,      FALSE},
     /* Float */
     {WINED3DFMT_R16_FLOAT,          0x0,        0x0,        0x0,        0x0,        2,      0,      0,      FALSE},
     {WINED3DFMT_R16G16_FLOAT,       0x0,        0x0,        0x0,        0x0,        4,      0,      0,      FALSE},
+    {WINED3DFMT_R16G16_SINT,        0x0,        0x0,        0x0,        0x0,        4,      0,      0,      FALSE},
     {WINED3DFMT_R16G16B16A16_FLOAT, 0x1,        0x0,        0x0,        0x0,        8,      0,      0,      FALSE},
+    {WINED3DFMT_R16G16B16A16_SINT,  0x1,        0x0,        0x0,        0x0,        8,      0,      0,      FALSE},
     /* Palettized formats */
     {WINED3DFMT_A8P8,               0x0000ff00, 0x0,        0x0,        0x0,        2,      0,      0,      FALSE},
     {WINED3DFMT_P8,                 0x0,        0x0,        0x0,        0x0,        1,      0,      0,      FALSE},
-    /* Standard ARGB formats. Keep WINED3DFMT_R8G8B8(=20) at position 20 */
+    /* Standard ARGB formats. */
     {WINED3DFMT_R8G8B8,             0x0,        0x00ff0000, 0x0000ff00, 0x000000ff, 3,      0,      0,      FALSE},
     {WINED3DFMT_A8R8G8B8,           0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff, 4,      0,      0,      FALSE},
     {WINED3DFMT_X8R8G8B8,           0x0,        0x00ff0000, 0x0000ff00, 0x000000ff, 4,      0,      0,      FALSE},
@@ -89,7 +92,10 @@ static const struct StaticPixelFormatDesc formats[] =
     {WINED3DFMT_A8R3G3B2,           0x0000ff00, 0x000000e0, 0x0000001c, 0x00000003, 2,      0,      0,      FALSE},
     {WINED3DFMT_X4R4G4B4,           0x0,        0x00000f00, 0x000000f0, 0x0000000f, 2,      0,      0,      FALSE},
     {WINED3DFMT_R10G10B10A2_UNORM,  0xb0000000, 0x000003ff, 0x000ffc00, 0x3ff00000, 4,      0,      0,      FALSE},
+    {WINED3DFMT_R10G10B10A2_UINT,   0xb0000000, 0x000003ff, 0x000ffc00, 0x3ff00000, 4,      0,      0,      FALSE},
+    {WINED3DFMT_R10G10B10A2_SNORM,  0xb0000000, 0x000003ff, 0x000ffc00, 0x3ff00000, 4,      0,      0,      FALSE},
     {WINED3DFMT_R8G8B8A8_UNORM,     0xff000000, 0x000000ff, 0x0000ff00, 0x00ff0000, 4,      0,      0,      FALSE},
+    {WINED3DFMT_R8G8B8A8_UINT,      0xff000000, 0x000000ff, 0x0000ff00, 0x00ff0000, 4,      0,      0,      FALSE},
     {WINED3DFMT_X8B8G8R8,           0x0,        0x000000ff, 0x0000ff00, 0x00ff0000, 4,      0,      0,      FALSE},
     {WINED3DFMT_R16G16_UNORM,       0x0,        0x0000ffff, 0xffff0000, 0x0,        4,      0,      0,      FALSE},
     {WINED3DFMT_A2R10G10B10,        0xb0000000, 0x3ff00000, 0x000ffc00, 0x000003ff, 4,      0,      0,      FALSE},
@@ -126,6 +132,38 @@ static const struct StaticPixelFormatDesc formats[] =
     {WINED3DFMT_ATI2N,              0x0,        0x0,        0x0,        0x0,        1,      0,      0,      TRUE },
     {WINED3DFMT_NVHU,               0x0,        0x0,        0x0,        0x0,        2,      0,      0,      TRUE },
     {WINED3DFMT_NVHS,               0x0,        0x0,        0x0,        0x0,        2,      0,      0,      TRUE },
+};
+
+struct wined3d_format_vertex_info
+{
+    WINED3DFORMAT format;
+    enum wined3d_ffp_emit_idx emit_idx;
+    GLint component_count;
+    GLenum gl_vtx_type;
+    GLint gl_vtx_format;
+    GLboolean gl_normalized;
+    unsigned int component_size;
+};
+
+static const struct wined3d_format_vertex_info format_vertex_info[] =
+{
+    {WINED3DFMT_R32_FLOAT,          WINED3D_FFP_EMIT_FLOAT1,    1, GL_FLOAT,          1, GL_FALSE, sizeof(float)},
+    {WINED3DFMT_R32G32_FLOAT,       WINED3D_FFP_EMIT_FLOAT2,    2, GL_FLOAT,          2, GL_FALSE, sizeof(float)},
+    {WINED3DFMT_R32G32B32_FLOAT,    WINED3D_FFP_EMIT_FLOAT3,    3, GL_FLOAT,          3, GL_FALSE, sizeof(float)},
+    {WINED3DFMT_R32G32B32A32_FLOAT, WINED3D_FFP_EMIT_FLOAT4,    4, GL_FLOAT,          4, GL_FALSE, sizeof(float)},
+    {WINED3DFMT_A8R8G8B8,           WINED3D_FFP_EMIT_D3DCOLOR,  4, GL_UNSIGNED_BYTE,  4, GL_TRUE,  sizeof(BYTE)},
+    {WINED3DFMT_R8G8B8A8_UINT,      WINED3D_FFP_EMIT_UBYTE4,    4, GL_UNSIGNED_BYTE,  4, GL_FALSE, sizeof(BYTE)},
+    {WINED3DFMT_R16G16_SINT,        WINED3D_FFP_EMIT_SHORT2,    2, GL_SHORT,          2, GL_FALSE, sizeof(short int)},
+    {WINED3DFMT_R16G16B16A16_SINT,  WINED3D_FFP_EMIT_SHORT4,    4, GL_SHORT,          4, GL_FALSE, sizeof(short int)},
+    {WINED3DFMT_R8G8B8A8_UNORM,     WINED3D_FFP_EMIT_UBYTE4N,   4, GL_UNSIGNED_BYTE,  4, GL_TRUE,  sizeof(BYTE)},
+    {WINED3DFMT_R16G16_SNORM,       WINED3D_FFP_EMIT_SHORT2N,   2, GL_SHORT,          2, GL_TRUE,  sizeof(short int)},
+    {WINED3DFMT_R16G16B16A16_SNORM, WINED3D_FFP_EMIT_SHORT4N,   4, GL_SHORT,          4, GL_TRUE,  sizeof(short int)},
+    {WINED3DFMT_R16G16_UNORM,       WINED3D_FFP_EMIT_USHORT2N,  2, GL_UNSIGNED_SHORT, 2, GL_TRUE,  sizeof(short int)},
+    {WINED3DFMT_R16G16B16A16_UNORM, WINED3D_FFP_EMIT_USHORT4N,  4, GL_UNSIGNED_SHORT, 4, GL_TRUE,  sizeof(short int)},
+    {WINED3DFMT_R10G10B10A2_UINT,   WINED3D_FFP_EMIT_UDEC3,     3, GL_UNSIGNED_SHORT, 3, GL_FALSE, sizeof(short int)},
+    {WINED3DFMT_R10G10B10A2_SNORM,  WINED3D_FFP_EMIT_DEC3N,     3, GL_SHORT,          3, GL_TRUE,  sizeof(short int)},
+    {WINED3DFMT_R16G16_FLOAT,       WINED3D_FFP_EMIT_FLOAT16_2, 2, GL_FLOAT,          2, GL_FALSE, sizeof(GLhalfNV)},
+    {WINED3DFMT_R16G16B16A16_FLOAT, WINED3D_FFP_EMIT_FLOAT16_4, 4, GL_FLOAT,          4, GL_FALSE, sizeof(GLhalfNV)}
 };
 
 typedef struct {
@@ -606,6 +644,51 @@ static void apply_format_fixups(WineD3D_GL_Info *gl_info)
     idx = getFmtIdx(WINED3DFMT_YV12);
     gl_info->gl_formats[idx].heightscale = 1.5;
     gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YV12);
+
+    if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
+    {
+        idx = getFmtIdx(WINED3DFMT_A8R8G8B8);
+        gl_info->gl_formats[idx].gl_vtx_format = GL_BGRA;
+    }
+
+    if (GL_SUPPORT(NV_HALF_FLOAT))
+    {
+        /* Do not change the size of the type, it is CPU side. We have to change the GPU-side information though.
+         * It is the job of the vertex buffer code to make sure that the vbos have the right format */
+        idx = getFmtIdx(WINED3DFMT_R16G16_FLOAT);
+        gl_info->gl_formats[idx].gl_vtx_type = GL_HALF_FLOAT_NV;
+
+        idx = getFmtIdx(WINED3DFMT_R16G16B16A16_FLOAT);
+        gl_info->gl_formats[idx].gl_vtx_type = GL_HALF_FLOAT_NV;
+    }
+}
+
+static BOOL init_format_vertex_info(WineD3D_GL_Info *gl_info)
+{
+    unsigned int i;
+
+    for (i = 0; i < (sizeof(format_vertex_info) / sizeof(*format_vertex_info)); ++i)
+    {
+        struct GlPixelFormatDesc *format_desc;
+        int fmt_idx = getFmtIdx(format_vertex_info[i].format);
+
+        if (fmt_idx == -1)
+        {
+            ERR("Format %s (%#x) not found.\n",
+                    debug_d3dformat(format_vertex_info[i].format), format_vertex_info[i].format);
+            return FALSE;
+        }
+
+        format_desc = &gl_info->gl_formats[fmt_idx];
+        format_desc->emit_idx = format_vertex_info[i].emit_idx;
+        format_desc->component_count = format_vertex_info[i].component_count;
+        format_desc->gl_vtx_type = format_vertex_info[i].gl_vtx_type;
+        format_desc->gl_vtx_format = format_vertex_info[i].gl_vtx_format;
+        format_desc->gl_normalized = format_vertex_info[i].gl_normalized;
+        format_desc->component_size = format_vertex_info[i].component_size;
+    }
+
+    return TRUE;
 }
 
 BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
@@ -623,49 +706,15 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         return FALSE;
     }
 
+    if (!init_format_vertex_info(gl_info))
+    {
+        HeapFree(GetProcessHeap(), 0, gl_info->gl_formats);
+        return FALSE;
+    }
+
     apply_format_fixups(gl_info);
 
     return TRUE;
-}
-
-/* NOTE: Make sure these are in the correct numerical order. (see /include/wined3d_types.h) */
-static WINED3DGLTYPE const glTypeLookupTemplate[WINED3DDECLTYPE_UNUSED] =
-{
-    {WINED3DDECLTYPE_FLOAT1,    1, GL_FLOAT,          1, GL_FALSE, sizeof(float)},
-    {WINED3DDECLTYPE_FLOAT2,    2, GL_FLOAT,          2, GL_FALSE, sizeof(float)},
-    {WINED3DDECLTYPE_FLOAT3,    3, GL_FLOAT,          3, GL_FALSE, sizeof(float)},
-    {WINED3DDECLTYPE_FLOAT4,    4, GL_FLOAT,          4, GL_FALSE, sizeof(float)},
-    {WINED3DDECLTYPE_D3DCOLOR,  4, GL_UNSIGNED_BYTE,  4, GL_TRUE,  sizeof(BYTE)},
-    {WINED3DDECLTYPE_UBYTE4,    4, GL_UNSIGNED_BYTE,  4, GL_FALSE, sizeof(BYTE)},
-    {WINED3DDECLTYPE_SHORT2,    2, GL_SHORT,          2, GL_FALSE, sizeof(short int)},
-    {WINED3DDECLTYPE_SHORT4,    4, GL_SHORT,          4, GL_FALSE, sizeof(short int)},
-    {WINED3DDECLTYPE_UBYTE4N,   4, GL_UNSIGNED_BYTE,  4, GL_TRUE,  sizeof(BYTE)},
-    {WINED3DDECLTYPE_SHORT2N,   2, GL_SHORT,          2, GL_TRUE,  sizeof(short int)},
-    {WINED3DDECLTYPE_SHORT4N,   4, GL_SHORT,          4, GL_TRUE,  sizeof(short int)},
-    {WINED3DDECLTYPE_USHORT2N,  2, GL_UNSIGNED_SHORT, 2, GL_TRUE,  sizeof(short int)},
-    {WINED3DDECLTYPE_USHORT4N,  4, GL_UNSIGNED_SHORT, 4, GL_TRUE,  sizeof(short int)},
-    {WINED3DDECLTYPE_UDEC3,     3, GL_UNSIGNED_SHORT, 3, GL_FALSE, sizeof(short int)},
-    {WINED3DDECLTYPE_DEC3N,     3, GL_SHORT,          3, GL_TRUE,  sizeof(short int)},
-    {WINED3DDECLTYPE_FLOAT16_2, 2, GL_FLOAT,          2, GL_FALSE, sizeof(GLhalfNV)},
-    {WINED3DDECLTYPE_FLOAT16_4, 4, GL_FLOAT,          4, GL_FALSE, sizeof(GLhalfNV)}
-};
-
-void init_type_lookup(WineD3D_GL_Info *gl_info) {
-    memcpy(gl_info->glTypeLookup, glTypeLookupTemplate, sizeof(glTypeLookupTemplate));
-
-    if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
-    {
-        gl_info->glTypeLookup[WINED3DDECLTYPE_D3DCOLOR].format = GL_BGRA;
-    }
-
-    if (GL_SUPPORT(NV_HALF_FLOAT))
-    {
-        /* Do not change the size of the type, it is CPU side. We have to change the GPU-side information though.
-         * It is the job of the vertex buffer code to make sure that the vbos have the right format
-         */
-        gl_info->glTypeLookup[WINED3DDECLTYPE_FLOAT16_2].glType = GL_HALF_FLOAT_NV;
-        gl_info->glTypeLookup[WINED3DDECLTYPE_FLOAT16_4].glType = GL_HALF_FLOAT_NV;
-    }
 }
 
 #undef GLINFO_LOCATION
@@ -763,6 +812,7 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_R10G10B10A2_TYPELESS);
     FMT_TO_STR(WINED3DFMT_R10G10B10A2_UNORM);
     FMT_TO_STR(WINED3DFMT_R10G10B10A2_UINT);
+    FMT_TO_STR(WINED3DFMT_R10G10B10A2_SNORM);
     FMT_TO_STR(WINED3DFMT_R11G11B10_FLOAT);
     FMT_TO_STR(WINED3DFMT_R8G8B8A8_TYPELESS);
     FMT_TO_STR(WINED3DFMT_R8G8B8A8_UNORM);
@@ -910,34 +960,6 @@ const char* debug_d3ddeclmethod(WINED3DDECLMETHOD method) {
 #undef WINED3DDECLMETHOD_TO_STR
         default:
             FIXME("Unrecognized %u declaration method!\n", method);
-            return "unrecognized";
-    }
-}
-
-const char* debug_d3ddecltype(WINED3DDECLTYPE type) {
-    switch (type) {
-#define WINED3DDECLTYPE_TO_STR(u) case u: return #u
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_FLOAT1);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_FLOAT2);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_FLOAT3);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_FLOAT4);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_D3DCOLOR);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_UBYTE4);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_SHORT2);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_SHORT4);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_UBYTE4N);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_SHORT2N);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_SHORT4N);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_USHORT2N);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_USHORT4N);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_UDEC3);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_DEC3N);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_FLOAT16_2);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_FLOAT16_4);
-        WINED3DDECLTYPE_TO_STR(WINED3DDECLTYPE_UNUSED);
-#undef WINED3DDECLTYPE_TO_STR
-        default:
-            FIXME("Unrecognized %u declaration type!\n", type);
             return "unrecognized";
     }
 }
@@ -1492,8 +1514,8 @@ BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP op, DWO
 }
 
 /* Setup this textures matrix according to the texture flags*/
-void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed, DWORD coordtype,
-                        BOOL ffp_proj_control)
+void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed,
+        WINED3DFORMAT vtx_fmt, BOOL ffp_proj_control)
 {
     float mat[16];
 
@@ -1528,8 +1550,9 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
         }
     } else { /* under directx the R/Z coord can be used for translation, under opengl we use the Q coord instead */
         if(!calculatedCoords) {
-            switch(coordtype) {
-                case WINED3DDECLTYPE_FLOAT1:
+            switch(vtx_fmt)
+            {
+                case WINED3DFMT_R32_FLOAT:
                     /* Direct3D passes the default 1.0 in the 2nd coord, while gl passes it in the 4th.
                      * swap 2nd and 4th coord. No need to store the value of mat[12] in mat[4] because
                      * the input value to the transformation will be 0, so the matrix value is irrelevant
@@ -1539,7 +1562,7 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
                     mat[14] = mat[6];
                     mat[15] = mat[7];
                     break;
-                case WINED3DDECLTYPE_FLOAT2:
+                case WINED3DFMT_R32G32_FLOAT:
                     /* See above, just 3rd and 4th coord
                     */
                     mat[12] = mat[8];
@@ -1547,14 +1570,14 @@ void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, B
                     mat[14] = mat[10];
                     mat[15] = mat[11];
                     break;
-                case WINED3DDECLTYPE_FLOAT3: /* Opengl defaults match dx defaults */
-                case WINED3DDECLTYPE_FLOAT4: /* No defaults apply, all app defined */
+                case WINED3DFMT_R32G32B32_FLOAT: /* Opengl defaults match dx defaults */
+                case WINED3DFMT_R32G32B32A32_FLOAT: /* No defaults apply, all app defined */
 
                 /* This is to prevent swapping the matrix lines and put the default 4th coord = 1.0
                  * into a bad place. The division elimination below will apply to make sure the
                  * 1.0 doesn't do anything bad. The caller will set this value if the stride is 0
                  */
-                case WINED3DDECLTYPE_UNUSED: /* No texture coords, 0/0/0/1 defaults are passed */
+                case WINED3DFMT_UNKNOWN: /* No texture coords, 0/0/0/1 defaults are passed */
                     break;
                 default:
                     FIXME("Unexpected fixed function texture coord input\n");

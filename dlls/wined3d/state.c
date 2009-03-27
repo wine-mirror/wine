@@ -3013,8 +3013,8 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     set_texture_matrix(&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
             stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS], generated, context->last_was_rhw,
             stateblock->wineD3DDevice->strided_streams.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].stride
-            ? stateblock->wineD3DDevice->strided_streams.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].d3d_type
-            : WINED3DDECLTYPE_UNUSED,
+            ? stateblock->wineD3DDevice->strided_streams.elements[WINED3D_FFP_TEXCOORD0 + coordIdx].d3d_format
+            : WINED3DFMT_UNKNOWN,
             stateblock->wineD3DDevice->frag_pipe->ffp_proj_control);
 
     /* The sampler applying function calls us if this changes */
@@ -3920,25 +3920,25 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
 
             if (context->numbered_array_mask & (1 << i)) unload_numbered_array(stateblock, context, i);
 
-            switch(stream_info->elements[i].d3d_type)
+            switch(stream_info->elements[i].d3d_format)
             {
-                case WINED3DDECLTYPE_FLOAT1:
+                case WINED3DFMT_R32_FLOAT:
                     GL_EXTCALL(glVertexAttrib1fvARB(i, (const GLfloat *)ptr));
                     break;
-                case WINED3DDECLTYPE_FLOAT2:
+                case WINED3DFMT_R32G32_FLOAT:
                     GL_EXTCALL(glVertexAttrib2fvARB(i, (const GLfloat *)ptr));
                     break;
-                case WINED3DDECLTYPE_FLOAT3:
+                case WINED3DFMT_R32G32B32_FLOAT:
                     GL_EXTCALL(glVertexAttrib3fvARB(i, (const GLfloat *)ptr));
                     break;
-                case WINED3DDECLTYPE_FLOAT4:
+                case WINED3DFMT_R32G32B32A32_FLOAT:
                     GL_EXTCALL(glVertexAttrib4fvARB(i, (const GLfloat *)ptr));
                     break;
 
-                case WINED3DDECLTYPE_UBYTE4:
+                case WINED3DFMT_R8G8B8A8_UINT:
                     GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
                     break;
-                case WINED3DDECLTYPE_D3DCOLOR:
+                case WINED3DFMT_A8R8G8B8:
                     if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
                     {
                         const DWORD *src = (const DWORD *)ptr;
@@ -3949,56 +3949,55 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
                         break;
                     }
                     /* else fallthrough */
-                case WINED3DDECLTYPE_UBYTE4N:
+                case WINED3DFMT_R8G8B8A8_UNORM:
                     GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
                     break;
 
-                case WINED3DDECLTYPE_SHORT2:
+                case WINED3DFMT_R16G16_SINT:
                     GL_EXTCALL(glVertexAttrib4svARB(i, (const GLshort *)ptr));
                     break;
-                case WINED3DDECLTYPE_SHORT4:
+                case WINED3DFMT_R16G16B16A16_SINT:
                     GL_EXTCALL(glVertexAttrib4svARB(i, (const GLshort *)ptr));
                     break;
 
-                case WINED3DDECLTYPE_SHORT2N:
+                case WINED3DFMT_R16G16_SNORM:
                 {
                     const GLshort s[4] = {((const GLshort *)ptr)[0], ((const GLshort *)ptr)[1], 0, 1};
                     GL_EXTCALL(glVertexAttrib4NsvARB(i, s));
                     break;
                 }
-                case WINED3DDECLTYPE_USHORT2N:
+                case WINED3DFMT_R16G16_UNORM:
                 {
                     const GLushort s[4] = {((const GLushort *)ptr)[0], ((const GLushort *)ptr)[1], 0, 1};
                     GL_EXTCALL(glVertexAttrib4NusvARB(i, s));
                     break;
                 }
-                case WINED3DDECLTYPE_SHORT4N:
+                case WINED3DFMT_R16G16B16A16_SNORM:
                     GL_EXTCALL(glVertexAttrib4NsvARB(i, (const GLshort *)ptr));
                     break;
-                case WINED3DDECLTYPE_USHORT4N:
+                case WINED3DFMT_R16G16B16A16_UNORM:
                     GL_EXTCALL(glVertexAttrib4NusvARB(i, (const GLushort *)ptr));
                     break;
 
-                case WINED3DDECLTYPE_UDEC3:
+                case WINED3DFMT_R10G10B10A2_UINT:
                     FIXME("Unsure about WINED3DDECLTYPE_UDEC3\n");
                     /*glVertexAttrib3usvARB(i, (const GLushort *)ptr); Does not exist */
                     break;
-                case WINED3DDECLTYPE_DEC3N:
+                case WINED3DFMT_R10G10B10A2_SNORM:
                     FIXME("Unsure about WINED3DDECLTYPE_DEC3N\n");
                     /*glVertexAttrib3NusvARB(i, (const GLushort *)ptr); Does not exist */
                     break;
 
-                case WINED3DDECLTYPE_FLOAT16_2:
+                case WINED3DFMT_R16G16_FLOAT:
                     /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
                      * byte float according to the IEEE standard
                      */
                     FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_2\n");
                     break;
-                case WINED3DDECLTYPE_FLOAT16_4:
+                case WINED3DFMT_R16G16B16A16_FLOAT:
                     FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_4\n");
                     break;
 
-                case WINED3DDECLTYPE_UNUSED:
                 default:
                     ERR("Unexpected declaration in stride 0 attributes\n");
                     break;

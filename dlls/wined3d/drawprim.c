@@ -119,8 +119,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
     element = &si->elements[WINED3D_FFP_DIFFUSE];
     if (element->data) diffuse = element->data + streamOffset[element->stream_idx];
     else glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    if (This->activeContext->num_untracked_materials && element->d3d_type != WINED3DDECLTYPE_D3DCOLOR)
-        FIXME("Implement diffuse color tracking from %s\n", debug_d3ddecltype(element->d3d_type));
+    if (This->activeContext->num_untracked_materials && element->d3d_format != WINED3DFMT_A8R8G8B8)
+        FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->d3d_format));
 
     element = &si->elements[WINED3D_FFP_SPECULAR];
     if (element->data)
@@ -130,13 +130,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
         /* special case where the fog density is stored in the specular alpha channel */
         if (This->stateBlock->renderState[WINED3DRS_FOGENABLE]
                 && (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE
-                    || si->elements[WINED3D_FFP_POSITION].d3d_type == WINED3DDECLTYPE_FLOAT4)
+                    || si->elements[WINED3D_FFP_POSITION].d3d_format == WINED3DFMT_R32G32B32A32_FLOAT)
                 && This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
         {
             if (GL_SUPPORT(EXT_FOG_COORD))
             {
-                if (element->d3d_type == WINED3DDECLTYPE_D3DCOLOR) specular_fog = TRUE;
-                else FIXME("Implement fog coordinates from %s\n", debug_d3ddecltype(element->d3d_type));
+                if (element->d3d_format == WINED3DFMT_A8R8G8B8) specular_fog = TRUE;
+                else FIXME("Implement fog coordinates from %s\n", debug_d3dformat(element->d3d_format));
             }
             else
             {
@@ -235,7 +235,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
             ptr = texCoords[coord_idx] + (SkipnStrides * si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].stride);
 
             texture_idx = This->texUnitMap[texture];
-            multi_texcoord_funcs[si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].d3d_type](
+            multi_texcoord_funcs[si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].emit_idx](
                     GL_TEXTURE0_ARB + texture_idx, ptr);
         }
 
@@ -243,7 +243,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
         if (diffuse) {
             const void *ptrToCoords = diffuse + SkipnStrides * si->elements[WINED3D_FFP_DIFFUSE].stride;
 
-            diffuse_funcs[si->elements[WINED3D_FFP_DIFFUSE].d3d_type](ptrToCoords);
+            diffuse_funcs[si->elements[WINED3D_FFP_DIFFUSE].emit_idx](ptrToCoords);
             if(This->activeContext->num_untracked_materials) {
                 DWORD diffuseColor = ((const DWORD *)ptrToCoords)[0];
                 unsigned char i;
@@ -264,7 +264,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
         if (specular) {
             const void *ptrToCoords = specular + SkipnStrides * si->elements[WINED3D_FFP_SPECULAR].stride;
 
-            specular_funcs[si->elements[WINED3D_FFP_SPECULAR].d3d_type](ptrToCoords);
+            specular_funcs[si->elements[WINED3D_FFP_SPECULAR].emit_idx](ptrToCoords);
 
             if (specular_fog)
             {
@@ -276,13 +276,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
         /* Normal -------------------------------- */
         if (normal != NULL) {
             const void *ptrToCoords = normal + SkipnStrides * si->elements[WINED3D_FFP_NORMAL].stride;
-            normal_funcs[si->elements[WINED3D_FFP_NORMAL].d3d_type](ptrToCoords);
+            normal_funcs[si->elements[WINED3D_FFP_NORMAL].emit_idx](ptrToCoords);
         }
 
         /* Position -------------------------------- */
         if (position) {
             const void *ptrToCoords = position + SkipnStrides * si->elements[WINED3D_FFP_POSITION].stride;
-            position_funcs[si->elements[WINED3D_FFP_POSITION].d3d_type](ptrToCoords);
+            position_funcs[si->elements[WINED3D_FFP_POSITION].emit_idx](ptrToCoords);
         }
 
         /* For non indexed mode, step onto next parts */
@@ -295,25 +295,27 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
     checkGLcall("glEnd and previous calls");
 }
 
-static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, const UINT index, const void *ptr) {
-    switch(type) {
-        case WINED3DDECLTYPE_FLOAT1:
+static inline void send_attribute(IWineD3DDeviceImpl *This, WINED3DFORMAT format, const UINT index, const void *ptr)
+{
+    switch(format)
+    {
+        case WINED3DFMT_R32_FLOAT:
             GL_EXTCALL(glVertexAttrib1fvARB(index, ptr));
             break;
-        case WINED3DDECLTYPE_FLOAT2:
+        case WINED3DFMT_R32G32_FLOAT:
             GL_EXTCALL(glVertexAttrib2fvARB(index, ptr));
             break;
-        case WINED3DDECLTYPE_FLOAT3:
+        case WINED3DFMT_R32G32B32_FLOAT:
             GL_EXTCALL(glVertexAttrib3fvARB(index, ptr));
             break;
-        case WINED3DDECLTYPE_FLOAT4:
+        case WINED3DFMT_R32G32B32A32_FLOAT:
             GL_EXTCALL(glVertexAttrib4fvARB(index, ptr));
             break;
 
-        case WINED3DDECLTYPE_UBYTE4:
+        case WINED3DFMT_R8G8B8A8_UINT:
             GL_EXTCALL(glVertexAttrib4ubvARB(index, ptr));
             break;
-        case WINED3DDECLTYPE_D3DCOLOR:
+        case WINED3DFMT_A8R8G8B8:
             if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))
             {
                 const DWORD *src = ptr;
@@ -324,46 +326,46 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, co
                 break;
             }
             /* else fallthrough */
-        case WINED3DDECLTYPE_UBYTE4N:
+        case WINED3DFMT_R8G8B8A8_UNORM:
             GL_EXTCALL(glVertexAttrib4NubvARB(index, ptr));
             break;
 
-        case WINED3DDECLTYPE_SHORT2:
+        case WINED3DFMT_R16G16_SINT:
             GL_EXTCALL(glVertexAttrib4svARB(index, ptr));
             break;
-        case WINED3DDECLTYPE_SHORT4:
+        case WINED3DFMT_R16G16B16A16_SINT:
             GL_EXTCALL(glVertexAttrib4svARB(index, ptr));
             break;
 
-        case WINED3DDECLTYPE_SHORT2N:
+        case WINED3DFMT_R16G16_SNORM:
         {
             GLshort s[4] = {((const GLshort *)ptr)[0], ((const GLshort *)ptr)[1], 0, 1};
             GL_EXTCALL(glVertexAttrib4NsvARB(index, s));
             break;
         }
-        case WINED3DDECLTYPE_USHORT2N:
+        case WINED3DFMT_R16G16_UNORM:
         {
             GLushort s[4] = {((const GLushort *)ptr)[0], ((const GLushort *)ptr)[1], 0, 1};
             GL_EXTCALL(glVertexAttrib4NusvARB(index, s));
             break;
         }
-        case WINED3DDECLTYPE_SHORT4N:
+        case WINED3DFMT_R16G16B16A16_SNORM:
             GL_EXTCALL(glVertexAttrib4NsvARB(index, ptr));
             break;
-        case WINED3DDECLTYPE_USHORT4N:
+        case WINED3DFMT_R16G16B16A16_UNORM:
             GL_EXTCALL(glVertexAttrib4NusvARB(index, ptr));
             break;
 
-        case WINED3DDECLTYPE_UDEC3:
+        case WINED3DFMT_R10G10B10A2_UINT:
             FIXME("Unsure about WINED3DDECLTYPE_UDEC3\n");
             /*glVertexAttrib3usvARB(instancedData[j], (GLushort *) ptr); Does not exist */
             break;
-        case WINED3DDECLTYPE_DEC3N:
+        case WINED3DFMT_R10G10B10A2_SNORM:
             FIXME("Unsure about WINED3DDECLTYPE_DEC3N\n");
             /*glVertexAttrib3NusvARB(instancedData[j], (GLushort *) ptr); Does not exist */
             break;
 
-        case WINED3DDECLTYPE_FLOAT16_2:
+        case WINED3DFMT_R16G16_FLOAT:
             /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
              * byte float according to the IEEE standard
              */
@@ -375,7 +377,7 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, co
                 GL_EXTCALL(glVertexAttrib2fARB(index, x, y));
             }
             break;
-        case WINED3DDECLTYPE_FLOAT16_4:
+        case WINED3DFMT_R16G16B16A16_FLOAT:
             if (GL_SUPPORT(NV_HALF_FLOAT)) {
                 GL_EXTCALL(glVertexAttrib4hvNV(index, ptr));
             } else {
@@ -387,9 +389,8 @@ static inline void send_attribute(IWineD3DDeviceImpl *This, const DWORD type, co
             }
             break;
 
-        case WINED3DDECLTYPE_UNUSED:
         default:
-            ERR("Unexpected attribute declaration: %d\n", type);
+            ERR("Unexpected attribute format: %s\n", debug_d3dformat(format));
             break;
     }
 }
@@ -446,7 +447,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
                   si->elements[i].stride * SkipnStrides +
                   stateblock->streamOffset[si->elements[i].stream_idx];
 
-            send_attribute(This, si->elements[i].d3d_type, i, ptr);
+            send_attribute(This, si->elements[i].d3d_format, i, ptr);
         }
         SkipnStrides++;
     }
@@ -514,7 +515,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
                 ptr += (long) vb->resource.allocatedMemory;
             }
 
-            send_attribute(This, si->elements[instancedData[j]].d3d_type, instancedData[j], ptr);
+            send_attribute(This, si->elements[instancedData[j]].d3d_format, instancedData[j], ptr);
         }
 
         glDrawElements(glPrimitiveType, numberOfVertices, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
@@ -1049,17 +1050,17 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
         vtxStride += 4 * sizeof(float);
     }
     memset(&patch->strided, 0, sizeof(&patch->strided));
-    patch->strided.position.dwType = WINED3DDECLTYPE_FLOAT3;
+    patch->strided.position.format = WINED3DFMT_R32G32B32_FLOAT;
     patch->strided.position.lpData = (BYTE *) patch->mem;
     patch->strided.position.dwStride = vtxStride;
 
     if(patch->has_normals) {
-        patch->strided.normal.dwType = WINED3DDECLTYPE_FLOAT3;
+        patch->strided.normal.format = WINED3DFMT_R32G32B32_FLOAT;
         patch->strided.normal.lpData = (BYTE *) patch->mem + 3 * sizeof(float) /* pos */;
         patch->strided.normal.dwStride = vtxStride;
     }
     if(patch->has_texcoords) {
-        patch->strided.texCoords[0].dwType = WINED3DDECLTYPE_FLOAT4;
+        patch->strided.texCoords[0].format = WINED3DFMT_R32G32B32A32_FLOAT;
         patch->strided.texCoords[0].lpData = (BYTE *) patch->mem + 3 * sizeof(float) /* pos */;
         if(patch->has_normals) {
             patch->strided.texCoords[0].lpData += 3 * sizeof(float);

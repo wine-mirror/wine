@@ -256,8 +256,8 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         {
             if (!element->ffp_valid)
             {
-                WARN("Skipping unsupported fixed function element of type %s and usage %s\n",
-                        debug_d3ddecltype(element->type), debug_d3ddeclusage(element->usage));
+                WARN("Skipping unsupported fixed function element of format %s and usage %s\n",
+                        debug_d3dformat(element->format_desc->format), debug_d3ddeclusage(element->usage));
                 stride_used = FALSE;
             }
             else
@@ -269,23 +269,24 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         if (stride_used)
         {
             TRACE("Load %s array %u [usage %s, usage_idx %u, "
-                    "input_slot %u, offset %u, stride %u, type %s, buffer_object %u]\n",
+                    "input_slot %u, offset %u, stride %u, format %s, buffer_object %u]\n",
                     use_vshader ? "shader": "fixed function", idx,
-                    debug_d3ddeclusage(element->usage), element->usage_idx,
-                    element->input_slot, element->offset, stride, debug_d3ddecltype(element->type), buffer_object);
+                    debug_d3ddeclusage(element->usage), element->usage_idx, element->input_slot,
+                    element->offset, stride, debug_d3dformat(element->format_desc->format), buffer_object);
 
-            stream_info->elements[idx].d3d_type = element->type;
-            stream_info->elements[idx].size = WINED3D_ATR_SIZE(element->type);
-            stream_info->elements[idx].format = WINED3D_ATR_FORMAT(element->type);
-            stream_info->elements[idx].type = WINED3D_ATR_GLTYPE(element->type);
+            stream_info->elements[idx].d3d_format = element->format_desc->format;
+            stream_info->elements[idx].emit_idx = element->format_desc->emit_idx;
+            stream_info->elements[idx].size = element->format_desc->component_count;
+            stream_info->elements[idx].format = element->format_desc->gl_vtx_format;
+            stream_info->elements[idx].type = element->format_desc->gl_vtx_type;
             stream_info->elements[idx].stride = stride;
-            stream_info->elements[idx].normalized = WINED3D_ATR_NORMALIZED(element->type);
+            stream_info->elements[idx].normalized = element->format_desc->gl_normalized;
             stream_info->elements[idx].data = data;
-            stream_info->elements[idx].type_size = WINED3D_ATR_TYPESIZE(element->type);
+            stream_info->elements[idx].type_size = element->format_desc->component_size;
             stream_info->elements[idx].stream_idx = element->input_slot;
             stream_info->elements[idx].buffer_object = buffer_object;
 
-            if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->type == WINED3DDECLTYPE_D3DCOLOR)
+            if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && element->format_desc->format == WINED3DFMT_A8R8G8B8)
             {
                 stream_info->swizzle_map |= 1 << idx;
             }
@@ -310,14 +311,16 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
 static void stream_info_element_from_strided(IWineD3DDeviceImpl *This,
         const struct WineDirect3DStridedData *strided, struct wined3d_stream_info_element *e)
 {
-    e->d3d_type = strided->dwType;
-    e->size = WINED3D_ATR_SIZE(strided->dwType);
-    e->format = WINED3D_ATR_FORMAT(strided->dwType);
-    e->type = WINED3D_ATR_GLTYPE(strided->dwType);
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(strided->format, &This->adapter->gl_info);
+    e->d3d_format = format_desc->format;
+    e->emit_idx = format_desc->emit_idx;
+    e->size = format_desc->component_count;
+    e->format = format_desc->gl_vtx_format;
+    e->type = format_desc->gl_vtx_type;
     e->stride = strided->dwStride;
-    e->normalized = WINED3D_ATR_NORMALIZED(strided->dwType);
+    e->normalized = format_desc->gl_normalized;
     e->data = strided->lpData;
-    e->type_size = WINED3D_ATR_TYPESIZE(strided->dwType);
+    e->type_size = format_desc->component_size;
     e->stream_idx = 0;
     e->buffer_object = 0;
 }
@@ -349,7 +352,7 @@ void device_stream_info_from_strided(IWineD3DDeviceImpl *This,
 
     for (i = 0; i < sizeof(stream_info->elements) / sizeof(*stream_info->elements); ++i)
     {
-        if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && stream_info->elements[i].d3d_type == WINED3DDECLTYPE_D3DCOLOR)
+        if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && stream_info->elements[i].d3d_format == WINED3DFMT_A8R8G8B8)
         {
             stream_info->swizzle_map |= 1 << i;
         }
@@ -2217,101 +2220,102 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
     idx = 0;
     if (has_pos) {
         if (!has_blend && (fvf & WINED3DFVF_XYZRHW)) {
-            elements[idx].Type = WINED3DDECLTYPE_FLOAT4;
-            elements[idx].Usage = WINED3DDECLUSAGE_POSITIONT;
+            elements[idx].format = WINED3DFMT_R32G32B32A32_FLOAT;
+            elements[idx].usage = WINED3DDECLUSAGE_POSITIONT;
         }
         else if ((fvf & WINED3DFVF_XYZW) == WINED3DFVF_XYZW) {
-            elements[idx].Type = WINED3DDECLTYPE_FLOAT4;
-            elements[idx].Usage = WINED3DDECLUSAGE_POSITION;
+            elements[idx].format = WINED3DFMT_R32G32B32A32_FLOAT;
+            elements[idx].usage = WINED3DDECLUSAGE_POSITION;
         }
         else {
-            elements[idx].Type = WINED3DDECLTYPE_FLOAT3;
-            elements[idx].Usage = WINED3DDECLUSAGE_POSITION;
+            elements[idx].format = WINED3DFMT_R32G32B32_FLOAT;
+            elements[idx].usage = WINED3DDECLUSAGE_POSITION;
         }
-        elements[idx].UsageIndex = 0;
+        elements[idx].usage_idx = 0;
         idx++;
     }
     if (has_blend && (num_blends > 0)) {
         if (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2) && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR))
-            elements[idx].Type = WINED3DDECLTYPE_D3DCOLOR;
+            elements[idx].format = WINED3DFMT_A8R8G8B8;
         else {
             switch(num_blends) {
-                case 1: elements[idx].Type = WINED3DDECLTYPE_FLOAT1; break;
-                case 2: elements[idx].Type = WINED3DDECLTYPE_FLOAT2; break;
-                case 3: elements[idx].Type = WINED3DDECLTYPE_FLOAT3; break;
-                case 4: elements[idx].Type = WINED3DDECLTYPE_FLOAT4; break;
+                case 1: elements[idx].format = WINED3DFMT_R32_FLOAT; break;
+                case 2: elements[idx].format = WINED3DFMT_R32G32_FLOAT; break;
+                case 3: elements[idx].format = WINED3DFMT_R32G32B32_FLOAT; break;
+                case 4: elements[idx].format = WINED3DFMT_R32G32B32A32_FLOAT; break;
                 default:
                     ERR("Unexpected amount of blend values: %u\n", num_blends);
             }
         }
-        elements[idx].Usage = WINED3DDECLUSAGE_BLENDWEIGHT;
-        elements[idx].UsageIndex = 0;
+        elements[idx].usage = WINED3DDECLUSAGE_BLENDWEIGHT;
+        elements[idx].usage_idx = 0;
         idx++;
     }
     if (has_blend_idx) {
         if (fvf & WINED3DFVF_LASTBETA_UBYTE4 ||
             (((fvf & WINED3DFVF_XYZB5) == WINED3DFVF_XYZB2) && (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)))
-            elements[idx].Type = WINED3DDECLTYPE_UBYTE4;
+            elements[idx].format = WINED3DFMT_R8G8B8A8_UINT;
         else if (fvf & WINED3DFVF_LASTBETA_D3DCOLOR)
-            elements[idx].Type = WINED3DDECLTYPE_D3DCOLOR;
+            elements[idx].format = WINED3DFMT_A8R8G8B8;
         else
-            elements[idx].Type = WINED3DDECLTYPE_FLOAT1;
-        elements[idx].Usage = WINED3DDECLUSAGE_BLENDINDICES;
-        elements[idx].UsageIndex = 0;
+            elements[idx].format = WINED3DFMT_R32_FLOAT;
+        elements[idx].usage = WINED3DDECLUSAGE_BLENDINDICES;
+        elements[idx].usage_idx = 0;
         idx++;
     }
     if (has_normal) {
-        elements[idx].Type = WINED3DDECLTYPE_FLOAT3;
-        elements[idx].Usage = WINED3DDECLUSAGE_NORMAL;
-        elements[idx].UsageIndex = 0;
+        elements[idx].format = WINED3DFMT_R32G32B32_FLOAT;
+        elements[idx].usage = WINED3DDECLUSAGE_NORMAL;
+        elements[idx].usage_idx = 0;
         idx++;
     }
     if (has_psize) {
-        elements[idx].Type = WINED3DDECLTYPE_FLOAT1;
-        elements[idx].Usage = WINED3DDECLUSAGE_PSIZE;
-        elements[idx].UsageIndex = 0;
+        elements[idx].format = WINED3DFMT_R32_FLOAT;
+        elements[idx].usage = WINED3DDECLUSAGE_PSIZE;
+        elements[idx].usage_idx = 0;
         idx++;
     }
     if (has_diffuse) {
-        elements[idx].Type = WINED3DDECLTYPE_D3DCOLOR;
-        elements[idx].Usage = WINED3DDECLUSAGE_COLOR;
-        elements[idx].UsageIndex = 0;
+        elements[idx].format = WINED3DFMT_A8R8G8B8;
+        elements[idx].usage = WINED3DDECLUSAGE_COLOR;
+        elements[idx].usage_idx = 0;
         idx++;
     }
     if (has_specular) {
-        elements[idx].Type = WINED3DDECLTYPE_D3DCOLOR;
-        elements[idx].Usage = WINED3DDECLUSAGE_COLOR;
-        elements[idx].UsageIndex = 1;
+        elements[idx].format = WINED3DFMT_A8R8G8B8;
+        elements[idx].usage = WINED3DDECLUSAGE_COLOR;
+        elements[idx].usage_idx = 1;
         idx++;
     }
     for (idx2 = 0; idx2 < num_textures; idx2++) {
         unsigned int numcoords = (texcoords >> (idx2*2)) & 0x03;
         switch (numcoords) {
             case WINED3DFVF_TEXTUREFORMAT1:
-                elements[idx].Type = WINED3DDECLTYPE_FLOAT1;
+                elements[idx].format = WINED3DFMT_R32_FLOAT;
                 break;
             case WINED3DFVF_TEXTUREFORMAT2:
-                elements[idx].Type = WINED3DDECLTYPE_FLOAT2;
+                elements[idx].format = WINED3DFMT_R32G32_FLOAT;
                 break;
             case WINED3DFVF_TEXTUREFORMAT3:
-                elements[idx].Type = WINED3DDECLTYPE_FLOAT3;
+                elements[idx].format = WINED3DFMT_R32G32B32_FLOAT;
                 break;
             case WINED3DFVF_TEXTUREFORMAT4:
-                elements[idx].Type = WINED3DDECLTYPE_FLOAT4;
+                elements[idx].format = WINED3DFMT_R32G32B32A32_FLOAT;
                 break;
         }
-        elements[idx].Usage = WINED3DDECLUSAGE_TEXCOORD;
-        elements[idx].UsageIndex = idx2;
+        elements[idx].usage = WINED3DDECLUSAGE_TEXCOORD;
+        elements[idx].usage_idx = idx2;
         idx++;
     }
 
     /* Now compute offsets, and initialize the rest of the fields */
     for (idx = 0, offset = 0; idx < size; ++idx)
     {
-        elements[idx].Stream = 0;
-        elements[idx].Method = WINED3DDECLMETHOD_DEFAULT;
-        elements[idx].Offset = offset;
-        offset += WINED3D_ATR_SIZE(elements[idx].Type) * WINED3D_ATR_TYPESIZE(elements[idx].Type);
+        const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(elements[idx].format, &This->adapter->gl_info);
+        elements[idx].input_slot = 0;
+        elements[idx].method = WINED3DDECLMETHOD_DEFAULT;
+        elements[idx].offset = offset;
+        offset += format_desc->component_count * format_desc->component_size;
     }
 
     *ppVertexElements = elements;

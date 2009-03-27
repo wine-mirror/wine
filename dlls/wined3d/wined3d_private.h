@@ -209,14 +209,6 @@ const GLenum magLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1];
 extern const struct filter_lookup filter_lookup_nofilter;
 extern struct filter_lookup filter_lookup;
 
-void init_type_lookup(WineD3D_GL_Info *gl_info);
-#define WINED3D_ATR_TYPE(type)          GLINFO_LOCATION.glTypeLookup[type].d3dType
-#define WINED3D_ATR_SIZE(type)          GLINFO_LOCATION.glTypeLookup[type].size
-#define WINED3D_ATR_GLTYPE(type)        GLINFO_LOCATION.glTypeLookup[type].glType
-#define WINED3D_ATR_FORMAT(type)        GLINFO_LOCATION.glTypeLookup[type].format
-#define WINED3D_ATR_NORMALIZED(type)    GLINFO_LOCATION.glTypeLookup[type].normalized
-#define WINED3D_ATR_TYPESIZE(type)      GLINFO_LOCATION.glTypeLookup[type].typesize
-
 /* float_16_to_32() and float_32_to_16() (see implementation in
  * surface_base.c) convert 16 bit floats in the FLOAT16 data type
  * to standard C floats and vice versa. They do not depend on the encoding
@@ -591,8 +583,8 @@ do {                                          \
 
 /* Trace vector and strided data information */
 #define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
-#define TRACE_STRIDED(si, name) TRACE( #name "=(data:%p, stride:%d, type:%d, vbo %d, stream %u)\n", \
-        si->elements[name].data, si->elements[name].stride, si->elements[name].d3d_type, \
+#define TRACE_STRIDED(si, name) TRACE( #name "=(data:%p, stride:%d, format:%#x, vbo %d, stream %u)\n", \
+        si->elements[name].data, si->elements[name].stride, si->elements[name].d3d_format, \
         si->elements[name].buffer_object, si->elements[name].stream_idx);
 
 /* Defines used for optimizations */
@@ -670,9 +662,32 @@ enum wined3d_ffp_idx
     WINED3D_FFP_TEXCOORD7 = 14,
 };
 
+enum wined3d_ffp_emit_idx
+{
+    WINED3D_FFP_EMIT_FLOAT1 = 0,
+    WINED3D_FFP_EMIT_FLOAT2 = 1,
+    WINED3D_FFP_EMIT_FLOAT3 = 2,
+    WINED3D_FFP_EMIT_FLOAT4 = 3,
+    WINED3D_FFP_EMIT_D3DCOLOR = 4,
+    WINED3D_FFP_EMIT_UBYTE4 = 5,
+    WINED3D_FFP_EMIT_SHORT2 = 6,
+    WINED3D_FFP_EMIT_SHORT4 = 7,
+    WINED3D_FFP_EMIT_UBYTE4N = 8,
+    WINED3D_FFP_EMIT_SHORT2N = 9,
+    WINED3D_FFP_EMIT_SHORT4N = 10,
+    WINED3D_FFP_EMIT_USHORT2N = 11,
+    WINED3D_FFP_EMIT_USHORT4N = 12,
+    WINED3D_FFP_EMIT_UDEC3 = 13,
+    WINED3D_FFP_EMIT_DEC3N = 14,
+    WINED3D_FFP_EMIT_FLOAT16_2 = 15,
+    WINED3D_FFP_EMIT_FLOAT16_4 = 16,
+    WINED3D_FFP_EMIT_COUNT = 17
+};
+
 struct wined3d_stream_info_element
 {
-    WINED3DDECLTYPE d3d_type;
+    WINED3DFORMAT d3d_format;
+    enum wined3d_ffp_emit_idx emit_idx;
     GLint size;
     GLint format;
     GLenum type;
@@ -703,12 +718,12 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 
 typedef void (WINE_GLAPI *glAttribFunc)(const void *data);
 typedef void (WINE_GLAPI *glMultiTexCoordFunc)(GLenum unit, const void *data);
-extern glAttribFunc position_funcs[WINED3DDECLTYPE_UNUSED];
-extern glAttribFunc diffuse_funcs[WINED3DDECLTYPE_UNUSED];
+extern glAttribFunc position_funcs[WINED3D_FFP_EMIT_COUNT];
+extern glAttribFunc diffuse_funcs[WINED3D_FFP_EMIT_COUNT];
 extern glAttribFunc specular_func_3ubv;
-extern glAttribFunc specular_funcs[WINED3DDECLTYPE_UNUSED];
-extern glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
-extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3DDECLTYPE_UNUSED];
+extern glAttribFunc specular_funcs[WINED3D_FFP_EMIT_COUNT];
+extern glAttribFunc normal_funcs[WINED3D_FFP_EMIT_COUNT];
+extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT];
 
 #define eps 1e-8
 
@@ -1747,7 +1762,7 @@ BOOL palette9_changed(IWineD3DSurfaceImpl *This);
 
 struct wined3d_vertex_declaration_element
 {
-    WINED3DDECLTYPE type;
+    const struct GlPixelFormatDesc *format_desc;
     BOOL ffp_valid;
     WORD input_slot;
     WORD offset;
@@ -2104,7 +2119,6 @@ const char* debug_d3dresourcetype(WINED3DRESOURCETYPE res);
 const char* debug_d3dusage(DWORD usage);
 const char* debug_d3dusagequery(DWORD usagequery);
 const char* debug_d3ddeclmethod(WINED3DDECLMETHOD method);
-const char* debug_d3ddecltype(WINED3DDECLTYPE type);
 const char* debug_d3ddeclusage(BYTE usage);
 const char* debug_d3dprimitivetype(WINED3DPRIMITIVETYPE PrimitiveType);
 const char* debug_d3drenderstate(DWORD state);
@@ -2538,6 +2552,13 @@ struct GlPixelFormatDesc
     UINT byte_count;
     WORD depth_size;
     WORD stencil_size;
+
+    enum wined3d_ffp_emit_idx emit_idx;
+    GLint component_count;
+    GLenum gl_vtx_type;
+    GLint gl_vtx_format;
+    GLboolean gl_normalized;
+    unsigned int component_size;
 
     GLint glInternal;
     GLint glGammaInternal;

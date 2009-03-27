@@ -185,12 +185,12 @@ const GLenum magLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1] =
 };
 
 /* drawStridedSlow attributes */
-glAttribFunc position_funcs[WINED3DDECLTYPE_UNUSED];
-glAttribFunc diffuse_funcs[WINED3DDECLTYPE_UNUSED];
+glAttribFunc position_funcs[WINED3D_FFP_EMIT_COUNT];
+glAttribFunc diffuse_funcs[WINED3D_FFP_EMIT_COUNT];
 glAttribFunc specular_func_3ubv;
-glAttribFunc specular_funcs[WINED3DDECLTYPE_UNUSED];
-glAttribFunc normal_funcs[WINED3DDECLTYPE_UNUSED];
-glMultiTexCoordFunc multi_texcoord_funcs[WINED3DDECLTYPE_UNUSED];
+glAttribFunc specular_funcs[WINED3D_FFP_EMIT_COUNT];
+glAttribFunc normal_funcs[WINED3D_FFP_EMIT_COUNT];
+glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT];
 
 /**
  * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created,
@@ -4117,113 +4117,113 @@ static void WINE_GLAPI warn_no_specular_func(const void *data)
 
 static void fillGLAttribFuncs(const WineD3D_GL_Info *gl_info)
 {
-    position_funcs[WINED3DDECLTYPE_FLOAT1]      = invalid_func;
-    position_funcs[WINED3DDECLTYPE_FLOAT2]      = invalid_func;
-    position_funcs[WINED3DDECLTYPE_FLOAT3]      = (glAttribFunc)glVertex3fv;
-    position_funcs[WINED3DDECLTYPE_FLOAT4]      = position_float4;
-    position_funcs[WINED3DDECLTYPE_D3DCOLOR]    = position_d3dcolor;
-    position_funcs[WINED3DDECLTYPE_UBYTE4]      = invalid_func;
-    position_funcs[WINED3DDECLTYPE_SHORT2]      = invalid_func;
-    position_funcs[WINED3DDECLTYPE_SHORT4]      = (glAttribFunc)glVertex2sv;
-    position_funcs[WINED3DDECLTYPE_UBYTE4N]     = invalid_func;
-    position_funcs[WINED3DDECLTYPE_SHORT2N]     = invalid_func;
-    position_funcs[WINED3DDECLTYPE_SHORT4N]     = invalid_func;
-    position_funcs[WINED3DDECLTYPE_USHORT2N]    = invalid_func;
-    position_funcs[WINED3DDECLTYPE_USHORT4N]    = invalid_func;
-    position_funcs[WINED3DDECLTYPE_UDEC3]       = invalid_func;
-    position_funcs[WINED3DDECLTYPE_DEC3N]       = invalid_func;
-    position_funcs[WINED3DDECLTYPE_FLOAT16_2]   = invalid_func;
-    position_funcs[WINED3DDECLTYPE_FLOAT16_4]   = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_FLOAT1]      = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_FLOAT2]      = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_FLOAT3]      = (glAttribFunc)glVertex3fv;
+    position_funcs[WINED3D_FFP_EMIT_FLOAT4]      = position_float4;
+    position_funcs[WINED3D_FFP_EMIT_D3DCOLOR]    = position_d3dcolor;
+    position_funcs[WINED3D_FFP_EMIT_UBYTE4]      = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_SHORT2]      = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_SHORT4]      = (glAttribFunc)glVertex2sv;
+    position_funcs[WINED3D_FFP_EMIT_UBYTE4N]     = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_SHORT2N]     = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_SHORT4N]     = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_USHORT2N]    = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_USHORT4N]    = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_UDEC3]       = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_DEC3N]       = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_FLOAT16_2]   = invalid_func;
+    position_funcs[WINED3D_FFP_EMIT_FLOAT16_4]   = invalid_func;
 
-    diffuse_funcs[WINED3DDECLTYPE_FLOAT1]       = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_FLOAT2]       = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_FLOAT3]       = (glAttribFunc)glColor3fv;
-    diffuse_funcs[WINED3DDECLTYPE_FLOAT4]       = (glAttribFunc)glColor4fv;
-    diffuse_funcs[WINED3DDECLTYPE_D3DCOLOR]     = diffuse_d3dcolor;
-    diffuse_funcs[WINED3DDECLTYPE_UBYTE4]       = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_SHORT2]       = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_SHORT4]       = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_UBYTE4N]      = (glAttribFunc)glColor4ubv;
-    diffuse_funcs[WINED3DDECLTYPE_SHORT2N]      = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_SHORT4N]      = (glAttribFunc)glColor4sv;
-    diffuse_funcs[WINED3DDECLTYPE_USHORT2N]     = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_USHORT4N]     = (glAttribFunc)glColor4usv;
-    diffuse_funcs[WINED3DDECLTYPE_UDEC3]        = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_DEC3N]        = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_FLOAT16_2]    = invalid_func;
-    diffuse_funcs[WINED3DDECLTYPE_FLOAT16_4]    = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT1]       = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT2]       = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT3]       = (glAttribFunc)glColor3fv;
+    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT4]       = (glAttribFunc)glColor4fv;
+    diffuse_funcs[WINED3D_FFP_EMIT_D3DCOLOR]     = diffuse_d3dcolor;
+    diffuse_funcs[WINED3D_FFP_EMIT_UBYTE4]       = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_SHORT2]       = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_SHORT4]       = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_UBYTE4N]      = (glAttribFunc)glColor4ubv;
+    diffuse_funcs[WINED3D_FFP_EMIT_SHORT2N]      = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_SHORT4N]      = (glAttribFunc)glColor4sv;
+    diffuse_funcs[WINED3D_FFP_EMIT_USHORT2N]     = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_USHORT4N]     = (glAttribFunc)glColor4usv;
+    diffuse_funcs[WINED3D_FFP_EMIT_UDEC3]        = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_DEC3N]        = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT16_2]    = invalid_func;
+    diffuse_funcs[WINED3D_FFP_EMIT_FLOAT16_4]    = invalid_func;
 
     /* No 4 component entry points here */
-    specular_funcs[WINED3DDECLTYPE_FLOAT1]      = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_FLOAT2]      = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_FLOAT1]      = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_FLOAT2]      = invalid_func;
     if(GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-        specular_funcs[WINED3DDECLTYPE_FLOAT3]      = (glAttribFunc)GL_EXTCALL(glSecondaryColor3fvEXT);
+        specular_funcs[WINED3D_FFP_EMIT_FLOAT3]  = (glAttribFunc)GL_EXTCALL(glSecondaryColor3fvEXT);
     } else {
-        specular_funcs[WINED3DDECLTYPE_FLOAT3]      = warn_no_specular_func;
+        specular_funcs[WINED3D_FFP_EMIT_FLOAT3]  = warn_no_specular_func;
     }
-    specular_funcs[WINED3DDECLTYPE_FLOAT4]      = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_FLOAT4]      = invalid_func;
     if(GL_SUPPORT(EXT_SECONDARY_COLOR)) {
         specular_func_3ubv = (glAttribFunc)GL_EXTCALL(glSecondaryColor3ubvEXT);
-        specular_funcs[WINED3DDECLTYPE_D3DCOLOR]    = specular_d3dcolor;
+        specular_funcs[WINED3D_FFP_EMIT_D3DCOLOR] = specular_d3dcolor;
     } else {
-        specular_funcs[WINED3DDECLTYPE_D3DCOLOR]      = warn_no_specular_func;
+        specular_funcs[WINED3D_FFP_EMIT_D3DCOLOR] = warn_no_specular_func;
     }
-    specular_funcs[WINED3DDECLTYPE_UBYTE4]      = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_SHORT2]      = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_SHORT4]      = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_UBYTE4N]     = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_SHORT2N]     = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_SHORT4N]     = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_USHORT2N]    = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_USHORT4N]    = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_UDEC3]       = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_DEC3N]       = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_FLOAT16_2]   = invalid_func;
-    specular_funcs[WINED3DDECLTYPE_FLOAT16_4]   = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_UBYTE4]      = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_SHORT2]      = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_SHORT4]      = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_UBYTE4N]     = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_SHORT2N]     = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_SHORT4N]     = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_USHORT2N]    = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_USHORT4N]    = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_UDEC3]       = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_DEC3N]       = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_FLOAT16_2]   = invalid_func;
+    specular_funcs[WINED3D_FFP_EMIT_FLOAT16_4]   = invalid_func;
 
     /* Only 3 component entry points here. Test how others behave. Float4 normals are used
      * by one of our tests, trying to pass it to the pixel shader, which fails on Windows.
      */
-    normal_funcs[WINED3DDECLTYPE_FLOAT1]         = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_FLOAT2]         = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_FLOAT3]         = (glAttribFunc)glNormal3fv;
-    normal_funcs[WINED3DDECLTYPE_FLOAT4]         = (glAttribFunc)glNormal3fv; /* Just ignore the 4th value */
-    normal_funcs[WINED3DDECLTYPE_D3DCOLOR]       = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_UBYTE4]         = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_SHORT2]         = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_SHORT4]         = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_UBYTE4N]        = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_SHORT2N]        = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_SHORT4N]        = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_USHORT2N]       = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_USHORT4N]       = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_UDEC3]          = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_DEC3N]          = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_FLOAT16_2]      = invalid_func;
-    normal_funcs[WINED3DDECLTYPE_FLOAT16_4]      = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_FLOAT1]         = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_FLOAT2]         = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_FLOAT3]         = (glAttribFunc)glNormal3fv;
+    normal_funcs[WINED3D_FFP_EMIT_FLOAT4]         = (glAttribFunc)glNormal3fv; /* Just ignore the 4th value */
+    normal_funcs[WINED3D_FFP_EMIT_D3DCOLOR]       = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_UBYTE4]         = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_SHORT2]         = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_SHORT4]         = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_UBYTE4N]        = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_SHORT2N]        = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_SHORT4N]        = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_USHORT2N]       = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_USHORT4N]       = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_UDEC3]          = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_DEC3N]          = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_FLOAT16_2]      = invalid_func;
+    normal_funcs[WINED3D_FFP_EMIT_FLOAT16_4]      = invalid_func;
 
-    multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT1]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord1fvARB);
-    multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT2]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord2fvARB);
-    multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT3]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord3fvARB);
-    multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT4]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord4fvARB);
-    multi_texcoord_funcs[WINED3DDECLTYPE_D3DCOLOR]  = invalid_texcoord_func;
-    multi_texcoord_funcs[WINED3DDECLTYPE_UBYTE4]    = invalid_texcoord_func;
-    multi_texcoord_funcs[WINED3DDECLTYPE_SHORT2]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord2svARB);
-    multi_texcoord_funcs[WINED3DDECLTYPE_SHORT4]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord4svARB);
-    multi_texcoord_funcs[WINED3DDECLTYPE_UBYTE4N]   = invalid_texcoord_func;
-    multi_texcoord_funcs[WINED3DDECLTYPE_SHORT2N]   = invalid_texcoord_func;
-    multi_texcoord_funcs[WINED3DDECLTYPE_SHORT4N]   = invalid_texcoord_func;
-    multi_texcoord_funcs[WINED3DDECLTYPE_USHORT2N]  = invalid_texcoord_func;
-    multi_texcoord_funcs[WINED3DDECLTYPE_USHORT4N]  = invalid_texcoord_func;
-    multi_texcoord_funcs[WINED3DDECLTYPE_UDEC3]     = invalid_texcoord_func;
-    multi_texcoord_funcs[WINED3DDECLTYPE_DEC3N]     = invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT1]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord1fvARB);
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT2]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord2fvARB);
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT3]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord3fvARB);
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT4]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord4fvARB);
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_D3DCOLOR]  = invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_UBYTE4]    = invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_SHORT2]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord2svARB);
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_SHORT4]    = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord4svARB);
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_UBYTE4N]   = invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_SHORT2N]   = invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_SHORT4N]   = invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_USHORT2N]  = invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_USHORT4N]  = invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_UDEC3]     = invalid_texcoord_func;
+    multi_texcoord_funcs[WINED3D_FFP_EMIT_DEC3N]     = invalid_texcoord_func;
     if (GL_SUPPORT(NV_HALF_FLOAT))
     {
-        multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_2] = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord2hvNV);
-        multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_4] = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord4hvNV);
+        multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT16_2] = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord2hvNV);
+        multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT16_4] = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord4hvNV);
     } else {
-        multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_2] = invalid_texcoord_func;
-        multi_texcoord_funcs[WINED3DDECLTYPE_FLOAT16_4] = invalid_texcoord_func;
+        multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT16_2] = invalid_texcoord_func;
+        multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT16_4] = invalid_texcoord_func;
     }
 }
 
@@ -4492,7 +4492,6 @@ BOOL InitAdapters(IWineD3DImpl *This)
         select_shader_mode(&adapter->gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &adapter->gl_info);
         fillGLAttribFuncs(&adapter->gl_info);
-        init_type_lookup(&adapter->gl_info);
         adapter->opengl = TRUE;
     }
     This->adapter_count = 1;
