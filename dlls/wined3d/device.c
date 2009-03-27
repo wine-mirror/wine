@@ -2200,8 +2200,6 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
 
     DWORD num_textures = (fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
     DWORD texcoords = (fvf & 0xFFFF0000) >> 16;
-
-    WINED3DVERTEXELEMENT end_element = WINED3DDECL_END();
     WINED3DVERTEXELEMENT *elements = NULL;
 
     unsigned int size;
@@ -2210,14 +2208,12 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
 
     /* Compute declaration size */
     size = has_pos + (has_blend && num_blends > 0) + has_blend_idx + has_normal +
-           has_psize + has_diffuse + has_specular + num_textures + 1;
+           has_psize + has_diffuse + has_specular + num_textures;
 
     /* convert the declaration */
     elements = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WINED3DVERTEXELEMENT));
-    if (!elements)
-        return 0;
+    if (!elements) return ~0U;
 
-    elements[size-1] = end_element;
     idx = 0;
     if (has_pos) {
         if (!has_blend && (fvf & WINED3DFVF_XYZRHW)) {
@@ -2310,7 +2306,8 @@ static unsigned int ConvertFvfToDeclaration(IWineD3DDeviceImpl *This, /* For the
     }
 
     /* Now compute offsets, and initialize the rest of the fields */
-    for (idx = 0, offset = 0; idx < size-1; idx++) {
+    for (idx = 0, offset = 0; idx < size; ++idx)
+    {
         elements[idx].Stream = 0;
         elements[idx].Method = WINED3DDECLMETHOD_DEFAULT;
         elements[idx].Offset = offset;
@@ -2328,7 +2325,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3D
     DWORD hr;
 
     size = ConvertFvfToDeclaration(This, Fvf, &elements);
-    if (size == 0) return WINED3DERR_OUTOFVIDEOMEMORY;
+    if (size == ~0U) return WINED3DERR_OUTOFVIDEOMEMORY;
 
     hr = IWineD3DDevice_CreateVertexDeclaration(iface, ppVertexDeclaration, Parent, elements, size);
     HeapFree(GetProcessHeap(), 0, elements);

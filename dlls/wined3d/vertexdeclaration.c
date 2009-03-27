@@ -206,9 +206,6 @@ HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *This,
         }
     }
 
-    /* Skip the END element. */
-    --element_count;
-
     This->element_count = element_count;
     This->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->elements) * element_count);
     if (!This->elements)

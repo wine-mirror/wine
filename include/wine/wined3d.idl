@@ -846,7 +846,6 @@ typedef enum _WINED3DDECLTYPE
     WINED3DDECLTYPE_FLOAT16_4               = 16,
     WINED3DDECLTYPE_UNUSED                  = 17,
 } WINED3DDECLTYPE;
-cpp_quote("#define WINED3DDECL_END() {0xFF, 0, WINED3DDECLTYPE_UNUSED, 0, 0, 0, -1}")
 
 typedef enum _WINED3DDECLUSAGE
 {

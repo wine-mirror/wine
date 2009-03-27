@@ -312,13 +312,16 @@ static UINT convert_to_wined3d_declaration(const D3DVERTEXELEMENT9* d3d9_element
     while (element++->Stream != 0xff && element_count++ < 128);
 
     if (element_count == 128) {
-        return 0;
+        return ~0U;
     }
+
+    /* Skip the END element */
+    --element_count;
 
     *wined3d_elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(WINED3DVERTEXELEMENT));
     if (!*wined3d_elements) {
         FIXME("Memory allocation failed\n");
-        return 0;
+        return ~0U;
     }
 
     for (i = 0; i < element_count; ++i) {
@@ -335,6 +338,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9E
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DVertexDeclaration9Impl *object = NULL;
     WINED3DVERTEXELEMENT* wined3d_elements;
+    UINT wined3d_element_count;
     UINT element_count;
     HRESULT hr = D3D_OK;
 
@@ -344,8 +348,9 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9E
         return D3DERR_INVALIDCALL;
     }
 
-    element_count = convert_to_wined3d_declaration(pVertexElements, &wined3d_elements);
-    if (!element_count) {
+    wined3d_element_count = convert_to_wined3d_declaration(pVertexElements, &wined3d_elements);
+    if (wined3d_element_count == ~0U)
+    {
         FIXME("(%p) : Error parsing vertex declaration\n", This);
         return D3DERR_INVALIDCALL;
     }
@@ -361,6 +366,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9E
     object->lpVtbl = &Direct3DVertexDeclaration9_Vtbl;
     object->ref = 0;
 
+    element_count = wined3d_element_count + 1;
     object->elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(D3DVERTEXELEMENT9));
     if (!object->elements) {
         HeapFree(GetProcessHeap(), 0, wined3d_elements);
@@ -372,7 +378,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9E
     object->element_count = element_count;
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wineD3DVertexDeclaration, (IUnknown *)object, wined3d_elements, element_count);
+    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wineD3DVertexDeclaration,
+            (IUnknown *)object, wined3d_elements, wined3d_element_count);
     LeaveCriticalSection(&d3d9_cs);
 
     HeapFree(GetProcessHeap(), 0, wined3d_elements);

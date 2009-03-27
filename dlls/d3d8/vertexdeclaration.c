@@ -324,11 +324,6 @@ UINT convert_to_wined3d_declaration(const DWORD *d3d8_elements, DWORD *d3d8_elem
         token += parse_token(token);
     }
 
-    /* END */
-    element = *wined3d_elements + element_count++;
-    element->Stream = 0xFF;
-    element->Type = WINED3DDECLTYPE_UNUSED;
-
     *d3d8_elements_size = (++token - d3d8_elements) * sizeof(DWORD);
 
     return element_count;
