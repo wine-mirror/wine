@@ -103,22 +103,6 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDecl
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclaration *iface,
-        WINED3DVERTEXELEMENT *elements, UINT *element_count) {
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    HRESULT hr = WINED3D_OK;
-
-    TRACE("(%p) : d3d version %d, elements %p, element_count %p\n",
-            This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion, elements, element_count);
-
-    *element_count = This->declarationWNumElements;
-    if (elements) {
-        CopyMemory(elements, This->pDeclarationWine, This->declarationWNumElements * sizeof(WINED3DVERTEXELEMENT));
-    }
-
-    return hr;
-}
-
 static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
 {
     switch(element->Usage)
@@ -287,6 +271,5 @@ const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl =
     /* IWineD3DVertexDeclaration */
     IWineD3DVertexDeclarationImpl_GetParent,
     IWineD3DVertexDeclarationImpl_GetDevice,
-    IWineD3DVertexDeclarationImpl_GetDeclaration,
     IWineD3DVertexDeclarationImpl_SetDeclaration
 };
