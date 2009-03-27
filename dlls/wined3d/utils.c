@@ -404,12 +404,36 @@ static BOOL init_format_base_info(WineD3D_GL_Info *gl_info)
     return TRUE;
 }
 
+#define GLINFO_LOCATION (*gl_info)
+
+static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_format)
+{
+    GLuint tex, fb;
+    GLenum status;
+
+    while(glGetError());
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    GL_EXTCALL(glGenFramebuffersEXT(1, &fb));
+    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb));
+    GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tex, 0));
+
+    status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
+    GL_EXTCALL(glDeleteFramebuffersEXT(1, &fb));
+    glDeleteTextures(1, &tex);
+
+    checkGLcall("Framebuffer format check");
+
+    return status == GL_FRAMEBUFFER_COMPLETE_EXT;
+}
+
 BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
 {
     return init_format_base_info(gl_info);
 }
 
-#define GLINFO_LOCATION (*gl_info)
 BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 {
     unsigned int src;
@@ -433,42 +457,22 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
         desc->Flags |= gl_formats_template[src].Flags;
         desc->heightscale = 1.0;
 
-        if(wined3d_settings.offscreen_rendering_mode == ORM_FBO &&
-           gl_formats_template[src].rtInternal != 0) {
-            GLuint tex, fb;
-            GLenum status;
-
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && gl_formats_template[src].rtInternal)
+        {
             /* Check if the default internal format is supported as a frame buffer target, otherwise
              * fall back to the render target internal.
              *
              * Try to stick to the standard format if possible, this limits precision differences
              */
-            while(glGetError());
-            glGenTextures(1, &tex);
-            glBindTexture(GL_TEXTURE_2D, tex);
-            glTexImage2D(GL_TEXTURE_2D, 0, gl_formats_template[src].glInternal, 16, 16, 0,
-                         GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-            GL_EXTCALL(glGenFramebuffersEXT(1, &fb));
-            GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb));
-            GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-                                                 GL_TEXTURE_2D, tex, 0));
-
-            status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
-            GL_EXTCALL(glDeleteFramebuffersEXT(1, &fb));
-            glDeleteTextures(1, &tex);
-
-            checkGLcall("Framebuffer format check");
-
-            if(status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-                TRACE("Internal format of %s not supported as frame buffer target, using render target internal instead\n",
-                    debug_d3dformat(gl_formats_template[src].fmt));
+            if (!check_fbo_compat(gl_info, gl_formats_template[src].glInternal))
+            {
+                TRACE("Internal format of %s not supported as FBO target, using render target internal instead\n",
+                        debug_d3dformat(gl_formats_template[src].fmt));
                 gl_info->gl_formats[dst].rtInternal = gl_formats_template[src].rtInternal;
             } else {
                 TRACE("Format %s is supported as fbo target\n", debug_d3dformat(gl_formats_template[src].fmt));
                 gl_info->gl_formats[dst].rtInternal = gl_formats_template[src].glInternal;
             }
-
         } else {
             gl_info->gl_formats[dst].rtInternal = gl_formats_template[src].glInternal;
         }
