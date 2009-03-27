@@ -2172,7 +2172,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice*
 
     *ppVertexDeclaration = (IWineD3DVertexDeclaration *)object;
 
-    hr = IWineD3DVertexDeclaration_SetDeclaration((IWineD3DVertexDeclaration *)object, elements, element_count);
+    hr = vertexdeclaration_init(object, elements, element_count);
+
     if(FAILED(hr)) {
         IWineD3DVertexDeclaration_Release((IWineD3DVertexDeclaration *)object);
         *ppVertexDeclaration = NULL;

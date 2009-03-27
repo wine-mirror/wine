@@ -2758,10 +2758,6 @@ interface IWineD3DVertexDeclaration : IWineD3DBase
     HRESULT GetDevice(
         [out] IWineD3DDevice **device
     );
-    HRESULT SetDeclaration(
-        [in] const WINED3DVERTEXELEMENT *elements,
-        [in] UINT element_count
-    );
 }
 
 [

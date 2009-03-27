@@ -191,9 +191,9 @@ static BOOL declaration_element_valid_ffp(const WINED3DVERTEXELEMENT *element)
     }
 }
 
-static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVertexDeclaration *iface,
-        const WINED3DVERTEXELEMENT *elements, UINT element_count) {
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
+HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *This,
+        const WINED3DVERTEXELEMENT *elements, UINT element_count)
+{
     HRESULT hr = WINED3D_OK;
     unsigned int i;
     char isPreLoaded[MAX_STREAMS];
@@ -271,5 +271,4 @@ const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl =
     /* IWineD3DVertexDeclaration */
     IWineD3DVertexDeclarationImpl_GetParent,
     IWineD3DVertexDeclarationImpl_GetDevice,
-    IWineD3DVertexDeclarationImpl_SetDeclaration
 };

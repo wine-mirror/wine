@@ -1765,6 +1765,9 @@ typedef struct IWineD3DVertexDeclarationImpl {
 
 extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
 
+HRESULT vertexdeclaration_init(IWineD3DVertexDeclarationImpl *This,
+        const WINED3DVERTEXELEMENT *elements, UINT element_count);
+
 /*****************************************************************************
  * IWineD3DStateBlock implementation structure
  */
