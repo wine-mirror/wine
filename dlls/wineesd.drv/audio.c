@@ -212,9 +212,6 @@ typedef struct {
 static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
 static WINE_WAVEIN	WInDev    [MAX_WAVEINDRV];
 
-static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
-static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
-
 /* These strings used only for tracing */
 static const char *wodPlayerCmdString[] = {
     "WINE_WM_PAUSING",
@@ -227,6 +224,28 @@ static const char *wodPlayerCmdString[] = {
     "WINE_WM_STARTING",
     "WINE_WM_STOPPING",
 };
+
+
+/*======================================================================*
+ *                  Low level DSOUND implementation			*
+ *======================================================================*/
+
+static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
+{
+    /* we can't perform memory mapping as we don't have a file stream
+	interface with esd like we do with oss */
+    MESSAGE("This sound card's driver does not support direct access\n");
+    MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
+    return MMSYSERR_NOTSUPPORTED;
+}
+
+static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
+{
+    memset(desc, 0, sizeof(*desc));
+    strcpy(desc->szDesc, "Wine EsounD DirectSound Driver");
+    strcpy(desc->szDrvname, "wineesd.drv");
+    return MMSYSERR_NOERROR;
+}
 
 /*======================================================================*
  *                  Low level WAVE implementation			*
@@ -2069,26 +2088,6 @@ DWORD WINAPI ESD_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 	FIXME("unknown message %d!\n", wMsg);
     }
     return MMSYSERR_NOTSUPPORTED;
-}
-
-/*======================================================================*
- *                  Low level DSOUND implementation			*
- *======================================================================*/
-static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
-{
-    /* we can't perform memory mapping as we don't have a file stream
-	interface with esd like we do with oss */
-    MESSAGE("This sound card's driver does not support direct access\n");
-    MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
-    return MMSYSERR_NOTSUPPORTED;
-}
-
-static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
-{
-    memset(desc, 0, sizeof(*desc));
-    strcpy(desc->szDesc, "Wine EsounD DirectSound Driver");
-    strcpy(desc->szDrvname, "wineesd.drv");
-    return MMSYSERR_NOERROR;
 }
 
 #else /* !HAVE_ESD */
