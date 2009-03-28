@@ -1496,6 +1496,18 @@ TAB_EraseTabInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
 	    FillRect(hdc, &rTemp, hbr);
     }
 
+    /* highlighting is drawn on top of previous fills */
+    if (TAB_GetItem(infoPtr, iItem)->dwState & TCIS_HIGHLIGHTED)
+    {
+        if (deleteBrush)
+        {
+            DeleteObject(hbr);
+            deleteBrush = FALSE;
+        }
+        hbr = GetSysColorBrush(COLOR_HIGHLIGHT);
+        FillRect(hdc, &rTemp, hbr);
+    }
+
     /* Cleanup */
     if (deleteBrush) DeleteObject(hbr);
 }
@@ -1649,10 +1661,15 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
   */
   oldBkMode = SetBkMode(hdc, TRANSPARENT);
   if (!GetWindowTheme (infoPtr->hwnd) || (lStyle & TCS_BUTTONS))
-      SetTextColor(hdc, (((lStyle & TCS_HOTTRACK) && (iItem == infoPtr->iHotTracked) 
-                          && !(lStyle & TCS_FLATBUTTONS)) 
-                        | (TAB_GetItem(infoPtr, iItem)->dwState & TCIS_HIGHLIGHTED)) ?
-                        comctl32_color.clrHighlight : comctl32_color.clrBtnText);
+  {
+    if ((lStyle & TCS_HOTTRACK) && (iItem == infoPtr->iHotTracked) &&
+        !(lStyle & TCS_FLATBUTTONS))
+      SetTextColor(hdc, comctl32_color.clrHighlight);
+    else if (TAB_GetItem(infoPtr, iItem)->dwState & TCIS_HIGHLIGHTED)
+      SetTextColor(hdc, comctl32_color.clrHighlightText);
+    else
+      SetTextColor(hdc, comctl32_color.clrBtnText);
+  }
 
   /*
    * if owner draw, tell the owner to draw
@@ -2698,6 +2715,8 @@ static inline LRESULT
 TAB_HighlightItem (TAB_INFO *infoPtr, INT iItem, BOOL fHighlight)
 {
   LPDWORD lpState;
+  DWORD oldState;
+  RECT r;
 
   TRACE("(%p,%d,%s)\n", infoPtr, iItem, fHighlight ? "true" : "false");
 
@@ -2705,11 +2724,15 @@ TAB_HighlightItem (TAB_INFO *infoPtr, INT iItem, BOOL fHighlight)
     return FALSE;
   
   lpState = &TAB_GetItem(infoPtr, iItem)->dwState;
+  oldState = *lpState;
 
   if (fHighlight)
     *lpState |= TCIS_HIGHLIGHTED;
   else
     *lpState &= ~TCIS_HIGHLIGHTED;
+
+  if ((oldState != *lpState) && TAB_InternalGetItemRect (infoPtr, iItem, &r, NULL))
+    InvalidateRect (infoPtr->hwnd, &r, TRUE);
 
   return TRUE;
 }
