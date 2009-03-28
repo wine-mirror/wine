@@ -1456,8 +1456,6 @@ AC_CHECK_FUNCS(\
 	gettid \
 	gettimeofday \
 	getuid \
-	inet_ntop \
-	inet_pton \
 	kqueue \
 	lstat \
 	memmove \
@@ -1530,6 +1528,8 @@ AC_CHECK_FUNCS(\
 	getprotobynumber \
 	getservbyport \
 	inet_network \
+	inet_ntop \
+	inet_pton \
 	sendmsg \
 	socketpair \
 )
