@@ -166,8 +166,6 @@ typedef struct {
 
     /* esd information */
     int				esd_fd;		/* the socket fd we get from esd when opening a stream for playing */
-    int				bytes_per_frame;
-    DWORD                       dwBufferSize;           /* size of whole buffer in bytes */
 
     char*			sound_buffer;
     long			buffer_size;
@@ -188,7 +186,6 @@ typedef struct {
     /* synchronization stuff */
     HANDLE			hStartUpEvent;
     HANDLE			hThread;
-    DWORD			dwThreadID;
     ESD_MSG_RING		msgRing;
 } WINE_WAVEOUT;
 
@@ -202,7 +199,6 @@ typedef struct {
 
     /* esd information */
     int				esd_fd;		/* the socket fd we get from esd when opening a stream for recording */
-    int				bytes_per_frame;
 
     LPWAVEHDR			lpQueuePtr;
     DWORD			dwRecordedTotal;
@@ -210,7 +206,6 @@ typedef struct {
     /* synchronization stuff */
     HANDLE			hStartUpEvent;
     HANDLE			hThread;
-    DWORD			dwThreadID;
     ESD_MSG_RING		msgRing;
 } WINE_WAVEIN;
 
@@ -1241,8 +1236,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     else if (wwo->waveFormat.Format.wBitsPerSample == 16)
 	out_bits = ESD_BITS16;
 
-    wwo->bytes_per_frame = (wwo->waveFormat.Format.wBitsPerSample * wwo->waveFormat.Format.nChannels) / 8;
-
     if (wwo->waveFormat.Format.nChannels == 1)
 	out_channels = ESD_MONO;
     else if (wwo->waveFormat.Format.nChannels == 2)
@@ -1260,9 +1253,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if(wwo->esd_fd < 0) return MMSYSERR_ALLOCATED;
 
-    wwo->dwBufferSize = ESD_BUF_SIZE;
-    TRACE("Buffer size is now (%d)\n",wwo->dwBufferSize);
-
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
 
@@ -1278,17 +1268,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD_PTR)wDevID,
-                                    0, &(wwo->dwThreadID));
+                                    0, NULL);
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
 	CloseHandle(wwo->hStartUpEvent);
     } else {
 	wwo->hThread = INVALID_HANDLE_VALUE;
-	wwo->dwThreadID = 0;
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("esd=%d, dwBufferSize=%d\n",
-	  wwo->esd_fd, wwo->dwBufferSize);
+    TRACE("esd=%d\n", wwo->esd_fd);
 
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->waveFormat.Format.wBitsPerSample, wwo->waveFormat.Format.nAvgBytesPerSec,
@@ -1895,8 +1883,6 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     else if (wwi->waveFormat.Format.wBitsPerSample == 16)
 	in_bits = ESD_BITS16;
 
-    wwi->bytes_per_frame = (wwi->waveFormat.Format.wBitsPerSample * wwi->waveFormat.Format.nChannels) / 8;
-
     if (wwi->waveFormat.Format.nChannels == 1)
 	in_channels = ESD_MONO;
     else if (wwi->waveFormat.Format.nChannels == 2)
@@ -1935,12 +1921,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwi->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD_PTR)wDevID,
-                                    0, &(wwi->dwThreadID));
+                                    0, NULL);
 	WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
 	CloseHandle(wwi->hStartUpEvent);
     } else {
 	wwi->hThread = INVALID_HANDLE_VALUE;
-	wwi->dwThreadID = 0;
     }
     wwi->hStartUpEvent = INVALID_HANDLE_VALUE;
 
