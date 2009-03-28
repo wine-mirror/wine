@@ -32,7 +32,7 @@
  * TODO:
  *
  *  Styles:
- *   TCS_MULTISELECT
+ *   TCS_MULTISELECT - implement for VK_SPACE selection
  *   TCS_RIGHT
  *   TCS_RIGHTJUSTIFY
  *   TCS_SCROLLOPPOSITE
@@ -41,9 +41,6 @@
  *
  *  Extended Styles:
  *   TCS_EX_REGISTERDROP
- *
- *  States:
- *   TCIS_BUTTONPRESSED
  *
  *  Notifications:
  *   NM_RELEASEDCAPTURE
@@ -162,6 +159,7 @@ static const WCHAR themeClass[] = { 'T','a','b',0 };
 static void TAB_InvalidateTabArea(const TAB_INFO *);
 static void TAB_EnsureSelectionVisible(TAB_INFO *);
 static void TAB_DrawItemInterior(const TAB_INFO *, HDC, INT, RECT*);
+static LRESULT TAB_DeselectAll(TAB_INFO *, BOOL);
 
 static BOOL
 TAB_SendSimpleNotify (const TAB_INFO *infoPtr, UINT code)
@@ -587,6 +585,7 @@ TAB_LButtonDown (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
   POINT pt;
   INT newItem;
   UINT dummy;
+  LONG lStyle = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
 
   if (infoPtr->hwndToolTip)
     TAB_RelayEvent (infoPtr->hwndToolTip, infoPtr->hwnd,
@@ -607,14 +606,43 @@ TAB_LButtonDown (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
   TRACE("On Tab, item %d\n", newItem);
 
-  if (newItem != -1 && infoPtr->iSelected != newItem)
+  if ((newItem != -1) && (infoPtr->iSelected != newItem))
   {
-    if (!TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING))
+    if ((lStyle & TCS_BUTTONS) && (lStyle & TCS_MULTISELECT) &&
+        (wParam & MK_CONTROL))
     {
-      TAB_SetCurSel(infoPtr, newItem);
+      RECT r;
+
+      /* toggle multiselection */
+      TAB_GetItem(infoPtr, newItem)->dwState ^= TCIS_BUTTONPRESSED;
+      if (TAB_InternalGetItemRect (infoPtr, newItem, &r, NULL))
+        InvalidateRect (infoPtr->hwnd, &r, TRUE);
+    }
+    else
+    {
+      INT i;
+      BOOL pressed = FALSE;
+
+      /* any button pressed ? */
+      for (i = 0; i < infoPtr->uNumItem; i++)
+        if ((TAB_GetItem (infoPtr, i)->dwState & TCIS_BUTTONPRESSED) &&
+            (infoPtr->iSelected != i))
+        {
+          pressed = TRUE;
+          break;
+        }
+
+      TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGING);
+
+      if (pressed)
+        TAB_DeselectAll (infoPtr, FALSE);
+      else
+        TAB_SetCurSel(infoPtr, newItem);
+
       TAB_SendSimpleNotify(infoPtr, TCN_SELCHANGE);
     }
   }
+
   return 0;
 }
 
