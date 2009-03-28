@@ -97,15 +97,14 @@ static DWORD wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD_PTR dwParam1, D
  */
 static BOOL wodUpdatePlayedTotal(WINE_WAVEDEV* wwo, snd_pcm_status_t* ps)
 {
-    snd_pcm_sframes_t delay = 0;
-    snd_pcm_sframes_t avail = 0;
+    snd_pcm_sframes_t delay;
+    snd_pcm_sframes_t avail;
     snd_pcm_uframes_t buf_size = 0;
     snd_pcm_state_t state;
-    int err;
 
     state = snd_pcm_state(wwo->pcm);
     avail = snd_pcm_avail_update(wwo->pcm);
-    err = snd_pcm_hw_params_get_buffer_size(wwo->hw_params, &buf_size);
+    snd_pcm_hw_params_get_buffer_size(wwo->hw_params, &buf_size);
     delay = buf_size - avail;
 
     if (state != SND_PCM_STATE_RUNNING && state != SND_PCM_STATE_PREPARED)
