@@ -1287,8 +1287,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("esd=0x%lx, dwBufferSize=%d\n",
-	  (long)wwo->esd_fd, wwo->dwBufferSize);
+    TRACE("esd=%d, dwBufferSize=%d\n",
+	  wwo->esd_fd, wwo->dwBufferSize);
 
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->waveFormat.Format.wBitsPerSample, wwo->waveFormat.Format.nAvgBytesPerSec,
