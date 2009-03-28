@@ -252,8 +252,8 @@ static inline LRESULT TAB_SetCurSel (TAB_INFO *infoPtr, INT iItem)
       return -1;
   else {
       if (infoPtr->iSelected != iItem) {
-          infoPtr->items[prevItem].dwState &= ~TCIS_BUTTONPRESSED;
-          infoPtr->items[iItem].dwState |= TCIS_BUTTONPRESSED;
+          TAB_GetItem(infoPtr, prevItem)->dwState &= ~TCIS_BUTTONPRESSED;
+          TAB_GetItem(infoPtr, iItem)->dwState |= TCIS_BUTTONPRESSED;
 
           infoPtr->iSelected=iItem;
           infoPtr->uFocus=iItem;
@@ -1956,7 +1956,7 @@ static void TAB_DrawItem(const TAB_INFO *infoPtr, HDC  hdc, INT  iItem)
       }
       else  /* ! selected */
       {
-        DWORD state = infoPtr->items[iItem].dwState;
+        DWORD state = TAB_GetItem(infoPtr, iItem)->dwState;
 
         if (state & TCIS_BUTTONPRESSED)
           DrawEdge(hdc, &r, EDGE_SUNKEN, BF_SOFT|BF_RECT);
@@ -3113,7 +3113,7 @@ static LRESULT TAB_RemoveImage (TAB_INFO *infoPtr, INT image)
     /* shift indices, repaint items if needed */
     for (i = 0; i < infoPtr->uNumItem; i++)
     {
-      idx = &infoPtr->items[i].iImage;
+      idx = &TAB_GetItem(infoPtr, i)->iImage;
       if (*idx >= image)
       {
         if (*idx == image)
