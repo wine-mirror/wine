@@ -179,6 +179,8 @@ typedef struct {
 
     DWORD			dwPlayedTotal;		/* number of bytes actually played since opening */
     DWORD                       dwWrittenTotal;         /* number of bytes written to the audio device since opening */
+    DWORD			dwLastWrite;		/* Time of last write */
+    DWORD			dwLatency;		/* Num of milliseconds between when data is sent to the server and when it is played */
 
     /* synchronization stuff */
     HANDLE			hStartUpEvent;
@@ -672,13 +674,31 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD_PTR dwParam1,
 /**************************************************************************
  * 				wodUpdatePlayedTotal	[internal]
  *
+ * dwPlayedTotal is used for wodPlayer_NotifyCompletions() and
+ * wodGetPosition(), so a byte must only be reported as played once it has
+ * reached the speakers. So give our best estimate based on the latency
+ * reported by the esd server, and on the elapsed time since the last byte
+ * was sent to the server.
  */
-static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo)
+static void wodUpdatePlayedTotal(WINE_WAVEOUT* wwo)
 {
-    /* total played is the bytes written less the bytes to write ;-) */
-    wwo->dwPlayedTotal = wwo->dwWrittenTotal;
+    DWORD elapsed;
 
-    return TRUE;
+    if (wwo->dwPlayedTotal == wwo->dwWrittenTotal)
+        return;
+
+    /* GetTickCount() wraps every now and then, but these being all unsigned it's ok */
+    elapsed = GetTickCount() - wwo->dwLastWrite;
+    if (elapsed < wwo->dwLatency)
+    {
+        wwo->dwPlayedTotal = wwo->dwWrittenTotal - (wwo->dwLatency - elapsed) * wwo->waveFormat.Format.nAvgBytesPerSec / 1000;
+        TRACE("written=%u - elapsed=%u -> played=%u\n", wwo->dwWrittenTotal, elapsed, wwo->dwPlayedTotal);
+    }
+    else
+    {
+        wwo->dwPlayedTotal = wwo->dwWrittenTotal;
+        TRACE("elapsed=%u -> played=written=%u\n", elapsed, wwo->dwPlayedTotal);
+    }
 }
 
 /**************************************************************************
@@ -783,6 +803,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo)
 {
     DWORD dwLength = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
     int written;
+    DWORD now;
 
     TRACE("Writing wavehdr %p.%u[%u]\n",
           wwo->lpPlayPtr, wwo->dwPartialOffset, wwo->lpPlayPtr->dwBufferLength);
@@ -794,8 +815,10 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo)
         TRACE("write(%u) failed, errno=%d\n", dwLength, errno);
         return 0;
     }
-    TRACE("Wrote %d bytes out of %u\n", written, dwLength);
+    now = GetTickCount();
+    TRACE("Wrote %d bytes out of %u, %ums since last\n", written, dwLength, now-wwo->dwLastWrite);
 
+    wwo->dwLastWrite = now;
     wwo->dwWrittenTotal += written; /* update stats on this wave device */
     if (written == dwLength)
     {
@@ -1159,9 +1182,21 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->stream_name = get_stream_name("out", wDevID);
     wwo->stream_id = 0;
-    wwo->esd_fd = -1;
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
+
+    wwo->esd_fd = esd_open_sound(NULL);
+    if (wwo->esd_fd >= 0)
+    {
+        wwo->dwLatency = 1000 * esd_get_latency(wwo->esd_fd) * 4 / wwo->waveFormat.Format.nAvgBytesPerSec;
+    }
+    else
+    {
+        WARN("esd_open_sound() failed");
+        /* just do a rough guess at the latency and continue anyway */
+        wwo->dwLatency = 1000 * (2 * ESD_BUF_SIZE) / out_rate;
+    }
+    TRACE("dwLatency = %ums\n", wwo->dwLatency);
 
     /* ESD_BUF_SIZE is the socket buffer size in samples. Set dwSleepTime
      * to a fraction of that so it never get empty.
