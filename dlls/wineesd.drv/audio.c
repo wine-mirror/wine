@@ -774,44 +774,39 @@ static DWORD wodPlayer_NotifyWait(const WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 
 /**************************************************************************
  * 			     wodPlayer_WriteMaxFrags            [internal]
- * Writes the maximum number of bytes possible to the DSP and returns
- * the number of bytes written.
+ *
+ * Esdlib will have set the stream socket buffer size to an appropriate
+ * value, so now our job is to keep it full. So write what we can, and
+ * return 1 if more can be written and 0 otherwise.
  */
-static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
+static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo)
 {
-    /* Only attempt to write to free bytes */
     DWORD dwLength = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
-    int toWrite = min(dwLength, *bytes);
     int written;
 
     TRACE("Writing wavehdr %p.%u[%u]\n",
           wwo->lpPlayPtr, wwo->dwPartialOffset, wwo->lpPlayPtr->dwBufferLength);
 
-    /* send the audio data to esd for playing */
-    TRACE("toWrite == %d\n", toWrite);
-    written = write(wwo->stream_fd, wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toWrite);
-
-    TRACE("written = %d\n", written);
-
-    if (written <= 0) 
+    written = write(wwo->stream_fd, wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, dwLength);
+    if (written <= 0)
     {
-      *bytes = 0; /* apparently esd is actually full */
-      return written; /* if we wrote nothing just return */
+        /* the esd buffer is full or some error occurred */
+        TRACE("write(%u) failed, errno=%d\n", dwLength, errno);
+        return 0;
     }
-
-    if (written >= dwLength)
-        wodPlayer_PlayPtrNext(wwo);   /* If we wrote all current wavehdr, skip to the next one */
-    else
-        wwo->dwPartialOffset += written;    /* Remove the amount written */
-
-    if (written < toWrite)
-	*bytes = 0;
-    else
-	*bytes -= written;
+    TRACE("Wrote %d bytes out of %u\n", written, dwLength);
 
     wwo->dwWrittenTotal += written; /* update stats on this wave device */
+    if (written == dwLength)
+    {
+        /* We're done with this wavehdr, skip to the next one */
+        wodPlayer_PlayPtrNext(wwo);
+        return 1;
+    }
 
-    return written; /* return the number of bytes written */
+    /* Remove the amount written and wait a bit before trying to write more */
+    wwo->dwPartialOffset += written;
+    return 0;
 }
 
 
@@ -1002,58 +997,32 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
  */
 static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
 {
-    DWORD       availInQ;
-
     wodUpdatePlayedTotal(wwo);
-    /* better way to set availInQ? */
-    availInQ = ESD_BUF_SIZE;
-    TRACE("availInQ = %d\n", availInQ);
-
-    /* input queue empty */
-    if (!wwo->lpPlayPtr) {
-        TRACE("Run out of wavehdr:s... flushing\n");
-        return INFINITE;
-    }
-
-#if 0
-    /* no more room... no need to try to feed */
-    if(!availInQ)
-    {
-	TRACE("no more room, no need to try to feed\n");
-	return wwo->dwSleepTime;
-    }
-#endif
-
-    /* Feed from partial wavehdr */
-    if (wwo->lpPlayPtr && wwo->dwPartialOffset != 0)
-    {
-        TRACE("feeding from partial wavehdr\n");
-        wodPlayer_WriteMaxFrags(wwo, &availInQ);
-    }
 
     /* Feed wavehdrs until we run out of wavehdrs or DSP space */
-    if (!wwo->dwPartialOffset)
+    while (wwo->lpPlayPtr)
     {
-	while(wwo->lpPlayPtr && availInQ)
-	{
-	    TRACE("feeding waveheaders until we run out of space\n");
-	    /* note the value that dwPlayedTotal will return when this wave finishes playing */
-	    wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
-            TRACE("reserved=(%ld) dwWrittenTotal=(%d) dwBufferLength=(%d)\n",
-		  wwo->lpPlayPtr->reserved,
-		  wwo->dwWrittenTotal,
-		  wwo->lpPlayPtr->dwBufferLength
-		);
-	    wodPlayer_WriteMaxFrags(wwo, &availInQ);
-	}
+        if (wwo->dwPartialOffset != 0)
+            TRACE("feeding from partial wavehdr\n");
+        else
+        {
+            /* Note the value that dwPlayedTotal will return when this
+             * wavehdr finishes playing, for the completion notifications.
+             */
+            wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
+            TRACE("new wavehdr: reserved=(%ld) dwWrittenTotal=(%d) dwBufferLength=(%d)\n",
+                  wwo->lpPlayPtr->reserved, wwo->dwWrittenTotal,
+                  wwo->lpPlayPtr->dwBufferLength);
+        }
+        if (!wodPlayer_WriteMaxFrags(wwo))
+        {
+            /* the buffer is full, wait a bit */
+            return wwo->dwSleepTime;
+        }
     }
 
-    if (!wwo->lpPlayPtr) {
-        TRACE("Ran out of wavehdrs\n");
-        return INFINITE;
-    }
-
-    return wwo->dwSleepTime;
+    TRACE("Ran out of wavehdrs or nothing to play\n");
+    return INFINITE;
 }
 
 
@@ -1118,6 +1087,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int			out_bits = ESD_BITS8, out_channels = ESD_MONO, out_rate;
     int			out_mode = ESD_STREAM, out_func = ESD_PLAY;
     esd_format_t	out_format;
+    int			mode;
 
     TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
@@ -1193,7 +1163,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
 
-    wwo->dwSleepTime = (1024 * 1000 * BUFFER_REFILL_THRESHOLD) / wwo->waveFormat.Format.nAvgBytesPerSec;
+    /* ESD_BUF_SIZE is the socket buffer size in samples. Set dwSleepTime
+     * to a fraction of that so it never get empty.
+     */
+    wwo->dwSleepTime = 1000 * ESD_BUF_SIZE / out_rate / 3;
+
+    /* Set the stream socket to O_NONBLOCK, so we can stop playing smoothly */
+    mode = fcntl(wwo->stream_fd, F_GETFL);
+    mode |= O_NONBLOCK;
+    fcntl(wwo->stream_fd, F_SETFL, mode);
 
     ESD_InitRingMessage(&wwo->msgRing);
 
