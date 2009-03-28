@@ -51,9 +51,6 @@
  *   TCN_GETOBJECT
  *   TCN_KEYDOWN
  *
- *  Messages:
- *   TCM_DESELECTALL
- *
  *  Macros:
  *   TabCtrl_AdjustRect
  *
@@ -3164,6 +3161,39 @@ TAB_GetExtendedStyle (TAB_INFO *infoPtr)
   return infoPtr->exStyle;
 }
 
+static LRESULT
+TAB_DeselectAll (TAB_INFO *infoPtr, BOOL excludesel)
+{
+  LONG style = GetWindowLongW(infoPtr->hwnd, GWL_STYLE);
+  BOOL paint = FALSE;
+  INT i, selected = infoPtr->iSelected;
+
+  if (!(style & TCS_BUTTONS))
+    return 0;
+
+  for (i = 0; i < infoPtr->uNumItem; i++)
+  {
+    if ((TAB_GetItem(infoPtr, i)->dwState & TCIS_BUTTONPRESSED) &&
+        (selected != i))
+    {
+      TAB_GetItem(infoPtr, i)->dwState &= ~TCIS_BUTTONPRESSED;
+      paint = TRUE;
+    }
+  }
+
+  if (!excludesel && (selected != -1))
+  {
+    TAB_GetItem(infoPtr, selected)->dwState &= ~TCIS_BUTTONPRESSED;
+    infoPtr->iSelected = -1;
+    paint = TRUE;
+  }
+
+  if (paint)
+    TAB_InvalidateTabArea (infoPtr);
+
+  return 0;
+}
+
 static LRESULT WINAPI
 TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -3257,8 +3287,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_SetMinTabWidth(infoPtr, (INT)lParam);
 
     case TCM_DESELECTALL:
-      FIXME("Unimplemented msg TCM_DESELECTALL\n");
-      return 0;
+      return TAB_DeselectAll (infoPtr, (BOOL)wParam);
 
     case TCM_GETEXTENDEDSTYLE:
       return TAB_GetExtendedStyle (infoPtr);
