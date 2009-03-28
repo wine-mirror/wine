@@ -165,6 +165,7 @@ typedef struct {
     DWORD			dwSleepTime;		/* Num of milliseconds to sleep between filling the dsp buffers */
 
     /* esd information */
+    char*			stream_name;		/* a unique name identifying the esd stream */
     int				stream_fd;		/* the socket fd we get from esd when opening a stream for playing */
 
     char*			sound_buffer;
@@ -198,6 +199,7 @@ typedef struct {
     char                        interface_name[32];
 
     /* esd information */
+    char*			stream_name;		/* a unique name identifying the esd stream */
     int				stream_fd;		/* the socket fd we get from esd when opening a stream for recording */
 
     LPWAVEHDR			lpQueuePtr;
@@ -391,12 +393,35 @@ static void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
         memcpy(wf2, wf1, sizeof(WAVEFORMATEX) + wf1->cbSize);
 }
 
+static char* get_stream_name(const char* direction, unsigned int dev_id)
+{
+    char exename[MAX_PATH];
+    char *basename, *s;
+    char* stream_name;
+
+    GetModuleFileNameA(NULL, exename, sizeof(exename));
+    exename[sizeof(exename)-1]='\0';
+    basename = s = exename;
+    while (*s)
+    {
+        if (*s == '/' || *s == '\\')
+            basename = s+1;
+        s++;
+    }
+
+    stream_name = HeapAlloc(GetProcessHeap(), 0, 4+strlen(basename)+10+strlen(direction)+10+1);
+    sprintf(stream_name, "%s (%lu:%s%u)", basename, (unsigned long)getpid(), direction, dev_id);
+
+    return stream_name;
+}
+
 /******************************************************************
  *		ESD_CloseWaveOutDevice
  *
  */
 static void	ESD_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
 {
+	HeapFree(GetProcessHeap(), 0, wwo->stream_name);
 	esd_close(wwo->stream_fd);
 	wwo->stream_fd = -1;
 
@@ -412,6 +437,7 @@ static void	ESD_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
  */
 static void	ESD_CloseWaveInDevice(WINE_WAVEIN* wwi)
 {
+	HeapFree(GetProcessHeap(), 0, wwi->stream_name);
 	esd_close(wwi->stream_fd);
 	wwi->stream_fd = -1;
 }
@@ -1264,13 +1290,14 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     out_rate = (int) wwo->waveFormat.Format.nSamplesPerSec;
 	TRACE("esd output format = 0x%08x, rate = %d\n", out_format, out_rate);
 
-    wwo->stream_fd = esd_play_stream(out_format, out_rate, NULL, "wineesd");
+    wwo->stream_fd = esd_play_stream(out_format, out_rate, NULL, wwo->stream_name);
+    TRACE("wwo->stream_fd=%d\n", wwo->stream_fd);
+    if(wwo->stream_fd < 0) return MMSYSERR_ALLOCATED;
+    wwo->stream_name = get_stream_name("out", wDevID);
 
     /* clear these so we don't have any confusion ;-) */
     wwo->sound_buffer = 0;
     wwo->buffer_size = 0;
-
-    if(wwo->stream_fd < 0) return MMSYSERR_ALLOCATED;
 
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
@@ -1294,8 +1321,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	wwo->hThread = INVALID_HANDLE_VALUE;
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
-
-    TRACE("stream=%d\n", wwo->stream_fd);
 
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->waveFormat.Format.wBitsPerSample, wwo->waveFormat.Format.nAvgBytesPerSec,
@@ -1912,19 +1937,19 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	TRACE("esd input format = 0x%08x, rate = %d\n", in_format, in_rate);
 
 #ifdef WID_USE_ESDMON
-    wwi->stream_fd = esd_monitor_stream(in_format, in_rate, NULL, "wineesd");
+    wwi->stream_fd = esd_monitor_stream(in_format, in_rate, NULL, wwi->stream_name);
 #else
-    wwi->stream_fd = esd_record_stream(in_format, in_rate, NULL, "wineesd");
+    wwi->stream_fd = esd_record_stream(in_format, in_rate, NULL, wwi->stream_name);
 #endif
-    TRACE("(wwi->stream_fd=%d)\n",wwi->stream_fd);
+    TRACE("wwi->stream_fd=%d\n",wwi->stream_fd);
+    if(wwi->stream_fd < 0) return MMSYSERR_ALLOCATED;
+    wwi->stream_name = get_stream_name("in", wDevID);
     wwi->state = WINE_WS_STOPPED;
 
     if (wwi->lpQueuePtr) {
 	WARN("Should have an empty queue (%p)\n", wwi->lpQueuePtr);
 	wwi->lpQueuePtr = NULL;
     }
-
-    if(wwi->stream_fd < 0) return MMSYSERR_ALLOCATED;
 
     /* Set the socket to O_NONBLOCK, so we can stop recording smoothly */
     mode = fcntl(wwi->stream_fd, F_GETFL);
