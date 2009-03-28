@@ -167,12 +167,8 @@ typedef struct {
     /* esd information */
     char*			stream_name;		/* a unique name identifying the esd stream */
     int				stream_fd;		/* the socket fd we get from esd when opening a stream for playing */
-
-    char*			sound_buffer;
-    long			buffer_size;
-
-    DWORD			volume_left;		/* volume control information */
-    DWORD			volume_right;
+    int				stream_id;		/* the stream id (to change the volume) */
+    int				esd_fd;			/* a socket to communicate with the sound server */
 
     LPWAVEHDR			lpQueuePtr;		/* start of queued WAVEHDRs (waiting to be notified) */
     LPWAVEHDR			lpPlayPtr;		/* start of not yet fully played buffers */
@@ -252,59 +248,6 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 /*======================================================================*
  *                  Low level WAVE implementation			*
  *======================================================================*/
-
-/* Volume functions derived from Alsaplayer source */
-/* length is the number of 16 bit samples */
-static void volume_effect16(void *bufin, void* bufout, int length, int left,
-		int right, int 	nChannels)
-{
-  short *d_out = bufout;
-  short *d_in = bufin;
-  int i, v;
-
-/*
-  TRACE("length == %d, nChannels == %d\n", length, nChannels);
-*/
-
-  if (right == -1) right = left;
-
-  for(i = 0; i < length; i+=(nChannels))
-  {
-    v = (int) ((*(d_in++) * left) / 100);
-    *(d_out++) = (v>32767) ? 32767 : ((v<-32768) ? -32768 : v);
-    if(nChannels == 2)
-    {
-      v = (int) ((*(d_in++) * right) / 100);
-      *(d_out++) = (v>32767) ? 32767 : ((v<-32768) ? -32768 : v);
-    }
-  }
-}
-
-/* length is the number of 8 bit samples */
-static void volume_effect8(void *bufin, void* bufout, int length, int left,
-		int right, int 	nChannels)
-{
-  BYTE *d_out = bufout;
-  BYTE *d_in = bufin;
-  int i, v;
-
-/*
-  TRACE("length == %d, nChannels == %d\n", length, nChannels);
-*/
-
-  if (right == -1) right = left;
-
-  for(i = 0; i < length; i+=(nChannels))
-  {
-    v = (BYTE) ((*(d_in++) * left) / 100);
-    *(d_out++) = (v>255) ? 255 : ((v<0) ? 0 : v);
-    if(nChannels == 2)
-    {
-      v = (BYTE) ((*(d_in++) * right) / 100);
-      *(d_out++) = (v>255) ? 255 : ((v<0) ? 0 : v);
-    }
-  }
-}
 
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              WAVEFORMATPCMEX* format)
@@ -424,11 +367,8 @@ static void	ESD_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
 	HeapFree(GetProcessHeap(), 0, wwo->stream_name);
 	esd_close(wwo->stream_fd);
 	wwo->stream_fd = -1;
-
-  /* free up the buffer we use for volume and reset the size */
-  HeapFree(GetProcessHeap(), 0, wwo->sound_buffer);
-  wwo->sound_buffer = NULL;
-  wwo->buffer_size = 0;
+	if (wwo->esd_fd)
+		esd_close(wwo->esd_fd);
 }
 
 /******************************************************************
@@ -847,56 +787,9 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     TRACE("Writing wavehdr %p.%u[%u]\n",
           wwo->lpPlayPtr, wwo->dwPartialOffset, wwo->lpPlayPtr->dwBufferLength);
 
-    /* see if our buffer isn't large enough for the data we are writing */
-    if(wwo->buffer_size < toWrite)
-    {
-      if(wwo->sound_buffer)
-      {
-	wwo->sound_buffer = HeapReAlloc(GetProcessHeap(), 0, wwo->sound_buffer, toWrite);
-	wwo->buffer_size = toWrite;
-      }
-    }
-
-    /* if we don't have a buffer then get one */
-    if(!wwo->sound_buffer)
-    {
-      /* allocate some memory for the buffer */
-      wwo->sound_buffer = HeapAlloc(GetProcessHeap(), 0, toWrite);
-      wwo->buffer_size = toWrite;
-    }
-
-    /* if we don't have a buffer then error out */
-    if(!wwo->sound_buffer)
-    {
-      ERR("error allocating sound_buffer memory\n");
-      return 0;
-    }
-
-    TRACE("toWrite == %d\n", toWrite);
-
-    /* apply volume to the bits */
-    /* for single channel audio streams we only use the LEFT volume */
-    if(wwo->waveFormat.Format.wBitsPerSample == 16)
-    {
-      /* apply volume to the buffer we are about to send */
-      /* divide toWrite(bytes) by 2 as volume processes by 16 bits */
-      volume_effect16(wwo->lpPlayPtr->lpData + wwo->dwPartialOffset,
-                wwo->sound_buffer, toWrite>>1, wwo->volume_left,
-		wwo->volume_right, wwo->waveFormat.Format.nChannels);
-    } else if(wwo->waveFormat.Format.wBitsPerSample == 8)
-    {
-      /* apply volume to the buffer we are about to send */
-      volume_effect8(wwo->lpPlayPtr->lpData + wwo->dwPartialOffset,
-                wwo->sound_buffer, toWrite, wwo->volume_left,
-		wwo->volume_right, wwo->waveFormat.Format.nChannels);
-    } else
-    {
-      FIXME("unsupported wwo->format.wBitsPerSample of %d\n",
-        wwo->waveFormat.Format.wBitsPerSample);
-    }
-
     /* send the audio data to esd for playing */
-    written = write(wwo->stream_fd, wwo->sound_buffer, toWrite);
+    TRACE("toWrite == %d\n", toWrite);
+    written = write(wwo->stream_fd, wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toWrite);
 
     TRACE("written = %d\n", written);
 
@@ -1293,20 +1186,14 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->stream_fd = esd_play_stream(out_format, out_rate, NULL, wwo->stream_name);
     TRACE("wwo->stream_fd=%d\n", wwo->stream_fd);
     if(wwo->stream_fd < 0) return MMSYSERR_ALLOCATED;
+
     wwo->stream_name = get_stream_name("out", wDevID);
-
-    /* clear these so we don't have any confusion ;-) */
-    wwo->sound_buffer = 0;
-    wwo->buffer_size = 0;
-
+    wwo->stream_id = 0;
+    wwo->esd_fd = -1;
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
 
     wwo->dwSleepTime = (1024 * 1000 * BUFFER_REFILL_THRESHOLD) / wwo->waveFormat.Format.nAvgBytesPerSec;
-
-    /* Initialize volume to full level */
-    wwo->volume_left = 100;
-    wwo->volume_right = 100;
 
     ESD_InitRingMessage(&wwo->msgRing);
 
@@ -1502,22 +1389,70 @@ static DWORD wodBreakLoop(WORD wDevID)
     return MMSYSERR_NOERROR;
 }
 
+static esd_player_info_t* wod_get_player(WINE_WAVEOUT* wwo, esd_info_t** esd_all_info)
+{
+    esd_player_info_t* player;
+
+    if (wwo->esd_fd == -1)
+    {
+        wwo->esd_fd = esd_open_sound(NULL);
+        if (wwo->esd_fd < 0)
+        {
+            WARN("esd_open_sound() failed (%d)\n", errno);
+            return NULL;
+        }
+    }
+
+    *esd_all_info = esd_get_all_info(wwo->esd_fd);
+    if (!*esd_all_info)
+    {
+        WARN("esd_get_all_info() failed (%d)\n", errno);
+        return NULL;
+    }
+
+    for (player = (*esd_all_info)->player_list; player != NULL; player = player->next)
+    {
+        if (strcmp(player->name, wwo->stream_name) == 0)
+        {
+            wwo->stream_id = player->source_id;
+            return player;
+        }
+    }
+
+    return NULL;
+}
+
 /**************************************************************************
  * 				wodGetVolume			[internal]
  */
 static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
-    DWORD left, right;
+    esd_info_t* esd_all_info;
+    esd_player_info_t* player;
+    DWORD ret;
 
-    left = WOutDev[wDevID].volume_left;
-    right = WOutDev[wDevID].volume_right;
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].stream_fd == -1)
+    {
+	WARN("bad device ID !\n");
+	return MMSYSERR_BADDEVICEID;
+    }
 
-    TRACE("(%u, %p);\n", wDevID, lpdwVol);
+    ret = MMSYSERR_ERROR;
+    player = wod_get_player(WOutDev+wDevID, &esd_all_info);
+    if (player)
+    {
+        DWORD left, right;
+        left = (player->left_vol_scale * 0xFFFF) / ESD_VOLUME_BASE;
+        right = (player->right_vol_scale * 0xFFFF) / ESD_VOLUME_BASE;
+        TRACE("volume = %u / %u\n", left, right);
+        *lpdwVol = left + (right << 16);
+        ret = MMSYSERR_NOERROR;
+    }
+    else
+        ret = MMSYSERR_ERROR;
 
-    *lpdwVol = ((left * 0xFFFFl) / 100) + (((right * 0xFFFFl) / 100) <<
-		16);
-
-    return MMSYSERR_NOERROR;
+    esd_free_all_info(esd_all_info);
+    return ret;
 }
 
 /**************************************************************************
@@ -1525,15 +1460,30 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
  */
 static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
-    DWORD left, right;
+    WINE_WAVEOUT* wwo = WOutDev+wDevID;
 
-    left  = (LOWORD(dwParam) * 100) / 0xFFFFl;
-    right = (HIWORD(dwParam) * 100) / 0xFFFFl;
+    if (wDevID >= MAX_WAVEOUTDRV || wwo->stream_fd == -1)
+    {
+	WARN("bad device ID !\n");
+	return MMSYSERR_BADDEVICEID;
+    }
 
-    TRACE("(%u, %08X);\n", wDevID, dwParam);
+    /* stream_id is the ESD's file descriptor for our stream so it's should
+     * be non-zero if set.
+     */
+    if (!wwo->stream_id)
+    {
+        esd_info_t* esd_all_info;
+        /* wod_get_player sets the stream_id as a side effect */
+        wod_get_player(wwo, &esd_all_info);
+        esd_free_all_info(esd_all_info);
+    }
+    if (!wwo->stream_id)
+        return MMSYSERR_ERROR;
 
-    WOutDev[wDevID].volume_left = left;
-    WOutDev[wDevID].volume_right = right;
+    esd_set_stream_pan(wwo->esd_fd, wwo->stream_id,
+                       LOWORD(dwParam) * ESD_VOLUME_BASE / 0xFFFF,
+                       HIWORD(dwParam) * ESD_VOLUME_BASE / 0xFFFF);
 
     return MMSYSERR_NOERROR;
 }
