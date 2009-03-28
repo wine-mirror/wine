@@ -165,7 +165,7 @@ typedef struct {
     DWORD			dwSleepTime;		/* Num of milliseconds to sleep between filling the dsp buffers */
 
     /* esd information */
-    int				esd_fd;		/* the socket fd we get from esd when opening a stream for playing */
+    int				stream_fd;		/* the socket fd we get from esd when opening a stream for playing */
 
     char*			sound_buffer;
     long			buffer_size;
@@ -198,7 +198,7 @@ typedef struct {
     char                        interface_name[32];
 
     /* esd information */
-    int				esd_fd;		/* the socket fd we get from esd when opening a stream for recording */
+    int				stream_fd;		/* the socket fd we get from esd when opening a stream for recording */
 
     LPWAVEHDR			lpQueuePtr;
     DWORD			dwRecordedTotal;
@@ -397,8 +397,8 @@ static void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
  */
 static void	ESD_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
 {
-	esd_close(wwo->esd_fd); 	/* close the esd socket fd */
-	wwo->esd_fd = -1;
+	esd_close(wwo->stream_fd);
+	wwo->stream_fd = -1;
 
   /* free up the buffer we use for volume and reset the size */
   HeapFree(GetProcessHeap(), 0, wwo->sound_buffer);
@@ -412,8 +412,8 @@ static void	ESD_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
  */
 static void	ESD_CloseWaveInDevice(WINE_WAVEIN* wwi)
 {
-	esd_close(wwi->esd_fd); 	/* close the esd socket fd */
-	wwi->esd_fd = -1;
+	esd_close(wwi->stream_fd);
+	wwi->stream_fd = -1;
 }
 
 /******************************************************************
@@ -426,7 +426,7 @@ LONG		ESD_WaveClose(void)
     /* close all open devices */
     for(iDevice = 0; iDevice < MAX_WAVEOUTDRV; iDevice++)
     {
-      if(WOutDev[iDevice].esd_fd != -1)
+      if(WOutDev[iDevice].stream_fd != -1)
       {
         ESD_CloseWaveOutDevice(&WOutDev[iDevice]);
       }
@@ -434,7 +434,7 @@ LONG		ESD_WaveClose(void)
 
     for(iDevice = 0; iDevice < MAX_WAVEINDRV; iDevice++)
     {
-      if(WInDev[iDevice].esd_fd != -1)
+      if(WInDev[iDevice].stream_fd != -1)
       {
         ESD_CloseWaveInDevice(&WInDev[iDevice]);
       }
@@ -468,7 +468,7 @@ LONG ESD_WaveInit(void)
     {
         static const WCHAR ini[] = {'E','s','o','u','n','D',' ','W','a','v','e','O','u','t','D','r','i','v','e','r',0};
 
-	WOutDev[i].esd_fd = -1;
+	WOutDev[i].stream_fd = -1;
 	memset(&WOutDev[i].caps, 0, sizeof(WOutDev[i].caps)); /* zero out
 							caps values */
 	WOutDev[i].caps.wMid = 0x00FF; 	/* Manufacturer ID */
@@ -501,7 +501,7 @@ LONG ESD_WaveInit(void)
     {
         static const WCHAR ini[] = {'E','s','o','u','n','D',' ','W','a','v','e','I','n','D','r','i','v','e','r',0};
 
-	WInDev[i].esd_fd = -1;
+	WInDev[i].stream_fd = -1;
 	memset(&WInDev[i].caps, 0, sizeof(WInDev[i].caps)); /* zero out
 							caps values */
 	WInDev[i].caps.wMid = 0x00FF;
@@ -870,7 +870,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* bytes)
     }
 
     /* send the audio data to esd for playing */
-    written = write(wwo->esd_fd, wwo->sound_buffer, toWrite);
+    written = write(wwo->stream_fd, wwo->sound_buffer, toWrite);
 
     TRACE("written = %d\n", written);
 
@@ -1211,7 +1211,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     /* if this device is already open tell the app that it is allocated */
-    if(WOutDev[wDevID].esd_fd != -1)
+    if(WOutDev[wDevID].stream_fd != -1)
     {
       TRACE("device already allocated\n");
       return MMSYSERR_ALLOCATED;
@@ -1264,13 +1264,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     out_rate = (int) wwo->waveFormat.Format.nSamplesPerSec;
 	TRACE("esd output format = 0x%08x, rate = %d\n", out_format, out_rate);
 
-    wwo->esd_fd = esd_play_stream(out_format, out_rate, NULL, "wineesd");
+    wwo->stream_fd = esd_play_stream(out_format, out_rate, NULL, "wineesd");
 
     /* clear these so we don't have any confusion ;-) */
     wwo->sound_buffer = 0;
     wwo->buffer_size = 0;
 
-    if(wwo->esd_fd < 0) return MMSYSERR_ALLOCATED;
+    if(wwo->stream_fd < 0) return MMSYSERR_ALLOCATED;
 
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
@@ -1295,7 +1295,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("esd=%d\n", wwo->esd_fd);
+    TRACE("stream=%d\n", wwo->stream_fd);
 
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->waveFormat.Format.wBitsPerSample, wwo->waveFormat.Format.nAvgBytesPerSec,
@@ -1315,7 +1315,7 @@ static DWORD wodClose(WORD wDevID)
 
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].esd_fd == -1) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].stream_fd == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1348,7 +1348,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].esd_fd == -1) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].stream_fd == -1) {
         WARN("bad dev ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1383,7 +1383,7 @@ static DWORD wodPause(WORD wDevID)
 {
     TRACE("(%u);!\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].esd_fd == -1) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].stream_fd == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1401,7 +1401,7 @@ static DWORD wodRestart(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].esd_fd == -1) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].stream_fd == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1426,7 +1426,7 @@ static DWORD wodReset(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].esd_fd == -1) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].stream_fd == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1446,7 +1446,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 
     TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].esd_fd == -1) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].stream_fd == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1469,7 +1469,7 @@ static DWORD wodBreakLoop(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].esd_fd == -1) {
+    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].stream_fd == -1) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -1711,7 +1711,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	    while(wwi->lpQueuePtr)
 	    {
 		TRACE("attempt to read %d bytes\n",lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
-		bytesRead = read(wwi->esd_fd,
+		bytesRead = read(wwi->stream_fd,
 			      lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
 			      lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
 		TRACE("bytesRead=%d\n",bytesRead);
@@ -1858,7 +1858,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     /* if this device is already open tell the app that it is allocated */
-    if(WInDev[wDevID].esd_fd != -1)
+    if(WInDev[wDevID].stream_fd != -1)
     {
 	TRACE("device already allocated\n");
 	return MMSYSERR_ALLOCATED;
@@ -1912,11 +1912,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	TRACE("esd input format = 0x%08x, rate = %d\n", in_format, in_rate);
 
 #ifdef WID_USE_ESDMON
-    wwi->esd_fd = esd_monitor_stream(in_format, in_rate, NULL, "wineesd");
+    wwi->stream_fd = esd_monitor_stream(in_format, in_rate, NULL, "wineesd");
 #else
-    wwi->esd_fd = esd_record_stream(in_format, in_rate, NULL, "wineesd");
+    wwi->stream_fd = esd_record_stream(in_format, in_rate, NULL, "wineesd");
 #endif
-    TRACE("(wwi->esd_fd=%d)\n",wwi->esd_fd);
+    TRACE("(wwi->stream_fd=%d)\n",wwi->stream_fd);
     wwi->state = WINE_WS_STOPPED;
 
     if (wwi->lpQueuePtr) {
@@ -1924,12 +1924,12 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	wwi->lpQueuePtr = NULL;
     }
 
-    if(wwi->esd_fd < 0) return MMSYSERR_ALLOCATED;
+    if(wwi->stream_fd < 0) return MMSYSERR_ALLOCATED;
 
-    /* Set the esd socket O_NONBLOCK, so we can stop recording smoothly */
-    mode = fcntl(wwi->esd_fd, F_GETFL);
+    /* Set the socket to O_NONBLOCK, so we can stop recording smoothly */
+    mode = fcntl(wwi->stream_fd, F_GETFL);
     mode |= O_NONBLOCK;
-    fcntl(wwi->esd_fd, F_SETFL, mode);
+    fcntl(wwi->stream_fd, F_SETFL, mode);
 
     wwi->dwRecordedTotal = 0;
     wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
