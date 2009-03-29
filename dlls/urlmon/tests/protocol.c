@@ -352,7 +352,10 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
 {
     HRESULT hres;
 
-    CHECK_EXPECT(Switch);
+    if(tested_protocol == FTP_TEST)
+      CHECK_EXPECT2(Switch);
+    else
+      CHECK_EXPECT(Switch);
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
 
     pdata = pProtocolData;
@@ -1835,23 +1838,19 @@ static void test_ftp_protocol(void)
        (hres == S_OK && cb==1), "Read failed: %08x (%d bytes)\n", hres, cb);
 
     WaitForSingleObject(event_complete, INFINITE);
-    CHECK_CALLED(Switch);
 
     while(1) {
-        SET_EXPECT(Switch);
 
         hres = IInternetProtocol_Read(async_protocol, buf, sizeof(buf), &cb);
-        if(hres == E_PENDING) {
+        if(hres == E_PENDING)
             WaitForSingleObject(event_complete, INFINITE);
-            CHECK_CALLED(Switch);
-        }else {
-            CHECK_NOT_CALLED(Switch);
+        else
             if(cb == 0) break;
-        }
     }
 
     ok(hres == S_FALSE, "Read failed: %08x\n", hres);
     CHECK_CALLED(ReportResult);
+    CHECK_CALLED(Switch);
 
     test_protocol_terminate(async_protocol);
 
