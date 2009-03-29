@@ -279,8 +279,15 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
         }
+    }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
+        switch(nCmdID) {
+        case 105: /* TODO */
+            return E_FAIL;
+        default:
+            ok(0, "unexpected nCmdID %d\n", nCmdID);
+        }
     }else {
-        ok(0, "unepected pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
+        ok(0, "unexpected pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
     }
 
     return E_FAIL;
