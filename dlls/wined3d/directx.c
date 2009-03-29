@@ -1405,12 +1405,14 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     /* Make sure there's an active HDC else the WGL extensions will fail */
     hdc = pwglGetCurrentDC();
     if (hdc) {
-        WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
-        TRACE_(d3d_caps)("WGL_Extensions reported:\n");
+        /* Not all GL drivers might offer WGL extensions e.g. VirtualBox */
+        if(GL_EXTCALL(wglGetExtensionsStringARB))
+            WGL_Extensions = GL_EXTCALL(wglGetExtensionsStringARB(hdc));
 
         if (NULL == WGL_Extensions) {
             ERR("   WGL_Extensions returns NULL\n");
         } else {
+            TRACE_(d3d_caps)("WGL_Extensions reported:\n");
             while (*WGL_Extensions != 0x00) {
                 const char *Start;
                 char ThisExtn[256];
