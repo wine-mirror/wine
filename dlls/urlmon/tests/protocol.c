@@ -1610,6 +1610,19 @@ static void test_protocol_terminate(IInternetProtocol *protocol)
     ok(hres == S_OK, "UnlockRequest failed: %08x\n", hres);
 }
 
+static void test_http_info(IInternetProtocol *protocol)
+{
+    IWinInetHttpInfo *info;
+    HRESULT hres;
+
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IWinInetHttpInfo, (void**)&info);
+    ok(hres == S_OK, "Could not get IWinInterHttpInfo iface: %08x\n", hres);
+
+    /* TODO */
+
+    IWinInetHttpInfo_Release(info);
+}
+
 /* is_first refers to whether this is the first call to this function
  * _for this url_ */
 static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
@@ -1648,6 +1661,7 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
         ULONG ref;
 
         test_priority(async_protocol);
+        test_http_info(async_protocol);
 
         SET_EXPECT(ReportProgress_FINDINGRESOURCE);
         SET_EXPECT(ReportProgress_CONNECTING);
