@@ -25,6 +25,7 @@
 #include "mmddk.h"
 #include "wine/debug.h"
 #include "mciqtz_private.h"
+#include "digitalv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciqtz);
 
@@ -132,6 +133,73 @@ static WINE_MCIQTZ* MCIQTZ_mciGetOpenDev(UINT wDevID)
 }
 
 /***************************************************************************
+ *                              MCIQTZ_mciOpen                  [internal]
+ */
+static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
+                            LPMCI_DGV_OPEN_PARMSW lpOpenParms)
+{
+    WINE_MCIQTZ* wma;
+    HRESULT hr;
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpOpenParms);
+
+    MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
+
+    if (!lpOpenParms)
+        return MCIERR_NULL_PARAMETER_BLOCK;
+
+    wma = (WINE_MCIQTZ*)mciGetDriverData(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (LPVOID*)&wma->pgraph);
+    if (FAILED(hr)) {
+        TRACE("Cannot create filtergraph (hr = %x)\n", hr);
+        goto err;
+    }
+
+    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaControl, (LPVOID*)&wma->pmctrl);
+    if (FAILED(hr)) {
+        TRACE("Cannot get IMediaControl interface (hr = %x)\n", hr);
+        goto err;
+    }
+
+    if (!((dwFlags & MCI_OPEN_ELEMENT) && (dwFlags & MCI_OPEN_ELEMENT))) {
+        TRACE("Wrong dwFlags %x\n", dwFlags);
+        goto err;
+    }
+
+    if (!lpOpenParms->lpstrElementName && !lstrlenW(lpOpenParms->lpstrElementName)) {
+        TRACE("Invalid filename specified\n");
+        goto err;
+    }
+
+    TRACE("Open file %s\n", debugstr_w(lpOpenParms->lpstrElementName));
+
+    hr = IGraphBuilder_RenderFile(wma->pgraph, lpOpenParms->lpstrElementName, NULL);
+    if (FAILED(hr)) {
+        TRACE("Cannot render file (hr = %x)\n", hr);
+        goto err;
+    }
+
+    return 0;
+
+err:
+    if (wma->pgraph)
+        IGraphBuilder_Release(wma->pgraph);
+    wma->pgraph = NULL;
+    if (wma->pmctrl)
+        IMediaControl_Release(wma->pmctrl);
+    wma->pmctrl = NULL;
+
+    CoUninitialize();
+
+    return MCIERR_INTERNAL;
+}
+
+/***************************************************************************
  *                              MCIQTZ_mciClose                 [internal]
  */
 static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
@@ -146,6 +214,41 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
 
+    if (wma->pgraph)
+        IGraphBuilder_Release(wma->pgraph);
+    wma->pgraph = NULL;
+    if (wma->pmctrl)
+        IMediaControl_Release(wma->pmctrl);
+    wma->pmctrl = NULL;
+
+    CoUninitialize();
+
+    return 0;
+}
+
+/***************************************************************************
+ *                              MCIQTZ_mciPlay                  [internal]
+ */
+static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
+{
+    WINE_MCIQTZ* wma;
+    HRESULT hr;
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+
+    if (!lpParms)
+        return MCIERR_NULL_PARAMETER_BLOCK;
+
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
+
+    hr = IMediaControl_Run(wma->pmctrl);
+    if (FAILED(hr)) {
+        TRACE("Cannot run filtergraph (hr = %x)\n", hr);
+        return MCIERR_INTERNAL;
+    }
+
+    wma->started = TRUE;
+
     return 0;
 }
 
@@ -155,12 +258,24 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
     WINE_MCIQTZ* wma;
+    HRESULT hr;
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
+
+    if (!wma->started)
+        return 0;
+
+    hr = IMediaControl_Stop(wma->pmctrl);
+    if (FAILED(hr)) {
+        TRACE("Cannot stop filtergraph (hr = %x)\n", hr);
+        return MCIERR_INTERNAL;
+    }
+
+    wma->started = FALSE;
 
     return 0;
 }
@@ -195,7 +310,60 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     if (dwDevID == 0xFFFFFFFF)
         return 1;
 
-    FIXME("Unsupported command [%u]\n", wMsg);
+    switch (wMsg) {
+        case MCI_OPEN_DRIVER:   return MCIQTZ_mciOpen      (dwDevID, dwParam1, (LPMCI_DGV_OPEN_PARMSW)     dwParam2);
+        case MCI_CLOSE_DRIVER:  return MCIQTZ_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)       dwParam2);
+        case MCI_PLAY:          return MCIQTZ_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)          dwParam2);
+        case MCI_RECORD:
+        case MCI_STOP:
+        case MCI_SET:
+        case MCI_PAUSE:
+        case MCI_RESUME:
+        case MCI_STATUS:
+        case MCI_GETDEVCAPS:
+        case MCI_INFO:
+        case MCI_SEEK:
+        case MCI_PUT:
+        case MCI_WINDOW:
+        case MCI_LOAD:
+        case MCI_SAVE:
+        case MCI_FREEZE:
+        case MCI_REALIZE:
+        case MCI_UNFREEZE:
+        case MCI_UPDATE:
+        case MCI_WHERE:
+        case MCI_STEP:
+        case MCI_COPY:
+        case MCI_CUT:
+        case MCI_DELETE:
+        case MCI_PASTE:
+        case MCI_CUE:
+        /* Digital Video specific */
+        case MCI_CAPTURE:
+        case MCI_MONITOR:
+        case MCI_RESERVE:
+        case MCI_SETAUDIO:
+        case MCI_SIGNAL:
+        case MCI_SETVIDEO:
+        case MCI_QUALITY:
+        case MCI_LIST:
+        case MCI_UNDO:
+        case MCI_CONFIGURE:
+        case MCI_RESTORE:
+            FIXME("Unimplemented command [%u]\n", wMsg);
+            break;
+        case MCI_SPIN:
+        case MCI_ESCAPE:
+            WARN("Unsupported command [%u]\n", wMsg);
+            break;
+        case MCI_OPEN:
+        case MCI_CLOSE:
+            FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
+            break;
+        default:
+            TRACE("Sending msg [%u] to default driver proc\n", wMsg);
+            return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
+    }
 
     return MCIERR_UNRECOGNIZED_COMMAND;
 }

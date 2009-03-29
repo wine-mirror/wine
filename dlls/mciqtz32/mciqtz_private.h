@@ -21,8 +21,15 @@
 #ifndef __WINE_PRIVATE_MCIQTZ_H
 #define __WINE_PRIVATE_MCIQTZ_H
 
+#define COBJMACROS
+
+#include "dshow.h"
+
 typedef struct {
-    MCIDEVICEID         wDevID;
+    MCIDEVICEID    wDevID;
+    IGraphBuilder* pgraph;
+    IMediaControl* pmctrl;
+    BOOL           started;
 } WINE_MCIQTZ;
 
 #endif  /* __WINE_PRIVATE_MCIQTZ_H */
