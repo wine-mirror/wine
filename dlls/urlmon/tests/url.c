@@ -128,6 +128,7 @@ DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(Load);
 DEFINE_EXPECT(PutProperty_MIMETYPEPROP);
 DEFINE_EXPECT(PutProperty_CLASSIDPROP);
+DEFINE_EXPECT(SetPriority);
 
 static const WCHAR TEST_URL_1[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','\0'};
 static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','/','\0'};
@@ -223,6 +224,11 @@ static const char *debugstr_guid(REFIID riid)
     return buf;
 }
 
+static BOOL is_urlmon_protocol(int prot)
+{
+    return prot == FILE_TEST || prot == HTTP_TEST || prot == HTTPS_TEST || prot == FTP_TEST || prot == MK_TEST;
+}
+
 static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
 {
     HRESULT hr;
@@ -244,14 +250,66 @@ static void test_create(void)
     test_CreateURLMoniker(TEST_URL_1, TEST_PART_URL_1);
 }
 
+static HRESULT WINAPI Priority_QueryInterface(IInternetPriority *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Priority_AddRef(IInternetPriority *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Priority_Release(IInternetPriority *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Priority_SetPriority(IInternetPriority *iface, LONG nPriority)
+{
+    CHECK_EXPECT(SetPriority);
+    ok(!nPriority, "nPriority = %d\n", nPriority);
+    return S_OK;
+}
+
+static HRESULT WINAPI Priority_GetPriority(IInternetPriority *iface, LONG *pnPriority)
+{
+    ok(0, "unexpected call\n");
+    return S_OK;
+}
+
+static const IInternetPriorityVtbl InternetPriorityVtbl = {
+    Priority_QueryInterface,
+    Priority_AddRef,
+    Priority_Release,
+    Priority_SetPriority,
+    Priority_GetPriority
+};
+
+static IInternetPriority InternetPriority = { &InternetPriorityVtbl };
+
 static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
+    *ppv = NULL;
+
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
         *ppv = iface;
         return S_OK;
     }
 
-    *ppv = NULL;
+    if(IsEqualGUID(&IID_IInternetPriority, riid)) {
+        if(!is_urlmon_protocol(test_protocol))
+            return E_NOINTERFACE;
+
+        *ppv = &InternetPriority;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(&IID_IInternetProtocolEx, riid))
+        return E_NOINTERFACE; /* TODO */
+
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -413,9 +471,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     if(filedwl_api) {
         ok(bindf == (BINDF_PULLDATA|BINDF_FROMURLMON|BINDF_NEEDFILE), "bindf=%08x\n", bindf);
-    }else if(tymed == TYMED_ISTREAM
-       && (test_protocol == FILE_TEST || test_protocol == MK_TEST
-           || test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)) {
+    }else if(tymed == TYMED_ISTREAM && is_urlmon_protocol(test_protocol)) {
         ok(bindf == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
                      |BINDF_FROMURLMON),
            "bindf=%08x\n", bindf);
@@ -2072,6 +2128,8 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
         SET_EXPECT(QueryService_IInternetProtocol);
     SET_EXPECT(OnStartBinding);
     if(emulate_protocol) {
+        if(is_urlmon_protocol(test_protocol))
+            SET_EXPECT(SetPriority);
         SET_EXPECT(Start);
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(Terminate);
@@ -2143,6 +2201,8 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
         CHECK_CALLED(QueryService_IInternetProtocol);
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
+        if(is_urlmon_protocol(test_protocol))
+            CHECK_CALLED(SetPriority);
         CHECK_CALLED(Start);
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
             if(tymed == TYMED_FILE)
@@ -2242,6 +2302,8 @@ static void test_BindToObject(int protocol, BOOL emul)
         SET_EXPECT(QueryService_IInternetProtocol);
     SET_EXPECT(Obj_OnStartBinding);
     if(emulate_protocol) {
+        if(is_urlmon_protocol(test_protocol))
+            SET_EXPECT(SetPriority);
         SET_EXPECT(Start);
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             SET_EXPECT(Terminate);
@@ -2311,6 +2373,8 @@ static void test_BindToObject(int protocol, BOOL emul)
         CHECK_CALLED(QueryService_IInternetProtocol);
     CHECK_CALLED(Obj_OnStartBinding);
     if(emulate_protocol) {
+        if(is_urlmon_protocol(test_protocol))
+            CHECK_CALLED(SetPriority);
         CHECK_CALLED(Start);
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CHECK_CALLED(Terminate);
@@ -2391,6 +2455,8 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
     }
     SET_EXPECT(OnStartBinding);
     if(emulate_protocol) {
+        if(is_urlmon_protocol(test_protocol))
+            SET_EXPECT(SetPriority);
         SET_EXPECT(Start);
         SET_EXPECT(UnlockRequest);
     }else {
@@ -2425,6 +2491,8 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
     }
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
+        if(is_urlmon_protocol(test_protocol))
+            CHECK_CALLED(SetPriority);
         CHECK_CALLED(Start);
         CHECK_CALLED(UnlockRequest);
     }else {
@@ -2524,6 +2592,8 @@ static void test_ReportResult(HRESULT exhres)
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(QueryInterface_IInternetProtocol);
     SET_EXPECT(OnStartBinding);
+    if(is_urlmon_protocol(test_protocol))
+        SET_EXPECT(SetPriority);
     SET_EXPECT(Start);
 
     hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
@@ -2536,6 +2606,8 @@ static void test_ReportResult(HRESULT exhres)
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(QueryInterface_IInternetProtocol);
     CHECK_CALLED(OnStartBinding);
+    if(is_urlmon_protocol(test_protocol))
+        CHECK_CALLED(SetPriority);
     CHECK_CALLED(Start);
 
     ok(unk == NULL, "unk=%p\n", unk);
