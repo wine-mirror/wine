@@ -3110,6 +3110,59 @@ BOOL WINAPI GetProcessHandleCount(HANDLE hProcess, DWORD *cnt)
     return !status;
 }
 
+/******************************************************************
+ *		QueryFullProcessImageNameW (KERNEL32.@)
+ */
+BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lpExeName, PDWORD pdwSize)
+{
+    BYTE buffer[sizeof(UNICODE_STRING) + MAX_PATH*sizeof(WCHAR)];  /* this buffer should be enough */
+    UNICODE_STRING *dynamic_buffer = NULL;
+    UNICODE_STRING nt_path;
+    UNICODE_STRING *result = NULL;
+    NTSTATUS status;
+    DWORD needed;
+
+    RtlInitUnicodeStringEx(&nt_path, NULL);
+    /* FIXME: On Windows, ProcessImageFileName return an NT path. We rely that it being a DOS path,
+     * as this is on Wine. */
+    status = NtQueryInformationProcess(hProcess, ProcessImageFileName, buffer, sizeof(buffer), &needed);
+    if (status == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        dynamic_buffer = HeapAlloc(GetProcessHeap(), 0, needed);
+        status = NtQueryInformationProcess(hProcess, ProcessImageFileName, (LPBYTE)dynamic_buffer, needed, &needed);
+        result = dynamic_buffer;
+    }
+    else
+        result = (PUNICODE_STRING)buffer;
+
+    if (status) goto cleanup;
+
+    if (dwFlags & PROCESS_NAME_NATIVE)
+    {
+        if (!RtlDosPathNameToNtPathName_U(result->Buffer, &nt_path, NULL, NULL))
+        {
+            status = STATUS_OBJECT_PATH_NOT_FOUND;
+            goto cleanup;
+        }
+        result = &nt_path;
+    }
+
+    if (result->Length/sizeof(WCHAR) + 1 > *pdwSize)
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        goto cleanup;
+    }
+
+    lstrcpynW(lpExeName, result->Buffer, result->Length/sizeof(WCHAR) + 1);
+    *pdwSize = result->Length/sizeof(WCHAR);
+
+cleanup:
+    HeapFree(GetProcessHeap(), 0, dynamic_buffer);
+    RtlFreeUnicodeString(&nt_path);
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
 /***********************************************************************
  * ProcessIdToSessionId   (KERNEL32.@)
  * This function is available on Terminal Server 4SP4 and Windows 2000
