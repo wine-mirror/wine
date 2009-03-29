@@ -161,3 +161,12 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 	9  "기본 웨이브 출력 장치"
 	10 "기본 미디출력 장치"
 }
+
+STRINGTABLE DISCARDABLE
+LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
+{
+	7  "Numatytasis DirectSound"
+	8  "DirectSound: %s"
+	9  "Numatytasis WaveOut įrenginys"
+	10 "Numatytasis MidiOut įrenginys"
+}
