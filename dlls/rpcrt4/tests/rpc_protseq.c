@@ -43,13 +43,6 @@ static void test_RpcServerUseProtseq(void)
     static unsigned char np[] = "ncacn_np";
     static unsigned char ncalrpc[] = "ncalrpc";
 
-    /* show that RpcServerUseProtseqEp(..., NULL, ...) isn't the same as
-     * RpcServerUseProtseq(...) */
-    status = RpcServerUseProtseqEp(ncalrpc, 0, NULL, NULL);
-    ok(status == RPC_S_INVALID_ENDPOINT_FORMAT,
-       "RpcServerUseProtseqEp with NULL endpoint should have failed with "
-       "RPC_S_INVALID_ENDPOINT_FORMAT instead of %d\n", status);
-
     status = RpcServerInqBindings(&bindings);
     if (status == RPC_S_NO_BINDINGS)
         binding_count_before = 0;
@@ -59,6 +52,13 @@ static void test_RpcServerUseProtseq(void)
         ok(status == RPC_S_OK, "RpcServerInqBindings failed with status %d\n", status);
         RpcBindingVectorFree(&bindings);
     }
+
+    /* show that RpcServerUseProtseqEp(..., NULL, ...) is the same as
+     * RpcServerUseProtseq(...) */
+    status = RpcServerUseProtseqEp(ncalrpc, 0, NULL, NULL);
+    ok(status == RPC_S_OK || broken(status == RPC_S_INVALID_ENDPOINT_FORMAT),
+       "RpcServerUseProtseqEp with NULL endpoint failed with status %d\n",
+       status);
 
     /* register protocol sequences without explicit endpoints */
     status = RpcServerUseProtseq(np, 0, NULL);

@@ -772,9 +772,6 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExA( RPC_CSTR Protseq, UINT MaxCalls, RPC
        debugstr_a(szep), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
 
-  if (!Endpoint)
-    return RPC_S_INVALID_ENDPOINT_FORMAT;
-
   status = RPCRT4_get_or_create_serverprotseq(MaxCalls, RPCRT4_strdupA(szps), &ps);
   if (status != RPC_S_OK)
     return status;
@@ -795,9 +792,6 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( RPC_WSTR Protseq, UINT MaxCalls, RPC
   TRACE("(%s,%u,%s,%p,{%u,%u,%u})\n", debugstr_w( Protseq ), MaxCalls,
        debugstr_w( Endpoint ), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
-
-  if (!Endpoint)
-    return RPC_S_INVALID_ENDPOINT_FORMAT;
 
   status = RPCRT4_get_or_create_serverprotseq(MaxCalls, RPCRT4_strdupWtoA(Protseq), &ps);
   if (status != RPC_S_OK)
