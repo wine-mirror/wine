@@ -32,6 +32,7 @@
 #include "gphoto2_Es.rc"
 #include "gphoto2_Fr.rc"
 #include "gphoto2_Ko.rc"
+#include "gphoto2_Lt.rc"
 #include "gphoto2_Nl.rc"
 #include "gphoto2_No.rc"
 #include "gphoto2_Pl.rc"
