@@ -1814,6 +1814,7 @@ static void test_ftp_protocol(void)
     ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
 
     test_priority(async_protocol);
+    test_http_info(async_protocol);
 
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(GetBindString_USER_AGENT);
