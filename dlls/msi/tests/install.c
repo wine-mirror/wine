@@ -3228,7 +3228,7 @@ static void test_publish_processcomponents(void)
     lstrcpyA(program_files_maximus,PROG_FILES_DIR);
     lstrcatA(program_files_maximus,"\\msitest\\maximus");
 
-    ok(!lstrcmpA(val, program_files_maximus),
+    ok(!lstrcmpiA(val, program_files_maximus),
        "Expected \"%s\", got \"%s\"\n", program_files_maximus, val);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, compkey, &hkey);
@@ -3272,7 +3272,7 @@ static void test_publish_processcomponents(void)
     res = RegQueryValueExA(comp, "84A88FD7F6998CE40A22FB59F6B9C2BB",
                            NULL, NULL, (LPBYTE)val, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    ok(!lstrcmpA(val, program_files_maximus),
+    ok(!lstrcmpiA(val, program_files_maximus),
        "Expected \"%s\", got \"%s\"\n", program_files_maximus, val);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, compkey, &hkey);
