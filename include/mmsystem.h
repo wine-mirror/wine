@@ -285,6 +285,19 @@ BOOL 		WINAPI 	PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound);
 #define SND_PURGE		0x00000040L /* purge all sounds */
 #define SND_APPLICATION     	0x00000080L /* look for application specific association */
 
+#define SND_ALIAS_START         0
+
+#define sndAlias(ch0, ch1)              (SND_ALIAS_START + ((DWORD)(BYTE)(ch0) | ((DWORD)(BYTE)(ch1) << 8)))
+
+#define SND_ALIAS_SYSTEMASTERISK        sndAlias('S', '*')
+#define SND_ALIAS_SYSTEMQUESTION        sndAlias('S', '?')
+#define SND_ALIAS_SYSTEMHAND            sndAlias('S', 'H')
+#define SND_ALIAS_SYSTEMEXIT            sndAlias('S', 'E')
+#define SND_ALIAS_SYSTEMSTART           sndAlias('S', 'S')
+#define SND_ALIAS_SYSTEMWELCOME         sndAlias('S', 'W')
+#define SND_ALIAS_SYSTEMEXCLAMATION     sndAlias('S', '!')
+#define SND_ALIAS_SYSTEMDEFAULT         sndAlias('S', 'D')
+
 /* waveform audio error return values */
 #define WAVERR_BADFORMAT      (WAVERR_BASE + 0)    /* unsupported wave format */
 #define WAVERR_STILLPLAYING   (WAVERR_BASE + 1)    /* still something playing */

@@ -193,11 +193,12 @@ static BOOL PlaySound_IsString(DWORD fdwSound, const void* psz)
     /* SND_RESOURCE is 0x40004 while
      * SND_MEMORY is 0x00004
      */
-    switch (fdwSound & (SND_RESOURCE|SND_ALIAS|SND_FILENAME))
+    switch (fdwSound & (SND_RESOURCE|SND_ALIAS_ID|SND_FILENAME))
     {
     case SND_RESOURCE:  return HIWORD(psz) != 0; /* by name or by ID ? */
+    case SND_ALIAS_ID:
     case SND_MEMORY:    return FALSE;
-    case SND_ALIAS:     /* what about ALIAS_ID ??? */
+    case SND_ALIAS:
     case SND_FILENAME:
     case 0:             return TRUE;
     default:            FIXME("WTF\n"); return FALSE;
@@ -309,6 +310,36 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     }
     else if (wps->fdwSound & SND_ALIAS)
     {
+        if (wps->fdwSound & SND_ALIAS_ID)
+        {
+            static const WCHAR  wszSystemAsterisk[] = {'S','y','s','t','e','m','A','s','t','e','r','i','s','k',0};
+            static const WCHAR  wszSystemDefault[] = {'S','y','s','t','e','m','D','e','f','a','u','l','t',0};
+            static const WCHAR  wszSystemExclamation[] = {'S','y','s','t','e','m','E','x','c','l','a','m','a','t','i','o','n',0};
+            static const WCHAR  wszSystemExit[] = {'S','y','s','t','e','m','E','x','i','t',0};
+            static const WCHAR  wszSystemHand[] = {'S','y','s','t','e','m','H','a','n','d',0};
+            static const WCHAR  wszSystemQuestion[] = {'S','y','s','t','e','m','Q','u','e','s','t','i','o','n',0};
+            static const WCHAR  wszSystemStart[] = {'S','y','s','t','e','m','S','t','a','r','t',0};
+            static const WCHAR  wszSystemWelcome[] = {'S','y','s','t','e','m','W','e','l','c','o','m','e',0};
+
+            wps->fdwSound &= ~(SND_ALIAS_ID ^ SND_ALIAS);
+            if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMASTERISK)
+                wps->pszSound = wszSystemAsterisk;
+            else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMDEFAULT)
+                wps->pszSound = wszSystemDefault;
+            else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMEXCLAMATION)
+                wps->pszSound = wszSystemExclamation;
+            else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMEXIT)
+                wps->pszSound = wszSystemExit;
+            else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMHAND)
+                wps->pszSound = wszSystemHand;
+            else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMQUESTION)
+                wps->pszSound = wszSystemQuestion;
+            else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMSTART)
+                wps->pszSound = wszSystemStart;
+            else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMWELCOME)
+                wps->pszSound = wszSystemWelcome;
+            else return FALSE;
+        }
         hmmio = get_mmioFromProfile(wps->fdwSound, wps->pszSound);
     }
     else if (wps->fdwSound & SND_FILENAME)
@@ -445,11 +476,6 @@ static BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSo
      */
     if ((fdwSound & (SND_NOWAIT | SND_NOSTOP)) && PlaySoundList != NULL)
 	return FALSE;
-
-    if ((fdwSound & SND_ALIAS_ID) == SND_ALIAS_ID) {
-        FIXME("SND_ALIAS_ID not supported\n");
-        return FALSE;
-    }
 
     /* alloc internal structure, if we need to play something */
     if (pszSound && !(fdwSound & SND_PURGE))
