@@ -173,6 +173,7 @@ static BOOL stopped_binding = FALSE, stopped_obj_binding = FALSE, emulate_protoc
 static DWORD read = 0, bindf = 0, prot_state = 0, thread_id, tymed;
 static CHAR mime_type[512];
 static IInternetProtocolSink *protocol_sink = NULL;
+static IBinding *current_binding;
 static HANDLE complete_event, complete_event2;
 static HRESULT binding_hres;
 static BOOL have_IHttpNegotiate2;
@@ -1179,6 +1180,8 @@ static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD
     if(pib == (void*)0xdeadbeef)
         return S_OK;
 
+    current_binding = pib;
+
     hres = IBinding_QueryInterface(pib, &IID_IMoniker, (void**)&mon);
     ok(hres == E_NOINTERFACE, "IBinding should not have IMoniker interface\n");
     if(SUCCEEDED(hres))
@@ -1338,6 +1341,21 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
     default:
         ok(0, "unexpected code %d\n", ulStatusCode);
     };
+
+    if(current_binding) {
+        IWinInetHttpInfo *http_info;
+        HRESULT hres;
+
+        hres = IBinding_QueryInterface(current_binding, &IID_IWinInetHttpInfo, (void**)&http_info);
+        if(!emulate_protocol && test_protocol != FILE_TEST && is_urlmon_protocol(test_protocol))
+            ok(hres == S_OK, "Could not get IWinInetHttpInfo iface: %08x\n", hres);
+        else
+            ok(hres == E_NOINTERFACE,
+               "QueryInterface(IID_IWinInetHttpInfo) returned: %08x, expected E_NOINTERFACE\n", hres);
+        if(SUCCEEDED(hres))
+            IWinInetHttpInfo_Release(http_info);
+    }
+
     return S_OK;
 }
 

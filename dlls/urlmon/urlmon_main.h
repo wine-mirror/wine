@@ -57,8 +57,8 @@ static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_ref
 #define DEFINE_THIS2(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,ifc)))
 #define DEFINE_THIS(cls,ifc,iface) DEFINE_THIS2(cls,lp ## ifc ## Vtbl,iface)
 
-IInternetProtocolInfo *get_protocol_info(LPCWSTR url);
-HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, IClassFactory **ret);
+IInternetProtocolInfo *get_protocol_info(LPCWSTR);
+HRESULT get_protocol_handler(LPCWSTR,CLSID*,BOOL*,IClassFactory**);
 BOOL is_registered_protocol(LPCWSTR);
 void register_urlmon_namespace(IClassFactory*,REFIID,LPCWSTR,BOOL);
 
@@ -67,6 +67,7 @@ HRESULT bind_to_object(IMoniker *mon, LPCWSTR url, IBindCtx *pbc, REFIID riid, v
 
 HRESULT create_binding_protocol(LPCWSTR url, BOOL from_urlmon, IInternetProtocol **protocol);
 void set_binding_sink(IInternetProtocol *bind_protocol, IInternetProtocolSink *sink);
+IWinInetInfo *get_wininet_info(IInternetProtocol*);
 
 typedef struct ProtocolVtbl ProtocolVtbl;
 
