@@ -255,7 +255,7 @@ static RPC_STATUS rpcrt4_ncalrpc_open(RpcConnection* Connection)
   return r;
 }
 
-static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq, LPSTR endpoint)
+static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq, const char *endpoint)
 {
   static const char prefix[] = "\\\\.\\pipe\\lrpc\\";
   RPC_STATUS r;
@@ -313,7 +313,7 @@ static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
   return r;
 }
 
-static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protseq, LPSTR endpoint)
+static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protseq, const char *endpoint)
 {
   static const char prefix[] = "\\\\.";
   RPC_STATUS r;
@@ -869,7 +869,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
   return RPC_S_SERVER_UNAVAILABLE;
 }
 
-static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *protseq, LPSTR endpoint)
+static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *protseq, const char *endpoint)
 {
     RPC_STATUS status = RPC_S_CANT_CREATE_ENDPOINT;
     int sock;
