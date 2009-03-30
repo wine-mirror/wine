@@ -802,12 +802,18 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
     DeleteFileA(filename);
 }
 
+static DWORD timeout = 0;
+
 static BOOL check_file_data(LPCSTR path, LPCSTR data)
 {
     HANDLE file;
     CHAR buf[MAX_PATH];
     DWORD size;
     BOOL ret;
+
+    /* Sleep() is needed on Win9x and WinME */
+    if (timeout)
+        Sleep(timeout);
 
     file = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     if (file == INVALID_HANDLE_VALUE)
@@ -847,6 +853,8 @@ static void test_WritePrivateProfileString(void)
        broken(GetLastError() == ERROR_INVALID_PARAMETER) || /* NT4 */
        broken(GetLastError() == 0xdeadbeef), /* Win9x and WinME */
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+    if (GetLastError() == 0xdeadbeef)
+        timeout = 1000;
     ok(GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES,
        "Expected path to not exist\n");
 
@@ -905,7 +913,9 @@ static void test_WritePrivateProfileString(void)
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     todo_wine
     {
-        ok(check_file_data(path, data), "File doesn't match\n");
+        ok(check_file_data(path, data) ||
+           (broken(GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES)), /* Win9x and WinME */
+           "File doesn't match\n");
     }
     DeleteFileA(path);
 
@@ -913,15 +923,20 @@ static void test_WritePrivateProfileString(void)
     data = "[App]\r\n"
            "key=\r\n";
     ret = WritePrivateProfileStringA("App", "key", "", path);
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    ok(check_file_data(path, data), "File doesn't match\n");
+    ok(ret == TRUE ||
+       broken(!ret), /* Win9x and WinME */
+       "Expected TRUE, got %d\n", ret);
+    ok(check_file_data(path, data) ||
+       (broken(GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES)), /* Win9x and WinME */
+       "File doesn't match\n");
     DeleteFileA(path);
 
     /* empty lpFileName */
     SetLastError(0xdeadbeef);
     ret = WritePrivateProfileStringA("App", "key", "string", "");
     ok(ret == FALSE, "Expected FALSE, got %d\n", ret);
-    ok(GetLastError() == ERROR_ACCESS_DENIED,
+    ok(GetLastError() == ERROR_ACCESS_DENIED ||
+       broken(GetLastError() == ERROR_PATH_NOT_FOUND), /* Win9x and WinME */
        "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
 
     /* The resulting file will be  X:\\%WINDIR%\\win1.tmp */
