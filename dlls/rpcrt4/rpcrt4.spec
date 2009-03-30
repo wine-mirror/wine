@@ -371,7 +371,7 @@
 @ stdcall RpcEpRegisterA(ptr ptr ptr str)
 @ stub RpcEpRegisterNoReplaceA
 @ stub RpcEpRegisterNoReplaceW
-@ stub RpcEpRegisterW
+@ stdcall RpcEpRegisterW(ptr ptr ptr wstr)
 @ stdcall RpcEpResolveBinding(ptr ptr)
 @ stdcall RpcEpUnregister(ptr ptr ptr)
 @ stub RpcErrorAddRecord # wxp
