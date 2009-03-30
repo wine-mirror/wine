@@ -764,6 +764,9 @@ static void test_create(void)
 {
     HWND hList;
     HWND hHeader;
+    LONG_PTR ret;
+    LONG r;
+    LVCOLUMNA col;
     WNDCLASSEX cls;
     cls.cbSize = sizeof(WNDCLASSEX);
     ok(GetClassInfoEx(GetModuleHandle(NULL), "SysListView32", &cls), "GetClassInfoEx failed\n");
@@ -777,6 +780,88 @@ static void test_create(void)
     ok((HIMAGELIST)SendMessage(hList, LVM_GETIMAGELIST, 0, 0) == test_create_imagelist, "Image list not obtained\n");
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader) && IsWindowVisible(hHeader), "Listview not in report mode\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    DestroyWindow(hList);
+
+    /* header isn't created on LVS_ICON and LVS_LIST styles */
+    hList = CreateWindow("SysListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL,
+                          GetModuleHandle(NULL), 0);
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    todo_wine ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    todo_wine ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    /* insert column */
+    memset(&col, 0, sizeof(LVCOLUMNA));
+    col.mask = LVCF_WIDTH;
+    col.cx = 100;
+    r = SendMessage(hList, LVM_INSERTCOLUMN, 0, (LPARAM)&col);
+    ok(r == 0, "Expected 0 column's inserted\n");
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader), "Header should be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    DestroyWindow(hList);
+
+    hList = CreateWindow("SysListView32", "Test", WS_VISIBLE|LVS_LIST, 0, 0, 100, 100, NULL, NULL,
+                          GetModuleHandle(NULL), 0);
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    todo_wine ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    todo_wine ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    /* insert column */
+    memset(&col, 0, sizeof(LVCOLUMNA));
+    col.mask = LVCF_WIDTH;
+    col.cx = 100;
+    r = SendMessage(hList, LVM_INSERTCOLUMN, 0, (LPARAM)&col);
+    ok(r == 0, "Expected 0 column's inserted\n");
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader), "Header should be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    DestroyWindow(hList);
+
+    /* try to switch LVS_ICON -> LVS_REPORT and back LVS_ICON -> LVS_REPORT */
+    hList = CreateWindow("SysListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL,
+                          GetModuleHandle(NULL), 0);
+    ret = SetWindowLongPtr(hList, GWL_STYLE, GetWindowLongPtr(hList, GWL_STYLE) | LVS_REPORT);
+    ok(ret = WS_VISIBLE, "Style wrong, should be WS_VISIBLE|LVS_ICON\n");
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader), "Header should be created\n");
+    ret = SetWindowLongPtr(hList, GWL_STYLE, GetWindowLong(hList, GWL_STYLE) & ~LVS_REPORT);
+    ok(ret = WS_VISIBLE|LVS_REPORT, "Style wrong, should be WS_VISIBLE|LVS_REPORT\n");
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader), "Header should be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    DestroyWindow(hList);
+
+    /* try to switch LVS_LIST -> LVS_REPORT and back LVS_LIST -> LVS_REPORT */
+    hList = CreateWindow("SysListView32", "Test", WS_VISIBLE|LVS_LIST, 0, 0, 100, 100, NULL, NULL,
+                          GetModuleHandle(NULL), 0);
+    ret = SetWindowLongPtr(hList, GWL_STYLE,
+                          (GetWindowLongPtr(hList, GWL_STYLE) & ~LVS_LIST) | LVS_REPORT);
+    ok(ret = WS_VISIBLE|LVS_LIST, "Style wrong, should be WS_VISIBLE|LVS_ICON\n");
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    ret = SetWindowLongPtr(hList, GWL_STYLE,
+                          (GetWindowLongPtr(hList, GWL_STYLE) & ~LVS_REPORT) | LVS_LIST);
+    ok(ret = WS_VISIBLE|LVS_REPORT, "Style wrong, should be WS_VISIBLE|LVS_REPORT\n");
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    DestroyWindow(hList);
+
+    /* LVS_REPORT without WS_VISIBLE */
+    hList = CreateWindow("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+                          GetModuleHandle(NULL), 0);
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    todo_wine ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    todo_wine ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    /* insert column */
+    memset(&col, 0, sizeof(LVCOLUMNA));
+    col.mask = LVCF_WIDTH;
+    col.cx = 100;
+    r = SendMessage(hList, LVM_INSERTCOLUMN, 0, (LPARAM)&col);
+    ok(r == 0, "Expected 0 column's inserted\n");
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader), "Header should be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
     DestroyWindow(hList);
 }
 
