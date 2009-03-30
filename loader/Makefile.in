@@ -45,7 +45,7 @@ wine: $(MAIN_OBJS) Makefile.in
 wine-installed: $(MAIN_OBJS) Makefile.in
 	$(CC) -o $@ $(LDEXECFLAGS) $(MAIN_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
-$(EXTRA_BINARIES:%=__install__%): $(DESTDIR)$(bindir) dummy
+$(EXTRA_BINARIES:%=__install__%): $(EXTRA_BINARIES) $(DESTDIR)$(bindir) dummy
 	f=`expr $@ : '__install__\(.*\)'` && $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f
 
 .PHONY: $(EXTRA_BINARIES:%=__install__%)
