@@ -61,6 +61,7 @@ typedef struct EnumFormatImpl {
 
 static BOOL expect_DataObjectImpl_QueryGetData = TRUE;
 static ULONG DataObjectImpl_GetData_calls = 0;
+static ULONG DataObjectImpl_EnumFormatEtc_calls = 0;
 
 static UINT cf_stream, cf_storage, cf_another, cf_onemore;
 
@@ -291,6 +292,8 @@ static HRESULT WINAPI DataObjectImpl_EnumFormatEtc(IDataObject* iface, DWORD dwD
 {
     DataObjectImpl *This = (DataObjectImpl*)iface;
 
+    DataObjectImpl_EnumFormatEtc_calls++;
+
     if(dwDirection != DATADIR_GET) {
         ok(0, "unexpected direction %d\n", dwDirection);
         return E_NOTIMPL;
@@ -500,6 +503,61 @@ static void test_get_clipboard(void)
     ok(DataObjectImpl_GetData_calls == 6, "DataObjectImpl_GetData should have been called 6 times instead of %d times\n", DataObjectImpl_GetData_calls);
 
     IDataObject_Release(data_obj);
+}
+
+static void test_enum_fmtetc(IDataObject *src)
+{
+    HRESULT hr;
+    IDataObject *data;
+    IEnumFORMATETC *enum_fmt, *src_enum;
+    FORMATETC fmt, src_fmt;
+    DWORD count = 0;
+
+    hr = OleGetClipboard(&data);
+    ok(hr == S_OK, "OleGetClipboard failed with error 0x%08x\n", hr);
+
+    hr = IDataObject_EnumFormatEtc(data, DATADIR_SET, &enum_fmt);
+    ok(hr == E_NOTIMPL, "got %08x\n", hr);
+
+    DataObjectImpl_EnumFormatEtc_calls = 0;
+    hr = IDataObject_EnumFormatEtc(data, DATADIR_GET, &enum_fmt);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(DataObjectImpl_EnumFormatEtc_calls == 0, "EnumFormatEtc was called\n");
+
+    if(src) IDataObject_EnumFormatEtc(src, DATADIR_GET, &src_enum);
+
+    while((hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL)) == S_OK)
+    {
+        ok(src != NULL, "shouldn't be here\n");
+        hr = IEnumFORMATETC_Next(src_enum, 1, &src_fmt, NULL);
+        ok(hr == S_OK, "%d: got %08x\n", count, hr);
+        ok(fmt.cfFormat == src_fmt.cfFormat, "%d: %04x %04x\n", count, fmt.cfFormat, src_fmt.cfFormat);
+        ok(fmt.dwAspect == src_fmt.dwAspect, "%d: %08x %08x\n", count, fmt.dwAspect, src_fmt.dwAspect);
+        ok(fmt.lindex == src_fmt.lindex, "%d: %08x %08x\n", count, fmt.lindex, src_fmt.lindex);
+        ok(fmt.tymed == src_fmt.tymed, "%d: %08x %08x\n", count, fmt.tymed, src_fmt.tymed);
+        if(fmt.ptd)
+        {
+            ok(src_fmt.ptd != NULL, "%d: expected non-NULL\n", count);
+            CoTaskMemFree(fmt.ptd);
+            CoTaskMemFree(src_fmt.ptd);
+        }
+        count++;
+    }
+
+    ok(hr == S_FALSE, "%d: got %08x\n", count, hr);
+
+    if(src)
+    {
+        hr = IEnumFORMATETC_Next(src_enum, 1, &src_fmt, NULL);
+        ok(hr == S_FALSE, "%d: got %08x\n", count, hr);
+        IEnumFORMATETC_Release(src_enum);
+    }
+
+    hr = IEnumFORMATETC_Reset(enum_fmt);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    IEnumFORMATETC_Release(enum_fmt);
+    IDataObject_Release(data);
 }
 
 static void test_cf_dataobject(IDataObject *data)
@@ -718,8 +776,11 @@ static void test_set_clipboard(void)
     hr = OleSetClipboard(data_cmpl);
     ok(hr == S_OK, "failed to set clipboard to complex data, hr = 0x%08x\n", hr);
     test_cf_dataobject(data_cmpl);
+    test_enum_fmtetc(data_cmpl);
 
     ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard, hr = 0x%08x\n", hr);
+
+    test_enum_fmtetc(NULL);
 
     ref = IDataObject_Release(data1);
     ok(ref == 0, "expected data1 ref=0, got %d\n", ref);
