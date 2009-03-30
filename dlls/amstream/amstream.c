@@ -129,7 +129,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_GetMediaStream(IAMMultiMediaStream
     MSPID PurposeId;
     unsigned int i;
 
-    TRACE("(%p/%p)->(%p,%p)\n", This, iface, idPurpose, ppMediaStream);
+    TRACE("(%p/%p)->(%s,%p)\n", This, iface, debugstr_guid(idPurpose), ppMediaStream);
 
     for (i = 0; i < This->nbStreams; i++)
     {
@@ -268,7 +268,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_AddMediaStream(IAMMultiMediaStream
     IMediaStream* pStream;
     IMediaStream** pNewStreams;
 
-    FIXME("(%p/%p)->(%p,%p,%x,%p) partial stub!\n", This, iface, pStreamObject, PurposeId, dwFlags, ppNewStream);
+    FIXME("(%p/%p)->(%p,%s,%x,%p) partial stub!\n", This, iface, pStreamObject, debugstr_guid(PurposeId), dwFlags, ppNewStream);
 
     if (IsEqualGUID(PurposeId, &MSPID_PrimaryVideo))
         hr = DirectDrawMediaStream_create((IMultiMediaStream*)iface, PurposeId, This->StreamType, &pStream);

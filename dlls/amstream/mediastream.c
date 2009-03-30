@@ -58,7 +58,7 @@ HRESULT MediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, S
 {
     IMediaStreamImpl* object; 
 
-    TRACE("(%p,%p,%p)\n", Parent, pPurposeId, ppMediaStream);
+    TRACE("(%p,%s,%p)\n", Parent, debugstr_guid(pPurposeId), ppMediaStream);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamImpl));
     if (!object)
@@ -198,7 +198,7 @@ HRESULT DirectDrawMediaStream_create(IMultiMediaStream* Parent, const MSPID* pPu
 {
     IDirectDrawMediaStreamImpl* object;
 
-    TRACE("(%p,%p,%p)\n", Parent, pPurposeId, ppMediaStream);
+    TRACE("(%p,%s,%p)\n", Parent, debugstr_guid(pPurposeId), ppMediaStream);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IMediaStreamImpl));
     if (!object)
