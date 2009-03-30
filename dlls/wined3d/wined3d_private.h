@@ -584,7 +584,7 @@ do {                                          \
 /* Trace vector and strided data information */
 #define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
 #define TRACE_STRIDED(si, name) TRACE( #name "=(data:%p, stride:%d, format:%#x, vbo %d, stream %u)\n", \
-        si->elements[name].data, si->elements[name].stride, si->elements[name].d3d_format, \
+        si->elements[name].data, si->elements[name].stride, si->elements[name].format_desc->format, \
         si->elements[name].buffer_object, si->elements[name].stream_idx);
 
 /* Defines used for optimizations */
@@ -686,15 +686,9 @@ enum wined3d_ffp_emit_idx
 
 struct wined3d_stream_info_element
 {
-    WINED3DFORMAT d3d_format;
-    enum wined3d_ffp_emit_idx emit_idx;
-    GLint size;
-    GLint format;
-    GLenum type;
+    const struct GlPixelFormatDesc *format_desc;
     GLsizei stride;
-    GLboolean normalized;
     const BYTE *data;
-    int type_size;
     UINT stream_idx;
     GLuint buffer_object;
 };

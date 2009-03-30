@@ -119,8 +119,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
     element = &si->elements[WINED3D_FFP_DIFFUSE];
     if (element->data) diffuse = element->data + streamOffset[element->stream_idx];
     else glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    if (This->activeContext->num_untracked_materials && element->d3d_format != WINED3DFMT_A8R8G8B8)
-        FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->d3d_format));
+    if (This->activeContext->num_untracked_materials && element->format_desc->format != WINED3DFMT_A8R8G8B8)
+        FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format_desc->format));
 
     element = &si->elements[WINED3D_FFP_SPECULAR];
     if (element->data)
@@ -130,13 +130,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
         /* special case where the fog density is stored in the specular alpha channel */
         if (This->stateBlock->renderState[WINED3DRS_FOGENABLE]
                 && (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE
-                    || si->elements[WINED3D_FFP_POSITION].d3d_format == WINED3DFMT_R32G32B32A32_FLOAT)
+                    || si->elements[WINED3D_FFP_POSITION].format_desc->format == WINED3DFMT_R32G32B32A32_FLOAT)
                 && This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE)
         {
             if (GL_SUPPORT(EXT_FOG_COORD))
             {
-                if (element->d3d_format == WINED3DFMT_A8R8G8B8) specular_fog = TRUE;
-                else FIXME("Implement fog coordinates from %s\n", debug_d3dformat(element->d3d_format));
+                if (element->format_desc->format == WINED3DFMT_A8R8G8B8) specular_fog = TRUE;
+                else FIXME("Implement fog coordinates from %s\n", debug_d3dformat(element->format_desc->format));
             }
             else
             {
@@ -235,7 +235,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
             ptr = texCoords[coord_idx] + (SkipnStrides * si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].stride);
 
             texture_idx = This->texUnitMap[texture];
-            multi_texcoord_funcs[si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].emit_idx](
+            multi_texcoord_funcs[si->elements[WINED3D_FFP_TEXCOORD0 + coord_idx].format_desc->emit_idx](
                     GL_TEXTURE0_ARB + texture_idx, ptr);
         }
 
@@ -243,7 +243,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
         if (diffuse) {
             const void *ptrToCoords = diffuse + SkipnStrides * si->elements[WINED3D_FFP_DIFFUSE].stride;
 
-            diffuse_funcs[si->elements[WINED3D_FFP_DIFFUSE].emit_idx](ptrToCoords);
+            diffuse_funcs[si->elements[WINED3D_FFP_DIFFUSE].format_desc->emit_idx](ptrToCoords);
             if(This->activeContext->num_untracked_materials) {
                 DWORD diffuseColor = ((const DWORD *)ptrToCoords)[0];
                 unsigned char i;
@@ -264,7 +264,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
         if (specular) {
             const void *ptrToCoords = specular + SkipnStrides * si->elements[WINED3D_FFP_SPECULAR].stride;
 
-            specular_funcs[si->elements[WINED3D_FFP_SPECULAR].emit_idx](ptrToCoords);
+            specular_funcs[si->elements[WINED3D_FFP_SPECULAR].format_desc->emit_idx](ptrToCoords);
 
             if (specular_fog)
             {
@@ -276,13 +276,13 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
         /* Normal -------------------------------- */
         if (normal != NULL) {
             const void *ptrToCoords = normal + SkipnStrides * si->elements[WINED3D_FFP_NORMAL].stride;
-            normal_funcs[si->elements[WINED3D_FFP_NORMAL].emit_idx](ptrToCoords);
+            normal_funcs[si->elements[WINED3D_FFP_NORMAL].format_desc->emit_idx](ptrToCoords);
         }
 
         /* Position -------------------------------- */
         if (position) {
             const void *ptrToCoords = position + SkipnStrides * si->elements[WINED3D_FFP_POSITION].stride;
-            position_funcs[si->elements[WINED3D_FFP_POSITION].emit_idx](ptrToCoords);
+            position_funcs[si->elements[WINED3D_FFP_POSITION].format_desc->emit_idx](ptrToCoords);
         }
 
         /* For non indexed mode, step onto next parts */
@@ -447,7 +447,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
                   si->elements[i].stride * SkipnStrides +
                   stateblock->streamOffset[si->elements[i].stream_idx];
 
-            send_attribute(This, si->elements[i].d3d_format, i, ptr);
+            send_attribute(This, si->elements[i].format_desc->format, i, ptr);
         }
         SkipnStrides++;
     }
@@ -515,7 +515,7 @@ static inline void drawStridedInstanced(IWineD3DDevice *iface, const struct wine
                 ptr += (long) vb->resource.allocatedMemory;
             }
 
-            send_attribute(This, si->elements[instancedData[j]].d3d_format, instancedData[j], ptr);
+            send_attribute(This, si->elements[instancedData[j]].format_desc->format, instancedData[j], ptr);
         }
 
         glDrawElements(glPrimitiveType, numberOfVertices, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,

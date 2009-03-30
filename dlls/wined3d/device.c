@@ -274,15 +274,9 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
                     debug_d3ddeclusage(element->usage), element->usage_idx, element->input_slot,
                     element->offset, stride, debug_d3dformat(element->format_desc->format), buffer_object);
 
-            stream_info->elements[idx].d3d_format = element->format_desc->format;
-            stream_info->elements[idx].emit_idx = element->format_desc->emit_idx;
-            stream_info->elements[idx].size = element->format_desc->component_count;
-            stream_info->elements[idx].format = element->format_desc->gl_vtx_format;
-            stream_info->elements[idx].type = element->format_desc->gl_vtx_type;
+            stream_info->elements[idx].format_desc = element->format_desc;
             stream_info->elements[idx].stride = stride;
-            stream_info->elements[idx].normalized = element->format_desc->gl_normalized;
             stream_info->elements[idx].data = data;
-            stream_info->elements[idx].type_size = element->format_desc->component_size;
             stream_info->elements[idx].stream_idx = element->input_slot;
             stream_info->elements[idx].buffer_object = buffer_object;
 
@@ -312,15 +306,9 @@ static void stream_info_element_from_strided(IWineD3DDeviceImpl *This,
         const struct WineDirect3DStridedData *strided, struct wined3d_stream_info_element *e)
 {
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(strided->format, &This->adapter->gl_info);
-    e->d3d_format = format_desc->format;
-    e->emit_idx = format_desc->emit_idx;
-    e->size = format_desc->component_count;
-    e->format = format_desc->gl_vtx_format;
-    e->type = format_desc->gl_vtx_type;
+    e->format_desc = format_desc;
     e->stride = strided->dwStride;
-    e->normalized = format_desc->gl_normalized;
     e->data = strided->lpData;
-    e->type_size = format_desc->component_size;
     e->stream_idx = 0;
     e->buffer_object = 0;
 }
@@ -352,7 +340,7 @@ void device_stream_info_from_strided(IWineD3DDeviceImpl *This,
 
     for (i = 0; i < sizeof(stream_info->elements) / sizeof(*stream_info->elements); ++i)
     {
-        if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && stream_info->elements[i].d3d_format == WINED3DFMT_A8R8G8B8)
+        if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && stream_info->elements[i].format_desc->format == WINED3DFMT_A8R8G8B8)
         {
             stream_info->swizzle_map |= 1 << i;
         }

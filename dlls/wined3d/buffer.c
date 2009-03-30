@@ -145,7 +145,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
     if (!attrib->stride)
     {
         FIXME("%s used with stride 0, let's hope we get the vertex stride from somewhere else\n",
-                debug_d3dformat(attrib->d3d_format));
+                debug_d3dformat(attrib->format_desc->format));
     }
     else if(attrib->stride != *stride_this_run && *stride_this_run)
     {
@@ -169,7 +169,7 @@ static BOOL buffer_process_converted_attribute(struct wined3d_buffer *This,
     }
 
     data = (((DWORD_PTR)attrib->data) + offset) % This->stride;
-    attrib_size = attrib->size * attrib->type_size;
+    attrib_size = attrib->format_desc->component_count * attrib->format_desc->component_size;
     for (i = 0; i < attrib_size; ++i)
     {
         if (This->conversion_map[data + i] != conversion_type)
@@ -196,7 +196,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This,
      */
     if (attrib->buffer_object != This->buffer_object) return FALSE;
 
-    format = attrib->d3d_format;
+    format = attrib->format_desc->format;
     /* Look for newly appeared conversion */
     if (!GL_SUPPORT(NV_HALF_FLOAT) && (format == WINED3DFMT_R16G16_FLOAT || format == WINED3DFMT_R16G16B16A16_FLOAT))
     {
@@ -243,7 +243,7 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
 
         if (strided->elements[i].buffer_object != This->buffer_object) continue;
 
-        format = strided->elements[i].d3d_format;
+        format = strided->elements[i].format_desc->format;
         if (format == WINED3DFMT_R16G16_FLOAT)
         {
             shift = 4;
@@ -267,7 +267,8 @@ static UINT *find_conversion_shift(struct wined3d_buffer *This,
 
         if (shift)
         {
-            orig_type_size = strided->elements[i].type_size * strided->elements[i].size;
+            orig_type_size = strided->elements[i].format_desc->component_count
+                    * strided->elements[i].format_desc->component_size;
             for (j = (DWORD_PTR)strided->elements[i].data + orig_type_size; j < stride; ++j)
             {
                 ret[j] += shift;
