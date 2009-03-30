@@ -492,9 +492,9 @@ TOOLBAR_DrawFlatSeparator (const RECT *lpRect, HDC hdc, const TOOLBAR_INFO *info
 
 
 /***********************************************************************
-* 		TOOLBAR_DrawDDFlatSeparator
+* 		TOOLBAR_DrawFlatHorizontalSeparator
 *
-* This function draws the separator that was flagged as BTNS_DROPDOWN.
+* This function draws horizontal separator for toolbars having CCS_VERT style.
 * In this case, the separator is a pixel high line of COLOR_BTNSHADOW,
 * followed by a pixel high line of COLOR_BTNHIGHLIGHT. These separators
 * are horizontal as opposed to the vertical separators for not dropdown
@@ -503,7 +503,7 @@ TOOLBAR_DrawFlatSeparator (const RECT *lpRect, HDC hdc, const TOOLBAR_INFO *info
 * FIXME: It is possible that the height of each line is really SM_CYBORDER.
 */
 static void
-TOOLBAR_DrawDDFlatSeparator (const RECT *lpRect, HDC hdc,
+TOOLBAR_DrawFlatHorizontalSeparator (const RECT *lpRect, HDC hdc,
                              const TOOLBAR_INFO *infoPtr)
 {
     RECT myrect;
@@ -855,8 +855,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc, DWORD dwBaseCustDr
         /* empirical tests show that iBitmap can/will be non-zero    */
         /* when drawing the vertical bar...      */
         if ((dwStyle & TBSTYLE_FLAT) /* && (btnPtr->iBitmap == 0) */) {
-	    if (btnPtr->fsStyle & BTNS_DROPDOWN)
-		TOOLBAR_DrawDDFlatSeparator (&rc, hdc, infoPtr);
+            if (dwStyle & CCS_VERT)
+               TOOLBAR_DrawFlatHorizontalSeparator (&rc, hdc, infoPtr);
 	    else
 		TOOLBAR_DrawFlatSeparator (&rc, hdc, infoPtr);
 	}
@@ -1330,10 +1330,9 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 	/* it is the actual width of the separator. This is used for */
 	/* custom controls in toolbars.                              */
 	/*                                                           */
-	/* BTNS_DROPDOWN separators are treated as buttons for    */
-	/* width.  - GA 8/01                                         */
+        /* horizontal separators are treated as buttons for width    */
 	if ((btnPtr[i].fsStyle & BTNS_SEP) &&
-	    !(btnPtr[i].fsStyle & BTNS_DROPDOWN))
+            !(infoPtr->dwStyle & CCS_VERT))
 	    cx = (btnPtr[i].iBitmap > 0) ?
 			btnPtr[i].iBitmap : SEPARATOR_WIDTH;
 	else
@@ -1689,7 +1688,7 @@ TOOLBAR_LayoutToolbar(HWND hwnd)
 	/* it is the actual width of the separator. This is used for */
 	/* custom controls in toolbars.                              */
 	if (btnPtr->fsStyle & BTNS_SEP) {
-	    if (btnPtr->fsStyle & BTNS_DROPDOWN) {
+	    if (infoPtr->dwStyle & CCS_VERT) {
 		cy = (btnPtr->iBitmap > 0) ?
 		     btnPtr->iBitmap : SEPARATOR_WIDTH;
 		cx = infoPtr->nButtonWidth;
@@ -1762,7 +1761,7 @@ TOOLBAR_LayoutToolbar(HWND hwnd)
 		/* UNDOCUMENTED: If a separator has a non zero bitmap index, */
 		/* it is the actual width of the separator. This is used for */
 		/* custom controls in toolbars. 			     */
-		if ( !(btnPtr->fsStyle & BTNS_DROPDOWN))
+               if ( !(infoPtr->dwStyle & CCS_VERT))
 		    y += cy + ( (btnPtr->iBitmap > 0 ) ?
 				btnPtr->iBitmap : SEPARATOR_WIDTH) * 2 /3;
 		else
