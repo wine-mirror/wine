@@ -1779,7 +1779,7 @@ static void test_MsiInstallProduct(void)
     type = REG_SZ;
     res = RegQueryValueExA(hkey, "OrderTestName", NULL, &type, (LPBYTE)path, &size);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    ok(!lstrcmpA(path, "OrderTestValue"), "Expected imaname, got %s\n", path);
+    ok(!lstrcmpA(path, "OrderTestValue"), "Expected OrderTestValue, got %s\n", path);
 
     check_service_is_installed();
 
