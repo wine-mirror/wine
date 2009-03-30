@@ -1460,16 +1460,20 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
         void *outline;
 
         dwSize = GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, 0, NULL, &identity);
-        if (!dwSize) return FALSE;
+        if (dwSize == GDI_ERROR) return FALSE;
 
-        outline = HeapAlloc(GetProcessHeap(), 0, dwSize);
-        if (!outline) return FALSE;
+        /* add outline only if char is printable */
+        if(dwSize)
+        {
+            outline = HeapAlloc(GetProcessHeap(), 0, dwSize);
+            if (!outline) return FALSE;
 
-        GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, dwSize, outline, &identity);
+            GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, dwSize, outline, &identity);
 
-        PATH_add_outline(dc, org.x + x + xoff, org.x + y + yoff, outline, dwSize);
+            PATH_add_outline(dc, org.x + x + xoff, org.x + y + yoff, outline, dwSize);
 
-        HeapFree(GetProcessHeap(), 0, outline);
+            HeapFree(GetProcessHeap(), 0, outline);
+        }
 
         if (dx)
         {
