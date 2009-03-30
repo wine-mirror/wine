@@ -37,7 +37,6 @@
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/server.h"
-#include "wine/pthread.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
 #include "ddk/wdm.h"
@@ -68,9 +67,6 @@ static LIST_ENTRY tls_links;
 static size_t sigstack_total_size;
 static ULONG sigstack_zero_bits;
 static int nb_threads = 1;
-
-static struct wine_pthread_functions pthread_functions;
-
 
 static RTL_CRITICAL_SECTION ldt_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
@@ -289,7 +285,6 @@ HANDLE thread_init(void)
     thread_data->debug_info = &debug_info;
     InsertHeadList( &tls_links, &teb->TlsLinks );
 
-    wine_pthread_get_functions( &pthread_functions, sizeof(pthread_functions) );
     signal_init_thread( teb );
     virtual_init_threading();
 
