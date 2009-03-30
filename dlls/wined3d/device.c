@@ -250,7 +250,19 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
 
         if (use_vshader)
         {
-            stride_used = vshader_get_input(This->stateBlock->vertexShader, element->usage, element->usage_idx, &idx);
+            if (element->output_slot == ~0U)
+            {
+                /* TODO: Assuming vertexdeclarations are usually used with the
+                 * same or a similar shader, it might be worth it to store the
+                 * last used output slot and try that one first. */
+                stride_used = vshader_get_input(This->stateBlock->vertexShader,
+                        element->usage, element->usage_idx, &idx);
+            }
+            else
+            {
+                idx = element->output_slot;
+                stride_used = TRUE;
+            }
         }
         else
         {
