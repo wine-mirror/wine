@@ -1326,17 +1326,14 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
 	if (btnPtr[i].fsState & TBSTATE_HIDDEN)
 	    continue;
 
-	/* UNDOCUMENTED: If a separator has a non zero bitmap index, */
-	/* it is the actual width of the separator. This is used for */
-	/* custom controls in toolbars.                              */
-	/*                                                           */
+        if (btnPtr[i].cx > 0)
+            cx = btnPtr[i].cx;
         /* horizontal separators are treated as buttons for width    */
-	if ((btnPtr[i].fsStyle & BTNS_SEP) &&
+	else if ((btnPtr[i].fsStyle & BTNS_SEP) &&
             !(infoPtr->dwStyle & CCS_VERT))
-	    cx = (btnPtr[i].iBitmap > 0) ?
-			btnPtr[i].iBitmap : SEPARATOR_WIDTH;
+	    cx = SEPARATOR_WIDTH;
 	else
-	    cx = (btnPtr[i].cx) ? btnPtr[i].cx : infoPtr->nButtonWidth;
+	    cx = infoPtr->nButtonWidth;
 
 	/* Two or more adjacent separators form a separator group.   */
 	/* The first separator in a group should be wrapped to the   */
@@ -1684,18 +1681,13 @@ TOOLBAR_LayoutToolbar(HWND hwnd)
 
 	cy = infoPtr->nButtonHeight;
 
-	/* UNDOCUMENTED: If a separator has a non zero bitmap index, */
-	/* it is the actual width of the separator. This is used for */
-	/* custom controls in toolbars.                              */
 	if (btnPtr->fsStyle & BTNS_SEP) {
 	    if (infoPtr->dwStyle & CCS_VERT) {
-		cy = (btnPtr->iBitmap > 0) ?
-		     btnPtr->iBitmap : SEPARATOR_WIDTH;
-		cx = infoPtr->nButtonWidth;
+                cy = SEPARATOR_WIDTH;
+                cx = (btnPtr->cx > 0) ? btnPtr->cx : infoPtr->nButtonWidth;
 	    }
 	    else
-		cx = (btnPtr->iBitmap > 0) ?
-		     btnPtr->iBitmap : SEPARATOR_WIDTH;
+                cx = (btnPtr->cx > 0) ? btnPtr->cx : SEPARATOR_WIDTH;
 	}
 	else
 	{
@@ -1758,12 +1750,9 @@ TOOLBAR_LayoutToolbar(HWND hwnd)
 	        y += cy;
 	    else
 	    {
-		/* UNDOCUMENTED: If a separator has a non zero bitmap index, */
-		/* it is the actual width of the separator. This is used for */
-		/* custom controls in toolbars. 			     */
                if ( !(infoPtr->dwStyle & CCS_VERT))
-		    y += cy + ( (btnPtr->iBitmap > 0 ) ?
-				btnPtr->iBitmap : SEPARATOR_WIDTH) * 2 /3;
+                    y += cy + ( (btnPtr->cx > 0 ) ?
+                                btnPtr->cx : SEPARATOR_WIDTH) * 2 /3;
 		else
 		    y += cy;
 
@@ -1845,7 +1834,12 @@ TOOLBAR_InternalInsertButtonsT(TOOLBAR_INFO *infoPtr, INT iIndex, UINT nAddButto
         TOOLBAR_DumpTBButton(lpTbb, fUnicode);
 
         ZeroMemory(btnPtr, sizeof(*btnPtr));
-        btnPtr->iBitmap   = lpTbb[iButton].iBitmap;
+
+        /* When inserting separator, iBitmap controls it's size */
+        if (lpTbb[iButton].fsStyle & BTNS_SEP) {
+            btnPtr->cx        = lpTbb[iButton].iBitmap;
+        } else
+            btnPtr->iBitmap   = lpTbb[iButton].iBitmap;
         btnPtr->idCommand = lpTbb[iButton].idCommand;
         btnPtr->fsState   = lpTbb[iButton].fsState;
         btnPtr->fsStyle   = lpTbb[iButton].fsStyle;
@@ -3400,7 +3394,11 @@ TOOLBAR_GetButtonInfoT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL bUnicode)
     if (lpTbInfo->dwMask & TBIF_LPARAM)
 	lpTbInfo->lParam = btnPtr->dwData;
     if (lpTbInfo->dwMask & TBIF_SIZE)
-	lpTbInfo->cx = (WORD)(btnPtr->rect.right - btnPtr->rect.left);
+        /* tests show that for separators TBIF_SIZE returns not calculated width,
+           but cx property, that differs from 0 only if application have
+           specifically set it */
+        lpTbInfo->cx = (btnPtr->fsStyle & BTNS_SEP)
+            ? btnPtr->cx : (WORD)(btnPtr->rect.right - btnPtr->rect.left);
     if (lpTbInfo->dwMask & TBIF_STATE)
 	lpTbInfo->fsState = btnPtr->fsState;
     if (lpTbInfo->dwMask & TBIF_STYLE)
@@ -4240,7 +4238,9 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
                 {
                     /* separator */
                     nmtbr.tbButton.fsStyle = TBSTYLE_SEP;
-                    nmtbr.tbButton.iBitmap = SEPARATOR_WIDTH;
+                    /* when inserting separators, iBitmap controls it's size.
+                       0 sets default size (width) */
+                    nmtbr.tbButton.iBitmap = 0;
                 }
                 else if (*nmtbr.pCurrent == (DWORD)-2)
                     /* hidden button */
