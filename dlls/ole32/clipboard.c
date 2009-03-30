@@ -821,8 +821,6 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
 	    STGMEDIUM*       pmedium)
 {
   HANDLE      hData = 0;
-  BOOL bClipboardOpen = FALSE;
-  HRESULT hr = S_OK;
   LPVOID src;
   ole_clipbrd *This = impl_from_IDataObject(iface);
 
@@ -855,8 +853,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
   /*
    * Otherwise, get the data from the windows clipboard using GetClipboardData
    */
-  if ( !(bClipboardOpen = OpenClipboard(theOleClipboard->hWndClipboard)) )
-    HANDLE_ERROR( CLIPBRD_E_CANT_OPEN );
+  if ( !OpenClipboard(theOleClipboard->hWndClipboard)) return CLIPBRD_E_CANT_OPEN;
 
   hData = GetClipboardData(pformatetcIn->cfFormat);
 
@@ -886,17 +883,8 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
   pmedium->u.hGlobal = hData;
   pmedium->pUnkForRelease = NULL;
 
-  hr = S_OK;
+  if ( !CloseClipboard() ) return CLIPBRD_E_CANT_CLOSE;
 
-CLEANUP:
-  /*
-   * Close Windows clipboard
-   */
-  if ( bClipboardOpen && !CloseClipboard() )
-     hr = CLIPBRD_E_CANT_CLOSE;
-
-  if ( FAILED(hr) )
-      return hr;
   return (hData == 0) ? DV_E_FORMATETC : S_OK;
 }
 
@@ -1356,7 +1344,6 @@ static HRESULT set_dataobject_format(HWND hwnd)
 HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
 {
   HRESULT hr = S_OK;
-  BOOL bClipboardOpen = FALSE;
   struct oletls *info = COM_CurrentInfo();
 
   TRACE("(%p)\n", pDataObj);
@@ -1367,9 +1354,6 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
     if(!info->ole_inits)
       return CO_E_NOTINITIALIZED;
 
-  /*
-   * Make sure we have a clipboard object
-   */
   OLEClipbrd_Initialize();
 
   /*
@@ -1378,21 +1362,19 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
   if ( !theOleClipboard->hWndClipboard )
     theOleClipboard->hWndClipboard = OLEClipbrd_CreateWindow();
 
-  if ( !theOleClipboard->hWndClipboard ) /* sanity check */
-    HANDLE_ERROR( E_FAIL );
+  if ( !theOleClipboard->hWndClipboard ) return E_FAIL;
 
-  /*
-   * Open the Windows clipboard, associating it with our hidden window
-   */
-  if ( !(bClipboardOpen = OpenClipboard(theOleClipboard->hWndClipboard)) )
-    HANDLE_ERROR( CLIPBRD_E_CANT_OPEN );
+  if ( !OpenClipboard(theOleClipboard->hWndClipboard) ) return CLIPBRD_E_CANT_OPEN;
 
   /*
    * Empty the current clipboard and make our window the clipboard owner
    * NOTE: This will trigger a WM_DESTROYCLIPBOARD message
    */
   if ( !EmptyClipboard() )
-    HANDLE_ERROR( CLIPBRD_E_CANT_EMPTY );
+  {
+    hr = CLIPBRD_E_CANT_EMPTY;
+    goto end;
+  }
 
   /*
    * If we are already holding on to an IDataObject first release that.
@@ -1409,22 +1391,15 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
   {
     IDataObject_AddRef(theOleClipboard->pIDataObjectSrc);
     hr = set_clipboard_formats(pDataObj);
-    if(FAILED(hr)) goto CLEANUP;
+    if(FAILED(hr)) goto end;
   }
 
   hr = set_dataobject_format(theOleClipboard->hWndClipboard);
 
-CLEANUP:
+end:
 
-  /*
-   * Close Windows clipboard (It remains associated with our window)
-   */
-  if ( bClipboardOpen && !CloseClipboard() )
-    hr = CLIPBRD_E_CANT_CLOSE;
+  if ( !CloseClipboard() )  hr = CLIPBRD_E_CANT_CLOSE;
 
-  /*
-   * Release the source IDataObject if something failed
-   */
   if ( FAILED(hr) )
   {
     if (theOleClipboard->pIDataObjectSrc)
@@ -1477,7 +1452,6 @@ HRESULT WINAPI OleFlushClipboard(void)
   IEnumFORMATETC* penumFormatetc = NULL;
   FORMATETC rgelt;
   HRESULT hr = S_OK;
-  BOOL bClipboardOpen = FALSE;
 
   TRACE("()\n");
 
@@ -1489,8 +1463,8 @@ HRESULT WINAPI OleFlushClipboard(void)
   if (!theOleClipboard->pIDataObjectSrc)
     return S_OK;
 
-  if ( !(bClipboardOpen = OpenClipboard(theOleClipboard->hWndClipboard)) )
-    HANDLE_ERROR( CLIPBRD_E_CANT_OPEN );
+  if (!OpenClipboard(theOleClipboard->hWndClipboard))
+    return CLIPBRD_E_CANT_OPEN;
 
   /*
    * Render all HGLOBAL formats supported by the source into
@@ -1499,9 +1473,8 @@ HRESULT WINAPI OleFlushClipboard(void)
   if ( FAILED( hr = IDataObject_EnumFormatEtc( theOleClipboard->pIDataObjectSrc,
                                                DATADIR_GET,
                                                &penumFormatetc) ))
-  {
-    HANDLE_ERROR( hr );
-  }
+    goto end;
+
 
   while ( S_OK == IEnumFORMATETC_Next(penumFormatetc, 1, &rgelt, NULL) )
   {
@@ -1524,10 +1497,9 @@ HRESULT WINAPI OleFlushClipboard(void)
   IDataObject_Release(theOleClipboard->pIDataObjectSrc);
   theOleClipboard->pIDataObjectSrc = NULL;
 
-CLEANUP:
+end:
 
-  if ( bClipboardOpen && !CloseClipboard() )
-    hr = CLIPBRD_E_CANT_CLOSE;
+  if ( !CloseClipboard() ) hr = CLIPBRD_E_CANT_CLOSE;
 
   return hr;
 }
