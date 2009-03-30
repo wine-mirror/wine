@@ -33,9 +33,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#ifdef HAVE_PTHREAD_H
-# include <pthread.h>
-#endif
+#include <pthread.h>
 
 #include "wine/library.h"
 #include "main.h"

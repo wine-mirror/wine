@@ -22,8 +22,6 @@
 #ifndef __WINE_LOADER_MAIN_H
 #define __WINE_LOADER_MAIN_H
 
-#include "wine/pthread.h"
-
 struct wine_preload_info
 {
     void  *addr;

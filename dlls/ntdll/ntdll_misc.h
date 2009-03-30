@@ -22,9 +22,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <sys/types.h>
-#ifdef HAVE_PTHREAD_H
-# include <pthread.h>
-#endif
+#include <pthread.h>
 
 #include "windef.h"
 #include "winnt.h"

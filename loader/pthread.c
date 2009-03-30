@@ -39,17 +39,13 @@
 #include <sys/ucontext.h>
 #include <sys/thr.h>
 #endif
-#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
-#endif
 #ifdef HAVE_PTHREAD_NP_H
 #include <pthread_np.h>
 #endif
 
 #include "wine/library.h"
 #include "wine/pthread.h"
-
-#ifdef HAVE_PTHREAD_H
 
 static int init_done;
 static int nb_threads = 1;
@@ -222,47 +218,6 @@ static void DECLSPEC_NORETURN abort_thread( long status )
     if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) _exit( status );
     pthread_exit( (void *)status );
 }
-
-#else  /* HAVE_PTHREAD_H */
-
-static void init_process( const struct wine_pthread_callbacks *callbacks, size_t size )
-{
-}
-
-static void init_thread( struct wine_pthread_thread_info *info )
-{
-}
-
-static int create_thread( struct wine_pthread_thread_info *info )
-{
-    return -1;
-}
-
-static void init_current_teb( struct wine_pthread_thread_info *info )
-{
-}
-
-static void *get_current_teb(void)
-{
-    return NULL;
-}
-
-static void DECLSPEC_NORETURN exit_thread( struct wine_pthread_thread_info *info )
-{
-    abort();
-}
-
-static void DECLSPEC_NORETURN abort_thread( long status )
-{
-    abort();
-}
-
-static int pthread_sigmask( int how, const sigset_t *newset, sigset_t *oldset )
-{
-    return -1;
-}
-
-#endif  /* HAVE_PTHREAD_H */
 
 
 /***********************************************************************
