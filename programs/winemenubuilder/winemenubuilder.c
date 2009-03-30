@@ -146,6 +146,7 @@ typedef struct
 
 static char *xdg_config_dir;
 static char *xdg_data_dir;
+static char *xdg_desktop_dir;
 
 /* Icon extraction routines
  *
@@ -1382,7 +1383,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
             lastEntry = link_name;
         else
             ++lastEntry;
-        location = heap_printf("%s/Desktop/%s.desktop", getenv("HOME"), lastEntry);
+        location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
         if (location)
         {
             r = !write_desktop_entry(location, lastEntry, escaped_path, escaped_args, escaped_description, work_dir, icon_name);
@@ -1464,7 +1465,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
             lastEntry = link_name;
         else
             ++lastEntry;
-        location = heap_printf("%s/Desktop/%s.desktop", getenv("HOME"), lastEntry);
+        location = heap_printf("%s/%s.desktop", xdg_desktop_dir, lastEntry);
         if (location)
         {
             r = !write_desktop_entry(location, lastEntry, "winebrowser", escaped_urlPath, NULL, NULL, NULL);
@@ -1705,6 +1706,16 @@ static CHAR *next_token( LPSTR *p )
 
 static BOOL init_xdg(void)
 {
+    WCHAR shellDesktopPath[MAX_PATH];
+    HRESULT hr = SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, SHGFP_TYPE_CURRENT, shellDesktopPath);
+    if (SUCCEEDED(hr))
+        xdg_desktop_dir = wine_get_unix_file_name(shellDesktopPath);
+    if (xdg_desktop_dir == NULL)
+    {
+        WINE_ERR("error looking up the desktop directory\n");
+        return FALSE;
+    }
+
     if (getenv("XDG_CONFIG_HOME"))
         xdg_config_dir = heap_printf("%s/menus/applications-merged", getenv("XDG_CONFIG_HOME"));
     else
@@ -1730,6 +1741,7 @@ static BOOL init_xdg(void)
         }
         HeapFree(GetProcessHeap(), 0, xdg_config_dir);
     }
+    WINE_ERR("out of memory\n");
     return FALSE;
 }
 
@@ -1744,7 +1756,8 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
     BOOL bURL = FALSE;
     int ret = 0;
 
-    init_xdg();
+    if (!init_xdg())
+        return 1;
 
     for( p = cmdline; p && *p; )
     {
