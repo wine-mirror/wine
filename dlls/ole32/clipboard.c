@@ -146,6 +146,22 @@ typedef struct
     /* then follows any DVTARGETDEVICE structures referenced in the FORMATETCs */
 } ole_priv_data;
 
+/* Create an empty data structure.  The only thing that really matters
+   here is setting count and size members.  This is used by the enumerator as a
+   convenience when there's an empty list. */
+static HRESULT create_empty_priv_data(ole_priv_data **data)
+{
+    ole_priv_data *ptr;
+
+    *data = NULL;
+    ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(*ptr));
+    if(!ptr) return E_OUTOFMEMORY;
+    ptr->size = sizeof(*ptr);
+    ptr->count = 0;
+    *data = ptr;
+    return S_OK;
+}
+
 /*---------------------------------------------------------------------*
  *  Implementation of the internal IEnumFORMATETC interface returned by
  *  the OLE clipboard's IDataObject.
@@ -157,8 +173,7 @@ typedef struct enum_fmtetc
     LONG ref;
 
     UINT pos;    /* current enumerator position */
-    UINT                         countFmt;  /* number of EnumFORMATETC's in array */
-    LPFORMATETC                  pFmt;      /* array of EnumFORMATETC's */
+    ole_priv_data *data;
 } enum_fmtetc;
 
 static inline enum_fmtetc *impl_from_IEnumFORMATETC(IEnumFORMATETC *iface)
@@ -225,8 +240,8 @@ static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_Release(LPENUMFORMATETC iface)
   if (!ref)
   {
     TRACE("() - destroying IEnumFORMATETC(%p)\n",This);
-    HeapFree(GetProcessHeap(), 0, This->pFmt);
-    HeapFree(GetProcessHeap(),0,This);
+    HeapFree(GetProcessHeap(), 0, This->data);
+    HeapFree(GetProcessHeap(), 0, This);
   }
   return ref;
 }
@@ -240,22 +255,31 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Next
   (LPENUMFORMATETC iface, ULONG celt, FORMATETC *rgelt, ULONG *pceltFethed)
 {
   enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
-  UINT cfetch;
+  UINT cfetch, i;
   HRESULT hres = S_FALSE;
 
   TRACE("(%p)->(pos=%u)\n", This, This->pos);
 
-  if (This->pos < This->countFmt)
+  if (This->pos < This->data->count)
   {
-    cfetch = This->countFmt - This->pos;
+    cfetch = This->data->count - This->pos;
     if (cfetch >= celt)
     {
       cfetch = celt;
       hres = S_OK;
     }
 
-    memcpy(rgelt, &This->pFmt[This->pos], cfetch * sizeof(FORMATETC));
-    This->pos += cfetch;
+    for(i = 0; i < cfetch; i++)
+    {
+      rgelt[i] = This->data->entries[This->pos++].fmtetc;
+      if(rgelt[i].ptd)
+      {
+        DVTARGETDEVICE *target = (DVTARGETDEVICE *)((char *)This->data + (DWORD)rgelt[i].ptd);
+        rgelt[i].ptd = CoTaskMemAlloc(target->tdSize);
+        if(!rgelt[i].ptd) return E_OUTOFMEMORY;
+        memcpy(rgelt[i].ptd, target, target->tdSize);
+      }
+    }
   }
   else
   {
@@ -281,9 +305,9 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Skip(LPENUMFORMATETC iface, ULON
   TRACE("(%p)->(num=%u)\n", This, celt);
 
   This->pos += celt;
-  if (This->pos > This->countFmt)
+  if (This->pos > This->data->count)
   {
-    This->pos = This->countFmt;
+    This->pos = This->data->count;
     return S_FALSE;
   }
   return S_OK;
@@ -303,7 +327,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Reset(LPENUMFORMATETC iface)
   return S_OK;
 }
 
-static HRESULT enum_fmtetc_construct(UINT cfmt, const FORMATETC afmt[], IEnumFORMATETC **obj);
+static HRESULT enum_fmtetc_construct(ole_priv_data *data, UINT pos, IEnumFORMATETC **obj);
 
 /************************************************************************
  * OLEClipbrd_IEnumFORMATETC_Clone (IEnumFORMATETC)
@@ -311,19 +335,20 @@ static HRESULT enum_fmtetc_construct(UINT cfmt, const FORMATETC afmt[], IEnumFOR
  * Standard enumerator members for IEnumFORMATETC
  */
 static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone
-  (LPENUMFORMATETC iface, LPENUMFORMATETC* ppenum)
+  (LPENUMFORMATETC iface, LPENUMFORMATETC* obj)
 {
   enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
-  HRESULT hr = S_OK;
+  ole_priv_data *new_data;
 
-  TRACE("(%p)->(ppenum=%p)\n", This, ppenum);
+  TRACE("(%p)->(%p)\n", This, obj);
 
-  if ( !ppenum )
-    return E_INVALIDARG;
+  if ( !obj ) return E_INVALIDARG;
+  *obj = NULL;
 
-  hr = enum_fmtetc_construct(This->countFmt, This->pFmt, ppenum);
+  new_data = HeapAlloc(GetProcessHeap(), 0, This->data->size);
+  if(!new_data) return E_OUTOFMEMORY;
 
-  return hr;
+  return enum_fmtetc_construct(new_data, This->pos, obj);
 }
 
 static const IEnumFORMATETCVtbl efvt =
@@ -340,13 +365,11 @@ static const IEnumFORMATETCVtbl efvt =
 /************************************************************************
  * enum_fmtetc_construct
  *
- * Creates an IEnumFORMATETC enumerator from an array of FORMATETC
- * Structures.
+ * Creates an IEnumFORMATETC enumerator from ole_priv_data which it then owns.
  */
-static HRESULT enum_fmtetc_construct(UINT cfmt, const FORMATETC afmt[], IEnumFORMATETC **obj)
+static HRESULT enum_fmtetc_construct(ole_priv_data *data, UINT pos, IEnumFORMATETC **obj)
 {
   enum_fmtetc* ef;
-  DWORD size=cfmt * sizeof(FORMATETC);
 
   *obj = NULL;
   ef = HeapAlloc(GetProcessHeap(), 0, sizeof(*ef));
@@ -354,19 +377,10 @@ static HRESULT enum_fmtetc_construct(UINT cfmt, const FORMATETC afmt[], IEnumFOR
 
   ef->ref = 1;
   ef->lpVtbl = &efvt;
+  ef->data = data;
+  ef->pos = pos;
 
-  ef->pos = 0;
-  ef->countFmt = cfmt;
-  ef->pFmt = HeapAlloc(GetProcessHeap(), 0, size);
-  if (ef->pFmt)
-    memcpy(ef->pFmt, afmt, size);
-  else
-  {
-    HeapFree(GetProcessHeap(), 0, ef);
-    return E_OUTOFMEMORY;
-  }
-
-  TRACE("(%p)->()\n",ef);
+  TRACE("(%p)->()\n", ef);
   *obj = (IEnumFORMATETC *)ef;
   return S_OK;
 }
@@ -969,90 +983,47 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_SetData(
 static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
 	    IDataObject*     iface,
 	    DWORD            dwDirection,
-	    IEnumFORMATETC** ppenumFormatEtc)
+	    IEnumFORMATETC** enum_fmt)
 {
-  HRESULT hr = S_OK;
-  FORMATETC *afmt = NULL;
-  int cfmt, i;
-  UINT format;
-  BOOL bClipboardOpen;
-  ole_clipbrd *This = impl_from_IDataObject(iface);
+    HRESULT hr = S_OK;
+    ole_clipbrd *This = impl_from_IDataObject(iface);
+    HGLOBAL handle;
+    ole_priv_data *data = NULL;
 
-  TRACE("(%p, %x, %p)\n", iface, dwDirection, ppenumFormatEtc);
+    TRACE("(%p, %x, %p)\n", iface, dwDirection, enum_fmt);
 
-  /*
-   * If we have a data source placed on the clipboard (via OleSetClipboard)
-   * simply delegate to the source object's EnumFormatEtc
-   */
-  if ( This->pIDataObjectSrc )
-  {
-    return IDataObject_EnumFormatEtc(This->pIDataObjectSrc,
-                                     dwDirection, ppenumFormatEtc);
-  }
+    *enum_fmt = NULL;
 
-  /*
-   * Otherwise we must provide our own enumerator which wraps around the
-   * Windows clipboard function EnumClipboardFormats
-   */
-  if ( !ppenumFormatEtc )
-    return E_INVALIDARG;
+    if ( dwDirection != DATADIR_GET ) return E_NOTIMPL;
+    if ( !OpenClipboard(This->hWndClipboard) ) return CLIPBRD_E_CANT_OPEN;
 
-  if ( dwDirection != DATADIR_GET ) /* IDataObject_SetData not implemented */
-    return E_NOTIMPL;
-
-  /*
-   * Store all current clipboard formats in an array of FORMATETC's,
-   * and create an IEnumFORMATETC enumerator from this list.
-   */
-  cfmt = CountClipboardFormats();
-  afmt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                sizeof(FORMATETC) * cfmt);
-  /*
-   * Open the Windows clipboard, associating it with our hidden window
-   */
-  if ( !(bClipboardOpen = OpenClipboard(This->hWndClipboard)) )
-    HANDLE_ERROR( CLIPBRD_E_CANT_OPEN );
-
-  /*
-   * Store all current clipboard formats in an array of FORMATETC's
-   * TODO: Handle TYMED_IStorage media which were put on the clipboard
-   * by copying the storage into global memory. We must convert this
-   * TYMED_HGLOBAL back to TYMED_IStorage.
-   */
-  for (i = 0, format = 0; i < cfmt; i++)
-  {
-    format = EnumClipboardFormats(format);
-    if (!format)  /* Failed! */
+    handle = GetClipboardData( ole_priv_data_clipboard_format );
+    if(handle)
     {
-      ERR("EnumClipboardFormats failed to return format!\n");
-      HANDLE_ERROR( E_FAIL );
+        ole_priv_data *src = GlobalLock(handle);
+        if(src)
+        {
+            /* FIXME: sanity check on size */
+            data = HeapAlloc(GetProcessHeap(), 0, src->size);
+            if(!data)
+            {
+                GlobalUnlock(handle);
+                hr = E_OUTOFMEMORY;
+                goto end;
+            }
+            memcpy(data, src, src->size);
+            GlobalUnlock(handle);
+        }
     }
 
-    /* Init the FORMATETC struct */
-    afmt[i].cfFormat = format;
-    afmt[i].ptd = NULL;
-    afmt[i].dwAspect = DVASPECT_CONTENT;
-    afmt[i].lindex = -1;
-    afmt[i].tymed = TYMED_HGLOBAL;
-  }
+    if(!data) hr = create_empty_priv_data(&data);
+    if(FAILED(hr)) goto end;
 
-  hr = enum_fmtetc_construct( cfmt, afmt, ppenumFormatEtc );
-  if (FAILED(hr))
-    HANDLE_ERROR( hr );
+    hr = enum_fmtetc_construct( data, 0, enum_fmt );
 
-CLEANUP:
-  /*
-   * Free the array of FORMATETC's
-   */
-  HeapFree(GetProcessHeap(), 0, afmt);
-
-  /*
-   * Close Windows clipboard
-   */
-  if ( bClipboardOpen && !CloseClipboard() )
-    hr = CLIPBRD_E_CANT_CLOSE;
-
-  return hr;
+end:
+    if ( !CloseClipboard() ) hr = CLIPBRD_E_CANT_CLOSE;
+    return hr;
 }
 
 /************************************************************************
