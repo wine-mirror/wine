@@ -1353,7 +1353,6 @@ static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWOR
 
         pt.x = x + int_from_fixed(header->pfxStart.x);
         pt.y = y - int_from_fixed(header->pfxStart.y);
-        LPtoDP(dc->hSelf, &pt, 1);
         PATH_AddEntry(pPath, &pt, PT_MOVETO);
 
         curve = (TTPOLYCURVE *)(header + 1);
@@ -1372,7 +1371,6 @@ static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWOR
                 {
                     pt.x = x + int_from_fixed(curve->apfx[i].x);
                     pt.y = y - int_from_fixed(curve->apfx[i].y);
-                    LPtoDP(dc->hSelf, &pt, 1);
                     PATH_AddEntry(pPath, &pt, PT_LINETO);
                 }
                 break;
@@ -1391,13 +1389,11 @@ static BOOL PATH_add_outline(DC *dc, INT x, INT y, TTPOLYGONHEADER *header, DWOR
 
                 pts[0].x = x + int_from_fixed(ptfx.x);
                 pts[0].y = y - int_from_fixed(ptfx.y);
-                LPtoDP(dc->hSelf, &pts[0], 1);
 
                 for(i = 0; i < curve->cpfx; i++)
                 {
                     pts[i + 1].x = x + int_from_fixed(curve->apfx[i].x);
                     pts[i + 1].y = y - int_from_fixed(curve->apfx[i].y);
-                    LPtoDP(dc->hSelf, &pts[i + 1], 1);
                 }
 
                 PATH_BezierTo(pPath, pts, curve->cpfx + 1);
