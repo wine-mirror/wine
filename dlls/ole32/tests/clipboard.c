@@ -387,12 +387,12 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
     dm.dmSize = sizeof(dm);
     dm.dmDriverExtra = 0;
     lstrcpyW(dm.dmDeviceName, devname);
-    obj->fmtetc[3].ptd = HeapAlloc(GetProcessHeap(), 0, sizeof(DVTARGETDEVICE) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra);
-    obj->fmtetc[3].ptd->tdSize = sizeof(DVTARGETDEVICE) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra;
-    obj->fmtetc[3].ptd->tdDriverNameOffset = sizeof(DVTARGETDEVICE);
+    obj->fmtetc[3].ptd = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra);
+    obj->fmtetc[3].ptd->tdSize = FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra;
+    obj->fmtetc[3].ptd->tdDriverNameOffset = FIELD_OFFSET(DVTARGETDEVICE, tdData);
     obj->fmtetc[3].ptd->tdDeviceNameOffset = 0;
     obj->fmtetc[3].ptd->tdPortNameOffset   = 0;
-    obj->fmtetc[3].ptd->tdExtDevmodeOffset = sizeof(DVTARGETDEVICE) + sizeof(devname);
+    obj->fmtetc[3].ptd->tdExtDevmodeOffset = obj->fmtetc[3].ptd->tdDriverNameOffset + sizeof(devname);
     lstrcpyW((WCHAR*)obj->fmtetc[3].ptd->tdData, devname);
     memcpy(obj->fmtetc[3].ptd->tdData + sizeof(devname), &dm, dm.dmSize + dm.dmDriverExtra);
 
