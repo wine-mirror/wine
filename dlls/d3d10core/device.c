@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Henri Verbeet for CodeWeavers
+ * Copyright 2008-2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -909,10 +909,14 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *if
         const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count, const void *shader_byte_code,
         SIZE_T shader_byte_code_length, ID3D10InputLayout **input_layout)
 {
+    struct d3d10_device *This = (struct d3d10_device *)iface;
     struct d3d10_input_layout *object;
+    WINED3DVERTEXELEMENT *wined3d_elements;
+    UINT wined3d_element_count;
+    HRESULT hr;
 
-    FIXME("iface %p, element_descs %p, element_count %u, shader_byte_code %p,"
-            "\tshader_byte_code_length %lu, input_layout %p stub!\n",
+    TRACE("iface %p, element_descs %p, element_count %u, shader_byte_code %p,"
+            "\tshader_byte_code_length %lu, input_layout %p\n",
             iface, element_descs, element_count, shader_byte_code,
             shader_byte_code_length, input_layout);
 
@@ -925,6 +929,19 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *if
 
     object->vtbl = &d3d10_input_layout_vtbl;
     object->refcount = 1;
+
+    hr = d3d10_input_layout_to_wined3d_declaration(element_descs, element_count,
+            shader_byte_code, shader_byte_code_length, &wined3d_elements, &wined3d_element_count);
+    if (FAILED(hr))
+    {
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    IWineD3DDevice_CreateVertexDeclaration(This->wined3d_device, &object->wined3d_decl,
+            (IUnknown *)object, wined3d_elements, wined3d_element_count);
+
+    HeapFree(GetProcessHeap(), 0, wined3d_elements);
 
     *input_layout = (ID3D10InputLayout *)object;
 

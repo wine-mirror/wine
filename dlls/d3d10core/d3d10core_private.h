@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Henri Verbeet for CodeWeavers
+ * Copyright 2008-2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,6 +38,7 @@
     ((DWORD)(ch0) | ((DWORD)(ch1) << 8) | \
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
+#define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 
 /* TRACE helper functions */
 const char *debug_d3d10_primitive_topology(D3D10_PRIMITIVE_TOPOLOGY topology);
@@ -118,7 +119,13 @@ struct d3d10_input_layout
 {
     const struct ID3D10InputLayoutVtbl *vtbl;
     LONG refcount;
+
+    IWineD3DVertexDeclaration *wined3d_decl;
 };
+
+HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEMENT_DESC *element_descs,
+        UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
+        WINED3DVERTEXELEMENT **wined3d_elements, UINT *wined3d_element_count);
 
 /* ID3D10VertexShader */
 extern const struct ID3D10VertexShaderVtbl d3d10_vertex_shader_vtbl;
