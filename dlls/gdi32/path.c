@@ -1429,7 +1429,6 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
     unsigned int idx;
     double cosEsc, sinEsc;
     LOGFONTW lf;
-    POINT org;
     HDC hdc = dc->hSelf;
     INT offset = 0, xoff = 0, yoff = 0;
 
@@ -1450,8 +1449,6 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
         sinEsc = 0;
     }
 
-    GetDCOrgEx(hdc, &org);
-
     for (idx = 0; idx < count; idx++)
     {
         static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
@@ -1470,7 +1467,7 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
 
             GetGlyphOutlineW(hdc, str[idx], GGO_GLYPH_INDEX | GGO_NATIVE, &gm, dwSize, outline, &identity);
 
-            PATH_add_outline(dc, org.x + x + xoff, org.x + y + yoff, outline, dwSize);
+            PATH_add_outline(dc, x + xoff, y + yoff, outline, dwSize);
 
             HeapFree(GetProcessHeap(), 0, outline);
         }
