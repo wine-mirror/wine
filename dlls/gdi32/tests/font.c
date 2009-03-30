@@ -2887,6 +2887,23 @@ static void test_GetGlyphOutline(void)
        ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
     }
 
+    /* test for needed buffer size request on space char */
+    memset(&gm, 0, sizeof(gm));
+    SetLastError(0xdeadbeef);
+    ret = GetGlyphOutlineW(hdc, ' ', GGO_NATIVE, &gm, 0, NULL, &mat);
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        ok(ret == 0, "GetGlyphOutlineW should return 0 buffer size for space char\n");
+
+    /* requesting buffer size for space char + error */
+    memset(&gm, 0, sizeof(gm));
+    SetLastError(0xdeadbeef);
+    ret = GetGlyphOutlineW(0, ' ', GGO_NATIVE, &gm, 0, NULL, NULL);
+    if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+    {
+       ok(ret == GDI_ERROR, "GetGlyphOutlineW should return GDI_ERROR\n");
+       ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %u\n", GetLastError());
+    }
+
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
     DeleteDC(hdc);
