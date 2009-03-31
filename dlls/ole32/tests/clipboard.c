@@ -746,7 +746,9 @@ static void test_set_clipboard(void)
     h = SetClipboardData(cf_onemore, hblob);
     ok(h == hblob, "got %p\n", h);
     h = GetClipboardData(cf_onemore);
-    ok(h == hblob, "got %p\n", h);
+    ok(h == hblob ||
+       broken(h != NULL), /* win9x */
+       "got %p\n", h);
     CloseClipboard();
 
     hr = OleFlushClipboard();
@@ -761,7 +763,9 @@ static void test_set_clipboard(void)
     /* format should survive the flush */
     OpenClipboard(NULL);
     h = GetClipboardData(cf_onemore);
-    ok(h == hblob, "got %p\n", h);
+    ok(h == hblob ||
+       broken(h != NULL), /* win9x */
+       "got %p\n", h);
     CloseClipboard();
 
     test_cf_dataobject(NULL);
