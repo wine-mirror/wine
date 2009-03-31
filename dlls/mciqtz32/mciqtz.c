@@ -26,6 +26,7 @@
 #include "wine/debug.h"
 #include "mciqtz_private.h"
 #include "digitalv.h"
+#include "wownt32.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mciqtz);
 
@@ -253,6 +254,61 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
 }
 
 /***************************************************************************
+ *                              MCIQTZ_mciSeek                  [internal]
+ */
+static DWORD MCIQTZ_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
+{
+    WINE_MCIQTZ* wma;
+    HRESULT hr;
+    IMediaPosition* pmpos;
+    LONGLONG newpos;
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+
+    MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
+
+    if (!lpParms)
+        return MCIERR_NULL_PARAMETER_BLOCK;
+
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+
+    if (dwFlags & MCI_SEEK_TO_START) {
+        newpos = 0;
+    } else if (dwFlags & MCI_SEEK_TO_END) {
+        FIXME("MCI_SEEK_TO_END not implemented yet\n");
+        return MCIERR_INTERNAL;
+    } else if (dwFlags & MCI_TO) {
+        FIXME("MCI_TO not implemented yet\n");
+        return MCIERR_INTERNAL;
+    } else {
+        WARN("dwFlag doesn't tell where to seek to...\n");
+        return MCIERR_MISSING_PARAMETER;
+    }
+
+    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaPosition, (LPVOID*)&pmpos);
+    if (FAILED(hr)) {
+        FIXME("Cannot get IMediaPostion interface (hr = %x)\n", hr);
+        return MCIERR_INTERNAL;
+    }
+
+    hr = IMediaPosition_put_CurrentPosition(pmpos, newpos);
+    if (FAILED(hr)) {
+        FIXME("Cannot set position (hr = %x)\n", hr);
+        IMediaPosition_Release(pmpos);
+        return MCIERR_INTERNAL;
+    }
+
+    IMediaPosition_Release(pmpos);
+
+    if (dwFlags & MCI_NOTIFY)
+        mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)), wDevID, MCI_NOTIFY_SUCCESSFUL);
+
+    return 0;
+}
+
+/***************************************************************************
  *                              MCIQTZ_mciStop                  [internal]
  */
 static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
@@ -314,6 +370,7 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_OPEN_DRIVER:   return MCIQTZ_mciOpen      (dwDevID, dwParam1, (LPMCI_DGV_OPEN_PARMSW)     dwParam2);
         case MCI_CLOSE_DRIVER:  return MCIQTZ_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)       dwParam2);
         case MCI_PLAY:          return MCIQTZ_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)          dwParam2);
+        case MCI_SEEK:          return MCIQTZ_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)          dwParam2);
         case MCI_RECORD:
         case MCI_STOP:
         case MCI_SET:
@@ -322,7 +379,6 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_STATUS:
         case MCI_GETDEVCAPS:
         case MCI_INFO:
-        case MCI_SEEK:
         case MCI_PUT:
         case MCI_WINDOW:
         case MCI_LOAD:
