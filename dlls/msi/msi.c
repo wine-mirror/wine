@@ -476,7 +476,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     MSIINSTALLCONTEXT context;
     UINT r;
     DWORD sz;
-    WCHAR sourcepath[MAX_PATH];
+    WCHAR sourcepath[MAX_PATH], filename[MAX_PATH];
     LPWSTR commandline;
 
     static const WCHAR szInstalled[] = {
@@ -537,6 +537,16 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
 
     if (context == MSIINSTALLCONTEXT_MACHINE)
         lstrcatW(commandline, szMachine);
+
+    sz = sizeof(sourcepath);
+    MsiSourceListGetInfoW(szProduct, NULL, context, MSICODE_PRODUCT,
+                          INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath, &sz);
+
+    sz = sizeof(filename);
+    MsiSourceListGetInfoW(szProduct, NULL, context, MSICODE_PRODUCT,
+                          INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
+
+    strcatW(sourcepath, filename);
 
     r = MSI_InstallPackage( package, sourcepath, commandline );
 
