@@ -3559,9 +3559,6 @@ static UINT msi_publish_product_properties(MSIPACKAGE *package, HKEY hkey)
     langid = msi_get_property_int(package, szProductLanguage, 0);
     msi_reg_set_val_dword(hkey, INSTALLPROPERTY_LANGUAGEW, langid);
 
-    ptr = strrchrW(package->PackagePath, '\\' ) + 1;
-    msi_reg_set_val_str(hkey, INSTALLPROPERTY_PACKAGENAMEW, ptr);
-
     /* FIXME */
     msi_reg_set_val_dword(hkey, INSTALLPROPERTY_AUTHORIZED_LUA_APPW, 0);
 
