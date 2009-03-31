@@ -1664,6 +1664,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
     /* Handle first the FOURCC surfaces... */
     if (sEntry->Flags & dEntry->Flags & WINED3DFMT_FLAG_FOURCC)
     {
+        UINT block_width;
+        UINT block_height;
+        UINT block_byte_size;
+
         TRACE("Fourcc -> Fourcc copy\n");
         if (trans)
             FIXME("trans arg not supported when a FOURCC surface is involved\n");
@@ -1675,8 +1679,37 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
             ret = WINED3DERR_WRONGTEXTUREFORMAT;
             goto error;
         }
-        /* FIXME: Watch out that the size is correct for FOURCC surfaces */
-        memcpy(dbuf, sbuf, This->resource.size);
+
+        if (This->resource.format_desc->format == WINED3DFMT_DXT1)
+        {
+            block_width = 4;
+            block_height = 4;
+            block_byte_size = 8;
+        }
+        else if (This->resource.format_desc->format == WINED3DFMT_DXT2
+                || This->resource.format_desc->format == WINED3DFMT_DXT3
+                || This->resource.format_desc->format == WINED3DFMT_DXT4
+                || This->resource.format_desc->format == WINED3DFMT_DXT5)
+        {
+            block_width = 4;
+            block_height = 4;
+            block_byte_size = 16;
+        }
+        else
+        {
+            FIXME("Unsupported FourCC format %s.\n", debug_d3dformat(This->resource.format_desc->format));
+            block_width = 1;
+            block_height = 1;
+            block_byte_size = This->resource.format_desc->byte_count;
+        }
+
+        for (y = 0; y < h; y += block_height)
+        {
+            memcpy(dbuf, sbuf, (w / block_width) * block_byte_size);
+            dbuf += dlock.Pitch;
+            sbuf += slock.Pitch;
+        }
+
         goto error;
     }
     if ((sEntry->Flags & WINED3DFMT_FLAG_FOURCC) && !(dEntry->Flags & WINED3DFMT_FLAG_FOURCC))
