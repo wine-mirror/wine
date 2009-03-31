@@ -7605,6 +7605,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         WARN("Rejecting Reset() call because the requested display mode is not supported\n");
         WARN("Requested mode: %d, %d\n", pPresentationParameters->BackBufferWidth,
              pPresentationParameters->BackBufferHeight);
+        IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
         return WINED3DERR_INVALIDCALL;
     }
 
