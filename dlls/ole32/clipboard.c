@@ -126,6 +126,7 @@ static const CHAR OLEClipbrd_WNDCLASS[] = "CLIPBRDWNDCLASS";
 
 static UINT dataobject_clipboard_format;
 static UINT ole_priv_data_clipboard_format;
+static UINT embed_source_clipboard_format;
 
 /* Structure of 'Ole Private Data' clipboard format */
 typedef struct
@@ -423,7 +424,119 @@ static HGLOBAL OLEClipbrd_GlobalDupMem( HGLOBAL hGlobalSrc )
     return hGlobalDest;
 }
 
-#define MAX_CLIPFORMAT_NAME   80
+/************************************************************
+ *              render_embed_source_hack
+ *
+ * This is clearly a hack and has no place in the clipboard code.
+ *
+ */
+static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
+{
+    STGMEDIUM std;
+    HGLOBAL hStorage = 0;
+    HRESULT hr = S_OK;
+    ILockBytes *ptrILockBytes;
+
+    memset(&std, 0, sizeof(STGMEDIUM));
+    std.tymed = fmt->tymed = TYMED_ISTORAGE;
+
+    hStorage = GlobalAlloc(GMEM_SHARE|GMEM_MOVEABLE, 0);
+    if (hStorage == NULL) return E_OUTOFMEMORY;
+    hr = CreateILockBytesOnHGlobal(hStorage, FALSE, &ptrILockBytes);
+    hr = StgCreateDocfileOnILockBytes(ptrILockBytes, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &std.u.pstg);
+    ILockBytes_Release(ptrILockBytes);
+
+    if (FAILED(hr = IDataObject_GetDataHere(theOleClipboard->pIDataObjectSrc, fmt, &std)))
+    {
+        WARN("() : IDataObject_GetDataHere failed to render clipboard data! (%x)\n", hr);
+        GlobalFree(hStorage);
+        return hr;
+    }
+
+    if (1) /* check whether the presentation data is already -not- present */
+    {
+        FORMATETC fmt2;
+        STGMEDIUM std2;
+        METAFILEPICT *mfp = 0;
+
+        fmt2.cfFormat = CF_METAFILEPICT;
+        fmt2.ptd = 0;
+        fmt2.dwAspect = DVASPECT_CONTENT;
+        fmt2.lindex = -1;
+        fmt2.tymed = TYMED_MFPICT;
+
+        memset(&std2, 0, sizeof(STGMEDIUM));
+        std2.tymed = TYMED_MFPICT;
+
+        /* Get the metafile picture out of it */
+
+        if (SUCCEEDED(hr = IDataObject_GetData(theOleClipboard->pIDataObjectSrc, &fmt2, &std2)))
+        {
+            mfp = GlobalLock(std2.u.hGlobal);
+        }
+
+        if (mfp)
+        {
+            OLECHAR name[]={ 2, 'O', 'l', 'e', 'P', 'r', 'e', 's', '0', '0', '0', 0};
+            IStream *pStream = 0;
+            void *mfBits;
+            PresentationDataHeader pdh;
+            INT nSize;
+            CLSID clsID;
+            LPOLESTR strProgID;
+            CHAR strOleTypeName[51];
+            BYTE OlePresStreamHeader [] =
+            {
+                0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x00, 0x00, 0x00,
+                0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00
+            };
+
+            nSize = GetMetaFileBitsEx(mfp->hMF, 0, NULL);
+
+            memset(&pdh, 0, sizeof(PresentationDataHeader));
+            memcpy(&pdh, OlePresStreamHeader, sizeof(OlePresStreamHeader));
+
+            pdh.dwObjectExtentX = mfp->xExt;
+            pdh.dwObjectExtentY = mfp->yExt;
+            pdh.dwSize = nSize;
+
+            hr = IStorage_CreateStream(std.u.pstg, name, STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &pStream);
+
+            hr = IStream_Write(pStream, &pdh, sizeof(PresentationDataHeader), NULL);
+
+            mfBits = HeapAlloc(GetProcessHeap(), 0, nSize);
+            nSize = GetMetaFileBitsEx(mfp->hMF, nSize, mfBits);
+
+            hr = IStream_Write(pStream, mfBits, nSize, NULL);
+
+            IStream_Release(pStream);
+
+            HeapFree(GetProcessHeap(), 0, mfBits);
+
+            GlobalUnlock(std2.u.hGlobal);
+            ReleaseStgMedium(&std2);
+
+            ReadClassStg(std.u.pstg, &clsID);
+            ProgIDFromCLSID(&clsID, &strProgID);
+
+            WideCharToMultiByte( CP_ACP, 0, strProgID, -1, strOleTypeName, sizeof(strOleTypeName), NULL, NULL );
+            OLECONVERT_CreateOleStream(std.u.pstg);
+            OLECONVERT_CreateCompObjStream(std.u.pstg, strOleTypeName);
+        }
+    }
+
+    if ( !SetClipboardData( fmt->cfFormat, hStorage ) )
+    {
+        WARN("() : Failed to set rendered clipboard data into clipboard!\n");
+        GlobalFree(hStorage);
+        hr = CLIPBRD_E_CANT_SET;
+    }
+
+    ReleaseStgMedium(&std);
+    return hr;
+}
 
 /***********************************************************************
  * OLEClipbrd_RenderFormat(LPFORMATETC)
@@ -433,140 +546,51 @@ static HGLOBAL OLEClipbrd_GlobalDupMem( HGLOBAL hGlobalSrc )
  */
 static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pFormatetc)
 {
-  STGMEDIUM std;
-  HGLOBAL hDup;
-  HRESULT hr = S_OK;
-  char szFmtName[MAX_CLIPFORMAT_NAME];
-  ILockBytes *ptrILockBytes = 0;
-  HGLOBAL hStorage = 0;
+    STGMEDIUM std;
+    HGLOBAL hDup;
+    HRESULT hr;
 
-  if (!GetClipboardFormatNameA(pFormatetc->cfFormat, szFmtName, MAX_CLIPFORMAT_NAME))
-      szFmtName[0] = '\0';
-
-  /* If embed source */
-  if (!strcmp(szFmtName, CF_EMBEDSOURCE))
-  {
-    memset(&std, 0, sizeof(STGMEDIUM));
-    std.tymed = pFormatetc->tymed = TYMED_ISTORAGE;
-
-    hStorage = GlobalAlloc(GMEM_SHARE|GMEM_MOVEABLE, 0);
-    if (hStorage == NULL)
-      HANDLE_ERROR( E_OUTOFMEMORY );
-    hr = CreateILockBytesOnHGlobal(hStorage, FALSE, &ptrILockBytes);
-    hr = StgCreateDocfileOnILockBytes(ptrILockBytes, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &std.u.pstg);
-
-    if (FAILED(hr = IDataObject_GetDataHere(theOleClipboard->pIDataObjectSrc, pFormatetc, &std)))
+    /* Embed source hack */
+    if(pFormatetc->cfFormat == embed_source_clipboard_format)
     {
-      WARN("() : IDataObject_GetDataHere failed to render clipboard data! (%x)\n", hr);
-      GlobalFree(hStorage);
-      return hr;
+        return render_embed_source_hack(pIDataObject, pFormatetc);
     }
 
-    if (1) /* check whether the presentation data is already -not- present */
-    {
-      FORMATETC fmt2;
-      STGMEDIUM std2;
-      METAFILEPICT *mfp = 0;
-
-      fmt2.cfFormat = CF_METAFILEPICT;
-      fmt2.ptd = 0;
-      fmt2.dwAspect = DVASPECT_CONTENT;
-      fmt2.lindex = -1;
-      fmt2.tymed = TYMED_MFPICT;
-
-      memset(&std2, 0, sizeof(STGMEDIUM));
-      std2.tymed = TYMED_MFPICT;
-
-      /* Get the metafile picture out of it */
-
-      if (SUCCEEDED(hr = IDataObject_GetData(theOleClipboard->pIDataObjectSrc, &fmt2, &std2)))
-      {
-        mfp = GlobalLock(std2.u.hGlobal);
-      }
-
-      if (mfp)
-      {
-        OLECHAR name[]={ 2, 'O', 'l', 'e', 'P', 'r', 'e', 's', '0', '0', '0', 0};
-        IStream *pStream = 0;
-        void *mfBits;
-        PresentationDataHeader pdh;
-        INT nSize;
-        CLSID clsID;
-        LPOLESTR strProgID;
-        CHAR strOleTypeName[51];
-        BYTE OlePresStreamHeader [] =
-        {
-            0xFF, 0xFF, 0xFF, 0xFF, 0x03, 0x00, 0x00, 0x00,
-            0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-            0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00
-        };
-
-        nSize = GetMetaFileBitsEx(mfp->hMF, 0, NULL);
-
-        memset(&pdh, 0, sizeof(PresentationDataHeader));
-        memcpy(&pdh, OlePresStreamHeader, sizeof(OlePresStreamHeader));
-
-        pdh.dwObjectExtentX = mfp->xExt;
-        pdh.dwObjectExtentY = mfp->yExt;
-        pdh.dwSize = nSize;
-
-        hr = IStorage_CreateStream(std.u.pstg, name, STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &pStream);
-
-        hr = IStream_Write(pStream, &pdh, sizeof(PresentationDataHeader), NULL);
-
-        mfBits = HeapAlloc(GetProcessHeap(), 0, nSize);
-        nSize = GetMetaFileBitsEx(mfp->hMF, nSize, mfBits);
-
-        hr = IStream_Write(pStream, mfBits, nSize, NULL);
-
-        IStream_Release(pStream);
-
-        HeapFree(GetProcessHeap(), 0, mfBits);
-
-        GlobalUnlock(std2.u.hGlobal);
-
-        ReadClassStg(std.u.pstg, &clsID);
-        ProgIDFromCLSID(&clsID, &strProgID);
-
-        WideCharToMultiByte( CP_ACP, 0, strProgID, -1, strOleTypeName, sizeof(strOleTypeName), NULL, NULL );
-        OLECONVERT_CreateOleStream(std.u.pstg);
-        OLECONVERT_CreateCompObjStream(std.u.pstg, strOleTypeName);
-      }
-    }
-  }
-  else
-  {
     if (FAILED(hr = IDataObject_GetData(pIDataObject, pFormatetc, &std)))
     {
         WARN("() : IDataObject_GetData failed to render clipboard data! (%x)\n", hr);
-        GlobalFree(hStorage);
         return hr;
     }
 
     /* To put a copy back on the clipboard */
 
-    hStorage = std.u.hGlobal;
-  }
+    if(std.tymed != TYMED_HGLOBAL)
+    {
+        FIXME("got tymed %x\n", std.tymed);
+        hr = DV_E_FORMATETC;
+        goto end;
+    }
 
   /*
    *  Put a copy of the rendered data back on the clipboard
    */
 
-  if ( !(hDup = OLEClipbrd_GlobalDupMem(hStorage)) )
-    HANDLE_ERROR( E_OUTOFMEMORY );
+    if ( !(hDup = OLEClipbrd_GlobalDupMem(std.u.hGlobal)) )
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
 
-  if ( !SetClipboardData( pFormatetc->cfFormat, hDup ) )
-  {
-    GlobalFree(hDup);
-    WARN("() : Failed to set rendered clipboard data into clipboard!\n");
-  }
+    if ( !SetClipboardData( pFormatetc->cfFormat, hDup ) )
+    {
+        WARN("() : Failed to set rendered clipboard data into clipboard!\n");
+        GlobalFree(hDup);
+        hr = CLIPBRD_E_CANT_SET;
+    }
 
-CLEANUP:
-
-  ReleaseStgMedium(&std);
-
-  return hr;
+end:
+    ReleaseStgMedium(&std);
+    return hr;
 }
 
 
@@ -1106,11 +1130,14 @@ static void register_clipboard_formats(void)
 {
     static const WCHAR DataObjectW[] = { 'D','a','t','a','O','b','j','e','c','t',0 };
     static const WCHAR OlePrivateDataW[] = { 'O','l','e',' ','P','r','i','v','a','t','e',' ','D','a','t','a',0 };
+    static const WCHAR EmbedSourceW[] = { 'E','m','b','e','d',' ','S','o','u','r','c','e',0 };
 
     if(!dataobject_clipboard_format)
         dataobject_clipboard_format = RegisterClipboardFormatW(DataObjectW);
     if(!ole_priv_data_clipboard_format)
         ole_priv_data_clipboard_format = RegisterClipboardFormatW(OlePrivateDataW);
+    if(!embed_source_clipboard_format)
+        embed_source_clipboard_format = RegisterClipboardFormatW(EmbedSourceW);
 }
 
 /***********************************************************************
