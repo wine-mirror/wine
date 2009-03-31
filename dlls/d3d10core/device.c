@@ -178,8 +178,17 @@ static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device *ifac
         UINT start_slot, UINT buffer_count, ID3D10Buffer *const *buffers,
         const UINT *strides, const UINT *offsets)
 {
-    FIXME("iface %p, start_slot %u, buffer_count %u, buffers %p, strides %p, offsets %p stub!\n",
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+    unsigned int i;
+
+    TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p, strides %p, offsets %p\n",
             iface, start_slot, buffer_count, buffers, strides, offsets);
+
+    for (i = 0; i < buffer_count; ++i)
+    {
+        IWineD3DDevice_SetStreamSource(This->wined3d_device, start_slot,
+                ((struct d3d10_buffer *)buffers[i])->wined3d_buffer, offsets[i], strides[i]);
+    }
 }
 
 static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device *iface,
