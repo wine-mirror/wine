@@ -1367,6 +1367,14 @@ typedef enum _tagINTERNETFEATURELIST
     FEATURE_ENTRY_COUNT
 } INTERNETFEATURELIST;
 
+typedef struct _tagPROTOCOLFILTERDATA {
+    DWORD cbSize;
+    IInternetProtocolSink *pProtocolSink;
+    IInternetProtocol *pProtocol;
+    IUnknown *pUnk;
+    DWORD dwFilterFlags;
+} PROTOCOLFILTERDATA;
+
 /*****************************************************************************
  * IUri interface
  */
