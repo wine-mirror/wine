@@ -32,7 +32,7 @@ DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_wentry( PEB *peb )
     BOOL needs_init = (__wine_spec_init_state != CONSTRUCTORS_DONE);
     DWORD ret;
 
-    if (needs_init) _init( __wine_main_argc, __wine_main_argv, __wine_main_environ );
+    if (needs_init) _init( __wine_main_argc, __wine_main_argv, NULL );
     ret = wmain( __wine_main_argc, __wine_main_wargv );
     if (needs_init) _fini();
     ExitProcess( ret );
