@@ -245,11 +245,22 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
                 IUnknown_AddRef(pmedium->pUnkForRelease);
 
                 if(pformatetc->cfFormat == CF_TEXT || pformatetc->cfFormat == cf_global)
+                {
+                    pmedium->tymed = TYMED_HGLOBAL;
                     U(*pmedium).hGlobal = This->text;
+                }
                 else if(pformatetc->cfFormat == cf_stream)
+                {
+                    pmedium->tymed = TYMED_ISTREAM;
+                    IStream_AddRef(This->stm);
                     U(*pmedium).pstm = This->stm;
+                }
                 else if(pformatetc->cfFormat == cf_storage)
+                {
+                    pmedium->tymed = TYMED_ISTORAGE;
+                    IStorage_AddRef(This->stg);
                     U(*pmedium).pstg = This->stg;
+                }
                 return S_OK;
             }
         }
