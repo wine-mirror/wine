@@ -620,7 +620,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device *iface,
     wined3d_desc.misc_flags = desc->MiscFlags;
 
     hr = IWineD3DDevice_CreateBuffer(This->wined3d_device, &wined3d_desc,
-            (IUnknown *)object, &object->wined3d_buffer);
+            data ? data->pSysMem : NULL, (IUnknown *)object, &object->wined3d_buffer);
     if (FAILED(hr))
     {
         ERR("CreateBuffer failed, returning %#x\n", hr);

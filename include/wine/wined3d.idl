@@ -2909,6 +2909,7 @@ interface IWineD3DDevice : IWineD3DBase
 {
     HRESULT CreateBuffer(
         [in] struct wined3d_buffer_desc *desc,
+        [in] const void *data,
         [in] IUnknown *parent,
         [out] IWineD3DBuffer **buffer
     );

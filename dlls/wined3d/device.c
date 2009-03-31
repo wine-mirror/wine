@@ -435,13 +435,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetParent(IWineD3DDevice *iface, IUnkno
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
-        struct wined3d_buffer_desc *desc, IUnknown *parent, IWineD3DBuffer **buffer)
+        struct wined3d_buffer_desc *desc, const void *data, IUnknown *parent, IWineD3DBuffer **buffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_buffer *object;
     HRESULT hr;
 
-    TRACE("iface %p, desc %p, parent %p, buffer %p\n", iface, desc, parent, buffer);
+    TRACE("iface %p, desc %p, data %p, parent %p, buffer %p\n", iface, desc, data, parent, buffer);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -470,6 +470,29 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
 
     TRACE("size %#x, usage=%#x, format %s, memory @ %p, iface @ %p\n", object->resource.size, object->resource.usage,
             debug_d3dformat(object->resource.format_desc->format), object->resource.allocatedMemory, object);
+
+    if (data)
+    {
+        BYTE *ptr;
+
+        hr = IWineD3DBuffer_Map((IWineD3DBuffer *)object, 0, desc->byte_width, &ptr, 0);
+        if (FAILED(hr))
+        {
+            ERR("Failed to map buffer, hr %#x\n", hr);
+            IWineD3DBuffer_Release((IWineD3DBuffer *)object);
+            return hr;
+        }
+
+        memcpy(ptr, data, desc->byte_width);
+
+        hr = IWineD3DBuffer_Unmap((IWineD3DBuffer *)object);
+        if (FAILED(hr))
+        {
+            ERR("Failed to unmap buffer, hr %#x\n", hr);
+            IWineD3DBuffer_Release((IWineD3DBuffer *)object);
+            return hr;
+        }
+    }
 
     *buffer = (IWineD3DBuffer *)object;
 
