@@ -1982,6 +1982,13 @@ static void test_LookupAccountName(void)
 
     /* case insensitivity */
     check_wellknown_name("lOCAlServICE", WinLocalServiceSid);
+
+    /* fully qualified account names */
+    check_wellknown_name("NT AUTHORITY\\LocalService", WinLocalServiceSid);
+    check_wellknown_name("nt authority\\Network Service", WinNetworkServiceSid);
+    check_wellknown_name("nt authority test\\Network Service", 0);
+    check_wellknown_name("Dummy\\Network Service", 0);
+    check_wellknown_name("ntauthority\\Network Service", 0);
 }
 
 static void test_security_descriptor(void)

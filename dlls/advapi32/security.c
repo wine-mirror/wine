@@ -2651,6 +2651,8 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
     DWORD nameLen;
     LPWSTR userName = NULL;
     LPCWSTR domainName;
+    LPCWSTR lpAccountNamePtr;
+    LPCWSTR lpDomainNamePtr = NULL;
 
     FIXME("%s %s %p %p %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpAccountName),
           Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse);
@@ -2667,11 +2669,22 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
     }
 
     /* Check well known SIDs first */
+    if ((lpAccountNamePtr = strrchrW(lpAccountName,'\\')))
+    {
+        lpAccountNamePtr++;
+        lpDomainNamePtr = lpAccountName;
+    }
+    else
+        lpAccountNamePtr = lpAccountName;
 
     for (i = 0; i < (sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0])); i++)
     {
-        if (!strcmpiW(lpAccountName, ACCOUNT_SIDS[i].account) ||
-            (ACCOUNT_SIDS[i].alias && !strcmpiW(lpAccountName, ACCOUNT_SIDS[i].alias)))
+        /* check domain first */
+        if (lpDomainNamePtr && (strncmpiW(lpDomainNamePtr, ACCOUNT_SIDS[i].domain, strlenW(ACCOUNT_SIDS[i].domain)) || lpDomainNamePtr[strlenW(ACCOUNT_SIDS[i].domain)]!='\\'))
+            continue;
+
+        if (!strcmpiW(lpAccountNamePtr, ACCOUNT_SIDS[i].account) ||
+            (ACCOUNT_SIDS[i].alias && !strcmpiW(lpAccountNamePtr, ACCOUNT_SIDS[i].alias)))
         {
             DWORD sidLen = SECURITY_MAX_SID_SIZE;
 
