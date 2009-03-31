@@ -270,7 +270,7 @@ static int do_synchronous_recv ( SOCKET s, char *buf, int buflen, int recvlen )
     return p - buf;
 }
 
-static int do_synchronous_recvfrom ( SOCKET s, char *buf, int buflen,int flags,struct sockaddr *from, socklen_t *fromlen, int recvlen )
+static int do_synchronous_recvfrom ( SOCKET s, char *buf, int buflen,int flags,struct sockaddr *from, int *fromlen, int recvlen )
 {
     char* last = buf + buflen, *p;
     int n = 1;
@@ -642,7 +642,7 @@ static VOID WINAPI simple_mixed_client ( client_params *par )
     test_params *gen = par->general;
     client_memory *mem;
     int pos, n_sent, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, id;
-    socklen_t fromLen = sizeof(mem->addr);
+    int fromLen = sizeof(mem->addr);
     struct sockaddr test;
 
     id = GetCurrentThreadId();
