@@ -79,12 +79,14 @@
 #  define fd_set unix_fd_set
 #  define timeval unix_timeval
 #  define select unix_select
+#  define socklen_t unix_socklen_t
 #  include <sys/types.h>
 #  include <time.h>
 #  include <stdlib.h>
 #  undef fd_set
 #  undef timeval
 #  undef select
+#  undef socklen_t
 #  undef FD_SETSIZE
 #  undef FD_CLR
 #  undef FD_SET
