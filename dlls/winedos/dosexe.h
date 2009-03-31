@@ -352,6 +352,7 @@ extern BOOL WINAPI MZ_Current( void );
 extern void WINAPI MZ_AllocDPMITask( void );
 extern void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg );
 extern BOOL DOSVM_IsWin16(void);
+extern void DOSVM_Exit( WORD retval );
 
 /* dosvm.c */
 extern void DOSVM_SendQueuedEvents( CONTEXT86 * );

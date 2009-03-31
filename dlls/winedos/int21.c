@@ -4176,7 +4176,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x00: /* TERMINATE PROGRAM */
         TRACE("TERMINATE PROGRAM\n");
         if (DOSVM_IsWin16())
-            ExitThread( 0 );
+            DOSVM_Exit( 0 );
         else if(ISV86(context))
             MZ_Exit( context, FALSE, 0 );
         else
@@ -5050,7 +5050,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
     case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
         TRACE( "EXIT with return code %d\n", AL_reg(context) );
         if (DOSVM_IsWin16())
-            ExitThread( AL_reg(context) );
+            DOSVM_Exit( AL_reg(context) );
         else if(ISV86(context))
             MZ_Exit( context, FALSE, AL_reg(context) );
         else

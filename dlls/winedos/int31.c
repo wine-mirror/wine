@@ -626,11 +626,11 @@ static void StartPM( CONTEXT86 *context )
     TRACE( "Protected mode DOS program is terminating\n" );
 
     /*
-     * FIXME: Instead of calling ExitThread, we should release all
+     * FIXME: Instead of calling DOSVM_Exit, we should release all
      *        allocated protected mode resources and call MZ_Exit
      *        using real mode context. See DPMI specification.
      */
-    ExitThread( DPMI_retval );
+    DOSVM_Exit( DPMI_retval );
 
 #if 0
     wine_ldt_free_entries( psp->environment, 1 );

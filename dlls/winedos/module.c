@@ -64,6 +64,18 @@ BOOL DOSVM_IsWin16(void)
   return DOSVM_isdosexe ? FALSE : TRUE;
 }
 
+/**********************************************************************
+ *          DOSVM_Exit
+ */
+void DOSVM_Exit( WORD retval )
+{
+    DWORD count;
+
+    ReleaseThunkLock( &count );
+    ExitThread( retval );
+}
+
+
 #ifdef MZ_SUPPORTED
 
 #ifdef HAVE_SYS_MMAN_H
@@ -731,7 +743,7 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
     } else
       TRACE("killing DOS task\n");
   }
-  ExitThread( retval );
+  DOSVM_Exit( retval );
 }
 
 
@@ -785,7 +797,7 @@ void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
  */
 void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
 {
-  ExitThread( retval );
+  DOSVM_Exit( retval );
 }
 
 /***********************************************************************

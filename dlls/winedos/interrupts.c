@@ -951,7 +951,7 @@ static void WINAPI DOSVM_Int1aHandler( CONTEXT86 *context )
 static void WINAPI DOSVM_Int20Handler( CONTEXT86 *context )
 {
     if (DOSVM_IsWin16())
-        ExitThread( 0 );
+        DOSVM_Exit( 0 );
     else if(ISV86(context))
         MZ_Exit( context, TRUE, 0 );
     else
