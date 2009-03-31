@@ -112,6 +112,38 @@ typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 extern "C" {
 #endif
 
+#define GAI_STRERROR_BUFFER_SIZE        1024
+
+static inline char *gai_strerrorA(int errcode)
+{
+    static char buffer[GAI_STRERROR_BUFFER_SIZE + 1];
+
+    /* FIXME: should format message from system, ignoring inserts in neutral
+     * language */
+    buffer[0] = '\0';
+
+    return buffer;
+}
+
+static inline WCHAR *gai_strerrorW(int errcode)
+{
+    static WCHAR buffer[GAI_STRERROR_BUFFER_SIZE + 1];
+
+    /* FIXME: should format message from system, ignoring inserts in neutral
+     * language */
+    buffer[0] = '\0';
+
+    return buffer;
+}
+
+#ifdef USE_WS_PREFIX
+# define WS_gai_strerror WINELIB_NAME_AW(gai_strerror)
+#elif defined(WINE_NO_UNICODE_MACROS)
+# define gai_strerror gai_strerrorA
+#else
+# define gai_strerror WINELIB_NAME_AW(gai_strerror)
+#endif
+
 void WINAPI WS(freeaddrinfo)(LPADDRINFO);
 #define     FreeAddrInfoA WS(freeaddrinfo)
 void WINAPI FreeAddrInfoW(PADDRINFOW);
