@@ -517,7 +517,9 @@ static void test_enum_fmtetc(IDataObject *src)
     ok(hr == S_OK, "OleGetClipboard failed with error 0x%08x\n", hr);
 
     hr = IDataObject_EnumFormatEtc(data, DATADIR_SET, &enum_fmt);
-    ok(hr == E_NOTIMPL, "got %08x\n", hr);
+    ok(hr == E_NOTIMPL ||
+       broken(hr == E_INVALIDARG), /* win98 (not win98SE) */
+       "got %08x\n", hr);
 
     DataObjectImpl_EnumFormatEtc_calls = 0;
     hr = IDataObject_EnumFormatEtc(data, DATADIR_GET, &enum_fmt);
