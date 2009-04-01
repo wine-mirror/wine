@@ -199,7 +199,7 @@ typedef struct trapframe SIGCONTEXT;
 
 #endif /* bsdi */
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 
 typedef struct sigcontext SIGCONTEXT;
 
@@ -228,7 +228,41 @@ typedef struct sigcontext SIGCONTEXT;
 #define FPU_sig(context)     NULL  /* FIXME */
 #define FPUX_sig(context)    NULL  /* FIXME */
 
-#endif  /* *BSD */
+#endif  /* __FreeBSD__ */
+
+#ifdef __OpenBSD__
+
+typedef struct sigcontext SIGCONTEXT;
+
+#define EAX_sig(context)     ((context)->sc_eax)
+#define EBX_sig(context)     ((context)->sc_ebx)
+#define ECX_sig(context)     ((context)->sc_ecx)
+#define EDX_sig(context)     ((context)->sc_edx)
+#define ESI_sig(context)     ((context)->sc_esi)
+#define EDI_sig(context)     ((context)->sc_edi)
+#define EBP_sig(context)     ((context)->sc_ebp)
+
+#define CS_sig(context)      ((context)->sc_cs)
+#define DS_sig(context)      ((context)->sc_ds)
+#define ES_sig(context)      ((context)->sc_es)
+#define FS_sig(context)      ((context)->sc_fs)
+#define GS_sig(context)      ((context)->sc_gs)
+#define SS_sig(context)      ((context)->sc_ss)
+
+#define TRAP_sig(context)    ((context)->sc_trapno)
+#define ERROR_sig(context)   ((context)->sc_err)
+#define EFL_sig(context)     ((context)->sc_eflags)
+
+#define EIP_sig(context)     ((context)->sc_eip)
+#define ESP_sig(context)     ((context)->sc_esp)
+
+#define FPU_sig(context)     NULL  /* FIXME */
+#define FPUX_sig(context)    NULL  /* FIXME */
+
+#define T_MCHK T_MACHK
+#define T_XMMFLT T_XFTRAP
+
+#endif  /* __OpenBSD__ */
 
 #if defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
 
