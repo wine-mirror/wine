@@ -450,7 +450,7 @@ typedef struct SHADER_OPCODE
     DWORD max_version;
 } SHADER_OPCODE;
 
-typedef struct SHADER_OPCODE_ARG
+struct wined3d_shader_instruction
 {
     IWineD3DBaseShader *shader;
     const shader_reg_maps *reg_maps;
@@ -463,9 +463,9 @@ typedef struct SHADER_OPCODE_ARG
     DWORD src[4];
     DWORD src_addr[4];
     SHADER_BUFFER *buffer;
-} SHADER_OPCODE_ARG;
+};
 
-typedef void (*SHADER_HANDLER)(const struct SHADER_OPCODE_ARG *);
+typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 
 struct shader_caps {
     DWORD               VertexShaderVersion;
@@ -2300,7 +2300,7 @@ extern BOOL vshader_get_input(
 extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object);
 
 /* GLSL helper functions */
-extern void shader_glsl_add_instruction_modifiers(const SHADER_OPCODE_ARG *arg);
+extern void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instruction *ins);
 
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
