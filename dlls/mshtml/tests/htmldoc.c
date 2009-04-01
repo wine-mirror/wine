@@ -103,6 +103,7 @@ DEFINE_EXPECT(Exec_SETDOWNLOADSTATE_1);
 DEFINE_EXPECT(Exec_ShellDocView_37);
 DEFINE_EXPECT(Exec_ShellDocView_84);
 DEFINE_EXPECT(Exec_ShellDocView_103);
+DEFINE_EXPECT(Exec_ShellDocView_105);
 DEFINE_EXPECT(Exec_UPDATECOMMANDS);
 DEFINE_EXPECT(Exec_SETTITLE);
 DEFINE_EXPECT(Exec_HTTPEQUIV);
@@ -149,7 +150,7 @@ static BOOL expect_LockContainer_fLock;
 static BOOL expect_InPlaceUIWindow_SetActiveObject_active = TRUE;
 static BOOL ipsex;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
-static BOOL readystate_set_loading = FALSE, load_from_stream;
+static BOOL readystate_set_loading = FALSE, readystate_set_interactive = FALSE, load_from_stream;
 static BOOL editmode = FALSE, show_failed;
 static int stream_read, protocol_read;
 static enum load_state_t {
@@ -648,9 +649,15 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
     switch(dispID) {
     case DISPID_READYSTATE:
         CHECK_EXPECT2(OnChanged_READYSTATE);
-        test_MSHTML_QueryStatus(NULL, OLECMDF_SUPPORTED
-            | (editmode && (load_state == LD_INTERACTIVE || load_state == LD_COMPLETE)
-               ? OLECMDF_ENABLED : 0));
+
+        if(readystate_set_interactive) {
+            readystate_set_interactive = FALSE;
+            load_state = LD_INTERACTIVE;
+        }
+        else
+            test_MSHTML_QueryStatus(NULL, OLECMDF_SUPPORTED
+                | (editmode && (load_state == LD_INTERACTIVE || load_state == LD_COMPLETE)
+                   ? OLECMDF_ENABLED : 0));
 
         if(readystate_set_loading) {
             readystate_set_loading = FALSE;
@@ -663,7 +670,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         CHECK_EXPECT(OnChanged_1005);
         if(!editmode)
             test_readyState(NULL);
-        load_state = LD_INTERACTIVE;
+        readystate_set_interactive = (load_state != LD_INTERACTIVE);
         return S_OK;
     }
 
@@ -2138,6 +2145,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
                 break;
             case 1:
                 CHECK_EXPECT(Exec_SETDOWNLOADSTATE_1);
+                readystate_set_interactive = (load_state != LD_INTERACTIVE);
                 break;
             default:
                 ok(0, "unexpevted V_I4(pvaIn)=%d\n", V_I4(pvaIn));
@@ -2202,6 +2210,14 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             CHECK_EXPECT2(Exec_ShellDocView_103);
 
             ok(pvaIn == NULL, "pvaIn != NULL\n");
+            ok(pvaOut == NULL, "pvaOut != NULL\n");
+
+            return E_NOTIMPL;
+
+        case 105:
+            CHECK_EXPECT2(Exec_ShellDocView_105);
+
+            ok(pvaIn != NULL, "pvaIn == NULL\n");
             ok(pvaOut == NULL, "pvaOut != NULL\n");
 
             return E_NOTIMPL;
@@ -2750,6 +2766,7 @@ static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
     SET_EXPECT(Exec_SETPROGRESSPOS);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
     SET_EXPECT(Exec_ShellDocView_103);
+    SET_EXPECT(Exec_ShellDocView_105);
     SET_EXPECT(Exec_MSHTML_PARSECOMPLETE);
     SET_EXPECT(Exec_HTTPEQUIV_DONE);
     SET_EXPECT(SetStatusText);
@@ -2802,6 +2819,7 @@ static void test_download(BOOL verb_done, BOOL css_dwl, BOOL css_try_dwl)
     CHECK_CALLED(Exec_SETPROGRESSPOS);
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
     SET_CALLED(Exec_ShellDocView_103);
+    SET_CALLED(Exec_ShellDocView_105);
     CHECK_CALLED(Exec_MSHTML_PARSECOMPLETE);
     CHECK_CALLED(Exec_HTTPEQUIV_DONE);
     SET_CALLED(SetStatusText);
