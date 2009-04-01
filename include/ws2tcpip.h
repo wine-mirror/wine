@@ -92,6 +92,14 @@ typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 # define WS_EAI_SOCKTYPE	WSAESOCKTNOSUPPORT
 #endif
 
+#ifndef USE_WS_PREFIX
+# define NI_MAXHOST         1025
+# define NI_MAXSERV         32
+#else
+# define WS_NI_MAXHOST      1025
+# define WS_NI_MAXSERV      32
+#endif
+
 /* Possible Windows flags for getnameinfo() */
 #ifndef USE_WS_PREFIX
 # define NI_NOFQDN          0x01
