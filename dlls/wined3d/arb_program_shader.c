@@ -827,7 +827,7 @@ static void pshader_hw_cnd(const SHADER_OPCODE_ARG *arg)
     pshader_gen_input_modifier_line(arg->shader, buffer, arg->src[2], 2, src_name[2]);
 
     /* The coissue flag changes the semantic of the cnd instruction in <= 1.3 shaders */
-    if (arg->reg_maps->shader_version <= WINED3DPS_VERSION(1, 3) && arg->opcode_token & WINED3DSI_COISSUE)
+    if (arg->reg_maps->shader_version <= WINED3DPS_VERSION(1, 3) && arg->coissue)
     {
         shader_addline(buffer, "MOV%s %s%s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask, src_name[1]);
     } else {
@@ -1139,12 +1139,8 @@ static void pshader_hw_tex(const SHADER_OPCODE_ARG *arg)
           projected = TRUE;
       }
   } else {
-      if(arg->opcode_token & WINED3DSI_TEXLD_PROJECT) {
-          projected = TRUE;
-      }
-      if(arg->opcode_token & WINED3DSI_TEXLD_BIAS) {
-          bias = TRUE;
-      }
+      if (arg->flags & WINED3DSI_TEXLD_PROJECT) projected = TRUE;
+      if (arg->flags & WINED3DSI_TEXLD_BIAS) bias = TRUE;
   }
   shader_hw_sample(arg, reg_sampler_code, reg_dest, reg_coord, projected, bias);
 }

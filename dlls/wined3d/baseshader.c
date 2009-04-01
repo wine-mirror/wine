@@ -785,6 +785,8 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
 
     while (WINED3DPS_END() != *pToken)
     {
+        DWORD opcode_token;
+
         /* Skip version token */
         if (shader_is_version_token(*pToken))
         {
@@ -801,13 +803,13 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         }
 
         /* Read opcode */
-        hw_arg.opcode_token = *pToken++;
-        curOpcode = shader_get_opcode(opcode_table, shader_version, hw_arg.opcode_token);
+        opcode_token = *pToken++;
+        curOpcode = shader_get_opcode(opcode_table, shader_version, opcode_token);
 
         /* Unknown opcode and its parameters */
         if (!curOpcode)
         {
-            FIXME("Unrecognized opcode: token=0x%08x\n", hw_arg.opcode_token);
+            FIXME("Unrecognized opcode: token=0x%08x\n", opcode_token);
             pToken += shader_skip_unrecognized(pToken, shader_version);
             continue;
         }
@@ -821,7 +823,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
                 || WINED3DSIO_PHASE == curOpcode->opcode
                 || WINED3DSIO_RET == curOpcode->opcode)
         {
-            pToken += shader_skip_opcode(curOpcode, hw_arg.opcode_token, shader_version);
+            pToken += shader_skip_opcode(curOpcode, opcode_token, shader_version);
             continue;
         }
 
@@ -832,14 +834,14 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         if (!hw_fct)
         {
             FIXME("Can't handle opcode %s in hwShader\n", curOpcode->name);
-            pToken += shader_skip_opcode(curOpcode, hw_arg.opcode_token, shader_version);
+            pToken += shader_skip_opcode(curOpcode, opcode_token, shader_version);
             continue;
         }
 
         hw_arg.opcode = curOpcode;
 
-        hw_arg.flags = hw_arg.opcode_token & WINED3D_OPCODESPECIFICCONTROL_MASK;
-        hw_arg.coissue = hw_arg.opcode_token & WINED3DSI_COISSUE;
+        hw_arg.flags = opcode_token & WINED3D_OPCODESPECIFICCONTROL_MASK;
+        hw_arg.coissue = opcode_token & WINED3DSI_COISSUE;
 
         /* Destination token */
         if (curOpcode->dst_token)
@@ -851,7 +853,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         }
 
         /* Predication token */
-        if (hw_arg.opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED) hw_arg.predicate = *pToken++;
+        if (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED) hw_arg.predicate = *pToken++;
 
         /* Other source tokens */
         for (i = 0; i < (curOpcode->num_params - curOpcode->dst_token); ++i)

@@ -2243,7 +2243,6 @@ typedef struct SHADER_OPCODE_ARG {
     IWineD3DBaseShader* shader;
     const shader_reg_maps *reg_maps;
     CONST SHADER_OPCODE* opcode;
-    DWORD opcode_token;
     DWORD flags;
     BOOL coissue;
     DWORD dst;
