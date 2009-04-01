@@ -48,6 +48,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+extern HINSTANCE WINAPI WOWShellExecute(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
+                                        LPCSTR lpParameters,LPCSTR lpDirectory,
+                                        INT iShowCmd, void *callback);
 
 typedef struct {     /* structure for dropped files */
  WORD     wSize;
@@ -600,31 +603,6 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
                                    LPCSTR lpFile, LPCSTR lpParameters,
                                    LPCSTR lpDirectory, INT16 iShowCmd )
 {
-    SHELLEXECUTEINFOW seiW;
-    WCHAR *wVerb = NULL, *wFile = NULL, *wParameters = NULL, *wDirectory = NULL;
-    HANDLE hProcess = 0;
-
-    seiW.lpVerb = lpOperation ? __SHCloneStrAtoW(&wVerb, lpOperation) : NULL;
-    seiW.lpFile = lpFile ? __SHCloneStrAtoW(&wFile, lpFile) : NULL;
-    seiW.lpParameters = lpParameters ? __SHCloneStrAtoW(&wParameters, lpParameters) : NULL;
-    seiW.lpDirectory = lpDirectory ? __SHCloneStrAtoW(&wDirectory, lpDirectory) : NULL;
-
-    seiW.cbSize = sizeof(seiW);
-    seiW.fMask = 0;
-    seiW.hwnd = HWND_32(hWnd);
-    seiW.nShow = iShowCmd;
-    seiW.lpIDList = 0;
-    seiW.lpClass = 0;
-    seiW.hkeyClass = 0;
-    seiW.dwHotKey = 0;
-    seiW.hProcess = hProcess;
-
-    SHELL_execute( &seiW, SHELL_Execute16 );
-
-    SHFree(wVerb);
-    SHFree(wFile);
-    SHFree(wParameters);
-    SHFree(wDirectory);
-
-    return HINSTANCE_16(seiW.hInstApp);
+    return HINSTANCE_16( WOWShellExecute( HWND_32(hWnd), lpOperation, lpFile, lpParameters,
+                                          lpDirectory, iShowCmd, SHELL_Execute16 ));
 }

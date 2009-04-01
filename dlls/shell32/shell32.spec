@@ -438,4 +438,4 @@
 @ stdcall StrStrIA(str str) shlwapi.StrStrIA
 @ stdcall StrStrIW(wstr wstr) shlwapi.StrStrIW
 @ stdcall StrStrW(wstr wstr) shlwapi.StrStrW
-@ stub WOWShellExecute
+@ stdcall WOWShellExecute(long str str str str long ptr)
