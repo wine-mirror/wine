@@ -2011,20 +2011,35 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     rectcpy[3].Y = rectcpy[2].Y = rect->Y + rect->Height;
     transform_and_round_points(graphics, corners, rectcpy, 4);
 
-    if(roundr(rect->Width) == 0 && roundr(rect->Height) == 0){
-        rel_width = rel_height = 1.0;
-        nwidth = nheight = INT_MAX;
+    if (roundr(rect->Width) == 0)
+    {
+        rel_width = 1.0;
+        nwidth = INT_MAX;
     }
-    else{
+    else
+    {
         rel_width = sqrt((corners[1].x - corners[0].x) * (corners[1].x - corners[0].x) +
                          (corners[1].y - corners[0].y) * (corners[1].y - corners[0].y))
                          / rect->Width;
+        nwidth = roundr(rel_width * rect->Width);
+    }
+
+    if (roundr(rect->Height) == 0)
+    {
+        rel_height = 1.0;
+        nheight = INT_MAX;
+    }
+    else
+    {
         rel_height = sqrt((corners[2].x - corners[1].x) * (corners[2].x - corners[1].x) +
                           (corners[2].y - corners[1].y) * (corners[2].y - corners[1].y))
                           / rect->Height;
-
-        nwidth = roundr(rel_width * rect->Width);
         nheight = roundr(rel_height * rect->Height);
+    }
+
+    if (roundr(rect->Width) != 0 && roundr(rect->Height) != 0)
+    {
+        /* FIXME: If only the width or only the height is 0, we should probably still clip */
         rgn = CreatePolygonRgn(corners, 4, ALTERNATE);
         SelectClipRgn(graphics->hdc, rgn);
     }
