@@ -372,14 +372,14 @@ static ULONG WINAPI HttpProtocol_Release(IInternetProtocol *iface)
 
 static HRESULT WINAPI HttpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
-        DWORD grfPI, DWORD dwReserved)
+        DWORD grfPI, HANDLE_PTR dwReserved)
 {
     HttpProtocol *This = PROTOCOL_THIS(iface);
 
     static const WCHAR httpW[] = {'h','t','t','p',':'};
     static const WCHAR httpsW[] = {'h','t','t','p','s',':'};
 
-    TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
+    TRACE("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
     if(This->https

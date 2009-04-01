@@ -335,7 +335,7 @@ static ULONG WINAPI Protocol_Release(IInternetProtocol *iface)
 
 static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
-        DWORD grfPI, DWORD dwReserved)
+        DWORD grfPI, HANDLE_PTR dwReserved)
 {
     BINDINFO bindinfo;
     DWORD bindf = 0;
@@ -349,7 +349,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
     ok(pOIBindInfo != NULL, "pOIBindInfo == NULL\n");
     ok(!grfPI, "grfPI = %x\n", grfPI);
-    ok(!dwReserved, "dwReserved = %d\n", dwReserved);
+    ok(!dwReserved, "dwReserved = %lx\n", dwReserved);
 
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(bindinfo);

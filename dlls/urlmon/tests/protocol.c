@@ -877,7 +877,7 @@ static DWORD WINAPI thread_proc(PVOID arg)
 
 static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
-        DWORD grfPI, DWORD dwReserved)
+        DWORD grfPI, HANDLE_PTR dwReserved)
 {
     BINDINFO bindinfo, exp_bindinfo;
     DWORD cbindf = 0;
@@ -890,7 +890,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(pOIProtSink != &protocol_sink, "unexpected pOIProtSink\n");
     ok(pOIBindInfo != &bind_info, "unexpected pOIBindInfo\n");
     ok(!grfPI, "grfPI = %x\n", grfPI);
-    ok(!dwReserved, "dwReserved = %d\n", dwReserved);
+    ok(!dwReserved, "dwReserved = %lx\n", dwReserved);
 
     memset(&bindinfo, 0, sizeof(bindinfo));
     bindinfo.cbSize = sizeof(bindinfo);

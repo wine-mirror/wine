@@ -143,13 +143,13 @@ static ULONG WINAPI FtpProtocol_Release(IInternetProtocol *iface)
 
 static HRESULT WINAPI FtpProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
-        DWORD grfPI, DWORD dwReserved)
+        DWORD grfPI, HANDLE_PTR dwReserved)
 {
     FtpProtocol *This = PROTOCOL_THIS(iface);
 
     static const WCHAR ftpW[] = {'f','t','p',':'};
 
-    TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
+    TRACE("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink,
           pOIBindInfo, grfPI, dwReserved);
 
     if(strncmpW(szUrl, ftpW, sizeof(ftpW)/sizeof(WCHAR)))

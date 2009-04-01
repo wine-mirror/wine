@@ -703,7 +703,7 @@ interface IInternetProtocolRoot : IUnknown
         [in] IInternetProtocolSink *pOIProtSink,
         [in] IInternetBindInfo *pOIBindInfo,
         [in] DWORD grfPI,
-        [in] DWORD dwReserved);
+        [in] HANDLE_PTR dwReserved);
 
     HRESULT Continue(
         [in] PROTOCOLDATA *pProtocolData);

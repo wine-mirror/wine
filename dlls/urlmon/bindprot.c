@@ -123,7 +123,7 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocol *iface)
 
 static HRESULT WINAPI BindProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
-        DWORD grfPI, DWORD dwReserved)
+        DWORD grfPI, HANDLE_PTR dwReserved)
 {
     BindProtocol *This = PROTOCOL_THIS(iface);
     IInternetProtocol *protocol = NULL;
@@ -134,7 +134,7 @@ static HRESULT WINAPI BindProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     LPOLESTR clsid_str;
     HRESULT hres;
 
-    TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
+    TRACE("(%p)->(%s %p %p %08x %lx)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
     if(!szUrl || !pOIProtSink || !pOIBindInfo)
