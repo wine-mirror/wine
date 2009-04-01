@@ -49,7 +49,6 @@ EXPORTS
     toupperW
     vsnprintfW
     vsprintfW
-    wine_anon_mmap
     wine_call_on_stack
     wine_casemap_lower
     wine_casemap_upper
@@ -96,10 +95,6 @@ EXPORTS
     wine_ldt_is_system
     wine_ldt_realloc_entries
     wine_ldt_set_entry
-    wine_mmap_add_reserved_area
-    wine_mmap_enum_reserved_areas
-    wine_mmap_is_in_reserved_area
-    wine_mmap_remove_reserved_area
     wine_pthread_get_functions
     wine_pthread_set_functions
     wine_switch_to_stack

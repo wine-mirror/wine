@@ -41,6 +41,8 @@
 #include "wine/library.h"
 #include "wine/list.h"
 
+#ifdef HAVE_MMAP
+
 struct reserved_area
 {
     struct list entry;
@@ -50,8 +52,6 @@ struct reserved_area
 
 static struct list reserved_areas = LIST_INIT(reserved_areas);
 static const unsigned int granularity_mask = 0xffff;  /* reserved areas have 64k granularity */
-
-#ifdef HAVE_MMAP
 
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
@@ -390,23 +390,6 @@ void mmap_init(void)
     reserve_dos_area();
 }
 
-#else /* HAVE_MMAP */
-
-void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
-{
-    return (void *)-1;
-}
-
-static inline int munmap( void *ptr, size_t size )
-{
-    return 0;
-}
-
-void mmap_init(void)
-{
-}
-
-#endif
 
 /***********************************************************************
  *           wine_mmap_add_reserved_area
@@ -602,3 +585,11 @@ int wine_mmap_enum_reserved_areas( int (*enum_func)(void *base, size_t size, voi
     }
     return ret;
 }
+
+#else /* HAVE_MMAP */
+
+void mmap_init(void)
+{
+}
+
+#endif
