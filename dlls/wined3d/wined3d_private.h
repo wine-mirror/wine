@@ -295,7 +295,20 @@ typedef struct wined3d_settings_s {
 extern wined3d_settings_t wined3d_settings;
 
 /* Shader backends */
-struct SHADER_OPCODE_ARG;
+
+/* TODO: Make this dynamic, based on shader limits ? */
+#define MAX_ATTRIBS 16
+#define MAX_REG_ADDR 1
+#define MAX_REG_TEMP 32
+#define MAX_REG_TEXCRD 8
+#define MAX_REG_INPUT 12
+#define MAX_REG_OUTPUT 12
+#define MAX_CONST_I 16
+#define MAX_CONST_B 16
+
+/* FIXME: This needs to go up to 2048 for
+ * Shader model 3 according to msdn (and for software shaders) */
+#define MAX_LABELS 16
 
 #define SHADER_PGMSIZE 65535
 typedef struct SHADER_BUFFER {
@@ -393,6 +406,65 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_TABLE_SIZE
 };
 
+typedef struct semantic
+{
+    DWORD usage;
+    DWORD reg;
+} semantic;
+
+typedef struct shader_reg_maps
+{
+    DWORD shader_version;
+    char texcoord[MAX_REG_TEXCRD];          /* pixel < 3.0 */
+    char temporary[MAX_REG_TEMP];           /* pixel, vertex */
+    char address[MAX_REG_ADDR];             /* vertex */
+    char packed_input[MAX_REG_INPUT];       /* pshader >= 3.0 */
+    char packed_output[MAX_REG_OUTPUT];     /* vertex >= 3.0 */
+    char attributes[MAX_ATTRIBS];           /* vertex */
+    char labels[MAX_LABELS];                /* pixel, vertex */
+    DWORD texcoord_mask[MAX_REG_TEXCRD];    /* vertex < 3.0 */
+
+    /* Sampler usage tokens
+     * Use 0 as default (bit 31 is always 1 on a valid token) */
+    DWORD samplers[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
+    BOOL bumpmat[MAX_TEXTURES], luminanceparams[MAX_TEXTURES];
+    char usesnrm, vpos, usesdsy;
+    char usesrelconstF;
+
+    /* Whether or not loops are used in this shader, and nesting depth */
+    unsigned loop_depth;
+
+    /* Whether or not this shader uses fog */
+    char fog;
+
+} shader_reg_maps;
+
+typedef struct SHADER_OPCODE
+{
+    unsigned int opcode;
+    const char *name;
+    char dst_token;
+    CONST UINT num_params;
+    enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
+    DWORD min_version;
+    DWORD max_version;
+} SHADER_OPCODE;
+
+typedef struct SHADER_OPCODE_ARG
+{
+    IWineD3DBaseShader *shader;
+    const shader_reg_maps *reg_maps;
+    CONST SHADER_OPCODE *opcode;
+    DWORD flags;
+    BOOL coissue;
+    DWORD dst;
+    DWORD dst_addr;
+    DWORD predicate;
+    DWORD src[4];
+    DWORD src_addr[4];
+    SHADER_BUFFER *buffer;
+} SHADER_OPCODE_ARG;
+
 typedef void (*SHADER_HANDLER)(const struct SHADER_OPCODE_ARG *);
 
 struct shader_caps {
@@ -456,8 +528,6 @@ struct ps_compile_args {
        D3D9 has a limit of 16 samplers and the fixup is superfluous
        in D3D10 (unconditional NP2 support mandatory). */
 };
-
-#define MAX_ATTRIBS 16
 
 enum fog_src_type {
     VS_FOG_Z        = 0,
@@ -2166,55 +2236,11 @@ BOOL getDepthStencilBits(const struct GlPixelFormatDesc *format_desc, short *dep
 void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2);
 UINT wined3d_log2i(UINT32 x);
 
-/* TODO: Make this dynamic, based on shader limits ? */
-#define MAX_REG_ADDR 1
-#define MAX_REG_TEMP 32
-#define MAX_REG_TEXCRD 8
-#define MAX_REG_INPUT 12
-#define MAX_REG_OUTPUT 12
-#define MAX_CONST_I 16
-#define MAX_CONST_B 16
-
-/* FIXME: This needs to go up to 2048 for
- * Shader model 3 according to msdn (and for software shaders) */
-#define MAX_LABELS 16
-
-typedef struct semantic {
-    DWORD usage;
-    DWORD reg;
-} semantic;
-
 typedef struct local_constant {
     struct list entry;
     unsigned int idx;
     DWORD value[4];
 } local_constant;
-
-typedef struct shader_reg_maps {
-    DWORD shader_version;
-    char texcoord[MAX_REG_TEXCRD];          /* pixel < 3.0 */
-    char temporary[MAX_REG_TEMP];           /* pixel, vertex */
-    char address[MAX_REG_ADDR];             /* vertex */
-    char packed_input[MAX_REG_INPUT];       /* pshader >= 3.0 */
-    char packed_output[MAX_REG_OUTPUT];     /* vertex >= 3.0 */
-    char attributes[MAX_ATTRIBS];           /* vertex */
-    char labels[MAX_LABELS];                /* pixel, vertex */
-    DWORD texcoord_mask[MAX_REG_TEXCRD];    /* vertex < 3.0 */
-
-    /* Sampler usage tokens 
-     * Use 0 as default (bit 31 is always 1 on a valid token) */
-    DWORD samplers[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
-    BOOL bumpmat[MAX_TEXTURES], luminanceparams[MAX_TEXTURES];
-    char usesnrm, vpos, usesdsy;
-    char usesrelconstF;
-
-    /* Whether or not loops are used in this shader, and nesting depth */
-    unsigned loop_depth;
-
-    /* Whether or not this shader uses fog */
-    char fog;
-
-} shader_reg_maps;
 
 /* Undocumented opcode controls */
 #define INST_CONTROLS_SHIFT 16
@@ -2228,30 +2254,6 @@ typedef enum COMPARISON_TYPE {
     COMPARISON_NE = 5,
     COMPARISON_LE = 6
 } COMPARISON_TYPE;
-
-typedef struct SHADER_OPCODE {
-    unsigned int  opcode;
-    const char*   name;
-    char          dst_token;
-    CONST UINT    num_params;
-    enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
-    DWORD         min_version;
-    DWORD         max_version;
-} SHADER_OPCODE;
-
-typedef struct SHADER_OPCODE_ARG {
-    IWineD3DBaseShader* shader;
-    const shader_reg_maps *reg_maps;
-    CONST SHADER_OPCODE* opcode;
-    DWORD flags;
-    BOOL coissue;
-    DWORD dst;
-    DWORD dst_addr;
-    DWORD predicate;
-    DWORD src[4];
-    DWORD src_addr[4];
-    SHADER_BUFFER* buffer;
-} SHADER_OPCODE_ARG;
 
 typedef struct SHADER_LIMITS {
     unsigned int temporary;
