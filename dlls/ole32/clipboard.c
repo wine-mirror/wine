@@ -387,41 +387,32 @@ static HRESULT enum_fmtetc_construct(ole_priv_data *data, UINT pos, IEnumFORMATE
 }
 
 /***********************************************************************
- * OLEClipbrd_GlobalDupMem( HGLOBAL )
+ *                    dup_global_mem
+ *
  * Helper method to duplicate an HGLOBAL chunk of memory
  */
-static HGLOBAL OLEClipbrd_GlobalDupMem( HGLOBAL hGlobalSrc )
+static HRESULT dup_global_mem( HGLOBAL src, HGLOBAL *dst )
 {
-    HGLOBAL hGlobalDest;
-    PVOID pGlobalSrc, pGlobalDest;
-    DWORD cBytes;
+    void *src_ptr, *dst_ptr;
+    DWORD size;
 
-    if ( !hGlobalSrc )
-      return 0;
+    *dst = NULL;
+    if ( !src ) return S_FALSE;
 
-    cBytes = GlobalSize(hGlobalSrc);
-    if ( 0 == cBytes )
-      return 0;
+    size = GlobalSize(src);
 
-    hGlobalDest = GlobalAlloc( GMEM_DDESHARE|GMEM_MOVEABLE,
-                               cBytes );
-    if ( !hGlobalDest )
-      return 0;
+    *dst = GlobalAlloc( GMEM_DDESHARE|GMEM_MOVEABLE, size );
+    if ( !*dst ) return E_OUTOFMEMORY;
 
-    pGlobalSrc = GlobalLock(hGlobalSrc);
-    pGlobalDest = GlobalLock(hGlobalDest);
-    if ( !pGlobalSrc || !pGlobalDest )
-    {
-      GlobalFree(hGlobalDest);
-      return 0;
-    }
+    src_ptr = GlobalLock(src);
+    dst_ptr = GlobalLock(*dst);
 
-    memcpy(pGlobalDest, pGlobalSrc, cBytes);
+    memcpy(dst_ptr, src_ptr, size);
 
-    GlobalUnlock(hGlobalSrc);
-    GlobalUnlock(hGlobalDest);
+    GlobalUnlock(*dst);
+    GlobalUnlock(src);
 
-    return hGlobalDest;
+    return S_OK;
 }
 
 /************************************************************
@@ -548,7 +539,7 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
 static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
 {
     STGMEDIUM std;
-    HGLOBAL hDup;
+    HGLOBAL clip_data = NULL;
     HRESULT hr;
 
     /* Embed source hack */
@@ -570,16 +561,13 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
         goto end;
     }
 
-    if ( !(hDup = OLEClipbrd_GlobalDupMem(std.u.hGlobal)) )
-    {
-        hr = E_OUTOFMEMORY;
-        goto end;
-    }
+    hr = dup_global_mem(std.u.hGlobal, &clip_data);
+    if(FAILED(hr)) goto end;
 
-    if ( !SetClipboardData( fmt->cfFormat, hDup ) )
+    if ( !SetClipboardData( fmt->cfFormat, clip_data ) )
     {
         WARN("() : Failed to set rendered clipboard data into clipboard!\n");
-        GlobalFree(hDup);
+        GlobalFree(clip_data);
         hr = CLIPBRD_E_CANT_SET;
     }
 
