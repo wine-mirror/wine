@@ -66,7 +66,6 @@
 #include "winuser.h"
 #include "lzexpand.h"
 
-#include "wine/winbase16.h"
 #include "wine/unicode.h"
 #include "objbase.h"
 #include "typelib.h"
@@ -76,6 +75,26 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 WINE_DECLARE_DEBUG_CHANNEL(typelib);
+
+typedef struct
+{
+    WORD     offset;
+    WORD     length;
+    WORD     flags;
+    WORD     id;
+    WORD     handle;
+    WORD     usage;
+} NE_NAMEINFO;
+
+typedef struct
+{
+    WORD        type_id;   /* Type identifier */
+    WORD        count;     /* Number of resources of this type */
+    DWORD       resloader; /* SetResourceHandler() */
+    /*
+     * Name info array.
+     */
+} NE_TYPEINFO;
 
 static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, VARTYPE *vt);
 static HRESULT TLB_AllocAndInitVarDesc(const VARDESC *src, VARDESC **dest_ptr);
