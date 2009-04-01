@@ -42,12 +42,12 @@ static void test_OpenCase(void)
         ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
     }
     h = ICOpen(mmioFOURCC('V','I','D','C'),mmioFOURCC('m','s','v','c'),ICMODE_DECOMPRESS);
-    todo_wine ok(0!=h,"ICOpen(VIDC.msvc) failed\n");
+    ok(0!=h,"ICOpen(VIDC.msvc) failed\n");
     if (h) {
         ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
     }
     h = ICOpen(mmioFOURCC('V','I','D','C'),mmioFOURCC('M','S','V','C'),ICMODE_DECOMPRESS);
-    todo_wine ok(0!=h,"ICOpen(VIDC.MSVC) failed\n");
+    ok(0!=h,"ICOpen(VIDC.MSVC) failed\n");
     if (h) {
         ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
     }
