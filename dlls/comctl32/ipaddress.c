@@ -508,7 +508,7 @@ IPADDRESS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    return return_val;
 		} else if (len == 3 && startsel==endsel && endsel==len)
 		    IPADDRESS_GotoNextField (infoPtr, index, POS_SELALL);
-		else if (len < 3) break;
+		else if (len < 3 || startsel != endsel) break;
 	    } else if(c == '.' || c == ' ') {
 		if(len && startsel==endsel && startsel != 0) {
 		    IPADDRESS_GotoNextField(infoPtr, index, POS_SELALL);
