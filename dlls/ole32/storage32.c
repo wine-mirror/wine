@@ -912,7 +912,7 @@ static HRESULT WINAPI StorageBaseImpl_RenameElement(
      * Invoke Destroy to get rid of the ole property and automatically redo
      * the linking of its previous and next members...
      */
-    IStorage_DestroyElement((IStorage*)This->ancestorStorage, pwcsOldName);
+    IStorage_DestroyElement(iface, pwcsOldName);
 
   }
   else
