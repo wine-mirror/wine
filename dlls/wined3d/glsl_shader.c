@@ -1314,10 +1314,9 @@ void shader_glsl_add_instruction_modifiers(const SHADER_OPCODE_ARG* arg)
     }
 }
 
-static inline const char* shader_get_comp_op(
-    const DWORD opcode) {
-
-    DWORD op = (opcode & INST_CONTROLS_MASK) >> INST_CONTROLS_SHIFT;
+static inline const char *shader_get_comp_op(DWORD flags)
+{
+    DWORD op = (flags & INST_CONTROLS_MASK) >> INST_CONTROLS_SHIFT;
     switch (op) {
         case COMPARISON_GT: return ">";
         case COMPARISON_EQ: return "==";
@@ -1972,7 +1971,8 @@ static void shader_glsl_cnd(const SHADER_OPCODE_ARG *arg)
         shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, &src2_param);
 
         /* Fun: The D3DSI_COISSUE flag changes the semantic of the cnd instruction for < 1.4 shaders */
-        if(arg->opcode_token & WINED3DSI_COISSUE) {
+        if (arg->coissue)
+        {
             shader_addline(arg->buffer, "%s /* COISSUE! */);\n", src1_param.param_str);
         } else {
             shader_addline(arg->buffer, "%s > 0.5 ? %s : %s);\n",
@@ -2304,7 +2304,7 @@ static void shader_glsl_ifc(const SHADER_OPCODE_ARG *arg)
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_0, &src1_param);
 
     shader_addline(arg->buffer, "if (%s %s %s) {\n",
-            src0_param.param_str, shader_get_comp_op(arg->opcode_token), src1_param.param_str);
+            src0_param.param_str, shader_get_comp_op(arg->flags), src1_param.param_str);
 }
 
 static void shader_glsl_else(const SHADER_OPCODE_ARG *arg)
@@ -2327,7 +2327,7 @@ static void shader_glsl_breakc(const SHADER_OPCODE_ARG *arg)
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_0, &src1_param);
 
     shader_addline(arg->buffer, "if (%s %s %s) break;\n",
-            src0_param.param_str, shader_get_comp_op(arg->opcode_token), src1_param.param_str);
+            src0_param.param_str, shader_get_comp_op(arg->flags), src1_param.param_str);
 }
 
 static void shader_glsl_label(const SHADER_OPCODE_ARG *arg)
@@ -2401,7 +2401,8 @@ static void pshader_glsl_tex(const SHADER_OPCODE_ARG *arg)
             mask = WINED3DSP_WRITEMASK_3;
         }
     } else {
-        if(arg->opcode_token & WINED3DSI_TEXLD_PROJECT) {
+        if (arg->flags & WINED3DSI_TEXLD_PROJECT)
+        {
             /* ps 2.0 texldp instruction always divides by the fourth component. */
             sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
             mask = WINED3DSP_WRITEMASK_3;
@@ -2430,7 +2431,8 @@ static void pshader_glsl_tex(const SHADER_OPCODE_ARG *arg)
     } else {
         glsl_src_param_t coord_param;
         shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], mask, &coord_param);
-        if(arg->opcode_token & WINED3DSI_TEXLD_BIAS) {
+        if (arg->flags & WINED3DSI_TEXLD_BIAS)
+        {
             glsl_src_param_t bias;
             shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, &bias);
             shader_glsl_gen_sample_code(arg, sampler_idx, &sample_function, swizzle, bias.param_str,
