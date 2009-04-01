@@ -52,7 +52,7 @@ FARPROC WINAPI DECLSPEC_HIDDEN __wine_spec_delay_load( unsigned int id )
     return proc;
 }
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__APPLE__)  /* we can't support destructors properly on Mac OS */
 static void free_delay_imports(void) __attribute__((destructor));
 static void free_delay_imports(void)
 {
