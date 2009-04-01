@@ -1939,7 +1939,15 @@ static NTSTATUS DVD_GetRegion(int dev, PDVD_REGION region)
 static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, PDVD_LAYER_DESCRIPTOR layer)
 {
 #ifdef DVD_READ_STRUCT
-    dvd_struct s;
+    /* dvd_struct is not defined consistently across platforms */
+    union
+    {
+	struct dvd_physical	physical;
+	struct dvd_copyright	copyright;
+	struct dvd_disckey	disckey;
+	struct dvd_bca		bca;
+	struct dvd_manufact	manufact;
+    } s;
 
     if (structure->BlockByteOffset.u.HighPart || structure->BlockByteOffset.u.LowPart)
         FIXME(": BlockByteOffset is not handled\n");
@@ -1947,26 +1955,26 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
     switch (structure->Format)
     {
     case DvdPhysicalDescriptor:
-        s.type = DVD_STRUCT_PHYSICAL;
+        s.physical.type = DVD_STRUCT_PHYSICAL;
         s.physical.layer_num = structure->LayerNumber;
         break;
 
     case DvdCopyrightDescriptor:
-        s.type = DVD_STRUCT_COPYRIGHT;
+        s.copyright.type = DVD_STRUCT_COPYRIGHT;
         s.copyright.layer_num = structure->LayerNumber;
         break;
 
     case DvdDiskKeyDescriptor:
-        s.type = DVD_STRUCT_DISCKEY;
+        s.disckey.type = DVD_STRUCT_DISCKEY;
         s.disckey.agid = structure->SessionId;
         break;
 
     case DvdBCADescriptor:
-        s.type = DVD_STRUCT_BCA;
+        s.bca.type = DVD_STRUCT_BCA;
         break;
 
     case DvdManufacturerDescriptor:
-        s.type = DVD_STRUCT_MANUFACT;
+        s.manufact.type = DVD_STRUCT_MANUFACT;
         s.manufact.layer_num = structure->LayerNumber;
         break;
 
