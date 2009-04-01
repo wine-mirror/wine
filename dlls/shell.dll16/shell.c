@@ -42,7 +42,6 @@
 #include "shlwapi.h"
 
 #include "wine/winbase16.h"
-#include "shell32_main.h"
 
 #include "wine/debug.h"
 
@@ -51,6 +50,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 extern HINSTANCE WINAPI WOWShellExecute(HWND hWnd, LPCSTR lpOperation,LPCSTR lpFile,
                                         LPCSTR lpParameters,LPCSTR lpDirectory,
                                         INT iShowCmd, void *callback);
+
+#define HICON_16(h32)		(LOWORD(h32))
+#define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
+#define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
+#define HINSTANCE_16(h32)	(LOWORD(h32))
 
 typedef struct {     /* structure for dropped files */
  WORD     wSize;
@@ -170,7 +174,9 @@ HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
  */
 BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
                                LPARAM lParam )
-{ return (BOOL16)AboutDlgProc( HWND_32(hWnd), msg, wParam, lParam );
+{
+    FIXME( "stub\n" );
+    return FALSE;
 }
 
 

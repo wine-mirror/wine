@@ -1,0 +1,19 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = shell.dll16
+IMPORTS   = shell32 user32 advapi32 kernel32
+
+EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,shell32.dll
+EXTRARCFLAGS  = -O res16
+
+SPEC_SRCS = shell.dll16.spec
+
+C_SRCS = shell.c
+
+RC_SRCS = version.rc
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

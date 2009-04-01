@@ -84,7 +84,6 @@ dlls/rpcrt4/tests/server_c.c
 dlls/rpcrt4/tests/server_s.c
 dlls/setupx.dll16
 dlls/shdocvw/shdocvw_v1.tlb
-dlls/shell.dll16
 dlls/stdole2.tlb/std_ole_v2.tlb
 dlls/stdole32.tlb/std_ole_v1.tlb
 dlls/system.drv16

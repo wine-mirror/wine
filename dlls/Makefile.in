@@ -25,7 +25,6 @@ WIN16_FILES = \
 	mmsystem.dll16 \
 	msvideo.dll16 \
 	setupx.dll16 \
-	shell.dll16 \
 	system.drv16 \
 	toolhelp.dll16 \
 	user.exe16 \
@@ -57,9 +56,6 @@ msvideo.dll16:
 
 setupx.dll16:
 	echo "setupapi.dll" >$@
-
-shell.dll16:
-	echo "shell32.dll" >$@
 
 ddeml.dll16 user.exe16:
 	echo "user32.dll" >$@

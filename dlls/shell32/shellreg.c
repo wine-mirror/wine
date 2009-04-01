@@ -33,7 +33,6 @@
 #include "winreg.h"
 
 #include "undocshell.h"
-#include "wine/winbase16.h"
 
 #include "wine/debug.h"
 

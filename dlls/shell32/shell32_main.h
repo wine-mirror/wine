@@ -35,7 +35,6 @@
 #include "undocshell.h"
 #include "shlobj.h"
 #include "shellapi.h"
-#include "wine/windef16.h"
 #include "wine/unicode.h"
 
 /*******************************************
@@ -153,20 +152,6 @@ void FreeChangeNotifications(void);
 
 BOOL SHELL_ConfirmYesNoW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir);
 
-/* 16-bit functions */
-void        WINAPI DragAcceptFiles16(HWND16 hWnd, BOOL16 b);
-UINT16      WINAPI DragQueryFile16(HDROP16 hDrop, WORD wFile, LPSTR lpszFile, WORD wLength);
-void        WINAPI DragFinish16(HDROP16 h);
-BOOL16      WINAPI DragQueryPoint16(HDROP16 hDrop, POINT16 *p);
-HINSTANCE16 WINAPI ShellExecute16(HWND16,LPCSTR,LPCSTR,LPCSTR,LPCSTR,INT16);
-HICON16     WINAPI ExtractIcon16(HINSTANCE16,LPCSTR,UINT16);
-HICON16     WINAPI ExtractAssociatedIcon16(HINSTANCE16,LPSTR,LPWORD);
-HICON16     WINAPI ExtractIconEx16 ( LPCSTR, INT16, HICON16 *, HICON16 *, UINT16 );
-HINSTANCE16 WINAPI FindExecutable16(LPCSTR,LPCSTR,LPSTR);
-HGLOBAL16   WINAPI InternalExtractIcon16(HINSTANCE16,LPCSTR,UINT16,WORD);
-BOOL16      WINAPI ShellAbout16(HWND16,LPCSTR,LPCSTR,HICON16);
-BOOL16      WINAPI AboutDlgProc16(HWND16,UINT16,WPARAM16,LPARAM);
-
 static inline BOOL SHELL_OsIsUnicode(void)
 {
     /* if high-bit of version is 0, we are emulating NT */
@@ -204,12 +189,6 @@ static inline WCHAR * __SHCloneStrAtoW(WCHAR ** target, const char * source)
 	MultiByteToWideChar(CP_ACP, 0, source, -1, *target, len);
 	return *target;
 }
-
-/* handle conversions */
-#define HICON_16(h32)		(LOWORD(h32))
-#define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
-#define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
-#define HINSTANCE_16(h32)	(LOWORD(h32))
 
 typedef UINT_PTR (*SHELL_ExecuteW32)(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
 			    const SHELLEXECUTEINFOW *sei, LPSHELLEXECUTEINFOW sei_out);

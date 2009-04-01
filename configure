@@ -26853,6 +26853,14 @@ dlls/shdocvw/tests/Makefile: dlls/shdocvw/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/shdocvw/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/shell.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	shell.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/shell.dll16/Makefile: dlls/shell.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/shell.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/shell32/Makefile"
 test "x$enable_shell32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	shell32"
@@ -29204,6 +29212,7 @@ do
     "dlls/shdoclc/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shdoclc/Makefile" ;;
     "dlls/shdocvw/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shdocvw/Makefile" ;;
     "dlls/shdocvw/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shdocvw/tests/Makefile" ;;
+    "dlls/shell.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shell.dll16/Makefile" ;;
     "dlls/shell32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shell32/Makefile" ;;
     "dlls/shell32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shell32/tests/Makefile" ;;
     "dlls/shfolder/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/shfolder/Makefile" ;;

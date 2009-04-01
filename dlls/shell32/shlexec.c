@@ -42,7 +42,6 @@
 #include "shlwapi.h"
 #include "ddeml.h"
 
-#include "wine/winbase16.h"
 #include "shell32_main.h"
 #include "pidl.h"
 #include "shresdef.h"
