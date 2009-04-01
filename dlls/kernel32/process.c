@@ -56,6 +56,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(file);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
+#ifdef __APPLE__
+extern char **__wine_get_main_environment(void);
+#define environ __wine_get_main_environment()
+#else
+extern char **environ;
+#endif
+
 typedef struct
 {
     LPSTR lpEnvAddress;
@@ -267,7 +274,7 @@ static BOOL find_exe_file( const WCHAR *name, WCHAR *buffer, int buflen, HANDLE 
  *
  * Build the Win32 environment from the Unix environment
  */
-static BOOL build_initial_environment( char **environ )
+static BOOL build_initial_environment(void)
 {
     SIZE_T size = 1;
     char **e;
@@ -989,7 +996,7 @@ void CDECL __wine_kernel_init(void)
     if (!params->Environment)
     {
         /* Copy the parent environment */
-        if (!build_initial_environment( __wine_main_environ )) exit(1);
+        if (!build_initial_environment()) exit(1);
 
         /* convert old configuration to new format */
         convert_old_config();
