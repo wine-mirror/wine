@@ -4776,6 +4776,13 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
     if(!State)
         return DDERR_INVALIDPARAMS;
 
+    if (TexStageStateType > D3DTSS_TEXTURETRANSFORMFLAGS)
+    {
+        WARN("Invalid TexStageStateType %#x passed.\n", TexStageStateType);
+        *State = 0;
+        return DD_OK;
+    }
+
     EnterCriticalSection(&ddraw_cs);
 
     if (l->sampler_state)
@@ -4895,6 +4902,12 @@ IDirect3DDeviceImpl_7_SetTextureStageState(IDirect3DDevice7 *iface,
     const struct tss_lookup *l = &tss_lookup[TexStageStateType];
     HRESULT hr;
     TRACE("(%p)->(%08x,%08x,%08x): Relay!\n", This, Stage, TexStageStateType, State);
+
+    if (TexStageStateType > D3DTSS_TEXTURETRANSFORMFLAGS)
+    {
+        WARN("Invalid TexStageStateType %#x passed.\n", TexStageStateType);
+        return DD_OK;
+    }
 
     EnterCriticalSection(&ddraw_cs);
 
