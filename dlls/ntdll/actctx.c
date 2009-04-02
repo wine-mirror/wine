@@ -2022,7 +2022,9 @@ static NTSTATUS parse_depend_manifests(struct actctx_loader* acl)
         {
             if (!acl->dependencies[i].optional)
             {
-                FIXME( "Could not find dependent assembly %s\n", debugstr_w(acl->dependencies[i].name) );
+                FIXME( "Could not find dependent assembly %s (%s)\n",
+                    debugstr_w(acl->dependencies[i].name),
+                    debugstr_version(&acl->dependencies[i].version) );
                 status = STATUS_SXS_CANT_GEN_ACTCTX;
                 break;
             }
