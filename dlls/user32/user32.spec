@@ -385,7 +385,7 @@
 @ stdcall GetWindowPlacement(long ptr)
 @ stdcall GetWindowRect(long ptr)
 @ stdcall GetWindowRgn(long long)
-# @ stub GetWindowRgnBox
+@ stdcall GetWindowRgnBox(long ptr)
 @ stdcall GetWindowTextA(long ptr long)
 @ stdcall GetWindowTextLengthA(long)
 @ stdcall GetWindowTextLengthW(long)

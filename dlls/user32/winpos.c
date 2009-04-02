@@ -155,6 +155,26 @@ int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
     return nRet;
 }
 
+/***********************************************************************
+ *		GetWindowRgnBox (USER32.@)
+ */
+int WINAPI GetWindowRgnBox( HWND hwnd, LPRECT prect )
+{
+    int ret = ERROR;
+    HRGN hrgn;
+
+    if (!prect)
+        return ERROR;
+
+    if ((hrgn = CreateRectRgn(0, 0, 0, 0)))
+    {
+        if ((ret = GetWindowRgn( hwnd, hrgn )) != ERROR )
+            ret = GetRgnBox( hrgn, prect );
+        DeleteObject(hrgn);
+    }
+
+    return ret;
+}
 
 /***********************************************************************
  *		SetWindowRgn (USER32.@)
