@@ -1089,6 +1089,75 @@ sub source_scan_project_file($$$)
 }
 
 ##
+# Scans the specified workspace file to find the project files
+sub source_scan_workspace_file($);
+sub source_scan_workspace_file($)
+{
+    my $filename=$_[0];
+    my $path=dirname($filename);
+    my @components;
+
+    if (! -e $filename) {
+        return;
+    }
+
+    if (!open(FILEIWS,$filename)) {
+        print STDERR "error: unable to open $filename for reading:\n";
+        print STDERR "       $!\n";
+        return;
+    }
+
+    my $prj_name;
+    my $prj_path;
+
+    if ($filename =~ /.dsw$/i) {
+        while (<FILEIWS>) {
+            # Remove any trailing CrLf
+            s/\r\n$/\n/;
+
+            # catch a project definition
+            if (/^Project:\s\"(.*)\"=(.*)\s-/) {
+                $prj_name=$1;
+                $prj_path=$2;
+                @components=split /[\/\\]+/, $2;
+                $prj_path=search_from($path, \@components);
+                print "Name: $prj_name\nPath: $prj_path\n";
+                source_scan_project_file(\@main_project,1,$prj_path);
+                next;
+            } elsif (/^#/) {
+                # ignore Comments
+            } elsif (/\w:/) {
+                print STDERR "unknown section $_\n";
+            } elsif (/^Microsoft(.*)Studio(.*)File,\sFormat Version\s(.*)/) {
+                print "\nFileversion: $3\n";
+            }
+        }
+        close(FILEIWS);
+    } elsif ($filename =~ /.sln$/i) {
+        while (<FILEIWS>) {
+            # Remove any trailing CrLf
+            s/\r\n$/\n/;
+
+            # catch a project definition
+            if (/^Project(.*)=\s*"(.*)",\s*"(.*)",\s*"(.*)"/) {
+                $prj_name=$2;
+                $prj_path=$3;
+                @components=split /[\/\\]+/, $3;
+                $prj_path=search_from($path, \@components);
+                print "Name: $prj_name\nPath: $prj_path\n";
+                source_scan_project_file(\@main_project,1,$prj_path);
+                next;
+            } elsif (/^Microsoft(.*)Studio(.*)File,\sFormat Version\s(.*)/) {
+                print "\nFileversion: $3\n";
+            }
+        }
+        close(FILEIWS);
+    }
+
+    @projects=sort { @$a[$P_PATH] cmp @$b[$P_PATH] } @projects;
+}
+
+##
 # Scans the specified directory to:
 # - see if we should create a Makefile in this directory. We normally do
 #   so if we find a project file and sources
@@ -1572,6 +1641,8 @@ sub source_scan()
     } elsif (defined $opt_work_file) {
         if ($opt_work_file =~ /.dsp$/i or $opt_work_file =~ /.vcproj$/i) {
             source_scan_project_file(\@main_project,0,$opt_work_file);
+        } elsif ($opt_work_file =~ /.dsw$/i or $opt_work_file =~ /.sln$/i) {
+            source_scan_workspace_file($opt_work_file);
         }
     }
 }
@@ -2425,7 +2496,7 @@ sub usage()
   print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Pdir] [-idll] [-Ldir] [-llibrary]\n";
   print STDERR "                 [--nodlls] [--nomsvcrt] [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files]\n";
-  print STDERR "                 work_directory|project_file\n";
+  print STDERR "                 work_directory|project_file|workspace_file\n";
   print STDERR "\nWinemaker is designed to recursively convert all the Windows sources found in\n";
   print STDERR "the specified directory so that they can be compiled with Winelib. During this\n";
   print STDERR "process it will modify and rename some of the files in that directory.\n";
