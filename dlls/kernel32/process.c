@@ -599,6 +599,30 @@ static void set_library_wargv( char **argv )
 
 
 /***********************************************************************
+ *              update_library_argv0
+ *
+ * Update the argv[0] global variable with the binary we have found.
+ */
+static void update_library_argv0( const WCHAR *argv0 )
+{
+    DWORD len = strlenW( argv0 );
+
+    if (len > strlenW( __wine_main_wargv[0] ))
+    {
+        __wine_main_wargv[0] = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
+    }
+    strcpyW( __wine_main_wargv[0], argv0 );
+
+    len = WideCharToMultiByte( CP_ACP, 0, argv0, -1, NULL, 0, NULL, NULL );
+    if (len > strlen( __wine_main_argv[0] ) + 1)
+    {
+        __wine_main_argv[0] = RtlAllocateHeap( GetProcessHeap(), 0, len );
+    }
+    WideCharToMultiByte( CP_ACP, 0, argv0, -1, __wine_main_argv[0], len, NULL, NULL );
+}
+
+
+/***********************************************************************
  *           build_command_line
  *
  * Build the command line of a process from the argv array.
@@ -1024,6 +1048,7 @@ void CDECL __wine_kernel_init(void)
             MESSAGE( "wine: cannot find '%s'\n", __wine_main_argv[0] );
             ExitProcess( GetLastError() );
         }
+        update_library_argv0( main_exe_name );
         if (!build_command_line( __wine_main_wargv )) goto error;
         boot_event = start_wineboot();
     }
