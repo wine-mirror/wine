@@ -665,7 +665,7 @@ static void TestGetSet(void)
 /* This function hooks in and records all messages to the treeview control */
 static LRESULT WINAPI TreeviewWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
     WNDPROC lpOldProc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);

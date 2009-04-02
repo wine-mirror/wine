@@ -153,7 +153,7 @@ struct subclass_info
 
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
 
@@ -217,7 +217,7 @@ static HWND create_parent_window(void)
 static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
 
@@ -300,7 +300,7 @@ static HWND create_custom_listview_control(DWORD style)
 static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
 
