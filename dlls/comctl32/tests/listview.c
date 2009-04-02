@@ -820,11 +820,11 @@ static void test_create(void)
     hList = CreateWindow("SysListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandle(NULL), 0);
     ret = SetWindowLongPtr(hList, GWL_STYLE, GetWindowLongPtr(hList, GWL_STYLE) | LVS_REPORT);
-    ok(ret = WS_VISIBLE, "Style wrong, should be WS_VISIBLE|LVS_ICON\n");
+    ok(ret & WS_VISIBLE, "Style wrong, should have WS_VISIBLE\n");
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader), "Header should be created\n");
     ret = SetWindowLongPtr(hList, GWL_STYLE, GetWindowLong(hList, GWL_STYLE) & ~LVS_REPORT);
-    ok(ret = WS_VISIBLE|LVS_REPORT, "Style wrong, should be WS_VISIBLE|LVS_REPORT\n");
+    ok((ret & WS_VISIBLE) && (ret & LVS_REPORT), "Style wrong, should have WS_VISIBLE|LVS_REPORT\n");
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader), "Header should be created\n");
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
@@ -835,13 +835,13 @@ static void test_create(void)
                           GetModuleHandle(NULL), 0);
     ret = SetWindowLongPtr(hList, GWL_STYLE,
                           (GetWindowLongPtr(hList, GWL_STYLE) & ~LVS_LIST) | LVS_REPORT);
-    ok(ret = WS_VISIBLE|LVS_LIST, "Style wrong, should be WS_VISIBLE|LVS_ICON\n");
+    ok(((ret & WS_VISIBLE) && (ret & LVS_LIST)), "Style wrong, should have WS_VISIBLE|LVS_LIST\n");
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader), "Header shouldn't be created\n");
     ok(hHeader == GetDlgItem(hList, 0), "NULL dialog item expected\n");
     ret = SetWindowLongPtr(hList, GWL_STYLE,
                           (GetWindowLongPtr(hList, GWL_STYLE) & ~LVS_REPORT) | LVS_LIST);
-    ok(ret = WS_VISIBLE|LVS_REPORT, "Style wrong, should be WS_VISIBLE|LVS_REPORT\n");
+    ok(((ret & WS_VISIBLE) && (ret & LVS_REPORT)), "Style wrong, should have WS_VISIBLE|LVS_REPORT\n");
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader), "Header shouldn't be created\n");
     ok(hHeader == GetDlgItem(hList, 0), "NULL dialog item expected\n");
@@ -862,6 +862,18 @@ static void test_create(void)
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader), "Header should be created\n");
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    DestroyWindow(hList);
+
+    /* LVS_REPORT without WS_VISIBLE, try to show it */
+    hList = CreateWindow("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+                          GetModuleHandle(NULL), 0);
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    todo_wine ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    todo_wine ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    ShowWindow(hList, SW_SHOW);
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "NULL dialog item expected\n");
     DestroyWindow(hList);
 }
 
