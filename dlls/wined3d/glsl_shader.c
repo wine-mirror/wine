@@ -941,9 +941,6 @@ static void shader_glsl_gen_modifier (
     char *out_str) {
 
     out_str[0] = 0;
-    
-    if (instr == WINED3DSIO_TEXKILL)
-        return;
 
     switch (instr & WINED3DSP_SRCMOD_MASK) {
     case WINED3DSPSM_DZ: /* Need to handle this in the instructions itself (texld & texcrd). */
