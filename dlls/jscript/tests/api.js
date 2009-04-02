@@ -640,4 +640,9 @@ ok(Math.floor(Math.LOG10E*100) === 43, "Math.LOG10E = " + Math.LOG10E);
 Math.LOG10E = "test";
 ok(Math.floor(Math.LOG10E*100) === 43, "modified Math.LOG10E = " + Math.LOG10E);
 
+ok(typeof(Math.LN2) === "number", "typeof(Math.LN2) = " + typeof(Math.LN2));
+ok(Math.floor(Math.LN2*100) === 69, "Math.LN2 = " + Math.LN2);
+Math.LN2 = "test";
+ok(Math.floor(Math.LN2*100) === 69, "modified Math.LN2 = " + Math.LN2);
+
 reportSuccess();
