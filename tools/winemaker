@@ -3,6 +3,7 @@ use strict;
 
 # Copyright 2000-2004 Francois Gouget for CodeWeavers
 # Copyright 2004 Dimitrie O. Paun
+# Copyright 2009 André Hentschel
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,7 +20,7 @@ use strict;
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
-my $version="0.6.0";
+my $version="0.7.0";
 
 use Cwd;
 use File::Basename;
@@ -68,6 +69,10 @@ my $OPT_ASK_SKIP=-1;
 ##
 # This is the directory in which winemaker will operate.
 my $opt_work_dir;
+
+##
+# This is the file in which winemaker will operate if a project file is specified.
+my $opt_work_file;
 
 ##
 # Make a backup of the files
@@ -507,6 +512,580 @@ sub source_set_options($$)
     }
   }
   return 1;
+}
+
+##
+# Scans the specified project file to:
+# - get a list of targets for this project
+# - get some settings
+# - get the list of source files
+sub source_scan_project_file($$$);
+sub source_scan_project_file($$$)
+{
+    # a reference to the parent's project
+    my $parent_project=$_[0];
+    # 0 if it is a single project, 1 if it is part of a workspace
+    my $is_sub_project=$_[1];
+    # the name of the project file, with complete path, or without if in
+    # the same directory
+    my $filename=$_[2];
+
+    # reference to the project for this file. May not be used
+    my $project;
+    # list of targets found in the current file
+    my %targets;
+    # list of sources found in the current file
+    my @sources_c=();
+    my @sources_cxx=();
+    my @sources_rc=();
+    my @sources_misc=();
+    # some more settings
+    my $path=dirname($filename);
+    my $prj_target_cflags;
+    my $prj_target_ldflags;
+    my $prj_target_libs;
+    my $prj_name;
+    my $found_cfg=0;
+    my $prj_cfg;
+    my $prj_target_type=1;
+    my @prj_target_options;
+
+    if (!($path=~/\/$/)) {
+        $path.="/";
+    }
+
+    if (defined $opt_single_target or $is_sub_project == 0) {
+        # Either there is a single target and thus a single project,
+        # or we are a single project-file for which a project
+        # already exists
+        $project=$parent_project;
+    } else {
+        $project=[];
+        project_init($project, $path, \@global_settings);
+    }
+    my $project_settings=@$project[$P_SETTINGS];
+
+    if ($filename =~ /.dsp$/i) {
+        # First find out what this project file contains:
+        # collect all sources, find targets and settings
+        if (!open(FILEI,$filename)) {
+            print STDERR "error: unable to open $filename for reading:\n";
+            print STDERR "       $!\n";
+            return;
+        }
+        my $sfilet;
+        while (<FILEI>) {
+            # Remove any trailing CtrlZ, which isn't strictly in the file
+            if (/\x1A/) {
+                s/\x1A//;
+                last if (/^$/)
+            }
+
+            # Remove any trailing CrLf
+            s/\r\n$/\n/;
+            if (!/\n$/) {
+                # Make sure all lines are '\n' terminated
+                $_ .= "\n";
+            }
+
+            if (/^\# Microsoft Developer Studio Project File - Name=\"([^\"]+)/) {
+                $prj_name="$1.exe";
+                $targets{$prj_name}=1;
+                #print $prj_name;
+                next;
+            } elsif (/^# TARGTYPE/) {
+                if (/[[:space:]]0x0101$/) {
+                    # Win32 (x86) Application
+                    $prj_target_type=1;
+                }elsif (/[[:space:]]0x0102$/) {
+                    # Win32 (x86) Dynamic-Link Library
+                    $prj_target_type=3;
+                }elsif (/[[:space:]]0x0103$/) {
+                    # Win32 (x86) Console Application
+                    $prj_target_type=2;
+                }elsif (/[[:space:]]0x0104$/) {
+                    # Win32 (x86) Static Library
+                }
+                next;
+            } elsif (/^# ADD CPP(.*)/ && $found_cfg==1) {
+                $prj_target_cflags=$1;
+                @prj_target_options=split(" /", $prj_target_cflags);
+                $prj_target_cflags="";
+                foreach ( @prj_target_options ) {
+                    if ($_ eq "") {
+                        # empty
+                    } elsif (/nologo/) {
+                        # Suppress Startup Banner and Information Messages
+                    } elsif (/^W0$/) {
+                        # Turns off all warning messages
+                        $prj_target_cflags.="-w ";
+                    } elsif (/^W[123]$/) {
+                        # Warning Level
+                        $prj_target_cflags.="-W ";
+                    } elsif (/^W4$/) {
+                        # Warning Level
+                        $prj_target_cflags.="-Wall ";
+                    } elsif (/^WX$/) {
+                        # Warnings As Errors
+                        $prj_target_cflags.="-Werror ";
+                    } elsif (/^Gm$/) {
+                        # Enable Minimal Rebuild
+                    } elsif (/^GX$/) {
+                        # Enable Exception Handling
+                        $prj_target_cflags.="-fexceptions ";
+                    } elsif (/^Z[d7iI]$/) {
+                        # Debug Info
+                        $prj_target_cflags.="-g ";
+                    } elsif (/^Od$/) {
+                        # Disable Optimizations
+                        $prj_target_cflags.="-O0 ";
+                    } elsif (/^O1$/) {
+                        # Minimize Size
+                        $prj_target_cflags.="-Os ";
+                    } elsif (/^O2$/) {
+                        # Maximize Speed
+                        $prj_target_cflags.="-O2 ";
+                    } elsif (/^Ob0$/) {
+                        # Disables inline Expansion
+                        $prj_target_cflags.="-fno-inline ";
+                    } elsif (/^Ob1$/) {
+                    #    In-line Function Expansion
+                    } elsif (/^Ob2$/) {
+                        # auto In-line Function Expansion
+                        $prj_target_cflags.="-finline-functions ";
+                    } elsif (/^Oy$/) {
+                        # Frame-Pointer Omission
+                        $prj_target_cflags.="-fomit-frame-pointer ";
+                    } elsif (/^GZ$/) {
+                        # Catch Release-Build Errors in Debug Build
+                    } elsif (/^M[DLT]d?$/) {
+                        # Use Multithreaded Run-Time Library
+                    } elsif (/^D\s*\"(.*)\"/) {
+                        # Preprocessor Definitions
+                        $prj_target_cflags.="-D".$1." ";
+                    } elsif (/^I/) {
+                        # Additional Include Directories
+                        #$prj_target_cflags.="-I" fixpath(option)
+                    } elsif (/^U\s*\"(.*)\"/) {
+                        # Undefines a previously defined symbol
+                        $prj_target_cflags.="-U".$1." ";
+                    } elsif (/^Fp/) {
+                        # Name .PCH File
+                    } elsif (/^F[Rr]/) {
+                        # Create .SBR File
+                    } elsif (/^YX$/) {
+                        # Automatic Use of Precompiled Headers
+                    } elsif (/^FD$/) {
+                        # Generate File Dependencies
+                    } elsif (/^c$/) {
+                        # Compile Without Linking
+                        # this option is always present and is already specified in the suffix rules
+                    } elsif (/^GB$/) {
+                        # Blend Optimization
+                        $prj_target_cflags.="-mcpu=pentiumpro -D_M_IX86=500 ";
+                    } elsif (/^G6$/) {
+                        # Pentium Pro Optimization
+                        $prj_target_cflags.="-march=pentiumpro -D_M_IX86=600 ";
+                    } elsif (/^G5$/) {
+                        # Pentium Optimization
+                        $prj_target_cflags.="-mcpu=pentium -D_M_IX86=500 ";
+                    } elsif (/^G3$/) {
+                        # 80386 Optimization
+                        $prj_target_cflags.="-mcpu=i386 -D_M_IX86=300 ";
+                    } elsif (/^G4$/) {
+                        # 80486 Optimization
+                        $prj_target_cflags.="-mcpu=i486 -D_M_IX86=400 ";
+                    } elsif (/^Yc/) {
+                        # Create Precompiled Header
+                    } elsif (/^Yu/) {
+                        # Use Precompiled Header
+                    } elsif (/^Za$/) {
+                        # Disable Language Extensions
+                        $prj_target_cflags.="-ansi ";
+                    } elsif (/^Ze$/) {
+                        # Enable Microsoft Extensions
+                    } elsif (/^Zm[[:digit:]]+$/) {
+                        # Specify Memory Allocation Limit
+                    } elsif (/^Zp1?$/) {
+                        # Packs structures on 1-byte boundaries
+                        $prj_target_cflags.="-fpack-struct ";
+                    } elsif (/^Zp(2|4|8|16)$/) {
+                        # Struct Member Alignment
+                        $prj_target_cflags.="-fpack-struct=".$1;
+                    } else {
+                        print "C compiler option $_ not implemented\n";
+                    }
+                }
+
+                #print "\nOptions: $prj_target_cflags\n";
+                next;
+            } elsif (/^# ADD LINK32(.*)/ && $found_cfg==1) {
+                $prj_target_ldflags=$1;
+                @prj_target_options=split(" /", $prj_target_ldflags);
+                $prj_target_ldflags="";
+                $prj_target_libs=$prj_target_options[0];
+                #print "\n$prj_target_libs bevor\n";
+                $prj_target_libs=~s/\\/\//g;
+                $prj_target_libs=~s/\.lib//g;
+                $prj_target_libs=~s/\s/ -l/g;
+                #print "\n$prj_target_libs after\n";
+                shift (@prj_target_options);
+                foreach ( @prj_target_options ) {
+                    if ($_ eq "") {
+                        # empty
+                    } elsif (/^base:(.*)/) {
+                        # Base Address
+                        $prj_target_ldflags.="--image-base ".$1." ";
+                    } elsif (/^debug$/) {
+                        # Generate Debug Info
+                    } elsif (/^dll$/) {
+                        # Build a DLL
+                        $prj_target_type=3;
+                    } elsif (/^incremental:[[:alpha:]]+$/) {
+                        # Link Incrmentally
+                    } elsif (/^implib:/) {
+                        # Name import library
+                    } elsif (/^libpath:\"(.*)\"/) {
+                        # Additional Libpath
+                        push @{@$project_settings[$T_DLL_PATH]},"-L$1";
+                    } elsif (/^machine:[[:alnum:]]+$/) {
+                        # Specify Target Platform
+                    } elsif (/^map/) {
+                        # Generate Mapfile
+                        if (/^map:(.*)/) {
+                            $prj_target_ldflags.="-Map ".$1." ";
+                        } else {
+                            $prj_target_ldflags.="-Map ".$prj_name.".map ";
+                        }
+                    } elsif (/^nologo$/) {
+                        # Suppress Startup Banner and Information Messages
+                    } elsif (/^out:/) {
+                        # Output File Name
+                        # may use it as Target?
+                    } elsif (/^pdbtype:/) {
+                        # Program Database Storage
+                    } elsif (/^subsystem:/) {
+                        # Specify Subsystem
+                    } elsif (/^version:[[:digit:].]+$/) {
+                        # Version Information
+                    } else {
+                        print "Linker option $_ not implemented\n";
+                    }
+                }
+                next;
+            } elsif (/^LIB32=/ && $found_cfg==1) {
+                #$libflag = 1;
+                next;
+            } elsif (/^SOURCE=(.*)$/) {
+                my @components=split /[\/\\]+/, $1;
+                $sfilet=search_from($path, \@components);
+                if ($sfilet =~ /\.(exe|dll)$/i) {
+                    $targets{$sfilet}=1;
+                } elsif ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
+                    push @sources_c,$sfilet;
+                } elsif ($sfilet =~ /\.(cpp|cxx)$/i) {
+                    if ($sfilet =~ /^stdafx.cpp$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
+                        push @sources_misc,$sfilet;
+                        @$project_settings[$T_FLAGS]|=$TF_MFC;
+                    } else {
+                        push @sources_cxx,$sfilet;
+                    }
+                } elsif ($sfilet =~ /\.rc$/i) {
+                    push @sources_rc,$sfilet;
+                } elsif ($sfilet =~ /\.(h|hxx|hpp|inl|rc2|dlg)$/i) {
+                    push @sources_misc,$sfilet;
+                    if ($sfilet =~ /^stdafx.h$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
+                        @$project_settings[$T_FLAGS]|=$TF_MFC;
+                    }
+                }
+                next;
+
+            } elsif (/^# (Begin|End) Source File/) {
+                # Source-Files already handled
+                next;
+            } elsif (/^# (Begin|End) Group/) {
+                # Groups are ignored
+                next;
+            } elsif (/^# (Begin|End) Custom Build/) {
+                # Custom Builds are ignored
+                next;
+            } elsif (/^# ADD LIB32 /) {
+                #"ARFLAGS=rus"
+                next;
+            } elsif (/^# Begin Target$/) {
+                # Targets are ignored
+                next;
+            } elsif (/^# End Target$/) {
+                # Targets are ignored
+                next;
+            } elsif (/^!/) {
+                if ($found_cfg == 1) {
+                    $found_cfg=0;
+                }
+                if (/if (.*)\(CFG\)" == "(.*)"/i) {
+                    if ($2 eq $prj_cfg) {
+                        $found_cfg=1;
+                    }
+                }
+                next;
+            } elsif (/^CFG=(.*)/i) {
+                $prj_cfg=$1;
+                next;
+            }
+                else { # Line recognized
+                # print "|\n";
+            }
+        }
+        close(FILEI);
+
+        push @{@$project_settings[$T_LIBRARIES]},$prj_target_libs;
+        push @{@$project_settings[$T_CEXTRA]},$prj_target_cflags;
+        push @{@$project_settings[$T_CXXEXTRA]},$prj_target_cflags;
+        push @{@$project_settings[$T_LDFLAGS]},$prj_target_ldflags;
+    } elsif ($filename =~ /.vcproj$/i) {
+        # Import des Moduls XML::Simple
+        use XML::Simple;
+
+        my $project_xml = XMLin($filename, forcearray=>1);
+
+        $targets{$project_xml->{'Name'}.".exe"}=1;
+        my $sfilet;
+        for my $vc_files (@{$project_xml->{'Files'}}) {
+            for my $vc_filter (@{$vc_files->{'Filter'}}) {
+                for my $vc_file (@{$vc_filter->{'File'}}) {
+                    $sfilet=$vc_file->{'RelativePath'};
+                    if (($opt_lower == $OPT_LOWER_ALL and $sfilet =~ /[A-Z]/) or ($opt_lower == $OPT_LOWER_UPPERCASE and $sfilet !~ /[a-z]/)) {
+                        $sfilet=lc $sfilet; #to lowercase if necessary
+                    }
+                    $sfilet=~s/\\\\/\\/g; #remove double backslash
+                    $sfilet=~s/^\.\\//; #remove starting 'this directory'
+                    $sfilet=~s/\\/\//g; #make slashes out of backslashes
+                    if ($sfilet =~ /\.(exe|dll)$/i) {
+                        $targets{$sfilet}=1;
+                    } elsif ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
+                        push @sources_c,$sfilet;
+                    } elsif ($sfilet =~ /\.(cpp|cxx)$/i) {
+                        if ($sfilet =~ /^stdafx.cpp$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
+                            push @sources_misc,$sfilet;
+                            @$project_settings[$T_FLAGS]|=$TF_MFC;
+                        } else {
+                            push @sources_cxx,$sfilet;
+                        }
+                    } elsif ($sfilet =~ /\.rc$/i) {
+                        push @sources_rc,$sfilet;
+                    } elsif ($sfilet =~ /\.(h|hxx|hpp|inl|rc2|dlg)$/i) {
+                        push @sources_misc,$sfilet;
+                        if ($sfilet =~ /^stdafx.h$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
+                            @$project_settings[$T_FLAGS]|=$TF_MFC;
+                        }
+                    }
+                }
+            }
+        }
+        $prj_target_cflags="";
+        for my $vc_configurations (@{$project_xml->{'Configurations'}}) {
+            for my $vc_configuration (@{$vc_configurations->{'Configuration'}}) {
+                for my $vc_tool (@{$vc_configuration->{'Tool'}}) {
+                    if ($vc_tool->{'Name'} ne 'VCCLCompilerTool') { next; }
+                    if (defined $vc_tool->{'Optimization'}) {$prj_target_cflags.="-O".$vc_tool->{'Optimization'}." ";}
+                    if (defined $vc_tool->{'WarningLevel'}) {
+                        if ($vc_tool->{'WarningLevel'}==0) {
+                            $prj_target_cflags.="-w ";
+                        } elsif ($vc_tool->{'WarningLevel'}<4) {
+                            $prj_target_cflags.="-W ";
+                        } elsif ($vc_tool->{'WarningLevel'}==4) {
+                            $prj_target_cflags.="-Wall ";
+                        } elsif ($vc_tool->{'WarningLevel'} eq "X") {
+                            $prj_target_cflags.="-Werror ";
+                        }
+                    }
+                    if (defined $vc_tool->{'PreprocessorDefinitions'}) {
+                        $vc_tool->{'PreprocessorDefinitions'}=~s/;/ -D/g;
+                        $prj_target_cflags.="-D".$vc_tool->{'PreprocessorDefinitions'}." ";
+                    }
+                }
+                last;
+            }
+        }
+        push @{@$project_settings[$T_CEXTRA]},$prj_target_cflags;
+        push @{@$project_settings[$T_CXXEXTRA]},$prj_target_cflags;
+    }
+
+    my $target_count;
+    $target_count=keys %targets;
+
+
+    # Add this project to the project list, except for
+    # the main project which is already in the list.
+    if ($is_sub_project == 1) {
+        push @projects,$project;
+    }
+
+    # Ask for project-wide options
+    if ($opt_ask_project_options == $OPT_ASK_YES) {
+        my $flag_desc="";
+        if ((@$project_settings[$T_FLAGS] & $TF_MFC)!=0) {
+            $flag_desc="mfc";
+        }
+        print "* Type any project-wide options (-D/-I/-P/-i/-L/-l/--mfc),\n";
+        if (defined $flag_desc) {
+            print "* (currently $flag_desc)\n";
+        }
+        print "* or 'skip' to skip the target specific options,\n";
+        print "* or 'never' to not be asked this question again:\n";
+        while (1) {
+            my $options=<STDIN>;
+            chomp $options;
+            if ($options eq "skip") {
+                $opt_ask_target_options=$OPT_ASK_SKIP;
+                last;
+            } elsif ($options eq "never") {
+                $opt_ask_project_options=$OPT_ASK_NO;
+                last;
+            } elsif (source_set_options($project_settings,$options)) {
+                last;
+            }
+            print "Please re-enter the options:\n";
+        }
+    }
+
+    # - Create the targets
+    # - Check if we have both libraries and programs
+    # - Match each target with source files (sort in reverse
+    #   alphabetical order to get the longest matches first)
+    my @local_dlls=();
+    my @local_depends=();
+    my @exe_list=();
+    foreach my $target_name (map (lc, (sort { $b cmp $a } keys %targets))) {
+        # Create the target...
+        my $target=[];
+        target_init($target);
+        @$target[$T_NAME]=$target_name;
+        @$target[$T_FLAGS]|=@$project_settings[$T_FLAGS];
+        if ($target_name =~ /\.dll$/) {
+            @$target[$T_TYPE]=$TT_DLL;
+            push @local_depends,"$target_name.so";
+            push @local_dlls,$target_name;
+            my $canon=canonize($target_name);
+            push @{@$target[$T_LDFLAGS]},("-shared","\$(${canon}_MODULE:%=%.spec)");
+        } else {
+            @$target[$T_TYPE]=$opt_target_type;
+            push @exe_list,$target;
+            push @{@$target[$T_LDFLAGS]},(@$target[$T_TYPE] == $TT_CUIEXE ? "-mconsole" : "-mwindows");
+        }
+        my $basename=$target_name;
+        $basename=~ s/\.(dll|exe)$//i;
+        # This is the default link list of Visual Studio
+        my @std_imports=qw(odbc32 ole32 oleaut32 winspool odbccp32);
+        my @std_libraries=qw(uuid);
+        if ((@$target[$T_FLAGS] & $TF_NODLLS) == 0) {
+            @$target[$T_DLLS]=\@std_imports;
+            @$target[$T_LIBRARIES]=\@std_libraries;
+        } else {
+            @$target[$T_DLLS]=[];
+            @$target[$T_LIBRARIES]=[];
+        }
+        if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
+            push @{@$target[$T_LDFLAGS]},"-mno-cygwin";
+            push @{@$target[$T_LDFLAGS]},"-m32";
+        }
+        push @{@$project[$P_TARGETS]},$target;
+
+        # Ask for target-specific options
+        if ($opt_ask_target_options == $OPT_ASK_YES) {
+            my $flag_desc="";
+            if ((@$target[$T_FLAGS] & $TF_MFC)!=0) {
+                $flag_desc=" (mfc";
+            }
+            if ($flag_desc ne "") {
+                $flag_desc.=")";
+            }
+            print "* Specify any link option (-P/-i/-L/-l/--mfc) specific to the target\n";
+            print "* \"$target_name\"$flag_desc or 'never' to not be asked this question again:\n";
+            while (1) {
+            my $options=<STDIN>;
+            chomp $options;
+            if ($options eq "never") {
+                $opt_ask_target_options=$OPT_ASK_NO;
+                last;
+            } elsif (source_set_options($target,$options)) {
+                last;
+            }
+            print "Please re-enter the options:\n";
+            }
+        }
+        if (@$target[$T_FLAGS] & $TF_MFC) {
+            @$project_settings[$T_FLAGS]|=$TF_MFC;
+            push @{@$target[$T_DLL_PATH]},"\$(MFC_LIBRARY_PATH)";
+            push @{@$target[$T_DLLS]},"mfc.dll";
+            # FIXME: Link with the MFC in the Unix sense, until we
+            # start exporting the functions properly.
+            push @{@$target[$T_LIBRARY_PATH]},"\$(MFC_LIBRARY_PATH)";
+            push @{@$target[$T_LIBRARIES]},"mfc";
+        }
+
+        # Match sources...
+        if ($target_count == 1) {
+            push @{@$target[$T_SOURCES_C]},@{@$project_settings[$T_SOURCES_C]},@sources_c;
+            @$project_settings[$T_SOURCES_C]=[];
+            @sources_c=();
+
+            push @{@$target[$T_SOURCES_CXX]},@{@$project_settings[$T_SOURCES_CXX]},@sources_cxx;
+            @$project_settings[$T_SOURCES_CXX]=[];
+            @sources_cxx=();
+
+            push @{@$target[$T_SOURCES_RC]},@{@$project_settings[$T_SOURCES_RC]},@sources_rc;
+            @$project_settings[$T_SOURCES_RC]=[];
+            @sources_rc=();
+
+            push @{@$target[$T_SOURCES_MISC]},@{@$project_settings[$T_SOURCES_MISC]},@sources_misc;
+            # No need for sorting these sources
+            @$project_settings[$T_SOURCES_MISC]=[];
+            @sources_misc=();
+        }
+        @$target[$T_SOURCES_C]=[sort @{@$target[$T_SOURCES_C]}];
+        @$target[$T_SOURCES_CXX]=[sort @{@$target[$T_SOURCES_CXX]}];
+        @$target[$T_SOURCES_RC]=[sort @{@$target[$T_SOURCES_RC]}];
+        @$target[$T_SOURCES_MISC]=[sort @{@$target[$T_SOURCES_MISC]}];
+    }
+    if ($opt_ask_target_options == $OPT_ASK_SKIP) {
+        $opt_ask_target_options=$OPT_ASK_YES;
+    }
+
+    if ((@$project_settings[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
+        push @{@$project_settings[$T_CEXTRA]},"-mno-cygwin";
+        push @{@$project_settings[$T_CXXEXTRA]},"-mno-cygwin";
+    }
+
+    if (@$project_settings[$T_FLAGS] & $TF_MFC) {
+        push @{@$project_settings[$T_INCLUDE_PATH]},"\$(MFC_INCLUDE_PATH)";
+    }
+    # The sources that did not match, if any, go to the extra
+    # source list of the project settings
+    foreach my $source (@sources_c) {
+        if ($source ne "") {
+            push @{@$project_settings[$T_SOURCES_C]},$source;
+        }
+    }
+    @$project_settings[$T_SOURCES_C]=[sort @{@$project_settings[$T_SOURCES_C]}];
+    foreach my $source (@sources_cxx) {
+        if ($source ne "") {
+            push @{@$project_settings[$T_SOURCES_CXX]},$source;
+        }
+    }
+    @$project_settings[$T_SOURCES_CXX]=[sort @{@$project_settings[$T_SOURCES_CXX]}];
+    foreach my $source (@sources_rc) {
+        if ($source ne "") {
+            push @{@$project_settings[$T_SOURCES_RC]},$source;
+        }
+    }
+    @$project_settings[$T_SOURCES_RC]=[sort @{@$project_settings[$T_SOURCES_RC]}];
+    foreach my $source (@sources_misc) {
+        if ($source ne "") {
+            push @{@$project_settings[$T_SOURCES_MISC]},$source;
+        }
+    }
+    @$project_settings[$T_SOURCES_MISC]=[sort @{@$project_settings[$T_SOURCES_MISC]}];
 }
 
 ##
@@ -985,11 +1564,16 @@ sub source_scan()
   # The main directory is always going to be there
   push @projects,\@main_project;
 
-  # Now scan the directory tree looking for source files and, maybe, targets
-  print "Scanning the source directories...\n";
-  source_scan_directory(\@main_project,"","",0);
-
-  @projects=sort { @$a[$P_PATH] cmp @$b[$P_PATH] } @projects;
+    if (defined $opt_work_dir) {
+        # Now scan the directory tree looking for source files and, maybe, targets
+        print "Scanning the source directories...\n";
+        source_scan_directory(\@main_project,"","",0);
+        @projects=sort { @$a[$P_PATH] cmp @$b[$P_PATH] } @projects;
+    } elsif (defined $opt_work_file) {
+        if ($opt_work_file =~ /.dsp$/i or $opt_work_file =~ /.vcproj$/i) {
+            source_scan_project_file(\@main_project,0,$opt_work_file);
+        }
+    }
 }
 
 #####
@@ -1841,7 +2425,7 @@ sub usage()
   print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Pdir] [-idll] [-Ldir] [-llibrary]\n";
   print STDERR "                 [--nodlls] [--nomsvcrt] [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files]\n";
-  print STDERR "                 work_directory\n";
+  print STDERR "                 work_directory|project_file\n";
   print STDERR "\nWinemaker is designed to recursively convert all the Windows sources found in\n";
   print STDERR "the specified directory so that they can be compiled with Winelib. During this\n";
   print STDERR "process it will modify and rename some of the files in that directory.\n";
@@ -1915,22 +2499,27 @@ while (@ARGV>0) {
   # Catch errors
   } else {
     if ($arg ne "--help" and $arg ne "-h" and $arg ne "-?") {
-      if (!defined $opt_work_dir) {
-        $opt_work_dir=$arg;
-      } else {
-        print STDERR "error: the work directory, \"$arg\", has already been specified (was \"$opt_work_dir\")\n";
-        usage();
-      }
+        if (!defined $opt_work_dir and !defined $opt_work_file) {
+            if (-f $arg) {
+                $opt_work_file=$arg;
+            }
+            else {
+                $opt_work_dir=$arg;
+            }
+        } else {
+            print STDERR "error: the work directory, \"$arg\", has already been specified (was \"$opt_work_dir\")\n";
+            usage();
+        }
     } else {
-      usage();
+        usage();
     }
   }
 }
 
-if (!defined $opt_work_dir) {
-  print STDERR "error: you must specify the directory containing the sources to be converted\n";
+if (!defined $opt_work_dir and !defined $opt_work_file) {
+  print STDERR "error: you must specify the directory or project file containing the sources to be converted\n";
   usage();
-} elsif (!chdir $opt_work_dir) {
+} elsif (defined $opt_work_dir and !chdir $opt_work_dir) {
   print STDERR "error: could not chdir to the work directory\n";
   print STDERR "       $!\n";
   usage();
