@@ -1555,7 +1555,6 @@ static void PRINTF_ATTR(6, 7) shader_glsl_gen_sample_code(const struct wined3d_s
 /* Generate GLSL arithmetic functions (dst = src1 + src2) */
 static void shader_glsl_arith(const struct wined3d_shader_instruction *ins)
 {
-    CONST SHADER_OPCODE* curOpcode = ins->opcode;
     SHADER_BUFFER *buffer = ins->buffer;
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
@@ -1563,13 +1562,14 @@ static void shader_glsl_arith(const struct wined3d_shader_instruction *ins)
     char op;
 
     /* Determine the GLSL operator to use based on the opcode */
-    switch (curOpcode->opcode) {
-        case WINED3DSIO_MUL: op = '*'; break;
-        case WINED3DSIO_ADD: op = '+'; break;
-        case WINED3DSIO_SUB: op = '-'; break;
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_MUL: op = '*'; break;
+        case WINED3DSIH_ADD: op = '+'; break;
+        case WINED3DSIH_SUB: op = '-'; break;
         default:
             op = ' ';
-            FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
+            FIXME("Opcode %#x not yet handled in GLSL\n", ins->handler_idx);
             break;
     }
 
@@ -1603,7 +1603,7 @@ static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
             shader_addline(buffer, "int(floor(%s)));\n", src0_param.param_str);
         }
     }
-    else if(ins->opcode->opcode == WINED3DSIO_MOVA)
+    else if(ins->handler_idx == WINED3DSIH_MOVA)
     {
         /* We need to *round* to the nearest int here. */
         unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
@@ -1620,7 +1620,6 @@ static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
 /* Process the dot product operators DP3 and DP4 in GLSL (dst = dot(src0, src1)) */
 static void shader_glsl_dot(const struct wined3d_shader_instruction *ins)
 {
-    CONST SHADER_OPCODE *curOpcode = ins->opcode;
     SHADER_BUFFER *buffer = ins->buffer;
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
@@ -1631,7 +1630,8 @@ static void shader_glsl_dot(const struct wined3d_shader_instruction *ins)
     dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
 
     /* dp3 works on vec3, dp4 on vec4 */
-    if (curOpcode->opcode == WINED3DSIO_DP4) {
+    if (ins->handler_idx == WINED3DSIH_DP4)
+    {
         src_write_mask = WINED3DSP_WRITEMASK_ALL;
     } else {
         src_write_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
@@ -1721,18 +1721,19 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
 
     /* Determine the GLSL function to use based on the opcode */
     /* TODO: Possibly make this a table for faster lookups */
-    switch (curOpcode->opcode) {
-        case WINED3DSIO_MIN: instruction = "min"; break;
-        case WINED3DSIO_MAX: instruction = "max"; break;
-        case WINED3DSIO_ABS: instruction = "abs"; break;
-        case WINED3DSIO_FRC: instruction = "fract"; break;
-        case WINED3DSIO_NRM: instruction = "normalize"; break;
-        case WINED3DSIO_EXP: instruction = "exp2"; break;
-        case WINED3DSIO_SGN: instruction = "sign"; break;
-        case WINED3DSIO_DSX: instruction = "dFdx"; break;
-        case WINED3DSIO_DSY: instruction = "ycorrection.y * dFdy"; break;
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_MIN: instruction = "min"; break;
+        case WINED3DSIH_MAX: instruction = "max"; break;
+        case WINED3DSIH_ABS: instruction = "abs"; break;
+        case WINED3DSIH_FRC: instruction = "fract"; break;
+        case WINED3DSIH_NRM: instruction = "normalize"; break;
+        case WINED3DSIH_EXP: instruction = "exp2"; break;
+        case WINED3DSIH_SGN: instruction = "sign"; break;
+        case WINED3DSIH_DSX: instruction = "dFdx"; break;
+        case WINED3DSIH_DSY: instruction = "ycorrection.y * dFdy"; break;
         default: instruction = "";
-            FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
+            FIXME("Opcode %#x not yet handled in GLSL\n", ins->handler_idx);
             break;
     }
 
@@ -1848,20 +1849,20 @@ static void shader_glsl_compare(const struct wined3d_shader_instruction *ins)
     if (mask_size > 1) {
         const char *compare;
 
-        switch(ins->opcode->opcode)
+        switch(ins->handler_idx)
         {
-            case WINED3DSIO_SLT: compare = "lessThan"; break;
-            case WINED3DSIO_SGE: compare = "greaterThanEqual"; break;
+            case WINED3DSIH_SLT: compare = "lessThan"; break;
+            case WINED3DSIH_SGE: compare = "greaterThanEqual"; break;
             default: compare = "";
-                FIXME("Can't handle opcode %s\n", ins->opcode->name);
+                FIXME("Can't handle opcode %#x\n", ins->handler_idx);
         }
 
         shader_addline(ins->buffer, "vec%d(%s(%s, %s)));\n", mask_size, compare,
                 src0_param.param_str, src1_param.param_str);
     } else {
-        switch(ins->opcode->opcode)
+        switch(ins->handler_idx)
         {
-            case WINED3DSIO_SLT:
+            case WINED3DSIH_SLT:
                 /* Step(src0, src1) is not suitable here because if src0 == src1 SLT is supposed,
                  * to return 0.0 but step returns 1.0 because step is not < x
                  * An alternative is a bvec compare padded with an unused second component.
@@ -1871,12 +1872,12 @@ static void shader_glsl_compare(const struct wined3d_shader_instruction *ins)
                  */
                 shader_addline(ins->buffer, "(%s < %s) ? 1.0 : 0.0);\n", src0_param.param_str, src1_param.param_str);
                 break;
-            case WINED3DSIO_SGE:
+            case WINED3DSIH_SGE:
                 /* Here we can use the step() function and safe a conditional */
                 shader_addline(ins->buffer, "step(%s, %s));\n", src1_param.param_str, src0_param.param_str);
                 break;
             default:
-                FIXME("Can't handle opcode %s\n", ins->opcode->name);
+                FIXME("Can't handle opcode %#x\n", ins->handler_idx);
         }
 
     }
@@ -2048,25 +2049,25 @@ static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
     tmp_ins.src_addr[1] = ins->src_addr[1];
     tmp_ins.reg_maps = ins->reg_maps;
 
-    switch(ins->opcode->opcode)
+    switch(ins->handler_idx)
     {
-        case WINED3DSIO_M4x4:
+        case WINED3DSIH_M4x4:
             nComponents = 4;
             tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
             break;
-        case WINED3DSIO_M4x3:
+        case WINED3DSIH_M4x3:
             nComponents = 3;
             tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
             break;
-        case WINED3DSIO_M3x4:
+        case WINED3DSIH_M3x4:
             nComponents = 4;
             tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
             break;
-        case WINED3DSIO_M3x3:
+        case WINED3DSIH_M3x3:
             nComponents = 3;
             tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
             break;
-        case WINED3DSIO_M3x2:
+        case WINED3DSIH_M3x2:
             nComponents = 2;
             tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
             break;
@@ -2074,6 +2075,7 @@ static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
             break;
     }
 
+    tmp_ins.handler_idx = tmp_ins.opcode->handler_idx;
     for (i = 0; i < nComponents; ++i)
     {
         tmp_ins.dst = ((ins->dst) & ~WINED3DSP_WRITEMASK_ALL) | (WINED3DSP_WRITEMASK_0 << i);
@@ -2278,13 +2280,13 @@ static void shader_glsl_end(const struct wined3d_shader_instruction *ins)
 
     shader_addline(ins->buffer, "}\n");
 
-    if (ins->opcode->opcode == WINED3DSIO_ENDLOOP)
+    if (ins->handler_idx == WINED3DSIH_ENDLOOP)
     {
         shader->baseShader.cur_loop_depth--;
         shader->baseShader.cur_loop_regno--;
     }
 
-    if (ins->opcode->opcode == WINED3DSIO_ENDREP)
+    if (ins->handler_idx == WINED3DSIH_ENDREP)
     {
         shader->baseShader.cur_loop_depth--;
     }
@@ -2843,7 +2845,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
             "T%u%s + vec4(bumpenvmat%d * %s, 0.0, 0.0)%s", sampler_idx, coord_mask, sampler_idx,
             coord_param.param_str, coord_mask);
 
-    if (ins->opcode->opcode == WINED3DSIO_TEXBEML)
+    if (ins->handler_idx == WINED3DSIH_TEXBEML)
     {
         glsl_src_param_t luminance_param;
         glsl_dst_param_t dst_param;
