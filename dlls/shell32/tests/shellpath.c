@@ -30,6 +30,7 @@
 #include "shlguid.h"
 #include "shlobj.h"
 #include "shlwapi.h"
+#include "initguid.h"
 #include "wine/test.h"
 
 /* CSIDL_MYDOCUMENTS is now the same as CSIDL_PERSONAL, but what we want
@@ -537,7 +538,7 @@ static void matchSpecialFolderPathToEnv(int folder, const char *envVar)
  * fail if it isn't--that check should already have been done.
  * Fails if the returned PIDL is a GUID whose value does not match guid.
  */
-static void matchGUID(int folder, const GUID *guid)
+static void matchGUID(int folder, const GUID *guid, const GUID *guid_alt)
 {
     LPITEMIDLIST pidl;
     HRESULT hr;
@@ -555,11 +556,18 @@ static void matchGUID(int folder, const GUID *guid)
          pidlLast->mkid.abID[0] == PT_GUID))
         {
             GUID *shellGuid = (GUID *)(pidlLast->mkid.abID + 2);
-            char shellGuidStr[39], guidStr[39];
+            char shellGuidStr[39], guidStr[39], guid_altStr[39];
 
-            ok(IsEqualIID(shellGuid, guid),
-             "%s: got GUID %s, expected %s\n", getFolderName(folder),
-             printGUID(shellGuid, shellGuidStr), printGUID(guid, guidStr));
+            if (!guid_alt)
+             ok(IsEqualIID(shellGuid, guid),
+              "%s: got GUID %s, expected %s\n", getFolderName(folder),
+              printGUID(shellGuid, shellGuidStr), printGUID(guid, guidStr));
+            else
+             ok(IsEqualIID(shellGuid, guid) ||
+              IsEqualIID(shellGuid, guid_alt),
+              "%s: got GUID %s, expected %s or %s\n", getFolderName(folder),
+              printGUID(shellGuid, shellGuidStr), printGUID(guid, guidStr),
+              printGUID(guid_alt, guid_altStr));
         }
         IMalloc_Free(pMalloc, pidl);
     }
@@ -581,16 +589,19 @@ static void testPidlTypes(void)
      TRUE);
 }
 
+/* FIXME: Should be in shobjidl.idl */
+DEFINE_GUID(CLSID_NetworkExplorerFolder, 0xF02C1A0D, 0xBE21, 0x4350, 0x88, 0xB0, 0x73, 0x67, 0xFC, 0x96, 0xEF, 0x3C);
+
 /* Verifies various shell virtual folders have the correct well-known GUIDs. */
 static void testGUIDs(void)
 {
-    matchGUID(CSIDL_BITBUCKET, &CLSID_RecycleBin);
-    matchGUID(CSIDL_CONTROLS, &CLSID_ControlPanel);
-    matchGUID(CSIDL_DRIVES, &CLSID_MyComputer);
-    matchGUID(CSIDL_INTERNET, &CLSID_Internet);
-    matchGUID(CSIDL_NETWORK, &CLSID_NetworkPlaces);
-    matchGUID(CSIDL_PERSONAL, &CLSID_MyDocuments);
-    matchGUID(CSIDL_COMMON_DOCUMENTS, &CLSID_CommonDocuments);
+    matchGUID(CSIDL_BITBUCKET, &CLSID_RecycleBin, NULL);
+    matchGUID(CSIDL_CONTROLS, &CLSID_ControlPanel, NULL);
+    matchGUID(CSIDL_DRIVES, &CLSID_MyComputer, NULL);
+    matchGUID(CSIDL_INTERNET, &CLSID_Internet, NULL);
+    matchGUID(CSIDL_NETWORK, &CLSID_NetworkPlaces, &CLSID_NetworkExplorerFolder); /* Vista and higher */
+    matchGUID(CSIDL_PERSONAL, &CLSID_MyDocuments, NULL);
+    matchGUID(CSIDL_COMMON_DOCUMENTS, &CLSID_CommonDocuments, NULL);
 }
 
 /* Verifies various shell paths match the environment variables to which they
