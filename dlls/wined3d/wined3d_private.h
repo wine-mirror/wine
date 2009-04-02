@@ -464,6 +464,8 @@ struct wined3d_shader_instruction
     DWORD src[4];
     DWORD src_addr[4];
     SHADER_BUFFER *buffer;
+    UINT dst_count;
+    UINT src_count;
 };
 
 typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);

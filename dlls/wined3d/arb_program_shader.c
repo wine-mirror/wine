@@ -1581,6 +1581,8 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     }
 
     tmp_ins.handler_idx = tmp_ins.opcode->handler_idx;
+    tmp_ins.dst_count = tmp_ins.opcode->dst_token ? 1 : 0;
+    tmp_ins.src_count = tmp_ins.opcode->num_params - tmp_ins.dst_count;
     for (i = 0; i < nComponents; i++) {
         tmp_ins.dst = ((ins->dst) & ~WINED3DSP_WRITEMASK_ALL)|(WINED3DSP_WRITEMASK_0<<i);
         tmp_ins.src[1] = ins->src[1]+i;

@@ -845,7 +845,8 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         ins.coissue = opcode_token & WINED3DSI_COISSUE;
 
         /* Destination token */
-        if (curOpcode->dst_token)
+        ins.dst_count = curOpcode->dst_token ? 1 : 0;
+        if (ins.dst_count)
         {
             DWORD param, addr_token = 0;
             pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
@@ -857,7 +858,8 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         if (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED) ins.predicate = *pToken++;
 
         /* Other source tokens */
-        for (i = 0; i < (curOpcode->num_params - curOpcode->dst_token); ++i)
+        ins.src_count = curOpcode->num_params - curOpcode->dst_token;
+        for (i = 0; i < ins.src_count; ++i)
         {
             DWORD param, addr_token = 0;
             pToken += shader_get_param(pToken, shader_version, &param, &addr_token);

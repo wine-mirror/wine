@@ -1293,7 +1293,7 @@ void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instructi
 {
     DWORD mask = ins->dst & WINED3DSP_DSTMOD_MASK;
 
-    if (ins->opcode->dst_token && mask)
+    if (ins->dst_count && mask)
     {
         glsl_dst_param_t dst_param;
 
@@ -1712,7 +1712,6 @@ static void shader_glsl_log(const struct wined3d_shader_instruction *ins)
 /* Map the opcode 1-to-1 to the GL code (arg->dst = instruction(src0, src1, ...) */
 static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
 {
-    CONST SHADER_OPCODE *curOpcode = ins->opcode;
     SHADER_BUFFER *buffer = ins->buffer;
     glsl_src_param_t src_param;
     const char *instruction;
@@ -1741,12 +1740,13 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
 
     shader_addline(buffer, "%s(", instruction);
 
-    if (curOpcode->num_params > 1)
+    if (ins->src_count)
     {
         shader_glsl_add_src_param(ins, ins->src[0], ins->src_addr[0], write_mask, &src_param);
         shader_addline(buffer, "%s", src_param.param_str);
-        for (i = 2; i < curOpcode->num_params; ++i) {
-            shader_glsl_add_src_param(ins, ins->src[i-1], ins->src_addr[i-1], write_mask, &src_param);
+        for (i = 1; i < ins->src_count; ++i)
+        {
+            shader_glsl_add_src_param(ins, ins->src[i], ins->src_addr[i], write_mask, &src_param);
             shader_addline(buffer, ", %s", src_param.param_str);
         }
     }
@@ -2076,6 +2076,8 @@ static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
     }
 
     tmp_ins.handler_idx = tmp_ins.opcode->handler_idx;
+    tmp_ins.dst_count = tmp_ins.opcode->dst_token ? 1 : 0;
+    tmp_ins.src_count = tmp_ins.opcode->num_params - tmp_ins.dst_count;
     for (i = 0; i < nComponents; ++i)
     {
         tmp_ins.dst = ((ins->dst) & ~WINED3DSP_WRITEMASK_ALL) | (WINED3DSP_WRITEMASK_0 << i);
