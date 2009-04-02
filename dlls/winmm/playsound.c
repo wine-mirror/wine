@@ -338,7 +338,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
                 wps->pszSound = wszSystemStart;
             else if (wps->pszSound == (LPCWSTR)SND_ALIAS_SYSTEMWELCOME)
                 wps->pszSound = wszSystemWelcome;
-            else return FALSE;
+            else goto errCleanUp;
         }
         hmmio = get_mmioFromProfile(wps->fdwSound, wps->pszSound);
     }
