@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEMAKER 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
+.TH WINEMAKER 1 "February 2009" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winemaker \- generate a build infrastructure for compiling Windows programs on Unix
 .SH SYNOPSIS
@@ -21,7 +21,7 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 ]
 .br
   [
-.IR               "-Dmacro[=defn] " "] [ " "-Idir " "] [ " "-Ldir " "] [ " "-idll" "] [ " "-llibrary "
+.IR               "-Dmacro[=defn] " "] [ " "-Idir " "] [ " "-Pdir " "] [ " "-idll" "] [ " "-Ldir " "] [ " "-llibrary "
 ]
 .br
   [
@@ -30,7 +30,8 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 .br
   [
 .IR               "--generated-files " "] [ " "--nogenerated-files " "] 
-]
+.br
+.IR               "work_directory" "| " "project_file" "| " "workspace_file"
 
 .SH DESCRIPTION
 .PP
@@ -60,10 +61,11 @@ encounters something out of the ordinary, winemaker will warn you about it.
 the executables and libraries you are trying to build, match them with
 source files, and generate the corresponding Makefile.in files.
 .PP
-- finally winemaker will generate a global Makefile.in file calling out to all
-the others, and a configure script customized for use with Winelib.
+- finally winemaker will generate a global Makefile for normal use.
 .PP
 - winemaker knows about MFC-based project and will generate customized files.
+.PP
+- winemaker can read existing Projectfiles. It supports dsp, dsw, vcproj and sln files.
 .PP
 .SH OPTIONS
 .TP
@@ -140,11 +142,14 @@ Adds the specified macro definition to the global list of macro definitions.
 .I -Idir
 Appends the specified directory to the global include path.
 .TP
-.I -Ldir
-Appends the specified directory to the global library path.
+.I -Pdir
+Appends the specified directory to the global dll path.
 .TP
 .I -idll
 Adds the Winelib library to the global list of Winelib libraries to import.
+.TP
+.I -Ldir
+Appends the specified directory to the global library path.
 .TP
 .I -llibrary
 Adds the specified library to the global list of libraries to link with.
@@ -167,25 +172,16 @@ Tells winemaker not to generate the Makefile.
 .PP
 Here is a typical winemaker use:
 .PP
-$ winemaker --lower-uppercase -DSTRICT
+$ winemaker --lower-uppercase -DSTRICT .
 .PP
 The above tells winemaker to scan the current directory and its
 subdirectories for source files. Whenever if finds a file or directory which
 name is all uppercase, it should rename it to lowercase. It should then fix
 all these source files for compilation with Winelib and generate Makefiles.
 The '-DSTRICT' specifies that the STRICT macro must be set when compiling
-these sources. Finally winemaker will create a global Makefile.in and
-configure.in, and run autoconf to generate the configure script.
+these sources. Finally winemaker will create a Makefile.
 .PP
 The next step would be:
-.PP
-$ ./configure --with-wine=/usr/local/opt/wine
-.PP
-This generates the makefiles from the Makefile.in files. The generated
-makefiles will fetch the Winelib headers and libraries from the Wine
-installation located in /usr/local/opt/wine.
-.PP
-And finally:
 .PP
 $ make
 .PP
@@ -193,23 +189,22 @@ If at this point you get compilation errors (which is quite likely for a
 reasonably sized project) then you should consult the Winelib User Guide to
 find tips on how to resolve them.
 .PP
-For an MFC-based project one would have run the following commands instead:
+For an MFC-based project you would have to run the following commands instead:
 .PP
-$ winemaker --lower-uppercase --mfc
+$ winemaker --lower-uppercase --mfc .
 .br
-$ ./configure --with-wine=/usr/local/opt/wine \\
-.br
-              --with-mfc=/usr/local/opt/mfc
+$ make
+.PP
+For an existing project-file you would have to run the following commands:
+.PP
+$ winemaker --lower-all myproject.dsp
 .br
 $ make
 .PP
 
 .SH TODO / BUGS
 .PP
-Winemaker should support the Visual Studio project files (.dsp for newer
-versions and .mak for some older versions). This would allow it to be much
-more accurate, especially for the macro, include and library path
-settings.
+In some cases you will have to edit the Makefile or sourcefiles by yourself.
 .PP
 Assuming that the windows executable/library is available, we could
 use a pedump-like tool to determine what kind of executable it is (graphical
@@ -229,7 +224,7 @@ Winemaker does not support message files and the message compiler yet.
 .PP
 The Winelib User Guide:
 .PP
-http://wine.codeweavers.com/docs/winelib-user/
+http://www.winehq.org/docs/winelib-guide/index
 .PP
 .BR wine (1)
 .PP
