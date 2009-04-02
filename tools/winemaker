@@ -1301,17 +1301,17 @@ sub fix_file($$$)
     if ($is_rc and !$is_mfc and /^(\s*)(\#\s*include\s*)\"afxres\.h\"/) {
       # VC6 automatically includes 'afxres.h', an MFC specific header, in
       # the RC files it generates (even in non-MFC projects). So we replace
-      # it with 'winres.h' its very close standard cousin so that non MFC
+      # it with 'winresrc.h' its very close standard cousin so that non MFC
       # projects can compile in Wine without the MFC sources.
       my $warning="mfc:afxres.h";
       if (!defined $warnings{$warning}) {
 	$warnings{$warning}="1";
-	print STDERR "warning: In non-MFC projects, winemaker replaces the MFC specific header 'afxres.h' with 'winres.h'\n";
+	print STDERR "warning: In non-MFC projects, winemaker replaces the MFC specific header 'afxres.h' with 'winresrc.h'\n";
 	print STDERR "warning: the above warning is issued only once\n";
       }
       print FILEO "$1/* winemaker: $2\"afxres.h\" */\n";
-      print FILEO "$1/* winemaker:warning: 'afxres.h' is an MFC specific header. Replacing it with 'winres.h' */\n";
-      print FILEO "$1$2\"winres.h\"$'";
+      print FILEO "$1/* winemaker:warning: 'afxres.h' is an MFC specific header. Replacing it with 'winresrc.h' */\n";
+      print FILEO "$1$2\"winresrc.h\"$'";
       $modified=1;
 
     } elsif (/^(\s*\#\s*include\s*)([\"<])([^\"]+)([\">])/) {
@@ -1473,7 +1473,7 @@ sub fix_file($$$)
 	print FILEO;
 
       } elsif ($rc_textinclude_state == 3 and /^(\s*\"\#\s*include\s*\"\")afxres\.h(\"\"\\r\\n\")/) {
-	print FILEO "$1winres.h$2$'";
+	print FILEO "$1winresrc.h$2$'";
 	$modified=1;
 
       } elsif (/^\s*BEGIN(\W.*)?$/) {
