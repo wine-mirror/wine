@@ -907,33 +907,33 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
     char arguments[256];
     unsigned int i;
 
-    switch (curOpcode->opcode)
+    switch (ins->handler_idx)
     {
-        case WINED3DSIO_ABS: instruction = "ABS"; break;
-        case WINED3DSIO_ADD: instruction = "ADD"; break;
-        case WINED3DSIO_CRS: instruction = "XPD"; break;
-        case WINED3DSIO_DP3: instruction = "DP3"; break;
-        case WINED3DSIO_DP4: instruction = "DP4"; break;
-        case WINED3DSIO_DST: instruction = "DST"; break;
-        case WINED3DSIO_EXP: instruction = "EX2"; break;
-        case WINED3DSIO_EXPP: instruction = "EXP"; break;
-        case WINED3DSIO_FRC: instruction = "FRC"; break;
-        case WINED3DSIO_LIT: instruction = "LIT"; break;
-        case WINED3DSIO_LOG: instruction = "LG2"; break;
-        case WINED3DSIO_LOGP: instruction = "LOG"; break;
-        case WINED3DSIO_LRP: instruction = "LRP"; break;
-        case WINED3DSIO_MAD: instruction = "MAD"; break;
-        case WINED3DSIO_MAX: instruction = "MAX"; break;
-        case WINED3DSIO_MIN: instruction = "MIN"; break;
-        case WINED3DSIO_MOV: instruction = "MOV"; break;
-        case WINED3DSIO_MUL: instruction = "MUL"; break;
-        case WINED3DSIO_NOP: instruction = "NOP"; break;
-        case WINED3DSIO_POW: instruction = "POW"; break;
-        case WINED3DSIO_SGE: instruction = "SGE"; break;
-        case WINED3DSIO_SLT: instruction = "SLT"; break;
-        case WINED3DSIO_SUB: instruction = "SUB"; break;
+        case WINED3DSIH_ABS: instruction = "ABS"; break;
+        case WINED3DSIH_ADD: instruction = "ADD"; break;
+        case WINED3DSIH_CRS: instruction = "XPD"; break;
+        case WINED3DSIH_DP3: instruction = "DP3"; break;
+        case WINED3DSIH_DP4: instruction = "DP4"; break;
+        case WINED3DSIH_DST: instruction = "DST"; break;
+        case WINED3DSIH_EXP: instruction = "EX2"; break;
+        case WINED3DSIH_EXPP: instruction = "EXP"; break;
+        case WINED3DSIH_FRC: instruction = "FRC"; break;
+        case WINED3DSIH_LIT: instruction = "LIT"; break;
+        case WINED3DSIH_LOG: instruction = "LG2"; break;
+        case WINED3DSIH_LOGP: instruction = "LOG"; break;
+        case WINED3DSIH_LRP: instruction = "LRP"; break;
+        case WINED3DSIH_MAD: instruction = "MAD"; break;
+        case WINED3DSIH_MAX: instruction = "MAX"; break;
+        case WINED3DSIH_MIN: instruction = "MIN"; break;
+        case WINED3DSIH_MOV: instruction = "MOV"; break;
+        case WINED3DSIH_MUL: instruction = "MUL"; break;
+        case WINED3DSIH_NOP: instruction = "NOP"; break;
+        case WINED3DSIH_POW: instruction = "POW"; break;
+        case WINED3DSIH_SGE: instruction = "SGE"; break;
+        case WINED3DSIH_SLT: instruction = "SLT"; break;
+        case WINED3DSIH_SUB: instruction = "SUB"; break;
         default: instruction = "";
-            FIXME("Unhandled opcode %s\n", curOpcode->name);
+            FIXME("Unhandled opcode %#x\n", ins->handler_idx);
             break;
     }
 
@@ -1018,12 +1018,12 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
     if ((WINED3DSHADER_VERSION_MAJOR(ins->reg_maps->shader_version) == 1
             && !shader_is_pshader_version(ins->reg_maps->shader_version)
             && shader_get_regtype(ins->dst) == WINED3DSPR_ADDR)
-            || ins->opcode->opcode == WINED3DSIO_MOVA)
+            || ins->handler_idx == WINED3DSIH_MOVA)
     {
         SHADER_BUFFER *buffer = ins->buffer;
         char src0_param[256];
 
-        if (ins->opcode->opcode == WINED3DSIO_MOVA)
+        if (ins->handler_idx == WINED3DSIH_MOVA)
             FIXME("mova should round\n");
 
         src0_param[0] = '\0';
@@ -1271,7 +1271,7 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
 
         shader_hw_sample(ins, reg_dest_code, reg_coord, "TMP", FALSE, FALSE);
 
-        if (ins->opcode->opcode == WINED3DSIO_TEXBEML && has_luminance)
+        if (ins->handler_idx == WINED3DSIH_TEXBEML && has_luminance)
         {
             shader_addline(buffer, "MAD TMP, T%u.z, luminance%d.x, luminance%d.y;\n",
                            src, reg_dest_code, reg_dest_code);
@@ -1554,30 +1554,30 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     tmp_ins.src_addr[1] = ins->src_addr[1];
     tmp_ins.reg_maps = ins->reg_maps;
 
-    switch(ins->opcode->opcode)
+    switch(ins->handler_idx)
     {
-    case WINED3DSIO_M4x4:
-        nComponents = 4;
-        tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
-        break;
-    case WINED3DSIO_M4x3:
-        nComponents = 3;
-        tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
-        break;
-    case WINED3DSIO_M3x4:
-        nComponents = 4;
-        tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
-        break;
-    case WINED3DSIO_M3x3:
-        nComponents = 3;
-        tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
-        break;
-    case WINED3DSIO_M3x2:
-        nComponents = 2;
-        tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
-        break;
-    default:
-        break;
+        case WINED3DSIH_M4x4:
+            nComponents = 4;
+            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
+            break;
+        case WINED3DSIH_M4x3:
+            nComponents = 3;
+            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
+            break;
+        case WINED3DSIH_M3x4:
+            nComponents = 4;
+            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
+            break;
+        case WINED3DSIH_M3x3:
+            nComponents = 3;
+            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
+            break;
+        case WINED3DSIH_M3x2:
+            nComponents = 2;
+            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
+            break;
+        default:
+            break;
     }
 
     tmp_ins.handler_idx = tmp_ins.opcode->handler_idx;
@@ -1590,7 +1590,6 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
 
 static void vshader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
 {
-    CONST SHADER_OPCODE *curOpcode = ins->opcode;
     SHADER_BUFFER *buffer = ins->buffer;
     DWORD dst = ins->dst;
     DWORD src = ins->src[0];
@@ -1599,12 +1598,12 @@ static void vshader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
 
     char tmpLine[256];
 
-    switch(curOpcode->opcode)
+    switch(ins->handler_idx)
     {
-        case WINED3DSIO_RSQ: instruction = "RSQ"; break;
-        case WINED3DSIO_RCP: instruction = "RCP"; break;
+        case WINED3DSIH_RSQ: instruction = "RSQ"; break;
+        case WINED3DSIH_RCP: instruction = "RCP"; break;
         default: instruction = "";
-            FIXME("Unhandled opcode %s\n", curOpcode->name);
+            FIXME("Unhandled opcode %#x\n", ins->handler_idx);
             break;
     }
 
