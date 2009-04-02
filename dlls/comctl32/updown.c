@@ -507,6 +507,7 @@ UPDOWN_Buddy_SubclassProc(HWND  hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         HWND upDownHwnd = GetPropW(hwnd, BUDDY_UPDOWN_HWND);
 
 	UPDOWN_KeyPressed(UPDOWN_GetInfoPtr(upDownHwnd), (int)wParam);
+	if ((wParam == VK_UP) || (wParam == VK_DOWN)) return 0;
     }
     else if (uMsg == WM_MOUSEWHEEL) {
         HWND upDownHwnd = GetPropW(hwnd, BUDDY_UPDOWN_HWND);
