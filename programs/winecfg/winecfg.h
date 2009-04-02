@@ -107,7 +107,7 @@ struct drive
 
 #define DRIVE_MASK_BIT(B) (1 << (toupper(B) - 'A'))
 
-long drive_available_mask(char letter);
+ULONG drive_available_mask(char letter);
 BOOL add_drive(char letter, const char *targetpath, const char *device,
                const WCHAR *label, DWORD serial, DWORD type);
 void delete_drive(struct drive *pDrive);

@@ -300,7 +300,7 @@ static void on_add_click(HWND dialog)
        then invoke the directory chooser dialog. */
 
     char new = 'C'; /* we skip A and B, they are historically floppy drives */
-    long mask = ~drive_available_mask(0); /* the mask is now which drives aren't available */
+    ULONG mask = ~drive_available_mask(0); /* the mask is now which drives aren't available */
     int i, c;
 
     while (mask & (1 << (new - 'A')))

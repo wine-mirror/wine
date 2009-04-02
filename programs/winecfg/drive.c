@@ -72,9 +72,9 @@ static inline int letter_to_index(char letter)
  * so the edit dialog can display the currently used drive letter
  * alongside the available ones.
  */
-long drive_available_mask(char letter)
+ULONG drive_available_mask(char letter)
 {
-  long result = 0;
+  ULONG result = 0;
   int i;
 
   WINE_TRACE("\n");
@@ -89,7 +89,7 @@ long drive_available_mask(char letter)
   result = ~result;
   if (letter) result |= DRIVE_MASK_BIT(letter);
 
-  WINE_TRACE("finished drive letter loop with %lx\n", result);
+  WINE_TRACE("finished drive letter loop with %x\n", result);
   return result;
 }
 

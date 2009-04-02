@@ -43,7 +43,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 BOOL gui_mode = TRUE;
-static long working_mask = 0;
+static ULONG working_mask = 0;
 
 typedef struct
 {
