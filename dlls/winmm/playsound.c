@@ -310,7 +310,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     }
     else if (wps->fdwSound & SND_ALIAS)
     {
-        if (wps->fdwSound & SND_ALIAS_ID)
+        if ((wps->fdwSound & SND_ALIAS_ID) == SND_ALIAS_ID)
         {
             static const WCHAR  wszSystemAsterisk[] = {'S','y','s','t','e','m','A','s','t','e','r','i','s','k',0};
             static const WCHAR  wszSystemDefault[] = {'S','y','s','t','e','m','D','e','f','a','u','l','t',0};
