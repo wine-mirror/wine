@@ -121,7 +121,7 @@ case $host in
       AC_SUBST(TARGETFLAGS,"-m64")
     fi
     ;;
-  *-mingw32*)
+  *-mingw32*|*-cygwin*)
     enable_win16=${enable_win16:-no}
     ;;
   i[[3456789]]86*)
@@ -522,9 +522,6 @@ case $host_os in
       LIBEXT="dll"
     fi
     IMPLIBEXT="a"
-    dnl We can't build 16-bit NE dlls
-    WIN16_FILES=""
-    WIN16_INSTALL=""
     dnl Disable modules that can't be used on Windows
     enable_iphlpapi=${enable_iphlpapi:-no}
     enable_kernel32=${enable_kernel32:-no}

@@ -3883,7 +3883,7 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 
     fi
     ;;
-  *-mingw32*)
+  *-mingw32*|*-cygwin*)
     enable_win16=${enable_win16:-no}
     ;;
   i[3456789]86*)
@@ -7503,8 +7503,6 @@ fi
             LIBEXT="dll"
     fi
     IMPLIBEXT="a"
-        WIN16_FILES=""
-    WIN16_INSTALL=""
         enable_iphlpapi=${enable_iphlpapi:-no}
     enable_kernel32=${enable_kernel32:-no}
     enable_msvcrt=${enable_msvcrt:-no}
