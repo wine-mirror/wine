@@ -58,9 +58,9 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #ifdef __APPLE__
 extern char **__wine_get_main_environment(void);
-#define environ __wine_get_main_environment()
 #else
-extern char **environ;
+extern char **__wine_main_environ;
+static char **__wine_get_main_environment(void) { return __wine_main_environ; }
 #endif
 
 typedef struct
@@ -280,9 +280,10 @@ static BOOL build_initial_environment(void)
     char **e;
     WCHAR *p, *endptr;
     void *ptr;
+    char **env = __wine_get_main_environment();
 
     /* Compute the total size of the Unix environment */
-    for (e = environ; *e; e++)
+    for (e = env; *e; e++)
     {
         if (is_special_env_var( *e )) continue;
         size += MultiByteToWideChar( CP_UNIXCP, 0, *e, -1, NULL, 0 );
@@ -299,7 +300,7 @@ static BOOL build_initial_environment(void)
     endptr = p + size / sizeof(WCHAR);
 
     /* And fill it with the Unix environment */
-    for (e = environ; *e; e++)
+    for (e = env; *e; e++)
     {
         char *str = *e;
 
