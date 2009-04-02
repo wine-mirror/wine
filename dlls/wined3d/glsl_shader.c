@@ -1740,7 +1740,8 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
 
     shader_addline(buffer, "%s(", instruction);
 
-    if (curOpcode->num_params > 0) {
+    if (curOpcode->num_params > 1)
+    {
         shader_glsl_add_src_param(ins, ins->src[0], ins->src_addr[0], write_mask, &src_param);
         shader_addline(buffer, "%s", src_param.param_str);
         for (i = 2; i < curOpcode->num_params; ++i) {
