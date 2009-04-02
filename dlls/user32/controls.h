@@ -88,6 +88,7 @@ extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar ) DECLSPEC
 extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect,
                                 HWND hwnd, BOOL suppress_draw ) DECLSPEC_HIDDEN;
 extern UINT MENU_FindSubMenu( HMENU *hmenu, HMENU hSubTarget ) DECLSPEC_HIDDEN;
+extern void MENU_EndMenu(HWND) DECLSPEC_HIDDEN;
 
 /* nonclient area */
 extern LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip) DECLSPEC_HIDDEN;

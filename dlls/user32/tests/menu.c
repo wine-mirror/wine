@@ -40,6 +40,7 @@ static ATOM atomMenuCheckClass;
 static BOOL (WINAPI *pGetMenuInfo)(HMENU,LPCMENUINFO);
 static UINT (WINAPI *pSendInput)(UINT, INPUT*, size_t);
 static BOOL (WINAPI *pSetMenuInfo)(HMENU,LPCMENUINFO);
+static BOOL (WINAPI *pEndMenu) (void);
 
 static void init_function_pointers(void)
 {
@@ -53,6 +54,7 @@ static void init_function_pointers(void)
     GET_PROC(GetMenuInfo)
     GET_PROC(SendInput)
     GET_PROC(SetMenuInfo)
+    GET_PROC(EndMenu)
 
 #undef GET_PROC
 }
@@ -2847,6 +2849,89 @@ static void test_menu_trackpopupmenu(void)
     DestroyWindow(hwnd);
 }
 
+/* test handling of WM_CANCELMODE messages */
+static int g_got_enteridle;
+static HWND g_hwndtosend;
+static LRESULT WINAPI menu_cancelmode_wnd_proc(HWND hwnd, UINT msg,
+        WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        case WM_ENTERMENULOOP:
+            g_got_enteridle = 0;
+            return SendMessage( g_hwndtosend, WM_CANCELMODE, 0, 0);
+        case WM_ENTERIDLE:
+            {
+                if( g_got_enteridle++ == 0) {
+                    /* little hack to get another WM_ENTERIDLE message */
+                    PostMessage( hwnd, WM_MOUSEMOVE, 0, 0);
+                    return SendMessage( g_hwndtosend, WM_CANCELMODE, 0, 0);
+                }
+                pEndMenu();
+                return TRUE;
+            }
+    }
+    return DefWindowProc( hwnd, msg, wparam, lparam);
+}
+
+static void test_menu_cancelmode(void)
+{
+    DWORD ret;
+    HWND hwnd, hwndchild;
+    HMENU menu;
+    if( !pEndMenu) { /* win95 */
+        win_skip( "EndMenu is not available\n");
+        return;
+    }
+    hwnd = CreateWindowEx( 0, MAKEINTATOM(atomMenuCheckClass), NULL,
+            WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
+            NULL, NULL, NULL, NULL);
+    hwndchild = CreateWindowEx( 0, MAKEINTATOM(atomMenuCheckClass), NULL,
+            WS_VISIBLE | WS_CHILD, 10, 10, 20, 20,
+            hwnd, NULL, NULL, NULL);
+    ok( hwnd != NULL && hwndchild != NULL,
+            "CreateWindowEx failed with error %d\n", GetLastError());
+    g_hwndtosend = hwnd;
+    SetWindowLongPtr( hwnd, GWLP_WNDPROC, (LONG_PTR)menu_cancelmode_wnd_proc);
+    SetWindowLongPtr( hwndchild, GWLP_WNDPROC, (LONG_PTR)menu_cancelmode_wnd_proc);
+    menu = CreatePopupMenu();
+    ok( menu != NULL, "CreatePopupMenu failed with error %d\n", GetLastError());
+    ret = AppendMenuA( menu, MF_STRING, 1, "winetest");
+    ok( ret, "Functie failed lasterror is %u\n", GetLastError());
+    /* seems to be needed only on wine :( */
+    {MSG msg;   while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);}
+    /* test the effect of sending a WM_CANCELMODE message in the WM_INITMENULOOP
+     * handler of the menu owner */
+    /* test results is exctracted from variable g_got_enteridle. Possible values:
+     * 0 : complete conformance. Sending WM_CANCELMODE cancels a menu initializing tracking
+     * 1 : Sending WM_CANCELMODE cancels a menu that is in tracking state
+     * 2 : Sending WM_CANCELMODE does not work
+     */
+    /* menu owner is top level window */
+    g_hwndtosend = hwnd;
+    ret = TrackPopupMenu( menu, 0x100, 100,100, 0, hwnd, NULL);
+    todo_wine {
+        ok( g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
+    }
+    ok( g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less then 2\n", g_got_enteridle);
+    /* menu owner is child window */
+    g_hwndtosend = hwndchild;
+    ret = TrackPopupMenu( menu, 0x100, 100,100, 0, hwndchild, NULL);
+    todo_wine {
+        ok(g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
+    }
+    ok(g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less then 2\n", g_got_enteridle);
+    /* now send the WM_CANCELMODE messages to the WRONG window */
+    /* those should fail ( to have any effect) */
+    g_hwndtosend = hwnd;
+    ret = TrackPopupMenu( menu, 0x100, 100,100, 0, hwndchild, NULL);
+    ok( g_got_enteridle == 2, "received %d WM_ENTERIDLE messages, should be 2\n", g_got_enteridle);
+    /* cleanup */
+    DestroyMenu( menu);
+    DestroyWindow( hwndchild);
+    DestroyWindow( hwnd);
+}
+
 START_TEST(menu)
 {
     init_function_pointers();
@@ -2884,4 +2969,5 @@ START_TEST(menu)
 
     test_menu_hilitemenuitem();
     test_menu_trackpopupmenu();
+    test_menu_cancelmode();
 }

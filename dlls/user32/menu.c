@@ -176,6 +176,7 @@ static UINT     ODitemheight; /* default owner drawn item height */
 /* Use global popup window because there's no way 2 menus can
  * be tracked at the same time.  */
 static HWND top_popup;
+static HMENU top_popup_hmenu;
 
   /* Flag set by EndMenu() to force an exit from menu tracking */
 static BOOL fEndMenu = FALSE;
@@ -1884,8 +1885,10 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
                                 hwndOwner, 0, (HINSTANCE)GetWindowLongPtrW(hwndOwner, GWLP_HINSTANCE),
                                 (LPVOID)hmenu );
     if( !menu->hWnd ) return FALSE;
-    if (!top_popup) top_popup = menu->hWnd;
-
+    if (!top_popup) {
+        top_popup = menu->hWnd;
+        top_popup_hmenu = hmenu;
+    }
     /* Display the window */
 
     SetWindowPos( menu->hWnd, HWND_TOPMOST, 0, 0, 0, 0,
@@ -1953,7 +1956,10 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
     if (lppop->FocusedItem == wIndex) return;
     if (lppop->wFlags & MF_POPUP) hdc = GetDC( lppop->hWnd );
     else hdc = GetDCEx( lppop->hWnd, 0, DCX_CACHE | DCX_WINDOW);
-    if (!top_popup) top_popup = lppop->hWnd;
+    if (!top_popup) {
+        top_popup = lppop->hWnd;
+        top_popup_hmenu = hmenu;
+    }
 
     SelectObject( hdc, get_menu_font(FALSE));
 
@@ -2460,6 +2466,20 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
 HWND MENU_IsMenuActive(void)
 {
     return top_popup;
+}
+
+/**********************************************************************
+ *         MENU_EndMenu
+ *
+ * Calls EndMenu() if the hwnd parameter belongs to the menu owner
+ *
+ * Does the (menu stuff) of the default window handling of WM_CANCELMODE
+ */
+void MENU_EndMenu( HWND hwnd )
+{
+    POPUPMENU *menu;
+    menu = top_popup_hmenu ? MENU_GetMenu( top_popup_hmenu ) : NULL;
+    if (menu && hwnd == menu->hwndOwner) EndMenu();
 }
 
 /***********************************************************************
@@ -3363,6 +3383,7 @@ static BOOL MENU_ExitTracking(HWND hWnd)
     SendMessageW( hWnd, WM_EXITMENULOOP, 0, 0 );
     ShowCaret(0);
     top_popup = 0;
+    top_popup_hmenu = NULL;
     return TRUE;
 }
 
@@ -3530,7 +3551,10 @@ static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 
     case WM_DESTROY:
         /* zero out global pointer in case resident popup window was destroyed. */
-        if (hwnd == top_popup) top_popup = 0;
+        if (hwnd == top_popup) {
+            top_popup = 0;
+            top_popup_hmenu = NULL;
+        }
         break;
 
     case WM_SHOWWINDOW:
