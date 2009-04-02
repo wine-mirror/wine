@@ -579,6 +579,36 @@ ok(tmp === Infinity, "Math.abs(-Infinite) = " + tmp);
 tmp = Math.abs(-3, 2);
 ok(tmp === 3, "Math.abs(-3, 2) = " + tmp);
 
+tmp = Math.cos(0);
+ok(tmp === 1, "Math.cos(0) = " + tmp);
+
+tmp = Math.cos(Math.PI/2);
+ok(Math.floor(tmp*100) === 0, "Math.cos(Math.PI/2) = " + tmp);
+
+tmp = Math.cos(-Math.PI/2);
+ok(Math.floor(tmp*100) === 0, "Math.cos(-Math.PI/2) = " + tmp);
+
+tmp = Math.cos(Math.PI/3, 2);
+ok(Math.floor(tmp*100) === 50, "Math.cos(Math.PI/3, 2) = " + tmp);
+
+tmp = Math.cos(true);
+ok(Math.floor(tmp*100) === 54, "Math.cos(true) = " + tmp);
+
+tmp = Math.cos(false);
+ok(tmp === 1, "Math.cos(false) = " + tmp);
+
+tmp = Math.cos();
+ok(isNaN(tmp), "Math.cos() is not NaN");
+
+tmp = Math.cos(NaN);
+ok(isNaN(tmp), "Math.cos(NaN) is not NaN");
+
+tmp = Math.cos(Infinity);
+ok(isNaN(tmp), "Math.cos(Infinity) is not NaN");
+
+tmp = Math.cos(-Infinity);
+ok(isNaN(tmp), "Math.cos(-Infinity) is not NaN");
+
 tmp = Math.pow(2, 2);
 ok(tmp === 4, "Math.pow(2, 2) = " + tmp);
 
