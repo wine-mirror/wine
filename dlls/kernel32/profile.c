@@ -202,9 +202,9 @@ static void PROFILE_Save( HANDLE hFile, const PROFILESECTION *section, ENCODING 
 
     for ( ; section; section = section->next)
     {
-        int len = 4;
+        int len = 0;
 
-        if (section->name[0]) len += strlenW(section->name);
+        if (section->name[0]) len += strlenW(section->name) + 4;
 
         for (key = section->key; key; key = key->next)
         {
@@ -216,15 +216,15 @@ static void PROFILE_Save( HANDLE hFile, const PROFILESECTION *section, ENCODING 
         if (!buffer) return;
 
         p = buffer;
-        *p++ = '[';
         if (section->name[0])
         {
+            *p++ = '[';
             strcpyW( p, section->name );
             p += strlenW(p);
+            *p++ = ']';
+            *p++ = '\r';
+            *p++ = '\n';
         }
-        *p++ = ']';
-        *p++ = '\r';
-        *p++ = '\n';
 
         for (key = section->key; key; key = key->next)
         {

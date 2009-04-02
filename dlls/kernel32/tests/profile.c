@@ -972,10 +972,7 @@ static void test_WritePrivateProfileString(void)
            "key5=string5\r\n";
     ret = WritePrivateProfileStringA("App3", "key5", "string5", path);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine
-    {
-        ok(check_file_data(path, data), "File doesn't match\n");
-    }
+    ok(check_file_data(path, data), "File doesn't match\n");
 
     /* lpString is NULL, key2 key is deleted */
     data = "[App1]\r\n"
@@ -987,10 +984,7 @@ static void test_WritePrivateProfileString(void)
            "key5=string5\r\n";
     ret = WritePrivateProfileStringA("App1", "key2", NULL, path);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine
-    {
-        ok(check_file_data(path, data), "File doesn't match\n");
-    }
+    ok(check_file_data(path, data), "File doesn't match\n");
 
     /* try to delete key2 again */
     data = "[App1]\r\n"
@@ -1002,10 +996,7 @@ static void test_WritePrivateProfileString(void)
            "key5=string5\r\n";
     ret = WritePrivateProfileStringA("App1", "key2", NULL, path);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine
-    {
-        ok(check_file_data(path, data), "File doesn't match\n");
-    }
+    ok(check_file_data(path, data), "File doesn't match\n");
 
     /* lpKeyName is NULL, App1 section is deleted */
     data = "[App2]\r\n"
@@ -1014,29 +1005,20 @@ static void test_WritePrivateProfileString(void)
            "key5=string5\r\n";
     ret = WritePrivateProfileStringA("App1", NULL, "string1", path);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine
-    {
-        ok(check_file_data(path, data), "File doesn't match\n");
-    }
+    ok(check_file_data(path, data), "File doesn't match\n");
 
     /* lpString is not needed to delete a section */
     data = "[App3]\r\n"
            "key5=string5\r\n";
     ret = WritePrivateProfileStringA("App2", NULL, NULL, path);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine
-    {
-        ok(check_file_data(path, data), "File doesn't match\n");
-    }
+    ok(check_file_data(path, data), "File doesn't match\n");
 
     /* leave just the section */
     data = "[App3]\r\n";
     ret = WritePrivateProfileStringA("App3", "key5", NULL, path);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    todo_wine
-    {
-        ok(check_file_data(path, data), "File doesn't match\n");
-    }
+    ok(check_file_data(path, data), "File doesn't match\n");
 
     DeleteFileA(path);
 }
