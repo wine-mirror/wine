@@ -69,6 +69,7 @@ sub DO_DUMP_FUNC($$@)
 {
     my $name = shift;
     my $req = shift;
+    my $prefix = " ";
     push @trace_lines, "static void dump_${name}_$req( const struct ${name}_$req *req )\n{\n";
     while ($#_ >= 0)
     {
@@ -81,31 +82,23 @@ sub DO_DUMP_FUNC($$@)
             if ($fmt =~ /^&(.*)/)
             {
                 my $func = $1;
-                push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-                push @trace_lines, "    $func( &req->$var );\n";
-                push @trace_lines, "    fprintf( stderr, \",\" );\n" if ($#_ > 0);
+                push @trace_lines, "    $func( \"$prefix$var=\", &req->$var );\n";
             }
             elsif ($fmt =~ /^(%.*)\s+\((.*)\)/)
             {
                 my ($format, $cast) = ($1, $2);
-                push @trace_lines, "    fprintf( stderr, \" $var=$format";
-                push @trace_lines, "," if ($#_ > 0);
-                push @trace_lines, "\", ($cast)req->$var );\n";
+                push @trace_lines, "    fprintf( stderr, \"$prefix$var=$format\", ($cast)req->$var );\n";
             }
             else
             {
-                push @trace_lines, "    fprintf( stderr, \" $var=$fmt";
-                push @trace_lines, "," if ($#_ > 0);
-                push @trace_lines, "\", req->$var );\n";
+                push @trace_lines, "    fprintf( stderr, \"$prefix$var=$fmt\", req->$var );\n";
             }
 	}
 	else  # must be some varargs format
 	{
-            my $func = $type;
-            push @trace_lines, "    fprintf( stderr, \" $var=\" );\n";
-            push @trace_lines, "    $func;\n";
-            push @trace_lines, "    fputc( ',', stderr );\n" if ($#_ > 0);
+            push @trace_lines, "    " . sprintf($type, "$prefix$var=") . ";\n";
         }
+        $prefix = ", ";
     }
     push @trace_lines, "}\n\n";
 }
@@ -215,13 +208,13 @@ sub PARSE_REQUESTS()
             if (/^\s*VARARG\((\w+),(\w+),(\w+)\)/)
             {
                 $var = $1;
-                $type = "dump_varargs_" . $2 . "( min(cur_size,req->" . $3 . ") )";
+                $type = "dump_varargs_" . $2 . "( \"%s\", min(cur_size,req->" . $3 . ") )";
                 s!(VARARG\(.*\)\s*;)!/* $1 */!;
             }
             elsif (/^\s*VARARG\((\w+),(\w+)\)/)
             {
                 $var = $1;
-                $type = "dump_varargs_" . $2 . "( cur_size )";
+                $type = "dump_varargs_" . $2 . "( \"%s\", cur_size )";
                 s!(VARARG\(.*\)\s*;)!/* $1 */!;
             }
             elsif (/^\s*(\w+\**(\s+\w+\**)*)\s+(\w+);/)
