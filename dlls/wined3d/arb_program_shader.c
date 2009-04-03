@@ -1584,6 +1584,7 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     }
 
     for (i = 0; i < nComponents; i++) {
+        tmp_dst.register_idx = ins->dst[0].register_idx;
         tmp_dst.token = ((ins->dst[0].token) & ~WINED3DSP_WRITEMASK_ALL) | (WINED3DSP_WRITEMASK_0 << i);
         tmp_ins.src[1] = ins->src[1]+i;
         shader_hw_map2gl(&tmp_ins);

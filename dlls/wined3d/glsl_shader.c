@@ -1917,7 +1917,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
         DWORD src0regtype = shader_get_regtype(ins->src[0]);
         DWORD src1regtype = shader_get_regtype(ins->src[1]);
         DWORD src2regtype = shader_get_regtype(ins->src[2]);
-        DWORD dstreg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+        DWORD dstreg = ins->dst[0].register_idx;
         DWORD dstregtype = shader_get_regtype(ins->dst[0].token);
 
         /* Cycle through all source0 channels */
@@ -2086,6 +2086,7 @@ static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
 
     for (i = 0; i < nComponents; ++i)
     {
+        tmp_dst.register_idx = ins->dst[0].register_idx;
         tmp_dst.token = ((ins->dst[0].token) & ~WINED3DSP_WRITEMASK_ALL) | (WINED3DSP_WRITEMASK_0 << i);
         tmp_ins.src[1] = ins->src[1] + i;
         shader_glsl_dot(&tmp_ins);
@@ -2394,7 +2395,7 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
 
     /* 1.0-1.4: Use destination register as sampler source.
      * 2.0+: Use provided sampler source. */
-    if (shader_version < WINED3DPS_VERSION(2,0)) sampler_idx = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    if (shader_version < WINED3DPS_VERSION(2,0)) sampler_idx = ins->dst[0].register_idx;
     else sampler_idx = ins->src[1] & WINED3DSP_REGNUM_MASK;
     sampler_type = ins->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
 
@@ -2513,7 +2514,7 @@ static void pshader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
 
     if (ins->reg_maps->shader_version != WINED3DPS_VERSION(1,4))
     {
-        DWORD reg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+        DWORD reg = ins->dst[0].register_idx;
         shader_addline(buffer, "clamp(gl_TexCoord[%u], 0.0, 1.0)%s);\n", reg, dst_mask);
     } else {
         DWORD reg = ins->src[0] & WINED3DSP_REGNUM_MASK;
@@ -2555,7 +2556,7 @@ static void pshader_glsl_texdp3tex(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
     glsl_sample_function_t sample_function;
-    DWORD sampler_idx = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD sampler_idx = ins->dst[0].register_idx;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD sampler_type = ins->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     UINT mask_size;
@@ -2598,7 +2599,7 @@ static void pshader_glsl_texdp3tex(const struct wined3d_shader_instruction *ins)
 static void pshader_glsl_texdp3(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
-    DWORD dstreg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD dstreg = ins->dst[0].register_idx;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD dst_mask;
     unsigned int mask_size;
@@ -2640,7 +2641,7 @@ static void pshader_glsl_texdepth(const struct wined3d_shader_instruction *ins)
 static void pshader_glsl_texm3x2depth(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
-    DWORD dstreg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD dstreg = ins->dst[0].register_idx;
     glsl_src_param_t src0_param;
 
     shader_glsl_add_src_param(ins, ins->src[0], ins->src_addr[0], src_mask, &src0_param);
@@ -2654,7 +2655,7 @@ static void pshader_glsl_texm3x2depth(const struct wined3d_shader_instruction *i
 static void pshader_glsl_texm3x2pad(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
-    DWORD reg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD reg = ins->dst[0].register_idx;
     SHADER_BUFFER *buffer = ins->buffer;
     glsl_src_param_t src0_param;
 
@@ -2668,7 +2669,7 @@ static void pshader_glsl_texm3x3pad(const struct wined3d_shader_instruction *ins
 {
     IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)ins->shader;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
-    DWORD reg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD reg = ins->dst[0].register_idx;
     SHADER_BUFFER *buffer = ins->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     glsl_src_param_t src0_param;
@@ -2681,7 +2682,7 @@ static void pshader_glsl_texm3x3pad(const struct wined3d_shader_instruction *ins
 static void pshader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins)
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
-    DWORD reg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD reg = ins->dst[0].register_idx;
     SHADER_BUFFER *buffer = ins->buffer;
     glsl_src_param_t src0_param;
     DWORD sampler_type = ins->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
@@ -2702,7 +2703,7 @@ static void pshader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins
 {
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     glsl_src_param_t src0_param;
-    DWORD reg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD reg = ins->dst[0].register_idx;
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->shader;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     DWORD sampler_type = ins->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
@@ -2727,7 +2728,7 @@ static void pshader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     glsl_src_param_t src0_param;
     char dst_mask[6];
-    DWORD reg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD reg = ins->dst[0].register_idx;
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->shader;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
 
@@ -2745,7 +2746,7 @@ static void pshader_glsl_texm3x3(const struct wined3d_shader_instruction *ins)
 static void pshader_glsl_texm3x3spec(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)ins->shader;
-    DWORD reg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD reg = ins->dst[0].register_idx;
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
     SHADER_BUFFER *buffer = ins->buffer;
@@ -2776,7 +2777,7 @@ static void pshader_glsl_texm3x3spec(const struct wined3d_shader_instruction *in
 static void pshader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *shader = (IWineD3DPixelShaderImpl *)ins->shader;
-    DWORD reg = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD reg = ins->dst[0].register_idx;
     SHADER_BUFFER *buffer = ins->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     glsl_src_param_t src0_param;
@@ -2819,7 +2820,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     DWORD flags;
     char coord_mask[6];
 
-    sampler_idx = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    sampler_idx = ins->dst[0].register_idx;
     flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
 
     sampler_type = ins->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
@@ -2870,7 +2871,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
 static void pshader_glsl_bem(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param, src1_param;
-    DWORD sampler_idx = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD sampler_idx = ins->dst[0].register_idx;
 
     shader_glsl_add_src_param(ins, ins->src[0], ins->src_addr[0],
             WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &src0_param);
@@ -2887,7 +2888,7 @@ static void pshader_glsl_bem(const struct wined3d_shader_instruction *ins)
 static void pshader_glsl_texreg2ar(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
-    DWORD sampler_idx = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD sampler_idx = ins->dst[0].register_idx;
     DWORD sampler_type = ins->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     glsl_sample_function_t sample_function;
 
@@ -2903,7 +2904,7 @@ static void pshader_glsl_texreg2ar(const struct wined3d_shader_instruction *ins)
 static void pshader_glsl_texreg2gb(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
-    DWORD sampler_idx = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD sampler_idx = ins->dst[0].register_idx;
     DWORD sampler_type = ins->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     glsl_sample_function_t sample_function;
 
@@ -2919,7 +2920,7 @@ static void pshader_glsl_texreg2gb(const struct wined3d_shader_instruction *ins)
 static void pshader_glsl_texreg2rgb(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
-    DWORD sampler_idx = ins->dst[0].token & WINED3DSP_REGNUM_MASK;
+    DWORD sampler_idx = ins->dst[0].register_idx;
     DWORD sampler_type = ins->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     glsl_sample_function_t sample_function;
 

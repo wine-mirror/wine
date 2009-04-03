@@ -850,6 +850,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         {
             dst_param.addr_token = 0;
             pToken += shader_get_param(pToken, shader_version, &dst_param.token, &dst_param.addr_token);
+            dst_param.register_idx = dst_param.token & WINED3DSP_REGNUM_MASK;
         }
 
         /* Predication token */
