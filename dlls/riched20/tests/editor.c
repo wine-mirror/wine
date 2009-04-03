@@ -4216,32 +4216,31 @@ struct exsetsel_s {
   long expected_retval;
   int expected_getsel_start;
   int expected_getsel_end;
-  int _exsetsel_todo_wine;
   int _getsel_todo_wine;
 };
 
 const struct exsetsel_s exsetsel_tests[] = {
   /* sanity tests */
-  {5, 10, 10, 5, 10, 0, 0},
-  {15, 17, 17, 15, 17, 0, 0},
+  {5, 10, 10, 5, 10, 0},
+  {15, 17, 17, 15, 17, 0},
   /* test cpMax > strlen() */
-  {0, 100, 18, 0, 18, 0, 1},
+  {0, 100, 18, 0, 18, 1},
   /* test cpMin == cpMax */
-  {5, 5, 5, 5, 5, 0, 0},
+  {5, 5, 5, 5, 5, 0},
   /* test cpMin < 0 && cpMax >= 0 (bug 4462) */
-  {-1, 0, 5, 5, 5, 0, 0},
-  {-1, 17, 5, 5, 5, 0, 0},
-  {-1, 18, 5, 5, 5, 0, 0},
+  {-1, 0, 5, 5, 5, 0},
+  {-1, 17, 5, 5, 5, 0},
+  {-1, 18, 5, 5, 5, 0},
   /* test cpMin < 0 && cpMax < 0 */
-  {-1, -1, 17, 17, 17, 0, 0},
-  {-4, -5, 17, 17, 17, 0, 0},
+  {-1, -1, 17, 17, 17, 0},
+  {-4, -5, 17, 17, 17, 0},
   /* test cMin >=0 && cpMax < 0 (bug 6814) */
-  {0, -1, 18, 0, 18, 0, 1},
-  {17, -5, 18, 17, 18, 0, 1},
-  {18, -3, 17, 17, 17, 0, 0},
+  {0, -1, 18, 0, 18, 1},
+  {17, -5, 18, 17, 18, 1},
+  {18, -3, 17, 17, 17, 0},
   /* test if cpMin > cpMax */
-  {15, 19, 18, 15, 18, 0, 1},
-  {19, 15, 18, 15, 18, 0, 1}
+  {15, 19, 18, 15, 18, 1},
+  {19, 15, 18, 15, 18, 1}
 };
 
 static void check_EM_EXSETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) {
@@ -4253,13 +4252,7 @@ static void check_EM_EXSETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id
     cr.cpMax = setsel->max;
     result = SendMessage(hwnd, EM_EXSETSEL, 0, (LPARAM) &cr);
 
-    if (setsel->_exsetsel_todo_wine) {
-        todo_wine {
-            ok(result == setsel->expected_retval, "EM_EXSETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
-        }
-    } else {
-        ok(result == setsel->expected_retval, "EM_EXSETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
-    }
+    ok(result == setsel->expected_retval, "EM_EXSETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
 
     SendMessage(hwnd, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
 
