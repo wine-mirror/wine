@@ -50,6 +50,21 @@
 #include "security.h"
 
 
+#define CPU_FLAG(cpu) (1 << (cpu))
+#ifdef __i386__
+static const unsigned int supported_cpus = CPU_FLAG(CPU_x86);
+#elif defined(__x86_64__)
+static const unsigned int supported_cpus = CPU_FLAG(CPU_x86_64) | CPU_FLAG(CPU_x86);
+#elif defined(__ALPHA__)
+static const unsigned int supported_cpus = CPU_FLAG(CPU_ALPHA);
+#elif defined(__powerpc__)
+static const unsigned int supported_cpus = CPU_FLAG(CPU_POWERPC);
+#elif defined(__sparc__)
+static const unsigned int supported_cpus = CPU_FLAG(CPU_SPARC);
+#else
+#error Unsupported CPU
+#endif
+
 /* thread queues */
 
 struct thread_wait
@@ -1043,6 +1058,11 @@ DECL_HANDLER(init_thread)
 
     if (!process->peb)  /* first thread, initialize the process too */
     {
+        if (!CPU_FLAG(req->cpu) || !(supported_cpus & CPU_FLAG(req->cpu)))
+        {
+            set_error( STATUS_NOT_SUPPORTED );
+            return;
+        }
         process->unix_pid = current->unix_pid;
         process->peb      = req->entry;
         process->cpu      = req->cpu;
@@ -1066,6 +1086,7 @@ DECL_HANDLER(init_thread)
     reply->tid     = get_thread_id( current );
     reply->version = SERVER_PROTOCOL_VERSION;
     reply->server_start = server_start_time;
+    reply->all_cpus     = supported_cpus;
     return;
 
  error:

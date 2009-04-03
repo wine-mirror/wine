@@ -1053,6 +1053,15 @@ size_t server_init_thread( void *entry_point )
     }
     SERVER_END_REQ;
 
-    if (ret) server_protocol_error( "init_thread failed with status %x\n", ret );
+    if (ret)
+    {
+        if (ret == STATUS_NOT_SUPPORTED)
+        {
+            static const char * const cpu_arch[] = { "x86", "x86_64", "Alpha", "PowerPC", "Sparc" };
+            server_protocol_error( "the running wineserver doesn't support the %s architecture.\n",
+                                   cpu_arch[client_cpu] );
+        }
+        else server_protocol_error( "init_thread failed with status %x\n", ret );
+    }
     return info_size;
 }

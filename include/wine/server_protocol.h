@@ -584,6 +584,8 @@ struct init_thread_reply
     timeout_t    server_start;
     data_size_t  info_size;
     int          version;
+    unsigned int all_cpus;
+    char __pad_36[4];
 };
 
 
@@ -5222,6 +5224,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 383
+#define SERVER_PROTOCOL_VERSION 384
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

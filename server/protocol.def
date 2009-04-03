@@ -568,6 +568,7 @@ typedef union
     timeout_t    server_start; /* server start time */
     data_size_t  info_size;    /* total size of startup info */
     int          version;      /* protocol version */
+    unsigned int all_cpus;     /* bitset of supported CPUs */
 @END
 
 
