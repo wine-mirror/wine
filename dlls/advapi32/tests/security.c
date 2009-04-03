@@ -1684,7 +1684,7 @@ static void test_LookupAccountSid(void)
     }
 }
 
-static void get_sid_info(PSID psid, LPSTR *user, LPSTR *dom)
+static BOOL get_sid_info(PSID psid, LPSTR *user, LPSTR *dom)
 {
     static CHAR account[UNLEN + 1];
     static CHAR domain[UNLEN + 1];
@@ -1697,7 +1697,8 @@ static void get_sid_info(PSID psid, LPSTR *user, LPSTR *dom)
     size = dom_size = UNLEN + 1;
     account[0] = '\0';
     domain[0] = '\0';
-    LookupAccountSidA(NULL, psid, account, &size, domain, &dom_size, &use);
+    SetLastError(0xdeadbeef);
+    return LookupAccountSidA(NULL, psid, account, &size, domain, &dom_size, &use);
 }
 
 static void check_wellknown_name(const char* name, WELL_KNOWN_SID_TYPE result)
@@ -1711,7 +1712,7 @@ static void check_wellknown_name(const char* name, WELL_KNOWN_SID_TYPE result)
     SID_NAME_USE sid_use;
     LPSTR domain, account, sid_domain, wk_domain, wk_account;
     PSID psid;
-    BOOL ret;
+    BOOL ret ,ret2;
 
     sid_size = 0;
     domain_size = 0;
@@ -1723,19 +1724,25 @@ static void check_wellknown_name(const char* name, WELL_KNOWN_SID_TYPE result)
     if (!result)
     {
         ok(!ret, " %s Should have failed to lookup account name\n",name);
-        return;
+        goto cleanup;
     }
 
     AllocateAndInitializeSid(&ident, 6, SECURITY_NT_NON_UNIQUE, 12, 23, 34, 45, 56, 0, 0, &domainsid);
     cb = sizeof(wk_sid);
     if (!pCreateWellKnownSid(result, domainsid, wk_sid, &cb))
     {
-        win_skip("SID %i is not avalable on the system\n",result);
-        return;
+        win_skip("SID %i is not available on the system\n",result);
+        goto cleanup;
+    }
+
+    ret2 = get_sid_info(wk_sid, &wk_account, &wk_domain);
+    if (!ret2 && GetLastError() == ERROR_NONE_MAPPED)
+    {
+        win_skip("CreateWellKnownSid() succeeded but the account '%s' is not present (W2K)\n", name);
+        goto cleanup;
     }
 
     get_sid_info(psid, &account, &sid_domain);
-    get_sid_info(wk_sid, &wk_account, &wk_domain);
 
     ok(ret, "Failed to lookup account name %s\n",name);
     ok(sid_size != 0, "sid_size was zero\n");
@@ -1746,6 +1753,7 @@ static void check_wellknown_name(const char* name, WELL_KNOWN_SID_TYPE result)
     ok(!lstrcmp(domain, wk_domain), "Expected %s, got %s\n", wk_domain, domain);
     ok(sid_use == SidTypeWellKnownGroup , "Expected Use (5), got %d\n", sid_use);
 
+cleanup:
     HeapFree(GetProcessHeap(),0,psid);
     HeapFree(GetProcessHeap(),0,domain);
 }
@@ -1958,7 +1966,7 @@ static void test_LookupAccountName(void)
 
     if (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH)
     {
-        skip("Non-english locale (skipping well know name creation tests)\n");
+        skip("Non-english locale (skipping well known name creation tests)\n");
         return;
     }
 
