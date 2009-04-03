@@ -90,6 +90,8 @@ static const enum cpu_type client_cpu = CPU_SPARC;
 #error Unsupported CPU
 #endif
 
+unsigned int server_cpus = 0;
+
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 /* data structure used to pass an fd with sendmsg/recvmsg */
 struct cmsg_fd
@@ -1050,6 +1052,7 @@ size_t server_init_thread( void *entry_point )
         NtCurrentTeb()->ClientId.UniqueThread  = ULongToHandle(reply->tid);
         info_size         = reply->info_size;
         server_start_time = reply->server_start;
+        server_cpus       = reply->all_cpus;
     }
     SERVER_END_REQ;
 

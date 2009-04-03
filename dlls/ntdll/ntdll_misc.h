@@ -66,6 +66,7 @@ extern void virtual_init_threading(void);
 
 /* server support */
 extern timeout_t server_start_time;
+extern unsigned int server_cpus;
 extern void server_init_process(void);
 extern NTSTATUS server_init_process_done(void);
 extern size_t server_init_thread( void *entry_point );

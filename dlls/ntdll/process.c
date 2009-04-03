@@ -305,10 +305,14 @@ NTSTATUS WINAPI NtQueryInformationProcess(
          else ret = STATUS_INFO_LENGTH_MISMATCH;
          break;
     case ProcessWow64Information:
-        if (ProcessInformationLength == 4)
+        if (ProcessInformationLength == sizeof(DWORD))
         {
-            memset(ProcessInformation, 0, ProcessInformationLength);
-            len = 4;
+#ifdef __i386__
+            *(DWORD *)ProcessInformation = (server_cpus & (1 << CPU_x86_64)) != 0;
+#else
+            *(DWORD *)ProcessInformation = FALSE;
+#endif
+            len = sizeof(DWORD);
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
