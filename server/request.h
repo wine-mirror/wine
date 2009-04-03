@@ -663,7 +663,6 @@ C_ASSERT( FIELD_OFFSET(struct init_thread_request, teb) == 24 );
 C_ASSERT( FIELD_OFFSET(struct init_thread_request, entry) == 32 );
 C_ASSERT( FIELD_OFFSET(struct init_thread_request, reply_fd) == 40 );
 C_ASSERT( FIELD_OFFSET(struct init_thread_request, wait_fd) == 44 );
-C_ASSERT( FIELD_OFFSET(struct init_thread_request, peb) == 48 );
 C_ASSERT( FIELD_OFFSET(struct init_thread_reply, pid) == 8 );
 C_ASSERT( FIELD_OFFSET(struct init_thread_reply, tid) == 12 );
 C_ASSERT( FIELD_OFFSET(struct init_thread_reply, server_start) == 16 );

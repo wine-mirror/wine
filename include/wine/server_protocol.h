@@ -567,7 +567,6 @@ struct init_thread_request
     client_ptr_t entry;
     int          reply_fd;
     int          wait_fd;
-    client_ptr_t peb;
 };
 struct init_thread_reply
 {
@@ -5215,6 +5214,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 381
+#define SERVER_PROTOCOL_VERSION 382
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

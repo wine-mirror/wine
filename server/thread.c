@@ -1031,7 +1031,7 @@ DECL_HANDLER(init_thread)
     if (!(current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj, 0 )))
         return;
 
-    if (!is_valid_address(req->teb) || !is_valid_address(req->peb))
+    if (!is_valid_address(req->teb))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
@@ -1044,7 +1044,7 @@ DECL_HANDLER(init_thread)
     if (!process->peb)  /* first thread, initialize the process too */
     {
         process->unix_pid = current->unix_pid;
-        process->peb      = req->peb;
+        process->peb      = req->entry;
         reply->info_size  = init_process( current );
     }
     else

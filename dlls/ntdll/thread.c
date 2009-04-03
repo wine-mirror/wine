@@ -294,7 +294,7 @@ HANDLE thread_init(void)
 
     /* setup the server connection */
     server_init_process();
-    info_size = server_init_thread( NULL );
+    info_size = server_init_thread( peb );
 
     /* create the process heap */
     if (!(peb->ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))

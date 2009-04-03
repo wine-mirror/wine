@@ -1026,7 +1026,6 @@ size_t server_init_thread( void *entry_point )
         req->unix_pid    = getpid();
         req->unix_tid    = get_unix_tid();
         req->teb         = wine_server_client_ptr( NtCurrentTeb() );
-        req->peb         = wine_server_client_ptr( NtCurrentTeb()->Peb );
         req->entry       = wine_server_client_ptr( entry_point );
         req->reply_fd    = reply_pipe[1];
         req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];

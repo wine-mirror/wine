@@ -551,10 +551,9 @@ typedef union
     int          unix_tid;     /* Unix tid of new thread */
     int          debug_level;  /* new debug level */
     client_ptr_t teb;          /* TEB of new thread (in thread address space) */
-    client_ptr_t entry;        /* thread entry point (in thread address space) */
+    client_ptr_t entry;        /* entry point or PEB if initial thread (in thread address space) */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
-    client_ptr_t peb;          /* address of PEB (in thread address space) */
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */

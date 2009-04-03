@@ -991,9 +991,7 @@ static void dump_init_thread_request( const struct init_thread_request *req )
     dump_uint64( &req->entry );
     fprintf( stderr, "," );
     fprintf( stderr, " reply_fd=%d,", req->reply_fd );
-    fprintf( stderr, " wait_fd=%d,", req->wait_fd );
-    fprintf( stderr, " peb=" );
-    dump_uint64( &req->peb );
+    fprintf( stderr, " wait_fd=%d", req->wait_fd );
 }
 
 static void dump_init_thread_reply( const struct init_thread_reply *req )
