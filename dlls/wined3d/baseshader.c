@@ -838,8 +838,6 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
             continue;
         }
 
-        ins.opcode = curOpcode;
-
         ins.handler_idx = curOpcode->handler_idx;
         ins.flags = opcode_token & WINED3D_OPCODESPECIFICCONTROL_MASK;
         ins.coissue = opcode_token & WINED3DSI_COISSUE;

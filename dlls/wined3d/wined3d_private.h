@@ -454,7 +454,6 @@ struct wined3d_shader_instruction
 {
     IWineD3DBaseShader *shader;
     const shader_reg_maps *reg_maps;
-    CONST SHADER_OPCODE *opcode;
     enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
     DWORD flags;
     BOOL coissue;

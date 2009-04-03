@@ -1541,9 +1541,6 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     int i;
     int nComponents = 0;
     struct wined3d_shader_instruction tmp_ins;
-    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->shader;
-    const SHADER_OPCODE *opcode_table = shader->baseShader.shader_ins;
-    DWORD shader_version = ins->reg_maps->shader_version;
 
     memset(&tmp_ins, 0, sizeof(tmp_ins));
 
@@ -1554,36 +1551,36 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     tmp_ins.src_addr[0] = ins->src_addr[0];
     tmp_ins.src_addr[1] = ins->src_addr[1];
     tmp_ins.reg_maps = ins->reg_maps;
+    tmp_ins.dst_count = 1;
+    tmp_ins.src_count = 2;
 
     switch(ins->handler_idx)
     {
         case WINED3DSIH_M4x4:
             nComponents = 4;
-            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
+            tmp_ins.handler_idx = WINED3DSIH_DP4;
             break;
         case WINED3DSIH_M4x3:
             nComponents = 3;
-            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP4);
+            tmp_ins.handler_idx = WINED3DSIH_DP4;
             break;
         case WINED3DSIH_M3x4:
             nComponents = 4;
-            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
+            tmp_ins.handler_idx = WINED3DSIH_DP3;
             break;
         case WINED3DSIH_M3x3:
             nComponents = 3;
-            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
+            tmp_ins.handler_idx = WINED3DSIH_DP3;
             break;
         case WINED3DSIH_M3x2:
             nComponents = 2;
-            tmp_ins.opcode = shader_get_opcode(opcode_table, shader_version, WINED3DSIO_DP3);
+            tmp_ins.handler_idx = WINED3DSIH_DP3;
             break;
         default:
+            FIXME("Unhandled opcode %#x\n", ins->handler_idx);
             break;
     }
 
-    tmp_ins.handler_idx = tmp_ins.opcode->handler_idx;
-    tmp_ins.dst_count = tmp_ins.opcode->dst_token ? 1 : 0;
-    tmp_ins.src_count = tmp_ins.opcode->num_params - tmp_ins.dst_count;
     for (i = 0; i < nComponents; i++) {
         tmp_ins.dst = ((ins->dst) & ~WINED3DSP_WRITEMASK_ALL)|(WINED3DSP_WRITEMASK_0<<i);
         tmp_ins.src[1] = ins->src[1]+i;
