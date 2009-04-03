@@ -105,6 +105,21 @@ static void dump_ioctl_code( const ioctl_code_t *code )
     }
 }
 
+static void dump_cpu_type( const cpu_type_t *code )
+{
+    switch (*code)
+    {
+#define CASE(c) case CPU_##c: fputs( #c, stderr ); break
+        CASE(x86);
+        CASE(x86_64);
+        CASE(ALPHA);
+        CASE(POWERPC);
+        CASE(SPARC);
+        default: fprintf( stderr, "%u", *code ); break;
+#undef CASE
+    }
+}
+
 static void dump_apc_call( const apc_call_t *call )
 {
     fputc( '{', stderr );
@@ -991,7 +1006,9 @@ static void dump_init_thread_request( const struct init_thread_request *req )
     dump_uint64( &req->entry );
     fprintf( stderr, "," );
     fprintf( stderr, " reply_fd=%d,", req->reply_fd );
-    fprintf( stderr, " wait_fd=%d", req->wait_fd );
+    fprintf( stderr, " wait_fd=%d,", req->wait_fd );
+    fprintf( stderr, " cpu=" );
+    dump_cpu_type( &req->cpu );
 }
 
 static void dump_init_thread_reply( const struct init_thread_reply *req )

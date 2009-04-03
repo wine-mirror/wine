@@ -50,6 +50,7 @@ my %formats =
     "async_data_t"  => [  40,  8,  "&dump_async_data" ],
     "luid_t"        => [  8,   4,  "&dump_luid" ],
     "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
+    "cpu_type_t"    => [  4,   4,  "&dump_cpu_type" ],
 );
 
 my @requests = ();

@@ -76,6 +76,20 @@ WINE_DEFAULT_DEBUG_CHANNEL(server);
 #define SOCKETNAME "socket"        /* name of the socket file */
 #define LOCKNAME   "lock"          /* name of the lock file */
 
+#ifdef __i386__
+static const enum cpu_type client_cpu = CPU_x86;
+#elif defined(__x86_64__)
+static const enum cpu_type client_cpu = CPU_x86_64;
+#elif defined(__ALPHA__)
+static const enum cpu_type client_cpu = CPU_ALPHA;
+#elif defined(__powerpc__)
+static const enum cpu_type client_cpu = CPU_POWERPC;
+#elif defined(__sparc__)
+static const enum cpu_type client_cpu = CPU_SPARC;
+#else
+#error Unsupported CPU
+#endif
+
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 /* data structure used to pass an fd with sendmsg/recvmsg */
 struct cmsg_fd
@@ -1030,6 +1044,7 @@ size_t server_init_thread( void *entry_point )
         req->reply_fd    = reply_pipe[1];
         req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];
         req->debug_level = (TRACE_ON(server) != 0);
+        req->cpu         = client_cpu;
         ret = wine_server_call( req );
         NtCurrentTeb()->ClientId.UniqueProcess = ULongToHandle(reply->pid);
         NtCurrentTeb()->ClientId.UniqueThread  = ULongToHandle(reply->tid);

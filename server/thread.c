@@ -1045,10 +1045,16 @@ DECL_HANDLER(init_thread)
     {
         process->unix_pid = current->unix_pid;
         process->peb      = req->entry;
+        process->cpu      = req->cpu;
         reply->info_size  = init_process( current );
     }
     else
     {
+        if (req->cpu != process->cpu)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
         if (process->unix_pid != current->unix_pid)
             process->unix_pid = -1;  /* can happen with linuxthreads */
         if (current->suspend + process->suspend > 0) stop_thread( current );

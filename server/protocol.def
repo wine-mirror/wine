@@ -143,6 +143,13 @@ typedef union
     } rip_info;
 } debug_event_t;
 
+/* supported CPU types */
+enum cpu_type
+{
+    CPU_x86, CPU_x86_64, CPU_ALPHA, CPU_POWERPC, CPU_SPARC
+};
+typedef int cpu_type_t;
+
 /* structure used in sending an fd from client to server */
 struct send_fd
 {
@@ -554,6 +561,7 @@ typedef union
     client_ptr_t entry;        /* entry point or PEB if initial thread (in thread address space) */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
+    cpu_type_t   cpu;          /* CPU that this thread is running on */
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */

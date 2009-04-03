@@ -128,6 +128,13 @@ typedef union
 } debug_event_t;
 
 
+enum cpu_type
+{
+    CPU_x86, CPU_x86_64, CPU_ALPHA, CPU_POWERPC, CPU_SPARC
+};
+typedef int cpu_type_t;
+
+
 struct send_fd
 {
     thread_id_t tid;
@@ -567,6 +574,7 @@ struct init_thread_request
     client_ptr_t entry;
     int          reply_fd;
     int          wait_fd;
+    cpu_type_t   cpu;
 };
 struct init_thread_reply
 {
@@ -5214,6 +5222,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 382
+#define SERVER_PROTOCOL_VERSION 383
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
