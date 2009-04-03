@@ -899,7 +899,6 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
 /* Map the opcode 1-to-1 to the GL code */
 static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
 {
-    CONST SHADER_OPCODE *curOpcode = ins->opcode;
     SHADER_BUFFER *buffer = ins->buffer;
     DWORD dst = ins->dst;
     const DWORD *src = ins->src;
@@ -949,9 +948,9 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         const char *modifier;
         DWORD shift;
 
-        if (!curOpcode->num_params)
+        if (!(ins->dst_count + ins->src_count))
         {
-            ERR("Opcode \"%s\" has no parameters\n", curOpcode->name);
+            ERR("Opcode \"%#x\" has no parameters\n", ins->handler_idx);
             return;
         }
 
@@ -974,8 +973,10 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         modifier = (saturate && !shift) ? "_SAT" : "";
 
         /* Generate input register names (with modifiers) */
-        for (i = 1; i < curOpcode->num_params; ++i)
-            pshader_gen_input_modifier_line(ins->shader, buffer, src[i-1], i-1, operands[i]);
+        for (i = 0; i < ins->src_count; ++i)
+        {
+            pshader_gen_input_modifier_line(ins->shader, buffer, src[i], i, operands[i + 1]);
+        }
 
         /* Handle output register */
         pshader_get_register_name(ins->shader, dst, output_rname);
@@ -985,10 +986,10 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
 
         arguments[0] = '\0';
         strcat(arguments, operands[0]);
-        for (i = 1; i < curOpcode->num_params; i++)
+        for (i = 0; i < ins->src_count; ++i)
         {
             strcat(arguments, ", ");
-            strcat(arguments, operands[i]);
+            strcat(arguments, operands[i + 1]);
         }
         shader_addline(buffer, "%s%s %s;\n", instruction, modifier, arguments);
 
@@ -998,13 +999,13 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         /* Note that vshader_program_add_param() adds spaces. */
 
         arguments[0] = '\0';
-        if (curOpcode->num_params > 0)
+        if (ins->dst_count)
         {
             vshader_program_add_param(ins, dst, FALSE, arguments);
-            for (i = 1; i < curOpcode->num_params; ++i)
+            for (i = 0; i < ins->src_count; ++i)
             {
                 strcat(arguments, ",");
-                vshader_program_add_param(ins, src[i-1], TRUE, arguments);
+                vshader_program_add_param(ins, src[i], TRUE, arguments);
             }
         }
         shader_addline(buffer, "%s%s;\n", instruction, arguments);
