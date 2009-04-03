@@ -771,6 +771,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     const SHADER_OPCODE *opcode_table = This->baseShader.shader_ins;
     const SHADER_HANDLER *handler_table = device->shader_backend->shader_instruction_handler_table;
     DWORD shader_version = reg_maps->shader_version;
+    struct wined3d_shader_dst_param dst_param;
     struct wined3d_shader_instruction ins;
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode;
@@ -781,6 +782,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     ins.shader = iface;
     ins.buffer = buffer;
     ins.reg_maps = reg_maps;
+    ins.dst = &dst_param;
     This->baseShader.parse_state.current_row = 0;
 
     while (WINED3DPS_END() != *pToken)
@@ -846,10 +848,8 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         ins.dst_count = curOpcode->dst_token ? 1 : 0;
         if (ins.dst_count)
         {
-            DWORD param, addr_token = 0;
-            pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
-            ins.dst = param;
-            ins.dst_addr = addr_token;
+            dst_param.addr_token = 0;
+            pToken += shader_get_param(pToken, shader_version, &dst_param.token, &dst_param.addr_token);
         }
 
         /* Predication token */
