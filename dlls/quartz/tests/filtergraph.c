@@ -1460,7 +1460,7 @@ static HRESULT get_connected_filter_name(TestFilterImpl *pFilter, char *FilterNa
 static void test_render_filter_priority(void)
 {
     /* Tests filter choice priorities in Render(). */
-    DWORD cookie1, cookie2, cookie3;
+    DWORD cookie1 = 0, cookie2 = 0, cookie3 = 0;
     HRESULT hr;
     IFilterGraph2* pgraph2 = NULL;
     IFilterMapper2 *pMapper2 = NULL;
@@ -1758,12 +1758,15 @@ static void test_render_filter_priority(void)
     hr = CoRegisterClassObject(Filter1ClassFactory.clsid, (IUnknown *)&Filter1ClassFactory,
                                CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie1);
     ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
+    if (FAILED(hr)) goto out;
     hr = CoRegisterClassObject(Filter2ClassFactory.clsid, (IUnknown *)&Filter2ClassFactory,
                                CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie2);
     ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
+    if (FAILED(hr)) goto out;
     hr = CoRegisterClassObject(Filter3ClassFactory.clsid, (IUnknown *)&Filter3ClassFactory,
                                CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie3);
     ok(hr == S_OK, "CoRegisterClassObject failed with %08x\n", hr);
+    if (FAILED(hr)) goto out;
 
     rgf2.dwVersion = 2;
     rgf2.dwMerit = MERIT_UNLIKELY;
