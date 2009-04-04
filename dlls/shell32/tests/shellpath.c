@@ -58,6 +58,9 @@
 #ifndef PT_FOLDER
 #define PT_FOLDER     0x31 /* has path */
 #endif
+#ifndef PT_FOLDERW
+#define PT_FOLDERW    0x35 /* has path */
+#endif
 #ifndef PT_WORKGRP
 #define PT_WORKGRP    0x41 /* no path */
 #endif
@@ -90,8 +93,8 @@ static DLLVERSIONINFO shellVersion = { 0 };
 static LPMALLOC pMalloc;
 static const BYTE guidType[] = { PT_GUID };
 static const BYTE controlPanelType[] = { PT_SHELLEXT, PT_GUID };
-static const BYTE folderType[] = { PT_FOLDER };
-static const BYTE favoritesType[] = { PT_FOLDER, 0, PT_IESPECIAL2 /* Win98 */ };
+static const BYTE folderType[] = { PT_FOLDER, PT_FOLDERW };
+static const BYTE favoritesType[] = { PT_FOLDER, PT_FOLDERW, 0, PT_IESPECIAL2 /* Win98 */ };
 static const BYTE folderOrSpecialType[] = { PT_FOLDER, PT_IESPECIAL2 };
 static const BYTE personalType[] = { PT_FOLDER, PT_GUID, PT_DRIVE, 0xff /* Win9x */,
  PT_IESPECIAL2 /* Win98 */, 0 /* Vista */ };
