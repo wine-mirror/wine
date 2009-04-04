@@ -97,10 +97,11 @@
 #define PT_FOLDER1	0x30
 #define PT_FOLDER	0x31
 #define PT_VALUE	0x32
-#define PT_VALUEW       0x34
+#define PT_VALUEW	0x34
+#define PT_FOLDERW	0x35
 #define PT_WORKGRP	0x41
 #define PT_COMP		0x42
-#define PT_NETPROVIDER  0x46
+#define PT_NETPROVIDER	0x46
 #define PT_NETWORK	0x47
 #define PT_IESPECIAL1	0x61
 #define PT_YAGUID	0x70 /* yet another guid.. */
