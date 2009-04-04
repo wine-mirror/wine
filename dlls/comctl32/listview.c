@@ -1547,7 +1547,7 @@ static INT LISTVIEW_ProcessLetterKeys(LISTVIEW_INFO *infoPtr, WPARAM charCode, L
     /* update the search parameters */
     infoPtr->lastKeyPressTimestamp = GetTickCount();
     if (infoPtr->lastKeyPressTimestamp - lastKeyPressTimestamp < KEY_DELAY) {
-        if (infoPtr->nSearchParamLength < MAX_PATH)
+        if (infoPtr->nSearchParamLength < MAX_PATH-1)
             infoPtr->szSearchParam[infoPtr->nSearchParamLength++]=charCode;
         if (infoPtr->charCode != charCode)
             infoPtr->charCode = charCode = 0;
