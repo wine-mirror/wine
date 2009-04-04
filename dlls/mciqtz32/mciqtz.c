@@ -172,7 +172,7 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         goto err;
     }
 
-    if (!lpOpenParms->lpstrElementName && !lstrlenW(lpOpenParms->lpstrElementName)) {
+    if (!lpOpenParms->lpstrElementName || !lpOpenParms->lpstrElementName[0]) {
         TRACE("Invalid filename specified\n");
         goto err;
     }
