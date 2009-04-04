@@ -2041,7 +2041,8 @@ HRESULT CALLBACK IPropertyBag_Read_Proxy(
       FIXME("Safearray support not yet implemented.\n");
       return E_NOTIMPL;
     default:
-      break;
+      FIXME("Unknown V_VT %d - support not yet implemented.\n", V_VT(pVar));
+      return E_NOTIMPL;
   }
 
   return IPropertyBag_RemoteRead_Proxy(This, pszPropName, pVar, pErrorLog,
