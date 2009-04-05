@@ -695,12 +695,31 @@ static void test_GetAttributesOf(void)
     LPCITEMIDLIST pidlEmpty = (LPCITEMIDLIST)&emptyitem;
     LPITEMIDLIST pidlMyComputer;
     DWORD dwFlags;
-    static const DWORD dwDesktopFlags = /* As observed on WinXP SP2 */
-        SFGAO_STORAGE | SFGAO_HASPROPSHEET | SFGAO_STORAGEANCESTOR |
-        SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_HASSUBFOLDER;
-    static const DWORD dwMyComputerFlags = /* As observed on WinXP SP2 */
-        SFGAO_CANRENAME | SFGAO_CANDELETE | SFGAO_HASPROPSHEET |
-        SFGAO_DROPTARGET | SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
+    static const DWORD desktopFlags[] = {
+        /* WinXP */
+        SFGAO_STORAGE | SFGAO_HASPROPSHEET | SFGAO_STORAGEANCESTOR | SFGAO_FILESYSANCESTOR |
+        SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_HASSUBFOLDER,
+        /* Win2k */
+        SFGAO_CANRENAME | SFGAO_HASPROPSHEET | SFGAO_STREAM | SFGAO_FILESYSANCESTOR |
+        SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_HASSUBFOLDER,
+        /* WinMe, Win9x, WinNT*/
+        SFGAO_CANRENAME | SFGAO_HASPROPSHEET | SFGAO_FILESYSANCESTOR |
+        SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_HASSUBFOLDER
+    };
+    static const DWORD myComputerFlags[] = {
+        /* WinXP */
+        SFGAO_CANRENAME | SFGAO_CANDELETE | SFGAO_HASPROPSHEET | SFGAO_DROPTARGET |
+        SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_HASSUBFOLDER,
+        /* Win2k */
+        SFGAO_CANRENAME | SFGAO_HASPROPSHEET | SFGAO_DROPTARGET | SFGAO_STREAM |
+        SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_HASSUBFOLDER,
+        /* WinMe, Win9x, WinNT */
+        SFGAO_CANRENAME | SFGAO_HASPROPSHEET | SFGAO_DROPTARGET | SFGAO_FILESYSANCESTOR |
+        SFGAO_FOLDER | SFGAO_HASSUBFOLDER,
+        /* Win95, WinNT when queried directly */
+        SFGAO_HASPROPSHEET | SFGAO_DROPTARGET | SFGAO_FILESYSANCESTOR |
+        SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_HASSUBFOLDER
+    };
     WCHAR wszMyComputer[] = { 
         ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-',
         'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
@@ -709,7 +728,8 @@ static void test_GetAttributesOf(void)
     static WCHAR cTestDirW[] = {'t','e','s','t','d','i','r',0};
     IShellFolder *IDesktopFolder, *testIShellFolder;
     ITEMIDLIST *newPIDL;
-    int len;
+    int len, i;
+    BOOL foundFlagsMatch;
 
     hr = SHGetDesktopFolder(&psfDesktop);
     ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08x\n", hr);
@@ -719,15 +739,25 @@ static void test_GetAttributesOf(void)
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 1, &pidlEmpty, &dwFlags);
     ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(empty pidl) failed! hr = %08x\n", hr);
-    ok (dwFlags == dwDesktopFlags, "Wrong Desktop attributes: %08x, expected: %08x\n", 
-        dwFlags, dwDesktopFlags);
+    for (i = 0, foundFlagsMatch = FALSE; !foundFlagsMatch &&
+         i < sizeof(desktopFlags) / sizeof(desktopFlags[0]); i++)
+    {
+        if (desktopFlags[i] == dwFlags)
+            foundFlagsMatch = TRUE;
+    }
+    ok (foundFlagsMatch, "Wrong Desktop attributes: %08x\n", dwFlags);
 
     /* .. or with no itemidlist at all. */
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 0, NULL, &dwFlags);
     ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(NULL) failed! hr = %08x\n", hr);
-    ok (dwFlags == dwDesktopFlags, "Wrong Desktop attributes: %08x, expected: %08x\n", 
-        dwFlags, dwDesktopFlags);
+    for (i = 0, foundFlagsMatch = FALSE; !foundFlagsMatch &&
+         i < sizeof(desktopFlags) / sizeof(desktopFlags[0]); i++)
+    {
+        if (desktopFlags[i] == dwFlags)
+            foundFlagsMatch = TRUE;
+    }
+    ok (foundFlagsMatch, "Wrong Desktop attributes: %08x\n", dwFlags);
    
     /* Testing the attributes of the MyComputer shellfolder */
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyComputer, NULL, &pidlMyComputer, NULL);
@@ -737,7 +767,7 @@ static void test_GetAttributesOf(void)
         return;
     }
 
-    /* WinXP SP2 sets the SFGAO_CANLINK flag, when MyComputer is queried via the Desktop 
+    /* Windows sets the SFGAO_CANLINK flag, when MyComputer is queried via the Desktop
      * folder object. It doesn't do this, if MyComputer is queried directly (see below).
      * SFGAO_CANLINK is the same as DROPEFFECT_LINK, which MSDN says means: "Drag source
      * should create a link to the original data". You can't create links on MyComputer on
@@ -747,8 +777,13 @@ static void test_GetAttributesOf(void)
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 1, (LPCITEMIDLIST*)&pidlMyComputer, &dwFlags);
     ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(MyComputer) failed! hr = %08x\n", hr);
-    ok ((dwFlags & ~(DWORD)SFGAO_CANLINK) == dwMyComputerFlags, 
-                    "Wrong MyComputer attributes: %08x, expected: %08x\n", dwFlags, dwMyComputerFlags);
+    for (i = 0, foundFlagsMatch = FALSE; !foundFlagsMatch &&
+         i < sizeof(myComputerFlags) / sizeof(myComputerFlags[0]); i++)
+    {
+        if (myComputerFlags[i] == (dwFlags & ~(DWORD)SFGAO_CANLINK))
+            foundFlagsMatch = TRUE;
+    }
+    ok (foundFlagsMatch, "Wrong MyComputer attributes: %08x\n", dwFlags);
 
     hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
     ok (SUCCEEDED(hr), "Desktop failed to bind to MyComputer object! hr = %08x\n", hr);
@@ -765,8 +800,14 @@ static void test_GetAttributesOf(void)
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfMyComputer, 0, NULL, &dwFlags);
     ok (SUCCEEDED(hr), "MyComputer->GetAttributesOf(NULL) failed! hr = %08x\n", hr); 
-    todo_wine { ok (dwFlags == dwMyComputerFlags, 
-                    "Wrong MyComputer attributes: %08x, expected: %08x\n", dwFlags, dwMyComputerFlags); }
+    for (i = 0, foundFlagsMatch = FALSE; !foundFlagsMatch &&
+         i < sizeof(myComputerFlags) / sizeof(myComputerFlags[0]); i++)
+    {
+        if (myComputerFlags[i] == dwFlags)
+            foundFlagsMatch = TRUE;
+    }
+    todo_wine
+    ok (foundFlagsMatch, "Wrong MyComputer attributes: %08x\n", dwFlags);
 
     IShellFolder_Release(psfMyComputer);
 
@@ -774,8 +815,8 @@ static void test_GetAttributesOf(void)
     len = lstrlenA(cCurrDirA);
 
     if (len == 0) {
-	win_skip("GetCurrentDirectoryA returned empty string. Skipping test_GetAttributesOf\n");
-	return;
+        win_skip("GetCurrentDirectoryA returned empty string. Skipping test_GetAttributesOf\n");
+        return;
     }
     if(cCurrDirA[len-1] == '\\')
 	cCurrDirA[len-1] = 0;
