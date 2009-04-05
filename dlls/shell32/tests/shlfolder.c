@@ -818,8 +818,8 @@ static void test_GetAttributesOf(void)
         win_skip("GetCurrentDirectoryA returned empty string. Skipping test_GetAttributesOf\n");
         return;
     }
-    if(cCurrDirA[len-1] == '\\')
-	cCurrDirA[len-1] = 0;
+    if (len > 3 && cCurrDirA[len-1] == '\\')
+        cCurrDirA[len-1] = 0;
 
     /* create test directory */
     CreateFilesFolders();
@@ -862,7 +862,7 @@ static void test_GetAttributesOf(void)
     hr = IShellFolder_GetAttributesOf(IDesktopFolder, 1, (LPCITEMIDLIST*)&newPIDL, &dwFlags);
     ok (SUCCEEDED(hr), "Desktop->GetAttributesOf() failed! hr = %08x\n", hr);
     ok ((dwFlags&SFGAO_FOLDER), "Wrong directory attribute for absolute PIDL: %08x\n", dwFlags);
-        
+
     /* free memory */
     IMalloc_Free(ppM, newPIDL);
 
@@ -871,7 +871,7 @@ static void test_GetAttributesOf(void)
     Cleanup();
 
     IShellFolder_Release(IDesktopFolder);
-}    
+}
 
 static void test_SHGetPathFromIDList(void)
 {
