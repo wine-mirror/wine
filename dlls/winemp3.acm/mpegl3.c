@@ -490,8 +490,7 @@ static	LRESULT MPEG3_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ad
 	if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
 	    adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
         {
-            nblocks = (adsi->pwfxDst->nAvgBytesPerSec * 8 * 144 / adsi->pwfxDst->nSamplesPerSec);
-            nblocks = (adss->cbDstLength - 3002 - nblocks) / nblocks;
+            nblocks = (adss->cbDstLength - 3000) / (DWORD)(adsi->pwfxDst->nAvgBytesPerSec * 1152 / adsi->pwfxDst->nSamplesPerSec + 0.5);
             if (nblocks == 0)
                 return ACMERR_NOTPOSSIBLE;
             adss->cbSrcLength = nblocks * 1152 * adsi->pwfxSrc->nBlockAlign;
@@ -502,7 +501,7 @@ static	LRESULT MPEG3_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ad
             nblocks = adss->cbDstLength / (adsi->pwfxDst->nBlockAlign * 1152);
             if (nblocks == 0)
                 return ACMERR_NOTPOSSIBLE;
-            adss->cbSrcLength = nblocks * (DWORD)(adsi->pwfxSrc->nAvgBytesPerSec * 8 * 144 / adsi->pwfxSrc->nSamplesPerSec);
+            adss->cbSrcLength = nblocks * (DWORD)(adsi->pwfxSrc->nAvgBytesPerSec * 1152 / adsi->pwfxSrc->nSamplesPerSec);
 	}
         else
         {
@@ -517,15 +516,20 @@ static	LRESULT MPEG3_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ad
             nblocks = adss->cbSrcLength / (adsi->pwfxSrc->nBlockAlign * 1152);
             if (nblocks == 0)
                 return ACMERR_NOTPOSSIBLE;
-            adss->cbDstLength = nblocks * (DWORD)(adsi->pwfxDst->nAvgBytesPerSec * 8 * 144 / adsi->pwfxDst->nSamplesPerSec);
+            if (adss->cbSrcLength % (DWORD)(adsi->pwfxSrc->nBlockAlign * 1152))
+                /* Round block count up. */
+                nblocks++;
+            adss->cbDstLength = 3000 + nblocks * (DWORD)(adsi->pwfxDst->nAvgBytesPerSec * 1152 / adsi->pwfxDst->nSamplesPerSec + 0.5);
 	}
         else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 &&
                  adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
         {
-            nblocks = (adsi->pwfxSrc->nAvgBytesPerSec * 8 * 144 / adsi->pwfxSrc->nSamplesPerSec);
-            nblocks = (adss->cbSrcLength - 3002 - nblocks) / nblocks;
+            nblocks = adss->cbSrcLength / (DWORD)(adsi->pwfxSrc->nAvgBytesPerSec * 1152 / adsi->pwfxSrc->nSamplesPerSec);
             if (nblocks == 0)
                 return ACMERR_NOTPOSSIBLE;
+            if (adss->cbSrcLength % (DWORD)(adsi->pwfxSrc->nAvgBytesPerSec * 1152 / adsi->pwfxSrc->nSamplesPerSec))
+                /* Round block count up. */
+                nblocks++;
             adss->cbDstLength = nblocks * 1152 * adsi->pwfxDst->nBlockAlign;
 	}
         else
