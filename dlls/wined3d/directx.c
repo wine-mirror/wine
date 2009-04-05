@@ -1088,13 +1088,29 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
              */
             if(WINE_D3D9_CAPABLE(gl_info) && (gl_info->vs_nv_version == VS_VERSION_30)) {
-                /* Geforce GTX - highend */
-                if(strstr(gl_info->gl_renderer, "GTX 280")) {
+                /* Geforce 200 - highend */
+                if(strstr(gl_info->gl_renderer, "GTX 280") ||
+                   strstr(gl_info->gl_renderer, "GTX 285") ||
+                   strstr(gl_info->gl_renderer, "GTX 295"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_GTX280;
                     vidmem = 1024;
                 }
-                /* Geforce9 - highend */
-                else if(strstr(gl_info->gl_renderer, "9800")) {
+                /* Geforce 200 - midend high */
+                if(strstr(gl_info->gl_renderer, "GTX 275")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_GTX275;
+                    vidmem = 896;
+                }
+                /* Geforce 200 - midend */
+                if(strstr(gl_info->gl_renderer, "GTX 260")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_GTX260;
+                    vidmem = 1024;
+                }
+                /* Geforce9 - highend / Geforce 200 - midend (GTS 150/250 are based on the same core) */
+                else if(strstr(gl_info->gl_renderer, "9800") ||
+                        strstr(gl_info->gl_renderer, "GTS 150") ||
+                        strstr(gl_info->gl_renderer, "GTS 250"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_9800GT;
                     vidmem = 512;
                 }
@@ -1102,6 +1118,28 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                 else if(strstr(gl_info->gl_renderer, "9600")) {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_9600GT;
                     vidmem = 384; /* The 9600GSO has 384MB, the 9600GT has 512-1024MB */
+                }
+                /* Geforce9 - midend low / Geforce 200 - low*/
+                else if(strstr(gl_info->gl_renderer, "9500") ||
+                        strstr(gl_info->gl_renderer, "GT 120") ||
+                        strstr(gl_info->gl_renderer, "GT 130"))
+                {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_9500GT;
+                    vidmem = 256; /* The 9500GT has 256-1024MB */
+                }
+                /* Geforce9 - lowend */
+                else if(strstr(gl_info->gl_renderer, "9400")) {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_9400GT;
+                    vidmem = 256; /* The 9400GT has 256-1024MB */
+                }
+                /* Geforce9 - lowend low */
+                else if(strstr(gl_info->gl_renderer, "9100") ||
+                        strstr(gl_info->gl_renderer, "9200") ||
+                        strstr(gl_info->gl_renderer, "9300") ||
+                        strstr(gl_info->gl_renderer, "G 100"))
+                {
+                    gl_info->gl_card = CARD_NVIDIA_GEFORCE_9200;
+                    vidmem = 256; /* The 9100-9300 cards have 256MB */
                 }
                 /* Geforce8 - highend */
                 else if (strstr(gl_info->gl_renderer, "8800")) {
