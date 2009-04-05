@@ -995,11 +995,13 @@ static DWORD URLCache_CopyEntry(
     /* FIXME: is source url optional? */
     if (*lpdwBufferSize >= dwRequiredSize)
     {
-        lpCacheEntryInfo->lpszSourceUrlName = (LPSTR)lpCacheEntryInfo + dwRequiredSize - lenUrl - 1;
+        DWORD lenUrlBytes = (lenUrl+1) * (bUnicode ? sizeof(WCHAR) : sizeof(CHAR));
+
+        lpCacheEntryInfo->lpszSourceUrlName = (LPSTR)lpCacheEntryInfo + dwRequiredSize - lenUrlBytes;
         if (bUnicode)
             MultiByteToWideChar(CP_ACP, 0, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, -1, (LPWSTR)lpCacheEntryInfo->lpszSourceUrlName, lenUrl + 1);
         else
-            memcpy(lpCacheEntryInfo->lpszSourceUrlName, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, (lenUrl + 1) * sizeof(CHAR));
+            memcpy(lpCacheEntryInfo->lpszSourceUrlName, (LPSTR)pUrlEntry + pUrlEntry->dwOffsetUrl, lenUrlBytes);
     }
 
     if ((dwRequiredSize % 4) && (dwRequiredSize < *lpdwBufferSize))
