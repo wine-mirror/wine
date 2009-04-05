@@ -33,6 +33,7 @@
 #include "msacm_It.rc"
 #include "msacm_Ja.rc"
 #include "msacm_Ko.rc"
+#include "msacm_Lt.rc"
 #include "msacm_Nl.rc"
 #include "msacm_No.rc"
 #include "msacm_Pl.rc"
