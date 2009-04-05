@@ -1668,6 +1668,57 @@ static BOOL Process_URL( LPCWSTR urlname, BOOL bWait )
     return !r;
 }
 
+static void RefreshFileTypeAssociations(void)
+{
+    HANDLE hSem = NULL;
+    char *mime_dir = NULL;
+    char *packages_dir = NULL;
+    char *applications_dir = NULL;
+
+    hSem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
+    if( WAIT_OBJECT_0 != MsgWaitForMultipleObjects( 1, &hSem, FALSE, INFINITE, QS_ALLINPUT ) )
+    {
+        WINE_ERR("failed wait for semaphore\n");
+        CloseHandle(hSem);
+        hSem = NULL;
+        goto end;
+    }
+
+    mime_dir = heap_printf("%s/mime", xdg_data_dir);
+    if (mime_dir == NULL)
+    {
+        WINE_ERR("out of memory\n");
+        goto end;
+    }
+    create_directories(mime_dir);
+
+    packages_dir = heap_printf("%s/packages", mime_dir);
+    if (packages_dir == NULL)
+    {
+        WINE_ERR("out of memory\n");
+        goto end;
+    }
+    create_directories(packages_dir);
+
+    applications_dir = heap_printf("%s/applications", xdg_data_dir);
+    if (applications_dir == NULL)
+    {
+        WINE_ERR("out of memory\n");
+        goto end;
+    }
+    create_directories(applications_dir);
+
+end:
+    if (hSem)
+    {
+        ReleaseSemaphore(hSem, 1, NULL);
+        CloseHandle(hSem);
+    }
+    HeapFree(GetProcessHeap(), 0, mime_dir);
+    HeapFree(GetProcessHeap(), 0, packages_dir);
+    HeapFree(GetProcessHeap(), 0, applications_dir);
+}
+
 static CHAR *next_token( LPSTR *p )
 {
     LPSTR token = NULL, t = *p;
@@ -1764,6 +1815,11 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         token = next_token( &p );
 	if( !token )
 	    break;
+        if( !lstrcmpA( token, "-a" ) )
+        {
+            RefreshFileTypeAssociations();
+            break;
+        }
         if( !lstrcmpA( token, "-w" ) )
             bWait = TRUE;
         else if ( !lstrcmpA( token, "-u" ) )
