@@ -67,7 +67,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Paramètres des fenêtres ",IDC_STATIC,8,4,244,92
     CONTROL     "Permettre aux applications DirectX d'empêcher la souris de quitter leur fenêtre",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP | BS_MULTILINE,15,20,230,16
-    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
+    CONTROL     "Permettre au gestionnaire de &fenêtres de &décorer les fenêtres",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,40,230,8
     CONTROL     "Permettre au gestionnaire de &fenêtres de contrôler les fenêtres",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,52,230,8
     CONTROL     "Émuler un bureau virtuel",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,64,230,8
@@ -188,7 +188,7 @@ BEGIN
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Taille :",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Item :",IDC_STATIC,15,64,112,8
+    LTEXT           "Elément :",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
     LTEXT           "Couleur :",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
