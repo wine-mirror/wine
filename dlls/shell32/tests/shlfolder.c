@@ -769,10 +769,6 @@ static void test_GetAttributesOf(void)
 
     /* Windows sets the SFGAO_CANLINK flag, when MyComputer is queried via the Desktop
      * folder object. It doesn't do this, if MyComputer is queried directly (see below).
-     * SFGAO_CANLINK is the same as DROPEFFECT_LINK, which MSDN says means: "Drag source
-     * should create a link to the original data". You can't create links on MyComputer on
-     * Windows, so this flag shouldn't be set. Seems like a bug in Windows. As long as nobody
-     * depends on this bug, we probably shouldn't imitate it.
      */
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 1, (LPCITEMIDLIST*)&pidlMyComputer, &dwFlags);
@@ -780,9 +776,10 @@ static void test_GetAttributesOf(void)
     for (i = 0, foundFlagsMatch = FALSE; !foundFlagsMatch &&
          i < sizeof(myComputerFlags) / sizeof(myComputerFlags[0]); i++)
     {
-        if (myComputerFlags[i] == (dwFlags & ~(DWORD)SFGAO_CANLINK))
+        if ((myComputerFlags[i] | SFGAO_CANLINK) == dwFlags)
             foundFlagsMatch = TRUE;
     }
+    todo_wine
     ok (foundFlagsMatch, "Wrong MyComputer attributes: %08x\n", dwFlags);
 
     hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
