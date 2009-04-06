@@ -687,6 +687,7 @@ struct IDirect3DVertexBufferImpl
 
     /*** Storage for D3D7 specific things ***/
     DWORD                Caps;
+    DWORD                fvf;
 };
 
 /* The Vtables */

@@ -4104,7 +4104,6 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
     IDirect3DVertexBufferImpl *vb = (IDirect3DVertexBufferImpl *)D3DVertexBuf;
     HRESULT hr;
     DWORD stride;
-    WINED3DBUFFER_DESC Desc;
 
     TRACE("(%p)->(%08x,%p,%08x,%08x,%08x)\n", This, PrimitiveType, D3DVertexBuf, StartVertex, NumVertices, Flags);
 
@@ -4114,18 +4113,9 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
         ERR("(%p) No Vertex buffer specified\n", This);
         return DDERR_INVALIDPARAMS;
     }
+    stride = get_flexible_vertex_size(vb->fvf);
 
-    /* Get the FVF of the vertex buffer, and its stride */
     EnterCriticalSection(&ddraw_cs);
-    hr = IWineD3DBuffer_GetDesc(vb->wineD3DVertexBuffer, &Desc);
-    if(hr != D3D_OK)
-    {
-        ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr = %08x\n", This, hr);
-        LeaveCriticalSection(&ddraw_cs);
-        return hr;
-    }
-    stride = get_flexible_vertex_size(Desc.FVF);
-
     hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
                                              vb->wineD3DVertexDeclaration);
     if(FAILED(hr))
@@ -4229,32 +4219,20 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 {
     IDirect3DDeviceImpl *This = (IDirect3DDeviceImpl *)iface;
     IDirect3DVertexBufferImpl *vb = (IDirect3DVertexBufferImpl *)D3DVertexBuf;
-    DWORD stride;
+    DWORD stride = get_flexible_vertex_size(vb->fvf);
     WORD *LockedIndices;
     HRESULT hr;
-    WINED3DBUFFER_DESC Desc;
 
     TRACE("(%p)->(%08x,%p,%d,%d,%p,%d,%08x)\n", This, PrimitiveType, vb, StartVertex, NumVertices, Indices, IndexCount, Flags);
 
     /* Steps:
-     * 1) Calculate some things: stride, ...
-     * 2) Upload the Indices to the index buffer
-     * 3) Set the index source
-     * 4) Set the Vertex Buffer as the Stream source
-     * 5) Call IWineD3DDevice::DrawIndexedPrimitive
+     * 1) Upload the Indices to the index buffer
+     * 2) Set the index source
+     * 3) Set the Vertex Buffer as the Stream source
+     * 4) Call IWineD3DDevice::DrawIndexedPrimitive
      */
 
     EnterCriticalSection(&ddraw_cs);
-    /* Get the FVF of the vertex buffer, and its stride */
-    hr = IWineD3DBuffer_GetDesc(vb->wineD3DVertexBuffer, &Desc);
-    if(hr != D3D_OK)
-    {
-        ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr = %08x\n", This, hr);
-        LeaveCriticalSection(&ddraw_cs);
-        return hr;
-    }
-    stride = get_flexible_vertex_size(Desc.FVF);
-    TRACE("Vertex buffer FVF = %08x, stride=%d\n", Desc.FVF, stride);
 
     hr = IWineD3DDevice_SetVertexDeclaration(This->wineD3DDevice,
                                              vb->wineD3DVertexDeclaration);

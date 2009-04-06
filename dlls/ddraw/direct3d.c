@@ -1017,6 +1017,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
 
     object->Caps = Desc->dwCaps;
     object->ddraw = This;
+    object->fvf = Desc->dwFVF;
 
     EnterCriticalSection(&ddraw_cs);
     hr = IWineD3DDevice_CreateVertexBuffer(This->wineD3DDevice,
