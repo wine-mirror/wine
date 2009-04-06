@@ -1292,28 +1292,28 @@ static DWORD shader_glsl_append_dst(SHADER_BUFFER *buffer, const struct wined3d_
 void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instruction *ins)
 {
     glsl_dst_param_t dst_param;
-    DWORD mask;
+    DWORD modifiers;
 
     if (!ins->dst_count) return;
 
-    mask = ins->dst[0].token & WINED3DSP_DSTMOD_MASK;
-    if (!mask) return;
+    modifiers = ins->dst[0].modifiers;
+    if (!modifiers) return;
 
     shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
 
-    if (mask & WINED3DSPDM_SATURATE)
+    if (modifiers & WINED3DSPDM_SATURATE)
     {
         /* _SAT means to clamp the value of the register to between 0 and 1 */
         shader_addline(ins->buffer, "%s%s = clamp(%s%s, 0.0, 1.0);\n", dst_param.reg_name,
                 dst_param.mask_str, dst_param.reg_name, dst_param.mask_str);
     }
 
-    if (mask & WINED3DSPDM_MSAMPCENTROID)
+    if (modifiers & WINED3DSPDM_MSAMPCENTROID)
     {
         FIXME("_centroid modifier not handled\n");
     }
 
-    if (mask & WINED3DSPDM_PARTIALPRECISION)
+    if (modifiers & WINED3DSPDM_PARTIALPRECISION)
     {
         /* MSDN says this modifier can be safely ignored, so that's what we'll do. */
     }
@@ -2090,6 +2090,7 @@ static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
     for (i = 0; i < nComponents; ++i)
     {
         tmp_dst.register_idx = ins->dst[0].register_idx;
+        tmp_dst.modifiers = ins->dst[0].modifiers;
         tmp_dst.token = ((ins->dst[0].token) & ~WINED3DSP_WRITEMASK_ALL) | (WINED3DSP_WRITEMASK_0 << i);
         tmp_ins.src[1] = ins->src[1] + i;
         shader_glsl_dot(&tmp_ins);

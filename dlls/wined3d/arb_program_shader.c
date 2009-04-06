@@ -814,7 +814,7 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     char dst_wmask[20];
     char dst_name[50];
     char src_name[3][50];
-    BOOL sat = (ins->dst[0].token & WINED3DSP_DSTMOD_MASK) & WINED3DSPDM_SATURATE;
+    BOOL sat = ins->dst[0].modifiers & WINED3DSPDM_SATURATE;
     DWORD shift = (ins->dst[0].token & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
 
     /* FIXME: support output modifiers */
@@ -848,7 +848,7 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
     char dst_name[50];
     char src_name[3][50];
     DWORD shift = (ins->dst[0].token & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    BOOL sat = (ins->dst[0].token & WINED3DSP_DSTMOD_MASK) & WINED3DSPDM_SATURATE;
+    BOOL sat = ins->dst[0].modifiers & WINED3DSPDM_SATURATE;
 
     /* FIXME: support output modifiers */
 
@@ -877,7 +877,7 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
     char dst_name[50];
     char src_name[3][50];
     DWORD shift = (ins->dst[0].token & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    BOOL sat = (ins->dst[0].token & WINED3DSP_DSTMOD_MASK) & WINED3DSPDM_SATURATE;
+    BOOL sat = ins->dst[0].modifiers & WINED3DSPDM_SATURATE;
 
     pshader_get_register_name(ins->shader, ins->dst[0].token, dst_name);
     shader_arb_get_write_mask(ins, ins->dst[0].token, dst_wmask);
@@ -900,7 +900,6 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
 static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->buffer;
-    DWORD dst = ins->dst[0].token;
     const DWORD *src = ins->src;
     const char *instruction;
     char arguments[256];
@@ -939,6 +938,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
     if (shader_is_pshader_version(ins->reg_maps->shader_version))
     {
         /* Output token related */
+        const struct wined3d_shader_dst_param *dst;
         char output_rname[256];
         char output_wmask[20];
         char operands[4][100];
@@ -953,11 +953,12 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
             ERR("Opcode \"%#x\" has no parameters\n", ins->handler_idx);
             return;
         }
+        dst = &ins->dst[0];
 
         /* Process modifiers */
-        if (dst & WINED3DSP_DSTMOD_MASK)
+        if (dst->modifiers)
         {
-            DWORD mask = dst & WINED3DSP_DSTMOD_MASK;
+            DWORD mask = dst->modifiers;
 
             saturate = mask & WINED3DSPDM_SATURATE;
             centroid = mask & WINED3DSPDM_MSAMPCENTROID;
@@ -969,7 +970,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
             if (centroid)
                 FIXME("Unhandled modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
         }
-        shift = (dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+        shift = (dst->token & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
         modifier = (saturate && !shift) ? "_SAT" : "";
 
         /* Generate input register names (with modifiers) */
@@ -979,9 +980,9 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         }
 
         /* Handle output register */
-        pshader_get_register_name(ins->shader, dst, output_rname);
+        pshader_get_register_name(ins->shader, dst->token, output_rname);
         strcpy(operands[0], output_rname);
-        shader_arb_get_write_mask(ins, dst, output_wmask);
+        shader_arb_get_write_mask(ins, dst->token, output_wmask);
         strcat(operands[0], output_wmask);
 
         arguments[0] = '\0';
@@ -1001,7 +1002,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         arguments[0] = '\0';
         if (ins->dst_count)
         {
-            vshader_program_add_param(ins, dst, FALSE, arguments);
+            vshader_program_add_param(ins, ins->dst[0].token, FALSE, arguments);
             for (i = 0; i < ins->src_count; ++i)
             {
                 strcat(arguments, ",");
@@ -1585,6 +1586,7 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
 
     for (i = 0; i < nComponents; i++) {
         tmp_dst.register_idx = ins->dst[0].register_idx;
+        tmp_dst.modifiers = ins->dst[0].modifiers;
         tmp_dst.token = ((ins->dst[0].token) & ~WINED3DSP_WRITEMASK_ALL) | (WINED3DSP_WRITEMASK_0 << i);
         tmp_ins.src[1] = ins->src[1]+i;
         shader_hw_map2gl(&tmp_ins);
@@ -1631,7 +1633,7 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
     char src_name[50];
     char dst_wmask[20];
     DWORD shift = (ins->dst[0].token & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    BOOL sat = (ins->dst[0].token & WINED3DSP_DSTMOD_MASK) & WINED3DSPDM_SATURATE;
+    BOOL sat = ins->dst[0].modifiers & WINED3DSPDM_SATURATE;
 
     pshader_get_register_name(ins->shader, ins->dst[0].token, dst_name);
     shader_arb_get_write_mask(ins, ins->dst[0].token, dst_wmask);
@@ -1658,7 +1660,7 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
     char src_name[50];
     char dst_wmask[20];
     DWORD shift = (ins->dst[0].token & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    BOOL sat = (ins->dst[0].token & WINED3DSP_DSTMOD_MASK) & WINED3DSPDM_SATURATE;
+    BOOL sat = ins->dst[0].modifiers & WINED3DSPDM_SATURATE;
 
     pshader_get_register_name(ins->shader, ins->dst[0].token, dst_name);
     shader_arb_get_write_mask(ins, ins->dst[0].token, dst_wmask);
