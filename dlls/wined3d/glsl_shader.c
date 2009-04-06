@@ -1940,14 +1940,14 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
             (src1reg == dstreg && src1regtype == dstregtype) ||
             (src2reg == dstreg && src2regtype == dstregtype)) {
 
-                write_mask = shader_glsl_get_write_mask(ins->dst[0].token & (~WINED3DSP_SWIZZLE_MASK | write_mask),
+                write_mask = shader_glsl_get_write_mask(ins->dst[0].token & (~WINED3DSP_WRITEMASK_ALL | write_mask),
                         mask_char);
                 if (!write_mask) continue;
                 shader_addline(ins->buffer, "tmp0%s = (", mask_char);
                 temp_destination = TRUE;
             } else {
                 write_mask = shader_glsl_append_dst_ext(ins->buffer, ins,
-                        ins->dst[0].token & (~WINED3DSP_SWIZZLE_MASK | write_mask));
+                        ins->dst[0].token & (~WINED3DSP_WRITEMASK_ALL | write_mask));
                 if (!write_mask) continue;
             }
 
@@ -2008,7 +2008,7 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
             }
         }
         write_mask = shader_glsl_append_dst_ext(ins->buffer, ins,
-                ins->dst[0].token & (~WINED3DSP_SWIZZLE_MASK | write_mask));
+                ins->dst[0].token & (~WINED3DSP_WRITEMASK_ALL | write_mask));
         if (!write_mask) continue;
 
         shader_glsl_add_src_param(ins, ins->src[0], ins->src_addr[0], cmp_channel, &src0_param);
