@@ -1253,15 +1253,15 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
  * Also, return the actual register name and swizzle in case the
  * caller needs this information as well. */
 static DWORD shader_glsl_add_dst_param(const struct wined3d_shader_instruction *ins,
-        const DWORD param, const DWORD addr_token, glsl_dst_param_t *dst_param)
+        const struct wined3d_shader_dst_param *wined3d_dst, glsl_dst_param_t *glsl_dst)
 {
     BOOL is_color = FALSE;
 
-    dst_param->mask_str[0] = '\0';
-    dst_param->reg_name[0] = '\0';
+    glsl_dst->mask_str[0] = '\0';
+    glsl_dst->reg_name[0] = '\0';
 
-    shader_glsl_get_register_name(param, addr_token, dst_param->reg_name, &is_color, ins);
-    return shader_glsl_get_write_mask(param, dst_param->mask_str);
+    shader_glsl_get_register_name(wined3d_dst->token, wined3d_dst->addr_token, glsl_dst->reg_name, &is_color, ins);
+    return shader_glsl_get_write_mask(wined3d_dst->token, glsl_dst->mask_str);
 }
 
 /* Append the destination part of the instruction to the buffer, return the effective write mask */
@@ -1272,7 +1272,7 @@ static DWORD shader_glsl_append_dst_ext(SHADER_BUFFER *buffer,
     DWORD mask;
     int shift;
 
-    mask = shader_glsl_add_dst_param(ins, dst->token, dst->addr_token, &glsl_dst);
+    mask = shader_glsl_add_dst_param(ins, dst, &glsl_dst);
     if (mask)
     {
         shift = (dst->token & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
@@ -1299,7 +1299,7 @@ void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instructi
     mask = ins->dst[0].token & WINED3DSP_DSTMOD_MASK;
     if (!mask) return;
 
-    shader_glsl_add_dst_param(ins, ins->dst[0].token, 0, &dst_param);
+    shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
 
     if (mask & WINED3DSPDM_SATURATE)
     {
@@ -2624,7 +2624,7 @@ static void pshader_glsl_texdepth(const struct wined3d_shader_instruction *ins)
 {
     glsl_dst_param_t dst_param;
 
-    shader_glsl_add_dst_param(ins, ins->dst[0].token, 0, &dst_param);
+    shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
 
     /* Tests show that texdepth never returns anything below 0.0, and that r5.y is clamped to 1.0.
      * Negative input is accepted, -0.25 / -0.5 returns 0.5. GL should clamp gl_FragDepth to [0;1], but
@@ -2863,7 +2863,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
         glsl_dst_param_t dst_param;
 
         shader_glsl_add_src_param(ins, ins->src[0], ins->src_addr[0], WINED3DSP_WRITEMASK_2, &luminance_param);
-        shader_glsl_add_dst_param(ins, ins->dst[0].token, ins->dst[0].addr_token, &dst_param);
+        shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
 
         shader_addline(ins->buffer, "%s%s *= (%s * luminancescale%d + luminanceoffset%d);\n",
                 dst_param.reg_name, dst_param.mask_str,
@@ -2942,7 +2942,7 @@ static void pshader_glsl_texkill(const struct wined3d_shader_instruction *ins)
     glsl_dst_param_t dst_param;
 
     /* The argument is a destination parameter, and no writemasks are allowed */
-    shader_glsl_add_dst_param(ins, ins->dst[0].token, 0, &dst_param);
+    shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
     if ((ins->reg_maps->shader_version >= WINED3DPS_VERSION(2,0)))
     {
         /* 2.0 shaders compare all 4 components in texkill */
