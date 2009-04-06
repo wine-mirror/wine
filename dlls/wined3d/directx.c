@@ -2391,6 +2391,7 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
 
             /* Floating point formats */
         case WINED3DFMT_R16_FLOAT:
+        case WINED3DFMT_R16G16_FLOAT:
         case WINED3DFMT_R16G16B16A16_FLOAT:
             if(GL_SUPPORT(ARB_TEXTURE_FLOAT) && GL_SUPPORT(ARB_HALF_FLOAT_PIXEL)) {
                 TRACE_(d3d_caps)("[OK]\n");
@@ -2400,17 +2401,9 @@ static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
             return FALSE;
 
         case WINED3DFMT_R32_FLOAT:
+        case WINED3DFMT_R32G32_FLOAT:
         case WINED3DFMT_R32G32B32A32_FLOAT:
             if (GL_SUPPORT(ARB_TEXTURE_FLOAT)) {
-                TRACE_(d3d_caps)("[OK]\n");
-                return TRUE;
-            }
-            TRACE_(d3d_caps)("[FAILED]\n");
-            return FALSE;
-
-        case WINED3DFMT_R16G16_FLOAT:
-        case WINED3DFMT_R32G32_FLOAT:
-            if(GL_SUPPORT(ARB_TEXTURE_RG)) {
                 TRACE_(d3d_caps)("[OK]\n");
                 return TRUE;
             }
