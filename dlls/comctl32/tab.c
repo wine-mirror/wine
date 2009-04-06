@@ -1480,11 +1480,12 @@ TAB_EraseTabInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
 	{
 	    if (lStyle & TCS_FLATBUTTONS)
 	    {
-		FillRect(hdc, drawRect, hbr);
+		InflateRect(&rTemp, 2, 2);
+		FillRect(hdc, &rTemp, hbr);
 		if (iItem == infoPtr->iHotTracked)
 		{
-		    DrawEdge(hdc, drawRect, EDGE_RAISED, BF_SOFT|BF_TOPLEFT);
-		    DrawEdge(hdc, drawRect, EDGE_RAISED, BF_FLAT|BF_BOTTOMRIGHT);
+		    DrawEdge(hdc, &rTemp, EDGE_RAISED, BF_SOFT|BF_TOPLEFT);
+		    DrawEdge(hdc, &rTemp, EDGE_RAISED, BF_FLAT|BF_BOTTOMRIGHT);
 		}
 	    }
 	    else
