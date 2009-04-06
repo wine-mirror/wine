@@ -345,7 +345,7 @@ typedef struct IDirect3DIndexBuffer9Impl
     LONG                    ref;
 
     /* IDirect3DResource9 fields */
-    IWineD3DIndexBuffer    *wineD3DIndexBuffer;
+    IWineD3DBuffer         *wineD3DIndexBuffer;
 
     /* Parent reference */
     LPDIRECT3DDEVICE9EX       parentDevice;

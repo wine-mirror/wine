@@ -245,7 +245,7 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
         hr = IWineD3DBuffer_GetDesc(This->wineD3DVertexBuffer, &Desc);
         if(hr != D3D_OK)
         {
-            ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr=%08x\n", This, hr);
+            ERR("(%p) IWineD3DBuffer::GetDesc failed with hr=%08x\n", This, hr);
             LeaveCriticalSection(&ddraw_cs);
             return hr;
         }
@@ -445,7 +445,7 @@ IDirect3DVertexBufferImpl_GetVertexBufferDesc(IDirect3DVertexBuffer7 *iface,
     hr = IWineD3DBuffer_GetDesc(This->wineD3DVertexBuffer, &WDesc);
     if(hr != D3D_OK)
     {
-        ERR("(%p) IWineD3DVertexBuffer::GetDesc failed with hr=%08x\n", This, hr);
+        ERR("(%p) IWineD3DBuffer::GetDesc failed with hr=%08x\n", This, hr);
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }

@@ -347,7 +347,7 @@ struct IDirect3DIndexBuffer8Impl
     LONG                             ref;
 
     /* IDirect3DResource8 fields */
-    IWineD3DIndexBuffer             *wineD3DIndexBuffer;
+    IWineD3DBuffer                  *wineD3DIndexBuffer;
 
     /* Parent reference */
     LPDIRECT3DDEVICE8                parentDevice;

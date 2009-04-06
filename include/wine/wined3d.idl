@@ -2342,26 +2342,6 @@ interface IWineD3DRendertargetView : IWineD3DBase
 [
     object,
     local,
-    uuid(3a02a54e-6f30-11d9-c687-00046142c14f)
-]
-interface IWineD3DIndexBuffer : IWineD3DResource
-{
-    HRESULT Map(
-        [in] UINT offset,
-        [in] UINT size,
-        [out] BYTE **data,
-        [in] DWORD flags
-    );
-    HRESULT Unmap(
-    );
-    HRESULT GetDesc(
-        [out] WINED3DBUFFER_DESC *desc
-    );
-}
-
-[
-    object,
-    local,
     uuid(f756720c-32b9-4439-b5a3-1d6c97037d9e)
 ]
 interface IWineD3DPalette : IWineD3DBase
@@ -2916,7 +2896,7 @@ interface IWineD3DDevice : IWineD3DBase
         [in] DWORD usage,
         [in] WINED3DFORMAT format,
         [in] WINED3DPOOL pool,
-        [out] IWineD3DIndexBuffer **index_buffer,
+        [out] IWineD3DBuffer **index_buffer,
         [in] HANDLE *shared_handle,
         [in] IUnknown *parent
     );
@@ -3139,10 +3119,10 @@ interface IWineD3DDevice : IWineD3DBase
         [out] WINED3DGAMMARAMP *ramp
     );
     HRESULT SetIndices(
-        [in] IWineD3DIndexBuffer *index_buffer
+        [in] IWineD3DBuffer *index_buffer
     );
     HRESULT GetIndices(
-        [out] IWineD3DIndexBuffer **index_buffer
+        [out] IWineD3DBuffer **index_buffer
     );
     HRESULT SetBaseVertexIndex(
         [in] INT base_index

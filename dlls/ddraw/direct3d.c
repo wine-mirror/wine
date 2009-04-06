@@ -820,7 +820,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
 
     /* Create an Index Buffer. WineD3D needs one for Drawing indexed primitives
      * Create a (hopefully) long enough buffer, and copy the indices into it
-     * Ideally, a IWineD3DIndexBuffer::SetData method could be created, which
+     * Ideally, a IWineD3DBuffer::SetData method could be created, which
      * takes the pointer and avoids the memcpy
      */
     hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice, 0x40000 /* Length. Don't know how long it should be */,

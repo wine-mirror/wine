@@ -301,7 +301,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                 }
             }
         }
-        if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
+        if(This->pIndexData) IWineD3DBuffer_Release(This->pIndexData);
         if(This->vertexShader) IWineD3DVertexShader_Release(This->vertexShader);
         if(This->pixelShader) IWineD3DPixelShader_Release(This->pixelShader);
 
@@ -509,8 +509,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                         || (This->baseVertexIndex != targetStateBlock->baseVertexIndex))) {
             TRACE("Updating pIndexData to %p, baseVertexIndex to %d\n",
                     targetStateBlock->pIndexData, targetStateBlock->baseVertexIndex);
-            if(targetStateBlock->pIndexData) IWineD3DIndexBuffer_AddRef(targetStateBlock->pIndexData);
-            if(This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
+            if(targetStateBlock->pIndexData) IWineD3DBuffer_AddRef(targetStateBlock->pIndexData);
+            if(This->pIndexData) IWineD3DBuffer_Release(This->pIndexData);
             This->pIndexData = targetStateBlock->pIndexData;
             This->baseVertexIndex = targetStateBlock->baseVertexIndex;
         }
@@ -656,8 +656,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         This->scissorRect = targetStateBlock->scissorRect;
 
         if(targetStateBlock->pIndexData != This->pIndexData) {
-            if (targetStateBlock->pIndexData) IWineD3DIndexBuffer_AddRef(targetStateBlock->pIndexData);
-            if (This->pIndexData) IWineD3DIndexBuffer_Release(This->pIndexData);
+            if (targetStateBlock->pIndexData) IWineD3DBuffer_AddRef(targetStateBlock->pIndexData);
+            if (This->pIndexData) IWineD3DBuffer_Release(This->pIndexData);
             This->pIndexData = targetStateBlock->pIndexData;
         }
         for(i = 0; i < MAX_STREAMS; i++) {

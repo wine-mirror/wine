@@ -317,8 +317,8 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         EnterCriticalSection(&ddraw_cs);
         /* Free the index buffer. */
         IWineD3DDevice_SetIndices(This->wineD3DDevice, NULL);
-        IWineD3DIndexBuffer_GetParent(This->indexbuffer,
-                                      (IUnknown **) &IndexBufferParent);
+        IWineD3DBuffer_GetParent(This->indexbuffer,
+                                 (IUnknown **) &IndexBufferParent);
         IParent_Release(IndexBufferParent); /* Once for the getParent */
         if( IParent_Release(IndexBufferParent) != 0)  /* And now to destroy it */
         {
@@ -4271,23 +4271,23 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
      * or a SetData-Method for the index buffer, which
      * overrides the index buffer data with our pointer.
      */
-    hr = IWineD3DIndexBuffer_Map(This->indexbuffer,
-                                 0 /* OffSetToLock */,
-                                 IndexCount * sizeof(WORD),
-                                 (BYTE **) &LockedIndices,
-                                 0 /* Flags */);
+    hr = IWineD3DBuffer_Map(This->indexbuffer,
+                            0 /* OffSetToLock */,
+                            IndexCount * sizeof(WORD),
+                            (BYTE **) &LockedIndices,
+                            0 /* Flags */);
     assert(IndexCount < 0x100000);
     if(hr != D3D_OK)
     {
-        ERR("(%p) IWineD3DIndexBuffer::Lock failed with hr = %08x\n", This, hr);
+        ERR("(%p) IWineD3DBuffer::Map failed with hr = %08x\n", This, hr);
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }
     memcpy(LockedIndices, Indices, IndexCount * sizeof(WORD));
-    hr = IWineD3DIndexBuffer_Unmap(This->indexbuffer);
+    hr = IWineD3DBuffer_Unmap(This->indexbuffer);
     if(hr != D3D_OK)
     {
-        ERR("(%p) IWineD3DIndexBuffer::Unlock failed with hr = %08x\n", This, hr);
+        ERR("(%p) IWineD3DBuffer::Unmap failed with hr = %08x\n", This, hr);
         LeaveCriticalSection(&ddraw_cs);
         return hr;
     }

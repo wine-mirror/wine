@@ -1930,7 +1930,7 @@ struct IWineD3DStateBlockImpl
     UINT                      streamFlags[MAX_STREAMS + 1];     /*0 | WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA  */
 
     /* Indices */
-    IWineD3DIndexBuffer*      pIndexData;
+    IWineD3DBuffer*           pIndexData;
     INT                       baseVertexIndex;
     INT                       loadBaseVertexIndex; /* non-indexed drawing needs 0 here, indexed baseVertexIndex */
 

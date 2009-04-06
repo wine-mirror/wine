@@ -2099,7 +2099,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, I
 
 static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8** ppIndexData,UINT* pBaseVertexIndex) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
-    IWineD3DIndexBuffer *retIndexData = NULL;
+    IWineD3DBuffer *retIndexData = NULL;
     HRESULT rc = D3D_OK;
 
     TRACE("(%p) Relay\n", This);
@@ -2113,8 +2113,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, I
     IWineD3DDevice_GetBaseVertexIndex(This->WineD3DDevice, (INT *) pBaseVertexIndex);
     rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData);
     if (SUCCEEDED(rc) && retIndexData) {
-        IWineD3DIndexBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
-        IWineD3DIndexBuffer_Release(retIndexData);
+        IWineD3DBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
+        IWineD3DBuffer_Release(retIndexData);
     } else {
         if (FAILED(rc)) FIXME("Call to GetIndices failed\n");
         *ppIndexData = NULL;
