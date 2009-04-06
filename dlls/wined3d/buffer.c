@@ -317,11 +317,15 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
      * processing, FLOAT4 POSITIONT with fixed function, and FLOAT16 if
      * GL_NV_half_float is not supported.
      *
+     * Note for d3d8 and d3d9:
      * The vertex buffer FVF doesn't help with finding them, we have to use
      * the decoded vertex declaration and pick the things that concern the
      * current buffer. A problem with this is that this can change between
      * draws, so we have to validate the information and reprocess the buffer
      * if it changes, and avoid false positives for performance reasons.
+     * WineD3D doesn't even know the vertex buffer any more, it is managed
+     * by the client libraries and passed to SetStreamSource and ProcessVertices
+     * as needed.
      *
      * We have to distinguish between vertex shaders and fixed function to
      * pick the way we access the strided vertex information.
@@ -938,7 +942,6 @@ static HRESULT STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DBU
     desc->Usage = This->resource.usage;
     desc->Pool = This->resource.pool;
     desc->Size = This->resource.size;
-    desc->FVF = This->fvf;
 
     return WINED3D_OK;
 }

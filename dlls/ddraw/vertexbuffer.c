@@ -384,7 +384,8 @@ IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
                                         Count,
                                         This->wineD3DVertexBuffer,
                                         NULL /* Output vdecl */,
-                                        Flags);
+                                        Flags,
+                                        This->fvf);
 
     /* Restore the states if needed */
     if(doClip != oldClip)

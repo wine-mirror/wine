@@ -737,7 +737,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 
     object->lpVtbl = &Direct3DVertexBuffer8_Vtbl;
     object->ref = 1;
     EnterCriticalSection(&d3d8_cs);
-    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage & WINED3DUSAGE_MASK, FVF, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), NULL, (IUnknown *)object);
+    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage & WINED3DUSAGE_MASK,
+            0 /* fvf for ddraw only */, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), NULL,
+            (IUnknown *)object);
     LeaveCriticalSection(&d3d8_cs);
     object->fvf = FVF;
 
@@ -1662,10 +1664,11 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DrawIndexedPrimitiveUP(LPDIRECT3DDEVI
 static HRESULT WINAPI IDirect3DDevice8Impl_ProcessVertices(LPDIRECT3DDEVICE8 iface, UINT SrcStartIndex,UINT DestIndex,UINT VertexCount,IDirect3DVertexBuffer8* pDestBuffer,DWORD Flags) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     HRESULT hr;
+    IDirect3DVertexBuffer8Impl *dest = (IDirect3DVertexBuffer8Impl *) pDestBuffer;
     TRACE("(%p) Relay\n" , This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DDevice_ProcessVertices(This->WineD3DDevice,SrcStartIndex, DestIndex, VertexCount, ((IDirect3DVertexBuffer8Impl *)pDestBuffer)->wineD3DVertexBuffer, NULL, Flags);
+    hr = IWineD3DDevice_ProcessVertices(This->WineD3DDevice,SrcStartIndex, DestIndex, VertexCount, dest->wineD3DVertexBuffer, NULL, Flags, dest->fvf);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }

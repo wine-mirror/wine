@@ -2095,9 +2095,6 @@ struct wined3d_buffer
     UINT dirty_end;
     LONG lock_count;
 
-    /* legacy vertex buffers */
-    DWORD fvf;
-
     /* conversion stuff */
     UINT conversion_count;
     UINT draw_count;

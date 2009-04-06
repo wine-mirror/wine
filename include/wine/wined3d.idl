@@ -1869,7 +1869,6 @@ typedef struct _WINED3DBUFFER_DESC
     DWORD Usage;
     WINED3DPOOL Pool;
     UINT Size;
-    DWORD FVF;
 } WINED3DBUFFER_DESC;
 
 typedef struct glDescriptor
@@ -3349,7 +3348,8 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT vertex_count,
         [in] IWineD3DBuffer *dest_buffer,
         [in] IWineD3DVertexDeclaration *declaration,
-        [in] DWORD flags
+        [in] DWORD flags,
+        [in] DWORD DestFVF
     );
     HRESULT BeginStateBlock(
     );

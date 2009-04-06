@@ -247,7 +247,9 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(LPDIRECT3DDEVICE9EX iface
     object->ref = 1;
     object->fvf = FVF;
     EnterCriticalSection(&d3d9_cs);
-    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage & WINED3DUSAGE_MASK, FVF, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), pSharedHandle, (IUnknown *)object);
+    hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage & WINED3DUSAGE_MASK,
+            0 /* fvf for ddraw only */, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer),
+            pSharedHandle, (IUnknown *)object);
     LeaveCriticalSection(&d3d9_cs);
     
     if (hrc != D3D_OK) {

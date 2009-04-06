@@ -552,8 +552,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     TRACE("(%p) : Size=%d, Usage=0x%08x, FVF=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
     *ppVertexBuffer = (IWineD3DBuffer *)object;
 
-    object->fvf = FVF;
-
     /* Observations show that drawStridedSlow is faster on dynamic VBs than converting +
      * drawStridedFast (half-life 2).
      *
@@ -4506,11 +4504,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
 
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount,
-        const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD dwFlags)
+        const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD dwFlags,
+        DWORD DestFVF)
 {
     char *dest_ptr, *dest_conv = NULL, *dest_conv_addr = NULL;
     unsigned int i;
-    DWORD DestFVF = dest->fvf;
     WINED3DVIEWPORT vp;
     WINED3DMATRIX mat, proj_mat, view_mat, world_mat;
     BOOL doClip;
@@ -4866,7 +4864,8 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
 #undef copy_and_next
 
 static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, UINT SrcStartIndex, UINT DestIndex,
-        UINT VertexCount, IWineD3DBuffer *pDestBuffer, IWineD3DVertexDeclaration *pVertexDecl, DWORD Flags)
+        UINT VertexCount, IWineD3DBuffer *pDestBuffer, IWineD3DVertexDeclaration *pVertexDecl, DWORD Flags,
+        DWORD DestFVF)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct wined3d_stream_info stream_info;
@@ -4912,7 +4911,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
     }
 
     return process_vertices_strided(This, DestIndex, VertexCount, &stream_info,
-            (struct wined3d_buffer *)pDestBuffer, Flags);
+            (struct wined3d_buffer *)pDestBuffer, Flags, DestFVF);
 }
 
 /*****
