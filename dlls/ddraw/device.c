@@ -4271,11 +4271,11 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
      * or a SetData-Method for the index buffer, which
      * overrides the index buffer data with our pointer.
      */
-    hr = IWineD3DIndexBuffer_Lock(This->indexbuffer,
-                                  0 /* OffSetToLock */,
-                                  IndexCount * sizeof(WORD),
-                                  (BYTE **) &LockedIndices,
-                                  0 /* Flags */);
+    hr = IWineD3DIndexBuffer_Map(This->indexbuffer,
+                                 0 /* OffSetToLock */,
+                                 IndexCount * sizeof(WORD),
+                                 (BYTE **) &LockedIndices,
+                                 0 /* Flags */);
     assert(IndexCount < 0x100000);
     if(hr != D3D_OK)
     {
@@ -4284,7 +4284,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
         return hr;
     }
     memcpy(LockedIndices, Indices, IndexCount * sizeof(WORD));
-    hr = IWineD3DIndexBuffer_Unlock(This->indexbuffer);
+    hr = IWineD3DIndexBuffer_Unmap(This->indexbuffer);
     if(hr != D3D_OK)
     {
         ERR("(%p) IWineD3DIndexBuffer::Unlock failed with hr = %08x\n", This, hr);

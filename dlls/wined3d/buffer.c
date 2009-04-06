@@ -1091,7 +1091,7 @@ static WINED3DRESOURCETYPE STDMETHODCALLTYPE IWineD3DIndexBufferImpl_GetType(IWi
 
 /* IWineD3DIndexBuffer methods */
 
-static HRESULT STDMETHODCALLTYPE IWineD3DIndexBufferImpl_Lock(IWineD3DIndexBuffer *iface,
+static HRESULT STDMETHODCALLTYPE IWineD3DIndexBufferImpl_Map(IWineD3DIndexBuffer *iface,
         UINT OffsetToLock, UINT SizeToLock, BYTE **ppbData, DWORD Flags)
 {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
@@ -1128,7 +1128,7 @@ static HRESULT STDMETHODCALLTYPE IWineD3DIndexBufferImpl_Lock(IWineD3DIndexBuffe
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuffer *iface)
+static HRESULT STDMETHODCALLTYPE IWineD3DIndexBufferImpl_Unmap(IWineD3DIndexBuffer *iface)
 {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
     ULONG locks = InterlockedDecrement(&This->lockcount);
@@ -1193,7 +1193,7 @@ const IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl =
     IWineD3DIndexBufferImpl_UnLoad,
     IWineD3DIndexBufferImpl_GetType,
     /* IWineD3DIndexBuffer methods */
-    IWineD3DIndexBufferImpl_Lock,
-    IWineD3DIndexBufferImpl_Unlock,
+    IWineD3DIndexBufferImpl_Map,
+    IWineD3DIndexBufferImpl_Unmap,
     IWineD3DIndexBufferImpl_GetDesc,
 };

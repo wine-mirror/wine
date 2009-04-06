@@ -2346,13 +2346,13 @@ interface IWineD3DRendertargetView : IWineD3DBase
 ]
 interface IWineD3DIndexBuffer : IWineD3DResource
 {
-    HRESULT Lock(
+    HRESULT Map(
         [in] UINT offset,
         [in] UINT size,
         [out] BYTE **data,
         [in] DWORD flags
     );
-    HRESULT Unlock(
+    HRESULT Unmap(
     );
     HRESULT GetDesc(
         [out] WINED3DBUFFER_DESC *desc

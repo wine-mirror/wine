@@ -161,7 +161,7 @@ static HRESULT WINAPI IDirect3DIndexBuffer8Impl_Lock(LPDIRECT3DINDEXBUFFER8 ifac
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DIndexBuffer_Lock(This->wineD3DIndexBuffer, OffsetToLock, SizeToLock, ppbData, Flags);
+    hr = IWineD3DIndexBuffer_Map(This->wineD3DIndexBuffer, OffsetToLock, SizeToLock, ppbData, Flags);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
@@ -172,7 +172,7 @@ static HRESULT WINAPI IDirect3DIndexBuffer8Impl_Unlock(LPDIRECT3DINDEXBUFFER8 if
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DIndexBuffer_Unlock(This->wineD3DIndexBuffer);
+    hr = IWineD3DIndexBuffer_Unmap(This->wineD3DIndexBuffer);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }
