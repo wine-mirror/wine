@@ -17,6 +17,7 @@ C_SRCS = \
 	gopher.c \
 	http.c \
 	internet.c \
+	mimefilter.c \
 	mk.c \
 	protocol.c \
 	regsvr.c \
