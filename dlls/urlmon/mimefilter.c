@@ -22,12 +22,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 typedef struct {
-    const IInternetProtocolVtbl  *lpIInternetProtocolVtbl;
+    const IInternetProtocolVtbl      *lpIInternetProtocolVtbl;
+    const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
 
     LONG ref;
 } MimeFilter;
 
-#define PROTOCOL(x)  ((IInternetProtocol*)  &(x)->lpIInternetProtocolVtbl)
+#define PROTOCOL(x)      ((IInternetProtocol*)      &(x)->lpIInternetProtocolVtbl)
+#define PROTOCOLSINK(x)  ((IInternetProtocolSink*)  &(x)->lpIInternetProtocolSinkVtbl)
 
 #define PROTOCOL_THIS(iface) DEFINE_THIS(MimeFilter, IInternetProtocol, iface)
 
@@ -45,6 +47,9 @@ static HRESULT WINAPI MimeFilterProtocol_QueryInterface(IInternetProtocol *iface
     }else if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
         TRACE("(%p)->(IID_IInternetProtocol %p)\n", This, ppv);
         *ppv = PROTOCOL(This);
+    }else if(IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
+        TRACE("(%p)->(IID_IInternetProtocolSink %p)\n", This, ppv);
+        *ppv = PROTOCOLSINK(This);
     }
 
     if(*ppv) {
@@ -174,6 +179,71 @@ static const IInternetProtocolVtbl MimeFilterProtocolVtbl = {
     MimeFilterProtocol_UnlockRequest
 };
 
+#define PROTSINK_THIS(iface) DEFINE_THIS(MimeFilter, IInternetProtocolSink, iface)
+
+static HRESULT WINAPI MimeFilterSink_QueryInterface(IInternetProtocolSink *iface,
+        REFIID riid, void **ppv)
+{
+    MimeFilter *This = PROTSINK_THIS(iface);
+    return IInternetProtocol_QueryInterface(PROTOCOL(This), riid, ppv);
+}
+
+static ULONG WINAPI MimeFilterSink_AddRef(IInternetProtocolSink *iface)
+{
+    MimeFilter *This = PROTSINK_THIS(iface);
+    return IInternetProtocol_AddRef(PROTOCOL(This));
+}
+
+static ULONG WINAPI MimeFilterSink_Release(IInternetProtocolSink *iface)
+{
+    MimeFilter *This = PROTSINK_THIS(iface);
+    return IInternetProtocol_Release(PROTOCOL(This));
+}
+
+static HRESULT WINAPI MimeFilterSink_Switch(IInternetProtocolSink *iface,
+        PROTOCOLDATA *pProtocolData)
+{
+    MimeFilter *This = PROTSINK_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pProtocolData);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeFilterSink_ReportProgress(IInternetProtocolSink *iface,
+        ULONG ulStatusCode, LPCWSTR szStatusText)
+{
+    MimeFilter *This = PROTSINK_THIS(iface);
+    FIXME("(%p)->(%u %s)\n", This, ulStatusCode, debugstr_w(szStatusText));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeFilterSink_ReportData(IInternetProtocolSink *iface,
+        DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
+{
+    MimeFilter *This = PROTSINK_THIS(iface);
+    FIXME("(%p)->(%d %u %u)\n", This, grfBSCF, ulProgress, ulProgressMax);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MimeFilterSink_ReportResult(IInternetProtocolSink *iface,
+        HRESULT hrResult, DWORD dwError, LPCWSTR szResult)
+{
+    MimeFilter *This = PROTSINK_THIS(iface);
+    FIXME("(%p)->(%08x %d %s)\n", This, hrResult, dwError, debugstr_w(szResult));
+    return E_NOTIMPL;
+}
+
+#undef PROTSINK_THIS
+
+static const IInternetProtocolSinkVtbl InternetProtocolSinkVtbl = {
+    MimeFilterSink_QueryInterface,
+    MimeFilterSink_AddRef,
+    MimeFilterSink_Release,
+    MimeFilterSink_Switch,
+    MimeFilterSink_ReportProgress,
+    MimeFilterSink_ReportData,
+    MimeFilterSink_ReportResult
+};
+
 HRESULT MimeFilter_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 {
     MimeFilter *ret;
@@ -184,7 +254,8 @@ HRESULT MimeFilter_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 
     ret = heap_alloc_zero(sizeof(MimeFilter));
 
-    ret->lpIInternetProtocolVtbl = &MimeFilterProtocolVtbl;
+    ret->lpIInternetProtocolVtbl     = &MimeFilterProtocolVtbl;
+    ret->lpIInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
     ret->ref = 1;
 
     *ppobj = PROTOCOL(ret);
