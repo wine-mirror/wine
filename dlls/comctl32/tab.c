@@ -1570,7 +1570,22 @@ TAB_DrawItemInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
 	drawRect->left   += 4;
 	drawRect->top    += 4;
 	drawRect->right  -= 4;
-	drawRect->bottom -= 1;
+
+	if (lStyle & TCS_VERTICAL)
+	{
+	  if (!(lStyle & TCS_BOTTOM)) drawRect->right  += 1;
+	  drawRect->bottom   -= 4;
+	}
+	else
+	{
+	  if (lStyle & TCS_BOTTOM)
+	  {
+	    drawRect->top    -= 2;
+	    drawRect->bottom -= 4;
+	  }
+	  else
+	    drawRect->bottom -= 1;
+	}
       }
       else
       {
