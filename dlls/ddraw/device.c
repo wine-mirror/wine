@@ -4104,7 +4104,7 @@ IDirect3DDeviceImpl_7_DrawPrimitiveVB(IDirect3DDevice7 *iface,
     IDirect3DVertexBufferImpl *vb = (IDirect3DVertexBufferImpl *)D3DVertexBuf;
     HRESULT hr;
     DWORD stride;
-    WINED3DVERTEXBUFFER_DESC Desc;
+    WINED3DBUFFER_DESC Desc;
 
     TRACE("(%p)->(%08x,%p,%08x,%08x,%08x)\n", This, PrimitiveType, D3DVertexBuf, StartVertex, NumVertices, Flags);
 
@@ -4232,7 +4232,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     DWORD stride;
     WORD *LockedIndices;
     HRESULT hr;
-    WINED3DVERTEXBUFFER_DESC Desc;
+    WINED3DBUFFER_DESC Desc;
 
     TRACE("(%p)->(%08x,%p,%d,%d,%p,%d,%08x)\n", This, PrimitiveType, vb, StartVertex, NumVertices, Indices, IndexCount, Flags);
 

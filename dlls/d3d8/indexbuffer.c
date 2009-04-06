@@ -180,15 +180,19 @@ static HRESULT WINAPI IDirect3DIndexBuffer8Impl_Unlock(LPDIRECT3DINDEXBUFFER8 if
 static HRESULT WINAPI IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXBUFFER8 iface, D3DINDEXBUFFER_DESC *pDesc) {
     IDirect3DIndexBuffer8Impl *This = (IDirect3DIndexBuffer8Impl *)iface;
     HRESULT hr;
+    WINED3DBUFFER_DESC desc;
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DIndexBuffer_GetDesc(This->wineD3DIndexBuffer, (WINED3DINDEXBUFFER_DESC *) pDesc);
+    hr = IWineD3DIndexBuffer_GetDesc(This->wineD3DIndexBuffer, &desc);
     LeaveCriticalSection(&d3d8_cs);
 
     if (SUCCEEDED(hr)) {
-        pDesc->Format = d3dformat_from_wined3dformat(pDesc->Format);
+        pDesc->Format = d3dformat_from_wined3dformat(desc.Format);
         pDesc->Type = D3DRTYPE_INDEXBUFFER;
+        pDesc->Usage = desc.Usage;
+        pDesc->Pool = desc.Pool;
+        pDesc->Size = desc.Size;
     }
 
     return hr;

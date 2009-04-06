@@ -908,7 +908,7 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
     return WINED3D_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DVERTEXBUFFER_DESC *desc)
+static HRESULT STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DBUFFER_DESC *desc)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
 
@@ -1159,7 +1159,7 @@ static HRESULT STDMETHODCALLTYPE IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuf
 }
 
 static HRESULT STDMETHODCALLTYPE IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBuffer *iface,
-        WINED3DINDEXBUFFER_DESC *pDesc)
+        WINED3DBUFFER_DESC *pDesc)
 {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
 

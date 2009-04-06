@@ -185,14 +185,19 @@ static HRESULT WINAPI IDirect3DVertexBuffer9Impl_Unlock(LPDIRECT3DVERTEXBUFFER9 
 static HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTEXBUFFER9 iface, D3DVERTEXBUFFER_DESC* pDesc) {
     IDirect3DVertexBuffer9Impl *This = (IDirect3DVertexBuffer9Impl *)iface;
     HRESULT hr;
+    WINED3DBUFFER_DESC desc;
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d9_cs);
-    hr = IWineD3DBuffer_GetDesc(This->wineD3DVertexBuffer, (WINED3DVERTEXBUFFER_DESC *)pDesc);
+    hr = IWineD3DBuffer_GetDesc(This->wineD3DVertexBuffer, &desc);
     LeaveCriticalSection(&d3d9_cs);
 
     if (SUCCEEDED(hr)) {
-        pDesc->Format = d3dformat_from_wined3dformat(pDesc->Format);
+        pDesc->Format = d3dformat_from_wined3dformat(desc.Format);
+        pDesc->Usage = desc.Usage;
+        pDesc->Pool = desc.Pool;
+        pDesc->Size = desc.Size;
+        pDesc->FVF = desc.FVF;
         pDesc->Type = D3DRTYPE_VERTEXBUFFER;
     }
 

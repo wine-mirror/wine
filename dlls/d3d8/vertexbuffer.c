@@ -182,15 +182,20 @@ static HRESULT WINAPI IDirect3DVertexBuffer8Impl_Unlock(LPDIRECT3DVERTEXBUFFER8 
 static HRESULT WINAPI IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER8 iface, D3DVERTEXBUFFER_DESC *pDesc) {
     IDirect3DVertexBuffer8Impl *This = (IDirect3DVertexBuffer8Impl *)iface;
     HRESULT hr;
+    WINED3DBUFFER_DESC desc;
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
-    hr = IWineD3DBuffer_GetDesc(This->wineD3DVertexBuffer, (WINED3DVERTEXBUFFER_DESC *)pDesc);
+    hr = IWineD3DBuffer_GetDesc(This->wineD3DVertexBuffer, &desc);
     LeaveCriticalSection(&d3d8_cs);
 
     if (SUCCEEDED(hr)) {
         pDesc->Type = D3DRTYPE_VERTEXBUFFER;
-        pDesc->Format = d3dformat_from_wined3dformat(pDesc->Format);
+        pDesc->Usage = desc.Usage;
+        pDesc->Pool = desc.Pool;
+        pDesc->Size = desc.Size;
+        pDesc->FVF = desc.FVF;
+        pDesc->Format = d3dformat_from_wined3dformat(desc.Format);
     }
 
     return hr;

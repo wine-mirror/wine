@@ -766,12 +766,10 @@ typedef enum _WINED3DRESOURCETYPE
     WINED3DRTYPE_TEXTURE                    = 3,
     WINED3DRTYPE_VOLUMETEXTURE              = 4,
     WINED3DRTYPE_CUBETEXTURE                = 5,
-    WINED3DRTYPE_VERTEXBUFFER               = 6,
-    WINED3DRTYPE_INDEXBUFFER                = 7,
-    WINED3DRTYPE_BUFFER                     = 8,
+    WINED3DRTYPE_BUFFER                     = 6,
     WINED3DRTYPE_FORCE_DWORD                = 0x7fffffff
 } WINED3DRESOURCETYPE;
-const UINT WINED3DRTYPECOUNT                = WINED3DRTYPE_INDEXBUFFER + 1;
+const UINT WINED3DRTYPECOUNT                = WINED3DRTYPE_BUFFER + 1;
 
 typedef enum _WINED3DPOOL
 {
@@ -1864,7 +1862,7 @@ typedef struct WINED3DDEVINFO_VCACHE
                            non user modifiable (only valid if OptMethod==1) */
 } WINED3DDEVINFO_VCACHE;
 
-typedef struct _WINED3DVERTEXBUFFER_DESC
+typedef struct _WINED3DBUFFER_DESC
 {
     WINED3DFORMAT Format;
     WINED3DRESOURCETYPE Type;
@@ -1872,16 +1870,7 @@ typedef struct _WINED3DVERTEXBUFFER_DESC
     WINED3DPOOL Pool;
     UINT Size;
     DWORD FVF;
-} WINED3DVERTEXBUFFER_DESC;
-
-typedef struct _WINED3DINDEXBUFFER_DESC
-{
-    WINED3DFORMAT Format;
-    WINED3DRESOURCETYPE Type;
-    DWORD Usage;
-    WINED3DPOOL Pool;
-    UINT Size;
-} WINED3DINDEXBUFFER_DESC;
+} WINED3DBUFFER_DESC;
 
 typedef struct glDescriptor
 {
@@ -2366,7 +2355,7 @@ interface IWineD3DIndexBuffer : IWineD3DResource
     HRESULT Unlock(
     );
     HRESULT GetDesc(
-        [out] WINED3DINDEXBUFFER_DESC *desc
+        [out] WINED3DBUFFER_DESC *desc
     );
 }
 
@@ -2844,7 +2833,7 @@ interface IWineD3DBuffer : IWineD3DResource
     HRESULT Unmap(
     );
     HRESULT GetDesc(
-        [out] WINED3DVERTEXBUFFER_DESC *desc
+        [out] WINED3DBUFFER_DESC *desc
     );
 }
 

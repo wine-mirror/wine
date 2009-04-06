@@ -234,7 +234,7 @@ IDirect3DVertexBufferImpl_Lock(IDirect3DVertexBuffer7 *iface,
                                DWORD *Size)
 {
     IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
-    WINED3DVERTEXBUFFER_DESC Desc;
+    WINED3DBUFFER_DESC Desc;
     HRESULT hr;
     TRACE("(%p)->(%08x,%p,%p)\n", This, Flags, Data, Size);
 
@@ -340,7 +340,7 @@ IDirect3DVertexBufferImpl_ProcessVertices(IDirect3DVertexBuffer7 *iface,
     IDirect3DDeviceImpl *D3D = (IDirect3DDeviceImpl *)D3DDevice;
     BOOL oldClip, doClip;
     HRESULT hr;
-    WINED3DVERTEXBUFFER_DESC Desc;
+    WINED3DBUFFER_DESC Desc;
 
     TRACE("(%p)->(%08x,%d,%d,%p,%d,%p,%08x)\n", This, VertexOp, DestIndex, Count, Src, SrcIndex, D3D, Flags);
 
@@ -435,7 +435,7 @@ IDirect3DVertexBufferImpl_GetVertexBufferDesc(IDirect3DVertexBuffer7 *iface,
                                               D3DVERTEXBUFFERDESC *Desc)
 {
     IDirect3DVertexBufferImpl *This = (IDirect3DVertexBufferImpl *)iface;
-    WINED3DVERTEXBUFFER_DESC WDesc;
+    WINED3DBUFFER_DESC WDesc;
     HRESULT hr;
     TRACE("(%p)->(%p)\n", This, Desc);
 
