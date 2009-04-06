@@ -1200,16 +1200,21 @@ BOOL WINAPI GetTransform( HDC hdc, DWORD unknown, LPXFORM xform )
 BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
 {
     BOOL ret = FALSE;
-    DC *dc = get_dc_ptr( hdc );
+    DC *dc;
 
+    if (!xform) return FALSE;
+
+    dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
-    if (!xform) goto done;
 
     /* Check that graphics mode is GM_ADVANCED */
     if (dc->GraphicsMode!=GM_ADVANCED) goto done;
 
     TRACE("eM11 %f eM12 %f eM21 %f eM22 %f eDx %f eDy %f\n",
         xform->eM11, xform->eM12, xform->eM21, xform->eM22, xform->eDx, xform->eDy);
+
+    /* The transform must conform to (eM11 * eM22 != eM12 * eM21) requirement */
+    if (xform->eM11 * xform->eM22 == xform->eM12 * xform->eM21) goto done;
 
     if (dc->funcs->pSetWorldTransform)
     {

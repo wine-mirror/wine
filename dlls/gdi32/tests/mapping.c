@@ -85,6 +85,15 @@ static void test_world_transform(void)
 
     hdc = CreateCompatibleDC(0);
 
+    xform.eM11 = 1.0f;
+    xform.eM12 = 0.0f;
+    xform.eM21 = 0.0f;
+    xform.eM22 = 1.0f;
+    xform.eDx = 0.0f;
+    xform.eDy = 0.0f;
+    ret = SetWorldTransform(hdc, &xform);
+    ok(!ret, "SetWorldTransform should fail in GM_COMPATIBLE mode\n");
+
     size_cx = GetDeviceCaps(hdc, HORZSIZE);
     size_cy = GetDeviceCaps(hdc, VERTSIZE);
     res_x = GetDeviceCaps(hdc, HORZRES);
@@ -144,6 +153,16 @@ static void test_world_transform(void)
     expect_world_trasform(hdc, 1.0, 1.0);
     expect_LPtoDP(hdc, 1000, 1000);
 
+    /* The transform must conform to (eM11 * eM22 != eM12 * eM21) requirement */
+    xform.eM11 = 1.0f;
+    xform.eM12 = 2.0f;
+    xform.eM21 = 1.0f;
+    xform.eM22 = 2.0f;
+    xform.eDx = 0.0f;
+    xform.eDy = 0.0f;
+    ret = SetWorldTransform(hdc, &xform);
+    ok(!ret, "SetWorldTransform should fail with an invalid xform\n");
+
     xform.eM11 = 20.0f;
     xform.eM12 = 0.0f;
     xform.eM21 = 0.0f;
@@ -177,6 +196,16 @@ static void test_world_transform(void)
     SetLastError(0xdeadbeef);
     ret = SetMapMode(hdc, MM_TEXT);
     ok(ret == MM_LOMETRIC, "expected MM_LOMETRIC, got %d\n", ret);
+
+    expect_viewport_ext(hdc, 1, 1);
+    expect_window_ext(hdc, 1, 1);
+    expect_world_trasform(hdc, 20.0, 20.0);
+    expect_LPtoDP(hdc, 20000, 20000);
+
+    ret = SetGraphicsMode(hdc, GM_COMPATIBLE);
+    ok(ret, "SetGraphicsMode(GM_COMPATIBLE) should not fail if DC has't an identity transform\n");
+    ret = GetGraphicsMode(hdc);
+    ok(ret == GM_COMPATIBLE, "expected GM_COMPATIBLE, got %d\n", ret);
 
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
