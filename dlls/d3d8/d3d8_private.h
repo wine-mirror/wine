@@ -326,6 +326,8 @@ struct IDirect3DVertexBuffer8Impl
 
     /* Parent reference */
     LPDIRECT3DDEVICE8                 parentDevice;
+
+    DWORD                             fvf;
 };
 
 /* --------------------- */

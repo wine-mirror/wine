@@ -739,6 +739,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 
     EnterCriticalSection(&d3d8_cs);
     hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage & WINED3DUSAGE_MASK, FVF, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), NULL, (IUnknown *)object);
     LeaveCriticalSection(&d3d8_cs);
+    object->fvf = FVF;
 
     if (D3D_OK != hrc) {
 

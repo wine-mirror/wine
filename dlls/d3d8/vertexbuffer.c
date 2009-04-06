@@ -194,7 +194,7 @@ static HRESULT WINAPI IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER8
         pDesc->Usage = desc.Usage;
         pDesc->Pool = desc.Pool;
         pDesc->Size = desc.Size;
-        pDesc->FVF = desc.FVF;
+        pDesc->FVF = This->fvf;
         pDesc->Format = d3dformat_from_wined3dformat(desc.Format);
     }
 
