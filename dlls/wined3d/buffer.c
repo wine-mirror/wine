@@ -214,7 +214,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This,
 
     format = attrib->format_desc->format;
     /* Look for newly appeared conversion */
-    if (!GL_SUPPORT(NV_HALF_FLOAT) && (format == WINED3DFMT_R16G16_FLOAT || format == WINED3DFMT_R16G16B16A16_FLOAT))
+    if (!GL_SUPPORT(ARB_HALF_FLOAT_VERTEX) && (format == WINED3DFMT_R16G16_FLOAT || format == WINED3DFMT_R16G16B16A16_FLOAT))
     {
         ret = buffer_process_converted_attribute(This, CONV_FLOAT16_2, attrib, stride_this_run);
 
@@ -327,7 +327,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
     /* Certain declaration types need some fixups before we can pass them to
      * opengl. This means D3DCOLOR attributes with fixed function vertex
      * processing, FLOAT4 POSITIONT with fixed function, and FLOAT16 if
-     * GL_NV_half_float is not supported.
+     * GL_ARB_half_float_vertex is not supported.
      *
      * Note for d3d8 and d3d9:
      * The vertex buffer FVF doesn't help with finding them, we have to use

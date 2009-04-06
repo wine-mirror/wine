@@ -92,6 +92,7 @@ static const struct {
     {"GL_ARB_vertex_shader",                ARB_VERTEX_SHADER,              0                           },
     {"GL_ARB_shader_objects",               ARB_SHADER_OBJECTS,             0                           },
     {"GL_ARB_shader_texture_lod",           ARB_SHADER_TEXTURE_LOD,         0                           },
+    {"GL_ARB_half_float_vertex",            ARB_HALF_FLOAT_VERTEX,          0                           },
 
     /* EXT */
     {"GL_EXT_blend_color",                  EXT_BLEND_COLOR,                0                           },
@@ -1008,6 +1009,10 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             gl_info->supported[NV_TEXTURE_SHADER] = FALSE;
             gl_info->supported[NV_TEXTURE_SHADER2] = FALSE;
             gl_info->supported[NV_TEXTURE_SHADER3] = FALSE;
+        }
+        if(gl_info->supported[NV_HALF_FLOAT]) {
+            /* GL_ARB_half_float_vertex is a subset of GL_NV_half_float */
+            gl_info->supported[ARB_HALF_FLOAT_VERTEX] = TRUE;
         }
 
     }
@@ -3629,7 +3634,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                            WINED3DDTCAPS_UBYTE4N   |
                            WINED3DDTCAPS_SHORT2N   |
                            WINED3DDTCAPS_SHORT4N;
-        if (GL_SUPPORT(NV_HALF_FLOAT)) {
+        if (GL_SUPPORT(ARB_HALF_FLOAT_VERTEX)) {
             pCaps->DeclTypes |= WINED3DDTCAPS_FLOAT16_2 |
                                 WINED3DDTCAPS_FLOAT16_4;
         }
@@ -4340,6 +4345,7 @@ static void fillGLAttribFuncs(const WineD3D_GL_Info *gl_info)
     multi_texcoord_funcs[WINED3D_FFP_EMIT_DEC3N]     = invalid_texcoord_func;
     if (GL_SUPPORT(NV_HALF_FLOAT))
     {
+        /* Not supported by ARB_HALF_FLOAT_VERTEX, so check for NV_HALF_FLOAT */
         multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT16_2] = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord2hvNV);
         multi_texcoord_funcs[WINED3D_FFP_EMIT_FLOAT16_4] = (glMultiTexCoordFunc)GL_EXTCALL(glMultiTexCoord4hvNV);
     } else {

@@ -2537,6 +2537,12 @@ typedef void (WINE_GLAPI * PGLFNGETCOMPRESSEDTEXIMAGEPROC) (GLenum target, GLint
 #define GL_DECR_WRAP_EXT                  0x8508
 #endif
 
+/* GL_ARB_half_float_vertex */
+#ifndef GL_ARB_half_float_vertex
+#define GL_ARB_half_float_vertex
+/* No _ARB, see extension spec */
+#define GL_HALF_FLOAT                     0x140B
+#endif
 /* GL_NV_half_float */
 #ifndef GL_NV_half_float
 #define GL_NV_half_float 1
@@ -3398,6 +3404,7 @@ typedef enum _GL_SupportedExt {
   ARB_VERTEX_SHADER,
   ARB_SHADER_OBJECTS,
   ARB_SHADER_TEXTURE_LOD,
+  ARB_HALF_FLOAT_VERTEX,
   /* EXT */
   EXT_BLEND_COLOR,
   EXT_BLEND_MINMAX,
