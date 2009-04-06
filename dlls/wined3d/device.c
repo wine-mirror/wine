@@ -532,7 +532,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     }
 
     object->vtbl = &wined3d_buffer_vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_VERTEXBUFFER, This, Size, Usage, format_desc, Pool, parent);
+    hr = resource_init(&object->resource, WINED3DRTYPE_BUFFER, This, Size, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -650,7 +650,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
     }
 
     object->lpVtbl = &IWineD3DIndexBuffer_Vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_INDEXBUFFER, This, Length, Usage, format_desc, Pool, parent);
+    hr = resource_init(&object->resource, WINED3DRTYPE_BUFFER, This, Length, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -7905,7 +7905,7 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
         case WINED3DRTYPE_VOLUME:
         /* TODO: nothing really? */
         break;
-        case WINED3DRTYPE_VERTEXBUFFER:
+        case WINED3DRTYPE_BUFFER:
         {
             int streamNumber;
             TRACE("Cleaning up stream pointers\n");
@@ -7928,24 +7928,19 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
                     }
                 }
             }
-        }
-        break;
-        case WINED3DRTYPE_INDEXBUFFER:
-        if (This->updateStateBlock != NULL ) { /* ==NULL when device is being destroyed */
-            if (This->updateStateBlock->pIndexData == (IWineD3DIndexBuffer *)resource) {
-                This->updateStateBlock->pIndexData =  NULL;
-            }
-        }
-        if (This->stateBlock != NULL ) { /* ==NULL when device is being destroyed */
-            if (This->stateBlock->pIndexData == (IWineD3DIndexBuffer *)resource) {
-                This->stateBlock->pIndexData =  NULL;
-            }
-        }
-        break;
 
-        case WINED3DRTYPE_BUFFER:
-            /* Nothing to do, yet.*/
-            break;
+            if (This->updateStateBlock != NULL ) { /* ==NULL when device is being destroyed */
+                if (This->updateStateBlock->pIndexData == (IWineD3DIndexBuffer *)resource) {
+                    This->updateStateBlock->pIndexData =  NULL;
+                }
+            }
+            if (This->stateBlock != NULL ) { /* ==NULL when device is being destroyed */
+                if (This->stateBlock->pIndexData == (IWineD3DIndexBuffer *)resource) {
+                    This->stateBlock->pIndexData =  NULL;
+                }
+            }
+        }
+        break;
 
         default:
         FIXME("(%p) unknown resource type %p %u\n", This, resource, IWineD3DResource_GetType(resource));

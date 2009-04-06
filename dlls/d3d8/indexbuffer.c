@@ -149,13 +149,9 @@ static void WINAPI IDirect3DIndexBuffer8Impl_PreLoad(LPDIRECT3DINDEXBUFFER8 ifac
 
 static D3DRESOURCETYPE WINAPI IDirect3DIndexBuffer8Impl_GetType(LPDIRECT3DINDEXBUFFER8 iface) {
     IDirect3DIndexBuffer8Impl *This = (IDirect3DIndexBuffer8Impl *)iface;
-    D3DRESOURCETYPE type;
-    TRACE("(%p) Relay\n", This);
+    TRACE("(%p)\n", This);
 
-    EnterCriticalSection(&d3d8_cs);
-    type = IWineD3DIndexBuffer_GetType(This->wineD3DIndexBuffer);
-    LeaveCriticalSection(&d3d8_cs);
-    return type;
+    return D3DRTYPE_INDEXBUFFER;
 }
 
 /* IDirect3DIndexBuffer8 Interface follow: */
@@ -190,7 +186,10 @@ static HRESULT WINAPI IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXBUFFER8 i
     hr = IWineD3DIndexBuffer_GetDesc(This->wineD3DIndexBuffer, (WINED3DINDEXBUFFER_DESC *) pDesc);
     LeaveCriticalSection(&d3d8_cs);
 
-    if (SUCCEEDED(hr)) pDesc->Format = d3dformat_from_wined3dformat(pDesc->Format);
+    if (SUCCEEDED(hr)) {
+        pDesc->Format = d3dformat_from_wined3dformat(pDesc->Format);
+        pDesc->Type = D3DRTYPE_INDEXBUFFER;
+    }
 
     return hr;
 }

@@ -428,17 +428,18 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
     HRESULT ret = S_OK;
     WINED3DSURFACE_DESC surface_desc;
     WINED3DVOLUME_DESC volume_desc;
-    WINED3DINDEXBUFFER_DESC index_desc;
-    WINED3DVERTEXBUFFER_DESC vertex_desc;
+    D3DINDEXBUFFER_DESC index_desc;
+    D3DVERTEXBUFFER_DESC vertex_desc;
     WINED3DFORMAT dummy_format;
     WINED3DMULTISAMPLE_TYPE dummy_multisampletype;
     DWORD dummy_dword;
     WINED3DPOOL pool = WINED3DPOOL_SCRATCH; /* a harmless pool */
-    IUnknown *parent;
+    IDirect3DResource9 *parent;
 
-    type = IWineD3DResource_GetType(resource);
+    IWineD3DResource_GetParent(resource, (IUnknown **) &parent);
+    type = IDirect3DResource9_GetType(parent);
     switch(type) {
-        case WINED3DRTYPE_SURFACE:
+        case D3DRTYPE_SURFACE:
             surface_desc.Format = &dummy_format;
             surface_desc.Type = &type;
             surface_desc.Usage = &dummy_dword;
@@ -452,7 +453,7 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
             IWineD3DSurface_GetDesc((IWineD3DSurface *) resource, &surface_desc);
             break;
 
-        case WINED3DRTYPE_VOLUME:
+        case D3DRTYPE_VOLUME:
             volume_desc.Format = &dummy_format;
             volume_desc.Type = &type;
             volume_desc.Usage = &dummy_dword;
@@ -464,13 +465,13 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
             IWineD3DVolume_GetDesc((IWineD3DVolume *) resource, &volume_desc);
             break;
 
-        case WINED3DRTYPE_INDEXBUFFER:
-            IWineD3DIndexBuffer_GetDesc((IWineD3DIndexBuffer *) resource, &index_desc);
+        case D3DRTYPE_INDEXBUFFER:
+            IDirect3DIndexBuffer9_GetDesc((IDirect3DIndexBuffer9 *) parent, &index_desc);
             pool = index_desc.Pool;
             break;
 
-        case WINED3DRTYPE_VERTEXBUFFER:
-            IWineD3DBuffer_GetDesc((IWineD3DBuffer *)resource, &vertex_desc);
+        case D3DRTYPE_VERTEXBUFFER:
+            IDirect3DVertexBuffer9_GetDesc((IDirect3DVertexBuffer9 *)parent, &vertex_desc);
             pool = vertex_desc.Pool;
             break;
 
@@ -482,7 +483,6 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
     }
 
     if(pool == WINED3DPOOL_DEFAULT) {
-        IWineD3DResource_GetParent(resource, &parent);
         if(IUnknown_Release(parent) == 0) {
             TRACE("Parent %p is an implicit resource with ref 0\n", parent);
         } else {
@@ -490,6 +490,8 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
             ret = S_FALSE;
             *resources_ok = FALSE;
         }
+    } else {
+        IUnknown_Release(parent);
     }
     IWineD3DResource_Release(resource);
 

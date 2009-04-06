@@ -3047,7 +3047,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
                 /* Do nothing, continue with checking the format below */
                 break;
         }
-    } else if((RType == WINED3DRTYPE_INDEXBUFFER) || (RType == WINED3DRTYPE_VERTEXBUFFER)){
+    } else if(RType == WINED3DRTYPE_BUFFER){
         /* For instance vertexbuffer/indexbuffer aren't supported yet because no Windows drivers seem to offer it */
         TRACE_(d3d_caps)("Unhandled resource type D3DRTYPE_INDEXBUFFER / D3DRTYPE_VERTEXBUFFER\n");
         return WINED3DERR_NOTAVAILABLE;
