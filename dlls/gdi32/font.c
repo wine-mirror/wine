@@ -2483,8 +2483,7 @@ BOOL WINAPI CreateScalableFontResourceW( DWORD fHidden,
 DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
                                LPKERNINGPAIR kern_pairA )
 {
-    INT charset;
-    CHARSETINFO csi;
+    UINT cp;
     CPINFO cpi;
     DWORD i, total_kern_pairs, kern_pairs_copied = 0;
     KERNINGPAIR *kern_pairW;
@@ -2495,22 +2494,17 @@ DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
         return 0;
     }
 
-    charset = GetTextCharset(hDC);
-    if (!TranslateCharsetInfo(ULongToPtr(charset), &csi, TCI_SRCCHARSET))
-    {
-        FIXME("Can't find codepage for charset %d\n", charset);
-        return 0;
-    }
+    cp = GdiGetCodePage(hDC);
+
     /* GetCPInfo() will fail on CP_SYMBOL, and WideCharToMultiByte is supposed
      * to fail on an invalid character for CP_SYMBOL.
      */
     cpi.DefaultChar[0] = 0;
-    if (csi.ciACP != CP_SYMBOL && !GetCPInfo(csi.ciACP, &cpi))
+    if (cp != CP_SYMBOL && !GetCPInfo(cp, &cpi))
     {
-        FIXME("Can't find codepage %u info\n", csi.ciACP);
+        FIXME("Can't find codepage %u info\n", cp);
         return 0;
     }
-    TRACE("charset %d => codepage %u\n", charset, csi.ciACP);
 
     total_kern_pairs = GetKerningPairsW(hDC, 0, NULL);
     if (!total_kern_pairs) return 0;
@@ -2522,10 +2516,10 @@ DWORD WINAPI GetKerningPairsA( HDC hDC, DWORD cPairs,
     {
         char first, second;
 
-        if (!WideCharToMultiByte(csi.ciACP, 0, &kern_pairW[i].wFirst, 1, &first, 1, NULL, NULL))
+        if (!WideCharToMultiByte(cp, 0, &kern_pairW[i].wFirst, 1, &first, 1, NULL, NULL))
             continue;
 
-        if (!WideCharToMultiByte(csi.ciACP, 0, &kern_pairW[i].wSecond, 1, &second, 1, NULL, NULL))
+        if (!WideCharToMultiByte(cp, 0, &kern_pairW[i].wSecond, 1, &second, 1, NULL, NULL))
             continue;
 
         if (first == cpi.DefaultChar[0] || second == cpi.DefaultChar[0])
