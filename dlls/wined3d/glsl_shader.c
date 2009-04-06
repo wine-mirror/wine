@@ -1266,17 +1266,17 @@ static DWORD shader_glsl_add_dst_param(const struct wined3d_shader_instruction *
 
 /* Append the destination part of the instruction to the buffer, return the effective write mask */
 static DWORD shader_glsl_append_dst_ext(SHADER_BUFFER *buffer,
-        const struct wined3d_shader_instruction *ins, const DWORD param)
+        const struct wined3d_shader_instruction *ins, const struct wined3d_shader_dst_param *dst)
 {
-    glsl_dst_param_t dst_param;
+    glsl_dst_param_t glsl_dst;
     DWORD mask;
     int shift;
 
-    mask = shader_glsl_add_dst_param(ins, param, ins->dst[0].addr_token, &dst_param);
-
-    if(mask) {
-        shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-        shader_addline(buffer, "%s%s = %s(", dst_param.reg_name, dst_param.mask_str, shift_glsl_tab[shift]);
+    mask = shader_glsl_add_dst_param(ins, dst->token, dst->addr_token, &glsl_dst);
+    if (mask)
+    {
+        shift = (dst->token & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+        shader_addline(buffer, "%s%s = %s(", glsl_dst.reg_name, glsl_dst.mask_str, shift_glsl_tab[shift]);
     }
 
     return mask;
@@ -1285,7 +1285,7 @@ static DWORD shader_glsl_append_dst_ext(SHADER_BUFFER *buffer,
 /* Append the destination part of the instruction to the buffer, return the effective write mask */
 static DWORD shader_glsl_append_dst(SHADER_BUFFER *buffer, const struct wined3d_shader_instruction *ins)
 {
-    return shader_glsl_append_dst_ext(buffer, ins, ins->dst[0].token);
+    return shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0]);
 }
 
 /** Process GLSL instruction modifiers */
@@ -1946,8 +1946,9 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
                 shader_addline(ins->buffer, "tmp0%s = (", mask_char);
                 temp_destination = TRUE;
             } else {
-                write_mask = shader_glsl_append_dst_ext(ins->buffer, ins,
-                        ins->dst[0].token & (~WINED3DSP_WRITEMASK_ALL | write_mask));
+                struct wined3d_shader_dst_param dst = ins->dst[0];
+                dst.token &= ~WINED3DSP_WRITEMASK_ALL | write_mask;
+                write_mask = shader_glsl_append_dst_ext(ins->buffer, ins, &dst);
                 if (!write_mask) continue;
             }
 
@@ -1961,7 +1962,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
 
         if(temp_destination) {
             shader_glsl_get_write_mask(ins->dst[0].token, mask_char);
-            shader_glsl_append_dst_ext(ins->buffer, ins, ins->dst[0].token);
+            shader_glsl_append_dst(ins->buffer, ins);
             shader_addline(ins->buffer, "tmp0%s);\n", mask_char);
         }
     }
@@ -1998,6 +1999,7 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
     }
     /* Cycle through all source0 channels */
     for (i=0; i<4; i++) {
+        struct wined3d_shader_dst_param dst;
         write_mask = 0;
         /* Find the destination channels which use the current source0 channel */
         for (j=0; j<4; j++) {
@@ -2007,8 +2009,9 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
                 cmp_channel = WINED3DSP_WRITEMASK_0 << j;
             }
         }
-        write_mask = shader_glsl_append_dst_ext(ins->buffer, ins,
-                ins->dst[0].token & (~WINED3DSP_WRITEMASK_ALL | write_mask));
+        dst = ins->dst[0];
+        dst.token &= ~WINED3DSP_WRITEMASK_ALL | write_mask;
+        write_mask = shader_glsl_append_dst_ext(ins->buffer, ins, &dst);
         if (!write_mask) continue;
 
         shader_glsl_add_src_param(ins, ins->src[0], ins->src_addr[0], cmp_channel, &src0_param);
