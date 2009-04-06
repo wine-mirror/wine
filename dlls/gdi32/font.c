@@ -247,45 +247,13 @@ static void FONT_NewTextMetricExWToA(const NEWTEXTMETRICEXW *ptmW, NEWTEXTMETRIC
 DWORD WINAPI GdiGetCodePage( HDC hdc )
 {
     UINT cp = CP_ACP;
-    CHARSETINFO csi;
-    int charset = GetTextCharset(hdc);
+    DC *dc = get_dc_ptr( hdc );
 
-    /* Hmm, nicely designed api this one! */
-    if(TranslateCharsetInfo(ULongToPtr(charset), &csi, TCI_SRCCHARSET))
-        cp = csi.ciACP;
-    else {
-        switch(charset) {
-        case OEM_CHARSET:
-            cp = GetOEMCP();
-            break;
-        case DEFAULT_CHARSET:
-            cp = GetACP();
-            break;
-
-        case VISCII_CHARSET:
-        case TCVN_CHARSET:
-        case KOI8_CHARSET:
-        case ISO3_CHARSET:
-        case ISO4_CHARSET:
-        case ISO10_CHARSET:
-        case CELTIC_CHARSET:
-            /* FIXME: These have no place here, but because x11drv
-               enumerates fonts with these (made up) charsets some apps
-               might use them and then the FIXME below would become
-               annoying.  Now we could pick the intended codepage for
-               each of these, but since it's broken anyway we'll just
-               use CP_ACP and hope it'll go away...
-            */
-            cp = CP_ACP;
-            break;
-
-        default:
-            FIXME("Can't find codepage for charset %d\n", charset);
-            break;
-        }
+    if (dc)
+    {
+        cp = dc->font_code_page;
+        release_dc_ptr( dc );
     }
-
-    TRACE("charset %d => cp %d\n", charset, cp);
     return cp;
 }
 
@@ -465,6 +433,52 @@ HFONT WINAPI CreateFontW( INT height, INT width, INT esc,
     return CreateFontIndirectW( &logfont );
 }
 
+static void update_font_code_page( DC *dc )
+{
+    CHARSETINFO csi;
+    int charset = DEFAULT_CHARSET;
+
+    if (dc->gdiFont)
+        charset = WineEngGetTextCharsetInfo( dc->gdiFont, NULL, 0 );
+
+    /* Hmm, nicely designed api this one! */
+    if (TranslateCharsetInfo( ULongToPtr(charset), &csi, TCI_SRCCHARSET) )
+        dc->font_code_page = csi.ciACP;
+    else {
+        switch(charset) {
+        case OEM_CHARSET:
+            dc->font_code_page = GetOEMCP();
+            break;
+        case DEFAULT_CHARSET:
+            dc->font_code_page = GetACP();
+            break;
+
+        case VISCII_CHARSET:
+        case TCVN_CHARSET:
+        case KOI8_CHARSET:
+        case ISO3_CHARSET:
+        case ISO4_CHARSET:
+        case ISO10_CHARSET:
+        case CELTIC_CHARSET:
+            /* FIXME: These have no place here, but because x11drv
+               enumerates fonts with these (made up) charsets some apps
+               might use them and then the FIXME below would become
+               annoying.  Now we could pick the intended codepage for
+               each of these, but since it's broken anyway we'll just
+               use CP_ACP and hope it'll go away...
+            */
+            dc->font_code_page = CP_ACP;
+            break;
+
+        default:
+            FIXME("Can't find codepage for charset %d\n", charset);
+            dc->font_code_page = CP_ACP;
+            break;
+        }
+    }
+
+    TRACE("charset %d => cp %d\n", charset, dc->font_code_page);
+}
 
 /***********************************************************************
  *           FONT_SelectObject
@@ -506,6 +520,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
     {
         ret = dc->hFont;
         dc->hFont = handle;
+        update_font_code_page( dc );
         GDI_dec_ref_count( ret );
     }
     release_dc_ptr( dc );

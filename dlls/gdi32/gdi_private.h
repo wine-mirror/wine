@@ -281,6 +281,7 @@ typedef struct tagDC
     GdiFont      *gdiFont;
     GdiPath       path;
 
+    UINT          font_code_page;
     WORD          ROPmode;
     WORD          polyFillMode;
     WORD          stretchBltMode;
