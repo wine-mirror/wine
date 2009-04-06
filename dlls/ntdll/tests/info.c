@@ -818,7 +818,7 @@ static void test_query_process_image_file_name(void)
     file_nameA[len] = '\0';
     HeapFree(GetProcessHeap(), 0, buffer);
     trace("process image file name: %s\n", file_nameA);
-    todo_wine ok(strncmp(file_nameA, "\\Device\\", 8) == 0, "Process image name should be an NT path beginning with \\Device\\ (is %s)", file_nameA);
+    todo_wine ok(strncmp(file_nameA, "\\Device\\", 8) == 0, "Process image name should be an NT path beginning with \\Device\\ (is %s)\n", file_nameA);
     HeapFree(GetProcessHeap(), 0, file_nameA);
 }
 
