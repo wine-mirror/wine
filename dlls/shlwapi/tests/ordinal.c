@@ -482,7 +482,7 @@ static void test_SHPackDispParams(void)
     ok(params.rgdispidNamedArgs == NULL, "params.rgdispidNamedArgs = %p\n", params.rgdispidNamedArgs);
     ok(params.rgvarg == vars, "params.rgvarg = %p\n", params.rgvarg);
     ok(V_VT(vars) == VT_I4, "V_VT(var) = %d\n", V_VT(vars));
-    ok(V_DISPATCH(vars) == (void*)0xdeadbeef, "failed\n");
+    ok(V_I4(vars) == 0xdeadbeef, "failed %x\n", V_I4(vars));
 
     memset(&params, 0xc0, sizeof(params));
     hres = pSHPackDispParams(&params, NULL, 0, 0);
