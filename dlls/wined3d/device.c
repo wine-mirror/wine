@@ -463,6 +463,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
+    object->buffer_type_hint = GL_ARRAY_BUFFER_ARB;
 
     TRACE("Created resource %p\n", object);
 
@@ -540,6 +541,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
         *ppVertexBuffer = NULL;
         return hr;
     }
+    object->buffer_type_hint = GL_ARRAY_BUFFER_ARB;
 
     TRACE("(%p) : Created resource %p\n", This, object);
 
@@ -580,62 +582,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     return WINED3D_OK;
 }
 
-static void CreateIndexBufferVBO(IWineD3DDeviceImpl *This, IWineD3DIndexBufferImpl *object) {
-    GLenum error, glUsage;
-    TRACE("Creating VBO for Index Buffer %p\n", object);
-
-    /* The following code will modify the ELEMENT_ARRAY_BUFFER binding, make sure it is
-     * restored on the next draw
-     */
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
-
-    /* Make sure that a context is there. Needed in a multithreaded environment. Otherwise this call is a nop */
-    ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-    ENTER_GL();
-
-    while(glGetError());
-
-    GL_EXTCALL(glGenBuffersARB(1, &object->vbo));
-    error = glGetError();
-    if(error != GL_NO_ERROR || object->vbo == 0) {
-        ERR("Creating a vbo failed with error %s (%#x), continuing without vbo for this buffer\n", debug_glerror(error), error);
-        goto out;
-    }
-
-    GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, object->vbo));
-    error = glGetError();
-    if(error != GL_NO_ERROR) {
-        ERR("Failed to bind index buffer with error %s (%#x), continuing without vbo for this buffer\n", debug_glerror(error), error);
-        goto out;
-    }
-
-    /* Use static write only usage for now. Dynamic index buffers stay in sysmem, and due to the sysmem
-        * copy no readback will be needed
-        */
-    glUsage = GL_STATIC_DRAW_ARB;
-    GL_EXTCALL(glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, object->resource.size, NULL, glUsage));
-    error = glGetError();
-    if(error != GL_NO_ERROR) {
-        ERR("Failed to initialize the index buffer with error %s (%#x)\n", debug_glerror(error), error);
-        goto out;
-    }
-    LEAVE_GL();
-    TRACE("Successfully created vbo %d for index buffer %p\n", object->vbo, object);
-    return;
-
-out:
-    GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
-    GL_EXTCALL(glDeleteBuffersARB(1, &object->vbo));
-    LEAVE_GL();
-    object->vbo = 0;
-}
-
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage, 
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage,
                                                     WINED3DFORMAT Format, WINED3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer,
                                                     HANDLE *sharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
-    IWineD3DIndexBufferImpl *object;
+    struct wined3d_buffer *object;
     HRESULT hr;
 
     TRACE("(%p) Creating index buffer\n", This);
@@ -649,7 +601,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    object->lpVtbl = &IWineD3DIndexBuffer_Vtbl;
+    object->vtbl = &wined3d_buffer_vtbl;
     hr = resource_init(&object->resource, WINED3DRTYPE_BUFFER, This, Length, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
@@ -658,13 +610,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
         *ppIndexBuffer = NULL;
         return hr;
     }
+    object->buffer_type_hint = GL_ELEMENT_ARRAY_BUFFER_ARB;
 
     TRACE("(%p) : Created resource %p\n", This, object);
 
     IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     if(Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
-        CreateIndexBufferVBO(This, object);
+        object->flags |= WINED3D_BUFFER_CREATEBO;
     }
 
     TRACE("(%p) : Len=%d, Use=%x, Format=(%u,%s), Pool=%d - Memory@%p, Iface@%p\n", This, Length, Usage, Format, 
@@ -3704,9 +3657,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
 
     if(oldIdxs != pIndexData) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
-        if(pIndexData) IWineD3DIndexBuffer_AddRef(pIndexData);
-        if(oldIdxs) IWineD3DIndexBuffer_Release(oldIdxs);
+        if(pIndexData) {
+            InterlockedIncrement(&((struct wined3d_buffer *)pIndexData)->bind_count);
+            IWineD3DIndexBuffer_AddRef(pIndexData);
+        }
+        if(oldIdxs) {
+            InterlockedDecrement(&((struct wined3d_buffer *)oldIdxs)->bind_count);
+            IWineD3DIndexBuffer_Release(oldIdxs);
+        }
     }
+
     return WINED3D_OK;
 }
 
@@ -5700,7 +5660,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
         This->stateBlock->streamIsUP = FALSE;
     }
-    vbo = ((IWineD3DIndexBufferImpl *) pIB)->vbo;
+    vbo = ((struct wined3d_buffer *) pIB)->buffer_object;
 
     TRACE("(%p) : min %u, vertex count %u, startIdx %u, index count %u\n",
             This, minIndex, NumVertices, startIndex, index_count);
@@ -5718,7 +5678,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
     }
 
     drawPrimitive(iface, index_count, NumVertices, startIndex, idxStride,
-            vbo ? NULL : ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex);
+            vbo ? NULL : ((struct wined3d_buffer *) pIB)->resource.allocatedMemory, minIndex);
 
     return WINED3D_OK;
 }

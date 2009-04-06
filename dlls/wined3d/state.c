@@ -4631,8 +4631,8 @@ static void indexbuffer(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     if(stateblock->streamIsUP || stateblock->pIndexData == NULL ) {
         GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
     } else {
-        IWineD3DIndexBufferImpl *ib = (IWineD3DIndexBufferImpl *) stateblock->pIndexData;
-        GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ib->vbo));
+        struct wined3d_buffer *ib = (struct wined3d_buffer *) stateblock->pIndexData;
+        GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ib->buffer_object));
     }
 }
 

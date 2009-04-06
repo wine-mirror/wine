@@ -95,7 +95,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
          * idxData will be != NULL
          */
         if(idxData == NULL) {
-            idxData = ((IWineD3DIndexBufferImpl *) This->stateBlock->pIndexData)->resource.allocatedMemory;
+            idxData = ((struct wined3d_buffer *) This->stateBlock->pIndexData)->resource.allocatedMemory;
         }
 
         if (idxSize == 2) pIdxBufS = idxData;
@@ -413,7 +413,7 @@ static void drawStridedSlowVs(IWineD3DDevice *iface, const struct wined3d_stream
          * idxData will be != NULL
          */
         if(idxData == NULL) {
-            idxData = ((IWineD3DIndexBufferImpl *) stateblock->pIndexData)->resource.allocatedMemory;
+            idxData = ((struct wined3d_buffer *) stateblock->pIndexData)->resource.allocatedMemory;
         }
 
         if (idxSize == 2) pIdxBufS = idxData;

@@ -1405,24 +1405,6 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID guid,
 #define RESOURCE_ALIGNMENT 32
 
 /*****************************************************************************
- * IWineD3DIndexBuffer implementation structure (extends IWineD3DResourceImpl)
- */
-typedef struct IWineD3DIndexBufferImpl
-{
-    /* IUnknown & WineD3DResource Information     */
-    const IWineD3DIndexBufferVtbl *lpVtbl;
-    IWineD3DResourceClass     resource;
-
-    GLuint                    vbo;
-    UINT                      dirtystart, dirtyend;
-    LONG                      lockcount;
-
-    /* WineD3DVertexBuffer specifics */
-} IWineD3DIndexBufferImpl;
-
-extern const IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
-
-/*****************************************************************************
  * IWineD3DBaseTexture D3D- > openGL state map lookups
  */
 #define WINED3DFUNC_NOTSUPPORTED  -2
@@ -2103,6 +2085,7 @@ struct wined3d_buffer
 
     GLuint buffer_object;
     GLenum buffer_object_usage;
+    GLenum buffer_type_hint;
     UINT buffer_object_size;
     LONG bind_count;
     DWORD flags;
