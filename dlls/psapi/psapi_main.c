@@ -507,8 +507,11 @@ DWORD WINAPI GetProcessImageFileNameA( HANDLE process, LPSTR file, DWORD size )
  */
 DWORD WINAPI GetProcessImageFileNameW( HANDLE process, LPWSTR file, DWORD size )
 {
-    FIXME("(%p, %p, %d) stub\n", process, file, size );
-    return 0;
+    BOOL success = QueryFullProcessImageNameW(process, PROCESS_NAME_NATIVE, file, &size);
+    if (success)
+        return size;
+    else
+        return 0;
 }
 
 /***********************************************************************
