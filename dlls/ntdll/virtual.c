@@ -2089,10 +2089,18 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         if (!wine_mmap_enum_reserved_areas( get_free_mem_state_callback, info, 0 ))
         {
             /* not in a reserved area at all, pretend it's allocated */
+#ifdef __i386__
             info->State             = MEM_RESERVE;
             info->Protect           = PAGE_NOACCESS;
             info->AllocationProtect = PAGE_NOACCESS;
             info->Type              = MEM_PRIVATE;
+#else
+            info->State             = MEM_FREE;
+            info->Protect           = PAGE_NOACCESS;
+            info->AllocationBase    = 0;
+            info->AllocationProtect = 0;
+            info->Type              = 0;
+#endif
         }
     }
     else
