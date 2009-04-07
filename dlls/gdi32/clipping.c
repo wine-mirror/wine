@@ -51,12 +51,6 @@ void CLIPPING_UpdateGCRegion( DC * dc )
 {
     HRGN clip_rgn;
 
-    if (!dc->hVisRgn)
-    {
-        ERR("hVisRgn is zero. Please report this.\n" );
-        exit(1);
-    }
-
     /* update the intersection of meta and clip regions */
     if (dc->hMetaRgn && dc->hClipRgn)
     {
