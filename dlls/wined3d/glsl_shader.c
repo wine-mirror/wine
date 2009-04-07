@@ -1601,7 +1601,7 @@ static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
      * shader versions WINED3DSIO_MOVA is used for this. */
     if ((WINED3DSHADER_VERSION_MAJOR(ins->reg_maps->shader_version) == 1
             && !shader_is_pshader_version(ins->reg_maps->shader_version)
-            && shader_get_regtype(ins->dst[0].token) == WINED3DSPR_ADDR))
+            && ins->dst[0].register_type == WINED3DSPR_ADDR))
     {
         /* This is a simple floor() */
         unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
@@ -1920,7 +1920,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
         DWORD src1regtype = shader_get_regtype(ins->src[1]);
         DWORD src2regtype = shader_get_regtype(ins->src[2]);
         DWORD dstreg = ins->dst[0].register_idx;
-        DWORD dstregtype = shader_get_regtype(ins->dst[0].token);
+        DWORD dstregtype = ins->dst[0].register_type;
 
         /* Cycle through all source0 channels */
         for (i=0; i<4; i++) {

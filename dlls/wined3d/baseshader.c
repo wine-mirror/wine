@@ -850,6 +850,8 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         {
             dst_param.addr_token = 0;
             pToken += shader_get_param(pToken, shader_version, &dst_param.token, &dst_param.addr_token);
+            dst_param.register_type = ((dst_param.token & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
+                    | ((dst_param.token & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
             dst_param.register_idx = dst_param.token & WINED3DSP_REGNUM_MASK;
             dst_param.write_mask = dst_param.token & WINED3DSP_WRITEMASK_ALL;
             dst_param.modifiers = dst_param.token & WINED3DSP_DSTMOD_MASK;

@@ -1019,7 +1019,7 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 
     if ((WINED3DSHADER_VERSION_MAJOR(ins->reg_maps->shader_version) == 1
             && !shader_is_pshader_version(ins->reg_maps->shader_version)
-            && shader_get_regtype(ins->dst[0].token) == WINED3DSPR_ADDR)
+            && ins->dst[0].register_type == WINED3DSPR_ADDR)
             || ins->handler_idx == WINED3DSIH_MOVA)
     {
         SHADER_BUFFER *buffer = ins->buffer;
