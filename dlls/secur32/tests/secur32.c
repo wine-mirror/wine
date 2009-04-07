@@ -32,6 +32,8 @@ static HMODULE secdll;
 
 static BOOLEAN (WINAPI * pGetComputerObjectNameA)(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG lpnSize);
 static BOOLEAN (WINAPI * pGetComputerObjectNameW)(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG lpnSize);
+static BOOLEAN (WINAPI * pGetUserNameExA)(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG lpnSize);
+static BOOLEAN (WINAPI * pGetUserNameExW)(EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG lpnSize);
 static PSecurityFunctionTableA (SEC_ENTRY * pInitSecurityInterfaceA)(void);
 static PSecurityFunctionTableW (SEC_ENTRY * pInitSecurityInterfaceW)(void);
 
@@ -94,6 +96,82 @@ static void testGetComputerObjectNameW(void)
     }
 }
 
+static void testGetUserNameExA(void)
+{
+    char name[256];
+    ULONG size;
+    BOOLEAN rc;
+    int i;
+
+    for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); i++) {
+        size = sizeof(name);
+        ZeroMemory(name, sizeof(name));
+        rc = pGetUserNameExA(formats[i], name, &size);
+        ok(rc || ((formats[i] == NameUnknown) &&
+           (GetLastError() == ERROR_INVALID_PARAMETER)) ||
+           (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
+           (GetLastError() == ERROR_NO_SUCH_DOMAIN) ||
+           (GetLastError() == ERROR_NO_SUCH_USER) ||
+           (GetLastError() == ERROR_NONE_MAPPED) ||
+           (GetLastError() == ERROR_ACCESS_DENIED),
+           "GetUserNameExA(%d) failed: %d\n",
+           formats[i], GetLastError());
+    }
+
+    size = 0;
+    rc = pGetUserNameExA(NameSamCompatible, NULL, &size);
+    ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
+    ok(size != 0, "Expected size to be set to required size\n");
+    size = 0;
+    rc = pGetUserNameExA(NameSamCompatible, name, &size);
+    ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
+    ok(size != 0, "Expected size to be set to required size\n");
+    size = 1;
+    name[0] = 0xff;
+    rc = pGetUserNameExA(NameSamCompatible, name, &size);
+    ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
+    ok(1 < size, "Expected size to be set to required size\n");
+    ok(name[0] == (char) 0xff, "Expected unchanged buffer\n");
+}
+
+static void testGetUserNameExW(void)
+{
+    WCHAR nameW[256];
+    ULONG size;
+    BOOLEAN rc;
+    int i;
+
+    for (i = 0; i < (sizeof(formats) / sizeof(formats[0])); i++) {
+        size = sizeof(nameW);
+        ZeroMemory(nameW, sizeof(nameW));
+        rc = pGetUserNameExW(formats[i], nameW, &size);
+        ok(rc || ((formats[i] == NameUnknown) &&
+           (GetLastError() == ERROR_INVALID_PARAMETER)) ||
+           (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
+           (GetLastError() == ERROR_NO_SUCH_DOMAIN) ||
+           (GetLastError() == ERROR_NO_SUCH_USER) ||
+           (GetLastError() == ERROR_NONE_MAPPED) ||
+           (GetLastError() == ERROR_ACCESS_DENIED),
+           "GetUserNameExW(%d) failed: %d\n",
+           formats[i], GetLastError());
+    }
+
+    size = 0;
+    rc = pGetUserNameExW(NameSamCompatible, NULL, &size);
+    ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
+    ok(size != 0, "Expected size to be set to required size\n");
+    size = 0;
+    rc = pGetUserNameExW(NameSamCompatible, nameW, &size);
+    ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
+    ok(size != 0, "Expected size to be set to required size\n");
+    size = 1;
+    nameW[0] = 0xff;
+    rc = pGetUserNameExW(NameSamCompatible, nameW, &size);
+    ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
+    ok(1 < size, "Expected size to be set to required size\n");
+    ok(nameW[0] == (WCHAR) 0xff, "Expected unchanged buffer\n");
+}
+
 static void test_InitSecurityInterface(void)
 {
     PSecurityFunctionTableA sftA;
@@ -137,6 +215,8 @@ START_TEST(secur32)
     {
         pGetComputerObjectNameA = (PVOID)GetProcAddress(secdll, "GetComputerObjectNameA");
         pGetComputerObjectNameW = (PVOID)GetProcAddress(secdll, "GetComputerObjectNameW");
+        pGetUserNameExA = (PVOID)GetProcAddress(secdll, "GetUserNameExA");
+        pGetUserNameExW = (PVOID)GetProcAddress(secdll, "GetUserNameExW");
         pInitSecurityInterfaceA = (PVOID)GetProcAddress(secdll, "InitSecurityInterfaceA");
         pInitSecurityInterfaceW = (PVOID)GetProcAddress(secdll, "InitSecurityInterfaceW");
  
@@ -145,6 +225,12 @@ START_TEST(secur32)
 
         if (pGetComputerObjectNameW)
             testGetComputerObjectNameW();
+
+        if (pGetUserNameExA)
+            testGetUserNameExA();
+
+        if (pGetUserNameExW)
+            testGetUserNameExW();
 
         test_InitSecurityInterface();
 
