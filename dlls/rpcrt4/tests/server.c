@@ -591,6 +591,12 @@ s_context_handle_test(void)
     binding = I_RpcGetCurrentCallHandle();
     ok(binding != NULL, "I_RpcGetCurrentCallHandle returned NULL\n");
 
+    if (!pNDRSContextMarshall2 || !pNDRSContextUnmarshall2)
+    {
+        win_skip("NDRSContextMarshall2 or NDRSContextUnmarshall2 not exported from rpcrt4.dll\n");
+        return;
+    }
+
     h = pNDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
 
@@ -614,6 +620,9 @@ s_context_handle_test(void)
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
     ok(h->userContext == (void *)0xdeadbeef, "userContext of interface didn't unmarshal properly: %p\n", h->userContext);
 
+    /* raises ERROR_INVALID_HANDLE exception on Vista upwards */
+    if (0)
+    {
     /* marshal a context handle with an interface specified */
     h = pNDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, &server_if.InterfaceId, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
@@ -627,6 +636,7 @@ s_context_handle_test(void)
     h = pNDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, &server_if.InterfaceId, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
     ok(h->userContext == (void *)0xcafebabe, "userContext of interface didn't unmarshal properly: %p\n", h->userContext);
+    }
 
     /* test same interface data, but different pointer */
     /* raises ERROR_INVALID_HANDLE exception */
