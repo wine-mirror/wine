@@ -473,6 +473,7 @@ SRCDIR_INCLUDES = \
 	wmistr.h \
 	wnaspi32.h \
 	wownt32.h \
+	ws2def.h \
 	ws2ipdef.h \
 	ws2spi.h \
 	ws2tcpip.h \

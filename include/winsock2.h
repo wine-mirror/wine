@@ -47,6 +47,7 @@
 #include <winsock.h>
 #undef  __WINE_WINSOCK2__
 
+#include <ws2def.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -420,28 +421,6 @@ typedef struct _BLOB {
         BYTE   *pBlobData;
 } BLOB, *LPBLOB;
 #endif
-
-#ifndef __CSADDR_DEFINED__
-#define __CSADDR_DEFINED__
-
-typedef struct _SOCKET_ADDRESS {
-        LPSOCKADDR      lpSockaddr;
-        INT             iSockaddrLength;
-} SOCKET_ADDRESS, *PSOCKET_ADDRESS, *LPSOCKET_ADDRESS;
-
-typedef struct _CSADDR_INFO {
-        SOCKET_ADDRESS  LocalAddr;
-        SOCKET_ADDRESS  RemoteAddr;
-        INT             iSocketType;
-        INT             iProtocol;
-} CSADDR_INFO, *PCSADDR_INFO, *LPCSADDR_INFO;
-#endif
-
-/*socket address list */
-typedef struct _SOCKET_ADDRESS_LIST {
-        INT             iAddressCount;
-        SOCKET_ADDRESS  Address[1];
-} SOCKET_ADDRESS_LIST, *LPSOCKET_ADDRESS_LIST;
 
 /*   addressfamily protocol pairs */
 typedef struct _AFPROTOCOLS {
