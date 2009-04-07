@@ -1437,11 +1437,11 @@ static void shader_glsl_append_fixup_arg(char *arguments, const char *reg_name,
 
 static void shader_glsl_color_correction(const struct wined3d_shader_instruction *ins, struct color_fixup_desc fixup)
 {
+    struct wined3d_shader_dst_param dst;
     unsigned int mask_size, remaining;
     glsl_dst_param_t dst_param;
     char arguments[256];
     DWORD mask;
-    BOOL dummy;
 
     mask = 0;
     if (fixup.x_sign_fixup || fixup.x_source != CHANNEL_SOURCE_X) mask |= WINED3DSP_WRITEMASK_0;
@@ -1461,11 +1461,10 @@ static void shader_glsl_color_correction(const struct wined3d_shader_instruction
 
     mask_size = shader_glsl_get_write_mask_size(mask);
 
-    dst_param.mask_str[0] = '\0';
-    shader_glsl_get_write_mask(mask, dst_param.mask_str);
-
-    dst_param.reg_name[0] = '\0';
-    shader_glsl_get_register_name(ins->dst[0].token, ins->dst[0].addr_token, dst_param.reg_name, &dummy, ins);
+    dst = ins->dst[0];
+    dst.write_mask = mask;
+    dst.token = (dst.token & ~WINED3DSP_WRITEMASK_ALL) | dst.write_mask;
+    shader_glsl_add_dst_param(ins, &dst, &dst_param);
 
     arguments[0] = '\0';
     remaining = mask_size;
