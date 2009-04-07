@@ -1106,7 +1106,9 @@ static HRESULT WINAPI InitPropertyBag_IPropertyBag_Read(IPropertyBag *iface, LPC
         'R','e','s','o','l','v','e','L','i','n','k','F','l','a','g','s',0 };
        
     if (!lstrcmpW(pszPropName, wszTargetSpecialFolder)) {
-        ok(V_VT(pVar) == VT_I4, "Wrong variant type for 'TargetSpecialFolder' property!\n");
+        ok(V_VT(pVar) == VT_I4 ||
+           broken(V_VT(pVar) == VT_BSTR),   /* Win2k */
+           "Wrong variant type for 'TargetSpecialFolder' property!\n");
         return E_INVALIDARG;
     }
     
@@ -1120,7 +1122,9 @@ static HRESULT WINAPI InitPropertyBag_IPropertyBag_Read(IPropertyBag *iface, LPC
         WCHAR wszPath[MAX_PATH];
         BOOL result;
         
-        ok(V_VT(pVar) == VT_BSTR, "Wrong variant type for 'Target' property!\n");
+        ok(V_VT(pVar) == VT_BSTR ||
+           broken(V_VT(pVar) == VT_EMPTY),  /* Win2k */
+           "Wrong variant type for 'Target' property!\n");
         if (V_VT(pVar) != VT_BSTR) return E_INVALIDARG;
 
         result = pSHGetSpecialFolderPathW(NULL, wszPath, CSIDL_DESKTOPDIRECTORY, FALSE);
