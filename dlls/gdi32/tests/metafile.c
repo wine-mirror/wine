@@ -2349,7 +2349,6 @@ static void test_SetEnhMetaFileBits(void)
     ok(!hemf ||
        broken(hemf != NULL), /* Win9x, WinMe */
        "SetEnhMetaFileBits should fail\n");
-    todo_wine
     ok(GetLastError() == 0xdeadbeef, "Expected deadbeef, got %u\n", GetLastError());
     DeleteEnhMetaFile(hemf);
 
@@ -2360,7 +2359,6 @@ static void test_SetEnhMetaFileBits(void)
     ok(!hemf ||
        broken(hemf != NULL), /* Win9x, WinMe */
        "SetEnhMetaFileBits should fail\n");
-    todo_wine
     ok(GetLastError() == 0xdeadbeef, "Expected deadbeef, got %u\n", GetLastError());
     DeleteEnhMetaFile(hemf);
 }

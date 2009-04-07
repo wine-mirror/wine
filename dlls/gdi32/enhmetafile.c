@@ -252,12 +252,16 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk )
     HENHMETAFILE hmf;
     ENHMETAFILEOBJ *metaObj;
 
-    if (emh->iType != EMR_HEADER || emh->dSignature != ENHMETA_SIGNATURE ||
+    if (emh->iType != EMR_HEADER)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return 0;
+    }
+    if (emh->dSignature != ENHMETA_SIGNATURE ||
         (emh->nBytes & 3)) /* refuse to load unaligned EMF as Windows does */
     {
         WARN("Invalid emf header type 0x%08x sig 0x%08x.\n",
              emh->iType, emh->dSignature);
-        SetLastError(ERROR_INVALID_DATA);
         return 0;
     }
 
