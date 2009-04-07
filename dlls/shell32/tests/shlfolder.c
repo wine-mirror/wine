@@ -848,6 +848,8 @@ static void test_GetAttributesOf(void)
     IMalloc_Free(ppM, newPIDL);
 
     /* append testdirectory name to path */
+    if (cCurrDirA[len-1] == '\\')
+        cCurrDirA[len-1] = 0;
     lstrcatA(cCurrDirA, "\\testdir");
     MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
 
