@@ -7,6 +7,7 @@ MODULE    = rpcrt4.dll
 IMPORTLIB = rpcrt4
 IMPORTS   = uuid advapi32 kernel32 ntdll
 DELAYIMPORTS = wininet secur32 user32
+EXTRALIBS = @SOCKETLIBS@
 
 C_SRCS = \
 	cproxy.c \
