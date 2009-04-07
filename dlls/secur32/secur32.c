@@ -32,6 +32,7 @@
 #include "secext.h"
 #include "ntsecapi.h"
 #include "thunks.h"
+#include "lmcons.h"
 
 #include "wine/list.h"
 #include "wine/debug.h"
@@ -1055,15 +1056,103 @@ BOOLEAN WINAPI GetComputerObjectNameW(
 BOOLEAN WINAPI GetUserNameExA(
   EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
 {
-    FIXME("%d %p %p\n", NameFormat, lpNameBuffer, nSize);
-    return FALSE;
+    BOOLEAN rc;
+    LPWSTR bufferW = NULL;
+    ULONG sizeW = *nSize;
+    TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
+    if (lpNameBuffer) {
+        bufferW = HeapAlloc(GetProcessHeap(), 0, sizeW * sizeof(WCHAR));
+        if (bufferW == NULL) {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+            return FALSE;
+        }
+    }
+    rc = GetUserNameExW(NameFormat, bufferW, &sizeW);
+    if (rc) {
+        ULONG len = WideCharToMultiByte(CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL);
+        if (len <= *nSize)
+        {
+            WideCharToMultiByte(CP_ACP, 0, bufferW, -1, lpNameBuffer, *nSize, NULL, NULL);
+            *nSize = len - 1;
+        }
+        else
+        {
+            *nSize = len;
+            rc = FALSE;
+            SetLastError(ERROR_MORE_DATA);
+        }
+    }
+    else
+        *nSize = sizeW;
+    HeapFree(GetProcessHeap(), 0, bufferW);
+    return rc;
 }
 
 BOOLEAN WINAPI GetUserNameExW(
   EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
 {
-    FIXME("%d %p %p\n", NameFormat, lpNameBuffer, nSize);
-    return FALSE;
+    BOOLEAN status;
+    WCHAR samname[UNLEN + 1 + MAX_COMPUTERNAME_LENGTH + 1];
+    LPWSTR out;
+    DWORD len;
+    TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
+
+    if (NameFormat == NameUnknown)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    switch (NameFormat)
+    {
+    case NameSamCompatible:
+        {
+            /* This assumes the current user is always a local account */
+            len = MAX_COMPUTERNAME_LENGTH + 1;
+            if (GetComputerNameW(samname, &len))
+            {
+                out = samname + lstrlenW(samname);
+                *out++ = '\\';
+                len = UNLEN + 1;
+                if (GetUserNameW(out, &len))
+                {
+                    status = (lstrlenW(samname) < *nSize);
+                    if (status)
+                    {
+                        lstrcpyW(lpNameBuffer, samname);
+                        *nSize = lstrlenW(samname);
+                    }
+                    else
+                    {
+                        SetLastError(ERROR_MORE_DATA);
+                        *nSize = lstrlenW(samname) + 1;
+                    }
+                }
+                else
+                    status = FALSE;
+            }
+            else
+                status = FALSE;
+        }
+        break;
+    case NameFullyQualifiedDN:
+    case NameDisplay:
+    case NameUniqueId:
+    case NameCanonical:
+    case NameUserPrincipal:
+    case NameCanonicalEx:
+    case NameServicePrincipal:
+    case NameDnsDomain:
+        FIXME("NameFormat %d not implemented\n", NameFormat);
+        SetLastError(ERROR_CANT_ACCESS_DOMAIN_INFO);
+        status = FALSE;
+        break;
+    default:
+        SetLastError(ERROR_INVALID_PARAMETER);
+        status = FALSE;
+    }
+
+    return status;
 }
 
 BOOLEAN WINAPI TranslateNameA(
