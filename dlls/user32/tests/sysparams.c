@@ -156,6 +156,7 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam );
 static LRESULT CALLBACK SysParamsTestWndProc( HWND hWnd, UINT msg, WPARAM wParam,
                                               LPARAM lParam );
 static int change_counter;
+static int change_setworkarea_param, change_iconverticalspacing_param;
 static int change_last_param;
 static int last_bpp;
 static BOOL displaychange_ok = FALSE, displaychange_test_active = FALSE;
@@ -176,21 +177,32 @@ static LRESULT CALLBACK SysParamsTestWndProc( HWND hWnd, UINT msg, WPARAM wParam
     case WM_SETTINGCHANGE:
         if (change_counter>0) { 
             /* ignore these messages caused by resizing of toolbars */
-            if( wParam == SPI_SETWORKAREA ||
-                wParam == SPI_ICONVERTICALSPACING ||
-                displaychange_test_active)
+            if( wParam == SPI_SETWORKAREA){
+                change_setworkarea_param = 1;
                 break;
-            if( change_last_param == SPI_SETWORKAREA ||
-                change_last_param == SPI_ICONVERTICALSPACING)
-            {
+            } else if( wParam == SPI_ICONVERTICALSPACING) {
+                change_iconverticalspacing_param = 1;
+                break;
+            } else if( displaychange_test_active)
+                break;
+            if( !change_last_param){
                 change_last_param = wParam;
                 break;
             }
             ok(0,"too many changes counter=%d last change=%d\n",
                change_counter,change_last_param);
+            change_counter++;
+            change_last_param = wParam;
+            break;
         }
         change_counter++;
-        change_last_param = wParam;
+        change_last_param = change_setworkarea_param = change_iconverticalspacing_param =0;
+        if( wParam == SPI_SETWORKAREA)
+            change_setworkarea_param = 1;
+        else if( wParam == SPI_ICONVERTICALSPACING)
+            change_iconverticalspacing_param = 1;
+        else
+            change_last_param = wParam;
         break;
 
     case WM_DESTROY:
@@ -218,7 +230,9 @@ static void test_change_message( int action, int optional )
     ok( 1 == change_counter,
         "Missed a message: change_counter=%d\n", change_counter );
     change_counter = 0;
-    ok( action == change_last_param,
+    ok( action == change_last_param ||
+        ( change_setworkarea_param && action == SPI_SETWORKAREA) ||
+        ( change_iconverticalspacing_param && action == SPI_ICONVERTICALSPACING),
         "Wrong action got %d expected %d\n", change_last_param, action );
     change_last_param = 0;
 }
@@ -1778,20 +1792,22 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     if (!test_error_msg(rc,"SPI_SETWORKAREA")) return;
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%d\n",rc,GetLastError());
-    test_change_message( SPI_SETWORKAREA, 0 );
     rc=SystemParametersInfoA( SPI_GETWORKAREA, 0, &area, 0 );
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%d\n",rc,GetLastError());
+    if( !EqualRect( &area, &curr_val)) /* no message if rect has not changed */
+        test_change_message( SPI_SETWORKAREA, 0);
     eq( area.left,   curr_val.left,   "left",   "%d" );
     eq( area.top,    curr_val.top,    "top",    "%d" );
     eq( area.right,  curr_val.right,  "right",  "%d" );
     eq( area.bottom, curr_val.bottom, "bottom", "%d" );
-
+    curr_val = area;
     rc=SystemParametersInfoA( SPI_SETWORKAREA, 0, &old_area,
                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%d\n",rc,GetLastError());
-    test_change_message( SPI_SETWORKAREA, 0 );
     rc=SystemParametersInfoA( SPI_GETWORKAREA, 0, &area, 0 );
     ok(rc!=0,"SystemParametersInfoA: rc=%d err=%d\n",rc,GetLastError());
+    if( !EqualRect( &area, &curr_val)) /* no message if rect has not changed */
+        test_change_message( SPI_SETWORKAREA, 0 );
     eq( area.left,   old_area.left,   "left",   "%d" );
     eq( area.top,    old_area.top,    "top",    "%d" );
     eq( area.right,  old_area.right,  "right",  "%d" );
