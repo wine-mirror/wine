@@ -383,7 +383,7 @@ extern void release_dc_ptr( DC *dc ) DECLSPEC_HIDDEN;
 extern void update_dc( DC *dc ) DECLSPEC_HIDDEN;
 extern void DC_InitDC( DC * dc ) DECLSPEC_HIDDEN;
 extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
-extern HDC get_dc_state( HDC hdc ) DECLSPEC_HIDDEN;
+extern INT save_dc_state( HDC hdc ) DECLSPEC_HIDDEN;
 extern void set_dc_state( HDC hdc, HDC hdcs ) DECLSPEC_HIDDEN;
 
 /* dib.c */

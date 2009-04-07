@@ -332,12 +332,12 @@ void DC_UpdateXforms( DC *dc )
 
 
 /***********************************************************************
- *           get_dc_state   (Not a Windows API)
+ *           save_dc_state
  */
-HDC get_dc_state( HDC hdc )
+INT save_dc_state( HDC hdc )
 {
     DC * newdc, * dc;
-    HGDIOBJ handle;
+    INT ret;
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
     if (!(newdc = HeapAlloc( GetProcessHeap(), 0, sizeof(*newdc ))))
@@ -407,8 +407,6 @@ HDC get_dc_state( HDC hdc )
         release_dc_ptr( dc );
         return 0;
     }
-    handle = newdc->hSelf;
-    TRACE("(%p): returning %p\n", hdc, handle );
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
@@ -428,9 +426,19 @@ HDC get_dc_state( HDC hdc )
     }
     /* don't bother recomputing hMetaClipRgn, we'll do that in SetDCState */
 
+    if (!PATH_AssignGdiPath( &newdc->path, &dc->path ))
+    {
+        release_dc_ptr( dc );
+        free_dc_ptr( newdc );
+	return 0;
+    }
+
+    newdc->saved_dc = dc->saved_dc;
+    dc->saved_dc = newdc->hSelf;
+    ret = ++dc->saveLevel;
     release_dc_ptr( newdc );
     release_dc_ptr( dc );
-    return handle;
+    return ret;
 }
 
 
@@ -533,8 +541,7 @@ void set_dc_state( HDC hdc, HDC hdcs )
  */
 INT WINAPI SaveDC( HDC hdc )
 {
-    HDC hdcs;
-    DC * dc, * dcs;
+    DC * dc;
     INT ret;
 
     dc = get_dc_ptr( hdc );
@@ -549,32 +556,7 @@ INT WINAPI SaveDC( HDC hdc )
         return ret;
     }
 
-    if (!(hdcs = get_dc_state( hdc )))
-    {
-        release_dc_ptr( dc );
-        return 0;
-    }
-    dcs = get_dc_ptr( hdcs );
-
-    /* Copy path. The reason why path saving / restoring is in SaveDC/
-     * RestoreDC and not in GetDCState/SetDCState is that the ...DCState
-     * functions are only in Win16 (which doesn't have paths) and that
-     * SetDCState doesn't allow us to signal an error (which can happen
-     * when copying paths).
-     */
-    if (!PATH_AssignGdiPath( &dcs->path, &dc->path ))
-    {
-        release_dc_ptr( dc );
-        release_dc_ptr( dcs );
-	DeleteDC( hdcs );
-	return 0;
-    }
-
-    dcs->saved_dc = dc->saved_dc;
-    dc->saved_dc = hdcs;
-    TRACE("(%p): returning %d\n", hdc, dc->saveLevel+1 );
-    ret = ++dc->saveLevel;
-    release_dc_ptr( dcs );
+    ret = save_dc_state( hdc );
     release_dc_ptr( dc );
     return ret;
 }
