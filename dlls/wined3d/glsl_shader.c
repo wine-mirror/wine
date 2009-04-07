@@ -1184,7 +1184,8 @@ static DWORD shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
     char *ptr = write_mask;
     DWORD mask = param & WINED3DSP_WRITEMASK_ALL;
 
-    if (shader_is_scalar(param)) {
+    if (shader_is_scalar(shader_get_regtype(param), param & WINED3DSP_REGNUM_MASK))
+    {
         mask = WINED3DSP_WRITEMASK_0;
     } else {
         *ptr++ = '.';
@@ -1218,7 +1219,8 @@ static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, DWORD mask, c
     const char *swizzle_chars = fixup ? "zyxw" : "xyzw";
     char *ptr = swizzle_str;
 
-    if (!shader_is_scalar(param)) {
+    if (!shader_is_scalar(shader_get_regtype(param), param & WINED3DSP_REGNUM_MASK))
+    {
         *ptr++ = '.';
         /* swizzle bits fields: wwzzyyxx */
         if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = swizzle_chars[swizzle & 0x03];
@@ -1900,7 +1902,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
     char mask_char[6];
     BOOL temp_destination = FALSE;
 
-    if (shader_is_scalar(ins->src[0]))
+    if (shader_is_scalar(shader_get_regtype(ins->src[0]), ins->src[0] & WINED3DSP_REGNUM_MASK))
     {
         write_mask = shader_glsl_append_dst(ins->buffer, ins);
 
