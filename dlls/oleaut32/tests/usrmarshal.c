@@ -146,8 +146,8 @@ static void check_safearray(void *buffer, LPSAFEARRAY lpsa)
     wiresa += sizeof(DWORD);
     ok(*(DWORD *)wiresa == cell_count, "wiresa + 0x1c should be %u instead of %u\n", cell_count, *(DWORD *)wiresa);
     wiresa += sizeof(DWORD);
-    ok(*(DWORD_PTR *)wiresa == (DWORD_PTR)lpsa->pvData, "wiresa + 0x20 should be lpsa->pvData instead of 0x%08lx\n", *(DWORD_PTR *)wiresa);
-    wiresa += sizeof(DWORD_PTR);
+    ok(*(DWORD *)wiresa, "wiresa + 0x20 should be non-zero instead of 0x%08x\n", *(DWORD *)wiresa);
+    wiresa += sizeof(DWORD);
     if(sftype == SF_HAVEIID)
     {
         GUID guid;
