@@ -1446,7 +1446,7 @@ static void shader_glsl_color_correction(const struct wined3d_shader_instruction
     if (fixup.y_sign_fixup || fixup.y_source != CHANNEL_SOURCE_Y) mask |= WINED3DSP_WRITEMASK_1;
     if (fixup.z_sign_fixup || fixup.z_source != CHANNEL_SOURCE_Z) mask |= WINED3DSP_WRITEMASK_2;
     if (fixup.w_sign_fixup || fixup.w_source != CHANNEL_SOURCE_W) mask |= WINED3DSP_WRITEMASK_3;
-    mask &= ins->dst[0].token;
+    mask &= ins->dst[0].write_mask;
 
     if (!mask) return; /* Nothing to do */
 
@@ -1509,7 +1509,7 @@ static void PRINTF_ATTR(6, 7) shader_glsl_gen_sample_code(const struct wined3d_s
     BOOL rect_fixup = FALSE;
     va_list args;
 
-    shader_glsl_get_swizzle(swizzle, FALSE, ins->dst[0].token, dst_swizzle);
+    shader_glsl_get_swizzle(swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
 
     if (shader_is_pshader_version(ins->reg_maps->shader_version))
     {
@@ -1947,6 +1947,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
                 temp_destination = TRUE;
             } else {
                 struct wined3d_shader_dst_param dst = ins->dst[0];
+                dst.write_mask &= write_mask;
                 dst.token &= ~WINED3DSP_WRITEMASK_ALL | write_mask;
                 write_mask = shader_glsl_append_dst_ext(ins->buffer, ins, &dst);
                 if (!write_mask) continue;
@@ -2010,6 +2011,7 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
             }
         }
         dst = ins->dst[0];
+        dst.write_mask &= write_mask;
         dst.token &= ~WINED3DSP_WRITEMASK_ALL | write_mask;
         write_mask = shader_glsl_append_dst_ext(ins->buffer, ins, &dst);
         if (!write_mask) continue;
@@ -2087,11 +2089,11 @@ static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
             break;
     }
 
+    tmp_dst = ins->dst[0];
     for (i = 0; i < nComponents; ++i)
     {
-        tmp_dst.register_idx = ins->dst[0].register_idx;
-        tmp_dst.modifiers = ins->dst[0].modifiers;
-        tmp_dst.token = ((ins->dst[0].token) & ~WINED3DSP_WRITEMASK_ALL) | (WINED3DSP_WRITEMASK_0 << i);
+        tmp_dst.write_mask = WINED3DSP_WRITEMASK_0 << i;
+        tmp_dst.token = (tmp_dst.token & ~WINED3DSP_WRITEMASK_ALL) | tmp_dst.write_mask;
         tmp_ins.src[1] = ins->src[1] + i;
         shader_glsl_dot(&tmp_ins);
     }

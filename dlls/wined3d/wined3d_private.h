@@ -453,6 +453,7 @@ typedef struct SHADER_OPCODE
 struct wined3d_shader_dst_param
 {
     UINT register_idx;
+    DWORD write_mask;
     DWORD modifiers;
     DWORD token;
     DWORD addr_token;

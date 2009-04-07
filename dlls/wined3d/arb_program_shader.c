@@ -688,7 +688,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     if (shader_is_pshader_version(ins->reg_maps->shader_version))
     {
         IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)ins->shader;
-        gen_color_correction(buffer, dst_str, ins->dst[0].token & WINED3DSP_WRITEMASK_ALL,
+        gen_color_correction(buffer, dst_str, ins->dst[0].write_mask,
                 "one", "coefmul.x", ps->cur_args->color_fixup[sampler_idx]);
     }
 }
@@ -1584,10 +1584,10 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
             break;
     }
 
+    tmp_dst = ins->dst[0];
     for (i = 0; i < nComponents; i++) {
-        tmp_dst.register_idx = ins->dst[0].register_idx;
-        tmp_dst.modifiers = ins->dst[0].modifiers;
-        tmp_dst.token = ((ins->dst[0].token) & ~WINED3DSP_WRITEMASK_ALL) | (WINED3DSP_WRITEMASK_0 << i);
+        tmp_dst.write_mask = WINED3DSP_WRITEMASK_0 << i;
+        tmp_dst.token = (tmp_dst.token & ~WINED3DSP_WRITEMASK_ALL) | tmp_dst.write_mask;
         tmp_ins.src[1] = ins->src[1]+i;
         shader_hw_map2gl(&tmp_ins);
     }
