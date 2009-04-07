@@ -787,8 +787,8 @@ static void test_create(void)
     hList = CreateWindow("SysListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandle(NULL), 0);
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
-    todo_wine ok(!IsWindow(hHeader), "Header shouldn't be created\n");
-    todo_wine ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
     /* insert column */
     memset(&col, 0, sizeof(LVCOLUMNA));
     col.mask = LVCF_WIDTH;
@@ -803,8 +803,8 @@ static void test_create(void)
     hList = CreateWindow("SysListView32", "Test", WS_VISIBLE|LVS_LIST, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandle(NULL), 0);
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
-    todo_wine ok(!IsWindow(hHeader), "Header shouldn't be created\n");
-    todo_wine ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
     /* insert column */
     memset(&col, 0, sizeof(LVCOLUMNA));
     col.mask = LVCF_WIDTH;
@@ -851,8 +851,8 @@ static void test_create(void)
     hList = CreateWindow("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandle(NULL), 0);
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
-    todo_wine ok(!IsWindow(hHeader), "Header shouldn't be created\n");
-    todo_wine ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
     /* insert column */
     memset(&col, 0, sizeof(LVCOLUMNA));
     col.mask = LVCF_WIDTH;
@@ -868,12 +868,12 @@ static void test_create(void)
     hList = CreateWindow("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandle(NULL), 0);
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
-    todo_wine ok(!IsWindow(hHeader), "Header shouldn't be created\n");
-    todo_wine ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
     ShowWindow(hList, SW_SHOW);
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
-    ok(IsWindow(hHeader), "Header shouldn't be created\n");
-    ok(hHeader == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    ok(IsWindow(hHeader), "Header should be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
     DestroyWindow(hList);
 }
 
