@@ -84,6 +84,7 @@ DEFINE_EXPECT(GetBindString_USER_AGENT);
 DEFINE_EXPECT(GetBindString_POST_COOKIE);
 DEFINE_EXPECT(QueryService_HttpNegotiate);
 DEFINE_EXPECT(QueryService_InternetProtocol);
+DEFINE_EXPECT(QueryService_HttpSecurity);
 DEFINE_EXPECT(BeginningTransaction);
 DEFINE_EXPECT(GetRootSecurityId);
 DEFINE_EXPECT(OnResponse);
@@ -123,6 +124,7 @@ static HANDLE event_complete, event_complete2;
 static BOOL binding_test;
 static PROTOCOLDATA protocoldata, *pdata;
 static DWORD prot_read;
+static BOOL security_problem = FALSE;
 
 static enum {
     FILE_TEST,
@@ -181,6 +183,60 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
     return lstrcmpW(strw, buf);
 }
+
+static HRESULT WINAPI HttpSecurity_QueryInterface(IHttpSecurity *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid)
+            || IsEqualGUID(&IID_IHttpSecurity, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI HttpSecurity_AddRef(IHttpSecurity *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI HttpSecurity_Release(IHttpSecurity *iface)
+{
+    return 1;
+}
+
+static  HRESULT WINAPI HttpSecurity_GetWindow(IHttpSecurity* iface, REFGUID rguidReason, HWND *phwnd)
+{
+    trace("HttpSecurity_GetWindow\n");
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI HttpSecurity_OnSecurityProblem(IHttpSecurity *iface, DWORD dwProblem)
+{
+    trace("Security problem: %u\n", dwProblem);
+    ok(dwProblem == ERROR_INTERNET_SEC_CERT_REV_FAILED, "Expected ERROR_INTERNET_SEC_CERT_REV_FAILED got %u\n", dwProblem);
+
+    /* Only retry once */
+    if (security_problem)
+        return E_ABORT;
+
+    security_problem = TRUE;
+    SET_EXPECT(BeginningTransaction);
+
+    return RPC_E_RETRY;
+}
+
+static IHttpSecurityVtbl HttpSecurityVtbl = {
+    HttpSecurity_QueryInterface,
+    HttpSecurity_AddRef,
+    HttpSecurity_Release,
+    HttpSecurity_GetWindow,
+    HttpSecurity_OnSecurityProblem
+};
+
+static IHttpSecurity http_security = { &HttpSecurityVtbl };
 
 static HRESULT WINAPI HttpNegotiate_QueryInterface(IHttpNegotiate2 *iface, REFIID riid, void **ppv)
 {
@@ -320,6 +376,12 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
         return E_NOINTERFACE;
     }
 
+    if(IsEqualGUID(&IID_IHttpSecurity, guidService)) {
+        ok(IsEqualGUID(&IID_IHttpSecurity, riid), "unexpected riid\n");
+        CHECK_EXPECT(QueryService_HttpSecurity);
+        return IHttpSecurity_QueryInterface(&http_security, riid, ppv);
+    }
+
     ok(0, "unexpected service %s\n", debugstr_guid(guidService));
     return E_FAIL;
 }
@@ -380,7 +442,7 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
         }
         if(tested_protocol == FTP_TEST)
             todo_wine CHECK_CALLED(ReportProgress_SENDINGREQUEST);
-        else
+        else if (tested_protocol != HTTPS_TEST)
             CHECK_CALLED(ReportProgress_SENDINGREQUEST);
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
             SET_EXPECT(OnResponse);
@@ -397,18 +459,26 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
     ok(hres == S_OK, "Continue failed: %08x\n", hres);
     if(tested_protocol == FTP_TEST)
         CLEAR_CALLED(ReportData);
-    else
+    else if (! security_problem)
         CHECK_CALLED(ReportData);
 
     if (!state) {
-        state = 1;
-        if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
-            CHECK_CALLED(OnResponse);
-            if(tested_protocol == HTTPS_TEST)
-                CHECK_CALLED(ReportProgress_ACCEPTRANGES);
-            CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
-            if(bindf & BINDF_NEEDFILE)
-                CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
+        if (! security_problem)
+        {
+            state = 1;
+            if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST) {
+                CHECK_CALLED(OnResponse);
+                if(tested_protocol == HTTPS_TEST)
+                    CHECK_CALLED(ReportProgress_ACCEPTRANGES);
+                CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+                if(bindf & BINDF_NEEDFILE)
+                    CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
+            }
+        }
+        else
+        {
+            security_problem = FALSE;
+            SET_EXPECT(ReportProgress_CONNECTING);
         }
     }
 
@@ -466,11 +536,11 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         }
         break;
     case BINDSTATUS_FINDINGRESOURCE:
-        CHECK_EXPECT(ReportProgress_FINDINGRESOURCE);
+        CHECK_EXPECT2(ReportProgress_FINDINGRESOURCE);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         break;
     case BINDSTATUS_CONNECTING:
-        CHECK_EXPECT(ReportProgress_CONNECTING);
+        CHECK_EXPECT2(ReportProgress_CONNECTING);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         break;
     case BINDSTATUS_SENDINGREQUEST:
@@ -1672,6 +1742,8 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
         SET_EXPECT(ReportProgress_PROXYDETECTING);
         if(! is_https)
             SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
+        else
+            SET_EXPECT(QueryService_HttpSecurity);
         if(!(bindf & BINDF_FROMURLMON)) {
             SET_EXPECT(OnResponse);
             SET_EXPECT(ReportProgress_RAWMIMETYPE);
@@ -1695,6 +1767,8 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
             CHECK_CALLED(Switch);
         else
             CHECK_CALLED(ReportData);
+        if (is_https)
+            CLEAR_CALLED(QueryService_HttpSecurity);
 
         while(1) {
             if(bindf & BINDF_FROMURLMON)
@@ -1721,6 +1795,8 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
         }
         ok(hres == S_FALSE, "Read failed: %08x\n", hres);
         CHECK_CALLED(ReportResult);
+        if (is_https)
+            CLEAR_CALLED(ReportProgress_SENDINGREQUEST);
 
         test_protocol_terminate(async_protocol);
         ref = IInternetProtocol_Release(async_protocol);
