@@ -3388,7 +3388,8 @@ BOOL16 WINAPI LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
  */
 HDC16 WINAPI GetDCState16( HDC16 hdc )
 {
-    return HDC_16( get_dc_state( HDC_32(hdc) ));
+    ERR( "no longer supported\n" );
+    return 0;
 }
 
 
@@ -3397,7 +3398,7 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
  */
 void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
 {
-    set_dc_state( HDC_32(hdc), HDC_32(hdcs) );
+    ERR( "no longer supported\n" );
 }
 
 /***********************************************************************
