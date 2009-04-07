@@ -449,7 +449,7 @@ static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         }
     case EMR_EOF:
         ok(save_state == 0, "EOF save_state %d\n", save_state);
-        ok(select_no == 2, "Too many/few selects  %i\n",select_no);
+        ok(select_no == 3, "Too many/few selects  %i\n",select_no);
         break;
     }
 
@@ -484,7 +484,7 @@ static void test_SaveDC(void)
     int ret;
     POINT pt;
     SIZE size;
-    HFONT hFont,hFontOld,hFontCheck;
+    HFONT hFont,hFont2,hFontOld,hFontCheck;
     static const RECT rc = { 0, 0, 150, 150 };
 
     /* Win9x doesn't play EMFs on invisible windows */
@@ -512,9 +512,9 @@ static void test_SaveDC(void)
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    ok(pt.x == 0,"Extecting ViewportOrg x of 0, got %i\n",pt.x);
+    ok(pt.x == 0,"Expecting ViewportOrg x of 0, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    ok(size.cx == 120,"Extecting ViewportExt cx of 120, got %i\n",size.cx);
+    ok(size.cx == 120,"Expecting ViewportExt cx of 120, got %i\n",size.cx);
     ret = SaveDC(hdcMetafile);
     ok(ret == 1, "ret = %d\n", ret);
 
@@ -527,9 +527,9 @@ static void test_SaveDC(void)
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    ok(pt.x == 10,"Extecting ViewportOrg x of 10, got %i\n",pt.x);
+    ok(pt.x == 10,"Expecting ViewportOrg x of 10, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    ok(size.cx == 200,"Extecting ViewportExt cx of 200, got %i\n",size.cx);
+    ok(size.cx == 200,"Expecting ViewportExt cx of 200, got %i\n",size.cx);
     ret = SaveDC(hdcMetafile);
     ok(ret == 2, "ret = %d\n", ret);
 
@@ -537,14 +537,16 @@ static void test_SaveDC(void)
     SetViewportOrgEx(hdcMetafile, 20, 20, NULL);
     SetWindowExtEx(hdcMetafile, 120, 120, NULL );
     SetViewportExtEx(hdcMetafile, 300, 300, NULL );
+    SetPolyFillMode( hdcMetafile, ALTERNATE );
+    SetBkColor( hdcMetafile, 0 );
 
     /* Force Win9x to update DC state */
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    ok(pt.x == 20,"Extecting ViewportOrg x of 20, got %i\n",pt.x);
+    ok(pt.x == 20,"Expecting ViewportOrg x of 20, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    ok(size.cx == 300,"Extecting ViewportExt cx of 300, got %i\n",size.cx);
+    ok(size.cx == 300,"Expecting ViewportExt cx of 300, got %i\n",size.cx);
     ret = SaveDC(hdcMetafile);
     ok(ret == 3, "ret = %d\n", ret);
 
@@ -553,33 +555,40 @@ static void test_SaveDC(void)
     SetWindowExtEx(hdcMetafile, 200, 200, NULL );
     SetViewportExtEx(hdcMetafile, 400, 400, NULL );
 
+    SetPolyFillMode( hdcMetafile, WINDING );
+    SetBkColor( hdcMetafile, 0x123456 );
+    ok( GetPolyFillMode( hdcMetafile ) == WINDING, "PolyFillMode not restored\n" );
+    ok( GetBkColor( hdcMetafile ) == 0x123456, "Background color not restored\n" );
+
     /* Force Win9x to update DC state */
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    ok(pt.x == 30,"Extecting ViewportOrg x of 30, got %i\n",pt.x);
+    ok(pt.x == 30,"Expecting ViewportOrg x of 30, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    ok(size.cx == 400,"Extecting ViewportExt cx of 400, got %i\n",size.cx);
+    ok(size.cx == 400,"Expecting ViewportExt cx of 400, got %i\n",size.cx);
     ret = RestoreDC(hdcMetafile, -1);
     ok(ret, "ret = %d\n", ret);
 
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    todo_wine ok(pt.x == 20,"Extecting ViewportOrg x of 20, got %i\n",pt.x);
+    todo_wine ok(pt.x == 20,"Expecting ViewportOrg x of 20, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    todo_wine ok(size.cx == 300,"Extecting ViewportExt cx of 300, got %i\n",size.cx);
+    todo_wine ok(size.cx == 300,"Expecting ViewportExt cx of 300, got %i\n",size.cx);
+    todo_wine ok( GetPolyFillMode( hdcMetafile ) == ALTERNATE, "PolyFillMode not restored\n" );
+    todo_wine ok( GetBkColor( hdcMetafile ) == 0, "Background color not restored\n" );
     ret = SaveDC(hdcMetafile);
     ok(ret == 3, "ret = %d\n", ret);
 
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    todo_wine ok(pt.x == 20,"Extecting ViewportOrg x of 20, got %i\n",pt.x);
+    todo_wine ok(pt.x == 20,"Expecting ViewportOrg x of 20, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    todo_wine ok(size.cx == 300,"Extecting ViewportExt cx of 300, got %i\n",size.cx);
+    todo_wine ok(size.cx == 300,"Expecting ViewportExt cx of 300, got %i\n",size.cx);
     ret = RestoreDC(hdcMetafile, 1);
     ok(ret, "ret = %d\n", ret);
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    todo_wine ok(pt.x == 0,"Extecting ViewportOrg x of 0, got %i\n",pt.x);
+    todo_wine ok(pt.x == 0,"Expecting ViewportOrg x of 0, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    todo_wine ok(size.cx == 120,"Extecting ViewportExt cx of 120, got %i\n",size.cx);
+    todo_wine ok(size.cx == 120,"Expecting ViewportExt cx of 120, got %i\n",size.cx);
 
     SetWindowOrgEx(hdcMetafile, -4, -4, NULL);
     SetViewportOrgEx(hdcMetafile, 40, 40, NULL);
@@ -590,16 +599,16 @@ static void test_SaveDC(void)
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    ok(pt.x == 40,"Extecting ViewportOrg x of 40, got %i\n",pt.x);
+    ok(pt.x == 40,"Expecting ViewportOrg x of 40, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    ok(size.cx == 50,"Extecting ViewportExt cx of 50, got %i\n",size.cx);
+    ok(size.cx == 50,"Expecting ViewportExt cx of 50, got %i\n",size.cx);
     ret = SaveDC(hdcMetafile);
     ok(ret == 1, "ret = %d\n", ret);
 
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    ok(pt.x == 40,"Extecting ViewportOrg x of 40, got %i\n",pt.x);
+    ok(pt.x == 40,"Expecting ViewportOrg x of 40, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    ok(size.cx == 50,"Extecting ViewportExt cx of 50, got %i\n",size.cx);
+    ok(size.cx == 50,"Expecting ViewportExt cx of 50, got %i\n",size.cx);
     ret = SaveDC(hdcMetafile);
     ok(ret == 2, "ret = %d\n", ret);
 
@@ -614,18 +623,25 @@ static void test_SaveDC(void)
     ok(hFont != 0, "CreateFontIndirectA error %d\n", GetLastError());
 
     hFontOld = SelectObject(hdcMetafile, hFont);
+
+    hFont2 = CreateFontIndirectA(&orig_lf);
+    ok(hFont2 != 0, "CreateFontIndirectA error %d\n", GetLastError());
+    hFontCheck = SelectObject(hdcMetafile, hFont2);
+    ok(hFontCheck == hFont, "Font not selected\n");
+
     /* Force Win9x to update DC state */
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = RestoreDC(hdcMetafile, 1);
     ok(ret, "ret = %d\n", ret);
     ret = GetViewportOrgEx(hdcMetafile, &pt);
-    ok(pt.x == 40,"Extecting ViewportOrg x of 40, got %i\n",pt.x);
+    ok(pt.x == 40,"Expecting ViewportOrg x of 40, got %i\n",pt.x);
     ret = GetViewportExtEx(hdcMetafile, &size);
-    ok(size.cx == 50,"Extecting ViewportExt cx of 50, got %i\n",size.cx);
+    ok(size.cx == 50,"Expecting ViewportExt cx of 50, got %i\n",size.cx);
 
     hFontCheck = SelectObject(hdcMetafile, hFontOld);
-    todo_wine ok(hFontOld == hFontCheck && hFontCheck != hFont, "Font not reverted with DC Restore\n");
+    todo_wine ok(hFontOld == hFontCheck && hFontCheck != hFont && hFontCheck != hFont2,
+                 "Font not reverted with DC Restore\n");
 
     hMetafile = CloseEnhMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
@@ -634,6 +650,8 @@ static void test_SaveDC(void)
     ok( ret == 1, "EnumEnhMetaFile rets %d\n", ret);
 
     ret = DeleteObject(hFont);
+    ok( ret, "DeleteObject error %d\n", GetLastError());
+    ret = DeleteObject(hFont2);
     ok( ret, "DeleteObject error %d\n", GetLastError());
     ret = DeleteEnhMetaFile(hMetafile);
     ok( ret, "DeleteEnhMetaFile error %d\n", GetLastError());
@@ -649,7 +667,7 @@ static void test_mf_SaveDC(void)
     int ret;
     POINT pt;
     SIZE size;
-    HFONT hFont,hFontOld,hFontCheck;
+    HFONT hFont,hFont2,hFontOld,hFontCheck;
 
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA error %d\n", GetLastError());
@@ -693,6 +711,8 @@ static void test_mf_SaveDC(void)
 
     /* Force Win9x to update DC state */
     SetPixelV(hdcMetafile, 50, 50, 0);
+    SetPolyFillMode( hdcMetafile, ALTERNATE );
+    SetBkColor( hdcMetafile, 0 );
 
     ret = SaveDC(hdcMetafile);
     todo_wine ok(ret == 1, "ret = %d\n", ret);
@@ -701,6 +721,11 @@ static void test_mf_SaveDC(void)
     SetViewportOrgEx(hdcMetafile, 30, 30, NULL);
     SetWindowExtEx(hdcMetafile, 200, 200, NULL );
     SetViewportExtEx(hdcMetafile, 400, 400, NULL );
+
+    SetPolyFillMode( hdcMetafile, WINDING );
+    SetBkColor( hdcMetafile, 0x123456 );
+    todo_wine ok( !GetPolyFillMode( hdcMetafile ), "GetPolyFillMode succeeded\n" );
+    todo_wine ok( GetBkColor( hdcMetafile ) == CLR_INVALID, "GetBkColor succeeded\n" );
 
     /* Force Win9x to update DC state */
     SetPixelV(hdcMetafile, 50, 50, 0);
@@ -739,13 +764,19 @@ static void test_mf_SaveDC(void)
     ok(hFont != 0, "CreateFontIndirectA error %d\n", GetLastError());
 
     hFontOld = SelectObject(hdcMetafile, hFont);
+
+    hFont2 = CreateFontIndirectA(&orig_lf);
+    ok(hFont2 != 0, "CreateFontIndirectA error %d\n", GetLastError());
+    hFontCheck = SelectObject(hdcMetafile, hFont2);
+    ok(hFontCheck == hFont, "Font not selected\n");
+
     /* Force Win9x to update DC state */
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = RestoreDC(hdcMetafile, 1);
 
     hFontCheck = SelectObject(hdcMetafile, hFontOld);
-    ok(hFontOld != hFontCheck && hFontCheck == hFont, "Font incorrectly reverted with DC Restore\n");
+    ok(hFontOld != hFontCheck && hFontCheck == hFont2, "Font incorrectly reverted with DC Restore\n");
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
@@ -753,6 +784,8 @@ static void test_mf_SaveDC(void)
     ret = DeleteMetaFile(hMetafile);
     ok( ret, "DeleteMetaFile error %d\n", GetLastError());
     ret = DeleteObject(hFont);
+    ok( ret, "DeleteObject error %d\n", GetLastError());
+    ret = DeleteObject(hFont2);
     ok( ret, "DeleteObject error %d\n", GetLastError());
 }
 
