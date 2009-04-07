@@ -25,10 +25,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 INT CDECL EMFDRV_SaveDC( PHYSDEV dev )
 {
+    EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
+    INT ret = save_dc_state( physDev->hdc );
     EMRSAVEDC emr;
-    emr.emr.iType = EMR_SAVEDC;
-    emr.emr.nSize = sizeof(emr);
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+
+    if (ret)
+    {
+        emr.emr.iType = EMR_SAVEDC;
+        emr.emr.nSize = sizeof(emr);
+        EMFDRV_WriteRecord( dev, &emr.emr );
+    }
+    return ret;
 }
 
 BOOL CDECL EMFDRV_RestoreDC( PHYSDEV dev, INT level )

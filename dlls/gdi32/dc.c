@@ -578,19 +578,13 @@ INT WINAPI SaveDC( HDC hdc )
     DC * dc;
     INT ret;
 
-    dc = get_dc_ptr( hdc );
-    if (!dc) return 0;
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
     if(dc->funcs->pSaveDC)
-    {
         ret = dc->funcs->pSaveDC( dc->physDev );
-        if(ret)
-            ret = ++dc->saveLevel;
-        release_dc_ptr( dc );
-        return ret;
-    }
+    else
+        ret = save_dc_state( hdc );
 
-    ret = save_dc_state( hdc );
     release_dc_ptr( dc );
     return ret;
 }

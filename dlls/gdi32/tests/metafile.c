@@ -643,6 +643,11 @@ static void test_SaveDC(void)
     todo_wine ok(hFontOld == hFontCheck && hFontCheck != hFont && hFontCheck != hFont2,
                  "Font not reverted with DC Restore\n");
 
+    ret = RestoreDC(hdcMetafile, -20);
+    ok(!ret, "ret = %d\n", ret);
+    ret = RestoreDC(hdcMetafile, 20);
+    ok(!ret, "ret = %d\n", ret);
+
     hMetafile = CloseEnhMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
 
@@ -702,7 +707,7 @@ static void test_mf_SaveDC(void)
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = SaveDC(hdcMetafile);
-    todo_wine ok(ret == 1, "ret = %d\n", ret);
+    ok(ret == 1, "ret = %d\n", ret);
 
     SetWindowOrgEx(hdcMetafile, -2, -2, NULL);
     SetViewportOrgEx(hdcMetafile, 20, 20, NULL);
@@ -715,7 +720,7 @@ static void test_mf_SaveDC(void)
     SetBkColor( hdcMetafile, 0 );
 
     ret = SaveDC(hdcMetafile);
-    todo_wine ok(ret == 1, "ret = %d\n", ret);
+    ok(ret == 1, "ret = %d\n", ret);
 
     SetWindowOrgEx(hdcMetafile, -3, -3, NULL);
     SetViewportOrgEx(hdcMetafile, 30, 30, NULL);
@@ -731,10 +736,10 @@ static void test_mf_SaveDC(void)
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = RestoreDC(hdcMetafile, -1);
-    ok(ret, "ret = %d\n", ret);
+    todo_wine ok(ret, "ret = %d\n", ret);
 
     ret = SaveDC(hdcMetafile);
-    todo_wine ok(ret == 1, "ret = %d\n", ret);
+    ok(ret == 1, "ret = %d\n", ret);
 
     ret = RestoreDC(hdcMetafile, 1);
     todo_wine ok(ret, "ret = %d\n", ret);
@@ -748,10 +753,10 @@ static void test_mf_SaveDC(void)
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = SaveDC(hdcMetafile);
-    todo_wine ok(ret == 1, "ret = %d\n", ret);
+    ok(ret == 1, "ret = %d\n", ret);
 
     ret = SaveDC(hdcMetafile);
-    todo_wine ok(ret == 1, "ret = %d\n", ret);
+    ok(ret == 1, "ret = %d\n", ret);
 
     memset(&orig_lf, 0, sizeof(orig_lf));
     orig_lf.lfCharSet = ANSI_CHARSET;
@@ -774,9 +779,18 @@ static void test_mf_SaveDC(void)
     SetPixelV(hdcMetafile, 50, 50, 0);
 
     ret = RestoreDC(hdcMetafile, 1);
+    todo_wine ok(ret, "ret = %d\n", ret);
 
     hFontCheck = SelectObject(hdcMetafile, hFontOld);
     ok(hFontOld != hFontCheck && hFontCheck == hFont2, "Font incorrectly reverted with DC Restore\n");
+
+    /* restore level is ignored */
+    ret = RestoreDC(hdcMetafile, -20);
+    todo_wine ok(ret, "ret = %d\n", ret);
+    ret = RestoreDC(hdcMetafile, 20);
+    todo_wine ok(ret, "ret = %d\n", ret);
+    ret = RestoreDC(hdcMetafile, 0);
+    todo_wine ok(ret, "ret = %d\n", ret);
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseEnhMetaFile error %d\n", GetLastError());
