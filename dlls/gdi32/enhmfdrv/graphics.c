@@ -684,6 +684,9 @@ COLORREF CDECL
 EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color )
 {
     EMRSETBKCOLOR emr;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+
+    if (physDev->restoring) return color;  /* don't output records during RestoreDC */
 
     emr.emr.iType = EMR_SETBKCOLOR;
     emr.emr.nSize = sizeof(emr);
@@ -700,6 +703,9 @@ COLORREF CDECL
 EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
 {
     EMRSETTEXTCOLOR emr;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+
+    if (physDev->restoring) return color;  /* don't output records during RestoreDC */
 
     emr.emr.iType = EMR_SETTEXTCOLOR;
     emr.emr.nSize = sizeof(emr);

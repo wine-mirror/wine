@@ -27,7 +27,6 @@ INT  CDECL MFDRV_SaveDC( PHYSDEV dev )
 
 BOOL  CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level )
 {
-    if(level != -1) return FALSE;
     return MFDRV_MetaParam1( dev, META_RESTOREDC, level );
 }
 

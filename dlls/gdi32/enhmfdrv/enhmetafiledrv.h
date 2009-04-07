@@ -46,6 +46,7 @@ typedef struct
     INT        technology;
     INT        planes;
     INT        numcolors;
+    INT        restoring;          /* RestoreDC counter */
 } EMFDRV_PDEVICE;
 
 

@@ -455,6 +455,11 @@ BOOL restore_dc_state( HDC hdc, INT level )
 
     /* find the state level to restore */
 
+    if (abs(level) > dc->saveLevel || level == 0)
+    {
+        release_dc_ptr( dc );
+        return FALSE;
+    }
     if (level < 0) level = dc->saveLevel + level + 1;
     first_dcs = dc->saved_dc;
     for (hdcs = first_dcs, save_level = dc->saveLevel; save_level > level; save_level--)
@@ -602,23 +607,11 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     if (!(dc = get_dc_ptr( hdc ))) return FALSE;
     update_dc( dc );
 
-    if(abs(level) > dc->saveLevel || level == 0)
-    {
-        release_dc_ptr( dc );
-        return FALSE;
-    }
-
     if(dc->funcs->pRestoreDC)
-    {
         success = dc->funcs->pRestoreDC( dc->physDev, level );
-        if(level < 0) level = dc->saveLevel + level + 1;
-        if(success)
-            dc->saveLevel = level - 1;
-        release_dc_ptr( dc );
-        return success;
-    }
+    else
+        success = restore_dc_state( hdc, level );
 
-    success = restore_dc_state( hdc, level );
     release_dc_ptr( dc );
     return success;
 }

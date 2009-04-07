@@ -43,6 +43,7 @@ BOOL CDECL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
     EMFDRV_PDEVICE* physDev = (EMFDRV_PDEVICE*)dev;
     DC *dc = get_dc_ptr( physDev->hdc );
     EMRRESTOREDC emr;
+    BOOL ret;
 
     emr.emr.iType = EMR_RESTOREDC;
     emr.emr.nSize = sizeof(emr);
@@ -51,11 +52,14 @@ BOOL CDECL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
         emr.iRelative = level;
     else
         emr.iRelative = level - dc->saveLevel - 1;
-
-    EMFDRV_WriteRecord( dev, &emr.emr );
-
     release_dc_ptr( dc );
-    return TRUE;
+
+    physDev->restoring++;
+    ret = restore_dc_state( physDev->hdc, level );
+    physDev->restoring--;
+
+    if (ret) EMFDRV_WriteRecord( dev, &emr.emr );
+    return ret;
 }
 
 UINT CDECL EMFDRV_SetTextAlign( PHYSDEV dev, UINT align )

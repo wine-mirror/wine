@@ -280,6 +280,8 @@ HBRUSH CDECL EMFDRV_SelectBrush(PHYSDEV dev, HBRUSH hBrush )
     DWORD index;
     int i;
 
+    if (physDev->restoring) return hBrush;  /* don't output SelectObject records during RestoreDC */
+
     /* If the object is a stock brush object, do not need to create it.
      * See definitions in  wingdi.h for range of stock brushes.
      * We do however have to handle setting the higher order bit to
@@ -356,6 +358,8 @@ HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, HANDLE gdiFont )
     EMRSELECTOBJECT emr;
     DWORD index;
     int i;
+
+    if (physDev->restoring) return 0;  /* don't output SelectObject records during RestoreDC */
 
     /* If the object is a stock font object, do not need to create it.
      * See definitions in  wingdi.h for range of stock fonts.
@@ -436,6 +440,8 @@ HPEN CDECL EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
     DWORD index;
     int i;
 
+    if (physDev->restoring) return hPen;  /* don't output SelectObject records during RestoreDC */
+
     /* If the object is a stock pen object, do not need to create it.
      * See definitions in  wingdi.h for range of stock pens.
      * We do however have to handle setting the higher order bit to
@@ -500,6 +506,8 @@ HPALETTE CDECL EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force )
     EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE*)dev;
     EMRSELECTPALETTE emr;
     DWORD index;
+
+    if (physDev->restoring) return hPal;  /* don't output SelectObject records during RestoreDC */
 
     if (hPal == GetStockObject( DEFAULT_PALETTE ))
     {
