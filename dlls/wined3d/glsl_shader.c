@@ -1920,6 +1920,8 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
         DWORD src2regtype = shader_get_regtype(ins->src[2]);
         DWORD dstreg = ins->dst[0].register_idx;
         DWORD dstregtype = ins->dst[0].register_type;
+        DWORD dst_mask = ins->dst[0].write_mask;
+        struct wined3d_shader_dst_param dst = ins->dst[0];
 
         /* Cycle through all source0 channels */
         for (i=0; i<4; i++) {
@@ -1933,23 +1935,22 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
                 }
             }
 
+            dst.write_mask = dst_mask & write_mask;
+            dst.token = (dst.token & ~WINED3DSP_WRITEMASK_ALL) | dst.write_mask;
+
             /* Splitting the cmp instruction up in multiple lines imposes a problem:
             * The first lines may overwrite source parameters of the following lines.
             * Deal with that by using a temporary destination register if needed
             */
-            if((src0reg == dstreg && src0regtype == dstregtype) ||
-            (src1reg == dstreg && src1regtype == dstregtype) ||
-            (src2reg == dstreg && src2regtype == dstregtype)) {
-
-                write_mask = shader_glsl_get_write_mask(ins->dst[0].token & (~WINED3DSP_WRITEMASK_ALL | write_mask),
-                        mask_char);
+            if ((src0reg == dstreg && src0regtype == dstregtype)
+                    || (src1reg == dstreg && src1regtype == dstregtype)
+                    || (src2reg == dstreg && src2regtype == dstregtype))
+            {
+                write_mask = shader_glsl_get_write_mask(dst.token, mask_char);
                 if (!write_mask) continue;
                 shader_addline(ins->buffer, "tmp0%s = (", mask_char);
                 temp_destination = TRUE;
             } else {
-                struct wined3d_shader_dst_param dst = ins->dst[0];
-                dst.write_mask &= write_mask;
-                dst.token &= ~WINED3DSP_WRITEMASK_ALL | write_mask;
                 write_mask = shader_glsl_append_dst_ext(ins->buffer, ins, &dst);
                 if (!write_mask) continue;
             }
@@ -1976,11 +1977,13 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
  * the compare is done per component of src0. */
 static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
 {
+    struct wined3d_shader_dst_param dst;
     glsl_src_param_t src0_param;
     glsl_src_param_t src1_param;
     glsl_src_param_t src2_param;
     DWORD write_mask, cmp_channel = 0;
     unsigned int i, j;
+    DWORD dst_mask;
 
     if (ins->reg_maps->shader_version < WINED3DPS_VERSION(1, 4))
     {
@@ -2000,8 +2003,9 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
         return;
     }
     /* Cycle through all source0 channels */
+    dst_mask = ins->dst[0].write_mask;
+    dst = ins->dst[0];
     for (i=0; i<4; i++) {
-        struct wined3d_shader_dst_param dst;
         write_mask = 0;
         /* Find the destination channels which use the current source0 channel */
         for (j=0; j<4; j++) {
@@ -2011,9 +2015,9 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
                 cmp_channel = WINED3DSP_WRITEMASK_0 << j;
             }
         }
-        dst = ins->dst[0];
-        dst.write_mask &= write_mask;
-        dst.token &= ~WINED3DSP_WRITEMASK_ALL | write_mask;
+
+        dst.write_mask = dst_mask & write_mask;
+        dst.token = (dst.token & ~WINED3DSP_WRITEMASK_ALL) | dst.write_mask;
         write_mask = shader_glsl_append_dst_ext(ins->buffer, ins, &dst);
         if (!write_mask) continue;
 
