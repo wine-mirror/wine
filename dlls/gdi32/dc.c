@@ -443,27 +443,45 @@ INT save_dc_state( HDC hdc )
 
 
 /***********************************************************************
- *           set_dc_state   (Not a Windows API)
+ *           restore_dc_state
  */
-void set_dc_state( HDC hdc, HDC hdcs )
+BOOL restore_dc_state( HDC hdc, INT level )
 {
+    HDC hdcs, first_dcs;
     DC *dc, *dcs;
+    INT save_level;
 
-    if (!(dc = get_dc_ptr( hdc ))) return;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+
+    /* find the state level to restore */
+
+    if (level < 0) level = dc->saveLevel + level + 1;
+    first_dcs = dc->saved_dc;
+    for (hdcs = first_dcs, save_level = dc->saveLevel; save_level > level; save_level--)
+    {
+	if (!(dcs = get_dc_ptr( hdcs )))
+	{
+            release_dc_ptr( dc );
+            return FALSE;
+	}
+        hdcs = dcs->saved_dc;
+        release_dc_ptr( dcs );
+    }
+
+    /* restore the state */
+
     if (!(dcs = get_dc_ptr( hdcs )))
     {
         release_dc_ptr( dc );
-        return;
+        return FALSE;
     }
-    if (!(dcs->flags & DC_SAVED))
+    if (!PATH_AssignGdiPath( &dc->path, &dcs->path ))
     {
-        release_dc_ptr( dc );
         release_dc_ptr( dcs );
-        return;
+        release_dc_ptr( dc );
+        return FALSE;
     }
-    TRACE("%p %p\n", hdc, hdcs );
 
-    update_dc( dc );
     dc->flags            = dcs->flags & ~DC_SAVED;
     dc->layout           = dcs->layout;
     dc->hDevice          = dcs->hDevice;
@@ -531,8 +549,24 @@ void set_dc_state( HDC hdc, HDC hdcs )
     SetBkColor( hdc, dcs->backgroundColor);
     SetTextColor( hdc, dcs->textColor);
     GDISelectPalette( hdc, dcs->hPalette, FALSE );
-    release_dc_ptr( dc );
+
+    dc->saved_dc  = dcs->saved_dc;
+    dcs->saved_dc = 0;
+    dc->saveLevel = save_level - 1;
+
     release_dc_ptr( dcs );
+
+    /* now destroy all the saved DCs */
+
+    while (first_dcs)
+    {
+	if (!(dcs = get_dc_ptr( first_dcs ))) break;
+        hdcs = dcs->saved_dc;
+        free_dc_ptr( dcs );
+        first_dcs = hdcs;
+    }
+    release_dc_ptr( dc );
+    return TRUE;
 }
 
 
@@ -567,19 +601,18 @@ INT WINAPI SaveDC( HDC hdc )
  */
 BOOL WINAPI RestoreDC( HDC hdc, INT level )
 {
-    DC * dc, * dcs;
+    DC *dc;
     BOOL success;
 
     TRACE("%p %d\n", hdc, level );
     if (!(dc = get_dc_ptr( hdc ))) return FALSE;
+    update_dc( dc );
 
     if(abs(level) > dc->saveLevel || level == 0)
     {
         release_dc_ptr( dc );
         return FALSE;
     }
-
-    update_dc( dc );
 
     if(dc->funcs->pRestoreDC)
     {
@@ -591,28 +624,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
         return success;
     }
 
-    if (level < 0) level = dc->saveLevel + level + 1;
-    success=TRUE;
-    while (dc->saveLevel >= level)
-    {
-        HDC hdcs = dc->saved_dc;
-	if (!(dcs = get_dc_ptr( hdcs )))
-	{
-            success = FALSE;
-            break;
-	}
-        dc->saved_dc = dcs->saved_dc;
-        dcs->saved_dc = 0;
-	if (--dc->saveLevel < level)
-	{
-	    set_dc_state( hdc, hdcs );
-            if (!PATH_AssignGdiPath( &dc->path, &dcs->path ))
-		/* FIXME: This might not be quite right, since we're
-		 * returning FALSE but still destroying the saved DC state */
-	        success=FALSE;
-	}
-        free_dc_ptr( dcs );
-    }
+    success = restore_dc_state( hdc, level );
     release_dc_ptr( dc );
     return success;
 }

@@ -384,7 +384,7 @@ extern void update_dc( DC *dc ) DECLSPEC_HIDDEN;
 extern void DC_InitDC( DC * dc ) DECLSPEC_HIDDEN;
 extern void DC_UpdateXforms( DC * dc ) DECLSPEC_HIDDEN;
 extern INT save_dc_state( HDC hdc ) DECLSPEC_HIDDEN;
-extern void set_dc_state( HDC hdc, HDC hdcs ) DECLSPEC_HIDDEN;
+extern BOOL restore_dc_state( HDC hdc, INT level ) DECLSPEC_HIDDEN;
 
 /* dib.c */
 extern int DIB_GetDIBWidthBytes( int width, int depth ) DECLSPEC_HIDDEN;
