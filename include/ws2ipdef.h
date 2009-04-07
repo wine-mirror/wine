@@ -261,8 +261,4 @@ struct WS(ip_msfilter) {
 #define WS_INET6_ADDRSTRLEN     65
 #endif /* USE_WS_PREFIX */
 
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* __WS2IPDEF__ */
