@@ -1131,6 +1131,7 @@ struct pending_line
     int                 source_idx;
     int                 line_num;
     unsigned long       offset;
+    unsigned long       load_offset;
 };
 
 struct pending_object
@@ -1177,13 +1178,15 @@ static inline void pending_add_var(struct pending_list* pending, const char* nam
 }
 
 static inline void pending_add_line(struct pending_list* pending, int source_idx,
-                                    int line_num, unsigned long offset)
+                                    int line_num, unsigned long offset,
+                                    unsigned long load_offset)
 {
     pending_make_room(pending);
     pending->objs[pending->num].tag = PENDING_LINE;
     pending->objs[pending->num].u.line.source_idx   = source_idx;
     pending->objs[pending->num].u.line.line_num     = line_num;
     pending->objs[pending->num].u.line.offset       = offset;
+    pending->objs[pending->num].u.line.load_offset  = load_offset;
     pending->num++;
 }
 
@@ -1203,7 +1206,7 @@ static void pending_flush(struct pending_list* pending, struct module* module,
             break;
         case PENDING_LINE:
             if (module->type == DMT_MACHO)
-                pending->objs[i].u.line.offset -= func->address;
+                pending->objs[i].u.line.offset -= func->address - pending->objs[i].u.line.load_offset;
             symt_add_func_line(module, func, pending->objs[i].u.line.source_idx,
                                pending->objs[i].u.line.line_num, pending->objs[i].u.line.offset);
             break;
@@ -1489,12 +1492,12 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             {
                 unsigned long offset = stab_ptr->n_value;
                 if (module->type == DMT_MACHO)
-                    offset -= curr_func->address;
+                    offset -= curr_func->address - load_offset;
                 symt_add_func_line(module, curr_func, source_idx, 
                                    stab_ptr->n_desc, offset);
             }
             else pending_add_line(&pending_func, source_idx, stab_ptr->n_desc,
-                                  stab_ptr->n_value);
+                                  stab_ptr->n_value, load_offset);
             break;
         case N_FUN:
             /*
