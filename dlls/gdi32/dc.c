@@ -165,6 +165,11 @@ BOOL free_dc_ptr( DC *dc )
 {
     assert( dc->refcount == 1 );
     if (free_gdi_handle( dc->hSelf ) != dc) return FALSE;  /* shouldn't happen */
+    if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
+    if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
+    if (dc->hMetaClipRgn) DeleteObject( dc->hMetaClipRgn );
+    if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
+    PATH_DestroyGdiPath( &dc->path );
     return HeapFree( GetProcessHeap(), 0, dc );
 }
 
@@ -624,8 +629,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 		 * returning FALSE but still destroying the saved DC state */
 	        success=FALSE;
 	}
-        release_dc_ptr( dcs );
-	DeleteDC( hdcs );
+        free_dc_ptr( dcs );
     }
     release_dc_ptr( dc );
     return success;
@@ -684,7 +688,6 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     return hdc;
 
 error:
-    if (dc && dc->hVisRgn) DeleteObject( dc->hVisRgn );
     if (dc) free_dc_ptr( dc );
     DRIVER_release_driver( funcs );
     return 0;
@@ -801,7 +804,6 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     return ret;
 
 error:
-    if (dc && dc->hVisRgn) DeleteObject( dc->hVisRgn );
     if (dc) free_dc_ptr( dc );
     DRIVER_release_driver( funcs );
     return 0;
@@ -842,11 +844,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
         if (!(dcs = get_dc_ptr( hdcs ))) break;
         dc->saved_dc = dcs->saved_dc;
         dc->saveLevel--;
-        if (dcs->hClipRgn) DeleteObject( dcs->hClipRgn );
-        if (dcs->hMetaRgn) DeleteObject( dcs->hMetaRgn );
-        if (dcs->hMetaClipRgn) DeleteObject( dcs->hMetaClipRgn );
-        if (dcs->hVisRgn) DeleteObject( dcs->hVisRgn );
-        PATH_DestroyGdiPath(&dcs->path);
         free_dc_ptr( dcs );
     }
 
@@ -868,11 +865,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
         HeapFree( GetProcessHeap(), 0, dc->saved_visrgn );
         dc->saved_visrgn = next;
     }
-    if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
-    if (dc->hMetaRgn) DeleteObject( dc->hMetaRgn );
-    if (dc->hMetaClipRgn) DeleteObject( dc->hMetaClipRgn );
-    if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
-    PATH_DestroyGdiPath(&dc->path);
 
     free_dc_ptr( dc );
     if (funcs) DRIVER_release_driver( funcs );  /* do that after releasing the GDI lock */
