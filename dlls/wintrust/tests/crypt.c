@@ -206,9 +206,7 @@ static void test_context(void)
     /* Proper release */
     SetLastError(0xdeadbeef);
     ret = pCryptCATAdminReleaseContext(hca, 0);
-    ok(ret, "Expected success\n");
-    ok(GetLastError() == 0xdeadbeef,
-       "Expected no change in last error, got %d\n", GetLastError());
+    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
 
     /* Try to release a second time */
     SetLastError(0xdeadbeef);
