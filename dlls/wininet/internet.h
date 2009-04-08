@@ -291,6 +291,12 @@ struct WORKREQ_HTTPSENDREQUESTW
     BOOL   bEndRequest;
 };
 
+struct WORKREQ_HTTPENDREQUESTW
+{
+    DWORD     dwFlags;
+    DWORD_PTR dwContext;
+};
+
 struct WORKREQ_SENDCALLBACK
 {
     DWORD_PTR dwContext;
@@ -337,6 +343,7 @@ typedef struct WORKREQ
         struct WORKREQ_FTPRENAMEFILEW           FtpRenameFileW;
         struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;
         struct WORKREQ_HTTPSENDREQUESTW         HttpSendRequestW;
+        struct WORKREQ_HTTPENDREQUESTW          HttpEndRequestW;
         struct WORKREQ_SENDCALLBACK             SendCallback;
         struct WORKREQ_INTERNETOPENURLW         InternetOpenUrlW;
         struct WORKREQ_INTERNETREADFILEEXA      InternetReadFileExA;

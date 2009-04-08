@@ -714,55 +714,85 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
 BOOL WINAPI HttpEndRequestA(HINTERNET hRequest, 
         LPINTERNET_BUFFERSA lpBuffersOut, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    LPINTERNET_BUFFERSA ptr;
-    LPINTERNET_BUFFERSW lpBuffersOutW,ptrW;
-    BOOL rc = FALSE;
+    TRACE("(%p, %p, %08x, %08lx)\n", hRequest, lpBuffersOut, dwFlags, dwContext);
 
-    TRACE("(%p, %p, %08x, %08lx): stub\n", hRequest, lpBuffersOut, dwFlags,
-            dwContext);
-
-    ptr = lpBuffersOut;
-    if (ptr)
-        lpBuffersOutW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                sizeof(INTERNET_BUFFERSW));
-    else
-        lpBuffersOutW = NULL;
-
-    ptrW = lpBuffersOutW;
-    while (ptr)
+    if (lpBuffersOut)
     {
-        if (ptr->lpvBuffer && ptr->dwBufferLength)
-            ptrW->lpvBuffer = HeapAlloc(GetProcessHeap(),0,ptr->dwBufferLength);
-        ptrW->dwBufferLength = ptr->dwBufferLength;
-        ptrW->dwBufferTotal= ptr->dwBufferTotal;
-
-        if (ptr->Next)
-            ptrW->Next = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-                    sizeof(INTERNET_BUFFERSW));
-
-        ptr = ptr->Next;
-        ptrW = ptrW->Next;
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
 
-    rc = HttpEndRequestW(hRequest, lpBuffersOutW, dwFlags, dwContext);
+    return HttpEndRequestW(hRequest, NULL, dwFlags, dwContext);
+}
 
-    if (lpBuffersOutW)
+static BOOL HTTP_HttpEndRequestW(LPWININETHTTPREQW lpwhr, DWORD dwFlags, DWORD_PTR dwContext)
+{
+    BOOL rc = FALSE;
+    INT responseLen;
+    DWORD dwBufferSize;
+    INTERNET_ASYNC_RESULT iar;
+
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                  INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
+
+    responseLen = HTTP_GetResponseHeaders(lpwhr, TRUE);
+    if (responseLen)
+        rc = TRUE;
+
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                  INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen, sizeof(DWORD));
+
+    /* process cookies here. Is this right? */
+    HTTP_ProcessCookies(lpwhr);
+
+    dwBufferSize = sizeof(lpwhr->dwContentLength);
+    if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
+                             &lpwhr->dwContentLength, &dwBufferSize, NULL))
+        lpwhr->dwContentLength = -1;
+
+    if (lpwhr->dwContentLength == 0)
+        HTTP_FinishedReading(lpwhr);
+
+    if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT))
     {
-        ptrW = lpBuffersOutW;
-        while (ptrW)
+        DWORD dwCode,dwCodeLength = sizeof(DWORD);
+        if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE, &dwCode, &dwCodeLength, NULL) &&
+            (dwCode == 302 || dwCode == 301 || dwCode == 303))
         {
-            LPINTERNET_BUFFERSW ptrW2;
-
-            FIXME("Do we need to translate info out of these buffer?\n");
-
-            HeapFree(GetProcessHeap(),0,ptrW->lpvBuffer);
-            ptrW2 = ptrW->Next;
-            HeapFree(GetProcessHeap(),0,ptrW);
-            ptrW = ptrW2;
+            WCHAR szNewLocation[INTERNET_MAX_URL_LENGTH];
+            dwBufferSize=sizeof(szNewLocation);
+            if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_LOCATION, szNewLocation, &dwBufferSize, NULL))
+            {
+                /* redirects are always GETs */
+                HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
+                lpwhr->lpszVerb = WININET_strdupW(szGET);
+                HTTP_DrainContent(lpwhr);
+                INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                                      INTERNET_STATUS_REDIRECT, szNewLocation, dwBufferSize);
+                rc = HTTP_HandleRedirect(lpwhr, szNewLocation);
+                if (rc)
+                    rc = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, TRUE);
+            }
         }
     }
 
+    iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
+    iar.dwError = rc ? 0 : INTERNET_GetLastError();
+
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                          INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                          sizeof(INTERNET_ASYNC_RESULT));
     return rc;
+}
+
+static void AsyncHttpEndRequestProc(WORKREQUEST *work)
+{
+    struct WORKREQ_HTTPENDREQUESTW const *req = &work->u.HttpEndRequestW;
+    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW)work->hdr;
+
+    TRACE("%p\n", lpwhr);
+
+    HTTP_HttpEndRequestW(lpwhr, req->dwFlags, req->dwContext);
 }
 
 /***********************************************************************
@@ -780,10 +810,15 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
 {
     BOOL rc = FALSE;
     LPWININETHTTPREQW lpwhr;
-    INT responseLen;
-    DWORD dwBufferSize;
 
     TRACE("-->\n");
+
+    if (lpBuffersOut)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
 
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
@@ -791,58 +826,27 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
         if (lpwhr)
             WININET_Release( &lpwhr->hdr );
-    	return FALSE;
+        return FALSE;
     }
-
     lpwhr->hdr.dwFlags |= dwFlags;
-    lpwhr->hdr.dwContext = dwContext;
 
-    /* We appear to do nothing with lpBuffersOut.. is that correct? */
-
-    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-            INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
-
-    responseLen = HTTP_GetResponseHeaders(lpwhr, TRUE);
-    if (responseLen)
-	    rc = TRUE;
-
-    SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-            INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen, sizeof(DWORD));
-
-    /* process cookies here. Is this right? */
-    HTTP_ProcessCookies(lpwhr);
-
-    dwBufferSize = sizeof(lpwhr->dwContentLength);
-    if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
-                             &lpwhr->dwContentLength,&dwBufferSize,NULL))
-        lpwhr->dwContentLength = -1;
-
-    if (lpwhr->dwContentLength == 0)
-        HTTP_FinishedReading(lpwhr);
-
-    if(!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT))
+    if (lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        DWORD dwCode,dwCodeLength=sizeof(DWORD);
-        if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,NULL) &&
-            (dwCode==302 || dwCode==301 || dwCode==303))
-        {
-            WCHAR szNewLocation[INTERNET_MAX_URL_LENGTH];
-            dwBufferSize=sizeof(szNewLocation);
-            if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
-            {
-                /* redirects are always GETs */
-                HeapFree(GetProcessHeap(),0,lpwhr->lpszVerb);
-                lpwhr->lpszVerb = WININET_strdupW(szGET);
-                HTTP_DrainContent(lpwhr);
-                INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                                      INTERNET_STATUS_REDIRECT, szNewLocation,
-                                      dwBufferSize);
-                rc = HTTP_HandleRedirect(lpwhr, szNewLocation);
-                if (rc)
-                    rc = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, TRUE);
-            }
-        }
+        WORKREQUEST work;
+        struct WORKREQ_HTTPENDREQUESTW *request;
+
+        work.asyncproc = AsyncHttpEndRequestProc;
+        work.hdr = WININET_AddRef( &lpwhr->hdr );
+
+        request = &work.u.HttpEndRequestW;
+        request->dwFlags = dwFlags;
+        request->dwContext = dwContext;
+
+        INTERNET_AsyncCall(&work);
+        INTERNET_SetLastError(ERROR_IO_PENDING);
     }
+    else
+        rc = HTTP_HttpEndRequestW(lpwhr, dwFlags, dwContext);
 
     WININET_Release( &lpwhr->hdr );
     TRACE("%i <--\n",rc);
