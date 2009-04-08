@@ -912,7 +912,12 @@ typedef struct _RpcConnection_tcp
 {
   RpcConnection common;
   int sock;
+#ifdef HAVE_SOCKETPAIR
   int cancel_fds[2];
+#else
+  HANDLE sock_event;
+  HANDLE cancel_event;
+#endif
 } RpcConnection_tcp;
 
 #ifdef HAVE_SOCKETPAIR
@@ -978,30 +983,78 @@ static void rpcrt4_sock_wait_destroy(RpcConnection_tcp *tcpc)
 
 static BOOL rpcrt4_sock_wait_init(RpcConnection_tcp *tcpc)
 {
-  /* FIXME */
-  return FALSE;
+  static BOOL wsa_inited;
+  if (!wsa_inited)
+  {
+    WSADATA wsadata;
+    WSAStartup(MAKEWORD(2, 2), &wsadata);
+    /* Note: WSAStartup can be called more than once so we don't bother with
+     * making accesses to wsa_inited thread-safe */
+    wsa_inited = TRUE;
+  }
+  tcpc->sock_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+  tcpc->cancel_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+  if (!tcpc->sock_event || !tcpc->cancel_event)
+  {
+    ERR("event creation failed\n");
+    if (tcpc->sock_event) CloseHandle(tcpc->sock_event);
+    return FALSE;
+  }
+  return TRUE;
 }
 
 static BOOL rpcrt4_sock_wait_for_recv(RpcConnection_tcp *tcpc)
 {
-  /* FIXME */
-  return FALSE;
+  HANDLE wait_handles[2];
+  DWORD res;
+  if (WSAEventSelect(tcpc->sock, tcpc->sock_event, FD_READ | FD_CLOSE) == SOCKET_ERROR)
+  {
+    ERR("WSAEventSelect() failed with error %d\n", WSAGetLastError());
+    return FALSE;
+  }
+  wait_handles[0] = tcpc->sock_event;
+  wait_handles[1] = tcpc->cancel_event;
+  res = WaitForMultipleObjects(2, wait_handles, FALSE, INFINITE);
+  switch (res)
+  {
+  case WAIT_OBJECT_0:
+    return TRUE;
+  case WAIT_OBJECT_0 + 1:
+    return FALSE;
+  default:
+    ERR("WaitForMultipleObjects() failed with error %d\n", GetLastError());
+    return FALSE;
+  }
 }
 
 static BOOL rpcrt4_sock_wait_for_send(RpcConnection_tcp *tcpc)
 {
-  /* FIXME */
-  return FALSE;
+  DWORD res;
+  if (WSAEventSelect(tcpc->sock, tcpc->sock_event, FD_WRITE | FD_CLOSE) == SOCKET_ERROR)
+  {
+    ERR("WSAEventSelect() failed with error %d\n", WSAGetLastError());
+    return FALSE;
+  }
+  res = WaitForSingleObject(tcpc->sock_event, INFINITE);
+  switch (res)
+  {
+  case WAIT_OBJECT_0:
+    return TRUE;
+  default:
+    ERR("WaitForMultipleObjects() failed with error %d\n", GetLastError());
+    return FALSE;
+  }
 }
 
 static void rpcrt4_sock_wait_cancel(RpcConnection_tcp *tcpc)
 {
-  /* FIXME */
+  SetEvent(tcpc->cancel_event);
 }
 
 static void rpcrt4_sock_wait_destroy(RpcConnection_tcp *tcpc)
 {
-  /* FIXME */
+  CloseHandle(tcpc->sock_event);
+  CloseHandle(tcpc->cancel_event);
 }
 
 #endif
@@ -1104,8 +1157,6 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
   ERR("couldn't connect to %s:%s\n", Connection->NetworkAddr, Connection->Endpoint);
   return RPC_S_SERVER_UNAVAILABLE;
 }
-
-#ifdef HAVE_SOCKETPAIR
 
 static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *protseq, const char *endpoint)
 {
@@ -1265,8 +1316,6 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
     ERR("couldn't listen on port %s\n", endpoint);
     return status;
 }
-
-#endif
 
 static RPC_STATUS rpcrt4_conn_tcp_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
 {
@@ -1518,6 +1567,149 @@ static int rpcrt4_protseq_sock_wait_for_new_connection(RpcServerProtseq *protseq
         }
 
     return 1;
+}
+
+#else /* HAVE_SOCKETPAIR */
+
+typedef struct _RpcServerProtseq_sock
+{
+    RpcServerProtseq common;
+    HANDLE mgr_event;
+} RpcServerProtseq_sock;
+
+static RpcServerProtseq *rpcrt4_protseq_sock_alloc(void)
+{
+    RpcServerProtseq_sock *ps = HeapAlloc(GetProcessHeap(), 0, sizeof(*ps));
+    if (ps)
+    {
+        static BOOL wsa_inited;
+        if (!wsa_inited)
+        {
+            WSADATA wsadata;
+            WSAStartup(MAKEWORD(2, 2), &wsadata);
+            /* Note: WSAStartup can be called more than once so we don't bother with
+             * making accesses to wsa_inited thread-safe */
+            wsa_inited = TRUE;
+        }
+        ps->mgr_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    }
+    return &ps->common;
+}
+
+static void rpcrt4_protseq_sock_signal_state_changed(RpcServerProtseq *protseq)
+{
+    RpcServerProtseq_sock *sockps = CONTAINING_RECORD(protseq, RpcServerProtseq_sock, common);
+    SetEvent(sockps->mgr_event);
+}
+
+static void *rpcrt4_protseq_sock_get_wait_array(RpcServerProtseq *protseq, void *prev_array, unsigned int *count)
+{
+    HANDLE *objs = prev_array;
+    RpcConnection_tcp *conn;
+    RpcServerProtseq_sock *sockps = CONTAINING_RECORD(protseq, RpcServerProtseq_sock, common);
+
+    EnterCriticalSection(&protseq->cs);
+
+    /* open and count connections */
+    *count = 1;
+    conn = CONTAINING_RECORD(protseq->conn, RpcConnection_tcp, common);
+    while (conn)
+    {
+        if (conn->sock != -1)
+            (*count)++;
+        conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_tcp, common);
+    }
+
+    /* make array of connections */
+    if (objs)
+        objs = HeapReAlloc(GetProcessHeap(), 0, objs, *count*sizeof(HANDLE));
+    else
+        objs = HeapAlloc(GetProcessHeap(), 0, *count*sizeof(HANDLE));
+    if (!objs)
+    {
+        ERR("couldn't allocate objs\n");
+        LeaveCriticalSection(&protseq->cs);
+        return NULL;
+    }
+
+    objs[0] = sockps->mgr_event;
+    *count = 1;
+    conn = CONTAINING_RECORD(protseq->conn, RpcConnection_tcp, common);
+    while (conn)
+    {
+        if (conn->sock != -1)
+        {
+            int res = WSAEventSelect(conn->sock, conn->sock_event, FD_ACCEPT);
+            if (res == SOCKET_ERROR)
+                ERR("WSAEventSelect() failed with error %d\n", WSAGetLastError());
+            else
+            {
+                objs[*count] = conn->sock_event;
+                (*count)++;
+            }
+        }
+        conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_tcp, common);
+    }
+    LeaveCriticalSection(&protseq->cs);
+    return objs;
+}
+
+static void rpcrt4_protseq_sock_free_wait_array(RpcServerProtseq *protseq, void *array)
+{
+    HeapFree(GetProcessHeap(), 0, array);
+}
+
+static int rpcrt4_protseq_sock_wait_for_new_connection(RpcServerProtseq *protseq, unsigned int count, void *wait_array)
+{
+    HANDLE b_handle;
+    HANDLE *objs = wait_array;
+    DWORD res;
+    RpcConnection *cconn;
+    RpcConnection_tcp *conn;
+
+    if (!objs)
+        return -1;
+
+    do
+    {
+        /* an alertable wait isn't strictly necessary, but due to our
+         * overlapped I/O implementation in Wine we need to free some memory
+         * by the file user APC being called, even if no completion routine was
+         * specified at the time of starting the async operation */
+        res = WaitForMultipleObjectsEx(count, objs, FALSE, INFINITE, TRUE);
+    } while (res == WAIT_IO_COMPLETION);
+
+    if (res == WAIT_OBJECT_0)
+        return 0;
+    else if (res == WAIT_FAILED)
+    {
+        ERR("wait failed with error %d\n", GetLastError());
+        return -1;
+    }
+    else
+    {
+        b_handle = objs[res - WAIT_OBJECT_0];
+        /* find which connection got a RPC */
+        EnterCriticalSection(&protseq->cs);
+        conn = CONTAINING_RECORD(protseq->conn, RpcConnection_tcp, common);
+        while (conn)
+        {
+            if (b_handle == conn->sock_event) break;
+            conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_tcp, common);
+        }
+        cconn = NULL;
+        if (conn)
+            RPCRT4_SpawnConnection(&cconn, &conn->common);
+        else
+            ERR("failed to locate connection for handle %p\n", b_handle);
+        LeaveCriticalSection(&protseq->cs);
+        if (cconn)
+        {
+            RPCRT4_new_client(cconn);
+            return 1;
+        }
+        else return -1;
+    }
 }
 
 #endif  /* HAVE_SOCKETPAIR */
@@ -2551,7 +2743,6 @@ static const struct protseq_ops protseq_list[] =
         rpcrt4_protseq_np_wait_for_new_connection,
         rpcrt4_protseq_ncalrpc_open_endpoint,
     },
-#ifdef HAVE_SOCKETPAIR
     {
         "ncacn_ip_tcp",
         rpcrt4_protseq_sock_alloc,
@@ -2561,7 +2752,6 @@ static const struct protseq_ops protseq_list[] =
         rpcrt4_protseq_sock_wait_for_new_connection,
         rpcrt4_protseq_ncacn_ip_tcp_open_endpoint,
     },
-#endif
 };
 
 #define ARRAYSIZE(a) (sizeof((a)) / sizeof((a)[0]))
