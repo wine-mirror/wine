@@ -1376,11 +1376,11 @@ static void test_ITEMIDLIST_format(void) {
     HANDLE hFile;
     HRESULT hr;
     BOOL bResult;
-    WCHAR wszFile[3][17] = { { 'e','v','e','n','_',0 }, { 'o','d','d','_',0 }, 
+    WCHAR wszFile[3][17] = { { 'e','v','e','n','_',0 }, { 'o','d','d','_',0 },
         { 'l','o','n','g','e','r','_','t','h','a','n','.','8','_','3',0 } };
     int i;
-    
-    if(!pSHGetSpecialFolderPathW) return;
+
+    if (!pSHGetSpecialFolderPathW) return;
 
     bResult = pSHGetSpecialFolderPathW(NULL, wszPersonal, CSIDL_PERSONAL, FALSE);
     ok(bResult, "SHGetSpecialFolderPathW failed! Last error: %u\n", GetLastError());
@@ -1417,9 +1417,9 @@ static void test_ITEMIDLIST_format(void) {
         CHAR szFile[MAX_PATH];
         struct FileStructA *pFileStructA;
         WORD cbOffset;
-        
+
         WideCharToMultiByte(CP_ACP, 0, wszFile[i], -1, szFile, MAX_PATH, NULL, NULL);
-        
+
         hFile = CreateFileW(wszFile[i], GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_FLAG_WRITE_THROUGH, NULL);
         ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed! (%u)\n", GetLastError());
         if (hFile == INVALID_HANDLE_VALUE) {
@@ -1439,51 +1439,57 @@ static void test_ITEMIDLIST_format(void) {
         pFileStructA = (struct FileStructA *)pidlFile->mkid.abID;
         ok(pFileStructA->type == 0x32, "PIDLTYPE should be 0x32!\n");
         ok(pFileStructA->dummy == 0x00, "Dummy Byte should be 0x00!\n");
-        ok(pFileStructA->dwFileSize == 0, "Filesize should be zero!\n"); 
+        ok(pFileStructA->dwFileSize == 0, "Filesize should be zero!\n");
 
-        if (i < 2) /* First two file names are already in valid 8.3 format */ 
+        if (i < 2) /* First two file names are already in valid 8.3 format */
             ok(!strcmp(szFile, (CHAR*)&pidlFile->mkid.abID[12]), "Wrong file name!\n");
-        else 
+        else
             /* WinXP stores a derived 8.3 dos name (LONGER~1.8_3) here. We probably
              * can't implement this correctly, since unix filesystems don't support
              * this nasty short/long filename stuff. So we'll probably stay with our
              * current habbit of storing the long filename here, which seems to work
              * just fine. */
-            todo_wine { ok(pidlFile->mkid.abID[18] == '~', "Should be derived 8.3 name!\n"); }
+            todo_wine
+            ok(pidlFile->mkid.abID[18] == '~' ||
+               broken(pidlFile->mkid.abID[34] == '~'),  /* Win2k */
+               "Should be derived 8.3 name!\n");
 
         if (i == 0) /* First file name has an even number of chars. No need for alignment. */
-            ok(pidlFile->mkid.abID[12 + strlen(szFile) + 1] != '\0', 
-                "Alignment byte, where there shouldn't be!\n"); 
-        
+            ok(pidlFile->mkid.abID[12 + strlen(szFile) + 1] != '\0' ||
+               broken(pidlFile->mkid.cb == 2 + 12 + strlen(szFile) + 1 + 1),    /* Win2k */
+                "Alignment byte, where there shouldn't be!\n");
+
         if (i == 1) /* Second file name has an uneven number of chars => alignment byte */
-            ok(pidlFile->mkid.abID[12 + strlen(szFile) + 1] == '\0', 
+            ok(pidlFile->mkid.abID[12 + strlen(szFile) + 1] == '\0',
                 "There should be an alignment byte, but isn't!\n");
 
         /* The offset of the FileStructW member is stored as a WORD at the end of the pidl. */
         cbOffset = *(WORD*)(((LPBYTE)pidlFile)+pidlFile->mkid.cb-sizeof(WORD));
-        ok (cbOffset >= sizeof(struct FileStructA) &&
-            cbOffset <= pidlFile->mkid.cb - sizeof(struct FileStructW),
+        ok ((cbOffset >= sizeof(struct FileStructA) &&
+            cbOffset <= pidlFile->mkid.cb - sizeof(struct FileStructW)) ||
+            broken(pidlFile->mkid.cb == 2 + 12 + strlen(szFile) + 1 + 1) ||     /* Win2k on short names */
+            broken(pidlFile->mkid.cb == 2 + 12 + strlen(szFile) + 1 + 12 + 1),  /* Win2k on long names */
             "Wrong offset value (%d) stored at the end of the PIDL\n", cbOffset);
 
         if (cbOffset >= sizeof(struct FileStructA) &&
-            cbOffset <= pidlFile->mkid.cb - sizeof(struct FileStructW)) 
+            cbOffset <= pidlFile->mkid.cb - sizeof(struct FileStructW))
         {
             struct FileStructW *pFileStructW = (struct FileStructW *)(((LPBYTE)pidlFile)+cbOffset);
 
-            ok(pidlFile->mkid.cb == cbOffset + pFileStructW->cbLen, 
+            ok(pidlFile->mkid.cb == cbOffset + pFileStructW->cbLen,
                 "FileStructW's offset and length should add up to the PIDL's length!\n");
 
             if (pidlFile->mkid.cb == cbOffset + pFileStructW->cbLen) {
                 /* Since we just created the file, time of creation,
-                 * time of last access and time of last write access just be the same. 
-                 * These tests seem to fail sometimes (on WinXP), if the test is run again shortly 
+                 * time of last access and time of last write access just be the same.
+                 * These tests seem to fail sometimes (on WinXP), if the test is run again shortly
                  * after the first run. I do remember something with NTFS keeping the creation time
                  * if a file is deleted and then created again within a couple of seconds or so.
                  * Might be the reason. */
                 ok (pFileStructA->uFileDate == pFileStructW->uDate &&
                     pFileStructA->uFileTime == pFileStructW->uTime,
                     "Last write time should match creation time!\n");
-    
+
                 ok (pFileStructA->uFileDate == pFileStructW->uDate2 &&
                     pFileStructA->uFileTime == pFileStructW->uTime2,
                     "Last write time should match last access time!\n");
