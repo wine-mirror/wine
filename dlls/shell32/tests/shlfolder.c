@@ -1196,7 +1196,13 @@ static void test_FolderShortcut(void) {
         win_skip("SHGetSpecialFolderPathW and/or StrRetToBufW are not available\n");
         return;
     }
-   
+
+    if (!pSHGetFolderPathAndSubDirA)
+    {
+        win_skip("FolderShortcut test doesn't work on Win2k\n");
+        return;
+    }
+
     /* These tests basically show, that CLSID_FolderShortcuts are initialized
      * via their IPersistPropertyBag interface. And that the target folder
      * is taken from the IPropertyBag's 'Target' property.
@@ -1216,7 +1222,7 @@ static void test_FolderShortcut(void) {
         IPersistPropertyBag_Release(pPersistPropertyBag);
         return;
     }
-    
+
     hr = IPersistPropertyBag_QueryInterface(pPersistPropertyBag, &IID_IShellFolder, 
                                             (LPVOID*)&pShellFolder);
     IPersistPropertyBag_Release(pPersistPropertyBag);
