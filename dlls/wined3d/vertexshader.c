@@ -183,7 +183,12 @@ static void vshader_set_input(
         WINED3DSP_WRITEMASK_ALL | (WINED3DSPR_INPUT << WINED3DSP_REGTYPE_SHIFT) | regnum;
 
     This->semantics_in[regnum].usage = usage_token;
-    This->semantics_in[regnum].reg = reg_token;
+    This->semantics_in[regnum].reg.register_type = WINED3DSPR_INPUT;
+    This->semantics_in[regnum].reg.register_idx = regnum;
+    This->semantics_in[regnum].reg.write_mask = WINED3DSP_WRITEMASK_ALL;
+    This->semantics_in[regnum].reg.modifiers = 0;
+    This->semantics_in[regnum].reg.token = reg_token;
+    This->semantics_in[regnum].reg.addr_token = 0;
 }
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2) {

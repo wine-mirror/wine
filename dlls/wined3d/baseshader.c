@@ -212,11 +212,23 @@ static void shader_delete_constant_list(struct list* clist) {
     list_init(clist);
 }
 
+static void shader_parse_dst_param(DWORD param, DWORD addr_param, struct wined3d_shader_dst_param *dst)
+{
+    dst->register_type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
+            | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
+    dst->register_idx = param & WINED3DSP_REGNUM_MASK;
+    dst->write_mask = param & WINED3DSP_WRITEMASK_ALL;
+    dst->modifiers = param & WINED3DSP_DSTMOD_MASK;
+    dst->token = param;
+    dst->addr_token = addr_param;
+}
+
 /* Note that this does not count the loop register
  * as an address register. */
 
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_maps *reg_maps,
-        struct semantic *semantics_in, struct semantic *semantics_out, const DWORD *byte_code)
+        struct wined3d_shader_semantic *semantics_in, struct wined3d_shader_semantic *semantics_out,
+        const DWORD *byte_code)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
@@ -286,13 +298,14 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                     reg_maps->packed_input[regnum] = 1;
 
                 semantics_in[regnum].usage = usage;
-                semantics_in[regnum].reg = param;
+                shader_parse_dst_param(param, 0, &semantics_in[regnum].reg);
 
             /* Vshader: mark 3.0 output registers used, save token */
             } else if (WINED3DSPR_OUTPUT == regtype) {
                 reg_maps->packed_output[regnum] = 1;
                 semantics_out[regnum].usage = usage;
-                semantics_out[regnum].reg = param;
+                shader_parse_dst_param(param, 0, &semantics_out[regnum].reg);
+
                 if (usage & (WINED3DDECLUSAGE_FOG << WINED3DSP_DCL_USAGE_SHIFT))
                     reg_maps->fog = 1;
 
@@ -848,13 +861,9 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         ins.dst_count = curOpcode->dst_token ? 1 : 0;
         if (ins.dst_count)
         {
-            dst_param.addr_token = 0;
-            pToken += shader_get_param(pToken, shader_version, &dst_param.token, &dst_param.addr_token);
-            dst_param.register_type = ((dst_param.token & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
-                    | ((dst_param.token & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
-            dst_param.register_idx = dst_param.token & WINED3DSP_REGNUM_MASK;
-            dst_param.write_mask = dst_param.token & WINED3DSP_WRITEMASK_ALL;
-            dst_param.modifiers = dst_param.token & WINED3DSP_DSTMOD_MASK;
+            DWORD param, addr_param = 0;
+            pToken += shader_get_param(pToken, shader_version, &param, &addr_param);
+            shader_parse_dst_param(param, addr_param, &dst_param);
         }
 
         /* Predication token */

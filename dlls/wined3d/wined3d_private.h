@@ -406,12 +406,6 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_TABLE_SIZE
 };
 
-typedef struct semantic
-{
-    DWORD usage;
-    DWORD reg;
-} semantic;
-
 typedef struct shader_reg_maps
 {
     DWORD shader_version;
@@ -474,6 +468,12 @@ struct wined3d_shader_instruction
     UINT dst_count;
     const struct wined3d_shader_dst_param *dst;
     UINT src_count;
+};
+
+struct wined3d_shader_semantic
+{
+    DWORD usage;
+    struct wined3d_shader_dst_param reg;
 };
 
 typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
@@ -2341,7 +2341,8 @@ void shader_buffer_init(struct SHADER_BUFFER *buffer);
 void shader_buffer_free(struct SHADER_BUFFER *buffer);
 void shader_cleanup(IWineD3DBaseShader *iface);
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_maps *reg_maps,
-        struct semantic *semantics_in, struct semantic *semantics_out, const DWORD *byte_code);
+        struct wined3d_shader_semantic *semantics_in, struct wined3d_shader_semantic *semantics_out,
+        const DWORD *byte_code);
 void shader_init(struct IWineD3DBaseShaderClass *shader,
         IWineD3DDevice *device, const SHADER_OPCODE *instruction_table);
 void shader_trace_init(const DWORD *byte_code, const SHADER_OPCODE *opcode_table);
@@ -2439,8 +2440,8 @@ typedef struct IWineD3DVertexShaderImpl {
     UINT                        num_gl_shaders, shader_array_size;
 
     /* Vertex shader input and output semantics */
-    semantic semantics_in [MAX_ATTRIBS];
-    semantic semantics_out [MAX_REG_OUTPUT];
+    struct wined3d_shader_semantic semantics_in[MAX_ATTRIBS];
+    struct wined3d_shader_semantic semantics_out[MAX_REG_OUTPUT];
 
     UINT                       min_rel_offset, max_rel_offset;
     UINT                       rel_offset;
@@ -2474,7 +2475,7 @@ typedef struct IWineD3DPixelShaderImpl {
     IUnknown                   *parent;
 
     /* Pixel shader input semantics */
-    semantic semantics_in [MAX_REG_INPUT];
+    struct wined3d_shader_semantic semantics_in[MAX_REG_INPUT];
     DWORD                 input_reg_map[MAX_REG_INPUT];
     BOOL                  input_reg_used[MAX_REG_INPUT];
     int                         declared_in_count;

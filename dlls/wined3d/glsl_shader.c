@@ -2993,7 +2993,7 @@ static void pshader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void pshader_glsl_input_pack(SHADER_BUFFER* buffer, const struct semantic* semantics_in,
+static void pshader_glsl_input_pack(SHADER_BUFFER *buffer, const struct wined3d_shader_semantic *semantics_in,
         IWineD3DPixelShader *iface, enum vertexprocessing_mode vertexprocessing)
 {
    unsigned int i;
@@ -3002,7 +3002,6 @@ static void pshader_glsl_input_pack(SHADER_BUFFER* buffer, const struct semantic
    for (i = 0; i < MAX_REG_INPUT; i++) {
 
        DWORD usage_token = semantics_in[i].usage;
-       DWORD register_token = semantics_in[i].reg;
        DWORD usage, usage_idx;
        char reg_mask[6];
 
@@ -3010,7 +3009,7 @@ static void pshader_glsl_input_pack(SHADER_BUFFER* buffer, const struct semantic
        if (!usage_token) continue;
        usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
        usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-       shader_glsl_get_write_mask(register_token, reg_mask);
+       shader_glsl_get_write_mask(semantics_in[i].reg.token, reg_mask);
 
        switch(usage) {
 
@@ -3092,12 +3091,11 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const WineD
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
-static void handle_ps3_input(SHADER_BUFFER *buffer, const struct semantic *semantics_in,
-        const struct semantic *semantics_out, const WineD3D_GL_Info *gl_info, const DWORD *map)
+static void handle_ps3_input(SHADER_BUFFER *buffer, const struct wined3d_shader_semantic *semantics_in,
+        const struct wined3d_shader_semantic *semantics_out, const WineD3D_GL_Info *gl_info, const DWORD *map)
 {
     unsigned int i, j;
     DWORD usage_token, usage_token_out;
-    DWORD register_token, register_token_out;
     DWORD usage, usage_idx, usage_out, usage_idx_out;
     DWORD *set;
     DWORD in_idx;
@@ -3136,11 +3134,9 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const struct semantic *seman
             sprintf(destination, "IN[%u]", in_idx);
         }
 
-        register_token = semantics_in[i].reg;
-
         usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
         usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-        set[map[i]] = shader_glsl_get_write_mask(register_token, reg_mask);
+        set[map[i]] = shader_glsl_get_write_mask(semantics_in[i].reg.token, reg_mask);
 
         if(!semantics_out) {
             switch(usage) {
@@ -3180,11 +3176,10 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const struct semantic *seman
             for(j = 0; j < MAX_REG_OUTPUT; j++) {
                 usage_token_out = semantics_out[j].usage;
                 if (!usage_token_out) continue;
-                register_token_out = semantics_out[j].reg;
 
                 usage_out = (usage_token_out & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
                 usage_idx_out = (usage_token_out & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-                shader_glsl_get_write_mask(register_token_out, reg_mask_out);
+                shader_glsl_get_write_mask(semantics_out[j].reg.token, reg_mask_out);
 
                 if(usage == usage_out &&
                    usage_idx == usage_idx_out) {
@@ -3256,10 +3251,9 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     unsigned int i;
     SHADER_BUFFER buffer;
     DWORD usage_token;
-    DWORD register_token;
     DWORD usage, usage_idx, writemask;
     char reg_mask[6];
-    const struct semantic *semantics_out, *semantics_in;
+    const struct wined3d_shader_semantic *semantics_out, *semantics_in;
 
     shader_buffer_init(&buffer);
 
@@ -3291,11 +3285,10 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         for(i = 0; i < MAX_REG_OUTPUT; i++) {
             usage_token = semantics_out[i].usage;
             if (!usage_token) continue;
-            register_token = semantics_out[i].reg;
 
             usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
             usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-            writemask = shader_glsl_get_write_mask(register_token, reg_mask);
+            writemask = shader_glsl_get_write_mask(semantics_out[i].reg.token, reg_mask);
 
             switch(usage) {
                 case WINED3DDECLUSAGE_COLOR:
@@ -3347,11 +3340,10 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         for(i = 0; i < MAX_REG_OUTPUT; i++) {
             usage_token = semantics_out[i].usage;
             if (!usage_token) continue;
-            register_token = semantics_out[i].reg;
 
             usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
             usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-            shader_glsl_get_write_mask(register_token, reg_mask);
+            shader_glsl_get_write_mask(semantics_out[i].reg.token, reg_mask);
 
             switch(usage) {
                 case WINED3DDECLUSAGE_POSITION:
