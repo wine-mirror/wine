@@ -198,6 +198,8 @@ typedef struct
     LPWSTR lpszStatusText;
     DWORD dwContentLength; /* total number of bytes to be read */
     DWORD dwContentRead; /* bytes of the content read so far */
+    DWORD dwBytesToWrite;
+    DWORD dwBytesWritten;
     HTTPHEADERW *pCustHeaders;
     DWORD nCustHeaders;
     HANDLE hCacheFile;

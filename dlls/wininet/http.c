@@ -1875,9 +1875,14 @@ static DWORD HTTPREQ_ReadFileExW(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSW *bu
 
 static BOOL HTTPREQ_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWORD size, DWORD *written)
 {
+    BOOL ret;
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW)hdr;
 
-    return NETCON_send(&lpwhr->netConnection, buffer, size, 0, (LPINT)written);
+    *written = 0;
+    if ((ret = NETCON_send(&lpwhr->netConnection, buffer, size, 0, (LPINT)written)))
+        lpwhr->dwBytesWritten += *written;
+
+    return ret;
 }
 
 static void HTTPREQ_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
@@ -3259,6 +3264,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     {
         sprintfW(contentLengthStr, szContentLength, dwContentLength);
         HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        lpwhr->dwBytesToWrite = dwContentLength;
     }
     if (lpwhr->lpHttpSession->lpAppInfo->lpszAgent)
     {
@@ -3356,6 +3362,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
         NETCON_send(&lpwhr->netConnection, ascii_req, len, 0, &cnt);
         HeapFree( GetProcessHeap(), 0, ascii_req );
+
+        lpwhr->dwBytesWritten = dwOptionalLength;
 
         INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                               INTERNET_STATUS_REQUEST_SENT,
