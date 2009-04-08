@@ -2996,48 +2996,48 @@ static void pshader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
 static void pshader_glsl_input_pack(SHADER_BUFFER *buffer, const struct wined3d_shader_semantic *semantics_in,
         IWineD3DPixelShader *iface, enum vertexprocessing_mode vertexprocessing)
 {
-   unsigned int i;
-   IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) iface;
+    unsigned int i;
+    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
 
-   for (i = 0; i < MAX_REG_INPUT; i++) {
+    for (i = 0; i < MAX_REG_INPUT; ++i)
+    {
+        DWORD usage_token = semantics_in[i].usage;
+        DWORD usage, usage_idx;
+        char reg_mask[6];
 
-       DWORD usage_token = semantics_in[i].usage;
-       DWORD usage, usage_idx;
-       char reg_mask[6];
+        /* Uninitialized */
+        if (!usage_token) continue;
+        usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
+        usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
+        shader_glsl_get_write_mask(semantics_in[i].reg.token, reg_mask);
 
-       /* Uninitialized */
-       if (!usage_token) continue;
-       usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
-       usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-       shader_glsl_get_write_mask(semantics_in[i].reg.token, reg_mask);
+        switch (usage)
+        {
+            case WINED3DDECLUSAGE_TEXCOORD:
+                if (usage_idx < 8 && vertexprocessing == pretransformed)
+                    shader_addline(buffer, "IN[%u]%s = gl_TexCoord[%u]%s;\n",
+                            This->input_reg_map[i], reg_mask, usage_idx, reg_mask);
+                else
+                    shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                            This->input_reg_map[i], reg_mask, reg_mask);
+                break;
 
-       switch(usage) {
+            case WINED3DDECLUSAGE_COLOR:
+                if (usage_idx == 0)
+                    shader_addline(buffer, "IN[%u]%s = vec4(gl_Color)%s;\n",
+                            This->input_reg_map[i], reg_mask, reg_mask);
+                else if (usage_idx == 1)
+                    shader_addline(buffer, "IN[%u]%s = vec4(gl_SecondaryColor)%s;\n",
+                            This->input_reg_map[i], reg_mask, reg_mask);
+                else
+                    shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                            This->input_reg_map[i], reg_mask, reg_mask);
+                break;
 
-           case WINED3DDECLUSAGE_TEXCOORD:
-               if(usage_idx < 8 && vertexprocessing == pretransformed) {
-                   shader_addline(buffer, "IN[%u]%s = gl_TexCoord[%u]%s;\n",
-                                  This->input_reg_map[i], reg_mask, usage_idx, reg_mask);
-               } else {
-                   shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                                  This->input_reg_map[i], reg_mask, reg_mask);
-               }
-               break;
-
-           case WINED3DDECLUSAGE_COLOR:
-               if (usage_idx == 0)
-                   shader_addline(buffer, "IN[%u]%s = vec4(gl_Color)%s;\n",
-                       This->input_reg_map[i], reg_mask, reg_mask);
-               else if (usage_idx == 1)
-                   shader_addline(buffer, "IN[%u]%s = vec4(gl_SecondaryColor)%s;\n",
-                       This->input_reg_map[i], reg_mask, reg_mask);
-               else
-                   shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                       This->input_reg_map[i], reg_mask, reg_mask);
-               break;
-
-           default:
-               shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                   This->input_reg_map[i], reg_mask, reg_mask);
+            default:
+                shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                        This->input_reg_map[i], reg_mask, reg_mask);
+                break;
         }
     }
 }
