@@ -298,33 +298,6 @@ static void dump_luid( const char *prefix, const luid_t *luid )
     fprintf( stderr, "%s%d.%u", prefix, luid->high_part, luid->low_part );
 }
 
-static void dump_context( const CONTEXT *context, data_size_t size )
-{
-    CONTEXT ctx;
-
-    memset( &ctx, 0, sizeof(ctx) );
-    memcpy( &ctx, context, min( size, sizeof(CONTEXT) ));
-#ifdef __i386__
-    fprintf( stderr, "{flags=%08x,eax=%08x,ebx=%08x,ecx=%08x,edx=%08x,esi=%08x,edi=%08x,"
-             "ebp=%08x,eip=%08x,esp=%08x,eflags=%08x,cs=%04x,ds=%04x,es=%04x,"
-             "fs=%04x,gs=%04x,dr0=%08x,dr1=%08x,dr2=%08x,dr3=%08x,dr6=%08x,dr7=%08x,",
-             ctx.ContextFlags, ctx.Eax, ctx.Ebx, ctx.Ecx, ctx.Edx,
-             ctx.Esi, ctx.Edi, ctx.Ebp, ctx.Eip, ctx.Esp, ctx.EFlags,
-             ctx.SegCs, ctx.SegDs, ctx.SegEs, ctx.SegFs, ctx.SegGs,
-             ctx.Dr0, ctx.Dr1, ctx.Dr2, ctx.Dr3, ctx.Dr6, ctx.Dr7 );
-    fprintf( stderr, "float=" );
-    dump_uints( (const int *)&ctx.FloatSave, sizeof(ctx.FloatSave) / sizeof(int) );
-    if (size > FIELD_OFFSET( CONTEXT, ExtendedRegisters ))
-    {
-        fprintf( stderr, ",extended=" );
-        dump_uints( (const int *)&ctx.ExtendedRegisters, sizeof(ctx.ExtendedRegisters) / sizeof(int) );
-    }
-    fprintf( stderr, "}" );
-#else
-    dump_uints( (const int *)&ctx, sizeof(ctx) / sizeof(int) );
-#endif
-}
-
 static void dump_varargs_ints( const char *prefix, data_size_t size )
 {
     const int *data = cur_data;
@@ -428,14 +401,190 @@ static void dump_varargs_unicode_str( const char *prefix, data_size_t size )
 
 static void dump_varargs_context( const char *prefix, data_size_t size )
 {
+    const context_t *context = cur_data;
+    context_t ctx;
+    unsigned int i;
+
     if (!size)
     {
         fprintf( stderr, "%s{}", prefix );
         return;
     }
-    fprintf( stderr, "%s", prefix );
-    dump_context( cur_data, size );
-    remove_data( min( size, sizeof(CONTEXT) ));
+    size = min( size, sizeof(ctx) );
+    memset( &ctx, 0, sizeof(ctx) );
+    memcpy( &ctx, context, size );
+
+    fprintf( stderr,"%s{", prefix );
+    dump_cpu_type( "cpu=", &ctx.cpu );
+    switch (ctx.cpu)
+    {
+    case CPU_x86:
+        if (ctx.flags & SERVER_CTX_CONTROL)
+            fprintf( stderr, ",eip=%08x,esp=%08x,ebp=%08x,eflags=%08x,cs=%04x,ss=%04x",
+                     ctx.ctl.i386_regs.eip, ctx.ctl.i386_regs.esp, ctx.ctl.i386_regs.ebp,
+                     ctx.ctl.i386_regs.eflags, ctx.ctl.i386_regs.cs, ctx.ctl.i386_regs.ss );
+        if (ctx.flags & SERVER_CTX_SEGMENTS)
+            fprintf( stderr, ",ds=%04x,es=%04x,fs=%04x,gs=%04x",
+                     ctx.seg.i386_regs.ds, ctx.seg.i386_regs.es,
+                     ctx.seg.i386_regs.fs, ctx.seg.i386_regs.gs );
+        if (ctx.flags & SERVER_CTX_INTEGER)
+            fprintf( stderr, ",eax=%08x,ebx=%08x,ecx=%08x,edx=%08x,esi=%08x,edi=%08x",
+                     ctx.integer.i386_regs.eax, ctx.integer.i386_regs.ebx, ctx.integer.i386_regs.ecx,
+                     ctx.integer.i386_regs.edx, ctx.integer.i386_regs.esi, ctx.integer.i386_regs.edi );
+        if (ctx.flags & SERVER_CTX_DEBUG_REGISTERS)
+            fprintf( stderr, ",dr0=%08x,dr1=%08x,dr2=%08x,dr3=%08x,dr6=%08x,dr7=%08x",
+                     ctx.debug.i386_regs.dr0, ctx.debug.i386_regs.dr1, ctx.debug.i386_regs.dr2,
+                     ctx.debug.i386_regs.dr3, ctx.debug.i386_regs.dr6, ctx.debug.i386_regs.dr7 );
+        if (ctx.flags & SERVER_CTX_FLOATING_POINT)
+        {
+            fprintf( stderr, "fp.ctrl=%08x,fp.status=%08x,fp.tag=%08x,fp.err_off=%08x,fp.err_sel=%08x",
+                     ctx.fp.i386_regs.ctrl, ctx.fp.i386_regs.status, ctx.fp.i386_regs.tag,
+                     ctx.fp.i386_regs.err_off, ctx.fp.i386_regs.err_sel );
+            fprintf( stderr, ",fp.data_off=%08x,fp.data_sel=%08x,fp.cr0npx=%08x",
+                     ctx.fp.i386_regs.data_off, ctx.fp.i386_regs.data_sel, ctx.fp.i386_regs.cr0npx );
+            for (i = 0; i < 8; i++)
+                fprintf( stderr, ",fp.reg%u=%Lg", i, *(long double *)&ctx.fp.i386_regs.regs[10*i] );
+        }
+        if (ctx.flags & SERVER_CTX_EXTENDED_REGISTERS)
+        {
+            fprintf( stderr, ",extended=" );
+            dump_uints( (const int *)ctx.ext.i386_regs, sizeof(ctx.ext.i386_regs) / sizeof(int) );
+        }
+        break;
+    case CPU_x86_64:
+        if (ctx.flags & SERVER_CTX_CONTROL)
+        {
+            dump_uint64( ",rip=", &ctx.ctl.x86_64_regs.rip );
+            dump_uint64( ",rbp=", &ctx.ctl.x86_64_regs.rbp );
+            dump_uint64( ",rsp=", &ctx.ctl.x86_64_regs.rsp );
+            fprintf( stderr, ",cs=%04x,ss=%04x,flags=%08x,mxcsr=%08x",
+                     ctx.ctl.x86_64_regs.cs, ctx.ctl.x86_64_regs.ss,
+                     ctx.ctl.x86_64_regs.flags, ctx.ctl.x86_64_regs.mxcsr );
+        }
+        if (ctx.flags & SERVER_CTX_INTEGER)
+        {
+            dump_uint64( ",rax=", &ctx.integer.x86_64_regs.rax );
+            dump_uint64( ",rbx=", &ctx.integer.x86_64_regs.rbx );
+            dump_uint64( ",rcx=", &ctx.integer.x86_64_regs.rcx );
+            dump_uint64( ",rdx=", &ctx.integer.x86_64_regs.rdx );
+            dump_uint64( ",rsi=", &ctx.integer.x86_64_regs.rsi );
+            dump_uint64( ",rdi=", &ctx.integer.x86_64_regs.rdi );
+            dump_uint64( ",r8=",  &ctx.integer.x86_64_regs.r8 );
+            dump_uint64( ",r9=",  &ctx.integer.x86_64_regs.r9 );
+            dump_uint64( ",r10=", &ctx.integer.x86_64_regs.r10 );
+            dump_uint64( ",r11=", &ctx.integer.x86_64_regs.r11 );
+            dump_uint64( ",r12=", &ctx.integer.x86_64_regs.r12 );
+            dump_uint64( ",r13=", &ctx.integer.x86_64_regs.r13 );
+            dump_uint64( ",r14=", &ctx.integer.x86_64_regs.r14 );
+            dump_uint64( ",r15=", &ctx.integer.x86_64_regs.r15 );
+        }
+        if (ctx.flags & SERVER_CTX_SEGMENTS)
+            fprintf( stderr, ",ds=%04x,es=%04x,fs=%04x,gs=%04x",
+                     ctx.seg.x86_64_regs.ds, ctx.seg.x86_64_regs.es,
+                     ctx.seg.x86_64_regs.fs, ctx.seg.x86_64_regs.gs );
+        if (ctx.flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            dump_uint64( ",dr0=", &ctx.debug.x86_64_regs.dr0 );
+            dump_uint64( ",dr1=", &ctx.debug.x86_64_regs.dr1 );
+            dump_uint64( ",dr2=", &ctx.debug.x86_64_regs.dr2 );
+            dump_uint64( ",dr3=", &ctx.debug.x86_64_regs.dr3 );
+            dump_uint64( ",dr6=", &ctx.debug.x86_64_regs.dr6 );
+            dump_uint64( ",dr7=", &ctx.debug.x86_64_regs.dr7 );
+        }
+        if (ctx.flags & SERVER_CTX_FLOATING_POINT)
+        {
+            for (i = 0; i < 32; i++)
+                fprintf( stderr, ",fp%u=%08x%08x%08x%08x", i,
+                         (unsigned int)(ctx.fp.x86_64_regs.fpregs[i].high >> 32),
+                         (unsigned int)ctx.fp.x86_64_regs.fpregs[i].high,
+                         (unsigned int)(ctx.fp.x86_64_regs.fpregs[i].low >> 32),
+                         (unsigned int)ctx.fp.x86_64_regs.fpregs[i].low );
+        }
+        break;
+    case CPU_ALPHA:
+        if (ctx.flags & SERVER_CTX_CONTROL)
+        {
+            dump_uint64( ",fir=", &ctx.ctl.alpha_regs.fir );
+            fprintf( stderr, ",psr=%08x", ctx.ctl.alpha_regs.psr );
+        }
+        if (ctx.flags & SERVER_CTX_INTEGER)
+        {
+            dump_uint64( ",v0=",  &ctx.integer.alpha_regs.v0 );
+            dump_uint64( ",t0=",  &ctx.integer.alpha_regs.t0 );
+            dump_uint64( ",t1=",  &ctx.integer.alpha_regs.t1 );
+            dump_uint64( ",t2=",  &ctx.integer.alpha_regs.t2 );
+            dump_uint64( ",t3=",  &ctx.integer.alpha_regs.t3 );
+            dump_uint64( ",t4=",  &ctx.integer.alpha_regs.t4 );
+            dump_uint64( ",t5=",  &ctx.integer.alpha_regs.t5 );
+            dump_uint64( ",t6=",  &ctx.integer.alpha_regs.t6 );
+            dump_uint64( ",t7=",  &ctx.integer.alpha_regs.t7 );
+            dump_uint64( ",t8=",  &ctx.integer.alpha_regs.t8 );
+            dump_uint64( ",t9=",  &ctx.integer.alpha_regs.t9 );
+            dump_uint64( ",t10=", &ctx.integer.alpha_regs.t10 );
+            dump_uint64( ",t11=", &ctx.integer.alpha_regs.t11 );
+            dump_uint64( ",t12=", &ctx.integer.alpha_regs.t12 );
+            dump_uint64( ",s0=",  &ctx.integer.alpha_regs.s0 );
+            dump_uint64( ",s1=",  &ctx.integer.alpha_regs.s1 );
+            dump_uint64( ",s2=",  &ctx.integer.alpha_regs.s2 );
+            dump_uint64( ",s3=",  &ctx.integer.alpha_regs.s3 );
+            dump_uint64( ",s4=",  &ctx.integer.alpha_regs.s4 );
+            dump_uint64( ",s5=",  &ctx.integer.alpha_regs.s5 );
+            dump_uint64( ",s6=",  &ctx.integer.alpha_regs.s6 );
+            dump_uint64( ",a0=",  &ctx.integer.alpha_regs.a0 );
+            dump_uint64( ",a1=",  &ctx.integer.alpha_regs.a1 );
+            dump_uint64( ",a2=",  &ctx.integer.alpha_regs.a2 );
+            dump_uint64( ",a3=",  &ctx.integer.alpha_regs.a3 );
+            dump_uint64( ",a4=",  &ctx.integer.alpha_regs.a4 );
+            dump_uint64( ",a5=",  &ctx.integer.alpha_regs.a5 );
+            dump_uint64( ",at=",  &ctx.integer.alpha_regs.at );
+        }
+        if (ctx.flags & SERVER_CTX_FLOATING_POINT)
+        {
+            for (i = 0; i < 32; i++)
+            {
+                fprintf( stderr, ",f%u", i );
+                dump_uint64( "=", &ctx.fp.alpha_regs.f[i] );
+            }
+            dump_uint64( ",fpcr=", &ctx.fp.alpha_regs.fpcr );
+            dump_uint64( ",softfpcr=", &ctx.fp.alpha_regs.softfpcr );
+        }
+        break;
+    case CPU_POWERPC:
+        if (ctx.flags & SERVER_CTX_CONTROL)
+            fprintf( stderr, ",iar=%08x,msr=%08x,ctr=%08x,lr=%08x,dar=%08x,dsisr=%08x,trap=%08x",
+                     ctx.ctl.powerpc_regs.iar, ctx.ctl.powerpc_regs.msr, ctx.ctl.powerpc_regs.ctr,
+                     ctx.ctl.powerpc_regs.lr, ctx.ctl.powerpc_regs.dar, ctx.ctl.powerpc_regs.dsisr,
+                     ctx.ctl.powerpc_regs.trap );
+        if (ctx.flags & SERVER_CTX_INTEGER)
+        {
+            for (i = 0; i < 32; i++) fprintf( stderr, ",gpr%u=%08x", i, ctx.integer.powerpc_regs.gpr[i] );
+            fprintf( stderr, ",cr=%08x,xer=%08x",
+                     ctx.integer.powerpc_regs.cr, ctx.integer.powerpc_regs.xer );
+        }
+        if (ctx.flags & SERVER_CTX_DEBUG_REGISTERS)
+            for (i = 0; i < 8; i++) fprintf( stderr, ",dr%u=%08x", i, ctx.debug.powerpc_regs.dr[i] );
+        if (ctx.flags & SERVER_CTX_FLOATING_POINT)
+        {
+            for (i = 0; i < 32; i++) fprintf( stderr, ",fpr%u=%g", i, ctx.fp.powerpc_regs.fpr[i] );
+            fprintf( stderr, ",fpscr=%g", ctx.fp.powerpc_regs.fpscr );
+        }
+        break;
+    case CPU_SPARC:
+        if (ctx.flags & SERVER_CTX_CONTROL)
+            fprintf( stderr, ",psr=%08x,pc=%08x,npc=%08x,y=%08x,wim=%08x,tbr=%08x",
+                     ctx.ctl.sparc_regs.psr, ctx.ctl.sparc_regs.pc, ctx.ctl.sparc_regs.npc,
+                     ctx.ctl.sparc_regs.y, ctx.ctl.sparc_regs.wim, ctx.ctl.sparc_regs.tbr );
+        if (ctx.flags & SERVER_CTX_INTEGER)
+        {
+            for (i = 0; i < 8; i++) fprintf( stderr, ",g%u=%08x", i, ctx.integer.sparc_regs.g[i] );
+            for (i = 0; i < 8; i++) fprintf( stderr, ",o%u=%08x", i, ctx.integer.sparc_regs.o[i] );
+            for (i = 0; i < 8; i++) fprintf( stderr, ",l%u=%08x", i, ctx.integer.sparc_regs.l[i] );
+            for (i = 0; i < 8; i++) fprintf( stderr, ",i%u=%08x", i, ctx.integer.sparc_regs.i[i] );
+        }
+        break;
+    }
+    fputc( '}', stderr );
+    remove_data( size );
 }
 
 static void dump_varargs_debug_event( const char *prefix, data_size_t size )
@@ -2128,7 +2277,6 @@ static void dump_get_thread_context_reply( const struct get_thread_context_reply
 static void dump_set_thread_context_request( const struct set_thread_context_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", suspend=%d", req->suspend );
     dump_varargs_context( ", context=", cur_size );
 }

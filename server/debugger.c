@@ -49,7 +49,7 @@ struct debug_event
     enum debug_event_state state;     /* event state */
     int                    status;    /* continuation status */
     debug_event_t          data;      /* event data */
-    CONTEXT                context;   /* register context */
+    context_t              context;   /* register context */
 };
 
 /* debug context */
@@ -652,11 +652,11 @@ DECL_HANDLER(queue_exception_event)
 
         if ((event = alloc_debug_event( current, EXCEPTION_DEBUG_EVENT, &data )))
         {
-            const CONTEXT *context = (const CONTEXT *)((char *)get_req_data() + req->len);
+            const context_t *context = (const context_t *)((char *)get_req_data() + req->len);
             data_size_t size = get_req_data_size() - req->len;
 
             memset( &event->context, 0, sizeof(event->context) );
-            memcpy( &event->context, context, size );
+            memcpy( &event->context, context, min( sizeof(event->context), size ) );
             current->context = &event->context;
 
             if ((reply->handle = alloc_handle( current->process, event, SYNCHRONIZE, 0 )))
@@ -682,7 +682,7 @@ DECL_HANDLER(get_exception_status)
         {
             if (current->context == &event->context)
             {
-                data_size_t size = min( sizeof(CONTEXT), get_reply_max_size() );
+                data_size_t size = min( sizeof(context_t), get_reply_max_size() );
                 set_reply_data( &event->context, size );
                 current->context = NULL;
             }

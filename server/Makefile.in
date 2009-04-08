@@ -14,11 +14,6 @@ C_SRCS = \
 	clipboard.c \
 	completion.c \
 	console.c \
-	context_alpha.c \
-	context_i386.c \
-	context_powerpc.c \
-	context_sparc.c \
-	context_x86_64.c \
 	debugger.c \
 	device.c \
 	directory.c \

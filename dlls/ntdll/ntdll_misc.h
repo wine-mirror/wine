@@ -44,6 +44,8 @@ extern void wait_suspend( CONTEXT *context );
 extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 extern void set_cpu_context( const CONTEXT *context );
 extern void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags );
+extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from );
+extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from );
 
 /* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );

@@ -149,14 +149,16 @@ void wait_suspend( CONTEXT *context )
 {
     LARGE_INTEGER timeout;
     int saved_errno = errno;
+    context_t server_context;
+
+    context_to_server( &server_context, context );
 
     /* store the context we got at suspend time */
     SERVER_START_REQ( set_thread_context )
     {
         req->handle  = wine_server_obj_handle( GetCurrentThread() );
-        req->flags   = CONTEXT_FULL;
         req->suspend = 1;
-        wine_server_add_data( req, context, sizeof(*context) );
+        wine_server_add_data( req, &server_context, sizeof(server_context) );
         wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -169,13 +171,13 @@ void wait_suspend( CONTEXT *context )
     SERVER_START_REQ( get_thread_context )
     {
         req->handle  = wine_server_obj_handle( GetCurrentThread() );
-        req->flags   = CONTEXT_FULL;
         req->suspend = 1;
-        wine_server_set_reply( req, context, sizeof(*context) );
+        wine_server_set_reply( req, &server_context, sizeof(server_context) );
         wine_server_call( req );
     }
     SERVER_END_REQ;
 
+    context_from_server( context, &server_context );
     errno = saved_errno;
 }
 
@@ -187,15 +189,18 @@ void wait_suspend( CONTEXT *context )
  */
 static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
 {
-    int ret;
+    NTSTATUS ret;
     DWORD i;
     HANDLE handle = 0;
     client_ptr_t params[EXCEPTION_MAXIMUM_PARAMETERS];
+    context_t server_context;
 
     if (!NtCurrentTeb()->Peb->BeingDebugged) return 0;  /* no debugger present */
 
     for (i = 0; i < min( rec->NumberParameters, EXCEPTION_MAXIMUM_PARAMETERS ); i++)
         params[i] = rec->ExceptionInformation[i];
+
+    context_to_server( &server_context, context );
 
     SERVER_START_REQ( queue_exception_event )
     {
@@ -206,7 +211,7 @@ static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTE
         req->address = wine_server_client_ptr( rec->ExceptionAddress );
         req->len     = i * sizeof(params[0]);
         wine_server_add_data( req, params, req->len );
-        wine_server_add_data( req, context, sizeof(*context) );
+        wine_server_add_data( req, &server_context, sizeof(server_context) );
         if (!wine_server_call( req )) handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
@@ -217,10 +222,11 @@ static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTE
     SERVER_START_REQ( get_exception_status )
     {
         req->handle = wine_server_obj_handle( handle );
-        wine_server_set_reply( req, context, sizeof(*context) );
+        wine_server_set_reply( req, &server_context, sizeof(server_context) );
         ret = wine_server_call( req );
     }
     SERVER_END_REQ;
+    if (!ret) ret = context_from_server( context, &server_context );
     return ret;
 }
 

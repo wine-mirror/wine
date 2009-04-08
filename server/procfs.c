@@ -200,20 +200,14 @@ error:
 }
 
 /* retrieve the thread registers */
-void get_thread_context( struct thread *thread, CONTEXT *context, unsigned int flags )
+void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
 {
-    /* all other regs are handled on the client side */
-    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
-
     /* FIXME: get debug registers */
 }
 
 /* set the thread registers */
-void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
 {
-    /* all other regs are handled on the client side */
-    assert( (flags | CONTEXT_i386) == CONTEXT_DEBUG_REGISTERS );
-
     /* FIXME: set debug registers */
 }
 

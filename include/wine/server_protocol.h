@@ -135,6 +135,63 @@ enum cpu_type
 typedef int cpu_type_t;
 
 
+typedef struct
+{
+    cpu_type_t       cpu;
+    unsigned int     flags;
+    union
+    {
+        struct { unsigned int eip, ebp, esp, eflags, cs, ss; } i386_regs;
+        struct { unsigned __int64 rip, rbp, rsp;
+                 unsigned int cs, ss, flags, mxcsr; } x86_64_regs;
+        struct { unsigned __int64 fir;
+                 unsigned int psr; } alpha_regs;
+        struct { unsigned int iar, msr, ctr, lr, dar, dsisr, trap; } powerpc_regs;
+        struct { unsigned int psr, pc, npc, y, wim, tbr; } sparc_regs;
+    } ctl;
+    union
+    {
+        struct { unsigned int eax, ebx, ecx, edx, esi, edi; } i386_regs;
+        struct { unsigned __int64 rax,rbx, rcx, rdx, rsi, rdi,
+                                  r8, r9, r10, r11, r12, r13, r14, r15; } x86_64_regs;
+        struct { unsigned __int64 v0, t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12,
+                                  s0, s1, s2, s3, s4, s5, s6, a0, a1, a2, a3, a4, a5, at; } alpha_regs;
+        struct { unsigned int gpr[32], cr, xer; } powerpc_regs;
+        struct { unsigned int g[8], o[8], l[8], i[8]; } sparc_regs;
+    } integer;
+    union
+    {
+        struct { unsigned int ds, es, fs, gs; } i386_regs;
+        struct { unsigned int ds, es, fs, gs; } x86_64_regs;
+    } seg;
+    union
+    {
+        struct { unsigned int ctrl, status, tag, err_off, err_sel, data_off, data_sel, cr0npx;
+                 unsigned char regs[80]; } i386_regs;
+        struct { struct { unsigned __int64 low, high; } fpregs[32]; } x86_64_regs;
+        struct { unsigned __int64 f[32], fpcr, softfpcr; } alpha_regs;
+        struct { double fpr[32], fpscr; } powerpc_regs;
+    } fp;
+    union
+    {
+        struct { unsigned int dr0, dr1, dr2, dr3, dr6, dr7; } i386_regs;
+        struct { unsigned __int64 dr0, dr1, dr2, dr3, dr6, dr7; } x86_64_regs;
+        struct { unsigned int dr[8]; } powerpc_regs;
+    } debug;
+    union
+    {
+        unsigned char i386_regs[512];
+    } ext;
+} context_t;
+
+#define SERVER_CTX_CONTROL            0x01
+#define SERVER_CTX_INTEGER            0x02
+#define SERVER_CTX_SEGMENTS           0x04
+#define SERVER_CTX_FLOATING_POINT     0x08
+#define SERVER_CTX_DEBUG_REGISTERS    0x10
+#define SERVER_CTX_EXTENDED_REGISTERS 0x20
+
+
 struct send_fd
 {
     thread_id_t tid;
@@ -2356,7 +2413,6 @@ struct set_thread_context_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    unsigned int flags;
     int          suspend;
     /* VARARG(context,context); */
 };
@@ -5224,6 +5280,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 384
+#define SERVER_PROTOCOL_VERSION 385
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
