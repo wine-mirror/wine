@@ -631,14 +631,18 @@ static HRESULT parse_pe_header(ASSEMBLY *assembly)
     if (!assembly->nthdr)
         return E_FAIL;
 
-    if (assembly->nthdr->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
+    if (assembly->nthdr->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
     {
         IMAGE_OPTIONAL_HEADER64 *opthdr =
                 (IMAGE_OPTIONAL_HEADER64 *)&assembly->nthdr->OptionalHeader;
         datadirs = opthdr->DataDirectory;
     }
     else
-        datadirs = assembly->nthdr->OptionalHeader.DataDirectory;
+    {
+        IMAGE_OPTIONAL_HEADER32 *opthdr =
+                (IMAGE_OPTIONAL_HEADER32 *)&assembly->nthdr->OptionalHeader;
+        datadirs = opthdr->DataDirectory;
+    }
 
     if (!datadirs)
         return E_FAIL;
