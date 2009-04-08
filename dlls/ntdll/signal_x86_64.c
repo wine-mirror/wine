@@ -189,6 +189,7 @@ static inline int dispatch_signal(unsigned int sig)
  */
 static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
 {
+    context->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS;
     context->Rax    = RAX_sig(sigcontext);
     context->Rcx    = RCX_sig(sigcontext);
     context->Rdx    = RDX_sig(sigcontext);
@@ -214,7 +215,11 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
     context->SegEs  = 0;  /* FIXME */
     context->SegSs  = 0;  /* FIXME */
     context->MxCsr  = 0;  /* FIXME */
-    if (FPU_sig(sigcontext)) context->u.FltSave = *FPU_sig(sigcontext);
+    if (FPU_sig(sigcontext))
+    {
+        context->ContextFlags |= CONTEXT_FLOATING_POINT;
+        context->u.FltSave = *FPU_sig(sigcontext);
+    }
 }
 
 
