@@ -3251,7 +3251,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     SHADER_BUFFER buffer;
     DWORD usage, usage_idx, writemask;
     char reg_mask[6];
-    const struct wined3d_shader_semantic *semantics_out, *semantics_in;
+    const struct wined3d_shader_semantic *semantics_out;
 
     shader_buffer_init(&buffer);
 
@@ -3327,7 +3327,6 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
 
     } else if(ps_major >= 3 && vs_major >= 3) {
         semantics_out = vs->semantics_out;
-        semantics_in = ps->semantics_in;
 
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
         shader_addline(&buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
@@ -3357,19 +3356,17 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
 
         /* Then, fix the pixel shader input */
         handle_ps3_input(&buffer, gl_info, ps->input_reg_map,
-                semantics_in, &ps->baseShader.reg_maps, semantics_out, &vs->baseShader.reg_maps);
+                ps->semantics_in, &ps->baseShader.reg_maps, semantics_out, &vs->baseShader.reg_maps);
 
         shader_addline(&buffer, "}\n");
     } else if(ps_major >= 3 && vs_major < 3) {
-        semantics_in = ps->semantics_in;
-
         shader_addline(&buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
         shader_addline(&buffer, "void order_ps_input() {\n");
         /* The vertex shader wrote to the builtin varyings. There is no need to figure out position and
          * point size, but we depend on the optimizers kindness to find out that the pixel shader doesn't
          * read gl_TexCoord and gl_ColorX, otherwise we'll run out of varyings
          */
-        handle_ps3_input(&buffer, gl_info, ps->input_reg_map, semantics_in, &ps->baseShader.reg_maps, NULL, NULL);
+        handle_ps3_input(&buffer, gl_info, ps->input_reg_map, ps->semantics_in, &ps->baseShader.reg_maps, NULL, NULL);
         shader_addline(&buffer, "}\n");
     } else {
         ERR("Unexpected vertex and pixel shader version condition: vs: %d, ps: %d\n", vs_major, ps_major);
