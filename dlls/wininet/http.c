@@ -1878,10 +1878,13 @@ static BOOL HTTPREQ_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWOR
     BOOL ret;
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW)hdr;
 
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
+
     *written = 0;
     if ((ret = NETCON_send(&lpwhr->netConnection, buffer, size, 0, (LPINT)written)))
         lpwhr->dwBytesWritten += *written;
 
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_REQUEST_SENT, written, sizeof(DWORD));
     return ret;
 }
 
