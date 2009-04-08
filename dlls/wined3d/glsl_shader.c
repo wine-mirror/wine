@@ -489,7 +489,39 @@ static void shader_glsl_load_np2fixup_constants(
     IWineD3DDevice* device,
     char usePixelShader,
     char useVertexShader) {
-    /* not implemented */
+
+    const IWineD3DDeviceImpl* deviceImpl = (const IWineD3DDeviceImpl*) device;
+    const struct glsl_shader_prog_link* prog = ((struct shader_glsl_priv *)(deviceImpl->shader_priv))->glsl_program;
+
+    if (!prog) {
+        /* No GLSL program set - nothing to do. */
+        return;
+    }
+
+    if (!usePixelShader) {
+        /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
+        return;
+    }
+
+    if (prog->ps_args.texrect_fixup) {
+        UINT i;
+        UINT fixup = prog->ps_args.texrect_fixup;
+        const WineD3D_GL_Info* gl_info = &deviceImpl->adapter->gl_info;
+        const IWineD3DStateBlockImpl* stateBlock = (const IWineD3DStateBlockImpl*) deviceImpl->stateBlock;
+
+        for (i = 0; fixup; fixup >>= 1, ++i) {
+            if (-1 != prog->rectFixup_location[i]) {
+                const IWineD3DBaseTextureImpl* const tex = (const IWineD3DBaseTextureImpl*) stateBlock->textures[i];
+                if (!tex) {
+                    FIXME("Non-existant texture is flagged for NP2 texcoord fixup\n");
+                    continue;
+                } else {
+                    const float tex_dim[2] = {tex->baseTexture.pow2Matrix[0], tex->baseTexture.pow2Matrix[5]};
+                    GL_EXTCALL(glUniform2fvARB(prog->rectFixup_location[i], 1, tex_dim));
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -597,24 +629,6 @@ static void shader_glsl_load_constants(
                 correction_params[1] = -1.0;
             }
             GL_EXTCALL(glUniform4fvARB(prog->ycorrection_location, 1, correction_params));
-        }
-
-        /* Constant loading for texture rect coord fixup. */
-        if (prog->ps_args.texrect_fixup) {
-            UINT fixup = prog->ps_args.texrect_fixup;
-
-            for (i = 0; fixup; fixup >>= 1, ++i) {
-                if (-1 != prog->rectFixup_location[i]) {
-                    const IWineD3DBaseTextureImpl* const tex = (const IWineD3DBaseTextureImpl*) stateBlock->textures[i];
-                    if (!tex) {
-                        FIXME("Non-existant texture is flagged for NP2 texcoord fixup\n");
-                        continue;
-                    } else {
-                        const float tex_dim[2] = {tex->baseTexture.pow2Matrix[0], tex->baseTexture.pow2Matrix[5]};
-                        GL_EXTCALL(glUniform2fvARB(prog->rectFixup_location[i], 1, tex_dim));
-                    }
-                }
-            }
         }
     }
 
