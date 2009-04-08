@@ -1483,10 +1483,7 @@ TAB_EraseTabInterior(const TAB_INFO *infoPtr, HDC hdc, INT iItem, RECT *drawRect
 		InflateRect(&rTemp, 2, 2);
 		FillRect(hdc, &rTemp, hbr);
 		if (iItem == infoPtr->iHotTracked)
-		{
-		    DrawEdge(hdc, &rTemp, EDGE_RAISED, BF_SOFT|BF_TOPLEFT);
-		    DrawEdge(hdc, &rTemp, EDGE_RAISED, BF_FLAT|BF_BOTTOMRIGHT);
-		}
+		    DrawEdge(hdc, &rTemp, BDR_RAISEDINNER, BF_RECT);
 	    }
 	    else
 		FillRect(hdc, &rTemp, hbr);
