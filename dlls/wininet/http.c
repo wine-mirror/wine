@@ -3513,10 +3513,23 @@ lend:
 
     /* TODO: send notification for P3P header */
 
-    if(lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC) {
-        if(bSuccess) {
-            HTTP_ReceiveRequestData(lpwhr, TRUE);
-        }else {
+    if (lpwhr->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+    {
+        if (bSuccess)
+        {
+            if (lpwhr->dwBytesWritten == lpwhr->dwBytesToWrite) HTTP_ReceiveRequestData(lpwhr, TRUE);
+            else
+            {
+                iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
+                iar.dwError = 0;
+
+                INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                                  INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                                  sizeof(INTERNET_ASYNC_RESULT));
+            }
+        }
+        else
+        {
             iar.dwResult = (DWORD_PTR)lpwhr->hdr.hInternet;
             iar.dwError = INTERNET_GetLastError();
 
