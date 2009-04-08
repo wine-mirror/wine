@@ -297,13 +297,17 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                 else
                     reg_maps->packed_input[regnum] = 1;
 
-                semantics_in[regnum].usage = usage;
+                semantics_in[regnum].usage = (usage & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
+                semantics_in[regnum].usage_idx =
+                        (usage & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
                 shader_parse_dst_param(param, 0, &semantics_in[regnum].reg);
 
             /* Vshader: mark 3.0 output registers used, save token */
             } else if (WINED3DSPR_OUTPUT == regtype) {
                 reg_maps->packed_output[regnum] = 1;
-                semantics_out[regnum].usage = usage;
+                semantics_out[regnum].usage = (usage & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
+                semantics_out[regnum].usage_idx =
+                        (usage & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
                 shader_parse_dst_param(param, 0, &semantics_out[regnum].reg);
 
                 if (usage & (WINED3DDECLUSAGE_FOG << WINED3DSP_DCL_USAGE_SHIFT))

@@ -3002,16 +3002,14 @@ static void pshader_glsl_input_pack(IWineD3DPixelShader *iface, SHADER_BUFFER *b
 
     for (i = 0; i < MAX_REG_INPUT; ++i)
     {
-        DWORD usage_token;
         DWORD usage, usage_idx;
         char reg_mask[6];
 
         /* Unused */
         if (!reg_maps->packed_input[i]) continue;
 
-        usage_token = semantics_in[i].usage;
-        usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
-        usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
+        usage = semantics_in[i].usage;
+        usage_idx = semantics_in[i].usage_idx;
         shader_glsl_get_write_mask(semantics_in[i].reg.token, reg_mask);
 
         switch (usage)
@@ -3099,7 +3097,6 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
         const struct wined3d_shader_semantic *semantics_out, const struct shader_reg_maps *reg_maps_out)
 {
     unsigned int i, j;
-    DWORD usage_token, usage_token_out;
     DWORD usage, usage_idx, usage_out, usage_idx_out;
     DWORD *set;
     DWORD in_idx;
@@ -3137,9 +3134,8 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
             sprintf(destination, "IN[%u]", in_idx);
         }
 
-        usage_token = semantics_in[i].usage;
-        usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
-        usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
+        usage = semantics_in[i].usage;
+        usage_idx = semantics_in[i].usage_idx;
         set[map[i]] = shader_glsl_get_write_mask(semantics_in[i].reg.token, reg_mask);
 
         if(!semantics_out) {
@@ -3180,9 +3176,8 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
             for(j = 0; j < MAX_REG_OUTPUT; j++) {
                 if (!reg_maps_out->packed_output[j]) continue;
 
-                usage_token_out = semantics_out[j].usage;
-                usage_out = (usage_token_out & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
-                usage_idx_out = (usage_token_out & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
+                usage_out = semantics_out[j].usage;
+                usage_idx_out = semantics_out[j].usage_idx;
                 shader_glsl_get_write_mask(semantics_out[j].reg.token, reg_mask_out);
 
                 if(usage == usage_out &&
@@ -3254,7 +3249,6 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     DWORD ps_major = ps ? WINED3DSHADER_VERSION_MAJOR(ps->baseShader.reg_maps.shader_version) : 0;
     unsigned int i;
     SHADER_BUFFER buffer;
-    DWORD usage_token;
     DWORD usage, usage_idx, writemask;
     char reg_mask[6];
     const struct wined3d_shader_semantic *semantics_out, *semantics_in;
@@ -3289,9 +3283,8 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         for(i = 0; i < MAX_REG_OUTPUT; i++) {
             if (!vs->baseShader.reg_maps.packed_output[i]) continue;
 
-            usage_token = semantics_out[i].usage;
-            usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
-            usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
+            usage = semantics_out[i].usage;
+            usage_idx = semantics_out[i].usage_idx;
             writemask = shader_glsl_get_write_mask(semantics_out[i].reg.token, reg_mask);
 
             switch(usage) {
@@ -3344,9 +3337,8 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         for(i = 0; i < MAX_REG_OUTPUT; i++) {
             if (!vs->baseShader.reg_maps.packed_output[i]) continue;
 
-            usage_token = semantics_out[i].usage;
-            usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
-            usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
+            usage = semantics_out[i].usage;
+            usage_idx = semantics_out[i].usage_idx;
             shader_glsl_get_write_mask(semantics_out[i].reg.token, reg_mask);
 
             switch(usage) {

@@ -472,7 +472,8 @@ struct wined3d_shader_instruction
 
 struct wined3d_shader_semantic
 {
-    DWORD usage;
+    WINED3DDECLUSAGE usage;
+    UINT usage_idx;
     struct wined3d_shader_dst_param reg;
 };
 
