@@ -209,11 +209,16 @@ BOOL vshader_get_input(
     int i;
 
     for (i = 0; i < MAX_ATTRIBS; i++) {
-        DWORD usage_token = This->semantics_in[i].usage;
-        DWORD usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
-        DWORD usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
+        DWORD usage_token, usage, usage_idx;
 
-        if (usage_token && match_usage(usage, usage_idx, usage_req, usage_idx_req)) {
+        if (!This->baseShader.reg_maps.attributes[i]) continue;
+
+        usage_token = This->semantics_in[i].usage;
+        usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
+        usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
+
+        if (match_usage(usage, usage_idx, usage_req, usage_idx_req))
+        {
             *regnum = i;
             return TRUE;
         }

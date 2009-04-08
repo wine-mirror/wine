@@ -2993,20 +2993,23 @@ static void pshader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void pshader_glsl_input_pack(SHADER_BUFFER *buffer, const struct wined3d_shader_semantic *semantics_in,
-        IWineD3DPixelShader *iface, enum vertexprocessing_mode vertexprocessing)
+static void pshader_glsl_input_pack(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer,
+        const struct wined3d_shader_semantic *semantics_in, const struct shader_reg_maps *reg_maps,
+        enum vertexprocessing_mode vertexprocessing)
 {
     unsigned int i;
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
 
     for (i = 0; i < MAX_REG_INPUT; ++i)
     {
-        DWORD usage_token = semantics_in[i].usage;
+        DWORD usage_token;
         DWORD usage, usage_idx;
         char reg_mask[6];
 
-        /* Uninitialized */
-        if (!usage_token) continue;
+        /* Unused */
+        if (!reg_maps->packed_input[i]) continue;
+
+        usage_token = semantics_in[i].usage;
         usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
         usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
         shader_glsl_get_write_mask(semantics_in[i].reg.token, reg_mask);
@@ -3091,8 +3094,9 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const WineD
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
-static void handle_ps3_input(SHADER_BUFFER *buffer, const struct wined3d_shader_semantic *semantics_in,
-        const struct wined3d_shader_semantic *semantics_out, const WineD3D_GL_Info *gl_info, const DWORD *map)
+static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info, const DWORD *map,
+        const struct wined3d_shader_semantic *semantics_in, const struct shader_reg_maps *reg_maps_in,
+        const struct wined3d_shader_semantic *semantics_out, const struct shader_reg_maps *reg_maps_out)
 {
     unsigned int i, j;
     DWORD usage_token, usage_token_out;
@@ -3112,8 +3116,7 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const struct wined3d_shader_
     }
 
     for(i = 0; i < MAX_REG_INPUT; i++) {
-        usage_token = semantics_in[i].usage;
-        if (!usage_token) continue;
+        if (!reg_maps_in->packed_input[i]) continue;
 
         in_idx = map[i];
         if (in_idx >= (in_count + 2)) {
@@ -3134,6 +3137,7 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const struct wined3d_shader_
             sprintf(destination, "IN[%u]", in_idx);
         }
 
+        usage_token = semantics_in[i].usage;
         usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
         usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
         set[map[i]] = shader_glsl_get_write_mask(semantics_in[i].reg.token, reg_mask);
@@ -3174,9 +3178,9 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const struct wined3d_shader_
         } else {
             BOOL found = FALSE;
             for(j = 0; j < MAX_REG_OUTPUT; j++) {
-                usage_token_out = semantics_out[j].usage;
-                if (!usage_token_out) continue;
+                if (!reg_maps_out->packed_output[j]) continue;
 
+                usage_token_out = semantics_out[j].usage;
                 usage_out = (usage_token_out & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
                 usage_idx_out = (usage_token_out & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
                 shader_glsl_get_write_mask(semantics_out[j].reg.token, reg_mask_out);
@@ -3283,9 +3287,9 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
 
         shader_addline(&buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
         for(i = 0; i < MAX_REG_OUTPUT; i++) {
-            usage_token = semantics_out[i].usage;
-            if (!usage_token) continue;
+            if (!vs->baseShader.reg_maps.packed_output[i]) continue;
 
+            usage_token = semantics_out[i].usage;
             usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
             usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
             writemask = shader_glsl_get_write_mask(semantics_out[i].reg.token, reg_mask);
@@ -3338,9 +3342,9 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
         for(i = 0; i < MAX_REG_OUTPUT; i++) {
-            usage_token = semantics_out[i].usage;
-            if (!usage_token) continue;
+            if (!vs->baseShader.reg_maps.packed_output[i]) continue;
 
+            usage_token = semantics_out[i].usage;
             usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
             usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
             shader_glsl_get_write_mask(semantics_out[i].reg.token, reg_mask);
@@ -3360,7 +3364,8 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         }
 
         /* Then, fix the pixel shader input */
-        handle_ps3_input(&buffer, semantics_in, semantics_out, gl_info, ps->input_reg_map);
+        handle_ps3_input(&buffer, gl_info, ps->input_reg_map,
+                semantics_in, &ps->baseShader.reg_maps, semantics_out, &vs->baseShader.reg_maps);
 
         shader_addline(&buffer, "}\n");
     } else if(ps_major >= 3 && vs_major < 3) {
@@ -3372,7 +3377,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
          * point size, but we depend on the optimizers kindness to find out that the pixel shader doesn't
          * read gl_TexCoord and gl_ColorX, otherwise we'll run out of varyings
          */
-        handle_ps3_input(&buffer, semantics_in, NULL, gl_info, ps->input_reg_map);
+        handle_ps3_input(&buffer, gl_info, ps->input_reg_map, semantics_in, &ps->baseShader.reg_maps, NULL, NULL);
         shader_addline(&buffer, "}\n");
     } else {
         ERR("Unexpected vertex and pixel shader version condition: vs: %d, ps: %d\n", vs_major, ps_major);
@@ -3967,7 +3972,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface, SHADER_BU
 
     /* Pack 3.0 inputs */
     if (reg_maps->shader_version >= WINED3DPS_VERSION(3,0) && args->vp_mode != vertexshader) {
-        pshader_glsl_input_pack(buffer, This->semantics_in, iface, args->vp_mode);
+        pshader_glsl_input_pack(iface, buffer, This->semantics_in, reg_maps, args->vp_mode);
     }
 
     /* Base Shader Body */
