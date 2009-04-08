@@ -1338,6 +1338,9 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
     case BINDSTATUS_PROXYDETECTING:
         trace("BINDSTATUS_PROXYDETECTING\n");
         break;
+    case BINDSTATUS_COOKIE_SENT:
+        trace("BINDSTATUS_COOKIE_SENT\n");
+        break;
     default:
         ok(0, "unexpected code %d\n", ulStatusCode);
     };
