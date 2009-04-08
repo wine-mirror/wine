@@ -1030,9 +1030,12 @@ static void test_mixerOpen(void)
            mmsys_error(rc));
 
         rc = mixerOpen(&mix, d, 0xdeadbeef, 0, CALLBACK_WINDOW);
-        ok(rc == MMSYSERR_INVALPARAM,
+        ok(rc == MMSYSERR_INVALPARAM ||
+           rc == MMSYSERR_NOERROR, /* 98 */
            "mixerOpen: MMSYSERR_INVALPARAM expected, got %s\n",
            mmsys_error(rc));
+        if (rc == MMSYSERR_NOERROR)
+            test_mixerClose(mix);
 
         /* Test mixerOpen with a NULL dwCallback and CALLBACK_WINDOW flag. */
         rc = mixerOpen(&mix, d, 0, 0, CALLBACK_WINDOW);
