@@ -117,8 +117,11 @@ HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS dwCacheFlags, LPWSTR pwzCachePath,
     static const WCHAR gac[] = {'G','A','C',0};
     static const WCHAR nativeimg[] = {
         'N','a','t','i','v','e','I','m','a','g','e','s','_',0};
-    static const WCHAR zapfmt[] = {
-        '%','s','\\','%','s','\\','%','s','%','s','_','3','2',0};
+#ifdef _WIN64
+    static const WCHAR zapfmt[] = {'%','s','\\','%','s','\\','%','s','%','s','_','6','4',0};
+#else
+    static const WCHAR zapfmt[] = {'%','s','\\','%','s','\\','%','s','%','s','_','3','2',0};
+#endif
 
     TRACE("(%08x, %p, %p)\n", dwCacheFlags, pwzCachePath, pcchPath);
 
