@@ -336,6 +336,84 @@ static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
     return 0;
 }
 
+/***************************************************************************
+ *                              MCIQTZ_mciStatus                [internal]
+ */
+static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSW lpParms)
+{
+    WINE_MCIQTZ* wma;
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+
+    if (!lpParms)
+        return MCIERR_NULL_PARAMETER_BLOCK;
+
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+
+    if (!(dwFlags & MCI_STATUS_ITEM)) {
+        WARN("No status item specified\n");
+        return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+
+    switch (lpParms->dwItem) {
+        case MCI_STATUS_LENGTH:
+            FIXME("MCI_STATUS_LENGTH not implemented yet\n");
+            return MCIERR_UNRECOGNIZED_COMMAND;
+        case MCI_STATUS_POSITION:
+        {
+            HRESULT hr;
+            REFTIME curpos;
+            IMediaPosition* pmpos;
+
+            hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IMediaPosition, (LPVOID*)&pmpos);
+            if (FAILED(hr)) {
+                FIXME("Cannot get IMediaPostion interface (hr = %x)\n", hr);
+                return MCIERR_INTERNAL;
+            }
+
+            hr = IMediaPosition_get_CurrentPosition(pmpos, &curpos);
+            if (FAILED(hr)) {
+                FIXME("Cannot get position (hr = %x)\n", hr);
+                IMediaPosition_Release(pmpos);
+                return MCIERR_INTERNAL;
+            }
+
+            IMediaPosition_Release(pmpos);
+            lpParms->dwReturn = curpos / 10000;
+
+            break;
+        }
+        case MCI_STATUS_NUMBER_OF_TRACKS:
+            FIXME("MCI_STATUS_NUMBER_OF_TRACKS not implemented yet\n");
+            return MCIERR_UNRECOGNIZED_COMMAND;
+        case MCI_STATUS_MODE:
+            FIXME("MCI_STATUS_MODE not implemented yet\n");
+            return MCIERR_UNRECOGNIZED_COMMAND;
+        case MCI_STATUS_MEDIA_PRESENT:
+            FIXME("MCI_STATUS_MEDIA_PRESENT not implemented yet\n");
+            return MCIERR_UNRECOGNIZED_COMMAND;
+        case MCI_STATUS_TIME_FORMAT:
+            FIXME("MCI_STATUS_TIME_FORMAT not implemented yet\n");
+            return MCIERR_UNRECOGNIZED_COMMAND;
+        case MCI_STATUS_READY:
+            FIXME("MCI_STATUS_READY not implemented yet\n");
+            return MCIERR_UNRECOGNIZED_COMMAND;
+        case MCI_STATUS_CURRENT_TRACK:
+            FIXME("MCI_STATUS_CURRENT_TRACK not implemented yet\n");
+            return MCIERR_UNRECOGNIZED_COMMAND;
+        default:
+            FIXME("Unknown command %08X\n", lpParms->dwItem);
+            return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+
+    if (dwFlags & MCI_NOTIFY)
+        mciDriverNotify(HWND_32(LOWORD(lpParms->dwCallback)), wDevID, MCI_NOTIFY_SUCCESSFUL);
+
+    return 0;
+}
+
 /*======================================================================*
  *                  	    MCI QTZ entry points			*
  *======================================================================*/
@@ -371,12 +449,12 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_CLOSE_DRIVER:  return MCIQTZ_mciClose     (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)       dwParam2);
         case MCI_PLAY:          return MCIQTZ_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)          dwParam2);
         case MCI_SEEK:          return MCIQTZ_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)          dwParam2);
+        case MCI_STATUS:        return MCIQTZ_mciStatus    (dwDevID, dwParam1, (LPMCI_DGV_STATUS_PARMSW)   dwParam2);
         case MCI_RECORD:
         case MCI_STOP:
         case MCI_SET:
         case MCI_PAUSE:
         case MCI_RESUME:
-        case MCI_STATUS:
         case MCI_GETDEVCAPS:
         case MCI_INFO:
         case MCI_PUT:
