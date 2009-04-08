@@ -174,6 +174,16 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, con
 }
 
 /**
+ * Loads the texture dimensions for NP2 fixup into the currently set ARB_[vertex/fragment]_programs.
+ */
+static void shader_arb_load_np2fixup_constants(
+    IWineD3DDevice* device,
+    char usePixelShader,
+    char useVertexShader) {
+    /* not implemented */
+}
+
+/**
  * Loads the app-supplied constants into the currently set ARB_[vertex/fragment]_programs.
  * 
  * We only support float constants in ARB at the moment, so don't 
@@ -2306,6 +2316,7 @@ const shader_backend_t arb_program_shader_backend = {
     shader_arb_update_float_vertex_constants,
     shader_arb_update_float_pixel_constants,
     shader_arb_load_constants,
+    shader_arb_load_np2fixup_constants,
     shader_arb_destroy,
     shader_arb_alloc,
     shader_arb_free,

@@ -483,6 +483,16 @@ static void reset_program_constant_version(void *value, void *context)
 }
 
 /**
+ * Loads the texture dimensions for NP2 fixup into the currently set GLSL program.
+ */
+static void shader_glsl_load_np2fixup_constants(
+    IWineD3DDevice* device,
+    char usePixelShader,
+    char useVertexShader) {
+    /* not implemented */
+}
+
+/**
  * Loads the app-supplied constants into the currently set GLSL program.
  */
 static void shader_glsl_load_constants(
@@ -4281,6 +4291,7 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_update_float_vertex_constants,
     shader_glsl_update_float_pixel_constants,
     shader_glsl_load_constants,
+    shader_glsl_load_np2fixup_constants,
     shader_glsl_destroy,
     shader_glsl_alloc,
     shader_glsl_free,
