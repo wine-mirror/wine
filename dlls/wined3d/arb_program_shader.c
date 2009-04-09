@@ -672,7 +672,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             }
             if(shader_is_pshader_version(ins->reg_maps->shader_version)) {
                const IWineD3DPixelShaderImpl* const ps = (const IWineD3DPixelShaderImpl*)This;
-               if(ps->cur_args->texrect_fixup & (1 << sampler_idx)) {
+               if(ps->cur_args->np2_fixup & (1 << sampler_idx)) {
                    FIXME("NP2 texcoord fixup is currently not implemented in ARB mode (use GLSL instead).\n");
                }
             }

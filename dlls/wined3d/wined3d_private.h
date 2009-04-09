@@ -538,8 +538,8 @@ struct ps_compile_args {
     /* Projected textures(ps 1.0-1.3) */
     /* Texture types(2D, Cube, 3D) in ps 1.x */
     BOOL                        srgb_correction;
-    WORD                        texrect_fixup;
-    /* Bitmap for texture rect coord fixups (16 samplers max currently).
+    WORD                        np2_fixup;
+    /* Bitmap for NP2 texcoord fixups (16 samplers max currently).
        D3D9 has a limit of 16 samplers and the fixup is superfluous
        in D3D10 (unconditional NP2 support mandatory). */
 };
