@@ -1932,6 +1932,7 @@ struct IWineD3DStateBlockImpl
 
     /* Indices */
     IWineD3DBuffer*           pIndexData;
+    WINED3DFORMAT             IndexFmt;
     INT                       baseVertexIndex;
     INT                       loadBaseVertexIndex; /* non-indexed drawing needs 0 here, indexed baseVertexIndex */
 

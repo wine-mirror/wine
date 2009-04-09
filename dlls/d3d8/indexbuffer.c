@@ -188,7 +188,7 @@ static HRESULT WINAPI IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXBUFFER8 i
     LeaveCriticalSection(&d3d8_cs);
 
     if (SUCCEEDED(hr)) {
-        pDesc->Format = d3dformat_from_wined3dformat(desc.Format);
+        pDesc->Format = d3dformat_from_wined3dformat(This->format);
         pDesc->Type = D3DRTYPE_INDEXBUFFER;
         pDesc->Usage = desc.Usage;
         pDesc->Pool = desc.Pool;

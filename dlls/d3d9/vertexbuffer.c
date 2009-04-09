@@ -193,7 +193,7 @@ static HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTEXBUFFER9
     LeaveCriticalSection(&d3d9_cs);
 
     if (SUCCEEDED(hr)) {
-        pDesc->Format = d3dformat_from_wined3dformat(desc.Format);
+        pDesc->Format = D3DFMT_VERTEXDATA;
         pDesc->Usage = desc.Usage;
         pDesc->Pool = desc.Pool;
         pDesc->Size = desc.Size;

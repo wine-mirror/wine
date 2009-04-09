@@ -516,8 +516,7 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_Reset(LPDIRECT3DDEVICE9EX iface, D3
      * below fails, the device is considered "lost", and _Reset and _Release are the only allowed calls
      */
     EnterCriticalSection(&d3d9_cs);
-
-    IWineD3DDevice_SetIndices(This->WineD3DDevice, NULL);
+    IWineD3DDevice_SetIndices(This->WineD3DDevice, NULL, WINED3DFMT_UNKNOWN);
     for(i = 0; i < 16; i++) {
         IWineD3DDevice_SetStreamSource(This->WineD3DDevice, i, NULL, 0, 0);
     }
@@ -1639,11 +1638,13 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetStreamSourceFreq(LPDIRECT3DDEVIC
 static HRESULT  WINAPI  IDirect3DDevice9Impl_SetIndices(LPDIRECT3DDEVICE9EX iface, IDirect3DIndexBuffer9* pIndexData) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     HRESULT hr;
+    IDirect3DIndexBuffer9Impl *ib = (IDirect3DIndexBuffer9Impl *) pIndexData;
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DDevice_SetIndices(This->WineD3DDevice,
-            pIndexData ? ((IDirect3DIndexBuffer9Impl *)pIndexData)->wineD3DIndexBuffer : NULL);
+            ib ? ib->wineD3DIndexBuffer : NULL,
+            ib ? ib->format : WINED3DFMT_UNKNOWN);
     LeaveCriticalSection(&d3d9_cs);
     return hr;
 }

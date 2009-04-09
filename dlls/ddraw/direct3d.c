@@ -824,7 +824,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
      * takes the pointer and avoids the memcpy
      */
     hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice, 0x40000 /* Length. Don't know how long it should be */,
-            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DFMT_R16_UINT /* Format. D3D7 uses WORDS */, WINED3DPOOL_DEFAULT,
+            WINED3DUSAGE_DYNAMIC /* Usage */, WINED3DPOOL_DEFAULT,
             &object->indexbuffer, 0 /* Handle */, (IUnknown *)IndexBufferParent);
 
     if(FAILED(hr))

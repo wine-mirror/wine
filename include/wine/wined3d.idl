@@ -1864,7 +1864,6 @@ typedef struct WINED3DDEVINFO_VCACHE
 
 typedef struct _WINED3DBUFFER_DESC
 {
-    WINED3DFORMAT Format;
     WINED3DRESOURCETYPE Type;
     DWORD Usage;
     WINED3DPOOL Pool;
@@ -2893,7 +2892,6 @@ interface IWineD3DDevice : IWineD3DBase
     HRESULT CreateIndexBuffer(
         [in] UINT length,
         [in] DWORD usage,
-        [in] WINED3DFORMAT format,
         [in] WINED3DPOOL pool,
         [out] IWineD3DBuffer **index_buffer,
         [in] HANDLE *shared_handle,
@@ -3118,7 +3116,8 @@ interface IWineD3DDevice : IWineD3DBase
         [out] WINED3DGAMMARAMP *ramp
     );
     HRESULT SetIndices(
-        [in] IWineD3DBuffer *index_buffer
+        [in] IWineD3DBuffer *index_buffer,
+        [in] WINED3DFORMAT format
     );
     HRESULT GetIndices(
         [out] IWineD3DBuffer **index_buffer

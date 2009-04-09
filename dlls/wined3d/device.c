@@ -583,10 +583,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage,
-                                                    WINED3DFORMAT Format, WINED3DPOOL Pool, IWineD3DBuffer** ppIndexBuffer,
+                                                    WINED3DPOOL Pool, IWineD3DBuffer** ppIndexBuffer,
                                                     HANDLE *sharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(WINED3DFMT_UNKNOWN, &This->adapter->gl_info);
     struct wined3d_buffer *object;
     HRESULT hr;
 
@@ -620,8 +620,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
         object->flags |= WINED3D_BUFFER_CREATEBO;
     }
 
-    TRACE("(%p) : Len=%d, Use=%x, Format=(%u,%s), Pool=%d - Memory@%p, Iface@%p\n", This, Length, Usage, Format, 
-                           debug_d3dformat(Format), Pool, object, object->resource.allocatedMemory);
+    TRACE("(%p) : Len=%d, Use=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Length, Usage,
+            Pool, object, object->resource.allocatedMemory);
     *ppIndexBuffer = (IWineD3DBuffer *) object;
 
     return WINED3D_OK;
@@ -3637,7 +3637,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetMaterial(IWineD3DDevice *iface, WINE
 /*****
  * Get / Set Indices
  *****/
-static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DBuffer* pIndexData) {
+static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWineD3DBuffer* pIndexData, WINED3DFORMAT fmt) {
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DBuffer *oldIdxs;
 
@@ -3646,6 +3646,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
 
     This->updateStateBlock->changed.indices = TRUE;
     This->updateStateBlock->pIndexData = pIndexData;
+    This->updateStateBlock->IndexFmt = fmt;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -5639,7 +5640,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
     UINT                 idxStride = 2;
     IWineD3DBuffer *pIB;
-    WINED3DBUFFER_DESC  IdxBufDsc;
     GLuint vbo;
 
     pIB = This->stateBlock->pIndexData;
@@ -5666,8 +5666,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *if
     TRACE("(%p) : min %u, vertex count %u, startIdx %u, index count %u\n",
             This, minIndex, NumVertices, startIndex, index_count);
 
-    IWineD3DBuffer_GetDesc(pIB, &IdxBufDsc);
-    if (IdxBufDsc.Format == WINED3DFMT_R16_UINT) {
+    if (This->stateBlock->IndexFmt == WINED3DFMT_R16_UINT) {
         idxStride = 2;
     } else {
         idxStride = 4;

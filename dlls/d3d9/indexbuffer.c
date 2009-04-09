@@ -189,7 +189,7 @@ static HRESULT  WINAPI        IDirect3DIndexBuffer9Impl_GetDesc(LPDIRECT3DINDEXB
     LeaveCriticalSection(&d3d9_cs);
 
     if (SUCCEEDED(hr)) {
-        pDesc->Format = d3dformat_from_wined3dformat(desc.Format);
+        pDesc->Format = d3dformat_from_wined3dformat(This->format);
         pDesc->Usage = desc.Usage;
         pDesc->Pool = desc.Pool;
         pDesc->Size = desc.Size;
@@ -241,10 +241,11 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateIndexBuffer(LPDIRECT3DDEVICE9EX iface,
 
     object->lpVtbl = &Direct3DIndexBuffer9_Vtbl;
     object->ref = 1;
+    object->format = wined3dformat_from_d3dformat(Format);
     TRACE("Calling wined3d create index buffer\n");
     EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage & WINED3DUSAGE_MASK,
-            wined3dformat_from_d3dformat(Format), (WINED3DPOOL)Pool, &object->wineD3DIndexBuffer,
+            (WINED3DPOOL)Pool, &object->wineD3DIndexBuffer,
             pSharedHandle, (IUnknown *)object);
     LeaveCriticalSection(&d3d9_cs);
     if (hrc != D3D_OK) {

@@ -351,6 +351,7 @@ typedef struct IDirect3DIndexBuffer9Impl
 
     /* Parent reference */
     LPDIRECT3DDEVICE9EX       parentDevice;
+    WINED3DFORMAT             format;
 } IDirect3DIndexBuffer9Impl;
 
 /* --------------------- */

@@ -773,10 +773,11 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 i
 
     object->lpVtbl = &Direct3DIndexBuffer8_Vtbl;
     object->ref = 1;
+    object->format = wined3dformat_from_d3dformat(Format);
     TRACE("Calling wined3d create index buffer\n");
     EnterCriticalSection(&d3d8_cs);
     hrc = IWineD3DDevice_CreateIndexBuffer(This->WineD3DDevice, Length, Usage & WINED3DUSAGE_MASK,
-            wined3dformat_from_d3dformat(Format), (WINED3DPOOL) Pool, &object->wineD3DIndexBuffer,
+            (WINED3DPOOL) Pool, &object->wineD3DIndexBuffer,
             NULL, (IUnknown *)object);
     LeaveCriticalSection(&d3d8_cs);
 
@@ -2085,6 +2086,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEV
 static HRESULT WINAPI IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8* pIndexData, UINT baseVertexIndex) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     HRESULT hr;
+    IDirect3DIndexBuffer8Impl *ib = (IDirect3DIndexBuffer8Impl *)pIndexData;
     TRACE("(%p) Relay\n", This);
 
     EnterCriticalSection(&d3d8_cs);
@@ -2096,7 +2098,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, I
      */
     IWineD3DDevice_SetBaseVertexIndex(This->WineD3DDevice, baseVertexIndex);
     hr = IWineD3DDevice_SetIndices(This->WineD3DDevice,
-            pIndexData ? ((IDirect3DIndexBuffer8Impl *)pIndexData)->wineD3DIndexBuffer : NULL);
+            ib ? ib->wineD3DIndexBuffer : NULL,
+            ib ? ib->format : WINED3DFMT_UNKNOWN);
     LeaveCriticalSection(&d3d8_cs);
     return hr;
 }

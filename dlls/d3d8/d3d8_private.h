@@ -353,6 +353,8 @@ struct IDirect3DIndexBuffer8Impl
 
     /* Parent reference */
     LPDIRECT3DDEVICE8                parentDevice;
+
+    WINED3DFORMAT                    format;
 };
 
 /* --------------------- */

@@ -937,7 +937,6 @@ static HRESULT STDMETHODCALLTYPE buffer_GetDesc(IWineD3DBuffer *iface, WINED3DBU
 
     TRACE("(%p)\n", This);
 
-    desc->Format = This->resource.format_desc->format;
     desc->Type = This->resource.resourceType;
     desc->Usage = This->resource.usage;
     desc->Pool = This->resource.pool;
