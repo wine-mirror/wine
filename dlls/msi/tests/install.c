@@ -2295,6 +2295,7 @@ static void test_setpropertyfolder(void)
 {
     UINT r;
     CHAR path[MAX_PATH];
+    DWORD attr;
 
     lstrcpyA(path, PROG_FILES_DIR);
     lstrcatA(path, "\\msitest\\added");
@@ -2308,7 +2309,8 @@ static void test_setpropertyfolder(void)
 
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    if (GetFileAttributesA(path) == FILE_ATTRIBUTE_DIRECTORY)
+    attr = GetFileAttributesA(path);
+    if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
     {
         ok(delete_pf("msitest\\added\\maximus", TRUE), "File not installed\n");
         ok(delete_pf("msitest\\added", FALSE), "File not installed\n");
