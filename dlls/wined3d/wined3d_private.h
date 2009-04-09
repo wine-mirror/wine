@@ -2079,6 +2079,7 @@ enum wined3d_buffer_conversion_type
 #define WINED3D_BUFFER_DIRTY        0x02    /* Buffer data has been modified */
 #define WINED3D_BUFFER_HASDESC      0x04    /* A vertex description has been found */
 #define WINED3D_BUFFER_CREATEBO     0x08    /* Attempt to create a buffer object next PreLoad */
+#define WINED3D_BUFFER_DOUBLEBUFFER 0x10    /* Use a vbo and local allocated memory */
 
 struct wined3d_buffer
 {
@@ -2110,6 +2111,7 @@ struct wined3d_buffer
 
 extern const IWineD3DBufferVtbl wined3d_buffer_vtbl;
 const BYTE *buffer_get_memory(IWineD3DBuffer *iface, UINT offset, GLuint *buffer_object);
+const BYTE *buffer_get_sysmem(struct wined3d_buffer *This);
 
 /* IWineD3DRendertargetView */
 struct wined3d_rendertarget_view

@@ -100,10 +100,11 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
     }
 
     /* Reserve memory for the buffer. The amount of data won't change
-    * so we are safe with calling glBufferData once with a NULL ptr and
-    * calling glBufferSubData on updates
-    */
-    GL_EXTCALL(glBufferDataARB(This->buffer_type_hint, This->resource.size, NULL, gl_usage));
+     * so we are safe with calling glBufferData once and
+     * calling glBufferSubData on updates. Upload the actual data in case
+     * we're not double buffering, so we can release the heap mem afterwards
+     */
+    GL_EXTCALL(glBufferDataARB(This->buffer_type_hint, This->resource.size, This->resource.allocatedMemory, gl_usage));
     error = glGetError();
     if (error != GL_NO_ERROR)
     {
@@ -117,7 +118,18 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This)
     This->buffer_object_usage = gl_usage;
     This->dirty_start = 0;
     This->dirty_end = This->resource.size;
-    This->flags |= WINED3D_BUFFER_DIRTY;
+
+    if(This->flags & WINED3D_BUFFER_DOUBLEBUFFER)
+    {
+        This->flags |= WINED3D_BUFFER_DIRTY;
+    }
+    else
+    {
+        HeapFree(GetProcessHeap(), 0, This->resource.heapMemory);
+        This->resource.allocatedMemory = NULL;
+        This->resource.heapMemory = NULL;
+        This->flags &= ~WINED3D_BUFFER_DIRTY;
+    }
 
     return;
 
@@ -457,6 +469,13 @@ static void buffer_check_buffer_object_size(struct wined3d_buffer *This)
         {
             IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_INDEXBUFFER);
         }
+
+        /* Rescue the data before resizing the buffer object if we do not have our backup copy */
+        if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+        {
+            buffer_get_sysmem(This);
+        }
+
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
         checkGLcall("glBindBufferARB");
@@ -569,21 +588,40 @@ static ULONG STDMETHODCALLTYPE buffer_AddRef(IWineD3DBuffer *iface)
     return refcount;
 }
 
+const BYTE *buffer_get_sysmem(struct wined3d_buffer *This)
+{
+    if(This->flags & WINED3D_BUFFER_DOUBLEBUFFER) return This->resource.allocatedMemory;
+
+    This->resource.heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->resource.size + RESOURCE_ALIGNMENT);
+    This->resource.allocatedMemory = (BYTE *)(((ULONG_PTR)This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
+    ENTER_GL();
+    GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+    GL_EXTCALL(glGetBufferSubDataARB(This->buffer_type_hint, 0, This->resource.size, This->resource.allocatedMemory));
+    LEAVE_GL();
+    This->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
+
+    return This->resource.allocatedMemory;
+}
+
 static void STDMETHODCALLTYPE buffer_UnLoad(IWineD3DBuffer *iface)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
 
     TRACE("iface %p\n", iface);
 
-    /* This is easy: The whole content is shadowed in This->resource.allocatedMemory,
-     * so we only have to destroy the vbo. Only do it if we have a vbo, which implies
-     * that vbos are supported
-     */
     if (This->buffer_object)
     {
         IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
         ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
+        /* Download the buffer, but don't permanently enable double buffering */
+        if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+        {
+            buffer_get_sysmem(This);
+            This->flags &= ~WINED3D_BUFFER_DOUBLEBUFFER;
+        }
+
         ENTER_GL();
         GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
         checkGLcall("glDeleteBuffersARB");
@@ -765,6 +803,9 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
          */
         TRACE("No conversion needed\n");
 
+        /* Nothing to do because we locked directly into the vbo */
+        if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER)) return;
+
         if (!device->isInDraw)
         {
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
@@ -776,6 +817,11 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         checkGLcall("glBufferSubDataARB");
         LEAVE_GL();
         return;
+    }
+
+    if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER))
+    {
+        buffer_get_sysmem(This);
     }
 
     /* Now for each vertex in the buffer that needs conversion */
@@ -875,10 +921,11 @@ static WINED3DRESOURCETYPE STDMETHODCALLTYPE buffer_GetType(IWineD3DBuffer *ifac
 static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, UINT size, BYTE **data, DWORD flags)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
+    LONG count;
 
     TRACE("iface %p, offset %u, size %u, data %p, flags %#x\n", iface, offset, size, data, flags);
 
-    InterlockedIncrement(&This->lock_count);
+    count = InterlockedIncrement(&This->lock_count);
 
     if (This->flags & WINED3D_BUFFER_DIRTY)
     {
@@ -900,7 +947,22 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
         else This->dirty_end = This->resource.size;
     }
 
-    This->flags |= WINED3D_BUFFER_DIRTY;
+    if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER) && This->buffer_object)
+    {
+        if(count == 1)
+        {
+            if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
+            {
+                IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_INDEXBUFFER);
+            }
+            GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+            This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_READ_WRITE_ARB));
+        }
+    }
+    else
+    {
+        This->flags |= WINED3D_BUFFER_DIRTY;
+    }
 
     *data = This->resource.allocatedMemory + offset;
 
@@ -923,7 +985,17 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
         return WINED3D_OK;
     }
 
-    if (This->flags & WINED3D_BUFFER_HASDESC)
+    if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER) && This->buffer_object)
+    {
+        if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
+        {
+            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_INDEXBUFFER);
+        }
+        GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
+        GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
+        This->resource.allocatedMemory = NULL;
+    }
+    else if (This->flags & WINED3D_BUFFER_HASDESC)
     {
         buffer_PreLoad(iface);
     }
