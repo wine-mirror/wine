@@ -329,6 +329,8 @@ typedef struct IDirect3DVertexBuffer9Impl
 
     /* Parent reference */
     LPDIRECT3DDEVICE9EX       parentDevice;
+
+    DWORD fvf;
 } IDirect3DVertexBuffer9Impl;
 
 /* --------------------- */

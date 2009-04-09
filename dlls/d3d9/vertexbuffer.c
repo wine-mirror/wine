@@ -197,8 +197,8 @@ static HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTEXBUFFER9
         pDesc->Usage = desc.Usage;
         pDesc->Pool = desc.Pool;
         pDesc->Size = desc.Size;
-        pDesc->FVF = desc.FVF;
         pDesc->Type = D3DRTYPE_VERTEXBUFFER;
+        pDesc->FVF = This->fvf;
     }
 
 
@@ -245,6 +245,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexBuffer(LPDIRECT3DDEVICE9EX iface
 
     object->lpVtbl = &Direct3DVertexBuffer9_Vtbl;
     object->ref = 1;
+    object->fvf = FVF;
     EnterCriticalSection(&d3d9_cs);
     hrc = IWineD3DDevice_CreateVertexBuffer(This->WineD3DDevice, Size, Usage & WINED3DUSAGE_MASK, FVF, (WINED3DPOOL) Pool, &(object->wineD3DVertexBuffer), pSharedHandle, (IUnknown *)object);
     LeaveCriticalSection(&d3d9_cs);
