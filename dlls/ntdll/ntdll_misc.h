@@ -188,15 +188,14 @@ struct debug_info
 /* thread private data, stored in NtCurrentTeb()->SystemReserved2 */
 struct ntdll_thread_data
 {
-    DWORD              fs;            /* 1d4 TEB selector */
-    DWORD              gs;            /* 1d8 libc selector; update winebuild if you move this! */
-    struct debug_info *debug_info;    /* 1dc info for debugstr functions */
-    int                request_fd;    /* 1e0 fd for sending server requests */
-    int                reply_fd;      /* 1e4 fd for receiving server replies */
-    int                wait_fd[2];    /* 1e8 fd for sleeping server requests */
-    void              *vm86_ptr;      /* 1f0 data for vm86 mode */
-    void              *pthread_data;  /* 1f4 private data for pthread emulation */
-    pthread_t          pthread_id;    /* 1f8 pthread thread id */
+    DWORD              fs;            /* 1d4/300 TEB selector */
+    DWORD              gs;            /* 1d8/304 libc selector; update winebuild if you move this! */
+    struct debug_info *debug_info;    /* 1dc/308 info for debugstr functions */
+    int                request_fd;    /* 1e0/310 fd for sending server requests */
+    int                reply_fd;      /* 1e4/314 fd for receiving server replies */
+    int                wait_fd[2];    /* 1e8/318 fd for sleeping server requests */
+    void              *vm86_ptr;      /* 1f0/320 data for vm86 mode */
+    pthread_t          pthread_id;    /* 1f4/328 pthread thread id */
 };
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
