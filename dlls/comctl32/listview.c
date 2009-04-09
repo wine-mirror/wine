@@ -3478,6 +3478,8 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     NMLISTVIEW nmlv;
     UINT uChanged = 0;
     LVITEMW item;
+    /* stateMask is ignored for LVM_INSERTITEM */
+    UINT stateMask = isNew ? ~0 : lpLVItem->stateMask;
 
     TRACE("()\n");
 
@@ -3510,7 +3512,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 
     TRACE("oldState=%x, newState=%x\n", item.state, lpLVItem->state);
     /* determine what fields will change */    
-    if ((lpLVItem->mask & LVIF_STATE) && ((item.state ^ lpLVItem->state) & lpLVItem->stateMask & ~infoPtr->uCallbackMask))
+    if ((lpLVItem->mask & LVIF_STATE) && ((item.state ^ lpLVItem->state) & stateMask & ~infoPtr->uCallbackMask))
 	uChanged |= LVIF_STATE;
 
     if ((lpLVItem->mask & LVIF_IMAGE) && (lpItem->hdr.iImage != lpLVItem->iImage))
@@ -3531,7 +3533,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
     nmlv.iItem = lpLVItem->iItem;
-    nmlv.uNewState = (item.state & ~lpLVItem->stateMask) | (lpLVItem->state & lpLVItem->stateMask);
+    nmlv.uNewState = (item.state & ~stateMask) | (lpLVItem->state & stateMask);
     nmlv.uOldState = item.state;
     nmlv.uChanged = uChanged;
     nmlv.lParam = item.lParam;
@@ -3564,21 +3566,21 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 
     if (uChanged & LVIF_STATE)
     {
-	if (lpItem && (lpLVItem->stateMask & ~infoPtr->uCallbackMask & ~(LVIS_FOCUSED | LVIS_SELECTED)))
+	if (lpItem && (stateMask & ~infoPtr->uCallbackMask & ~(LVIS_FOCUSED | LVIS_SELECTED)))
 	{
-	    lpItem->state &= ~lpLVItem->stateMask;
-	    lpItem->state |= (lpLVItem->state & lpLVItem->stateMask);
+	    lpItem->state &= ~stateMask;
+	    lpItem->state |= (lpLVItem->state & stateMask);
 	}
-	if (lpLVItem->state & lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED)
+	if (lpLVItem->state & stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED)
 	{
 	    if (infoPtr->dwStyle & LVS_SINGLESEL) LISTVIEW_DeselectAllSkipItem(infoPtr, lpLVItem->iItem);
 	    ranges_additem(infoPtr->selectionRanges, lpLVItem->iItem);
 	}
-	else if (lpLVItem->stateMask & LVIS_SELECTED)
+	else if (stateMask & LVIS_SELECTED)
 	    ranges_delitem(infoPtr->selectionRanges, lpLVItem->iItem);
 	
 	/* if we are asked to change focus, and we manage it, do it */
-	if (lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED)
+	if (stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED)
 	{
 	    if (lpLVItem->state & LVIS_FOCUSED)
 	    {

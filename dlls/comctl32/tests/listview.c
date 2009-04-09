@@ -634,6 +634,72 @@ static void test_items(void)
     insert_column(hwnd, 0);
     insert_column(hwnd, 1);
 
+    /* LVIS_SELECTED with zero stateMask */
+    /* set */
+    memset (&item, 0, sizeof (item));
+    item.mask = LVIF_STATE;
+    item.state = LVIS_SELECTED;
+    item.stateMask = 0;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
+    ok(r == 0, "ret %d\n", r);
+    /* get */
+    memset (&item, 0xcc, sizeof (item));
+    item.mask = LVIF_STATE;
+    item.stateMask = LVIS_SELECTED;
+    item.state = 0;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(r != 0, "ret %d\n", r);
+    ok(item.state & LVIS_SELECTED, "Expected LVIS_SELECTED\n");
+    SendMessage(hwnd, LVM_DELETEITEM, 0, 0);
+
+    /* LVIS_SELECTED with zero stateMask */
+    /* set */
+    memset (&item, 0, sizeof (item));
+    item.mask = LVIF_STATE;
+    item.state = LVIS_FOCUSED;
+    item.stateMask = 0;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
+    ok(r == 0, "ret %d\n", r);
+    /* get */
+    memset (&item, 0xcc, sizeof (item));
+    item.mask = LVIF_STATE;
+    item.stateMask = LVIS_FOCUSED;
+    item.state = 0;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(r != 0, "ret %d\n", r);
+    ok(item.state & LVIS_FOCUSED, "Expected LVIS_FOCUSED\n");
+    SendMessage(hwnd, LVM_DELETEITEM, 0, 0);
+
+    /* LVIS_CUT with LVIS_FOCUSED stateMask */
+    /* set */
+    memset (&item, 0, sizeof (item));
+    item.mask = LVIF_STATE;
+    item.state = LVIS_CUT;
+    item.stateMask = LVIS_FOCUSED;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
+    ok(r == 0, "ret %d\n", r);
+    /* get */
+    memset (&item, 0xcc, sizeof (item));
+    item.mask = LVIF_STATE;
+    item.stateMask = LVIS_CUT;
+    item.state = 0;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(r != 0, "ret %d\n", r);
+    ok(item.state & LVIS_CUT, "Expected LVIS_CUT\n");
+    SendMessage(hwnd, LVM_DELETEITEM, 0, 0);
+
     /* Insert an item with just a param */
     memset (&item, 0xcc, sizeof (item));
     item.mask = LVIF_PARAM;
