@@ -1179,23 +1179,29 @@ static void shader_glsl_get_register_name(const DWORD param, const DWORD addr_to
     strcat(regstr, tmpStr);
 }
 
+static void shader_glsl_write_mask_to_str(DWORD write_mask, char *str)
+{
+    *str++ = '.';
+    if (write_mask & WINED3DSP_WRITEMASK_0) *str++ = 'x';
+    if (write_mask & WINED3DSP_WRITEMASK_1) *str++ = 'y';
+    if (write_mask & WINED3DSP_WRITEMASK_2) *str++ = 'z';
+    if (write_mask & WINED3DSP_WRITEMASK_3) *str++ = 'w';
+    *str = '\0';
+}
+
 /* Get the GLSL write mask for the destination register */
 static DWORD shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
-    char *ptr = write_mask;
     DWORD mask = param & WINED3DSP_WRITEMASK_ALL;
 
     if (shader_is_scalar(shader_get_regtype(param), param & WINED3DSP_REGNUM_MASK))
     {
         mask = WINED3DSP_WRITEMASK_0;
-    } else {
-        *ptr++ = '.';
-        if (param & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
-        if (param & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
-        if (param & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
-        if (param & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
+        *write_mask = '\0';
     }
-
-    *ptr = '\0';
+    else
+    {
+        shader_glsl_write_mask_to_str(mask, write_mask);
+    }
 
     return mask;
 }
@@ -2462,7 +2468,7 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
     if (shader_version < WINED3DPS_VERSION(1,4))
     {
         char coord_mask[6];
-        shader_glsl_get_write_mask(mask, coord_mask);
+        shader_glsl_write_mask_to_str(mask, coord_mask);
         shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, NULL,
                 "T%u%s", sampler_idx, coord_mask);
     } else {
@@ -2839,7 +2845,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
     mask = sample_function.coord_mask;
 
-    shader_glsl_get_write_mask(mask, coord_mask);
+    shader_glsl_write_mask_to_str(mask, coord_mask);
 
     /* with projective textures, texbem only divides the static texture coord, not the displacement,
          * so we can't let the GL handle this.
@@ -2854,7 +2860,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
             case WINED3DTTFF_COUNT4:
             case WINED3DTTFF_DISABLE: div_mask = WINED3DSP_WRITEMASK_3; break;
         }
-        shader_glsl_get_write_mask(div_mask, coord_div_mask);
+        shader_glsl_write_mask_to_str(div_mask, coord_div_mask);
         shader_addline(ins->buffer, "T%u%s /= T%u%s;\n", sampler_idx, coord_mask, sampler_idx, coord_div_mask);
     }
 
