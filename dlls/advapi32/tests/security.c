@@ -1410,8 +1410,8 @@ static void test_CreateWellKnownSid(void)
 static void test_LookupAccountSid(void)
 {
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
-    CHAR accountA[MAX_PATH], domainA[MAX_PATH];
-    DWORD acc_sizeA, dom_sizeA;
+    CHAR accountA[MAX_PATH], domainA[MAX_PATH], usernameA[MAX_PATH];
+    DWORD acc_sizeA, dom_sizeA, user_sizeA;
     DWORD real_acc_sizeA, real_dom_sizeA;
     WCHAR accountW[MAX_PATH], domainW[MAX_PATH];
     DWORD acc_sizeW, dom_sizeW;
@@ -1419,10 +1419,12 @@ static void test_LookupAccountSid(void)
     PSID pUsersSid = NULL;
     SID_NAME_USE use;
     BOOL ret;
-    DWORD size;
+    DWORD size,cbti = 0;
     MAX_SID  max_sid;
     CHAR *str_sidA;
     int i;
+    HANDLE hToken;
+    PTOKEN_USER ptiUser = NULL;
 
     /* native windows crashes if account size, domain size, or name use is NULL */
 
@@ -1580,6 +1582,26 @@ static void test_LookupAccountSid(void)
        real_dom_sizeW + 1, dom_sizeW);
 
     FreeSid(pUsersSid);
+
+    /* Test LookupAccountSid with Sid retrieved from token information.
+     This assumes this process is running under the account of the current user.*/
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_DUPLICATE, &hToken);
+    ret = GetTokenInformation(hToken, TokenUser, NULL, 0, &cbti);
+    ptiUser = (PTOKEN_USER) HeapAlloc(GetProcessHeap(), 0, cbti);
+    if (GetTokenInformation(hToken, TokenUser, ptiUser, cbti, &cbti))
+    {
+        acc_sizeA = dom_sizeA = MAX_PATH;
+        ret = LookupAccountSidA(NULL, ptiUser->User.Sid, accountA, &acc_sizeA, domainA, &dom_sizeA, &use);
+        ok(ret, "LookupAccountSidA() Expected TRUE, got FALSE\n");
+        user_sizeA = MAX_PATH;
+        ret = GetUserNameA(usernameA , &user_sizeA);
+        ok(ret, "GetUserNameA() Expected TRUE, got FALSE\n");
+        todo_wine
+        {
+            ok(lstrcmpA(usernameA, accountA) == 0, "LookupAccountSidA() Expected account name: %s got: %s\n", usernameA, accountA );
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, ptiUser);
 
     if (pCreateWellKnownSid && pConvertSidToStringSidA)
     {
