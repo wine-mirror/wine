@@ -999,7 +999,7 @@ static void test_MessageBoxFontTest(void)
     hDlg = CreateDialogIndirectParamW(g_hinst, (LPCDLGTEMPLATE)dlgTemplate, NULL, messageBoxFontDlgWinProc, 0);
     if (!hDlg)
     {
-        todo_wine win_skip("dialog wasn't created\n");
+        win_skip("dialog wasn't created\n");
         return;
     }
 
