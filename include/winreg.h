@@ -25,13 +25,13 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#define HKEY_CLASSES_ROOT       ((HKEY) 0x80000000)
-#define HKEY_CURRENT_USER       ((HKEY) 0x80000001)
-#define HKEY_LOCAL_MACHINE      ((HKEY) 0x80000002)
-#define HKEY_USERS              ((HKEY) 0x80000003)
-#define HKEY_PERFORMANCE_DATA   ((HKEY) 0x80000004)
-#define HKEY_CURRENT_CONFIG     ((HKEY) 0x80000005)
-#define HKEY_DYN_DATA           ((HKEY) 0x80000006)
+#define HKEY_CLASSES_ROOT       ((HKEY)(LONG_PTR)(LONG)0x80000000)
+#define HKEY_CURRENT_USER       ((HKEY)(LONG_PTR)(LONG)0x80000001)
+#define HKEY_LOCAL_MACHINE      ((HKEY)(LONG_PTR)(LONG)0x80000002)
+#define HKEY_USERS              ((HKEY)(LONG_PTR)(LONG)0x80000003)
+#define HKEY_PERFORMANCE_DATA   ((HKEY)(LONG_PTR)(LONG)0x80000004)
+#define HKEY_CURRENT_CONFIG     ((HKEY)(LONG_PTR)(LONG)0x80000005)
+#define HKEY_DYN_DATA           ((HKEY)(LONG_PTR)(LONG)0x80000006)
 
 /*
  *	registry provider structs
