@@ -37,15 +37,15 @@
 #include <sys/mman.h>
 #endif
 
-#include "windef.h"
-#include "winbase.h"
 #include "build.h"
+
+typedef unsigned short WCHAR;
 
 /* Unicode string or integer id */
 struct string_id
 {
     WCHAR *str;  /* ptr to Unicode string */
-    WORD   id;   /* integer id if str is NULL */
+    unsigned short id;   /* integer id if str is NULL */
 };
 
 /* descriptor for a resource */
@@ -55,7 +55,7 @@ struct resource
     struct string_id name;
     const void      *data;
     unsigned int     data_size;
-    WORD             lang;
+    unsigned short   lang;
 };
 
 /* name level of the resource tree */
@@ -90,7 +90,10 @@ static const unsigned char *file_end;   /* end of resource file */
 static const char *file_name;  /* current resource file name */
 
 /* size of a resource directory with n entries */
-#define RESDIR_SIZE(n)  (sizeof(IMAGE_RESOURCE_DIRECTORY) + (n) * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY))
+#define RESOURCE_DIR_SIZE        (4 * sizeof(unsigned int))
+#define RESOURCE_DIR_ENTRY_SIZE  (2 * sizeof(unsigned int))
+#define RESOURCE_DATA_ENTRY_SIZE (4 * sizeof(unsigned int))
+#define RESDIR_SIZE(n)  (RESOURCE_DIR_SIZE + (n) * RESOURCE_DIR_ENTRY_SIZE)
 
 
 static inline struct resource *add_resource( DLLSPEC *spec )
@@ -137,22 +140,22 @@ static struct res_type *add_type( struct res_tree *tree, const struct resource *
 }
 
 /* get the next word from the current resource file */
-static WORD get_word(void)
+static unsigned short get_word(void)
 {
-    WORD ret = *(const WORD *)file_pos;
+    unsigned short ret = *(const unsigned short *)file_pos;
     if (byte_swapped) ret = (ret << 8) | (ret >> 8);
-    file_pos += sizeof(WORD);
+    file_pos += sizeof(unsigned short);
     if (file_pos > file_end) fatal_error( "%s is a truncated file\n", file_name );
     return ret;
 }
 
 /* get the next dword from the current resource file */
-static DWORD get_dword(void)
+static unsigned int get_dword(void)
 {
-    DWORD ret = *(const DWORD *)file_pos;
+    unsigned int ret = *(const unsigned int *)file_pos;
     if (byte_swapped)
         ret = ((ret << 24) | ((ret << 8) & 0x00ff0000) | ((ret >> 8) & 0x0000ff00) | (ret >> 24));
-    file_pos += sizeof(DWORD);
+    file_pos += sizeof(unsigned int);
     if (file_pos > file_end) fatal_error( "%s is a truncated file\n", file_name );
     return ret;
 }
@@ -179,7 +182,7 @@ static void get_string( struct string_id *str )
 /* all values must be zero except header size */
 static int check_header(void)
 {
-    DWORD size;
+    unsigned int size;
 
     if (get_dword()) return 0;        /* data size */
     size = get_dword();               /* header size */
@@ -198,17 +201,17 @@ static int check_header(void)
 /* load the next resource from the current file */
 static void load_next_resource( DLLSPEC *spec )
 {
-    DWORD hdr_size;
+    unsigned int hdr_size;
     struct resource *res = add_resource( spec );
 
     res->data_size = (get_dword() + 3) & ~3;
     hdr_size = get_dword();
     if (hdr_size & 3) fatal_error( "%s header size not aligned\n", file_name );
 
-    res->data = file_pos - 2*sizeof(DWORD) + hdr_size;
+    res->data = file_pos - 2*sizeof(unsigned int) + hdr_size;
     get_string( &res->type );
     get_string( &res->name );
-    if ((UINT_PTR)file_pos & 2) get_word();  /* align to dword boundary */
+    if ((unsigned long)file_pos & 2) get_word();  /* align to dword boundary */
     get_dword();                        /* skip data version */
     get_word();                         /* skip mem options */
     res->lang = get_word();
@@ -360,7 +363,7 @@ void output_resources( DLLSPEC *spec )
         for (n = 0, name = type->names; n < type->nb_names; n++, name++)
             offset += RESDIR_SIZE( name->nb_languages );
     }
-    offset += spec->nb_resources * sizeof(IMAGE_RESOURCE_DATA_ENTRY);
+    offset += spec->nb_resources * RESOURCE_DATA_ENTRY_SIZE;
 
     for (i = nb_id_types = 0, type = tree->types; i < tree->nb_types; i++, type++)
     {
@@ -428,7 +431,7 @@ void output_resources( DLLSPEC *spec )
             output_res_dir( 0, name->nb_languages );
             for (k = 0, res = name->res; k < name->nb_languages; k++, res++)
             {
-                unsigned int entry_offset = (res - spec->resources) * sizeof(IMAGE_RESOURCE_DATA_ENTRY);
+                unsigned int entry_offset = (res - spec->resources) * RESOURCE_DATA_ENTRY_SIZE;
                 output( "\t.long 0x%08x,0x%08x\n", res->lang, data_offset + entry_offset );
             }
         }

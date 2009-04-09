@@ -36,8 +36,6 @@
 # include <getopt.h>
 #endif
 
-#include "windef.h"
-#include "winbase.h"
 #include "build.h"
 
 int UsePIC = 0;

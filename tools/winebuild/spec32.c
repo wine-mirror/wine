@@ -30,11 +30,20 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "windef.h"
-#include "winbase.h"
-#include "wine/exception.h"
 #include "build.h"
 
+#define IMAGE_FILE_MACHINE_UNKNOWN 0
+#define IMAGE_FILE_MACHINE_I386    0x014c
+#define IMAGE_FILE_MACHINE_ALPHA   0x0184
+#define IMAGE_FILE_MACHINE_POWERPC 0x01f0
+#define IMAGE_FILE_MACHINE_AMD64   0x8664
+
+#define IMAGE_SIZEOF_NT_OPTIONAL32_HEADER 224
+#define IMAGE_SIZEOF_NT_OPTIONAL64_HEADER 240
+
+#define IMAGE_NT_OPTIONAL_HDR32_MAGIC 0x10b
+#define IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
+#define IMAGE_ROM_OPTIONAL_HDR_MAGIC  0x107
 
 /* check if entry point needs a relay thunk */
 static inline int needs_relay( const ORDDEF *odp )
@@ -416,7 +425,7 @@ void output_module( DLLSPEC *spec )
     output( "%s\n", asm_globl("__wine_spec_nt_header") );
     output( ".L__wine_spec_rva_base:\n" );
 
-    output( "\t.long 0x%04x\n", IMAGE_NT_SIGNATURE );    /* Signature */
+    output( "\t.long 0x4550\n" );         /* Signature */
     switch(target_cpu)
     {
     case CPU_x86:     machine = IMAGE_FILE_MACHINE_I386; break;

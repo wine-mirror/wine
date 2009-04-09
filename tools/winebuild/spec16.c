@@ -28,9 +28,23 @@
 #include <assert.h>
 #include <ctype.h>
 
-#include "wine/winbase16.h"
-
 #include "build.h"
+
+#define NE_FFLAGS_SINGLEDATA 0x0001
+#define NE_FFLAGS_LIBMODULE  0x8000
+
+/* argument type flags for relay debugging */
+enum arg_types
+{
+    ARG_NONE = 0, /* indicates end of arg list */
+    ARG_WORD,     /* unsigned word */
+    ARG_SWORD,    /* signed word */
+    ARG_LONG,     /* long or segmented pointer */
+    ARG_PTR,      /* linear pointer */
+    ARG_STR,      /* linear pointer to null-terminated string */
+    ARG_SEGSTR,   /* segmented pointer to null-terminated string */
+    ARG_VARARG    /* start of varargs */
+};
 
 /* sequences of nops to fill a certain number of words */
 static const char * const nop_sequence[4] =
@@ -587,8 +601,7 @@ static void output_module16( DLLSPEC *spec )
     output( "\t.data\n" );
     output( "\t.align %d\n", get_alignment(4) );
     output( ".L__wine_spec_dos_header:\n" );
-    output( "\t%s 0x%04x\n", get_asm_short_keyword(),                      /* e_magic */
-             IMAGE_DOS_SIGNATURE );
+    output( "\t%s 0x5a4d\n", get_asm_short_keyword() );                    /* e_magic */
     output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_cblp */
     output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_cp */
     output( "\t%s 0\n", get_asm_short_keyword() );                         /* e_crlc */
@@ -609,8 +622,7 @@ static void output_module16( DLLSPEC *spec )
     output( "\t.long .L__wine_spec_ne_header-.L__wine_spec_dos_header\n" );/* e_lfanew */
 
     output( ".L__wine_spec_ne_header:\n" );
-    output( "\t%s 0x%04x\n", get_asm_short_keyword(),                      /* ne_magic */
-             IMAGE_OS2_SIGNATURE );
+    output( "\t%s 0x454e\n", get_asm_short_keyword() );                    /* ne_magic */
     output( "\t.byte 0\n" );                                               /* ne_ver */
     output( "\t.byte 0\n" );                                               /* ne_rev */
     output( "\t%s .L__wine_spec_ne_enttab-.L__wine_spec_ne_header\n",      /* ne_enttab */
@@ -645,8 +657,8 @@ static void output_module16( DLLSPEC *spec )
     output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_cmovent */
     output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_align */
     output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_cres */
-    output( "\t.byte 0x%02x\n", NE_OSFLAGS_WINDOWS );          /* ne_exetyp */
-    output( "\t.byte 0x%02x\n", NE_AFLAGS_FASTLOAD );          /* ne_flagsothers */
+    output( "\t.byte 0x04\n" );                                /* ne_exetyp = NE_OSFLAGS_WINDOWS */
+    output( "\t.byte 0x08\n" );                                /* ne_flagsothers = NE_AFLAGS_FASTLOAD */
     output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_pretthunks */
     output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_psegrefbytes */
     output( "\t%s 0\n", get_asm_short_keyword() );             /* ne_swaparea */
@@ -662,7 +674,7 @@ static void output_module16( DLLSPEC *spec )
              get_asm_short_keyword() );
     output( "\t%s .L__wine_spec_code_segment_end-.L__wine_spec_code_segment\n", /* size */
              get_asm_short_keyword() );
-    output( "\t%s 0x%04x\n", get_asm_short_keyword(), NE_SEGFLAGS_32BIT );      /* flags */
+    output( "\t%s 0x2000\n", get_asm_short_keyword() ); /* flags = NE_SEGFLAGS_32BIT */
     output( "\t%s .L__wine_spec_code_segment_end-.L__wine_spec_code_segment\n", /* minsize */
              get_asm_short_keyword() );
 
@@ -672,7 +684,7 @@ static void output_module16( DLLSPEC *spec )
              get_asm_short_keyword() );
     output( "\t%s .L__wine_spec_data_segment_end-.L__wine_spec_data_segment\n", /* size */
              get_asm_short_keyword() );
-    output( "\t%s 0x%04x\n", get_asm_short_keyword(), NE_SEGFLAGS_DATA );      /* flags */
+    output( "\t%s 0x0001\n", get_asm_short_keyword() ); /* flags = NE_SEGFLAGS_DATA */
     output( "\t%s .L__wine_spec_data_segment_end-.L__wine_spec_data_segment\n", /* minsize */
              get_asm_short_keyword() );
 

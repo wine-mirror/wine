@@ -28,7 +28,6 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-#include "windef.h"
 #include "build.h"
 
 /* offset of the stack pointer relative to %fs:(0) */
@@ -647,7 +646,7 @@ static void BuildRet16Func(void)
  * (ebp+4)   ret addr
  * (ebp)     ebp
  */
-static void BuildCallTo32CBClient( BOOL isEx )
+static void BuildCallTo32CBClient( int isEx )
 {
     function_header( isEx ? "CALL32_CBClientEx" : "CALL32_CBClient" );
 
@@ -925,13 +924,13 @@ void BuildRelays16(void)
     output( "%s\n", asm_globl("__wine_call16_start") );
 
     /* Standard CallFrom16 routine */
-    BuildCallFrom16Core( FALSE, FALSE );
+    BuildCallFrom16Core( 0, 0 );
 
     /* Register CallFrom16 routine */
-    BuildCallFrom16Core( TRUE, FALSE );
+    BuildCallFrom16Core( 1, 0 );
 
     /* C16ThkSL CallFrom16 routine */
-    BuildCallFrom16Core( FALSE, TRUE );
+    BuildCallFrom16Core( 0, 1 );
 
     /* Standard CallTo16 routine */
     BuildCallTo16Core( 0 );
@@ -943,10 +942,10 @@ void BuildRelays16(void)
     BuildRet16Func();
 
     /* CBClientThunkSL routine */
-    BuildCallTo32CBClient( FALSE );
+    BuildCallTo32CBClient( 0 );
 
     /* CBClientThunkSLEx routine */
-    BuildCallTo32CBClient( TRUE  );
+    BuildCallTo32CBClient( 1  );
 
     /* Pending DPMI events check stub */
     BuildPendingEventCheck();

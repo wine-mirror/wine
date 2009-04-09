@@ -35,8 +35,6 @@
 # include <unistd.h>
 #endif
 
-#include "windef.h"
-#include "winbase.h"
 #include "build.h"
 
 struct import

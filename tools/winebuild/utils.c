@@ -31,8 +31,6 @@
 # include <unistd.h>
 #endif
 
-#include "windef.h"
-#include "winnt.h"
 #include "build.h"
 
 #define MAX_TMP_FILES 8
