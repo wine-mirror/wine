@@ -118,10 +118,20 @@ static void testGetUserNameExA(void)
            formats[i], GetLastError());
     }
 
+    if (0) /* Crashes on Windows */
+        rc = pGetUserNameExA(NameSamCompatible, NULL, NULL);
+
     size = 0;
     rc = pGetUserNameExA(NameSamCompatible, NULL, &size);
     ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
     ok(size != 0, "Expected size to be set to required size\n");
+
+    if (0) /* Crashes on Windows with big enough size */
+    {
+        /* Returned size is already big enough */
+        rc = pGetUserNameExA(NameSamCompatible, NULL, &size);
+    }
+
     size = 0;
     rc = pGetUserNameExA(NameSamCompatible, name, &size);
     ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
@@ -156,10 +166,20 @@ static void testGetUserNameExW(void)
            formats[i], GetLastError());
     }
 
+    if (0) /* Crashes on Windows */
+        rc = pGetUserNameExW(NameSamCompatible, NULL, NULL);
+
     size = 0;
     rc = pGetUserNameExW(NameSamCompatible, NULL, &size);
     ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
     ok(size != 0, "Expected size to be set to required size\n");
+
+    if (0) /* Crashes on Windows with big enough size */
+    {
+        /* Returned size is already big enough */
+        rc = pGetUserNameExW(NameSamCompatible, NULL, &size);
+    }
+
     size = 0;
     rc = pGetUserNameExW(NameSamCompatible, nameW, &size);
     ok(! rc && GetLastError() == ERROR_MORE_DATA, "Expected fail with ERROR_MORE_DATA, got %d with %u\n", rc, GetLastError());
