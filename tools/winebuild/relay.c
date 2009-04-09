@@ -28,26 +28,17 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-#define __WINESRC__  /* FIXME: for WINE_VM86_TEB_INFO */
-#include "winternl.h"
-#include "wine/winbase16.h"
-
+#include "windef.h"
 #include "build.h"
 
-/* offset of a structure field relative to the start of the struct */
-#define STRUCTOFFSET(type,field) ((int)FIELD_OFFSET(type,field))
-
-/* offset of register relative to the start of the STACK16FRAME struct */
-#define STACK16OFFSET(reg)  STRUCTOFFSET(STACK16FRAME,reg)
-
-/* offset of register relative to the start of the STACK32FRAME struct */
-#define STACK32OFFSET(reg)  STRUCTOFFSET(STACK32FRAME,reg)
-
 /* offset of the stack pointer relative to %fs:(0) */
-#define STACKOFFSET 0xc0  /* STRUCTOFFSET(TEB,WOW32Reserved) */
+#define STACKOFFSET 0xc0  /* FIELD_OFFSET(TEB,WOW32Reserved) */
 
 /* fix this if the ntdll_thread_regs structure is changed */
-#define GS_OFFSET  0x1d8  /* STRUCTOFFSET(TEB,SystemReserved2) + STRUCTOFFSET(ntdll_thread_data,gs) */
+#define GS_OFFSET  0x1d8  /* FIELD_OFFSET(TEB,SystemReserved2) + FIELD_OFFSET(ntdll_thread_data,gs) */
+
+#define DPMI_VIF_OFFSET      (0x1fc + 0) /* FIELD_OFFSET(TEB,GdiTebBatch) + FIELD_OFFSET(WINE_VM86_TEB_INFO,dpmi_vif) */
+#define VM86_PENDING_OFFSET  (0x1fc + 4) /* FIELD_OFFSET(TEB,GdiTebBatch) + FIELD_OFFSET(WINE_VM86_TEB_INFO,vm86_pending) */
 
 static void function_header( const char *name )
 {
@@ -190,7 +181,7 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     output( "\tpushl %%ds\n" );
     output( "\tpopl %%ss\n" );
     output( "\tmovl %%ebp, %%esp\n" );
-    output( "\taddl $%d, %%ebp\n", STACK32OFFSET(ebp) );
+    output( "\taddl $0x20,%%ebp\n");  /* FIELD_OFFSET(STACK32FRAME,ebp) */
 
 
     /* At this point:
@@ -207,10 +198,10 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     if ( thunk )
     {
         /* Set up registers as expected and call thunk */
-        output( "\tleal %d(%%edx), %%ebx\n", (int)sizeof(STACK16FRAME)-22 );
+        output( "\tleal 0x1a(%%edx),%%ebx\n" );  /* sizeof(STACK16FRAME)-22 */
         output( "\tleal -4(%%esp), %%ebp\n" );
 
-        output( "\tcall *%d(%%edx)\n", STACK16OFFSET(entry_point) );
+        output( "\tcall *0x26(%%edx)\n");  /* FIELD_OFFSET(STACK16FRAME,entry_point) */
 
         /* Switch stack back */
         output( "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
@@ -241,7 +232,7 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     /* Build register CONTEXT */
     if ( reg_func )
     {
-        output( "\tsubl $%d, %%esp\n", (int)sizeof(CONTEXT86) );
+        output( "\tsubl $0x2cc,%%esp\n" );       /* sizeof(CONTEXT86) */
 
         output( "\tmovl %%ecx,0xc0(%%esp)\n" );  /* EFlags */
 
@@ -250,31 +241,31 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
         output( "\tmovl %%esi,0xa0(%%esp)\n" );  /* Esi */
         output( "\tmovl %%edi,0x9c(%%esp)\n" );  /* Edi */
 
-        output( "\tmovl %d(%%edx), %%eax\n", STACK16OFFSET(ebp) );
+        output( "\tmovl 0x0c(%%edx),%%eax\n");   /* FIELD_OFFSET(STACK16FRAME,ebp) */
         output( "\tmovl %%eax,0xb4(%%esp)\n" );  /* Ebp */
-        output( "\tmovl %d(%%edx), %%eax\n", STACK16OFFSET(ecx) );
+        output( "\tmovl 0x08(%%edx),%%eax\n");   /* FIELD_OFFSET(STACK16FRAME,ecx) */
         output( "\tmovl %%eax,0xac(%%esp)\n" );  /* Ecx */
-        output( "\tmovl %d(%%edx), %%eax\n", STACK16OFFSET(edx) );
+        output( "\tmovl 0x04(%%edx),%%eax\n");   /* FIELD_OFFSET(STACK16FRAME,edx) */
         output( "\tmovl %%eax,0xa8(%%esp)\n" );  /* Edx */
 
-        output( "\tmovzwl %d(%%edx), %%eax\n", STACK16OFFSET(ds) );
+        output( "\tmovzwl 0x10(%%edx),%%eax\n"); /* FIELD_OFFSET(STACK16FRAME,ds) */
         output( "\tmovl %%eax,0x98(%%esp)\n" );  /* SegDs */
-        output( "\tmovzwl %d(%%edx), %%eax\n", STACK16OFFSET(es) );
+        output( "\tmovzwl 0x12(%%edx),%%eax\n"); /* FIELD_OFFSET(STACK16FRAME,es) */
         output( "\tmovl %%eax,0x94(%%esp)\n" );  /* SegEs */
-        output( "\tmovzwl %d(%%edx), %%eax\n", STACK16OFFSET(fs) );
+        output( "\tmovzwl 0x14(%%edx),%%eax\n"); /* FIELD_OFFSET(STACK16FRAME,fs) */
         output( "\tmovl %%eax,0x90(%%esp)\n" );  /* SegFs */
-        output( "\tmovzwl %d(%%edx), %%eax\n", STACK16OFFSET(gs) );
+        output( "\tmovzwl 0x16(%%edx),%%eax\n"); /* FIELD_OFFSET(STACK16FRAME,gs) */
         output( "\tmovl %%eax,0x8c(%%esp)\n" );  /* SegGs */
 
-        output( "\tmovzwl %d(%%edx), %%eax\n", STACK16OFFSET(cs) );
+        output( "\tmovzwl 0x2e(%%edx),%%eax\n"); /* FIELD_OFFSET(STACK16FRAME,cs) */
         output( "\tmovl %%eax,0xbc(%%esp)\n" );  /* SegCs */
-        output( "\tmovzwl %d(%%edx), %%eax\n", STACK16OFFSET(ip) );
+        output( "\tmovzwl 0x2c(%%edx),%%eax\n"); /* FIELD_OFFSET(STACK16FRAME,ip) */
         output( "\tmovl %%eax,0xb8(%%esp)\n" );  /* Eip */
 
         output( "\t.byte 0x64\n\tmovzwl (%d), %%eax\n", STACKOFFSET+2 );
         output( "\tmovl %%eax,0xc8(%%esp)\n" );  /* SegSs */
         output( "\t.byte 0x64\n\tmovzwl (%d), %%eax\n", STACKOFFSET );
-        output( "\taddl $%d, %%eax\n", STACK16OFFSET(ip) );
+        output( "\taddl $0x2c,%%eax\n");         /* FIELD_OFFSET(STACK16FRAME,ip) */
         output( "\tmovl %%eax,0xc4(%%esp)\n" );  /* Esp */
 #if 0
         output( "\tfsave 0x1c(%%esp)\n" ); /* FloatSave */
@@ -294,14 +285,14 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
     }
 
     /* Call relay routine (which will call the API entry point) */
-    output( "\tleal %d(%%edx), %%eax\n", (int)sizeof(STACK16FRAME) );
+    output( "\tleal 0x30(%%edx),%%eax\n" ); /* sizeof(STACK16FRAME) */
     output( "\tpushl %%eax\n" );
-    output( "\tpushl %d(%%edx)\n", STACK16OFFSET(entry_point) );
-    output( "\tcall *%d(%%edx)\n", STACK16OFFSET(relay) );
+    output( "\tpushl 0x26(%%edx)\n");  /* FIELD_OFFSET(STACK16FRAME,entry_point) */
+    output( "\tcall *0x20(%%edx)\n");  /* FIELD_OFFSET(STACK16FRAME,relay) */
 
     if ( reg_func )
     {
-        output( "\tleal -%d(%%ebp), %%ebx\n", (int)sizeof(CONTEXT) + STACK32OFFSET(ebp) );
+        output( "\tleal -748(%%ebp),%%ebx\n" ); /* sizeof(CONTEXT) + FIELD_OFFSET(STACK32FRAME,ebp) */
 
         /* Switch stack back */
         output( "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );
@@ -309,7 +300,7 @@ static void BuildCallFrom16Core( int reg_func, int thunk )
         output( "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
 
         /* Get return address to CallFrom16 stub */
-        output( "\taddw $%d, %%sp\n", STACK16OFFSET(callfrom_ip)-4 );
+        output( "\taddw $0x14,%%sp\n" ); /* FIELD_OFFSET(STACK16FRAME,callfrom_ip)-4 */
         output( "\tpopl %%eax\n" );
         output( "\tpopl %%edx\n" );
 
@@ -439,7 +430,7 @@ static void BuildCallTo16Core( int reg_func )
          *        at the cost of a somewhat less efficient return path.]
          */
 
-        output( "\tmovl %d(%%esp), %%edi\n", STACK32OFFSET(target) - STACK32OFFSET(edi));
+        output( "\tmovl 0x14(%%esp),%%edi\n" ); /* FIELD_OFFSET(STACK32FRAME,target) - FIELD_OFFSET(STACK32FRAME,edi) */
                 /* everything above edi has been popped already */
 
         output( "\tmovl %%eax,0xb0(%%edi)\n");  /* Eax */
@@ -473,15 +464,15 @@ static void BuildCallTo16Core( int reg_func )
 
     /* Make %bp point to the previous stackframe (built by CallFrom16) */
     output( "\tmovzwl %%sp,%%ebp\n" );
-    output( "\tleal %d(%%ebp),%%ebp\n", STACK16OFFSET(bp) );
+    output( "\tleal 0x2a(%%ebp),%%ebp\n");  /* FIELD_OFFSET(STACK16FRAME,bp) */
 
     /* Add the specified offset to the new sp */
-    output( "\tsubw %d(%%edx), %%sp\n", STACK32OFFSET(nb_args) );
+    output( "\tsubw 0x2c(%%edx), %%sp\n");  /* FIELD_OFFSET(STACK32FRAME,nb_args) */
 
     if (reg_func)
     {
         /* Push the called routine address */
-        output( "\tmovl %d(%%edx),%%edx\n", STACK32OFFSET(target) );
+        output( "\tmovl 0x28(%%edx),%%edx\n");  /* FIELD_OFFSET(STACK32FRAME,target) */
         output( "\tpushw 0xbc(%%edx)\n");  /* SegCs */
         output( "\tpushw 0xb8(%%edx)\n");  /* Eip */
 
@@ -507,12 +498,12 @@ static void BuildCallTo16Core( int reg_func )
     else  /* not a register function */
     {
         /* Push the called routine address */
-        output( "\tpushl %d(%%edx)\n", STACK32OFFSET(target) );
+        output( "\tpushl 0x28(%%edx)\n"); /* FIELD_OFFSET(STACK32FRAME,target) */
 
         /* Set %fs and %gs to the value saved by the last CallFrom16 */
-        output( "\tpushw %d(%%ebp)\n", STACK16OFFSET(fs)-STACK16OFFSET(bp) );
+        output( "\tpushw -22(%%ebp)\n" ); /* FIELD_OFFSET(STACK16FRAME,fs)-FIELD_OFFSET(STACK16FRAME,bp) */
         output( "\tpopw %%fs\n" );
-        output( "\tpushw %d(%%ebp)\n", STACK16OFFSET(gs)-STACK16OFFSET(bp) );
+        output( "\tpushw -20(%%ebp)\n" ); /* FIELD_OFFSET(STACK16FRAME,gs)-FIELD_OFFSET(STACK16FRAME,bp) */
         output( "\tpopw %%gs\n" );
 
         /* Set %ds and %es (and %ax just in case) equal to %ss */
@@ -758,7 +749,7 @@ static void BuildCallTo32CBClient( BOOL isEx )
  */
 static void BuildCallFrom32Regs(void)
 {
-    static const int STACK_SPACE = 128 + sizeof(CONTEXT86);
+    static const int STACK_SPACE = 128 + 0x2cc /* sizeof(CONTEXT86) */;
 
     /* Function header */
 
@@ -888,11 +879,9 @@ static void BuildPendingEventCheck(void)
 
     /* Check for pending events. */
 
-    output( "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n",
-            STRUCTOFFSET(TEB,GdiTebBatch) + STRUCTOFFSET(WINE_VM86_TEB_INFO,vm86_pending) );
+    output( "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n", VM86_PENDING_OFFSET );
     output( "\tje %s\n", asm_name("DPMI_PendingEventCheck_Cleanup") );
-    output( "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n",
-            STRUCTOFFSET(TEB,GdiTebBatch) + STRUCTOFFSET(WINE_VM86_TEB_INFO,dpmi_vif) );
+    output( "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n", DPMI_VIF_OFFSET );
     output( "\tje %s\n", asm_name("DPMI_PendingEventCheck_Cleanup") );
 
     /* Process pending events. */
