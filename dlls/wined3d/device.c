@@ -352,6 +352,8 @@ void device_stream_info_from_strided(IWineD3DDeviceImpl *This,
 
     for (i = 0; i < sizeof(stream_info->elements) / sizeof(*stream_info->elements); ++i)
     {
+        if (!stream_info->elements[i].format_desc) continue;
+
         if (!GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA) && stream_info->elements[i].format_desc->format == WINED3DFMT_A8R8G8B8)
         {
             stream_info->swizzle_map |= 1 << i;
