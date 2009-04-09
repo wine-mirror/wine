@@ -344,16 +344,10 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
     }
 
     if(device->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE] && pshader) {
-        shader_addline(buffer, "PARAM srgb_mul_low = {%f, %f, %f, 1.0};\n",
-                        srgb_mul_low, srgb_mul_low, srgb_mul_low);
-        shader_addline(buffer, "PARAM srgb_comparison =  {%f, %f, %f, %f};\n",
-                        srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
-        shader_addline(buffer, "PARAM srgb_pow =  {%f, %f, %f, 1.0};\n",
-                       srgb_pow, srgb_pow, srgb_pow);
-        shader_addline(buffer, "PARAM srgb_mul_hi =  {%f, %f, %f, 1.0};\n",
-                       srgb_mul_high, srgb_mul_high, srgb_mul_high);
-        shader_addline(buffer, "PARAM srgb_sub_hi =  {%f, %f, %f, 0.0};\n",
-                       srgb_sub_high, srgb_sub_high, srgb_sub_high);
+        shader_addline(buffer, "PARAM srgb_consts1 = {%f, %f, %f, %f};\n",
+                       srgb_mul_low, srgb_cmp, srgb_pow, srgb_mul_high);
+        shader_addline(buffer, "PARAM srgb_consts2 = {%f, %f, %f, %f};\n",
+                       srgb_sub_high, 0.0, 0.0, 0.0);
     }
 
     /* Load local constants using the program-local space,
@@ -1958,16 +1952,16 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
     /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
 
     /* Calculate the > 0.0031308 case */
-    shader_addline(buffer, "POW %s.x, %s.x, srgb_pow.x;\n", tmp1, fragcolor);
-    shader_addline(buffer, "POW %s.y, %s.y, srgb_pow.y;\n", tmp1, fragcolor);
-    shader_addline(buffer, "POW %s.z, %s.z, srgb_pow.z;\n", tmp1, fragcolor);
-    shader_addline(buffer, "MUL %s, %s, srgb_mul_hi;\n", tmp1, tmp1);
-    shader_addline(buffer, "SUB %s, %s, srgb_sub_hi;\n", tmp1, tmp1);
+    shader_addline(buffer, "POW %s.x, %s.x, srgb_consts1.z;\n", tmp1, fragcolor);
+    shader_addline(buffer, "POW %s.y, %s.y, srgb_consts1.z;\n", tmp1, fragcolor);
+    shader_addline(buffer, "POW %s.z, %s.z, srgb_consts1.z;\n", tmp1, fragcolor);
+    shader_addline(buffer, "MUL %s, %s, srgb_consts1.w;\n", tmp1, tmp1);
+    shader_addline(buffer, "SUB %s, %s, srgb_consts2.x;\n", tmp1, tmp1);
     /* Calculate the < case */
-    shader_addline(buffer, "MUL %s, srgb_mul_low, %s;\n", tmp2, fragcolor);
+    shader_addline(buffer, "MUL %s, srgb_consts1.x, %s;\n", tmp2, fragcolor);
     /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
-    shader_addline(buffer, "SLT %s, srgb_comparison, %s;\n", tmp3, fragcolor);
-    shader_addline(buffer, "SGE %s, srgb_comparison, %s;\n", tmp4, fragcolor);
+    shader_addline(buffer, "SLT %s, srgb_consts1.y, %s;\n", tmp3, fragcolor);
+    shader_addline(buffer, "SGE %s, srgb_consts1.y, %s;\n", tmp4, fragcolor);
     /* Store the components > 0.0031308 in the destination */
     shader_addline(buffer, "MUL %s, %s, %s;\n", fragcolor, tmp1, tmp3);
     /* Add the components that are < 0.0031308 */
@@ -2858,16 +2852,10 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
         shader_addline(&buffer, "PARAM specular_enable = program.env[%u];\n", ARB_FFP_CONST_SPECULAR_ENABLE);
 
     if(settings->sRGB_write) {
-        shader_addline(&buffer, "PARAM srgb_mul_low = {%f, %f, %f, 1.0};\n",
-                       srgb_mul_low, srgb_mul_low, srgb_mul_low);
-        shader_addline(&buffer, "PARAM srgb_comparison =  {%f, %f, %f, %f};\n",
-                       srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
-        shader_addline(&buffer, "PARAM srgb_pow =  {%f, %f, %f, 1.0};\n",
-                       srgb_pow, srgb_pow, srgb_pow);
-        shader_addline(&buffer, "PARAM srgb_mul_hi =  {%f, %f, %f, 1.0};\n",
-                       srgb_mul_high, srgb_mul_high, srgb_mul_high);
-        shader_addline(&buffer, "PARAM srgb_sub_hi =  {%f, %f, %f, 0.0};\n",
-                       srgb_sub_high, srgb_sub_high, srgb_sub_high);
+        shader_addline(&buffer, "PARAM srgb_consts1 = {%f, %f, %f, %f};\n",
+                       srgb_mul_low, srgb_cmp, srgb_pow, srgb_mul_high);
+        shader_addline(&buffer, "PARAM srgb_consts2 = {%f, %f, %f, %f};\n",
+                       srgb_sub_high, 0.0, 0.0, 0.0);
     }
 
     /* Generate texture sampling instructions) */
