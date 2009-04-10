@@ -167,7 +167,7 @@ static HRESULT WINAPI DocumentMgr_Pop(ITfDocumentMgr *iface, DWORD dwFlags)
     if (dwFlags)
         return E_INVALIDARG;
 
-    if (This->contextStack[0] == NULL) /* Cannot pop last context */
+    if (This->contextStack[1] == NULL) /* Cannot pop last context */
         return E_FAIL;
 
     ITfThreadMgrEventSink_OnPopContext(This->ThreadMgrSink,This->contextStack[0]);
