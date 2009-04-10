@@ -321,7 +321,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
  *
  * Implementation of NtRaiseException.
  */
-static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
 {
     NTSTATUS status;
 
@@ -410,21 +410,30 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 }
 
 
+/*******************************************************************
+ *		raise_status
+ *
+ * Implementation of RtlRaiseStatus with a specific exception record.
+ */
+void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
+{
+    EXCEPTION_RECORD ExceptionRec;
+
+    ExceptionRec.ExceptionCode    = status;
+    ExceptionRec.ExceptionFlags   = EH_NONCONTINUABLE;
+    ExceptionRec.ExceptionRecord  = rec;
+    ExceptionRec.NumberParameters = 0;
+    for (;;) RtlRaiseException( &ExceptionRec );  /* never returns */
+}
+
+
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */
 void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     NTSTATUS status = raise_exception( rec, context, TRUE );
-    if (status != STATUS_SUCCESS)
-    {
-        EXCEPTION_RECORD newrec;
-        newrec.ExceptionCode    = status;
-        newrec.ExceptionFlags   = EH_NONCONTINUABLE;
-        newrec.ExceptionRecord  = rec;
-        newrec.NumberParameters = 0;
-        RtlRaiseException( &newrec );  /* never returns */
-    }
+    if (status != STATUS_SUCCESS) raise_status( status, rec );
 }
 
 /**********************************************************************/
@@ -447,7 +456,7 @@ void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
 void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID unusedEip,
                               PEXCEPTION_RECORD pRecord, PVOID returnEax, CONTEXT *context )
 {
-    EXCEPTION_RECORD record, newrec;
+    EXCEPTION_RECORD record;
     EXCEPTION_REGISTRATION_RECORD *frame, *dispatch;
     DWORD res;
 
@@ -476,23 +485,12 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID un
     {
         /* Check frame address */
         if (pEndFrame && (frame > pEndFrame))
-        {
-            newrec.ExceptionCode    = STATUS_INVALID_UNWIND_TARGET;
-            newrec.ExceptionFlags   = EH_NONCONTINUABLE;
-            newrec.ExceptionRecord  = pRecord;
-            newrec.NumberParameters = 0;
-            RtlRaiseException( &newrec );  /* never returns */
-        }
+            raise_status( STATUS_INVALID_UNWIND_TARGET, pRecord );
+
         if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
             ((void*)(frame+1) > NtCurrentTeb()->Tib.StackBase) ||
             (UINT_PTR)frame & 3)
-        {
-            newrec.ExceptionCode    = STATUS_BAD_STACK;
-            newrec.ExceptionFlags   = EH_NONCONTINUABLE;
-            newrec.ExceptionRecord  = pRecord;
-            newrec.NumberParameters = 0;
-            RtlRaiseException( &newrec );  /* never returns */
-        }
+            raise_status( STATUS_BAD_STACK, pRecord );
 
         /* Call handler */
         TRACE( "calling handler at %p code=%x flags=%x\n",
@@ -508,11 +506,7 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID un
             frame = dispatch;
             break;
         default:
-            newrec.ExceptionCode    = STATUS_INVALID_DISPOSITION;
-            newrec.ExceptionFlags   = EH_NONCONTINUABLE;
-            newrec.ExceptionRecord  = pRecord;
-            newrec.NumberParameters = 0;
-            RtlRaiseException( &newrec );  /* never returns */
+            raise_status( STATUS_INVALID_DISPOSITION, pRecord );
             break;
         }
         frame = __wine_pop_frame( frame );
@@ -541,13 +535,7 @@ void WINAPI RtlUnwind( PVOID pEndFrame, PVOID unusedEip,
  */
 void WINAPI RtlRaiseStatus( NTSTATUS status )
 {
-    EXCEPTION_RECORD ExceptionRec;
-
-    ExceptionRec.ExceptionCode    = status;
-    ExceptionRec.ExceptionFlags   = EH_NONCONTINUABLE;
-    ExceptionRec.ExceptionRecord  = NULL;
-    ExceptionRec.NumberParameters = 0;
-    RtlRaiseException( &ExceptionRec );
+    raise_status( status, NULL );
 }
 
 

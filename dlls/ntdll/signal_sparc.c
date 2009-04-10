@@ -371,6 +371,7 @@ static void segv_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
 
@@ -386,7 +387,8 @@ static void segv_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionInformation[0] = 0;  /* FIXME: read/write access ? */
     rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
 
-    __regs_RtlRaiseException( &rec, &context );
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, ucontext );
 }
 
@@ -399,6 +401,7 @@ static void bus_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     save_context( &context, ucontext );
     rec.ExceptionRecord  = NULL;
@@ -411,7 +414,8 @@ static void bus_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     else
         rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
 
-    __regs_RtlRaiseException( &rec, &context );
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, ucontext );
 }
 
@@ -424,6 +428,7 @@ static void ill_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     switch ( info->si_code )
     {
@@ -450,7 +455,8 @@ static void ill_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    __regs_RtlRaiseException( &rec, &context );
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, ucontext );
 }
 
@@ -464,6 +470,7 @@ static void trap_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     switch ( info->si_code )
     {
@@ -481,7 +488,8 @@ static void trap_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    __regs_RtlRaiseException( &rec, &context );
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, ucontext );
 }
 
@@ -495,6 +503,7 @@ static void fpe_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     switch ( info->si_code )
     {
@@ -531,7 +540,8 @@ static void fpe_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    __regs_RtlRaiseException( &rec, &context );
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, ucontext );
     restore_fpu( &context, ucontext );
 }
@@ -548,6 +558,7 @@ static void int_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     {
         EXCEPTION_RECORD rec;
         CONTEXT context;
+        NTSTATUS status;
 
         save_context( &context, ucontext );
         rec.ExceptionCode    = CONTROL_C_EXIT;
@@ -555,7 +566,8 @@ static void int_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
         rec.ExceptionRecord  = NULL;
         rec.ExceptionAddress = (LPVOID)context.pc;
         rec.NumberParameters = 0;
-        __regs_RtlRaiseException( &rec, &context );
+        status = raise_exception( &rec, &context, TRUE );
+        if (status) raise_status( status, &rec );
         restore_context( &context, ucontext );
     }
 }
@@ -569,6 +581,7 @@ static HANDLER_DEF(abrt_handler)
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     save_context( &context, HANDLER_CONTEXT );
     rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
@@ -576,7 +589,8 @@ static HANDLER_DEF(abrt_handler)
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    __regs_RtlRaiseException( &rec, &context ); /* Should never return.. */
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, HANDLER_CONTEXT );
 }
 

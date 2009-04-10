@@ -478,6 +478,7 @@ static HANDLER_DEF(segv_handler)
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     save_context( &context, HANDLER_CONTEXT );
 
@@ -532,7 +533,8 @@ static HANDLER_DEF(segv_handler)
         break;
     }
 
-    __regs_RtlRaiseException( &rec, &context );
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
 done:
     restore_context( &context, HANDLER_CONTEXT );
 }
@@ -546,6 +548,7 @@ static HANDLER_DEF(trap_handler)
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     save_context( &context, HANDLER_CONTEXT );
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
@@ -567,7 +570,8 @@ static HANDLER_DEF(trap_handler)
         break;
     }
 
-    __regs_RtlRaiseException( &rec, &context );
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, HANDLER_CONTEXT );
 }
 
@@ -580,6 +584,7 @@ static HANDLER_DEF(fpe_handler)
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     save_context( &context, HANDLER_CONTEXT );
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
@@ -616,7 +621,8 @@ static HANDLER_DEF(fpe_handler)
         break;
     }
 
-    __regs_RtlRaiseException( &rec, &context );
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, HANDLER_CONTEXT );
 }
 
@@ -631,6 +637,7 @@ static HANDLER_DEF(int_handler)
     {
         EXCEPTION_RECORD rec;
         CONTEXT context;
+        NTSTATUS status;
 
         save_context( &context, HANDLER_CONTEXT );
         rec.ExceptionCode    = CONTROL_C_EXIT;
@@ -638,7 +645,8 @@ static HANDLER_DEF(int_handler)
         rec.ExceptionRecord  = NULL;
         rec.ExceptionAddress = (LPVOID)context.Rip;
         rec.NumberParameters = 0;
-        __regs_RtlRaiseException( &rec, &context );
+        status = raise_exception( &rec, &context, TRUE );
+        if (status) raise_status( status, &rec );
         restore_context( &context, HANDLER_CONTEXT );
     }
 }
@@ -653,6 +661,7 @@ static HANDLER_DEF(abrt_handler)
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     save_context( &context, HANDLER_CONTEXT );
     rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
@@ -660,7 +669,8 @@ static HANDLER_DEF(abrt_handler)
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.Rip;
     rec.NumberParameters = 0;
-    __regs_RtlRaiseException( &rec, &context ); /* Should never return.. */
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, HANDLER_CONTEXT );
 }
 

@@ -629,7 +629,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
 
             vcontext.EFlags &= ~VIP_FLAG;
             get_vm86_teb_info()->vm86_pending = 0;
-            __regs_RtlRaiseException( rec, &vcontext );
+            raise_exception( rec, &vcontext, TRUE );
 
             restore_vm86_context( &vcontext, vm86 );
             check_pending = TRUE;
@@ -1470,6 +1470,8 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
  */
 static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
+    NTSTATUS status;
+
     switch(rec->ExceptionCode)
     {
     case EXCEPTION_ACCESS_VIOLATION:
@@ -1492,7 +1494,8 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         }
         break;
     }
-    __regs_RtlRaiseException( rec, context );
+    status = NtRaiseException( rec, context, TRUE );
+    if (status) raise_status( status, rec );
 done:
     NtSetContextThread( GetCurrentThread(), context );
 }
@@ -1503,6 +1506,8 @@ done:
  */
 static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
+    NTSTATUS status;
+
     if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
     {
         struct ntdll_thread_regs * const regs = ntdll_get_thread_regs();
@@ -1522,20 +1527,22 @@ static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         context->EFlags &= ~0x100;  /* clear single-step flag */
     }
 
-    __regs_RtlRaiseException( rec, context );
-    NtSetContextThread( GetCurrentThread(), context );
+    status = NtRaiseException( rec, context, TRUE );
+    if (status) raise_status( status, rec );
 }
 
 
 /**********************************************************************
- *		raise_exception
+ *		raise_generic_exception
  *
  * Generic raise function for exceptions that don't need special treatment.
  */
-static void WINAPI raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+static void WINAPI raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    __regs_RtlRaiseException( rec, context );
-    NtSetContextThread( GetCurrentThread(), context );
+    NTSTATUS status;
+
+    status = NtRaiseException( rec, context, TRUE );
+    if (status) raise_status( status, rec );
 }
 
 
@@ -1564,7 +1571,7 @@ static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *con
     {
         /* Executing DPMI code and virtual interrupts are enabled. */
         get_vm86_teb_info()->vm86_pending = 0;
-        __regs_RtlRaiseException( rec, context );
+        NtRaiseException( rec, context, TRUE );
     }
 done:
     NtSetContextThread( GetCurrentThread(), context );
@@ -1705,7 +1712,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     CONTEXT *win_context;
     SIGCONTEXT *context = sigcontext;
-    EXCEPTION_RECORD *rec = setup_exception( context, raise_exception );
+    EXCEPTION_RECORD *rec = setup_exception( context, raise_generic_exception );
 
     win_context = get_exception_context( rec );
 
@@ -1756,7 +1763,7 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     init_handler( sigcontext, &fs, &gs );
     if (!dispatch_signal(SIGINT))
     {
-        EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_exception );
+        EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
         rec->ExceptionCode = CONTROL_C_EXIT;
     }
 }
@@ -1768,7 +1775,7 @@ static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_exception );
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
     rec->ExceptionCode  = EXCEPTION_WINE_ASSERTION;
     rec->ExceptionFlags = EH_NONCONTINUABLE;
 }
@@ -1986,7 +1993,7 @@ void __wine_enter_vm86( CONTEXT *context )
             WINE_ERR( "unhandled result from vm86 mode %x\n", res );
             continue;
         }
-        __regs_RtlRaiseException( &rec, context );
+        raise_exception( &rec, context, TRUE );
     }
 }
 

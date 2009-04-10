@@ -618,6 +618,7 @@ static inline DWORD get_fpu_code( const CONTEXT *context )
 static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr )
 {
     EXCEPTION_RECORD rec;
+    NTSTATUS status;
 
     rec.ExceptionRecord  = NULL;
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
@@ -694,7 +695,8 @@ static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr 
 	}
     	break;
     }
-    __regs_RtlRaiseException( &rec, context );
+    status = raise_exception( &rec, context, TRUE );
+    if (status) raise_status( status, &rec );
 }
 
 /**********************************************************************
@@ -705,6 +707,7 @@ static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr 
 static void do_trap( CONTEXT *context, int code, void * addr )
 {
     EXCEPTION_RECORD rec;
+    NTSTATUS status;
 
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     rec.ExceptionRecord  = NULL;
@@ -726,7 +729,8 @@ static void do_trap( CONTEXT *context, int code, void * addr )
     default:FIXME("Unhandled SIGTRAP/%x\n", code);
 		break;
     }
-    __regs_RtlRaiseException( &rec, context );
+    status = raise_exception( &rec, context, TRUE );
+    if (status) raise_status( status, &rec );
 }
 
 /**********************************************************************
@@ -737,6 +741,7 @@ static void do_trap( CONTEXT *context, int code, void * addr )
 static void do_fpe( CONTEXT *context, int code, void * addr )
 {
     EXCEPTION_RECORD rec;
+    NTSTATUS status;
 
     switch ( code  & 0xffff ) {
 #ifdef FPE_FLTSUB
@@ -785,7 +790,8 @@ static void do_fpe( CONTEXT *context, int code, void * addr )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = addr;
     rec.NumberParameters = 0;
-    __regs_RtlRaiseException( &rec, context );
+    status = raise_exception( &rec, context, TRUE );
+    if (status) raise_status( status, &rec );
 }
 
 /**********************************************************************
@@ -840,6 +846,7 @@ static HANDLER_DEF(int_handler)
     {
         EXCEPTION_RECORD rec;
         CONTEXT context;
+        NTSTATUS status;
 
         save_context( &context, HANDLER_CONTEXT );
         rec.ExceptionCode    = CONTROL_C_EXIT;
@@ -847,7 +854,8 @@ static HANDLER_DEF(int_handler)
         rec.ExceptionRecord  = NULL;
         rec.ExceptionAddress = (LPVOID)context.Iar;
         rec.NumberParameters = 0;
-        __regs_RtlRaiseException( &rec, &context );
+        status = raise_exception( &rec, &context, TRUE );
+        if (status) raise_status( status, &rec );
         restore_context( &context, HANDLER_CONTEXT );
     }
 }
@@ -862,6 +870,7 @@ static HANDLER_DEF(abrt_handler)
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
+    NTSTATUS status;
 
     save_context( &context, HANDLER_CONTEXT );
     rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
@@ -869,7 +878,8 @@ static HANDLER_DEF(abrt_handler)
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.Iar;
     rec.NumberParameters = 0;
-    __regs_RtlRaiseException( &rec, &context ); /* Should never return.. */
+    status = raise_exception( &rec, &context, TRUE );
+    if (status) raise_status( status, &rec );
     restore_context( &context, HANDLER_CONTEXT );
 }
 

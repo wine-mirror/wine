@@ -41,7 +41,8 @@ struct drive_info
 
 /* exceptions */
 extern void wait_suspend( CONTEXT *context );
-extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
+extern NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
+extern void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec ) DECLSPEC_NORETURN;
 extern void set_cpu_context( const CONTEXT *context );
 extern void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags );
 extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from );
