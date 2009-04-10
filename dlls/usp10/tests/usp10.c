@@ -44,6 +44,8 @@ static void test_ScriptShape(HDC hdc)
     SCRIPT_VISATTR attrs[4];
     SCRIPT_ITEM items[2];
     int nb, widths[4];
+    GOFFSET offset[4];
+    ABC abc[4];
 
     hr = ScriptItemize(NULL, 4, 2, NULL, NULL, items, NULL);
     ok(hr == E_INVALIDARG, "ScriptItemize should return E_INVALIDARG not %08x\n", hr);
@@ -81,9 +83,19 @@ static void test_ScriptShape(HDC hdc)
     ok(hr == E_INVALIDARG, "ScriptPlace should return E_INVALIDARG not %08x\n", hr);
 
     hr = ScriptPlace(NULL, &sc, glyphs, 4, attrs, &items[0].a, widths, NULL, NULL);
+    ok(hr == E_PENDING ||
+       hr == E_INVALIDARG, /* Vista, W2K8 */
+       "ScriptPlace should return E_PENDING or E_INVALIDARG, not %08x\n", hr);
+
+    hr = ScriptPlace(NULL, &sc, glyphs, 4, attrs, &items[0].a, widths, offset, NULL);
     ok(hr == E_PENDING, "ScriptPlace should return E_PENDING not %08x\n", hr);
 
-    hr = ScriptPlace(hdc, &sc, glyphs, 4, attrs, &items[0].a, widths, NULL, NULL);
+    hr = ScriptPlace(NULL, &sc, glyphs, 4, attrs, &items[0].a, widths, NULL, abc);
+    ok(hr == E_PENDING ||
+       hr == E_INVALIDARG, /* Vista, W2K8 */
+       "ScriptPlace should return E_PENDING or E_INVALIDARG, not %08x\n", hr);
+
+    hr = ScriptPlace(hdc, &sc, glyphs, 4, attrs, &items[0].a, widths, offset, NULL);
     ok(!hr, "ScriptPlace should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
