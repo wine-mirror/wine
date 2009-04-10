@@ -226,7 +226,7 @@ static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTE
         ret = wine_server_call( req );
     }
     SERVER_END_REQ;
-    if (!ret) ret = context_from_server( context, &server_context );
+    if (ret >= 0) context_from_server( context, &server_context );
     return ret;
 }
 

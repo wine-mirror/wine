@@ -206,14 +206,13 @@ static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *Exce
     trace("vect. handler %08x addr:%p context.Eip:%x\n", rec->ExceptionCode,
           rec->ExceptionAddress, context->Eip);
 
-    todo_wine {
+    todo_wine
     ok(rec->ExceptionAddress == (char *)code_mem + 0xb, "ExceptionAddress at %p instead of %p\n",
        rec->ExceptionAddress, (char *)code_mem + 0xb);
 
     if (pNtCurrentTeb()->Peb->BeingDebugged)
         ok((void *)context->Eax == pRtlRaiseException, "debugger managed to modify Eax to %x should be %p\n",
            context->Eax, pRtlRaiseException);
-    }
 
     /* check that context.Eip is fixed up only for EXCEPTION_BREAKPOINT
      * even if raised by RtlRaiseException
