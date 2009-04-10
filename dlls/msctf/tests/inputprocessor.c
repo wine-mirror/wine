@@ -160,6 +160,27 @@ static void test_FindClosestCategory(void)
     ok(IsEqualGUID(&output,&GUID_TFCAT_TIP_KEYBOARD),"Wrong GUID\n");
 }
 
+static void test_Enable(void)
+{
+    HRESULT hr;
+    BOOL enabled = FALSE;
+
+    hr = ITfInputProcessorProfiles_EnableLanguageProfile(g_ipp,&CLSID_FakeService, gLangid, &CLSID_FakeService, TRUE);
+    ok(SUCCEEDED(hr),"Failed to enable text service\n");
+    hr = ITfInputProcessorProfiles_IsEnabledLanguageProfile(g_ipp,&CLSID_FakeService, gLangid, &CLSID_FakeService, &enabled);
+    ok(SUCCEEDED(hr),"Failed to get enabled state\n");
+    ok(enabled == TRUE,"enabled state incorrect\n");
+}
+
+static void test_Disable(void)
+{
+    HRESULT hr;
+
+    trace("Disabling\n");
+    hr = ITfInputProcessorProfiles_EnableLanguageProfile(g_ipp,&CLSID_FakeService, gLangid, &CLSID_FakeService, FALSE);
+    ok(SUCCEEDED(hr),"Failed to disable text service\n");
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -168,8 +189,10 @@ START_TEST(inputprocessor)
         test_Register();
         test_RegisterCategory();
         test_EnumInputProcessorInfo();
+        test_Enable();
         test_EnumLanguageProfiles();
         test_FindClosestCategory();
+        test_Disable();
         test_UnregisterCategory();
         test_Unregister();
     }
