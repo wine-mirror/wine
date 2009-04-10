@@ -699,7 +699,6 @@ void signal_init_process(void)
        this is correct, because that is what x86 does, or it is harmful 
        because it could obscure problems in user code */
     asm("ta 6"); /* 6 == ST_FIX_ALIGN defined in sys/trap.h */
-    signal_init_thread();
     return;
 
  error:
@@ -714,6 +713,19 @@ void signal_init_process(void)
 void __wine_enter_vm86( CONTEXT *context )
 {
     MESSAGE("vm86 mode not supported on this platform\n");
+}
+
+/***********************************************************************
+ *		RtlRaiseException (NTDLL.@)
+ */
+void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
+{
+    CONTEXT context;
+    NTSTATUS status;
+
+    RtlCaptureContext( &context );
+    status = raise_exception( rec, &context, TRUE );
+    if (status) raise_status( status, rec );
 }
 
 /**********************************************************************

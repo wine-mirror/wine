@@ -427,29 +427,6 @@ void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
 }
 
 
-/***********************************************************************
- *		RtlRaiseException (NTDLL.@)
- */
-void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    NTSTATUS status = raise_exception( rec, context, TRUE );
-    if (status != STATUS_SUCCESS) raise_status( status, rec );
-}
-
-/**********************************************************************/
-
-#ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
-#else
-void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
-{
-    CONTEXT context;
-    RtlCaptureContext( &context );
-    __regs_RtlRaiseException( rec, &context );
-}
-#endif
-
-
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
  */

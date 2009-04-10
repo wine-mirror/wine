@@ -2007,6 +2007,18 @@ void __wine_enter_vm86( CONTEXT *context )
 }
 #endif /* __HAVE_VM86 */
 
+
+/***********************************************************************
+ *		RtlRaiseException (NTDLL.@)
+ */
+void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status = raise_exception( rec, context, TRUE );
+    if (status != STATUS_SUCCESS) raise_status( status, rec );
+}
+DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
+
+
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
  */

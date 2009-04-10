@@ -804,6 +804,17 @@ PVOID WINAPI RtlVirtualUnwind ( ULONG type, ULONG64 base, ULONG64 pc,
 }
 
 
+/***********************************************************************
+ *		RtlRaiseException (NTDLL.@)
+ */
+void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status = raise_exception( rec, context, TRUE );
+    if (status != STATUS_SUCCESS) raise_status( status, rec );
+}
+DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
+
+
 /**********************************************************************
  *              __wine_enter_vm86   (NTDLL.@)
  */

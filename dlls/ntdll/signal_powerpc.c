@@ -1001,6 +1001,19 @@ void __wine_enter_vm86( CONTEXT *context )
     MESSAGE("vm86 mode not supported on this platform\n");
 }
 
+/***********************************************************************
+ *		RtlRaiseException (NTDLL.@)
+ */
+void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
+{
+    CONTEXT context;
+    NTSTATUS status;
+
+    RtlCaptureContext( &context );
+    status = raise_exception( rec, &context, TRUE );
+    if (status) raise_status( status, rec );
+}
+
 /**********************************************************************
  *              DbgBreakPoint   (NTDLL.@)
  */
