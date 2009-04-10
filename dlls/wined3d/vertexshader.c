@@ -185,6 +185,7 @@ static void vshader_set_input(
     This->semantics_in[regnum].reg.write_mask = WINED3DSP_WRITEMASK_ALL;
     This->semantics_in[regnum].reg.modifiers = 0;
     This->semantics_in[regnum].reg.shift = 0;
+    This->semantics_in[regnum].reg.has_rel_addr = FALSE;
     This->semantics_in[regnum].reg.token = reg_token;
     This->semantics_in[regnum].reg.addr_token = 0;
 }
