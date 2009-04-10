@@ -724,6 +724,7 @@ void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
     NTSTATUS status;
 
     RtlCaptureContext( &context );
+    rec->ExceptionAddress = (void *)context.pc;
     status = raise_exception( rec, &context, TRUE );
     if (status) raise_status( status, rec );
 }
