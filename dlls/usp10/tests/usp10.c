@@ -40,7 +40,7 @@ static void test_ScriptShape(HDC hdc)
     BOOL ret;
     HRESULT hr;
     SCRIPT_CACHE sc = NULL;
-    WORD glyphs[4];
+    WORD glyphs[4], logclust[4];
     SCRIPT_VISATTR attrs[4];
     SCRIPT_ITEM items[2];
     int nb, widths[4];
@@ -65,10 +65,16 @@ static void test_ScriptShape(HDC hdc)
     ok(hr == E_PENDING, "ScriptShape should return E_PENDING not %08x\n", hr);
 
     hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, attrs, &nb);
+    ok(!hr ||
+       hr == E_INVALIDARG, /* Vista, W2K8 */
+       "ScriptShape should return S_OK or E_INVALIDARG, not %08x\n", hr);
+    ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
+
+    hr = ScriptShape(hdc, &sc, test1, 4, 4, &items[0].a, glyphs, logclust, attrs, &nb);
     ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
-    hr = ScriptShape(NULL, &sc, test1, 4, 4, &items[0].a, glyphs, NULL, attrs, &nb);
+    hr = ScriptShape(NULL, &sc, test1, 4, 4, &items[0].a, glyphs, logclust, attrs, &nb);
     ok(!hr, "ScriptShape should return S_OK not %08x\n", hr);
 
     hr = ScriptPlace(hdc, &sc, glyphs, 4, NULL, &items[0].a, widths, NULL, NULL);
