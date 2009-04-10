@@ -1289,14 +1289,9 @@ static DWORD shader_glsl_append_dst_ext(SHADER_BUFFER *buffer,
 {
     glsl_dst_param_t glsl_dst;
     DWORD mask;
-    int shift;
 
     mask = shader_glsl_add_dst_param(ins, dst, &glsl_dst);
-    if (mask)
-    {
-        shift = (dst->token & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-        shader_addline(buffer, "%s%s = %s(", glsl_dst.reg_name, glsl_dst.mask_str, shift_glsl_tab[shift]);
-    }
+    if (mask) shader_addline(buffer, "%s%s = %s(", glsl_dst.reg_name, glsl_dst.mask_str, shift_glsl_tab[dst->shift]);
 
     return mask;
 }

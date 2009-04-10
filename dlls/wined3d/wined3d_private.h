@@ -450,6 +450,7 @@ struct wined3d_shader_dst_param
     UINT register_idx;
     DWORD write_mask;
     DWORD modifiers;
+    DWORD shift;
     DWORD token;
     DWORD addr_token;
 };
