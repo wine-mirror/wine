@@ -5961,7 +5961,13 @@ HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL *pBoolOut)
   return S_OK;
 }
 
-static BOOL VARIANT_GetLocalisedText(LANGID langId, DWORD dwId, WCHAR *lpszDest)
+/************************************************************************
+ * VARIANT_GetLocalisedText [internal]
+ *
+ * Get a localized string from the resources
+ *
+ */
+BOOL VARIANT_GetLocalisedText(LANGID langId, DWORD dwId, WCHAR *lpszDest)
 {
   HRSRC hrsrc;
 
