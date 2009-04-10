@@ -2662,7 +2662,10 @@ static void test_keyboard_input(HWND hwnd)
     ok(GetFocus() == hwnd, "wrong focus window %p\n", GetFocus());
 
     keybd_event(VK_SPACE, 0, 0, 0);
-    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    do
+    {
+        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
+    } while (ret && msg.message >= 0xc000);
     if (!ret)
     {
         skip( "keybd_event didn't work, skipping keyboard test\n" );
@@ -4930,7 +4933,10 @@ static void test_GetWindowModuleFileName(void)
         ok(IsWindow(hwnd), "got invalid desktop window %p\n", hwnd);
         SetLastError(0xdeadbeef);
         ret2 = pGetWindowModuleFileNameA(hwnd, buf2, sizeof(buf2));
-        ok(!ret2 || ret1 == ret2 /* vista */, "expected 0 or %u, got %u %s\n", ret1, ret2, buf2);
+        ok(!ret2 ||
+           ret1 == ret2 || /* vista */
+           broken(ret2),  /* some win98 return user.exe as file name */
+           "expected 0 or %u, got %u %s\n", ret1, ret2, buf2);
     }
 }
 
