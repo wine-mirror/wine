@@ -196,6 +196,14 @@ static HRESULT WINAPI ThreadMgr_fnDeactivate( ITfThreadMgr* iface)
 {
     ThreadMgr *This = (ThreadMgr *)iface;
     FIXME("STUB:(%p)\n",This);
+
+    if (This->focus)
+    {
+        ITfThreadMgrEventSink_OnSetFocus((ITfThreadMgrEventSink*)&This->ThreadMgrEventSinkVtbl, 0, This->focus);
+        ITfDocumentMgr_Release(This->focus);
+        This->focus = 0;
+    }
+
     return E_NOTIMPL;
 }
 
