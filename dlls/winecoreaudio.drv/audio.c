@@ -32,6 +32,7 @@
 # include <unistd.h>
 #endif
 #include <fcntl.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -103,6 +104,7 @@ AudioUnitRender(                    AudioUnit                       ci,
 #define	WINE_WS_PAUSED    1
 #define	WINE_WS_STOPPED   2
 #define WINE_WS_CLOSED    3
+#define WINE_WS_OPENING   4
 
 typedef struct tagCoreAudio_Device {
     char                        dev_name[32];
@@ -771,9 +773,10 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEOUT*	wwo;
-    DWORD retval;
     DWORD               ret;
     AudioStreamBasicDescription streamFormat;
+    AudioUnit           audioUnit = NULL;
+    BOOL                auInited  = FALSE;
 
     TRACE("(%u, %p, %08x);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL)
@@ -808,7 +811,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
               lpDesc->lpFormat->nSamplesPerSec);
         return MMSYSERR_NOERROR;
     }
-    
+
+    /* We proceed in three phases:
+     * o Reserve the device for us, marking it as unavailable (not closed)
+     * o Create, configure, and start the Audio Unit.  To avoid deadlock,
+     *   this has to be done without holding wwo->lock.
+     * o If that was successful, finish setting up our device info and
+     *   mark the device as ready.
+     *   Otherwise, clean up and mark the device as available.
+     */
     wwo = &WOutDev[wDevID];
     if (!OSSpinLockTry(&wwo->lock))
         return MMSYSERR_ALLOCATED;
@@ -819,11 +830,16 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_ALLOCATED;
     }
 
-    if (!AudioUnit_CreateDefaultAudioUnit((void *) wwo, &wwo->audioUnit))
+    wwo->state = WINE_WS_OPENING;
+    wwo->audioUnit = NULL;
+    OSSpinLockUnlock(&wwo->lock);
+
+
+    if (!AudioUnit_CreateDefaultAudioUnit((void *) wwo, &audioUnit))
     {
         ERR("CoreAudio_CreateDefaultAudioUnit(%p) failed\n", wwo);
-        OSSpinLockUnlock(&wwo->lock);
-        return MMSYSERR_ERROR;
+        ret = MMSYSERR_ERROR;
+        goto error;
     }
 
     streamFormat.mFormatID = kAudioFormatLinearPCM;
@@ -842,24 +858,34 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     streamFormat.mBytesPerFrame = streamFormat.mBitsPerChannel * streamFormat.mChannelsPerFrame / 8;	
     streamFormat.mBytesPerPacket = streamFormat.mBytesPerFrame * streamFormat.mFramesPerPacket;		
 
-    ret = AudioUnit_InitializeWithStreamDescription(wwo->audioUnit, &streamFormat);
+    ret = AudioUnit_InitializeWithStreamDescription(audioUnit, &streamFormat);
     if (!ret) 
     {
-        AudioUnit_CloseAudioUnit(wwo->audioUnit);
-        OSSpinLockUnlock(&wwo->lock);
-        return WAVERR_BADFORMAT; /* FIXME return an error based on the OSStatus */
+        ret = WAVERR_BADFORMAT; /* FIXME return an error based on the OSStatus */
+        goto error;
     }
-    wwo->streamDescription = streamFormat;
+    auInited = TRUE;
 
-    ret = AudioOutputUnitStart(wwo->audioUnit);
+    /* Our render callback CoreAudio_woAudioUnitIOProc may be called before
+     * AudioOutputUnitStart returns.  Core Audio will grab its own internal
+     * lock before calling it and the callback grabs wwo->lock.  This would
+     * deadlock if we were holding wwo->lock.
+     * Also, the callback has to safely do nothing in that case, because
+     * wwo hasn't been completely filled out, yet. */
+    ret = AudioOutputUnitStart(audioUnit);
     if (ret)
     {
         ERR("AudioOutputUnitStart failed: %08x\n", ret);
-        AudioUnitUninitialize(wwo->audioUnit);
-        AudioUnit_CloseAudioUnit(wwo->audioUnit);
-        OSSpinLockUnlock(&wwo->lock);
-        return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
+        ret = MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
+        goto error;
     }
+
+
+    OSSpinLockLock(&wwo->lock);
+    assert(wwo->state == WINE_WS_OPENING);
+
+    wwo->audioUnit = audioUnit;
+    wwo->streamDescription = streamFormat;
 
     wwo->state = WINE_WS_STOPPED;
 
@@ -885,9 +911,24 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     OSSpinLockUnlock(&wwo->lock);
     
-    retval = wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
+    ret = wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
     
-    return retval;
+    return ret;
+
+error:
+    if (audioUnit)
+    {
+        if (auInited)
+            AudioUnitUninitialize(audioUnit);
+        AudioUnit_CloseAudioUnit(audioUnit);
+    }
+
+    OSSpinLockLock(&wwo->lock);
+    assert(wwo->state == WINE_WS_OPENING);
+    wwo->state = WINE_WS_CLOSED;
+    OSSpinLockUnlock(&wwo->lock);
+
+    return ret;
 }
 
 /**************************************************************************
@@ -1291,7 +1332,7 @@ static DWORD wodReset(WORD wDevID)
 
     OSSpinLockLock(&wwo->lock);
 
-    if (wwo->state == WINE_WS_CLOSED)
+    if (wwo->state == WINE_WS_CLOSED || wwo->state == WINE_WS_OPENING)
     {
         OSSpinLockUnlock(&wwo->lock);
         WARN("resetting a closed device\n");
@@ -1589,6 +1630,9 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
 
     OSSpinLockLock(&wwo->lock);
 
+    /* We might have been called before wwo has been completely filled out by
+     * wodOpen.  We have to do nothing in that case.  The check of wwo->state
+     * below ensures that. */
     while (dataNeeded > 0 && wwo->state == WINE_WS_PLAYING && wwo->lpPlayPtr)
     {
         unsigned int available = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
