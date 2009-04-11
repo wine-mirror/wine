@@ -1097,12 +1097,6 @@ BOOLEAN WINAPI GetUserNameExW(
     DWORD len;
     TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
 
-    if (NameFormat == NameUnknown)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
     switch (NameFormat)
     {
     case NameSamCompatible:
@@ -1135,6 +1129,7 @@ BOOLEAN WINAPI GetUserNameExW(
                 status = FALSE;
         }
         break;
+    case NameUnknown:
     case NameFullyQualifiedDN:
     case NameDisplay:
     case NameUniqueId:
@@ -1143,8 +1138,7 @@ BOOLEAN WINAPI GetUserNameExW(
     case NameCanonicalEx:
     case NameServicePrincipal:
     case NameDnsDomain:
-        FIXME("NameFormat %d not implemented\n", NameFormat);
-        SetLastError(ERROR_CANT_ACCESS_DOMAIN_INFO);
+        SetLastError(ERROR_NONE_MAPPED);
         status = FALSE;
         break;
     default:
