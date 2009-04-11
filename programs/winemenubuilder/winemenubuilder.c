@@ -78,6 +78,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/library.h"
+#include "wine/list.h"
 #include "wine.xpm"
 
 #ifdef HAVE_PNG_H
@@ -143,6 +144,13 @@ typedef struct
         HRSRC *pResInfo;
         int   nIndex;
 } ENUMRESSTRUCT;
+
+struct xdg_mime_type
+{
+    char *mimeType;
+    char *glob;
+    struct list entry;
+};
 
 static char *xdg_config_dir;
 static char *xdg_data_dir;
@@ -1243,6 +1251,165 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
     return hr;
 }
 
+static BOOL next_line(FILE *file, char **line, int *size)
+{
+    int pos = 0;
+    char *cr;
+    if (*line == NULL)
+    {
+        *size = 4096;
+        *line = HeapAlloc(GetProcessHeap(), 0, *size);
+    }
+    while (*line != NULL)
+    {
+        if (fgets(&(*line)[pos], *size - pos, file) == NULL)
+        {
+            HeapFree(GetProcessHeap(), 0, *line);
+            *line = NULL;
+            if (feof(file))
+                return TRUE;
+            return FALSE;
+        }
+        pos = strlen(*line);
+        cr = strchr(*line, '\n');
+        if (cr == NULL)
+        {
+            char *line2;
+            (*size) *= 2;
+            line2 = HeapReAlloc(GetProcessHeap(), 0, *line, *size);
+            if (line2)
+                *line = line2;
+            else
+            {
+                HeapFree(GetProcessHeap(), 0, *line);
+                *line = NULL;
+            }
+        }
+        else
+        {
+            *cr = 0;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static BOOL add_mimes(const char *xdg_data_dir, struct list *mime_types)
+{
+    char *globs_filename = NULL;
+    BOOL ret = TRUE;
+    globs_filename = heap_printf("%s/mime/globs", xdg_data_dir);
+    if (globs_filename)
+    {
+        FILE *globs_file = fopen(globs_filename, "r");
+        if (globs_file) /* doesn't have to exist */
+        {
+            char *line = NULL;
+            int size = 0;
+            while (ret && (ret = next_line(globs_file, &line, &size)) && line)
+            {
+                char *pos;
+                struct xdg_mime_type *mime_type_entry = NULL;
+                if (line[0] != '#' && (pos = strchr(line, ':')))
+                {
+                    mime_type_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct xdg_mime_type));
+                    if (mime_type_entry)
+                    {
+                        *pos = 0;
+                        mime_type_entry->mimeType = line;
+                        mime_type_entry->glob = pos + 1;
+                        list_add_tail(mime_types, &mime_type_entry->entry);
+                    }
+                    else
+                        ret = FALSE;
+                }
+            }
+            HeapFree(GetProcessHeap(), 0, line);
+            fclose(globs_file);
+        }
+        HeapFree(GetProcessHeap(), 0, globs_filename);
+    }
+    else
+        ret = FALSE;
+    return ret;
+}
+
+static void free_native_mime_types(struct list *native_mime_types)
+{
+    struct xdg_mime_type *mime_type_entry, *mime_type_entry2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(mime_type_entry, mime_type_entry2, native_mime_types, struct xdg_mime_type, entry)
+    {
+        list_remove(&mime_type_entry->entry);
+        HeapFree(GetProcessHeap(), 0, mime_type_entry->mimeType);
+        HeapFree(GetProcessHeap(), 0, mime_type_entry);
+    }
+    HeapFree(GetProcessHeap(), 0, native_mime_types);
+}
+
+static BOOL build_native_mime_types(const char *xdg_data_home, struct list **mime_types)
+{
+    char *xdg_data_dirs;
+    BOOL ret;
+
+    *mime_types = NULL;
+
+    xdg_data_dirs = getenv("XDG_DATA_DIRS");
+    if (xdg_data_dirs == NULL)
+        xdg_data_dirs = heap_printf("/usr/local/share/:/usr/share/");
+    else
+        xdg_data_dirs = heap_printf("%s", xdg_data_dirs);
+
+    if (xdg_data_dirs)
+    {
+        *mime_types = HeapAlloc(GetProcessHeap(), 0, sizeof(struct list));
+        if (*mime_types)
+        {
+            const char *begin;
+            char *end;
+
+            list_init(*mime_types);
+            ret = add_mimes(xdg_data_home, *mime_types);
+            if (ret)
+            {
+                for (begin = xdg_data_dirs; (end = strchr(begin, ':')); begin = end + 1)
+                {
+                    *end = '\0';
+                    ret = add_mimes(begin, *mime_types);
+                    *end = ':';
+                    if (!ret)
+                        break;
+                }
+                if (ret)
+                    ret = add_mimes(begin, *mime_types);
+            }
+        }
+        else
+            ret = FALSE;
+        HeapFree(GetProcessHeap(), 0, xdg_data_dirs);
+    }
+    else
+        ret = FALSE;
+    if (!ret && *mime_types)
+    {
+        free_native_mime_types(*mime_types);
+        *mime_types = NULL;
+    }
+    return ret;
+}
+
+static BOOL generate_associations(const char *xdg_data_home, const char *packages_dir, const char *applications_dir)
+{
+    struct list *nativeMimeTypes = NULL;
+
+    if (!build_native_mime_types(xdg_data_home, &nativeMimeTypes))
+    {
+        WINE_ERR("could not build native MIME types\n");
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
 {
     static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
@@ -1707,6 +1874,8 @@ static void RefreshFileTypeAssociations(void)
         goto end;
     }
     create_directories(applications_dir);
+
+    generate_associations(xdg_data_dir, packages_dir, applications_dir);
 
 end:
     if (hSem)
