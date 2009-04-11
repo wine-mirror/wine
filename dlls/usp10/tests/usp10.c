@@ -1183,6 +1183,12 @@ static void test_digit_substitution(void)
     for (i = 0; i < sizeof(groups)/sizeof(groups[0]); i++)
     {
         ret = pEnumLanguageGroupLocalesA(enum_proc, groups[i], 0, 0);
+        if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+        {
+            win_skip("EnumLanguageGroupLocalesA not implemented on this platform\n");
+            break;
+        }
+        
         ok(ret, "EnumLanguageGroupLocalesA failed unexpectedly: %u\n", GetLastError());
     }
 }
