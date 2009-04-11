@@ -826,11 +826,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_ERROR;
     }
 
-    if ((dwFlags & WAVE_DIRECTSOUND) && 
-        !(wwo->caps.dwSupport & WAVECAPS_DIRECTSOUND))
-	/* not supported, ignore it */
-	dwFlags &= ~WAVE_DIRECTSOUND;
-
     streamFormat.mFormatID = kAudioFormatLinearPCM;
     streamFormat.mFormatFlags = kLinearPCMFormatFlagIsPacked;
     /* FIXME check for 32bits float -> kLinearPCMFormatFlagIsFloat */
