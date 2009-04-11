@@ -1983,6 +1983,7 @@ static DWORD widClose(WORD wDevID)
 {
     DWORD           ret = MMSYSERR_NOERROR;
     WINE_WAVEIN*    wwi;
+    OSStatus        err;
 
     TRACE("(%u);\n", wDevID);
 
@@ -1994,7 +1995,7 @@ static DWORD widClose(WORD wDevID)
 
     wwi = &WInDev[wDevID];
     OSSpinLockLock(&wwi->lock);
-    if (wwi->state == WINE_WS_CLOSED)
+    if (wwi->state == WINE_WS_CLOSED || wwi->state == WINE_WS_CLOSING)
     {
         WARN("Device already closed.\n");
         ret = MMSYSERR_INVALHANDLE;
@@ -2006,35 +2007,49 @@ static DWORD widClose(WORD wDevID)
     }
     else
     {
-        wwi->state = WINE_WS_CLOSED;
+        wwi->state = WINE_WS_CLOSING;
     }
 
     OSSpinLockUnlock(&wwi->lock);
 
-    if (ret == MMSYSERR_NOERROR)
+    if (ret != MMSYSERR_NOERROR)
+        return ret;
+
+
+    /* Clean up and close the audio unit.  This has to be done without
+     * wwi->lock being held to avoid deadlock.  AudioUnitUninitialize will
+     * grab an internal Core Audio lock while waiting for the device work
+     * thread to exit.  Meanwhile the device work thread may be holding
+     * that lock and trying to grab the wwi->lock in the callback. */
+    err = AudioUnitUninitialize(wwi->audioUnit);
+    if (err)
     {
-        OSStatus err = AudioUnitUninitialize(wwi->audioUnit);
-        if (err)
-        {
-            ERR("AudioUnitUninitialize return %c%c%c%c\n", (char) (err >> 24),
-                                                           (char) (err >> 16),
-                                                           (char) (err >> 8),
-                                                           (char) err);
-        }
-
-        if (!AudioUnit_CloseAudioUnit(wwi->audioUnit))
-        {
-            ERR("Can't close AudioUnit\n");
-        }
-
-        /* Dellocate our audio buffers */
-        widHelper_DestroyAudioBufferList(wwi->bufferList);
-        wwi->bufferList = NULL;
-        HeapFree(GetProcessHeap(), 0, wwi->bufferListCopy);
-        wwi->bufferListCopy = NULL;
-
-        ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+        ERR("AudioUnitUninitialize return %c%c%c%c\n", (char) (err >> 24),
+                                                       (char) (err >> 16),
+                                                       (char) (err >> 8),
+                                                       (char) err);
     }
+
+    if (!AudioUnit_CloseAudioUnit(wwi->audioUnit))
+    {
+        ERR("Can't close AudioUnit\n");
+    }
+
+
+    OSSpinLockLock(&wwi->lock);
+    assert(wwi->state == WINE_WS_CLOSING);
+
+    /* Dellocate our audio buffers */
+    widHelper_DestroyAudioBufferList(wwi->bufferList);
+    wwi->bufferList = NULL;
+    HeapFree(GetProcessHeap(), 0, wwi->bufferListCopy);
+    wwi->bufferListCopy = NULL;
+
+    wwi->audioUnit = NULL;
+    wwi->state = WINE_WS_CLOSED;
+    OSSpinLockUnlock(&wwi->lock);
+
+    ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
 
     return ret;
 }
@@ -2069,7 +2084,7 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     wwi = &WInDev[wDevID];
     OSSpinLockLock(&wwi->lock);
 
-    if (wwi->state == WINE_WS_CLOSED)
+    if (wwi->state == WINE_WS_CLOSED || wwi->state == WINE_WS_CLOSING)
     {
         WARN("Trying to add buffer to closed device.\n");
         ret = MMSYSERR_INVALHANDLE;
@@ -2121,7 +2136,7 @@ static DWORD widStart(WORD wDevID)
     wwi = &WInDev[wDevID];
     OSSpinLockLock(&wwi->lock);
 
-    if (wwi->state == WINE_WS_CLOSED)
+    if (wwi->state == WINE_WS_CLOSED || wwi->state == WINE_WS_CLOSING)
     {
         WARN("Trying to start closed device.\n");
         ret = MMSYSERR_INVALHANDLE;
@@ -2180,7 +2195,7 @@ static DWORD widStop(WORD wDevID)
 
     OSSpinLockLock(&wwi->lock);
 
-    if (wwi->state == WINE_WS_CLOSED)
+    if (wwi->state == WINE_WS_CLOSED || wwi->state == WINE_WS_CLOSING)
     {
         WARN("Trying to stop closed device.\n");
         ret = MMSYSERR_INVALHANDLE;
@@ -2253,7 +2268,7 @@ static DWORD widReset(WORD wDevID)
     wwi = &WInDev[wDevID];
     OSSpinLockLock(&wwi->lock);
 
-    if (wwi->state == WINE_WS_CLOSED)
+    if (wwi->state == WINE_WS_CLOSED || wwi->state == WINE_WS_CLOSING)
     {
         WARN("Trying to reset a closed device.\n");
         ret = MMSYSERR_INVALHANDLE;
@@ -2441,6 +2456,9 @@ OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
 
     lpStorePtr = wwi->lpQueuePtr;
 
+    /* We might have been called while the waveIn device is being closed in
+     * widClose.  We have to do nothing in that case.  The check of wwi->state
+     * below ensures that. */
     while (dataToStore > 0 && wwi->state == WINE_WS_PLAYING && lpStorePtr)
     {
         unsigned int room = lpStorePtr->dwBufferLength - lpStorePtr->dwBytesRecorded;
