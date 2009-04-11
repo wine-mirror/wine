@@ -87,22 +87,21 @@ AudioUnitRender(                    AudioUnit                       ci,
 * +---------+-------------+---------------+---------------------------------+
 * |  state  |  function   |     event     |            new state	     |
 * +---------+-------------+---------------+---------------------------------+
-* |	     | open()	   |		   | STOPPED		       	     |
+* |	    | open()	   |		   | PLAYING		       	     |
 * | PAUSED  | write()	   | 		   | PAUSED		       	     |
-* | STOPPED | write()	   | <thrd create> | PLAYING		  	     |
 * | PLAYING | write()	   | HEADER        | PLAYING		  	     |
 * | (other) | write()	   | <error>       |		       		     |
 * | (any)   | pause()	   | PAUSING	   | PAUSED		       	     |
-* | PAUSED  | restart()   | RESTARTING    | PLAYING (if no thrd => STOPPED) |
-* | (any)   | reset()	   | RESETTING     | STOPPED		      	     |
+* | PAUSED  | restart()    | RESTARTING    | PLAYING                         |
+* | (any)   | reset()	   | RESETTING     | PLAYING		      	     |
 * | (any)   | close()	   | CLOSING	   | CLOSED		      	     |
 * +---------+-------------+---------------+---------------------------------+
 */
 
 /* states of the playing device */
-#define	WINE_WS_PLAYING   0
+#define	WINE_WS_PLAYING   0 /* for waveOut: lpPlayPtr == NULL -> stopped */
 #define	WINE_WS_PAUSED    1
-#define	WINE_WS_STOPPED   2
+#define	WINE_WS_STOPPED   2 /* Not used for waveOut */
 #define WINE_WS_CLOSED    3
 #define WINE_WS_OPENING   4
 #define WINE_WS_CLOSING   5
@@ -888,7 +887,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->audioUnit = audioUnit;
     wwo->streamDescription = streamFormat;
 
-    wwo->state = WINE_WS_STOPPED;
+    wwo->state = WINE_WS_PLAYING;
 
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
@@ -1101,9 +1100,7 @@ static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
         /* We didn't loop back.  Advance to the next wave header */
         wwo->lpPlayPtr = wwo->lpPlayPtr->lpNext;
 
-        if (!wwo->lpPlayPtr)
-            wwo->state = WINE_WS_STOPPED;
-        else
+        if (wwo->lpPlayPtr)
             wodHelper_CheckForLoopBegin(wwo);
     }
 }
@@ -1228,9 +1225,6 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     {
         wwo->lpPlayPtr = lpWaveHdr;
 
-        if (wwo->state == WINE_WS_STOPPED)
-            wwo->state = WINE_WS_PLAYING;
-
         wodHelper_CheckForLoopBegin(wwo);
 
         wwo->dwPartialOffset = 0;
@@ -1259,9 +1253,9 @@ static DWORD wodPause(WORD wDevID)
      * the mutex while we make an Audio Unit call.  Stop the Audio Unit before
      * setting the PAUSED state.  In wodRestart, the order is reversed.  This
      * guarantees that we can't get into a situation where the state is
-     * PLAYING or STOPPED but the Audio Unit isn't running.  Although we can
-     * be in PAUSED state with the Audio Unit still running, that's harmless
-     * because the render callback will just produce silence.
+     * PLAYING but the Audio Unit isn't running.  Although we can be in PAUSED
+     * state with the Audio Unit still running, that's harmless because the
+     * render callback will just produce silence.
      */
     status = AudioOutputUnitStop(WOutDev[wDevID].audioUnit);
     if (status) {
@@ -1270,7 +1264,7 @@ static DWORD wodPause(WORD wDevID)
     }
 
     OSSpinLockLock(&WOutDev[wDevID].lock);
-    if (WOutDev[wDevID].state == WINE_WS_PLAYING || WOutDev[wDevID].state == WINE_WS_STOPPED)
+    if (WOutDev[wDevID].state == WINE_WS_PLAYING)
         WOutDev[wDevID].state = WINE_WS_PAUSED;
     OSSpinLockUnlock(&WOutDev[wDevID].lock);
 
@@ -1293,21 +1287,16 @@ static DWORD wodRestart(WORD wDevID)
     }
 
     /* The order of the following operations is important since we can't hold
-     * the mutex while we make an Audio Unit call.  Set the PLAYING/STOPPED
+     * the mutex while we make an Audio Unit call.  Set the PLAYING
      * state before starting the Audio Unit.  In wodPause, the order is
      * reversed.  This guarantees that we can't get into a situation where
-     * the state is PLAYING or STOPPED but the Audio Unit isn't running.
+     * the state is PLAYING but the Audio Unit isn't running.
      * Although we can be in PAUSED state with the Audio Unit still running,
      * that's harmless because the render callback will just produce silence.
      */
     OSSpinLockLock(&WOutDev[wDevID].lock);
     if (WOutDev[wDevID].state == WINE_WS_PAUSED)
-    {
-        if (WOutDev[wDevID].lpPlayPtr)
-            WOutDev[wDevID].state = WINE_WS_PLAYING;
-        else
-            WOutDev[wDevID].state = WINE_WS_STOPPED;
-    }
+        WOutDev[wDevID].state = WINE_WS_PLAYING;
     OSSpinLockUnlock(&WOutDev[wDevID].lock);
 
     status = AudioOutputUnitStart(WOutDev[wDevID].audioUnit);
@@ -1351,7 +1340,7 @@ static DWORD wodReset(WORD wDevID)
 
     lpSavedQueuePtr = wwo->lpQueuePtr;
     wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
-    wwo->state = WINE_WS_STOPPED;
+    wwo->state = WINE_WS_PLAYING;
     wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
 
     wwo->dwPartialOffset = 0;        /* Clear partial wavehdr */
