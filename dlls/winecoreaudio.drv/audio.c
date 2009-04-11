@@ -105,6 +105,7 @@ AudioUnitRender(                    AudioUnit                       ci,
 #define	WINE_WS_STOPPED   2
 #define WINE_WS_CLOSED    3
 #define WINE_WS_OPENING   4
+#define WINE_WS_CLOSING   5
 
 typedef struct tagCoreAudio_Device {
     char                        dev_name[32];
@@ -957,14 +958,17 @@ static DWORD wodClose(WORD wDevID)
     } else
     {
         OSStatus err;
+        AudioUnit audioUnit = wwo->audioUnit;
+
         /* sanity check: this should not happen since the device must have been reset before */
         if (wwo->lpQueuePtr || wwo->lpPlayPtr) ERR("out of sync\n");
         
-        wwo->state = WINE_WS_CLOSED; /* mark the device as closed */
+        wwo->state = WINE_WS_CLOSING; /* mark the device as closing */
+        wwo->audioUnit = NULL;
         
         OSSpinLockUnlock(&wwo->lock);
 
-        err = AudioUnitUninitialize(wwo->audioUnit);
+        err = AudioUnitUninitialize(audioUnit);
         if (err) {
             ERR("AudioUnitUninitialize return %c%c%c%c\n", (char) (err >> 24),
                                                             (char) (err >> 16),
@@ -973,12 +977,17 @@ static DWORD wodClose(WORD wDevID)
             return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
         }
         
-        if ( !AudioUnit_CloseAudioUnit(wwo->audioUnit) )
+        if ( !AudioUnit_CloseAudioUnit(audioUnit) )
         {
             ERR("Can't close AudioUnit\n");
             return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
         }  
         
+        OSSpinLockLock(&wwo->lock);
+        assert(wwo->state == WINE_WS_CLOSING);
+        wwo->state = WINE_WS_CLOSED; /* mark the device as closed */
+        OSSpinLockUnlock(&wwo->lock);
+
         ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
     
@@ -1332,7 +1341,8 @@ static DWORD wodReset(WORD wDevID)
 
     OSSpinLockLock(&wwo->lock);
 
-    if (wwo->state == WINE_WS_CLOSED || wwo->state == WINE_WS_OPENING)
+    if (wwo->state == WINE_WS_CLOSED || wwo->state == WINE_WS_CLOSING ||
+        wwo->state == WINE_WS_OPENING)
     {
         OSSpinLockUnlock(&wwo->lock);
         WARN("resetting a closed device\n");
@@ -1631,8 +1641,8 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
     OSSpinLockLock(&wwo->lock);
 
     /* We might have been called before wwo has been completely filled out by
-     * wodOpen.  We have to do nothing in that case.  The check of wwo->state
-     * below ensures that. */
+     * wodOpen, or while it's being closed in wodClose.  We have to do nothing
+     * in that case.  The check of wwo->state below ensures that. */
     while (dataNeeded > 0 && wwo->state == WINE_WS_PLAYING && wwo->lpPlayPtr)
     {
         unsigned int available = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
