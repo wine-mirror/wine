@@ -3949,26 +3949,43 @@ struct driver_version_information {
 };
 
 static const struct driver_version_information driver_version_table[] = {
-    /* Nvidia drivers. Geforce6 and newer cards are supported by the current driver (177.x)*/
-    /* GeforceFX support is up to 173.x, Geforce2MX/3/4 up to 96.x, TNT/Geforce1/2 up to 71.x */
-    /* Note that version numbers >100 lets say 123.45 use >= x.y.11.2345 and not x.y.10.12345 */
+    /* Nvidia drivers. Geforce6 and newer cards are supported by the current driver (180.x)
+     * GeforceFX support is up to 173.x, - driver uses numbering x.y.11.7341 for 173.41 where x is the windows revision (6=2000/xp, 7=vista), y is unknown
+     * Geforce2MX/3/4 up to 96.x - driver uses numbering 9.6.8.9 for 96.89
+     * TNT/Geforce1/2 up to 71.x - driver uses numbering 7.1.8.6 for 71.86
+     *
+     * All version numbers used below are from the Linux nvidia drivers.
+     */
+    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT,           7,  1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT2,          7,  1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE,            7,  1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2_MX,        9,  6,  4,  3      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2,           7,  1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE3,           9,  6,  4,  3      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_MX,        9,  6,  4,  3      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_TI4200,    9,  6,  4,  3      },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     7,  15, 11, 7341   },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     7,  15, 11, 7341   },
     {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     7,  15, 11, 7341    },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     7,  15, 11, 7341    },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     7,  15, 11, 7341    },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     7,  15, 11, 8044   },
 
     /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode */
     {VENDOR_ATI,        CARD_ATI_RADEON_9500,           6,  14, 10, 6764    },
@@ -3978,7 +3995,7 @@ static const struct driver_version_information driver_version_table[] = {
     {VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         6,  14, 10, 6764    },
     {VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         6,  14, 10, 6764    },
 
-    /* TODO: Add information about legacy nvidia and ATI hardware, Intel and other cards */
+    /* TODO: Add information about legacy ATI hardware, Intel and other cards */
 };
 
 static void fixup_extensions(WineD3D_GL_Info *gl_info) {
