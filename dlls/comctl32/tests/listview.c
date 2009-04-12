@@ -1441,6 +1441,69 @@ todo_wine{
     DestroyWindow(hwnd);
 }
 
+/* comparison callback for test_sorting */
+static INT WINAPI test_CallBackCompare(LPARAM first, LPARAM second, LPARAM lParam)
+{
+    if (first == second) return 0;
+    return (first > second ? 1 : -1);
+}
+
+static void test_sorting(void)
+{
+    HWND hwnd;
+    LVITEMA item = {0};
+    DWORD r;
+
+    hwnd = create_listview_control();
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    /* insert some items */
+    item.mask = LVIF_PARAM | LVIF_STATE;
+    item.state = LVIS_SELECTED;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    item.lParam = 3;
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
+    expect(0, r);
+
+    item.mask = LVIF_PARAM;
+    item.iItem = 1;
+    item.iSubItem = 0;
+    item.lParam = 2;
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
+    expect(1, r);
+
+    item.mask = LVIF_STATE | LVIF_PARAM;
+    item.state = LVIS_SELECTED;
+    item.iItem = 2;
+    item.iSubItem = 0;
+    item.lParam = 4;
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
+    expect(2, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(-1, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(2, r);
+
+    r = SendMessage(hwnd, LVM_SORTITEMS, 0, (LPARAM)test_CallBackCompare);
+    expect(TRUE, r);
+
+    r = SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(2, r);
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(-1, r);
+    r = SendMessage(hwnd, LVM_GETITEMSTATE, 0, LVIS_SELECTED);
+    expect(0, r);
+    r = SendMessage(hwnd, LVM_GETITEMSTATE, 1, LVIS_SELECTED);
+    expect(LVIS_SELECTED, r);
+    r = SendMessage(hwnd, LVM_GETITEMSTATE, 2, LVIS_SELECTED);
+    expect(LVIS_SELECTED, r);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -1479,4 +1542,5 @@ START_TEST(listview)
     test_getorigin();
     test_multiselect();
     test_subitem_rect();
+    test_sorting();
 }

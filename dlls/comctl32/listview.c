@@ -57,7 +57,6 @@
  *   -- LISTVIEW_[GS]etColumnOrderArray stubs
  *   -- LISTVIEW_SetColumnWidth ignores header images & bitmap
  *   -- LISTVIEW_SetIconSpacing is incomplete
- *   -- LISTVIEW_SortItems is broken
  *   -- LISTVIEW_StyleChanged doesn't handle some changes too well
  *
  * Speedups
@@ -3575,21 +3574,38 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 	{
 	    if (infoPtr->dwStyle & LVS_SINGLESEL) LISTVIEW_DeselectAllSkipItem(infoPtr, lpLVItem->iItem);
 	    ranges_additem(infoPtr->selectionRanges, lpLVItem->iItem);
+	    lpItem->state |= LVIS_SELECTED;
 	}
 	else if (stateMask & LVIS_SELECTED)
+	{
 	    ranges_delitem(infoPtr->selectionRanges, lpLVItem->iItem);
-	
+	    lpItem->state &= ~LVIS_SELECTED;
+	}
 	/* if we are asked to change focus, and we manage it, do it */
 	if (stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED)
 	{
 	    if (lpLVItem->state & LVIS_FOCUSED)
 	    {
-		LISTVIEW_SetItemFocus(infoPtr, -1);
+		if (infoPtr->nFocusedItem != -1)
+		{
+		    /* remove current focus */
+		    item.mask  = LVIF_STATE;
+		    item.state = 0;
+		    item.stateMask = LVIS_FOCUSED;
+
+		    /* recurse with redrawing an item */
+		    LISTVIEW_SetItemState(infoPtr, infoPtr->nFocusedItem, &item);
+		}
+
+		lpItem->state |= LVIS_FOCUSED;
 		infoPtr->nFocusedItem = lpLVItem->iItem;
     	        LISTVIEW_EnsureVisible(infoPtr, lpLVItem->iItem, uView == LVS_LIST);
 	    }
 	    else if (infoPtr->nFocusedItem == lpLVItem->iItem)
-		infoPtr->nFocusedItem = -1;
+	    {
+	        lpItem->state &= ~LVIS_FOCUSED;
+	        infoPtr->nFocusedItem = -1;
+	    }
 	}
     }
 
@@ -7487,7 +7503,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
 	    ranges_del(infoPtr->selectionRanges, range);
 	    if (infoPtr->nFocusedItem >= nItems)
 	    {
-		infoPtr->nFocusedItem = -1;
+		LISTVIEW_SetItemFocus(infoPtr, -1);
 		SetRectEmpty(&infoPtr->rcFocus);
 	    }
 	}
@@ -7855,8 +7871,8 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     HDPA hdpaSubItems;
     ITEM_INFO *lpItem;
-    LPVOID selectionMarkItem;
-    LVITEMW item;
+    LPVOID selectionMarkItem = NULL;
+    LPVOID focusedItem = NULL;
     int i;
 
     TRACE("(pfnCompare=%p, lParamSort=%lx)\n", pfnCompare, lParamSort);
@@ -7869,45 +7885,32 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
     /* if there are 0 or 1 items, there is no need to sort */
     if (infoPtr->nItemCount < 2) return TRUE;
 
+    /* clear selection */
+    ranges_clear(infoPtr->selectionRanges);
+
+    /* save selection mark and focused item */
+    if (infoPtr->nSelectionMark >= 0)
+        selectionMarkItem = DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nSelectionMark);
     if (infoPtr->nFocusedItem >= 0)
-    {
-        hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nFocusedItem);
-        lpItem = DPA_GetPtr(hdpaSubItems, 0);
-	if (lpItem) lpItem->state |= LVIS_FOCUSED;
-    }
-    /* FIXME: go thorugh selected items and mark them so in lpItem->state */
-    /*        clear the lpItem->state for non-selected ones */
-    /*        remove the selection ranges */
-    
+        focusedItem = DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nFocusedItem);
+
     infoPtr->pfnCompare = pfnCompare;
     infoPtr->lParamSort = lParamSort;
     DPA_Sort(infoPtr->hdpaItems, LISTVIEW_CallBackCompare, (LPARAM)infoPtr);
 
-    /* Adjust selections and indices so that they are the way they should
-     * be after the sort (otherwise, the list items move around, but
-     * whatever is at the item's previous original position will be
-     * selected instead)
-     */
-    selectionMarkItem=(infoPtr->nSelectionMark>=0)?DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nSelectionMark):NULL;
+    /* restore selection ranges */
     for (i=0; i < infoPtr->nItemCount; i++)
     {
         hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, i);
         lpItem = DPA_GetPtr(hdpaSubItems, 0);
 
 	if (lpItem->state & LVIS_SELECTED)
-	{
-	    item.state = LVIS_SELECTED;
-	    item.stateMask = LVIS_SELECTED;
-	    LISTVIEW_SetItemState(infoPtr, i, &item);
-	}
-	if (lpItem->state & LVIS_FOCUSED)
-	{
-            infoPtr->nFocusedItem = i;
-	    lpItem->state &= ~LVIS_FOCUSED;
-	}
+	    ranges_additem(infoPtr->selectionRanges, i);
     }
-    if (selectionMarkItem != NULL)
-	infoPtr->nSelectionMark = DPA_GetPtrIndex(infoPtr->hdpaItems, selectionMarkItem);
+    /* restore selection mark and focused item */
+    infoPtr->nSelectionMark = DPA_GetPtrIndex(infoPtr->hdpaItems, selectionMarkItem);
+    infoPtr->nFocusedItem   = DPA_GetPtrIndex(infoPtr->hdpaItems, focusedItem);
+
     /* I believe nHotItem should be left alone, see LISTVIEW_ShiftIndices */
 
     /* refresh the display */
