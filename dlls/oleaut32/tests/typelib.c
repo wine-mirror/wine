@@ -638,6 +638,10 @@ static void test_QueryPathOfRegTypeLib(void)
         { 3, 22, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
         { 3, 37, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
         { 3, 40, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
+        { 0xffff, 0xffff, S_OK, {'f','a','k','e','_','5','_','3','7','.','d','l','l',0 } },
+        { 0xffff, 0, TYPE_E_LIBNOTREGISTERED, { 0 } },
+        { 3, 0xffff, TYPE_E_LIBNOTREGISTERED, { 0 } },
+        { 5, 0xffff, TYPE_E_LIBNOTREGISTERED, { 0 } },
         { 4, 0, TYPE_E_LIBNOTREGISTERED, { 0 } }
     };
     static const WCHAR base[] = {'f','a','k','e',0};
@@ -657,6 +661,7 @@ static void test_QueryPathOfRegTypeLib(void)
     if (!do_typelib_reg_key(&uid, 3, 0, base, 0)) return;
     if (!do_typelib_reg_key(&uid, 3, 1, base, 0)) return;
     if (!do_typelib_reg_key(&uid, 3, 37, base, 0)) return;
+    if (!do_typelib_reg_key(&uid, 5, 37, base, 0)) return;
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
