@@ -836,16 +836,42 @@ double CDECL _nextafter(double num, double next)
  */
 char * CDECL _ecvt( double number, int ndigits, int *decpt, int *sign )
 {
+    int prec;
     thread_data_t *data = msvcrt_get_thread_data();
-    char *dec;
-
+    /* FIXME: check better for overflow (native supports over 300 chars's) */
+    ndigits = min( ndigits, 80 - 7); /* 7 : space for dec point, 1 for "e",
+                                      * 4 for exponent and one for
+                                      * terminating '\0' */
     if (!data->efcvt_buffer)
         data->efcvt_buffer = MSVCRT_malloc( 80 ); /* ought to be enough */
 
-    snprintf(data->efcvt_buffer, 80, "%.*e", ndigits /* FIXME wrong */, number);
-    *sign = (number < 0);
-    dec = strchr(data->efcvt_buffer, '.');
-    *decpt = (dec) ? dec - data->efcvt_buffer : -1;
+    if( number < 0) {
+        *sign = TRUE;
+        number = -number;
+    } else
+        *sign = FALSE;
+    /* handle cases with zero ndigits or less */
+    prec = ndigits;
+    if( prec < 1) prec = 2;
+    snprintf(data->efcvt_buffer, 80, "%.*le", prec - 1, number);
+    /* take the decimal "point away */
+    if( prec != 1)
+        strcpy( data->efcvt_buffer + 1, data->efcvt_buffer + 2);
+    /* take the exponential "e" out */
+    data->efcvt_buffer[ prec] = '\0';
+    /* read the exponent */
+    sscanf( data->efcvt_buffer + prec + 1, "%d", decpt);
+    (*decpt)++;
+    /* adjust for some border cases */
+    if( data->efcvt_buffer[0] == '0')/* value is zero */
+        *decpt = 0;
+    /* handle cases with zero ndigits or less */
+    if( ndigits < 1){
+        if( data->efcvt_buffer[ 0] >= '5')
+            (*decpt)++;
+        data->efcvt_buffer[ 0] = '\0';
+    }
+    TRACE("out=\"%s\"\n",data->efcvt_buffer);
     return data->efcvt_buffer;
 }
 
