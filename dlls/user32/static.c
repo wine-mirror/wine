@@ -874,12 +874,6 @@ static void STATIC_PaintBitmapfn(HWND hwnd, HDC hdc, DWORD style )
         SelectObject(hMemDC, oldbitmap);
         DeleteDC(hMemDC);
     }
-    else
-    {
-        RECT rcClient;
-        GetClientRect( hwnd, &rcClient );
-        FillRect( hdc, &rcClient, hbrush );
-    }
 }
 
 
