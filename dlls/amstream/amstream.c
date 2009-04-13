@@ -214,7 +214,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Initialize(IAMMultiMediaStream* if
     IAMMultiMediaStreamImpl *This = (IAMMultiMediaStreamImpl *)iface;
     HRESULT hr = S_OK;
 
-    FIXME("(%p/%p)->(%x,%x,%p) partial stub!\n", This, iface, (DWORD)StreamType, dwFlags, pFilterGraph);
+    TRACE("(%p/%p)->(%x,%x,%p)\n", This, iface, (DWORD)StreamType, dwFlags, pFilterGraph);
 
     if (pFilterGraph)
     {
