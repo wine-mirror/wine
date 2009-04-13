@@ -819,6 +819,7 @@ extern UINT msi_spawn_error_dialog( MSIPACKAGE*, LPWSTR, LPWSTR );
 extern MSISUMMARYINFO *MSI_GetSummaryInformationW( IStorage *stg, UINT uiUpdateCount );
 extern LPWSTR msi_suminfo_dup_string( MSISUMMARYINFO *si, UINT uiProperty );
 extern LPWSTR msi_get_suminfo_product( IStorage *stg );
+extern UINT msi_add_suminfo( MSIDATABASE *db, LPWSTR **records, int num_records, int num_columns );
 
 /* undocumented functions */
 UINT WINAPI MsiCreateAndVerifyInstallerDirectory( DWORD );
