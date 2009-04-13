@@ -24363,6 +24363,14 @@ dlls/amstream/Makefile: dlls/amstream/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/amstream/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/amstream/tests/Makefile"
+test "x$enable_tests" != xno && ALL_TEST_DIRS="$ALL_TEST_DIRS \\
+	amstream/tests"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/amstream/tests/Makefile: dlls/amstream/tests/Makefile.in dlls/Maketest.rules"
+ac_config_files="$ac_config_files dlls/amstream/tests/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/appwiz.cpl/Makefile"
 test "x$enable_appwiz_cpl" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	appwiz.cpl"
@@ -28899,6 +28907,7 @@ do
     "dlls/advpack/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advpack/Makefile" ;;
     "dlls/advpack/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/advpack/tests/Makefile" ;;
     "dlls/amstream/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/amstream/Makefile" ;;
+    "dlls/amstream/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/amstream/tests/Makefile" ;;
     "dlls/appwiz.cpl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/appwiz.cpl/Makefile" ;;
     "dlls/atl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/atl/Makefile" ;;
     "dlls/authz/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/authz/Makefile" ;;
