@@ -1398,6 +1398,8 @@ static INT LISTVIEW_CreateHeader(LISTVIEW_INFO *infoPtr)
     /* set header font */
     SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, (LPARAM)TRUE);
 
+    LISTVIEW_UpdateSize(infoPtr);
+
     return 0;
 }
 
@@ -1672,6 +1674,8 @@ static void LISTVIEW_UpdateHeaderSize(const LISTVIEW_INFO *infoPtr, INT nNewScro
     POINT point[2];
 
     TRACE("nNewScrollPos=%d\n", nNewScrollPos);
+
+    if (!infoPtr->hwndHeader)  return;
 
     GetWindowRect(infoPtr->hwndHeader, &winRect);
     point[0].x = winRect.left;
@@ -8143,7 +8147,6 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     {
       ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
     }
-    LISTVIEW_UpdateSize(infoPtr);
     LISTVIEW_UpdateScroll(infoPtr);
   }
 
@@ -9127,7 +9130,7 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 	LISTVIEW_UpdateScroll(infoPtr);
     }
 
-    UpdateWindow(infoPtr->hwndHeader);
+    if (infoPtr->hwndHeader)  UpdateWindow(infoPtr->hwndHeader);
 
     if (hdc) 
         LISTVIEW_Refresh(infoPtr, hdc, NULL);

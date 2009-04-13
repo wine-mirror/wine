@@ -903,14 +903,14 @@ static void test_create(void)
                           (GetWindowLongPtr(hList, GWL_STYLE) & ~LVS_LIST) | LVS_REPORT);
     ok(((ret & WS_VISIBLE) && (ret & LVS_LIST)), "Style wrong, should have WS_VISIBLE|LVS_LIST\n");
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
-    ok(IsWindow(hHeader), "Header shouldn't be created\n");
-    ok(hHeader == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    ok(IsWindow(hHeader), "Header should be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
     ret = SetWindowLongPtr(hList, GWL_STYLE,
                           (GetWindowLongPtr(hList, GWL_STYLE) & ~LVS_REPORT) | LVS_LIST);
     ok(((ret & WS_VISIBLE) && (ret & LVS_REPORT)), "Style wrong, should have WS_VISIBLE|LVS_REPORT\n");
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
-    ok(IsWindow(hHeader), "Header shouldn't be created\n");
-    ok(hHeader == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+    ok(IsWindow(hHeader), "Header should be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
     DestroyWindow(hList);
 
     /* LVS_REPORT without WS_VISIBLE */
@@ -940,6 +940,16 @@ static void test_create(void)
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader), "Header should be created\n");
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    DestroyWindow(hList);
+
+    /* LVS_REPORT with LVS_NOCOLUMNHEADER */
+    hList = CreateWindow("SysListView32", "Test", LVS_REPORT|LVS_NOCOLUMNHEADER|WS_VISIBLE,
+                          0, 0, 100, 100, NULL, NULL, GetModuleHandle(NULL), 0);
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader), "Header should be created\n");
+    ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    /* HDS_DRAGDROP set by default */
+    ok(GetWindowLongPtr(hHeader, GWL_STYLE) & HDS_DRAGDROP, "Expected header to have HDS_DRAGDROP\n");
     DestroyWindow(hList);
 }
 
