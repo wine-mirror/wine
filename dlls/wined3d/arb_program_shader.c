@@ -404,20 +404,23 @@ static const char * const shift_tab[] = {
 };
 
 static void shader_arb_get_write_mask(const struct wined3d_shader_instruction *ins,
-        const DWORD param, char *write_mask)
+        const struct wined3d_shader_dst_param *dst, char *write_mask)
 {
     char *ptr = write_mask;
     char vshader = shader_is_vshader_version(ins->reg_maps->shader_version);
 
-    if(vshader && shader_get_regtype(param) == WINED3DSPR_ADDR) {
+    if (vshader && dst->register_type == WINED3DSPR_ADDR)
+    {
         *ptr++ = '.';
         *ptr++ = 'x';
-    } else if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
+    }
+    else if (dst->write_mask != WINED3DSP_WRITEMASK_ALL)
+    {
         *ptr++ = '.';
-        if (param & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
-        if (param & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
-        if (param & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
-        if (param & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
+        if (dst->write_mask & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
+        if (dst->write_mask & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
+        if (dst->write_mask & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
+        if (dst->write_mask & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
     }
 
     *ptr = '\0';
@@ -577,7 +580,7 @@ static void shader_arb_add_dst_param(const struct wined3d_shader_instruction *in
             wined3d_dst->register_idx, wined3d_dst->has_rel_addr, register_name, &is_color);
     strcat(str, register_name);
 
-    shader_arb_get_write_mask(ins, wined3d_dst->token, write_mask);
+    shader_arb_get_write_mask(ins, wined3d_dst, write_mask);
     strcat(str, write_mask);
 }
 
@@ -811,7 +814,7 @@ static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
 
     shader_arb_get_register_name(ins->shader, dst->register_type,
             dst->register_idx, dst->has_rel_addr, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst->token, dst_wmask);
+    shader_arb_get_write_mask(ins, dst, dst_wmask);
     strcat(dst_name, dst_wmask);
 
     pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[0], 0, src_name[0]);
@@ -846,7 +849,7 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     /* Handle output register */
     shader_arb_get_register_name(ins->shader, dst->register_type,
             dst->register_idx, dst->has_rel_addr, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst->token, dst_wmask);
+    shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     /* Generate input register names (with modifiers) */
     pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[0], 0, src_name[0]);
@@ -882,7 +885,7 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
     /* Handle output register */
     shader_arb_get_register_name(ins->shader, dst->register_type,
             dst->register_idx, dst->has_rel_addr, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst->token, dst_wmask);
+    shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     /* Generate input register names (with modifiers) */
     pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[0], 0, src_name[0]);
@@ -911,7 +914,7 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
 
     shader_arb_get_register_name(ins->shader, dst->register_type,
             dst->register_idx, dst->has_rel_addr, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst->token, dst_wmask);
+    shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[0], 0, src_name[0]);
     pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[1], 1, src_name[1]);
@@ -1015,7 +1018,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         shader_arb_get_register_name(ins->shader, dst->register_type,
                 dst->register_idx, dst->has_rel_addr, output_rname, &is_color);
         strcpy(operands[0], output_rname);
-        shader_arb_get_write_mask(ins, dst->token, output_wmask);
+        shader_arb_get_write_mask(ins, dst, output_wmask);
         strcat(operands[0], output_wmask);
 
         arguments[0] = '\0';
@@ -1187,21 +1190,20 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
 
 static void pshader_hw_texcoord(const struct wined3d_shader_instruction *ins)
 {
-    DWORD dst = ins->dst[0].token;
+    const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->buffer;
 
     char tmp[20];
     shader_arb_get_write_mask(ins, dst, tmp);
     if (ins->reg_maps->shader_version != WINED3DPS_VERSION(1,4))
     {
-        DWORD reg = ins->dst[0].register_idx;
+        DWORD reg = dst->register_idx;
         shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
     } else {
-        DWORD reg1 = ins->dst[0].register_idx;
         char reg_src[40];
 
         pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[0], 0, reg_src);
-        shader_addline(buffer, "MOV R%u%s, %s;\n", reg1, tmp, reg_src);
+        shader_addline(buffer, "MOV R%u%s, %s;\n", dst->register_idx, tmp, reg_src);
    }
 }
 
@@ -1526,7 +1528,7 @@ static void pshader_hw_texdp3(const struct wined3d_shader_instruction *ins)
     /* Handle output register */
     shader_arb_get_register_name(ins->shader, dst->register_type,
             dst->register_idx, dst->has_rel_addr, dst_str, &is_color);
-    shader_arb_get_write_mask(ins, dst->token, dst_mask);
+    shader_arb_get_write_mask(ins, dst, dst_mask);
 
     pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[0], 0, src0);
     shader_addline(buffer, "DP3 %s%s, T%u, %s;\n", dst_str, dst_mask, dst->register_idx, src0);
@@ -1547,7 +1549,7 @@ static void pshader_hw_texm3x3(const struct wined3d_shader_instruction *ins)
 
     shader_arb_get_register_name(ins->shader, dst->register_type,
             dst->register_idx, dst->has_rel_addr, dst_str, &is_color);
-    shader_arb_get_write_mask(ins, dst->token, dst_mask);
+    shader_arb_get_write_mask(ins, dst, dst_mask);
 
     pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[0], 0, src0);
     shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", dst->register_idx, src0);
@@ -1683,7 +1685,7 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
 
     shader_arb_get_register_name(ins->shader, dst->register_type,
             dst->register_idx, dst->has_rel_addr, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst->token, dst_wmask);
+    shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[0], 0, src_name);
     shader_addline(buffer, "DP3 TMP, %s, %s;\n", src_name, src_name);
@@ -1713,7 +1715,7 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
 
     shader_arb_get_register_name(ins->shader, dst->register_type,
             dst->register_idx, dst->has_rel_addr, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst->token, dst_wmask);
+    shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     pshader_gen_input_modifier_line(ins->shader, buffer, ins->src[0], 0, src_name);
     shader_addline(buffer, "SCS%s %s%s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask,
