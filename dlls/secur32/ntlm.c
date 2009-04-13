@@ -662,8 +662,20 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 ret = SEC_E_NO_CREDENTIALS;
                 goto isc_end;
             }
-            else /* Just do a noop on the next run */
+            else
+            {
+                /* Some versions of Samba have a broken ntlm_auth that can
+                 * return "BH" here. Catch this and abort. */
+                if(!strncmp(buffer, "BH", 2))
+                {
+                    ERR("ntlm_auth replied 'BH'. This should not happen. "
+                        "Please fix your ntlm_auth install and try again.\n");
+                    ret = SEC_E_INTERNAL_ERROR;
+                    goto isc_end;
+                }
+                /* Otherwise, just do a noop on the next run */
                 lstrcpynA(buffer, "OK", max_len-1);
+            }
         }
         else
         {
