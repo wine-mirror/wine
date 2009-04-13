@@ -221,7 +221,6 @@ static void shader_parse_dst_param(DWORD param, DWORD addr_param, struct wined3d
     dst->modifiers = param & WINED3DSP_DSTMOD_MASK;
     dst->shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
     dst->has_rel_addr = param & WINED3DSHADER_ADDRMODE_RELATIVE;
-    dst->token = param;
     dst->addr_token = addr_param;
 }
 

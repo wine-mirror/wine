@@ -1505,7 +1505,6 @@ static void shader_glsl_color_correction(const struct wined3d_shader_instruction
 
     dst = ins->dst[0];
     dst.write_mask = mask;
-    dst.token = (dst.token & ~WINED3DSP_WRITEMASK_ALL) | dst.write_mask;
     shader_glsl_add_dst_param(ins, &dst, &dst_param);
 
     arguments[0] = '\0';
@@ -1976,9 +1975,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
                     cmp_channel = WINED3DSP_WRITEMASK_0 << j;
                 }
             }
-
             dst.write_mask = dst_mask & write_mask;
-            dst.token = (dst.token & ~WINED3DSP_WRITEMASK_ALL) | dst.write_mask;
 
             /* Splitting the cmp instruction up in multiple lines imposes a problem:
             * The first lines may overwrite source parameters of the following lines.
@@ -2059,7 +2056,6 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
         }
 
         dst.write_mask = dst_mask & write_mask;
-        dst.token = (dst.token & ~WINED3DSP_WRITEMASK_ALL) | dst.write_mask;
         write_mask = shader_glsl_append_dst_ext(ins->buffer, ins, &dst);
         if (!write_mask) continue;
 
@@ -2140,7 +2136,6 @@ static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
     for (i = 0; i < nComponents; ++i)
     {
         tmp_dst.write_mask = WINED3DSP_WRITEMASK_0 << i;
-        tmp_dst.token = (tmp_dst.token & ~WINED3DSP_WRITEMASK_ALL) | tmp_dst.write_mask;
         tmp_ins.src[1] = ins->src[1] + i;
         shader_glsl_dot(&tmp_ins);
     }

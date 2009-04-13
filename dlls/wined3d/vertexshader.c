@@ -174,10 +174,6 @@ static void vshader_set_input(
     unsigned int regnum,
     BYTE usage, BYTE usage_idx) {
 
-    /* Fake register; set reserved bit, regnum, type: input, wmask: all */
-    DWORD reg_token = (0x1 << 31) |
-        WINED3DSP_WRITEMASK_ALL | (WINED3DSPR_INPUT << WINED3DSP_REGTYPE_SHIFT) | regnum;
-
     This->semantics_in[regnum].usage = usage;
     This->semantics_in[regnum].usage_idx = usage_idx;
     This->semantics_in[regnum].reg.register_type = WINED3DSPR_INPUT;
@@ -186,7 +182,6 @@ static void vshader_set_input(
     This->semantics_in[regnum].reg.modifiers = 0;
     This->semantics_in[regnum].reg.shift = 0;
     This->semantics_in[regnum].reg.has_rel_addr = FALSE;
-    This->semantics_in[regnum].reg.token = reg_token;
     This->semantics_in[regnum].reg.addr_token = 0;
 }
 
