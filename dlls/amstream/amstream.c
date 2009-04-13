@@ -349,6 +349,14 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_OpenFile(IAMMultiMediaStream* ifac
         goto end;
     }
 
+    /* If Initialize was not called before, we do it here */
+    if (!This->pFilterGraph)
+    {
+        ret = IAMMultiMediaStream_Initialize(iface, STREAMTYPE_READ, 0, NULL);
+        if (FAILED(ret))
+            goto end;
+    }
+
     ret = IFilterGraph_QueryInterface(This->pFilterGraph, &IID_IGraphBuilder, (void**)&This->GraphBuilder);
     if(ret != S_OK)
     {
