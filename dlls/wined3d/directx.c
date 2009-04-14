@@ -4014,6 +4014,26 @@ static BOOL match_apple(WineD3D_GL_Info *gl_info) {
     return implementation_is_apple(gl_info);
 }
 
+static BOOL match_geforce5(WineD3D_GL_Info *gl_info) {
+    if(gl_info->gl_vendor == VENDOR_NVIDIA) {
+        if(gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5800 || gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5600) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static BOOL match_apple_intel(WineD3D_GL_Info *gl_info) {
+    return gl_info->gl_vendor == VENDOR_INTEL && implementation_is_apple(gl_info);
+}
+
+static BOOL match_apple_nonr500ati(WineD3D_GL_Info *gl_info) {
+    if(!implementation_is_apple(gl_info)) return FALSE;
+    if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
+    if(gl_info->gl_card == CARD_ATI_RADEON_X1600) return FALSE;
+    return TRUE;
+}
+
 static void quirk_arb_constants(WineD3D_GL_Info *gl_info) {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL\n", gl_info->vs_arb_constantsF);
     gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
@@ -4021,57 +4041,8 @@ static void quirk_arb_constants(WineD3D_GL_Info *gl_info) {
     gl_info->ps_glsl_constantsF = gl_info->ps_arb_constantsF;
 }
 
-struct driver_quirk quirk_table[] = {
-    {
-        match_ati_r300_to_500,
-        quirk_arb_constants,
-        "ATI GLSL constant quirk"
-    },
-    /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
-     * used it falls back to software. While the compiler can detect if the shader uses all declared
-     * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
-     * using relative addressing falls back to software.
-     *
-     * ARB vp gives the correct amount of uniforms, so use it instead of GLSL
-     */
-    {
-        match_apple,
-        quirk_arb_constants,
-        "Apple GLSL uniform override"
-    }
-};
-
-static void fixup_extensions(WineD3D_GL_Info *gl_info) {
-    unsigned int i;
-    BOOL apple = implementation_is_apple(gl_info);
-
-    for(i = 0; i < (sizeof(quirk_table) / sizeof(*quirk_table)); i++) {
-        if(!quirk_table[i].match(gl_info)) continue;
-        TRACE_(d3d_caps)("Applying driver quirk \"%s\"\n", quirk_table[i].description);
-        quirk_table[i].apply(gl_info);
-    }
-
-    if(apple) {
-        /* The Intel GPUs on MacOS set the .w register of texcoords to 0.0 by default, which causes problems
-         * with fixed function fragment processing. Ideally this flag should be detected with a test shader
-         * and OpenGL feedback mode, but some GL implementations (MacOS ATI at least, probably all MacOS ones)
-         * do not like vertex shaders in feedback mode and return an error, even though it should be valid
-         * according to the spec.
-         *
-         * We don't want to enable this on all cards, as it adds an extra instruction per texcoord used. This
-         * makes the shader slower and eats instruction slots which should be available to the d3d app.
-         *
-         * ATI Radeon HD 2xxx cards on MacOS have the issue. Instead of checking for the buggy cards, blacklist
-         * all radeon cards on Macs and whitelist the good ones. That way we're prepared for the future. If
-         * this workaround is activated on cards that do not need it, it won't break things, just affect
-         * performance negatively.
-         */
-        if(gl_info->gl_vendor == VENDOR_INTEL ||
-           (gl_info->gl_vendor == VENDOR_ATI && gl_info->gl_card != CARD_ATI_RADEON_X1600)) {
-            TRACE("Enabling vertex texture coord fixes in vertex shaders\n");
-            gl_info->set_texcoord_w = TRUE;
-        }
-    }
+static void quirk_ati_dx9(WineD3D_GL_Info *gl_info) {
+    quirk_arb_constants(gl_info);
 
     /* MacOS advertises GL_ARB_texture_non_power_of_two on ATI r500 and earlier cards, although
      * these cards only support GL_ARB_texture_rectangle(D3DPTEXTURECAPS_NONPOW2CONDITIONAL).
@@ -4085,16 +4056,12 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
      * has this extension promoted to core. The extension loading code sets this extension supported
      * due to that, so this code works on fglrx as well.
      */
-    if(gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] && gl_info->gl_vendor == VENDOR_ATI) {
-        if(gl_info->gl_card == CARD_ATI_RADEON_X700 || gl_info->gl_card == CARD_ATI_RADEON_X1600 ||
-            gl_info->gl_card == CARD_ATI_RADEON_9500 || gl_info->gl_card == CARD_ATI_RADEON_8500  ||
-            gl_info->gl_card == CARD_ATI_RADEON_7200 || gl_info->gl_card == CARD_ATI_RAGE_128PRO) {
-            TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing\n");
-            gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
-            gl_info->supported[WINE_NORMALIZED_TEXRECT] = TRUE;
-        }
-    }
+    TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing\n");
+    gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
+    gl_info->supported[WINE_NORMALIZED_TEXRECT] = TRUE;
+}
 
+static void quirk_no_np2(WineD3D_GL_Info *gl_info) {
     /*  The nVidia GeForceFX series reports OpenGL 2.0 capabilities with the latest drivers versions, but
      *  doesn't explicitly advertise the ARB_tex_npot extension in the GL extension string.
      *  This usually means that ARB_tex_npot is supported in hardware as long as the application is staying
@@ -4110,12 +4077,72 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
      *  post-processing effects in the game "Max Payne 2").
      *  The behaviour can be verified through a simple test app attached in bugreport #14724.
      */
-    if(gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] && gl_info->gl_vendor == VENDOR_NVIDIA) {
-        if(gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5800 || gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5600) {
-            TRACE("GL_ARB_texture_non_power_of_two advertised through OpenGL 2.0 on NV FX card, removing\n");
-            gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
-            gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
-        }
+    TRACE("GL_ARB_texture_non_power_of_two advertised through OpenGL 2.0 on NV FX card, removing\n");
+    gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
+    gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
+}
+
+static void quirk_texcoord_w(WineD3D_GL_Info *gl_info) {
+    /* The Intel GPUs on MacOS set the .w register of texcoords to 0.0 by default, which causes problems
+     * with fixed function fragment processing. Ideally this flag should be detected with a test shader
+     * and OpenGL feedback mode, but some GL implementations (MacOS ATI at least, probably all MacOS ones)
+     * do not like vertex shaders in feedback mode and return an error, even though it should be valid
+     * according to the spec.
+     *
+     * We don't want to enable this on all cards, as it adds an extra instruction per texcoord used. This
+     * makes the shader slower and eats instruction slots which should be available to the d3d app.
+     *
+     * ATI Radeon HD 2xxx cards on MacOS have the issue. Instead of checking for the buggy cards, blacklist
+     * all radeon cards on Macs and whitelist the good ones. That way we're prepared for the future. If
+     * this workaround is activated on cards that do not need it, it won't break things, just affect
+     * performance negatively.
+     */
+    TRACE("Enabling vertex texture coord fixes in vertex shaders\n");
+    gl_info->set_texcoord_w = TRUE;
+}
+
+struct driver_quirk quirk_table[] = {
+    {
+        match_ati_r300_to_500,
+        quirk_ati_dx9,
+        "ATI GLSL constant and normalized texrect quirk"
+    },
+    /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
+     * used it falls back to software. While the compiler can detect if the shader uses all declared
+     * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
+     * using relative addressing falls back to software.
+     *
+     * ARB vp gives the correct amount of uniforms, so use it instead of GLSL
+     */
+    {
+        match_apple,
+        quirk_arb_constants,
+        "Apple GLSL uniform override"
+    },
+    {
+        match_geforce5,
+        quirk_no_np2,
+        "Geforce 5 NP2 disable"
+    },
+    {
+        match_apple_intel,
+        quirk_texcoord_w,
+        "Init texcoord .w for Apple Intel GPU driver"
+    },
+    {
+        match_apple_nonr500ati,
+        quirk_texcoord_w,
+        "Init texcoord .w for Apple ATI >= r600 GPU driver"
+    }
+};
+
+static void fixup_extensions(WineD3D_GL_Info *gl_info) {
+    unsigned int i;
+
+    for(i = 0; i < (sizeof(quirk_table) / sizeof(*quirk_table)); i++) {
+        if(!quirk_table[i].match(gl_info)) continue;
+        TRACE_(d3d_caps)("Applying driver quirk \"%s\"\n", quirk_table[i].description);
+        quirk_table[i].apply(gl_info);
     }
 
     /* Find out if PBOs work as they are supposed to */
