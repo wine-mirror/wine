@@ -4041,6 +4041,16 @@ static void quirk_arb_constants(WineD3D_GL_Info *gl_info) {
     gl_info->ps_glsl_constantsF = gl_info->ps_arb_constantsF;
 }
 
+static void quirk_apple_glsl_constants(WineD3D_GL_Info *gl_info) {
+    quirk_arb_constants(gl_info);
+    /* MacOS needs uniforms for relative addressing offsets. This can accumulate to quite a few uniforms.
+     * Beyond that the general uniform isn't optimal, so reserve a number of uniforms. 12 vec4's should
+     * allow 48 different offsets or other helper immediate values
+     */
+    TRACE_(d3d_caps)("Reserving 12 GLSL constants for compiler private use\n");
+    gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 12);
+}
+
 static void quirk_ati_dx9(WineD3D_GL_Info *gl_info) {
     quirk_arb_constants(gl_info);
 
@@ -4059,6 +4069,12 @@ static void quirk_ati_dx9(WineD3D_GL_Info *gl_info) {
     TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing\n");
     gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
     gl_info->supported[WINE_NORMALIZED_TEXRECT] = TRUE;
+
+    /* fglrx has the same structural issues as the one described in quirk_apple_glsl_constants, although
+     * it is generally more efficient. Reserve just 8 constants
+     */
+    TRACE_(d3d_caps)("Reserving 8 GLSL constants for compiler private use\n");
+    gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 8);
 }
 
 static void quirk_no_np2(WineD3D_GL_Info *gl_info) {
@@ -4116,7 +4132,7 @@ struct driver_quirk quirk_table[] = {
      */
     {
         match_apple,
-        quirk_arb_constants,
+        quirk_apple_glsl_constants,
         "Apple GLSL uniform override"
     },
     {
