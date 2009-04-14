@@ -516,5 +516,9 @@ int main(int argc, char *argv[])
     triple_space(f_c);
     write_encoding_by_UV(f_c);
 
+    /* Clean up */
+    fclose(f_c);
+    fclose(f_h;
+
     return 0;
 }
