@@ -1914,8 +1914,6 @@ BOOL CDECL X11DRV_GetKeyboardLayoutName(LPWSTR name)
     langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
     if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
         layout |= 0xe001 << 16; /* FIXME */
-    else
-        layout |= layout << 16;
 
     sprintfW(name, formatW, layout);
     TRACE("returning %s\n", debugstr_w(name));

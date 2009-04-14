@@ -1284,6 +1284,19 @@ static void test_get_async_key_state(void)
     ok(0 == GetAsyncKeyState(-1000000), "GetAsyncKeyState did not return 0\n");
 }
 
+static void test_keyboard_layout_name(void)
+{
+    BOOL ret;
+    char klid[KL_NAMELENGTH];
+
+    if (GetKeyboardLayout(0) != (HKL)(ULONG_PTR)0x04090409) return;
+
+    klid[0] = 0;
+    ret = GetKeyboardLayoutNameA(klid);
+    ok(ret, "GetKeyboardLayoutNameA failed %u\n", GetLastError());
+    ok(!strcmp(klid, "00000409"), "expected 00000409, got %s\n", klid);
+}
+
 START_TEST(input)
 {
     init_function_pointers();
@@ -1300,6 +1313,7 @@ START_TEST(input)
     test_key_map();
     test_ToUnicode();
     test_get_async_key_state();
+    test_keyboard_layout_name();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
