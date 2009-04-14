@@ -3194,10 +3194,14 @@ static BOOL create_child_font_list(GdiFont *font)
     BOOL ret = FALSE;
     SYSTEM_LINKS *font_link;
     CHILD_FONT *font_link_entry, *new_child;
+    FontSubst *psub;
+    WCHAR* font_name;
 
+    psub = get_font_subst(&font_subst_list, font->name, -1);
+    font_name = psub ? psub->to.name : font->name;
     LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
     {
-        if(!strcmpiW(font_link->font_name, font->name))
+        if(!strcmpiW(font_link->font_name, font_name))
         {
             TRACE("found entry in system list\n");
             LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
@@ -3218,7 +3222,7 @@ static BOOL create_child_font_list(GdiFont *font)
      */
     if (use_default_fallback && font->charset != SYMBOL_CHARSET &&
         font->charset != OEM_CHARSET &&
-        strcmpiW(font->name,szDefaultFallbackLink) != 0)
+        strcmpiW(font_name,szDefaultFallbackLink) != 0)
         LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
         {
             if(!strcmpiW(font_link->font_name,szDefaultFallbackLink))
