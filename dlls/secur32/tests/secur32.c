@@ -107,14 +107,13 @@ static void testGetUserNameExA(void)
         size = sizeof(name);
         ZeroMemory(name, sizeof(name));
         rc = pGetUserNameExA(formats[i], name, &size);
-        ok(rc || ((formats[i] == NameUnknown) &&
-           (GetLastError() == ERROR_INVALID_PARAMETER)) ||
-           (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
-           (GetLastError() == ERROR_NO_SUCH_DOMAIN) ||
-           (GetLastError() == ERROR_NO_SUCH_USER) ||
-           (GetLastError() == ERROR_NONE_MAPPED) ||
-           (GetLastError() == ERROR_ACCESS_DENIED),
-           "GetUserNameExA(%d) failed: %d\n",
+        ok(rc ||
+           (formats[i] == NameUnknown &&
+            GetLastError() == ERROR_NO_SUCH_USER) ||
+           GetLastError() == ERROR_NONE_MAPPED ||
+           broken(formats[i] == NameDnsDomain &&
+                  GetLastError() == ERROR_INVALID_PARAMETER),
+           "GetUserNameExW(%d) failed: %d\n",
            formats[i], GetLastError());
     }
 
@@ -155,13 +154,12 @@ static void testGetUserNameExW(void)
         size = sizeof(nameW);
         ZeroMemory(nameW, sizeof(nameW));
         rc = pGetUserNameExW(formats[i], nameW, &size);
-        ok(rc || ((formats[i] == NameUnknown) &&
-           (GetLastError() == ERROR_INVALID_PARAMETER)) ||
-           (GetLastError() == ERROR_CANT_ACCESS_DOMAIN_INFO) ||
-           (GetLastError() == ERROR_NO_SUCH_DOMAIN) ||
-           (GetLastError() == ERROR_NO_SUCH_USER) ||
-           (GetLastError() == ERROR_NONE_MAPPED) ||
-           (GetLastError() == ERROR_ACCESS_DENIED),
+        ok(rc ||
+           (formats[i] == NameUnknown &&
+            GetLastError() == ERROR_NO_SUCH_USER) ||
+           GetLastError() == ERROR_NONE_MAPPED ||
+           broken(formats[i] == NameDnsDomain &&
+                  GetLastError() == ERROR_INVALID_PARAMETER),
            "GetUserNameExW(%d) failed: %d\n",
            formats[i], GetLastError());
     }
@@ -212,7 +210,7 @@ static void test_InitSecurityInterface(void)
 
     if (!pInitSecurityInterfaceW)
     {
-        skip("InitSecurityInterfaceW not exported by secur32.dll\n");
+        win_skip("InitSecurityInterfaceW not exported by secur32.dll\n");
         return;
     }
 
@@ -242,15 +240,23 @@ START_TEST(secur32)
  
         if (pGetComputerObjectNameA)
             testGetComputerObjectNameA();
+        else
+            win_skip("GetComputerObjectNameA not exported by secur32.dll\n");
 
         if (pGetComputerObjectNameW)
             testGetComputerObjectNameW();
+        else
+            win_skip("GetComputerObjectNameW not exported by secur32.dll\n");
 
         if (pGetUserNameExA)
             testGetUserNameExA();
+        else
+            win_skip("GetUserNameExA not exported by secur32.dll\n");
 
         if (pGetUserNameExW)
             testGetUserNameExW();
+        else
+            win_skip("GetUserNameExW not exported by secur32.dll\n");
 
         test_InitSecurityInterface();
 
