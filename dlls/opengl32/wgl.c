@@ -102,8 +102,8 @@ typedef struct wine_glcontext {
 
 void enter_gl(void)
 {
-    Wine_GLContext *curctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-    
+    Wine_GLContext *curctx = NtCurrentTeb()->glContext;
+
     if (curctx && curctx->do_escape)
     {
         enum x11drv_escape_codes escape = X11DRV_SYNC_PIXMAP;
@@ -230,8 +230,8 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
   /* After that, search in the thunks to find the real name of the extension */
   ext.name = lpszProc;
-  ext_ret = (const OpenGL_extension *) bsearch(&ext, extension_registry,
-					 extension_registry_size, sizeof(OpenGL_extension), compar);
+  ext_ret = bsearch(&ext, extension_registry, extension_registry_size,
+                    sizeof(OpenGL_extension), compar);
 
   /* If nothing was found, we are looking for a WGL extension or an unknown GL extension. */
   if (ext_ret == NULL) {
