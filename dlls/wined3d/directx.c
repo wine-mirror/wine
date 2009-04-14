@@ -4002,9 +4002,38 @@ static const struct driver_version_information driver_version_table[] = {
     /* TODO: Add information about legacy ATI hardware, Intel and other cards */
 };
 
+static BOOL match_ati_r300_to_500(WineD3D_GL_Info *gl_info) {
+    if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
+    if(gl_info->gl_card == CARD_ATI_RADEON_9500) return TRUE;
+    if(gl_info->gl_card == CARD_ATI_RADEON_X700) return TRUE;
+    if(gl_info->gl_card == CARD_ATI_RADEON_X1600) return TRUE;
+    return FALSE;
+}
+
+static void quirk_arb_constants(WineD3D_GL_Info *gl_info) {
+    TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL\n", gl_info->vs_arb_constantsF);
+    gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
+    TRACE_(d3d_caps)("Using ARB ps constant limit(=%u) for GLSL\n", gl_info->ps_arb_constantsF);
+    gl_info->ps_glsl_constantsF = gl_info->ps_arb_constantsF;
+}
+
+struct driver_quirk quirk_table[] = {
+    {
+        match_ati_r300_to_500,
+        quirk_arb_constants,
+        "ATI GLSL constant quirk"
+    }
+};
+
 static void fixup_extensions(WineD3D_GL_Info *gl_info) {
     unsigned int i;
     BOOL apple = implementation_is_apple(gl_info);
+
+    for(i = 0; i < (sizeof(quirk_table) / sizeof(*quirk_table)); i++) {
+        if(!quirk_table[i].match(gl_info)) continue;
+        TRACE_(d3d_caps)("Applying driver quirk \"%s\"\n", quirk_table[i].description);
+        quirk_table[i].apply(gl_info);
+    }
 
     if(apple) {
         /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
