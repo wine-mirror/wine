@@ -44,6 +44,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "winnls.h"
 #include "x11drv.h"
 #include "wine/server.h"
@@ -1613,6 +1614,48 @@ static HKL get_locale_kbd_layout(void)
     return (HKL)layout;
 }
 
+/***********************************************************************
+ *     GetKeyboardLayoutName (X11DRV.@)
+ */
+BOOL CDECL X11DRV_GetKeyboardLayoutName(LPWSTR name)
+{
+    static const WCHAR formatW[] = {'%','0','8','l','x',0};
+    DWORD layout;
+    LANGID langid;
+
+    layout = main_key_tab[kbd_layout].lcid;
+    /* see comment for get_locale_kbd_layout */
+    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        layout |= 0xe001 << 16; /* FIXME */
+
+    sprintfW(name, formatW, layout);
+    TRACE("returning %s\n", debugstr_w(name));
+    return TRUE;
+}
+
+static void set_kbd_layout_preload_key(void)
+{
+    static const WCHAR preload[] =
+        {'K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','\\','P','r','e','l','o','a','d',0};
+    static const WCHAR one[] = {'1',0};
+
+    HKEY hkey;
+    WCHAR layout[KL_NAMELENGTH];
+
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, preload, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL))
+        return;
+
+    if (!RegQueryValueExW(hkey, one, NULL, NULL, NULL, NULL))
+    {
+        RegCloseKey(hkey);
+        return;
+    }
+    if (X11DRV_GetKeyboardLayoutName(layout))
+        RegSetValueExW(hkey, one, 0, REG_SZ, (const BYTE *)layout, sizeof(layout));
+
+    RegCloseKey(hkey);
+}
 
 /**********************************************************************
  *		X11DRV_InitKeyboard
@@ -1629,6 +1672,8 @@ void X11DRV_InitKeyboard( Display *display )
     char ckey[4]={0,0,0,0};
     const char (*lkey)[MAIN_LEN][4];
     char vkey_used[256] = { 0 };
+
+    set_kbd_layout_preload_key();
 
     wine_tsx11_lock();
     XDisplayKeycodes(display, &min_keycode, &max_keycode);
@@ -1897,27 +1942,6 @@ HKL CDECL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
         FIXME("couldn't return keyboard layout for thread %04x\n", dwThreadid);
 
     return get_locale_kbd_layout();
-}
-
-
-/***********************************************************************
- *		GetKeyboardLayoutName (X11DRV.@)
- */
-BOOL CDECL X11DRV_GetKeyboardLayoutName(LPWSTR name)
-{
-    static const WCHAR formatW[] = {'%','0','8','l','x',0};
-    DWORD layout;
-    LANGID langid;
-
-    layout = main_key_tab[kbd_layout].lcid;
-    /* see comment for get_locale_kbd_layout */
-    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
-    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        layout |= 0xe001 << 16; /* FIXME */
-
-    sprintfW(name, formatW, layout);
-    TRACE("returning %s\n", debugstr_w(name));
-    return TRUE;
 }
 
 
