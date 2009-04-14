@@ -4010,6 +4010,10 @@ static BOOL match_ati_r300_to_500(WineD3D_GL_Info *gl_info) {
     return FALSE;
 }
 
+static BOOL match_apple(WineD3D_GL_Info *gl_info) {
+    return implementation_is_apple(gl_info);
+}
+
 static void quirk_arb_constants(WineD3D_GL_Info *gl_info) {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL\n", gl_info->vs_arb_constantsF);
     gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
@@ -4022,6 +4026,18 @@ struct driver_quirk quirk_table[] = {
         match_ati_r300_to_500,
         quirk_arb_constants,
         "ATI GLSL constant quirk"
+    },
+    /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
+     * used it falls back to software. While the compiler can detect if the shader uses all declared
+     * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
+     * using relative addressing falls back to software.
+     *
+     * ARB vp gives the correct amount of uniforms, so use it instead of GLSL
+     */
+    {
+        match_apple,
+        quirk_arb_constants,
+        "Apple GLSL uniform override"
     }
 };
 
@@ -4036,21 +4052,6 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info) {
     }
 
     if(apple) {
-        /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
-         * used it falls back to software. While the compiler can detect if the shader uses all declared
-         * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
-         * using relative addressing falls back to software.
-         *
-         * ARB vp gives the correct amount of uniforms, so use it instead of GLSL
-         */
-        if(gl_info->vs_glsl_constantsF <= gl_info->vs_arb_constantsF) {
-            FIXME("GLSL doesn't advertise more vertex shader uniforms than ARB. Driver fixup outdated?\n");
-        } else {
-            TRACE("Driver claims %u GLSL vs uniforms, replacing with %u ARB vp uniforms\n",
-                  gl_info->vs_glsl_constantsF, gl_info->vs_arb_constantsF);
-            gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
-        }
-
         /* The Intel GPUs on MacOS set the .w register of texcoords to 0.0 by default, which causes problems
          * with fixed function fragment processing. Ideally this flag should be detected with a test shader
          * and OpenGL feedback mode, but some GL implementations (MacOS ATI at least, probably all MacOS ones)
