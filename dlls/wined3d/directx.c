@@ -3850,7 +3850,7 @@ ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
     return IUnknown_Release(volumeParent);
 }
 
-static BOOL implementation_is_apple(const WineD3D_GL_Info *gl_info)
+static BOOL match_apple(const WineD3D_GL_Info *gl_info)
 {
     /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
      * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
@@ -4002,7 +4002,7 @@ static const struct driver_version_information driver_version_table[] = {
     /* TODO: Add information about legacy ATI hardware, Intel and other cards */
 };
 
-static BOOL match_ati_r300_to_500(WineD3D_GL_Info *gl_info) {
+static BOOL match_ati_r300_to_500(const WineD3D_GL_Info *gl_info) {
     if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
     if(gl_info->gl_card == CARD_ATI_RADEON_9500) return TRUE;
     if(gl_info->gl_card == CARD_ATI_RADEON_X700) return TRUE;
@@ -4010,11 +4010,7 @@ static BOOL match_ati_r300_to_500(WineD3D_GL_Info *gl_info) {
     return FALSE;
 }
 
-static BOOL match_apple(WineD3D_GL_Info *gl_info) {
-    return implementation_is_apple(gl_info);
-}
-
-static BOOL match_geforce5(WineD3D_GL_Info *gl_info) {
+static BOOL match_geforce5(const WineD3D_GL_Info *gl_info) {
     if(gl_info->gl_vendor == VENDOR_NVIDIA) {
         if(gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5800 || gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5600) {
             return TRUE;
@@ -4023,12 +4019,12 @@ static BOOL match_geforce5(WineD3D_GL_Info *gl_info) {
     return FALSE;
 }
 
-static BOOL match_apple_intel(WineD3D_GL_Info *gl_info) {
-    return gl_info->gl_vendor == VENDOR_INTEL && implementation_is_apple(gl_info);
+static BOOL match_apple_intel(const WineD3D_GL_Info *gl_info) {
+    return gl_info->gl_vendor == VENDOR_INTEL && match_apple(gl_info);
 }
 
-static BOOL match_apple_nonr500ati(WineD3D_GL_Info *gl_info) {
-    if(!implementation_is_apple(gl_info)) return FALSE;
+static BOOL match_apple_nonr500ati(const WineD3D_GL_Info *gl_info) {
+    if(!match_apple(gl_info)) return FALSE;
     if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
     if(gl_info->gl_card == CARD_ATI_RADEON_X1600) return FALSE;
     return TRUE;
