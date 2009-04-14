@@ -23,6 +23,7 @@
 #define COBJMACROS
 
 #include "wine/test.h"
+#include "initguid.h"
 #include "amstream.h"
 
 #define FILE_LEN 9

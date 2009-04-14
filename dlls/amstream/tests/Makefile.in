@@ -3,7 +3,7 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = amstream.dll
-IMPORTS   = kernel32 oleaut32 ole32 quartz strmiids
+IMPORTS   = quartz oleaut32 ole32 kernel32
 
 CTESTS = \
 	amstream.c
