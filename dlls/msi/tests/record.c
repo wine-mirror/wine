@@ -122,15 +122,47 @@ static void test_msirecord(void)
     r = MsiRecordGetInteger(h, 0);
     ok(r == 1, "failed to get integer\n");
 
-    /* same record, but add a string to it */
+    /* same record, but add a null or empty string to it */
     r = MsiRecordSetString(h, 0, NULL);
     ok(r == ERROR_SUCCESS, "Failed to set null string at 0\n");
     r = MsiRecordIsNull(h, 0);
     ok(r == TRUE, "null string not null field\n");
+    r = MsiRecordDataSize(h, 0);
+    ok(r == 0, "size of string record is strlen\n");
+    buf[0] = 0;
+    sz = sizeof buf;
+    r = MsiRecordGetStringA(h, 0, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Failed to get string at 0\n");
+    ok(buf[0] == 0, "MsiRecordGetStringA returned the wrong string\n");
+    ok(sz == 0, "MsiRecordGetStringA returned the wrong length\n");
+    bufW[0] = 0;
+    sz = sizeof bufW / sizeof bufW[0];
+    r = MsiRecordGetStringW(h, 0, bufW, &sz);
+    ok(r == ERROR_SUCCESS, "Failed to get string at 0\n");
+    ok(bufW[0] == 0, "MsiRecordGetStringW returned the wrong string\n");
+    todo_wine
+    ok(sz == 0, "MsiRecordGetStringW returned the wrong length\n");
     r = MsiRecordSetString(h, 0, "");
     ok(r == ERROR_SUCCESS, "Failed to set empty string at 0\n");
     r = MsiRecordIsNull(h, 0);
     ok(r == TRUE, "null string not null field\n");
+    r = MsiRecordDataSize(h, 0);
+    ok(r == 0, "size of string record is strlen\n");
+    buf[0] = 0;
+    sz = sizeof buf;
+    r = MsiRecordGetStringA(h, 0, buf, &sz);
+    ok(r == ERROR_SUCCESS, "Failed to get string at 0\n");
+    ok(buf[0] == 0, "MsiRecordGetStringA returned the wrong string\n");
+    ok(sz == 0, "MsiRecordGetStringA returned the wrong length\n");
+    bufW[0] = 0;
+    sz = sizeof bufW / sizeof bufW[0];
+    r = MsiRecordGetStringW(h, 0, bufW, &sz);
+    ok(r == ERROR_SUCCESS, "Failed to get string at 0\n");
+    ok(bufW[0] == 0, "MsiRecordGetStringW returned the wrong string\n");
+    todo_wine
+    ok(sz == 0, "MsiRecordGetStringW returned the wrong length\n");
+
+    /* same record, but add a string to it */
     r = MsiRecordSetString(h,0,str);
     ok(r == ERROR_SUCCESS, "Failed to set string at 0\n");
     r = MsiRecordGetInteger(h, 0);
