@@ -1494,7 +1494,8 @@ static void test_ITEMIDLIST_format(void) {
                     pFileStructA->uFileTime == pFileStructW->uTime2,
                     "Last write time should match last access time!\n");
 
-                ok (!lstrcmpW(wszFile[i], pFileStructW->wszName),
+                ok (!lstrcmpW(wszFile[i], pFileStructW->wszName) ||
+                    !lstrcmpW(wszFile[i], (WCHAR *)(pFileStructW->abFooBar2 + 22)), /* Vista */
                     "The filename should be stored in unicode at this position!\n");
             }
         }
