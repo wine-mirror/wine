@@ -140,7 +140,6 @@ static void test_msirecord(void)
     r = MsiRecordGetStringW(h, 0, bufW, &sz);
     ok(r == ERROR_SUCCESS, "Failed to get string at 0\n");
     ok(bufW[0] == 0, "MsiRecordGetStringW returned the wrong string\n");
-    todo_wine
     ok(sz == 0, "MsiRecordGetStringW returned the wrong length\n");
     r = MsiRecordSetString(h, 0, "");
     ok(r == ERROR_SUCCESS, "Failed to set empty string at 0\n");
@@ -159,7 +158,6 @@ static void test_msirecord(void)
     r = MsiRecordGetStringW(h, 0, bufW, &sz);
     ok(r == ERROR_SUCCESS, "Failed to get string at 0\n");
     ok(bufW[0] == 0, "MsiRecordGetStringW returned the wrong string\n");
-    todo_wine
     ok(sz == 0, "MsiRecordGetStringW returned the wrong length\n");
 
     /* same record, but add a string to it */
