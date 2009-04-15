@@ -22,6 +22,7 @@
 #include "nls/winerr_enu.mc.rc"
 #include "nls/winerr_fra.mc.rc"
 #include "nls/winerr_kor.mc.rc"
+#include "nls/winerr_nld.mc.rc"
 #include "nls/winerr_nor.mc.rc"
 
 #include "version.rc"
