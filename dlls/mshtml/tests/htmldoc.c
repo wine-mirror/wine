@@ -4191,7 +4191,7 @@ static void test_IPersistHistory(void)
         return;
 
     hres = IUnknown_QueryInterface(unk, &IID_IPersistHistory, (void**)&phist);
-    todo_wine ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
+    ok(hres == S_OK, "QueryInterface returned %08x, expected S_OK\n", hres);
     if(hres == S_OK)
         IPersistHistory_Release(phist);
 

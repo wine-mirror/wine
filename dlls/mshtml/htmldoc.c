@@ -134,8 +134,8 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
         TRACE("(%p)->(IID_ISupportErrorInfo %p)\n", This, ppvObject);
         *ppvObject = SUPPERRINFO(This);
     }else if(IsEqualGUID(&IID_IPersistHistory, riid)) {
-        FIXME("(%p)->(IID_IPersistHistory currently not supported %p)\n", This, ppvObject);
-        *ppvObject = NULL;
+        TRACE("(%p)->(IID_IPersistHistory %p)\n", This, ppvObject);
+        *ppvObject = PERSISTHIST(This);
     }else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppvObject);
         return E_NOINTERFACE;
