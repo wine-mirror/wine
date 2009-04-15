@@ -462,6 +462,12 @@ struct wined3d_shader_dst_param
     DWORD addr_token;
 };
 
+struct wined3d_shader_src_param
+{
+    DWORD token;
+    DWORD addr_token;
+};
+
 struct wined3d_shader_instruction
 {
     const struct wined3d_shader_context *ctx;
@@ -469,11 +475,10 @@ struct wined3d_shader_instruction
     DWORD flags;
     BOOL coissue;
     DWORD predicate;
-    DWORD src[4];
-    DWORD src_addr[4];
     UINT dst_count;
     const struct wined3d_shader_dst_param *dst;
     UINT src_count;
+    const struct wined3d_shader_src_param *src;
 };
 
 struct wined3d_shader_semantic

@@ -789,6 +789,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     const SHADER_OPCODE *opcode_table = This->baseShader.shader_ins;
     const SHADER_HANDLER *handler_table = device->shader_backend->shader_instruction_handler_table;
     DWORD shader_version = reg_maps->shader_version;
+    struct wined3d_shader_src_param src_param[4];
     struct wined3d_shader_dst_param dst_param;
     struct wined3d_shader_instruction ins;
     struct wined3d_shader_context ctx;
@@ -804,6 +805,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
 
     ins.ctx = &ctx;
     ins.dst = &dst_param;
+    ins.src = src_param;
     This->baseShader.parse_state.current_row = 0;
 
     while (WINED3DPS_END() != *pToken)
@@ -883,8 +885,8 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         {
             DWORD param, addr_token = 0;
             pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
-            ins.src[i] = param;
-            ins.src_addr[i] = addr_token;
+            src_param[i].token = param;
+            src_param[i].addr_token = addr_token;
         }
 
         /* Call appropriate function for output target */
