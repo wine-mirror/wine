@@ -444,6 +444,13 @@ typedef struct SHADER_OPCODE
     DWORD max_version;
 } SHADER_OPCODE;
 
+struct wined3d_shader_context
+{
+    IWineD3DBaseShader *shader;
+    const struct shader_reg_maps *reg_maps;
+    SHADER_BUFFER *buffer;
+};
+
 struct wined3d_shader_dst_param
 {
     WINED3DSHADER_PARAM_REGISTER_TYPE register_type;
@@ -457,15 +464,13 @@ struct wined3d_shader_dst_param
 
 struct wined3d_shader_instruction
 {
-    IWineD3DBaseShader *shader;
-    const shader_reg_maps *reg_maps;
+    const struct wined3d_shader_context *ctx;
     enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
     DWORD flags;
     BOOL coissue;
     DWORD predicate;
     DWORD src[4];
     DWORD src_addr[4];
-    SHADER_BUFFER *buffer;
     UINT dst_count;
     const struct wined3d_shader_dst_param *dst;
     UINT src_count;

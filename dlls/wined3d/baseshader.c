@@ -791,15 +791,18 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     DWORD shader_version = reg_maps->shader_version;
     struct wined3d_shader_dst_param dst_param;
     struct wined3d_shader_instruction ins;
+    struct wined3d_shader_context ctx;
     const DWORD *pToken = pFunction;
     const SHADER_OPCODE *curOpcode;
     SHADER_HANDLER hw_fct;
     DWORD i;
 
     /* Initialize current parsing state */
-    ins.shader = iface;
-    ins.buffer = buffer;
-    ins.reg_maps = reg_maps;
+    ctx.shader = iface;
+    ctx.reg_maps = reg_maps;
+    ctx.buffer = buffer;
+
+    ins.ctx = &ctx;
     ins.dst = &dst_param;
     This->baseShader.parse_state.current_row = 0;
 
