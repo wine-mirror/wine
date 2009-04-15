@@ -78,10 +78,12 @@ AddReg=\
 [DefaultInstall.Services]
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
+AddService=TermService,0,TerminalServices
 
 [DefaultInstall.NT.Services]
 AddService=MountMgr,0x800,MountMgrService
 AddService=Spooler,0,SpoolerService
+AddService=TermService,0,TerminalServices
 
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
@@ -2903,6 +2905,14 @@ ServiceType=0x110
 StartType=4
 ErrorControl=1
 LoadOrderGroup="SpoolerGroup"
+
+[TerminalServices]
+Description="Remote desktop access"
+DisplayName="Terminal Services"
+ServiceBinary="%11%\termsv.exe"
+ServiceType=32
+StartType=3
+ErrorControl=1
 
 [Services]
 HKLM,"System\CurrentControlSet\Services\VxD\MSTCP",,,""

@@ -28007,6 +28007,15 @@ programs/taskmgr/Makefile: programs/taskmgr/Makefile.in programs/Makeprog.rules"
 ac_config_files="$ac_config_files programs/taskmgr/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	programs/termsv/Makefile"
+test "x$enable_termsv" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
+	termsv" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
+	termsv"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+programs/termsv/Makefile: programs/termsv/Makefile.in programs/Makeprog.rules"
+ac_config_files="$ac_config_files programs/termsv/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	programs/uninstaller/Makefile"
 test "x$enable_uninstaller" != xno && ALL_PROGRAM_DIRS="$ALL_PROGRAM_DIRS \\
 	uninstaller" && ALL_PROGRAM_INSTALL_DIRS="$ALL_PROGRAM_INSTALL_DIRS \\
@@ -29359,6 +29368,7 @@ do
     "programs/start/Makefile") CONFIG_FILES="$CONFIG_FILES programs/start/Makefile" ;;
     "programs/svchost/Makefile") CONFIG_FILES="$CONFIG_FILES programs/svchost/Makefile" ;;
     "programs/taskmgr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/taskmgr/Makefile" ;;
+    "programs/termsv/Makefile") CONFIG_FILES="$CONFIG_FILES programs/termsv/Makefile" ;;
     "programs/uninstaller/Makefile") CONFIG_FILES="$CONFIG_FILES programs/uninstaller/Makefile" ;;
     "programs/unlodctr/Makefile") CONFIG_FILES="$CONFIG_FILES programs/unlodctr/Makefile" ;;
     "programs/view/Makefile") CONFIG_FILES="$CONFIG_FILES programs/view/Makefile" ;;
