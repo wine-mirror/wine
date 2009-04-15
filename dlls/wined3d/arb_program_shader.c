@@ -1154,7 +1154,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
   if (shader_version < WINED3DPS_VERSION(2,0))
      reg_sampler_code = dst->register_idx;
   else
-     reg_sampler_code = ins->src[1].token & WINED3DSP_REGNUM_MASK;
+     reg_sampler_code = ins->src[1].register_idx;
 
   /* projection flag:
    * 1.1, 1.2, 1.3: Use WINED3DTSS_TEXTURETRANSFORMFLAGS
@@ -1260,7 +1260,6 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
     BOOL is_color;
     int i;
 
-    DWORD src = ins->src[0].token & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
 
     char reg_coord[40];
@@ -1290,6 +1289,8 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
     }
 
     if(has_bumpmat) {
+        DWORD src = ins->src[0].register_idx;
+
         /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
 
         shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, x, z, 0, 0;\n", reg_dest_code);
@@ -1433,7 +1434,7 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     DWORD flags;
     DWORD reg = ins->dst[0].register_idx;
-    DWORD reg3 = ins->src[1].token & WINED3DSP_REGNUM_MASK;
+    DWORD reg3 = ins->src[1].register_idx;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_str[8];
@@ -1632,6 +1633,7 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     for (i = 0; i < nComponents; i++) {
         tmp_dst.write_mask = WINED3DSP_WRITEMASK_0 << i;
         shader_hw_map2gl(&tmp_ins);
+        ++tmp_src[1].register_idx;
         ++tmp_src[1].token;
     }
 }

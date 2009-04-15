@@ -228,6 +228,7 @@ static void shader_parse_src_param(DWORD param, DWORD addr_param, struct wined3d
 {
     src->register_type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
             | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
+    src->register_idx = param & WINED3DSP_REGNUM_MASK;
     src->token = param;
     src->addr_token = addr_param;
 }
