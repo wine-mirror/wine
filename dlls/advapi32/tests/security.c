@@ -1354,7 +1354,9 @@ struct well_known_sid_value
 static void test_CreateWellKnownSid(void)
 {
     SID_IDENTIFIER_AUTHORITY ident = { SECURITY_NT_AUTHORITY };
-    PSID domainsid;
+    PSID domainsid, sid;
+    DWORD size, error;
+    BOOL ret;
     int i;
 
     if (!pCreateWellKnownSid)
@@ -1362,6 +1364,25 @@ static void test_CreateWellKnownSid(void)
         win_skip("CreateWellKnownSid not available\n");
         return;
     }
+
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pCreateWellKnownSid(WinInteractiveSid, NULL, NULL, &size);
+    error = GetLastError();
+    ok(!ret, "CreateWellKnownSid succeeded\n");
+    ok(error == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %u\n", error);
+    ok(size, "expected size > 0\n");
+
+    SetLastError(0xdeadbeef);
+    ret = pCreateWellKnownSid(WinInteractiveSid, NULL, NULL, &size);
+    error = GetLastError();
+    ok(!ret, "CreateWellKnownSid succeeded\n");
+    ok(error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %u\n", error);
+
+    sid = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = pCreateWellKnownSid(WinInteractiveSid, NULL, sid, &size);
+    ok(ret, "CreateWellKnownSid failed %u\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, sid);
 
     /* a domain sid usually have three subauthorities but we test that CreateWellKnownSid doesn't check it */
     AllocateAndInitializeSid(&ident, 6, SECURITY_NT_NON_UNIQUE, 12, 23, 34, 45, 56, 0, 0, &domainsid);
