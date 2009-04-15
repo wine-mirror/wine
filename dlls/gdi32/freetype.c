@@ -1340,7 +1340,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             localised_family = NULL;
             if(!fake_family) {
                 localised_family = get_familyname(ft_face);
-                if(localised_family && !strcmpW(localised_family, english_family)) {
+                if(localised_family && !strcmpiW(localised_family, english_family)) {
                     HeapFree(GetProcessHeap(), 0, localised_family);
                     localised_family = NULL;
                 }
@@ -1349,7 +1349,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             family = NULL;
             LIST_FOR_EACH(family_elem_ptr, &font_list) {
                 family = LIST_ENTRY(family_elem_ptr, Family, entry);
-                if(!strcmpW(family->FamilyName, localised_family ? localised_family : english_family))
+                if(!strcmpiW(family->FamilyName, localised_family ? localised_family : english_family))
                     break;
                 family = NULL;
             }
@@ -1410,7 +1410,7 @@ static INT AddFontToList(const char *file, void *font_data_ptr, DWORD font_data_
             while(face_elem_ptr) {
                 face = LIST_ENTRY(face_elem_ptr, Face, entry);
                 face_elem_ptr = list_next(&family->faces, face_elem_ptr);
-                if(!strcmpW(face->StyleName, StyleW) &&
+                if(!strcmpiW(face->StyleName, StyleW) &&
                    (FT_IS_SCALABLE(ft_face) || ((size->y_ppem == face->size.y_ppem) && !memcmp(&fs, &face->fs, sizeof(fs)) ))) {
                     TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
                           debugstr_w(family->FamilyName), debugstr_w(StyleW),
@@ -3199,7 +3199,7 @@ static BOOL create_child_font_list(GdiFont *font)
 
     LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
     {
-        if(!strcmpW(font_link->font_name, font->name))
+        if(!strcmpiW(font_link->font_name, font->name))
         {
             TRACE("found entry in system list\n");
             LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
@@ -3220,10 +3220,10 @@ static BOOL create_child_font_list(GdiFont *font)
      */
     if (use_default_fallback && font->charset != SYMBOL_CHARSET &&
         font->charset != OEM_CHARSET &&
-        strcmpW(font->name,szDefaultFallbackLink) != 0)
+        strcmpiW(font->name,szDefaultFallbackLink) != 0)
         LIST_FOR_EACH_ENTRY(font_link, &system_links, SYSTEM_LINKS, entry)
         {
-            if(!strcmpW(font_link->font_name,szDefaultFallbackLink))
+            if(!strcmpiW(font_link->font_name,szDefaultFallbackLink))
             {
                 TRACE("found entry in default fallback list\n");
                 LIST_FOR_EACH_ENTRY(font_link_entry, &font_link->links, CHILD_FONT, entry)
