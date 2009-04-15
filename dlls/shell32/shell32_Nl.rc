@@ -281,9 +281,11 @@ STRINGTABLE
 
 	IDS_NEWFOLDER		"Nieuwe Map"
 
-	IDS_CPANEL_TITLE            "Wine Control Panel"
-	IDS_CPANEL_NAME             "Name"
-	IDS_CPANEL_DESCRIPTION      "Description"
+	IDS_CPANEL_TITLE            "Wine Controle Paneel"
+	IDS_CPANEL_NAME             "Naam"
+	IDS_CPANEL_DESCRIPTION      "Beschrijving"
+
+        IDS_SHLEXEC_NOASSOC         "Er is geen Windows programma geconfigureerd om dit soort bestanden te openen."
 }
 
 STRINGTABLE
