@@ -1944,7 +1944,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
     char mask_char[6];
     BOOL temp_destination = FALSE;
 
-    if (shader_is_scalar(shader_get_regtype(ins->src[0].token), ins->src[0].token & WINED3DSP_REGNUM_MASK))
+    if (shader_is_scalar(ins->src[0].register_type, ins->src[0].token & WINED3DSP_REGNUM_MASK))
     {
         write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
 
@@ -1958,9 +1958,9 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
         DWORD src0reg = ins->src[0].token & WINED3DSP_REGNUM_MASK;
         DWORD src1reg = ins->src[1].token & WINED3DSP_REGNUM_MASK;
         DWORD src2reg = ins->src[2].token & WINED3DSP_REGNUM_MASK;
-        DWORD src0regtype = shader_get_regtype(ins->src[0].token);
-        DWORD src1regtype = shader_get_regtype(ins->src[1].token);
-        DWORD src2regtype = shader_get_regtype(ins->src[2].token);
+        DWORD src0regtype = ins->src[0].register_type;
+        DWORD src1regtype = ins->src[1].register_type;
+        DWORD src2regtype = ins->src[2].register_type;
         DWORD dstreg = ins->dst[0].register_idx;
         DWORD dstregtype = ins->dst[0].register_type;
         DWORD dst_mask = ins->dst[0].write_mask;
@@ -2283,7 +2283,6 @@ static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src1_param;
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    DWORD regtype = shader_get_regtype(ins->src[1].token);
     DWORD reg = ins->src[1].token & WINED3DSP_REGNUM_MASK;
     const DWORD *control_values = NULL;
     const local_constant *constant;
@@ -2295,7 +2294,8 @@ static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
      * known at compile time, the GLSL compiler can unroll the loop, and replace indirect addressing with direct
      * addressing.
      */
-    if(regtype == WINED3DSPR_CONSTINT) {
+    if (ins->src[1].register_type == WINED3DSPR_CONSTINT)
+    {
         LIST_FOR_EACH_ENTRY(constant, &shader->baseShader.constantsI, local_constant, entry) {
             if(constant->idx == reg) {
                 control_values = constant->value;

@@ -224,6 +224,14 @@ static void shader_parse_dst_param(DWORD param, DWORD addr_param, struct wined3d
     dst->addr_token = addr_param;
 }
 
+static void shader_parse_src_param(DWORD param, DWORD addr_param, struct wined3d_shader_src_param *src)
+{
+    src->register_type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
+            | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
+    src->token = param;
+    src->addr_token = addr_param;
+}
+
 /* Note that this does not count the loop register
  * as an address register. */
 
@@ -885,8 +893,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         {
             DWORD param, addr_token = 0;
             pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
-            src_param[i].token = param;
-            src_param[i].addr_token = addr_token;
+            shader_parse_src_param(param, addr_token, &src_param[i]);
         }
 
         /* Call appropriate function for output target */
