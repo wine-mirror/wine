@@ -1651,8 +1651,6 @@ static BOOL init_system_links(void)
         index = 0;
         while(RegEnumValueW(hkey, index++, value, &val_len, NULL, &type, (LPBYTE)data, &data_len) == ERROR_SUCCESS)
         {
-            TRACE("%s:\n", debugstr_w(value));
-
             memset(&fs, 0, sizeof(fs));
             font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
             psub = get_font_subst(&font_subst_list, value, -1);
@@ -1663,7 +1661,7 @@ static BOOL init_system_links(void)
                 WCHAR *face_name;
                 CHILD_FONT *child_font;
 
-                TRACE("\t%s\n", debugstr_w(entry));
+                TRACE("%s: %s\n", debugstr_w(value), debugstr_w(entry));
 
                 next = entry + strlenW(entry) + 1;
                 
