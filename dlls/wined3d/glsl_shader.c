@@ -2459,7 +2459,7 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
     }
     else if (shader_version < WINED3DPS_VERSION(2,0))
     {
-        DWORD src_mod = ins->src[0].token & WINED3DSP_SRCMOD_MASK;
+        DWORD src_mod = ins->src[0].modifiers;
 
         if (src_mod == WINED3DSPSM_DZ) {
             sample_flags |= WINED3D_GLSL_SAMPLE_PROJECTED;
@@ -2559,7 +2559,7 @@ static void pshader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
                 ins->dst[0].register_idx, dst_mask);
     } else {
         DWORD reg = ins->src[0].register_idx;
-        DWORD src_mod = ins->src[0].token & WINED3DSP_SRCMOD_MASK;
+        DWORD src_mod = ins->src[0].modifiers;
         char dst_swizzle[6];
 
         shader_glsl_get_swizzle(ins->src[0].token, FALSE, write_mask, dst_swizzle);

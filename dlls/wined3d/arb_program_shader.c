@@ -1173,7 +1173,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
   }
   else if (shader_version < WINED3DPS_VERSION(2,0))
   {
-      DWORD src_mod = ins->src[0].token & WINED3DSP_SRCMOD_MASK;
+      DWORD src_mod = ins->src[0].modifiers;
       if (src_mod == WINED3DSPSM_DZ) {
           projected = TRUE;
       } else if(src_mod == WINED3DSPSM_DW) {
