@@ -88,7 +88,7 @@ static void be_x86_64_print_context(HANDLE hThread, const CONTEXT* ctx,
     if (ctx->EFlags & 0x00004000) *pt-- = 'N'; /* Nested Task Flag */
     if (ctx->EFlags & 0x00008000) *pt-- = '-';
     if (ctx->EFlags & 0x00010000) *pt-- = 'R'; /* Resume Flag */
-    if (ctx->EFlags & 0x00020000) *pt-- = 'V'; /* Vritual Mode Flag */
+    if (ctx->EFlags & 0x00020000) *pt-- = 'V'; /* Virtual Mode Flag */
     if (ctx->EFlags & 0x00040000) *pt-- = 'a'; /* Alignment Check Flag */
 
     dbg_printf(" rip:%016lx rsp:%016lx rbp:%016lx eflags:%08x (%s)\n",
