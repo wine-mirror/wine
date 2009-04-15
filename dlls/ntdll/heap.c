@@ -1372,6 +1372,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
         void *ret = allocate_large_block( heap, flags, size );
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
         if (!ret && (flags & HEAP_GENERATE_EXCEPTIONS)) RtlRaiseStatus( STATUS_NO_MEMORY );
+        notify_alloc( ret, size, flags & HEAP_ZERO_MEMORY );
         TRACE("(%p,%08x,%08lx): returning %p\n", heap, flags, size, ret );
         return ret;
     }
