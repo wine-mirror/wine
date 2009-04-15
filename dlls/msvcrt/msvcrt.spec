@@ -84,9 +84,9 @@
 @ cdecl __RTDynamicCast(ptr long ptr ptr long) MSVCRT___RTDynamicCast
 @ cdecl __RTtypeid(ptr) MSVCRT___RTtypeid
 @ cdecl __STRINGTOLD(ptr ptr str long)
-@ stub ___lc_codepage_func
-@ stub ___lc_collate_cp_func
-@ stub ___lc_handle_func
+@ cdecl ___lc_codepage_func()
+@ cdecl ___lc_collate_cp_func()
+@ cdecl ___lc_handle_func()
 @ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
 @ cdecl ___setlc_active_func() MSVCRT____setlc_active_func
 @ cdecl ___unguarded_readlc_active_add_func() MSVCRT____unguarded_readlc_active_add_func

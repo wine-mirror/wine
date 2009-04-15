@@ -607,3 +607,27 @@ void CDECL __lconv_init(void)
 {
   FIXME(" stub\n");
 }
+
+/*********************************************************************
+ *      ___lc_handle_func (MSVCRT.@)
+ */
+HANDLE * CDECL ___lc_handle_func(void)
+{
+    return MSVCRT___lc_handle;
+}
+
+/*********************************************************************
+ *      ___lc_codepage_func (MSVCRT.@)
+ */
+int CDECL ___lc_codepage_func(void)
+{
+    return MSVCRT___lc_codepage;
+}
+
+/*********************************************************************
+ *      ___lc_collate_cp_func (MSVCRT.@)
+ */
+int CDECL ___lc_collate_cp_func(void)
+{
+    return MSVCRT___lc_collate_cp;
+}
