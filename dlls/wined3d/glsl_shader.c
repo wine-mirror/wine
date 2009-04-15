@@ -825,7 +825,8 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
                         shader_addline(buffer, "uniform sampler2D %csampler%u;\n", prefix, i);
                     }
 
-                    if(ps_args->np2_fixup & (1 << i)) {
+                    if (pshader && ps_args->np2_fixup & (1 << i))
+                    {
                         /* NP2/RECT textures in OpenGL use texcoords in the range [0,width]x[0,height]
                          * while D3D has them in the (normalized) [0,1]x[0,1] range.
                          * samplerNP2Fixup stores texture dimensions and is updated through
