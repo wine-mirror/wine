@@ -714,7 +714,7 @@ static inline LPCSTR debugscrollcode(int nScrollCode)
 }
 
 
-/******** Notification functions i************************************/
+/******** Notification functions ************************************/
 
 static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, const NMHEADERW *lpnmh)
 {
@@ -2943,7 +2943,7 @@ fail:
 *
 * RETURNS:
 *   SUCCESS : TRUE
-*   FAILURE : TRUE
+*   FAILURE : FALSE
 */
 static BOOL LISTVIEW_DeselectAllSkipItems(LISTVIEW_INFO *infoPtr, RANGES toSkip)
 {
@@ -4491,7 +4491,7 @@ static DWORD LISTVIEW_ApproximateViewRect(const LISTVIEW_INFO *infoPtr, INT nIte
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] iItem   : index of item
- * [O] lppt    : Upperr-left corner of the image
+ * [O] lppt    : Upper-left corner of the image
  *
  * RETURN:
  * Returns a handle to the image list if successful, NULL otherwise.
@@ -6258,7 +6258,7 @@ static INT LISTVIEW_GetNextItem(const LISTVIEW_INFO *infoPtr, INT nItem, UINT uF
       }
       else if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
       {
-        /* Special case for autoarrange - move 'ti the beginning of a row */
+        /* Special case for autoarrange - move 'til the beginning of a row */
         if (is_autoarrange(infoPtr))
         {
           nCountPerRow = LISTVIEW_GetCountPerRow(infoPtr);
@@ -8623,7 +8623,7 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
     /* send NM_KILLFOCUS notification */
     if (!notify(infoPtr, NM_KILLFOCUS)) return 0;
 
-    /* if we have a focus rectagle, get rid of it */
+    /* if we have a focus rectangle, get rid of it */
     LISTVIEW_ShowFocusRect(infoPtr, FALSE);
     
     /* set window focus flag */
@@ -9279,7 +9279,7 @@ static LRESULT LISTVIEW_RButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
     /* set button flag */
     infoPtr->bRButtonDown = FALSE;
 
-    /* Send NM_RClICK notification */
+    /* Send NM_RCLICK notification */
     lvHitTestInfo.pt.x = x;
     lvHitTestInfo.pt.y = y;
     LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, FALSE);
