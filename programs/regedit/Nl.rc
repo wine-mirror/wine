@@ -282,6 +282,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "De naam van de geselecteerde sleutel naar het Klembord kopiëren"
     ID_EDIT_FIND            "Een tekenreeks zoeken in een sleutel, een waarde of gegevens"
     ID_EDIT_FINDNEXT        "De opgegeven tekst nogmaals zoeken"
+    ID_EDIT_EXPORT          "Exporteert de geselecteerde subsleutel van het register naar een tekst bestand"
 END
 
 STRINGTABLE DISCARDABLE
