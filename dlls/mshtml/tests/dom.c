@@ -573,7 +573,7 @@ static void _test_elem_type(unsigned line, IUnknown *unk, elem_type_t type)
 }
 
 #define get_node_type(n) _get_node_type(__LINE__,n)
-static long _get_node_type(unsigned line, IUnknown *unk)
+static LONG _get_node_type(unsigned line, IUnknown *unk)
 {
     IHTMLDOMNode *node = _get_node_iface(line, unk);
     LONG type = -1;
@@ -609,7 +609,7 @@ static IHTMLDOMChildrenCollection *_get_child_nodes(unsigned line, IUnknown *unk
 }
 
 #define get_child_item(c,i) _get_child_item(__LINE__,c,i)
-static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *col, long idx)
+static IHTMLDOMNode *_get_child_item(unsigned line, IHTMLDOMChildrenCollection *col, LONG idx)
 {
     IHTMLDOMNode *node = NULL;
     IDispatch *disp;
@@ -791,29 +791,29 @@ static IHTMLOptionElement *_create_option_elem(unsigned line, IHTMLDocument2 *do
 }
 
 #define test_select_length(s,l) _test_select_length(__LINE__,s,l)
-static void _test_select_length(unsigned line, IHTMLSelectElement *select, long length)
+static void _test_select_length(unsigned line, IHTMLSelectElement *select, LONG length)
 {
     LONG len = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLSelectElement_get_length(select, &len);
     ok_(__FILE__,line) (hres == S_OK, "get_length failed: %08x\n", hres);
-    ok_(__FILE__,line) (len == length, "len=%d, expected %ld\n", len, length);
+    ok_(__FILE__,line) (len == length, "len=%d, expected %d\n", len, length);
 }
 
 #define test_select_selidx(s,i) _test_select_selidx(__LINE__,s,i)
-static void _test_select_selidx(unsigned line, IHTMLSelectElement *select, long index)
+static void _test_select_selidx(unsigned line, IHTMLSelectElement *select, LONG index)
 {
     LONG idx = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLSelectElement_get_selectedIndex(select, &idx);
     ok_(__FILE__,line) (hres == S_OK, "get_selectedIndex failed: %08x\n", hres);
-    ok_(__FILE__,line) (idx == index, "idx=%d, expected %ld\n", idx, index);
+    ok_(__FILE__,line) (idx == index, "idx=%d, expected %d\n", idx, index);
 }
 
 #define test_select_put_selidx(s,i) _test_select_put_selidx(__LINE__,s,i)
-static void _test_select_put_selidx(unsigned line, IHTMLSelectElement *select, long index)
+static void _test_select_put_selidx(unsigned line, IHTMLSelectElement *select, LONG index)
 {
     HRESULT hres;
 
@@ -903,38 +903,38 @@ static void _test_range_expand(unsigned line, IHTMLTxtRange *range, LPWSTR unit,
 }
 
 #define test_range_move(r,u,c,e) _test_range_move(__LINE__,r,u,c,e)
-static void _test_range_move(unsigned line, IHTMLTxtRange *range, LPWSTR unit, long cnt, long excnt)
+static void _test_range_move(unsigned line, IHTMLTxtRange *range, LPWSTR unit, LONG cnt, LONG excnt)
 {
     LONG c = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLTxtRange_move(range, unit, cnt, &c);
     ok_(__FILE__,line) (hres == S_OK, "move failed: %08x\n", hres);
-    ok_(__FILE__,line) (c == excnt, "count=%d, expected %ld\n", c, excnt);
+    ok_(__FILE__,line) (c == excnt, "count=%d, expected %d\n", c, excnt);
     _test_range_text(line, range, NULL);
 }
 
 #define test_range_movestart(r,u,c,e) _test_range_movestart(__LINE__,r,u,c,e)
 static void _test_range_movestart(unsigned line, IHTMLTxtRange *range,
-        LPWSTR unit, long cnt, long excnt)
+        LPWSTR unit, LONG cnt, LONG excnt)
 {
     LONG c = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLTxtRange_moveStart(range, unit, cnt, &c);
     ok_(__FILE__,line) (hres == S_OK, "move failed: %08x\n", hres);
-    ok_(__FILE__,line) (c == excnt, "count=%d, expected %ld\n", c, excnt);
+    ok_(__FILE__,line) (c == excnt, "count=%d, expected %d\n", c, excnt);
 }
 
 #define test_range_moveend(r,u,c,e) _test_range_moveend(__LINE__,r,u,c,e)
-static void _test_range_moveend(unsigned line, IHTMLTxtRange *range, LPWSTR unit, long cnt, long excnt)
+static void _test_range_moveend(unsigned line, IHTMLTxtRange *range, LPWSTR unit, LONG cnt, LONG excnt)
 {
     LONG c = 0xdeadbeef;
     HRESULT hres;
 
     hres = IHTMLTxtRange_moveEnd(range, unit, cnt, &c);
     ok_(__FILE__,line) (hres == S_OK, "move failed: %08x\n", hres);
-    ok_(__FILE__,line) (c == excnt, "count=%d, expected %ld\n", c, excnt);
+    ok_(__FILE__,line) (c == excnt, "count=%d, expected %d\n", c, excnt);
 }
 
 #define test_range_put_text(r,t) _test_range_put_text(__LINE__,r,t)
@@ -999,7 +999,7 @@ static void _test_range_parent(unsigned line, IHTMLTxtRange *range, elem_type_t 
 
 #define test_elem_collection(c,t,l) _test_elem_collection(__LINE__,c,t,l)
 static void _test_elem_collection(unsigned line, IUnknown *unk,
-        const elem_type_t *elem_types, long exlen)
+        const elem_type_t *elem_types, LONG exlen)
 {
     IHTMLElementCollection *col;
     LONG len;
@@ -1015,7 +1015,7 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
 
     hres = IHTMLElementCollection_get_length(col, &len);
     ok_(__FILE__,line) (hres == S_OK, "get_length failed: %08x\n", hres);
-    ok_(__FILE__,line) (len == exlen, "len=%d, expected %ld\n", len, exlen);
+    ok_(__FILE__,line) (len == exlen, "len=%d, expected %d\n", len, exlen);
 
     if(len > exlen)
         len = exlen;
@@ -1052,7 +1052,7 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
 }
 
 #define test_elem_getelembytag(u,t,l) _test_elem_getelembytag(__LINE__,u,t,l)
-static void _test_elem_getelembytag(unsigned line, IUnknown *unk, elem_type_t type, long exlen)
+static void _test_elem_getelembytag(unsigned line, IUnknown *unk, elem_type_t type, LONG exlen)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     IHTMLElementCollection *col = NULL;
@@ -1272,7 +1272,7 @@ static void _test_select_set_disabled(unsigned line, IHTMLSelectElement *select,
 }
 
 #define elem_get_scroll_height(u) _elem_get_scroll_height(__LINE__,u)
-static long _elem_get_scroll_height(unsigned line, IUnknown *unk)
+static LONG _elem_get_scroll_height(unsigned line, IUnknown *unk)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     IHTMLTextContainer *txtcont;
@@ -1295,7 +1295,7 @@ static long _elem_get_scroll_height(unsigned line, IUnknown *unk)
 }
 
 #define elem_get_scroll_width(u) _elem_get_scroll_width(__LINE__,u)
-static long _elem_get_scroll_width(unsigned line, IUnknown *unk)
+static LONG _elem_get_scroll_width(unsigned line, IUnknown *unk)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     IHTMLTextContainer *txtcont;
@@ -1318,7 +1318,7 @@ static long _elem_get_scroll_width(unsigned line, IUnknown *unk)
 }
 
 #define elem_get_scroll_top(u) _elem_get_scroll_top(__LINE__,u)
-static long _elem_get_scroll_top(unsigned line, IUnknown *unk)
+static LONG _elem_get_scroll_top(unsigned line, IUnknown *unk)
 {
     IHTMLElement2 *elem = _get_elem2_iface(line, unk);
     IHTMLTextContainer *txtcont;
@@ -1954,7 +1954,7 @@ static void _test_style_set_csstext(unsigned line, IHTMLStyle *style, const char
 }
 
 static void test_elem_col_item(IHTMLElementCollection *col, const char *n,
-        const elem_type_t *elem_types, long len)
+        const elem_type_t *elem_types, LONG len)
 {
     IDispatch *disp;
     VARIANT name, index;
@@ -3644,7 +3644,7 @@ static void test_default_selection(IHTMLDocument2 *doc)
 
 static void test_default_body(IHTMLBodyElement *body)
 {
-    long l;
+    LONG l;
     BSTR bstr;
     HRESULT hres;
     VARIANT v;
@@ -3662,7 +3662,7 @@ static void test_default_body(IHTMLBodyElement *body)
     l = elem_get_scroll_width((IUnknown*)body);
     ok(l != -1, "scrollWidth == -1\n");
     l = elem_get_scroll_top((IUnknown*)body);
-    ok(!l, "scrollTop = %ld\n", l);
+    ok(!l, "scrollTop = %d\n", l);
     elem_get_scroll_left((IUnknown*)body);
 
     /* get_text tests */
@@ -4074,7 +4074,7 @@ static void test_child_col_disp(IHTMLDOMChildrenCollection *col)
     DISPPARAMS dp = {NULL, NULL, 0, 0};
     VARIANT var;
     EXCEPINFO ei;
-    long type;
+    LONG type;
     DISPID id;
     BSTR bstr;
     HRESULT hres;
@@ -4097,7 +4097,7 @@ static void test_child_col_disp(IHTMLDOMChildrenCollection *col)
     ok(V_DISPATCH(&var) != NULL, "V_DISPATCH(var) == NULL\n");
     node = get_node_iface((IUnknown*)V_DISPATCH(&var));
     type = get_node_type((IUnknown*)node);
-    ok(type == 3, "type=%ld\n", type);
+    ok(type == 3, "type=%d\n", type);
     IHTMLDOMNode_Release(node);
     VariantClear(&var);
 
@@ -4118,7 +4118,7 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLElement *elem, *elem2, *elem3;
     IHTMLDOMNode *node, *node2;
     IDispatch *disp;
-    long type;
+    LONG type;
     HRESULT hres;
     IHTMLElementCollection *collection;
     IHTMLDocument3 *doc3;
@@ -4233,7 +4233,7 @@ static void test_elems(IHTMLDocument2 *doc)
         {
             test_node_name((IUnknown*)node, "#document");
             type = get_node_type((IUnknown*)node);
-            ok(type == 9, "type=%ld, expected 9\n", type);
+            ok(type == 9, "type=%d, expected 9\n", type);
             node2 = test_node_get_parent((IUnknown*)node);
             IHTMLDOMNode_Release(node);
             ok(node2 == NULL, "node != NULL\n");
@@ -4281,7 +4281,7 @@ static void test_elems(IHTMLDocument2 *doc)
         }
 
         type = get_node_type((IUnknown*)select);
-        ok(type == 1, "type=%ld\n", type);
+        ok(type == 1, "type=%d\n", type);
 
         IHTMLSelectElement_Release(select);
 
@@ -4408,7 +4408,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(!node2, "node2 != NULL\n");
 
         type = get_node_type((IUnknown*)node);
-        ok(type == 3, "type=%ld\n", type);
+        ok(type == 3, "type=%d\n", type);
 
         test_node_get_value_str((IUnknown*)node, "text test");
         test_node_put_value_str((IUnknown*)elem, "test text");
@@ -4432,7 +4432,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(node != NULL, "node == NULL\n");
         if(node) {
             type = get_node_type((IUnknown*)node);
-            ok(type == 3, "type=%ld\n", type);
+            ok(type == 3, "type=%d\n", type);
             IHTMLDOMNode_Release(node);
         }
 
@@ -4440,7 +4440,7 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(node != NULL, "node == NULL\n");
         if(node) {
             type = get_node_type((IUnknown*)node);
-            ok(type == 8, "type=%ld\n", type);
+            ok(type == 8, "type=%d\n", type);
 
             test_elem_id((IUnknown*)node, NULL);
             IHTMLDOMNode_Release(node);
@@ -4532,7 +4532,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
     IHTMLDocument5 *doc5;
     IDispatch *disp;
     VARIANT var;
-    long type;
+    LONG type;
     HRESULT hres;
     BSTR str;
 
@@ -4541,7 +4541,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
     elem = test_create_elem(doc, "TEST");
     test_elem_tag((IUnknown*)elem, "TEST");
     type = get_node_type((IUnknown*)elem);
-    ok(type == 1, "type=%ld\n", type);
+    ok(type == 1, "type=%d\n", type);
     test_ifaces((IUnknown*)elem, elem_iids);
     test_disp((IUnknown*)elem, &DIID_DispHTMLGenericElement);
 
@@ -4600,7 +4600,7 @@ static void test_create_elems(IHTMLDocument2 *doc)
         if(hres == S_OK)
         {
             type = get_node_type((IUnknown*)comment);
-            ok(type == 8, "type=%ld, expected 8\n", type);
+            ok(type == 8, "type=%d, expected 8\n", type);
 
             test_node_get_value_str((IUnknown*)comment, "testing");
 
