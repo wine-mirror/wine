@@ -103,9 +103,13 @@ typedef struct
     /* then follows any DVTARGETDEVICE structures referenced in the FORMATETCs */
 } ole_priv_data;
 
-/* Create an empty data structure.  The only thing that really matters
-   here is setting count and size members.  This is used by the enumerator as a
-   convenience when there's an empty list. */
+/*****************************************************************************
+ *           create_empty_priv_data
+ *
+ * Create an empty data structure.  The only thing that really matters
+ * here is setting count and size members.  This is used by the enumerator as a
+ * convenience when there's an empty list.
+ */
 static HRESULT create_empty_priv_data(ole_priv_data **data)
 {
     ole_priv_data *ptr;
@@ -592,138 +596,62 @@ end:
 
 
 /***********************************************************************
- * OLEClipbrd_WndProc(HWND, unsigned, WORD, LONG)
- * Processes messages sent to the OLE clipboard window.
- * Note that we will intercept messages in our WndProc only when data
- * has been placed in the clipboard via OleSetClipboard().
- * i.e. Only when OLE owns the windows clipboard.
+ *                   clipbrd_wndproc
  */
-static LRESULT CALLBACK OLEClipbrd_WndProc
-  (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK clipbrd_wndproc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
-  switch (message)
-  {
-    /*
-     * WM_RENDERFORMAT
-     * We receive this message to allow us to handle delayed rendering of
-     * a specific clipboard format when an application requests data in
-     * that format by calling GetClipboardData.
-     * (Recall that in OleSetClipboard, we used SetClipboardData to
-     * make all HGLOBAL formats supported by the source IDataObject
-     * available using delayed rendering)
-     * On receiving this message we must actually render the data in the
-     * specified format and place it on the clipboard by calling the
-     * SetClipboardData function.
-     */
+    ole_clipbrd *clipbrd = theOleClipboard;
+
+    switch (message)
+    {
     case WM_RENDERFORMAT:
     {
-      FORMATETC rgelt;
+        UINT cf = wparam;
+        ole_priv_data_entry *entry;
 
-      ZeroMemory( &rgelt, sizeof(FORMATETC));
+        TRACE("(): WM_RENDERFORMAT(cfFormat=%x)\n", cf);
+        entry = find_format_in_list(clipbrd->cached_enum->entries, clipbrd->cached_enum->count, cf);
 
-      /*
-       * Initialize FORMATETC to a Windows clipboard friendly format
-       */
-      rgelt.cfFormat = (UINT) wParam;
-      rgelt.dwAspect = DVASPECT_CONTENT;
-      rgelt.lindex = -1;
-      rgelt.tymed = TYMED_HGLOBAL;
+        if(entry)
+            render_format(clipbrd->pIDataObjectSrc, &entry->fmtetc);
 
-      TRACE("(): WM_RENDERFORMAT(cfFormat=%d)\n", rgelt.cfFormat);
-
-      /*
-       * Render the clipboard data.
-       * (We must have a source data object or we wouldn't be in this WndProc)
-       */
-      render_format( (IDataObject*)&(theOleClipboard->lpvtbl), &rgelt );
-
-      break;
+        break;
     }
 
-    /*
-     * WM_RENDERALLFORMATS
-     * Sent before the clipboard owner window is destroyed.
-     * We should receive this message only when OleUninitialize is called
-     * while we have an IDataObject in the clipboard.
-     * For the content of the clipboard to remain available to other
-     * applications, we must render data in all the formats the source IDataObject
-     * is capable of generating, and place the data on the clipboard by calling
-     * SetClipboardData.
-     */
     case WM_RENDERALLFORMATS:
     {
-      IEnumFORMATETC* penumFormatetc = NULL;
-      FORMATETC rgelt;
+        DWORD i;
+        ole_priv_data_entry *entries = clipbrd->cached_enum->entries;
 
-      TRACE("(): WM_RENDERALLFORMATS\n");
+        TRACE("(): WM_RENDERALLFORMATS\n");
 
-      /*
-       * Render all HGLOBAL formats supported by the source into
-       * the windows clipboard.
-       */
-      if ( FAILED( IDataObject_EnumFormatEtc( (IDataObject*)&(theOleClipboard->lpvtbl),
-                                 DATADIR_GET, &penumFormatetc) ) )
-      {
-        WARN("(): WM_RENDERALLFORMATS failed to retrieve EnumFormatEtc!\n");
-        return 0;
-      }
-
-      while ( S_OK == IEnumFORMATETC_Next(penumFormatetc, 1, &rgelt, NULL) )
-      {
-        if ( rgelt.tymed == TYMED_HGLOBAL )
+        for(i = 0; i < clipbrd->cached_enum->count; i++)
         {
-          /*
-           * Render the clipboard data.
-           */
-          if ( FAILED(render_format( (IDataObject*)&(theOleClipboard->lpvtbl), &rgelt )) )
-            continue;
-
-          TRACE("(): WM_RENDERALLFORMATS(cfFormat=%d)\n", rgelt.cfFormat);
+            if(entries[i].first_use)
+                render_format(clipbrd->pIDataObjectSrc, &entries[i].fmtetc);
         }
-      }
-
-      IEnumFORMATETC_Release(penumFormatetc);
-
-      break;
+        break;
     }
 
-    /*
-     * WM_DESTROYCLIPBOARD
-     * This is sent by EmptyClipboard before the clipboard is emptied.
-     * We should release any IDataObject we are holding onto when we receive
-     * this message, since it indicates that the OLE clipboard should be empty
-     * from this point on.
-     */
     case WM_DESTROYCLIPBOARD:
     {
-      TRACE("(): WM_DESTROYCLIPBOARD\n");
-      /*
-       * Release the data object we are holding on to
-       */
-      if ( theOleClipboard->pIDataObjectSrc )
-      {
-        IDataObject_Release(theOleClipboard->pIDataObjectSrc);
-        theOleClipboard->pIDataObjectSrc = NULL;
-        HeapFree(GetProcessHeap(), 0, theOleClipboard->cached_enum);
-        theOleClipboard->cached_enum = NULL;
-      }
-      break;
+        TRACE("(): WM_DESTROYCLIPBOARD\n");
+
+        if ( clipbrd->pIDataObjectSrc )
+        {
+            IDataObject_Release(clipbrd->pIDataObjectSrc);
+            clipbrd->pIDataObjectSrc = NULL;
+            HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
+            clipbrd->cached_enum = NULL;
+        }
+        break;
     }
 
-/*
-    case WM_ASKCBFORMATNAME:
-    case WM_CHANGECBCHAIN:
-    case WM_DRAWCLIPBOARD:
-    case WM_SIZECLIPBOARD:
-    case WM_HSCROLLCLIPBOARD:
-    case WM_VSCROLLCLIPBOARD:
-    case WM_PAINTCLIPBOARD:
-*/
     default:
-      return DefWindowProcA(hWnd, message, wParam, lParam);
-  }
+        return DefWindowProcA(hwnd, message, wparam, lparam);
+    }
 
-  return 0;
+    return 0;
 }
 
 
@@ -1196,7 +1124,7 @@ static HWND OLEClipbrd_CreateWindow(void)
      * We don't bother doing this since the FindClassByAtom code
      * would have to be changed to deal with this idiosyncrasy. */
     wcex.style          = CS_GLOBALCLASS;
-    wcex.lpfnWndProc    = OLEClipbrd_WndProc;
+    wcex.lpfnWndProc    = clipbrd_wndproc;
     wcex.hInstance      = 0;
     wcex.lpszClassName  = OLEClipbrd_WNDCLASS;
 
