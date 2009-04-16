@@ -137,6 +137,7 @@ typedef struct ole_clipbrd
     HWND window;                     /* Hidden clipboard window */
     IDataObject *src_data;           /* Source object passed to OleSetClipboard */
     ole_priv_data *cached_enum;      /* Cached result from the enumeration of src data object */
+    IStream *marshal_data;           /* Stream onto which to marshal src_data */
 } ole_clipbrd;
 
 static inline ole_clipbrd *impl_from_IDataObject(IDataObject *iface)
@@ -173,6 +174,8 @@ static inline HRESULT get_ole_clipbrd(ole_clipbrd **clipbrd)
  * Name of our registered OLE clipboard window class
  */
 static const WCHAR clipbrd_wndclass[] = {'C','L','I','P','B','R','D','W','N','D','C','L','A','S','S',0};
+
+static const WCHAR wine_marshal_dataobject[] = {'W','i','n','e',' ','m','a','r','s','h','a','l',' ','d','a','t','a','o','b','j','e','c','t',0};
 
 static UINT dataobject_clipboard_format;
 static UINT ole_priv_data_clipboard_format;
@@ -829,6 +832,7 @@ static void OLEClipbrd_Destroy(ole_clipbrd* This)
 
     if ( This->window ) destroy_clipbrd_window(This->window);
 
+    IStream_Release(This->marshal_data);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -1119,6 +1123,7 @@ static const IDataObjectVtbl OLEClipbrd_IDataObject_VTable =
 static ole_clipbrd* OLEClipbrd_Construct(void)
 {
     ole_clipbrd* This;
+    HGLOBAL h;
 
     This = HeapAlloc( GetProcessHeap(), 0, sizeof(*This) );
     if (!This) return NULL;
@@ -1130,7 +1135,18 @@ static ole_clipbrd* OLEClipbrd_Construct(void)
     This->src_data = NULL;
     This->cached_enum = NULL;
 
+    h = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, 0);
+    if(!h) goto error;
+
+    if(FAILED(CreateStreamOnHGlobal(h, TRUE, &This->marshal_data)))
+        goto error;
+
     return This;
+
+error:
+    if(h) GlobalFree(h);
+    HeapFree(GetProcessHeap(), 0, This);
+    return NULL;
 }
 
 static void register_clipboard_formats(void)
@@ -1291,17 +1307,45 @@ static inline HRESULT get_clipbrd_window(ole_clipbrd *clipbrd, HWND *wnd)
     return *wnd ? S_OK : E_FAIL;
 }
 
+
+/**********************************************************************
+ *                  release_marshal_data
+ *
+ * Releases the data and sets the stream back to zero size.
+ */
+static inline void release_marshal_data(IStream *stm)
+{
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER size;
+    pos.QuadPart = size.QuadPart = 0;
+
+    IStream_Seek(stm, pos, STREAM_SEEK_SET, NULL);
+    CoReleaseMarshalData(stm);
+    IStream_Seek(stm, pos, STREAM_SEEK_SET, NULL);
+    IStream_SetSize(stm, size);
+}
+
 /***********************************************************************
  *                   set_src_dataobject
  *
  * Clears and sets the clipboard's src IDataObject.
+ *
+ * To marshal the source dataobject we do something rather different from Windows.
+ * We set a window prop which contains the marshalled data.
+ * Windows set two props one of which is an IID, the other is an endpoint number.
  */
 static HRESULT set_src_dataobject(ole_clipbrd *clipbrd, IDataObject *data)
 {
-    HRESULT hr = S_OK;
+    HRESULT hr;
+    HWND wnd;
+
+    if(FAILED(hr = get_clipbrd_window(clipbrd, &wnd))) return hr;
 
     if(clipbrd->src_data)
     {
+        RemovePropW(wnd, wine_marshal_dataobject);
+        release_marshal_data(clipbrd->marshal_data);
+
         IDataObject_Release(clipbrd->src_data);
         clipbrd->src_data = NULL;
         HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
@@ -1310,8 +1354,19 @@ static HRESULT set_src_dataobject(ole_clipbrd *clipbrd, IDataObject *data)
 
     if(data)
     {
+        HGLOBAL h;
+        IUnknown *unk;
+
         IDataObject_AddRef(data);
         clipbrd->src_data = data;
+
+        IDataObject_QueryInterface(data, &IID_IUnknown, (void**)&unk);
+        hr = CoMarshalInterface(clipbrd->marshal_data, &IID_IDataObject, unk,
+                                MSHCTX_LOCAL, NULL, MSHLFLAGS_TABLESTRONG);
+        IUnknown_Release(unk); /* Don't hold a ref on IUnknown, we have one on IDataObject. */
+        if(FAILED(hr)) return hr;
+        GetHGlobalFromStream(clipbrd->marshal_data, &h);
+        SetPropW(wnd, wine_marshal_dataobject, h);
         hr = set_clipboard_formats(clipbrd, data);
     }
     return hr;
