@@ -884,7 +884,6 @@ static void test_consumer_refs(void)
 
     ok(get1 == get2, "data objects differ\n");
     refs = IDataObject_Release(get2);
-todo_wine
     ok(refs == 1, "got %d\n", refs);
 
     OleFlushClipboard();
@@ -892,7 +891,6 @@ todo_wine
     hr = OleGetClipboard(&get2);
     ok(hr == S_OK, "got %08x\n", hr);
 
-todo_wine
     ok(get1 != get2, "data objects match\n");
 
     OleSetClipboard(NULL);
@@ -900,10 +898,8 @@ todo_wine
     hr = OleGetClipboard(&get3);
     ok(hr == S_OK, "got %08x\n", hr);
 
-todo_wine {
     ok(get1 != get3, "data objects match\n");
     ok(get2 != get3, "data objects match\n");
-}
 
     IDataObject_Release(get3);
     IDataObject_Release(get2);

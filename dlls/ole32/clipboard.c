@@ -124,15 +124,24 @@ static HRESULT create_empty_priv_data(ole_priv_data **data)
     return S_OK;
 }
 
+/****************************************************************************
+ * Consumer snapshot.  Represents the state of the ole clipboard
+ * returned by OleGetClipboard().
+ */
+typedef struct snapshot
+{
+    const IDataObjectVtbl* lpVtbl;
+    LONG ref;
+
+    DWORD seq_no;                   /* Clipboard sequence number corresponding to this snapshot */
+} snapshot;
 
 /****************************************************************************
  * ole_clipbrd
  */
 typedef struct ole_clipbrd
 {
-    const IDataObjectVtbl* lpvtbl;  /* Exposed IDataObject vtable */
-
-    LONG ref;
+    snapshot *latest_snapshot;       /* Latest consumer snapshot */
 
     HWND window;                     /* Hidden clipboard window */
     IDataObject *src_data;           /* Source object passed to OleSetClipboard */
@@ -140,9 +149,9 @@ typedef struct ole_clipbrd
     IStream *marshal_data;           /* Stream onto which to marshal src_data */
 } ole_clipbrd;
 
-static inline ole_clipbrd *impl_from_IDataObject(IDataObject *iface)
+static inline snapshot *impl_from_IDataObject(IDataObject *iface)
 {
-    return (ole_clipbrd*)((char*)iface - FIELD_OFFSET(ole_clipbrd, lpvtbl));
+    return (snapshot*)((char*)iface - FIELD_OFFSET(snapshot, lpVtbl));
 }
 
 typedef struct PresentationDataHeader
@@ -763,16 +772,12 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
 
 
 /************************************************************************
- * OLEClipbrd_IDataObject_QueryInterface (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
+ *           snapshot_QueryInterface
  */
-static HRESULT WINAPI OLEClipbrd_IDataObject_QueryInterface(
-            IDataObject*     iface,
-            REFIID           riid,
-            void**           ppvObject)
+static HRESULT WINAPI snapshot_QueryInterface(IDataObject *iface,
+                                              REFIID riid, void **ppvObject)
 {
-  ole_clipbrd *This = impl_from_IDataObject(iface);
+  snapshot *This = impl_from_IDataObject(iface);
   TRACE("(%p)->(IID:%s, %p)\n", This, debugstr_guid(riid), ppvObject);
 
   if ( (This==0) || (ppvObject==0) )
@@ -797,18 +802,15 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_QueryInterface(
 }
 
 /************************************************************************
- * OLEClipbrd_IDataObject_AddRef (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
+ *              snapshot_AddRef
  */
-static ULONG WINAPI OLEClipbrd_IDataObject_AddRef(
-            IDataObject*     iface)
+static ULONG WINAPI snapshot_AddRef(IDataObject *iface)
 {
-  ole_clipbrd *This = impl_from_IDataObject(iface);
+    snapshot *This = impl_from_IDataObject(iface);
 
-  TRACE("(%p)->(count=%u)\n",This, This->ref);
+    TRACE("(%p)->(count=%u)\n", This, This->ref);
 
-  return InterlockedIncrement(&This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 /***********************************************************************
@@ -837,26 +839,28 @@ static void OLEClipbrd_Destroy(ole_clipbrd* This)
 }
 
 /************************************************************************
- * OLEClipbrd_IDataObject_Release (IUnknown)
- *
- * See Windows documentation for more details on IUnknown methods.
+ *      snapshot_Release
  */
-static ULONG WINAPI OLEClipbrd_IDataObject_Release(
-            IDataObject*     iface)
+static ULONG WINAPI snapshot_Release(IDataObject *iface)
 {
-  ole_clipbrd *This = impl_from_IDataObject(iface);
-  ULONG ref;
+    snapshot *This = impl_from_IDataObject(iface);
+    ULONG ref;
 
-  TRACE("(%p)->(count=%u)\n",This, This->ref);
+    TRACE("(%p)->(count=%u)\n", This, This->ref);
 
-  ref = InterlockedDecrement(&This->ref);
+    ref = InterlockedDecrement(&This->ref);
 
-  if (ref == 0)
-  {
-    OLEClipbrd_Destroy(This);
-  }
+    if (ref == 0)
+    {
+        ole_clipbrd *clipbrd;
+        HRESULT hr = get_ole_clipbrd(&clipbrd);
 
-  return ref;
+        if(SUCCEEDED(hr) && clipbrd->latest_snapshot == This)
+            clipbrd->latest_snapshot = NULL;
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
 }
 
 /************************************************************
@@ -922,13 +926,11 @@ end:
 }
 
 /************************************************************************
- * OLEClipbrd_IDataObject_GetData (IDataObject)
- *
+ *         snapshot_GetData
  */
-static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatetcIn,
-	    STGMEDIUM*       pmedium)
+static HRESULT WINAPI snapshot_GetData(IDataObject *iface,
+                                       FORMATETC *pformatetcIn,
+                                       STGMEDIUM *pmedium)
 {
   HANDLE h, hData = 0;
   HRESULT hr;
@@ -984,102 +986,78 @@ end:
 }
 
 /************************************************************************
- * OLEClipbrd_IDataObject_GetDataHere (IDataObject)
+ *          snapshot_GetDataHere
  */
-static HRESULT WINAPI OLEClipbrd_IDataObject_GetDataHere(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatetc,
-	    STGMEDIUM*       pmedium)
+static HRESULT WINAPI snapshot_GetDataHere(IDataObject *iface, FORMATETC *fmt,
+                                           STGMEDIUM *med)
 {
-  FIXME(": Stub\n");
-  return E_NOTIMPL;
+    FIXME("(%p, %p, %p): stub\n", iface, fmt, med);
+    return E_NOTIMPL;
 }
 
 /************************************************************************
- * OLEClipbrd_IDataObject_QueryGetData (IDataObject)
+ *           snapshot_QueryGetData
  *
  * The OLE Clipboard's implementation of this method delegates to
  * a data source if there is one or wraps around the windows clipboard
  * function IsClipboardFormatAvailable() otherwise.
  *
- * See Windows documentation for more details on IDataObject methods.
  */
-static HRESULT WINAPI OLEClipbrd_IDataObject_QueryGetData(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatetc)
+static HRESULT WINAPI snapshot_QueryGetData(IDataObject *iface, FORMATETC *fmt)
 {
-  TRACE("(%p, %p)\n", iface, pformatetc);
+    FIXME("(%p, %p)\n", iface, fmt);
 
-  if (!pformatetc)
-    return E_INVALIDARG;
+    if (!fmt) return E_INVALIDARG;
 
-  if ( pformatetc->dwAspect != DVASPECT_CONTENT )
-    return DV_E_FORMATETC;
+    if ( fmt->dwAspect != DVASPECT_CONTENT ) return DV_E_FORMATETC;
 
-  if ( pformatetc->lindex != -1 )
-    return DV_E_FORMATETC;
+    if ( fmt->lindex != -1 ) return DV_E_FORMATETC;
 
-  /*
-   * Delegate to the Windows clipboard function IsClipboardFormatAvailable
-   */
-  return (IsClipboardFormatAvailable(pformatetc->cfFormat)) ? S_OK : DV_E_CLIPFORMAT;
+    return (IsClipboardFormatAvailable(fmt->cfFormat)) ? S_OK : DV_E_CLIPFORMAT;
 }
 
 /************************************************************************
- * OLEClipbrd_IDataObject_GetCanonicalFormatEtc (IDataObject)
- *
- * See Windows documentation for more details on IDataObject methods.
+ *              snapshot_GetCanonicalFormatEtc
  */
-static HRESULT WINAPI OLEClipbrd_IDataObject_GetCanonicalFormatEtc(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatectIn,
-	    LPFORMATETC      pformatetcOut)
+static HRESULT WINAPI snapshot_GetCanonicalFormatEtc(IDataObject *iface, FORMATETC *fmt_in,
+                                                     FORMATETC *fmt_out)
 {
-  TRACE("(%p, %p, %p)\n", iface, pformatectIn, pformatetcOut);
+    TRACE("(%p, %p, %p)\n", iface, fmt_in, fmt_out);
 
-  if ( !pformatectIn || !pformatetcOut )
-    return E_INVALIDARG;
+    if ( !fmt_in || !fmt_out ) return E_INVALIDARG;
 
-  *pformatetcOut = *pformatectIn;
-  return DATA_S_SAMEFORMATETC;
+    *fmt_out = *fmt_in;
+    return DATA_S_SAMEFORMATETC;
 }
 
 /************************************************************************
- * OLEClipbrd_IDataObject_SetData (IDataObject)
+ *              snapshot_SetData
  *
- * The OLE Clipboard's does not implement this method
- *
- * See Windows documentation for more details on IDataObject methods.
+ * The OLE Clipboard does not implement this method
  */
-static HRESULT WINAPI OLEClipbrd_IDataObject_SetData(
-	    IDataObject*     iface,
-	    LPFORMATETC      pformatetc,
-	    STGMEDIUM*       pmedium,
-	    BOOL             fRelease)
+static HRESULT WINAPI snapshot_SetData(IDataObject *iface, FORMATETC *fmt,
+                                       STGMEDIUM *med, BOOL release)
 {
-  TRACE("\n");
-  return E_NOTIMPL;
+    TRACE("(%p, %p, %p, %d): not implemented\n", iface, fmt, med, release);
+    return E_NOTIMPL;
 }
 
 /************************************************************************
- * OLEClipbrd_IDataObject_EnumFormatEtc (IDataObject)
+ *             snapshot_EnumFormatEtc
  *
- * See Windows documentation for more details on IDataObject methods.
  */
-static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
-	    IDataObject*     iface,
-	    DWORD            dwDirection,
-	    IEnumFORMATETC** enum_fmt)
+static HRESULT WINAPI snapshot_EnumFormatEtc(IDataObject *iface, DWORD dir,
+                                             IEnumFORMATETC **enum_fmt)
 {
     HRESULT hr = S_OK;
     HGLOBAL handle;
     ole_priv_data *data = NULL;
 
-    TRACE("(%p, %x, %p)\n", iface, dwDirection, enum_fmt);
+    TRACE("(%p, %x, %p)\n", iface, dir, enum_fmt);
 
     *enum_fmt = NULL;
 
-    if ( dwDirection != DATADIR_GET ) return E_NOTIMPL;
+    if ( dir != DATADIR_GET ) return E_NOTIMPL;
     if ( !OpenClipboard(NULL) ) return CLIPBRD_E_CANT_OPEN;
 
     handle = GetClipboardData( ole_priv_data_clipboard_format );
@@ -1112,72 +1090,74 @@ end:
 }
 
 /************************************************************************
- * OLEClipbrd_IDataObject_DAdvise (IDataObject)
- *
- * The OLE Clipboard's does not implement this method
- *
- * See Windows documentation for more details on IDataObject methods.
- */
-static HRESULT WINAPI OLEClipbrd_IDataObject_DAdvise(
-	    IDataObject*     iface,
-	    FORMATETC*       pformatetc,
-	    DWORD            advf,
-	    IAdviseSink*     pAdvSink,
-	    DWORD*           pdwConnection)
-{
-  TRACE("\n");
-  return E_NOTIMPL;
-}
-
-/************************************************************************
- * OLEClipbrd_IDataObject_DUnadvise (IDataObject)
- *
- * The OLE Clipboard's does not implement this method
- *
- * See Windows documentation for more details on IDataObject methods.
- */
-static HRESULT WINAPI OLEClipbrd_IDataObject_DUnadvise(
-	    IDataObject*     iface,
-	    DWORD            dwConnection)
-{
-  TRACE("\n");
-  return E_NOTIMPL;
-}
-
-/************************************************************************
- * OLEClipbrd_IDataObject_EnumDAdvise (IDataObject)
+ *               snapshot_DAdvise
  *
  * The OLE Clipboard does not implement this method
- *
- * See Windows documentation for more details on IDataObject methods.
  */
-static HRESULT WINAPI OLEClipbrd_IDataObject_EnumDAdvise(
-	    IDataObject*     iface,
-	    IEnumSTATDATA**  ppenumAdvise)
+static HRESULT WINAPI snapshot_DAdvise(IDataObject *iface, FORMATETC *fmt,
+                                       DWORD flags, IAdviseSink *sink,
+                                       DWORD *conn)
 {
-  TRACE("\n");
-  return E_NOTIMPL;
+    TRACE("(%p, %p, %x, %p, %p): not implemented\n", iface, fmt, flags, sink, conn);
+    return E_NOTIMPL;
 }
 
-static const IDataObjectVtbl OLEClipbrd_IDataObject_VTable =
+/************************************************************************
+ *              snapshot_DUnadvise
+ *
+ * The OLE Clipboard does not implement this method
+ */
+static HRESULT WINAPI snapshot_DUnadvise(IDataObject* iface, DWORD conn)
 {
-  OLEClipbrd_IDataObject_QueryInterface,
-  OLEClipbrd_IDataObject_AddRef,
-  OLEClipbrd_IDataObject_Release,
-  OLEClipbrd_IDataObject_GetData,
-  OLEClipbrd_IDataObject_GetDataHere,
-  OLEClipbrd_IDataObject_QueryGetData,
-  OLEClipbrd_IDataObject_GetCanonicalFormatEtc,
-  OLEClipbrd_IDataObject_SetData,
-  OLEClipbrd_IDataObject_EnumFormatEtc,
-  OLEClipbrd_IDataObject_DAdvise,
-  OLEClipbrd_IDataObject_DUnadvise,
-  OLEClipbrd_IDataObject_EnumDAdvise
+    TRACE("(%p, %d): not implemented\n", iface, conn);
+    return E_NOTIMPL;
+}
+
+/************************************************************************
+ *             snapshot_EnumDAdvise
+ *
+ * The OLE Clipboard does not implement this method
+ */
+static HRESULT WINAPI snapshot_EnumDAdvise(IDataObject* iface,
+                                           IEnumSTATDATA** enum_advise)
+{
+    TRACE("(%p, %p): not implemented\n", iface, enum_advise);
+    return E_NOTIMPL;
+}
+
+static const IDataObjectVtbl snapshot_vtable =
+{
+    snapshot_QueryInterface,
+    snapshot_AddRef,
+    snapshot_Release,
+    snapshot_GetData,
+    snapshot_GetDataHere,
+    snapshot_QueryGetData,
+    snapshot_GetCanonicalFormatEtc,
+    snapshot_SetData,
+    snapshot_EnumFormatEtc,
+    snapshot_DAdvise,
+    snapshot_DUnadvise,
+    snapshot_EnumDAdvise
 };
 
 /*---------------------------------------------------------------------*
  *           Internal implementation methods for the OLE clipboard
  *---------------------------------------------------------------------*/
+
+static snapshot *snapshot_construct(DWORD seq_no)
+{
+    snapshot *This;
+
+    This = HeapAlloc( GetProcessHeap(), 0, sizeof(*This) );
+    if (!This) return NULL;
+
+    This->lpVtbl = &snapshot_vtable;
+    This->ref = 0;
+    This->seq_no = seq_no;
+
+    return This;
+}
 
 /*********************************************************
  * Construct the OLEClipbrd class.
@@ -1190,9 +1170,7 @@ static ole_clipbrd* OLEClipbrd_Construct(void)
     This = HeapAlloc( GetProcessHeap(), 0, sizeof(*This) );
     if (!This) return NULL;
 
-    This->lpvtbl = &OLEClipbrd_IDataObject_VTable;
-    This->ref = 1;
-
+    This->latest_snapshot = NULL;
     This->window = NULL;
     This->src_data = NULL;
     This->cached_enum = NULL;
@@ -1248,18 +1226,11 @@ void OLEClipbrd_Initialize(void)
 void OLEClipbrd_UnInitialize(void)
 {
   TRACE("()\n");
-  /*
-   * Destroy the clipboard if no one holds a reference to us.
-   * Note that the clipboard was created with a reference count of 1.
-   */
-  if ( theOleClipboard && (theOleClipboard->ref <= 1) )
+
+  if ( theOleClipboard )
   {
     OLEClipbrd_Destroy( theOleClipboard );
     theOleClipboard = NULL;
-  }
-  else
-  {
-    WARN( "() : OLEClipbrd_UnInitialize called while client holds an IDataObject reference!\n");
   }
 }
 
@@ -1608,17 +1579,32 @@ end:
  * state of the Windows clipboard. If the current clipboard already contains
  * an IDataObject, our internal IDataObject will delegate to this object.
  */
-HRESULT WINAPI OleGetClipboard(IDataObject** ppDataObj)
+HRESULT WINAPI OleGetClipboard(IDataObject **obj)
 {
     HRESULT hr;
     ole_clipbrd *clipbrd;
-    TRACE("()\n");
+    DWORD seq_no;
+
+    TRACE("(%p)\n", obj);
+
+    if(!obj) return E_INVALIDARG;
 
     if(FAILED(hr = get_ole_clipbrd(&clipbrd))) return hr;
 
-    hr = IDataObject_QueryInterface( (IDataObject*)&(clipbrd->lpvtbl),
-                                     &IID_IDataObject,  (void**)ppDataObj);
-    return hr;
+    seq_no = GetClipboardSequenceNumber();
+    if(clipbrd->latest_snapshot && clipbrd->latest_snapshot->seq_no != seq_no)
+        clipbrd->latest_snapshot = NULL;
+
+    if(!clipbrd->latest_snapshot)
+    {
+        clipbrd->latest_snapshot = snapshot_construct(seq_no);
+        if(!clipbrd->latest_snapshot) return E_OUTOFMEMORY;
+    }
+
+    *obj = (IDataObject*)&clipbrd->latest_snapshot->lpVtbl;
+    IDataObject_AddRef(*obj);
+
+    return S_OK;
 }
 
 /******************************************************************************
