@@ -161,7 +161,7 @@ static ole_clipbrd* theOleClipboard;
 /*
  * Name of our registered OLE clipboard window class
  */
-static const CHAR OLEClipbrd_WNDCLASS[] = "CLIPBRDWNDCLASS";
+static const WCHAR clipbrd_wndclass[] = {'C','L','I','P','B','R','D','W','N','D','C','L','A','S','S',0};
 
 static UINT dataobject_clipboard_format;
 static UINT ole_priv_data_clipboard_format;
@@ -795,7 +795,7 @@ static LRESULT CALLBACK clipbrd_wndproc(HWND hwnd, UINT message, WPARAM wparam, 
     }
 
     default:
-        return DefWindowProcA(hwnd, message, wparam, lparam);
+        return DefWindowProcW(hwnd, message, wparam, lparam);
     }
 
     return 0;
@@ -863,8 +863,11 @@ static ULONG WINAPI OLEClipbrd_IDataObject_AddRef(
  */
 static void OLEClipbrd_DestroyWindow(HWND hwnd)
 {
-  DestroyWindow(hwnd);
-  UnregisterClassA( OLEClipbrd_WNDCLASS, 0 );
+    static const WCHAR ole32W[] = {'o','l','e','3','2',0};
+    HINSTANCE hinst = GetModuleHandleW(ole32W);
+
+    DestroyWindow(hwnd);
+    UnregisterClassW( clipbrd_wndclass, hinst );
 }
 
 static void OLEClipbrd_Destroy(ole_clipbrd* This)
@@ -1241,47 +1244,29 @@ void OLEClipbrd_UnInitialize(void)
  */
 static HWND OLEClipbrd_CreateWindow(void)
 {
-  HWND hwnd = 0;
-  WNDCLASSEXA wcex;
+    WNDCLASSEXW class;
+    static const WCHAR ole32W[] = {'o','l','e','3','2',0};
+    static const WCHAR title[] = {'C','l','i','p','b','o','a','r','d','W','i','n','d','o','w',0};
+    HINSTANCE hinst = GetModuleHandleW(ole32W);
 
-  /*
-   * Register the clipboard window class if necessary
-   */
-    ZeroMemory( &wcex, sizeof(WNDCLASSEXA));
+    class.cbSize         = sizeof(class);
+    class.style          = 0;
+    class.lpfnWndProc    = clipbrd_wndproc;
+    class.cbClsExtra     = 0;
+    class.cbWndExtra     = 0;
+    class.hInstance      = hinst;
+    class.hIcon          = 0;
+    class.hCursor        = 0;
+    class.hbrBackground  = 0;
+    class.lpszMenuName   = NULL;
+    class.lpszClassName  = clipbrd_wndclass;
+    class.hIconSm        = NULL;
 
-    wcex.cbSize         = sizeof(WNDCLASSEXA);
-    /* Windows creates this class with a style mask of 0
-     * We don't bother doing this since the FindClassByAtom code
-     * would have to be changed to deal with this idiosyncrasy. */
-    wcex.style          = CS_GLOBALCLASS;
-    wcex.lpfnWndProc    = clipbrd_wndproc;
-    wcex.hInstance      = 0;
-    wcex.lpszClassName  = OLEClipbrd_WNDCLASS;
+    RegisterClassExW(&class);
 
-    RegisterClassExA(&wcex);
-
-  /*
-   * Create a hidden window to receive OLE clipboard messages
-   */
-
-/*
- *  If we need to store state info we can store it here.
- *  For now we don't need this functionality.
- *   ClipboardWindowInfo clipboardInfo;
- *   ZeroMemory( &trackerInfo, sizeof(ClipboardWindowInfo));
- */
-
-  hwnd = CreateWindowA(OLEClipbrd_WNDCLASS,
-				    "ClipboardWindow",
-				    WS_POPUP | WS_CLIPSIBLINGS | WS_OVERLAPPED,
-				    CW_USEDEFAULT, CW_USEDEFAULT,
-				    CW_USEDEFAULT, CW_USEDEFAULT,
-				    0,
-				    0,
-				    0,
-				    0 /*(LPVOID)&clipboardInfo */);
-
-  return hwnd;
+    return CreateWindowW(clipbrd_wndclass, title, WS_POPUP | WS_CLIPSIBLINGS | WS_OVERLAPPED,
+                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                         NULL, NULL, hinst, 0);
 }
 
 /*********************************************************************
