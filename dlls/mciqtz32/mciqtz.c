@@ -185,6 +185,8 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
         goto err;
     }
 
+    wma->opened = TRUE;
+
     return 0;
 
 err:
@@ -215,14 +217,12 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
 
-    if (wma->pgraph)
+    if (wma->opened) {
         IGraphBuilder_Release(wma->pgraph);
-    wma->pgraph = NULL;
-    if (wma->pmctrl)
         IMediaControl_Release(wma->pmctrl);
-    wma->pmctrl = NULL;
-
-    CoUninitialize();
+        CoUninitialize();
+        wma->opened = FALSE;
+    }
 
     return 0;
 }
