@@ -262,7 +262,7 @@ unsigned int CDECL MSVCRT____setlc_active_func(void)
  */
 void msvcrt_init_args(void)
 {
-  DWORD version;
+  OSVERSIONINFOW osvi;
 
   MSVCRT__acmdln = _strdup( GetCommandLineA() );
   MSVCRT__wcmdln = msvcrt_wstrdupa(MSVCRT__acmdln);
@@ -273,17 +273,23 @@ void msvcrt_init_args(void)
   TRACE("got %s, wide = %s argc=%d\n", debugstr_a(MSVCRT__acmdln),
         debugstr_w(MSVCRT__wcmdln),MSVCRT___argc);
 
-  version = GetVersion();
-  MSVCRT__osver       = version >> 16;
-  MSVCRT__winminor    = version & 0xFF;
-  MSVCRT__winmajor    = (version>>8) & 0xFF;
-  MSVCRT_baseversion = version >> 16;
-  MSVCRT__winver     = ((version >> 8) & 0xFF) + ((version & 0xFF) << 8);
-  MSVCRT_baseminor   = (version >> 16) & 0xFF;
-  MSVCRT_basemajor   = (version >> 24) & 0xFF;
-  MSVCRT_osversion   = version & 0xFFFF;
-  MSVCRT_osminor     = version & 0xFF;
-  MSVCRT_osmajor     = (version>>8) & 0xFF;
+  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
+  GetVersionExW( &osvi );
+  MSVCRT__winver     = (osvi.dwMajorVersion << 8) | osvi.dwMinorVersion;
+  MSVCRT__winmajor   = osvi.dwMajorVersion;
+  MSVCRT__winminor   = osvi.dwMinorVersion;
+  MSVCRT__osver      = osvi.dwBuildNumber;
+  MSVCRT_osversion   = MSVCRT__winver;
+  MSVCRT_osmajor     = MSVCRT__winmajor;
+  MSVCRT_osminor     = MSVCRT__winminor;
+  MSVCRT_baseversion = MSVCRT__osver;
+  MSVCRT_baseminor   = MSVCRT_baseversion & 0xFF;
+  MSVCRT_basemajor   = (MSVCRT_baseversion >> 8) & 0xFF;
+  TRACE( "winver %08x winmajor %08x winminor %08x osver%08x baseversion %08x basemajor %08x baseminor %08x\n",
+          MSVCRT__winver, MSVCRT__winmajor, MSVCRT__winminor, MSVCRT__osver, MSVCRT_baseversion,
+          MSVCRT_basemajor, MSVCRT_baseminor);
+  TRACE( "osversion %08x osmajor %08x osminor %08x\n", MSVCRT_osversion, MSVCRT_osmajor, MSVCRT_osminor);
+
   MSVCRT__HUGE = HUGE_VAL;
   MSVCRT___setlc_active = 0;
   MSVCRT___unguarded_readlc_active = 0;
