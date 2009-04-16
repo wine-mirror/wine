@@ -813,31 +813,6 @@ static ULONG WINAPI snapshot_AddRef(IDataObject *iface)
     return InterlockedIncrement(&This->ref);
 }
 
-/***********************************************************************
- *                 destroy_clipbrd_window
- * Destroy the clipboard window and unregister its class
- */
-static void destroy_clipbrd_window(HWND hwnd)
-{
-    static const WCHAR ole32W[] = {'o','l','e','3','2',0};
-    HINSTANCE hinst = GetModuleHandleW(ole32W);
-
-    DestroyWindow(hwnd);
-    UnregisterClassW( clipbrd_wndclass, hinst );
-}
-
-static void OLEClipbrd_Destroy(ole_clipbrd* This)
-{
-    TRACE("()\n");
-
-    if (!This) return;
-
-    if ( This->window ) destroy_clipbrd_window(This->window);
-
-    IStream_Release(This->marshal_data);
-    HeapFree(GetProcessHeap(), 0, This);
-}
-
 /************************************************************************
  *      snapshot_Release
  */
@@ -1160,35 +1135,8 @@ static snapshot *snapshot_construct(DWORD seq_no)
 }
 
 /*********************************************************
- * Construct the OLEClipbrd class.
+ *               register_clipboard_formats
  */
-static ole_clipbrd* OLEClipbrd_Construct(void)
-{
-    ole_clipbrd* This;
-    HGLOBAL h;
-
-    This = HeapAlloc( GetProcessHeap(), 0, sizeof(*This) );
-    if (!This) return NULL;
-
-    This->latest_snapshot = NULL;
-    This->window = NULL;
-    This->src_data = NULL;
-    This->cached_enum = NULL;
-
-    h = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, 0);
-    if(!h) goto error;
-
-    if(FAILED(CreateStreamOnHGlobal(h, TRUE, &This->marshal_data)))
-        goto error;
-
-    return This;
-
-error:
-    if(h) GlobalFree(h);
-    HeapFree(GetProcessHeap(), 0, This);
-    return NULL;
-}
-
 static void register_clipboard_formats(void)
 {
     static const WCHAR DataObjectW[] = { 'D','a','t','a','O','b','j','e','c','t',0 };
@@ -1209,15 +1157,40 @@ static void register_clipboard_formats(void)
  */
 void OLEClipbrd_Initialize(void)
 {
-  register_clipboard_formats();
+    register_clipboard_formats();
 
-  if ( !theOleClipboard )
-  {
-    TRACE("()\n");
-    theOleClipboard = OLEClipbrd_Construct();
-  }
+    if ( !theOleClipboard )
+    {
+        ole_clipbrd* clipbrd;
+        HGLOBAL h;
+
+        TRACE("()\n");
+
+        clipbrd = HeapAlloc( GetProcessHeap(), 0, sizeof(*clipbrd) );
+        if (!clipbrd) return;
+
+        clipbrd->latest_snapshot = NULL;
+        clipbrd->window = NULL;
+        clipbrd->src_data = NULL;
+        clipbrd->cached_enum = NULL;
+
+        h = GlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, 0);
+        if(!h)
+        {
+            HeapFree(GetProcessHeap(), 0, clipbrd);
+            return;
+        }
+
+        if(FAILED(CreateStreamOnHGlobal(h, TRUE, &clipbrd->marshal_data)))
+        {
+            GlobalFree(h);
+            HeapFree(GetProcessHeap(), 0, clipbrd);
+            return;
+        }
+
+        theOleClipboard = clipbrd;
+    }
 }
-
 
 /***********************************************************************
  * OLEClipbrd_UnInitialize()
@@ -1225,13 +1198,25 @@ void OLEClipbrd_Initialize(void)
  */
 void OLEClipbrd_UnInitialize(void)
 {
-  TRACE("()\n");
+    ole_clipbrd *clipbrd = theOleClipboard;
 
-  if ( theOleClipboard )
-  {
-    OLEClipbrd_Destroy( theOleClipboard );
-    theOleClipboard = NULL;
-  }
+    TRACE("()\n");
+
+    if ( clipbrd )
+    {
+        static const WCHAR ole32W[] = {'o','l','e','3','2',0};
+        HINSTANCE hinst = GetModuleHandleW(ole32W);
+
+        if ( clipbrd->window )
+        {
+            DestroyWindow(clipbrd->window);
+            UnregisterClassW( clipbrd_wndclass, hinst );
+        }
+
+        IStream_Release(clipbrd->marshal_data);
+        HeapFree(GetProcessHeap(), 0, clipbrd);
+        theOleClipboard = NULL;
+    }
 }
 
 /*********************************************************************
