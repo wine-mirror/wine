@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -255,7 +256,7 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
                     IStream_AddRef(This->stm);
                     U(*pmedium).pstm = This->stm;
                 }
-                else if(pformatetc->cfFormat == cf_storage)
+                else if(pformatetc->cfFormat == cf_storage || pformatetc->cfFormat == cf_another)
                 {
                     pmedium->tymed = TYMED_ISTORAGE;
                     IStorage_AddRef(This->stg);
@@ -386,12 +387,12 @@ static HRESULT DataObjectImpl_CreateText(LPCSTR text, LPDATAOBJECT *lplpdataobj)
 
 const char *cmpl_stm_data = "complex stream";
 const char *cmpl_text_data = "complex text";
+const WCHAR devname[] = {'m','y','d','e','v',0};
 
 static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
 {
     DataObjectImpl *obj;
     ILockBytes *lbs;
-    static const WCHAR devname[] = {'m','y','d','e','v',0};
     DEVMODEW dm;
 
     obj = HeapAlloc(GetProcessHeap(), 0, sizeof(DataObjectImpl));
@@ -1007,8 +1008,148 @@ static void test_consumer_refs(void)
     OleUninitialize();
 }
 
+static void test_flushed_getdata(void)
+{
+    HRESULT hr;
+    IDataObject *src, *get;
+    FORMATETC fmt;
+    STGMEDIUM med;
+    STATSTG stat;
+    DEVMODEW dm;
+
+    OleInitialize(NULL);
+
+    hr = DataObjectImpl_CreateComplex(&src);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = OleSetClipboard(src);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = OleFlushClipboard();
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = OleGetClipboard(&get);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    /* global format -> global & stream */
+
+    InitFormatEtc(fmt, CF_TEXT, TYMED_HGLOBAL);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    InitFormatEtc(fmt, CF_TEXT, TYMED_ISTREAM);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTREAM, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    InitFormatEtc(fmt, CF_TEXT, TYMED_ISTORAGE);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == E_FAIL, "got %08x\n", hr);
+
+    InitFormatEtc(fmt, CF_TEXT, 0xffff);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    /* stream format -> global & stream */
+
+    InitFormatEtc(fmt, cf_stream, TYMED_ISTREAM);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTREAM, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    InitFormatEtc(fmt, cf_stream, TYMED_ISTORAGE);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == E_FAIL, "got %08x\n", hr);
+
+    InitFormatEtc(fmt, cf_stream, TYMED_HGLOBAL);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    InitFormatEtc(fmt, cf_stream, 0xffff);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTREAM, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    /* storage format -> global, stream & storage */
+
+    InitFormatEtc(fmt, cf_storage, TYMED_ISTORAGE);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTORAGE, "got %x\n", med.tymed);
+    hr = IStorage_Stat(med.u.pstg, &stat, STATFLAG_NONAME);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(stat.grfMode == (STGM_SHARE_EXCLUSIVE | STGM_READWRITE), "got %08x\n", stat.grfMode);
+    ReleaseStgMedium(&med);
+
+    InitFormatEtc(fmt, cf_storage, TYMED_ISTREAM);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTREAM, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    InitFormatEtc(fmt, cf_storage, TYMED_HGLOBAL);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    InitFormatEtc(fmt, cf_storage, TYMED_HGLOBAL | TYMED_ISTREAM);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    InitFormatEtc(fmt, cf_storage, 0xffff);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTORAGE, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    /* complex format with target device */
+
+    InitFormatEtc(fmt, cf_another, 0xffff);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    todo_wine ok(hr == DV_E_FORMATETC, "got %08x\n", hr);
+
+    InitFormatEtc(fmt, cf_another, 0xffff);
+    memset(&dm, 0, sizeof(dm));
+    dm.dmSize = sizeof(dm);
+    dm.dmDriverExtra = 0;
+    lstrcpyW(dm.dmDeviceName, devname);
+    fmt.ptd = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra);
+    fmt.ptd->tdSize = FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra;
+    fmt.ptd->tdDriverNameOffset = FIELD_OFFSET(DVTARGETDEVICE, tdData);
+    fmt.ptd->tdDeviceNameOffset = 0;
+    fmt.ptd->tdPortNameOffset   = 0;
+    fmt.ptd->tdExtDevmodeOffset = fmt.ptd->tdDriverNameOffset + sizeof(devname);
+    lstrcpyW((WCHAR*)fmt.ptd->tdData, devname);
+    memcpy(fmt.ptd->tdData + sizeof(devname), &dm, dm.dmSize + dm.dmDriverExtra);
+
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTORAGE, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+
+    HeapFree(GetProcessHeap(), 0, fmt.ptd);
+
+
+    IDataObject_Release(get);
+    IDataObject_Release(src);
+    OleUninitialize();
+}
+
 START_TEST(clipboard)
 {
     test_set_clipboard();
     test_consumer_refs();
+    test_flushed_getdata();
 }
