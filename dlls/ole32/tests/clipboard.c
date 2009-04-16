@@ -862,13 +862,26 @@ static void test_set_clipboard(void)
     OleUninitialize();
 }
 
+static inline ULONG count_refs(IDataObject *d)
+{
+    IDataObject_AddRef(d);
+    return IDataObject_Release(d);
+}
+
 static void test_consumer_refs(void)
 {
     HRESULT hr;
     IDataObject *src, *get1, *get2, *get3;
-    LONG refs;
+    ULONG refs, old_refs;
+    FORMATETC fmt;
+    STGMEDIUM med;
+
+    InitFormatEtc(fmt, CF_TEXT, TYMED_HGLOBAL);
 
     OleInitialize(NULL);
+
+    /* First show that each clipboard state results in
+       a different data object */
 
     hr = DataObjectImpl_CreateText("data1", &src);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -888,6 +901,12 @@ static void test_consumer_refs(void)
 
     OleFlushClipboard();
 
+    DataObjectImpl_GetData_calls = 0;
+    hr = IDataObject_GetData(get1, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(DataObjectImpl_GetData_calls == 0, "GetData called\n");
+    ReleaseStgMedium(&med);
+
     hr = OleGetClipboard(&get2);
     ok(hr == S_OK, "got %08x\n", hr);
 
@@ -904,6 +923,46 @@ static void test_consumer_refs(void)
     IDataObject_Release(get3);
     IDataObject_Release(get2);
     IDataObject_Release(get1);
+
+    /* Now call GetData before the flush and show that this
+       takes a ref on our src data obj. */
+
+    hr = OleSetClipboard(src);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    old_refs = count_refs(src);
+    trace("old_refs %d\n", old_refs);
+
+    hr = OleGetClipboard(&get1);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    refs = count_refs(src);
+    ok(refs == old_refs, "%d %d\n", refs, old_refs);
+
+    DataObjectImpl_GetData_calls = 0;
+    hr = IDataObject_GetData(get1, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(DataObjectImpl_GetData_calls == 1, "GetData not called\n");
+    ReleaseStgMedium(&med);
+    refs = count_refs(src);
+    ok(refs == old_refs + 1, "%d %d\n", refs, old_refs);
+
+    OleFlushClipboard();
+
+    DataObjectImpl_GetData_calls = 0;
+    hr = IDataObject_GetData(get1, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(DataObjectImpl_GetData_calls == 1, "GetData not called\n");
+    ReleaseStgMedium(&med);
+
+    refs = count_refs(src);
+    ok(refs == 2, "%d\n", refs);
+
+    IDataObject_Release(get1);
+
+    refs = count_refs(src);
+    ok(refs == 1, "%d\n", refs);
+
     IDataObject_Release(src);
 
     OleUninitialize();

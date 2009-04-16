@@ -134,6 +134,8 @@ typedef struct snapshot
     LONG ref;
 
     DWORD seq_no;                   /* Clipboard sequence number corresponding to this snapshot */
+
+    IDataObject *data;              /* If we unmarshal a remote data object we hold a ref here */
 } snapshot;
 
 /****************************************************************************
@@ -830,6 +832,8 @@ static ULONG WINAPI snapshot_Release(IDataObject *iface)
         ole_clipbrd *clipbrd;
         HRESULT hr = get_ole_clipbrd(&clipbrd);
 
+        if(This->data) IDataObject_Release(This->data);
+
         if(SUCCEEDED(hr) && clipbrd->latest_snapshot == This)
             clipbrd->latest_snapshot = NULL;
         HeapFree(GetProcessHeap(), 0, This);
@@ -907,25 +911,26 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface,
                                        FORMATETC *pformatetcIn,
                                        STGMEDIUM *pmedium)
 {
-  HANDLE h, hData = 0;
-  HRESULT hr;
-  IDataObject *data;
+    snapshot *This = impl_from_IDataObject(iface);
+    HANDLE h, hData = 0;
+    HRESULT hr;
 
-  TRACE("(%p,%p,%p)\n", iface, pformatetcIn, pmedium);
+    TRACE("(%p,%p,%p)\n", iface, pformatetcIn, pmedium);
 
-  if ( !pformatetcIn || !pmedium )
-    return E_INVALIDARG;
+    if ( !pformatetcIn || !pmedium ) return E_INVALIDARG;
 
-  if ( !OpenClipboard(NULL)) return CLIPBRD_E_CANT_OPEN;
+    if ( !OpenClipboard(NULL)) return CLIPBRD_E_CANT_OPEN;
 
-  hr = get_current_dataobject(&data);
-  if ( hr == S_OK )
-  {
-    hr = IDataObject_GetData(data, pformatetcIn, pmedium);
-    IDataObject_Release(data);
-    CloseClipboard();
-    return hr;
-  }
+    if(!This->data)
+        hr = get_current_dataobject(&This->data);
+
+    if(This->data)
+    {
+        hr = IDataObject_GetData(This->data, pformatetcIn, pmedium);
+        CloseClipboard();
+        return hr;
+    }
+
 
   /*
    * Otherwise, get the data from the windows clipboard using GetClipboardData
@@ -1130,6 +1135,7 @@ static snapshot *snapshot_construct(DWORD seq_no)
     This->lpVtbl = &snapshot_vtable;
     This->ref = 0;
     This->seq_no = seq_no;
+    This->data = NULL;
 
     return This;
 }
