@@ -1479,6 +1479,7 @@ sub source_scan_directory($$$$)
     }
     if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
       push @{@$target[$T_LDFLAGS]},"-mno-cygwin";
+      push @{@$target[$T_LDFLAGS]},"-m32";
     }
     push @{@$project[$P_TARGETS]},$target;
 
