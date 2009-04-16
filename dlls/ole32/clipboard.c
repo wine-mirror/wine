@@ -1062,7 +1062,10 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
 
     entry = find_format_in_list(enum_data->entries, enum_data->count, fmt->cfFormat);
     if(entry)
+    {
         mask = fmt->tymed & entry->fmtetc.tymed;
+        if(!mask) mask = fmt->tymed & (TYMED_ISTREAM | TYMED_HGLOBAL);
+    }
     else /* non-Ole format */
         mask = fmt->tymed & TYMED_HGLOBAL;
 
