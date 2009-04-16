@@ -959,6 +959,33 @@ static HRESULT get_stgmed_for_global(HGLOBAL h, STGMEDIUM *med)
 }
 
 /************************************************************************
+ *                    get_stgmed_for_stream
+ *
+ * Returns a stg medium with a stream based on the handle
+ */
+static HRESULT get_stgmed_for_stream(HGLOBAL h, STGMEDIUM *med)
+{
+    HRESULT hr;
+    HGLOBAL dst;
+
+    med->pUnkForRelease = NULL;
+    med->tymed = TYMED_NULL;
+
+    hr = dup_global_mem(h, GMEM_MOVEABLE, &dst);
+    if(FAILED(hr)) return hr;
+
+    hr = CreateStreamOnHGlobal(dst, TRUE, &med->u.pstm);
+    if(FAILED(hr))
+    {
+        GlobalFree(dst);
+        return hr;
+    }
+
+    med->tymed = TYMED_ISTREAM;
+    return hr;
+}
+
+/************************************************************************
  *         snapshot_GetData
  */
 static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
@@ -1005,6 +1032,8 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
 
     if(mask & TYMED_HGLOBAL)
         hr = get_stgmed_for_global(h, med);
+    else if(mask & TYMED_ISTREAM)
+        hr = get_stgmed_for_stream(h, med);
     else
     {
         FIXME("Unhandled tymed - emum tymed %x req tymed %x\n", entry->fmtetc.tymed, fmt->tymed);
