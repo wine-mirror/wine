@@ -753,68 +753,6 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
     return hr;
 }
 
-/***********************************************************************
- *                   clipbrd_wndproc
- */
-static LRESULT CALLBACK clipbrd_wndproc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
-{
-    ole_clipbrd *clipbrd;
-
-    get_ole_clipbrd(&clipbrd);
-
-    switch (message)
-    {
-    case WM_RENDERFORMAT:
-    {
-        UINT cf = wparam;
-        ole_priv_data_entry *entry;
-
-        TRACE("(): WM_RENDERFORMAT(cfFormat=%x)\n", cf);
-        entry = find_format_in_list(clipbrd->cached_enum->entries, clipbrd->cached_enum->count, cf);
-
-        if(entry)
-            render_format(clipbrd->pIDataObjectSrc, &entry->fmtetc);
-
-        break;
-    }
-
-    case WM_RENDERALLFORMATS:
-    {
-        DWORD i;
-        ole_priv_data_entry *entries = clipbrd->cached_enum->entries;
-
-        TRACE("(): WM_RENDERALLFORMATS\n");
-
-        for(i = 0; i < clipbrd->cached_enum->count; i++)
-        {
-            if(entries[i].first_use)
-                render_format(clipbrd->pIDataObjectSrc, &entries[i].fmtetc);
-        }
-        break;
-    }
-
-    case WM_DESTROYCLIPBOARD:
-    {
-        TRACE("(): WM_DESTROYCLIPBOARD\n");
-
-        if ( clipbrd->pIDataObjectSrc )
-        {
-            IDataObject_Release(clipbrd->pIDataObjectSrc);
-            clipbrd->pIDataObjectSrc = NULL;
-            HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
-            clipbrd->cached_enum = NULL;
-        }
-        break;
-    }
-
-    default:
-        return DefWindowProcW(hwnd, message, wparam, lparam);
-    }
-
-    return 0;
-}
-
-
 /*---------------------------------------------------------------------*
  *  Implementation of the internal IDataObject interface exposed by
  *  the OLE clipboard.
@@ -1249,37 +1187,6 @@ void OLEClipbrd_UnInitialize(void)
   }
 }
 
-/***********************************************************************
- * OLEClipbrd_CreateWindow()
- * Create the clipboard window
- */
-static HWND OLEClipbrd_CreateWindow(void)
-{
-    WNDCLASSEXW class;
-    static const WCHAR ole32W[] = {'o','l','e','3','2',0};
-    static const WCHAR title[] = {'C','l','i','p','b','o','a','r','d','W','i','n','d','o','w',0};
-    HINSTANCE hinst = GetModuleHandleW(ole32W);
-
-    class.cbSize         = sizeof(class);
-    class.style          = 0;
-    class.lpfnWndProc    = clipbrd_wndproc;
-    class.cbClsExtra     = 0;
-    class.cbWndExtra     = 0;
-    class.hInstance      = hinst;
-    class.hIcon          = 0;
-    class.hCursor        = 0;
-    class.hbrBackground  = 0;
-    class.lpszMenuName   = NULL;
-    class.lpszClassName  = clipbrd_wndclass;
-    class.hIconSm        = NULL;
-
-    RegisterClassExW(&class);
-
-    return CreateWindowW(clipbrd_wndclass, title, WS_POPUP | WS_CLIPSIBLINGS | WS_OVERLAPPED,
-                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-                         NULL, NULL, hinst, 0);
-}
-
 /*********************************************************************
  *          set_clipboard_formats
  *
@@ -1372,6 +1279,119 @@ static HRESULT set_clipboard_formats(ole_clipbrd *clipbrd, IDataObject *data)
     return S_OK;
 }
 
+/***********************************************************************
+ *                   set_src_dataobject
+ *
+ * Clears and sets the clipboard's src IDataObject.
+ */
+static HRESULT set_src_dataobject(ole_clipbrd *clipbrd, IDataObject *data)
+{
+    HRESULT hr = S_OK;
+
+    if(clipbrd->pIDataObjectSrc)
+    {
+        IDataObject_Release(clipbrd->pIDataObjectSrc);
+        clipbrd->pIDataObjectSrc = NULL;
+        HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
+        clipbrd->cached_enum = NULL;
+    }
+
+    if(data)
+    {
+        IDataObject_AddRef(data);
+        clipbrd->pIDataObjectSrc = data;
+        hr = set_clipboard_formats(clipbrd, data);
+    }
+    return hr;
+}
+
+/***********************************************************************
+ *                   clipbrd_wndproc
+ */
+static LRESULT CALLBACK clipbrd_wndproc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    ole_clipbrd *clipbrd;
+
+    get_ole_clipbrd(&clipbrd);
+
+    switch (message)
+    {
+    case WM_RENDERFORMAT:
+    {
+        UINT cf = wparam;
+        ole_priv_data_entry *entry;
+
+        TRACE("(): WM_RENDERFORMAT(cfFormat=%x)\n", cf);
+        entry = find_format_in_list(clipbrd->cached_enum->entries, clipbrd->cached_enum->count, cf);
+
+        if(entry)
+            render_format(clipbrd->pIDataObjectSrc, &entry->fmtetc);
+
+        break;
+    }
+
+    case WM_RENDERALLFORMATS:
+    {
+        DWORD i;
+        ole_priv_data_entry *entries = clipbrd->cached_enum->entries;
+
+        TRACE("(): WM_RENDERALLFORMATS\n");
+
+        for(i = 0; i < clipbrd->cached_enum->count; i++)
+        {
+            if(entries[i].first_use)
+                render_format(clipbrd->pIDataObjectSrc, &entries[i].fmtetc);
+        }
+        break;
+    }
+
+    case WM_DESTROYCLIPBOARD:
+    {
+        TRACE("(): WM_DESTROYCLIPBOARD\n");
+
+        set_src_dataobject(clipbrd, NULL);
+        break;
+    }
+
+    default:
+        return DefWindowProcW(hwnd, message, wparam, lparam);
+    }
+
+    return 0;
+}
+
+
+/***********************************************************************
+ * OLEClipbrd_CreateWindow()
+ * Create the clipboard window
+ */
+static HWND OLEClipbrd_CreateWindow(void)
+{
+    WNDCLASSEXW class;
+    static const WCHAR ole32W[] = {'o','l','e','3','2',0};
+    static const WCHAR title[] = {'C','l','i','p','b','o','a','r','d','W','i','n','d','o','w',0};
+    HINSTANCE hinst = GetModuleHandleW(ole32W);
+
+    class.cbSize         = sizeof(class);
+    class.style          = 0;
+    class.lpfnWndProc    = clipbrd_wndproc;
+    class.cbClsExtra     = 0;
+    class.cbWndExtra     = 0;
+    class.hInstance      = hinst;
+    class.hIcon          = 0;
+    class.hCursor        = 0;
+    class.hbrBackground  = 0;
+    class.lpszMenuName   = NULL;
+    class.lpszClassName  = clipbrd_wndclass;
+    class.hIconSm        = NULL;
+
+    RegisterClassExW(&class);
+
+    return CreateWindowW(clipbrd_wndclass, title, WS_POPUP | WS_CLIPSIBLINGS | WS_OVERLAPPED,
+                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                         NULL, NULL, hinst, 0);
+}
+
 /*********************************************************************
  *          set_dataobject_format
  *
@@ -1416,12 +1436,12 @@ static HRESULT set_dataobject_format(HWND hwnd)
  *    CLIPBRD_E_CANT_SET    SetClipboard failed
  */
 
-HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
+HRESULT WINAPI OleSetClipboard(IDataObject* data)
 {
   HRESULT hr;
   ole_clipbrd *clipbrd;
 
-  TRACE("(%p)\n", pDataObj);
+  TRACE("(%p)\n", data);
 
   if(FAILED(hr = get_ole_clipbrd(&clipbrd))) return hr;
 
@@ -1444,25 +1464,8 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
     goto end;
   }
 
-  /*
-   * If we are already holding on to an IDataObject first release that.
-   */
-  if ( clipbrd->pIDataObjectSrc )
-  {
-    IDataObject_Release(clipbrd->pIDataObjectSrc);
-    clipbrd->pIDataObjectSrc = NULL;
-    HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
-    clipbrd->cached_enum = NULL;
-  }
-
-  /* A NULL value indicates that the clipboard should be emptied. */
-  clipbrd->pIDataObjectSrc = pDataObj;
-  if ( pDataObj )
-  {
-    IDataObject_AddRef(clipbrd->pIDataObjectSrc);
-    hr = set_clipboard_formats(clipbrd, pDataObj);
-    if(FAILED(hr)) goto end;
-  }
+  hr = set_src_dataobject(clipbrd, data);
+  if(FAILED(hr)) goto end;
 
   hr = set_dataobject_format(clipbrd->hWndClipboard);
 
@@ -1472,13 +1475,7 @@ end:
 
   if ( FAILED(hr) )
   {
-    if (clipbrd->pIDataObjectSrc)
-    {
-      IDataObject_Release(clipbrd->pIDataObjectSrc);
-      clipbrd->pIDataObjectSrc = NULL;
-      HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
-      clipbrd->cached_enum = NULL;
-    }
+    set_src_dataobject(clipbrd, NULL);
   }
 
   return hr;
@@ -1561,10 +1558,7 @@ HRESULT WINAPI OleFlushClipboard(void)
 
   hr = set_dataobject_format(NULL);
 
-  IDataObject_Release(clipbrd->pIDataObjectSrc);
-  clipbrd->pIDataObjectSrc = NULL;
-  HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
-  clipbrd->cached_enum = NULL;
+  set_src_dataobject(clipbrd, NULL);
 
 end:
 
