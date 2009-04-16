@@ -105,6 +105,34 @@ typedef struct
 } ole_priv_data;
 
 /*****************************************************************************
+ *           td_offs_to_ptr
+ *
+ * Returns a ptr to a target device at a given offset from the
+ * start of the ole_priv_data.
+ *
+ * Used when unpacking ole private data from the clipboard.
+ */
+static inline DVTARGETDEVICE *td_offs_to_ptr(ole_priv_data *data, DWORD_PTR off)
+{
+    if(off == 0) return NULL;
+    return (DVTARGETDEVICE*)((char*)data + off);
+}
+
+/*****************************************************************************
+ *           td_get_offs
+ *
+ * Get the offset from the start of the ole_priv_data of the idx'th
+ * target device.
+ *
+ * Used when packing ole private data to the clipboard.
+ */
+static inline DWORD_PTR td_get_offs(ole_priv_data *data, DWORD idx)
+{
+    if(data->entries[idx].fmtetc.ptd == NULL) return 0;
+    return (char*)data->entries[idx].fmtetc.ptd - (char*)data;
+}
+
+/*****************************************************************************
  *           create_empty_priv_data
  *
  * Create an empty data structure.  The only thing that really matters
@@ -313,7 +341,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Next
       rgelt[i] = This->data->entries[This->pos++].fmtetc;
       if(rgelt[i].ptd)
       {
-        DVTARGETDEVICE *target = (DVTARGETDEVICE *)((char *)This->data + (DWORD)rgelt[i].ptd);
+        DVTARGETDEVICE *target = rgelt[i].ptd;
         rgelt[i].ptd = CoTaskMemAlloc(target->tdSize);
         if(!rgelt[i].ptd) return E_OUTOFMEMORY;
         memcpy(rgelt[i].ptd, target, target->tdSize);
@@ -378,6 +406,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone
 {
   enum_fmtetc *This = impl_from_IEnumFORMATETC(iface);
   ole_priv_data *new_data;
+  DWORD i;
 
   TRACE("(%p)->(%p)\n", This, obj);
 
@@ -386,6 +415,12 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Clone
 
   new_data = HeapAlloc(GetProcessHeap(), 0, This->data->size);
   if(!new_data) return E_OUTOFMEMORY;
+  memcpy(new_data, This->data, This->data->size);
+
+  /* Fixup any target device ptrs */
+  for(i = 0; i < This->data->count; i++)
+      new_data->entries[i].fmtetc.ptd =
+          td_offs_to_ptr(new_data, td_get_offs(This->data, i));
 
   return enum_fmtetc_construct(new_data, This->pos, obj);
 }
@@ -922,6 +957,8 @@ static HRESULT get_priv_data(ole_priv_data **data)
         ole_priv_data *src = GlobalLock(handle);
         if(src)
         {
+            DWORD i;
+
             /* FIXME: sanity check on size */
             *data = HeapAlloc(GetProcessHeap(), 0, src->size);
             if(!*data)
@@ -931,6 +968,11 @@ static HRESULT get_priv_data(ole_priv_data **data)
             }
             memcpy(*data, src, src->size);
             GlobalUnlock(handle);
+
+            /* Fixup any target device offsets to ptrs */
+            for(i = 0; i < (*data)->count; i++)
+                (*data)->entries[i].fmtetc.ptd =
+                    td_offs_to_ptr(*data, (DWORD_PTR)(*data)->entries[i].fmtetc.ptd);
         }
     }
 
@@ -1343,7 +1385,7 @@ static HRESULT set_clipboard_formats(ole_clipbrd *clipbrd, IDataObject *data)
     FORMATETC fmt;
     IEnumFORMATETC *enum_fmt;
     HGLOBAL priv_data_handle;
-    DWORD target_offset;
+    DWORD_PTR target_offset;
     ole_priv_data *priv_data;
     DWORD count = 0, needed = sizeof(*priv_data), idx;
 
@@ -1410,9 +1452,8 @@ static HRESULT set_clipboard_formats(ole_clipbrd *clipbrd, IDataObject *data)
     clipbrd->cached_enum = HeapAlloc(GetProcessHeap(), 0, needed);
     memcpy(clipbrd->cached_enum, priv_data, needed);
     for(idx = 0; idx < clipbrd->cached_enum->count; idx++)
-        if(clipbrd->cached_enum->entries[idx].fmtetc.ptd)
-            clipbrd->cached_enum->entries[idx].fmtetc.ptd =
-                (DVTARGETDEVICE *)((char*)clipbrd->cached_enum + (DWORD)clipbrd->cached_enum->entries[idx].fmtetc.ptd);
+        clipbrd->cached_enum->entries[idx].fmtetc.ptd =
+            td_offs_to_ptr(clipbrd->cached_enum, (DWORD_PTR)clipbrd->cached_enum->entries[idx].fmtetc.ptd);
 
     GlobalUnlock(priv_data_handle);
     SetClipboardData(ole_priv_data_clipboard_format, priv_data_handle);
