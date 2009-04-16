@@ -902,7 +902,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
   /*
    * Otherwise, get the data from the windows clipboard using GetClipboardData
    */
-  if ( !OpenClipboard(theOleClipboard->window)) return CLIPBRD_E_CANT_OPEN;
+  if ( !OpenClipboard(NULL)) return CLIPBRD_E_CANT_OPEN;
 
   h = GetClipboardData(pformatetcIn->cfFormat);
   hr = dup_global_mem(h, GMEM_MOVEABLE, &hData);
@@ -1006,7 +1006,6 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
 	    IEnumFORMATETC** enum_fmt)
 {
     HRESULT hr = S_OK;
-    ole_clipbrd *This = impl_from_IDataObject(iface);
     HGLOBAL handle;
     ole_priv_data *data = NULL;
 
@@ -1015,7 +1014,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
     *enum_fmt = NULL;
 
     if ( dwDirection != DATADIR_GET ) return E_NOTIMPL;
-    if ( !OpenClipboard(This->window) ) return CLIPBRD_E_CANT_OPEN;
+    if ( !OpenClipboard(NULL) ) return CLIPBRD_E_CANT_OPEN;
 
     handle = GetClipboardData( ole_priv_data_clipboard_format );
     if(handle)
