@@ -135,7 +135,7 @@ typedef struct ole_clipbrd
     LONG ref;
 
     HWND window;                     /* Hidden clipboard window */
-    IDataObject *pIDataObjectSrc;    /* Source object passed to OleSetClipboard */
+    IDataObject *src_data;           /* Source object passed to OleSetClipboard */
     ole_priv_data *cached_enum;      /* Cached result from the enumeration of src data object */
 } ole_clipbrd;
 
@@ -461,7 +461,7 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
     hr = StgCreateDocfileOnILockBytes(ptrILockBytes, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &std.u.pstg);
     ILockBytes_Release(ptrILockBytes);
 
-    if (FAILED(hr = IDataObject_GetDataHere(theOleClipboard->pIDataObjectSrc, fmt, &std)))
+    if (FAILED(hr = IDataObject_GetDataHere(theOleClipboard->src_data, fmt, &std)))
     {
         WARN("() : IDataObject_GetDataHere failed to render clipboard data! (%x)\n", hr);
         GlobalFree(hStorage);
@@ -485,7 +485,7 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
 
         /* Get the metafile picture out of it */
 
-        if (SUCCEEDED(hr = IDataObject_GetData(theOleClipboard->pIDataObjectSrc, &fmt2, &std2)))
+        if (SUCCEEDED(hr = IDataObject_GetData(theOleClipboard->src_data, &fmt2, &std2)))
         {
             mfp = GlobalLock(std2.u.hGlobal);
         }
@@ -884,9 +884,9 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
    * NOTE: This code assumes that the IDataObject is in the same address space!
    * We will need to add marshalling support when Wine handles multiple processes.
    */
-  if ( This->pIDataObjectSrc )
+  if ( This->src_data )
   {
-    return IDataObject_GetData(This->pIDataObjectSrc, pformatetcIn, pmedium);
+    return IDataObject_GetData(This->src_data, pformatetcIn, pmedium);
   }
 
   if ( pformatetcIn->lindex != -1 )
@@ -1127,7 +1127,7 @@ static ole_clipbrd* OLEClipbrd_Construct(void)
     This->ref = 1;
 
     This->window = NULL;
-    This->pIDataObjectSrc = NULL;
+    This->src_data = NULL;
     This->cached_enum = NULL;
 
     return This;
@@ -1300,10 +1300,10 @@ static HRESULT set_src_dataobject(ole_clipbrd *clipbrd, IDataObject *data)
 {
     HRESULT hr = S_OK;
 
-    if(clipbrd->pIDataObjectSrc)
+    if(clipbrd->src_data)
     {
-        IDataObject_Release(clipbrd->pIDataObjectSrc);
-        clipbrd->pIDataObjectSrc = NULL;
+        IDataObject_Release(clipbrd->src_data);
+        clipbrd->src_data = NULL;
         HeapFree(GetProcessHeap(), 0, clipbrd->cached_enum);
         clipbrd->cached_enum = NULL;
     }
@@ -1311,7 +1311,7 @@ static HRESULT set_src_dataobject(ole_clipbrd *clipbrd, IDataObject *data)
     if(data)
     {
         IDataObject_AddRef(data);
-        clipbrd->pIDataObjectSrc = data;
+        clipbrd->src_data = data;
         hr = set_clipboard_formats(clipbrd, data);
     }
     return hr;
@@ -1337,7 +1337,7 @@ static LRESULT CALLBACK clipbrd_wndproc(HWND hwnd, UINT message, WPARAM wparam, 
         entry = find_format_in_list(clipbrd->cached_enum->entries, clipbrd->cached_enum->count, cf);
 
         if(entry)
-            render_format(clipbrd->pIDataObjectSrc, &entry->fmtetc);
+            render_format(clipbrd->src_data, &entry->fmtetc);
 
         break;
     }
@@ -1352,7 +1352,7 @@ static LRESULT CALLBACK clipbrd_wndproc(HWND hwnd, UINT message, WPARAM wparam, 
         for(i = 0; i < clipbrd->cached_enum->count; i++)
         {
             if(entries[i].first_use)
-                render_format(clipbrd->pIDataObjectSrc, &entries[i].fmtetc);
+                render_format(clipbrd->src_data, &entries[i].fmtetc);
         }
         break;
     }
@@ -1530,7 +1530,7 @@ HRESULT WINAPI OleFlushClipboard(void)
   /*
    * Already flushed or no source DataObject? Nothing to do.
    */
-  if (!clipbrd->pIDataObjectSrc) return S_OK;
+  if (!clipbrd->src_data) return S_OK;
 
   if (!OpenClipboard(wnd)) return CLIPBRD_E_CANT_OPEN;
 
@@ -1538,7 +1538,7 @@ HRESULT WINAPI OleFlushClipboard(void)
    * Render all HGLOBAL formats supported by the source into
    * the windows clipboard.
    */
-  if ( FAILED( hr = IDataObject_EnumFormatEtc( clipbrd->pIDataObjectSrc,
+  if ( FAILED( hr = IDataObject_EnumFormatEtc( clipbrd->src_data,
                                                DATADIR_GET,
                                                &penumFormatetc) ))
     goto end;
@@ -1553,7 +1553,7 @@ HRESULT WINAPI OleFlushClipboard(void)
             GetClipboardFormatNameA(rgelt.cfFormat, szFmtName, sizeof(szFmtName)-1)
               ? szFmtName : "");
 
-      if ( FAILED(render_format( clipbrd->pIDataObjectSrc, &rgelt )) )
+      if ( FAILED(render_format( clipbrd->src_data, &rgelt )) )
         continue;
     }
   }
@@ -1575,16 +1575,15 @@ end:
 /***********************************************************************
  *           OleIsCurrentClipboard [OLE32.@]
  */
-HRESULT WINAPI OleIsCurrentClipboard(IDataObject *pDataObject)
+HRESULT WINAPI OleIsCurrentClipboard(IDataObject *data)
 {
-  HRESULT hr;
-  ole_clipbrd *clipbrd;
-  TRACE("()\n");
+    HRESULT hr;
+    ole_clipbrd *clipbrd;
+    TRACE("()\n");
 
-  if(FAILED(hr = get_ole_clipbrd(&clipbrd))) return hr;
+    if(FAILED(hr = get_ole_clipbrd(&clipbrd))) return hr;
 
-  if (pDataObject == NULL)
-    return S_FALSE;
+    if (data == NULL) return S_FALSE;
 
-  return (pDataObject == clipbrd->pIDataObjectSrc) ? S_OK : S_FALSE;
+    return (data == clipbrd->src_data) ? S_OK : S_FALSE;
 }
