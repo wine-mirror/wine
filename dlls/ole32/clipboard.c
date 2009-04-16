@@ -859,14 +859,71 @@ static ULONG WINAPI OLEClipbrd_IDataObject_Release(
   return ref;
 }
 
+/************************************************************
+ *              get_current_ole_clip_window
+ *
+ * Return the window that owns the ole clipboard.
+ *
+ * If the clipboard is flushed or not owned by ole this will
+ * return NULL.
+ */
+static HWND get_current_ole_clip_window(void)
+{
+    HGLOBAL h;
+    HWND *ptr, wnd;
+
+    h = GetClipboardData(dataobject_clipboard_format);
+    if(!h) return NULL;
+    ptr = GlobalLock(h);
+    if(!ptr) return NULL;
+    wnd = *ptr;
+    GlobalUnlock(h);
+    return wnd;
+}
+
+/************************************************************
+ *              get_current_dataobject
+ *
+ * Return an unmarshalled IDataObject if there is a current
+ * (ie non-flushed) object on the ole clipboard.
+ */
+static HRESULT get_current_dataobject(IDataObject **data)
+{
+    HRESULT hr = S_FALSE;
+    HWND wnd = get_current_ole_clip_window();
+    HGLOBAL h;
+    void *ptr;
+    IStream *stm;
+    LARGE_INTEGER pos;
+
+    *data = NULL;
+    if(!wnd) return S_FALSE;
+
+    h = GetPropW(wnd, wine_marshal_dataobject);
+    if(!h) return S_FALSE;
+    ptr = GlobalLock(h);
+    if(!ptr) return S_FALSE;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stm);
+    if(FAILED(hr)) goto end;
+
+    hr = IStream_Write(stm, ptr, GlobalSize(h), NULL);
+    if(SUCCEEDED(hr))
+    {
+        pos.QuadPart = 0;
+        IStream_Seek(stm, pos, STREAM_SEEK_SET, NULL);
+        hr = CoUnmarshalInterface(stm, &IID_IDataObject, (void**)data);
+    }
+    IStream_Release(stm);
+
+end:
+    GlobalUnlock(h);
+    return hr;
+}
 
 /************************************************************************
  * OLEClipbrd_IDataObject_GetData (IDataObject)
  *
- * The OLE Clipboard's implementation of this method delegates to
- * a data source if there is one or wraps around the windows clipboard
- *
- * See Windows documentation for more details on IDataObject methods.
  */
 static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
 	    IDataObject*     iface,
@@ -874,39 +931,40 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
 	    STGMEDIUM*       pmedium)
 {
   HANDLE h, hData = 0;
-  ole_clipbrd *This = impl_from_IDataObject(iface);
   HRESULT hr;
+  IDataObject *data;
 
   TRACE("(%p,%p,%p)\n", iface, pformatetcIn, pmedium);
 
   if ( !pformatetcIn || !pmedium )
     return E_INVALIDARG;
 
-  /*
-   * If we have a data source placed on the clipboard (via OleSetClipboard)
-   * simply delegate to the source object's QueryGetData
-   * NOTE: This code assumes that the IDataObject is in the same address space!
-   * We will need to add marshalling support when Wine handles multiple processes.
-   */
-  if ( This->src_data )
+  if ( !OpenClipboard(NULL)) return CLIPBRD_E_CANT_OPEN;
+
+  hr = get_current_dataobject(&data);
+  if ( hr == S_OK )
   {
-    return IDataObject_GetData(This->src_data, pformatetcIn, pmedium);
+    hr = IDataObject_GetData(data, pformatetcIn, pmedium);
+    IDataObject_Release(data);
+    CloseClipboard();
+    return hr;
   }
-
-  if ( pformatetcIn->lindex != -1 )
-    return DV_E_FORMATETC;
-
-  if ( (pformatetcIn->tymed & TYMED_HGLOBAL) != TYMED_HGLOBAL )
-    return DV_E_TYMED;
-/*
-   if ( pformatetcIn->dwAspect != DVASPECT_CONTENT )
-     return DV_E_DVASPECT;
-*/
 
   /*
    * Otherwise, get the data from the windows clipboard using GetClipboardData
    */
-  if ( !OpenClipboard(NULL)) return CLIPBRD_E_CANT_OPEN;
+
+  if ( pformatetcIn->lindex != -1 )
+  {
+      hr = DV_E_FORMATETC;
+      goto end;
+  }
+
+  if ( (pformatetcIn->tymed & TYMED_HGLOBAL) != TYMED_HGLOBAL )
+  {
+      hr = DV_E_TYMED;
+      goto end;
+  }
 
   h = GetClipboardData(pformatetcIn->cfFormat);
   hr = dup_global_mem(h, GMEM_MOVEABLE, &hData);
@@ -918,12 +976,16 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
   pmedium->u.hGlobal = hData;
   pmedium->pUnkForRelease = NULL;
 
+end:
   if ( !CloseClipboard() ) return CLIPBRD_E_CANT_CLOSE;
 
   if(FAILED(hr)) return hr;
   return (hData == 0) ? DV_E_FORMATETC : S_OK;
 }
 
+/************************************************************************
+ * OLEClipbrd_IDataObject_GetDataHere (IDataObject)
+ */
 static HRESULT WINAPI OLEClipbrd_IDataObject_GetDataHere(
 	    IDataObject*     iface,
 	    LPFORMATETC      pformatetc,
