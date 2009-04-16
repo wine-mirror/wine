@@ -862,8 +862,59 @@ static void test_set_clipboard(void)
     OleUninitialize();
 }
 
+static void test_consumer_refs(void)
+{
+    HRESULT hr;
+    IDataObject *src, *get1, *get2, *get3;
+    LONG refs;
+
+    OleInitialize(NULL);
+
+    hr = DataObjectImpl_CreateText("data1", &src);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = OleSetClipboard(src);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = OleGetClipboard(&get1);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = OleGetClipboard(&get2);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    ok(get1 == get2, "data objects differ\n");
+    refs = IDataObject_Release(get2);
+todo_wine
+    ok(refs == 1, "got %d\n", refs);
+
+    OleFlushClipboard();
+
+    hr = OleGetClipboard(&get2);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+todo_wine
+    ok(get1 != get2, "data objects match\n");
+
+    OleSetClipboard(NULL);
+
+    hr = OleGetClipboard(&get3);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+todo_wine {
+    ok(get1 != get3, "data objects match\n");
+    ok(get2 != get3, "data objects match\n");
+}
+
+    IDataObject_Release(get3);
+    IDataObject_Release(get2);
+    IDataObject_Release(get1);
+    IDataObject_Release(src);
+
+    OleUninitialize();
+}
 
 START_TEST(clipboard)
 {
     test_set_clipboard();
+    test_consumer_refs();
 }
