@@ -484,18 +484,18 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_UNDO:
         case MCI_CONFIGURE:
         case MCI_RESTORE:
-            FIXME("Unimplemented command [%u]\n", wMsg);
+            FIXME("Unimplemented command [%08X]\n", wMsg);
             break;
         case MCI_SPIN:
         case MCI_ESCAPE:
-            WARN("Unsupported command [%u]\n", wMsg);
+            WARN("Unsupported command [%08X]\n", wMsg);
             break;
         case MCI_OPEN:
         case MCI_CLOSE:
             FIXME("Shouldn't receive a MCI_OPEN or CLOSE message\n");
             break;
         default:
-            TRACE("Sending msg [%u] to default driver proc\n", wMsg);
+            TRACE("Sending msg [%08X] to default driver proc\n", wMsg);
             return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
     }
 
