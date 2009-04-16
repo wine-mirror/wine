@@ -1709,8 +1709,6 @@ HRESULT WINAPI OleGetClipboard(IDataObject **obj)
  */
 HRESULT WINAPI OleFlushClipboard(void)
 {
-  IEnumFORMATETC* penumFormatetc = NULL;
-  FORMATETC rgelt;
   HRESULT hr;
   ole_clipbrd *clipbrd;
   HWND wnd;
@@ -1728,37 +1726,11 @@ HRESULT WINAPI OleFlushClipboard(void)
 
   if (!OpenClipboard(wnd)) return CLIPBRD_E_CANT_OPEN;
 
-  /*
-   * Render all HGLOBAL formats supported by the source into
-   * the windows clipboard.
-   */
-  if ( FAILED( hr = IDataObject_EnumFormatEtc( clipbrd->src_data,
-                                               DATADIR_GET,
-                                               &penumFormatetc) ))
-    goto end;
-
-
-  while ( S_OK == IEnumFORMATETC_Next(penumFormatetc, 1, &rgelt, NULL) )
-  {
-    if ( rgelt.tymed == TYMED_HGLOBAL )
-    {
-      CHAR szFmtName[80];
-      TRACE("(cfFormat=%d:%s)\n", rgelt.cfFormat,
-            GetClipboardFormatNameA(rgelt.cfFormat, szFmtName, sizeof(szFmtName)-1)
-              ? szFmtName : "");
-
-      if ( FAILED(render_format( clipbrd->src_data, &rgelt )) )
-        continue;
-    }
-  }
-
-  IEnumFORMATETC_Release(penumFormatetc);
+  SendMessageW(wnd, WM_RENDERALLFORMATS, 0, 0);
 
   hr = set_dataobject_format(NULL);
 
   set_src_dataobject(clipbrd, NULL);
-
-end:
 
   if ( !CloseClipboard() ) hr = CLIPBRD_E_CANT_CLOSE;
 
