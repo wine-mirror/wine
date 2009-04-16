@@ -404,7 +404,7 @@ static HRESULT enum_fmtetc_construct(ole_priv_data *data, UINT pos, IEnumFORMATE
  *
  * Helper method to duplicate an HGLOBAL chunk of memory
  */
-static HRESULT dup_global_mem( HGLOBAL src, HGLOBAL *dst )
+static HRESULT dup_global_mem( HGLOBAL src, DWORD flags, HGLOBAL *dst )
 {
     void *src_ptr, *dst_ptr;
     DWORD size;
@@ -414,7 +414,7 @@ static HRESULT dup_global_mem( HGLOBAL src, HGLOBAL *dst )
 
     size = GlobalSize(src);
 
-    *dst = GlobalAlloc( GMEM_DDESHARE|GMEM_MOVEABLE, size );
+    *dst = GlobalAlloc( flags, size );
     if ( !*dst ) return E_OUTOFMEMORY;
 
     src_ptr = GlobalLock(src);
@@ -685,7 +685,7 @@ static HRESULT get_data_from_global(IDataObject *data, FORMATETC *fmt, HGLOBAL *
     hr = IDataObject_GetData(data, &mem_fmt, &med);
     if(FAILED(hr)) return hr;
 
-    hr = dup_global_mem(med.u.hGlobal, &h);
+    hr = dup_global_mem(med.u.hGlobal, GMEM_DDESHARE|GMEM_MOVEABLE, &h);
 
     if(SUCCEEDED(hr)) *mem = h;
 
@@ -918,9 +918,9 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
 	    LPFORMATETC      pformatetcIn,
 	    STGMEDIUM*       pmedium)
 {
-  HANDLE      hData = 0;
-  LPVOID src;
+  HANDLE h, hData = 0;
   ole_clipbrd *This = impl_from_IDataObject(iface);
+  HRESULT hr;
 
   TRACE("(%p,%p,%p)\n", iface, pformatetcIn, pmedium);
 
@@ -953,26 +953,8 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
    */
   if ( !OpenClipboard(theOleClipboard->hWndClipboard)) return CLIPBRD_E_CANT_OPEN;
 
-  hData = GetClipboardData(pformatetcIn->cfFormat);
-
-  /* Must make a copy of global handle returned by GetClipboardData; it
-   * is not valid after we call CloseClipboard
-   * Application is responsible for freeing the memory (Forte Agent does this)
-   */
-  src = GlobalLock(hData);
-  if(src) {
-      LPVOID dest;
-      ULONG  size;
-      HANDLE hDest;
-
-      size = GlobalSize(hData);
-      hDest = GlobalAlloc(GHND, size);
-      dest  = GlobalLock(hDest);
-      memcpy(dest, src, size);
-      GlobalUnlock(hDest);
-      GlobalUnlock(hData);
-      hData = hDest;
-  }
+  h = GetClipboardData(pformatetcIn->cfFormat);
+  hr = dup_global_mem(h, GMEM_MOVEABLE, &hData);
 
   /*
    * Return the clipboard data in the storage medium structure
@@ -983,6 +965,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_GetData(
 
   if ( !CloseClipboard() ) return CLIPBRD_E_CANT_CLOSE;
 
+  if(FAILED(hr)) return hr;
   return (hData == 0) ? DV_E_FORMATETC : S_OK;
 }
 
