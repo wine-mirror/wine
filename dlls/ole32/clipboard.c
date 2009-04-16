@@ -986,6 +986,42 @@ static HRESULT get_stgmed_for_stream(HGLOBAL h, STGMEDIUM *med)
 }
 
 /************************************************************************
+ *                    get_stgmed_for_storage
+ *
+ * Returns a stg medium with a storage based on the handle
+ */
+static HRESULT get_stgmed_for_storage(HGLOBAL h, STGMEDIUM *med)
+{
+    HRESULT hr;
+    HGLOBAL dst;
+    ILockBytes *lbs;
+
+    med->pUnkForRelease = NULL;
+    med->tymed = TYMED_NULL;
+
+    hr = dup_global_mem(h, GMEM_MOVEABLE, &dst);
+    if(FAILED(hr)) return hr;
+
+    hr = CreateILockBytesOnHGlobal(dst, TRUE, &lbs);
+    if(FAILED(hr))
+    {
+        GlobalFree(dst);
+        return hr;
+    }
+
+    hr = StgOpenStorageOnILockBytes(lbs, NULL,  STGM_SHARE_EXCLUSIVE | STGM_READWRITE, NULL, 0, &med->u.pstg);
+    ILockBytes_Release(lbs);
+    if(FAILED(hr))
+    {
+        GlobalFree(dst);
+        return hr;
+    }
+
+    med->tymed = TYMED_ISTORAGE;
+    return hr;
+}
+
+/************************************************************************
  *         snapshot_GetData
  */
 static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
@@ -1030,7 +1066,9 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
     else /* non-Ole format */
         mask = fmt->tymed & TYMED_HGLOBAL;
 
-    if(mask & TYMED_HGLOBAL)
+    if(mask & TYMED_ISTORAGE)
+        hr = get_stgmed_for_storage(h, med);
+    else if(mask & TYMED_HGLOBAL)
         hr = get_stgmed_for_global(h, med);
     else if(mask & TYMED_ISTREAM)
         hr = get_stgmed_for_stream(h, med);
