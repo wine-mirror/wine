@@ -518,7 +518,7 @@ int main(int argc, char *argv[])
 
     /* Clean up */
     fclose(f_c);
-    fclose(f_h;
+    fclose(f_h);
 
     return 0;
 }
