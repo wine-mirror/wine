@@ -528,6 +528,21 @@ static HRESULT render_embed_source_hack(IDataObject *data, LPFORMATETC fmt)
     return hr;
 }
 
+/************************************************************************
+ *           find_format_in_list
+ *
+ * Returns the first entry that matches the provided clipboard format.
+ */
+static inline ole_priv_data_entry *find_format_in_list(ole_priv_data_entry *entries, DWORD num, UINT cf)
+{
+    DWORD i;
+    for(i = 0; i < num; i++)
+        if(entries[i].fmtetc.cfFormat == cf)
+            return &entries[i];
+
+    return NULL;
+}
+
 /***********************************************************************
  *                render_format
  *
@@ -1211,16 +1226,6 @@ static HWND OLEClipbrd_CreateWindow(void)
   return hwnd;
 }
 
-static inline BOOL is_format_in_list(ole_priv_data_entry *entries, DWORD num, UINT cf)
-{
-    DWORD i;
-    for(i = 0; i < num; i++)
-        if(entries[i].fmtetc.cfFormat == cf)
-            return TRUE;
-
-    return FALSE;
-}
-
 /*********************************************************************
  *          set_clipboard_formats
  *
@@ -1294,7 +1299,7 @@ static HRESULT set_clipboard_formats(ole_clipbrd *clipbrd, IDataObject *data)
             CoTaskMemFree(fmt.ptd);
         }
 
-        priv_data->entries[idx].first_use = !is_format_in_list(priv_data->entries, idx, fmt.cfFormat);
+        priv_data->entries[idx].first_use = !find_format_in_list(priv_data->entries, idx, fmt.cfFormat);
         priv_data->entries[idx].unk[0] = 0;
         priv_data->entries[idx].unk[1] = 0;
 
