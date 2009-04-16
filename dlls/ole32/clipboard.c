@@ -904,20 +904,76 @@ end:
     return hr;
 }
 
+/***********************************************************
+ *     get_priv_data
+ *
+ * Returns a copy of the Ole Private Data
+ */
+static HRESULT get_priv_data(ole_priv_data **data)
+{
+    HGLOBAL handle;
+    HRESULT hr = S_OK;
+
+    *data = NULL;
+
+    handle = GetClipboardData( ole_priv_data_clipboard_format );
+    if(handle)
+    {
+        ole_priv_data *src = GlobalLock(handle);
+        if(src)
+        {
+            /* FIXME: sanity check on size */
+            *data = HeapAlloc(GetProcessHeap(), 0, src->size);
+            if(!*data)
+            {
+                GlobalUnlock(handle);
+                return E_OUTOFMEMORY;
+            }
+            memcpy(*data, src, src->size);
+            GlobalUnlock(handle);
+        }
+    }
+
+    if(!*data) hr = create_empty_priv_data(data);
+
+    return hr;
+}
+
+/************************************************************************
+ *                    get_stgmed_for_global
+ *
+ * Returns a stg medium with a copy of the global handle
+ */
+static HRESULT get_stgmed_for_global(HGLOBAL h, STGMEDIUM *med)
+{
+    HRESULT hr;
+
+    med->pUnkForRelease = NULL;
+    med->tymed = TYMED_NULL;
+
+    hr = dup_global_mem(h, GMEM_MOVEABLE, &med->u.hGlobal);
+
+    if(SUCCEEDED(hr)) med->tymed = TYMED_HGLOBAL;
+
+    return hr;
+}
+
 /************************************************************************
  *         snapshot_GetData
  */
-static HRESULT WINAPI snapshot_GetData(IDataObject *iface,
-                                       FORMATETC *pformatetcIn,
-                                       STGMEDIUM *pmedium)
+static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
+                                       STGMEDIUM *med)
 {
     snapshot *This = impl_from_IDataObject(iface);
-    HANDLE h, hData = 0;
+    HANDLE h;
     HRESULT hr;
+    ole_priv_data *enum_data = NULL;
+    ole_priv_data_entry *entry;
+    DWORD mask;
 
-    TRACE("(%p,%p,%p)\n", iface, pformatetcIn, pmedium);
+    TRACE("(%p,%p,%p)\n", iface, fmt, med);
 
-    if ( !pformatetcIn || !pmedium ) return E_INVALIDARG;
+    if ( !fmt || !med ) return E_INVALIDARG;
 
     if ( !OpenClipboard(NULL)) return CLIPBRD_E_CANT_OPEN;
 
@@ -926,43 +982,39 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface,
 
     if(This->data)
     {
-        hr = IDataObject_GetData(This->data, pformatetcIn, pmedium);
+        hr = IDataObject_GetData(This->data, fmt, med);
         CloseClipboard();
         return hr;
     }
 
+    h = GetClipboardData(fmt->cfFormat);
+    if(!h)
+    {
+        hr = DV_E_FORMATETC;
+        goto end;
+    }
 
-  /*
-   * Otherwise, get the data from the windows clipboard using GetClipboardData
-   */
+    hr = get_priv_data(&enum_data);
+    if(FAILED(hr)) goto end;
 
-  if ( pformatetcIn->lindex != -1 )
-  {
-      hr = DV_E_FORMATETC;
-      goto end;
-  }
+    entry = find_format_in_list(enum_data->entries, enum_data->count, fmt->cfFormat);
+    if(entry)
+        mask = fmt->tymed & entry->fmtetc.tymed;
+    else /* non-Ole format */
+        mask = fmt->tymed & TYMED_HGLOBAL;
 
-  if ( (pformatetcIn->tymed & TYMED_HGLOBAL) != TYMED_HGLOBAL )
-  {
-      hr = DV_E_TYMED;
-      goto end;
-  }
-
-  h = GetClipboardData(pformatetcIn->cfFormat);
-  hr = dup_global_mem(h, GMEM_MOVEABLE, &hData);
-
-  /*
-   * Return the clipboard data in the storage medium structure
-   */
-  pmedium->tymed = (hData == 0) ? TYMED_NULL : TYMED_HGLOBAL;
-  pmedium->u.hGlobal = hData;
-  pmedium->pUnkForRelease = NULL;
+    if(mask & TYMED_HGLOBAL)
+        hr = get_stgmed_for_global(h, med);
+    else
+    {
+        FIXME("Unhandled tymed - emum tymed %x req tymed %x\n", entry->fmtetc.tymed, fmt->tymed);
+        hr = E_FAIL;
+        goto end;
+    }
 
 end:
-  if ( !CloseClipboard() ) return CLIPBRD_E_CANT_CLOSE;
-
-  if(FAILED(hr)) return hr;
-  return (hData == 0) ? DV_E_FORMATETC : S_OK;
+    if ( !CloseClipboard() ) hr = CLIPBRD_E_CANT_CLOSE;
+    return hr;
 }
 
 /************************************************************************
@@ -1029,8 +1081,7 @@ static HRESULT WINAPI snapshot_SetData(IDataObject *iface, FORMATETC *fmt,
 static HRESULT WINAPI snapshot_EnumFormatEtc(IDataObject *iface, DWORD dir,
                                              IEnumFORMATETC **enum_fmt)
 {
-    HRESULT hr = S_OK;
-    HGLOBAL handle;
+    HRESULT hr;
     ole_priv_data *data = NULL;
 
     TRACE("(%p, %x, %p)\n", iface, dir, enum_fmt);
@@ -1040,26 +1091,8 @@ static HRESULT WINAPI snapshot_EnumFormatEtc(IDataObject *iface, DWORD dir,
     if ( dir != DATADIR_GET ) return E_NOTIMPL;
     if ( !OpenClipboard(NULL) ) return CLIPBRD_E_CANT_OPEN;
 
-    handle = GetClipboardData( ole_priv_data_clipboard_format );
-    if(handle)
-    {
-        ole_priv_data *src = GlobalLock(handle);
-        if(src)
-        {
-            /* FIXME: sanity check on size */
-            data = HeapAlloc(GetProcessHeap(), 0, src->size);
-            if(!data)
-            {
-                GlobalUnlock(handle);
-                hr = E_OUTOFMEMORY;
-                goto end;
-            }
-            memcpy(data, src, src->size);
-            GlobalUnlock(handle);
-        }
-    }
+    hr = get_priv_data(&data);
 
-    if(!data) hr = create_empty_priv_data(&data);
     if(FAILED(hr)) goto end;
 
     hr = enum_fmtetc_construct( data, 0, enum_fmt );
