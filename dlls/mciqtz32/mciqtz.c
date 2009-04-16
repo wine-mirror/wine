@@ -60,7 +60,7 @@ static DWORD MCIQTZ_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
 {
     WINE_MCIQTZ* wma;
 
-    TRACE("%s, %p\n", debugstr_w(str), modp);
+    TRACE("(%s, %p)\n", debugstr_w(str), modp);
 
     /* session instance */
     if (!modp)
@@ -83,7 +83,7 @@ static DWORD MCIQTZ_drvClose(DWORD dwDevID)
 {
     WINE_MCIQTZ* wma;
 
-    TRACE("%04x\n", dwDevID);
+    TRACE("(%04x)\n", dwDevID);
 
     /* finish all outstanding things */
     MCIQTZ_mciClose(dwDevID, MCI_WAIT, NULL);
@@ -105,7 +105,7 @@ static DWORD MCIQTZ_drvConfigure(DWORD dwDevID)
 {
     WINE_MCIQTZ* wma;
 
-    TRACE("%04x\n", dwDevID);
+    TRACE("(%04x)\n", dwDevID);
 
     MCIQTZ_mciStop(dwDevID, MCI_WAIT, NULL);
 
