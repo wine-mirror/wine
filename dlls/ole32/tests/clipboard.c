@@ -871,7 +871,7 @@ static inline ULONG count_refs(IDataObject *d)
 static void test_consumer_refs(void)
 {
     HRESULT hr;
-    IDataObject *src, *get1, *get2, *get3;
+    IDataObject *src, *src2, *get1, *get2, *get3;
     ULONG refs, old_refs;
     FORMATETC fmt;
     STGMEDIUM med;
@@ -884,6 +884,8 @@ static void test_consumer_refs(void)
        a different data object */
 
     hr = DataObjectImpl_CreateText("data1", &src);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = DataObjectImpl_CreateText("data2", &src2);
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = OleSetClipboard(src);
@@ -931,7 +933,6 @@ static void test_consumer_refs(void)
     ok(hr == S_OK, "got %08x\n", hr);
 
     old_refs = count_refs(src);
-    trace("old_refs %d\n", old_refs);
 
     hr = OleGetClipboard(&get1);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -963,6 +964,44 @@ static void test_consumer_refs(void)
     refs = count_refs(src);
     ok(refs == 1, "%d\n", refs);
 
+    /* Now set a second src object before the call to GetData
+       and show that GetData calls that second src. */
+
+    hr = OleSetClipboard(src);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    old_refs = count_refs(src);
+
+    hr = OleGetClipboard(&get1);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    refs = count_refs(src);
+    ok(refs == old_refs, "%d %d\n", refs, old_refs);
+
+    hr = OleSetClipboard(src2);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    old_refs = count_refs(src2);
+
+    DataObjectImpl_GetData_calls = 0;
+    hr = IDataObject_GetData(get1, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(DataObjectImpl_GetData_calls == 1, "GetData not called\n");
+    ReleaseStgMedium(&med);
+
+    refs = count_refs(src);
+    ok(refs == 1, "%d\n", refs);
+    refs = count_refs(src2);
+    ok(refs == old_refs + 1, "%d %d\n", refs, old_refs);
+
+    OleSetClipboard(NULL);
+
+    refs = count_refs(src2);
+    ok(refs == 2, "%d\n", refs);
+
+    IDataObject_Release(get1);
+
+    IDataObject_Release(src2);
     IDataObject_Release(src);
 
     OleUninitialize();
