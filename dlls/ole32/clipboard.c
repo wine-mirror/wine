@@ -558,6 +558,61 @@ static inline ole_priv_data_entry *find_format_in_list(ole_priv_data_entry *entr
 }
 
 /***************************************************************************
+ *         get_data_from_storage
+ *
+ * Returns storage data in an HGLOBAL.
+ */
+static HRESULT get_data_from_storage(IDataObject *data, FORMATETC *fmt, HGLOBAL *mem)
+{
+    HGLOBAL h;
+    IStorage *stg;
+    HRESULT hr;
+    FORMATETC stg_fmt;
+    STGMEDIUM med;
+    ILockBytes *lbs;
+
+    *mem = NULL;
+
+    h = GlobalAlloc( GMEM_DDESHARE|GMEM_MOVEABLE, 0 );
+    if(!h) return E_OUTOFMEMORY;
+
+    hr = CreateILockBytesOnHGlobal(h, FALSE, &lbs);
+    if(SUCCEEDED(hr))
+    {
+        hr = StgCreateDocfileOnILockBytes(lbs, STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stg);
+        ILockBytes_Release(lbs);
+    }
+    if(FAILED(hr))
+    {
+        GlobalFree(h);
+        return hr;
+    }
+
+    stg_fmt = *fmt;
+    med.tymed = stg_fmt.tymed = TYMED_ISTORAGE;
+    med.u.pstg = stg;
+    med.pUnkForRelease = NULL;
+
+    hr = IDataObject_GetDataHere(data, &stg_fmt, &med);
+    if(FAILED(hr))
+    {
+        med.u.pstg = NULL;
+        hr = IDataObject_GetData(data, &stg_fmt, &med);
+        if(FAILED(hr)) goto end;
+
+        hr = IStorage_CopyTo(med.u.pstg, 0, NULL, NULL, stg);
+        ReleaseStgMedium(&med);
+        if(FAILED(hr)) goto end;
+    }
+    *mem = h;
+
+end:
+    IStorage_Release(stg);
+    if(FAILED(hr)) GlobalFree(h);
+    return hr;
+}
+
+/***************************************************************************
  *         get_data_from_stream
  *
  * Returns stream data in an HGLOBAL.
@@ -656,7 +711,11 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
         return render_embed_source_hack(data, fmt);
     }
 
-    if(fmt->tymed & TYMED_ISTREAM)
+    if(fmt->tymed & TYMED_ISTORAGE)
+    {
+        hr = get_data_from_storage(data, fmt, &clip_data);
+    }
+    else if(fmt->tymed & TYMED_ISTREAM)
     {
         hr = get_data_from_stream(data, fmt, &clip_data);
     }
