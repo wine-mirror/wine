@@ -61,6 +61,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -165,6 +166,15 @@ static const CHAR OLEClipbrd_WNDCLASS[] = "CLIPBRDWNDCLASS";
 static UINT dataobject_clipboard_format;
 static UINT ole_priv_data_clipboard_format;
 static UINT embed_source_clipboard_format;
+
+static inline char *dump_fmtetc(FORMATETC *fmt)
+{
+    static char buf[100];
+
+    snprintf(buf, sizeof(buf), "cf %04x ptd %p aspect %x lindex %d tymed %x",
+             fmt->cfFormat, fmt->ptd, fmt->dwAspect, fmt->lindex, fmt->tymed);
+    return buf;
+}
 
 /*---------------------------------------------------------------------*
  *  Implementation of the internal IEnumFORMATETC interface returned by
@@ -1235,11 +1245,11 @@ static HWND OLEClipbrd_CreateWindow(void)
 /*********************************************************************
  *          set_clipboard_formats
  *
- * Enumerate all HGLOBAL formats supported by the source and make
+ * Enumerate all formats supported by the source and make
  * those formats available using delayed rendering using SetClipboardData.
+ * Cache the enumeration list and make that list visibile as the
+ * 'Ole Private Data' format on the clipboard.
  *
- * TODO: We need to additionally handle TYMED_IStorage and
- * TYMED_IStream data by copying into global memory.
  */
 static HRESULT set_clipboard_formats(ole_clipbrd *clipbrd, IDataObject *data)
 {
@@ -1287,14 +1297,7 @@ static HRESULT set_clipboard_formats(ole_clipbrd *clipbrd, IDataObject *data)
 
     while(IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL) == S_OK)
     {
-        if (fmt.tymed == TYMED_HGLOBAL)
-        {
-            char fmt_name[80];
-            TRACE("(cfFormat=%d:%s)\n", fmt.cfFormat,
-                  GetClipboardFormatNameA(fmt.cfFormat, fmt_name, sizeof(fmt_name)-1) ? fmt_name : "");
-
-            SetClipboardData(fmt.cfFormat, NULL);
-        }
+        TRACE("%s\n", dump_fmtetc(&fmt));
 
         priv_data->entries[idx].fmtetc = fmt;
         if(fmt.ptd)
@@ -1308,6 +1311,9 @@ static HRESULT set_clipboard_formats(ole_clipbrd *clipbrd, IDataObject *data)
         priv_data->entries[idx].first_use = !find_format_in_list(priv_data->entries, idx, fmt.cfFormat);
         priv_data->entries[idx].unk[0] = 0;
         priv_data->entries[idx].unk[1] = 0;
+
+        if (priv_data->entries[idx].first_use)
+            SetClipboardData(fmt.cfFormat, NULL);
 
         idx++;
     }
