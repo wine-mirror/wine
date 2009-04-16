@@ -1063,6 +1063,36 @@ static HRESULT get_stgmed_for_storage(HGLOBAL h, STGMEDIUM *med)
     return hr;
 }
 
+static inline BOOL string_off_equal(const DVTARGETDEVICE *t1, WORD off1, const DVTARGETDEVICE *t2, WORD off2)
+{
+    const WCHAR *str1, *str2;
+
+    if(off1 == 0 && off2 == 0) return TRUE;
+    if(off1 == 0 || off2 == 0) return FALSE;
+
+    str1 = (const WCHAR*)((const char*)t1 + off1);
+    str2 = (const WCHAR*)((const char*)t2 + off2);
+
+    return !lstrcmpW(str1, str2);
+}
+
+static inline BOOL td_equal(const DVTARGETDEVICE *t1, const DVTARGETDEVICE *t2)
+{
+    if(t1 == NULL && t2 == NULL) return TRUE;
+    if(t1 == NULL || t2 == NULL) return FALSE;
+
+    if(!string_off_equal(t1, t1->tdDriverNameOffset, t2, t2->tdDriverNameOffset))
+        return FALSE;
+    if(!string_off_equal(t1, t1->tdDeviceNameOffset, t2, t2->tdDeviceNameOffset))
+        return FALSE;
+    if(!string_off_equal(t1, t1->tdPortNameOffset, t2, t2->tdPortNameOffset))
+        return FALSE;
+
+    /* FIXME check devmode? */
+
+    return TRUE;
+}
+
 /************************************************************************
  *         snapshot_GetData
  */
@@ -1105,6 +1135,11 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
     entry = find_format_in_list(enum_data->entries, enum_data->count, fmt->cfFormat);
     if(entry)
     {
+        if(!td_equal(fmt->ptd, entry->fmtetc.ptd))
+        {
+            hr = DV_E_FORMATETC;
+            goto end;
+        }
         mask = fmt->tymed & entry->fmtetc.tymed;
         if(!mask) mask = fmt->tymed & (TYMED_ISTREAM | TYMED_HGLOBAL);
     }
@@ -1125,6 +1160,7 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
     }
 
 end:
+    HeapFree(GetProcessHeap(), 0, enum_data);
     if ( !CloseClipboard() ) hr = CLIPBRD_E_CANT_CLOSE;
     return hr;
 }
