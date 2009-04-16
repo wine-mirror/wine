@@ -84,50 +84,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define HANDLE_ERROR(err) do { hr = err; TRACE("(HRESULT=%x)\n", (HRESULT)err); goto CLEANUP; } while (0)
 
-
-/****************************************************************************
- * ole_clipbrd
- */
-struct ole_clipbrd
-{
-    const IDataObjectVtbl* lpvtbl;  /* Exposed IDataObject vtable */
-
-    LONG ref;
-
-    HWND hWndClipboard;              /* Hidden clipboard window */
-    IDataObject* pIDataObjectSrc;    /* Source object passed to OleSetClipboard */
-};
-
-typedef struct ole_clipbrd ole_clipbrd;
-
-static inline ole_clipbrd *impl_from_IDataObject(IDataObject *iface)
-{
-    return (ole_clipbrd*)((char*)iface - FIELD_OFFSET(ole_clipbrd, lpvtbl));
-}
-
-typedef struct PresentationDataHeader
-{
-  BYTE unknown1[28];
-  DWORD dwObjectExtentX;
-  DWORD dwObjectExtentY;
-  DWORD dwSize;
-} PresentationDataHeader;
-
-/*
- * The one and only ole_clipbrd object which is created by OLEClipbrd_Initialize()
- */
-static ole_clipbrd* theOleClipboard;
-
-
-/*
- * Name of our registered OLE clipboard window class
- */
-static const CHAR OLEClipbrd_WNDCLASS[] = "CLIPBRDWNDCLASS";
-
-static UINT dataobject_clipboard_format;
-static UINT ole_priv_data_clipboard_format;
-static UINT embed_source_clipboard_format;
-
 /* Structure of 'Ole Private Data' clipboard format */
 typedef struct
 {
@@ -162,6 +118,49 @@ static HRESULT create_empty_priv_data(ole_priv_data **data)
     *data = ptr;
     return S_OK;
 }
+
+
+/****************************************************************************
+ * ole_clipbrd
+ */
+typedef struct ole_clipbrd
+{
+    const IDataObjectVtbl* lpvtbl;  /* Exposed IDataObject vtable */
+
+    LONG ref;
+
+    HWND hWndClipboard;              /* Hidden clipboard window */
+    IDataObject *pIDataObjectSrc;    /* Source object passed to OleSetClipboard */
+    ole_priv_data *cached_enum;      /* Cached result from the enumeration of src data object */
+} ole_clipbrd;
+
+static inline ole_clipbrd *impl_from_IDataObject(IDataObject *iface)
+{
+    return (ole_clipbrd*)((char*)iface - FIELD_OFFSET(ole_clipbrd, lpvtbl));
+}
+
+typedef struct PresentationDataHeader
+{
+  BYTE unknown1[28];
+  DWORD dwObjectExtentX;
+  DWORD dwObjectExtentY;
+  DWORD dwSize;
+} PresentationDataHeader;
+
+/*
+ * The one and only ole_clipbrd object which is created by OLEClipbrd_Initialize()
+ */
+static ole_clipbrd* theOleClipboard;
+
+
+/*
+ * Name of our registered OLE clipboard window class
+ */
+static const CHAR OLEClipbrd_WNDCLASS[] = "CLIPBRDWNDCLASS";
+
+static UINT dataobject_clipboard_format;
+static UINT ole_priv_data_clipboard_format;
+static UINT embed_source_clipboard_format;
 
 /*---------------------------------------------------------------------*
  *  Implementation of the internal IEnumFORMATETC interface returned by
@@ -690,6 +689,8 @@ static LRESULT CALLBACK OLEClipbrd_WndProc
       {
         IDataObject_Release(theOleClipboard->pIDataObjectSrc);
         theOleClipboard->pIDataObjectSrc = NULL;
+        HeapFree(GetProcessHeap(), 0, theOleClipboard->cached_enum);
+        theOleClipboard->cached_enum = NULL;
       }
       break;
     }
@@ -1104,6 +1105,7 @@ static ole_clipbrd* OLEClipbrd_Construct(void)
 
     This->hWndClipboard = NULL;
     This->pIDataObjectSrc = NULL;
+    This->cached_enum = NULL;
 
     theOleClipboard = This;
     return This;
@@ -1228,7 +1230,7 @@ static inline BOOL is_format_in_list(ole_priv_data_entry *entries, DWORD num, UI
  * TODO: We need to additionally handle TYMED_IStorage and
  * TYMED_IStream data by copying into global memory.
  */
-static HRESULT set_clipboard_formats(IDataObject *data)
+static HRESULT set_clipboard_formats(ole_clipbrd *clipbrd, IDataObject *data)
 {
     HRESULT hr;
     FORMATETC fmt;
@@ -1300,6 +1302,14 @@ static HRESULT set_clipboard_formats(IDataObject *data)
     }
 
     IEnumFORMATETC_Release(enum_fmt);
+
+    /* Cache the list and fixup any target device offsets to ptrs */
+    clipbrd->cached_enum = HeapAlloc(GetProcessHeap(), 0, needed);
+    memcpy(clipbrd->cached_enum, priv_data, needed);
+    for(idx = 0; idx < clipbrd->cached_enum->count; idx++)
+        if(clipbrd->cached_enum->entries[idx].fmtetc.ptd)
+            clipbrd->cached_enum->entries[idx].fmtetc.ptd =
+                (DVTARGETDEVICE *)((char*)clipbrd->cached_enum + (DWORD)clipbrd->cached_enum->entries[idx].fmtetc.ptd);
 
     GlobalUnlock(priv_data_handle);
     SetClipboardData(ole_priv_data_clipboard_format, priv_data_handle);
@@ -1393,6 +1403,8 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
   {
     IDataObject_Release(theOleClipboard->pIDataObjectSrc);
     theOleClipboard->pIDataObjectSrc = NULL;
+    HeapFree(GetProcessHeap(), 0, theOleClipboard->cached_enum);
+    theOleClipboard->cached_enum = NULL;
   }
 
   /* A NULL value indicates that the clipboard should be emptied. */
@@ -1400,7 +1412,7 @@ HRESULT WINAPI OleSetClipboard(IDataObject* pDataObj)
   if ( pDataObj )
   {
     IDataObject_AddRef(theOleClipboard->pIDataObjectSrc);
-    hr = set_clipboard_formats(pDataObj);
+    hr = set_clipboard_formats(theOleClipboard, pDataObj);
     if(FAILED(hr)) goto end;
   }
 
@@ -1416,6 +1428,8 @@ end:
     {
       IDataObject_Release(theOleClipboard->pIDataObjectSrc);
       theOleClipboard->pIDataObjectSrc = NULL;
+      HeapFree(GetProcessHeap(), 0, theOleClipboard->cached_enum);
+      theOleClipboard->cached_enum = NULL;
     }
   }
 
@@ -1506,6 +1520,8 @@ HRESULT WINAPI OleFlushClipboard(void)
 
   IDataObject_Release(theOleClipboard->pIDataObjectSrc);
   theOleClipboard->pIDataObjectSrc = NULL;
+  HeapFree(GetProcessHeap(), 0, theOleClipboard->cached_enum);
+  theOleClipboard->cached_enum = NULL;
 
 end:
 
