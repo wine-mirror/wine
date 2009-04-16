@@ -547,16 +547,96 @@ static inline ole_priv_data_entry *find_format_in_list(ole_priv_data_entry *entr
     return NULL;
 }
 
+/***************************************************************************
+ *         get_data_from_stream
+ *
+ * Returns stream data in an HGLOBAL.
+ */
+static HRESULT get_data_from_stream(IDataObject *data, FORMATETC *fmt, HGLOBAL *mem)
+{
+    HGLOBAL h;
+    IStream *stm = NULL;
+    HRESULT hr;
+    FORMATETC stm_fmt;
+    STGMEDIUM med;
+
+    *mem = NULL;
+
+    h = GlobalAlloc( GMEM_DDESHARE|GMEM_MOVEABLE, 0 );
+    if(!h) return E_OUTOFMEMORY;
+
+    hr = CreateStreamOnHGlobal(h, FALSE, &stm);
+    if(FAILED(hr)) goto error;
+
+    stm_fmt = *fmt;
+    med.tymed = stm_fmt.tymed = TYMED_ISTREAM;
+    med.u.pstm = stm;
+    med.pUnkForRelease = NULL;
+
+    hr = IDataObject_GetDataHere(data, &stm_fmt, &med);
+    if(FAILED(hr))
+    {
+        LARGE_INTEGER offs;
+        ULARGE_INTEGER pos;
+
+        med.u.pstm = NULL;
+        hr = IDataObject_GetData(data, &stm_fmt, &med);
+        if(FAILED(hr)) goto error;
+
+        offs.QuadPart = 0;
+        IStream_Seek(med.u.pstm, offs, STREAM_SEEK_CUR, &pos);
+        IStream_Seek(med.u.pstm, offs, STREAM_SEEK_SET, NULL);
+        hr = IStream_CopyTo(med.u.pstm, stm, pos, NULL, NULL);
+        ReleaseStgMedium(&med);
+        if(FAILED(hr)) goto error;
+    }
+    *mem = h;
+    IStream_Release(stm);
+    return S_OK;
+
+error:
+    if(stm) IStream_Release(stm);
+    GlobalFree(h);
+    return hr;
+}
+
+/***************************************************************************
+ *         get_data_from_global
+ *
+ * Returns global data in an HGLOBAL.
+ */
+static HRESULT get_data_from_global(IDataObject *data, FORMATETC *fmt, HGLOBAL *mem)
+{
+    HGLOBAL h;
+    HRESULT hr;
+    FORMATETC mem_fmt;
+    STGMEDIUM med;
+
+    *mem = NULL;
+
+    mem_fmt = *fmt;
+    mem_fmt.tymed = TYMED_HGLOBAL;
+
+    hr = IDataObject_GetData(data, &mem_fmt, &med);
+    if(FAILED(hr)) return hr;
+
+    hr = dup_global_mem(med.u.hGlobal, &h);
+
+    if(SUCCEEDED(hr)) *mem = h;
+
+    ReleaseStgMedium(&med);
+
+    return hr;
+}
+
 /***********************************************************************
  *                render_format
  *
  * Render the clipboard data. Note that this call will delegate to the
  * source data object.
- * Note: This function assumes it is passed an HGLOBAL format to render.
  */
 static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
 {
-    STGMEDIUM std;
     HGLOBAL clip_data = NULL;
     HRESULT hr;
 
@@ -566,34 +646,32 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
         return render_embed_source_hack(data, fmt);
     }
 
-    if (FAILED(hr = IDataObject_GetData(data, fmt, &std)))
+    if(fmt->tymed & TYMED_ISTREAM)
     {
-        WARN("() : IDataObject_GetData failed to render clipboard data! (%x)\n", hr);
-        return hr;
+        hr = get_data_from_stream(data, fmt, &clip_data);
     }
-
-    if(std.tymed != TYMED_HGLOBAL)
+    else if(fmt->tymed & TYMED_HGLOBAL)
     {
-        FIXME("got tymed %x\n", std.tymed);
+        hr = get_data_from_global(data, fmt, &clip_data);
+    }
+    else
+    {
+        FIXME("Unhandled tymed %x\n", fmt->tymed);
         hr = DV_E_FORMATETC;
-        goto end;
     }
 
-    hr = dup_global_mem(std.u.hGlobal, &clip_data);
-    if(FAILED(hr)) goto end;
-
-    if ( !SetClipboardData( fmt->cfFormat, clip_data ) )
+    if(SUCCEEDED(hr))
     {
-        WARN("() : Failed to set rendered clipboard data into clipboard!\n");
-        GlobalFree(clip_data);
-        hr = CLIPBRD_E_CANT_SET;
+        if ( !SetClipboardData(fmt->cfFormat, clip_data) )
+        {
+            WARN("() : Failed to set rendered clipboard data into clipboard!\n");
+            GlobalFree(clip_data);
+            hr = CLIPBRD_E_CANT_SET;
+        }
     }
 
-end:
-    ReleaseStgMedium(&std);
     return hr;
 }
-
 
 /***********************************************************************
  *                   clipbrd_wndproc
