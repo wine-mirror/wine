@@ -247,10 +247,9 @@ static void test_synthesized(void)
     ok(cf == CF_UNICODETEXT, "cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
-    todo_wine ok(cf == CF_METAFILEPICT, "cf %08x\n", cf);
-    if(cf == CF_METAFILEPICT)
-        cf = EnumClipboardFormats(cf);
+    ok(cf == CF_METAFILEPICT, "cf %08x\n", cf);
 
+    cf = EnumClipboardFormats(cf);
     ok(cf == 0, "cf %08x\n", cf);
 
     r = EmptyClipboard();

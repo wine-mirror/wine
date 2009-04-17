@@ -2746,7 +2746,7 @@ static BOOL X11DRV_CLIPBOARD_SynthesizeData(UINT wFormatID)
     }
     else if (wFormatID == CF_METAFILEPICT)
     {
-        bsyn = (lpSource = X11DRV_CLIPBOARD_LookupData(CF_METAFILEPICT)) &&
+        bsyn = (lpSource = X11DRV_CLIPBOARD_LookupData(CF_ENHMETAFILE)) &&
             ~lpSource->wFlags & CF_FLAG_SYNTHESIZED;
     }
     else if (wFormatID == CF_DIB)
