@@ -774,14 +774,16 @@ usage (void)
 {
     fprintf (stderr,
 "Usage: winetest [OPTION]... [TESTS]\n\n"
-"  -c       console mode, no GUI\n"
-"  -e       preserve the environment\n"
-"  -h       print this message and exit\n"
-"  -p       shutdown when the tests are done\n"
-"  -q       quiet mode, no output at all\n"
-"  -o FILE  put report into FILE, do not submit\n"
-"  -s FILE  submit FILE, do not run tests\n"
-"  -t TAG   include TAG of characters [-.0-9a-zA-Z] in the report\n");
+" --help    print this message and exit\n"
+" --version print the build version and exit\n"
+" -c        console mode, no GUI\n"
+" -e        preserve the environment\n"
+" -h        print this message and exit\n"
+" -p        shutdown when the tests are done\n"
+" -q        quiet mode, no output at all\n"
+" -o FILE   put report into FILE, do not submit\n"
+" -s FILE   submit FILE, do not run tests\n"
+" -t TAG    include TAG of characters [-.0-9a-zA-Z] in the report\n");
 }
 
 int main( int argc, char *argv[] )
@@ -797,7 +799,15 @@ int main( int argc, char *argv[] )
 
     for (i = 1; argv[i]; i++)
     {
-        if (argv[i][0] != '-' || argv[i][2]) {
+        if (!strcmp(argv[i], "--help")) {
+            usage ();
+            exit (0);
+        }
+        else if (!strcmp(argv[i], "--version")) {
+            printf("%-12.12s\n", build_id[0] ? build_id : "unknown");
+            exit (0);
+        }
+        else if ((argv[i][0] != '-' && argv[i][0] != '/') || argv[i][2]) {
             if (nb_filters == sizeof(filters)/sizeof(filters[0]))
             {
                 report (R_ERROR, "Too many test filters specified");
