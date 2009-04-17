@@ -1729,7 +1729,8 @@ HRESULT WINAPI OleSetClipboard(IDataObject* data)
   hr = set_src_dataobject(clipbrd, data);
   if(FAILED(hr)) goto end;
 
-  hr = set_dataobject_format(wnd);
+  if(data)
+    hr = set_dataobject_format(wnd);
 
 end:
 

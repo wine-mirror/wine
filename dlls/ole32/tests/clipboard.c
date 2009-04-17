@@ -595,6 +595,21 @@ static void test_enum_fmtetc(IDataObject *src)
     IDataObject_Release(data);
 }
 
+static void test_no_cf_dataobject(void)
+{
+    UINT cf_dataobject = RegisterClipboardFormatA("DataObject");
+    UINT cf_ole_priv_data = RegisterClipboardFormatA("Ole Private Data");
+    HANDLE h;
+    OpenClipboard(NULL);
+
+    h = GetClipboardData(cf_dataobject);
+    ok(!h, "got %p\n", h);
+    h = GetClipboardData(cf_ole_priv_data);
+    ok(!h, "got %p\n", h);
+
+    CloseClipboard();
+}
+
 static void test_cf_dataobject(IDataObject *data)
 {
     UINT cf = 0;
@@ -851,6 +866,7 @@ static void test_set_clipboard(void)
 
     ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard, hr = 0x%08x\n", hr);
 
+    test_no_cf_dataobject();
     test_enum_fmtetc(NULL);
 
     ref = IDataObject_Release(data1);
