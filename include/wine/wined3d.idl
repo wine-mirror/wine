@@ -2222,8 +2222,8 @@ interface IWineD3D : IWineD3DBase
     );
     HRESULT EnumAdapterModes(
         [in] UINT adapter_idx,
-        [in] UINT mode_idx,
         [in] WINED3DFORMAT format,
+        [in] UINT mode_idx,
         [out] WINED3DDISPLAYMODE *mode
     );
     HRESULT GetAdapterDisplayMode(
