@@ -1295,7 +1295,8 @@ static DWORD shader_glsl_add_dst_param(const struct wined3d_shader_instruction *
     glsl_dst->reg_name[0] = '\0';
 
     shader_glsl_get_register_name(wined3d_dst->register_type, wined3d_dst->register_idx,
-            wined3d_dst->has_rel_addr, wined3d_dst->addr_token, glsl_dst->reg_name, &is_color, ins);
+            !!wined3d_dst->rel_addr, wined3d_dst->rel_addr ? wined3d_dst->rel_addr->token : 0,
+            glsl_dst->reg_name, &is_color, ins);
     return shader_glsl_get_write_mask(wined3d_dst, glsl_dst->mask_str);
 }
 

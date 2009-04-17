@@ -458,8 +458,7 @@ struct wined3d_shader_dst_param
     DWORD write_mask;
     DWORD modifiers;
     DWORD shift;
-    BOOL has_rel_addr;
-    DWORD addr_token;
+    const struct wined3d_shader_src_param *rel_addr;
 };
 
 struct wined3d_shader_src_param
