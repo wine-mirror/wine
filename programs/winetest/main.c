@@ -769,6 +769,48 @@ static BOOL WINAPI ctrl_handler(DWORD ctrl_type)
     return FALSE;
 }
 
+
+static BOOL CALLBACK
+extract_only_proc (HMODULE hModule, LPCTSTR lpszType, LPTSTR lpszName, LONG_PTR lParam)
+{
+    const char *target_dir = (const char *)lParam;
+    char filename[MAX_PATH];
+
+    if (test_filtered_out( lpszName, NULL )) return TRUE;
+
+    strcpy(filename, lpszName);
+    CharLowerA(filename);
+
+    extract_test( &wine_tests[nr_of_files], target_dir, filename );
+    nr_of_files++;
+    return TRUE;
+}
+
+static void extract_only (const char *target_dir)
+{
+    BOOL res;
+
+    report (R_DIR, target_dir);
+    res = CreateDirectoryA( target_dir, NULL );
+    if (!res && GetLastError() != ERROR_ALREADY_EXISTS)
+        report (R_FATAL, "Could not create directory: %s (%d)", target_dir, GetLastError ());
+
+    nr_of_files = 0;
+    report (R_STATUS, "Counting tests");
+    if (!EnumResourceNames (NULL, MAKEINTRESOURCE(TESTRES), EnumTestFileProc, (LPARAM)&nr_of_files))
+        report (R_FATAL, "Can't enumerate test files: %d", GetLastError ());
+
+    wine_tests = xmalloc (nr_of_files * sizeof wine_tests[0] );
+
+    report (R_STATUS, "Extracting tests");
+    report (R_PROGRESS, 0, nr_of_files);
+    nr_of_files = 0;
+    if (!EnumResourceNames (NULL, MAKEINTRESOURCE(TESTRES), extract_only_proc, (LPARAM)target_dir))
+        report (R_FATAL, "Can't enumerate test files: %d", GetLastError ());
+
+    report (R_DELTA, 0, "Extracting: Done");
+}
+
 static void
 usage (void)
 {
@@ -783,12 +825,14 @@ usage (void)
 " -q        quiet mode, no output at all\n"
 " -o FILE   put report into FILE, do not submit\n"
 " -s FILE   submit FILE, do not run tests\n"
-" -t TAG    include TAG of characters [-.0-9a-zA-Z] in the report\n");
+" -t TAG    include TAG of characters [-.0-9a-zA-Z] in the report\n"
+" -x DIR    Extract tests to DIR (default: .\\wct) and exit\n");
 }
 
 int main( int argc, char *argv[] )
 {
     char *logname = NULL;
+    const char *extract = NULL;
     const char *cp, *submit = NULL;
     int reset_env = 1;
     int poweroff = 0;
@@ -797,7 +841,7 @@ int main( int argc, char *argv[] )
 
     if (!LoadStringA( 0, IDS_BUILD_ID, build_id, sizeof(build_id) )) build_id[0] = 0;
 
-    for (i = 1; argv[i]; i++)
+    for (i = 1; i < argc && argv[i]; i++)
     {
         if (!strcmp(argv[i], "--help")) {
             usage ();
@@ -867,13 +911,19 @@ int main( int argc, char *argv[] )
                 exit (2);
             }
             break;
+        case 'x':
+            if (!(extract = argv[++i]))
+                extract = ".\\wct";
+
+            extract_only (extract);
+            break;
         default:
             report (R_ERROR, "invalid option: -%c", argv[i][1]);
             usage ();
             exit (2);
         }
     }
-    if (!submit) {
+    if (!submit && !extract) {
         report (R_STATUS, "Starting up");
 
         if (!running_on_visible_desktop ())
