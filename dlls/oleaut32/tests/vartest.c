@@ -106,15 +106,16 @@ static void init(void)
     res = VarBstrFromBool(VARIANT_TRUE, LANG_USER_DEFAULT, VAR_LOCALBOOL, &bstr);
     ok(SUCCEEDED(res) && (lstrlenW(bstr) > 0),
         "Expected localized string for 'True'\n");
-    lstrcpyW(sz12_true, sz12);
-    if (bstr) lstrcatW(sz12_true, bstr);
+    /* lstrcpyW / lstrcatW do not work on win95 */
+    memcpy(sz12_true, sz12, sizeof(sz12));
+    if (bstr) memcpy(&sz12_true[2], bstr, SysStringByteLen(bstr) + sizeof(WCHAR));
     SysFreeString(bstr);
 
     res = VarBstrFromBool(VARIANT_FALSE, LANG_USER_DEFAULT, VAR_LOCALBOOL, &bstr);
     ok(SUCCEEDED(res) && (lstrlenW(bstr) > 0),
         "Expected localized string for 'False'\n");
-    lstrcpyW(sz12_false, sz12);
-    if (bstr) lstrcatW(sz12_false, bstr);
+    memcpy(sz12_false, sz12, sizeof(sz12));
+    if (bstr) memcpy(&sz12_false[2], bstr, SysStringByteLen(bstr) + sizeof(WCHAR));
     SysFreeString(bstr);
 
     hOleaut32 = GetModuleHandle("oleaut32.dll");
