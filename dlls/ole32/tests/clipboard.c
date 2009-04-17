@@ -1163,9 +1163,157 @@ static void test_flushed_getdata(void)
     OleUninitialize();
 }
 
+static HGLOBAL create_text(void)
+{
+    HGLOBAL h = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE, 5);
+    char *p = GlobalLock(h);
+    strcpy(p, "test");
+    GlobalUnlock(h);
+    return h;
+}
+
+static HENHMETAFILE create_emf(void)
+{
+    const RECT rect = {0, 0, 100, 100};
+    HDC hdc = CreateEnhMetaFileA(NULL, NULL, &rect, "HENHMETAFILE Ole Clipboard Test\0Test\0\0");
+    ExtTextOutA(hdc, 0, 0, ETO_OPAQUE, &rect, "Test String", strlen("Test String"), NULL);
+    return CloseEnhMetaFile(hdc);
+}
+
+static void test_nonole_clipboard(void)
+{
+    HRESULT hr;
+    BOOL r;
+    IDataObject *get;
+    IEnumFORMATETC *enum_fmt;
+    FORMATETC fmt;
+    HGLOBAL h, hblob, htext;
+    HENHMETAFILE emf;
+
+    r = OpenClipboard(NULL);
+    ok(r, "gle %d\n", GetLastError());
+    r = EmptyClipboard();
+    ok(r, "gle %d\n", GetLastError());
+    r = CloseClipboard();
+    ok(r, "gle %d\n", GetLastError());
+
+    OleInitialize(NULL);
+
+    /* empty clipboard */
+    hr = OleGetClipboard(&get);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IDataObject_EnumFormatEtc(get, DATADIR_GET, &enum_fmt);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    IEnumFORMATETC_Release(enum_fmt);
+
+    IDataObject_Release(get);
+
+    /* set a user defined clipboard type */
+
+    htext = create_text();
+    hblob = GlobalAlloc(GMEM_DDESHARE|GMEM_MOVEABLE|GMEM_ZEROINIT, 10);
+    emf = create_emf();
+
+    r = OpenClipboard(NULL);
+    ok(r, "gle %d\n", GetLastError());
+    h = SetClipboardData(CF_TEXT, htext);
+    ok(h == htext, "got %p\n", h);
+    h = SetClipboardData(cf_onemore, hblob);
+    ok(h == hblob, "got %p\n", h);
+    h = SetClipboardData(CF_ENHMETAFILE, emf);
+    ok(h == emf, "got %p\n", h);
+    r = CloseClipboard();
+    ok(r, "gle %d\n", GetLastError());
+
+    hr = OleGetClipboard(&get);
+    ok(hr == S_OK, "got %08x\n", hr);
+    hr = IDataObject_EnumFormatEtc(get, DATADIR_GET, &enum_fmt);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(fmt.cfFormat == CF_TEXT, "cf %04x\n", fmt.cfFormat);
+    ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+    ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+    ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+    ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
+
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(fmt.cfFormat == cf_onemore, "cf %04x\n", fmt.cfFormat);
+    ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+    ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+    ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+    ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
+
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(fmt.cfFormat == CF_ENHMETAFILE, "cf %04x\n", fmt.cfFormat);
+    ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+    ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+    ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+    ok(fmt.tymed == TYMED_ENHMF, "tymed %x\n", fmt.tymed);
+
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_OK, "got %08x\n", hr); /* User32 adds some synthesised formats */
+
+    todo_wine ok(fmt.cfFormat == CF_LOCALE, "cf %04x\n", fmt.cfFormat);
+    if(fmt.cfFormat == CF_LOCALE)
+    {
+        ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+        ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+        ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+        ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
+
+        hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+        ok(hr == S_OK, "got %08x\n", hr);
+    }
+
+    ok(fmt.cfFormat == CF_OEMTEXT, "cf %04x\n", fmt.cfFormat);
+    ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+    ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+    ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+    ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
+
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(fmt.cfFormat == CF_UNICODETEXT, "cf %04x\n", fmt.cfFormat);
+    ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+    ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+    ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+    ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
+
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(fmt.cfFormat == CF_METAFILEPICT, "cf %04x\n", fmt.cfFormat);
+    ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+    ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+    ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+    ok(fmt.tymed == TYMED_MFPICT, "tymed %x\n", fmt.tymed);
+
+    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+    ok(hr == S_FALSE, "got %08x\n", hr);
+    IEnumFORMATETC_Release(enum_fmt);
+
+    IDataObject_Release(get);
+
+    r = OpenClipboard(NULL);
+    ok(r, "gle %d\n", GetLastError());
+    r = EmptyClipboard();
+    ok(r, "gle %d\n", GetLastError());
+    r = CloseClipboard();
+    ok(r, "gle %d\n", GetLastError());
+
+    OleUninitialize();
+}
+
 START_TEST(clipboard)
 {
     test_set_clipboard();
     test_consumer_refs();
     test_flushed_getdata();
+    test_nonole_clipboard();
 }

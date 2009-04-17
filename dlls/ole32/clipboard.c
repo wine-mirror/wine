@@ -132,26 +132,6 @@ static inline DWORD_PTR td_get_offs(ole_priv_data *data, DWORD idx)
     return (char*)data->entries[idx].fmtetc.ptd - (char*)data;
 }
 
-/*****************************************************************************
- *           create_empty_priv_data
- *
- * Create an empty data structure.  The only thing that really matters
- * here is setting count and size members.  This is used by the enumerator as a
- * convenience when there's an empty list.
- */
-static HRESULT create_empty_priv_data(ole_priv_data **data)
-{
-    ole_priv_data *ptr;
-
-    *data = NULL;
-    ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(*ptr));
-    if(!ptr) return E_OUTOFMEMORY;
-    ptr->size = sizeof(*ptr);
-    ptr->count = 0;
-    *data = ptr;
-    return S_OK;
-}
-
 /****************************************************************************
  * Consumer snapshot.  Represents the state of the ole clipboard
  * returned by OleGetClipboard().
@@ -939,6 +919,26 @@ end:
     return hr;
 }
 
+static DWORD get_tymed_from_nonole_cf(UINT cf)
+{
+    if(cf >= 0xc000) return TYMED_ISTREAM | TYMED_HGLOBAL;
+
+    switch(cf)
+    {
+    case CF_TEXT:
+    case CF_OEMTEXT:
+    case CF_UNICODETEXT:
+        return TYMED_ISTREAM | TYMED_HGLOBAL;
+    case CF_ENHMETAFILE:
+        return TYMED_ENHMF;
+    case CF_METAFILEPICT:
+        return TYMED_MFPICT;
+    default:
+        FIXME("returning TYMED_NULL for cf %04x\n", cf);
+        return TYMED_NULL;
+    }
+}
+
 /***********************************************************
  *     get_priv_data
  *
@@ -948,6 +948,7 @@ static HRESULT get_priv_data(ole_priv_data **data)
 {
     HGLOBAL handle;
     HRESULT hr = S_OK;
+    ole_priv_data *ret = NULL;
 
     *data = NULL;
 
@@ -960,24 +961,55 @@ static HRESULT get_priv_data(ole_priv_data **data)
             DWORD i;
 
             /* FIXME: sanity check on size */
-            *data = HeapAlloc(GetProcessHeap(), 0, src->size);
-            if(!*data)
+            ret = HeapAlloc(GetProcessHeap(), 0, src->size);
+            if(!ret)
             {
                 GlobalUnlock(handle);
                 return E_OUTOFMEMORY;
             }
-            memcpy(*data, src, src->size);
+            memcpy(ret, src, src->size);
             GlobalUnlock(handle);
 
             /* Fixup any target device offsets to ptrs */
-            for(i = 0; i < (*data)->count; i++)
-                (*data)->entries[i].fmtetc.ptd =
-                    td_offs_to_ptr(*data, (DWORD_PTR)(*data)->entries[i].fmtetc.ptd);
+            for(i = 0; i < ret->count; i++)
+                ret->entries[i].fmtetc.ptd =
+                    td_offs_to_ptr(ret, (DWORD_PTR) ret->entries[i].fmtetc.ptd);
         }
     }
 
-    if(!*data) hr = create_empty_priv_data(data);
+    if(!ret) /* Non-ole data */
+    {
+        UINT cf;
+        DWORD count = 0, idx, size = FIELD_OFFSET(ole_priv_data, entries);
 
+        for(cf = 0; (cf = EnumClipboardFormats(cf)) != 0; count++)
+        {
+            char buf[100];
+            GetClipboardFormatNameA(cf, buf, sizeof(buf));
+            TRACE("\tcf %04x %s\n", cf, buf);
+            ;
+        }
+        TRACE("count %d\n", count);
+        size += count * sizeof(ret->entries[0]);
+
+        /* There are holes in fmtetc so zero init */
+        ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+        if(!ret) return E_OUTOFMEMORY;
+        ret->size = size;
+        ret->count = count;
+
+        for(cf = 0, idx = 0; (cf = EnumClipboardFormats(cf)) != 0; idx++)
+        {
+            ret->entries[idx].fmtetc.cfFormat = cf;
+            ret->entries[idx].fmtetc.ptd = NULL;
+            ret->entries[idx].fmtetc.dwAspect = DVASPECT_CONTENT;
+            ret->entries[idx].fmtetc.lindex = -1;
+            ret->entries[idx].fmtetc.tymed = get_tymed_from_nonole_cf(cf);
+            ret->entries[idx].first_use = 1;
+        }
+    }
+
+    *data = ret;
     return hr;
 }
 
