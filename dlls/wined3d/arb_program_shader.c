@@ -551,20 +551,20 @@ static void shader_arb_get_register_name(IWineD3DBaseShader *iface, WINED3DSHADE
 }
 
 static void shader_arb_add_src_param(const struct wined3d_shader_instruction *ins,
-        DWORD param, char *str)
+        const struct wined3d_shader_src_param *wined3d_src, char *str)
 {
     char register_name[255];
     char swizzle[6];
     BOOL is_color;
 
-    if ((param & WINED3DSP_SRCMOD_MASK) == WINED3DSPSM_NEG) strcat(str, " -");
+    if (wined3d_src->modifiers == WINED3DSPSM_NEG) strcat(str, " -");
     else strcat(str, " ");
 
-    shader_arb_get_register_name(ins->ctx->shader, shader_get_regtype(param), param & WINED3DSP_REGNUM_MASK,
-            param & WINED3DSHADER_ADDRMODE_RELATIVE, register_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, wined3d_src->register_type,
+            wined3d_src->register_idx, !!wined3d_src->rel_addr, register_name, &is_color);
     strcat(str, register_name);
 
-    shader_arb_get_swizzle(param, is_color, swizzle);
+    shader_arb_get_swizzle(wined3d_src->token, is_color, swizzle);
     strcat(str, swizzle);
 }
 
@@ -1043,7 +1043,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
             for (i = 0; i < ins->src_count; ++i)
             {
                 strcat(arguments, ",");
-                shader_arb_add_src_param(ins, ins->src[i].token, arguments);
+                shader_arb_add_src_param(ins, &ins->src[i], arguments);
             }
         }
         shader_addline(buffer, "%s%s;\n", instruction, arguments);
@@ -1068,7 +1068,7 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
         src0_param[0] = '\0';
         if (((IWineD3DVertexShaderImpl *)shader)->rel_offset)
         {
-            shader_arb_add_src_param(ins, ins->src[0].token, src0_param);
+            shader_arb_add_src_param(ins, &ins->src[0], src0_param);
             shader_addline(buffer, "ADD TMP.x, %s, helper_const.z;\n", src0_param);
             shader_addline(buffer, "ARL A0.x, TMP.x;\n");
         }
@@ -1077,9 +1077,11 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
             /* Apple's ARB_vertex_program implementation does not accept an ARL source argument
              * with more than one component. Thus replicate the first source argument over all
              * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc) */
-            DWORD parm = ins->src[0].token & ~(WINED3DSP_SWIZZLE_MASK);
-            parm |= ((ins->src[0].token >> WINED3DSP_SWIZZLE_SHIFT) & 0x3) * (0x55 << WINED3DSP_SWIZZLE_SHIFT);
-            shader_arb_add_src_param(ins, parm, src0_param);
+            struct wined3d_shader_src_param tmp_src = ins->src[0];
+            tmp_src.token &= ~WINED3DSP_SWIZZLE_MASK;
+            tmp_src.token |= ((ins->src[0].token >> WINED3DSP_SWIZZLE_SHIFT) & 0x3)
+                    * (0x55 << WINED3DSP_SWIZZLE_SHIFT);
+            shader_arb_add_src_param(ins, &tmp_src, src0_param);
             shader_addline(buffer, "ARL A0.x, %s;\n", src0_param);
         }
     }
@@ -1651,7 +1653,7 @@ static void vshader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
     strcpy(tmpLine, instruction);
     shader_arb_add_dst_param(ins, &ins->dst[0], tmpLine); /* Destination */
     strcat(tmpLine, ",");
-    shader_arb_add_src_param(ins, ins->src[0].token, tmpLine);
+    shader_arb_add_src_param(ins, &ins->src[0], tmpLine);
     if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) == swizzle) {
         /* Dx sdk says .x is used if no swizzle is given, but our test shows that
          * .w is used
