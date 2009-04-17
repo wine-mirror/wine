@@ -1076,17 +1076,9 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
         {
             /* Apple's ARB_vertex_program implementation does not accept an ARL source argument
              * with more than one component. Thus replicate the first source argument over all
-             * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc)
-             */
-            DWORD parm = ins->src[0].token & ~(WINED3DVS_SWIZZLE_MASK);
-            if ((ins->src[0].token & WINED3DVS_X_W) == WINED3DVS_X_W)
-                parm |= WINED3DVS_X_W | WINED3DVS_Y_W | WINED3DVS_Z_W | WINED3DVS_W_W;
-            else if ((ins->src[0].token & WINED3DVS_X_Z) == WINED3DVS_X_Z)
-                parm |= WINED3DVS_X_Z | WINED3DVS_Y_Z | WINED3DVS_Z_Z | WINED3DVS_W_Z;
-            else if ((ins->src[0].token & WINED3DVS_X_Y) == WINED3DVS_X_Y)
-                parm |= WINED3DVS_X_Y | WINED3DVS_Y_Y | WINED3DVS_Z_Y | WINED3DVS_W_Y;
-            else if ((ins->src[0].token & WINED3DVS_X_X) == WINED3DVS_X_X)
-                parm |= WINED3DVS_X_X | WINED3DVS_Y_X | WINED3DVS_Z_X | WINED3DVS_W_X;
+             * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc) */
+            DWORD parm = ins->src[0].token & ~(WINED3DSP_SWIZZLE_MASK);
+            parm |= ((ins->src[0].token >> WINED3DSP_SWIZZLE_SHIFT) & 0x3) * (0x55 << WINED3DSP_SWIZZLE_SHIFT);
             shader_arb_add_src_param(ins, parm, src0_param);
             shader_addline(buffer, "ARL A0.x, %s;\n", src0_param);
         }
