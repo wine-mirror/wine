@@ -1996,8 +1996,8 @@ static void test_ioctlsocket(void)
 {
     SOCKET sock;
     int ret;
-    long cmds[] = {FIONBIO, FIONREAD, SIOCATMARK};
-    int i;
+    static const LONG cmds[] = {FIONBIO, FIONREAD, SIOCATMARK};
+    UINT i;
 
     sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(sock != INVALID_SOCKET, "Creating the socket failed: %d\n", WSAGetLastError());
@@ -2007,7 +2007,7 @@ static void test_ioctlsocket(void)
         return;
     }
 
-    for(i = 0; i < sizeof(cmds)/sizeof(long); i++)
+    for(i = 0; i < sizeof(cmds)/sizeof(cmds[0]); i++)
     {
         /* broken apps like defcon pass the argp value directly instead of a pointer to it */
         ret = ioctlsocket(sock, cmds[i], (u_long *)1);
