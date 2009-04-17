@@ -1296,6 +1296,7 @@ static void test_WSAAddressToStringA(void)
     ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !strcmp( address, expect1 ), "Expected: %s, got: %s\n", expect1, address );
+    ok( len == sizeof( expect1 ), "Expected size to be %d, got %d\n", sizeof( expect1 ), len);
 
     len = sizeof(address);
 
@@ -1329,6 +1330,7 @@ static void test_WSAAddressToStringA(void)
     ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !strcmp( address, expect4 ), "Expected: %s, got: %s\n", expect4, address );
+    ok( len == sizeof( expect4 ), "Expected size to be %d, got %d\n", sizeof( expect4 ), len);
 }
 
 static void test_WSAAddressToStringW(void)
