@@ -1046,7 +1046,7 @@ static HRESULT Session_EvaluateCondition(IDispatch *pSession, LPCWSTR szConditio
     return hr;
 }
 
-static HRESULT Session_Message(IDispatch *pSession, long kind, IDispatch *record, int *ret)
+static HRESULT Session_Message(IDispatch *pSession, LONG kind, IDispatch *record, int *ret)
 {
     VARIANT varresult;
     VARIANTARG vararg[2];
@@ -1067,7 +1067,7 @@ static HRESULT Session_Message(IDispatch *pSession, long kind, IDispatch *record
     return hr;
 }
 
-static HRESULT Session_SetInstallLevel(IDispatch *pSession, long iInstallLevel)
+static HRESULT Session_SetInstallLevel(IDispatch *pSession, LONG iInstallLevel)
 {
     VARIANT varresult;
     VARIANTARG vararg[1];
