@@ -91,6 +91,14 @@ static void test_logpen(void)
         size = GetObject(hpen, sizeof(lp), &lp);
         ok(size == sizeof(lp), "GetObject returned %d, error %d\n", size, GetLastError());
 
+        if (pen[i].style == PS_USERSTYLE || pen[i].style == PS_ALTERNATE)
+        {
+           if (lp.lopnStyle == pen[i].style)
+           {
+               win_skip("Skipping PS_USERSTYLE and PS_ALTERNATE tests on Win9x\n");
+               continue;
+           }
+        }
         ok(lp.lopnStyle == pen[i].ret_style, "expected %u, got %u\n", pen[i].ret_style, lp.lopnStyle);
         ok(lp.lopnWidth.x == pen[i].ret_width, "expected %u, got %d\n", pen[i].ret_width, lp.lopnWidth.x);
         ok(lp.lopnWidth.y == 0 ||
@@ -521,6 +529,11 @@ static void test_ps_userstyle(void)
 
     pen = ExtCreatePen(PS_GEOMETRIC | PS_USERSTYLE, 50, &lb, 3, NULL);
     ok(pen == 0, "ExtCreatePen should fail\n");
+    if (pen == 0 && GetLastError() == 0xdeadbeef)
+    {
+        win_skip("Looks like 9x, skipping PS_USERSTYLE tests\n");
+        return;
+    }
     expect(ERROR_INVALID_PARAMETER, GetLastError());
     DeleteObject(pen);
     SetLastError(0xdeadbeef);
