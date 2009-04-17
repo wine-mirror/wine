@@ -2051,6 +2051,54 @@ static void test_sh_path_prepare(void)
     RemoveDirectoryW(UNICODE_PATH);
 }
 
+static void test_sh_new_link_info(void)
+{
+    BOOL ret, mustcopy=TRUE;
+    CHAR linkto[MAX_PATH];
+    CHAR destdir[MAX_PATH];
+    CHAR result[MAX_PATH];
+    CHAR result2[MAX_PATH];
+
+    /* source file does not exist */
+    set_curr_dir_path(linkto, "nosuchfile.txt\0");
+    set_curr_dir_path(destdir, "testdir2\0");
+    ret = SHGetNewLinkInfoA(linkto, destdir, result, &mustcopy, 0);
+    ok(ret == FALSE, "SHGetNewLinkInfoA succeeded\n");
+    ok(mustcopy == FALSE, "mustcopy should be FALSE\n");
+
+    /* dest dir does not exist */
+    set_curr_dir_path(linkto, "test1.txt\0");
+    set_curr_dir_path(destdir, "nosuchdir\0");
+    ret = SHGetNewLinkInfoA(linkto, destdir, result, &mustcopy, 0);
+    ok(ret == TRUE, "SHGetNewLinkInfoA failed, err=%i\n", GetLastError());
+    ok(mustcopy == FALSE, "mustcopy should be FALSE\n");
+
+    /* source file exists */
+    set_curr_dir_path(linkto, "test1.txt\0");
+    set_curr_dir_path(destdir, "testdir2\0");
+    ret = SHGetNewLinkInfoA(linkto, destdir, result, &mustcopy, 0);
+    ok(ret == TRUE, "SHGetNewLinkInfoA failed, err=%i\n", GetLastError());
+    ok(mustcopy == FALSE, "mustcopy should be FALSE\n");
+    ok(CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, destdir,
+                      lstrlenA(destdir), result, lstrlenA(destdir)) == CSTR_EQUAL,
+       "%s does not start with %s\n", result, destdir);
+    ok(lstrlenA(result) > 4 && lstrcmpiA(result+lstrlenA(result)-4, ".lnk") == 0,
+       "%s does not end with .lnk\n", result);
+
+    /* preferred target name already exists */
+    createTestFile(result);
+    ret = SHGetNewLinkInfoA(linkto, destdir, result2, &mustcopy, 0);
+    ok(ret == TRUE, "SHGetNewLinkInfoA failed, err=%i\n", GetLastError());
+    ok(mustcopy == FALSE, "mustcopy should be FALSE\n");
+    ok(CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, destdir,
+                      lstrlenA(destdir), result2, lstrlenA(destdir)) == CSTR_EQUAL,
+       "%s does not start with %s\n", result2, destdir);
+    ok(lstrlenA(result2) > 4 && lstrcmpiA(result2+lstrlenA(result2)-4, ".lnk") == 0,
+       "%s does not end with .lnk\n", result2);
+    ok(lstrcmpiA(result, result2) != 0, "%s and %s are the same\n", result, result2);
+    DeleteFileA(result);
+}
+
 static void test_unicode(void)
 {
     SHFILEOPSTRUCTW shfoW;
@@ -2156,6 +2204,10 @@ START_TEST(shlfileop)
 
     init_shfo_tests();
     test_sh_path_prepare();
+    clean_after_shfo_tests();
+
+    init_shfo_tests();
+    test_sh_new_link_info();
     clean_after_shfo_tests();
 
     test_unicode();
