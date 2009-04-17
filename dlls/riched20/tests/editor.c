@@ -445,7 +445,7 @@ static int get_scroll_pos_y(HWND hwnd)
   return p.y;
 }
 
-static void move_cursor(HWND hwnd, long charindex)
+static void move_cursor(HWND hwnd, LONG charindex)
 {
   CHARRANGE cr;
   cr.cpMax = charindex;
@@ -4211,9 +4211,9 @@ static void test_EM_GETMODIFY(void)
 }
 
 struct exsetsel_s {
-  long min;
-  long max;
-  long expected_retval;
+  LONG min;
+  LONG max;
+  LRESULT expected_retval;
   int expected_getsel_start;
   int expected_getsel_end;
   int _getsel_todo_wine;
