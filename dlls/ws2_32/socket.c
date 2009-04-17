@@ -4868,7 +4868,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
     p = strchrW( buffer, ':' );
     if (!((SOCKADDR_IN *)sockaddr)->sin_port) *p = 0;
 
-    size = strlenW( buffer );
+    size = strlenW( buffer ) + 1;
 
     if (*lenstr <  size)
     {
@@ -4876,6 +4876,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
         return SOCKET_ERROR;
     }
 
+    *lenstr = size;
     lstrcpyW( string, buffer );
     return 0;
 }

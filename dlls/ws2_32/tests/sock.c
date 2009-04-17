@@ -1369,6 +1369,7 @@ static void test_WSAAddressToStringW(void)
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address, expect1 ), "Expected different address string\n" );
+    ok( len == sizeof( expect1 )/sizeof( WCHAR ), "Expected size to be %d, got %d\n", sizeof( expect1 )/sizeof( WCHAR ), len);
 
     len = sizeof(address);
 
@@ -1402,6 +1403,7 @@ static void test_WSAAddressToStringW(void)
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address, expect4 ), "Expected different address string\n" );
+    ok( len == sizeof( expect4 )/sizeof( WCHAR ), "Expected size to be %d, got %d\n", sizeof( expect4 )/sizeof( WCHAR ), len);
 }
 
 static void test_WSAStringToAddressA(void)
