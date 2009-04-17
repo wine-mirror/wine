@@ -1022,7 +1022,7 @@ static void shader_glsl_gen_modifier (
 /** Writes the GLSL variable name that corresponds to the register that the
  * DX opcode parameter is trying to access */
 static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx,
-        BOOL rel_addr, const DWORD addr_token, char *register_name, BOOL *is_color,
+        const struct wined3d_shader_src_param *rel_addr, char *register_name, BOOL *is_color,
         const struct wined3d_shader_instruction *ins)
 {
     /* oPos, oFog and oPts in D3D */
@@ -1051,7 +1051,7 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
                 if (rel_addr)
                 {
                     glsl_src_param_t rel_param;
-                    shader_glsl_add_src_param(ins, addr_token, NULL, WINED3DSP_WRITEMASK_0, &rel_param);
+                    shader_glsl_add_src_param(ins, rel_addr->token, NULL, WINED3DSP_WRITEMASK_0, &rel_param);
 
                     /* Removing a + 0 would be an obvious optimization, but macos doesn't see the NOP
                      * operation there
@@ -1106,7 +1106,7 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
         if (rel_addr)
         {
            glsl_src_param_t rel_param;
-           shader_glsl_add_src_param(ins, addr_token, NULL, WINED3DSP_WRITEMASK_0, &rel_param);
+           shader_glsl_add_src_param(ins, rel_addr->token, NULL, WINED3DSP_WRITEMASK_0, &rel_param);
            if (register_idx)
                sprintf(register_name, "%cC[%s + %u]", prefix, rel_param.param_str, register_idx);
            else
@@ -1277,7 +1277,7 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
     swizzle_str[0] = '\0';
 
     shader_glsl_get_register_name(shader_get_regtype(param), param & WINED3DSP_REGNUM_MASK,
-            !!addr_param, addr_param ? addr_param->token : 0, src_param->reg_name, &is_color, ins);
+            addr_param, src_param->reg_name, &is_color, ins);
 
     shader_glsl_get_swizzle(param, is_color, mask, swizzle_str);
     shader_glsl_gen_modifier(param, src_param->reg_name, swizzle_str, src_param->param_str);
@@ -1295,8 +1295,7 @@ static DWORD shader_glsl_add_dst_param(const struct wined3d_shader_instruction *
     glsl_dst->reg_name[0] = '\0';
 
     shader_glsl_get_register_name(wined3d_dst->register_type, wined3d_dst->register_idx,
-            !!wined3d_dst->rel_addr, wined3d_dst->rel_addr ? wined3d_dst->rel_addr->token : 0,
-            glsl_dst->reg_name, &is_color, ins);
+            wined3d_dst->rel_addr, glsl_dst->reg_name, &is_color, ins);
     return shader_glsl_get_write_mask(wined3d_dst, glsl_dst->mask_str);
 }
 
