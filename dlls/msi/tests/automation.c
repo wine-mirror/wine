@@ -2331,7 +2331,6 @@ static void test_Installer_InstallProduct(void)
 
 static void test_Installer(void)
 {
-    static WCHAR szBackslash[] = { '\\',0 };
     static WCHAR szCreateRecordException[] = { 'C','r','e','a','t','e','R','e','c','o','r','d',',','C','o','u','n','t',0 };
     static WCHAR szIntegerDataException[] = { 'I','n','t','e','g','e','r','D','a','t','a',',','F','i','e','l','d',0 };
     WCHAR szPath[MAX_PATH];
@@ -2395,8 +2394,9 @@ static void test_Installer(void)
     ok(len, "MultiByteToWideChar returned error %d\n", GetLastError());
     if (!len) return;
 
-    lstrcatW(szPath, szBackslash);
-    lstrcatW(szPath, szMsifile);
+    /* lstrcatW does not work on win95 */
+    szPath[len - 1] = '\\';
+    memcpy(&szPath[len], szMsifile, sizeof(szMsifile));
 
     /* Installer::OpenPackage */
     hr = Installer_OpenPackage(szPath, 0, &pSession);
