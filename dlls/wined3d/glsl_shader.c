@@ -1105,27 +1105,12 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
         /* Relative addressing */
         if (rel_addr)
         {
-           /* Relative addressing on shaders 2.0+ have a relative address token, 
-            * prior to that, it was hard-coded as "A0.x" because there's only 1 register */
-           if (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 2)
-           {
-               glsl_src_param_t rel_param;
-               shader_glsl_add_src_param(ins, addr_token, 0, WINED3DSP_WRITEMASK_0, &rel_param);
-               if (register_idx)
-               {
-                   sprintf(register_name, "%cC[%s + %u]", prefix, rel_param.param_str, register_idx);
-               } else {
-                   sprintf(register_name, "%cC[%s]", prefix, rel_param.param_str);
-               }
-           } else {
-               if (register_idx)
-               {
-                   sprintf(register_name, "%cC[A0.x + %u]", prefix, register_idx);
-               } else {
-                   sprintf(register_name, "%cC[A0.x]", prefix);
-               }
-           }
-
+           glsl_src_param_t rel_param;
+           shader_glsl_add_src_param(ins, addr_token, 0, WINED3DSP_WRITEMASK_0, &rel_param);
+           if (register_idx)
+               sprintf(register_name, "%cC[%s + %u]", prefix, rel_param.param_str, register_idx);
+           else
+               sprintf(register_name, "%cC[%s]", prefix, rel_param.param_str);
         } else {
             if (shader_constant_is_local(This, register_idx))
             {

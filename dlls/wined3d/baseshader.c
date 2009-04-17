@@ -7,6 +7,7 @@
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Ivan Gyurdiev
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -131,17 +132,31 @@ const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *opcode_table, DWORD 
  * Return the number of tokens read */
 static int shader_get_param(const DWORD *pToken, DWORD shader_version, DWORD *param, DWORD *addr_token)
 {
+    UINT count = 1;
+
+    *param = *pToken;
+
     /* PS >= 3.0 have relative addressing (with token)
      * VS >= 2.0 have relative addressing (with token)
      * VS >= 1.0 < 2.0 have relative addressing (without token)
      * The version check below should work in general */
+    if (*pToken & WINED3DSHADER_ADDRMODE_RELATIVE)
+    {
+        if (WINED3DSHADER_VERSION_MAJOR(shader_version) < 2)
+        {
+            *addr_token = (1 << 31)
+                    | ((WINED3DSPR_ADDR << WINED3DSP_REGTYPE_SHIFT2) & WINED3DSP_REGTYPE_MASK2)
+                    | ((WINED3DSPR_ADDR << WINED3DSP_REGTYPE_SHIFT) & WINED3DSP_REGTYPE_MASK)
+                    | WINED3DSP_NOSWIZZLE;
+        }
+        else
+        {
+            *addr_token = *(pToken + 1);
+            ++count;
+        }
+    }
 
-    char rel_token = WINED3DSHADER_VERSION_MAJOR(shader_version) >= 2 &&
-        ((*pToken & WINED3DSHADER_ADDRESSMODE_MASK) == WINED3DSHADER_ADDRMODE_RELATIVE);
-
-    *param = *pToken;
-    *addr_token = rel_token? *(pToken + 1): 0;
-    return rel_token? 2:1;
+    return count;
 }
 
 /* Return the number of parameters to skip for an opcode */
@@ -167,7 +182,7 @@ static int shader_skip_unrecognized(const DWORD *pToken, DWORD shader_version)
     /* TODO: Think of a good name for 0x80000000 and replace it with a constant */
     while (*pToken & 0x80000000) {
 
-        DWORD param, addr_token;
+        DWORD param, addr_token = 0;
         tokens_read += shader_get_param(pToken, shader_version, &param, &addr_token);
         pToken += tokens_read;
 
@@ -1014,7 +1029,7 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
             }
             else
             {
-                DWORD param, addr_token;
+                DWORD param, addr_token = 0;
                 int tokens_read;
 
                 /* Print out predication source token first - it follows
