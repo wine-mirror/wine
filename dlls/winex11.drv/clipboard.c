@@ -2778,9 +2778,9 @@ void CDECL X11DRV_EndClipboardUpdate(void)
     INT count = ClipDataCount;
 
     /* Do Unicode <-> Text <-> OEM mapping */
-    X11DRV_CLIPBOARD_SynthesizeData(CF_UNICODETEXT);
     X11DRV_CLIPBOARD_SynthesizeData(CF_TEXT);
     X11DRV_CLIPBOARD_SynthesizeData(CF_OEMTEXT);
+    X11DRV_CLIPBOARD_SynthesizeData(CF_UNICODETEXT);
 
     /* Enhmetafile <-> MetafilePict mapping */
     X11DRV_CLIPBOARD_SynthesizeData(CF_ENHMETAFILE);
