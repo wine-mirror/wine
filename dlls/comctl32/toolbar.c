@@ -1331,7 +1331,7 @@ TOOLBAR_WrapToolbar( HWND hwnd, DWORD dwStyle )
         /* horizontal separators are treated as buttons for width    */
 	else if ((btnPtr[i].fsStyle & BTNS_SEP) &&
             !(infoPtr->dwStyle & CCS_VERT))
-	    cx = SEPARATOR_WIDTH;
+            cx = (btnPtr[i].iBitmap > 0) ? btnPtr[i].iBitmap : SEPARATOR_WIDTH;
 	else
 	    cx = infoPtr->nButtonWidth;
 
@@ -1683,11 +1683,12 @@ TOOLBAR_LayoutToolbar(HWND hwnd)
 
 	if (btnPtr->fsStyle & BTNS_SEP) {
 	    if (infoPtr->dwStyle & CCS_VERT) {
-                cy = SEPARATOR_WIDTH;
-                cx = (btnPtr->cx > 0) ? btnPtr->cx : infoPtr->nButtonWidth;
+                cy = (btnPtr->iBitmap > 0) ? btnPtr->iBitmap : SEPARATOR_WIDTH;
+                cx = (btnPtr->cx > 0) ? btnPtr->cx : infoPtr->nWidth;
 	    }
 	    else
-                cx = (btnPtr->cx > 0) ? btnPtr->cx : SEPARATOR_WIDTH;
+                cx = (btnPtr->cx > 0) ? btnPtr->cx :
+                    (btnPtr->iBitmap > 0) ? btnPtr->iBitmap : SEPARATOR_WIDTH;
 	}
 	else
 	{
@@ -1835,11 +1836,7 @@ TOOLBAR_InternalInsertButtonsT(TOOLBAR_INFO *infoPtr, INT iIndex, UINT nAddButto
 
         ZeroMemory(btnPtr, sizeof(*btnPtr));
 
-        /* When inserting separator, iBitmap controls it's size */
-        if (lpTbb[iButton].fsStyle & BTNS_SEP) {
-            btnPtr->cx        = lpTbb[iButton].iBitmap;
-        } else
-            btnPtr->iBitmap   = lpTbb[iButton].iBitmap;
+        btnPtr->iBitmap   = lpTbb[iButton].iBitmap;
         btnPtr->idCommand = lpTbb[iButton].idCommand;
         btnPtr->fsState   = lpTbb[iButton].fsState;
         btnPtr->fsStyle   = lpTbb[iButton].fsStyle;
