@@ -203,7 +203,7 @@ static void _dump_EnumDevices_dwFlags(DWORD dwFlags) {
 	};
 	TRACE(" flags: ");
 	if (dwFlags == 0) {
-	    TRACE("DIEDFL_ALLDEVICES");
+	    TRACE("DIEDFL_ALLDEVICES\n");
 	    return;
 	}
 	for (i = 0; i < (sizeof(flags) / sizeof(flags[0])); i++)
