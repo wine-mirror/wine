@@ -4531,7 +4531,7 @@ TOOLBAR_SetButtonSize (HWND hwnd, LPARAM lParam)
      * 22 high. Demonstarted in ControlSpy Toolbar. GLA 3/02
      */
     if (cx == 0) cx = 24;
-    if (cy == 0) cx = 22;
+    if (cy == 0) cy = 22;
     
     cx = max(cx, infoPtr->szPadding.cx + infoPtr->nBitmapWidth);
     cy = max(cy, infoPtr->szPadding.cy + infoPtr->nBitmapHeight);
