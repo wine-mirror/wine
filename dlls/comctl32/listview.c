@@ -2654,15 +2654,17 @@ static void ranges_assert(RANGES ranges, LPCSTR desc, const char *func, int line
     assert (ranges);
     assert (DPA_GetPtrCount(ranges->hdpa) >= 0);
     ranges_dump(ranges);
-    prev = DPA_GetPtr(ranges->hdpa, 0);
     if (DPA_GetPtrCount(ranges->hdpa) > 0)
-	assert (prev->lower >= 0 && prev->lower < prev->upper);
-    for (i = 1; i < DPA_GetPtrCount(ranges->hdpa); i++)
     {
-        curr = DPA_GetPtr(ranges->hdpa, i);
-	assert (prev->upper <= curr->lower);
-	assert (curr->lower < curr->upper);
-	prev = curr;
+	prev = DPA_GetPtr(ranges->hdpa, 0);
+	assert (prev->lower >= 0 && prev->lower < prev->upper);
+	for (i = 1; i < DPA_GetPtrCount(ranges->hdpa); i++)
+	{
+	    curr = DPA_GetPtr(ranges->hdpa, i);
+	    assert (prev->upper <= curr->lower);
+	    assert (curr->lower < curr->upper);
+	    prev = curr;
+	}
     }
     TRACE("--- Done checking---\n");
 }
