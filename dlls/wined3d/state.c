@@ -3913,7 +3913,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock,
             if (stream_info->elements[i].buffer_object)
             {
                 vb = (struct wined3d_buffer *)stateblock->streamSource[stream_info->elements[i].stream_idx];
-                ptr += (long) vb->resource.allocatedMemory;
+                ptr += (long) buffer_get_sysmem(vb);
             }
 
             if (context->numbered_array_mask & (1 << i)) unload_numbered_array(stateblock, context, i);

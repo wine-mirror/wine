@@ -220,7 +220,7 @@ void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
             {
                 WARN("loadBaseVertexIndex is < 0 (%d), not using vbos\n", This->stateBlock->loadBaseVertexIndex);
                 buffer_object = 0;
-                data = ((struct wined3d_buffer *)This->stateBlock->streamSource[element->input_slot])->resource.allocatedMemory;
+                data = buffer_get_sysmem((struct wined3d_buffer *)This->stateBlock->streamSource[element->input_slot]);
                 if ((UINT_PTR)data < -This->stateBlock->loadBaseVertexIndex * stride)
                 {
                     FIXME("System memory vertex data load offset is negative!\n");
@@ -4531,27 +4531,7 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
     ENTER_GL();
 
     if (dest->resource.allocatedMemory == NULL) {
-        /* This may happen if we do direct locking into a vbo. Unlikely,
-         * but theoretically possible(ddraw processvertices test)
-         */
-        dest->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, dest->resource.size);
-        if(!dest->resource.allocatedMemory) {
-            LEAVE_GL();
-            ERR("Out of memory\n");
-            return E_OUTOFMEMORY;
-        }
-        if (dest->buffer_object)
-        {
-            const void *src;
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->buffer_object));
-            checkGLcall("glBindBufferARB");
-            src = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_ONLY_ARB));
-            if(src) {
-                memcpy(dest->resource.allocatedMemory, src, dest->resource.size);
-            }
-            GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
-            checkGLcall("glUnmapBufferARB");
-        }
+        buffer_get_sysmem(dest);
     }
 
     /* Get a pointer into the destination vbo(create one if none exists) and
