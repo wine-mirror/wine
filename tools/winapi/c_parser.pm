@@ -663,19 +663,6 @@ sub parse_c_declaration($$$$$$$$$$$$) {
 }
 
 ########################################################################
-# parse_c_declarations
-
-sub parse_c_declarations($$$$) {
-    my $self = shift;
-
-    my $refcurrent = shift;
-    my $refline = shift;
-    my $refcolumn = shift;
-
-    return 1;
-}
-
-########################################################################
 # _parse_c
 
 sub _parse_c($$$$$$) {
