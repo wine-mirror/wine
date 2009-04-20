@@ -180,9 +180,7 @@ sub _find_align_kind_size($) {
     my $align;
     my $kind;
     my $size;
-    if (0) {
-	# Nothing
-    } elsif (/\*+$/) {
+    if (/\*+$/) {
 	$align = 4;
 	$kind = "pointer";
 	$size = 4;

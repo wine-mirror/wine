@@ -315,13 +315,7 @@ sub parse_spec_file($$) {
 	    if ($internal_name =~ /^(.*?)\.(.*?)$/) {
 		my $forward_module = lc($1);
 		my $forward_name = $2;
-
-		if (0) {
-		    $calling_convention .= " -forward";
-		} else {
-		    $calling_convention = "forward";
-		}
-
+		$calling_convention = "forward";
 		$$function_forward{$module}{$external_name} = [$forward_module, $forward_name];
 	    }
 

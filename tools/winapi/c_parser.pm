@@ -1873,10 +1873,6 @@ sub parse_c_typedef($$$$) {
 	    
 	    &$$found_type($type);
 	}
-
-	if (0 && $_ && !/^,/) {
-	    $self->_parse_c_error($_, $line, $column, "typedef");
-	}   
     } else {
 	$self->_parse_c_error($_, $line, $column, "typedef");
     }
