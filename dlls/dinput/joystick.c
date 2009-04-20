@@ -332,7 +332,7 @@ HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo(
     }
 
     /* Return joystick */
-    pdidi->guidInstance = GUID_Joystick;
+    pdidi->guidInstance = This->guidInstance;
     pdidi->guidProduct = This->guidProduct;
     /* we only support traditional joysticks for now */
     pdidi->dwDevType = This->devcaps.dwDevType;
@@ -365,7 +365,7 @@ HRESULT WINAPI JoystickWGenericImpl_GetDeviceInfo(
     }
 
     /* Return joystick */
-    pdidi->guidInstance = GUID_Joystick;
+    pdidi->guidInstance = This->guidInstance;
     pdidi->guidProduct = This->guidProduct;
     /* we only support traditional joysticks for now */
     pdidi->dwDevType = This->devcaps.dwDevType;

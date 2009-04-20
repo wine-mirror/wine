@@ -41,6 +41,7 @@ typedef struct JoystickGenericImpl
     DIDEVCAPS   devcaps;
     DIJOYSTATE2 js;     /* wine data */
     GUID        guidProduct;
+    GUID        guidInstance;
     char        *name;
 
     joy_polldev_handler *joy_polldev;

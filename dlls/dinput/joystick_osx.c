@@ -650,6 +650,8 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 
     newDevice->id = index;
 
+    newDevice->generic.guidInstance = DInput_Wine_OsX_Joystick_GUID;
+    newDevice->generic.guidInstance.Data3 = index;
     newDevice->generic.guidProduct = DInput_Wine_OsX_Joystick_GUID;
     newDevice->generic.joy_polldev = poll_osx_device_state;
 
