@@ -563,15 +563,12 @@ sub parse_c_block($$$$$$$) {
 ########################################################################
 # parse_c_declaration
 
-sub parse_c_declaration($$$$$$$$$$$$) {
-    my $self = shift;
+sub parse_c_declaration($$$$)
+{
+    my ($self, $refcurrent, $refline, $refcolumn) = @_;
 
     my $found_declaration = \${$self->{FOUND_DECLARATION}};
     my $found_function = \${$self->{FOUND_FUNCTION}};
-
-    my $refcurrent = shift;
-    my $refline = shift;
-    my $refcolumn = shift;
 
     local $_ = $$refcurrent;
     my $line = $$refline;
@@ -591,18 +588,10 @@ sub parse_c_declaration($$$$$$$$$$$$) {
     }
 
     # Function
-    my $function = shift;
-
-    my $linkage = shift;
-    my $calling_convention = shift;
-    my $return_type = shift;
-    my $name = shift;
-    my @arguments = shift;
-    my @argument_lines = shift;
-    my @argument_columns = shift;
+    my $function;
 
     # Variable
-    my $type;
+    my ($linkage, $type, $name);
 
     if(s/^WINE_(?:DEFAULT|DECLARE)_DEBUG_CHANNEL\s*\(\s*(\w+)\s*\)\s*//s) { # FIXME: Wine specific kludge
 	$self->_update_c_position($&, \$line, \$column);
