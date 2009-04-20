@@ -1038,8 +1038,9 @@ static void msi_update_table_columns( MSIDATABASE *db, LPCWSTR name )
     table = find_cached_table( db, name );
     old_count = table->col_count;
     msi_free( table->colinfo );
-    table_get_column_info( db, name, &table->colinfo, &table->col_count );
+    table->colinfo = NULL;
 
+    table_get_column_info( db, name, &table->colinfo, &table->col_count );
     if (!table->col_count)
         return;
 
