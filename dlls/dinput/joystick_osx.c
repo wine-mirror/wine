@@ -724,11 +724,6 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     }
     newDevice->generic.base.data_format.wine_df = df;
 
-    /* create default properties */
-    newDevice->generic.props = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwNumObjs*sizeof(ObjProps));
-    if (newDevice->generic.props == 0)
-        goto FAILED;
-
     /* initialize default properties */
     get_osx_device_elements_props(newDevice);
 
@@ -761,7 +756,6 @@ FAILED:
     HeapFree(GetProcessHeap(), 0, df);
     release_DataFormat(&newDevice->generic.base.data_format);
     HeapFree(GetProcessHeap(),0,newDevice->generic.name);
-    HeapFree(GetProcessHeap(),0,newDevice->generic.props);
     HeapFree(GetProcessHeap(),0,newDevice);
     *pdev = 0;
 

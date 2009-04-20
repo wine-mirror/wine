@@ -462,11 +462,6 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     }
     newDevice->generic.base.data_format.wine_df = df;
 
-    /* create default properties */
-    newDevice->generic.props = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwNumObjs*sizeof(ObjProps));
-    if (newDevice->generic.props == 0)
-        goto FAILED;
-
     /* initialize default properties */
     for (i = 0; i < c_dfDIJoystick2.dwNumObjs; i++) {
         newDevice->generic.props[i].lDevMin = -32767;
@@ -510,7 +505,6 @@ FAILED1:
     release_DataFormat(&newDevice->generic.base.data_format);
     HeapFree(GetProcessHeap(),0,newDevice->axis_map);
     HeapFree(GetProcessHeap(),0,newDevice->generic.name);
-    HeapFree(GetProcessHeap(),0,newDevice->generic.props);
     HeapFree(GetProcessHeap(),0,newDevice);
     *pdev = 0;
 

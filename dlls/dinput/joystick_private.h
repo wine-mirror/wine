@@ -29,6 +29,8 @@
 #include "dinput_private.h"
 #include "device_private.h"
 
+/* Number of objects in the default data format */
+#define MAX_PROPS 164
 struct JoystickGenericImpl;
 
 typedef void joy_polldev_handler(struct JoystickGenericImpl *This);
@@ -37,7 +39,7 @@ typedef struct JoystickGenericImpl
 {
     struct IDirectInputDevice2AImpl base;
 
-    ObjProps    *props;
+    ObjProps    props[MAX_PROPS];
     DIDEVCAPS   devcaps;
     DIJOYSTATE2 js;     /* wine data */
     GUID        guidProduct;
