@@ -114,26 +114,17 @@ struct JoyDev {
 
 struct JoystickImpl
 {
-        struct IDirectInputDevice2AImpl base;
-
+        struct JoystickGenericImpl      generic;
         struct JoyDev                  *joydev;
 
 	/* joystick private */
 	int				joyfd;
-
-	DIJOYSTATE2			js;
-
-	ObjProps                        props[ABS_MAX];
 
 	int                             axes[ABS_MAX];
         POINTL                          povs[4];
 
 	/* LUT for KEY_ to offset in rgbButtons */
 	BYTE				buttons[KEY_MAX];
-
-	DWORD                           numAxes;
-	DWORD                           numPOVs;
-	DWORD                           numButtons;
 
 	/* Force feedback variables */
         struct list                     ff_effects;
@@ -144,6 +135,7 @@ struct JoystickImpl
 
 static void fake_current_js_state(JoystickImpl *ji);
 static void find_joydevs(void);
+static void joy_polldev(JoystickGenericImpl *This);
 
 /* This GUID is slightly different from the linux joystick one. Take note. */
 static const GUID DInput_Wine_Joystick_Base_GUID = { /* 9e573eda-7734-11d2-8d4a-23903fb6bdf7 */
@@ -393,12 +385,14 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
     if (!newDevice) return NULL;
 
-    newDevice->base.lpVtbl = jvt;
-    newDevice->base.ref    = 1;
-    newDevice->base.guid   = *rguid;
-    newDevice->base.dinput = dinput;
+    newDevice->generic.base.lpVtbl = jvt;
+    newDevice->generic.base.ref    = 1;
+    newDevice->generic.base.guid   = *rguid;
+    newDevice->generic.base.dinput = dinput;
+    newDevice->generic.joy_polldev = joy_polldev;
     newDevice->joyfd       = -1;
     newDevice->joydev      = &joydevs[index];
+    newDevice->generic.name        = newDevice->joydev->name;
     list_init(&newDevice->ff_effects);
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
     newDevice->ff_state    = FF_STATUS_STOPPED;
@@ -408,8 +402,8 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
        enabled. */
     newDevice->ff_autocenter = 1;
     newDevice->ff_gain = 0xFFFF;
-    InitializeCriticalSection(&newDevice->base.crit);
-    newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
+    InitializeCriticalSection(&newDevice->generic.base.crit);
+    newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
 
     /* get options */
     get_app_key(&hkey, &appkey);
@@ -437,18 +431,18 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i], df->dwObjSize);
         newDevice->axes[i] = idx;
-        newDevice->props[idx].lDevMin = newDevice->joydev->axes[i].minimum;
-        newDevice->props[idx].lDevMax = newDevice->joydev->axes[i].maximum;
-        newDevice->props[idx].lMin    = 0;
-        newDevice->props[idx].lMax    = 0xffff;
-        newDevice->props[idx].lSaturation = 0;
-        newDevice->props[idx].lDeadZone = def_deadzone;
+        newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[i].minimum;
+        newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[i].maximum;
+        newDevice->generic.props[idx].lMin    = 0;
+        newDevice->generic.props[idx].lMax    = 0xffff;
+        newDevice->generic.props[idx].lSaturation = 0;
+        newDevice->generic.props[idx].lDeadZone = def_deadzone;
 
         /* Linux supports force-feedback on X & Y axes only */
         if (newDevice->joydev->has_ff && (i == 0 || i == 1))
             df->rgodf[idx].dwFlags |= DIDOI_FFACTUATOR;
 
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numAxes++) | DIDFT_ABSAXIS;
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->generic.devcaps.dwAxes++) | DIDFT_ABSAXIS;
     }
 
     for (i = 0; i < WINE_JOYSTICK_MAX_POVS; i++)
@@ -461,25 +455,36 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i + WINE_JOYSTICK_MAX_AXES], df->dwObjSize);
         newDevice->axes[ABS_HAT0X + i * 2] = newDevice->axes[ABS_HAT0Y + i * 2] = i;
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numPOVs++) | DIDFT_POV;
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->generic.devcaps.dwPOVs++) | DIDFT_POV;
     }
 
     /* Buttons can be anywhere, so check all */
-    for (i = 0; i < KEY_MAX && newDevice->numButtons < WINE_JOYSTICK_MAX_BUTTONS; i++)
+    for (i = 0; i < KEY_MAX && newDevice->generic.devcaps.dwButtons < WINE_JOYSTICK_MAX_BUTTONS; i++)
     {
         if (!test_bit(newDevice->joydev->keybits, i)) continue;
 
-        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[newDevice->numButtons + WINE_JOYSTICK_MAX_AXES + WINE_JOYSTICK_MAX_POVS], df->dwObjSize);
-	newDevice->buttons[i] = 0x80 | newDevice->numButtons;
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[newDevice->generic.devcaps.dwButtons + 12], df->dwObjSize);
+        newDevice->buttons[i] = 0x80 | newDevice->generic.devcaps.dwButtons;
         df->rgodf[idx  ].pguid = &GUID_Button;
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numButtons++) | DIDFT_PSHBUTTON;
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->generic.devcaps.dwButtons++) | DIDFT_PSHBUTTON;
     }
     df->dwNumObjs = idx;
+    newDevice->generic.base.data_format.wine_df = df;
 
     fake_current_js_state(newDevice);
 
-    newDevice->base.data_format.wine_df = df;
-    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->base.dinput);
+    /* Fill the caps */
+    newDevice->generic.devcaps.dwSize = sizeof(newDevice->generic.devcaps);
+    newDevice->generic.devcaps.dwFlags = DIDC_ATTACHED;
+    if (newDevice->generic.base.dinput->dwVersion >= 0x0800)
+        newDevice->generic.devcaps.dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
+    else
+        newDevice->generic.devcaps.dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
+
+    if (newDevice->joydev->has_ff)
+        newDevice->generic.devcaps.dwFlags |= DIDC_FORCEFEEDBACK;
+
+    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->generic.base.dinput);
     return newDevice;
 
 failed:
@@ -682,33 +687,34 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
  * values on the axes
  */
 #define CENTER_AXIS(a) \
-    (ji->axes[a] == -1 ? 0 : joystick_map_axis( &ji->props[ji->axes[a]], \
+    (ji->axes[a] == -1 ? 0 : joystick_map_axis( &ji->generic.props[ji->axes[a]], \
                                                 ji->joydev->axes[a].value ))
 static void fake_current_js_state(JoystickImpl *ji)
 {
     int i;
 
     /* center the axes */
-    ji->js.lX           = CENTER_AXIS(ABS_X);
-    ji->js.lY           = CENTER_AXIS(ABS_Y);
-    ji->js.lZ           = CENTER_AXIS(ABS_Z);
-    ji->js.lRx          = CENTER_AXIS(ABS_RX);
-    ji->js.lRy          = CENTER_AXIS(ABS_RY);
-    ji->js.lRz          = CENTER_AXIS(ABS_RZ);
-    ji->js.rglSlider[0] = CENTER_AXIS(ABS_THROTTLE);
-    ji->js.rglSlider[1] = CENTER_AXIS(ABS_RUDDER);
+    ji->generic.js.lX           = CENTER_AXIS(ABS_X);
+    ji->generic.js.lY           = CENTER_AXIS(ABS_Y);
+    ji->generic.js.lZ           = CENTER_AXIS(ABS_Z);
+    ji->generic.js.lRx          = CENTER_AXIS(ABS_RX);
+    ji->generic.js.lRy          = CENTER_AXIS(ABS_RY);
+    ji->generic.js.lRz          = CENTER_AXIS(ABS_RZ);
+    ji->generic.js.rglSlider[0] = CENTER_AXIS(ABS_THROTTLE);
+    ji->generic.js.rglSlider[1] = CENTER_AXIS(ABS_RUDDER);
 
     /* POV center is -1 */
     for (i = 0; i < 4; i++)
-        ji->js.rgdwPOV[i] = -1;
+        ji->generic.js.rgdwPOV[i] = -1;
 }
 #undef CENTER_AXIS
 
 /* convert wine format offset to user format object index */
-static void joy_polldev(JoystickImpl *This)
+static void joy_polldev(JoystickGenericImpl *iface)
 {
     struct pollfd plfd;
     struct input_event ie;
+    JoystickImpl *This = (JoystickImpl*) iface;
 
     if (This->joyfd==-1)
 	return;
@@ -739,7 +745,7 @@ static void joy_polldev(JoystickImpl *This)
             {
                 btn &= 0x7F;
                 inst_id = DIDFT_MAKEINSTANCE(btn) | DIDFT_PSHBUTTON;
-                This->js.rgbButtons[btn] = value = ie.value ? 0x80 : 0x00;
+                This->generic.js.rgbButtons[btn] = value = ie.value ? 0x80 : 0x00;
             }
             break;
         }
@@ -750,17 +756,17 @@ static void joy_polldev(JoystickImpl *This)
                 break;
             }
             inst_id = DIDFT_MAKEINSTANCE(axis) | (ie.code < ABS_HAT0X ? DIDFT_ABSAXIS : DIDFT_POV);
-            value = joystick_map_axis(&This->props[id_to_object(This->base.data_format.wine_df, inst_id)], ie.value);
+            value = joystick_map_axis(&This->generic.props[id_to_object(This->generic.base.data_format.wine_df, inst_id)], ie.value);
 
 	    switch (ie.code) {
-            case ABS_X:         This->js.lX  = value; break;
-            case ABS_Y:         This->js.lY  = value; break;
-            case ABS_Z:         This->js.lZ  = value; break;
-            case ABS_RX:        This->js.lRx = value; break;
-            case ABS_RY:        This->js.lRy = value; break;
-            case ABS_RZ:        This->js.lRz = value; break;
-            case ABS_THROTTLE:  This->js.rglSlider[0] = value; break;
-            case ABS_RUDDER:    This->js.rglSlider[1] = value; break;
+            case ABS_X:         This->generic.js.lX  = value; break;
+            case ABS_Y:         This->generic.js.lY  = value; break;
+            case ABS_Z:         This->generic.js.lZ  = value; break;
+            case ABS_RX:        This->generic.js.lRx = value; break;
+            case ABS_RY:        This->generic.js.lRy = value; break;
+            case ABS_RZ:        This->generic.js.lRz = value; break;
+            case ABS_THROTTLE:  This->generic.js.rglSlider[0] = value; break;
+            case ABS_RUDDER:    This->generic.js.rglSlider[1] = value; break;
             case ABS_HAT0X: case ABS_HAT0Y: case ABS_HAT1X: case ABS_HAT1Y:
             case ABS_HAT2X: case ABS_HAT2Y: case ABS_HAT3X: case ABS_HAT3Y:
             {
@@ -771,7 +777,7 @@ static void joy_polldev(JoystickImpl *This)
                 else
                     This->povs[idx].x = ie.value;
 
-                This->js.rgdwPOV[idx] = value = joystick_map_pov(&This->povs[idx]);
+                This->generic.js.rgdwPOV[idx] = value = joystick_map_pov(&This->povs[idx]);
                 break;
             }
 	    default:
@@ -795,34 +801,9 @@ static void joy_polldev(JoystickImpl *This)
 	}
         if (inst_id >= 0)
             queue_event((LPDIRECTINPUTDEVICE8A)This,
-                        id_to_offset(&This->base.data_format, inst_id),
-                        value, ie.time.tv_usec, This->base.dinput->evsequence++);
+                        id_to_offset(&This->generic.base.data_format, inst_id),
+                        value, ie.time.tv_usec, This->generic.base.dinput->evsequence++);
     }
-}
-
-/******************************************************************************
-  *     GetDeviceState : returns the "state" of the joystick.
-  *
-  */
-static HRESULT WINAPI JoystickAImpl_GetDeviceState(
-	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
-) {
-    JoystickImpl *This = (JoystickImpl *)iface;
-
-    TRACE("(this=%p,0x%08x,%p)\n", This, len, ptr);
-
-    if (!This->base.acquired)
-    {
-        WARN("not acquired\n");
-        return DIERR_NOTACQUIRED;
-    }
-
-    joy_polldev(This);
-
-    /* convert and copy data to user supplied buffer */
-    fill_DataFormat(ptr, len, &This->js, &This->base.data_format);
-
-    return DI_OK;
 }
 
 /******************************************************************************
@@ -845,53 +826,6 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 
   if (!HIWORD(rguid)) {
     switch (LOWORD(rguid)) {
-    case (DWORD_PTR)DIPROP_RANGE: {
-      LPCDIPROPRANGE pr = (LPCDIPROPRANGE)ph;
-
-      if (ph->dwHow == DIPH_DEVICE) {
-        DWORD i;
-        TRACE("proprange(%d,%d) all\n", pr->lMin, pr->lMax);
-        for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++) {
-          /* Scale dead-zone */
-          This->props[i].lDeadZone = MulDiv(This->props[i].lDeadZone, pr->lMax - pr->lMin,
-                                            This->props[i].lMax - This->props[i].lMin);
-          This->props[i].lMin = pr->lMin;
-          This->props[i].lMax = pr->lMax;
-        }
-      } else {
-        int obj = find_property(&This->base.data_format, ph);
-
-        TRACE("proprange(%d,%d) obj=%d\n", pr->lMin, pr->lMax, obj);
-        if (obj >= 0) {
-          /* Scale dead-zone */
-          This->props[obj].lDeadZone = MulDiv(This->props[obj].lDeadZone, pr->lMax - pr->lMin,
-                                              This->props[obj].lMax - This->props[obj].lMin);
-          This->props[obj].lMin = pr->lMin;
-          This->props[obj].lMax = pr->lMax;
-        }
-      }
-      fake_current_js_state(This);
-      break;
-    }
-    case (DWORD_PTR)DIPROP_DEADZONE: {
-      LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
-      if (ph->dwHow == DIPH_DEVICE) {
-        DWORD i;
-        TRACE("deadzone(%d) all\n", pd->dwData);
-        for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++) {
-          This->props[i].lDeadZone = pd->dwData;
-        }
-      } else {
-        int obj = find_property(&This->base.data_format, ph);
-
-        TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
-        if (obj >= 0) {
-          This->props[obj].lDeadZone = pd->dwData;
-        }
-      }
-      fake_current_js_state(This);
-      break;
-    }
     case (DWORD_PTR)DIPROP_CALIBRATIONMODE: {
       LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
       FIXME("DIPROP_CALIBRATIONMODE(%d)\n", pd->dwData);
@@ -905,32 +839,12 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 
       break;
     }
-    case (DWORD_PTR)DIPROP_SATURATION: {
-      LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
-
-      if (ph->dwHow == DIPH_DEVICE) {
-        DWORD i;
-
-        TRACE("saturation(%d) all\n", pd->dwData);
-        for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++)
-          This->props[i].lSaturation = pd->dwData;
-      } else {
-          int obj = find_property(&This->base.data_format, ph);
-
-          if (obj < 0) return DIERR_OBJECTNOTFOUND;
-
-          TRACE("saturation(%d) obj=%d\n", pd->dwData, obj);
-          This->props[obj].lSaturation = pd->dwData;
-      }
-      fake_current_js_state(This);
-      break;
-    }
     case (DWORD_PTR)DIPROP_FFGAIN: {
       LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
 
       TRACE("DIPROP_FFGAIN(%d)\n", pd->dwData);
       This->ff_gain = MulDiv(pd->dwData, 0xFFFF, 10000);
-      if (This->base.acquired) {
+      if (This->generic.base.acquired) {
         /* Update immediately. */
         struct input_event event;
 
@@ -943,57 +857,10 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       break;
     }
     default:
-      return IDirectInputDevice2AImpl_SetProperty(iface, rguid, ph);
+      return JoystickAGenericImpl_SetProperty(iface, rguid, ph);
     }
   }
   return DI_OK;
-}
-
-static HRESULT WINAPI JoystickAImpl_GetCapabilities(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIDEVCAPS lpDIDevCaps)
-{
-    JoystickImpl *This = (JoystickImpl *)iface;
-
-    TRACE("%p->(%p)\n",iface,lpDIDevCaps);
-
-    if (!lpDIDevCaps) {
-	WARN("invalid pointer\n");
-	return E_POINTER;
-    }
-
-    if (lpDIDevCaps->dwSize != sizeof(DIDEVCAPS)) {
-        WARN("invalid argument\n");
-        return DIERR_INVALIDPARAM;
-    }
-
-    lpDIDevCaps->dwFlags	= DIDC_ATTACHED;
-    if (This->base.dinput->dwVersion >= 0x0800)
-        lpDIDevCaps->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
-    else
-        lpDIDevCaps->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
-
-    if (This->joydev->has_ff) 
-	 lpDIDevCaps->dwFlags |= DIDC_FORCEFEEDBACK;
-
-    lpDIDevCaps->dwAxes = This->numAxes;
-    lpDIDevCaps->dwButtons = This->numButtons;
-    lpDIDevCaps->dwPOVs = This->numPOVs;
-
-    return DI_OK;
-}
-
-static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
-{
-    JoystickImpl *This = (JoystickImpl *)iface;
-
-    TRACE("(%p)\n",This);
-
-    if (!This->base.acquired)
-        return DIERR_NOTACQUIRED;
-
-    joy_polldev(This);
-    return DI_OK;
 }
 
 /******************************************************************************
@@ -1011,40 +878,6 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     if (HIWORD(rguid)) return DI_OK;
 
     switch (LOWORD(rguid)) {
-    case (DWORD_PTR) DIPROP_RANGE:
-    {
-        LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
-        int obj = find_property(&This->base.data_format, pdiph);
-
-        if (obj < 0) return DIERR_OBJECTNOTFOUND;
-
-        pr->lMin = This->props[obj].lMin;
-        pr->lMax = This->props[obj].lMax;
-	TRACE("range(%d, %d) obj=%d\n", pr->lMin, pr->lMax, obj);
-        break;
-    }
-    case (DWORD_PTR) DIPROP_DEADZONE:
-    {
-        LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
-        int obj = find_property(&This->base.data_format, pdiph);
-
-        if (obj < 0) return DIERR_OBJECTNOTFOUND;
-
-        pd->dwData = This->props[obj].lDeadZone;
-        TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
-        break;
-    }
-    case (DWORD_PTR) DIPROP_SATURATION:
-    {
-        LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
-        int obj = find_property(&This->base.data_format, pdiph);
-
-        if (obj < 0) return DIERR_OBJECTNOTFOUND;
-
-        pd->dwData = This->props[obj].lSaturation;
-        TRACE("saturation(%d) obj=%d\n", pd->dwData, obj);
-        break;
-    }
     case (DWORD_PTR) DIPROP_AUTOCENTER:
     {
         LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
@@ -1063,7 +896,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     }
 
     default:
-        return IDirectInputDevice2AImpl_GetProperty(iface, rguid, pdiph);
+        return JoystickAGenericImpl_GetProperty(iface, rguid, pdiph);
     }
 
     return DI_OK;
@@ -1432,8 +1265,8 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8A iface,
         (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA)))
         return DIERR_INVALIDPARAM;
 
-    fill_joystick_dideviceinstanceA(pdidi, This->base.dinput->dwVersion,
-                                    get_joystick_index(&This->base.guid));
+    fill_joystick_dideviceinstanceA(pdidi, This->generic.base.dinput->dwVersion,
+                                    get_joystick_index(&This->generic.base.guid));
     return DI_OK;
 }
 
@@ -1449,8 +1282,8 @@ static HRESULT WINAPI JoystickWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface,
         (pdidi->dwSize != sizeof(DIDEVICEINSTANCEW)))
         return DIERR_INVALIDPARAM;
 
-    fill_joystick_dideviceinstanceW(pdidi, This->base.dinput->dwVersion,
-                                    get_joystick_index(&This->base.guid));
+    fill_joystick_dideviceinstanceW(pdidi, This->generic.base.dinput->dwVersion,
+                                    get_joystick_index(&This->generic.base.guid));
     return DI_OK;
 }
 
@@ -1459,13 +1292,13 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
         IDirectInputDevice2AImpl_Release,
-	JoystickAImpl_GetCapabilities,
+        JoystickAGenericImpl_GetCapabilities,
         IDirectInputDevice2AImpl_EnumObjects,
 	JoystickAImpl_GetProperty,
 	JoystickAImpl_SetProperty,
 	JoystickAImpl_Acquire,
 	JoystickAImpl_Unacquire,
-	JoystickAImpl_GetDeviceState,
+        JoystickAGenericImpl_GetDeviceState,
 	IDirectInputDevice2AImpl_GetDeviceData,
         IDirectInputDevice2AImpl_SetDataFormat,
 	IDirectInputDevice2AImpl_SetEventNotification,
@@ -1481,7 +1314,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	JoystickAImpl_SendForceFeedbackCommand,
 	JoystickAImpl_EnumCreatedEffectObjects,
 	IDirectInputDevice2AImpl_Escape,
-	JoystickAImpl_Poll,
+        JoystickAGenericImpl_Poll,
 	IDirectInputDevice2AImpl_SendDeviceData,
 	IDirectInputDevice7AImpl_EnumEffectsInFile,
         IDirectInputDevice7AImpl_WriteEffectToFile,
@@ -1501,13 +1334,13 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	IDirectInputDevice2WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
         XCAST(Release)IDirectInputDevice2AImpl_Release,
-	XCAST(GetCapabilities)JoystickAImpl_GetCapabilities,
+        XCAST(GetCapabilities)JoystickAGenericImpl_GetCapabilities,
         IDirectInputDevice2WImpl_EnumObjects,
 	XCAST(GetProperty)JoystickAImpl_GetProperty,
 	XCAST(SetProperty)JoystickAImpl_SetProperty,
 	XCAST(Acquire)JoystickAImpl_Acquire,
 	XCAST(Unacquire)JoystickAImpl_Unacquire,
-	XCAST(GetDeviceState)JoystickAImpl_GetDeviceState,
+        XCAST(GetDeviceState)JoystickAGenericImpl_GetDeviceState,
 	XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
         XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
@@ -1523,7 +1356,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	XCAST(SendForceFeedbackCommand)JoystickAImpl_SendForceFeedbackCommand,
 	XCAST(EnumCreatedEffectObjects)JoystickAImpl_EnumCreatedEffectObjects,
 	XCAST(Escape)IDirectInputDevice2AImpl_Escape,
-	XCAST(Poll)JoystickAImpl_Poll,
+        XCAST(Poll)JoystickAGenericImpl_Poll,
 	XCAST(SendDeviceData)IDirectInputDevice2AImpl_SendDeviceData,
         IDirectInputDevice7WImpl_EnumEffectsInFile,
         IDirectInputDevice7WImpl_WriteEffectToFile,
