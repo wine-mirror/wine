@@ -20,11 +20,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include <assert.h>
 #include "wine/test.h"
 #include "initguid.h"
 #include "ddraw.h"
 #include "d3d.h"
+#include "unknwn.h"
 
 static LPDIRECTDRAW7           lpDD = NULL;
 static LPDIRECT3D7             lpD3D = NULL;
@@ -41,6 +44,7 @@ static IDirect3D *Direct3D1 = NULL;
 static IDirect3DDevice *Direct3DDevice1 = NULL;
 static IDirect3DExecuteBuffer *ExecuteBuffer = NULL;
 static IDirect3DViewport *Viewport = NULL;
+static IDirect3DLight *Light = NULL;
 
 typedef struct {
     int total;
@@ -72,6 +76,13 @@ static void init_function_pointers(void)
 {
     HMODULE hmod = GetModuleHandleA("ddraw.dll");
     pDirectDrawCreateEx = (void*)GetProcAddress(hmod, "DirectDrawCreateEx");
+}
+
+
+static ULONG getRefcount(IUnknown *iface)
+{
+    IUnknown_AddRef(iface);
+    return IUnknown_Release(iface);
 }
 
 
@@ -1000,11 +1011,17 @@ static BOOL D3D1_createObjects(void)
     hr = IDirect3DViewport_SetViewport(Viewport, &vp_data);
     ok(hr == D3D_OK, "IDirect3DViewport_SetViewport returned %08x\n", hr);
 
+    hr = IDirect3D_CreateLight(Direct3D1, &Light, NULL);
+    ok(hr == D3D_OK, "IDirect3D_CreateLight failed: %08x\n", hr);
+    if (!Light)
+        return FALSE;
+
     return TRUE;
 }
 
 static void D3D1_releaseObjects(void)
 {
+    if (Light) IDirect3DLight_Release(Light);
     if (Viewport) IDirect3DViewport_Release(Viewport);
     if (ExecuteBuffer) IDirect3DExecuteBuffer_Release(ExecuteBuffer);
     if (Direct3DDevice1) IDirect3DDevice_Release(Direct3DDevice1);
@@ -1034,6 +1051,8 @@ static void Direct3D1Test(void)
     D3DINSTRUCTION *instr;
     D3DBRANCH *branch;
     IDirect3D *Direct3D_alt;
+    IDirect3DLight *d3dlight;
+    ULONG refcount;
     unsigned int idx = 0;
     static struct v_in testverts[] = {
         {0.0, 0.0, 0.0},  { 1.0,  1.0,  1.0}, {-1.0, -1.0, -1.0},
@@ -1394,6 +1413,24 @@ static void Direct3D1Test(void)
 
     hr = IDirect3DDevice_DeleteViewport(Direct3DDevice1, Viewport);
     ok(hr == D3D_OK, "IDirect3DDevice_DeleteViewport returned %08x\n", hr);
+
+    hr = IDirect3DViewport_AddLight(Viewport, Light);
+    ok(hr == D3D_OK, "IDirect3DViewport_AddLight returned %08x\n", hr);
+    refcount = getRefcount((IUnknown*) Light);
+    ok(refcount == 2, "Refcount should be 2, returned is %d\n", refcount);
+
+    hr = IDirect3DViewport_NextLight(Viewport, NULL, &d3dlight, D3DNEXT_HEAD);
+    ok(hr == D3D_OK, "IDirect3DViewport_AddLight returned %08x\n", hr);
+    ok(d3dlight == Light, "Got different light returned %p, expected %p\n", d3dlight, Light);
+    refcount = getRefcount((IUnknown*) Light);
+    ok(refcount == 3, "Refcount should be 2, returned is %d\n", refcount);
+
+    hr = IDirect3DViewport_DeleteLight(Viewport, Light);
+    ok(hr == D3D_OK, "IDirect3DViewport_DeleteLight returned %08x\n", hr);
+    refcount = getRefcount((IUnknown*) Light);
+    ok(refcount == 2, "Refcount should be 2, returned is %d\n", refcount);
+
+    IDirect3DLight_Release(Light);
 }
 
 static BOOL colortables_check_equality(PALETTEENTRY table1[256], PALETTEENTRY table2[256])
