@@ -1192,7 +1192,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     else
     {
-        WARN("esd_open_sound() failed");
+        WARN("esd_open_sound() failed\n");
         /* just do a rough guess at the latency and continue anyway */
         wwo->dwLatency = 1000 * (2 * ESD_BUF_SIZE) / out_rate;
     }
