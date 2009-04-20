@@ -7209,7 +7209,7 @@ static HIMAGELIST LISTVIEW_CreateCheckBoxIL(const LISTVIEW_INFO *infoPtr)
 
     hbm_orig = SelectObject(hdc, hbm_mask);
     FillRect(hdc, &rc, hbr_white);
-    InflateRect(&rc, -3, -3);
+    InflateRect(&rc, -2, -2);
     FillRect(hdc, &rc, hbr_black);
 
     SelectObject(hdc, hbm_im);
