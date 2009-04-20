@@ -1532,6 +1532,8 @@ static void test_ownerdata(void)
 {
     HWND hwnd;
     LONG_PTR style, ret;
+    DWORD res;
+    LVITEMA item;
 
     /* it isn't possible to set LVS_OWNERDATA after creation */
     hwnd = create_listview_control(0);
@@ -1578,6 +1580,22 @@ static void test_ownerdata(void)
                 "try to switch to LVS_OWNERDATA seq", FALSE);
     style = GetWindowLongPtrA(hwnd, GWL_STYLE);
     ok(style & LVS_OWNERDATA, "LVS_OWNERDATA is expected\n");
+    DestroyWindow(hwnd);
+
+    /* try select an item */
+    hwnd = create_listview_control(LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    ok(res != 0, "Expected LVM_SETITEMCOUNT to succeed\n");
+    res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(0, res);
+    memset(&item, 0, sizeof(item));
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, res);
+    res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(1, res);
     DestroyWindow(hwnd);
 }
 

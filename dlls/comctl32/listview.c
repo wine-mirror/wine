@@ -3565,7 +3565,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 
     if (uChanged & LVIF_STATE)
     {
-	if (lpItem && (stateMask & ~infoPtr->uCallbackMask & ~(LVIS_FOCUSED | LVIS_SELECTED)))
+	if (lpItem && (stateMask & ~infoPtr->uCallbackMask))
 	{
 	    lpItem->state &= ~stateMask;
 	    lpItem->state |= (lpLVItem->state & stateMask);
@@ -3574,12 +3574,10 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 	{
 	    if (infoPtr->dwStyle & LVS_SINGLESEL) LISTVIEW_DeselectAllSkipItem(infoPtr, lpLVItem->iItem);
 	    ranges_additem(infoPtr->selectionRanges, lpLVItem->iItem);
-	    lpItem->state |= LVIS_SELECTED;
 	}
 	else if (stateMask & LVIS_SELECTED)
 	{
 	    ranges_delitem(infoPtr->selectionRanges, lpLVItem->iItem);
-	    lpItem->state &= ~LVIS_SELECTED;
 	}
 	/* if we are asked to change focus, and we manage it, do it */
 	if (stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED)
@@ -3597,13 +3595,11 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 		    LISTVIEW_SetItemState(infoPtr, infoPtr->nFocusedItem, &item);
 		}
 
-		lpItem->state |= LVIS_FOCUSED;
 		infoPtr->nFocusedItem = lpLVItem->iItem;
     	        LISTVIEW_EnsureVisible(infoPtr, lpLVItem->iItem, uView == LVS_LIST);
 	    }
 	    else if (infoPtr->nFocusedItem == lpLVItem->iItem)
 	    {
-	        lpItem->state &= ~LVIS_FOCUSED;
 	        infoPtr->nFocusedItem = -1;
 	    }
 	}
