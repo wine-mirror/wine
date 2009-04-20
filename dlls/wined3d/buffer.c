@@ -951,12 +951,18 @@ static HRESULT STDMETHODCALLTYPE buffer_Map(IWineD3DBuffer *iface, UINT offset, 
     {
         if(count == 1)
         {
+            IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
             if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
             {
                 IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_INDEXBUFFER);
             }
+
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            ENTER_GL();
             GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
             This->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(This->buffer_type_hint, GL_READ_WRITE_ARB));
+            LEAVE_GL();
         }
     }
     else
@@ -987,12 +993,19 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
 
     if(!(This->flags & WINED3D_BUFFER_DOUBLEBUFFER) && This->buffer_object)
     {
+        IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
         if(This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
         {
             IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_INDEXBUFFER);
         }
+
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ENTER_GL();
         GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
         GL_EXTCALL(glUnmapBufferARB(This->buffer_type_hint));
+        LEAVE_GL();
+
         This->resource.allocatedMemory = NULL;
     }
     else if (This->flags & WINED3D_BUFFER_HASDESC)
