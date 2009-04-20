@@ -207,7 +207,7 @@ HRESULT WINAPI NdrDllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv,
  */
 HRESULT WINAPI NdrDllCanUnloadNow(CStdPSFactoryBuffer *pPSFactoryBuffer)
 {
-  return !(pPSFactoryBuffer->RefCount);
+  return pPSFactoryBuffer->RefCount != 0 ? S_FALSE : S_OK;
 }
 
 
