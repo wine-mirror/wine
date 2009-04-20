@@ -876,10 +876,7 @@ static struct expr * EXPR_sval( void *info, const struct sql_str *str )
     {
         e->type = EXPR_SVAL;
         if( SQL_getstring( info, str, (LPWSTR *)&e->u.sval ) != ERROR_SUCCESS )
-        {
-            msi_free( e );
-            return NULL;
-        }
+            return NULL; /* e will be freed by query destructor */
     }
     return e;
 }
