@@ -140,7 +140,7 @@ SANE_Status sane_option_get_str(SANE_Handle h, const char *option_name, SANE_Str
         return SANE_STATUS_NO_MEM;
 }
 
-/* Important:  SANE has the side effect of of overwriting val with the returned value */
+/* Important:  SANE has the side effect of overwriting val with the returned value */
 SANE_Status sane_option_set_str(SANE_Handle h, const char *option_name, SANE_String val, SANE_Int *status)
 {
     SANE_Status rc;

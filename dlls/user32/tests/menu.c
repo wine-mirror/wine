@@ -562,8 +562,8 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
     }
     ret = GetMenuItemRect( hwnd, hmenu, 0, &rc);
     if (0)  /* comment out menu size checks, behavior is different in almost every Windows version */
-            /* the tests should however succeed on win2000, XP and Wine (at least upto 1.1.15) */
-            /* with a variety of dpi's and desktop font sizes */
+            /* the tests should however succeed on win2000, XP and Wine (at least up to 1.1.15) */
+            /* with a variety of dpis and desktop font sizes */
     {
         /* check menu width */
         if( ispop)
@@ -2809,7 +2809,7 @@ static void test_menu_trackpopupmenu(void)
                 gflag_initmenupopup ? " WM_INITMENUPOPUP ": " ",
                 gflag_entermenuloop ? "WM_INITMENULOOP ": "",
                 gflag_initmenu ? "WM_INITMENU": "");
-        /* now a somewhat successfull call */
+        /* now a somewhat successful call */
         gle = 0xdeadbeef;
         gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = 0;
         ret = MyTrackPopupMenu( Ex, hmenu, 0x100, 100,100, hwnd, NULL);
@@ -2913,14 +2913,14 @@ static void test_menu_cancelmode(void)
     todo_wine {
         ok( g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
     }
-    ok( g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less then 2\n", g_got_enteridle);
+    ok( g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less than 2\n", g_got_enteridle);
     /* menu owner is child window */
     g_hwndtosend = hwndchild;
     ret = TrackPopupMenu( menu, 0x100, 100,100, 0, hwndchild, NULL);
     todo_wine {
         ok(g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
     }
-    ok(g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less then 2\n", g_got_enteridle);
+    ok(g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less than 2\n", g_got_enteridle);
     /* now send the WM_CANCELMODE messages to the WRONG window */
     /* those should fail ( to have any effect) */
     g_hwndtosend = hwnd;

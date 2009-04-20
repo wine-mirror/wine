@@ -760,7 +760,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
     } else {
         if (wwo->lpLoopPtr) {
             /* complicated case, not handled yet (could imply modifying the loop counter */
-            FIXME("Pausing while in loop isn't correctly handled yet, except strange results\n");
+            FIXME("Pausing while in loop isn't correctly handled yet, expec strange results\n");
             wwo->lpPlayPtr = wwo->lpLoopPtr;
             wwo->WrittenTotal = wwo->PlayedTotal; /* this is wrong !!! */
         } else {

@@ -755,7 +755,7 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
     /* FIXME: include new PaddedBorderWidth parameter */
     PaddedBorderWidth = ncmsave.iBorderWidth - old_border;
     if( PaddedBorderWidth){
-        win_skip( "Can not reliable restore border width yet (PaddedBorderWidth = %d)\n",
+        win_skip( "Cannot reliably restore border width yet (PaddedBorderWidth = %d)\n",
                 PaddedBorderWidth);
         return;
     }

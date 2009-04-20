@@ -456,7 +456,7 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     strcpyW(data,cookie_data);
     memset(&expiry,0,sizeof(expiry));
 
-    /* lots of informations can be parsed out of the cookie value */
+    /* lots of information can be parsed out of the cookie value */
 
     ptr = data;
     for (;;)

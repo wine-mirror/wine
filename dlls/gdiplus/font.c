@@ -301,7 +301,7 @@ GpStatus WINGDIPAPI GdipGetFamily(GpFont *font, GpFontFamily **family)
  *
  * RETURNS
  *  SUCCESS: Ok
- *  FAILURE: InvalidParamter (font or size was NULL)
+ *  FAILURE: InvalidParameter (font or size was NULL)
  *
  * NOTES
  *  Size returned is actually emSize -- not internal size used for drawing.
