@@ -186,7 +186,15 @@ static void test_profile_sections(void)
         broken(GetLastError() == 0xdeadbeef), /* Win9x, WinME */
         "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
-    /* And a real one */
+    /* Existing empty section with no keys */
+    SetLastError(0xdeadbeef);
+    ret=GetPrivateProfileSectionA("section2", buf, sizeof(buf), testfile4);
+    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    ok( GetLastError() == ERROR_SUCCESS ||
+        broken(GetLastError() == 0xdeadbeef), /* Win9x, WinME */
+        "expected ERROR_SUCCESS, got %d\n", GetLastError());
+
+    /* Existing section with keys and values*/
     SetLastError(0xdeadbeef);
     ret=GetPrivateProfileSectionA("section1", buf, sizeof(buf), testfile4);
     for( p = buf + strlen(buf) + 1; *p;p += strlen(p)+1)
@@ -797,6 +805,18 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
                                    buf, MAX_PATH, filename);
     ok(ret == 4, "Expected 4, got %d\n", ret);
     ok(!lstrcmpA(buf, "val1"), "Expected \"val1\", got \"%s\"\n", buf);
+
+ /* Existing section with no keys in an existing file */
+    memset(buf, 0xc,sizeof(buf));
+    SetLastError(0xdeadbeef);
+    ret=GetPrivateProfileStringA("section2", "DoesntExist", "",
+                                 buf, MAX_PATH, filename);
+    ok( ret == 0, "expected return size 0, got %d\n", ret );
+    ok(!lstrcmpA(buf, ""), "Expected \"\", got \"%s\"\n", buf);
+    todo_wine
+    ok( GetLastError() == 0xdeadbeef , "expected 0xdeadbeef, got %d\n",
+        GetLastError());
+
 
     DeleteFileA(path);
     DeleteFileA(filename);
