@@ -3743,6 +3743,8 @@ typedef struct NMLVSCROLL
     (HWND)SNDMSGA((hwnd), LVM_GETEDITCONTROL, 0, 0)
 #define ListView_GetTextColor(hwnd)  \
     (COLORREF)SNDMSGA((hwnd), LVM_GETTEXTCOLOR, 0, 0)
+#define ListView_GetTextBkColor(hwnd) \
+    (COLORREF)SNDMSGA((hwnd), LVM_GETTEXTBKCOLOR, 0, 0)
 #define ListView_GetBkColor(hwnd)  \
     (COLORREF)SNDMSGA((hwnd), LVM_GETBKCOLOR, 0, 0)
 #define ListView_GetItemA(hwnd,pitem) \

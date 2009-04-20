@@ -144,7 +144,6 @@
  *   -- ListView_GetISearchString
  *   -- ListView_GetNumberOfWorkAreas
  *   -- ListView_GetOrigin
- *   -- ListView_GetTextBkColor
  *   -- ListView_GetUnicodeFormat, ListView_SetUnicodeFormat
  *   -- ListView_GetWorkAreas, ListView_SetWorkAreas
  *
