@@ -205,7 +205,7 @@ static int find_osx_devices(void)
     tIOReturn = IOHIDManagerOpen( gIOHIDManagerRef, 0L);
     if ( kIOReturnSuccess != tIOReturn )
     {
-        ERR("Couldn't open IOHIDManager.");
+        ERR("Couldn't open IOHIDManager.\n");
         return 0;
     }
 
