@@ -771,7 +771,7 @@ static void InternetOpenUrlA_test(void)
   char buffer[0x400];
   DWORD size, readbytes, totalbytes=0;
   BOOL ret;
-  
+
   myhinternet = InternetOpen("Winetest",0,NULL,NULL,INTERNET_FLAG_NO_CACHE_WRITE);
   ok((myhinternet != 0), "InternetOpen failed, error %u\n",GetLastError());
   size = 0x400;
@@ -1038,7 +1038,7 @@ static void HttpHeaders_test(void)
     strcpy(buffer,"Warning");
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
                buffer,&len,&index)==0,"Warning hearder reported as Existing\n");
-    
+
     ok(HttpAddRequestHeaders(hRequest,"Warning:test1",-1,HTTP_ADDREQ_FLAG_ADD),
             "Failed to add new header\n");
 
@@ -1184,7 +1184,7 @@ static void HttpHeaders_test(void)
     strcpy(buffer,"Warning");
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
                 buffer,&len,&index)==0,"Third Header Should Not Exist\n");
-    
+
     ok(HttpAddRequestHeaders(hRequest,"Warning:test4",-1,HTTP_ADDREQ_FLAG_ADD_IF_NEW)==0, "HTTP_ADDREQ_FLAG_ADD_IF_NEW replaced existing header\n");
 
     index = 0;
@@ -1274,7 +1274,7 @@ static void HttpHeaders_test(void)
     strcpy(buffer,"Warning");
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index)==0,"Third Header Should Not Exist\n");
 
-    
+
     ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
 done:
     ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
@@ -1849,7 +1849,9 @@ static void test_HttpSendRequestW(int port)
     ret = HttpSendRequestW(req, header, ~0u, NULL, 0);
     error = GetLastError();
     ok(!ret, "HttpSendRequestW succeeded\n");
-    ok(error == ERROR_IO_PENDING || broken(error == ERROR_HTTP_HEADER_NOT_FOUND), /* IE6 */
+    ok(error == ERROR_IO_PENDING ||
+       broken(error == ERROR_HTTP_HEADER_NOT_FOUND) ||  /* IE6 */
+       broken(error == ERROR_INVALID_PARAMETER),        /* IE5 */
        "got %u expected ERROR_IO_PENDING\n", error);
 
     InternetCloseHandle(req);
