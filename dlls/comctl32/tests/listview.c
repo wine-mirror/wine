@@ -1351,6 +1351,7 @@ static void test_multiselect(void)
     static const int items=5;
     BYTE kstate[256];
     select_task task;
+    LONG_PTR style;
 
     static struct t_select_task task_list[] = {
         { "using VK_DOWN", 0, VK_DOWN, -1, -1 },
@@ -1406,6 +1407,60 @@ static void test_multiselect(void)
         kstate[VK_SHIFT]=0x00;
         SetKeyboardState(kstate);
     }
+    DestroyWindow(hwnd);
+
+    /* make multiple selection, then switch to LVS_SINGLESEL */
+    hwnd = create_listview_control(0);
+    for (i=0;i<items;i++) {
+	    insert_item(hwnd, 0);
+    }
+    item_count = (int)SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(items,item_count);
+    /* deselect all items */
+    ListView_SetItemState(hwnd, -1, 0, LVIS_SELECTED);
+    SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
+    for (i=0;i<3;i++) {
+        ListView_SetItemState(hwnd, i, LVIS_SELECTED, LVIS_SELECTED);
+    }
+
+    r = SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(3, r);
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+todo_wine
+    expect(-1, r);
+
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(!(style & LVS_SINGLESEL), "LVS_SINGLESEL isn't expected\n");
+    SetWindowLongPtrA(hwnd, GWL_STYLE, style | LVS_SINGLESEL);
+    /* check that style is accepted */
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_SINGLESEL, "LVS_SINGLESEL expected\n");
+
+    for (i=0;i<3;i++) {
+        r = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
+        ok(r & LVIS_SELECTED, "Expected item %d to be selected\n", i);
+    }
+    r = SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(3, r);
+    SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+    expect(3, r);
+
+    /* select one more */
+    ListView_SetItemState(hwnd, 3, LVIS_SELECTED, LVIS_SELECTED);
+
+    for (i=0;i<3;i++) {
+        r = ListView_GetItemState(hwnd, i, LVIS_SELECTED);
+        ok(!(r & LVIS_SELECTED), "Expected item %d to be unselected\n", i);
+    }
+    r = ListView_GetItemState(hwnd, 3, LVIS_SELECTED);
+    ok(r & LVIS_SELECTED, "Expected item %d to be selected\n", i);
+
+    r = SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(1, r);
+    r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
+todo_wine
+    expect(-1, r);
+
     DestroyWindow(hwnd);
 }
 
