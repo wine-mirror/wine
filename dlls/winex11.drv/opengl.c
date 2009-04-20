@@ -4,7 +4,7 @@
  * Copyright 2000 Lionel Ulmer
  * Copyright 2005 Alex Woods
  * Copyright 2005 Raphael Junqueira
- * Copyright 2006 Roderick Colenbrander
+ * Copyright 2006-2009 Roderick Colenbrander
  * Copyright 2006 Tomas Carnecky
  *
  * This library is free software; you can redistribute it and/or
@@ -681,6 +681,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       case WGL_TYPE_RGBA_ARB: pixelattrib = GLX_RGBA_BIT; break ;
       /* This is the same as WGL_TYPE_RGBA_FLOAT_ATI but the GLX constants differ, only the ARB GLX one is widely supported so use that */
       case WGL_TYPE_RGBA_FLOAT_ATI: pixelattrib = GLX_RGBA_FLOAT_BIT; break ;
+      case WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT: pixelattrib = GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT; break ;
       default:
         ERR("unexpected PixelType(%x)\n", pop);	
         pop = 0;
@@ -790,6 +791,11 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       TRACE("pAttr[%d] = GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT: %x\n", cur, pop);
       break ;
 
+    case WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT:
+      pop = iWGLAttr[++cur];
+      PUSH2(oGLXAttr, GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT, pop);
+      TRACE("pAttr[%d] = GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT: %x\n", cur, pop);
+      break ;
     default:
       FIXME("unsupported %x WGL Attribute\n", iWGLAttr[cur]);
       break;
@@ -838,6 +844,9 @@ static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
             break;
         case GLX_RGBA_FLOAT_BIT:
             render_type = GLX_RGBA_FLOAT_TYPE;
+            break;
+        case GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT:
+            render_type = GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT;
             break;
         default:
             ERR("Unknown render_type: %x\n", render_type);
@@ -2743,6 +2752,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 else if (tmp & GLX_COLOR_INDEX_BIT)    { piValues[i] = WGL_TYPE_COLORINDEX_ARB; }
                 else if (tmp & GLX_RGBA_FLOAT_BIT)     { piValues[i] = WGL_TYPE_RGBA_FLOAT_ATI; }
                 else if (tmp & GLX_RGBA_FLOAT_ATI_BIT) { piValues[i] = WGL_TYPE_RGBA_FLOAT_ATI; }
+                else if (tmp & GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT) { piValues[i] = WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT; }
                 else {
                     ERR("unexpected RenderType(%x)\n", tmp);
                     piValues[i] = WGL_TYPE_RGBA_ARB;
@@ -2851,6 +2861,10 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
 
             case WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT:
                 curGLXAttr = GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT;
+                break;
+
+            case WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT:
+                curGLXAttr = GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT;
                 break;
 
             case WGL_ACCUM_RED_BITS_ARB:
@@ -3401,6 +3415,9 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     if(glxRequireExtension("GLX_EXT_framebuffer_sRGB"))
         register_extension_string("WGL_EXT_framebuffer_sRGB");
+
+    if(glxRequireExtension("GLX_EXT_fbconfig_packed_float"))
+        register_extension_string("WGL_EXT_pixel_format_packed_float");
 
     /* The OpenGL extension GL_NV_vertex_array_range adds wgl/glX functions which aren't exported as 'real' wgl/glX extensions. */
     if(strstr(WineGLInfo.glExtensions, "GL_NV_vertex_array_range") != NULL)

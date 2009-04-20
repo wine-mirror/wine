@@ -182,6 +182,13 @@
 # define GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT 0x20B2
 #endif
 
+/* WGL_EXT_pixel_format_packed_float */
+#define WGL_TYPE_RGBA_UNSIGNED_FLOAT_EXT 0x20A8
+#ifndef GLX_EXT_fbconfig_packed_float
+#define GLX_RGBA_UNSIGNED_FLOAT_TYPE_EXT 0x20B1
+#define GLX_RGBA_UNSIGNED_FLOAT_BIT_EXT  0x00000008
+#endif
+
 /** WGL_ARB_create_context */
 #define WGL_CONTEXT_DEBUG_BIT_ARB      0x0001
 #define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x0002
