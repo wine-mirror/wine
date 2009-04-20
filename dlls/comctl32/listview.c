@@ -9570,7 +9570,6 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
     if (wStyleType != GWL_STYLE) return 0;
   
     /* FIXME: if LVS_NOSORTHEADER changed, update header */
-    /*        what if LVS_OWNERDATA changed? */
     /*        or LVS_SINGLESEL */
     /*        or LVS_SORT{AS,DES}CENDING */
 
@@ -9658,6 +9657,36 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
 
     /* invalidate client area + erase background */
     LISTVIEW_InvalidateList(infoPtr);
+
+    return 0;
+}
+
+/***
+ * DESCRIPTION:
+ * Processes WM_STYLECHANGING messages.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] wStyleType : window style type (normal or extended)
+ * [I0] lpss : window style information
+ *
+ * RETURN:
+ * Zero
+ */
+static INT LISTVIEW_StyleChanging(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
+                                  STYLESTRUCT *lpss)
+{
+    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
+          wStyleType, lpss->styleOld, lpss->styleNew);
+
+    /* don't forward LVS_OWNERDATA only if not already set to */
+    if ((lpss->styleNew ^ lpss->styleOld) & LVS_OWNERDATA)
+    {
+        if (lpss->styleOld & LVS_OWNERDATA)
+            lpss->styleNew |= LVS_OWNERDATA;
+        else
+            lpss->styleNew &= ~LVS_OWNERDATA;
+    }
 
     return 0;
 }
@@ -10163,6 +10192,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case WM_STYLECHANGED:
     return LISTVIEW_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
+
+  case WM_STYLECHANGING:
+    return LISTVIEW_StyleChanging(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
   case WM_SYSCOLORCHANGE:
     COMCTL32_RefreshSysColors();

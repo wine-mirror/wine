@@ -146,6 +146,12 @@ static const struct message listview_itempos_seq[] = {
     { 0 }
 };
 
+static const struct message listview_ownerdata_switchto_seq[] = {
+    { WM_STYLECHANGING,    sent },
+    { WM_STYLECHANGED,     sent },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -223,6 +229,14 @@ static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
 
     trace("listview: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
+    /* some debug output for style changing */
+    if ((message == WM_STYLECHANGING ||
+         message == WM_STYLECHANGED) && lParam)
+    {
+        STYLESTRUCT *style = (STYLESTRUCT*)lParam;
+        trace("\told style: 0x%08x, new style: 0x%08x\n", style->styleOld, style->styleNew);
+    }
+
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
@@ -237,7 +251,7 @@ static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wPa
     return ret;
 }
 
-static HWND create_listview_control(void)
+static HWND create_listview_control(DWORD style)
 {
     struct subclass_info *info;
     HWND hwnd;
@@ -249,7 +263,7 @@ static HWND create_listview_control(void)
 
     GetClientRect(hwndparent, &rect);
     hwnd = CreateWindowExA(0, WC_LISTVIEW, "foo",
-                           WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT,
+                           WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT | style,
                            0, 0, rect.right, rect.bottom,
                            hwndparent, NULL, GetModuleHandleA(NULL), NULL);
     ok(hwnd != NULL, "gle=%d\n", GetLastError());
@@ -957,7 +971,7 @@ static void test_redraw(void)
 {
     HWND hwnd, hwndheader;
 
-    hwnd = create_listview_control();
+    hwnd = create_listview_control(0);
     hwndheader = subclass_header(hwnd);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1009,7 +1023,7 @@ static void test_customdraw(void)
     HWND hwnd;
     WNDPROC oldwndproc;
 
-    hwnd = create_listview_control();
+    hwnd = create_listview_control(0);
 
     insert_column(hwnd, 0);
     insert_column(hwnd, 1);
@@ -1081,7 +1095,7 @@ static void test_color(void)
     COLORREF color;
     COLORREF colors[4] = {RGB(0,0,0), RGB(100,50,200), CLR_NONE, RGB(255,255,255)};
 
-    hwnd = create_listview_control();
+    hwnd = create_listview_control(0);
     ok(hwnd != NULL, "failed to create a listview window\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1127,7 +1141,7 @@ static void test_item_count(void)
     static CHAR item1text[] = "item1";
     static CHAR item2text[] = "item2";
 
-    hwnd = create_listview_control();
+    hwnd = create_listview_control(0);
     ok(hwnd != NULL, "failed to create a listview window\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -1346,7 +1360,7 @@ static void test_multiselect(void)
     };
 
 
-    hwnd = create_listview_control();
+    hwnd = create_listview_control(0);
 
     for (i=0;i<items;i++) {
 	    insert_item(hwnd, 0);
@@ -1403,7 +1417,7 @@ static void test_subitem_rect(void)
     RECT rect;
 
     /* test LVM_GETSUBITEMRECT for header */
-    hwnd = create_listview_control();
+    hwnd = create_listview_control(0);
     ok(hwnd != NULL, "failed to create a listview window\n");
     /* add some columns */
     memset(&col, 0, sizeof(LVCOLUMN));
@@ -1464,7 +1478,7 @@ static void test_sorting(void)
     LVITEMA item = {0};
     DWORD r;
 
-    hwnd = create_listview_control();
+    hwnd = create_listview_control(0);
     ok(hwnd != NULL, "failed to create a listview window\n");
 
     /* insert some items */
@@ -1514,6 +1528,59 @@ static void test_sorting(void)
     DestroyWindow(hwnd);
 }
 
+static void test_ownerdata(void)
+{
+    HWND hwnd;
+    LONG_PTR style, ret;
+
+    /* it isn't possible to set LVS_OWNERDATA after creation */
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(!(style & LVS_OWNERDATA) && style, "LVS_OWNERDATA isn't expected\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SetWindowLongPtrA(hwnd, GWL_STYLE, style | LVS_OWNERDATA);
+    ok(ret == style, "Expected set GWL_STYLE to succeed\n");
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_ownerdata_switchto_seq,
+                "try to switch to LVS_OWNERDATA seq", FALSE);
+
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(!(style & LVS_OWNERDATA), "LVS_OWNERDATA isn't expected\n");
+    DestroyWindow(hwnd);
+
+    /* try to set LVS_OWNERDATA after creation just having it */
+    hwnd = create_listview_control(LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_OWNERDATA, "LVS_OWNERDATA is expected\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SetWindowLongPtrA(hwnd, GWL_STYLE, style | LVS_OWNERDATA);
+    ok(ret == style, "Expected set GWL_STYLE to succeed\n");
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_ownerdata_switchto_seq,
+                "try to switch to LVS_OWNERDATA seq", FALSE);
+    DestroyWindow(hwnd);
+
+    /* try to remove LVS_OWNERDATA after creation just having it */
+    hwnd = create_listview_control(LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_OWNERDATA, "LVS_OWNERDATA is expected\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    ret = SetWindowLongPtrA(hwnd, GWL_STYLE, style & ~LVS_OWNERDATA);
+    ok(ret == style, "Expected set GWL_STYLE to succeed\n");
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_ownerdata_switchto_seq,
+                "try to switch to LVS_OWNERDATA seq", FALSE);
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_OWNERDATA, "LVS_OWNERDATA is expected\n");
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -1553,4 +1620,5 @@ START_TEST(listview)
     test_multiselect();
     test_subitem_rect();
     test_sorting();
+    test_ownerdata();
 }
