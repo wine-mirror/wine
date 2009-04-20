@@ -77,7 +77,13 @@ sub set_find_count_callback($$) {
     $$find_count = shift;
 }
 
-sub kind($$) {
+
+#
+# Property setter / getter functions (each does both)
+#
+
+sub kind($;$)
+{
     my $self = shift;
     my $kind = \${$self->{KIND}};
     my $dirty = \${$self->{DIRTY}};
@@ -93,7 +99,8 @@ sub kind($$) {
     return $$kind;
 }
 
-sub _name($$) {
+sub _name($;$)
+{
     my $self = shift;
     my $_name = \${$self->{_NAME}};
     my $dirty = \${$self->{DIRTY}};
@@ -105,7 +112,8 @@ sub _name($$) {
     return $$_name;
 }
 
-sub name($$) {
+sub name($;$)
+{
     my $self = shift;
     my $name = \${$self->{NAME}};
     my $dirty = \${$self->{DIRTY}};
@@ -124,7 +132,8 @@ sub name($$) {
     }
 }
 
-sub pack($$) {
+sub pack($;$)
+{
     my $self = shift;
     my $pack = \${$self->{PACK}};
     my $dirty = \${$self->{DIRTY}};
@@ -187,7 +196,8 @@ sub field_count($) {
     return $count;
 }
 
-sub field_names($$) {
+sub field_names($;$)
+{
     my $self = shift;
     my $field_names = \${$self->{FIELD_NAMES}};
     my $dirty = \${$self->{DIRTY}};
@@ -217,7 +227,8 @@ sub field_sizes($) {
     return $$field_sizes;
 }
 
-sub field_type_names($$) {
+sub field_type_names($;$)
+{
     my $self = shift;
     my $field_type_names = \${$self->{FIELD_TYPE_NAMES}};
     my $dirty = \${$self->{DIRTY}};

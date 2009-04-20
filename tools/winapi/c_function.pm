@@ -20,7 +20,8 @@ package c_function;
 
 use strict;
 
-sub new($) {
+sub new($)
+{
     my $proto = shift;
     my $class = ref($proto) || $proto;
     my $self  = {};
@@ -29,7 +30,13 @@ sub new($) {
     return $self;
 }
 
-sub file($$) {
+
+#
+# Property setter / getter functions (each does both)
+#
+
+sub file($;$)
+{
     my $self = shift;
     my $file = \${$self->{FILE}};
 
@@ -40,7 +47,8 @@ sub file($$) {
     return $$file;
 }
 
-sub begin_line($$) {
+sub begin_line($;$)
+{
     my $self = shift;
     my $begin_line = \${$self->{BEGIN_LINE}};
 
@@ -51,7 +59,8 @@ sub begin_line($$) {
     return $$begin_line;
 }
 
-sub begin_column($$) {
+sub begin_column($;$)
+{
     my $self = shift;
     my $begin_column = \${$self->{BEGIN_COLUMN}};
 
@@ -62,7 +71,8 @@ sub begin_column($$) {
     return $$begin_column;
 }
 
-sub end_line($$) {
+sub end_line($;$)
+{
     my $self = shift;
     my $end_line = \${$self->{END_LINE}};
 
@@ -73,7 +83,8 @@ sub end_line($$) {
     return $$end_line;
 }
 
-sub end_column($$) {
+sub end_column($;$)
+{
     my $self = shift;
     my $end_column = \${$self->{END_COLUMN}};
 
@@ -84,7 +95,8 @@ sub end_column($$) {
     return $$end_column;
 }
 
-sub linkage($$) {
+sub linkage($;$)
+{
     my $self = shift;
     my $linkage = \${$self->{LINKAGE}};
 
@@ -95,7 +107,8 @@ sub linkage($$) {
     return $$linkage;
 }
 
-sub return_type($$) {
+sub return_type($;$)
+{
     my $self = shift;
     my $return_type = \${$self->{RETURN_TYPE}};
 
@@ -106,7 +119,8 @@ sub return_type($$) {
     return $$return_type;
 }
 
-sub calling_convention($$) {
+sub calling_convention($;$)
+{
     my $self = shift;
     my $calling_convention = \${$self->{CALLING_CONVENTION}};
 
@@ -117,7 +131,8 @@ sub calling_convention($$) {
     return $$calling_convention;
 }
 
-sub name($$) {
+sub name($;$)
+{
     my $self = shift;
     my $name = \${$self->{NAME}};
 
@@ -128,7 +143,8 @@ sub name($$) {
     return $$name;
 }
 
-sub argument_types($$) {
+sub argument_types($;$)
+{
     my $self = shift;
     my $argument_types = \${$self->{ARGUMENT_TYPES}};
 
@@ -139,7 +155,8 @@ sub argument_types($$) {
     return $$argument_types;
 }
 
-sub argument_names($$) {
+sub argument_names($;$)
+{
     my $self = shift;
     my $argument_names = \${$self->{ARGUMENT_NAMES}};
 
@@ -150,7 +167,8 @@ sub argument_names($$) {
     return $$argument_names;
 }
 
-sub statements_line($$) {
+sub statements_line($;$)
+{
     my $self = shift;
     my $statements_line = \${$self->{STATEMENTS_LINE}};
 
@@ -161,7 +179,8 @@ sub statements_line($$) {
     return $$statements_line;
 }
 
-sub statements_column($$) {
+sub statements_column($;$)
+{
     my $self = shift;
     my $statements_column = \${$self->{STATEMENTS_COLUMN}};
 
@@ -172,7 +191,8 @@ sub statements_column($$) {
     return $$statements_column;
 }
 
-sub statements($$) {
+sub statements($;$)
+{
     my $self = shift;
     my $statements = \${$self->{STATEMENTS}};
 
