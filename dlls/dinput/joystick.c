@@ -32,40 +32,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 /******************************************************************************
-  *     Acquire : gets exclusive control of the joystick
-  */
-HRESULT WINAPI JoystickAGenericImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
-{
-    JoystickGenericImpl *This = (JoystickGenericImpl *)iface;
-
-    TRACE("(%p)\n",This);
-
-    if (This->base.acquired) {
-        WARN("already acquired\n");
-        return S_FALSE;
-    }
-
-    This->base.acquired = 1;
-
-    return DI_OK;
-}
-
-/******************************************************************************
-  *     Unacquire : frees the joystick
-  */
-HRESULT WINAPI JoystickAGenericImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
-{
-    JoystickGenericImpl *This = (JoystickGenericImpl *)iface;
-    HRESULT res;
-
-    TRACE("(%p)\n",This);
-
-    if ((res = IDirectInputDevice2AImpl_Unacquire(iface)) != DI_OK) return res;
-
-    return DI_OK;
-}
-
-/******************************************************************************
   *     SetProperty : change input device properties
   */
 HRESULT WINAPI JoystickAGenericImpl_SetProperty(
