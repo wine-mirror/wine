@@ -49,6 +49,9 @@ static DWORD tmSinkRefCount;
 static ITfDocumentMgr *test_CurrentFocus = NULL;
 static ITfDocumentMgr *test_PrevFocus = NULL;
 static INT  test_OnSetFocus = SINK_UNEXPECTED;
+static INT  test_OnInitDocumentMgr = SINK_UNEXPECTED;
+static INT  test_OnPushContext = SINK_UNEXPECTED;
+static INT  test_OnPopContext = SINK_UNEXPECTED;
 
 HRESULT RegisterTextService(REFCLSID rclsid);
 HRESULT UnregisterTextService();
@@ -261,11 +264,19 @@ static void test_Activate(void)
     todo_wine ok(SUCCEEDED(hr),"Failed to Activate text service\n");
 }
 
+static int inline check_context_refcount(ITfContext *iface)
+{
+    IUnknown_AddRef(iface);
+    return IUnknown_Release(iface);
+}
+
 static void test_startSession(void)
 {
     HRESULT hr;
     DWORD cnt;
+    DWORD editCookie;
     ITfDocumentMgr *dmtest;
+    ITfContext *cxt,*cxt2,*cxt3,*cxtTest;
 
     test_ShouldActivate = TRUE;
     ITfThreadMgr_Activate(g_tm,&cid);
@@ -296,6 +307,109 @@ static void test_startSession(void)
     hr = ITfThreadMgr_GetFocus(g_tm,&dmtest);
     ok(SUCCEEDED(hr),"GetFocus Failed\n");
     ok(g_dm == dmtest,"Expected DocumentMgr not focused\n");
+
+    hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, NULL, &cxt, &editCookie);
+    ok(SUCCEEDED(hr),"CreateContext Failed\n");
+
+    hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, NULL, &cxt2, &editCookie);
+    ok(SUCCEEDED(hr),"CreateContext Failed\n");
+
+    hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, NULL, &cxt3, &editCookie);
+    ok(SUCCEEDED(hr),"CreateContext Failed\n");
+
+    cnt = check_context_refcount(cxt);
+    test_OnPushContext = SINK_EXPECTED;
+    test_OnInitDocumentMgr = SINK_EXPECTED;
+    hr = ITfDocumentMgr_Push(g_dm, cxt);
+    ok(SUCCEEDED(hr),"Push Failed\n");
+    ok(check_context_refcount(cxt) > cnt, "Ref count did not increase\n");
+    ok(test_OnPushContext == SINK_FIRED, "OnPushContext sink not fired\n");
+    ok(test_OnInitDocumentMgr == SINK_FIRED, "OnInitDocumentMgr sink not fired\n");
+
+    hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetTop Failed\n");
+    ok(cxtTest == cxt, "Wrong context on top\n");
+    ok(check_context_refcount(cxt) > cnt, "Ref count did not increase\n");
+    cnt = ITfContext_Release(cxtTest);
+
+    hr = ITfDocumentMgr_GetBase(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetBase Failed\n");
+    ok(cxtTest == cxt, "Wrong context on Base\n");
+    ok(check_context_refcount(cxt) > cnt, "Ref count did not increase\n");
+    ITfContext_Release(cxtTest);
+
+    check_context_refcount(cxt2);
+    test_OnPushContext = SINK_EXPECTED;
+    hr = ITfDocumentMgr_Push(g_dm, cxt2);
+    ok(SUCCEEDED(hr),"Push Failed\n");
+    ok(test_OnPushContext == SINK_FIRED, "OnPushContext sink not fired\n");
+
+    cnt = check_context_refcount(cxt2);
+    hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetTop Failed\n");
+    ok(cxtTest == cxt2, "Wrong context on top\n");
+    ok(check_context_refcount(cxt2) > cnt, "Ref count did not increase\n");
+    ITfContext_Release(cxtTest);
+
+    cnt = check_context_refcount(cxt);
+    hr = ITfDocumentMgr_GetBase(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetBase Failed\n");
+    ok(cxtTest == cxt, "Wrong context on Base\n");
+    ok(check_context_refcount(cxt) > cnt, "Ref count did not increase\n");
+    ITfContext_Release(cxtTest);
+
+    cnt = check_context_refcount(cxt3);
+    hr = ITfDocumentMgr_Push(g_dm, cxt3);
+    ok(!SUCCEEDED(hr),"Push Succeeded\n");
+    ok(check_context_refcount(cxt3) == cnt, "Ref changed\n");
+
+    cnt = check_context_refcount(cxt2);
+    hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetTop Failed\n");
+    ok(cxtTest == cxt2, "Wrong context on top\n");
+    ok(check_context_refcount(cxt2) > cnt, "Ref count did not increase\n");
+    ITfContext_Release(cxtTest);
+
+    cnt = check_context_refcount(cxt);
+    hr = ITfDocumentMgr_GetBase(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetBase Failed\n");
+    ok(cxtTest == cxt, "Wrong context on Base\n");
+    ok(check_context_refcount(cxt) > cnt, "Ref count did not increase\n");
+    ITfContext_Release(cxtTest);
+
+    cnt = check_context_refcount(cxt2);
+    test_OnPopContext = SINK_EXPECTED;
+    hr = ITfDocumentMgr_Pop(g_dm, 0);
+    ok(SUCCEEDED(hr),"Pop Failed\n");
+    ok(check_context_refcount(cxt2) < cnt, "Ref count did not decrease\n");
+    ok(test_OnPopContext == SINK_FIRED, "OnPopContext sink not fired\n");
+
+    hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetTop Failed\n");
+    ok(cxtTest == cxt, "Wrong context on top\n");
+    ITfContext_Release(cxtTest);
+
+    hr = ITfDocumentMgr_GetBase(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetBase Failed\n");
+    ok(cxtTest == cxt, "Wrong context on base\n");
+    ITfContext_Release(cxtTest);
+
+    hr = ITfDocumentMgr_Pop(g_dm, 0);
+    ok(!SUCCEEDED(hr),"Pop Succeeded\n");
+
+    hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetTop Failed\n");
+    ok(cxtTest == cxt, "Wrong context on top\n");
+    ITfContext_Release(cxtTest);
+
+    hr = ITfDocumentMgr_GetBase(g_dm, &cxtTest);
+    ok(SUCCEEDED(hr),"GetBase Failed\n");
+    ok(cxtTest == cxt, "Wrong context on base\n");
+    ITfContext_Release(cxtTest);
+
+    ITfContext_Release(cxt);
+    ITfContext_Release(cxt2);
+    ITfContext_Release(cxt3);
 }
 
 static void test_endSession(void)
@@ -389,7 +503,8 @@ static ULONG WINAPI ThreadMgrEventSink_Release(ITfThreadMgrEventSink *iface)
 static HRESULT WINAPI ThreadMgrEventSink_OnInitDocumentMgr(ITfThreadMgrEventSink *iface,
 ITfDocumentMgr *pdim)
 {
-    trace("\n");
+    ok(test_OnInitDocumentMgr == SINK_EXPECTED, "Unexpected OnInitDocumentMgr sink\n");
+    test_OnInitDocumentMgr = SINK_FIRED;
     return S_OK;
 }
 
@@ -413,14 +528,16 @@ ITfDocumentMgr *pdimFocus, ITfDocumentMgr *pdimPrevFocus)
 static HRESULT WINAPI ThreadMgrEventSink_OnPushContext(ITfThreadMgrEventSink *iface,
 ITfContext *pic)
 {
-    trace("\n");
+    ok(test_OnPushContext == SINK_EXPECTED, "Unexpected OnPushContext sink\n");
+    test_OnPushContext = SINK_FIRED;
     return S_OK;
 }
 
 static HRESULT WINAPI ThreadMgrEventSink_OnPopContext(ITfThreadMgrEventSink *iface,
 ITfContext *pic)
 {
-    trace("\n");
+    ok(test_OnPopContext == SINK_EXPECTED, "Unexpected OnPopContext sink\n");
+    test_OnPopContext = SINK_FIRED;
     return S_OK;
 }
 
