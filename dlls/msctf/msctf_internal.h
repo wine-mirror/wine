@@ -28,5 +28,11 @@ extern HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfConte
 extern HRESULT InputProcessorProfiles_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
 extern HRESULT CategoryMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
 
+/* cookie function */
+extern DWORD  generate_Cookie(DWORD magic, LPVOID data);
+extern DWORD  get_Cookie_magic(DWORD id);
+extern LPVOID get_Cookie_data(DWORD id);
+extern LPVOID remove_Cookie(DWORD id);
+
 extern const WCHAR szwSystemTIPKey[];
 #endif /* __WINE_MSCTF_I_H */
