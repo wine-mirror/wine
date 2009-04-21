@@ -1049,6 +1049,45 @@ static void test_reset(void)
     hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
     ok(hr == D3DERR_DEVICENOTRESET, "IDirect3DDevice9_TestCooperativeLevel after a failed reset returned %#x\n", hr);
 
+    pDevice = NULL;
+    IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = FALSE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+                    D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+
+    if(FAILED(hr))
+    {
+        skip("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
+        goto cleanup;
+    }
+
+    hr = IDirect3DDevice9_TestCooperativeLevel(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_TestCooperativeLevel after creation returned %#x\n", hr);
+
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.Windowed         = TRUE;
+    d3dpp.BackBufferWidth  = 400;
+    d3dpp.BackBufferHeight = 300;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    hr = IDirect3DDevice9_Reset(pDevice, &d3dpp);
+    todo_wine ok(hr == D3D_OK, "IDirect3DDevice9_Reset failed with 0x%08x\n", hr);
+
+    if (FAILED(hr)) goto cleanup;
+
+    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &surface);
+    todo_wine ok(hr == D3D_OK, "GetDepthStencilSurface failed with 0x%08x\n", hr);
+    todo_wine ok(surface != NULL, "Depth stencil should not be NULL\n");
+    if (surface) IDirect3DSurface9_Release(surface);
+
 cleanup:
     HeapFree(GetProcessHeap(), 0, modes);
     if(pD3d) IDirect3D9_Release(pD3d);
