@@ -81,7 +81,7 @@ struct tgt_process_minidump_data
 
 static inline struct tgt_process_minidump_data* private_data(struct dbg_process* pcs)
 {
-    return (struct tgt_process_minidump_data*)pcs->pio_data;
+    return pcs->pio_data;
 }
 
 static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr, 
@@ -95,7 +95,7 @@ static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr,
     if (MiniDumpReadDumpStream(private_data(dbg_curr_process)->mapping,
                                MemoryListStream, &dir, &stream, &size))
     {
-        MINIDUMP_MEMORY_LIST*   mml = (MINIDUMP_MEMORY_LIST*)stream;
+        MINIDUMP_MEMORY_LIST*   mml = stream;
         MINIDUMP_MEMORY_DESCRIPTOR* mmd = &mml->MemoryRanges[0];
         int                     i;
 
@@ -180,7 +180,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     /* fetch PID */
     if (MiniDumpReadDumpStream(data->mapping, MiscInfoStream, &dir, &stream, &size))
     {
-        MINIDUMP_MISC_INFO* mmi = (MINIDUMP_MISC_INFO*)stream;
+        MINIDUMP_MISC_INFO* mmi = stream;
         if (mmi->Flags1 & MINIDUMP_MISC1_PROCESS_ID)
             pid = mmi->ProcessId;
     }
@@ -189,7 +189,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     lstrcpyW(exec_name, default_exec_name);
     if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, &dir, &stream, &size))
     {
-        mml = (MINIDUMP_MODULE_LIST*)stream;
+        mml = stream;
         if (mml->NumberOfModules)
         {
             WCHAR*      ptr;
@@ -212,7 +212,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 
     if (MiniDumpReadDumpStream(data->mapping, SystemInfoStream, &dir, &stream, &size))
     {
-        MINIDUMP_SYSTEM_INFO*   msi = (MINIDUMP_SYSTEM_INFO*)stream;
+        MINIDUMP_SYSTEM_INFO*   msi = stream;
         const char *str;
         char tmp[128];
 
@@ -308,7 +308,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 
     if (MiniDumpReadDumpStream(data->mapping, ThreadListStream, &dir, &stream, &size))
     {
-        MINIDUMP_THREAD_LIST*   mtl = (MINIDUMP_THREAD_LIST*)stream;
+        MINIDUMP_THREAD_LIST*   mtl = stream;
         ULONG                   i;
 
         for (i = 0; i < mtl->NumberOfThreads; i++)
@@ -323,7 +323,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     {
         WCHAR   buffer[MAX_PATH];
 
-        mml = (MINIDUMP_MODULE_LIST*)stream;
+        mml = stream;
         for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
         {
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
@@ -342,7 +342,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     {
         WCHAR   buffer[MAX_PATH];
 
-        mml = (MINIDUMP_MODULE_LIST*)stream;
+        mml = stream;
         for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
         {
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
@@ -362,7 +362,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     }
     if (MiniDumpReadDumpStream(data->mapping, ExceptionStream, &dir, &stream, &size))
     {
-        MINIDUMP_EXCEPTION_STREAM*      mes = (MINIDUMP_EXCEPTION_STREAM*)stream;
+        MINIDUMP_EXCEPTION_STREAM*      mes = stream;
 
         if ((dbg_curr_thread = dbg_get_thread(dbg_curr_process, mes->ThreadId)))
         {

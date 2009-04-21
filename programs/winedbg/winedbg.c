@@ -404,7 +404,7 @@ struct mod_loader_info
 
 static BOOL CALLBACK mod_loader_cb(PCSTR mod_name, ULONG base, PVOID ctx)
 {
-    struct mod_loader_info*     mli = (struct mod_loader_info*)ctx;
+    struct mod_loader_info*     mli = ctx;
 
     if (!strcmp(mod_name, "<wine-loader>"))
     {

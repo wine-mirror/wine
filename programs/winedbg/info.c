@@ -178,7 +178,7 @@ static inline BOOL module_is_container(const IMAGEHLP_MODULE64* wmod_cntnr,
 
 static BOOL CALLBACK info_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
 {
-    struct info_module* im = (struct info_module*)ctx;
+    struct info_module* im = ctx;
 
     if (im->num_used + 1 > im->num_alloc)
     {

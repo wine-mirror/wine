@@ -217,7 +217,7 @@ struct sym_enum
 
 static BOOL WINAPI sym_enum_cb(PSYMBOL_INFO sym_info, ULONG size, PVOID user)
 {
-    struct sym_enum*    se = (struct sym_enum*)user;
+    struct sym_enum*    se = user;
 
     if (sym_info->Flags & SYMFLAG_PARAMETER)
     {

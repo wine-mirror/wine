@@ -146,7 +146,7 @@ struct sgv_data
 
 static BOOL CALLBACK sgv_cb(PSYMBOL_INFO sym, ULONG size, PVOID ctx)
 {
-    struct sgv_data*    sgv = (struct sgv_data*)ctx;
+    struct sgv_data*    sgv = ctx;
     unsigned            insp;
     char                tmp[64];
 

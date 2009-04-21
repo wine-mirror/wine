@@ -346,7 +346,7 @@ struct type_find_t
 
 static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
 {
-    struct type_find_t* user = (struct type_find_t*)_user;
+    struct type_find_t* user = _user;
     BOOL                ret = TRUE;
     struct dbg_type     type;
     DWORD               type_id;
