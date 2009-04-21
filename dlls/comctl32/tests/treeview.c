@@ -748,6 +748,79 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
     return 0L;
 }
 
+static void TestExpandInvisible(void)
+{
+    static CHAR nodeText[][5] = {"0", "1", "2", "3", "4"};
+    TVINSERTSTRUCTA ins;
+    HTREEITEM node[5];
+    RECT dummyRect;
+    BOOL nodeVisible;
+
+    /* The test builds the following tree and expands then node 1, while node 0 is collapsed.
+     *
+     * 0
+     * |- 1
+     * |  |- 2
+     * |  |- 3
+     * |- 4
+     *
+     */
+
+    TreeView_DeleteAllItems(hTree);
+
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = TVI_ROOT;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = nodeText[0];
+    node[0] = TreeView_InsertItem(hTree, &ins);
+    assert(node[0]);
+
+    ins.hInsertAfter = TVI_LAST;
+    U(ins).item.mask = TVIF_TEXT;
+    ins.hParent = node[0];
+
+    U(ins).item.pszText = nodeText[1];
+    node[1] = TreeView_InsertItem(hTree, &ins);
+    assert(node[1]);
+    U(ins).item.pszText = nodeText[4];
+    node[4] = TreeView_InsertItem(hTree, &ins);
+    assert(node[4]);
+
+    ins.hParent = node[1];
+
+    U(ins).item.pszText = nodeText[2];
+    node[2] = TreeView_InsertItem(hTree, &ins);
+    assert(node[2]);
+    U(ins).item.pszText = nodeText[3];
+    node[3] = TreeView_InsertItem(hTree, &ins);
+    assert(node[3]);
+
+
+    nodeVisible = TreeView_GetItemRect(hTree, node[1], &dummyRect, FALSE);
+    ok(!nodeVisible, "Node 1 should not be visible.\n");
+    nodeVisible = TreeView_GetItemRect(hTree, node[2], &dummyRect, FALSE);
+    ok(!nodeVisible, "Node 2 should not be visible.\n");
+    nodeVisible = TreeView_GetItemRect(hTree, node[3], &dummyRect, FALSE);
+    ok(!nodeVisible, "Node 3 should not be visible.\n");
+    nodeVisible = TreeView_GetItemRect(hTree, node[4], &dummyRect, FALSE);
+    ok(!nodeVisible, "Node 4 should not be visible.\n");
+
+    ok(TreeView_Expand(hTree, node[1], TVE_EXPAND), "Expand of node 1 failed.\n");
+
+    nodeVisible = TreeView_GetItemRect(hTree, node[1], &dummyRect, FALSE);
+    ok(!nodeVisible, "Node 1 should not be visible.\n");
+    nodeVisible = TreeView_GetItemRect(hTree, node[2], &dummyRect, FALSE);
+todo_wine
+    ok(!nodeVisible, "Node 2 should not be visible.\n");
+    nodeVisible = TreeView_GetItemRect(hTree, node[3], &dummyRect, FALSE);
+todo_wine
+    ok(!nodeVisible, "Node 3 should not be visible.\n");
+    nodeVisible = TreeView_GetItemRect(hTree, node[4], &dummyRect, FALSE);
+todo_wine
+    ok(!nodeVisible, "Node 4 should not be visible.\n");
+}
+
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -813,6 +886,9 @@ START_TEST(treeview)
 
     /* Clears all the previous items */
     TestCallback();
+
+    /* Clears all the previous items */
+    TestExpandInvisible();
 
     PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
     while(GetMessageA(&msg,0,0,0)) {
