@@ -4100,6 +4100,30 @@ struct get_token_groups_reply
     char __pad_12[4];
 };
 
+struct get_token_default_dacl_request
+{
+    struct request_header __header;
+    obj_handle_t    handle;
+};
+struct get_token_default_dacl_reply
+{
+    struct reply_header __header;
+    data_size_t     acl_len;
+    /* VARARG(acl,ACL); */
+    char __pad_12[4];
+};
+
+struct set_token_default_dacl_request
+{
+    struct request_header __header;
+    obj_handle_t    handle;
+    /* VARARG(acl,ACL); */
+};
+struct set_token_default_dacl_reply
+{
+    struct reply_header __header;
+};
+
 struct set_security_object_request
 {
     struct request_header __header;
@@ -4765,6 +4789,8 @@ enum request
     REQ_access_check,
     REQ_get_token_user,
     REQ_get_token_groups,
+    REQ_get_token_default_dacl,
+    REQ_set_token_default_dacl,
     REQ_set_security_object,
     REQ_get_security_object,
     REQ_create_mailslot,
@@ -5008,6 +5034,8 @@ union generic_request
     struct access_check_request access_check_request;
     struct get_token_user_request get_token_user_request;
     struct get_token_groups_request get_token_groups_request;
+    struct get_token_default_dacl_request get_token_default_dacl_request;
+    struct set_token_default_dacl_request set_token_default_dacl_request;
     struct set_security_object_request set_security_object_request;
     struct get_security_object_request get_security_object_request;
     struct create_mailslot_request create_mailslot_request;
@@ -5249,6 +5277,8 @@ union generic_reply
     struct access_check_reply access_check_reply;
     struct get_token_user_reply get_token_user_reply;
     struct get_token_groups_reply get_token_groups_reply;
+    struct get_token_default_dacl_reply get_token_default_dacl_reply;
+    struct set_token_default_dacl_reply set_token_default_dacl_reply;
     struct set_security_object_reply set_security_object_reply;
     struct get_security_object_reply get_security_object_reply;
     struct create_mailslot_reply create_mailslot_reply;
@@ -5280,6 +5310,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 385
+#define SERVER_PROTOCOL_VERSION 386
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

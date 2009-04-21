@@ -1344,3 +1344,49 @@ DECL_HANDLER(get_token_statistics)
         release_object( token );
     }
 }
+
+DECL_HANDLER(get_token_default_dacl)
+{
+    struct token *token;
+
+    reply->acl_len = 0;
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 TOKEN_QUERY,
+                                                 &token_ops )))
+    {
+        if (token->default_dacl)
+            reply->acl_len = token->default_dacl->AclSize;
+
+        if (reply->acl_len <= get_reply_max_size())
+        {
+            ACL *acl_reply = set_reply_data_size( reply->acl_len );
+            if (acl_reply)
+                memcpy( acl_reply, token->default_dacl, reply->acl_len );
+        }
+        else set_error( STATUS_BUFFER_TOO_SMALL );
+
+        release_object( token );
+    }
+}
+
+DECL_HANDLER(set_token_default_dacl)
+{
+    struct token *token;
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 TOKEN_ADJUST_DEFAULT,
+                                                 &token_ops )))
+    {
+        const ACL *acl = get_req_data();
+        unsigned int acl_size = get_req_data_size();
+
+        free( token->default_dacl );
+        token->default_dacl = NULL;
+
+        if (acl_size)
+            token->default_dacl = memdup( acl, acl_size );
+
+        release_object( token );
+    }
+}

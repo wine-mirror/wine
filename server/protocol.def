@@ -2896,6 +2896,18 @@ enum message_type
     VARARG(user,token_groups); /* groups the token's user belongs to */
 @END
 
+@REQ(get_token_default_dacl)
+    obj_handle_t    handle;     /* handle to the token */
+@REPLY
+    data_size_t     acl_len;    /* length needed to store access control list */
+    VARARG(acl,ACL);            /* access control list */
+@END
+
+@REQ(set_token_default_dacl)
+    obj_handle_t    handle;     /* handle to the token */
+    VARARG(acl,ACL);            /* default dacl to set */
+@END
+
 @REQ(set_security_object)
     obj_handle_t    handle;       /* handle to the object */
     unsigned int    security_info; /* which parts of security descriptor to set */

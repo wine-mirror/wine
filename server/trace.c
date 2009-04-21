@@ -907,6 +907,13 @@ static void dump_inline_acl( const char *prefix, const ACL *acl, data_size_t siz
     fputc( '}', stderr );
 }
 
+static void dump_varargs_ACL( const char *prefix, data_size_t size )
+{
+    const ACL *acl = cur_data;
+    dump_inline_acl( prefix, acl, size );
+    remove_data( size );
+}
+
 static void dump_inline_security_descriptor( const char *prefix, const struct security_descriptor *sd, data_size_t size )
 {
     fprintf( stderr,"%s{", prefix );
@@ -3461,6 +3468,23 @@ static void dump_get_token_groups_reply( const struct get_token_groups_reply *re
     dump_varargs_token_groups( ", user=", cur_size );
 }
 
+static void dump_get_token_default_dacl_request( const struct get_token_default_dacl_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_get_token_default_dacl_reply( const struct get_token_default_dacl_reply *req )
+{
+    fprintf( stderr, " acl_len=%u", req->acl_len );
+    dump_varargs_ACL( ", acl=", cur_size );
+}
+
+static void dump_set_token_default_dacl_request( const struct set_token_default_dacl_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+    dump_varargs_ACL( ", acl=", cur_size );
+}
+
 static void dump_set_security_object_request( const struct set_security_object_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -3995,6 +4019,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_access_check_request,
     (dump_func)dump_get_token_user_request,
     (dump_func)dump_get_token_groups_request,
+    (dump_func)dump_get_token_default_dacl_request,
+    (dump_func)dump_set_token_default_dacl_request,
     (dump_func)dump_set_security_object_request,
     (dump_func)dump_get_security_object_request,
     (dump_func)dump_create_mailslot_request,
@@ -4234,6 +4260,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_access_check_reply,
     (dump_func)dump_get_token_user_reply,
     (dump_func)dump_get_token_groups_reply,
+    (dump_func)dump_get_token_default_dacl_reply,
+    NULL,
     NULL,
     (dump_func)dump_get_security_object_reply,
     (dump_func)dump_create_mailslot_reply,
@@ -4473,6 +4501,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "access_check",
     "get_token_user",
     "get_token_groups",
+    "get_token_default_dacl",
+    "set_token_default_dacl",
     "set_security_object",
     "get_security_object",
     "create_mailslot",
