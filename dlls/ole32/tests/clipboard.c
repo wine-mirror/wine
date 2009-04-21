@@ -1136,7 +1136,10 @@ static void test_flushed_getdata(void)
 
     InitFormatEtc(fmt, cf_another, 0xffff);
     hr = IDataObject_GetData(get, &fmt, &med);
-    ok(hr == DV_E_FORMATETC, "got %08x\n", hr);
+    ok(hr == DV_E_FORMATETC ||
+       broken(hr == S_OK), /* win9x, winme & nt4 */
+       "got %08x\n", hr);
+    if(hr == S_OK) ReleaseStgMedium(&med);
 
     InitFormatEtc(fmt, cf_another, 0xffff);
     memset(&dm, 0, sizeof(dm));
