@@ -727,7 +727,7 @@ sub source_scan_project_file($$$)
                 #print "\n$prj_target_libs bevor\n";
                 $prj_target_libs=~s/\\/\//g;
                 $prj_target_libs=~s/\.lib//g;
-                $prj_target_libs=~s/\s/ -l/g;
+                $prj_target_libs=~s/\s+/ -l/g;
                 #print "\n$prj_target_libs after\n";
                 shift (@prj_target_options);
                 foreach ( @prj_target_options ) {
