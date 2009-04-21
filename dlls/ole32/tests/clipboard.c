@@ -914,9 +914,11 @@ static void test_consumer_refs(void)
     hr = OleGetClipboard(&get2);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    ok(get1 == get2, "data objects differ\n");
+    ok(get1 == get2 ||
+       broken(get1 != get2), /* win9x, winme & nt4 */
+       "data objects differ\n");
     refs = IDataObject_Release(get2);
-    ok(refs == 1, "got %d\n", refs);
+    ok(refs == (get1 == get2 ? 1 : 0), "got %d\n", refs);
 
     OleFlushClipboard();
 
