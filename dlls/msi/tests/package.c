@@ -8818,7 +8818,6 @@ static void test_appsearch_drlocator(void)
     search_absolute_directory(path, "");
     r = MsiGetPropertyA(hpkg, "SIGPROP11", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
     ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     DeleteFileA("FileName1");

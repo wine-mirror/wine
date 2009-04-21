@@ -969,7 +969,10 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATU
     else
         depth = MSI_RecordGetInteger(row,4);
 
-    ACTION_ExpandAnyPath(package, path, expanded, MAX_PATH);
+    if (sz)
+        ACTION_ExpandAnyPath(package, path, expanded, MAX_PATH);
+    else
+        strcpyW(expanded, path);
 
     if (parent)
     {
@@ -984,7 +987,7 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATU
         strcpyW(path, parent);
         strcatW(path, expanded);
     }
-    else
+    else if (sz)
         strcpyW(path, expanded);
 
     PathAddBackslashW(path);
