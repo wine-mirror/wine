@@ -780,8 +780,42 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 IDirectSoundBuffer_Release(secondary);
                 secondary=NULL;
             }
-            wfxe.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
 
+            wfxe.Format.cbSize = sizeof(wfxe);
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL) && !secondary,
+                "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
+                rc, secondary);
+            if (secondary)
+            {
+                IDirectSoundBuffer_Release(secondary);
+                secondary=NULL;
+            }
+
+            wfxe.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(rc==DS_OK && secondary,
+                "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
+                rc, secondary);
+            if (secondary)
+            {
+                IDirectSoundBuffer_Release(secondary);
+                secondary=NULL;
+            }
+
+            wfxe.Format.cbSize = sizeof(wfxe) + 1;
+            rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            ok(((rc==DSERR_CONTROLUNAVAIL || DSERR_INVALIDCALL /* 2003 */) && !secondary)
+                || rc==DS_OK /* driver dependent? */,
+                "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
+                rc, secondary);
+            if (secondary)
+            {
+                IDirectSoundBuffer_Release(secondary);
+                secondary=NULL;
+            }
+
+            wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx);
             ++wfxe.Samples.wValidBitsPerSample;
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DSERR_INVALIDPARAM && !secondary,

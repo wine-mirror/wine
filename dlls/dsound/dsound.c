@@ -1586,13 +1586,17 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
         }
         if (pwfxe->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
         {
+            /* check if cbSize is at least 22 bytes */
             if (pwfxe->Format.cbSize < (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
             {
                 WARN("Too small a cbSize %u\n", pwfxe->Format.cbSize);
                 return DSERR_INVALIDPARAM;
             }
 
-            if (pwfxe->Format.cbSize > (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)))
+            /* cbSize should be 22 bytes, with one possible exception */
+            if (pwfxe->Format.cbSize > (sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX)) &&
+                !(IsEqualGUID(&pwfxe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM) &&
+                pwfxe->Format.cbSize == sizeof(WAVEFORMATEXTENSIBLE)))
             {
                 WARN("Too big a cbSize %u\n", pwfxe->Format.cbSize);
                 return DSERR_CONTROLUNAVAIL;
