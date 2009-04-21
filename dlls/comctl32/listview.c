@@ -1377,6 +1377,8 @@ static INT LISTVIEW_CreateHeader(LISTVIEW_INFO *infoPtr)
 
     if (infoPtr->hwndHeader) return 0;
 
+    TRACE("Creating header for list %p\n", infoPtr->hwndSelf);
+
     /* setup creation flags */
     dFlags |= (LVS_NOSORTHEADER & infoPtr->dwStyle) ? 0 : HDS_BUTTONS;
     dFlags |= (LVS_NOCOLUMNHEADER & infoPtr->dwStyle) ? HDS_HIDDEN : 0;
