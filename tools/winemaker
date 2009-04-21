@@ -900,6 +900,11 @@ sub source_scan_project_file($$$)
                         $vc_tool->{'PreprocessorDefinitions'}=~s/;/ -D/g;
                         $prj_target_cflags.="-D".$vc_tool->{'PreprocessorDefinitions'}." ";
                     }
+                    if (defined $vc_tool->{'AdditionalIncludeDirectories'}) {
+                        $vc_tool->{'AdditionalIncludeDirectories'}=~s/\\/\//g;
+                        $vc_tool->{'AdditionalIncludeDirectories'}=~s/;/ -I/g;
+                        push @{@$project_settings[$T_INCLUDE_PATH]},"-I".$vc_tool->{'AdditionalIncludeDirectories'};
+                    }
                 }
                 last;
             }
