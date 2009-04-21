@@ -465,6 +465,7 @@ struct wined3d_shader_src_param
 {
     WINED3DSHADER_PARAM_REGISTER_TYPE register_type;
     UINT register_idx;
+    DWORD swizzle;
     DWORD modifiers;
     const struct wined3d_shader_src_param *rel_addr;
     DWORD token;

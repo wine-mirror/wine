@@ -1075,9 +1075,9 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
              * with more than one component. Thus replicate the first source argument over all
              * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc) */
             struct wined3d_shader_src_param tmp_src = ins->src[0];
-            tmp_src.token &= ~WINED3DSP_SWIZZLE_MASK;
-            tmp_src.token |= ((ins->src[0].token >> WINED3DSP_SWIZZLE_SHIFT) & 0x3)
+            tmp_src.swizzle = ((ins->src[0].swizzle >> WINED3DSP_SWIZZLE_SHIFT) & 0x3)
                     * (0x55 << WINED3DSP_SWIZZLE_SHIFT);
+            tmp_src.token = (tmp_src.token & ~WINED3DSP_SWIZZLE_MASK) | tmp_src.swizzle;
             shader_arb_add_src_param(ins, &tmp_src, src0_param);
             shader_addline(buffer, "ARL A0.x, %s;\n", src0_param);
         }
@@ -1633,7 +1633,6 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
 static void vshader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    DWORD swizzle = (ins->src[0].token & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
     const char *instruction;
 
     char tmpLine[256];
@@ -1651,7 +1650,8 @@ static void vshader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
     shader_arb_add_dst_param(ins, &ins->dst[0], tmpLine); /* Destination */
     strcat(tmpLine, ",");
     shader_arb_add_src_param(ins, &ins->src[0], tmpLine);
-    if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) == swizzle) {
+    if (ins->src[0].swizzle == WINED3DSP_NOSWIZZLE)
+    {
         /* Dx sdk says .x is used if no swizzle is given, but our test shows that
          * .w is used
          */

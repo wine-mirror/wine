@@ -1946,7 +1946,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
             write_mask = 0;
             /* Find the destination channels which use the current source0 channel */
             for (j=0; j<4; j++) {
-                if (((ins->src[0].token >> (WINED3DSP_SWIZZLE_SHIFT + 2 * j)) & 0x3) == i)
+                if (((ins->src[0].swizzle >> (WINED3DSP_SWIZZLE_SHIFT + 2 * j)) & 0x3) == i)
                 {
                     write_mask |= WINED3DSP_WRITEMASK_0 << j;
                     cmp_channel = WINED3DSP_WRITEMASK_0 << j;
@@ -2028,7 +2028,7 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
         write_mask = 0;
         /* Find the destination channels which use the current source0 channel */
         for (j=0; j<4; j++) {
-            if (((ins->src[0].token >> (WINED3DSP_SWIZZLE_SHIFT + 2 * j)) & 0x3) == i)
+            if (((ins->src[0].swizzle >> (WINED3DSP_SWIZZLE_SHIFT + 2 * j)) & 0x3) == i)
             {
                 write_mask |= WINED3DSP_WRITEMASK_0 << j;
                 cmp_channel = WINED3DSP_WRITEMASK_0 << j;
@@ -2469,7 +2469,7 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
     mask |= sample_function.coord_mask;
 
     if (shader_version < WINED3DPS_VERSION(2,0)) swizzle = WINED3DVS_NOSWIZZLE;
-    else swizzle = ins->src[1].token & WINED3DSP_SWIZZLE_MASK;
+    else swizzle = ins->src[1].swizzle;
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
@@ -2504,7 +2504,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
     DWORD sample_flags = WINED3D_GLSL_SAMPLE_LOD;
     DWORD sampler_type;
     DWORD sampler_idx;
-    DWORD swizzle = ins->src[1].token & WINED3DSP_SWIZZLE_MASK;
+    DWORD swizzle = ins->src[1].swizzle;
 
     sampler_idx = ins->src[1].register_idx;
     sampler_type = ins->ctx->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
