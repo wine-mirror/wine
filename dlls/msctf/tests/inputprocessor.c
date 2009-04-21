@@ -33,14 +33,22 @@ static ITfInputProcessorProfiles* g_ipp;
 static LANGID gLangid;
 static ITfCategoryMgr * g_cm = NULL;
 static ITfThreadMgr* g_tm = NULL;
+static ITfDocumentMgr *g_dm = NULL;
 static TfClientId cid = 0;
 static TfClientId tid = 0;
+
+#define SINK_UNEXPECTED 0
+#define SINK_EXPECTED 1
+#define SINK_FIRED 2
 
 static BOOL test_ShouldActivate = FALSE;
 static BOOL test_ShouldDeactivate = FALSE;
 
 static DWORD tmSinkCookie;
 static DWORD tmSinkRefCount;
+static ITfDocumentMgr *test_CurrentFocus = NULL;
+static ITfDocumentMgr *test_PrevFocus = NULL;
+static INT  test_OnSetFocus = SINK_UNEXPECTED;
 
 HRESULT RegisterTextService(REFCLSID rclsid);
 HRESULT UnregisterTextService();
@@ -255,15 +263,50 @@ static void test_Activate(void)
 
 static void test_startSession(void)
 {
+    HRESULT hr;
+    DWORD cnt;
+    ITfDocumentMgr *dmtest;
+
     test_ShouldActivate = TRUE;
     ITfThreadMgr_Activate(g_tm,&cid);
     todo_wine ok(cid != tid,"TextService id mistakenly matches Client id\n");
+
+    hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&g_dm);
+    ok(SUCCEEDED(hr),"CreateDocumentMgr failed\n");
+
+    hr = ITfThreadMgr_GetFocus(g_tm,&dmtest);
+    ok(SUCCEEDED(hr),"GetFocus Failed\n");
+    ok(dmtest == NULL,"Initial focus not null\n");
+
+    test_CurrentFocus = g_dm;
+    test_PrevFocus = NULL;
+    test_OnSetFocus  = SINK_EXPECTED;
+    hr = ITfThreadMgr_SetFocus(g_tm,g_dm);
+    ok(SUCCEEDED(hr),"SetFocus Failed\n");
+    ok(test_OnSetFocus == SINK_FIRED, "OnSetFocus sink not called\n");
+    test_OnSetFocus  = SINK_UNEXPECTED;
+
+    hr = ITfThreadMgr_GetFocus(g_tm,&dmtest);
+    ok(SUCCEEDED(hr),"GetFocus Failed\n");
+    ok(g_dm == dmtest,"Expected DocumentMgr not focused\n");
+
+    cnt = ITfDocumentMgr_Release(g_dm);
+    ok(cnt == 2,"DocumentMgr refcount not expected (2 vs %i)\n",cnt);
+
+    hr = ITfThreadMgr_GetFocus(g_tm,&dmtest);
+    ok(SUCCEEDED(hr),"GetFocus Failed\n");
+    ok(g_dm == dmtest,"Expected DocumentMgr not focused\n");
 }
 
 static void test_endSession(void)
 {
     test_ShouldDeactivate = TRUE;
+    test_CurrentFocus = NULL;
+    test_PrevFocus = g_dm;
+    test_OnSetFocus  = SINK_EXPECTED;
     ITfThreadMgr_Deactivate(g_tm);
+    ok(test_OnSetFocus == SINK_FIRED, "OnSetFocus sink not called\n");
+    test_OnSetFocus  = SINK_UNEXPECTED;
 }
 
 START_TEST(inputprocessor)
@@ -360,7 +403,10 @@ ITfDocumentMgr *pdim)
 static HRESULT WINAPI ThreadMgrEventSink_OnSetFocus(ITfThreadMgrEventSink *iface,
 ITfDocumentMgr *pdimFocus, ITfDocumentMgr *pdimPrevFocus)
 {
-    trace("\n");
+    ok(test_OnSetFocus == SINK_EXPECTED, "Unexpected OnSetFocus sink\n");
+    ok(pdimFocus == test_CurrentFocus,"Sink reports wrong focus\n");
+    ok(pdimPrevFocus == test_PrevFocus,"Sink reports wrong previous focus\n");
+    test_OnSetFocus = SINK_FIRED;
     return S_OK;
 }
 
