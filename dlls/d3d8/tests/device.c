@@ -1358,6 +1358,45 @@ static void test_depth_stencil_reset(void)
     ok(hr == D3DERR_NOTFOUND, "GetDepthStencilSurface returned 0x%08x, expected D3DERR_NOTFOUND\n", hr);
     ok(surface == NULL, "Depth stencil should be NULL\n");
 
+    device = NULL;
+    IDirect3D8_GetAdapterDisplayMode( d3d8, D3DADAPTER_DEFAULT, &display_mode );
+
+    ZeroMemory( &present_parameters, sizeof(present_parameters) );
+    present_parameters.Windowed         = TRUE;
+    present_parameters.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferFormat = display_mode.Format;
+    present_parameters.EnableAutoDepthStencil = FALSE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    hr = IDirect3D8_CreateDevice( d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+                    D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device );
+
+    if(FAILED(hr))
+    {
+        skip("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        goto cleanup;
+    }
+
+    hr = IDirect3DDevice8_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "IDirect3DDevice8_TestCooperativeLevel after creation returned %#x\n", hr);
+
+    present_parameters.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    present_parameters.Windowed         = TRUE;
+    present_parameters.BackBufferWidth  = 400;
+    present_parameters.BackBufferHeight = 300;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    hr = IDirect3DDevice8_Reset(device, &present_parameters);
+    todo_wine ok(hr == D3D_OK, "IDirect3DDevice8_Reset failed with 0x%08x\n", hr);
+
+    if (FAILED(hr)) goto cleanup;
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surface);
+    todo_wine ok(hr == D3D_OK, "GetDepthStencilSurface failed with 0x%08x\n", hr);
+    todo_wine ok(surface != NULL, "Depth stencil should not be NULL\n");
+    if (surface) IDirect3DSurface8_Release(surface);
+
 cleanup:
     if(d3d8) IDirect3D8_Release(d3d8);
     if(device) IDirect3D8_Release(device);
