@@ -467,7 +467,7 @@ static BOOL is_integer(parse_buffer* buf)
 
 static BOOL is_string(parse_buffer* buf)
 {
-  char tmp[32];
+  char tmp[100];
   DWORD pos = 0;
   char c;
   BOOL ok = 0;
@@ -475,7 +475,7 @@ static BOOL is_string(parse_buffer* buf)
   if (*buf->buffer != '"')
     return FALSE;
 
-  while (!is_separator(c = *(buf->buffer+pos+1)) && (pos < 31))
+  while (!is_separator(c = *(buf->buffer+pos+1)) && (pos < 99))
   {
     if (c == '"')
     {
