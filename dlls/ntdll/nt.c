@@ -242,9 +242,6 @@ NTSTATUS WINAPI NtQueryInformationToken(
     case TokenPrimaryGroup:
         len = sizeof(TOKEN_PRIMARY_GROUP);
         break;
-    case TokenDefaultDacl:
-        len = sizeof(TOKEN_DEFAULT_DACL);
-        break;
     case TokenSource:
         len = sizeof(TOKEN_SOURCE);
         break;
@@ -441,6 +438,31 @@ NTSTATUS WINAPI NtQueryInformationToken(
         }
         SERVER_END_REQ;
         break;
+    case TokenDefaultDacl:
+        SERVER_START_REQ( get_token_default_dacl )
+        {
+            TOKEN_DEFAULT_DACL *default_dacl = tokeninfo;
+            ACL *acl = (ACL *)(default_dacl + 1);
+            DWORD acl_len;
+
+            if (tokeninfolength < sizeof(TOKEN_DEFAULT_DACL)) acl_len = 0;
+            else acl_len = tokeninfolength - sizeof(TOKEN_DEFAULT_DACL);
+
+            req->handle = wine_server_obj_handle( token );
+            wine_server_set_reply( req, acl, acl_len );
+            status = wine_server_call( req );
+
+            if (retlen) *retlen = reply->acl_len + sizeof(TOKEN_DEFAULT_DACL);
+            if (status == STATUS_SUCCESS)
+            {
+                if (reply->acl_len)
+                    default_dacl->DefaultDacl = acl;
+                else
+                    default_dacl->DefaultDacl = NULL;
+            }
+        }
+        SERVER_END_REQ;
+        break;
     default:
         {
             ERR("Unhandled Token Information class %d!\n", tokeninfoclass);
@@ -460,9 +482,44 @@ NTSTATUS WINAPI NtSetInformationToken(
         PVOID TokenInformation,
         ULONG TokenInformationLength)
 {
-    FIXME("%p %d %p %u\n", TokenHandle, TokenInformationClass,
-          TokenInformation, TokenInformationLength);
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS ret = STATUS_NOT_IMPLEMENTED;
+
+    TRACE("%p %d %p %u\n", TokenHandle, TokenInformationClass,
+           TokenInformation, TokenInformationLength);
+
+    switch (TokenInformationClass)
+    {
+    case TokenDefaultDacl:
+        if (TokenInformationLength < sizeof(TOKEN_DEFAULT_DACL))
+        {
+            ret = STATUS_INFO_LENGTH_MISMATCH;
+            break;
+        }
+        if (!TokenInformation)
+        {
+            ret = STATUS_ACCESS_VIOLATION;
+            break;
+        }
+        SERVER_START_REQ( set_token_default_dacl )
+        {
+            ACL *acl = ((TOKEN_DEFAULT_DACL *)TokenInformation)->DefaultDacl;
+            WORD size;
+
+            if (acl) size = acl->AclSize;
+            else size = 0;
+
+            req->handle = wine_server_obj_handle( TokenHandle );
+            wine_server_add_data( req, acl, size );
+            ret = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        break;
+    default:
+        FIXME("unimplemented class %u\n", TokenInformationClass);
+        break;
+    }
+
+    return ret;
 }
 
 /******************************************************************************
