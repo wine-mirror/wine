@@ -810,13 +810,10 @@ static void TestExpandInvisible(void)
     nodeVisible = TreeView_GetItemRect(hTree, node[1], &dummyRect, FALSE);
     ok(!nodeVisible, "Node 1 should not be visible.\n");
     nodeVisible = TreeView_GetItemRect(hTree, node[2], &dummyRect, FALSE);
-todo_wine
     ok(!nodeVisible, "Node 2 should not be visible.\n");
     nodeVisible = TreeView_GetItemRect(hTree, node[3], &dummyRect, FALSE);
-todo_wine
     ok(!nodeVisible, "Node 3 should not be visible.\n");
     nodeVisible = TreeView_GetItemRect(hTree, node[4], &dummyRect, FALSE);
-todo_wine
     ok(!nodeVisible, "Node 4 should not be visible.\n");
 }
 
