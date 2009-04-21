@@ -33,6 +33,11 @@ static ITfInputProcessorProfiles* g_ipp;
 static LANGID gLangid;
 static ITfCategoryMgr * g_cm = NULL;
 static ITfThreadMgr* g_tm = NULL;
+static TfClientId cid = 0;
+static TfClientId tid = 0;
+
+static BOOL test_ShouldActivate = FALSE;
+static BOOL test_ShouldDeactivate = FALSE;
 
 static DWORD tmSinkCookie;
 static DWORD tmSinkRefCount;
@@ -240,6 +245,27 @@ static void test_ThreadMgrUnadviseSinks(void)
     ITfSource_Release(source);
 }
 
+static void test_Activate(void)
+{
+    HRESULT hr;
+
+    hr = ITfInputProcessorProfiles_ActivateLanguageProfile(g_ipp,&CLSID_FakeService,gLangid,&CLSID_FakeService);
+    todo_wine ok(SUCCEEDED(hr),"Failed to Activate text service\n");
+}
+
+static void test_startSession(void)
+{
+    test_ShouldActivate = TRUE;
+    ITfThreadMgr_Activate(g_tm,&cid);
+    todo_wine ok(cid != tid,"TextService id mistakenly matches Client id\n");
+}
+
+static void test_endSession(void)
+{
+    test_ShouldDeactivate = TRUE;
+    ITfThreadMgr_Deactivate(g_tm);
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -250,6 +276,9 @@ START_TEST(inputprocessor)
         test_EnumInputProcessorInfo();
         test_Enable();
         test_ThreadMgrAdviseSinks();
+        test_Activate();
+        test_startSession();
+        test_endSession();
         test_EnumLanguageProfiles();
         test_FindClosestCategory();
         test_Disable();
@@ -527,12 +556,15 @@ static HRESULT WINAPI TextService_Activate(ITfTextInputProcessor *iface,
         ITfThreadMgr *ptim, TfClientId id)
 {
     trace("TextService_Activate\n");
+    ok(test_ShouldActivate,"Activation came unexpectedly\n");
+    tid = id;
     return S_OK;
 }
 
 static HRESULT WINAPI TextService_Deactivate(ITfTextInputProcessor *iface)
 {
     trace("TextService_Deactivate\n");
+    ok(test_ShouldDeactivate,"Deactivation came unexpectedly\n");
     return S_OK;
 }
 
