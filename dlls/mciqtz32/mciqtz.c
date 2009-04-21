@@ -34,21 +34,21 @@ static DWORD MCIQTZ_mciClose(UINT, DWORD, LPMCI_GENERIC_PARMS);
 static DWORD MCIQTZ_mciStop(UINT, DWORD, LPMCI_GENERIC_PARMS);
 
 /*======================================================================*
- *                  	    MCI QTZ implementation			*
+ *                          MCI QTZ implementation                      *
  *======================================================================*/
 
 HINSTANCE MCIQTZ_hInstance = 0;
 
 /***********************************************************************
- *		DllMain (MCIQTZ.0)
+ *              DllMain (MCIQTZ.0)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
-	MCIQTZ_hInstance = hInstDLL;
-	break;
+        MCIQTZ_hInstance = hInstDLL;
+        break;
     }
     return TRUE;
 }
@@ -415,11 +415,11 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
 }
 
 /*======================================================================*
- *                  	    MCI QTZ entry points			*
+ *                          MCI QTZ entry points                        *
  *======================================================================*/
 
 /**************************************************************************
- * 				DriverProc (MCIQTZ.@)
+ *                              DriverProc (MCIQTZ.@)
  */
 LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
                                    LPARAM dwParam1, LPARAM dwParam2)
