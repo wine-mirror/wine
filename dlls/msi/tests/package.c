@@ -8555,6 +8555,42 @@ static void test_appsearch_inilocator(void)
     DeleteFileA(msifile);
 }
 
+/*
+ * MSI AppSearch action on DrLocator table always returns absolute paths.
+ * If a relative path was set, it returns the first absolute path that
+ * matches or an empty string if it didn't find anything.
+ * This helper function replicates this behaviour.
+ */
+static void search_absolute_directory(LPSTR absolute, LPCSTR relative)
+{
+    int i, size;
+    DWORD attr, drives;
+
+    size = lstrlenA(relative);
+    drives = GetLogicalDrives();
+    lstrcpyA(absolute, "A:\\");
+    for (i = 0; i < 26; absolute[0] = '\0', i++)
+    {
+        if (!(drives & (1 << i)))
+            continue;
+
+        absolute[0] = 'A' + i;
+        if (GetDriveType(absolute) != DRIVE_FIXED)
+            continue;
+
+        lstrcpynA(absolute + 3, relative, size + 1);
+        attr = GetFileAttributesA(absolute);
+        if (attr != INVALID_FILE_ATTRIBUTES &&
+            (attr & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            if (absolute[3 + size - 1] != '\\')
+                lstrcatA(absolute, "\\");
+            break;
+        }
+        absolute[3] = '\0';
+    }
+}
+
 static void test_appsearch_drlocator(void)
 {
     MSIHANDLE hpkg, hdb;
@@ -8617,6 +8653,9 @@ static void test_appsearch_drlocator(void)
     r = add_appsearch_entry(hdb, "'SIGPROP10', 'NewSignature10'");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    r = add_appsearch_entry(hdb, "'SIGPROP11', 'NewSignature11'");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
     r = create_drlocator_table(hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -8667,6 +8706,11 @@ static void test_appsearch_drlocator(void)
 
     /* no parent, full path, depth 0, signature w/ version, sig->name not ignored */
     sprintf(path, "'NewSignature10', '', '%s', 0", CURR_DIR);
+    r = add_drlocator_entry(hdb, path);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* no parent, relative empty path, depth 0, no signature */
+    sprintf(path, "'NewSignature11', '', '', 0");
     r = add_drlocator_entry(hdb, path);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -8769,6 +8813,13 @@ static void test_appsearch_drlocator(void)
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
         ok(!lstrcmpA(prop, ""), "Expected \"\", got \"%s\"\n", prop);
     }
+
+    size = MAX_PATH;
+    search_absolute_directory(path, "");
+    r = MsiGetPropertyA(hpkg, "SIGPROP11", prop, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     DeleteFileA("FileName1");
     DeleteFileA("FileName3.dll");
