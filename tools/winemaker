@@ -854,9 +854,6 @@ sub source_scan_project_file($$$)
             for my $vc_filter (@{$vc_files->{'Filter'}}) {
                 for my $vc_file (@{$vc_filter->{'File'}}) {
                     $sfilet=$vc_file->{'RelativePath'};
-                    if (($opt_lower == $OPT_LOWER_ALL and $sfilet =~ /[A-Z]/) or ($opt_lower == $OPT_LOWER_UPPERCASE and $sfilet !~ /[a-z]/)) {
-                        $sfilet=lc $sfilet; #to lowercase if necessary
-                    }
                     $sfilet=~s/\\\\/\\/g; #remove double backslash
                     $sfilet=~s/^\.\\//; #remove starting 'this directory'
                     $sfilet=~s/\\/\//g; #make slashes out of backslashes
