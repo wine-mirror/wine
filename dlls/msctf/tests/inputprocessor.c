@@ -34,8 +34,12 @@ static LANGID gLangid;
 static ITfCategoryMgr * g_cm = NULL;
 static ITfThreadMgr* g_tm = NULL;
 
+static DWORD tmSinkCookie;
+static DWORD tmSinkRefCount;
+
 HRESULT RegisterTextService(REFCLSID rclsid);
 HRESULT UnregisterTextService();
+HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut);
 
 DEFINE_GUID(CLSID_FakeService, 0xEDE1A7AD,0x66DE,0x47E0,0xB6,0x20,0x3E,0x92,0xF8,0x24,0x6B,0xF3);
 DEFINE_GUID(CLSID_TF_InputProcessorProfiles, 0x33c53a50,0xf456,0x4884,0xb0,0x49,0x85,0xfd,0x64,0x3e,0xcf,0xed);
@@ -194,6 +198,48 @@ static void test_Disable(void)
     ok(SUCCEEDED(hr),"Failed to disable text service\n");
 }
 
+static void test_ThreadMgrAdviseSinks(void)
+{
+    ITfSource *source = NULL;
+    HRESULT hr;
+    IUnknown *sink;
+
+    hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfSource, (LPVOID*)&source);
+    ok(SUCCEEDED(hr),"Failed to get IID_ITfSource for ThreadMgr\n");
+    if (!source)
+        return;
+
+    ThreadMgrEventSink_Constructor(&sink);
+
+    tmSinkRefCount = 1;
+    tmSinkCookie = 0;
+    hr = ITfSource_AdviseSink(source,&IID_ITfThreadMgrEventSink, sink, &tmSinkCookie);
+    ok(SUCCEEDED(hr),"Failed to Advise Sink\n");
+    ok(tmSinkCookie!=0,"Failed to get sink cookie\n");
+
+    /* Advising the sink adds a ref, Relesing here lets the object be deleted
+       when unadvised */
+    tmSinkRefCount = 2;
+    IUnknown_Release(sink);
+    ITfSource_Release(source);
+}
+
+static void test_ThreadMgrUnadviseSinks(void)
+{
+    ITfSource *source = NULL;
+    HRESULT hr;
+
+    hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfSource, (LPVOID*)&source);
+    ok(SUCCEEDED(hr),"Failed to get IID_ITfSource for ThreadMgr\n");
+    if (!source)
+        return;
+
+    tmSinkRefCount = 1;
+    hr = ITfSource_UnadviseSink(source, tmSinkCookie);
+    ok(SUCCEEDED(hr),"Failed to unadvise Sink\n");
+    ITfSource_Release(source);
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -203,9 +249,11 @@ START_TEST(inputprocessor)
         test_RegisterCategory();
         test_EnumInputProcessorInfo();
         test_Enable();
+        test_ThreadMgrAdviseSinks();
         test_EnumLanguageProfiles();
         test_FindClosestCategory();
         test_Disable();
+        test_ThreadMgrUnadviseSinks();
         test_UnregisterCategory();
         test_Unregister();
     }
@@ -214,6 +262,120 @@ START_TEST(inputprocessor)
     cleanup();
 }
 
+/**********************************************************************
+ * ITfThreadMgrEventSink
+ **********************************************************************/
+typedef struct tagThreadMgrEventSink
+{
+    const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl;
+    LONG refCount;
+} ThreadMgrEventSink;
+
+static void ThreadMgrEventSink_Destructor(ThreadMgrEventSink *This)
+{
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *iface, REFIID iid, LPVOID *ppvOut)
+{
+    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfThreadMgrEventSink))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ThreadMgrEventSink_AddRef(ITfThreadMgrEventSink *iface)
+{
+    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
+    ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI ThreadMgrEventSink_Release(ITfThreadMgrEventSink *iface)
+{
+    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
+    ULONG ret;
+
+    ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        ThreadMgrEventSink_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnInitDocumentMgr(ITfThreadMgrEventSink *iface,
+ITfDocumentMgr *pdim)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnUninitDocumentMgr(ITfThreadMgrEventSink *iface,
+ITfDocumentMgr *pdim)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnSetFocus(ITfThreadMgrEventSink *iface,
+ITfDocumentMgr *pdimFocus, ITfDocumentMgr *pdimPrevFocus)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnPushContext(ITfThreadMgrEventSink *iface,
+ITfContext *pic)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnPopContext(ITfThreadMgrEventSink *iface,
+ITfContext *pic)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static const ITfThreadMgrEventSinkVtbl ThreadMgrEventSink_ThreadMgrEventSinkVtbl =
+{
+    ThreadMgrEventSink_QueryInterface,
+    ThreadMgrEventSink_AddRef,
+    ThreadMgrEventSink_Release,
+
+    ThreadMgrEventSink_OnInitDocumentMgr,
+    ThreadMgrEventSink_OnUninitDocumentMgr,
+    ThreadMgrEventSink_OnSetFocus,
+    ThreadMgrEventSink_OnPushContext,
+    ThreadMgrEventSink_OnPopContext
+};
+
+HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut)
+{
+    ThreadMgrEventSink *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ThreadMgrEventSink));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->ThreadMgrEventSinkVtbl = &ThreadMgrEventSink_ThreadMgrEventSinkVtbl;
+    This->refCount = 1;
+
+    *ppOut = (IUnknown *)This;
+    return S_OK;
+}
 
 
 /********************************************************************************************
