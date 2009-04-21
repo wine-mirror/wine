@@ -8768,7 +8768,7 @@ static void test_appsearch_drlocator(void)
     ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
-    sprintf(path, "%s\\", CURR_DIR);
+    search_absolute_directory(path, CURR_DIR + 3);
     r = MsiGetPropertyA(hpkg, "SIGPROP3", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
