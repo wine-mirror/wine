@@ -967,15 +967,12 @@ static const char * const shift_glsl_tab[] = {
 };
 
 /* Generate a GLSL parameter that does the input modifier computation and return the input register/mask to use */
-static void shader_glsl_gen_modifier (
-    const DWORD instr,
-    const char *in_reg,
-    const char *in_regswizzle,
-    char *out_str) {
-
+static void shader_glsl_gen_modifier(DWORD src_modifier, const char *in_reg, const char *in_regswizzle, char *out_str)
+{
     out_str[0] = 0;
 
-    switch (instr & WINED3DSP_SRCMOD_MASK) {
+    switch (src_modifier)
+    {
     case WINED3DSPSM_DZ: /* Need to handle this in the instructions itself (texld & texcrd). */
     case WINED3DSPSM_DW:
     case WINED3DSPSM_NONE:
@@ -1015,7 +1012,7 @@ static void shader_glsl_gen_modifier (
         sprintf(out_str, "-abs(%s%s)", in_reg, in_regswizzle);
         break;
     default:
-        FIXME("Unhandled modifier %u\n", (instr & WINED3DSP_SRCMOD_MASK));
+        FIXME("Unhandled modifier %u\n", src_modifier);
         sprintf(out_str, "%s%s", in_reg, in_regswizzle);
     }
 }
@@ -1281,7 +1278,7 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
             wined3d_src->rel_addr, glsl_src->reg_name, &is_color, ins);
 
     shader_glsl_get_swizzle(wined3d_src->token, is_color, mask, swizzle_str);
-    shader_glsl_gen_modifier(wined3d_src->token, glsl_src->reg_name, swizzle_str, glsl_src->param_str);
+    shader_glsl_gen_modifier(wined3d_src->modifiers, glsl_src->reg_name, swizzle_str, glsl_src->param_str);
 }
 
 /* From a given parameter token, generate the corresponding GLSL string.
