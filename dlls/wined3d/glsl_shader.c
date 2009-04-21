@@ -1240,25 +1240,29 @@ static unsigned int shader_glsl_get_write_mask_size(DWORD write_mask) {
     return size;
 }
 
-static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, DWORD mask, char *swizzle_str) {
+static void shader_glsl_swizzle_to_str(const DWORD swizzle, BOOL fixup, DWORD mask, char *str)
+{
     /* For registers of type WINED3DDECLTYPE_D3DCOLOR, data is stored as "bgra",
      * but addressed as "rgba". To fix this we need to swap the register's x
      * and z components. */
-    DWORD swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
     const char *swizzle_chars = fixup ? "zyxw" : "xyzw";
-    char *ptr = swizzle_str;
+    DWORD s = swizzle >> WINED3DSP_SWIZZLE_SHIFT;
 
-    if (!shader_is_scalar(shader_get_regtype(param), param & WINED3DSP_REGNUM_MASK))
-    {
-        *ptr++ = '.';
-        /* swizzle bits fields: wwzzyyxx */
-        if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = swizzle_chars[swizzle & 0x03];
-        if (mask & WINED3DSP_WRITEMASK_1) *ptr++ = swizzle_chars[(swizzle >> 2) & 0x03];
-        if (mask & WINED3DSP_WRITEMASK_2) *ptr++ = swizzle_chars[(swizzle >> 4) & 0x03];
-        if (mask & WINED3DSP_WRITEMASK_3) *ptr++ = swizzle_chars[(swizzle >> 6) & 0x03];
-    }
+    *str++ = '.';
+    /* swizzle bits fields: wwzzyyxx */
+    if (mask & WINED3DSP_WRITEMASK_0) *str++ = swizzle_chars[s & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_1) *str++ = swizzle_chars[(s >> 2) & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_2) *str++ = swizzle_chars[(s >> 4) & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_3) *str++ = swizzle_chars[(s >> 6) & 0x03];
+    *str = '\0';
+}
 
-    *ptr = '\0';
+static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, DWORD mask, char *swizzle_str)
+{
+    if (shader_is_scalar(shader_get_regtype(param), param & WINED3DSP_REGNUM_MASK))
+        *swizzle_str = '\0';
+    else
+        shader_glsl_swizzle_to_str(param & WINED3DSP_SWIZZLE_MASK, fixup, mask, swizzle_str);
 }
 
 /* From a given parameter token, generate the corresponding GLSL string.
@@ -1535,7 +1539,7 @@ static void PRINTF_ATTR(6, 7) shader_glsl_gen_sample_code(const struct wined3d_s
     BOOL np2_fixup = FALSE;
     va_list args;
 
-    shader_glsl_get_swizzle(swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
+    shader_glsl_swizzle_to_str(swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
 
     if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version))
     {
