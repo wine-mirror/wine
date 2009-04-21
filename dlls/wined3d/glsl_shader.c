@@ -1257,12 +1257,13 @@ static void shader_glsl_swizzle_to_str(const DWORD swizzle, BOOL fixup, DWORD ma
     *str = '\0';
 }
 
-static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, DWORD mask, char *swizzle_str)
+static void shader_glsl_get_swizzle(const struct wined3d_shader_src_param *param,
+        BOOL fixup, DWORD mask, char *swizzle_str)
 {
-    if (shader_is_scalar(shader_get_regtype(param), param & WINED3DSP_REGNUM_MASK))
+    if (shader_is_scalar(param->register_type, param->register_idx))
         *swizzle_str = '\0';
     else
-        shader_glsl_swizzle_to_str(param & WINED3DSP_SWIZZLE_MASK, fixup, mask, swizzle_str);
+        shader_glsl_swizzle_to_str(param->swizzle, fixup, mask, swizzle_str);
 }
 
 /* From a given parameter token, generate the corresponding GLSL string.
@@ -1281,7 +1282,7 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
     shader_glsl_get_register_name(wined3d_src->register_type, wined3d_src->register_idx,
             wined3d_src->rel_addr, glsl_src->reg_name, &is_color, ins);
 
-    shader_glsl_get_swizzle(wined3d_src->token, is_color, mask, swizzle_str);
+    shader_glsl_get_swizzle(wined3d_src, is_color, mask, swizzle_str);
     shader_glsl_gen_modifier(wined3d_src->modifiers, glsl_src->reg_name, swizzle_str, glsl_src->param_str);
 }
 
@@ -2549,7 +2550,7 @@ static void pshader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
         DWORD src_mod = ins->src[0].modifiers;
         char dst_swizzle[6];
 
-        shader_glsl_get_swizzle(ins->src[0].token, FALSE, write_mask, dst_swizzle);
+        shader_glsl_get_swizzle(&ins->src[0], FALSE, write_mask, dst_swizzle);
 
         if (src_mod == WINED3DSPSM_DZ) {
             glsl_src_param_t div_param;
