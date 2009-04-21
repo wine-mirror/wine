@@ -56,6 +56,7 @@ static INT  test_OnPopContext = SINK_UNEXPECTED;
 HRESULT RegisterTextService(REFCLSID rclsid);
 HRESULT UnregisterTextService();
 HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut);
+HRESULT TextStoreACP_Constructor(IUnknown **ppOut);
 
 DEFINE_GUID(CLSID_FakeService, 0xEDE1A7AD,0x66DE,0x47E0,0xB6,0x20,0x3E,0x92,0xF8,0x24,0x6B,0xF3);
 DEFINE_GUID(CLSID_TF_InputProcessorProfiles, 0x33c53a50,0xf456,0x4884,0xb0,0x49,0x85,0xfd,0x64,0x3e,0xcf,0xed);
@@ -277,6 +278,7 @@ static void test_startSession(void)
     DWORD editCookie;
     ITfDocumentMgr *dmtest;
     ITfContext *cxt,*cxt2,*cxt3,*cxtTest;
+    ITextStoreACP *ts;
 
     test_ShouldActivate = TRUE;
     ITfThreadMgr_Activate(g_tm,&cid);
@@ -308,7 +310,9 @@ static void test_startSession(void)
     ok(SUCCEEDED(hr),"GetFocus Failed\n");
     ok(g_dm == dmtest,"Expected DocumentMgr not focused\n");
 
-    hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, NULL, &cxt, &editCookie);
+    TextStoreACP_Constructor((IUnknown**)&ts);
+
+    hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, (IUnknown*)ts, &cxt, &editCookie);
     ok(SUCCEEDED(hr),"CreateContext Failed\n");
 
     hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, NULL, &cxt2, &editCookie);
@@ -446,6 +450,275 @@ START_TEST(inputprocessor)
     else
         skip("Unable to create InputProcessor\n");
     cleanup();
+}
+
+/**********************************************************************
+ * ITextStoreACP
+ **********************************************************************/
+typedef struct tagTextStoreACP
+{
+    const ITextStoreACPVtbl *TextStoreACPVtbl;
+    LONG refCount;
+} TextStoreACP;
+
+static void TextStoreACP_Destructor(TextStoreACP *This)
+{
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI TextStoreACP_QueryInterface(ITextStoreACP *iface, REFIID iid, LPVOID *ppvOut)
+{
+    TextStoreACP *This = (TextStoreACP *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITextStoreACP))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TextStoreACP_AddRef(ITextStoreACP *iface)
+{
+    TextStoreACP *This = (TextStoreACP *)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI TextStoreACP_Release(ITextStoreACP *iface)
+{
+    TextStoreACP *This = (TextStoreACP *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        TextStoreACP_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
+    REFIID riid, IUnknown *punk, DWORD dwMask)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI TextStoreACP_UnadviseSink(ITextStoreACP *iface,
+    IUnknown *punk)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RequestLock(ITextStoreACP *iface,
+    DWORD dwLockFlags, HRESULT *phrSession)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetStatus(ITextStoreACP *iface,
+    TS_STATUS *pdcs)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_QueryInsert(ITextStoreACP *iface,
+    LONG acpTestStart, LONG acpTestEnd, ULONG cch, LONG *pacpResultStart,
+    LONG *pacpResultEnd)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetSelection(ITextStoreACP *iface,
+    ULONG ulIndex, ULONG ulCount, TS_SELECTION_ACP *pSelection, ULONG *pcFetched)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_SetSelection(ITextStoreACP *iface,
+    ULONG ulCount, const TS_SELECTION_ACP *pSelection)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetText(ITextStoreACP *iface,
+    LONG acpStart, LONG acpEnd, WCHAR *pchPlain, ULONG cchPlainReq,
+    ULONG *pcchPlainRet, TS_RUNINFO *prgRunInfo, ULONG cRunInfoReq,
+    ULONG *pcRunInfoRet, LONG *pacpNext)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_SetText(ITextStoreACP *iface,
+    DWORD dwFlags, LONG acpStart, LONG acpEnd, const WCHAR *pchText,
+    ULONG cch, TS_TEXTCHANGE *pChange)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetFormattedText(ITextStoreACP *iface,
+    LONG acpStart, LONG acpEnd, IDataObject **ppDataObject)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetEmbedded(ITextStoreACP *iface,
+    LONG acpPos, REFGUID rguidService, REFIID riid, IUnknown **ppunk)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_QueryInsertEmbedded(ITextStoreACP *iface,
+    const GUID *pguidService, const FORMATETC *pFormatEtc, BOOL *pfInsertable)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_InsertEmbedded(ITextStoreACP *iface,
+    DWORD dwFlags, LONG acpStart, LONG acpEnd, IDataObject *pDataObject,
+    TS_TEXTCHANGE *pChange)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_InsertTextAtSelection(ITextStoreACP *iface,
+    DWORD dwFlags, const WCHAR *pchText, ULONG cch, LONG *pacpStart,
+    LONG *pacpEnd, TS_TEXTCHANGE *pChange)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_InsertEmbeddedAtSelection(ITextStoreACP *iface,
+    DWORD dwFlags, IDataObject *pDataObject, LONG *pacpStart, LONG *pacpEnd,
+    TS_TEXTCHANGE *pChange)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RequestSupportedAttrs(ITextStoreACP *iface,
+    DWORD dwFlags, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RequestAttrsAtPosition(ITextStoreACP *iface,
+    LONG acpPos, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs,
+    DWORD dwFlags)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RequestAttrsTransitioningAtPosition(ITextStoreACP *iface,
+    LONG acpPos, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs,
+    DWORD dwFlags)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_FindNextAttrTransition(ITextStoreACP *iface,
+    LONG acpStart, LONG acpHalt, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs,
+    DWORD dwFlags, LONG *pacpNext, BOOL *pfFound, LONG *plFoundOffset)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RetrieveRequestedAttrs(ITextStoreACP *iface,
+    ULONG ulCount, TS_ATTRVAL *paAttrVals, ULONG *pcFetched)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetEndACP(ITextStoreACP *iface,
+    LONG *pacp)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetActiveView(ITextStoreACP *iface,
+    TsViewCookie *pvcView)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetACPFromPoint(ITextStoreACP *iface,
+    TsViewCookie vcView, const POINT *ptScreen, DWORD dwFlags,
+    LONG *pacp)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetTextExt(ITextStoreACP *iface,
+    TsViewCookie vcView, LONG acpStart, LONG acpEnd, RECT *prc,
+    BOOL *pfClipped)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetScreenExt(ITextStoreACP *iface,
+    TsViewCookie vcView, RECT *prc)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetWnd(ITextStoreACP *iface,
+    TsViewCookie vcView, HWND *phwnd)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static const ITextStoreACPVtbl TextStoreACP_TextStoreACPVtbl =
+{
+    TextStoreACP_QueryInterface,
+    TextStoreACP_AddRef,
+    TextStoreACP_Release,
+
+    TextStoreACP_AdviseSink,
+    TextStoreACP_UnadviseSink,
+    TextStoreACP_RequestLock,
+    TextStoreACP_GetStatus,
+    TextStoreACP_QueryInsert,
+    TextStoreACP_GetSelection,
+    TextStoreACP_SetSelection,
+    TextStoreACP_GetText,
+    TextStoreACP_SetText,
+    TextStoreACP_GetFormattedText,
+    TextStoreACP_GetEmbedded,
+    TextStoreACP_QueryInsertEmbedded,
+    TextStoreACP_InsertEmbedded,
+    TextStoreACP_InsertTextAtSelection,
+    TextStoreACP_InsertEmbeddedAtSelection,
+    TextStoreACP_RequestSupportedAttrs,
+    TextStoreACP_RequestAttrsAtPosition,
+    TextStoreACP_RequestAttrsTransitioningAtPosition,
+    TextStoreACP_FindNextAttrTransition,
+    TextStoreACP_RetrieveRequestedAttrs,
+    TextStoreACP_GetEndACP,
+    TextStoreACP_GetActiveView,
+    TextStoreACP_GetACPFromPoint,
+    TextStoreACP_GetTextExt,
+    TextStoreACP_GetScreenExt,
+    TextStoreACP_GetWnd
+};
+
+HRESULT TextStoreACP_Constructor(IUnknown **ppOut)
+{
+    TextStoreACP *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TextStoreACP));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->TextStoreACPVtbl = &TextStoreACP_TextStoreACPVtbl;
+    This->refCount = 1;
+
+    *ppOut = (IUnknown *)This;
+    return S_OK;
 }
 
 /**********************************************************************
