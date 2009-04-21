@@ -244,9 +244,12 @@ static void test_synthesized(void)
     ok(cf == CF_OEMTEXT, "cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
-    ok(cf == CF_UNICODETEXT, "cf %08x\n", cf);
+    ok(cf == CF_UNICODETEXT ||
+       broken(cf == CF_METAFILEPICT), /* win9x and winME has no CF_UNICODETEXT */
+       "cf %08x\n", cf);
 
-    cf = EnumClipboardFormats(cf);
+    if(cf == CF_UNICODETEXT)
+        cf = EnumClipboardFormats(cf);
     ok(cf == CF_METAFILEPICT, "cf %08x\n", cf);
 
     cf = EnumClipboardFormats(cf);
