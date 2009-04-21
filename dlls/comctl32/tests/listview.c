@@ -1651,6 +1651,24 @@ static void test_ownerdata(void)
     expect(TRUE, res);
     res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
     expect(1, res);
+    res = SendMessageA(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(1, res);
+    DestroyWindow(hwnd);
+
+    /* LVM_SETITEM is unsupported on LVS_OWNERDATA */
+    hwnd = create_listview_control(LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    ok(res != 0, "Expected LVM_SETITEMCOUNT to succeed\n");
+    res = SendMessageA(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    expect(1, res);
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_STATE;
+    item.iItem = 0;
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    res = SendMessageA(hwnd, LVM_SETITEM, 0, (LPARAM)&item);
+    expect(FALSE, res);
     DestroyWindow(hwnd);
 }
 

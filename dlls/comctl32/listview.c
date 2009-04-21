@@ -10010,10 +10010,11 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   /* case LVM_SETINSERTMARKCOLOR: */
 
   case LVM_SETITEMA:
-    return LISTVIEW_SetItemT(infoPtr, (LPLVITEMW)lParam, FALSE);
-
   case LVM_SETITEMW:
-    return LISTVIEW_SetItemT(infoPtr, (LPLVITEMW)lParam, TRUE);
+    {
+	if (infoPtr->dwStyle & LVS_OWNERDATA) return FALSE;
+	return LISTVIEW_SetItemT(infoPtr, (LPLVITEMW)lParam, (uMsg == LVM_SETITEMW));
+    }
 
   case LVM_SETITEMCOUNT:
     return LISTVIEW_SetItemCount(infoPtr, (INT)wParam, (DWORD)lParam);
