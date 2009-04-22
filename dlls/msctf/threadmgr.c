@@ -365,7 +365,7 @@ static WINAPI HRESULT ThreadMgrSource_AdviseSink(ITfSource *iface,
             return CONNECT_E_CANNOTCONNECT;
         }
         list_add_head(&This->ThreadMgrEventSink,&tms->entry);
-        *pdwCookie = (DWORD)tms;
+        *pdwCookie = generate_Cookie(COOKIE_MAGIC_TMSINK, tms);
     }
     else
     {
@@ -380,9 +380,17 @@ static WINAPI HRESULT ThreadMgrSource_AdviseSink(ITfSource *iface,
 
 static WINAPI HRESULT ThreadMgrSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
 {
-    ThreadMgrSink *sink = (ThreadMgrSink*)pdwCookie;
+    ThreadMgrSink *sink;
     ThreadMgr *This = impl_from_ITfSourceVtbl(iface);
+
     TRACE("(%p) %x\n",This,pdwCookie);
+
+    if (get_Cookie_magic(pdwCookie)!=COOKIE_MAGIC_TMSINK)
+        return E_INVALIDARG;
+
+    sink = (ThreadMgrSink*)remove_Cookie(pdwCookie);
+    if (!sink)
+        return CONNECT_E_NOCONNECTION;
 
     list_remove(&sink->entry);
     free_sink(sink);

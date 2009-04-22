@@ -20,6 +20,10 @@
 
 #ifndef __WINE_MSCTF_I_H
 #define __WINE_MSCTF_I_H
+
+#define COOKIE_MAGIC_TMSINK  0x0010
+#define COOKIE_MAGIC_CONTEXTSINK 0x0020
+
 extern DWORD tlsIndex;
 
 extern HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
