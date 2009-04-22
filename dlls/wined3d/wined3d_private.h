@@ -2244,6 +2244,7 @@ BOOL getDepthStencilBits(const struct GlPixelFormatDesc *format_desc, short *dep
 /* Math utils */
 void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2);
 UINT wined3d_log2i(UINT32 x);
+unsigned int count_bits(unsigned int mask);
 
 typedef struct local_constant {
     struct list entry;
@@ -2318,7 +2319,7 @@ typedef struct IWineD3DBaseShaderClass
     UINT                            functionLength;
     UINT                            cur_loop_depth, cur_loop_regno;
     BOOL                            load_local_constsF;
-    BOOL                            uses_bool_consts, uses_int_consts;
+    BOOL                            num_bool_consts, num_int_consts;
 
     /* Type of shader backend */
     int shader_mode;

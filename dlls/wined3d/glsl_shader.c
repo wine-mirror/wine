@@ -558,13 +558,13 @@ static void shader_glsl_load_constants(
                 prog->vuniformF_locations, &priv->vconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
-        if(vshader->baseShader.uses_int_consts) {
+        if(vshader->baseShader.num_int_consts) {
             shader_glsl_load_constantsI(vshader, gl_info, prog->vuniformI_locations,
                     stateBlock->vertexShaderConstantI, stateBlock->changed.vertexShaderConstantsI);
         }
 
         /* Load DirectX 9 boolean constants/uniforms for vertex shader */
-        if(vshader->baseShader.uses_bool_consts) {
+        if(vshader->baseShader.num_bool_consts) {
             shader_glsl_load_constantsB(vshader, gl_info, programId,
                     stateBlock->vertexShaderConstantB, stateBlock->changed.vertexShaderConstantsB);
         }
@@ -583,13 +583,13 @@ static void shader_glsl_load_constants(
                 prog->puniformF_locations, &priv->pconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
-        if(pshader->baseShader.uses_int_consts) {
+        if(pshader->baseShader.num_int_consts) {
             shader_glsl_load_constantsI(pshader, gl_info, prog->puniformI_locations,
                     stateBlock->pixelShaderConstantI, stateBlock->changed.pixelShaderConstantsI);
         }
 
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
-        if(pshader->baseShader.uses_bool_consts) {
+        if(pshader->baseShader.num_bool_consts) {
             shader_glsl_load_constantsB(pshader, gl_info, programId,
                     stateBlock->pixelShaderConstantB, stateBlock->changed.pixelShaderConstantsB);
         }
@@ -724,21 +724,53 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
     /* Declare the constants (aka uniforms) */
     if (This->baseShader.limits.constant_float > 0) {
         unsigned max_constantsF;
+        /* Unless the shader uses indirect addressing, always declare the maximum array size and ignore that we need some
+         * uniforms privately. E.g. if GL supports 256 uniforms, and we need 2 for the pos fixup and immediate values, still
+         * declare VC[256]. If the shader needs more uniforms than we have it won't work in any case. If it uses less, the
+         * compiler will figure out which uniforms are really used and strip them out. This allows a shader to use c255 on
+         * a dx9 card, as long as it doesn't also use all the other constants.
+         *
+         * If the shader uses indirect addressing the compiler must assume that all declared uniforms are used. In this case,
+         * declare only the amount that we're assured to have.
+         *
+         * Thus we run into problems in these two cases:
+         * 1) The shader really uses more uniforms than supported
+         * 2) The shader uses indirect addressing, less constants than supported, but uses a constant index > #supported consts
+         */
         if(pshader) {
-            max_constantsF = GL_LIMITS(pshader_constantsF) - (MAX_CONST_B / 4) - MAX_CONST_I - 2;
-            max_constantsF = min(This->baseShader.limits.constant_float, max_constantsF);
+            /* No indirect addressing here */
+            max_constantsF = GL_LIMITS(pshader_constantsF);
         } else {
-            /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix) */
-            max_constantsF = GL_LIMITS(vshader_constantsF) - (MAX_CONST_B / 4) - MAX_CONST_I - 1;
-            max_constantsF = min(This->baseShader.limits.constant_float, max_constantsF);
+            if(This->baseShader.reg_maps.usesrelconstF) {
+                /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix).
+                 * Subtract another uniform for immediate values, which have to be loaded via uniform by the driver as well.
+                 * The shader code only uses 0.5, 2.0, 1.0, 128 and -128 in vertex shader code, so one vec4 should be enough
+                 * (Unfortunately the Nvidia driver doesn't store 128 and -128 in one float
+                 */
+                max_constantsF = GL_LIMITS(vshader_constantsF) - 3;
+                max_constantsF -= This->baseShader.num_int_consts;
+                /* Strictly speaking a bool only uses one scalar, but the nvidia(Linux) compiler doesn't pack them properly,
+                 * so each scalar requires a full vec4. We could work around this by packing the booleans ourselves, but
+                 * for now take this into account when calculating the number of available constants
+                 */
+                max_constantsF -= This->baseShader.num_bool_consts;
+                /* Set by driver quirks in directx.c */
+                max_constantsF -= GLINFO_LOCATION.reserved_glsl_constants;
+            } else {
+                max_constantsF = GL_LIMITS(vshader_constantsF);
+            }
         }
+        max_constantsF = min(This->baseShader.limits.constant_float, max_constantsF);
         shader_addline(buffer, "uniform vec4 %cC[%u];\n", prefix, max_constantsF);
     }
 
-    if (This->baseShader.limits.constant_int > 0)
+    /* Always declare the full set of constants, the compiler can remove the unused ones because d3d doesn't(yet)
+     * support indirect int and bool constant addressing. This avoids problems if the app uses e.g. i0 and i9.
+     */
+    if (This->baseShader.limits.constant_int > 0 && This->baseShader.num_int_consts)
         shader_addline(buffer, "uniform ivec4 %cI[%u];\n", prefix, This->baseShader.limits.constant_int);
 
-    if (This->baseShader.limits.constant_bool > 0)
+    if (This->baseShader.limits.constant_bool > 0 && This->baseShader.num_bool_consts)
         shader_addline(buffer, "uniform bool %cB[%u];\n", prefix, This->baseShader.limits.constant_bool);
 
     if(!pshader) {
@@ -4117,8 +4149,7 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *
     else
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
     TRACE_(d3d_caps)("Hardware vertex shader version %d.%d enabled (GLSL)\n", (pCaps->VertexShaderVersion >> 8) & 0xff, pCaps->VertexShaderVersion & 0xff);
-    /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix) */
-    pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF) - (MAX_CONST_B / 4) - MAX_CONST_I - 1;
+    pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
 
     /* Older DX9-class videocards (GeforceFX / Radeon >9500/X*00) only support pixel shader 2.0/2.0a/2.0b.
      * In OpenGL the extensions related to GLSL abstract lowlevel GL info away which is needed
@@ -4136,12 +4167,7 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *
     else
         pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
 
-    /* Subtract the other potential uniforms from the max available (bools & ints), and 2 states for fog.
-     * In theory the texbem instruction may need one more shader constant too. But lets assume
-     * that a sm <= 1.3 shader does not need all the uniforms provided by a glsl-capable card,
-     * and lets not take away a uniform needlessly from all other shaders.
-     */
-    pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF) - (MAX_CONST_B / 4) - MAX_CONST_I - 2;
+    pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF);
 
     /* FIXME: The following line is card dependent. -8.0 to 8.0 is the
      * Direct3D minimum requirement.

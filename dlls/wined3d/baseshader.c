@@ -361,6 +361,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
     const DWORD* pToken = byte_code;
     char pshader;
+    unsigned int intconst = 0, boolconst = 0;
 
     /* There are some minor differences between pixel and vertex shaders */
 
@@ -490,13 +491,21 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
         else if (ins.handler_idx == WINED3DSIH_LOOP
                 || ins.handler_idx == WINED3DSIH_REP)
         {
+            DWORD reg;
+
+            if(ins.handler_idx == WINED3DSIH_LOOP) {
+                reg = pToken[1];
+            } else {
+                reg = pToken[0];
+            }
+
             cur_loop_depth++;
             if(cur_loop_depth > max_loop_depth)
                 max_loop_depth = cur_loop_depth;
             pToken += param_size;
 
             /* Rep and Loop always use an integer constant for the control parameters */
-            This->baseShader.uses_int_consts = TRUE;
+            intconst |= (1 << (reg & WINED3DSP_REGNUM_MASK));
         }
         else if (ins.handler_idx == WINED3DSIH_ENDLOOP
                 || ins.handler_idx == WINED3DSIH_ENDREP)
@@ -628,10 +637,10 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                     }
                 }
                 else if(WINED3DSPR_CONSTINT == regtype) {
-                    This->baseShader.uses_int_consts = TRUE;
+                    intconst |= (1 << reg);
                 }
                 else if(WINED3DSPR_CONSTBOOL == regtype) {
-                    This->baseShader.uses_bool_consts = TRUE;
+                    boolconst |= (1 << reg);
                 }
 
                 /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and is used
@@ -650,6 +659,8 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
     reg_maps->loop_depth = max_loop_depth;
 
     This->baseShader.functionLength = ((char *)pToken - (char *)byte_code);
+    This->baseShader.num_bool_consts = count_bits(boolconst);
+    This->baseShader.num_int_consts = count_bits(intconst);
 
     return WINED3D_OK;
 }
