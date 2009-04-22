@@ -387,7 +387,7 @@ static HRESULT DataObjectImpl_CreateText(LPCSTR text, LPDATAOBJECT *lplpdataobj)
 
 const char *cmpl_stm_data = "complex stream";
 const char *cmpl_text_data = "complex text";
-const WCHAR devname[] = {'m','y','d','e','v',0};
+const WCHAR device_name[] = {'m','y','d','e','v',0};
 
 static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
 {
@@ -418,15 +418,15 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
     dm.dmDriverExtra = 0;
-    lstrcpyW(dm.dmDeviceName, devname);
-    obj->fmtetc[3].ptd = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra);
-    obj->fmtetc[3].ptd->tdSize = FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra;
+    lstrcpyW(dm.dmDeviceName, device_name);
+    obj->fmtetc[3].ptd = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra);
+    obj->fmtetc[3].ptd->tdSize = FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra;
     obj->fmtetc[3].ptd->tdDriverNameOffset = FIELD_OFFSET(DVTARGETDEVICE, tdData);
     obj->fmtetc[3].ptd->tdDeviceNameOffset = 0;
     obj->fmtetc[3].ptd->tdPortNameOffset   = 0;
-    obj->fmtetc[3].ptd->tdExtDevmodeOffset = obj->fmtetc[3].ptd->tdDriverNameOffset + sizeof(devname);
-    lstrcpyW((WCHAR*)obj->fmtetc[3].ptd->tdData, devname);
-    memcpy(obj->fmtetc[3].ptd->tdData + sizeof(devname), &dm, dm.dmSize + dm.dmDriverExtra);
+    obj->fmtetc[3].ptd->tdExtDevmodeOffset = obj->fmtetc[3].ptd->tdDriverNameOffset + sizeof(device_name);
+    lstrcpyW((WCHAR*)obj->fmtetc[3].ptd->tdData, device_name);
+    memcpy(obj->fmtetc[3].ptd->tdData + sizeof(device_name), &dm, dm.dmSize + dm.dmDriverExtra);
 
     InitFormatEtc(obj->fmtetc[4], cf_global, TYMED_HGLOBAL);
     InitFormatEtc(obj->fmtetc[5], cf_another, TYMED_HGLOBAL);
@@ -1180,15 +1180,15 @@ static void test_flushed_getdata(void)
     memset(&dm, 0, sizeof(dm));
     dm.dmSize = sizeof(dm);
     dm.dmDriverExtra = 0;
-    lstrcpyW(dm.dmDeviceName, devname);
-    fmt.ptd = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra);
-    fmt.ptd->tdSize = FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(devname) + dm.dmSize + dm.dmDriverExtra;
+    lstrcpyW(dm.dmDeviceName, device_name);
+    fmt.ptd = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra);
+    fmt.ptd->tdSize = FIELD_OFFSET(DVTARGETDEVICE, tdData) + sizeof(device_name) + dm.dmSize + dm.dmDriverExtra;
     fmt.ptd->tdDriverNameOffset = FIELD_OFFSET(DVTARGETDEVICE, tdData);
     fmt.ptd->tdDeviceNameOffset = 0;
     fmt.ptd->tdPortNameOffset   = 0;
-    fmt.ptd->tdExtDevmodeOffset = fmt.ptd->tdDriverNameOffset + sizeof(devname);
-    lstrcpyW((WCHAR*)fmt.ptd->tdData, devname);
-    memcpy(fmt.ptd->tdData + sizeof(devname), &dm, dm.dmSize + dm.dmDriverExtra);
+    fmt.ptd->tdExtDevmodeOffset = fmt.ptd->tdDriverNameOffset + sizeof(device_name);
+    lstrcpyW((WCHAR*)fmt.ptd->tdData, device_name);
+    memcpy(fmt.ptd->tdData + sizeof(device_name), &dm, dm.dmSize + dm.dmDriverExtra);
 
     hr = IDataObject_GetData(get, &fmt, &med);
     ok(hr == S_OK, "got %08x\n", hr);
