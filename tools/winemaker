@@ -397,28 +397,6 @@ sub is_absolute($)
 }
 
 ##
-# Performs a binary search looking for the specified item
-sub bsearch($$)
-{
-  my $array=$_[0];
-  my $item=$_[1];
-  my $last=@{$array}-1;
-  my $first=0;
-
-  while ($first<=$last) {
-    my $index=int(($first+$last)/2);
-    my $cmp=@$array[$index] cmp $item;
-    if ($cmp<0) {
-      $first=$index+1;
-    } elsif ($cmp>0) {
-      $last=$index-1;
-    } else {
-      return $index;
-    }
-  }
-}
-
-##
 # Retrieves the contents of the specified directory.
 # We either get it from the directories hashtable which acts as a
 # cache, or use opendir, readdir, closedir and store the result
