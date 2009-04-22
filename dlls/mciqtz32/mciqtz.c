@@ -99,12 +99,12 @@ static DWORD MCIQTZ_drvClose(DWORD dwDevID)
 
     TRACE("(%04x)\n", dwDevID);
 
-    /* finish all outstanding things */
-    MCIQTZ_mciClose(dwDevID, MCI_WAIT, NULL);
-
     wma = MCIQTZ_mciGetOpenDev(dwDevID);
 
     if (wma) {
+        /* finish all outstanding things */
+        MCIQTZ_mciClose(dwDevID, MCI_WAIT, NULL);
+
         HeapFree(GetProcessHeap(), 0, wma);
         return 1;
     }
@@ -121,16 +121,15 @@ static DWORD MCIQTZ_drvConfigure(DWORD dwDevID)
 
     TRACE("(%04x)\n", dwDevID);
 
+    wma = MCIQTZ_mciGetOpenDev(dwDevID);
+    if (!wma)
+        return 0;
+
     MCIQTZ_mciStop(dwDevID, MCI_WAIT, NULL);
 
-    wma = MCIQTZ_mciGetOpenDev(dwDevID);
+    MessageBoxA(0, "Sample QTZ Wine Driver !", "MM-Wine Driver", MB_OK);
 
-    if (wma) {
-        MessageBoxA(0, "Sample QTZ Wine Driver !", "MM-Wine Driver", MB_OK);
-        return 1;
-    }
-
-    return 0;
+    return 1;
 }
 
 /***************************************************************************
@@ -144,14 +143,14 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpOpenParms);
 
-    MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
-
     if (!lpOpenParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
+
+    MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
@@ -211,11 +210,11 @@ static DWORD MCIQTZ_mciClose(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
-    MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
-
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
+
+    MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
 
     if (wma->opened) {
         IGraphBuilder_Release(wma->pgraph);
@@ -267,14 +266,14 @@ static DWORD MCIQTZ_mciSeek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms
 
     TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
 
-    MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
-
     if (!lpParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
+
+    MCIQTZ_mciStop(wDevID, MCI_WAIT, NULL);
 
     if (dwFlags & MCI_SEEK_TO_START) {
         newpos = 0;
