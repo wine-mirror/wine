@@ -1079,7 +1079,7 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
         if( regval != vals[i])
             regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY1,
                     SPI_SETICONTITLEWRAP_VALNAME, dpi);
-        ok( regval == vals[i],
+        ok( regval == vals[i] || broken(regval == -1), /* win9x */
                 "wrong value in registry %d, expected %d\n", regval, vals[i] );
 
         rc=SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &v, 0 );
@@ -1668,9 +1668,11 @@ static void test_SPI_SETICONMETRICS( void )               /*     46 */
         return;
    /* check some registry values */ 
     regval = metricfromreg( SPI_ICONHORIZONTALSPACING_REGKEY, SPI_ICONHORIZONTALSPACING_VALNAME, dpi);
-    ok( regval==im_orig.iHorzSpacing, "wrong value in registry %d, expected %d\n", regval, im_orig.iHorzSpacing);
+    ok( regval==im_orig.iHorzSpacing || broken(regval == -1), /* nt4 */
+        "wrong value in registry %d, expected %d\n", regval, im_orig.iHorzSpacing);
     regval = metricfromreg( SPI_ICONVERTICALSPACING_REGKEY, SPI_ICONVERTICALSPACING_VALNAME, dpi);
-    ok( regval==im_orig.iVertSpacing, "wrong value in registry %d, expected %d\n", regval, im_orig.iVertSpacing);
+    ok( regval==im_orig.iVertSpacing || broken(regval == -1), /* nt4 */
+        "wrong value in registry %d, expected %d\n", regval, im_orig.iVertSpacing);
     regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY2, SPI_SETICONTITLEWRAP_VALNAME, dpi);
     if( regval != im_orig.iTitleWrap)
         regval = metricfromreg( SPI_SETICONTITLEWRAP_REGKEY1, SPI_SETICONTITLEWRAP_VALNAME, dpi);
@@ -1798,8 +1800,11 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
         test_change_message( SPI_SETWORKAREA, 0);
     eq( area.left,   curr_val.left,   "left",   "%d" );
     eq( area.top,    curr_val.top,    "top",    "%d" );
-    eq( area.right,  curr_val.right,  "right",  "%d" );
-    eq( area.bottom, curr_val.bottom, "bottom", "%d" );
+    /* size may be rounded up */
+    ok( area.right >= curr_val.right && area.right < curr_val.right + 8,
+        "right: got %d instead of %d\n", area.right, curr_val.right );
+    ok( area.bottom >= curr_val.bottom && area.bottom < curr_val.bottom + 8,
+        "bottom: got %d instead of %d\n", area.bottom, curr_val.bottom );
     curr_val = area;
     rc=SystemParametersInfoA( SPI_SETWORKAREA, 0, &old_area,
                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
@@ -1810,8 +1815,11 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
         test_change_message( SPI_SETWORKAREA, 0 );
     eq( area.left,   old_area.left,   "left",   "%d" );
     eq( area.top,    old_area.top,    "top",    "%d" );
-    eq( area.right,  old_area.right,  "right",  "%d" );
-    eq( area.bottom, old_area.bottom, "bottom", "%d" );
+    /* size may be rounded up */
+    ok( area.right >= old_area.right && area.right < old_area.right + 8,
+        "right: got %d instead of %d\n", area.right, old_area.right );
+    ok( area.bottom >= old_area.bottom && area.bottom < old_area.bottom + 8,
+        "bottom: got %d instead of %d\n", area.bottom, old_area.bottom );
 }
 
 static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
