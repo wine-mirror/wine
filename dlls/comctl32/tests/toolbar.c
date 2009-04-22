@@ -777,7 +777,7 @@ static TBBUTTON buttons3[] = {
 static void test_sizes(void)
 {
     HWND hToolbar = NULL;
-    HIMAGELIST himl;
+    HIMAGELIST himl, himl2;
     TBBUTTONINFO tbinfo;
     int style;
     int i;
@@ -928,9 +928,13 @@ static void test_sizes(void)
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(100, 21), "Unexpected button size\n");
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(100, 100));
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(100, 100), "Unexpected button size\n");
+    /* But there are no update when we change imagelist, and image sizes are the same */
+    himl2 = ImageList_LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_128x15), 20, 2, CLR_NONE, IMAGE_BITMAP, LR_DEFAULTCOLOR);
+    ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, (LRESULT)himl2) == (LRESULT)himl, "TB_SETIMAGELIST failed\n");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(100, 100), "Unexpected button size\n");
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(1, 1));
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 21), "Unexpected button size\n");
-    ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, 0) == (LRESULT)himl, "TB_SETIMAGELIST failed\n");
+    ok(SendMessageA(hToolbar, TB_SETIMAGELIST, 0, 0) == (LRESULT)himl2, "TB_SETIMAGELIST failed\n");
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(27, 7), "Unexpected button size\n");
     SendMessageA(hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(1, 1));
     ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(8, 7), "Unexpected button size\n");

@@ -4777,6 +4777,8 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
     HIMAGELIST himlTemp;
     HIMAGELIST himl = (HIMAGELIST)lParam;
     INT oldButtonWidth = infoPtr->nButtonWidth;
+    INT oldBitmapWidth = infoPtr->nBitmapWidth;
+    INT oldBitmapHeight = infoPtr->nBitmapHeight;
     INT i, id = 0;
 
     if (infoPtr->iVersion >= 5)
@@ -4795,9 +4797,12 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
         infoPtr->nBitmapWidth = 1;
         infoPtr->nBitmapHeight = 1;
     }
-    TOOLBAR_CalcToolbar(hwnd);
-    if (infoPtr->nButtonWidth < oldButtonWidth)
-        TOOLBAR_SetButtonSize(hwnd, MAKELONG(oldButtonWidth, infoPtr->nButtonHeight));
+    if ((oldBitmapWidth != infoPtr->nBitmapWidth) || (oldBitmapHeight != infoPtr->nBitmapHeight))
+    {
+        TOOLBAR_CalcToolbar(hwnd);
+        if (infoPtr->nButtonWidth < oldButtonWidth)
+            TOOLBAR_SetButtonSize(hwnd, MAKELONG(oldButtonWidth, infoPtr->nButtonHeight));
+    }
 
     TRACE("hwnd %p, new himl=%p, id = %d, count=%d, bitmap w=%d, h=%d\n",
 	  hwnd, infoPtr->himlDef, id, infoPtr->nNumBitmaps,
