@@ -847,6 +847,7 @@ static void test_create(void)
     LONG_PTR ret;
     LONG r;
     LVCOLUMNA col;
+    RECT rect;
     WNDCLASSEX cls;
     cls.cbSize = sizeof(WNDCLASSEX);
     ok(GetClassInfoEx(GetModuleHandle(NULL), "SysListView32", &cls), "GetClassInfoEx failed\n");
@@ -975,6 +976,31 @@ static void test_create(void)
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader), "Header should be created\n");
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    DestroyWindow(hList);
+
+    /* requesting header info with LVM_GETSUBITEMRECT doesn't create it */
+    hList = CreateWindow("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
+                          GetModuleHandle(NULL), 0);
+    ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = -10;
+    r = SendMessage(hList, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
+todo_wine
+    ok(r != 0, "Expected not-null LRESULT\n");
+
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(!IsWindow(hHeader), "Header shouldn't be created\n");
+    ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
+
+    expect(0, rect.left);
+todo_wine {
+    expect(0, rect.right);
+    expect(0, rect.top);
+    expect(0, rect.bottom);
+}
     DestroyWindow(hList);
 }
 
@@ -1528,6 +1554,21 @@ todo_wine{
     expect(3, rect.top);
 }
 
+    DestroyWindow(hwnd);
+
+    /* try it for non LVS_REPORT style */
+    hwnd = CreateWindow("SysListView32", "Test", LVS_ICON, 0, 0, 100, 100, NULL, NULL,
+                         GetModuleHandle(NULL), 0);
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = -10;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
+    ok(r == 0, "Expected not-null LRESULT\n");
+    /* rect is unchanged */
+    expect(0, rect.left);
+    expect(-10, rect.right);
+    expect(1, rect.top);
+    expect(-10, rect.bottom);
     DestroyWindow(hwnd);
 }
 
