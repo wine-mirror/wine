@@ -2472,7 +2472,7 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
     shader_glsl_get_sample_function(sampler_type, sample_flags, &sample_function);
     mask |= sample_function.coord_mask;
 
-    if (shader_version < WINED3DPS_VERSION(2,0)) swizzle = WINED3DVS_NOSWIZZLE;
+    if (shader_version < WINED3DPS_VERSION(2,0)) swizzle = WINED3DSP_NOSWIZZLE;
     else swizzle = ins->src[1].swizzle;
 
     /* 1.0-1.3: Use destination register as coordinate source.
@@ -2602,17 +2602,17 @@ static void pshader_glsl_texdp3tex(const struct wined3d_shader_instruction *ins)
     switch(mask_size)
     {
         case 1:
-            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DVS_NOSWIZZLE, NULL,
+            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
                     "dot(gl_TexCoord[%u].xyz, %s)", sampler_idx, src0_param.param_str);
             break;
 
         case 2:
-            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DVS_NOSWIZZLE, NULL,
+            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
                     "vec2(dot(gl_TexCoord[%u].xyz, %s), 0.0)", sampler_idx, src0_param.param_str);
             break;
 
         case 3:
-            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DVS_NOSWIZZLE, NULL,
+            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
                     "vec3(dot(gl_TexCoord[%u].xyz, %s), 0.0, 0.0)", sampler_idx, src0_param.param_str);
             break;
 
@@ -2722,7 +2722,7 @@ static void pshader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DVS_NOSWIZZLE, NULL, "tmp0.xy");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, "tmp0.xy");
 }
 
 /** Process the WINED3DSIO_TEXM3X3TEX instruction in GLSL
@@ -2744,7 +2744,7 @@ static void pshader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DVS_NOSWIZZLE, NULL, "tmp0.xyz");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, "tmp0.xyz");
 
     current_state->current_row = 0;
 }
@@ -2795,7 +2795,7 @@ static void pshader_glsl_texm3x3spec(const struct wined3d_shader_instruction *in
     shader_glsl_get_sample_function(stype, 0, &sample_function);
 
     /* Sample the texture */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DVS_NOSWIZZLE, NULL, "tmp0.xyz");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, "tmp0.xyz");
 
     current_state->current_row = 0;
 }
@@ -2827,7 +2827,7 @@ static void pshader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *i
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DVS_NOSWIZZLE, NULL, "tmp0.xyz");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, "tmp0.xyz");
 
     current_state->current_row = 0;
 }
@@ -2877,7 +2877,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &coord_param);
 
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DVS_NOSWIZZLE, NULL,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
             "T%u%s + vec4(bumpenvmat%d * %s, 0.0, 0.0)%s", sampler_idx, coord_mask, sampler_idx,
             coord_param.param_str, coord_mask);
 
@@ -2920,7 +2920,7 @@ static void pshader_glsl_texreg2ar(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DVS_NOSWIZZLE, NULL,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
             "%s.wx", src0_param.reg_name);
 }
 
@@ -2936,7 +2936,7 @@ static void pshader_glsl_texreg2gb(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DVS_NOSWIZZLE, NULL,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
             "%s.yz", src0_param.reg_name);
 }
 
@@ -2953,7 +2953,7 @@ static void pshader_glsl_texreg2rgb(const struct wined3d_shader_instruction *ins
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &src0_param);
 
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DVS_NOSWIZZLE, NULL,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
             "%s", src0_param.param_str);
 }
 

@@ -789,7 +789,8 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
         * swizzle bits fields:
         *  RRGGBBAA
         */
-        if ((WINED3DVS_NOSWIZZLE >> WINED3DVS_SWIZZLE_SHIFT) != swizzle) {
+        if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) != swizzle)
+        {
             if (swizzle_x == swizzle_y &&
                 swizzle_x == swizzle_z &&
                 swizzle_x == swizzle_w) {
