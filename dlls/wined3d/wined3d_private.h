@@ -468,7 +468,6 @@ struct wined3d_shader_src_param
     DWORD swizzle;
     DWORD modifiers;
     const struct wined3d_shader_src_param *rel_addr;
-    DWORD token;
 };
 
 struct wined3d_shader_instruction

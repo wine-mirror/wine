@@ -1078,7 +1078,6 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
             struct wined3d_shader_src_param tmp_src = ins->src[0];
             tmp_src.swizzle = ((ins->src[0].swizzle >> WINED3DSP_SWIZZLE_SHIFT) & 0x3)
                     * (0x55 << WINED3DSP_SWIZZLE_SHIFT);
-            tmp_src.token = (tmp_src.token & ~WINED3DSP_SWIZZLE_MASK) | tmp_src.swizzle;
             shader_arb_add_src_param(ins, &tmp_src, src0_param);
             shader_addline(buffer, "ARL A0.x, %s;\n", src0_param);
         }
@@ -1627,7 +1626,6 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
         tmp_dst.write_mask = WINED3DSP_WRITEMASK_0 << i;
         shader_hw_map2gl(&tmp_ins);
         ++tmp_src[1].register_idx;
-        ++tmp_src[1].token;
     }
 }
 

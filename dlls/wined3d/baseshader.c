@@ -248,7 +248,6 @@ static void shader_parse_src_param(DWORD param, const struct wined3d_shader_src_
     src->swizzle = param & WINED3DSP_SWIZZLE_MASK;
     src->modifiers = param & WINED3DSP_SRCMOD_MASK;
     src->rel_addr = rel_addr;
-    src->token = param;
 }
 
 /* Note that this does not count the loop register

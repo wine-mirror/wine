@@ -2122,7 +2122,6 @@ static void shader_glsl_mnxn(const struct wined3d_shader_instruction *ins)
         tmp_dst.write_mask = WINED3DSP_WRITEMASK_0 << i;
         shader_glsl_dot(&tmp_ins);
         ++tmp_src[1].register_idx;
-        ++tmp_src[1].token;
     }
 }
 
