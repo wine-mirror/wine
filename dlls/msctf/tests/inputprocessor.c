@@ -257,6 +257,16 @@ static void test_ThreadMgrUnadviseSinks(void)
     ITfSource_Release(source);
 }
 
+static void test_KeystrokeMgr(void)
+{
+    ITfKeystrokeMgr *keymgr= NULL;
+    HRESULT hr;
+
+    hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfKeystrokeMgr, (LPVOID*)&keymgr);
+    ok(SUCCEEDED(hr),"Failed to get IID_ITfKeystrokeMgr for ThreadMgr\n");
+    ITfKeystrokeMgr_Release(keymgr);
+}
+
 static void test_Activate(void)
 {
     HRESULT hr;
@@ -439,6 +449,7 @@ START_TEST(inputprocessor)
         test_ThreadMgrAdviseSinks();
         test_Activate();
         test_startSession();
+        test_KeystrokeMgr();
         test_endSession();
         test_EnumLanguageProfiles();
         test_FindClosestCategory();
