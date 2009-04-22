@@ -56,6 +56,7 @@ interface ITfRangeBackup;
 interface IEnumTfLanguageProfiles;
 interface ITfEditRecord;
 interface ITfCompositionView;
+interface ITfKeyEventSink;
 
 typedef [uuid(e1b5808d-1e46-4c19-84dc-68c5f5978cc8)] struct TF_LANGUAGEPROFILE
 {
@@ -65,6 +66,12 @@ typedef [uuid(e1b5808d-1e46-4c19-84dc-68c5f5978cc8)] struct TF_LANGUAGEPROFILE
     BOOL fActive;
     GUID guidProfile;
 } TF_LANGUAGEPROFILE;
+
+typedef [uuid(77c12f95-b783-450d-879f-1cd2362c6521)] struct TF_PRESERVEDKEY
+{
+    UINT uVKey;
+    UINT uModifiers;
+} TF_PRESERVEDKEY;
 
 [
     object,
@@ -509,4 +516,79 @@ interface ITfThreadMgrEventSink : IUnknown
 
     HRESULT OnPopContext(
         [in] ITfContext *pic);
+};
+
+[
+  object,
+  local,
+  uuid(aa80e7f0-2021-11d2-93e0-0060b067b86e),
+  pointer_default(unique)
+]
+interface ITfKeystrokeMgr : IUnknown
+{
+    HRESULT AdviseKeyEventSink(
+        [in] TfClientId tid,
+        [in] ITfKeyEventSink *pSink,
+        [in] BOOL fForeground);
+
+    HRESULT UnadviseKeyEventSink(
+        [in] TfClientId tid);
+
+    HRESULT GetForeground(
+        [out] CLSID *pclsid);
+
+    HRESULT TestKeyDown(
+        [in] WPARAM wParam,
+        [in] LPARAM lParam,
+        [out] BOOL *pfEaten);
+
+    HRESULT TestKeyUp(
+        [in] WPARAM wParam,
+        [in] LPARAM lParam,
+        [out] BOOL *pfEaten);
+
+    HRESULT KeyDown(
+        [in] WPARAM wParam,
+        [in] LPARAM lParam,
+        [out] BOOL *pfEaten);
+
+    HRESULT KeyUp(
+        [in] WPARAM wParam,
+        [in] LPARAM lParam,
+        [out] BOOL *pfEaten);
+
+    HRESULT GetPreservedKey(
+        [in] ITfContext *pic,
+        [in] const TF_PRESERVEDKEY *pprekey,
+        [out] GUID *pguid);
+
+    HRESULT IsPreservedKey(
+        [in] REFGUID rguid,
+        [in] const TF_PRESERVEDKEY *pprekey,
+        [out] BOOL *pfRegistered);
+
+    HRESULT PreserveKey(
+        [in] TfClientId tid,
+        [in] REFGUID rguid,
+        [in] const TF_PRESERVEDKEY *prekey,
+        [in, size_is(cchDesc)] const WCHAR *pchDesc,
+        [in] ULONG cchDesc);
+
+    HRESULT UnpreserveKey(
+        [in] REFGUID rguid,
+        [in] const TF_PRESERVEDKEY *pprekey);
+
+    HRESULT SetPreservedKeyDescription(
+        [in] REFGUID rguid,
+        [in, size_is(cchDesc)] const WCHAR *pchDesc,
+        [in] ULONG cchDesc);
+
+    HRESULT GetPreservedKeyDescription(
+        [in] REFGUID rguid,
+        [out] BSTR *pbstrDesc);
+
+    HRESULT SimulatePreservedKey(
+        [in] ITfContext *pic,
+        [in] REFGUID rguid,
+        [out] BOOL *pfEaten);
 };
