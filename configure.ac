@@ -325,7 +325,6 @@ AC_CHECK_HEADERS(\
 	sys/ipc.h \
 	sys/limits.h \
 	sys/link.h \
-	sys/lwp.h \
 	sys/mman.h \
 	sys/modem.h \
 	sys/msg.h \
@@ -335,7 +334,6 @@ AC_CHECK_HEADERS(\
 	sys/prctl.h \
 	sys/protosw.h \
 	sys/ptrace.h \
-	sys/reg.h \
 	sys/resource.h \
 	sys/scsiio.h \
 	sys/shm.h \

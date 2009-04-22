@@ -837,9 +837,6 @@
 /* Define to 1 if you have the <sys/link.h> header file. */
 #undef HAVE_SYS_LINK_H
 
-/* Define to 1 if you have the <sys/lwp.h> header file. */
-#undef HAVE_SYS_LWP_H
-
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
 
@@ -869,9 +866,6 @@
 
 /* Define to 1 if you have the <sys/ptrace.h> header file. */
 #undef HAVE_SYS_PTRACE_H
-
-/* Define to 1 if you have the <sys/reg.h> header file. */
-#undef HAVE_SYS_REG_H
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
