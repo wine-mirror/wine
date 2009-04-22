@@ -1285,14 +1285,19 @@ static void test_nonole_clipboard(void)
 
     hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
-    ok(fmt.cfFormat == CF_UNICODETEXT, "cf %04x\n", fmt.cfFormat);
-    ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
-    ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
-    ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
-    ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
+    ok(fmt.cfFormat == CF_UNICODETEXT ||
+       broken(fmt.cfFormat == CF_METAFILEPICT), /* win9x and winme don't have CF_UNICODETEXT */
+       "cf %04x\n", fmt.cfFormat);
+    if(fmt.cfFormat == CF_UNICODETEXT)
+    {
+        ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
+        ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
+        ok(fmt.lindex == -1, "lindex %d\n", fmt.lindex);
+        ok(fmt.tymed == (TYMED_ISTREAM | TYMED_HGLOBAL), "tymed %x\n", fmt.tymed);
 
-    hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
-    ok(hr == S_OK, "got %08x\n", hr);
+        hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+        ok(hr == S_OK, "got %08x\n", hr);
+    }
     ok(fmt.cfFormat == CF_METAFILEPICT, "cf %04x\n", fmt.cfFormat);
     ok(fmt.ptd == NULL, "ptd %p\n", fmt.ptd);
     ok(fmt.dwAspect == DVASPECT_CONTENT, "aspect %x\n", fmt.dwAspect);
