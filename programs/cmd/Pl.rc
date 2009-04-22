@@ -4,6 +4,7 @@
  *
  * Copyright (C) 1999 D A Pickles
  * Copyright (C) 2004 Piotr Caban
+ * Copyright (C) 2009 £ukasz Wojni³owicz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,19 +35,19 @@ wywo³ywanej procedury.\n\
 Zmiany domyœlnego katalogu, zmiennych œrodowiskowych itd. wykonane przez\n\
 wywo³an¹ procedurê s¹ dziedziczone przez skrypt wywo³uj¹cy CALL.\n"
 
-  WCMD_CD,     "Pomoc o CD\n"
-  WCMD_CHDIR,  "Pomoc o CHDIR\n"
+  WCMD_CD,     "Pomoc do CD\n"
+  WCMD_CHDIR,  "Pomoc do CHDIR\n"
 
   WCMD_CLS,    "CLS czyœci ekran konsoli\n"
 
-  WCMD_COPY,   "Pomoc o COPY\n"
-  WCMD_CTTY,   "Pomoc o  CTTY\n"
-  WCMD_DATE,   "Pomoc o  DATE\n"
-  WCMD_DEL,    "Pomoc o  DEL\n"
-  WCMD_DIR,    "Pomoc o  DIR\n"
+  WCMD_COPY,   "Pomoc do COPY\n"
+  WCMD_CTTY,   "Pomoc do  CTTY\n"
+  WCMD_DATE,   "Pomoc do  DATE\n"
+  WCMD_DEL,    "Pomoc do  DEL\n"
+  WCMD_DIR,    "Pomoc do  DIR\n"
 
   WCMD_ECHO,
-"ECHO <ci¹g znaków> drukuje <ci¹g znków> do aktualnego u¿¹dzenia.\n\
+"ECHO <ci¹g znaków> drukuje <ci¹g znaków> do aktualnego urz¹dzenia.\n\
 \n\
 ECHO ON powoduje, ¿e wszystkie komendy z pliku bat s¹ drukowane\n\
 do aktualnego urz¹dzenia przed wywo³aniem.\n\
@@ -63,7 +64,7 @@ zbioru.\n\
 Sk³adnia: FOR %zmienna IN (zbiór) DO polecenie\n\
 \n\
 Wymóg powtarzania znaku %, gdy u¿ywamy komendy FOR w pliku bat nie\n\
-istnije w cmd\n"
+istnieje w cmd\n"
 
   WCMD_GOTO,
 "Komenda GOTO przenosi kursor do innego miejsca w pliku bat.\n\
@@ -71,7 +72,7 @@ istnije w cmd\n"
 Etykieta, która jest celem skoku (komendy GOTO) mo¿e mieæ maksymalnie\n\
 255 znaków d³ugoœci, nie mo¿e zawieraæ spacji. Je¿eli s¹ dwie (lub\n\
 wiêcej) etykiety o takich samych nazwach skok zostanie wykonany do\n\
-pierwszej z nich. Je¿eli etykieta nie istnije wykonywanie pliku zostaje\n\
+pierwszej z nich. Je¿eli etykieta nie istnieje wykonywanie pliku zostaje\n\
 przerwane.\n"
 
   WCMD_HELP,   "Pomoc o HELP\n"
@@ -84,7 +85,7 @@ Sk³adnia:	IF [NOT] EXIST nazwa_pliku komenda\n\
 	IF [NOT] ERRORLEVEL numer komenda\n\
 \n\
 W drugiej formie (ci¹g_znaków1==ci¹g_znaków2) ci¹g znaków musi byæ zawarty w\n\
-cudzys³owie.Przy porównywaniu pomijana jest wielkoœæ znaków.\n"
+cudzys³owie. Przy porównywaniu pomijana jest wielkoœæ znaków.\n"
 
   WCMD_LABEL,  "LABEL jest u¿ywane do ustawienia etykiety dysku.\n\
 \n\
@@ -122,7 +123,7 @@ na ekranie.\n"
 "PROMPT ustawia tekst zg³oszenia konsoli.\n\
 \n\
 Tekst wystêpuj¹cy za komend¹ (i spacje wystêpuj¹ce za nim)\n\
-pojawiaj¹ siê na pocz¹tku lini gdy cmd czeka na komendê.\n\
+pojawiaj¹ siê na pocz¹tku linii gdy cmd czeka na komendê.\n\
 \n\
 Nastêpuj¹ce ci¹gi znaków maj¹ specjalne znaczenie:\n\
 \n\
@@ -132,7 +133,7 @@ $l    Znak <              $n    Dysk                $p    Œcie¿ka\n\
 $q    Znak =              $t    Czas                $v    Wersja cmd\n\
 \n\
 Wpisanie PROMPT bez opcji resetuje ustawienia konsoli zwi¹zane z komend¹\n\
-PROMPT, ustawia wyœwietlany tekst na œcie¿ke i znak >.\n\
+PROMPT, ustawia wyœwietlany tekst na œcie¿kê i znak >.\n\
 (Tak samo jak polecenie PROMPT $p$g).\n\
 \n\
 Polecenie 'SET PROMPT=tekst' ma taki sam efekt jak 'PROMPT tekst'\n"
@@ -149,7 +150,7 @@ stosowane jako komentarz w pliku typu bat.\n"
   WCMD_SET,
 "SET wyœwietla lub ustawia zmienne œrodowiskowe cmd.\n\
 \n\
-SET bez parametrów wyœwitla wszystkie ustawione zmienne.\n\
+SET bez parametrów wyœwietla wszystkie ustawione zmienne.\n\
 \n\
 Sk³adnia polecenia (by utworzyæ lub zmodyfikowaæ zmienn¹:\n\
 \n\
@@ -167,7 +168,7 @@ systemu.\n"
   WCMD_SHIFT,
 "SHIFT jest u¿ywane w plikach bat do usuniêcia pierwszego parametru z listy\n\
 parametrów, parametr 2 staje sie 1 itd. Polecenie to nie ma efektu gdy jest\n\
-wywo³ywane z lini komend.\n"
+wywo³ywane z linii komend.\n"
 
   WCMD_TIME,   "Pomoc o TIME\n"
 
@@ -233,39 +234,39 @@ VOL\t\tWyœwietla etykietê dysku\n\
 EXIT\t\tWy³¹cza CMD\n\n\
 Wpisz HELP <komenda> dla dok³adniejszych informacji o komendzie\n"
 
-  WCMD_CONFIRM, "Are you sure"
-  WCMD_YES, "Y"
+  WCMD_CONFIRM, "Czy jesteœ pewien?"
+  WCMD_YES, "T"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "File association missing for extension %s\n"
-  WCMD_NOFTYPE, "No open command associated with file type '%s'\n"
-  WCMD_OVERWRITE, "Overwrite %s"
-  WCMD_MORESTR, "More..."
+  WCMD_NOASSOC, "Brak skojarzenia pliku dla rozszerzenia %s\n"
+  WCMD_NOFTYPE, "Brak skojarzenia polecenia otwórz z typem plików '%s'\n"
+  WCMD_OVERWRITE, "Nadpisaæ %s"
+  WCMD_MORESTR, "Wiêcej..."
   WCMD_TRUNCATEDLINE, "Line in Batch processing possibly truncated. Using:\n"
-  WCMD_NYI, "Not Yet Implemented\n\n"
-  WCMD_NOARG, "Argument missing\n"
-  WCMD_SYNTAXERR, "Syntax error\n"
-  WCMD_FILENOTFOUND, "%s : File Not Found\n"
-  WCMD_NOCMDHELP, "No help available for %s\n"
-  WCMD_NOTARGET, "Target to GOTO not found\n"
-  WCMD_CURRENTDATE, "Current Date is %s\n"
-  WCMD_CURRENTTIME, "Current Time is %s\n"
-  WCMD_NEWDATE, "Enter new date: "
-  WCMD_NEWTIME, "Enter new time: "
-  WCMD_MISSINGENV, "Environment variable %s not defined\n"
-  WCMD_READFAIL, "Failed to open '%s'\n"
+  WCMD_NYI, "Jeszcze niezaimplementowane\n\n"
+  WCMD_NOARG, "Brakuje argumentu\n"
+  WCMD_SYNTAXERR, "B³¹d sk³adni\n"
+  WCMD_FILENOTFOUND, "%s : Plik nie znaleziony\n"
+  WCMD_NOCMDHELP, "Plik pomocy nie istnieje dla %s\n"
+  WCMD_NOTARGET, "Nie znaleziono przeznaczenia dla GOTO\n"
+  WCMD_CURRENTDATE, "Aktualna data: %s\n"
+  WCMD_CURRENTTIME, "Aktualny czas: %s\n"
+  WCMD_NEWDATE, "Wpisz now¹ datê: "
+  WCMD_NEWTIME, "Wpisz nowy czas: "
+  WCMD_MISSINGENV, "Zmienna œrodowiskowa %s niezdefiniowana\n"
+  WCMD_READFAIL, "Nieudane otwarcie '%s'\n"
   WCMD_CALLINSCRIPT, "Cannot call batch label outside of a batch script\n"
   WCMD_ALL, "A"
-  WCMD_DELPROMPT, "%s, Delete"
-  WCMD_ECHOPROMPT, "Echo is %s\n"
-  WCMD_VERIFYPROMPT, "Verify is %s\n"
-  WCMD_VERIFYERR, "Verify must be ON or OFF\n";
-  WCMD_ARGERR, "Parameter error\n"
-  WCMD_VOLUMEDETAIL, "Volume in drive %c is %s\nVolume Serial Number is %04x-%04x\n\n"
-  WCMD_VOLUMEPROMPT, "Volume label (11 characters, ENTER for none)?"
-  WCMD_NOPATH, "PATH not found\n"
-  WCMD_ANYKEY,"Press Return key to continue: "
-  WCMD_CONSTITLE,"Wine Command Prompt"
-  WCMD_VERSION,"CMD Version %s\n\n"
-  WCMD_MOREPROMPT, "More? "
-  WCMD_LINETOOLONG, "The input line is too long.\n"
+  WCMD_DELPROMPT, "%s, Usun¹æ"
+  WCMD_ECHOPROMPT, "Echo jest %s\n"
+  WCMD_VERIFYPROMPT, "Verify jest %s\n"
+  WCMD_VERIFYERR, "Verify musi byæ ON lub OFF\n";
+  WCMD_ARGERR, "B³¹d parametru\n"
+  WCMD_VOLUMEDETAIL, "Wolumenem w napêdzie %c jest %s\nNumer seryjny wolumenu: %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "Etykieta Wolumenu (11 znaków, ENTER aby pomin¹æ)?"
+  WCMD_NOPATH, "Nie znaleziono PATH\n"
+  WCMD_ANYKEY,"Naciœnij klawisz Enter, aby kontynuowaæ: "
+  WCMD_CONSTITLE,"Wiersz Poleceñ Wine"
+  WCMD_VERSION,"Wersja CMD %s\n\n"
+  WCMD_MOREPROMPT, "Wiêcej? "
+  WCMD_LINETOOLONG, "Wpisany tekst jest zbyt d³ugi.\n"
 }
