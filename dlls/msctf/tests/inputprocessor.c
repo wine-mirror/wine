@@ -53,6 +53,7 @@ static INT  test_OnSetFocus = SINK_UNEXPECTED;
 static INT  test_OnInitDocumentMgr = SINK_UNEXPECTED;
 static INT  test_OnPushContext = SINK_UNEXPECTED;
 static INT  test_OnPopContext = SINK_UNEXPECTED;
+static INT  test_KEV_OnSetFocus = SINK_UNEXPECTED;
 
 HRESULT RegisterTextService(REFCLSID rclsid);
 HRESULT UnregisterTextService();
@@ -259,18 +260,149 @@ static void test_ThreadMgrUnadviseSinks(void)
     ITfSource_Release(source);
 }
 
+/**********************************************************************
+ * ITfKeyEventSink
+ **********************************************************************/
+typedef struct tagKeyEventSink
+{
+    const ITfKeyEventSinkVtbl *KeyEventSinkVtbl;
+    LONG refCount;
+} KeyEventSink;
+
+static void KeyEventSink_Destructor(KeyEventSink *This)
+{
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI KeyEventSink_QueryInterface(ITfKeyEventSink *iface, REFIID iid, LPVOID *ppvOut)
+{
+    KeyEventSink *This = (KeyEventSink *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfKeyEventSink))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI KeyEventSink_AddRef(ITfKeyEventSink *iface)
+{
+    KeyEventSink *This = (KeyEventSink *)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI KeyEventSink_Release(ITfKeyEventSink *iface)
+{
+    KeyEventSink *This = (KeyEventSink *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        KeyEventSink_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI KeyEventSink_OnSetFocus(ITfKeyEventSink *iface,
+        BOOL fForeground)
+{
+    ok(test_KEV_OnSetFocus == SINK_EXPECTED,"Unexpected KeyEventSink_OnSetFocus\n");
+    test_KEV_OnSetFocus = SINK_FIRED;
+    return S_OK;
+}
+
+static HRESULT WINAPI KeyEventSink_OnTestKeyDown(ITfKeyEventSink *iface,
+        ITfContext *pic, WPARAM wParam, LPARAM lParam, BOOL *pfEaten)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI KeyEventSink_OnTestKeyUp(ITfKeyEventSink *iface,
+        ITfContext *pic, WPARAM wParam, LPARAM lParam, BOOL *pfEaten)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI KeyEventSink_OnKeyDown(ITfKeyEventSink *iface,
+        ITfContext *pic, WPARAM wParam, LPARAM lParam, BOOL *pfEaten)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI KeyEventSink_OnKeyUp(ITfKeyEventSink *iface,
+        ITfContext *pic, WPARAM wParam, LPARAM lParam, BOOL *pfEaten)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI KeyEventSink_OnPreservedKey(ITfKeyEventSink *iface,
+    ITfContext *pic, REFGUID rguid, BOOL *pfEaten)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static const ITfKeyEventSinkVtbl KeyEventSink_KeyEventSinkVtbl =
+{
+    KeyEventSink_QueryInterface,
+    KeyEventSink_AddRef,
+    KeyEventSink_Release,
+
+    KeyEventSink_OnSetFocus,
+    KeyEventSink_OnTestKeyDown,
+    KeyEventSink_OnTestKeyUp,
+    KeyEventSink_OnKeyDown,
+    KeyEventSink_OnKeyUp,
+    KeyEventSink_OnPreservedKey
+};
+
+HRESULT KeyEventSink_Constructor(ITfKeyEventSink **ppOut)
+{
+    KeyEventSink *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(KeyEventSink));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->KeyEventSinkVtbl = &KeyEventSink_KeyEventSinkVtbl;
+    This->refCount = 1;
+
+    *ppOut = (ITfKeyEventSink*)This;
+    return S_OK;
+}
+
+
 static void test_KeystrokeMgr(void)
 {
     ITfKeystrokeMgr *keymgr= NULL;
     HRESULT hr;
     TF_PRESERVEDKEY tfpk;
     BOOL preserved;
+    ITfKeyEventSink *sink;
+
+    KeyEventSink_Constructor(&sink);
 
     hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfKeystrokeMgr, (LPVOID*)&keymgr);
     ok(SUCCEEDED(hr),"Failed to get IID_ITfKeystrokeMgr for ThreadMgr\n");
 
     tfpk.uVKey = 'A';
     tfpk.uModifiers = TF_MOD_SHIFT;
+
+    test_KEV_OnSetFocus = SINK_EXPECTED;
+    hr = ITfKeystrokeMgr_AdviseKeyEventSink(keymgr,tid,sink,TRUE);
+    todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_AdviseKeyEventSink failed\n");
+    todo_wine ok(test_KEV_OnSetFocus == SINK_FIRED, "KeyEventSink_OnSetFocus not fired as expected\n");
 
     hr =ITfKeystrokeMgr_PreserveKey(keymgr, 0, &CLSID_PreservedKey, &tfpk, NULL, 0);
     todo_wine ok(hr==E_INVALIDARG,"ITfKeystrokeMgr_PreserveKey inproperly succeeded\n");
@@ -296,7 +428,11 @@ static void test_KeystrokeMgr(void)
     hr = ITfKeystrokeMgr_UnpreserveKey(keymgr, &CLSID_PreservedKey,&tfpk);
     todo_wine ok(hr==CONNECT_E_NOCONNECTION,"ITfKeystrokeMgr_UnpreserveKey inproperly succeeded\n");
 
+    hr = ITfKeystrokeMgr_UnadviseKeyEventSink(keymgr,tid);
+    todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_UnadviseKeyEventSink failed\n");
+
     ITfKeystrokeMgr_Release(keymgr);
+    ITfKeyEventSink_Release(sink);
 }
 
 static void test_Activate(void)
