@@ -1138,7 +1138,7 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
     ole_priv_data_entry *entry;
     DWORD mask;
 
-    TRACE("(%p,%p,%p)\n", iface, fmt, med);
+    TRACE("(%p, %p {%s}, %p)\n", iface, fmt, dump_fmtetc(fmt), med);
 
     if ( !fmt || !med ) return E_INVALIDARG;
 
@@ -1203,7 +1203,7 @@ end:
 static HRESULT WINAPI snapshot_GetDataHere(IDataObject *iface, FORMATETC *fmt,
                                            STGMEDIUM *med)
 {
-    FIXME("(%p, %p, %p): stub\n", iface, fmt, med);
+    FIXME("(%p, %p {%s}, %p): stub\n", iface, fmt, dump_fmtetc(fmt), med);
     return E_NOTIMPL;
 }
 
@@ -1217,7 +1217,7 @@ static HRESULT WINAPI snapshot_GetDataHere(IDataObject *iface, FORMATETC *fmt,
  */
 static HRESULT WINAPI snapshot_QueryGetData(IDataObject *iface, FORMATETC *fmt)
 {
-    FIXME("(%p, %p)\n", iface, fmt);
+    FIXME("(%p, %p {%s})\n", iface, fmt, dump_fmtetc(fmt));
 
     if (!fmt) return E_INVALIDARG;
 
