@@ -19,7 +19,7 @@
 #ifndef __WS2IPDEF__
 #define __WS2IPDEF__
 
-/* FIXME: #include <in6addr.h> */
+#include <in6addr.h>
 
 #ifdef USE_WS_PREFIX
 #define WS(x)    WS_##x
@@ -27,21 +27,12 @@
 #define WS(x)    x
 #endif
 
-/* FIXME: This gets defined by some Unix (Linux) header and messes things */
-#undef s6_addr
-
-/* FIXME: should be in in6addr.h */
-typedef struct WS(in_addr6)
-{
-   WS(u_char) s6_addr[16]; /* IPv6 address */
-} IN6_ADDR, *PIN6_ADDR, *LPIN6_ADDR;
-
 typedef struct WS(sockaddr_in6_old)
 {
-   short   sin6_family;            /* AF_INET6 */
-   WS(u_short) sin6_port;              /* Transport level port number */
-   WS(u_long) sin6_flowinfo;          /* IPv6 flow information */
-   struct  WS(in_addr6) sin6_addr; /* IPv6 address */
+   SHORT    sin6_family;
+   USHORT   sin6_port;
+   ULONG    sin6_flowinfo;
+   IN6_ADDR sin6_addr;
 } SOCKADDR_IN6_OLD,*PSOCKADDR_IN6_OLD, *LPSOCKADDR_IN6_OLD;
 
 typedef union sockaddr_gen
@@ -131,11 +122,11 @@ typedef struct _INTERFACE_INFO
 
 typedef struct WS(sockaddr_in6)
 {
-   short   sin6_family;            /* AF_INET6 */
-   WS(u_short) sin6_port;          /* Transport level port number */
-   WS(u_long) sin6_flowinfo;       /* IPv6 flow information */
-   struct  WS(in_addr6) sin6_addr; /* IPv6 address */
-   WS(u_long) sin6_scope_id;       /* IPv6 scope id */
+   SHORT    sin6_family;
+   USHORT   sin6_port;
+   ULONG    sin6_flowinfo;
+   IN6_ADDR sin6_addr;
+   ULONG    sin6_scope_id;
 } SOCKADDR_IN6,*PSOCKADDR_IN6, *LPSOCKADDR_IN6;
 
 /*

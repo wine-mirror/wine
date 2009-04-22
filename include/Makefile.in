@@ -244,6 +244,7 @@ SRCDIR_INCLUDES = \
 	idispids.h \
 	imagehlp.h \
 	imm.h \
+	in6addr.h \
 	initguid.h \
 	intshcut.h \
 	ipexport.h \

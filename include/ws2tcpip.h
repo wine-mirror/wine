@@ -29,9 +29,6 @@
 #define WS(x)    x
 #endif
 
-/* FIXME: This gets defined by some Unix (Linux) header and messes things */
-#undef s6_addr
-
 /* for addrinfo calls */
 typedef struct WS(addrinfo)
 {
