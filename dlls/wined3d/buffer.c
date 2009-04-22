@@ -590,7 +590,8 @@ static ULONG STDMETHODCALLTYPE buffer_AddRef(IWineD3DBuffer *iface)
 
 const BYTE *buffer_get_sysmem(struct wined3d_buffer *This)
 {
-    if(This->flags & WINED3D_BUFFER_DOUBLEBUFFER) return This->resource.allocatedMemory;
+    /* AllocatedMemory exists if the buffer is double buffered or has no buffer object at all */
+    if(This->resource.allocatedMemory) return This->resource.allocatedMemory;
 
     This->resource.heapMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->resource.size + RESOURCE_ALIGNMENT);
     This->resource.allocatedMemory = (BYTE *)(((ULONG_PTR)This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
