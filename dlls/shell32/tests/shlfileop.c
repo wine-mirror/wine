@@ -2063,21 +2063,27 @@ static void test_sh_new_link_info(void)
     set_curr_dir_path(linkto, "nosuchfile.txt\0");
     set_curr_dir_path(destdir, "testdir2\0");
     ret = SHGetNewLinkInfoA(linkto, destdir, result, &mustcopy, 0);
-    ok(ret == FALSE, "SHGetNewLinkInfoA succeeded\n");
+    ok(ret == FALSE ||
+       broken(ret == lstrlenA(result) + 1), /* NT4 */
+       "SHGetNewLinkInfoA succeeded\n");
     ok(mustcopy == FALSE, "mustcopy should be FALSE\n");
 
     /* dest dir does not exist */
     set_curr_dir_path(linkto, "test1.txt\0");
     set_curr_dir_path(destdir, "nosuchdir\0");
     ret = SHGetNewLinkInfoA(linkto, destdir, result, &mustcopy, 0);
-    ok(ret == TRUE, "SHGetNewLinkInfoA failed, err=%i\n", GetLastError());
+    ok(ret == TRUE ||
+       broken(ret == lstrlenA(result) + 1), /* NT4 */
+       "SHGetNewLinkInfoA failed, err=%i\n", GetLastError());
     ok(mustcopy == FALSE, "mustcopy should be FALSE\n");
 
     /* source file exists */
     set_curr_dir_path(linkto, "test1.txt\0");
     set_curr_dir_path(destdir, "testdir2\0");
     ret = SHGetNewLinkInfoA(linkto, destdir, result, &mustcopy, 0);
-    ok(ret == TRUE, "SHGetNewLinkInfoA failed, err=%i\n", GetLastError());
+    ok(ret == TRUE ||
+       broken(ret == lstrlenA(result) + 1), /* NT4 */
+       "SHGetNewLinkInfoA failed, err=%i\n", GetLastError());
     ok(mustcopy == FALSE, "mustcopy should be FALSE\n");
     ok(CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, destdir,
                       lstrlenA(destdir), result, lstrlenA(destdir)) == CSTR_EQUAL,
@@ -2088,7 +2094,9 @@ static void test_sh_new_link_info(void)
     /* preferred target name already exists */
     createTestFile(result);
     ret = SHGetNewLinkInfoA(linkto, destdir, result2, &mustcopy, 0);
-    ok(ret == TRUE, "SHGetNewLinkInfoA failed, err=%i\n", GetLastError());
+    ok(ret == TRUE ||
+       broken(ret == lstrlenA(result2) + 1), /* NT4 */
+       "SHGetNewLinkInfoA failed, err=%i\n", GetLastError());
     ok(mustcopy == FALSE, "mustcopy should be FALSE\n");
     ok(CompareStringA(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, destdir,
                       lstrlenA(destdir), result2, lstrlenA(destdir)) == CSTR_EQUAL,
