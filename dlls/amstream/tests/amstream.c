@@ -52,6 +52,8 @@ static int create_directdraw(void)
 
     hr = DirectDrawCreate(NULL, &pdd, NULL);
     ok(hr==DD_OK, "DirectDrawCreate returned: %x\n", hr);
+    if (hr != DD_OK)
+       goto error;
 
     hr = IDirectDraw_QueryInterface(pdd, &IID_IDirectDraw7, (LPVOID*)&pdd7);
     ok(hr==DD_OK, "QueryInterface returned: %x\n", hr);
