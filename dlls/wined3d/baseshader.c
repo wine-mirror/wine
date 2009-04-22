@@ -246,7 +246,7 @@ static void shader_parse_src_param(DWORD param, const struct wined3d_shader_src_
             | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
     src->register_idx = param & WINED3DSP_REGNUM_MASK;
     src->swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
-    src->modifiers = param & WINED3DSP_SRCMOD_MASK;
+    src->modifiers = (param & WINED3DSP_SRCMOD_MASK) >> WINED3DSP_SRCMOD_SHIFT;
     src->rel_addr = rel_addr;
 }
 
@@ -781,7 +781,7 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
                 case WINED3DSPSM_ABSNEG:  TRACE(")"); break;
                 case WINED3DSPSM_ABS:     TRACE(")"); break;
                 default:
-                    TRACE("_unknown_modifier(%#x)", modifier >> WINED3DSP_SRCMOD_SHIFT);
+                    TRACE("_unknown_modifier(%#x)", modifier);
             }
         }
 
