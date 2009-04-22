@@ -54,6 +54,20 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 }
 
 /**************************************************************************
+ *                              MCIQTZ_mciGetOpenDev            [internal]
+ */
+static WINE_MCIQTZ* MCIQTZ_mciGetOpenDev(UINT wDevID)
+{
+    WINE_MCIQTZ* wma = (WINE_MCIQTZ*)mciGetDriverData(wDevID);
+
+    if (!wma) {
+        WARN("Invalid wDevID=%u\n", wDevID);
+        return NULL;
+    }
+    return wma;
+}
+
+/**************************************************************************
  *                              MCIQTZ_drvOpen                  [internal]
  */
 static DWORD MCIQTZ_drvOpen(LPCWSTR str, LPMCI_OPEN_DRIVER_PARMSW modp)
@@ -88,7 +102,7 @@ static DWORD MCIQTZ_drvClose(DWORD dwDevID)
     /* finish all outstanding things */
     MCIQTZ_mciClose(dwDevID, MCI_WAIT, NULL);
 
-    wma = (WINE_MCIQTZ*)mciGetDriverData(dwDevID);
+    wma = MCIQTZ_mciGetOpenDev(dwDevID);
 
     if (wma) {
         HeapFree(GetProcessHeap(), 0, wma);
@@ -109,7 +123,7 @@ static DWORD MCIQTZ_drvConfigure(DWORD dwDevID)
 
     MCIQTZ_mciStop(dwDevID, MCI_WAIT, NULL);
 
-    wma = (WINE_MCIQTZ*)mciGetDriverData(dwDevID);
+    wma = MCIQTZ_mciGetOpenDev(dwDevID);
 
     if (wma) {
         MessageBoxA(0, "Sample QTZ Wine Driver !", "MM-Wine Driver", MB_OK);
@@ -117,20 +131,6 @@ static DWORD MCIQTZ_drvConfigure(DWORD dwDevID)
     }
 
     return 0;
-}
-
-/**************************************************************************
- *                              MCIQTZ_mciGetOpenDev            [internal]
- */
-static WINE_MCIQTZ* MCIQTZ_mciGetOpenDev(UINT wDevID)
-{
-    WINE_MCIQTZ* wma = (WINE_MCIQTZ*)mciGetDriverData(wDevID);
-
-    if (!wma) {
-        WARN("Invalid wDevID=%u\n", wDevID);
-        return 0;
-    }
-    return wma;
 }
 
 /***************************************************************************
@@ -149,7 +149,7 @@ static DWORD MCIQTZ_mciOpen(UINT wDevID, DWORD dwFlags,
     if (!lpOpenParms)
         return MCIERR_NULL_PARAMETER_BLOCK;
 
-    wma = (WINE_MCIQTZ*)mciGetDriverData(wDevID);
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
     if (!wma)
         return MCIERR_INVALID_DEVICE_ID;
 
