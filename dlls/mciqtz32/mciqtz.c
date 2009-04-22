@@ -241,6 +241,8 @@ static DWORD MCIQTZ_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms
         return MCIERR_NULL_PARAMETER_BLOCK;
 
     wma = MCIQTZ_mciGetOpenDev(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
 
     hr = IMediaControl_Run(wma->pmctrl);
     if (FAILED(hr)) {
