@@ -5984,6 +5984,24 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
 
     if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return FALSE;
 
+    /* special case for header items */
+    if (nItem == -1)
+    {
+        if (lprc->left != LVIR_BOUNDS)
+        {
+            FIXME("Only LVIR_BOUNDS is implemented for header, got %d\n", lprc->left);
+            return FALSE;
+        }
+
+        if (infoPtr->hwndHeader)
+            return Header_GetItemRect(infoPtr->hwndHeader, lprc->top, lprc);
+        else
+        {
+            memset(lprc, 0, sizeof(RECT));
+            return TRUE;
+        }
+    }
+
     if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &Position)) return FALSE;
 
     if (nColumn < 0 || nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns)) return FALSE;

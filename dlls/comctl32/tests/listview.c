@@ -988,7 +988,6 @@ static void test_create(void)
     rect.top  = 1;
     rect.right = rect.bottom = -10;
     r = SendMessage(hList, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
-todo_wine
     ok(r != 0, "Expected not-null LRESULT\n");
 
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
@@ -996,11 +995,10 @@ todo_wine
     ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
 
     expect(0, rect.left);
-todo_wine {
     expect(0, rect.right);
     expect(0, rect.top);
     expect(0, rect.bottom);
-}
+
     DestroyWindow(hList);
 }
 
@@ -1537,22 +1535,23 @@ static void test_subitem_rect(void)
     rect.top  = 1;
     rect.right = rect.bottom = 0;
     r = SendMessage(hwnd, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
-todo_wine{
+
     ok(r != 0, "Expected not-null LRESULT\n");
     expect(100, rect.left);
     expect(250, rect.right);
+todo_wine
     expect(3, rect.top);
-}
+
     rect.left = LVIR_BOUNDS;
     rect.top  = 2;
     rect.right = rect.bottom = 0;
     r = SendMessage(hwnd, LVM_GETSUBITEMRECT, -1, (LPARAM)&rect);
-todo_wine{
+
     ok(r != 0, "Expected not-null LRESULT\n");
     expect(250, rect.left);
     expect(450, rect.right);
+todo_wine
     expect(3, rect.top);
-}
 
     DestroyWindow(hwnd);
 
