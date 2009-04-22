@@ -593,6 +593,34 @@ static void test_enum_fmtetc(IDataObject *src)
     hr = IEnumFORMATETC_Reset(enum_fmt);
     ok(hr == S_OK, "got %08x\n", hr);
 
+    if(src) /* Exercise the enumerator a bit */
+    {
+        IEnumFORMATETC *clone;
+        FORMATETC third_fmt;
+
+        hr = IEnumFORMATETC_Next(enum_fmt, 1, &third_fmt, NULL);
+        ok(hr == S_OK, "got %08x\n", hr);
+        hr = IEnumFORMATETC_Next(enum_fmt, 1, &third_fmt, NULL);
+        ok(hr == S_OK, "got %08x\n", hr);
+        hr = IEnumFORMATETC_Next(enum_fmt, 1, &third_fmt, NULL);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        hr = IEnumFORMATETC_Reset(enum_fmt);
+        ok(hr == S_OK, "got %08x\n", hr);
+        hr = IEnumFORMATETC_Skip(enum_fmt, 2);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        hr = IEnumFORMATETC_Clone(enum_fmt, &clone);
+        ok(hr == S_OK, "got %08x\n", hr);
+        hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(fmt.cfFormat == third_fmt.cfFormat, "formats don't match\n");
+        hr = IEnumFORMATETC_Next(clone, 1, &fmt, NULL);
+        ok(hr == S_OK, "got %08x\n", hr);
+        ok(fmt.cfFormat == third_fmt.cfFormat, "formats don't match\n");
+        IEnumFORMATETC_Release(clone);
+    }
+
     IEnumFORMATETC_Release(enum_fmt);
     IDataObject_Release(data);
 }
