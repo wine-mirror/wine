@@ -38,6 +38,18 @@ typedef [uuid(7213778c-7bb0-4270-b050-6189ee594e97)]  DWORD TfEditCookie;
 typedef [uuid(de403c21-89fd-4f85-8b87-64584d063fbc)] DWORD TfClientId;
 typedef [uuid(88a9c478-f3ec-4763-8345-cd9250443f8d)] DWORD TfGuidAtom;
 
+cpp_quote("#define TF_MOD_ALT                   0x0001")
+cpp_quote("#define TF_MOD_CONTROL               0x0002")
+cpp_quote("#define TF_MOD_SHIFT                 0x0004")
+cpp_quote("#define TF_MOD_RALT                  0x0008")
+cpp_quote("#define TF_MOD_RCONTROL              0x0010")
+cpp_quote("#define TF_MOD_RSHIFT                0x0020")
+cpp_quote("#define TF_MOD_LALT                  0x0040")
+cpp_quote("#define TF_MOD_LCONTROL              0x0080")
+cpp_quote("#define TF_MOD_LSHIFT                0x0100")
+cpp_quote("#define TF_MOD_ON_KEYUP              0x0200")
+cpp_quote("#define TF_MOD_IGNORE_ALL_MODIFIER   0x0400")
+
 interface ITfDocumentMgr;
 interface ITfContext;
 interface IEnumTfDocumentMgrs;
