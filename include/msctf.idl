@@ -592,3 +592,44 @@ interface ITfKeystrokeMgr : IUnknown
         [in] REFGUID rguid,
         [out] BOOL *pfEaten);
 };
+
+[
+  object,
+  local,
+  uuid(aa80e7f5-2021-11d2-93e0-0060b067b86e),
+  pointer_default(unique)
+]
+interface ITfKeyEventSink : IUnknown
+{
+    HRESULT OnSetFocus(
+        [in] BOOL fForeground);
+
+    HRESULT OnTestKeyDown(
+        [in] ITfContext *pic,
+        [in] WPARAM wParam,
+        [in] LPARAM lParam,
+        [out] BOOL *pfEaten);
+
+    HRESULT OnTestKeyUp(
+        [in] ITfContext *pic,
+        [in] WPARAM wParam,
+        [in] LPARAM lParam,
+        [out] BOOL *pfEaten);
+
+    HRESULT OnKeyDown(
+        [in] ITfContext *pic,
+        [in] WPARAM wParam,
+        [in] LPARAM lParam,
+        [out] BOOL *pfEaten);
+
+    HRESULT OnKeyUp(
+        [in] ITfContext *pic,
+        [in] WPARAM wParam,
+        [in] LPARAM lParam,
+        [out] BOOL *pfEaten);
+
+    HRESULT OnPreservedKey(
+        [in] ITfContext *pic,
+        [in] REFGUID rguid,
+        [out] BOOL *pfEaten);
+};
