@@ -264,6 +264,7 @@ static void test_KeystrokeMgr(void)
     ITfKeystrokeMgr *keymgr= NULL;
     HRESULT hr;
     TF_PRESERVEDKEY tfpk;
+    BOOL preserved;
 
     hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfKeystrokeMgr, (LPVOID*)&keymgr);
     ok(SUCCEEDED(hr),"Failed to get IID_ITfKeystrokeMgr for ThreadMgr\n");
@@ -280,8 +281,17 @@ static void test_KeystrokeMgr(void)
     hr =ITfKeystrokeMgr_PreserveKey(keymgr, tid, &CLSID_PreservedKey, &tfpk, NULL, 0);
     todo_wine ok(hr == TF_E_ALREADY_EXISTS,"ITfKeystrokeMgr_PreserveKey inproperly succeeded \n");
 
+    preserved = FALSE;
+    hr = ITfKeystrokeMgr_IsPreservedKey(keymgr, &CLSID_PreservedKey, &tfpk, &preserved);
+    todo_wine ok(hr == S_OK, "ITfKeystrokeMgr_IsPreservedKey failed\n");
+    if (hr == S_OK) todo_wine ok(preserved == TRUE,"misreporting preserved key\n");
+
     hr = ITfKeystrokeMgr_UnpreserveKey(keymgr, &CLSID_PreservedKey,&tfpk);
     todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_UnpreserveKey failed\n");
+
+    hr = ITfKeystrokeMgr_IsPreservedKey(keymgr, &CLSID_PreservedKey, &tfpk, &preserved);
+    todo_wine ok(hr == S_FALSE, "ITfKeystrokeMgr_IsPreservedKey failed\n");
+    if (hr == S_FALSE) todo_wine ok(preserved == FALSE,"misreporting preserved key\n");
 
     hr = ITfKeystrokeMgr_UnpreserveKey(keymgr, &CLSID_PreservedKey,&tfpk);
     todo_wine ok(hr==CONNECT_E_NOCONNECTION,"ITfKeystrokeMgr_UnpreserveKey inproperly succeeded\n");
