@@ -2359,11 +2359,29 @@ static void shader_glsl_rep(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     glsl_src_param_t src0_param;
+    const DWORD *control_values = NULL;
+    const local_constant *constant;
 
-    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src0_param);
-    shader_addline(ins->ctx->buffer, "for (tmpInt%d = 0; tmpInt%d < %s; tmpInt%d++) {\n",
-            shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_depth,
-            src0_param.param_str, shader->baseShader.cur_loop_depth);
+    /* Try to hardcode local values to help the GLSL compiler to unroll and optimize the loop */
+    if(ins->src[0].register_type == WINED3DSPR_CONSTINT) {
+        LIST_FOR_EACH_ENTRY(constant, &shader->baseShader.constantsI, local_constant, entry) {
+            if(constant->idx == ins->src[0].register_idx) {
+                control_values = constant->value;
+                break;
+            }
+        }
+    }
+
+    if(control_values) {
+        shader_addline(ins->ctx->buffer, "for (tmpInt%d = 0; tmpInt%d < %d; tmpInt%d++) {\n",
+                       shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_depth,
+                       control_values[0], shader->baseShader.cur_loop_depth);
+    } else {
+        shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src0_param);
+        shader_addline(ins->ctx->buffer, "for (tmpInt%d = 0; tmpInt%d < %s; tmpInt%d++) {\n",
+                shader->baseShader.cur_loop_depth, shader->baseShader.cur_loop_depth,
+                src0_param.param_str, shader->baseShader.cur_loop_depth);
+    }
     shader->baseShader.cur_loop_depth++;
 }
 
