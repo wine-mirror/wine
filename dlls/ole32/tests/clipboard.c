@@ -584,7 +584,9 @@ static void test_enum_fmtetc(IDataObject *src)
     if(src)
     {
         hr = IEnumFORMATETC_Next(src_enum, 1, &src_fmt, NULL);
-        ok(hr == S_FALSE, "%d: got %08x\n", count, hr);
+        ok(hr == S_FALSE ||
+           broken(hr == S_OK && count == 5), /* win9x and winme don't enumerate duplicated cf's */
+           "%d: got %08x\n", count, hr);
         IEnumFORMATETC_Release(src_enum);
     }
 
