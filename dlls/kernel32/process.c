@@ -3158,10 +3158,11 @@ BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lp
     RtlInitUnicodeStringEx(&nt_path, NULL);
     /* FIXME: On Windows, ProcessImageFileName return an NT path. We rely that it being a DOS path,
      * as this is on Wine. */
-    status = NtQueryInformationProcess(hProcess, ProcessImageFileName, buffer, sizeof(buffer), &needed);
+    status = NtQueryInformationProcess(hProcess, ProcessImageFileName, buffer,
+                                       sizeof(buffer) - sizeof(WCHAR), &needed);
     if (status == STATUS_INFO_LENGTH_MISMATCH)
     {
-        dynamic_buffer = HeapAlloc(GetProcessHeap(), 0, needed);
+        dynamic_buffer = HeapAlloc(GetProcessHeap(), 0, needed + sizeof(WCHAR));
         status = NtQueryInformationProcess(hProcess, ProcessImageFileName, (LPBYTE)dynamic_buffer, needed, &needed);
         result = dynamic_buffer;
     }
@@ -3172,6 +3173,7 @@ BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lp
 
     if (dwFlags & PROCESS_NAME_NATIVE)
     {
+        result->Buffer[result->Length / sizeof(WCHAR)] = 0;
         if (!RtlDosPathNameToNtPathName_U(result->Buffer, &nt_path, NULL, NULL))
         {
             status = STATUS_OBJECT_PATH_NOT_FOUND;
@@ -3186,8 +3188,9 @@ BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lp
         goto cleanup;
     }
 
-    lstrcpynW(lpExeName, result->Buffer, result->Length/sizeof(WCHAR) + 1);
     *pdwSize = result->Length/sizeof(WCHAR);
+    memcpy( lpExeName, result->Buffer, result->Length );
+    lpExeName[*pdwSize] = 0;
 
 cleanup:
     HeapFree(GetProcessHeap(), 0, dynamic_buffer);
