@@ -3220,7 +3220,7 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
 
 static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -3270,7 +3270,7 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
 
 static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -6897,8 +6897,8 @@ done:
 static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message, 
 			     WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
-    static long beginpaint_counter = 0;
+    static LONG defwndproc_counter = 0;
+    static LONG beginpaint_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -7034,7 +7034,7 @@ static LRESULT WINAPI MsgCheckProcW(HWND hwnd, UINT message, WPARAM wParam, LPAR
 
 static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -7073,8 +7073,8 @@ static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam,
 
 static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
-    static long beginpaint_counter = 0;
+    static LONG defwndproc_counter = 0;
+    static LONG beginpaint_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -7141,7 +7141,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
 
 static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -7175,7 +7175,7 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
 
 static LRESULT WINAPI ShowWindowProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 
@@ -11024,7 +11024,7 @@ static LRESULT (WINAPI *listbox_orig_proc)(HWND, UINT, WPARAM, LPARAM);
 
 static LRESULT WINAPI listbox_hook_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
-    static long defwndproc_counter = 0;
+    static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct recvd_message msg;
 

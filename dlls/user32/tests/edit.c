@@ -646,8 +646,8 @@ static void set_client_height(HWND Wnd, unsigned Height)
 
     GetClientRect(Wnd, &ClientRect);
     ok(ClientRect.bottom - ClientRect.top == Height,
-        "The client height should be %ld, but is %ld\n",
-        (long)Height, (long)(ClientRect.bottom - ClientRect.top));
+        "The client height should be %d, but is %d\n",
+        Height, ClientRect.bottom - ClientRect.top);
 }
 
 static void test_edit_control_1(void)

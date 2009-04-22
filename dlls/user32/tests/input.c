@@ -58,7 +58,7 @@
 
 /* globals */
 static HWND hWndTest;
-static long timetag = 0x10000000;
+static LONG timetag = 0x10000000;
 
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 static int (WINAPI *pGetMouseMovePointsEx) (UINT, LPMOUSEMOVEPOINT, LPMOUSEMOVEPOINT, int, DWORD);
