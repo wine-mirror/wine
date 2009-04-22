@@ -24,6 +24,7 @@ import "textstor.idl";
 #endif
 
 cpp_quote("#define TF_E_STACKFULL MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0501)")
+cpp_quote("#define TF_E_ALREADY_EXISTS  MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0506)")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_ThreadMgr;")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_InputProcessorProfiles;")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_CategoryMgr;")

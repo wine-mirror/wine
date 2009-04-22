@@ -28,6 +28,7 @@
 #include "shlguid.h"
 #include "comcat.h"
 #include "msctf.h"
+#include "olectl.h"
 
 static ITfInputProcessorProfiles* g_ipp;
 static LANGID gLangid;
@@ -67,6 +68,7 @@ DEFINE_GUID(GUID_TFCAT_TIP_HANDWRITING,  0x246ecb87,0xc2f2,0x4abe,0x90,0x5b,0xc8
 DEFINE_GUID (GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER,  0x046B8C80,0x1647,0x40F7,0x9B,0x21,0xB9,0x3B,0x81,0xAA,0xBC,0x1B);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(CLSID_TF_ThreadMgr,           0x529a9e6b,0x6587,0x4f23,0xab,0x9e,0x9c,0x7d,0x68,0x3e,0x3c,0x50);
+DEFINE_GUID(CLSID_PreservedKey,           0xA0ED8E55,0xCD3B,0x4274,0xB2,0x95,0xF6,0xC9,0xBA,0x2B,0x84,0x72);
 
 
 static HRESULT initialize(void)
@@ -261,9 +263,29 @@ static void test_KeystrokeMgr(void)
 {
     ITfKeystrokeMgr *keymgr= NULL;
     HRESULT hr;
+    TF_PRESERVEDKEY tfpk;
 
     hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfKeystrokeMgr, (LPVOID*)&keymgr);
     ok(SUCCEEDED(hr),"Failed to get IID_ITfKeystrokeMgr for ThreadMgr\n");
+
+    tfpk.uVKey = 'A';
+    tfpk.uModifiers = TF_MOD_SHIFT;
+
+    hr =ITfKeystrokeMgr_PreserveKey(keymgr, 0, &CLSID_PreservedKey, &tfpk, NULL, 0);
+    todo_wine ok(hr==E_INVALIDARG,"ITfKeystrokeMgr_PreserveKey inproperly succeeded\n");
+
+    hr =ITfKeystrokeMgr_PreserveKey(keymgr, tid, &CLSID_PreservedKey, &tfpk, NULL, 0);
+    todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_PreserveKey failed\n");
+
+    hr =ITfKeystrokeMgr_PreserveKey(keymgr, tid, &CLSID_PreservedKey, &tfpk, NULL, 0);
+    todo_wine ok(hr == TF_E_ALREADY_EXISTS,"ITfKeystrokeMgr_PreserveKey inproperly succeeded \n");
+
+    hr = ITfKeystrokeMgr_UnpreserveKey(keymgr, &CLSID_PreservedKey,&tfpk);
+    todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_UnpreserveKey failed\n");
+
+    hr = ITfKeystrokeMgr_UnpreserveKey(keymgr, &CLSID_PreservedKey,&tfpk);
+    todo_wine ok(hr==CONNECT_E_NOCONNECTION,"ITfKeystrokeMgr_UnpreserveKey inproperly succeeded\n");
+
     ITfKeystrokeMgr_Release(keymgr);
 }
 
