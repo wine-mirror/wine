@@ -436,7 +436,7 @@ static void shader_arb_get_swizzle(const struct wined3d_shader_src_param *param,
     char *ptr = swizzle_str;
 
     /* swizzle bits fields: wwzzyyxx */
-    DWORD swizzle = param->swizzle >> WINED3DSP_SWIZZLE_SHIFT;
+    DWORD swizzle = param->swizzle;
     DWORD swizzle_x = swizzle & 0x03;
     DWORD swizzle_y = (swizzle >> 2) & 0x03;
     DWORD swizzle_z = (swizzle >> 4) & 0x03;
@@ -444,7 +444,8 @@ static void shader_arb_get_swizzle(const struct wined3d_shader_src_param *param,
 
     /* If the swizzle is the default swizzle (ie, "xyzw"), we don't need to
      * generate a swizzle string. Unless we need to our own swizzling. */
-    if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) != swizzle || fixup) {
+    if (swizzle != WINED3DSP_NOSWIZZLE || fixup)
+    {
         *ptr++ = '.';
         if (swizzle_x == swizzle_y && swizzle_x == swizzle_z && swizzle_x == swizzle_w) {
             *ptr++ = swizzle_chars[swizzle_x];
@@ -1076,8 +1077,7 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
              * with more than one component. Thus replicate the first source argument over all
              * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc) */
             struct wined3d_shader_src_param tmp_src = ins->src[0];
-            tmp_src.swizzle = ((ins->src[0].swizzle >> WINED3DSP_SWIZZLE_SHIFT) & 0x3)
-                    * (0x55 << WINED3DSP_SWIZZLE_SHIFT);
+            tmp_src.swizzle = (tmp_src.swizzle & 0x3) * 0x55;
             shader_arb_add_src_param(ins, &tmp_src, src0_param);
             shader_addline(buffer, "ARL A0.x, %s;\n", src0_param);
         }

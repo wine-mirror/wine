@@ -1246,14 +1246,13 @@ static void shader_glsl_swizzle_to_str(const DWORD swizzle, BOOL fixup, DWORD ma
      * but addressed as "rgba". To fix this we need to swap the register's x
      * and z components. */
     const char *swizzle_chars = fixup ? "zyxw" : "xyzw";
-    DWORD s = swizzle >> WINED3DSP_SWIZZLE_SHIFT;
 
     *str++ = '.';
     /* swizzle bits fields: wwzzyyxx */
-    if (mask & WINED3DSP_WRITEMASK_0) *str++ = swizzle_chars[s & 0x03];
-    if (mask & WINED3DSP_WRITEMASK_1) *str++ = swizzle_chars[(s >> 2) & 0x03];
-    if (mask & WINED3DSP_WRITEMASK_2) *str++ = swizzle_chars[(s >> 4) & 0x03];
-    if (mask & WINED3DSP_WRITEMASK_3) *str++ = swizzle_chars[(s >> 6) & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_0) *str++ = swizzle_chars[swizzle & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_1) *str++ = swizzle_chars[(swizzle >> 2) & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_2) *str++ = swizzle_chars[(swizzle >> 4) & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_3) *str++ = swizzle_chars[(swizzle >> 6) & 0x03];
     *str = '\0';
 }
 
@@ -1951,7 +1950,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
             write_mask = 0;
             /* Find the destination channels which use the current source0 channel */
             for (j=0; j<4; j++) {
-                if (((ins->src[0].swizzle >> (WINED3DSP_SWIZZLE_SHIFT + 2 * j)) & 0x3) == i)
+                if (((ins->src[0].swizzle >> (2 * j)) & 0x3) == i)
                 {
                     write_mask |= WINED3DSP_WRITEMASK_0 << j;
                     cmp_channel = WINED3DSP_WRITEMASK_0 << j;
@@ -2033,7 +2032,7 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
         write_mask = 0;
         /* Find the destination channels which use the current source0 channel */
         for (j=0; j<4; j++) {
-            if (((ins->src[0].swizzle >> (WINED3DSP_SWIZZLE_SHIFT + 2 * j)) & 0x3) == i)
+            if (((ins->src[0].swizzle >> (2 * j)) & 0x3) == i)
             {
                 write_mask |= WINED3DSP_WRITEMASK_0 << j;
                 cmp_channel = WINED3DSP_WRITEMASK_0 << j;
