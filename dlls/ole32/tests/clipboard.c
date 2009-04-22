@@ -714,7 +714,12 @@ static void test_cf_dataobject(IDataObject *data)
                     ok(priv->res2 == 1, "got %08x\n", priv->res2);
                     ok(priv->count == count, "got %08x expected %08x\n", priv->count, count);
                     ok(priv->res3[0] == 0, "got %08x\n", priv->res3[0]);
-                    ok(priv->res3[1] == 0, "got %08x\n", priv->res3[1]);
+
+                    /* win64 sets the lsb */
+                    if(sizeof(fmt_ptr->fmt.ptd) == 8)
+                        todo_wine ok(priv->res3[1] == 1, "got %08x\n", priv->res3[1]);
+                    else
+                        ok(priv->res3[1] == 0, "got %08x\n", priv->res3[1]);
 
                     GlobalUnlock(h);
                     IEnumFORMATETC_Release(enum_fmt);
