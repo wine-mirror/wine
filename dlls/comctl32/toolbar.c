@@ -1832,7 +1832,7 @@ TOOLBAR_InternalInsertButtonsT(TOOLBAR_INFO *infoPtr, INT iIndex, UINT nAddButto
     for (iButton = 0; iButton < nAddButtons; iButton++) {
         TBUTTON_INFO *btnPtr = &infoPtr->buttons[iIndex + iButton];
 
-        TOOLBAR_DumpTBButton(lpTbb, fUnicode);
+        TOOLBAR_DumpTBButton(lpTbb + iButton, fUnicode);
 
         ZeroMemory(btnPtr, sizeof(*btnPtr));
 
