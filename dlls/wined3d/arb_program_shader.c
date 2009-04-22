@@ -427,7 +427,8 @@ static void shader_arb_get_write_mask(const struct wined3d_shader_instruction *i
     *ptr = '\0';
 }
 
-static void shader_arb_get_swizzle(const DWORD param, BOOL fixup, char *swizzle_str) {
+static void shader_arb_get_swizzle(const struct wined3d_shader_src_param *param, BOOL fixup, char *swizzle_str)
+{
     /* For registers of type WINED3DDECLTYPE_D3DCOLOR, data is stored as "bgra",
      * but addressed as "rgba". To fix this we need to swap the register's x
      * and z components. */
@@ -435,7 +436,7 @@ static void shader_arb_get_swizzle(const DWORD param, BOOL fixup, char *swizzle_
     char *ptr = swizzle_str;
 
     /* swizzle bits fields: wwzzyyxx */
-    DWORD swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
+    DWORD swizzle = param->swizzle >> WINED3DSP_SWIZZLE_SHIFT;
     DWORD swizzle_x = swizzle & 0x03;
     DWORD swizzle_y = (swizzle >> 2) & 0x03;
     DWORD swizzle_z = (swizzle >> 4) & 0x03;
@@ -564,7 +565,7 @@ static void shader_arb_add_src_param(const struct wined3d_shader_instruction *in
             wined3d_src->register_idx, !!wined3d_src->rel_addr, register_name, &is_color);
     strcat(str, register_name);
 
-    shader_arb_get_swizzle(wined3d_src->token, is_color, swizzle);
+    shader_arb_get_swizzle(wined3d_src, is_color, swizzle);
     strcat(str, swizzle);
 }
 
@@ -730,7 +731,7 @@ static void pshader_gen_input_modifier_line(IWineD3DBaseShader *iface, SHADER_BU
     /* Get register name */
     shader_arb_get_register_name(iface, src->register_type,
             src->register_idx, !!src->rel_addr, regstr, &is_color);
-    shader_arb_get_swizzle(src->token, is_color, swzstr);
+    shader_arb_get_swizzle(src, is_color, swzstr);
 
     switch (src->modifiers)
     {
