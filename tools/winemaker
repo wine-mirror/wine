@@ -1333,9 +1333,9 @@ sub source_scan_directory($$$$)
 	}
 	$name =~ s+(/|\.[^.]*)$++;
 	if ($opt_target_type == $TT_DLL) {
-	  $name = "$name.dll";
+	  $name = canonize($name).".dll";
 	} else {
-	  $name = "$name.exe";
+	  $name = canonize($name).".exe";
 	}
 	$targets{$name}=1;
       }
