@@ -767,8 +767,10 @@ static void test_cf_dataobject(IDataObject *data)
             ok(DataObjectImpl_GetDataHere_calls == 1, "got %d\n", DataObjectImpl_GetDataHere_calls);
             ptr = GlobalLock(h);
             size = GlobalSize(h);
-            ok(size == strlen(cmpl_stm_data), "expected %d got %d\n", lstrlenA(cmpl_stm_data), size);
-            ok(!memcmp(ptr, cmpl_stm_data, size), "mismatch\n");
+            ok(size == strlen(cmpl_stm_data) ||
+               broken(size > strlen(cmpl_stm_data)), /* win9x, winme */
+               "expected %d got %d\n", lstrlenA(cmpl_stm_data), size);
+            ok(!memcmp(ptr, cmpl_stm_data, strlen(cmpl_stm_data)), "mismatch\n");
             GlobalUnlock(h);
         }
         else if(cf == cf_global)
@@ -782,8 +784,10 @@ static void test_cf_dataobject(IDataObject *data)
             ok(DataObjectImpl_GetDataHere_calls == 0, "got %d\n", DataObjectImpl_GetDataHere_calls);
             ptr = GlobalLock(h);
             size = GlobalSize(h);
-            ok(size == strlen(cmpl_text_data) + 1, "expected %d got %d\n", lstrlenA(cmpl_text_data) + 1, size);
-            ok(!memcmp(ptr, cmpl_text_data, size), "mismatch\n");
+            ok(size == strlen(cmpl_text_data) + 1 ||
+               broken(size > strlen(cmpl_text_data) + 1), /* win9x, winme */
+               "expected %d got %d\n", lstrlenA(cmpl_text_data) + 1, size);
+            ok(!memcmp(ptr, cmpl_text_data, strlen(cmpl_text_data) + 1), "mismatch\n");
             GlobalUnlock(h);
         }
     } while(cf);
