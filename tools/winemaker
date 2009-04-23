@@ -2465,6 +2465,8 @@ sub print_banner()
 {
   print "Winemaker $version\n";
   print "Copyright 2000 Francois Gouget <fgouget\@codeweavers.com> for CodeWeavers\n";
+  print "Copyright 2004 Dimitrie O. Paun\n";
+  print "Copyright 2009 André Hentschel\n";
 }
 
 sub usage()
