@@ -994,11 +994,6 @@ static void test_create(void)
     ok(!IsWindow(hHeader), "Header shouldn't be created\n");
     ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
 
-    expect(0, rect.left);
-    expect(0, rect.right);
-    expect(0, rect.top);
-    expect(0, rect.bottom);
-
     DestroyWindow(hList);
 }
 
