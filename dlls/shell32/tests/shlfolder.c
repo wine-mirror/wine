@@ -609,7 +609,8 @@ static void test_CallForAttributes(void)
     
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyDocuments, NULL, 
                                        &pidlMyDocuments, NULL);
-    ok (SUCCEEDED(hr), 
+    ok (SUCCEEDED(hr) ||
+        broken(hr == E_INVALIDARG), /* Win95, NT4 */
         "Desktop's ParseDisplayName failed to parse MyDocuments's CLSID! hr = %08x\n", hr);
     if (FAILED(hr)) {
         IShellFolder_Release(psfDesktop);
