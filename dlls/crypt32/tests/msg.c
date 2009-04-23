@@ -3153,8 +3153,8 @@ static void test_msg_get_and_verify_signer(void)
     ret = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING,
      v1CertWithValidPubKey, sizeof(v1CertWithValidPubKey),
      CERT_STORE_ADD_ALWAYS, NULL);
-    ok(ret, "CertAddEncodedCertificateToStore failed: 0x%08x\n",
-     GetLastError());
+    ok(ret || broken(GetLastError() == OSS_DATA_ERROR /* Win98 */),
+     "CertAddEncodedCertificateToStore failed: 0x%08x\n", GetLastError());
     /* Specifying CMSG_TRUSTED_SIGNER_FLAG with a cert store that contains
      * the signer succeeds.
      */
