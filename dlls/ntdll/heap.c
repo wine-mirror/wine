@@ -1535,6 +1535,8 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     {
         if (!find_large_block( heapPtr, ptr )) goto error;
         if (!(ret = realloc_large_block( heapPtr, flags, ptr, size ))) goto oom;
+        notify_free( ptr );
+        notify_alloc( ret, size, flags & HEAP_ZERO_MEMORY );
         goto done;
     }
     if ((char *)pArena < (char *)subheap->base + subheap->headerSize) goto error;
@@ -1551,7 +1553,9 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
         if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE && (flags & HEAP_GROWABLE))
         {
             if (!(ret = allocate_large_block( heapPtr, flags, size ))) goto oom;
+            notify_alloc( ret, size, flags & HEAP_ZERO_MEMORY );
             memcpy( ret, pArena + 1, oldActualSize );
+            /* FIXME: free old memory here! */
             goto done;
         }
         if ((pNext < (char *)subheap->base + subheap->size) &&

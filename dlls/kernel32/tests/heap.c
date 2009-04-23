@@ -34,7 +34,30 @@ static SIZE_T resize_9x(SIZE_T size)
     return max(dwSizeAligned, 12); /* at least 12 bytes */
 }
 
-START_TEST(heap)
+static void test_sized_HeapAlloc(int nbytes)
+{
+    int success;
+    char *buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbytes);
+    ok(buf != NULL, "allocate failed");
+    ok(buf[0] == 0, "buffer not zeroed");
+    success = HeapFree(GetProcessHeap(), 0, buf);
+    ok(success, "free failed");
+}
+
+static void test_sized_HeapReAlloc(int nbytes1, int nbytes2)
+{
+    int success;
+    char *buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbytes1);
+    ok(buf != NULL, "allocate failed");
+    ok(buf[0] == 0, "buffer not zeroed");
+    buf = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf, nbytes2);
+    ok(buf != NULL, "reallocate failed");
+    ok(buf[nbytes2-1] == 0, "buffer not zeroed");
+    success = HeapFree(GetProcessHeap(), 0, buf);
+    ok(success, "free failed");
+}
+
+static void test_heap(void)
 {
     LPVOID  mem;
     LPVOID  msecond;
@@ -337,4 +360,17 @@ START_TEST(heap)
         "MAGIC_DEAD)\n", mem, GetLastError(), GetLastError());
 
     GlobalFree(gbl);
+}
+
+START_TEST(heap)
+{
+    test_heap();
+
+    /* Test both short and very long blocks */
+    test_sized_HeapAlloc(1);
+    test_sized_HeapAlloc(1 << 20);
+    test_sized_HeapReAlloc(1, 100);
+    test_sized_HeapReAlloc(1, (1 << 20));
+    test_sized_HeapReAlloc((1 << 20), (2 << 20));
+    test_sized_HeapReAlloc((1 << 20), 1);
 }
