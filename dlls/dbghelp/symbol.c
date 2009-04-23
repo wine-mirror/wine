@@ -1350,6 +1350,28 @@ BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
 }
 
 /***********************************************************************
+ *		SymGetSymFromName64 (DBGHELP.@)
+ */
+BOOL WINAPI SymGetSymFromName64(HANDLE hProcess, PCSTR Name, PIMAGEHLP_SYMBOL64 Symbol)
+{
+    char        buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+    SYMBOL_INFO*si = (SYMBOL_INFO*)buffer;
+    size_t      len;
+
+    if (Symbol->SizeOfStruct < sizeof(*Symbol)) return FALSE;
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen = MAX_SYM_NAME;
+    if (!SymFromName(hProcess, Name, si)) return FALSE;
+
+    Symbol->Address = si->Address;
+    Symbol->Size    = si->Size;
+    Symbol->Flags   = si->Flags;
+    len = min(Symbol->MaxNameLength, si->MaxNameLen);
+    lstrcpynA(Symbol->Name, si->Name, len);
+    return TRUE;
+}
+
+/***********************************************************************
  *		SymGetSymFromName (DBGHELP.@)
  */
 BOOL WINAPI SymGetSymFromName(HANDLE hProcess, PCSTR Name, PIMAGEHLP_SYMBOL Symbol)
@@ -1407,9 +1429,9 @@ BOOL symt_fill_func_line_info(const struct module* module, const struct symt_fun
 }
 
 /***********************************************************************
- *		SymGetSymNext (DBGHELP.@)
+ *		SymGetSymNext64 (DBGHELP.@)
  */
-BOOL WINAPI SymGetSymNext(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
+BOOL WINAPI SymGetSymNext64(HANDLE hProcess, PIMAGEHLP_SYMBOL64 Symbol)
 {
     /* algo:
      * get module from Symbol.Address
@@ -1423,9 +1445,28 @@ BOOL WINAPI SymGetSymNext(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
 }
 
 /***********************************************************************
+ *		SymGetSymNext (DBGHELP.@)
+ */
+BOOL WINAPI SymGetSymNext(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
+{
+    FIXME("(%p, %p): stub\n", hProcess, Symbol);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *		SymGetSymPrev64 (DBGHELP.@)
+ */
+BOOL WINAPI SymGetSymPrev64(HANDLE hProcess, PIMAGEHLP_SYMBOL64 Symbol)
+{
+    FIXME("(%p, %p): stub\n", hProcess, Symbol);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *		SymGetSymPrev (DBGHELP.@)
  */
-
 BOOL WINAPI SymGetSymPrev(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
 {
     FIXME("(%p, %p): stub\n", hProcess, Symbol);
@@ -1685,7 +1726,15 @@ PVOID WINAPI SymFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase)
  */
 BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, PSTR UnDecName, DWORD UnDecNameLength)
 {
-    TRACE("(%p %s %u)\n", sym, UnDecName, UnDecNameLength);
+    return UnDecorateSymbolName(sym->Name, UnDecName, UnDecNameLength,
+                                UNDNAME_COMPLETE) != 0;
+}
+
+/***********************************************************************
+ *		SymUnDName64 (DBGHELP.@)
+ */
+BOOL WINAPI SymUnDName64(PIMAGEHLP_SYMBOL64 sym, PSTR UnDecName, DWORD UnDecNameLength)
+{
     return UnDecorateSymbolName(sym->Name, UnDecName, UnDecNameLength,
                                 UNDNAME_COMPLETE) != 0;
 }

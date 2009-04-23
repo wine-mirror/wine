@@ -118,11 +118,11 @@
 @ stdcall SymGetSymFromAddr(long long ptr ptr)
 @ stdcall SymGetSymFromAddr64(long double ptr ptr)
 @ stdcall SymGetSymFromName(long str ptr)
-@ stub SymGetSymFromName64
+@ stdcall SymGetSymFromName64(long str ptr)
 @ stdcall SymGetSymNext(long ptr)
-@ stub SymGetSymNext64
+@ stdcall SymGetSymNext64(long ptr)
 @ stdcall SymGetSymPrev(long ptr)
-@ stub SymGetSymPrev64
+@ stdcall SymGetSymPrev64(long ptr)
 @ stub SymGetSymbolFile
 @ stub SymGetSymbolFileW
 @ stdcall SymGetTypeFromName(ptr double str ptr)
@@ -180,7 +180,7 @@
 # @ stub SymSetSymWithAddr64 no longer present ??
 @ stub SymSetSymWithAddr64
 @ stdcall SymUnDName(ptr str long)
-@ stub SymUnDName64
+@ stdcall SymUnDName64(ptr str long)
 @ stdcall SymUnloadModule(long long)
 @ stdcall SymUnloadModule64(long double)
 @ stdcall UnDecorateSymbolName(str str long long)
