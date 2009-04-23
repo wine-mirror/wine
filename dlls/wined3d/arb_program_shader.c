@@ -1000,10 +1000,10 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
             partialprecision = mask & WINED3DSPDM_PARTIALPRECISION;
             mask &= ~(WINED3DSPDM_MSAMPCENTROID | WINED3DSPDM_PARTIALPRECISION | WINED3DSPDM_SATURATE);
             if (mask)
-                FIXME("Unrecognized modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
+                FIXME("Unrecognized modifier(%#x)\n", mask);
 
             if (centroid)
-                FIXME("Unhandled modifier(%#x)\n", mask >> WINED3DSP_DSTMOD_SHIFT);
+                FIXME("Unhandled modifier(%#x)\n", mask);
         }
         shift = dst->shift;
         modifier = (saturate && !shift) ? "_SAT" : "";

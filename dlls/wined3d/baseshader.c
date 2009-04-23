@@ -234,7 +234,7 @@ static void shader_parse_dst_param(DWORD param, const struct wined3d_shader_src_
             | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
     dst->register_idx = param & WINED3DSP_REGNUM_MASK;
     dst->write_mask = param & WINED3DSP_WRITEMASK_ALL;
-    dst->modifiers = param & WINED3DSP_DSTMOD_MASK;
+    dst->modifiers = (param & WINED3DSP_DSTMOD_MASK) >> WINED3DSP_DSTMOD_SHIFT;
     dst->shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
     dst->rel_addr = rel_addr;
 }
@@ -966,7 +966,7 @@ static void shader_dump_ins_modifiers(const DWORD output)
 
     mmask &= ~(WINED3DSPDM_SATURATE | WINED3DSPDM_PARTIALPRECISION | WINED3DSPDM_MSAMPCENTROID);
     if (mmask)
-        FIXME("_unrecognized_modifier(%#x)", mmask >> WINED3DSP_DSTMOD_SHIFT);
+        FIXME("_unrecognized_modifier(%#x)", mmask);
 }
 
 void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table)
