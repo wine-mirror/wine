@@ -161,7 +161,9 @@ static void test_world_transform(void)
     xform.eDx = 0.0f;
     xform.eDy = 0.0f;
     ret = SetWorldTransform(hdc, &xform);
-    ok(!ret, "SetWorldTransform should fail with an invalid xform\n");
+    ok(!ret ||
+       broken(ret), /* NT4 */
+       "SetWorldTransform should fail with an invalid xform\n");
 
     xform.eM11 = 20.0f;
     xform.eM12 = 0.0f;
