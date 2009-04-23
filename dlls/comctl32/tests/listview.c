@@ -1578,6 +1578,9 @@ static void test_sorting(void)
     HWND hwnd;
     LVITEMA item = {0};
     DWORD r;
+    LONG_PTR style;
+    static CHAR names[][4] = {"A", "B", "C", "D"};
+    CHAR buff[10];
 
     hwnd = create_listview_control(0);
     ok(hwnd != NULL, "failed to create a listview window\n");
@@ -1625,6 +1628,88 @@ static void test_sorting(void)
     expect(LVIS_SELECTED, r);
     r = SendMessage(hwnd, LVM_GETITEMSTATE, 2, LVIS_SELECTED);
     expect(LVIS_SELECTED, r);
+
+    DestroyWindow(hwnd);
+
+    /* switch to LVS_SORTASCENDING when some items added */
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    item.mask = LVIF_TEXT;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    item.pszText = names[1];
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
+    expect(0, r);
+
+    item.mask = LVIF_TEXT;
+    item.iItem = 1;
+    item.iSubItem = 0;
+    item.pszText = names[2];
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
+    expect(1, r);
+
+    item.mask = LVIF_TEXT;
+    item.iItem = 2;
+    item.iSubItem = 0;
+    item.pszText = names[0];
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
+    expect(2, r);
+
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    SetWindowLongPtrA(hwnd, GWL_STYLE, style | LVS_SORTASCENDING);
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_SORTASCENDING, "Expected LVS_SORTASCENDING to be set\n");
+
+    /* no sorting performed when switched to LVS_SORTASCENDING */
+    item.mask = LVIF_TEXT;
+    item.iItem = 0;
+    item.pszText = buff;
+    item.cchTextMax = sizeof(buff);
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    ok(lstrcmp(buff, names[1]) == 0, "Expected '%s', got '%s'\n", names[1], buff);
+
+    item.iItem = 1;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    ok(lstrcmp(buff, names[2]) == 0, "Expected '%s', got '%s'\n", names[2], buff);
+
+    item.iItem = 2;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    ok(lstrcmp(buff, names[0]) == 0, "Expected '%s', got '%s'\n", names[0], buff);
+
+    /* adding new item doesn't resort list */
+    item.mask = LVIF_TEXT;
+    item.iItem = 3;
+    item.iSubItem = 0;
+    item.pszText = names[3];
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
+    expect(3, r);
+
+    item.mask = LVIF_TEXT;
+    item.iItem = 0;
+    item.pszText = buff;
+    item.cchTextMax = sizeof(buff);
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    todo_wine ok(lstrcmp(buff, names[1]) == 0, "Expected '%s', got '%s'\n", names[1], buff);
+
+    item.iItem = 1;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    todo_wine ok(lstrcmp(buff, names[2]) == 0, "Expected '%s', got '%s'\n", names[2], buff);
+
+    item.iItem = 2;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    todo_wine ok(lstrcmp(buff, names[0]) == 0, "Expected '%s', got '%s'\n", names[0], buff);
+
+    item.iItem = 3;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    ok(lstrcmp(buff, names[3]) == 0, "Expected '%s', got '%s'\n", names[3], buff);
 
     DestroyWindow(hwnd);
 }
