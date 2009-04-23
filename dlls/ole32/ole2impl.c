@@ -86,6 +86,24 @@ HRESULT WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject)
 }
 
 /******************************************************************************
+ *		OleCreateFromDataEx        [OLE32.@]
+ *
+ * Creates an embedded object from data transfer object retrieved from
+ * the clipboard or OLE drag and drop.
+ */
+HRESULT WINAPI OleCreateFromDataEx(IDataObject *data, REFIID iid, DWORD flags,
+                                   DWORD renderopt, ULONG num_fmts, DWORD *adv_flags, FORMATETC *fmts,
+                                   IAdviseSink *sink, DWORD *conns,
+                                   IOleClientSite *client_site, IStorage *stg, void **obj)
+{
+    FIXME("(%p, %s, %08x, %08x, %d, %p, %p, %p, %p, %p, %p, %p): stub\n",
+          data, debugstr_guid(iid), flags, renderopt, num_fmts, adv_flags, fmts,
+          sink, conns, client_site, stg, obj);
+
+    return E_NOTIMPL;
+}
+
+/******************************************************************************
  *		OleCreateFromData        [OLE32.@]
  *
  * Author   : Abey George
