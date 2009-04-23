@@ -38,6 +38,7 @@
 HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 HRESULT (WINAPI * pCoGetObjectContext)(REFIID riid, LPVOID *ppv);
 HRESULT (WINAPI * pCoSwitchCallContext)(IUnknown *pObject, IUnknown **ppOldObject);
+HRESULT (WINAPI * pCoGetTreatAsClass)(REFCLSID clsidOld, LPCLSID pClsidNew);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
@@ -1141,6 +1142,22 @@ static void test_CoGetCallContext(void)
     CoUninitialize();
 }
 
+static void test_CoGetTreatAsClass(void)
+{
+    HRESULT hr;
+    CLSID out;
+    static GUID deadbeef = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
+
+    if (!pCoGetTreatAsClass)
+    {
+        win_skip("CoGetTreatAsClass not present\n");
+        return;
+    }
+    hr = pCoGetTreatAsClass(&deadbeef,&out);
+    ok (hr == S_FALSE, "expected S_FALSE got %x\n",hr);
+    ok (IsEqualGUID(&out,&deadbeef), "expected to get same clsid back\n");
+}
+
 static void test_CoInitializeEx(void)
 {
     HRESULT hr;
@@ -1167,6 +1184,7 @@ START_TEST(compobj)
     HMODULE hOle32 = GetModuleHandle("ole32");
     pCoGetObjectContext = (void*)GetProcAddress(hOle32, "CoGetObjectContext");
     pCoSwitchCallContext = (void*)GetProcAddress(hOle32, "CoSwitchCallContext");
+    pCoGetTreatAsClass = (void*)GetProcAddress(hOle32,"CoGetTreatAsClass");
     if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx")))
     {
         trace("You need DCOM95 installed to run this test\n");
@@ -1192,5 +1210,6 @@ START_TEST(compobj)
     test_CoFreeUnusedLibraries();
     test_CoGetObjectContext();
     test_CoGetCallContext();
+    test_CoGetTreatAsClass();
     test_CoInitializeEx();
 }
