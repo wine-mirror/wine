@@ -967,7 +967,7 @@ static void PropertyStorage_PropertyDestroy(void *k, void *d, void *extra)
 
 #ifdef WORDS_BIGENDIAN
 /* Swaps each character in str to or from little endian; assumes the conversion
- * is symmetric, that is, that le16toh is equivalent to htole16.
+ * is symmetric, that is, that lendian16toh is equivalent to htole16.
  */
 static void PropertyStorage_ByteSwapString(LPWSTR str, size_t len)
 {
