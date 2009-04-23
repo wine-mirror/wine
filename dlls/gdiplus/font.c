@@ -224,9 +224,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontA(HDC hdc,
     if(!MultiByteToWideChar(CP_ACP, 0, lfa->lfFaceName, -1, lfw.lfFaceName, LF_FACESIZE))
         return GenericError;
 
-    GdipCreateFontFromLogfontW(hdc, &lfw, font);
-
-    return Ok;
+    return GdipCreateFontFromLogfontW(hdc, &lfw, font);
 }
 
 /*******************************************************************************
