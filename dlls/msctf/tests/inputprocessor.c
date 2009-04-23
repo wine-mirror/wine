@@ -105,6 +105,10 @@ static void test_Register(void)
     static const WCHAR szDesc[] = {'F','a','k','e',' ','W','i','n','e',' ','S','e','r','v','i','c','e',0};
     static const WCHAR szFile[] = {'F','a','k','e',' ','W','i','n','e',' ','S','e','r','v','i','c','e',' ','F','i','l','e',0};
 
+    hr = ITfInputProcessorProfiles_GetCurrentLanguage(g_ipp,&gLangid);
+    ok(SUCCEEDED(hr),"Unable to get current language id\n");
+    trace("Current Language %x\n",gLangid);
+
     hr = RegisterTextService(&CLSID_FakeService);
     ok(SUCCEEDED(hr),"Unable to register COM for TextService\n");
     hr = ITfInputProcessorProfiles_Register(g_ipp, &CLSID_FakeService);
@@ -609,7 +613,6 @@ START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
     {
-        gLangid = GetUserDefaultLCID();
         test_Register();
         test_RegisterCategory();
         test_EnumInputProcessorInfo();
