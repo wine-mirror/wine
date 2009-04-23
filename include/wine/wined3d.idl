@@ -2886,7 +2886,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] DWORD fvf,
         [in] WINED3DPOOL pool,
         [out] IWineD3DBuffer **vertex_buffer,
-        [in] HANDLE *shared_handle,
         [in] IUnknown *parent
     );
     HRESULT CreateIndexBuffer(
@@ -2894,7 +2893,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] DWORD usage,
         [in] WINED3DPOOL pool,
         [out] IWineD3DBuffer **index_buffer,
-        [in] HANDLE *shared_handle,
         [in] IUnknown *parent
     );
     HRESULT CreateStateBlock(
@@ -2915,7 +2913,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DPOOL pool,
         [in] WINED3DMULTISAMPLE_TYPE multisample_type,
         [in] DWORD multisample_quality,
-        [in] HANDLE *shared_handle,
         [in] WINED3DSURFTYPE surface_type,
         [in] IUnknown *parent
     );
@@ -2932,7 +2929,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DFORMAT format,
         [in] WINED3DPOOL pool,
         [out] IWineD3DTexture **texture,
-        [in] HANDLE *shared_handle,
         [in] IUnknown *parent
     );
     HRESULT CreateVolumeTexture(
@@ -2944,7 +2940,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DFORMAT format,
         [in] WINED3DPOOL pool,
         [out] IWineD3DVolumeTexture **texture,
-        [in] HANDLE *shared_handle,
         [in] IUnknown *parent
     );
     HRESULT CreateVolume(
@@ -2955,7 +2950,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DFORMAT format,
         [in] WINED3DPOOL pool,
         [out] IWineD3DVolume **volume,
-        [in] HANDLE *shared_handle,
         [in] IUnknown *parent
     );
     HRESULT CreateCubeTexture(
@@ -2965,7 +2959,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] WINED3DFORMAT format,
         [in] WINED3DPOOL pool,
         [out] IWineD3DCubeTexture **texture,
-        [in] HANDLE *shared_handle,
         [in] IUnknown *parent
     );
     HRESULT CreateQuery(

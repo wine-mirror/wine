@@ -691,7 +691,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
                 wined3dformat_from_dxgi_format(desc->Format), FALSE, FALSE, 0,
                 &object->wined3d_surface, WINED3DRTYPE_SURFACE, desc->Usage, WINED3DPOOL_DEFAULT,
                 desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3DMULTISAMPLE_NONE,
-                desc->SampleDesc.Quality, NULL, SURFACE_OPENGL, (IUnknown *)object);
+                desc->SampleDesc.Quality, SURFACE_OPENGL, (IUnknown *)object);
         if (FAILED(hr))
         {
             ERR("CreateSurface failed, returning %#x\n", hr);

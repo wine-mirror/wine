@@ -503,7 +503,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage,
-        DWORD FVF, WINED3DPOOL Pool, IWineD3DBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent)
+        DWORD FVF, WINED3DPOOL Pool, IWineD3DBuffer **ppVertexBuffer, IUnknown *parent)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     /* Dummy format for now */
@@ -582,9 +582,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage,
-                                                    WINED3DPOOL Pool, IWineD3DBuffer** ppIndexBuffer,
-                                                    HANDLE *sharedHandle, IUnknown *parent) {
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface,
+        UINT Length, DWORD Usage, WINED3DPOOL Pool, IWineD3DBuffer **ppIndexBuffer, IUnknown *parent)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(WINED3DFMT_UNKNOWN, &This->adapter->gl_info);
     struct wined3d_buffer *object;
@@ -897,8 +897,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
     return WINED3D_OK;
 }
 
-static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Width, UINT Height, WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level, IWineD3DSurface **ppSurface,WINED3DRESOURCETYPE Type, DWORD Usage, WINED3DPOOL Pool, WINED3DMULTISAMPLE_TYPE MultiSample ,DWORD MultisampleQuality, HANDLE* pSharedHandle, WINED3DSURFTYPE Impl, IUnknown *parent) {
-    IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface,
+        UINT Width, UINT Height, WINED3DFORMAT Format, BOOL Lockable, BOOL Discard, UINT Level,
+        IWineD3DSurface **ppSurface, WINED3DRESOURCETYPE Type, DWORD Usage, WINED3DPOOL Pool,
+        WINED3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, WINED3DSURFTYPE Impl, IUnknown *parent)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int Size       = 1;
     const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(Format, &GLINFO_LOCATION);
@@ -1085,8 +1089,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateRendertargetView(IWineD3DDevice *
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
-        UINT Width, UINT Height, UINT Levels, DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool,
-        IWineD3DTexture **ppTexture, HANDLE *pSharedHandle, IUnknown *parent)
+        UINT Width, UINT Height, UINT Levels, DWORD Usage, WINED3DFORMAT Format,
+        WINED3DPOOL Pool, IWineD3DTexture **ppTexture, IUnknown *parent)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
@@ -1099,8 +1103,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     unsigned int pow2Height;
 
     TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#x\n", This, Width, Height, Levels, Usage);
-    TRACE("Format %#x (%s), Pool %#x, ppTexture %p, pSharedHandle %p, parent %p\n",
-            Format, debug_d3dformat(Format), Pool, ppTexture, pSharedHandle, parent);
+    TRACE("Format %#x (%s), Pool %#x, ppTexture %p, parent %p\n",
+            Format, debug_d3dformat(Format), Pool, ppTexture, parent);
 
     /* TODO: It should only be possible to create textures for formats
              that are reported as supported */
@@ -1269,8 +1273,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
-        UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool,
-        IWineD3DVolumeTexture **ppVolumeTexture, HANDLE *pSharedHandle, IUnknown *parent)
+        UINT Width, UINT Height, UINT Depth, UINT Levels, DWORD Usage, WINED3DFORMAT Format,
+        WINED3DPOOL Pool, IWineD3DVolumeTexture **ppVolumeTexture, IUnknown *parent)
 {
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
@@ -1391,12 +1395,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
-                                               UINT Width, UINT Height, UINT Depth,
-                                               DWORD Usage,
-                                               WINED3DFORMAT Format, WINED3DPOOL Pool,
-                                               IWineD3DVolume** ppVolume,
-                                               HANDLE* pSharedHandle, IUnknown *parent) {
-
+        UINT Width, UINT Height, UINT Depth, DWORD Usage, WINED3DFORMAT Format,
+        WINED3DPOOL Pool, IWineD3DVolume **ppVolume, IUnknown *parent)
+{
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl        *object; /** NOTE: impl ref allowed since this is a create function **/
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &GLINFO_LOCATION);
@@ -1451,8 +1452,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface,
-        UINT EdgeLength, UINT Levels, DWORD Usage, WINED3DFORMAT Format, WINED3DPOOL Pool,
-        IWineD3DCubeTexture **ppCubeTexture, HANDLE *pSharedHandle, IUnknown *parent)
+        UINT EdgeLength, UINT Levels, DWORD Usage, WINED3DFORMAT Format,
+        WINED3DPOOL Pool, IWineD3DCubeTexture **ppCubeTexture, IUnknown *parent)
 {
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
@@ -2466,7 +2467,7 @@ static void IWineD3DDeviceImpl_LoadLogo(IWineD3DDeviceImpl *This, const char *fi
 
     hr = IWineD3DDevice_CreateSurface((IWineD3DDevice *) This, bm.bmWidth, bm.bmHeight, WINED3DFMT_R5G6B5,
                                       TRUE, FALSE, 0, &This->logo_surface, WINED3DRTYPE_SURFACE, 0,
-                                      WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, NULL, SURFACE_OPENGL, NULL);
+                                      WINED3DPOOL_DEFAULT, WINED3DMULTISAMPLE_NONE, 0, SURFACE_OPENGL, NULL);
     if(FAILED(hr)) {
         ERR("Wine logo requested, but failed to create surface\n");
         goto out;
