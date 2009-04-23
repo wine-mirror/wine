@@ -105,7 +105,23 @@ void shader_init(struct IWineD3DBaseShaderClass *shader,
     list_init(&shader->linked_programs);
 }
 
-const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *opcode_table, DWORD shader_version, DWORD code)
+static inline WINED3DSHADER_PARAM_REGISTER_TYPE shader_get_regtype(DWORD param)
+{
+    return ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
+            | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
+}
+
+static inline DWORD shader_get_writemask(DWORD param)
+{
+    return param & WINED3DSP_WRITEMASK_ALL;
+}
+
+static inline BOOL shader_is_comment(DWORD token)
+{
+    return WINED3DSIO_COMMENT == (token & WINED3DSI_OPCODE_MASK);
+}
+
+static const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *opcode_table, DWORD shader_version, DWORD code)
 {
     DWORD i = 0;
 

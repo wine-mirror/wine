@@ -2300,8 +2300,6 @@ extern int shader_addline(
     const char* fmt, ...) PRINTF_ATTR(2,3);
 int shader_vaddline(SHADER_BUFFER *buffer, const char *fmt, va_list args);
 
-const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *shader_ins, DWORD shader_version, DWORD code);
-
 /* Vertex shader utility functions */
 extern BOOL vshader_get_input(
     IWineD3DVertexShader* iface,
@@ -2367,25 +2365,12 @@ void shader_trace_init(const DWORD *byte_code, const SHADER_OPCODE *opcode_table
 extern void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction);
 
-static inline int shader_get_regtype(const DWORD param) {
-    return (((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT) |
-            ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2));
-}
-
-static inline int shader_get_writemask(const DWORD param) {
-    return param & WINED3DSP_WRITEMASK_ALL;
-}
-
 static inline BOOL shader_is_pshader_version(DWORD token) {
     return 0xFFFF0000 == (token & 0xFFFF0000);
 }
 
 static inline BOOL shader_is_vshader_version(DWORD token) {
     return 0xFFFE0000 == (token & 0xFFFF0000);
-}
-
-static inline BOOL shader_is_comment(DWORD token) {
-    return WINED3DSIO_COMMENT == (token & WINED3DSI_OPCODE_MASK);
 }
 
 static inline BOOL shader_is_scalar(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx)
