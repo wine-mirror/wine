@@ -2125,7 +2125,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BU
     if(args->fog_src == VS_FOG_Z) {
         shader_addline(buffer, "MOV result.fogcoord, TMP_OUT.z;\n");
     } else if (!reg_maps->fog) {
-        shader_addline(buffer, "MOV result.fogcoord, 0.0;\n");
+        shader_addline(buffer, "MOV result.fogcoord, helper_const.w;\n");
     }
 
     /* Write the final position.
