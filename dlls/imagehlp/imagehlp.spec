@@ -50,7 +50,7 @@
 @ stdcall SymEnumTypes(long long ptr ptr) dbghelp.SymEnumTypes
 @ stdcall SymEnumerateModules64(long ptr ptr) dbghelp.SymEnumerateModules64
 @ stdcall SymEnumerateModules(long ptr ptr) dbghelp.SymEnumerateModules
-@ stub SymEnumerateSymbols64
+@ stdcall SymEnumerateSymbols64(long double ptr ptr) dbghelp.SymEnumerateSymbols64
 @ stdcall SymEnumerateSymbols(long long ptr ptr) dbghelp.SymEnumerateSymbols
 @ stub SymEnumerateSymbolsW64
 @ stub SymEnumerateSymbolsW
@@ -77,11 +77,11 @@
 @ stdcall SymGetSearchPath(long str long) dbghelp.SymGetSearchPath
 @ stdcall SymGetSymFromAddr64(long double ptr ptr) dbghelp.SymGetSymFromAddr64
 @ stdcall SymGetSymFromAddr(long long ptr ptr) dbghelp.SymGetSymFromAddr
-@ stub SymGetSymFromName64
+@ stdcall SymGetSymFromName64(long str ptr) dbghelp.SymGetSymFromName64
 @ stdcall SymGetSymFromName(long str ptr) dbghelp.SymGetSymFromName
-@ stub SymGetSymNext64
+@ stdcall SymGetSymNext64(long ptr) dbghelp.SymGetSymNext64
 @ stdcall SymGetSymNext(long ptr) dbghelp.SymGetSymNext
-@ stub SymGetSymPrev64
+@ stdcall SymGetSymPrev64(long ptr) dbghelp.SymGetSymPrev64
 @ stdcall SymGetSymPrev(long ptr) dbghelp.SymGetSymPrev
 @ stdcall SymGetTypeFromName(long long str ptr) dbghelp.SymGetTypeFromName
 @ stdcall SymGetTypeInfo(long long long long ptr) dbghelp.SymGetTypeInfo
@@ -97,7 +97,7 @@
 @ stdcall SymSetContext(long ptr ptr) dbghelp.SymSetContext
 @ stdcall SymSetOptions(long) dbghelp.SymSetOptions
 @ stdcall SymSetSearchPath(long str) dbghelp.SymSetSearchPath
-@ stub SymUnDName64
+@ stdcall SymUnDName64(ptr str long) dbghelp.SymUnDName64
 @ stdcall SymUnDName(ptr str long) dbghelp.SymUnDName
 @ stdcall SymUnloadModule64(long double) dbghelp.SymUnloadModule64
 @ stdcall SymUnloadModule(long long) dbghelp.SymUnloadModule
