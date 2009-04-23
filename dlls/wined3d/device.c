@@ -7612,8 +7612,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         ERR("Cannot change the device window yet\n");
     }
     if (pPresentationParameters->EnableAutoDepthStencil && !This->auto_depth_stencil_buffer) {
-        WARN("Auto depth stencil enabled, but no auto depth stencil present, returning WINED3DERR_INVALIDCALL\n");
-        return WINED3DERR_INVALIDCALL;
+        HRESULT hrc;
+
+        TRACE("Creating the depth stencil buffer\n");
+
+        hrc = IWineD3DDeviceParent_CreateDepthStencilSurface(This->device_parent,
+                This->parent,
+                pPresentationParameters->BackBufferWidth,
+                pPresentationParameters->BackBufferHeight,
+                pPresentationParameters->AutoDepthStencilFormat,
+                pPresentationParameters->MultiSampleType,
+                pPresentationParameters->MultiSampleQuality,
+                FALSE,
+                &This->auto_depth_stencil_buffer);
+
+        if (FAILED(hrc)) {
+            ERR("Failed to create the depth stencil buffer\n");
+            IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+            return WINED3DERR_INVALIDCALL;
+        }
     }
 
     /* Reset the depth stencil */

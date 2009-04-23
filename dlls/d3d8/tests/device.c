@@ -1388,13 +1388,13 @@ static void test_depth_stencil_reset(void)
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
 
     hr = IDirect3DDevice8_Reset(device, &present_parameters);
-    todo_wine ok(hr == D3D_OK, "IDirect3DDevice8_Reset failed with 0x%08x\n", hr);
+    ok(hr == D3D_OK, "IDirect3DDevice8_Reset failed with 0x%08x\n", hr);
 
     if (FAILED(hr)) goto cleanup;
 
     hr = IDirect3DDevice8_GetDepthStencilSurface(device, &surface);
-    todo_wine ok(hr == D3D_OK, "GetDepthStencilSurface failed with 0x%08x\n", hr);
-    todo_wine ok(surface != NULL, "Depth stencil should not be NULL\n");
+    ok(hr == D3D_OK, "GetDepthStencilSurface failed with 0x%08x\n", hr);
+    ok(surface != NULL, "Depth stencil should not be NULL\n");
     if (surface) IDirect3DSurface8_Release(surface);
 
 cleanup:
