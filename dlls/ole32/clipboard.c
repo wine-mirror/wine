@@ -196,9 +196,17 @@ static const WCHAR clipbrd_wndclass[] = {'C','L','I','P','B','R','D','W','N','D'
 
 static const WCHAR wine_marshal_dataobject[] = {'W','i','n','e',' ','m','a','r','s','h','a','l',' ','d','a','t','a','o','b','j','e','c','t',0};
 
-static UINT dataobject_clipboard_format;
-static UINT ole_priv_data_clipboard_format;
-static UINT embed_source_clipboard_format;
+UINT ownerlink_clipboard_format = 0;
+UINT filename_clipboard_format = 0;
+UINT filenameW_clipboard_format = 0;
+UINT dataobject_clipboard_format = 0;
+UINT embedded_object_clipboard_format = 0;
+UINT embed_source_clipboard_format = 0;
+UINT custom_link_source_clipboard_format = 0;
+UINT link_source_clipboard_format = 0;
+UINT object_descriptor_clipboard_format = 0;
+UINT link_source_descriptor_clipboard_format = 0;
+UINT ole_private_data_clipboard_format = 0;
 
 static inline char *dump_fmtetc(FORMATETC *fmt)
 {
@@ -952,7 +960,7 @@ static HRESULT get_priv_data(ole_priv_data **data)
 
     *data = NULL;
 
-    handle = GetClipboardData( ole_priv_data_clipboard_format );
+    handle = GetClipboardData( ole_private_data_clipboard_format );
     if(handle)
     {
         ole_priv_data *src = GlobalLock(handle);
@@ -1358,16 +1366,30 @@ static snapshot *snapshot_construct(DWORD seq_no)
  */
 static void register_clipboard_formats(void)
 {
-    static const WCHAR DataObjectW[] = { 'D','a','t','a','O','b','j','e','c','t',0 };
-    static const WCHAR OlePrivateDataW[] = { 'O','l','e',' ','P','r','i','v','a','t','e',' ','D','a','t','a',0 };
-    static const WCHAR EmbedSourceW[] = { 'E','m','b','e','d',' ','S','o','u','r','c','e',0 };
+    static const WCHAR OwnerLink[] = {'O','w','n','e','r','L','i','n','k',0};
+    static const WCHAR FileName[] = {'F','i','l','e','N','a','m','e',0};
+    static const WCHAR FileNameW[] = {'F','i','l','e','N','a','m','e','W',0};
+    static const WCHAR DataObject[] = {'D','a','t','a','O','b','j','e','c','t',0};
+    static const WCHAR EmbeddedObject[] = {'E','m','b','e','d','d','e','d',' ','O','b','j','e','c','t',0};
+    static const WCHAR EmbedSource[] = {'E','m','b','e','d',' ','S','o','u','r','c','e',0};
+    static const WCHAR CustomLinkSource[] = {'C','u','s','t','o','m',' ','L','i','n','k',' ','S','o','u','r','c','e',0};
+    static const WCHAR LinkSource[] = {'L','i','n','k',' ','S','o','u','r','c','e',0};
+    static const WCHAR ObjectDescriptor[] = {'O','b','j','e','c','t',' ','D','e','s','c','r','i','p','t','o','r',0};
+    static const WCHAR LinkSourceDescriptor[] = {'L','i','n','k',' ','S','o','u','r','c','e',' ',
+                                                 'D','e','s','c','r','i','p','t','o','r',0};
+    static const WCHAR OlePrivateData[] = {'O','l','e',' ','P','r','i','v','a','t','e',' ','D','a','t','a',0};
 
-    if(!dataobject_clipboard_format)
-        dataobject_clipboard_format = RegisterClipboardFormatW(DataObjectW);
-    if(!ole_priv_data_clipboard_format)
-        ole_priv_data_clipboard_format = RegisterClipboardFormatW(OlePrivateDataW);
-    if(!embed_source_clipboard_format)
-        embed_source_clipboard_format = RegisterClipboardFormatW(EmbedSourceW);
+    ownerlink_clipboard_format = RegisterClipboardFormatW(OwnerLink);
+    filename_clipboard_format = RegisterClipboardFormatW(FileName);
+    filenameW_clipboard_format = RegisterClipboardFormatW(FileNameW);
+    dataobject_clipboard_format = RegisterClipboardFormatW(DataObject);
+    embedded_object_clipboard_format = RegisterClipboardFormatW(EmbeddedObject);
+    embed_source_clipboard_format = RegisterClipboardFormatW(EmbedSource);
+    custom_link_source_clipboard_format = RegisterClipboardFormatW(CustomLinkSource);
+    link_source_clipboard_format = RegisterClipboardFormatW(LinkSource);
+    object_descriptor_clipboard_format = RegisterClipboardFormatW(ObjectDescriptor);
+    link_source_descriptor_clipboard_format = RegisterClipboardFormatW(LinkSourceDescriptor);
+    ole_private_data_clipboard_format = RegisterClipboardFormatW(OlePrivateData);
 }
 
 /***********************************************************************
@@ -1524,7 +1546,7 @@ static HRESULT set_clipboard_formats(ole_clipbrd *clipbrd, IDataObject *data)
             td_offs_to_ptr(clipbrd->cached_enum, (DWORD_PTR)clipbrd->cached_enum->entries[idx].fmtetc.ptd);
 
     GlobalUnlock(priv_data_handle);
-    SetClipboardData(ole_priv_data_clipboard_format, priv_data_handle);
+    SetClipboardData(ole_private_data_clipboard_format, priv_data_handle);
 
     return S_OK;
 }
