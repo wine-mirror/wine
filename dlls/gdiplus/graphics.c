@@ -941,11 +941,17 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
 GpStatus WINGDIPAPI GdipCreateFromHWND(HWND hwnd, GpGraphics **graphics)
 {
     GpStatus ret;
+    HDC hdc;
 
     TRACE("(%p, %p)\n", hwnd, graphics);
 
-    if((ret = GdipCreateFromHDC(GetDC(hwnd), graphics)) != Ok)
+    hdc = GetDC(hwnd);
+
+    if((ret = GdipCreateFromHDC(hdc, graphics)) != Ok)
+    {
+        ReleaseDC(hwnd, hdc);
         return ret;
+    }
 
     (*graphics)->hwnd = hwnd;
     (*graphics)->owndc = TRUE;
