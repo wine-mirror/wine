@@ -924,6 +924,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
 
     (*graphics)->hdc = hdc;
     (*graphics)->hwnd = WindowFromDC(hdc);
+    (*graphics)->owndc = FALSE;
     (*graphics)->smoothing = SmoothingModeDefault;
     (*graphics)->compqual = CompositingQualityDefault;
     (*graphics)->interpolation = InterpolationModeDefault;
@@ -947,6 +948,7 @@ GpStatus WINGDIPAPI GdipCreateFromHWND(HWND hwnd, GpGraphics **graphics)
         return ret;
 
     (*graphics)->hwnd = hwnd;
+    (*graphics)->owndc = TRUE;
 
     return Ok;
 }
@@ -1081,7 +1083,7 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
     if(!graphics) return InvalidParameter;
     if(graphics->busy) return ObjectBusy;
 
-    if(graphics->hwnd)
+    if(graphics->owndc)
         ReleaseDC(graphics->hwnd, graphics->hdc);
 
     GdipDeleteRegion(graphics->clip);

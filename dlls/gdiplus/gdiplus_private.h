@@ -91,6 +91,7 @@ struct GpPen{
 struct GpGraphics{
     HDC hdc;
     HWND hwnd;
+    BOOL owndc;
     SmoothingMode smoothing;
     CompositingQuality compqual;
     InterpolationMode interpolation;
