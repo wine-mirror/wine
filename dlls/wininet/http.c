@@ -3227,7 +3227,7 @@ static void HTTP_InsertCookies(LPWININETHTTPREQW lpwhr)
             InternetGetCookieW(lpszUrl, NULL, lpszCookies + cnt, &nCookieSize);
             strcatW(lpszCookies, szCrLf);
 
-            HTTP_HttpAddRequestHeadersW(lpwhr, lpszCookies, strlenW(lpszCookies), HTTP_ADDREQ_FLAG_ADD);
+            HTTP_HttpAddRequestHeadersW(lpwhr, lpszCookies, strlenW(lpszCookies), HTTP_ADDREQ_FLAG_REPLACE);
             HeapFree(GetProcessHeap(), 0, lpszCookies);
         }
     }
