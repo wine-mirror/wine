@@ -850,7 +850,7 @@ static void test_columns(void)
     ok(order[0] == 0, "Expected order 0, got %d\n", order[0]);
     ok(order[1] == 1, "Expected order 1, got %d\n", order[1]);
 
-    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_getorderarray_seq, "get order array", TRUE);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_getorderarray_seq, "get order array", FALSE);
 
     DestroyWindow(hwnd);
 }

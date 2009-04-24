@@ -5375,16 +5375,12 @@ static BOOL LISTVIEW_GetColumnT(const LISTVIEW_INFO *infoPtr, INT nColumn, LPLVC
 
 static BOOL LISTVIEW_GetColumnOrderArray(const LISTVIEW_INFO *infoPtr, INT iCount, LPINT lpiArray)
 {
-    INT i;
+    TRACE("iCount=%d, lpiArray=%p\n", iCount, lpiArray);
 
     if (!lpiArray)
 	return FALSE;
 
-    /* FIXME: little hack */
-    for (i = 0; i < iCount; i++)
-	lpiArray[i] = i;
-
-    return TRUE;
+    return SendMessageW(infoPtr->hwndHeader, HDM_GETORDERARRAY, iCount, (LPARAM)lpiArray);
 }
 
 /***
