@@ -911,16 +911,15 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     ins.src = src_param;
     This->baseShader.parse_state.current_row = 0;
 
+    if (!shader_is_version_token(*pToken++))
+    {
+        ERR("First token is not a version token, invalid shader.\n");
+        return;
+    }
+
     while (WINED3DPS_END() != *pToken)
     {
         DWORD opcode_token;
-
-        /* Skip version token */
-        if (shader_is_version_token(*pToken))
-        {
-            ++pToken;
-            continue;
-        }
 
         /* Skip comment tokens */
         if (shader_is_comment(*pToken))
