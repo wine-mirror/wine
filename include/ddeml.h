@@ -314,14 +314,15 @@ typedef struct tagCONVCONTEXT
     UINT  wFlags;
     UINT  wCountryID;
     INT   iCodePage;
-    DWORD   dwLangID;
-    DWORD   dwSecurity;
+    DWORD dwLangID;
+    DWORD dwSecurity;
+    SECURITY_QUALITY_OF_SERVICE qos;
 } CONVCONTEXT, *PCONVCONTEXT;
 
 typedef struct tagCONVINFO
 {
     DWORD		cb;
-    DWORD 		hUser;
+    DWORD_PTR 		hUser;
     HCONV		hConvPartner;
     HSZ			hszSvcPartner;
     HSZ			hszServiceReq;
