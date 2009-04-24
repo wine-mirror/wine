@@ -307,7 +307,8 @@ static void test_create_delete_svc(void)
     svc_handle1 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL, SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
                                  SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, account, password);
     ok(!svc_handle1, "Expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_SERVICE_ACCOUNT,
+       "Expected ERROR_INVALID_PARAMETER or ERROR_INVALID_SERVICE_ACCOUNT, got %d\n", GetLastError());
 
     /* Illegal (start-type is not a mask and should only be one of the possibilities)
      * Remark : 'OR'-ing them could result in a valid possibility (but doesn't make sense as
@@ -1762,10 +1763,7 @@ static void test_sequence(void)
     SetLastError(0xdeadbeef);
     ret = QueryServiceConfigA(svc_handle, config, given, &needed);
     ok(ret, "Expected success, got error %u\n", GetLastError());
-    todo_wine
-    {
-    ok(given == needed, "Expected the given (%d) and needed (%d) buffersizes to be equal\n", given, needed);
-    }
+
     ok(config->lpBinaryPathName && config->lpLoadOrderGroup && config->lpDependencies && config->lpServiceStartName &&
         config->lpDisplayName, "Expected all string struct members to be non-NULL\n");
     ok(config->dwServiceType == (SERVICE_INTERACTIVE_PROCESS | SERVICE_WIN32_OWN_PROCESS),
