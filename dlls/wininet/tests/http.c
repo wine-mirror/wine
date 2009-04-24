@@ -1275,7 +1275,6 @@ static void HttpHeaders_test(void)
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index)==0,"Third Header Should Not Exist\n");
 
     /* Ensure that blank headers are ignored and don't cause a failure */
-    todo_wine{
     ok(HttpAddRequestHeaders(hRequest,"\r\nBlankTest:value\r\n\r\n",-1, HTTP_ADDREQ_FLAG_ADD_IF_NEW), "Failed to add header with blank entries in list\n");
 
     index = 0;
@@ -1284,7 +1283,6 @@ static void HttpHeaders_test(void)
     ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Unable to query header\n");
     ok(index == 1, "Index was not incremented\n");
     ok(strcmp(buffer,"value")==0, "incorrect string was returned(%s)\n",buffer);
-    }
 
     ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
 done:

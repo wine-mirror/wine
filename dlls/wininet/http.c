@@ -610,6 +610,13 @@ static BOOL HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
             lpszEnd += 2; /* Jump over \r\n */
         }
         TRACE("interpreting header %s\n", debugstr_w(lpszStart));
+        if (*lpszStart == '\0')
+        {
+            /* Skip 0-length headers */
+            lpszStart = lpszEnd;
+            bSuccess = TRUE;
+            continue;
+        }
         pFieldAndValue = HTTP_InterpretHttpHeader(lpszStart);
         if (pFieldAndValue)
         {
