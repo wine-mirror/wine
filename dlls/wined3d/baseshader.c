@@ -384,8 +384,8 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
     pshader = shader_is_pshader_version(shader_version);
 
     while (WINED3DVS_END() != *pToken) {
-        CONST SHADER_OPCODE* curOpcode;
-        DWORD opcode_token;
+        struct wined3d_shader_instruction ins;
+        UINT param_size;
 
         /* Skip comments */
         if (shader_is_comment(*pToken))
@@ -397,17 +397,19 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
         }
 
         /* Fetch opcode */
-        opcode_token = *pToken++;
-        curOpcode = shader_get_opcode(shader_ins, shader_version, opcode_token);
+        shader_sm1_read_opcode(&pToken, &ins, &param_size, shader_ins, shader_version);
 
         /* Unhandled opcode, and its parameters */
-        if (NULL == curOpcode) {
-           while (*pToken & 0x80000000)
-               ++pToken;
+        if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
+        {
+            TRACE("Skipping unrecognized instruction.\n");
+            pToken += param_size;
+            continue;
+        }
 
         /* Handle declarations */
-        } else if (WINED3DSIO_DCL == curOpcode->opcode) {
-
+        if (ins.handler_idx == WINED3DSIH_DCL)
+        {
             DWORD usage = *pToken++;
             DWORD param = *pToken++;
             DWORD regtype = shader_get_regtype(param);
@@ -441,9 +443,9 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
             /* Save sampler usage token */
             } else if (WINED3DSPR_SAMPLER == regtype)
                 reg_maps->samplers[regnum] = usage;
-
-        } else if (WINED3DSIO_DEF == curOpcode->opcode) {
-
+        }
+        else if (ins.handler_idx == WINED3DSIH_DEF)
+        {
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
             lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
@@ -464,65 +466,70 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
             }
 
             list_add_head(&This->baseShader.constantsF, &lconst->entry);
-            pToken += curOpcode->num_params;
-
-        } else if (WINED3DSIO_DEFI == curOpcode->opcode) {
-
+            pToken += param_size;
+        }
+        else if (ins.handler_idx == WINED3DSIH_DEFI)
+        {
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
             lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
             memcpy(lconst->value, pToken + 1, 4 * sizeof(DWORD));
             list_add_head(&This->baseShader.constantsI, &lconst->entry);
-            pToken += curOpcode->num_params;
-
-        } else if (WINED3DSIO_DEFB == curOpcode->opcode) {
-
+            pToken += param_size;
+        }
+        else if (ins.handler_idx == WINED3DSIH_DEFB)
+        {
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
             lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
             memcpy(lconst->value, pToken + 1, 1 * sizeof(DWORD));
             list_add_head(&This->baseShader.constantsB, &lconst->entry);
-            pToken += curOpcode->num_params;
-
+            pToken += param_size;
+        }
         /* If there's a loop in the shader */
-        } else if (WINED3DSIO_LOOP == curOpcode->opcode ||
-                   WINED3DSIO_REP == curOpcode->opcode) {
+        else if (ins.handler_idx == WINED3DSIH_LOOP
+                || ins.handler_idx == WINED3DSIH_REP)
+        {
             cur_loop_depth++;
             if(cur_loop_depth > max_loop_depth)
                 max_loop_depth = cur_loop_depth;
-            pToken += curOpcode->num_params;
+            pToken += param_size;
 
             /* Rep and Loop always use an integer constant for the control parameters */
             This->baseShader.uses_int_consts = TRUE;
-        } else if (WINED3DSIO_ENDLOOP == curOpcode->opcode ||
-                   WINED3DSIO_ENDREP == curOpcode->opcode) {
+        }
+        else if (ins.handler_idx == WINED3DSIH_ENDLOOP
+                || ins.handler_idx == WINED3DSIH_ENDREP)
+        {
             cur_loop_depth--;
-
+        }
         /* For subroutine prototypes */
-        } else if (WINED3DSIO_LABEL == curOpcode->opcode) {
+        else if (ins.handler_idx == WINED3DSIH_LABEL)
+        {
 
             DWORD snum = *pToken & WINED3DSP_REGNUM_MASK; 
             reg_maps->labels[snum] = 1;
-            pToken += curOpcode->num_params;
-
+            pToken += param_size;
+        }
         /* Set texture, address, temporary registers */
-        } else {
+        else
+        {
             int i, limit;
 
             /* Declare 1.X samplers implicitly, based on the destination reg. number */
             if (WINED3DSHADER_VERSION_MAJOR(shader_version) == 1
                     && pshader /* Filter different instructions with the same enum values in VS */
-                    && (WINED3DSIO_TEX == curOpcode->opcode
-                        || WINED3DSIO_TEXBEM == curOpcode->opcode
-                        || WINED3DSIO_TEXBEML == curOpcode->opcode
-                        || WINED3DSIO_TEXDP3TEX == curOpcode->opcode
-                        || WINED3DSIO_TEXM3x2TEX == curOpcode->opcode
-                        || WINED3DSIO_TEXM3x3SPEC == curOpcode->opcode
-                        || WINED3DSIO_TEXM3x3TEX == curOpcode->opcode
-                        || WINED3DSIO_TEXM3x3VSPEC == curOpcode->opcode
-                        || WINED3DSIO_TEXREG2AR == curOpcode->opcode
-                        || WINED3DSIO_TEXREG2GB == curOpcode->opcode
-                        || WINED3DSIO_TEXREG2RGB == curOpcode->opcode))
+                    && (ins.handler_idx == WINED3DSIH_TEX
+                        || ins.handler_idx == WINED3DSIH_TEXBEM
+                        || ins.handler_idx == WINED3DSIH_TEXBEML
+                        || ins.handler_idx == WINED3DSIH_TEXDP3TEX
+                        || ins.handler_idx == WINED3DSIH_TEXM3x2TEX
+                        || ins.handler_idx == WINED3DSIH_TEXM3x3SPEC
+                        || ins.handler_idx == WINED3DSIH_TEXM3x3TEX
+                        || ins.handler_idx == WINED3DSIH_TEXM3x3VSPEC
+                        || ins.handler_idx == WINED3DSIH_TEXREG2AR
+                        || ins.handler_idx == WINED3DSIH_TEXREG2GB
+                        || ins.handler_idx == WINED3DSIH_TEXREG2RGB))
             {
                 /* Fake sampler usage, only set reserved bit and ttype */
                 DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
@@ -531,20 +538,27 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                 reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
 
                 /* texbem is only valid with < 1.4 pixel shaders */
-                if(WINED3DSIO_TEXBEM  == curOpcode->opcode ||
-                    WINED3DSIO_TEXBEML == curOpcode->opcode) {
+                if (ins.handler_idx == WINED3DSIH_TEXBEM
+                        || ins.handler_idx == WINED3DSIH_TEXBEML)
+                {
                     reg_maps->bumpmat[sampler_code] = TRUE;
-                    if(WINED3DSIO_TEXBEML == curOpcode->opcode) {
+                    if (ins.handler_idx == WINED3DSIH_TEXBEML)
+                    {
                         reg_maps->luminanceparams[sampler_code] = TRUE;
                     }
                 }
             }
-            if(WINED3DSIO_NRM  == curOpcode->opcode) {
+            if (ins.handler_idx == WINED3DSIH_NRM)
+            {
                 reg_maps->usesnrm = 1;
-            } else if(WINED3DSIO_BEM == curOpcode->opcode && pshader) {
+            }
+            else if (pshader && ins.handler_idx == WINED3DSIH_BEM)
+            {
                 DWORD regnum = *pToken & WINED3DSP_REGNUM_MASK;
                 reg_maps->bumpmat[regnum] = TRUE;
-            } else if(WINED3DSIO_DSY  == curOpcode->opcode) {
+            }
+            else if (ins.handler_idx == WINED3DSIH_DSY)
+            {
                 reg_maps->usesdsy = 1;
             }
 
@@ -555,8 +569,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
              * okay, since we'll catch any address registers when 
              * they are initialized (required by spec) */
 
-            limit = (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED)?
-                curOpcode->num_params + 1: curOpcode->num_params;
+            limit = ins.dst_count + ins.src_count + (ins.predicate ? 1 : 0);
 
             for (i = 0; i < limit; ++i) {
 
