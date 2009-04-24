@@ -904,7 +904,7 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
       break;
     p = ME_FindItemFwd(p, diRunOrParagraphOrEnd);
   }
-  if (!ME_StreamOutPrint(pStream, "}"))
+  if (!ME_StreamOutMove(pStream, "}\0", 2))
     return FALSE;
   return TRUE;
 }
