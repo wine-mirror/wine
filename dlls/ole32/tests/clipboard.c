@@ -118,6 +118,8 @@ static HRESULT WINAPI EnumFormatImpl_Next(IEnumFORMATETC *iface, ULONG celt,
     EnumFormatImpl *This = (EnumFormatImpl*)iface;
     ULONG count, i;
 
+    trace("next: count %d cur %d\n", celt, This->cur);
+
     if(!rgelt)
         return E_INVALIDARG;
 
@@ -565,7 +567,7 @@ static void test_enum_fmtetc(IDataObject *src)
         ok(src != NULL, "shouldn't be here\n");
         hr = IEnumFORMATETC_Next(src_enum, 1, &src_fmt, NULL);
         ok(hr == S_OK, "%d: got %08x\n", count, hr);
-        trace("%d: cf %04x aspect %x tymed %x\n", count, fmt.cfFormat, fmt.dwAspect, fmt.tymed);
+        trace("%d: %s\n", count, dump_fmtetc(&fmt));
         ok(fmt.cfFormat == src_fmt.cfFormat, "%d: %04x %04x\n", count, fmt.cfFormat, src_fmt.cfFormat);
         ok(fmt.dwAspect == src_fmt.dwAspect, "%d: %08x %08x\n", count, fmt.dwAspect, src_fmt.dwAspect);
         ok(fmt.lindex == src_fmt.lindex, "%d: %08x %08x\n", count, fmt.lindex, src_fmt.lindex);
