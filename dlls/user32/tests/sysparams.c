@@ -1801,9 +1801,9 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
     eq( area.left,   curr_val.left,   "left",   "%d" );
     eq( area.top,    curr_val.top,    "top",    "%d" );
     /* size may be rounded up */
-    ok( area.right >= curr_val.right && area.right < curr_val.right + 8,
+    ok( area.right >= curr_val.right && area.right < curr_val.right + 16,
         "right: got %d instead of %d\n", area.right, curr_val.right );
-    ok( area.bottom >= curr_val.bottom && area.bottom < curr_val.bottom + 8,
+    ok( area.bottom >= curr_val.bottom && area.bottom < curr_val.bottom + 16,
         "bottom: got %d instead of %d\n", area.bottom, curr_val.bottom );
     curr_val = area;
     rc=SystemParametersInfoA( SPI_SETWORKAREA, 0, &old_area,
@@ -1816,9 +1816,9 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
     eq( area.left,   old_area.left,   "left",   "%d" );
     eq( area.top,    old_area.top,    "top",    "%d" );
     /* size may be rounded up */
-    ok( area.right >= old_area.right && area.right < old_area.right + 8,
+    ok( area.right >= old_area.right && area.right < old_area.right + 16,
         "right: got %d instead of %d\n", area.right, old_area.right );
-    ok( area.bottom >= old_area.bottom && area.bottom < old_area.bottom + 8,
+    ok( area.bottom >= old_area.bottom && area.bottom < old_area.bottom + 16,
         "bottom: got %d instead of %d\n", area.bottom, old_area.bottom );
 }
 
@@ -2667,8 +2667,10 @@ static void test_GetSystemMetrics( void)
         screen.cx = GetSystemMetrics( SM_CXSCREEN );
         screen.cy = GetSystemMetrics( SM_CYSCREEN );
     }
-    ok_gsm( SM_CXMAXTRACK, screen.cx + 4 + 2 * GetSystemMetrics(SM_CXFRAME));
-    ok_gsm( SM_CYMAXTRACK, screen.cy + 4 + 2 * GetSystemMetrics(SM_CYFRAME));
+    ok_gsm_2( SM_CXMAXTRACK, screen.cx + 4 + 2 * GetSystemMetrics(SM_CXFRAME),
+              screen.cx - 4 + 2 * GetSystemMetrics(SM_CXFRAME)); /* Vista */
+    ok_gsm_2( SM_CYMAXTRACK, screen.cy + 4 + 2 * GetSystemMetrics(SM_CYFRAME),
+              screen.cy - 4 + 2 * GetSystemMetrics(SM_CYFRAME)); /* Vista */
     /* the next two cannot really be tested as they depend on (application)
      * toolbars */
     /* SM_CXMAXIMIZED */
