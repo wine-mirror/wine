@@ -263,13 +263,17 @@ static void test_EnumObjects(IShellFolder *iFolder)
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
         flags &= SFGAO_testfor;
         ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
-        ok(flags == (attrs[i]), "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
+        ok(flags == (attrs[i]) ||
+           flags == (attrs[i] & ~SFGAO_FILESYSANCESTOR), /* Win9x, NT4 */
+           "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
 
         flags = SFGAO_testfor;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
         flags &= SFGAO_testfor;
         ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
-        ok(flags == attrs[i], "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
+        ok(flags == attrs[i] ||
+           flags == (attrs[i] & ~SFGAO_FILESYSANCESTOR), /* Win9x, NT4 */
+           "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
     }
 
     for (i=0;i<5;i++)
