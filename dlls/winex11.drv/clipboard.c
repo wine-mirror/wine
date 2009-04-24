@@ -537,7 +537,7 @@ static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCWSTR FormatNam
     lpFormat->NextFormat = lpNewFormat;
     lpNewFormat->PrevFormat = lpFormat;
 
-    TRACE("Registering format(%d): %s drvData %d\n",
+    TRACE("Registering format(%04x): %s drvData %d\n",
         lpNewFormat->wFormatID, debugstr_w(FormatName), lpNewFormat->drvData);
 
     return lpNewFormat;
@@ -615,7 +615,7 @@ static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormatID, HANDLE16 hData1
 {
     LPWINE_CLIPDATA lpData = X11DRV_CLIPBOARD_LookupData(wFormatID);
 
-    TRACE("format=%d lpData=%p hData16=%08x hData32=%p flags=0x%08x lpFormat=%p override=%d\n",
+    TRACE("format=%04x lpData=%p hData16=%08x hData32=%p flags=0x%08x lpFormat=%p override=%d\n",
         wFormatID, lpData, hData16, hData32, flags, lpFormat, override);
 
     if (lpData && !override)
@@ -671,7 +671,7 @@ static BOOL X11DRV_CLIPBOARD_InsertClipboardData(UINT wFormatID, HANDLE16 hData1
  */
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
 {
-    TRACE("%d\n", lpData->wFormatID);
+    TRACE("%04x\n", lpData->wFormatID);
 
     if ((lpData->wFormatID >= CF_GDIOBJFIRST &&
         lpData->wFormatID <= CF_GDIOBJLAST) || 
@@ -794,7 +794,7 @@ static BOOL X11DRV_CLIPBOARD_RenderFormat(Display *display, LPWINE_CLIPDATA lpDa
     {
         if (!X11DRV_CLIPBOARD_ReadSelectionData(display, lpData))
         {
-            ERR("Failed to cache clipboard data owned by another process. Format=%d\n", 
+            ERR("Failed to cache clipboard data owned by another process. Format=%04x\n",
                 lpData->wFormatID);
             bret = FALSE;
         }
@@ -937,7 +937,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wForma
     INT src_chars, dst_chars, alloc_size;
     LPWINE_CLIPDATA lpSource = NULL;
 
-    TRACE(" %d\n", wFormatID);
+    TRACE("%04x\n", wFormatID);
 
     if ((lpSource = X11DRV_CLIPBOARD_LookupData(wFormatID)) &&
         lpSource->hData32)
@@ -947,17 +947,17 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wForma
     if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_UNICODETEXT)) &&
         (!(lpSource->wFlags & CF_FLAG_SYNTHESIZED) || lpSource->hData32))
     {
-        TRACE("UNICODETEXT -> %d\n", wFormatID);
+        TRACE("UNICODETEXT -> %04x\n", wFormatID);
     }
     else if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_TEXT)) &&
         (!(lpSource->wFlags & CF_FLAG_SYNTHESIZED) || lpSource->hData32))
     {
-        TRACE("TEXT -> %d\n", wFormatID);
+        TRACE("TEXT -> %04x\n", wFormatID);
     }
     else if ((lpSource = X11DRV_CLIPBOARD_LookupData(CF_OEMTEXT)) &&
         (!(lpSource->wFlags & CF_FLAG_SYNTHESIZED) || lpSource->hData32))
     {
-        TRACE("OEMTEXT -> %d\n", wFormatID);
+        TRACE("OEMTEXT -> %04x\n", wFormatID);
     }
 
     if (!lpSource || (lpSource->wFlags & CF_FLAG_SYNTHESIZED &&
@@ -993,7 +993,7 @@ static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wForma
     if (!dst_chars)
         return FALSE;
 
-    TRACE("Converting from '%d' to '%d', %i chars\n",
+    TRACE("Converting from '%04x' to '%04x', %i chars\n",
     	lpSource->wFormatID, wFormatID, src_chars);
 
     /* Convert characters to bytes */
@@ -1421,7 +1421,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Display *display, Window requ
     *lpBytes = 0; /* Assume failure */
 
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpData))
-        ERR("Failed to export %d format\n", lpData->wFormatID);
+        ERR("Failed to export %04x format\n", lpData->wFormatID);
     else
     {
         datasize = GlobalSize(lpData->hData32);
@@ -1613,7 +1613,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, 
         }
     }
     else
-        ERR("Failed to render %d format\n", lpData->wFormatID);
+        ERR("Failed to render %04x format\n", lpData->wFormatID);
 
     return 0;
 }
@@ -1633,7 +1633,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor
 
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
     {
-        ERR("Failed to export %d format\n", lpdata->wFormatID);
+        ERR("Failed to export %04x format\n", lpdata->wFormatID);
         return 0;
     }
 
@@ -1667,7 +1667,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Display *display, Window reque
 {
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
     {
-        ERR("Failed to export %d format\n", lpdata->wFormatID);
+        ERR("Failed to export %04x format\n", lpdata->wFormatID);
         return 0;
     }
 
@@ -1685,7 +1685,7 @@ static HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Display *display, Window reques
 {
     if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
     {
-        ERR("Failed to export %d format\n", lpdata->wFormatID);
+        ERR("Failed to export %04x format\n", lpdata->wFormatID);
         return 0;
     }
 
@@ -1762,7 +1762,7 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
               */
              while (lpFormat)
              {
-                 TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
+                 TRACE("Atom#%d Property(%d): --> FormatID(%04x) %s\n",
                        i, lpFormat->drvData, lpFormat->wFormatID, debugstr_w(lpFormat->Name));
                  X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0, lpFormat, FALSE);
                  lpFormat = X11DRV_CLIPBOARD_LookupProperty(lpFormat, properties[i]);
@@ -1805,7 +1805,7 @@ static VOID X11DRV_CLIPBOARD_InsertSelectionProperties(Display *display, Atom* p
                      ERR("Failed to register %s property. Type will not be cached.\n", names[i]);
                      continue;
                  }
-                 TRACE("Atom#%d Property(%d): --> FormatID(%d) %s\n",
+                 TRACE("Atom#%d Property(%d): --> FormatID(%04x) %s\n",
                        i, lpFormat->drvData, lpFormat->wFormatID, debugstr_w(lpFormat->Name));
                  X11DRV_CLIPBOARD_InsertClipboardData(lpFormat->wFormatID, 0, 0, 0, lpFormat, FALSE);
              }
@@ -1952,11 +1952,11 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
     XEvent xe;
     BOOL bRet = FALSE;
 
-    TRACE("%d\n", lpData->wFormatID);
+    TRACE("%04x\n", lpData->wFormatID);
 
     if (!lpData->lpFormat)
     {
-        ERR("Requesting format %d but no source format linked to data.\n",
+        ERR("Requesting format %04x but no source format linked to data.\n",
             lpData->wFormatID);
         return FALSE;
     }
@@ -2666,7 +2666,7 @@ BOOL CDECL X11DRV_GetClipboardData(UINT wFormat, HANDLE16* phData16, HANDLE* phD
         if (phData32)
             *phData32 = lpRender->hData32;
 
-        TRACE(" returning hData16(%04x) hData32(%p) (type %d)\n",
+        TRACE(" returning hData16(%04x) hData32(%p) (type %04x)\n",
             lpRender->hData16, lpRender->hData32, lpRender->wFormatID);
 
         return lpRender->hData16 || lpRender->hData32;
@@ -2724,7 +2724,7 @@ static BOOL X11DRV_CLIPBOARD_SynthesizeData(UINT wFormatID)
     BOOL bsyn = TRUE;
     LPWINE_CLIPDATA lpSource = NULL;
 
-    TRACE(" %d\n", wFormatID);
+    TRACE(" %04x\n", wFormatID);
 
     /* Don't need to synthesize if it already exists */
     if (X11DRV_CLIPBOARD_LookupData(wFormatID))
