@@ -147,8 +147,10 @@ static void test_ParseDisplayName(void)
     ok(SUCCEEDED(hr), "DesktopFolder->ParseDisplayName failed. hr = %08x.\n", hr);
     if (FAILED(hr)) goto finished;
 
-    ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x31, "Last pidl should be of type "
-       "PT_FOLDER, but is: %02x\n", pILFindLastID(newPIDL)->mkid.abID[0]);
+    ok(pILFindLastID(newPIDL)->mkid.abID[0] == 0x31 ||
+       pILFindLastID(newPIDL)->mkid.abID[0] == 0xb1, /* Win98 */
+       "Last pidl should be of type PT_FOLDER or PT_IESPECIAL2, but is: %02x\n",
+       pILFindLastID(newPIDL)->mkid.abID[0]);
     IMalloc_Free(ppM, newPIDL);
     
 finished:
