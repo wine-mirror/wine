@@ -151,6 +151,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *d, Window w, Atom pr
 static HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportMetaFilePict(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *d, Window w, Atom prop);
+static HANDLE X11DRV_CLIPBOARD_ImportImageBmp(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportXAString(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportUTF8(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *d, Window w, Atom prop);
@@ -192,6 +193,7 @@ static const WCHAR wszCF_DIF[] = {'W','C','F','_','D','I','F',0};
 static const WCHAR wszCF_TIFF[] = {'W','C','F','_','T','I','F','F',0};
 static const WCHAR wszCF_OEMTEXT[] = {'W','C','F','_','O','E','M','T','E','X','T',0};
 static const WCHAR wszCF_DIB[] = {'W','C','F','_','D','I','B',0};
+static const WCHAR wszIMAGEBMP[] = {'i','m','a','g','e','/','b','m','p',0};
 static const WCHAR wszCF_PALETTE[] = {'W','C','F','_','P','A','L','E','T','T','E',0};
 static const WCHAR wszCF_PENDATA[] = {'W','C','F','_','P','E','N','D','A','T','A',0};
 static const WCHAR wszCF_RIFF[] = {'W','C','F','_','R','I','F','F',0};
@@ -278,7 +280,10 @@ static WINE_CLIPFORMAT ClipFormats[]  =
         X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[20], &ClipFormats[22]},
 
     { CF_DSPENHMETAFILE, wszCF_DSPENHMETAFILE, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportClipboardData,
-        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[21], NULL}
+        X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[21], &ClipFormats[23]},
+
+    { CF_DIB, wszIMAGEBMP, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportImageBmp,
+        NULL, &ClipFormats[22], NULL},
 };
 
 #define GET_ATOM(prop)  (((prop) < FIRST_XATOM) ? (Atom)(prop) : X11DRV_Atoms[(prop) - FIRST_XATOM])
@@ -1308,6 +1313,52 @@ static HANDLE X11DRV_CLIPBOARD_ImportXAPIXMAP(Display *display, Window w, Atom p
 
         hClipData = X11DRV_DIB_CreateDIBFromPixmap(*pPixmap, hdc);
         ReleaseDC(hwnd, hdc);
+
+        /* Free the retrieved property data */
+        HeapFree(GetProcessHeap(), 0, lpdata);
+    }
+
+    return hClipData;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ImportImageBmp
+ *
+ *  Import image/bmp, converting the image to CF_DIB.
+ */
+static HANDLE X11DRV_CLIPBOARD_ImportImageBmp(Display *display, Window w, Atom prop)
+{
+    LPBYTE lpdata;
+    unsigned long cbytes;
+    HANDLE hClipData = 0;
+
+    if (X11DRV_CLIPBOARD_ReadProperty(display, w, prop, &lpdata, &cbytes))
+    {
+        BITMAPFILEHEADER *bfh = (BITMAPFILEHEADER*)lpdata;
+
+        if (cbytes >= sizeof(BITMAPFILEHEADER)+sizeof(BITMAPCOREHEADER) &&
+            bfh->bfType == 0x4d42 /* "BM" */)
+        {
+            BITMAPINFO *bmi = (BITMAPINFO*)(bfh+1);
+            HBITMAP hbmp;
+            HDC hdc;
+
+            hdc = GetDC(0);
+            hbmp = CreateDIBitmap(
+                hdc,
+                &(bmi->bmiHeader),
+                CBM_INIT,
+                lpdata+bfh->bfOffBits,
+                bmi,
+                DIB_RGB_COLORS
+                );
+
+            hClipData = X11DRV_DIB_CreateDIBFromBitmap(hdc, hbmp);
+
+            DeleteObject(hbmp);
+            ReleaseDC(0, hdc);
+        }
 
         /* Free the retrieved property data */
         HeapFree(GetProcessHeap(), 0, lpdata);
