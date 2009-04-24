@@ -629,7 +629,9 @@ static void test_fromhicon(void)
     DeleteObject(hbmColor);
 
     stat = GdipCreateBitmapFromHICON(hIcon, &bitmap);
-    expect(Ok, stat);
+    ok(stat == Ok ||
+       broken(stat == InvalidParameter), /* Win98 */
+       "Expected Ok, got %.8x\n", stat);
     if(stat == Ok){
        /* check attributes */
        stat = GdipGetImageHeight((GpImage*)bitmap, &dim);
