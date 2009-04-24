@@ -152,6 +152,12 @@ static const struct message listview_ownerdata_switchto_seq[] = {
     { 0 }
 };
 
+static const struct message listview_getorderarray_seq[] = {
+    { LVM_GETCOLUMNORDERARRAY, sent|id|wparam, 2, 0, LISTVIEW_ID },
+    { HDM_GETORDERARRAY,       sent|id|wparam, 2, 0, HEADER_ID },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -800,9 +806,10 @@ static void test_items(void)
 
 static void test_columns(void)
 {
-    HWND hwnd;
+    HWND hwnd, hwndheader;
     LVCOLUMN column;
     DWORD rc;
+    INT order[2];
 
     hwnd = CreateWindowEx(0, "SysListView32", "foo", LVS_REPORT,
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
@@ -819,6 +826,31 @@ static void test_columns(void)
     ok(rc==10 ||
        broken(rc==0), /* win9x */
        "Inserting column with no mask failed to set width to 10 with %d\n", rc);
+
+    DestroyWindow(hwnd);
+
+    /* LVM_GETCOLUMNORDERARRAY */
+    hwnd = create_listview_control(0);
+    hwndheader = subclass_header(hwnd);
+
+    memset(&column, 0, sizeof(column));
+    column.mask = LVCF_WIDTH;
+    column.cx = 100;
+    rc = ListView_InsertColumn(hwnd, 0, &column);
+    ok(rc == 0, "Inserting column failed with %d\n", rc);
+
+    column.cx = 200;
+    rc = ListView_InsertColumn(hwnd, 1, &column);
+    ok(rc == 1, "Inserting column failed with %d\n", rc);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    rc = SendMessage(hwnd, LVM_GETCOLUMNORDERARRAY, 2, (LPARAM)&order);
+    ok(rc != 0, "Expected LVM_GETCOLUMNORDERARRAY to succeed\n");
+    ok(order[0] == 0, "Expected order 0, got %d\n", order[0]);
+    ok(order[1] == 1, "Expected order 1, got %d\n", order[1]);
+
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_getorderarray_seq, "get order array", TRUE);
 
     DestroyWindow(hwnd);
 }
