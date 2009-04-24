@@ -167,7 +167,6 @@ void hash_table_remove(struct hash_table_t *table, void *key);
 #define MAX_COMBINED_SAMPLERS   (MAX_FRAGMENT_SAMPLERS + MAX_VERTEX_SAMPLERS)
 #define MAX_ACTIVE_LIGHTS       8
 #define MAX_CLIPPLANES          WINED3DMAXUSERCLIPPLANES
-#define MAX_LEVELS              256
 
 #define MAX_CONST_I 16
 #define MAX_CONST_B 16
@@ -634,8 +633,7 @@ extern int num_lock;
 
 /* DirectX Device Limits */
 /* --------------------- */
-#define MAX_LEVELS  256  /* Maximum number of mipmap levels. Guessed at 256 */
-
+#define MAX_MIP_LEVELS 32  /* Maximum number of mipmap levels. */
 #define MAX_STREAMS  16  /* Maximum possible streams - used for fixed size arrays
                             See MaxStreams in MSDN under GetDeviceCaps */
 #define HIGHEST_TRANSFORMSTATE WINED3DTS_WORLDMATRIX(255) /* Highest value in WINED3DTRANSFORMSTATETYPE */
@@ -1519,7 +1517,7 @@ typedef struct IWineD3DTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DTexture */
-    IWineD3DSurface          *surfaces[MAX_LEVELS];
+    IWineD3DSurface          *surfaces[MAX_MIP_LEVELS];
     UINT                      target;
     BOOL                      cond_np2;
 
@@ -1538,7 +1536,7 @@ typedef struct IWineD3DCubeTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DCubeTexture */
-    IWineD3DSurface          *surfaces[6][MAX_LEVELS];
+    IWineD3DSurface          *surfaces[6][MAX_MIP_LEVELS];
 } IWineD3DCubeTextureImpl;
 
 extern const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl;
@@ -1584,7 +1582,7 @@ typedef struct IWineD3DVolumeTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DVolumeTexture */
-    IWineD3DVolume           *volumes[MAX_LEVELS];
+    IWineD3DVolume           *volumes[MAX_MIP_LEVELS];
 } IWineD3DVolumeTextureImpl;
 
 extern const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;
