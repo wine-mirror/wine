@@ -4698,16 +4698,18 @@ int WINAPI WSARemoveServiceClass(LPGUID info)
 PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, size_t len )
 {
 #ifdef HAVE_INET_NTOP
-    union generic_unix_sockaddr unix_addr;
+    struct WS_in6_addr *in6;
+    struct WS_in_addr  *in;
 
+    TRACE("family %d, addr (%p), buffer (%p), len %d\n", family, addr, buffer, len);
     switch (family)
     {
     case WS_AF_INET:
-        ws_sockaddr_ws2u( addr, sizeof(struct WS_sockaddr_in), &unix_addr );
-        return inet_ntop( AF_INET, &unix_addr, buffer, len );
+        in = addr;
+        return inet_ntop( AF_INET, &in->WS_s_addr, buffer, len );
     case WS_AF_INET6:
-        ws_sockaddr_ws2u( addr, sizeof(struct WS_sockaddr_in6), &unix_addr );
-        return inet_ntop( AF_INET6, &unix_addr, buffer, len );
+        in6 = addr;
+        return inet_ntop( AF_INET6, in6->WS_s6_addr, buffer, len );
     }
 #else
     FIXME( "not supported on this platform\n" );

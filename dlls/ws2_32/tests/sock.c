@@ -2040,7 +2040,7 @@ static void test_addr_to_print(void)
 
     pdst = pInetNtop(AF_INET,(void*)&in.s_addr, dst, sizeof(dst));
     ok(pdst != NULL, "InetNtop failed %s\n", dst);
-    todo_wine ok(!strcmp(pdst, addr1_Str),"Address %s != %s\n", pdst, addr1_Str);
+    ok(!strcmp(pdst, addr1_Str),"Address %s != %s\n", pdst, addr1_Str);
 
     /* Test invalid parm conditions */
     pdst = pInetNtop(1, (void*)&in.s_addr, dst, sizeof(dst));
@@ -2051,13 +2051,13 @@ static void test_addr_to_print(void)
     memcpy(in6.u.Byte, addr2_Num, sizeof(addr2_Num));
     pdst = pInetNtop(AF_INET6,(void*)&in6.s6_addr, dst6, sizeof(dst6));
     ok(pdst != NULL, "InetNtop failed %s\n", dst6);
-    todo_wine ok(!strcmp(pdst, addr2_Str),"Address %s != %s\n", pdst, addr2_Str);
+    ok(!strcmp(pdst, addr2_Str),"Address %s != %s\n", pdst, addr2_Str);
 
     /* Test an zero suffixed IPV6 address */
     memcpy(in6.s6_addr, addr3_Num, sizeof(addr3_Num));
     pdst = pInetNtop(AF_INET6,(void*)&in6.s6_addr, dst6, sizeof(dst6));
     ok(pdst != NULL, "InetNtop failed %s\n", dst6);
-    todo_wine ok(!strcmp(pdst, addr3_Str),"Address %s != %s\n", pdst, addr3_Str);
+    ok(!strcmp(pdst, addr3_Str),"Address %s != %s\n", pdst, addr3_Str);
 }
 
 static void test_ioctlsocket(void)
