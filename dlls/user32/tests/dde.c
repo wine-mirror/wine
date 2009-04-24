@@ -585,7 +585,7 @@ static HDDEDATA CALLBACK server_ddeml_callback(UINT uType, UINT uFmt, HCONV hcon
         size = DdeQueryStringA(server_pid, hsz2, str, MAX_PATH, CP_WINANSI);
         ok(!strncmp(str, "TestDDEServer(", 14), "Expected TestDDEServer(, got %s\n", str);
         ok(str[size - 1] == ')', "Expected ')', got %c\n", str[size - 1]);
-        ok(size == 25, "Expected 25, got %d\n", size);
+        ok(size == 17 + 2*sizeof(ULONG_PTR), "Got size %d for %s\n", size, str);
 
         return (HDDEDATA)TRUE;
     }
