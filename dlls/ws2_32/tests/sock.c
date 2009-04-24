@@ -2310,6 +2310,32 @@ static void test_WSASendTo(void)
             "a successful call to WSASendTo()\n");
 }
 
+static void test_GetAddrInfoW(void)
+{
+    static const WCHAR port[] = {'8','0',0};
+    static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
+
+    int ret;
+    ADDRINFOW *result, hint;
+
+    memset(&hint, 0, sizeof(ADDRINFOW));
+
+    ret = GetAddrInfoW(NULL, NULL, NULL, &result);
+    ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
+
+    ret = GetAddrInfoW(localhost, NULL, NULL, &result);
+    ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
+    FreeAddrInfoW(result);
+
+    ret = GetAddrInfoW(localhost, port, NULL, &result);
+    ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
+    FreeAddrInfoW(result);
+
+    ret = GetAddrInfoW(localhost, port, &hint, &result);
+    ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
+    FreeAddrInfoW(result);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -2353,6 +2379,7 @@ START_TEST( sock )
     test_WSASendTo();
 
     test_ipv6only();
+    test_GetAddrInfoW();
 
     Exit();
 }

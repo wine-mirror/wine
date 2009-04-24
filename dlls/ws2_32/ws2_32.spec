@@ -50,6 +50,7 @@
 
 500 stub     WEP
 
+@ stdcall FreeAddrInfoW(ptr)
 @ stdcall GetAddrInfoW(wstr wstr ptr ptr)
 @ stdcall WSApSetPostRoutine(ptr)
 @ stdcall WPUCompleteOverlappedRequest(long ptr long long ptr)

@@ -3583,13 +3583,149 @@ outofmem:
 #endif
 }
 
+static struct WS_addrinfoW *addrinfo_AtoW(const struct WS_addrinfo *ai)
+{
+    struct WS_addrinfoW *ret;
+
+    if (!(ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct WS_addrinfoW)))) return NULL;
+    ret->ai_flags     = ai->ai_flags;
+    ret->ai_family    = ai->ai_family;
+    ret->ai_socktype  = ai->ai_socktype;
+    ret->ai_protocol  = ai->ai_protocol;
+    ret->ai_addrlen   = ai->ai_addrlen;
+    ret->ai_canonname = NULL;
+    ret->ai_addr      = NULL;
+    ret->ai_next      = NULL;
+    if (ai->ai_canonname)
+    {
+        int len = MultiByteToWideChar(CP_ACP, 0, ai->ai_canonname, -1, NULL, 0);
+        if (!(ret->ai_canonname = HeapAlloc(GetProcessHeap(), 0, len)))
+        {
+            HeapFree(GetProcessHeap(), 0, ret);
+            return NULL;
+        }
+        MultiByteToWideChar(CP_ACP, 0, ai->ai_canonname, -1, ret->ai_canonname, len);
+    }
+    if (ai->ai_addr)
+    {
+        if (!(ret->ai_addr = HeapAlloc(GetProcessHeap(), 0, sizeof(struct WS_sockaddr))))
+        {
+            HeapFree(GetProcessHeap(), 0, ret->ai_canonname);
+            HeapFree(GetProcessHeap(), 0, ret);
+            return NULL;
+        }
+        memcpy(ret->ai_addr, ai->ai_addr, sizeof(struct WS_sockaddr));
+    }
+    return ret;
+}
+
+static struct WS_addrinfoW *addrinfo_list_AtoW(const struct WS_addrinfo *info)
+{
+    struct WS_addrinfoW *ret, *infoW;
+
+    if (!(ret = infoW = addrinfo_AtoW(info))) return NULL;
+    while (info->ai_next)
+    {
+        if (!(infoW->ai_next = addrinfo_AtoW(info->ai_next)))
+        {
+            FreeAddrInfoW(ret);
+            return NULL;
+        }
+        infoW = infoW->ai_next;
+        info = info->ai_next;
+    }
+    return ret;
+}
+
+static struct WS_addrinfo *addrinfo_WtoA(const struct WS_addrinfoW *ai)
+{
+    struct WS_addrinfo *ret;
+
+    if (!(ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct WS_addrinfo)))) return NULL;
+    ret->ai_flags     = ai->ai_flags;
+    ret->ai_family    = ai->ai_family;
+    ret->ai_socktype  = ai->ai_socktype;
+    ret->ai_protocol  = ai->ai_protocol;
+    ret->ai_addrlen   = ai->ai_addrlen;
+    ret->ai_canonname = NULL;
+    ret->ai_addr      = NULL;
+    ret->ai_next      = NULL;
+    if (ai->ai_canonname)
+    {
+        int len = WideCharToMultiByte(CP_ACP, 0, ai->ai_canonname, -1, NULL, 0, NULL, NULL);
+        if (!(ret->ai_canonname = HeapAlloc(GetProcessHeap(), 0, len)))
+        {
+            HeapFree(GetProcessHeap(), 0, ret);
+            return NULL;
+        }
+        WideCharToMultiByte(CP_ACP, 0, ai->ai_canonname, -1, ret->ai_canonname, len, NULL, NULL);
+    }
+    if (ai->ai_addr)
+    {
+        if (!(ret->ai_addr = HeapAlloc(GetProcessHeap(), 0, sizeof(struct WS_sockaddr))))
+        {
+            HeapFree(GetProcessHeap(), 0, ret->ai_canonname);
+            HeapFree(GetProcessHeap(), 0, ret);
+            return NULL;
+        }
+        memcpy(ret->ai_addr, ai->ai_addr, sizeof(struct WS_sockaddr));
+    }
+    return ret;
+}
+
 /***********************************************************************
  *		GetAddrInfoW		(WS2_32.@)
  */
 int WINAPI GetAddrInfoW(LPCWSTR nodename, LPCWSTR servname, const ADDRINFOW *hints, PADDRINFOW *res)
 {
-    FIXME("empty stub!\n");
-    return EAI_FAIL;
+    int ret, len;
+    char *nodenameA, *servnameA = NULL;
+    struct WS_addrinfo *resA, *hintsA = NULL;
+
+    len = WideCharToMultiByte(CP_ACP, 0, nodename, -1, NULL, 0, NULL, NULL);
+    if (!(nodenameA = HeapAlloc(GetProcessHeap(), 0, len))) return EAI_MEMORY;
+    WideCharToMultiByte(CP_ACP, 0, nodename, -1, nodenameA, len, NULL, NULL);
+
+    if (servname)
+    {
+        len = WideCharToMultiByte(CP_ACP, 0, servname, -1, NULL, 0, NULL, NULL);
+        if (!(servnameA = HeapAlloc(GetProcessHeap(), 0, len)))
+        {
+            HeapFree(GetProcessHeap(), 0, nodenameA);
+            return EAI_MEMORY;
+        }
+        WideCharToMultiByte(CP_ACP, 0, servname, -1, servnameA, len, NULL, NULL);
+    }
+
+    if (hints) hintsA = addrinfo_WtoA(hints);
+    ret = WS_getaddrinfo(nodenameA, servnameA, hintsA, &resA);
+    WS_freeaddrinfo(hintsA);
+
+    if (!ret)
+    {
+        *res = addrinfo_list_AtoW(resA);
+        WS_freeaddrinfo(resA);
+    }
+
+    HeapFree(GetProcessHeap(), 0, nodenameA);
+    HeapFree(GetProcessHeap(), 0, servnameA);
+    return ret;
+}
+
+/***********************************************************************
+ *      FreeAddrInfoW        (WS2_32.@)
+ */
+void WINAPI FreeAddrInfoW(PADDRINFOW ai)
+{
+    while (ai)
+    {
+        ADDRINFOW *next;
+        HeapFree(GetProcessHeap(), 0, ai->ai_canonname);
+        HeapFree(GetProcessHeap(), 0, ai->ai_addr);
+        next = ai->ai_next;
+        HeapFree(GetProcessHeap(), 0, ai);
+        ai = next;
+    }
 }
 
 int WINAPI WS_getnameinfo(const SOCKADDR *sa, WS_socklen_t salen, PCHAR host,
