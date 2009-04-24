@@ -38,7 +38,7 @@ BEGIN
                     to close. We are sorry for the inconvenience.",
                     IDC_STATIC_TXT1,27,10,224,30
     LTEXT           "This can be caused by a problem in the program or a deficiency in Wine. \
-                    You may want to check http:/*appdb.winehq.org for tips about running \
+                    You may want to check http://appdb.winehq.org for tips about running \
                     this application.\n\n\
                     If this problem is not present under Windows and has not been reported \
                     yet, you can report it at http://bugs.winehq.org.",IDC_STATIC_TXT2,27,60,224,100
