@@ -447,12 +447,12 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     cookie_domain *thisCookieDomain = NULL;
     cookie *thisCookie;
     struct list *cursor;
-    LPWSTR data;
+    LPWSTR data, value;
     WCHAR *ptr;
     FILETIME expiry;
     BOOL expired = FALSE;
 
-    data = HeapAlloc(GetProcessHeap(),0,(lstrlenW(cookie_data)+1) * sizeof(WCHAR));
+    value = data = HeapAlloc(GetProcessHeap(), 0, (strlenW(cookie_data) + 1) * sizeof(WCHAR));
     strcpyW(data,cookie_data);
     memset(&expiry,0,sizeof(expiry));
 
@@ -469,6 +469,10 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
 
         if (!(ptr = strchrW(ptr,';'))) break;
         *ptr++ = 0;
+
+        value = HeapAlloc(GetProcessHeap(), 0, (ptr - data) * sizeof(WCHAR));
+        strcpyW(value, data);
+
         while (*ptr == ' ') ptr++; /* whitespace */
 
         if (strncmpiW(ptr, szDomain, 7) == 0)
@@ -502,11 +506,20 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
             }
         }
         else if (strncmpiW(ptr, szSecure, 6) == 0)
+        {
             FIXME("secure not handled (%s)\n",debugstr_w(ptr));
+            ptr += strlenW(szSecure);
+        }
         else if (strncmpiW(ptr, szHttpOnly, 8) == 0)
+        {
             FIXME("httponly not handled (%s)\n",debugstr_w(ptr));
-        else
+            ptr += strlenW(szHttpOnly);
+        }
+        else if (*ptr)
+        {
             FIXME("Unknown additional option %s\n",debugstr_w(ptr));
+            break;
+        }
     }
 
     LIST_FOR_EACH(cursor, &domain_list)
@@ -524,6 +537,7 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
         else
         {
             HeapFree(GetProcessHeap(),0,data);
+            if (value != data) HeapFree(GetProcessHeap(), 0, value);
             return TRUE;
         }
     }
@@ -532,15 +546,17 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
         COOKIE_deleteCookie(thisCookie, FALSE);
 
     TRACE("setting cookie %s=%s for domain %s path %s\n", debugstr_w(cookie_name),
-          debugstr_w(data), debugstr_w(thisCookieDomain->lpCookieDomain),debugstr_w(thisCookieDomain->lpCookiePath));
+          debugstr_w(value), debugstr_w(thisCookieDomain->lpCookieDomain),debugstr_w(thisCookieDomain->lpCookiePath));
 
-    if (!expired && !COOKIE_addCookie(thisCookieDomain, cookie_name,data, expiry))
+    if (!expired && !COOKIE_addCookie(thisCookieDomain, cookie_name, value, expiry))
     {
         HeapFree(GetProcessHeap(),0,data);
+        if (value != data) HeapFree(GetProcessHeap(), 0, value);
         return FALSE;
     }
 
     HeapFree(GetProcessHeap(),0,data);
+    if (value != data) HeapFree(GetProcessHeap(), 0, value);
     return TRUE;
 }
 

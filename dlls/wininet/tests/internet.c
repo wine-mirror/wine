@@ -272,6 +272,8 @@ static void test_complicated_cookie(void)
   ok(ret == TRUE,"InternetSetCookie failed\n");
   ret = InternetSetCookie("http://www.example.com/bar/",NULL,"M=N; domain=.example.com; path=/foo/");
   ok(ret == TRUE,"InternetSetCookie failed\n");
+  ret = InternetSetCookie("http://www.example.com/bar/",NULL,"O=P; secure; path=/bar");
+  ok(ret == TRUE,"InternetSetCookie failed\n");
 
   len = 1024;
   ret = InternetGetCookie("http://testing.example.com", NULL, buffer, &len);
@@ -282,6 +284,7 @@ static void test_complicated_cookie(void)
   ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
   ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
   ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+  ok(strstr(buffer,"O=P")==NULL,"O=P present\n");
 
   len = 1024;
   ret = InternetGetCookie("http://testing.example.com/foobar", NULL, buffer, &len);
@@ -292,6 +295,7 @@ static void test_complicated_cookie(void)
   ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
   ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
   ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+  ok(strstr(buffer,"O=P")==NULL,"O=P present\n");
 
   len = 1024;
   ret = InternetGetCookie("http://testing.example.com/foobar/", NULL, buffer, &len);
@@ -302,6 +306,7 @@ static void test_complicated_cookie(void)
   ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
   ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
   ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+  ok(strstr(buffer,"O=P")==NULL,"O=P present\n");
 
   len = 1024;
   ret = InternetGetCookie("http://testing.example.com/foo/bar", NULL, buffer, &len);
@@ -312,6 +317,7 @@ static void test_complicated_cookie(void)
   ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
   ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
   ok(strstr(buffer,"M=N")!=NULL,"M=N missing\n");
+  ok(strstr(buffer,"O=P")==NULL,"O=P present\n");
 
   len = 1024;
   ret = InternetGetCookie("http://testing.example.com/barfoo", NULL, buffer, &len);
@@ -322,6 +328,7 @@ static void test_complicated_cookie(void)
   ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
   ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
   ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+  ok(strstr(buffer,"O=P")==NULL,"O=P present\n");
 
   len = 1024;
   ret = InternetGetCookie("http://testing.example.com/barfoo/", NULL, buffer, &len);
@@ -332,6 +339,7 @@ static void test_complicated_cookie(void)
   ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
   ok(strstr(buffer,"K=L")==NULL,"K=L present\n");
   ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+  ok(strstr(buffer,"O=P")==NULL,"O=P present\n");
 
   len = 1024;
   ret = InternetGetCookie("http://testing.example.com/bar/foo", NULL, buffer, &len);
@@ -342,6 +350,7 @@ static void test_complicated_cookie(void)
   ok(strstr(buffer,"I=J")!=NULL,"I=J missing\n");
   ok(strstr(buffer,"K=L")!=NULL,"K=L missing\n");
   ok(strstr(buffer,"M=N")==NULL,"M=N present\n");
+  ok(strstr(buffer,"O=P")==NULL,"O=P present\n");
 }
 
 static void test_null(void)
