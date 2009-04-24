@@ -1351,9 +1351,8 @@ void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instructi
     }
 }
 
-static inline const char *shader_get_comp_op(DWORD flags)
+static inline const char *shader_get_comp_op(DWORD op)
 {
-    DWORD op = (flags & INST_CONTROLS_MASK) >> INST_CONTROLS_SHIFT;
     switch (op) {
         case COMPARISON_GT: return ">";
         case COMPARISON_EQ: return "==";

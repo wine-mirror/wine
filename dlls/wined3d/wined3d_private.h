@@ -2253,10 +2253,6 @@ typedef struct local_constant {
     DWORD value[4];
 } local_constant;
 
-/* Undocumented opcode controls */
-#define INST_CONTROLS_SHIFT 16
-#define INST_CONTROLS_MASK 0x00ff0000
-
 typedef enum COMPARISON_TYPE {
     COMPARISON_GT = 1,
     COMPARISON_EQ = 2,

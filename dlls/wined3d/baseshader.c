@@ -967,7 +967,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         }
 
         ins.handler_idx = curOpcode->handler_idx;
-        ins.flags = opcode_token & WINED3D_OPCODESPECIFICCONTROL_MASK;
+        ins.flags = (opcode_token & WINED3D_OPCODESPECIFICCONTROL_MASK) >> WINED3D_OPCODESPECIFICCONTROL_SHIFT;
         ins.coissue = opcode_token & WINED3DSI_COISSUE;
 
         /* Destination token */
@@ -1146,7 +1146,7 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
                 if (curOpcode->opcode == WINED3DSIO_IFC
                         || curOpcode->opcode == WINED3DSIO_BREAKC)
                 {
-                    DWORD op = (opcode_token & INST_CONTROLS_MASK) >> INST_CONTROLS_SHIFT;
+                    DWORD op = (opcode_token & WINED3D_OPCODESPECIFICCONTROL_MASK) >> WINED3D_OPCODESPECIFICCONTROL_SHIFT;
 
                     switch (op)
                     {
@@ -1161,7 +1161,7 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
                 }
                 else if (curOpcode->opcode == WINED3DSIO_TEX
                         && shader_version >= WINED3DPS_VERSION(2,0)
-                        && (opcode_token & WINED3DSI_TEXLD_PROJECT))
+                        && (opcode_token & (WINED3DSI_TEXLD_PROJECT << WINED3D_OPCODESPECIFICCONTROL_SHIFT)))
                 {
                     TRACE("p");
                 }
