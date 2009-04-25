@@ -53,6 +53,7 @@ POPUP "&Bearbeiten" {
 POPUP "&Suchen" {
   MENUITEM "Suchen...\tStrg+F", CMD_SEARCH
   MENUITEM "&Weitersuchen\tF3", CMD_SEARCH_NEXT
+  MENUITEM "&Ersetzen...\tStrg+H", CMD_REPLACE
  }
 POPUP "&Hilfe" {
   MENUITEM "&Inhalt",           CMD_HELP_CONTENTS

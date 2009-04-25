@@ -294,6 +294,7 @@ static int NOTEPAD_MenuCommand(WPARAM wParam)
 
     case CMD_SEARCH:           DIALOG_Search(); break;
     case CMD_SEARCH_NEXT:      DIALOG_SearchNext(); break;
+    case CMD_REPLACE:          DIALOG_Replace(); break;
                                
     case CMD_WRAP:             DIALOG_EditWrap(); break;
     case CMD_FONT:             DIALOG_SelectFont(); break;
@@ -414,6 +415,77 @@ void NOTEPAD_DoFind(FINDREPLACE *fr)
     SendMessage(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
 }
 
+void NOTEPAD_DoReplace(FINDREPLACE *fr)
+{
+    LPTSTR content;
+    int len = lstrlen(fr->lpstrFindWhat);
+    int fileLen;
+    DWORD pos;
+    DWORD pos_start;
+
+    fileLen = GetWindowTextLength(Globals.hEdit) + 1;
+    content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(TCHAR));
+    if (!content) return;
+    GetWindowText(Globals.hEdit, content, fileLen);
+
+    SendMessage(Globals.hEdit, EM_GETSEL, (WPARAM)&pos_start, (LPARAM)&pos);
+    switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
+    {
+        case FR_DOWN:
+            if ( pos-pos_start == len && StrCmpNI(fr->lpstrFindWhat, content+pos_start, len) == 0)
+                SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
+            break;
+        case FR_DOWN|FR_MATCHCASE:
+            if ( pos-pos_start == len && StrCmpN(fr->lpstrFindWhat, content+pos_start, len) == 0)
+                SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
+            break;
+        default:    /* shouldn't happen */
+            return;
+    }
+    HeapFree(GetProcessHeap(), 0, content);
+
+    NOTEPAD_DoFind(fr);
+}
+
+void NOTEPAD_DoReplaceAll(FINDREPLACE *fr)
+{
+    LPTSTR content;
+    LPTSTR found;
+    int len = lstrlen(fr->lpstrFindWhat);
+    int fileLen;
+    DWORD pos;
+
+    SendMessage(Globals.hEdit, EM_SETSEL, 0, 0);
+    while(TRUE){
+        fileLen = GetWindowTextLength(Globals.hEdit) + 1;
+        content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(TCHAR));
+        if (!content) return;
+        GetWindowText(Globals.hEdit, content, fileLen);
+
+        SendMessage(Globals.hEdit, EM_GETSEL, 0, (LPARAM)&pos);
+        switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
+        {
+            case FR_DOWN:
+                found = StrStrI(content+pos, fr->lpstrFindWhat);
+                break;
+            case FR_DOWN|FR_MATCHCASE:
+                found = StrStr(content+pos, fr->lpstrFindWhat);
+                break;
+            default:    /* shouldn't happen */
+                return;
+        }
+        HeapFree(GetProcessHeap(), 0, content);
+
+        if(found == NULL)
+        {
+            SendMessage(Globals.hEdit, EM_SETSEL, 0, 0);
+            return;
+        }
+        SendMessage(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
+        SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
+    }
+}
+
 /***********************************************************************
  *
  *           NOTEPAD_WndProc
@@ -431,6 +503,16 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         {
             Globals.lastFind = *fr;
             NOTEPAD_DoFind(fr);
+        }
+        if (fr->Flags & FR_REPLACE)
+        {
+            Globals.lastFind = *fr;
+            NOTEPAD_DoReplace(fr);
+        }
+        if (fr->Flags & FR_REPLACEALL)
+        {
+            Globals.lastFind = *fr;
+            NOTEPAD_DoReplaceAll(fr);
         }
         return 0;
     }

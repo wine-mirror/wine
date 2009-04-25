@@ -45,6 +45,7 @@
 
 #define CMD_SEARCH              0x120
 #define CMD_SEARCH_NEXT         0x121
+#define CMD_REPLACE             0x122
 
 #define CMD_WRAP                0x119
 #define CMD_FONT                0x140

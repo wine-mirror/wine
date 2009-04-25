@@ -747,6 +747,25 @@ VOID DIALOG_SearchNext(VOID)
         NOTEPAD_DoFind(&Globals.lastFind);
 }
 
+VOID DIALOG_Replace(VOID)
+{
+        ZeroMemory(&Globals.find, sizeof(Globals.find));
+        Globals.find.lStructSize      = sizeof(Globals.find);
+        Globals.find.hwndOwner        = Globals.hMainWnd;
+        Globals.find.hInstance        = Globals.hInstance;
+        Globals.find.lpstrFindWhat    = Globals.szFindText;
+        Globals.find.wFindWhatLen     = SIZEOF(Globals.szFindText);
+        Globals.find.lpstrReplaceWith = Globals.szReplaceText;
+        Globals.find.wReplaceWithLen  = SIZEOF(Globals.szReplaceText);
+        Globals.find.Flags            = FR_DOWN|FR_HIDEWHOLEWORD;
+
+        /* We only need to create the modal FindReplace dialog which will */
+        /* notify us of incoming events using hMainWnd Window Messages    */
+
+        Globals.hFindReplaceDlg = ReplaceText(&Globals.find);
+        assert(Globals.hFindReplaceDlg !=0);
+}
+
 VOID DIALOG_HelpContents(VOID)
 {
     WinHelp(Globals.hMainWnd, helpfileW, HELP_INDEX, 0);
