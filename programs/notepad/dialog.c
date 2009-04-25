@@ -724,6 +724,13 @@ VOID DIALOG_SelectFont(VOID)
 
 VOID DIALOG_Search(VOID)
 {
+        /* Allow only one search/replace dialog to open */
+        if(Globals.hFindReplaceDlg != NULL)
+        {
+            SetActiveWindow(Globals.hFindReplaceDlg);
+            return;
+        }
+
         ZeroMemory(&Globals.find, sizeof(Globals.find));
         Globals.find.lStructSize      = sizeof(Globals.find);
         Globals.find.hwndOwner        = Globals.hMainWnd;
@@ -749,6 +756,13 @@ VOID DIALOG_SearchNext(VOID)
 
 VOID DIALOG_Replace(VOID)
 {
+        /* Allow only one search/replace dialog to open */
+        if(Globals.hFindReplaceDlg != NULL)
+        {
+            SetActiveWindow(Globals.hFindReplaceDlg);
+            return;
+        }
+
         ZeroMemory(&Globals.find, sizeof(Globals.find));
         Globals.find.lStructSize      = sizeof(Globals.find);
         Globals.find.hwndOwner        = Globals.hMainWnd;
