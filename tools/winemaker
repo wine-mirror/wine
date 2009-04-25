@@ -638,6 +638,9 @@ sub source_scan_project_file($$$)
                     } elsif (/^Oy$/) {
                         # Frame-Pointer Omission
                         $prj_target_cflags.="-fomit-frame-pointer ";
+                    } elsif (/^Oy-$/) {
+                        # Frame-Pointer Omission
+                        $prj_target_cflags.="-fno-omit-frame-pointer ";
                     } elsif (/^GZ$/) {
                         # Catch Release-Build Errors in Debug Build
                     } elsif (/^M[DLT]d?$/) {
