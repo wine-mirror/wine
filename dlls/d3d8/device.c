@@ -359,6 +359,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDeviceCaps(LPDIRECT3DDEVICE8 iface
     if(pCaps->VertexShaderVersion > D3DVS_VERSION(1,1)){
         pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
     }
+    pCaps->MaxVertexShaderConst = min(D3D8_MAX_VERTEX_SHADER_CONSTANTF, pCaps->MaxVertexShaderConst);
 
     TRACE("Returning %p %p\n", This, pCaps);
     return hrc;
@@ -1998,6 +1999,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEV
     HRESULT hr;
     TRACE("(%p) : Relay\n", This);
 
+    if(Register + ConstantCount > D3D8_MAX_VERTEX_SHADER_CONSTANTF) {
+        WARN("Trying to access %u constants, but d3d8 only supports %u\n",
+             Register + ConstantCount, D3D8_MAX_VERTEX_SHADER_CONSTANTF);
+        return D3DERR_INVALIDCALL;
+    }
+
     EnterCriticalSection(&d3d8_cs);
     hr = IWineD3DDevice_SetVertexShaderConstantF(This->WineD3DDevice, Register, pConstantData, ConstantCount);
     LeaveCriticalSection(&d3d8_cs);
@@ -2008,6 +2015,12 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEV
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     HRESULT hr;
     TRACE("(%p) : Relay\n", This);
+
+    if(Register + ConstantCount > D3D8_MAX_VERTEX_SHADER_CONSTANTF) {
+        WARN("Trying to access %u constants, but d3d8 only supports %u\n",
+             Register + ConstantCount, D3D8_MAX_VERTEX_SHADER_CONSTANTF);
+        return D3DERR_INVALIDCALL;
+    }
 
     EnterCriticalSection(&d3d8_cs);
     hr = IWineD3DDevice_GetVertexShaderConstantF(This->WineD3DDevice, Register, pConstantData, ConstantCount);

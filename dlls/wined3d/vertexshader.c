@@ -115,9 +115,6 @@ static void vshader_set_limits(
       This->baseShader.limits.attributes = 16;
       This->baseShader.limits.packed_input = 0;
 
-      /* Must match D3DCAPS9.MaxVertexShaderConst: at least 256 for vs_2_0 */
-      This->baseShader.limits.constant_float = GL_LIMITS(vshader_constantsF);
-
       switch (This->baseShader.reg_maps.shader_version)
       {
           case WINED3DVS_VERSION(1,0):
@@ -129,8 +126,12 @@ static void vshader_set_limits(
                    This->baseShader.limits.packed_output = 0;
                    This->baseShader.limits.sampler = 0;
                    This->baseShader.limits.label = 0;
+                   /* TODO: vs_1_1 has a minimum of 96 constants. What happens if a vs_1_1 shader is used
+                    * on a vs_3_0 capable card that has 256 constants?
+                    */
+                   This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
                    break;
-      
+
           case WINED3DVS_VERSION(2,0):
           case WINED3DVS_VERSION(2,1):
                    This->baseShader.limits.temporary = 12;
@@ -140,6 +141,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.packed_output = 0;
                    This->baseShader.limits.sampler = 0;
                    This->baseShader.limits.label = 16;
+                   This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
                    break;
 
           case WINED3DVS_VERSION(3,0):
@@ -150,6 +152,12 @@ static void vshader_set_limits(
                    This->baseShader.limits.packed_output = 12;
                    This->baseShader.limits.sampler = 4;
                    This->baseShader.limits.label = 16; /* FIXME: 2048 */
+                   /* DX10 cards on Windows advertise a d3d9 constant limit of 256 even though they are capable
+                    * of supporting much more(GL drivers advertise 1024). d3d9.dll and d3d8.dll clamp the
+                    * wined3d-advertised maximum. Clamp the constant limit for <= 3.0 shaders to 256.s
+                    * use constant buffers
+                    */
+                   This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
                    break;
 
           default: This->baseShader.limits.temporary = 12;
@@ -159,6 +167,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.packed_output = 0;
                    This->baseShader.limits.sampler = 0;
                    This->baseShader.limits.label = 16;
+                   This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
                    FIXME("Unrecognized vertex shader version %#x\n",
                            This->baseShader.reg_maps.shader_version);
       }
