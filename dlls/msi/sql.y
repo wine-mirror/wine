@@ -359,7 +359,7 @@ data_type:
         }
   | TK_LONGCHAR
         {
-            $$ = 2;
+            $$ = MSITYPE_STRING | 0x400;
         }
   | TK_SHORT
         {
