@@ -9603,7 +9603,7 @@ static void yuv_color_test(IDirect3DDevice9 *device) {
             color = getPixelColor(device, 600, 240);
             ok(color_match(color, ref_color_right, 16),
                "Input 0x%08x: Got color 0x%08x for pixel 2/1, expected 0x%08x, format %s\n",
-               test_data[i].in, color, ref_color_left, fmt_string);
+               test_data[i].in, color, ref_color_right, fmt_string);
         }
         IDirect3DSurface9_Release(surface);
     }
