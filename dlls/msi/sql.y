@@ -363,7 +363,7 @@ data_type:
         }
   | TK_SHORT
         {
-            $$ = 2;
+            $$ = 2 | 0x400;
         }
   | TK_INT
         {
