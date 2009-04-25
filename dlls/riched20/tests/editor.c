@@ -3383,6 +3383,61 @@ static void test_EM_STREAMOUT(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_STREAMOUT_FONTTBL(void)
+{
+  HWND hwndRichEdit = new_richedit(NULL);
+  EDITSTREAM es;
+  char buf[1024] = {0};
+  char * p;
+  char * fontTbl;
+  int brackCount;
+
+  const char * TestItem = "TestSomeText";
+
+  /* fills in the richedit control with some text */
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem);
+
+  /* streams out the text in rtf format */
+  p = buf;
+  es.dwCookie = (DWORD_PTR)&p;
+  es.dwError = 0;
+  es.pfnCallback = test_WM_SETTEXT_esCallback;
+  memset(buf, 0, sizeof(buf));
+  SendMessage(hwndRichEdit, EM_STREAMOUT,
+              (WPARAM)(SF_RTF), (LPARAM)&es);
+
+  /* scans for \fonttbl, error if not found */
+  fontTbl = strstr(buf, "\\fonttbl");
+  ok(fontTbl != NULL, "missing \\fonttbl section\n");
+  if(fontTbl)
+  {
+      /* scans for terminating closing bracket */
+      brackCount = 1;
+      while(*fontTbl && brackCount)
+      {
+          if(*fontTbl == '{')
+              brackCount++;
+          else if(*fontTbl == '}')
+              brackCount--;
+          fontTbl++;
+      }
+    /* checks wether closing bracket is ok */
+      ok(brackCount == 0, "missing closing bracket in \\fonttbl block\n");
+      if(!brackCount)
+      {
+          /* char before closing fonttbl block should be a closed bracket */
+          fontTbl -= 2;
+          ok(*fontTbl == '}', "spurious character '%02x' before \\fonttbl closing bracket\n", *fontTbl);
+
+          /* char after fonttbl block should be a crlf */
+          fontTbl += 2;
+          ok(*fontTbl == 0x0d && *(fontTbl+1) == 0x0a, "missing crlf after \\fonttbl block\n");
+      }
+  }
+  DestroyWindow(hwndRichEdit);
+}
+
+
 static void test_EM_SETTEXTEX(void)
 {
   HWND hwndRichEdit, parent;
@@ -6631,6 +6686,7 @@ START_TEST( editor )
   test_WM_PASTE();
   test_EM_STREAMIN();
   test_EM_STREAMOUT();
+  test_EM_STREAMOUT_FONTTBL();
   test_EM_StreamIn_Undo();
   test_EM_FORMATRANGE();
   test_unicode_conversions();
