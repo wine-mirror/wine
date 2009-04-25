@@ -627,10 +627,14 @@ sub source_scan_project_file($$$)
                         # Disables inline Expansion
                         $prj_target_cflags.="-fno-inline ";
                     } elsif (/^Ob1$/) {
-                    #    In-line Function Expansion
+                        #In-line Function Expansion
+                        $prj_target_cflags.="-finline-functions ";
                     } elsif (/^Ob2$/) {
                         # auto In-line Function Expansion
                         $prj_target_cflags.="-finline-functions ";
+                    } elsif (/^Ox$/) {
+                        # Use maximum optimization
+                        $prj_target_cflags.="-O3 ";
                     } elsif (/^Oy$/) {
                         # Frame-Pointer Omission
                         $prj_target_cflags.="-fomit-frame-pointer ";
