@@ -247,9 +247,25 @@ struct WS(ip_msfilter) {
 #ifndef USE_WS_PREFIX
 #define INET_ADDRSTRLEN         22
 #define INET6_ADDRSTRLEN        65
+#define IN6ADDR_ANY_INIT        { 0 }
+#define IN6ADDR_LOOPBACK_INIT   { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }
 #else
 #define WS_INET_ADDRSTRLEN      22
 #define WS_INET6_ADDRSTRLEN     65
+#define WS_IN6ADDR_ANY_INIT     { 0 }
+#define WS_IN6ADDR_LOOPBACK_INIT { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }
 #endif /* USE_WS_PREFIX */
+
+static inline BOOL WS(IN6_IS_ADDR_LOOPBACK) ( const IN6_ADDR *a )
+{
+    return (BOOL)((a->s6_words[0] == 0) &&
+                  (a->s6_words[1] == 0) &&
+                  (a->s6_words[2] == 0) &&
+                  (a->s6_words[3] == 0) &&
+                  (a->s6_words[4] == 0) &&
+                  (a->s6_words[5] == 0) &&
+                  (a->s6_words[6] == 0) &&
+                  (a->s6_words[7] == 0x0100));
+}
 
 #endif /* __WS2IPDEF__ */
