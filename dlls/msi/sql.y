@@ -367,7 +367,7 @@ data_type:
         }
   | TK_INT
         {
-            $$ = 2;
+            $$ = 2 | 0x400;
         }
   | TK_LONG
         {

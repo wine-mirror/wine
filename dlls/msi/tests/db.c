@@ -1144,7 +1144,7 @@ static void test_viewgetcolumninfo(void)
     /* check the type in _Columns */
     ok( 0x3dff == get_columns_table_type(hdb, "Properties", 1 ), "_columns table wrong\n");
     ok( 0x1d01 == get_columns_table_type(hdb, "Properties", 2 ), "_columns table wrong\n");
-    todo_wine ok( 0x1502 == get_columns_table_type(hdb, "Properties", 3 ), "_columns table wrong\n");
+    ok( 0x1502 == get_columns_table_type(hdb, "Properties", 3 ), "_columns table wrong\n");
 
     /* now try the names */
     rec = get_column_info( hdb, "select * from `Properties`", MSICOLINFO_NAMES );
