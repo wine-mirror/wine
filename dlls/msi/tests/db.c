@@ -1133,7 +1133,8 @@ static void test_viewgetcolumninfo(void)
 	    "  `Intvalue` INT, "
 	    "  `Integervalue` INTEGER, "
 	    "  `Shortvalue` SHORT, "
-	    "  `Longvalue` LONG "
+	    "  `Longvalue` LONG, "
+	    "  `Longcharvalue` LONGCHAR "
 	    "  PRIMARY KEY `Property`)" );
     ok( r == ERROR_SUCCESS , "Failed to create table\n" );
 
@@ -1147,6 +1148,7 @@ static void test_viewgetcolumninfo(void)
     ok( check_record( rec, 4, "I2"), "wrong record type\n");
     ok( check_record( rec, 5, "I2"), "wrong record type\n");
     ok( check_record( rec, 6, "I4"), "wrong record type\n");
+    todo_wine ok( check_record( rec, 7, "S0"), "wrong record type\n");
 
     MsiCloseHandle( rec );
 
@@ -1157,6 +1159,7 @@ static void test_viewgetcolumninfo(void)
     ok( 0x1502 == get_columns_table_type(hdb, "Properties", 4 ), "_columns table wrong\n");
     ok( 0x1502 == get_columns_table_type(hdb, "Properties", 5 ), "_columns table wrong\n");
     ok( 0x1104 == get_columns_table_type(hdb, "Properties", 6 ), "_columns table wrong\n");
+    todo_wine ok( 0x1d00 == get_columns_table_type(hdb, "Properties", 7 ), "_columns table wrong\n");
 
     /* now try the names */
     rec = get_column_info( hdb, "select * from `Properties`", MSICOLINFO_NAMES );
@@ -1168,6 +1171,7 @@ static void test_viewgetcolumninfo(void)
     ok( check_record( rec, 4, "Integervalue"), "wrong record type\n");
     ok( check_record( rec, 5, "Shortvalue"), "wrong record type\n");
     ok( check_record( rec, 6, "Longvalue"), "wrong record type\n");
+    ok( check_record( rec, 7, "Longcharvalue"), "wrong record type\n");
 
     MsiCloseHandle( rec );
 
