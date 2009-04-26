@@ -338,6 +338,72 @@ static DWORD MCIQTZ_mciStop(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 }
 
 /***************************************************************************
+ *                              MCIQTZ_mciGetDevCaps            [internal]
+ */
+static DWORD MCIQTZ_mciGetDevCaps(UINT wDevID, DWORD dwFlags, LPMCI_GETDEVCAPS_PARMS lpParms)
+{
+    WINE_MCIQTZ* wma;
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+
+    if (!lpParms)
+        return MCIERR_NULL_PARAMETER_BLOCK;
+
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+
+    if (!(dwFlags & MCI_STATUS_ITEM)) {
+        WARN("No capability item specified\n");
+        return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+
+    switch (lpParms->dwItem) {
+        case MCI_GETDEVCAPS_CAN_RECORD:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+            TRACE("MCI_GETDEVCAPS_CAN_RECORD = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_GETDEVCAPS_HAS_AUDIO:
+            lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+            TRACE("MCI_GETDEVCAPS_HAS_AUDIO = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_GETDEVCAPS_HAS_VIDEO:
+            lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+            TRACE("MCI_GETDEVCAPS_HAS_VIDEO = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_GETDEVCAPS_DEVICE_TYPE:
+            lpParms->dwReturn = MAKEMCIRESOURCE(MCI_DEVTYPE_DIGITAL_VIDEO, MCI_DEVTYPE_DIGITAL_VIDEO);
+            TRACE("MCI_GETDEVCAPS_DEVICE_TYPE = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_GETDEVCAPS_USES_FILES:
+            lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+            TRACE("MCI_GETDEVCAPS_USES_FILES = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_GETDEVCAPS_COMPOUND_DEVICE:
+            lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+            TRACE("MCI_GETDEVCAPS_COMPOUND_DEVICE = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_GETDEVCAPS_CAN_EJECT:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+            TRACE("MCI_GETDEVCAPS_EJECT = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_GETDEVCAPS_CAN_PLAY:
+            lpParms->dwReturn = MAKEMCIRESOURCE(TRUE, MCI_TRUE);
+            TRACE("MCI_GETDEVCAPS_CAN_PLAY = %08x\n", lpParms->dwReturn);
+            break;
+        case MCI_GETDEVCAPS_CAN_SAVE:
+            lpParms->dwReturn = MAKEMCIRESOURCE(FALSE, MCI_FALSE);
+            TRACE("MCI_GETDEVCAPS_CAN_SAVE = %08x\n", lpParms->dwReturn);
+            break;
+        default:
+            ERR("Unknown capability %08x\n", lpParms->dwItem);
+            return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+
+    return MCI_RESOURCE_RETURNED;
+}
+
+/***************************************************************************
  *                              MCIQTZ_mciStatus                [internal]
  */
 static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSW lpParms)
@@ -451,12 +517,12 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_PLAY:          return MCIQTZ_mciPlay      (dwDevID, dwParam1, (LPMCI_PLAY_PARMS)          dwParam2);
         case MCI_SEEK:          return MCIQTZ_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)          dwParam2);
         case MCI_STOP:          return MCIQTZ_mciStop      (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)       dwParam2);
+        case MCI_GETDEVCAPS:    return MCIQTZ_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)    dwParam2);
         case MCI_STATUS:        return MCIQTZ_mciStatus    (dwDevID, dwParam1, (LPMCI_DGV_STATUS_PARMSW)   dwParam2);
         case MCI_RECORD:
         case MCI_SET:
         case MCI_PAUSE:
         case MCI_RESUME:
-        case MCI_GETDEVCAPS:
         case MCI_INFO:
         case MCI_PUT:
         case MCI_WINDOW:
