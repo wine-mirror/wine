@@ -4206,8 +4206,8 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
 
         /* draw the horizontial lines for the rows */
         itemheight =  LISTVIEW_CalculateItemHeight(infoPtr);
-        rcItem.left = infoPtr->rcList.left + Origin.x;
-        rcItem.right = infoPtr->rcList.right + Origin.x;
+        rcItem.left   = infoPtr->rcList.left;
+        rcItem.right  = infoPtr->rcList.right;
         rcItem.bottom = rcItem.top = Origin.y - 1;
         MoveToEx(hdc, rcItem.left, rcItem.top, NULL);
         LineTo(hdc, rcItem.right, rcItem.top);
