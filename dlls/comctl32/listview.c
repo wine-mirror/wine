@@ -9057,8 +9057,20 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 		    }
 
 		    /* when shrinking the last column clear the now unused field */
-		    if (lpnmh->iItem == DPA_GetPtrCount(infoPtr->hdpaColumns) - 1 && dx < 0)
+		    if (lpnmh->iItem == DPA_GetPtrCount(infoPtr->hdpaColumns) - 1)
+		    {
+		        RECT right;
+
 		        rcCol.right -= dx;
+
+		        /* deal with right from rightmost column area */
+		        right.left = rcCol.right;
+		        right.top  = rcCol.top;
+		        right.bottom = rcCol.bottom;
+		        right.right = infoPtr->rcList.right;
+
+		        LISTVIEW_InvalidateRect(infoPtr, &right);
+		    }
 
 		    LISTVIEW_InvalidateRect(infoPtr, &rcCol);
 		}
