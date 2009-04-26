@@ -4365,8 +4365,7 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *prcEra
 enddraw:
     /* For LVS_EX_GRIDLINES go and draw lines */
     /*  This includes the case where there were *no* items */
-    if ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT &&
-        infoPtr->dwLvExStyle & LVS_EX_GRIDLINES)
+    if ((uView == LVS_REPORT) && infoPtr->dwLvExStyle & LVS_EX_GRIDLINES)
         LISTVIEW_RefreshReportGrid(infoPtr, hdc);
 
     if (cdmode & CDRF_NOTIFYPOSTPAINT)
