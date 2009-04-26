@@ -481,6 +481,90 @@ static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMS
     return 0;
 }
 
+/***************************************************************************
+ *                              MCIQTZ_mciWhere                 [internal]
+ */
+static DWORD MCIQTZ_mciWhere(UINT wDevID, DWORD dwFlags, LPMCI_DGV_RECT_PARMS lpParms)
+{
+    WINE_MCIQTZ* wma;
+    IVideoWindow* pVideoWindow;
+    HRESULT hr;
+    HWND hWnd;
+    RECT rc;
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+
+    if (!lpParms)
+        return MCIERR_NULL_PARAMETER_BLOCK;
+
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+
+    /* Find if there is a video stream and get the display window */
+    hr = IGraphBuilder_QueryInterface(wma->pgraph, &IID_IVideoWindow, (LPVOID*)&pVideoWindow);
+    if (FAILED(hr)) {
+        ERR("Cannot get IVideoWindow interface (hr = %x)\n", hr);
+        return MCIERR_INTERNAL;
+    }
+
+    hr = IVideoWindow_get_Owner(pVideoWindow, (OAHWND*)&hWnd);
+    IVideoWindow_Release(pVideoWindow);
+    if (FAILED(hr)) {
+        TRACE("No video stream, returning no window error\n");
+        return MCIERR_NO_WINDOW;
+    }
+
+    if (dwFlags & MCI_DGV_WHERE_SOURCE) {
+        if (dwFlags & MCI_DGV_WHERE_MAX)
+            FIXME("MCI_DGV_WHERE_SOURCE_MAX not supported yet\n");
+        else
+            FIXME("MCI_DGV_WHERE_SOURCE not supported yet\n");
+        return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+    if (dwFlags & MCI_DGV_WHERE_DESTINATION) {
+        if (dwFlags & MCI_DGV_WHERE_MAX) {
+            GetClientRect(hWnd, &rc);
+            TRACE("MCI_DGV_WHERE_DESTINATION_MAX %s\n", wine_dbgstr_rect(&rc));
+        } else {
+            FIXME("MCI_DGV_WHERE_DESTINATION not supported yet\n");
+            return MCIERR_UNRECOGNIZED_COMMAND;
+        }
+    }
+    if (dwFlags & MCI_DGV_WHERE_FRAME) {
+        if (dwFlags & MCI_DGV_WHERE_MAX)
+            FIXME("MCI_DGV_WHERE_FRAME_MAX not supported yet\n");
+        else
+            FIXME("MCI_DGV_WHERE_FRAME not supported yet\n");
+        return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+    if (dwFlags & MCI_DGV_WHERE_VIDEO) {
+        if (dwFlags & MCI_DGV_WHERE_MAX)
+            FIXME("MCI_DGV_WHERE_VIDEO_MAX not supported yet\n");
+        else
+            FIXME("MCI_DGV_WHERE_VIDEO not supported yet\n");
+        return MCIERR_UNRECOGNIZED_COMMAND;
+    }
+    if (dwFlags & MCI_DGV_WHERE_WINDOW) {
+        if (dwFlags & MCI_DGV_WHERE_MAX) {
+            GetWindowRect(GetDesktopWindow(), &rc);
+            TRACE("MCI_DGV_WHERE_WINDOW_MAX %s\n", wine_dbgstr_rect(&rc));
+        } else {
+            GetWindowRect(hWnd, &rc);
+            TRACE("MCI_DGV_WHERE_WINDOW %s\n", wine_dbgstr_rect(&rc));
+        }
+    }
+
+    /* In MCI, RECT structure is used differently: rc.right = width & rc.bottom = height
+     * So convert the normal RECT into a MCI RECT before returning */
+    lpParms->rc.left = rc.left;
+    lpParms->rc.top = rc.right;
+    lpParms->rc.right = rc.right - rc.left;
+    lpParms->rc.bottom = rc.bottom - rc.top;
+
+    return 0;
+}
+
 /*======================================================================*
  *                          MCI QTZ entry points                        *
  *======================================================================*/
@@ -519,6 +603,7 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_STOP:          return MCIQTZ_mciStop      (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)       dwParam2);
         case MCI_GETDEVCAPS:    return MCIQTZ_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)    dwParam2);
         case MCI_STATUS:        return MCIQTZ_mciStatus    (dwDevID, dwParam1, (LPMCI_DGV_STATUS_PARMSW)   dwParam2);
+        case MCI_WHERE:         return MCIQTZ_mciWhere     (dwDevID, dwParam1, (LPMCI_DGV_RECT_PARMS)      dwParam2);
         case MCI_RECORD:
         case MCI_SET:
         case MCI_PAUSE:
@@ -532,7 +617,6 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_REALIZE:
         case MCI_UNFREEZE:
         case MCI_UPDATE:
-        case MCI_WHERE:
         case MCI_STEP:
         case MCI_COPY:
         case MCI_CUT:
