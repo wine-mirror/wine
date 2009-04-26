@@ -4173,7 +4173,6 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
         LISTVIEW_GetHeaderRect(infoPtr, colRange.upper - 1, &rcItem);
         if (rcItem.left + Origin.x < rcClip.right) break;
     }
-    iterator_rangeitems(&j, colRange);
 
     if ((hPen = CreatePen( PS_SOLID, 1, comctl32_color.clr3dFace )))
     {
