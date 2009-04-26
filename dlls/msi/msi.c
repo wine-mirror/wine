@@ -407,7 +407,7 @@ UINT WINAPI MsiDetermineApplicablePatchesW(LPCWSTR szProductPackagePath,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT MsiDeterminePatchSequenceA(LPCSTR szProductCode, LPCSTR szUserSid,
+UINT WINAPI MsiDeterminePatchSequenceA(LPCSTR szProductCode, LPCSTR szUserSid,
     MSIINSTALLCONTEXT dwContext, DWORD cPatchInfo, PMSIPATCHSEQUENCEINFOA pPatchInfo)
 {
     FIXME("(%s, %s, %d, %d, %p): stub!\n", debugstr_a(szProductCode),
@@ -416,7 +416,7 @@ UINT MsiDeterminePatchSequenceA(LPCSTR szProductCode, LPCSTR szUserSid,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
-UINT MsiDeterminePatchSequenceW(LPCWSTR szProductCode, LPCWSTR szUserSid,
+UINT WINAPI MsiDeterminePatchSequenceW(LPCWSTR szProductCode, LPCWSTR szUserSid,
     MSIINSTALLCONTEXT dwContext, DWORD cPatchInfo, PMSIPATCHSEQUENCEINFOW pPatchInfo)
 {
     FIXME("(%s, %s, %d, %d, %p): stub!\n", debugstr_w(szProductCode),
