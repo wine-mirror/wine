@@ -4152,6 +4152,7 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
     POINT Origin;
     RANGE colRange;
     ITERATOR j;
+    BOOL rmost;
 
     TRACE("()\n");
 
@@ -4173,6 +4174,9 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
         LISTVIEW_GetHeaderRect(infoPtr, colRange.upper - 1, &rcItem);
         if (rcItem.left + Origin.x < rcClip.right) break;
     }
+    /* is right most vertical line visible? */
+    LISTVIEW_GetHeaderRect(infoPtr, DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, &rcItem);
+    rmost = (rcItem.right + Origin.x < rcClip.right);
 
     if ((hPen = CreatePen( PS_SOLID, 1, comctl32_color.clr3dFace )))
     {
@@ -4193,6 +4197,12 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
             LineTo (hdc, rcItem.left, rcItem.bottom);
         }
         iterator_destroy(&j);
+        /* draw rightmost grid line if visible */
+        if (rmost)
+        {
+            MoveToEx (hdc, rcItem.right, rcItem.top, NULL);
+            LineTo (hdc, rcItem.right, rcItem.bottom);
+        }
 
         /* draw the horizontial lines for the rows */
         itemheight =  LISTVIEW_CalculateItemHeight(infoPtr);
