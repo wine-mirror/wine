@@ -912,6 +912,7 @@ int main( int argc, char *argv[] )
             }
             break;
         case 'x':
+            report (R_TEXTMODE);
             if (!(extract = argv[++i]))
                 extract = ".\\wct";
 
