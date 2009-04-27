@@ -692,6 +692,7 @@ static LPURLCACHE_HEADER URLCacheContainer_LockIndex(URLCACHECONTAINER * pContai
      * of the memory mapped file */
     if (pHeader->dwFileSize != pContainer->file_size)
     {
+        UnmapViewOfFile( pHeader );
         URLCacheContainer_CloseIndex(pContainer);
         error = URLCacheContainer_OpenIndex(pContainer);
         if (error != ERROR_SUCCESS)
