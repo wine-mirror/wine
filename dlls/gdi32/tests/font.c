@@ -1785,7 +1785,9 @@ static void test_EnumFontFamilies(const char *font_name, INT font_charset)
             ok(efdw.total > 0, "fonts enumerated: NULL\n");
             ok(ansi_charset > 0, "NULL family should enumerate ANSI_CHARSET\n");
             ok(symbol_charset > 0, "NULL family should enumerate SYMBOL_CHARSET\n");
-            ok(russian_charset > 0, "NULL family should enumerate RUSSIAN_CHARSET\n");
+            ok(russian_charset > 0 ||
+               broken(russian_charset == 0), /* NT4 */
+               "NULL family should enumerate RUSSIAN_CHARSET\n");
         }
 
         efdw.total = 0;
