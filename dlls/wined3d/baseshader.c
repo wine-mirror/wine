@@ -1171,9 +1171,7 @@ static void shader_dump_ins_modifiers(const DWORD output)
 void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table)
 {
     const DWORD* pToken = pFunction;
-    const SHADER_OPCODE* curOpcode = NULL;
     DWORD shader_version;
-    DWORD opcode_token;
     DWORD i;
 
     TRACE("Parsing %p\n", pFunction);
@@ -1190,6 +1188,9 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
 
     while (WINED3DVS_END() != *pToken)
     {
+        struct wined3d_shader_instruction ins;
+        UINT param_size;
+
         if (shader_is_comment(*pToken)) /* comment */
         {
             DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
@@ -1198,128 +1199,117 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
             pToken += comment_len;
             continue;
         }
-        opcode_token = *pToken++;
-        curOpcode = shader_get_opcode(opcode_table, shader_version, opcode_token);
 
-        if (!curOpcode)
+        shader_sm1_read_opcode(&pToken, &ins, &param_size, opcode_table, shader_version);
+        if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
         {
-            int tokens_read;
-            FIXME("Unrecognized opcode: token=0x%08x\n", opcode_token);
-            tokens_read = shader_skip_unrecognized(pToken, shader_version);
-            pToken += tokens_read;
+            TRACE("Skipping unrecognized instruction.\n");
+            pToken += param_size;
+            continue;
+        }
+
+        if (ins.handler_idx == WINED3DSIH_DCL)
+        {
+            DWORD usage = *pToken;
+            DWORD param = *(pToken + 1);
+
+            shader_dump_decl_usage(usage, param, shader_version);
+            shader_dump_ins_modifiers(param);
+            TRACE(" ");
+            shader_dump_param(param, 0, 0, shader_version);
+            pToken += 2;
+        }
+        else if (ins.handler_idx == WINED3DSIH_DEF)
+        {
+            unsigned int offset = shader_get_float_offset(*pToken);
+
+            TRACE("def c%u = %f, %f, %f, %f", offset,
+                    *(const float *)(pToken + 1),
+                    *(const float *)(pToken + 2),
+                    *(const float *)(pToken + 3),
+                    *(const float *)(pToken + 4));
+            pToken += 5;
+        }
+        else if (ins.handler_idx == WINED3DSIH_DEFI)
+        {
+            TRACE("defi i%u = %d, %d, %d, %d", *pToken & WINED3DSP_REGNUM_MASK,
+                    *(pToken + 1),
+                    *(pToken + 2),
+                    *(pToken + 3),
+                    *(pToken + 4));
+            pToken += 5;
+        }
+        else if (ins.handler_idx == WINED3DSIH_DEFB)
+        {
+            TRACE("defb b%u = %s", *pToken & WINED3DSP_REGNUM_MASK,
+                    *(pToken + 1)? "true": "false");
+            pToken += 2;
         }
         else
         {
-            if (curOpcode->opcode == WINED3DSIO_DCL)
-            {
-                DWORD usage = *pToken;
-                DWORD param = *(pToken + 1);
+            DWORD param, addr_token = 0;
+            int tokens_read;
 
-                shader_dump_decl_usage(usage, param, shader_version);
+            /* Print out predication source token first - it follows
+             * the destination token. */
+            if (ins.predicate)
+            {
+                TRACE("(");
+                shader_dump_param(*(pToken + 2), 0, 1, shader_version);
+                TRACE(") ");
+            }
+
+            /* PixWin marks instructions with the coissue flag with a '+' */
+            if (ins.coissue) TRACE("+");
+
+            TRACE("%s", shader_opcode_names[ins.handler_idx]);
+
+            if (ins.handler_idx == WINED3DSIH_IFC
+                    || ins.handler_idx == WINED3DSIH_BREAKC)
+            {
+                switch (ins.flags)
+                {
+                    case COMPARISON_GT: TRACE("_gt"); break;
+                    case COMPARISON_EQ: TRACE("_eq"); break;
+                    case COMPARISON_GE: TRACE("_ge"); break;
+                    case COMPARISON_LT: TRACE("_lt"); break;
+                    case COMPARISON_NE: TRACE("_ne"); break;
+                    case COMPARISON_LE: TRACE("_le"); break;
+                    default: TRACE("_(%u)", ins.flags);
+                }
+            }
+            else if (ins.handler_idx == WINED3DSIH_TEX
+                    && shader_version >= WINED3DPS_VERSION(2,0)
+                    && (ins.flags & WINED3DSI_TEXLD_PROJECT))
+            {
+                TRACE("p");
+            }
+
+            /* Destination token */
+            if (ins.dst_count)
+            {
+                tokens_read = shader_get_param(pToken, shader_version, &param, &addr_token);
+                pToken += tokens_read;
+
                 shader_dump_ins_modifiers(param);
                 TRACE(" ");
-                shader_dump_param(param, 0, 0, shader_version);
-                pToken += 2;
+                shader_dump_param(param, addr_token, 0, shader_version);
             }
-            else if (curOpcode->opcode == WINED3DSIO_DEF)
+
+            /* Predication token - already printed out, just skip it */
+            if (ins.predicate) ++pToken;
+
+            /* Other source tokens */
+            for (i = ins.dst_count; i < (ins.dst_count + ins.src_count); ++i)
             {
-                unsigned int offset = shader_get_float_offset(*pToken);
+                tokens_read = shader_get_param(pToken, shader_version, &param, &addr_token);
+                pToken += tokens_read;
 
-                TRACE("def c%u = %f, %f, %f, %f", offset,
-                        *(const float *)(pToken + 1),
-                        *(const float *)(pToken + 2),
-                        *(const float *)(pToken + 3),
-                        *(const float *)(pToken + 4));
-                pToken += 5;
+                TRACE((i == 0)? " " : ", ");
+                shader_dump_param(param, addr_token, 1, shader_version);
             }
-            else if (curOpcode->opcode == WINED3DSIO_DEFI)
-            {
-                TRACE("defi i%u = %d, %d, %d, %d", *pToken & WINED3DSP_REGNUM_MASK,
-                        *(pToken + 1),
-                        *(pToken + 2),
-                        *(pToken + 3),
-                        *(pToken + 4));
-                pToken += 5;
-            }
-            else if (curOpcode->opcode == WINED3DSIO_DEFB)
-            {
-                TRACE("defb b%u = %s", *pToken & WINED3DSP_REGNUM_MASK,
-                        *(pToken + 1)? "true": "false");
-                pToken += 2;
-            }
-            else
-            {
-                DWORD param, addr_token = 0;
-                int tokens_read;
-
-                /* Print out predication source token first - it follows
-                 * the destination token. */
-                if (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED)
-                {
-                    TRACE("(");
-                    shader_dump_param(*(pToken + 2), 0, 1, shader_version);
-                    TRACE(") ");
-                }
-                if (opcode_token & WINED3DSI_COISSUE)
-                {
-                    /* PixWin marks instructions with the coissue flag with a '+' */
-                    TRACE("+");
-                }
-
-                TRACE("%s", shader_opcode_names[curOpcode->handler_idx]);
-
-                if (curOpcode->opcode == WINED3DSIO_IFC
-                        || curOpcode->opcode == WINED3DSIO_BREAKC)
-                {
-                    DWORD op = (opcode_token & WINED3D_OPCODESPECIFICCONTROL_MASK) >> WINED3D_OPCODESPECIFICCONTROL_SHIFT;
-
-                    switch (op)
-                    {
-                        case COMPARISON_GT: TRACE("_gt"); break;
-                        case COMPARISON_EQ: TRACE("_eq"); break;
-                        case COMPARISON_GE: TRACE("_ge"); break;
-                        case COMPARISON_LT: TRACE("_lt"); break;
-                        case COMPARISON_NE: TRACE("_ne"); break;
-                        case COMPARISON_LE: TRACE("_le"); break;
-                        default: TRACE("_(%u)", op);
-                    }
-                }
-                else if (curOpcode->opcode == WINED3DSIO_TEX
-                        && shader_version >= WINED3DPS_VERSION(2,0)
-                        && (opcode_token & (WINED3DSI_TEXLD_PROJECT << WINED3D_OPCODESPECIFICCONTROL_SHIFT)))
-                {
-                    TRACE("p");
-                }
-
-                /* Destination token */
-                if (curOpcode->dst_token)
-                {
-                    tokens_read = shader_get_param(pToken, shader_version, &param, &addr_token);
-                    pToken += tokens_read;
-
-                    shader_dump_ins_modifiers(param);
-                    TRACE(" ");
-                    shader_dump_param(param, addr_token, 0, shader_version);
-                }
-
-                /* Predication token - already printed out, just skip it */
-                if (opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED)
-                {
-                    pToken++;
-                }
-
-                /* Other source tokens */
-                for (i = curOpcode->dst_token; i < curOpcode->num_params; ++i)
-                {
-                    tokens_read = shader_get_param(pToken, shader_version, &param, &addr_token);
-                    pToken += tokens_read;
-
-                    TRACE((i == 0)? " " : ", ");
-                    shader_dump_param(param, addr_token, 1, shader_version);
-                }
-            }
-            TRACE("\n");
         }
+        TRACE("\n");
     }
 }
 
