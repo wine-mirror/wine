@@ -1371,12 +1371,9 @@ static void test_WSAAddressToStringA(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_1, sizeof(addr6_1));
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-  todo_wine
-  {
     ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !strcmp( address6, expect6_1 ), "Expected: %s, got: %s\n", expect6_1, address6 );
     ok( len == sizeof(expect6_1), "Got size %d\n", len);
-  }
 
     /* Test a longer IPv6 address */
     len = sizeof(address6);
@@ -1387,12 +1384,9 @@ static void test_WSAAddressToStringA(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_2, sizeof(addr6_2));
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-  todo_wine
-  {
     ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !strcmp( address6, expect6_2 ), "Expected: %s, got: %s\n", expect6_2, address6 );
     ok( len == sizeof(expect6_2), "Got size %d\n", len);
-  }
 
     /* Test IPv6 address and port number */
     len = sizeof(address6);
@@ -1403,9 +1397,9 @@ static void test_WSAAddressToStringA(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
   todo_wine
   {
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !strcmp( address6, expect6_3 ), "Expected: %s, got: %s\n", expect6_3, address6 );
     ok( len == sizeof(expect6_3), "Got size %d\n", len);
   }
@@ -1419,9 +1413,9 @@ static void test_WSAAddressToStringA(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
   todo_wine
   {
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !strcmp( address6, expect6_3_2 ), "Expected: %s, got: %s\n", expect6_3_2, address6 );
     ok( len == sizeof(expect6_3_2), "Got size %d\n", len);
   }
@@ -1435,9 +1429,9 @@ static void test_WSAAddressToStringA(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
   todo_wine
   {
-    ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !strcmp( address6, expect6_3_3 ), "Expected: %s, got: %s\n", expect6_3_3, address6 );
     ok( len == sizeof(expect6_3_3), "Got size %d\n", len);
   }
