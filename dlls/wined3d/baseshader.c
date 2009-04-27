@@ -128,8 +128,7 @@ static const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *opcode_table,
 {
     DWORD i = 0;
 
-    /** TODO: use dichotomic search */
-    while (opcode_table[i].name)
+    while (opcode_table[i].handler_idx != WINED3DSIH_TABLE_SIZE)
     {
         if ((code & WINED3DSI_OPCODE_MASK) == opcode_table[i].opcode
                 && shader_version >= opcode_table[i].min_version
@@ -205,6 +204,93 @@ static void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_inst
     ins->src_count = opcode_info->num_params - opcode_info->dst_token;
     *param_size = shader_skip_opcode(opcode_info, opcode_token, shader_version);
 }
+
+static const char *shader_opcode_names[] =
+{
+    /* WINED3DSIH_ABS           */ "abs",
+    /* WINED3DSIH_ADD           */ "add",
+    /* WINED3DSIH_BEM           */ "bem",
+    /* WINED3DSIH_BREAK         */ "break",
+    /* WINED3DSIH_BREAKC        */ "breakc",
+    /* WINED3DSIH_BREAKP        */ "breakp",
+    /* WINED3DSIH_CALL          */ "call",
+    /* WINED3DSIH_CALLNZ        */ "callnz",
+    /* WINED3DSIH_CMP           */ "cmp",
+    /* WINED3DSIH_CND           */ "cnd",
+    /* WINED3DSIH_CRS           */ "crs",
+    /* WINED3DSIH_DCL           */ "dcl",
+    /* WINED3DSIH_DEF           */ "def",
+    /* WINED3DSIH_DEFB          */ "defb",
+    /* WINED3DSIH_DEFI          */ "defi",
+    /* WINED3DSIH_DP2ADD        */ "dp2add",
+    /* WINED3DSIH_DP3           */ "dp3",
+    /* WINED3DSIH_DP4           */ "dp4",
+    /* WINED3DSIH_DST           */ "dst",
+    /* WINED3DSIH_DSX           */ "dsx",
+    /* WINED3DSIH_DSY           */ "dsy",
+    /* WINED3DSIH_ELSE          */ "else",
+    /* WINED3DSIH_ENDIF         */ "endif",
+    /* WINED3DSIH_ENDLOOP       */ "endloop",
+    /* WINED3DSIH_ENDREP        */ "endrep",
+    /* WINED3DSIH_EXP           */ "exp",
+    /* WINED3DSIH_EXPP          */ "expp",
+    /* WINED3DSIH_FRC           */ "frc",
+    /* WINED3DSIH_IF            */ "if",
+    /* WINED3DSIH_IFC           */ "ifc",
+    /* WINED3DSIH_LABEL         */ "label",
+    /* WINED3DSIH_LIT           */ "lit",
+    /* WINED3DSIH_LOG           */ "log",
+    /* WINED3DSIH_LOGP          */ "logp",
+    /* WINED3DSIH_LOOP          */ "loop",
+    /* WINED3DSIH_LRP           */ "lrp",
+    /* WINED3DSIH_M3x2          */ "m3x2",
+    /* WINED3DSIH_M3x3          */ "m3x3",
+    /* WINED3DSIH_M3x4          */ "m3x4",
+    /* WINED3DSIH_M4x3          */ "m4x3",
+    /* WINED3DSIH_M4x4          */ "m4x4",
+    /* WINED3DSIH_MAD           */ "mad",
+    /* WINED3DSIH_MAX           */ "max",
+    /* WINED3DSIH_MIN           */ "min",
+    /* WINED3DSIH_MOV           */ "mov",
+    /* WINED3DSIH_MOVA          */ "mova",
+    /* WINED3DSIH_MUL           */ "mul",
+    /* WINED3DSIH_NOP           */ "nop",
+    /* WINED3DSIH_NRM           */ "nrm",
+    /* WINED3DSIH_PHASE         */ "phase",
+    /* WINED3DSIH_POW           */ "pow",
+    /* WINED3DSIH_RCP           */ "rcp",
+    /* WINED3DSIH_REP           */ "rep",
+    /* WINED3DSIH_RET           */ "ret",
+    /* WINED3DSIH_RSQ           */ "rsq",
+    /* WINED3DSIH_SETP          */ "setp",
+    /* WINED3DSIH_SGE           */ "sge",
+    /* WINED3DSIH_SGN           */ "sgn",
+    /* WINED3DSIH_SINCOS        */ "sincos",
+    /* WINED3DSIH_SLT           */ "slt",
+    /* WINED3DSIH_SUB           */ "sub",
+    /* WINED3DSIH_TEX           */ "texld",
+    /* WINED3DSIH_TEXBEM        */ "texbem",
+    /* WINED3DSIH_TEXBEML       */ "texbeml",
+    /* WINED3DSIH_TEXCOORD      */ "texcrd",
+    /* WINED3DSIH_TEXDEPTH      */ "texdepth",
+    /* WINED3DSIH_TEXDP3        */ "texdp3",
+    /* WINED3DSIH_TEXDP3TEX     */ "texdp3tex",
+    /* WINED3DSIH_TEXKILL       */ "texkill",
+    /* WINED3DSIH_TEXLDD        */ "texldd",
+    /* WINED3DSIH_TEXLDL        */ "texldl",
+    /* WINED3DSIH_TEXM3x2DEPTH  */ "texm3x2depth",
+    /* WINED3DSIH_TEXM3x2PAD    */ "texm3x2pad",
+    /* WINED3DSIH_TEXM3x2TEX    */ "texm3x2tex",
+    /* WINED3DSIH_TEXM3x3       */ "texm3x3",
+    /* WINED3DSIH_TEXM3x3DIFF   */ "texm3x3diff",
+    /* WINED3DSIH_TEXM3x3PAD    */ "texm3x3pad",
+    /* WINED3DSIH_TEXM3x3SPEC   */ "texm3x3spec",
+    /* WINED3DSIH_TEXM3x3TEX    */ "texm3x3tex",
+    /* WINED3DSIH_TEXM3x3VSPEC  */ "texm3x3vspec",
+    /* WINED3DSIH_TEXREG2AR     */ "texreg2ar",
+    /* WINED3DSIH_TEXREG2GB     */ "texreg2gb",
+    /* WINED3DSIH_TEXREG2RGB    */ "texreg2rgb",
+};
 
 static inline BOOL shader_is_version_token(DWORD token) {
     return shader_is_pshader_version(token) ||
@@ -1180,7 +1266,7 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
                     TRACE("+");
                 }
 
-                TRACE("%s", curOpcode->name);
+                TRACE("%s", shader_opcode_names[curOpcode->handler_idx]);
 
                 if (curOpcode->opcode == WINED3DSIO_IFC
                         || curOpcode->opcode == WINED3DSIO_BREAKC)

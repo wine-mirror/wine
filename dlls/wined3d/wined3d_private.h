@@ -435,7 +435,6 @@ typedef struct shader_reg_maps
 typedef struct SHADER_OPCODE
 {
     unsigned int opcode;
-    const char *name;
     char dst_token;
     CONST UINT num_params;
     enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
