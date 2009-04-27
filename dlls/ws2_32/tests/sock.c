@@ -56,7 +56,8 @@
    } while (0);
 
 /* Function pointers */
-static HMODULE hws2_32 = 0;
+static void   (WINAPI  *pFreeAddrInfoW)(PADDRINFOW) = 0;
+static int    (WINAPI  *pGetAddrInfoW)(LPCWSTR,LPCWSTR,const ADDRINFOW *,PADDRINFOW *) = 0;
 static PCSTR  (WINAPI  *pInetNtop)(INT,LPVOID,LPSTR,ULONG) = 0;
 
 /**************** Structs and typedefs ***************/
@@ -841,6 +842,11 @@ static void Init (void)
 {
     WORD ver = MAKEWORD (2, 2);
     WSADATA data;
+    HMODULE hws2_32 = GetModuleHandle("ws2_32.dll");
+
+    pFreeAddrInfoW = (void *)GetProcAddress(hws2_32, "FreeAddrInfoW");
+    pGetAddrInfoW = (void *)GetProcAddress(hws2_32, "GetAddrInfoW");
+    pInetNtop = (void *)GetProcAddress(hws2_32, "inet_ntop");
 
     ok ( WSAStartup ( ver, &data ) == 0, "WSAStartup failed\n" );
     tls = TlsAlloc();
@@ -2016,9 +2022,6 @@ static void test_addr_to_print(void)
     u_char addr3_Num[16] = {0x20,0x30,0xa4,0xb1};
     PCSTR addr3_Str = "2030:a4b1::";
 
-    hws2_32 = GetModuleHandle("ws2_32.dll");
-    pInetNtop = (void *)GetProcAddress(hws2_32, "inet_ntop");
-
     in.s_addr = addr0_Num;
 
     pdst = inet_ntoa(*((struct in_addr*)&in.s_addr));
@@ -2382,22 +2385,28 @@ static void test_GetAddrInfoW(void)
     int ret;
     ADDRINFOW *result, hint;
 
+    if (!pGetAddrInfoW || !pFreeAddrInfoW)
+    {
+        win_skip("GetAddrInfoW and/or FreeAddrInfoW not present\n");
+        return;
+    }
+
     memset(&hint, 0, sizeof(ADDRINFOW));
 
-    ret = GetAddrInfoW(NULL, NULL, NULL, &result);
+    ret = pGetAddrInfoW(NULL, NULL, NULL, &result);
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
 
-    ret = GetAddrInfoW(localhost, NULL, NULL, &result);
+    ret = pGetAddrInfoW(localhost, NULL, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    FreeAddrInfoW(result);
+    pFreeAddrInfoW(result);
 
-    ret = GetAddrInfoW(localhost, port, NULL, &result);
+    ret = pGetAddrInfoW(localhost, port, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    FreeAddrInfoW(result);
+    pFreeAddrInfoW(result);
 
-    ret = GetAddrInfoW(localhost, port, &hint, &result);
+    ret = pGetAddrInfoW(localhost, port, &hint, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    FreeAddrInfoW(result);
+    pFreeAddrInfoW(result);
 }
 
 /**************** Main program  ***************/
