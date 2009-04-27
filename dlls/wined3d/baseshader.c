@@ -191,6 +191,18 @@ static void shader_parse_src_param(DWORD param, const struct wined3d_shader_src_
     src->rel_addr = rel_addr;
 }
 
+static void shader_parse_dst_param(DWORD param, const struct wined3d_shader_src_param *rel_addr,
+        struct wined3d_shader_dst_param *dst)
+{
+    dst->register_type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
+            | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
+    dst->register_idx = param & WINED3DSP_REGNUM_MASK;
+    dst->write_mask = param & WINED3DSP_WRITEMASK_ALL;
+    dst->modifiers = (param & WINED3DSP_DSTMOD_MASK) >> WINED3DSP_DSTMOD_SHIFT;
+    dst->shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+    dst->rel_addr = rel_addr;
+}
+
 static void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size,
         const SHADER_OPCODE *opcode_table, DWORD shader_version)
 {
@@ -230,6 +242,23 @@ static void shader_sm1_read_src_param(const DWORD **ptr, struct wined3d_shader_s
     else
     {
         shader_parse_src_param(token, NULL, src_param);
+    }
+}
+
+static void shader_sm1_read_dst_param(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
+        struct wined3d_shader_src_param *dst_rel_addr, DWORD shader_version)
+{
+    DWORD token, addr_token;
+
+    *ptr += shader_get_param(*ptr, shader_version, &token, &addr_token);
+    if (token & WINED3DSHADER_ADDRMODE_RELATIVE)
+    {
+        shader_parse_src_param(addr_token, NULL, dst_rel_addr);
+        shader_parse_dst_param(token, dst_rel_addr, dst_param);
+    }
+    else
+    {
+        shader_parse_dst_param(token, NULL, dst_param);
     }
 }
 
@@ -437,18 +466,6 @@ static void shader_delete_constant_list(struct list* clist) {
         HeapFree(GetProcessHeap(), 0, constant);
     }
     list_init(clist);
-}
-
-static void shader_parse_dst_param(DWORD param, const struct wined3d_shader_src_param *rel_addr,
-        struct wined3d_shader_dst_param *dst)
-{
-    dst->register_type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
-            | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
-    dst->register_idx = param & WINED3DSP_REGNUM_MASK;
-    dst->write_mask = param & WINED3DSP_WRITEMASK_ALL;
-    dst->modifiers = (param & WINED3DSP_DSTMOD_MASK) >> WINED3DSP_DSTMOD_SHIFT;
-    dst->shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    dst->rel_addr = rel_addr;
 }
 
 /* Note that this does not count the loop register
@@ -1115,21 +1132,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         }
 
         /* Destination token */
-        if (ins.dst_count)
-        {
-            DWORD param, addr_param;
-            pToken += shader_get_param(pToken, shader_version, &param, &addr_param);
-
-            if (param & WINED3DSHADER_ADDRMODE_RELATIVE)
-            {
-                shader_parse_src_param(addr_param, NULL, &dst_rel_addr);
-                shader_parse_dst_param(param, &dst_rel_addr, &dst_param);
-            }
-            else
-            {
-                shader_parse_dst_param(param, NULL, &dst_param);
-            }
-        }
+        if (ins.dst_count) shader_sm1_read_dst_param(&pToken, &dst_param, &dst_rel_addr, shader_version);
 
         /* Predication token */
         if (ins.predicate) ins.predicate = *pToken++;
