@@ -654,7 +654,7 @@ VOID DIALOG_EditTimeDate(VOID)
 
     GetLocalTime(&st);
 
-    GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, szDate, MAX_STRING_LEN);
+    GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, szDate, MAX_STRING_LEN);
     SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)szDate);
 
     SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)spaceW);
