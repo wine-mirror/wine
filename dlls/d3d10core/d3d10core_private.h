@@ -39,6 +39,7 @@
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
+#define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
 
 /* TRACE helper functions */
 const char *debug_d3d10_primitive_topology(D3D10_PRIMITIVE_TOPOLOGY topology);
@@ -149,7 +150,11 @@ struct d3d10_pixel_shader
 {
     const struct ID3D10PixelShaderVtbl *vtbl;
     LONG refcount;
+
+    IWineD3DPixelShader *wined3d_shader;
 };
+
+HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, const DWORD **shader_code);
 
 /* Layered device */
 enum dxgi_device_layer_id

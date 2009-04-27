@@ -24,6 +24,37 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
+static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
+{
+    const DWORD **shader_data = ctx;
+    char tag_str[5];
+
+    switch(tag)
+    {
+        case TAG_SHDR:
+            *shader_data = (const DWORD *)data;
+            return S_OK;
+
+        default:
+            memcpy(tag_str, &tag, 4);
+            tag_str[4] = '\0';
+            FIXME("Unhandled chunk %s\n", tag_str);
+            return S_OK;
+    }
+}
+
+HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, const DWORD **shader_code)
+{
+    HRESULT hr;
+
+    hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, shader_code);
+    if (!*shader_code) hr = E_FAIL;
+
+    if (FAILED(hr)) ERR("Failed to parse shader, hr %#x\n", hr);
+
+    return hr;
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_QueryInterface(ID3D10VertexShader *iface,

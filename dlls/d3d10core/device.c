@@ -1023,10 +1023,20 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device *iface,
         const void *byte_code, SIZE_T byte_code_length, ID3D10PixelShader **shader)
 {
+    struct d3d10_device *This = (struct d3d10_device *)iface;
     struct d3d10_pixel_shader *object;
+    const DWORD *shader_code;
+    HRESULT hr;
 
-    FIXME("iface %p, byte_code %p, byte_code_length %lu, shader %p stub!\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p\n",
             iface, byte_code, byte_code_length, shader);
+
+    hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_code);
+    if (FAILED(hr))
+    {
+        ERR("Failed to extract shader, hr %#x\n", hr);
+        return hr;
+    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1037,6 +1047,15 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device *if
 
     object->vtbl = &d3d10_pixel_shader_vtbl;
     object->refcount = 1;
+
+    hr = IWineD3DDevice_CreatePixelShader(This->wined3d_device,
+            shader_code, &object->wined3d_shader, (IUnknown *)object);
+    if (FAILED(hr))
+    {
+        ERR("CreatePixelShader failed, hr %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     *shader = (ID3D10PixelShader *)object;
 
