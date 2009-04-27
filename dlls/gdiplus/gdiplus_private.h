@@ -52,6 +52,8 @@ extern void calc_curve_bezier(CONST GpPointF *pts, REAL tension, REAL *x1,
 extern void calc_curve_bezier_endp(REAL xend, REAL yend, REAL xadj, REAL yadj,
     REAL tension, REAL *x, REAL *y);
 
+extern void free_installed_fonts(void);
+
 extern BOOL lengthen_path(GpPath *path, INT len);
 
 extern GpStatus trace_path(GpGraphics *graphics, GpPath *path);
@@ -245,6 +247,7 @@ struct GpStringFormat{
 struct GpFontCollection{
     GpFontFamily **FontFamilies;
     INT count;
+    INT allocated;
 };
 
 struct GpFontFamily{

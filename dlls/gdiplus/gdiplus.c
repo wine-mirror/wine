@@ -64,6 +64,10 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
         break;
+
+    case DLL_PROCESS_DETACH:
+        free_installed_fonts();
+        break;
     }
     return TRUE;
 }
