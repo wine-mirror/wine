@@ -727,13 +727,13 @@ static const KeyEntry EmacsKeyMapExtended[] =
 
 static const KeyMap EmacsKeyMap[] =
 {
-    {0x00000000, 1, StdKeyMap},
-    {0x00000001, 1, EmacsKeyMapAlt},	/* left  alt  */
-    {0x00000002, 1, EmacsKeyMapAlt},	/* right alt  */
-    {0x00000004, 1, EmacsKeyMapCtrl},	/* left  ctrl */
-    {0x00000008, 1, EmacsKeyMapCtrl},	/* right ctrl */
-    {0x00000100, 0, EmacsKeyMapExtended},
-    {0,		 0, 0}
+    {0,                  1, StdKeyMap},
+    {RIGHT_ALT_PRESSED,  1, EmacsKeyMapAlt},	/* right alt  */
+    {LEFT_ALT_PRESSED,   1, EmacsKeyMapAlt},	/* left  alt  */
+    {RIGHT_CTRL_PRESSED, 1, EmacsKeyMapCtrl},	/* right ctrl */
+    {LEFT_CTRL_PRESSED,  1, EmacsKeyMapCtrl},	/* left  ctrl */
+    {ENHANCED_KEY,       0, EmacsKeyMapExtended},
+    {0,                  0, NULL}
 };
 
 static const KeyEntry Win32KeyMapExtended[] =
@@ -758,12 +758,12 @@ static const KeyEntry Win32KeyMapCtrlExtended[] =
 
 static const KeyMap Win32KeyMap[] =
 {
-    {0x00000000, 1, StdKeyMap},
-    {0x00000000, 0, Win32ExtraStdKeyMap},
-    {0x00000100, 0, Win32KeyMapExtended},
-    {0x00000104, 0, Win32KeyMapCtrlExtended},
-    {0x00000108, 0, Win32KeyMapCtrlExtended},
-    {0,		 0, 0}
+    {0,                                 1, StdKeyMap},
+    {0,                                 0, Win32ExtraStdKeyMap},
+    {ENHANCED_KEY,                      0, Win32KeyMapExtended},
+    {ENHANCED_KEY | RIGHT_CTRL_PRESSED, 0, Win32KeyMapCtrlExtended},
+    {ENHANCED_KEY | LEFT_CTRL_PRESSED,  0, Win32KeyMapCtrlExtended},
+    {0,                                 0, NULL}
 };
 #undef CTRL
 
