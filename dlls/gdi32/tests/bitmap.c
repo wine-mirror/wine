@@ -1441,6 +1441,13 @@ static void test_GetDIBits(void)
         0,0,0,0, 0xff,0xff,0,0, 0,0,0,0, 0xff,0xff,0,0,
         0,0,0,0, 0xff,0xff,0,0, 0,0,0,0, 0xff,0xff,0,0
     };
+    static const BYTE dib_bits_1_9x[16 * 4] =
+    {
+        0,0,0xaa,0xaa, 0xff,0xff,0xaa,0xaa, 0,0,0xaa,0xaa, 0xff,0xff,0xaa,0xaa,
+        0,0,0xaa,0xaa, 0xff,0xff,0xaa,0xaa, 0,0,0xaa,0xaa, 0xff,0xff,0xaa,0xaa,
+        0,0,0xaa,0xaa, 0xff,0xff,0xaa,0xaa, 0,0,0xaa,0xaa, 0xff,0xff,0xaa,0xaa,
+        0,0,0xaa,0xaa, 0xff,0xff,0xaa,0xaa, 0,0,0xaa,0xaa, 0xff,0xff,0xaa,0xaa
+    };
     /* 2-bytes aligned 24-bit bitmap data: 16x16 */
     static const BYTE bmp_bits_24[16 * 16*3] =
     {
@@ -1592,15 +1599,21 @@ static void test_GetDIBits(void)
     }
 
     /* returned bits are DWORD aligned and upside down */
-    ok(!memcmp(buf, dib_bits_1, sizeof(dib_bits_1)), "DIB bits don't match\n");
+    ok(!memcmp(buf, dib_bits_1, sizeof(dib_bits_1)) ||
+       broken(!memcmp(buf, dib_bits_1_9x, sizeof(dib_bits_1_9x))), /* Win9x, WinME */
+       "DIB bits don't match\n");
 
     /* Test the palette indices */
     memset(bi->bmiColors, 0xAA, sizeof(RGBQUAD) * 256);
     SetLastError(0xdeadbeef);
     lines = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_PAL_COLORS);
-
-    ok(((WORD*)bi->bmiColors)[0] == 0, "Color 0 is %d\n", ((WORD*)bi->bmiColors)[0]);
-    ok(((WORD*)bi->bmiColors)[1] == 1, "Color 1 is %d\n", ((WORD*)bi->bmiColors)[1]);
+    if (lines == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+        win_skip("Win9x/WinMe doesn't handle 0 for the number of scan lines\n");
+    else
+    {
+        ok(((WORD*)bi->bmiColors)[0] == 0, "Color 0 is %d\n", ((WORD*)bi->bmiColors)[0]);
+        ok(((WORD*)bi->bmiColors)[1] == 1, "Color 1 is %d\n", ((WORD*)bi->bmiColors)[1]);
+    }
     for (i = 2; i < 256; i++)
         ok(((WORD*)bi->bmiColors)[i] == 0xAAAA, "Color %d is %d\n", i, ((WORD*)bi->bmiColors)[1]);
 
@@ -1708,15 +1721,21 @@ static void test_GetDIBits(void)
 
     /* returned bits are DWORD aligned and upside down */
 todo_wine
-    ok(!memcmp(buf, dib_bits_1, sizeof(dib_bits_1)), "DIB bits don't match\n");
+    ok(!memcmp(buf, dib_bits_1, sizeof(dib_bits_1)) ||
+       broken(!memcmp(buf, dib_bits_1_9x, sizeof(dib_bits_1_9x))), /* Win9x, WinME */
+       "DIB bits don't match\n");
 
     /* Test the palette indices */
     memset(bi->bmiColors, 0xAA, sizeof(RGBQUAD) * 256);
     SetLastError(0xdeadbeef);
     lines = GetDIBits(hdc, hbmp, 0, 0, NULL, bi, DIB_PAL_COLORS);
-
-    ok(((WORD*)bi->bmiColors)[0] == 0, "Color 0 is %d\n", ((WORD*)bi->bmiColors)[0]);
-    ok(((WORD*)bi->bmiColors)[1] == 1, "Color 1 is %d\n", ((WORD*)bi->bmiColors)[1]);
+    if (lines == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
+        win_skip("Win9x/WinMe doesn't handle 0 for the number of scan lines\n");
+    else
+    {
+        ok(((WORD*)bi->bmiColors)[0] == 0, "Color 0 is %d\n", ((WORD*)bi->bmiColors)[0]);
+        ok(((WORD*)bi->bmiColors)[1] == 1, "Color 1 is %d\n", ((WORD*)bi->bmiColors)[1]);
+    }
     for (i = 2; i < 256; i++)
         ok(((WORD*)bi->bmiColors)[i] == 0xAAAA, "Color %d is %d\n", i, ((WORD*)bi->bmiColors)[i]);
 
