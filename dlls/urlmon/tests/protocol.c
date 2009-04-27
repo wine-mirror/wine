@@ -671,7 +671,9 @@ static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HR
     if(SUCCEEDED(hrResult) || tested_protocol == FTP_TEST)
         ok(dwError == ERROR_SUCCESS, "dwError = %d, expected ERROR_SUCCESS\n", dwError);
     else
-        ok(dwError != ERROR_SUCCESS, "dwError == ERROR_SUCCESS\n");
+        ok(dwError != ERROR_SUCCESS ||
+           broken(tested_protocol == MK_TEST), /* Win9x, WinME and NT4 */
+           "dwError == ERROR_SUCCESS\n");
     ok(!szResult, "szResult != NULL\n");
 
     return S_OK;
