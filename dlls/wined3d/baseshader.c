@@ -180,6 +180,17 @@ static int shader_skip_unrecognized(const DWORD *ptr, DWORD shader_version)
     return tokens_read;
 }
 
+static void shader_parse_src_param(DWORD param, const struct wined3d_shader_src_param *rel_addr,
+        struct wined3d_shader_src_param *src)
+{
+    src->register_type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
+            | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
+    src->register_idx = param & WINED3DSP_REGNUM_MASK;
+    src->swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
+    src->modifiers = (param & WINED3DSP_SRCMOD_MASK) >> WINED3DSP_SRCMOD_SHIFT;
+    src->rel_addr = rel_addr;
+}
+
 static void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size,
         const SHADER_OPCODE *opcode_table, DWORD shader_version)
 {
@@ -203,6 +214,23 @@ static void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_inst
     ins->dst_count = opcode_info->dst_token ? 1 : 0;
     ins->src_count = opcode_info->num_params - opcode_info->dst_token;
     *param_size = shader_skip_opcode(opcode_info, opcode_token, shader_version);
+}
+
+static void shader_sm1_read_src_param(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
+        struct wined3d_shader_src_param *src_rel_addr, DWORD shader_version)
+{
+    DWORD token, addr_token;
+
+    *ptr += shader_get_param(*ptr, shader_version, &token, &addr_token);
+    if (token & WINED3DSHADER_ADDRMODE_RELATIVE)
+    {
+        shader_parse_src_param(addr_token, NULL, src_rel_addr);
+        shader_parse_src_param(token, src_rel_addr, src_param);
+    }
+    else
+    {
+        shader_parse_src_param(token, NULL, src_param);
+    }
 }
 
 static const char *shader_opcode_names[] =
@@ -421,17 +449,6 @@ static void shader_parse_dst_param(DWORD param, const struct wined3d_shader_src_
     dst->modifiers = (param & WINED3DSP_DSTMOD_MASK) >> WINED3DSP_DSTMOD_SHIFT;
     dst->shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
     dst->rel_addr = rel_addr;
-}
-
-static void shader_parse_src_param(DWORD param, const struct wined3d_shader_src_param *rel_addr,
-        struct wined3d_shader_src_param *src)
-{
-    src->register_type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
-            | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
-    src->register_idx = param & WINED3DSP_REGNUM_MASK;
-    src->swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
-    src->modifiers = (param & WINED3DSP_SRCMOD_MASK) >> WINED3DSP_SRCMOD_SHIFT;
-    src->rel_addr = rel_addr;
 }
 
 /* Note that this does not count the loop register
@@ -1120,17 +1137,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
         /* Other source tokens */
         for (i = 0; i < ins.src_count; ++i)
         {
-            DWORD param, addr_param;
-            pToken += shader_get_param(pToken, shader_version, &param, &addr_param);
-            if (param & WINED3DSHADER_ADDRMODE_RELATIVE)
-            {
-                shader_parse_src_param(addr_param, NULL, &src_rel_addr[i]);
-                shader_parse_src_param(param, &src_rel_addr[i], &src_param[i]);
-            }
-            else
-            {
-                shader_parse_src_param(param, NULL, &src_param[i]);
-            }
+            shader_sm1_read_src_param(&pToken, &src_param[i], &src_rel_addr[i], shader_version);
         }
 
         /* Call appropriate function for output target */
