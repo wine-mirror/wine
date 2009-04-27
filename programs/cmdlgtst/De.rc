@@ -145,7 +145,7 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 168, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 180, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 24, 228, 11, 13
- CONTROL "Markierte Flags sind durch das System gesetzt wurden und müssen von dem Benutzer entfernt werden", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
+ CONTROL "Markierte Flags sind durch das System gesetzt worden und müssen von dem Benutzer entfernt werden", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
 }
 
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
