@@ -213,8 +213,8 @@
 @ stdcall IsUrlCacheEntryExpiredW(wstr long ptr)
 @ stub LoadUrlCacheContent
 @ stub ParseX509EncodedCertificateForListBoxEntry
-@ stub PrivacyGetZonePreferenceW # (long long ptr ptr ptr)
-@ stub PrivacySetZonePreferenceW # (long long long wstr)
+@ stdcall PrivacyGetZonePreferenceW(long long ptr ptr ptr)
+@ stdcall PrivacySetZonePreferenceW(long long long wstr)
 @ stdcall ReadUrlCacheEntryStream(ptr long ptr ptr long)
 @ stdcall RegisterUrlCacheNotification(ptr long long long long long)
 @ stdcall ResumeSuspendedDownload(long long)
