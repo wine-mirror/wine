@@ -349,8 +349,8 @@ static void test_installedfonts (void)
     expect (InvalidParameter, stat);
 
     stat = GdipNewInstalledFontCollection(&collection);
-    todo_wine expect (Ok, stat);
-    todo_wine ok (collection != NULL, "got NULL font collection\n");
+    expect (Ok, stat);
+    ok (collection != NULL, "got NULL font collection\n");
 }
 
 START_TEST(font)
