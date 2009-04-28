@@ -404,6 +404,44 @@ static DWORD MCIQTZ_mciGetDevCaps(UINT wDevID, DWORD dwFlags, LPMCI_GETDEVCAPS_P
 }
 
 /***************************************************************************
+ *                              MCIQTZ_mciSet                   [internal]
+ */
+static DWORD MCIQTZ_mciSet(UINT wDevID, DWORD dwFlags, LPMCI_DGV_SET_PARMS lpParms)
+{
+    WINE_MCIQTZ* wma;
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+
+    if (!lpParms)
+        return MCIERR_NULL_PARAMETER_BLOCK;
+
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+
+    if (dwFlags & MCI_SET_TIME_FORMAT) {
+        switch (lpParms->dwTimeFormat) {
+            case MCI_FORMAT_MILLISECONDS:
+                TRACE("MCI_SET_TIME_FORMAT = MCI_FORMAT_MILLISECONDS\n");
+                wma->time_format = MCI_FORMAT_MILLISECONDS;
+                break;
+            case MCI_FORMAT_FRAMES:
+                TRACE("MCI_SET_TIME_FORMAT = MCI_FORMAT_FRAMES\n");
+                wma->time_format = MCI_FORMAT_FRAMES;
+                break;
+            default:
+                WARN("Bad time format %u\n", lpParms->dwTimeFormat);
+                return MCIERR_BAD_TIME_FORMAT;
+        }
+    }
+
+    if (dwFlags & ~MCI_SET_TIME_FORMAT)
+        FIXME("Flags not supported yet %08lX\n", dwFlags & ~MCI_SET_TIME_FORMAT);
+
+    return 0;
+}
+
+/***************************************************************************
  *                              MCIQTZ_mciStatus                [internal]
  */
 static DWORD MCIQTZ_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_DGV_STATUS_PARMSW lpParms)
@@ -602,10 +640,10 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_SEEK:          return MCIQTZ_mciSeek      (dwDevID, dwParam1, (LPMCI_SEEK_PARMS)          dwParam2);
         case MCI_STOP:          return MCIQTZ_mciStop      (dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)       dwParam2);
         case MCI_GETDEVCAPS:    return MCIQTZ_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)    dwParam2);
+        case MCI_SET:           return MCIQTZ_mciSet       (dwDevID, dwParam1, (LPMCI_DGV_SET_PARMS)       dwParam2);
         case MCI_STATUS:        return MCIQTZ_mciStatus    (dwDevID, dwParam1, (LPMCI_DGV_STATUS_PARMSW)   dwParam2);
         case MCI_WHERE:         return MCIQTZ_mciWhere     (dwDevID, dwParam1, (LPMCI_DGV_RECT_PARMS)      dwParam2);
         case MCI_RECORD:
-        case MCI_SET:
         case MCI_PAUSE:
         case MCI_RESUME:
         case MCI_INFO:
