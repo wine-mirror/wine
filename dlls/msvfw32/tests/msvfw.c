@@ -51,6 +51,16 @@ static void test_OpenCase(void)
     if (h) {
         ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
     }
+    h = ICOpen(mmioFOURCC('v','i','d','c'),mmioFOURCC('m','S','v','C'),ICMODE_DECOMPRESS);
+    ok(0!=h,"ICOpen(vidc.mSvC) failed\n");
+    if (h) {
+        ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
+    }
+    h = ICOpen(mmioFOURCC('v','I','d','C'),mmioFOURCC('m','s','v','c'),ICMODE_DECOMPRESS);
+    ok(0!=h,"ICOpen(vIdC.msvc) failed\n");
+    if (h) {
+        ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
+    }
 }
 
 START_TEST(msvfw)
