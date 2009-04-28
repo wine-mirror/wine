@@ -805,6 +805,20 @@ static void test_items(void)
     ok(r != 0, "ret %d\n", r);
     todo_wine ok(item.state == LVIS_DROPHILITED, "got state %x, expected %x\n", item.state, LVIS_DROPHILITED);
 
+    /* some notnull but meaningless masks */
+    memset (&item, 0, sizeof(item));
+    item.mask = LVIF_NORECOMPUTE;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(r != 0, "ret %d\n", r);
+    memset (&item, 0, sizeof(item));
+    item.mask = LVIF_DI_SETITEM;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
+    ok(r != 0, "ret %d\n", r);
+
     DestroyWindow(hwnd);
 }
 
