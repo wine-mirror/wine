@@ -14497,6 +14497,117 @@ methods:
 };
 
 /*****************************************************************************
+ *    HTMLWindowEvents interface
+ */
+[
+    hidden,
+    uuid(96A0A4E0-D062-11cf-94B6-00AA0060275C)
+]
+dispinterface HTMLWindowEvents
+{
+properties:
+methods:
+    [id(DISPID_HTMLWINDOWEVENTS_ONLOAD)]
+    void onload();
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONUNLOAD)]
+    void onunload();
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONHELP)]
+    VARIANT_BOOL onhelp();
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONFOCUS)]
+    void onfocus();
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONBLUR)]
+    void onblur();
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONERROR)]
+    void onerror([in] BSTR description,
+                 [in] BSTR url,
+                 [in] LONG line);
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONRESIZE)]
+    void onresize();
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONSCROLL)]
+    void onscroll();
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONBEFOREUNLOAD)]
+    void onbeforeunload();
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONBEFOREPRINT)]
+    void onbeforeprint();
+
+    [id(DISPID_HTMLWINDOWEVENTS_ONAFTERPRINT)]
+    void onafterprint();
+};
+
+/*****************************************************************************
+ *    HTMLWindowEvents2 interface
+ */
+[
+    hidden,
+    uuid(3050f625-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface HTMLWindowEvents2
+{
+properties:
+methods:
+    [id(DISPID_HTMLWINDOWEVENTS2_ONLOAD)]
+    void onload([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONUNLOAD)]
+    void onunload([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONHELP)]
+    VARIANT_BOOL onhelp([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONFOCUS)]
+    void onfocus([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONBLUR)]
+    void onblur([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONERROR)]
+    void onerror([in] BSTR description,
+                 [in] BSTR url,
+                 [in] LONG line);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONRESIZE)]
+    void onresize([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONSCROLL)]
+    void onscroll([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONBEFOREUNLOAD)]
+    void onbeforeunload([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONBEFOREPRINT)]
+    void onbeforeprint([in] IHTMLEventObj* pEvtObj);
+
+    [id(DISPID_HTMLWINDOWEVENTS2_ONAFTERPRINT)]
+    void onafterprint([in] IHTMLEventObj* pEvtObj);
+};
+
+/*****************************************************************************
+ *    HTMLWindowProxy class
+ */
+[
+    uuid(3050f391-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLWindowProxy
+{
+    [default]           dispinterface DispHTMLWindowProxy;
+    [source, default]   dispinterface HTMLWindowEvents;
+    [source]            dispinterface HTMLWindowEvents2;
+                        interface IHTMLWindow2;
+                        interface IHTMLWindow3;
+                        interface IHTMLWindow4;
+                        interface IHTMLWindow5;
+};
+
+/*****************************************************************************
  *    HTMLDocumentEvents2 interface
  */
 [
