@@ -1115,15 +1115,35 @@ GpStatus WINGDIPAPI GdipScaleTextureTransform(GpTexture* brush,
 }
 
 GpStatus WINGDIPAPI GdipSetLineBlend(GpLineGradient *brush,
-    GDIPCONST REAL *blend, GDIPCONST REAL* positions, INT count)
+    GDIPCONST REAL *factors, GDIPCONST REAL* positions, INT count)
 {
-    static int calls;
+    REAL *new_blendfac, *new_blendpos;
 
-    if(!brush || !blend || !positions || count <= 0)
+    TRACE("(%p, %p, %p, %i)\n", brush, factors, positions, count);
+
+    if(!brush || !factors || !positions || count <= 0 ||
+       (count >= 2 && (positions[0] != 0.0f || positions[count-1] != 1.0f)))
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    new_blendfac = GdipAlloc(count * sizeof(REAL));
+    new_blendpos = GdipAlloc(count * sizeof(REAL));
+
+    if (!new_blendfac || !new_blendpos)
+    {
+        GdipFree(new_blendfac);
+        GdipFree(new_blendpos);
+        return OutOfMemory;
+    }
+
+    memcpy(new_blendfac, factors, count * sizeof(REAL));
+    memcpy(new_blendpos, positions, count * sizeof(REAL));
+
+    GdipFree(brush->blendfac);
+    GdipFree(brush->blendpos);
+
+    brush->blendcount = count;
+    brush->blendfac = new_blendfac;
+    brush->blendpos = new_blendpos;
 
     return Ok;
 }
