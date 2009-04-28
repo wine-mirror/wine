@@ -416,6 +416,8 @@ typedef struct shader_reg_maps
     char attributes[MAX_ATTRIBS];           /* vertex */
     char labels[MAX_LABELS];                /* pixel, vertex */
     DWORD texcoord_mask[MAX_REG_TEXCRD];    /* vertex < 3.0 */
+    WORD integer_constants;                 /* MAX_CONST_I, 16 */
+    WORD boolean_constants;                 /* MAX_CONST_B, 16 */
 
     /* Sampler usage tokens
      * Use 0 as default (bit 31 is always 1 on a valid token) */
@@ -2318,7 +2320,6 @@ typedef struct IWineD3DBaseShaderClass
     UINT                            functionLength;
     UINT                            cur_loop_depth, cur_loop_regno;
     BOOL                            load_local_constsF;
-    BOOL                            num_bool_consts, num_int_consts;
 
     /* Type of shader backend */
     int shader_mode;

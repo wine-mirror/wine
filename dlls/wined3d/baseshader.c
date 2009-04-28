@@ -468,6 +468,78 @@ static void shader_delete_constant_list(struct list* clist) {
     list_init(clist);
 }
 
+static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct shader_reg_maps *reg_maps,
+        DWORD register_type, UINT register_idx, BOOL has_rel_addr, BOOL pshader)
+{
+    switch (register_type)
+    {
+        case WINED3DSPR_TEXTURE: /* WINED3DSPR_ADDR */
+            if (pshader) reg_maps->texcoord[register_idx] = 1;
+            else reg_maps->address[register_idx] = 1;
+            break;
+
+        case WINED3DSPR_TEMP:
+            reg_maps->temporary[register_idx] = 1;
+            break;
+
+        case WINED3DSPR_INPUT:
+            if (!pshader) reg_maps->attributes[register_idx] = 1;
+            else
+            {
+                if (has_rel_addr)
+                {
+                    /* If relative addressing is used, we must assume that all registers
+                     * are used. Even if it is a construct like v3[aL], we can't assume
+                     * that v0, v1 and v2 aren't read because aL can be negative */
+                    unsigned int i;
+                    for (i = 0; i < MAX_REG_INPUT; ++i)
+                    {
+                        ((IWineD3DPixelShaderImpl *)This)->input_reg_used[i] = TRUE;
+                    }
+                }
+                else
+                {
+                    ((IWineD3DPixelShaderImpl *)This)->input_reg_used[register_idx] = TRUE;
+                }
+            }
+            break;
+
+        case WINED3DSPR_RASTOUT:
+            if (register_idx == 1) reg_maps->fog = 1;
+            break;
+
+        case WINED3DSPR_MISCTYPE:
+            if (pshader && register_idx == 0) reg_maps->vpos = 1;
+            break;
+
+        case WINED3DSPR_CONST:
+            if (has_rel_addr)
+            {
+                if (!pshader)
+                {
+                    if (register_idx <= ((IWineD3DVertexShaderImpl *)This)->min_rel_offset)
+                        ((IWineD3DVertexShaderImpl *)This)->min_rel_offset = register_idx;
+                    else if (register_idx >= ((IWineD3DVertexShaderImpl *)This)->max_rel_offset)
+                        ((IWineD3DVertexShaderImpl *)This)->max_rel_offset = register_idx;
+                }
+                reg_maps->usesrelconstF = TRUE;
+            }
+            break;
+
+        case WINED3DSPR_CONSTINT:
+            reg_maps->integer_constants |= (1 << register_idx);
+            break;
+
+        case WINED3DSPR_CONSTBOOL:
+            reg_maps->boolean_constants |= (1 << register_idx);
+            break;
+
+        default:
+            TRACE("Not recording register of type %#x and idx %u\n", register_type, register_idx);
+            break;
+    }
+}
+
 /* Note that this does not count the loop register
  * as an address register. */
 
@@ -481,7 +553,6 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
     const DWORD* pToken = byte_code;
     char pshader;
-    unsigned int intconst = 0, boolconst = 0;
 
     /* There are some minor differences between pixel and vertex shaders */
 
@@ -625,7 +696,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
             pToken += param_size;
 
             /* Rep and Loop always use an integer constant for the control parameters */
-            intconst |= (1 << (reg & WINED3DSP_REGNUM_MASK));
+            reg_maps->integer_constants |= (1 << (reg & WINED3DSP_REGNUM_MASK));
         }
         else if (ins.handler_idx == WINED3DSIH_ENDLOOP
                 || ins.handler_idx == WINED3DSIH_ENDREP)
@@ -708,69 +779,18 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                 regtype = shader_get_regtype(param);
                 reg = param & WINED3DSP_REGNUM_MASK;
 
-                if (WINED3DSPR_TEXTURE == regtype) { /* vs: WINED3DSPR_ADDR */
-
-                    if (pshader)
-                        reg_maps->texcoord[reg] = 1;
-                    else
-                        reg_maps->address[reg] = 1;
-                }
-
-                else if (WINED3DSPR_TEMP == regtype)
-                    reg_maps->temporary[reg] = 1;
-
-                else if (WINED3DSPR_INPUT == regtype) {
-                    if( !pshader)
-                        reg_maps->attributes[reg] = 1;
-                    else {
-                        if(param & WINED3DSHADER_ADDRMODE_RELATIVE) {
-                            /* If relative addressing is used, we must assume that all registers
-                             * are used. Even if it is a construct like v3[aL], we can't assume
-                             * that v0, v1 and v2 aren't read because aL can be negative
-                             */
-                            unsigned int i;
-                            for(i = 0; i < MAX_REG_INPUT; i++) {
-                                ((IWineD3DPixelShaderImpl *) This)->input_reg_used[i] = TRUE;
-                            }
-                        } else {
-                            ((IWineD3DPixelShaderImpl *) This)->input_reg_used[reg] = TRUE;
-                        }
-                    }
-                }
-
-                else if (WINED3DSPR_RASTOUT == regtype && reg == 1)
-                    reg_maps->fog = 1;
-
-                else if (WINED3DSPR_MISCTYPE == regtype && reg == 0 && pshader)
-                    reg_maps->vpos = 1;
-
-                else if(WINED3DSPR_CONST == regtype) {
-                    if(param & WINED3DSHADER_ADDRMODE_RELATIVE) {
-                        if(!pshader) {
-                            if(reg <= ((IWineD3DVertexShaderImpl *) This)->min_rel_offset) {
-                                ((IWineD3DVertexShaderImpl *) This)->min_rel_offset = reg;
-                            } else if(reg >= ((IWineD3DVertexShaderImpl *) This)->max_rel_offset) {
-                                ((IWineD3DVertexShaderImpl *) This)->max_rel_offset = reg;
-                            }
-                        }
-                        reg_maps->usesrelconstF = TRUE;
-                    }
-                }
-                else if(WINED3DSPR_CONSTINT == regtype) {
-                    intconst |= (1 << reg);
-                }
-                else if(WINED3DSPR_CONSTBOOL == regtype) {
-                    boolconst |= (1 << reg);
-                }
-
-                /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and is used
-                 * in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel shaders because TECRDOUT
-                 * isn't used in them, but future register types might cause issues
-                 */
-                else if (WINED3DSPR_TEXCRDOUT == regtype && i == 0 /* Only look at writes */
+                /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and
+                 * is used in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel
+                 * shaders because TECRDOUT isn't used in them, but future register types might cause issues */
+                if (regtype == WINED3DSPR_TEXCRDOUT && i == 0 /* Only look at writes */
                         && !pshader && WINED3DSHADER_VERSION_MAJOR(shader_version) < 3)
                 {
                     reg_maps->texcoord_mask[reg] |= shader_get_writemask(param);
+                }
+                else
+                {
+                    shader_record_register_usage(This, reg_maps, regtype, reg,
+                            param & WINED3DSHADER_ADDRMODE_RELATIVE, pshader);
                 }
             }
         }
@@ -779,8 +799,6 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
     reg_maps->loop_depth = max_loop_depth;
 
     This->baseShader.functionLength = ((char *)pToken - (char *)byte_code);
-    This->baseShader.num_bool_consts = count_bits(boolconst);
-    This->baseShader.num_int_consts = count_bits(intconst);
 
     return WINED3D_OK;
 }

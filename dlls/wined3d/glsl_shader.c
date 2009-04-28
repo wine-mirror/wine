@@ -558,13 +558,15 @@ static void shader_glsl_load_constants(
                 prog->vuniformF_locations, &priv->vconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for vertex shader */
-        if(vshader->baseShader.num_int_consts) {
+        if (vshader->baseShader.reg_maps.integer_constants)
+        {
             shader_glsl_load_constantsI(vshader, gl_info, prog->vuniformI_locations,
                     stateBlock->vertexShaderConstantI, stateBlock->changed.vertexShaderConstantsI);
         }
 
         /* Load DirectX 9 boolean constants/uniforms for vertex shader */
-        if(vshader->baseShader.num_bool_consts) {
+        if (vshader->baseShader.reg_maps.boolean_constants)
+        {
             shader_glsl_load_constantsB(vshader, gl_info, programId,
                     stateBlock->vertexShaderConstantB, stateBlock->changed.vertexShaderConstantsB);
         }
@@ -583,13 +585,15 @@ static void shader_glsl_load_constants(
                 prog->puniformF_locations, &priv->pconst_heap, priv->stack, constant_version);
 
         /* Load DirectX 9 integer constants/uniforms for pixel shader */
-        if(pshader->baseShader.num_int_consts) {
+        if (pshader->baseShader.reg_maps.integer_constants)
+        {
             shader_glsl_load_constantsI(pshader, gl_info, prog->puniformI_locations,
                     stateBlock->pixelShaderConstantI, stateBlock->changed.pixelShaderConstantsI);
         }
 
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
-        if(pshader->baseShader.num_bool_consts) {
+        if (pshader->baseShader.reg_maps.boolean_constants)
+        {
             shader_glsl_load_constantsB(pshader, gl_info, programId,
                     stateBlock->pixelShaderConstantB, stateBlock->changed.pixelShaderConstantsB);
         }
@@ -748,12 +752,12 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
                  * (Unfortunately the Nvidia driver doesn't store 128 and -128 in one float
                  */
                 max_constantsF = GL_LIMITS(vshader_constantsF) - 3;
-                max_constantsF -= This->baseShader.num_int_consts;
+                max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
                 /* Strictly speaking a bool only uses one scalar, but the nvidia(Linux) compiler doesn't pack them properly,
                  * so each scalar requires a full vec4. We could work around this by packing the booleans ourselves, but
                  * for now take this into account when calculating the number of available constants
                  */
-                max_constantsF -= This->baseShader.num_bool_consts;
+                max_constantsF -= count_bits(This->baseShader.reg_maps.boolean_constants);
                 /* Set by driver quirks in directx.c */
                 max_constantsF -= GLINFO_LOCATION.reserved_glsl_constants;
             } else {
@@ -767,10 +771,10 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
     /* Always declare the full set of constants, the compiler can remove the unused ones because d3d doesn't(yet)
      * support indirect int and bool constant addressing. This avoids problems if the app uses e.g. i0 and i9.
      */
-    if (This->baseShader.limits.constant_int > 0 && This->baseShader.num_int_consts)
+    if (This->baseShader.limits.constant_int > 0 && This->baseShader.reg_maps.integer_constants)
         shader_addline(buffer, "uniform ivec4 %cI[%u];\n", prefix, This->baseShader.limits.constant_int);
 
-    if (This->baseShader.limits.constant_bool > 0 && This->baseShader.num_bool_consts)
+    if (This->baseShader.limits.constant_bool > 0 && This->baseShader.reg_maps.boolean_constants)
         shader_addline(buffer, "uniform bool %cB[%u];\n", prefix, This->baseShader.limits.constant_bool);
 
     if(!pshader) {
