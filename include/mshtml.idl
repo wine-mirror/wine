@@ -13884,6 +13884,43 @@ interface IHTMLWindow3 : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLWindow4 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f6cf-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLWindow4 : IDispatch
+{
+    [id(DISPID_IHTMLWINDOW4_CREATEPOPUP)]
+    HRESULT createPopup([optional, in] VARIANT* varArgIn,
+                        [retval, out] IDispatch** ppPopup);
+
+    [propget, id(DISPID_IHTMLWINDOW4_FRAMEELEMENT)]
+    HRESULT frameElement([retval, out] IHTMLFrameBase* * p);
+};
+
+/*****************************************************************************
+ *    IHTMLWindow5 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051040e-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLWindow5 : IDispatch
+{
+    [propput, id(DISPID_IHTMLWINDOW5_XMLHTTPREQUEST)]
+    HRESULT XMLHttpRequest([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLWINDOW5_XMLHTTPREQUEST)]
+    HRESULT XMLHttpRequest([retval, out] VARIANT * p);
+};
+
+/*****************************************************************************
  *    DispHTMLWindow2 dispinterface
  */
 [
