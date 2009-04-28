@@ -344,6 +344,113 @@ static void test_gradientgetrect(void)
     status = GdipDeleteBrush((GpBrush*)brush);
 }
 
+static void test_lineblend(void)
+{
+    GpLineGradient *brush;
+    GpStatus status;
+    GpPointF pt1, pt2;
+    INT count=10;
+    int i;
+    const REAL factors[5] = {0.0f, 0.1f, 0.5f, 0.9f, 1.0f};
+    const REAL positions[5] = {0.0f, 0.2f, 0.5f, 0.8f, 1.0f};
+    REAL res_factors[6] = {0.3f, 0.0f, 0.0f, 0.0f, 0.0f};
+    REAL res_positions[6] = {0.3f, 0.0f, 0.0f, 0.0f, 0.0f};
+
+    pt1.X = pt1.Y = 1.0;
+    pt2.X = pt2.Y = 100.0;
+    status = GdipCreateLineBrush(&pt1, &pt2, 0, 0, WrapModeTile, &brush);
+    expect(Ok, status);
+
+    status = GdipGetLineBlendCount(NULL, &count);
+    expect(InvalidParameter, status);
+
+    status = GdipGetLineBlendCount(brush, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipGetLineBlendCount(brush, &count);
+    expect(Ok, status);
+    expect(1, count);
+
+    status = GdipGetLineBlend(NULL, res_factors, res_positions, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipGetLineBlend(brush, NULL, res_positions, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipGetLineBlend(brush, res_factors, NULL, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipGetLineBlend(brush, res_factors, res_positions, 0);
+    expect(InvalidParameter, status);
+
+    status = GdipGetLineBlend(brush, res_factors, res_positions, -1);
+    expect(InvalidParameter, status);
+
+    status = GdipGetLineBlend(brush, res_factors, res_positions, 1);
+    expect(Ok, status);
+
+    status = GdipGetLineBlend(brush, res_factors, res_positions, 2);
+    expect(Ok, status);
+
+    status = GdipSetLineBlend(NULL, factors, positions, 5);
+    expect(InvalidParameter, status);
+
+    status = GdipSetLineBlend(brush, NULL, positions, 5);
+    expect(InvalidParameter, status);
+
+    status = GdipSetLineBlend(brush, factors, NULL, 5);
+    expect(InvalidParameter, status);
+
+    status = GdipSetLineBlend(brush, factors, positions, 0);
+    expect(InvalidParameter, status);
+
+    status = GdipSetLineBlend(brush, factors, positions, -1);
+    expect(InvalidParameter, status);
+
+    /* leave off the 0.0 position */
+    status = GdipSetLineBlend(brush, &factors[1], &positions[1], 4);
+    expect(InvalidParameter, status);
+
+    /* leave off the 1.0 position */
+    status = GdipSetLineBlend(brush, factors, positions, 4);
+    expect(InvalidParameter, status);
+
+    status = GdipSetLineBlend(brush, factors, positions, 5);
+    expect(Ok, status);
+
+    status = GdipGetLineBlendCount(brush, &count);
+    expect(Ok, status);
+    expect(5, count);
+
+    status = GdipGetLineBlend(brush, res_factors, res_positions, 4);
+    expect(InsufficientBuffer, status);
+
+    status = GdipGetLineBlend(brush, res_factors, res_positions, 5);
+    expect(Ok, status);
+
+    for (i=0; i<5; i++)
+    {
+        expectf(factors[i], res_factors[i]);
+        expectf(positions[i], res_positions[i]);
+    }
+
+    status = GdipGetLineBlend(brush, res_factors, res_positions, 6);
+    expect(Ok, status);
+
+    status = GdipSetLineBlend(brush, factors, positions, 1);
+    expect(Ok, status);
+
+    status = GdipGetLineBlendCount(brush, &count);
+    expect(Ok, status);
+    expect(1, count);
+
+    status = GdipGetLineBlend(brush, res_factors, res_positions, 1);
+    expect(Ok, status);
+
+    status = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok, status);
+}
+
 START_TEST(brush)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -365,6 +472,7 @@ START_TEST(brush)
     test_transform();
     test_texturewrap();
     test_gradientgetrect();
+    test_lineblend();
 
     GdiplusShutdown(gdiplusToken);
 }
