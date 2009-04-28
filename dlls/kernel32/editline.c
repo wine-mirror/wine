@@ -656,13 +656,6 @@ static const KeyEntry StdKeyMap[] =
     {	0,		NULL			}
 };
 
-static const KeyEntry Win32ExtraStdKeyMap[] =
-{
-    {/*VK_F8*/   0x77,	WCEL_FindPrevInHist	},
-    {	0,		NULL			}
-};
-
-
 static const KeyEntry EmacsKeyMapCtrl[] =
 {
     {	CTRL('@'),	WCEL_SetMark		},
@@ -712,9 +705,8 @@ static const KeyEntry EmacsKeyMapAlt[] =
     {	0,		NULL			}
 };
 
-static const KeyEntry EmacsKeyMapExtended[] =
+static const KeyEntry EmacsStdKeyMap[] =
 {
-    {/*RETURN*/  0x0d,	WCEL_Done },
     {/*VK_PRIOR*/0x21, 	WCEL_MoveToPrevHist	},
     {/*VK_NEXT*/ 0x22,	WCEL_MoveToNextHist 	},
     {/*VK_END*/  0x23,	WCEL_MoveToEnd		},
@@ -728,15 +720,15 @@ static const KeyEntry EmacsKeyMapExtended[] =
 static const KeyMap EmacsKeyMap[] =
 {
     {0,                  1, StdKeyMap},
+    {0,                  0, EmacsStdKeyMap},
     {RIGHT_ALT_PRESSED,  1, EmacsKeyMapAlt},	/* right alt  */
     {LEFT_ALT_PRESSED,   1, EmacsKeyMapAlt},	/* left  alt  */
     {RIGHT_CTRL_PRESSED, 1, EmacsKeyMapCtrl},	/* right ctrl */
     {LEFT_CTRL_PRESSED,  1, EmacsKeyMapCtrl},	/* left  ctrl */
-    {ENHANCED_KEY,       0, EmacsKeyMapExtended},
     {0,                  0, NULL}
 };
 
-static const KeyEntry Win32KeyMapExtended[] =
+static const KeyEntry Win32StdKeyMap[] =
 {
     {/*VK_LEFT*/ 0x25, 	WCEL_MoveLeft 		},
     {/*VK_RIGHT*/0x27,	WCEL_MoveRight		},
@@ -745,10 +737,11 @@ static const KeyEntry Win32KeyMapExtended[] =
     {/*VK_UP*/   0x26, 	WCEL_MoveToPrevHist 	},
     {/*VK_DOWN*/ 0x28,	WCEL_MoveToNextHist	},
     {/*VK_DEL*/  0x2e,	WCEL_DeleteCurrChar	},
+    {/*VK_F8*/   0x77,	WCEL_FindPrevInHist	},
     {	0,		NULL 			}
 };
 
-static const KeyEntry Win32KeyMapCtrlExtended[] =
+static const KeyEntry Win32KeyMapCtrl[] =
 {
     {/*VK_LEFT*/ 0x25, 	WCEL_MoveToLeftWord 	},
     {/*VK_RIGHT*/0x27,	WCEL_MoveToRightWord	},
@@ -758,12 +751,11 @@ static const KeyEntry Win32KeyMapCtrlExtended[] =
 
 static const KeyMap Win32KeyMap[] =
 {
-    {0,                                 1, StdKeyMap},
-    {0,                                 0, Win32ExtraStdKeyMap},
-    {ENHANCED_KEY,                      0, Win32KeyMapExtended},
-    {ENHANCED_KEY | RIGHT_CTRL_PRESSED, 0, Win32KeyMapCtrlExtended},
-    {ENHANCED_KEY | LEFT_CTRL_PRESSED,  0, Win32KeyMapCtrlExtended},
-    {0,                                 0, NULL}
+    {0,                  1, StdKeyMap},
+    {0,                  0, Win32StdKeyMap},
+    {RIGHT_CTRL_PRESSED, 0, Win32KeyMapCtrl},
+    {LEFT_CTRL_PRESSED,  0, Win32KeyMapCtrl},
+    {0,                  0, NULL}
 };
 #undef CTRL
 
