@@ -1151,14 +1151,18 @@ GpStatus WINGDIPAPI GdipSetLineBlend(GpLineGradient *brush,
 GpStatus WINGDIPAPI GdipGetLineBlend(GpLineGradient *brush, REAL *factors,
     REAL *positions, INT count)
 {
-    static int calls;
-
     TRACE("(%p, %p, %p, %i)\n", brush, factors, positions, count);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!brush || !factors || !positions || count <= 0)
+        return InvalidParameter;
 
-    return NotImplemented;
+    if (count < brush->blendcount)
+        return InsufficientBuffer;
+
+    memcpy(factors, brush->blendfac, brush->blendcount * sizeof(REAL));
+    memcpy(positions, brush->blendpos, brush->blendcount * sizeof(REAL));
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetLineBlendCount(GpLineGradient *brush, INT *count)
