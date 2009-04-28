@@ -145,6 +145,9 @@ struct GpLineGradient{
     ARGB endcolor;
     GpWrapMode wrap;
     BOOL gamma;
+    REAL* blendfac;  /* blend factors */
+    REAL* blendpos;  /* blend positions */
+    INT blendcount;
 };
 
 struct GpTexture{

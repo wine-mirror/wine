@@ -108,14 +108,38 @@ GpStatus WINGDIPAPI GdipCloneBrush(GpBrush *brush, GpBrush **clone)
 
             break;
         }
-        case BrushTypeLinearGradient:
-            *clone = GdipAlloc(sizeof(GpLineGradient));
-            if(!*clone)    return OutOfMemory;
+        case BrushTypeLinearGradient:{
+            GpLineGradient *dest, *src;
+            INT count;
 
-            memcpy(*clone, brush, sizeof(GpLineGradient));
+            dest = GdipAlloc(sizeof(GpLineGradient));
+            if(!dest)    return OutOfMemory;
 
-            (*clone)->gdibrush = CreateSolidBrush((*clone)->lb.lbColor);
+            src = (GpLineGradient*)brush;
+
+            memcpy(dest, src, sizeof(GpLineGradient));
+
+            dest->brush.gdibrush = CreateSolidBrush(dest->brush.lb.lbColor);
+
+            count = dest->blendcount;
+            dest->blendfac = GdipAlloc(count * sizeof(REAL));
+            dest->blendpos = GdipAlloc(count * sizeof(REAL));
+
+            if (!dest->blendfac || !dest->blendpos)
+            {
+                GdipFree(dest->blendfac);
+                GdipFree(dest->blendpos);
+                DeleteObject(dest->brush.gdibrush);
+                GdipFree(dest);
+                return OutOfMemory;
+            }
+
+            memcpy(dest->blendfac, src->blendfac, count * sizeof(REAL));
+            memcpy(dest->blendpos, src->blendpos, count * sizeof(REAL));
+
+            *clone = &dest->brush;
             break;
+        }
         case BrushTypeTextureFill:
             *clone = GdipAlloc(sizeof(GpTexture));
             if(!*clone)    return OutOfMemory;
@@ -225,6 +249,23 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
     (*line)->endcolor = endcolor;
     (*line)->wrap = wrap;
     (*line)->gamma = FALSE;
+
+    (*line)->blendcount = 1;
+    (*line)->blendfac = GdipAlloc(sizeof(REAL));
+    (*line)->blendpos = GdipAlloc(sizeof(REAL));
+
+    if (!(*line)->blendfac || !(*line)->blendpos)
+    {
+        GdipFree((*line)->blendfac);
+        GdipFree((*line)->blendpos);
+        DeleteObject((*line)->brush.gdibrush);
+        GdipFree(*line);
+        *line = NULL;
+        return OutOfMemory;
+    }
+
+    (*line)->blendfac[0] = 1.0f;
+    (*line)->blendpos[0] = 1.0f;
 
     return Ok;
 }
@@ -765,7 +806,10 @@ GpStatus WINGDIPAPI GdipDeleteBrush(GpBrush *brush)
             GdipFree(((GpPathGradient*) brush)->blendpos);
             break;
         case BrushTypeSolidColor:
+            break;
         case BrushTypeLinearGradient:
+            GdipFree(((GpLineGradient*)brush)->blendfac);
+            GdipFree(((GpLineGradient*)brush)->blendpos);
             break;
         case BrushTypeTextureFill:
             GdipDeleteMatrix(((GpTexture*)brush)->transform);
