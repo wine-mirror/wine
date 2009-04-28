@@ -1374,20 +1374,28 @@ static void AttachmentTest(void)
     ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
 
     hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
-    ok(hr == DD_OK, "Attaching an offscreen plain surface to a front buffer returned %08x\n", hr);
-    /* Try the reverse without detaching first */
+    ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
+       "Attaching an offscreen plain surface to a front buffer returned %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        /* Try the reverse without detaching first */
+        hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface1);
+        ok(hr == DDERR_SURFACEALREADYATTACHED, "Attaching an attached surface to its attachee returned %08x\n", hr);
+        hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
+        ok(hr == DD_OK, "DeleteAttachedSurface failed with %08x\n", hr);
+    }
     hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface1);
-    ok(hr == DDERR_SURFACEALREADYATTACHED, "Attaching an attached surface to its attachee returned %08x\n", hr);
-    hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
-    ok(hr == DD_OK, "DeleteAttachedSurface failed with %08x\n", hr);
-    hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface1);
-    ok(hr == DD_OK, "Attaching a front buffer to an offscreen plain surface returned %08x\n", hr);
-    /* Try to detach reversed */
-    hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
-    ok(hr == DDERR_CANNOTDETACHSURFACE, "DeleteAttachedSurface returned %08x\n", hr);
-    /* Now the proper detach */
-    hr = IDirectDrawSurface_DeleteAttachedSurface(surface2, 0, surface1);
-    ok(hr == DD_OK, "DeleteAttachedSurface failed with %08x\n", hr);
+    ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
+       "Attaching a front buffer to an offscreen plain surface returned %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        /* Try to detach reversed */
+        hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
+        ok(hr == DDERR_CANNOTDETACHSURFACE, "DeleteAttachedSurface returned %08x\n", hr);
+        /* Now the proper detach */
+        hr = IDirectDrawSurface_DeleteAttachedSurface(surface2, 0, surface1);
+        ok(hr == DD_OK, "DeleteAttachedSurface failed with %08x\n", hr);
+    }
     hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface3); /* Fails on refrast */
     ok(hr == DD_OK || broken(hr == DDERR_CANNOTATTACHSURFACE),
        "Attaching an offscreen plain surface to another offscreen plain surface returned %08x\n", hr);
