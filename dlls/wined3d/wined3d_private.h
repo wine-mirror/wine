@@ -168,9 +168,6 @@ void hash_table_remove(struct hash_table_t *table, void *key);
 #define MAX_ACTIVE_LIGHTS       8
 #define MAX_CLIPPLANES          WINED3DMAXUSERCLIPPLANES
 
-#define MAX_CONST_I 16
-#define MAX_CONST_B 16
-
 /* Used for CreateStateBlock */
 #define NUM_SAVEDPIXELSTATES_R     35
 #define NUM_SAVEDPIXELSTATES_T     18
