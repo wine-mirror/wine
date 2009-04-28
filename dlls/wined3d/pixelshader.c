@@ -314,7 +314,6 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     list_init(&This->baseShader.constantsI);
 
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-    memset(reg_maps, 0, sizeof(shader_reg_maps));
     hr = shader_get_registers_used((IWineD3DBaseShader *)This, reg_maps, This->semantics_in, NULL, pFunction);
     if (FAILED(hr)) return hr;
 

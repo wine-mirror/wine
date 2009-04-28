@@ -556,8 +556,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
 
     /* There are some minor differences between pixel and vertex shaders */
 
-    memset(reg_maps->bumpmat, 0, sizeof(reg_maps->bumpmat));
-    memset(reg_maps->luminanceparams, 0, sizeof(reg_maps->luminanceparams));
+    memset(reg_maps, 0, sizeof(*reg_maps));
 
     /* get_registers_used is called on every compile on some 1.x shaders, which can result
      * in stacking up a collection of local constants. Delete the old constants if existing

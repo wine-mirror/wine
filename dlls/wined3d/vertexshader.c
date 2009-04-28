@@ -329,7 +329,6 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     /* Second pass: figure out registers used, semantics, etc.. */
     This->min_rel_offset = GL_LIMITS(vshader_constantsF);
     This->max_rel_offset = 0;
-    memset(reg_maps, 0, sizeof(shader_reg_maps));
     hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
             This->semantics_in, This->semantics_out, pFunction);
     if (hr != WINED3D_OK) return hr;
