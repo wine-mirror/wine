@@ -1163,14 +1163,14 @@ GpStatus WINGDIPAPI GdipGetLineBlend(GpLineGradient *brush, REAL *factors,
 
 GpStatus WINGDIPAPI GdipGetLineBlendCount(GpLineGradient *brush, INT *count)
 {
-    static int calls;
-
     TRACE("(%p, %p)\n", brush, count);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (!brush || !count)
+        return InvalidParameter;
 
-    return NotImplemented;
+    *count = brush->blendcount;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetLineGammaCorrection(GpLineGradient *line,
