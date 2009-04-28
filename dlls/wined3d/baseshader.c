@@ -763,35 +763,42 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
             }
 
             /* This will loop over all the registers and try to
-             * make a bitmask of the ones we're interested in. 
+             * make a bitmask of the ones we're interested in.
              *
-             * Relative addressing tokens are ignored, but that's 
-             * okay, since we'll catch any address registers when 
+             * Relative addressing tokens are ignored, but that's
+             * okay, since we'll catch any address registers when
              * they are initialized (required by spec) */
 
-            limit = ins.dst_count + ins.src_count + (ins.predicate ? 1 : 0);
+            if (ins.dst_count)
+            {
+                struct wined3d_shader_dst_param dst_param;
+                struct wined3d_shader_src_param dst_rel_addr;
 
-            for (i = 0; i < limit; ++i) {
-
-                DWORD param, addr_token, reg, regtype;
-                pToken += shader_get_param(pToken, shader_version, &param, &addr_token);
-
-                regtype = shader_get_regtype(param);
-                reg = param & WINED3DSP_REGNUM_MASK;
+                shader_sm1_read_dst_param(&pToken, &dst_param, &dst_rel_addr, shader_version);
 
                 /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and
                  * is used in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel
                  * shaders because TECRDOUT isn't used in them, but future register types might cause issues */
-                if (regtype == WINED3DSPR_TEXCRDOUT && i == 0 /* Only look at writes */
-                        && !pshader && WINED3DSHADER_VERSION_MAJOR(shader_version) < 3)
+                if (!pshader && WINED3DSHADER_VERSION_MAJOR(shader_version) < 3
+                        && dst_param.register_type == WINED3DSPR_TEXCRDOUT)
                 {
-                    reg_maps->texcoord_mask[reg] |= shader_get_writemask(param);
+                    reg_maps->texcoord_mask[dst_param.register_type] |= dst_param.write_mask;
                 }
                 else
                 {
-                    shader_record_register_usage(This, reg_maps, regtype, reg,
-                            param & WINED3DSHADER_ADDRMODE_RELATIVE, pshader);
+                    shader_record_register_usage(This, reg_maps, dst_param.register_type,
+                            dst_param.register_idx, !!dst_param.rel_addr, pshader);
                 }
+            }
+
+            limit = ins.src_count + (ins.predicate ? 1 : 0);
+            for (i = 0; i < limit; ++i)
+            {
+                struct wined3d_shader_src_param src_param, src_rel_addr;
+
+                shader_sm1_read_src_param(&pToken, &src_param, &src_rel_addr, shader_version);
+                shader_record_register_usage(This, reg_maps, src_param.register_type,
+                        src_param.register_idx, !!src_param.rel_addr, pshader);
             }
         }
     }
