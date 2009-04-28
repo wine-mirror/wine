@@ -1881,10 +1881,9 @@ static void test_norecompute(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     res = SendMessageA(hwnd, LVM_GETITEM, 0, (LPARAM)&item);
     expect(TRUE, res);
-todo_wine
     ok(item.pszText == LPSTR_TEXTCALLBACK, "Expected (%p), got (%p)\n",
        LPSTR_TEXTCALLBACK, (VOID*)item.pszText);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "retrieve with LVIF_NORECOMPUTE seq", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "retrieve with LVIF_NORECOMPUTE seq", FALSE);
 
     DestroyWindow(hwnd);
 
@@ -1906,10 +1905,9 @@ todo_wine
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     res = SendMessageA(hwnd, LVM_GETITEM, 0, (LPARAM)&item);
     expect(TRUE, res);
-todo_wine
     ok(item.pszText == LPSTR_TEXTCALLBACK, "Expected (%p), got (%p)\n",
        LPSTR_TEXTCALLBACK, (VOID*)item.pszText);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "retrieve with LVIF_NORECOMPUTE seq 2", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "retrieve with LVIF_NORECOMPUTE seq 2", FALSE);
 
     DestroyWindow(hwnd);
 }

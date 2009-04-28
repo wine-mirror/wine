@@ -72,7 +72,6 @@
  * Flags
  *   -- LVIF_COLUMNS
  *   -- LVIF_GROUPID
- *   -- LVIF_NORECOMPUTE
  *
  * States
  *   -- LVIS_ACTIVATING (not currently supported by comctl32.dll version 6.0)
@@ -5560,6 +5559,8 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	/* apparently, we should not callback for lParam in LVS_OWNERDATA */
 	if ((lpLVItem->mask & ~(LVIF_STATE | LVIF_PARAM)) || infoPtr->uCallbackMask)
 	{
+	    UINT mask = lpLVItem->mask;
+
 	    /* NOTE: copy only fields which we _know_ are initialized, some apps
 	     *       depend on the uninitialized fields being 0 */
 	    dispInfo.item.mask = lpLVItem->mask & ~LVIF_PARAM;
@@ -5567,34 +5568,49 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	    dispInfo.item.iSubItem = isubitem;
 	    if (lpLVItem->mask & LVIF_TEXT)
 	    {
-		dispInfo.item.pszText = lpLVItem->pszText;
-		dispInfo.item.cchTextMax = lpLVItem->cchTextMax;		
+		if (lpLVItem->mask & LVIF_NORECOMPUTE)
+		    /* reset mask */
+		    dispInfo.item.mask &= ~(LVIF_TEXT | LVIF_NORECOMPUTE);
+		else
+		{
+		    dispInfo.item.pszText = lpLVItem->pszText;
+		    dispInfo.item.cchTextMax = lpLVItem->cchTextMax;
+		}
 	    }
 	    if (lpLVItem->mask & LVIF_STATE)
 	        dispInfo.item.stateMask = lpLVItem->stateMask & infoPtr->uCallbackMask;
-	    notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
-	    dispInfo.item.stateMask = lpLVItem->stateMask;
-	    if (lpLVItem->mask & (LVIF_GROUPID|LVIF_COLUMNS))
+	    /* could be zeroed on LVIF_NORECOMPUTE case */
+	    if (dispInfo.item.mask != 0)
 	    {
-	        /* full size structure expected - _WIN32IE >= 0x560 */
-	        *lpLVItem = dispInfo.item;
+	        notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
+	        dispInfo.item.stateMask = lpLVItem->stateMask;
+	        if (lpLVItem->mask & (LVIF_GROUPID|LVIF_COLUMNS))
+	        {
+	            /* full size structure expected - _WIN32IE >= 0x560 */
+	            *lpLVItem = dispInfo.item;
+	        }
+	        else if (lpLVItem->mask & LVIF_INDENT)
+	        {
+	            /* indent member expected - _WIN32IE >= 0x300 */
+	            memcpy(lpLVItem, &dispInfo.item, offsetof( LVITEMW, iGroupId ));
+	        }
+	        else
+	        {
+	            /* minimal structure expected */
+	            memcpy(lpLVItem, &dispInfo.item, offsetof( LVITEMW, iIndent ));
+	        }
+	        lpLVItem->mask = mask;
+	        TRACE("   getdispinfo(1):lpLVItem=%s\n", debuglvitem_t(lpLVItem, isW));
 	    }
-	    else if (lpLVItem->mask & LVIF_INDENT)
-	    {
-	        /* indent member expected - _WIN32IE >= 0x300 */
-	        memcpy(lpLVItem, &dispInfo.item, offsetof( LVITEMW, iGroupId ));
-	    }
-	    else
-	    {
-	        /* minimal structure expected */
-	        memcpy(lpLVItem, &dispInfo.item, offsetof( LVITEMW, iIndent ));
-	    }
-	    TRACE("   getdispinfo(1):lpLVItem=%s\n", debuglvitem_t(lpLVItem, isW));
 	}
 	
 	/* make sure lParam is zeroed out */
 	if (lpLVItem->mask & LVIF_PARAM) lpLVItem->lParam = 0;
-	
+
+	/* callback marked pointer required here */
+	if ((lpLVItem->mask & LVIF_TEXT) && (lpLVItem->mask & LVIF_NORECOMPUTE))
+	    lpLVItem->pszText = LPSTR_TEXTCALLBACKW;
+
 	/* we store only a little state, so if we're not asked, we're done */
 	if (!(lpLVItem->mask & LVIF_STATE) || isubitem) return TRUE;
 
@@ -5651,7 +5667,8 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     }
 
     /* Apps depend on calling back for text if it is NULL or LPSTR_TEXTCALLBACKW */
-    if ((lpLVItem->mask & LVIF_TEXT) && !is_textW(pItemHdr->pszText))
+    if ((lpLVItem->mask & LVIF_TEXT) && !(lpLVItem->mask & LVIF_NORECOMPUTE) &&
+        !is_textW(pItemHdr->pszText))
     {
 	dispInfo.item.mask |= LVIF_TEXT;
 	dispInfo.item.pszText = lpLVItem->pszText;
@@ -5698,7 +5715,8 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     }
     else if (lpLVItem->mask & LVIF_TEXT)
     {
-	if (isW) lpLVItem->pszText = pItemHdr->pszText;
+	/* if LVN_GETDISPINFO's disabled with LVIF_NORECOMPUTE return callback placeholder */
+	if (isW || !is_textW(pItemHdr->pszText)) lpLVItem->pszText = pItemHdr->pszText;
 	else textcpynT(lpLVItem->pszText, isW, pItemHdr->pszText, TRUE, lpLVItem->cchTextMax);
     }
 
@@ -5774,7 +5792,12 @@ static BOOL LISTVIEW_GetItemExtT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVIte
     pszText = lpLVItem->pszText;
     bResult = LISTVIEW_GetItemT(infoPtr, lpLVItem, isW);
     if (bResult && lpLVItem->pszText != pszText)
-	textcpynT(pszText, isW, lpLVItem->pszText, isW, lpLVItem->cchTextMax);
+    {
+	if (lpLVItem->pszText != LPSTR_TEXTCALLBACKW)
+	    textcpynT(pszText, isW, lpLVItem->pszText, isW, lpLVItem->cchTextMax);
+	else
+	    pszText = LPSTR_TEXTCALLBACKW;
+    }
     lpLVItem->pszText = pszText;
 
     return bResult;
