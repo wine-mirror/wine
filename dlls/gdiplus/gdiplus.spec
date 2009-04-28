@@ -301,7 +301,7 @@
 @ stdcall GdipGetImageWidth(ptr ptr)
 @ stdcall GdipGetInterpolationMode(ptr ptr)
 @ stub GdipGetLineBlend
-@ stub GdipGetLineBlendCount
+@ stdcall GdipGetLineBlendCount(ptr ptr)
 @ stdcall GdipGetLineColors(ptr ptr)
 @ stdcall GdipGetLineGammaCorrection(ptr ptr)
 @ stub GdipGetLinePresetBlend

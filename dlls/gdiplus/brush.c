@@ -1084,6 +1084,18 @@ GpStatus WINGDIPAPI GdipSetLineBlend(GpLineGradient *brush,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetLineBlendCount(GpLineGradient *brush, INT *count)
+{
+    static int calls;
+
+    TRACE("(%p, %p)\n", brush, count);
+
+    if(!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetLineGammaCorrection(GpLineGradient *line,
     BOOL usegamma)
 {
