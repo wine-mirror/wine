@@ -158,6 +158,10 @@ static const struct message listview_getorderarray_seq[] = {
     { 0 }
 };
 
+static const struct message empty_seq[] = {
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -1835,6 +1839,81 @@ static void test_ownerdata(void)
     DestroyWindow(hwnd);
 }
 
+static void test_norecompute(void)
+{
+    static CHAR testA[] = "test";
+    CHAR buff[10];
+    LVITEMA item;
+    HWND hwnd;
+    DWORD res;
+
+    /* self containing control */
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_TEXT | LVIF_STATE;
+    item.iItem = 0;
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    item.pszText   = testA;
+    res = SendMessageA(hwnd, LVM_INSERTITEM, 0, (LPARAM)&item);
+    expect(0, res);
+    /* retrieve with LVIF_NORECOMPUTE */
+    item.mask  = LVIF_TEXT | LVIF_NORECOMPUTE;
+    item.iItem = 0;
+    item.pszText    = buff;
+    item.cchTextMax = sizeof(buff)/sizeof(CHAR);
+    res = SendMessageA(hwnd, LVM_GETITEM, 0, (LPARAM)&item);
+    expect(TRUE, res);
+    ok(lstrcmp(buff, testA) == 0, "Expected (%s), got (%s)\n", testA, buff);
+
+    item.mask = LVIF_TEXT;
+    item.iItem = 1;
+    item.pszText = LPSTR_TEXTCALLBACK;
+    res = SendMessageA(hwnd, LVM_INSERTITEM, 0, (LPARAM)&item);
+    expect(1, res);
+
+    item.mask  = LVIF_TEXT | LVIF_NORECOMPUTE;
+    item.iItem = 1;
+    item.pszText    = buff;
+    item.cchTextMax = sizeof(buff)/sizeof(CHAR);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    res = SendMessageA(hwnd, LVM_GETITEM, 0, (LPARAM)&item);
+    expect(TRUE, res);
+todo_wine
+    ok(item.pszText == LPSTR_TEXTCALLBACK, "Expected (%p), got (%p)\n",
+       LPSTR_TEXTCALLBACK, (VOID*)item.pszText);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "retrieve with LVIF_NORECOMPUTE seq", TRUE);
+
+    DestroyWindow(hwnd);
+
+    /* LVS_OWNERDATA */
+    hwnd = create_listview_control(LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    item.mask = LVIF_STATE;
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    item.iItem = 0;
+    res = SendMessageA(hwnd, LVM_INSERTITEM, 0, (LPARAM)&item);
+    expect(0, res);
+
+    item.mask  = LVIF_TEXT | LVIF_NORECOMPUTE;
+    item.iItem = 0;
+    item.pszText    = buff;
+    item.cchTextMax = sizeof(buff)/sizeof(CHAR);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    res = SendMessageA(hwnd, LVM_GETITEM, 0, (LPARAM)&item);
+    expect(TRUE, res);
+todo_wine
+    ok(item.pszText == LPSTR_TEXTCALLBACK, "Expected (%p), got (%p)\n",
+       LPSTR_TEXTCALLBACK, (VOID*)item.pszText);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "retrieve with LVIF_NORECOMPUTE seq 2", TRUE);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -1875,4 +1954,5 @@ START_TEST(listview)
     test_subitem_rect();
     test_sorting();
     test_ownerdata();
+    test_norecompute();
 }
