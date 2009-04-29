@@ -326,6 +326,9 @@ void manage_desktop( WCHAR *arg )
 
     if (hwnd == GetDesktopWindow())
     {
+        HMODULE shell32;
+        void (WINAPI *pShellDDEInit)( BOOL );
+
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
         if (name) set_desktop_window_title( hwnd, name );
@@ -334,6 +337,12 @@ void manage_desktop( WCHAR *arg )
         initialize_display_settings( hwnd );
         initialize_appbar();
         initialize_systray();
+
+        if ((shell32 = LoadLibraryA( "shell32.dll" )) &&
+            (pShellDDEInit = (void *)GetProcAddress( shell32, (LPCSTR)188)))
+        {
+            pShellDDEInit( TRUE );
+        }
     }
     else
     {
