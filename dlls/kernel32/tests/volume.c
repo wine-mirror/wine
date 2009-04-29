@@ -37,9 +37,14 @@ static BOOL (WINAPI *pGetVolumeInformationA)(LPCSTR, LPSTR, DWORD, LPDWORD, LPDW
 static void test_query_dos_deviceA(void)
 {
     char drivestr[] = "a:";
-    char *p, *q, *buffer, buffer2[2000];
+    char *p, *buffer, buffer2[2000];
     DWORD ret, ret2, buflen=32768;
     BOOL found = FALSE;
+
+    if (!pFindFirstVolumeA) {
+        win_skip("On win9x, HARDDISK and RAMDISK not present\n");
+        return;
+    }
 
     buffer = HeapAlloc( GetProcessHeap(), 0, buflen );
     ret = QueryDosDeviceA( NULL, buffer, buflen );
@@ -54,27 +59,11 @@ static void test_query_dos_deviceA(void)
         p = buffer;
         for (;;) {
             if (!strlen(p)) break;
-            trace("device entry %s\n", p);
             ret2 = QueryDosDeviceA( p, buffer2, sizeof(buffer2) );
-            ok(ret2, "QueryDosDeviceA failed to return current mapping, last error %u\n", GetLastError());
-            if (ret2) {
-                q = buffer2;
-                for (;;) {
-                    if (!strlen(q)) break;
-                    trace("for device %s, current mapping %s\n", p, q);
-                    q += strlen(q) + 1;
-                    if (ret2 <= (q-buffer2)) break;
-                }
-            }
+            ok(ret2, "QueryDosDeviceA failed to return current mapping for %s, last error %u\n", p, GetLastError());
             p += strlen(p) + 1;
             if (ret <= (p-buffer)) break;
         }
-    }
-
-    if (!pFindFirstVolumeA) {
-        win_skip("On win9x, HARDDISK and RAMDISK not present\n");
-        HeapFree( GetProcessHeap(), 0, buffer );
-        return;
     }
 
     for (;drivestr[0] <= 'z'; drivestr[0]++) {
@@ -294,49 +283,30 @@ static void test_GetVolumeInformationA(void)
     ret = pGetVolumeInformationA(NULL, vol_name_buf, vol_name_size, NULL,
             NULL, NULL, fs_name_buf, fs_name_len);
     ok(ret, "GetVolumeInformationA failed on null root dir, last error %u\n", GetLastError());
-    if (ret) {
-        trace("for %s, vol_serial_num=0x%08x, max_comp_len=%d, filesys flags=0x%08x, vol name=%s, filesys name=%s\n",
-                "<NULL>", vol_serial_num, max_comp_len, fs_flags, vol_name_buf, fs_name_buf);
-    }
 
     /* Try normal drive letter with trailing \  */
     ret = pGetVolumeInformationA(Root_Dir1, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
     ok(ret, "GetVolumeInformationA failed, root=%s, last error=%u\n", Root_Dir1, GetLastError());
-    if (ret) {
-        trace("for %s, vol_serial_num=0x%08x, max_comp_len=%d, filesys flags=0x%08x, vol name=%s, filesys name=%s\n",
-                Root_Dir1, vol_serial_num, max_comp_len, fs_flags, vol_name_buf, fs_name_buf);
-    }
 
     /* try again with dirve letter and the "disable parsing" prefix */
     ret = pGetVolumeInformationA(Root_Dir2, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
     todo_wine ok(ret, "GetVolumeInformationA failed, root=%s, last error=%u\n", Root_Dir2, GetLastError());
-    if (ret) {
-        trace("for %s, vol_serial_num=0x%08x, max_comp_len=%d, filesys flags=0x%08x, vol name=%s, filesys name=%s\n",
-                Root_Dir2, vol_serial_num, max_comp_len, fs_flags, vol_name_buf, fs_name_buf);
-    }
 
     /* try again with unique voluem name */
     ret = pGetVolumeInformationA(volume, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
     todo_wine ok(ret, "GetVolumeInformationA failed, root=%s, last error=%u\n", volume, GetLastError());
-    if (ret) {
-        trace("for %s, vol_serial_num=0x%08x, max_comp_len=%d, filesys flags=0x%08x, vol name=%s, filesys name=%s\n",
-                volume, vol_serial_num, max_comp_len, fs_flags, vol_name_buf, fs_name_buf);
-    }
 
     /* try again with device name space  */
     Root_Dir2[2] = '.';
     ret = pGetVolumeInformationA(Root_Dir2, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
     todo_wine ok(ret, "GetVolumeInformationA failed, root=%s, last error=%u\n", Root_Dir2, GetLastError());
-    if (ret) {
-        trace("for %s, vol_serial_num=0x%08x, max_comp_len=%d, filesys flags=0x%08x, vol name=%s, filesys name=%s\n",
-                Root_Dir2, vol_serial_num, max_comp_len, fs_flags, vol_name_buf, fs_name_buf);
-    }
 
     /* try again with a directory off the root - should generate error  */
+    if (windowsdir[strlen(windowsdir)-1] != '\\') strcat(windowsdir, "\\");
     ret = pGetVolumeInformationA(windowsdir, vol_name_buf, vol_name_size,
             &vol_serial_num, &max_comp_len, &fs_flags, fs_name_buf, fs_name_len);
     todo_wine ok(!ret && GetLastError()==ERROR_DIR_NOT_ROOT,
