@@ -38,6 +38,10 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 #define WINED3DSP_DCL_USAGEINDEX_SHIFT          16
 #define WINED3DSP_DCL_USAGEINDEX_MASK           (0xf << WINED3DSP_DCL_USAGEINDEX_SHIFT)
 
+/* DCL sampler type */
+#define WINED3DSP_TEXTURETYPE_SHIFT             27
+#define WINED3DSP_TEXTURETYPE_MASK              (0xf << WINED3DSP_TEXTURETYPE_SHIFT)
+
 /* Opcode-related masks */
 #define WINED3DSI_OPCODE_MASK                   0x0000ffff
 
@@ -269,7 +273,7 @@ static void shader_sm1_read_semantic(const DWORD **ptr, struct wined3d_shader_se
 
     semantic->usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
     semantic->usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-    semantic->sampler_type = usage_token & WINED3DSP_TEXTURETYPE_MASK;
+    semantic->sampler_type = (usage_token & WINED3DSP_TEXTURETYPE_MASK) >> WINED3DSP_TEXTURETYPE_SHIFT;
     shader_parse_dst_param(dst_token, NULL, &semantic->reg);
 }
 
@@ -824,7 +828,7 @@ static void shader_dump_decl_usage(DWORD decl, DWORD param, DWORD shader_version
     TRACE("dcl");
 
     if (regtype == WINED3DSPR_SAMPLER) {
-        DWORD ttype = decl & WINED3DSP_TEXTURETYPE_MASK;
+        DWORD ttype = (decl & WINED3DSP_TEXTURETYPE_MASK) >> WINED3DSP_TEXTURETYPE_SHIFT;
 
         switch (ttype) {
             case WINED3DSTT_2D: TRACE("_2d"); break;
