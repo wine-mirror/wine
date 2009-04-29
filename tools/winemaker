@@ -1742,6 +1742,8 @@ sub search_from($$)
   }
 
   foreach my $component (@$path) {
+    $component=~s/^\"//;
+    $component=~s/\"$//;
     #print "    looking for $component in \"$dirname\"\n";
     if ($component eq ".") {
       # Pass it as is
