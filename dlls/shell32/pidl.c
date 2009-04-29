@@ -1320,6 +1320,17 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
     return hr;
 }
 
+/*************************************************************************
+ * SHParseDisplayName             [SHELL32.@]
+ */
+HRESULT WINAPI SHParseDisplayName(LPCWSTR name, IBindCtx *bindctx, LPITEMIDLIST *pidlist,
+                                  SFGAOF attr_in, SFGAOF *attr_out)
+{
+    FIXME("%s %p %p %d %p stub!\n", debugstr_w(name), bindctx, pidlist, attr_in, attr_out);
+    if(pidlist) *pidlist = NULL;
+    return E_NOTIMPL;
+}
+
 /**************************************************************************
  *
  *        internal functions

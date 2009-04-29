@@ -373,6 +373,7 @@
 @ stdcall SHIsFileAvailableOffline(wstr ptr)
 @ stdcall SHLoadInProc(long)
 @ stdcall SHLoadNonloadedIconOverlayIdentifiers()
+@ stdcall SHParseDisplayName(wstr ptr ptr long ptr)
 @ stdcall SHPathPrepareForWriteA(long ptr str long)
 @ stdcall SHPathPrepareForWriteW(long ptr wstr long)
 @ stdcall SHQueryRecycleBinA(str ptr)
