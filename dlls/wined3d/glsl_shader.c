@@ -834,11 +834,10 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
 
     /* Declare texture samplers */ 
     for (i = 0; i < This->baseShader.limits.sampler; i++) {
-        if (reg_maps->samplers[i]) {
-
-            DWORD stype = reg_maps->samplers[i] & WINED3DSP_TEXTURETYPE_MASK;
-            switch (stype) {
-
+        if (reg_maps->sampler_type[i])
+        {
+            switch (reg_maps->sampler_type[i])
+            {
                 case WINED3DSTT_1D:
                     shader_addline(buffer, "uniform sampler1D %csampler%u;\n", prefix, i);
                     break;
@@ -867,7 +866,7 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
                     break;
                 default:
                     shader_addline(buffer, "uniform unsupported_sampler %csampler%u;\n", prefix, i);
-                    FIXME("Unrecognized sampler type: %#x\n", stype);
+                    FIXME("Unrecognized sampler type: %#x\n", reg_maps->sampler_type[i]);
                     break;
             }
         }
@@ -2440,7 +2439,7 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
     DWORD shader_version = ins->ctx->reg_maps->shader_version;
     glsl_sample_function_t sample_function;
     DWORD sample_flags = 0;
-    DWORD sampler_type;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type;
     DWORD sampler_idx;
     DWORD mask = 0, swizzle;
 
@@ -2448,7 +2447,7 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
      * 2.0+: Use provided sampler source. */
     if (shader_version < WINED3DPS_VERSION(2,0)) sampler_idx = ins->dst[0].register_idx;
     else sampler_idx = ins->src[1].register_idx;
-    sampler_type = ins->ctx->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
 
     if (shader_version < WINED3DPS_VERSION(1,4))
     {
@@ -2533,7 +2532,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
     DWORD swizzle = ins->src[1].swizzle;
 
     sampler_idx = ins->src[1].register_idx;
-    sampler_type = ins->ctx->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
     if(deviceImpl->stateBlock->textures[sampler_idx] &&
        IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
         sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
@@ -2608,7 +2607,7 @@ static void pshader_glsl_texdp3tex(const struct wined3d_shader_instruction *ins)
     glsl_sample_function_t sample_function;
     DWORD sampler_idx = ins->dst[0].register_idx;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
-    DWORD sampler_type = ins->ctx->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
     UINT mask_size;
 
     shader_glsl_add_src_param(ins, &ins->src[0], src_mask, &src0_param);
@@ -2735,7 +2734,7 @@ static void pshader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins
     DWORD reg = ins->dst[0].register_idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     glsl_src_param_t src0_param;
-    DWORD sampler_type = ins->ctx->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[reg];
     glsl_sample_function_t sample_function;
 
     shader_glsl_add_src_param(ins, &ins->src[0], src_mask, &src0_param);
@@ -2756,7 +2755,7 @@ static void pshader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins
     DWORD reg = ins->dst[0].register_idx;
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
-    DWORD sampler_type = ins->ctx->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[reg];
     glsl_sample_function_t sample_function;
 
     shader_glsl_add_src_param(ins, &ins->src[0], src_mask, &src0_param);
@@ -2801,7 +2800,7 @@ static void pshader_glsl_texm3x3spec(const struct wined3d_shader_instruction *in
     glsl_src_param_t src1_param;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
-    DWORD stype = ins->ctx->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
+    WINED3DSAMPLER_TEXTURE_TYPE stype = ins->ctx->reg_maps->sampler_type[reg];
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     glsl_sample_function_t sample_function;
 
@@ -2832,7 +2831,7 @@ static void pshader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *i
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     glsl_src_param_t src0_param;
     DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
-    DWORD sampler_type = ins->ctx->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[reg];
     glsl_sample_function_t sample_function;
 
     shader_glsl_add_src_param(ins, &ins->src[0], src_mask, &src0_param);
@@ -2864,7 +2863,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     glsl_sample_function_t sample_function;
     glsl_src_param_t coord_param;
-    DWORD sampler_type;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type;
     DWORD sampler_idx;
     DWORD mask;
     DWORD flags;
@@ -2873,7 +2872,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
     sampler_idx = ins->dst[0].register_idx;
     flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
 
-    sampler_type = ins->ctx->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
     /* Dependent read, not valid with conditional NP2 */
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
     mask = sample_function.coord_mask;
@@ -2936,7 +2935,7 @@ static void pshader_glsl_texreg2ar(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
     DWORD sampler_idx = ins->dst[0].register_idx;
-    DWORD sampler_type = ins->ctx->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
     glsl_sample_function_t sample_function;
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
@@ -2952,7 +2951,7 @@ static void pshader_glsl_texreg2gb(const struct wined3d_shader_instruction *ins)
 {
     glsl_src_param_t src0_param;
     DWORD sampler_idx = ins->dst[0].register_idx;
-    DWORD sampler_type = ins->ctx->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
     glsl_sample_function_t sample_function;
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
@@ -2968,7 +2967,7 @@ static void pshader_glsl_texreg2rgb(const struct wined3d_shader_instruction *ins
 {
     glsl_src_param_t src0_param;
     DWORD sampler_idx = ins->dst[0].register_idx;
-    DWORD sampler_type = ins->ctx->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
     glsl_sample_function_t sample_function;
 
     /* Dependent read, not valid with conditional NP2 */

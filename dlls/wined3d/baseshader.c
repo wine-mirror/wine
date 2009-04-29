@@ -633,7 +633,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
 
             /* Save sampler usage token */
             } else if (WINED3DSPR_SAMPLER == regtype)
-                reg_maps->samplers[regnum] = usage;
+                reg_maps->sampler_type[regnum] = usage & WINED3DSP_TEXTURETYPE_MASK;
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
@@ -734,7 +734,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                 DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
 
                 TRACE("Setting fake 2D sampler for 1.x pixelshader\n");
-                reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
+                reg_maps->sampler_type[sampler_code] = WINED3DSTT_2D;
 
                 /* texbem is only valid with < 1.4 pixel shaders */
                 if (ins.handler_idx == WINED3DSIH_TEXBEM

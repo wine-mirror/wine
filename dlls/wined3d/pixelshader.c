@@ -374,7 +374,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
 static void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures)
 {
     DWORD shader_version = reg_maps->shader_version;
-    DWORD *samplers = reg_maps->samplers;
+    WINED3DSAMPLER_TEXTURE_TYPE *sampler_type = reg_maps->sampler_type;
     unsigned int i;
 
     if (WINED3DSHADER_VERSION_MAJOR(shader_version) != 1) return;
@@ -382,12 +382,12 @@ static void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD
     for (i = 0; i < max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS); ++i)
     {
         /* We don't sample from this sampler */
-        if (!samplers[i]) continue;
+        if (!sampler_type[i]) continue;
 
         if (!textures[i])
         {
             ERR("No texture bound to sampler %u, using 2D\n", i);
-            samplers[i] = (0x1 << 31) | WINED3DSTT_2D;
+            sampler_type[i] = WINED3DSTT_2D;
             continue;
         }
 
@@ -397,21 +397,21 @@ static void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD
             case GL_TEXTURE_2D:
                 /* We have to select between texture rectangles and 2D textures later because 2.0 and
                  * 3.0 shaders only have WINED3DSTT_2D as well */
-                samplers[i] = (1 << 31) | WINED3DSTT_2D;
+                sampler_type[i] = WINED3DSTT_2D;
                 break;
 
             case GL_TEXTURE_3D:
-                samplers[i] = (1 << 31) | WINED3DSTT_VOLUME;
+                sampler_type[i] = WINED3DSTT_VOLUME;
                 break;
 
             case GL_TEXTURE_CUBE_MAP_ARB:
-                samplers[i] = (1 << 31) | WINED3DSTT_CUBE;
+                sampler_type[i] = WINED3DSTT_CUBE;
                 break;
 
             default:
                 FIXME("Unrecognized texture type %#x, using 2D\n",
                         IWineD3DBaseTexture_GetTextureDimensions(textures[i]));
-                samplers[i] = (0x1 << 31) | WINED3DSTT_2D;
+                sampler_type[i] = WINED3DSTT_2D;
         }
     }
 }
@@ -463,7 +463,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
     args->np2_fixup = 0;
 
     for(i = 0; i < MAX_FRAGMENT_SAMPLERS; i++) {
-        if(shader->baseShader.reg_maps.samplers[i] == 0) continue;
+        if (!shader->baseShader.reg_maps.sampler_type[i]) continue;
         tex = (IWineD3DBaseTextureImpl *) stateblock->textures[i];
         if(!tex) {
             args->color_fixup[i] = COLOR_FIXUP_IDENTITY;

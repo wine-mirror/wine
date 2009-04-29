@@ -4208,12 +4208,13 @@ static void device_map_fixed_function_samplers(IWineD3DDeviceImpl *This) {
 }
 
 static void device_map_psamplers(IWineD3DDeviceImpl *This) {
-    const DWORD *sampler_tokens =
-            ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.reg_maps.samplers;
+    const WINED3DSAMPLER_TEXTURE_TYPE *sampler_type =
+            ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.reg_maps.sampler_type;
     unsigned int i;
 
     for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
-        if (sampler_tokens[i] && This->texUnitMap[i] != i) {
+        if (sampler_type[i] && This->texUnitMap[i] != i)
+        {
             device_map_stage(This, i, i);
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
             if (i < MAX_TEXTURES) {
@@ -4250,9 +4251,9 @@ static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, const DWORD *pshad
 }
 
 static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
-    const DWORD *vshader_sampler_tokens =
-            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.reg_maps.samplers;
-    const DWORD *pshader_sampler_tokens = NULL;
+    const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_type =
+            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.reg_maps.sampler_type;
+    const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_type = NULL;
     int start = GL_LIMITS(combined_samplers) - 1;
     int i;
 
@@ -4261,12 +4262,13 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
 
         /* Note that we only care if a sampler is sampled or not, not the sampler's specific type.
          * Otherwise we'd need to call shader_update_samplers() here for 1.x pixelshaders. */
-        pshader_sampler_tokens = pshader->baseShader.reg_maps.samplers;
+        pshader_sampler_type = pshader->baseShader.reg_maps.sampler_type;
     }
 
     for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
         int vsampler_idx = i + MAX_FRAGMENT_SAMPLERS;
-        if (vshader_sampler_tokens[i]) {
+        if (vshader_sampler_type[i])
+        {
             if (This->texUnitMap[vsampler_idx] != WINED3D_UNMAPPED_STAGE)
             {
                 /* Already mapped somewhere */
@@ -4274,7 +4276,8 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
             }
 
             while (start >= 0) {
-                if (device_unit_free_for_vs(This, pshader_sampler_tokens, vshader_sampler_tokens, start)) {
+                if (device_unit_free_for_vs(This, pshader_sampler_type, vshader_sampler_type, start))
+                {
                     device_map_stage(This, vsampler_idx, start);
                     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(vsampler_idx));
 

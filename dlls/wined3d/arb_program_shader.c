@@ -659,7 +659,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
         const char *dst_str, const char *coord_reg, BOOL projected, BOOL bias)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    DWORD sampler_type = ins->ctx->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    DWORD sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
     const char *tex_type;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
