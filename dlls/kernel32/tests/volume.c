@@ -343,6 +343,56 @@ static void test_GetVolumeInformationA(void)
           "GetVolumeInformationA failed, root=%s, last error=%u\n", windowsdir, GetLastError());
 }
 
+/* Test to check that unique volume name from windows dir mount point  */
+/* matches at least one of the unique volume names returned from the   */
+/* FindFirstVolumeA/FindNextVolumeA list.                              */
+static void test_enum_vols(void)
+{
+    DWORD   ret;
+    HANDLE  hFind = INVALID_HANDLE_VALUE;
+    char    Volume_1[MAX_PATH] = {0};
+    char    Volume_2[MAX_PATH] = {0};
+    char    path[] = "c:\\";
+    BOOL    found = FALSE;
+    char    windowsdir[MAX_PATH];
+
+    if (!pGetVolumeNameForVolumeMountPointA) {
+        win_skip("GetVolumeNameForVolumeMountPointA not found\n");
+        return;
+    }
+
+    /*get windows drive letter and update strings for testing  */
+    ret = GetWindowsDirectory( windowsdir, sizeof(windowsdir) );
+    ok(ret < sizeof(windowsdir), "windowsdir is abnormally long!\n");
+    ok(ret != 0, "GetWindowsDirecory: error %d\n", GetLastError());
+    path[0] = windowsdir[0];
+
+    /* get the unique volume name for the windows drive  */
+    ret = pGetVolumeNameForVolumeMountPointA( path, Volume_1, MAX_PATH );
+    ok(ret == TRUE, "GetVolumeNameForVolumeMountPointA failed\n");
+todo_wine
+    ok(strlen(Volume_1) == 49, "GetVolumeNameForVolumeMountPointA returned wrong length name %s\n", Volume_1);
+
+    /* get first unique volume name of list  */
+    hFind = pFindFirstVolumeA( Volume_2, MAX_PATH );
+    ok(hFind != INVALID_HANDLE_VALUE, "FindFirstVolume failed, err=%u\n",
+                GetLastError());
+
+    do
+    {
+        /* validate correct length of unique volume name  */
+        ok(strlen(Volume_2) == 49, "Find[First/Next]Volume returned wrong length name %s\n", Volume_1);
+        if (memcmp(Volume_1, Volume_2, 49) == 0)
+        {
+            found = TRUE;
+            break;
+        }
+    } while (pFindNextVolumeA( hFind, Volume_2, MAX_PATH ));
+todo_wine
+    ok(found, "volume name %s not found by Find[First/Next]Volume\n", Volume_1);
+    pFindVolumeClose( hFind );
+}
+
 START_TEST(volume)
 {
     hdll = GetModuleHandleA("kernel32.dll");
@@ -362,4 +412,5 @@ START_TEST(volume)
     test_GetLogicalDriveStringsA();
     test_GetLogicalDriveStringsW();
     test_GetVolumeInformationA();
+    test_enum_vols();
 }
