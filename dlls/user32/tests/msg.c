@@ -11017,6 +11017,19 @@ static const struct message wm_lb_click_0[] =
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_LISTBOX, LBN_SELCHANGE) },
     { 0 }
 };
+static const struct message wm_lb_deletestring[] =
+{
+    { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+    { WM_DELETEITEM, sent|wparam|parent, ID_LISTBOX, 0 },
+    { 0 }
+};
+static const struct message wm_lb_deletestring_reset[] =
+{
+    { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+    { LB_RESETCONTENT, sent|wparam|lparam|defwinproc, 0, 0 },
+    { WM_DELETEITEM, sent|wparam|parent, ID_LISTBOX, 0 },
+    { 0 }
+};
 
 #define check_lb_state(a1, a2, a3, a4, a5) check_lb_state_dbg(a1, a2, a3, a4, a5, __LINE__)
 
@@ -11125,6 +11138,33 @@ static void test_listbox_messages(void)
     ok(ret == LB_OKAY, "expected LB_OKAY, got %ld\n", ret);
     ok_sequence(wm_lb_click_0, "WM_LBUTTONDOWN 0", FALSE );
     check_lb_state(listbox, 3, 0, 0, 0);
+    flush_sequence();
+
+    trace("deleting item 0\n");
+    ret = SendMessage(listbox, LB_DELETESTRING, 0, 0);
+    ok(ret == 2, "expected 2, got %ld\n", ret);
+    ok_sequence(wm_lb_deletestring, "LB_DELETESTRING 0", FALSE );
+    check_lb_state(listbox, 2, -1, 0, 0);
+    flush_sequence();
+
+    trace("deleting item 0\n");
+    ret = SendMessage(listbox, LB_DELETESTRING, 0, 0);
+    ok(ret == 1, "expected 1, got %ld\n", ret);
+    ok_sequence(wm_lb_deletestring, "LB_DELETESTRING 0", FALSE );
+    check_lb_state(listbox, 1, -1, 0, 0);
+    flush_sequence();
+
+    trace("deleting item 0\n");
+    ret = SendMessage(listbox, LB_DELETESTRING, 0, 0);
+    ok(ret == 0, "expected 0, got %ld\n", ret);
+    ok_sequence(wm_lb_deletestring_reset, "LB_DELETESTRING 0", FALSE );
+    check_lb_state(listbox, 0, -1, 0, 0);
+    flush_sequence();
+
+    trace("deleting item 0\n");
+    ret = SendMessage(listbox, LB_DELETESTRING, 0, 0);
+    ok(ret == LB_ERR, "expected LB_ERR, got %ld\n", ret);
+    check_lb_state(listbox, 0, -1, 0, 0);
     flush_sequence();
 
     log_all_parent_messages--;
