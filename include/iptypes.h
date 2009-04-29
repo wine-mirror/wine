@@ -84,4 +84,139 @@ typedef struct {
     UINT EnableDns;
 } FIXED_INFO, *PFIXED_INFO;
 
+typedef enum {
+    IpPrefixOriginOther = 0,
+    IpPrefixOriginManual,
+    IpPrefixOriginWellKnown,
+    IpPrefixOriginDhcp,
+    IpPrefixOriginRouterAdvertisement,
+    IpPrefixOriginUnchanged = 16
+} IP_PREFIX_ORIGIN;
+
+typedef enum {
+    IpSuffixOriginOther = 0,
+    IpSuffixOriginManual,
+    IpSuffixOriginWellKnown,
+    IpSuffixOriginDhcp,
+    IpSuffixOriginLinkLayerAddress,
+    IpSuffixOriginRandom,
+    IpSuffixOriginUnchanged = 16
+} IP_SUFFIX_ORIGIN;
+
+typedef enum {
+    IfOperStatusUp = 1,
+    IfOperStatusDown,
+    IfOperStatusTesting,
+    IfOperStatusUnknown,
+    IfOperStatusDormant,
+    IfOperStatusNotPresent,
+    IfOperStatusLowerLayerDown
+} IF_OPER_STATUS;
+
+typedef enum {
+    IpDadStateInvalid = 0,
+    IpDadStateTentative,
+    IpDadStateDuplicate,
+    IpDadStateDeprecated,
+    IpDadStatePreferred
+} IP_DAD_STATE;
+
+#ifdef _WINSOCK2API_
+
+typedef struct _IP_ADAPTER_UNICAST_ADDRESS {
+    union {
+        struct {
+            ULONG Length;
+            DWORD Flags;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    struct _IP_ADAPTER_UNICAST_ADDRESS *Next;
+    SOCKET_ADDRESS                      Address;
+    IP_PREFIX_ORIGIN                    PrefixOrigin;
+    IP_SUFFIX_ORIGIN                    SuffixOrigin;
+    IP_DAD_STATE                        DadState;
+    ULONG                               ValidLifetime;
+    ULONG                               PreferredLifetime;
+    ULONG                               LeaseLifetime;
+} IP_ADAPTER_UNICAST_ADDRESS, *PIP_ADAPTER_UNICAST_ADDRESS;
+
+typedef struct _IP_ADAPTER_ANYCAST_ADDRESS {
+    union {
+        ULONGLONG Alignment;
+        struct {
+            ULONG Length;
+            DWORD Flags;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    struct _IP_ADAPTER_ANYCAST_ADDRESS *Next;
+    SOCKET_ADDRESS                      Address;
+} IP_ADAPTER_ANYCAST_ADDRESS, *PIP_ADAPTER_ANYCAST_ADDRESS;
+
+typedef struct _IP_ADAPTER_MULTICAST_ADDRESS {
+    union {
+        ULONGLONG Alignment;
+        struct {
+            ULONG Length;
+            DWORD Flags;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    struct _IP_ADAPTER_MULTICAST_ADDRESS *Next;
+    SOCKET_ADDRESS                       Address;
+} IP_ADAPTER_MULTICAST_ADDRESS, *PIP_ADAPTER_MULTICAST_ADDRESS;
+
+typedef struct _IP_ADAPTER_DNS_SERVER_ADDRESS {
+    union {
+        ULONGLONG Alignment;
+        struct {
+            ULONG Length;
+            DWORD Reserved;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    struct _IP_ADAPTER_DNS_SERVER_ADDRESS *Next;
+    SOCKET_ADDRESS                         Address;
+} IP_ADAPTER_DNS_SERVER_ADDRESS, *PIP_ADAPTER_DNS_SERVER_ADDRESS;
+
+typedef struct _IP_ADAPTER_PREFIX {
+    union {
+        ULONGLONG Alignment;
+        struct {
+            ULONG Length;
+            DWORD Flags;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    struct _IP_ADAPTER_PREFIX *Next;
+    SOCKET_ADDRESS             Address;
+    ULONG                      PrefixLength;
+} IP_ADAPTER_PREFIX, *PIP_ADAPTER_PREFIX;
+
+typedef struct _IP_ADAPTER_ADDRESSES {
+    union {
+        ULONGLONG Alignment;
+        struct {
+            ULONG Length;
+            DWORD IfIndex;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    struct _IP_ADAPTER_ADDRESSES   *Next;
+    PCHAR                           AdapterName;
+    PIP_ADAPTER_UNICAST_ADDRESS     FirstUnicastAddress;
+    PIP_ADAPTER_ANYCAST_ADDRESS     FirstAnycastAddress;
+    PIP_ADAPTER_MULTICAST_ADDRESS   FirstMulticastAddress;
+    PIP_ADAPTER_DNS_SERVER_ADDRESS  FirstDnsServerAddress;
+    PWCHAR                          DnsSuffix;
+    PWCHAR                          Description;
+    PWCHAR                          FriendlyName;
+    BYTE                            PhysicalAddress[MAX_ADAPTER_ADDRESS_LENGTH];
+    DWORD                           PhysicalAddressLength;
+    DWORD                           Flags;
+    DWORD                           Mtu;
+    DWORD                           IfType;
+    IF_OPER_STATUS                  OperStatus;
+    DWORD                           Ipv6IfIndex;
+    DWORD                           ZoneIndices[16];
+    PIP_ADAPTER_PREFIX              FirstPrefix;
+} IP_ADAPTER_ADDRESSES, *PIP_ADAPTER_ADDRESSES;
+
+#endif /* _WINSOCK2API_ */
+
 #endif /* WINE_IPTYPES_H_*/
