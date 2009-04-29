@@ -482,6 +482,7 @@ struct wined3d_shader_semantic
 {
     WINED3DDECLUSAGE usage;
     UINT usage_idx;
+    WINED3DSAMPLER_TEXTURE_TYPE sampler_type;
     struct wined3d_shader_dst_param reg;
 };
 

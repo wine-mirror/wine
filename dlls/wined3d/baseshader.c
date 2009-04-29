@@ -262,6 +262,17 @@ static void shader_sm1_read_dst_param(const DWORD **ptr, struct wined3d_shader_d
     }
 }
 
+static void shader_sm1_read_semantic(const DWORD **ptr, struct wined3d_shader_semantic *semantic)
+{
+    DWORD usage_token = *(*ptr)++;
+    DWORD dst_token = *(*ptr)++;
+
+    semantic->usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
+    semantic->usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
+    semantic->sampler_type = usage_token & WINED3DSP_TEXTURETYPE_MASK;
+    shader_parse_dst_param(dst_token, NULL, &semantic->reg);
+}
+
 static const char *shader_opcode_names[] =
 {
     /* WINED3DSIH_ABS           */ "abs",
@@ -601,39 +612,36 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
         /* Handle declarations */
         if (ins.handler_idx == WINED3DSIH_DCL)
         {
-            DWORD usage = *pToken++;
-            DWORD param = *pToken++;
-            DWORD regtype = shader_get_regtype(param);
-            unsigned int regnum = param & WINED3DSP_REGNUM_MASK;
+            struct wined3d_shader_semantic semantic;
 
-            /* Vshader: mark attributes used
-               Pshader: mark 3.0 input registers used, save token */
-            if (WINED3DSPR_INPUT == regtype) {
+            shader_sm1_read_semantic(&pToken, &semantic);
 
-                if (!pshader)
-                    reg_maps->attributes[regnum] = 1;
-                else
-                    reg_maps->packed_input[regnum] = 1;
+            switch (semantic.reg.register_type)
+            {
+                /* Vshader: mark attributes used
+                 * Pshader: mark 3.0 input registers used, save token */
+                case WINED3DSPR_INPUT:
+                    if (!pshader) reg_maps->attributes[semantic.reg.register_idx] = 1;
+                    else reg_maps->packed_input[semantic.reg.register_idx] = 1;
+                    semantics_in[semantic.reg.register_idx] = semantic;
+                    break;
 
-                semantics_in[regnum].usage = (usage & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
-                semantics_in[regnum].usage_idx =
-                        (usage & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-                shader_parse_dst_param(param, NULL, &semantics_in[regnum].reg);
+                /* Vshader: mark 3.0 output registers used, save token */
+                case WINED3DSPR_OUTPUT:
+                    reg_maps->packed_output[semantic.reg.register_idx] = 1;
+                    semantics_out[semantic.reg.register_idx] = semantic;
+                    if (semantic.usage == WINED3DDECLUSAGE_FOG) reg_maps->fog = 1;
+                    break;
 
-            /* Vshader: mark 3.0 output registers used, save token */
-            } else if (WINED3DSPR_OUTPUT == regtype) {
-                reg_maps->packed_output[regnum] = 1;
-                semantics_out[regnum].usage = (usage & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
-                semantics_out[regnum].usage_idx =
-                        (usage & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-                shader_parse_dst_param(param, NULL, &semantics_out[regnum].reg);
+                /* Save sampler usage token */
+                case WINED3DSPR_SAMPLER:
+                    reg_maps->sampler_type[semantic.reg.register_idx] = semantic.sampler_type;
+                    break;
 
-                if (usage & (WINED3DDECLUSAGE_FOG << WINED3DSP_DCL_USAGE_SHIFT))
-                    reg_maps->fog = 1;
-
-            /* Save sampler usage token */
-            } else if (WINED3DSPR_SAMPLER == regtype)
-                reg_maps->sampler_type[regnum] = usage & WINED3DSP_TEXTURETYPE_MASK;
+                default:
+                    TRACE("Not recording DCL register type %#x.\n", semantic.reg.register_type);
+                    break;
+            }
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
