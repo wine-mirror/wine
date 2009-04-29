@@ -112,4 +112,7 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags);
  */
 char *toIPAddressString(unsigned int addr, char string[16]);
 
+DWORD getInterfaceMtuByName(const char *name, PDWORD mtu);
+DWORD getInterfaceStatusByName(const char *name, PDWORD status);
+
 #endif /* ndef WINE_IFENUM_H_ */

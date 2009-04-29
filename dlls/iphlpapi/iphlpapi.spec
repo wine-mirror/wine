@@ -18,6 +18,7 @@
 @ stub FlushIpNetTableFromStack
 @ stdcall GetAdapterIndex( wstr ptr )
 @ stub GetAdapterOrderMap
+@ stdcall GetAdaptersAddresses( long long ptr ptr ptr )
 @ stdcall GetAdaptersInfo( ptr ptr )
 @ stdcall GetBestInterface( long ptr )
 @ stdcall GetBestInterfaceEx( ptr ptr )

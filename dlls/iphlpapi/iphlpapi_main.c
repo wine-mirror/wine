@@ -23,6 +23,12 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NET_IF_H
+#include <net/if.h>
+#endif
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
@@ -44,10 +50,15 @@
 #include "iphlpapi.h"
 #include "ifenum.h"
 #include "ipstats.h"
+#include "ipifcons.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
+
+#ifndef IF_NAMESIZE
+#define IF_NAMESIZE 16
+#endif
 
 #ifndef INADDR_NONE
 #define INADDR_NONE ~0UL
@@ -586,6 +597,168 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
   return ret;
 }
 
+static DWORD typeFromMibType(DWORD mib_type)
+{
+    switch (mib_type)
+    {
+    case MIB_IF_TYPE_ETHERNET:  return IF_TYPE_ETHERNET_CSMACD;
+    case MIB_IF_TYPE_TOKENRING: return IF_TYPE_ISO88025_TOKENRING;
+    case MIB_IF_TYPE_PPP:       return IF_TYPE_PPP;
+    case MIB_IF_TYPE_LOOPBACK:  return IF_TYPE_SOFTWARE_LOOPBACK;
+    default:                    return IF_TYPE_OTHER;
+    }
+}
+
+static ULONG addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
+{
+    ULONG ret, i;
+    MIB_IPADDRTABLE *at;
+
+    *num_addrs = 0;
+    if ((ret = getIPAddrTable(&at, GetProcessHeap(), 0))) return ret;
+    for (i = 0; i < at->dwNumEntries; i++)
+    {
+        if (at->table[i].dwIndex == index) (*num_addrs)++;
+    }
+    if (!(*addrs = HeapAlloc(GetProcessHeap(), 0, *num_addrs * sizeof(DWORD))))
+    {
+        HeapFree(GetProcessHeap(), 0, at);
+        return ERROR_OUTOFMEMORY;
+    }
+    for (i = 0; i < at->dwNumEntries; i++)
+    {
+        if (at->table[i].dwIndex == index) (*addrs)[i] = at->table[i].dwAddr;
+    }
+    HeapFree(GetProcessHeap(), 0, at);
+    return ERROR_SUCCESS;
+}
+
+static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, ULONG *size)
+{
+    ULONG ret, i, num_addrs, total_size;
+    DWORD *addrs;
+
+    if ((ret = addressesFromIndex(index, &addrs, &num_addrs))) return ret;
+
+    total_size = sizeof(IP_ADAPTER_ADDRESSES);
+    total_size += IF_NAMESIZE;
+    total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_addrs;
+    total_size += sizeof(struct sockaddr_in) * num_addrs;
+
+    if (aa && *size >= total_size)
+    {
+        char name[IF_NAMESIZE], *ptr = (char *)aa + sizeof(IP_ADAPTER_ADDRESSES);
+        DWORD buflen, type, status;
+
+        memset(aa, 0, sizeof(IP_ADAPTER_ADDRESSES));
+        aa->Length  = sizeof(IP_ADAPTER_ADDRESSES);
+        aa->IfIndex = index;
+
+        getInterfaceNameByIndex(index, name);
+        memcpy(ptr, name, IF_NAMESIZE);
+        aa->AdapterName = ptr;
+        ptr += IF_NAMESIZE;
+
+        if (num_addrs)
+        {
+            IP_ADAPTER_UNICAST_ADDRESS *ua;
+            struct sockaddr_in *sa;
+
+            ua = aa->FirstUnicastAddress = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+            for (i = 0; i < num_addrs; i++)
+            {
+                memset(ua, 0, sizeof(IP_ADAPTER_UNICAST_ADDRESS));
+                ua->Length                  = sizeof(IP_ADAPTER_UNICAST_ADDRESS);
+                ua->Address.iSockaddrLength = sizeof(struct sockaddr_in);
+                ua->Address.lpSockaddr      = (SOCKADDR *)((char *)ua + ua->Length);
+
+                sa = (struct sockaddr_in *)ua->Address.lpSockaddr;
+                sa->sin_family      = AF_INET;
+                sa->sin_addr.s_addr = addrs[i];
+                sa->sin_port        = 0;
+
+                ptr += ua->Length + ua->Address.iSockaddrLength;
+                if (i < num_addrs - 1)
+                {
+                    ua->Next = (IP_ADAPTER_UNICAST_ADDRESS *)ptr;
+                    ua = ua->Next;
+                }
+            }
+        }
+
+        buflen = MAX_INTERFACE_PHYSADDR;
+        getInterfacePhysicalByIndex(index, &buflen, aa->PhysicalAddress, &type);
+        aa->PhysicalAddressLength = buflen;
+        aa->IfType = typeFromMibType(type);
+
+        getInterfaceMtuByName(name, &aa->Mtu);
+
+        getInterfaceStatusByName(name, &status);
+        if (status == MIB_IF_OPER_STATUS_OPERATIONAL) aa->OperStatus = IfOperStatusUp;
+        else if (status == MIB_IF_OPER_STATUS_NON_OPERATIONAL) aa->OperStatus = IfOperStatusDown;
+        else aa->OperStatus = IfOperStatusUnknown;
+    }
+    *size = total_size;
+    HeapFree(GetProcessHeap(), 0, addrs);
+    return ERROR_SUCCESS;
+}
+
+ULONG WINAPI GetAdaptersAddresses(ULONG family, ULONG flags, PVOID reserved,
+                                  PIP_ADAPTER_ADDRESSES aa, PULONG buflen)
+{
+    InterfaceIndexTable *table;
+    ULONG i, size, total_size, ret = ERROR_NO_DATA;
+
+    if (!buflen) return ERROR_INVALID_PARAMETER;
+
+    if (family == AF_INET6 || family == AF_UNSPEC)
+        FIXME("no support for IPv6 addresses\n");
+
+    if (family != AF_INET && family != AF_UNSPEC) return ERROR_NO_DATA;
+
+    table = getInterfaceIndexTable();
+    if (!table || !table->numIndexes)
+    {
+        HeapFree(GetProcessHeap(), 0, table);
+        return ERROR_NO_DATA;
+    }
+    total_size = 0;
+    for (i = 0; i < table->numIndexes; i++)
+    {
+        size = 0;
+        if ((ret = adapterAddressesFromIndex(table->indexes[i], NULL, &size)))
+        {
+            HeapFree(GetProcessHeap(), 0, table);
+            return ret;
+        }
+        total_size += size;
+    }
+    if (aa && *buflen >= total_size)
+    {
+        ULONG bytes_left = size = total_size;
+        for (i = 0; i < table->numIndexes; i++)
+        {
+            if ((ret = adapterAddressesFromIndex(table->indexes[i], aa, &size)))
+            {
+                HeapFree(GetProcessHeap(), 0, table);
+                return ret;
+            }
+            if (i < table->numIndexes - 1)
+            {
+                aa->Next = (IP_ADAPTER_ADDRESSES *)((char *)aa + size);
+                aa = aa->Next;
+                size = bytes_left -= size;
+            }
+        }
+        ret = ERROR_SUCCESS;
+    }
+    if (*buflen < total_size) ret = ERROR_BUFFER_OVERFLOW;
+    *buflen = total_size;
+
+    TRACE("num adapters %u\n", table->numIndexes);
+    HeapFree(GetProcessHeap(), 0, table);
+    return ret;
+}
 
 /******************************************************************
  *    GetBestInterface (IPHLPAPI.@)

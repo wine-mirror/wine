@@ -548,7 +548,7 @@ DWORD getInterfacePhysicalByIndex(DWORD index, PDWORD len, PBYTE addr,
     return ERROR_INVALID_DATA;
 }
 
-static DWORD getInterfaceMtuByName(const char *name, PDWORD mtu)
+DWORD getInterfaceMtuByName(const char *name, PDWORD mtu)
 {
   DWORD ret;
   int fd;
@@ -580,7 +580,7 @@ static DWORD getInterfaceMtuByName(const char *name, PDWORD mtu)
   return ret;
 }
 
-static DWORD getInterfaceStatusByName(const char *name, PDWORD status)
+DWORD getInterfaceStatusByName(const char *name, PDWORD status)
 {
   DWORD ret;
   int fd;
