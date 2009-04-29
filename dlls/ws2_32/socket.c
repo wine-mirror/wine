@@ -4695,13 +4695,13 @@ int WINAPI WSARemoveServiceClass(LPGUID info)
 /***********************************************************************
  *              inet_ntop                      (WS2_32.@)
  */
-PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, size_t len )
+PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
 {
 #ifdef HAVE_INET_NTOP
     struct WS_in6_addr *in6;
     struct WS_in_addr  *in;
 
-    TRACE("family %d, addr (%p), buffer (%p), len %d\n", family, addr, buffer, len);
+    TRACE("family %d, addr (%p), buffer (%p), len %ld\n", family, addr, buffer, len);
     switch (family)
     {
     case WS_AF_INET:

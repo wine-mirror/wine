@@ -161,9 +161,9 @@ int WINAPI  WS(getnameinfo)(const SOCKADDR*,WS(socklen_t),PCHAR,DWORD,PCHAR,DWOR
 #define     GetNameInfoA WS(getnameinfo)
 INT WINAPI  GetNameInfoW(const SOCKADDR*,WS(socklen_t),PWCHAR,DWORD,PWCHAR,DWORD,INT);
 #define     GetNameInfo WINELIB_NAME_AW(GetNameInfo)
-PCSTR WINAPI WS(inet_ntop)(INT,PVOID,PSTR,size_t);
+PCSTR WINAPI WS(inet_ntop)(INT,PVOID,PSTR,SIZE_T);
 #define     InetNtopA WS(inet_ntop)
-PCWSTR WINAPI InetNtopW(INT,PVOID,PWSTR,size_t);
+PCWSTR WINAPI InetNtopW(INT,PVOID,PWSTR,SIZE_T);
 #define     InetNtop WINELIB_NAME_AW(InetNtop)
 int WINAPI  WS(inet_pton)(INT,PCSTR,PVOID);
 #define     InetPtonA WS(inet_pton)
