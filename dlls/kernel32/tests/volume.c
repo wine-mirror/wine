@@ -287,7 +287,6 @@ static void test_GetVolumeInformationA(void)
     /* check for error on no trailing \   */
     ret = pGetVolumeInformationA(Root_Dir0, vol_name_buf, vol_name_size, NULL,
             NULL, NULL, fs_name_buf, fs_name_len);
-todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_NAME,
         "GetVolumeInformationA w/o '\\' did not fail, last error %u\n", GetLastError());
 

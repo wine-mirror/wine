@@ -526,7 +526,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     }
     else
     {
-        if (!root[0] || root[1] != ':')
+        if (!root[0] || root[1] != ':' || root[lstrlenW(root)-1] != '\\' )
         {
             SetLastError( ERROR_INVALID_NAME );
             return FALSE;
