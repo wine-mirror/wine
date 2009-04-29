@@ -526,7 +526,7 @@ DWORD svcctl_ChangeServiceConfigW(
         WINE_FIXME("Changing tag id not supported\n");
 
     if (lpDependencies != NULL)
-        WINE_FIXME("Chainging dependencies not supported\n");
+        WINE_FIXME("Changing dependencies not supported\n");
 
     if (lpServiceStartName != NULL)
         new_entry.config.lpServiceStartName = (LPWSTR)lpServiceStartName;
