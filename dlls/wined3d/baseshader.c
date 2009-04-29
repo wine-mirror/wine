@@ -94,7 +94,7 @@ typedef enum _WINED3DSHADER_ADDRESSMODE_TYPE
   WINED3DSHADER_ADDRMODE_FORCE_DWORD = 0x7fffffff,
 } WINED3DSHADER_ADDRESSMODE_TYPE;
 
-static void shader_dump_param(const DWORD param, const DWORD addr_token, int input, DWORD shader_version);
+static void shader_dump_param(const DWORD param, const DWORD addr_token, BOOL is_src, DWORD shader_version);
 
 /* Read a parameter opcode from the input stream,
  * and possibly a relative addressing token.
@@ -902,7 +902,7 @@ static void shader_dump_decl_usage(DWORD decl, DWORD param, DWORD shader_version
 }
 
 static void shader_dump_arr_entry(const DWORD param, const DWORD addr_token,
-        unsigned int reg, int input, DWORD shader_version)
+        unsigned int reg, BOOL is_src, DWORD shader_version)
 {
     char relative =
         ((param & WINED3DSHADER_ADDRESSMODE_MASK) == WINED3DSHADER_ADDRMODE_RELATIVE);
@@ -910,7 +910,7 @@ static void shader_dump_arr_entry(const DWORD param, const DWORD addr_token,
     if (relative) {
         TRACE("[");
         if (addr_token)
-            shader_dump_param(addr_token, 0, input, shader_version);
+            shader_dump_param(addr_token, 0, is_src, shader_version);
         else
             TRACE("a0.x");
         TRACE(" + ");
@@ -920,7 +920,7 @@ static void shader_dump_arr_entry(const DWORD param, const DWORD addr_token,
          TRACE("]");
 }
 
-static void shader_dump_param(const DWORD param, const DWORD addr_token, int input, DWORD shader_version)
+static void shader_dump_param(const DWORD param, const DWORD addr_token, BOOL is_src, DWORD shader_version)
 {
     static const char * const rastout_reg_names[] = { "oPos", "oFog", "oPts" };
     static const char * const misctype_reg_names[] = { "vPos", "vFace"};
@@ -933,7 +933,8 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(shader_version);
 
-    if (input) {
+    if (is_src)
+    {
         if ( (modifier == WINED3DSPSM_NEG) ||
              (modifier == WINED3DSPSM_BIASNEG) ||
              (modifier == WINED3DSPSM_SIGNNEG) ||
@@ -955,14 +956,14 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
             break;
         case WINED3DSPR_INPUT:
             TRACE("v");
-            shader_dump_arr_entry(param, addr_token, reg, input, shader_version);
+            shader_dump_arr_entry(param, addr_token, reg, is_src, shader_version);
             break;
         case WINED3DSPR_CONST:
         case WINED3DSPR_CONST2:
         case WINED3DSPR_CONST3:
         case WINED3DSPR_CONST4:
             TRACE("c");
-            shader_dump_arr_entry(param, addr_token, shader_get_float_offset(param), input, shader_version);
+            shader_dump_arr_entry(param, addr_token, shader_get_float_offset(param), is_src, shader_version);
             break;
         case WINED3DSPR_TEXTURE: /* vs: case D3DSPR_ADDR */
             TRACE("%c%u", (pshader? 't':'a'), reg);
@@ -986,18 +987,18 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
 
             if (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 3) {
                 TRACE("o");
-                shader_dump_arr_entry(param, addr_token, reg, input, shader_version);
+                shader_dump_arr_entry(param, addr_token, reg, is_src, shader_version);
             }
             else 
                TRACE("oT%u", reg);
             break;
         case WINED3DSPR_CONSTINT:
             TRACE("i");
-            shader_dump_arr_entry(param, addr_token, reg, input, shader_version);
+            shader_dump_arr_entry(param, addr_token, reg, is_src, shader_version);
             break;
         case WINED3DSPR_CONSTBOOL:
             TRACE("b");
-            shader_dump_arr_entry(param, addr_token, reg, input, shader_version);
+            shader_dump_arr_entry(param, addr_token, reg, is_src, shader_version);
             break;
         case WINED3DSPR_LABEL:
             TRACE("l%u", reg);
@@ -1023,7 +1024,8 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, int inp
             break;
    }
 
-   if (!input) {
+   if (!is_src)
+   {
        /* operand output (for modifiers and shift, see dump_ins_modifiers) */
 
        if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
@@ -1262,7 +1264,7 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
             shader_dump_decl_usage(usage, param, shader_version);
             shader_dump_ins_modifiers(param);
             TRACE(" ");
-            shader_dump_param(param, 0, 0, shader_version);
+            shader_dump_param(param, 0, FALSE, shader_version);
             pToken += 2;
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
@@ -1301,7 +1303,7 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
             if (ins.predicate)
             {
                 TRACE("(");
-                shader_dump_param(*(pToken + 2), 0, 1, shader_version);
+                shader_dump_param(*(pToken + 2), 0, TRUE, shader_version);
                 TRACE(") ");
             }
 
@@ -1339,7 +1341,7 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
 
                 shader_dump_ins_modifiers(param);
                 TRACE(" ");
-                shader_dump_param(param, addr_token, 0, shader_version);
+                shader_dump_param(param, addr_token, FALSE, shader_version);
             }
 
             /* Predication token - already printed out, just skip it */
@@ -1352,7 +1354,7 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
                 pToken += tokens_read;
 
                 TRACE((i == 0)? " " : ", ");
-                shader_dump_param(param, addr_token, 1, shader_version);
+                shader_dump_param(param, addr_token, TRUE, shader_version);
             }
         }
         TRACE("\n");
