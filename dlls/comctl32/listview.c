@@ -1412,6 +1412,13 @@ static inline BOOL LISTVIEW_GetItemW(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpL
     return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
 }
 
+/* used to handle collapse main item column case */
+static inline BOOL LISTVIEW_DrawFocusRect(const LISTVIEW_INFO *infoPtr, HDC hdc)
+{
+    return (infoPtr->rcFocus.left < infoPtr->rcFocus.right) ?
+            DrawFocusRect(hdc, &infoPtr->rcFocus) : FALSE;
+}
+
 /* Listview invalidation functions: use _only_ these functions to invalidate */
 
 static inline BOOL is_redrawing(const LISTVIEW_INFO *infoPtr)
@@ -1862,7 +1869,7 @@ static void LISTVIEW_ShowFocusRect(const LISTVIEW_INFO *infoPtr, BOOL fShow)
     }
     else
     {
-	DrawFocusRect(hdc, &infoPtr->rcFocus);
+	LISTVIEW_DrawFocusRect(infoPtr, hdc);
     }
 done:
     ReleaseDC(infoPtr->hwndSelf, hdc);
@@ -4368,7 +4375,7 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *prcEra
 
 	/* if we have a focus rect, draw it */
 	if (infoPtr->bFocus)
-	    DrawFocusRect(hdc, &infoPtr->rcFocus);
+	    LISTVIEW_DrawFocusRect(infoPtr, hdc);
     }
     iterator_destroy(&i);
     
