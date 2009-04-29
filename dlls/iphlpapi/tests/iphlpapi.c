@@ -63,6 +63,7 @@ typedef DWORD (WINAPI *GetUdpStatisticsFunc)(PMIB_UDPSTATS);
 typedef DWORD (WINAPI *GetTcpTableFunc)(PMIB_TCPTABLE,PDWORD,BOOL);
 typedef DWORD (WINAPI *GetUdpTableFunc)(PMIB_UDPTABLE,PDWORD,BOOL);
 typedef DWORD (WINAPI *GetPerAdapterInfoFunc)(ULONG,PIP_PER_ADAPTER_INFO,PULONG);
+typedef DWORD (WINAPI *GetAdaptersAddressesFunc)(ULONG,ULONG,PVOID,PIP_ADAPTER_ADDRESSES,PULONG);
 
 static GetNumberOfInterfacesFunc gGetNumberOfInterfaces = NULL;
 static GetIpAddrTableFunc gGetIpAddrTable = NULL;
@@ -81,6 +82,7 @@ static GetUdpStatisticsFunc gGetUdpStatistics = NULL;
 static GetTcpTableFunc gGetTcpTable = NULL;
 static GetUdpTableFunc gGetUdpTable = NULL;
 static GetPerAdapterInfoFunc gGetPerAdapterInfo = NULL;
+static GetAdaptersAddressesFunc gGetAdaptersAddresses = NULL;
 
 static void loadIPHlpApi(void)
 {
@@ -119,6 +121,7 @@ static void loadIPHlpApi(void)
     gGetUdpTable = (GetUdpTableFunc)GetProcAddress(
      hLibrary, "GetUdpTable");
     gGetPerAdapterInfo = (GetPerAdapterInfoFunc)GetProcAddress(hLibrary, "GetPerAdapterInfo");
+    gGetAdaptersAddresses = (GetAdaptersAddressesFunc)GetProcAddress(hLibrary, "GetAdaptersAddresses");
   }
 }
 
@@ -811,6 +814,71 @@ static void testWin2KFunctions(void)
     testGetPerAdapterInfo();
 }
 
+static void test_GetAdaptersAddresses(void)
+{
+    ULONG ret, size;
+    IP_ADAPTER_ADDRESSES *aa;
+    IP_ADAPTER_UNICAST_ADDRESS *ua;
+
+    if (!gGetAdaptersAddresses)
+    {
+        win_skip("GetAdaptersAddresses not present\n");
+        return;
+    }
+
+    ret = gGetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", ret);
+
+    ret = gGetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &size);
+    ok(ret == ERROR_BUFFER_OVERFLOW, "expected ERROR_BUFFER_OVERFLOW, got %u\n", ret);
+    if (ret != ERROR_BUFFER_OVERFLOW) return;
+
+    aa = HeapAlloc(GetProcessHeap(), 0, size);
+    ret = gGetAdaptersAddresses(AF_UNSPEC, 0, NULL, aa, &size);
+    ok(!ret, "expected ERROR_SUCCESS got %u\n", ret);
+
+    while (!ret && winetest_debug > 1 && aa)
+    {
+        trace("Length:                %u\n", aa->Length);
+        trace("IfIndex:               %u\n", aa->IfIndex);
+        trace("Next:                  %p\n", aa->Next);
+        trace("AdapterName:           %s\n", aa->AdapterName);
+        trace("FirstUnicastAddress:   %p\n", aa->FirstUnicastAddress);
+        ua = aa->FirstUnicastAddress;
+        while (ua)
+        {
+            trace("\tLength:                  %u\n", ua->Length);
+            trace("\tFlags:                   0x%08x\n", ua->Flags);
+            trace("\tNext:                    %p\n", ua->Next);
+            trace("\tAddress.lpSockaddr:      %p\n", ua->Address.lpSockaddr);
+            trace("\tAddress.iSockaddrLength: %d\n", ua->Address.iSockaddrLength);
+            trace("\tPrefixOrigin:            %u\n", ua->PrefixOrigin);
+            trace("\tSuffixOrigin:            %u\n", ua->SuffixOrigin);
+            trace("\tDadState:                %u\n", ua->DadState);
+            trace("\tValidLifetime:           0x%08x\n", ua->ValidLifetime);
+            trace("\tPreferredLifetime:       0x%08x\n", ua->PreferredLifetime);
+            trace("\tLeaseLifetime:           0x%08x\n", ua->LeaseLifetime);
+            trace("\n");
+            ua = ua->Next;
+        }
+        trace("FirstAnycastAddress:   %p\n", aa->FirstAnycastAddress);
+        trace("FirstMulticastAddress: %p\n", aa->FirstMulticastAddress);
+        trace("FirstDnsServerAddress: %p\n", aa->FirstDnsServerAddress);
+        trace("DnsSuffix:             %p\n", aa->DnsSuffix);
+        trace("Description:           %p\n", aa->Description);
+        trace("FriendlyName:          %p\n", aa->FriendlyName);
+        trace("PhysicalAddress:       %02x\n", aa->PhysicalAddress[0]);
+        trace("PhysicalAddressLength: %u\n", aa->PhysicalAddressLength);
+        trace("Flags:                 0x%08x\n", aa->Flags);
+        trace("Mtu:                   %u\n", aa->Mtu);
+        trace("IfType:                %u\n", aa->IfType);
+        trace("OperStatus:            %u\n", aa->OperStatus);
+        trace("\n");
+        aa = aa->Next;
+    }
+    HeapFree(GetProcessHeap(), 0, aa);
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -820,6 +888,7 @@ START_TEST(iphlpapi)
     testWinNT4Functions();
     testWin98Functions();
     testWin2KFunctions();
+    test_GetAdaptersAddresses();
     freeIPHlpApi();
   }
 }
