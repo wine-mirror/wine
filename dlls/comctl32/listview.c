@@ -309,6 +309,8 @@ typedef struct tagLISTVIEW_INFO
   INT nMeasureItemHeight;
   INT xTrackLine;               /* The x coefficient of the track line or -1 if none */
   DELAYED_ITEM_EDIT itemEdit;   /* Pointer to this structure will be the timer ID */
+
+  DWORD iVersion; /* CCM_[G,S]ETVERSION */
 } LISTVIEW_INFO;
 
 /*
@@ -8133,6 +8135,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->nMeasureItemHeight = 0;
   infoPtr->xTrackLine = -1;  /* no track line */
   infoPtr->itemEdit.fEnabled = FALSE;
+  infoPtr->iVersion = COMCTL32_VERSION;
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -9759,6 +9762,47 @@ static LRESULT LISTVIEW_ShowWindow(LISTVIEW_INFO *infoPtr, BOOL bShown, INT iSta
 
 /***
  * DESCRIPTION:
+ * Processes CCM_GETVERSION messages.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ *
+ * RETURN:
+ * Current version
+ */
+static inline LRESULT LISTVIEW_GetVersion(LISTVIEW_INFO *infoPtr)
+{
+  return infoPtr->iVersion;
+}
+
+/***
+ * DESCRIPTION:
+ * Processes CCM_SETVERSION messages.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr  : valid pointer to the listview structure
+ * [I] iVersion : version to be set
+ *
+ * RETURN:
+ * -1 when requested version is greater then DLL version;
+ * previous version otherwise
+ */
+static LRESULT LISTVIEW_SetVersion(LISTVIEW_INFO *infoPtr, DWORD iVersion)
+{
+  INT iOldVersion = infoPtr->iVersion;
+
+  if (iVersion > COMCTL32_VERSION)
+    return -1;
+
+  infoPtr->iVersion = iVersion;
+
+  TRACE("new version %d\n", iVersion);
+
+  return iOldVersion;
+}
+
+/***
+ * DESCRIPTION:
  * Window procedure of the listview control.
  *
  */
@@ -10125,6 +10169,12 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case LVM_UPDATE:
     return LISTVIEW_Update(infoPtr, (INT)wParam);
+
+  case CCM_GETVERSION:
+    return LISTVIEW_GetVersion(infoPtr);
+
+  case CCM_SETVERSION:
+    return LISTVIEW_SetVersion(infoPtr, wParam);
 
   case WM_CHAR:
     return LISTVIEW_ProcessLetterKeys( infoPtr, wParam, lParam );
