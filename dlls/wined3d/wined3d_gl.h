@@ -2895,7 +2895,7 @@ typedef void (WINE_GLAPI * PGLFNGETFENCEIVNVPROC) (GLuint, GLenum, GLint *);
 #ifndef GL_APPLE_fence
 #define GL_APPLE_fence 1
 #define GL_DRAW_PIXELS_APPLE                0x8A0A
-#define GL_FENCE_APPLE                      0x84F3
+#define GL_FENCE_APPLE                      0x8A0B
 #endif
 typedef void (WINE_GLAPI * PGLFNGENFENCESAPPLEPROC) (GLsizei, GLuint *);
 typedef void (WINE_GLAPI * PGLFNDELETEFENCESAPPLEPROC) (GLuint, const GLuint *);
