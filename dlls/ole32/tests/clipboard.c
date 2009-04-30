@@ -1361,10 +1361,160 @@ static void test_nonole_clipboard(void)
     OleUninitialize();
 }
 
+static void test_getdatahere(void)
+{
+    HRESULT hr;
+    IDataObject *src, *get;
+    FORMATETC fmt;
+    STGMEDIUM med;
+
+    OleInitialize(NULL);
+
+    hr = DataObjectImpl_CreateComplex(&src);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = OleSetClipboard(src);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = OleGetClipboard(&get);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    /* global format -> global & stream */
+
+    DataObjectImpl_GetData_calls = 0;
+    DataObjectImpl_GetDataHere_calls = 0;
+
+    InitFormatEtc(fmt, CF_TEXT, TYMED_HGLOBAL);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_HGLOBAL;
+    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 100);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 1, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 1, "called %d\n", DataObjectImpl_GetData_calls);
+
+    InitFormatEtc(fmt, CF_TEXT, 0);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_HGLOBAL;
+    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 100);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 2, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 1, "called %d\n", DataObjectImpl_GetData_calls);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_HGLOBAL;
+    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 1);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == E_FAIL, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 3, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 1, "called %d\n", DataObjectImpl_GetData_calls);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_ISTREAM;
+    CreateStreamOnHGlobal(NULL, TRUE, &U(med).pstm);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTREAM, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 4, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 1, "called %d\n", DataObjectImpl_GetData_calls);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_ISTORAGE;
+    StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &U(med).pstg);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == E_FAIL, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTORAGE, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 5, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 1, "called %d\n", DataObjectImpl_GetData_calls);
+
+    InitFormatEtc(fmt, cf_stream, 0);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_HGLOBAL;
+    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 100);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 7, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 2, "called %d\n", DataObjectImpl_GetData_calls);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_ISTREAM;
+    CreateStreamOnHGlobal(NULL, TRUE, &U(med).pstm);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTREAM, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 8, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 2, "called %d\n", DataObjectImpl_GetData_calls);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_ISTORAGE;
+    StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &U(med).pstg);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == E_FAIL, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTORAGE, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 9, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 2, "called %d\n", DataObjectImpl_GetData_calls);
+
+    InitFormatEtc(fmt, cf_storage, 0);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_HGLOBAL;
+    U(med).hGlobal = GlobalAlloc(GMEM_MOVEABLE, 3000);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_HGLOBAL, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 11, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 3, "called %d\n", DataObjectImpl_GetData_calls);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_ISTREAM;
+    CreateStreamOnHGlobal(NULL, TRUE, &U(med).pstm);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTREAM, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 12, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 3, "called %d\n", DataObjectImpl_GetData_calls);
+
+    med.pUnkForRelease = NULL;
+    med.tymed = TYMED_ISTORAGE;
+    StgCreateDocfile(NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &U(med).pstg);
+    hr = IDataObject_GetDataHere(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(med.tymed == TYMED_ISTORAGE, "got %x\n", med.tymed);
+    ReleaseStgMedium(&med);
+    ok(DataObjectImpl_GetDataHere_calls == 13, "called %d\n", DataObjectImpl_GetDataHere_calls);
+    ok(DataObjectImpl_GetData_calls == 3, "called %d\n", DataObjectImpl_GetData_calls);
+
+
+    IDataObject_Release(get);
+    IDataObject_Release(src);
+
+    OleUninitialize();
+
+}
+
 START_TEST(clipboard)
 {
     test_set_clipboard();
     test_consumer_refs();
     test_flushed_getdata();
     test_nonole_clipboard();
+    test_getdatahere();
 }
