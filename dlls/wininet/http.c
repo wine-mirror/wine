@@ -3277,7 +3277,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     if (dwContentLength || strcmpW(lpwhr->lpszVerb, szGET))
     {
         sprintfW(contentLengthStr, szContentLength, dwContentLength);
-        HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+        HTTP_HttpAddRequestHeadersW(lpwhr, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_REPLACE);
         lpwhr->dwBytesToWrite = dwContentLength;
     }
     if (lpwhr->lpHttpSession->lpAppInfo->lpszAgent)
