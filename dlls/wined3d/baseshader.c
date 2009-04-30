@@ -840,82 +840,75 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
     return WINED3D_OK;
 }
 
-static void shader_dump_decl_usage(DWORD decl, DWORD param, DWORD shader_version)
+static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semantic, DWORD shader_version)
 {
-    DWORD regtype = shader_get_regtype(param);
-
     TRACE("dcl");
 
-    if (regtype == WINED3DSPR_SAMPLER) {
-        DWORD ttype = (decl & WINED3DSP_TEXTURETYPE_MASK) >> WINED3DSP_TEXTURETYPE_SHIFT;
-
-        switch (ttype) {
+    if (semantic->reg.register_type == WINED3DSPR_SAMPLER)
+    {
+        switch (semantic->sampler_type)
+        {
             case WINED3DSTT_2D: TRACE("_2d"); break;
             case WINED3DSTT_CUBE: TRACE("_cube"); break;
             case WINED3DSTT_VOLUME: TRACE("_volume"); break;
-            default: TRACE("_unknown_ttype(0x%08x)", ttype);
-       }
-
-    } else { 
-
-        DWORD usage = decl & WINED3DSP_DCL_USAGE_MASK;
-        DWORD idx = (decl & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-
+            default: TRACE("_unknown_ttype(0x%08x)", semantic->sampler_type);
+        }
+    }
+    else
+    {
         /* Pixel shaders 3.0 don't have usage semantics */
         if (shader_is_pshader_version(shader_version) && shader_version < WINED3DPS_VERSION(3,0))
             return;
         else
             TRACE("_");
 
-        switch(usage) {
-        case WINED3DDECLUSAGE_POSITION:
-            TRACE("position%d", idx);
-            break;
-        case WINED3DDECLUSAGE_BLENDINDICES:
-            TRACE("blend");
-            break;
-        case WINED3DDECLUSAGE_BLENDWEIGHT:
-            TRACE("weight");
-            break;
-        case WINED3DDECLUSAGE_NORMAL:
-            TRACE("normal%d", idx);
-            break;
-        case WINED3DDECLUSAGE_PSIZE:
-            TRACE("psize");
-            break;
-        case WINED3DDECLUSAGE_COLOR:
-            if(idx == 0)  {
-                TRACE("color");
-            } else {
-                TRACE("specular%d", (idx - 1));
-            }
-            break;
-        case WINED3DDECLUSAGE_TEXCOORD:
-            TRACE("texture%d", idx);
-            break;
-        case WINED3DDECLUSAGE_TANGENT:
-            TRACE("tangent");
-            break;
-        case WINED3DDECLUSAGE_BINORMAL:
-            TRACE("binormal");
-            break;
-        case WINED3DDECLUSAGE_TESSFACTOR:
-            TRACE("tessfactor");
-            break;
-        case WINED3DDECLUSAGE_POSITIONT:
-            TRACE("positionT%d", idx);
-            break;
-        case WINED3DDECLUSAGE_FOG:
-            TRACE("fog");
-            break;
-        case WINED3DDECLUSAGE_DEPTH:
-            TRACE("depth");
-            break;
-        case WINED3DDECLUSAGE_SAMPLE:
-            TRACE("sample");
-            break;
-        default:
-            FIXME("unknown_semantics(0x%08x)", usage);
+        switch (semantic->usage)
+        {
+            case WINED3DDECLUSAGE_POSITION:
+                TRACE("position%d", semantic->usage_idx);
+                break;
+            case WINED3DDECLUSAGE_BLENDINDICES:
+                TRACE("blend");
+                break;
+            case WINED3DDECLUSAGE_BLENDWEIGHT:
+                TRACE("weight");
+                break;
+            case WINED3DDECLUSAGE_NORMAL:
+                TRACE("normal%d", semantic->usage_idx);
+                break;
+            case WINED3DDECLUSAGE_PSIZE:
+                TRACE("psize");
+                break;
+            case WINED3DDECLUSAGE_COLOR:
+                if (semantic->usage_idx == 0) TRACE("color");
+                else TRACE("specular%d", (semantic->usage_idx - 1));
+                break;
+            case WINED3DDECLUSAGE_TEXCOORD:
+                TRACE("texture%d", semantic->usage_idx);
+                break;
+            case WINED3DDECLUSAGE_TANGENT:
+                TRACE("tangent");
+                break;
+            case WINED3DDECLUSAGE_BINORMAL:
+                TRACE("binormal");
+                break;
+            case WINED3DDECLUSAGE_TESSFACTOR:
+                TRACE("tessfactor");
+                break;
+            case WINED3DDECLUSAGE_POSITIONT:
+                TRACE("positionT%d", semantic->usage_idx);
+                break;
+            case WINED3DDECLUSAGE_FOG:
+                TRACE("fog");
+                break;
+            case WINED3DDECLUSAGE_DEPTH:
+                TRACE("depth");
+                break;
+            case WINED3DDECLUSAGE_SAMPLE:
+                TRACE("sample");
+                break;
+            default:
+                FIXME("unknown_semantics(0x%08x)", semantic->usage);
         }
     }
 }
@@ -1202,12 +1195,12 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
     }
 }
 
-static void shader_dump_ins_modifiers(const DWORD output)
+static void shader_dump_ins_modifiers(const struct wined3d_shader_dst_param *dst)
 {
-    DWORD shift = (output & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    DWORD mmask = output & WINED3DSP_DSTMOD_MASK;
+    DWORD mmask = dst->modifiers;
 
-    switch (shift) {
+    switch (dst->shift)
+    {
         case 0: break;
         case 13: TRACE("_d8"); break;
         case 14: TRACE("_d4"); break;
@@ -1215,7 +1208,7 @@ static void shader_dump_ins_modifiers(const DWORD output)
         case 1: TRACE("_x2"); break;
         case 2: TRACE("_x4"); break;
         case 3: TRACE("_x8"); break;
-        default: TRACE("_unhandled_shift(%d)", shift); break;
+        default: TRACE("_unhandled_shift(%d)", dst->shift); break;
     }
 
     if (mmask & WINED3DSPDM_SATURATE)         TRACE("_sat");
@@ -1269,18 +1262,15 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
 
         if (ins.handler_idx == WINED3DSIH_DCL)
         {
-            struct wined3d_shader_dst_param dst;
-            DWORD usage = *pToken;
-            DWORD param = *(pToken + 1);
+            struct wined3d_shader_semantic semantic;
 
-            shader_parse_dst_param(param, NULL, &dst);
+            shader_sm1_read_semantic(&pToken, &semantic);
 
-            shader_dump_decl_usage(usage, param, shader_version);
-            shader_dump_ins_modifiers(param);
+            shader_dump_decl_usage(&semantic, shader_version);
+            shader_dump_ins_modifiers(&semantic.reg);
             TRACE(" ");
-            shader_dump_param(dst.register_type, dst.register_idx, FALSE,
-                    0, dst.write_mask, dst.rel_addr, shader_version);
-            pToken += 2;
+            shader_dump_param(semantic.reg.register_type, semantic.reg.register_idx, FALSE,
+                    0, semantic.reg.write_mask, semantic.reg.rel_addr, shader_version);
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
@@ -1360,20 +1350,9 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
                 struct wined3d_shader_dst_param dst;
                 struct wined3d_shader_src_param rel_addr;
 
-                tokens_read = shader_get_param(pToken, shader_version, &param, &addr_token);
-                pToken += tokens_read;
+                shader_sm1_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
 
-                if (param & WINED3DSHADER_ADDRMODE_RELATIVE)
-                {
-                    shader_parse_src_param(addr_token, NULL, &rel_addr);
-                    shader_parse_dst_param(param, &rel_addr, &dst);
-                }
-                else
-                {
-                    shader_parse_dst_param(param, NULL, &dst);
-                }
-
-                shader_dump_ins_modifiers(param);
+                shader_dump_ins_modifiers(&dst);
                 TRACE(" ");
                 shader_dump_param(dst.register_type, dst.register_idx, FALSE,
                         0, dst.write_mask, dst.rel_addr, shader_version);
