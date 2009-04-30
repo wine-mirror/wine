@@ -16,6 +16,6 @@ Name[da]=Wine, Programstarter til Windows-programmer
 Name[nb]=Wine Programlaster for Windowsapplikasjoner
 Name[nn]=Wine Programlaster for Windowsapplikasjoner
 Exec=wine start /unix %f
-MimeType=application/x-ms-dos-executable;application/x-msdos-program;application/x-msdownload;application/exe;application/x-exe;application/dos-exe;vms/exe;application/x-winexe;application/msdos-windows;application/x-zip-compressed;application/x-executable;application/x-msi;
+MimeType=application/x-ms-dos-executable;application/x-msi;
 NoDisplay=true
 StartupNotify=true
