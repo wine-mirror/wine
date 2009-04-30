@@ -161,6 +161,8 @@ static HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, 
     Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
 static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+static HANDLE X11DRV_CLIPBOARD_ExportImageBmp(Display *display, Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 static HANDLE X11DRV_CLIPBOARD_ExportMetaFilePict(Display *display, Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 static HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Display *display, Window requestor, Atom aTarget,
@@ -283,7 +285,7 @@ static WINE_CLIPFORMAT ClipFormats[]  =
         X11DRV_CLIPBOARD_ExportClipboardData, &ClipFormats[21], &ClipFormats[23]},
 
     { CF_DIB, wszIMAGEBMP, 0, CF_FLAG_BUILTINFMT, X11DRV_CLIPBOARD_ImportImageBmp,
-        NULL, &ClipFormats[22], NULL},
+        X11DRV_CLIPBOARD_ExportImageBmp, &ClipFormats[22], NULL},
 };
 
 #define GET_ATOM(prop)  (((prop) < FIRST_XATOM) ? (Atom)(prop) : X11DRV_Atoms[(prop) - FIRST_XATOM])
@@ -1705,6 +1707,75 @@ static HANDLE X11DRV_CLIPBOARD_ExportXAPIXMAP(Display *display, Window requestor
     GlobalUnlock(hData);
 
     return hData;
+}
+
+
+/**************************************************************************
+ *		X11DRV_CLIPBOARD_ExportImageBmp
+ *
+ *  Export CF_DIB to image/bmp.
+ */
+static HANDLE X11DRV_CLIPBOARD_ExportImageBmp(Display *display, Window requestor, Atom aTarget, Atom rprop,
+    LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+{
+    HANDLE hpackeddib;
+    LPBYTE dibdata;
+    UINT bmpsize;
+    HANDLE hbmpdata;
+    LPBYTE bmpdata;
+    BITMAPFILEHEADER *bfh;
+
+    *lpBytes = 0;
+
+    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
+    {
+        ERR("Failed to export %04x format\n", lpdata->wFormatID);
+        return 0;
+    }
+
+    hpackeddib = lpdata->hData32;
+
+    dibdata = GlobalLock(hpackeddib);
+    if (!dibdata)
+    {
+        ERR("Failed to lock packed DIB\n");
+        return 0;
+    }
+
+    bmpsize = sizeof(BITMAPFILEHEADER) + GlobalSize(hpackeddib);
+
+    hbmpdata = GlobalAlloc(0, bmpsize);
+
+    if (hbmpdata)
+    {
+        bmpdata = GlobalLock(hbmpdata);
+
+        if (!bmpdata)
+        {
+            GlobalFree(hbmpdata);
+            GlobalUnlock(hpackeddib);
+            return 0;
+        }
+
+        /* bitmap file header */
+        bfh = (BITMAPFILEHEADER*)bmpdata;
+        bfh->bfType = 0x4d42; /* "BM" */
+        bfh->bfSize = bmpsize;
+        bfh->bfReserved1 = 0;
+        bfh->bfReserved2 = 0;
+        bfh->bfOffBits = sizeof(BITMAPFILEHEADER) + bitmap_info_size((BITMAPINFO*)dibdata, DIB_RGB_COLORS);
+
+        /* rest of bitmap is the same as the packed dib */
+        memcpy(bfh+1, dibdata, bmpsize-sizeof(BITMAPFILEHEADER));
+
+        *lpBytes = bmpsize;
+
+        GlobalUnlock(hbmpdata);
+    }
+
+    GlobalUnlock(hpackeddib);
+
+    return hbmpdata;
 }
 
 
