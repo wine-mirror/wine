@@ -41,7 +41,8 @@ struct drive_info
 
 /* exceptions */
 extern void wait_suspend( CONTEXT *context );
-extern NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance );
+extern NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context );
+extern LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context );
 extern void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec ) DECLSPEC_NORETURN;
 extern void set_cpu_context( const CONTEXT *context );
 extern void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags );

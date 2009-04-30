@@ -40,13 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
-/* Exception record for handling exceptions happening inside exception handlers */
-typedef struct
-{
-    EXCEPTION_REGISTRATION_RECORD frame;
-    EXCEPTION_REGISTRATION_RECORD *prevFrame;
-} EXC_NESTED_FRAME;
-
 typedef struct
 {
     struct list                 entry;
@@ -63,82 +56,6 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": vectored_handlers_section") }
 };
 static RTL_CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-#ifdef __i386__
-# define GET_IP(context) ((LPVOID)(context)->Eip)
-#elif defined(__sparc__)
-# define GET_IP(context) ((LPVOID)(context)->pc)
-#elif defined(__powerpc__)
-# define GET_IP(context) ((LPVOID)(context)->Iar)
-#elif defined(__ALPHA__)
-# define GET_IP(context) ((LPVOID)(context)->Fir)
-#elif defined(__x86_64__)
-# define GET_IP(context) ((LPVOID)(context)->Rip)
-#else
-# error You must define GET_IP for this CPU
-#endif
-
-/*******************************************************************
- *         EXC_RaiseHandler
- *
- * Handler for exceptions happening inside a handler.
- */
-static DWORD EXC_RaiseHandler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                               CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
-{
-    if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
-        return ExceptionContinueSearch;
-    /* We shouldn't get here so we store faulty frame in dispatcher */
-    *dispatcher = ((EXC_NESTED_FRAME*)frame)->prevFrame;
-    return ExceptionNestedException;
-}
-
-
-/*******************************************************************
- *         EXC_UnwindHandler
- *
- * Handler for exceptions happening inside an unwind handler.
- */
-static DWORD EXC_UnwindHandler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
-                                CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
-{
-    if (!(rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
-        return ExceptionContinueSearch;
-    /* We shouldn't get here so we store faulty frame in dispatcher */
-    *dispatcher = ((EXC_NESTED_FRAME*)frame)->prevFrame;
-    return ExceptionCollidedUnwind;
-}
-
-
-/*******************************************************************
- *         EXC_CallHandler
- *
- * Call an exception handler, setting up an exception frame to catch exceptions
- * happening during the handler execution.
- *
- * For i386 this function is implemented in assembler in signal_i386.c.
- */
-#ifndef __i386__
-static DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
-                              CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher,
-                              PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler)
-{
-    EXC_NESTED_FRAME newframe;
-    DWORD ret;
-
-    newframe.frame.Handler = nested_handler;
-    newframe.prevFrame     = frame;
-    __wine_push_frame( &newframe.frame );
-    ret = handler( record, frame, context, dispatcher );
-    __wine_pop_frame( &newframe.frame );
-    return ret;
-}
-#else
-/* in signal_i386.c */
-extern DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RECORD *frame,
-                              CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher,
-                              PEXCEPTION_HANDLER handler, PEXCEPTION_HANDLER nested_handler);
-#endif
 
 /**********************************************************************
  *           wait_suspend
@@ -187,7 +104,7 @@ void wait_suspend( CONTEXT *context )
  *
  * Send an EXCEPTION_DEBUG_EVENT event to the debugger.
  */
-static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
+NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTEXT *context )
 {
     NTSTATUS ret;
     DWORD i;
@@ -236,7 +153,7 @@ static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTE
  *
  * Call the vectored handlers chain.
  */
-static LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
+LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct list *ptr;
     LONG ret = EXCEPTION_CONTINUE_SEARCH;
@@ -260,156 +177,6 @@ static LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
 }
 
 
-/**********************************************************************
- *           call_stack_handlers
- *
- * Call the stack handlers chain.
- */
-static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
-{
-    EXCEPTION_REGISTRATION_RECORD *frame, *dispatch, *nested_frame;
-    DWORD res;
-
-    frame = NtCurrentTeb()->Tib.ExceptionList;
-    nested_frame = NULL;
-    while (frame != (EXCEPTION_REGISTRATION_RECORD*)~0UL)
-    {
-        /* Check frame address */
-        if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
-            ((void*)(frame+1) > NtCurrentTeb()->Tib.StackBase) ||
-            (ULONG_PTR)frame & 3)
-        {
-            rec->ExceptionFlags |= EH_STACK_INVALID;
-            break;
-        }
-
-        /* Call handler */
-        TRACE( "calling handler at %p code=%x flags=%x\n",
-               frame->Handler, rec->ExceptionCode, rec->ExceptionFlags );
-        res = EXC_CallHandler( rec, frame, context, &dispatch, frame->Handler, EXC_RaiseHandler );
-        TRACE( "handler at %p returned %x\n", frame->Handler, res );
-
-        if (frame == nested_frame)
-        {
-            /* no longer nested */
-            nested_frame = NULL;
-            rec->ExceptionFlags &= ~EH_NESTED_CALL;
-        }
-
-        switch(res)
-        {
-        case ExceptionContinueExecution:
-            if (!(rec->ExceptionFlags & EH_NONCONTINUABLE)) return STATUS_SUCCESS;
-            return STATUS_NONCONTINUABLE_EXCEPTION;
-        case ExceptionContinueSearch:
-            break;
-        case ExceptionNestedException:
-            if (nested_frame < dispatch) nested_frame = dispatch;
-            rec->ExceptionFlags |= EH_NESTED_CALL;
-            break;
-        default:
-            return STATUS_INVALID_DISPOSITION;
-        }
-        frame = frame->Prev;
-    }
-    return STATUS_UNHANDLED_EXCEPTION;
-}
-
-
-/*******************************************************************
- *		raise_exception
- *
- * Implementation of NtRaiseException.
- */
-NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
-{
-    NTSTATUS status;
-
-    if (first_chance)
-    {
-        DWORD c;
-
-        TRACE( "code=%x flags=%x addr=%p ip=%p tid=%04x\n",
-               rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
-               GET_IP(context), GetCurrentThreadId() );
-        for (c = 0; c < rec->NumberParameters; c++)
-            TRACE( " info[%d]=%08lx\n", c, rec->ExceptionInformation[c] );
-        if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
-        {
-            if (rec->ExceptionInformation[1] >> 16)
-                MESSAGE( "wine: Call from %p to unimplemented function %s.%s, aborting\n",
-                         rec->ExceptionAddress,
-                         (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
-            else
-                MESSAGE( "wine: Call from %p to unimplemented function %s.%ld, aborting\n",
-                         rec->ExceptionAddress,
-                         (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
-        }
-        else
-        {
-#ifdef __i386__
-            TRACE(" eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n",
-                  context->Eax, context->Ebx, context->Ecx,
-                  context->Edx, context->Esi, context->Edi );
-            TRACE(" ebp=%08x esp=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
-                  context->Ebp, context->Esp, context->SegCs, context->SegDs,
-                  context->SegEs, context->SegFs, context->SegGs, context->EFlags );
-#elif defined(__x86_64__)
-            TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
-                  context->Rax, context->Rbx, context->Rcx, context->Rdx );
-            TRACE(" rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
-                  context->Rsi, context->Rdi, context->Rbp, context->Rsp );
-            TRACE("  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
-                  context->R8, context->R9, context->R10, context->R11 );
-            TRACE(" r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
-                  context->R12, context->R13, context->R14, context->R15 );
-#endif
-        }
-        status = send_debug_event( rec, TRUE, context );
-        if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
-            return STATUS_SUCCESS;
-
-#ifdef __i386__
-        /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
-        if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
-#endif
-
-        if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
-            return STATUS_SUCCESS;
-
-        if ((status = call_stack_handlers( rec, context )) != STATUS_UNHANDLED_EXCEPTION)
-            return status;
-    }
-
-    /* last chance exception */
-
-    status = send_debug_event( rec, FALSE, context );
-    if (status != DBG_CONTINUE)
-    {
-        if (rec->ExceptionFlags & EH_STACK_INVALID)
-            ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");
-        else if (rec->ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
-            ERR("Process attempted to continue execution after noncontinuable exception.\n");
-        else
-            ERR("Unhandled exception code %x flags %x addr %p\n",
-                rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
-        NtTerminateProcess( NtCurrentProcess(), 1 );
-    }
-    return STATUS_SUCCESS;
-}
-
-
-/*******************************************************************
- *		NtRaiseException (NTDLL.@)
- */
-NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
-{
-    NTSTATUS status = raise_exception( rec, context, first_chance );
-    if (status == STATUS_SUCCESS) NtSetContextThread( GetCurrentThread(), context );
-    return status;
-}
-
-
 /*******************************************************************
  *		raise_status
  *
@@ -425,84 +192,6 @@ void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
     ExceptionRec.NumberParameters = 0;
     for (;;) RtlRaiseException( &ExceptionRec );  /* never returns */
 }
-
-
-/*******************************************************************
- *		RtlUnwind (NTDLL.@)
- */
-void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID unusedEip,
-                              PEXCEPTION_RECORD pRecord, PVOID returnEax, CONTEXT *context )
-{
-    EXCEPTION_RECORD record;
-    EXCEPTION_REGISTRATION_RECORD *frame, *dispatch;
-    DWORD res;
-
-#ifdef __i386__
-    context->Eax = (DWORD)returnEax;
-#endif
-
-    /* build an exception record, if we do not have one */
-    if (!pRecord)
-    {
-        record.ExceptionCode    = STATUS_UNWIND;
-        record.ExceptionFlags   = 0;
-        record.ExceptionRecord  = NULL;
-        record.ExceptionAddress = GET_IP(context);
-        record.NumberParameters = 0;
-        pRecord = &record;
-    }
-
-    pRecord->ExceptionFlags |= EH_UNWINDING | (pEndFrame ? 0 : EH_EXIT_UNWIND);
-
-    TRACE( "code=%x flags=%x\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
-
-    /* get chain of exception frames */
-    frame = NtCurrentTeb()->Tib.ExceptionList;
-    while ((frame != (EXCEPTION_REGISTRATION_RECORD*)~0UL) && (frame != pEndFrame))
-    {
-        /* Check frame address */
-        if (pEndFrame && (frame > pEndFrame))
-            raise_status( STATUS_INVALID_UNWIND_TARGET, pRecord );
-
-        if (((void*)frame < NtCurrentTeb()->Tib.StackLimit) ||
-            ((void*)(frame+1) > NtCurrentTeb()->Tib.StackBase) ||
-            (UINT_PTR)frame & 3)
-            raise_status( STATUS_BAD_STACK, pRecord );
-
-        /* Call handler */
-        TRACE( "calling handler at %p code=%x flags=%x\n",
-               frame->Handler, pRecord->ExceptionCode, pRecord->ExceptionFlags );
-        res = EXC_CallHandler( pRecord, frame, context, &dispatch, frame->Handler, EXC_UnwindHandler );
-        TRACE( "handler at %p returned %x\n", frame->Handler, res );
-
-        switch(res)
-        {
-        case ExceptionContinueSearch:
-            break;
-        case ExceptionCollidedUnwind:
-            frame = dispatch;
-            break;
-        default:
-            raise_status( STATUS_INVALID_DISPOSITION, pRecord );
-            break;
-        }
-        frame = __wine_pop_frame( frame );
-    }
-}
-
-/**********************************************************************/
-
-#ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( RtlUnwind, 4 )
-#else
-void WINAPI RtlUnwind( PVOID pEndFrame, PVOID unusedEip,
-                       PEXCEPTION_RECORD pRecord, PVOID returnEax )
-{
-    CONTEXT context;
-    RtlCaptureContext( &context );
-    __regs_RtlUnwind( pEndFrame, unusedEip, pRecord, returnEax, &context );
-}
-#endif
 
 
 /***********************************************************************

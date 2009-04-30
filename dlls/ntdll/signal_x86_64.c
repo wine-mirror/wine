@@ -470,6 +470,94 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 
 
 /**********************************************************************
+ *           call_stack_handlers
+ *
+ * Call the stack handlers chain.
+ */
+static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    EXCEPTION_POINTERS ptrs;
+
+    FIXME( "not implemented on x86_64\n" );
+
+    /* hack: call unhandled exception filter directly */
+    ptrs.ExceptionRecord = rec;
+    ptrs.ContextRecord = context;
+    unhandled_exception_filter( &ptrs );
+    return STATUS_UNHANDLED_EXCEPTION;
+}
+
+
+/*******************************************************************
+ *		raise_exception
+ *
+ * Implementation of NtRaiseException.
+ */
+static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    NTSTATUS status;
+
+    if (first_chance)
+    {
+        DWORD c;
+
+        TRACE( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
+               rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+               context->Rip, GetCurrentThreadId() );
+        for (c = 0; c < rec->NumberParameters; c++)
+            TRACE( " info[%d]=%08lx\n", c, rec->ExceptionInformation[c] );
+        if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
+        {
+            if (rec->ExceptionInformation[1] >> 16)
+                MESSAGE( "wine: Call from %p to unimplemented function %s.%s, aborting\n",
+                         rec->ExceptionAddress,
+                         (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
+            else
+                MESSAGE( "wine: Call from %p to unimplemented function %s.%ld, aborting\n",
+                         rec->ExceptionAddress,
+                         (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
+        }
+        else
+        {
+            TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+                  context->Rax, context->Rbx, context->Rcx, context->Rdx );
+            TRACE(" rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+                  context->Rsi, context->Rdi, context->Rbp, context->Rsp );
+            TRACE("  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+                  context->R8, context->R9, context->R10, context->R11 );
+            TRACE(" r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+                  context->R12, context->R13, context->R14, context->R15 );
+        }
+        status = send_debug_event( rec, TRUE, context );
+        if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
+            return STATUS_SUCCESS;
+
+        if (call_vectored_handlers( rec, context ) == EXCEPTION_CONTINUE_EXECUTION)
+            return STATUS_SUCCESS;
+
+        if ((status = call_stack_handlers( rec, context )) != STATUS_UNHANDLED_EXCEPTION)
+            return status;
+    }
+
+    /* last chance exception */
+
+    status = send_debug_event( rec, FALSE, context );
+    if (status != DBG_CONTINUE)
+    {
+        if (rec->ExceptionFlags & EH_STACK_INVALID)
+            ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");
+        else if (rec->ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
+            ERR("Process attempted to continue execution after noncontinuable exception.\n");
+        else
+            ERR("Unhandled exception code %x flags %x addr %p\n",
+                rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+        NtTerminateProcess( NtCurrentProcess(), rec->ExceptionCode );
+    }
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
  *		segv_handler
  *
  * Handler for SIGSEGV and related errors.
@@ -801,6 +889,45 @@ PVOID WINAPI RtlVirtualUnwind ( ULONG type, ULONG64 base, ULONG64 pc,
 {
     FIXME("stub\n");
     return NULL;
+}
+
+
+/*******************************************************************
+ *		RtlUnwind (NTDLL.@)
+ */
+void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID targetIp,
+                              PEXCEPTION_RECORD pRecord, PVOID retval, CONTEXT *context )
+{
+    EXCEPTION_RECORD record;
+
+    /* build an exception record, if we do not have one */
+    if (!pRecord)
+    {
+        record.ExceptionCode    = STATUS_UNWIND;
+        record.ExceptionFlags   = 0;
+        record.ExceptionRecord  = NULL;
+        record.ExceptionAddress = (void *)context->Rip;
+        record.NumberParameters = 0;
+        pRecord = &record;
+    }
+
+    pRecord->ExceptionFlags |= EH_UNWINDING | (pEndFrame ? 0 : EH_EXIT_UNWIND);
+
+    FIXME( "code=%x flags=%x not implemented on x86_64\n",
+           pRecord->ExceptionCode, pRecord->ExceptionFlags );
+    NtTerminateProcess( GetCurrentProcess(), 1 );
+}
+DEFINE_REGS_ENTRYPOINT( RtlUnwind, 4 )
+
+
+/*******************************************************************
+ *		NtRaiseException (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance )
+{
+    NTSTATUS status = raise_exception( rec, context, first_chance );
+    if (status == STATUS_SUCCESS) NtSetContextThread( GetCurrentThread(), context );
+    return status;
 }
 
 
