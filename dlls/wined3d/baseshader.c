@@ -453,20 +453,18 @@ static inline BOOL shader_is_comment(DWORD token)
 
 /* Convert floating point offset relative
  * to a register file to an absolute offset for float constants */
-static unsigned int shader_get_float_offset(const DWORD reg)
+static unsigned int shader_get_float_offset(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx)
 {
-     unsigned int regnum = reg & WINED3DSP_REGNUM_MASK;
-     int regtype = shader_get_regtype(reg);
-
-     switch (regtype) {
-        case WINED3DSPR_CONST: return regnum;
-        case WINED3DSPR_CONST2: return 2048 + regnum;
-        case WINED3DSPR_CONST3: return 4096 + regnum;
-        case WINED3DSPR_CONST4: return 6144 + regnum;
+    switch (register_type)
+    {
+        case WINED3DSPR_CONST: return register_idx;
+        case WINED3DSPR_CONST2: return 2048 + register_idx;
+        case WINED3DSPR_CONST3: return 4096 + register_idx;
+        case WINED3DSPR_CONST4: return 6144 + register_idx;
         default:
-            FIXME("Unsupported register type: %d\n", regtype);
-            return regnum;
-     }
+            FIXME("Unsupported register type: %d\n", register_type);
+            return register_idx;
+    }
 }
 
 static void shader_delete_constant_list(struct list* clist) {
@@ -962,7 +960,8 @@ static void shader_dump_param(const DWORD param, const DWORD addr_token, BOOL is
         case WINED3DSPR_CONST3:
         case WINED3DSPR_CONST4:
             TRACE("c");
-            shader_dump_arr_entry(param, addr_token, shader_get_float_offset(param), shader_version);
+            shader_dump_arr_entry(param, addr_token, shader_get_float_offset(shader_get_regtype(param),
+                    param & WINED3DSP_REGNUM_MASK), shader_version);
             break;
         case WINED3DSPR_TEXTURE: /* vs: case D3DSPR_ADDR */
             TRACE("%c%u", (pshader? 't':'a'), reg);
@@ -1268,7 +1267,8 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
-            unsigned int offset = shader_get_float_offset(*pToken);
+            unsigned int offset = shader_get_float_offset(shader_get_regtype(*pToken),
+                    *pToken & WINED3DSP_REGNUM_MASK);
 
             TRACE("def c%u = %f, %f, %f, %f", offset,
                     *(const float *)(pToken + 1),
