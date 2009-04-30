@@ -1138,6 +1138,18 @@ static DWORD FTPFILE_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size
     return res>=0 ? ERROR_SUCCESS : INTERNET_ERROR_BASE; /* FIXME*/
 }
 
+static DWORD FTPFILE_ReadFileExA(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSA *buffers,
+    DWORD flags, DWORD_PTR context)
+{
+    return FTPFILE_ReadFile(hdr, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength);
+}
+
+static DWORD FTPFILE_ReadFileExW(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSW *buffers,
+    DWORD flags, DWORD_PTR context)
+{
+    return FTPFILE_ReadFile(hdr, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength);
+}
+
 static BOOL FTPFILE_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWORD size, DWORD *written)
 {
     LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
@@ -1224,8 +1236,8 @@ static const HANDLEHEADERVtbl FTPFILEVtbl = {
     FTPFILE_QueryOption,
     NULL,
     FTPFILE_ReadFile,
-    NULL,
-    NULL,
+    FTPFILE_ReadFileExA,
+    FTPFILE_ReadFileExW,
     FTPFILE_WriteFile,
     FTPFILE_QueryDataAvailable,
     NULL
