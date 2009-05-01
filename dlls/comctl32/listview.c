@@ -142,7 +142,6 @@
  *   -- ListView_GetHoverTime, ListView_SetHoverTime
  *   -- ListView_GetISearchString
  *   -- ListView_GetNumberOfWorkAreas
- *   -- ListView_GetOrigin
  *   -- ListView_GetUnicodeFormat, ListView_SetUnicodeFormat
  *   -- ListView_GetWorkAreas, ListView_SetWorkAreas
  *
