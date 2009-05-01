@@ -185,6 +185,19 @@ static ARGB blend_line_gradient(GpLineGradient* brush, REAL position)
 {
     REAL blendfac;
 
+    /* clamp to between 0.0 and 1.0, using the wrap mode */
+    if (brush->wrap == WrapModeTile)
+    {
+        position = fmodf(position, 1.0f);
+        if (position < 0.0f) position += 1.0f;
+    }
+    else /* WrapModeFlip* */
+    {
+        position = fmodf(position, 2.0f);
+        if (position < 0.0f) position += 2.0f;
+        if (position > 1.0f) position = 2.0f - position;
+    }
+
     if (brush->blendcount == 1)
         blendfac = position;
     else
@@ -217,7 +230,6 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
     {
         GpLineGradient *line = (GpLineGradient*)brush;
         RECT rc;
-        int num_steps = 255;
 
         SelectClipPath(graphics->hdc, RGN_AND);
         if (GetClipBox(graphics->hdc, &rc) != NULLREGION)
@@ -228,9 +240,6 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
 
             SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
 
-            /* fill with starting color */
-            FillRect(graphics->hdc, &rc, brush->gdibrush);
-
             endpointsf[0] = line->startpoint;
             endpointsf[1] = line->endpoint;
             transform_and_round_points(graphics, endpointsi, endpointsf, 2);
@@ -238,114 +247,100 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
             if (abs(endpointsi[0].x-endpointsi[1].x) > abs(endpointsi[0].y-endpointsi[1].y))
             {
                 /* vertical-ish gradient */
-                int endborderx; /* vertical rectangle boundary near endpoint */
                 int startx, endx; /* x co-ordinates of endpoints shifted to intersect the top of the visible rectangle */
-                int startbottomx, endbottomx; /* x co-ordinate of endpoints shifted to intersect the bottom of the visible rectangle */
+                int startbottomx; /* x co-ordinate of start point shifted to intersect the bottom of the visible rectangle */
                 int width;
                 COLORREF col;
                 HBRUSH hbrush, hprevbrush;
-                int i;
-
-                if (endpointsi[1].x > endpointsi[0].x)
-                    endborderx = rc.right;
-                else
-                    endborderx = rc.left;
+                int leftx, rightx; /* x co-ordinates where the leftmost and rightmost gradient lines hit the top of the visible rectangle */
+                int x;
+                int tilt; /* horizontal distance covered by a gradient line */
 
                 startx = roundr((rc.top - endpointsf[0].Y) * (endpointsf[1].Y - endpointsf[0].Y) / (endpointsf[0].X - endpointsf[1].X) + endpointsf[0].X);
                 endx = roundr((rc.top - endpointsf[1].Y) * (endpointsf[1].Y - endpointsf[0].Y) / (endpointsf[0].X - endpointsf[1].X) + endpointsf[1].X);
                 width = endx - startx;
                 startbottomx = roundr((rc.bottom - endpointsf[0].Y) * (endpointsf[1].Y - endpointsf[0].Y) / (endpointsf[0].X - endpointsf[1].X) + endpointsf[0].X);
-                endbottomx = startbottomx+width;
+                tilt = startx - startbottomx;
 
-                if (num_steps > abs(width)) num_steps = abs(width);
+                if (startx >= startbottomx)
+                {
+                    leftx = rc.left;
+                    rightx = rc.right + tilt;
+                }
+                else
+                {
+                    leftx = rc.left + tilt;
+                    rightx = rc.right;
+                }
 
-                poly[0].x = endborderx;
+                poly[0].x = rc.right;
                 poly[0].y = rc.bottom;
-                poly[1].x = endborderx;
+                poly[1].x = rc.right;
                 poly[1].y = rc.top;
                 poly[2].y = rc.top;
                 poly[3].y = rc.bottom;
 
-                for (i=1; i<num_steps; i++)
+                for (x=leftx; x<=rightx; x++)
                 {
-                    ARGB argb = blend_line_gradient(line, i/(REAL)num_steps);
-                    int ofs = width * i / num_steps;
+                    ARGB argb = blend_line_gradient(line, (x-startx)/(REAL)width);
                     col = ARGB2COLORREF(argb);
                     hbrush = CreateSolidBrush(col);
                     hprevbrush = SelectObject(graphics->hdc, hbrush);
-                    poly[2].x = startx + ofs;
-                    poly[3].x = startbottomx + ofs;
+                    poly[2].x = x;
+                    poly[3].x = x - tilt;
                     Polygon(graphics->hdc, poly, 4);
                     SelectObject(graphics->hdc, hprevbrush);
                     DeleteObject(hbrush);
                 }
-
-                poly[2].x = endx;
-                poly[3].x = endbottomx;
-
-                /* draw the ending color */
-                col = ARGB2COLORREF(line->endcolor);
-                hbrush = CreateSolidBrush(col);
-                hprevbrush = SelectObject(graphics->hdc, hbrush);
-                Polygon(graphics->hdc, poly, 4);
-                SelectObject(graphics->hdc, hprevbrush);
-                DeleteObject(hbrush);
             }
             else if (endpointsi[0].y != endpointsi[1].y)
             {
                 /* horizontal-ish gradient */
-                int endbordery; /* horizontal rectangle boundary near endpoint */
                 int starty, endy; /* y co-ordinates of endpoints shifted to intersect the left of the visible rectangle */
-                int startrighty, endrighty; /* y co-ordinate of endpoints shifted to intersect the right of the visible rectangle */
+                int startrighty; /* y co-ordinate of start point shifted to intersect the right of the visible rectangle */
                 int height;
                 COLORREF col;
                 HBRUSH hbrush, hprevbrush;
-                int i;
-
-                if (endpointsi[1].y > endpointsi[0].y)
-                    endbordery = rc.bottom;
-                else
-                    endbordery = rc.top;
+                int topy, bottomy; /* y co-ordinates where the topmost and bottommost gradient lines hit the left of the visible rectangle */
+                int y;
+                int tilt; /* vertical distance covered by a gradient line */
 
                 starty = roundr((rc.left - endpointsf[0].X) * (endpointsf[0].X - endpointsf[1].X) / (endpointsf[1].Y - endpointsf[0].Y) + endpointsf[0].Y);
                 endy = roundr((rc.left - endpointsf[1].X) * (endpointsf[0].X - endpointsf[1].X) / (endpointsf[1].Y - endpointsf[0].Y) + endpointsf[1].Y);
                 height = endy - starty;
                 startrighty = roundr((rc.right - endpointsf[0].X) * (endpointsf[0].X - endpointsf[1].X) / (endpointsf[1].Y - endpointsf[0].Y) + endpointsf[0].Y);
-                endrighty = startrighty+height;
+                tilt = starty - startrighty;
 
-                if (num_steps > abs(height)) num_steps = abs(height);
+                if (starty >= startrighty)
+                {
+                    topy = rc.top;
+                    bottomy = rc.bottom + tilt;
+                }
+                else
+                {
+                    topy = rc.top + tilt;
+                    bottomy = rc.bottom;
+                }
 
                 poly[0].x = rc.right;
-                poly[0].y = endbordery;
+                poly[0].y = rc.bottom;
                 poly[1].x = rc.left;
-                poly[1].y = endbordery;
+                poly[1].y = rc.bottom;
                 poly[2].x = rc.left;
                 poly[3].x = rc.right;
 
-                for (i=1; i<num_steps; i++)
+                for (y=topy; y<=bottomy; y++)
                 {
-                    ARGB argb = blend_line_gradient(line, i/(REAL)num_steps);
-                    int ofs = height * i / num_steps;
+                    ARGB argb = blend_line_gradient(line, (y-starty)/(REAL)height);
                     col = ARGB2COLORREF(argb);
                     hbrush = CreateSolidBrush(col);
                     hprevbrush = SelectObject(graphics->hdc, hbrush);
-                    poly[2].y = starty + ofs;
-                    poly[3].y = startrighty + ofs;
+                    poly[2].y = y;
+                    poly[3].y = y - tilt;
                     Polygon(graphics->hdc, poly, 4);
                     SelectObject(graphics->hdc, hprevbrush);
                     DeleteObject(hbrush);
                 }
-
-                poly[2].y = endy;
-                poly[3].y = endrighty;
-
-                /* draw the ending color */
-                col = ARGB2COLORREF(line->endcolor);
-                hbrush = CreateSolidBrush(col);
-                hprevbrush = SelectObject(graphics->hdc, hbrush);
-                Polygon(graphics->hdc, poly, 4);
-                SelectObject(graphics->hdc, hprevbrush);
-                DeleteObject(hbrush);
             }
             /* else startpoint == endpoint */
         }
