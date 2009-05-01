@@ -1111,19 +1111,17 @@ static void build_call_from_regs_x86_64(void)
     output( "\tfxrstor 0x100(%%rbx)\n" );
     output( "\tldmxcsr 0x34(%%rbx)\n" );
 
-    output( "\tmovl 0x44(%%rbx),%%eax\n" );
-    output( "\tpushq %%rax\n" );
-    output( "\tpopfq\n" );
-
-    output( "\tmovq 0x98(%%rbx),%%rax\n" );  /* stack pointer */
-    output( "\tpushq 0xf8(%%rbx)\n" );  /* return address */
-    output( "\tpopq -8(%%rax)\n" );
-    output( "\tpushq 0x78(%%rbx)\n" );  /* rax */
-    output( "\tpopq -16(%%rax)\n" );
-    output( "\tmovq 0x90(%%rbx),%%rbx\n" );
-    output( "\tleaq -16(%%rax),%%rsp\n" );
-    output( "\tpopq %%rax\n" );
-    output( "\tret\n" );
+    output( "\tmovq 0xf8(%%rbx),%%rax\n" );  /* rip */
+    output( "\tmovq %%rax,0(%%rsp)\n" );
+    output( "\tmovw 0x38(%%rbx),%%ax\n" );   /* cs */
+    output( "\tmovq %%rax,0x8(%%rsp)\n" );
+    output( "\tmovl 0x44(%%rbx),%%eax\n" );  /* flags */
+    output( "\tmovq %%rax,0x10(%%rsp)\n" );
+    output( "\tmovq 0x98(%%rbx),%%rax\n" );  /* rsp */
+    output( "\tmovq %%rax,0x18(%%rsp)\n" );
+    output( "\tmovw 0x42(%%rbx),%%ax\n" );   /* ss */
+    output( "\tmovq %%rax,0x20(%%rsp)\n" );
+    output( "\tiretq\n" );
 
     output_function_size( "__wine_call_from_regs" );
 
