@@ -177,9 +177,9 @@ static void test_UnregisterCategory(void)
 {
     HRESULT hr;
     hr = ITfCategoryMgr_UnregisterCategory(g_cm, &CLSID_FakeService, &GUID_TFCAT_TIP_KEYBOARD, &CLSID_FakeService);
-    todo_wine ok(SUCCEEDED(hr),"ITfCategoryMgr_UnregisterCategory failed\n");
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_UnregisterCategory failed\n");
     hr = ITfCategoryMgr_UnregisterCategory(g_cm, &CLSID_FakeService, &GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER, &CLSID_FakeService);
-    todo_wine ok(SUCCEEDED(hr),"ITfCategoryMgr_UnregisterCategory failed\n");
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_UnregisterCategory failed\n");
 }
 
 static void test_FindClosestCategory(void)
