@@ -22,6 +22,8 @@
 
 #if defined(__x86_64__)
 
+#define STEP_FLAG 0x00000100 /* single step flag */
+
 static unsigned be_x86_64_get_addr(HANDLE hThread, const CONTEXT* ctx, 
                                  enum be_cpu_addr bca, ADDRESS64* addr)
 {
@@ -60,7 +62,8 @@ static unsigned be_x86_64_get_register_info(int regno, enum be_cpu_addr* kind)
 
 static void be_x86_64_single_step(CONTEXT* ctx, unsigned enable)
 {
-    dbg_printf("not done single_step\n");
+    if (enable) ctx->EFlags |= STEP_FLAG;
+    else ctx->EFlags &= ~STEP_FLAG;
 }
 
 static void be_x86_64_print_context(HANDLE hThread, const CONTEXT* ctx,
