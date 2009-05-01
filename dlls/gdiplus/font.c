@@ -195,7 +195,7 @@ GpStatus WINGDIPAPI GdipCreateFontFromLogfontW(HDC hdc,
     oldfont = SelectObject(hdc, hfont);
     GetTextMetricsW(hdc, &textmet);
 
-    (*font)->lfw.lfHeight = -textmet.tmHeight;
+    (*font)->lfw.lfHeight = -(textmet.tmHeight-textmet.tmInternalLeading);
     (*font)->lfw.lfWeight = textmet.tmWeight;
     (*font)->lfw.lfCharSet = textmet.tmCharSet;
 
