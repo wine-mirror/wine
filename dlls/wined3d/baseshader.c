@@ -911,34 +911,21 @@ static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semanti
     }
 }
 
-static void shader_dump_arr_entry(const struct wined3d_shader_src_param *rel_addr,
-        UINT register_idx, DWORD shader_version)
-{
-    if (rel_addr)
-    {
-        TRACE("[");
-        shader_dump_src_param(rel_addr, shader_version);
-        TRACE(" + ");
-    }
-    TRACE("%u", register_idx);
-    if (rel_addr) TRACE("]");
-}
-
 static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx,
         const struct wined3d_shader_src_param *rel_addr, DWORD shader_version)
 {
     static const char * const rastout_reg_names[] = {"oPos", "oFog", "oPts"};
     static const char * const misctype_reg_names[] = {"vPos", "vFace"};
+    UINT offset = register_idx;
 
     switch (register_type)
     {
         case WINED3DSPR_TEMP:
-            TRACE("r%u", register_idx);
+            TRACE("r");
             break;
 
         case WINED3DSPR_INPUT:
             TRACE("v");
-            shader_dump_arr_entry(rel_addr, register_idx, shader_version);
             break;
 
         case WINED3DSPR_CONST:
@@ -946,11 +933,11 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
         case WINED3DSPR_CONST3:
         case WINED3DSPR_CONST4:
             TRACE("c");
-            shader_dump_arr_entry(rel_addr, shader_get_float_offset(register_type, register_idx), shader_version);
+            offset = shader_get_float_offset(register_type, register_idx);
             break;
 
         case WINED3DSPR_TEXTURE: /* vs: case WINED3DSPR_ADDR */
-            TRACE("%c%u", (shader_is_pshader_version(shader_version) ? 't' : 'a'), register_idx);
+            TRACE("%c", shader_is_pshader_version(shader_version) ? 't' : 'a');
             break;
 
         case WINED3DSPR_RASTOUT:
@@ -958,7 +945,7 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
             break;
 
         case WINED3DSPR_COLOROUT:
-            TRACE("oC%u", register_idx);
+            TRACE("oC");
             break;
 
         case WINED3DSPR_DEPTHOUT:
@@ -966,35 +953,26 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
             break;
 
         case WINED3DSPR_ATTROUT:
-            TRACE("oD%u", register_idx);
+            TRACE("oD");
             break;
 
         case WINED3DSPR_TEXCRDOUT:
             /* Vertex shaders >= 3.0 use general purpose output registers
              * (WINED3DSPR_OUTPUT), which can include an address token */
-            if (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 3)
-            {
-                TRACE("o");
-                shader_dump_arr_entry(rel_addr, register_idx, shader_version);
-            }
-            else
-            {
-                TRACE("oT%u", register_idx);
-            }
+            if (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 3) TRACE("o");
+            else TRACE("oT");
             break;
 
         case WINED3DSPR_CONSTINT:
             TRACE("i");
-            shader_dump_arr_entry(rel_addr, register_idx, shader_version);
             break;
 
         case WINED3DSPR_CONSTBOOL:
             TRACE("b");
-            shader_dump_arr_entry(rel_addr, register_idx, shader_version);
             break;
 
         case WINED3DSPR_LABEL:
-            TRACE("l%u", register_idx);
+            TRACE("l");
             break;
 
         case WINED3DSPR_LOOP:
@@ -1002,7 +980,7 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
             break;
 
         case WINED3DSPR_SAMPLER:
-            TRACE("s%u", register_idx);
+            TRACE("s");
             break;
 
         case WINED3DSPR_MISCTYPE:
@@ -1011,12 +989,24 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
             break;
 
         case WINED3DSPR_PREDICATE:
-            TRACE("p%u", register_idx);
+            TRACE("p");
             break;
 
         default:
             TRACE("unhandled_rtype(%#x)", register_type);
             break;
+    }
+
+    if (register_type != WINED3DSPR_RASTOUT && register_type != WINED3DSPR_MISCTYPE)
+    {
+        if (rel_addr)
+        {
+            TRACE("[");
+            shader_dump_src_param(rel_addr, shader_version);
+            TRACE(" + ");
+        }
+        TRACE("%u", offset);
+        if (rel_addr) TRACE("]");
     }
 }
 
