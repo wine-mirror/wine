@@ -1118,10 +1118,9 @@ sub source_scan_workspace_file($)
             s/\r\n$/\n/;
 
             # catch a project definition
-            if (/^Project:\s\"(.*)\"=\"?(.*)\s-/) {
+            if (/^Project:\s\"(.*)\"=(.*)\s-/) {
                 $prj_name=$1;
                 $prj_path=$2;
-                $prj_path=~s/\"$//;
                 @components=split /[\/\\]+/, $prj_path;
                 $prj_path=search_from($path, \@components);
                 print "Name: $prj_name\nPath: $prj_path\n";
