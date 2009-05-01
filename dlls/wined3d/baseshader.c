@@ -296,6 +296,20 @@ static void shader_sm1_read_semantic(const DWORD **ptr, struct wined3d_shader_se
     shader_parse_dst_param(dst_token, NULL, &semantic->reg);
 }
 
+static void shader_sm1_read_comment(const DWORD **ptr, const char **comment)
+{
+    DWORD token = **ptr;
+
+    if ((token & WINED3DSI_OPCODE_MASK) != WINED3DSIO_COMMENT)
+    {
+        *comment = NULL;
+        return;
+    }
+
+    *comment = (const char *)++(*ptr);
+    *ptr += (token & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
+}
+
 static const char *shader_opcode_names[] =
 {
     /* WINED3DSIH_ABS           */ "abs",
@@ -465,11 +479,6 @@ static inline DWORD shader_get_writemask(DWORD param)
     return param & WINED3DSP_WRITEMASK_ALL;
 }
 
-static inline BOOL shader_is_comment(DWORD token)
-{
-    return WINED3DSIO_COMMENT == (token & WINED3DSI_OPCODE_MASK);
-}
-
 /* Convert floating point offset relative
  * to a register file to an absolute offset for float constants */
 static unsigned int shader_get_float_offset(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx)
@@ -608,16 +617,12 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
 
     while (WINED3DVS_END() != *pToken) {
         struct wined3d_shader_instruction ins;
+        const char *comment;
         UINT param_size;
 
         /* Skip comments */
-        if (shader_is_comment(*pToken))
-        {
-             DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
-             ++pToken;
-             pToken += comment_len;
-             continue;
-        }
+        shader_sm1_read_comment(&pToken, &comment);
+        if (comment) continue;
 
         /* Fetch opcode */
         shader_sm1_read_opcode(&pToken, &ins, &param_size, shader_ins, shader_version);
@@ -1132,15 +1137,12 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER* buffer,
 
     while (WINED3DPS_END() != *pToken)
     {
+        const char *comment;
         UINT param_size;
 
         /* Skip comment tokens */
-        if (shader_is_comment(*pToken))
-        {
-            pToken += (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
-            ++pToken;
-            continue;
-        }
+        shader_sm1_read_comment(&pToken, &comment);
+        if (comment) continue;
 
         /* Read opcode */
         shader_sm1_read_opcode(&pToken, &ins, &param_size, opcode_table, shader_version);
@@ -1245,14 +1247,14 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
     while (WINED3DVS_END() != *pToken)
     {
         struct wined3d_shader_instruction ins;
+        const char *comment;
         UINT param_size;
 
-        if (shader_is_comment(*pToken)) /* comment */
+        /* comment */
+        shader_sm1_read_comment(&pToken, &comment);
+        if (comment)
         {
-            DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
-            ++pToken;
-            TRACE("//%s\n", (const char*)pToken);
-            pToken += comment_len;
+            TRACE("//%s\n", comment);
             continue;
         }
 
