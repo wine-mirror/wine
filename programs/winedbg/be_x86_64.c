@@ -66,31 +66,16 @@ static void be_x86_64_single_step(CONTEXT* ctx, unsigned enable)
 static void be_x86_64_print_context(HANDLE hThread, const CONTEXT* ctx,
                                     int all_regs)
 {
-    char *pt, buf[33];
+    static const char flags[] = "aVR-N--ODITSZ-A-P-C";
+    char buf[33];
+    int i;
+
+    strcpy(buf, flags);
+    for (i = 0; buf[i]; i++)
+        if (buf[i] != '-' && !(ctx->EFlags & (1 << (sizeof(flags) - 2 - i))))
+            buf[i] = ' ';
 
     dbg_printf("Register dump:\n");
-    strcpy(buf, "   - 00      - - - ");
-    pt = buf + strlen(buf) - 1;
-    if (ctx->EFlags & 0x00000001) *pt-- = 'C'; /* Carry Flag */
-    if (ctx->EFlags & 0x00000002) *pt-- = '1';
-    if (ctx->EFlags & 0x00000004) *pt-- = 'P'; /* Parity Flag */
-    if (ctx->EFlags & 0x00000008) *pt-- = '-';
-    if (ctx->EFlags & 0x00000010) *pt-- = 'A'; /* Auxiliary Carry Flag */
-    if (ctx->EFlags & 0x00000020) *pt-- = '-';
-    if (ctx->EFlags & 0x00000040) *pt-- = 'Z'; /* Zero Flag */
-    if (ctx->EFlags & 0x00000080) *pt-- = 'S'; /* Sign Flag */
-    if (ctx->EFlags & 0x00000100) *pt-- = 'T'; /* Trap/Trace Flag */
-    if (ctx->EFlags & 0x00000200) *pt-- = 'I'; /* Interrupt Enable Flag */
-    if (ctx->EFlags & 0x00000400) *pt-- = 'D'; /* Direction Indicator */
-    if (ctx->EFlags & 0x00000800) *pt-- = 'O'; /* Overflow flags */
-    if (ctx->EFlags & 0x00001000) *pt-- = '1'; /* I/O Privilege Level */
-    if (ctx->EFlags & 0x00002000) *pt-- = '1'; /* I/O Privilege Level */
-    if (ctx->EFlags & 0x00004000) *pt-- = 'N'; /* Nested Task Flag */
-    if (ctx->EFlags & 0x00008000) *pt-- = '-';
-    if (ctx->EFlags & 0x00010000) *pt-- = 'R'; /* Resume Flag */
-    if (ctx->EFlags & 0x00020000) *pt-- = 'V'; /* Virtual Mode Flag */
-    if (ctx->EFlags & 0x00040000) *pt-- = 'a'; /* Alignment Check Flag */
-
     dbg_printf(" rip:%016lx rsp:%016lx rbp:%016lx eflags:%08x (%s)\n",
                ctx->Rip, ctx->Rsp, ctx->Rbp, ctx->EFlags, buf);
     dbg_printf(" rax:%016lx rbx:%016lx rcx:%016lx rdx:%016lx\n",
