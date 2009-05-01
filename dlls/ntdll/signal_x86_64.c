@@ -195,9 +195,21 @@ static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
     context->SegFs  = FS_sig(sigcontext);
     context->SegGs  = GS_sig(sigcontext);
     context->EFlags = EFL_sig(sigcontext);
-    context->SegDs  = 0;  /* FIXME */
-    context->SegEs  = 0;  /* FIXME */
-    context->SegSs  = 0;  /* FIXME */
+#ifdef DS_sig
+    context->SegDs  = DS_sig(sigcontext);
+#else
+    __asm__("movw %%ds,%0" : "=m" (context->SegDs));
+#endif
+#ifdef ES_sig
+    context->SegEs  = ES_sig(sigcontext);
+#else
+    __asm__("movw %%es,%0" : "=m" (context->SegEs));
+#endif
+#ifdef SS_sig
+    context->SegSs  = SS_sig(sigcontext);
+#else
+    __asm__("movw %%ss,%0" : "=m" (context->SegSs));
+#endif
     context->MxCsr  = 0;  /* FIXME */
     if (FPU_sig(sigcontext))
     {
@@ -235,6 +247,15 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
     FS_sig(sigcontext)  = context->SegFs;
     GS_sig(sigcontext)  = context->SegGs;
     EFL_sig(sigcontext) = context->EFlags;
+#ifdef DS_sig
+    DS_sig(sigcontext) = context->SegDs;
+#endif
+#ifdef ES_sig
+    ES_sig(sigcontext) = context->SegEs;
+#endif
+#ifdef SS_sig
+    SS_sig(sigcontext) = context->SegSs;
+#endif
     if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->u.FltSave;
 }
 
@@ -256,7 +277,8 @@ DEFINE_REGS_ENTRYPOINT( RtlCaptureContext, 1 )
  */
 void set_cpu_context( const CONTEXT *context )
 {
-    FIXME("not implemented\n");
+    extern void CDECL __wine_restore_regs( const CONTEXT * ) DECLSPEC_NORETURN;
+    __wine_restore_regs( context );
 }
 
 
