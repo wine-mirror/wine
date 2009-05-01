@@ -11533,6 +11533,38 @@ static void test_MsiSetProperty(void)
     DeleteFileA(msifile);
 }
 
+static void test_MsiApplyMultiplePatches(void)
+{
+    UINT r;
+
+    r = MsiApplyMultiplePatchesA(NULL, NULL, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
+
+    r = MsiApplyMultiplePatchesA("", NULL, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
+
+    r = MsiApplyMultiplePatchesA(";", NULL, NULL);
+    ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
+
+    r = MsiApplyMultiplePatchesA("  ;", NULL, NULL);
+    ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
+
+    r = MsiApplyMultiplePatchesA(";;", NULL, NULL);
+    ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
+
+    r = MsiApplyMultiplePatchesA("nosuchpatchpackage;", NULL, NULL);
+    todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
+
+    r = MsiApplyMultiplePatchesA(";nosuchpatchpackage", NULL, NULL);
+    ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
+
+    r = MsiApplyMultiplePatchesA("nosuchpatchpackage;nosuchpatchpackage", NULL, NULL);
+    todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
+
+    r = MsiApplyMultiplePatchesA("  nosuchpatchpackage  ;  nosuchpatchpackage  ", NULL, NULL);
+    todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
+}
+
 START_TEST(package)
 {
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
@@ -11566,4 +11598,5 @@ START_TEST(package)
     test_emptypackage();
     test_MsiGetProductProperty();
     test_MsiSetProperty();
+    test_MsiApplyMultiplePatches();
 }

@@ -232,8 +232,8 @@
 236 stub Migrate10CachedPackagesW
 237 stub MsiRemovePatchesA
 238 stub MsiRemovePatchesW
-239 stub MsiApplyMultiplePatchesA
-240 stub MsiApplyMultiplePatchesW
+239 stdcall MsiApplyMultiplePatchesA(str str str)
+240 stdcall MsiApplyMultiplePatchesW(wstr wstr wstr)
 241 stub MsiExtractPatchXMLDataA
 242 stub MsiExtractPatchXMLDataW
 243 stdcall MsiGetPatchInfoExA(str str str long str ptr ptr)

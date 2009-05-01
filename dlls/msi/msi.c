@@ -301,13 +301,13 @@ done:
     return r;
 }
 
-UINT WINAPI MsiApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szInstallPackage,
-         INSTALLTYPE eInstallType, LPCWSTR szCommandLine)
+static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWSTR szCommandLine)
 {
     MSIHANDLE patch, info;
     UINT r, type;
     DWORD size = 0;
     LPCWSTR cmd_ptr = szCommandLine;
+    LPCWSTR product_code = szProductCode;
     LPWSTR beg, end;
     LPWSTR cmd = NULL, codes = NULL;
 
@@ -315,41 +315,36 @@ UINT WINAPI MsiApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szInstallPackage,
     static const WCHAR patcheq[] = {'P','A','T','C','H','=',0};
     static WCHAR empty[] = {0};
 
-    TRACE("%s %s %d %s\n", debugstr_w(szPatchPackage), debugstr_w(szInstallPackage),
-          eInstallType, debugstr_w(szCommandLine));
-
-    if (szInstallPackage || eInstallType == INSTALLTYPE_NETWORK_IMAGE ||
-        eInstallType == INSTALLTYPE_SINGLE_INSTANCE)
+    if (!szProductCode)
     {
-        FIXME("Only reading target products from patch\n");
-        return ERROR_CALL_NOT_IMPLEMENTED;
+        r = MsiOpenDatabaseW(szPatchPackage, MSIDBOPEN_READONLY, &patch);
+        if (r != ERROR_SUCCESS)
+            return r;
+
+        r = MsiGetSummaryInformationW(patch, NULL, 0, &info);
+        if (r != ERROR_SUCCESS)
+            goto done;
+
+        r = MsiSummaryInfoGetPropertyW(info, PID_TEMPLATE, &type, NULL, NULL, empty, &size);
+        if (r != ERROR_MORE_DATA || !size || type != VT_LPSTR)
+        {
+            ERR("Failed to read product codes from patch\n");
+            goto done;
+        }
+
+        codes = msi_alloc(++size * sizeof(WCHAR));
+        if (!codes)
+        {
+            r = ERROR_OUTOFMEMORY;
+            goto done;
+        }
+
+        r = MsiSummaryInfoGetPropertyW(info, PID_TEMPLATE, &type, NULL, NULL, codes, &size);
+        if (r != ERROR_SUCCESS)
+            goto done;
+
+        product_code = codes;
     }
-
-    r = MsiOpenDatabaseW(szPatchPackage, MSIDBOPEN_READONLY, &patch);
-    if (r != ERROR_SUCCESS)
-        return r;
-
-    r = MsiGetSummaryInformationW(patch, NULL, 0, &info);
-    if (r != ERROR_SUCCESS)
-        goto done;
-
-    r = MsiSummaryInfoGetPropertyW(info, PID_TEMPLATE, &type, NULL, NULL, empty, &size);
-    if (r != ERROR_MORE_DATA || !size || type != VT_LPSTR)
-    {
-        ERR("Failed to read product codes from patch\n");
-        goto done;
-    }
-
-    codes = msi_alloc(++size * sizeof(WCHAR));
-    if (!codes)
-    {
-        r = ERROR_OUTOFMEMORY;
-        goto done;
-    }
-
-    r = MsiSummaryInfoGetPropertyW(info, PID_TEMPLATE, &type, NULL, NULL, codes, &size);
-    if (r != ERROR_SUCCESS)
-        goto done;
 
     if (!szCommandLine)
         cmd_ptr = empty;
@@ -386,6 +381,99 @@ done:
     MsiCloseHandle(info);
     MsiCloseHandle(patch);
 
+    return r;
+}
+
+UINT WINAPI MsiApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szInstallPackage,
+         INSTALLTYPE eInstallType, LPCWSTR szCommandLine)
+{
+    TRACE("%s %s %d %s\n", debugstr_w(szPatchPackage), debugstr_w(szInstallPackage),
+          eInstallType, debugstr_w(szCommandLine));
+
+    if (szInstallPackage || eInstallType == INSTALLTYPE_NETWORK_IMAGE ||
+        eInstallType == INSTALLTYPE_SINGLE_INSTANCE)
+    {
+        FIXME("Only reading target products from patch\n");
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+
+    return MSI_ApplyPatchW(szPatchPackage, NULL, szCommandLine);
+}
+
+UINT WINAPI MsiApplyMultiplePatchesA(LPCSTR szPatchPackages,
+        LPCSTR szProductCode, LPCSTR szPropertiesList)
+{
+    LPWSTR patch_packages = NULL;
+    LPWSTR product_code = NULL;
+    LPWSTR properties_list = NULL;
+    UINT r = ERROR_OUTOFMEMORY;
+
+    TRACE("%s %s %s\n", debugstr_a(szPatchPackages), debugstr_a(szProductCode),
+          debugstr_a(szPropertiesList));
+
+    if (!szPatchPackages || !szPatchPackages[0])
+        return ERROR_INVALID_PARAMETER;
+
+    if (!(patch_packages = strdupAtoW(szPatchPackages)))
+        return ERROR_OUTOFMEMORY;
+
+    if (szProductCode && !(product_code = strdupAtoW(szProductCode)))
+        goto done;
+
+    if (szPropertiesList && !(properties_list = strdupAtoW(szPropertiesList)))
+        goto done;
+
+    r = MsiApplyMultiplePatchesW(patch_packages, product_code, properties_list);
+
+done:
+    msi_free(patch_packages);
+    msi_free(product_code);
+    msi_free(properties_list);
+
+    return r;
+}
+
+UINT WINAPI MsiApplyMultiplePatchesW(LPCWSTR szPatchPackages,
+        LPCWSTR szProductCode, LPCWSTR szPropertiesList)
+{
+    UINT r = ERROR_SUCCESS;
+    LPCWSTR beg, end;
+
+    TRACE("%s %s %s\n", debugstr_w(szPatchPackages), debugstr_w(szProductCode),
+          debugstr_w(szPropertiesList));
+
+    if (!szPatchPackages || !szPatchPackages[0])
+        return ERROR_INVALID_PARAMETER;
+
+    beg = end = szPatchPackages;
+    while (*beg)
+    {
+        DWORD len;
+        LPWSTR patch;
+
+        while (*beg == ' ') beg++;
+        while (*end && *end != ';') end++;
+
+        len = end - beg;
+        while (len && beg[len - 1] == ' ') len--;
+
+        if (!len) return ERROR_INVALID_NAME;
+
+        patch = msi_alloc((len + 1) * sizeof(WCHAR));
+        if (!patch)
+            return ERROR_OUTOFMEMORY;
+
+        memcpy(patch, beg, len * sizeof(WCHAR));
+        patch[len] = '\0';
+
+        r = MSI_ApplyPatchW(patch, szProductCode, szPropertiesList);
+        msi_free(patch);
+
+        if (r != ERROR_SUCCESS)
+            break;
+
+        beg = ++end;
+    }
     return r;
 }
 
