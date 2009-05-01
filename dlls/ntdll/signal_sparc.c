@@ -48,9 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 static pthread_key_t teb_key;
 
-#define HANDLER_DEF(name) void name( int __signal, struct siginfo *__siginfo, ucontext_t *__context )
-#define HANDLER_CONTEXT (__context)
-
 typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
@@ -449,7 +446,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
  *
  * Handler for SIGSEGV.
  */
-static void segv_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
+static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
@@ -479,7 +476,7 @@ static void segv_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
  *
  * Handler for SIGBUS.
  */
-static void bus_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
+static void bus_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
@@ -506,7 +503,7 @@ static void bus_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
  *
  * Handler for SIGILL.
  */
-static void ill_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
+static void ill_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
@@ -548,7 +545,7 @@ static void ill_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
  *
  * Handler for SIGTRAP.
  */
-static void trap_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
+static void trap_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
@@ -581,7 +578,7 @@ static void trap_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
  *
  * Handler for SIGFPE.
  */
-static void fpe_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
+static void fpe_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
@@ -634,7 +631,7 @@ static void fpe_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
  *
  * Handler for SIGINT.
  */
-static void int_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
+static void int_handler( int signal, siginfo_t *info, void *ucontext )
 {
     if (!dispatch_signal(SIGINT))
     {
@@ -659,13 +656,13 @@ static void int_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
  *
  * Handler for SIGABRT.
  */
-static HANDLER_DEF(abrt_handler)
+static void abrt_handler( int signal, struct siginfo *info, void *ucontext )
 {
     EXCEPTION_RECORD rec;
     CONTEXT context;
     NTSTATUS status;
 
-    save_context( &context, HANDLER_CONTEXT );
+    save_context( &context, ucontext );
     rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
     rec.ExceptionFlags   = EH_NONCONTINUABLE;
     rec.ExceptionRecord  = NULL;
@@ -673,7 +670,7 @@ static HANDLER_DEF(abrt_handler)
     rec.NumberParameters = 0;
     status = raise_exception( &rec, &context, TRUE );
     if (status) raise_status( status, &rec );
-    restore_context( &context, HANDLER_CONTEXT );
+    restore_context( &context, ucontext );
 }
 
 
@@ -682,7 +679,7 @@ static HANDLER_DEF(abrt_handler)
  *
  * Handler for SIGQUIT.
  */
-static HANDLER_DEF(quit_handler)
+static void quit_handler( int signal, struct siginfo *info, void *ucontext )
 {
     abort_thread(0);
 }
@@ -693,13 +690,13 @@ static HANDLER_DEF(quit_handler)
  *
  * Handler for SIGUSR1, used to signal a thread that it got suspended.
  */
-static HANDLER_DEF(usr1_handler)
+static void usr1_handler( int signal, struct siginfo *info, void *ucontext )
 {
     CONTEXT context;
 
-    save_context( &context, HANDLER_CONTEXT );
+    save_context( &context, ucontext );
     wait_suspend( &context );
-    restore_context( &context, HANDLER_CONTEXT );
+    restore_context( &context, ucontext );
 }
 
 
@@ -713,23 +710,6 @@ size_t get_signal_stack_total_size(void)
 {
     assert( sizeof(TEB) <= getpagesize() );
     return getpagesize();  /* this is just for the TEB, we don't need a signal stack */
-}
-
-
-/***********************************************************************
- *           set_handler
- *
- * Set a signal handler
- */
-static int set_handler( int sig, void (*func)() )
-{
-    struct sigaction sig_act;
-
-    sig_act.sa_sigaction = func;
-    sig_act.sa_mask = server_block_set;
-    sig_act.sa_flags = SA_SIGINFO;
-
-    return sigaction( sig, &sig_act, NULL );
 }
 
 
@@ -766,15 +746,34 @@ void signal_init_thread( TEB *teb )
  */
 void signal_init_process(void)
 {
-    if (set_handler( SIGINT,  (void (*)())int_handler  ) == -1) goto error;
-    if (set_handler( SIGFPE,  (void (*)())fpe_handler  ) == -1) goto error;
-    if (set_handler( SIGSEGV, (void (*)())segv_handler ) == -1) goto error;
-    if (set_handler( SIGILL,  (void (*)())ill_handler  ) == -1) goto error;
-    if (set_handler( SIGBUS,  (void (*)())bus_handler  ) == -1) goto error;
-    if (set_handler( SIGTRAP, (void (*)())trap_handler ) == -1) goto error;
-    if (set_handler( SIGABRT, (void (*)())abrt_handler ) == -1) goto error;
-    if (set_handler( SIGQUIT, (void (*)())quit_handler ) == -1) goto error;
-    if (set_handler( SIGUSR1, (void (*)())usr1_handler ) == -1) goto error;
+    struct sigaction sig_act;
+
+    sig_act.sa_mask = server_block_set;
+    sig_act.sa_flags = SA_RESTART | SA_SIGINFO;
+
+    sig_act.sa_sigaction = int_handler;
+    if (sigaction( SIGINT, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = fpe_handler;
+    if (sigaction( SIGFPE, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = abrt_handler;
+    if (sigaction( SIGABRT, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = quit_handler;
+    if (sigaction( SIGQUIT, &sig_act, NULL ) == -1) goto error;
+    sig_act.sa_sigaction = usr1_handler;
+    if (sigaction( SIGUSR1, &sig_act, NULL ) == -1) goto error;
+
+    sig_act.sa_sigaction = segv_handler;
+    if (sigaction( SIGSEGV, &sig_act, NULL ) == -1) goto error;
+    if (sigaction( SIGILL, &sig_act, NULL ) == -1) goto error;
+#ifdef SIGBUS
+    if (sigaction( SIGBUS, &sig_act, NULL ) == -1) goto error;
+#endif
+
+#ifdef SIGTRAP
+    sig_act.sa_sigaction = trap_handler;
+    if (sigaction( SIGTRAP, &sig_act, NULL ) == -1) goto error;
+#endif
+
     /* 'ta 6' tells the kernel to synthesize any unaligned accesses this 
        process makes, instead of just signalling an error and terminating
        the process.  wine-devel did not reach a conclusion on whether
