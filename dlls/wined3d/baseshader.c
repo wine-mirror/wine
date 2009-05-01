@@ -468,17 +468,6 @@ void shader_init(struct IWineD3DBaseShaderClass *shader,
     list_init(&shader->linked_programs);
 }
 
-static inline WINED3DSHADER_PARAM_REGISTER_TYPE shader_get_regtype(DWORD param)
-{
-    return ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
-            | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
-}
-
-static inline DWORD shader_get_writemask(DWORD param)
-{
-    return param & WINED3DSP_WRITEMASK_ALL;
-}
-
 /* Convert floating point offset relative
  * to a register file to an absolute offset for float constants */
 static unsigned int shader_get_float_offset(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx)
@@ -671,10 +660,17 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
+            struct wined3d_shader_dst_param dst;
+            struct wined3d_shader_src_param rel_addr;
+
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
-            lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
-            memcpy(lconst->value, pToken + 1, 4 * sizeof(DWORD));
+
+            shader_sm1_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+            lconst->idx = dst.register_idx;
+
+            memcpy(lconst->value, pToken, 4 * sizeof(DWORD));
+            pToken += 4;
 
             /* In pixel shader 1.X shaders, the constants are clamped between [-1;1] */
             if (WINED3DSHADER_VERSION_MAJOR(shader_version) == 1 && pshader)
@@ -691,25 +687,38 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
             }
 
             list_add_head(&This->baseShader.constantsF, &lconst->entry);
-            pToken += param_size;
         }
         else if (ins.handler_idx == WINED3DSIH_DEFI)
         {
+            struct wined3d_shader_dst_param dst;
+            struct wined3d_shader_src_param rel_addr;
+
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
-            lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
-            memcpy(lconst->value, pToken + 1, 4 * sizeof(DWORD));
+
+            shader_sm1_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+            lconst->idx = dst.register_idx;
+
+            memcpy(lconst->value, pToken, 4 * sizeof(DWORD));
+            pToken += 4;
+
             list_add_head(&This->baseShader.constantsI, &lconst->entry);
-            pToken += param_size;
         }
         else if (ins.handler_idx == WINED3DSIH_DEFB)
         {
+            struct wined3d_shader_dst_param dst;
+            struct wined3d_shader_src_param rel_addr;
+
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
-            lconst->idx = *pToken & WINED3DSP_REGNUM_MASK;
-            memcpy(lconst->value, pToken + 1, 1 * sizeof(DWORD));
+
+            shader_sm1_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+            lconst->idx = dst.register_idx;
+
+            memcpy(lconst->value, pToken, sizeof(DWORD));
+            ++pToken;
+
             list_add_head(&This->baseShader.constantsB, &lconst->entry);
-            pToken += param_size;
         }
         /* If there's a loop in the shader */
         else if (ins.handler_idx == WINED3DSIH_LOOP
@@ -1279,30 +1288,41 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
-            unsigned int offset = shader_get_float_offset(shader_get_regtype(*pToken),
-                    *pToken & WINED3DSP_REGNUM_MASK);
+            struct wined3d_shader_dst_param dst;
+            struct wined3d_shader_src_param rel_addr;
 
-            TRACE("def c%u = %f, %f, %f, %f", offset,
+            shader_sm1_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+
+            TRACE("def c%u = %f, %f, %f, %f", shader_get_float_offset(dst.register_type, dst.register_idx),
+                    *(const float *)(pToken),
                     *(const float *)(pToken + 1),
                     *(const float *)(pToken + 2),
-                    *(const float *)(pToken + 3),
-                    *(const float *)(pToken + 4));
-            pToken += 5;
+                    *(const float *)(pToken + 3));
+            pToken += 4;
         }
         else if (ins.handler_idx == WINED3DSIH_DEFI)
         {
-            TRACE("defi i%u = %d, %d, %d, %d", *pToken & WINED3DSP_REGNUM_MASK,
+            struct wined3d_shader_dst_param dst;
+            struct wined3d_shader_src_param rel_addr;
+
+            shader_sm1_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+
+            TRACE("defi i%u = %d, %d, %d, %d", dst.register_idx,
+                    *(pToken),
                     *(pToken + 1),
                     *(pToken + 2),
-                    *(pToken + 3),
-                    *(pToken + 4));
-            pToken += 5;
+                    *(pToken + 3));
+            pToken += 4;
         }
         else if (ins.handler_idx == WINED3DSIH_DEFB)
         {
-            TRACE("defb b%u = %s", *pToken & WINED3DSP_REGNUM_MASK,
-                    *(pToken + 1)? "true": "false");
-            pToken += 2;
+            struct wined3d_shader_dst_param dst;
+            struct wined3d_shader_src_param rel_addr;
+
+            shader_sm1_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+
+            TRACE("defb b%u = %s", dst.register_idx, *pToken ? "true" : "false");
+            ++pToken;
         }
         else
         {
