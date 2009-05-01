@@ -273,9 +273,7 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
                     rightx = rc.right;
                 }
 
-                poly[0].x = rc.right;
                 poly[0].y = rc.bottom;
-                poly[1].x = rc.right;
                 poly[1].y = rc.top;
                 poly[2].y = rc.top;
                 poly[3].y = rc.bottom;
@@ -286,6 +284,8 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
                     col = ARGB2COLORREF(argb);
                     hbrush = CreateSolidBrush(col);
                     hprevbrush = SelectObject(graphics->hdc, hbrush);
+                    poly[0].x = x - tilt - 1;
+                    poly[1].x = x - 1;
                     poly[2].x = x;
                     poly[3].x = x - tilt;
                     Polygon(graphics->hdc, poly, 4);
@@ -323,9 +323,7 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
                 }
 
                 poly[0].x = rc.right;
-                poly[0].y = rc.bottom;
                 poly[1].x = rc.left;
-                poly[1].y = rc.bottom;
                 poly[2].x = rc.left;
                 poly[3].x = rc.right;
 
@@ -335,6 +333,8 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
                     col = ARGB2COLORREF(argb);
                     hbrush = CreateSolidBrush(col);
                     hprevbrush = SelectObject(graphics->hdc, hbrush);
+                    poly[0].y = y - tilt - 1;
+                    poly[1].y = y - 1;
                     poly[2].y = y;
                     poly[3].y = y - tilt;
                     Polygon(graphics->hdc, poly, 4);
