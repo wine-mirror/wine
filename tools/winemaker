@@ -20,7 +20,7 @@ use strict;
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
-my $version="0.7.0";
+my $version="0.7.1";
 
 use Cwd;
 use File::Basename;
@@ -62,6 +62,17 @@ my $OPT_ASK_YES=1;
 ##
 # Skip the questions till the end of this scope
 my $OPT_ASK_SKIP=-1;
+
+
+# The following constants define the architecture
+
+##
+# 32-Bit Target
+my $OPT_ARCH_32=32;
+
+##
+# 64-Bit Target
+my $OPT_ARCH_64=64;
 
 
 # General options
@@ -111,6 +122,10 @@ my $opt_target_type;
 ##
 # Contains the default set of flags to be used when creating a new target.
 my $opt_flags;
+
+##
+# Contains 32 for 32-Bit-Targets and 64 for 64-Bit-Targets
+my $opt_arch;
 
 ##
 # If true then winemaker should ask questions to the user as it goes
@@ -974,7 +989,7 @@ sub source_scan_project_file($$$)
         }
         if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
             push @{@$target[$T_LDFLAGS]},"-mno-cygwin";
-            push @{@$target[$T_LDFLAGS]},"-m32";
+            push @{@$target[$T_LDFLAGS]},"-m$opt_arch";
         }
         push @{@$project[$P_TARGETS]},$target;
 
@@ -1467,7 +1482,7 @@ sub source_scan_directory($$$$)
     }
     if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
       push @{@$target[$T_LDFLAGS]},"-mno-cygwin";
-      push @{@$target[$T_LDFLAGS]},"-m32";
+      push @{@$target[$T_LDFLAGS]},"-m$opt_arch";
     }
     push @{@$project[$P_TARGETS]},$target;
 
@@ -2456,6 +2471,7 @@ $opt_work_dir=undef;
 $opt_single_target=undef;
 $opt_target_type=$TT_GUIEXE;
 $opt_flags=0;
+$opt_arch=$OPT_ARCH_32;
 $opt_is_interactive=$OPT_ASK_NO;
 $opt_ask_project_options=$OPT_ASK_NO;
 $opt_ask_target_options=$OPT_ASK_NO;
@@ -2489,6 +2505,7 @@ sub usage()
   print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Pdir] [-idll] [-Ldir] [-llibrary]\n";
   print STDERR "                 [--nodlls] [--nomsvcrt] [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files]\n";
+  print STDERR "                 [--wine64]\n";
   print STDERR "                 work_directory|project_file|workspace_file\n";
   print STDERR "\nWinemaker is designed to recursively convert all the Windows sources found in\n";
   print STDERR "the specified directory so that they can be compiled with Winelib. During this\n";
@@ -2526,6 +2543,8 @@ while (@ARGV>0) {
     $opt_no_generated_files=0;
   } elsif ($arg eq "--nogenerated-files") {
     $opt_no_generated_files=1;
+  } elsif ($arg eq "--wine64") {
+    $opt_arch=$OPT_ARCH_64;
   } elsif ($arg =~ /^-D/) {
     push @{$global_settings[$T_DEFINES]},$arg;
   } elsif ($arg =~ /^-I/) {
