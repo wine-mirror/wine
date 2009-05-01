@@ -1304,19 +1304,22 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
         }
         else
         {
-            DWORD param, addr_token = 0;
-            int tokens_read;
+            struct wined3d_shader_src_param dst_rel_addr, src_rel_addr;
+            struct wined3d_shader_dst_param dst_param;
+            struct wined3d_shader_src_param src_param;
+
+            if (ins.dst_count)
+            {
+                shader_sm1_read_dst_param(&pToken, &dst_param, &dst_rel_addr, shader_version);
+            }
 
             /* Print out predication source token first - it follows
              * the destination token. */
             if (ins.predicate)
             {
-                struct wined3d_shader_src_param pred;
-
-                shader_parse_src_param(*(pToken + 2), NULL, &pred);
-
+                shader_sm1_read_src_param(&pToken, &src_param, &src_rel_addr, shader_version);
                 TRACE("(");
-                shader_dump_src_param(&pred, shader_version);
+                shader_dump_src_param(&src_param, shader_version);
                 TRACE(") ");
             }
 
@@ -1346,42 +1349,20 @@ void shader_trace_init(const DWORD *pFunction, const SHADER_OPCODE *opcode_table
                 TRACE("p");
             }
 
-            /* Destination token */
+            /* We already read the destination token, print it. */
             if (ins.dst_count)
             {
-                struct wined3d_shader_dst_param dst;
-                struct wined3d_shader_src_param rel_addr;
-
-                shader_sm1_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
-
-                shader_dump_ins_modifiers(&dst);
+                shader_dump_ins_modifiers(&dst_param);
                 TRACE(" ");
-                shader_dump_dst_param(&dst, shader_version);
+                shader_dump_dst_param(&dst_param, shader_version);
             }
-
-            /* Predication token - already printed out, just skip it */
-            if (ins.predicate) ++pToken;
 
             /* Other source tokens */
             for (i = ins.dst_count; i < (ins.dst_count + ins.src_count); ++i)
             {
-                struct wined3d_shader_src_param src, rel_addr;
-
-                tokens_read = shader_get_param(pToken, shader_version, &param, &addr_token);
-                pToken += tokens_read;
-
-                if (param & WINED3DSHADER_ADDRMODE_RELATIVE)
-                {
-                    shader_parse_src_param(addr_token, NULL, &rel_addr);
-                    shader_parse_src_param(param, &rel_addr, &src);
-                }
-                else
-                {
-                    shader_parse_src_param(param, NULL, &src);
-                }
-
+                shader_sm1_read_src_param(&pToken, &src_param, &src_rel_addr, shader_version);
                 TRACE(!i ? " " : ", ");
-                shader_dump_src_param(&src, shader_version);
+                shader_dump_src_param(&src_param, shader_version);
             }
         }
         TRACE("\n");
