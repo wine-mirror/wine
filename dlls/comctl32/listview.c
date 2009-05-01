@@ -7855,7 +7855,7 @@ static BOOL LISTVIEW_SetTextColor (LISTVIEW_INFO *infoPtr, COLORREF clrText)
 
 /***
  * DESCRIPTION:
- * Determines which listview item is located at the specified position.
+ * Sets new ToolTip window to ListView control.
  *
  * PARAMETER(S):
  * [I] infoPtr        : valid pointer to the listview structure
