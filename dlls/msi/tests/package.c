@@ -11535,7 +11535,7 @@ static void test_MsiSetProperty(void)
 
 static void test_MsiApplyMultiplePatches(void)
 {
-    UINT r;
+    UINT r, type = GetDriveType(NULL);
 
     r = MsiApplyMultiplePatchesA(NULL, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
@@ -11544,19 +11544,51 @@ static void test_MsiApplyMultiplePatches(void)
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
 
     r = MsiApplyMultiplePatchesA(";", NULL, NULL);
-    ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
+    todo_wine
+    {
+        if (type == DRIVE_FIXED)
+            ok(r == ERROR_PATH_NOT_FOUND,
+               "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
+        else
+            ok(r == ERROR_INVALID_NAME,
+               "Expected ERROR_INVALID_NAME, got %u\n", r);
+    }
 
     r = MsiApplyMultiplePatchesA("  ;", NULL, NULL);
-    ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
+    todo_wine
+    {
+        if (type == DRIVE_FIXED)
+            ok(r == ERROR_PATCH_PACKAGE_OPEN_FAILED,
+               "Expected ERROR_PATCH_PACKAGE_OPEN_FAILED, got %u\n", r);
+        else
+            ok(r == ERROR_INVALID_NAME,
+               "Expected ERROR_INVALID_NAME, got %u\n", r);
+    }
 
     r = MsiApplyMultiplePatchesA(";;", NULL, NULL);
-    ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
+    todo_wine
+    {
+        if (type == DRIVE_FIXED)
+            ok(r == ERROR_PATH_NOT_FOUND,
+               "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
+        else
+            ok(r == ERROR_INVALID_NAME,
+               "Expected ERROR_INVALID_NAME, got %u\n", r);
+    }
 
     r = MsiApplyMultiplePatchesA("nosuchpatchpackage;", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
 
     r = MsiApplyMultiplePatchesA(";nosuchpatchpackage", NULL, NULL);
-    ok(r == ERROR_INVALID_NAME, "Expected ERROR_INVALID_NAME, got %u\n", r);
+    todo_wine
+    {
+        if (type == DRIVE_FIXED)
+            ok(r == ERROR_PATH_NOT_FOUND,
+               "Expected ERROR_PATH_NOT_FOUND, got %u\n", r);
+        else
+            ok(r == ERROR_INVALID_NAME,
+               "Expected ERROR_INVALID_NAME, got %u\n", r);
+    }
 
     r = MsiApplyMultiplePatchesA("nosuchpatchpackage;nosuchpatchpackage", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
