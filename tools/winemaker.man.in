@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEMAKER 1 "February 2009" "@PACKAGE_STRING@" "Wine Developers Manual"
+.TH WINEMAKER 1 "May 2009" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winemaker \- generate a build infrastructure for compiling Windows programs on Unix
 .SH SYNOPSIS
@@ -30,6 +30,10 @@ winemaker \- generate a build infrastructure for compiling Windows programs on U
 .br
   [
 .IR               "--generated-files " "] [ " "--nogenerated-files " "] 
+]
+.br
+  [
+.IR               "--wine64 " "]
 .br
 .IR               "work_directory" "| " "project_file" "| " "workspace_file"
 
@@ -167,6 +171,9 @@ Tells winemaker to generate the build the Makefile. This is the default.
 .TP
 .I --nogenerated-files
 Tells winemaker not to generate the Makefile.
+.TP
+.I --wine64
+Tells winemaker to generate a 64-bit Makefile.
 
 .SH EXAMPLES
 .PP
