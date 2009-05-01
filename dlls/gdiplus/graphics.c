@@ -172,13 +172,41 @@ static void transform_and_round_points(GpGraphics *graphics, POINT *pti,
     }
 }
 
-static ARGB blend_colors(ARGB start, ARGB end, int current, int total)
+static ARGB blend_colors(ARGB start, ARGB end, REAL position)
 {
     ARGB result=0;
     ARGB i;
     for (i=0xff; i<=0xff0000; i = i << 8)
-        result |= (((start&i)*(total - current)+(end&i)*(current))/total)&i;
+        result |= (int)((start&i)*(1.0f - position)+(end&i)*(position))&i;
     return result;
+}
+
+static ARGB blend_line_gradient(GpLineGradient* brush, REAL position)
+{
+    REAL blendfac;
+
+    if (brush->blendcount == 1)
+        blendfac = position;
+    else
+    {
+        int i=1;
+        REAL left_blendpos, left_blendfac, right_blendpos, right_blendfac;
+        REAL range;
+
+        /* locate the blend positions surrounding this position */
+        while (position > brush->blendpos[i])
+            i++;
+
+        /* interpolate between the blend positions */
+        left_blendpos = brush->blendpos[i-1];
+        left_blendfac = brush->blendfac[i-1];
+        right_blendpos = brush->blendpos[i];
+        right_blendfac = brush->blendfac[i];
+        range = right_blendpos - left_blendpos;
+        blendfac = (left_blendfac * (right_blendpos - position) +
+                    right_blendfac * (position - left_blendpos)) / range;
+    }
+    return blend_colors(brush->startcolor, brush->endcolor, blendfac);
 }
 
 static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
@@ -240,7 +268,7 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
 
                 for (i=1; i<num_steps; i++)
                 {
-                    ARGB argb = blend_colors(line->startcolor, line->endcolor, i, num_steps);
+                    ARGB argb = blend_line_gradient(line, i/(REAL)num_steps);
                     int ofs = width * i / num_steps;
                     col = ARGB2COLORREF(argb);
                     hbrush = CreateSolidBrush(col);
@@ -296,7 +324,7 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
 
                 for (i=1; i<num_steps; i++)
                 {
-                    ARGB argb = blend_colors(line->startcolor, line->endcolor, i, num_steps);
+                    ARGB argb = blend_line_gradient(line, i/(REAL)num_steps);
                     int ofs = height * i / num_steps;
                     col = ARGB2COLORREF(argb);
                     hbrush = CreateSolidBrush(col);
