@@ -1170,7 +1170,6 @@ static BOOL macho_enum_modules_internal(const struct process* pcs,
     if (!pcs->dbg_hdr_addr ||
         !ReadProcessMemory(pcs->handle, (void*)pcs->dbg_hdr_addr,
                            &image_infos, sizeof(image_infos), NULL) ||
-        (image_infos.version != 1 && image_infos.version != 2) ||
         !image_infos.infoArray)
         goto done;
     TRACE("Process has %u image infos at %p\n", image_infos.infoArrayCount, image_infos.infoArray);
