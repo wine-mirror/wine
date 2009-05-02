@@ -1020,12 +1020,20 @@ static void test_create(void)
     /* setting LVS_EX_HEADERDRAGDROP creates header */
     hList = CreateWindow("SysListView32", "Test", LVS_REPORT, 0, 0, 100, 100, NULL, NULL,
                           GetModuleHandle(NULL), 0);
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(!IsWindow(hHeader), "Header shouldn't be created\n");
     ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
     SendMessage(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_HEADERDRAGDROP);
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
     ok(IsWindow(hHeader), "Header should be created\n");
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
+    DestroyWindow(hList);
+
+    /* not report style accepts LVS_EX_HEADERDRAGDROP too */
+    hList = create_custom_listview_control(0);
+    SendMessage(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_HEADERDRAGDROP);
+    r = SendMessage(hList, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
+    ok(r & LVS_EX_HEADERDRAGDROP, "Expected LVS_EX_HEADERDRAGDROP to be set\n");
     DestroyWindow(hList);
 
     /* requesting header info with LVM_GETSUBITEMRECT doesn't create it */
