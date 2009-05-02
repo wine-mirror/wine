@@ -573,6 +573,7 @@ struct sendinput_test_s {
         {{VK_MENU, 0x00}, {VK_LMENU, 0x00}, {VK_CONTROL, 0x00, 1}, {VK_LCONTROL, 0x01, 1}, {0}},
         {{WM_SYSKEYDOWN, hook|wparam|optional, VK_LCONTROL},
         {WM_SYSKEYDOWN, hook|wparam, VK_RMENU},
+        {WM_KEYDOWN, wparam|lparam|optional, VK_CONTROL, 0},
         {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0}, {0}}},
     {VK_RMENU, KEYEVENTF_KEYUP, 1,
         {{VK_MENU, 0x80}, {VK_LMENU, 0x80}, {VK_CONTROL, 0x81, 1}, {VK_LCONTROL, 0x80, 1}, {0}},
@@ -580,7 +581,7 @@ struct sendinput_test_s {
         {WM_KEYUP, hook|wparam, VK_RMENU},
         {WM_SYSKEYUP, wparam|lparam|optional, VK_CONTROL, KF_UP},
         {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP},
-        {WM_SYSCOMMAND}, {0}}},
+        {WM_SYSCOMMAND, optional}, {0}}},
     /* LMENU | KEYEVENTF_EXTENDEDKEY == RMENU */
     /* 40 */
     {VK_LMENU, KEYEVENTF_EXTENDEDKEY, 0,
@@ -598,6 +599,7 @@ struct sendinput_test_s {
         {{VK_MENU, 0x00}, {VK_RMENU, 0x00}, {VK_CONTROL, 0x00, 1}, {VK_LCONTROL, 0x01, 1}, {0}},
         {{WM_SYSKEYDOWN, hook|wparam|lparam|optional, VK_LCONTROL, 0},
         {WM_SYSKEYDOWN, hook|wparam|lparam, VK_RMENU, LLKHF_EXTENDED},
+        {WM_KEYDOWN, wparam|lparam|optional, VK_CONTROL, 0},
         {WM_SYSKEYDOWN, wparam|lparam, VK_MENU, KF_EXTENDED}, {0}}},
     {VK_RMENU, KEYEVENTF_KEYUP | KEYEVENTF_EXTENDEDKEY, 1,
         {{VK_MENU, 0x80}, {VK_RMENU, 0x80}, {VK_CONTROL, 0x81, 1}, {VK_LCONTROL, 0x80, 1}, {0}},
@@ -605,7 +607,7 @@ struct sendinput_test_s {
         {WM_KEYUP, hook|wparam|lparam, VK_RMENU, LLKHF_UP|LLKHF_EXTENDED},
         {WM_SYSKEYUP, wparam|lparam|optional, VK_CONTROL, KF_UP},
         {WM_SYSKEYUP, wparam|lparam, VK_MENU, KF_UP|KF_EXTENDED},
-        {WM_SYSCOMMAND}, {0}}},
+        {WM_SYSCOMMAND, optional}, {0}}},
     /* MENU == LMENU */
     /* 44 */
     {VK_MENU, 0, 0,
@@ -747,14 +749,6 @@ static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct sendinput_tes
             expected++;
             continue;
         }
-        else if (test->_todo_wine)
-        {
-            failcount++;
-            todo_wine
-            ok(FALSE,
-               "%2d (%x/%x): the msg 0x%04x was expected, but got msg 0x%04x instead\n",
-               id, test->wVk, test->dwFlags, expected->message, actual->message);
-        }
         /* NT4 doesn't send SYSKEYDOWN/UP to hooks, only KEYDOWN/UP */
         else if ((expected->flags & hook) &&
                  (expected->message == WM_SYSKEYDOWN || expected->message == WM_SYSKEYUP) &&
@@ -763,6 +757,24 @@ static void compare_and_check(int id, BYTE *ks1, BYTE *ks2, struct sendinput_tes
             ok((expected->flags & hook) == (actual->flags & hook),
                "%2d (%x/%x): the msg 0x%04x should have been sent by a hook\n",
                id, test->wVk, test->dwFlags, expected->message);
+        }
+        /* For VK_RMENU, at least localized Win2k/XP sends KEYDOWN/UP
+         * instead of SYSKEYDOWN/UP to the WNDPROC */
+        else if (test->wVk == VK_RMENU && !(expected->flags & hook) &&
+                 (expected->message == WM_SYSKEYDOWN || expected->message == WM_SYSKEYUP) &&
+                 (actual->message == expected->message - 4))
+        {
+            ok(expected->wParam == actual->wParam && expected->lParam == actual->lParam,
+               "%2d (%x/%x): the msg 0x%04x was expected, but got msg 0x%04x instead\n",
+               id, test->wVk, test->dwFlags, expected->message, actual->message);
+        }
+        else if (test->_todo_wine)
+        {
+            failcount++;
+            todo_wine
+            ok(FALSE,
+               "%2d (%x/%x): the msg 0x%04x was expected, but got msg 0x%04x instead\n",
+               id, test->wVk, test->dwFlags, expected->message, actual->message);
         }
         else
             ok(FALSE,
