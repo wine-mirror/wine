@@ -22,10 +22,16 @@
 
 #ifdef HAVE_AUDIOUNIT_AUDIOUNIT_H
 
+#define ULONG CoreFoundation_ULONG
+#define HRESULT CoreFoundation_HRESULT
+#include <CoreServices/CoreServices.h>
 #include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioToolbox.h>
+#undef ULONG
+#undef HRESULT
 
 #undef DPRINTF
+#undef STDMETHODCALLTYPE
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
