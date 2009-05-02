@@ -841,6 +841,9 @@ static int is_linker_arg(const char* arg)
 	case 'X':
 	    if (strcmp("-Xlinker", arg) == 0) return 1;
 	    break;
+	case 'a':
+	    if (strcmp("-arch", arg) == 0) return 1;
+	    break;
     }
 
     for (j = 0; j < sizeof(link_switches)/sizeof(link_switches[0]); j++)
@@ -987,6 +990,8 @@ int main(int argc, char **argv)
 		    break;
 		case 'a':
 		    if (strcmp("-aux-info", argv[i]) == 0)
+			next_is_arg = 1;
+		    if (strcmp("-arch", argv[i]) == 0)
 			next_is_arg = 1;
 		    break;
 		case 'X':
