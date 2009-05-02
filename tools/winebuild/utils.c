@@ -262,7 +262,9 @@ const char *get_as_command(void)
 
         if (force_pointer_size)
         {
-            const char *args = (force_pointer_size == 8) ? " --64" : " --32";
+            const char *args = (target_platform == PLATFORM_APPLE) ?
+                ((force_pointer_size == 8) ? " -arch x86_64" : " -arch i386") :
+                ((force_pointer_size == 8) ? " --64" : " --32");
             as_command = xrealloc( as_command, strlen(as_command) + strlen(args) + 1 );
             strcat( as_command, args );
         }
@@ -288,7 +290,9 @@ const char *get_ld_command(void)
 
         if (force_pointer_size)
         {
-            const char *args = (force_pointer_size == 8) ? " -m elf_x86_64" : " -m elf_i386";
+            const char *args = (target_platform == PLATFORM_APPLE) ?
+                ((force_pointer_size == 8) ? " -arch x86_64" : " -arch i386") :
+                ((force_pointer_size == 8) ? " -m elf_x86_64" : " -m elf_i386");
             ld_command = xrealloc( ld_command, strlen(ld_command) + strlen(args) + 1 );
             strcat( ld_command, args );
         }
