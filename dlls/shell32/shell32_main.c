@@ -1194,3 +1194,12 @@ HRESULT WINAPI DllCanUnloadNow(void)
     FIXME("stub\n");
     return S_FALSE;
 }
+
+/***********************************************************************
+ *              ExtractVersionResource16W (SHELL32.@)
+ */
+BOOL WINAPI ExtractVersionResource16W(LPWSTR s, DWORD d)
+{
+    FIXME("(%s %x) stub!\n", debugstr_w(s), d);
+    return FALSE;
+}

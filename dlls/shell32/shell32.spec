@@ -298,7 +298,7 @@
 @ stub ExtractIconResInfoA
 @ stub ExtractIconResInfoW
 @ stdcall ExtractIconW(long wstr long)
-@ stub ExtractVersionResource16W
+@ stdcall ExtractVersionResource16W(wstr long)
 @ stub FindExeDlgProc
 @ stdcall FindExecutableA(str str ptr)
 @ stdcall FindExecutableW(wstr wstr ptr)
