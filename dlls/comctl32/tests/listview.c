@@ -1068,6 +1068,7 @@ static void test_redraw(void)
     HWND hwnd, hwndheader;
     HDC hdc;
     BOOL res;
+    DWORD r;
 
     hwnd = create_listview_control(0);
     hwndheader = subclass_header(hwnd);
@@ -1082,21 +1083,45 @@ static void test_redraw(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* forward WM_ERASEBKGND to parent on CLR_NONE background color */
+    /* 1. Without backbuffer */
     res = ListView_SetBkColor(hwnd, CLR_NONE);
     expect(TRUE, res);
 
     hdc = GetWindowDC(hwndparent);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    r = SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    ok(r != 0, "Expected not zero result\n");
     ok_sequence(sequences, PARENT_FULL_SEQ_INDEX, forward_erasebkgnd_parent_seq,
-                "forward WM_ERASEBKGND on CLR_NONE", TRUE);
+                "forward WM_ERASEBKGND on CLR_NONE", FALSE);
 
     res = ListView_SetBkColor(hwnd, CLR_DEFAULT);
     expect(TRUE, res);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    r = SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    ok(r != 0, "Expected not zero result\n");
+    ok_sequence(sequences, PARENT_FULL_SEQ_INDEX, empty_seq,
+                "don't forward WM_ERASEBKGND on non-CLR_NONE", FALSE);
+
+    /* 2. With backbuffer */
+    SendMessageA(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_DOUBLEBUFFER,
+                                                     LVS_EX_DOUBLEBUFFER);
+    res = ListView_SetBkColor(hwnd, CLR_NONE);
+    expect(TRUE, res);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    r = SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    ok(r != 0, "Expected not zero result\n");
+    ok_sequence(sequences, PARENT_FULL_SEQ_INDEX, forward_erasebkgnd_parent_seq,
+                "forward WM_ERASEBKGND on CLR_NONE", FALSE);
+
+    res = ListView_SetBkColor(hwnd, CLR_DEFAULT);
+    expect(TRUE, res);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    r = SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    todo_wine ok(r != 0, "Expected not zero result\n");
     ok_sequence(sequences, PARENT_FULL_SEQ_INDEX, empty_seq,
                 "don't forward WM_ERASEBKGND on non-CLR_NONE", FALSE);
 

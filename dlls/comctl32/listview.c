@@ -36,8 +36,6 @@
  *   -- EN_KILLFOCUS should be handled in WM_COMMAND
  *   -- WM_CREATE: create the icon and small icon image lists at this point only if
  *      the LVS_SHAREIMAGELISTS style is not specified.
- *   -- WM_ERASEBKGND: forward this message to the parent window if the bkgnd
- *      color is CLR_NONE.
  *   -- WM_WINDOWPOSCHANGED: arrange the list items if the current view is icon
  *      or small icon and the LVS_AUTOARRANGE style is specified.
  *   -- WM_TIMER
@@ -8289,6 +8287,9 @@ static inline BOOL LISTVIEW_EraseBkgnd(const LISTVIEW_INFO *infoPtr, HDC hdc)
     TRACE("(hdc=%p)\n", hdc);
 
     if (!GetClipBox(hdc, &rc)) return FALSE;
+
+    if (infoPtr->clrBk == CLR_NONE)
+        return SendMessageW(infoPtr->hwndNotify, WM_ERASEBKGND, (WPARAM)hdc, 0);
 
     /* for double buffered controls we need to do this during refresh */
     if (infoPtr->dwLvExStyle & LVS_EX_DOUBLEBUFFER) return FALSE;
