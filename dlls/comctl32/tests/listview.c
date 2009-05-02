@@ -26,9 +26,10 @@
 #include "wine/test.h"
 #include "msg.h"
 
-#define PARENT_SEQ_INDEX    0
-#define LISTVIEW_SEQ_INDEX  1
-#define NUM_MSG_SEQUENCES   2
+#define PARENT_SEQ_INDEX       0
+#define PARENT_FULL_SEQ_INDEX  1
+#define LISTVIEW_SEQ_INDEX     2
+#define NUM_MSG_SEQUENCES      3
 
 #define LISTVIEW_ID 0
 #define HEADER_ID   1
@@ -162,6 +163,11 @@ static const struct message empty_seq[] = {
     { 0 }
 };
 
+static const struct message forward_erasebkgnd_parent_seq[] = {
+    { WM_ERASEBKGND, sent },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -172,6 +178,12 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
     static LONG defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
 
     /* log system messages, except for painting */
     if (message < WM_USER &&
@@ -185,13 +197,9 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
     {
         trace("parent: %p, %04x, %08lx, %08lx\n", hwnd, message, wParam, lParam);
 
-        msg.message = message;
-        msg.flags = sent|wparam|lparam;
-        if (defwndproc_counter) msg.flags |= defwinproc;
-        msg.wParam = wParam;
-        msg.lParam = lParam;
         add_message(sequences, PARENT_SEQ_INDEX, &msg);
     }
+    add_message(sequences, PARENT_FULL_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
     ret = DefWindowProcA(hwnd, message, wParam, lParam);
@@ -1058,6 +1066,8 @@ static void test_create(void)
 static void test_redraw(void)
 {
     HWND hwnd, hwndheader;
+    HDC hdc;
+    BOOL res;
 
     hwnd = create_listview_control(0);
     hwndheader = subclass_header(hwnd);
@@ -1070,6 +1080,27 @@ static void test_redraw(void)
     ok_sequence(sequences, LISTVIEW_SEQ_INDEX, redraw_listview_seq, "redraw listview", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    /* forward WM_ERASEBKGND to parent on CLR_NONE background color */
+    res = ListView_SetBkColor(hwnd, CLR_NONE);
+    expect(TRUE, res);
+
+    hdc = GetWindowDC(hwndparent);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    ok_sequence(sequences, PARENT_FULL_SEQ_INDEX, forward_erasebkgnd_parent_seq,
+                "forward WM_ERASEBKGND on CLR_NONE", TRUE);
+
+    res = ListView_SetBkColor(hwnd, CLR_DEFAULT);
+    expect(TRUE, res);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SendMessageA(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    ok_sequence(sequences, PARENT_FULL_SEQ_INDEX, empty_seq,
+                "don't forward WM_ERASEBKGND on non-CLR_NONE", FALSE);
+
+    ReleaseDC(hwndparent, hdc);
 
     DestroyWindow(hwnd);
 }
