@@ -1629,7 +1629,7 @@ static void test_sorting(void)
     LVITEMA item = {0};
     DWORD r;
     LONG_PTR style;
-    static CHAR names[][4] = {"A", "B", "C", "D"};
+    static CHAR names[][5] = {"A", "B", "C", "D", "0"};
     CHAR buff[10];
 
     hwnd = create_listview_control(0);
@@ -1744,19 +1744,56 @@ static void test_sorting(void)
     item.cchTextMax = sizeof(buff);
     r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
     expect(TRUE, r);
-    todo_wine ok(lstrcmp(buff, names[1]) == 0, "Expected '%s', got '%s'\n", names[1], buff);
+    ok(lstrcmp(buff, names[1]) == 0, "Expected '%s', got '%s'\n", names[1], buff);
 
     item.iItem = 1;
     r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
     expect(TRUE, r);
-    todo_wine ok(lstrcmp(buff, names[2]) == 0, "Expected '%s', got '%s'\n", names[2], buff);
+    ok(lstrcmp(buff, names[2]) == 0, "Expected '%s', got '%s'\n", names[2], buff);
 
     item.iItem = 2;
     r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
     expect(TRUE, r);
-    todo_wine ok(lstrcmp(buff, names[0]) == 0, "Expected '%s', got '%s'\n", names[0], buff);
+    ok(lstrcmp(buff, names[0]) == 0, "Expected '%s', got '%s'\n", names[0], buff);
 
     item.iItem = 3;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    ok(lstrcmp(buff, names[3]) == 0, "Expected '%s', got '%s'\n", names[3], buff);
+
+    /* corner case - item should be placed at first position */
+    item.mask = LVIF_TEXT;
+    item.iItem = 4;
+    item.iSubItem = 0;
+    item.pszText = names[4];
+    r = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM) &item);
+    expect(0, r);
+
+    item.iItem = 0;
+    item.pszText = buff;
+    item.cchTextMax = sizeof(buff);
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    ok(lstrcmp(buff, names[4]) == 0, "Expected '%s', got '%s'\n", names[4], buff);
+
+    item.iItem = 1;
+    item.pszText = buff;
+    item.cchTextMax = sizeof(buff);
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    ok(lstrcmp(buff, names[1]) == 0, "Expected '%s', got '%s'\n", names[1], buff);
+
+    item.iItem = 2;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    ok(lstrcmp(buff, names[2]) == 0, "Expected '%s', got '%s'\n", names[2], buff);
+
+    item.iItem = 3;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    expect(TRUE, r);
+    ok(lstrcmp(buff, names[0]) == 0, "Expected '%s', got '%s'\n", names[0], buff);
+
+    item.iItem = 4;
     r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
     expect(TRUE, r);
     ok(lstrcmp(buff, names[3]) == 0, "Expected '%s', got '%s'\n", names[3], buff);

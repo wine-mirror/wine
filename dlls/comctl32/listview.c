@@ -63,8 +63,9 @@
  *   -- LISTVIEW_GetNextItem needs to be rewritten. It is currently
  *      linear in the number of items in the list, and this is
  *      unacceptable for large lists.
- *   -- in sorted mode, LISTVIEW_InsertItemT sorts the array,
- *      instead of inserting in the right spot
+ *   -- if list is sorted by item text LISTVIEW_InsertItemT could use
+ *      binary search to calculate item index (e.g. DPA_Search()).
+ *      This requires sorted state to be reliably tracked in item modifiers.
  *   -- we should keep an ordered array of coordinates in iconic mode
  *      this would allow to frame items (iterator_frameditems),
  *      and find nearest item (LVFI_NEARESTXY) a lot more efficiently
@@ -6592,33 +6593,6 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     return lpht->iItem = iItem;
 }
 
-
-/* LISTVIEW_InsertCompare:  callback routine for comparing pszText members of the LV_ITEMS
-   in a LISTVIEW on insert.  Passed to DPA_Sort in LISTVIEW_InsertItem.
-   This function should only be used for inserting items into a sorted list (LVM_INSERTITEM)
-   and not during the processing of a LVM_SORTITEMS message. Applications should provide
-   their own sort proc. when sending LVM_SORTITEMS.
-*/
-/* Platform SDK:
-    (remarks on LVITEM: LVM_INSERTITEM will insert the new item in the proper sort postion...
-        if:
-          LVS_SORTXXX must be specified,
-          LVS_OWNERDRAW is not set,
-          <item>.pszText is not LPSTR_TEXTCALLBACK.
-
-    (LVS_SORT* flags): "For the LVS_SORTASCENDING... styles, item indices
-    are sorted based on item text..."
-*/
-static INT WINAPI LISTVIEW_InsertCompare(  LPVOID first, LPVOID second,  LPARAM lParam)
-{
-    ITEM_INFO* lv_first = DPA_GetPtr( first, 0 );
-    ITEM_INFO* lv_second = DPA_GetPtr( second, 0 );
-    INT cmpv = textcmpWT(lv_first->hdr.pszText, lv_second->hdr.pszText, TRUE); 
-
-    /* if we're sorting descending, negate the return value */
-    return (((const LISTVIEW_INFO *)lParam)->dwStyle & LVS_SORTDESCENDING) ? -cmpv : cmpv;
-}
-
 /***
  * DESCRIPTION:
  * Inserts a new item in the listview control.
@@ -6663,7 +6637,29 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
 
     if (lpLVItem->iItem < 0 && !is_sorted) return -1;
 
-    nItem = is_sorted ? infoPtr->nItemCount : min(lpLVItem->iItem, infoPtr->nItemCount);
+    /* calculate new item index */
+    if (is_sorted)
+    {
+        HDPA hItem;
+        ITEM_INFO *item_s;
+        INT i = 0, cmpv;
+
+        while (i < infoPtr->nItemCount)
+        {
+            hItem  = DPA_GetPtr( infoPtr->hdpaItems, i);
+            item_s = (ITEM_INFO*)DPA_GetPtr(hItem, 0);
+
+            cmpv = textcmpWT(item_s->hdr.pszText, lpLVItem->pszText, TRUE);
+            if (infoPtr->dwStyle & LVS_SORTDESCENDING) cmpv *= -1;
+
+            if (cmpv >= 0) break;
+            i++;
+        }
+        nItem = i;
+    }
+    else
+        nItem = min(lpLVItem->iItem, infoPtr->nItemCount);
+
     TRACE(" inserting at %d, sorted=%d, count=%d, iItem=%d\n", nItem, is_sorted, infoPtr->nItemCount, lpLVItem->iItem);
     nItem = DPA_InsertPtr( infoPtr->hdpaItems, nItem, hdpaSubItems );
     if (nItem == -1) goto fail;
@@ -6697,14 +6693,6 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
         item.state |= INDEXTOSTATEIMAGEMASK(1);
     }
     if (!set_main_item(infoPtr, &item, TRUE, isW, &has_changed)) goto undo;
-
-    /* if we're sorted, sort the list, and update the index */
-    if (is_sorted)
-    {
-	DPA_Sort( infoPtr->hdpaItems, LISTVIEW_InsertCompare, (LPARAM)infoPtr );
-	nItem = DPA_GetPtrIndex( infoPtr->hdpaItems, hdpaSubItems );
-	assert(nItem != -1);
-    }
 
     /* make room for the position, if we are in the right mode */
     if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
