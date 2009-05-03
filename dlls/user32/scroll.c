@@ -41,6 +41,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
+/* data for a single scroll bar */
 typedef struct
 {
     INT   curVal;   /* Current scroll-bar value */
@@ -50,6 +51,12 @@ typedef struct
     UINT  flags;    /* EnableScrollBar flags */
 } SCROLLBAR_INFO, *LPSCROLLBAR_INFO;
 
+/* data for window that has (one or two) scroll bars */
+typedef struct
+{
+    SCROLLBAR_INFO horz;
+    SCROLLBAR_INFO vert;
+} WINSCROLLBAR_INFO, *LPWINSCROLLBAR_INFO;
 
   /* Minimum size of the rectangle between the arrows */
 #define SCROLL_MIN_RECT  4
@@ -156,26 +163,39 @@ static SCROLLBAR_INFO *SCROLL_GetInternalInfo( HWND hwnd, INT nBar, BOOL alloc )
     if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return NULL;
     switch(nBar)
     {
-        case SB_HORZ: infoPtr = wndPtr->pHScroll; break;
-        case SB_VERT: infoPtr = wndPtr->pVScroll; break;
-        case SB_CTL:  infoPtr = (SCROLLBAR_INFO *)wndPtr->wExtra; break;
-        case SB_BOTH: WARN("with SB_BOTH\n"); break;
+        case SB_HORZ:
+            if (wndPtr->pScroll) infoPtr = &((LPWINSCROLLBAR_INFO)wndPtr->pScroll)->horz;
+            break;
+        case SB_VERT:
+            if (wndPtr->pScroll) infoPtr = &((LPWINSCROLLBAR_INFO)wndPtr->pScroll)->vert;
+            break;
+        case SB_CTL:
+            infoPtr = (SCROLLBAR_INFO *)wndPtr->wExtra;
+            break;
+        case SB_BOTH:
+            WARN("with SB_BOTH\n");
+            break;
     }
 
     if (!infoPtr && alloc)
     {
+        WINSCROLLBAR_INFO *winInfoPtr;
+
         if (nBar != SB_HORZ && nBar != SB_VERT)
             WARN("Cannot initialize nBar=%d\n",nBar);
-        else if ((infoPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(SCROLLBAR_INFO) )))
+        else if ((winInfoPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(WINSCROLLBAR_INFO) )))
         {
             /* Set default values */
-            infoPtr->minVal = infoPtr->curVal = infoPtr->page = 0;
-            /* From MSDN: max for a standard scroll bar is 100 by default. */
-            infoPtr->maxVal = 100;
-            /* Scroll bar is enabled by default after create */
-            infoPtr->flags  = ESB_ENABLE_BOTH;
-            if (nBar == SB_HORZ) wndPtr->pHScroll = infoPtr;
-            else wndPtr->pVScroll = infoPtr;
+            winInfoPtr->horz.minVal = 0;
+            winInfoPtr->horz.curVal = 0;
+            winInfoPtr->horz.page = 0;
+            /* From MSDN and our own tests:
+             * max for a standard scroll bar is 100 by default. */
+            winInfoPtr->horz.maxVal = 100;
+            winInfoPtr->horz.flags  = ESB_ENABLE_BOTH;
+            winInfoPtr->vert = winInfoPtr->horz;
+            wndPtr->pScroll = winInfoPtr;
+            infoPtr = nBar == SB_HORZ ? &winInfoPtr->horz : &winInfoPtr->vert;
         }
     }
     WIN_ReleasePtr( wndPtr );

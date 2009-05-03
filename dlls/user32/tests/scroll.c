@@ -211,6 +211,7 @@ static void scrollbar_test4(void)
 static void scrollbar_test_default( DWORD style)
 {
     INT min, max, ret;
+    DWORD winstyle;
     HWND hwnd;
     SCROLLINFO si = { sizeof( SCROLLINFO), SIF_TRACKPOS };
 
@@ -226,6 +227,7 @@ static void scrollbar_test_default( DWORD style)
         ok( min == 0 && max == 0,
                 "Scroll bar range is %d,%d. Expected 0,0. Style %08x\n", min, max, style);
     else
+todo_wine
         ok( min == 0 && max == 100,
                 "Scroll bar range is %d,%d. Expected 0,100. Style %08x\n", min, max, style);
     ret = GetScrollRange( hwnd, SB_HORZ, &min, &max);
@@ -236,6 +238,7 @@ static void scrollbar_test_default( DWORD style)
         ok( min == 0 && max == 0,
                 "Scroll bar range is %d,%d. Expected 0,0. Style %08x\n", min, max, style);
     else
+todo_wine
         ok( min == 0 && max == 100,
                 "Scroll bar range is %d,%d. Expected 0,100. Style %08x\n", min, max, style);
     /* test GetScrollInfo, vist for vertical SB */
@@ -244,6 +247,7 @@ static void scrollbar_test_default( DWORD style)
     if( !( style & ( WS_VSCROLL | WS_HSCROLL)))
         ok( !ret, "GetScrollInfo succeeded unexpectedly. Style is %08x\n", style);
     else
+todo_wine
         ok( ret, "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
     /* Same for Horizontal SB */
     ret = GetScrollInfo( hwnd, SB_HORZ, &si);
@@ -251,6 +255,7 @@ static void scrollbar_test_default( DWORD style)
     if( !( style & ( WS_VSCROLL | WS_HSCROLL)))
         ok( !ret, "GetScrollInfo succeeded unexpectedly. Style is %08x\n", style);
     else
+todo_wine
         ok( ret, "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
     /* now set the Vertical Scroll range to something that could be the default value it
      * already has */;
@@ -260,17 +265,23 @@ static void scrollbar_test_default( DWORD style)
     ret = GetScrollRange( hwnd, SB_HORZ, &min, &max);
     ok( ret, "GetScrollRange failed.\n");
     /* now the range should be 0,100 in ALL cases */
-todo_wine
     ok( min == 0 && max == 100,
             "Scroll bar range is %d,%d. Expected 0,100. Style %08x\n", min, max, style);
     /* See what is different now for GetScrollRange */
     ret = GetScrollInfo( hwnd, SB_HORZ, &si);
     /* should succeed in ALL cases */
-todo_wine
     ok( ret, "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
     ret = GetScrollInfo( hwnd, SB_VERT, &si);
     /* should succeed in ALL cases */
     ok( ret, "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
+    /* report the windows style */
+    winstyle = GetWindowLongW( hwnd, GWL_STYLE );
+    /* WS_VSCROLL added to the window style */
+todo_wine
+    if( !(style & WS_VSCROLL))
+        ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == ( style | WS_VSCROLL),
+                "unexpected style change %8lx expected %8lx\n",
+                (winstyle & (WS_HSCROLL|WS_VSCROLL)), style | WS_VSCROLL);
     /* do the test again with H and V reversed.
      * Start with a clean window */
     DestroyWindow( hwnd);
@@ -285,7 +296,6 @@ todo_wine
     ret = GetScrollRange( hwnd, SB_VERT, &min, &max);
     ok( ret, "GetScrollRange failed.\n");
     /* now the range should be 0,100 in ALL cases */
-todo_wine
     ok( min == 0 && max == 100,
             "Scroll bar range is %d,%d. Expected 0,100. Style %08x\n", min, max, style);
     /* See what is different now for GetScrollRange */
@@ -294,9 +304,16 @@ todo_wine
     ok( ret, "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
     ret = GetScrollInfo( hwnd, SB_VERT, &si);
     /* should succeed in ALL cases */
-todo_wine
     ok( ret, "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
-    /* Slightly change the test to muse SetScrollInfo
+    /* report the windows style */
+    winstyle = GetWindowLongW( hwnd, GWL_STYLE );
+    /* WS_HSCROLL added to the window style */
+todo_wine
+    if( !(style & WS_HSCROLL))
+        ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == ( style | WS_HSCROLL),
+                "unexpected style change %8lx expected %8lx\n",
+                (winstyle & (WS_HSCROLL|WS_VSCROLL)), style | WS_HSCROLL);
+    /* Slightly change the test to use SetScrollInfo
      * Start with a clean window */
     DestroyWindow( hwnd);
     hwnd = CreateWindowExA( 0, "static", "", WS_POPUP | style,
@@ -313,7 +330,6 @@ todo_wine
     ret = GetScrollRange( hwnd, SB_VERT, &min, &max);
     ok( ret, "GetScrollRange failed.\n");
     /* now the range should be 0,100 in ALL cases */
-todo_wine
     ok( min == 0 && max == 100,
             "Scroll bar range is %d,%d. Expected 0,100. Style %08x\n", min, max, style);
     /* See what is different now for GetScrollRange */
@@ -322,9 +338,31 @@ todo_wine
     ok( ret, "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
     ret = GetScrollInfo( hwnd, SB_VERT, &si);
     /* should succeed in ALL cases */
-todo_wine
     ok( ret, "GetScrollInfo failed unexpectedly. Style is %08x\n", style);
-     /* clean up */
+    /* also test if the window scroll bars are enabled */
+    ret = EnableScrollBar( hwnd, SB_VERT, ESB_ENABLE_BOTH);
+    ok( !ret, "Vertical window scroll bar was not enabled\n");
+    ret = EnableScrollBar( hwnd, SB_HORZ, ESB_ENABLE_BOTH);
+    ok( !ret, "Horizontal window scroll bar was not enabled\n");
+    DestroyWindow( hwnd);
+    /* finally, check if adding a WS_[HV]SColl style of a  window makes the scroll info
+     * available */
+    if( style & (WS_HSCROLL | WS_VSCROLL)) return;/* only test if not yet set */
+    /* Start with a clean window */
+    DestroyWindow( hwnd);
+    hwnd = CreateWindowExA( 0, "static", "", WS_POPUP ,
+                0, 0, 10, 10, 0, 0, 0, NULL);
+    assert( hwnd != 0);
+    ret = GetScrollInfo( hwnd, SB_VERT, &si);
+    /* should fail */
+    ok( !ret, "GetScrollInfo succeeded unexpectedly. Style is %08x\n", style);
+    /* add scroll styles */
+    winstyle = GetWindowLongW( hwnd, GWL_STYLE );
+    SetWindowLongW( hwnd, GWL_STYLE, winstyle | WS_VSCROLL | WS_HSCROLL);
+    ret = GetScrollInfo( hwnd, SB_VERT, &si);
+    /* should still fail */
+    ok( !ret, "GetScrollInfo succeeded unexpectedly. Style is %08x\n", style);
+    /* clean up */
     DestroyWindow( hwnd);
 }
 
@@ -359,11 +397,10 @@ START_TEST ( scroll )
     scrollbar_test4();
 
     scrollbar_test_default( 0);
-if( 0) { /* enable this when the todo's in scrollbar_test_default are fixed */
     scrollbar_test_default( WS_HSCROLL);
     scrollbar_test_default( WS_VSCROLL);
     scrollbar_test_default( WS_HSCROLL | WS_VSCROLL);
-}
+
     DestroyWindow(hScroll);
     DestroyWindow(hMainWnd);
 }

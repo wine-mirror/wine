@@ -1073,8 +1073,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, LPCWSTR className, UINT flags
     wndPtr->dwExStyle      = cs->dwExStyle;
     wndPtr->wIDmenu        = 0;
     wndPtr->helpContext    = 0;
-    wndPtr->pVScroll       = NULL;
-    wndPtr->pHScroll       = NULL;
+    wndPtr->pScroll        = NULL;
     wndPtr->userdata       = 0;
     wndPtr->hIcon          = 0;
     wndPtr->hIconSmall     = 0;

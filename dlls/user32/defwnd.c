@@ -406,9 +406,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             if (!wndPtr) return 0;
             HeapFree( GetProcessHeap(), 0, wndPtr->text );
             wndPtr->text = NULL;
-            HeapFree( GetProcessHeap(), 0, wndPtr->pVScroll );
-            HeapFree( GetProcessHeap(), 0, wndPtr->pHScroll );
-            wndPtr->pVScroll = wndPtr->pHScroll = NULL;
+            HeapFree( GetProcessHeap(), 0, wndPtr->pScroll );
+            wndPtr->pScroll = NULL;
             WIN_ReleasePtr( wndPtr );
             return 0;
         }
