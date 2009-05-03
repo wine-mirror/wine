@@ -144,7 +144,12 @@ static void test_createdibitmap(void)
     bmih.biPlanes = 1;
     bmih.biBitCount = 32;
     bmih.biCompression = BI_RGB;
- 
+
+    hbm = CreateDIBitmap(hdc, NULL, CBM_INIT, NULL, NULL, 0);
+    ok(hbm == NULL, "CreateDIBitmap should fail\n");
+    hbm = CreateDIBitmap(hdc, NULL, 0, NULL, NULL, 0);
+    ok(hbm == NULL, "CreateDIBitmap should fail\n");
+
     /* First create an un-initialised bitmap.  The depth of the bitmap
        should match that of the hdc and not that supplied in bmih.
     */

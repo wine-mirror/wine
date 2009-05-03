@@ -1097,6 +1097,8 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     DWORD compr, size;
     DC *dc;
 
+    if (!header) return 0;
+
     if (DIB_GetBitmapInfo( header, &width, &height, &planes, &bpp, &compr, &size ) == -1) return 0;
     
     if (width < 0)
