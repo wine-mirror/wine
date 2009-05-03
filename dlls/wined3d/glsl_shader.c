@@ -44,6 +44,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 #define WINED3D_GLSL_SAMPLE_PROJECTED   0x1
 #define WINED3D_GLSL_SAMPLE_RECT        0x2
 #define WINED3D_GLSL_SAMPLE_LOD         0x4
+#define WINED3D_GLSL_SAMPLE_GRAD        0x8
 
 typedef struct {
     char reg_name[150];
@@ -1394,12 +1395,15 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, DWORD flags, gls
     BOOL projected = flags & WINED3D_GLSL_SAMPLE_PROJECTED;
     BOOL texrect = flags & WINED3D_GLSL_SAMPLE_RECT;
     BOOL lod = flags & WINED3D_GLSL_SAMPLE_LOD;
+    BOOL grad = flags & WINED3D_GLSL_SAMPLE_GRAD;
 
     /* Note that there's no such thing as a projected cube texture. */
     switch(sampler_type) {
         case WINED3DSTT_1D:
             if(lod) {
                 sample_function->name = projected ? "texture1DProjLod" : "texture1DLod";
+            } else  if(grad) {
+                sample_function->name = projected ? "texture1DProjGradARB" : "texture1DGradARB";
             } else {
                 sample_function->name = projected ? "texture1DProj" : "texture1D";
             }
@@ -1409,12 +1413,19 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, DWORD flags, gls
             if(texrect) {
                 if(lod) {
                     sample_function->name = projected ? "texture2DRectProjLod" : "texture2DRectLod";
+                } else  if(grad) {
+                    /* What good are texrect grad functions? I don't know, but GL_EXT_gpu_shader4 defines them.
+                    * There is no GL_ARB_shader_texture_lod spec yet, so I don't know if they're defined there
+                     */
+                    sample_function->name = projected ? "shadow2DRectProjGradARB" : "shadow2DRectGradARB";
                 } else {
                     sample_function->name = projected ? "texture2DRectProj" : "texture2DRect";
                 }
             } else {
                 if(lod) {
                     sample_function->name = projected ? "texture2DProjLod" : "texture2DLod";
+                } else  if(grad) {
+                    sample_function->name = projected ? "texture2DProjGradARB" : "texture2DGradARB";
                 } else {
                     sample_function->name = projected ? "texture2DProj" : "texture2D";
                 }
@@ -1424,6 +1435,8 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, DWORD flags, gls
         case WINED3DSTT_CUBE:
             if(lod) {
                 sample_function->name = "textureCubeLod";
+            } else if(grad) {
+                sample_function->name = "textureCubeGradARB";
             } else {
                 sample_function->name = "textureCube";
             }
@@ -1432,6 +1445,8 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, DWORD flags, gls
         case WINED3DSTT_VOLUME:
             if(lod) {
                 sample_function->name = projected ? "texture3DProjLod" : "texture3DLod";
+            } else  if(grad) {
+                sample_function->name = projected ? "texture3DProjGradARB" : "texture3DGradARB";
             } else {
                 sample_function->name = projected ? "texture3DProj" : "texture3D";
             }
@@ -1551,8 +1566,9 @@ static void shader_glsl_color_correction(const struct wined3d_shader_instruction
     }
 }
 
-static void PRINTF_ATTR(6, 7) shader_glsl_gen_sample_code(const struct wined3d_shader_instruction *ins,
+static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_shader_instruction *ins,
         DWORD sampler, const glsl_sample_function_t *sample_function, DWORD swizzle,
+        const char *dx, const char *dy,
         const char *bias, const char *coord_reg_fmt, ...)
 {
     const char *sampler_base;
@@ -1594,6 +1610,8 @@ static void PRINTF_ATTR(6, 7) shader_glsl_gen_sample_code(const struct wined3d_s
     } else {
         if (np2_fixup) {
             shader_addline(ins->ctx->buffer, " * PsamplerNP2Fixup%u)%s);\n", sampler, dst_swizzle);
+        } else if(dx && dy) {
+            shader_addline(ins->ctx->buffer, ", %s, %s)%s);\n", dx, dy, dst_swizzle);
         } else {
             shader_addline(ins->ctx->buffer, ")%s);\n", dst_swizzle);
         }
@@ -2520,7 +2538,7 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
     {
         char coord_mask[6];
         shader_glsl_write_mask_to_str(mask, coord_mask);
-        shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, NULL,
+        shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, NULL, NULL, NULL,
                 "T%u%s", sampler_idx, coord_mask);
     } else {
         glsl_src_param_t coord_param;
@@ -2529,13 +2547,46 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
         {
             glsl_src_param_t bias;
             shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &bias);
-            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, bias.param_str,
+            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, NULL, NULL, bias.param_str,
                     "%s", coord_param.param_str);
         } else {
-            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, NULL,
+            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, NULL, NULL, NULL,
                     "%s", coord_param.param_str);
         }
     }
+}
+
+static void shader_glsl_texldd(const struct wined3d_shader_instruction *ins)
+{
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    const WineD3D_GL_Info* gl_info = &deviceImpl->adapter->gl_info;
+    glsl_sample_function_t sample_function;
+    glsl_src_param_t coord_param, dx_param, dy_param;
+    DWORD sample_flags = WINED3D_GLSL_SAMPLE_GRAD;
+    DWORD sampler_type;
+    DWORD sampler_idx;
+    DWORD swizzle = ins->src[1].swizzle;
+
+    if(!GL_SUPPORT(ARB_SHADER_TEXTURE_LOD)) {
+        FIXME("texldd used, but not supported by hardware. Falling back to regular tex\n");
+        return pshader_glsl_tex(ins);
+    }
+
+    sampler_idx = ins->src[1].register_idx;
+    sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
+    if(deviceImpl->stateBlock->textures[sampler_idx] &&
+       IWineD3DBaseTexture_GetTextureDimensions(deviceImpl->stateBlock->textures[sampler_idx]) == GL_TEXTURE_RECTANGLE_ARB) {
+        sample_flags |= WINED3D_GLSL_SAMPLE_RECT;
+    }
+
+    shader_glsl_get_sample_function(sampler_type, sample_flags, &sample_function);
+    shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
+    shader_glsl_add_src_param(ins, &ins->src[2], sample_function.coord_mask, &dx_param);
+    shader_glsl_add_src_param(ins, &ins->src[3], sample_function.coord_mask, &dy_param);
+
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, dx_param.param_str, dy_param.param_str, NULL,
+                                "%s", coord_param.param_str);
 }
 
 static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
@@ -2566,7 +2617,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
          * However, they seem to work just fine in fragment shaders as well. */
         WARN("Using %s in fragment shader.\n", sample_function.name);
     }
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, lod_param.param_str,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, swizzle, NULL, NULL, lod_param.param_str,
             "%s", coord_param.param_str);
 }
 
@@ -2641,17 +2692,17 @@ static void pshader_glsl_texdp3tex(const struct wined3d_shader_instruction *ins)
     switch(mask_size)
     {
         case 1:
-            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
+            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL,
                     "dot(gl_TexCoord[%u].xyz, %s)", sampler_idx, src0_param.param_str);
             break;
 
         case 2:
-            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
+            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL,
                     "vec2(dot(gl_TexCoord[%u].xyz, %s), 0.0)", sampler_idx, src0_param.param_str);
             break;
 
         case 3:
-            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
+            shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL,
                     "vec3(dot(gl_TexCoord[%u].xyz, %s), 0.0, 0.0)", sampler_idx, src0_param.param_str);
             break;
 
@@ -2761,7 +2812,7 @@ static void pshader_glsl_texm3x2tex(const struct wined3d_shader_instruction *ins
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, "tmp0.xy");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL, "tmp0.xy");
 }
 
 /** Process the WINED3DSIO_TEXM3X3TEX instruction in GLSL
@@ -2783,7 +2834,7 @@ static void pshader_glsl_texm3x3tex(const struct wined3d_shader_instruction *ins
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, "tmp0.xyz");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL, "tmp0.xyz");
 
     current_state->current_row = 0;
 }
@@ -2834,7 +2885,7 @@ static void pshader_glsl_texm3x3spec(const struct wined3d_shader_instruction *in
     shader_glsl_get_sample_function(stype, 0, &sample_function);
 
     /* Sample the texture */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, "tmp0.xyz");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL, "tmp0.xyz");
 
     current_state->current_row = 0;
 }
@@ -2866,7 +2917,7 @@ static void pshader_glsl_texm3x3vspec(const struct wined3d_shader_instruction *i
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
-    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, "tmp0.xyz");
+    shader_glsl_gen_sample_code(ins, reg, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL, "tmp0.xyz");
 
     current_state->current_row = 0;
 }
@@ -2916,7 +2967,7 @@ static void pshader_glsl_texbem(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1, &coord_param);
 
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL,
             "T%u%s + vec4(bumpenvmat%d * %s, 0.0, 0.0)%s", sampler_idx, coord_mask, sampler_idx,
             coord_param.param_str, coord_mask);
 
@@ -2959,7 +3010,7 @@ static void pshader_glsl_texreg2ar(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL,
             "%s.wx", src0_param.reg_name);
 }
 
@@ -2975,7 +3026,7 @@ static void pshader_glsl_texreg2gb(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_ALL, &src0_param);
 
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL,
             "%s.yz", src0_param.reg_name);
 }
 
@@ -2992,7 +3043,7 @@ static void pshader_glsl_texreg2rgb(const struct wined3d_shader_instruction *ins
     shader_glsl_get_sample_function(sampler_type, 0, &sample_function);
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &src0_param);
 
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE, NULL, NULL, NULL,
             "%s", src0_param.param_str);
 }
 
@@ -4001,6 +4052,9 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
     if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
         shader_addline(buffer, "#extension GL_ARB_draw_buffers : enable\n");
     }
+    if(GL_SUPPORT(ARB_SHADER_TEXTURE_LOD) && reg_maps->usestexldd) {
+        shader_addline(buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
+    }
     if (GL_SUPPORT(ARB_TEXTURE_RECTANGLE)) {
         /* The spec says that it doesn't have to be explicitly enabled, but the nvidia
          * drivers write a warning if we don't do so
@@ -4288,7 +4342,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_TEXDP3        */ pshader_glsl_texdp3,
     /* WINED3DSIH_TEXDP3TEX     */ pshader_glsl_texdp3tex,
     /* WINED3DSIH_TEXKILL       */ pshader_glsl_texkill,
-    /* WINED3DSIH_TEXLDD        */ NULL,
+    /* WINED3DSIH_TEXLDD        */ shader_glsl_texldd,
     /* WINED3DSIH_TEXLDL        */ shader_glsl_texldl,
     /* WINED3DSIH_TEXM3x2DEPTH  */ pshader_glsl_texm3x2depth,
     /* WINED3DSIH_TEXM3x2PAD    */ pshader_glsl_texm3x2pad,

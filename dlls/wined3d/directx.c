@@ -91,6 +91,7 @@ static const struct {
     {"GL_ARB_vertex_program",               ARB_VERTEX_PROGRAM,             0                           },
     {"GL_ARB_vertex_shader",                ARB_VERTEX_SHADER,              0                           },
     {"GL_ARB_shader_objects",               ARB_SHADER_OBJECTS,             0                           },
+    {"GL_ARB_shader_texture_lod",           ARB_SHADER_TEXTURE_LOD,         0                           },
 
     /* EXT */
     {"GL_EXT_blend_color",                  EXT_BLEND_COLOR,                0                           },
