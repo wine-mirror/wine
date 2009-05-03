@@ -1553,12 +1553,11 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void vshader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
+static void shader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    const char *instruction;
+    const char *instruction, *sat;
 
-    char tmpLine[256];
     char dst[50];
     char src[50];
 
@@ -1571,22 +1570,20 @@ static void vshader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
             break;
     }
 
-    strcpy(tmpLine, instruction);
+    if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE) sat = "_SAT";
+    else sat = "";
+
     shader_arb_get_dst_param(ins, &ins->dst[0], dst); /* Destination */
-    strcat(tmpLine, " ");
-    strcat(tmpLine, dst);
-    strcat(tmpLine, ", ");
     shader_arb_get_src_param(ins, &ins->src[0], 0, src);
-    strcat(tmpLine, src);
     if (ins->src[0].swizzle == WINED3DSP_NOSWIZZLE)
     {
         /* Dx sdk says .x is used if no swizzle is given, but our test shows that
          * .w is used
          */
-        strcat(tmpLine, ".w");
+        strcat(src, ".w");
     }
 
-    shader_addline(buffer, "%s;\n", tmpLine);
+    shader_addline(buffer, "%s%s %s, %s;\n", instruction, sat, dst, src);
 }
 
 static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
@@ -2224,10 +2221,10 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_NRM           */ shader_hw_nrm,
     /* WINED3DSIH_PHASE         */ NULL,
     /* WINED3DSIH_POW           */ shader_hw_map2gl,
-    /* WINED3DSIH_RCP           */ vshader_hw_rsq_rcp,
+    /* WINED3DSIH_RCP           */ shader_hw_rsq_rcp,
     /* WINED3DSIH_REP           */ NULL,
     /* WINED3DSIH_RET           */ NULL,
-    /* WINED3DSIH_RSQ           */ vshader_hw_rsq_rcp,
+    /* WINED3DSIH_RSQ           */ shader_hw_rsq_rcp,
     /* WINED3DSIH_SETP          */ NULL,
     /* WINED3DSIH_SGE           */ shader_hw_map2gl,
     /* WINED3DSIH_SGN           */ NULL,
