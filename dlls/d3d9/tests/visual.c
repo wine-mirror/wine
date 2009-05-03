@@ -8371,6 +8371,12 @@ static void pointsize_test(IDirect3DDevice9 *device)
     D3DMATRIX identity;
     float ptsize, ptsize_orig, ptsizemax_orig, ptsizemin_orig;
     DWORD color;
+    IDirect3DTexture9 *tex1, *tex2;
+    D3DLOCKED_RECT lr;
+    const DWORD tex1_data[4] = {0x00ff0000, 0x00ff0000,
+                                0x00000000, 0x00000000};
+    const DWORD tex2_data[4] = {0x00000000, 0x0000ff00,
+                                0x00000000, 0x0000ff00};
 
     const float vertices[] = {
         64,     64,     0.1,
@@ -8455,7 +8461,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
 
         hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSIZE_MAX, (DWORD *) (&ptsizemax_orig));
         ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed, hr=%08x\n", hr);
-        hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSIZE_MAX, (DWORD *) (&ptsizemin_orig));
+        hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSIZE_MIN, (DWORD *) (&ptsizemin_orig));
         ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed, hr=%08x\n", hr);
 
         /* What happens if point scaling is disabled, and POINTSIZE_MAX < POINTSIZE? */
@@ -8596,6 +8602,86 @@ static void pointsize_test(IDirect3DDevice9 *device)
     color = getPixelColor(device, 576+4, 64+4);
     ok(color == 0x00ffffff, "pSize: Pixel (576+4),(64+4) has color 0x%08x, expected 0x00ffffff\n", color);
 
+    /* The following code tests point sprites with two textures, to see if each texture coordinate unit
+     * generates texture coordinates for the point(result: Yes, it does)
+     *
+     * However, not all GL implementations support point sprites(they need GL_ARB_point_sprite), but there
+     * is no point sprite cap bit in d3d because native d3d software emulates point sprites. Until the
+     * SW emulation is implemented in wined3d, this test will fail on GL drivers that does not support them.
+     */
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%08x\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &tex1, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &tex2, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed hr=%08x\n", hr);
+    memset(&lr, 0, sizeof(lr));
+    hr = IDirect3DTexture9_LockRect(tex1, 0, &lr, NULL, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_LockRect failed hr=%08x\n", hr);
+    memcpy(lr.pBits, tex1_data, sizeof(tex1_data));
+    hr = IDirect3DTexture9_UnlockRect(tex1, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_UnlockRect failed hr=%08x\n", hr);
+    memset(&lr, 0, sizeof(lr));
+    hr = IDirect3DTexture9_LockRect(tex2, 0, &lr, NULL, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_LockRect failed hr=%08x\n", hr);
+    memcpy(lr.pBits, tex2_data, sizeof(tex2_data));
+    hr = IDirect3DTexture9_UnlockRect(tex2, 0);
+    ok(hr == D3D_OK, "IDirect3DTexture9_UnlockRect failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) tex1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 1, (IDirect3DBaseTexture9 *) tex2);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_ADD);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLORARG2, D3DTA_CURRENT);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSPRITEENABLE, TRUE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed hr=%08x\n", hr);
+    ptsize = 32.0;
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize)));
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr=%08x\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed, hr=%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, &vertices[0], sizeof(float) * 3);
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed, hr=%08x\n", hr);
+    }
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    color = getPixelColor(device, 64-4, 64-4);
+    ok(color == 0x00ff0000, "pSprite: Pixel (64-4),(64-4) has color 0x%08x, expected 0x00ff0000\n", color);
+    color = getPixelColor(device, 64-4, 64+4);
+    ok(color == 0x00000000, "pSprite: Pixel (64-4),(64+4) has color 0x%08x, expected 0x00000000\n", color);
+    color = getPixelColor(device, 64+4, 64+4);
+    ok(color == 0x0000ff00, "pSprite: Pixel (64+4),(64+4) has color 0x%08x, expected 0x0000ff00\n", color);
+    color = getPixelColor(device, 64+4, 64-4);
+    ok(color == 0x00ffff00, "pSprite: Pixel (64+4),(64-4) has color 0x%08x, expected 0x00ffff00\n", color);
+
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 1, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%08x\n", hr);
+    IDirect3DTexture9_Release(tex1);
+    IDirect3DTexture9_Release(tex2);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSPRITEENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed hr=%08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize_orig)));
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed hr=%08x\n", hr);
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &identity);
