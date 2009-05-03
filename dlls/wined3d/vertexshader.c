@@ -285,8 +285,6 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
 
     vshader_set_limits(This);
 
-    This->baseShader.shader_mode = deviceImpl->vs_selected_mode;
-
     if(deviceImpl->vs_selected_mode == SHADER_ARB &&
        (GLINFO_LOCATION).arb_vs_offset_limit      &&
        This->min_rel_offset <= This->max_rel_offset) {

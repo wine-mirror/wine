@@ -207,7 +207,6 @@ static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
 static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
 
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
-    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
     unsigned int i, highest_reg_used = 0, num_regs_used = 0;
     shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     const struct wined3d_shader_frontend *fe;
@@ -284,8 +283,6 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     }
 
     This->baseShader.load_local_constsF = FALSE;
-
-    This->baseShader.shader_mode = deviceImpl->ps_selected_mode;
 
     TRACE("(%p) : Copying the function\n", This);
 

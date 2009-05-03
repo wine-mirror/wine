@@ -807,6 +807,7 @@ typedef struct {
             SHADER_BUFFER *buffer, const struct vs_compile_args *args);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
+    void (*shader_add_instruction_modifiers)(const struct wined3d_shader_instruction *ins);
 } shader_backend_t;
 
 extern const shader_backend_t glsl_shader_backend;
@@ -2525,9 +2526,6 @@ extern BOOL vshader_get_input(
 
 extern HRESULT allocate_shader_constants(IWineD3DStateBlockImpl* object);
 
-/* GLSL helper functions */
-extern void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instruction *ins);
-
 /*****************************************************************************
  * IDirect3DBaseShader implementation structure
  */
@@ -2542,9 +2540,6 @@ typedef struct IWineD3DBaseShaderClass
     BOOL                            load_local_constsF;
     const struct wined3d_shader_frontend *frontend;
     void *frontend_data;
-
-    /* Type of shader backend */
-    int shader_mode;
 
     /* Programs this shader is linked with */
     struct list linked_programs;

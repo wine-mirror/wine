@@ -1028,9 +1028,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         hw_fct(&ins);
 
         /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
-        /* FIXME: This should be internal to the shader backend.
-         * Also, right now this is the only reason "shader_mode" exists. */
-        if (This->baseShader.shader_mode == SHADER_GLSL) shader_glsl_add_instruction_modifiers(&ins);
+        device->shader_backend->shader_add_instruction_modifiers(&ins);
     }
 }
 
@@ -1252,6 +1250,7 @@ static GLuint shader_none_generate_vshader(IWineD3DVertexShader *iface,
     FIXME("NONE shader backend asked to generate a vertex shader\n");
     return 0;
 }
+static void shader_none_add_instruction_modifiers(const struct wined3d_shader_instruction *ins) {}
 
 #define GLINFO_LOCATION      (*gl_info)
 static void shader_none_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *pCaps)
@@ -1298,4 +1297,5 @@ const shader_backend_t none_shader_backend = {
     shader_none_generate_vshader,
     shader_none_get_caps,
     shader_none_color_fixup_supported,
+    shader_none_add_instruction_modifiers,
 };

@@ -1363,7 +1363,7 @@ static DWORD shader_glsl_append_dst(SHADER_BUFFER *buffer, const struct wined3d_
 }
 
 /** Process GLSL instruction modifiers */
-void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_add_instruction_modifiers(const struct wined3d_shader_instruction *ins)
 {
     glsl_dst_param_t dst_param;
     DWORD modifiers;
@@ -4401,4 +4401,5 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_generate_vshader,
     shader_glsl_get_caps,
     shader_glsl_color_fixup_supported,
+    shader_glsl_add_instruction_modifiers,
 };

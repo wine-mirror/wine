@@ -2247,6 +2247,10 @@ static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)
     return FALSE;
 }
 
+static void shader_arb_add_instruction_modifiers(const struct wined3d_shader_instruction *ins) {
+    /* Nothing to do for now */
+}
+
 static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABLE_SIZE] =
 {
     /* WINED3DSIH_ABS           */ shader_hw_map2gl,
@@ -2351,6 +2355,7 @@ const shader_backend_t arb_program_shader_backend = {
     shader_arb_generate_vshader,
     shader_arb_get_caps,
     shader_arb_color_fixup_supported,
+    shader_arb_add_instruction_modifiers,
 };
 
 /* ARB_fragment_program fixed function pipeline replacement definitions */
