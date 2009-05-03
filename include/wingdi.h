@@ -1876,6 +1876,8 @@ typedef struct {
 #define BI_RLE8          1
 #define BI_RLE4          2
 #define BI_BITFIELDS     3
+#define BI_JPEG          4
+#define BI_PNG           5
 
 typedef struct tagBITMAPINFO
 {
