@@ -415,7 +415,7 @@ static void test_KeystrokeMgr(void)
     todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_PreserveKey failed\n");
 
     hr =ITfKeystrokeMgr_PreserveKey(keymgr, tid, &CLSID_PreservedKey, &tfpk, NULL, 0);
-    todo_wine ok(hr == TF_E_ALREADY_EXISTS,"ITfKeystrokeMgr_PreserveKey inproperly succeeded \n");
+    todo_wine ok(hr == TF_E_ALREADY_EXISTS,"ITfKeystrokeMgr_PreserveKey inproperly succeeded\n");
 
     preserved = FALSE;
     hr = ITfKeystrokeMgr_IsPreservedKey(keymgr, &CLSID_PreservedKey, &tfpk, &preserved);
