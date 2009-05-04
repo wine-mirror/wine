@@ -38,23 +38,23 @@ static void test_sized_HeapAlloc(int nbytes)
 {
     int success;
     char *buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbytes);
-    ok(buf != NULL, "allocate failed");
-    ok(buf[0] == 0, "buffer not zeroed");
+    ok(buf != NULL, "allocate failed\n");
+    ok(buf[0] == 0, "buffer not zeroed\n");
     success = HeapFree(GetProcessHeap(), 0, buf);
-    ok(success, "free failed");
+    ok(success, "free failed\n");
 }
 
 static void test_sized_HeapReAlloc(int nbytes1, int nbytes2)
 {
     int success;
     char *buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbytes1);
-    ok(buf != NULL, "allocate failed");
-    ok(buf[0] == 0, "buffer not zeroed");
+    ok(buf != NULL, "allocate failed\n");
+    ok(buf[0] == 0, "buffer not zeroed\n");
     buf = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf, nbytes2);
-    ok(buf != NULL, "reallocate failed");
-    ok(buf[nbytes2-1] == 0, "buffer not zeroed");
+    ok(buf != NULL, "reallocate failed\n");
+    ok(buf[nbytes2-1] == 0, "buffer not zeroed\n");
     success = HeapFree(GetProcessHeap(), 0, buf);
-    ok(success, "free failed");
+    ok(success, "free failed\n");
 }
 
 static void test_heap(void)
