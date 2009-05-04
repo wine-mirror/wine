@@ -724,21 +724,24 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
         else if (ins.handler_idx == WINED3DSIH_LOOP
                 || ins.handler_idx == WINED3DSIH_REP)
         {
-            DWORD reg;
+            struct wined3d_shader_src_param src, rel_addr;
 
-            if(ins.handler_idx == WINED3DSIH_LOOP) {
-                reg = pToken[1];
-            } else {
-                reg = pToken[0];
+            shader_sm1_read_src_param(&pToken, &src, &rel_addr, shader_version);
+
+            /* Rep and Loop always use an integer constant for the control parameters */
+            if (ins.handler_idx == WINED3DSIH_REP)
+            {
+                reg_maps->integer_constants |= 1 << src.register_idx;
+            }
+            else
+            {
+                shader_sm1_read_src_param(&pToken, &src, &rel_addr, shader_version);
+                reg_maps->integer_constants |= 1 << src.register_idx;
             }
 
             cur_loop_depth++;
             if(cur_loop_depth > max_loop_depth)
                 max_loop_depth = cur_loop_depth;
-            pToken += param_size;
-
-            /* Rep and Loop always use an integer constant for the control parameters */
-            reg_maps->integer_constants |= (1 << (reg & WINED3DSP_REGNUM_MASK));
         }
         else if (ins.handler_idx == WINED3DSIH_ENDLOOP
                 || ins.handler_idx == WINED3DSIH_ENDREP)
@@ -748,61 +751,15 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
         /* For subroutine prototypes */
         else if (ins.handler_idx == WINED3DSIH_LABEL)
         {
+            struct wined3d_shader_src_param src, rel_addr;
 
-            DWORD snum = *pToken & WINED3DSP_REGNUM_MASK; 
-            reg_maps->labels[snum] = 1;
-            pToken += param_size;
+            shader_sm1_read_src_param(&pToken, &src, &rel_addr, shader_version);
+            reg_maps->labels[src.register_idx] = 1;
         }
         /* Set texture, address, temporary registers */
         else
         {
             int i, limit;
-
-            /* Declare 1.X samplers implicitly, based on the destination reg. number */
-            if (WINED3DSHADER_VERSION_MAJOR(shader_version) == 1
-                    && pshader /* Filter different instructions with the same enum values in VS */
-                    && (ins.handler_idx == WINED3DSIH_TEX
-                        || ins.handler_idx == WINED3DSIH_TEXBEM
-                        || ins.handler_idx == WINED3DSIH_TEXBEML
-                        || ins.handler_idx == WINED3DSIH_TEXDP3TEX
-                        || ins.handler_idx == WINED3DSIH_TEXM3x2TEX
-                        || ins.handler_idx == WINED3DSIH_TEXM3x3SPEC
-                        || ins.handler_idx == WINED3DSIH_TEXM3x3TEX
-                        || ins.handler_idx == WINED3DSIH_TEXM3x3VSPEC
-                        || ins.handler_idx == WINED3DSIH_TEXREG2AR
-                        || ins.handler_idx == WINED3DSIH_TEXREG2GB
-                        || ins.handler_idx == WINED3DSIH_TEXREG2RGB))
-            {
-                /* Fake sampler usage, only set reserved bit and ttype */
-                DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
-
-                TRACE("Setting fake 2D sampler for 1.x pixelshader\n");
-                reg_maps->sampler_type[sampler_code] = WINED3DSTT_2D;
-
-                /* texbem is only valid with < 1.4 pixel shaders */
-                if (ins.handler_idx == WINED3DSIH_TEXBEM
-                        || ins.handler_idx == WINED3DSIH_TEXBEML)
-                {
-                    reg_maps->bumpmat[sampler_code] = TRUE;
-                    if (ins.handler_idx == WINED3DSIH_TEXBEML)
-                    {
-                        reg_maps->luminanceparams[sampler_code] = TRUE;
-                    }
-                }
-            }
-            if (ins.handler_idx == WINED3DSIH_NRM)
-            {
-                reg_maps->usesnrm = 1;
-            }
-            else if (pshader && ins.handler_idx == WINED3DSIH_BEM)
-            {
-                DWORD regnum = *pToken & WINED3DSP_REGNUM_MASK;
-                reg_maps->bumpmat[regnum] = TRUE;
-            }
-            else if (ins.handler_idx == WINED3DSIH_DSY)
-            {
-                reg_maps->usesdsy = 1;
-            }
 
             /* This will loop over all the registers and try to
              * make a bitmask of the ones we're interested in.
@@ -831,6 +788,52 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_m
                     shader_record_register_usage(This, reg_maps, dst_param.register_type,
                             dst_param.register_idx, !!dst_param.rel_addr, pshader);
                 }
+
+                /* Declare 1.X samplers implicitly, based on the destination reg. number */
+                if (WINED3DSHADER_VERSION_MAJOR(shader_version) == 1
+                        && pshader /* Filter different instructions with the same enum values in VS */
+                        && (ins.handler_idx == WINED3DSIH_TEX
+                            || ins.handler_idx == WINED3DSIH_TEXBEM
+                            || ins.handler_idx == WINED3DSIH_TEXBEML
+                            || ins.handler_idx == WINED3DSIH_TEXDP3TEX
+                            || ins.handler_idx == WINED3DSIH_TEXM3x2TEX
+                            || ins.handler_idx == WINED3DSIH_TEXM3x3SPEC
+                            || ins.handler_idx == WINED3DSIH_TEXM3x3TEX
+                            || ins.handler_idx == WINED3DSIH_TEXM3x3VSPEC
+                            || ins.handler_idx == WINED3DSIH_TEXREG2AR
+                            || ins.handler_idx == WINED3DSIH_TEXREG2GB
+                            || ins.handler_idx == WINED3DSIH_TEXREG2RGB))
+                {
+                    /* Fake sampler usage, only set reserved bit and ttype */
+                    DWORD sampler_code = dst_param.register_idx;
+
+                    TRACE("Setting fake 2D sampler for 1.x pixelshader\n");
+                    reg_maps->sampler_type[sampler_code] = WINED3DSTT_2D;
+
+                    /* texbem is only valid with < 1.4 pixel shaders */
+                    if (ins.handler_idx == WINED3DSIH_TEXBEM
+                            || ins.handler_idx == WINED3DSIH_TEXBEML)
+                    {
+                        reg_maps->bumpmat[sampler_code] = TRUE;
+                        if (ins.handler_idx == WINED3DSIH_TEXBEML)
+                        {
+                            reg_maps->luminanceparams[sampler_code] = TRUE;
+                        }
+                    }
+                }
+                else if (pshader && ins.handler_idx == WINED3DSIH_BEM)
+                {
+                    reg_maps->bumpmat[dst_param.register_idx] = TRUE;
+                }
+            }
+
+            if (ins.handler_idx == WINED3DSIH_NRM)
+            {
+                reg_maps->usesnrm = 1;
+            }
+            else if (ins.handler_idx == WINED3DSIH_DSY)
+            {
+                reg_maps->usesdsy = 1;
             }
 
             limit = ins.src_count + (ins.predicate ? 1 : 0);
