@@ -475,8 +475,6 @@ typedef enum COMPARISON_TYPE
 #define WINED3DVS_VERSION(major, minor) (0xfffe0000 | ((major) << 8) | (minor))
 #define WINED3DSHADER_VERSION_MAJOR(version) (((version) >> 8) & 0xff)
 #define WINED3DSHADER_VERSION_MINOR(version) (((version) >> 0) & 0xff)
-#define WINED3DPS_END() 0x0000ffff
-#define WINED3DVS_END() 0x0000ffff
 
 /* Shader backends */
 
@@ -684,6 +682,7 @@ struct wined3d_shader_frontend
             struct wined3d_shader_src_param *dst_rel_addr, DWORD shader_version);
     void (*shader_read_semantic)(const DWORD **ptr, struct wined3d_shader_semantic *semantic);
     void (*shader_read_comment)(const DWORD **ptr, const char **comment);
+    BOOL (*shader_is_end)(const DWORD **ptr);
 };
 
 extern const struct wined3d_shader_frontend sm1_shader_frontend;

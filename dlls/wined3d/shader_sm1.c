@@ -84,6 +84,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 #define WINED3DSP_SRCMOD_SHIFT                  24
 #define WINED3DSP_SRCMOD_MASK                   (0xf << WINED3DSP_SRCMOD_SHIFT)
 
+#define WINED3DSP_END                           0x0000ffff
+
 enum WINED3DSHADER_ADDRESSMODE_TYPE
 {
     WINED3DSHADER_ADDRMODE_ABSOLUTE = 0 << WINED3DSHADER_ADDRESSMODE_SHIFT,
@@ -303,6 +305,17 @@ static void shader_sm1_read_comment(const DWORD **ptr, const char **comment)
     *ptr += (token & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
 }
 
+static BOOL shader_sm1_is_end(const DWORD **ptr)
+{
+    if (**ptr == WINED3DSP_END)
+    {
+        ++(*ptr);
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 const struct wined3d_shader_frontend sm1_shader_frontend =
 {
     shader_sm1_read_opcode,
@@ -310,4 +323,5 @@ const struct wined3d_shader_frontend sm1_shader_frontend =
     shader_sm1_read_dst_param,
     shader_sm1_read_semantic,
     shader_sm1_read_comment,
+    shader_sm1_is_end,
 };
