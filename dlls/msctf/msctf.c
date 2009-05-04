@@ -252,6 +252,18 @@ LPVOID remove_Cookie(DWORD id)
     return cookies[index].data;
 }
 
+DWORD enumerate_Cookie(DWORD magic, DWORD *index)
+{
+    int i;
+    for (i = *index; i < id_last; i++)
+        if (cookies[i].id != 0 && cookies[i].magic == magic)
+        {
+            *index = (i+1);
+            return cookies[i].id;
+        }
+    return 0x0;
+}
+
 /*************************************************************************
  * MSCTF DllMain
  */

@@ -609,6 +609,45 @@ static void test_endSession(void)
     test_OnSetFocus  = SINK_UNEXPECTED;
 }
 
+static void test_TfGuidAtom(void)
+{
+    GUID gtest,g1;
+    HRESULT hr;
+    TfGuidAtom atom1,atom2;
+    BOOL equal;
+
+    CoCreateGuid(&gtest);
+
+    /* msdn reports this should return E_INVALIDARG.  However my test show it crashing (winxp)*/
+    /*
+    hr = ITfCategoryMgr_RegisterGUID(g_cm,&gtest,NULL);
+    ok(hr==E_INVALIDARG,"ITfCategoryMgr_RegisterGUID should have failed\n");
+    */
+    hr = ITfCategoryMgr_RegisterGUID(g_cm,&gtest,&atom1);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_RegisterGUID failed\n");
+    hr = ITfCategoryMgr_RegisterGUID(g_cm,&gtest,&atom2);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_RegisterGUID failed\n");
+    ok(atom1 == atom2,"atoms do not match\n");
+    hr = ITfCategoryMgr_GetGUID(g_cm,atom2,NULL);
+    ok(hr==E_INVALIDARG,"ITfCategoryMgr_GetGUID should have failed\n");
+    hr = ITfCategoryMgr_GetGUID(g_cm,atom2,&g1);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_GetGUID failed\n");
+    ok(IsEqualGUID(&g1,&gtest),"guids do not match\n");
+    hr = ITfCategoryMgr_IsEqualTfGuidAtom(g_cm,atom1,&gtest,NULL);
+    ok(hr==E_INVALIDARG,"ITfCategoryMgr_IsEqualTfGuidAtom should have failed\n");
+    hr = ITfCategoryMgr_IsEqualTfGuidAtom(g_cm,atom1,&gtest,&equal);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_IsEqualTfGuidAtom failed\n");
+    ok(equal == TRUE,"Equal value invalid\n");
+
+    /* show that cid and tid TfClientIds are also TfGuidAtoms */
+    hr = ITfCategoryMgr_IsEqualTfGuidAtom(g_cm,tid,&CLSID_FakeService,&equal);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_IsEqualTfGuidAtom failed\n");
+    todo_wine ok(equal == TRUE,"Equal value invalid\n");
+    hr = ITfCategoryMgr_GetGUID(g_cm,cid,&g1);
+    ok(SUCCEEDED(hr),"ITfCategoryMgr_GetGUID failed\n");
+    todo_wine ok(!IsEqualGUID(&g1,&GUID_NULL),"guid should not be NULL\n");
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -620,6 +659,7 @@ START_TEST(inputprocessor)
         test_ThreadMgrAdviseSinks();
         test_Activate();
         test_startSession();
+        test_TfGuidAtom();
         test_KeystrokeMgr();
         test_endSession();
         test_EnumLanguageProfiles();

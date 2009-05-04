@@ -312,25 +312,77 @@ static HRESULT WINAPI CategoryMgr_RegisterGUID ( ITfCategoryMgr *iface,
         REFGUID rguid, TfGuidAtom *pguidatom
 )
 {
+    DWORD index;
+    GUID *checkguid;
+    DWORD id;
     CategoryMgr *This = (CategoryMgr*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %s %p\n",This,debugstr_guid(rguid),pguidatom);
+
+    if (!pguidatom)
+        return E_INVALIDARG;
+
+    index = 0;
+    do {
+        id = enumerate_Cookie(COOKIE_MAGIC_GUIDATOM,&index);
+        if (id && IsEqualGUID(rguid,get_Cookie_data(id)))
+        {
+            *pguidatom = id;
+            return S_OK;
+        }
+    } while(id);
+
+    checkguid = HeapAlloc(GetProcessHeap(),0,sizeof(GUID));
+    *checkguid = *rguid;
+    id = generate_Cookie(COOKIE_MAGIC_GUIDATOM,checkguid);
+
+    if (!id)
+    {
+        HeapFree(GetProcessHeap(),0,checkguid);
+        return E_FAIL;
+    }
+
+    *pguidatom = id;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI CategoryMgr_GetGUID ( ITfCategoryMgr *iface,
         TfGuidAtom guidatom, GUID *pguid)
 {
     CategoryMgr *This = (CategoryMgr*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %i\n",This,guidatom);
+
+    if (!pguid)
+        return E_INVALIDARG;
+
+    *pguid = GUID_NULL;
+
+    if (get_Cookie_magic(guidatom) == COOKIE_MAGIC_GUIDATOM)
+        *pguid = *((REFGUID)get_Cookie_data(guidatom));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI CategoryMgr_IsEqualTfGuidAtom ( ITfCategoryMgr *iface,
         TfGuidAtom guidatom, REFGUID rguid, BOOL *pfEqual)
 {
     CategoryMgr *This = (CategoryMgr*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %i %s %p\n",This,guidatom,debugstr_guid(rguid),pfEqual);
+
+    if (!pfEqual)
+        return E_INVALIDARG;
+
+    *pfEqual = FALSE;
+    if (get_Cookie_magic(guidatom) == COOKIE_MAGIC_GUIDATOM)
+    {
+        if (IsEqualGUID(rguid,get_Cookie_data(guidatom)))
+            *pfEqual = TRUE;
+    }
+
+    return S_OK;
 }
 
 

@@ -23,6 +23,7 @@
 
 #define COOKIE_MAGIC_TMSINK  0x0010
 #define COOKIE_MAGIC_CONTEXTSINK 0x0020
+#define COOKIE_MAGIC_GUIDATOM 0x0030
 
 extern DWORD tlsIndex;
 
@@ -37,6 +38,7 @@ extern DWORD  generate_Cookie(DWORD magic, LPVOID data);
 extern DWORD  get_Cookie_magic(DWORD id);
 extern LPVOID get_Cookie_data(DWORD id);
 extern LPVOID remove_Cookie(DWORD id);
+extern DWORD enumerate_Cookie(DWORD magic, DWORD *index);
 
 extern const WCHAR szwSystemTIPKey[];
 #endif /* __WINE_MSCTF_I_H */
