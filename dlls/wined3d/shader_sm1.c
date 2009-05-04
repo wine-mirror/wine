@@ -219,7 +219,7 @@ static int shader_skip_unrecognized(const DWORD *ptr, DWORD shader_version)
     return tokens_read;
 }
 
-void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size,
+static void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size,
         const SHADER_OPCODE *opcode_table, DWORD shader_version)
 {
     const SHADER_OPCODE *opcode_info;
@@ -244,7 +244,7 @@ void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction
     *param_size = shader_skip_opcode(opcode_info, opcode_token, shader_version);
 }
 
-void shader_sm1_read_src_param(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
+static void shader_sm1_read_src_param(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
         struct wined3d_shader_src_param *src_rel_addr, DWORD shader_version)
 {
     DWORD token, addr_token;
@@ -261,7 +261,7 @@ void shader_sm1_read_src_param(const DWORD **ptr, struct wined3d_shader_src_para
     }
 }
 
-void shader_sm1_read_dst_param(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
+static void shader_sm1_read_dst_param(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
         struct wined3d_shader_src_param *dst_rel_addr, DWORD shader_version)
 {
     DWORD token, addr_token;
@@ -278,7 +278,7 @@ void shader_sm1_read_dst_param(const DWORD **ptr, struct wined3d_shader_dst_para
     }
 }
 
-void shader_sm1_read_semantic(const DWORD **ptr, struct wined3d_shader_semantic *semantic)
+static void shader_sm1_read_semantic(const DWORD **ptr, struct wined3d_shader_semantic *semantic)
 {
     DWORD usage_token = *(*ptr)++;
     DWORD dst_token = *(*ptr)++;
@@ -289,7 +289,7 @@ void shader_sm1_read_semantic(const DWORD **ptr, struct wined3d_shader_semantic 
     shader_parse_dst_param(dst_token, NULL, &semantic->reg);
 }
 
-void shader_sm1_read_comment(const DWORD **ptr, const char **comment)
+static void shader_sm1_read_comment(const DWORD **ptr, const char **comment)
 {
     DWORD token = **ptr;
 
@@ -302,3 +302,12 @@ void shader_sm1_read_comment(const DWORD **ptr, const char **comment)
     *comment = (const char *)++(*ptr);
     *ptr += (token & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
 }
+
+const struct wined3d_shader_frontend sm1_shader_frontend =
+{
+    shader_sm1_read_opcode,
+    shader_sm1_read_src_param,
+    shader_sm1_read_dst_param,
+    shader_sm1_read_semantic,
+    shader_sm1_read_comment,
+};

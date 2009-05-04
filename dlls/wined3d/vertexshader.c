@@ -319,7 +319,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     TRACE("(%p) : pFunction %p\n", iface, pFunction);
 
     /* First pass: trace shader */
-    if (TRACE_ON(d3d_shader)) shader_trace_init(pFunction, This->baseShader.shader_ins);
+    if (TRACE_ON(d3d_shader)) shader_trace_init(&sm1_shader_frontend, pFunction, This->baseShader.shader_ins);
 
     /* Initialize immediate constant lists */
     list_init(&This->baseShader.constantsF);
@@ -329,8 +329,8 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     /* Second pass: figure out registers used, semantics, etc.. */
     This->min_rel_offset = GL_LIMITS(vshader_constantsF);
     This->max_rel_offset = 0;
-    hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
-            This->semantics_in, This->semantics_out, pFunction);
+    hr = shader_get_registers_used((IWineD3DBaseShader*) This, &sm1_shader_frontend,
+            reg_maps, This->semantics_in, This->semantics_out, pFunction);
     if (hr != WINED3D_OK) return hr;
 
     vshader_set_limits(This);
@@ -411,7 +411,8 @@ static GLuint vertexshader_compile(IWineD3DVertexShaderImpl *This, const struct 
     TRACE("(%p) : Generating hardware program\n", This);
     shader_buffer_init(&buffer);
     This->cur_args = args;
-    ret = deviceImpl->shader_backend->shader_generate_vshader((IWineD3DVertexShader *)This, &buffer, args);
+    ret = deviceImpl->shader_backend->shader_generate_vshader((IWineD3DVertexShader *)This,
+            &sm1_shader_frontend, &buffer, args);
     This->cur_args = NULL;
     shader_buffer_free(&buffer);
 

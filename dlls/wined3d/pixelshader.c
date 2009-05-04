@@ -306,7 +306,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     TRACE("(%p) : pFunction %p\n", iface, pFunction);
 
     /* First pass: trace shader */
-    if (TRACE_ON(d3d_shader)) shader_trace_init(pFunction, This->baseShader.shader_ins);
+    if (TRACE_ON(d3d_shader)) shader_trace_init(&sm1_shader_frontend, pFunction, This->baseShader.shader_ins);
 
     /* Initialize immediate constant lists */
     list_init(&This->baseShader.constantsF);
@@ -314,7 +314,8 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     list_init(&This->baseShader.constantsI);
 
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-    hr = shader_get_registers_used((IWineD3DBaseShader *)This, reg_maps, This->semantics_in, NULL, pFunction);
+    hr = shader_get_registers_used((IWineD3DBaseShader *)This, &sm1_shader_frontend,
+            reg_maps, This->semantics_in, NULL, pFunction);
     if (FAILED(hr)) return hr;
 
     pshader_set_limits(This);
@@ -432,7 +433,8 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
     TRACE("(%p) : Generating hardware program\n", This);
     This->cur_args = args;
     shader_buffer_init(&buffer);
-    retval = device->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This, &buffer, args);
+    retval = device->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This,
+            &sm1_shader_frontend, &buffer, args);
     shader_buffer_free(&buffer);
     This->cur_args = NULL;
 

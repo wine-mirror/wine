@@ -1975,7 +1975,9 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
     /* [0.0;1.0] clamping. Not needed, this is done implicitly */
 }
 
-static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer, const struct ps_compile_args *args) {
+static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, const struct wined3d_shader_frontend *fe,
+        SHADER_BUFFER *buffer, const struct ps_compile_args *args)
+{
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
@@ -2024,7 +2026,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
     shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
 
     /* Base Shader Body */
-    shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
+    shader_generate_main((IWineD3DBaseShader *)This, buffer, fe, reg_maps, function);
 
     if(args->srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TMP2", "TA", "TB");
@@ -2063,7 +2065,9 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface, SHADER_BUF
     return retval;
 }
 
-static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer, const struct vs_compile_args *args) {
+static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface, const struct wined3d_shader_frontend *fe,
+        SHADER_BUFFER *buffer, const struct vs_compile_args *args)
+{
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     const shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
@@ -2115,7 +2119,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface, SHADER_BU
     }
 
     /* Base Shader Body */
-    shader_generate_main( (IWineD3DBaseShader*) This, buffer, reg_maps, function);
+    shader_generate_main((IWineD3DBaseShader *)This, buffer, fe, reg_maps, function);
 
     /* The D3DRS_FOGTABLEMODE render state defines if the shader-generated fog coord is used
      * or if the fragment depth is used. If the fragment depth is used(FOGTABLEMODE != NONE),

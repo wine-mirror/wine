@@ -674,6 +674,20 @@ struct wined3d_shader_semantic
     struct wined3d_shader_dst_param reg;
 };
 
+struct wined3d_shader_frontend
+{
+    void (*shader_read_opcode)(const DWORD **ptr, struct wined3d_shader_instruction *ins,
+            UINT *param_size, const SHADER_OPCODE *opcode_table, DWORD shader_version);
+    void (*shader_read_src_param)(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
+            struct wined3d_shader_src_param *src_rel_addr, DWORD shader_version);
+    void (*shader_read_dst_param)(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
+            struct wined3d_shader_src_param *dst_rel_addr, DWORD shader_version);
+    void (*shader_read_semantic)(const DWORD **ptr, struct wined3d_shader_semantic *semantic);
+    void (*shader_read_comment)(const DWORD **ptr, const char **comment);
+};
+
+extern const struct wined3d_shader_frontend sm1_shader_frontend;
+
 typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 
 struct shader_caps {
@@ -762,8 +776,10 @@ typedef struct {
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
-    GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer, const struct ps_compile_args *args);
-    GLuint (*shader_generate_vshader)(IWineD3DVertexShader *iface, SHADER_BUFFER *buffer, const struct vs_compile_args *args);
+    GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface, const struct wined3d_shader_frontend *fe,
+            SHADER_BUFFER *buffer, const struct ps_compile_args *args);
+    GLuint (*shader_generate_vshader)(IWineD3DVertexShader *iface, const struct wined3d_shader_frontend *fe,
+            SHADER_BUFFER *buffer, const struct vs_compile_args *args);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
 } shader_backend_t;
@@ -2532,15 +2548,16 @@ void shader_buffer_free(struct SHADER_BUFFER *buffer);
 void shader_cleanup(IWineD3DBaseShader *iface);
 void shader_dump_src_param(const struct wined3d_shader_src_param *param, DWORD shader_version);
 void shader_dump_dst_param(const struct wined3d_shader_dst_param *param, DWORD shader_version);
-HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, struct shader_reg_maps *reg_maps,
-        struct wined3d_shader_semantic *semantics_in, struct wined3d_shader_semantic *semantics_out,
-        const DWORD *byte_code);
+void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
+        const struct wined3d_shader_frontend *fe, const shader_reg_maps *reg_maps,
+        const DWORD *pFunction);
+HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
+        struct shader_reg_maps *reg_maps, struct wined3d_shader_semantic *semantics_in,
+        struct wined3d_shader_semantic *semantics_out, const DWORD *byte_code);
 void shader_init(struct IWineD3DBaseShaderClass *shader,
         IWineD3DDevice *device, const SHADER_OPCODE *instruction_table);
-void shader_trace_init(const DWORD *byte_code, const SHADER_OPCODE *opcode_table);
-
-extern void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
-        const shader_reg_maps *reg_maps, const DWORD *pFunction);
+void shader_trace_init(const struct wined3d_shader_frontend *fe,
+        const DWORD *pFunction, const SHADER_OPCODE *opcode_table);
 
 static inline BOOL shader_is_pshader_version(DWORD token) {
     return 0xFFFF0000 == (token & 0xFFFF0000);
@@ -2592,15 +2609,6 @@ static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl* This, DWORD 
     return FALSE;
 
 }
-
-void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size,
-        const SHADER_OPCODE *opcode_table, DWORD shader_version);
-void shader_sm1_read_src_param(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
-        struct wined3d_shader_src_param *src_rel_addr, DWORD shader_version);
-void shader_sm1_read_dst_param(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
-        struct wined3d_shader_src_param *dst_rel_addr, DWORD shader_version);
-void shader_sm1_read_semantic(const DWORD **ptr, struct wined3d_shader_semantic *semantic);
-void shader_sm1_read_comment(const DWORD **ptr, const char **comment);
 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structures
