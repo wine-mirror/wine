@@ -24,3 +24,4 @@
 #include "resource.h"
 
 #include "rsrc_En.rc"
+#include "rsrc_Ko.rc"
