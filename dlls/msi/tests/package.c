@@ -32,6 +32,8 @@
 static const char msifile[] = "winetest.msi";
 char CURR_DIR[MAX_PATH];
 
+static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
+
 static void get_user_sid(LPSTR *usersid)
 {
     HANDLE token;
@@ -11537,13 +11539,18 @@ static void test_MsiApplyMultiplePatches(void)
 {
     UINT r, type = GetDriveType(NULL);
 
-    r = MsiApplyMultiplePatchesA(NULL, NULL, NULL);
+    if (!pMsiApplyMultiplePatchesA) {
+        win_skip("MsiApplyMultiplePatchesA not found\n");
+        return;
+    }
+
+    r = pMsiApplyMultiplePatchesA(NULL, NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
 
-    r = MsiApplyMultiplePatchesA("", NULL, NULL);
+    r = pMsiApplyMultiplePatchesA("", NULL, NULL);
     ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
 
-    r = MsiApplyMultiplePatchesA(";", NULL, NULL);
+    r = pMsiApplyMultiplePatchesA(";", NULL, NULL);
     todo_wine
     {
         if (type == DRIVE_FIXED)
@@ -11554,7 +11561,7 @@ static void test_MsiApplyMultiplePatches(void)
                "Expected ERROR_INVALID_NAME, got %u\n", r);
     }
 
-    r = MsiApplyMultiplePatchesA("  ;", NULL, NULL);
+    r = pMsiApplyMultiplePatchesA("  ;", NULL, NULL);
     todo_wine
     {
         if (type == DRIVE_FIXED)
@@ -11565,7 +11572,7 @@ static void test_MsiApplyMultiplePatches(void)
                "Expected ERROR_INVALID_NAME, got %u\n", r);
     }
 
-    r = MsiApplyMultiplePatchesA(";;", NULL, NULL);
+    r = pMsiApplyMultiplePatchesA(";;", NULL, NULL);
     todo_wine
     {
         if (type == DRIVE_FIXED)
@@ -11576,10 +11583,10 @@ static void test_MsiApplyMultiplePatches(void)
                "Expected ERROR_INVALID_NAME, got %u\n", r);
     }
 
-    r = MsiApplyMultiplePatchesA("nosuchpatchpackage;", NULL, NULL);
+    r = pMsiApplyMultiplePatchesA("nosuchpatchpackage;", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
 
-    r = MsiApplyMultiplePatchesA(";nosuchpatchpackage", NULL, NULL);
+    r = pMsiApplyMultiplePatchesA(";nosuchpatchpackage", NULL, NULL);
     todo_wine
     {
         if (type == DRIVE_FIXED)
@@ -11590,15 +11597,19 @@ static void test_MsiApplyMultiplePatches(void)
                "Expected ERROR_INVALID_NAME, got %u\n", r);
     }
 
-    r = MsiApplyMultiplePatchesA("nosuchpatchpackage;nosuchpatchpackage", NULL, NULL);
+    r = pMsiApplyMultiplePatchesA("nosuchpatchpackage;nosuchpatchpackage", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
 
-    r = MsiApplyMultiplePatchesA("  nosuchpatchpackage  ;  nosuchpatchpackage  ", NULL, NULL);
+    r = pMsiApplyMultiplePatchesA("  nosuchpatchpackage  ;  nosuchpatchpackage  ", NULL, NULL);
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
 }
 
 START_TEST(package)
 {
+    HMODULE hmsi = GetModuleHandleA("msi.dll");
+
+    pMsiApplyMultiplePatchesA = (void *)GetProcAddress(hmsi, "MsiApplyMultiplePatchesA");
+
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
     test_createpackage();
