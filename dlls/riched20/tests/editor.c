@@ -3421,7 +3421,7 @@ static void test_EM_STREAMOUT_FONTTBL(void)
               brackCount--;
           fontTbl++;
       }
-    /* checks wether closing bracket is ok */
+    /* checks whether closing bracket is ok */
       ok(brackCount == 0, "missing closing bracket in \\fonttbl block\n");
       if(!brackCount)
       {

@@ -1191,9 +1191,9 @@ static void test_edit_control_5(void)
               10, 10, 1, 1,
               NULL, NULL, NULL, NULL);
     assert(hWnd);
-    /* size of non-child edit control is (much) bigger then requested */
+    /* size of non-child edit control is (much) bigger than requested */
     GetWindowRect( hWnd, &rc);
-    ok( rc.right - rc.left > 20, "size of the window (%d) is smaller then expected\n",
+    ok( rc.right - rc.left > 20, "size of the window (%d) is smaller than expected\n",
             rc.right - rc.left);
     DestroyWindow(hWnd);
     /* so create a parent, and give it edit controls children to test with */

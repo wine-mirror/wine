@@ -9816,7 +9816,7 @@ static inline LRESULT LISTVIEW_GetVersion(LISTVIEW_INFO *infoPtr)
  * [I] iVersion : version to be set
  *
  * RETURN:
- * -1 when requested version is greater then DLL version;
+ * -1 when requested version is greater than DLL version;
  * previous version otherwise
  */
 static LRESULT LISTVIEW_SetVersion(LISTVIEW_INFO *infoPtr, DWORD iVersion)
