@@ -836,6 +836,37 @@ out:
     client_stop ();
 }
 
+/* Tests for WSAStartup */
+
+/* This should fail. WSAStartup should be called before any network function is used. */
+static void test_WithoutWSAStartup(void)
+{
+    LPVOID ptr;
+
+    WSASetLastError(0xdeadbeef);
+    ptr = gethostbyname("localhost");
+
+    todo_wine ok(ptr == NULL, "gethostbyname() succeeded unexpectedly: %d\n", WSAGetLastError());
+    todo_wine ok(WSAGetLastError() == WSANOTINITIALISED, "gethostbyname() failed with unexpected error: %d\n",
+                WSAGetLastError());
+}
+
+static void test_WithWSAStartup(void)
+{
+    WSADATA data;
+    WORD version = MAKEWORD( 2, 2 );
+    INT res;
+    LPVOID ptr;
+
+    res = WSAStartup( version, &data );
+    ok(res == 0, "WSAStartup() failed unexpectedly: %d\n", res);
+
+    ptr = gethostbyname("localhost");
+    ok(ptr != NULL, "gethostbyname() failed unexpectedly: %d\n", WSAGetLastError());
+
+    WSACleanup();
+}
+
 /**************** Main program utility functions ***************/
 
 static void Init (void)
@@ -2513,6 +2544,12 @@ static void test_GetAddrInfoW(void)
 START_TEST( sock )
 {
     int i;
+
+/* Leave these tests at the beginning. They depend on WSAStartup not having been
+ * called, which is done by Init() below. */
+    test_WithoutWSAStartup();
+    test_WithWSAStartup();
+
     Init();
 
     test_set_getsockopt();
