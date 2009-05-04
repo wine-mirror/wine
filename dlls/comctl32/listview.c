@@ -6232,7 +6232,7 @@ static INT LISTVIEW_GetNextItem(const LISTVIEW_INFO *infoPtr, INT nItem, UINT uF
         while (nItem >= 0)
         {
           nItem--;
-          if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
+          if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
         }
       }
@@ -6252,10 +6252,10 @@ static INT LISTVIEW_GetNextItem(const LISTVIEW_INFO *infoPtr, INT nItem, UINT uF
         }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_UP;
-        SendMessageW( infoPtr->hwndSelf, LVM_GETITEMPOSITION, nItem, (LPARAM)&lvFindInfo.pt );
-        while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
+        LISTVIEW_GetItemPosition(infoPtr, nItem, &lvFindInfo.pt);
+        while ((nItem = LISTVIEW_FindItemW(infoPtr, nItem, &lvFindInfo)) != -1)
         {
-          if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
+          if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
         }
       }
@@ -6287,8 +6287,8 @@ static INT LISTVIEW_GetNextItem(const LISTVIEW_INFO *infoPtr, INT nItem, UINT uF
         }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_DOWN;
-        SendMessageW( infoPtr->hwndSelf, LVM_GETITEMPOSITION, nItem, (LPARAM)&lvFindInfo.pt );
-        while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
+        LISTVIEW_GetItemPosition(infoPtr, nItem, &lvFindInfo.pt);
+        while ((nItem = LISTVIEW_FindItemW(infoPtr, nItem, &lvFindInfo)) != -1)
         {
           if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
@@ -6323,10 +6323,10 @@ static INT LISTVIEW_GetNextItem(const LISTVIEW_INFO *infoPtr, INT nItem, UINT uF
         }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_LEFT;
-        SendMessageW( infoPtr->hwndSelf, LVM_GETITEMPOSITION, nItem, (LPARAM)&lvFindInfo.pt );
-        while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
+        LISTVIEW_GetItemPosition(infoPtr, nItem, &lvFindInfo.pt);
+        while ((nItem = LISTVIEW_FindItemW(infoPtr, nItem, &lvFindInfo)) != -1)
         {
-          if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
+          if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
         }
       }
@@ -6339,7 +6339,7 @@ static INT LISTVIEW_GetNextItem(const LISTVIEW_INFO *infoPtr, INT nItem, UINT uF
         while (nItem + nCountPerColumn < infoPtr->nItemCount)
         {
           nItem += nCountPerColumn;
-          if ((ListView_GetItemState(infoPtr->hwndSelf, nItem, uMask) & uMask) == uMask)
+          if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
         }
       }
@@ -6359,8 +6359,8 @@ static INT LISTVIEW_GetNextItem(const LISTVIEW_INFO *infoPtr, INT nItem, UINT uF
         }
         lvFindInfo.flags = LVFI_NEARESTXY;
         lvFindInfo.vkDirection = VK_RIGHT;
-        SendMessageW( infoPtr->hwndSelf, LVM_GETITEMPOSITION, nItem, (LPARAM)&lvFindInfo.pt );
-        while ((nItem = ListView_FindItemW(infoPtr->hwndSelf, nItem, &lvFindInfo)) != -1)
+        LISTVIEW_GetItemPosition(infoPtr, nItem, &lvFindInfo.pt);
+        while ((nItem = LISTVIEW_FindItemW(infoPtr, nItem, &lvFindInfo)) != -1)
         {
           if ((LISTVIEW_GetItemState(infoPtr, nItem, uMask) & uMask) == uMask)
             return nItem;
@@ -8626,19 +8626,19 @@ static LRESULT LISTVIEW_KeyDown(LISTVIEW_INFO *infoPtr, INT nVirtualKey, LONG lK
     break;
 
   case VK_LEFT:
-    nItem = ListView_GetNextItem(infoPtr->hwndSelf, infoPtr->nFocusedItem, LVNI_TOLEFT);
+    nItem = LISTVIEW_GetNextItem(infoPtr, infoPtr->nFocusedItem, LVNI_TOLEFT);
     break;
 
   case VK_UP:
-    nItem = ListView_GetNextItem(infoPtr->hwndSelf, infoPtr->nFocusedItem, LVNI_ABOVE);
+    nItem = LISTVIEW_GetNextItem(infoPtr, infoPtr->nFocusedItem, LVNI_ABOVE);
     break;
 
   case VK_RIGHT:
-    nItem = ListView_GetNextItem(infoPtr->hwndSelf, infoPtr->nFocusedItem, LVNI_TORIGHT);
+    nItem = LISTVIEW_GetNextItem(infoPtr, infoPtr->nFocusedItem, LVNI_TORIGHT);
     break;
 
   case VK_DOWN:
-    nItem = ListView_GetNextItem(infoPtr->hwndSelf, infoPtr->nFocusedItem, LVNI_BELOW);
+    nItem = LISTVIEW_GetNextItem(infoPtr, infoPtr->nFocusedItem, LVNI_BELOW);
     break;
 
   case VK_PRIOR:
