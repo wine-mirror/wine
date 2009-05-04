@@ -332,9 +332,9 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
         } else {
             max_constantsF = GL_LIMITS(vshader_constantsF) - 1;
         }
+        /* Temporary Output register */
+        shader_addline(buffer, "TEMP TMP_OUT;\n");
     }
-    /* Temporary Output register */
-    shader_addline(buffer, "TEMP TMP_OUT;\n");
 
     for(i = 0; i < This->baseShader.limits.temporary; i++) {
         if (reg_maps->temporary[i])
