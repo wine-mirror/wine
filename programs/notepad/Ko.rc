@@ -5,6 +5,7 @@
  *  Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  *  Copyright 2007 Bang Jun-Young <junyoung@mogua.com>
+ *  Copyright 2009  YunSong Hwang <hys545@dreamwiz.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -54,6 +55,7 @@ POPUP "편집(&E)" {
 POPUP "찾기(&S)" {
   MENUITEM "찾기(&S)...\tCtrl+F",       CMD_SEARCH
   MENUITEM "다음 찾기(&N)\tF3",         CMD_SEARCH_NEXT
+  MENUITEM "바꾸기(&R)...\tCtrl+H", CMD_REPLACE
  }
 POPUP "도움말(&H)" {
   MENUITEM "항목(&C)",                  CMD_HELP_CONTENTS
