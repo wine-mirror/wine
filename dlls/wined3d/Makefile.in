@@ -25,6 +25,7 @@ C_SRCS = \
 	pixelshader.c \
 	query.c \
 	resource.c \
+	shader_sm1.c \
 	state.c \
 	stateblock.c \
 	surface_base.c \
