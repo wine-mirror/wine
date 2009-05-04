@@ -447,7 +447,7 @@ static void test_Activate(void)
     todo_wine ok(SUCCEEDED(hr),"Failed to Activate text service\n");
 }
 
-static int inline check_context_refcount(ITfContext *iface)
+static inline int check_context_refcount(ITfContext *iface)
 {
     IUnknown_AddRef(iface);
     return IUnknown_Release(iface);
