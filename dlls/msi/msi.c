@@ -303,7 +303,7 @@ done:
 
 static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWSTR szCommandLine)
 {
-    MSIHANDLE patch, info;
+    MSIHANDLE patch = 0, info = 0;
     UINT r, type;
     DWORD size = 0;
     LPCWSTR cmd_ptr = szCommandLine;
