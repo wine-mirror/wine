@@ -121,6 +121,7 @@ static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField,
 static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
 static BOOL HTTP_HttpQueryInfoW(LPWININETHTTPREQW, DWORD, LPVOID, LPDWORD, LPDWORD);
+static LPWSTR HTTP_GetRedirectURL(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl);
 static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
 static BOOL HTTP_VerifyValidHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field);
@@ -766,7 +767,7 @@ static BOOL HTTP_HttpEndRequestW(LPWININETHTTPREQW lpwhr, DWORD dwFlags, DWORD_P
         if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE, &dwCode, &dwCodeLength, NULL) &&
             (dwCode == 302 || dwCode == 301 || dwCode == 303))
         {
-            WCHAR szNewLocation[INTERNET_MAX_URL_LENGTH];
+            WCHAR *new_url, szNewLocation[INTERNET_MAX_URL_LENGTH];
             dwBufferSize=sizeof(szNewLocation);
             if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_LOCATION, szNewLocation, &dwBufferSize, NULL))
             {
@@ -774,11 +775,15 @@ static BOOL HTTP_HttpEndRequestW(LPWININETHTTPREQW lpwhr, DWORD dwFlags, DWORD_P
                 HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
                 lpwhr->lpszVerb = WININET_strdupW(szGET);
                 HTTP_DrainContent(lpwhr);
-                INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                                      INTERNET_STATUS_REDIRECT, szNewLocation, dwBufferSize);
-                rc = HTTP_HandleRedirect(lpwhr, szNewLocation);
-                if (rc)
-                    rc = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, TRUE);
+                if ((new_url = HTTP_GetRedirectURL( lpwhr, szNewLocation )))
+                {
+                    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_REDIRECT,
+                                          new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
+                    rc = HTTP_HandleRedirect(lpwhr, new_url);
+                    if (rc)
+                        rc = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, TRUE);
+                    HeapFree( GetProcessHeap(), 0, new_url );
+                }
             }
         }
     }
@@ -2941,6 +2946,70 @@ static BOOL HTTP_GetRequestURL(WININETHTTPREQW *req, LPWSTR buf)
 }
 
 /***********************************************************************
+ *           HTTP_GetRedirectURL (internal)
+ */
+static LPWSTR HTTP_GetRedirectURL(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
+{
+    static WCHAR szHttp[] = {'h','t','t','p',0};
+    static WCHAR szHttps[] = {'h','t','t','p','s',0};
+    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
+    URL_COMPONENTSW urlComponents;
+    DWORD url_length = 0;
+    LPWSTR orig_url;
+    LPWSTR combined_url;
+
+    if (lpszUrl[0]=='/') return WININET_strdupW( lpszUrl );
+
+    urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
+    urlComponents.lpszScheme = (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE) ? szHttps : szHttp;
+    urlComponents.dwSchemeLength = 0;
+    urlComponents.lpszHostName = lpwhs->lpszHostName;
+    urlComponents.dwHostNameLength = 0;
+    urlComponents.nPort = lpwhs->nHostPort;
+    urlComponents.lpszUserName = lpwhs->lpszUserName;
+    urlComponents.dwUserNameLength = 0;
+    urlComponents.lpszPassword = NULL;
+    urlComponents.dwPasswordLength = 0;
+    urlComponents.lpszUrlPath = lpwhr->lpszPath;
+    urlComponents.dwUrlPathLength = 0;
+    urlComponents.lpszExtraInfo = NULL;
+    urlComponents.dwExtraInfoLength = 0;
+
+    if (!InternetCreateUrlW(&urlComponents, 0, NULL, &url_length) &&
+        (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
+        return NULL;
+
+    orig_url = HeapAlloc(GetProcessHeap(), 0, url_length);
+
+    /* convert from bytes to characters */
+    url_length = url_length / sizeof(WCHAR) - 1;
+    if (!InternetCreateUrlW(&urlComponents, 0, orig_url, &url_length))
+    {
+        HeapFree(GetProcessHeap(), 0, orig_url);
+        return NULL;
+    }
+
+    url_length = 0;
+    if (!InternetCombineUrlW(orig_url, lpszUrl, NULL, &url_length, ICU_ENCODE_SPACES_ONLY) &&
+        (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
+    {
+        HeapFree(GetProcessHeap(), 0, orig_url);
+        return NULL;
+    }
+    combined_url = HeapAlloc(GetProcessHeap(), 0, url_length * sizeof(WCHAR));
+
+    if (!InternetCombineUrlW(orig_url, lpszUrl, combined_url, &url_length, ICU_ENCODE_SPACES_ONLY))
+    {
+        HeapFree(GetProcessHeap(), 0, orig_url);
+        HeapFree(GetProcessHeap(), 0, combined_url);
+        return NULL;
+    }
+    HeapFree(GetProcessHeap(), 0, orig_url);
+    return combined_url;
+}
+
+
+/***********************************************************************
  *           HTTP_HandleRedirect (internal)
  */
 static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
@@ -2962,55 +3031,6 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
         WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
         static WCHAR szHttp[] = {'h','t','t','p',0};
         static WCHAR szHttps[] = {'h','t','t','p','s',0};
-        DWORD url_length = 0;
-        LPWSTR orig_url;
-        LPWSTR combined_url;
-
-        urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
-        urlComponents.lpszScheme = (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE) ? szHttps : szHttp;
-        urlComponents.dwSchemeLength = 0;
-        urlComponents.lpszHostName = lpwhs->lpszHostName;
-        urlComponents.dwHostNameLength = 0;
-        urlComponents.nPort = lpwhs->nHostPort;
-        urlComponents.lpszUserName = lpwhs->lpszUserName;
-        urlComponents.dwUserNameLength = 0;
-        urlComponents.lpszPassword = NULL;
-        urlComponents.dwPasswordLength = 0;
-        urlComponents.lpszUrlPath = lpwhr->lpszPath;
-        urlComponents.dwUrlPathLength = 0;
-        urlComponents.lpszExtraInfo = NULL;
-        urlComponents.dwExtraInfoLength = 0;
-
-        if (!InternetCreateUrlW(&urlComponents, 0, NULL, &url_length) &&
-            (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
-            return FALSE;
-
-        orig_url = HeapAlloc(GetProcessHeap(), 0, url_length);
-
-        /* convert from bytes to characters */
-        url_length = url_length / sizeof(WCHAR) - 1;
-        if (!InternetCreateUrlW(&urlComponents, 0, orig_url, &url_length))
-        {
-            HeapFree(GetProcessHeap(), 0, orig_url);
-            return FALSE;
-        }
-
-        url_length = 0;
-        if (!InternetCombineUrlW(orig_url, lpszUrl, NULL, &url_length, ICU_ENCODE_SPACES_ONLY) &&
-            (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
-        {
-            HeapFree(GetProcessHeap(), 0, orig_url);
-            return FALSE;
-        }
-        combined_url = HeapAlloc(GetProcessHeap(), 0, url_length * sizeof(WCHAR));
-
-        if (!InternetCombineUrlW(orig_url, lpszUrl, combined_url, &url_length, ICU_ENCODE_SPACES_ONLY))
-        {
-            HeapFree(GetProcessHeap(), 0, orig_url);
-            HeapFree(GetProcessHeap(), 0, combined_url);
-            return FALSE;
-        }
-        HeapFree(GetProcessHeap(), 0, orig_url);
 
         userName[0] = 0;
         hostName[0] = 0;
@@ -3029,13 +3049,8 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
         urlComponents.dwUrlPathLength = 2048;
         urlComponents.lpszExtraInfo = NULL;
         urlComponents.dwExtraInfoLength = 0;
-        if(!InternetCrackUrlW(combined_url, strlenW(combined_url), 0, &urlComponents))
-        {
-            HeapFree(GetProcessHeap(), 0, combined_url);
+        if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
             return FALSE;
-        }
-
-        HeapFree(GetProcessHeap(), 0, combined_url);
 
         if (!strncmpW(szHttp, urlComponents.lpszScheme, strlenW(szHttp)) &&
             (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE))
@@ -3430,7 +3445,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
             if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && bSuccess)
             {
-                WCHAR szNewLocation[INTERNET_MAX_URL_LENGTH];
+                WCHAR *new_url, szNewLocation[INTERNET_MAX_URL_LENGTH];
                 dwBufferSize=sizeof(szNewLocation);
                 if ((dwStatusCode==HTTP_STATUS_REDIRECT || dwStatusCode==HTTP_STATUS_MOVED) &&
                     HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
@@ -3440,14 +3455,17 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                     lpwhr->lpszVerb = WININET_strdupW(szGET);
 
                     HTTP_DrainContent(lpwhr);
-                    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                                          INTERNET_STATUS_REDIRECT, szNewLocation,
-                                          dwBufferSize);
-                    bSuccess = HTTP_HandleRedirect(lpwhr, szNewLocation);
-                    if (bSuccess)
+                    if ((new_url = HTTP_GetRedirectURL( lpwhr, szNewLocation )))
                     {
-                        HeapFree(GetProcessHeap(), 0, requestString);
-                        loop_next = TRUE;
+                        INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_REDIRECT,
+                                              new_url, (strlenW(new_url) + 1) * sizeof(WCHAR));
+                        bSuccess = HTTP_HandleRedirect(lpwhr, new_url);
+                        if (bSuccess)
+                        {
+                            HeapFree(GetProcessHeap(), 0, requestString);
+                            loop_next = TRUE;
+                        }
+                        HeapFree( GetProcessHeap(), 0, new_url );
                     }
                 }
             }
