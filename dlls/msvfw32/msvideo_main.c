@@ -680,8 +680,6 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 
 	TRACE("(%p,%d,%p,%p,%p,%p)\n",hic,dwFlags,lpbiFormat,lpData,lpbi,lpBits);
 
-	TRACE("lpBits[0] == %x\n",((LPDWORD)lpBits)[0]);
-
 	icd.dwFlags	= dwFlags;
 	icd.lpbiInput	= lpbiFormat;
 	icd.lpInput	= lpData;
@@ -690,8 +688,6 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	icd.lpOutput	= lpBits;
 	icd.ckid	= 0;
 	ret = ICSendMessage(hic,ICM_DECOMPRESS,(DWORD_PTR)&icd,sizeof(ICDECOMPRESS));
-
-	TRACE("lpBits[0] == %x\n",((LPDWORD)lpBits)[0]);
 
 	TRACE("-> %d\n",ret);
 
