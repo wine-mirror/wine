@@ -1652,9 +1652,15 @@ static BOOL init_system_links(void)
         while(RegEnumValueW(hkey, index++, value, &val_len, NULL, &type, (LPBYTE)data, &data_len) == ERROR_SUCCESS)
         {
             memset(&fs, 0, sizeof(fs));
-            font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
             psub = get_font_subst(&font_subst_list, value, -1);
-            font_link->font_name = (psub)? strdupW(psub->to.name) : strdupW(value);
+            /* Don't store fonts that are only substitutes for other fonts */
+            if(psub)
+            {
+                TRACE("%s: SystemLink entry for substituted font, ignoring\n", debugstr_w(value));
+                continue;
+            }
+            font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
+            font_link->font_name = strdupW(value);
             list_init(&font_link->links);
             for(entry = data; (char*)entry < (char*)data + data_len && *entry != 0; entry = next)
             {
