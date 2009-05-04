@@ -26,6 +26,7 @@
 #include "wine/test.h"
 
 static HWND hScroll, hMainWnd;
+static BOOL bThemeActive = FALSE;
 
 static LRESULT CALLBACK MyWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
@@ -277,11 +278,18 @@ todo_wine
     /* report the windows style */
     winstyle = GetWindowLongW( hwnd, GWL_STYLE );
     /* WS_VSCROLL added to the window style */
-todo_wine
     if( !(style & WS_VSCROLL))
-        ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == ( style | WS_VSCROLL),
-                "unexpected style change %8lx expected %8lx\n",
-                (winstyle & (WS_HSCROLL|WS_VSCROLL)), style | WS_VSCROLL);
+    {
+        if (bThemeActive || style != WS_HSCROLL)
+todo_wine
+            ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == ( style | WS_VSCROLL),
+                    "unexpected style change %8lx expected %8lx\n",
+                    (winstyle & (WS_HSCROLL|WS_VSCROLL)), style | WS_VSCROLL);
+        else
+            ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == style,
+                    "unexpected style change %8lx expected %8x\n",
+                    (winstyle & (WS_HSCROLL|WS_VSCROLL)), style);
+    }
     /* do the test again with H and V reversed.
      * Start with a clean window */
     DestroyWindow( hwnd);
@@ -308,11 +316,18 @@ todo_wine
     /* report the windows style */
     winstyle = GetWindowLongW( hwnd, GWL_STYLE );
     /* WS_HSCROLL added to the window style */
-todo_wine
     if( !(style & WS_HSCROLL))
-        ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == ( style | WS_HSCROLL),
-                "unexpected style change %8lx expected %8lx\n",
-                (winstyle & (WS_HSCROLL|WS_VSCROLL)), style | WS_HSCROLL);
+    {
+        if (bThemeActive || style != WS_VSCROLL)
+todo_wine
+            ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == ( style | WS_HSCROLL),
+                    "unexpected style change %8lx expected %8lx\n",
+                    (winstyle & (WS_HSCROLL|WS_VSCROLL)), style | WS_HSCROLL);
+        else
+            ok( (winstyle & (WS_HSCROLL|WS_VSCROLL)) == style,
+                    "unexpected style change %8lx expected %8x\n",
+                    (winstyle & (WS_HSCROLL|WS_VSCROLL)), style);
+    }
     /* Slightly change the test to use SetScrollInfo
      * Start with a clean window */
     DestroyWindow( hwnd);
@@ -369,6 +384,8 @@ todo_wine
 START_TEST ( scroll )
 {
     WNDCLASSA wc;
+    HMODULE hUxtheme;
+    BOOL (WINAPI * pIsThemeActive)(VOID);
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
@@ -395,6 +412,16 @@ START_TEST ( scroll )
     scrollbar_test2();
     scrollbar_test3();
     scrollbar_test4();
+
+    /* Some test results vary depending of theming being active or not */
+    hUxtheme = LoadLibraryA("uxtheme.dll");
+    if (hUxtheme)
+    {
+        pIsThemeActive = (void*)GetProcAddress(hUxtheme, "IsThemeActive");
+        if (pIsThemeActive)
+            bThemeActive = pIsThemeActive();
+        FreeLibrary(hUxtheme);
+    }
 
     scrollbar_test_default( 0);
     scrollbar_test_default( WS_HSCROLL);
