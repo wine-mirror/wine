@@ -443,8 +443,8 @@ BOOL WINAPI SetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
  */
 
 BOOL WINAPI SystemTimeToTzSpecificLocalTime(
-    LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
-    LPSYSTEMTIME lpUniversalTime, LPSYSTEMTIME lpLocalTime )
+    const TIME_ZONE_INFORMATION *lpTimeZoneInformation,
+    const SYSTEMTIME *lpUniversalTime, LPSYSTEMTIME lpLocalTime )
 {
     FILETIME ft;
     LONG lBias;
@@ -489,8 +489,8 @@ BOOL WINAPI SystemTimeToTzSpecificLocalTime(
  *  Failure: FALSE.
  */
 BOOL WINAPI TzSpecificLocalTimeToSystemTime(
-    LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
-    LPSYSTEMTIME lpLocalTime, LPSYSTEMTIME lpUniversalTime)
+    const TIME_ZONE_INFORMATION *lpTimeZoneInformation,
+    const SYSTEMTIME *lpLocalTime, LPSYSTEMTIME lpUniversalTime)
 {
     FILETIME ft;
     LONG lBias;
