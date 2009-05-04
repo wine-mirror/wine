@@ -1260,7 +1260,10 @@ static void pshader_hw_texm3x2pad(const struct wined3d_shader_instruction *ins)
     char src0_name[50];
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.x, fragment.texcoord[%u], %s;\n", reg, src0_name);
+    /* The next instruction will be a texm3x2tex or texm3x2depth that writes to the uninitialized
+     * T<reg+1> register. Use this register to store the calculated vector
+     */
+    shader_addline(buffer, "DP3 T%u.x, fragment.texcoord[%u], %s;\n", reg + 1, reg, src0_name);
 }
 
 static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
@@ -1272,12 +1275,16 @@ static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_str[50];
     char src0_name[50];
+    char dst_reg[50];
+
+    /* We know that we're writing to the uninitialized T<reg> register, so use it for temporary storage */
+    sprintf(dst_reg, "T%u", reg);
 
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.y, fragment.texcoord[%u], %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 %s.y, fragment.texcoord[%u], %s;\n", dst_reg, reg, src0_name);
     flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
-    shader_hw_sample(ins, reg, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED, FALSE);
+    shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED, FALSE);
 }
 
 static void pshader_hw_texm3x3pad(const struct wined3d_shader_instruction *ins)
@@ -1478,16 +1485,16 @@ static void pshader_hw_texm3x2depth(const struct wined3d_shader_instruction *ins
     char src0[50];
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
-    shader_addline(buffer, "DP3 TMP.y, fragment.texcoord[%u], %s;\n", dst_reg, src0);
+    shader_addline(buffer, "DP3 T%u.y, fragment.texcoord[%u], %s;\n", dst_reg, dst_reg, src0);
 
     /* How to deal with the special case dst_name.g == 0? if r != 0, then
      * the r * (1 / 0) will give infinity, which is clamped to 1.0, the correct
      * result. But if r = 0.0, then 0 * inf = 0, which is incorrect.
      */
-    shader_addline(buffer, "RCP TMP.y, TMP.y;\n");
-    shader_addline(buffer, "MUL TMP.x, TMP.x, TMP.y;\n");
-    shader_addline(buffer, "MIN TMP.x, TMP.x, one.x;\n");
-    shader_addline(buffer, "MAX result.depth, TMP.x, 0.0;\n");
+    shader_addline(buffer, "RCP T%u.y, T%u.y;\n", dst_reg, dst_reg);
+    shader_addline(buffer, "MUL T%u.x, T%u.x, T%u.y;\n", dst_reg, dst_reg, dst_reg);
+    shader_addline(buffer, "MIN T%u.x, T%u.x, one.x;\n", dst_reg, dst_reg);
+    shader_addline(buffer, "MAX result.depth, T%u.x, 0.0;\n", dst_reg);
 }
 
 /** Handles transforming all WINED3DSIO_M?x? opcodes for
