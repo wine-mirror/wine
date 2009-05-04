@@ -2555,6 +2555,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
         struct wined3d_shader_semantic *semantics_out, const DWORD *byte_code);
 void shader_init(struct IWineD3DBaseShaderClass *shader,
         IWineD3DDevice *device, const SHADER_OPCODE *instruction_table);
+const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token);
 void shader_trace_init(const struct wined3d_shader_frontend *fe,
         const DWORD *pFunction, const SHADER_OPCODE *opcode_table);
 

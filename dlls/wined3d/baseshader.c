@@ -119,6 +119,23 @@ static const char *shader_opcode_names[] =
     /* WINED3DSIH_TEXREG2RGB    */ "texreg2rgb",
 };
 
+#define WINED3D_SM1_VS  0xfffe
+#define WINED3D_SM1_PS  0xffff
+
+const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token)
+{
+    switch (version_token >> 16)
+    {
+        case WINED3D_SM1_VS:
+        case WINED3D_SM1_PS:
+            return &sm1_shader_frontend;
+
+        default:
+            FIXME("Unrecognised version token %#x\n", version_token);
+            return NULL;
+    }
+}
+
 static inline BOOL shader_is_version_token(DWORD token) {
     return shader_is_pshader_version(token) ||
            shader_is_vshader_version(token);

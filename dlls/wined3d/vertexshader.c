@@ -313,13 +313,21 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
 
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
+    const struct wined3d_shader_frontend *fe;
     HRESULT hr;
     shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
 
     TRACE("(%p) : pFunction %p\n", iface, pFunction);
 
+    fe = shader_select_frontend(*pFunction);
+    if (!fe)
+    {
+        FIXME("Unable to find frontend for shader.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     /* First pass: trace shader */
-    if (TRACE_ON(d3d_shader)) shader_trace_init(&sm1_shader_frontend, pFunction, This->baseShader.shader_ins);
+    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, pFunction, This->baseShader.shader_ins);
 
     /* Initialize immediate constant lists */
     list_init(&This->baseShader.constantsF);
@@ -329,7 +337,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     /* Second pass: figure out registers used, semantics, etc.. */
     This->min_rel_offset = GL_LIMITS(vshader_constantsF);
     This->max_rel_offset = 0;
-    hr = shader_get_registers_used((IWineD3DBaseShader*) This, &sm1_shader_frontend,
+    hr = shader_get_registers_used((IWineD3DBaseShader*) This, fe,
             reg_maps, This->semantics_in, This->semantics_out, pFunction);
     if (hr != WINED3D_OK) return hr;
 
@@ -404,15 +412,22 @@ static HRESULT WINAPI IWIneD3DVertexShaderImpl_SetLocalConstantsF(IWineD3DVertex
 
 static GLuint vertexshader_compile(IWineD3DVertexShaderImpl *This, const struct vs_compile_args *args) {
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
+    const struct wined3d_shader_frontend *fe;
     SHADER_BUFFER buffer;
     GLuint ret;
+
+    fe = shader_select_frontend(This->baseShader.reg_maps.shader_version);
+    if (!fe)
+    {
+        FIXME("Unable to find frontend for shader.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
     shader_buffer_init(&buffer);
     This->cur_args = args;
-    ret = deviceImpl->shader_backend->shader_generate_vshader((IWineD3DVertexShader *)This,
-            &sm1_shader_frontend, &buffer, args);
+    ret = deviceImpl->shader_backend->shader_generate_vshader((IWineD3DVertexShader *)This, fe, &buffer, args);
     This->cur_args = NULL;
     shader_buffer_free(&buffer);
 

@@ -301,12 +301,20 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
     unsigned int i, highest_reg_used = 0, num_regs_used = 0;
     shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+    const struct wined3d_shader_frontend *fe;
     HRESULT hr;
 
     TRACE("(%p) : pFunction %p\n", iface, pFunction);
 
+    fe = shader_select_frontend(*pFunction);
+    if (!fe)
+    {
+        FIXME("Unable to find frontend for shader.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     /* First pass: trace shader */
-    if (TRACE_ON(d3d_shader)) shader_trace_init(&sm1_shader_frontend, pFunction, This->baseShader.shader_ins);
+    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, pFunction, This->baseShader.shader_ins);
 
     /* Initialize immediate constant lists */
     list_init(&This->baseShader.constantsF);
@@ -314,8 +322,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     list_init(&This->baseShader.constantsI);
 
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-    hr = shader_get_registers_used((IWineD3DBaseShader *)This, &sm1_shader_frontend,
-            reg_maps, This->semantics_in, NULL, pFunction);
+    hr = shader_get_registers_used((IWineD3DBaseShader *)This, fe, reg_maps, This->semantics_in, NULL, pFunction);
     if (FAILED(hr)) return hr;
 
     pshader_set_limits(This);
@@ -422,9 +429,17 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
     CONST DWORD *function = This->baseShader.function;
     GLuint retval;
     SHADER_BUFFER buffer;
+    const struct wined3d_shader_frontend *fe;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
 
     TRACE("(%p) : function %p\n", This, function);
+
+    fe = shader_select_frontend(This->baseShader.reg_maps.shader_version);
+    if (!fe)
+    {
+        FIXME("Unable to find frontend for shader.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     pixelshader_update_samplers(&This->baseShader.reg_maps,
             ((IWineD3DDeviceImpl *)This->baseShader.device)->stateBlock->textures);
@@ -433,8 +448,7 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
     TRACE("(%p) : Generating hardware program\n", This);
     This->cur_args = args;
     shader_buffer_init(&buffer);
-    retval = device->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This,
-            &sm1_shader_frontend, &buffer, args);
+    retval = device->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This, fe, &buffer, args);
     shader_buffer_free(&buffer);
     This->cur_args = NULL;
 
