@@ -34,74 +34,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define GLINFO_LOCATION ((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info
 
-/* This table is not order or position dependent. */
-const SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] =
-{
-    /* Arithmetic */
-    {WINED3DSIO_NOP,     0, 0, WINED3DSIH_NOP,        0,                      0                     },
-    {WINED3DSIO_MOV,     1, 2, WINED3DSIH_MOV,        0,                      0                     },
-    {WINED3DSIO_MOVA,    1, 2, WINED3DSIH_MOVA,       WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_ADD,     1, 3, WINED3DSIH_ADD,        0,                      0                     },
-    {WINED3DSIO_SUB,     1, 3, WINED3DSIH_SUB,        0,                      0                     },
-    {WINED3DSIO_MAD,     1, 4, WINED3DSIH_MAD,        0,                      0                     },
-    {WINED3DSIO_MUL,     1, 3, WINED3DSIH_MUL,        0,                      0                     },
-    {WINED3DSIO_RCP,     1, 2, WINED3DSIH_RCP,        0,                      0                     },
-    {WINED3DSIO_RSQ,     1, 2, WINED3DSIH_RSQ,        0,                      0                     },
-    {WINED3DSIO_DP3,     1, 3, WINED3DSIH_DP3,        0,                      0                     },
-    {WINED3DSIO_DP4,     1, 3, WINED3DSIH_DP4,        0,                      0                     },
-    {WINED3DSIO_MIN,     1, 3, WINED3DSIH_MIN,        0,                      0                     },
-    {WINED3DSIO_MAX,     1, 3, WINED3DSIH_MAX,        0,                      0                     },
-    {WINED3DSIO_SLT,     1, 3, WINED3DSIH_SLT,        0,                      0                     },
-    {WINED3DSIO_SGE,     1, 3, WINED3DSIH_SGE,        0,                      0                     },
-    {WINED3DSIO_ABS,     1, 2, WINED3DSIH_ABS,        0,                      0                     },
-    {WINED3DSIO_EXP,     1, 2, WINED3DSIH_EXP,        0,                      0                     },
-    {WINED3DSIO_LOG,     1, 2, WINED3DSIH_LOG,        0,                      0                     },
-    {WINED3DSIO_EXPP,    1, 2, WINED3DSIH_EXPP,       0,                      0                     },
-    {WINED3DSIO_LOGP,    1, 2, WINED3DSIH_LOGP,       0,                      0                     },
-    {WINED3DSIO_LIT,     1, 2, WINED3DSIH_LIT,        0,                      0                     },
-    {WINED3DSIO_DST,     1, 3, WINED3DSIH_DST,        0,                      0                     },
-    {WINED3DSIO_LRP,     1, 4, WINED3DSIH_LRP,        0,                      0                     },
-    {WINED3DSIO_FRC,     1, 2, WINED3DSIH_FRC,        0,                      0                     },
-    {WINED3DSIO_POW,     1, 3, WINED3DSIH_POW,        0,                      0                     },
-    {WINED3DSIO_CRS,     1, 3, WINED3DSIH_CRS,        0,                      0                     },
-    {WINED3DSIO_SGN,     1, 2, WINED3DSIH_SGN,        0,                      0                     },
-    {WINED3DSIO_NRM,     1, 2, WINED3DSIH_NRM,        0,                      0                     },
-    {WINED3DSIO_SINCOS,  1, 4, WINED3DSIH_SINCOS,     WINED3DVS_VERSION(2,0), WINED3DVS_VERSION(2,1)},
-    {WINED3DSIO_SINCOS,  1, 2, WINED3DSIH_SINCOS,     WINED3DVS_VERSION(3,0), -1                    },
-    /* Matrix */
-    {WINED3DSIO_M4x4,    1, 3, WINED3DSIH_M4x4,       0,                      0                     },
-    {WINED3DSIO_M4x3,    1, 3, WINED3DSIH_M4x3,       0,                      0                     },
-    {WINED3DSIO_M3x4,    1, 3, WINED3DSIH_M3x4,       0,                      0                     },
-    {WINED3DSIO_M3x3,    1, 3, WINED3DSIH_M3x3,       0,                      0                     },
-    {WINED3DSIO_M3x2,    1, 3, WINED3DSIH_M3x2,       0,                      0                     },
-    /* Declare registers */
-    {WINED3DSIO_DCL,     0, 2, WINED3DSIH_DCL,        0,                      0                     },
-    /* Constant definitions */
-    {WINED3DSIO_DEF,     1, 5, WINED3DSIH_DEF,        0,                      0                     },
-    {WINED3DSIO_DEFB,    1, 2, WINED3DSIH_DEFB,       0,                      0                     },
-    {WINED3DSIO_DEFI,    1, 5, WINED3DSIH_DEFI,       0,                      0                     },
-    /* Flow control */
-    {WINED3DSIO_REP,     0, 1, WINED3DSIH_REP,        WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_ENDREP,  0, 0, WINED3DSIH_ENDREP,     WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_IF,      0, 1, WINED3DSIH_IF,         WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_IFC,     0, 2, WINED3DSIH_IFC,        WINED3DVS_VERSION(2,1), -1                    },
-    {WINED3DSIO_ELSE,    0, 0, WINED3DSIH_ELSE,       WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_ENDIF,   0, 0, WINED3DSIH_ENDIF,      WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_BREAK,   0, 0, WINED3DSIH_BREAK,      WINED3DVS_VERSION(2,1), -1                    },
-    {WINED3DSIO_BREAKC,  0, 2, WINED3DSIH_BREAKC,     WINED3DVS_VERSION(2,1), -1                    },
-    {WINED3DSIO_BREAKP,  0, 1, WINED3DSIH_BREAKP,     0,                      0                     },
-    {WINED3DSIO_CALL,    0, 1, WINED3DSIH_CALL,       WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_CALLNZ,  0, 2, WINED3DSIH_CALLNZ,     WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_LOOP,    0, 2, WINED3DSIH_LOOP,       WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_RET,     0, 0, WINED3DSIH_RET,        WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_ENDLOOP, 0, 0, WINED3DSIH_ENDLOOP,    WINED3DVS_VERSION(2,0), -1                    },
-    {WINED3DSIO_LABEL,   0, 1, WINED3DSIH_LABEL,      WINED3DVS_VERSION(2,0), -1                    },
-
-    {WINED3DSIO_SETP,    1, 3, WINED3DSIH_SETP,       0,                      0                     },
-    {WINED3DSIO_TEXLDL,  1, 3, WINED3DSIH_TEXLDL,     WINED3DVS_VERSION(3,0), -1                    },
-    {0,                  0, 0, WINED3DSIH_TABLE_SIZE, 0,                      0                     },
-};
-
 static void vshader_set_limits(
       IWineD3DVertexShaderImpl *This) {
 
@@ -325,9 +257,16 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
         FIXME("Unable to find frontend for shader.\n");
         return WINED3DERR_INVALIDCALL;
     }
+    This->baseShader.frontend = fe;
+    This->baseShader.frontend_data = fe->shader_init(pFunction);
+    if (!This->baseShader.frontend_data)
+    {
+        FIXME("Failed to initialize frontend.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     /* First pass: trace shader */
-    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, pFunction, This->baseShader.shader_ins);
+    if (TRACE_ON(d3d_shader)) shader_trace_init(fe, This->baseShader.frontend_data, pFunction);
 
     /* Initialize immediate constant lists */
     list_init(&This->baseShader.constantsF);
@@ -412,22 +351,14 @@ static HRESULT WINAPI IWIneD3DVertexShaderImpl_SetLocalConstantsF(IWineD3DVertex
 
 static GLuint vertexshader_compile(IWineD3DVertexShaderImpl *This, const struct vs_compile_args *args) {
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
-    const struct wined3d_shader_frontend *fe;
     SHADER_BUFFER buffer;
     GLuint ret;
-
-    fe = shader_select_frontend(This->baseShader.reg_maps.shader_version);
-    if (!fe)
-    {
-        FIXME("Unable to find frontend for shader.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
     shader_buffer_init(&buffer);
     This->cur_args = args;
-    ret = deviceImpl->shader_backend->shader_generate_vshader((IWineD3DVertexShader *)This, fe, &buffer, args);
+    ret = deviceImpl->shader_backend->shader_generate_vshader((IWineD3DVertexShader *)This, &buffer, args);
     This->cur_args = NULL;
     shader_buffer_free(&buffer);
 

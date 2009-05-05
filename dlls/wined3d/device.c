@@ -2344,7 +2344,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
 
     object->lpVtbl = &IWineD3DVertexShader_Vtbl;
     object->parent = parent;
-    shader_init(&object->baseShader, iface, IWineD3DVertexShaderImpl_shader_ins);
+    shader_init(&object->baseShader, iface);
     list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
     *ppVertexShader = (IWineD3DVertexShader *)object;
 
@@ -2383,7 +2383,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
 
     object->lpVtbl = &IWineD3DPixelShader_Vtbl;
     object->parent = parent;
-    shader_init(&object->baseShader, iface, IWineD3DPixelShaderImpl_shader_ins);
+    shader_init(&object->baseShader, iface);
     list_add_head(&This->shaders, &object->baseShader.shader_list_entry);
     *ppPixelShader = (IWineD3DPixelShader *)object;
 

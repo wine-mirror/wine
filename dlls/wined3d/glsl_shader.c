@@ -3984,7 +3984,7 @@ static BOOL shader_glsl_dirty_const(IWineD3DDevice *iface) {
     return FALSE;
 }
 
-static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface, const struct wined3d_shader_frontend *fe,
+static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
         SHADER_BUFFER *buffer, const struct ps_compile_args *args)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
@@ -4017,7 +4017,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface, const str
     }
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader *)This, buffer, fe, reg_maps, function);
+    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function);
 
     /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
     if (reg_maps->shader_version < WINED3DPS_VERSION(2,0))
@@ -4085,7 +4085,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface, const str
     return shader_obj;
 }
 
-static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface, const struct wined3d_shader_frontend *fe,
+static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface,
         SHADER_BUFFER *buffer, const struct vs_compile_args *args)
 {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
@@ -4102,7 +4102,7 @@ static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface, const st
     shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, NULL);
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader*)This, buffer, fe, reg_maps, function);
+    shader_generate_main((IWineD3DBaseShader*)This, buffer, reg_maps, function);
 
     /* Unpack 3.0 outputs */
     if (reg_maps->shader_version >= WINED3DVS_VERSION(3,0)) shader_addline(buffer, "order_ps_input(OUT);\n");

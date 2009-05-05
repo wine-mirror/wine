@@ -28,6 +28,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define WINED3D_SM4_OPCODE_MASK                 0xff
 
+struct wined3d_sm4_data
+{
+    /* We don't store a lot in here yet. */
+};
+
+static void *shader_sm4_init(const DWORD *byte_code)
+{
+    struct wined3d_sm4_data *priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv));
+    if (!priv)
+    {
+        ERR("Failed to allocate private data\n");
+        return NULL;
+    }
+
+    return priv;
+}
+
+static void shader_sm4_free(void *data)
+{
+    HeapFree(GetProcessHeap(), 0, data);
+}
+
 static void shader_sm4_read_header(const DWORD **ptr, DWORD *shader_version)
 {
     TRACE("version: 0x%08x\n", **ptr);
@@ -36,8 +58,8 @@ static void shader_sm4_read_header(const DWORD **ptr, DWORD *shader_version)
     ++(*ptr);
 }
 
-static void shader_sm4_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins,
-        UINT *param_size, const SHADER_OPCODE *opcode_table, DWORD shader_version)
+static void shader_sm4_read_opcode(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins,
+        UINT *param_size, DWORD shader_version)
 {
     DWORD token = *(*ptr)++;
     DWORD opcode = token & WINED3D_SM4_OPCODE_MASK;
@@ -86,6 +108,8 @@ static BOOL shader_sm4_is_end(const DWORD **ptr)
 
 const struct wined3d_shader_frontend sm4_shader_frontend =
 {
+    shader_sm4_init,
+    shader_sm4_free,
     shader_sm4_read_header,
     shader_sm4_read_opcode,
     shader_sm4_read_src_param,

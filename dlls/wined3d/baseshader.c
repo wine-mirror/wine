@@ -119,12 +119,6 @@ static const char *shader_opcode_names[] =
     /* WINED3DSIH_TEXREG2RGB    */ "texreg2rgb",
 };
 
-#define WINED3D_SM1_VS  0xfffe
-#define WINED3D_SM1_PS  0xffff
-#define WINED3D_SM4_PS  0x0000
-#define WINED3D_SM4_VS  0x0001
-#define WINED3D_SM4_GS  0x0002
-
 const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token)
 {
     switch (version_token >> 16)
@@ -206,12 +200,10 @@ int shader_addline(SHADER_BUFFER* buffer, const char *format, ...)
     return ret;
 }
 
-void shader_init(struct IWineD3DBaseShaderClass *shader,
-        IWineD3DDevice *device, const SHADER_OPCODE *instruction_table)
+void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDevice *device)
 {
     shader->ref = 1;
     shader->device = device;
-    shader->shader_ins = instruction_table;
     list_init(&shader->linked_programs);
 }
 
@@ -325,7 +317,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
         struct wined3d_shader_semantic *semantics_out, const DWORD *byte_code)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
-    const SHADER_OPCODE *shader_ins = This->baseShader.shader_ins;
+    void *fe_data = This->baseShader.frontend_data;
     DWORD shader_version;
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
     const DWORD* pToken = byte_code;
@@ -357,7 +349,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
         if (comment) continue;
 
         /* Fetch opcode */
-        fe->shader_read_opcode(&pToken, &ins, &param_size, shader_ins, shader_version);
+        fe->shader_read_opcode(fe_data, &pToken, &ins, &param_size, shader_version);
 
         /* Unhandled opcode, and its parameters */
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
@@ -856,13 +848,13 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param, DWORD s
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on msdn */
 void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
-        const struct wined3d_shader_frontend *fe, const shader_reg_maps *reg_maps,
-        const DWORD *pFunction)
+        const shader_reg_maps *reg_maps, const DWORD *pFunction)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device; /* To access shader backend callbacks */
-    const SHADER_OPCODE *opcode_table = This->baseShader.shader_ins;
     const SHADER_HANDLER *handler_table = device->shader_backend->shader_instruction_handler_table;
+    const struct wined3d_shader_frontend *fe = This->baseShader.frontend;
+    void *fe_data = This->baseShader.frontend_data;
     struct wined3d_shader_src_param src_rel_addr[4];
     struct wined3d_shader_src_param src_param[4];
     struct wined3d_shader_src_param dst_rel_addr;
@@ -896,7 +888,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         if (comment) continue;
 
         /* Read opcode */
-        fe->shader_read_opcode(&pToken, &ins, &param_size, opcode_table, shader_version);
+        fe->shader_read_opcode(fe_data, &pToken, &ins, &param_size, shader_version);
 
         /* Unknown opcode and its parameters */
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
@@ -977,8 +969,7 @@ static void shader_dump_ins_modifiers(const struct wined3d_shader_dst_param *dst
         FIXME("_unrecognized_modifier(%#x)", mmask);
 }
 
-void shader_trace_init(const struct wined3d_shader_frontend *fe,
-        const DWORD *pFunction, const SHADER_OPCODE *opcode_table)
+void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *pFunction)
 {
     const DWORD* pToken = pFunction;
     DWORD shader_version;
@@ -1005,7 +996,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe,
             continue;
         }
 
-        fe->shader_read_opcode(&pToken, &ins, &param_size, opcode_table, shader_version);
+        fe->shader_read_opcode(fe_data, &pToken, &ins, &param_size, shader_version);
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
         {
             TRACE("Skipping unrecognized instruction.\n");
@@ -1139,6 +1130,11 @@ void shader_cleanup(IWineD3DBaseShader *iface)
     shader_delete_constant_list(&This->baseShader.constantsB);
     shader_delete_constant_list(&This->baseShader.constantsI);
     list_remove(&This->baseShader.shader_list_entry);
+
+    if (This->baseShader.frontend && This->baseShader.frontend_data)
+    {
+        This->baseShader.frontend->shader_free(This->baseShader.frontend_data);
+    }
 }
 
 static const SHADER_HANDLER shader_none_instruction_handler_table[WINED3DSIH_TABLE_SIZE] = {0};
@@ -1153,13 +1149,13 @@ static void shader_none_destroy(IWineD3DBaseShader *iface) {}
 static HRESULT shader_none_alloc(IWineD3DDevice *iface) {return WINED3D_OK;}
 static void shader_none_free(IWineD3DDevice *iface) {}
 static BOOL shader_none_dirty_const(IWineD3DDevice *iface) {return FALSE;}
-static GLuint shader_none_generate_pshader(IWineD3DPixelShader *iface, const struct wined3d_shader_frontend *fe,
+static GLuint shader_none_generate_pshader(IWineD3DPixelShader *iface,
         SHADER_BUFFER *buffer, const struct ps_compile_args *args)
 {
     FIXME("NONE shader backend asked to generate a pixel shader\n");
     return 0;
 }
-static GLuint shader_none_generate_vshader(IWineD3DVertexShader *iface, const struct wined3d_shader_frontend *fe,
+static GLuint shader_none_generate_vshader(IWineD3DVertexShader *iface,
         SHADER_BUFFER *buffer, const struct vs_compile_args *args)
 {
     FIXME("NONE shader backend asked to generate a vertex shader\n");

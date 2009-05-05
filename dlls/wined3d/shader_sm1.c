@@ -92,6 +92,184 @@ enum WINED3DSHADER_ADDRESSMODE_TYPE
     WINED3DSHADER_ADDRMODE_RELATIVE = 1 << WINED3DSHADER_ADDRESSMODE_SHIFT,
 };
 
+struct wined3d_sm1_opcode_info
+{
+    unsigned int opcode;
+    UINT dst_count;
+    UINT param_count;
+    enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
+    DWORD min_version;
+    DWORD max_version;
+};
+
+struct wined3d_sm1_data
+{
+    const struct wined3d_sm1_opcode_info *opcode_table;
+};
+
+/* This table is not order or position dependent. */
+static const struct wined3d_sm1_opcode_info vs_opcode_table[] =
+{
+    /* Arithmetic */
+    {WINED3DSIO_NOP,          0, 0, WINED3DSIH_NOP,          0,                      0                     },
+    {WINED3DSIO_MOV,          1, 2, WINED3DSIH_MOV,          0,                      0                     },
+    {WINED3DSIO_MOVA,         1, 2, WINED3DSIH_MOVA,         WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_ADD,          1, 3, WINED3DSIH_ADD,          0,                      0                     },
+    {WINED3DSIO_SUB,          1, 3, WINED3DSIH_SUB,          0,                      0                     },
+    {WINED3DSIO_MAD,          1, 4, WINED3DSIH_MAD,          0,                      0                     },
+    {WINED3DSIO_MUL,          1, 3, WINED3DSIH_MUL,          0,                      0                     },
+    {WINED3DSIO_RCP,          1, 2, WINED3DSIH_RCP,          0,                      0                     },
+    {WINED3DSIO_RSQ,          1, 2, WINED3DSIH_RSQ,          0,                      0                     },
+    {WINED3DSIO_DP3,          1, 3, WINED3DSIH_DP3,          0,                      0                     },
+    {WINED3DSIO_DP4,          1, 3, WINED3DSIH_DP4,          0,                      0                     },
+    {WINED3DSIO_MIN,          1, 3, WINED3DSIH_MIN,          0,                      0                     },
+    {WINED3DSIO_MAX,          1, 3, WINED3DSIH_MAX,          0,                      0                     },
+    {WINED3DSIO_SLT,          1, 3, WINED3DSIH_SLT,          0,                      0                     },
+    {WINED3DSIO_SGE,          1, 3, WINED3DSIH_SGE,          0,                      0                     },
+    {WINED3DSIO_ABS,          1, 2, WINED3DSIH_ABS,          0,                      0                     },
+    {WINED3DSIO_EXP,          1, 2, WINED3DSIH_EXP,          0,                      0                     },
+    {WINED3DSIO_LOG,          1, 2, WINED3DSIH_LOG,          0,                      0                     },
+    {WINED3DSIO_EXPP,         1, 2, WINED3DSIH_EXPP,         0,                      0                     },
+    {WINED3DSIO_LOGP,         1, 2, WINED3DSIH_LOGP,         0,                      0                     },
+    {WINED3DSIO_LIT,          1, 2, WINED3DSIH_LIT,          0,                      0                     },
+    {WINED3DSIO_DST,          1, 3, WINED3DSIH_DST,          0,                      0                     },
+    {WINED3DSIO_LRP,          1, 4, WINED3DSIH_LRP,          0,                      0                     },
+    {WINED3DSIO_FRC,          1, 2, WINED3DSIH_FRC,          0,                      0                     },
+    {WINED3DSIO_POW,          1, 3, WINED3DSIH_POW,          0,                      0                     },
+    {WINED3DSIO_CRS,          1, 3, WINED3DSIH_CRS,          0,                      0                     },
+    {WINED3DSIO_SGN,          1, 2, WINED3DSIH_SGN,          0,                      0                     },
+    {WINED3DSIO_NRM,          1, 2, WINED3DSIH_NRM,          0,                      0                     },
+    {WINED3DSIO_SINCOS,       1, 4, WINED3DSIH_SINCOS,       WINED3DVS_VERSION(2,0), WINED3DVS_VERSION(2,1)},
+    {WINED3DSIO_SINCOS,       1, 2, WINED3DSIH_SINCOS,       WINED3DVS_VERSION(3,0), -1                    },
+    /* Matrix */
+    {WINED3DSIO_M4x4,         1, 3, WINED3DSIH_M4x4,         0,                      0                     },
+    {WINED3DSIO_M4x3,         1, 3, WINED3DSIH_M4x3,         0,                      0                     },
+    {WINED3DSIO_M3x4,         1, 3, WINED3DSIH_M3x4,         0,                      0                     },
+    {WINED3DSIO_M3x3,         1, 3, WINED3DSIH_M3x3,         0,                      0                     },
+    {WINED3DSIO_M3x2,         1, 3, WINED3DSIH_M3x2,         0,                      0                     },
+    /* Declare registers */
+    {WINED3DSIO_DCL,          0, 2, WINED3DSIH_DCL,          0,                      0                     },
+    /* Constant definitions */
+    {WINED3DSIO_DEF,          1, 5, WINED3DSIH_DEF,          0,                      0                     },
+    {WINED3DSIO_DEFB,         1, 2, WINED3DSIH_DEFB,         0,                      0                     },
+    {WINED3DSIO_DEFI,         1, 5, WINED3DSIH_DEFI,         0,                      0                     },
+    /* Flow control */
+    {WINED3DSIO_REP,          0, 1, WINED3DSIH_REP,          WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_ENDREP,       0, 0, WINED3DSIH_ENDREP,       WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_IF,           0, 1, WINED3DSIH_IF,           WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_IFC,          0, 2, WINED3DSIH_IFC,          WINED3DVS_VERSION(2,1), -1                    },
+    {WINED3DSIO_ELSE,         0, 0, WINED3DSIH_ELSE,         WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_ENDIF,        0, 0, WINED3DSIH_ENDIF,        WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_BREAK,        0, 0, WINED3DSIH_BREAK,        WINED3DVS_VERSION(2,1), -1                    },
+    {WINED3DSIO_BREAKC,       0, 2, WINED3DSIH_BREAKC,       WINED3DVS_VERSION(2,1), -1                    },
+    {WINED3DSIO_BREAKP,       0, 1, WINED3DSIH_BREAKP,       0,                      0                     },
+    {WINED3DSIO_CALL,         0, 1, WINED3DSIH_CALL,         WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_CALLNZ,       0, 2, WINED3DSIH_CALLNZ,       WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_LOOP,         0, 2, WINED3DSIH_LOOP,         WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_RET,          0, 0, WINED3DSIH_RET,          WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_ENDLOOP,      0, 0, WINED3DSIH_ENDLOOP,      WINED3DVS_VERSION(2,0), -1                    },
+    {WINED3DSIO_LABEL,        0, 1, WINED3DSIH_LABEL,        WINED3DVS_VERSION(2,0), -1                    },
+
+    {WINED3DSIO_SETP,         1, 3, WINED3DSIH_SETP,         0,                      0                     },
+    {WINED3DSIO_TEXLDL,       1, 3, WINED3DSIH_TEXLDL,       WINED3DVS_VERSION(3,0), -1                    },
+    {0,                       0, 0, WINED3DSIH_TABLE_SIZE,   0,                      0                     },
+};
+
+static const struct wined3d_sm1_opcode_info ps_opcode_table[] =
+{
+    /* Arithmetic */
+    {WINED3DSIO_NOP,          0, 0, WINED3DSIH_NOP,          0,                      0                     },
+    {WINED3DSIO_MOV,          1, 2, WINED3DSIH_MOV,          0,                      0                     },
+    {WINED3DSIO_ADD,          1, 3, WINED3DSIH_ADD,          0,                      0                     },
+    {WINED3DSIO_SUB,          1, 3, WINED3DSIH_SUB,          0,                      0                     },
+    {WINED3DSIO_MAD,          1, 4, WINED3DSIH_MAD,          0,                      0                     },
+    {WINED3DSIO_MUL,          1, 3, WINED3DSIH_MUL,          0,                      0                     },
+    {WINED3DSIO_RCP,          1, 2, WINED3DSIH_RCP,          0,                      0                     },
+    {WINED3DSIO_RSQ,          1, 2, WINED3DSIH_RSQ,          0,                      0                     },
+    {WINED3DSIO_DP3,          1, 3, WINED3DSIH_DP3,          0,                      0                     },
+    {WINED3DSIO_DP4,          1, 3, WINED3DSIH_DP4,          0,                      0                     },
+    {WINED3DSIO_MIN,          1, 3, WINED3DSIH_MIN,          0,                      0                     },
+    {WINED3DSIO_MAX,          1, 3, WINED3DSIH_MAX,          0,                      0                     },
+    {WINED3DSIO_SLT,          1, 3, WINED3DSIH_SLT,          0,                      0                     },
+    {WINED3DSIO_SGE,          1, 3, WINED3DSIH_SGE,          0,                      0                     },
+    {WINED3DSIO_ABS,          1, 2, WINED3DSIH_ABS,          0,                      0                     },
+    {WINED3DSIO_EXP,          1, 2, WINED3DSIH_EXP,          0,                      0                     },
+    {WINED3DSIO_LOG,          1, 2, WINED3DSIH_LOG,          0,                      0                     },
+    {WINED3DSIO_EXPP,         1, 2, WINED3DSIH_EXPP,         0,                      0                     },
+    {WINED3DSIO_LOGP,         1, 2, WINED3DSIH_LOGP,         0,                      0                     },
+    {WINED3DSIO_DST,          1, 3, WINED3DSIH_DST,          0,                      0                     },
+    {WINED3DSIO_LRP,          1, 4, WINED3DSIH_LRP,          0,                      0                     },
+    {WINED3DSIO_FRC,          1, 2, WINED3DSIH_FRC,          0,                      0                     },
+    {WINED3DSIO_CND,          1, 4, WINED3DSIH_CND,          WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_CMP,          1, 4, WINED3DSIH_CMP,          WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(3,0)},
+    {WINED3DSIO_POW,          1, 3, WINED3DSIH_POW,          0,                      0                     },
+    {WINED3DSIO_CRS,          1, 3, WINED3DSIH_CRS,          0,                      0                     },
+    {WINED3DSIO_NRM,          1, 2, WINED3DSIH_NRM,          0,                      0                     },
+    {WINED3DSIO_SINCOS,       1, 4, WINED3DSIH_SINCOS,       WINED3DPS_VERSION(2,0), WINED3DPS_VERSION(2,1)},
+    {WINED3DSIO_SINCOS,       1, 2, WINED3DSIH_SINCOS,       WINED3DPS_VERSION(3,0), -1                    },
+    {WINED3DSIO_DP2ADD,       1, 4, WINED3DSIH_DP2ADD,       WINED3DPS_VERSION(2,0), -1                    },
+    /* Matrix */
+    {WINED3DSIO_M4x4,         1, 3, WINED3DSIH_M4x4,         0,                      0                     },
+    {WINED3DSIO_M4x3,         1, 3, WINED3DSIH_M4x3,         0,                      0                     },
+    {WINED3DSIO_M3x4,         1, 3, WINED3DSIH_M3x4,         0,                      0                     },
+    {WINED3DSIO_M3x3,         1, 3, WINED3DSIH_M3x3,         0,                      0                     },
+    {WINED3DSIO_M3x2,         1, 3, WINED3DSIH_M3x2,         0,                      0                     },
+    /* Register declarations */
+    {WINED3DSIO_DCL,          0, 2, WINED3DSIH_DCL,          0,                      0                     },
+    /* Flow control */
+    {WINED3DSIO_REP,          0, 1, WINED3DSIH_REP,          WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_ENDREP,       0, 0, WINED3DSIH_ENDREP,       WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_IF,           0, 1, WINED3DSIH_IF,           WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_IFC,          0, 2, WINED3DSIH_IFC,          WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_ELSE,         0, 0, WINED3DSIH_ELSE,         WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_ENDIF,        0, 0, WINED3DSIH_ENDIF,        WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_BREAK,        0, 0, WINED3DSIH_BREAK,        WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_BREAKC,       0, 2, WINED3DSIH_BREAKC,       WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_BREAKP,       0, 1, WINED3DSIH_BREAKP,       0,                      0                     },
+    {WINED3DSIO_CALL,         0, 1, WINED3DSIH_CALL,         WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_CALLNZ,       0, 2, WINED3DSIH_CALLNZ,       WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_LOOP,         0, 2, WINED3DSIH_LOOP,         WINED3DPS_VERSION(3,0), -1                    },
+    {WINED3DSIO_RET,          0, 0, WINED3DSIH_RET,          WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_ENDLOOP,      0, 0, WINED3DSIH_ENDLOOP,      WINED3DPS_VERSION(3,0), -1                    },
+    {WINED3DSIO_LABEL,        0, 1, WINED3DSIH_LABEL,        WINED3DPS_VERSION(2,1), -1                    },
+    /* Constant definitions */
+    {WINED3DSIO_DEF,          1, 5, WINED3DSIH_DEF,          0,                      0                     },
+    {WINED3DSIO_DEFB,         1, 2, WINED3DSIH_DEFB,         0,                      0                     },
+    {WINED3DSIO_DEFI,         1, 5, WINED3DSIH_DEFI,         0,                      0                     },
+    /* Texture */
+    {WINED3DSIO_TEXCOORD,     1, 1, WINED3DSIH_TEXCOORD,     0,                      WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXCOORD,     1, 2, WINED3DSIH_TEXCOORD,     WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_TEXKILL,      1, 1, WINED3DSIH_TEXKILL,      WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(3,0)},
+    {WINED3DSIO_TEX,          1, 1, WINED3DSIH_TEX,          0,                      WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEX,          1, 2, WINED3DSIH_TEX,          WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_TEX,          1, 3, WINED3DSIH_TEX,          WINED3DPS_VERSION(2,0), -1                    },
+    {WINED3DSIO_TEXBEM,       1, 2, WINED3DSIH_TEXBEM,       0,                      WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXBEML,      1, 2, WINED3DSIH_TEXBEML,      WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXREG2AR,    1, 2, WINED3DSIH_TEXREG2AR,    WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXREG2GB,    1, 2, WINED3DSIH_TEXREG2GB,    WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXREG2RGB,   1, 2, WINED3DSIH_TEXREG2RGB,   WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x2PAD,   1, 2, WINED3DSIH_TEXM3x2PAD,   WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x2TEX,   1, 2, WINED3DSIH_TEXM3x2TEX,   WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3PAD,   1, 2, WINED3DSIH_TEXM3x3PAD,   WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3DIFF,  1, 2, WINED3DSIH_TEXM3x3DIFF,  WINED3DPS_VERSION(0,0), WINED3DPS_VERSION(0,0)},
+    {WINED3DSIO_TEXM3x3SPEC,  1, 3, WINED3DSIH_TEXM3x3SPEC,  WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3VSPEC, 1, 2, WINED3DSIH_TEXM3x3VSPEC, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3TEX,   1, 2, WINED3DSIH_TEXM3x3TEX,   WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXDP3TEX,    1, 2, WINED3DSIH_TEXDP3TEX,    WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x2DEPTH, 1, 2, WINED3DSIH_TEXM3x2DEPTH, WINED3DPS_VERSION(1,3), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXDP3,       1, 2, WINED3DSIH_TEXDP3,       WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3,      1, 2, WINED3DSIH_TEXM3x3,      WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXDEPTH,     1, 1, WINED3DSIH_TEXDEPTH,     WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_BEM,          1, 3, WINED3DSIH_BEM,          WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_DSX,          1, 2, WINED3DSIH_DSX,          WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_DSY,          1, 2, WINED3DSIH_DSY,          WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_TEXLDD,       1, 5, WINED3DSIH_TEXLDD,       WINED3DPS_VERSION(2,1), -1                    },
+    {WINED3DSIO_SETP,         1, 3, WINED3DSIH_SETP,         0,                      0                     },
+    {WINED3DSIO_TEXLDL,       1, 3, WINED3DSIH_TEXLDL,       WINED3DPS_VERSION(3,0), -1                    },
+    {WINED3DSIO_PHASE,        0, 0, WINED3DSIH_PHASE,        0,                      0                     },
+    {0,                       0, 0, WINED3DSIH_TABLE_SIZE,   0,                      0                     },
+};
+
 /* Read a parameter opcode from the input stream,
  * and possibly a relative addressing token.
  * Return the number of tokens read */
@@ -124,7 +302,8 @@ static int shader_get_param(const DWORD *ptr, DWORD shader_version, DWORD *token
     return count;
 }
 
-static const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *opcode_table, DWORD shader_version, DWORD code)
+static const struct wined3d_sm1_opcode_info *shader_get_opcode(const struct wined3d_sm1_opcode_info *opcode_table,
+        DWORD shader_version, DWORD code)
 {
     DWORD i = 0;
 
@@ -146,12 +325,13 @@ static const SHADER_OPCODE *shader_get_opcode(const SHADER_OPCODE *opcode_table,
 }
 
 /* Return the number of parameters to skip for an opcode */
-static inline int shader_skip_opcode(const SHADER_OPCODE *opcode_info, DWORD opcode_token, DWORD shader_version)
+static int shader_skip_opcode(const struct wined3d_sm1_opcode_info *opcode_info,
+        DWORD opcode_token, DWORD shader_version)
 {
    /* Shaders >= 2.0 may contain address tokens, but fortunately they
     * have a useful length mask - use it here. Shaders 1.0 contain no such tokens */
     return (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 2)
-            ? ((opcode_token & WINED3DSI_INSTLENGTH_MASK) >> WINED3DSI_INSTLENGTH_SHIFT) : opcode_info->num_params;
+            ? ((opcode_token & WINED3DSI_INSTLENGTH_MASK) >> WINED3DSI_INSTLENGTH_SHIFT) : opcode_info->param_count;
 }
 
 static void shader_parse_src_param(DWORD param, const struct wined3d_shader_src_param *rel_addr,
@@ -221,20 +401,54 @@ static int shader_skip_unrecognized(const DWORD *ptr, DWORD shader_version)
     return tokens_read;
 }
 
+static void *shader_sm1_init(const DWORD *byte_code)
+{
+    struct wined3d_sm1_data *priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv));
+    if (!priv)
+    {
+        ERR("Failed to allocate private data\n");
+        return NULL;
+    }
+
+    switch (*byte_code >> 16)
+    {
+        case WINED3D_SM1_VS:
+            priv->opcode_table = vs_opcode_table;
+            break;
+
+        case WINED3D_SM1_PS:
+            priv->opcode_table = ps_opcode_table;
+            break;
+
+        default:
+            FIXME("Unrecognized shader type %#x\n", *byte_code >> 16);
+            HeapFree(GetProcessHeap(), 0, priv);
+            return NULL;
+    }
+
+    return priv;
+}
+
+static void shader_sm1_free(void *data)
+{
+    HeapFree(GetProcessHeap(), 0, data);
+}
+
 static void shader_sm1_read_header(const DWORD **ptr, DWORD *shader_version)
 {
     TRACE("version: 0x%08x\n", **ptr);
     *shader_version = *(*ptr)++;
 }
 
-static void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size,
-        const SHADER_OPCODE *opcode_table, DWORD shader_version)
+static void shader_sm1_read_opcode(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins,
+        UINT *param_size, DWORD shader_version)
 {
-    const SHADER_OPCODE *opcode_info;
+    struct wined3d_sm1_data *priv = data;
+    const struct wined3d_sm1_opcode_info *opcode_info;
     DWORD opcode_token;
 
     opcode_token = *(*ptr)++;
-    opcode_info = shader_get_opcode(opcode_table, shader_version, opcode_token);
+    opcode_info = shader_get_opcode(priv->opcode_table, shader_version, opcode_token);
     if (!opcode_info)
     {
         FIXME("Unrecognized opcode: token=0x%08x\n", opcode_token);
@@ -247,8 +461,8 @@ static void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_inst
     ins->flags = (opcode_token & WINED3D_OPCODESPECIFICCONTROL_MASK) >> WINED3D_OPCODESPECIFICCONTROL_SHIFT;
     ins->coissue = opcode_token & WINED3DSI_COISSUE;
     ins->predicate = opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED;
-    ins->dst_count = opcode_info->dst_token ? 1 : 0;
-    ins->src_count = opcode_info->num_params - opcode_info->dst_token;
+    ins->dst_count = opcode_info->dst_count ? 1 : 0;
+    ins->src_count = opcode_info->param_count - opcode_info->dst_count;
     *param_size = shader_skip_opcode(opcode_info, opcode_token, shader_version);
 }
 
@@ -324,6 +538,8 @@ static BOOL shader_sm1_is_end(const DWORD **ptr)
 
 const struct wined3d_shader_frontend sm1_shader_frontend =
 {
+    shader_sm1_init,
+    shader_sm1_free,
     shader_sm1_read_header,
     shader_sm1_read_opcode,
     shader_sm1_read_src_param,

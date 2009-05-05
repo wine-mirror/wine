@@ -470,9 +470,15 @@ typedef enum COMPARISON_TYPE
     COMPARISON_LE = 6,
 } COMPARISON_TYPE;
 
+#define WINED3D_SM1_VS  0xfffe
+#define WINED3D_SM1_PS  0xffff
+#define WINED3D_SM4_PS  0x0000
+#define WINED3D_SM4_VS  0x0001
+#define WINED3D_SM4_GS  0x0002
+
 /* Shader version tokens, and shader end tokens */
-#define WINED3DPS_VERSION(major, minor) (0xffff0000 | ((major) << 8) | (minor))
-#define WINED3DVS_VERSION(major, minor) (0xfffe0000 | ((major) << 8) | (minor))
+#define WINED3DPS_VERSION(major, minor) ((WINED3D_SM1_PS << 16) | ((major) << 8) | (minor))
+#define WINED3DVS_VERSION(major, minor) ((WINED3D_SM1_VS << 16) | ((major) << 8) | (minor))
 #define WINED3DSHADER_VERSION_MAJOR(version) (((version) >> 8) & 0xff)
 #define WINED3DSHADER_VERSION_MINOR(version) (((version) >> 0) & 0xff)
 
@@ -615,16 +621,6 @@ typedef struct shader_reg_maps
 
 } shader_reg_maps;
 
-typedef struct SHADER_OPCODE
-{
-    unsigned int opcode;
-    char dst_token;
-    CONST UINT num_params;
-    enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
-    DWORD min_version;
-    DWORD max_version;
-} SHADER_OPCODE;
-
 struct wined3d_shader_context
 {
     IWineD3DBaseShader *shader;
@@ -674,9 +670,11 @@ struct wined3d_shader_semantic
 
 struct wined3d_shader_frontend
 {
+    void *(*shader_init)(const DWORD *ptr);
+    void (*shader_free)(void *data);
     void (*shader_read_header)(const DWORD **ptr, DWORD *shader_version);
-    void (*shader_read_opcode)(const DWORD **ptr, struct wined3d_shader_instruction *ins,
-            UINT *param_size, const SHADER_OPCODE *opcode_table, DWORD shader_version);
+    void (*shader_read_opcode)(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins,
+            UINT *param_size, DWORD shader_version);
     void (*shader_read_src_param)(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
             struct wined3d_shader_src_param *src_rel_addr, DWORD shader_version);
     void (*shader_read_dst_param)(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
@@ -777,9 +775,9 @@ typedef struct {
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
-    GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface, const struct wined3d_shader_frontend *fe,
+    GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface,
             SHADER_BUFFER *buffer, const struct ps_compile_args *args);
-    GLuint (*shader_generate_vshader)(IWineD3DVertexShader *iface, const struct wined3d_shader_frontend *fe,
+    GLuint (*shader_generate_vshader)(IWineD3DVertexShader *iface,
             SHADER_BUFFER *buffer, const struct vs_compile_args *args);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
@@ -2512,11 +2510,12 @@ typedef struct IWineD3DBaseShaderClass
     LONG                            ref;
     SHADER_LIMITS                   limits;
     SHADER_PARSE_STATE              parse_state;
-    CONST SHADER_OPCODE             *shader_ins;
     DWORD                          *function;
     UINT                            functionLength;
     UINT                            cur_loop_depth, cur_loop_regno;
     BOOL                            load_local_constsF;
+    const struct wined3d_shader_frontend *frontend;
+    void *frontend_data;
 
     /* Type of shader backend */
     int shader_mode;
@@ -2550,16 +2549,13 @@ void shader_cleanup(IWineD3DBaseShader *iface);
 void shader_dump_src_param(const struct wined3d_shader_src_param *param, DWORD shader_version);
 void shader_dump_dst_param(const struct wined3d_shader_dst_param *param, DWORD shader_version);
 void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
-        const struct wined3d_shader_frontend *fe, const shader_reg_maps *reg_maps,
-        const DWORD *pFunction);
+        const shader_reg_maps *reg_maps, const DWORD *pFunction);
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
         struct shader_reg_maps *reg_maps, struct wined3d_shader_semantic *semantics_in,
         struct wined3d_shader_semantic *semantics_out, const DWORD *byte_code);
-void shader_init(struct IWineD3DBaseShaderClass *shader,
-        IWineD3DDevice *device, const SHADER_OPCODE *instruction_table);
+void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDevice *device);
 const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token);
-void shader_trace_init(const struct wined3d_shader_frontend *fe,
-        const DWORD *pFunction, const SHADER_OPCODE *opcode_table);
+void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *pFunction);
 
 static inline BOOL shader_is_pshader_version(DWORD token) {
     return 0xFFFF0000 == (token & 0xFFFF0000);
@@ -2648,7 +2644,6 @@ typedef struct IWineD3DVertexShaderImpl {
 
     const struct vs_compile_args    *cur_args;
 } IWineD3DVertexShaderImpl;
-extern const SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[];
 extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
 
 void find_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct vs_compile_args *args);
@@ -2691,7 +2686,6 @@ typedef struct IWineD3DPixelShaderImpl {
     const struct ps_compile_args *cur_args;
 } IWineD3DPixelShaderImpl;
 
-extern const SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[];
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
 GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args);
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args);
