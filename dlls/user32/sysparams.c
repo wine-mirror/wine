@@ -710,7 +710,11 @@ static inline HDC get_display_dc(void)
 {
     static const WCHAR DISPLAY[] = {'D','I','S','P','L','A','Y',0};
     static HDC display_dc;
-    if (!display_dc) display_dc = CreateICW( DISPLAY, NULL, NULL, NULL );
+    if (!display_dc)
+    {
+        display_dc = CreateICW( DISPLAY, NULL, NULL, NULL );
+        __wine_make_gdi_object_system( display_dc, TRUE );
+    }
     return display_dc;
 }
 
