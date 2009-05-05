@@ -270,9 +270,29 @@ static void shader_arb_update_float_pixel_constants(IWineD3DDevice *iface, UINT 
     This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, start + count + 1);
 }
 
+static DWORD *local_const_mapping(IWineD3DBaseShaderImpl *This)
+{
+    DWORD *ret;
+    DWORD idx = 0;
+    const local_constant *lconst;
+
+    if(This->baseShader.load_local_constsF || list_empty(&This->baseShader.constantsF)) return NULL;
+
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * This->baseShader.limits.temporary);
+    if(!ret) {
+        ERR("Out of memory\n");
+        return NULL;
+    }
+
+    LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
+        ret[lconst->idx] = idx++;
+    }
+    return ret;
+}
+
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
 static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const shader_reg_maps *reg_maps,
-        SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info)
+        SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info, DWORD *lconst_map)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
@@ -353,10 +373,10 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
     /* Load local constants using the program-local space,
      * this avoids reloading them each time the shader is used
      */
-    if(!This->baseShader.load_local_constsF) {
+    if(lconst_map) {
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
             shader_addline(buffer, "PARAM C%u = program.local[%u];\n", lconst->idx,
-                           lconst->idx);
+                           lconst_map[lconst->idx]);
         }
     }
 
@@ -366,7 +386,7 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
      * local constants do not declare the loaded constants as an array because ARB compilers usually
      * do not optimize unused constants away
      */
-    if(This->baseShader.load_local_constsF || list_empty(&This->baseShader.constantsF)) {
+    if(!lconst_map || list_empty(&This->baseShader.constantsF)) {
         /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
         shader_addline(buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
                     max_constantsF, max_constantsF - 1);
@@ -1980,6 +2000,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     const local_constant *lconst;
     GLuint retval;
     const char *fragcolor;
+    DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBfp1.0\n");
@@ -2017,7 +2038,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     }
 
     /* Base Declarations */
-    shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
+    shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
 
     /* Base Shader Body */
     shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function);
@@ -2048,12 +2069,13 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     }
 
     /* Load immediate constants */
-    if(!This->baseShader.load_local_constsF) {
+    if(lconst_map) {
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
             const float *value = (const float *)lconst->value;
-            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, lconst->idx, value));
+            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, lconst_map[lconst->idx], value));
             checkGLcall("glProgramLocalParameter4fvARB");
         }
+        HeapFree(GetProcessHeap(), 0, lconst_map);
     }
 
     return retval;
@@ -2069,6 +2091,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
     const local_constant *lconst;
     GLuint ret;
+    DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
@@ -2082,7 +2105,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     shader_addline(buffer, "TEMP TMP;\n");
 
     /* Base Declarations */
-    shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION);
+    shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
 
     /* We need a constant to fixup the final position */
     shader_addline(buffer, "PARAM posFixup = program.env[%d];\n", ARB_SHADER_PRIVCONST_POS);
@@ -2165,13 +2188,15 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
         ret = -1;
     } else {
         /* Load immediate constants */
-        if(!This->baseShader.load_local_constsF) {
+        if(lconst_map) {
             LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
                 const float *value = (const float *)lconst->value;
-                GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, lconst->idx, value));
+                GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, lconst_map[lconst->idx], value));
             }
         }
     }
+    HeapFree(GetProcessHeap(), 0, lconst_map);
+
     return ret;
 }
 
