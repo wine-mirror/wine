@@ -334,7 +334,9 @@ static Window create_client_window( Display *display, struct x11drv_win_data *da
     mask = CWEventMask | CWBitGravity | CWWinGravity | CWBackingStore;
 
     if ((cx = data->client_rect.right - data->client_rect.left) <= 0) cx = 1;
+    else if (cx > 65535) cx = 65535;
     if ((cy = data->client_rect.bottom - data->client_rect.top) <= 0) cy = 1;
+    else if (cy > 65535) cy = 65535;
 
     wine_tsx11_lock();
 
@@ -711,11 +713,13 @@ static int get_window_changes( XWindowChanges *changes, const RECT *old, const R
     if (old->right - old->left != new->right - new->left )
     {
         if ((changes->width = new->right - new->left) <= 0) changes->width = 1;
+        else if (changes->width > 65535) changes->width = 65535;
         mask |= CWWidth;
     }
     if (old->bottom - old->top != new->bottom - new->top)
     {
         if ((changes->height = new->bottom - new->top) <= 0) changes->height = 1;
+        else if (changes->height > 65535) changes->height = 65535;
         mask |= CWHeight;
     }
     if (old->left != new->left)
@@ -1289,6 +1293,8 @@ static void sync_window_position( Display *display, struct x11drv_win_data *data
         changes.height = data->whole_rect.bottom - data->whole_rect.top;
         /* if window rect is empty force size to 1x1 */
         if (changes.width <= 0 || changes.height <= 0) changes.width = changes.height = 1;
+        if (changes.width > 65535) changes.width = 65535;
+        if (changes.height > 65535) changes.height = 65535;
         mask |= CWWidth | CWHeight;
     }
 
@@ -1438,7 +1444,9 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     DWORD layered_flags;
 
     if (!(cx = data->window_rect.right - data->window_rect.left)) cx = 1;
+    else if (cx > 65535) cx = 65535;
     if (!(cy = data->window_rect.bottom - data->window_rect.top)) cy = 1;
+    else if (cy > 65535) cy = 65535;
 
     if (!data->managed && is_window_managed( data->hwnd, SWP_NOACTIVATE, &data->window_rect ))
     {
