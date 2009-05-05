@@ -221,6 +221,12 @@ static int shader_skip_unrecognized(const DWORD *ptr, DWORD shader_version)
     return tokens_read;
 }
 
+static void shader_sm1_read_header(const DWORD **ptr, DWORD *shader_version)
+{
+    TRACE("version: 0x%08x\n", **ptr);
+    *shader_version = *(*ptr)++;
+}
+
 static void shader_sm1_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size,
         const SHADER_OPCODE *opcode_table, DWORD shader_version)
 {
@@ -318,6 +324,7 @@ static BOOL shader_sm1_is_end(const DWORD **ptr)
 
 const struct wined3d_shader_frontend sm1_shader_frontend =
 {
+    shader_sm1_read_header,
     shader_sm1_read_opcode,
     shader_sm1_read_src_param,
     shader_sm1_read_dst_param,

@@ -342,13 +342,8 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
     shader_delete_constant_list(&This->baseShader.constantsB);
     shader_delete_constant_list(&This->baseShader.constantsI);
 
-    /* The version token is supposed to be the first token */
-    if (!shader_is_version_token(*pToken))
-    {
-        FIXME("First token is not a version token, invalid shader.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-    reg_maps->shader_version = shader_version = *pToken++;
+    fe->shader_read_header(&pToken, &shader_version);
+    reg_maps->shader_version = shader_version;
     pshader = shader_is_pshader_version(shader_version);
 
     while (!fe->shader_is_end(&pToken))
@@ -868,7 +863,6 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device; /* To access shader backend callbacks */
     const SHADER_OPCODE *opcode_table = This->baseShader.shader_ins;
     const SHADER_HANDLER *handler_table = device->shader_backend->shader_instruction_handler_table;
-    DWORD shader_version = reg_maps->shader_version;
     struct wined3d_shader_src_param src_rel_addr[4];
     struct wined3d_shader_src_param src_param[4];
     struct wined3d_shader_src_param dst_rel_addr;
@@ -877,6 +871,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
     struct wined3d_shader_context ctx;
     const DWORD *pToken = pFunction;
     SHADER_HANDLER hw_fct;
+    DWORD shader_version;
     DWORD i;
 
     /* Initialize current parsing state */
@@ -889,11 +884,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
     ins.src = src_param;
     This->baseShader.parse_state.current_row = 0;
 
-    if (!shader_is_version_token(*pToken++))
-    {
-        ERR("First token is not a version token, invalid shader.\n");
-        return;
-    }
+    fe->shader_read_header(&pToken, &shader_version);
 
     while (!fe->shader_is_end(&pToken))
     {
@@ -995,13 +986,8 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe,
 
     TRACE("Parsing %p\n", pFunction);
 
-    /* The version token is supposed to be the first token */
-    if (!shader_is_version_token(*pToken))
-    {
-        FIXME("First token is not a version token, invalid shader.\n");
-        return;
-    }
-    shader_version = *pToken++;
+    fe->shader_read_header(&pToken, &shader_version);
+
     TRACE("%s_%u_%u\n", shader_is_pshader_version(shader_version) ? "ps": "vs",
             WINED3DSHADER_VERSION_MAJOR(shader_version), WINED3DSHADER_VERSION_MINOR(shader_version));
 

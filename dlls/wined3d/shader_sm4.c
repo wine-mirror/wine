@@ -23,6 +23,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
+static void shader_sm4_read_header(const DWORD **ptr, DWORD *shader_version)
+{
+    TRACE("version: 0x%08x\n", **ptr);
+    *shader_version = *(*ptr)++;
+    TRACE("token count: %u\n", **ptr);
+    ++(*ptr);
+}
+
 static void shader_sm4_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins,
         UINT *param_size, const SHADER_OPCODE *opcode_table, DWORD shader_version)
 {
@@ -63,6 +71,7 @@ static BOOL shader_sm4_is_end(const DWORD **ptr)
 
 const struct wined3d_shader_frontend sm4_shader_frontend =
 {
+    shader_sm4_read_header,
     shader_sm4_read_opcode,
     shader_sm4_read_src_param,
     shader_sm4_read_dst_param,
