@@ -83,6 +83,8 @@ typedef struct {
 typedef struct {
     LPWSTR name;
     LPWSTR printername;
+    monitor_t * pm;
+    HANDLE hXcv;
 } printer_t;
 
 /* ############################### */
@@ -93,6 +95,7 @@ static monitor_t * pm_localport;
 static const PRINTPROVIDOR * pprovider = NULL;
 
 static const WCHAR backslashW[] = {'\\',0};
+static const WCHAR bs_ports_bsW[] = {'\\','P','o','r','t','s','\\',0};
 static const WCHAR configuration_fileW[] = {'C','o','n','f','i','g','u','r','a','t','i','o','n',' ','F','i','l','e',0};
 static const WCHAR datatypeW[] = {'D','a','t','a','t','y','p','e',0};
 static const WCHAR data_fileW[] = {'D','a','t','a',' ','F','i','l','e',0};
@@ -123,20 +126,30 @@ static const WCHAR oem_urlW[] = {'O','E','M',' ','U','r','l',0};
 static const WCHAR parametersW[] = {'P','a','r','a','m','e','t','e','r','s',0};
 static const WCHAR portW[] = {'P','o','r','t',0};
 static const WCHAR previous_namesW[] = {'P','r','e','v','i','o','u','s',' ','N','a','m','e','s',0};
+static const WCHAR printersW[] = {'S','y','s','t','e','m','\\',
+                                  'C','u', 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                  'C','o','n','t','r','o','l','\\',
+                                  'P','r','i','n','t','\\',
+                                  'P','r','i','n','t','e','r','s',0};
 static const WCHAR spooldriversW[] = {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',0};
-static const WCHAR versionW[] = {'V','e','r','s','i','o','n',0};
-
-static const WCHAR win40_envnameW[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
-static const WCHAR win40_subdirW[] = {'w','i','n','4','0',0};
 static const WCHAR version0_regpathW[] = {'\\','V','e','r','s','i','o','n','-','0',0};
 static const WCHAR version0_subdirW[] = {'\\','0',0};
-
+static const WCHAR version3_regpathW[] = {'\\','V','e','r','s','i','o','n','-','3',0};
+static const WCHAR version3_subdirW[] = {'\\','3',0};
+static const WCHAR versionW[] = {'V','e','r','s','i','o','n',0};
+static const WCHAR win40_envnameW[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
+static const WCHAR win40_subdirW[] = {'w','i','n','4','0',0};
+static const WCHAR winnt_cv_portsW[] = {'S','o','f','t','w','a','r','e','\\',
+                                        'M','i','c','r','o','s','o','f','t','\\',
+                                        'W','i','n','d','o','w','s',' ','N','T','\\',
+                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                        'P','o','r','t','s',0};
 static const WCHAR x64_envnameW[] = {'W','i','n','d','o','w','s',' ','x','6','4',0};
 static const WCHAR x64_subdirW[] = {'x','6','4',0};
 static const WCHAR x86_envnameW[] = {'W','i','n','d','o','w','s',' ','N','T',' ','x','8','6',0};
 static const WCHAR x86_subdirW[] = {'w','3','2','x','8','6',0};
-static const WCHAR version3_regpathW[] = {'\\','V','e','r','s','i','o','n','-','3',0};
-static const WCHAR version3_subdirW[] = {'\\','3',0};
+static const WCHAR XcvMonitorW[] = {',','X','c','v','M','o','n','i','t','o','r',' ',0};
+static const WCHAR XcvPortW[] = {',','X','c','v','P','o','r','t',' ',0};
 
 
 static const printenv_t env_x86 =   {x86_envnameW, x86_subdirW, 3,
@@ -544,6 +557,65 @@ static DWORD monitor_loadall(void)
 }
 
 /******************************************************************
+ * monitor_load_by_port [internal]
+ *
+ * load a printmonitor for a given port
+ *
+ * On failure, NULL is returned
+ */
+
+static monitor_t * monitor_load_by_port(LPCWSTR portname)
+{
+    HKEY    hroot;
+    HKEY    hport;
+    LPWSTR  buffer;
+    monitor_t * pm = NULL;
+    DWORD   registered = 0;
+    DWORD   id = 0;
+    DWORD   len;
+
+    TRACE("(%s)\n", debugstr_w(portname));
+
+    /* Try the Local Monitor first */
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, winnt_cv_portsW, &hroot) == ERROR_SUCCESS) {
+        if (RegQueryValueExW(hroot, portname, NULL, NULL, NULL, &len) == ERROR_SUCCESS) {
+            /* found the portname */
+            RegCloseKey(hroot);
+            return monitor_load(localportW, NULL);
+        }
+        RegCloseKey(hroot);
+    }
+
+    len = MAX_PATH + lstrlenW(bs_ports_bsW) + lstrlenW(portname) + 1;
+    buffer = heap_alloc(len * sizeof(WCHAR));
+    if (buffer == NULL) return NULL;
+
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, monitorsW, &hroot) == ERROR_SUCCESS) {
+        EnterCriticalSection(&monitor_handles_cs);
+        RegQueryInfoKeyW(hroot, NULL, NULL, NULL, &registered, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+        while ((pm == NULL) && (id < registered)) {
+            buffer[0] = '\0';
+            RegEnumKeyW(hroot, id, buffer, MAX_PATH);
+            TRACE("testing %s\n", debugstr_w(buffer));
+            len = lstrlenW(buffer);
+            lstrcatW(buffer, bs_ports_bsW);
+            lstrcatW(buffer, portname);
+            if (RegOpenKeyW(hroot, buffer, &hport) == ERROR_SUCCESS) {
+                RegCloseKey(hport);
+                buffer[len] = '\0';             /* use only the Monitor-Name */
+                pm = monitor_load(buffer, NULL);
+            }
+            id++;
+        }
+        LeaveCriticalSection(&monitor_handles_cs);
+        RegCloseKey(hroot);
+    }
+    heap_free(buffer);
+    return pm;
+}
+
+/******************************************************************
  * Return the number of bytes for an multi_sz string.
  * The result includes all \0s
  * (specifically the extra \0, that is needed as multi_sz terminator).
@@ -944,6 +1016,10 @@ static HMODULE driver_load(const printenv_t * env, LPWSTR dllname)
  */
 static VOID printer_free(printer_t * printer)
 {
+    if (printer->hXcv)
+        printer->pm->monitor->pfnXcvClosePort(printer->hXcv);
+
+    monitor_unload(printer->pm);
 
     heap_free(printer->printername);
     heap_free(printer->name);
@@ -960,6 +1036,9 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
     WCHAR servername[MAX_COMPUTERNAME_LENGTH + 1];
     printer_t *printer = NULL;
     LPCWSTR printername;
+    HKEY    hkeyPrinters;
+    HKEY    hkeyPrinter;
+    DWORD   len;
 
     if (copy_servername_from_name(name, servername)) {
         FIXME("server %s not supported\n", debugstr_w(servername));
@@ -987,6 +1066,74 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
     if (name && (!printer->name)) {
         printer_free(printer);
         printer = NULL;
+    }
+    if (printername) {
+        len = sizeof(XcvMonitorW)/sizeof(WCHAR) - 1;
+        if (strncmpW(printername, XcvMonitorW, len) == 0) {
+            /* OpenPrinter(",XcvMonitor ", ...) detected */
+            TRACE(",XcvMonitor: %s\n", debugstr_w(&printername[len]));
+            printer->pm = monitor_load(&printername[len], NULL);
+            if (printer->pm == NULL) {
+                printer_free(printer);
+                SetLastError(ERROR_UNKNOWN_PORT);
+                printer = NULL;
+                goto end;
+            }
+        }
+        else
+        {
+            len = sizeof(XcvPortW)/sizeof(WCHAR) - 1;
+            if (strncmpW( printername, XcvPortW, len) == 0) {
+                /* OpenPrinter(",XcvPort ", ...) detected */
+                TRACE(",XcvPort: %s\n", debugstr_w(&printername[len]));
+                printer->pm = monitor_load_by_port(&printername[len]);
+                if (printer->pm == NULL) {
+                    printer_free(printer);
+                    SetLastError(ERROR_UNKNOWN_PORT);
+                    printer = NULL;
+                    goto end;
+                }
+            }
+        }
+
+        if (printer->pm) {
+            if ((printer->pm->monitor) && (printer->pm->monitor->pfnXcvOpenPort)) {
+                printer->pm->monitor->pfnXcvOpenPort(&printername[len],
+                                                    pDefault ? pDefault->DesiredAccess : 0,
+                                                    &printer->hXcv);
+            }
+            if (printer->hXcv == NULL) {
+                printer_free(printer);
+                SetLastError(ERROR_INVALID_PARAMETER);
+                printer = NULL;
+                goto end;
+            }
+        }
+        else
+        {
+            /* Does the Printer exist? */
+            if (RegCreateKeyW(HKEY_LOCAL_MACHINE, printersW, &hkeyPrinters) != ERROR_SUCCESS) {
+                ERR("Can't create Printers key\n");
+                printer_free(printer);
+                SetLastError(ERROR_INVALID_PRINTER_NAME);
+                printer = NULL;
+                goto end;
+            }
+            if (RegOpenKeyW(hkeyPrinters, printername, &hkeyPrinter) != ERROR_SUCCESS) {
+                WARN("Printer not found in Registry: %s\n", debugstr_w(printername));
+                RegCloseKey(hkeyPrinters);
+                printer_free(printer);
+                SetLastError(ERROR_INVALID_PRINTER_NAME);
+                printer = NULL;
+                goto end;
+            }
+            RegCloseKey(hkeyPrinter);
+            RegCloseKey(hkeyPrinters);
+        }
+    }
+    else
+    {
+        TRACE("using the local printserver\n");
     }
 
 end:
