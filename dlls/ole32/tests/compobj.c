@@ -276,7 +276,7 @@ static void test_CoCreateInstance(void)
 
     pUnk = (IUnknown *)0xdeadbeef;
     hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
-    todo_wine ok(hr == S_OK, "CoCreateInstance should have returned S_OK instead of 0x%08x\n", hr);
+    ok(hr == S_OK, "CoCreateInstance should have returned S_OK instead of 0x%08x\n", hr);
     if (pUnk) IUnknown_Release(pUnk);
 
     SetEvent(info.stop);
@@ -325,7 +325,7 @@ static void test_CoGetClassObject(void)
 
     pUnk = (IUnknown *)0xdeadbeef;
     hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
-    todo_wine ok(hr == S_OK, "CoGetClassObject should have returned S_OK instead of 0x%08x\n", hr);
+    ok(hr == S_OK, "CoGetClassObject should have returned S_OK instead of 0x%08x\n", hr);
     if (pUnk) IUnknown_Release(pUnk);
 
     SetEvent(info.stop);
