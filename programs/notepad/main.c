@@ -343,10 +343,10 @@ static VOID NOTEPAD_InitMenuPopup(HMENU menu, int index)
     int enable;
 
     EnableMenuItem(menu, CMD_UNDO,
-        SendMessage(Globals.hEdit, EM_CANUNDO, 0, 0) ? MF_ENABLED : MF_GRAYED);
+        SendMessageW(Globals.hEdit, EM_CANUNDO, 0, 0) ? MF_ENABLED : MF_GRAYED);
     EnableMenuItem(menu, CMD_PASTE,
         IsClipboardFormatAvailable(CF_TEXT) ? MF_ENABLED : MF_GRAYED);
-    enable = SendMessage(Globals.hEdit, EM_GETSEL, 0, 0);
+    enable = SendMessageW(Globals.hEdit, EM_GETSEL, 0, 0);
     enable = (HIWORD(enable) == LOWORD(enable)) ? MF_GRAYED : MF_ENABLED;
     EnableMenuItem(menu, CMD_CUT, enable);
     EnableMenuItem(menu, CMD_COPY, enable);
@@ -385,7 +385,7 @@ void NOTEPAD_DoFind(FINDREPLACE *fr)
     if (!content) return;
     GetWindowText(Globals.hEdit, content, fileLen);
 
-    SendMessage(Globals.hEdit, EM_GETSEL, 0, (LPARAM)&pos);        
+    SendMessageW(Globals.hEdit, EM_GETSEL, 0, (LPARAM)&pos);
     switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
     {
         case 0:
@@ -412,7 +412,7 @@ void NOTEPAD_DoFind(FINDREPLACE *fr)
         return;
     }
 
-    SendMessage(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
+    SendMessageW(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
 }
 
 void NOTEPAD_DoReplace(FINDREPLACE *fr)
@@ -428,16 +428,16 @@ void NOTEPAD_DoReplace(FINDREPLACE *fr)
     if (!content) return;
     GetWindowText(Globals.hEdit, content, fileLen);
 
-    SendMessage(Globals.hEdit, EM_GETSEL, (WPARAM)&pos_start, (LPARAM)&pos);
+    SendMessageW(Globals.hEdit, EM_GETSEL, (WPARAM)&pos_start, (LPARAM)&pos);
     switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
     {
         case FR_DOWN:
             if ( pos-pos_start == len && StrCmpNI(fr->lpstrFindWhat, content+pos_start, len) == 0)
-                SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
+                SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
             break;
         case FR_DOWN|FR_MATCHCASE:
             if ( pos-pos_start == len && StrCmpN(fr->lpstrFindWhat, content+pos_start, len) == 0)
-                SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
+                SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
             break;
         default:    /* shouldn't happen */
             return;
@@ -455,14 +455,14 @@ void NOTEPAD_DoReplaceAll(FINDREPLACE *fr)
     int fileLen;
     DWORD pos;
 
-    SendMessage(Globals.hEdit, EM_SETSEL, 0, 0);
+    SendMessageW(Globals.hEdit, EM_SETSEL, 0, 0);
     while(TRUE){
         fileLen = GetWindowTextLength(Globals.hEdit) + 1;
         content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(TCHAR));
         if (!content) return;
         GetWindowText(Globals.hEdit, content, fileLen);
 
-        SendMessage(Globals.hEdit, EM_GETSEL, 0, (LPARAM)&pos);
+        SendMessageW(Globals.hEdit, EM_GETSEL, 0, (LPARAM)&pos);
         switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
         {
             case FR_DOWN:
@@ -478,11 +478,11 @@ void NOTEPAD_DoReplaceAll(FINDREPLACE *fr)
 
         if(found == NULL)
         {
-            SendMessage(Globals.hEdit, EM_SETSEL, 0, 0);
+            SendMessageW(Globals.hEdit, EM_SETSEL, 0, 0);
             return;
         }
-        SendMessage(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
-        SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
+        SendMessageW(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
+        SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
     }
 }
 
@@ -535,7 +535,7 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
                              NULL, Globals.hInstance, NULL);
 
         Globals.hFont = CreateFontIndirect(&Globals.lfFont);
-        SendMessage(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)FALSE);
+        SendMessageW(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, FALSE);
         break;
     }
 

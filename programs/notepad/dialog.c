@@ -160,7 +160,7 @@ static VOID DoSaveFile(VOID)
     if (!WriteFile(hFile, pTemp, size, &dwNumWrite, NULL))
         ShowLastError();
     else
-        SendMessage(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
+        SendMessageW(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
 
     SetEndOfFile(hFile);
     CloseHandle(hFile);
@@ -177,7 +177,7 @@ BOOL DoCloseFile(void)
     int nResult;
     static const WCHAR empty_strW[] = { 0 };
 
-    if (SendMessage(Globals.hEdit, EM_GETMODIFY, 0, 0))
+    if (SendMessageW(Globals.hEdit, EM_GETMODIFY, 0, 0))
     {
         /* prompt user to save changes */
         nResult = AlertFileNotSaved(Globals.szFileName);
@@ -255,18 +255,18 @@ void DoOpenFile(LPCWSTR szFileName)
 
     HeapFree(GetProcessHeap(), 0, pTemp);
 
-    SendMessage(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
-    SendMessage(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
+    SendMessageW(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
+    SendMessageW(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
     SetFocus(Globals.hEdit);
     
     /*  If the file starts with .LOG, add a time/date at the end and set cursor after */
     if (GetWindowTextW(Globals.hEdit, log, sizeof(log)/sizeof(log[0])) && !lstrcmp(log, dotlog))
     {
 	static const WCHAR lfW[] = { '\r','\n',0 };
-	SendMessage(Globals.hEdit, EM_SETSEL, GetWindowTextLength(Globals.hEdit), -1);
-	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)lfW);
+        SendMessageW(Globals.hEdit, EM_SETSEL, GetWindowTextLength(Globals.hEdit), -1);
+        SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)lfW);
 	DIALOG_EditTimeDate();
-	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)lfW);
+        SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)lfW);
     }
 
     SetFileName(szFileName);
@@ -280,7 +280,7 @@ VOID DIALOG_FileNew(VOID)
     /* Close any files and prompt to save changes */
     if (DoCloseFile()) {
         SetWindowText(Globals.hEdit, empty_strW);
-        SendMessage(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
+        SendMessageW(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
         SetFocus(Globals.hEdit);
     }
 }
@@ -618,32 +618,32 @@ VOID DIALOG_FileExit(VOID)
 
 VOID DIALOG_EditUndo(VOID)
 {
-    SendMessage(Globals.hEdit, EM_UNDO, 0, 0);
+    SendMessageW(Globals.hEdit, EM_UNDO, 0, 0);
 }
 
 VOID DIALOG_EditCut(VOID)
 {
-    SendMessage(Globals.hEdit, WM_CUT, 0, 0);
+    SendMessageW(Globals.hEdit, WM_CUT, 0, 0);
 }
 
 VOID DIALOG_EditCopy(VOID)
 {
-    SendMessage(Globals.hEdit, WM_COPY, 0, 0);
+    SendMessageW(Globals.hEdit, WM_COPY, 0, 0);
 }
 
 VOID DIALOG_EditPaste(VOID)
 {
-    SendMessage(Globals.hEdit, WM_PASTE, 0, 0);
+    SendMessageW(Globals.hEdit, WM_PASTE, 0, 0);
 }
 
 VOID DIALOG_EditDelete(VOID)
 {
-    SendMessage(Globals.hEdit, WM_CLEAR, 0, 0);
+    SendMessageW(Globals.hEdit, WM_CLEAR, 0, 0);
 }
 
 VOID DIALOG_EditSelectAll(VOID)
 {
-    SendMessage(Globals.hEdit, EM_SETSEL, 0, (LPARAM)-1);
+    SendMessageW(Globals.hEdit, EM_SETSEL, 0, -1);
 }
 
 VOID DIALOG_EditTimeDate(VOID)
@@ -655,12 +655,12 @@ VOID DIALOG_EditTimeDate(VOID)
     GetLocalTime(&st);
 
     GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &st, NULL, szDate, MAX_STRING_LEN);
-    SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)szDate);
+    SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)szDate);
 
-    SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)spaceW);
+    SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)spaceW);
 
     GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, szDate, MAX_STRING_LEN);
-    SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)szDate);
+    SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)szDate);
 }
 
 VOID DIALOG_EditWrap(VOID)
@@ -681,16 +681,16 @@ VOID DIALOG_EditWrap(VOID)
         return;
     }
     GetWindowText(Globals.hEdit, pTemp, size);
-    modify = SendMessage(Globals.hEdit, EM_GETMODIFY, 0, 0);
+    modify = SendMessageW(Globals.hEdit, EM_GETMODIFY, 0, 0);
     DestroyWindow(Globals.hEdit);
     GetClientRect(Globals.hMainWnd, &rc);
     if( Globals.bWrapLongLines ) dwStyle |= WS_HSCROLL | ES_AUTOHSCROLL;
     Globals.hEdit = CreateWindowEx(WS_EX_CLIENTEDGE, editW, NULL, dwStyle,
                          0, 0, rc.right, rc.bottom, Globals.hMainWnd,
                          NULL, Globals.hInstance, NULL);
-    SendMessage(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)FALSE);
+    SendMessageW(Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, FALSE);
     SetWindowTextW(Globals.hEdit, pTemp);
-    SendMessage(Globals.hEdit, EM_SETMODIFY, (WPARAM)modify, 0);
+    SendMessageW(Globals.hEdit, EM_SETMODIFY, modify, 0);
     SetFocus(Globals.hEdit);
     HeapFree(GetProcessHeap(), 0, pTemp);
     
@@ -716,7 +716,7 @@ VOID DIALOG_SelectFont(VOID)
 
         Globals.hFont=CreateFontIndirect( &lf );
         Globals.lfFont=lf;
-        SendMessage( Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, (LPARAM)TRUE );
+        SendMessageW( Globals.hEdit, WM_SETFONT, (WPARAM)Globals.hFont, TRUE );
         if( currfont!=NULL )
             DeleteObject( currfont );
     }
