@@ -434,7 +434,7 @@ static void shader_sm1_free(void *data)
     HeapFree(GetProcessHeap(), 0, data);
 }
 
-static void shader_sm1_read_header(const DWORD **ptr, DWORD *shader_version)
+static void shader_sm1_read_header(void *data, const DWORD **ptr, DWORD *shader_version)
 {
     TRACE("version: 0x%08x\n", **ptr);
     *shader_version = *(*ptr)++;
@@ -525,7 +525,7 @@ static void shader_sm1_read_comment(const DWORD **ptr, const char **comment)
     *ptr += (token & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
 }
 
-static BOOL shader_sm1_is_end(const DWORD **ptr)
+static BOOL shader_sm1_is_end(void *data, const DWORD **ptr)
 {
     if (**ptr == WINED3DSP_END)
     {

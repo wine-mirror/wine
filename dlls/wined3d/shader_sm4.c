@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 struct wined3d_sm4_data
 {
-    /* We don't store a lot in here yet. */
+    const DWORD *end;
 };
 
 static void *shader_sm4_init(const DWORD *byte_code)
@@ -50,12 +50,15 @@ static void shader_sm4_free(void *data)
     HeapFree(GetProcessHeap(), 0, data);
 }
 
-static void shader_sm4_read_header(const DWORD **ptr, DWORD *shader_version)
+static void shader_sm4_read_header(void *data, const DWORD **ptr, DWORD *shader_version)
 {
+    struct wined3d_sm4_data *priv = data;
+    priv->end = *ptr;
+
     TRACE("version: 0x%08x\n", **ptr);
     *shader_version = *(*ptr)++;
     TRACE("token count: %u\n", **ptr);
-    ++(*ptr);
+    priv->end += *(*ptr)++;
 }
 
 static void shader_sm4_read_opcode(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins,
@@ -100,10 +103,10 @@ static void shader_sm4_read_comment(const DWORD **ptr, const char **comment)
     *comment = NULL;
 }
 
-static BOOL shader_sm4_is_end(const DWORD **ptr)
+static BOOL shader_sm4_is_end(void *data, const DWORD **ptr)
 {
-    FIXME("ptr %p stub!\n", ptr);
-    return TRUE;
+    struct wined3d_sm4_data *priv = data;
+    return *ptr == priv->end;
 }
 
 const struct wined3d_shader_frontend sm4_shader_frontend =

@@ -334,11 +334,11 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
     shader_delete_constant_list(&This->baseShader.constantsB);
     shader_delete_constant_list(&This->baseShader.constantsI);
 
-    fe->shader_read_header(&pToken, &shader_version);
+    fe->shader_read_header(fe_data, &pToken, &shader_version);
     reg_maps->shader_version = shader_version;
     pshader = shader_is_pshader_version(shader_version);
 
-    while (!fe->shader_is_end(&pToken))
+    while (!fe->shader_is_end(fe_data, &pToken))
     {
         struct wined3d_shader_instruction ins;
         const char *comment;
@@ -876,9 +876,9 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
     ins.src = src_param;
     This->baseShader.parse_state.current_row = 0;
 
-    fe->shader_read_header(&pToken, &shader_version);
+    fe->shader_read_header(fe_data, &pToken, &shader_version);
 
-    while (!fe->shader_is_end(&pToken))
+    while (!fe->shader_is_end(fe_data, &pToken))
     {
         const char *comment;
         UINT param_size;
@@ -977,12 +977,12 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
 
     TRACE("Parsing %p\n", pFunction);
 
-    fe->shader_read_header(&pToken, &shader_version);
+    fe->shader_read_header(fe_data, &pToken, &shader_version);
 
     TRACE("%s_%u_%u\n", shader_is_pshader_version(shader_version) ? "ps": "vs",
             WINED3DSHADER_VERSION_MAJOR(shader_version), WINED3DSHADER_VERSION_MINOR(shader_version));
 
-    while (!fe->shader_is_end(&pToken))
+    while (!fe->shader_is_end(fe_data, &pToken))
     {
         struct wined3d_shader_instruction ins;
         const char *comment;
