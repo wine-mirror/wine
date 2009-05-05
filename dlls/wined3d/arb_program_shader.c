@@ -1037,6 +1037,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
     BOOL projected = FALSE, bias = FALSE;
+    struct wined3d_shader_src_param src;
 
     char reg_dest[40];
     char reg_coord[40];
@@ -1049,8 +1050,13 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
        1.4+: Use provided coordinate source register. */
     if (shader_version < WINED3D_SHADER_VERSION(1,4))
         strcpy(reg_coord, reg_dest);
-    else
-        shader_arb_get_src_param(ins, &ins->src[0], 0, reg_coord);
+    else {
+        /* TEX is the only instruction that can handle DW and DZ natively */
+        src = ins->src[0];
+        if(src.modifiers == WINED3DSPSM_DW) src.modifiers = WINED3DSPSM_NONE;
+        if(src.modifiers == WINED3DSPSM_DZ) src.modifiers = WINED3DSPSM_NONE;
+        shader_arb_get_src_param(ins, &src, 0, reg_coord);
+    }
 
     /* 1.0-1.4: Use destination register number as texture code.
        2.0+: Use provided sampler number as texure code. */
@@ -1078,6 +1084,11 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     {
         DWORD src_mod = ins->src[0].modifiers;
         if (src_mod == WINED3DSPSM_DZ) {
+            /* TXP cannot handle DZ natively, so move the z coordinate to .w. reg_coord is a read-only
+             * varying register, so we need a temp reg
+             */
+            shader_addline(ins->ctx->buffer, "SWZ TA, %s, x, y, z, z;\n", reg_coord);
+            strcpy(reg_coord, "TA");
             projected = TRUE;
         } else if(src_mod == WINED3DSPSM_DW) {
             projected = TRUE;
