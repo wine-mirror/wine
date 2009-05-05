@@ -506,7 +506,7 @@ static BOOL ProcessRunKeys( HKEY hkRoot, LPCWSTR szKeyName, BOOL bDelete,
 
         if( (res=runCmd(szCmdLine, NULL, bSynchronous, FALSE ))==INVALID_RUNCMD_RETURN )
         {
-            WINE_ERR("Error running cmd #%d (%d)\n", i, GetLastError() );
+            WINE_ERR("Error running cmd %s (%d)\n", wine_dbgstr_w(szCmdLine), GetLastError() );
         }
 
         WINE_TRACE("Done processing cmd #%d\n", i);
