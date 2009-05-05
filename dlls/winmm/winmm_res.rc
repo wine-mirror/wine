@@ -39,6 +39,7 @@
 #include "winmm_Ja.rc"
 #include "winmm_Nl.rc"
 #include "winmm_No.rc"
+#include "winmm_Pl.rc"
 #include "winmm_Pt.rc"
 #include "winmm_Ru.rc"
 #include "winmm_Si.rc"
