@@ -5,7 +5,7 @@
  * Copyright 1997 Len White
  * Copyright 1999 Keith Matthews
  * Copyright 2000 Corel
- * Copyright 2001,2002 Eric Pouech
+ * Copyright 2001,2002,2009 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 #include <string.h>
 #include "windef.h"
@@ -30,7 +33,6 @@
 #include "wownt32.h"
 #include "dde.h"
 #include "ddeml.h"
-#include "dde_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
@@ -87,15 +89,14 @@ static void map3216_conv_context(CONVCONTEXT16* cc16, const CONVCONTEXT* cc32)
     cc16->dwSecurity = cc32->dwSecurity;
 }
 
-
 /******************************************************************
  *		WDML_InvokeCallback16
  *
  *
  */
-HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
-                                      HCONV hConv, HSZ hsz1, HSZ hsz2,
-                                      HDDEDATA hdata, DWORD dwData1, DWORD dwData2)
+static HDDEDATA	CALLBACK WDML_InvokeCallback16(DWORD pfn16, UINT uType, UINT uFmt,
+                                               HCONV hConv, HSZ hsz1, HSZ hsz2,
+                                               HDDEDATA hdata, ULONG_PTR dwData1, ULONG_PTR dwData2)
 {
     DWORD               d1 = 0;
     HDDEDATA            ret;
@@ -133,7 +134,7 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
     args[2]  = LOWORD(d1);
     args[1]  = HIWORD(dwData2);
     args[0]  = LOWORD(dwData2);
-    WOWCallback16Ex( (DWORD)pfn, WCB16_PASCAL, sizeof(args), args, (DWORD *)&ret );
+    WOWCallback16Ex(pfn16, WCB16_PASCAL, sizeof(args), args, (DWORD *)&ret);
 
     switch (uType)
     {
@@ -145,14 +146,89 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
     return ret;
 }
 
+#define MAX_THUNKS      32
+/* As DDEML doesn't provide a way to get back to an InstanceID when
+ * a callback is run, we use thunk in order to implement simply the
+ * 32bit->16bit callback mechanism.
+ * For each 16bit instance, we create a thunk, which will be passed as
+ * a 32bit callback. This thunk also stores (in the code!) the 16bit
+ * address of the 16bit callback, and passes it back to
+ * WDML_InvokeCallback16.
+ * The code below is mainly to create the thunks themselved
+ */
+static struct ddeml_thunk
+{
+    BYTE        popl_eax;        /* popl  %eax (return address) */
+    BYTE        pushl_func;      /* pushl $pfn16 (16bit callback function) */
+    SEGPTR      pfn16;
+    BYTE        pushl_eax;       /* pushl %eax */
+    BYTE        jmp;             /* ljmp WDML_InvokeCallback16 */
+    DWORD       callback;
+    DWORD       instId;          /* instance ID */
+} *DDEML16_Thunks;
+
+static CRITICAL_SECTION ddeml_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &ddeml_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": ddeml_cs") }
+};
+static CRITICAL_SECTION ddeml_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static struct ddeml_thunk*      DDEML_AddThunk(DWORD instId, DWORD pfn16)
+{
+    struct ddeml_thunk* thunk;
+
+    if (!DDEML16_Thunks)
+    {
+        DDEML16_Thunks = VirtualAlloc(NULL, MAX_THUNKS * sizeof(*DDEML16_Thunks), MEM_COMMIT,
+                                      PAGE_EXECUTE_READWRITE);
+        if (!DDEML16_Thunks) return NULL;
+        for (thunk = DDEML16_Thunks; thunk < &DDEML16_Thunks[MAX_THUNKS]; thunk++)
+        {
+            thunk->popl_eax     = 0x58;   /* popl  %eax */
+            thunk->pushl_func   = 0x68;   /* pushl $pfn16 */
+            thunk->pfn16        = 0;
+            thunk->pushl_eax    = 0x50;   /* pushl %eax */
+            thunk->jmp          = 0xe9;   /* jmp WDML_InvokeCallback16 */
+            thunk->callback     = (char *)WDML_InvokeCallback16 - (char *)(&thunk->callback + 1);
+            thunk->instId       = 0;
+        }
+    }
+    for (thunk = DDEML16_Thunks; thunk < &DDEML16_Thunks[MAX_THUNKS]; thunk++)
+    {
+        /* either instId is 0, and we're looking for an empty slot, or
+         * instId is an already existing instance, and we should find its thunk
+         */
+        if (thunk->instId == instId)
+        {
+            thunk->pfn16 = pfn16;
+            return thunk;
+        }
+    }
+    FIXME("Out of ddeml-thunks. Bump MAX_THUNKS\n");
+    return NULL;
+}
+
 /******************************************************************************
  *            DdeInitialize   (DDEML.2)
  */
 UINT16 WINAPI DdeInitialize16(LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
 			      DWORD afCmd, DWORD ulRes)
 {
-    return WDML_Initialize(pidInst, (PFNCALLBACK)pfnCallback, afCmd, ulRes,
-                           FALSE, TRUE);
+    UINT16 ret;
+    struct ddeml_thunk* thunk;
+
+    EnterCriticalSection(&ddeml_cs);
+    if ((thunk = DDEML_AddThunk(*pidInst, (DWORD)pfnCallback)))
+    {
+        ret = DdeInitializeA(pidInst, (PFNCALLBACK)thunk, afCmd, ulRes);
+        if (ret == DMLERR_NO_ERROR) thunk->instId = *pidInst;
+    }
+    else ret = DMLERR_SYS_ERROR;
+    LeaveCriticalSection(&ddeml_cs);
+    return ret;
 }
 
 /*****************************************************************
@@ -160,7 +236,23 @@ UINT16 WINAPI DdeInitialize16(LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
  */
 BOOL16 WINAPI DdeUninitialize16(DWORD idInst)
 {
-    return (BOOL16)DdeUninitialize(idInst);
+    struct ddeml_thunk* thunk;
+    BOOL16              ret = FALSE;
+
+    if (!DdeUninitialize(idInst)) return FALSE;
+    EnterCriticalSection(&ddeml_cs);
+    for (thunk = DDEML16_Thunks; thunk < &DDEML16_Thunks[MAX_THUNKS]; thunk++)
+    {
+        if (thunk->instId == idInst)
+        {
+            thunk->instId = 0;
+            ret = TRUE;
+            break;
+        }
+    }
+    LeaveCriticalSection(&ddeml_cs);
+    if (!ret) FIXME("Should never happen\n");
+    return ret;
 }
 
 /*****************************************************************

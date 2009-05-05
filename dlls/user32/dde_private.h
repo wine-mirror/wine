@@ -157,7 +157,6 @@ typedef struct tagWDML_INSTANCE
     BOOL			monitor;        /* have these two as full Booleans cos they'll be tested frequently */
     BOOL			clientOnly;	/* bit wasteful of space but it will be faster */
     BOOL			unicode;	/* Flag to indicate Win32 API used to initialise */
-    BOOL			win16;          /* flag to indicate Win16 API used to initialize */
     HSZNode*			nodeList;	/* for cleaning upon exit */
     PFNCALLBACK     		callback;
     DWORD           		CBFflags;
@@ -189,9 +188,6 @@ typedef enum {
 extern	HDDEDATA 	WDML_InvokeCallback(WDML_INSTANCE* pInst, UINT uType, UINT uFmt, HCONV hConv,
 					    HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
 					    ULONG_PTR dwData1, ULONG_PTR dwData2) DECLSPEC_HIDDEN;
-extern	HDDEDATA 	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt, HCONV hConv,
-					      HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
-					      DWORD dwData1, DWORD dwData2) DECLSPEC_HIDDEN;
 extern	WDML_SERVER*	WDML_AddServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic) DECLSPEC_HIDDEN;
 extern	void		WDML_RemoveServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic) DECLSPEC_HIDDEN;
 extern	WDML_SERVER*	WDML_FindServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic) DECLSPEC_HIDDEN;
@@ -201,7 +197,7 @@ extern WDML_QUEUE_STATE WDML_ServerHandle(WDML_CONV* pConv, WDML_XACT* pXAct) DE
 HDDEDATA WDML_ClientHandle(WDML_CONV *pConv, WDML_XACT *pXAct, DWORD dwTimeout, LPDWORD pdwResult) DECLSPEC_HIDDEN;
 /* called both in DdeClientTransaction and server side. */
 extern	UINT		WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
-					DWORD afCmd, DWORD ulRes, BOOL bUnicode, BOOL b16) DECLSPEC_HIDDEN;
+					DWORD afCmd, DWORD ulRes, BOOL bUnicode) DECLSPEC_HIDDEN;
 extern	WDML_CONV* 	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
 				     HSZ hszService, HSZ hszTopic, HWND hwndClient, HWND hwndServer) DECLSPEC_HIDDEN;
 extern	void		WDML_RemoveConv(WDML_CONV* pConv, WDML_SIDE side) DECLSPEC_HIDDEN;
