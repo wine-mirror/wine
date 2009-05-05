@@ -47,6 +47,7 @@
 #include "wps_Nl.rc"
 #include "wps_No.rc"
 #include "wps_Pt.rc"
+#include "wps_Pl.rc"
 #include "wps_Ro.rc"
 #include "wps_Ru.rc"
 #include "wps_Si.rc"
