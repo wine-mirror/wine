@@ -23,6 +23,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
+#define WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT    24
+#define WINED3D_SM4_INSTRUCTION_LENGTH_MASK     (0xf << WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT)
+
+#define WINED3D_SM4_OPCODE_MASK                 0xff
+
 static void shader_sm4_read_header(const DWORD **ptr, DWORD *shader_version)
 {
     TRACE("version: 0x%08x\n", **ptr);
@@ -34,8 +39,18 @@ static void shader_sm4_read_header(const DWORD **ptr, DWORD *shader_version)
 static void shader_sm4_read_opcode(const DWORD **ptr, struct wined3d_shader_instruction *ins,
         UINT *param_size, const SHADER_OPCODE *opcode_table, DWORD shader_version)
 {
-    FIXME("ptr %p, ins %p, param_size %p, opcode_table %p, shader_version %#x stub!\n",
-            ptr, ins, param_size, opcode_table, shader_version);
+    DWORD token = *(*ptr)++;
+    DWORD opcode = token & WINED3D_SM4_OPCODE_MASK;
+
+    FIXME("Unrecognized opcode %#x, token 0x%08x\n", opcode, token);
+
+    ins->handler_idx = WINED3DSIH_TABLE_SIZE;
+    ins->flags = 0;
+    ins->coissue = 0;
+    ins->predicate = 0;
+    ins->dst_count = 0;
+    ins->src_count = 0;
+    *param_size = ((token & WINED3D_SM4_INSTRUCTION_LENGTH_MASK) >> WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT) - 1;
 }
 
 static void shader_sm4_read_src_param(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
