@@ -686,6 +686,7 @@ struct wined3d_shader_frontend
 };
 
 extern const struct wined3d_shader_frontend sm1_shader_frontend;
+extern const struct wined3d_shader_frontend sm4_shader_frontend;
 
 typedef void (*SHADER_HANDLER)(const struct wined3d_shader_instruction *);
 

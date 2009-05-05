@@ -121,6 +121,9 @@ static const char *shader_opcode_names[] =
 
 #define WINED3D_SM1_VS  0xfffe
 #define WINED3D_SM1_PS  0xffff
+#define WINED3D_SM4_PS  0x0000
+#define WINED3D_SM4_VS  0x0001
+#define WINED3D_SM4_GS  0x0002
 
 const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token)
 {
@@ -129,6 +132,11 @@ const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token
         case WINED3D_SM1_VS:
         case WINED3D_SM1_PS:
             return &sm1_shader_frontend;
+
+        case WINED3D_SM4_PS:
+        case WINED3D_SM4_VS:
+        case WINED3D_SM4_GS:
+            return &sm4_shader_frontend;
 
         default:
             FIXME("Unrecognised version token %#x\n", version_token);
