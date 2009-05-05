@@ -27054,6 +27054,14 @@ dlls/sxs/Makefile: dlls/sxs/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/sxs/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/t2embed/Makefile"
+test "x$enable_t2embed" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	t2embed"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/t2embed/Makefile: dlls/t2embed/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/t2embed/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/tapi32/Makefile"
 test "x$enable_tapi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	tapi32"
@@ -29277,6 +29285,7 @@ do
     "dlls/strmiids/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/strmiids/Makefile" ;;
     "dlls/svrapi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/svrapi/Makefile" ;;
     "dlls/sxs/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sxs/Makefile" ;;
+    "dlls/t2embed/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/t2embed/Makefile" ;;
     "dlls/tapi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/tapi32/Makefile" ;;
     "dlls/traffic/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/traffic/Makefile" ;;
     "dlls/twain.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/twain.dll16/Makefile" ;;
