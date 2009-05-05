@@ -60,6 +60,7 @@ typedef struct tagACLMulti {
     const ITfThreadMgrVtbl *ThreadMgrVtbl;
     const ITfSourceVtbl *SourceVtbl;
     const ITfKeystrokeMgrVtbl *KeystrokeMgrVtbl;
+    const ITfMessagePumpVtbl *MessagePumpVtbl;
     LONG refCount;
 
     const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl; /* internal */
@@ -83,6 +84,11 @@ static inline ThreadMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
 static inline ThreadMgr *impl_from_ITfKeystrokeMgrVtbl(ITfKeystrokeMgr *iface)
 {
     return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,KeystrokeMgrVtbl));
+}
+
+static inline ThreadMgr *impl_from_ITfMessagePumpVtbl(ITfMessagePump *iface)
+{
+    return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,MessagePumpVtbl));
 }
 
 static inline ThreadMgr *impl_from_ITfThreadMgrEventSink(ITfThreadMgrEventSink *iface)
@@ -162,6 +168,10 @@ static HRESULT WINAPI ThreadMgr_QueryInterface(ITfThreadMgr *iface, REFIID iid, 
     else if (IsEqualIID(iid, &IID_ITfKeystrokeMgr))
     {
         *ppvOut = &This->KeystrokeMgrVtbl;
+    }
+    else if (IsEqualIID(iid, &IID_ITfMessagePump))
+    {
+        *ppvOut = &This->MessagePumpVtbl;
     }
 
     if (*ppvOut)
@@ -576,6 +586,80 @@ static const ITfKeystrokeMgrVtbl ThreadMgr_KeystrokeMgrVtbl =
 };
 
 /*****************************************************
+ * ITfMessagePump functions
+ *****************************************************/
+
+static HRESULT WINAPI MessagePump_QueryInterface(ITfMessagePump *iface, REFIID iid, LPVOID *ppvOut)
+{
+    ThreadMgr *This = impl_from_ITfMessagePumpVtbl(iface);
+    return ThreadMgr_QueryInterface((ITfThreadMgr *)This, iid, *ppvOut);
+}
+
+static ULONG WINAPI MessagePump_AddRef(ITfMessagePump *iface)
+{
+    ThreadMgr *This = impl_from_ITfMessagePumpVtbl(iface);
+    return ThreadMgr_AddRef((ITfThreadMgr*)This);
+}
+
+static ULONG WINAPI MessagePump_Release(ITfMessagePump *iface)
+{
+    ThreadMgr *This = impl_from_ITfMessagePumpVtbl(iface);
+    return ThreadMgr_Release((ITfThreadMgr *)This);
+}
+
+static HRESULT WINAPI MessagePump_PeekMessageA(ITfMessagePump *iface,
+        LPMSG pMsg, HWND hwnd, UINT wMsgFilterMin, UINT wMsgFilterMax,
+        UINT wRemoveMsg, BOOL *pfResult)
+{
+    if (!pfResult)
+        return E_INVALIDARG;
+    *pfResult = PeekMessageA(pMsg, hwnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
+    return S_OK;
+}
+
+static HRESULT WINAPI MessagePump_GetMessageA(ITfMessagePump *iface,
+        LPMSG pMsg, HWND hwnd, UINT wMsgFilterMin, UINT wMsgFilterMax,
+        BOOL *pfResult)
+{
+    if (!pfResult)
+        return E_INVALIDARG;
+    *pfResult = GetMessageA(pMsg, hwnd, wMsgFilterMin, wMsgFilterMax);
+    return S_OK;
+}
+
+static HRESULT WINAPI MessagePump_PeekMessageW(ITfMessagePump *iface,
+        LPMSG pMsg, HWND hwnd, UINT wMsgFilterMin, UINT wMsgFilterMax,
+        UINT wRemoveMsg, BOOL *pfResult)
+{
+    if (!pfResult)
+        return E_INVALIDARG;
+    *pfResult = PeekMessageW(pMsg, hwnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
+    return S_OK;
+}
+
+static HRESULT WINAPI MessagePump_GetMessageW(ITfMessagePump *iface,
+        LPMSG pMsg, HWND hwnd, UINT wMsgFilterMin, UINT wMsgFilterMax,
+        BOOL *pfResult)
+{
+    if (!pfResult)
+        return E_INVALIDARG;
+    *pfResult = GetMessageW(pMsg, hwnd, wMsgFilterMin, wMsgFilterMax);
+    return S_OK;
+}
+
+static const ITfMessagePumpVtbl ThreadMgr_MessagePumpVtbl =
+{
+    MessagePump_QueryInterface,
+    MessagePump_AddRef,
+    MessagePump_Release,
+
+    MessagePump_PeekMessageA,
+    MessagePump_GetMessageA,
+    MessagePump_PeekMessageW,
+    MessagePump_GetMessageW
+};
+
+/*****************************************************
  * ITfThreadMgrEventSink functions  (internal)
  *****************************************************/
 static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *iface, REFIID iid, LPVOID *ppvOut)
@@ -718,6 +802,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->ThreadMgrVtbl= &ThreadMgr_ThreadMgrVtbl;
     This->SourceVtbl = &ThreadMgr_SourceVtbl;
     This->KeystrokeMgrVtbl= &ThreadMgr_KeystrokeMgrVtbl;
+    This->MessagePumpVtbl= &ThreadMgr_MessagePumpVtbl;
     This->ThreadMgrEventSinkVtbl = &ThreadMgr_ThreadMgrEventSinkVtbl;
     This->refCount = 1;
     TlsSetValue(tlsIndex,This);

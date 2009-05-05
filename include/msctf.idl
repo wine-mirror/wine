@@ -22,6 +22,7 @@ import "comcat.idl";
 import "textstor.idl";
 /* import "ctfutb.idl"; */
 #endif
+cpp_quote("#include <winuser.h>")
 
 cpp_quote("#define TF_E_STACKFULL MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0501)")
 cpp_quote("#define TF_E_ALREADY_EXISTS  MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0506)")
@@ -645,4 +646,43 @@ interface ITfKeyEventSink : IUnknown
         [in] ITfContext *pic,
         [in] REFGUID rguid,
         [out] BOOL *pfEaten);
+};
+
+[
+  object,
+  local,
+  uuid(8f1b8ad8-0b6b-4874-90c5-bd76011e8f7c),
+  pointer_default(unique)
+]
+interface ITfMessagePump : IUnknown
+{
+    HRESULT PeekMessageA(
+        [out] LPMSG pMsg,
+        [in] HWND hwnd,
+        [in] UINT wMsgFilterMin,
+        [in] UINT wMsgFilterMax,
+        [in] UINT wRemoveMsg,
+        [out] BOOL *pfResult);
+
+    HRESULT GetMessageA(
+        [out] LPMSG pMsg,
+        [in] HWND hwnd,
+        [in] UINT wMsgFilterMin,
+        [in] UINT wMsgFilterMax,
+        [out] BOOL *pfResult);
+
+    HRESULT PeekMessageW(
+        [out] LPMSG pMsg,
+        [in] HWND hwnd,
+        [in] UINT wMsgFilterMin,
+        [in] UINT wMsgFilterMax,
+        [in] UINT wRemoveMsg,
+        [out] BOOL *pfResult);
+
+    HRESULT GetMessageW(
+        [out] LPMSG pMsg,
+        [in] HWND hwnd,
+        [in] UINT wMsgFilterMin,
+        [in] UINT wMsgFilterMax,
+        [out] BOOL *pfResult);
 };
