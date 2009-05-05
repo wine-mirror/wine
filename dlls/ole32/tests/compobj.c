@@ -218,11 +218,36 @@ static void test_StringFromGUID2(void)
   ok(len == 0, "len: %d (expected 0)\n", len);
 }
 
+struct info
+{
+    HANDLE wait, stop;
+};
+
+static DWORD CALLBACK ole_initialize_thread(LPVOID pv)
+{
+    HRESULT hr;
+    struct info *info = pv;
+
+    hr = pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    SetEvent(info->wait);
+    WaitForSingleObject(info->stop, INFINITE);
+
+    CoUninitialize();
+    return hr;
+}
+
 static void test_CoCreateInstance(void)
 {
-    REFCLSID rclsid = &CLSID_MyComputer;
-    IUnknown *pUnk = (IUnknown *)0xdeadbeef;
-    HRESULT hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
+    HRESULT hr;
+    HANDLE thread;
+    DWORD tid, exitcode;
+    IUnknown *pUnk;
+    struct info info;
+    REFCLSID rclsid = &CLSID_InternetZoneManager;
+
+    pUnk = (IUnknown *)0xdeadbeef;
+    hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
     ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
     ok(pUnk == NULL, "CoCreateInstance should have changed the passed in pointer to NULL, instead of %p\n", pUnk);
 
@@ -234,19 +259,85 @@ static void test_CoCreateInstance(void)
 
     hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
     ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
+
+    /* show that COM doesn't have to be initialized for multi-threaded apartments if another
+       thread has already done so */
+
+    info.wait = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ok(info.wait != NULL, "CreateEvent failed with error %d\n", GetLastError());
+
+    info.stop = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ok(info.stop != NULL, "CreateEvent failed with error %d\n", GetLastError());
+
+    thread = CreateThread(NULL, 0, ole_initialize_thread, &info, 0, &tid);
+    ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
+
+    WaitForSingleObject(info.wait, INFINITE);
+
+    pUnk = (IUnknown *)0xdeadbeef;
+    hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
+    todo_wine ok(hr == S_OK, "CoCreateInstance should have returned S_OK instead of 0x%08x\n", hr);
+    if (pUnk) IUnknown_Release(pUnk);
+
+    SetEvent(info.stop);
+    WaitForSingleObject(thread, INFINITE);
+
+    GetExitCodeThread(thread, &exitcode);
+    hr = exitcode;
+    ok(hr == S_OK, "thread should have returned S_OK instead of 0x%08x\n", hr);
+
+    CloseHandle(thread);
+    CloseHandle(info.wait);
+    CloseHandle(info.stop);
 }
 
 static void test_CoGetClassObject(void)
 {
-    IUnknown *pUnk = (IUnknown *)0xdeadbeef;
-    HRESULT hr = CoGetClassObject(&CLSID_MyComputer, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
+    HRESULT hr;
+    HANDLE thread;
+    DWORD tid, exitcode;
+    IUnknown *pUnk;
+    struct info info;
+    REFCLSID rclsid = &CLSID_InternetZoneManager;
+
+    hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
     ok(hr == CO_E_NOTINITIALIZED, "CoGetClassObject should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
     ok(pUnk == NULL, "CoGetClassObject should have changed the passed in pointer to NULL, instead of %p\n", pUnk);
 
-    hr = CoGetClassObject(&CLSID_MyComputer, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, NULL);
+    hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, NULL);
     ok(hr == E_INVALIDARG ||
        broken(hr == CO_E_NOTINITIALIZED), /* win9x */
        "CoGetClassObject should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    /* show that COM doesn't have to be initialized for multi-threaded apartments if another
+       thread has already done so */
+
+    info.wait = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ok(info.wait != NULL, "CreateEvent failed with error %d\n", GetLastError());
+
+    info.stop = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ok(info.stop != NULL, "CreateEvent failed with error %d\n", GetLastError());
+
+    thread = CreateThread(NULL, 0, ole_initialize_thread, &info, 0, &tid);
+    ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
+
+    WaitForSingleObject(info.wait, INFINITE);
+
+    pUnk = (IUnknown *)0xdeadbeef;
+    hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
+    todo_wine ok(hr == S_OK, "CoGetClassObject should have returned S_OK instead of 0x%08x\n", hr);
+    if (pUnk) IUnknown_Release(pUnk);
+
+    SetEvent(info.stop);
+    WaitForSingleObject(thread, INFINITE);
+
+    GetExitCodeThread(thread, &exitcode);
+    hr = exitcode;
+    ok(hr == S_OK, "thread should have returned S_OK instead of 0x%08x\n", hr);
+
+    CloseHandle(thread);
+    CloseHandle(info.wait);
+    CloseHandle(info.stop);
 }
 
 static ATOM register_dummy_class(void)
