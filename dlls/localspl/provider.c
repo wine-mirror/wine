@@ -80,6 +80,11 @@ typedef struct {
     LPCWSTR  versionsubdir;
 } printenv_t;
 
+typedef struct {
+    LPWSTR name;
+    LPWSTR printername;
+} printer_t;
+
 /* ############################### */
 
 static struct list monitor_handles = LIST_INIT( monitor_handles );
@@ -271,6 +276,32 @@ static LONG copy_servername_from_name(LPCWSTR name, LPWSTR target)
         }
     }
     return serverlen;
+}
+
+/******************************************************************
+ * get_basename_from_name  (internal)
+ *
+ * skip over the serverpart from the full name
+ *
+ */
+static LPCWSTR get_basename_from_name(LPCWSTR name)
+{
+    if (name == NULL)  return NULL;
+    if ((name[0] == '\\') && (name[1] == '\\')) {
+        /* skip over the servername and search for the following '\'  */
+        name = strchrW(&name[2], '\\');
+        if ((name) && (name[1])) {
+            /* found a separator ('\') followed by a name:
+               skip over the separator and return the rest */
+            name++;
+        }
+        else
+        {
+            /* no basename present (we found only a servername) */
+            return NULL;
+        }
+    }
+    return name;
 }
 
 /******************************************************************
@@ -907,6 +938,64 @@ static HMODULE driver_load(const printenv_t * env, LPWSTR dllname)
     return hui;
 }
 
+/******************************************************************
+ *  printer_free
+ *  free the data pointer of an opened printer
+ */
+static VOID printer_free(printer_t * printer)
+{
+
+    heap_free(printer->printername);
+    heap_free(printer->name);
+    heap_free(printer);
+}
+
+/******************************************************************
+ *  printer_alloc_handle
+ *  alloc a printer handle and remember the data pointer in the printer handle table
+ *
+ */
+static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
+{
+    WCHAR servername[MAX_COMPUTERNAME_LENGTH + 1];
+    printer_t *printer = NULL;
+    LPCWSTR printername;
+
+    if (copy_servername_from_name(name, servername)) {
+        FIXME("server %s not supported\n", debugstr_w(servername));
+        SetLastError(ERROR_INVALID_PRINTER_NAME);
+        return NULL;
+    }
+
+    printername = get_basename_from_name(name);
+    if (name != printername) TRACE("converted %s to %s\n", debugstr_w(name), debugstr_w(printername));
+
+    /* an empty printername is invalid */
+    if (printername && (!printername[0])) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    printer = heap_alloc_zero(sizeof(printer_t));
+    if (!printer) goto end;
+
+    /* clone the base name. This is NULL for the printserver */
+    printer->printername = strdupW(printername);
+
+    /* clone the full name */
+    printer->name = strdupW(name);
+    if (name && (!printer->name)) {
+        printer_free(printer);
+        printer = NULL;
+    }
+
+end:
+
+    TRACE("==> %p\n", printer);
+    return (HANDLE)printer;
+}
+
+
 /******************************************************************************
  *  myAddPrinterDriverEx [internal]
  *
@@ -1213,6 +1302,34 @@ static BOOL WINAPI fpAddPrinterDriverEx(LPWSTR pName, DWORD level, LPBYTE pDrive
 
     return myAddPrinterDriverEx(level, pDriverInfo, dwFileCopyFlags, TRUE);
 }
+
+/******************************************************************************
+ * fpClosePrinter [exported through PRINTPROVIDOR]
+ *
+ * Close a printer handle and free associated resources
+ *
+ * PARAMS
+ *  hPrinter [I] Printerhandle to close
+ *
+ * RESULTS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+static BOOL WINAPI fpClosePrinter(HANDLE hPrinter)
+{
+    printer_t *printer = (printer_t *) hPrinter;
+
+    TRACE("(%p)\n", hPrinter);
+
+    if (printer) {
+        printer_free(printer);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
 /******************************************************************
  * fpDeleteMonitor [exported through PRINTPROVIDOR]
  *
@@ -1425,13 +1542,48 @@ emP_cleanup:
     return (res);
 }
 
+/******************************************************************************
+ * fpOpenPrinter [exported through PRINTPROVIDOR]
+ *
+ * Open a Printer / Printserver or a Printer-Object
+ *
+ * PARAMS
+ *  lpPrinterName [I] Name of Printserver, Printer, or Printer-Object
+ *  pPrinter      [O] The resulting Handle is stored here
+ *  pDefaults     [I] PTR to Default Printer Settings or NULL
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  lpPrinterName is one of:
+ *|  Printserver (NT only): "Servername" or NULL for the local Printserver
+ *|  Printer: "PrinterName"
+ *|  Printer-Object: "PrinterName,Job xxx"
+ *|  XcvMonitor: "Servername,XcvMonitor MonitorName"
+ *|  XcvPort: "Servername,XcvPort PortName"
+ *
+ *
+ */
+static BOOL WINAPI fpOpenPrinter(LPWSTR lpPrinterName, HANDLE *pPrinter,
+                                 LPPRINTER_DEFAULTSW pDefaults)
+{
+
+    TRACE("(%s, %p, %p)\n", debugstr_w(lpPrinterName), pPrinter, pDefaults);
+
+    *pPrinter = printer_alloc_handle(lpPrinterName, pDefaults);
+
+    return (*pPrinter != 0);
+}
+
 /*****************************************************
  *  setup_provider [internal]
  */
 void setup_provider(void)
 {
     static const PRINTPROVIDOR backend = {
-        NULL,   /* fpOpenPrinter */
+        fpOpenPrinter,
         NULL,   /* fpSetJob */
         NULL,   /* fpGetJob */
         NULL,   /* fpEnumJobs */
@@ -1462,7 +1614,7 @@ void setup_provider(void)
         NULL,   /* fpGetPrinterData */
         NULL,   /* fpSetPrinterData */
         NULL,   /* fpWaitForPrinterChange */
-        NULL,   /* fpClosePrinter */
+        fpClosePrinter,
         NULL,   /* fpAddForm */
         NULL,   /* fpDeleteForm */
         NULL,   /* fpGetForm */

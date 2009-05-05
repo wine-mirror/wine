@@ -111,6 +111,7 @@ typedef struct {
     LPWSTR printername;
     monitor_t *pm;
     HANDLE hXcv;
+    HANDLE backend_printer;
     jobqueue_t *queue;
     started_doc_t *doc;
 } opened_printer_t;
@@ -1119,7 +1120,7 @@ static LPCWSTR get_basename_from_name(LPCWSTR name)
  * ToDo:
  *  - pDefault is ignored
  */
-static HANDLE get_opened_printer_entry(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
+static HANDLE get_opened_printer_entry(LPWSTR name, LPPRINTER_DEFAULTSW pDefault)
 {
     UINT_PTR handle = nb_printer_handles, i;
     jobqueue_t *queue = NULL;
@@ -1129,6 +1130,8 @@ static HANDLE get_opened_printer_entry(LPCWSTR name, LPPRINTER_DEFAULTSW pDefaul
     HKEY    hkeyPrinters;
     HKEY    hkeyPrinter;
     DWORD   len;
+
+    if ((backend == NULL)  && !load_backend()) return NULL;
 
     servername = get_servername_from_name(name);
     if (servername) {
@@ -1188,6 +1191,11 @@ static HANDLE get_opened_printer_entry(LPCWSTR name, LPPRINTER_DEFAULTSW pDefaul
         goto end;
     }
 
+    /* get a printer handle from the backend */
+    if (! backend->fpOpenPrinter(name, &printer->backend_printer, pDefault)) {
+        handle = 0;
+        goto end;
+    }
 
     /* clone the base name. This is NULL for the printserver */
     printer->printername = strdupW(printername);
@@ -2892,6 +2900,10 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
         TRACE("%p: %s (hXcv: %p) for %s (doc: %p)\n", printer->pm,
                 debugstr_w(printer->pm ? printer->pm->dllname : NULL),
                 printer->hXcv, debugstr_w(printer->name), printer->doc );
+
+        if (printer->backend_printer) {
+            backend->fpClosePrinter(printer->backend_printer);
+        }
 
         if(printer->doc)
             EndDocPrinter(hPrinter);
