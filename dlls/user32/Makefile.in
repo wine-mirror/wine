@@ -9,7 +9,6 @@ IMPORTS   = gdi32 advapi32 kernel32 ntdll
 DELAYIMPORTS = imm32
 
 SPEC_SRCS16 = \
-	ddeml.spec \
 	user.exe.spec
 
 C_SRCS = \
@@ -22,7 +21,6 @@ C_SRCS = \
 	dde_client.c \
 	dde_misc.c \
 	dde_server.c \
-	ddeml16.c \
 	defdlg.c \
 	defwnd.c \
 	desktop.c \

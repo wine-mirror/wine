@@ -19,7 +19,6 @@ DOCSUBDIRS     = $(DLLSUBDIRS)
 
 WIN16_FILES = \
 	commdlg.dll16 \
-	ddeml.dll16 \
 	gdi.exe16 \
 	krnl386.exe16 \
 	mmsystem.dll16 \
@@ -57,7 +56,7 @@ msvideo.dll16:
 setupx.dll16:
 	echo "setupapi.dll" >$@
 
-ddeml.dll16 user.exe16:
+user.exe16:
 	echo "user32.dll" >$@
 
 ver.dll16:
