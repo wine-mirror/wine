@@ -1663,3 +1663,15 @@ GpStatus WINGDIPAPI GdipImageForceValidation(GpImage *image)
 
     return Ok;
 }
+
+/*****************************************************************************
+ * GdipGetImageThumbnail [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetImageThumbnail(GpImage *image, UINT width, UINT height,
+                            GpImage **ret_image, GetThumbnailImageAbort cb,
+                            VOID * cb_data)
+{
+    FIXME("(%p %u %u %p %p %p) stub\n",
+        image, width, height, ret_image, cb, cb_data);
+    return NotImplemented;
+}
