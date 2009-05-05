@@ -1160,9 +1160,12 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
                      0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
          }
 
-         SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
-         SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
-         SendCustomDlgNotificationMessage(hwnd,CDN_SELCHANGE);
+         if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+         {
+             SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
+             SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
+             SendCustomDlgNotificationMessage(hwnd,CDN_SELCHANGE);
+         }
          return 0;
        }
     case WM_SIZE:
@@ -1749,11 +1752,12 @@ static BOOL FILEDLG95_SendFileOK( HWND hwnd, FileOpenDlgInfos *fodInfos )
     /* ask the hook if we can close */
     if(IsHooked(fodInfos))
     {
-        LRESULT retval;
+        LRESULT retval = 0;
 
         TRACE("---\n");
         /* First send CDN_FILEOK as MSDN doc says */
-        retval = SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
+        if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+            retval = SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
         if (GetWindowLongPtrW(fodInfos->DlgInfos.hwndCustomDlg, DWLP_MSGRESULT))
         {
             TRACE("canceled\n");
@@ -2148,7 +2152,8 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
           IPersistFolder2_Release(ppf2);
 	  if( ! COMDLG32_PIDL_ILIsEqual(pidlCurrent, fodInfos->ShellInfos.pidlAbsCurrent))
 	  {
-            if (SUCCEEDED(IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidlCurrent, SBSP_ABSOLUTE)))
+            if (SUCCEEDED(IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidlCurrent, SBSP_ABSOLUTE))
+                && fodInfos->ofnInfos->Flags & OFN_EXPLORER)
             {
               SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
             }
@@ -2451,7 +2456,8 @@ static BOOL FILEDLG95_SHELL_UpFolder(HWND hwnd)
                                           NULL,
                                           SBSP_PARENT)))
   {
-    SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
+    if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+        SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
     return TRUE;
   }
   return FALSE;
@@ -2473,7 +2479,8 @@ static BOOL FILEDLG95_SHELL_BrowseToDesktop(HWND hwnd)
 
   SHGetSpecialFolderLocation(0,CSIDL_DESKTOP,&pidl);
   hres = IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidl, SBSP_ABSOLUTE);
-  SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
+  if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+      SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
   COMDLG32_SHFree(pidl);
   return SUCCEEDED(hres);
 }
@@ -2651,7 +2658,8 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
           len = lstrlenW(lpstrFilter)+1;
           fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc( len * sizeof(WCHAR) );
           lstrcpyW(fodInfos->ShellInfos.lpstrCurrentFilter,lpstrFilter);
-          SendCustomDlgNotificationMessage(hwnd,CDN_TYPECHANGE);
+          if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+              SendCustomDlgNotificationMessage(hwnd,CDN_TYPECHANGE);
       }
 
       /* Refresh the actual view to display the included items*/
@@ -2955,7 +2963,8 @@ static BOOL FILEDLG95_LOOKIN_OnCommand(HWND hwnd, WORD wNotifyCode)
                                               tmpFolder->pidlItem,
                                               SBSP_ABSOLUTE)))
       {
-        SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
+        if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+            SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
         return TRUE;
       }
       break;
@@ -3629,7 +3638,8 @@ static BOOL BrowseSelectedFolder(HWND hwnd)
                MessageBoxW( hwnd, notexist, fodInfos->title, MB_OK | MB_ICONEXCLAMATION );
           }
           bBrowseSelFolder = TRUE;
-          SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
+          if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+              SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
       }
       COMDLG32_SHFree( pidlSelection );
   }
