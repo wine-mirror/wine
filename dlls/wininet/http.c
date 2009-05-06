@@ -3271,7 +3271,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwContentLength, BOOL bEndRequest)
 {
     INT cnt;
-    BOOL bSuccess = FALSE;
+    BOOL bSuccess = FALSE, redirected = FALSE;
     LPWSTR requestString = NULL;
     INT responseLen;
     BOOL loop_next;
@@ -3373,7 +3373,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             goto lend;
 
         /* send the request as ASCII, tack on the optional data */
-        if( !lpOptional )
+        if (!lpOptional || redirected)
             dwOptionalLength = 0;
         len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
                                    NULL, 0, NULL, NULL );
@@ -3467,6 +3467,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                         }
                         HeapFree( GetProcessHeap(), 0, new_url );
                     }
+                    redirected = TRUE;
                 }
             }
             if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTH) && bSuccess)
