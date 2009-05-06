@@ -11604,6 +11604,17 @@ static void test_MsiApplyMultiplePatches(void)
     todo_wine ok(r == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %u\n", r);
 }
 
+static void test_MsiApplyPatch(void)
+{
+    UINT r;
+
+    r = MsiApplyPatch(NULL, NULL, INSTALLTYPE_DEFAULT, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
+
+    r = MsiApplyPatch("", NULL, INSTALLTYPE_DEFAULT, NULL);
+    ok(r == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %u\n", r);
+}
+
 START_TEST(package)
 {
     HMODULE hmsi = GetModuleHandleA("msi.dll");
@@ -11642,4 +11653,5 @@ START_TEST(package)
     test_MsiGetProductProperty();
     test_MsiSetProperty();
     test_MsiApplyMultiplePatches();
+    test_MsiApplyPatch();
 }

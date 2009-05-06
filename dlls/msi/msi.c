@@ -315,6 +315,9 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
     static const WCHAR patcheq[] = {'P','A','T','C','H','=',0};
     static WCHAR empty[] = {0};
 
+    if (!szPatchPackage || !szPatchPackage[0])
+        return ERROR_INVALID_PARAMETER;
+
     if (!szProductCode)
     {
         r = MsiOpenDatabaseW(szPatchPackage, MSIDBOPEN_READONLY, &patch);
