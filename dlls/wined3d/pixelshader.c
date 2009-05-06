@@ -120,84 +120,84 @@ static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* 
   return WINED3D_OK;
 }
 
-static void pshader_set_limits(
-      IWineD3DPixelShaderImpl *This) { 
+static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
+{
+    This->baseShader.limits.attributes = 0;
+    This->baseShader.limits.address = 0;
+    This->baseShader.limits.packed_output = 0;
 
-      This->baseShader.limits.attributes = 0;
-      This->baseShader.limits.address = 0;
-      This->baseShader.limits.packed_output = 0;
+    switch (This->baseShader.reg_maps.shader_version)
+    {
+        case WINED3DPS_VERSION(1,0):
+        case WINED3DPS_VERSION(1,1):
+        case WINED3DPS_VERSION(1,2):
+        case WINED3DPS_VERSION(1,3):
+            This->baseShader.limits.temporary = 2;
+            This->baseShader.limits.constant_float = 8;
+            This->baseShader.limits.constant_int = 0;
+            This->baseShader.limits.constant_bool = 0;
+            This->baseShader.limits.texcoord = 4;
+            This->baseShader.limits.sampler = 4;
+            This->baseShader.limits.packed_input = 0;
+            This->baseShader.limits.label = 0;
+            break;
 
-      switch (This->baseShader.reg_maps.shader_version)
-      {
-          case WINED3DPS_VERSION(1,0):
-          case WINED3DPS_VERSION(1,1):
-          case WINED3DPS_VERSION(1,2):
-          case WINED3DPS_VERSION(1,3): 
-                   This->baseShader.limits.temporary = 2;
-                   This->baseShader.limits.constant_float = 8;
-                   This->baseShader.limits.constant_int = 0;
-                   This->baseShader.limits.constant_bool = 0;
-                   This->baseShader.limits.texcoord = 4;
-                   This->baseShader.limits.sampler = 4;
-                   This->baseShader.limits.packed_input = 0;
-                   This->baseShader.limits.label = 0;
-                   break;
+        case WINED3DPS_VERSION(1,4):
+            This->baseShader.limits.temporary = 6;
+            This->baseShader.limits.constant_float = 8;
+            This->baseShader.limits.constant_int = 0;
+            This->baseShader.limits.constant_bool = 0;
+            This->baseShader.limits.texcoord = 6;
+            This->baseShader.limits.sampler = 6;
+            This->baseShader.limits.packed_input = 0;
+            This->baseShader.limits.label = 0;
+            break;
 
-          case WINED3DPS_VERSION(1,4):
-                   This->baseShader.limits.temporary = 6;
-                   This->baseShader.limits.constant_float = 8;
-                   This->baseShader.limits.constant_int = 0;
-                   This->baseShader.limits.constant_bool = 0;
-                   This->baseShader.limits.texcoord = 6;
-                   This->baseShader.limits.sampler = 6;
-                   This->baseShader.limits.packed_input = 0;
-                   This->baseShader.limits.label = 0;
-                   break;
-               
-          /* FIXME: temporaries must match D3DPSHADERCAPS2_0.NumTemps */ 
-          case WINED3DPS_VERSION(2,0):
-                   This->baseShader.limits.temporary = 32;
-                   This->baseShader.limits.constant_float = 32;
-                   This->baseShader.limits.constant_int = 16;
-                   This->baseShader.limits.constant_bool = 16;
-                   This->baseShader.limits.texcoord = 8;
-                   This->baseShader.limits.sampler = 16;
-                   This->baseShader.limits.packed_input = 0;
-                   break;
+        /* FIXME: temporaries must match D3DPSHADERCAPS2_0.NumTemps */
+        case WINED3DPS_VERSION(2,0):
+            This->baseShader.limits.temporary = 32;
+            This->baseShader.limits.constant_float = 32;
+            This->baseShader.limits.constant_int = 16;
+            This->baseShader.limits.constant_bool = 16;
+            This->baseShader.limits.texcoord = 8;
+            This->baseShader.limits.sampler = 16;
+            This->baseShader.limits.packed_input = 0;
+            break;
 
-          case WINED3DPS_VERSION(2,1):
-                   This->baseShader.limits.temporary = 32;
-                   This->baseShader.limits.constant_float = 32;
-                   This->baseShader.limits.constant_int = 16;
-                   This->baseShader.limits.constant_bool = 16;
-                   This->baseShader.limits.texcoord = 8;
-                   This->baseShader.limits.sampler = 16;
-                   This->baseShader.limits.packed_input = 0;
-                   This->baseShader.limits.label = 16;
-                   break;
+        case WINED3DPS_VERSION(2,1):
+            This->baseShader.limits.temporary = 32;
+            This->baseShader.limits.constant_float = 32;
+            This->baseShader.limits.constant_int = 16;
+            This->baseShader.limits.constant_bool = 16;
+            This->baseShader.limits.texcoord = 8;
+            This->baseShader.limits.sampler = 16;
+            This->baseShader.limits.packed_input = 0;
+            This->baseShader.limits.label = 16;
+            break;
 
-          case WINED3DPS_VERSION(3,0):
-                   This->baseShader.limits.temporary = 32;
-                   This->baseShader.limits.constant_float = 224;
-                   This->baseShader.limits.constant_int = 16;
-                   This->baseShader.limits.constant_bool = 16;
-                   This->baseShader.limits.texcoord = 0;
-                   This->baseShader.limits.sampler = 16;
-                   This->baseShader.limits.packed_input = 12;
-                   This->baseShader.limits.label = 16; /* FIXME: 2048 */
-                   break;
+        case WINED3DPS_VERSION(3,0):
+            This->baseShader.limits.temporary = 32;
+            This->baseShader.limits.constant_float = 224;
+            This->baseShader.limits.constant_int = 16;
+            This->baseShader.limits.constant_bool = 16;
+            This->baseShader.limits.texcoord = 0;
+            This->baseShader.limits.sampler = 16;
+            This->baseShader.limits.packed_input = 12;
+            This->baseShader.limits.label = 16; /* FIXME: 2048 */
+            break;
 
-          default: This->baseShader.limits.temporary = 32;
-                   This->baseShader.limits.constant_float = 32;
-                   This->baseShader.limits.constant_int = 16;
-                   This->baseShader.limits.constant_bool = 16;
-                   This->baseShader.limits.texcoord = 8;
-                   This->baseShader.limits.sampler = 16;
-                   This->baseShader.limits.packed_input = 0;
-                   This->baseShader.limits.label = 0;
-                   FIXME("Unrecognized pixel shader version %#x\n",
-                           This->baseShader.reg_maps.shader_version);
-      }
+        default:
+            This->baseShader.limits.temporary = 32;
+            This->baseShader.limits.constant_float = 32;
+            This->baseShader.limits.constant_int = 16;
+            This->baseShader.limits.constant_bool = 16;
+            This->baseShader.limits.texcoord = 8;
+            This->baseShader.limits.sampler = 16;
+            This->baseShader.limits.packed_input = 0;
+            This->baseShader.limits.label = 0;
+            FIXME("Unrecognized pixel shader version %#x\n",
+                    This->baseShader.reg_maps.shader_version);
+    }
 }
 
 static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
