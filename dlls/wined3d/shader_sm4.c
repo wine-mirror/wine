@@ -28,9 +28,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define WINED3D_SM4_OPCODE_MASK                 0xff
 
+#define WINED3D_SM4_REGISTER_TYPE_SHIFT         12
+#define WINED3D_SM4_REGISTER_TYPE_MASK          (0xf << WINED3D_SM4_REGISTER_TYPE_SHIFT)
+
+#define WINED3D_SM4_WRITEMASK_SHIFT             4
+#define WINED3D_SM4_WRITEMASK_MASK              (0xf << WINED3D_SM4_WRITEMASK_SHIFT)
+
+enum wined3d_sm4_register_type
+{
+    WINED3D_SM4_RT_TEMP     = 0x0,
+    WINED3D_SM4_RT_INPUT    = 0x1,
+    WINED3D_SM4_RT_OUTPUT   = 0x2,
+};
+
 struct wined3d_sm4_data
 {
     const DWORD *end;
+};
+
+static const WINED3DSHADER_PARAM_REGISTER_TYPE register_type_table[] =
+{
+    /* WINED3D_SM4_RT_TEMP */   WINED3DSPR_TEMP,
+    /* WINED3D_SM4_RT_INPUT */  WINED3DSPR_INPUT,
+    /* WINED3D_SM4_RT_OUTPUT */ WINED3DSPR_OUTPUT,
 };
 
 static void *shader_sm4_init(const DWORD *byte_code)
@@ -88,8 +108,26 @@ static void shader_sm4_read_src_param(const DWORD **ptr, struct wined3d_shader_s
 static void shader_sm4_read_dst_param(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
         struct wined3d_shader_src_param *dst_rel_addr, DWORD shader_version)
 {
-    FIXME("ptr %p, dst_param %p, dst_rel_addr %p, shader_version %#x stub!\n",
-            ptr, dst_param, dst_rel_addr, shader_version);
+    DWORD token = *(*ptr)++;
+    UINT register_idx = *(*ptr)++;
+    enum wined3d_sm4_register_type register_type;
+
+    register_type = (token & WINED3D_SM4_REGISTER_TYPE_MASK) >> WINED3D_SM4_REGISTER_TYPE_SHIFT;
+    if (register_type >= sizeof(register_type_table) / sizeof(*register_type_table))
+    {
+        FIXME("Unhandled register type %#x\n", register_type);
+        dst_param->register_type = WINED3DSPR_TEMP;
+    }
+    else
+    {
+        dst_param->register_type = register_type_table[register_type];
+    }
+
+    dst_param->register_idx = register_idx;
+    dst_param->write_mask = (token & WINED3D_SM4_WRITEMASK_MASK) >> WINED3D_SM4_WRITEMASK_SHIFT;
+    dst_param->modifiers = 0;
+    dst_param->shift = 0;
+    dst_param->rel_addr = NULL;
 }
 
 static void shader_sm4_read_semantic(const DWORD **ptr, struct wined3d_shader_semantic *semantic)
