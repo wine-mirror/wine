@@ -27318,6 +27318,14 @@ dlls/w32sys.dll16/Makefile: dlls/w32sys.dll16/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/w32sys.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/wbemprox/Makefile"
+test "x$enable_wbemprox" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	wbemprox"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wbemprox/Makefile: dlls/wbemprox/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/wbemprox/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/win32s16.dll16/Makefile"
 test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	win32s16.dll16"
@@ -29326,6 +29334,7 @@ do
     "dlls/vwin32.vxd/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/vwin32.vxd/Makefile" ;;
     "dlls/w32skrnl/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/w32skrnl/Makefile" ;;
     "dlls/w32sys.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/w32sys.dll16/Makefile" ;;
+    "dlls/wbemprox/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wbemprox/Makefile" ;;
     "dlls/win32s16.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/win32s16.dll16/Makefile" ;;
     "dlls/win87em.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/win87em.dll16/Makefile" ;;
     "dlls/winaspi.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winaspi.dll16/Makefile" ;;
