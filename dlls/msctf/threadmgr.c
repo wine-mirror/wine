@@ -61,6 +61,7 @@ typedef struct tagACLMulti {
     const ITfSourceVtbl *SourceVtbl;
     const ITfKeystrokeMgrVtbl *KeystrokeMgrVtbl;
     const ITfMessagePumpVtbl *MessagePumpVtbl;
+    const ITfClientIdVtbl *ClientIdVtbl;
     LONG refCount;
 
     const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl; /* internal */
@@ -89,6 +90,11 @@ static inline ThreadMgr *impl_from_ITfKeystrokeMgrVtbl(ITfKeystrokeMgr *iface)
 static inline ThreadMgr *impl_from_ITfMessagePumpVtbl(ITfMessagePump *iface)
 {
     return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,MessagePumpVtbl));
+}
+
+static inline ThreadMgr *impl_from_ITfClientIdVtbl(ITfClientId *iface)
+{
+    return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,ClientIdVtbl));
 }
 
 static inline ThreadMgr *impl_from_ITfThreadMgrEventSink(ITfThreadMgrEventSink *iface)
@@ -172,6 +178,10 @@ static HRESULT WINAPI ThreadMgr_QueryInterface(ITfThreadMgr *iface, REFIID iid, 
     else if (IsEqualIID(iid, &IID_ITfMessagePump))
     {
         *ppvOut = &This->MessagePumpVtbl;
+    }
+    else if (IsEqualIID(iid, &IID_ITfClientId))
+    {
+        *ppvOut = &This->ClientIdVtbl;
     }
 
     if (*ppvOut)
@@ -660,6 +670,54 @@ static const ITfMessagePumpVtbl ThreadMgr_MessagePumpVtbl =
 };
 
 /*****************************************************
+ * ITfClientId functions
+ *****************************************************/
+
+static HRESULT WINAPI ClientId_QueryInterface(ITfClientId *iface, REFIID iid, LPVOID *ppvOut)
+{
+    ThreadMgr *This = impl_from_ITfClientIdVtbl(iface);
+    return ThreadMgr_QueryInterface((ITfThreadMgr *)This, iid, *ppvOut);
+}
+
+static ULONG WINAPI ClientId_AddRef(ITfClientId *iface)
+{
+    ThreadMgr *This = impl_from_ITfClientIdVtbl(iface);
+    return ThreadMgr_AddRef((ITfThreadMgr*)This);
+}
+
+static ULONG WINAPI ClientId_Release(ITfClientId *iface)
+{
+    ThreadMgr *This = impl_from_ITfClientIdVtbl(iface);
+    return ThreadMgr_Release((ITfThreadMgr *)This);
+}
+
+static HRESULT WINAPI ClientId_GetClientId(ITfClientId *iface,
+    REFCLSID rclsid, TfClientId *ptid)
+
+{
+    HRESULT hr;
+    ITfCategoryMgr *catmgr;
+    ThreadMgr *This = impl_from_ITfClientIdVtbl(iface);
+
+    TRACE("(%p) %s\n",This,debugstr_guid(rclsid));
+
+    CategoryMgr_Constructor(NULL,(IUnknown**)&catmgr);
+    hr = ITfCategoryMgr_RegisterGUID(catmgr,rclsid,ptid);
+    ITfCategoryMgr_Release(catmgr);
+
+    return hr;
+}
+
+static const ITfClientIdVtbl ThreadMgr_ClientIdVtbl =
+{
+    ClientId_QueryInterface,
+    ClientId_AddRef,
+    ClientId_Release,
+
+    ClientId_GetClientId
+};
+
+/*****************************************************
  * ITfThreadMgrEventSink functions  (internal)
  *****************************************************/
 static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *iface, REFIID iid, LPVOID *ppvOut)
@@ -803,6 +861,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->SourceVtbl = &ThreadMgr_SourceVtbl;
     This->KeystrokeMgrVtbl= &ThreadMgr_KeystrokeMgrVtbl;
     This->MessagePumpVtbl= &ThreadMgr_MessagePumpVtbl;
+    This->ClientIdVtbl = &ThreadMgr_ClientIdVtbl;
     This->ThreadMgrEventSinkVtbl = &ThreadMgr_ThreadMgrEventSinkVtbl;
     This->refCount = 1;
     TlsSetValue(tlsIndex,This);

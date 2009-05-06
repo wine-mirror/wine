@@ -686,3 +686,16 @@ interface ITfMessagePump : IUnknown
         [in] UINT wMsgFilterMax,
         [out] BOOL *pfResult);
 };
+
+[
+  object,
+  local,
+  uuid(d60a7b49-1b9f-4be2-b702-47e9dc05dec3),
+  pointer_default(unique)
+]
+interface ITfClientId : IUnknown
+{
+    HRESULT GetClientId(
+        [in] REFCLSID rclsid,
+        [out] TfClientId *ptid);
+};

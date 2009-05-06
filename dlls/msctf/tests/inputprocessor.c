@@ -648,6 +648,36 @@ static void test_TfGuidAtom(void)
     todo_wine ok(!IsEqualGUID(&g1,&GUID_NULL),"guid should not be NULL\n");
 }
 
+static void test_ClientId(void)
+{
+    ITfClientId *pcid;
+    TfClientId id1,id2;
+    HRESULT hr;
+    GUID g2;
+
+    hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfClientId, (LPVOID*)&pcid);
+    ok(SUCCEEDED(hr),"Unable to aquire ITfClientId interface\n");
+
+    CoCreateGuid(&g2);
+
+    hr = ITfClientId_GetClientId(pcid,&GUID_NULL,&id1);
+    ok(SUCCEEDED(hr),"GetClientId failed\n");
+    hr = ITfClientId_GetClientId(pcid,&GUID_NULL,&id2);
+    ok(SUCCEEDED(hr),"GetClientId failed\n");
+    ok(id1==id2,"Id's for GUID_NULL do not match\n");
+    hr = ITfClientId_GetClientId(pcid,&CLSID_FakeService,&id2);
+    ok(SUCCEEDED(hr),"GetClientId failed\n");
+    ok(id2!=id1,"Id matches GUID_NULL\n");
+    todo_wine ok(id2==tid,"Id for CLSID_FakeService not matching tid\n");
+    ok(id2!=cid,"Id for CLSID_FakeService matching cid\n");
+    hr = ITfClientId_GetClientId(pcid,&g2,&id2);
+    ok(SUCCEEDED(hr),"GetClientId failed\n");
+    ok(id2!=id1,"Id matches GUID_NULL\n");
+    ok(id2!=tid,"Id for random guid matching tid\n");
+    ok(id2!=cid,"Id for random guid matching cid\n");
+    ITfClientId_Release(pcid);
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -660,6 +690,7 @@ START_TEST(inputprocessor)
         test_Activate();
         test_startSession();
         test_TfGuidAtom();
+        test_ClientId();
         test_KeystrokeMgr();
         test_endSession();
         test_EnumLanguageProfiles();
