@@ -341,6 +341,7 @@ static BOOL ImportRegistryFile(HWND hWnd)
     WCHAR title[128];
 
     InitOpenFileName(hWnd, &ofn);
+    ofn.Flags |= OFN_ENABLESIZING;
     LoadStringW(hInst, IDS_FILEDIALOG_IMPORT_TITLE, title, COUNT_OF(title));
     ofn.lpstrTitle = title;
     if (GetOpenFileNameW(&ofn)) {

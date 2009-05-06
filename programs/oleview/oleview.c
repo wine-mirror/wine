@@ -137,7 +137,7 @@ static void InitOpenFileName(HWND hWnd, OPENFILENAME *pofn, WCHAR *wszFilter,
     pofn->nFilterIndex = 0;
     pofn->lpstrFile = wszFileName;
     pofn->nMaxFile = MAX_LOAD_STRING;
-    pofn->Flags = OFN_HIDEREADONLY;
+    pofn->Flags = OFN_HIDEREADONLY | OFN_ENABLESIZING;
 }
 
 static void CopyClsid(HTREEITEM item)

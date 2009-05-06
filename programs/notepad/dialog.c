@@ -306,7 +306,7 @@ VOID DIALOG_FileOpen(VOID)
     openfilename.nMaxFile          = SIZEOF(szPath);
     openfilename.lpstrInitialDir   = szDir;
     openfilename.Flags             = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
-        OFN_HIDEREADONLY;
+        OFN_HIDEREADONLY | OFN_ENABLESIZING;
     openfilename.lpstrDefExt       = szDefaultExt;
 
 
@@ -345,7 +345,7 @@ BOOL DIALOG_FileSaveAs(VOID)
     saveas.nMaxFile          = SIZEOF(szPath);
     saveas.lpstrInitialDir   = szDir;
     saveas.Flags             = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT |
-        OFN_HIDEREADONLY;
+        OFN_HIDEREADONLY | OFN_ENABLESIZING;
     saveas.lpstrDefExt       = szDefaultExt;
 
     if (GetSaveFileName(&saveas)) {
