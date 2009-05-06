@@ -53,7 +53,7 @@ typedef struct {
 
 typedef struct {
     char reg_name[150];
-    char param_str[100];
+    char param_str[200];
 } glsl_src_param_t;
 
 typedef struct {
