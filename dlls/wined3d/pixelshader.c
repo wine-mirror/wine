@@ -341,17 +341,9 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
     CONST DWORD *function = This->baseShader.function;
     GLuint retval;
     SHADER_BUFFER buffer;
-    const struct wined3d_shader_frontend *fe;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
 
     TRACE("(%p) : function %p\n", This, function);
-
-    fe = shader_select_frontend(This->baseShader.reg_maps.shader_version);
-    if (!fe)
-    {
-        FIXME("Unable to find frontend for shader.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
 
     pixelshader_update_samplers(&This->baseShader.reg_maps,
             ((IWineD3DDeviceImpl *)This->baseShader.device)->stateBlock->textures);
