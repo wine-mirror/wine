@@ -27,7 +27,6 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
 #define MAX_PROGRAM_NAME_LENGTH 80
 
