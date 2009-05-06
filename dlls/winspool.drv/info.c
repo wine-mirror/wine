@@ -109,8 +109,6 @@ typedef struct {
 typedef struct {
     LPWSTR name;
     LPWSTR printername;
-    monitor_t *pm;
-    HANDLE hXcv;
     HANDLE backend_printer;
     jobqueue_t *queue;
     started_doc_t *doc;
@@ -244,8 +242,6 @@ static const WCHAR deviceW[]  = {'d','e','v','i','c','e',0};
 static const WCHAR devicesW[] = {'d','e','v','i','c','e','s',0};
 static const WCHAR windowsW[] = {'w','i','n','d','o','w','s',0};
 static const WCHAR emptyStringW[] = {0};
-static const WCHAR XcvMonitorW[] = {',','X','c','v','M','o','n','i','t','o','r',' ',0};
-static const WCHAR XcvPortW[] = {',','X','c','v','P','o','r','t',' ',0};
 
 static const WCHAR May_Delete_Value[] = {'W','i','n','e','M','a','y','D','e','l','e','t','e','M','e',0};
 
@@ -1127,9 +1123,6 @@ static HANDLE get_opened_printer_entry(LPWSTR name, LPPRINTER_DEFAULTSW pDefault
     opened_printer_t *printer = NULL;
     LPWSTR  servername;
     LPCWSTR printername;
-    HKEY    hkeyPrinters;
-    HKEY    hkeyPrinter;
-    DWORD   len;
 
     if ((backend == NULL)  && !load_backend()) return NULL;
 
@@ -1207,69 +1200,6 @@ static HANDLE get_opened_printer_entry(LPWSTR name, LPPRINTER_DEFAULTSW pDefault
         goto end;
     }
 
-    if (printername) {
-        len = sizeof(XcvMonitorW)/sizeof(WCHAR) - 1;
-        if (strncmpW(printername, XcvMonitorW, len) == 0) {
-            /* OpenPrinter(",XcvMonitor " detected */
-            TRACE(",XcvMonitor: %s\n", debugstr_w(&printername[len]));
-            printer->pm = monitor_load(&printername[len], NULL);
-            if (printer->pm == NULL) {
-                SetLastError(ERROR_UNKNOWN_PORT);
-                handle = 0;
-                goto end;
-            }
-        }
-        else
-        {
-            len = sizeof(XcvPortW)/sizeof(WCHAR) - 1;
-            if (strncmpW( printername, XcvPortW, len) == 0) {
-                /* OpenPrinter(",XcvPort " detected */
-                TRACE(",XcvPort: %s\n", debugstr_w(&printername[len]));
-                printer->pm = monitor_load_by_port(&printername[len]);
-                if (printer->pm == NULL) {
-                    SetLastError(ERROR_UNKNOWN_PORT);
-                    handle = 0;
-                    goto end;
-                }
-            }
-        }
-
-        if (printer->pm) {
-            if ((printer->pm->monitor) && (printer->pm->monitor->pfnXcvOpenPort)) {
-                printer->pm->monitor->pfnXcvOpenPort(&printername[len],
-                                                    pDefault ? pDefault->DesiredAccess : 0,
-                                                    &printer->hXcv);
-            }
-            if (printer->hXcv == NULL) {
-                SetLastError(ERROR_INVALID_PARAMETER);
-                handle = 0;
-                goto end;
-            }
-        }
-        else
-        {
-            /* Does the Printer exist? */
-            if (RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) != ERROR_SUCCESS) {
-                ERR("Can't create Printers key\n");
-                handle = 0;
-                goto end;
-            }
-            if (RegOpenKeyW(hkeyPrinters, printername, &hkeyPrinter) != ERROR_SUCCESS) {
-                WARN("Printer not found in Registry: %s\n", debugstr_w(printername));
-                RegCloseKey(hkeyPrinters);
-                SetLastError(ERROR_INVALID_PRINTER_NAME);
-                handle = 0;
-                goto end;
-            }
-            RegCloseKey(hkeyPrinter);
-            RegCloseKey(hkeyPrinters);
-        }
-    }
-    else
-    {
-        TRACE("using the local printserver\n");
-    }
-
     if(queue)
         printer->queue = queue;
     else
@@ -1290,8 +1220,6 @@ end:
     LeaveCriticalSection(&printer_handles_cs);
     if (!handle && printer) {
         /* Something failed: Free all resources */
-        if (printer->hXcv) printer->pm->monitor->pfnXcvClosePort(printer->hXcv);
-        monitor_unload(printer->pm);
         HeapFree(GetProcessHeap(), 0, printer->printername);
         HeapFree(GetProcessHeap(), 0, printer->name);
         if (!queue) HeapFree(GetProcessHeap(), 0, printer->queue);
@@ -2897,9 +2825,7 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
     {
         struct list *cursor, *cursor2;
 
-        TRACE("%p: %s (hXcv: %p) for %s (doc: %p)\n", printer->pm,
-                debugstr_w(printer->pm ? printer->pm->dllname : NULL),
-                printer->hXcv, debugstr_w(printer->name), printer->doc );
+        TRACE("closing %s (doc: %p)\n", debugstr_w(printer->name), printer->doc);
 
         if (printer->backend_printer) {
             backend->fpClosePrinter(printer->backend_printer);
@@ -2917,8 +2843,7 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
             }
             HeapFree(GetProcessHeap(), 0, printer->queue);
         }
-        if (printer->hXcv) printer->pm->monitor->pfnXcvClosePort(printer->hXcv);
-        monitor_unload(printer->pm);
+
         HeapFree(GetProcessHeap(), 0, printer->printername);
         HeapFree(GetProcessHeap(), 0, printer->name);
         HeapFree(GetProcessHeap(), 0, printer);
@@ -7088,8 +7013,10 @@ BOOL WINAPI XcvDataW( HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
           pInputData, cbInputData, pOutputData,
           cbOutputData, pcbOutputNeeded, pdwStatus);
 
+    if ((backend == NULL)  && !load_backend()) return FALSE;
+
     printer = get_opened_printer(hXcv);
-    if (!printer || (!printer->hXcv)) {
+    if (!printer || (!printer->backend_printer)) {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
@@ -7106,10 +7033,9 @@ BOOL WINAPI XcvDataW( HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
 
     *pcbOutputNeeded = 0;
 
-    *pdwStatus = printer->pm->monitor->pfnXcvDataPort(printer->hXcv, pszDataName,
-            pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
+    return backend->fpXcvData(printer->backend_printer, pszDataName, pInputData,
+                    cbInputData, pOutputData, cbOutputData, pcbOutputNeeded, pdwStatus);
 
-    return TRUE;
 }
 
 /*****************************************************************************

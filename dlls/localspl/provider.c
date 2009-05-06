@@ -1724,6 +1724,73 @@ static BOOL WINAPI fpOpenPrinter(LPWSTR lpPrinterName, HANDLE *pPrinter,
     return (*pPrinter != 0);
 }
 
+/******************************************************************************
+ * fpXcvData [exported through PRINTPROVIDOR]
+ *
+ * Execute commands in the Printmonitor DLL
+ *
+ * PARAMS
+ *  hXcv            [i] Handle from fpOpenPrinter (with XcvMonitor or XcvPort)
+ *  pszDataName     [i] Name of the command to execute
+ *  pInputData      [i] Buffer for extra Input Data (needed only for some commands)
+ *  cbInputData     [i] Size in Bytes of Buffer at pInputData
+ *  pOutputData     [o] Buffer to receive additional Data (needed only for some commands)
+ *  cbOutputData    [i] Size in Bytes of Buffer at pOutputData
+ *  pcbOutputNeeded [o] PTR to receive the minimal Size in Bytes of the Buffer at pOutputData
+ *  pdwStatus       [o] PTR to receive the win32 error code from the Printmonitor DLL
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ * NOTES
+ *  Returning "TRUE" does mean, that the Printmonitor DLL was called successful.
+ *  The execution of the command can still fail (check pdwStatus for ERROR_SUCCESS).
+ *
+ *  Minimal List of commands, that a Printmonitor DLL should support:
+ *
+ *| "MonitorUI" : Return the Name of the Userinterface-DLL as WSTR in pOutputData
+ *| "AddPort"   : Add a Port
+ *| "DeletePort": Delete a Port
+ *
+ *  Many Printmonitors support additional commands. Examples for localspl.dll:
+ *  "GetDefaultCommConfig", "SetDefaultCommConfig",
+ *  "GetTransmissionRetryTimeout", "ConfigureLPTPortCommandOK"
+ *
+ */
+static BOOL WINAPI fpXcvData(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
+                    DWORD cbInputData, PBYTE pOutputData, DWORD cbOutputData,
+                    PDWORD pcbOutputNeeded, PDWORD pdwStatus)
+{
+    printer_t *printer = (printer_t * ) hXcv;
+
+    TRACE("(%p, %s, %p, %d, %p, %d, %p, %p)\n", hXcv, debugstr_w(pszDataName),
+          pInputData, cbInputData, pOutputData,
+          cbOutputData, pcbOutputNeeded, pdwStatus);
+
+    if (!printer || (!printer->hXcv)) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (!pcbOutputNeeded) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!pszDataName || !pdwStatus || (!pOutputData && (cbOutputData > 0))) {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+
+    *pcbOutputNeeded = 0;
+
+    *pdwStatus = printer->pm->monitor->pfnXcvDataPort(printer->hXcv, pszDataName,
+            pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
+
+    return TRUE;
+}
+
 /*****************************************************
  *  setup_provider [internal]
  */
@@ -1806,7 +1873,7 @@ void setup_provider(void)
         NULL,   /* fpAddPerMachineConnection */
         NULL,   /* fpDeletePerMachineConnection */
         NULL,   /* fpEnumPerMachineConnections */
-        NULL,   /* fpXcvData */
+        fpXcvData,
         fpAddPrinterDriverEx,
         NULL,   /* fpSplReadPrinter */
         NULL,   /* fpDriverUnloadComplete */
