@@ -3241,6 +3241,18 @@ GpStatus WINGDIPAPI GdipSetPixelOffsetMode(GpGraphics *graphics, PixelOffsetMode
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipSetRenderingOrigin(GpGraphics *graphics, INT x, INT y)
+{
+    static int calls;
+
+    TRACE("(%p,%i,%i)\n", graphics, x, y);
+
+    if (!(calls++))
+        FIXME("not implemented\n");
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipSetSmoothingMode(GpGraphics *graphics, SmoothingMode mode)
 {
     TRACE("(%p, %d)\n", graphics, mode);

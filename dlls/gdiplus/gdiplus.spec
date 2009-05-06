@@ -582,7 +582,7 @@
 @ stdcall GdipSetPenWidth(ptr long)
 @ stdcall GdipSetPixelOffsetMode(ptr long)
 @ stdcall GdipSetPropertyItem(ptr ptr)
-@ stub GdipSetRenderingOrigin
+@ stdcall GdipSetRenderingOrigin(ptr long long)
 @ stdcall GdipSetSmoothingMode(ptr long)
 @ stdcall GdipSetSolidFillColor(ptr ptr)
 @ stdcall GdipSetStringFormatAlign(ptr long)
