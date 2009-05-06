@@ -319,7 +319,8 @@ static void on_add_app_click(HWND dialog)
   OPENFILENAMEW ofn = { sizeof(OPENFILENAMEW),
 		       0, /*hInst*/0, 0, NULL, 0, 0, NULL,
 		       0, NULL, 0, pathC, 0,
-		       OFN_SHOWHELP | OFN_HIDEREADONLY, 0, 0, NULL, 0, NULL };
+		       OFN_SHOWHELP | OFN_HIDEREADONLY | OFN_ENABLESIZING,
+                       0, 0, NULL, 0, NULL };
 
   LoadStringW (GetModuleHandle (NULL), IDS_SELECT_EXECUTABLE, selectExecutableStr,
       sizeof(selectExecutableStr)/sizeof(selectExecutableStr[0]));

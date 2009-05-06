@@ -642,7 +642,7 @@ static void on_theme_install(HWND dialog)
   ofn.nMaxFileTitle = sizeof(filetitle)/sizeof(filetitle[0]);
   ofn.lpstrInitialDir = NULL;
   ofn.lpstrTitle = title;
-  ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
+  ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
   ofn.nFileOffset = 0;
   ofn.nFileExtension = 0;
   ofn.lpstrDefExt = NULL;
