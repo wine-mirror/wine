@@ -426,7 +426,6 @@ extern BOOL PSDRV_SetPen( PSDRV_PDEVICE *physDev );
 extern void PSDRV_SetClip(PSDRV_PDEVICE* phyDev);
 extern void PSDRV_ResetClip(PSDRV_PDEVICE* phyDev);
 
-extern BOOL PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2);
 extern BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2);
 extern void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
 		     COLORREF wincolor );
@@ -457,7 +456,6 @@ extern BOOL PSDRV_WriteGSave(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteGRestore(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteNewPath(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteClosePath(PSDRV_PDEVICE *physDev);
-extern BOOL PSDRV_WriteInitClip(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteClip(PSDRV_PDEVICE *physDev);
 extern BOOL PSDRV_WriteRectClip(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h);
 extern BOOL PSDRV_WriteRectClip2(PSDRV_PDEVICE *physDev, CHAR *pszArrayName);

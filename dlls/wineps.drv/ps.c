@@ -112,13 +112,6 @@ static const char psrectangle[] = /* x, y, width, height, -width */
 "%d 0 rlineto\n"
 "closepath\n";
 
-static const char psrrectangle[] = /* x, y, width, height, -width */
-"%d %d rmoveto\n"
-"%d 0 rlineto\n"
-"0 %d rlineto\n"
-"%d 0 rlineto\n"
-"closepath\n";
-
 static const char psglyphshow[] = /* glyph name */
 "/%s glyphshow\n";
 
@@ -169,9 +162,6 @@ static const char psclosepath[] =
 static const char psclip[] =
 "clip\n";
 
-static const char psinitclip[] =
-"initclip\n";
-
 static const char pseoclip[] =
 "eoclip\n";
 
@@ -186,9 +176,6 @@ static const char pshatch[] =
 
 static const char psrotate[] = /* ang */
 "%.1f rotate\n";
-
-static const char psarrayget[] =
-"%s %d get\n";
 
 static const char psarrayput[] =
 "%s %d %d put\n";
@@ -508,15 +495,6 @@ BOOL PSDRV_WriteRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width,
     return PSDRV_WriteSpool(physDev, buf, strlen(buf));
 }
 
-BOOL PSDRV_WriteRRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width,
-      INT height)
-{
-    char buf[100];
-
-    sprintf(buf, psrrectangle, x, y, width, height, -width);
-    return PSDRV_WriteSpool(physDev, buf, strlen(buf));
-}
-
 BOOL PSDRV_WriteArc(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h, double ang1,
 		      double ang2)
 {
@@ -649,11 +627,6 @@ BOOL PSDRV_WriteClip(PSDRV_PDEVICE *physDev)
 BOOL PSDRV_WriteEOClip(PSDRV_PDEVICE *physDev)
 {
     return PSDRV_WriteSpool(physDev, pseoclip, sizeof(pseoclip)-1);
-}
-
-BOOL PSDRV_WriteInitClip(PSDRV_PDEVICE *physDev)
-{
-    return PSDRV_WriteSpool(physDev, psinitclip, sizeof(psinitclip)-1);
 }
 
 BOOL PSDRV_WriteHatch(PSDRV_PDEVICE *physDev)
@@ -806,14 +779,6 @@ BOOL PSDRV_WriteData(PSDRV_PDEVICE *physDev, const BYTE *data, DWORD number)
     } while(num_left);
 
     return TRUE;
-}
-
-BOOL PSDRV_WriteArrayGet(PSDRV_PDEVICE *physDev, CHAR *pszArrayName, INT nIndex)
-{
-    char buf[100];
-
-    sprintf(buf, psarrayget, pszArrayName, nIndex);
-    return PSDRV_WriteSpool(physDev, buf, strlen(buf));
 }
 
 BOOL PSDRV_WriteArrayPut(PSDRV_PDEVICE *physDev, CHAR *pszArrayName, INT nIndex, LONG lObject)
