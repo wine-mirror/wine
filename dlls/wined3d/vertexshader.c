@@ -36,14 +36,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
 {
+    DWORD shader_version = WINED3D_SHADER_VERSION(This->baseShader.reg_maps.shader_version.major,
+            This->baseShader.reg_maps.shader_version.minor);
+
     This->baseShader.limits.texcoord = 0;
     This->baseShader.limits.attributes = 16;
     This->baseShader.limits.packed_input = 0;
 
-    switch (This->baseShader.reg_maps.shader_version)
+    switch (shader_version)
     {
-        case WINED3DVS_VERSION(1,0):
-        case WINED3DVS_VERSION(1,1):
+        case WINED3D_SHADER_VERSION(1,0):
+        case WINED3D_SHADER_VERSION(1,1):
             This->baseShader.limits.temporary = 12;
             This->baseShader.limits.constant_bool = 0;
             This->baseShader.limits.constant_int = 0;
@@ -56,8 +59,8 @@ static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
             This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
             break;
 
-        case WINED3DVS_VERSION(2,0):
-        case WINED3DVS_VERSION(2,1):
+        case WINED3D_SHADER_VERSION(2,0):
+        case WINED3D_SHADER_VERSION(2,1):
             This->baseShader.limits.temporary = 12;
             This->baseShader.limits.constant_bool = 16;
             This->baseShader.limits.constant_int = 16;
@@ -68,7 +71,7 @@ static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
             This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
             break;
 
-        case WINED3DVS_VERSION(3,0):
+        case WINED3D_SHADER_VERSION(3,0):
             This->baseShader.limits.temporary = 32;
             This->baseShader.limits.constant_bool = 32;
             This->baseShader.limits.constant_int = 32;
@@ -92,8 +95,9 @@ static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
             This->baseShader.limits.sampler = 0;
             This->baseShader.limits.label = 16;
             This->baseShader.limits.constant_float = min(256, GL_LIMITS(vshader_constantsF));
-            FIXME("Unrecognized vertex shader version %#x\n",
-                    This->baseShader.reg_maps.shader_version);
+            FIXME("Unrecognized vertex shader version %u.%u\n",
+                    This->baseShader.reg_maps.shader_version.major,
+                    This->baseShader.reg_maps.shader_version.minor);
     }
 }
 

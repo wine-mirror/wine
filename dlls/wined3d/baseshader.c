@@ -318,7 +318,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     void *fe_data = This->baseShader.frontend_data;
-    DWORD shader_version;
+    struct wined3d_shader_version shader_version;
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
     const DWORD* pToken = byte_code;
     char pshader;
@@ -336,7 +336,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
 
     fe->shader_read_header(fe_data, &pToken, &shader_version);
     reg_maps->shader_version = shader_version;
-    pshader = shader_is_pshader_version(shader_version);
+    pshader = shader_is_pshader_version(shader_version.type);
 
     while (!fe->shader_is_end(fe_data, &pToken))
     {
@@ -408,7 +408,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             pToken += 4;
 
             /* In pixel shader 1.X shaders, the constants are clamped between [-1;1] */
-            if (WINED3DSHADER_VERSION_MAJOR(shader_version) == 1 && pshader)
+            if (shader_version.major == 1 && pshader)
             {
                 float *value = (float *) lconst->value;
                 if(value[0] < -1.0) value[0] = -1.0;
@@ -513,8 +513,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and
                  * is used in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel
                  * shaders because TECRDOUT isn't used in them, but future register types might cause issues */
-                if (!pshader && WINED3DSHADER_VERSION_MAJOR(shader_version) < 3
-                        && dst_param.register_type == WINED3DSPR_TEXCRDOUT)
+                if (!pshader && shader_version.major < 3 && dst_param.register_type == WINED3DSPR_TEXCRDOUT)
                 {
                     reg_maps->texcoord_mask[dst_param.register_type] |= dst_param.write_mask;
                 }
@@ -525,7 +524,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 }
 
                 /* Declare 1.X samplers implicitly, based on the destination reg. number */
-                if (WINED3DSHADER_VERSION_MAJOR(shader_version) == 1
+                if (shader_version.major == 1
                         && pshader /* Filter different instructions with the same enum values in VS */
                         && (ins.handler_idx == WINED3DSIH_TEX
                             || ins.handler_idx == WINED3DSIH_TEXBEM
@@ -593,7 +592,8 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
     return WINED3D_OK;
 }
 
-static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semantic, DWORD shader_version)
+static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semantic,
+        const struct wined3d_shader_version *shader_version)
 {
     TRACE("dcl");
 
@@ -610,7 +610,7 @@ static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semanti
     else
     {
         /* Pixel shaders 3.0 don't have usage semantics */
-        if (shader_is_pshader_version(shader_version) && shader_version < WINED3DPS_VERSION(3,0))
+        if (shader_is_pshader_version(shader_version->type) && shader_version->major < 3)
             return;
         else
             TRACE("_");
@@ -667,7 +667,7 @@ static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semanti
 }
 
 static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx,
-        const struct wined3d_shader_src_param *rel_addr, DWORD shader_version)
+        const struct wined3d_shader_src_param *rel_addr, const struct wined3d_shader_version *shader_version)
 {
     static const char * const rastout_reg_names[] = {"oPos", "oFog", "oPts"};
     static const char * const misctype_reg_names[] = {"vPos", "vFace"};
@@ -692,7 +692,7 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
             break;
 
         case WINED3DSPR_TEXTURE: /* vs: case WINED3DSPR_ADDR */
-            TRACE("%c", shader_is_pshader_version(shader_version) ? 't' : 'a');
+            TRACE("%c", shader_is_pshader_version(shader_version->type) ? 't' : 'a');
             break;
 
         case WINED3DSPR_RASTOUT:
@@ -714,7 +714,7 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
         case WINED3DSPR_TEXCRDOUT:
             /* Vertex shaders >= 3.0 use general purpose output registers
              * (WINED3DSPR_OUTPUT), which can include an address token */
-            if (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 3) TRACE("o");
+            if (shader_version->major >= 3) TRACE("o");
             else TRACE("oT");
             break;
 
@@ -765,7 +765,8 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
     }
 }
 
-void shader_dump_dst_param(const struct wined3d_shader_dst_param *param, DWORD shader_version)
+void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
+        const struct wined3d_shader_version *shader_version)
 {
     DWORD write_mask = param->write_mask;
 
@@ -783,7 +784,8 @@ void shader_dump_dst_param(const struct wined3d_shader_dst_param *param, DWORD s
     }
 }
 
-void shader_dump_src_param(const struct wined3d_shader_src_param *param, DWORD shader_version)
+void shader_dump_src_param(const struct wined3d_shader_src_param *param,
+        const struct wined3d_shader_version *shader_version)
 {
     DWORD src_modifier = param->modifiers;
     DWORD swizzle = param->swizzle;
@@ -861,13 +863,13 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
     void *fe_data = This->baseShader.frontend_data;
     struct wined3d_shader_src_param src_rel_addr[4];
     struct wined3d_shader_src_param src_param[4];
+    struct wined3d_shader_version shader_version;
     struct wined3d_shader_src_param dst_rel_addr;
     struct wined3d_shader_dst_param dst_param;
     struct wined3d_shader_instruction ins;
     struct wined3d_shader_context ctx;
     const DWORD *pToken = pFunction;
     SHADER_HANDLER hw_fct;
-    DWORD shader_version;
     DWORD i;
 
     /* Initialize current parsing state */
@@ -975,16 +977,16 @@ static void shader_dump_ins_modifiers(const struct wined3d_shader_dst_param *dst
 
 void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *pFunction)
 {
+    struct wined3d_shader_version shader_version;
     const DWORD* pToken = pFunction;
-    DWORD shader_version;
     DWORD i;
 
     TRACE("Parsing %p\n", pFunction);
 
     fe->shader_read_header(fe_data, &pToken, &shader_version);
 
-    TRACE("%s_%u_%u\n", shader_is_pshader_version(shader_version) ? "ps": "vs",
-            WINED3DSHADER_VERSION_MAJOR(shader_version), WINED3DSHADER_VERSION_MINOR(shader_version));
+    TRACE("%s_%u_%u\n", shader_is_pshader_version(shader_version.type) ? "ps": "vs",
+            shader_version.major, shader_version.minor);
 
     while (!fe->shader_is_end(fe_data, &pToken))
     {
@@ -1014,10 +1016,10 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
 
             fe->shader_read_semantic(&pToken, &semantic);
 
-            shader_dump_decl_usage(&semantic, shader_version);
+            shader_dump_decl_usage(&semantic, &shader_version);
             shader_dump_ins_modifiers(&semantic.reg);
             TRACE(" ");
-            shader_dump_dst_param(&semantic.reg, shader_version);
+            shader_dump_dst_param(&semantic.reg, &shader_version);
         }
         else if (ins.handler_idx == WINED3DSIH_DEF)
         {
@@ -1074,7 +1076,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
             {
                 fe->shader_read_src_param(fe_data, &pToken, &src_param, &src_rel_addr);
                 TRACE("(");
-                shader_dump_src_param(&src_param, shader_version);
+                shader_dump_src_param(&src_param, &shader_version);
                 TRACE(") ");
             }
 
@@ -1098,7 +1100,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
                 }
             }
             else if (ins.handler_idx == WINED3DSIH_TEX
-                    && shader_version >= WINED3DPS_VERSION(2,0)
+                    && shader_version.major >= 2
                     && (ins.flags & WINED3DSI_TEXLD_PROJECT))
             {
                 TRACE("p");
@@ -1109,7 +1111,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
             {
                 shader_dump_ins_modifiers(&dst_param);
                 TRACE(" ");
-                shader_dump_dst_param(&dst_param, shader_version);
+                shader_dump_dst_param(&dst_param, &shader_version);
             }
 
             /* Other source tokens */
@@ -1117,7 +1119,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
             {
                 fe->shader_read_src_param(fe_data, &pToken, &src_param, &src_rel_addr);
                 TRACE(!i ? " " : ", ");
-                shader_dump_src_param(&src_param, shader_version);
+                shader_dump_src_param(&src_param, &shader_version);
             }
         }
         TRACE("\n");

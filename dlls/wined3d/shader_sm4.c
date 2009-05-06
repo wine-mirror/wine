@@ -40,6 +40,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 #define WINED3D_SM4_SWIZZLE_SHIFT               4
 #define WINED3D_SM4_SWIZZLE_MASK                (0xff << WINED3D_SM4_SWIZZLE_SHIFT)
 
+#define WINED3D_SM4_VERSION_MAJOR(version)      (((version) >> 4) & 0xf)
+#define WINED3D_SM4_VERSION_MINOR(version)      (((version) >> 0) & 0xf)
+
 enum wined3d_sm4_opcode
 {
     WINED3D_SM4_OP_ADD      = 0x00,
@@ -66,7 +69,7 @@ enum wined3d_sm4_immconst_type
 
 struct wined3d_sm4_data
 {
-    DWORD shader_version;
+    struct wined3d_shader_version shader_version;
     const DWORD *end;
 };
 
@@ -126,17 +129,40 @@ static void shader_sm4_free(void *data)
     HeapFree(GetProcessHeap(), 0, data);
 }
 
-static void shader_sm4_read_header(void *data, const DWORD **ptr, DWORD *shader_version)
+static void shader_sm4_read_header(void *data, const DWORD **ptr, struct wined3d_shader_version *shader_version)
 {
     struct wined3d_sm4_data *priv = data;
+    DWORD version_token;
+
     priv->end = *ptr;
 
-    TRACE("version: 0x%08x\n", **ptr);
-    *shader_version = *(*ptr)++;
+    version_token = *(*ptr)++;
+    TRACE("version: 0x%08x\n", version_token);
+
     TRACE("token count: %u\n", **ptr);
     priv->end += *(*ptr)++;
 
-    priv->shader_version = *shader_version;
+    switch (version_token >> 16)
+    {
+        case WINED3D_SM4_PS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_PIXEL;
+            break;
+
+        case WINED3D_SM4_VS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_VERTEX;
+            break;
+
+        case WINED3D_SM4_GS:
+            priv->shader_version.type = WINED3D_SHADER_TYPE_GEOMETRY;
+            break;
+
+        default:
+            FIXME("Unrecognized shader type %#x\n", version_token >> 16);
+    }
+    priv->shader_version.major = WINED3D_SM4_VERSION_MAJOR(version_token);
+    priv->shader_version.minor = WINED3D_SM4_VERSION_MINOR(version_token);
+
+    *shader_version = priv->shader_version;
 }
 
 static void shader_sm4_read_opcode(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins,

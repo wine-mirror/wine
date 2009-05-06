@@ -122,16 +122,19 @@ static HRESULT  WINAPI IWineD3DPixelShaderImpl_GetFunction(IWineD3DPixelShader* 
 
 static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
 {
+    DWORD shader_version = WINED3D_SHADER_VERSION(This->baseShader.reg_maps.shader_version.major,
+            This->baseShader.reg_maps.shader_version.minor);
+
     This->baseShader.limits.attributes = 0;
     This->baseShader.limits.address = 0;
     This->baseShader.limits.packed_output = 0;
 
-    switch (This->baseShader.reg_maps.shader_version)
+    switch (shader_version)
     {
-        case WINED3DPS_VERSION(1,0):
-        case WINED3DPS_VERSION(1,1):
-        case WINED3DPS_VERSION(1,2):
-        case WINED3DPS_VERSION(1,3):
+        case WINED3D_SHADER_VERSION(1,0):
+        case WINED3D_SHADER_VERSION(1,1):
+        case WINED3D_SHADER_VERSION(1,2):
+        case WINED3D_SHADER_VERSION(1,3):
             This->baseShader.limits.temporary = 2;
             This->baseShader.limits.constant_float = 8;
             This->baseShader.limits.constant_int = 0;
@@ -142,7 +145,7 @@ static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
             This->baseShader.limits.label = 0;
             break;
 
-        case WINED3DPS_VERSION(1,4):
+        case WINED3D_SHADER_VERSION(1,4):
             This->baseShader.limits.temporary = 6;
             This->baseShader.limits.constant_float = 8;
             This->baseShader.limits.constant_int = 0;
@@ -154,7 +157,7 @@ static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
             break;
 
         /* FIXME: temporaries must match D3DPSHADERCAPS2_0.NumTemps */
-        case WINED3DPS_VERSION(2,0):
+        case WINED3D_SHADER_VERSION(2,0):
             This->baseShader.limits.temporary = 32;
             This->baseShader.limits.constant_float = 32;
             This->baseShader.limits.constant_int = 16;
@@ -164,7 +167,7 @@ static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
             This->baseShader.limits.packed_input = 0;
             break;
 
-        case WINED3DPS_VERSION(2,1):
+        case WINED3D_SHADER_VERSION(2,1):
             This->baseShader.limits.temporary = 32;
             This->baseShader.limits.constant_float = 32;
             This->baseShader.limits.constant_int = 16;
@@ -175,7 +178,7 @@ static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
             This->baseShader.limits.label = 16;
             break;
 
-        case WINED3DPS_VERSION(3,0):
+        case WINED3D_SHADER_VERSION(3,0):
             This->baseShader.limits.temporary = 32;
             This->baseShader.limits.constant_float = 224;
             This->baseShader.limits.constant_int = 16;
@@ -195,8 +198,9 @@ static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
             This->baseShader.limits.sampler = 16;
             This->baseShader.limits.packed_input = 0;
             This->baseShader.limits.label = 0;
-            FIXME("Unrecognized pixel shader version %#x\n",
-                    This->baseShader.reg_maps.shader_version);
+            FIXME("Unrecognized pixel shader version %u.%u\n",
+                    This->baseShader.reg_maps.shader_version.major,
+                    This->baseShader.reg_maps.shader_version.minor);
     }
 }
 
@@ -293,11 +297,10 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
 
 static void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures)
 {
-    DWORD shader_version = reg_maps->shader_version;
     WINED3DSAMPLER_TEXTURE_TYPE *sampler_type = reg_maps->sampler_type;
     unsigned int i;
 
-    if (WINED3DSHADER_VERSION_MAJOR(shader_version) != 1) return;
+    if (reg_maps->shader_version.major != 1) return;
 
     for (i = 0; i < max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS); ++i)
     {
@@ -396,7 +399,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
             args->np2_fixup |= (1 << i);
         }
     }
-    if (shader->baseShader.reg_maps.shader_version >= WINED3DPS_VERSION(3,0))
+    if (shader->baseShader.reg_maps.shader_version.major >= 3)
     {
         if (((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.position_transformed)
         {

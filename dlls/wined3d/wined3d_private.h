@@ -486,8 +486,6 @@ typedef enum COMPARISON_TYPE
 /* Shader version tokens, and shader end tokens */
 #define WINED3DPS_VERSION(major, minor) ((WINED3D_SM1_PS << 16) | ((major) << 8) | (minor))
 #define WINED3DVS_VERSION(major, minor) ((WINED3D_SM1_VS << 16) | ((major) << 8) | (minor))
-#define WINED3DSHADER_VERSION_MAJOR(version) (((version) >> 8) & 0xff)
-#define WINED3DSHADER_VERSION_MINOR(version) (((version) >> 0) & 0xff)
 
 /* Shader backends */
 
@@ -601,9 +599,25 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_TABLE_SIZE
 };
 
+enum wined3d_shader_type
+{
+    WINED3D_SHADER_TYPE_PIXEL,
+    WINED3D_SHADER_TYPE_VERTEX,
+    WINED3D_SHADER_TYPE_GEOMETRY,
+};
+
+struct wined3d_shader_version
+{
+    enum wined3d_shader_type type;
+    BYTE major;
+    BYTE minor;
+};
+
+#define WINED3D_SHADER_VERSION(major, minor) (((major) << 8) | (minor))
+
 typedef struct shader_reg_maps
 {
-    DWORD shader_version;
+    struct wined3d_shader_version shader_version;
     char texcoord[MAX_REG_TEXCRD];          /* pixel < 3.0 */
     char temporary[MAX_REG_TEMP];           /* pixel, vertex */
     char address[MAX_REG_ADDR];             /* vertex */
@@ -681,7 +695,7 @@ struct wined3d_shader_frontend
 {
     void *(*shader_init)(const DWORD *ptr);
     void (*shader_free)(void *data);
-    void (*shader_read_header)(void *data, const DWORD **ptr, DWORD *shader_version);
+    void (*shader_read_header)(void *data, const DWORD **ptr, struct wined3d_shader_version *shader_version);
     void (*shader_read_opcode)(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size);
     void (*shader_read_src_param)(void *data, const DWORD **ptr, struct wined3d_shader_src_param *src_param,
             struct wined3d_shader_src_param *src_rel_addr);
@@ -2554,8 +2568,10 @@ typedef struct IWineD3DBaseShaderImpl {
 void shader_buffer_init(struct SHADER_BUFFER *buffer);
 void shader_buffer_free(struct SHADER_BUFFER *buffer);
 void shader_cleanup(IWineD3DBaseShader *iface);
-void shader_dump_src_param(const struct wined3d_shader_src_param *param, DWORD shader_version);
-void shader_dump_dst_param(const struct wined3d_shader_dst_param *param, DWORD shader_version);
+void shader_dump_src_param(const struct wined3d_shader_src_param *param,
+        const struct wined3d_shader_version *shader_version);
+void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
+        const struct wined3d_shader_version *shader_version);
 void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction);
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
@@ -2565,12 +2581,14 @@ void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDevice *device)
 const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token);
 void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *pFunction);
 
-static inline BOOL shader_is_pshader_version(DWORD token) {
-    return 0xFFFF0000 == (token & 0xFFFF0000);
+static inline BOOL shader_is_pshader_version(enum wined3d_shader_type type)
+{
+    return type == WINED3D_SHADER_TYPE_PIXEL;
 }
 
-static inline BOOL shader_is_vshader_version(DWORD token) {
-    return 0xFFFE0000 == (token & 0xFFFF0000);
+static inline BOOL shader_is_vshader_version(enum wined3d_shader_type type)
+{
+    return type == WINED3D_SHADER_TYPE_VERTEX;
 }
 
 static inline BOOL shader_is_scalar(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx)

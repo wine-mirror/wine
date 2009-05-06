@@ -369,8 +369,8 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl *This, const Wine
     const local_constant *lconst;
 
     /* 1.X pshaders have the constants clamped to [-1;1] implicitly. */
-    if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.reg_maps.shader_version) == 1
-            && shader_is_pshader_version(This->baseShader.reg_maps.shader_version))
+    if (This->baseShader.reg_maps.shader_version.major == 1
+            && shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type))
         walk_constant_heap_clamped(gl_info, constants, constant_locations, heap, stack, version);
     else
         walk_constant_heap(gl_info, constants, constant_locations, heap, stack, version);
@@ -434,7 +434,7 @@ static void shader_glsl_load_constantsB(IWineD3DBaseShaderImpl *This, const Wine
     GLint tmp_loc;
     unsigned int i;
     char tmp_name[8];
-    char is_pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version);
+    char is_pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
     const char* prefix = is_pshader? "PB":"VB";
     struct list* ptr;
 
@@ -700,12 +700,11 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
-    DWORD shader_version = reg_maps->shader_version;
     unsigned int i, extra_constants_needed = 0;
     const local_constant *lconst;
 
     /* There are some minor differences between pixel and vertex shaders */
-    char pshader = shader_is_pshader_version(shader_version);
+    char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     char prefix = pshader ? 'P' : 'V';
 
     /* Prototype the subroutines */
@@ -778,7 +777,7 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
          * out. The nvidia driver only does that if the parameter is inout instead of out, hence the
          * inout.
          */
-        if (shader_version >= WINED3DVS_VERSION(3, 0))
+        if (reg_maps->shader_version.major >= 3)
         {
             shader_addline(buffer, "void order_ps_input(in vec4[%u]);\n", MAX_REG_OUTPUT);
         } else {
@@ -888,7 +887,7 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
     /* Declare input register varyings. Only pixel shader, vertex shaders have that declared in the
      * helper function shader that is linked in at link time
      */
-    if (pshader && shader_version >= WINED3DPS_VERSION(3, 0))
+    if (pshader && reg_maps->shader_version.major >= 3)
     {
         if (use_vs(device->stateBlock))
         {
@@ -1053,8 +1052,7 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     const WineD3D_GL_Info* gl_info = &deviceImpl->adapter->gl_info;
-    DWORD shader_version = This->baseShader.reg_maps.shader_version;
-    char pshader = shader_is_pshader_version(shader_version);
+    char pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
 
     *is_color = FALSE;
 
@@ -1066,7 +1064,7 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
     case WINED3DSPR_INPUT:
         if (pshader) {
             /* Pixel shaders >= 3.0 */
-            if (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 3)
+            if (This->baseShader.reg_maps.shader_version.major >= 3)
             {
                 DWORD in_count = GL_LIMITS(glsl_varyings) / 4;
 
@@ -1198,7 +1196,7 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
     break;
     case WINED3DSPR_TEXCRDOUT:
         /* Vertex shaders >= 3.0: WINED3DSPR_OUTPUT */
-        if (WINED3DSHADER_VERSION_MAJOR(shader_version) >= 3) sprintf(register_name, "OUT[%u]", register_idx);
+        if (This->baseShader.reg_maps.shader_version.major >= 3) sprintf(register_name, "OUT[%u]", register_idx);
         else sprintf(register_name, "gl_TexCoord[%u]", register_idx);
     break;
     case WINED3DSPR_MISCTYPE:
@@ -1579,7 +1577,7 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
 
     shader_glsl_swizzle_to_str(swizzle, FALSE, ins->dst[0].write_mask, dst_swizzle);
 
-    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version))
+    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
     {
         IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
         fixup = This->cur_args->color_fixup[sampler];
@@ -1667,9 +1665,9 @@ static void shader_glsl_mov(const struct wined3d_shader_instruction *ins)
 
     /* In vs_1_1 WINED3DSIO_MOV can write to the address register. In later
      * shader versions WINED3DSIO_MOVA is used for this. */
-    if ((WINED3DSHADER_VERSION_MAJOR(ins->ctx->reg_maps->shader_version) == 1
-            && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version)
-            && ins->dst[0].register_type == WINED3DSPR_ADDR))
+    if (ins->ctx->reg_maps->shader_version.major == 1
+            && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)
+            && ins->dst[0].register_type == WINED3DSPR_ADDR)
     {
         /* This is a simple floor() */
         unsigned int mask_size = shader_glsl_get_write_mask_size(write_mask);
@@ -1845,7 +1843,7 @@ static void shader_glsl_expp(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src_param);
 
-    if (ins->ctx->reg_maps->shader_version < WINED3DPS_VERSION(2,0))
+    if (ins->ctx->reg_maps->shader_version.major < 2)
     {
         char dst_mask[6];
 
@@ -2047,8 +2045,10 @@ static void shader_glsl_cnd(const struct wined3d_shader_instruction *ins)
     DWORD write_mask, cmp_channel = 0;
     unsigned int i, j;
     DWORD dst_mask;
+    DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
+            ins->ctx->reg_maps->shader_version.minor);
 
-    if (ins->ctx->reg_maps->shader_version < WINED3DPS_VERSION(1, 4))
+    if (shader_version < WINED3D_SHADER_VERSION(1, 4))
     {
         write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
         shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src0_param);
@@ -2472,7 +2472,8 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-    DWORD shader_version = ins->ctx->reg_maps->shader_version;
+    DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
+            ins->ctx->reg_maps->shader_version.minor);
     glsl_sample_function_t sample_function;
     DWORD sample_flags = 0;
     WINED3DSAMPLER_TEXTURE_TYPE sampler_type;
@@ -2481,11 +2482,11 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
 
     /* 1.0-1.4: Use destination register as sampler source.
      * 2.0+: Use provided sampler source. */
-    if (shader_version < WINED3DPS_VERSION(2,0)) sampler_idx = ins->dst[0].register_idx;
+    if (shader_version < WINED3D_SHADER_VERSION(2,0)) sampler_idx = ins->dst[0].register_idx;
     else sampler_idx = ins->src[1].register_idx;
     sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
 
-    if (shader_version < WINED3DPS_VERSION(1,4))
+    if (shader_version < WINED3D_SHADER_VERSION(1,4))
     {
         DWORD flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
 
@@ -2501,7 +2502,7 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
             }
         }
     }
-    else if (shader_version < WINED3DPS_VERSION(2,0))
+    else if (shader_version < WINED3D_SHADER_VERSION(2,0))
     {
         DWORD src_mod = ins->src[0].modifiers;
 
@@ -2529,12 +2530,12 @@ static void pshader_glsl_tex(const struct wined3d_shader_instruction *ins)
     shader_glsl_get_sample_function(sampler_type, sample_flags, &sample_function);
     mask |= sample_function.coord_mask;
 
-    if (shader_version < WINED3DPS_VERSION(2,0)) swizzle = WINED3DSP_NOSWIZZLE;
+    if (shader_version < WINED3D_SHADER_VERSION(2,0)) swizzle = WINED3DSP_NOSWIZZLE;
     else swizzle = ins->src[1].swizzle;
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
-    if (shader_version < WINED3DPS_VERSION(1,4))
+    if (shader_version < WINED3D_SHADER_VERSION(1,4))
     {
         char coord_mask[6];
         shader_glsl_write_mask_to_str(mask, coord_mask);
@@ -2611,7 +2612,7 @@ static void shader_glsl_texldl(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &lod_param);
 
-    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version))
+    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
     {
         /* The GLSL spec claims the Lod sampling functions are only supported in vertex shaders.
          * However, they seem to work just fine in fragment shaders as well. */
@@ -2627,7 +2628,7 @@ static void pshader_glsl_texcoord(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     DWORD write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
 
-    if (ins->ctx->reg_maps->shader_version != WINED3DPS_VERSION(1,4))
+    if (!(ins->ctx->reg_maps->shader_version.major == 1 && ins->ctx->reg_maps->shader_version.minor == 4))
     {
         char dst_mask[6];
 
@@ -3055,7 +3056,7 @@ static void pshader_glsl_texkill(const struct wined3d_shader_instruction *ins)
 
     /* The argument is a destination parameter, and no writemasks are allowed */
     shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
-    if ((ins->ctx->reg_maps->shader_version >= WINED3DPS_VERSION(2,0)))
+    if (ins->ctx->reg_maps->shader_version.major >= 2)
     {
         /* 2.0 shaders compare all 4 components in texkill */
         shader_addline(ins->ctx->buffer, "if (any(lessThan(%s.xyzw, vec4(0.0)))) discard;\n", dst_param.reg_name);
@@ -3346,8 +3347,8 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     IWineD3DVertexShaderImpl *vs = (IWineD3DVertexShaderImpl *) vertexshader;
     IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) pixelshader;
     IWineD3DDeviceImpl *device;
-    DWORD vs_major = WINED3DSHADER_VERSION_MAJOR(vs->baseShader.reg_maps.shader_version);
-    DWORD ps_major = ps ? WINED3DSHADER_VERSION_MAJOR(ps->baseShader.reg_maps.shader_version) : 0;
+    DWORD vs_major = vs->baseShader.reg_maps.shader_version.major;
+    DWORD ps_major = ps ? ps->baseShader.reg_maps.shader_version.major : 0;
     unsigned int i;
     SHADER_BUFFER buffer;
     DWORD usage, usage_idx, writemask;
@@ -3672,7 +3673,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     checkGLcall("Find glsl program uniform locations");
 
     if (pshader
-            && WINED3DSHADER_VERSION_MAJOR(((IWineD3DPixelShaderImpl *)pshader)->baseShader.reg_maps.shader_version) >= 3
+            && ((IWineD3DPixelShaderImpl *)pshader)->baseShader.reg_maps.shader_version.major >= 3
             && ((IWineD3DPixelShaderImpl *)pshader)->declared_in_count > GL_LIMITS(glsl_varyings) / 4)
     {
         TRACE("Shader %d needs vertex color clamping disabled\n", programId);
@@ -3859,7 +3860,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     /* Note: Do not use QueryInterface here to find out which shader type this is because this code
      * can be called from IWineD3DBaseShader::Release
      */
-    char pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version);
+    char pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
 
     if(pshader) {
         ps = (IWineD3DPixelShaderImpl *) This;
@@ -4066,7 +4067,8 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
     shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, args);
 
     /* Pack 3.0 inputs */
-    if (reg_maps->shader_version >= WINED3DPS_VERSION(3,0) && args->vp_mode != vertexshader) {
+    if (reg_maps->shader_version.major >= 3 && args->vp_mode != vertexshader)
+    {
         pshader_glsl_input_pack(iface, buffer, This->semantics_in, reg_maps, args->vp_mode);
     }
 
@@ -4074,7 +4076,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
     shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function);
 
     /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
-    if (reg_maps->shader_version < WINED3DPS_VERSION(2,0))
+    if (reg_maps->shader_version.major < 2)
     {
         /* Some older cards like GeforceFX ones don't support multiple buffers, so also not gl_FragData */
         if(GL_SUPPORT(ARB_DRAW_BUFFERS))
@@ -4104,7 +4106,8 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
      * NOTE: gl_Fog.start and gl_Fog.end don't hold fog start s and end e but
      * -1/(e-s) and e/(e-s) respectively.
      */
-    if(reg_maps->shader_version < WINED3DPS_VERSION(3,0)) {
+    if (reg_maps->shader_version.major < 3)
+    {
         switch(args->fog) {
             case FOG_OFF: break;
             case FOG_LINEAR:
@@ -4159,7 +4162,7 @@ static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface,
     shader_generate_main((IWineD3DBaseShader*)This, buffer, reg_maps, function);
 
     /* Unpack 3.0 outputs */
-    if (reg_maps->shader_version >= WINED3DVS_VERSION(3,0)) shader_addline(buffer, "order_ps_input(OUT);\n");
+    if (reg_maps->shader_version.major >= 3) shader_addline(buffer, "order_ps_input(OUT);\n");
     else shader_addline(buffer, "order_ps_input();\n");
 
     /* The D3DRS_FOGTABLEMODE render state defines if the shader-generated fog coord is used

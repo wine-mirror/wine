@@ -81,7 +81,6 @@ struct shader_arb_priv {
 static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, const WineD3D_GL_Info *gl_info,
         GLuint target_type, unsigned int max_constants, const float *constants, char *dirty_consts)
 {
-    DWORD shader_version = This->baseShader.reg_maps.shader_version;
     local_constant* lconst;
     DWORD i, j;
     unsigned int ret;
@@ -95,7 +94,7 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, con
         }
     }
     /* In 1.X pixel shaders constants are implicitly clamped in the range [-1;1] */
-    if (target_type == GL_FRAGMENT_PROGRAM_ARB && WINED3DSHADER_VERSION_MAJOR(shader_version) == 1)
+    if (target_type == GL_FRAGMENT_PROGRAM_ARB && This->baseShader.reg_maps.shader_version.major == 1)
     {
         float lcl_const[4];
         for(i = 0; i < max_constants; i++) {
@@ -297,7 +296,7 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     DWORD i, cur;
-    char pshader = shader_is_pshader_version(reg_maps->shader_version);
+    char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
             (pshader ? GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS :
                        GL_LIMITS(vshader_constantsF) - ARB_SHADER_RESERVED_VS_CONSTS));
@@ -422,7 +421,7 @@ static void shader_arb_get_write_mask(const struct wined3d_shader_instruction *i
         const struct wined3d_shader_dst_param *dst, char *write_mask)
 {
     char *ptr = write_mask;
-    char vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version);
+    char vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
 
     if (vshader && dst->register_type == WINED3DSPR_ADDR)
     {
@@ -480,8 +479,7 @@ static void shader_arb_get_register_name(IWineD3DBaseShader *iface, WINED3DSHADE
     /* oPos, oFog and oPts in D3D */
     static const char * const rastout_reg_names[] = {"TMP_OUT", "result.fogcoord", "result.pointsize"};
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)iface;
-    DWORD shader_version = This->baseShader.reg_maps.shader_version;
-    BOOL pshader = shader_is_pshader_version(shader_version);
+    BOOL pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
 
     *is_color = FALSE;
 
@@ -690,7 +688,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             } else {
                 tex_type = "2D";
             }
-            if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version))
+            if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
             {
                const IWineD3DPixelShaderImpl* const ps = (const IWineD3DPixelShaderImpl*)This;
                if(ps->cur_args->np2_fixup & (1 << sampler_idx)) {
@@ -723,7 +721,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
         shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
     }
 
-    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version))
+    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
     {
         IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
         gen_color_correction(buffer, dst_str, ins->dst[0].write_mask,
@@ -858,6 +856,8 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
     DWORD shift = dst->shift;
     BOOL is_color;
+    DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
+            ins->ctx->reg_maps->shader_version.minor);
 
     /* FIXME: support output modifiers */
 
@@ -872,7 +872,7 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[2], 2, src_name[2]);
 
     /* The coissue flag changes the semantic of the cnd instruction in <= 1.3 shaders */
-    if (ins->ctx->reg_maps->shader_version <= WINED3DPS_VERSION(1, 3) && ins->coissue)
+    if (shader_version <= WINED3D_SHADER_VERSION(1, 3) && ins->coissue)
     {
         shader_addline(buffer, "MOV%s %s%s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask, src_name[1]);
     } else {
@@ -983,7 +983,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
             break;
     }
 
-    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version))
+    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
     {
         /* Output token related */
         const struct wined3d_shader_dst_param *dst;
@@ -1067,8 +1067,8 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
 
-    if ((WINED3DSHADER_VERSION_MAJOR(ins->ctx->reg_maps->shader_version) == 1
-            && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version)
+    if ((ins->ctx->reg_maps->shader_version.major == 1
+            && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)
             && ins->dst[0].register_type == WINED3DSPR_ADDR)
             || ins->handler_idx == WINED3DSIH_MOVA)
     {
@@ -1105,7 +1105,6 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 static void pshader_hw_texkill(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
-    DWORD shader_version = ins->ctx->reg_maps->shader_version;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char reg_dest[40];
     BOOL is_color;
@@ -1116,7 +1115,7 @@ static void pshader_hw_texkill(const struct wined3d_shader_instruction *ins)
     shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
             dst->register_idx, !!dst->rel_addr, reg_dest, &is_color);
 
-    if (shader_version >= WINED3DPS_VERSION(2,0))
+    if (ins->ctx->reg_maps->shader_version.major >= 2)
     {
         /* The arb backend doesn't claim ps 2.0 support, but try to eat what the app feeds to us */
         shader_addline(buffer, "KIL %s;\n", reg_dest);
@@ -1137,7 +1136,8 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     BOOL is_color;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    DWORD shader_version = ins->ctx->reg_maps->shader_version;
+    DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
+            ins->ctx->reg_maps->shader_version.minor);
     BOOL projected = FALSE, bias = FALSE;
 
     char reg_dest[40];
@@ -1150,14 +1150,14 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
-   if (shader_version < WINED3DPS_VERSION(1,4))
+   if (shader_version < WINED3D_SHADER_VERSION(1,4))
       strcpy(reg_coord, reg_dest);
    else
       pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, reg_coord);
 
   /* 1.0-1.4: Use destination register number as texture code.
      2.0+: Use provided sampler number as texure code. */
-  if (shader_version < WINED3DPS_VERSION(2,0))
+  if (shader_version < WINED3D_SHADER_VERSION(2,0))
      reg_sampler_code = dst->register_idx;
   else
      reg_sampler_code = ins->src[1].register_idx;
@@ -1167,7 +1167,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
    * 1.4: Use WINED3DSPSM_DZ or WINED3DSPSM_DW on src[0]
    * 2.0+: Use WINED3DSI_TEXLD_PROJECT on the opcode
    */
-  if (shader_version < WINED3DPS_VERSION(1,4))
+  if (shader_version < WINED3D_SHADER_VERSION(1,4))
   {
       DWORD flags = 0;
       if(reg_sampler_code < MAX_TEXTURES) {
@@ -1177,7 +1177,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
           projected = TRUE;
       }
   }
-  else if (shader_version < WINED3DPS_VERSION(2,0))
+  else if (shader_version < WINED3D_SHADER_VERSION(2,0))
   {
       DWORD src_mod = ins->src[0].modifiers;
       if (src_mod == WINED3DSPSM_DZ) {
@@ -1196,10 +1196,12 @@ static void pshader_hw_texcoord(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
+    DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
+            ins->ctx->reg_maps->shader_version.minor);
 
     char tmp[20];
     shader_arb_get_write_mask(ins, dst, tmp);
-    if (ins->ctx->reg_maps->shader_version != WINED3DPS_VERSION(1,4))
+    if (shader_version != WINED3D_SHADER_VERSION(1,4))
     {
         DWORD reg = dst->register_idx;
         shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
@@ -1907,7 +1909,7 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)baseShader->baseShader.device)->adapter->gl_info;
 
-    if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version))
+    if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version.type))
     {
         IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) iface;
         UINT i;
@@ -1995,7 +1997,6 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
-    DWORD shader_version = reg_maps->shader_version;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     const local_constant *lconst;
     GLuint retval;
@@ -2005,7 +2006,8 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBfp1.0\n");
 
-    if (shader_version < WINED3DPS_VERSION(3,0)) {
+    if (reg_maps->shader_version.major < 3)
+    {
         switch(args->fog) {
             case FOG_OFF:
                 break;
@@ -2030,7 +2032,8 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     shader_addline(buffer, "PARAM coefmul = { 2, 4, 8, 16 };\n");
     shader_addline(buffer, "PARAM one = { 1.0, 1.0, 1.0, 1.0 };\n");
 
-    if (shader_version < WINED3DPS_VERSION(2,0)) {
+    if (reg_maps->shader_version.major < 2)
+    {
         fragcolor = "R0";
     } else {
         shader_addline(buffer, "TEMP TMP_COLOR;\n");
