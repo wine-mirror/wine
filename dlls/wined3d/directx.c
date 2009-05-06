@@ -1014,7 +1014,11 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             /* GL_ARB_half_float_vertex is a subset of GL_NV_half_float */
             gl_info->supported[ARB_HALF_FLOAT_VERTEX] = TRUE;
         }
-
+        if(gl_info->supported[ARB_POINT_SPRITE]) {
+            gl_info->max_point_sprite_units = gl_info->max_textures;
+        } else {
+            gl_info->max_point_sprite_units = 0;
+        }
     }
     checkGLcall("extension detection\n");
 
@@ -4031,6 +4035,13 @@ static BOOL match_apple_nonr500ati(const WineD3D_GL_Info *gl_info) {
     return TRUE;
 }
 
+static BOOL match_fglrx(const WineD3D_GL_Info *gl_info) {
+    if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
+    if(match_apple(gl_info)) return FALSE;
+    if(strstr(gl_info->gl_renderer, "DRI")) return FALSE; /* Filter out Mesa DRI drivers */
+    return TRUE;
+}
+
 static void quirk_arb_constants(WineD3D_GL_Info *gl_info) {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL\n", gl_info->vs_arb_constantsF);
     gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
@@ -4046,6 +4057,26 @@ static void quirk_apple_glsl_constants(WineD3D_GL_Info *gl_info) {
      */
     TRACE_(d3d_caps)("Reserving 12 GLSL constants for compiler private use\n");
     gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 12);
+}
+
+/* fglrx crashes with a very bad kernel panic if GL_POINT_SPRITE_ARB is set to GL_COORD_REPLACE_ARB
+ * on more than one texture unit. This means that the d3d9 visual point size test will cause a
+ * kernel panic on any machine running fglrx 9.3(latest that supports r300 to r500 cards). This
+ * quirk only enables point sprites on the first texture unit. This keeps point sprites working in
+ * most games, but avoids the crash
+ *
+ * A more sophisticated way would be to find all units that need texture coordinates and enable
+ * point sprites for one if only one is found, and software emulate point sprites in drawStridedSlow
+ * if more than one unit needs texture coordinates(This requires software ffp and vertex shaders though)
+ *
+ * Note that disabling the extension entirely does not gain predictability because there is no point
+ * sprite capability flag in d3d, so the potential rendering bugs are the same if we disable the extension.
+ */
+static void quirk_one_point_sprite(WineD3D_GL_Info *gl_info) {
+    if(gl_info->supported[ARB_POINT_SPRITE]) {
+        TRACE("Limiting point sprites to one texture unit\n");
+        gl_info->max_point_sprite_units = 1;
+    }
 }
 
 static void quirk_ati_dx9(WineD3D_GL_Info *gl_info) {
@@ -4146,6 +4177,11 @@ struct driver_quirk quirk_table[] = {
         match_apple_nonr500ati,
         quirk_texcoord_w,
         "Init texcoord .w for Apple ATI >= r600 GPU driver"
+    },
+    {
+        match_fglrx,
+        quirk_one_point_sprite,
+        "Fglrx point sprite crash workaround"
     }
 };
 
