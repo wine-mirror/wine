@@ -2856,7 +2856,6 @@ static void test_pack_HCURSOR(void)
     /* HCURSOR */
     TEST_TYPE_SIZE   (HCURSOR, 4)
     TEST_TYPE_ALIGN  (HCURSOR, 4)
-    TEST_TYPE_UNSIGNED(HCURSOR)
 }
 
 static void test_pack_HFILE(void)
@@ -2893,7 +2892,6 @@ static void test_pack_HMODULE(void)
     /* HMODULE */
     TEST_TYPE_SIZE   (HMODULE, 4)
     TEST_TYPE_ALIGN  (HMODULE, 4)
-    TEST_TYPE_UNSIGNED(HMODULE)
 }
 
 static void test_pack_INT(void)

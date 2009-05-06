@@ -220,9 +220,9 @@ sub _find_align_kind_size($) {
 	$align = 4;
 	$kind = "float";
 	$size = 12;
-    } elsif (/^H(?:DC|BITMAP|BRUSH|ICON|INSTANCE|KEY|MENU|METAFILE|RESULT|WND)$/) {
+    } elsif (/^H(?:DC|BITMAP|BRUSH|ICON|INSTANCE|KEY|MENU|METAFILE|WND)$/) {
 	$align = 4;
-	$kind = "unsigned";
+	$kind = "pointer";
 	$size = 4;
     } elsif (/^LP(?:BYTE|CSTR|CWSTR|DWORD|STR|VOID|WSTR)$/) {
 	$align = 4;
