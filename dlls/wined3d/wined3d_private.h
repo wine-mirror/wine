@@ -682,12 +682,11 @@ struct wined3d_shader_frontend
     void *(*shader_init)(const DWORD *ptr);
     void (*shader_free)(void *data);
     void (*shader_read_header)(void *data, const DWORD **ptr, DWORD *shader_version);
-    void (*shader_read_opcode)(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins,
-            UINT *param_size, DWORD shader_version);
-    void (*shader_read_src_param)(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
-            struct wined3d_shader_src_param *src_rel_addr, DWORD shader_version);
-    void (*shader_read_dst_param)(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
-            struct wined3d_shader_src_param *dst_rel_addr, DWORD shader_version);
+    void (*shader_read_opcode)(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size);
+    void (*shader_read_src_param)(void *data, const DWORD **ptr, struct wined3d_shader_src_param *src_param,
+            struct wined3d_shader_src_param *src_rel_addr);
+    void (*shader_read_dst_param)(void *data, const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
+            struct wined3d_shader_src_param *dst_rel_addr);
     void (*shader_read_semantic)(const DWORD **ptr, struct wined3d_shader_semantic *semantic);
     void (*shader_read_comment)(const DWORD **ptr, const char **comment);
     BOOL (*shader_is_end)(void *data, const DWORD **ptr);

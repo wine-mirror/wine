@@ -66,6 +66,7 @@ enum wined3d_sm4_immconst_type
 
 struct wined3d_sm4_data
 {
+    DWORD shader_version;
     const DWORD *end;
 };
 
@@ -134,10 +135,12 @@ static void shader_sm4_read_header(void *data, const DWORD **ptr, DWORD *shader_
     *shader_version = *(*ptr)++;
     TRACE("token count: %u\n", **ptr);
     priv->end += *(*ptr)++;
+
+    priv->shader_version = *shader_version;
 }
 
 static void shader_sm4_read_opcode(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins,
-        UINT *param_size, DWORD shader_version)
+        UINT *param_size)
 {
     const struct wined3d_sm4_opcode_info *opcode_info;
     DWORD token = *(*ptr)++;
@@ -161,8 +164,8 @@ static void shader_sm4_read_opcode(void *data, const DWORD **ptr, struct wined3d
     ins->src_count = opcode_info->src_count;
 }
 
-static void shader_sm4_read_src_param(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
-        struct wined3d_shader_src_param *src_rel_addr, DWORD shader_version)
+static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wined3d_shader_src_param *src_param,
+        struct wined3d_shader_src_param *src_rel_addr)
 {
     DWORD token = *(*ptr)++;
     enum wined3d_sm4_register_type register_type;
@@ -213,8 +216,8 @@ static void shader_sm4_read_src_param(const DWORD **ptr, struct wined3d_shader_s
     src_param->rel_addr = NULL;
 }
 
-static void shader_sm4_read_dst_param(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
-        struct wined3d_shader_src_param *dst_rel_addr, DWORD shader_version)
+static void shader_sm4_read_dst_param(void *data, const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
+        struct wined3d_shader_src_param *dst_rel_addr)
 {
     DWORD token = *(*ptr)++;
     UINT register_idx = *(*ptr)++;

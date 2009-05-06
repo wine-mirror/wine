@@ -349,7 +349,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
         if (comment) continue;
 
         /* Fetch opcode */
-        fe->shader_read_opcode(fe_data, &pToken, &ins, &param_size, shader_version);
+        fe->shader_read_opcode(fe_data, &pToken, &ins, &param_size);
 
         /* Unhandled opcode, and its parameters */
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
@@ -401,7 +401,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
 
-            fe->shader_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+            fe->shader_read_dst_param(fe_data, &pToken, &dst, &rel_addr);
             lconst->idx = dst.register_idx;
 
             memcpy(lconst->value, pToken, 4 * sizeof(DWORD));
@@ -431,7 +431,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
 
-            fe->shader_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+            fe->shader_read_dst_param(fe_data, &pToken, &dst, &rel_addr);
             lconst->idx = dst.register_idx;
 
             memcpy(lconst->value, pToken, 4 * sizeof(DWORD));
@@ -447,7 +447,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
             if (!lconst) return E_OUTOFMEMORY;
 
-            fe->shader_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+            fe->shader_read_dst_param(fe_data, &pToken, &dst, &rel_addr);
             lconst->idx = dst.register_idx;
 
             memcpy(lconst->value, pToken, sizeof(DWORD));
@@ -461,7 +461,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
         {
             struct wined3d_shader_src_param src, rel_addr;
 
-            fe->shader_read_src_param(&pToken, &src, &rel_addr, shader_version);
+            fe->shader_read_src_param(fe_data, &pToken, &src, &rel_addr);
 
             /* Rep and Loop always use an integer constant for the control parameters */
             if (ins.handler_idx == WINED3DSIH_REP)
@@ -470,7 +470,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             }
             else
             {
-                fe->shader_read_src_param(&pToken, &src, &rel_addr, shader_version);
+                fe->shader_read_src_param(fe_data, &pToken, &src, &rel_addr);
                 reg_maps->integer_constants |= 1 << src.register_idx;
             }
 
@@ -488,7 +488,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
         {
             struct wined3d_shader_src_param src, rel_addr;
 
-            fe->shader_read_src_param(&pToken, &src, &rel_addr, shader_version);
+            fe->shader_read_src_param(fe_data, &pToken, &src, &rel_addr);
             reg_maps->labels[src.register_idx] = 1;
         }
         /* Set texture, address, temporary registers */
@@ -508,7 +508,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 struct wined3d_shader_dst_param dst_param;
                 struct wined3d_shader_src_param dst_rel_addr;
 
-                fe->shader_read_dst_param(&pToken, &dst_param, &dst_rel_addr, shader_version);
+                fe->shader_read_dst_param(fe_data, &pToken, &dst_param, &dst_rel_addr);
 
                 /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and
                  * is used in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel
@@ -580,7 +580,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             {
                 struct wined3d_shader_src_param src_param, src_rel_addr;
 
-                fe->shader_read_src_param(&pToken, &src_param, &src_rel_addr, shader_version);
+                fe->shader_read_src_param(fe_data, &pToken, &src_param, &src_rel_addr);
                 shader_record_register_usage(This, reg_maps, src_param.register_type,
                         src_param.register_idx, !!src_param.rel_addr, pshader);
             }
@@ -892,7 +892,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         if (comment) continue;
 
         /* Read opcode */
-        fe->shader_read_opcode(fe_data, &pToken, &ins, &param_size, shader_version);
+        fe->shader_read_opcode(fe_data, &pToken, &ins, &param_size);
 
         /* Unknown opcode and its parameters */
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
@@ -927,7 +927,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         }
 
         /* Destination token */
-        if (ins.dst_count) fe->shader_read_dst_param(&pToken, &dst_param, &dst_rel_addr, shader_version);
+        if (ins.dst_count) fe->shader_read_dst_param(fe_data, &pToken, &dst_param, &dst_rel_addr);
 
         /* Predication token */
         if (ins.predicate) ins.predicate = *pToken++;
@@ -935,7 +935,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         /* Other source tokens */
         for (i = 0; i < ins.src_count; ++i)
         {
-            fe->shader_read_src_param(&pToken, &src_param[i], &src_rel_addr[i], shader_version);
+            fe->shader_read_src_param(fe_data, &pToken, &src_param[i], &src_rel_addr[i]);
         }
 
         /* Call appropriate function for output target */
@@ -1000,7 +1000,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
             continue;
         }
 
-        fe->shader_read_opcode(fe_data, &pToken, &ins, &param_size, shader_version);
+        fe->shader_read_opcode(fe_data, &pToken, &ins, &param_size);
         if (ins.handler_idx == WINED3DSIH_TABLE_SIZE)
         {
             TRACE("Skipping unrecognized instruction.\n");
@@ -1024,7 +1024,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
             struct wined3d_shader_dst_param dst;
             struct wined3d_shader_src_param rel_addr;
 
-            fe->shader_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+            fe->shader_read_dst_param(fe_data, &pToken, &dst, &rel_addr);
 
             TRACE("def c%u = %f, %f, %f, %f", shader_get_float_offset(dst.register_type, dst.register_idx),
                     *(const float *)(pToken),
@@ -1038,7 +1038,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
             struct wined3d_shader_dst_param dst;
             struct wined3d_shader_src_param rel_addr;
 
-            fe->shader_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+            fe->shader_read_dst_param(fe_data, &pToken, &dst, &rel_addr);
 
             TRACE("defi i%u = %d, %d, %d, %d", dst.register_idx,
                     *(pToken),
@@ -1052,7 +1052,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
             struct wined3d_shader_dst_param dst;
             struct wined3d_shader_src_param rel_addr;
 
-            fe->shader_read_dst_param(&pToken, &dst, &rel_addr, shader_version);
+            fe->shader_read_dst_param(fe_data, &pToken, &dst, &rel_addr);
 
             TRACE("defb b%u = %s", dst.register_idx, *pToken ? "true" : "false");
             ++pToken;
@@ -1065,14 +1065,14 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
 
             if (ins.dst_count)
             {
-                fe->shader_read_dst_param(&pToken, &dst_param, &dst_rel_addr, shader_version);
+                fe->shader_read_dst_param(fe_data, &pToken, &dst_param, &dst_rel_addr);
             }
 
             /* Print out predication source token first - it follows
              * the destination token. */
             if (ins.predicate)
             {
-                fe->shader_read_src_param(&pToken, &src_param, &src_rel_addr, shader_version);
+                fe->shader_read_src_param(fe_data, &pToken, &src_param, &src_rel_addr);
                 TRACE("(");
                 shader_dump_src_param(&src_param, shader_version);
                 TRACE(") ");
@@ -1115,7 +1115,7 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
             /* Other source tokens */
             for (i = ins.dst_count; i < (ins.dst_count + ins.src_count); ++i)
             {
-                fe->shader_read_src_param(&pToken, &src_param, &src_rel_addr, shader_version);
+                fe->shader_read_src_param(fe_data, &pToken, &src_param, &src_rel_addr);
                 TRACE(!i ? " " : ", ");
                 shader_dump_src_param(&src_param, shader_version);
             }

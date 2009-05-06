@@ -108,6 +108,7 @@ struct wined3d_sm1_opcode_info
 
 struct wined3d_sm1_data
 {
+    DWORD shader_version;
     const struct wined3d_sm1_opcode_info *opcode_table;
 };
 
@@ -440,24 +441,28 @@ static void shader_sm1_free(void *data)
 
 static void shader_sm1_read_header(void *data, const DWORD **ptr, DWORD *shader_version)
 {
+    struct wined3d_sm1_data *priv = data;
+
     TRACE("version: 0x%08x\n", **ptr);
     *shader_version = *(*ptr)++;
+
+    priv->shader_version = *shader_version;
 }
 
 static void shader_sm1_read_opcode(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins,
-        UINT *param_size, DWORD shader_version)
+        UINT *param_size)
 {
     struct wined3d_sm1_data *priv = data;
     const struct wined3d_sm1_opcode_info *opcode_info;
     DWORD opcode_token;
 
     opcode_token = *(*ptr)++;
-    opcode_info = shader_get_opcode(priv->opcode_table, shader_version, opcode_token);
+    opcode_info = shader_get_opcode(priv->opcode_table, priv->shader_version, opcode_token);
     if (!opcode_info)
     {
         FIXME("Unrecognized opcode: token=0x%08x\n", opcode_token);
         ins->handler_idx = WINED3DSIH_TABLE_SIZE;
-        *param_size = shader_skip_unrecognized(*ptr, shader_version);
+        *param_size = shader_skip_unrecognized(*ptr, priv->shader_version);
         return;
     }
 
@@ -467,15 +472,16 @@ static void shader_sm1_read_opcode(void *data, const DWORD **ptr, struct wined3d
     ins->predicate = opcode_token & WINED3DSHADER_INSTRUCTION_PREDICATED;
     ins->dst_count = opcode_info->dst_count ? 1 : 0;
     ins->src_count = opcode_info->param_count - opcode_info->dst_count;
-    *param_size = shader_skip_opcode(opcode_info, opcode_token, shader_version);
+    *param_size = shader_skip_opcode(opcode_info, opcode_token, priv->shader_version);
 }
 
-static void shader_sm1_read_src_param(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
-        struct wined3d_shader_src_param *src_rel_addr, DWORD shader_version)
+static void shader_sm1_read_src_param(void *data, const DWORD **ptr, struct wined3d_shader_src_param *src_param,
+        struct wined3d_shader_src_param *src_rel_addr)
 {
+    struct wined3d_sm1_data *priv = data;
     DWORD token, addr_token;
 
-    *ptr += shader_get_param(*ptr, shader_version, &token, &addr_token);
+    *ptr += shader_get_param(*ptr, priv->shader_version, &token, &addr_token);
     if (token & WINED3DSHADER_ADDRMODE_RELATIVE)
     {
         shader_parse_src_param(addr_token, NULL, src_rel_addr);
@@ -487,12 +493,13 @@ static void shader_sm1_read_src_param(const DWORD **ptr, struct wined3d_shader_s
     }
 }
 
-static void shader_sm1_read_dst_param(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
-        struct wined3d_shader_src_param *dst_rel_addr, DWORD shader_version)
+static void shader_sm1_read_dst_param(void *data, const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
+        struct wined3d_shader_src_param *dst_rel_addr)
 {
+    struct wined3d_sm1_data *priv = data;
     DWORD token, addr_token;
 
-    *ptr += shader_get_param(*ptr, shader_version, &token, &addr_token);
+    *ptr += shader_get_param(*ptr, priv->shader_version, &token, &addr_token);
     if (token & WINED3DSHADER_ADDRMODE_RELATIVE)
     {
         shader_parse_src_param(addr_token, NULL, dst_rel_addr);
