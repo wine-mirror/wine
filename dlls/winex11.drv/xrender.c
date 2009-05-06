@@ -639,8 +639,7 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
 /***********************************************************************
  *   X11DRV_XRender_UpdateDrawable
  *
- * This gets called from X11DRV_SetDrawable and X11DRV_SelectBitmap.
- * It deletes the pict and tile when the drawable changes.
+ * Deletes the pict and tile when the drawable changes.
  */
 void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
 {
