@@ -61,7 +61,7 @@ void FillSolidRect(HDC hDC, LPCRECT lpRect, COLORREF clr)
     ExtTextOut(hDC, 0, 0, ETO_OPAQUE, lpRect, NULL, 0, NULL);
 }
 
-void FillSolidRect2(HDC hDC, int x, int y, int cx, int cy, COLORREF clr)
+static void FillSolidRect2(HDC hDC, int x, int y, int cx, int cy, COLORREF clr)
 {
     RECT rect;
 
@@ -73,18 +73,12 @@ void FillSolidRect2(HDC hDC, int x, int y, int cx, int cy, COLORREF clr)
     ExtTextOut(hDC, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
 }
 
-void Draw3dRect(HDC hDC, int x, int y, int cx, int cy, COLORREF clrTopLeft, COLORREF clrBottomRight)
+static void Draw3dRect(HDC hDC, int x, int y, int cx, int cy, COLORREF clrTopLeft, COLORREF clrBottomRight)
 {
     FillSolidRect2(hDC, x, y, cx - 1, 1, clrTopLeft);
     FillSolidRect2(hDC, x, y, 1, cy - 1, clrTopLeft);
     FillSolidRect2(hDC, x + cx, y, -1, cy, clrBottomRight);
     FillSolidRect2(hDC, x, y + cy, cx, -1, clrBottomRight);
-}
-
-void Draw3dRect2(HDC hDC, LPRECT lpRect, COLORREF clrTopLeft, COLORREF clrBottomRight)
-{
-    Draw3dRect(hDC, lpRect->left, lpRect->top, lpRect->right - lpRect->left,
-        lpRect->bottom - lpRect->top, clrTopLeft, clrBottomRight);
 }
 
 void Font_DrawText(HDC hDC, LPWSTR lpwszText, int x, int y)

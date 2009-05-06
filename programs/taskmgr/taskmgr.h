@@ -143,9 +143,6 @@ extern HWND hApplicationPageNewTaskButton;   /* Application New Task button */
 
 /* Forward declarations of functions included in this code module: */
 void FillSolidRect(HDC hDC, LPCRECT lpRect, COLORREF clr);
-void FillSolidRect2(HDC hDC, int x, int y, int cx, int cy, COLORREF clr);
-void Draw3dRect(HDC hDC, int x, int y, int cx, int cy, COLORREF clrTopLeft, COLORREF clrBottomRight);
-void Draw3dRect2(HDC hDC, LPRECT lpRect, COLORREF clrTopLeft, COLORREF clrBottomRight);
 void Font_DrawText(HDC hDC, LPWSTR lpwszText, int x, int y);
 
 #define OPTIONS_MENU_INDEX    1
