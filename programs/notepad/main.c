@@ -415,7 +415,7 @@ void NOTEPAD_DoFind(FINDREPLACE *fr)
     SendMessageW(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
 }
 
-void NOTEPAD_DoReplace(FINDREPLACE *fr)
+static void NOTEPAD_DoReplace(FINDREPLACE *fr)
 {
     LPTSTR content;
     int len = lstrlen(fr->lpstrFindWhat);
@@ -447,7 +447,7 @@ void NOTEPAD_DoReplace(FINDREPLACE *fr)
     NOTEPAD_DoFind(fr);
 }
 
-void NOTEPAD_DoReplaceAll(FINDREPLACE *fr)
+static void NOTEPAD_DoReplaceAll(FINDREPLACE *fr)
 {
     LPTSTR content;
     LPTSTR found;
