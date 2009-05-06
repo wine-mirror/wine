@@ -309,10 +309,35 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF* rect,
     if(!line || !rect)
         return InvalidParameter;
 
-    start.X = rect->X;
-    start.Y = rect->Y;
-    end.X = rect->X + rect->Width;
-    end.Y = rect->Y + rect->Height;
+    switch (mode)
+    {
+    case LinearGradientModeHorizontal:
+        start.X = rect->X;
+        start.Y = rect->Y;
+        end.X = rect->X + rect->Width;
+        end.Y = rect->Y;
+        break;
+    case LinearGradientModeVertical:
+        start.X = rect->X;
+        start.Y = rect->Y;
+        end.X = rect->X;
+        end.Y = rect->Y + rect->Height;
+        break;
+    case LinearGradientModeForwardDiagonal:
+        start.X = rect->X;
+        start.Y = rect->Y;
+        end.X = rect->X + rect->Width;
+        end.Y = rect->Y + rect->Height;
+        break;
+    case LinearGradientModeBackwardDiagonal:
+        start.X = rect->X + rect->Width;
+        start.Y = rect->Y;
+        end.X = rect->X;
+        end.Y = rect->Y + rect->Height;
+        break;
+    default:
+        return InvalidParameter;
+    }
 
     stat = GdipCreateLineBrush(&start, &end, startcolor, endcolor, wrap, line);
 
