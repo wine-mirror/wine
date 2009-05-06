@@ -31,14 +31,27 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 #define WINED3D_SM4_REGISTER_TYPE_SHIFT         12
 #define WINED3D_SM4_REGISTER_TYPE_MASK          (0xf << WINED3D_SM4_REGISTER_TYPE_SHIFT)
 
+#define WINED3D_SM4_IMMCONST_TYPE_SHIFT         0
+#define WINED3D_SM4_IMMCONST_TYPE_MASK          (0x3 << WINED3D_SM4_IMMCONST_TYPE_SHIFT)
+
 #define WINED3D_SM4_WRITEMASK_SHIFT             4
 #define WINED3D_SM4_WRITEMASK_MASK              (0xf << WINED3D_SM4_WRITEMASK_SHIFT)
+
+#define WINED3D_SM4_SWIZZLE_SHIFT               4
+#define WINED3D_SM4_SWIZZLE_MASK                (0xff << WINED3D_SM4_SWIZZLE_SHIFT)
 
 enum wined3d_sm4_register_type
 {
     WINED3D_SM4_RT_TEMP     = 0x0,
     WINED3D_SM4_RT_INPUT    = 0x1,
     WINED3D_SM4_RT_OUTPUT   = 0x2,
+    WINED3D_SM4_RT_IMMCONST = 0x4,
+};
+
+enum wined3d_sm4_immconst_type
+{
+    WINED3D_SM4_IMMCONST_FLOAT  = 0x1,
+    WINED3D_SM4_IMMCONST_FLOAT4 = 0x2,
 };
 
 struct wined3d_sm4_data
@@ -48,9 +61,11 @@ struct wined3d_sm4_data
 
 static const WINED3DSHADER_PARAM_REGISTER_TYPE register_type_table[] =
 {
-    /* WINED3D_SM4_RT_TEMP */   WINED3DSPR_TEMP,
-    /* WINED3D_SM4_RT_INPUT */  WINED3DSPR_INPUT,
-    /* WINED3D_SM4_RT_OUTPUT */ WINED3DSPR_OUTPUT,
+    /* WINED3D_SM4_RT_TEMP */       WINED3DSPR_TEMP,
+    /* WINED3D_SM4_RT_INPUT */      WINED3DSPR_INPUT,
+    /* WINED3D_SM4_RT_OUTPUT */     WINED3DSPR_OUTPUT,
+    /* UNKNOWN */                   0,
+    /* WINED3D_SM4_RT_IMMCONST */   WINED3DSPR_IMMCONST,
 };
 
 static void *shader_sm4_init(const DWORD *byte_code)
@@ -101,8 +116,53 @@ static void shader_sm4_read_opcode(void *data, const DWORD **ptr, struct wined3d
 static void shader_sm4_read_src_param(const DWORD **ptr, struct wined3d_shader_src_param *src_param,
         struct wined3d_shader_src_param *src_rel_addr, DWORD shader_version)
 {
-    FIXME("ptr %p, src_param %p, src_rel_addr %p, shader_version %#x stub!\n",
-            ptr, src_param, src_rel_addr, shader_version);
+    DWORD token = *(*ptr)++;
+    enum wined3d_sm4_register_type register_type;
+
+    register_type = (token & WINED3D_SM4_REGISTER_TYPE_MASK) >> WINED3D_SM4_REGISTER_TYPE_SHIFT;
+    if (register_type >= sizeof(register_type_table) / sizeof(*register_type_table))
+    {
+        FIXME("Unhandled register type %#x\n", register_type);
+        src_param->register_type = WINED3DSPR_TEMP;
+    }
+    else
+    {
+        src_param->register_type = register_type_table[register_type];
+    }
+
+    if (register_type == WINED3D_SM4_RT_IMMCONST)
+    {
+        enum wined3d_sm4_immconst_type immconst_type =
+                (token & WINED3D_SM4_IMMCONST_TYPE_MASK) >> WINED3D_SM4_IMMCONST_TYPE_SHIFT;
+        src_param->swizzle = WINED3DSP_NOSWIZZLE;
+
+        switch(immconst_type)
+        {
+            case WINED3D_SM4_IMMCONST_FLOAT:
+                src_param->immconst_type = WINED3D_IMMCONST_FLOAT;
+                memcpy(src_param->immconst_data, *ptr, 1 * sizeof(DWORD));
+                *ptr += 1;
+                break;
+
+            case WINED3D_SM4_IMMCONST_FLOAT4:
+                src_param->immconst_type = WINED3D_IMMCONST_FLOAT4;
+                memcpy(src_param->immconst_data, *ptr, 4 * sizeof(DWORD));
+                *ptr += 4;
+                break;
+
+            default:
+                FIXME("Unhandled immediate constant type %#x\n", immconst_type);
+                break;
+        }
+    }
+    else
+    {
+        src_param->register_idx = *(*ptr)++;
+        src_param->swizzle = (token & WINED3D_SM4_SWIZZLE_MASK) >> WINED3D_SM4_SWIZZLE_SHIFT;
+    }
+
+    src_param->modifiers = 0;
+    src_param->rel_addr = NULL;
 }
 
 static void shader_sm4_read_dst_param(const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,

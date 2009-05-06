@@ -322,7 +322,14 @@ typedef enum _WINED3DSHADER_PARAM_REGISTER_TYPE
     WINED3DSPR_MISCTYPE = 17,
     WINED3DSPR_LABEL = 18,
     WINED3DSPR_PREDICATE = 19,
+    WINED3DSPR_IMMCONST,
 } WINED3DSHADER_PARAM_REGISTER_TYPE;
+
+enum wined3d_immconst_type
+{
+    WINED3D_IMMCONST_FLOAT,
+    WINED3D_IMMCONST_FLOAT4,
+};
 
 typedef enum _WINED3DVS_RASTOUT_OFFSETS
 {
@@ -645,6 +652,8 @@ struct wined3d_shader_src_param
     DWORD swizzle;
     DWORD modifiers;
     const struct wined3d_shader_src_param *rel_addr;
+    enum wined3d_immconst_type immconst_type;
+    DWORD immconst_data[4];
 };
 
 struct wined3d_shader_instruction
