@@ -23,8 +23,6 @@
 #include "sane_i.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(twain);
-
 #ifdef SONAME_LIBSANE
 static SANE_Status sane_find_option(SANE_Handle h, const char *option_name,
         const SANE_Option_Descriptor **opt_p, int *optno, SANE_Value_Type type)
