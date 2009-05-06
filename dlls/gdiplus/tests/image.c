@@ -480,7 +480,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     expectf(HEIGHT1, height);
     if (stat == Ok)
         GdipDisposeImage((GpImage*)gpbm);
-    GlobalFree(hbm);
+    DeleteObject(hbm);
 
     hbm = CreateBitmap(WIDTH2, HEIGHT2, 1, 1, &buff);
     stat = GdipCreateBitmapFromHBITMAP(hbm, NULL, &gpbm);
@@ -493,7 +493,7 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     expectf(HEIGHT2, height);
     if (stat == Ok)
         GdipDisposeImage((GpImage*)gpbm);
-    GlobalFree(hbm);
+    DeleteObject(hbm);
 
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
@@ -530,8 +530,8 @@ static void test_GdipCreateBitmapFromHBITMAP(void)
     if (stat == Ok)
         GdipDisposeImage((GpImage*)gpbm);
 
-    GlobalFree(hpal);
-    GlobalFree(hbm);
+    DeleteObject(hpal);
+    DeleteObject(hbm);
 }
 
 static void test_GdipGetImageFlags(void)
