@@ -2027,6 +2027,47 @@ static void test_norecompute(void)
     DestroyWindow(hwnd);
 }
 
+static void test_nosortheader(void)
+{
+    HWND hwnd, header;
+    LONG_PTR style;
+
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "header expected\n");
+
+    style = GetWindowLongPtr(header, GWL_STYLE);
+    ok(style & HDS_BUTTONS, "expected header to have HDS_BUTTONS\n");
+
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    SetWindowLongPtr(hwnd, GWL_STYLE, style | LVS_NOSORTHEADER);
+    /* HDS_BUTTONS retained */
+    style = GetWindowLongPtr(header, GWL_STYLE);
+    ok(style & HDS_BUTTONS, "expected header to retain HDS_BUTTONS\n");
+
+    DestroyWindow(hwnd);
+
+    /* create with LVS_NOSORTHEADER */
+    hwnd = create_listview_control(LVS_NOSORTHEADER);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    header = (HWND)SendMessageA(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "header expected\n");
+
+    style = GetWindowLongPtr(header, GWL_STYLE);
+    ok(!(style & HDS_BUTTONS), "expected header to have no HDS_BUTTONS\n");
+
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    SetWindowLongPtr(hwnd, GWL_STYLE, style & ~LVS_NOSORTHEADER);
+    /* not changed here */
+    style = GetWindowLongPtr(header, GWL_STYLE);
+    ok(!(style & HDS_BUTTONS), "expected header to have no HDS_BUTTONS\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -2068,4 +2109,5 @@ START_TEST(listview)
     test_sorting();
     test_ownerdata();
     test_norecompute();
+    test_nosortheader();
 }

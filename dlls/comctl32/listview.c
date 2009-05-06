@@ -9631,8 +9631,6 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
           wStyleType, lpss->styleOld, lpss->styleNew);
 
     if (wStyleType != GWL_STYLE) return 0;
-  
-    /* FIXME: if LVS_NOSORTHEADER changed, update header */
 
     infoPtr->dwStyle = lpss->styleNew;
 
