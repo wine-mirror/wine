@@ -1808,7 +1808,7 @@ typedef struct _HttpTimerThreadData
     HANDLE timer_cancelled;
 } HttpTimerThreadData;
 
-static VOID CALLBACK rpcrt4_http_keep_connection_active_timer_proc(PVOID param, BOOLEAN dummy)
+static VOID rpcrt4_http_keep_connection_active_timer_proc(PVOID param, BOOLEAN dummy)
 {
     HINTERNET in_request = param;
     RpcPktHdr *idle_pkt;
