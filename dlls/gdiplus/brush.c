@@ -250,6 +250,11 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
     (*line)->wrap = wrap;
     (*line)->gamma = FALSE;
 
+    (*line)->rect.X = (startpoint->X < endpoint->X ? startpoint->X: endpoint->X);
+    (*line)->rect.Y = (startpoint->Y < endpoint->Y ? startpoint->Y: endpoint->Y);
+    (*line)->rect.Width  = fabs(startpoint->X - endpoint->X);
+    (*line)->rect.Height = fabs(startpoint->Y - endpoint->Y);
+
     (*line)->blendcount = 1;
     (*line)->blendfac = GdipAlloc(sizeof(REAL));
     (*line)->blendpos = GdipAlloc(sizeof(REAL));
@@ -1538,11 +1543,7 @@ GpStatus WINGDIPAPI GdipGetLineRect(GpLineGradient *brush, GpRectF *rect)
     if(!brush || !rect)
         return InvalidParameter;
 
-    rect->X = (brush->startpoint.X < brush->endpoint.X ? brush->startpoint.X: brush->endpoint.X);
-    rect->Y = (brush->startpoint.Y < brush->endpoint.Y ? brush->startpoint.Y: brush->endpoint.Y);
-
-    rect->Width  = fabs(brush->startpoint.X - brush->endpoint.X);
-    rect->Height = fabs(brush->startpoint.Y - brush->endpoint.Y);
+    *rect = brush->rect;
 
     return Ok;
 }

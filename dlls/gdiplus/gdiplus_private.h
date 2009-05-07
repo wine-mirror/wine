@@ -143,6 +143,7 @@ struct GpLineGradient{
     GpPointF endpoint;
     ARGB startcolor;
     ARGB endcolor;
+    RectF rect;
     GpWrapMode wrap;
     BOOL gamma;
     REAL* blendfac;  /* blend factors */
