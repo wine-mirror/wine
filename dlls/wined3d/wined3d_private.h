@@ -625,6 +625,7 @@ typedef struct shader_reg_maps
     char packed_output[MAX_REG_OUTPUT];     /* vertex >= 3.0 */
     char attributes[MAX_ATTRIBS];           /* vertex */
     char labels[MAX_LABELS];                /* pixel, vertex */
+    DWORD *constf;                          /* pixel, vertex */
     DWORD texcoord_mask[MAX_REG_TEXCRD];    /* vertex < 3.0 */
     WORD integer_constants;                 /* MAX_CONST_I, 16 */
     WORD boolean_constants;                 /* MAX_CONST_B, 16 */
@@ -2579,7 +2580,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction);
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
         struct shader_reg_maps *reg_maps, struct wined3d_shader_semantic *semantics_in,
-        struct wined3d_shader_semantic *semantics_out, const DWORD *byte_code);
+        struct wined3d_shader_semantic *semantics_out, const DWORD *byte_code, DWORD constf_size);
 void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDevice *device);
 const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token);
 void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *pFunction);

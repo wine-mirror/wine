@@ -237,6 +237,14 @@ static void shader_delete_constant_list(struct list* clist) {
     list_init(clist);
 }
 
+static inline void set_bitmap_bit(DWORD *bitmap, DWORD bit)
+{
+    DWORD idx, shift;
+    idx = bit >> 5;
+    shift = bit & 0x1f;
+    bitmap[idx] |= (1 << shift);
+}
+
 static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct shader_reg_maps *reg_maps,
         DWORD register_type, UINT register_idx, BOOL has_rel_addr, BOOL pshader)
 {
@@ -293,6 +301,10 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
                 }
                 reg_maps->usesrelconstF = TRUE;
             }
+            else
+            {
+                set_bitmap_bit(reg_maps->constf, register_idx);
+            }
             break;
 
         case WINED3DSPR_CONSTINT:
@@ -309,12 +321,32 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
     }
 }
 
+static unsigned char get_instr_regcount(enum WINED3D_SHADER_INSTRUCTION_HANDLER instr, int param)
+{
+    switch(instr)
+    {
+        case WINED3DSIH_M4x4:
+        case WINED3DSIH_M3x4:
+            return param == 1 ? 4 : 1;
+
+        case WINED3DSIH_M4x3:
+        case WINED3DSIH_M3x3:
+            return param == 1 ? 3 : 1;
+
+        case WINED3DSIH_M3x2:
+            return param == 1 ? 2 : 1;
+
+        default:
+            return 1;
+    }
+}
+
 /* Note that this does not count the loop register
  * as an address register. */
 
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
         struct shader_reg_maps *reg_maps, struct wined3d_shader_semantic *semantics_in,
-        struct wined3d_shader_semantic *semantics_out, const DWORD *byte_code)
+        struct wined3d_shader_semantic *semantics_out, const DWORD *byte_code, DWORD constf_size)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     void *fe_data = This->baseShader.frontend_data;
@@ -337,6 +369,13 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
     fe->shader_read_header(fe_data, &pToken, &shader_version);
     reg_maps->shader_version = shader_version;
     pshader = shader_is_pshader_version(shader_version.type);
+
+    reg_maps->constf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                 sizeof(*reg_maps->constf) * ((constf_size + 31) / 32));
+    if(!reg_maps->constf) {
+        ERR("Out of memory\n");
+        return E_OUTOFMEMORY;
+    }
 
     while (!fe->shader_is_end(fe_data, &pToken))
     {
@@ -582,6 +621,24 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 fe->shader_read_src_param(fe_data, &pToken, &src_param, &src_rel_addr);
                 shader_record_register_usage(This, reg_maps, src_param.reg.type,
                         src_param.reg.idx, !!src_param.reg.rel_addr, pshader);
+                switch(get_instr_regcount(ins.handler_idx, i))
+                {
+                    case 4:
+                        shader_record_register_usage(This, reg_maps, src_param.reg.type,
+                                src_param.reg.idx + 3, !!src_param.reg.rel_addr, pshader);
+                        /* drop through */
+                    case 3:
+                        shader_record_register_usage(This, reg_maps, src_param.reg.type,
+                                src_param.reg.idx + 2, !!src_param.reg.rel_addr, pshader);
+                        /* drop through */
+                    case 2:
+                        shader_record_register_usage(This, reg_maps, src_param.reg.type,
+                                src_param.reg.idx + 1, !!src_param.reg.rel_addr, pshader);
+                        /* drop through */
+                    case 1:
+                        shader_record_register_usage(This, reg_maps, src_param.reg.type,
+                                src_param.reg.idx, !!src_param.reg.rel_addr, pshader);
+                }
             }
         }
     }
@@ -1158,6 +1215,7 @@ void shader_cleanup(IWineD3DBaseShader *iface)
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)iface;
 
     ((IWineD3DDeviceImpl *)This->baseShader.device)->shader_backend->shader_destroy(iface);
+    HeapFree(GetProcessHeap(), 0, This->baseShader.reg_maps.constf);
     HeapFree(GetProcessHeap(), 0, This->baseShader.function);
     shader_delete_constant_list(&This->baseShader.constantsF);
     shader_delete_constant_list(&This->baseShader.constantsB);
