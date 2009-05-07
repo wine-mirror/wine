@@ -1034,7 +1034,6 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
-    BOOL is_color;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
     BOOL projected = FALSE, bias = FALSE;
@@ -1044,50 +1043,50 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     DWORD reg_sampler_code;
 
     /* All versions have a destination register */
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, reg_dest, &is_color);
+    shader_arb_get_dst_param(ins, dst, reg_dest);
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
-   if (shader_version < WINED3D_SHADER_VERSION(1,4))
-      strcpy(reg_coord, reg_dest);
-   else
-      shader_arb_get_src_param(ins, &ins->src[0], 0, reg_coord);
+    if (shader_version < WINED3D_SHADER_VERSION(1,4))
+        strcpy(reg_coord, reg_dest);
+    else
+        shader_arb_get_src_param(ins, &ins->src[0], 0, reg_coord);
 
-  /* 1.0-1.4: Use destination register number as texture code.
-     2.0+: Use provided sampler number as texure code. */
-  if (shader_version < WINED3D_SHADER_VERSION(2,0))
-     reg_sampler_code = dst->reg.idx;
-  else
-     reg_sampler_code = ins->src[1].reg.idx;
+    /* 1.0-1.4: Use destination register number as texture code.
+       2.0+: Use provided sampler number as texure code. */
+    if (shader_version < WINED3D_SHADER_VERSION(2,0))
+        reg_sampler_code = dst->reg.idx;
+    else
+        reg_sampler_code = ins->src[1].reg.idx;
 
-  /* projection flag:
-   * 1.1, 1.2, 1.3: Use WINED3DTSS_TEXTURETRANSFORMFLAGS
-   * 1.4: Use WINED3DSPSM_DZ or WINED3DSPSM_DW on src[0]
-   * 2.0+: Use WINED3DSI_TEXLD_PROJECT on the opcode
-   */
-  if (shader_version < WINED3D_SHADER_VERSION(1,4))
-  {
-      DWORD flags = 0;
-      if(reg_sampler_code < MAX_TEXTURES) {
-        flags = deviceImpl->stateBlock->textureState[reg_sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS];
-      }
-      if (flags & WINED3DTTFF_PROJECTED) {
-          projected = TRUE;
-      }
-  }
-  else if (shader_version < WINED3D_SHADER_VERSION(2,0))
-  {
-      DWORD src_mod = ins->src[0].modifiers;
-      if (src_mod == WINED3DSPSM_DZ) {
-          projected = TRUE;
-      } else if(src_mod == WINED3DSPSM_DW) {
-          projected = TRUE;
-      }
-  } else {
-      if (ins->flags & WINED3DSI_TEXLD_PROJECT) projected = TRUE;
-      if (ins->flags & WINED3DSI_TEXLD_BIAS) bias = TRUE;
-  }
-  shader_hw_sample(ins, reg_sampler_code, reg_dest, reg_coord, projected, bias);
+    /* projection flag:
+     * 1.1, 1.2, 1.3: Use WINED3DTSS_TEXTURETRANSFORMFLAGS
+     * 1.4: Use WINED3DSPSM_DZ or WINED3DSPSM_DW on src[0]
+     * 2.0+: Use WINED3DSI_TEXLD_PROJECT on the opcode
+     */
+    if (shader_version < WINED3D_SHADER_VERSION(1,4))
+    {
+        DWORD flags = 0;
+        if(reg_sampler_code < MAX_TEXTURES) {
+            flags = deviceImpl->stateBlock->textureState[reg_sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+        }
+        if (flags & WINED3DTTFF_PROJECTED) {
+            projected = TRUE;
+        }
+    }
+    else if (shader_version < WINED3D_SHADER_VERSION(2,0))
+    {
+        DWORD src_mod = ins->src[0].modifiers;
+        if (src_mod == WINED3DSPSM_DZ) {
+            projected = TRUE;
+        } else if(src_mod == WINED3DSPSM_DW) {
+            projected = TRUE;
+        }
+    } else {
+        if (ins->flags & WINED3DSI_TEXLD_PROJECT) projected = TRUE;
+        if (ins->flags & WINED3DSI_TEXLD_BIAS) bias = TRUE;
+    }
+    shader_hw_sample(ins, reg_sampler_code, reg_dest, reg_coord, projected, bias);
 }
 
 static void pshader_hw_texcoord(const struct wined3d_shader_instruction *ins)
