@@ -1016,13 +1016,11 @@ static void pshader_hw_texkill(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char reg_dest[40];
-    BOOL is_color;
 
     /* No swizzles are allowed in d3d's texkill. PS 1.x ignores the 4th component as documented,
      * but >= 2.0 honors it(undocumented, but tested by the d3d9 testsuit)
      */
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, reg_dest, &is_color);
+    shader_arb_get_dst_param(ins, dst, reg_dest);
 
     if (ins->ctx->reg_maps->shader_version.major >= 2)
     {
@@ -1032,8 +1030,7 @@ static void pshader_hw_texkill(const struct wined3d_shader_instruction *ins)
         /* ARB fp doesn't like swizzles on the parameter of the KIL instruction. To mask the 4th component,
          * copy the register into our general purpose TMP variable, overwrite .w and pass TMP to KIL
          */
-        shader_addline(buffer, "MOV TMP, %s;\n", reg_dest);
-        shader_addline(buffer, "MOV TMP.w, one.w;\n");
+        shader_addline(buffer, "SWZ TMP, %s, x, y, z, 1;\n", reg_dest);
         shader_addline(buffer, "KIL TMP;\n");
     }
 }
