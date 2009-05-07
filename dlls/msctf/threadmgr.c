@@ -598,8 +598,29 @@ static HRESULT WINAPI KeystrokeMgr_UnpreserveKey(ITfKeystrokeMgr *iface,
         REFGUID rguid, const TF_PRESERVEDKEY *pprekey)
 {
     ThreadMgr *This = impl_from_ITfKeystrokeMgrVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    PreservedKey* key = NULL;
+    struct list *cursor;
+    TRACE("(%p) %s (%x %x)\n",This,debugstr_guid(rguid),(pprekey)?pprekey->uVKey:0, (pprekey)?pprekey->uModifiers:0);
+
+    if (!pprekey || !rguid)
+        return E_INVALIDARG;
+
+    LIST_FOR_EACH(cursor, &This->CurrentPreservedKeys)
+    {
+        key = LIST_ENTRY(cursor,PreservedKey,entry);
+        if (IsEqualGUID(rguid,&key->guid) && pprekey->uVKey == key->prekey.uVKey && pprekey->uModifiers == key->prekey.uModifiers)
+            break;
+        key = NULL;
+    }
+
+    if (!key)
+        return CONNECT_E_NOCONNECTION;
+
+    list_remove(&key->entry);
+    HeapFree(GetProcessHeap(),0,key->description);
+    HeapFree(GetProcessHeap(),0,key);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI KeystrokeMgr_SetPreservedKeyDescription(ITfKeystrokeMgr *iface,

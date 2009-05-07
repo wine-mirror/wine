@@ -430,7 +430,7 @@ static void test_KeystrokeMgr(void)
     if (hr == S_FALSE) todo_wine ok(preserved == FALSE,"misreporting preserved key\n");
 
     hr = ITfKeystrokeMgr_UnpreserveKey(keymgr, &CLSID_PreservedKey,&tfpk);
-    todo_wine ok(hr==CONNECT_E_NOCONNECTION,"ITfKeystrokeMgr_UnpreserveKey inproperly succeeded\n");
+    ok(hr==CONNECT_E_NOCONNECTION,"ITfKeystrokeMgr_UnpreserveKey inproperly succeeded\n");
 
     hr = ITfKeystrokeMgr_UnadviseKeyEventSink(keymgr,tid);
     todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_UnadviseKeyEventSink failed\n");
