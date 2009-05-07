@@ -785,6 +785,31 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
         sprintf(outregstr, "T%c%s", 'A' + tmpreg, swzstr);
 }
 
+static const char *shader_arb_get_modifier(const struct wined3d_shader_instruction *ins)
+{
+    DWORD mod;
+    const char *ret = "";
+    if (!ins->dst_count) return "";
+
+    mod = ins->dst[0].modifiers;
+    if(mod & WINED3DSPDM_SATURATE) {
+        ret = "_SAT";
+        mod &= ~WINED3DSPDM_SATURATE;
+    }
+    if(mod & WINED3DSPDM_PARTIALPRECISION) {
+        FIXME("Unhandled modifier WINED3DSPDM_PARTIALPRECISION\n");
+        mod &= ~WINED3DSPDM_PARTIALPRECISION;
+    }
+    if(mod & WINED3DSPDM_MSAMPCENTROID) {
+        FIXME("Unhandled modifier WINED3DSPDM_MSAMPCENTROID\n");
+        mod &= ~WINED3DSPDM_MSAMPCENTROID;
+    }
+    if(mod) {
+        FIXME("Unknown modifiers 0x%08x\n", mod);
+    }
+    return ret;
+}
+
 static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
@@ -827,7 +852,6 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[3][50];
-    BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
 
@@ -837,13 +861,13 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     /* The coissue flag changes the semantic of the cnd instruction in <= 1.3 shaders */
     if (shader_version <= WINED3D_SHADER_VERSION(1, 3) && ins->coissue)
     {
-        shader_addline(buffer, "MOV%s %s, %s;\n", sat ? "_SAT" : "", dst_name, src_name[1]);
+        shader_addline(buffer, "MOV%s %s, %s;\n", shader_arb_get_modifier(ins), dst_name, src_name[1]);
     } else {
         shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
         shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
         shader_addline(buffer, "ADD TMP, -%s, coefdiv.x;\n", src_name[0]);
         shader_addline(buffer, "CMP%s %s, TMP, %s, %s;\n",
-                                sat ? "_SAT" : "", dst_name, src_name[1], src_name[2]);
+                       shader_arb_get_modifier(ins), dst_name, src_name[1], src_name[2]);
     }
 }
 
@@ -853,7 +877,6 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[3][50];
-    BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
 
     shader_arb_get_dst_param(ins, dst, dst_name);
 
@@ -862,7 +885,7 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
     shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
 
-    shader_addline(buffer, "CMP%s %s, %s, %s, %s;\n", sat ? "_SAT" : "", dst_name,
+    shader_addline(buffer, "CMP%s %s, %s, %s, %s;\n", shader_arb_get_modifier(ins), dst_name,
                    src_name[0], src_name[2], src_name[1]);
 }
 
@@ -874,7 +897,6 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[3][50];
-    BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
 
     shader_arb_get_dst_param(ins, dst, dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
@@ -885,7 +907,7 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "MOV TMP, %s;\n", src_name[0]);
     shader_addline(buffer, "MOV TMP.z, 0.0;\n");
     shader_addline(buffer, "DP3 TMP2, TMP, %s;\n", src_name[1]);
-    shader_addline(buffer, "ADD%s %s, TMP2, %s;\n", sat ? "_SAT" : "", dst_name, src_name[2]);
+    shader_addline(buffer, "ADD%s %s, TMP2, %s;\n", shader_arb_get_modifier(ins), dst_name, src_name[2]);
 }
 
 /* Map the opcode 1-to-1 to the GL code */
@@ -896,7 +918,6 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
     char arguments[256], dst_str[50];
     unsigned int i;
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
-    const char *modifier;
 
     switch (ins->handler_idx)
     {
@@ -927,10 +948,6 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
             break;
     }
 
-    /* All instructions handled by this function have a destination parameter */
-    if(dst->modifiers & WINED3DSPDM_SATURATE) modifier = "_SAT";
-    else modifier = "";
-
     /* Note that shader_arb_add_dst_param() adds spaces. */
     arguments[0] = '\0';
     shader_arb_get_dst_param(ins, dst, dst_str);
@@ -941,7 +958,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         shader_arb_get_src_param(ins, &ins->src[i], i, operand);
         strcat(arguments, operand);
     }
-    shader_addline(buffer, "%s%s %s%s;\n", instruction, modifier, dst_str, arguments);
+    shader_addline(buffer, "%s%s %s%s;\n", instruction, shader_arb_get_modifier(ins), dst_str, arguments);
 }
 
 static void shader_hw_nop(const struct wined3d_shader_instruction *ins)
@@ -1537,7 +1554,7 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
 static void shader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    const char *instruction, *sat;
+    const char *instruction;
 
     char dst[50];
     char src[50];
@@ -1551,9 +1568,6 @@ static void shader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
             break;
     }
 
-    if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE) sat = "_SAT";
-    else sat = "";
-
     shader_arb_get_dst_param(ins, &ins->dst[0], dst); /* Destination */
     shader_arb_get_src_param(ins, &ins->src[0], 0, src);
     if (ins->src[0].swizzle == WINED3DSP_NOSWIZZLE)
@@ -1564,23 +1578,21 @@ static void shader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
         strcat(src, ".w");
     }
 
-    shader_addline(buffer, "%s%s %s, %s;\n", instruction, sat, dst, src);
+    shader_addline(buffer, "%s%s %s, %s;\n", instruction, shader_arb_get_modifier(ins), dst, src);
 }
 
 static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
 {
-    const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[50];
-    BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
 
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
     shader_addline(buffer, "DP3 TMP, %s, %s;\n", src_name, src_name);
     shader_addline(buffer, "RSQ TMP, TMP.x;\n");
     /* dst.w = src[0].w * 1 / (src.x^2 + src.y^2 + src.z^2)^(1/2) according to msdn*/
-    shader_addline(buffer, "MUL%s %s, %s, TMP;\n", sat ? "_SAT" : "", dst_name,
+    shader_addline(buffer, "MUL%s %s, %s, TMP;\n", shader_arb_get_modifier(ins), dst_name,
                    src_name);
 }
 
@@ -1590,15 +1602,13 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
      * must contain fixed constants. So we need a separate function to filter those constants and
      * can't use map2gl
      */
-    const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[50];
-    BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
 
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
-    shader_addline(buffer, "SCS%s %s, %s;\n", sat ? "_SAT" : "", dst_name,
+    shader_addline(buffer, "SCS%s %s, %s;\n", shader_arb_get_modifier(ins), dst_name,
                    src_name);
 }
 
@@ -2118,7 +2128,6 @@ static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)
 }
 
 static void shader_arb_add_instruction_modifiers(const struct wined3d_shader_instruction *ins) {
-    BOOL saturate;
     DWORD shift;
     char write_mask[20], regstr[50];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
@@ -2130,13 +2139,15 @@ static void shader_arb_add_instruction_modifiers(const struct wined3d_shader_ins
     dst = &ins->dst[0];
     shift = dst->shift;
     if(shift == 0) return; /* Saturate alone is handled by the instructions */
-    saturate = dst->modifiers & WINED3DSPDM_SATURATE;
 
     shader_arb_get_write_mask(ins, dst, write_mask);
     shader_arb_get_register_name(ins->ctx->shader, &dst->reg, regstr, &is_color);
 
-    /* Generate a line that does the output modifier computation */
-    shader_addline(buffer, "MUL%s %s%s, %s, %s;\n", saturate ? "_SAT" : "",
+    /* Generate a line that does the output modifier computation
+     * FIXME: _SAT vs shift? _SAT alone is already handled in the instructions, if this
+     * maps problems in e.g. _d4_sat modify shader_arb_get_modifier
+     */
+    shader_addline(buffer, "MUL%s %s%s, %s, %s;\n", shader_arb_get_modifier(ins),
                    regstr, write_mask, regstr, shift_tab[shift]);
 }
 
