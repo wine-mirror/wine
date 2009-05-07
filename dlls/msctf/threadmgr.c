@@ -56,6 +56,15 @@ typedef struct tagThreadMgrSink {
     } interfaces;
 } ThreadMgrSink;
 
+typedef struct tagPreservedKey
+{
+    struct list     entry;
+    GUID            guid;
+    TF_PRESERVEDKEY prekey;
+    LPWSTR          description;
+    TfClientId      tid;
+} PreservedKey;
+
 typedef struct tagACLMulti {
     const ITfThreadMgrVtbl *ThreadMgrVtbl;
     const ITfSourceVtbl *SourceVtbl;
@@ -67,6 +76,8 @@ typedef struct tagACLMulti {
     const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl; /* internal */
 
     ITfDocumentMgr *focus;
+
+    struct list CurrentPreservedKeys;
 
     /* kept as separate lists to reduce unnecessary iterations */
     struct list     ActiveLanguageProfileNotifySink;
@@ -153,6 +164,14 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
         ThreadMgrSink* sink = LIST_ENTRY(cursor,ThreadMgrSink,entry);
         list_remove(cursor);
         free_sink(sink);
+    }
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->CurrentPreservedKeys)
+    {
+        PreservedKey* key = LIST_ENTRY(cursor,PreservedKey,entry);
+        list_remove(cursor);
+        HeapFree(GetProcessHeap(),0,key->description);
+        HeapFree(GetProcessHeap(),0,key);
     }
 
     HeapFree(GetProcessHeap(),0,This);
@@ -537,8 +556,42 @@ static HRESULT WINAPI KeystrokeMgr_PreserveKey(ITfKeystrokeMgr *iface,
         const WCHAR *pchDesc, ULONG cchDesc)
 {
     ThreadMgr *This = impl_from_ITfKeystrokeMgrVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    struct list *cursor;
+    PreservedKey *newkey;
+
+    TRACE("(%p) %x %s (%x,%x) %s\n",This,tid, debugstr_guid(rguid),(prekey)?prekey->uVKey:0,(prekey)?prekey->uModifiers:0,debugstr_wn(pchDesc,cchDesc));
+
+    if (!tid || ! rguid || !prekey || (cchDesc && !pchDesc))
+        return E_INVALIDARG;
+
+    LIST_FOR_EACH(cursor, &This->CurrentPreservedKeys)
+    {
+        PreservedKey* key = LIST_ENTRY(cursor,PreservedKey,entry);
+        if (IsEqualGUID(rguid,&key->guid) && prekey->uVKey == key->prekey.uVKey && prekey->uModifiers == key->prekey.uModifiers)
+            return TF_E_ALREADY_EXISTS;
+    }
+
+    newkey = HeapAlloc(GetProcessHeap(),0,sizeof(PreservedKey));
+    if (!newkey)
+        return E_OUTOFMEMORY;
+
+    newkey->guid  = *rguid;
+    newkey->prekey = *prekey;
+    newkey->tid = tid;
+    if (cchDesc)
+    {
+        newkey->description = HeapAlloc(GetProcessHeap(),0,cchDesc * sizeof(WCHAR));
+        if (!newkey->description)
+        {
+            HeapFree(GetProcessHeap(),0,newkey);
+            return E_OUTOFMEMORY;
+        }
+        memcpy(newkey->description, pchDesc, cchDesc*sizeof(WCHAR));
+    }
+
+    list_add_head(&This->CurrentPreservedKeys,&newkey->entry);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI KeystrokeMgr_UnpreserveKey(ITfKeystrokeMgr *iface,
@@ -865,6 +918,8 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->ThreadMgrEventSinkVtbl = &ThreadMgr_ThreadMgrEventSinkVtbl;
     This->refCount = 1;
     TlsSetValue(tlsIndex,This);
+
+    list_init(&This->CurrentPreservedKeys);
 
     list_init(&This->ActiveLanguageProfileNotifySink);
     list_init(&This->DisplayAttributeNotifySink);

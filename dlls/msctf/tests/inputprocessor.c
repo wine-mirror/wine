@@ -409,7 +409,7 @@ static void test_KeystrokeMgr(void)
     todo_wine ok(test_KEV_OnSetFocus == SINK_FIRED, "KeyEventSink_OnSetFocus not fired as expected\n");
 
     hr =ITfKeystrokeMgr_PreserveKey(keymgr, 0, &CLSID_PreservedKey, &tfpk, NULL, 0);
-    todo_wine ok(hr==E_INVALIDARG,"ITfKeystrokeMgr_PreserveKey inproperly succeeded\n");
+    ok(hr==E_INVALIDARG,"ITfKeystrokeMgr_PreserveKey inproperly succeeded\n");
 
     hr =ITfKeystrokeMgr_PreserveKey(keymgr, tid, &CLSID_PreservedKey, &tfpk, NULL, 0);
     todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_PreserveKey failed\n");
