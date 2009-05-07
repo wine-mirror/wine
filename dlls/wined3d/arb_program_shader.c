@@ -1013,8 +1013,8 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
         if (((IWineD3DVertexShaderImpl *)shader)->rel_offset)
         {
             shader_arb_get_src_param(ins, &ins->src[0], 0, src0_param);
-            shader_addline(buffer, "ADD TMP.x, %s, helper_const.z;\n", src0_param);
-            shader_addline(buffer, "ARL A0.x, TMP.x;\n");
+            shader_addline(buffer, "ADD TA.x, %s, helper_const.z;\n", src0_param);
+            shader_addline(buffer, "ARL A0.x, TA.x;\n");
         }
         else
         {
@@ -1605,11 +1605,11 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
     char src_name[50];
 
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
-    shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
-    shader_addline(buffer, "DP3 TMP, %s, %s;\n", src_name, src_name);
-    shader_addline(buffer, "RSQ TMP, TMP.x;\n");
+    shader_arb_get_src_param(ins, &ins->src[0], 1 /* Use TB */, src_name);
+    shader_addline(buffer, "DP3 TA, %s, %s;\n", src_name, src_name);
+    shader_addline(buffer, "RSQ TA, TA.x;\n");
     /* dst.w = src[0].w * 1 / (src.x^2 + src.y^2 + src.z^2)^(1/2) according to msdn*/
-    shader_addline(buffer, "MUL%s %s, %s, TMP;\n", shader_arb_get_modifier(ins), dst_name,
+    shader_addline(buffer, "MUL%s %s, %s, TA;\n", shader_arb_get_modifier(ins), dst_name,
                    src_name);
 }
 
@@ -1927,7 +1927,6 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
         }
     }
 
-    shader_addline(buffer, "TEMP TMP;\n");     /* Used in matrix ops */
     shader_addline(buffer, "TEMP TA;\n");      /* Used for modifiers */
     shader_addline(buffer, "TEMP TB;\n");      /* Used for modifiers */
     shader_addline(buffer, "TEMP TC;\n");      /* Used for modifiers */
@@ -1954,7 +1953,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function);
 
     if(args->srgb_correction) {
-        arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TA", "TB");
+        arbfp_add_sRGB_correction(buffer, fragcolor, "TA", "TB", "TC");
         shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     } else if(reg_maps->shader_version.major < 2) {
         shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
@@ -2017,7 +2016,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
         This->baseShader.limits.constant_float =
                 min(95, This->baseShader.limits.constant_float);
 
-    shader_addline(buffer, "TEMP TMP;\n");
+    shader_addline(buffer, "TEMP TA;\n");
 
     /* Base Declarations */
     shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
@@ -2072,9 +2071,9 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
      * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
      * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
      */
-    shader_addline(buffer, "MUL TMP, posFixup, TMP_OUT.w;\n");
-    shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TMP.z;\n");
-    shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TMP.w;\n");
+    shader_addline(buffer, "MUL TA, posFixup, TMP_OUT.w;\n");
+    shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
+    shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
 
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
      * and the glsl equivalent
