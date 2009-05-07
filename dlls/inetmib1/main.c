@@ -431,45 +431,61 @@ static AsnInteger32 getItemAndInstanceFromTable(AsnObjectIdentifier *oid,
     return ret;
 }
 
-static void setOidWithItem(AsnObjectIdentifier *dst, AsnObjectIdentifier *base,
+static INT setOidWithItem(AsnObjectIdentifier *dst, AsnObjectIdentifier *base,
     UINT item)
 {
     UINT id;
     AsnObjectIdentifier oid;
+    INT ret;
 
-    SnmpUtilOidCpy(dst, base);
-    oid.idLength = 1;
-    oid.ids = &id;
-    id = item;
-    SnmpUtilOidAppend(dst, &oid);
+    ret = SnmpUtilOidCpy(dst, base);
+    if (ret)
+    {
+        oid.idLength = 1;
+        oid.ids = &id;
+        id = item;
+        ret = SnmpUtilOidAppend(dst, &oid);
+    }
+    return ret;
 }
 
-static void setOidWithItemAndIpAddr(AsnObjectIdentifier *dst,
+static INT setOidWithItemAndIpAddr(AsnObjectIdentifier *dst,
     AsnObjectIdentifier *base, UINT item, DWORD addr)
 {
     UINT id;
     BYTE *ptr;
     AsnObjectIdentifier oid;
+    INT ret;
 
-    setOidWithItem(dst, base, item);
-    oid.idLength = 1;
-    oid.ids = &id;
-    for (ptr = (BYTE *)&addr; ptr < (BYTE *)&addr + sizeof(DWORD); ptr++)
+    ret = setOidWithItem(dst, base, item);
+    if (ret)
     {
-        id = *ptr;
-        SnmpUtilOidAppend(dst, &oid);
+        oid.idLength = 1;
+        oid.ids = &id;
+        for (ptr = (BYTE *)&addr; ret && ptr < (BYTE *)&addr + sizeof(DWORD);
+         ptr++)
+        {
+            id = *ptr;
+            ret = SnmpUtilOidAppend(dst, &oid);
+        }
     }
+    return ret;
 }
 
-static void setOidWithItemAndInteger(AsnObjectIdentifier *dst,
+static INT setOidWithItemAndInteger(AsnObjectIdentifier *dst,
     AsnObjectIdentifier *base, UINT item, UINT instance)
 {
     AsnObjectIdentifier oid;
+    INT ret;
 
-    setOidWithItem(dst, base, item);
-    oid.idLength = 1;
-    oid.ids = &instance;
-    SnmpUtilOidAppend(dst, &oid);
+    ret = setOidWithItem(dst, base, item);
+    if (ret)
+    {
+        oid.idLength = 1;
+        oid.ids = &instance;
+        ret = SnmpUtilOidAppend(dst, &oid);
+    }
+    return ret;
 }
 
 static struct structToAsnValue mib2IfEntryMap[] = {
