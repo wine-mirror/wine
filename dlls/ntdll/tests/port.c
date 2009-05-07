@@ -62,8 +62,8 @@ typedef struct _LPC_MESSAGE
   USHORT MessageType;
   USHORT VirtualRangesOffset;
   CLIENT_ID ClientId;
-  ULONG MessageId;
-  ULONG SectionSize;
+  ULONG_PTR MessageId;
+  ULONG_PTR SectionSize;
   UCHAR Data[ANYSIZE_ARRAY];
 } LPC_MESSAGE, *PLPC_MESSAGE;
 

@@ -691,8 +691,8 @@ NTSTATUS WINAPI NtRequestWaitReplyPort(
     TRACE("\tVirtualRangesOffset = %u\n",pLpcMessageIn->VirtualRangesOffset);
     TRACE("\tClientId.UniqueProcess = %p\n",pLpcMessageIn->ClientId.UniqueProcess);
     TRACE("\tClientId.UniqueThread  = %p\n",pLpcMessageIn->ClientId.UniqueThread);
-    TRACE("\tMessageId           = %u\n",pLpcMessageIn->MessageId);
-    TRACE("\tSectionSize         = %u\n",pLpcMessageIn->SectionSize);
+    TRACE("\tMessageId           = %lu\n",pLpcMessageIn->MessageId);
+    TRACE("\tSectionSize         = %lu\n",pLpcMessageIn->SectionSize);
     TRACE("\tData                = %s\n",
       debugstr_an((const char*)pLpcMessageIn->Data,pLpcMessageIn->DataSize));
   }
