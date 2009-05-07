@@ -1954,7 +1954,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
 
     if(args->srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TA", "TB", "TC");
-        shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
+        shader_addline(buffer, "MOV result.color.a, %s;\n", fragcolor);
     } else if(reg_maps->shader_version.major < 2) {
         shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     }
