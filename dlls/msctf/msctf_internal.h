@@ -40,5 +40,11 @@ extern LPVOID get_Cookie_data(DWORD id);
 extern LPVOID remove_Cookie(DWORD id);
 extern DWORD enumerate_Cookie(DWORD magic, DWORD *index);
 
+/* activated text services functions */
+extern HRESULT add_active_textservice(TF_LANGUAGEPROFILE *lp);
+extern BOOL get_active_textservice(REFCLSID rclsid, TF_LANGUAGEPROFILE *lp);
+extern HRESULT activate_textservices(ITfThreadMgr *tm);
+extern HRESULT deactivate_textservices(void);
+
 extern const WCHAR szwSystemTIPKey[];
 #endif /* __WINE_MSCTF_I_H */
