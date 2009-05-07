@@ -356,7 +356,7 @@ static VOID NOTEPAD_InitMenuPopup(HMENU menu, int index)
         GetWindowTextLength(Globals.hEdit) ? MF_ENABLED : MF_GRAYED);
 }
 
-static LPTSTR NOTEPAD_StrRStr(LPTSTR pszSource, LPTSTR pszLast, LPTSTR pszSrch)
+static LPWSTR NOTEPAD_StrRStr(LPWSTR pszSource, LPWSTR pszLast, LPWSTR pszSrch)
 {
     int len = lstrlen(pszSrch);
     pszLast--;
@@ -372,16 +372,16 @@ static LPTSTR NOTEPAD_StrRStr(LPTSTR pszSource, LPTSTR pszLast, LPTSTR pszSrch)
 /***********************************************************************
  * The user activated the Find dialog
  */
-void NOTEPAD_DoFind(FINDREPLACE *fr)
+void NOTEPAD_DoFind(FINDREPLACEW *fr)
 {
-    LPTSTR content;
-    LPTSTR found;
+    LPWSTR content;
+    LPWSTR found;
     int len = lstrlen(fr->lpstrFindWhat);
     int fileLen;
     DWORD pos;
-    
+
     fileLen = GetWindowTextLength(Globals.hEdit) + 1;
-    content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(TCHAR));
+    content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(WCHAR));
     if (!content) return;
     GetWindowText(Globals.hEdit, content, fileLen);
 
@@ -415,16 +415,16 @@ void NOTEPAD_DoFind(FINDREPLACE *fr)
     SendMessageW(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
 }
 
-static void NOTEPAD_DoReplace(FINDREPLACE *fr)
+static void NOTEPAD_DoReplace(FINDREPLACEW *fr)
 {
-    LPTSTR content;
+    LPWSTR content;
     int len = lstrlen(fr->lpstrFindWhat);
     int fileLen;
     DWORD pos;
     DWORD pos_start;
 
     fileLen = GetWindowTextLength(Globals.hEdit) + 1;
-    content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(TCHAR));
+    content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(WCHAR));
     if (!content) return;
     GetWindowText(Globals.hEdit, content, fileLen);
 
@@ -447,10 +447,10 @@ static void NOTEPAD_DoReplace(FINDREPLACE *fr)
     NOTEPAD_DoFind(fr);
 }
 
-static void NOTEPAD_DoReplaceAll(FINDREPLACE *fr)
+static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
 {
-    LPTSTR content;
-    LPTSTR found;
+    LPWSTR content;
+    LPWSTR found;
     int len = lstrlen(fr->lpstrFindWhat);
     int fileLen;
     DWORD pos;
@@ -458,7 +458,7 @@ static void NOTEPAD_DoReplaceAll(FINDREPLACE *fr)
     SendMessageW(Globals.hEdit, EM_SETSEL, 0, 0);
     while(TRUE){
         fileLen = GetWindowTextLength(Globals.hEdit) + 1;
-        content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(TCHAR));
+        content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(WCHAR));
         if (!content) return;
         GetWindowText(Globals.hEdit, content, fileLen);
 
@@ -495,8 +495,8 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
 {
     if (msg == aFINDMSGSTRING)      /* not a constant so can't be used in switch */
     {
-        FINDREPLACE *fr = (FINDREPLACE *)lParam;
-        
+        FINDREPLACEW *fr = (FINDREPLACEW *)lParam;
+
         if (fr->Flags & FR_DIALOGTERM)
             Globals.hFindReplaceDlg = NULL;
         if (fr->Flags & FR_FINDNEXT)
@@ -717,9 +717,9 @@ static void HandleCommandLine(LPWSTR cmdline)
  */
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
-    MSG        msg;
-    HACCEL      hAccel;
-    WNDCLASSEX class;
+    MSG msg;
+    HACCEL hAccel;
+    WNDCLASSEXW class;
     HMONITOR monitor;
     MONITORINFO info;
     INT x, y;

@@ -50,8 +50,7 @@ VOID ShowLastError(void)
         LoadString(Globals.hInstance, STRING_ERROR, szTitle, SIZEOF(szTitle));
         FormatMessage(
             FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-            NULL, error, 0,
-            (LPTSTR) &lpMsgBuf, 0, NULL);
+            NULL, error, 0, (LPWSTR)&lpMsgBuf, 0, NULL);
         MessageBox(NULL, lpMsgBuf, szTitle, MB_OK | MB_ICONERROR);
         LocalFree(lpMsgBuf);
     }
@@ -122,7 +121,7 @@ static int AlertFileNotSaved(LPCWSTR szFileName)
  */
 BOOL FileExists(LPCWSTR szFilename)
 {
-   WIN32_FIND_DATA entry;
+   WIN32_FIND_DATAW entry;
    HANDLE hFile;
 
    hFile = FindFirstFile(szFilename, &entry);
@@ -287,7 +286,7 @@ VOID DIALOG_FileNew(VOID)
 
 VOID DIALOG_FileOpen(VOID)
 {
-    OPENFILENAME openfilename;
+    OPENFILENAMEW openfilename;
     WCHAR szPath[MAX_PATH];
     WCHAR szDir[MAX_PATH];
     static const WCHAR szDefaultExt[] = { 't','x','t',0 };
@@ -326,7 +325,7 @@ BOOL DIALOG_FileSave(VOID)
 
 BOOL DIALOG_FileSaveAs(VOID)
 {
-    OPENFILENAME saveas;
+    OPENFILENAMEW saveas;
     WCHAR szPath[MAX_PATH];
     WCHAR szDir[MAX_PATH];
     static const WCHAR szDefaultExt[] = { 't','x','t',0 };
@@ -337,7 +336,7 @@ BOOL DIALOG_FileSaveAs(VOID)
     GetCurrentDirectory(SIZEOF(szDir), szDir);
     lstrcpy(szPath, txt_files);
 
-    saveas.lStructSize       = sizeof(OPENFILENAME);
+    saveas.lStructSize       = sizeof(OPENFILENAMEW);
     saveas.hwndOwner         = Globals.hMainWnd;
     saveas.hInstance         = Globals.hInstance;
     saveas.lpstrFilter       = Globals.szFilter;
@@ -384,7 +383,7 @@ static int notepad_print_header(HDC hdc, RECT *rc, BOOL dopage, BOOL header, int
 static BOOL notepad_print_page(HDC hdc, RECT *rc, BOOL dopage, int page, LPTEXTINFO tInfo)
 {
     int b, y;
-    TEXTMETRIC tm;
+    TEXTMETRICW tm;
     SIZE szMetrics;
 
     if (dopage)
@@ -478,10 +477,10 @@ static BOOL notepad_print_page(HDC hdc, RECT *rc, BOOL dopage, int page, LPTEXTI
 
 VOID DIALOG_FilePrint(VOID)
 {
-    DOCINFO di;
-    PRINTDLG printer;
+    DOCINFOW di;
+    PRINTDLGW printer;
     int page, dopage, copy;
-    LOGFONT lfFont;
+    LOGFONTW lfFont;
     HFONT hTextFont, old_font = 0;
     DWORD size;
     BOOL ret = FALSE;
@@ -516,7 +515,7 @@ VOID DIALOG_FilePrint(VOID)
     SetMapMode(printer.hDC, MM_TEXT);
 
     /* initialize DOCINFO */
-    di.cbSize = sizeof(DOCINFO);
+    di.cbSize = sizeof(DOCINFOW);
     di.lpszDocName = Globals.szFileTitle;
     di.lpszOutput = NULL;
     di.lpszDatatype = NULL;
@@ -594,7 +593,7 @@ VOID DIALOG_FilePrint(VOID)
 
 VOID DIALOG_FilePrinterSetup(VOID)
 {
-    PRINTDLG printer;
+    PRINTDLGW printer;
 
     ZeroMemory(&printer, sizeof(printer));
     printer.lStructSize         = sizeof(printer);
@@ -701,8 +700,8 @@ VOID DIALOG_EditWrap(VOID)
 
 VOID DIALOG_SelectFont(VOID)
 {
-    CHOOSEFONT cf;
-    LOGFONT lf=Globals.lfFont;
+    CHOOSEFONTW cf;
+    LOGFONTW lf=Globals.lfFont;
 
     ZeroMemory( &cf, sizeof(cf) );
     cf.lStructSize=sizeof(cf);

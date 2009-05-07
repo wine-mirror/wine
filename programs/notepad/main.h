@@ -27,27 +27,27 @@
 
 typedef struct
 {
-  HANDLE  hInstance;
-  HWND    hMainWnd;
-  HWND    hFindReplaceDlg;
-  HWND    hEdit;
-  HFONT   hFont; /* Font used by the edit control */
-  LOGFONT lfFont;
-  BOOL    bWrapLongLines;
-  WCHAR   szFindText[MAX_PATH];
-  WCHAR   szReplaceText[MAX_PATH];
-  WCHAR   szFileName[MAX_PATH];
-  WCHAR   szFileTitle[MAX_PATH];
-  WCHAR   szFilter[2 * MAX_STRING_LEN + 100];
-  INT     iMarginTop;
-  INT     iMarginBottom;
-  INT     iMarginLeft;
-  INT     iMarginRight;
-  WCHAR   szHeader[MAX_PATH];
-  WCHAR   szFooter[MAX_PATH];
+  HANDLE   hInstance;
+  HWND     hMainWnd;
+  HWND     hFindReplaceDlg;
+  HWND     hEdit;
+  HFONT    hFont; /* Font used by the edit control */
+  LOGFONTW lfFont;
+  BOOL     bWrapLongLines;
+  WCHAR    szFindText[MAX_PATH];
+  WCHAR    szReplaceText[MAX_PATH];
+  WCHAR    szFileName[MAX_PATH];
+  WCHAR    szFileTitle[MAX_PATH];
+  WCHAR    szFilter[2 * MAX_STRING_LEN + 100];
+  INT      iMarginTop;
+  INT      iMarginBottom;
+  INT      iMarginLeft;
+  INT      iMarginRight;
+  WCHAR    szHeader[MAX_PATH];
+  WCHAR    szFooter[MAX_PATH];
 
-  FINDREPLACE find;
-  FINDREPLACE lastFind;
+  FINDREPLACEW find;
+  FINDREPLACEW lastFind;
   HGLOBAL hDevMode; /* printer mode */
   HGLOBAL hDevNames; /* printer names */
 } NOTEPAD_GLOBALS;
@@ -55,5 +55,5 @@ typedef struct
 extern NOTEPAD_GLOBALS Globals;
 
 VOID SetFileName(LPCWSTR szFileName);
-void NOTEPAD_DoFind(FINDREPLACE *fr);
+void NOTEPAD_DoFind(FINDREPLACEW *fr);
 DWORD get_dpi(void);
