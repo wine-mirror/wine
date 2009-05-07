@@ -42,6 +42,13 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION      (*gl_info)
 
 /* GL locking for state handlers is done by the caller. */
+static BOOL need_mova_const(IWineD3DBaseShader *shader, const WineD3D_GL_Info *gl_info) {
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) shader;
+    if(!This->baseShader.reg_maps.usesmova) return FALSE;
+    /* TODO: ARR from GL_NV_vertex_program2_option */
+    return TRUE;
+}
+
 static BOOL need_helper_const(const WineD3D_GL_Info *gl_info) {
     if(!GL_SUPPORT(NV_VERTEX_PROGRAM)   || /* Need to init colors */
        gl_info->arb_vs_offset_limit     || /* Have to init texcoords */
@@ -51,12 +58,14 @@ static BOOL need_helper_const(const WineD3D_GL_Info *gl_info) {
     return FALSE;
 }
 
-static unsigned int reserved_vs_const(const WineD3D_GL_Info *gl_info) {
+static unsigned int reserved_vs_const(IWineD3DBaseShader *shader, const WineD3D_GL_Info *gl_info) {
+    unsigned int ret = 1;
     /* We use one PARAM for the pos fixup, and in some cases one to load
      * some immediate values into the shader
      */
-    if(need_helper_const(gl_info)) return 2;
-    else return 1;
+    if(need_helper_const(gl_info)) ret++;
+    if(need_mova_const(shader, gl_info)) ret++;
+    return ret;
 }
 
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
@@ -328,7 +337,7 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
         max_constantsF = GL_LIMITS(pshader_constantsF);
     } else {
         if(This->baseShader.reg_maps.usesrelconstF) {
-            max_constantsF = GL_LIMITS(vshader_constantsF) - reserved_vs_const(gl_info);
+            max_constantsF = GL_LIMITS(vshader_constantsF) - reserved_vs_const(iface, gl_info);
         } else {
             max_constantsF = GL_LIMITS(vshader_constantsF) - 1;
         }
@@ -998,17 +1007,35 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
 
-    if ((ins->ctx->reg_maps->shader_version.major == 1
-            && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)
-            && ins->dst[0].reg.type == WINED3DSPR_ADDR)
-            || ins->handler_idx == WINED3DSIH_MOVA)
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    char src0_param[256];
+
+    if(ins->handler_idx == WINED3DSIH_MOVA) {
+        struct wined3d_shader_src_param tmp_src = ins->src[0];
+        tmp_src.swizzle = (tmp_src.swizzle & 0x3) * 0x55;
+        shader_arb_get_src_param(ins, &tmp_src, 0, src0_param);
+
+        /* This implements the mova formula used in GLSL. The first two instructions
+         * prepare the sign() part. Note that it is fine to have my_sign(0.0) = 1.0
+         * in this case:
+         * mova A0.x, 0.0
+         *
+         * A0.x = arl(floor(abs(0.0) + 0.5) * 1.0) = floor(0.5) = 0.0 since arl does a floor
+         *
+         * TODO: ARR from GL_NV_vertex_program2_option
+         */
+        shader_addline(buffer, "SGE TA.y, %s, mova_const.y;\n", src0_param);
+        shader_addline(buffer, "MAD TA.y, TA.y, mova_const.z, -mova_const.w;\n");
+
+        shader_addline(buffer, "ABS TA.x, %s;\n", src0_param);
+        shader_addline(buffer, "ADD TA.x, TA.x, mova_const.x;\n");
+        shader_addline(buffer, "FLR TA.x, TA.x;\n");
+        shader_addline(buffer, "MUL TA.x, TA.x, TA.y;\n");
+        shader_addline(buffer, "ARL A0.x, TA.x;\n");
+    } else if (ins->ctx->reg_maps->shader_version.major == 1
+          && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)
+          && ins->dst[0].reg.type == WINED3DSPR_ADDR)
     {
-        SHADER_BUFFER *buffer = ins->ctx->buffer;
-        char src0_param[256];
-
-        if (ins->handler_idx == WINED3DSIH_MOVA)
-            FIXME("mova should round\n");
-
         src0_param[0] = '\0';
         if (((IWineD3DVertexShaderImpl *)shader)->rel_offset)
         {
@@ -2009,6 +2036,9 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     shader_addline(buffer, "!!ARBvp1.0\n");
     if(need_helper_const(gl_info)) {
         shader_addline(buffer, "PARAM helper_const = { 2.0, -1.0, %d.0, 0.0 };\n", This->rel_offset);
+    }
+    if(need_mova_const((IWineD3DBaseShader *) iface, gl_info)) {
+        shader_addline(buffer, "PARAM mova_const = { 0.5, 0.0, 2.0, 1.0 };\n");
     }
 
     /* Mesa supports only 95 constants */
