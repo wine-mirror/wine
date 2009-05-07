@@ -2621,6 +2621,15 @@ static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
                     return FALSE;
             }
 
+        case WINED3DSPR_IMMCONST:
+            switch(reg->immconst_type)
+            {
+                case WINED3D_IMMCONST_FLOAT:
+                    return TRUE;
+                default:
+                    return FALSE;
+            }
+
         default:
             return FALSE;
     }
