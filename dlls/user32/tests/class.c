@@ -43,11 +43,13 @@ static const WCHAR WC_EDITW[] = {'E','d','i','t',0};
 
 static LRESULT WINAPI ClassTest_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if (msg == WM_NCCREATE) return 1;
     return DefWindowProcW (hWnd, msg, wParam, lParam);
 }
 
 static LRESULT WINAPI ClassTest_WndProc2 (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    if (msg == WM_NCCREATE) return 1;
     return DefWindowProcA (hWnd, msg, wParam, lParam);
 }
 
@@ -370,6 +372,7 @@ static void test_instances(void)
 
     /* setting global flag doesn't change status of class */
     hwnd = CreateWindowExA( 0, name, "test", 0, 0, 0, 0, 0, 0, 0, main_module, 0 );
+    ok( hwnd != 0, "CreateWindow failed error %u\n", GetLastError());
     SetClassLongA( hwnd, GCL_STYLE, CS_GLOBALCLASS );
     cls.lpszMenuName  = "kernel32";
     cls.hInstance = kernel32;
