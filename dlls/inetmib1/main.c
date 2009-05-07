@@ -1279,6 +1279,7 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
     AsnObjectIdentifier mib2oid = DEFINE_OID(mib2);
     AsnInteger32 error = SNMP_ERRORSTATUS_NOERROR, errorIndex = 0;
     UINT i;
+    BOOL ret = TRUE;
 
     TRACE("(0x%02x, %p, %p, %p)\n", bPduType, pVarBindList,
         pErrorStatus, pErrorIndex);
@@ -1300,7 +1301,7 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
                 impl = findSupportedQuery(pVarBindList->list[i].name.ids, len,
                     &matchingIndex);
             if (impl && impl->query)
-                impl->query(bPduType, &pVarBindList->list[i], &error);
+                ret = impl->query(bPduType, &pVarBindList->list[i], &error);
             else
                 error = SNMP_ERRORSTATUS_NOSUCHNAME;
             if (error == SNMP_ERRORSTATUS_NOSUCHNAME &&
@@ -1317,7 +1318,8 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
                     error = SNMP_ERRORSTATUS_NOERROR;
                     impl = &supportedIDs[matchingIndex];
                     if (impl->query)
-                        impl->query(bPduType, &pVarBindList->list[i], &error);
+                        ret = impl->query(bPduType, &pVarBindList->list[i],
+                            &error);
                     else
                         error = SNMP_ERRORSTATUS_NOSUCHNAME;
                 }
@@ -1327,7 +1329,7 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
                 if (error == SNMP_ERRORSTATUS_NOSUCHNAME)
                 {
                     SnmpUtilOidFree(&pVarBindList->list[i].name);
-                    SnmpUtilOidCpy(&pVarBindList->list[i].name,
+                    ret = SnmpUtilOidCpy(&pVarBindList->list[i].name,
                         &supportedIDs[matchingIndex - 1].name);
                     pVarBindList->list[i].name.ids[
                         pVarBindList->list[i].name.idLength - 1] += 1;
@@ -1339,7 +1341,7 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
     }
     *pErrorStatus = error;
     *pErrorIndex = errorIndex;
-    return TRUE;
+    return ret;
 }
 
 /*****************************************************************************
