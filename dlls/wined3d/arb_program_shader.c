@@ -1878,7 +1878,7 @@ static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {
 }
 
 static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcolor, const char *tmp1,
-                                      const char *tmp2, const char *tmp3, const char *tmp4) {
+                                      const char *tmp2, const char *tmp3) {
     /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
 
     /* Calculate the > 0.0031308 case */
@@ -1889,14 +1889,9 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
     shader_addline(buffer, "SUB %s, %s, srgb_consts2.x;\n", tmp1, tmp1);
     /* Calculate the < case */
     shader_addline(buffer, "MUL %s, srgb_consts1.x, %s;\n", tmp2, fragcolor);
-    /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
-    shader_addline(buffer, "SLT %s, srgb_consts1.y, %s;\n", tmp3, fragcolor);
-    shader_addline(buffer, "SGE %s, srgb_consts1.y, %s;\n", tmp4, fragcolor);
-    /* Store the components > 0.0031308 in the destination */
-    shader_addline(buffer, "MUL %s, %s, %s;\n", fragcolor, tmp1, tmp3);
-    /* Add the components that are < 0.0031308 */
-    shader_addline(buffer, "MAD result.color.xyz, %s, %s, %s;\n", tmp2, tmp4, fragcolor);
-    /* [0.0;1.0] clamping. Not needed, this is done implicitly */
+    /* Subtract the comparison value from the fragcolor and use CMP to pick either the > case * or the < case */
+    shader_addline(buffer, "SUB %s, %s, srgb_consts1.y;\n", tmp3, fragcolor);
+    shader_addline(buffer, "CMP result.color.xyz, %s, %s, %s;\n", tmp3, tmp2, tmp1);
 }
 
 /* GL locking is done by the caller */
@@ -1959,7 +1954,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function);
 
     if(args->srgb_correction) {
-        arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TA", "TB", "TC");
+        arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TA", "TB");
         shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     } else if(reg_maps->shader_version.major < 2) {
         shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
@@ -2964,7 +2959,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
 
     if(settings->sRGB_write) {
         shader_addline(&buffer, "MAD ret, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
-        arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2", "tempreg");
+        arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2");
         shader_addline(&buffer, "MOV result.color.w, ret.w;\n");
     } else {
         shader_addline(&buffer, "MAD result.color, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
