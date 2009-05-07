@@ -324,9 +324,25 @@ static HRESULT WINAPI InputProcessorProfiles_GetActiveLanguageProfile(
         ITfInputProcessorProfiles *iface, REFCLSID rclsid, LANGID *plangid,
         GUID *pguidProfile)
 {
+    TF_LANGUAGEPROFILE profile;
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %s %p %p\n",This,debugstr_guid(rclsid),plangid,pguidProfile);
+
+    if (!rclsid || !plangid || !pguidProfile)
+        return E_INVALIDARG;
+
+    if (get_active_textservice(rclsid, &profile))
+    {
+        *plangid = profile.langid;
+        *pguidProfile = profile.guidProfile;
+        return S_OK;
+    }
+    else
+    {
+        *pguidProfile = GUID_NULL;
+        return S_FALSE;
+    }
 }
 
 static HRESULT WINAPI InputProcessorProfiles_GetLanguageProfileDescription(
