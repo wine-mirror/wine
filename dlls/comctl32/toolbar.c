@@ -3435,9 +3435,6 @@ TOOLBAR_GetButtonTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT nIndex;
     LPWSTR lpText;
 
-    if (lParam == 0)
-	return -1;
-
     nIndex = TOOLBAR_GetButtonIndex (infoPtr, (INT)wParam, FALSE);
     if (nIndex == -1)
 	return -1;
@@ -3445,7 +3442,7 @@ TOOLBAR_GetButtonTextA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     lpText = TOOLBAR_GetText(infoPtr,&infoPtr->buttons[nIndex]);
 
     return WideCharToMultiByte( CP_ACP, 0, lpText, -1,
-                                (LPSTR)lParam, 0x7fffffff, NULL, NULL ) - 1;
+                                (LPSTR)lParam, lParam ? 0x7fffffff : 0, NULL, NULL ) - 1;
 }
 
 
