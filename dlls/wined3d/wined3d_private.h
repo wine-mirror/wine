@@ -1234,6 +1234,7 @@ struct WineD3DContext {
     GLint                   gl_fog_source;
     GLfloat                 fog_coord_value;
     GLfloat                 color[4], fogstart, fogend, fogcolor[4];
+    GLuint                  dummy_arbfp_prog;
 };
 
 typedef enum ContextUsage {

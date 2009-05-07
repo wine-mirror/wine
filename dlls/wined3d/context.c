@@ -946,6 +946,24 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             checkGLcall("glTexEnvi(GL_TEXTURE_SHADER_NV, GL_PREVIOUS_TEXTURE_INPUT_NV, ...\n");
         }
     }
+    if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+        /* MacOS(radeon X1600 at least, but most likely others too) refuses to draw if GLSL and ARBFP are
+         * enabled, but the currently bound arbfp program is 0. Enabling ARBFP with prog 0 is invalid, but
+         * GLSL should bypass this. This causes problems in programs that never use the fixed function pipeline,
+         * because the ARBFP extension is enabled by the ARBFP pipeline at context creation, but no program
+         * is ever assigned.
+         *
+         * So make sure a program is assigned to each context. The first real ARBFP use will set a different
+         * program and the dummy program is destroyed when the context is destroyed.
+         */
+        const char *dummy_program =
+                "!!ARBfp1.0\n"
+                "MOV result.color, fragment.color.primary;\n"
+                "END\n";
+        GL_EXTCALL(glGenProgramsARB(1, &ret->dummy_arbfp_prog));
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, ret->dummy_arbfp_prog));
+        GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(dummy_program), dummy_program));
+    }
 
     for(s = 0; s < GL_LIMITS(point_sprite_units); s++) {
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + s));
@@ -1064,6 +1082,9 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     if (context->dst_fbo) {
         TRACE("Destroy dst FBO %d\n", context->dst_fbo);
         context_destroy_fbo(This, &context->dst_fbo);
+    }
+    if(context->dummy_arbfp_prog) {
+        GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
     }
 
     LEAVE_GL();
