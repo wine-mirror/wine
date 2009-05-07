@@ -379,10 +379,10 @@ static void test_gradientgetrect(void)
     memset(&rectf, 0, sizeof(GpRectF));
     status = GdipGetLineRect(brush, &rectf);
     expect(Ok, status);
-    todo_wine expectf(10.0, rectf.X);
-    todo_wine expectf(10.0, rectf.Y);
-    todo_wine expectf(-100.0, rectf.Width);
-    todo_wine expectf(-100.0, rectf.Height);
+    expectf(10.0, rectf.X);
+    expectf(10.0, rectf.Y);
+    expectf(-100.0, rectf.Width);
+    expectf(-100.0, rectf.Height);
     status = GdipDeleteBrush((GpBrush*)brush);
 }
 

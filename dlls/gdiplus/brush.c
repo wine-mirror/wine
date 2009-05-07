@@ -301,6 +301,7 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF* rect,
     GpLineGradient **line)
 {
     GpPointF start, end;
+    GpStatus stat;
 
     TRACE("(%p, %x, %x, %d, %d, %p)\n", rect, startcolor, endcolor, mode,
           wrap, line);
@@ -313,7 +314,12 @@ GpStatus WINGDIPAPI GdipCreateLineBrushFromRect(GDIPCONST GpRectF* rect,
     end.X = rect->X + rect->Width;
     end.Y = rect->Y + rect->Height;
 
-    return GdipCreateLineBrush(&start, &end, startcolor, endcolor, wrap, line);
+    stat = GdipCreateLineBrush(&start, &end, startcolor, endcolor, wrap, line);
+
+    if (stat == Ok)
+        (*line)->rect = *rect;
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipCreateLineBrushFromRectI(GDIPCONST GpRect* rect,
