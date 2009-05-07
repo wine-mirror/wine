@@ -1042,9 +1042,8 @@ static void shader_glsl_gen_modifier(DWORD src_modifier, const char *in_reg, con
 
 /** Writes the GLSL variable name that corresponds to the register that the
  * DX opcode parameter is trying to access */
-static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx,
-        const struct wined3d_shader_src_param *rel_addr, char *register_name, BOOL *is_color,
-        const struct wined3d_shader_instruction *ins)
+static void shader_glsl_get_register_name(const struct wined3d_shader_register *reg,
+        char *register_name, BOOL *is_color, const struct wined3d_shader_instruction *ins)
 {
     /* oPos, oFog and oPts in D3D */
     static const char * const hwrastout_reg_names[] = { "gl_Position", "gl_FogFragCoord", "gl_PointSize" };
@@ -1056,32 +1055,32 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
 
     *is_color = FALSE;
 
-    switch (register_type)
+    switch (reg->type)
     {
         case WINED3DSPR_TEMP:
-            sprintf(register_name, "R%u", register_idx);
+            sprintf(register_name, "R%u", reg->idx);
             break;
 
         case WINED3DSPR_INPUT:
             /* vertex shaders */
             if (!pshader)
             {
-                if (((IWineD3DVertexShaderImpl *)This)->cur_args->swizzle_map & (1 << register_idx)) *is_color = TRUE;
-                sprintf(register_name, "attrib%u", register_idx);
+                if (((IWineD3DVertexShaderImpl *)This)->cur_args->swizzle_map & (1 << reg->idx)) *is_color = TRUE;
+                sprintf(register_name, "attrib%u", reg->idx);
                 break;
             }
 
             /* pixel shaders >= 3.0 */
             if (This->baseShader.reg_maps.shader_version.major >= 3)
             {
-                DWORD idx = ((IWineD3DPixelShaderImpl *)This)->input_reg_map[register_idx];
+                DWORD idx = ((IWineD3DPixelShaderImpl *)This)->input_reg_map[reg->idx];
                 DWORD in_count = GL_LIMITS(glsl_varyings) / 4;
 
-                if (rel_addr)
+                if (reg->rel_addr)
                 {
                     glsl_src_param_t rel_param;
 
-                    shader_glsl_add_src_param(ins, rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
+                    shader_glsl_add_src_param(ins, reg->rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
 
                     /* Removing a + 0 would be an obvious optimization, but macos doesn't see the NOP
                      * operation there */
@@ -1122,7 +1121,7 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
             }
             else
             {
-                if (register_idx == 0) strcpy(register_name, "gl_Color");
+                if (reg->idx == 0) strcpy(register_name, "gl_Color");
                 else strcpy(register_name, "gl_SecondaryColor");
                 break;
             }
@@ -1133,36 +1132,36 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
                 const char prefix = pshader ? 'P' : 'V';
 
                 /* Relative addressing */
-                if (rel_addr)
+                if (reg->rel_addr)
                 {
                     glsl_src_param_t rel_param;
-                    shader_glsl_add_src_param(ins, rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
-                    if (register_idx) sprintf(register_name, "%cC[%s + %u]", prefix, rel_param.param_str, register_idx);
+                    shader_glsl_add_src_param(ins, reg->rel_addr, WINED3DSP_WRITEMASK_0, &rel_param);
+                    if (reg->idx) sprintf(register_name, "%cC[%s + %u]", prefix, rel_param.param_str, reg->idx);
                     else sprintf(register_name, "%cC[%s]", prefix, rel_param.param_str);
                 }
                 else
                 {
-                    if (shader_constant_is_local(This, register_idx))
-                        sprintf(register_name, "%cLC%u", prefix, register_idx);
+                    if (shader_constant_is_local(This, reg->idx))
+                        sprintf(register_name, "%cLC%u", prefix, reg->idx);
                     else
-                        sprintf(register_name, "%cC[%u]", prefix, register_idx);
+                        sprintf(register_name, "%cC[%u]", prefix, reg->idx);
                 }
             }
             break;
 
         case WINED3DSPR_CONSTINT:
-            if (pshader) sprintf(register_name, "PI[%u]", register_idx);
-            else sprintf(register_name, "VI[%u]", register_idx);
+            if (pshader) sprintf(register_name, "PI[%u]", reg->idx);
+            else sprintf(register_name, "VI[%u]", reg->idx);
             break;
 
         case WINED3DSPR_CONSTBOOL:
-            if (pshader) sprintf(register_name, "PB[%u]", register_idx);
-            else sprintf(register_name, "VB[%u]", register_idx);
+            if (pshader) sprintf(register_name, "PB[%u]", reg->idx);
+            else sprintf(register_name, "VB[%u]", reg->idx);
             break;
 
         case WINED3DSPR_TEXTURE: /* case WINED3DSPR_ADDR: */
-            if (pshader) sprintf(register_name, "T%u", register_idx);
-            else sprintf(register_name, "A%u", register_idx);
+            if (pshader) sprintf(register_name, "T%u", reg->idx);
+            else sprintf(register_name, "A%u", reg->idx);
             break;
 
         case WINED3DSPR_LOOP:
@@ -1170,21 +1169,21 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
             break;
 
         case WINED3DSPR_SAMPLER:
-            if (pshader) sprintf(register_name, "Psampler%u", register_idx);
-            else sprintf(register_name, "Vsampler%u", register_idx);
+            if (pshader) sprintf(register_name, "Psampler%u", reg->idx);
+            else sprintf(register_name, "Vsampler%u", reg->idx);
             break;
 
         case WINED3DSPR_COLOROUT:
-            if (register_idx >= GL_LIMITS(buffers))
-                WARN("Write to render target %u, only %d supported\n", register_idx, 4);
+            if (reg->idx >= GL_LIMITS(buffers))
+                WARN("Write to render target %u, only %d supported\n", reg->idx, 4);
 
-            if (GL_SUPPORT(ARB_DRAW_BUFFERS)) sprintf(register_name, "gl_FragData[%u]", register_idx);
+            if (GL_SUPPORT(ARB_DRAW_BUFFERS)) sprintf(register_name, "gl_FragData[%u]", reg->idx);
             /* On older cards with GLSL support like the GeforceFX there's only one buffer. */
             else sprintf(register_name, "gl_FragColor");
             break;
 
         case WINED3DSPR_RASTOUT:
-            sprintf(register_name, "%s", hwrastout_reg_names[register_idx]);
+            sprintf(register_name, "%s", hwrastout_reg_names[reg->idx]);
             break;
 
         case WINED3DSPR_DEPTHOUT:
@@ -1192,23 +1191,23 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
             break;
 
         case WINED3DSPR_ATTROUT:
-            if (register_idx == 0) sprintf(register_name, "gl_FrontColor");
+            if (reg->idx == 0) sprintf(register_name, "gl_FrontColor");
             else sprintf(register_name, "gl_FrontSecondaryColor");
             break;
 
         case WINED3DSPR_TEXCRDOUT:
             /* Vertex shaders >= 3.0: WINED3DSPR_OUTPUT */
-            if (This->baseShader.reg_maps.shader_version.major >= 3) sprintf(register_name, "OUT[%u]", register_idx);
-            else sprintf(register_name, "gl_TexCoord[%u]", register_idx);
+            if (This->baseShader.reg_maps.shader_version.major >= 3) sprintf(register_name, "OUT[%u]", reg->idx);
+            else sprintf(register_name, "gl_TexCoord[%u]", reg->idx);
             break;
 
         case WINED3DSPR_MISCTYPE:
-            if (register_idx == 0)
+            if (reg->idx == 0)
             {
                 /* vPos */
                 sprintf(register_name, "vpos");
             }
-            else if (register_idx == 1)
+            else if (reg->idx == 1)
             {
                 /* Note that gl_FrontFacing is a bool, while vFace is
                  * a float for which the sign determines front/back */
@@ -1216,13 +1215,13 @@ static void shader_glsl_get_register_name(WINED3DSHADER_PARAM_REGISTER_TYPE regi
             }
             else
             {
-                FIXME("Unhandled misctype register %d\n", register_idx);
+                FIXME("Unhandled misctype register %d\n", reg->idx);
                 sprintf(register_name, "unrecognized_register");
             }
             break;
 
         default:
-            FIXME("Unhandled register name Type(%d)\n", register_type);
+            FIXME("Unhandled register name Type(%d)\n", reg->type);
             sprintf(register_name, "unrecognized_register");
             break;
     }
@@ -1305,9 +1304,7 @@ static void shader_glsl_add_src_param(const struct wined3d_shader_instruction *i
     glsl_src->param_str[0] = '\0';
     swizzle_str[0] = '\0';
 
-    shader_glsl_get_register_name(wined3d_src->reg.type, wined3d_src->reg.idx,
-            wined3d_src->reg.rel_addr, glsl_src->reg_name, &is_color, ins);
-
+    shader_glsl_get_register_name(&wined3d_src->reg, glsl_src->reg_name, &is_color, ins);
     shader_glsl_get_swizzle(wined3d_src, is_color, mask, swizzle_str);
     shader_glsl_gen_modifier(wined3d_src->modifiers, glsl_src->reg_name, swizzle_str, glsl_src->param_str);
 }
@@ -1323,8 +1320,7 @@ static DWORD shader_glsl_add_dst_param(const struct wined3d_shader_instruction *
     glsl_dst->mask_str[0] = '\0';
     glsl_dst->reg_name[0] = '\0';
 
-    shader_glsl_get_register_name(wined3d_dst->reg.type, wined3d_dst->reg.idx,
-            wined3d_dst->reg.rel_addr, glsl_dst->reg_name, &is_color, ins);
+    shader_glsl_get_register_name(&wined3d_dst->reg, glsl_dst->reg_name, &is_color, ins);
     return shader_glsl_get_write_mask(wined3d_dst, glsl_dst->mask_str);
 }
 
