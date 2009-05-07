@@ -567,18 +567,16 @@ static void shader_arb_get_register_name(IWineD3DBaseShader *iface, WINED3DSHADE
     }
 }
 
-static void shader_arb_add_dst_param(const struct wined3d_shader_instruction *ins,
+static void shader_arb_get_dst_param(const struct wined3d_shader_instruction *ins,
         const struct wined3d_shader_dst_param *wined3d_dst, char *str)
 {
     char register_name[255];
     char write_mask[6];
     BOOL is_color;
 
-    strcat(str, " ");
-
     shader_arb_get_register_name(ins->ctx->shader, wined3d_dst->reg.type,
             wined3d_dst->reg.idx, !!wined3d_dst->reg.rel_addr, register_name, &is_color);
-    strcat(str, register_name);
+    strcpy(str, register_name);
 
     shader_arb_get_write_mask(ins, wined3d_dst, write_mask);
     strcat(str, write_mask);
@@ -1011,15 +1009,15 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         }
         shader_addline(buffer, "%s%s %s;\n", instruction, modifier, arguments);
     } else {
-        /* Note that shader_arb_add_dst_param() adds spaces. */
-
         arguments[0] = '\0';
         if (ins->dst_count)
         {
-            shader_arb_add_dst_param(ins, &ins->dst[0], arguments);
+            char operand[100];
+            shader_arb_get_dst_param(ins, &ins->dst[0], operand);
+            strcat(arguments, " ");
+            strcat(arguments, operand);
             for (i = 0; i < ins->src_count; ++i)
             {
-                char operand[100];
                 strcat(arguments, ", ");
                 shader_arb_get_src_param(ins, &ins->src[i], i, operand);
                 strcat(arguments, operand);
@@ -1616,6 +1614,7 @@ static void vshader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
     const char *instruction;
 
     char tmpLine[256];
+    char dst[50];
     char src[50];
 
     switch(ins->handler_idx)
@@ -1628,7 +1627,9 @@ static void vshader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
     }
 
     strcpy(tmpLine, instruction);
-    shader_arb_add_dst_param(ins, &ins->dst[0], tmpLine); /* Destination */
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst); /* Destination */
+    strcat(tmpLine, " ");
+    strcat(tmpLine, dst);
     strcat(tmpLine, ", ");
     shader_arb_get_src_param(ins, &ins->src[0], 0, src);
     strcat(tmpLine, src);
