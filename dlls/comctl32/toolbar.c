@@ -1841,7 +1841,9 @@ TOOLBAR_InternalInsertButtonsT(TOOLBAR_INFO *infoPtr, INT iIndex, UINT nAddButto
         btnPtr->fsState   = lpTbb[iButton].fsState;
         btnPtr->fsStyle   = lpTbb[iButton].fsStyle;
         btnPtr->dwData    = lpTbb[iButton].dwData;
-        if(HIWORD(lpTbb[iButton].iString) && lpTbb[iButton].iString != -1)
+        if (btnPtr->fsStyle & BTNS_SEP)
+            btnPtr->iString = -1;
+        else if(HIWORD(lpTbb[iButton].iString) && lpTbb[iButton].iString != -1)
         {
             if (fUnicode)
                 Str_SetPtrW((LPWSTR*)&btnPtr->iString, (LPWSTR)lpTbb[iButton].iString );
