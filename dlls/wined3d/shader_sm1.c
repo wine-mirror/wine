@@ -346,24 +346,24 @@ static int shader_skip_opcode(const struct wined3d_sm1_data *priv,
 static void shader_parse_src_param(DWORD param, const struct wined3d_shader_src_param *rel_addr,
         struct wined3d_shader_src_param *src)
 {
-    src->register_type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
+    src->reg.type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
             | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
-    src->register_idx = param & WINED3DSP_REGNUM_MASK;
+    src->reg.idx = param & WINED3DSP_REGNUM_MASK;
     src->swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
     src->modifiers = (param & WINED3DSP_SRCMOD_MASK) >> WINED3DSP_SRCMOD_SHIFT;
-    src->rel_addr = rel_addr;
+    src->reg.rel_addr = rel_addr;
 }
 
 static void shader_parse_dst_param(DWORD param, const struct wined3d_shader_src_param *rel_addr,
         struct wined3d_shader_dst_param *dst)
 {
-    dst->register_type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
+    dst->reg.type = ((param & WINED3DSP_REGTYPE_MASK) >> WINED3DSP_REGTYPE_SHIFT)
             | ((param & WINED3DSP_REGTYPE_MASK2) >> WINED3DSP_REGTYPE_SHIFT2);
-    dst->register_idx = param & WINED3DSP_REGNUM_MASK;
+    dst->reg.idx = param & WINED3DSP_REGNUM_MASK;
     dst->write_mask = (param & WINED3D_SM1_WRITEMASK_MASK) >> WINED3D_SM1_WRITEMASK_SHIFT;
     dst->modifiers = (param & WINED3DSP_DSTMOD_MASK) >> WINED3DSP_DSTMOD_SHIFT;
     dst->shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    dst->rel_addr = rel_addr;
+    dst->reg.rel_addr = rel_addr;
 }
 
 /* Read the parameters of an unrecognized opcode from the input stream

@@ -113,12 +113,12 @@ static void vshader_set_input(
 
     This->semantics_in[regnum].usage = usage;
     This->semantics_in[regnum].usage_idx = usage_idx;
-    This->semantics_in[regnum].reg.register_type = WINED3DSPR_INPUT;
-    This->semantics_in[regnum].reg.register_idx = regnum;
+    This->semantics_in[regnum].reg.reg.type = WINED3DSPR_INPUT;
+    This->semantics_in[regnum].reg.reg.idx = regnum;
     This->semantics_in[regnum].reg.write_mask = WINED3DSP_WRITEMASK_ALL;
     This->semantics_in[regnum].reg.modifiers = 0;
     This->semantics_in[regnum].reg.shift = 0;
-    This->semantics_in[regnum].reg.rel_addr = NULL;
+    This->semantics_in[regnum].reg.reg.rel_addr = NULL;
 }
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2) {

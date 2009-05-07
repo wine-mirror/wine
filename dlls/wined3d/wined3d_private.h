@@ -649,25 +649,28 @@ struct wined3d_shader_context
     SHADER_BUFFER *buffer;
 };
 
+struct wined3d_shader_register
+{
+    WINED3DSHADER_PARAM_REGISTER_TYPE type;
+    UINT idx;
+    const struct wined3d_shader_src_param *rel_addr;
+    enum wined3d_immconst_type immconst_type;
+    DWORD immconst_data[4];
+};
+
 struct wined3d_shader_dst_param
 {
-    WINED3DSHADER_PARAM_REGISTER_TYPE register_type;
-    UINT register_idx;
+    struct wined3d_shader_register reg;
     DWORD write_mask;
     DWORD modifiers;
     DWORD shift;
-    const struct wined3d_shader_src_param *rel_addr;
 };
 
 struct wined3d_shader_src_param
 {
-    WINED3DSHADER_PARAM_REGISTER_TYPE register_type;
-    UINT register_idx;
+    struct wined3d_shader_register reg;
     DWORD swizzle;
     DWORD modifiers;
-    const struct wined3d_shader_src_param *rel_addr;
-    enum wined3d_immconst_type immconst_type;
-    DWORD immconst_data[4];
 };
 
 struct wined3d_shader_instruction

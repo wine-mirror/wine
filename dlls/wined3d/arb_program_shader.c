@@ -423,7 +423,7 @@ static void shader_arb_get_write_mask(const struct wined3d_shader_instruction *i
     char *ptr = write_mask;
     char vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
 
-    if (vshader && dst->register_type == WINED3DSPR_ADDR)
+    if (vshader && dst->reg.type == WINED3DSPR_ADDR)
     {
         *ptr++ = '.';
         *ptr++ = 'x';
@@ -574,8 +574,8 @@ static void shader_arb_add_src_param(const struct wined3d_shader_instruction *in
     if (wined3d_src->modifiers == WINED3DSPSM_NEG) strcat(str, " -");
     else strcat(str, " ");
 
-    shader_arb_get_register_name(ins->ctx->shader, wined3d_src->register_type,
-            wined3d_src->register_idx, !!wined3d_src->rel_addr, register_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, wined3d_src->reg.type,
+            wined3d_src->reg.idx, !!wined3d_src->reg.rel_addr, register_name, &is_color);
     strcat(str, register_name);
 
     shader_arb_get_swizzle(wined3d_src, is_color, swizzle);
@@ -591,8 +591,8 @@ static void shader_arb_add_dst_param(const struct wined3d_shader_instruction *in
 
     strcat(str, " ");
 
-    shader_arb_get_register_name(ins->ctx->shader, wined3d_dst->register_type,
-            wined3d_dst->register_idx, !!wined3d_dst->rel_addr, register_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, wined3d_dst->reg.type,
+            wined3d_dst->reg.idx, !!wined3d_dst->reg.rel_addr, register_name, &is_color);
     strcat(str, register_name);
 
     shader_arb_get_write_mask(ins, wined3d_dst, write_mask);
@@ -742,8 +742,8 @@ static void pshader_gen_input_modifier_line(IWineD3DBaseShader *iface, SHADER_BU
     insert_line = 1;
 
     /* Get register name */
-    shader_arb_get_register_name(iface, src->register_type,
-            src->register_idx, !!src->rel_addr, regstr, &is_color);
+    shader_arb_get_register_name(iface, src->reg.type,
+            src->reg.idx, !!src->reg.rel_addr, regstr, &is_color);
     shader_arb_get_swizzle(src, is_color, swzstr);
 
     switch (src->modifiers)
@@ -811,7 +811,7 @@ static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
     char dst_name[50];
     char src_name[2][50];
     char dst_wmask[20];
-    DWORD sampler_code = dst->register_idx;
+    DWORD sampler_code = dst->reg.idx;
     BOOL has_bumpmat = FALSE;
     BOOL is_color;
     int i;
@@ -825,8 +825,8 @@ static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
         }
     }
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
     strcat(dst_name, dst_wmask);
 
@@ -862,8 +862,8 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     /* FIXME: support output modifiers */
 
     /* Handle output register */
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     /* Generate input register names (with modifiers) */
@@ -898,8 +898,8 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
     /* FIXME: support output modifiers */
 
     /* Handle output register */
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     /* Generate input register names (with modifiers) */
@@ -927,8 +927,8 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, src_name[0]);
@@ -1029,8 +1029,8 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         }
 
         /* Handle output register */
-        shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-                dst->register_idx, !!dst->rel_addr, output_rname, &is_color);
+        shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+                dst->reg.idx, !!dst->reg.rel_addr, output_rname, &is_color);
         strcpy(operands[0], output_rname);
         shader_arb_get_write_mask(ins, dst, output_wmask);
         strcat(operands[0], output_wmask);
@@ -1069,7 +1069,7 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 
     if ((ins->ctx->reg_maps->shader_version.major == 1
             && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)
-            && ins->dst[0].register_type == WINED3DSPR_ADDR)
+            && ins->dst[0].reg.type == WINED3DSPR_ADDR)
             || ins->handler_idx == WINED3DSIH_MOVA)
     {
         SHADER_BUFFER *buffer = ins->ctx->buffer;
@@ -1112,8 +1112,8 @@ static void pshader_hw_texkill(const struct wined3d_shader_instruction *ins)
     /* No swizzles are allowed in d3d's texkill. PS 1.x ignores the 4th component as documented,
      * but >= 2.0 honors it(undocumented, but tested by the d3d9 testsuit)
      */
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, reg_dest, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, reg_dest, &is_color);
 
     if (ins->ctx->reg_maps->shader_version.major >= 2)
     {
@@ -1145,8 +1145,8 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     DWORD reg_sampler_code;
 
     /* All versions have a destination register */
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, reg_dest, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, reg_dest, &is_color);
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
@@ -1158,9 +1158,9 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
   /* 1.0-1.4: Use destination register number as texture code.
      2.0+: Use provided sampler number as texure code. */
   if (shader_version < WINED3D_SHADER_VERSION(2,0))
-     reg_sampler_code = dst->register_idx;
+     reg_sampler_code = dst->reg.idx;
   else
-     reg_sampler_code = ins->src[1].register_idx;
+     reg_sampler_code = ins->src[1].reg.idx;
 
   /* projection flag:
    * 1.1, 1.2, 1.3: Use WINED3DTSS_TEXTURETRANSFORMFLAGS
@@ -1203,13 +1203,13 @@ static void pshader_hw_texcoord(const struct wined3d_shader_instruction *ins)
     shader_arb_get_write_mask(ins, dst, tmp);
     if (shader_version != WINED3D_SHADER_VERSION(1,4))
     {
-        DWORD reg = dst->register_idx;
+        DWORD reg = dst->reg.idx;
         shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
     } else {
         char reg_src[40];
 
         pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, reg_src);
-        shader_addline(buffer, "MOV R%u%s, %s;\n", dst->register_idx, tmp, reg_src);
+        shader_addline(buffer, "MOV R%u%s, %s;\n", dst->reg.idx, tmp, reg_src);
    }
 }
 
@@ -1220,7 +1220,7 @@ static void pshader_hw_texreg2ar(const struct wined3d_shader_instruction *ins)
      IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
      DWORD flags;
 
-     DWORD reg1 = ins->dst[0].register_idx;
+     DWORD reg1 = ins->dst[0].reg.idx;
      char dst_str[8];
      char src_str[50];
 
@@ -1236,7 +1236,7 @@ static void pshader_hw_texreg2gb(const struct wined3d_shader_instruction *ins)
 {
      SHADER_BUFFER *buffer = ins->ctx->buffer;
 
-     DWORD reg1 = ins->dst[0].register_idx;
+     DWORD reg1 = ins->dst[0].reg.idx;
      char dst_str[8];
      char src_str[50];
 
@@ -1250,7 +1250,7 @@ static void pshader_hw_texreg2gb(const struct wined3d_shader_instruction *ins)
 static void pshader_hw_texreg2rgb(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    DWORD reg1 = ins->dst[0].register_idx;
+    DWORD reg1 = ins->dst[0].reg.idx;
     char dst_str[8];
     char src_str[50];
 
@@ -1274,10 +1274,10 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
     DWORD reg_dest_code;
 
     /* All versions have a destination register */
-    reg_dest_code = dst->register_idx;
+    reg_dest_code = dst->reg.idx;
     /* Can directly use the name because texbem is only valid for <= 1.3 shaders */
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, reg_coord, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, reg_coord, &is_color);
 
     for(i = 0; i < This->numbumpenvmatconsts; i++) {
         if (This->bumpenvmatconst[i].const_num != WINED3D_CONST_NUM_UNUSED
@@ -1297,7 +1297,7 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
     }
 
     if(has_bumpmat) {
-        DWORD src = ins->src[0].register_idx;
+        DWORD src = ins->src[0].reg.idx;
 
         /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
 
@@ -1341,7 +1341,7 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
 
 static void pshader_hw_texm3x2pad(const struct wined3d_shader_instruction *ins)
 {
-    DWORD reg = ins->dst[0].register_idx;
+    DWORD reg = ins->dst[0].reg.idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char src0_name[50];
 
@@ -1354,7 +1354,7 @@ static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     DWORD flags;
-    DWORD reg = ins->dst[0].register_idx;
+    DWORD reg = ins->dst[0].reg.idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_str[8];
     char src0_name[50];
@@ -1369,7 +1369,7 @@ static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
 static void pshader_hw_texm3x3pad(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
-    DWORD reg = ins->dst[0].register_idx;
+    DWORD reg = ins->dst[0].reg.idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char src0_name[50];
@@ -1384,7 +1384,7 @@ static void pshader_hw_texm3x3tex(const struct wined3d_shader_instruction *ins)
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     DWORD flags;
-    DWORD reg = ins->dst[0].register_idx;
+    DWORD reg = ins->dst[0].reg.idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char dst_str[8];
@@ -1405,7 +1405,7 @@ static void pshader_hw_texm3x3vspec(const struct wined3d_shader_instruction *ins
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     DWORD flags;
-    DWORD reg = ins->dst[0].register_idx;
+    DWORD reg = ins->dst[0].reg.idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char dst_str[8];
@@ -1441,8 +1441,8 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     DWORD flags;
-    DWORD reg = ins->dst[0].register_idx;
-    DWORD reg3 = ins->src[1].register_idx;
+    DWORD reg = ins->dst[0].reg.idx;
+    DWORD reg3 = ins->src[1].reg.idx;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_str[8];
@@ -1485,8 +1485,8 @@ static void pshader_hw_texdepth(const struct wined3d_shader_instruction *ins)
      * parameter. According to the msdn, this must be register r5, but let's keep it more flexible
      * here
      */
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
 
     /* According to the msdn, the source register(must be r5) is unusable after
      * the texdepth instruction, so we're free to modify it
@@ -1509,7 +1509,7 @@ static void pshader_hw_texdepth(const struct wined3d_shader_instruction *ins)
 static void pshader_hw_texdp3tex(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    DWORD sampler_idx = ins->dst[0].register_idx;
+    DWORD sampler_idx = ins->dst[0].reg.idx;
     char src0[50];
     char dst_str[8];
 
@@ -1533,12 +1533,12 @@ static void pshader_hw_texdp3(const struct wined3d_shader_instruction *ins)
     BOOL is_color;
 
     /* Handle output register */
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, dst_str, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, dst_str, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_mask);
 
     pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, src0);
-    shader_addline(buffer, "DP3 %s%s, T%u, %s;\n", dst_str, dst_mask, dst->register_idx, src0);
+    shader_addline(buffer, "DP3 %s%s, T%u, %s;\n", dst_str, dst_mask, dst->reg.idx, src0);
 
     /* TODO: Handle output modifiers */
 }
@@ -1554,12 +1554,12 @@ static void pshader_hw_texm3x3(const struct wined3d_shader_instruction *ins)
     char src0[50];
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, dst_str, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, dst_str, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_mask);
 
     pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, src0);
-    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", dst->register_idx, src0);
+    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", dst->reg.idx, src0);
     shader_addline(buffer, "MOV %s%s, TMP;\n", dst_str, dst_mask);
 
     /* TODO: Handle output modifiers */
@@ -1573,7 +1573,7 @@ static void pshader_hw_texm3x3(const struct wined3d_shader_instruction *ins)
 static void pshader_hw_texm3x2depth(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    DWORD dst_reg = ins->dst[0].register_idx;
+    DWORD dst_reg = ins->dst[0].reg.idx;
     char src0[50];
 
     pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, src0);
@@ -1595,8 +1595,8 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
 {
     int i;
     int nComponents = 0;
-    struct wined3d_shader_dst_param tmp_dst = {0};
-    struct wined3d_shader_src_param tmp_src[2] = {{0}};
+    struct wined3d_shader_dst_param tmp_dst = {{0}};
+    struct wined3d_shader_src_param tmp_src[2] = {{{0}}};
     struct wined3d_shader_instruction tmp_ins;
 
     memset(&tmp_ins, 0, sizeof(tmp_ins));
@@ -1641,7 +1641,7 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     for (i = 0; i < nComponents; i++) {
         tmp_dst.write_mask = WINED3DSP_WRITEMASK_0 << i;
         shader_hw_map2gl(&tmp_ins);
-        ++tmp_src[1].register_idx;
+        ++tmp_src[1].reg.idx;
     }
 }
 
@@ -1687,8 +1687,8 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, src_name);
@@ -1717,8 +1717,8 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->register_type,
-            dst->register_idx, !!dst->rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, src_name);
