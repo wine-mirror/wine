@@ -1242,7 +1242,7 @@ static DWORD shader_glsl_get_write_mask(const struct wined3d_shader_dst_param *p
 {
     DWORD mask = param->write_mask;
 
-    if (shader_is_scalar(param->reg.type, param->reg.idx))
+    if (shader_is_scalar(&param->reg))
     {
         mask = WINED3DSP_WRITEMASK_0;
         *write_mask = '\0';
@@ -1285,7 +1285,7 @@ static void shader_glsl_swizzle_to_str(const DWORD swizzle, BOOL fixup, DWORD ma
 static void shader_glsl_get_swizzle(const struct wined3d_shader_src_param *param,
         BOOL fixup, DWORD mask, char *swizzle_str)
 {
-    if (shader_is_scalar(param->reg.type, param->reg.idx))
+    if (shader_is_scalar(&param->reg))
         *swizzle_str = '\0';
     else
         shader_glsl_swizzle_to_str(param->swizzle, fixup, mask, swizzle_str);
@@ -1970,7 +1970,7 @@ static void shader_glsl_cmp(const struct wined3d_shader_instruction *ins)
     char mask_char[6];
     BOOL temp_destination = FALSE;
 
-    if (shader_is_scalar(ins->src[0].reg.type, ins->src[0].reg.idx))
+    if (shader_is_scalar(&ins->src[0].reg))
     {
         write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
 

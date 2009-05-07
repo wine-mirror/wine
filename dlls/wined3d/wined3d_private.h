@@ -2594,13 +2594,13 @@ static inline BOOL shader_is_vshader_version(enum wined3d_shader_type type)
     return type == WINED3D_SHADER_TYPE_VERTEX;
 }
 
-static inline BOOL shader_is_scalar(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx)
+static inline BOOL shader_is_scalar(const struct wined3d_shader_register *reg)
 {
-    switch (register_type)
+    switch (reg->type)
     {
         case WINED3DSPR_RASTOUT:
             /* oFog & oPts */
-            if (register_idx != 0) return TRUE;
+            if (reg->idx != 0) return TRUE;
             /* oPos */
             return FALSE;
 
@@ -2611,7 +2611,7 @@ static inline BOOL shader_is_scalar(WINED3DSHADER_PARAM_REGISTER_TYPE register_t
             return TRUE;
 
         case WINED3DSPR_MISCTYPE:
-            switch(register_idx)
+            switch(reg->idx)
             {
                 case 0: /* vPos */
                     return FALSE;
