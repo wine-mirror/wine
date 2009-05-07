@@ -543,7 +543,14 @@ static void shader_arb_get_register_name(IWineD3DBaseShader *iface,
         case WINED3DSPR_COLOROUT:
             if (reg->idx == 0)
             {
-                strcpy(register_name, "TMP_COLOR");
+                if(((IWineD3DPixelShaderImpl *)This)->cur_args->srgb_correction)
+                {
+                    strcpy(register_name, "TMP_COLOR");
+                }
+                else
+                {
+                    strcpy(register_name, "result.color");
+                }
             }
             else
             {
@@ -1930,8 +1937,12 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     {
         fragcolor = "R0";
     } else {
-        shader_addline(buffer, "TEMP TMP_COLOR;\n");
-        fragcolor = "TMP_COLOR";
+        if(args->srgb_correction) {
+            shader_addline(buffer, "TEMP TMP_COLOR;\n");
+            fragcolor = "TMP_COLOR";
+        } else {
+            fragcolor = "result.color";
+        }
     }
 
     /* Base Declarations */
@@ -1942,8 +1953,10 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
 
     if(args->srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TMP", "TMP2", "TA", "TB");
+        shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
+    } else if(reg_maps->shader_version.major < 2) {
+        shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     }
-    shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     shader_addline(buffer, "END\n");
 
     /* TODO: change to resource.glObjectHandle or something like that */
