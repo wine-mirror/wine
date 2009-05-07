@@ -42,11 +42,22 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION      (*gl_info)
 
 /* GL locking for state handlers is done by the caller. */
+static BOOL need_helper_const(const WineD3D_GL_Info *gl_info) {
+    if(!GL_SUPPORT(NV_VERTEX_PROGRAM)   || /* Need to init colors */
+       gl_info->arb_vs_offset_limit     || /* Have to init texcoords */
+       gl_info->set_texcoord_w) {          /* Load the immval offset */
+        return TRUE;
+    }
+    return FALSE;
+}
 
-/* We have to subtract any other PARAMs that we might use in our shader programs.
- * ATI seems to count 2 implicit PARAMs when we use fog and NVIDIA counts 1,
- * and we reference one row of the PROJECTION matrix which counts as 1 PARAM. */
-#define ARB_SHADER_RESERVED_VS_CONSTS 3
+static unsigned int reserved_vs_const(const WineD3D_GL_Info *gl_info) {
+    /* We use one PARAM for the pos fixup, and in some cases one to load
+     * some immediate values into the shader
+     */
+    if(need_helper_const(gl_info)) return 2;
+    else return 1;
+}
 
 /* The arb shader only loads the bump mapping environment matrix into the shader if it finds
  * a free constant to do that, so only reduce the number of available constants by 2 for the fog states.
@@ -56,7 +67,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
  * so upload them above that
  */
-#define ARB_SHADER_PRIVCONST_BASE (GL_LIMITS(vshader_constantsF) - ARB_SHADER_RESERVED_VS_CONSTS)
+#define ARB_SHADER_PRIVCONST_BASE (GL_LIMITS(vshader_constantsF) - reserved_vs_const(&GLINFO_LOCATION))
 #define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
 
 /* ARB_program_shader private data */
@@ -307,7 +318,7 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     unsigned max_constantsF = min(This->baseShader.limits.constant_float,
             (pshader ? GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS :
-                       GL_LIMITS(vshader_constantsF) - ARB_SHADER_RESERVED_VS_CONSTS));
+                    GL_LIMITS(vshader_constantsF) - reserved_vs_const(gl_info)));
     const local_constant *lconst;
 
     /* Temporary Output register */
@@ -1958,7 +1969,9 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
-    shader_addline(buffer, "PARAM helper_const = { 2.0, -1.0, %d.0, 0.0 };\n", This->rel_offset);
+    if(need_helper_const(gl_info)) {
+        shader_addline(buffer, "PARAM helper_const = { 2.0, -1.0, %d.0, 0.0 };\n", This->rel_offset);
+    }
 
     /* Mesa supports only 95 constants */
     if (GL_VEND(MESA) || GL_VEND(WINE))
@@ -2009,7 +2022,8 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     if(args->fog_src == VS_FOG_Z) {
         shader_addline(buffer, "MOV result.fogcoord, TMP_OUT.z;\n");
     } else if (!reg_maps->fog) {
-        shader_addline(buffer, "MOV result.fogcoord, helper_const.w;\n");
+        /* posFixup.x is always 1.0, so we can savely use it */
+        shader_addline(buffer, "ADD result.fogcoord, posFixup.x, -posFixup.x;\n");
     }
 
     /* Write the final position.
@@ -2026,7 +2040,12 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
      * and the glsl equivalent
      */
-    shader_addline(buffer, "MAD TMP_OUT.z, TMP_OUT.z, helper_const.x, -TMP_OUT.w;\n");
+    if(need_helper_const(gl_info)) {
+        shader_addline(buffer, "MAD TMP_OUT.z, TMP_OUT.z, helper_const.x, -TMP_OUT.w;\n");
+    } else {
+        shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, TMP_OUT.z;\n");
+        shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, -TMP_OUT.w;\n");
+    }
 
     shader_addline(buffer, "MOV result.position, TMP_OUT;\n");
 
@@ -2073,7 +2092,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
     if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
         TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
-        pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF) - ARB_SHADER_RESERVED_VS_CONSTS;
+        pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF) - reserved_vs_const(gl_info);
     }
 
     if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
