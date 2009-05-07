@@ -444,7 +444,7 @@ static void test_Activate(void)
     HRESULT hr;
 
     hr = ITfInputProcessorProfiles_ActivateLanguageProfile(g_ipp,&CLSID_FakeService,gLangid,&CLSID_FakeService);
-    todo_wine ok(SUCCEEDED(hr),"Failed to Activate text service\n");
+    ok(SUCCEEDED(hr),"Failed to Activate text service\n");
 }
 
 static inline int check_context_refcount(ITfContext *iface)
