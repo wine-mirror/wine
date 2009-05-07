@@ -1128,11 +1128,11 @@ static void pshader_hw_texreg2ar(const struct wined3d_shader_instruction *ins)
      DWORD flags;
 
      DWORD reg1 = ins->dst[0].reg.idx;
-     char dst_str[8];
+     char dst_str[50];
      char src_str[50];
 
      /* Note that texreg2ar treats Tx as a temporary register, not as a varying */
-     sprintf(dst_str, "T%u", reg1);
+     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
      shader_arb_get_src_param(ins, &ins->src[0], 0, src_str);
      shader_addline(buffer, "MOV TMP.x, %s.w;\n", src_str);
      shader_addline(buffer, "MOV TMP.y, %s.x;\n", src_str);
@@ -1145,11 +1145,11 @@ static void pshader_hw_texreg2gb(const struct wined3d_shader_instruction *ins)
      SHADER_BUFFER *buffer = ins->ctx->buffer;
 
      DWORD reg1 = ins->dst[0].reg.idx;
-     char dst_str[8];
+     char dst_str[50];
      char src_str[50];
 
      /* Note that texreg2gb treats Tx as a temporary register, not as a varying */
-     sprintf(dst_str, "T%u", reg1);
+     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
      shader_arb_get_src_param(ins, &ins->src[0], 0, src_str);
      shader_addline(buffer, "MOV TMP.x, %s.y;\n", src_str);
      shader_addline(buffer, "MOV TMP.y, %s.z;\n", src_str);
@@ -1159,11 +1159,11 @@ static void pshader_hw_texreg2gb(const struct wined3d_shader_instruction *ins)
 static void pshader_hw_texreg2rgb(const struct wined3d_shader_instruction *ins)
 {
     DWORD reg1 = ins->dst[0].reg.idx;
-    char dst_str[8];
+    char dst_str[50];
     char src_str[50];
 
     /* Note that texreg2rg treats Tx as a temporary register, not as a varying */
-    sprintf(dst_str, "T%u", reg1);
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_str);
     shader_hw_sample(ins, reg1, dst_str, src_str, FALSE, FALSE);
 }
