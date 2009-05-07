@@ -59,15 +59,10 @@ static unsigned int reserved_vs_const(const WineD3D_GL_Info *gl_info) {
     else return 1;
 }
 
-/* The arb shader only loads the bump mapping environment matrix into the shader if it finds
- * a free constant to do that, so only reduce the number of available constants by 2 for the fog states.
- */
-#define ARB_SHADER_RESERVED_PS_CONSTS 2
-
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
  * so upload them above that
  */
-#define ARB_SHADER_PRIVCONST_BASE (GL_LIMITS(vshader_constantsF) - reserved_vs_const(&GLINFO_LOCATION))
+#define ARB_SHADER_PRIVCONST_BASE (GL_LIMITS(vshader_constantsF) - 1)
 #define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
 
 /* ARB_program_shader private data */
@@ -316,11 +311,28 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     DWORD i, cur, next_local = 0;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
-    unsigned max_constantsF = min(This->baseShader.limits.constant_float,
-            (pshader ? GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS :
-                    GL_LIMITS(vshader_constantsF) - reserved_vs_const(gl_info)));
+    unsigned max_constantsF;
     const local_constant *lconst;
 
+    /* In pixel shaders, all private constants are program local, we don't need anything
+     * from program.env. Thus we can advertise the full set of constants in pixel shaders.
+     * If we need a private constant the GL implementation will squeeze it in somewhere
+     *
+     * With vertex shaders we need the posFixup and on some GL implementations 4 helper
+     * immediate values. The posFixup is loaded using program.env for now, so always
+     * subtract one from the number of constants. If the shader uses indirect addressing,
+     * account for the helper const too because we have to declare all availabke d3d constants
+     * and don't know which are actually used.
+     */
+    if(pshader) {
+        max_constantsF = GL_LIMITS(pshader_constantsF);
+    } else {
+        if(This->baseShader.reg_maps.usesrelconstF) {
+            max_constantsF = GL_LIMITS(vshader_constantsF) - reserved_vs_const(gl_info);
+        } else {
+            max_constantsF = GL_LIMITS(vshader_constantsF) - 1;
+        }
+    }
     /* Temporary Output register */
     shader_addline(buffer, "TEMP TMP_OUT;\n");
 
@@ -2092,14 +2104,14 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
     if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
         TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
-        pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF) - reserved_vs_const(gl_info);
+        pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF) - 1;
     }
 
     if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
         pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
         pCaps->PixelShader1xMaxValue = 8.0;
         TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
-        pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS;
+        pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF);
     }
 
     pCaps->VSClipping = FALSE; /* TODO: GL_NV_vertex_program2_option provides this */
