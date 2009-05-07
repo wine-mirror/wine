@@ -72,7 +72,7 @@ static const WCHAR value_szFooter[]         = {'s','z','T','r','a','i','l','e','
  */
 VOID SetFileName(LPCWSTR szFileName)
 {
-    lstrcpy(Globals.szFileName, szFileName);
+    lstrcpyW(Globals.szFileName, szFileName);
     Globals.szFileTitle[0] = 0;
     GetFileTitle(szFileName, Globals.szFileTitle, sizeof(Globals.szFileTitle));
 }
@@ -153,13 +153,13 @@ static VOID NOTEPAD_SaveSettingToRegistry(void)
         RegSetValueEx(hkey, value_iPointSize, 0, REG_DWORD, (LPBYTE)&data, sizeof(DWORD));
 
         RegSetValueEx(hkey, value_lfFaceName, 0, REG_SZ, (LPBYTE)&Globals.lfFont.lfFaceName,
-                      lstrlen(Globals.lfFont.lfFaceName) * sizeof(Globals.lfFont.lfFaceName[0]));
+                      lstrlenW(Globals.lfFont.lfFaceName) * sizeof(Globals.lfFont.lfFaceName[0]));
 
         RegSetValueEx(hkey, value_szHeader, 0, REG_SZ, (LPBYTE)&Globals.szHeader,
-                      lstrlen(Globals.szHeader) * sizeof(Globals.szHeader[0]));
+                      lstrlenW(Globals.szHeader) * sizeof(Globals.szHeader[0]));
 
         RegSetValueEx(hkey, value_szFooter, 0, REG_SZ, (LPBYTE)&Globals.szFooter,
-                      lstrlen(Globals.szFooter) * sizeof(Globals.szFooter[0]));
+                      lstrlenW(Globals.szFooter) * sizeof(Globals.szFooter[0]));
 
         RegCloseKey(hkey);
     }
@@ -203,7 +203,7 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
     Globals.lfFont.lfClipPrecision  = CLIP_DEFAULT_PRECIS;
     Globals.lfFont.lfQuality        = DEFAULT_QUALITY;
     Globals.lfFont.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
-    lstrcpy(Globals.lfFont.lfFaceName, systemW);
+    lstrcpyW(Globals.lfFont.lfFaceName, systemW);
 
     LoadString(Globals.hInstance, STRING_PAGESETUP_HEADERVALUE, Globals.szHeader,
                sizeof(Globals.szHeader) / sizeof(Globals.szHeader[0]));
@@ -250,17 +250,17 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
         size = sizeof(Globals.lfFont.lfFaceName);
         if(RegQueryValueEx(hkey, value_lfFaceName, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
             if(type == REG_SZ)
-                lstrcpy(Globals.lfFont.lfFaceName, data_helper);
-        
+                lstrcpyW(Globals.lfFont.lfFaceName, data_helper);
+
         size = sizeof(Globals.szHeader);
         if(RegQueryValueEx(hkey, value_szHeader, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
             if(type == REG_SZ)
-                lstrcpy(Globals.szHeader, data_helper);
+                lstrcpyW(Globals.szHeader, data_helper);
 
         size = sizeof(Globals.szFooter);
         if(RegQueryValueEx(hkey, value_szFooter, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
             if(type == REG_SZ)
-                lstrcpy(Globals.szFooter, data_helper);
+                lstrcpyW(Globals.szFooter, data_helper);
         RegCloseKey(hkey);
     }
 }
@@ -320,13 +320,13 @@ static VOID NOTEPAD_InitData(VOID)
     static const WCHAR all_files[] = { '*','.','*',0 };
 
     LoadString(Globals.hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
-    p += lstrlen(p) + 1;
-    lstrcpy(p, txt_files);
-    p += lstrlen(p) + 1;
+    p += lstrlenW(p) + 1;
+    lstrcpyW(p, txt_files);
+    p += lstrlenW(p) + 1;
     LoadString(Globals.hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
-    p += lstrlen(p) + 1;
-    lstrcpy(p, all_files);
-    p += lstrlen(p) + 1;
+    p += lstrlenW(p) + 1;
+    lstrcpyW(p, all_files);
+    p += lstrlenW(p) + 1;
     *p = '\0';
     Globals.hDevMode = NULL;
     Globals.hDevNames = NULL;
@@ -358,11 +358,11 @@ static VOID NOTEPAD_InitMenuPopup(HMENU menu, int index)
 
 static LPWSTR NOTEPAD_StrRStr(LPWSTR pszSource, LPWSTR pszLast, LPWSTR pszSrch)
 {
-    int len = lstrlen(pszSrch);
+    int len = lstrlenW(pszSrch);
     pszLast--;
     while (pszLast >= pszSource)
     {
-        if (StrCmpN(pszLast, pszSrch, len) == 0)
+        if (StrCmpNW(pszLast, pszSrch, len) == 0)
             return pszLast;
         pszLast--;
     }
@@ -376,7 +376,7 @@ void NOTEPAD_DoFind(FINDREPLACEW *fr)
 {
     LPWSTR content;
     LPWSTR found;
-    int len = lstrlen(fr->lpstrFindWhat);
+    int len = lstrlenW(fr->lpstrFindWhat);
     int fileLen;
     DWORD pos;
 
@@ -389,16 +389,16 @@ void NOTEPAD_DoFind(FINDREPLACEW *fr)
     switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
     {
         case 0:
-            found = StrRStrI(content, content+pos-len, fr->lpstrFindWhat);
+            found = StrRStrIW(content, content+pos-len, fr->lpstrFindWhat);
             break;
         case FR_DOWN:
-            found = StrStrI(content+pos, fr->lpstrFindWhat);
+            found = StrStrIW(content+pos, fr->lpstrFindWhat);
             break;
         case FR_MATCHCASE:
             found = NOTEPAD_StrRStr(content, content+pos-len, fr->lpstrFindWhat);
             break;
         case FR_DOWN|FR_MATCHCASE:
-            found = StrStr(content+pos, fr->lpstrFindWhat);
+            found = StrStrW(content+pos, fr->lpstrFindWhat);
             break;
         default:    /* shouldn't happen */
             return;
@@ -418,7 +418,7 @@ void NOTEPAD_DoFind(FINDREPLACEW *fr)
 static void NOTEPAD_DoReplace(FINDREPLACEW *fr)
 {
     LPWSTR content;
-    int len = lstrlen(fr->lpstrFindWhat);
+    int len = lstrlenW(fr->lpstrFindWhat);
     int fileLen;
     DWORD pos;
     DWORD pos_start;
@@ -432,11 +432,11 @@ static void NOTEPAD_DoReplace(FINDREPLACEW *fr)
     switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
     {
         case FR_DOWN:
-            if ( pos-pos_start == len && StrCmpNI(fr->lpstrFindWhat, content+pos_start, len) == 0)
+            if ( pos-pos_start == len && StrCmpNIW(fr->lpstrFindWhat, content+pos_start, len) == 0)
                 SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
             break;
         case FR_DOWN|FR_MATCHCASE:
-            if ( pos-pos_start == len && StrCmpN(fr->lpstrFindWhat, content+pos_start, len) == 0)
+            if ( pos-pos_start == len && StrCmpNW(fr->lpstrFindWhat, content+pos_start, len) == 0)
                 SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
             break;
         default:    /* shouldn't happen */
@@ -451,7 +451,7 @@ static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
 {
     LPWSTR content;
     LPWSTR found;
-    int len = lstrlen(fr->lpstrFindWhat);
+    int len = lstrlenW(fr->lpstrFindWhat);
     int fileLen;
     DWORD pos;
 
@@ -466,10 +466,10 @@ static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
         switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
         {
             case FR_DOWN:
-                found = StrStrI(content+pos, fr->lpstrFindWhat);
+                found = StrStrIW(content+pos, fr->lpstrFindWhat);
                 break;
             case FR_DOWN|FR_MATCHCASE:
-                found = StrStr(content+pos, fr->lpstrFindWhat);
+                found = StrStrW(content+pos, fr->lpstrFindWhat);
                 break;
             default:    /* shouldn't happen */
                 return;
@@ -602,7 +602,7 @@ static int AlertFileDoesNotExist(LPCWSTR szFileName)
    WCHAR szResource[MAX_STRING_LEN];
 
    LoadString(Globals.hInstance, STRING_DOESNOTEXIST, szResource, SIZEOF(szResource));
-   wsprintf(szMessage, szResource, szFileName);
+   wsprintfW(szMessage, szResource, szFileName);
 
    LoadString(Globals.hInstance, STRING_ERROR, szResource, SIZEOF(szResource));
 
@@ -683,8 +683,8 @@ static void HandleCommandLine(LPWSTR cmdline)
             }
             else
             {
-                lstrcpyn(buf, cmdline, MAX_PATH - lstrlen(txtW) - 1);
-                lstrcat(buf, txtW);
+                lstrcpynW(buf, cmdline, MAX_PATH - lstrlenW(txtW) - 1);
+                lstrcatW(buf, txtW);
                 file_name = buf;
                 file_exists = FileExists(buf);
             }

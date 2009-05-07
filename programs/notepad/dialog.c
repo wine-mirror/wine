@@ -68,13 +68,13 @@ static void UpdateWindowCaption(void)
   static const WCHAR hyphenW[] = { ' ','-',' ',0 };
 
   if (Globals.szFileTitle[0] != '\0')
-      lstrcpy(szCaption, Globals.szFileTitle);
+      lstrcpyW(szCaption, Globals.szFileTitle);
   else
       LoadString(Globals.hInstance, STRING_UNTITLED, szCaption, SIZEOF(szCaption));
 
   LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
-  lstrcat(szCaption, hyphenW);
-  lstrcat(szCaption, szNotepad);
+  lstrcatW(szCaption, hyphenW);
+  lstrcatW(szCaption, szNotepad);
 
   SetWindowText(Globals.hMainWnd, szCaption);
 }
@@ -86,7 +86,7 @@ int DIALOG_StringMsgBox(HWND hParent, int formatId, LPCWSTR szString, DWORD dwFl
 
    /* Load and format szMessage */
    LoadString(Globals.hInstance, formatId, szResource, SIZEOF(szResource));
-   wnsprintf(szMessage, SIZEOF(szMessage), szResource, szString);
+   wnsprintfW(szMessage, SIZEOF(szMessage), szResource, szString);
 
    /* Load szCaption */
    if ((dwFlags & MB_ICONMASK) == MB_ICONEXCLAMATION)
@@ -259,7 +259,7 @@ void DoOpenFile(LPCWSTR szFileName)
     SetFocus(Globals.hEdit);
     
     /*  If the file starts with .LOG, add a time/date at the end and set cursor after */
-    if (GetWindowTextW(Globals.hEdit, log, sizeof(log)/sizeof(log[0])) && !lstrcmp(log, dotlog))
+    if (GetWindowTextW(Globals.hEdit, log, sizeof(log)/sizeof(log[0])) && !lstrcmpW(log, dotlog))
     {
 	static const WCHAR lfW[] = { '\r','\n',0 };
         SendMessageW(Globals.hEdit, EM_SETSEL, GetWindowTextLength(Globals.hEdit), -1);
@@ -295,7 +295,7 @@ VOID DIALOG_FileOpen(VOID)
     ZeroMemory(&openfilename, sizeof(openfilename));
 
     GetCurrentDirectory(SIZEOF(szDir), szDir);
-    lstrcpy(szPath, txt_files);
+    lstrcpyW(szPath, txt_files);
 
     openfilename.lStructSize       = sizeof(openfilename);
     openfilename.hwndOwner         = Globals.hMainWnd;
@@ -334,7 +334,7 @@ BOOL DIALOG_FileSaveAs(VOID)
     ZeroMemory(&saveas, sizeof(saveas));
 
     GetCurrentDirectory(SIZEOF(szDir), szDir);
-    lstrcpy(szPath, txt_files);
+    lstrcpyW(szPath, txt_files);
 
     saveas.lStructSize       = sizeof(OPENFILENAMEW);
     saveas.hwndOwner         = Globals.hMainWnd;
@@ -370,11 +370,11 @@ static int notepad_print_header(HDC hdc, RECT *rc, BOOL dopage, BOOL header, int
     if (*text)
     {
         /* Write the header or footer */
-        GetTextExtentPoint32(hdc, text, lstrlen(text), &szMetric);
+        GetTextExtentPoint32W(hdc, text, lstrlenW(text), &szMetric);
         if (dopage)
             ExtTextOut(hdc, (rc->left + rc->right - szMetric.cx) / 2,
                        header ? rc->top : rc->bottom - szMetric.cy,
-                       ETO_CLIPPED, rc, text, lstrlen(text), NULL);
+                       ETO_CLIPPED, rc, text, lstrlenW(text), NULL);
         return 1;
     }
     return 0;
