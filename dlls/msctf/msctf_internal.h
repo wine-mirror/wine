@@ -26,6 +26,7 @@
 #define COOKIE_MAGIC_GUIDATOM 0x0030
 
 extern DWORD tlsIndex;
+extern TfClientId processId;
 
 extern HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
 extern HRESULT DocumentMgr_Constructor(ITfThreadMgrEventSink*, ITfDocumentMgr **ppOut);

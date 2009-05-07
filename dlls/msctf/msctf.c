@@ -69,8 +69,10 @@ static UINT id_last;
 static UINT array_size;
 
 static struct list AtsList = LIST_INIT(AtsList);
+static UINT activated = 0;
 
 DWORD tlsIndex = 0;
+TfClientId processId = 0;
 
 const WCHAR szwSystemTIPKey[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\','C','T','F','\\','T','I','P',0};
 
@@ -397,6 +399,9 @@ HRESULT add_active_textservice(TF_LANGUAGEPROFILE *lp)
     if (!IsEqualGUID(&actsvr->LanguageProfile.catid,&GUID_NULL))
         deactivate_remove_conflicting_ts(&actsvr->LanguageProfile.catid);
 
+    if (activated > 0)
+        activate_given_ts(actsvr, tm);
+
     entry->ats = actsvr;
     list_add_head(&AtsList, &entry->entry);
 
@@ -424,6 +429,10 @@ HRESULT activate_textservices(ITfThreadMgr *tm)
     HRESULT hr = S_OK;
     AtsEntry *ats;
 
+    activated ++;
+    if (activated > 1)
+        return S_OK;
+
     LIST_FOR_EACH_ENTRY(ats, &AtsList, AtsEntry, entry)
     {
         hr = activate_given_ts(ats->ats, tm);
@@ -437,8 +446,12 @@ HRESULT deactivate_textservices(void)
 {
     AtsEntry *ats;
 
-    LIST_FOR_EACH_ENTRY(ats, &AtsList, AtsEntry, entry)
-        deactivate_given_ts(ats->ats);
+    if (activated > 0)
+        activated --;
+
+    if (activated == 0)
+        LIST_FOR_EACH_ENTRY(ats, &AtsList, AtsEntry, entry)
+            deactivate_given_ts(ats->ats);
 
     return S_OK;
 }

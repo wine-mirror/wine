@@ -76,6 +76,7 @@ typedef struct tagACLMulti {
     const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl; /* internal */
 
     ITfDocumentMgr *focus;
+    LONG activationCount;
 
     struct list CurrentPreservedKeys;
 
@@ -237,23 +238,48 @@ static ULONG WINAPI ThreadMgr_Release(ITfThreadMgr *iface)
 static HRESULT WINAPI ThreadMgr_fnActivate( ITfThreadMgr* iface, TfClientId *ptid)
 {
     ThreadMgr *This = (ThreadMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %p\n",This, ptid);
+
+    if (!ptid)
+        return E_INVALIDARG;
+
+    if (!processId)
+    {
+        GUID guid;
+        CoCreateGuid(&guid);
+        ITfClientId_GetClientId((ITfClientId*)&This->ClientIdVtbl,&guid,&processId);
+    }
+
+    activate_textservices(iface);
+    This->activationCount++;
+    *ptid = processId;
+    return S_OK;
 }
 
 static HRESULT WINAPI ThreadMgr_fnDeactivate( ITfThreadMgr* iface)
 {
     ThreadMgr *This = (ThreadMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
+    TRACE("(%p)\n",This);
 
-    if (This->focus)
+    if (This->activationCount == 0)
+        return E_UNEXPECTED;
+
+    This->activationCount --;
+
+    if (This->activationCount == 0)
     {
-        ITfThreadMgrEventSink_OnSetFocus((ITfThreadMgrEventSink*)&This->ThreadMgrEventSinkVtbl, 0, This->focus);
-        ITfDocumentMgr_Release(This->focus);
-        This->focus = 0;
+        if (This->focus)
+        {
+            ITfThreadMgrEventSink_OnSetFocus((ITfThreadMgrEventSink*)&This->ThreadMgrEventSinkVtbl, 0, This->focus);
+            ITfDocumentMgr_Release(This->focus);
+            This->focus = 0;
+        }
     }
 
-    return E_NOTIMPL;
+    deactivate_textservices();
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ThreadMgr_CreateDocumentMgr( ITfThreadMgr* iface, ITfDocumentMgr

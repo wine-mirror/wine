@@ -412,18 +412,18 @@ static void test_KeystrokeMgr(void)
     ok(hr==E_INVALIDARG,"ITfKeystrokeMgr_PreserveKey inproperly succeeded\n");
 
     hr =ITfKeystrokeMgr_PreserveKey(keymgr, tid, &CLSID_PreservedKey, &tfpk, NULL, 0);
-    todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_PreserveKey failed\n");
+    ok(SUCCEEDED(hr),"ITfKeystrokeMgr_PreserveKey failed\n");
 
     hr =ITfKeystrokeMgr_PreserveKey(keymgr, tid, &CLSID_PreservedKey, &tfpk, NULL, 0);
-    todo_wine ok(hr == TF_E_ALREADY_EXISTS,"ITfKeystrokeMgr_PreserveKey inproperly succeeded\n");
+    ok(hr == TF_E_ALREADY_EXISTS,"ITfKeystrokeMgr_PreserveKey inproperly succeeded\n");
 
     preserved = FALSE;
     hr = ITfKeystrokeMgr_IsPreservedKey(keymgr, &CLSID_PreservedKey, &tfpk, &preserved);
-    todo_wine ok(hr == S_OK, "ITfKeystrokeMgr_IsPreservedKey failed\n");
+    ok(hr == S_OK, "ITfKeystrokeMgr_IsPreservedKey failed\n");
     if (hr == S_OK) ok(preserved == TRUE,"misreporting preserved key\n");
 
     hr = ITfKeystrokeMgr_UnpreserveKey(keymgr, &CLSID_PreservedKey,&tfpk);
-    todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_UnpreserveKey failed\n");
+    ok(SUCCEEDED(hr),"ITfKeystrokeMgr_UnpreserveKey failed\n");
 
     hr = ITfKeystrokeMgr_IsPreservedKey(keymgr, &CLSID_PreservedKey, &tfpk, &preserved);
     ok(hr == S_FALSE, "ITfKeystrokeMgr_IsPreservedKey failed\n");
@@ -461,10 +461,23 @@ static void test_startSession(void)
     ITfDocumentMgr *dmtest;
     ITfContext *cxt,*cxt2,*cxt3,*cxtTest;
     ITextStoreACP *ts;
+    TfClientId cid2 = 0;
+
+    hr = ITfThreadMgr_Deactivate(g_tm);
+    ok(hr == E_UNEXPECTED,"Deactivate should have failed with E_UNEXPECTED\n");
 
     test_ShouldActivate = TRUE;
-    ITfThreadMgr_Activate(g_tm,&cid);
-    todo_wine ok(cid != tid,"TextService id mistakenly matches Client id\n");
+    hr  = ITfThreadMgr_Activate(g_tm,&cid);
+    ok(SUCCEEDED(hr),"Failed to Activate\n");
+    ok(cid != tid,"TextService id mistakenly matches Client id\n");
+
+    test_ShouldActivate = FALSE;
+    hr = ITfThreadMgr_Activate(g_tm,&cid2);
+    ok(SUCCEEDED(hr),"Failed to Activate\n");
+    ok (cid == cid2, "Second activate client ID does not match\n");
+
+    hr = ITfThreadMgr_Deactivate(g_tm);
+    ok(SUCCEEDED(hr),"Failed to Deactivate\n");
 
     hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&g_dm);
     ok(SUCCEEDED(hr),"CreateDocumentMgr failed\n");
@@ -600,11 +613,13 @@ static void test_startSession(void)
 
 static void test_endSession(void)
 {
+    HRESULT hr;
     test_ShouldDeactivate = TRUE;
     test_CurrentFocus = NULL;
     test_PrevFocus = g_dm;
     test_OnSetFocus  = SINK_EXPECTED;
-    ITfThreadMgr_Deactivate(g_tm);
+    hr = ITfThreadMgr_Deactivate(g_tm);
+    ok(SUCCEEDED(hr),"Failed to Deactivate\n");
     ok(test_OnSetFocus == SINK_FIRED, "OnSetFocus sink not called\n");
     test_OnSetFocus  = SINK_UNEXPECTED;
 }
@@ -642,10 +657,10 @@ static void test_TfGuidAtom(void)
     /* show that cid and tid TfClientIds are also TfGuidAtoms */
     hr = ITfCategoryMgr_IsEqualTfGuidAtom(g_cm,tid,&CLSID_FakeService,&equal);
     ok(SUCCEEDED(hr),"ITfCategoryMgr_IsEqualTfGuidAtom failed\n");
-    todo_wine ok(equal == TRUE,"Equal value invalid\n");
+    ok(equal == TRUE,"Equal value invalid\n");
     hr = ITfCategoryMgr_GetGUID(g_cm,cid,&g1);
     ok(SUCCEEDED(hr),"ITfCategoryMgr_GetGUID failed\n");
-    todo_wine ok(!IsEqualGUID(&g1,&GUID_NULL),"guid should not be NULL\n");
+    ok(!IsEqualGUID(&g1,&GUID_NULL),"guid should not be NULL\n");
 }
 
 static void test_ClientId(void)
@@ -668,7 +683,7 @@ static void test_ClientId(void)
     hr = ITfClientId_GetClientId(pcid,&CLSID_FakeService,&id2);
     ok(SUCCEEDED(hr),"GetClientId failed\n");
     ok(id2!=id1,"Id matches GUID_NULL\n");
-    todo_wine ok(id2==tid,"Id for CLSID_FakeService not matching tid\n");
+    ok(id2==tid,"Id for CLSID_FakeService not matching tid\n");
     ok(id2!=cid,"Id for CLSID_FakeService matching cid\n");
     hr = ITfClientId_GetClientId(pcid,&g2,&id2);
     ok(SUCCEEDED(hr),"GetClientId failed\n");
