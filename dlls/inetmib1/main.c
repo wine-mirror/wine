@@ -143,7 +143,10 @@ static BOOL mib2IfNumberQuery(BYTE bPduType, SnmpVarBind *pVarBind,
 
             copyInt(&pVarBind->value, &numIfs);
             if (bPduType == SNMP_PDU_GETNEXT)
+            {
+                SnmpUtilOidFree(&pVarBind->name);
                 SnmpUtilOidCpy(&pVarBind->name, &numberOid);
+            }
             *pErrorStatus = SNMP_ERRORSTATUS_NOERROR;
         }
         else
@@ -440,6 +443,7 @@ static INT setOidWithItem(AsnObjectIdentifier *dst, AsnObjectIdentifier *base,
     AsnObjectIdentifier oid;
     INT ret;
 
+    SnmpUtilOidFree(dst);
     ret = SnmpUtilOidCpy(dst, base);
     if (ret)
     {
