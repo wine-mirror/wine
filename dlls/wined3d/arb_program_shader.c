@@ -798,31 +798,6 @@ static void pshader_gen_input_modifier_line(IWineD3DBaseShader *iface, SHADER_BU
         sprintf(outregstr, "T%c%s", 'A' + tmpreg, swzstr);
 }
 
-static inline void pshader_gen_output_modifier_line(const struct wined3d_shader_instruction *ins)
-{
-    BOOL saturate;
-    DWORD shift;
-    char write_mask[20], regstr[50];
-    SHADER_BUFFER *buffer = ins->ctx->buffer;
-    BOOL is_color = FALSE;
-    const struct wined3d_shader_dst_param *dst;
-
-    if (!ins->dst_count) return;
-
-    dst = &ins->dst[0];
-    shift = dst->shift;
-    if(shift == 0) return; /* Saturate alone is handled by the instructions */
-    saturate = dst->modifiers & WINED3DSPDM_SATURATE;
-
-    shader_arb_get_write_mask(ins, dst, write_mask);
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-                                 dst->reg.idx, !!dst->reg.rel_addr, regstr, &is_color);
-
-    /* Generate a line that does the output modifier computation */
-    shader_addline(buffer, "MUL%s %s%s, %s, %s;\n", saturate ? "_SAT" : "",
-        regstr, write_mask, regstr, shift_tab[shift]);
-}
-
 static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
@@ -899,8 +874,6 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
         shader_addline(buffer, "CMP%s %s%s, TMP, %s, %s;\n",
                                 sat ? "_SAT" : "", dst_name, dst_wmask, src_name[1], src_name[2]);
     }
-
-    pshader_gen_output_modifier_line(ins);
 }
 
 static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
@@ -927,8 +900,6 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
 
     shader_addline(buffer, "CMP%s %s%s, %s, %s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask,
                    src_name[0], src_name[2], src_name[1]);
-
-    pshader_gen_output_modifier_line(ins);
 }
 
 /** Process the WINED3DSIO_DP2ADD instruction in ARB.
@@ -956,8 +927,6 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "MOV TMP.z, 0.0;\n");
     shader_addline(buffer, "DP3 TMP2, TMP, %s;\n", src_name[1]);
     shader_addline(buffer, "ADD%s %s%s, TMP2, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask, src_name[2]);
-
-    pshader_gen_output_modifier_line(ins);
 }
 
 /* Map the opcode 1-to-1 to the GL code */
@@ -1058,9 +1027,6 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
             strcat(arguments, operands[i + 1]);
         }
         shader_addline(buffer, "%s%s %s;\n", instruction, modifier, arguments);
-
-        /* A shift requires another line. */
-        pshader_gen_output_modifier_line(ins);
     } else {
         /* Note that shader_arb_add_*_param() adds spaces. */
 
@@ -1712,8 +1678,6 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
     /* dst.w = src[0].w * 1 / (src.x^2 + src.y^2 + src.z^2)^(1/2) according to msdn*/
     shader_addline(buffer, "MUL%s %s%s, %s, TMP;\n", sat ? "_SAT" : "", dst_name, dst_wmask,
                    src_name);
-
-    pshader_gen_output_modifier_line(ins);
 }
 
 static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
@@ -1737,9 +1701,6 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
     pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, src_name);
     shader_addline(buffer, "SCS%s %s%s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask,
                    src_name);
-
-    pshader_gen_output_modifier_line(ins);
-
 }
 
 static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
@@ -2256,7 +2217,27 @@ static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)
 }
 
 static void shader_arb_add_instruction_modifiers(const struct wined3d_shader_instruction *ins) {
-    /* Nothing to do for now */
+    BOOL saturate;
+    DWORD shift;
+    char write_mask[20], regstr[50];
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    BOOL is_color = FALSE;
+    const struct wined3d_shader_dst_param *dst;
+
+    if (!ins->dst_count) return;
+
+    dst = &ins->dst[0];
+    shift = dst->shift;
+    if(shift == 0) return; /* Saturate alone is handled by the instructions */
+    saturate = dst->modifiers & WINED3DSPDM_SATURATE;
+
+    shader_arb_get_write_mask(ins, dst, write_mask);
+    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
+                                 dst->reg.idx, !!dst->reg.rel_addr, regstr, &is_color);
+
+    /* Generate a line that does the output modifier computation */
+    shader_addline(buffer, "MUL%s %s%s, %s, %s;\n", saturate ? "_SAT" : "",
+                   regstr, write_mask, regstr, shift_tab[shift]);
 }
 
 static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABLE_SIZE] =
