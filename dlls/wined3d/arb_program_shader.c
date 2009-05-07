@@ -831,33 +831,25 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    char dst_wmask[20];
     char dst_name[50];
     char src_name[3][50];
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
-    BOOL is_color;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
 
-    /* FIXME: support output modifiers */
-
-    /* Handle output register */
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst, dst_wmask);
-
-    /* Generate input register names (with modifiers) */
-    shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
+    shader_arb_get_dst_param(ins, dst, dst_name);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
-    shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
 
     /* The coissue flag changes the semantic of the cnd instruction in <= 1.3 shaders */
     if (shader_version <= WINED3D_SHADER_VERSION(1, 3) && ins->coissue)
     {
-        shader_addline(buffer, "MOV%s %s%s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask, src_name[1]);
+        shader_addline(buffer, "MOV%s %s, %s;\n", sat ? "_SAT" : "", dst_name, src_name[1]);
     } else {
+        shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
+        shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
         shader_addline(buffer, "ADD TMP, -%s, coefdiv.x;\n", src_name[0]);
-        shader_addline(buffer, "CMP%s %s%s, TMP, %s, %s;\n",
-                                sat ? "_SAT" : "", dst_name, dst_wmask, src_name[1], src_name[2]);
+        shader_addline(buffer, "CMP%s %s, TMP, %s, %s;\n",
+                                sat ? "_SAT" : "", dst_name, src_name[1], src_name[2]);
     }
 }
 
