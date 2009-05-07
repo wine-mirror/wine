@@ -824,11 +824,10 @@ static void test_GetPrivateProfileString(const char *content, const char *descri
 
 static DWORD timeout = 0;
 
-static BOOL check_file_data(LPCSTR path, LPCSTR data)
+static BOOL check_binary_file_data(LPCSTR path, const VOID *data, DWORD size)
 {
     HANDLE file;
     CHAR buf[MAX_PATH];
-    DWORD size;
     BOOL ret;
 
     /* Sleep() is needed on Win9x and WinME */
@@ -839,17 +838,23 @@ static BOOL check_file_data(LPCSTR path, LPCSTR data)
     if (file == INVALID_HANDLE_VALUE)
       return FALSE;
 
-    size = GetFileSize(file, NULL);
-    buf[size] = '\0';
+    if(size != GetFileSize(file, NULL) )
+    {
+        CloseHandle(file);
+        return FALSE;
+    }
+
     ret = ReadFile(file, buf, size, &size, NULL);
     CloseHandle(file);
     if (!ret)
       return FALSE;
 
-    if (!*data && size != 0)
-        return FALSE;
+    return !memcmp(buf, data, size);
+}
 
-    return !lstrcmpA(buf, data);
+static BOOL check_file_data(LPCSTR path, LPCSTR data)
+{
+    return check_binary_file_data(path, data, lstrlenA(data));
 }
 
 static void test_WritePrivateProfileString(void)
@@ -1039,7 +1044,23 @@ static void test_WritePrivateProfileString(void)
     ret = WritePrivateProfileStringA("App3", "key5", NULL, path);
     ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
     ok(check_file_data(path, data), "File doesn't match\n");
+    DeleteFileA(path);
 
+    /* NULLs in file before first section. Should be preserved in output */
+    data = "Data \0 before \0 first \0 section"    /* 31 bytes */
+           "\r\n[section1]\r\n"                    /* 14 bytes */
+           "key1=string1\r\n";                     /* 14 bytes */
+    GetTempFileNameA(temp, "wine", 0, path);
+    create_test_file(path, data, 31);
+    ret = WritePrivateProfileStringA("section1", "key1", "string1", path);
+    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
+    todo_wine
+    ok( check_binary_file_data(path, data, 59) ||
+        broken( check_binary_file_data(path,        /* Windows 9x */
+            "Data \0 before \0 first \0 section"    /* 31 bytes */
+            "\r\n\r\n[section1]\r\n"                /* 14 bytes */
+            "key1=string1"                          /* 14 bytes */
+            , 59)), "File doesn't match\n");
     DeleteFileA(path);
 }
 
