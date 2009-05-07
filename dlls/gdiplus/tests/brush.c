@@ -328,6 +328,34 @@ static void test_gradientgetrect(void)
     expectf(10.0, rectf.Width);
     todo_wine expectf(10.0, rectf.Height);
     status = GdipDeleteBrush((GpBrush*)brush);
+    /* slope = -1 */
+    pt1.X = pt1.Y = 0.0;
+    pt2.X = 20.0;
+    pt2.Y = -20.0;
+    status = GdipCreateLineBrush(&pt1, &pt2, 0, 0, WrapModeTile, &brush);
+    expect(Ok, status);
+    memset(&rectf, 0, sizeof(GpRectF));
+    status = GdipGetLineRect(brush, &rectf);
+    expect(Ok, status);
+    expectf(0.0, rectf.X);
+    expectf(-20.0, rectf.Y);
+    expectf(20.0, rectf.Width);
+    expectf(20.0, rectf.Height);
+    status = GdipDeleteBrush((GpBrush*)brush);
+    /* slope = 1/100 */
+    pt1.X = pt1.Y = 0.0;
+    pt2.X = 100.0;
+    pt2.Y = 1.0;
+    status = GdipCreateLineBrush(&pt1, &pt2, 0, 0, WrapModeTile, &brush);
+    expect(Ok, status);
+    memset(&rectf, 0, sizeof(GpRectF));
+    status = GdipGetLineRect(brush, &rectf);
+    expect(Ok, status);
+    expectf(0.0, rectf.X);
+    expectf(0.0, rectf.Y);
+    expectf(100.0, rectf.Width);
+    expectf(1.0, rectf.Height);
+    status = GdipDeleteBrush((GpBrush*)brush);
     /* from rect with LinearGradientModeHorizontal */
     rectf.X = rectf.Y = 10.0;
     rectf.Width = rectf.Height = 100.0;
@@ -341,6 +369,20 @@ static void test_gradientgetrect(void)
     expectf(10.0, rectf.Y);
     expectf(100.0, rectf.Width);
     expectf(100.0, rectf.Height);
+    status = GdipDeleteBrush((GpBrush*)brush);
+    /* passing negative Width/Height to LinearGradientModeHorizontal */
+    rectf.X = rectf.Y = 10.0;
+    rectf.Width = rectf.Height = -100.0;
+    status = GdipCreateLineBrushFromRect(&rectf, 0, 0, LinearGradientModeHorizontal,
+        WrapModeTile, &brush);
+    expect(Ok, status);
+    memset(&rectf, 0, sizeof(GpRectF));
+    status = GdipGetLineRect(brush, &rectf);
+    expect(Ok, status);
+    todo_wine expectf(10.0, rectf.X);
+    todo_wine expectf(10.0, rectf.Y);
+    todo_wine expectf(-100.0, rectf.Width);
+    todo_wine expectf(-100.0, rectf.Height);
     status = GdipDeleteBrush((GpBrush*)brush);
 }
 
