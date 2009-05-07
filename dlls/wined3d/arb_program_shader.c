@@ -792,10 +792,8 @@ static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[2][50];
-    char dst_wmask[20];
     DWORD sampler_code = dst->reg.idx;
     BOOL has_bumpmat = FALSE;
-    BOOL is_color;
     int i;
 
     for(i = 0; i < This->numbumpenvmatconsts; i++) {
@@ -806,10 +804,6 @@ static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
             break;
         }
     }
-
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst, dst_wmask);
-    strcat(dst_name, dst_wmask);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
@@ -1389,14 +1383,13 @@ static void pshader_hw_texdepth(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
-    BOOL is_color;
 
     /* texdepth has an implicit destination, the fragment depth value. It's only parameter,
      * which is essentially an input, is the destination register because it is the first
      * parameter. According to the msdn, this must be register r5, but let's keep it more flexible
-     * here
+     * here(writemasks/swizzles are not valid on texdepth)
      */
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
+    shader_arb_get_dst_param(ins, dst, dst_name);
 
     /* According to the msdn, the source register(must be r5) is unusable after
      * the texdepth instruction, so we're free to modify it
@@ -1438,18 +1431,12 @@ static void pshader_hw_texdp3(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     char src0[50];
     char dst_str[50];
-    char dst_mask[6];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    BOOL is_color;
 
     /* Handle output register */
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_str, &is_color);
-    shader_arb_get_write_mask(ins, dst, dst_mask);
-
+    shader_arb_get_dst_param(ins, dst, dst_str);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
-    shader_addline(buffer, "DP3 %s%s, fragment.texcoord[%u], %s;\n", dst_str, dst_mask, dst->reg.idx, src0);
-
-    /* TODO: Handle output modifiers */
+    shader_addline(buffer, "DP3 %s, fragment.texcoord[%u], %s;\n", dst_str, dst->reg.idx, src0);
 }
 
 /** Process the WINED3DSIO_TEXM3X3 instruction in ARB
@@ -1459,16 +1446,12 @@ static void pshader_hw_texm3x3(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_str[50];
-    char dst_mask[6];
     char src0[50];
-    BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_str, &is_color);
-    shader_arb_get_write_mask(ins, dst, dst_mask);
-
+    shader_arb_get_dst_param(ins, dst, dst_str);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
     shader_addline(buffer, "DP3 TMP.z, fragment.texcoord[%u], %s;\n", dst->reg.idx, src0);
-    shader_addline(buffer, "MOV %s%s, TMP;\n", dst_str, dst_mask);
+    shader_addline(buffer, "MOV %s, TMP;\n", dst_str);
 }
 
 /** Process the WINED3DSIO_TEXM3X2DEPTH instruction in ARB:
@@ -1590,18 +1573,14 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[50];
-    char dst_wmask[20];
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
-    BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst, dst_wmask);
-
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
     shader_addline(buffer, "DP3 TMP, %s, %s;\n", src_name, src_name);
     shader_addline(buffer, "RSQ TMP, TMP.x;\n");
     /* dst.w = src[0].w * 1 / (src.x^2 + src.y^2 + src.z^2)^(1/2) according to msdn*/
-    shader_addline(buffer, "MUL%s %s%s, %s, TMP;\n", sat ? "_SAT" : "", dst_name, dst_wmask,
+    shader_addline(buffer, "MUL%s %s, %s, TMP;\n", sat ? "_SAT" : "", dst_name,
                    src_name);
 }
 
@@ -1615,15 +1594,11 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[50];
-    char dst_wmask[20];
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
-    BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst, dst_wmask);
-
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
-    shader_addline(buffer, "SCS%s %s%s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask,
+    shader_addline(buffer, "SCS%s %s, %s;\n", sat ? "_SAT" : "", dst_name,
                    src_name);
 }
 
