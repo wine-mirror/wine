@@ -547,8 +547,25 @@ static HRESULT WINAPI KeystrokeMgr_IsPreservedKey(ITfKeystrokeMgr *iface,
         REFGUID rguid, const TF_PRESERVEDKEY *pprekey, BOOL *pfRegistered)
 {
     ThreadMgr *This = impl_from_ITfKeystrokeMgrVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    struct list *cursor;
+
+    TRACE("(%p) %s (%x %x) %p\n",This,debugstr_guid(rguid), (pprekey)?pprekey->uVKey:0, (pprekey)?pprekey->uModifiers:0, pfRegistered);
+
+    if (!rguid || !pprekey || !pfRegistered)
+        return E_INVALIDARG;
+
+    LIST_FOR_EACH(cursor, &This->CurrentPreservedKeys)
+    {
+        PreservedKey* key = LIST_ENTRY(cursor,PreservedKey,entry);
+        if (IsEqualGUID(rguid,&key->guid) && pprekey->uVKey == key->prekey.uVKey && pprekey->uModifiers == key->prekey.uModifiers)
+        {
+            *pfRegistered = TRUE;
+            return S_OK;
+        }
+    }
+
+    *pfRegistered = FALSE;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI KeystrokeMgr_PreserveKey(ITfKeystrokeMgr *iface,

@@ -420,14 +420,14 @@ static void test_KeystrokeMgr(void)
     preserved = FALSE;
     hr = ITfKeystrokeMgr_IsPreservedKey(keymgr, &CLSID_PreservedKey, &tfpk, &preserved);
     todo_wine ok(hr == S_OK, "ITfKeystrokeMgr_IsPreservedKey failed\n");
-    if (hr == S_OK) todo_wine ok(preserved == TRUE,"misreporting preserved key\n");
+    if (hr == S_OK) ok(preserved == TRUE,"misreporting preserved key\n");
 
     hr = ITfKeystrokeMgr_UnpreserveKey(keymgr, &CLSID_PreservedKey,&tfpk);
     todo_wine ok(SUCCEEDED(hr),"ITfKeystrokeMgr_UnpreserveKey failed\n");
 
     hr = ITfKeystrokeMgr_IsPreservedKey(keymgr, &CLSID_PreservedKey, &tfpk, &preserved);
-    todo_wine ok(hr == S_FALSE, "ITfKeystrokeMgr_IsPreservedKey failed\n");
-    if (hr == S_FALSE) todo_wine ok(preserved == FALSE,"misreporting preserved key\n");
+    ok(hr == S_FALSE, "ITfKeystrokeMgr_IsPreservedKey failed\n");
+    if (hr == S_FALSE) ok(preserved == FALSE,"misreporting preserved key\n");
 
     hr = ITfKeystrokeMgr_UnpreserveKey(keymgr, &CLSID_PreservedKey,&tfpk);
     ok(hr==CONNECT_E_NOCONNECTION,"ITfKeystrokeMgr_UnpreserveKey inproperly succeeded\n");
