@@ -857,24 +857,18 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    char dst_wmask[20];
     char dst_name[50];
     char src_name[3][50];
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
-    BOOL is_color;
 
-    /* FIXME: support output modifiers */
-
-    /* Handle output register */
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst, dst_wmask);
+    shader_arb_get_dst_param(ins, dst, dst_name);
 
     /* Generate input register names (with modifiers) */
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
     shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
 
-    shader_addline(buffer, "CMP%s %s%s, %s, %s, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask,
+    shader_addline(buffer, "CMP%s %s, %s, %s, %s;\n", sat ? "_SAT" : "", dst_name,
                    src_name[0], src_name[2], src_name[1]);
 }
 
