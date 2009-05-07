@@ -385,13 +385,16 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
      * local constants do not declare the loaded constants as an array because ARB compilers usually
      * do not optimize unused constants away
      */
-    if(!lconst_map || list_empty(&This->baseShader.constantsF)) {
+    if(This->baseShader.reg_maps.usesrelconstF) {
         /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
         shader_addline(buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
                     max_constantsF, max_constantsF - 1);
     } else {
         for(i = 0; i < max_constantsF; i++) {
-            if(!shader_constant_is_local(This, i)) {
+            DWORD idx, mask;
+            idx = i >> 5;
+            mask = 1 << (i & 0x1f);
+            if(!shader_constant_is_local(This, i) && (This->baseShader.reg_maps.constf[idx] & mask)) {
                 shader_addline(buffer, "PARAM C%d = program.env[%d];\n",i, i);
             }
         }
@@ -513,7 +516,7 @@ static void shader_arb_get_register_name(IWineD3DBaseShader *iface, WINED3DSHADE
             }
             else
             {
-                if (This->baseShader.load_local_constsF || list_empty(&This->baseShader.constantsF))
+                if (This->baseShader.reg_maps.usesrelconstF)
                     sprintf(register_name, "C[%u]", register_idx);
                 else
                     sprintf(register_name, "C%u", register_idx);
@@ -1442,13 +1445,14 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     DWORD flags;
     DWORD reg = ins->dst[0].reg.idx;
-    DWORD reg3 = ins->src[1].reg.idx;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_str[8];
     char src0_name[50];
+    char src1_name[50];
 
     pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[0], 0, src0_name);
+    pshader_gen_input_modifier_line(ins->ctx->shader, buffer, &ins->src[1], 1, src1_name);
     shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", reg, src0_name);
 
     /* Calculate reflection vector.
@@ -1459,12 +1463,12 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
      *
      * Which normalizes the normal vector
      */
-    shader_addline(buffer, "DP3 TMP.w, TMP, C[%u];\n", reg3);
+    shader_addline(buffer, "DP3 TMP.w, TMP, %s;\n", src1_name);
     shader_addline(buffer, "DP3 TMP2.w, TMP, TMP;\n");
     shader_addline(buffer, "RCP TMP2.w, TMP2.w;\n");
     shader_addline(buffer, "MUL TMP.w, TMP.w, TMP2.w;\n");
     shader_addline(buffer, "MUL TMP, TMP.w, TMP;\n");
-    shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -C[%u];\n", reg3);
+    shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -%s;\n", src1_name);
 
     /* Sample the texture using the calculated coordinates */
     sprintf(dst_str, "T%u", reg);
