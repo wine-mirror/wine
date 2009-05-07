@@ -89,12 +89,12 @@ DWORD get_dpi(void)
     DWORD dpi = 96;
     HKEY hkey;
 
-    if (RegOpenKey(HKEY_CURRENT_CONFIG, dpi_key_name, &hkey) == ERROR_SUCCESS)
+    if (RegOpenKeyW(HKEY_CURRENT_CONFIG, dpi_key_name, &hkey) == ERROR_SUCCESS)
     {
         DWORD type, size, new_dpi;
 
         size = sizeof(new_dpi);
-        if(RegQueryValueEx(hkey, dpi_value_name, NULL, &type, (void *)&new_dpi, &size) == ERROR_SUCCESS)
+        if(RegQueryValueExW(hkey, dpi_value_name, NULL, &type, (LPBYTE)&new_dpi, &size) == ERROR_SUCCESS)
         {
             if(type == REG_DWORD && new_dpi != 0)
                 dpi = new_dpi;
@@ -115,7 +115,7 @@ static VOID NOTEPAD_SaveSettingToRegistry(void)
     HKEY hkey;
     DWORD disp;
 
-    if(RegCreateKeyEx(HKEY_CURRENT_USER, notepad_reg_key, 0, NULL,
+    if(RegCreateKeyExW(HKEY_CURRENT_USER, notepad_reg_key, 0, NULL,
                 REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, &disp) == ERROR_SUCCESS)
     {
         DWORD data;
@@ -125,7 +125,7 @@ static VOID NOTEPAD_SaveSettingToRegistry(void)
         GetWindowPlacement(Globals.hMainWnd, &wndpl);
         main_rect = wndpl.rcNormalPosition;
 
-#define SET_NOTEPAD_REG(hkey, value_name, value_data) do { DWORD data = (DWORD)(value_data); RegSetValueEx(hkey, value_name, 0, REG_DWORD, (LPBYTE)&data, sizeof(DWORD)); }while(0)
+#define SET_NOTEPAD_REG(hkey, value_name, value_data) do { DWORD data = value_data; RegSetValueExW(hkey, value_name, 0, REG_DWORD, (LPBYTE)&data, sizeof(DWORD)); }while(0)
         SET_NOTEPAD_REG(hkey, value_fWrap,            Globals.bWrapLongLines);
         SET_NOTEPAD_REG(hkey, value_iWindowPosX,      main_rect.left);
         SET_NOTEPAD_REG(hkey, value_iWindowPosY,      main_rect.top);
@@ -150,15 +150,15 @@ static VOID NOTEPAD_SaveSettingToRegistry(void)
 
         /* Store the current value as 10 * twips */
         data = MulDiv(abs(Globals.lfFont.lfHeight), 720 , get_dpi());
-        RegSetValueEx(hkey, value_iPointSize, 0, REG_DWORD, (LPBYTE)&data, sizeof(DWORD));
+        RegSetValueExW(hkey, value_iPointSize, 0, REG_DWORD, (LPBYTE)&data, sizeof(DWORD));
 
-        RegSetValueEx(hkey, value_lfFaceName, 0, REG_SZ, (LPBYTE)&Globals.lfFont.lfFaceName,
+        RegSetValueExW(hkey, value_lfFaceName, 0, REG_SZ, (LPBYTE)&Globals.lfFont.lfFaceName,
                       lstrlenW(Globals.lfFont.lfFaceName) * sizeof(Globals.lfFont.lfFaceName[0]));
 
-        RegSetValueEx(hkey, value_szHeader, 0, REG_SZ, (LPBYTE)&Globals.szHeader,
+        RegSetValueExW(hkey, value_szHeader, 0, REG_SZ, (LPBYTE)&Globals.szHeader,
                       lstrlenW(Globals.szHeader) * sizeof(Globals.szHeader[0]));
 
-        RegSetValueEx(hkey, value_szFooter, 0, REG_SZ, (LPBYTE)&Globals.szFooter,
+        RegSetValueExW(hkey, value_szFooter, 0, REG_SZ, (LPBYTE)&Globals.szFooter,
                       lstrlenW(Globals.szFooter) * sizeof(Globals.szFooter[0]));
 
         RegCloseKey(hkey);
@@ -210,12 +210,12 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
     LoadString(Globals.hInstance, STRING_PAGESETUP_FOOTERVALUE, Globals.szFooter,
                sizeof(Globals.szFooter) / sizeof(Globals.szFooter[0]));
 
-    if(RegOpenKey(HKEY_CURRENT_USER, notepad_reg_key, &hkey) == ERROR_SUCCESS)
+    if(RegOpenKeyW(HKEY_CURRENT_USER, notepad_reg_key, &hkey) == ERROR_SUCCESS)
     {
         WORD  data_helper[MAX_PATH];
         DWORD type, data, size;
 
-#define QUERY_NOTEPAD_REG(hkey, value_name, ret) do { DWORD type, data; DWORD size = sizeof(DWORD); if(RegQueryValueEx(hkey, value_name, 0, &type, (LPBYTE)&data, &size) == ERROR_SUCCESS) if(type == REG_DWORD) ret = (typeof(ret))data; } while(0)
+#define QUERY_NOTEPAD_REG(hkey, value_name, ret) do { DWORD type, data; DWORD size = sizeof(DWORD); if(RegQueryValueExW(hkey, value_name, 0, &type, (LPBYTE)&data, &size) == ERROR_SUCCESS) if(type == REG_DWORD) ret = data; } while(0)
         QUERY_NOTEPAD_REG(hkey, value_fWrap,            Globals.bWrapLongLines);
         QUERY_NOTEPAD_REG(hkey, value_iWindowPosX,      main_rect.left);
         QUERY_NOTEPAD_REG(hkey, value_iWindowPosY,      main_rect.top);
@@ -242,23 +242,23 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
         main_rect.bottom = main_rect.top + dy;
 
         size = sizeof(DWORD);
-        if(RegQueryValueEx(hkey, value_iPointSize, 0, &type, (LPBYTE)&data, &size) == ERROR_SUCCESS)
+        if(RegQueryValueExW(hkey, value_iPointSize, 0, &type, (LPBYTE)&data, &size) == ERROR_SUCCESS)
             if(type == REG_DWORD)
                 /* The value is stored as 10 * twips */
                 Globals.lfFont.lfHeight = -MulDiv(abs(data), get_dpi(), 720);
 
         size = sizeof(Globals.lfFont.lfFaceName);
-        if(RegQueryValueEx(hkey, value_lfFaceName, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
+        if(RegQueryValueExW(hkey, value_lfFaceName, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
             if(type == REG_SZ)
                 lstrcpyW(Globals.lfFont.lfFaceName, data_helper);
 
         size = sizeof(Globals.szHeader);
-        if(RegQueryValueEx(hkey, value_szHeader, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
+        if(RegQueryValueExW(hkey, value_szHeader, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
             if(type == REG_SZ)
                 lstrcpyW(Globals.szHeader, data_helper);
 
         size = sizeof(Globals.szFooter);
-        if(RegQueryValueEx(hkey, value_szFooter, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
+        if(RegQueryValueExW(hkey, value_szFooter, 0, &type, (LPBYTE)&data_helper, &size) == ERROR_SUCCESS)
             if(type == REG_SZ)
                 lstrcpyW(Globals.szFooter, data_helper);
         RegCloseKey(hkey);
