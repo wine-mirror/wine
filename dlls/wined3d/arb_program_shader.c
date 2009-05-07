@@ -878,15 +878,11 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    char dst_wmask[20];
     char dst_name[50];
     char src_name[3][50];
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
-    BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
-    shader_arb_get_write_mask(ins, dst, dst_wmask);
-
+    shader_arb_get_dst_param(ins, dst, dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
     shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
@@ -895,7 +891,7 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "MOV TMP, %s;\n", src_name[0]);
     shader_addline(buffer, "MOV TMP.z, 0.0;\n");
     shader_addline(buffer, "DP3 TMP2, TMP, %s;\n", src_name[1]);
-    shader_addline(buffer, "ADD%s %s%s, TMP2, %s;\n", sat ? "_SAT" : "", dst_name, dst_wmask, src_name[2]);
+    shader_addline(buffer, "ADD%s %s, TMP2, %s;\n", sat ? "_SAT" : "", dst_name, src_name[2]);
 }
 
 /* Map the opcode 1-to-1 to the GL code */
