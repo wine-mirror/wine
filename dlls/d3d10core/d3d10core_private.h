@@ -39,7 +39,14 @@
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
+#define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
+
+struct d3d10_shader_info
+{
+    const DWORD *shader_code;
+    struct wined3d_shader_signature *output_signature;
+};
 
 /* TRACE helper functions */
 const char *debug_d3d10_primitive_topology(D3D10_PRIMITIVE_TOPOLOGY topology);
@@ -152,9 +159,10 @@ struct d3d10_pixel_shader
     LONG refcount;
 
     IWineD3DPixelShader *wined3d_shader;
+    struct wined3d_shader_signature output_signature;
 };
 
-HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, const DWORD **shader_code);
+HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, struct d3d10_shader_info *shader_info);
 HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d_shader_signature *s);
 void shader_free_signature(struct wined3d_shader_signature *s);
 

@@ -26,31 +26,46 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
 static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
-    const DWORD **shader_data = ctx;
+    struct d3d10_shader_info *shader_info = ctx;
     char tag_str[5];
+    HRESULT hr;
 
     switch(tag)
     {
+        case TAG_OSGN:
+            hr = shader_parse_signature(data, data_size, shader_info->output_signature);
+            if (FAILED(hr)) return hr;
+            break;
+
         case TAG_SHDR:
-            *shader_data = (const DWORD *)data;
-            return S_OK;
+            shader_info->shader_code = (const DWORD *)data;
+            break;
 
         default:
             memcpy(tag_str, &tag, 4);
             tag_str[4] = '\0';
             FIXME("Unhandled chunk %s\n", tag_str);
-            return S_OK;
+            break;
     }
+
+    return S_OK;
 }
 
-HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, const DWORD **shader_code)
+HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, struct d3d10_shader_info *shader_info)
 {
     HRESULT hr;
 
-    hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, shader_code);
-    if (!*shader_code) hr = E_FAIL;
+    shader_info->shader_code = NULL;
+    memset(shader_info->output_signature, 0, sizeof(*shader_info->output_signature));
 
-    if (FAILED(hr)) ERR("Failed to parse shader, hr %#x\n", hr);
+    hr = parse_dxbc(dxbc, dxbc_length, shdr_handler, shader_info);
+    if (!shader_info->shader_code) hr = E_FAIL;
+
+    if (FAILED(hr))
+    {
+        ERR("Failed to parse shader, hr %#x\n", hr);
+        shader_free_signature(shader_info->output_signature);
+    }
 
     return hr;
 }
@@ -347,6 +362,7 @@ static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_Release(ID3D10PixelShader *ifa
 
     if (!refcount)
     {
+        shader_free_signature(&This->output_signature);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
