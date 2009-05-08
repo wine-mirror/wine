@@ -1465,6 +1465,14 @@ GpStatus WINGDIPAPI GdipTransformPath(GpPath *path, GpMatrix *matrix)
                                      path->pathdata.Count);
 }
 
+GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
+    REAL flatness)
+{
+    FIXME("(%p,%p,%p,%0.2f)\n", path, pen, matrix, flatness);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipAddPathRectangle(GpPath *path, REAL x, REAL y,
     REAL width, REAL height)
 {
