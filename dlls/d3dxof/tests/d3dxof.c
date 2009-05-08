@@ -151,10 +151,10 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int* plevel)
     char str_clsid_type[40];
     DWORD len= 100;
     LPDIRECTXFILEOBJECT pChildObj;
-    int i,k;
+    int i;
     int j = 0;
     LPBYTE pData;
-    DWORD size;
+    DWORD k, size;
 
     hr = IDirectXFileData_GetId(lpDirectXFileData, &clsid);
     ok(hr == DXFILE_OK, "IDirectXFileData_GetId: %x\n", hr);
