@@ -546,8 +546,31 @@ static HRESULT WINAPI KeystrokeMgr_UnadviseKeyEventSink(ITfKeystrokeMgr *iface,
         TfClientId tid)
 {
     ThreadMgr *This = impl_from_ITfKeystrokeMgrVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    CLSID textservice;
+    ITfKeyEventSink *check = NULL;
+    TRACE("(%p) %x\n",This,tid);
+
+    if (!tid)
+        return E_INVALIDARG;
+
+    textservice = get_textservice_clsid(tid);
+    if (IsEqualCLSID(&GUID_NULL,&textservice))
+        return E_INVALIDARG;
+
+    get_textservice_sink(tid, &IID_ITfKeyEventSink, (IUnknown**)&check);
+
+    if (!check)
+        return CONNECT_E_NOCONNECTION;
+
+    set_textservice_sink(tid, &IID_ITfKeyEventSink, NULL);
+    ITfKeyEventSink_Release(check);
+
+    if (This->forgroundKeyEventSink == check)
+    {
+        ITfKeyEventSink_Release(This->forgroundKeyEventSink);
+        This->forgroundKeyEventSink = NULL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI KeystrokeMgr_GetForeground(ITfKeystrokeMgr *iface,
