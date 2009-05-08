@@ -78,6 +78,8 @@ typedef struct tagACLMulti {
     ITfDocumentMgr *focus;
     LONG activationCount;
 
+    ITfKeyEventSink *forgroundKeyEventSink;
+
     struct list CurrentPreservedKeys;
 
     /* kept as separate lists to reduce unnecessary iterations */
@@ -509,8 +511,35 @@ static HRESULT WINAPI KeystrokeMgr_AdviseKeyEventSink(ITfKeystrokeMgr *iface,
         TfClientId tid, ITfKeyEventSink *pSink, BOOL fForeground)
 {
     ThreadMgr *This = impl_from_ITfKeystrokeMgrVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    CLSID textservice;
+    ITfKeyEventSink *check = NULL;
+
+    TRACE("(%p) %x %p %i\n",This,tid,pSink,fForeground);
+
+    if (!tid || !pSink)
+        return E_INVALIDARG;
+
+    textservice = get_textservice_clsid(tid);
+    if (IsEqualCLSID(&GUID_NULL,&textservice))
+        return E_INVALIDARG;
+
+    get_textservice_sink(tid, &IID_ITfKeyEventSink, (IUnknown**)&check);
+    if (check != NULL)
+        return CONNECT_E_ADVISELIMIT;
+
+    if (FAILED(IUnknown_QueryInterface(pSink,&IID_ITfKeyEventSink,(LPVOID*) &check)))
+        return E_INVALIDARG;
+
+    set_textservice_sink(tid, &IID_ITfKeyEventSink, (IUnknown*)check);
+
+    if (fForeground)
+    {
+        if (This->forgroundKeyEventSink)
+            ITfKeyEventSink_Release(This->forgroundKeyEventSink);
+        ITfKeyEventSink_AddRef(check);
+        This->forgroundKeyEventSink = check;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI KeystrokeMgr_UnadviseKeyEventSink(ITfKeystrokeMgr *iface,

@@ -47,5 +47,9 @@ extern BOOL get_active_textservice(REFCLSID rclsid, TF_LANGUAGEPROFILE *lp);
 extern HRESULT activate_textservices(ITfThreadMgr *tm);
 extern HRESULT deactivate_textservices(void);
 
+extern CLSID get_textservice_clsid(TfClientId tid);
+extern HRESULT get_textservice_sink(TfClientId tid, REFCLSID iid, IUnknown** sink);
+extern HRESULT set_textservice_sink(TfClientId tid, REFCLSID iid, IUnknown* sink);
+
 extern const WCHAR szwSystemTIPKey[];
 #endif /* __WINE_MSCTF_I_H */

@@ -55,6 +55,7 @@ typedef struct {
     TF_LANGUAGEPROFILE      LanguageProfile;
     ITfTextInputProcessor   *pITfTextInputProcessor;
     ITfThreadMgr            *pITfThreadMgr;
+    ITfKeyEventSink         *pITfKeyEventSink;
     TfClientId              tid;
 } ActivatedTextService;
 
@@ -378,6 +379,7 @@ HRESULT add_active_textservice(TF_LANGUAGEPROFILE *lp)
     actsvr->pITfTextInputProcessor = NULL;
     actsvr->LanguageProfile = *lp;
     actsvr->LanguageProfile.fActive = TRUE;
+    actsvr->pITfKeyEventSink = NULL;
 
     /* get TIP category */
     if (SUCCEEDED(CategoryMgr_Constructor(NULL,(IUnknown**)&catmgr)))
@@ -454,6 +456,50 @@ HRESULT deactivate_textservices(void)
             deactivate_given_ts(ats->ats);
 
     return S_OK;
+}
+
+CLSID get_textservice_clsid(TfClientId tid)
+{
+    AtsEntry *ats;
+
+    LIST_FOR_EACH_ENTRY(ats, &AtsList, AtsEntry, entry)
+        if (ats->ats->tid == tid)
+            return ats->ats->LanguageProfile.clsid;
+    return GUID_NULL;
+}
+
+HRESULT get_textservice_sink(TfClientId tid, REFCLSID iid, IUnknown **sink)
+{
+    AtsEntry *ats;
+
+    if (!IsEqualCLSID(iid,&IID_ITfKeyEventSink))
+        return E_NOINTERFACE;
+
+    LIST_FOR_EACH_ENTRY(ats, &AtsList, AtsEntry, entry)
+        if (ats->ats->tid == tid)
+        {
+            *sink = (IUnknown*)ats->ats->pITfKeyEventSink;
+            return S_OK;
+        }
+
+    return E_FAIL;
+}
+
+HRESULT set_textservice_sink(TfClientId tid, REFCLSID iid, IUnknown* sink)
+{
+    AtsEntry *ats;
+
+    if (!IsEqualCLSID(iid,&IID_ITfKeyEventSink))
+        return E_NOINTERFACE;
+
+    LIST_FOR_EACH_ENTRY(ats, &AtsList, AtsEntry, entry)
+        if (ats->ats->tid == tid)
+        {
+            ats->ats->pITfKeyEventSink = (ITfKeyEventSink*)sink;
+            return S_OK;
+        }
+
+    return E_FAIL;
 }
 
 /*************************************************************************
