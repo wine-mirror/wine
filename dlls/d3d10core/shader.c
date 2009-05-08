@@ -362,6 +362,7 @@ static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_Release(ID3D10PixelShader *ifa
 
     if (!refcount)
     {
+        IWineD3DPixelShader_Release(This->wined3d_shader);
         shader_free_signature(&This->output_signature);
         HeapFree(GetProcessHeap(), 0, This);
     }
