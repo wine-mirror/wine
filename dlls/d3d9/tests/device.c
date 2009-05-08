@@ -745,7 +745,7 @@ static void test_reset(void)
     modes = HeapAlloc(GetProcessHeap(), 0, sizeof(*modes) * adapter_mode_count);
     for(i = 0; i < adapter_mode_count; ++i)
     {
-        int j;
+        UINT j;
         ZeroMemory( &d3ddm2, sizeof(d3ddm2) );
         hr = IDirect3D9_EnumAdapterModes(pD3d, D3DADAPTER_DEFAULT, d3ddm.Format, i, &d3ddm2);
         ok(hr == D3D_OK, "IDirect3D9_EnumAdapterModes returned %#x\n", hr);
