@@ -45,8 +45,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 static BOOL need_mova_const(IWineD3DBaseShader *shader, const WineD3D_GL_Info *gl_info) {
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *) shader;
     if(!This->baseShader.reg_maps.usesmova) return FALSE;
-    /* TODO: ARR from GL_NV_vertex_program2_option */
-    return TRUE;
+    return !GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION);
 }
 
 static BOOL need_helper_const(const WineD3D_GL_Info *gl_info) {
@@ -536,6 +535,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
     static const char * const rastout_reg_names[] = {"TMP_OUT", "result.fogcoord", "result.pointsize"};
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     BOOL pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
+    struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
 
     *is_color = FALSE;
 
@@ -567,9 +567,10 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
                     sprintf(rel_reg, "A0.x");
                 } else {
                     shader_arb_get_src_param(ins, reg->rel_addr, 0, rel_reg);
-                    /* FIXME: GL_NV_vertex_progam2_option */
-                    shader_arb_request_a0(ins, rel_reg);
-                    sprintf(rel_reg, "A0.x");
+                    if(ctx->target_version == ARB) {
+                        shader_arb_request_a0(ins, rel_reg);
+                        sprintf(rel_reg, "A0.x");
+                    }
                 }
                 if (reg->idx >= rel_offset)
                     sprintf(register_name, "C[%s + %u]", rel_reg, reg->idx - rel_offset);
@@ -601,7 +602,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             }
             else
             {
-                if(This->baseShader.reg_maps.shader_version.major == 1)
+                if(This->baseShader.reg_maps.shader_version.major == 1 || ctx->target_version >= NV2)
                 {
                     sprintf(register_name, "A%u", reg->idx);
                 }
@@ -1036,6 +1037,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_SGE: instruction = "SGE"; break;
         case WINED3DSIH_SLT: instruction = "SLT"; break;
         case WINED3DSIH_SUB: instruction = "SUB"; break;
+        case WINED3DSIH_MOVA:instruction = "ARR"; break;
         default: instruction = "";
             FIXME("Unhandled opcode %#x\n", ins->handler_idx);
             break;
@@ -1068,9 +1070,14 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
     char src0_param[256];
 
     if(ins->handler_idx == WINED3DSIH_MOVA) {
+        struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
         struct wined3d_shader_src_param tmp_src = ins->src[0];
         char write_mask[6];
 
+        if(ctx->target_version >= NV2) {
+            shader_hw_map2gl(ins);
+            return;
+        }
         tmp_src.swizzle = (tmp_src.swizzle & 0x3) * 0x55;
         shader_arb_get_src_param(ins, &tmp_src, 0, src0_param);
         shader_arb_get_write_mask(ins, &ins->dst[0], write_mask);
@@ -1084,8 +1091,6 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
          *
          * The ARL is performed when A0 is used - the requested component is read from A0_SHADOW into
          * A0.x. We can use the overwritten component of A0_shadow as temporary storage for the sign.
-         *
-         * TODO: ARR from GL_NV_vertex_program2_option
          */
         shader_addline(buffer, "SGE A0_SHADOW%s, %s, mova_const.y;\n", write_mask, src0_param);
         shader_addline(buffer, "MAD A0_SHADOW%s, A0_SHADOW, mova_const.z, -mova_const.w;\n", write_mask);
