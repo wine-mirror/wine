@@ -1039,6 +1039,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_SUB: instruction = "SUB"; break;
         case WINED3DSIH_MOVA:instruction = "ARR"; break;
         case WINED3DSIH_SGN: instruction = "SSG"; break;
+        case WINED3DSIH_DSX: instruction = "DDX"; break;
         default: instruction = "";
             FIXME("Unhandled opcode %#x\n", ins->handler_idx);
             break;
@@ -2354,7 +2355,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_DP3           */ shader_hw_map2gl,
     /* WINED3DSIH_DP4           */ shader_hw_map2gl,
     /* WINED3DSIH_DST           */ shader_hw_map2gl,
-    /* WINED3DSIH_DSX           */ NULL,
+    /* WINED3DSIH_DSX           */ shader_hw_map2gl,
     /* WINED3DSIH_DSY           */ NULL,
     /* WINED3DSIH_ELSE          */ NULL,
     /* WINED3DSIH_ENDIF         */ NULL,
