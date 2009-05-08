@@ -525,7 +525,7 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     DWORD enable  = 0xFFFFFFFF;
     DWORD disable = 0x00000000;
 
-    if (use_vs(stateblock))
+    if (!stateblock->wineD3DDevice->vs_clipping && use_vs(stateblock))
     {
         /* The spec says that opengl clipping planes are disabled when using shaders. Direct3D planes aren't,
          * so that is an issue. The MacOS ATI driver keeps clipping planes activated with shaders in some
@@ -3496,9 +3496,22 @@ static void clipplane(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     }
 
     /* Clip Plane settings are affected by the model view in OpenGL, the View transform in direct3d */
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+    if(!use_vs(stateblock)) {
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadMatrixf(&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+    } else {
+        /* with vertex shaders, clip planes are not transformed in direct3d,
+         * in OpenGL they are still transformed by the model view.
+         * Use this to swap the y coordinate if necessary
+         */
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        if(stateblock->wineD3DDevice->render_offscreen) {
+            glScalef(1.0, -1.0, 1.0);
+        }
+    }
 
     TRACE("Clipplane [%f,%f,%f,%f]\n",
           stateblock->clipplane[index][0],
@@ -4403,7 +4416,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
         if(context->last_was_vshader) {
             updateFog = TRUE;
-            if(!isStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPLANEENABLE))) {
+            if(!device->vs_clipping && !isStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPLANEENABLE))) {
                 state_clipping(STATE_RENDER(WINED3DRS_CLIPPLANEENABLE), stateblock, context);
             }
         }
@@ -4414,17 +4427,19 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         if(!context->last_was_vshader) {
             unsigned int i;
             static BOOL warned = FALSE;
-            /* Disable all clip planes to get defined results on all drivers. See comment in the
-             * state_clipping state handler
-             */
-            for(i = 0; i < GL_LIMITS(clipplanes); i++) {
-                glDisable(GL_CLIP_PLANE0 + i);
-                checkGLcall("glDisable(GL_CLIP_PLANE0 + i)");
-            }
+            if(!device->vs_clipping) {
+                /* Disable all clip planes to get defined results on all drivers. See comment in the
+                 * state_clipping state handler
+                 */
+                for(i = 0; i < GL_LIMITS(clipplanes); i++) {
+                    glDisable(GL_CLIP_PLANE0 + i);
+                    checkGLcall("glDisable(GL_CLIP_PLANE0 + i)");
+                }
 
-            if(!warned && stateblock->renderState[WINED3DRS_CLIPPLANEENABLE]) {
-                FIXME("Clipping not supported with vertex shaders\n");
-                warned = TRUE;
+                if(!warned && stateblock->renderState[WINED3DRS_CLIPPLANEENABLE]) {
+                    FIXME("Clipping not supported with vertex shaders\n");
+                    warned = TRUE;
+                }
             }
             if(wasrhw) {
                 /* Apply the transform matrices when switching from rhw drawing to vertex shaders. Vertex

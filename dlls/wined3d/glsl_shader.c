@@ -704,6 +704,17 @@ static void shader_glsl_update_float_pixel_constants(IWineD3DDevice *iface, UINT
     }
 }
 
+static int vec4_varyings(DWORD shader_major, const WineD3D_GL_Info *gl_info)
+{
+    int ret = GL_LIMITS(glsl_varyings) / 4;
+    /* 4.0 shaders do not write clip coords because d3d10 does not support user clipplanes */
+    if(shader_major > 3) return ret;
+
+    /* 3.0 shaders may need an extra varying for the clip coord on some cards(mostly dx10 ones) */
+    if(gl_info->glsl_clip_varying) ret -= 1;
+    return ret;
+}
+
 /** Generate the variable & register declarations for the GLSL output target */
 static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const shader_reg_maps *reg_maps,
         SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info,
@@ -748,9 +759,11 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
                 /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix).
                  * Subtract another uniform for immediate values, which have to be loaded via uniform by the driver as well.
                  * The shader code only uses 0.5, 2.0, 1.0, 128 and -128 in vertex shader code, so one vec4 should be enough
-                 * (Unfortunately the Nvidia driver doesn't store 128 and -128 in one float
+                 * (Unfortunately the Nvidia driver doesn't store 128 and -128 in one float).
+                 *
+                 * Writing gl_ClipPos requires one uniform for each clipplane as well.
                  */
-                max_constantsF = GL_LIMITS(vshader_constantsF) - 3;
+                max_constantsF = GL_LIMITS(vshader_constantsF) - 3 - GL_LIMITS(clipplanes);
                 max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
                 /* Strictly speaking a bool only uses one scalar, but the nvidia(Linux) compiler doesn't pack them properly,
                  * so each scalar requires a full vec4. We could work around this by packing the booleans ourselves, but
@@ -902,13 +915,13 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
     {
         if (use_vs(device->stateBlock))
         {
-            shader_addline(buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
+            shader_addline(buffer, "varying vec4 IN[%u];\n", vec4_varyings(reg_maps->shader_version.major, gl_info));
         } else {
             /* TODO: Write a replacement shader for the fixed function vertex pipeline, so this isn't needed.
              * For fixed function vertex processing + 3.0 pixel shader we need a separate function in the
              * pixel shader that reads the fixed function color into the packed input registers.
              */
-            shader_addline(buffer, "vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
+            shader_addline(buffer, "vec4 IN[%u];\n", vec4_varyings(reg_maps->shader_version.major, gl_info));
         }
     }
 
@@ -1085,7 +1098,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             if (This->baseShader.reg_maps.shader_version.major >= 3)
             {
                 DWORD idx = ((IWineD3DPixelShaderImpl *)This)->input_reg_map[reg->idx];
-                DWORD in_count = GL_LIMITS(glsl_varyings) / 4;
+                DWORD in_count = vec4_varyings(This->baseShader.reg_maps.shader_version.major, gl_info);
 
                 if (reg->rel_addr)
                 {
@@ -3237,7 +3250,7 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
     DWORD usage, usage_idx, usage_out, usage_idx_out;
     DWORD *set;
     DWORD in_idx;
-    DWORD in_count = GL_LIMITS(glsl_varyings) / 4;
+    DWORD in_count = vec4_varyings(3, gl_info);
     char reg_mask[6], reg_mask_out[6];
     char destination[50];
 
@@ -3467,7 +3480,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         semantics_out = vs->semantics_out;
 
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
-        shader_addline(&buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
+        shader_addline(&buffer, "varying vec4 IN[%u];\n", vec4_varyings(3, gl_info));
         shader_addline(&buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
@@ -3498,7 +3511,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
 
         shader_addline(&buffer, "}\n");
     } else if(ps_major >= 3 && vs_major < 3) {
-        shader_addline(&buffer, "varying vec4 IN[%u];\n", GL_LIMITS(glsl_varyings) / 4);
+        shader_addline(&buffer, "varying vec4 IN[%u];\n", vec4_varyings(3, gl_info));
         shader_addline(&buffer, "void order_ps_input() {\n");
         /* The vertex shader wrote to the builtin varyings. There is no need to figure out position and
          * point size, but we depend on the optimizers kindness to find out that the pixel shader doesn't
@@ -3713,7 +3726,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
 
     if (pshader
             && ((IWineD3DPixelShaderImpl *)pshader)->baseShader.reg_maps.shader_version.major >= 3
-            && ((IWineD3DPixelShaderImpl *)pshader)->declared_in_count > GL_LIMITS(glsl_varyings) / 4)
+            && ((IWineD3DPixelShaderImpl *)pshader)->declared_in_count > vec4_varyings(3, gl_info))
     {
         TRACE("Shader %d needs vertex color clamping disabled\n", programId);
         entry->vertex_color_clamp = GL_FALSE;
@@ -4242,6 +4255,7 @@ static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface,
      */
     shader_addline(buffer, "gl_Position.y = gl_Position.y * posFixup.y;\n");
     shader_addline(buffer, "gl_Position.xy += posFixup.zw * gl_Position.ww;\n");
+    shader_addline(buffer, "gl_ClipVertex = gl_Position;\n");
 
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
      *
@@ -4310,6 +4324,8 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *
      */
     pCaps->PixelShader1xMaxValue = 8.0;
     TRACE_(d3d_caps)("Hardware pixel shader version %d.%d enabled (GLSL)\n", (pCaps->PixelShaderVersion >> 8) & 0xff, pCaps->PixelShaderVersion & 0xff);
+
+    pCaps->VSClipping = TRUE;
 }
 
 static BOOL shader_glsl_color_fixup_supported(struct color_fixup_desc fixup)

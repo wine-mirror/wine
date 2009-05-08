@@ -3799,6 +3799,7 @@ static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter,
     object->shader_backend->shader_get_caps(DeviceType, &adapter->gl_info, &shader_caps);
     object->d3d_vshader_constantF = shader_caps.MaxVertexShaderConst;
     object->d3d_pshader_constantF = shader_caps.MaxPixelShaderConst;
+    object->vs_clipping = shader_caps.VSClipping;
 
     memset(&ffp_caps, 0, sizeof(ffp_caps));
     frag_pipeline = select_fragment_implementation(adapter, DeviceType);
@@ -4058,6 +4059,18 @@ static BOOL match_fglrx(const WineD3D_GL_Info *gl_info) {
     return TRUE;
 }
 
+static BOOL match_dx10_capable(const WineD3D_GL_Info *gl_info) {
+    /* DX9 cards support 40 single float varyings in hardware, most drivers report 32. ATI misreports
+     * 44 varyings. So assume that if we have more than 44 varyings we have a dx10 card.
+     * This detection is for the gl_ClipPos varying quirk. If a d3d9 card really supports more than 44
+     * varyings and we subtract one in dx9 shaders its not going to hurt us because the dx9 limit is
+     * hardcoded
+     *
+     * dx10 cards usually have 64 varyings
+     */
+    return gl_info->max_glsl_varyings > 44;
+}
+
 static void quirk_arb_constants(WineD3D_GL_Info *gl_info) {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL\n", gl_info->vs_arb_constantsF);
     gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
@@ -4161,6 +4174,10 @@ static void quirk_texcoord_w(WineD3D_GL_Info *gl_info) {
     gl_info->set_texcoord_w = TRUE;
 }
 
+static void quirk_clip_varying(WineD3D_GL_Info *gl_info) {
+    gl_info->glsl_clip_varying = TRUE;
+}
+
 struct driver_quirk quirk_table[] = {
     {
         match_ati_r300_to_500,
@@ -4198,6 +4215,11 @@ struct driver_quirk quirk_table[] = {
         match_fglrx,
         quirk_one_point_sprite,
         "Fglrx point sprite crash workaround"
+    },
+    {
+        match_dx10_capable,
+        quirk_clip_varying,
+        "Reserved varying for gl_ClipPos"
     }
 };
 

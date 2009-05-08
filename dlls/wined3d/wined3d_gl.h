@@ -3962,6 +3962,7 @@ typedef struct _WineD3D_GL_Info {
   BOOL arb_vs_offset_limit;
   BOOL set_texcoord_w;
   DWORD reserved_glsl_constants;
+  BOOL glsl_clip_varying;
 
   BOOL supported[OPENGL_SUPPORTED_EXT_END + 1];
 

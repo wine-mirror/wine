@@ -2082,6 +2082,8 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
         TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
         pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS;
     }
+
+    pCaps->VSClipping = FALSE; /* TODO: GL_NV_vertex_program2_option provides this */
 }
 
 static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)
