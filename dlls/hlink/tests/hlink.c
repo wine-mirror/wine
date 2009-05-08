@@ -80,7 +80,7 @@ static const char *debugstr_guid(REFIID riid)
 
 static void test_HlinkIsShortcut(void)
 {
-    int i;
+    UINT i;
     HRESULT hres;
 
     static const WCHAR file0[] = {'f','i','l','e',0};
