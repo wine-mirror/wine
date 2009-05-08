@@ -36,11 +36,11 @@
 #include "winbase.h"
 #include "wingdi.h"
 
-static const char *debugstr_wn(const WCHAR *wstr, int n)
+static const char *debugstr_wn(const WCHAR *wstr, unsigned int n)
 {
     static char buf[80];
     char *p;
-    int i;
+    unsigned int i;
 
     if (!wstr) return "(null)";
 

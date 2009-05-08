@@ -375,7 +375,7 @@ static int dump_raw_block(const DATABLOCK_HEADER* bhdr)
     data_size=bhdr->cbSize-sizeof(*bhdr);
     if (data_size > 0)
     {
-        unsigned int i;
+        int i;
         const unsigned char *data;
 
         printf("data    = ");
