@@ -409,7 +409,7 @@
 @ stdcall GdipImageGetFrameCount(ptr ptr ptr)
 @ stdcall GdipImageGetFrameDimensionsCount(ptr ptr)
 @ stdcall GdipImageGetFrameDimensionsList(ptr ptr long)
-@ stub GdipImageRotateFlip
+@ stdcall GdipImageRotateFlip(ptr long)
 @ stdcall GdipImageSelectActiveFrame(ptr ptr long)
 @ stub GdipImageSetAbort
 @ stub GdipInitializePalette

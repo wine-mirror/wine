@@ -1675,3 +1675,12 @@ GpStatus WINGDIPAPI GdipGetImageThumbnail(GpImage *image, UINT width, UINT heigh
         image, width, height, ret_image, cb, cb_data);
     return NotImplemented;
 }
+
+/*****************************************************************************
+ * GdipImageRotateFlip [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
+{
+    FIXME("(%p %u) stub\n", image, type);
+    return NotImplemented;
+}
