@@ -124,7 +124,12 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetShaderResources(ID3D10Device *if
 
 static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device *iface, ID3D10PixelShader *shader)
 {
-    FIXME("iface %p, shader %p stub!\n", iface, shader);
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+    struct d3d10_pixel_shader *ps = (struct d3d10_pixel_shader *)shader;
+
+    TRACE("iface %p, shader %p\n", iface, shader);
+
+    IWineD3DDevice_SetPixelShader(This->wined3d_device, ps ? ps->wined3d_shader : NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_PSSetSamplers(ID3D10Device *iface,
