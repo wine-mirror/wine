@@ -5788,21 +5788,13 @@ static void test_UintChangeTypeEx(void)
 
 static void test_ClearCustData(void)
 {
-  WCHAR buff[sizeof(CUSTDATAITEM) * NUM_CUST_ITEMS / sizeof(WCHAR)];
   CUSTDATA ci;
   unsigned i;
 
   CHECKPTR(ClearCustData);
 
-  memset(buff, 0, sizeof(buff));
-
   ci.cCustData = NUM_CUST_ITEMS;
-  /* This is a bit tricky. We use SysAllocStringByteLen to allocate the
-   * array, since native uses an internal IMalloc interface for allocating
-   * its memory, while Wine uses HeapAlloc(). Doing this ensures we allocate
-   * using the correct function whether with native or builtin.
-   */
-  ci.prgCustData = (LPCUSTDATAITEM)Get(SysAllocStringByteLen((LPCSTR)buff, sizeof(buff)));
+  ci.prgCustData = CoTaskMemAlloc( sizeof(CUSTDATAITEM) * NUM_CUST_ITEMS );
   for (i = 0; i < NUM_CUST_ITEMS; i++)
     VariantInit(&ci.prgCustData[i].varValue);
   pClearCustData(&ci);
