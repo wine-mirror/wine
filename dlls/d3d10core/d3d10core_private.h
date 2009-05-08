@@ -155,6 +155,8 @@ struct d3d10_pixel_shader
 };
 
 HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, const DWORD **shader_code);
+HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d_shader_signature *s);
+void shader_free_signature(struct wined3d_shader_signature *s);
 
 /* Layered device */
 enum dxgi_device_layer_id

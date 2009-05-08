@@ -24,74 +24,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
-struct input_signature_element
-{
-    const char *semantic_name;
-    UINT semantic_idx;
-    DWORD unknown; /* system value semantic? */
-    DWORD component_type;
-    UINT register_idx;
-    DWORD mask;
-};
-
-struct input_signature
-{
-    struct input_signature_element *elements;
-    UINT element_count;
-};
-
-static HRESULT parse_isgn(const char *data, struct input_signature *is)
-{
-    struct input_signature_element *e;
-    const char *ptr = data;
-    unsigned int i;
-    DWORD count;
-
-    read_dword(&ptr, &count);
-    TRACE("%u elements\n", count);
-
-    skip_dword_unknown(&ptr, 1);
-
-    e = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*e));
-    if (!e)
-    {
-        ERR("Failed to allocate input signature memory.\n");
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < count; ++i)
-    {
-        UINT name_offset;
-
-        read_dword(&ptr, &name_offset);
-        e[i].semantic_name = data + name_offset;
-        read_dword(&ptr, &e[i].semantic_idx);
-        read_dword(&ptr, &e[i].unknown);
-        read_dword(&ptr, &e[i].component_type);
-        read_dword(&ptr, &e[i].register_idx);
-        read_dword(&ptr, &e[i].mask);
-
-        TRACE("semantic: %s, semantic idx: %u, unknown %#x, type %u, register idx: %u, use_mask %#x, input_mask %#x\n",
-                e[i].semantic_name, e[i].semantic_idx, e[i].unknown, e[i].component_type,
-                e[i].register_idx, (e[i].mask >> 8) & 0xff, e[i].mask & 0xff);
-    }
-
-    is->elements = e;
-    is->element_count = count;
-
-    return S_OK;
-}
-
 static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
-    struct input_signature *is = ctx;
-    const char *ptr = data;
+    struct wined3d_shader_signature *is = ctx;
     char tag_str[5];
 
     switch(tag)
     {
         case TAG_ISGN:
-            return parse_isgn(ptr, is);
+            return shader_parse_signature(data, data_size, is);
 
         default:
             memcpy(tag_str, &tag, 4);
@@ -105,7 +46,7 @@ HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEMENT_DESC
         UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
         WINED3DVERTEXELEMENT **wined3d_elements, UINT *wined3d_element_count)
 {
-    struct input_signature is;
+    struct wined3d_shader_signature is;
     HRESULT hr;
     UINT i;
 
@@ -157,7 +98,7 @@ HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEMENT_DESC
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, is.elements);
+    shader_free_signature(&is);
 
     return S_OK;
 }

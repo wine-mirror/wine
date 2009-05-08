@@ -55,6 +55,71 @@ HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, const DWO
     return hr;
 }
 
+HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d_shader_signature *s)
+{
+    struct wined3d_shader_signature_element *e;
+    unsigned int string_data_offset;
+    unsigned int string_data_size;
+    const char *ptr = data;
+    char *string_data;
+    unsigned int i;
+    DWORD count;
+
+    read_dword(&ptr, &count);
+    TRACE("%u elements\n", count);
+
+    skip_dword_unknown(&ptr, 1);
+
+    e = HeapAlloc(GetProcessHeap(), 0, count * sizeof(*e));
+    if (!e)
+    {
+        ERR("Failed to allocate input signature memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    /* 2 DWORDs for the header, 6 for each element. */
+    string_data_offset = 2 * sizeof(DWORD) + count * 6 * sizeof(DWORD);
+    string_data_size = data_size - string_data_offset;
+    string_data = HeapAlloc(GetProcessHeap(), 0, string_data_size);
+    if (!string_data)
+    {
+        ERR("Failed to allocate string data memory.\n");
+        HeapFree(GetProcessHeap(), 0, e);
+        return E_OUTOFMEMORY;
+    }
+    memcpy(string_data, data + string_data_offset, string_data_size);
+
+    for (i = 0; i < count; ++i)
+    {
+        UINT name_offset;
+
+        read_dword(&ptr, &name_offset);
+        e[i].semantic_name = string_data + (name_offset - string_data_offset);
+        read_dword(&ptr, &e[i].semantic_idx);
+        read_dword(&ptr, &e[i].sysval_semantic);
+        read_dword(&ptr, &e[i].component_type);
+        read_dword(&ptr, &e[i].register_idx);
+        read_dword(&ptr, &e[i].mask);
+
+        TRACE("semantic: %s, semantic idx: %u, sysval_semantic %#x, "
+                "type %u, register idx: %u, use_mask %#x, input_mask %#x\n",
+                e[i].semantic_name, e[i].semantic_idx, e[i].sysval_semantic, e[i].component_type,
+                e[i].register_idx, (e[i].mask >> 8) & 0xff, e[i].mask & 0xff);
+    }
+
+    s->elements = e;
+    s->element_count = count;
+    s->string_data = string_data;
+
+    return S_OK;
+}
+
+void shader_free_signature(struct wined3d_shader_signature *s)
+{
+    HeapFree(GetProcessHeap(), 0, s->string_data);
+    HeapFree(GetProcessHeap(), 0, s->elements);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_QueryInterface(ID3D10VertexShader *iface,
