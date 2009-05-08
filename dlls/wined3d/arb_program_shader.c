@@ -1311,9 +1311,8 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
-    DWORD src = ins->src[0].reg.idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    char reg_coord[40], dst_reg[50];
+    char reg_coord[40], dst_reg[50], src_reg[50];
     DWORD reg_dest_code;
 
     /* All versions have a destination register. The Tx where the texture coordinates come
@@ -1321,15 +1320,16 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
      */
     reg_dest_code = dst->reg.idx;
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_reg);
+    shader_arb_get_src_param(ins, &ins->src[0], 0, src_reg);
     sprintf(reg_coord, "fragment.texcoord[%u]", reg_dest_code);
 
     /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed
      * The Tx in which the perturbation map is stored is the tempreg incarnation of the texture register
      */
     shader_addline(buffer, "SWZ TB, bumpenvmat%d, x, z, 0, 0;\n", reg_dest_code);
-    shader_addline(buffer, "DP3 TA.x, TB, T%u;\n", src);
+    shader_addline(buffer, "DP3 TA.x, TB, %s;\n", src_reg);
     shader_addline(buffer, "SWZ TB, bumpenvmat%d, y, w, 0, 0;\n", reg_dest_code);
-    shader_addline(buffer, "DP3 TA.y, TB, T%u;\n", src);
+    shader_addline(buffer, "DP3 TA.y, TB, %s;\n", src_reg);
 
     /* with projective textures, texbem only divides the static texture coord, not the displacement,
      * so we can't let the GL handle this.
@@ -1347,8 +1347,9 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
 
     if (ins->handler_idx == WINED3DSIH_TEXBEML)
     {
-        shader_addline(buffer, "MAD TA, T%u.z, luminance%d.x, luminance%d.y;\n",
-                        src, reg_dest_code, reg_dest_code);
+        /* No src swizzles are allowed, so this is ok */
+        shader_addline(buffer, "MAD TA, %s.z, luminance%d.x, luminance%d.y;\n",
+                       src_reg, reg_dest_code, reg_dest_code);
         shader_addline(buffer, "MUL %s, %s, TA;\n", dst_reg, dst_reg);
     }
 }
