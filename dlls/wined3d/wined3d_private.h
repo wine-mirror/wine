@@ -697,7 +697,7 @@ struct wined3d_shader_semantic
 
 struct wined3d_shader_frontend
 {
-    void *(*shader_init)(const DWORD *ptr);
+    void *(*shader_init)(const DWORD *ptr, const struct wined3d_shader_signature *output_signature);
     void (*shader_free)(void *data);
     void (*shader_read_header)(void *data, const DWORD **ptr, struct wined3d_shader_version *shader_version);
     void (*shader_read_opcode)(void *data, const DWORD **ptr, struct wined3d_shader_instruction *ins, UINT *param_size);

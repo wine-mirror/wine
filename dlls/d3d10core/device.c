@@ -1049,7 +1049,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device *if
     object->refcount = 1;
 
     hr = IWineD3DDevice_CreatePixelShader(This->wined3d_device,
-            shader_code, &object->wined3d_shader, (IUnknown *)object);
+            shader_code, NULL, &object->wined3d_shader, (IUnknown *)object);
     if (FAILED(hr))
     {
         ERR("CreatePixelShader failed, hr %#x\n", hr);

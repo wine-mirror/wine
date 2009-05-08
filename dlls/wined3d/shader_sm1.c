@@ -410,13 +410,18 @@ static int shader_skip_unrecognized(const struct wined3d_sm1_data *priv, const D
     return tokens_read;
 }
 
-static void *shader_sm1_init(const DWORD *byte_code)
+static void *shader_sm1_init(const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
 {
     struct wined3d_sm1_data *priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv));
     if (!priv)
     {
         ERR("Failed to allocate private data\n");
         return NULL;
+    }
+
+    if (output_signature)
+    {
+        FIXME("SM 1-3 shader shouldn't have output signatures.\n");
     }
 
     switch (*byte_code >> 16)

@@ -204,8 +204,9 @@ static void pshader_set_limits(IWineD3DPixelShaderImpl *This)
     }
 }
 
-static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface, CONST DWORD *pFunction) {
-
+static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *iface,
+        const DWORD *pFunction, const struct wined3d_shader_signature *output_signature)
+{
     IWineD3DPixelShaderImpl *This =(IWineD3DPixelShaderImpl *)iface;
     unsigned int i, highest_reg_used = 0, num_regs_used = 0;
     shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
@@ -221,7 +222,7 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
         return WINED3DERR_INVALIDCALL;
     }
     This->baseShader.frontend = fe;
-    This->baseShader.frontend_data = fe->shader_init(pFunction);
+    This->baseShader.frontend_data = fe->shader_init(pFunction, output_signature);
     if (!This->baseShader.frontend_data)
     {
         FIXME("Failed to initialize frontend.\n");

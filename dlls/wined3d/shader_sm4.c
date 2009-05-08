@@ -71,6 +71,7 @@ struct wined3d_sm4_data
 {
     struct wined3d_shader_version shader_version;
     const DWORD *end;
+    const struct wined3d_shader_signature *output_signature;
 };
 
 struct wined3d_sm4_opcode_info
@@ -79,6 +80,13 @@ struct wined3d_sm4_opcode_info
     enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
     UINT dst_count;
     UINT src_count;
+};
+
+struct sysval_map
+{
+    enum wined3d_sysval_semantic sysval;
+    WINED3DSHADER_PARAM_REGISTER_TYPE register_type;
+    UINT register_idx;
 };
 
 static const struct wined3d_sm4_opcode_info opcode_table[] =
@@ -100,6 +108,19 @@ static const WINED3DSHADER_PARAM_REGISTER_TYPE register_type_table[] =
     /* WINED3D_SM4_RT_IMMCONST */   WINED3DSPR_IMMCONST,
 };
 
+static const struct sysval_map sysval_map[] =
+{
+    {WINED3D_SV_DEPTH,      WINED3DSPR_DEPTHOUT,    0},
+    {WINED3D_SV_TARGET0,    WINED3DSPR_COLOROUT,    0},
+    {WINED3D_SV_TARGET1,    WINED3DSPR_COLOROUT,    1},
+    {WINED3D_SV_TARGET2,    WINED3DSPR_COLOROUT,    2},
+    {WINED3D_SV_TARGET3,    WINED3DSPR_COLOROUT,    3},
+    {WINED3D_SV_TARGET4,    WINED3DSPR_COLOROUT,    4},
+    {WINED3D_SV_TARGET5,    WINED3DSPR_COLOROUT,    5},
+    {WINED3D_SV_TARGET6,    WINED3DSPR_COLOROUT,    6},
+    {WINED3D_SV_TARGET7,    WINED3DSPR_COLOROUT,    7},
+};
+
 static const struct wined3d_sm4_opcode_info *get_opcode_info(enum wined3d_sm4_opcode opcode)
 {
     unsigned int i;
@@ -112,7 +133,53 @@ static const struct wined3d_sm4_opcode_info *get_opcode_info(enum wined3d_sm4_op
     return NULL;
 }
 
-static void *shader_sm4_init(const DWORD *byte_code)
+static void map_sysval(enum wined3d_sysval_semantic sysval, struct wined3d_shader_register *reg)
+{
+    unsigned int i;
+
+    for (i = 0; i < sizeof(sysval_map) / sizeof(*sysval_map); ++i)
+    {
+        if (sysval == sysval_map[i].sysval)
+        {
+            reg->type = sysval_map[i].register_type;
+            reg->idx = sysval_map[i].register_idx;
+        }
+    }
+}
+
+static void map_register(struct wined3d_sm4_data *priv, struct wined3d_shader_register *reg)
+{
+    switch (priv->shader_version.type)
+    {
+        case WINED3D_SHADER_TYPE_PIXEL:
+            if (reg->type == WINED3DSPR_OUTPUT)
+            {
+                unsigned int i;
+                const struct wined3d_shader_signature *s = priv->output_signature;
+
+                if (!s)
+                {
+                    ERR("Shader has no output signature, unable to map register.\n");
+                    break;
+                }
+
+                for (i = 0; i < s->element_count; ++i)
+                {
+                    if (s->elements[i].register_idx == reg->idx)
+                    {
+                        map_sysval(s->elements[i].sysval_semantic, reg);
+                        break;
+                    }
+                }
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void *shader_sm4_init(const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
 {
     struct wined3d_sm4_data *priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv));
     if (!priv)
@@ -120,6 +187,8 @@ static void *shader_sm4_init(const DWORD *byte_code)
         ERR("Failed to allocate private data\n");
         return NULL;
     }
+
+    priv->output_signature = output_signature;
 
     return priv;
 }
@@ -193,6 +262,7 @@ static void shader_sm4_read_opcode(void *data, const DWORD **ptr, struct wined3d
 static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wined3d_shader_src_param *src_param,
         struct wined3d_shader_src_param *src_rel_addr)
 {
+    struct wined3d_sm4_data *priv = data;
     DWORD token = *(*ptr)++;
     enum wined3d_sm4_register_type register_type;
 
@@ -240,11 +310,14 @@ static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wine
 
     src_param->modifiers = 0;
     src_param->reg.rel_addr = NULL;
+
+    map_register(priv, &src_param->reg);
 }
 
 static void shader_sm4_read_dst_param(void *data, const DWORD **ptr, struct wined3d_shader_dst_param *dst_param,
         struct wined3d_shader_src_param *dst_rel_addr)
 {
+    struct wined3d_sm4_data *priv = data;
     DWORD token = *(*ptr)++;
     UINT register_idx = *(*ptr)++;
     enum wined3d_sm4_register_type register_type;
@@ -265,6 +338,8 @@ static void shader_sm4_read_dst_param(void *data, const DWORD **ptr, struct wine
     dst_param->modifiers = 0;
     dst_param->shift = 0;
     dst_param->reg.rel_addr = NULL;
+
+    map_register(priv, &dst_param->reg);
 }
 
 static void shader_sm4_read_semantic(const DWORD **ptr, struct wined3d_shader_semantic *semantic)

@@ -2166,7 +2166,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 i
 
     EnterCriticalSection(&d3d8_cs);
     hr = IWineD3DDevice_CreatePixelShader(This->WineD3DDevice, pFunction,
-            &object->wineD3DPixelShader, (IUnknown *)object);
+            NULL, &object->wineD3DPixelShader, (IUnknown *)object);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&d3d8_cs);

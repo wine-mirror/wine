@@ -2354,7 +2354,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
         IWineD3DVertexShader_FakeSemantics(*ppVertexShader, vertex_declaration);
     }
 
-    hr = IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction);
+    hr = IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction, NULL);
     if (FAILED(hr))
     {
         WARN("(%p) : Failed to set function, returning %#x\n", iface, hr);
@@ -2366,7 +2366,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
     return hr;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface, CONST DWORD *pFunction, IWineD3DPixelShader **ppPixelShader, IUnknown *parent) {
+static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface,
+        const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
+        IWineD3DPixelShader **ppPixelShader, IUnknown *parent)
+{
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DPixelShaderImpl *object; /* NOTE: impl allowed, this is a create */
     HRESULT hr = WINED3D_OK;
@@ -2389,7 +2392,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePixelShader(IWineD3DDevice *iface
 
     TRACE("(%p) : Created pixel shader %p\n", This, *ppPixelShader);
 
-    hr = IWineD3DPixelShader_SetFunction(*ppPixelShader, pFunction);
+    hr = IWineD3DPixelShader_SetFunction(*ppPixelShader, pFunction, output_signature);
     if (FAILED(hr))
     {
         WARN("(%p) : Failed to set function, returning %#x\n", iface, hr);
