@@ -74,7 +74,7 @@ static void test_initvar( HMODULE hmsvcrt )
     int* (*pp_winmajor)() =  (int*(*)())GetProcAddress(hmsvcrt, "__p__winmajor");
     int* (*pp_winminor)() =  (int*(*)())GetProcAddress(hmsvcrt, "__p__winminor");
     int* (*pp_osver)() =  (int*(*)())GetProcAddress(hmsvcrt, "__p__osver");
-    int winver, winmajor, winminor, osver;
+    unsigned int winver, winmajor, winminor, osver;
 
     if( !( pp_winmajor && pp_winminor && pp_winver)) {
         win_skip("_winver variables are not available\n");
