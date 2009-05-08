@@ -90,7 +90,7 @@ static void msg_spy_flush_msgs(void) {
 }
 
 static CWPSTRUCT* msg_spy_find_msg(UINT message) {
-    int i;
+    UINT i;
 
     msg_spy_pump_msg_queue();
 
