@@ -1038,6 +1038,7 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_SLT: instruction = "SLT"; break;
         case WINED3DSIH_SUB: instruction = "SUB"; break;
         case WINED3DSIH_MOVA:instruction = "ARR"; break;
+        case WINED3DSIH_SGN: instruction = "SSG"; break;
         default: instruction = "";
             FIXME("Unhandled opcode %#x\n", ins->handler_idx);
             break;
@@ -1726,6 +1727,34 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
 }
 
 /* GL locking is done by the caller */
+static void shader_hw_sgn(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    char dst_name[50];
+    char src_name[50];
+    struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
+
+    /* SGN is only valid in vertex shaders */
+    if(ctx->target_version == NV2) {
+        shader_hw_map2gl(ins);
+        return;
+    }
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
+    shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
+
+    FIXME("Emulated SGN untested\n");
+    /* If SRC > 0.0, -SRC < SRC = TRUE, otherwise false.
+     * if SRC < 0.0,  SRC < -SRC = TRUE. If neither is true, src = 0.0
+     */
+    if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE) {
+        shader_addline(buffer, "SLT %s, -%s, %s;\n", dst_name, src_name, src_name);
+    } else {
+        shader_addline(buffer, "SLT TB, -%s, %s;\n", src_name, src_name);
+        shader_addline(buffer, "SLT TC,  %s, -%s;\n", src_name, src_name);
+        shader_addline(buffer, "ADD %s, TB, -TC;\n", dst_name);
+    }
+}
+
 static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
 {
     GLuint program_id = 0;
@@ -2363,7 +2392,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_RSQ           */ shader_hw_rsq_rcp,
     /* WINED3DSIH_SETP          */ NULL,
     /* WINED3DSIH_SGE           */ shader_hw_map2gl,
-    /* WINED3DSIH_SGN           */ NULL,
+    /* WINED3DSIH_SGN           */ shader_hw_sgn,
     /* WINED3DSIH_SINCOS        */ shader_hw_sincos,
     /* WINED3DSIH_SLT           */ shader_hw_map2gl,
     /* WINED3DSIH_SUB           */ shader_hw_map2gl,
