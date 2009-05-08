@@ -619,8 +619,6 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 struct wined3d_shader_src_param src_param, src_rel_addr;
 
                 fe->shader_read_src_param(fe_data, &pToken, &src_param, &src_rel_addr);
-                shader_record_register_usage(This, reg_maps, src_param.reg.type,
-                        src_param.reg.idx, !!src_param.reg.rel_addr, pshader);
                 switch(get_instr_regcount(ins.handler_idx, i))
                 {
                     case 4:
