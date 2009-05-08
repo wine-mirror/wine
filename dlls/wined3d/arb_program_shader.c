@@ -86,6 +86,14 @@ struct shader_arb_priv {
 
 struct shader_arb_ctx_priv {
     char addr_reg[20];
+    enum {
+        /* plain GL_ARB_vertex_program or GL_ARB_fragment_program */
+        ARB,
+        /* GL_NV_vertex_progam2_option or GL_NV_fragment_program_option */
+        NV2,
+        /* GL_NV_vertex_program3 or GL_NV_fragment_program2 */
+        NV3
+    } target_version;
 };
 
 /********************************************************
@@ -1979,9 +1987,17 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     GLuint retval;
     const char *fragcolor;
     DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
+    struct shader_arb_ctx_priv priv_ctx;
 
     /*  Create the hw ARB shader */
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
     shader_addline(buffer, "!!ARBfp1.0\n");
+    if(GL_SUPPORT(NV_FRAGMENT_PROGRAM_OPTION)) {
+        shader_addline(buffer, "OPTION NV_fragment_program;\n");
+        priv_ctx.target_version = NV2;
+    } else {
+        priv_ctx.target_version = ARB;
+    }
 
     if (reg_maps->shader_version.major < 3)
     {
@@ -2023,7 +2039,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, NULL);
+    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
 
     if(args->srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TA", "TB", "TC");
@@ -2082,6 +2098,13 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
+
+    if(GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) {
+        shader_addline(buffer, "OPTION NV_vertex_program2;\n");
+        priv_ctx.target_version = NV2;
+    } else {
+        priv_ctx.target_version = ARB;
+    }
 
     if(need_helper_const(gl_info)) {
         shader_addline(buffer, "PARAM helper_const = { 2.0, -1.0, %d.0, 0.0 };\n", This->rel_offset);

@@ -3080,6 +3080,13 @@ typedef void (WINE_GLAPI *PGLFNSETFRAGMENTSHADERCONSTANTATI) (GLuint dst, const 
 #define GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT          0x8DBE
 #endif
 
+/* GL_NV_vertex_program2_option */
+#ifndef GL_NV_vertex_program2_option
+#define GL_NV_vertex_program2_option
+#define GL_MAX_PROGRAM_EXEC_INSTRUCTIONS_NV               0x88F4
+#define GL_MAX_PROGRAM_CALL_DEPTH_NV                      0x88F5
+#endif
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -3450,7 +3457,9 @@ typedef enum _GL_SupportedExt {
   NV_VERTEX_PROGRAM,
   NV_VERTEX_PROGRAM1_1,
   NV_VERTEX_PROGRAM2,
+  NV_VERTEX_PROGRAM2_OPTION,
   NV_VERTEX_PROGRAM3,
+  NV_FRAGMENT_PROGRAM_OPTION,
   NV_FENCE,
   NV_DEPTH_CLAMP,
   NV_LIGHT_MAX_EXPONENT,

@@ -140,7 +140,9 @@ static const struct {
     {"GL_NV_vertex_program",                NV_VERTEX_PROGRAM,              0                           },
     {"GL_NV_vertex_program1_1",             NV_VERTEX_PROGRAM1_1,           0                           },
     {"GL_NV_vertex_program2",               NV_VERTEX_PROGRAM2,             0                           },
+    {"GL_NV_vertex_program2_option",        NV_VERTEX_PROGRAM2_OPTION,      0                           },
     {"GL_NV_vertex_program3",               NV_VERTEX_PROGRAM3,             0                           },
+    {"GL_NV_fragment_program_option",       NV_FRAGMENT_PROGRAM_OPTION,     0                           },
     {"GL_NV_depth_clamp",                   NV_DEPTH_CLAMP,                 0                           },
     {"GL_NV_light_max_exponent",            NV_LIGHT_MAX_EXPONENT,          0                           },
 
