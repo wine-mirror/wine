@@ -316,15 +316,11 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
             shader_addline(buffer, "ADDRESS A%d;\n", i);
     }
 
-    for(i = 0; i < This->baseShader.limits.texcoord; i++) {
-        if (reg_maps->texcoord[i])
-            shader_addline(buffer,"TEMP T%u;\n", i);
-    }
-
-    /* Texture coordinate registers must be pre-loaded */
-    for (i = 0; i < This->baseShader.limits.texcoord; i++) {
-        if (reg_maps->texcoord[i])
-            shader_addline(buffer, "MOV T%u, fragment.texcoord[%u];\n", i, i);
+    if(pshader && reg_maps->shader_version.major == 1 && reg_maps->shader_version.minor <= 3) {
+        for(i = 0; i < This->baseShader.limits.texcoord; i++) {
+            if (reg_maps->texcoord[i] && pshader)
+                shader_addline(buffer,"TEMP T%u;\n", i);
+        }
     }
 
     for(i = 0; i < (sizeof(reg_maps->bumpmat) / sizeof(reg_maps->bumpmat[0])); i++) {
@@ -524,7 +520,19 @@ static void shader_arb_get_register_name(IWineD3DBaseShader *iface,
             break;
 
         case WINED3DSPR_TEXTURE: /* case WINED3DSPR_ADDR: */
-            if (pshader) sprintf(register_name, "T%u", reg->idx);
+            if (pshader) {
+                if(This->baseShader.reg_maps.shader_version.major == 1 &&
+                   This->baseShader.reg_maps.shader_version.minor <= 3) {
+                    /* In ps <= 1.3, Tx is a temporary register as destination to all instructions,
+                     * and as source to most instructions. For some instructions it is the texcoord
+                     * input. Those instructions know about the special use
+                     */
+                    sprintf(register_name, "T%u", reg->idx);
+                } else {
+                    /* in ps 1.4 and 2.x Tx is always a (read-only) varying */
+                    sprintf(register_name, "fragment.texcoord[%u]", reg->idx);
+                }
+            }
             else  sprintf(register_name, "A%u", reg->idx);
             break;
 
@@ -1019,11 +1027,20 @@ static void pshader_hw_texkill(const struct wined3d_shader_instruction *ins)
     if (ins->ctx->reg_maps->shader_version.major >= 2)
     {
         /* The arb backend doesn't claim ps 2.0 support, but try to eat what the app feeds to us */
+        shader_arb_get_dst_param(ins, dst, reg_dest);
         shader_addline(buffer, "KIL %s;\n", reg_dest);
     } else {
         /* ARB fp doesn't like swizzles on the parameter of the KIL instruction. To mask the 4th component,
          * copy the register into our general purpose TMP variable, overwrite .w and pass TMP to KIL
+         *
+         * ps_1_3 shaders use the texcoord incarnation of the Tx register. ps_1_4 shaders can use the same,
+         * or pass in any temporary register(in shader phase 2)
          */
+        if(ins->ctx->reg_maps->shader_version.minor <= 3) {
+            sprintf(reg_dest, "fragment.texcoord[%u]", dst->reg.idx);
+        } else {
+            shader_arb_get_dst_param(ins, dst, reg_dest);
+        }
         shader_addline(buffer, "SWZ TMP, %s, x, y, z, 1;\n", reg_dest);
         shader_addline(buffer, "KIL TMP;\n");
     }
@@ -1046,10 +1063,17 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     /* All versions have a destination register */
     shader_arb_get_dst_param(ins, dst, reg_dest);
 
-    /* 1.0-1.3: Use destination register as coordinate source.
+    /* 1.0-1.4: Use destination register number as texture code.
+       2.0+: Use provided sampler number as texure code. */
+    if (shader_version < WINED3D_SHADER_VERSION(2,0))
+        reg_sampler_code = dst->reg.idx;
+    else
+        reg_sampler_code = ins->src[1].reg.idx;
+
+    /* 1.0-1.3: Use the texcoord varying.
        1.4+: Use provided coordinate source register. */
     if (shader_version < WINED3D_SHADER_VERSION(1,4))
-        strcpy(reg_coord, reg_dest);
+        sprintf(reg_coord, "fragment.texcoord[%u]", reg_sampler_code);
     else {
         /* TEX is the only instruction that can handle DW and DZ natively */
         src = ins->src[0];
@@ -1057,13 +1081,6 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
         if(src.modifiers == WINED3DSPSM_DZ) src.modifiers = WINED3DSPSM_NONE;
         shader_arb_get_src_param(ins, &src, 0, reg_coord);
     }
-
-    /* 1.0-1.4: Use destination register number as texture code.
-       2.0+: Use provided sampler number as texure code. */
-    if (shader_version < WINED3D_SHADER_VERSION(2,0))
-        reg_sampler_code = dst->reg.idx;
-    else
-        reg_sampler_code = ins->src[1].reg.idx;
 
     /* projection flag:
      * 1.1, 1.2, 1.3: Use WINED3DTSS_TEXTURETRANSFORMFLAGS
@@ -1132,6 +1149,7 @@ static void pshader_hw_texreg2ar(const struct wined3d_shader_instruction *ins)
      char dst_str[8];
      char src_str[50];
 
+     /* Note that texreg2ar treats Tx as a temporary register, not as a varying */
      sprintf(dst_str, "T%u", reg1);
      shader_arb_get_src_param(ins, &ins->src[0], 0, src_str);
      shader_addline(buffer, "MOV TMP.x, %s.w;\n", src_str);
@@ -1148,6 +1166,7 @@ static void pshader_hw_texreg2gb(const struct wined3d_shader_instruction *ins)
      char dst_str[8];
      char src_str[50];
 
+     /* Note that texreg2gb treats Tx as a temporary register, not as a varying */
      sprintf(dst_str, "T%u", reg1);
      shader_arb_get_src_param(ins, &ins->src[0], 0, src_str);
      shader_addline(buffer, "MOV TMP.x, %s.y;\n", src_str);
@@ -1161,6 +1180,7 @@ static void pshader_hw_texreg2rgb(const struct wined3d_shader_instruction *ins)
     char dst_str[8];
     char src_str[50];
 
+    /* Note that texreg2rg treats Tx as a temporary register, not as a varying */
     sprintf(dst_str, "T%u", reg1);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_str);
     shader_hw_sample(ins, reg1, dst_str, src_str, FALSE, FALSE);
@@ -1172,18 +1192,19 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     BOOL has_bumpmat = FALSE;
     BOOL has_luminance = FALSE;
-    BOOL is_color;
     int i;
 
     SHADER_BUFFER *buffer = ins->ctx->buffer;
 
-    char reg_coord[40];
+    char reg_coord[40], dst_reg[50];
     DWORD reg_dest_code;
 
-    /* All versions have a destination register */
+    /* All versions have a destination register. The Tx where the texture coordinates come
+     * from is the varying incarnation of the texture register
+     */
     reg_dest_code = dst->reg.idx;
-    /* Can directly use the name because texbem is only valid for <= 1.3 shaders */
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, reg_coord, &is_color);
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst_reg);
+    sprintf(reg_coord, "fragment.texcoord[%u]", reg_dest_code);
 
     for(i = 0; i < This->numbumpenvmatconsts; i++) {
         if (This->bumpenvmatconst[i].const_num != WINED3D_CONST_NUM_UNUSED
@@ -1205,8 +1226,9 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
     if(has_bumpmat) {
         DWORD src = ins->src[0].reg.idx;
 
-        /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
-
+        /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed
+         * The Tx in which the perturbation map is stored is the tempreg incarnation of the texture register
+         */
         shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, x, z, 0, 0;\n", reg_dest_code);
         shader_addline(buffer, "DP3 TMP.x, TMP2, T%u;\n", src);
         shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, y, w, 0, 0;\n", reg_dest_code);
@@ -1224,13 +1246,13 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
             shader_addline(buffer, "ADD TMP.xy, TMP, %s;\n", reg_coord);
         }
 
-        shader_hw_sample(ins, reg_dest_code, reg_coord, "TMP", FALSE, FALSE);
+        shader_hw_sample(ins, reg_dest_code, dst_reg, "TMP", FALSE, FALSE);
 
         if (ins->handler_idx == WINED3DSIH_TEXBEML && has_luminance)
         {
             shader_addline(buffer, "MAD TMP, T%u.z, luminance%d.x, luminance%d.y;\n",
                            src, reg_dest_code, reg_dest_code);
-            shader_addline(buffer, "MUL %s, %s, TMP;\n", reg_coord, reg_coord);
+            shader_addline(buffer, "MUL %s, %s, TMP;\n", dst_reg, dst_reg);
         }
 
     } else {
@@ -1241,7 +1263,7 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
             tf = 0;
         }
         /* Without a bump matrix loaded, just sample with the unmodified coordinates */
-        shader_hw_sample(ins, reg_dest_code, reg_coord, reg_coord, tf & WINED3DTTFF_PROJECTED, FALSE);
+        shader_hw_sample(ins, reg_dest_code, dst_reg, reg_coord, tf & WINED3DTTFF_PROJECTED, FALSE);
     }
 }
 
@@ -1252,7 +1274,7 @@ static void pshader_hw_texm3x2pad(const struct wined3d_shader_instruction *ins)
     char src0_name[50];
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.x, T%u, %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.x, fragment.texcoord[%u], %s;\n", reg, src0_name);
 }
 
 static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
@@ -1267,7 +1289,7 @@ static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
 
     sprintf(dst_str, "T%u", reg);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.y, T%u, %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.y, fragment.texcoord[%u], %s;\n", reg, src0_name);
     flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
     shader_hw_sample(ins, reg, dst_str, "TMP", flags & WINED3DTTFF_PROJECTED, FALSE);
 }
@@ -1281,7 +1303,7 @@ static void pshader_hw_texm3x3pad(const struct wined3d_shader_instruction *ins)
     char src0_name[50];
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.%c, T%u, %s;\n", 'x' + current_state->current_row, reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.%c, fragment.texcoord[%u], %s;\n", 'x' + current_state->current_row, reg, src0_name);
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
@@ -1297,7 +1319,7 @@ static void pshader_hw_texm3x3tex(const struct wined3d_shader_instruction *ins)
     char src0_name[50];
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.z, fragment.texcoord[%u], %s;\n", reg, src0_name);
 
     /* Sample the texture using the calculated coordinates */
     sprintf(dst_str, "T%u", reg);
@@ -1318,7 +1340,7 @@ static void pshader_hw_texm3x3vspec(const struct wined3d_shader_instruction *ins
     char src0_name[50];
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.z, fragment.texcoord[%u], %s;\n", reg, src0_name);
 
     /* Construct the eye-ray vector from w coordinates */
     shader_addline(buffer, "MOV TMP2.x, fragment.texcoord[%u].w;\n", current_state->texcoord_w[0]);
@@ -1356,7 +1378,7 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
     shader_arb_get_src_param(ins, &ins->src[0], 1, src1_name);
-    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", reg, src0_name);
+    shader_addline(buffer, "DP3 TMP.z, fragment.texcoord[%u], %s;\n", reg, src0_name);
 
     /* Calculate reflection vector.
      *
@@ -1421,7 +1443,7 @@ static void pshader_hw_texdp3tex(const struct wined3d_shader_instruction *ins)
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
     shader_addline(buffer, "MOV TMP, 0.0;\n");
-    shader_addline(buffer, "DP3 TMP.x, T%u, %s;\n", sampler_idx, src0);
+    shader_addline(buffer, "DP3 TMP.x, fragment.texcoord[%u], %s;\n", sampler_idx, src0);
 
     sprintf(dst_str, "T%u", sampler_idx);
     shader_hw_sample(ins, sampler_idx, dst_str, "TMP", FALSE /* Only one coord, can't be projected */, FALSE);
@@ -1443,7 +1465,7 @@ static void pshader_hw_texdp3(const struct wined3d_shader_instruction *ins)
     shader_arb_get_write_mask(ins, dst, dst_mask);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
-    shader_addline(buffer, "DP3 %s%s, T%u, %s;\n", dst_str, dst_mask, dst->reg.idx, src0);
+    shader_addline(buffer, "DP3 %s%s, fragment.texcoord[%u], %s;\n", dst_str, dst_mask, dst->reg.idx, src0);
 
     /* TODO: Handle output modifiers */
 }
@@ -1463,7 +1485,7 @@ static void pshader_hw_texm3x3(const struct wined3d_shader_instruction *ins)
     shader_arb_get_write_mask(ins, dst, dst_mask);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
-    shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", dst->reg.idx, src0);
+    shader_addline(buffer, "DP3 TMP.z, fragment.texcoord[%u], %s;\n", dst->reg.idx, src0);
     shader_addline(buffer, "MOV %s%s, TMP;\n", dst_str, dst_mask);
 
     /* TODO: Handle output modifiers */
@@ -1481,7 +1503,7 @@ static void pshader_hw_texm3x2depth(const struct wined3d_shader_instruction *ins
     char src0[50];
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
-    shader_addline(buffer, "DP3 TMP.y, T%u, %s;\n", dst_reg, src0);
+    shader_addline(buffer, "DP3 TMP.y, fragment.texcoord[%u], %s;\n", dst_reg, src0);
 
     /* How to deal with the special case dst_name.g == 0? if r != 0, then
      * the r * (1 / 0) will give infinity, which is clamped to 1.0, the correct
