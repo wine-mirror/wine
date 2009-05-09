@@ -2493,6 +2493,7 @@ static void test_async_HttpSendRequestEx(void)
     InternetCloseHandle( ses );
 
     WaitForSingleObject( info.wait, 10000 );
+    Sleep(100);
     CloseHandle( info.wait );
 }
 
@@ -2557,9 +2558,9 @@ START_TEST(http)
     InternetOpenRequest_test();
     test_http_cache();
     InternetOpenUrlA_test();
-    HttpSendRequestEx_test();
     HttpHeaders_test();
     test_http_connection();
     test_user_agent_header();
     test_bogus_accept_types_array();
+    HttpSendRequestEx_test();
 }
