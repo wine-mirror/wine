@@ -2321,6 +2321,7 @@ struct notification
     unsigned int status;   /* status received */
     int          async;    /* delivered from another thread? */
     int          todo;
+    int          optional;
 };
 
 struct info
@@ -2356,6 +2357,13 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
         return;
     }
 
+    while (info->test[i].status != status && info->test[i].optional &&
+        i < info->count - 1 &&
+        info->test[i].function == info->test[i + 1].function)
+    {
+        i++;
+    }
+
     status_ok   = (info->test[i].status == status);
     function_ok = (info->test[i].function == info->function);
 
@@ -2375,7 +2383,7 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
             todo_wine ok( function_ok, "%u: expected function %u got %u\n", info->line, info->test[i].function, info->function );
     }
     if (i == info->count - 1 || info->test[i].function != info->test[i + 1].function) SetEvent( info->wait );
-    info->index++;
+    info->index = i+1;
 
     LeaveCriticalSection( &notification_cs );
 }
@@ -2390,6 +2398,7 @@ static const struct notification async_send_request_ex_test[] =
 {
     { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, 0 },
     { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, 0 },
+    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
     { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1 },
     { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, 1 },
     { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, 1 },
