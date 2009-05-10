@@ -214,8 +214,8 @@ static BOOL Control_CreateListView (CPanel *panel)
     panel->hImageListLarge = ImageList_Create(GetSystemMetrics(SM_CXICON),
         GetSystemMetrics(SM_CYICON), ILC_MASK, 1, 1);
 
-    (void) ListView_SetImageList(panel->hWndListView, panel->hImageListSmall, LVSIL_SMALL);
-    (void) ListView_SetImageList(panel->hWndListView, panel->hImageListLarge, LVSIL_NORMAL);
+    SendMessageW(panel->hWndListView, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)panel->hImageListSmall);
+    SendMessageW(panel->hWndListView, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)panel->hImageListLarge);
 
     /* Create columns for list view */
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_SUBITEM | LVCF_WIDTH;

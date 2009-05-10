@@ -560,7 +560,7 @@ static BOOLEAN LV_AddItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 	TRACE("(%p)(pidl=%p)\n", This, pidl);
 
 	lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;	/*set the mask*/
-	lvItem.iItem = ListView_GetItemCount(This->hWndList);	/*add the item to the end of the list*/
+	lvItem.iItem = SendMessageW(This->hWndList, LVM_GETITEMCOUNT, 0, 0); /*add the item to the end of the list*/
 	lvItem.iSubItem = 0;
 	lvItem.lParam = (LPARAM) ILClone(ILFindLastID(pidl));				/*set the item's data*/
 	lvItem.pszText = LPSTR_TEXTCALLBACKW;			/*get text on a callback basis*/
@@ -578,7 +578,7 @@ static BOOLEAN LV_DeleteItem(IShellViewImpl * This, LPCITEMIDLIST pidl)
 	TRACE("(%p)(pidl=%p)\n", This, pidl);
 
 	nIndex = LV_FindItemByPidl(This, ILFindLastID(pidl));
-	return (-1==ListView_DeleteItem(This->hWndList, nIndex))? FALSE: TRUE;
+	return (-1==SendMessageW(This->hWndList, LVM_DELETEITEM, nIndex, 0))? FALSE: TRUE;
 }
 
 /**********************************************************
@@ -836,7 +836,7 @@ static UINT ShellView_GetSelections(IShellViewImpl * This)
 
 	SHFree(This->apidl);
 
-	This->cidl = ListView_GetSelectedCount(This->hWndList);
+	This->cidl = SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0);
 	This->apidl = SHAlloc(This->cidl * sizeof(LPITEMIDLIST));
 
 	TRACE("selected=%i\n", This->cidl);
@@ -1494,14 +1494,13 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
               if(plvKeyDown->wVKey == VK_F2)
               {
                 /* see how many files are selected */
-                int i = ListView_GetSelectedCount(This->hWndList);
+                int i = SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0);
 
                 /* get selected item */
                 if(i == 1)
                 {
                   /* get selected item */
-                  i = ListView_GetNextItem(This->hWndList, -1,
-			LVNI_SELECTED);
+                  i = SendMessageW(This->hWndList, LVM_GETNEXTITEM, -1, MAKELPARAM (LVNI_SELECTED, 0));
 
                   SendMessageW(This->hWndList, LVM_ENSUREVISIBLE, i, 0);
                   SendMessageW(This->hWndList, LVM_EDITLABELW, i, 0);
@@ -1524,7 +1523,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		if (psfhlp == NULL)
 		  break;
 
-		if(!(i = ListView_GetSelectedCount(This->hWndList)))
+		if(!(i = SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0)))
 		  break;
 
 		/* allocate memory for the pidl array */
@@ -1534,11 +1533,11 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 		/* retrieve all selected items */
 		i = 0;
 		item_index = -1;
-		while(ListView_GetSelectedCount(This->hWndList) > i)
+		while(SendMessageW(This->hWndList, LVM_GETSELECTEDCOUNT, 0, 0) > i)
 		{
 		  /* get selected item */
-		  item_index = ListView_GetNextItem(This->hWndList,
-			item_index, LVNI_SELECTED);
+		  item_index = SendMessageW(This->hWndList, LVM_GETNEXTITEM, item_index,
+                                            MAKELPARAM (LVNI_SELECTED, 0));
 		  item.iItem = item_index;
 		  item.mask = LVIF_PARAM;
 		  SendMessageA(This->hWndList, LVM_GETITEMA, 0, (LPARAM) &item);

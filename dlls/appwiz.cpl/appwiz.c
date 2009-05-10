@@ -365,7 +365,7 @@ static inline void EmptyList(void)
  */
 static void UpdateButtons(HWND hWnd)
 {
-    BOOL sel = ListView_GetSelectedCount(GetDlgItem(hWnd, IDL_PROGRAMS)) != 0;
+    BOOL sel = SendMessageW(GetDlgItem(hWnd, IDL_PROGRAMS), LVM_GETSELECTEDCOUNT, 0, 0) != 0;
 
     EnableWindow(GetDlgItem(hWnd, IDC_ADDREMOVE), sel);
     EnableWindow(GetDlgItem(hWnd, IDC_SUPPORT_INFO), sel);
@@ -636,7 +636,7 @@ static HIMAGELIST AddListViewImageList(HWND hWnd)
     ImageList_AddIcon(hSmall, hDefaultIcon);
     DestroyIcon(hDefaultIcon);
 
-    (void) ListView_SetImageList(hWnd, hSmall, LVSIL_SMALL);
+    SendMessageW(hWnd, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)hSmall);
 
     return hSmall;
 }

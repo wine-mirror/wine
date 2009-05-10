@@ -3667,13 +3667,13 @@ typedef struct NMLVSCROLL
 } NMLVSCROLL, *LPNMLVSCROLL;
 
 #define ListView_SetItemCount(hwnd,count) \
-    (BOOL)SNDMSGA((hwnd),LVM_SETITEMCOUNT,(WPARAM)(INT)(count),0)
+    (BOOL)SNDMSG((hwnd),LVM_SETITEMCOUNT,(WPARAM)(INT)(count),0)
 #define ListView_SetTextBkColor(hwnd,clrBk) \
-    (BOOL)SNDMSGA((hwnd),LVM_SETTEXTBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
+    (BOOL)SNDMSG((hwnd),LVM_SETTEXTBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_SetTextColor(hwnd,clrBk) \
-    (BOOL)SNDMSGA((hwnd),LVM_SETTEXTCOLOR,0,(LPARAM)(COLORREF)(clrBk))
+    (BOOL)SNDMSG((hwnd),LVM_SETTEXTCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_DeleteColumn(hwnd,col)\
-    (LRESULT)SNDMSGA((hwnd),LVM_DELETECOLUMN,0,(LPARAM)(INT)(col))
+    (LRESULT)SNDMSG((hwnd),LVM_DELETECOLUMN,0,(LPARAM)(INT)(col))
 #define ListView_GetColumnA(hwnd,x,col)\
     (LRESULT)SNDMSGA((hwnd),LVM_GETCOLUMNA,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNA)(col))
 #define ListView_GetColumnW(hwnd,x,col)\
@@ -3685,13 +3685,13 @@ typedef struct NMLVSCROLL
     (LRESULT)SNDMSGW((hwnd),LVM_SETCOLUMNW,(WPARAM)(INT)(x),(LPARAM)(LPLVCOLUMNW)(col))
 #define ListView_SetColumn WINELIB_NAME_AW(ListView_SetColumn)
 #define ListView_GetColumnWidth(hwnd,x)\
-    (INT)SNDMSGW((hwnd),LVM_GETCOLUMNWIDTH,(WPARAM)(INT)(x),0L)
+    (INT)SNDMSG((hwnd),LVM_GETCOLUMNWIDTH,(WPARAM)(INT)(x),0L)
 #define ListView_SetColumnWidth(hwnd,x,width)\
-    (BOOL)SNDMSGW((hwnd),LVM_SETCOLUMNWIDTH,(WPARAM)(INT)(x),(LPARAM)(MAKELPARAM(width,0)))
+    (BOOL)SNDMSG((hwnd),LVM_SETCOLUMNWIDTH,(WPARAM)(INT)(x),(LPARAM)(MAKELPARAM(width,0)))
 
 
 #define ListView_GetNextItem(hwnd,nItem,flags) \
-    (INT)SNDMSGA((hwnd),LVM_GETNEXTITEM,(WPARAM)(INT)(nItem),(LPARAM)(MAKELPARAM(flags,0)))
+    (INT)SNDMSG((hwnd),LVM_GETNEXTITEM,(WPARAM)(INT)(nItem),(LPARAM)(MAKELPARAM(flags,0)))
 #define ListView_FindItemA(hwnd,nItem,plvfi) \
     (INT)SNDMSGA((hwnd),LVM_FINDITEMA,(WPARAM)(INT)(nItem),(LPARAM)(LVFINDINFOA*)(plvfi))
 #define ListView_FindItemW(hwnd,nItem,plvfi) \
@@ -3699,11 +3699,11 @@ typedef struct NMLVSCROLL
 #define ListView_FindItem WINELIB_NAME_AW(ListView_FindItem)
 
 #define ListView_Arrange(hwnd,code) \
-    (INT)SNDMSGA((hwnd),LVM_ARRANGE,(WPARAM)(INT)(code),0L)
+    (INT)SNDMSG((hwnd),LVM_ARRANGE,(WPARAM)(INT)(code),0L)
 #define ListView_GetItemPosition(hwnd,i,ppt) \
-    (INT)SNDMSGA((hwnd),LVM_GETITEMPOSITION,(WPARAM)(INT)(i),(LPARAM)(LPPOINT)(ppt))
+    (INT)SNDMSG((hwnd),LVM_GETITEMPOSITION,(WPARAM)(INT)(i),(LPARAM)(LPPOINT)(ppt))
 #define ListView_GetItemRect(hwnd,i,prc,code) \
-	(BOOL)SNDMSGA((hwnd), LVM_GETITEMRECT, (WPARAM)(int)(i), \
+	(BOOL)SNDMSG((hwnd), LVM_GETITEMRECT, (WPARAM)(int)(i), \
 	((prc) ? (((RECT*)(prc))->left = (code),(LPARAM)(RECT \
 	*)(prc)) : (LPARAM)(RECT*)NULL))
 #define ListView_SetItemA(hwnd,pitem) \
@@ -3713,50 +3713,50 @@ typedef struct NMLVSCROLL
 #define ListView_SetItem WINELIB_NAME_AW(ListView_SetItem)
 #define ListView_SetItemState(hwnd,i,data,dataMask) \
 { LVITEMA _LVi; _LVi.state = data; _LVi.stateMask = dataMask;\
-  SNDMSGA(hwnd, LVM_SETITEMSTATE, (WPARAM)(UINT)i, (LPARAM) (LPLVITEMA)&_LVi);}
+  SNDMSG(hwnd, LVM_SETITEMSTATE, (WPARAM)(UINT)i, (LPARAM) (LPLVITEMA)&_LVi);}
 #define ListView_GetItemState(hwnd,i,mask) \
-    (UINT)SNDMSGA((hwnd),LVM_GETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(UINT)(mask))
+    (UINT)SNDMSG((hwnd),LVM_GETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(UINT)(mask))
 #define ListView_GetCountPerPage(hwnd) \
-    (BOOL)SNDMSGW((hwnd),LVM_GETCOUNTPERPAGE,0,0L)
+    (BOOL)SNDMSG((hwnd),LVM_GETCOUNTPERPAGE,0,0L)
 #define ListView_GetImageList(hwnd,iImageList) \
-    (HIMAGELIST)SNDMSGA((hwnd),LVM_GETIMAGELIST,(WPARAM)(INT)(iImageList),0L)
+    (HIMAGELIST)SNDMSG((hwnd),LVM_GETIMAGELIST,(WPARAM)(INT)(iImageList),0L)
 #define ListView_GetStringWidthA(hwnd,pstr) \
     (INT)SNDMSGA((hwnd),LVM_GETSTRINGWIDTHA,0,(LPARAM)(LPCSTR)(pstr))
 #define ListView_GetStringWidthW(hwnd,pstr) \
     (INT)SNDMSGW((hwnd),LVM_GETSTRINGWIDTHW,0,(LPARAM)(LPCWSTR)(pstr))
 #define ListView_GetStringWidth WINELIB_NAME_AW(ListView_GetStringWidth)
 #define ListView_GetTopIndex(hwnd) \
-    (BOOL)SNDMSGA((hwnd),LVM_GETTOPINDEX,0,0L)
+    (BOOL)SNDMSG((hwnd),LVM_GETTOPINDEX,0,0L)
 #define ListView_Scroll(hwnd,dx,dy) \
-    (BOOL)SNDMSGA((hwnd),LVM_SCROLL,(WPARAM)(INT)(dx),(LPARAM)(INT)(dy))
+    (BOOL)SNDMSG((hwnd),LVM_SCROLL,(WPARAM)(INT)(dx),(LPARAM)(INT)(dy))
 #define ListView_EnsureVisible(hwnd,i,fPartialOk) \
-    (BOOL)SNDMSGA((hwnd),LVM_ENSUREVISIBLE,(WPARAM)(INT)i,(LPARAM)(BOOL)fPartialOk)
+    (BOOL)SNDMSG((hwnd),LVM_ENSUREVISIBLE,(WPARAM)(INT)i,(LPARAM)(BOOL)fPartialOk)
 #define ListView_SetBkColor(hwnd,clrBk) \
-    (BOOL)SNDMSGA((hwnd),LVM_SETBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
+    (BOOL)SNDMSG((hwnd),LVM_SETBKCOLOR,0,(LPARAM)(COLORREF)(clrBk))
 #define ListView_SetImageList(hwnd,himl,iImageList) \
-    (HIMAGELIST)SNDMSGA((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(HIMAGELIST)(himl))
+    (HIMAGELIST)SNDMSG((hwnd),LVM_SETIMAGELIST,(WPARAM)(iImageList),(LPARAM)(HIMAGELIST)(himl))
 #define ListView_GetItemCount(hwnd) \
-    (INT)SNDMSGA((hwnd),LVM_GETITEMCOUNT,0,0L)
+    (INT)SNDMSG((hwnd),LVM_GETITEMCOUNT,0,0L)
 #define ListView_RedrawItems(hwnd,first,last) \
-    (BOOL)SNDMSGA((hwnd),LVM_REDRAWITEMS,(WPARAM)(INT)(first),(LPARAM)(INT)(last))
+    (BOOL)SNDMSG((hwnd),LVM_REDRAWITEMS,(WPARAM)(INT)(first),(LPARAM)(INT)(last))
 #define ListView_GetEditControl(hwnd) \
-    (HWND)SNDMSGA((hwnd), LVM_GETEDITCONTROL, 0, 0)
+    (HWND)SNDMSG((hwnd), LVM_GETEDITCONTROL, 0, 0)
 #define ListView_GetTextColor(hwnd)  \
-    (COLORREF)SNDMSGA((hwnd), LVM_GETTEXTCOLOR, 0, 0)
+    (COLORREF)SNDMSG((hwnd), LVM_GETTEXTCOLOR, 0, 0)
 #define ListView_GetTextBkColor(hwnd) \
-    (COLORREF)SNDMSGA((hwnd), LVM_GETTEXTBKCOLOR, 0, 0)
+    (COLORREF)SNDMSG((hwnd), LVM_GETTEXTBKCOLOR, 0, 0)
 #define ListView_GetBkColor(hwnd)  \
-    (COLORREF)SNDMSGA((hwnd), LVM_GETBKCOLOR, 0, 0)
+    (COLORREF)SNDMSG((hwnd), LVM_GETBKCOLOR, 0, 0)
 #define ListView_GetItemA(hwnd,pitem) \
     (BOOL)SNDMSGA((hwnd),LVM_GETITEMA,0,(LPARAM)(LVITEMA *)(pitem))
 #define ListView_GetItemW(hwnd,pitem) \
     (BOOL)SNDMSGW((hwnd),LVM_GETITEMW,0,(LPARAM)(LVITEMW *)(pitem))
 #define ListView_GetItem WINELIB_NAME_AW(ListView_GetItem)
 #define ListView_GetOrigin(hwnd,ppt) \
-    (BOOL)SNDMSGW((hwnd),LVM_GETORIGIN,0,(LPARAM)(POINT *)(ppt))
+    (BOOL)SNDMSG((hwnd),LVM_GETORIGIN,0,(LPARAM)(POINT *)(ppt))
 
 #define ListView_HitTest(hwnd,pinfo) \
-    (INT)SNDMSGA((hwnd),LVM_HITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
+    (INT)SNDMSG((hwnd),LVM_HITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
 
 #define ListView_InsertItemA(hwnd,pitem) \
     (INT)SNDMSGA((hwnd),LVM_INSERTITEMA,0,(LPARAM)(const LVITEMA *)(pitem))
@@ -3765,7 +3765,7 @@ typedef struct NMLVSCROLL
 #define ListView_InsertItem WINELIB_NAME_AW(ListView_InsertItem)
 
 #define ListView_DeleteAllItems(hwnd) \
-    (BOOL)SNDMSGA((hwnd),LVM_DELETEALLITEMS,0,0L)
+    (BOOL)SNDMSG((hwnd),LVM_DELETEALLITEMS,0,0L)
 
 #define ListView_InsertColumnA(hwnd,iCol,pcol) \
     (INT)SNDMSGA((hwnd),LVM_INSERTCOLUMNA,(WPARAM)(INT)(iCol),(LPARAM)(const LVCOLUMNA *)(pcol))
@@ -3774,19 +3774,19 @@ typedef struct NMLVSCROLL
 #define ListView_InsertColumn WINELIB_NAME_AW(ListView_InsertColumn)
 
 #define ListView_SortItems(hwndLV,_pfnCompare,_lPrm) \
-    (BOOL)SNDMSGA((hwndLV),LVM_SORTITEMS,(WPARAM)(LPARAM)_lPrm,(LPARAM)(PFNLVCOMPARE)_pfnCompare)
+    (BOOL)SNDMSG((hwndLV),LVM_SORTITEMS,(WPARAM)(LPARAM)_lPrm,(LPARAM)(PFNLVCOMPARE)_pfnCompare)
 #define ListView_SortItemsEx(hwndLV, _pfnCompare, _lPrm) \
-  (BOOL)SNDMSGA((hwndLV), LVM_SORTITEMSEX, (WPARAM)(LPARAM)(_lPrm), (LPARAM)(PFNLVCOMPARE)(_pfnCompare))
+  (BOOL)SNDMSG((hwndLV), LVM_SORTITEMSEX, (WPARAM)(LPARAM)(_lPrm), (LPARAM)(PFNLVCOMPARE)(_pfnCompare))
 
 #define ListView_SetItemPosition(hwndLV, i, x, y) \
-    (BOOL)SNDMSGA((hwndLV),LVM_SETITEMPOSITION,(WPARAM)(INT)(i),MAKELPARAM((x),(y)))
+    (BOOL)SNDMSG((hwndLV),LVM_SETITEMPOSITION,(WPARAM)(INT)(i),MAKELPARAM((x),(y)))
 #define ListView_GetSelectedCount(hwndLV) \
-    (UINT)SNDMSGA((hwndLV),LVM_GETSELECTEDCOUNT,0,0L)
+    (UINT)SNDMSG((hwndLV),LVM_GETSELECTEDCOUNT,0,0L)
 
 #define ListView_EditLabelA(hwndLV, i) \
-    (HWND)SNDMSGA((hwndLV),LVM_EDITLABELA,(WPARAM)(int)(i), 0L)
+    (HWND)SNDMSG((hwndLV),LVM_EDITLABELA,(WPARAM)(int)(i), 0L)
 #define ListView_EditLabelW(hwndLV, i) \
-    (HWND)SNDMSGW((hwndLV),LVM_EDITLABELW,(WPARAM)(int)(i), 0L)
+    (HWND)SNDMSG((hwndLV),LVM_EDITLABELW,(WPARAM)(int)(i), 0L)
 #define ListView_EditLabel WINELIB_NAME_AW(ListView_EditLabel)
 
 #define ListView_GetItemTextA(hwndLV, i, _iSubItem, _pszText, _cchTextMax) \
@@ -3807,7 +3807,7 @@ typedef struct NMLVSCROLL
 }
 #define ListView_GetItemText WINELIB_NAME_AW(ListView_GetItemText)
 #define ListView_SetItemPosition32(hwnd,n,x1,y1) \
-{ POINT ptNewPos; ptNewPos.x = (x1); ptNewPos.y = (y1); SNDMSGA((hwnd), LVM_SETITEMPOSITION32, (WPARAM)(int)(n), (LPARAM)&ptNewPos); }
+{ POINT ptNewPos; ptNewPos.x = (x1); ptNewPos.y = (y1); SNDMSG((hwnd), LVM_SETITEMPOSITION32, (WPARAM)(int)(n), (LPARAM)&ptNewPos); }
 #define ListView_SetItemTextA(hwndLV, i, _iSubItem, _pszText) \
 { LVITEMA _LVi; _LVi.iSubItem = _iSubItem; _LVi.pszText = _pszText;\
   SNDMSGA(hwndLV, LVM_SETITEMTEXTA, (WPARAM)i, (LPARAM) (LVITEMA*)&_LVi);}
@@ -3817,40 +3817,40 @@ typedef struct NMLVSCROLL
 #define ListView_SetItemText WINELIB_NAME_AW(ListView_SetItemText)
 
 #define ListView_DeleteItem(hwndLV, i) \
-    (BOOL)SNDMSGA(hwndLV, LVM_DELETEITEM, (WPARAM)(int)(i), 0L)
+    (BOOL)SNDMSG(hwndLV, LVM_DELETEITEM, (WPARAM)(int)(i), 0L)
 #define ListView_Update(hwndLV, i) \
-    (BOOL)SNDMSGA((hwndLV), LVM_UPDATE, (WPARAM)(i), 0L)
+    (BOOL)SNDMSG((hwndLV), LVM_UPDATE, (WPARAM)(i), 0L)
 #define ListView_GetColumnOrderArray(hwndLV, iCount, pi) \
-    (BOOL)SNDMSGA((hwndLV), LVM_GETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
+    (BOOL)SNDMSG((hwndLV), LVM_GETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
 #define ListView_GetExtendedListViewStyle(hwndLV) \
-    (DWORD)SNDMSGA((hwndLV), LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0L)
+    (DWORD)SNDMSG((hwndLV), LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0L)
 #define ListView_GetHotCursor(hwndLV) \
-    (HCURSOR)SNDMSGA((hwndLV), LVM_GETHOTCURSOR, 0, 0L)
+    (HCURSOR)SNDMSG((hwndLV), LVM_GETHOTCURSOR, 0, 0L)
 #define ListView_GetHotItem(hwndLV) \
-    (int)SNDMSGA((hwndLV), LVM_GETHOTITEM, 0, 0L)
+    (int)SNDMSG((hwndLV), LVM_GETHOTITEM, 0, 0L)
 #define ListView_GetItemSpacing(hwndLV, fSmall) \
-    (DWORD)SNDMSGA((hwndLV), LVM_GETITEMSPACING, (WPARAM)fSmall, 0L)
+    (DWORD)SNDMSG((hwndLV), LVM_GETITEMSPACING, (WPARAM)fSmall, 0L)
 #define ListView_GetSubItemRect(hwndLV, iItem, iSubItem, code, prc) \
-    (BOOL)SNDMSGA((hwndLV), LVM_GETSUBITEMRECT, (WPARAM)(int)(iItem), \
+    (BOOL)SNDMSG((hwndLV), LVM_GETSUBITEMRECT, (WPARAM)(int)(iItem), \
                        ((prc) ? ((((LPRECT)(prc))->top = iSubItem), (((LPRECT)(prc))->left = code), (LPARAM)(prc)) : 0))
 #define ListView_GetToolTips(hwndLV) \
-    (HWND)SNDMSGA((hwndLV), LVM_GETTOOLTIPS, 0, 0L)
+    (HWND)SNDMSG((hwndLV), LVM_GETTOOLTIPS, 0, 0L)
 #define ListView_SetColumnOrderArray(hwndLV, iCount, pi) \
-    (BOOL)SNDMSGA((hwndLV), LVM_SETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
+    (BOOL)SNDMSG((hwndLV), LVM_SETCOLUMNORDERARRAY, (WPARAM)iCount, (LPARAM)(LPINT)pi)
 #define ListView_SetExtendedListViewStyle(hwndLV, dw) \
-    (DWORD)SNDMSGA((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)dw)
+    (DWORD)SNDMSG((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, 0, (LPARAM)dw)
 #define ListView_SetExtendedListViewStyleEx(hwndLV, dwMask, dw) \
-    (DWORD)SNDMSGA((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, (WPARAM)dwMask, (LPARAM)dw)
+    (DWORD)SNDMSG((hwndLV), LVM_SETEXTENDEDLISTVIEWSTYLE, (WPARAM)dwMask, (LPARAM)dw)
 #define ListView_SetHotCursor(hwndLV, hcur) \
-    (HCURSOR)SNDMSGA((hwndLV), LVM_SETHOTCURSOR, 0, (LPARAM)hcur)
+    (HCURSOR)SNDMSG((hwndLV), LVM_SETHOTCURSOR, 0, (LPARAM)hcur)
 #define ListView_SetHotItem(hwndLV, i) \
-    (int)SNDMSGA((hwndLV), LVM_SETHOTITEM, (WPARAM)i, 0L)
+    (int)SNDMSG((hwndLV), LVM_SETHOTITEM, (WPARAM)i, 0L)
 #define ListView_SetIconSpacing(hwndLV, cx, cy) \
-    (DWORD)SNDMSGA((hwndLV), LVM_SETICONSPACING, 0, MAKELONG(cx,cy))
+    (DWORD)SNDMSG((hwndLV), LVM_SETICONSPACING, 0, MAKELONG(cx,cy))
 #define ListView_SetToolTips(hwndLV, hwndNewHwnd) \
-    (HWND)SNDMSGA((hwndLV), LVM_SETTOOLTIPS, (WPARAM)hwndNewHwnd, 0L)
+    (HWND)SNDMSG((hwndLV), LVM_SETTOOLTIPS, (WPARAM)hwndNewHwnd, 0L)
 #define ListView_SubItemHitTest(hwndLV, plvhti) \
-    (int)SNDMSGA((hwndLV), LVM_SUBITEMHITTEST, 0, (LPARAM)(LPLVHITTESTINFO)(plvhti))
+    (int)SNDMSG((hwndLV), LVM_SUBITEMHITTEST, 0, (LPARAM)(LPLVHITTESTINFO)(plvhti))
 #define ListView_GetSelectionMark(hwndLV) \
     (int)SNDMSG((hwndLV), LVM_GETSELECTIONMARK, 0, 0)
 #define ListView_SetSelectionMark(hwndLV, iItem) \
