@@ -1496,6 +1496,7 @@ static void test_multiselect(void)
     BYTE kstate[256];
     select_task task;
     LONG_PTR style;
+    LVITEMA item;
 
     static struct t_select_task task_list[] = {
         { "using VK_DOWN", 0, VK_DOWN, -1, -1 },
@@ -1604,6 +1605,36 @@ todo_wine
     r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
 todo_wine
     expect(-1, r);
+
+    /* try to select all on LVS_SINGLESEL */
+    memset(&item, 0, sizeof(item));
+    item.stateMask = LVIS_SELECTED;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, r);
+    ListView_SetSelectionMark(hwnd, -1);
+
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(FALSE, r);
+
+    r = ListView_GetSelectedCount(hwnd);
+    expect(0, r);
+    r = ListView_GetSelectionMark(hwnd);
+    expect(-1, r);
+
+    /* try to deselect all on LVS_SINGLESEL */
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    item.stateMask = LVIS_SELECTED;
+    item.state     = 0;
+    r = SendMessage(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, r);
+    r = ListView_GetSelectedCount(hwnd);
+    expect(0, r);
 
     DestroyWindow(hwnd);
 }
