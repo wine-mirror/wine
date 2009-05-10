@@ -4658,9 +4658,6 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     /* do not update screen if not in report mode */
     if (!is_redrawing(infoPtr) || (infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return;
     
-    /* if we have a focus, we must first erase the focus rect */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, FALSE);
-    
     /* Need to reset the item width when inserting a new column */
     infoPtr->nItemWidth += dx;
 
@@ -4671,9 +4668,6 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     rcOld = infoPtr->rcList;
     rcOld.left = ptOrigin.x + rcCol.left + dx;
     ScrollWindowEx(infoPtr->hwndSelf, dx, 0, &rcOld, &rcOld, 0, 0, SW_ERASE | SW_INVALIDATE);
-    
-    /* we can restore focus now */
-    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, TRUE);
 }
 
 /***
