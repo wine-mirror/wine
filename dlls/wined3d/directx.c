@@ -901,7 +901,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                  * So this is just a check to check that our assumption holds true. If not, write a warning
                  * and reduce the number of vertex samplers or probably disable vertex texture fetch.
                  */
-                if(gl_info->max_vertex_samplers &&
+                if(gl_info->max_vertex_samplers && gl_info->max_combined_samplers < 12 &&
                    MAX_TEXTURES + gl_info->max_vertex_samplers > gl_info->max_combined_samplers) {
                     FIXME("OpenGL implementation supports %u vertex samplers and %u total samplers\n",
                           gl_info->max_vertex_samplers, gl_info->max_combined_samplers);
