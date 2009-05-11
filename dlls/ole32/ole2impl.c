@@ -98,13 +98,15 @@ static inline void init_fmtetc(FORMATETC *fmt, CLIPFORMAT cf, TYMED tymed)
  *
  * Retrieve an object's storage from a variety of sources.
  *
- * FIXME: CF_EMBEDDEDOBJECT, CF_FILENAME, IPersistStorage.
+ * FIXME: CF_EMBEDDEDOBJECT, CF_FILENAME.
  */
 static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf)
 {
     HRESULT hr;
     FORMATETC fmt;
     STGMEDIUM med;
+    IPersistStorage *persist;
+    CLSID clsid;
 
     *src_cf = 0;
 
@@ -118,6 +120,24 @@ static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf)
         *src_cf = embed_source_clipboard_format;
         return hr;
     }
+
+    /* IPersistStorage */
+    hr = IDataObject_QueryInterface(data, &IID_IPersistStorage, (void**)&persist);
+    if(FAILED(hr)) return hr;
+
+    hr = IPersistStorage_GetClassID(persist, &clsid);
+    if(FAILED(hr)) goto end;
+
+    hr = IStorage_SetClass(stg, &clsid);
+    if(FAILED(hr)) goto end;
+
+    hr = IPersistStorage_Save(persist, stg, FALSE);
+    if(FAILED(hr)) goto end;
+
+    hr = IPersistStorage_SaveCompleted(persist, NULL);
+
+end:
+    IPersistStorage_Release(persist);
 
     return hr;
 }
