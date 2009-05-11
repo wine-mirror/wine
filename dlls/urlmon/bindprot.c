@@ -666,6 +666,23 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSin
     return S_OK;
 }
 
+typedef struct {
+    task_header_t header;
+    DWORD bscf;
+    ULONG progress;
+    ULONG progress_max;
+} report_data_task_t;
+
+static void report_data_proc(BindProtocol *This, task_header_t *t)
+{
+    report_data_task_t *task = (report_data_task_t*)t;
+
+    if(This->protocol_sink)
+        IInternetProtocolSink_ReportData(This->protocol_sink, task->bscf, task->progress, task->progress_max);
+
+    heap_free(task);
+}
+
 static HRESULT WINAPI BPInternetProtocolSink_ReportData(IInternetProtocolSink *iface,
         DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
 {
@@ -675,6 +692,21 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportData(IInternetProtocolSink *i
 
     if(!This->protocol_sink)
         return S_OK;
+
+    if(!do_direct_notif(This)) {
+        report_data_task_t *task;
+
+        task = heap_alloc(sizeof(report_data_task_t));
+        if(!task)
+            return E_OUTOFMEMORY;
+
+        task->bscf = grfBSCF;
+        task->progress = ulProgress;
+        task->progress_max = ulProgressMax;
+
+        push_task(This, &task->header, report_data_proc);
+        return S_OK;
+    }
 
     return IInternetProtocolSink_ReportData(This->protocol_sink, grfBSCF, ulProgress, ulProgressMax);
 }
