@@ -285,6 +285,59 @@ static void test_setpixelformat(HDC winhdc)
     }
 }
 
+static void test_sharelists(HDC winhdc)
+{
+    HGLRC hglrc1, hglrc2, hglrc3;
+    int res;
+
+    hglrc1 = wglCreateContext(winhdc);
+    res = wglShareLists(0, 0);
+    ok(res == FALSE, "Sharing display lists for no contexts passed!\n");
+
+    /* Test 1: Create a context and just share lists without doing anything special */
+    hglrc2 = wglCreateContext(winhdc);
+    if(hglrc2)
+    {
+        res = wglShareLists(hglrc1, hglrc2);
+        ok(res, "Sharing of display lists failed\n");
+        wglDeleteContext(hglrc2);
+    }
+
+    /* Test 2: Share display lists with a 'destination' context which has been made current */
+    hglrc2 = wglCreateContext(winhdc);
+    if(hglrc2)
+    {
+        res = wglMakeCurrent(winhdc, hglrc2);
+        ok(res, "Make current failed\n");
+        res = wglShareLists(hglrc1, hglrc2);
+        todo_wine ok(res, "Sharing display lists with a destination context which has been made current passed\n");
+        wglMakeCurrent(0, 0);
+        wglDeleteContext(hglrc2);
+    }
+
+    /* Test 3: Share display lists with a context which already shares display lists with another context.
+     * According to MSDN the second paramater can't share any display lists but some buggy drivers might allow it */
+    hglrc3 = wglCreateContext(winhdc);
+    if(hglrc3)
+    {
+        res = wglShareLists(hglrc3, hglrc1);
+        ok(res == FALSE, "Sharing of display lists failed for a context which already shared lists before\n");
+        wglDeleteContext(hglrc3);
+    }
+
+    /* Test 4: Share display lists with a 'source' context which has been made current */
+    hglrc2 = wglCreateContext(winhdc);
+    if(hglrc2)
+    {
+        res = wglMakeCurrent(winhdc, hglrc1);
+        ok(res, "Make current failed\n");
+        res = wglShareLists(hglrc1, hglrc2);
+        ok(res, "Sharing display lists with a source context which has been made current passed\n");
+        wglMakeCurrent(0, 0);
+        wglDeleteContext(hglrc2);
+    }
+}
+
 static void test_makecurrent(HDC winhdc)
 {
     BOOL ret;
@@ -601,6 +654,7 @@ START_TEST(opengl)
 
         test_makecurrent(hdc);
         test_setpixelformat(hdc);
+        test_sharelists(hdc);
         test_colorbits(hdc);
         test_gdi_dbuf(hdc);
 
