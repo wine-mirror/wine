@@ -4698,7 +4698,7 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
 
     LISTVIEW_GetHeaderRect(infoPtr, nColumn, &rcCol);
     
-    if (!Header_DeleteItem(infoPtr->hwndHeader, nColumn))
+    if (!SendMessageW(infoPtr->hwndHeader, HDM_DELETEITEM, nColumn, 0))
 	return FALSE;
 
     Free(DPA_GetPtr(infoPtr->hdpaColumns, nColumn));
@@ -6019,7 +6019,7 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
         }
 
         if (infoPtr->hwndHeader)
-            return Header_GetItemRect(infoPtr->hwndHeader, lprc->top, lprc);
+            return SendMessageW(infoPtr->hwndHeader, HDM_GETITEMRECT, lprc->top, (LPARAM)lprc);
         else
         {
             memset(lprc, 0, sizeof(RECT));
@@ -6983,7 +6983,8 @@ static INT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
     if (DPA_InsertPtr(infoPtr->hdpaColumns, nNewColumn, lpColumnInfo) == -1) goto fail;
 
     if (lpColumn->mask & LVCF_FMT) lpColumnInfo->fmt = lpColumn->fmt;
-    if (!Header_GetItemRect(infoPtr->hwndHeader, nNewColumn, &lpColumnInfo->rcHeader)) goto fail;
+    if (!SendMessageW(infoPtr->hwndHeader, HDM_GETITEMRECT, nNewColumn, (LPARAM)&lpColumnInfo->rcHeader))
+        goto fail;
 
     /* now we have to actually adjust the data */
     if (!(infoPtr->dwStyle & LVS_OWNERDATA) && infoPtr->nItemCount > 0)

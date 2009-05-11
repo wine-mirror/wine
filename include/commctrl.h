@@ -974,14 +974,14 @@ typedef struct tagNMHDFILTERBTNCLICK
 } NMHDFILTERBTNCLICK, *LPNMHDFILTERBTNCLICK;
 
 #define Header_GetItemCount(hwndHD) \
-  (INT)SNDMSGA((hwndHD),HDM_GETITEMCOUNT,0,0L)
+  (INT)SNDMSG((hwndHD),HDM_GETITEMCOUNT,0,0L)
 #define Header_InsertItemA(hwndHD,i,phdi) \
   (INT)SNDMSGA((hwndHD),HDM_INSERTITEMA,(WPARAM)(INT)(i),(LPARAM)(const HDITEMA*)(phdi))
 #define Header_InsertItemW(hwndHD,i,phdi) \
   (INT)SNDMSGW((hwndHD),HDM_INSERTITEMW,(WPARAM)(INT)(i),(LPARAM)(const HDITEMW*)(phdi))
 #define Header_InsertItem WINELIB_NAME_AW(Header_InsertItem)
 #define Header_DeleteItem(hwndHD,i) \
-  (BOOL)SNDMSGA((hwndHD),HDM_DELETEITEM,(WPARAM)(INT)(i),0L)
+  (BOOL)SNDMSG((hwndHD),HDM_DELETEITEM,(WPARAM)(INT)(i),0L)
 #define Header_GetItemA(hwndHD,i,phdi) \
   (BOOL)SNDMSGA((hwndHD),HDM_GETITEMA,(WPARAM)(INT)(i),(LPARAM)(HDITEMA*)(phdi))
 #define Header_GetItemW(hwndHD,i,phdi) \
@@ -993,27 +993,27 @@ typedef struct tagNMHDFILTERBTNCLICK
   (BOOL)SNDMSGW((hwndHD),HDM_SETITEMW,(WPARAM)(INT)(i),(LPARAM)(const HDITEMW*)(phdi))
 #define Header_SetItem WINELIB_NAME_AW(Header_SetItem)
 #define Header_Layout(hwndHD,playout) \
-  (BOOL)SNDMSGA((hwndHD),HDM_LAYOUT,0,(LPARAM)(LPHDLAYOUT)(playout))
+  (BOOL)SNDMSG((hwndHD),HDM_LAYOUT,0,(LPARAM)(LPHDLAYOUT)(playout))
 #define Header_GetItemRect(hwnd,iItem,lprc) \
-  (BOOL)SNDMSGA((hwnd),HDM_GETITEMRECT,(WPARAM)iItem,(LPARAM)lprc)
+  (BOOL)SNDMSG((hwnd),HDM_GETITEMRECT,(WPARAM)iItem,(LPARAM)lprc)
 #define Header_SetImageList(hwnd,himl) \
-  (HIMAGELIST)SNDMSGA((hwnd),HDM_SETIMAGELIST,0,(LPARAM)himl)
+  (HIMAGELIST)SNDMSG((hwnd),HDM_SETIMAGELIST,0,(LPARAM)himl)
 #define Header_GetImageList(hwnd) \
-  (HIMAGELIST)SNDMSGA((hwnd),HDM_GETIMAGELIST,0,0)
+  (HIMAGELIST)SNDMSG((hwnd),HDM_GETIMAGELIST,0,0)
 #define Header_OrderToIndex(hwnd,i) \
-  (INT)SNDMSGA((hwnd),HDM_ORDERTOINDEX,(WPARAM)i,0)
+  (INT)SNDMSG((hwnd),HDM_ORDERTOINDEX,(WPARAM)i,0)
 #define Header_CreateDragImage(hwnd,i) \
-  (HIMAGELIST)SNDMSGA((hwnd),HDM_CREATEDRAGIMAGE,(WPARAM)i,0)
+  (HIMAGELIST)SNDMSG((hwnd),HDM_CREATEDRAGIMAGE,(WPARAM)i,0)
 #define Header_GetOrderArray(hwnd,iCount,lpi) \
-  (BOOL)SNDMSGA((hwnd),HDM_GETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
+  (BOOL)SNDMSG((hwnd),HDM_GETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
 #define Header_SetOrderArray(hwnd,iCount,lpi) \
-  (BOOL)SNDMSGA((hwnd),HDM_SETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
+  (BOOL)SNDMSG((hwnd),HDM_SETORDERARRAY,(WPARAM)iCount,(LPARAM)lpi)
 #define Header_SetHotDivider(hwnd,fPos,dw) \
-  (INT)SNDMSGA((hwnd),HDM_SETHOTDIVIDER,(WPARAM)fPos,(LPARAM)dw)
+  (INT)SNDMSG((hwnd),HDM_SETHOTDIVIDER,(WPARAM)fPos,(LPARAM)dw)
 #define Header_SetUnicodeFormat(hwnd,fUnicode) \
-  (BOOL)SNDMSGA((hwnd),HDM_SETUNICODEFORMAT,(WPARAM)(fUnicode),0)
+  (BOOL)SNDMSG((hwnd),HDM_SETUNICODEFORMAT,(WPARAM)(fUnicode),0)
 #define Header_GetUnicodeFormat(hwnd) \
-  (BOOL)SNDMSGA((hwnd),HDM_GETUNICODEFORMAT,0,0)
+  (BOOL)SNDMSG((hwnd),HDM_GETUNICODEFORMAT,0,0)
 
 /* Win32 5.1 Button Theme */
 #define WC_BUTTONA       "Button"
