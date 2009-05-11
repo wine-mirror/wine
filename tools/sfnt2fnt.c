@@ -414,7 +414,7 @@ static struct fontinfo *fill_fontinfo( const char *face_name, int ppem, int enc,
     info->dfCharTable[i].offset = start + (width_bytes * ppem);
 
     info->hdr.fi.dfType = 0;
-    info->hdr.fi.dfPoints = ((ppem - il) * 72 + dpi/2) / dpi;
+    info->hdr.fi.dfPoints = ((ppem - il - el) * 72 + dpi/2) / dpi;
     info->hdr.fi.dfVertRes = dpi;
     info->hdr.fi.dfHorizRes = dpi;
     info->hdr.fi.dfAscent = ascent;
