@@ -711,6 +711,25 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportData(IInternetProtocolSink *i
     return IInternetProtocolSink_ReportData(This->protocol_sink, grfBSCF, ulProgress, ulProgressMax);
 }
 
+typedef struct {
+    task_header_t header;
+
+    HRESULT hres;
+    DWORD err;
+    LPWSTR str;
+} report_result_task_t;
+
+static void report_result_proc(BindProtocol *This, task_header_t *t)
+{
+    report_result_task_t *task = (report_result_task_t*)t;
+
+    if(This->protocol_sink)
+        IInternetProtocolSink_ReportResult(This->protocol_sink, task->hres, task->err, task->str);
+
+    heap_free(task->str);
+    heap_free(task);
+}
+
 static HRESULT WINAPI BPInternetProtocolSink_ReportResult(IInternetProtocolSink *iface,
         HRESULT hrResult, DWORD dwError, LPCWSTR szResult)
 {
@@ -722,6 +741,21 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportResult(IInternetProtocolSink 
         return E_FAIL;
 
     This->reported_result = TRUE;
+
+    if(!do_direct_notif(This)) {
+        report_result_task_t *task;
+
+        task = heap_alloc(sizeof(report_result_task_t));
+        if(!task)
+            return E_OUTOFMEMORY;
+
+        task->hres = hrResult;
+        task->err = dwError;
+        task->str = heap_strdupW(szResult);
+
+        push_task(This, &task->header, report_result_proc);
+        return S_OK;
+    }
 
     return IInternetProtocolSink_ReportResult(This->protocol_sink, hrResult, dwError, szResult);
 }
