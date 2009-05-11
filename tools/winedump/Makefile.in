@@ -13,6 +13,7 @@ C_SRCS = \
 	dos.c \
 	dump.c \
 	emf.c \
+	font.c \
 	le.c \
 	lib.c \
 	lnk.c \

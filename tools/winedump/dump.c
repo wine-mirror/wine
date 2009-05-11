@@ -242,6 +242,7 @@ dumpers[] =
     {SIG_MDMP,          get_kind_mdmp,  mdmp_dump},
     {SIG_LNK,           get_kind_lnk,   lnk_dump},
     {SIG_EMF,           get_kind_emf,   emf_dump},
+    {SIG_FNT,           get_kind_fnt,   fnt_dump},
     {SIG_UNKNOWN,       NULL,           NULL} /* sentinel */
 };
 
