@@ -1789,7 +1789,7 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, I
         report_data(binding, 0, 0, 0);
     }else {
         hres = IInternetProtocol_Start(binding->protocol, url, PROTSINK(binding),
-                 BINDINF(binding), 0, 0);
+                 BINDINF(binding), PI_APARTMENTTHREADED, 0);
 
         TRACE("start ret %08x\n", hres);
 
