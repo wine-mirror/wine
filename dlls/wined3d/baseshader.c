@@ -721,15 +721,14 @@ static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semanti
     }
 }
 
-static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type, UINT register_idx,
-        enum wined3d_immconst_type immconst_type, const DWORD *immconst_data,
-        const struct wined3d_shader_src_param *rel_addr, const struct wined3d_shader_version *shader_version)
+static void shader_dump_register(const struct wined3d_shader_register *reg,
+        const struct wined3d_shader_version *shader_version)
 {
     static const char * const rastout_reg_names[] = {"oPos", "oFog", "oPts"};
     static const char * const misctype_reg_names[] = {"vPos", "vFace"};
-    UINT offset = register_idx;
+    UINT offset = reg->idx;
 
-    switch (register_type)
+    switch (reg->type)
     {
         case WINED3DSPR_TEMP:
             TRACE("r");
@@ -744,7 +743,7 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
         case WINED3DSPR_CONST3:
         case WINED3DSPR_CONST4:
             TRACE("c");
-            offset = shader_get_float_offset(register_type, register_idx);
+            offset = shader_get_float_offset(reg->type, reg->idx);
             break;
 
         case WINED3DSPR_TEXTURE: /* vs: case WINED3DSPR_ADDR */
@@ -752,7 +751,7 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
             break;
 
         case WINED3DSPR_RASTOUT:
-            TRACE("%s", rastout_reg_names[register_idx]);
+            TRACE("%s", rastout_reg_names[reg->idx]);
             break;
 
         case WINED3DSPR_COLOROUT:
@@ -795,8 +794,8 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
             break;
 
         case WINED3DSPR_MISCTYPE:
-            if (register_idx > 1) FIXME("Unhandled misctype register %d\n", register_idx);
-            else TRACE("%s", misctype_reg_names[register_idx]);
+            if (reg->idx > 1) FIXME("Unhandled misctype register %d\n", reg->idx);
+            else TRACE("%s", misctype_reg_names[reg->idx]);
             break;
 
         case WINED3DSPR_PREDICATE:
@@ -808,41 +807,41 @@ static void shader_dump_register(WINED3DSHADER_PARAM_REGISTER_TYPE register_type
             break;
 
         default:
-            TRACE("unhandled_rtype(%#x)", register_type);
+            TRACE("unhandled_rtype(%#x)", reg->type);
             break;
     }
 
-    if (register_type == WINED3DSPR_IMMCONST)
+    if (reg->type == WINED3DSPR_IMMCONST)
     {
         TRACE("(");
-        switch (immconst_type)
+        switch (reg->immconst_type)
         {
             case WINED3D_IMMCONST_FLOAT:
-                TRACE("%.8e", *(float *)immconst_data);
+                TRACE("%.8e", *(float *)reg->immconst_data);
                 break;
 
             case WINED3D_IMMCONST_FLOAT4:
                 TRACE("%.8e, %.8e, %.8e, %.8e",
-                        *(float *)&immconst_data[0], *(float *)&immconst_data[1],
-                        *(float *)&immconst_data[2], *(float *)&immconst_data[3]);
+                        *(float *)&reg->immconst_data[0], *(float *)&reg->immconst_data[1],
+                        *(float *)&reg->immconst_data[2], *(float *)&reg->immconst_data[3]);
                 break;
 
             default:
-                TRACE("<unhandled immconst_type %#x>", immconst_type);
+                TRACE("<unhandled immconst_type %#x>", reg->immconst_type);
                 break;
         }
         TRACE(")");
     }
-    else if (register_type != WINED3DSPR_RASTOUT && register_type != WINED3DSPR_MISCTYPE)
+    else if (reg->type != WINED3DSPR_RASTOUT && reg->type != WINED3DSPR_MISCTYPE)
     {
-        if (rel_addr)
+        if (reg->rel_addr)
         {
             TRACE("[");
-            shader_dump_src_param(rel_addr, shader_version);
+            shader_dump_src_param(reg->rel_addr, shader_version);
             TRACE(" + ");
         }
         TRACE("%u", offset);
-        if (rel_addr) TRACE("]");
+        if (reg->rel_addr) TRACE("]");
     }
 }
 
@@ -851,7 +850,7 @@ void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
 {
     DWORD write_mask = param->write_mask;
 
-    shader_dump_register(param->reg.type, param->reg.idx, 0, NULL, param->reg.rel_addr, shader_version);
+    shader_dump_register(&param->reg, shader_version);
 
     if (write_mask != WINED3DSP_WRITEMASK_ALL)
     {
@@ -885,8 +884,7 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
     if (src_modifier == WINED3DSPSM_ABS || src_modifier == WINED3DSPSM_ABSNEG)
         TRACE("abs(");
 
-    shader_dump_register(param->reg.type, param->reg.idx, param->reg.immconst_type,
-            param->reg.immconst_data, param->reg.rel_addr, shader_version);
+    shader_dump_register(&param->reg, shader_version);
 
     if (src_modifier)
     {
