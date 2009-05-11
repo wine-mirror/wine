@@ -596,6 +596,39 @@ static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface
     return IInternetProtocolSink_Switch(This->protocol_sink, pProtocolData);
 }
 
+typedef struct {
+    task_header_t header;
+
+    ULONG status_code;
+    LPWSTR status_text;
+} on_progress_task_t;
+
+static void on_progress_proc(BindProtocol *This, task_header_t *t)
+{
+    on_progress_task_t *task = (on_progress_task_t*)t;
+
+    IInternetProtocolSink_ReportProgress(This->protocol_sink, task->status_code, task->status_text);
+
+    heap_free(task->status_text);
+    heap_free(task);
+}
+
+static void report_progress(BindProtocol *This, ULONG status_code, LPCWSTR status_text)
+{
+    if(do_direct_notif(This)) {
+        IInternetProtocolSink_ReportProgress(This->protocol_sink, status_code, status_text);
+    }else {
+        on_progress_task_t *task;
+
+        task = heap_alloc(sizeof(on_progress_task_t));
+
+        task->status_code = status_code;
+        task->status_text = heap_strdupW(status_text);
+
+        push_task(This, &task->header, on_progress_proc);
+    }
+}
+
 static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSink *iface,
         ULONG ulStatusCode, LPCWSTR szStatusText)
 {
@@ -614,20 +647,23 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSin
     case BINDSTATUS_MIMETYPEAVAILABLE:
         if(!This->protocol_sink)
             return S_OK;
-        return IInternetProtocolSink_ReportProgress(This->protocol_sink,
-                ulStatusCode, szStatusText);
+        report_progress(This, ulStatusCode, szStatusText);
+        break;
 
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
         if(!This->protocol_sink)
             return S_OK;
-        return IInternetProtocolSink_ReportProgress(This->protocol_sink,
+        report_progress(This,
                 This->from_urlmon ? BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE : BINDSTATUS_MIMETYPEAVAILABLE,
-                                                    szStatusText);
+                szStatusText);
+        break;
+
     default:
         FIXME("unsupported ulStatusCode %u\n", ulStatusCode);
+        return E_NOTIMPL;
     }
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI BPInternetProtocolSink_ReportData(IInternetProtocolSink *iface,
