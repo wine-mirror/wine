@@ -1167,6 +1167,8 @@ enum fogsource {
     FOGSOURCE_COORD,
 };
 
+#define WINED3D_MAX_FBO_ENTRIES 64
+
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext {
     /* State dirtification
@@ -1214,6 +1216,7 @@ struct WineD3DContext {
     GLint                   aux_buffers;
 
     /* FBOs */
+    UINT                    fbo_entry_count;
     struct list             fbo_list;
     struct fbo_entry        *current_fbo;
     GLuint                  src_fbo;

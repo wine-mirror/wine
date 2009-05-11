@@ -53,12 +53,10 @@ void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo)
     checkGLcall("glBindFramebuffer()");
 }
 
-static void context_destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
+static void context_clean_fbo_attachments(IWineD3DDeviceImpl *This)
 {
     unsigned int i;
 
-    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, *fbo));
-    checkGLcall("glBindFramebuffer()");
     for (i = 0; i < GL_LIMITS(buffers); ++i)
     {
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + i, GL_TEXTURE_2D, 0, 0));
@@ -66,6 +64,15 @@ static void context_destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
     }
     GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
     checkGLcall("glFramebufferTexture2D()");
+}
+
+static void context_destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
+{
+    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, *fbo));
+    checkGLcall("glBindFramebuffer()");
+
+    context_clean_fbo_attachments(This);
+
     GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
     checkGLcall("glBindFramebuffer()");
     GL_EXTCALL(glDeleteFramebuffersEXT(1, fbo));
@@ -230,6 +237,19 @@ static struct fbo_entry *context_create_fbo_entry(IWineD3DDevice *iface)
     return entry;
 }
 
+static void context_reuse_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *entry)
+{
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, entry->id));
+    checkGLcall("glBindFramebuffer()");
+    context_clean_fbo_attachments(This);
+
+    memcpy(entry->render_targets, This->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
+    entry->depth_stencil = This->stencilBufferTarget;
+    entry->attached = FALSE;
+}
+
 static void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, struct fbo_entry *entry)
 {
     if (entry->id)
@@ -253,12 +273,26 @@ static struct fbo_entry *context_find_fbo_entry(IWineD3DDevice *iface, WineD3DCo
         if (!memcmp(entry->render_targets, This->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets))
                 && entry->depth_stencil == This->stencilBufferTarget)
         {
+            list_remove(&entry->entry);
+            list_add_head(&context->fbo_list, &entry->entry);
             return entry;
         }
     }
 
-    entry = context_create_fbo_entry(iface);
-    list_add_head(&context->fbo_list, &entry->entry);
+    if (context->fbo_entry_count < WINED3D_MAX_FBO_ENTRIES)
+    {
+        entry = context_create_fbo_entry(iface);
+        list_add_head(&context->fbo_list, &entry->entry);
+        ++context->fbo_entry_count;
+    }
+    else
+    {
+        entry = LIST_ENTRY(list_tail(&context->fbo_list), struct fbo_entry, entry);
+        context_reuse_fbo_entry(iface, entry);
+        list_remove(&entry->entry);
+        list_add_head(&context->fbo_list, &entry->entry);
+    }
+
     return entry;
 }
 
