@@ -47,7 +47,8 @@ struct message
     msg_flags_t flags;  /* message props */
     WPARAM wParam;      /* expected value of wParam */
     LPARAM lParam;      /* expected value of lParam */
-    UINT id;            /* id of the window */
+    UINT id;            /* extra message data: id of the window,
+                           notify code etc. */
 };
 
 struct msg_sequence

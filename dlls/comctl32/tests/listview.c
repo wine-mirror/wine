@@ -168,6 +168,18 @@ static const struct message forward_erasebkgnd_parent_seq[] = {
     { 0 }
 };
 
+static const struct message ownderdata_select_focus_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_GETDISPINFOA },
+    { 0 }
+};
+
+static const struct message textcallback_set_again_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED  },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -184,6 +196,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
+    if (message == WM_NOTIFY && lParam) msg.id = ((NMHDR*)lParam)->code;
 
     /* log system messages, except for painting */
     if (message < WM_USER &&
@@ -826,6 +839,26 @@ static void test_items(void)
     item.iSubItem = 0;
     r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM) &item);
     ok(r != 0, "ret %d\n", r);
+
+    /* set text to callback value already having it */
+    r = SendMessage(hwnd, LVM_DELETEALLITEMS, 0, 0);
+    expect(TRUE, r);
+    memset (&item, 0, sizeof (item));
+    item.mask  = LVIF_TEXT;
+    item.pszText = LPSTR_TEXTCALLBACK;
+    item.iItem = 0;
+    r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
+    ok(r == 0, "ret %d\n", r);
+    memset (&item, 0, sizeof (item));
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    item.pszText = LPSTR_TEXTCALLBACK;
+    r = SendMessage(hwnd, LVM_SETITEMTEXT, 0 , (LPARAM) &item);
+    expect(TRUE, r);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, textcallback_set_again_parent_seq,
+                "check callback text comparison rule", TRUE);
 
     DestroyWindow(hwnd);
 }
@@ -1982,6 +2015,35 @@ static void test_ownerdata(void)
     item.state     = LVIS_SELECTED;
     res = SendMessageA(hwnd, LVM_SETITEM, 0, (LPARAM)&item);
     expect(FALSE, res);
+    DestroyWindow(hwnd);
+
+    /* check notifications after focused/selected changed */
+    hwnd = create_listview_control(LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    ok(res != 0, "Expected LVM_SETITEMCOUNT to succeed\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&item, 0, sizeof(item));
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, res);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownderdata_select_focus_parent_seq,
+                "ownerdata select notification", TRUE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&item, 0, sizeof(item));
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, res);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownderdata_select_focus_parent_seq,
+                "ownerdata focus notification", TRUE);
     DestroyWindow(hwnd);
 }
 
