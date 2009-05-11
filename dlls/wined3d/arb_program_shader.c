@@ -476,8 +476,8 @@ static void shader_arb_get_swizzle(const struct wined3d_shader_src_param *param,
     *ptr = '\0';
 }
 
-static void shader_arb_get_register_name(IWineD3DBaseShader *iface, WINED3DSHADER_PARAM_REGISTER_TYPE register_type,
-        UINT register_idx, BOOL rel_addr, char *register_name, BOOL *is_color)
+static void shader_arb_get_register_name(IWineD3DBaseShader *iface,
+        const struct wined3d_shader_register *reg, char *register_name, BOOL *is_color)
 {
     /* oPos, oFog and oPts in D3D */
     static const char * const rastout_reg_names[] = {"TMP_OUT", "result.fogcoord", "result.pointsize"};
@@ -486,63 +486,63 @@ static void shader_arb_get_register_name(IWineD3DBaseShader *iface, WINED3DSHADE
 
     *is_color = FALSE;
 
-    switch (register_type)
+    switch (reg->type)
     {
         case WINED3DSPR_TEMP:
-            sprintf(register_name, "R%u", register_idx);
+            sprintf(register_name, "R%u", reg->idx);
             break;
 
         case WINED3DSPR_INPUT:
             if (pshader)
             {
-                if (register_idx == 0) strcpy(register_name, "fragment.color.primary");
+                if (reg->idx == 0) strcpy(register_name, "fragment.color.primary");
                 else strcpy(register_name, "fragment.color.secondary");
             }
             else
             {
-                if (((IWineD3DVertexShaderImpl *)This)->cur_args->swizzle_map & (1 << register_idx)) *is_color = TRUE;
-                sprintf(register_name, "vertex.attrib[%u]", register_idx);
+                if (((IWineD3DVertexShaderImpl *)This)->cur_args->swizzle_map & (1 << reg->idx)) *is_color = TRUE;
+                sprintf(register_name, "vertex.attrib[%u]", reg->idx);
             }
             break;
 
         case WINED3DSPR_CONST:
-            if (!pshader && rel_addr)
+            if (!pshader && reg->rel_addr)
             {
                 UINT rel_offset = ((IWineD3DVertexShaderImpl *)This)->rel_offset;
-                if (register_idx >= rel_offset)
-                    sprintf(register_name, "C[A0.x + %u]", register_idx - rel_offset);
+                if (reg->idx >= rel_offset)
+                    sprintf(register_name, "C[A0.x + %u]", reg->idx - rel_offset);
                 else
-                    sprintf(register_name, "C[A0.x - %u]", -register_idx + rel_offset);
+                    sprintf(register_name, "C[A0.x - %u]", -reg->idx + rel_offset);
             }
             else
             {
                 if (This->baseShader.reg_maps.usesrelconstF)
-                    sprintf(register_name, "C[%u]", register_idx);
+                    sprintf(register_name, "C[%u]", reg->idx);
                 else
-                    sprintf(register_name, "C%u", register_idx);
+                    sprintf(register_name, "C%u", reg->idx);
             }
             break;
 
         case WINED3DSPR_TEXTURE: /* case WINED3DSPR_ADDR: */
-            if (pshader) sprintf(register_name, "T%u", register_idx);
-            else  sprintf(register_name, "A%u", register_idx);
+            if (pshader) sprintf(register_name, "T%u", reg->idx);
+            else  sprintf(register_name, "A%u", reg->idx);
             break;
 
         case WINED3DSPR_COLOROUT:
-            if (register_idx == 0)
+            if (reg->idx == 0)
             {
                 strcpy(register_name, "TMP_COLOR");
             }
             else
             {
                 /* TODO: See GL_ARB_draw_buffers */
-                FIXME("Unsupported write to render target %u\n", register_idx);
+                FIXME("Unsupported write to render target %u\n", reg->idx);
                 sprintf(register_name, "unsupported_register");
             }
             break;
 
         case WINED3DSPR_RASTOUT:
-            sprintf(register_name, "%s", rastout_reg_names[register_idx]);
+            sprintf(register_name, "%s", rastout_reg_names[reg->idx]);
             break;
 
         case WINED3DSPR_DEPTHOUT:
@@ -550,19 +550,19 @@ static void shader_arb_get_register_name(IWineD3DBaseShader *iface, WINED3DSHADE
             break;
 
         case WINED3DSPR_ATTROUT:
-            if (pshader) sprintf(register_name, "oD[%u]", register_idx);
-            else if (register_idx == 0) strcpy(register_name, "result.color.primary");
+            if (pshader) sprintf(register_name, "oD[%u]", reg->idx);
+            else if (reg->idx == 0) strcpy(register_name, "result.color.primary");
             else strcpy(register_name, "result.color.secondary");
             break;
 
         case WINED3DSPR_TEXCRDOUT:
-            if (pshader) sprintf(register_name, "oT[%u]", register_idx);
-            else sprintf(register_name, "result.texcoord[%u]", register_idx);
+            if (pshader) sprintf(register_name, "oT[%u]", reg->idx);
+            else sprintf(register_name, "result.texcoord[%u]", reg->idx);
             break;
 
         default:
-            FIXME("Unhandled register type %#x[%u]\n", register_type, register_idx);
-            sprintf(register_name, "unrecognized_register[%u]", register_idx);
+            FIXME("Unhandled register type %#x[%u]\n", reg->type, reg->idx);
+            sprintf(register_name, "unrecognized_register[%u]", reg->idx);
             break;
     }
 }
@@ -574,8 +574,7 @@ static void shader_arb_get_dst_param(const struct wined3d_shader_instruction *in
     char write_mask[6];
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, wined3d_dst->reg.type,
-            wined3d_dst->reg.idx, !!wined3d_dst->reg.rel_addr, register_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &wined3d_dst->reg, register_name, &is_color);
     strcpy(str, register_name);
 
     shader_arb_get_write_mask(ins, wined3d_dst, write_mask);
@@ -726,8 +725,7 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
     insert_line = 1;
 
     /* Get register name */
-    shader_arb_get_register_name(ins->ctx->shader, src->reg.type,
-            src->reg.idx, !!src->reg.rel_addr, regstr, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &src->reg, regstr, &is_color);
     shader_arb_get_swizzle(src, is_color, swzstr);
 
     switch (src->modifiers)
@@ -801,8 +799,7 @@ static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
         }
     }
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
     strcat(dst_name, dst_wmask);
 
@@ -837,8 +834,7 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     /* FIXME: support output modifiers */
 
     /* Handle output register */
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     /* Generate input register names (with modifiers) */
@@ -870,8 +866,7 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
     /* FIXME: support output modifiers */
 
     /* Handle output register */
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     /* Generate input register names (with modifiers) */
@@ -895,8 +890,7 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
@@ -1050,8 +1044,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     DWORD reg_sampler_code;
 
     /* All versions have a destination register */
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, reg_dest, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, reg_dest, &is_color);
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
@@ -1180,8 +1173,7 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
     /* All versions have a destination register */
     reg_dest_code = dst->reg.idx;
     /* Can directly use the name because texbem is only valid for <= 1.3 shaders */
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, reg_coord, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, reg_coord, &is_color);
 
     for(i = 0; i < This->numbumpenvmatconsts; i++) {
         if (This->bumpenvmatconst[i].const_num != WINED3D_CONST_NUM_UNUSED
@@ -1390,8 +1382,7 @@ static void pshader_hw_texdepth(const struct wined3d_shader_instruction *ins)
      * parameter. According to the msdn, this must be register r5, but let's keep it more flexible
      * here
      */
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
 
     /* According to the msdn, the source register(must be r5) is unusable after
      * the texdepth instruction, so we're free to modify it
@@ -1438,8 +1429,7 @@ static void pshader_hw_texdp3(const struct wined3d_shader_instruction *ins)
     BOOL is_color;
 
     /* Handle output register */
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, dst_str, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_str, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_mask);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
@@ -1459,8 +1449,7 @@ static void pshader_hw_texm3x3(const struct wined3d_shader_instruction *ins)
     char src0[50];
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, dst_str, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_str, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_mask);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
@@ -1593,8 +1582,7 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
@@ -1619,8 +1607,7 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
     BOOL sat = dst->modifiers & WINED3DSPDM_SATURATE;
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-            dst->reg.idx, !!dst->reg.rel_addr, dst_name, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, dst_name, &is_color);
     shader_arb_get_write_mask(ins, dst, dst_wmask);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
@@ -2157,8 +2144,7 @@ static void shader_arb_add_instruction_modifiers(const struct wined3d_shader_ins
     saturate = dst->modifiers & WINED3DSPDM_SATURATE;
 
     shader_arb_get_write_mask(ins, dst, write_mask);
-    shader_arb_get_register_name(ins->ctx->shader, dst->reg.type,
-                                 dst->reg.idx, !!dst->reg.rel_addr, regstr, &is_color);
+    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, regstr, &is_color);
 
     /* Generate a line that does the output modifier computation */
     shader_addline(buffer, "MUL%s %s%s, %s, %s;\n", saturate ? "_SAT" : "",
