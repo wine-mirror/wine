@@ -21,7 +21,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
-typedef struct {
+typedef struct BindProtocol BindProtocol;
+
+struct _task_header_t;
+
+typedef void (*task_proc_t)(BindProtocol*,struct _task_header_t*);
+
+typedef struct _task_header_t {
+    task_proc_t proc;
+    struct _task_header_t *next;
+} task_header_t;
+
+struct BindProtocol {
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
     const IInternetBindInfoVtbl *lpInternetBindInfoVtbl;
     const IInternetPriorityVtbl *lpInternetPriorityVtbl;
@@ -40,13 +51,79 @@ typedef struct {
 
     BOOL reported_result;
     BOOL from_urlmon;
-} BindProtocol;
+    DWORD pi;
+
+    DWORD apartment_thread;
+    HWND notif_hwnd;
+    DWORD continue_call;
+
+    CRITICAL_SECTION section;
+    task_header_t *task_queue_head, *task_queue_tail;
+};
 
 #define PROTOCOL(x)  ((IInternetProtocol*) &(x)->lpInternetProtocolVtbl)
 #define BINDINFO(x)  ((IInternetBindInfo*) &(x)->lpInternetBindInfoVtbl)
 #define PRIORITY(x)  ((IInternetPriority*) &(x)->lpInternetPriorityVtbl)
 #define SERVPROV(x)  ((IServiceProvider*)  &(x)->lpServiceProviderVtbl)
 #define PROTSINK(x)  ((IInternetProtocolSink*) &(x)->lpInternetProtocolSinkVtbl)
+
+void handle_bindprot_task(void *v)
+{
+    BindProtocol *This = v;
+    task_header_t *task;
+
+    while(1) {
+        EnterCriticalSection(&This->section);
+
+        task = This->task_queue_head;
+        if(task) {
+            This->task_queue_head = task->next;
+            if(!This->task_queue_head)
+                This->task_queue_tail = NULL;
+        }
+
+        LeaveCriticalSection(&This->section);
+
+        if(!task)
+            break;
+
+        This->continue_call++;
+        task->proc(This, task);
+        This->continue_call--;
+    }
+
+    IInternetProtocol_Release(PROTOCOL(This));
+}
+
+static void push_task(BindProtocol *This, task_header_t *task, task_proc_t proc)
+{
+    BOOL do_post = FALSE;
+
+    task->proc = proc;
+    task->next = NULL;
+
+    EnterCriticalSection(&This->section);
+
+    if(This->task_queue_tail) {
+        This->task_queue_tail->next = task;
+        This->task_queue_tail = task;
+    }else {
+        This->task_queue_tail = This->task_queue_head = task;
+        do_post = TRUE;
+    }
+
+    LeaveCriticalSection(&This->section);
+
+    if(do_post) {
+        IInternetProtocol_AddRef(PROTOCOL(This));
+        PostMessageW(This->notif_hwnd, WM_MK_CONTINUE2, 0, (LPARAM)This);
+    }
+}
+
+static BOOL inline do_direct_notif(BindProtocol *This)
+{
+    return !(This->pi & PI_APARTMENTTHREADED) || (This->apartment_thread == GetCurrentThreadId() && !This->continue_call);
+}
 
 #define PROTOCOL_THIS(iface) DEFINE_THIS(BindProtocol, InternetProtocol, iface)
 
@@ -113,6 +190,10 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocol *iface)
             IInternetBindInfo_Release(This->bind_info);
 
         set_binding_sink(PROTOCOL(This), NULL);
+
+        if(This->notif_hwnd)
+            release_notif_hwnd(This->notif_hwnd);
+        DeleteCriticalSection(&This->section);
         heap_free(This);
 
         URLMON_UnlockModule();
@@ -139,6 +220,8 @@ static HRESULT WINAPI BindProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     if(!szUrl || !pOIProtSink || !pOIBindInfo)
         return E_INVALIDARG;
+
+    This->pi = grfPI;
 
     hres = IInternetProtocolSink_QueryInterface(pOIProtSink, &IID_IServiceProvider,
                                                 (void**)&service_provider);
@@ -468,6 +551,20 @@ static ULONG WINAPI BPInternetProtocolSink_Release(IInternetProtocolSink *iface)
     return IInternetProtocol_Release(PROTOCOL(This));
 }
 
+typedef struct {
+    task_header_t header;
+    PROTOCOLDATA data;
+} switch_task_t;
+
+static void switch_proc(BindProtocol *bind, task_header_t *t)
+{
+    switch_task_t *task = (switch_task_t*)t;
+
+    IInternetProtocol_Continue(bind->protocol, &task->data);
+
+    heap_free(task);
+}
+
 static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface,
         PROTOCOLDATA *pProtocolData)
 {
@@ -477,6 +574,19 @@ static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface
 
     TRACE("flags %x state %x data %p cb %u\n", pProtocolData->grfFlags, pProtocolData->dwState,
           pProtocolData->pData, pProtocolData->cbData);
+
+    if(!do_direct_notif(This)) {
+        switch_task_t *task;
+
+        task = heap_alloc(sizeof(switch_task_t));
+        if(!task)
+            return E_OUTOFMEMORY;
+
+        task->data = *pProtocolData;
+
+        push_task(This, &task->header, switch_proc);
+        return S_OK;
+    }
 
     if(!This->protocol_sink) {
         IInternetProtocol_Continue(This->protocol, pProtocolData);
@@ -615,6 +725,9 @@ HRESULT create_binding_protocol(LPCWSTR url, BOOL from_urlmon, IInternetProtocol
 
     ret->ref = 1;
     ret->from_urlmon = from_urlmon;
+    ret->apartment_thread = GetCurrentThreadId();
+    ret->notif_hwnd = get_notif_hwnd();
+    InitializeCriticalSection(&ret->section);
 
     URLMON_LockModule();
 

@@ -192,6 +192,9 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         IBinding_Release(BINDING(binding));
         return 0;
     }
+    case WM_MK_CONTINUE2:
+        handle_bindprot_task((void*)lParam);
+        return 0;
     case WM_MK_RELEASE: {
         tls_data_t *data = get_tls_data();
 
@@ -205,7 +208,7 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
-static HWND get_notif_hwnd(void)
+HWND get_notif_hwnd(void)
 {
     static ATOM wnd_class = 0;
     tls_data_t *tls_data;
@@ -250,7 +253,7 @@ static HWND get_notif_hwnd(void)
     return tls_data->notif_hwnd;
 }
 
-static void release_notif_hwnd(HWND hwnd)
+void release_notif_hwnd(HWND hwnd)
 {
     tls_data_t *data = get_tls_data();
 
