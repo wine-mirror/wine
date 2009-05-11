@@ -100,18 +100,14 @@ struct Binding {
     LPWSTR url;
     IID iid;
     BOOL report_mime;
-    DWORD continue_call;
     DWORD state;
     HRESULT hres;
     download_state_t download_state;
     IUnknown *obj;
     IMoniker *mon;
     IBindCtx *bctx;
-
-    DWORD apartment_thread;
     HWND notif_hwnd;
 
-    task_header_t *task_queue_head, *task_queue_tail;
     CRITICAL_SECTION section;
 };
 
@@ -126,24 +122,6 @@ struct Binding {
 
 #define WM_MK_CONTINUE   (WM_USER+101)
 #define WM_MK_RELEASE    (WM_USER+102)
-
-static task_header_t *pop_task(Binding *binding)
-{
-    task_header_t *ret;
-
-    EnterCriticalSection(&binding->section);
-
-    ret = binding->task_queue_head;
-    if(ret) {
-        binding->task_queue_head = ret->next;
-        if(!binding->task_queue_head)
-            binding->task_queue_tail = NULL;
-    }
-
-    LeaveCriticalSection(&binding->section);
-
-    return ret;
-}
 
 static void fill_stgmed_buffer(stgmed_buf_t *buf)
 {
@@ -162,19 +140,6 @@ static void fill_stgmed_buffer(stgmed_buf_t *buf)
 static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
-    case WM_MK_CONTINUE: {
-        Binding *binding = (Binding*)lParam;
-        task_header_t *task;
-
-        while((task = pop_task(binding))) {
-            binding->continue_call++;
-            task->proc(binding, task);
-            binding->continue_call--;
-        }
-
-        IBinding_Release(BINDING(binding));
-        return 0;
-    }
     case WM_MK_CONTINUE2:
         handle_bindprot_task((void*)lParam);
         return 0;
@@ -1162,9 +1127,6 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     if(This->download_state == END_DOWNLOAD || (This->state & BINDING_STOPPED))
         return;
 
-    if(GetCurrentThreadId() != This->apartment_thread)
-        FIXME("called from worker thread\n");
-
     if(This->report_mime)
         mime_available(This, NULL, TRUE);
 
@@ -1513,7 +1475,6 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
 
     ret->to_object = to_obj;
     ret->iid = *riid;
-    ret->apartment_thread = GetCurrentThreadId();
     ret->notif_hwnd = get_notif_hwnd();
     ret->report_mime = !binding_ctx;
     ret->download_state = BEFORE_DOWNLOAD;
