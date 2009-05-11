@@ -117,9 +117,9 @@ static BOOL wined3d_init(HINSTANCE hInstDLL)
     wc.hCursor              = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
     wc.hbrBackground        = NULL;
     wc.lpszMenuName         = NULL;
-    wc.lpszClassName        = "WineD3D_OpenGL";
+    wc.lpszClassName        = WINED3D_OPENGL_WINDOW_CLASS_NAME;
 
-    if (!RegisterClassA(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+    if (!RegisterClassA(&wc))
     {
         ERR("Failed to register window class 'WineD3D_OpenGL'!\n");
         return FALSE;
@@ -320,9 +320,10 @@ static BOOL wined3d_init(HINSTANCE hInstDLL)
     return TRUE;
 }
 
-static BOOL wined3d_destroy(void)
+static BOOL wined3d_destroy(HINSTANCE hInstDLL)
 {
     HeapFree(GetProcessHeap(), 0, wined3d_settings.logo);
+    UnregisterClassA(WINED3D_OPENGL_WINDOW_CLASS_NAME, hInstDLL);
 
     return TRUE;
 }
@@ -338,7 +339,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
             return wined3d_init(hInstDLL);
 
         case DLL_PROCESS_DETACH:
-            return wined3d_destroy();
+            return wined3d_destroy(hInstDLL);
 
         default:
             return TRUE;

@@ -268,7 +268,7 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
         wined3d_fake_gl_context_foreign = FALSE;
 
         /* We need a fake window as a hdc retrieved using GetDC(0) can't be used for much GL purposes */
-        wined3d_fake_gl_context_hwnd = CreateWindowA("WineD3D_OpenGL", "WineD3D fake window", WS_OVERLAPPEDWINDOW,        10, 10, 10, 10, NULL, NULL, NULL, NULL);
+        wined3d_fake_gl_context_hwnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window", WS_OVERLAPPEDWINDOW, 10, 10, 10, 10, NULL, NULL, NULL, NULL);
         if(!wined3d_fake_gl_context_hwnd) {
             ERR("HWND creation failed!\n");
             goto fail;
