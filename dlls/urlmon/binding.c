@@ -127,23 +127,6 @@ struct Binding {
 #define WM_MK_CONTINUE   (WM_USER+101)
 #define WM_MK_RELEASE    (WM_USER+102)
 
-static void push_task(Binding *binding, task_header_t *task, task_proc_t proc)
-{
-    task->proc = proc;
-    task->next = NULL;
-
-    EnterCriticalSection(&binding->section);
-
-    if(binding->task_queue_tail) {
-        binding->task_queue_tail->next = task;
-        binding->task_queue_tail = task;
-    }else {
-        binding->task_queue_tail = binding->task_queue_head = task;
-    }
-
-    LeaveCriticalSection(&binding->section);
-}
-
 static task_header_t *pop_task(Binding *binding)
 {
     task_header_t *ret;
@@ -353,32 +336,12 @@ static void handle_mime_available(Binding *binding, BOOL verify)
     binding->clipboard_format = RegisterClipboardFormatW(binding->mime);
 }
 
-typedef struct {
-    task_header_t header;
-    BOOL verify;
-} mime_available_task_t;
-
-static void mime_available_proc(Binding *binding, task_header_t *t)
-{
-    mime_available_task_t *task = (mime_available_task_t*)t;
-
-    handle_mime_available(binding, task->verify);
-
-    heap_free(task);
-}
-
 static void mime_available(Binding *This, LPCWSTR mime, BOOL verify)
 {
     if(mime)
         set_binding_mime(This, mime);
 
-    if(GetCurrentThreadId() == This->apartment_thread) {
-        handle_mime_available(This, verify);
-    }else {
-        mime_available_task_t *task = heap_alloc(sizeof(task_header_t));
-        task->verify = verify;
-        push_task(This, &task->header, mime_available_proc);
-    }
+    handle_mime_available(This, verify);
 }
 
 static void stop_binding(Binding *binding, HRESULT hres, LPCWSTR str)
@@ -1137,59 +1100,11 @@ static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
     return E_FAIL;
 }
 
-typedef struct {
-    task_header_t header;
-
-    Binding *binding;
-    ULONG progress;
-    ULONG progress_max;
-    ULONG status_code;
-    LPWSTR status_text;
-} on_progress_task_t;
-
-static void on_progress_proc(Binding *binding, task_header_t *t)
-{
-    on_progress_task_t *task = (on_progress_task_t*)t;
-
-    IBindStatusCallback_OnProgress(binding->callback, task->progress,
-            task->progress_max, task->status_code, task->status_text);
-
-    heap_free(task->status_text);
-    heap_free(task);
-}
-
 static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
                         ULONG status_code, LPCWSTR status_text)
 {
-    on_progress_task_t *task;
-
-    if(GetCurrentThreadId() == This->apartment_thread && !This->continue_call) {
-        IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
-                                       status_code, status_text);
-        return;
-    }
-
-    task = heap_alloc(sizeof(on_progress_task_t));
-
-    task->progress = progress;
-    task->progress_max = progress_max;
-    task->status_code = status_code;
-
-    if(status_text) {
-        DWORD size = (strlenW(status_text)+1)*sizeof(WCHAR);
-
-        task->status_text = heap_alloc(size);
-        memcpy(task->status_text, status_text, size);
-    }else {
-        task->status_text = NULL;
-    }
-
-    push_task(This, &task->header, on_progress_proc);
-
-    if(GetCurrentThreadId() != This->apartment_thread) {
-        IBinding_AddRef(BINDING(This));
-        PostMessageW(This->notif_hwnd, WM_MK_CONTINUE, 0, (LPARAM)This);
-    }
+    IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
+            status_code, status_text);
 }
 
 static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink *iface,
