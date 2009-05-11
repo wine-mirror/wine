@@ -67,32 +67,110 @@ struct BindProtocol {
 #define SERVPROV(x)  ((IServiceProvider*)  &(x)->lpServiceProviderVtbl)
 #define PROTSINK(x)  ((IInternetProtocolSink*) &(x)->lpInternetProtocolSinkVtbl)
 
-void handle_bindprot_task(void *v)
+#define WM_MK_CONTINUE   (WM_USER+101)
+#define WM_MK_RELEASE    (WM_USER+102)
+
+static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    BindProtocol *This = v;
-    task_header_t *task;
+    switch(msg) {
+    case WM_MK_CONTINUE: {
+        BindProtocol *This = (BindProtocol*)lParam;
+        task_header_t *task;
 
-    while(1) {
-        EnterCriticalSection(&This->section);
+        while(1) {
+            EnterCriticalSection(&This->section);
 
-        task = This->task_queue_head;
-        if(task) {
-            This->task_queue_head = task->next;
-            if(!This->task_queue_head)
-                This->task_queue_tail = NULL;
+            task = This->task_queue_head;
+            if(task) {
+                This->task_queue_head = task->next;
+                if(!This->task_queue_head)
+                    This->task_queue_tail = NULL;
+            }
+
+            LeaveCriticalSection(&This->section);
+
+            if(!task)
+                break;
+
+            This->continue_call++;
+            task->proc(This, task);
+            This->continue_call--;
         }
 
-        LeaveCriticalSection(&This->section);
+        IInternetProtocol_Release(PROTOCOL(This));
+        return 0;
+    }
+    case WM_MK_RELEASE: {
+        tls_data_t *data = get_tls_data();
 
-        if(!task)
-            break;
-
-        This->continue_call++;
-        task->proc(This, task);
-        This->continue_call--;
+        if(!--data->notif_hwnd_cnt) {
+            DestroyWindow(hwnd);
+            data->notif_hwnd = NULL;
+        }
+    }
     }
 
-    IInternetProtocol_Release(PROTOCOL(This));
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+
+HWND get_notif_hwnd(void)
+{
+    static ATOM wnd_class = 0;
+    tls_data_t *tls_data;
+
+    static const WCHAR wszURLMonikerNotificationWindow[] =
+        {'U','R','L',' ','M','o','n','i','k','e','r',' ',
+         'N','o','t','i','f','i','c','a','t','i','o','n',' ','W','i','n','d','o','w',0};
+
+    tls_data = get_tls_data();
+    if(!tls_data)
+        return NULL;
+
+    if(tls_data->notif_hwnd_cnt) {
+        tls_data->notif_hwnd_cnt++;
+        return tls_data->notif_hwnd;
+    }
+
+    if(!wnd_class) {
+        static WNDCLASSEXW wndclass = {
+            sizeof(wndclass), 0,
+            notif_wnd_proc, 0, 0,
+            NULL, NULL, NULL, NULL, NULL,
+            wszURLMonikerNotificationWindow,
+            NULL
+        };
+
+        wndclass.hInstance = URLMON_hInstance;
+
+        wnd_class = RegisterClassExW(&wndclass);
+        if (!wnd_class && GetLastError() == ERROR_CLASS_ALREADY_EXISTS)
+            wnd_class = 1;
+    }
+
+    tls_data->notif_hwnd = CreateWindowExW(0, wszURLMonikerNotificationWindow,
+            wszURLMonikerNotificationWindow, 0, 0, 0, 0, 0, HWND_MESSAGE,
+            NULL, URLMON_hInstance, NULL);
+    if(tls_data->notif_hwnd)
+        tls_data->notif_hwnd_cnt++;
+
+    TRACE("hwnd = %p\n", tls_data->notif_hwnd);
+
+    return tls_data->notif_hwnd;
+}
+
+void release_notif_hwnd(HWND hwnd)
+{
+    tls_data_t *data = get_tls_data();
+
+    if(!data || data->notif_hwnd != hwnd) {
+        PostMessageW(data->notif_hwnd, WM_MK_RELEASE, 0, 0);
+        return;
+    }
+
+    if(!--data->notif_hwnd_cnt) {
+        DestroyWindow(data->notif_hwnd);
+        data->notif_hwnd = NULL;
+    }
 }
 
 static void push_task(BindProtocol *This, task_header_t *task, task_proc_t proc)
@@ -116,7 +194,7 @@ static void push_task(BindProtocol *This, task_header_t *task, task_proc_t proc)
 
     if(do_post) {
         IInternetProtocol_AddRef(PROTOCOL(This));
-        PostMessageW(This->notif_hwnd, WM_MK_CONTINUE2, 0, (LPARAM)This);
+        PostMessageW(This->notif_hwnd, WM_MK_CONTINUE, 0, (LPARAM)This);
     }
 }
 

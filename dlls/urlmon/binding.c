@@ -120,9 +120,6 @@ struct Binding {
 #define STREAM(x) ((IStream*) &(x)->lpStreamVtbl)
 #define HTTPNEG2(x) ((IHttpNegotiate2*) &(x)->lpHttpNegotiate2Vtbl)
 
-#define WM_MK_CONTINUE   (WM_USER+101)
-#define WM_MK_RELEASE    (WM_USER+102)
-
 static void fill_stgmed_buffer(stgmed_buf_t *buf)
 {
     DWORD read = 0;
@@ -135,85 +132,6 @@ static void fill_stgmed_buffer(stgmed_buf_t *buf)
     buf->size += read;
     if(read > 0)
         buf->init = TRUE;
-}
-
-static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    switch(msg) {
-    case WM_MK_CONTINUE2:
-        handle_bindprot_task((void*)lParam);
-        return 0;
-    case WM_MK_RELEASE: {
-        tls_data_t *data = get_tls_data();
-
-        if(!--data->notif_hwnd_cnt) {
-            DestroyWindow(hwnd);
-            data->notif_hwnd = NULL;
-        }
-    }
-    }
-
-    return DefWindowProcW(hwnd, msg, wParam, lParam);
-}
-
-HWND get_notif_hwnd(void)
-{
-    static ATOM wnd_class = 0;
-    tls_data_t *tls_data;
-
-    static const WCHAR wszURLMonikerNotificationWindow[] =
-        {'U','R','L',' ','M','o','n','i','k','e','r',' ',
-         'N','o','t','i','f','i','c','a','t','i','o','n',' ','W','i','n','d','o','w',0};
-
-    tls_data = get_tls_data();
-    if(!tls_data)
-        return NULL;
-
-    if(tls_data->notif_hwnd_cnt) {
-        tls_data->notif_hwnd_cnt++;
-        return tls_data->notif_hwnd;
-    }
-
-    if(!wnd_class) {
-        static WNDCLASSEXW wndclass = {
-            sizeof(wndclass), 0,
-            notif_wnd_proc, 0, 0,
-            NULL, NULL, NULL, NULL, NULL,
-            wszURLMonikerNotificationWindow,
-            NULL        
-        };
-
-        wndclass.hInstance = URLMON_hInstance;
-
-        wnd_class = RegisterClassExW(&wndclass);
-        if (!wnd_class && GetLastError() == ERROR_CLASS_ALREADY_EXISTS)
-            wnd_class = 1;
-    }
-
-    tls_data->notif_hwnd = CreateWindowExW(0, wszURLMonikerNotificationWindow,
-            wszURLMonikerNotificationWindow, 0, 0, 0, 0, 0, HWND_MESSAGE,
-            NULL, URLMON_hInstance, NULL);
-    if(tls_data->notif_hwnd)
-        tls_data->notif_hwnd_cnt++;
-
-    TRACE("hwnd = %p\n", tls_data->notif_hwnd);
-
-    return tls_data->notif_hwnd;
-}
-
-void release_notif_hwnd(HWND hwnd)
-{
-    tls_data_t *data = get_tls_data();
-
-    if(!data || data->notif_hwnd != hwnd) {
-        PostMessageW(data->notif_hwnd, WM_MK_RELEASE, 0, 0);
-        return;
-    }
-
-    if(!--data->notif_hwnd_cnt) {
-        DestroyWindow(data->notif_hwnd);
-        data->notif_hwnd = NULL;
-    }
 }
 
 static void dump_BINDINFO(BINDINFO *bi)

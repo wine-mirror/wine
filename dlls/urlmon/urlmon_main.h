@@ -119,9 +119,6 @@ tls_data_t *get_tls_data(void);
 HWND get_notif_hwnd(void);
 void release_notif_hwnd(HWND);
 
-#define WM_MK_CONTINUE2   (WM_USER+103)
-void handle_bindprot_task(void*);
-
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);
