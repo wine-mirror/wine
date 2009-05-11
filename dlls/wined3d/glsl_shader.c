@@ -1175,7 +1175,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
         case WINED3DSPR_COLOROUT:
             if (reg->idx >= GL_LIMITS(buffers))
-                WARN("Write to render target %u, only %d supported\n", reg->idx, 4);
+                WARN("Write to render target %u, only %d supported\n", reg->idx, GL_LIMITS(buffers));
 
             if (GL_SUPPORT(ARB_DRAW_BUFFERS)) sprintf(register_name, "gl_FragData[%u]", reg->idx);
             /* On older cards with GLSL support like the GeforceFX there's only one buffer. */
