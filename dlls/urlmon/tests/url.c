@@ -324,6 +324,28 @@ static ULONG WINAPI Protocol_Release(IInternetProtocol *iface)
     return 1;
 }
 
+static void test_switch_fail(void)
+{
+    IInternetProtocolSink *binding_sink;
+    PROTOCOLDATA protocoldata;
+    HRESULT hres;
+
+    static BOOL tested_switch_fail;
+
+    if(tested_switch_fail)
+        return;
+
+    tested_switch_fail = TRUE;
+
+    hres = IBinding_QueryInterface(current_binding, &IID_IInternetProtocolSink, (void**)&binding_sink);
+    ok(hres == S_OK, "Could not get IInternetProtocolSink iface: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        hres = IInternetProtocolSink_Switch(binding_sink, &protocoldata);
+        ok(hres == E_FAIL, "Switch failed: %08x, expected E_FAIL\n", hres);
+        IInternetProtocolSink_Release(binding_sink);
+    }
+}
+
 static DWORD WINAPI thread_proc(PVOID arg)
 {
     PROTOCOLDATA protocoldata;
@@ -367,6 +389,8 @@ static DWORD WINAPI thread_proc(PVOID arg)
         CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
     else
         CHECK_CALLED(OnProgress_SENDINGREQUEST);
+
+    test_switch_fail();
 
     SET_EXPECT(Continue);
     prot_state = 1;

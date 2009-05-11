@@ -1127,37 +1127,14 @@ static ULONG WINAPI InternetProtocolSink_Release(IInternetProtocolSink *iface)
     return IBinding_Release(BINDING(This));
 }
 
-typedef struct {
-    task_header_t header;
-    PROTOCOLDATA data;
-} switch_task_t;
-
-static void switch_proc(Binding *binding, task_header_t *t)
-{
-    switch_task_t *task = (switch_task_t*)t;
-
-    IInternetProtocol_Continue(binding->protocol, &task->data);
-
-    heap_free(task);
-}
-
 static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
         PROTOCOLDATA *pProtocolData)
 {
     Binding *This = PROTSINK_THIS(iface);
-    switch_task_t *task;
 
-    TRACE("(%p)->(%p)\n", This, pProtocolData);
+    WARN("(%p)->(%p)\n", This, pProtocolData);
 
-    task = heap_alloc(sizeof(switch_task_t));
-    task->data = *pProtocolData;
-
-    push_task(This, &task->header, switch_proc);
-
-    IBinding_AddRef(BINDING(This));
-    PostMessageW(This->notif_hwnd, WM_MK_CONTINUE, 0, (LPARAM)This);
-
-    return S_OK;
+    return E_FAIL;
 }
 
 typedef struct {
