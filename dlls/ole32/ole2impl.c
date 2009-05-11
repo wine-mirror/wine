@@ -84,6 +84,44 @@ HRESULT WINAPI OleQueryCreateFromData(IDataObject *data)
     return found_static ? OLE_S_STATIC : S_FALSE;
 }
 
+static inline void init_fmtetc(FORMATETC *fmt, CLIPFORMAT cf, TYMED tymed)
+{
+    fmt->cfFormat = cf;
+    fmt->ptd = NULL;
+    fmt->dwAspect = DVASPECT_CONTENT;
+    fmt->lindex = -1;
+    fmt->tymed = tymed;
+}
+
+/***************************************************************************
+ *         get_storage
+ *
+ * Retrieve an object's storage from a variety of sources.
+ *
+ * FIXME: CF_EMBEDDEDOBJECT, CF_FILENAME, IPersistStorage.
+ */
+static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf)
+{
+    HRESULT hr;
+    FORMATETC fmt;
+    STGMEDIUM med;
+
+    *src_cf = 0;
+
+    /* CF_EMBEDSOURCE */
+    init_fmtetc(&fmt, embed_source_clipboard_format, TYMED_ISTORAGE);
+    med.tymed = TYMED_ISTORAGE;
+    med.u.pstg = stg;
+    hr = IDataObject_GetDataHere(data, &fmt, &med);
+    if(SUCCEEDED(hr))
+    {
+        *src_cf = embed_source_clipboard_format;
+        return hr;
+    }
+
+    return hr;
+}
+
 /******************************************************************************
  *		OleCreateFromDataEx        [OLE32.@]
  *
@@ -91,15 +129,26 @@ HRESULT WINAPI OleQueryCreateFromData(IDataObject *data)
  * the clipboard or OLE drag and drop.
  */
 HRESULT WINAPI OleCreateFromDataEx(IDataObject *data, REFIID iid, DWORD flags,
-                                   DWORD renderopt, ULONG num_fmts, DWORD *adv_flags, FORMATETC *fmts,
+                                   DWORD renderopt, ULONG num_cache_fmts, DWORD *adv_flags, FORMATETC *cache_fmts,
                                    IAdviseSink *sink, DWORD *conns,
                                    IOleClientSite *client_site, IStorage *stg, void **obj)
 {
+    HRESULT hr;
+    UINT src_cf;
+
     FIXME("(%p, %s, %08x, %08x, %d, %p, %p, %p, %p, %p, %p, %p): stub\n",
-          data, debugstr_guid(iid), flags, renderopt, num_fmts, adv_flags, fmts,
+          data, debugstr_guid(iid), flags, renderopt, num_cache_fmts, adv_flags, cache_fmts,
           sink, conns, client_site, stg, obj);
 
-    return E_NOTIMPL;
+    hr = get_storage(data, stg, &src_cf);
+    if(FAILED(hr)) return hr;
+
+    hr = OleLoad(stg, iid, client_site, obj);
+    if(FAILED(hr)) return hr;
+
+    /* FIXME: Init cache */
+
+    return hr;
 }
 
 /******************************************************************************
