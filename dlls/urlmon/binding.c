@@ -125,6 +125,7 @@ struct Binding {
 #define HTTPNEG2(x) ((IHttpNegotiate2*) &(x)->lpHttpNegotiate2Vtbl)
 
 #define WM_MK_CONTINUE   (WM_USER+101)
+#define WM_MK_RELEASE    (WM_USER+102)
 
 static void push_task(Binding *binding, task_header_t *task, task_proc_t proc)
 {
@@ -177,7 +178,8 @@ static void fill_stgmed_buffer(stgmed_buf_t *buf)
 
 static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if(msg == WM_MK_CONTINUE) {
+    switch(msg) {
+    case WM_MK_CONTINUE: {
         Binding *binding = (Binding*)lParam;
         task_header_t *task;
 
@@ -190,6 +192,15 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         IBinding_Release(BINDING(binding));
         return 0;
     }
+    case WM_MK_RELEASE: {
+        tls_data_t *data = get_tls_data();
+
+        if(!--data->notif_hwnd_cnt) {
+            DestroyWindow(hwnd);
+            data->notif_hwnd = NULL;
+        }
+    }
+    }
 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
@@ -197,11 +208,20 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 static HWND get_notif_hwnd(void)
 {
     static ATOM wnd_class = 0;
-    HWND hwnd;
+    tls_data_t *tls_data;
 
     static const WCHAR wszURLMonikerNotificationWindow[] =
         {'U','R','L',' ','M','o','n','i','k','e','r',' ',
          'N','o','t','i','f','i','c','a','t','i','o','n',' ','W','i','n','d','o','w',0};
+
+    tls_data = get_tls_data();
+    if(!tls_data)
+        return NULL;
+
+    if(tls_data->notif_hwnd_cnt) {
+        tls_data->notif_hwnd_cnt++;
+        return tls_data->notif_hwnd;
+    }
 
     if(!wnd_class) {
         static WNDCLASSEXW wndclass = {
@@ -219,13 +239,30 @@ static HWND get_notif_hwnd(void)
             wnd_class = 1;
     }
 
-    hwnd = CreateWindowExW(0, wszURLMonikerNotificationWindow,
-                           wszURLMonikerNotificationWindow, 0, 0, 0, 0, 0, HWND_MESSAGE,
-                           NULL, URLMON_hInstance, NULL);
+    tls_data->notif_hwnd = CreateWindowExW(0, wszURLMonikerNotificationWindow,
+            wszURLMonikerNotificationWindow, 0, 0, 0, 0, 0, HWND_MESSAGE,
+            NULL, URLMON_hInstance, NULL);
+    if(tls_data->notif_hwnd)
+        tls_data->notif_hwnd_cnt++;
 
-    TRACE("hwnd = %p\n", hwnd);
+    TRACE("hwnd = %p\n", tls_data->notif_hwnd);
 
-    return hwnd;
+    return tls_data->notif_hwnd;
+}
+
+static void release_notif_hwnd(HWND hwnd)
+{
+    tls_data_t *data = get_tls_data();
+
+    if(!data || data->notif_hwnd != hwnd) {
+        PostMessageW(data->notif_hwnd, WM_MK_RELEASE, 0, 0);
+        return;
+    }
+
+    if(!--data->notif_hwnd_cnt) {
+        DestroyWindow(data->notif_hwnd);
+        data->notif_hwnd = NULL;
+    }
 }
 
 static void dump_BINDINFO(BINDINFO *bi)
@@ -957,8 +994,8 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        if (This->notif_hwnd)
-            DestroyWindow( This->notif_hwnd );
+        if(This->notif_hwnd)
+            release_notif_hwnd(This->notif_hwnd);
         if(This->mon)
             IMoniker_Release(This->mon);
         if(This->callback)

@@ -34,6 +34,7 @@
 #include "wininet.h"
 
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 extern HINSTANCE URLMON_hInstance;
 extern HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj);
@@ -105,6 +106,15 @@ HRESULT protocol_read(Protocol*,void*,ULONG,ULONG*);
 HRESULT protocol_lock_request(Protocol*);
 HRESULT protocol_unlock_request(Protocol*);
 void protocol_close_connection(Protocol*);
+
+typedef struct {
+    HWND notif_hwnd;
+    DWORD notif_hwnd_cnt;
+
+    struct list entry;
+} tls_data_t;
+
+tls_data_t *get_tls_data(void);
 
 static inline void *heap_alloc(size_t len)
 {
