@@ -1305,22 +1305,6 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     }
 }
 
-typedef struct {
-    task_header_t header;
-    DWORD bscf;
-    ULONG progress;
-    ULONG progress_max;
-} report_data_task_t;
-
-static void report_data_proc(Binding *binding, task_header_t *t)
-{
-    report_data_task_t *task = (report_data_task_t*)t;
-
-    report_data(binding, task->bscf, task->progress, task->progress_max);
-
-    heap_free(task);
-}
-
 static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *iface,
         DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
 {
@@ -1328,40 +1312,8 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
 
     TRACE("(%p)->(%d %u %u)\n", This, grfBSCF, ulProgress, ulProgressMax);
 
-    if(GetCurrentThreadId() != This->apartment_thread)
-        FIXME("called from worked hread\n");
-
-    if(This->continue_call) {
-        report_data_task_t *task = heap_alloc(sizeof(report_data_task_t));
-        task->bscf = grfBSCF;
-        task->progress = ulProgress;
-        task->progress_max = ulProgressMax;
-
-        push_task(This, &task->header, report_data_proc);
-    }else {
-        report_data(This, grfBSCF, ulProgress, ulProgressMax);
-    }
-
+    report_data(This, grfBSCF, ulProgress, ulProgressMax);
     return S_OK;
-}
-
-typedef struct {
-    task_header_t header;
-
-    HRESULT hres;
-    LPWSTR str;
-} report_result_task_t;
-
-static void report_result_proc(Binding *binding, task_header_t *t)
-{
-    report_result_task_t *task = (report_result_task_t*)t;
-
-    IInternetProtocol_Terminate(binding->protocol, 0);
-
-    stop_binding(binding, task->hres, task->str);
-
-    heap_free(task->str);
-    heap_free(task);
 }
 
 static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *iface,
@@ -1371,18 +1323,8 @@ static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *i
 
     TRACE("(%p)->(%08x %d %s)\n", This, hrResult, dwError, debugstr_w(szResult));
 
-    if(GetCurrentThreadId() == This->apartment_thread && !This->continue_call) {
-        IInternetProtocol_Terminate(This->protocol, 0);
-        stop_binding(This, hrResult, szResult);
-    }else {
-        report_result_task_t *task = heap_alloc(sizeof(report_result_task_t));
-
-        task->hres = hrResult;
-        task->str = heap_strdupW(szResult);
-
-        push_task(This, &task->header, report_result_proc);
-    }
-
+    IInternetProtocol_Terminate(This->protocol, 0);
+    stop_binding(This, hrResult, szResult);
     return S_OK;
 }
 
