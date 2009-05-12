@@ -10111,6 +10111,82 @@ static void alphatest_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed with 0x%08x\n", hr);
 }
 
+static void sincos_test(IDirect3DDevice9 *device) {
+    const DWORD sin_shader_code[] = {
+        0xfffe0200,                                                                 /* vs_2_0                       */
+        0x0200001f, 0x80000000, 0x900f0000,                                         /* dcl_position v0              */
+        0x05000051, 0xa00f0002, 0x40490fdb, 0x3f800000, 0x00000000, 0x3f59999a,     /* def c2, 3.14159, 1, 0, 0.85  */
+        0x03000005, 0x80010001, 0x90000000, 0xa0000002,                             /* mul r1.x, v0.x, c2.x         */
+        0x04000025, 0x80020000, 0x80000001, 0xa0e40000, 0xa0e40001,                 /* sincos r0.y, r1.x, c0, c1    */
+        0x02000001, 0xc00d0000, 0x90e40000,                                         /* mov oPos.xzw, v0             */
+        0x03000005, 0xc0020000, 0x80550000, 0xa0ff0002,                             /* mul oPos.y, r0.y, c2.w       */
+        0x02000001, 0xd00f0000, 0xa0a60002,                                         /* mov oD0, c2.zyzz             */
+        0x0000ffff                                                                  /* end                          */
+    };
+    const DWORD cos_shader_code[] = {
+        0xfffe0200,                                                                 /* vs_2_0                       */
+        0x0200001f, 0x80000000, 0x900f0000,                                         /* dcl_position v0              */
+        0x05000051, 0xa00f0002, 0x40490fdb, 0x3f800000, 0x00000000, 0x3f59999a,     /* def c2, 3.14159, 1, 0, 0.85  */
+        0x03000005, 0x80010001, 0x90000000, 0xa0000002,                             /* mul r1.x, v0.x, c2.x         */
+        0x04000025, 0x80010000, 0x80000001, 0xa0e40000, 0xa0e40001,                 /* sincos r0.x, r1.x, c0, c1    */
+        0x02000001, 0xc00d0000, 0x90e40000,                                         /* mov oPos.xzw, v0             */
+        0x03000005, 0xc0020000, 0x80000000, 0xa0ff0002,                             /* mul oPos.y, r0.x, c2.w       */
+        0x02000001, 0xd00f0000, 0xa0a90002,                                         /* mov oD0, c2.yzzz             */
+        0x0000ffff                                                                  /* end                          */
+    };
+    IDirect3DVertexShader9 *sin_shader, *cos_shader;
+    HRESULT hr;
+    struct {
+        float x, y, z;
+    } data[1280];
+    unsigned int i;
+    float sincosc1[4] = {D3DSINCOSCONST1};
+    float sincosc2[4] = {D3DSINCOSCONST2};
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, sin_shader_code, &sin_shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_CreateVertexShader(device, cos_shader_code, &cos_shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, sincosc1, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShaderConstantF failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 1, sincosc2, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShaderConstantF failed with 0x%08x\n", hr);
+
+    /* Generate a point from -1 to 1 every 0.5 pixels */
+    for(i = 0; i < 1280; i++) {
+        data[i].x = (-640.0 + i) / 640.0;
+        data[i].y = 0.0;
+        data[i].z = 0.1;
+    }
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    if(SUCCEEDED(hr)) {
+        hr = IDirect3DDevice9_SetVertexShader(device, sin_shader);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed with 0x%08x\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1280, data, sizeof(*data));
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed with 0x%08x\n", hr);
+
+        hr = IDirect3DDevice9_SetVertexShader(device, cos_shader);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed with 0x%08x\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1280, data, sizeof(*data));
+        ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed with 0x%08x\n", hr);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with 0x%08x\n", hr);
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    /* TODO: Find a way to properly validate the lines. Precicion issues make this a kinda nasty task */
+
+    IDirect3DDevice9_SetVertexShader(device, NULL);
+    IDirect3DVertexShader9_Release(sin_shader);
+    IDirect3DVertexShader9_Release(cos_shader);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -10220,6 +10296,7 @@ START_TEST(visual)
     if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0))
     {
         test_mova(device_ptr);
+        sincos_test(device_ptr);
         if (caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
             test_vshader_input(device_ptr);
             test_vshader_float16(device_ptr);
