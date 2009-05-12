@@ -3720,8 +3720,8 @@ typedef struct NMLVSCROLL
     (INT)SNDMSGW((hwnd),LVM_SETITEMW,0,(LPARAM)(const LVITEMW *)(pitem))
 #define ListView_SetItem WINELIB_NAME_AW(ListView_SetItem)
 #define ListView_SetItemState(hwnd,i,data,dataMask) \
-{ LVITEMA _LVi; _LVi.state = data; _LVi.stateMask = dataMask;\
-  SNDMSG(hwnd, LVM_SETITEMSTATE, (WPARAM)(UINT)i, (LPARAM) (LPLVITEMA)&_LVi);}
+{ LVITEM _LVi; _LVi.state = data; _LVi.stateMask = dataMask;\
+  SNDMSG(hwnd, LVM_SETITEMSTATE, (WPARAM)(UINT)i, (LPARAM) (LPLVITEM)&_LVi);}
 #define ListView_GetItemState(hwnd,i,mask) \
     (UINT)SNDMSG((hwnd),LVM_GETITEMSTATE,(WPARAM)(UINT)(i),(LPARAM)(UINT)(mask))
 #define ListView_GetCountPerPage(hwnd) \
