@@ -49,15 +49,16 @@ POPUP "Be&werken" {
   MENUITEM "&Lettertype instellen...",   CMD_FONT
  }
 POPUP "&Zoeken" {
-  MENUITEM "&Zoeken...\tCtrl+Z",       CMD_SEARCH
-  MENUITEM "&Volgende zoeken\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Zoeken...\tCtrl+Z",    CMD_SEARCH
+  MENUITEM "V&olgende zoeken\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Vervangen...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Help" {
   MENUITEM "&Help-onderwerpen",  CMD_HELP_CONTENTS
   MENUITEM "&Zoeken...",         CMD_HELP_SEARCH
   MENUITEM "&Hulp bij Help",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&Over Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
