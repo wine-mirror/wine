@@ -1120,7 +1120,10 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     /* TODO: Use a display list */
 
     /* Disable shaders */
+    ENTER_GL();
     This->shader_backend->shader_select((IWineD3DDevice *)This, FALSE, FALSE);
+    LEAVE_GL();
+
     Context_MarkStateDirty(context, STATE_VSHADER, StateTable);
     Context_MarkStateDirty(context, STATE_PIXELSHADER, StateTable);
 

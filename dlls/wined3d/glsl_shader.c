@@ -3889,12 +3889,20 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
         ps = (IWineD3DPixelShaderImpl *) This;
         if(ps->num_gl_shaders == 0) return;
         if (priv->glsl_program && (IWineD3DBaseShader *)priv->glsl_program->pshader == iface)
+        {
+            ENTER_GL();
             shader_glsl_select(This->baseShader.device, FALSE, FALSE);
+            LEAVE_GL();
+        }
     } else {
         vs = (IWineD3DVertexShaderImpl *) This;
         if(vs->num_gl_shaders == 0) return;
         if (priv->glsl_program && (IWineD3DBaseShader *)priv->glsl_program->vshader == iface)
+        {
+            ENTER_GL();
             shader_glsl_select(This->baseShader.device, FALSE, FALSE);
+            LEAVE_GL();
+        }
     }
 
     linked_programs = &This->baseShader.linked_programs;
