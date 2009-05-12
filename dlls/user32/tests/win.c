@@ -118,6 +118,16 @@ static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_
     }
 }
 
+static BOOL ignore_message( UINT message )
+{
+    /* these are always ignored */
+    return (message >= 0xc000 ||
+            message == WM_GETICON ||
+            message == WM_GETOBJECT ||
+            message == WM_TIMECHANGE ||
+            message == WM_DEVICECHANGE);
+}
+
 static BOOL CALLBACK EnumChildProc( HWND hwndChild, LPARAM lParam)
 {
     (*(LPINT)lParam)++;
@@ -2713,7 +2723,7 @@ static BOOL wait_for_message( MSG *msg )
         if (ret)
         {
             if (msg->message == WM_PAINT) DispatchMessage(msg);
-            else if (msg->message < 0xc000) break;  /* skip registered messages */
+            else if (!ignore_message(msg->message)) break;
         }
         else if (MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
     }

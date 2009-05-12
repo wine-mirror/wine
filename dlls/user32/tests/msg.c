@@ -1557,6 +1557,8 @@ static const struct message WmEnableWindowSeq_1[] =
 {
     { WM_CANCELMODE, sent|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { HCBT_SETFOCUS, hook|optional },
+    { WM_KILLFOCUS, sent|optional },
     { WM_ENABLE, sent|wparam|lparam, FALSE, 0 },
     { 0 }
 };
@@ -1759,6 +1761,16 @@ static const char *get_winpos_flags(UINT flags)
 #undef DUMP
 }
 
+static BOOL ignore_message( UINT message )
+{
+    /* these are always ignored */
+    return (message >= 0xc000 ||
+            message == WM_GETICON ||
+            message == WM_GETOBJECT ||
+            message == WM_TIMECHANGE ||
+            message == WM_DEVICECHANGE);
+}
+
 
 #define add_message(msg) add_message_(__LINE__,msg);
 static void add_message_(int line, const struct recvd_message *msg)
@@ -1863,6 +1875,8 @@ static void add_message_(int line, const struct recvd_message *msg)
                 sprintf( seq->output, "%s: %p %04x wp %08lx lp %08lx",
                          msg->descr, msg->hwnd, msg->message, msg->wParam, msg->lParam );
             }
+            if (msg->flags & (sent|posted|parent|defwinproc|beginpaint))
+                sprintf( seq->output + strlen(seq->output), " (flags %x)", msg->flags );
         }
     }
 
@@ -3202,9 +3216,7 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
         message != WM_MDIGETACTIVE &&
-        message != WM_GETICON &&
-        message != WM_GETOBJECT &&
-        message != WM_DEVICECHANGE)
+        !ignore_message( message ))
     {
         msg.hwnd = hwnd;
         msg.message = message;
@@ -3231,9 +3243,7 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_ERASEBKGND &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
-        message != WM_GETICON &&
-        message != WM_GETOBJECT &&
-        message != WM_DEVICECHANGE)
+        !ignore_message( message ))
     {
         switch (message)
         {
@@ -3281,9 +3291,7 @@ static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_ERASEBKGND &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
-        message != WM_GETICON &&
-        message != WM_GETOBJECT &&
-        message != WM_DEVICECHANGE)
+        !ignore_message( message ))
     {
         msg.hwnd = hwnd;
         msg.message = message;
@@ -3898,16 +3906,15 @@ static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam
 {
     struct recvd_message msg;
 
+    if (ignore_message( message )) return 0;
+
     switch (message)
     {
 	/* ignore */
-        case WM_GETICON:
-        case WM_GETOBJECT:
 	case WM_MOUSEMOVE:
 	case WM_NCMOUSEMOVE:
 	case WM_NCMOUSELEAVE:
 	case WM_SETCURSOR:
-	case WM_DEVICECHANGE:
             return 0;
         case WM_NCHITTEST:
             return HTCLIENT;
@@ -5157,11 +5164,10 @@ static LRESULT CALLBACK button_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
     LRESULT ret;
     struct recvd_message msg;
 
+    if (ignore_message( message )) return 0;
+
     switch (message)
     {
-    case WM_GETICON:
-    case WM_GETOBJECT:
-        return 0;  /* ignore them */
     case WM_SYNCPAINT:
         break;
     case BM_SETSTATE:
@@ -5318,7 +5324,7 @@ static LRESULT CALLBACK static_hook_proc(HWND hwnd, UINT message, WPARAM wParam,
     LRESULT ret;
     struct recvd_message msg;
 
-    if (message == WM_GETICON || message == WM_GETOBJECT) return 0;  /* ignore them */
+    if (ignore_message( message )) return 0;
 
     msg.hwnd = hwnd;
     msg.message = message;
@@ -5420,9 +5426,7 @@ static LRESULT CALLBACK combobox_hook_proc(HWND hwnd, UINT message, WPARAM wPara
         message != WM_ERASEBKGND &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
-        message != WM_GETICON &&
-        message != WM_GETOBJECT &&
-        message != WM_DEVICECHANGE)
+        !ignore_message( message ))
     {
         msg.hwnd = hwnd;
         msg.message = message;
@@ -6657,10 +6661,8 @@ static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
 
         /* ignore some unwanted messages */
         if (msg.message == WM_MOUSEMOVE ||
-            msg.message == WM_GETICON ||
-            msg.message == WM_GETOBJECT ||
             msg.message == WM_TIMER ||
-            msg.message == WM_DEVICECHANGE)
+            ignore_message( msg.message ))
             continue;
 
         log_msg.hwnd = msg.hwnd;
@@ -6902,8 +6904,7 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
     LRESULT ret;
     struct recvd_message msg;
 
-    /* ignore registered messages */
-    if (message >= 0xc000) return 0;
+    if (ignore_message( message )) return 0;
 
     switch (message)
     {
@@ -6966,9 +6967,6 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	case WM_MOUSEACTIVATE:
 	case WM_NCMOUSEMOVE:
 	case WM_SETCURSOR:
-	case WM_GETICON:
-	case WM_GETOBJECT:
-	case WM_DEVICECHANGE:
 	case WM_IME_SELECT:
 	    return 0;
     }
@@ -7038,11 +7036,10 @@ static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam,
     LRESULT ret;
     struct recvd_message msg;
 
+    if (ignore_message( message )) return 0;
+
     switch (message)
     {
-    case WM_GETICON:
-    case WM_GETOBJECT:
-        return 0;  /* ignore them */
     case WM_QUERYENDSESSION:
     case WM_ENDSESSION:
         lParam &= ~0x01;  /* Vista adds a 0x01 flag */
@@ -7078,10 +7075,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     LRESULT ret;
     struct recvd_message msg;
 
-    if (message == WM_GETICON || message == WM_GETOBJECT) return 0;  /* ignore them */
-
-    /* ignore registered messages */
-    if (message >= 0xc000) return 0;
+    if (ignore_message( message )) return 0;
 
     if (log_all_parent_messages ||
         message == WM_PARENTNOTIFY || message == WM_CANCELMODE ||
@@ -7145,7 +7139,7 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
     LRESULT ret;
     struct recvd_message msg;
 
-    if (message == WM_GETICON || message == WM_GETOBJECT) return 0;  /* ignore them */
+    if (ignore_message( message )) return 0;
 
     if (test_def_id)
     {
@@ -8773,7 +8767,7 @@ static LRESULT CALLBACK edit_hook_proc(HWND hwnd, UINT message, WPARAM wParam, L
     LRESULT ret;
     struct recvd_message msg;
 
-    if (message == WM_GETICON || message == WM_GETOBJECT) return 0;  /* ignore them */
+    if (ignore_message( message )) return 0;
 
     msg.hwnd = hwnd;
     msg.message = message;
@@ -10271,12 +10265,7 @@ static INT_PTR WINAPI test_dlg_proc(HWND hwnd, UINT message, WPARAM wParam, LPAR
 {
     struct recvd_message msg;
 
-    switch (message)
-    {
-    case WM_GETICON:
-    case WM_GETOBJECT:
-        return 0;  /* ignore them */
-    }
+    if (ignore_message( message )) return 0;
 
     msg.hwnd = hwnd;
     msg.message = message;
@@ -11052,9 +11041,7 @@ static LRESULT WINAPI listbox_hook_proc(HWND hwnd, UINT message, WPARAM wp, LPAR
         message != WM_ERASEBKGND &&
         message != WM_NCHITTEST &&
         message != WM_GETTEXT &&
-        message != WM_GETOBJECT &&
-        message != WM_GETICON &&
-        message != WM_DEVICECHANGE)
+        !ignore_message( message ))
     {
         msg.hwnd = hwnd;
         msg.message = message;
