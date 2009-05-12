@@ -233,8 +233,7 @@ static void shader_arb_load_constants(
             /* The state manager takes care that this function is always called if the bump env matrix changes
              */
             const float *data = (const float *)&stateBlock->textureState[(int) psi->bumpenvmatconst[i].texunit][WINED3DTSS_BUMPENVMAT00];
-            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->bumpenvmatconst[i].const_num, data));
-            deviceImpl->activeContext->pshader_const_dirty[psi->bumpenvmatconst[i].const_num] = 1;
+            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->bumpenvmatconst[i].const_num, data));
 
             if (psi->luminanceconst[i].const_num != WINED3D_CONST_NUM_UNUSED)
             {
@@ -244,8 +243,7 @@ static void shader_arb_load_constants(
                  * (they're WINED3DTSS_TEXTURETRANSFORMFLAGS and WINED3DTSS_ADDRESSW, so most likely 0 or NaN
                  */
                 const float *scale = (const float *)&stateBlock->textureState[(int) psi->luminanceconst[i].texunit][WINED3DTSS_BUMPENVLSCALE];
-                GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->luminanceconst[i].const_num, scale));
-                deviceImpl->activeContext->pshader_const_dirty[psi->luminanceconst[i].const_num] = 1;
+                GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->luminanceconst[i].const_num, scale));
             }
         }
     }
@@ -299,12 +297,11 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
-    DWORD i, cur;
+    DWORD i, cur, next_local = 0;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
-    unsigned max_constantsF = min(This->baseShader.limits.constant_float, 
+    unsigned max_constantsF = min(This->baseShader.limits.constant_float,
             (pshader ? GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS :
                        GL_LIMITS(vshader_constantsF) - ARB_SHADER_RESERVED_VS_CONSTS));
-    UINT extra_constants_needed = 0;
     const local_constant *lconst;
 
     /* Temporary Output register */
@@ -327,41 +324,6 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
         }
     }
 
-    for(i = 0; i < (sizeof(reg_maps->bumpmat) / sizeof(reg_maps->bumpmat[0])); i++) {
-        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This;
-        if(!reg_maps->bumpmat[i]) continue;
-
-        cur = ps->numbumpenvmatconsts;
-        ps->bumpenvmatconst[cur].const_num = -1;
-        ps->bumpenvmatconst[cur].texunit = i;
-        ps->luminanceconst[cur].const_num = -1;
-        ps->luminanceconst[cur].texunit = i;
-
-        /* If the shader does not use all available constants, use the next free constant to load the bump mapping environment matrix from
-         * the stateblock into the shader. If no constant is available don't load, texbem will then just sample the texture without applying
-         * bump mapping.
-         */
-        if(max_constantsF + extra_constants_needed < GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS) {
-            ps->bumpenvmatconst[cur].const_num = max_constantsF + extra_constants_needed;
-            shader_addline(buffer, "PARAM bumpenvmat%d = program.env[%d];\n",
-                           i, ps->bumpenvmatconst[cur].const_num);
-            extra_constants_needed++;
-
-            if(reg_maps->luminanceparams && max_constantsF + extra_constants_needed < GL_LIMITS(pshader_constantsF) - ARB_SHADER_RESERVED_PS_CONSTS) {
-                ((IWineD3DPixelShaderImpl *)This)->luminanceconst[cur].const_num = max_constantsF + extra_constants_needed;
-                shader_addline(buffer, "PARAM luminance%d = program.env[%d];\n",
-                               i, ps->luminanceconst[cur].const_num);
-                extra_constants_needed++;
-            } else if(reg_maps->luminanceparams) {
-                FIXME("No free constant to load the luminance parameters\n");
-            }
-        } else {
-            FIXME("No free constant found to load environment bump mapping matrix into the shader. texbem instruction will not apply bump mapping\n");
-        }
-
-        ps->numbumpenvmatconsts = cur + 1;
-    }
-
     if(device->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE] && pshader) {
         shader_addline(buffer, "PARAM srgb_consts1 = {%f, %f, %f, %f};\n",
                        srgb_mul_low, srgb_cmp, srgb_pow, srgb_mul_high);
@@ -376,6 +338,7 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
             shader_addline(buffer, "PARAM C%u = program.local[%u];\n", lconst->idx,
                            lconst_map[lconst->idx]);
+            next_local = max(next_local, lconst_map[lconst->idx] + 1);
         }
     }
 
@@ -399,6 +362,38 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
             }
         }
     }
+
+    for(i = 0; i < (sizeof(reg_maps->bumpmat) / sizeof(reg_maps->bumpmat[0])); i++) {
+        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This;
+        if(!reg_maps->bumpmat[i]) continue;
+
+        cur = ps->numbumpenvmatconsts;
+        ps->bumpenvmatconst[cur].const_num = -1;
+        ps->bumpenvmatconst[cur].texunit = i;
+        ps->luminanceconst[cur].const_num = -1;
+        ps->luminanceconst[cur].texunit = i;
+
+        /* We can fit the constants into the constant limit for sure because texbem, texbeml, bem and beml are only supported
+         * in 1.x shaders, and GL_ARB_fragment_program has a constant limit of 24 constants. So in the worst case we're loading
+         * 8 shader constants, 8 bump matrices and 8 luminance parameters and are perfectly fine. (No NP2 fixup on bumpmapped
+         * textures due to conditional NP2 restrictions)
+         *
+         * Use local constants to load the bump env parameters, not program.env. This avoids collisions with d3d constants of
+         * shaders in newer shader models. Since the bump env parameters have to share their space with NP2 fixup constants,
+         * their location is shader dependent anyway and they cannot be loaded globally.
+         */
+        ps->bumpenvmatconst[cur].const_num = next_local++;
+        shader_addline(buffer, "PARAM bumpenvmat%d = program.local[%d];\n",
+                       i, ps->bumpenvmatconst[cur].const_num);
+        ps->numbumpenvmatconsts = cur + 1;
+
+        if(!reg_maps->luminanceparams[i]) continue;
+
+        ((IWineD3DPixelShaderImpl *)This)->luminanceconst[cur].const_num = next_local++;
+        shader_addline(buffer, "PARAM luminance%d = program.local[%d];\n",
+                        i, ps->luminanceconst[cur].const_num);
+    }
+
 }
 
 static const char * const shift_tab[] = {
@@ -823,38 +818,22 @@ static const char *shader_arb_get_modifier(const struct wined3d_shader_instructi
 
 static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
 {
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[2][50];
     DWORD sampler_code = dst->reg.idx;
-    BOOL has_bumpmat = FALSE;
-    int i;
-
-    for(i = 0; i < This->numbumpenvmatconsts; i++) {
-        if (This->bumpenvmatconst[i].const_num != WINED3D_CONST_NUM_UNUSED
-                && This->bumpenvmatconst[i].texunit == sampler_code)
-        {
-            has_bumpmat = TRUE;
-            break;
-        }
-    }
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
 
-    if(has_bumpmat) {
-        /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
-        shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, x, z, 0, 0;\n", sampler_code);
-        shader_addline(buffer, "DP3 TMP.r, TMP2, %s;\n", src_name[1]);
-        shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, y, w, 0, 0;\n", sampler_code);
-        shader_addline(buffer, "DP3 TMP.g, TMP2, %s;\n", src_name[1]);
+    /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed */
+    shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, x, z, 0, 0;\n", sampler_code);
+    shader_addline(buffer, "DP3 TMP.r, TMP2, %s;\n", src_name[1]);
+    shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, y, w, 0, 0;\n", sampler_code);
+    shader_addline(buffer, "DP3 TMP.g, TMP2, %s;\n", src_name[1]);
 
-        shader_addline(buffer, "ADD %s, %s, TMP;\n", dst_name, src_name[0]);
-    } else {
-        shader_addline(buffer, "MOV %s, %s;\n", dst_name, src_name[0]);
-    }
+    shader_addline(buffer, "ADD %s, %s, TMP;\n", dst_name, src_name[0]);
 }
 
 static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
@@ -1194,12 +1173,8 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
-    BOOL has_bumpmat = FALSE;
-    BOOL has_luminance = FALSE;
-    int i;
-
+    DWORD src = ins->src[0].reg.idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-
     char reg_coord[40], dst_reg[50];
     DWORD reg_dest_code;
 
@@ -1210,64 +1185,33 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_reg);
     sprintf(reg_coord, "fragment.texcoord[%u]", reg_dest_code);
 
-    for(i = 0; i < This->numbumpenvmatconsts; i++) {
-        if (This->bumpenvmatconst[i].const_num != WINED3D_CONST_NUM_UNUSED
-                && reg_dest_code == This->bumpenvmatconst[i].texunit)
-        {
-            has_bumpmat = TRUE;
-            break;
-        }
-    }
-    for(i = 0; i < This->numbumpenvmatconsts; i++) {
-        if (This->luminanceconst[i].const_num != WINED3D_CONST_NUM_UNUSED
-                && reg_dest_code == This->luminanceconst[i].texunit)
-        {
-            has_luminance = TRUE;
-            break;
-        }
-    }
+    /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed
+     * The Tx in which the perturbation map is stored is the tempreg incarnation of the texture register
+     */
+    shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, x, z, 0, 0;\n", reg_dest_code);
+    shader_addline(buffer, "DP3 TMP.x, TMP2, T%u;\n", src);
+    shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, y, w, 0, 0;\n", reg_dest_code);
+    shader_addline(buffer, "DP3 TMP.y, TMP2, T%u;\n", src);
 
-    if(has_bumpmat) {
-        DWORD src = ins->src[0].reg.idx;
-
-        /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed
-         * The Tx in which the perturbation map is stored is the tempreg incarnation of the texture register
-         */
-        shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, x, z, 0, 0;\n", reg_dest_code);
-        shader_addline(buffer, "DP3 TMP.x, TMP2, T%u;\n", src);
-        shader_addline(buffer, "SWZ TMP2, bumpenvmat%d, y, w, 0, 0;\n", reg_dest_code);
-        shader_addline(buffer, "DP3 TMP.y, TMP2, T%u;\n", src);
-
-        /* with projective textures, texbem only divides the static texture coord, not the displacement,
-         * so we can't let the GL handle this.
-         */
-        if (((IWineD3DDeviceImpl*) This->baseShader.device)->stateBlock->textureState[reg_dest_code][WINED3DTSS_TEXTURETRANSFORMFLAGS]
-              & WINED3DTTFF_PROJECTED) {
-            shader_addline(buffer, "RCP TMP2.w, %s.w;\n", reg_coord);
-            shader_addline(buffer, "MUL TMP2.xy, %s, TMP2.w;\n", reg_coord);
-            shader_addline(buffer, "ADD TMP.xy, TMP, TMP2;\n");
-        } else {
-            shader_addline(buffer, "ADD TMP.xy, TMP, %s;\n", reg_coord);
-        }
-
-        shader_hw_sample(ins, reg_dest_code, dst_reg, "TMP", FALSE, FALSE);
-
-        if (ins->handler_idx == WINED3DSIH_TEXBEML && has_luminance)
-        {
-            shader_addline(buffer, "MAD TMP, T%u.z, luminance%d.x, luminance%d.y;\n",
-                           src, reg_dest_code, reg_dest_code);
-            shader_addline(buffer, "MUL %s, %s, TMP;\n", dst_reg, dst_reg);
-        }
-
+    /* with projective textures, texbem only divides the static texture coord, not the displacement,
+     * so we can't let the GL handle this.
+     */
+    if (((IWineD3DDeviceImpl*) This->baseShader.device)->stateBlock->textureState[reg_dest_code][WINED3DTSS_TEXTURETRANSFORMFLAGS]
+            & WINED3DTTFF_PROJECTED) {
+        shader_addline(buffer, "RCP TMP2.w, %s.w;\n", reg_coord);
+        shader_addline(buffer, "MUL TMP2.xy, %s, TMP2.w;\n", reg_coord);
+        shader_addline(buffer, "ADD TMP.xy, TMP, TMP2;\n");
     } else {
-        DWORD tf;
-        if(reg_dest_code < MAX_TEXTURES) {
-            tf = ((IWineD3DDeviceImpl*) This->baseShader.device)->stateBlock->textureState[reg_dest_code][WINED3DTSS_TEXTURETRANSFORMFLAGS];
-        } else {
-            tf = 0;
-        }
-        /* Without a bump matrix loaded, just sample with the unmodified coordinates */
-        shader_hw_sample(ins, reg_dest_code, dst_reg, reg_coord, tf & WINED3DTTFF_PROJECTED, FALSE);
+        shader_addline(buffer, "ADD TMP.xy, TMP, %s;\n", reg_coord);
+    }
+
+    shader_hw_sample(ins, reg_dest_code, dst_reg, "TMP", FALSE, FALSE);
+
+    if (ins->handler_idx == WINED3DSIH_TEXBEML)
+    {
+        shader_addline(buffer, "MAD TMP, T%u.z, luminance%d.x, luminance%d.y;\n",
+                        src, reg_dest_code, reg_dest_code);
+        shader_addline(buffer, "MUL %s, %s, TMP;\n", dst_reg, dst_reg);
     }
 }
 
