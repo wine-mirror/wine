@@ -3508,7 +3508,8 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
     item.iItem = lpLVItem->iItem;
     item.iSubItem = lpLVItem->iSubItem;
     item.mask = LVIF_STATE | LVIF_PARAM;
-    item.stateMask = ~0;
+    item.stateMask = (infoPtr->dwStyle & LVS_OWNERDATA) ? LVIS_FOCUSED | LVIS_SELECTED : ~0;
+
     item.state = 0;
     item.lParam = 0;
     if (!isNew && !LISTVIEW_GetItemW(infoPtr, &item)) return FALSE;
@@ -5553,7 +5554,8 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	dispInfo.item.state = 0;
 
 	/* apparently, we should not callback for lParam in LVS_OWNERDATA */
-	if ((lpLVItem->mask & ~(LVIF_STATE | LVIF_PARAM)) || infoPtr->uCallbackMask)
+	if ((lpLVItem->mask & ~(LVIF_STATE | LVIF_PARAM)) ||
+	   ((lpLVItem->mask & LVIF_STATE) && (infoPtr->uCallbackMask & lpLVItem->stateMask)))
 	{
 	    UINT mask = lpLVItem->mask;
 

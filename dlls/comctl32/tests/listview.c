@@ -180,6 +180,11 @@ static const struct message textcallback_set_again_parent_seq[] = {
     { 0 }
 };
 
+static const struct message single_getdispinfo_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_GETDISPINFOA },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -2044,6 +2049,53 @@ static void test_ownerdata(void)
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, ownderdata_select_focus_parent_seq,
                 "ownerdata focus notification", TRUE);
+    DestroyWindow(hwnd);
+
+    /* check notifications on LVM_GETITEM */
+    /* zero callback mask */
+    hwnd = create_listview_control(LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    ok(res != 0, "Expected LVM_SETITEMCOUNT to succeed\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&item, 0, sizeof(item));
+    item.stateMask = LVIS_SELECTED;
+    item.mask      = LVIF_STATE;
+    res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, res);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "ownerdata getitem selected state 1", FALSE);
+
+    /* non zero callback mask but not we asking for */
+    res = SendMessageA(hwnd, LVM_SETCALLBACKMASK, LVIS_OVERLAYMASK, 0);
+    expect(TRUE, res);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&item, 0, sizeof(item));
+    item.stateMask = LVIS_SELECTED;
+    item.mask      = LVIF_STATE;
+    res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, res);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "ownerdata getitem selected state 2", FALSE);
+
+    /* LVIS_OVERLAYMASK callback mask, asking for index */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&item, 0, sizeof(item));
+    item.stateMask = LVIS_OVERLAYMASK;
+    item.mask      = LVIF_STATE;
+    res = SendMessageA(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, res);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, single_getdispinfo_parent_seq,
+                "ownerdata getitem selected state 2", FALSE);
+
     DestroyWindow(hwnd);
 }
 
