@@ -52,7 +52,7 @@ typedef struct tagInputProcessorProfilesSink {
     union {
         /* InputProcessorProfile Sinks */
         IUnknown            *pIUnknown;
-        /* ITfLanguageProfileNotifySink *pITfLanguageProfileNotifySink; */
+        ITfLanguageProfileNotifySink *pITfLanguageProfileNotifySink;
     } interfaces;
 } InputProcessorProfilesSink;
 
@@ -599,6 +599,7 @@ static ULONG WINAPI IPPSource_Release(ITfSource *iface)
 static WINAPI HRESULT IPPSource_AdviseSink(ITfSource *iface,
         REFIID riid, IUnknown *punk, DWORD *pdwCookie)
 {
+    InputProcessorProfilesSink *ipps;
     InputProcessorProfiles *This = impl_from_ITfSourceVtbl(iface);
 
     TRACE("(%p) %s %p %p\n",This,debugstr_guid(riid),punk,pdwCookie);
@@ -606,8 +607,28 @@ static WINAPI HRESULT IPPSource_AdviseSink(ITfSource *iface,
     if (!riid || !punk || !pdwCookie)
         return E_INVALIDARG;
 
-    FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
-    return E_NOTIMPL;
+    if (IsEqualIID(riid, &IID_ITfLanguageProfileNotifySink))
+    {
+        ipps = HeapAlloc(GetProcessHeap(),0,sizeof(InputProcessorProfilesSink));
+        if (!ipps)
+            return E_OUTOFMEMORY;
+        if (!SUCCEEDED(IUnknown_QueryInterface(punk, riid, (LPVOID*)&ipps->interfaces.pITfLanguageProfileNotifySink)))
+        {
+            HeapFree(GetProcessHeap(),0,ipps);
+            return CONNECT_E_CANNOTCONNECT;
+        }
+        list_add_head(&This->LanguageProfileNotifySink,&ipps->entry);
+        *pdwCookie = generate_Cookie(COOKIE_MAGIC_IPPSINK, ipps);
+    }
+    else
+    {
+        FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
+        return E_NOTIMPL;
+    }
+
+    TRACE("cookie %x\n",*pdwCookie);
+
+    return S_OK;
 }
 
 static WINAPI HRESULT IPPSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)

@@ -699,3 +699,17 @@ interface ITfClientId : IUnknown
         [in] REFCLSID rclsid,
         [out] TfClientId *ptid);
 };
+
+[
+  object,
+  uuid(43c9fe15-f494-4c17-9de2-b8a4ac350aa8),
+  pointer_default(unique)
+]
+interface ITfLanguageProfileNotifySink : IUnknown
+{
+    HRESULT OnLanguageChange(
+        [in] LANGID langid,
+        [out] BOOL *pfAccept);
+
+    HRESULT OnLanguageChanged();
+}
