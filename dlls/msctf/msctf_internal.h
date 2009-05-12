@@ -24,6 +24,7 @@
 #define COOKIE_MAGIC_TMSINK  0x0010
 #define COOKIE_MAGIC_CONTEXTSINK 0x0020
 #define COOKIE_MAGIC_GUIDATOM 0x0030
+#define COOKIE_MAGIC_IPPSINK 0x0040
 
 extern DWORD tlsIndex;
 extern TfClientId processId;
