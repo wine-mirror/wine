@@ -1670,6 +1670,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
             IWineD3DDeviceImpl_FindTexUnitMap(This);
 
+            ENTER_GL();
             for(i=0; i < context->numDirtyEntries; i++) {
                 dirtyState = context->dirtyArray[i];
                 idx = dirtyState >> 5;
@@ -1677,6 +1678,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                 context->isStateDirty[idx] &= ~(1 << shift);
                 StateTable[dirtyState].apply(dirtyState, This->stateBlock, context);
             }
+            LEAVE_GL();
             context->numDirtyEntries = 0; /* This makes the whole list clean */
             context->last_was_blit = FALSE;
             break;
