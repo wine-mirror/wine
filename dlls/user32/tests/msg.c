@@ -11020,14 +11020,18 @@ static const struct message wm_lb_click_0[] =
 static const struct message wm_lb_deletestring[] =
 {
     { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
-    { WM_DELETEITEM, sent|wparam|parent, ID_LISTBOX, 0 },
+    { WM_DELETEITEM, sent|wparam|parent|optional, ID_LISTBOX, 0 },
+    { WM_DRAWITEM, sent|wparam|parent|optional, ID_LISTBOX },
+    { WM_DRAWITEM, sent|wparam|parent|optional, ID_LISTBOX },
     { 0 }
 };
 static const struct message wm_lb_deletestring_reset[] =
 {
     { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
-    { LB_RESETCONTENT, sent|wparam|lparam|defwinproc, 0, 0 },
-    { WM_DELETEITEM, sent|wparam|parent, ID_LISTBOX, 0 },
+    { LB_RESETCONTENT, sent|wparam|lparam|defwinproc|optional, 0, 0 },
+    { WM_DELETEITEM, sent|wparam|parent|optional, ID_LISTBOX, 0 },
+    { WM_DRAWITEM, sent|wparam|parent|optional, ID_LISTBOX },
+    { WM_DRAWITEM, sent|wparam|parent|optional, ID_LISTBOX },
     { 0 }
 };
 
