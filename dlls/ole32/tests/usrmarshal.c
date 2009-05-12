@@ -530,14 +530,15 @@ static void test_marshal_WdtpInterfacePointer(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
     size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, unk, &IID_IUnknown);
     todo_wine
-    ok(size > 28, "size should be > 28 bytes, not %d\n", size);
+    ok(size >= 0x4c, "size should be >= 0x4c bytes, not %d\n", size);
     trace("WdtpInterfacePointer_UserSize returned %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
     buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, buffer, unk, &IID_IUnknown);
     wireip = buffer;
-    if (size >= 28)
+    if (size >= 0x4c)
     {
+        ok(buffer_end == buffer + 0x4c, "buffer_end %p buffer %p\n", buffer_end, buffer);
         ok(*(DWORD *)wireip == 0x44, "wireip + 0x0 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
         ok(*(DWORD *)wireip == 0x44, "wireip + 0x4 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
