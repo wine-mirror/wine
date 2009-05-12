@@ -595,6 +595,7 @@ static void nvrc_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 static void nvrc_enable(IWineD3DDevice *iface, BOOL enable) { }
 
 static void nvts_enable(IWineD3DDevice *iface, BOOL enable) {
+    ENTER_GL();
     if(enable) {
         glEnable(GL_TEXTURE_SHADER_NV);
         checkGLcall("glEnable(GL_TEXTURE_SHADER_NV)");
@@ -602,6 +603,7 @@ static void nvts_enable(IWineD3DDevice *iface, BOOL enable) {
         glDisable(GL_TEXTURE_SHADER_NV);
         checkGLcall("glDisable(GL_TEXTURE_SHADER_NV)");
     }
+    LEAVE_GL();
 }
 
 static void nvrc_fragment_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *pCaps)

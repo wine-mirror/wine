@@ -2273,6 +2273,7 @@ struct arbfp_ffp_desc
 };
 
 static void arbfp_enable(IWineD3DDevice *iface, BOOL enable) {
+    ENTER_GL();
     if(enable) {
         glEnable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB)");
@@ -2280,6 +2281,7 @@ static void arbfp_enable(IWineD3DDevice *iface, BOOL enable) {
         glDisable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     }
+    LEAVE_GL();
 }
 
 static HRESULT arbfp_alloc(IWineD3DDevice *iface) {
