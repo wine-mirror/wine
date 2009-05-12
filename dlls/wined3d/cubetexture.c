@@ -257,14 +257,6 @@ static BOOL WINAPI IWineD3DCubeTextureImpl_IsCondNP2(IWineD3DCubeTexture *iface)
     return FALSE;
 }
 
-static void WINAPI IWineD3DCubeTextureImpl_ApplyStateChanges(IWineD3DCubeTexture *iface, 
-                                                        const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], 
-                                                        const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) {
-    TRACE("(%p) : relay to BaseTexture\n", iface);
-    basetexture_apply_state_changes((IWineD3DBaseTexture *)iface, textureStates, samplerStates);
-}
-
-
 /* *******************************************
    IWineD3DCubeTexture IWineD3DCubeTexture parts follow
    ******************************************* */
@@ -399,7 +391,6 @@ const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_BindTexture,
     IWineD3DCubeTextureImpl_GetTextureDimensions,
     IWineD3DCubeTextureImpl_IsCondNP2,
-    IWineD3DCubeTextureImpl_ApplyStateChanges,
     /* IWineD3DCubeTexture */
     IWineD3DCubeTextureImpl_Destroy,
     IWineD3DCubeTextureImpl_GetLevelDesc,

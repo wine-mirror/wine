@@ -3308,7 +3308,7 @@ static void sampler_texmatrix(DWORD state, IWineD3DStateBlockImpl *stateblock, W
 
     if(!texture) return;
     /* The fixed function np2 texture emulation uses the texture matrix to fix up the coordinates
-     * IWineD3DBaseTexture::ApplyStateChanges multiplies the set matrix with a fixup matrix. Before the
+     * basetexture_apply_state_changes() multiplies the set matrix with a fixup matrix. Before the
      * scaling is reapplied or removed, the texture matrix has to be reapplied
      *
      * The mapped stage is already active because the sampler() function below, which is part of the
@@ -3356,7 +3356,8 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
         IWineD3DBaseTextureImpl *tex_impl = (IWineD3DBaseTextureImpl *) stateblock->textures[sampler];
         tex_impl->baseTexture.internal_preload(stateblock->textures[sampler], srgb ? SRGB_SRGB : SRGB_RGB);
         IWineD3DBaseTexture_BindTexture(stateblock->textures[sampler], srgb);
-        IWineD3DBaseTexture_ApplyStateChanges(stateblock->textures[sampler], stateblock->textureState[sampler], stateblock->samplerState[sampler]);
+        basetexture_apply_state_changes(stateblock->textures[sampler],
+                stateblock->textureState[sampler], stateblock->samplerState[sampler]);
 
         if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
             tmpvalue.d = stateblock->samplerState[sampler][WINED3DSAMP_MIPMAPLODBIAS];

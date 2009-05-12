@@ -211,15 +211,6 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *if
     return FALSE;
 }
 
-static void WINAPI IWineD3DVolumeTextureImpl_ApplyStateChanges(IWineD3DVolumeTexture *iface,
-                                                        const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1],
-                                                        const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) {
-    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    TRACE("(%p) : nothing to do, passing to base texture\n", This);
-    basetexture_apply_state_changes((IWineD3DBaseTexture *)iface, textureStates, samplerStates);
-}
-
-
 /* *******************************************
    IWineD3DVolumeTexture IWineD3DVolumeTexture parts follow
    ******************************************* */
@@ -330,7 +321,6 @@ const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_BindTexture,
     IWineD3DVolumeTextureImpl_GetTextureDimensions,
     IWineD3DVolumeTextureImpl_IsCondNP2,
-    IWineD3DVolumeTextureImpl_ApplyStateChanges,
     /* volume texture */
     IWineD3DVolumeTextureImpl_Destroy,
     IWineD3DVolumeTextureImpl_GetLevelDesc,

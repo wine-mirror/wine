@@ -322,13 +322,15 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
     GLint textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
     BOOL cond_np2 = IWineD3DBaseTexture_IsCondNP2(iface);
 
+    TRACE("iface %p, textureStates %p, samplerStates %p\n", iface, textureStates, samplerStates);
+
     if(This->baseTexture.is_srgb) {
         states = This->baseTexture.srgbstates;
     } else {
         states = This->baseTexture.states;
     }
 
-    /* ApplyStateChanges relies on the correct texture being bound and loaded. */
+    /* This function relies on the correct texture being bound and loaded. */
 
     if(samplerStates[WINED3DSAMP_ADDRESSU]      != states[WINED3DTEXSTA_ADDRESSU]) {
         state = samplerStates[WINED3DSAMP_ADDRESSU];
