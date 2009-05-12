@@ -1241,18 +1241,20 @@ static void pshader_hw_texcoord(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
+    char dst_str[50];
 
-    char tmp[20];
-    shader_arb_get_write_mask(ins, dst, tmp);
-    if (shader_version != WINED3D_SHADER_VERSION(1,4))
+    if (shader_version < WINED3D_SHADER_VERSION(1,4))
     {
         DWORD reg = dst->reg.idx;
-        shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
+
+        shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
+        shader_addline(buffer, "MOV_SAT %s, fragment.texcoord[%u];\n", dst_str, reg);
     } else {
         char reg_src[40];
 
         shader_arb_get_src_param(ins, &ins->src[0], 0, reg_src);
-        shader_addline(buffer, "MOV R%u%s, %s;\n", dst->reg.idx, tmp, reg_src);
+        shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
+        shader_addline(buffer, "MOV %s, %s;\n", dst_str, reg_src);
    }
 }
 
@@ -1355,13 +1357,17 @@ static void pshader_hw_texm3x2pad(const struct wined3d_shader_instruction *ins)
 {
     DWORD reg = ins->dst[0].reg.idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    char src0_name[50];
+    char src0_name[50], dst_name[50];
+    BOOL is_color;
+    struct wined3d_shader_register tmp_reg = ins->dst[0].reg;
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
     /* The next instruction will be a texm3x2tex or texm3x2depth that writes to the uninitialized
      * T<reg+1> register. Use this register to store the calculated vector
      */
-    shader_addline(buffer, "DP3 T%u.x, fragment.texcoord[%u], %s;\n", reg + 1, reg, src0_name);
+    tmp_reg.idx = reg + 1;
+    shader_arb_get_register_name(ins, &tmp_reg, dst_name, &is_color);
+    shader_addline(buffer, "DP3 %s.x, fragment.texcoord[%u], %s;\n", dst_name, reg, src0_name);
 }
 
 static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
@@ -1374,9 +1380,10 @@ static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
     char dst_str[50];
     char src0_name[50];
     char dst_reg[50];
+    BOOL is_color;
 
     /* We know that we're writing to the uninitialized T<reg> register, so use it for temporary storage */
-    sprintf(dst_reg, "T%u", reg);
+    shader_arb_get_register_name(ins, &ins->dst[0].reg, dst_reg, &is_color);
 
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
@@ -1391,17 +1398,20 @@ static void pshader_hw_texm3x3pad(const struct wined3d_shader_instruction *ins)
     DWORD reg = ins->dst[0].reg.idx;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
-    char src0_name[50];
-    unsigned int dst;
+    char src0_name[50], dst_name[50];
+    struct wined3d_shader_register tmp_reg = ins->dst[0].reg;
+    BOOL is_color;
 
     /* There are always 2 texm3x3pad instructions followed by one texm3x3[tex,vspec, ...] instruction, with
      * incrementing ins->dst[0].register_idx numbers. So the pad instruction already knows the final destination
      * register, and this register is uninitialized(otherwise the assembler complains that it is 'redeclared')
      */
-    dst = reg + 2 - current_state->current_row;
+    tmp_reg.idx = reg + 2 - current_state->current_row;
+    shader_arb_get_register_name(ins, &tmp_reg, dst_name, &is_color);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 T%u.%c, fragment.texcoord[%u], %s;\n", dst, 'x' + current_state->current_row, reg, src0_name);
+    shader_addline(buffer, "DP3 %s%u.%c, fragment.texcoord[%u], %s;\n",
+                   dst_name, tmp_reg.idx, 'x' + current_state->current_row, reg, src0_name);
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
@@ -1414,17 +1424,17 @@ static void pshader_hw_texm3x3tex(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char dst_str[50];
-    char dst_reg[8];
-    char src0_name[50];
+    char src0_name[50], dst_name[50];
+    BOOL is_color;
 
-    sprintf(dst_reg, "T%u", reg);
+    shader_arb_get_register_name(ins, &ins->dst[0].reg, dst_name, &is_color);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 %s.z, fragment.texcoord[%u], %s;\n", dst_reg, reg, src0_name);
+    shader_addline(buffer, "DP3 %s.z, fragment.texcoord[%u], %s;\n", dst_name, reg, src0_name);
 
     /* Sample the texture using the calculated coordinates */
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
-    shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED, FALSE);
+    shader_hw_sample(ins, reg, dst_str, dst_name, flags & WINED3DTTFF_PROJECTED, FALSE);
     current_state->current_row = 0;
 }
 
@@ -1439,11 +1449,12 @@ static void pshader_hw_texm3x3vspec(const struct wined3d_shader_instruction *ins
     char dst_str[50];
     char src0_name[50];
     char dst_reg[8];
+    BOOL is_color;
 
     /* Get the dst reg without writemask strings. We know this register is uninitialized, so we can use all
      * components for temporary data storage
      */
-    sprintf(dst_reg, "T%u", reg);
+    shader_arb_get_register_name(ins, &ins->dst[0].reg, dst_reg, &is_color);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 %s.z, fragment.texcoord[%u], %s;\n", dst_reg, reg, src0_name);
 
@@ -1481,18 +1492,19 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
     char src0_name[50];
     char src1_name[50];
     char dst_reg[8];
+    BOOL is_color;
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
     shader_arb_get_src_param(ins, &ins->src[0], 1, src1_name);
-    /* Note: TMP.xy is input here, generated by two texm3x3pad instructions */
-    sprintf(dst_reg, "T%u", reg);
+    shader_arb_get_register_name(ins, &ins->dst[0].reg, dst_reg, &is_color);
+    /* Note: dst_reg.xy is input here, generated by two texm3x3pad instructions */
     shader_addline(buffer, "DP3 %s.z, fragment.texcoord[%u], %s;\n", dst_reg, reg, src0_name);
 
     /* Calculate reflection vector.
      *
-     *               dot(N, E)
-     * TMP.xyz = 2 * --------- * N - E
-     *               dot(N, N)
+     *                   dot(N, E)
+     * dst_reg.xyz = 2 * --------- * N - E
+     *                   dot(N, N)
      *
      * Which normalizes the normal vector
      */
@@ -1577,13 +1589,15 @@ static void pshader_hw_texm3x3(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    char dst_str[50];
+    char dst_str[50], dst_name[50];
     char src0[50];
+    BOOL is_color;
 
     shader_arb_get_dst_param(ins, dst, dst_str);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
-    shader_addline(buffer, "DP3 T%u.z, fragment.texcoord[%u], %s;\n", dst->reg.idx, dst->reg.idx, src0);
-    shader_addline(buffer, "MOV %s, T%u;\n", dst_str, dst->reg.idx);
+    shader_arb_get_register_name(ins, &ins->dst[0].reg, dst_name, &is_color);
+    shader_addline(buffer, "DP3 %s.z, fragment.texcoord[%u], %s;\n", dst_name, dst->reg.idx, src0);
+    shader_addline(buffer, "MOV %s, %s;\n", dst_str, dst_name);
 }
 
 /** Process the WINED3DSIO_TEXM3X2DEPTH instruction in ARB:
@@ -1594,20 +1608,22 @@ static void pshader_hw_texm3x3(const struct wined3d_shader_instruction *ins)
 static void pshader_hw_texm3x2depth(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
-    DWORD dst_reg = ins->dst[0].reg.idx;
-    char src0[50];
+    const struct wined3d_shader_dst_param *dst = &ins->dst[0];
+    char src0[50], dst_name[50];
+    BOOL is_color;
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0);
-    shader_addline(buffer, "DP3 T%u.y, fragment.texcoord[%u], %s;\n", dst_reg, dst_reg, src0);
+    shader_arb_get_register_name(ins, &ins->dst[0].reg, dst_name, &is_color);
+    shader_addline(buffer, "DP3 %s.y, fragment.texcoord[%u], %s;\n", dst_name, dst->reg.idx, src0);
 
     /* How to deal with the special case dst_name.g == 0? if r != 0, then
      * the r * (1 / 0) will give infinity, which is clamped to 1.0, the correct
      * result. But if r = 0.0, then 0 * inf = 0, which is incorrect.
      */
-    shader_addline(buffer, "RCP T%u.y, T%u.y;\n", dst_reg, dst_reg);
-    shader_addline(buffer, "MUL T%u.x, T%u.x, T%u.y;\n", dst_reg, dst_reg, dst_reg);
-    shader_addline(buffer, "MIN T%u.x, T%u.x, one.x;\n", dst_reg, dst_reg);
-    shader_addline(buffer, "MAX result.depth, T%u.x, 0.0;\n", dst_reg);
+    shader_addline(buffer, "RCP %s.y, %s.y;\n", dst_name, dst_name);
+    shader_addline(buffer, "MUL %s.x, %s.x, %s.y;\n", dst_name, dst_name, dst_name);
+    shader_addline(buffer, "MIN %s.x, %s.x, one.x;\n", dst_name, dst_name);
+    shader_addline(buffer, "MAX result.depth, %s.x, 0.0;\n", dst_name);
 }
 
 /** Handles transforming all WINED3DSIO_M?x? opcodes for
