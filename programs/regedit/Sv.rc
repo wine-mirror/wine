@@ -281,6 +281,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Kopierar namnet på den valda nyckeln till utklipp"
     ID_EDIT_FIND            "Söker en textsträng i nyckel, värde eller data"
     ID_EDIT_FINDNEXT        "Söker nästa träff till texten specificerad i föregående sökning"
+    ID_EDIT_EXPORT          "Exporterar vald gren av registret till en textfil"
 END
 
 STRINGTABLE DISCARDABLE
