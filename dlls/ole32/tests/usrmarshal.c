@@ -512,7 +512,6 @@ static void test_marshal_WdtpInterfacePointer(void)
     IUnknown *unk;
     IUnknown *unk2;
     unsigned char *wireip;
-    const IID *iid;
 
     /* shows that the WdtpInterfacePointer functions don't marshal anything for
      * NULL pointers, so code using these functions must handle that case
@@ -538,27 +537,32 @@ static void test_marshal_WdtpInterfacePointer(void)
     wireip = buffer;
     if (size >= 0x4c)
     {
+        HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, 0);
+        IStream *stm;
+        void *ptr;
+        LARGE_INTEGER pos;
+        DWORD h_size;
+
         ok(buffer_end == buffer + 0x4c, "buffer_end %p buffer %p\n", buffer_end, buffer);
         ok(*(DWORD *)wireip == 0x44, "wireip + 0x0 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
         ok(*(DWORD *)wireip == 0x44, "wireip + 0x4 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
-        ok(*(DWORD *)wireip == 0x574f454d /* 'MEOW' */, "wireip + 0x8 should be 0x574f454d instead of 0x%08x\n", *(DWORD *)wireip);
-        wireip += sizeof(DWORD);
-        ok(*(DWORD *)wireip == 0x1, "wireip + 0xc should be 0x1 instead of 0x%08x\n", *(DWORD *)wireip);
-        wireip += sizeof(DWORD);
-        iid = (const IID *)wireip;
-        ok(IsEqualIID(iid, &IID_IUnknown),
-           "wireip + 0x10 should be IID_IUnknown instead of {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-           iid->Data1, iid->Data2, iid->Data3,
-           iid->Data4[0], iid->Data4[1], iid->Data4[2], iid->Data4[3],
-           iid->Data4[4], iid->Data4[5], iid->Data4[6], iid->Data4[7]);
-        wireip += sizeof(IID);
-        ok(*(DWORD *)wireip == 0, "wireip + 0x1c should be 0 instead of 0x%08x\n", *(DWORD *)wireip);
-        wireip += sizeof(DWORD);
-        ok(*(DWORD *)wireip == 5, "wireip + 0x20 should be 5 instead of %d\n", *(DWORD *)wireip);
-        wireip += sizeof(DWORD);
-        /* the rest is dynamic so can't really be tested */
+
+        /* The remaining 0x44 bytes are the result of CoMarshalInterface */
+
+        CreateStreamOnHGlobal(h, TRUE, &stm);
+        CoMarshalInterface(stm, &IID_IUnknown, unk, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+        h_size = GlobalSize(h);
+        ok(h_size == 0x44, "size %x\n", h_size);
+
+        ptr = GlobalLock(h);
+        ok(!memcmp(ptr, wireip, 0x44), "buffer mismatch\n");
+        GlobalUnlock(h);
+        pos.QuadPart = 0;
+        IStream_Seek(stm, pos, STREAM_SEEK_SET, NULL);
+        CoReleaseMarshalData(stm);
+        IStream_Release(stm);
     }
 
     unk2 = NULL;
