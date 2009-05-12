@@ -54,6 +54,7 @@ POPUP "&Redigera" {
 POPUP "&Sök" {
   MENUITEM "Sök...",            CMD_SEARCH
   MENUITEM "&Sök nästa\tF3",    CMD_SEARCH_NEXT
+  MENUITEM "&Ersätt...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Hjälp" {
   MENUITEM "&Innehåll",         CMD_HELP_CONTENTS
