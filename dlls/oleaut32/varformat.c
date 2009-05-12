@@ -1305,7 +1305,10 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
           else
           {
             rgbDig[have_int + need_frac] = 0;
-            have_int++;
+            if (exponent < 0)
+              exponent++;
+            else
+              have_int++;
           }
         }
         else
