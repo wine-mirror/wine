@@ -4038,6 +4038,7 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
     struct shader_glsl_priv *priv = This->shader_priv;
     int i;
 
+    ENTER_GL();
     for (i = 0; i < tex_type_count; ++i)
     {
         if (priv->depth_blt_program[i])
@@ -4045,6 +4046,7 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
             GL_EXTCALL(glDeleteObjectARB(priv->depth_blt_program[i]));
         }
     }
+    LEAVE_GL();
 
     hash_table_destroy(priv->glsl_program_lookup, NULL, NULL);
     constant_heap_free(&priv->pconst_heap);

@@ -1838,6 +1838,7 @@ static void shader_arb_free(IWineD3DDevice *iface) {
     struct shader_arb_priv *priv = This->shader_priv;
     int i;
 
+    ENTER_GL();
     if(priv->depth_blt_vprogram_id) {
         GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
     }
@@ -1846,6 +1847,7 @@ static void shader_arb_free(IWineD3DDevice *iface) {
             GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id[i]));
         }
     }
+    LEAVE_GL();
 
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
 }
