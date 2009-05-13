@@ -141,7 +141,6 @@ extern unsigned int DIR_get_drives_info( struct drive_info info[MAX_DOS_DRIVES] 
 /* virtual memory */
 extern void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info );
 extern NTSTATUS virtual_create_system_view( void *base, SIZE_T size, DWORD vprot );
-extern SIZE_T virtual_free_system_view( PVOID *addr_ptr );
 extern NTSTATUS virtual_alloc_thread_stack( TEB *teb, SIZE_T reserve_size, SIZE_T commit_size );
 extern void virtual_clear_thread_stack(void);
 extern BOOL virtual_handle_stack_fault( void *addr );
