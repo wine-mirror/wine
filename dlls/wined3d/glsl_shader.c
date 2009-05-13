@@ -3911,6 +3911,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     if (linked_programs->next) {
         struct glsl_shader_prog_link *entry, *entry2;
 
+        ENTER_GL();
         if(pshader) {
             LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, pshader_entry) {
                 delete_glsl_program_entry(priv, gl_info, entry);
@@ -3920,6 +3921,7 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
                 delete_glsl_program_entry(priv, gl_info, entry);
             }
         }
+        LEAVE_GL();
     }
 
     if(pshader) {
