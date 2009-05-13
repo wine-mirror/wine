@@ -32,7 +32,7 @@ static BOOL compare(FLOAT u, FLOAT v)
     return (fabs(u-v) < admitted_error);
 }
 
-BOOL compare_vec3(D3DXVECTOR3 u, D3DXVECTOR3 v)
+static BOOL compare_vec3(D3DXVECTOR3 u, D3DXVECTOR3 v)
 {
     return ( compare(u.x, v.x) && compare(u.y, v.y) && compare(u.z, v.z) );
 }
