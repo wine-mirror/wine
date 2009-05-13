@@ -115,7 +115,7 @@ static IInternetProtocol *async_protocol = NULL;
 static BOOL first_data_notif = FALSE, http_is_first = FALSE,
     http_post_test = FALSE;
 static int state = 0, prot_state;
-static DWORD bindf = 0, ex_priority = 0;
+static DWORD bindf, ex_priority , pi;
 static IInternetProtocol *binding_protocol;
 static IInternetBindInfo *prot_bind_info;
 static IInternetProtocolSink *binding_sink;
@@ -125,6 +125,7 @@ static BOOL binding_test;
 static PROTOCOLDATA protocoldata, *pdata;
 static DWORD prot_read;
 static BOOL security_problem = FALSE;
+static BOOL async_read_pending;
 
 static enum {
     FILE_TEST,
@@ -1088,7 +1089,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
         PROTOCOLDATA *pProtocolData)
 {
-    DWORD bscf = 0;
+    DWORD bscf = 0, pr;
     HRESULT hres;
 
     CHECK_EXPECT(Continue);
@@ -1121,10 +1122,12 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
         IHttpNegotiate_Release(http_negotiate);
         ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
 
-        SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+        if(!(pi & PI_MIMEVERIFICATION))
+            SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
         hres = IInternetProtocolSink_ReportProgress(binding_sink,
                 BINDSTATUS_MIMETYPEAVAILABLE, text_htmlW);
-        CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        if(!(pi & PI_MIMEVERIFICATION))
+            CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
         ok(hres == S_OK,
            "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
 
@@ -1137,10 +1140,31 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
         break;
     }
 
-    SET_EXPECT(ReportData);
+    pr = prot_read;
+    if(pi & PI_MIMEVERIFICATION) {
+        if(pr < 200)
+            SET_EXPECT(Read);
+        if(pr == 200) {
+            SET_EXPECT(Read);
+            SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+        }
+    }
+    if(!(pi & PI_MIMEVERIFICATION) || pr >= 200)
+        SET_EXPECT(ReportData);
+
     hres = IInternetProtocolSink_ReportData(binding_sink, bscf, 100, 400);
-    CHECK_CALLED(ReportData);
     ok(hres == S_OK, "ReportData failed: %08x\n", hres);
+
+    if(pi & PI_MIMEVERIFICATION) {
+        if(pr < 200)
+            CHECK_CALLED(Read);
+        if(pr == 200) {
+            CLEAR_CALLED(Read);
+            CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+        }
+    }
+    if(!(pi & PI_MIMEVERIFICATION) || pr >= 200)
+        CHECK_CALLED(ReportData);
 
     if(prot_state == 3)
         prot_state = 4;
@@ -1177,14 +1201,26 @@ static HRESULT WINAPI Protocol_Resume(IInternetProtocol *iface)
 static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
         ULONG cb, ULONG *pcbRead)
 {
-    static BOOL b = TRUE;
+    if(pi & PI_MIMEVERIFICATION) {
+        CHECK_EXPECT2(Read);
 
-    CHECK_EXPECT(Read);
+        if(prot_read < 300) {
+            ok(pv != expect_pv, "pv == expect_pv\n");
+            if(prot_read < 300)
+                ok(cb == 2048-prot_read, "cb=%d\n", cb);
+            else
+                ok(cb == 700, "cb=%d\n", cb);
+        }else {
+            ok(expect_pv <= pv && (BYTE*)pv < (BYTE*)expect_pv + cb, "pv != expect_pv\n");
+        }
+    }else {
+        CHECK_EXPECT(Read);
 
-    ok(pv == expect_pv, "pv != expect_pv\n");
-    ok(cb == 1000, "cb=%d\n", cb);
+        ok(pv == expect_pv, "pv != expect_pv\n");
+        ok(cb == 1000, "cb=%d\n", cb);
+        ok(!*pcbRead, "*pcbRead = %d\n", *pcbRead);
+    }
     ok(pcbRead != NULL, "pcbRead == NULL\n");
-    ok(!*pcbRead, "*pcbRead = %d\n", *pcbRead);
 
     if(prot_state == 3) {
         HRESULT hres;
@@ -1196,8 +1232,10 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
         return S_FALSE;
     }
 
-    if((b = !b))
+    if((async_read_pending = !async_read_pending)) {
+        *pcbRead = 0;
         return tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST ? E_PENDING : S_FALSE;
+    }
 
     memset(pv, 'x', 100);
     prot_read += *pcbRead = 100;
@@ -1286,6 +1324,16 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
 };
 
 static IClassFactory ClassFactory = { &ClassFactoryVtbl };
+
+static void init_test(int prot, BOOL is_binding)
+{
+    tested_protocol = prot;
+    binding_test = is_binding;
+    first_data_notif = TRUE;
+    prot_read = 0;
+    prot_state = 0;
+    async_read_pending = TRUE;
+}
 
 static void test_priority(IInternetProtocol *protocol)
 {
@@ -1540,7 +1588,7 @@ static void test_file_protocol(void) {
     static const char html_doc[] = "<HTML></HTML>";
 
     trace("Testing file protocol...\n");
-    tested_protocol = FILE_TEST;
+    init_test(FILE_TEST, FALSE);
 
     SetLastError(0xdeadbeef);
     file = CreateFileW(wszIndexHtml, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
@@ -1849,7 +1897,7 @@ static void test_https_protocol(void)
          '.','c','o','m','/','t','e','s','t','.','h','t','m','l',0};
 
     trace("Testing https protocol (from urlmon)...\n");
-    tested_protocol = HTTPS_TEST;
+    init_test(HTTPS_TEST, FALSE);
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
     test_http_protocol_url(codeweavers_url, TRUE, TRUE);
 }
@@ -1986,7 +2034,7 @@ static void test_mk_protocol(void)
     static const WCHAR wrong_url2[] = {'m','k',':','/','t','e','s','t','.','h','t','m','l',0};
 
     trace("Testing mk protocol...\n");
-    tested_protocol = MK_TEST;
+    init_test(MK_TEST, FALSE);
 
     hres = CoGetClassObject(&CLSID_MkProtocol, CLSCTX_INPROC_SERVER, NULL,
             &IID_IUnknown, (void**)&unk);
@@ -2059,8 +2107,7 @@ static void test_CreateBinding(void)
     static const WCHAR wsz_test[] = {'t','e','s','t',0};
 
     trace("Testing CreateBinding...\n");
-    tested_protocol = BIND_TEST;
-    binding_test = TRUE;
+    init_test(BIND_TEST, TRUE);
 
     hres = CoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
@@ -2168,19 +2215,16 @@ static void test_CreateBinding(void)
     IInternetSession_Release(session);
 }
 
-static void test_binding(int prot)
+static void test_binding(int prot, DWORD grf_pi)
 {
     IInternetProtocol *protocol;
     IInternetSession *session;
     ULONG ref;
     HRESULT hres;
 
-    trace("Testing %s binding...\n", debugstr_w(protocol_names[prot]));
-
-    tested_protocol = prot;
-    binding_test = TRUE;
-    first_data_notif = TRUE;
-    prot_read = 0;
+    trace("Testing %s binding (grfPI %x)...\n", debugstr_w(protocol_names[prot]), grf_pi);
+    init_test(prot, TRUE);
+    pi = grf_pi;
 
     hres = CoInternetGetSession(0, &session, 0);
     ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
@@ -2208,7 +2252,7 @@ static void test_binding(int prot)
     SET_EXPECT(Start);
 
     expect_hrResult = S_OK;
-    hres = IInternetProtocol_Start(protocol, binding_urls[prot], &protocol_sink, &bind_info, 0, 0);
+    hres = IInternetProtocol_Start(protocol, binding_urls[prot], &protocol_sink, &bind_info, pi, 0);
     ok(hres == S_OK, "Start failed: %08x\n", hres);
 
     CHECK_CALLED(QueryService_InternetProtocol);
@@ -2264,8 +2308,10 @@ START_TEST(protocol)
     test_gopher_protocol();
     test_mk_protocol();
     test_CreateBinding();
-    test_binding(FILE_TEST);
-    test_binding(HTTP_TEST);
+    test_binding(FILE_TEST, 0);
+    test_binding(HTTP_TEST, 0);
+    test_binding(FILE_TEST, PI_MIMEVERIFICATION);
+    test_binding(HTTP_TEST, PI_MIMEVERIFICATION);
 
     CloseHandle(event_complete);
     CloseHandle(event_complete2);
