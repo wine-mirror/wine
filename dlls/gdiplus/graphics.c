@@ -2016,6 +2016,9 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     SIZE size;
     RECT drawcoord;
 
+    TRACE("(%p, %s, %i, %p, %s, %p, %p)\n", graphics, debugstr_wn(string, length),
+        length, font, debugstr_rectf(rect), format, brush);
+
     if(!graphics || !string || !font || !brush || !rect)
         return InvalidParameter;
 

@@ -380,3 +380,9 @@ inline void delete_element(region_element* element)
             break;
     }
 }
+
+const char *debugstr_rectf(CONST RectF* rc)
+{
+    if (!rc) return "(null)";
+    return wine_dbg_sprintf("(%0.2f,%0.2f,%0.2f,%0.2f)", rc->X, rc->Y, rc->Width, rc->Height);
+}

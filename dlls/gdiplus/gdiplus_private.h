@@ -69,6 +69,8 @@ static inline REAL deg2rad(REAL degrees)
     return M_PI * degrees / 180.0;
 }
 
+extern const char *debugstr_rectf(CONST RectF* rc);
+
 struct GpPen{
     UINT style;
     GpUnit unit;
