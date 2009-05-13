@@ -50,6 +50,7 @@ struct BindProtocol {
     LONG priority;
 
     BOOL reported_result;
+    BOOL reported_mime;
     BOOL from_urlmon;
     DWORD pi;
 
@@ -59,6 +60,11 @@ struct BindProtocol {
 
     CRITICAL_SECTION section;
     task_header_t *task_queue_head, *task_queue_tail;
+
+    BYTE *buf;
+    DWORD buf_size;
+    LPWSTR mime;
+    LPWSTR url;
 };
 
 #define PROTOCOL(x)  ((IInternetProtocol*) &(x)->lpInternetProtocolVtbl)
@@ -66,6 +72,9 @@ struct BindProtocol {
 #define PRIORITY(x)  ((IInternetPriority*) &(x)->lpInternetPriorityVtbl)
 #define SERVPROV(x)  ((IServiceProvider*)  &(x)->lpServiceProviderVtbl)
 #define PROTSINK(x)  ((IInternetProtocolSink*) &(x)->lpInternetProtocolSinkVtbl)
+
+#define BUFFER_SIZE     2048
+#define MIME_TEST_SIZE  255
 
 #define WM_MK_CONTINUE   (WM_USER+101)
 #define WM_MK_RELEASE    (WM_USER+102)
@@ -272,6 +281,9 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocol *iface)
         if(This->notif_hwnd)
             release_notif_hwnd(This->notif_hwnd);
         DeleteCriticalSection(&This->section);
+
+        heap_free(This->mime);
+        heap_free(This->url);
         heap_free(This);
 
         URLMON_UnlockModule();
@@ -300,6 +312,7 @@ static HRESULT WINAPI BindProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
         return E_INVALIDARG;
 
     This->pi = grfPI;
+    This->url = heap_strdupW(szUrl);
 
     hres = IInternetProtocolSink_QueryInterface(pOIProtSink, &IID_IServiceProvider,
                                                 (void**)&service_provider);
@@ -417,11 +430,30 @@ static HRESULT WINAPI BindProtocol_Read(IInternetProtocol *iface, void *pv,
 {
     BindProtocol *This = PROTOCOL_THIS(iface);
     ULONG read = 0;
-    HRESULT hres;
+    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%p %u %p)\n", This, pv, cb, pcbRead);
 
-    hres = IInternetProtocol_Read(This->protocol, pv, cb, &read);
+    if(This->buf) {
+        read = min(cb, This->buf_size);
+        memcpy(pv, This->buf, read);
+
+        if(read == This->buf_size) {
+            heap_free(This->buf);
+            This->buf = NULL;
+        }else {
+            memmove(This->buf, This->buf+cb, This->buf_size-cb);
+        }
+
+        This->buf_size -= read;
+    }
+
+    if(read < cb) {
+        ULONG cread = 0;
+
+        hres = IInternetProtocol_Read(This->protocol, (BYTE*)pv+read, cb, &cread);
+        read += cread;
+    }
 
     *pcbRead = read;
     return hres;
@@ -674,6 +706,47 @@ static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface
     return IInternetProtocolSink_Switch(This->protocol_sink, pProtocolData);
 }
 
+static void report_progress(BindProtocol *This, ULONG status_code, LPCWSTR status_text)
+{
+    switch(status_code) {
+    case BINDSTATUS_FINDINGRESOURCE:
+    case BINDSTATUS_CONNECTING:
+    case BINDSTATUS_BEGINDOWNLOADDATA:
+    case BINDSTATUS_SENDINGREQUEST:
+    case BINDSTATUS_CACHEFILENAMEAVAILABLE:
+    case BINDSTATUS_DIRECTBIND:
+    case BINDSTATUS_ACCEPTRANGES:
+        if(This->protocol_sink)
+            IInternetProtocolSink_ReportProgress(This->protocol_sink, status_code, status_text);
+        break;
+
+    case BINDSTATUS_MIMETYPEAVAILABLE:
+        if(!This->reported_mime) {
+            heap_free(This->mime);
+            This->mime = heap_strdupW(status_text);
+        }
+
+        if(This->protocol_sink && !(This->pi & PI_MIMEVERIFICATION))
+            IInternetProtocolSink_ReportProgress(This->protocol_sink, status_code, status_text);
+        break;
+
+    case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
+        if(!This->reported_mime) {
+            heap_free(This->mime);
+            This->mime = heap_strdupW(status_text);
+        }
+
+        if(This->protocol_sink) {
+            This->reported_mime = TRUE;
+            IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_MIMETYPEAVAILABLE, status_text);
+        }
+        break;
+
+    default:
+        FIXME("unsupported ulStatusCode %u\n", status_code);
+    }
+}
+
 typedef struct {
     task_header_t header;
 
@@ -685,26 +758,10 @@ static void on_progress_proc(BindProtocol *This, task_header_t *t)
 {
     on_progress_task_t *task = (on_progress_task_t*)t;
 
-    IInternetProtocolSink_ReportProgress(This->protocol_sink, task->status_code, task->status_text);
+    report_progress(This, task->status_code, task->status_text);
 
     heap_free(task->status_text);
     heap_free(task);
-}
-
-static void report_progress(BindProtocol *This, ULONG status_code, LPCWSTR status_text)
-{
-    if(do_direct_notif(This)) {
-        IInternetProtocolSink_ReportProgress(This->protocol_sink, status_code, status_text);
-    }else {
-        on_progress_task_t *task;
-
-        task = heap_alloc(sizeof(on_progress_task_t));
-
-        task->status_code = status_code;
-        task->status_text = heap_strdupW(status_text);
-
-        push_task(This, &task->header, on_progress_proc);
-    }
 }
 
 static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSink *iface,
@@ -714,34 +771,66 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSin
 
     TRACE("(%p)->(%u %s)\n", This, ulStatusCode, debugstr_w(szStatusText));
 
-    switch(ulStatusCode) {
-    case BINDSTATUS_FINDINGRESOURCE:
-    case BINDSTATUS_CONNECTING:
-    case BINDSTATUS_BEGINDOWNLOADDATA:
-    case BINDSTATUS_SENDINGREQUEST:
-    case BINDSTATUS_CACHEFILENAMEAVAILABLE:
-    case BINDSTATUS_DIRECTBIND:
-    case BINDSTATUS_ACCEPTRANGES:
-    case BINDSTATUS_MIMETYPEAVAILABLE:
-        if(!This->protocol_sink)
-            return S_OK;
+    if(do_direct_notif(This)) {
         report_progress(This, ulStatusCode, szStatusText);
-        break;
+    }else {
+        on_progress_task_t *task;
 
-    case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
-        if(!This->protocol_sink)
-            return S_OK;
-        report_progress(This,
-                This->from_urlmon ? BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE : BINDSTATUS_MIMETYPEAVAILABLE,
-                szStatusText);
-        break;
+        task = heap_alloc(sizeof(on_progress_task_t));
 
-    default:
-        FIXME("unsupported ulStatusCode %u\n", ulStatusCode);
-        return E_NOTIMPL;
+        task->status_code = ulStatusCode;
+        task->status_text = heap_strdupW(szStatusText);
+
+        push_task(This, &task->header, on_progress_proc);
     }
 
     return S_OK;
+}
+
+static HRESULT report_data(BindProtocol *This, DWORD bscf, ULONG progress, ULONG progress_max)
+{
+    if(!This->protocol_sink)
+        return S_OK;
+
+    if((This->pi & PI_MIMEVERIFICATION) && !This->reported_mime) {
+        DWORD read = 0;
+        LPWSTR mime;
+        HRESULT hres;
+
+        if(!This->buf) {
+            This->buf = heap_alloc(BUFFER_SIZE);
+            if(!This->buf)
+                return E_OUTOFMEMORY;
+        }
+
+        do {
+            read = 0;
+            hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size, BUFFER_SIZE-This->buf_size, &read);
+            if(hres != S_OK)
+                break;
+            This->buf_size += read;
+        }while(This->buf_size < MIME_TEST_SIZE);
+        if(FAILED(hres) && hres != E_PENDING)
+            return hres;
+
+        This->buf_size += read;
+        if(This->buf_size < MIME_TEST_SIZE && hres != S_FALSE)
+            return S_OK;
+
+
+        hres = FindMimeFromData(NULL, This->url, This->buf, min(This->buf_size, MIME_TEST_SIZE), This->mime, 0, &mime, 0);
+        if(FAILED(hres))
+            return hres;
+
+        heap_free(This->mime);
+        This->mime = heap_strdupW(mime);
+        CoTaskMemFree(mime);
+
+        This->reported_mime = TRUE;
+        IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_MIMETYPEAVAILABLE, This->mime);
+    }
+
+    return IInternetProtocolSink_ReportData(This->protocol_sink, bscf, progress, progress_max);
 }
 
 typedef struct {
@@ -755,9 +844,7 @@ static void report_data_proc(BindProtocol *This, task_header_t *t)
 {
     report_data_task_t *task = (report_data_task_t*)t;
 
-    if(This->protocol_sink)
-        IInternetProtocolSink_ReportData(This->protocol_sink, task->bscf, task->progress, task->progress_max);
-
+    report_data(This, task->bscf, task->progress, task->progress_max);
     heap_free(task);
 }
 
@@ -786,7 +873,7 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportData(IInternetProtocolSink *i
         return S_OK;
     }
 
-    return IInternetProtocolSink_ReportData(This->protocol_sink, grfBSCF, ulProgress, ulProgressMax);
+    return report_data(This, grfBSCF, ulProgress, ulProgressMax);
 }
 
 typedef struct {
