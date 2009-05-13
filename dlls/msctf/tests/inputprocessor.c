@@ -55,10 +55,600 @@ static INT  test_OnPushContext = SINK_UNEXPECTED;
 static INT  test_OnPopContext = SINK_UNEXPECTED;
 static INT  test_KEV_OnSetFocus = SINK_UNEXPECTED;
 
-HRESULT RegisterTextService(REFCLSID rclsid);
-HRESULT UnregisterTextService();
-HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut);
-HRESULT TextStoreACP_Constructor(IUnknown **ppOut);
+
+/**********************************************************************
+ * ITextStoreACP
+ **********************************************************************/
+typedef struct tagTextStoreACP
+{
+    const ITextStoreACPVtbl *TextStoreACPVtbl;
+    LONG refCount;
+} TextStoreACP;
+
+static void TextStoreACP_Destructor(TextStoreACP *This)
+{
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI TextStoreACP_QueryInterface(ITextStoreACP *iface, REFIID iid, LPVOID *ppvOut)
+{
+    TextStoreACP *This = (TextStoreACP *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITextStoreACP))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TextStoreACP_AddRef(ITextStoreACP *iface)
+{
+    TextStoreACP *This = (TextStoreACP *)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI TextStoreACP_Release(ITextStoreACP *iface)
+{
+    TextStoreACP *This = (TextStoreACP *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        TextStoreACP_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
+    REFIID riid, IUnknown *punk, DWORD dwMask)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI TextStoreACP_UnadviseSink(ITextStoreACP *iface,
+    IUnknown *punk)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RequestLock(ITextStoreACP *iface,
+    DWORD dwLockFlags, HRESULT *phrSession)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetStatus(ITextStoreACP *iface,
+    TS_STATUS *pdcs)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_QueryInsert(ITextStoreACP *iface,
+    LONG acpTestStart, LONG acpTestEnd, ULONG cch, LONG *pacpResultStart,
+    LONG *pacpResultEnd)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetSelection(ITextStoreACP *iface,
+    ULONG ulIndex, ULONG ulCount, TS_SELECTION_ACP *pSelection, ULONG *pcFetched)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_SetSelection(ITextStoreACP *iface,
+    ULONG ulCount, const TS_SELECTION_ACP *pSelection)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetText(ITextStoreACP *iface,
+    LONG acpStart, LONG acpEnd, WCHAR *pchPlain, ULONG cchPlainReq,
+    ULONG *pcchPlainRet, TS_RUNINFO *prgRunInfo, ULONG cRunInfoReq,
+    ULONG *pcRunInfoRet, LONG *pacpNext)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_SetText(ITextStoreACP *iface,
+    DWORD dwFlags, LONG acpStart, LONG acpEnd, const WCHAR *pchText,
+    ULONG cch, TS_TEXTCHANGE *pChange)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetFormattedText(ITextStoreACP *iface,
+    LONG acpStart, LONG acpEnd, IDataObject **ppDataObject)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetEmbedded(ITextStoreACP *iface,
+    LONG acpPos, REFGUID rguidService, REFIID riid, IUnknown **ppunk)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_QueryInsertEmbedded(ITextStoreACP *iface,
+    const GUID *pguidService, const FORMATETC *pFormatEtc, BOOL *pfInsertable)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_InsertEmbedded(ITextStoreACP *iface,
+    DWORD dwFlags, LONG acpStart, LONG acpEnd, IDataObject *pDataObject,
+    TS_TEXTCHANGE *pChange)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_InsertTextAtSelection(ITextStoreACP *iface,
+    DWORD dwFlags, const WCHAR *pchText, ULONG cch, LONG *pacpStart,
+    LONG *pacpEnd, TS_TEXTCHANGE *pChange)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_InsertEmbeddedAtSelection(ITextStoreACP *iface,
+    DWORD dwFlags, IDataObject *pDataObject, LONG *pacpStart, LONG *pacpEnd,
+    TS_TEXTCHANGE *pChange)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RequestSupportedAttrs(ITextStoreACP *iface,
+    DWORD dwFlags, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RequestAttrsAtPosition(ITextStoreACP *iface,
+    LONG acpPos, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs,
+    DWORD dwFlags)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RequestAttrsTransitioningAtPosition(ITextStoreACP *iface,
+    LONG acpPos, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs,
+    DWORD dwFlags)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_FindNextAttrTransition(ITextStoreACP *iface,
+    LONG acpStart, LONG acpHalt, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs,
+    DWORD dwFlags, LONG *pacpNext, BOOL *pfFound, LONG *plFoundOffset)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_RetrieveRequestedAttrs(ITextStoreACP *iface,
+    ULONG ulCount, TS_ATTRVAL *paAttrVals, ULONG *pcFetched)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetEndACP(ITextStoreACP *iface,
+    LONG *pacp)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetActiveView(ITextStoreACP *iface,
+    TsViewCookie *pvcView)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetACPFromPoint(ITextStoreACP *iface,
+    TsViewCookie vcView, const POINT *ptScreen, DWORD dwFlags,
+    LONG *pacp)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetTextExt(ITextStoreACP *iface,
+    TsViewCookie vcView, LONG acpStart, LONG acpEnd, RECT *prc,
+    BOOL *pfClipped)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetScreenExt(ITextStoreACP *iface,
+    TsViewCookie vcView, RECT *prc)
+{
+    trace("\n");
+    return S_OK;
+}
+static HRESULT WINAPI TextStoreACP_GetWnd(ITextStoreACP *iface,
+    TsViewCookie vcView, HWND *phwnd)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static const ITextStoreACPVtbl TextStoreACP_TextStoreACPVtbl =
+{
+    TextStoreACP_QueryInterface,
+    TextStoreACP_AddRef,
+    TextStoreACP_Release,
+
+    TextStoreACP_AdviseSink,
+    TextStoreACP_UnadviseSink,
+    TextStoreACP_RequestLock,
+    TextStoreACP_GetStatus,
+    TextStoreACP_QueryInsert,
+    TextStoreACP_GetSelection,
+    TextStoreACP_SetSelection,
+    TextStoreACP_GetText,
+    TextStoreACP_SetText,
+    TextStoreACP_GetFormattedText,
+    TextStoreACP_GetEmbedded,
+    TextStoreACP_QueryInsertEmbedded,
+    TextStoreACP_InsertEmbedded,
+    TextStoreACP_InsertTextAtSelection,
+    TextStoreACP_InsertEmbeddedAtSelection,
+    TextStoreACP_RequestSupportedAttrs,
+    TextStoreACP_RequestAttrsAtPosition,
+    TextStoreACP_RequestAttrsTransitioningAtPosition,
+    TextStoreACP_FindNextAttrTransition,
+    TextStoreACP_RetrieveRequestedAttrs,
+    TextStoreACP_GetEndACP,
+    TextStoreACP_GetActiveView,
+    TextStoreACP_GetACPFromPoint,
+    TextStoreACP_GetTextExt,
+    TextStoreACP_GetScreenExt,
+    TextStoreACP_GetWnd
+};
+
+HRESULT TextStoreACP_Constructor(IUnknown **ppOut)
+{
+    TextStoreACP *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TextStoreACP));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->TextStoreACPVtbl = &TextStoreACP_TextStoreACPVtbl;
+    This->refCount = 1;
+
+    *ppOut = (IUnknown *)This;
+    return S_OK;
+}
+
+/**********************************************************************
+ * ITfThreadMgrEventSink
+ **********************************************************************/
+typedef struct tagThreadMgrEventSink
+{
+    const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl;
+    LONG refCount;
+} ThreadMgrEventSink;
+
+static void ThreadMgrEventSink_Destructor(ThreadMgrEventSink *This)
+{
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *iface, REFIID iid, LPVOID *ppvOut)
+{
+    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfThreadMgrEventSink))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ThreadMgrEventSink_AddRef(ITfThreadMgrEventSink *iface)
+{
+    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
+    ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI ThreadMgrEventSink_Release(ITfThreadMgrEventSink *iface)
+{
+    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
+    ULONG ret;
+
+    ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        ThreadMgrEventSink_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnInitDocumentMgr(ITfThreadMgrEventSink *iface,
+ITfDocumentMgr *pdim)
+{
+    ok(test_OnInitDocumentMgr == SINK_EXPECTED, "Unexpected OnInitDocumentMgr sink\n");
+    test_OnInitDocumentMgr = SINK_FIRED;
+    return S_OK;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnUninitDocumentMgr(ITfThreadMgrEventSink *iface,
+ITfDocumentMgr *pdim)
+{
+    trace("\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnSetFocus(ITfThreadMgrEventSink *iface,
+ITfDocumentMgr *pdimFocus, ITfDocumentMgr *pdimPrevFocus)
+{
+    ok(test_OnSetFocus == SINK_EXPECTED, "Unexpected OnSetFocus sink\n");
+    ok(pdimFocus == test_CurrentFocus,"Sink reports wrong focus\n");
+    ok(pdimPrevFocus == test_PrevFocus,"Sink reports wrong previous focus\n");
+    test_OnSetFocus = SINK_FIRED;
+    return S_OK;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnPushContext(ITfThreadMgrEventSink *iface,
+ITfContext *pic)
+{
+    ok(test_OnPushContext == SINK_EXPECTED, "Unexpected OnPushContext sink\n");
+    test_OnPushContext = SINK_FIRED;
+    return S_OK;
+}
+
+static HRESULT WINAPI ThreadMgrEventSink_OnPopContext(ITfThreadMgrEventSink *iface,
+ITfContext *pic)
+{
+    ok(test_OnPopContext == SINK_EXPECTED, "Unexpected OnPopContext sink\n");
+    test_OnPopContext = SINK_FIRED;
+    return S_OK;
+}
+
+static const ITfThreadMgrEventSinkVtbl ThreadMgrEventSink_ThreadMgrEventSinkVtbl =
+{
+    ThreadMgrEventSink_QueryInterface,
+    ThreadMgrEventSink_AddRef,
+    ThreadMgrEventSink_Release,
+
+    ThreadMgrEventSink_OnInitDocumentMgr,
+    ThreadMgrEventSink_OnUninitDocumentMgr,
+    ThreadMgrEventSink_OnSetFocus,
+    ThreadMgrEventSink_OnPushContext,
+    ThreadMgrEventSink_OnPopContext
+};
+
+HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut)
+{
+    ThreadMgrEventSink *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ThreadMgrEventSink));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->ThreadMgrEventSinkVtbl = &ThreadMgrEventSink_ThreadMgrEventSinkVtbl;
+    This->refCount = 1;
+
+    *ppOut = (IUnknown *)This;
+    return S_OK;
+}
+
+
+/********************************************************************************************
+ * Stub text service for testing
+ ********************************************************************************************/
+
+static LONG TS_refCount;
+static IClassFactory *cf;
+static DWORD regid;
+
+typedef HRESULT (*LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
+
+typedef struct tagClassFactory
+{
+    const IClassFactoryVtbl *vtbl;
+    LONG   ref;
+    LPFNCONSTRUCTOR ctor;
+} ClassFactory;
+
+typedef struct tagTextService
+{
+    const ITfTextInputProcessorVtbl *TextInputProcessorVtbl;
+    LONG refCount;
+} TextService;
+
+static void ClassFactory_Destructor(ClassFactory *This)
+{
+    HeapFree(GetProcessHeap(),0,This);
+    TS_refCount--;
+}
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppvOut)
+{
+    *ppvOut = NULL;
+    if (IsEqualIID(riid, &IID_IClassFactory) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        IClassFactory_AddRef(iface);
+        *ppvOut = iface;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    ClassFactory *This = (ClassFactory *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    ClassFactory *This = (ClassFactory *)iface;
+    ULONG ret = InterlockedDecrement(&This->ref);
+
+    if (ret == 0)
+        ClassFactory_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *punkOuter, REFIID iid, LPVOID *ppvOut)
+{
+    ClassFactory *This = (ClassFactory *)iface;
+    HRESULT ret;
+    IUnknown *obj;
+
+    ret = This->ctor(punkOuter, &obj);
+    if (FAILED(ret))
+        return ret;
+    ret = IUnknown_QueryInterface(obj, iid, ppvOut);
+    IUnknown_Release(obj);
+    return ret;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    if(fLock)
+        InterlockedIncrement(&TS_refCount);
+    else
+        InterlockedDecrement(&TS_refCount);
+
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl = {
+    /* IUnknown */
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+
+    /* IClassFactory*/
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
+{
+    ClassFactory *This = HeapAlloc(GetProcessHeap(),0,sizeof(ClassFactory));
+    This->vtbl = &ClassFactoryVtbl;
+    This->ref = 1;
+    This->ctor = ctor;
+    *ppvOut = (LPVOID)This;
+    TS_refCount++;
+    return S_OK;
+}
+
+static void TextService_Destructor(TextService *This)
+{
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI TextService_QueryInterface(ITfTextInputProcessor *iface, REFIID iid, LPVOID *ppvOut)
+{
+    TextService *This = (TextService *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfTextInputProcessor))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TextService_AddRef(ITfTextInputProcessor *iface)
+{
+    TextService *This = (TextService *)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI TextService_Release(ITfTextInputProcessor *iface)
+{
+    TextService *This = (TextService *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        TextService_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI TextService_Activate(ITfTextInputProcessor *iface,
+        ITfThreadMgr *ptim, TfClientId id)
+{
+    trace("TextService_Activate\n");
+    ok(test_ShouldActivate,"Activation came unexpectedly\n");
+    tid = id;
+    return S_OK;
+}
+
+static HRESULT WINAPI TextService_Deactivate(ITfTextInputProcessor *iface)
+{
+    trace("TextService_Deactivate\n");
+    ok(test_ShouldDeactivate,"Deactivation came unexpectedly\n");
+    return S_OK;
+}
+
+static const ITfTextInputProcessorVtbl TextService_TextInputProcessorVtbl=
+{
+    TextService_QueryInterface,
+    TextService_AddRef,
+    TextService_Release,
+
+    TextService_Activate,
+    TextService_Deactivate
+};
+
+HRESULT TextService_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
+{
+    TextService *This;
+    if (pUnkOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TextService));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->TextInputProcessorVtbl= &TextService_TextInputProcessorVtbl;
+    This->refCount = 1;
+
+    *ppOut = (IUnknown *)This;
+    return S_OK;
+}
+
+HRESULT RegisterTextService(REFCLSID rclsid)
+{
+    ClassFactory_Constructor( TextService_Constructor ,(LPVOID*)&cf);
+    return CoRegisterClassObject(rclsid, (IUnknown*) cf, CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
+}
+
+HRESULT UnregisterTextService()
+{
+    return CoRevokeClassObject(regid);
+}
+
+/*
+ * The tests
+ */
 
 DEFINE_GUID(CLSID_FakeService, 0xEDE1A7AD,0x66DE,0x47E0,0xB6,0x20,0x3E,0x92,0xF8,0x24,0x6B,0xF3);
 DEFINE_GUID(CLSID_TF_InputProcessorProfiles, 0x33c53a50,0xf456,0x4884,0xb0,0x49,0x85,0xfd,0x64,0x3e,0xcf,0xed);
@@ -722,594 +1312,4 @@ START_TEST(inputprocessor)
     else
         skip("Unable to create InputProcessor\n");
     cleanup();
-}
-
-/**********************************************************************
- * ITextStoreACP
- **********************************************************************/
-typedef struct tagTextStoreACP
-{
-    const ITextStoreACPVtbl *TextStoreACPVtbl;
-    LONG refCount;
-} TextStoreACP;
-
-static void TextStoreACP_Destructor(TextStoreACP *This)
-{
-    HeapFree(GetProcessHeap(),0,This);
-}
-
-static HRESULT WINAPI TextStoreACP_QueryInterface(ITextStoreACP *iface, REFIID iid, LPVOID *ppvOut)
-{
-    TextStoreACP *This = (TextStoreACP *)iface;
-    *ppvOut = NULL;
-
-    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITextStoreACP))
-    {
-        *ppvOut = This;
-    }
-
-    if (*ppvOut)
-    {
-        IUnknown_AddRef(iface);
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI TextStoreACP_AddRef(ITextStoreACP *iface)
-{
-    TextStoreACP *This = (TextStoreACP *)iface;
-    return InterlockedIncrement(&This->refCount);
-}
-
-static ULONG WINAPI TextStoreACP_Release(ITextStoreACP *iface)
-{
-    TextStoreACP *This = (TextStoreACP *)iface;
-    ULONG ret;
-
-    ret = InterlockedDecrement(&This->refCount);
-    if (ret == 0)
-        TextStoreACP_Destructor(This);
-    return ret;
-}
-
-static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
-    REFIID riid, IUnknown *punk, DWORD dwMask)
-{
-    trace("\n");
-    return S_OK;
-}
-
-static HRESULT WINAPI TextStoreACP_UnadviseSink(ITextStoreACP *iface,
-    IUnknown *punk)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_RequestLock(ITextStoreACP *iface,
-    DWORD dwLockFlags, HRESULT *phrSession)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetStatus(ITextStoreACP *iface,
-    TS_STATUS *pdcs)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_QueryInsert(ITextStoreACP *iface,
-    LONG acpTestStart, LONG acpTestEnd, ULONG cch, LONG *pacpResultStart,
-    LONG *pacpResultEnd)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetSelection(ITextStoreACP *iface,
-    ULONG ulIndex, ULONG ulCount, TS_SELECTION_ACP *pSelection, ULONG *pcFetched)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_SetSelection(ITextStoreACP *iface,
-    ULONG ulCount, const TS_SELECTION_ACP *pSelection)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetText(ITextStoreACP *iface,
-    LONG acpStart, LONG acpEnd, WCHAR *pchPlain, ULONG cchPlainReq,
-    ULONG *pcchPlainRet, TS_RUNINFO *prgRunInfo, ULONG cRunInfoReq,
-    ULONG *pcRunInfoRet, LONG *pacpNext)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_SetText(ITextStoreACP *iface,
-    DWORD dwFlags, LONG acpStart, LONG acpEnd, const WCHAR *pchText,
-    ULONG cch, TS_TEXTCHANGE *pChange)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetFormattedText(ITextStoreACP *iface,
-    LONG acpStart, LONG acpEnd, IDataObject **ppDataObject)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetEmbedded(ITextStoreACP *iface,
-    LONG acpPos, REFGUID rguidService, REFIID riid, IUnknown **ppunk)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_QueryInsertEmbedded(ITextStoreACP *iface,
-    const GUID *pguidService, const FORMATETC *pFormatEtc, BOOL *pfInsertable)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_InsertEmbedded(ITextStoreACP *iface,
-    DWORD dwFlags, LONG acpStart, LONG acpEnd, IDataObject *pDataObject,
-    TS_TEXTCHANGE *pChange)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_InsertTextAtSelection(ITextStoreACP *iface,
-    DWORD dwFlags, const WCHAR *pchText, ULONG cch, LONG *pacpStart,
-    LONG *pacpEnd, TS_TEXTCHANGE *pChange)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_InsertEmbeddedAtSelection(ITextStoreACP *iface,
-    DWORD dwFlags, IDataObject *pDataObject, LONG *pacpStart, LONG *pacpEnd,
-    TS_TEXTCHANGE *pChange)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_RequestSupportedAttrs(ITextStoreACP *iface,
-    DWORD dwFlags, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_RequestAttrsAtPosition(ITextStoreACP *iface,
-    LONG acpPos, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs,
-    DWORD dwFlags)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_RequestAttrsTransitioningAtPosition(ITextStoreACP *iface,
-    LONG acpPos, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs,
-    DWORD dwFlags)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_FindNextAttrTransition(ITextStoreACP *iface,
-    LONG acpStart, LONG acpHalt, ULONG cFilterAttrs, const TS_ATTRID *paFilterAttrs,
-    DWORD dwFlags, LONG *pacpNext, BOOL *pfFound, LONG *plFoundOffset)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_RetrieveRequestedAttrs(ITextStoreACP *iface,
-    ULONG ulCount, TS_ATTRVAL *paAttrVals, ULONG *pcFetched)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetEndACP(ITextStoreACP *iface,
-    LONG *pacp)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetActiveView(ITextStoreACP *iface,
-    TsViewCookie *pvcView)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetACPFromPoint(ITextStoreACP *iface,
-    TsViewCookie vcView, const POINT *ptScreen, DWORD dwFlags,
-    LONG *pacp)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetTextExt(ITextStoreACP *iface,
-    TsViewCookie vcView, LONG acpStart, LONG acpEnd, RECT *prc,
-    BOOL *pfClipped)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetScreenExt(ITextStoreACP *iface,
-    TsViewCookie vcView, RECT *prc)
-{
-    trace("\n");
-    return S_OK;
-}
-static HRESULT WINAPI TextStoreACP_GetWnd(ITextStoreACP *iface,
-    TsViewCookie vcView, HWND *phwnd)
-{
-    trace("\n");
-    return S_OK;
-}
-
-static const ITextStoreACPVtbl TextStoreACP_TextStoreACPVtbl =
-{
-    TextStoreACP_QueryInterface,
-    TextStoreACP_AddRef,
-    TextStoreACP_Release,
-
-    TextStoreACP_AdviseSink,
-    TextStoreACP_UnadviseSink,
-    TextStoreACP_RequestLock,
-    TextStoreACP_GetStatus,
-    TextStoreACP_QueryInsert,
-    TextStoreACP_GetSelection,
-    TextStoreACP_SetSelection,
-    TextStoreACP_GetText,
-    TextStoreACP_SetText,
-    TextStoreACP_GetFormattedText,
-    TextStoreACP_GetEmbedded,
-    TextStoreACP_QueryInsertEmbedded,
-    TextStoreACP_InsertEmbedded,
-    TextStoreACP_InsertTextAtSelection,
-    TextStoreACP_InsertEmbeddedAtSelection,
-    TextStoreACP_RequestSupportedAttrs,
-    TextStoreACP_RequestAttrsAtPosition,
-    TextStoreACP_RequestAttrsTransitioningAtPosition,
-    TextStoreACP_FindNextAttrTransition,
-    TextStoreACP_RetrieveRequestedAttrs,
-    TextStoreACP_GetEndACP,
-    TextStoreACP_GetActiveView,
-    TextStoreACP_GetACPFromPoint,
-    TextStoreACP_GetTextExt,
-    TextStoreACP_GetScreenExt,
-    TextStoreACP_GetWnd
-};
-
-HRESULT TextStoreACP_Constructor(IUnknown **ppOut)
-{
-    TextStoreACP *This;
-
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TextStoreACP));
-    if (This == NULL)
-        return E_OUTOFMEMORY;
-
-    This->TextStoreACPVtbl = &TextStoreACP_TextStoreACPVtbl;
-    This->refCount = 1;
-
-    *ppOut = (IUnknown *)This;
-    return S_OK;
-}
-
-/**********************************************************************
- * ITfThreadMgrEventSink
- **********************************************************************/
-typedef struct tagThreadMgrEventSink
-{
-    const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl;
-    LONG refCount;
-} ThreadMgrEventSink;
-
-static void ThreadMgrEventSink_Destructor(ThreadMgrEventSink *This)
-{
-    HeapFree(GetProcessHeap(),0,This);
-}
-
-static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *iface, REFIID iid, LPVOID *ppvOut)
-{
-    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
-    *ppvOut = NULL;
-
-    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfThreadMgrEventSink))
-    {
-        *ppvOut = This;
-    }
-
-    if (*ppvOut)
-    {
-        IUnknown_AddRef(iface);
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI ThreadMgrEventSink_AddRef(ITfThreadMgrEventSink *iface)
-{
-    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
-    ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
-    return InterlockedIncrement(&This->refCount);
-}
-
-static ULONG WINAPI ThreadMgrEventSink_Release(ITfThreadMgrEventSink *iface)
-{
-    ThreadMgrEventSink *This = (ThreadMgrEventSink *)iface;
-    ULONG ret;
-
-    ok (tmSinkRefCount == This->refCount,"ThreadMgrEventSink refcount off %i vs %i\n",This->refCount,tmSinkRefCount);
-    ret = InterlockedDecrement(&This->refCount);
-    if (ret == 0)
-        ThreadMgrEventSink_Destructor(This);
-    return ret;
-}
-
-static HRESULT WINAPI ThreadMgrEventSink_OnInitDocumentMgr(ITfThreadMgrEventSink *iface,
-ITfDocumentMgr *pdim)
-{
-    ok(test_OnInitDocumentMgr == SINK_EXPECTED, "Unexpected OnInitDocumentMgr sink\n");
-    test_OnInitDocumentMgr = SINK_FIRED;
-    return S_OK;
-}
-
-static HRESULT WINAPI ThreadMgrEventSink_OnUninitDocumentMgr(ITfThreadMgrEventSink *iface,
-ITfDocumentMgr *pdim)
-{
-    trace("\n");
-    return S_OK;
-}
-
-static HRESULT WINAPI ThreadMgrEventSink_OnSetFocus(ITfThreadMgrEventSink *iface,
-ITfDocumentMgr *pdimFocus, ITfDocumentMgr *pdimPrevFocus)
-{
-    ok(test_OnSetFocus == SINK_EXPECTED, "Unexpected OnSetFocus sink\n");
-    ok(pdimFocus == test_CurrentFocus,"Sink reports wrong focus\n");
-    ok(pdimPrevFocus == test_PrevFocus,"Sink reports wrong previous focus\n");
-    test_OnSetFocus = SINK_FIRED;
-    return S_OK;
-}
-
-static HRESULT WINAPI ThreadMgrEventSink_OnPushContext(ITfThreadMgrEventSink *iface,
-ITfContext *pic)
-{
-    ok(test_OnPushContext == SINK_EXPECTED, "Unexpected OnPushContext sink\n");
-    test_OnPushContext = SINK_FIRED;
-    return S_OK;
-}
-
-static HRESULT WINAPI ThreadMgrEventSink_OnPopContext(ITfThreadMgrEventSink *iface,
-ITfContext *pic)
-{
-    ok(test_OnPopContext == SINK_EXPECTED, "Unexpected OnPopContext sink\n");
-    test_OnPopContext = SINK_FIRED;
-    return S_OK;
-}
-
-static const ITfThreadMgrEventSinkVtbl ThreadMgrEventSink_ThreadMgrEventSinkVtbl =
-{
-    ThreadMgrEventSink_QueryInterface,
-    ThreadMgrEventSink_AddRef,
-    ThreadMgrEventSink_Release,
-
-    ThreadMgrEventSink_OnInitDocumentMgr,
-    ThreadMgrEventSink_OnUninitDocumentMgr,
-    ThreadMgrEventSink_OnSetFocus,
-    ThreadMgrEventSink_OnPushContext,
-    ThreadMgrEventSink_OnPopContext
-};
-
-HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut)
-{
-    ThreadMgrEventSink *This;
-
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(ThreadMgrEventSink));
-    if (This == NULL)
-        return E_OUTOFMEMORY;
-
-    This->ThreadMgrEventSinkVtbl = &ThreadMgrEventSink_ThreadMgrEventSinkVtbl;
-    This->refCount = 1;
-
-    *ppOut = (IUnknown *)This;
-    return S_OK;
-}
-
-
-/********************************************************************************************
- * Stub text service for testing
- ********************************************************************************************/
-
-static LONG TS_refCount;
-static IClassFactory *cf;
-static DWORD regid;
-
-typedef HRESULT (*LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
-
-typedef struct tagClassFactory
-{
-    const IClassFactoryVtbl *vtbl;
-    LONG   ref;
-    LPFNCONSTRUCTOR ctor;
-} ClassFactory;
-
-typedef struct tagTextService
-{
-    const ITfTextInputProcessorVtbl *TextInputProcessorVtbl;
-    LONG refCount;
-} TextService;
-
-static void ClassFactory_Destructor(ClassFactory *This)
-{
-    HeapFree(GetProcessHeap(),0,This);
-    TS_refCount--;
-}
-
-static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppvOut)
-{
-    *ppvOut = NULL;
-    if (IsEqualIID(riid, &IID_IClassFactory) || IsEqualIID(riid, &IID_IUnknown))
-    {
-        IClassFactory_AddRef(iface);
-        *ppvOut = iface;
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
-{
-    ClassFactory *This = (ClassFactory *)iface;
-    return InterlockedIncrement(&This->ref);
-}
-
-static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
-{
-    ClassFactory *This = (ClassFactory *)iface;
-    ULONG ret = InterlockedDecrement(&This->ref);
-
-    if (ret == 0)
-        ClassFactory_Destructor(This);
-    return ret;
-}
-
-static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *punkOuter, REFIID iid, LPVOID *ppvOut)
-{
-    ClassFactory *This = (ClassFactory *)iface;
-    HRESULT ret;
-    IUnknown *obj;
-
-    ret = This->ctor(punkOuter, &obj);
-    if (FAILED(ret))
-        return ret;
-    ret = IUnknown_QueryInterface(obj, iid, ppvOut);
-    IUnknown_Release(obj);
-    return ret;
-}
-
-static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
-{
-    if(fLock)
-        InterlockedIncrement(&TS_refCount);
-    else
-        InterlockedDecrement(&TS_refCount);
-
-    return S_OK;
-}
-
-static const IClassFactoryVtbl ClassFactoryVtbl = {
-    /* IUnknown */
-    ClassFactory_QueryInterface,
-    ClassFactory_AddRef,
-    ClassFactory_Release,
-
-    /* IClassFactory*/
-    ClassFactory_CreateInstance,
-    ClassFactory_LockServer
-};
-
-static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
-{
-    ClassFactory *This = HeapAlloc(GetProcessHeap(),0,sizeof(ClassFactory));
-    This->vtbl = &ClassFactoryVtbl;
-    This->ref = 1;
-    This->ctor = ctor;
-    *ppvOut = (LPVOID)This;
-    TS_refCount++;
-    return S_OK;
-}
-
-static void TextService_Destructor(TextService *This)
-{
-    HeapFree(GetProcessHeap(),0,This);
-}
-
-static HRESULT WINAPI TextService_QueryInterface(ITfTextInputProcessor *iface, REFIID iid, LPVOID *ppvOut)
-{
-    TextService *This = (TextService *)iface;
-    *ppvOut = NULL;
-
-    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfTextInputProcessor))
-    {
-        *ppvOut = This;
-    }
-
-    if (*ppvOut)
-    {
-        IUnknown_AddRef(iface);
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI TextService_AddRef(ITfTextInputProcessor *iface)
-{
-    TextService *This = (TextService *)iface;
-    return InterlockedIncrement(&This->refCount);
-}
-
-static ULONG WINAPI TextService_Release(ITfTextInputProcessor *iface)
-{
-    TextService *This = (TextService *)iface;
-    ULONG ret;
-
-    ret = InterlockedDecrement(&This->refCount);
-    if (ret == 0)
-        TextService_Destructor(This);
-    return ret;
-}
-
-static HRESULT WINAPI TextService_Activate(ITfTextInputProcessor *iface,
-        ITfThreadMgr *ptim, TfClientId id)
-{
-    trace("TextService_Activate\n");
-    ok(test_ShouldActivate,"Activation came unexpectedly\n");
-    tid = id;
-    return S_OK;
-}
-
-static HRESULT WINAPI TextService_Deactivate(ITfTextInputProcessor *iface)
-{
-    trace("TextService_Deactivate\n");
-    ok(test_ShouldDeactivate,"Deactivation came unexpectedly\n");
-    return S_OK;
-}
-
-static const ITfTextInputProcessorVtbl TextService_TextInputProcessorVtbl=
-{
-    TextService_QueryInterface,
-    TextService_AddRef,
-    TextService_Release,
-
-    TextService_Activate,
-    TextService_Deactivate
-};
-
-HRESULT TextService_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
-{
-    TextService *This;
-    if (pUnkOuter)
-        return CLASS_E_NOAGGREGATION;
-
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TextService));
-    if (This == NULL)
-        return E_OUTOFMEMORY;
-
-    This->TextInputProcessorVtbl= &TextService_TextInputProcessorVtbl;
-    This->refCount = 1;
-
-    *ppOut = (IUnknown *)This;
-    return S_OK;
-}
-
-HRESULT RegisterTextService(REFCLSID rclsid)
-{
-    ClassFactory_Constructor( TextService_Constructor ,(LPVOID*)&cf);
-    return CoRegisterClassObject(rclsid, (IUnknown*) cf, CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
-}
-
-HRESULT UnregisterTextService()
-{
-    return CoRevokeClassObject(regid);
 }
