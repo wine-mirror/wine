@@ -518,7 +518,7 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
            "The sound played for %d ms instead of %g ms\n",
            now-start_time,1000*duration);
 
-        free(state.wave);
+        HeapFree(GetProcessHeap(), 0, state.wave);
         if (is_primary) {
             /* Set the CooperativeLevel back to normal */
             /* DSOUND: Setting DirectSound cooperative level to DSSCL_NORMAL */
