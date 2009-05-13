@@ -122,7 +122,7 @@
 200  pascal   VcpOpen(segptr ptr) VcpOpen16
 201  pascal   VcpClose(word str) VcpClose16
 202  pascal -ret16 vcpDefCallbackProc(ptr word word long long) vcpDefCallbackProc16
-203  stub     vcpEnumFiles #(ptr long)
+203  pascal   VcpEnumFiles(ptr long)
 204  pascal -ret16 VcpQueueRename(str str str str word word long) VcpQueueRename16
 205  pascal -ret16 vsmGetStringName(word ptr word) vsmGetStringName16
 206  pascal -ret16 vsmStringDelete(word) vsmStringDelete16
