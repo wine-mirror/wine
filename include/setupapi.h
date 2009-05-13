@@ -1391,6 +1391,9 @@ typedef enum {
 /* SetupConfigureWmiFromInfSection Flags values */
 #define SCWMI_CLOBBER_SECURITY 0x00000001
 
+/* SetupUninstallOEMInf Flags values */
+#define SUOI_FORCEDELETE 0x00000001
+
 LONG     WINAPI AddTagToGroupOrderList(PCWSTR lpGroupName, DWORD dwUnknown2, DWORD dwUnknown3);
 DWORD    WINAPI CaptureAndConvertAnsiArg(PCSTR lpSrc, PWSTR *lpDst);
 DWORD    WINAPI CaptureStringArg(PCWSTR lpSrc, PWSTR *lpDst);

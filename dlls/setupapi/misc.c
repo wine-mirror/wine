@@ -1114,6 +1114,45 @@ BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
 }
 
 /***********************************************************************
+ *      SetupUninstallOEMInfA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupUninstallOEMInfA( PCSTR inf_file, DWORD flags, PVOID reserved )
+{
+    BOOL ret;
+    WCHAR *inf_fileW = NULL;
+
+    TRACE("%s, 0x%08x, %p\n", debugstr_a(inf_file), flags, reserved);
+
+    if (inf_file && !(inf_fileW = strdupAtoW( inf_file ))) return FALSE;
+    ret = SetupUninstallOEMInfW( inf_fileW, flags, reserved );
+    HeapFree( GetProcessHeap(), 0, inf_fileW );
+    return ret;
+}
+
+/***********************************************************************
+ *      SetupUninstallOEMInfW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupUninstallOEMInfW( PCWSTR inf_file, DWORD flags, PVOID reserved )
+{
+    static const WCHAR infW[] = {'\\','i','n','f','\\',0};
+    WCHAR target[MAX_PATH];
+
+    TRACE("%s, 0x%08x, %p\n", debugstr_w(inf_file), flags, reserved);
+
+    if (!GetWindowsDirectoryW( target, sizeof(target)/sizeof(WCHAR) )) return FALSE;
+
+    strcatW( target, infW );
+    strcatW( target, inf_file );
+
+    if (flags & SUOI_FORCEDELETE)
+        return DeleteFileW(target);
+
+    FIXME("not deleting %s\n", debugstr_w(target));
+
+    return TRUE;
+}
+
+/***********************************************************************
  *      InstallCatalog  (SETUPAPI.@)
  */
 DWORD WINAPI InstallCatalog( LPCSTR catalog, LPCSTR basename, LPSTR fullname )

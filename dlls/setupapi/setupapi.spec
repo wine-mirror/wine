@@ -526,6 +526,8 @@
 @ stdcall SetupSetSourceListW(long ptr long)
 @ stdcall SetupTermDefaultQueueCallback(ptr)
 @ stdcall SetupTerminateFileLog(long)
+@ stdcall SetupUninstallOEMInfA(str long ptr)
+@ stdcall SetupUninstallOEMInfW(wstr long ptr)
 @ stub ShouldDeviceBeExcluded
 @ stdcall StampFileSecurity(wstr ptr)
 @ stdcall StringTableAddString(ptr wstr long)
