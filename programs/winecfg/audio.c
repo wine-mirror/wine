@@ -543,7 +543,10 @@ static void findAudioDrivers(void)
 static void checkRegistrySetting(HWND hDlg)
 {
     const AUDIO_DRIVER *pAudioDrv;
-    char * token, * tokens = strdup(curAudioDriver);
+    char * token, * tokens;
+
+    tokens = HeapAlloc(GetProcessHeap(), 0, strlen(curAudioDriver)+1);
+    strcpy(tokens, curAudioDriver);
 
 start_over:
     token = strtok(tokens, ",");
@@ -581,7 +584,7 @@ start_over:
         }
         token = strtok(NULL, ",");
     }
-    free(tokens);
+    HeapFree(GetProcessHeap(), 0, tokens);
 }
 
 static void selectDriver(HWND hDlg, const char * driver)
