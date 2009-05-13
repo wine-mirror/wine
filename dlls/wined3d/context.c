@@ -1109,7 +1109,9 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     TRACE("Setting up context %p for blitting\n", context);
     if(context->last_was_blit) {
         if(context->blit_w != width || context->blit_h != height) {
+            ENTER_GL();
             set_blit_dimension(width, height);
+            LEAVE_GL();
             context->blit_w = width; context->blit_h = height;
             /* No need to dirtify here, the states are still dirtified because they weren't
              * applied since the last SetupForBlit call. Otherwise last_was_blit would not
@@ -1268,9 +1270,11 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)");
     glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)");
     Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPING), StateTable);
-    LEAVE_GL();
 
     set_blit_dimension(width, height);
+
+    LEAVE_GL();
+
     context->blit_w = width; context->blit_h = height;
     Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
     Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION), StateTable);
