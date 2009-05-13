@@ -4427,13 +4427,13 @@ static const WCHAR ANIMATE_CLASSW[] = { 'S','y','s',
     (BOOL)SNDMSGW(hwnd,ACM_OPENW,(WPARAM)hInst,(LPARAM)(LPWSTR)(szName))
 #define Animate_OpenEx WINELIB_NAME_AW(Animate_OpenEx)
 #define Animate_Play(hwnd,from,to,rep) \
-    (BOOL)SNDMSGA(hwnd,ACM_PLAY,(WPARAM)(UINT)(rep),(LPARAM)MAKELONG(from,to))
+    (BOOL)SNDMSG(hwnd,ACM_PLAY,(WPARAM)(UINT)(rep),(LPARAM)MAKELONG(from,to))
 #define Animate_Stop(hwnd) \
-    (BOOL)SNDMSGA(hwnd,ACM_STOP,0,0)
+    (BOOL)SNDMSG(hwnd,ACM_STOP,0,0)
 #define Animate_Close(hwnd) \
-    (BOOL)SNDMSGA(hwnd,ACM_OPENA,0,0)
+    (BOOL)SNDMSG(hwnd,ACM_OPENA,0,0)
 #define Animate_Seek(hwnd,frame) \
-    (BOOL)SNDMSGA(hwnd,ACM_PLAY,1,(LPARAM)MAKELONG(frame,frame))
+    (BOOL)SNDMSG(hwnd,ACM_PLAY,1,(LPARAM)MAKELONG(frame,frame))
 
 
 /**************************************************************************
