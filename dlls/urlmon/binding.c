@@ -178,53 +178,17 @@ static void dump_BINDINFO(BINDINFO *bi)
             );
 }
 
-static void set_binding_mime(Binding *binding, LPCWSTR mime)
+static void mime_available(Binding *This, LPCWSTR mime)
 {
-    EnterCriticalSection(&binding->section);
+    heap_free(This->mime);
+    This->mime = heap_strdupW(mime);
 
-    if(binding->report_mime) {
-        heap_free(binding->mime);
-        binding->mime = heap_strdupW(mime);
-    }
-
-    LeaveCriticalSection(&binding->section);
-}
-
-static void handle_mime_available(Binding *binding, BOOL verify)
-{
-    BOOL report_mime;
-
-    EnterCriticalSection(&binding->section);
-    report_mime = binding->report_mime;
-    binding->report_mime = FALSE;
-    LeaveCriticalSection(&binding->section);
-
-    if(!report_mime)
+    if(!This->mime || !This->report_mime)
         return;
 
-    if(verify) {
-        LPWSTR mime = NULL;
+    IBindStatusCallback_OnProgress(This->callback, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE, This->mime);
 
-        fill_stgmed_buffer(binding->stgmed_buf);
-        FindMimeFromData(NULL, binding->url, binding->stgmed_buf->buf,
-                         min(binding->stgmed_buf->size, 255), binding->mime, 0, &mime, 0);
-
-        heap_free(binding->mime);
-        binding->mime = heap_strdupW(mime);
-        CoTaskMemFree(mime);
-    }
-
-    IBindStatusCallback_OnProgress(binding->callback, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE, binding->mime);
-
-    binding->clipboard_format = RegisterClipboardFormatW(binding->mime);
-}
-
-static void mime_available(Binding *This, LPCWSTR mime, BOOL verify)
-{
-    if(mime)
-        set_binding_mime(This, mime);
-
-    handle_mime_available(This, verify);
+    This->clipboard_format = RegisterClipboardFormatW(This->mime);
 }
 
 static void stop_binding(Binding *binding, HRESULT hres, LPCWSTR str)
@@ -1007,22 +971,20 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
     case BINDSTATUS_BEGINDOWNLOADDATA:
         fill_stgmed_buffer(This->stgmed_buf);
         break;
-    case BINDSTATUS_MIMETYPEAVAILABLE:
-        set_binding_mime(This, szStatusText);
-        break;
     case BINDSTATUS_SENDINGREQUEST:
         on_progress(This, 0, 0, BINDSTATUS_SENDINGREQUEST, szStatusText);
         break;
     case BINDSTATUS_PROTOCOLCLASSID:
         break;
+    case BINDSTATUS_MIMETYPEAVAILABLE:
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
-        mime_available(This, szStatusText, FALSE);
+        mime_available(This, szStatusText);
         break;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
         heap_free(This->stgmed_buf->cache_file);
         This->stgmed_buf->cache_file = heap_strdupW(szStatusText);
         break;
-    case BINDSTATUS_DIRECTBIND:
+    case BINDSTATUS_DIRECTBIND: /* FIXME: Handle BINDSTATUS_DIRECTBIND in BindProtocol */
         This->report_mime = FALSE;
         break;
     case BINDSTATUS_ACCEPTRANGES:
@@ -1044,9 +1006,6 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
 
     if(This->download_state == END_DOWNLOAD || (This->state & BINDING_STOPPED))
         return;
-
-    if(This->report_mime)
-        mime_available(This, NULL, TRUE);
 
     if(This->download_state == BEFORE_DOWNLOAD) {
         fill_stgmed_buffer(This->stgmed_buf);
@@ -1502,7 +1461,7 @@ static HRESULT start_binding(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, I
         report_data(binding, 0, 0, 0);
     }else {
         hres = IInternetProtocol_Start(binding->protocol, url, PROTSINK(binding),
-                 BINDINF(binding), PI_APARTMENTTHREADED, 0);
+                 BINDINF(binding), PI_APARTMENTTHREADED|PI_MIMEVERIFICATION, 0);
 
         TRACE("start ret %08x\n", hres);
 
