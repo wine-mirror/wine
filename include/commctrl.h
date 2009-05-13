@@ -4035,11 +4035,11 @@ static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
 
 /* TabCtrl Macros */
 #define TabCtrl_GetImageList(hwnd) \
-    (HIMAGELIST)SNDMSGA((hwnd), TCM_GETIMAGELIST, 0, 0L)
+    (HIMAGELIST)SNDMSG((hwnd), TCM_GETIMAGELIST, 0, 0L)
 #define TabCtrl_SetImageList(hwnd, himl) \
-    (HIMAGELIST)SNDMSGA((hwnd), TCM_SETIMAGELIST, 0, (LPARAM)(UINT)(HIMAGELIST)(himl))
+    (HIMAGELIST)SNDMSG((hwnd), TCM_SETIMAGELIST, 0, (LPARAM)(UINT)(HIMAGELIST)(himl))
 #define TabCtrl_GetItemCount(hwnd) \
-    (int)SNDMSGA((hwnd), TCM_GETITEMCOUNT, 0, 0L)
+    (int)SNDMSG((hwnd), TCM_GETITEMCOUNT, 0, 0L)
 #define TabCtrl_GetItemA(hwnd, iItem, pitem) \
     (BOOL)SNDMSGA((hwnd), TCM_GETITEMA, (WPARAM)(int)iItem, (LPARAM)(TCITEMA *)(pitem))
 #define TabCtrl_GetItemW(hwnd, iItem, pitem) \
@@ -4056,49 +4056,49 @@ static const WCHAR WC_TABCONTROLW[] = { 'S','y','s',
     (int)SNDMSGW((hwnd), TCM_INSERTITEMW, (WPARAM)(int)iItem, (LPARAM)(const TCITEMW *)(pitem))
 #define TabCtrl_InsertItem WINELIB_NAME_AW(TabCtrl_InsertItem)
 #define TabCtrl_DeleteItem(hwnd, i) \
-    (BOOL)SNDMSGA((hwnd), TCM_DELETEITEM, (WPARAM)(int)(i), 0L)
+    (BOOL)SNDMSG((hwnd), TCM_DELETEITEM, (WPARAM)(int)(i), 0L)
 #define TabCtrl_DeleteAllItems(hwnd) \
-    (BOOL)SNDMSGA((hwnd), TCM_DELETEALLITEMS, 0, 0L)
+    (BOOL)SNDMSG((hwnd), TCM_DELETEALLITEMS, 0, 0L)
 #define TabCtrl_GetItemRect(hwnd, i, prc) \
-    (BOOL)SNDMSGA((hwnd), TCM_GETITEMRECT, (WPARAM)(int)(i), (LPARAM)(RECT *)(prc))
+    (BOOL)SNDMSG((hwnd), TCM_GETITEMRECT, (WPARAM)(int)(i), (LPARAM)(RECT *)(prc))
 #define TabCtrl_GetCurSel(hwnd) \
-    (int)SNDMSGA((hwnd), TCM_GETCURSEL, 0, 0)
+    (int)SNDMSG((hwnd), TCM_GETCURSEL, 0, 0)
 #define TabCtrl_SetCurSel(hwnd, i) \
-    (int)SNDMSGA((hwnd), TCM_SETCURSEL, (WPARAM)i, 0)
+    (int)SNDMSG((hwnd), TCM_SETCURSEL, (WPARAM)i, 0)
 #define TabCtrl_HitTest(hwndTC, pinfo) \
-    (int)SNDMSGA((hwndTC), TCM_HITTEST, 0, (LPARAM)(TC_HITTESTINFO *)(pinfo))
+    (int)SNDMSG((hwndTC), TCM_HITTEST, 0, (LPARAM)(TC_HITTESTINFO *)(pinfo))
 #define TabCtrl_SetItemExtra(hwndTC, cb) \
-    (BOOL)SNDMSGA((hwndTC), TCM_SETITEMEXTRA, (WPARAM)(cb), 0L)
+    (BOOL)SNDMSG((hwndTC), TCM_SETITEMEXTRA, (WPARAM)(cb), 0L)
 #define TabCtrl_AdjustRect(hwnd, bLarger, prc) \
-    (int)SNDMSGA(hwnd, TCM_ADJUSTRECT, (WPARAM)(BOOL)bLarger, (LPARAM)(RECT *)prc)
+    (int)SNDMSG(hwnd, TCM_ADJUSTRECT, (WPARAM)(BOOL)bLarger, (LPARAM)(RECT *)prc)
 #define TabCtrl_SetItemSize(hwnd, x, y) \
-    (DWORD)SNDMSGA((hwnd), TCM_SETITEMSIZE, 0, MAKELPARAM(x,y))
+    (DWORD)SNDMSG((hwnd), TCM_SETITEMSIZE, 0, MAKELPARAM(x,y))
 #define TabCtrl_RemoveImage(hwnd, i) \
-    (void)SNDMSGA((hwnd), TCM_REMOVEIMAGE, i, 0L)
+    (void)SNDMSG((hwnd), TCM_REMOVEIMAGE, i, 0L)
 #define TabCtrl_SetPadding(hwnd,  cx, cy) \
-    (void)SNDMSGA((hwnd), TCM_SETPADDING, 0, MAKELPARAM(cx, cy))
+    (void)SNDMSG((hwnd), TCM_SETPADDING, 0, MAKELPARAM(cx, cy))
 #define TabCtrl_GetRowCount(hwnd) \
-    (int)SNDMSGA((hwnd), TCM_GETROWCOUNT, 0, 0L)
+    (int)SNDMSG((hwnd), TCM_GETROWCOUNT, 0, 0L)
 #define TabCtrl_GetToolTips(hwnd) \
-    (HWND)SNDMSGA((hwnd), TCM_GETTOOLTIPS, 0, 0L)
+    (HWND)SNDMSG((hwnd), TCM_GETTOOLTIPS, 0, 0L)
 #define TabCtrl_SetToolTips(hwnd, hwndTT) \
-    (void)SNDMSGA((hwnd), TCM_SETTOOLTIPS, (WPARAM)hwndTT, 0L)
+    (void)SNDMSG((hwnd), TCM_SETTOOLTIPS, (WPARAM)hwndTT, 0L)
 #define TabCtrl_GetCurFocus(hwnd) \
-    (int)SNDMSGA((hwnd), TCM_GETCURFOCUS, 0, 0)
+    (int)SNDMSG((hwnd), TCM_GETCURFOCUS, 0, 0)
 #define TabCtrl_SetCurFocus(hwnd, i) \
-    SNDMSGA((hwnd),TCM_SETCURFOCUS, i, 0)
+    SNDMSG((hwnd),TCM_SETCURFOCUS, i, 0)
 #define TabCtrl_SetMinTabWidth(hwnd, x) \
-    (int)SNDMSGA((hwnd), TCM_SETMINTABWIDTH, 0, x)
+    (int)SNDMSG((hwnd), TCM_SETMINTABWIDTH, 0, x)
 #define TabCtrl_DeselectAll(hwnd, fExcludeFocus)\
-    (void)SNDMSGA((hwnd), TCM_DESELECTALL, fExcludeFocus, 0)
+    (void)SNDMSG((hwnd), TCM_DESELECTALL, fExcludeFocus, 0)
 #define TabCtrl_GetUnicodeFormat(hwnd) \
-    (BOOL)SNDMSGA((hwnd), TCM_GETUNICODEFORMAT, 0, 0)
+    (BOOL)SNDMSG((hwnd), TCM_GETUNICODEFORMAT, 0, 0)
 #define TabCtrl_SetUnicodeFormat(hwnd, fUnicode) \
-    (BOOL)SNDMSGA((hwnd), TCM_SETUNICODEFORMAT, (WPARAM)fUnicode, 0)
+    (BOOL)SNDMSG((hwnd), TCM_SETUNICODEFORMAT, (WPARAM)fUnicode, 0)
 #define TabCtrl_GetExtendedStyle(hwnd) \
-    (BOOL)SNDMSGA((hwnd), TCM_GETEXTENDEDSTYLE, 0, 0)
+    (BOOL)SNDMSG((hwnd), TCM_GETEXTENDEDSTYLE, 0, 0)
 #define TabCtrl_SetExtendedStyle(hwnd, dwExStyle) \
-    (BOOL)SNDMSGA((hwnd), TCM_GETEXTENDEDSTYLE, 0, (LPARAM)dwExStyle)
+    (BOOL)SNDMSG((hwnd), TCM_GETEXTENDEDSTYLE, 0, (LPARAM)dwExStyle)
 #define TabCtrl_HighlightItem(hwnd, i, fHighlight) \
     (BOOL)SNDMSG((hwnd), TCM_HIGHLIGHTITEM, (WPARAM)i, (LPARAM)MAKELONG(fHighlight, 0))
 
