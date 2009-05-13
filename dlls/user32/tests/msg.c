@@ -8248,6 +8248,7 @@ static const struct message ScrollWindowPaint1[] = {
     { WM_GETTEXT, sent|beginpaint|optional },
     { WM_GETTEXT, sent|beginpaint|optional },
     { WM_GETTEXT, sent|beginpaint|optional },
+    { WM_GETTEXT, sent|beginpaint|defwinproc|optional },
     { WM_ERASEBKGND, sent|beginpaint|optional },
     { 0 }
 };
