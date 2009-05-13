@@ -310,7 +310,7 @@ static const ITextStoreACPVtbl TextStoreACP_TextStoreACPVtbl =
     TextStoreACP_GetWnd
 };
 
-HRESULT TextStoreACP_Constructor(IUnknown **ppOut)
+static HRESULT TextStoreACP_Constructor(IUnknown **ppOut)
 {
     TextStoreACP *This;
 
@@ -431,7 +431,7 @@ static const ITfThreadMgrEventSinkVtbl ThreadMgrEventSink_ThreadMgrEventSinkVtbl
     ThreadMgrEventSink_OnPopContext
 };
 
-HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut)
+static HRESULT ThreadMgrEventSink_Constructor(IUnknown **ppOut)
 {
     ThreadMgrEventSink *This;
 
@@ -618,7 +618,7 @@ static const ITfTextInputProcessorVtbl TextService_TextInputProcessorVtbl=
     TextService_Deactivate
 };
 
-HRESULT TextService_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
+static HRESULT TextService_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 {
     TextService *This;
     if (pUnkOuter)
@@ -635,13 +635,13 @@ HRESULT TextService_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     return S_OK;
 }
 
-HRESULT RegisterTextService(REFCLSID rclsid)
+static HRESULT RegisterTextService(REFCLSID rclsid)
 {
     ClassFactory_Constructor( TextService_Constructor ,(LPVOID*)&cf);
     return CoRegisterClassObject(rclsid, (IUnknown*) cf, CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
 }
 
-HRESULT UnregisterTextService()
+static HRESULT UnregisterTextService()
 {
     return CoRevokeClassObject(regid);
 }
@@ -961,7 +961,7 @@ static const ITfKeyEventSinkVtbl KeyEventSink_KeyEventSinkVtbl =
     KeyEventSink_OnPreservedKey
 };
 
-HRESULT KeyEventSink_Constructor(ITfKeyEventSink **ppOut)
+static HRESULT KeyEventSink_Constructor(ITfKeyEventSink **ppOut)
 {
     KeyEventSink *This;
 
@@ -983,7 +983,7 @@ static void test_KeystrokeMgr(void)
     HRESULT hr;
     TF_PRESERVEDKEY tfpk;
     BOOL preserved;
-    ITfKeyEventSink *sink;
+    ITfKeyEventSink *sink = NULL;
 
     KeyEventSink_Constructor(&sink);
 
