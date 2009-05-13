@@ -291,10 +291,8 @@ extern "C" {
 
 #if defined(_MSC_VER)
 # define C_ASSERT(e) typedef char __C_ASSERT__[(e)?1:-1]
-#elif defined(__GNUC__) 
-# define C_ASSERT(e) extern char __C_ASSERT__[(e)?1:-1] __attribute__((unused))
 #else
-# define C_ASSERT(e)
+# define C_ASSERT(e) extern void __C_ASSERT__(int [(e)?1:-1])
 #endif
 
 /* Eliminate Microsoft C/C++ compiler warning 4715 */
