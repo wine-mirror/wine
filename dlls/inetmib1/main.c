@@ -323,7 +323,27 @@ static DWORD oidToIpAddr(AsnObjectIdentifier *oid)
 typedef void (*oidToKeyFunc)(AsnObjectIdentifier *oid, void *dst);
 typedef int (*compareFunc)(const void *key, const void *value);
 
-static UINT findValueInTable(AsnObjectIdentifier *oid,
+/* Finds the first value in the table that matches key.  Returns its 1-based
+ * index if found, or 0 if not found.
+ */
+static UINT findValueInTable(const void *key,
+    struct GenericTable *table, size_t tableEntrySize, compareFunc compare)
+{
+    UINT index = 0;
+    void *value;
+
+    value = bsearch(key, table->entries, table->numEntries, tableEntrySize,
+        compare);
+    if (value)
+        index = ((BYTE *)value - (BYTE *)table->entries) / tableEntrySize + 1;
+    return index;
+}
+
+/* Finds the first value in the table that matches oid, using makeKey to
+ * convert the oid to a key for comparison.  Returns the value's 1-based
+ * index if found, or 0 if not found.
+ */
+static UINT findOidInTable(AsnObjectIdentifier *oid,
     struct GenericTable *table, size_t tableEntrySize, oidToKeyFunc makeKey,
     compareFunc compare)
 {
@@ -332,14 +352,50 @@ static UINT findValueInTable(AsnObjectIdentifier *oid,
 
     if (key)
     {
-        void *value;
-
         makeKey(oid, key);
-        value = bsearch(key, table->entries, table->numEntries, tableEntrySize,
-            compare);
-        if (value)
-            index = ((BYTE *)value - (BYTE *)table->entries) / tableEntrySize
-                + 1;
+        index = findValueInTable(key, table, tableEntrySize, compare);
+        HeapFree(GetProcessHeap(), 0, key);
+    }
+    return index;
+}
+
+/* Finds the first successor to the value in the table that does matches oid,
+ * using makeKey to convert the oid to a key for comparison.  A successor is
+ * a value that does not match oid, so if multiple entries match an oid, only
+ * the first will ever be returned using this method.
+ * Returns the successor's 1-based index if found, or 0 if not found.
+ */
+static UINT findNextOidInTable(AsnObjectIdentifier *oid,
+    struct GenericTable *table, size_t tableEntrySize, oidToKeyFunc makeKey,
+    compareFunc compare)
+{
+    UINT index = 0;
+    void *key = HeapAlloc(GetProcessHeap(), 0, tableEntrySize);
+
+    if (key)
+    {
+        makeKey(oid, key);
+        index = findValueInTable(key, table, tableEntrySize, compare);
+        if (index == 0)
+        {
+            /* Not found in table.  If it's less than the first entry, return
+             * the first index.  Otherwise just return 0 and let the caller
+             * handle finding the successor.
+             */
+            if (compare(key, table->entries) < 0)
+                index = 1;
+        }
+        else
+        {
+            /* Skip any entries that match the same key.  This enumeration will
+             * be incomplete, but it's what Windows appears to do if there are
+             * multiple entries with the same index in a table, and it avoids
+             * an infinite loop.
+             */
+            for (++index; index <= table->numEntries && compare(key,
+                &table->entries[tableEntrySize * index]) == 0; ++index)
+                ;
+        }
         HeapFree(GetProcessHeap(), 0, key);
     }
     return index;
@@ -403,9 +459,9 @@ static AsnInteger32 getItemAndInstanceFromTable(AsnObjectIdentifier *oid,
                 AsnObjectIdentifier ipOid = { instanceLen,
                     oid->ids + base->idLength + 1 };
 
-                *instance = findValueInTable(&ipOid, table, tableEntrySize,
-                    makeKey, compare) + 1;
-                if (*instance > table->numEntries)
+                *instance = findNextOidInTable(&ipOid, table, tableEntrySize,
+                    makeKey, compare);
+                if (!*instance || *instance > table->numEntries)
                     ret = SNMP_ERRORSTATUS_NOSUCHNAME;
             }
         }
@@ -424,7 +480,7 @@ static AsnInteger32 getItemAndInstanceFromTable(AsnObjectIdentifier *oid,
                 AsnObjectIdentifier ipOid = { instanceLen,
                     oid->ids + base->idLength + 1 };
 
-                *instance = findValueInTable(&ipOid, table, tableEntrySize,
+                *instance = findOidInTable(&ipOid, table, tableEntrySize,
                     makeKey, compare);
                 if (!*instance)
                     ret = SNMP_ERRORSTATUS_NOSUCHNAME;
