@@ -249,8 +249,12 @@ static void test_GetDiskInfoA(void)
     strcpy(p, "\\non\\existing\\path");
     ret = GetDiskInfoA(path, NULL, NULL, NULL);
     error = GetLastError();
-    ok(!ret, "GetDiskInfoA succeeded\n");
-    ok(error == ERROR_PATH_NOT_FOUND, "got %u expected ERROR_PATH_NOT_FOUND\n", error);
+    ok(!ret ||
+       broken(ret), /* < IE7 */
+       "GetDiskInfoA succeeded\n");
+    ok(error == ERROR_PATH_NOT_FOUND ||
+       broken(error == 0xdeadbeef), /* < IE7 */
+       "got %u expected ERROR_PATH_NOT_FOUND\n", error);
 
     SetLastError(0xdeadbeef);
     ret = GetDiskInfoA(NULL, NULL, NULL, NULL);
