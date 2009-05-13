@@ -723,9 +723,11 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
     /* Initialize item to point to the first child of the root folder. */
     memset(&item, 0, sizeof(item));
     item.mask = TVIF_PARAM;
-    item.hItem = TreeView_GetRoot(info->hwndTreeView);
-    if (item.hItem) 
-        item.hItem = TreeView_GetChild(info->hwndTreeView, item.hItem);
+    item.hItem = (HTREEITEM)SendMessageW(info->hwndTreeView, TVM_GETNEXTITEM, TVGN_ROOT, 0);
+
+    if (item.hItem)
+        item.hItem = (HTREEITEM)SendMessageW(info->hwndTreeView, TVM_GETNEXTITEM, TVGN_CHILD,
+                                             (LPARAM)item.hItem);
 
     /* Walk the tree along the nodes corresponding to the remaining ITEMIDLIST */
     while (item.hItem && !_ILIsEmpty(pidlCurrent)) {
@@ -740,10 +742,12 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
                 /* Only expand current node and move on to it's first child,
                  * if we didn't already reach the last SHITEMID */
                 SendMessageW(info->hwndTreeView, TVM_EXPAND, TVE_EXPAND, (LPARAM)item.hItem);
-                item.hItem = TreeView_GetChild(info->hwndTreeView, item.hItem);
+                item.hItem = (HTREEITEM)SendMessageW(info->hwndTreeView, TVM_GETNEXTITEM, TVGN_CHILD,
+                                             (LPARAM)item.hItem);
             }
         } else {
-            item.hItem = TreeView_GetNextSibling(info->hwndTreeView, item.hItem);
+            item.hItem = (HTREEITEM)SendMessageW(info->hwndTreeView, TVM_GETNEXTITEM, TVGN_NEXT,
+                                             (LPARAM)item.hItem);
         }
     }
 

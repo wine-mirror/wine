@@ -2679,33 +2679,33 @@ typedef struct tagTVKEYDOWN
 #define TreeView_InsertItem WINELIB_NAME_AW(TreeView_InsertItem)
 
 #define TreeView_DeleteItem(hwnd, hItem) \
-  (BOOL)SNDMSGA((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
+  (BOOL)SNDMSG((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
 #define TreeView_DeleteAllItems(hwnd) \
-  (BOOL)SNDMSGA((hwnd), TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT)
+  (BOOL)SNDMSG((hwnd), TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT)
 #define TreeView_Expand(hwnd, hitem, code) \
- (BOOL)SNDMSGA((hwnd), TVM_EXPAND, (WPARAM)code, \
+ (BOOL)SNDMSG((hwnd), TVM_EXPAND, (WPARAM)code, \
 	(LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_GetItemRect(hwnd, hitem, prc, code) \
- (*(HTREEITEM *)prc = (hitem), (BOOL)SNDMSGA((hwnd), \
+ (*(HTREEITEM *)prc = (hitem), (BOOL)SNDMSG((hwnd), \
 			TVM_GETITEMRECT, (WPARAM)(code), (LPARAM)(RECT *)(prc)))
 
 #define TreeView_GetCount(hwnd) \
-    (UINT)SNDMSGA((hwnd), TVM_GETCOUNT, 0, 0)
+    (UINT)SNDMSG((hwnd), TVM_GETCOUNT, 0, 0)
 #define TreeView_GetIndent(hwnd) \
-    (UINT)SNDMSGA((hwnd), TVM_GETINDENT, 0, 0)
+    (UINT)SNDMSG((hwnd), TVM_GETINDENT, 0, 0)
 #define TreeView_SetIndent(hwnd, indent) \
-    (BOOL)SNDMSGA((hwnd), TVM_SETINDENT, (WPARAM)indent, 0)
+    (BOOL)SNDMSG((hwnd), TVM_SETINDENT, (WPARAM)indent, 0)
 
 #define TreeView_GetImageList(hwnd, iImage) \
-    (HIMAGELIST)SNDMSGA((hwnd), TVM_GETIMAGELIST, iImage, 0)
+    (HIMAGELIST)SNDMSG((hwnd), TVM_GETIMAGELIST, iImage, 0)
 
 #define TreeView_SetImageList(hwnd, himl, iImage) \
-    (HIMAGELIST)SNDMSGA((hwnd), TVM_SETIMAGELIST, iImage, \
+    (HIMAGELIST)SNDMSG((hwnd), TVM_SETIMAGELIST, iImage, \
  (LPARAM)(HIMAGELIST)(himl))
 
 #define TreeView_GetNextItem(hwnd, hitem, code) \
-    (HTREEITEM)SNDMSGA((hwnd), TVM_GETNEXTITEM, (WPARAM)code,\
+    (HTREEITEM)SNDMSG((hwnd), TVM_GETNEXTITEM, (WPARAM)code,\
 (LPARAM)(HTREEITEM) (hitem))
 
 #define TreeView_GetChild(hwnd, hitem) \
@@ -2735,7 +2735,7 @@ typedef struct tagTVKEYDOWN
 
 
 #define TreeView_Select(hwnd, hitem, code) \
- (BOOL)SNDMSGA((hwnd), TVM_SELECTITEM, (WPARAM)(code), \
+ (BOOL)SNDMSG((hwnd), TVM_SELECTITEM, (WPARAM)(code), \
 (LPARAM)(HTREEITEM)(hitem))
 
 
@@ -2760,79 +2760,79 @@ typedef struct tagTVKEYDOWN
 #define TreeView_SetItem WINELIB_NAME_AW(TreeView_SetItem)
 
 #define TreeView_EditLabel(hwnd, hitem) \
-    (HWND)SNDMSGA((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
+    (HWND)SNDMSG((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_GetEditControl(hwnd) \
-    (HWND)SNDMSGA((hwnd), TVM_GETEDITCONTROL, 0, 0)
+    (HWND)SNDMSG((hwnd), TVM_GETEDITCONTROL, 0, 0)
 
 #define TreeView_GetVisibleCount(hwnd) \
-    (UINT)SNDMSGA((hwnd), TVM_GETVISIBLECOUNT, 0, 0)
+    (UINT)SNDMSG((hwnd), TVM_GETVISIBLECOUNT, 0, 0)
 
 #define TreeView_HitTest(hwnd, lpht) \
-    (HTREEITEM)SNDMSGA((hwnd), TVM_HITTEST, 0,\
+    (HTREEITEM)SNDMSG((hwnd), TVM_HITTEST, 0,\
 (LPARAM)(LPTVHITTESTINFO)(lpht))
 
 #define TreeView_CreateDragImage(hwnd, hitem) \
-    (HIMAGELIST)SNDMSGA((hwnd), TVM_CREATEDRAGIMAGE, 0,\
+    (HIMAGELIST)SNDMSG((hwnd), TVM_CREATEDRAGIMAGE, 0,\
 (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_SortChildren(hwnd, hitem, recurse) \
-    (BOOL)SNDMSGA((hwnd), TVM_SORTCHILDREN, (WPARAM)recurse,\
+    (BOOL)SNDMSG((hwnd), TVM_SORTCHILDREN, (WPARAM)recurse,\
 (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_EnsureVisible(hwnd, hitem) \
-    (BOOL)SNDMSGA((hwnd), TVM_ENSUREVISIBLE, 0, (LPARAM)(UINT)(hitem))
+    (BOOL)SNDMSG((hwnd), TVM_ENSUREVISIBLE, 0, (LPARAM)(UINT)(hitem))
 
 #define TreeView_SortChildrenCB(hwnd, psort, recurse) \
-    (BOOL)SNDMSGA((hwnd), TVM_SORTCHILDRENCB, (WPARAM)recurse, \
+    (BOOL)SNDMSG((hwnd), TVM_SORTCHILDRENCB, (WPARAM)recurse, \
     (LPARAM)(LPTV_SORTCB)(psort))
 
 #define TreeView_EndEditLabelNow(hwnd, fCancel) \
-    (BOOL)SNDMSGA((hwnd), TVM_ENDEDITLABELNOW, (WPARAM)fCancel, 0)
+    (BOOL)SNDMSG((hwnd), TVM_ENDEDITLABELNOW, (WPARAM)fCancel, 0)
 
 #define TreeView_GetISearchString(hwnd, lpsz) \
-    (BOOL)SNDMSGA((hwnd), TVM_GETISEARCHSTRING, 0, \
+    (BOOL)SNDMSG((hwnd), TVM_GETISEARCHSTRING, 0, \
 							(LPARAM)(LPTSTR)lpsz)
 
 #define TreeView_SetToolTips(hwnd,  hwndTT) \
-    (HWND)SNDMSGA((hwnd), TVM_SETTOOLTIPS, (WPARAM)(hwndTT), 0)
+    (HWND)SNDMSG((hwnd), TVM_SETTOOLTIPS, (WPARAM)(hwndTT), 0)
 
 #define TreeView_GetToolTips(hwnd) \
-    (HWND)SNDMSGA((hwnd), TVM_GETTOOLTIPS, 0, 0)
+    (HWND)SNDMSG((hwnd), TVM_GETTOOLTIPS, 0, 0)
 
 #define TreeView_SetItemHeight(hwnd,  iHeight) \
-    (INT)SNDMSGA((hwnd), TVM_SETITEMHEIGHT, (WPARAM)iHeight, 0)
+    (INT)SNDMSG((hwnd), TVM_SETITEMHEIGHT, (WPARAM)iHeight, 0)
 
 #define TreeView_GetItemHeight(hwnd) \
-    (INT)SNDMSGA((hwnd), TVM_GETITEMHEIGHT, 0, 0)
+    (INT)SNDMSG((hwnd), TVM_GETITEMHEIGHT, 0, 0)
 
 #define TreeView_SetBkColor(hwnd, clr) \
-    (COLORREF)SNDMSGA((hwnd), TVM_SETBKCOLOR, 0, (LPARAM)clr)
+    (COLORREF)SNDMSG((hwnd), TVM_SETBKCOLOR, 0, (LPARAM)clr)
 
 #define TreeView_SetTextColor(hwnd, clr) \
-    (COLORREF)SNDMSGA((hwnd), TVM_SETTEXTCOLOR, 0, (LPARAM)clr)
+    (COLORREF)SNDMSG((hwnd), TVM_SETTEXTCOLOR, 0, (LPARAM)clr)
 
 #define TreeView_GetBkColor(hwnd) \
-    (COLORREF)SNDMSGA((hwnd), TVM_GETBKCOLOR, 0, 0)
+    (COLORREF)SNDMSG((hwnd), TVM_GETBKCOLOR, 0, 0)
 
 #define TreeView_GetTextColor(hwnd) \
-    (COLORREF)SNDMSGA((hwnd), TVM_GETTEXTCOLOR, 0, 0)
+    (COLORREF)SNDMSG((hwnd), TVM_GETTEXTCOLOR, 0, 0)
 
 #define TreeView_SetScrollTime(hwnd, uTime) \
-    (UINT)SNDMSGA((hwnd), TVM_SETSCROLLTIME, uTime, 0)
+    (UINT)SNDMSG((hwnd), TVM_SETSCROLLTIME, uTime, 0)
 
 #define TreeView_GetScrollTime(hwnd) \
-    (UINT)SNDMSGA((hwnd), TVM_GETSCROLLTIME, 0, 0)
+    (UINT)SNDMSG((hwnd), TVM_GETSCROLLTIME, 0, 0)
 
 #define TreeView_SetInsertMark(hwnd, hItem, fAfter) \
-    (BOOL)SNDMSGA((hwnd), TVM_SETINSERTMARK, (WPARAM)(fAfter), \
+    (BOOL)SNDMSG((hwnd), TVM_SETINSERTMARK, (WPARAM)(fAfter), \
                        (LPARAM) (hItem))
 
 #define TreeView_SetInsertMarkColor(hwnd, clr) \
-    (COLORREF)SNDMSGA((hwnd), TVM_SETINSERTMARKCOLOR, 0, (LPARAM)clr)
+    (COLORREF)SNDMSG((hwnd), TVM_SETINSERTMARKCOLOR, 0, (LPARAM)clr)
 
 #define TreeView_GetInsertMarkColor(hwnd) \
-    (COLORREF)SNDMSGA((hwnd), TVM_GETINSERTMARKCOLOR, 0, 0)
+    (COLORREF)SNDMSG((hwnd), TVM_GETINSERTMARKCOLOR, 0, 0)
 
 #define TreeView_SetItemState(hwndTV, hti, data, _mask) \
 { TVITEM _TVi; \
@@ -2844,16 +2844,16 @@ typedef struct tagTVKEYDOWN
 }
 
 #define TreeView_GetItemState(hwndTV, hti, mask) \
-   (UINT)SNDMSGA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti), (LPARAM)(mask))
+   (UINT)SNDMSG((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti), (LPARAM)(mask))
 #define TreeView_GetCheckState(hwndTV, hti) \
-   ((((UINT)(SNDMSGA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti),  \
+   ((((UINT)(SNDMSG((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti),  \
                      TVIS_STATEIMAGEMASK))) >> 12) -1)
 
 #define TreeView_SetLineColor(hwnd, clr) \
-    (COLORREF)SNDMSGA((hwnd), TVM_SETLINECOLOR, 0, (LPARAM)(clr))
+    (COLORREF)SNDMSG((hwnd), TVM_SETLINECOLOR, 0, (LPARAM)(clr))
 
 #define TreeView_GetLineColor(hwnd) \
-    (COLORREF)SNDMSGA((hwnd), TVM_GETLINECOLOR, 0, 0)
+    (COLORREF)SNDMSG((hwnd), TVM_GETLINECOLOR, 0, 0)
 
 #define TreeView_MapAccIDToHTREEITEM(hwnd, id) \
     (HTREEITEM)SNDMSG((hwnd), TVM_MAPACCIDTOHTREEITEM, id, 0)
