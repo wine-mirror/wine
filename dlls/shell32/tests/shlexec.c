@@ -333,11 +333,11 @@ static void create_test_verb_dde(const char* extension, const char* verb,
     }
     else
     {
-        cmd=malloc(strlen(argv0)+10+strlen(child_file)+2+strlen(cmdtail)+1);
+        cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+10+strlen(child_file)+2+strlen(cmdtail)+1);
         sprintf(cmd,"%s shlexec \"%s\" %s", argv0, child_file, cmdtail);
         rc=RegSetValueEx(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmd, strlen(cmd)+1);
         assert(rc==ERROR_SUCCESS);
-        free(cmd);
+        HeapFree(GetProcessHeap(), 0, cmd);
     }
 
     if (ddeexec)
