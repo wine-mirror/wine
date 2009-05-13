@@ -92,16 +92,16 @@ static void releasedirectdraw(void)
 static void adddisplaymode(LPDDSURFACEDESC lpddsd)
 {
     if (!modes) 
-	modes = malloc((modes_size = 2) * sizeof(DDSURFACEDESC));
+	modes = HeapAlloc(GetProcessHeap(), 0, (modes_size = 2) * sizeof(DDSURFACEDESC));
     if (modes_cnt == modes_size) 
-	    modes = realloc(modes, (modes_size *= 2) * sizeof(DDSURFACEDESC));
+	    modes = HeapReAlloc(GetProcessHeap(), 0, modes, (modes_size *= 2) * sizeof(DDSURFACEDESC));
     assert(modes);
     modes[modes_cnt++] = *lpddsd;
 }
 
 static void flushdisplaymodes(void)
 {
-    free(modes);
+    HeapFree(GetProcessHeap(), 0, modes);
     modes = 0;
     modes_cnt = modes_size = 0;
 }
