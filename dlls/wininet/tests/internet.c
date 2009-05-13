@@ -742,8 +742,9 @@ static void test_IsDomainLegalCookieDomainW(void)
     error = GetLastError();
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
     ok(error == ERROR_SXS_KEY_NOT_FOUND ||
+        error == ERROR_SUCCESS || /* IE8 on W2K3 */
         error == 0xdeadbeef, /* up to IE7 */
-        "got %u expected ERROR_SXS_KEY_NOT_FOUND or 0xdeadbeef\n", error);
+        "unexpected error: %u\n", error);
 
     ret = pIsDomainLegalCookieDomainW(gmail_com, gmail_com);
     ok(ret, "IsDomainLegalCookieDomainW failed\n");
@@ -754,9 +755,9 @@ static void test_IsDomainLegalCookieDomainW(void)
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
     ok(error == ERROR_SXS_KEY_NOT_FOUND || /* IE8 on XP */
         error == ERROR_FILE_NOT_FOUND ||   /* IE8 on Vista */
+        error == ERROR_SUCCESS || /* IE8 on W2K3 */
         error == 0xdeadbeef, /* up to IE7 */
-        "got %u expected ERROR_SXS_KEY_NOT_FOUND, ERROR_FILE_NOT_FOUND or "
-        "0xdeadbeef\n", error);
+        "unexpected error: %u\n", error);
 
     ret = pIsDomainLegalCookieDomainW(uk, co_uk);
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
