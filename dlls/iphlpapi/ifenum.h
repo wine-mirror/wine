@@ -86,8 +86,6 @@ DWORD getInterfaceIndexByName(const char *name, PDWORD index);
  * if internal errors occur.
  * Returns NO_ERROR on success.
  */
-DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
- PDWORD type);
 DWORD getInterfacePhysicalByIndex(DWORD index, PDWORD len, PBYTE addr,
  PDWORD type);
 

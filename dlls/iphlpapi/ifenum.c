@@ -299,7 +299,7 @@ static DWORD getInterfaceMaskByName(const char *name)
 }
 
 #if defined (SIOCGIFHWADDR)
-DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
+static DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
  PDWORD type)
 {
   DWORD ret;
@@ -387,7 +387,7 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
   return ret;
 }
 #elif defined (SIOCGARP)
-DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
+static DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
  PDWORD type)
 {
   DWORD ret;
@@ -446,7 +446,7 @@ DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
   return ret;
 }
 #elif defined (HAVE_SYS_SYSCTL_H) && defined (HAVE_NET_IF_DL_H)
-DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
+static DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr,
  PDWORD type)
 {
   DWORD ret;
