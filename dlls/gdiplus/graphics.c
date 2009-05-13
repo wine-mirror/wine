@@ -2935,6 +2935,10 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
         nheight;
     SIZE size;
 
+    TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
+        debugstr_wn(string, length), length, font, debugstr_rectf(rect), format,
+        bounds, codepointsfitted, linesfilled);
+
     if(!graphics || !string || !font || !rect)
         return InvalidParameter;
 
