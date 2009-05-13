@@ -2834,11 +2834,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
      * private data, it might contain opengl pointers
      */
     if(This->depth_blt_texture) {
+        ENTER_GL();
         glDeleteTextures(1, &This->depth_blt_texture);
+        LEAVE_GL();
         This->depth_blt_texture = 0;
     }
     if (This->depth_blt_rb) {
+        ENTER_GL();
         GL_EXTCALL(glDeleteRenderbuffersEXT(1, &This->depth_blt_rb));
+        LEAVE_GL();
         This->depth_blt_rb = 0;
         This->depth_blt_rb_w = 0;
         This->depth_blt_rb_h = 0;
