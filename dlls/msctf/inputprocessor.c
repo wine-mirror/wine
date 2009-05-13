@@ -59,6 +59,9 @@ typedef struct tagInputProcessorProfilesSink {
 typedef struct tagInputProcessorProfiles {
     const ITfInputProcessorProfilesVtbl *InputProcessorProfilesVtbl;
     const ITfSourceVtbl *SourceVtbl;
+    /* const ITfInputProcessorProfileMgrVtbl *InputProcessorProfileMgrVtbl; */
+    /* const ITfInputProcessorProfilesExVtbl *InputProcessorProfilesExVtbl; */
+    /* const ITfInputProcessorProfileSubstituteLayoutVtbl *InputProcessorProfileSubstituteLayoutVtbl; */
     LONG refCount;
 
     LANGID  currentLanguage;

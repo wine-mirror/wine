@@ -71,6 +71,11 @@ typedef struct tagACLMulti {
     const ITfKeystrokeMgrVtbl *KeystrokeMgrVtbl;
     const ITfMessagePumpVtbl *MessagePumpVtbl;
     const ITfClientIdVtbl *ClientIdVtbl;
+    /* const ITfThreadMgrExVtbl *ThreadMgrExVtbl; */
+    /* const ITfConfigureSystemKeystrokeFeedVtbl *ConfigureSystemKeystrokeFeedVtbl; */
+    /* const ITfLangBarItemMgrVtbl *LangBarItemMgrVtbl; */
+    /* const ITfUIElementMgrVtbl *UIElementMgrVtbl; */
+    /* const ITfSourceSingleVtbl *SourceSingleVtbl; */
     LONG refCount;
 
     const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl; /* internal */

@@ -58,6 +58,13 @@ typedef struct tagContextSink {
 typedef struct tagContext {
     const ITfContextVtbl *ContextVtbl;
     const ITfSourceVtbl *SourceVtbl;
+    /* const ITfContextCompositionVtbl *ContextCompositionVtbl; */
+    /* const ITfContextOwnerCompositionServicesVtbl *ContextOwnerCompositionServicesVtbl; */
+    /* const ITfContextOwnerServicesVtbl *ContextOwnerServicesVtbl; */
+    /* const ITfInsertAtSelectionVtbl *InsertAtSelectionVtbl; */
+    /* const ITfMouseTrackerVtbl *MouseTrackerVtbl; */
+    /* const ITfQueryEmbeddedVtbl *QueryEmbeddedVtbl; */
+    /* const ITfSourceSingleVtbl *SourceSingleVtbl; */
     LONG refCount;
 
     TfClientId tidOwner;
@@ -79,6 +86,7 @@ typedef struct tagContext {
 
 typedef struct tagTextStoreACPSink {
     const ITextStoreACPSinkVtbl *TextStoreACPSinkVtbl;
+    /* const ITextStoreACPServicesVtbl *TextStoreACPServicesVtbl; */
     LONG refCount;
 
     Context *pContext;
