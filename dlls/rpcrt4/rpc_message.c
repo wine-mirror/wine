@@ -527,7 +527,7 @@ BOOL RPCRT4_IsValidHttpPacket(RpcPktHdr *hdr, unsigned char *data,
 }
 
 /* assumes the HTTP packet has been validated */
-unsigned char *RPCRT4_NextHttpHeaderField(unsigned char *data)
+static unsigned char *RPCRT4_NextHttpHeaderField(unsigned char *data)
 {
   ULONG type;
 
@@ -1032,7 +1032,7 @@ RPC_STATUS RPCRT4_ValidateCommonHeader(const RpcPktCommonHdr *hdr)
  * 
  * Receive a fragment from a connection.
  */
-RPC_STATUS RPCRT4_default_receive_fragment(RpcConnection *Connection, RpcPktHdr **Header, void **Payload)
+static RPC_STATUS RPCRT4_default_receive_fragment(RpcConnection *Connection, RpcPktHdr **Header, void **Payload)
 {
   RPC_STATUS status;
   DWORD hdr_length;

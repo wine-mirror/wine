@@ -41,7 +41,6 @@ DWORD RPCRT4_GetHeaderSize(const RpcPktHdr *Header);
 RPC_STATUS RPCRT4_ValidateCommonHeader(const RpcPktCommonHdr *hdr);
 
 BOOL RPCRT4_IsValidHttpPacket(RpcPktHdr *hdr, unsigned char *data, unsigned short data_len);
-unsigned char *RPCRT4_NextHttpHeaderField(unsigned char *data);
 RPC_STATUS RPCRT4_ParseHttpPrepareHeader1(RpcPktHdr *header, unsigned char *data, ULONG *field1);
 RPC_STATUS RPCRT4_ParseHttpPrepareHeader2(RpcPktHdr *header, unsigned char *data, ULONG *field1, ULONG *bytes_until_next_packet, ULONG *field3);
 RPC_STATUS RPCRT4_ParseHttpFlowControlHeader(RpcPktHdr *header, unsigned char *data, BOOL server, ULONG *bytes_transmitted, ULONG *flow_control_increment, UUID *pipe_uuid);
