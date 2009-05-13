@@ -3654,3 +3654,12 @@ DWORD WINAPI RegisterUrlCacheNotification(LPVOID a, DWORD b, DWORD c, DWORD d, D
     FIXME("(%p %x %x %x %x %x)\n", a, b, c, d, e, f);
     return 0;
 }
+
+/***********************************************************************
+ *           IncrementUrlCacheHeaderData (WININET.@)
+ */
+BOOL WINAPI IncrementUrlCacheHeaderData(DWORD index, LPDWORD data)
+{
+    FIXME("(%u, %p)\n", index, data);
+    return FALSE;
+}

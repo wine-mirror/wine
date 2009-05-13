@@ -109,7 +109,7 @@
 @ stdcall HttpSendRequestExA(long ptr ptr long long)
 @ stdcall HttpSendRequestExW(long ptr ptr long long)
 @ stdcall HttpSendRequestW(ptr wstr long ptr long)
-@ stub IncrementUrlCacheHeaderData
+@ stdcall IncrementUrlCacheHeaderData(long ptr)
 @ stub InternetAlgIdToStringA
 @ stub InternetAlgIdToStringW
 @ stdcall InternetAttemptConnect(long)
