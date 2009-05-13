@@ -3907,6 +3907,8 @@ static void test_pbo_functionality(WineD3D_GL_Info *gl_info) {
         return;
     }
 
+    ENTER_GL();
+
     while(glGetError());
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -3933,6 +3935,8 @@ static void test_pbo_functionality(WineD3D_GL_Info *gl_info) {
     glDeleteTextures(1, &texture);
     GL_EXTCALL(glDeleteBuffersARB(1, &pbo));
     checkGLcall("PBO test cleanup\n");
+
+    LEAVE_GL();
 
     if(memcmp(check, pattern, sizeof(check)) != 0) {
         WARN_(d3d_caps)("PBO test failed, read back data doesn't match original\n");
