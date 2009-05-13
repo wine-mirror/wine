@@ -371,6 +371,8 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
             {
                 struct fbo_entry *entry, *entry2;
 
+                ENTER_GL();
+
                 LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->contexts[i]->fbo_list, struct fbo_entry, entry)
                 {
                     BOOL destroyed = FALSE;
@@ -388,6 +390,8 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                     if (!destroyed && entry->depth_stencil == (IWineD3DSurface *)resource)
                         context_destroy_fbo_entry(This, entry);
                 }
+
+                LEAVE_GL();
             }
 
             break;
@@ -1599,7 +1603,9 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         case CTXUSAGE_CLEAR:
         case CTXUSAGE_DRAWPRIM:
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+                ENTER_GL();
                 context_apply_fbo_state((IWineD3DDevice *)This);
+                LEAVE_GL();
             }
             if (context->draw_buffer_dirty) {
                 apply_draw_buffer(This, target, FALSE);
@@ -1611,10 +1617,9 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
                 if (This->render_offscreen) {
                     FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
+                    ENTER_GL();
                     context_bind_fbo((IWineD3DDevice *)This, GL_FRAMEBUFFER_EXT, &context->dst_fbo);
                     context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, target);
-
-                    ENTER_GL();
                     GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0));
                     checkGLcall("glFramebufferRenderbufferEXT");
                     LEAVE_GL();
