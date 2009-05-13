@@ -350,14 +350,18 @@ static void test_res_protocol(void)
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == sizeof(blank_url)/sizeof(WCHAR), "size=%d\n", size);
+        ok(size == sizeof(blank_url)/sizeof(WCHAR) ||
+           size == sizeof(buf)/sizeof(buf[0]), /* IE8 */
+           "size=%d\n", size);
 
         size = 0xdeadbeef;
         hres = IInternetProtocolInfo_ParseUrl(protocol_info, wrong_url1, PARSE_DOMAIN, 0, buf,
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == sizeof(wrong_url1)/sizeof(WCHAR), "size=%d\n", size);
+        ok(size == sizeof(wrong_url1)/sizeof(WCHAR) ||
+           size == sizeof(buf)/sizeof(buf[0]), /* IE8 */
+           "size=%d\n", size);
 
         if (0)
         {
@@ -653,7 +657,9 @@ static void test_about_protocol(void)
                 sizeof(buf)/sizeof(buf[0]), &size, 0);
         ok(hres == S_OK || hres == E_FAIL, "ParseUrl failed: %08x\n", hres);
         ok(buf[0] == '?', "buf changed\n");
-        ok(size == sizeof(about_blank_url)/sizeof(WCHAR), "size=%d\n", size);
+        ok(size == sizeof(about_blank_url)/sizeof(WCHAR) ||
+           size == sizeof(buf)/sizeof(buf[0]), /* IE8 */
+           "size=%d\n", size);
 
         if (0)
         {
