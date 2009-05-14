@@ -1786,7 +1786,10 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
         TRACE("TYMED_ISTORAGE\n");
         if (pStgMedium->u.pstg)
         {
-            FIXME("not implemented for IStorage %p\n", pStgMedium->u.pstg);
+            IUnknown *unk;
+            IStorage_QueryInterface(pStgMedium->u.pstg, &IID_IUnknown, (void**)&unk);
+            size = WdtpInterfacePointer_UserSize(pFlags, LOWORD(*pFlags), size, unk, &IID_IStorage);
+            IUnknown_Release(unk);
         }
         break;
     case TYMED_GDI:
@@ -1895,7 +1898,10 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
         TRACE("TYMED_ISTORAGE\n");
         if (pStgMedium->u.pstg)
         {
-            FIXME("not implemented for IStorage %p\n", pStgMedium->u.pstg);
+            IUnknown *unk;
+            IStorage_QueryInterface(pStgMedium->u.pstg, &IID_IUnknown, (void**)&unk);
+            pBuffer = WdtpInterfacePointer_UserMarshal(pFlags, LOWORD(*pFlags), pBuffer, unk, &IID_IStorage);
+            IUnknown_Release(unk);
         }
         break;
     case TYMED_GDI:
@@ -2025,7 +2031,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
         TRACE("TYMED_ISTORAGE\n");
         if (content)
         {
-            FIXME("not implemented for IStorage\n");
+            pBuffer = WdtpInterfacePointer_UserUnmarshal(pFlags, pBuffer, (IUnknown**)&pStgMedium->u.pstg, &IID_IStorage);
         }
         else
             pStgMedium->u.pstg = NULL;
