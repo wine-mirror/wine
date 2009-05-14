@@ -623,15 +623,15 @@ static void test_marshal_STGMEDIUM(void)
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = STGMEDIUM_UserSize(&umcb.Flags, 0, &med);
-    todo_wine ok(size == unk_size + 2 * sizeof(DWORD), "size %d should be %d bytes\n", size, unk_size + 8);
+    ok(size == unk_size + 2 * sizeof(DWORD), "size %d should be %d bytes\n", size, unk_size + 8);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size * 2);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     buffer_end = STGMEDIUM_UserMarshal(&umcb.Flags, buffer, &med);
-    todo_wine ok(buffer_end - buffer - 2 * sizeof(DWORD) == unk_buffer_end - unk_buffer, "buffer size mismatch\n");
+    ok(buffer_end - buffer - 2 * sizeof(DWORD) == unk_buffer_end - unk_buffer, "buffer size mismatch\n");
     ok(*(DWORD*)buffer == TYMED_NULL, "got %08x\n", *(DWORD*)buffer);
     ok(*((DWORD*)buffer+1) != 0, "got %08x\n", *((DWORD*)buffer+1));
-    todo_wine ok(!memcmp(buffer+8, unk_buffer, unk_buffer_end - unk_buffer), "buffer mismatch\n");
+    ok(!memcmp(buffer+8, unk_buffer, unk_buffer_end - unk_buffer), "buffer mismatch\n");
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
 
@@ -642,7 +642,7 @@ static void test_marshal_STGMEDIUM(void)
     STGMEDIUM_UserUnmarshal(&umcb.Flags, buffer, &med2);
 
     ok(med2.tymed == TYMED_NULL, "got tymed %x\n", med2.tymed);
-    todo_wine ok(med2.pUnkForRelease != NULL, "Incorrectly unmarshalled\n");
+    ok(med2.pUnkForRelease != NULL, "Incorrectly unmarshalled\n");
 
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);

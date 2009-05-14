@@ -1808,7 +1808,7 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
     }
 
     if (pStgMedium->pUnkForRelease)
-        FIXME("buffer size pUnkForRelease\n");
+        size = WdtpInterfacePointer_UserSize(pFlags, LOWORD(*pFlags), size, pStgMedium->pUnkForRelease, &IID_IUnknown);
 
     return size;
 }
@@ -1914,7 +1914,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
     }
 
     if (pStgMedium->pUnkForRelease)
-        FIXME("marshal pUnkForRelease\n");
+        pBuffer = WdtpInterfacePointer_UserMarshal(pFlags, LOWORD(*pFlags), pBuffer, pStgMedium->pUnkForRelease, &IID_IUnknown);
 
     return pBuffer;
 }
@@ -2053,7 +2053,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
 
     pStgMedium->pUnkForRelease = NULL;
     if (releaseunk)
-        FIXME("unmarshal pUnkForRelease\n");
+        pBuffer = WdtpInterfacePointer_UserUnmarshal(pFlags, pBuffer, &pStgMedium->pUnkForRelease, &IID_IUnknown);
 
     return pBuffer;
 }
