@@ -100,6 +100,7 @@ typedef struct wine_glpixelformat {
     int         fmt_id;
     int         render_type;
     BOOL        offscreenOnly;
+    DWORD       dwFlags; /* We store some PFD_* flags in here for emulated bitmap formats */
 } WineGLPixelFormat;
 
 typedef struct wine_glcontext {
@@ -854,12 +855,24 @@ static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
     return render_type;
 }
 
+/* Check whether a fbconfig is suitable for Windows-style bitmap rendering */
+static BOOL check_fbconfig_bitmap_capability(Display *display, GLXFBConfig fbconfig)
+{
+    int dbuf, value;
+    pglXGetFBConfigAttrib(display, fbconfig, GLX_DOUBLEBUFFER, &dbuf);
+    pglXGetFBConfigAttrib(gdi_display, fbconfig, GLX_DRAWABLE_TYPE, &value);
+
+    /* Windows only supports bitmap rendering on single buffered formats, further the fbconfig needs to have
+     * the GLX_PIXMAP_BIT set. */
+    return !dbuf && (value & GLX_PIXMAP_BIT);
+}
+
 static WineGLPixelFormat *get_formats(Display *display, int *size_ret, int *onscreen_size_ret)
 {
     static WineGLPixelFormat *list;
     static int size, onscreen_size;
 
-    int fmt_id, nCfgs, i, run;
+    int fmt_id, nCfgs, i, run, bmp_formats;
     GLXFBConfig* cfgs;
     XVisualInfo *visinfo;
 
@@ -874,7 +887,21 @@ static WineGLPixelFormat *get_formats(Display *display, int *size_ret, int *onsc
         return NULL;
     }
 
-    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nCfgs*sizeof(WineGLPixelFormat));
+    /* Bitmap rendering on Windows implies the use of the Microsoft GDI software renderer.
+     * Further most GLX drivers only offer pixmap rendering using indirect rendering (except for modern drivers which support 'AIGLX' / composite).
+     * Indirect rendering can indicate software rendering (on Nvidia it is hw accelerated)
+     * Since bitmap rendering implies the use of software rendering we can safely use indirect rendering for bitmaps.
+     *
+     * Below we count the number of formats which are suitable for bitmap rendering. Windows restricts bitmap rendering to single buffered formats.
+     */
+    for(i=0, bmp_formats=0; i<nCfgs; i++)
+    {
+        if(check_fbconfig_bitmap_capability(display, cfgs[i]))
+            bmp_formats++;
+    }
+    TRACE("Found %d bitmap capable fbconfigs\n", bmp_formats);
+
+    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (nCfgs + bmp_formats)*sizeof(WineGLPixelFormat));
 
     /* Fill the pixel format list. Put onscreen formats at the top and offscreen ones at the bottom.
      * Do this as GLX doesn't guarantee that the list is sorted */
@@ -904,8 +931,24 @@ static WineGLPixelFormat *get_formats(Display *display, int *size_ret, int *onsc
                 list[size].fmt_id = fmt_id;
                 list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
                 list[size].offscreenOnly = FALSE;
+                list[size].dwFlags = 0;
                 size++;
                 onscreen_size++;
+
+                /* Clone a format if it is bitmap capable for indirect rendering to bitmaps */
+                if(check_fbconfig_bitmap_capability(display, cfgs[i]))
+                {
+                    TRACE("Found bitmap capable format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
+                    list[size].iPixelFormat = size+1; /* The index starts at 1 */
+                    list[size].fbconfig = cfgs[i];
+                    list[size].fmt_id = fmt_id;
+                    list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
+                    list[size].offscreenOnly = FALSE;
+                    list[size].dwFlags = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI;
+                    size++;
+                    onscreen_size++;
+                }
+
                 XFree(visinfo);
             } else if(run && !visinfo) {
                 TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
@@ -914,6 +957,7 @@ static WineGLPixelFormat *get_formats(Display *display, int *size_ret, int *onsc
                 list[size].fmt_id = fmt_id;
                 list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
                 list[size].offscreenOnly = TRUE;
+                list[size].dwFlags = 0;
                 size++;
             }
         }
@@ -1022,13 +1066,17 @@ static inline void sync_context(Wine_GLContext *context)
 }
 
 
-static GLXContext create_glxcontext(Display *display, Wine_GLContext *context, GLXContext shareList, BOOL direct)
+static GLXContext create_glxcontext(Display *display, Wine_GLContext *context, GLXContext shareList)
 {
     GLXContext ctx;
+
+    /* We use indirect rendering for rendering to bitmaps. See get_formats for a comment about this. */
+    BOOL indirect = (context->fmt->dwFlags & PFD_DRAW_TO_BITMAP) ? FALSE : TRUE;
+
     if(context->vis)
-        ctx = pglXCreateContext(gdi_display, context->vis, shareList, direct);
+        ctx = pglXCreateContext(gdi_display, context->vis, shareList, indirect);
     else /* Create a GLX Context for a pbuffer */
-        ctx = pglXCreateNewContext(gdi_display, context->fmt->fbconfig, context->fmt->render_type, shareList, direct);
+        ctx = pglXCreateNewContext(gdi_display, context->fmt->fbconfig, context->fmt->render_type, shareList, TRUE);
 
     return ctx;
 }
@@ -1347,15 +1395,15 @@ int CDECL X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 
   wine_tsx11_lock();
 
-  pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_X_RENDERABLE, &value);
-  if(value)
-      ppfd->dwFlags |= PFD_SUPPORT_GDI;
-
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
   if(value & GLX_WINDOW_BIT)
       ppfd->dwFlags |= PFD_DRAW_TO_WINDOW;
-  if(value & GLX_PIXMAP_BIT)
-      ppfd->dwFlags |= PFD_DRAW_TO_BITMAP;
+
+  /* On Windows bitmap rendering is only offered using the GDI Software renderer. We reserve some formats (see get_formats for more info)
+   * for bitmap rendering since we require indirect rendering for this. Further pixel format logs of a GeforceFX, Geforce8800GT, Radeon HD3400 and a
+   * Radeon 9000 indicated that all bitmap formats have PFD_SUPPORT_GDI. Except for 2 formats on the Radeon 9000 none of the hw accelerated formats
+   * offered the GDI bit either. */
+  ppfd->dwFlags |= fmt->dwFlags & (PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI);
 
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_CONFIG_CAVEAT, &value);
   if(value == GLX_SLOW_CONFIG)
@@ -1600,15 +1648,13 @@ BOOL CDECL X11DRV_wglCopyContext(HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask) {
         }
 
         if (!src->ctx) {
-            DWORD type = GetObjectType(src->hdc);
             wine_tsx11_lock();
-            src->ctx = create_glxcontext(gdi_display, src, NULL, type == OBJ_MEMDC ? False : True);
+            src->ctx = create_glxcontext(gdi_display, src, NULL);
             TRACE(" created a delayed OpenGL context (%p)\n", src->ctx);
         }
         else if (!dst->ctx) {
-            DWORD type = GetObjectType(dst->hdc);
             wine_tsx11_lock();
-            dst->ctx = create_glxcontext(gdi_display, dst, NULL, type == OBJ_MEMDC ? False : True);
+            dst->ctx = create_glxcontext(gdi_display, dst, NULL);
             TRACE(" created a delayed OpenGL context (%p)\n", dst->ctx);
         }
     }
@@ -1787,7 +1833,7 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
              * We are certain that the drawable and context are compatible as we only allow compatible formats.
              */
             TRACE(" Creating GLX Context\n");
-            ctx->ctx = create_glxcontext(gdi_display, ctx, NULL, type == OBJ_MEMDC ? False : True);
+            ctx->ctx = create_glxcontext(gdi_display, ctx, NULL);
             TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
         }
         TRACE(" make current for dis %p, drawable %p, ctx %p\n", gdi_display, (void*) drawable, ctx->ctx);
@@ -1821,7 +1867,6 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
 BOOL CDECL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEVICE* pReadDev, HGLRC hglrc)
 {
     BOOL ret;
-    int indirect = (GetObjectType(pDrawDev->hdc) == OBJ_MEMDC);
 
     TRACE("(%p,%p,%p)\n", pDrawDev, pReadDev, hglrc);
 
@@ -1840,7 +1885,7 @@ BOOL CDECL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* pDrawDev, X11DRV_PDEV
             Drawable d_read = get_glxdrawable(pReadDev);
 
             if (ctx->ctx == NULL) {
-                ctx->ctx = create_glxcontext(gdi_display, ctx, NULL, !indirect);
+                ctx->ctx = create_glxcontext(gdi_display, ctx, NULL);
                 TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
             }
             ctx->hdc = pDrawDev->hdc;
@@ -1875,20 +1920,22 @@ BOOL CDECL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
         ERR("Could not share display lists, context already created !\n");
         return FALSE;
     } else {
+        if(org && dest && (GetObjectType(org->hdc) == OBJ_MEMDC) ^ (GetObjectType(dest->hdc) == OBJ_MEMDC)) {
+            WARN("Attempting to share a context between a direct and indirect rendering context, expect issues!\n");
+        }
+
         if (org->ctx == NULL) {
-            int indirect = (GetObjectType(org->hdc) == OBJ_MEMDC);
             wine_tsx11_lock();
             describeContext(org);
 
-            org->ctx = create_glxcontext(gdi_display, org, NULL, !indirect);
+            org->ctx = create_glxcontext(gdi_display, org, NULL);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
         }
         if (NULL != dest) {
-            int indirect = (GetObjectType(dest->hdc) == OBJ_MEMDC);
             wine_tsx11_lock();
             describeContext(dest);
-            dest->ctx = create_glxcontext(gdi_display, dest, org->ctx, !indirect);
+            dest->ctx = create_glxcontext(gdi_display, dest, org->ctx);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
             return TRUE;
