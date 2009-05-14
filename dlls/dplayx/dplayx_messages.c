@@ -329,11 +329,7 @@ HRESULT DP_MSG_ForwardPlayerCreation( IDirectPlay2AImpl* This, DPID dpidServer )
   lpMsgBody->unknown4[5] =  0x0;
   lpMsgBody->unknown4[6] =  0x0;
 
-#if 0
-  lpMsgBody->unknown4[7] =  NS_GetOtherMagic( This->dp2->lpNameServerData )
-#else
   lpMsgBody->unknown4[7] =  NS_GetNsMagic( This->dp2->lpNameServerData );
-#endif
   TRACE( "Setting second magic to 0x%08x\n", lpMsgBody->unknown4[7] );
 
   lpMsgBody->unknown4[8] =  0x0;

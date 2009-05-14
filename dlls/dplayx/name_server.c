@@ -183,14 +183,6 @@ DWORD NS_GetNsMagic( LPVOID lpNSInfo )
   return lpHdrInfo[1];
 }
 
-/* Get the magic number associated with the non NS end */
-DWORD NS_GetOtherMagic( LPVOID lpNSInfo )
-{
-  lpNSCache lpCache = (lpNSCache)lpNSInfo;
-
-  return ((LPDWORD)lpCache->lpLocalAddrHdr)[1];
-}
-
 void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize )
 {
   lpNSCache lpCache = (lpNSCache)lpNSInfo;
