@@ -1158,6 +1158,14 @@ int CDECL X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
             continue;
         }
 
+        /* Only use bitmap capable for formats for bitmap rendering.
+         * See get_formats for more info. */
+        if( (ppfd->dwFlags & PFD_DRAW_TO_BITMAP) != (fmt->dwFlags & PFD_DRAW_TO_BITMAP))
+        {
+            TRACE("PFD_DRAW_TO_BITMAP mismatch for iPixelFormat=%d\n", i+1);
+            continue;
+        }
+
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value);
         if (value) dwFlags |= PFD_DOUBLEBUFFER;
         pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_STEREO, &value);
