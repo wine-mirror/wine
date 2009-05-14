@@ -2678,8 +2678,8 @@ HRESULT CALLBACK IDataObject_GetData_Proxy(
     FORMATETC *pformatetcIn,
     STGMEDIUM *pmedium)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", This, pformatetcIn, pmedium);
+    return IDataObject_RemoteGetData_Proxy(This, pformatetcIn, pmedium);
 }
 
 HRESULT __RPC_STUB IDataObject_GetData_Stub(
@@ -2687,8 +2687,8 @@ HRESULT __RPC_STUB IDataObject_GetData_Stub(
     FORMATETC *pformatetcIn,
     STGMEDIUM *pRemoteMedium)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", This, pformatetcIn, pRemoteMedium);
+    return IDataObject_GetData(This, pformatetcIn, pRemoteMedium);
 }
 
 HRESULT CALLBACK IDataObject_GetDataHere_Proxy(
@@ -2696,8 +2696,8 @@ HRESULT CALLBACK IDataObject_GetDataHere_Proxy(
     FORMATETC *pformatetc,
     STGMEDIUM *pmedium)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", This, pformatetc, pmedium);
+    return IDataObject_RemoteGetDataHere_Proxy(This, pformatetc, pmedium);
 }
 
 HRESULT __RPC_STUB IDataObject_GetDataHere_Stub(
@@ -2705,8 +2705,8 @@ HRESULT __RPC_STUB IDataObject_GetDataHere_Stub(
     FORMATETC *pformatetc,
     STGMEDIUM *pRemoteMedium)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %p)\n", This, pformatetc, pRemoteMedium);
+    return IDataObject_GetDataHere(This, pformatetc, pRemoteMedium);
 }
 
 HRESULT CALLBACK IDataObject_SetData_Proxy(
