@@ -1313,6 +1313,9 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
         }
         else
           (*prgbDig)++;
+        /* We converted trailing digits to zeroes => have_frac has changed */
+        while (have_frac > 0 && rgbDig[have_int + have_frac - 1] == 0)
+          have_frac--;
       }
     }
     TRACE("have_int=%d,need_int=%d,have_frac=%d,need_frac=%d,pad=%d,exp=%d\n",
