@@ -1272,10 +1272,20 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             break;
         case VENDOR_ATI:
             if(WINE_D3D9_CAPABLE(gl_info)) {
+                /* Radeon R7xx HD4800 - highend */
+                if (strstr(gl_info->gl_renderer, "HD 4800") ||
+                    strstr(gl_info->gl_renderer, "HD 4830") ||
+                    strstr(gl_info->gl_renderer, "HD 4850") ||
+                    strstr(gl_info->gl_renderer, "HD 4870") ||
+                    strstr(gl_info->gl_renderer, "HD 4890"))
+                {
+                    gl_info->gl_card = CARD_ATI_RADEON_HD4800;
+                    vidmem = 512; /* HD4800 cards use 512-1024MB, up to 2048MB for X2 version */
+                }
                 /* Radeon R6xx HD2900/HD3800 - highend */
-                if (strstr(gl_info->gl_renderer, "HD 2900") ||
-                    strstr(gl_info->gl_renderer, "HD 3870") ||
-                    strstr(gl_info->gl_renderer, "HD 3850"))
+                else if (strstr(gl_info->gl_renderer, "HD 2900") ||
+                         strstr(gl_info->gl_renderer, "HD 3870") ||
+                         strstr(gl_info->gl_renderer, "HD 3850"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD2900;
                     vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
@@ -4008,6 +4018,7 @@ static const struct driver_version_information driver_version_table[] = {
     {VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         "ATI Mobility Radeon HD 2300",      6,  14, 10, 6764    },
     {VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      6,  14, 10, 6764    },
     {VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        6,  14, 10, 6764    },
 
     /* TODO: Add information about legacy ATI hardware, Intel and other cards */
 };
