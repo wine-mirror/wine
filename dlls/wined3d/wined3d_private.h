@@ -1655,8 +1655,6 @@ HRESULT resource_set_private_data(IWineD3DResource *iface, REFGUID guid,
 /*****************************************************************************
  * IWineD3DBaseTexture D3D- > openGL state map lookups
  */
-#define WINED3DFUNC_NOTSUPPORTED  -2
-#define WINED3DFUNC_UNIMPLEMENTED -1
 
 typedef enum winetexturestates {
     WINED3DTEXSTA_ADDRESSU       = 0,
