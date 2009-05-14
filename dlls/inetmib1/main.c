@@ -1371,7 +1371,7 @@ BOOL WINAPI SnmpExtensionQuery(BYTE bPduType, SnmpVarBindList *pVarBindList,
                  * so we have to continue until an implementation handles the
                  * query or we exhaust the table of supported OIDs.
                  */
-                for (; error == SNMP_ERRORSTATUS_NOSUCHNAME &&
+                for (matchingIndex++; error == SNMP_ERRORSTATUS_NOSUCHNAME &&
                     matchingIndex < DEFINE_SIZEOF(supportedIDs);
                     matchingIndex++)
                 {
