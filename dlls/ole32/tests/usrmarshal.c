@@ -502,7 +502,7 @@ unsigned char * __RPC_USER WdtpInterfacePointer_UserMarshal(ULONG *, ULONG, unsi
 unsigned char * __RPC_USER WdtpInterfacePointer_UserUnmarshal(ULONG *, unsigned char *, IUnknown **, REFIID);
 void __RPC_USER WdtpInterfacePointer_UserFree(IUnknown *);
 
-static void test_marshal_WdtpInterfacePointer(void)
+static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
 {
     USER_MARSHAL_CB umcb;
     MIDL_STUB_MESSAGE stub_msg;
@@ -512,52 +512,60 @@ static void test_marshal_WdtpInterfacePointer(void)
     IUnknown *unk;
     IUnknown *unk2;
     unsigned char *wireip;
+    DWORD expected_size;
+
+    /* The marshalled data depends on the LOWORD of the ctx */
+
+    expected_size = (LOWORD(ctx) == MSHCTX_INPROC) ? 0x4c : 0xb4;
 
     /* shows that the WdtpInterfacePointer functions don't marshal anything for
      * NULL pointers, so code using these functions must handle that case
      * itself */
+
     unk = NULL;
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
-    size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, unk, &IID_IUnknown);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, umcb_ctx);
+    size = WdtpInterfacePointer_UserSize(&umcb.Flags, ctx, 0, unk, &IID_IUnknown);
     ok(size == 0, "size should be 0 bytes, not %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
-    buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, buffer, unk, &IID_IUnknown);
+    buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, ctx, buffer, unk, &IID_IUnknown);
     wireip = buffer;
     HeapFree(GetProcessHeap(), 0, buffer);
 
     unk = &Test_Unknown;
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
-    size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, unk, &IID_IUnknown);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, umcb_ctx);
+    size = WdtpInterfacePointer_UserSize(&umcb.Flags, ctx, 0, unk, &IID_IUnknown);
     todo_wine
-    ok(size >= 0x4c, "size should be >= 0x4c bytes, not %d\n", size);
+    ok(size >= expected_size, "size should be >= %x bytes, not %x\n", expected_size, size);
     trace("WdtpInterfacePointer_UserSize returned %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
-    buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, buffer, unk, &IID_IUnknown);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, umcb_ctx);
+    buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, ctx, buffer, unk, &IID_IUnknown);
     wireip = buffer;
-    if (size >= 0x4c)
+    if(size)
     {
         HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, 0);
         IStream *stm;
         void *ptr;
         LARGE_INTEGER pos;
-        DWORD h_size;
+        DWORD h_size, marshal_size;
 
-        ok(buffer_end == buffer + 0x4c, "buffer_end %p buffer %p\n", buffer_end, buffer);
-        ok(*(DWORD *)wireip == 0x44, "wireip + 0x0 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
+        ok(buffer_end == buffer + expected_size, "buffer_end %p buffer %p (diff %x)\n", buffer_end, buffer, buffer_end - buffer);
+
+        marshal_size = buffer_end - buffer - 2 * sizeof(DWORD);
+        ok(*(DWORD *)wireip == marshal_size, "wireip + 0x0 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
-        ok(*(DWORD *)wireip == 0x44, "wireip + 0x4 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
+        ok(*(DWORD *)wireip == marshal_size, "wireip + 0x4 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
         wireip += sizeof(DWORD);
 
-        /* The remaining 0x44 bytes are the result of CoMarshalInterface */
+        /* The remaining 0x44/0xac bytes are the result of CoMarshalInterface */
 
         CreateStreamOnHGlobal(h, TRUE, &stm);
-        CoMarshalInterface(stm, &IID_IUnknown, unk, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+        CoMarshalInterface(stm, &IID_IUnknown, unk, LOWORD(ctx), NULL, MSHLFLAGS_NORMAL);
         h_size = GlobalSize(h);
-        ok(h_size == 0x44, "size %x\n", h_size);
+        ok(h_size == marshal_size, "size %x\n", h_size);
 
         ptr = GlobalLock(h);
-        ok(!memcmp(ptr, wireip, 0x44), "buffer mismatch\n");
+        ok(!memcmp(ptr, wireip, h_size), "buffer mismatch\n");
         GlobalUnlock(h);
         pos.QuadPart = 0;
         IStream_Seek(stm, pos, STREAM_SEEK_SET, NULL);
@@ -566,13 +574,32 @@ static void test_marshal_WdtpInterfacePointer(void)
     }
 
     unk2 = NULL;
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_INPROC);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, umcb_ctx);
     WdtpInterfacePointer_UserUnmarshal(&umcb.Flags, buffer, &unk2, &IID_IUnknown);
     todo_wine
     ok(unk2 != NULL, "IUnknown object didn't unmarshal properly\n");
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
     WdtpInterfacePointer_UserFree(unk2);
+}
+
+static void test_marshal_WdtpInterfacePointer(void)
+{
+    /*
+     * There are two places where we can pass the marshalling ctx: as
+     * part of the umcb and as a separate flag.  The loword of that
+     * separate flag field is what matters.
+     */
+
+    /* All three are marshalled as inproc */
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_INPROC);
+    marshal_WdtpInterfacePointer(MSHCTX_DIFFERENTMACHINE, MSHCTX_INPROC);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MAKELONG(MSHCTX_INPROC, 0xffff));
+
+    /* All three are marshalled as remote */
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE);
+    marshal_WdtpInterfacePointer(MSHCTX_DIFFERENTMACHINE, MSHCTX_DIFFERENTMACHINE);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MAKELONG(MSHCTX_DIFFERENTMACHINE, 0xffff));
 }
 
 START_TEST(usrmarshal)
