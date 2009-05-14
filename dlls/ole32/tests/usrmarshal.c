@@ -599,6 +599,58 @@ static void test_marshal_WdtpInterfacePointer(void)
     marshal_WdtpInterfacePointer(MSHCTX_INPROC, MAKELONG(MSHCTX_DIFFERENTMACHINE, 0xffff));
 }
 
+static void test_marshal_STGMEDIUM(void)
+{
+    USER_MARSHAL_CB umcb;
+    MIDL_STUB_MESSAGE stub_msg;
+    RPC_MESSAGE rpc_msg;
+    unsigned char *buffer, *buffer_end, *unk_buffer, *unk_buffer_end;
+    ULONG size, unk_size;
+    STGMEDIUM med, med2;
+    IUnknown *unk = &Test_Unknown;
+
+    /* TYMED_NULL with pUnkForRelease */
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    unk_size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, unk, &IID_IUnknown);
+    unk_buffer = HeapAlloc(GetProcessHeap(), 0, unk_size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, unk_buffer, unk_size, MSHCTX_DIFFERENTMACHINE);
+    unk_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, unk_buffer, unk, &IID_IUnknown);
+
+    med.tymed = TYMED_NULL;
+    U(med).pstg = NULL;
+    med.pUnkForRelease = unk;
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    size = STGMEDIUM_UserSize(&umcb.Flags, 0, &med);
+    todo_wine ok(size == unk_size + 2 * sizeof(DWORD), "size %d should be %d bytes\n", size, unk_size + 8);
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size * 2);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    buffer_end = STGMEDIUM_UserMarshal(&umcb.Flags, buffer, &med);
+    todo_wine ok(buffer_end - buffer - 2 * sizeof(DWORD) == unk_buffer_end - unk_buffer, "buffer size mismatch\n");
+    ok(*(DWORD*)buffer == TYMED_NULL, "got %08x\n", *(DWORD*)buffer);
+    ok(*((DWORD*)buffer+1) != 0, "got %08x\n", *((DWORD*)buffer+1));
+    todo_wine ok(!memcmp(buffer+8, unk_buffer, unk_buffer_end - unk_buffer), "buffer mismatch\n");
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+
+    /* native crashes if this is uninitialised, presumably because it
+       tries to release it */
+    med2.pUnkForRelease = NULL;
+
+    STGMEDIUM_UserUnmarshal(&umcb.Flags, buffer, &med2);
+
+    ok(med2.tymed == TYMED_NULL, "got tymed %x\n", med2.tymed);
+    todo_wine ok(med2.pUnkForRelease != NULL, "Incorrectly unmarshalled\n");
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    STGMEDIUM_UserFree(&umcb.Flags, &med2);
+
+    HeapFree(GetProcessHeap(), 0, unk_buffer);
+}
+
 START_TEST(usrmarshal)
 {
     CoInitialize(NULL);
@@ -610,6 +662,7 @@ START_TEST(usrmarshal)
     test_marshal_HMETAFILE();
     test_marshal_HMETAFILEPICT();
     test_marshal_WdtpInterfacePointer();
+    test_marshal_STGMEDIUM();
 
     CoUninitialize();
 }
