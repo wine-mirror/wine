@@ -174,207 +174,8 @@ static DPLAYX_LOBBYDATA* lobbyData = NULL;
 static DPSESSIONDESC2* sessionData = NULL;
 /* static DPSESSIONDESC2* sessionData[ numSupportedSessions ]; */
 
-/* Function prototypes */
-static DWORD DPLAYX_SizeOfLobbyDataA( const DPLCONNECTION *lpDplData );
-static DWORD DPLAYX_SizeOfLobbyDataW( const DPLCONNECTION *lpDplData );
-static void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, const DPLCONNECTION *src );
-static void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, const DPLCONNECTION *src );
-static BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppId, LPDPLAYX_LOBBYDATA* dplData );
-static void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData );
-static BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
-                                          LPCDPSESSIONDESC2 lpSessionSrc );
-static BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart, LPHANDLE lphDeath,
-                                        LPHANDLE lphConnRead, BOOL bClearSetHandles );
 
-
-
-/***************************************************************************
- * Called to initialize the global data. This will only be used on the
- * loading of the dll
- ***************************************************************************/
-BOOL DPLAYX_ConstructData(void)
-{
-  SECURITY_ATTRIBUTES s_attrib;
-  BOOL                bInitializeSharedMemory = FALSE;
-  LPVOID              lpDesiredMemoryMapStart = (LPVOID)0x50000000;
-  HANDLE              hInformOnStart;
-
-  TRACE( "DPLAYX dll loaded - construct called\n" );
-
-  /* Create a semaphore to block access to DPLAYX global data structs */
-
-  s_attrib.bInheritHandle       = TRUE;
-  s_attrib.lpSecurityDescriptor = NULL;
-  s_attrib.nLength              = sizeof(s_attrib);
-
-  hDplayxSema = CreateSemaphoreA( &s_attrib, 0, 1, lpszDplayxSemaName );
-
-  /* First instance creates the semaphore. Others just use it */
-  if( GetLastError() == ERROR_SUCCESS )
-  {
-    TRACE( "Semaphore %p created\n", hDplayxSema );
-
-    /* The semaphore creator will also build the shared memory */
-    bInitializeSharedMemory = TRUE;
-  }
-  else if ( GetLastError() == ERROR_ALREADY_EXISTS )
-  {
-    TRACE( "Found semaphore handle %p\n", hDplayxSema );
-    DPLAYX_AcquireSemaphore();
-  }
-  else
-  {
-    ERR( ": semaphore error %d\n", GetLastError() );
-    return FALSE;
-  }
-
-  SetLastError( ERROR_SUCCESS );
-
-  hDplayxSharedMem = CreateFileMappingA( INVALID_HANDLE_VALUE,
-                                         &s_attrib,
-                                         PAGE_READWRITE | SEC_COMMIT,
-                                         0,
-                                         dwTotalSharedSize,
-                                         lpszDplayxFileMapping );
-
-  if( GetLastError() == ERROR_SUCCESS )
-  {
-    TRACE( "File mapped %p created\n", hDplayxSharedMem );
-  }
-  else if ( GetLastError() == ERROR_ALREADY_EXISTS )
-  {
-    TRACE( "Found FileMapping handle %p\n", hDplayxSharedMem );
-  }
-  else
-  {
-    ERR( ": unable to create shared memory (%d)\n", GetLastError() );
-    DPLAYX_ReleaseSemaphore();
-    return FALSE;
-  }
-
-  lpSharedStaticData = MapViewOfFileEx( hDplayxSharedMem,
-                                        FILE_MAP_WRITE,
-                                        0, 0, 0, lpDesiredMemoryMapStart );
-
-  if( lpSharedStaticData == NULL )
-  {
-    ERR( ": unable to map static data into process memory space (%d)\n",
-         GetLastError() );
-    DPLAYX_ReleaseSemaphore();
-    return FALSE;
-  }
-  else
-  {
-    if( lpDesiredMemoryMapStart == lpSharedStaticData )
-    {
-      TRACE( "File mapped to %p\n", lpSharedStaticData );
-    }
-    else
-    {
-      /* Presently the shared data structures use pointers. If the
-       * files are no mapped into the same area, the pointers will no
-       * longer make any sense :(
-       * FIXME: In the future make the shared data structures have some
-       *        sort of fixup to make them independent between data spaces.
-       *        This will also require a rework of the session data stuff.
-       */
-      ERR( "File mapped to %p (not %p). Expect failure\n",
-            lpSharedStaticData, lpDesiredMemoryMapStart );
-    }
-  }
-
-  /* Dynamic area starts just after the static area */
-  lpMemArea = (LPVOID)((BYTE*)lpSharedStaticData + dwStaticSharedSize);
-
-  /* FIXME: Crude hack */
-  lobbyData   = lpSharedStaticData;
-  sessionData = (DPSESSIONDESC2*)((BYTE*)lpSharedStaticData + (dwStaticSharedSize/2));
-
-  /* Initialize shared data segments. */
-  if( bInitializeSharedMemory )
-  {
-    UINT i;
-
-    TRACE( "Initializing shared memory\n" );
-
-    /* Set all lobbies to be "empty" */
-    for( i=0; i < numSupportedLobbies; i++ )
-    {
-      DPLAYX_InitializeLobbyDataEntry( &lobbyData[ i ] );
-    }
-
-    /* Set all sessions to be "empty" */
-    for( i=0; i < numSupportedSessions; i++ )
-    {
-      sessionData[i].dwSize = 0;
-    }
-
-    /* Zero out the dynamic area */
-    ZeroMemory( lpMemArea, dwDynamicSharedSize );
-
-    /* Just for fun sync the whole data area */
-    FlushViewOfFile( lpSharedStaticData, dwTotalSharedSize );
-  }
-
-  DPLAYX_ReleaseSemaphore();
-
-  /* Everything was created correctly. Signal the lobby client that
-   * we started up correctly
-   */
-  if( DPLAYX_GetThisLobbyHandles( &hInformOnStart, NULL, NULL, FALSE ) &&
-      hInformOnStart
-    )
-  {
-    BOOL bSuccess;
-    bSuccess = SetEvent( hInformOnStart );
-    TRACE( "Signalling lobby app start event %p %s\n",
-             hInformOnStart, bSuccess ? "succeed" : "failed" );
-
-    /* Close out handle */
-    DPLAYX_GetThisLobbyHandles( &hInformOnStart, NULL, NULL, TRUE );
-  }
-
-  return TRUE;
-}
-
-/***************************************************************************
- * Called to destroy all global data. This will only be used on the
- * unloading of the dll
- ***************************************************************************/
-BOOL DPLAYX_DestructData(void)
-{
-  HANDLE hInformOnDeath;
-
-  TRACE( "DPLAYX dll unloaded - destruct called\n" );
-
-  /* If required, inform that this app is dying */
-  if( DPLAYX_GetThisLobbyHandles( NULL, &hInformOnDeath, NULL, FALSE ) &&
-      hInformOnDeath
-    )
-  {
-    BOOL bSuccess;
-    bSuccess = SetEvent( hInformOnDeath );
-    TRACE( "Signalling lobby app death event %p %s\n",
-             hInformOnDeath, bSuccess ? "succeed" : "failed" );
-
-    /* Close out handle */
-    DPLAYX_GetThisLobbyHandles( NULL, &hInformOnDeath, NULL, TRUE );
-  }
-
-  /* DO CLEAN UP (LAST) */
-
-  /* Delete the semaphore */
-  CloseHandle( hDplayxSema );
-
-  /* Delete shared memory file mapping */
-  UnmapViewOfFile( lpSharedStaticData );
-  CloseHandle( hDplayxSharedMem );
-
-  return FALSE;
-}
-
-
-void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData )
+static void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData )
 {
   ZeroMemory( lpData, sizeof( *lpData ) );
 }
@@ -383,7 +184,7 @@ void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData )
  * TRUE/FALSE with a pointer to it's data returned. Pointer data is
  * is only valid if TRUE is returned.
  */
-BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppID, LPDPLAYX_LOBBYDATA* lplpDplData )
+static BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppID, LPDPLAYX_LOBBYDATA* lplpDplData )
 {
   UINT i;
 
@@ -549,65 +350,194 @@ static BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart,
   return TRUE;
 }
 
-
-HRESULT DPLAYX_GetConnectionSettingsA
-( DWORD dwAppID,
-  LPVOID lpData,
-  LPDWORD lpdwDataSize )
+/***************************************************************************
+ * Called to initialize the global data. This will only be used on the
+ * loading of the dll
+ ***************************************************************************/
+BOOL DPLAYX_ConstructData(void)
 {
-  LPDPLAYX_LOBBYDATA lpDplData;
-  DWORD              dwRequiredDataSize = 0;
-  HANDLE             hInformOnSettingRead;
+  SECURITY_ATTRIBUTES s_attrib;
+  BOOL                bInitializeSharedMemory = FALSE;
+  LPVOID              lpDesiredMemoryMapStart = (LPVOID)0x50000000;
+  HANDLE              hInformOnStart;
 
-  DPLAYX_AcquireSemaphore();
+  TRACE( "DPLAYX dll loaded - construct called\n" );
 
-  if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
+  /* Create a semaphore to block access to DPLAYX global data structs */
+
+  s_attrib.bInheritHandle       = TRUE;
+  s_attrib.lpSecurityDescriptor = NULL;
+  s_attrib.nLength              = sizeof(s_attrib);
+
+  hDplayxSema = CreateSemaphoreA( &s_attrib, 0, 1, lpszDplayxSemaName );
+
+  /* First instance creates the semaphore. Others just use it */
+  if( GetLastError() == ERROR_SUCCESS )
   {
-    DPLAYX_ReleaseSemaphore();
+    TRACE( "Semaphore %p created\n", hDplayxSema );
 
-    TRACE( "Application 0x%08x is not lobbied\n", dwAppID );
-    return DPERR_NOTLOBBIED;
+    /* The semaphore creator will also build the shared memory */
+    bInitializeSharedMemory = TRUE;
+  }
+  else if ( GetLastError() == ERROR_ALREADY_EXISTS )
+  {
+    TRACE( "Found semaphore handle %p\n", hDplayxSema );
+    DPLAYX_AcquireSemaphore();
+  }
+  else
+  {
+    ERR( ": semaphore error %d\n", GetLastError() );
+    return FALSE;
   }
 
-  dwRequiredDataSize = DPLAYX_SizeOfLobbyDataA( lpDplData->lpConn );
+  SetLastError( ERROR_SUCCESS );
 
-  /* Do they want to know the required buffer size or is the provided buffer
-   * big enough?
-   */
-  if ( ( lpData == NULL ) ||
-       ( *lpdwDataSize < dwRequiredDataSize )
-     )
+  hDplayxSharedMem = CreateFileMappingA( INVALID_HANDLE_VALUE,
+                                         &s_attrib,
+                                         PAGE_READWRITE | SEC_COMMIT,
+                                         0,
+                                         dwTotalSharedSize,
+                                         lpszDplayxFileMapping );
+
+  if( GetLastError() == ERROR_SUCCESS )
   {
+    TRACE( "File mapped %p created\n", hDplayxSharedMem );
+  }
+  else if ( GetLastError() == ERROR_ALREADY_EXISTS )
+  {
+    TRACE( "Found FileMapping handle %p\n", hDplayxSharedMem );
+  }
+  else
+  {
+    ERR( ": unable to create shared memory (%d)\n", GetLastError() );
     DPLAYX_ReleaseSemaphore();
-
-    *lpdwDataSize = DPLAYX_SizeOfLobbyDataA( lpDplData->lpConn );
-
-    return DPERR_BUFFERTOOSMALL;
+    return FALSE;
   }
 
-  DPLAYX_CopyConnStructA( lpData, lpDplData->lpConn );
+  lpSharedStaticData = MapViewOfFileEx( hDplayxSharedMem,
+                                        FILE_MAP_WRITE,
+                                        0, 0, 0, lpDesiredMemoryMapStart );
+
+  if( lpSharedStaticData == NULL )
+  {
+    ERR( ": unable to map static data into process memory space (%d)\n",
+         GetLastError() );
+    DPLAYX_ReleaseSemaphore();
+    return FALSE;
+  }
+  else
+  {
+    if( lpDesiredMemoryMapStart == lpSharedStaticData )
+    {
+      TRACE( "File mapped to %p\n", lpSharedStaticData );
+    }
+    else
+    {
+      /* Presently the shared data structures use pointers. If the
+       * files are not mapped into the same area, the pointers will no
+       * longer make any sense :(
+       * FIXME: In the future make the shared data structures have some
+       *        sort of fixup to make them independent between data spaces.
+       *        This will also require a rework of the session data stuff.
+       */
+      ERR( "File mapped to %p (not %p). Expect failure\n",
+            lpSharedStaticData, lpDesiredMemoryMapStart );
+    }
+  }
+
+  /* Dynamic area starts just after the static area */
+  lpMemArea = (LPVOID)((BYTE*)lpSharedStaticData + dwStaticSharedSize);
+
+  /* FIXME: Crude hack */
+  lobbyData   = lpSharedStaticData;
+  sessionData = (DPSESSIONDESC2*)((BYTE*)lpSharedStaticData + (dwStaticSharedSize/2));
+
+  /* Initialize shared data segments. */
+  if( bInitializeSharedMemory )
+  {
+    UINT i;
+
+    TRACE( "Initializing shared memory\n" );
+
+    /* Set all lobbies to be "empty" */
+    for( i=0; i < numSupportedLobbies; i++ )
+    {
+      DPLAYX_InitializeLobbyDataEntry( &lobbyData[ i ] );
+    }
+
+    /* Set all sessions to be "empty" */
+    for( i=0; i < numSupportedSessions; i++ )
+    {
+      sessionData[i].dwSize = 0;
+    }
+
+    /* Zero out the dynamic area */
+    ZeroMemory( lpMemArea, dwDynamicSharedSize );
+
+    /* Just for fun sync the whole data area */
+    FlushViewOfFile( lpSharedStaticData, dwTotalSharedSize );
+  }
 
   DPLAYX_ReleaseSemaphore();
 
-  /* They have gotten the information - signal the event if required */
-  if( DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, FALSE ) &&
-      hInformOnSettingRead
+  /* Everything was created correctly. Signal the lobby client that
+   * we started up correctly
+   */
+  if( DPLAYX_GetThisLobbyHandles( &hInformOnStart, NULL, NULL, FALSE ) &&
+      hInformOnStart
     )
   {
     BOOL bSuccess;
-    bSuccess = SetEvent( hInformOnSettingRead );
-    TRACE( "Signalling setting read event %p %s\n",
-             hInformOnSettingRead, bSuccess ? "succeed" : "failed" );
+    bSuccess = SetEvent( hInformOnStart );
+    TRACE( "Signalling lobby app start event %p %s\n",
+             hInformOnStart, bSuccess ? "succeed" : "failed" );
 
     /* Close out handle */
-    DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, TRUE );
+    DPLAYX_GetThisLobbyHandles( &hInformOnStart, NULL, NULL, TRUE );
   }
 
-  return DP_OK;
+  return TRUE;
 }
 
+/***************************************************************************
+ * Called to destroy all global data. This will only be used on the
+ * unloading of the dll
+ ***************************************************************************/
+BOOL DPLAYX_DestructData(void)
+{
+  HANDLE hInformOnDeath;
+
+  TRACE( "DPLAYX dll unloaded - destruct called\n" );
+
+  /* If required, inform that this app is dying */
+  if( DPLAYX_GetThisLobbyHandles( NULL, &hInformOnDeath, NULL, FALSE ) &&
+      hInformOnDeath
+    )
+  {
+    BOOL bSuccess;
+    bSuccess = SetEvent( hInformOnDeath );
+    TRACE( "Signalling lobby app death event %p %s\n",
+             hInformOnDeath, bSuccess ? "succeed" : "failed" );
+
+    /* Close out handle */
+    DPLAYX_GetThisLobbyHandles( NULL, &hInformOnDeath, NULL, TRUE );
+  }
+
+  /* DO CLEAN UP (LAST) */
+
+  /* Delete the semaphore */
+  CloseHandle( hDplayxSema );
+
+  /* Delete shared memory file mapping */
+  UnmapViewOfFile( lpSharedStaticData );
+  CloseHandle( hDplayxSharedMem );
+
+  return FALSE;
+}
+
+
 /* Assumption: Enough contiguous space was allocated at dest */
-void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, const DPLCONNECTION *src )
+static void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, const DPLCONNECTION *src )
 {
   BYTE* lpStartOfFreeSpace;
 
@@ -674,62 +604,8 @@ void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, const DPLCONNECTION *src )
   }
 }
 
-HRESULT DPLAYX_GetConnectionSettingsW
-( DWORD dwAppID,
-  LPVOID lpData,
-  LPDWORD lpdwDataSize )
-{
-  LPDPLAYX_LOBBYDATA lpDplData;
-  DWORD              dwRequiredDataSize = 0;
-  HANDLE             hInformOnSettingRead;
-
-  DPLAYX_AcquireSemaphore();
-
-  if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
-  {
-    DPLAYX_ReleaseSemaphore();
-    return DPERR_NOTLOBBIED;
-  }
-
-  dwRequiredDataSize = DPLAYX_SizeOfLobbyDataW( lpDplData->lpConn );
-
-  /* Do they want to know the required buffer size or is the provided buffer
-   * big enough?
-   */
-  if ( ( lpData == NULL ) ||
-       ( *lpdwDataSize < dwRequiredDataSize )
-     )
-  {
-    DPLAYX_ReleaseSemaphore();
-
-    *lpdwDataSize = DPLAYX_SizeOfLobbyDataW( lpDplData->lpConn );
-
-    return DPERR_BUFFERTOOSMALL;
-  }
-
-  DPLAYX_CopyConnStructW( lpData, lpDplData->lpConn );
-
-  DPLAYX_ReleaseSemaphore();
-
-  /* They have gotten the information - signal the event if required */
-  if( DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, FALSE ) &&
-      hInformOnSettingRead
-    )
-  {
-    BOOL bSuccess;
-    bSuccess = SetEvent( hInformOnSettingRead );
-    TRACE( "Signalling setting read event %p %s\n",
-             hInformOnSettingRead, bSuccess ? "succeed" : "failed" );
-
-    /* Close out handle */
-    DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, TRUE );
-  }
-
-  return DP_OK;
-}
-
 /* Assumption: Enough contiguous space was allocated at dest */
-void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, const DPLCONNECTION *src )
+static void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, const DPLCONNECTION *src )
 {
   BYTE*              lpStartOfFreeSpace;
 
@@ -795,6 +671,214 @@ void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, const DPLCONNECTION *src )
     /* No need to advance lpStartOfFreeSpace as there is no more "dynamic" data */
   }
 
+}
+
+static DWORD DPLAYX_SizeOfLobbyDataA( const DPLCONNECTION *lpConn )
+{
+  DWORD dwTotalSize = sizeof( DPLCONNECTION );
+
+  /* Just a safety check */
+  if( lpConn == NULL )
+  {
+    ERR( "lpConn is NULL\n" );
+    return 0;
+  }
+
+  if( lpConn->lpSessionDesc != NULL )
+  {
+    dwTotalSize += sizeof( DPSESSIONDESC2 );
+
+    if( lpConn->lpSessionDesc->u1.lpszSessionNameA )
+    {
+      dwTotalSize += strlen( lpConn->lpSessionDesc->u1.lpszSessionNameA ) + 1;
+    }
+
+    if( lpConn->lpSessionDesc->u2.lpszPasswordA )
+    {
+      dwTotalSize += strlen( lpConn->lpSessionDesc->u2.lpszPasswordA ) + 1;
+    }
+  }
+
+  if( lpConn->lpPlayerName != NULL )
+  {
+    dwTotalSize += sizeof( DPNAME );
+
+    if( lpConn->lpPlayerName->u1.lpszShortNameA )
+    {
+      dwTotalSize += strlen( lpConn->lpPlayerName->u1.lpszShortNameA ) + 1;
+    }
+
+    if( lpConn->lpPlayerName->u2.lpszLongNameA )
+    {
+      dwTotalSize += strlen( lpConn->lpPlayerName->u2.lpszLongNameA ) + 1;
+    }
+
+  }
+
+  dwTotalSize += lpConn->dwAddressSize;
+
+  return dwTotalSize;
+}
+
+static DWORD DPLAYX_SizeOfLobbyDataW( const DPLCONNECTION *lpConn )
+{
+  DWORD dwTotalSize = sizeof( DPLCONNECTION );
+
+  /* Just a safety check */
+  if( lpConn == NULL )
+  {
+    ERR( "lpConn is NULL\n" );
+    return 0;
+  }
+
+  if( lpConn->lpSessionDesc != NULL )
+  {
+    dwTotalSize += sizeof( DPSESSIONDESC2 );
+
+    if( lpConn->lpSessionDesc->u1.lpszSessionName )
+    {
+      dwTotalSize += sizeof( WCHAR ) *
+        ( strlenW( lpConn->lpSessionDesc->u1.lpszSessionName ) + 1 );
+    }
+
+    if( lpConn->lpSessionDesc->u2.lpszPassword )
+    {
+      dwTotalSize += sizeof( WCHAR ) *
+        ( strlenW( lpConn->lpSessionDesc->u2.lpszPassword ) + 1 );
+    }
+  }
+
+  if( lpConn->lpPlayerName != NULL )
+  {
+    dwTotalSize += sizeof( DPNAME );
+
+    if( lpConn->lpPlayerName->u1.lpszShortName )
+    {
+      dwTotalSize += sizeof( WCHAR ) *
+        ( strlenW( lpConn->lpPlayerName->u1.lpszShortName ) + 1 );
+    }
+
+    if( lpConn->lpPlayerName->u2.lpszLongName )
+    {
+      dwTotalSize += sizeof( WCHAR ) *
+        ( strlenW( lpConn->lpPlayerName->u2.lpszLongName ) + 1 );
+    }
+
+  }
+
+  dwTotalSize += lpConn->dwAddressSize;
+
+  return dwTotalSize;
+}
+
+HRESULT DPLAYX_GetConnectionSettingsA
+( DWORD dwAppID,
+  LPVOID lpData,
+  LPDWORD lpdwDataSize )
+{
+  LPDPLAYX_LOBBYDATA lpDplData;
+  DWORD              dwRequiredDataSize = 0;
+  HANDLE             hInformOnSettingRead;
+
+  DPLAYX_AcquireSemaphore();
+
+  if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
+  {
+    DPLAYX_ReleaseSemaphore();
+
+    TRACE( "Application 0x%08x is not lobbied\n", dwAppID );
+    return DPERR_NOTLOBBIED;
+  }
+
+  dwRequiredDataSize = DPLAYX_SizeOfLobbyDataA( lpDplData->lpConn );
+
+  /* Do they want to know the required buffer size or is the provided buffer
+   * big enough?
+   */
+  if ( ( lpData == NULL ) ||
+       ( *lpdwDataSize < dwRequiredDataSize )
+     )
+  {
+    DPLAYX_ReleaseSemaphore();
+
+    *lpdwDataSize = DPLAYX_SizeOfLobbyDataA( lpDplData->lpConn );
+
+    return DPERR_BUFFERTOOSMALL;
+  }
+
+  DPLAYX_CopyConnStructA( lpData, lpDplData->lpConn );
+
+  DPLAYX_ReleaseSemaphore();
+
+  /* They have gotten the information - signal the event if required */
+  if( DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, FALSE ) &&
+      hInformOnSettingRead
+    )
+  {
+    BOOL bSuccess;
+    bSuccess = SetEvent( hInformOnSettingRead );
+    TRACE( "Signalling setting read event %p %s\n",
+             hInformOnSettingRead, bSuccess ? "succeed" : "failed" );
+
+    /* Close out handle */
+    DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, TRUE );
+  }
+
+  return DP_OK;
+}
+
+HRESULT DPLAYX_GetConnectionSettingsW
+( DWORD dwAppID,
+  LPVOID lpData,
+  LPDWORD lpdwDataSize )
+{
+  LPDPLAYX_LOBBYDATA lpDplData;
+  DWORD              dwRequiredDataSize = 0;
+  HANDLE             hInformOnSettingRead;
+
+  DPLAYX_AcquireSemaphore();
+
+  if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
+  {
+    DPLAYX_ReleaseSemaphore();
+    return DPERR_NOTLOBBIED;
+  }
+
+  dwRequiredDataSize = DPLAYX_SizeOfLobbyDataW( lpDplData->lpConn );
+
+  /* Do they want to know the required buffer size or is the provided buffer
+   * big enough?
+   */
+  if ( ( lpData == NULL ) ||
+       ( *lpdwDataSize < dwRequiredDataSize )
+     )
+  {
+    DPLAYX_ReleaseSemaphore();
+
+    *lpdwDataSize = DPLAYX_SizeOfLobbyDataW( lpDplData->lpConn );
+
+    return DPERR_BUFFERTOOSMALL;
+  }
+
+  DPLAYX_CopyConnStructW( lpData, lpDplData->lpConn );
+
+  DPLAYX_ReleaseSemaphore();
+
+  /* They have gotten the information - signal the event if required */
+  if( DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, FALSE ) &&
+      hInformOnSettingRead
+    )
+  {
+    BOOL bSuccess;
+    bSuccess = SetEvent( hInformOnSettingRead );
+    TRACE( "Signalling setting read event %p %s\n",
+             hInformOnSettingRead, bSuccess ? "succeed" : "failed" );
+
+    /* Close out handle */
+    DPLAYX_GetThisLobbyHandles( NULL, NULL, &hInformOnSettingRead, TRUE );
+  }
+
+  return DP_OK;
 }
 
 /* Store the structure into the shared data structure. Ensure that allocs for
@@ -911,108 +995,10 @@ HRESULT DPLAYX_SetConnectionSettingsW
   return DP_OK;
 }
 
-DWORD DPLAYX_SizeOfLobbyDataA( const DPLCONNECTION *lpConn )
-{
-  DWORD dwTotalSize = sizeof( DPLCONNECTION );
-
-  /* Just a safety check */
-  if( lpConn == NULL )
-  {
-    ERR( "lpConn is NULL\n" );
-    return 0;
-  }
-
-  if( lpConn->lpSessionDesc != NULL )
-  {
-    dwTotalSize += sizeof( DPSESSIONDESC2 );
-
-    if( lpConn->lpSessionDesc->u1.lpszSessionNameA )
-    {
-      dwTotalSize += strlen( lpConn->lpSessionDesc->u1.lpszSessionNameA ) + 1;
-    }
-
-    if( lpConn->lpSessionDesc->u2.lpszPasswordA )
-    {
-      dwTotalSize += strlen( lpConn->lpSessionDesc->u2.lpszPasswordA ) + 1;
-    }
-  }
-
-  if( lpConn->lpPlayerName != NULL )
-  {
-    dwTotalSize += sizeof( DPNAME );
-
-    if( lpConn->lpPlayerName->u1.lpszShortNameA )
-    {
-      dwTotalSize += strlen( lpConn->lpPlayerName->u1.lpszShortNameA ) + 1;
-    }
-
-    if( lpConn->lpPlayerName->u2.lpszLongNameA )
-    {
-      dwTotalSize += strlen( lpConn->lpPlayerName->u2.lpszLongNameA ) + 1;
-    }
-
-  }
-
-  dwTotalSize += lpConn->dwAddressSize;
-
-  return dwTotalSize;
-}
-
-DWORD DPLAYX_SizeOfLobbyDataW( const DPLCONNECTION *lpConn )
-{
-  DWORD dwTotalSize = sizeof( DPLCONNECTION );
-
-  /* Just a safety check */
-  if( lpConn == NULL )
-  {
-    ERR( "lpConn is NULL\n" );
-    return 0;
-  }
-
-  if( lpConn->lpSessionDesc != NULL )
-  {
-    dwTotalSize += sizeof( DPSESSIONDESC2 );
-
-    if( lpConn->lpSessionDesc->u1.lpszSessionName )
-    {
-      dwTotalSize += sizeof( WCHAR ) *
-        ( strlenW( lpConn->lpSessionDesc->u1.lpszSessionName ) + 1 );
-    }
-
-    if( lpConn->lpSessionDesc->u2.lpszPassword )
-    {
-      dwTotalSize += sizeof( WCHAR ) *
-        ( strlenW( lpConn->lpSessionDesc->u2.lpszPassword ) + 1 );
-    }
-  }
-
-  if( lpConn->lpPlayerName != NULL )
-  {
-    dwTotalSize += sizeof( DPNAME );
-
-    if( lpConn->lpPlayerName->u1.lpszShortName )
-    {
-      dwTotalSize += sizeof( WCHAR ) *
-        ( strlenW( lpConn->lpPlayerName->u1.lpszShortName ) + 1 );
-    }
-
-    if( lpConn->lpPlayerName->u2.lpszLongName )
-    {
-      dwTotalSize += sizeof( WCHAR ) *
-        ( strlenW( lpConn->lpPlayerName->u2.lpszLongName ) + 1 );
-    }
-
-  }
-
-  dwTotalSize += lpConn->dwAddressSize;
-
-  return dwTotalSize;
-}
-
 
 
 /* Copy an ANSI session desc structure to the given buffer */
-BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
+static BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
                                    LPCDPSESSIONDESC2 lpSessionSrc )
 {
   CopyMemory( lpSessionDest, lpSessionSrc, sizeof( *lpSessionSrc ) );
