@@ -30,13 +30,21 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "vfw16.h"
-#include "msvideo_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
 
 /* Drivers32 settings */
 #define HKLM_DRIVERS32 "Software\\Microsoft\\Windows NT\\CurrentVersion\\Drivers32"
+
+/* handle16 --> handle conversions */
+#define HDRAWDIB_32(h16)	((HDRAWDIB)(ULONG_PTR)(h16))
+#define HIC_32(h16)		((HIC)(ULONG_PTR)(h16))
+
+/* handle --> handle16 conversions */
+#define HDRVR_16(h32)		(LOWORD(h32))
+#define HDRAWDIB_16(h32)	(LOWORD(h32))
+#define HIC_16(h32)		(LOWORD(h32))
 
 /***********************************************************************
  *		DrawDibOpen		[MSVIDEO.102]
@@ -132,14 +140,6 @@ BOOL16 VFWAPI DrawDibStop16(HDRAWDIB16 hdd)
 HIC16 VFWAPI ICOpen16(DWORD fccType, DWORD fccHandler, UINT16 wMode)
 {
     return HIC_16(ICOpen(fccType, fccHandler, wMode));
-}
-
-/***********************************************************************
- *		ICClose			[MSVIDEO.204]
- */
-LRESULT WINAPI ICClose16(HIC16 hic)
-{
-    return ICClose(HIC_32(hic));
 }
 
 /***********************************************************************
@@ -670,40 +670,99 @@ BOOL16 VFWAPI ICInfo16(DWORD fccType, DWORD fccHandler, ICINFO16 *lpicinfo)
  *
  *
  */
-static  LRESULT CALLBACK  IC_Callback3216(HIC hic, HDRVR hdrv, UINT msg, DWORD lp1, DWORD lp2)
+static  LRESULT CALLBACK  IC_Callback3216(DWORD pfn16, HIC hic, HDRVR hdrv, UINT msg, DWORD lp1, DWORD lp2)
 {
-    WINE_HIC*   whic;
     WORD args[8];
+    DWORD ret = 0;
 
-    whic = MSVIDEO_GetHicPtr(hic);
-    if (whic)
+    switch (msg)
     {
-        DWORD ret = 0;
-        switch (msg)
-        {
-        case DRV_OPEN:
-            lp2 = (DWORD)MapLS((void*)lp2);
-            break;
-        }
-        args[7] = HIWORD(hic);
-        args[6] = LOWORD(hic);
-        args[5] = HDRVR_16(whic->hdrv);
-        args[4] = msg;
-        args[3] = HIWORD(lp1);
-        args[2] = LOWORD(lp1);
-        args[1] = HIWORD(lp2);
-        args[0] = LOWORD(lp2);
-        WOWCallback16Ex( whic->driverproc16, WCB16_PASCAL, sizeof(args), args, &ret );
-
-        switch (msg)
-        {
-        case DRV_OPEN:
-            UnMapLS(lp2);
-            break;
-        }
-        return ret;
+    case DRV_OPEN:
+        lp2 = (DWORD)MapLS((void*)lp2);
+        break;
     }
-    else return ICERR_BADHANDLE;
+    args[7] = HIWORD(hic);
+    args[6] = LOWORD(hic);
+    args[5] = HDRVR_16(hdrv);
+    args[4] = msg;
+    args[3] = HIWORD(lp1);
+    args[2] = LOWORD(lp1);
+    args[1] = HIWORD(lp2);
+    args[0] = LOWORD(lp2);
+    WOWCallback16Ex( pfn16, WCB16_PASCAL, sizeof(args), args, &ret );
+
+    switch (msg)
+    {
+    case DRV_OPEN:
+        UnMapLS(lp2);
+        break;
+    }
+    return ret;
+}
+
+#define MAX_THUNKS      32
+
+static struct msvideo_thunk
+{
+    BYTE        popl_eax;        /* popl  %eax (return address) */
+    BYTE        pushl_func;      /* pushl $pfn16 (16bit callback function) */
+    DWORD       pfn16;
+    BYTE        pushl_eax;       /* pushl %eax */
+    BYTE        jmp;             /* ljmp WDML_InvokeCallback16 */
+    DWORD       callback;
+    HIC16       hIC16;           /* driver's handle */
+} *MSVIDEO_Thunks;
+
+static CRITICAL_SECTION msvideo_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &msvideo_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": msvideo_cs") }
+};
+static CRITICAL_SECTION msvideo_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static struct msvideo_thunk*      MSVIDEO_AddThunk(DWORD pfn16)
+{
+    struct msvideo_thunk* thunk;
+
+    if (!MSVIDEO_Thunks)
+    {
+        MSVIDEO_Thunks = VirtualAlloc(NULL, MAX_THUNKS * sizeof(*MSVIDEO_Thunks), MEM_COMMIT,
+                                      PAGE_EXECUTE_READWRITE);
+        if (!MSVIDEO_Thunks) return NULL;
+        for (thunk = MSVIDEO_Thunks; thunk < &MSVIDEO_Thunks[MAX_THUNKS]; thunk++)
+        {
+            thunk->popl_eax     = 0x58;   /* popl  %eax */
+            thunk->pushl_func   = 0x68;   /* pushl $pfn16 */
+            thunk->pfn16        = 0;
+            thunk->pushl_eax    = 0x50;   /* pushl %eax */
+            thunk->jmp          = 0xe9;   /* jmp IC_Callback3216 */
+            thunk->callback     = (char *)IC_Callback3216 - (char *)(&thunk->callback + 1);
+            thunk->hIC16        = 0;
+        }
+    }
+    for (thunk = MSVIDEO_Thunks; thunk < &MSVIDEO_Thunks[MAX_THUNKS]; thunk++)
+    {
+        if (thunk->pfn16 == 0)
+        {
+            thunk->pfn16 = pfn16;
+            return thunk;
+        }
+    }
+    FIXME("Out of msvideo-thunks. Bump MAX_THUNKS\n");
+    return NULL;
+}
+
+static struct msvideo_thunk*    MSVIDEO_HasThunk(HIC16 hic)
+{
+    struct msvideo_thunk* thunk;
+
+    for (thunk = MSVIDEO_Thunks; thunk < &MSVIDEO_Thunks[MAX_THUNKS]; thunk++)
+    {
+        if (thunk->hIC16 == hic) return thunk;
+    }
+    return NULL;
 }
 
 /***********************************************************************
@@ -712,9 +771,15 @@ static  LRESULT CALLBACK  IC_Callback3216(HIC hic, HDRVR hdrv, UINT msg, DWORD l
 HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FARPROC16 lpfnHandler)
 {
     HIC         hic32;
+    struct msvideo_thunk*       thunk;
 
-    hic32 = MSVIDEO_OpenFunction(fccType, fccHandler, wMode, 
-                                 (DRIVERPROC)IC_Callback3216, (DWORD)lpfnHandler);
+    EnterCriticalSection(&msvideo_cs);
+    if (!(thunk = MSVIDEO_AddThunk((DWORD)lpfnHandler))) return 0;
+    if ((hic32 = ICOpenFunction(fccType, fccHandler, wMode, IC_Callback3216)))
+        thunk->hIC16 = HIC_16(hic32);
+    else
+        thunk->pfn16 = 0;
+    LeaveCriticalSection(&msvideo_cs);
     return HIC_16(hic32);
 }
 
@@ -724,40 +789,57 @@ HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FAR
 LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lParam2) 
 {
     LRESULT     ret = ICERR_BADHANDLE;
-    WINE_HIC*   whic;
+    struct msvideo_thunk* thunk;
 
-    whic = MSVIDEO_GetHicPtr(HIC_32(hic));
-    if (whic)
+    if ((thunk = MSVIDEO_HasThunk(hic)))
     {
-        /* we've got a 16 bit driver proc... call it directly */
-        if (whic->driverproc16)
-        {
-            WORD args[8];
-            DWORD result;
+        WORD args[8];
+        DWORD result;
 
-            /* FIXME: original code was passing hdrv first and hic second */
-            /* but this doesn't match what IC_Callback3216 does */
-            args[7] = HIWORD(hic);
-            args[6] = LOWORD(hic);
-            args[5] = HDRVR_16(whic->hdrv);
-            args[4] = msg;
-            args[3] = HIWORD(lParam1);
-            args[2] = LOWORD(lParam1);
-            args[1] = HIWORD(lParam2);
-            args[0] = LOWORD(lParam2);
-            WOWCallback16Ex( whic->driverproc16, WCB16_PASCAL, sizeof(args), args, &result );
-            ret = result;
-        }
-        else
-        {
-            /* map the message for a 32 bit infrastructure, and pass it along */
-            void*       data16 = MSVIDEO_MapMsg16To32(msg, &lParam1, &lParam2);
-    
-            ret = MSVIDEO_SendMessage(whic, msg, lParam1, lParam2);
-            if (data16)
-                MSVIDEO_UnmapMsg16To32(msg, data16, &lParam1, &lParam2);
-        }
+        /* FIXME: original code was passing hdrv first and hic second */
+        /* but this doesn't match what IC_Callback3216 does */
+        args[7] = HIWORD(hic);
+        args[6] = LOWORD(hic);
+        args[5] = 0; /* the 32bit also sets it to NULL */
+        args[4] = msg;
+        args[3] = HIWORD(lParam1);
+        args[2] = LOWORD(lParam1);
+        args[1] = HIWORD(lParam2);
+        args[0] = LOWORD(lParam2);
+        WOWCallback16Ex( thunk->pfn16, WCB16_PASCAL, sizeof(args), args, &result );
+        ret = result;
     }
+    else
+    {
+        /* map the message for a 32 bit infrastructure, and pass it along */
+        void*       data16 = MSVIDEO_MapMsg16To32(msg, &lParam1, &lParam2);
+
+        ret = ICSendMessage(HIC_32(hic), msg, lParam1, lParam2);
+        if (data16)
+            MSVIDEO_UnmapMsg16To32(msg, data16, &lParam1, &lParam2);
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *		ICClose			[MSVIDEO.204]
+ */
+LRESULT WINAPI ICClose16(HIC16 hic)
+{
+    BOOL ret = ICClose(HIC_32(hic));
+
+    EnterCriticalSection(&msvideo_cs);
+    if (ret)
+    {
+        struct msvideo_thunk* thunk;
+        if ((thunk = MSVIDEO_HasThunk(hic)))
+        {
+            thunk->pfn16 = 0;
+            thunk->hIC16 = 0;
+        }
+        else ret = FALSE;
+    }
+    LeaveCriticalSection(&msvideo_cs);
     return ret;
 }
 
@@ -863,32 +945,6 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
     return 0;
 }
 
-/******************************************************************
- *		IC_CallTo16
- *
- *
- */
-static  LRESULT CALLBACK IC_CallTo16(HDRVR hdrv, HIC hic, UINT msg, LPARAM lp1, LPARAM lp2)
-{
-#if 0
-    WINE_HIC*   whic = IC_GetPtr(hic);
-    LRESULT     ret = 0;
-    
-    
-    if (whic->driverproc) 
-    {
-        ret = whic->driverproc(hic, whic->hdrv, msg, lParam1, lParam2);
-    }
-    else
-    {
-        ret = SendDriverMessage(whic->hdrv, msg, lParam1, lParam2);
-    }
-#else
-    FIXME("No 32=>16 conversion yet\n");
-#endif
-    return 0;
-}
-
 /**************************************************************************
  *                      DllEntryPoint (MSVIDEO.3)
  *
@@ -901,12 +957,8 @@ BOOL WINAPI VIDEO_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
     switch (fdwReason) 
     {
     case DLL_PROCESS_ATTACH:
-        /* hook in our 16 bit management functions */
-        pFnCallTo16 = IC_CallTo16;
         break;
     case DLL_PROCESS_DETACH:
-        /* remove our 16 bit management functions */
-        pFnCallTo16 = NULL;
         break;
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:

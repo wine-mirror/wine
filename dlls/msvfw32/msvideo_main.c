@@ -53,8 +53,6 @@ static inline const char *wine_dbgstr_fcc( DWORD fcc )
                             LOBYTE(HIWORD(fcc)), HIBYTE(HIWORD(fcc)));
 }
 
-LRESULT (CALLBACK *pFnCallTo16)(HDRVR, HIC, UINT, LPARAM, LPARAM) = NULL;
-
 static WINE_HIC*        MSVIDEO_FirstHic /* = NULL */;
 
 typedef struct _reg_driver reg_driver;
@@ -327,7 +325,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
 
     if (driver && driver->proc)
 	/* The driver has been registered at runtime with its driverproc */
-        return MSVIDEO_OpenFunction(fccType, fccHandler, wMode, driver->proc, 0);
+        return ICOpenFunction(fccType, fccHandler, wMode, driver->proc);
   
     /* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the
      * same layout as ICOPEN
@@ -360,9 +358,10 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     }
     bIs16 = GetDriverFlags(hdrv) & 0x10000000; /* undocumented flag: WINE_GDF_16BIT */
 
-    if (bIs16 && !pFnCallTo16)
+    if (bIs16)
     {
         FIXME("Got a 16 bit driver, but no 16 bit support in msvfw\n");
+        CloseDriver(hdrv, 0, 0);
         return 0;
     }
     whic = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_HIC));
@@ -372,13 +371,11 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         return FALSE;
     }
     whic->hdrv          = hdrv;
-    /* FIXME: is the signature the real one ? */
-    whic->driverproc    = bIs16 ? (DRIVERPROC)pFnCallTo16 : NULL;
-    whic->driverproc16  = 0;
+    whic->driverproc    = NULL;
     whic->type          = fccType;
     whic->handler       = fccHandler;
-    while (MSVIDEO_GetHicPtr(HIC_32(IC_HandleRef)) != NULL) IC_HandleRef++;
-    whic->hic           = HIC_32(IC_HandleRef++);
+    while (MSVIDEO_GetHicPtr((HIC)(ULONG_PTR)IC_HandleRef) != NULL) IC_HandleRef++;
+    whic->hic           = (HIC)(ULONG_PTR)IC_HandleRef++;
     whic->next          = MSVIDEO_FirstHic;
     MSVIDEO_FirstHic = whic;
 
@@ -387,16 +384,15 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
 }
 
 /***********************************************************************
- *		MSVIDEO_OpenFunction
+ *		ICOpenFunction			[MSVFW32.@]
  */
-HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, 
-                         DRIVERPROC lpfnHandler, DWORD lpfnHandler16) 
+HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHandler)
 {
     ICOPEN      icopen;
     WINE_HIC*   whic;
 
-    TRACE("(%s,%s,%d,%p,%08x)\n",
-          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode, lpfnHandler, lpfnHandler16);
+    TRACE("(%s,%s,%d,%p)\n",
+          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode, lpfnHandler);
 
     icopen.dwSize		= sizeof(ICOPEN);
     icopen.fccType		= fccType;
@@ -412,9 +408,8 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
     if (!whic) return 0;
 
     whic->driverproc   = lpfnHandler;
-    whic->driverproc16 = lpfnHandler16;
-    while (MSVIDEO_GetHicPtr(HIC_32(IC_HandleRef)) != NULL) IC_HandleRef++;
-    whic->hic          = HIC_32(IC_HandleRef++);
+    while (MSVIDEO_GetHicPtr((HIC)(ULONG_PTR)IC_HandleRef) != NULL) IC_HandleRef++;
+    whic->hic          = (HIC)(ULONG_PTR)IC_HandleRef++;
     whic->next         = MSVIDEO_FirstHic;
     MSVIDEO_FirstHic = whic;
 
@@ -445,14 +440,6 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
 
     TRACE("=> %p\n", whic->hic);
     return whic->hic;
-}
-
-/***********************************************************************
- *		ICOpenFunction			[MSVFW32.@]
- */
-HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, FARPROC lpfnHandler) 
-{
-    return MSVIDEO_OpenFunction(fccType, fccHandler, wMode, (DRIVERPROC)lpfnHandler, 0);
 }
 
 /***********************************************************************
