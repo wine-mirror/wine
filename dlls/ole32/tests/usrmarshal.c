@@ -512,7 +512,11 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
     IUnknown *unk;
     IUnknown *unk2;
     unsigned char *wireip;
-    DWORD expected_size;
+    HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, 0);
+    IStream *stm;
+    void *ptr;
+    LARGE_INTEGER pos;
+    DWORD h_size, marshal_size, expected_size;
 
     /* The marshalled data depends on the LOWORD of the ctx */
 
@@ -541,42 +545,35 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, umcb_ctx);
     buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, ctx, buffer, unk, &IID_IUnknown);
     wireip = buffer;
-    if(size)
-    {
-        HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, 0);
-        IStream *stm;
-        void *ptr;
-        LARGE_INTEGER pos;
-        DWORD h_size, marshal_size;
 
-        ok(buffer_end == buffer + expected_size, "buffer_end %p buffer %p (diff %x)\n", buffer_end, buffer, buffer_end - buffer);
+    /* Wine's standard marshalling appears to be a DWORD short */
+    todo_wine
+    ok(buffer_end == buffer + expected_size, "buffer_end %p buffer %p (diff %x)\n", buffer_end, buffer, buffer_end - buffer);
 
-        marshal_size = buffer_end - buffer - 2 * sizeof(DWORD);
-        ok(*(DWORD *)wireip == marshal_size, "wireip + 0x0 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
-        wireip += sizeof(DWORD);
-        ok(*(DWORD *)wireip == marshal_size, "wireip + 0x4 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
-        wireip += sizeof(DWORD);
+    marshal_size = buffer_end - buffer - 2 * sizeof(DWORD);
+    ok(*(DWORD *)wireip == marshal_size, "wireip + 0x0 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
+    wireip += sizeof(DWORD);
+    ok(*(DWORD *)wireip == marshal_size, "wireip + 0x4 should be 0x44 instead of 0x%08x\n", *(DWORD *)wireip);
+    wireip += sizeof(DWORD);
 
-        /* The remaining 0x44/0xac bytes are the result of CoMarshalInterface */
+    /* The remaining 0x44/0xac bytes are the result of CoMarshalInterface */
 
-        CreateStreamOnHGlobal(h, TRUE, &stm);
-        CoMarshalInterface(stm, &IID_IUnknown, unk, LOWORD(ctx), NULL, MSHLFLAGS_NORMAL);
-        h_size = GlobalSize(h);
-        ok(h_size == marshal_size, "size %x\n", h_size);
+    CreateStreamOnHGlobal(h, TRUE, &stm);
+    CoMarshalInterface(stm, &IID_IUnknown, unk, LOWORD(ctx), NULL, MSHLFLAGS_NORMAL);
+    h_size = GlobalSize(h);
+    ok(h_size == marshal_size, "size %x\n", h_size);
 
-        ptr = GlobalLock(h);
-        ok(!memcmp(ptr, wireip, h_size), "buffer mismatch\n");
-        GlobalUnlock(h);
-        pos.QuadPart = 0;
-        IStream_Seek(stm, pos, STREAM_SEEK_SET, NULL);
-        CoReleaseMarshalData(stm);
-        IStream_Release(stm);
-    }
+    ptr = GlobalLock(h);
+    ok(!memcmp(ptr, wireip, h_size), "buffer mismatch\n");
+    GlobalUnlock(h);
+    pos.QuadPart = 0;
+    IStream_Seek(stm, pos, STREAM_SEEK_SET, NULL);
+    CoReleaseMarshalData(stm);
+    IStream_Release(stm);
 
     unk2 = NULL;
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, umcb_ctx);
     WdtpInterfacePointer_UserUnmarshal(&umcb.Flags, buffer, &unk2, &IID_IUnknown);
-    todo_wine
     ok(unk2 != NULL, "IUnknown object didn't unmarshal properly\n");
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);

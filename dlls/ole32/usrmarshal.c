@@ -1570,10 +1570,19 @@ void __RPC_USER HMETAFILEPICT_UserFree(ULONG *pFlags, HMETAFILEPICT *phMfp)
  *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
  *  the first parameter is a ULONG.
  */
-ULONG __RPC_USER WdtpInterfacePointer_UserSize(ULONG *pFlags, ULONG RealFlags, IUnknown *punk, ULONG StartingSize, REFIID riid)
+ULONG __RPC_USER WdtpInterfacePointer_UserSize(ULONG *pFlags, ULONG RealFlags, ULONG StartingSize, IUnknown *punk, REFIID riid)
 {
-    FIXME("(%s, 0%x, %p, %d, %s): stub\n", debugstr_user_flags(pFlags), RealFlags, punk, StartingSize, debugstr_guid(riid));
-    return 0;
+    DWORD marshal_size = 0;
+    HRESULT hr;
+
+    TRACE("(%s, 0%x, %d, %p, %s)\n", debugstr_user_flags(pFlags), RealFlags, StartingSize, punk, debugstr_guid(riid));
+
+    hr = CoGetMarshalSizeMax(&marshal_size, riid, punk, LOWORD(RealFlags), NULL, MSHLFLAGS_NORMAL);
+    if(FAILED(hr)) return StartingSize;
+
+    ALIGN_LENGTH(StartingSize, 3);
+    StartingSize += 2 * sizeof(DWORD);
+    return StartingSize + marshal_size;
 }
 
 /******************************************************************************
@@ -1598,8 +1607,40 @@ ULONG __RPC_USER WdtpInterfacePointer_UserSize(ULONG *pFlags, ULONG RealFlags, I
  */
 unsigned char * WINAPI WdtpInterfacePointer_UserMarshal(ULONG *pFlags, ULONG RealFlags, unsigned char *pBuffer, IUnknown *punk, REFIID riid)
 {
-    FIXME("(%s, 0x%x, %p, &%p, %s): stub\n", debugstr_user_flags(pFlags), RealFlags, pBuffer, punk, debugstr_guid(riid));
-    return NULL;
+    HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, 0);
+    IStream *stm;
+    DWORD size;
+    void *ptr;
+
+    TRACE("(%s, 0x%x, %p, &%p, %s)\n", debugstr_user_flags(pFlags), RealFlags, pBuffer, punk, debugstr_guid(riid));
+
+    if(!h) return NULL;
+    if(CreateStreamOnHGlobal(h, TRUE, &stm) != S_OK)
+    {
+        GlobalFree(h);
+        return NULL;
+    }
+
+    if(CoMarshalInterface(stm, riid, punk, LOWORD(RealFlags), NULL, MSHLFLAGS_NORMAL) != S_OK)
+    {
+        IStream_Release(stm);
+        return NULL;
+    }
+
+    ALIGN_POINTER(pBuffer, 3);
+    size = GlobalSize(h);
+
+    *(DWORD *)pBuffer = size;
+    pBuffer += sizeof(DWORD);
+    *(DWORD *)pBuffer = size;
+    pBuffer += sizeof(DWORD);
+
+    ptr = GlobalLock(h);
+    memcpy(pBuffer, ptr, size);
+    GlobalUnlock(h);
+
+    IStream_Release(stm);
+    return pBuffer + size;
 }
 
 /******************************************************************************
@@ -1623,24 +1664,61 @@ unsigned char * WINAPI WdtpInterfacePointer_UserMarshal(ULONG *pFlags, ULONG Rea
  */
 unsigned char * WINAPI WdtpInterfacePointer_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, IUnknown **ppunk, REFIID riid)
 {
-    FIXME("(%s, %p, %p, %s): stub\n", debugstr_user_flags(pFlags), pBuffer, ppunk, debugstr_guid(riid));
-    return NULL;
+    HRESULT hr;
+    HGLOBAL h;
+    IStream *stm;
+    DWORD size;
+    void *ptr;
+
+    TRACE("(%s, %p, %p, %s)\n", debugstr_user_flags(pFlags), pBuffer, ppunk, debugstr_guid(riid));
+
+    ALIGN_POINTER(pBuffer, 3);
+
+    size = *(DWORD *)pBuffer;
+    pBuffer += sizeof(DWORD);
+    if(size != *(DWORD *)pBuffer)
+        RaiseException(RPC_X_BAD_STUB_DATA, 0, 0, NULL);
+
+    pBuffer += sizeof(DWORD);
+
+    /* FIXME: sanity check on size */
+
+    h = GlobalAlloc(GMEM_MOVEABLE, size);
+    if(!h) RaiseException(RPC_X_NO_MEMORY, 0, 0, NULL);
+
+    if(CreateStreamOnHGlobal(h, TRUE, &stm) != S_OK)
+    {
+        GlobalFree(h);
+        RaiseException(RPC_X_NO_MEMORY, 0, 0, NULL);
+    }
+
+    ptr = GlobalLock(h);
+    memcpy(ptr, pBuffer, size);
+    GlobalUnlock(h);
+
+    hr = CoUnmarshalInterface(stm, riid, (void**)ppunk);
+    IStream_Release(stm);
+
+    if(hr != S_OK) RaiseException(hr, 0, 0, NULL);
+
+    return pBuffer + size;
 }
 
 /******************************************************************************
  *           WdtpInterfacePointer_UserFree [OLE32.@]
  *
- * Frees an unmarshaled interface pointer.
+ * Releases an unmarshaled interface pointer.
  *
  * PARAMS
- *  punk    [I] Interface pointer to free.
+ *  punk    [I] Interface pointer to release.
  *
  * RETURNS
  *  Nothing.
  */
 void WINAPI WdtpInterfacePointer_UserFree(IUnknown *punk)
 {
-    FIXME("(%p): stub\n", punk);
+    TRACE("(%p)\n", punk);
+    if(punk) IUnknown_Release(punk);
 }
 
 /******************************************************************************
