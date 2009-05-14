@@ -2263,13 +2263,17 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
     if(GL_SUPPORT(EXT_PALETTED_TEXTURE))
     {
         TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
+        ENTER_GL();
         GL_EXTCALL(glColorTableEXT(This->glDescription.target,GL_RGBA,256,GL_RGBA,GL_UNSIGNED_BYTE, table));
+        LEAVE_GL();
     }
     else
     {
         /* Let a fragment shader do the color conversion by uploading the palette to a 1D texture.
          * The 8bit pixel data will be used as an index in this palette texture to retrieve the final color. */
         TRACE("Using fragment shaders for emulating 8-bit paletted texture support\n");
+
+        ENTER_GL();
 
         /* Create the fragment program if we don't have it */
         if(!device->paletteConversionShader)
@@ -2310,6 +2314,8 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
 
         /* Rebind the texture because it isn't bound anymore */
         glBindTexture(This->glDescription.target, This->glDescription.textureName);
+
+        LEAVE_GL();
     }
 }
 
