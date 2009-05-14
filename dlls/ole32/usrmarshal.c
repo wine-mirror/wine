@@ -2351,8 +2351,15 @@ HRESULT CALLBACK IStream_Seek_Proxy(
     DWORD dwOrigin,
     ULARGE_INTEGER *plibNewPosition)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    ULARGE_INTEGER newpos;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %d, %p)\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), dwOrigin, plibNewPosition);
+
+    hr = IStream_RemoteSeek_Proxy(This, dlibMove, dwOrigin, &newpos);
+    if(plibNewPosition) *plibNewPosition = newpos;
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IStream_Seek_Stub(
@@ -2361,8 +2368,8 @@ HRESULT __RPC_STUB IStream_Seek_Stub(
     DWORD dwOrigin,
     ULARGE_INTEGER *plibNewPosition)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s, %d, %p)\n", This, wine_dbgstr_longlong(dlibMove.QuadPart), dwOrigin, plibNewPosition);
+    return IStream_Seek(This, dlibMove, dwOrigin, plibNewPosition);
 }
 
 HRESULT CALLBACK IStream_CopyTo_Proxy(
@@ -2372,8 +2379,16 @@ HRESULT CALLBACK IStream_CopyTo_Proxy(
     ULARGE_INTEGER *pcbRead,
     ULARGE_INTEGER *pcbWritten)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    ULARGE_INTEGER read, written;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %s, %p, %p)\n", This, pstm, wine_dbgstr_longlong(cb.QuadPart), pcbRead, pcbWritten);
+
+    hr = IStream_RemoteCopyTo_Proxy(This, pstm, cb, &read, &written);
+    if(pcbRead) *pcbRead = read;
+    if(pcbWritten) *pcbWritten = written;
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IStream_CopyTo_Stub(
@@ -2383,8 +2398,9 @@ HRESULT __RPC_STUB IStream_CopyTo_Stub(
     ULARGE_INTEGER *pcbRead,
     ULARGE_INTEGER *pcbWritten)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %s, %p, %p)\n", This, pstm, wine_dbgstr_longlong(cb.QuadPart), pcbRead, pcbWritten);
+
+    return IStream_CopyTo(This, pstm, cb, pcbRead, pcbWritten);
 }
 
 HRESULT CALLBACK IEnumSTATSTG_Next_Proxy(
