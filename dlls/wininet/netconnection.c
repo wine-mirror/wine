@@ -209,8 +209,6 @@ BOOL NETCON_init(WININET_NETCONNECTION *connection, BOOL useSSL)
 	pBIO_new_fp(stderr, BIO_NOCLOSE); /* FIXME: should use winedebug stuff */
 
 	meth = pSSLv23_method();
-        connection->peek_msg = NULL;
-        connection->peek_msg_mem = NULL;
 #else
 	FIXME("can't use SSL, not compiled in.\n");
         INTERNET_SetLastError(ERROR_INTERNET_SECURITY_CHANNEL_ERROR);
@@ -329,11 +327,6 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
 #ifdef SONAME_LIBSSL
     if (connection->useSSL)
     {
-        HeapFree(GetProcessHeap(),0,connection->peek_msg_mem);
-        connection->peek_msg = NULL;
-        connection->peek_msg_mem = NULL;
-        connection->peek_len = 0;
-
         pSSL_shutdown(connection->ssl_s);
         pSSL_free(connection->ssl_s);
         connection->ssl_s = NULL;
@@ -541,54 +534,7 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
     else
     {
 #ifdef SONAME_LIBSSL
-        size_t peek_read = 0, read;
-
-	if (flags & ~(MSG_PEEK|MSG_WAITALL))
-	    FIXME("SSL_read does not support the following flag: %08x\n", flags);
-
-        /* this ugly hack is all for MSG_PEEK. eww gross */
-        if(connection->peek_msg) {
-            if(connection->peek_len >= len) {
-                memcpy(buf, connection->peek_msg, len);
-                if(!(flags & MSG_PEEK)) {
-                    if(connection->peek_len == len) {
-                        HeapFree(GetProcessHeap(), 0, connection->peek_msg);
-                        connection->peek_msg = NULL;
-                        connection->peek_len = 0;
-                    }else {
-                        memmove(connection->peek_msg, connection->peek_msg+len, connection->peek_len-len);
-                        connection->peek_len -= len;
-                        connection->peek_msg = HeapReAlloc(GetProcessHeap(), 0, connection->peek_msg, connection->peek_len);
-                    }
-                }
-
-                *recvd = len;
-                return TRUE;
-            }
-
-            memcpy(buf, connection->peek_msg, connection->peek_len);
-            peek_read = connection->peek_len;
-
-            if(!(flags & MSG_PEEK)) {
-                HeapFree(GetProcessHeap(), 0, connection->peek_msg);
-                connection->peek_msg = NULL;
-                connection->peek_len = 0;
-            }
-        }
-
-	read = pSSL_read(connection->ssl_s, (BYTE*)buf+peek_read, len-peek_read);
-
-        if(flags & MSG_PEEK) {
-            if(connection->peek_msg)
-                connection->peek_msg = HeapReAlloc(GetProcessHeap(), 0, connection->peek_msg,
-                                                   connection->peek_len+read);
-            else
-                connection->peek_msg = HeapAlloc(GetProcessHeap(), 0, read);
-            memcpy(connection->peek_msg+connection->peek_len, (BYTE*)buf+peek_read, read);
-            connection->peek_len += read;
-        }
-
-        *recvd = read + peek_read;
+	*recvd = pSSL_read(connection->ssl_s, buf, len);
 	return *recvd > 0 || !len;
 #else
 	return FALSE;
@@ -607,13 +553,9 @@ BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *avail
     if (!NETCON_connected(connection))
         return FALSE;
 
-#ifdef SONAME_LIBSSL
-    if (connection->peek_msg) *available = connection->peek_len + pSSL_pending(connection->ssl_s);
-#endif
-
-#ifdef FIONREAD
     if (!connection->useSSL)
     {
+#ifdef FIONREAD
         int unread;
         int retval = ioctlsocket(connection->socketFD, FIONREAD, &unread);
         if (!retval)
@@ -621,98 +563,16 @@ BOOL NETCON_query_data_available(WININET_NETCONNECTION *connection, DWORD *avail
             TRACE("%d bytes of queued, but unread data\n", unread);
             *available += unread;
         }
-    }
 #endif
-    return TRUE;
-}
-
-/******************************************************************************
- * NETCON_getNextLine
- */
-BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPDWORD dwBuffer)
-{
-
-    TRACE("\n");
-
-    if (!NETCON_connected(connection)) return FALSE;
-
-    if (!connection->useSSL)
-    {
-        struct pollfd pfd;
-	DWORD nRecv = 0;
-        int ret;
-
-        pfd.fd = connection->socketFD;
-        pfd.events = POLLIN;
-
-	while (nRecv < *dwBuffer)
-	{
-	    if (poll(&pfd,1, RESPONSE_TIMEOUT * 1000) > 0)
-	    {
-		if ((ret = recv(connection->socketFD, &lpszBuffer[nRecv], 1, 0)) <= 0)
-		{
-		    if (ret == -1) INTERNET_SetLastError(sock_get_error(errno));
-                    break;
-		}
-
-		if (lpszBuffer[nRecv] == '\n')
-		{
-                    lpszBuffer[nRecv++] = '\0';
-                    *dwBuffer = nRecv;
-                    TRACE(":%u %s\n", nRecv, debugstr_a(lpszBuffer));
-                    return TRUE;
-		}
-		if (lpszBuffer[nRecv] != '\r')
-		    nRecv++;
-	    }
-	    else
-	    {
-		INTERNET_SetLastError(ERROR_INTERNET_TIMEOUT);
-                break;
-	    }
-	}
     }
     else
     {
 #ifdef SONAME_LIBSSL
-	long prev_timeout;
-	DWORD nRecv = 0;
-        BOOL success = TRUE;
-
-        prev_timeout = pSSL_CTX_get_timeout(ctx);
-	pSSL_CTX_set_timeout(ctx, RESPONSE_TIMEOUT);
-
-	while (nRecv < *dwBuffer)
-	{
-	    int recv = 1;
-	    if (!NETCON_recv(connection, &lpszBuffer[nRecv], 1, 0, &recv))
-	    {
-                INTERNET_SetLastError(ERROR_CONNECTION_ABORTED);
-		success = FALSE;
-	    }
-
-	    if (lpszBuffer[nRecv] == '\n')
-	    {
-		success = TRUE;
-                break;
-	    }
-	    if (lpszBuffer[nRecv] != '\r')
-		nRecv++;
-	}
-
-        pSSL_CTX_set_timeout(ctx, prev_timeout);
-	if (success)
-	{
-	    lpszBuffer[nRecv++] = '\0';
-	    *dwBuffer = nRecv;
-	    TRACE("_SSL:%u %s\n", nRecv, lpszBuffer);
-            return TRUE;
-	}
+        *available = pSSL_pending(connection->ssl_s);
 #endif
     }
-    return FALSE;
+    return TRUE;
 }
-
 
 LPCVOID NETCON_GetCert(WININET_NETCONNECTION *connection)
 {
