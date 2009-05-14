@@ -138,6 +138,29 @@ static LPHTTPHEADERW HTTP_GetHeader(LPWININETHTTPREQW req, LPCWSTR head)
         return &req->pCustHeaders[HeaderIndex];
 }
 
+/* set the request content length based on the headers */
+static DWORD set_content_length( LPWININETHTTPREQW lpwhr )
+{
+    static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
+    WCHAR encoding[20];
+    DWORD size;
+
+    size = sizeof(lpwhr->dwContentLength);
+    if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
+                             &lpwhr->dwContentLength, &size, NULL))
+        lpwhr->dwContentLength = ~0u;
+
+    size = sizeof(encoding);
+    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_TRANSFER_ENCODING, encoding, &size, NULL) &&
+        !strcmpiW(encoding, szChunked))
+    {
+        lpwhr->dwContentLength = ~0u;
+        lpwhr->read_chunked = TRUE;
+    }
+
+    return lpwhr->dwContentLength;
+}
+
 /***********************************************************************
  *           HTTP_Tokenize (internal)
  *
@@ -753,13 +776,7 @@ static BOOL HTTP_HttpEndRequestW(LPWININETHTTPREQW lpwhr, DWORD dwFlags, DWORD_P
     /* process cookies here. Is this right? */
     HTTP_ProcessCookies(lpwhr);
 
-    dwBufferSize = sizeof(lpwhr->dwContentLength);
-    if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
-                             &lpwhr->dwContentLength, &dwBufferSize, NULL))
-        lpwhr->dwContentLength = -1;
-
-    if (lpwhr->dwContentLength == 0)
-        HTTP_FinishedReading(lpwhr);
+    if (!set_content_length( lpwhr )) HTTP_FinishedReading(lpwhr);
 
     if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT))
     {
@@ -1740,15 +1757,8 @@ static DWORD HTTP_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size, DW
 
 static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
-    WCHAR encoding[20];
-    DWORD buflen = sizeof(encoding);
-    static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
-
-    if (HTTP_HttpQueryInfoW(req, HTTP_QUERY_TRANSFER_ENCODING, encoding, &buflen, NULL) &&
-        !strcmpiW(encoding, szChunked))
-    {
+    if (req->read_chunked)
         return HTTP_ReadChunked(req, buffer, size, read, sync);
-    }
     else
         return HTTP_Read(req, buffer, size, read, sync);
 }
@@ -3124,6 +3134,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
                 NETCON_close(&lpwhr->netConnection);
                 if (!HTTP_ResolveName(lpwhr)) return FALSE;
                 if (!NETCON_init(&lpwhr->netConnection, lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)) return FALSE;
+                lpwhr->read_chunked = FALSE;
             }
         }
         else
@@ -3402,8 +3413,6 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         {
             DWORD dwBufferSize;
             DWORD dwStatusCode;
-            WCHAR encoding[20];
-            static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
 
             INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                                 INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
@@ -3421,22 +3430,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
             HTTP_ProcessCookies(lpwhr);
 
-            dwBufferSize = sizeof(lpwhr->dwContentLength);
-            if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
-                                     &lpwhr->dwContentLength,&dwBufferSize,NULL))
-                lpwhr->dwContentLength = -1;
-
-            if (lpwhr->dwContentLength == 0)
-                HTTP_FinishedReading(lpwhr);
-
-            /* Correct the case where both a Content-Length and Transfer-encoding = chunked are set */
-
-            dwBufferSize = sizeof(encoding);
-            if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_TRANSFER_ENCODING, encoding, &dwBufferSize, NULL) &&
-                !strcmpiW(encoding, szChunked))
-            {
-                lpwhr->dwContentLength = -1;
-            }
+            if (!set_content_length( lpwhr )) HTTP_FinishedReading(lpwhr);
 
             dwBufferSize = sizeof(dwStatusCode);
             if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,
@@ -3826,6 +3820,8 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     bSuccess = TRUE;
 
 lend:
+    lpwhr->read_chunked = FALSE;
+
     TRACE("%d <--\n", bSuccess);
     return bSuccess;
 }

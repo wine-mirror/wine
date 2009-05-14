@@ -206,6 +206,7 @@ typedef struct
     LPWSTR lpszCacheFile;
     struct HttpAuthInfo *pAuthInfo;
     struct HttpAuthInfo *pProxyAuthInfo;
+    BOOL  read_chunked;   /* are we reading in chunked mode? */
 } WININETHTTPREQW, *LPWININETHTTPREQW;
 
 
