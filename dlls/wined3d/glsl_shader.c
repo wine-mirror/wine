@@ -124,6 +124,7 @@ typedef struct {
 
 
 /** Prints the GLSL info log which will contain error messages if they exist */
+/* GL locking is done by the caller */
 static void print_glsl_info_log(const WineD3D_GL_Info *gl_info, GLhandleARB obj)
 {
     int infologLength = 0;
@@ -181,6 +182,7 @@ static void print_glsl_info_log(const WineD3D_GL_Info *gl_info, GLhandleARB obj)
 /**
  * Loads (pixel shader) samplers
  */
+/* GL locking is done by the caller */
 static void shader_glsl_load_psamplers(const WineD3D_GL_Info *gl_info, DWORD *tex_unit_map, GLhandleARB programId)
 {
     GLint name_loc;
@@ -204,6 +206,7 @@ static void shader_glsl_load_psamplers(const WineD3D_GL_Info *gl_info, DWORD *te
     }
 }
 
+/* GL locking is done by the caller */
 static void shader_glsl_load_vsamplers(const WineD3D_GL_Info *gl_info, DWORD *tex_unit_map, GLhandleARB programId)
 {
     GLint name_loc;
@@ -227,6 +230,7 @@ static void shader_glsl_load_vsamplers(const WineD3D_GL_Info *gl_info, DWORD *te
     }
 }
 
+/* GL locking is done by the caller */
 static inline void walk_constant_heap(const WineD3D_GL_Info *gl_info, const float *constants,
         const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
@@ -288,6 +292,7 @@ static inline void walk_constant_heap(const WineD3D_GL_Info *gl_info, const floa
     checkGLcall("walk_constant_heap()");
 }
 
+/* GL locking is done by the caller */
 static inline void apply_clamped_constant(const WineD3D_GL_Info *gl_info, GLint location, const GLfloat *data)
 {
     GLfloat clamped_constant[4];
@@ -302,6 +307,7 @@ static inline void apply_clamped_constant(const WineD3D_GL_Info *gl_info, GLint 
     GL_EXTCALL(glUniform4fvARB(location, 1, clamped_constant));
 }
 
+/* GL locking is done by the caller */
 static inline void walk_constant_heap_clamped(const WineD3D_GL_Info *gl_info, const float *constants,
         const GLint *constant_locations, const struct constant_heap *heap, unsigned char *stack, DWORD version)
 {
@@ -362,6 +368,7 @@ static inline void walk_constant_heap_clamped(const WineD3D_GL_Info *gl_info, co
 }
 
 /* Loads floating point constants (aka uniforms) into the currently set GLSL program. */
+/* GL locking is done by the caller */
 static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl *This, const WineD3D_GL_Info *gl_info,
         const float *constants, const GLint *constant_locations, const struct constant_heap *heap,
         unsigned char *stack, UINT version)
@@ -392,6 +399,7 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl *This, const Wine
 }
 
 /* Loads integer constants (aka uniforms) into the currently set GLSL program. */
+/* GL locking is done by the caller */
 static void shader_glsl_load_constantsI(IWineD3DBaseShaderImpl *This, const WineD3D_GL_Info *gl_info,
         const GLint locations[MAX_CONST_I], const int *constants, WORD constants_set)
 {
@@ -428,6 +436,7 @@ static void shader_glsl_load_constantsI(IWineD3DBaseShaderImpl *This, const Wine
 }
 
 /* Loads boolean constants (aka uniforms) into the currently set GLSL program. */
+/* GL locking is done by the caller */
 static void shader_glsl_load_constantsB(IWineD3DBaseShaderImpl *This, const WineD3D_GL_Info *gl_info,
         GLhandleARB programId, const BOOL *constants, WORD constants_set)
 {
@@ -487,6 +496,7 @@ static void reset_program_constant_version(void *value, void *context)
 /**
  * Loads the texture dimensions for NP2 fixup into the currently set GLSL program.
  */
+/* GL locking is done by the caller (state handler) */
 static void shader_glsl_load_np2fixup_constants(
     IWineD3DDevice* device,
     char usePixelShader,
@@ -529,6 +539,7 @@ static void shader_glsl_load_np2fixup_constants(
 /**
  * Loads the app-supplied constants into the currently set GLSL program.
  */
+/* GL locking is done by the caller (state handler) */
 static void shader_glsl_load_constants(
     IWineD3DDevice* device,
     char usePixelShader,
@@ -3197,6 +3208,7 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_p
     return hash_table_get(priv->glsl_program_lookup, &key);
 }
 
+/* GL locking is done by the caller */
 static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const WineD3D_GL_Info *gl_info,
         struct glsl_shader_prog_link *entry)
 {
@@ -3363,6 +3375,7 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
     HeapFree(GetProcessHeap(), 0, set);
 }
 
+/* GL locking is done by the caller */
 static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexshader,
         IWineD3DPixelShader *pixelshader, const WineD3D_GL_Info *gl_info)
 {
@@ -3508,6 +3521,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     return ret;
 }
 
+/* GL locking is done by the caller */
 static void hardcode_local_constants(IWineD3DBaseShaderImpl *shader, const WineD3D_GL_Info *gl_info,
         GLhandleARB programId, char prefix)
 {
@@ -3533,6 +3547,8 @@ static void hardcode_local_constants(IWineD3DBaseShaderImpl *shader, const WineD
  * the program in the hash table.  If it creates a program, it will link the
  * given objects, too.
  */
+
+/* GL locking is done by the caller */
 static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use_vs) {
     IWineD3DDeviceImpl *This               = (IWineD3DDeviceImpl *)iface;
     struct shader_glsl_priv *priv          = This->shader_priv;
@@ -3738,6 +3754,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     }
 }
 
+/* GL locking is done by the caller */
 static GLhandleARB create_glsl_blt_shader(const WineD3D_GL_Info *gl_info, enum tex_types tex_type)
 {
     GLhandleARB program_id;
@@ -3812,6 +3829,7 @@ static GLhandleARB create_glsl_blt_shader(const WineD3D_GL_Info *gl_info, enum t
     return program_id;
 }
 
+/* GL locking is done by the caller */
 static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_glsl_priv *priv = This->shader_priv;
@@ -3841,6 +3859,7 @@ static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     checkGLcall("glUseProgramObjectARB");
 }
 
+/* GL locking is done by the caller */
 static void shader_glsl_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
@@ -3858,6 +3877,7 @@ static void shader_glsl_select_depth_blt(IWineD3DDevice *iface, enum tex_types t
     }
 }
 
+/* GL locking is done by the caller */
 static void shader_glsl_deselect_depth_blt(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
@@ -4071,6 +4091,7 @@ static BOOL shader_glsl_dirty_const(IWineD3DDevice *iface) {
     return FALSE;
 }
 
+/* GL locking is done by the caller */
 static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
         SHADER_BUFFER *buffer, const struct ps_compile_args *args)
 {
@@ -4177,6 +4198,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
     return shader_obj;
 }
 
+/* GL locking is done by the caller */
 static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface,
         SHADER_BUFFER *buffer, const struct vs_compile_args *args)
 {

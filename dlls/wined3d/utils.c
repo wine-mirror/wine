@@ -1516,6 +1516,7 @@ BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP op, DWO
 }
 
 /* Setup this textures matrix according to the texture flags*/
+/* GL locking is done by the caller (state handler) */
 void set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed,
         WINED3DFORMAT vtx_fmt, BOOL ffp_proj_control)
 {
@@ -2384,6 +2385,7 @@ void add_ffp_frag_shader(struct hash_table_t *shaders, struct ffp_frag_desc *des
  * Requires the caller to activate the correct unit before
  */
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
+/* GL locking is done by the caller (state handler) */
 void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     if(stateblock->textures[stage]) {
         switch (IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[stage])) {
@@ -2457,6 +2459,7 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
     }
 }
 
+/* GL locking is done by the caller (state handler) */
 void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD sampler = state - STATE_SAMPLER(0);
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[sampler];

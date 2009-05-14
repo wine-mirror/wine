@@ -453,6 +453,7 @@ static void select_shader_max_constants(
  * IWineD3D parts follows
  **********************************************************/
 
+/* GL locking is done by the caller */
 static inline BOOL test_arb_vs_offset_limit(const WineD3D_GL_Info *gl_info)
 {
     GLuint prog;

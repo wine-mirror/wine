@@ -36,6 +36,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
 
+/* GL locking for state handlers is done by the caller. */
+
 static void state_blendop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
 
 static void state_nogl(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {

@@ -28,6 +28,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
+/* GL locking for state handlers is done by the caller. */
+
 /* Some private defines, Constant associations, etc.
  * Env bump matrix and per stage constant should be independent,
  * a stage that bump maps can't read the per state constant

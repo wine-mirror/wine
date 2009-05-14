@@ -41,6 +41,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION      (*gl_info)
 
+/* GL locking for state handlers is done by the caller. */
+
 /* We have to subtract any other PARAMs that we might use in our shader programs.
  * ATI seems to count 2 implicit PARAMs when we use fog and NVIDIA counts 1,
  * and we reference one row of the PROJECTION matrix which counts as 1 PARAM. */
@@ -78,6 +80,7 @@ struct shader_arb_priv {
  * @target_type should be either GL_VERTEX_PROGRAM_ARB (for vertex shaders)
  *  or GL_FRAGMENT_PROGRAM_ARB (for pixel shaders)
  */
+/* GL locking is done by the caller */
 static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, const WineD3D_GL_Info *gl_info,
         GLuint target_type, unsigned int max_constants, const float *constants, char *dirty_consts)
 {
@@ -189,6 +192,7 @@ static void shader_arb_load_np2fixup_constants(
  * We only support float constants in ARB at the moment, so don't 
  * worry about the Integers or Booleans
  */
+/* GL locking is done by the caller (state handler) */
 static void shader_arb_load_constants(
     IWineD3DDevice* device,
     char usePixelShader,
@@ -1612,6 +1616,7 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
                    src_name);
 }
 
+/* GL locking is done by the caller */
 static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
 {
     GLuint program_id = 0;
@@ -1637,6 +1642,7 @@ static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
     return program_id;
 }
 
+/* GL locking is done by the caller */
 static GLuint create_arb_blt_fragment_program(const WineD3D_GL_Info *gl_info, enum tex_types tex_type)
 {
     GLuint program_id = 0;
@@ -1686,6 +1692,7 @@ static GLuint create_arb_blt_fragment_program(const WineD3D_GL_Info *gl_info, en
     return program_id;
 }
 
+/* GL locking is done by the caller */
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = This->shader_priv;
@@ -1740,6 +1747,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     }
 }
 
+/* GL locking is done by the caller */
 static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = This->shader_priv;
@@ -1755,6 +1763,7 @@ static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types te
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
+/* GL locking is done by the caller */
 static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = This->shader_priv;
@@ -1875,6 +1884,7 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
     /* [0.0;1.0] clamping. Not needed, this is done implicitly */
 }
 
+/* GL locking is done by the caller */
 static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
         SHADER_BUFFER *buffer, const struct ps_compile_args *args)
 {
@@ -1968,6 +1978,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     return retval;
 }
 
+/* GL locking is done by the caller */
 static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
         SHADER_BUFFER *buffer, const struct vs_compile_args *args)
 {

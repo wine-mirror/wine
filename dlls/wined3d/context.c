@@ -38,6 +38,7 @@ static IWineD3DDeviceImpl *last_device;
 
 /* FBO helper functions */
 
+/* GL locking is done by the caller */
 void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo)
 {
     const IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -53,6 +54,7 @@ void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo)
     checkGLcall("glBindFramebuffer()");
 }
 
+/* GL locking is done by the caller */
 static void context_clean_fbo_attachments(IWineD3DDeviceImpl *This)
 {
     unsigned int i;
@@ -66,6 +68,7 @@ static void context_clean_fbo_attachments(IWineD3DDeviceImpl *This)
     checkGLcall("glFramebufferTexture2D()");
 }
 
+/* GL locking is done by the caller */
 static void context_destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
 {
     GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, *fbo));
@@ -79,6 +82,7 @@ static void context_destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
     checkGLcall("glDeleteFramebuffers()");
 }
 
+/* GL locking is done by the caller */
 static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD3DSurface *surface, BOOL force_preload)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -143,6 +147,7 @@ static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD
 }
 
 /* TODO: Handle stencil attachments */
+/* GL locking is done by the caller */
 void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer)
 {
     IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
@@ -168,6 +173,7 @@ void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_targe
     }
 }
 
+/* GL locking is done by the caller */
 void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface)
 {
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
@@ -187,6 +193,7 @@ void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWO
     }
 }
 
+/* GL locking is done by the caller */
 static void context_check_fbo_status(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -237,6 +244,7 @@ static struct fbo_entry *context_create_fbo_entry(IWineD3DDevice *iface)
     return entry;
 }
 
+/* GL locking is done by the caller */
 static void context_reuse_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *entry)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -250,6 +258,7 @@ static void context_reuse_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *ent
     entry->attached = FALSE;
 }
 
+/* GL locking is done by the caller */
 static void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, struct fbo_entry *entry)
 {
     if (entry->id)
@@ -263,6 +272,7 @@ static void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, struct fbo_entry
 }
 
 
+/* GL locking is done by the caller */
 static struct fbo_entry *context_find_fbo_entry(IWineD3DDevice *iface, WineD3DContext *context)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -296,6 +306,7 @@ static struct fbo_entry *context_find_fbo_entry(IWineD3DDevice *iface, WineD3DCo
     return entry;
 }
 
+/* GL locking is done by the caller */
 static void context_apply_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *entry)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -341,6 +352,7 @@ static void context_apply_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *ent
     }
 }
 
+/* GL locking is done by the caller */
 static void context_apply_fbo_state(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -1073,6 +1085,7 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     RemoveContextFromArray(This, context);
 }
 
+/* GL locking is done by the caller */
 static inline void set_blit_dimension(UINT width, UINT height) {
     glMatrixMode(GL_PROJECTION);
     checkGLcall("glMatrixMode(GL_PROJECTION)");

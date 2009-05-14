@@ -288,6 +288,7 @@ HRESULT basetexture_bind(IWineD3DBaseTexture *iface, BOOL srgb, BOOL *set_surfac
     return hr;
 }
 
+/* GL locking is done by the caller */
 static inline void apply_wrap(const GLint textureDimensions, const DWORD state, const GLint type,
                               BOOL cond_np2) {
     GLint wrapParm;
@@ -313,6 +314,7 @@ static inline void apply_wrap(const GLint textureDimensions, const DWORD state, 
     }
 }
 
+/* GL locking is done by the caller (state handler) */
 void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1],
         const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1])

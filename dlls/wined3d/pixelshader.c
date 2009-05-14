@@ -338,6 +338,7 @@ static void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD
     }
 }
 
+/* GL locking is done by the caller */
 static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps_compile_args *args)
 {
     CONST DWORD *function = This->baseShader.function;
@@ -440,6 +441,7 @@ void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImp
     }
 }
 
+/* GL locking is done by the caller */
 GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args)
 {
     UINT i;

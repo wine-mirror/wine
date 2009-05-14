@@ -426,6 +426,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
 /* In D3D the depth stencil dimensions have to be greater than or equal to the
  * render target dimensions. With FBOs, the dimensions have to be an exact match. */
 /* TODO: We should synchronize the renderbuffer's content with the texture's content. */
+/* GL locking is done by the caller */
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     renderbuffer_entry_t *entry;
@@ -4079,6 +4080,7 @@ static void surface_get_depth_blt_info(GLenum target, GLsizei w, GLsizei h, stru
     }
 }
 
+/* GL locking is done by the caller */
 static void surface_depth_blt(IWineD3DSurfaceImpl *This, GLuint texture, GLsizei w, GLsizei h, GLenum target)
 {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
