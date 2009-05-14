@@ -1615,22 +1615,171 @@ static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buf
     return ERROR_INTERNET_INVALID_OPTION;
 }
 
+/* read some more data into the read buffer */
+static BOOL read_more_data( WININETHTTPREQW *req, int maxlen )
+{
+    int len;
+
+    if (req->read_size && req->read_pos)
+    {
+        /* move existing data to the start of the buffer */
+        memmove( req->read_buf, req->read_buf + req->read_pos, req->read_size );
+        req->read_pos = 0;
+    }
+
+    if (maxlen == -1) maxlen = sizeof(req->read_buf);
+    if (!NETCON_recv( &req->netConnection, req->read_buf + req->read_size,
+                      maxlen - req->read_size, 0, &len )) return FALSE;
+    req->read_size += len;
+    return TRUE;
+}
+
+/* remove some amount of data from the read buffer */
+static void remove_data( WININETHTTPREQW *req, int count )
+{
+    if (!(req->read_size -= count)) req->read_pos = 0;
+    else req->read_pos += count;
+}
+
+static BOOL read_line( WININETHTTPREQW *req, LPSTR buffer, DWORD *len )
+{
+    int count, bytes_read, pos = 0;
+
+    for (;;)
+    {
+        char *eol = memchr( req->read_buf + req->read_pos, '\n', req->read_size );
+
+        if (eol)
+        {
+            count = eol - (req->read_buf + req->read_pos);
+            bytes_read = count + 1;
+        }
+        else count = bytes_read = req->read_size;
+
+        count = min( count, *len - pos );
+        memcpy( buffer + pos, req->read_buf + req->read_pos, count );
+        pos += count;
+        remove_data( req, bytes_read );
+        if (eol) break;
+
+        if (!read_more_data( req, -1 )) return FALSE;
+        if (!req->read_size)
+        {
+            *len = 0;
+            TRACE( "returning empty string\n" );
+            return FALSE;
+        }
+    }
+
+    if (pos < *len)
+    {
+        if (pos && buffer[pos - 1] == '\r') pos--;
+        *len = pos + 1;
+    }
+    buffer[*len - 1] = 0;
+    TRACE( "returning %s\n", debugstr_a(buffer));
+    return TRUE;
+}
+
+/* discard data contents until we reach end of line */
+static BOOL discard_eol( WININETHTTPREQW *req )
+{
+    do
+    {
+        char *eol = memchr( req->read_buf + req->read_pos, '\n', req->read_size );
+        if (eol)
+        {
+            remove_data( req, (eol + 1) - (req->read_buf + req->read_pos) );
+            break;
+        }
+        req->read_pos = req->read_size = 0;  /* discard everything */
+        if (!read_more_data( req, -1 )) return FALSE;
+    } while (req->read_size);
+    return TRUE;
+}
+
+/* read the size of the next chunk */
+static BOOL start_next_chunk( WININETHTTPREQW *req )
+{
+    DWORD chunk_size = 0;
+
+    if (!req->dwContentLength) return TRUE;
+    if (req->dwContentLength == req->dwContentRead)
+    {
+        /* read terminator for the previous chunk */
+        if (!discard_eol( req )) return FALSE;
+        req->dwContentLength = ~0u;
+        req->dwContentRead = 0;
+    }
+    for (;;)
+    {
+        while (req->read_size)
+        {
+            char ch = req->read_buf[req->read_pos];
+            if (ch >= '0' && ch <= '9') chunk_size = chunk_size * 16 + ch - '0';
+            else if (ch >= 'a' && ch <= 'f') chunk_size = chunk_size * 16 + ch - 'a' + 10;
+            else if (ch >= 'A' && ch <= 'F') chunk_size = chunk_size * 16 + ch - 'A' + 10;
+            else if (ch == ';' || ch == '\r' || ch == '\n')
+            {
+                TRACE( "reading %u byte chunk\n", chunk_size );
+                req->dwContentLength = chunk_size;
+                req->dwContentRead = 0;
+                if (!discard_eol( req )) return FALSE;
+                return TRUE;
+            }
+            remove_data( req, 1 );
+        }
+        if (!read_more_data( req, -1 )) return FALSE;
+        if (!req->read_size)
+        {
+            req->dwContentLength = req->dwContentRead = 0;
+            return TRUE;
+        }
+    }
+}
+
+/* return the size of data available to be read immediately */
+static DWORD get_avail_data( WININETHTTPREQW *req )
+{
+    if (req->read_chunked && (req->dwContentLength == ~0u || req->dwContentLength == req->dwContentRead))
+        return 0;
+    return min( req->read_size, req->dwContentLength - req->dwContentRead );
+}
+
+/* check if we have reached the end of the data to read */
+static BOOL end_of_read_data( WININETHTTPREQW *req )
+{
+    if (req->read_chunked) return (req->dwContentLength == 0);
+    if (req->dwContentLength == ~0u) return FALSE;
+    return (req->dwContentLength == req->dwContentRead);
+}
+
+static BOOL refill_buffer( WININETHTTPREQW *req )
+{
+    int len = sizeof(req->read_buf);
+
+    if (req->read_chunked && (req->dwContentLength == ~0u || req->dwContentLength == req->dwContentRead))
+    {
+        if (!start_next_chunk( req )) return FALSE;
+    }
+
+    if (req->dwContentLength != ~0u) len = min( len, req->dwContentLength - req->dwContentRead );
+    if (len <= req->read_size) return TRUE;
+
+    if (!read_more_data( req, len )) return FALSE;
+    if (!req->read_size) req->dwContentLength = req->dwContentRead = 0;
+    return TRUE;
+}
+
 static void HTTP_ReceiveRequestData(WININETHTTPREQW *req, BOOL first_notif)
 {
     INTERNET_ASYNC_RESULT iar;
-    BYTE buffer[4096];
-    int available;
-    BOOL res;
 
     TRACE("%p\n", req);
 
-    res = NETCON_recv(&req->netConnection, buffer,
-                min(sizeof(buffer), req->dwContentLength - req->dwContentRead),
-                MSG_PEEK, &available);
-
-    if(res) {
+    if (refill_buffer( req )) {
         iar.dwResult = (DWORD_PTR)req->hdr.hInternet;
-        iar.dwError = first_notif ? 0 : available;
+        iar.dwError = first_notif ? 0 : get_avail_data(req);
     }else {
         iar.dwResult = 0;
         iar.dwError = INTERNET_GetLastError();
@@ -1640,24 +1789,35 @@ static void HTTP_ReceiveRequestData(WININETHTTPREQW *req, BOOL first_notif)
                           sizeof(INTERNET_ASYNC_RESULT));
 }
 
-static DWORD HTTP_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
+static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
-    int bytes_read;
+    int len, bytes_read = 0;
 
-    if(!NETCON_recv(&req->netConnection, buffer, min(size, req->dwContentLength - req->dwContentRead),
-                     sync ? MSG_WAITALL : 0, &bytes_read)) {
-        if(req->dwContentLength != -1 && req->dwContentRead != req->dwContentLength)
-            ERR("not all data received %d/%d\n", req->dwContentRead, req->dwContentLength);
+    if (req->read_chunked && (req->dwContentLength == ~0u || req->dwContentLength == req->dwContentRead))
+    {
+        if (!start_next_chunk( req )) goto done;
+    }
+    if (req->dwContentLength != ~0u) size = min( size, req->dwContentLength - req->dwContentRead );
 
-        /* always return success, even if the network layer returns an error */
-        *read = 0;
-        HTTP_FinishedReading(req);
-        return ERROR_SUCCESS;
+    if (req->read_size)
+    {
+        bytes_read = min( req->read_size, size );
+        memcpy( buffer, req->read_buf + req->read_pos, bytes_read );
+        remove_data( req, bytes_read );
     }
 
+    if (size > bytes_read && (!bytes_read || sync))
+    {
+        if (NETCON_recv( &req->netConnection, (char *)buffer + bytes_read, size - bytes_read,
+                         sync ? MSG_WAITALL : 0, &len))
+            bytes_read += len;
+        /* always return success, even if the network layer returns an error */
+    }
+done:
     req->dwContentRead += bytes_read;
     *read = bytes_read;
 
+    TRACE( "retrieved %u bytes (%u/%u)\n", bytes_read, req->dwContentRead, req->dwContentLength );
     if(req->lpszCacheFile) {
         BOOL res;
         DWORD dwBytesWritten;
@@ -1673,95 +1833,6 @@ static DWORD HTTP_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *re
     return ERROR_SUCCESS;
 }
 
-static DWORD get_chunk_size(const char *buffer)
-{
-    const char *p;
-    DWORD size = 0;
-
-    for (p = buffer; *p; p++)
-    {
-        if (*p >= '0' && *p <= '9') size = size * 16 + *p - '0';
-        else if (*p >= 'a' && *p <= 'f') size = size * 16 + *p - 'a' + 10;
-        else if (*p >= 'A' && *p <= 'F') size = size * 16 + *p - 'A' + 10;
-        else if (*p == ';') break;
-    }
-    return size;
-}
-
-static DWORD HTTP_ReadChunked(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
-{
-    char reply[MAX_REPLY_LEN], *p = buffer;
-    DWORD buflen, to_read, to_write = size;
-    int bytes_read;
-
-    *read = 0;
-    for (;;)
-    {
-        if (*read == size) break;
-
-        if (req->dwContentLength == ~0u) /* new chunk */
-        {
-            buflen = sizeof(reply);
-            if (!NETCON_getNextLine(&req->netConnection, reply, &buflen)) break;
-
-            if (!(req->dwContentLength = get_chunk_size(reply)))
-            {
-                /* zero sized chunk marks end of transfer; read any trailing headers and return */
-                HTTP_GetResponseHeaders(req, FALSE);
-                break;
-            }
-        }
-        to_read = min(to_write, req->dwContentLength - req->dwContentRead);
-
-        if (!NETCON_recv(&req->netConnection, p, to_read, sync ? MSG_WAITALL : 0, &bytes_read))
-        {
-            if (bytes_read != to_read)
-                ERR("Not all data received %d/%d\n", bytes_read, to_read);
-
-            /* always return success, even if the network layer returns an error */
-            *read = 0;
-            break;
-        }
-        if (!bytes_read) break;
-
-        req->dwContentRead += bytes_read;
-        to_write -= bytes_read;
-        *read += bytes_read;
-
-        if (req->lpszCacheFile)
-        {
-            DWORD dwBytesWritten;
-
-            if (!WriteFile(req->hCacheFile, p, bytes_read, &dwBytesWritten, NULL))
-                WARN("WriteFile failed: %u\n", GetLastError());
-        }
-        p += bytes_read;
-
-        if (req->dwContentRead == req->dwContentLength) /* chunk complete */
-        {
-            req->dwContentRead = 0;
-            req->dwContentLength = ~0u;
-
-            buflen = sizeof(reply);
-            if (!NETCON_getNextLine(&req->netConnection, reply, &buflen))
-            {
-                ERR("Malformed chunk\n");
-                *read = 0;
-                break;
-            }
-        }
-    }
-    if (!*read) HTTP_FinishedReading(req);
-    return ERROR_SUCCESS;
-}
-
-static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
-{
-    if (req->read_chunked)
-        return HTTP_ReadChunked(req, buffer, size, read, sync);
-    else
-        return HTTP_Read(req, buffer, size, read, sync);
-}
 
 static DWORD HTTPREQ_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size, DWORD *read)
 {
@@ -1804,22 +1875,17 @@ static DWORD HTTPREQ_ReadFileExA(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSA *bu
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
-    if (hdr->dwFlags & INTERNET_FLAG_ASYNC) {
-        DWORD available = 0;
+    if ((hdr->dwFlags & INTERNET_FLAG_ASYNC) && !get_avail_data(req))
+    {
+        WORKREQUEST workRequest;
 
-        NETCON_query_data_available(&req->netConnection, &available);
-        if (!available)
-        {
-            WORKREQUEST workRequest;
+        workRequest.asyncproc = HTTPREQ_AsyncReadFileExAProc;
+        workRequest.hdr = WININET_AddRef(&req->hdr);
+        workRequest.u.InternetReadFileExA.lpBuffersOut = buffers;
 
-            workRequest.asyncproc = HTTPREQ_AsyncReadFileExAProc;
-            workRequest.hdr = WININET_AddRef(&req->hdr);
-            workRequest.u.InternetReadFileExA.lpBuffersOut = buffers;
+        INTERNET_AsyncCall(&workRequest);
 
-            INTERNET_AsyncCall(&workRequest);
-
-            return ERROR_IO_PENDING;
-        }
+        return ERROR_IO_PENDING;
     }
 
     res = HTTPREQ_Read(req, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength,
@@ -1869,22 +1935,17 @@ static DWORD HTTPREQ_ReadFileExW(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSW *bu
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
-    if (hdr->dwFlags & INTERNET_FLAG_ASYNC) {
-        DWORD available = 0;
+    if ((hdr->dwFlags & INTERNET_FLAG_ASYNC) && !get_avail_data(req))
+    {
+        WORKREQUEST workRequest;
 
-        NETCON_query_data_available(&req->netConnection, &available);
-        if (!available)
-        {
-            WORKREQUEST workRequest;
+        workRequest.asyncproc = HTTPREQ_AsyncReadFileExWProc;
+        workRequest.hdr = WININET_AddRef(&req->hdr);
+        workRequest.u.InternetReadFileExW.lpBuffersOut = buffers;
 
-            workRequest.asyncproc = HTTPREQ_AsyncReadFileExWProc;
-            workRequest.hdr = WININET_AddRef(&req->hdr);
-            workRequest.u.InternetReadFileExW.lpBuffersOut = buffers;
+        INTERNET_AsyncCall(&workRequest);
 
-            INTERNET_AsyncCall(&workRequest);
-
-            return ERROR_IO_PENDING;
-        }
+        return ERROR_IO_PENDING;
     }
 
     res = HTTPREQ_Read(req, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength,
@@ -1924,34 +1985,39 @@ static void HTTPREQ_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
 static DWORD HTTPREQ_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
 {
     WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
-    BYTE buffer[4048];
-    BOOL async;
 
     TRACE("(%p %p %x %lx)\n", req, available, flags, ctx);
 
-    if(!NETCON_query_data_available(&req->netConnection, available) || *available)
-        return ERROR_SUCCESS;
-
-    /* Even if we are in async mode, we need to determine whether
-     * there is actually more data available. We do this by trying
-     * to peek only a single byte in async mode. */
-    async = (req->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC) != 0;
-
-    if (NETCON_recv(&req->netConnection, buffer,
-                    min(async ? 1 : sizeof(buffer), req->dwContentLength - req->dwContentRead),
-                    MSG_PEEK, (int *)available) && async && *available)
+    if (!(*available = get_avail_data( req )))
     {
-        WORKREQUEST workRequest;
+        if (end_of_read_data( req )) return ERROR_SUCCESS;
 
-        *available = 0;
-        workRequest.asyncproc = HTTPREQ_AsyncQueryDataAvailableProc;
-        workRequest.hdr = WININET_AddRef( &req->hdr );
+        if (req->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+        {
+            WORKREQUEST workRequest;
 
-        INTERNET_AsyncCall(&workRequest);
+            workRequest.asyncproc = HTTPREQ_AsyncQueryDataAvailableProc;
+            workRequest.hdr = WININET_AddRef( &req->hdr );
 
-        return ERROR_IO_PENDING;
+            INTERNET_AsyncCall(&workRequest);
+
+            return ERROR_IO_PENDING;
+        }
+        else
+        {
+            refill_buffer( req );
+            *available = get_avail_data( req );
+        }
     }
 
+    if (*available == sizeof(req->read_buf))  /* check if we have even more pending in the socket */
+    {
+        DWORD extra;
+        if (NETCON_query_data_available(&req->netConnection, &extra))
+            *available = min( *available + extra, req->dwContentLength - req->dwContentRead );
+    }
+
+    TRACE( "returning %u\n", *available );
     return ERROR_SUCCESS;
 }
 
@@ -2008,6 +2074,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     lpwhr->hdr.refs = 1;
     lpwhr->hdr.lpfnStatusCB = lpwhs->hdr.lpfnStatusCB;
     lpwhr->hdr.dwInternalFlags = lpwhs->hdr.dwInternalFlags & INET_CALLBACKW;
+    lpwhr->dwContentLength = ~0u;
 
     WININET_AddRef( &lpwhs->hdr );
     lpwhr->lpHttpSession = lpwhs;
@@ -2122,7 +2189,10 @@ static void HTTP_DrainContent(WININETHTTPREQW *req)
     if (!NETCON_connected(&req->netConnection)) return;
 
     if (req->dwContentLength == -1)
+    {
         NETCON_close(&req->netConnection);
+        return;
+    }
 
     do
     {
@@ -3134,6 +3204,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
                 NETCON_close(&lpwhr->netConnection);
                 if (!HTTP_ResolveName(lpwhr)) return FALSE;
                 if (!NETCON_init(&lpwhr->netConnection, lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)) return FALSE;
+                lpwhr->read_pos = lpwhr->read_size = 0;
                 lpwhr->read_chunked = FALSE;
             }
         }
@@ -3820,6 +3891,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     bSuccess = TRUE;
 
 lend:
+    lpwhr->read_pos = lpwhr->read_size = 0;
     lpwhr->read_chunked = FALSE;
 
     TRACE("%d <--\n", bSuccess);
@@ -3886,7 +3958,7 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
          * We should first receive 'HTTP/1.x nnn OK' where nnn is the status code.
          */
         buflen = MAX_REPLY_LEN;
-        if (!NETCON_getNextLine(&lpwhr->netConnection, bufferA, &buflen))
+        if (!read_line(lpwhr, bufferA, &buflen))
             goto lend;
         rc += buflen;
         MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
@@ -3938,7 +4010,7 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
     do
     {
 	buflen = MAX_REPLY_LEN;
-        if (NETCON_getNextLine(&lpwhr->netConnection, bufferA, &buflen))
+        if (read_line(lpwhr, bufferA, &buflen))
         {
             LPWSTR * pFieldAndValue;
 
