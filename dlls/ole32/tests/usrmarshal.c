@@ -495,7 +495,43 @@ static const IUnknownVtbl TestUnknown_Vtbl =
     Test_IUnknown_Release,
 };
 
+static HRESULT WINAPI Test_IStream_QueryInterface(IStream *iface,
+                                                  REFIID riid, LPVOID *ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IStream))
+    {
+        *ppvObj = iface;
+        IStream_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Test_IStream_AddRef(IStream *iface)
+{
+    return 2; /* non-heap-based object */
+}
+
+static ULONG WINAPI Test_IStream_Release(IStream *iface)
+{
+    return 1; /* non-heap-based object */
+}
+
+static const IStreamVtbl TestStream_Vtbl =
+{
+    Test_IStream_QueryInterface,
+    Test_IStream_AddRef,
+    Test_IStream_Release
+    /* the rest can be NULLs */
+};
+
 static IUnknown Test_Unknown = { &TestUnknown_Vtbl };
+static IStream Test_Stream = { &TestStream_Vtbl };
 
 ULONG __RPC_USER WdtpInterfacePointer_UserSize(ULONG *, ULONG, ULONG, IUnknown *, REFIID);
 unsigned char * __RPC_USER WdtpInterfacePointer_UserMarshal(ULONG *, ULONG, unsigned char *, IUnknown *, REFIID);
@@ -604,18 +640,25 @@ static void test_marshal_STGMEDIUM(void)
     USER_MARSHAL_CB umcb;
     MIDL_STUB_MESSAGE stub_msg;
     RPC_MESSAGE rpc_msg;
-    unsigned char *buffer, *buffer_end, *unk_buffer, *unk_buffer_end;
-    ULONG size, unk_size;
+    unsigned char *buffer, *buffer_end, *unk_buffer, *unk_buffer_end, *stm_buffer, *stm_buffer_end;
+    ULONG size, unk_size, stm_size;
     STGMEDIUM med, med2;
     IUnknown *unk = &Test_Unknown;
-
-    /* TYMED_NULL with pUnkForRelease */
+    IStream *stm = &Test_Stream;
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     unk_size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, unk, &IID_IUnknown);
     unk_buffer = HeapAlloc(GetProcessHeap(), 0, unk_size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, unk_buffer, unk_size, MSHCTX_DIFFERENTMACHINE);
     unk_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, unk_buffer, unk, &IID_IUnknown);
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    stm_size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, (IUnknown*)stm, &IID_IStream);
+    stm_buffer = HeapAlloc(GetProcessHeap(), 0, stm_size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, stm_buffer, stm_size, MSHCTX_DIFFERENTMACHINE);
+    stm_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, stm_buffer, (IUnknown*)stm, &IID_IStream);
+
+    /* TYMED_NULL with pUnkForRelease */
 
     med.tymed = TYMED_NULL;
     U(med).pstg = NULL;
@@ -625,7 +668,7 @@ static void test_marshal_STGMEDIUM(void)
     size = STGMEDIUM_UserSize(&umcb.Flags, 0, &med);
     ok(size == unk_size + 2 * sizeof(DWORD), "size %d should be %d bytes\n", size, unk_size + 8);
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, size * 2);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     buffer_end = STGMEDIUM_UserMarshal(&umcb.Flags, buffer, &med);
     ok(buffer_end - buffer - 2 * sizeof(DWORD) == unk_buffer_end - unk_buffer, "buffer size mismatch\n");
@@ -637,6 +680,8 @@ static void test_marshal_STGMEDIUM(void)
 
     /* native crashes if this is uninitialised, presumably because it
        tries to release it */
+    med2.tymed = TYMED_NULL;
+    U(med2).pstm = NULL;
     med2.pUnkForRelease = NULL;
 
     STGMEDIUM_UserUnmarshal(&umcb.Flags, buffer, &med2);
@@ -648,6 +693,51 @@ static void test_marshal_STGMEDIUM(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     STGMEDIUM_UserFree(&umcb.Flags, &med2);
 
+    /* TYMED_ISTREAM with pUnkForRelease */
+
+    med.tymed = TYMED_ISTREAM;
+    U(med).pstm = stm;
+    med.pUnkForRelease = unk;
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    size = STGMEDIUM_UserSize(&umcb.Flags, 0, &med);
+    todo_wine
+    ok(size == stm_size + unk_size + 3 * sizeof(DWORD), "size %d should be %d bytes\n", size, stm_size + unk_size + 3 * sizeof(DWORD));
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+    buffer_end = STGMEDIUM_UserMarshal(&umcb.Flags, buffer, &med);
+    todo_wine
+    ok(buffer_end - buffer - 3 * sizeof(DWORD) == (unk_buffer_end - unk_buffer) + (stm_buffer_end - stm_buffer), "buffer size mismatch\n");
+    ok(*(DWORD*)buffer == TYMED_ISTREAM, "got %08x\n", *(DWORD*)buffer);
+    ok(*((DWORD*)buffer+1) != 0, "got %08x\n", *((DWORD*)buffer+1));
+    ok(*((DWORD*)buffer+2) != 0, "got %08x\n", *((DWORD*)buffer+2));
+    todo_wine
+    ok(!memcmp(buffer + 12, stm_buffer, stm_buffer_end - stm_buffer), "buffer mismatch\n");
+    todo_wine
+    ok(!memcmp(buffer + 12 + (stm_buffer_end - stm_buffer), unk_buffer, unk_buffer_end - unk_buffer), "buffer mismatch\n");
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
+
+    /* native crashes if this is uninitialised, presumably because it
+       tries to release it */
+    med2.tymed = TYMED_NULL;
+    U(med2).pstm = NULL;
+    med2.pUnkForRelease = NULL;
+
+    STGMEDIUM_UserUnmarshal(&umcb.Flags, buffer, &med2);
+
+    ok(med2.tymed == TYMED_ISTREAM, "got tymed %x\n", med2.tymed);
+    todo_wine
+    ok(U(med2).pstm != NULL, "Incorrectly unmarshalled\n");
+    ok(med2.pUnkForRelease != NULL, "Incorrectly unmarshalled\n");
+
+    HeapFree(GetProcessHeap(), 0, buffer);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    STGMEDIUM_UserFree(&umcb.Flags, &med2);
+
+
+    HeapFree(GetProcessHeap(), 0, stm_buffer);
     HeapFree(GetProcessHeap(), 0, unk_buffer);
 }
 
