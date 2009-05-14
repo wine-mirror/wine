@@ -823,7 +823,9 @@ static void test_ThreadMgrAdviseSinks(void)
     if (!source)
         return;
 
-    ThreadMgrEventSink_Constructor(&sink);
+    hr = ThreadMgrEventSink_Constructor(&sink);
+    ok(hr == S_OK, "got %08x\n", hr);
+    if(FAILED(hr)) return;
 
     tmSinkRefCount = 1;
     tmSinkCookie = 0;
