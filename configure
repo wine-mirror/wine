@@ -26182,6 +26182,14 @@ dlls/msvidc32/Makefile: dlls/msvidc32/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msvidc32/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/msvideo.dll16/Makefile"
+test "x$enable_win16" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	msvideo.dll16"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msvideo.dll16/Makefile: dlls/msvideo.dll16/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/msvideo.dll16/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mswsock/Makefile"
 test "x$enable_mswsock" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	mswsock"
@@ -29192,6 +29200,7 @@ do
     "dlls/msvfw32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvfw32/Makefile" ;;
     "dlls/msvfw32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvfw32/tests/Makefile" ;;
     "dlls/msvidc32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvidc32/Makefile" ;;
+    "dlls/msvideo.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msvideo.dll16/Makefile" ;;
     "dlls/mswsock/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mswsock/Makefile" ;;
     "dlls/msxml3/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msxml3/Makefile" ;;
     "dlls/msxml3/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msxml3/tests/Makefile" ;;

@@ -22,7 +22,6 @@ WIN16_FILES = \
 	gdi.exe16 \
 	krnl386.exe16 \
 	mmsystem.dll16 \
-	msvideo.dll16 \
 	setupx.dll16 \
 	system.drv16 \
 	toolhelp.dll16 \
@@ -49,9 +48,6 @@ gdi.exe16 wing.dll16:
 
 krnl386.exe16 system.drv16 toolhelp.dll16:
 	echo "kernel32.dll" >$@
-
-msvideo.dll16:
-	echo "msvfw32.dll" >$@
 
 setupx.dll16:
 	echo "setupapi.dll" >$@

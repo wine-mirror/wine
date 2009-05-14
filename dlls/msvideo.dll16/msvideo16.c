@@ -156,7 +156,7 @@ LRESULT VFWAPIV ICMessage16( HIC16 hic, UINT16 msg, UINT16 cb, VA_LIST16 valist 
 
     TRACE("0x%08x, %u, %u, ...)\n", (DWORD) hic, msg, cb);
 
-    for (i = 0; i < cb / sizeof(WORD); i++) 
+    for (i = 0; i < cb / sizeof(WORD); i++)
     {
 	lpData[i] = VA_ARG16(valist, WORD);
     }
@@ -186,7 +186,7 @@ LRESULT VFWAPI ICGetInfo16(HIC16 hic, ICINFO16 * picinfo, DWORD cb)
  */
 HIC16 VFWAPI ICLocate16(DWORD fccType, DWORD fccHandler,
 			LPBITMAPINFOHEADER lpbiIn, LPBITMAPINFOHEADER lpbiOut,
-		       	WORD wFlags)
+			WORD wFlags)
 {
     return HIC_16(ICLocate(fccType, fccHandler, lpbiIn, lpbiOut, wFlags));
 }
@@ -205,7 +205,7 @@ DWORD VFWAPIV ICCompress16(HIC16 hic, DWORD dwFlags,
     DWORD ret;
     ICCOMPRESS iccmp;
     SEGPTR seg_iccmp;
-    
+
     TRACE("(0x%08x,%d,%p,%p,%p,%p,...)\n", (DWORD) hic, dwFlags,
 	  lpbiOutput, lpData, lpbiInput, lpBits);
 
@@ -350,7 +350,7 @@ HIC16 VFWAPI ICGetDisplayFormat16(HIC16 hic, LPBITMAPINFOHEADER lpbiIn,
  *
  *
  */
-static LPVOID MSVIDEO_MapICDEX16To32(LPDWORD lParam) 
+static LPVOID MSVIDEO_MapICDEX16To32(LPDWORD lParam)
 {
     LPVOID ret;
 
@@ -387,7 +387,7 @@ static LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2)
 
     TRACE("Mapping %d\n", msg);
 
-    switch (msg) 
+    switch (msg)
     {
     case DRV_LOAD:
     case DRV_ENABLE:
@@ -418,10 +418,10 @@ static LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2)
         {
             ICINFO *ici = HeapAlloc(GetProcessHeap(), 0, sizeof(ICINFO));
             ICINFO16 *ici16;
-            
+
             ici16 = MapSL(*lParam1);
             ret = ici16;
-            
+
             ici->dwSize = sizeof(ICINFO);
             COPY(ici, fccType);
             COPY(ici, fccHandler);
@@ -503,7 +503,7 @@ static LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2)
          addr[1] = MSVIDEO_MapICDEX16To32(lParam2);
          else
          addr[1] = 0;
-         
+
          ret = addr;
          }
          break;*/
@@ -597,7 +597,7 @@ static void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID data16, LPDWORD lParam1, LPD
 
 #define UNCOPY(x, y) (x##16->y = x->y);
 
-    switch (msg) 
+    switch (msg)
     {
     case ICM_GETINFO:
         {
@@ -609,10 +609,10 @@ static void MSVIDEO_UnmapMsg16To32(UINT msg, LPVOID data16, LPDWORD lParam1, LPD
             UNCOPY(ici, dwFlags);
             UNCOPY(ici, dwVersion);
             UNCOPY(ici, dwVersionICM);
-            WideCharToMultiByte( CP_ACP, 0, ici->szName, -1, ici16->szName, 
+            WideCharToMultiByte( CP_ACP, 0, ici->szName, -1, ici16->szName,
                                  sizeof(ici16->szName), NULL, NULL );
             ici16->szName[sizeof(ici16->szName)-1] = 0;
-            WideCharToMultiByte( CP_ACP, 0, ici->szDescription, -1, ici16->szDescription, 
+            WideCharToMultiByte( CP_ACP, 0, ici->szDescription, -1, ici16->szDescription,
                                  sizeof(ici16->szDescription), NULL, NULL );
             ici16->szDescription[sizeof(ici16->szDescription)-1] = 0;
             /* This just gives garbage for some reason - BB
@@ -654,7 +654,7 @@ BOOL16 VFWAPI ICInfo16(DWORD fccType, DWORD fccHandler, ICINFO16 *lpicinfo)
     LPVOID lpv;
     DWORD lParam = (DWORD)lpicinfo;
     DWORD size = ((ICINFO*)(MapSL((SEGPTR)lpicinfo)))->dwSize;
-    
+
     /* Use the mapping functions to map the ICINFO structure */
     lpv = MSVIDEO_MapMsg16To32(ICM_GETINFO, &lParam, &size);
 
@@ -786,7 +786,7 @@ HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FAR
 /***********************************************************************
  *		ICSendMessage			[MSVIDEO.205]
  */
-LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lParam2) 
+LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lParam2)
 {
     LRESULT     ret = ICERR_BADHANDLE;
     struct msvideo_thunk* thunk;
@@ -864,10 +864,10 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
 
     TRACE("(%d,%p,%d,%p,%d)\n", nr, buf1, buf1len, buf2, buf2len);
     lRet = RegOpenKeyExA(HKEY_LOCAL_MACHINE, HKLM_DRIVERS32, 0, KEY_QUERY_VALUE, &hKey);
-    if (lRet == ERROR_SUCCESS) 
+    if (lRet == ERROR_SUCCESS)
     {
 	RegQueryInfoKeyA( hKey, 0, 0, 0, &cnt, 0, 0, 0, 0, 0, 0, 0);
-	for (i = 0; i < cnt; i++) 
+	for (i = 0; i < cnt; i++)
 	{
 	    bufLen = sizeof(buf) / sizeof(buf[0]);
 	    lRet = RegEnumKeyExA(hKey, i, buf, &bufLen, 0, 0, 0, &lastWrite);
@@ -879,8 +879,8 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
 	    if (lRet == ERROR_SUCCESS) found = TRUE;
 	    break;
 	}
-    	RegCloseKey( hKey );
-    } 
+	RegCloseKey( hKey );
+    }
 
     /* search system.ini if not found in the registry */
     if (!found && GetPrivateProfileStringA("drivers32", NULL, NULL, buf, sizeof(buf), "system.ini"))
@@ -901,13 +901,13 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
         return 20;
     }
     infosize = GetFileVersionInfoSizeA(fn, &verhandle);
-    if (!infosize) 
+    if (!infosize)
     {
         TRACE("%s has no fileversioninfo.\n", fn);
         return 18;
     }
     infobuf = HeapAlloc(GetProcessHeap(), 0, infosize);
-    if (GetFileVersionInfoA(fn, verhandle, infosize, infobuf)) 
+    if (GetFileVersionInfoA(fn, verhandle, infosize, infobuf))
     {
         /* Yes, two space behind : */
         /* FIXME: test for buflen */
@@ -919,7 +919,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
 	    );
         TRACE("version of %s is %s\n", fn, buf2);
     }
-    else 
+    else
     {
         TRACE("GetFileVersionInfoA failed for %s.\n", fn);
         lstrcpynA(buf2, fn, buf2len); /* msvideo.dll appears to copy fn*/
@@ -929,14 +929,14 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
                         version_info_spec,
                         &subblock,
                         &subblocklen
-            )) 
+            ))
     {
         UINT copylen = min(subblocklen,buf1len-1);
         memcpy(buf1, subblock, copylen);
         buf1[copylen] = '\0';
         TRACE("VQA returned %s\n", (LPCSTR)subblock);
     }
-    else 
+    else
     {
         TRACE("VQA did not return on query \\StringFileInfo\\040904E4\\FileDescription?\n");
         lstrcpynA(buf1, fn, buf1len); /* msvideo.dll appears to copy fn*/
@@ -954,7 +954,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
 BOOL WINAPI VIDEO_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
                           WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
-    switch (fdwReason) 
+    switch (fdwReason)
     {
     case DLL_PROCESS_ATTACH:
         break;

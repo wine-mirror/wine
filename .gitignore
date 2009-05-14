@@ -53,7 +53,6 @@ dlls/msi/sql.tab.c
 dlls/msi/sql.tab.h
 dlls/mstask/mstask_local.h
 dlls/mstask/mstask_local_i.c
-dlls/msvideo.dll16
 dlls/msxml3/msxml3_v1.tlb
 dlls/ole32/dcom.h
 dlls/ole32/dcom_p.c
