@@ -449,6 +449,8 @@ static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_form
     GLuint tex, fb;
     GLenum status;
 
+    ENTER_GL();
+
     while(glGetError());
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -463,6 +465,8 @@ static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_form
     glDeleteTextures(1, &tex);
 
     checkGLcall("Framebuffer format check");
+
+    LEAVE_GL();
 
     return status == GL_FRAMEBUFFER_COMPLETE_EXT;
 }
