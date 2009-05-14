@@ -4853,13 +4853,16 @@ static void ffp_blit_free(IWineD3DDevice *iface) { }
 static HRESULT ffp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
         GLenum textype, UINT width, UINT height)
 {
+    ENTER_GL();
     glEnable(textype);
     checkGLcall("glEnable(textype)");
+    LEAVE_GL();
     return WINED3D_OK;
 }
 
 static void ffp_blit_unset(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
+    ENTER_GL();
     glDisable(GL_TEXTURE_2D);
     checkGLcall("glDisable(GL_TEXTURE_2D)");
     if(GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
@@ -4870,6 +4873,7 @@ static void ffp_blit_unset(IWineD3DDevice *iface) {
         glDisable(GL_TEXTURE_RECTANGLE_ARB);
         checkGLcall("glDisable(GL_TEXTURE_RECTANGLE_ARB)");
     }
+    LEAVE_GL();
 }
 
 static BOOL ffp_blit_color_fixup_supported(struct color_fixup_desc fixup)
