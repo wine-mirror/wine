@@ -2297,8 +2297,15 @@ HRESULT CALLBACK ISequentialStream_Read_Proxy(
     ULONG cb,
     ULONG *pcbRead)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    ULONG read;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbRead);
+
+    hr = ISequentialStream_RemoteRead_Proxy(This, pv, cb, &read);
+    if(pcbRead) *pcbRead = read;
+
+    return hr;
 }
 
 HRESULT __RPC_STUB ISequentialStream_Read_Stub(
@@ -2307,8 +2314,8 @@ HRESULT __RPC_STUB ISequentialStream_Read_Stub(
     ULONG cb,
     ULONG *pcbRead)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbRead);
+    return ISequentialStream_Read(This, pv, cb, pcbRead);
 }
 
 HRESULT CALLBACK ISequentialStream_Write_Proxy(
@@ -2317,8 +2324,15 @@ HRESULT CALLBACK ISequentialStream_Write_Proxy(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    ULONG written;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbWritten);
+
+    hr = ISequentialStream_RemoteWrite_Proxy(This, pv, cb, &written);
+    if(pcbWritten) *pcbWritten = written;
+
+    return hr;
 }
 
 HRESULT __RPC_STUB ISequentialStream_Write_Stub(
@@ -2327,8 +2341,8 @@ HRESULT __RPC_STUB ISequentialStream_Write_Stub(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbWritten);
+    return ISequentialStream_Write(This, pv, cb, pcbWritten);
 }
 
 HRESULT CALLBACK IStream_Seek_Proxy(
