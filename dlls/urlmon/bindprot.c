@@ -171,7 +171,10 @@ void release_notif_hwnd(HWND hwnd)
 {
     tls_data_t *data = get_tls_data();
 
-    if(!data || data->notif_hwnd != hwnd) {
+    if(!data)
+        return;
+
+    if(data->notif_hwnd != hwnd) {
         PostMessageW(data->notif_hwnd, WM_MK_RELEASE, 0, 0);
         return;
     }
