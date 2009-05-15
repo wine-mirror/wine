@@ -60,7 +60,6 @@ struct msg_sequence
 
 void add_message(struct msg_sequence **seq, int sequence_index,
     const struct message *msg);
-void flush_sequence(struct msg_sequence **seg, int sequence_index);
 void flush_sequences(struct msg_sequence **seq, int n);
 
 #define ok_sequence(seq, index, exp, contx, todo) \

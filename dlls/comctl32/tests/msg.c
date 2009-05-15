@@ -51,7 +51,7 @@ void add_message(struct msg_sequence **seq, int sequence_index,
     msg_seq->count++;
 }
 
-void flush_sequence(struct msg_sequence **seg, int sequence_index)
+static void flush_sequence(struct msg_sequence **seg, int sequence_index)
 {
     struct msg_sequence *msg_seq = seg[sequence_index];
     HeapFree(GetProcessHeap(), 0, msg_seq->sequence);
