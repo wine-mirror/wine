@@ -25,6 +25,8 @@
 #define _WIN32_WINNT 0x500 /* For NTSTATUS */
 #endif
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -35,10 +37,7 @@
 #include "excpt.h"
 #include "wine/test.h"
 
-#ifdef __i386__
-static int      my_argc;
-static char**   my_argv;
-static int      test_stage;
+static void *code_mem;
 
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
@@ -48,7 +47,11 @@ static PVOID     (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG first, PVECTORE
 static ULONG     (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID handler);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
-static void *code_mem;
+
+#ifdef __i386__
+static int      my_argc;
+static char**   my_argv;
+static int      test_stage;
 
 /* Test various instruction combinations that cause a protection fault on the i386,
  * and check what the resulting exception looks like.
@@ -915,12 +918,192 @@ static void test_fpu_exceptions(void)
     ok(info.eip_offset == 0x19, "Got EIP offset %#x, expected 0x19\n", info.eip_offset);
 }
 
-#endif  /* __i386__ */
+#elif defined(__x86_64__)
+
+#define UNW_FLAG_NHANDLER  0
+#define UNW_FLAG_EHANDLER  1
+#define UNW_FLAG_UHANDLER  2
+#define UNW_FLAG_CHAININFO 4
+
+#define UWOP_PUSH_NONVOL     0
+#define UWOP_ALLOC_LARGE     1
+#define UWOP_ALLOC_SMALL     2
+#define UWOP_SET_FPREG       3
+#define UWOP_SAVE_NONVOL     4
+#define UWOP_SAVE_NONVOL_FAR 5
+#define UWOP_SAVE_XMM128     8
+#define UWOP_SAVE_XMM128_FAR 9
+#define UWOP_PUSH_MACHFRAME  10
+
+enum regs
+{
+    rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi,
+    r8,  r9,  r10, r11, r12, r13, r14, r15
+};
+
+static const char * const reg_names[16] =
+{
+    "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi",
+    "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15"
+};
+
+#define UWOP(code,info) (UWOP_##code | ((info) << 4))
+
+static void test_virtual_unwind(void)
+{
+    static const BYTE function[] =
+    {
+        0xff, 0xf5,                                  /* 00: push %rbp */
+        0x48, 0x81, 0xec, 0x10, 0x01, 0x00, 0x00,    /* 02: sub $0x110,%rsp */
+        0x48, 0x8d, 0x6c, 0x24, 0x30,                /* 09: lea 0x30(%rsp),%rbp */
+        0x48, 0x89, 0x9d, 0xf0, 0x00, 0x00, 0x00,    /* 0e: mov %rbx,0xf0(%rbp) */
+        0x48, 0x89, 0xb5, 0xf8, 0x00, 0x00, 0x00,    /* 15: mov %rsi,0xf8(%rbp) */
+        0x90                                         /* 1c: nop */
+    };
+
+    static const BYTE unwind_info[] =
+    {
+        1 | (UNW_FLAG_EHANDLER << 3),  /* version + flags */
+        0x1c,                          /* prolog size */
+        8,                             /* opcode count */
+        (0x03 << 4) | rbp,             /* frame reg rbp offset 0x30 */
+
+        0x1c, UWOP(SAVE_NONVOL, rsi), 0x25, 0, /* 1c: mov %rsi,0x128(%rsp) */
+        0x15, UWOP(SAVE_NONVOL, rbx), 0x24, 0, /* 15: mov %rbx,0x120(%rsp) */
+        0x0e, UWOP(SET_FPREG, rbp),            /* 0e: lea 0x30(%rsp),rbp */
+        0x09, UWOP(ALLOC_LARGE, 0), 0x22, 0,   /* 09: sub $0x110,%rsp */
+        0x02, UWOP(PUSH_NONVOL, rbp),          /* 02: push %rbp */
+
+        0x00, 0x02, 0x00, 0x00,  /* handler */
+        0x05, 0x06, 0x07, 0x08,  /* data */
+    };
+
+    static const struct
+    {
+        int rip_offset;   /* rip offset from code start */
+        int rbp_offset;   /* rbp offset from stack pointer */
+        int handler;      /* expect handler to be set? */
+        int rip;          /* expected final rip value */
+        int regs[8][2];   /* expected values for registers */
+    } results[] =
+    {
+      /* offset  rbp   handler  rip     registers */
+        { 0x00,  0x40,  FALSE, 0x000, { {rsp,0x008}, {-1,-1} }},
+        { 0x02,  0x40,  FALSE, 0x008, { {rsp,0x010}, {rbp,0x000}, {-1,-1} }},
+        { 0x09,  0x40,  FALSE, 0x118, { {rsp,0x120}, {rbp,0x110}, {-1,-1} }},
+        { 0x0e,  0x40,  FALSE, 0x128, { {rsp,0x130}, {rbp,0x120}, {-1,-1} }},
+        { 0x15,  0x40,  FALSE, 0x128, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {-1,-1} }},
+        { 0x1c,  0x40,  TRUE,  0x128, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {rsi,0x138}, {-1,-1}}},
+    };
+
+    static const int code_offset = 1024;
+    static const int unwind_offset = 1024;
+    void *handler, *data;
+    CONTEXT context;
+    RUNTIME_FUNCTION runtime_func;
+    KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
+    UINT i, j, k;
+    ULONG64 fake_stack[256];
+    ULONG64 frame, orig_rip, orig_rbp, unset_reg;
+
+    memcpy( (char *)code_mem + code_offset, function, sizeof(function) );
+    memcpy( (char *)code_mem + unwind_offset, unwind_info, sizeof(unwind_info) );
+
+    runtime_func.BeginAddress = code_offset;
+    runtime_func.EndAddress = code_offset + sizeof(function);
+    runtime_func.UnwindData = unwind_offset;
+
+    trace( "code: %p stack: %p\n", code_mem, fake_stack );
+
+    for (i = 0; i < sizeof(results)/sizeof(results[0]); i++)
+    {
+        memset( &ctx_ptr, 0, sizeof(ctx_ptr) );
+        memset( &context, 0x55, sizeof(context) );
+        memset( &unset_reg, 0x55, sizeof(unset_reg) );
+        for (j = 0; j < 256; j++) fake_stack[j] = j * 8;
+
+        context.Rsp = (ULONG_PTR)fake_stack;
+        context.Rbp = (ULONG_PTR)fake_stack + results[i].rbp_offset;
+        orig_rbp = context.Rbp;
+        orig_rip = (ULONG64)code_mem + code_offset + results[i].rip_offset;
+
+        trace( "%u: rip=%p rbp=%p rsp=%p\n", i, (void *)orig_rip, (void *)orig_rbp, (void *)context.Rsp );
+
+        data = (void *)0xdeadbeef;
+        handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_rip,
+                                    &runtime_func, &context, &data, &frame, &ctx_ptr );
+        if (results[i].handler)
+        {
+            ok( (char *)handler == (char *)code_mem + 0x200,
+                "%u: wrong handler %p/%p\n", i, handler, (char *)code_mem + 0x200 );
+            ok( *(DWORD *)data == 0x08070605, "%u: wrong handler data %p\n", i, data );
+        }
+        else
+        {
+            ok( handler == NULL, "%u: handler %p instead of NULL\n", i, handler );
+            ok( data == (void *)0xdeadbeef, "%u: handler data set to %p\n", i, data );
+        }
+
+        ok( context.Rip == results[i].rip, "%u: wrong rip %p/%x\n", i, (void *)context.Rip, results[i].rip );
+
+        for (j = 0; j < 16; j++)
+        {
+            static const UINT nb_regs = sizeof(results[i].regs) / sizeof(results[i].regs[0]);
+
+            for (k = 0; k < nb_regs; k++)
+            {
+                if (results[i].regs[k][0] == -1)
+                {
+                    k = nb_regs;
+                    break;
+                }
+                if (results[i].regs[k][0] == j) break;
+            }
+
+            if (j == rsp)  /* rsp is special */
+            {
+                ok( !ctx_ptr.u2.IntegerContext[j], "%u: rsp should not be set in ctx_ptr\n", i );
+                ok( context.Rsp == (ULONG64)fake_stack + results[i].regs[k][1],
+                    "%u: register rsp wrong %p/%p\n",
+                    i, (void *)context.Rsp, (char *)fake_stack + results[i].regs[k][1] );
+                continue;
+            }
+
+            if (ctx_ptr.u2.IntegerContext[j])
+            {
+                ok( k < nb_regs, "%u: register %s should not be set to %lx\n",
+                    i, reg_names[j], *(&context.Rax + j) );
+                if (k < nb_regs)
+                    ok( *(&context.Rax + j) == results[i].regs[k][1],
+                        "%u: register %s wrong %p/%x\n",
+                        i, reg_names[j], (void *)*(&context.Rax + j), results[i].regs[k][1] );
+            }
+            else
+            {
+                ok( k == nb_regs, "%u: register %s should be set\n", i, reg_names[j] );
+                if (j == rbp)
+                    ok( context.Rbp == orig_rbp, "%u: register rbp wrong %p/unset\n",
+                        i, (void *)context.Rbp );
+                else
+                    ok( *(&context.Rax + j) == unset_reg,
+                        "%u: register %s wrong %p/unset\n",
+                        i, reg_names[j], (void *)*(&context.Rax + j));
+            }
+        }
+    }
+}
+
+#endif  /* __x86_64__ */
 
 START_TEST(exception)
 {
-#ifdef __i386__
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+
+    code_mem = VirtualAlloc(NULL, 65536, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    if(!code_mem) {
+        trace("VirtualAlloc failed\n");
+        return;
+    }
 
     pNtCurrentTeb        = (void *)GetProcAddress( hntdll, "NtCurrentTeb" );
     pNtGetContextThread  = (void *)GetProcAddress( hntdll, "NtGetContextThread" );
@@ -932,6 +1115,8 @@ START_TEST(exception)
                                                                  "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll,
                                                                  "RtlRemoveVectoredExceptionHandler" );
+
+#ifdef __i386__
     if (!pNtCurrentTeb)
     {
         skip( "NtCurrentTeb not found\n" );
@@ -942,13 +1127,6 @@ START_TEST(exception)
         have_vectored_api = TRUE;
     else
         skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n");
-
-    /* 1024 byte should be sufficient */
-    code_mem = VirtualAlloc(NULL, 1024, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    if(!code_mem) {
-        trace("VirtualAlloc failed\n");
-        return;
-    }
 
     my_argc = winetest_get_mainargs( &my_argv );
     if (my_argc >= 4)
@@ -994,6 +1172,11 @@ START_TEST(exception)
     test_simd_exceptions();
     test_fpu_exceptions();
 
-    VirtualFree(code_mem, 1024, MEM_RELEASE);
+#elif defined(__x86_64__)
+
+    test_virtual_unwind();
+
 #endif
+
+    VirtualFree(code_mem, 0, MEM_FREE);
 }
