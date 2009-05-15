@@ -59,6 +59,9 @@ static const WCHAR wszEmpty[] = {0};
 
 #define SEE_MASK_CLASSALL (SEE_MASK_CLASSNAME | SEE_MASK_CLASSKEY)
 
+typedef UINT_PTR (*SHELL_ExecuteW32)(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
+			    const SHELLEXECUTEINFOW *sei, LPSHELLEXECUTEINFOW sei_out);
+
 
 /***********************************************************************
  *	SHELL_ArgifyW [Internal]
@@ -1465,7 +1468,7 @@ static void do_error_dialog( UINT_PTR retval, HWND hwnd )
 /*************************************************************************
  *	SHELL_execute [Internal]
  */
-BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
+static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 {
     static const WCHAR wSpace[] = {' ',0};
     static const WCHAR wWww[] = {'w','w','w',0};

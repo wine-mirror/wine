@@ -911,8 +911,8 @@ HRESULT WINAPI SHLoadInProc (REFCLSID rclsid)
 /*************************************************************************
  * AboutDlgProc            (internal)
  */
-INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
-                              LPARAM lParam )
+static INT_PTR CALLBACK AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
+                                      LPARAM lParam )
 {
     HWND hWndCtl;
 
