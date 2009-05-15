@@ -456,11 +456,11 @@ static AsnInteger32 getItemAndInstanceFromTable(AsnObjectIdentifier *oid,
             }
             else
             {
-                AsnObjectIdentifier ipOid = { instanceLen,
+                AsnObjectIdentifier instanceOid = { instanceLen,
                     oid->ids + base->idLength + 1 };
 
-                *instance = findNextOidInTable(&ipOid, table, tableEntrySize,
-                    makeKey, compare);
+                *instance = findNextOidInTable(&instanceOid, table,
+                    tableEntrySize, makeKey, compare);
                 if (!*instance || *instance > table->numEntries)
                     ret = SNMP_ERRORSTATUS_NOSUCHNAME;
             }
@@ -477,10 +477,10 @@ static AsnInteger32 getItemAndInstanceFromTable(AsnObjectIdentifier *oid,
                 ret = SNMP_ERRORSTATUS_NOSUCHNAME;
             else
             {
-                AsnObjectIdentifier ipOid = { instanceLen,
+                AsnObjectIdentifier instanceOid = { instanceLen,
                     oid->ids + base->idLength + 1 };
 
-                *instance = findOidInTable(&ipOid, table, tableEntrySize,
+                *instance = findOidInTable(&instanceOid, table, tableEntrySize,
                     makeKey, compare);
                 if (!*instance)
                     ret = SNMP_ERRORSTATUS_NOSUCHNAME;
