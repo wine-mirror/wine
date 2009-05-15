@@ -242,9 +242,6 @@ static void test_GetDiskInfoA(void)
     ret = GetDiskInfoA(path, NULL, NULL, NULL);
     ok(ret, "GetDiskInfoA failed %u\n", GetLastError());
 
-    ret = GetDiskInfoA(path, NULL, NULL, NULL);
-    ok(ret, "GetDiskInfoA failed %u\n", GetLastError());
-
     SetLastError(0xdeadbeef);
     strcpy(p, "\\non\\existing\\path");
     ret = GetDiskInfoA(path, NULL, NULL, NULL);
