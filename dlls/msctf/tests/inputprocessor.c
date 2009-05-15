@@ -54,6 +54,10 @@ static INT  test_OnInitDocumentMgr = SINK_UNEXPECTED;
 static INT  test_OnPushContext = SINK_UNEXPECTED;
 static INT  test_OnPopContext = SINK_UNEXPECTED;
 static INT  test_KEV_OnSetFocus = SINK_UNEXPECTED;
+static INT  test_ACP_AdviseSink = SINK_UNEXPECTED;
+static INT  test_ACP_GetStatus = SINK_UNEXPECTED;
+static INT  test_ACP_RequestLock = SINK_UNEXPECTED;
+static INT  test_DoEditSession = SINK_UNEXPECTED;
 
 
 /**********************************************************************
@@ -63,6 +67,8 @@ typedef struct tagTextStoreACP
 {
     const ITextStoreACPVtbl *TextStoreACPVtbl;
     LONG refCount;
+
+    ITextStoreACPSink *sink;
 } TextStoreACP;
 
 static void TextStoreACP_Destructor(TextStoreACP *This)
@@ -109,7 +115,14 @@ static ULONG WINAPI TextStoreACP_Release(ITextStoreACP *iface)
 static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
     REFIID riid, IUnknown *punk, DWORD dwMask)
 {
-    trace("\n");
+    TextStoreACP *This = (TextStoreACP *)iface;
+    HRESULT hr;
+
+    ok(test_ACP_AdviseSink == SINK_EXPECTED, "Unexpected TextStoreACP_AdviseSink sink\n");
+    test_ACP_AdviseSink = SINK_FIRED;
+
+    hr = IUnknown_QueryInterface(punk, &IID_ITextStoreACPSink,(LPVOID*)(&This->sink));
+    ok(SUCCEEDED(hr),"Unable to QueryInterface on sink\n");
     return S_OK;
 }
 
@@ -119,16 +132,25 @@ static HRESULT WINAPI TextStoreACP_UnadviseSink(ITextStoreACP *iface,
     trace("\n");
     return S_OK;
 }
+
 static HRESULT WINAPI TextStoreACP_RequestLock(ITextStoreACP *iface,
     DWORD dwLockFlags, HRESULT *phrSession)
 {
-    trace("\n");
+    TextStoreACP *This = (TextStoreACP *)iface;
+
+    ok(test_ACP_RequestLock == SINK_EXPECTED,"Unexpected TextStoreACP_RequestLock\n");
+    test_ACP_RequestLock = SINK_FIRED;
+    test_DoEditSession = SINK_EXPECTED;
+    *phrSession = ITextStoreACPSink_OnLockGranted(This->sink, TS_LF_READWRITE);
+    ok(test_DoEditSession = SINK_FIRED,"expected DoEditSession not fired\n");
+    ok(*phrSession == 0xdeadcafe,"Unexpected return from ITextStoreACPSink_OnLockGranted\n");
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_GetStatus(ITextStoreACP *iface,
     TS_STATUS *pdcs)
 {
-    trace("\n");
+    ok(test_ACP_GetStatus  == SINK_EXPECTED, "Unexpected TextStoreACP_GetStatus\n");
+    test_ACP_GetStatus = SINK_FIRED;
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_QueryInsert(ITextStoreACP *iface,
@@ -1114,12 +1136,14 @@ static void test_startSession(void)
 
     cnt = check_context_refcount(cxt);
     test_OnPushContext = SINK_EXPECTED;
+    test_ACP_AdviseSink = SINK_EXPECTED;
     test_OnInitDocumentMgr = SINK_EXPECTED;
     hr = ITfDocumentMgr_Push(g_dm, cxt);
     ok(SUCCEEDED(hr),"Push Failed\n");
     ok(check_context_refcount(cxt) > cnt, "Ref count did not increase\n");
     ok(test_OnPushContext == SINK_FIRED, "OnPushContext sink not fired\n");
     ok(test_OnInitDocumentMgr == SINK_FIRED, "OnInitDocumentMgr sink not fired\n");
+    ok(test_ACP_AdviseSink == SINK_FIRED,"TextStoreACP_AdviseSink not fired\n");
 
     hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
     ok(SUCCEEDED(hr),"GetTop Failed\n");
@@ -1289,6 +1313,122 @@ static void test_ClientId(void)
     ITfClientId_Release(pcid);
 }
 
+/**********************************************************************
+ * ITfEditSession
+ **********************************************************************/
+typedef struct tagEditSession
+{
+    const ITfEditSessionVtbl *EditSessionVtbl;
+    LONG refCount;
+} EditSession;
+
+static void EditSession_Destructor(EditSession *This)
+{
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI EditSession_QueryInterface(ITfEditSession *iface, REFIID iid, LPVOID *ppvOut)
+{
+    EditSession *This = (EditSession *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfEditSession))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI EditSession_AddRef(ITfEditSession *iface)
+{
+    EditSession *This = (EditSession *)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI EditSession_Release(ITfEditSession *iface)
+{
+    EditSession *This = (EditSession *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        EditSession_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI EditSession_DoEditSession(ITfEditSession *iface,
+TfEditCookie ec)
+{
+    ok(test_DoEditSession == SINK_EXPECTED, "Unexpected DoEditSession\n");
+    ok(test_ACP_RequestLock == SINK_FIRED,"Expected RequestLock not fired\n");
+    test_DoEditSession = SINK_FIRED;
+    return 0xdeadcafe;
+}
+
+static const ITfEditSessionVtbl EditSession_EditSessionVtbl =
+{
+    EditSession_QueryInterface,
+    EditSession_AddRef,
+    EditSession_Release,
+
+    EditSession_DoEditSession
+};
+
+HRESULT EditSession_Constructor(ITfEditSession **ppOut)
+{
+    EditSession *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(EditSession));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->EditSessionVtbl = &EditSession_EditSessionVtbl;
+    This->refCount = 1;
+
+    *ppOut = (ITfEditSession*)This;
+    return S_OK;
+}
+
+static void test_TStoApplicationText(void)
+{
+    HRESULT hr, hrSession;
+    ITfEditSession *es;
+    ITfContext *cxt;
+    ITfDocumentMgr *dm;
+
+    ITfThreadMgr_GetFocus(g_tm, &dm);
+    EditSession_Constructor(&es);
+    ITfDocumentMgr_GetTop(dm,&cxt);
+
+    hrSession = 0xfeedface;
+    /* Test no premissions flags */
+    hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC, &hrSession);
+    todo_wine ok(hr == E_INVALIDARG,"RequestEditSession should have failed with %x not %x\n",E_INVALIDARG,hr);
+    todo_wine ok(hrSession == E_FAIL,"hrSession should be %x not %x\n",E_FAIL,hrSession);
+
+    hrSession = 0xfeedface;
+    test_ACP_GetStatus = SINK_EXPECTED;
+    test_ACP_RequestLock = SINK_EXPECTED;
+    hrSession = 0xfeedface;
+    hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC|TF_ES_READWRITE, &hrSession);
+    todo_wine ok(SUCCEEDED(hr),"ITfContext_RequestEditSession failed\n");
+    todo_wine ok(test_ACP_GetStatus == SINK_FIRED," expected GetStatus not fired\n");
+    todo_wine ok(test_ACP_RequestLock == SINK_FIRED," expected RequestLock not fired\n");
+    todo_wine ok(test_DoEditSession == SINK_FIRED," expected DoEditSession not fired\n");
+    todo_wine ok(hrSession == 0xdeadcafe,"Unexpected hrSession\n");
+
+    ITfContext_Release(cxt);
+    ITfDocumentMgr_Release(dm);
+    ITfEditSession_Release(es);
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -1303,6 +1443,7 @@ START_TEST(inputprocessor)
         test_TfGuidAtom();
         test_ClientId();
         test_KeystrokeMgr();
+        test_TStoApplicationText();
         test_endSession();
         test_EnumLanguageProfiles();
         test_FindClosestCategory();
