@@ -84,6 +84,10 @@ struct shader_arb_priv {
     struct hash_table_t     *fragment_shaders;
 };
 
+struct shader_arb_ctx_priv {
+    char addr_reg[20];
+};
+
 /********************************************************
  * ARB_[vertex/fragment]_program helper functions follow
  ********************************************************/
@@ -503,6 +507,17 @@ static void shader_arb_get_swizzle(const struct wined3d_shader_src_param *param,
     *ptr = '\0';
 }
 
+static void shader_arb_request_a0(const struct wined3d_shader_instruction *ins, const char *src)
+{
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+
+    if(strcmp(priv->addr_reg, src) == 0) return;
+
+    strcpy(priv->addr_reg, src);
+    shader_addline(buffer, "ARL A0.x, %s;\n", src);
+}
+
 static void shader_arb_get_src_param(const struct wined3d_shader_instruction *ins,
         const struct wined3d_shader_src_param *src, unsigned int tmpreg, char *outregstr);
 
@@ -543,7 +558,9 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
                 if(This->baseShader.reg_maps.shader_version.major < 2) {
                     sprintf(rel_reg, "A0.x");
                 } else {
+                    shader_arb_get_src_param(ins, reg->rel_addr, 0, rel_reg);
                     /* FIXME: GL_NV_vertex_progam2_option */
+                    shader_arb_request_a0(ins, rel_reg);
                     sprintf(rel_reg, "A0.x");
                 }
                 if (reg->idx >= rel_offset)
@@ -574,7 +591,17 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
                     sprintf(register_name, "fragment.texcoord[%u]", reg->idx);
                 }
             }
-            else  sprintf(register_name, "A%u", reg->idx);
+            else
+            {
+                if(This->baseShader.reg_maps.shader_version.major == 1)
+                {
+                    sprintf(register_name, "A%u", reg->idx);
+                }
+                else
+                {
+                    sprintf(register_name, "A%u_SHADOW", reg->idx);
+                }
+            }
             break;
 
         case WINED3DSPR_COLOROUT:
@@ -1016,9 +1043,11 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 
     if(ins->handler_idx == WINED3DSIH_MOVA) {
         struct wined3d_shader_src_param tmp_src = ins->src[0];
+        char write_mask[6];
 
         tmp_src.swizzle = (tmp_src.swizzle & 0x3) * 0x55;
         shader_arb_get_src_param(ins, &tmp_src, 0, src0_param);
+        shader_arb_get_write_mask(ins, &ins->dst[0], write_mask);
 
         /* This implements the mova formula used in GLSL. The first two instructions
          * prepare the sign() part. Note that it is fine to have my_sign(0.0) = 1.0
@@ -1027,16 +1056,20 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
          *
          * A0.x = arl(floor(abs(0.0) + 0.5) * 1.0) = floor(0.5) = 0.0 since arl does a floor
          *
+         * The ARL is performed when A0 is used - the requested component is read from A0_SHADOW into
+         * A0.x. We can use the overwritten component of A0_shadow as temporary storage for the sign.
+         *
          * TODO: ARR from GL_NV_vertex_program2_option
          */
-        shader_addline(buffer, "SGE TA.y, %s, mova_const.y;\n", src0_param);
-        shader_addline(buffer, "MAD TA.y, TA.y, mova_const.z, -mova_const.w;\n");
+        shader_addline(buffer, "SGE A0_SHADOW%s, %s, mova_const.y;\n", write_mask, src0_param);
+        shader_addline(buffer, "MAD A0_SHADOW%s, A0_SHADOW, mova_const.z, -mova_const.w;\n", write_mask);
 
-        shader_addline(buffer, "ABS TA.x, %s;\n", src0_param);
-        shader_addline(buffer, "ADD TA.x, TA.x, mova_const.x;\n");
-        shader_addline(buffer, "FLR TA.x, TA.x;\n");
-        shader_addline(buffer, "MUL TA.x, TA.x, TA.y;\n");
-        shader_addline(buffer, "ARL A0.x, TA.x;\n");
+        shader_addline(buffer, "ABS TA%s, %s;\n", write_mask, src0_param);
+        shader_addline(buffer, "ADD TA%s, TA, mova_const.x;\n", write_mask);
+        shader_addline(buffer, "FLR TA%s, TA;\n", write_mask);
+        shader_addline(buffer, "MUL A0_SHADOW%s, TA, A0_SHADOW;\n", write_mask);
+
+        ((struct shader_arb_ctx_priv *)ins->ctx->backend_data)->addr_reg[0] = '\0';
     } else if (ins->ctx->reg_maps->shader_version.major == 1
           && !shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)
           && ins->dst[0].reg.type == WINED3DSPR_ADDR)
@@ -1982,7 +2015,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
     shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function);
+    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, NULL);
 
     if(args->srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, "TA", "TB", "TC");
@@ -2036,7 +2069,9 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     const local_constant *lconst;
     GLuint ret;
     DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
+    struct shader_arb_ctx_priv priv_ctx;
 
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
 
@@ -2045,6 +2080,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     }
     if(need_mova_const((IWineD3DBaseShader *) iface, gl_info)) {
         shader_addline(buffer, "PARAM mova_const = { 0.5, 0.0, 2.0, 1.0 };\n");
+        shader_addline(buffer, "TEMP A0_SHADOW;\n");
     }
 
     /* Mesa supports only 95 constants */
@@ -2086,7 +2122,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     }
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function);
+    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
 
     /* The D3DRS_FOGTABLEMODE render state defines if the shader-generated fog coord is used
      * or if the fragment depth is used. If the fragment depth is used(FOGTABLEMODE != NONE),

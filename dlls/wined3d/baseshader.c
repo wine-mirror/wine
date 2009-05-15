@@ -929,7 +929,7 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on msdn */
 void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
-        const shader_reg_maps *reg_maps, const DWORD *pFunction)
+        const shader_reg_maps *reg_maps, const DWORD *pFunction, void *backend_ctx)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device; /* To access shader backend callbacks */
@@ -951,6 +951,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
     ctx.shader = iface;
     ctx.reg_maps = reg_maps;
     ctx.buffer = buffer;
+    ctx.backend_data = backend_ctx;
 
     ins.ctx = &ctx;
     ins.dst = &dst_param;
