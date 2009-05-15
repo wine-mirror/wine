@@ -888,6 +888,7 @@
 @ stdcall RtlUnlockHeap(long)
 # @ stub RtlUnlockMemoryStreamRegion
 @ stdcall -register RtlUnwind(ptr ptr ptr ptr)
+@ stdcall -arch=x86_64 RtlUnwindEx(long long ptr long ptr)
 @ stdcall RtlUpcaseUnicodeChar(long)
 @ stdcall RtlUpcaseUnicodeString(ptr ptr long)
 @ stdcall RtlUpcaseUnicodeStringToAnsiString(ptr ptr long)

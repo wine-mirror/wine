@@ -897,29 +897,38 @@ PVOID WINAPI RtlVirtualUnwind ( ULONG type, ULONG64 base, ULONG64 pc,
 
 
 /*******************************************************************
- *		RtlUnwind (NTDLL.@)
+ *		RtlUnwindEx (NTDLL.@)
  */
-void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID targetIp,
-                              PEXCEPTION_RECORD pRecord, PVOID retval, CONTEXT *context )
+void WINAPI RtlUnwindEx( ULONG64 frame, ULONG64 target_ip, EXCEPTION_RECORD *rec,
+                         ULONG64 retval, CONTEXT *context, UNWIND_HISTORY_TABLE *table )
 {
     EXCEPTION_RECORD record;
 
     /* build an exception record, if we do not have one */
-    if (!pRecord)
+    if (!rec)
     {
         record.ExceptionCode    = STATUS_UNWIND;
         record.ExceptionFlags   = 0;
         record.ExceptionRecord  = NULL;
         record.ExceptionAddress = (void *)context->Rip;
         record.NumberParameters = 0;
-        pRecord = &record;
+        rec = &record;
     }
 
-    pRecord->ExceptionFlags |= EH_UNWINDING | (pEndFrame ? 0 : EH_EXIT_UNWIND);
+    rec->ExceptionFlags |= EH_UNWINDING | (frame ? 0 : EH_EXIT_UNWIND);
 
-    FIXME( "code=%x flags=%x not implemented on x86_64\n",
-           pRecord->ExceptionCode, pRecord->ExceptionFlags );
+    FIXME( "code=%x flags=%x not implemented on x86_64\n", rec->ExceptionCode, rec->ExceptionFlags );
     NtTerminateProcess( GetCurrentProcess(), 1 );
+}
+
+
+/*******************************************************************
+ *		RtlUnwind (NTDLL.@)
+ */
+void WINAPI __regs_RtlUnwind( ULONG64 frame, ULONG64 target_ip, EXCEPTION_RECORD *rec,
+                              ULONG64 retval, CONTEXT *context )
+{
+    RtlUnwindEx( frame, target_ip, rec, retval, context, NULL );
 }
 DEFINE_REGS_ENTRYPOINT( RtlUnwind, 4 )
 
