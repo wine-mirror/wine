@@ -132,7 +132,7 @@ void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, vo
  *
  * Switch to the specified stack to call the function and return.
  */
-int wine_call_on_stack( int (*func)(void *), void *arg, void *stack );
+
 #if defined(__i386__) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    "pushl %ebp\n\t"
