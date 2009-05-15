@@ -2549,8 +2549,15 @@ HRESULT CALLBACK IFillLockBytes_FillAppend_Proxy(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    ULONG written;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbWritten);
+
+    hr = IFillLockBytes_RemoteFillAppend_Proxy(This, pv, cb, &written);
+    if(pcbWritten) *pcbWritten = written;
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IFillLockBytes_FillAppend_Stub(
@@ -2559,8 +2566,8 @@ HRESULT __RPC_STUB IFillLockBytes_FillAppend_Stub(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p, %d, %p)\n", This, pv, cb, pcbWritten);
+    return IFillLockBytes_FillAppend(This, pv, cb, pcbWritten);
 }
 
 HRESULT CALLBACK IFillLockBytes_FillAt_Proxy(
@@ -2570,8 +2577,15 @@ HRESULT CALLBACK IFillLockBytes_FillAt_Proxy(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    ULONG written;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %p, %d, %p)\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
+
+    hr = IFillLockBytes_RemoteFillAt_Proxy(This, ulOffset, pv, cb, &written);
+    if(pcbWritten) *pcbWritten = written;
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IFillLockBytes_FillAt_Stub(
@@ -2581,8 +2595,8 @@ HRESULT __RPC_STUB IFillLockBytes_FillAt_Stub(
     ULONG cb,
     ULONG *pcbWritten)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s, %p, %d, %p)\n", This, wine_dbgstr_longlong(ulOffset.QuadPart), pv, cb, pcbWritten);
+    return IFillLockBytes_FillAt(This, ulOffset, pv, cb, pcbWritten);
 }
 
 HRESULT CALLBACK IEnumFORMATETC_Next_Proxy(
