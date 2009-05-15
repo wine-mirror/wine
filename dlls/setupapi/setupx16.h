@@ -382,7 +382,6 @@ RETERR16 WINAPI VcpQueueCopy16(
 	LPEXPANDVTBL lpExpandVtbl,
 	WORD fl, LPARAM lParam
 );
-RETERR16 VcpFlush16(WORD fl, LPCSTR lpszBackupDest);
 RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest);
 
 /* VcpExplain flags */

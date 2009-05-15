@@ -161,18 +161,6 @@ INT16 WINAPI vsmStringDelete16(VHSTR vhstr)
     return VCPN_FAIL;
 }
 
-/*
- * vsmStringFind() - not exported from a standard SETUPX.DLL, it seems
- */
-VHSTR WINAPI vsmStringFind16(LPCSTR lpszName)
-{
-    WORD n;
-    for (n = 0; n < vhstr_alloc; n++)
-	if ((vhstrlist[n]) && (vhstrlist[n]->refcount) && (!strcmp(vhstrlist[n]->pStr, lpszName)))
-	    return n;
-    return 0xffff;
-}
-
 /***********************************************************************
  *		vsmGetStringName (SETUPX.205)
  *
@@ -191,16 +179,6 @@ INT16 WINAPI vsmGetStringName16(VHSTR vhstr, LPSTR lpszBuffer, int cbBuffer)
 	}
     }
     return VCPN_FAIL;
-}
-
-/***********************************************************************
- *		vsmStringCompare (not exported from a standard SETUPX.DLL, it seems)
- */
-INT16 WINAPI vsmStringCompare16(VHSTR vhstrA, VHSTR vhstrB)
-{
-    if ((!VALID_VHSTR(vhstrA)) || (!VALID_VHSTR(vhstrB)))
-	return VCPN_FAIL; /* correct ? */
-    return strcmp(vhstrlist[vhstrA]->pStr, vhstrlist[vhstrB]->pStr);
 }
 
 /***********************************************************************
@@ -482,16 +460,6 @@ static RETERR16 VCP_CopyFiles(void)
 
     cbres = VCP_Callback(&vcp_status, VCPM_VSTATCOPYEND, 0, 0, VCP_MsgRef);
     return res;
-}
-
-/***********************************************************************
- *		VcpFlush - internal (not exported), but documented
- *
- * VNFL_NOW is used for VcpFlush.
- */
-RETERR16 VcpFlush16(WORD fl, LPCSTR lpszBackupDest)
-{
-    return OK;
 }
 
 /***********************************************************************
