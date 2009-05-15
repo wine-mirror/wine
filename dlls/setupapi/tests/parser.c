@@ -589,6 +589,12 @@ static void test_SetupGetIntField(void)
         retb = SetupGetIntField( &context, keys[i].index, &intfield );
         if ( keys[i].err == ERROR_SUCCESS )
         {
+            if ( !retb && !lstrcmpA( keys[i].key, "123=" ) )
+            {
+                win_skip( "results differ on Win9x\n" );
+                SetupCloseInfFile( hinf );
+                continue;
+            }
             ok( retb, "%u: Expected success\n", i );
             ok( GetLastError() == ERROR_SUCCESS ||
                 GetLastError() == 0xdeadbeef /* win9x, NT4 */,
