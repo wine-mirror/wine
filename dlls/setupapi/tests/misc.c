@@ -46,6 +46,7 @@ static CHAR CURR_DIR[MAX_PATH];
 static BOOL (WINAPI *pSetupGetFileCompressionInfoExA)(PCSTR, PSTR, DWORD, PDWORD, PDWORD, PDWORD, PUINT);
 static BOOL (WINAPI *pSetupCopyOEMInfA)(PCSTR, PCSTR, DWORD, DWORD, PSTR, DWORD, PDWORD, PSTR *);
 static BOOL (WINAPI *pSetupQueryInfOriginalFileInformationA)(PSP_INF_INFORMATION, UINT, PSP_ALTPLATFORM_INFO, PSP_ORIGINAL_FILE_INFO_A);
+static BOOL (WINAPI *pSetupUninstallOEMInfA)(PCSTR, DWORD, PVOID);
 
 static void create_inf_file(LPCSTR filename)
 {
@@ -581,6 +582,32 @@ static void test_SetupDecompressOrCopyFile(void)
     DeleteFileA(source);
 }
 
+static void test_SetupUninstallOEMInf(void)
+{
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = pSetupUninstallOEMInfA(NULL, 0, NULL);
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %08x\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pSetupUninstallOEMInfA("", 0, NULL);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pSetupUninstallOEMInfA("nonexistent.inf", 0, NULL);
+    todo_wine
+    {
+    ok(!ret, "Expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
+    }
+}
+
 START_TEST(misc)
 {
     HMODULE hsetupapi = GetModuleHandle("setupapi.dll");
@@ -588,6 +615,7 @@ START_TEST(misc)
     pSetupGetFileCompressionInfoExA = (void*)GetProcAddress(hsetupapi, "SetupGetFileCompressionInfoExA");
     pSetupCopyOEMInfA = (void*)GetProcAddress(hsetupapi, "SetupCopyOEMInfA");
     pSetupQueryInfOriginalFileInformationA = (void*)GetProcAddress(hsetupapi, "SetupQueryInfOriginalFileInformationA");
+    pSetupUninstallOEMInfA = (void*)GetProcAddress(hsetupapi, "SetupUninstallOEMInfA");
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
@@ -604,4 +632,9 @@ START_TEST(misc)
         win_skip("SetupGetFileCompressionInfoExA is not available\n");
 
     test_SetupDecompressOrCopyFile();
+
+    if (pSetupUninstallOEMInfA)
+        test_SetupUninstallOEMInf();
+    else
+        win_skip("SetupUninstallOEMInfA is not available\n");
 }

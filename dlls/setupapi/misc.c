@@ -1139,6 +1139,12 @@ BOOL WINAPI SetupUninstallOEMInfW( PCWSTR inf_file, DWORD flags, PVOID reserved 
 
     TRACE("%s, 0x%08x, %p\n", debugstr_w(inf_file), flags, reserved);
 
+    if (!inf_file)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     if (!GetWindowsDirectoryW( target, sizeof(target)/sizeof(WCHAR) )) return FALSE;
 
     strcatW( target, infW );
