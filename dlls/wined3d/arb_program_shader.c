@@ -457,14 +457,8 @@ static void shader_arb_get_write_mask(const struct wined3d_shader_instruction *i
         const struct wined3d_shader_dst_param *dst, char *write_mask)
 {
     char *ptr = write_mask;
-    char vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
 
-    if (vshader && dst->reg.type == WINED3DSPR_ADDR)
-    {
-        *ptr++ = '.';
-        *ptr++ = 'x';
-    }
-    else if (dst->write_mask != WINED3DSP_WRITEMASK_ALL)
+    if (dst->write_mask != WINED3DSP_WRITEMASK_ALL)
     {
         *ptr++ = '.';
         if (dst->write_mask & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
@@ -509,12 +503,15 @@ static void shader_arb_get_swizzle(const struct wined3d_shader_src_param *param,
     *ptr = '\0';
 }
 
-static void shader_arb_get_register_name(IWineD3DBaseShader *iface,
+static void shader_arb_get_src_param(const struct wined3d_shader_instruction *ins,
+        const struct wined3d_shader_src_param *src, unsigned int tmpreg, char *outregstr);
+
+static void shader_arb_get_register_name(const struct wined3d_shader_instruction *ins,
         const struct wined3d_shader_register *reg, char *register_name, BOOL *is_color)
 {
     /* oPos, oFog and oPts in D3D */
     static const char * const rastout_reg_names[] = {"TMP_OUT", "result.fogcoord", "result.pointsize"};
-    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)iface;
+    IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     BOOL pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
 
     *is_color = FALSE;
@@ -541,11 +538,18 @@ static void shader_arb_get_register_name(IWineD3DBaseShader *iface,
         case WINED3DSPR_CONST:
             if (!pshader && reg->rel_addr)
             {
+                char rel_reg[50];
                 UINT rel_offset = ((IWineD3DVertexShaderImpl *)This)->rel_offset;
+                if(This->baseShader.reg_maps.shader_version.major < 2) {
+                    sprintf(rel_reg, "A0.x");
+                } else {
+                    /* FIXME: GL_NV_vertex_progam2_option */
+                    sprintf(rel_reg, "A0.x");
+                }
                 if (reg->idx >= rel_offset)
-                    sprintf(register_name, "C[A0.x + %u]", reg->idx - rel_offset);
+                    sprintf(register_name, "C[%s + %u]", rel_reg, reg->idx - rel_offset);
                 else
-                    sprintf(register_name, "C[A0.x - %u]", -reg->idx + rel_offset);
+                    sprintf(register_name, "C[%s - %u]", rel_reg, -reg->idx + rel_offset);
             }
             else
             {
@@ -626,7 +630,7 @@ static void shader_arb_get_dst_param(const struct wined3d_shader_instruction *in
     char write_mask[6];
     BOOL is_color;
 
-    shader_arb_get_register_name(ins->ctx->shader, &wined3d_dst->reg, register_name, &is_color);
+    shader_arb_get_register_name(ins, &wined3d_dst->reg, register_name, &is_color);
     strcpy(str, register_name);
 
     shader_arb_get_write_mask(ins, wined3d_dst, write_mask);
@@ -777,7 +781,7 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
     insert_line = 1;
 
     /* Get register name */
-    shader_arb_get_register_name(ins->ctx->shader, &src->reg, regstr, &is_color);
+    shader_arb_get_register_name(ins, &src->reg, regstr, &is_color);
     shader_arb_get_swizzle(src, is_color, swzstr);
 
     switch (src->modifiers)
@@ -1012,6 +1016,7 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 
     if(ins->handler_idx == WINED3DSIH_MOVA) {
         struct wined3d_shader_src_param tmp_src = ins->src[0];
+
         tmp_src.swizzle = (tmp_src.swizzle & 0x3) * 0x55;
         shader_arb_get_src_param(ins, &tmp_src, 0, src0_param);
 
@@ -2034,6 +2039,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
+
     if(need_helper_const(gl_info)) {
         shader_addline(buffer, "PARAM helper_const = { 2.0, -1.0, %d.0, 0.0 };\n", This->rel_offset);
     }
@@ -2206,7 +2212,7 @@ static void shader_arb_add_instruction_modifiers(const struct wined3d_shader_ins
     if(shift == 0) return; /* Saturate alone is handled by the instructions */
 
     shader_arb_get_write_mask(ins, dst, write_mask);
-    shader_arb_get_register_name(ins->ctx->shader, &dst->reg, regstr, &is_color);
+    shader_arb_get_register_name(ins, &dst->reg, regstr, &is_color);
 
     /* Generate a line that does the output modifier computation
      * FIXME: _SAT vs shift? _SAT alone is already handled in the instructions, if this
