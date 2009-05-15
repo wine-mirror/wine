@@ -186,6 +186,32 @@ static void shader_arb_load_np2fixup_constants(
     /* not implemented */
 }
 
+static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
+{
+    IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
+    IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
+    IWineD3DPixelShaderImpl *psi = (IWineD3DPixelShaderImpl *) pshader;
+    const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
+    unsigned char i;
+
+    for(i = 0; i < psi->numbumpenvmatconsts; i++)
+    {
+        /* The state manager takes care that this function is always called if the bump env matrix changes */
+        const float *data = (const float *)&stateBlock->textureState[(int) psi->bumpenvmatconst[i].texunit][WINED3DTSS_BUMPENVMAT00];
+        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->bumpenvmatconst[i].const_num, data));
+
+        if (psi->luminanceconst[i].const_num != WINED3D_CONST_NUM_UNUSED)
+        {
+            /* WINED3DTSS_BUMPENVLSCALE and WINED3DTSS_BUMPENVLOFFSET are next to each other.
+             * point gl to the scale, and load 4 floats. x = scale, y = offset, z and w are junk, we
+             * don't care about them. The pointers are valid for sure because the stateblock is bigger.
+             * (they're WINED3DTSS_TEXTURETRANSFORMFLAGS and WINED3DTSS_ADDRESSW, so most likely 0 or NaN
+            */
+            const float *scale = (const float *)&stateBlock->textureState[(int) psi->luminanceconst[i].texunit][WINED3DTSS_BUMPENVLSCALE];
+            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->luminanceconst[i].const_num, scale));
+        }
+    }
+}
 /**
  * Loads the app-supplied constants into the currently set ARB_[vertex/fragment]_programs.
  * 
@@ -201,7 +227,6 @@ static void shader_arb_load_constants(
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device; 
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
     const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
-    unsigned char i;
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
@@ -218,9 +243,7 @@ static void shader_arb_load_constants(
     }
 
     if (usePixelShader) {
-
         IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
-        IWineD3DPixelShaderImpl *psi = (IWineD3DPixelShaderImpl *) pshader;
 
         /* Load DirectX 9 float constants for pixel shader */
         deviceImpl->highest_dirty_ps_const = shader_arb_load_constantsF(
@@ -228,24 +251,7 @@ static void shader_arb_load_constants(
                 deviceImpl->highest_dirty_ps_const,
                 stateBlock->pixelShaderConstantF,
                 deviceImpl->activeContext->pshader_const_dirty);
-
-        for(i = 0; i < psi->numbumpenvmatconsts; i++) {
-            /* The state manager takes care that this function is always called if the bump env matrix changes
-             */
-            const float *data = (const float *)&stateBlock->textureState[(int) psi->bumpenvmatconst[i].texunit][WINED3DTSS_BUMPENVMAT00];
-            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->bumpenvmatconst[i].const_num, data));
-
-            if (psi->luminanceconst[i].const_num != WINED3D_CONST_NUM_UNUSED)
-            {
-                /* WINED3DTSS_BUMPENVLSCALE and WINED3DTSS_BUMPENVLOFFSET are next to each other.
-                 * point gl to the scale, and load 4 floats. x = scale, y = offset, z and w are junk, we
-                 * don't care about them. The pointers are valid for sure because the stateblock is bigger.
-                 * (they're WINED3DTSS_TEXTURETRANSFORMFLAGS and WINED3DTSS_ADDRESSW, so most likely 0 or NaN
-                 */
-                const float *scale = (const float *)&stateBlock->textureState[(int) psi->luminanceconst[i].texunit][WINED3DTSS_BUMPENVLSCALE];
-                GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->luminanceconst[i].const_num, scale));
-            }
-        }
+        shader_arb_ps_local_constants(deviceImpl);
     }
 }
 
@@ -1687,6 +1693,8 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
             checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
         }
         TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
+
+        shader_arb_ps_local_constants(This);
     } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
         /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
          * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
