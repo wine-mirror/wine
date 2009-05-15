@@ -730,6 +730,12 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       TRACE("pAttr[%d] = WGL_SUPPORT_OPENGL_ARB: %d\n", cur, pop);
       break;
 
+    case WGL_SWAP_METHOD_ARB:
+      pop = iWGLAttr[++cur];
+      /* For now we ignore this and just return SWAP_EXCHANGE */
+      TRACE("pAttr[%d] = WGL_SWAP_METHOD_ARB: %#x\n", cur, pop);
+      break;
+
     case WGL_PBUFFER_LARGEST_ARB:
       pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_LARGEST_PBUFFER, pop);
@@ -2900,6 +2906,14 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 else
                     piValues[i] = GL_FALSE;
                 continue;
+
+            case WGL_SWAP_METHOD_ARB:
+                /* For now return SWAP_EXCHANGE_ARB which is the best type of buffer switch available.
+                 * Later on we can also use GLX_OML_swap_method on drivers which support this. At this
+                 * point only ATI offers this.
+                 */
+                piValues[i] = WGL_SWAP_EXCHANGE_ARB;
+                break;
 
             case WGL_PBUFFER_LARGEST_ARB:
                 curGLXAttr = GLX_LARGEST_PBUFFER;
