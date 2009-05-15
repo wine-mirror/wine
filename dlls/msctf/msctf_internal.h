@@ -35,6 +35,9 @@ extern HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfConte
 extern HRESULT InputProcessorProfiles_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
 extern HRESULT CategoryMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
 
+extern HRESULT Context_Initialize(ITfContext *cxt);
+extern HRESULT Context_Uninitialize(ITfContext *cxt);
+
 /* cookie function */
 extern DWORD  generate_Cookie(DWORD magic, LPVOID data);
 extern DWORD  get_Cookie_magic(DWORD id);

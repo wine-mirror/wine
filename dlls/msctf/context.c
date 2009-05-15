@@ -66,6 +66,7 @@ typedef struct tagContext {
     /* const ITfQueryEmbeddedVtbl *QueryEmbeddedVtbl; */
     /* const ITfSourceSingleVtbl *SourceSingleVtbl; */
     LONG refCount;
+    BOOL connected;
 
     TfClientId tidOwner;
 
@@ -446,16 +447,12 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     This->SourceVtbl = &Context_SourceVtbl;
     This->refCount = 1;
     This->tidOwner = tidOwner;
+    This->connected = FALSE;
 
     if (punk)
     {
-        if (SUCCEEDED(IUnknown_QueryInterface(punk, &IID_ITextStoreACP,
-                          (LPVOID*)&This->pITextStoreACP)))
-        {
-            if (SUCCEEDED(TextStoreACPSink_Constructor(&This->pITextStoreACPSink, This)))
-                ITextStoreACP_AdviseSink(This->pITextStoreACP, &IID_ITextStoreACPSink,
-                                        (IUnknown*)This->pITextStoreACPSink, TS_AS_ALL_SINKS);
-        }
+        IUnknown_QueryInterface(punk, &IID_ITextStoreACP,
+                          (LPVOID*)&This->pITextStoreACP);
 
         IUnknown_QueryInterface(punk, &IID_ITfContextOwnerCompositionSink,
                                 (LPVOID*)&This->pITfContextOwnerCompositionSink);
@@ -475,6 +472,34 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     list_init(&This->pTextEditSink);
     list_init(&This->pTextLayoutSink);
 
+    return S_OK;
+}
+
+HRESULT Context_Initialize(ITfContext *iface)
+{
+    Context *This = (Context *)iface;
+
+    if (This->pITextStoreACP)
+    {
+        if (SUCCEEDED(TextStoreACPSink_Constructor(&This->pITextStoreACPSink, This)))
+            ITextStoreACP_AdviseSink(This->pITextStoreACP, &IID_ITextStoreACPSink,
+                            (IUnknown*)This->pITextStoreACPSink, TS_AS_ALL_SINKS);
+    }
+    This->connected = TRUE;
+    return S_OK;
+}
+
+HRESULT Context_Uninitialize(ITfContext *iface)
+{
+    Context *This = (Context *)iface;
+
+    if (This->pITextStoreACPSink)
+    {
+        ITextStoreACP_UnadviseSink(This->pITextStoreACP, (IUnknown*)This->pITextStoreACPSink);
+        if (ITextStoreACPSink_Release(This->pITextStoreACPSink) == 0)
+            This->pITextStoreACPSink = NULL;
+    }
+    This->connected = FALSE;
     return S_OK;
 }
 
