@@ -266,26 +266,6 @@ static RETERR16 VCP_VirtnodeCreate(const VCPFILESPEC *vfsSrc, const VCPFILESPEC 
     return OK;
 }
 
-#if 0
-static BOOL VCP_VirtnodeDelete(LPVIRTNODE lpvnDel)
-{
-    DWORD n;
-    RETERR16 cbres;
-
-    for (n = 0; n < vn_last; n++)
-    {
-	if (pvnlist[n] == lpvnDel)
-	{
-	    cbres = VCP_Callback(lpvnDel, VCPM_NODEDESTROY, 0, 0, VCP_MsgRef);
-	    HeapFree(GetProcessHeap(), 0, lpvnDel);
-	    pvnlist[n] = NULL;
-	    return TRUE;
-	}
-    }
-    return FALSE;
-}
-#endif
-
 /***********************************************************************
  *		VcpOpen (SETUPX.200)
  *
@@ -553,32 +533,6 @@ RETERR16 WINAPI VcpClose16(WORD fl, LPCSTR lpszBackupDest)
     VCP_opened = FALSE;
     return OK;
 }
-
-#if 0
-static RETERR16 VCP_RenameFiles(void)
-{
-    char fn_src[MAX_PATH], fn_dst[MAX_PATH];
-    RETERR16 res = OK, cbres;
-    DWORD n;
-    LPVIRTNODE lpvn;
-
-    cbres = VCP_Callback(&vcp_status, VCPM_VSTATRENAMESTART, 0, 0, VCP_MsgRef);
-    for (n = 0; n < vn_num; n++)
-    {
-	lpvn = pvnlist[n];
-	if ((!lpvn) || ((lpvn->fl & VNFL_NODE_TYPE) != VNFL_RENAME)) continue;
-        strcpy(fn_src, VcpExplain16(lpvn, VCPEX_SRC_FULL));
-        strcpy(fn_dst, VcpExplain16(lpvn, VCPEX_DST_FULL));
-	cbres = VCP_Callback(&lpvn->vfsDst, VCPM_FILEOPENOUT, 0, (LPARAM)lpvn, VCP_MsgRef);
-        if (!(MoveFileExA(fn_src, fn_dst, MOVEFILE_REPLACE_EXISTING)))
-	    res = ERR_VCP_IOFAIL;
-	else
-	    VCP_VirtnodeDelete(lpvn);
-    }
-    cbres = VCP_Callback(&vcp_status, VCPM_VSTATRENAMEEND, 0, 0, VCP_MsgRef);
-    return res;
-}
-#endif
 
 /***********************************************************************
  *		vcpDefCallbackProc (SETUPX.202)
