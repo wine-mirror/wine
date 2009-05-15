@@ -2437,8 +2437,10 @@ HRESULT CALLBACK IStorage_OpenStream_Proxy(
     DWORD reserved2,
     IStream **ppstm)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s, %p, %08x, %d %p)\n", This, debugstr_w(pwcsName), reserved1, grfMode, reserved2, ppstm);
+    if(reserved1) WARN("reserved1 %p\n", reserved1);
+
+    return IStorage_RemoteOpenStream_Proxy(This, pwcsName, 0, NULL, grfMode, reserved2, ppstm);
 }
 
 HRESULT __RPC_STUB IStorage_OpenStream_Stub(
@@ -2450,8 +2452,10 @@ HRESULT __RPC_STUB IStorage_OpenStream_Stub(
     DWORD reserved2,
     IStream **ppstm)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s, %d, %p, %08x, %d %p)\n", This, debugstr_w(pwcsName), cbReserved1, reserved1, grfMode, reserved2, ppstm);
+    if(cbReserved1 || reserved1) WARN("cbReserved1 %d reserved1 %p\n", cbReserved1, reserved1);
+
+    return IStorage_OpenStream(This, pwcsName, NULL, grfMode, reserved2, ppstm);
 }
 
 HRESULT CALLBACK IStorage_EnumElements_Proxy(
@@ -2461,8 +2465,10 @@ HRESULT CALLBACK IStorage_EnumElements_Proxy(
     DWORD reserved3,
     IEnumSTATSTG **ppenum)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d, %p, %d, %p)\n", This, reserved1, reserved2, reserved3, ppenum);
+    if(reserved2) WARN("reserved2 %p\n", reserved2);
+
+    return IStorage_RemoteEnumElements_Proxy(This, reserved1, 0, NULL, reserved3, ppenum);
 }
 
 HRESULT __RPC_STUB IStorage_EnumElements_Stub(
@@ -2473,8 +2479,10 @@ HRESULT __RPC_STUB IStorage_EnumElements_Stub(
     DWORD reserved3,
     IEnumSTATSTG **ppenum)
 {
-    FIXME(":stub\n");
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d, %d, %p, %d, %p)\n", This, reserved1, cbReserved2, reserved2, reserved3, ppenum);
+    if(cbReserved2 || reserved2) WARN("cbReserved2 %d reserved2 %p\n", cbReserved2, reserved2);
+
+    return IStorage_EnumElements(This, reserved1, NULL, reserved3, ppenum);
 }
 
 HRESULT CALLBACK ILockBytes_ReadAt_Proxy(
