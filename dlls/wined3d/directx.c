@@ -1280,7 +1280,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     strstr(gl_info->gl_renderer, "HD 4890"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD4800;
-                    vidmem = 512; /* HD4800 cards use 512-1024MB, up to 2048MB for X2 version */
+                    vidmem = 512; /* HD4800 cards use 512-1024MB */
                 }
                 /* Radeon R6xx HD2900/HD3800 - highend */
                 else if (strstr(gl_info->gl_renderer, "HD 2900") ||
