@@ -823,12 +823,20 @@ static void get_thread_info(struct gdb_context* gdbctx, unsigned tid,
 enum packet_return {packet_error = 0x00, packet_ok = 0x01, packet_done = 0x02,
                     packet_last_f = 0x80};
 
+static char* packet_realloc(char* buf, int size)
+{
+    if (!buf)
+        return HeapAlloc(GetProcessHeap(), 0, size);
+    return HeapReAlloc(GetProcessHeap(), 0, buf, size);
+
+}
+
 static void packet_reply_grow(struct gdb_context* gdbctx, size_t size)
 {
     if (gdbctx->out_buf_alloc < gdbctx->out_len + size)
     {
         gdbctx->out_buf_alloc = ((gdbctx->out_len + size) / 32 + 1) * 32;
-        gdbctx->out_buf = realloc(gdbctx->out_buf, gdbctx->out_buf_alloc);
+        gdbctx->out_buf = packet_realloc(gdbctx->out_buf, gdbctx->out_buf_alloc);
     }
 }
 
@@ -2105,7 +2113,7 @@ static int fetch_data(struct gdb_context* gdbctx)
     {
 #define STEP 128
         if (gdbctx->in_len + STEP > gdbctx->in_buf_alloc)
-            gdbctx->in_buf = realloc(gdbctx->in_buf, gdbctx->in_buf_alloc += STEP);
+            gdbctx->in_buf = packet_realloc(gdbctx->in_buf, gdbctx->in_buf_alloc += STEP);
 #undef STEP
         if (gdbctx->trace & GDBPXY_TRC_LOWLEVEL)
             fprintf(stderr, "%d %d %*.*s\n",
