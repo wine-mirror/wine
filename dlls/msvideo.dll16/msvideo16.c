@@ -774,7 +774,11 @@ HIC16 VFWAPI ICOpenFunction16(DWORD fccType, DWORD fccHandler, UINT16 wMode, FAR
     struct msvideo_thunk*       thunk;
 
     EnterCriticalSection(&msvideo_cs);
-    if (!(thunk = MSVIDEO_AddThunk((DWORD)lpfnHandler))) return 0;
+    if (!(thunk = MSVIDEO_AddThunk((DWORD)lpfnHandler)))
+    {
+        LeaveCriticalSection(&msvideo_cs);
+        return 0;
+    }
     if ((hic32 = ICOpenFunction(fccType, fccHandler, wMode, IC_Callback3216)))
         thunk->hIC16 = HIC_16(hic32);
     else
