@@ -358,14 +358,6 @@ HRESULT add_active_textservice(TF_LANGUAGEPROFILE *lp)
     actsvr = HeapAlloc(GetProcessHeap(),0,sizeof(ActivatedTextService));
     if (!actsvr) return E_OUTOFMEMORY;
 
-    entry = HeapAlloc(GetProcessHeap(),0,sizeof(AtsEntry));
-
-    if (!entry)
-    {
-        HeapFree(GetProcessHeap(),0,actsvr);
-        return E_OUTOFMEMORY;
-    }
-
     ITfThreadMgr_QueryInterface(tm,&IID_ITfClientId,(LPVOID)&clientid);
     ITfClientId_GetClientId(clientid, &lp->clsid, &actsvr->tid);
     ITfClientId_Release(clientid);
@@ -403,6 +395,14 @@ HRESULT add_active_textservice(TF_LANGUAGEPROFILE *lp)
 
     if (activated > 0)
         activate_given_ts(actsvr, tm);
+
+    entry = HeapAlloc(GetProcessHeap(),0,sizeof(AtsEntry));
+
+    if (!entry)
+    {
+        HeapFree(GetProcessHeap(),0,actsvr);
+        return E_OUTOFMEMORY;
+    }
 
     entry->ats = actsvr;
     list_add_head(&AtsList, &entry->entry);
