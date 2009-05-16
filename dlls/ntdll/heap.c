@@ -1555,7 +1555,8 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
             if (!(ret = allocate_large_block( heapPtr, flags, size ))) goto oom;
             notify_alloc( ret, size, flags & HEAP_ZERO_MEMORY );
             memcpy( ret, pArena + 1, oldActualSize );
-            /* FIXME: free old memory here! */
+            notify_free( pArena + 1 );
+            HEAP_MakeInUseBlockFree( subheap, pArena );
             goto done;
         }
         if ((pNext < (char *)subheap->base + subheap->size) &&
