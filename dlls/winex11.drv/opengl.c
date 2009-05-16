@@ -613,8 +613,6 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
   int drawattrib = 0;
   int nvfloatattrib = GLX_DONT_CARE;
   int pixelattrib = 0;
-  int supportgdi = -1;
-  int doublebuf = -1;
 
   /* The list of WGL attributes is allowed to be NULL. We don't return here for NULL
    * because we need to do fixups for GLX_DRAWABLE_TYPE/GLX_RENDER_TYPE/GLX_FLOAT_COMPONENTS_NV. */
@@ -666,7 +664,6 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_DOUBLEBUFFER, pop);
       TRACE("pAttr[%d] = GLX_DOUBLEBUFFER: %d\n", cur, pop);
-      doublebuf = pop;
       break;
     case WGL_STEREO_ARB:
       pop = iWGLAttr[++cur];
@@ -690,10 +687,9 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       break;
 
     case WGL_SUPPORT_GDI_ARB:
+      /* This flag is set in a WineGLPixelFormat */
       pop = iWGLAttr[++cur];
-      PUSH2(oGLXAttr, GLX_X_RENDERABLE, pop);
       TRACE("pAttr[%d] = WGL_SUPPORT_GDI_ARB: %d\n", cur, pop);
-      supportgdi = pop;
       break;
 
     case WGL_DRAW_TO_BITMAP_ARB:
@@ -808,15 +804,6 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       break;
     }
     ++cur;
-  }
-
-  if(supportgdi > 0) {
-    if(doublebuf > 0) {
-      WARN("Attempting double-buffered gdi format\n");
-      return -1;
-    }
-    if(doublebuf < 0)
-      PUSH2(oGLXAttr, GLX_DOUBLEBUFFER, False);
   }
 
   /* Apply the OR'd drawable type bitmask now EVEN when WGL_DRAW_TO* is unset.
@@ -1011,7 +998,7 @@ static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixe
 }
 
 /* Search our internal pixelformat list for the WGL format corresponding to the given fbconfig */
-static WineGLPixelFormat* ConvertPixelFormatGLXtoWGL(Display *display, int fmt_id)
+static WineGLPixelFormat* ConvertPixelFormatGLXtoWGL(Display *display, int fmt_id, DWORD dwFlags)
 {
     WineGLPixelFormat *list;
     int i, size;
@@ -1019,7 +1006,9 @@ static WineGLPixelFormat* ConvertPixelFormatGLXtoWGL(Display *display, int fmt_i
     if (!(list = get_formats(display, &size, NULL ))) return NULL;
 
     for(i=0; i<size; i++) {
-        if(list[i].fmt_id == fmt_id) {
+        /* A GLX format can appear multiple times in the pixel format list due to fake formats for bitmap rendering.
+         * Fake formats might get selected when the user passes the proper flags using the dwFlags parameter. */
+        if( (list[i].fmt_id == fmt_id) && ((list[i].dwFlags & dwFlags) == dwFlags) ) {
             TRACE("Returning iPixelFormat %d for fmt_id 0x%x\n", list[i].iPixelFormat, fmt_id);
             return &list[i];
         }
@@ -1034,7 +1023,7 @@ int pixelformat_from_fbconfig_id(XID fbconfig_id)
 
     if (!fbconfig_id) return 0;
 
-    fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fbconfig_id);
+    fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fbconfig_id, 0 /* no flags */);
     if(fmt)
         return fmt->iPixelFormat;
     /* This will happen on hwnds without a pixel format set; it's ok */
@@ -2682,6 +2671,8 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
     WineGLPixelFormat *fmt;
     UINT pfmt_it = 0;
     int run;
+    int i;
+    DWORD dwFlags = 0;
 
     TRACE("(%p, %p, %p, %d, %p, %p): hackish\n", hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats);
     if (NULL != pfAttribFList) {
@@ -2694,6 +2685,19 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
         return GL_FALSE;
     }
     PUSH1(attribs, None);
+
+    /* There is no 1:1 mapping between GLX and WGL formats because we duplicate some GLX formats for bitmap rendering (see get_formats).
+     * Flags like PFD_SUPPORT_GDI, PFD_DRAW_TO_BITMAP and others are a property of the WineGLPixelFormat. We don't query these attributes
+     * using glXChooseFBConfig but we filter the result of glXChooseFBConfig later on by passing a dwFlags to 'ConvertPixelFormatGLXtoWGL'. */
+    for(i=0; piAttribIList[i] != 0; i+=2)
+    {
+        if(piAttribIList[i] == WGL_SUPPORT_GDI_ARB)
+        {
+            if(piAttribIList[i+1])
+                dwFlags |= PFD_SUPPORT_GDI;
+            break;
+        }
+    }
 
     /* Search for FB configurations matching the requirements in attribs */
     wine_tsx11_lock();
@@ -2716,7 +2720,7 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
             }
 
             /* Search for the format in our list of compatible formats */
-            fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fmt_id);
+            fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fmt_id, dwFlags);
             if(!fmt)
                 continue;
 
@@ -2884,14 +2888,8 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
 
             case WGL_SUPPORT_GDI_ARB:
                 if (!fmt) goto pix_error;
-                hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &tmp);
-                if (hTest) goto get_error;
-                if(tmp) {
-                    piValues[i] = GL_FALSE;
-                    continue;
-                }
-                curGLXAttr = GLX_X_RENDERABLE;
-                break;
+                piValues[i] = (fmt->dwFlags & PFD_SUPPORT_GDI) ? TRUE : FALSE;
+                continue;
 
             case WGL_DRAW_TO_WINDOW_ARB:
             case WGL_DRAW_TO_BITMAP_ARB:
@@ -3596,7 +3594,7 @@ XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
     WineGLPixelFormat *fmt;
     XVisualInfo *ret;
 
-    fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fbconfig_id);
+    fmt = ConvertPixelFormatGLXtoWGL(gdi_display, fbconfig_id, 0 /* no flags */);
     if(fmt == NULL)
         return NULL;
 
