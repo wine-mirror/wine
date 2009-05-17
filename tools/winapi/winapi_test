@@ -47,32 +47,23 @@ if ($options->pack) {
     push @tests, "pack";
 }
 
-my @files = ();
+my @files;
 {
     my %files;
 
-    my %test_dirs;
-    foreach my $test (@tests) {
-	my @test_dirs = $tests->get_test_dirs($test);
-	foreach my $test_dir (@test_dirs) {
-	    my @headers = $tests->get_section($test_dir, $test, "header");
-	    foreach my $header (@headers) {
-		$files{"include/$header"} = 1;
-	    }
-	}
-    }
-
-    foreach my $test (@tests) {
-	my @test_dirs = $tests->get_test_dirs($test);
-	foreach my $test_dir (@test_dirs) {
-	    my @headers = $tests->get_section($test_dir, $test, "header");
-	    foreach my $header (@headers) {
-		if($files{"include/$header"}) {
+    foreach my $test (@tests)
+    {
+	foreach my $test_dir ($tests->get_test_dirs($test))
+        {
+	    foreach my $header ($tests->get_section($test_dir, $test, "header"))
+            {
+                if (!$files{$header})
+                {
 		    push @files, "include/$header";
-		    $files{"include/$header"} = 0;
-		}
-	    }
-	}
+                    $files{$header} = 1;
+                }
+            }
+        }
     }
 }
 
