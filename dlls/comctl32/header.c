@@ -78,6 +78,7 @@ typedef struct
     BOOL      bDragging;        /* Are we dragging an item? */
     BOOL      bTracking;	/* Is in tracking mode? */
     POINT     ptLButtonDown;    /* The point where the left button was pressed */
+    DWORD     dwStyle;		/* the cached window GWL_STYLE */
     INT       iMoveItem;	/* index of tracked item. (Tracking mode) */
     INT       xTrackOffset;	/* distance between the right side of the tracked item and the cursor */
     INT       xOldTrack;	/* track offset (see above) after the last WM_MOUSEMOVE */
@@ -329,7 +330,7 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
     else {
         HBRUSH hbr;
     
-        if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & HDS_BUTTONS) {
+        if (infoPtr->dwStyle & HDS_BUTTONS) {
             if (phdi->bDown) {
                 DrawEdge (hdc, &r, BDR_RAISEDOUTER,
                             BF_RECT | BF_FLAT | BF_MIDDLE | BF_ADJUST);
@@ -547,7 +548,7 @@ HEADER_Refresh (HEADER_INFO *infoPtr, HDC hdc)
             DrawThemeBackground(theme, hdc, HP_HEADERITEM, HIS_NORMAL, &rcRest, NULL);
         }
         else {
-            if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & HDS_BUTTONS)
+            if (infoPtr->dwStyle & HDS_BUTTONS)
                 DrawEdge (hdc, &rcRest, EDGE_RAISED, BF_TOP|BF_LEFT|BF_BOTTOM|BF_SOFT|BF_MIDDLE);
             else
                 DrawEdge (hdc, &rcRest, EDGE_ETCHED, BF_BOTTOM|BF_MIDDLE);
@@ -1300,7 +1301,7 @@ HEADER_Layout (HEADER_INFO *infoPtr, LPHDLAYOUT lpLayout)
     lpLayout->pwpos->x = lpLayout->prc->left;
     lpLayout->pwpos->y = lpLayout->prc->top;
     lpLayout->pwpos->cx = lpLayout->prc->right - lpLayout->prc->left;
-    if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & HDS_HIDDEN)
+    if (infoPtr->dwStyle & HDS_HIDDEN)
         lpLayout->pwpos->cy = 0;
     else {
         lpLayout->pwpos->cy = infoPtr->nHeight;
@@ -1421,6 +1422,7 @@ HEADER_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
     infoPtr->hcurDivopen = LoadCursorW (COMCTL32_hModule, MAKEINTRESOURCEW(IDC_DIVIDEROPEN));
     infoPtr->bPressed  = FALSE;
     infoPtr->bTracking = FALSE;
+    infoPtr->dwStyle = lpcs->style;
     infoPtr->iMoveItem = 0;
     infoPtr->himl = 0;
     infoPtr->iHotItem = -1;
@@ -1504,7 +1506,7 @@ HEADER_LButtonDblClk (HEADER_INFO *infoPtr, INT x, INT y)
     pt.y = y;
     HEADER_InternalHitTest (infoPtr, &pt, &flags, &nItem);
 
-    if ((GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & HDS_BUTTONS) && (flags == HHT_ONHEADER))
+    if ((infoPtr->dwStyle & HDS_BUTTONS) && (flags == HHT_ONHEADER))
         HEADER_SendNotifyWithHDItemT(infoPtr, HDN_ITEMDBLCLICKW, nItem, NULL);
     else if ((flags == HHT_ONDIVIDER) || (flags == HHT_ONDIVOPEN))
         HEADER_SendNotifyWithHDItemT(infoPtr, HDN_DIVIDERDBLCLICKW, nItem, NULL);
@@ -1516,7 +1518,6 @@ HEADER_LButtonDblClk (HEADER_INFO *infoPtr, INT x, INT y)
 static LRESULT
 HEADER_LButtonDown (HEADER_INFO *infoPtr, INT x, INT y)
 {
-    DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     POINT pt;
     UINT  flags;
     INT   nItem;
@@ -1526,7 +1527,7 @@ HEADER_LButtonDown (HEADER_INFO *infoPtr, INT x, INT y)
     pt.y = y;
     HEADER_InternalHitTest (infoPtr, &pt, &flags, &nItem);
 
-    if ((dwStyle & HDS_BUTTONS) && (flags == HHT_ONHEADER)) {
+    if ((infoPtr->dwStyle & HDS_BUTTONS) && (flags == HHT_ONHEADER)) {
 	SetCapture (infoPtr->hwndSelf);
 	infoPtr->bCaptured = TRUE;
 	infoPtr->bPressed  = TRUE;
@@ -1553,7 +1554,7 @@ HEADER_LButtonDown (HEADER_INFO *infoPtr, INT x, INT y)
 	    infoPtr->iMoveItem = nItem;
 	    infoPtr->xTrackOffset = infoPtr->items[nItem].rect.right - pt.x;
 
-	    if (!(dwStyle & HDS_FULLDRAG)) {
+	    if (!(infoPtr->dwStyle & HDS_FULLDRAG)) {
 		infoPtr->xOldTrack = infoPtr->items[nItem].rect.right;
 		hdc = GetDC (infoPtr->hwndSelf);
 		HEADER_DrawTrackLine (infoPtr, hdc, infoPtr->xOldTrack);
@@ -1571,7 +1572,6 @@ HEADER_LButtonDown (HEADER_INFO *infoPtr, INT x, INT y)
 static LRESULT
 HEADER_LButtonUp (HEADER_INFO *infoPtr, INT x, INT y)
 {
-    DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     POINT pt;
     UINT  flags;
     INT   nItem;
@@ -1615,7 +1615,7 @@ HEADER_LButtonUp (HEADER_INFO *infoPtr, INT x, INT y)
             infoPtr->bDragging = FALSE;
             HEADER_SetHotDivider(infoPtr, FALSE, -1);
 	}
-	else if (!(dwStyle&HDS_DRAGDROP) || !HEADER_IsDragDistance(infoPtr, &pt))
+	else if (!(infoPtr->dwStyle & HDS_DRAGDROP) || !HEADER_IsDragDistance(infoPtr, &pt))
 	{
 	    infoPtr->items[infoPtr->iMoveItem].bDown = FALSE;
 	    hdc = GetDC (infoPtr->hwndSelf);
@@ -1637,7 +1637,7 @@ HEADER_LButtonUp (HEADER_INFO *infoPtr, INT x, INT y)
 
         HEADER_SendNotifyWithIntFieldT(infoPtr, HDN_ENDTRACKW, infoPtr->iMoveItem, HDI_WIDTH, iNewWidth);
 
-        if (!(dwStyle & HDS_FULLDRAG)) {
+        if (!(infoPtr->dwStyle & HDS_FULLDRAG)) {
 	    hdc = GetDC (infoPtr->hwndSelf);
 	    HEADER_DrawTrackLine (infoPtr, hdc, infoPtr->xOldTrack);
             ReleaseDC (infoPtr->hwndSelf, hdc);
@@ -1699,14 +1699,13 @@ HEADER_MouseLeave (HEADER_INFO *infoPtr)
 static LRESULT
 HEADER_MouseMove (HEADER_INFO *infoPtr, LPARAM lParam)
 {
-    DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     POINT pt;
     UINT  flags;
     INT   nItem, nWidth;
     HDC   hdc;
     /* With theming, hottracking is always enabled */
     BOOL  hotTrackEnabled =
-        ((dwStyle & HDS_BUTTONS) && (dwStyle & HDS_HOTTRACK))
+        ((infoPtr->dwStyle & HDS_BUTTONS) && (infoPtr->dwStyle & HDS_HOTTRACK))
         || (GetWindowTheme (infoPtr->hwndSelf) != NULL);
     INT oldHotItem = infoPtr->iHotItem;
 
@@ -1723,7 +1722,7 @@ HEADER_MouseMove (HEADER_INFO *infoPtr, LPARAM lParam)
 
     if (infoPtr->bCaptured) {
         /* check if we should drag the header */
-	if (infoPtr->bPressed && !infoPtr->bDragging && dwStyle&HDS_DRAGDROP
+	if (infoPtr->bPressed && !infoPtr->bDragging && (infoPtr->dwStyle & HDS_DRAGDROP)
 	    && HEADER_IsDragDistance(infoPtr, &pt))
 	{
             if (!HEADER_SendNotifyWithHDItemT(infoPtr, HDN_BEGINDRAG, infoPtr->iMoveItem, NULL))
@@ -1766,7 +1765,7 @@ HEADER_MouseMove (HEADER_INFO *infoPtr, LPARAM lParam)
 	    TRACE("Moving pressed item %d!\n", infoPtr->iMoveItem);
 	}
 	else if (infoPtr->bTracking) {
-	    if (dwStyle & HDS_FULLDRAG) {
+	    if (infoPtr->dwStyle & HDS_FULLDRAG) {
                 HEADER_ITEM *lpItem = &infoPtr->items[infoPtr->iMoveItem];
                 nWidth = pt.x - lpItem->rect.left + infoPtr->xTrackOffset;
                 if (!HEADER_SendNotifyWithIntFieldT(infoPtr, HDN_ITEMCHANGINGW, infoPtr->iMoveItem, HDI_WIDTH, nWidth))
@@ -1923,6 +1922,19 @@ static LRESULT HEADER_SetRedraw(HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lPar
     return ret;
 }
 
+static INT HEADER_StyleChanged(HEADER_INFO *infoPtr, WPARAM wStyleType,
+                               const LPSTYLESTRUCT lpss)
+{
+    TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
+          wStyleType, lpss->styleOld, lpss->styleNew);
+
+    if (wStyleType != GWL_STYLE) return 0;
+
+    infoPtr->dwStyle = lpss->styleNew;
+
+    return 0;
+}
+
 /* Update the theme handle after a theme change */
 static LRESULT HEADER_ThemeChanged(const HEADER_INFO *infoPtr)
 {
@@ -2066,6 +2078,9 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_SETREDRAW:
             return HEADER_SetRedraw(infoPtr, wParam, lParam);
+
+        case WM_STYLECHANGED:
+            return HEADER_StyleChanged(infoPtr, wParam, (LPSTYLESTRUCT)lParam);
 
         case WM_SYSCOLORCHANGE:
             COMCTL32_RefreshSysColors();
