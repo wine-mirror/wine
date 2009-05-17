@@ -300,7 +300,7 @@ HEADER_DrawItem (HEADER_INFO *infoPtr, HDC hdc, INT iItem, BOOL bHotTrack, LRESU
 
     /* Set the colors before sending NM_CUSTOMDRAW so that it can change them */
     SetTextColor(hdc, (bHotTrack && !theme) ? COLOR_HIGHLIGHT : COLOR_BTNTEXT);
-    SetBkColor(hdc, GetSysColor(COLOR_3DFACE));
+    SetBkColor(hdc, comctl32_color.clr3dFace);
 
     if (lCDFlags & CDRF_NOTIFYITEMDRAW && !(phdi->fmt & HDF_OWNERDRAW))
     {
@@ -497,7 +497,7 @@ HEADER_DrawHotDivider(const HEADER_INFO *infoPtr, HDC hdc)
     RECT r;
     
     HEADER_GetHotDividerRect(infoPtr, &r);
-    brush = CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT));
+    brush = CreateSolidBrush(comctl32_color.clrHighlight);
     FillRect(hdc, &r, brush);
     DeleteObject(brush);
 }
@@ -2066,6 +2066,10 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_SETREDRAW:
             return HEADER_SetRedraw(infoPtr, wParam, lParam);
+
+        case WM_SYSCOLORCHANGE:
+            COMCTL32_RefreshSysColors();
+            return 0;
 
         default:
             if ((msg >= WM_USER) && (msg < WM_APP) && !COMCTL32_IsReflectedMessage(msg))
