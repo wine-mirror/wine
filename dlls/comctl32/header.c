@@ -171,10 +171,8 @@ HEADER_IndexToOrder (const HEADER_INFO *infoPtr, INT iItem)
 
 
 static INT
-HEADER_OrderToIndex(const HEADER_INFO *infoPtr, WPARAM wParam)
+HEADER_OrderToIndex(const HEADER_INFO *infoPtr, INT iorder)
 {
-    INT iorder = (INT)wParam;
-
     if ((iorder <0) || iorder >= infoPtr->uNumItem)
       return iorder;
     return infoPtr->order[iorder];
@@ -951,7 +949,7 @@ HEADER_FreeCallbackItems(HEADER_ITEM *lpItem)
 }
 
 static LRESULT
-HEADER_CreateDragImage (HEADER_INFO *infoPtr, WPARAM wParam)
+HEADER_CreateDragImage (HEADER_INFO *infoPtr, INT iItem)
 {
     HEADER_ITEM *lpItem;
     HIMAGELIST himl;
@@ -963,13 +961,13 @@ HEADER_CreateDragImage (HEADER_INFO *infoPtr, WPARAM wParam)
     int height, width;
     HFONT hFont;
     
-    if (wParam >= infoPtr->uNumItem)
+    if (iItem >= infoPtr->uNumItem)
         return FALSE;
 
     if (!infoPtr->bRectsValid)
         HEADER_SetItemBounds(infoPtr);
 
-    lpItem = &infoPtr->items[wParam];
+    lpItem = &infoPtr->items[iItem];
     width = lpItem->rect.right - lpItem->rect.left;
     height = lpItem->rect.bottom - lpItem->rect.top;
     
@@ -984,7 +982,7 @@ HEADER_CreateDragImage (HEADER_INFO *infoPtr, WPARAM wParam)
 
     GetClientRect(infoPtr->hwndSelf, &rc);
     lCDFlags = HEADER_SendCtrlCustomDraw(infoPtr, CDDS_PREPAINT, hMemoryDC, &rc);
-    HEADER_DrawItem(infoPtr, hMemoryDC, wParam, FALSE, lCDFlags);
+    HEADER_DrawItem(infoPtr, hMemoryDC, iItem, FALSE, lCDFlags);
     if (lCDFlags & CDRF_NOTIFYPOSTPAINT)
         HEADER_SendCtrlCustomDraw(infoPtr, CDDS_POSTPAINT, hMemoryDC, &rc);
     
@@ -1050,9 +1048,8 @@ HEADER_SetHotDivider(HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-HEADER_DeleteItem (HEADER_INFO *infoPtr, WPARAM wParam)
+HEADER_DeleteItem (HEADER_INFO *infoPtr, INT iItem)
 {
-    INT iItem = (INT)wParam;
     INT iOrder;
     UINT i;
 
@@ -1166,11 +1163,8 @@ HEADER_GetItemCount (const HEADER_INFO *infoPtr)
 
 
 static LRESULT
-HEADER_GetItemRect (const HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+HEADER_GetItemRect (const HEADER_INFO *infoPtr, INT iItem, LPRECT lpRect)
 {
-    INT iItem = (INT)wParam;
-    LPRECT lpRect = (LPRECT)lParam;
-
     if ((iItem < 0) || (iItem >= (INT)infoPtr->uNumItem))
         return FALSE;
 
@@ -1184,11 +1178,9 @@ HEADER_GetItemRect (const HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static LRESULT
-HEADER_GetOrderArray(const HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+HEADER_GetOrderArray(const HEADER_INFO *infoPtr, INT size, LPINT order)
 {
-    LPINT order = (LPINT) lParam;
-
-    if ((unsigned int)wParam <infoPtr->uNumItem)
+    if ((UINT)size <infoPtr->uNumItem)
       return FALSE;
 
     memcpy(order, infoPtr->order, infoPtr->uNumItem * sizeof(INT));
@@ -1196,16 +1188,15 @@ HEADER_GetOrderArray(const HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 }
 
 static LRESULT
-HEADER_SetOrderArray(HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+HEADER_SetOrderArray(HEADER_INFO *infoPtr, INT size, LPINT order)
 {
-    int i;
-    LPINT order = (LPINT) lParam;
+    INT i;
     HEADER_ITEM *lpItem;
 
-    if ((unsigned int)wParam <infoPtr->uNumItem)
+    if ((UINT)size <infoPtr->uNumItem)
       return FALSE;
     memcpy(infoPtr->order, order, infoPtr->uNumItem * sizeof(INT));
-    for (i=0; i<(int)wParam; i++)
+    for (i=0; i<size; i++)
       {
         lpItem = &infoPtr->items[*order++];
 	lpItem->iOrder=i;
@@ -1223,10 +1214,8 @@ HEADER_GetUnicodeFormat (const HEADER_INFO *infoPtr)
 
 
 static LRESULT
-HEADER_HitTest (const HEADER_INFO *infoPtr, LPARAM lParam)
+HEADER_HitTest (const HEADER_INFO *infoPtr, LPHDHITTESTINFO phti)
 {
-    LPHDHITTESTINFO phti = (LPHDHITTESTINFO)lParam;
-
     HEADER_InternalHitTest (infoPtr, &phti->pt, &phti->flags, &phti->iItem);
 
     if (phti->flags == HHT_NOWHERE)
@@ -1304,10 +1293,8 @@ HEADER_InsertItemT (HEADER_INFO *infoPtr, INT nItem, const HDITEMW *phdi, BOOL b
 
 
 static LRESULT
-HEADER_Layout (HEADER_INFO *infoPtr, LPARAM lParam)
+HEADER_Layout (HEADER_INFO *infoPtr, LPHDLAYOUT lpLayout)
 {
-    LPHDLAYOUT lpLayout = (LPHDLAYOUT)lParam;
-
     lpLayout->pwpos->hwnd = infoPtr->hwndSelf;
     lpLayout->pwpos->hwndInsertAfter = 0;
     lpLayout->pwpos->x = lpLayout->prc->left;
@@ -1353,11 +1340,11 @@ HEADER_GetBitmapMargin(const HEADER_INFO *infoPtr)
 }
 
 static LRESULT
-HEADER_SetBitmapMargin(HEADER_INFO *infoPtr, WPARAM wParam)
+HEADER_SetBitmapMargin(HEADER_INFO *infoPtr, INT iMargin)
 {
     INT oldMargin = infoPtr->iMargin;
 
-    infoPtr->iMargin = (INT)wParam;
+    infoPtr->iMargin = iMargin;
 
     return oldMargin;
 }
@@ -1412,7 +1399,7 @@ HEADER_SetUnicodeFormat (HEADER_INFO *infoPtr, WPARAM wParam)
 
 
 static LRESULT
-HEADER_Create (HWND hwnd, LPARAM lParam)
+HEADER_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
 {
     HEADER_INFO *infoPtr;
     TEXTMETRICW tm;
@@ -1423,7 +1410,7 @@ HEADER_Create (HWND hwnd, LPARAM lParam)
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
     infoPtr->hwndSelf = hwnd;
-    infoPtr->hwndNotify = ((LPCREATESTRUCTA)lParam)->hwndParent;
+    infoPtr->hwndNotify = lpcs->hwndParent;
     infoPtr->uNumItem = 0;
     infoPtr->hFont = 0;
     infoPtr->items = 0;
@@ -1507,14 +1494,14 @@ HEADER_IsDragDistance(const HEADER_INFO *infoPtr, const POINT *pt)
 }
 
 static LRESULT
-HEADER_LButtonDblClk (HEADER_INFO *infoPtr, LPARAM lParam)
+HEADER_LButtonDblClk (HEADER_INFO *infoPtr, INT x, INT y)
 {
     POINT pt;
     UINT  flags;
     INT   nItem;
 
-    pt.x = (short)LOWORD(lParam);
-    pt.y = (short)HIWORD(lParam);
+    pt.x = x;
+    pt.y = y;
     HEADER_InternalHitTest (infoPtr, &pt, &flags, &nItem);
 
     if ((GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & HDS_BUTTONS) && (flags == HHT_ONHEADER))
@@ -1527,7 +1514,7 @@ HEADER_LButtonDblClk (HEADER_INFO *infoPtr, LPARAM lParam)
 
 
 static LRESULT
-HEADER_LButtonDown (HEADER_INFO *infoPtr, LPARAM lParam)
+HEADER_LButtonDown (HEADER_INFO *infoPtr, INT x, INT y)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     POINT pt;
@@ -1535,8 +1522,8 @@ HEADER_LButtonDown (HEADER_INFO *infoPtr, LPARAM lParam)
     INT   nItem;
     HDC   hdc;
 
-    pt.x = (short)LOWORD(lParam);
-    pt.y = (short)HIWORD(lParam);
+    pt.x = x;
+    pt.y = y;
     HEADER_InternalHitTest (infoPtr, &pt, &flags, &nItem);
 
     if ((dwStyle & HDS_BUTTONS) && (flags == HHT_ONHEADER)) {
@@ -1582,7 +1569,7 @@ HEADER_LButtonDown (HEADER_INFO *infoPtr, LPARAM lParam)
 
 
 static LRESULT
-HEADER_LButtonUp (HEADER_INFO *infoPtr, LPARAM lParam)
+HEADER_LButtonUp (HEADER_INFO *infoPtr, INT x, INT y)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     POINT pt;
@@ -1590,8 +1577,8 @@ HEADER_LButtonUp (HEADER_INFO *infoPtr, LPARAM lParam)
     INT   nItem;
     HDC   hdc;
 
-    pt.x = (INT)(SHORT)LOWORD(lParam);
-    pt.y = (INT)(SHORT)HIWORD(lParam);
+    pt.x = x;
+    pt.y = y;
     HEADER_InternalHitTest (infoPtr, &pt, &flags, &nItem);
 
     if (infoPtr->bPressed) {
@@ -1839,27 +1826,27 @@ HEADER_MouseMove (HEADER_INFO *infoPtr, LPARAM lParam)
 
 
 static LRESULT
-HEADER_Paint (HEADER_INFO *infoPtr, WPARAM wParam)
+HEADER_Paint (HEADER_INFO *infoPtr, HDC hdcParam)
 {
     HDC hdc;
     PAINTSTRUCT ps;
 
-    hdc = wParam==0 ? BeginPaint (infoPtr->hwndSelf, &ps) : (HDC)wParam;
+    hdc = hdcParam==0 ? BeginPaint (infoPtr->hwndSelf, &ps) : hdcParam;
     HEADER_Refresh (infoPtr, hdc);
-    if(!wParam)
+    if(!hdcParam)
 	EndPaint (infoPtr->hwndSelf, &ps);
     return 0;
 }
 
 
 static LRESULT
-HEADER_RButtonUp (HEADER_INFO *infoPtr, LPARAM lParam)
+HEADER_RButtonUp (HEADER_INFO *infoPtr, INT x, INT y)
 {
     BOOL bRet;
     POINT pt;
 
-    pt.x = (short)LOWORD(lParam);
-    pt.y = (short)HIWORD(lParam);
+    pt.x = x;
+    pt.y = y;
 
     /* Send a Notify message */
     bRet = HEADER_SendSimpleNotify (infoPtr, NM_RCLICK);
@@ -1900,18 +1887,16 @@ HEADER_SetCursor (HEADER_INFO *infoPtr, LPARAM lParam)
 
 
 static LRESULT
-HEADER_SetFont (HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+HEADER_SetFont (HEADER_INFO *infoPtr, HFONT hFont, WORD Redraw)
 {
     TEXTMETRICW tm;
-    HFONT hFont, hOldFont;
+    HFONT hOldFont;
     HDC hdc;
 
-    infoPtr->hFont = (HFONT)wParam;
-
-    hFont = infoPtr->hFont ? infoPtr->hFont : GetStockObject (SYSTEM_FONT);
+    infoPtr->hFont = hFont;
 
     hdc = GetDC (0);
-    hOldFont = SelectObject (hdc, hFont);
+    hOldFont = SelectObject (hdc, infoPtr->hFont ? infoPtr->hFont : GetStockObject (SYSTEM_FONT));
     GetTextMetricsW (hdc, &tm);
     infoPtr->nHeight = tm.tmHeight + VERT_BORDER;
     SelectObject (hdc, hOldFont);
@@ -1919,7 +1904,7 @@ HEADER_SetFont (HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     infoPtr->bRectsValid = FALSE;
 
-    if (lParam) {
+    if (Redraw) {
         InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     }
 
@@ -1961,10 +1946,10 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 /*	case HDM_CLEARFILTER: */
 
 	case HDM_CREATEDRAGIMAGE:
-	    return HEADER_CreateDragImage (infoPtr, wParam);
+	    return HEADER_CreateDragImage (infoPtr, (INT)wParam);
 
 	case HDM_DELETEITEM:
-	    return HEADER_DeleteItem (infoPtr, wParam);
+	    return HEADER_DeleteItem (infoPtr, (INT)wParam);
 
 /*	case HDM_EDITFILTER: */
 
@@ -1982,29 +1967,29 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return HEADER_GetItemCount (infoPtr);
 
 	case HDM_GETITEMRECT:
-	    return HEADER_GetItemRect (infoPtr, wParam, lParam);
+	    return HEADER_GetItemRect (infoPtr, (INT)wParam, (LPRECT)lParam);
 
 	case HDM_GETORDERARRAY:
-	    return HEADER_GetOrderArray(infoPtr, wParam, lParam);
+	    return HEADER_GetOrderArray(infoPtr, (INT)wParam, (LPINT)lParam);
 
 	case HDM_GETUNICODEFORMAT:
 	    return HEADER_GetUnicodeFormat (infoPtr);
 
 	case HDM_HITTEST:
-	    return HEADER_HitTest (infoPtr, lParam);
+	    return HEADER_HitTest (infoPtr, (LPHDHITTESTINFO)lParam);
 
 	case HDM_INSERTITEMA:
 	case HDM_INSERTITEMW:
 	    return HEADER_InsertItemT (infoPtr, (INT)wParam, (LPHDITEMW)lParam, msg == HDM_INSERTITEMW);
 
 	case HDM_LAYOUT:
-	    return HEADER_Layout (infoPtr, lParam);
+	    return HEADER_Layout (infoPtr, (LPHDLAYOUT)lParam);
 
 	case HDM_ORDERTOINDEX:
-	    return HEADER_OrderToIndex(infoPtr, wParam);
+	    return HEADER_OrderToIndex(infoPtr, (INT)wParam);
 
 	case HDM_SETBITMAPMARGIN:
-	    return HEADER_SetBitmapMargin(infoPtr, wParam);
+	    return HEADER_SetBitmapMargin(infoPtr, (INT)wParam);
 
 /*	case HDM_SETFILTERCHANGETIMEOUT: */
 
@@ -2019,13 +2004,13 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return HEADER_SetItemT (infoPtr, (INT)wParam, (LPHDITEMW)lParam, msg == HDM_SETITEMW);
 
 	case HDM_SETORDERARRAY:
-	    return HEADER_SetOrderArray(infoPtr, wParam, lParam);
+	    return HEADER_SetOrderArray(infoPtr, (INT)wParam, (LPINT)lParam);
 
 	case HDM_SETUNICODEFORMAT:
 	    return HEADER_SetUnicodeFormat (infoPtr, wParam);
 
         case WM_CREATE:
-            return HEADER_Create (hwnd, lParam);
+            return HEADER_Create (hwnd, (LPCREATESTRUCTW)lParam);
 
         case WM_DESTROY:
             return HEADER_Destroy (infoPtr);
@@ -2043,13 +2028,13 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return HEADER_GetFont (infoPtr);
 
         case WM_LBUTTONDBLCLK:
-            return HEADER_LButtonDblClk (infoPtr, lParam);
+            return HEADER_LButtonDblClk (infoPtr, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
         case WM_LBUTTONDOWN:
-            return HEADER_LButtonDown (infoPtr, lParam);
+            return HEADER_LButtonDown (infoPtr, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
         case WM_LBUTTONUP:
-            return HEADER_LButtonUp (infoPtr, lParam);
+            return HEADER_LButtonUp (infoPtr, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
         case WM_MOUSELEAVE:
             return HEADER_MouseLeave (infoPtr);
@@ -2068,16 +2053,16 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_PRINTCLIENT:
         case WM_PAINT:
-            return HEADER_Paint (infoPtr, wParam);
+            return HEADER_Paint (infoPtr, (HDC)wParam);
 
         case WM_RBUTTONUP:
-            return HEADER_RButtonUp (infoPtr, lParam);
+            return HEADER_RButtonUp (infoPtr, (SHORT)LOWORD(lParam), (SHORT)HIWORD(lParam));
 
         case WM_SETCURSOR:
             return HEADER_SetCursor (infoPtr, lParam);
 
         case WM_SETFONT:
-            return HEADER_SetFont (infoPtr, wParam, lParam);
+            return HEADER_SetFont (infoPtr, (HFONT)wParam, (WORD)lParam);
 
         case WM_SETREDRAW:
             return HEADER_SetRedraw(infoPtr, wParam, lParam);
