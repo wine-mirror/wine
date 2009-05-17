@@ -597,6 +597,7 @@ struct REG_TYPE {
 static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   static const WCHAR szName[] = {'s','z','N','a','m','e',0};
+  static const WCHAR szVersionW[] = {'s','z','V','e','r','s','i','o','n',0};
   static const WCHAR szCatName[] = {'s','z','C','a','t','N','a','m','e',0};
   static const WCHAR ClsidCatW[] = {'C','l','s','i','d','C','a','t',0};
   static const WCHAR ClsidFilterW[] = {'C','l','s','i','d','F','i','l','t','e','r',0};
@@ -613,6 +614,8 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
   static const WCHAR wszFriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};  
   static const WCHAR wszFilterDataName[] = {'F','i','l','t','e','r','D','a','t','a',0};
   /*static const WCHAR wszMeritName[] = {'M','e','r','i','t',0};*/
+
+  static const WCHAR szVersionFormat[] = {'v','%','d',0};
 
   ICreateDevEnum* pCreateDevEnum = NULL;
   IEnumMoniker* pEmCat = NULL;
@@ -672,6 +675,7 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 	    DWORD it;
 	    DWORD dwNOutputs = 0;
 	    DWORD dwNInputs = 0;
+            WCHAR bufferW[10];
 
             add_prop_str(pSubCont, szCatName, wszCatName);
             add_prop_str(pSubCont, ClsidCatW, wszCatClsid);
@@ -691,7 +695,8 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 	    prrf = (struct REG_RF*) pData;
 	    pCurrent = pData;
 
-            add_prop_ui4(pSubCont, szName, prrf->dwVersion);
+            snprintfW(bufferW, sizeof(bufferW)/sizeof(bufferW[0]), szVersionFormat, prrf->dwVersion);
+            add_prop_str(pSubCont, szVersionW, bufferW);
             add_prop_ui4(pSubCont, dwMerit, prrf->dwMerit);
 
 	    pCurrent += sizeof(struct REG_RF);
