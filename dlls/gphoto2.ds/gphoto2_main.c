@@ -37,6 +37,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 
+static char* GPHOTO2_StrDup(const char* str)
+{
+    char* dst = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
+    strcpy(dst, str);
+    return dst;
+}
+
 static void
 load_filesystem(const char *folder) {
 #ifdef HAVE_GPHOTO2
@@ -63,12 +70,12 @@ load_filesystem(const char *folder) {
 	ret = gp_list_get_name (list, i, &name);
 	if (ret < GP_OK)
 	    continue;
-	gpfile = HeapAlloc(GetProcessHeap(), 0, sizeof(struct gphoto2_file));
+	gpfile = HeapAlloc(GetProcessHeap(), 0, sizeof(struct gphoto2_file)); /* FIXME: Leaked */
 	if (!gpfile)
 	    continue;
 	TRACE("adding %s/%s\n", folder, name);
-	gpfile->folder = strdup(folder);
-	gpfile->filename = strdup(name);
+	gpfile->folder = GPHOTO2_StrDup(folder);
+	gpfile->filename = GPHOTO2_StrDup(name);
 	gpfile->download = FALSE;
 	list_add_tail( &activeDS.files, &gpfile->entry );
     }
