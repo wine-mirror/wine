@@ -338,33 +338,6 @@ DPQ_DECL_DELETECB( cbDeleteElemFromHeap, LPVOID )
   HeapFree( GetProcessHeap(), 0, elem );
 }
 
-/* Function to delete the list of groups with this interface. Needs to
- * delete the group and player lists associated with this group as well
- * as the group data associated with this group. It should not delete
- * player data as that is shared with the top player list and will be
- * deleted with that.
- */
-DPQ_DECL_DELETECB( cbDeleteGroupsElem, lpGroupList );
-DPQ_DECL_DELETECB( cbDeleteGroupsElem, lpGroupList )
-{
-  DPQ_DELETEQ( elem->lpGData->groups, groups,
-               lpGroupList, cbDeleteElemFromHeap );
-  DPQ_DELETEQ( elem->lpGData->players, players,
-               lpPlayerList, cbDeleteElemFromHeap );
-  HeapFree( GetProcessHeap(), 0, elem->lpGData );
-  HeapFree( GetProcessHeap(), 0, elem );
-}
-
-/* Function to delete the list of players with this interface. Needs to
- * delete the player data for all players as well.
- */
-DPQ_DECL_DELETECB( cbDeletePlayerElem, lpPlayerList );
-DPQ_DECL_DELETECB( cbDeletePlayerElem, lpPlayerList )
-{
-  HeapFree( GetProcessHeap(), 0, elem->lpPData );
-  HeapFree( GetProcessHeap(), 0, elem );
-}
-
 static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
 {
   IDirectPlay2AImpl *This = lpDP;
@@ -403,11 +376,6 @@ static BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
   {
     FreeLibrary( This->dp2->hDPLobbyProvider );
   }
-
-#if 0
-  DPQ_DELETEQ( This->dp2->players, players, lpPlayerList, cbDeletePlayerElem );
-  DPQ_DELETEQ( This->dp2->groups, groups, lpGroupList, cbDeleteGroupsElem );
-#endif
 
   /* FIXME: Need to delete receive and send msgs queue contents */
 
