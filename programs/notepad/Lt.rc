@@ -54,6 +54,7 @@ POPUP "&Taisa" {
 POPUP "&Paieška" {
   MENUITEM "&Ieškoti...\tCtrl+F",  CMD_SEARCH
   MENUITEM "Ieškoti k&ito\tF3",    CMD_SEARCH_NEXT
+  MENUITEM "Pa&keisti...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Žinynas" {
   MENUITEM "&Turinys",             CMD_HELP_CONTENTS
