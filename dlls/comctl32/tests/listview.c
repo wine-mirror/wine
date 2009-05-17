@@ -410,7 +410,9 @@ static void test_images(void)
                 10, 10, 100, 200, hwndparent, NULL, NULL, NULL);
     ok(hwnd != NULL, "failed to create listview window\n");
 
-    r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, 0x940);
+    r = SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, 0,
+                    LVS_EX_UNDERLINEHOT | LVS_EX_FLATSB | LVS_EX_ONECLICKACTIVATE);
+
     ok(r == 0, "should return zero\n");
 
     r = SendMessage(hwnd, LVM_SETIMAGELIST, 0, (LPARAM)himl);
