@@ -97,7 +97,7 @@ send_str (SOCKET s, ...)
     va_end (ap);
     if (!p) return 1;
     ret = send_buf (s, p, len);
-    free (p);
+    heap_free (p);
     return ret;
 }
 
@@ -159,7 +159,7 @@ send_file (const char *name)
     str = strmake (&total, body1, name);
     ret = send_str (s, head, filesize + total + sizeof body2 - 1) ||
         send_buf (s, str, total);
-    free (str);
+    heap_free (str);
     if (ret) {
         report (R_WARNING, "Error sending header: %d, %d",
                 errno, WSAGetLastError ());
@@ -211,7 +211,7 @@ send_file (const char *name)
     str = strmake (&count, "Received %s (%d bytes).\n",
                    name, filesize);
     ret = memcmp (str, buffer + total - count, count);
-    free (str);
+    heap_free (str);
     if (ret) {
         buffer[total] = 0;
         str = strstr (buffer, "\r\n\r\n");

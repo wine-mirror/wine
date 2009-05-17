@@ -27,7 +27,7 @@
 
 HANDLE logfile = 0;
 
-void *xmalloc (size_t len)
+void *heap_alloc (size_t len)
 {
     void *p = malloc (len);
 
@@ -35,7 +35,7 @@ void *xmalloc (size_t len)
     return p;
 }
 
-void *xrealloc (void *op, size_t len)
+void *heap_realloc (void *op, size_t len)
 {
     void *p = realloc (op, len);
 
@@ -43,11 +43,16 @@ void *xrealloc (void *op, size_t len)
     return p;
 }
 
-char *xstrdup( const char *str )
+char *heap_strdup( const char *str )
 {
     char *res = strdup( str );
     if (!res) report (R_FATAL, "Out of memory.");
     return res;
+}
+
+void heap_free (void *op)
+{
+    free (op);
 }
 
 static char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
@@ -65,7 +70,7 @@ static char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
         else break;
         q = realloc (p, size);
         if (!q) {
-          free (p);
+          heap_free (p);
           return NULL;
        }
        p = q;
@@ -111,7 +116,7 @@ void xprintf (const char *fmt, ...)
         head += written;
         size -= written;
     }
-    free (buffer);
+    heap_free (buffer);
 }
 
 int

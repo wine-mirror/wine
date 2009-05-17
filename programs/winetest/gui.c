@@ -66,7 +66,7 @@ textStatus (va_list ap)
 
     fputs (str, stderr);
     fputc ('\n', stderr);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -78,7 +78,7 @@ guiStatus (va_list ap)
 
     if (len > 128) str[129] = 0;
     SetDlgItemText (dialog, IDC_SB, str);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -121,7 +121,7 @@ textStep (va_list ap)
     progressCurr++;
     fputs (str, stderr);
     fprintf (stderr, " (%d of %d)\n", progressCurr, progressMax);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -135,7 +135,7 @@ guiStep (va_list ap)
     SetDlgItemText (dialog, pgID, str);
     SendDlgItemMessage (dialog, pgID+1, PBM_SETPOS,
                         (WPARAM)(progressScale * progressCurr), 0);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -149,7 +149,7 @@ textDelta (va_list ap)
     progressCurr += inc;
     fputs (str, stderr);
     fprintf (stderr, " (%d of %d)\n", progressCurr, progressMax);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -164,7 +164,7 @@ guiDelta (va_list ap)
     SetDlgItemText (dialog, pgID, str);
     SendDlgItemMessage (dialog, pgID+1, PBM_SETPOS,
                         (WPARAM)(progressScale * progressCurr), 0);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -194,7 +194,7 @@ textDir (va_list ap)
     fputs ("Temporary directory: ", stderr);
     fputs (str, stderr);
     fputc ('\n', stderr);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -204,7 +204,7 @@ guiDir (va_list ap)
     char *str = vstrmake (NULL, ap);
 
     SetDlgItemText (dialog, IDC_DIR, str);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -217,7 +217,7 @@ textOut (va_list ap)
     fputs ("Log file: ", stderr);
     fputs (str, stderr);
     fputc ('\n', stderr);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -227,7 +227,7 @@ guiOut (va_list ap)
     char *str = vstrmake (NULL, ap);
 
     SetDlgItemText (dialog, IDC_OUT, str);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -246,7 +246,7 @@ guiWarning (va_list ap)
     char *str = vstrmake (NULL, ap);
 
     MessageBox (dialog, str, "Warning", MB_ICONWARNING | MB_OK);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -265,7 +265,7 @@ guiError (va_list ap)
     char *str = vstrmake (NULL, ap);
 
     MessageBox (dialog, str, "Error", MB_ICONERROR | MB_OK);
-    free (str);
+    heap_free (str);
     return 0;
 }
 
@@ -294,7 +294,7 @@ textAsk (va_list ap)
 
     fprintf (stderr, "Question of type %d: %s\n"
              "Returning default: %d\n", uType, str, ret);
-    free (str);
+    heap_free (str);
     return ret;
 }
 
@@ -306,7 +306,7 @@ guiAsk (va_list ap)
     int ret = MessageBox (dialog, str, "Question",
                           MB_ICONQUESTION | uType);
 
-    free (str);
+    heap_free (str);
     return ret;
 }
 
@@ -341,7 +341,7 @@ AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                report (R_WARNING, "You must enter a tag to continue");
                return FALSE;
             }
-            tag = xmalloc (len+1);
+            tag = heap_alloc (len+1);
             GetDlgItemTextA (hwnd, IDC_TAG, tag, len+1);
             EndDialog (hwnd, IDOK);
             return TRUE;
