@@ -693,12 +693,9 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       break;
 
     case WGL_DRAW_TO_BITMAP_ARB:
+      /* This flag is set in a WineGLPixelFormat */
       pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_DRAW_TO_BITMAP_ARB: %d\n", cur, pop);
-      /* GLX_DRAWABLE_TYPE flags need to be OR'd together. See below. */
-      if (pop) {
-        drawattrib |= GLX_PIXMAP_BIT;
-      }
       break;
 
     case WGL_DRAW_TO_WINDOW_ARB:
@@ -2691,11 +2688,16 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
      * using glXChooseFBConfig but we filter the result of glXChooseFBConfig later on by passing a dwFlags to 'ConvertPixelFormatGLXtoWGL'. */
     for(i=0; piAttribIList[i] != 0; i+=2)
     {
-        if(piAttribIList[i] == WGL_SUPPORT_GDI_ARB)
+        switch(piAttribIList[i])
         {
-            if(piAttribIList[i+1])
-                dwFlags |= PFD_SUPPORT_GDI;
-            break;
+            case WGL_DRAW_TO_BITMAP_ARB:
+                if(piAttribIList[i+1])
+                    dwFlags |= PFD_DRAW_TO_BITMAP;
+                break;
+            case WGL_SUPPORT_GDI_ARB:
+                if(piAttribIList[i+1])
+                    dwFlags |= PFD_SUPPORT_GDI;
+                break;
         }
     }
 
@@ -2891,14 +2893,17 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 piValues[i] = (fmt->dwFlags & PFD_SUPPORT_GDI) ? TRUE : FALSE;
                 continue;
 
-            case WGL_DRAW_TO_WINDOW_ARB:
             case WGL_DRAW_TO_BITMAP_ARB:
+                if (!fmt) goto pix_error;
+                piValues[i] = (fmt->dwFlags & PFD_DRAW_TO_BITMAP) ? TRUE : FALSE;
+                continue;
+
+            case WGL_DRAW_TO_WINDOW_ARB:
             case WGL_DRAW_TO_PBUFFER_ARB:
                 if (!fmt) goto pix_error;
                 hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &tmp);
                 if (hTest) goto get_error;
                 if((curWGLAttr == WGL_DRAW_TO_WINDOW_ARB && (tmp&GLX_WINDOW_BIT)) ||
-                   (curWGLAttr == WGL_DRAW_TO_BITMAP_ARB && (tmp&GLX_PIXMAP_BIT)) ||
                    (curWGLAttr == WGL_DRAW_TO_PBUFFER_ARB && (tmp&GLX_PBUFFER_BIT)))
                     piValues[i] = GL_TRUE;
                 else
