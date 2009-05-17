@@ -598,8 +598,8 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
   HRESULT hr = S_OK;
   static const WCHAR szName[] = {'s','z','N','a','m','e',0};
   static const WCHAR szCatName[] = {'s','z','C','a','t','N','a','m','e',0};
-  static const WCHAR szClsidCat[] = {'s','z','C','l','s','i','d','C','a','t',0};
-  static const WCHAR szClsidFilter[] = {'s','z','C','l','s','i','d','F','i','l','t','e','r',0};
+  static const WCHAR ClsidCatW[] = {'C','l','s','i','d','C','a','t',0};
+  static const WCHAR ClsidFilterW[] = {'C','l','s','i','d','F','i','l','t','e','r',0};
   static const WCHAR dwInputs[] = {'d','w','I','n','p','u','t','s',0};
   static const WCHAR dwOutputs[] = {'d','w','O','u','t','p','u','t','s',0};
   static const WCHAR dwMerit[] = {'d','w','M','e','r','i','t',0};
@@ -674,7 +674,7 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 	    DWORD dwNInputs = 0;
 
             add_prop_str(pSubCont, szCatName, wszCatName);
-            add_prop_str(pSubCont, szClsidCat, wszCatClsid);
+            add_prop_str(pSubCont, ClsidCatW, wszCatClsid);
 
 	    hr = IPropertyBag_Read(pPropFilterBag, wszFriendlyName, &v, 0);
 	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szName, &v);
@@ -683,7 +683,7 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 
 	    hr = IPropertyBag_Read(pPropFilterBag, wszClsidName, &v, 0);
             TRACE("\tClsid:%s\n", debugstr_w(V_BSTR(&v)));
-	    hr = IDxDiagContainerImpl_AddProp(pSubCont, szClsidFilter, &v);
+	    hr = IDxDiagContainerImpl_AddProp(pSubCont, ClsidFilterW, &v);
 	    VariantClear(&v);
 
 	    hr = IPropertyBag_Read(pPropFilterBag, wszFilterDataName, &v, NULL);
