@@ -925,6 +925,16 @@ static void test_CommandLine(void)
     okChildStringWA("Arguments", "CommandLineW", buffer2);
     release_memory();
     assert(DeleteFileA(resfile) != 0);
+
+    if (0) /* Test crashes on NT-based Windows. */
+    {
+        /* Test NULL application name and command line parameters. */
+        SetLastError(0xdeadbeef);
+        ret = CreateProcessA(NULL, NULL, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+        ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+        ok(GetLastError() == ERROR_INVALID_PARAMETER,
+           "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
 }
 
 static void test_Directory(void)

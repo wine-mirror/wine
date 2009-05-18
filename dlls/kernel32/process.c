@@ -1787,12 +1787,6 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
         return ret;
     }
 
-    if (!cmdline)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return NULL;
-    }
-
     /* first check for a quoted file name */
 
     if ((cmdline[0] == '"') && ((p = strchrW( cmdline + 1, '"' ))))
