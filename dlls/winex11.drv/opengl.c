@@ -717,6 +717,11 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
       break;
 
     case WGL_ACCELERATION_ARB:
+      /* This flag is set in a WineGLPixelFormat */
+      pop = iWGLAttr[++cur];
+      TRACE("pAttr[%d] = WGL_ACCELERATION_ARB: %d\n", cur, pop);
+      break;
+
     case WGL_SUPPORT_OPENGL_ARB:
       pop = iWGLAttr[++cur];
       /** nothing to do, if we are here, supposing support Accelerated OpenGL */
@@ -2694,6 +2699,20 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
                 if(piAttribIList[i+1])
                     dwFlags |= PFD_DRAW_TO_BITMAP;
                 break;
+            case WGL_ACCELERATION_ARB:
+                switch(piAttribIList[i+1])
+                {
+                    case WGL_NO_ACCELERATION_ARB:
+                        dwFlags |= PFD_GENERIC_FORMAT;
+                        break;
+                    case WGL_GENERIC_ACCELERATION_ARB:
+                        dwFlags |= PFD_GENERIC_ACCELERATED;
+                        break;
+                    case WGL_FULL_ACCELERATION_ARB:
+                        /* Nothing to do */
+                        break;
+                }
+                break;
             case WGL_SUPPORT_GDI_ARB:
                 if(piAttribIList[i+1])
                     dwFlags |= PFD_SUPPORT_GDI;
@@ -2791,16 +2810,12 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
             case WGL_ACCELERATION_ARB:
                 curGLXAttr = GLX_CONFIG_CAVEAT;
                 if (!fmt) goto pix_error;
-                hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, curGLXAttr, &tmp);
-                if (hTest) goto get_error;
-                switch (tmp) {
-                    case GLX_NONE: piValues[i] = WGL_FULL_ACCELERATION_ARB; break;
-                    case GLX_SLOW_CONFIG: piValues[i] = WGL_GENERIC_ACCELERATION_ARB; break;
-                    case GLX_NON_CONFORMANT_CONFIG: piValues[i] = WGL_FULL_ACCELERATION_ARB; break;
-                    default:
-                        ERR("unexpected Config Caveat(%x)\n", tmp);
-                        piValues[i] = WGL_NO_ACCELERATION_ARB;
-                }
+                if(fmt->dwFlags & PFD_GENERIC_FORMAT)
+                    piValues[i] = WGL_NO_ACCELERATION_ARB;
+                else if(fmt->dwFlags & PFD_GENERIC_ACCELERATED)
+                    piValues[i] = WGL_GENERIC_ACCELERATION_ARB;
+                else
+                    piValues[i] = WGL_FULL_ACCELERATION_ARB;
                 continue;
 
             case WGL_TRANSPARENT_ARB:
