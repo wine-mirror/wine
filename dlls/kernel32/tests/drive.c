@@ -39,7 +39,8 @@ static void test_GetDriveTypeA(void)
     for (drive[0] = 'A'; drive[0] <= 'Z'; drive[0]++)
     {
         type = GetDriveTypeA(drive);
-        ok(type > 0 && type <= 6, "not a valid drive %c: type %u\n", drive[0], type);
+        ok(type > DRIVE_UNKNOWN && type <= DRIVE_RAMDISK,
+           "not a valid drive %c: type %u\n", drive[0], type);
 
         if (!(logical_drives & 1))
             ok(type == DRIVE_NO_ROOT_DIR,
@@ -67,7 +68,8 @@ static void test_GetDriveTypeW(void)
             win_skip("GetDriveTypeW is not available on Win9x\n");
             return;
         }
-        ok(type > 0 && type <= 6, "not a valid drive %c: type %u\n", drive[0], type);
+        ok(type > DRIVE_UNKNOWN && type <= DRIVE_RAMDISK,
+           "not a valid drive %c: type %u\n", drive[0], type);
 
         if (!(logical_drives & 1))
             ok(type == DRIVE_NO_ROOT_DIR,
