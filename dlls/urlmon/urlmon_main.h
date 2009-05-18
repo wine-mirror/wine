@@ -60,6 +60,7 @@ static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_ref
 
 IInternetProtocolInfo *get_protocol_info(LPCWSTR);
 HRESULT get_protocol_handler(LPCWSTR,CLSID*,BOOL*,IClassFactory**);
+IInternetProtocol *get_mime_filter(LPCWSTR);
 BOOL is_registered_protocol(LPCWSTR);
 void register_urlmon_namespace(IClassFactory*,REFIID,LPCWSTR,BOOL);
 
@@ -107,8 +108,20 @@ HRESULT protocol_lock_request(Protocol*);
 HRESULT protocol_unlock_request(Protocol*);
 void protocol_close_connection(Protocol*);
 
+typedef struct {
+    const IInternetProtocolVtbl      *lpIInternetProtocolVtbl;
+    const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
+
+    LONG ref;
+
+    IInternetProtocolSink *protocol_sink;
+    IInternetProtocol *protocol;
+} ProtocolProxy;
+
 #define PROTOCOL(x)  ((IInternetProtocol*)       &(x)->lpIInternetProtocolVtbl)
 #define PROTSINK(x)  ((IInternetProtocolSink*)   &(x)->lpIInternetProtocolSinkVtbl)
+
+HRESULT create_protocol_proxy(IInternetProtocol*,IInternetProtocolSink*,ProtocolProxy**);
 
 typedef struct {
     HWND notif_hwnd;

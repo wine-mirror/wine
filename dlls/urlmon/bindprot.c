@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Jacek Caban for CodeWeavers
+ * Copyright 2007-2009 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -68,6 +68,7 @@ struct BindProtocol {
     DWORD buf_size;
     LPWSTR mime;
     LPWSTR url;
+    ProtocolProxy *filter_proxy;
 };
 
 #define BINDINFO(x)  ((IInternetBindInfo*) &(x)->lpInternetBindInfoVtbl)
@@ -218,17 +219,70 @@ static BOOL inline do_direct_notif(BindProtocol *This)
     return !(This->pi & PI_APARTMENTTHREADED) || (This->apartment_thread == GetCurrentThreadId() && !This->continue_call);
 }
 
+static HRESULT handle_mime_filter(BindProtocol *This, IInternetProtocol *mime_filter, LPCWSTR mime)
+{
+    PROTOCOLFILTERDATA filter_data = { sizeof(PROTOCOLFILTERDATA), NULL, NULL, NULL, 0 };
+    IInternetProtocolSink *protocol_sink, *old_sink;
+    ProtocolProxy *filter_proxy;
+    HRESULT hres;
+
+    hres = IInternetProtocol_QueryInterface(mime_filter, &IID_IInternetProtocolSink, (void**)&protocol_sink);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_protocol_proxy(PROTOCOLHANDLER(This), This->protocol_sink, &filter_proxy);
+    if(FAILED(hres)) {
+        IInternetProtocolSink_Release(protocol_sink);
+        return hres;
+    }
+
+    old_sink = This->protocol_sink;
+    This->protocol_sink = protocol_sink;
+    This->filter_proxy = filter_proxy;
+
+    IInternetProtocol_AddRef(mime_filter);
+    This->protocol_handler = mime_filter;
+
+    filter_data.pProtocol = PROTOCOL(filter_proxy);
+    hres = IInternetProtocol_Start(mime_filter, mime, PROTSINK(filter_proxy), BINDINFO(This),
+            PI_FILTER_MODE|PI_FORCE_ASYNC, (HANDLE_PTR)&filter_data);
+    if(FAILED(hres)) {
+        IInternetProtocolSink_Release(old_sink);
+        return hres;
+    }
+
+    IInternetProtocolSink_ReportProgress(old_sink, BINDSTATUS_LOADINGMIMEHANDLER, NULL);
+    IInternetProtocolSink_Release(old_sink);
+
+    This->pi &= ~PI_MIMEVERIFICATION; /* FIXME: more tests */
+    return S_OK;
+}
+
 static void mime_available(BindProtocol *This, LPCWSTR mime, BOOL verified)
 {
+    IInternetProtocol *mime_filter;
+    HRESULT hres;
+
     heap_free(This->mime);
     This->mime = NULL;
-    This->mime = heap_strdupW(mime);
 
-    if(verified || !(This->pi & PI_MIMEVERIFICATION)) {
-        This->reported_mime = TRUE;
+    mime_filter = get_mime_filter(mime);
+    if(mime_filter) {
+        TRACE("Got mime filter for %s\n", debugstr_w(mime));
 
-        if(This->protocol_sink)
-            IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_MIMETYPEAVAILABLE, mime);
+        hres = handle_mime_filter(This, mime_filter, mime);
+        IInternetProtocol_Release(mime_filter);
+        if(FAILED(hres))
+            FIXME("MIME filter failed: %08x\n", hres);
+    }else {
+        This->mime = heap_strdupW(mime);
+
+        if(verified || !(This->pi & PI_MIMEVERIFICATION)) {
+            This->reported_mime = TRUE;
+
+            if(This->protocol_sink)
+                IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_MIMETYPEAVAILABLE, mime);
+        }
     }
 }
 
@@ -297,6 +351,8 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocol *iface)
             IInternetBindInfo_Release(This->bind_info);
         if(This->protocol_handler && This->protocol_handler != PROTOCOLHANDLER(This))
             IInternetProtocol_Release(This->protocol_handler);
+        if(This->filter_proxy)
+            IInternetProtocol_Release(PROTOCOL(This->filter_proxy));
 
         set_binding_sink(PROTOCOL(This), NULL);
 
@@ -576,6 +632,11 @@ static HRESULT WINAPI ProtocolHandler_Terminate(IInternetProtocol *iface, DWORD 
         return E_FAIL;
 
     IInternetProtocol_Terminate(This->protocol, 0);
+
+    if(This->filter_proxy) {
+        IInternetProtocol_Release(PROTOCOL(This->filter_proxy));
+        This->filter_proxy = NULL;
+    }
 
     set_binding_sink(PROTOCOL(This), NULL);
 

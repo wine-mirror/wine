@@ -20,6 +20,7 @@ C_SRCS = \
 	mimefilter.c \
 	mk.c \
 	protocol.c \
+	protproxy.c \
 	regsvr.c \
 	sec_mgr.c \
 	session.c \
