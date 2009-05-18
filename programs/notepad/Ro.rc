@@ -53,6 +53,7 @@ POPUP "&Editează" {
 POPUP "&Caută" {
   MENUITEM "&Caută...\tCtrl+F",         CMD_SEARCH
   MENUITEM "Caută &următorul\tF3",      CMD_SEARCH_NEXT
+  MENUITEM "&Înlocuiește...\tCtrl+H",   CMD_REPLACE
  }
 POPUP "&Ajutor" {
   MENUITEM "C&onținut",                 CMD_HELP_CONTENTS
