@@ -633,8 +633,11 @@ static void test_CopyFileW(void)
     DWORD ret;
 
     ret = GetTempPathW(MAX_PATH, temp_path);
-    if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    if (ret == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("GetTempPathW is not available\n");
         return;
+    }
     ok(ret != 0, "GetTempPathW error %d\n", GetLastError());
     ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
 
@@ -720,8 +723,11 @@ static void test_CreateFileW(void)
     DWORD ret;
 
     ret = GetTempPathW(MAX_PATH, temp_path);
-    if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    if (ret == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("GetTempPathW is not available\n");
         return;
+    }
     ok(ret != 0, "GetTempPathW error %d\n", GetLastError());
     ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
 
@@ -864,8 +870,11 @@ static void test_DeleteFileW( void )
     static const WCHAR emptyW[]={'\0'};
 
     ret = DeleteFileW(NULL);
-    if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    if (ret == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("DeleteFileW is not available\n");
         return;
+    }
     ok(!ret && GetLastError() == ERROR_PATH_NOT_FOUND,
        "DeleteFileW(NULL) returned ret=%d error=%d\n",ret,GetLastError());
 
@@ -984,8 +993,11 @@ static void test_MoveFileW(void)
     DWORD ret;
 
     ret = GetTempPathW(MAX_PATH, temp_path);
-    if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    if (ret == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("GetTempPathW is not available\n");
         return;
+    }
     ok(ret != 0, "GetTempPathW error %d\n", GetLastError());
     ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
 
@@ -2352,8 +2364,11 @@ static void test_ReplaceFileW(void)
     }
 
     ret = GetTempPathW(MAX_PATH, temp_path);
-    if (ret==0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    if (ret == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("GetTempPathW is not available\n");
         return;
+    }
     ok(ret != 0, "GetTempPathW error %d\n", GetLastError());
     ok(ret < MAX_PATH, "temp path should fit into MAX_PATH\n");
 
