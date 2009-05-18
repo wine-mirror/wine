@@ -246,15 +246,12 @@ static PIMLENTRY TOOLBAR_GetImageListEntry(const PIMLENTRY *pies, INT cies, INT 
 static VOID TOOLBAR_DeleteImageList(PIMLENTRY **pies, INT *cies);
 static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIST himl, INT id);
 static LRESULT TOOLBAR_LButtonDown(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
-static void TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason);
 static void TOOLBAR_LayoutToolbar(TOOLBAR_INFO *infoPtr);
 static LRESULT TOOLBAR_AutoSize(TOOLBAR_INFO *infoPtr);
 static void TOOLBAR_CheckImageListIconSize(TOOLBAR_INFO *infoPtr);
 static void TOOLBAR_TooltipAddTool(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *button);
 static void TOOLBAR_TooltipSetRect(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *button);
 
-static LRESULT
-TOOLBAR_NotifyFormat(const TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
 
 static inline int default_top_margin(const TOOLBAR_INFO *infoPtr)
 {
