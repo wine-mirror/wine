@@ -432,7 +432,10 @@ static void test_GetDateFormatW(void)
   ret = GetDateFormatW(LOCALE_SYSTEM_DEFAULT, DATE_LONGDATE, NULL,
                        input, buffer, COUNTOF(buffer));
   if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-      return;
+  {
+    win_skip("GetDateFormatW is not implemented\n");
+    return;
+  }
   ok(!ret && GetLastError() == ERROR_INVALID_FLAGS,
      "Expected ERROR_INVALID_FLAGS, got %d\n", GetLastError());
   EXPECT_EQW;
@@ -1631,8 +1634,11 @@ static void test_FoldStringA(void)
   /* MAP_FOLDDIGITS */
   SetLastError(0);
   ret = pFoldStringA(MAP_FOLDDIGITS, digits_src, -1, dst, 256);
-  if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+  if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+  {
+    win_skip("FoldStringA is not implemented\n");
     return;
+  }
   ok(ret == 4, "Expected ret == 4, got %d, error %d\n", ret, GetLastError());
   ok(strcmp(dst, digits_dst) == 0,
      "MAP_FOLDDIGITS: Expected '%s', got '%s'\n", digits_dst, dst);
