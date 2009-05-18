@@ -214,7 +214,7 @@ static void push_task(BindProtocol *This, task_header_t *task, task_proc_t proc)
     }
 }
 
-static BOOL inline do_direct_notif(BindProtocol *This)
+static inline BOOL do_direct_notif(BindProtocol *This)
 {
     return !(This->pi & PI_APARTMENTTHREADED) || (This->apartment_thread == GetCurrentThreadId() && !This->continue_call);
 }
