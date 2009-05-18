@@ -210,15 +210,10 @@ static HANDLE open_exe_file( const WCHAR *name )
     {
         WCHAR buffer[MAX_PATH];
         /* file doesn't exist, check for builtin */
-        if (!contains_path( name )) goto error;
-        if (!get_builtin_path( name, NULL, buffer, sizeof(buffer) )) goto error;
-        handle = 0;
+        if (contains_path( name ) && get_builtin_path( name, NULL, buffer, sizeof(buffer) ))
+            handle = 0;
     }
     return handle;
-
- error:
-    SetLastError( ERROR_FILE_NOT_FOUND );
-    return INVALID_HANDLE_VALUE;
 }
 
 

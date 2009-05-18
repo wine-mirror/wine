@@ -935,6 +935,26 @@ static void test_CommandLine(void)
         ok(GetLastError() == ERROR_INVALID_PARAMETER,
            "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     }
+
+    buffer[0] = '\0';
+
+    /* Test empty application name parameter. */
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(buffer, NULL, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_PATH_NOT_FOUND ||
+       broken(GetLastError() == ERROR_ACCESS_DENIED) /* Win98 */,
+       "Expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
+
+    buffer2[0] = '\0';
+
+    /* Test empty application name and command line parameters. */
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(buffer, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_PATH_NOT_FOUND ||
+       broken(GetLastError() == ERROR_ACCESS_DENIED) /* Win98 */,
+       "Expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
 }
 
 static void test_Directory(void)
