@@ -984,6 +984,12 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
         heap_free(This->stgmed_buf->cache_file);
         This->stgmed_buf->cache_file = heap_strdupW(szStatusText);
         break;
+    case BINDSTATUS_DECODING:
+        IBindStatusCallback_OnProgress(This->callback, 0, 0, BINDSTATUS_DECODING, szStatusText);
+        break;
+    case BINDSTATUS_LOADINGMIMEHANDLER:
+        on_progress(This, 0, 0, BINDSTATUS_LOADINGMIMEHANDLER, szStatusText);
+        break;
     case BINDSTATUS_DIRECTBIND: /* FIXME: Handle BINDSTATUS_DIRECTBIND in BindProtocol */
         This->report_mime = FALSE;
         break;
