@@ -293,6 +293,7 @@ typedef struct tagLISTVIEW_INFO
   HWND hwndEdit;
   WNDPROC EditWndProc;
   INT nEditLabelItem;
+  INT nLButtonDownItem;		/* tracks item to reset multiselection on WM_LBUTTONUP */
   DWORD dwHoverTime;
   HWND hwndToolTip;
 
@@ -3388,6 +3389,7 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
     {
         POINT tmp;
         RECT rect;
+        LVHITTESTINFO lvHitTestInfo;
         WORD wDragWidth = GetSystemMetrics(SM_CXDRAG);
         WORD wDragHeight= GetSystemMetrics(SM_CYDRAG);
 
@@ -3399,10 +3401,32 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
         tmp.x = x;
         tmp.y = y;
 
+        lvHitTestInfo.pt = tmp;
+        LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
+
+        /* reset item marker */
+        if (infoPtr->nLButtonDownItem != lvHitTestInfo.iItem)
+            infoPtr->nLButtonDownItem = -1;
+
         if (!PtInRect(&rect, tmp))
         {
-            LVHITTESTINFO lvHitTestInfo;
             NMLISTVIEW nmlv;
+
+            /* this path covers the following:
+               1. WM_LBUTTONDOWN over selected item (sets focus on it)
+               2. change focus with keys
+               3. move mouse over item from step 1 selects it and moves focus on it */
+            if (infoPtr->nLButtonDownItem != -1 &&
+               !LISTVIEW_GetItemState(infoPtr, infoPtr->nLButtonDownItem, LVIS_SELECTED))
+            {
+                LVITEMW lvItem;
+
+                lvItem.state =  LVIS_FOCUSED | LVIS_SELECTED;
+                lvItem.stateMask = LVIS_FOCUSED | LVIS_SELECTED;
+
+                LISTVIEW_SetItemState(infoPtr, infoPtr->nLButtonDownItem, &lvItem);
+                infoPtr->nLButtonDownItem = -1;
+            }
 
             lvHitTestInfo.pt = infoPtr->ptClickPos;
             LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
@@ -3420,8 +3444,6 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
             return 0;
         }
     }
-    else
-        infoPtr->bLButtonDown = FALSE;
 
     /* see if we are supposed to be tracking mouse hovering */
     if (LISTVIEW_isHotTracking(infoPtr)) {
@@ -8144,6 +8166,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   infoPtr->nEditLabelItem = -1;
+  infoPtr->nLButtonDownItem = -1;
   infoPtr->dwHoverTime = -1; /* default system hover time */
   infoPtr->nMeasureItemHeight = 0;
   infoPtr->xTrackLine = -1;  /* no track line */
@@ -8835,10 +8858,15 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
       else
       {
 	if (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED))
+	{
 	  infoPtr->nEditLabelItem = nItem;
+	  infoPtr->nLButtonDownItem = nItem;
 
-	/* set selection (clears other pre-existing selections) */
-        LISTVIEW_SetSelection(infoPtr, nItem);
+          LISTVIEW_SetItemFocus(infoPtr, nItem);
+	}
+	else
+	  /* set selection (clears other pre-existing selections) */
+	  LISTVIEW_SetSelection(infoPtr, nItem);
       }
     }
 
@@ -8848,7 +8876,8 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
   else
   {
     /* remove all selections */
-    LISTVIEW_DeselectAll(infoPtr);
+    if (!(wKey & MK_CONTROL) && !(wKey & MK_SHIFT))
+        LISTVIEW_DeselectAll(infoPtr);
     ReleaseCapture();
   }
   
@@ -8884,6 +8913,11 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
 
     /* set left button flag */
     infoPtr->bLButtonDown = FALSE;
+
+    /* set a single selection, reset others */
+    if(lvHitTestInfo.iItem == infoPtr->nLButtonDownItem && lvHitTestInfo.iItem != -1)
+        LISTVIEW_SetSelection(infoPtr, infoPtr->nLButtonDownItem);
+    infoPtr->nLButtonDownItem = -1;
 
     if (infoPtr->bDragging)
     {
