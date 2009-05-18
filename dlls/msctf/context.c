@@ -74,6 +74,7 @@ typedef struct tagContext {
     ITfContextOwnerCompositionSink *pITfContextOwnerCompositionSink;
 
     ITextStoreACPSink *pITextStoreACPSink;
+    ITfEditSession* currentEditSession;
 
     /* kept as separate lists to reduce unnecessary iterations */
     struct list     pContextKeyEventSink;
@@ -206,9 +207,53 @@ static HRESULT WINAPI Context_RequestEditSession (ITfContext *iface,
         TfClientId tid, ITfEditSession *pes, DWORD dwFlags,
         HRESULT *phrSession)
 {
+    HRESULT hr;
     Context *This = (Context *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    DWORD  dwLockFlags = 0x0;
+    TS_STATUS status;
+
+    TRACE("(%p) %i %p %x %p\n",This, tid, pes, dwFlags, phrSession);
+
+    if (!(dwFlags & TF_ES_READ) && !(dwFlags & TF_ES_READWRITE))
+    {
+        *phrSession = E_FAIL;
+        return E_INVALIDARG;
+    }
+
+    if (!This->pITextStoreACP)
+    {
+        FIXME("No ITextStoreACP avaliable\n");
+        *phrSession = E_FAIL;
+        return E_FAIL;
+    }
+
+    if (!(dwFlags & TF_ES_ASYNC))
+        dwLockFlags &= TS_LF_SYNC;
+
+    if (dwFlags & TF_ES_READ)
+        dwLockFlags &= TS_LF_READ;
+    else if ((dwFlags & TF_ES_READWRITE) == TF_ES_READWRITE)
+        dwLockFlags &= TS_LF_READWRITE;
+
+    /* TODO: cache this */
+    ITextStoreACP_GetStatus(This->pITextStoreACP, &status);
+
+    if (((dwFlags & TF_ES_READWRITE) == TF_ES_READWRITE) && (status.dwDynamicFlags & TS_SD_READONLY))
+    {
+        *phrSession = TS_E_READONLY;
+        return S_OK;
+    }
+
+    if (FAILED (ITfEditSession_QueryInterface(pes, &IID_ITfEditSession, (LPVOID*)&This->currentEditSession)))
+    {
+        *phrSession = E_FAIL;
+        return E_INVALIDARG;
+    }
+
+
+    hr = ITextStoreACP_RequestLock(This->pITextStoreACP, dwLockFlags, phrSession);
+
+    return hr;
 }
 
 static HRESULT WINAPI Context_InWriteSession (ITfContext *iface,
@@ -597,8 +642,23 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
         DWORD dwLockFlags)
 {
     TextStoreACPSink *This = (TextStoreACPSink *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p) %x\n",This, dwLockFlags);
+
+    if (!This->pContext || !This->pContext->currentEditSession)
+    {
+        ERR("OnLockGranted called on a context without a current edit session\nZ");
+        return E_FAIL;
+    }
+
+    /* TODO:  generate and use an edit cookie */
+    hr = ITfEditSession_DoEditSession(This->pContext->currentEditSession, 0xdeadcafe);
+
+    ITfEditSession_Release(This->pContext->currentEditSession);
+    This->pContext->currentEditSession = NULL;
+
+    return hr;
 }
 
 static HRESULT WINAPI TextStoreACPSink_OnStartEditTransaction(ITextStoreACPSink *iface)

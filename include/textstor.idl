@@ -20,6 +20,8 @@
 import "oaidl.idl";
 #endif
 
+cpp_quote("#define TS_E_READONLY        MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0209)")
+
 const ULONG TS_DEFAULT_SELECTION = ~0u;
 
 const DWORD TS_SD_READONLY     = 0x001;

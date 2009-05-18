@@ -149,8 +149,15 @@ static HRESULT WINAPI TextStoreACP_RequestLock(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_GetStatus(ITextStoreACP *iface,
     TS_STATUS *pdcs)
 {
-    ok(test_ACP_GetStatus  == SINK_EXPECTED, "Unexpected TextStoreACP_GetStatus\n");
+    static UINT count = 0;
+    count ++;
+
+    if (count == 1)
+        ok(test_ACP_GetStatus  == SINK_EXPECTED, "Unexpected TextStoreACP_GetStatus\n");
+    else
+        todo_wine ok(count == 1,"GetStatus called too many times\n");
     test_ACP_GetStatus = SINK_FIRED;
+    pdcs->dwDynamicFlags = TS_SD_READONLY;
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_QueryInsert(ITextStoreACP *iface,
@@ -1410,19 +1417,24 @@ static void test_TStoApplicationText(void)
     hrSession = 0xfeedface;
     /* Test no premissions flags */
     hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC, &hrSession);
-    todo_wine ok(hr == E_INVALIDARG,"RequestEditSession should have failed with %x not %x\n",E_INVALIDARG,hr);
-    todo_wine ok(hrSession == E_FAIL,"hrSession should be %x not %x\n",E_FAIL,hrSession);
+    ok(hr == E_INVALIDARG,"RequestEditSession should have failed with %x not %x\n",E_INVALIDARG,hr);
+    ok(hrSession == E_FAIL,"hrSession should be %x not %x\n",E_FAIL,hrSession);
 
     hrSession = 0xfeedface;
     test_ACP_GetStatus = SINK_EXPECTED;
+    hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC|TF_ES_READWRITE, &hrSession);
+    ok(SUCCEEDED(hr),"ITfContext_RequestEditSession failed\n");
+    ok(hrSession == TS_E_READONLY,"Unexpected hrSession (%x)\n",hrSession);
+    ok(test_ACP_GetStatus == SINK_FIRED," expected GetStatus not fired\n");
+
+    test_ACP_GetStatus = SINK_UNEXPECTED;
     test_ACP_RequestLock = SINK_EXPECTED;
     hrSession = 0xfeedface;
-    hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC|TF_ES_READWRITE, &hrSession);
-    todo_wine ok(SUCCEEDED(hr),"ITfContext_RequestEditSession failed\n");
-    todo_wine ok(test_ACP_GetStatus == SINK_FIRED," expected GetStatus not fired\n");
-    todo_wine ok(test_ACP_RequestLock == SINK_FIRED," expected RequestLock not fired\n");
-    todo_wine ok(test_DoEditSession == SINK_FIRED," expected DoEditSession not fired\n");
-    todo_wine ok(hrSession == 0xdeadcafe,"Unexpected hrSession\n");
+    hr = ITfContext_RequestEditSession(cxt, tid, es, TF_ES_SYNC|TF_ES_READ, &hrSession);
+    ok(SUCCEEDED(hr),"ITfContext_RequestEditSession failed\n");
+    ok(test_ACP_RequestLock == SINK_FIRED," expected RequestLock not fired\n");
+    ok(test_DoEditSession == SINK_FIRED," expected DoEditSession not fired\n");
+    ok(hrSession == 0xdeadcafe,"Unexpected hrSession (%x)\n",hrSession);
 
     ITfContext_Release(cxt);
     ITfDocumentMgr_Release(dm);
