@@ -798,8 +798,8 @@ VOID DIALOG_HelpAboutNotepad(VOID)
 {
     static const WCHAR notepadW[] = { 'W','i','n','e',' ','N','o','t','e','p','a','d',0 };
     WCHAR szNotepad[MAX_STRING_LEN];
-    HICON icon = LoadImageW( Globals.hInstance, MAKEINTRESOURCE(IDI_NOTEPAD),
-                             IMAGE_ICON, 48, 48, LR_SHARED );
+    HICON icon = LoadImageW(Globals.hInstance, MAKEINTRESOURCEW(IDI_NOTEPAD),
+                            IMAGE_ICON, 48, 48, LR_SHARED);
 
     LoadString(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
     ShellAbout(Globals.hMainWnd, szNotepad, notepadW, icon);
@@ -812,8 +812,8 @@ VOID DIALOG_HelpAboutNotepad(VOID)
  */
 VOID DIALOG_FilePageSetup(void)
 {
-  DialogBox(Globals.hInstance, MAKEINTRESOURCE(DIALOG_PAGESETUP),
-            Globals.hMainWnd, DIALOG_PAGESETUP_DlgProc);
+    DialogBoxW(Globals.hInstance, MAKEINTRESOURCEW(DIALOG_PAGESETUP),
+               Globals.hMainWnd, DIALOG_PAGESETUP_DlgProc);
 }
 
 

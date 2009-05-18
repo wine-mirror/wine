@@ -736,10 +736,10 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     class.cbSize        = sizeof(class);
     class.lpfnWndProc   = NOTEPAD_WndProc;
     class.hInstance     = Globals.hInstance;
-    class.hIcon         = LoadIcon(Globals.hInstance, MAKEINTRESOURCE(IDI_NOTEPAD));
-    class.hCursor       = LoadCursor(0, IDC_ARROW);
+    class.hIcon         = LoadIconW(Globals.hInstance, MAKEINTRESOURCEW(IDI_NOTEPAD));
+    class.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    class.lpszMenuName  = MAKEINTRESOURCE(MAIN_MENU);
+    class.lpszMenuName  = MAKEINTRESOURCEW(MAIN_MENU);
     class.lpszClassName = className;
 
     if (!RegisterClassEx(&class)) return FALSE;
@@ -777,7 +777,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
     HandleCommandLine(GetCommandLine());
 
-    hAccel = LoadAccelerators( hInstance, MAKEINTRESOURCE(ID_ACCEL) );
+    hAccel = LoadAcceleratorsW(hInstance, MAKEINTRESOURCEW(ID_ACCEL));
 
     while (GetMessage(&msg, 0, 0, 0))
     {
