@@ -1824,6 +1824,7 @@ static LPWSTR get_file_name( LPCWSTR appname, LPWSTR cmdline, LPWSTR buffer,
         sprintfW( ret, quotesW, name );
         strcatW( ret, p );
     }
+    else if (!ret) SetLastError( ERROR_FILE_NOT_FOUND );
 
  done:
     HeapFree( GetProcessHeap(), 0, name );

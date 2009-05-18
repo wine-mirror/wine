@@ -955,6 +955,40 @@ static void test_CommandLine(void)
     ok(GetLastError() == ERROR_PATH_NOT_FOUND ||
        broken(GetLastError() == ERROR_ACCESS_DENIED) /* Win98 */,
        "Expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
+
+    /* Test empty command line parameter. */
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+       GetLastError() == ERROR_PATH_NOT_FOUND /* NT4 */ ||
+       GetLastError() == ERROR_BAD_PATHNAME /* Win98 */,
+       "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+
+    strcpy(buffer, "doesnotexist.exe");
+    strcpy(buffer2, "does not exist.exe");
+
+    /* Test nonexistent application name. */
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(buffer, NULL, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(buffer2, NULL, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+
+    /* Test nonexistent command line parameter. */
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(!ret, "CreateProcessA unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 }
 
 static void test_Directory(void)
