@@ -822,7 +822,7 @@ static void switch_proc(BindProtocol *bind, task_header_t *t)
 {
     switch_task_t *task = (switch_task_t*)t;
 
-    IInternetProtocol_Continue(bind->protocol, &task->data);
+    IInternetProtocol_Continue(bind->protocol_handler, &task->data);
 
     heap_free(task);
 }
@@ -851,7 +851,7 @@ static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface
     }
 
     if(!This->protocol_sink) {
-        IInternetProtocol_Continue(This->protocol, pProtocolData);
+        IInternetProtocol_Continue(This->protocol_handler, pProtocolData);
         return S_OK;
     }
 
