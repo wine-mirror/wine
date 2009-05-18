@@ -943,6 +943,7 @@ static void test_CommandLine(void)
     ret = CreateProcessA(buffer, NULL, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(!ret, "CreateProcessA unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_PATH_NOT_FOUND ||
+       broken(GetLastError() == ERROR_FILE_NOT_FOUND) /* Win9x/WinME */ ||
        broken(GetLastError() == ERROR_ACCESS_DENIED) /* Win98 */,
        "Expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
 
@@ -953,6 +954,7 @@ static void test_CommandLine(void)
     ret = CreateProcessA(buffer, buffer2, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(!ret, "CreateProcessA unexpectedly succeeded\n");
     ok(GetLastError() == ERROR_PATH_NOT_FOUND ||
+       broken(GetLastError() == ERROR_FILE_NOT_FOUND) /* Win9x/WinME */ ||
        broken(GetLastError() == ERROR_ACCESS_DENIED) /* Win98 */,
        "Expected ERROR_PATH_NOT_FOUND, got %d\n", GetLastError());
 
