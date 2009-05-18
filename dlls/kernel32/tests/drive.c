@@ -62,9 +62,9 @@ static void test_GetDriveTypeW(void)
     for (drive[0] = 'A'; drive[0] <= 'Z'; drive[0]++)
     {
         type = GetDriveTypeW(drive);
-        if (type == DRIVE_UNKNOWN && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+        if (type == DRIVE_UNKNOWN && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
         {
-            /* Must be Win9x which doesn't support the Unicode functions */
+            win_skip("GetDriveTypeW is not available on Win9x\n");
             return;
         }
         ok(type > 0 && type <= 6, "not a valid drive %c: type %u\n", drive[0], type);
@@ -165,9 +165,9 @@ static void test_GetDiskFreeSpaceW(void)
     static const WCHAR unix_style_root_pathW[] = { '/', 0 };
 
     ret = GetDiskFreeSpaceW(NULL, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
-    if (ret == 0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
+    if (ret == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        /* Must be Win9x which doesn't support the Unicode functions */
+        win_skip("GetDiskFreeSpaceW is not available\n");
         return;
     }
     ok(ret, "GetDiskFreeSpaceW error %d\n", GetLastError());
