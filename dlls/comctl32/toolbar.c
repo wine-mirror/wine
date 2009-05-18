@@ -2615,7 +2615,7 @@ TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else
 		   oldText = SetTextColor (lpdis->hDC, (lpdis->itemState & ODS_FOCUS)?comctl32_color.clrHighlightText:comctl32_color.clrWindowText);
                 hPen = CreatePen( PS_SOLID, 1,
-                     GetSysColor( (lpdis->itemState & ODS_SELECTED)?COLOR_HIGHLIGHT:COLOR_WINDOW));
+                                 (lpdis->itemState & ODS_SELECTED)?comctl32_color.clrHighlight:comctl32_color.clrWindow);
 		hOldPen = SelectObject (lpdis->hDC, hPen );
 		hOldBrush = SelectObject (lpdis->hDC, GetSysColorBrush ((lpdis->itemState & ODS_FOCUS)?COLOR_HIGHLIGHT:COLOR_WINDOW));
 
