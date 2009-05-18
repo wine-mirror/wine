@@ -271,8 +271,11 @@ static HRESULT WINAPI Range_Clone(ITfRange *iface, ITfRange **ppClone)
 static HRESULT WINAPI Range_GetContext(ITfRange *iface, ITfContext **ppContext)
 {
     Range *This = (Range *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p)\n",This);
+    if (!ppContext)
+        return E_INVALIDARG;
+    *ppContext = This->pITfContext;
+    return S_OK;
 }
 
 static const ITfRangeVtbl Range_RangeVtbl =
