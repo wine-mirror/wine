@@ -2753,13 +2753,23 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
 
     userName = HeapAlloc(GetProcessHeap(), 0, nameLen*sizeof(WCHAR));
 
-    if (GetUserNameW(userName, &nameLen) && !strcmpW(lpAccountName, userName))
+    if (lpDomainNamePtr)
+    {
+        /* check to make sure this account is on this computer */
+        if (GetComputerNameW(userName, &nameLen) && strcmpW(lpDomainNamePtr, userName))
+        {
+            SetLastError(ERROR_NONE_MAPPED);
+            ret = FALSE;
+        }
+    }
+
+    if (GetUserNameW(userName, &nameLen) && !strcmpW(lpAccountNamePtr, userName))
         ret = lookup_user_account_name(Sid, cbSid, ReferencedDomainName,
                                        cchReferencedDomainName, peUse);
     else
     {
         nameLen = UNLEN + 1;
-        if (GetComputerNameW(userName, &nameLen) && !strcmpW(lpAccountName, userName))
+        if (GetComputerNameW(userName, &nameLen) && !strcmpW(lpAccountNamePtr, userName))
             ret = lookup_computer_account_name(Sid, cbSid, ReferencedDomainName,
                                                cchReferencedDomainName, peUse);
         else
