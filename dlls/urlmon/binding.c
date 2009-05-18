@@ -1172,6 +1172,17 @@ static HRESULT WINAPI InternetBindInfo_GetBindString(IInternetBindInfo *iface,
 
         return hres;
     }
+    case BINDSTRING_URL: {
+        DWORD size = (strlenW(This->url)+1) * sizeof(WCHAR);
+
+        if(!ppwzStr || !pcElFetched)
+            return E_INVALIDARG;
+
+        *ppwzStr = CoTaskMemAlloc(size);
+        memcpy(*ppwzStr, This->url, size);
+        *pcElFetched = 1;
+        return S_OK;
+    }
     }
 
     FIXME("not supported string type %d\n", ulStringType);
