@@ -268,7 +268,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ACCEL_FULL              "Complet"
     IDS_ACCEL_STANDARD          "Standard"
-    IDS_ACCEL_BASIC             "De basă"
+    IDS_ACCEL_BASIC             "De bază"
     IDS_ACCEL_EMULATION         "Emulare"
     IDS_DRIVER_ALSA             "Driver ALSA"
     IDS_DRIVER_ESOUND           "Driver Esound"
