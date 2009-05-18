@@ -107,6 +107,9 @@ HRESULT protocol_lock_request(Protocol*);
 HRESULT protocol_unlock_request(Protocol*);
 void protocol_close_connection(Protocol*);
 
+#define PROTOCOL(x)  ((IInternetProtocol*)       &(x)->lpIInternetProtocolVtbl)
+#define PROTSINK(x)  ((IInternetProtocolSink*)   &(x)->lpIInternetProtocolSinkVtbl)
+
 typedef struct {
     HWND notif_hwnd;
     DWORD notif_hwnd_cnt;

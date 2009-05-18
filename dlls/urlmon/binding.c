@@ -78,7 +78,7 @@ typedef enum {
 
 struct Binding {
     const IBindingVtbl               *lpBindingVtbl;
-    const IInternetProtocolSinkVtbl  *lpInternetProtocolSinkVtbl;
+    const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
     const IInternetBindInfoVtbl      *lpInternetBindInfoVtbl;
     const IWinInetHttpInfoVtbl       *lpWinInetHttpInfoVtbl;
     const IServiceProviderVtbl       *lpServiceProviderVtbl;
@@ -112,7 +112,6 @@ struct Binding {
 };
 
 #define BINDING(x)   ((IBinding*)               &(x)->lpBindingVtbl)
-#define PROTSINK(x)  ((IInternetProtocolSink*)  &(x)->lpInternetProtocolSinkVtbl)
 #define BINDINF(x)   ((IInternetBindInfo*)      &(x)->lpInternetBindInfoVtbl)
 #define INETINFO(x)  ((IWinInetHttpInfo*)       &(x)->lpWinInetHttpInfoVtbl)
 #define SERVPROV(x)  ((IServiceProvider*)       &(x)->lpServiceProviderVtbl)
@@ -916,7 +915,7 @@ static const IBindingVtbl BindingVtbl = {
     Binding_GetBindResult
 };
 
-#define PROTSINK_THIS(iface) DEFINE_THIS(Binding, InternetProtocolSink, iface)
+#define PROTSINK_THIS(iface) DEFINE_THIS(Binding, IInternetProtocolSink, iface)
 
 static HRESULT WINAPI InternetProtocolSink_QueryInterface(IInternetProtocolSink *iface,
         REFIID riid, void **ppv)
@@ -1360,7 +1359,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, LPCWSTR url, 
     ret = heap_alloc_zero(sizeof(Binding));
 
     ret->lpBindingVtbl              = &BindingVtbl;
-    ret->lpInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
+    ret->lpIInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
     ret->lpInternetBindInfoVtbl     = &InternetBindInfoVtbl;
     ret->lpWinInetHttpInfoVtbl      = &WinInetHttpInfoVtbl;
     ret->lpServiceProviderVtbl      = &ServiceProviderVtbl;

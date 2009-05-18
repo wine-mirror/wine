@@ -33,11 +33,11 @@ typedef struct _task_header_t {
 } task_header_t;
 
 struct BindProtocol {
-    const IInternetProtocolVtbl *lpInternetProtocolVtbl;
-    const IInternetBindInfoVtbl *lpInternetBindInfoVtbl;
-    const IInternetPriorityVtbl *lpInternetPriorityVtbl;
-    const IServiceProviderVtbl  *lpServiceProviderVtbl;
-    const IInternetProtocolSinkVtbl *lpInternetProtocolSinkVtbl;
+    const IInternetProtocolVtbl      *lpIInternetProtocolVtbl;
+    const IInternetBindInfoVtbl      *lpInternetBindInfoVtbl;
+    const IInternetPriorityVtbl      *lpInternetPriorityVtbl;
+    const IServiceProviderVtbl       *lpServiceProviderVtbl;
+    const IInternetProtocolSinkVtbl  *lpIInternetProtocolSinkVtbl;
 
     const IInternetProtocolVtbl *lpIInternetProtocolHandlerVtbl;
 
@@ -70,11 +70,9 @@ struct BindProtocol {
     LPWSTR url;
 };
 
-#define PROTOCOL(x)  ((IInternetProtocol*) &(x)->lpInternetProtocolVtbl)
 #define BINDINFO(x)  ((IInternetBindInfo*) &(x)->lpInternetBindInfoVtbl)
 #define PRIORITY(x)  ((IInternetPriority*) &(x)->lpInternetPriorityVtbl)
 #define SERVPROV(x)  ((IServiceProvider*)  &(x)->lpServiceProviderVtbl)
-#define PROTSINK(x)  ((IInternetProtocolSink*) &(x)->lpInternetProtocolSinkVtbl)
 
 #define PROTOCOLHANDLER(x)  ((IInternetProtocol*)  &(x)->lpIInternetProtocolHandlerVtbl)
 
@@ -234,7 +232,7 @@ static void mime_available(BindProtocol *This, LPCWSTR mime, BOOL verified)
     }
 }
 
-#define PROTOCOL_THIS(iface) DEFINE_THIS(BindProtocol, InternetProtocol, iface)
+#define PROTOCOL_THIS(iface) DEFINE_THIS(BindProtocol, IInternetProtocol, iface)
 
 static HRESULT WINAPI BindProtocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
@@ -792,7 +790,7 @@ static const IInternetPriorityVtbl InternetPriorityVtbl = {
 
 };
 
-#define PROTSINK_THIS(iface) DEFINE_THIS(BindProtocol, InternetProtocolSink, iface)
+#define PROTSINK_THIS(iface) DEFINE_THIS(BindProtocol, IInternetProtocolSink, iface)
 
 static HRESULT WINAPI BPInternetProtocolSink_QueryInterface(IInternetProtocolSink *iface,
         REFIID riid, void **ppv)
@@ -1118,11 +1116,11 @@ HRESULT create_binding_protocol(LPCWSTR url, BOOL from_urlmon, IInternetProtocol
 {
     BindProtocol *ret = heap_alloc_zero(sizeof(BindProtocol));
 
-    ret->lpInternetProtocolVtbl = &BindProtocolVtbl;
-    ret->lpInternetBindInfoVtbl = &InternetBindInfoVtbl;
-    ret->lpInternetPriorityVtbl = &InternetPriorityVtbl;
-    ret->lpServiceProviderVtbl  = &ServiceProviderVtbl;
-    ret->lpInternetProtocolSinkVtbl = &InternetProtocolSinkVtbl;
+    ret->lpIInternetProtocolVtbl        = &BindProtocolVtbl;
+    ret->lpInternetBindInfoVtbl         = &InternetBindInfoVtbl;
+    ret->lpInternetPriorityVtbl         = &InternetPriorityVtbl;
+    ret->lpServiceProviderVtbl          = &ServiceProviderVtbl;
+    ret->lpIInternetProtocolSinkVtbl    = &InternetProtocolSinkVtbl;
     ret->lpIInternetProtocolHandlerVtbl = &InternetProtocolHandlerVtbl;
 
     ret->ref = 1;
