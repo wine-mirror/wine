@@ -220,6 +220,20 @@ static BOOL inline do_direct_notif(BindProtocol *This)
     return !(This->pi & PI_APARTMENTTHREADED) || (This->apartment_thread == GetCurrentThreadId() && !This->continue_call);
 }
 
+static void mime_available(BindProtocol *This, LPCWSTR mime, BOOL verified)
+{
+    heap_free(This->mime);
+    This->mime = NULL;
+    This->mime = heap_strdupW(mime);
+
+    if(verified || !(This->pi & PI_MIMEVERIFICATION)) {
+        This->reported_mime = TRUE;
+
+        if(This->protocol_sink)
+            IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_MIMETYPEAVAILABLE, mime);
+    }
+}
+
 #define PROTOCOL_THIS(iface) DEFINE_THIS(BindProtocol, InternetProtocol, iface)
 
 static HRESULT WINAPI BindProtocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
@@ -859,25 +873,11 @@ static void report_progress(BindProtocol *This, ULONG status_code, LPCWSTR statu
         break;
 
     case BINDSTATUS_MIMETYPEAVAILABLE:
-        if(!This->reported_mime) {
-            heap_free(This->mime);
-            This->mime = heap_strdupW(status_text);
-        }
-
-        if(This->protocol_sink && !(This->pi & PI_MIMEVERIFICATION))
-            IInternetProtocolSink_ReportProgress(This->protocol_sink, status_code, status_text);
+        mime_available(This, status_text, FALSE);
         break;
 
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
-        if(!This->reported_mime) {
-            heap_free(This->mime);
-            This->mime = heap_strdupW(status_text);
-        }
-
-        if(This->protocol_sink) {
-            This->reported_mime = TRUE;
-            IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_MIMETYPEAVAILABLE, status_text);
-        }
+        mime_available(This, status_text, TRUE);
         break;
 
     default:
@@ -960,12 +960,8 @@ static HRESULT report_data(BindProtocol *This, DWORD bscf, ULONG progress, ULONG
         if(FAILED(hres))
             return hres;
 
-        heap_free(This->mime);
-        This->mime = heap_strdupW(mime);
+        mime_available(This, mime, TRUE);
         CoTaskMemFree(mime);
-
-        This->reported_mime = TRUE;
-        IInternetProtocolSink_ReportProgress(This->protocol_sink, BINDSTATUS_MIMETYPEAVAILABLE, This->mime);
     }
 
     return IInternetProtocolSink_ReportData(This->protocol_sink, bscf, progress, progress_max);
