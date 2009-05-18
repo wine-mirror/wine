@@ -615,7 +615,7 @@ static HRESULT WINAPI ProtocolHandler_Read(IInternetProtocol *iface, void *pv,
     if(read < cb) {
         ULONG cread = 0;
 
-        hres = IInternetProtocol_Read(This->protocol, (BYTE*)pv+read, cb, &cread);
+        hres = IInternetProtocol_Read(This->protocol, (BYTE*)pv+read, cb-read, &cread);
         read += cread;
     }
 
