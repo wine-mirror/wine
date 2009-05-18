@@ -3612,7 +3612,7 @@ TOOLBAR_GetState (const TOOLBAR_INFO *infoPtr, WPARAM wParam)
 static LRESULT
 TOOLBAR_GetStyle (const TOOLBAR_INFO *infoPtr)
 {
-    return GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE);
+    return infoPtr->dwStyle;
 }
 
 
@@ -5491,7 +5491,7 @@ TOOLBAR_LButtonDblClk (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     if (nHit >= 0)
         TOOLBAR_LButtonDown (infoPtr, wParam, lParam);
-    else if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & CCS_ADJUSTABLE)
+    else if (infoPtr->dwStyle & CCS_ADJUSTABLE)
 	TOOLBAR_Customize (infoPtr);
 
     return 0;
