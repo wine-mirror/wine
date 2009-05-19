@@ -939,7 +939,7 @@ static WineGLPixelFormat *get_formats(Display *display, int *size_ret, int *onsc
                     list[size].fmt_id = fmt_id;
                     list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
                     list[size].offscreenOnly = FALSE;
-                    list[size].dwFlags = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI | PFD_GENERIC_ACCELERATED;
+                    list[size].dwFlags = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI | PFD_GENERIC_FORMAT;
                     size++;
                     onscreen_size++;
                 }
@@ -1411,11 +1411,11 @@ int CDECL X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   ppfd->dwFlags |= fmt->dwFlags & (PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI);
 
   /* PFD_GENERIC_FORMAT - gdi software rendering
-   * PFD_GENERIC_ACCELERATED - some parts are accelerated by a display driver (ICD or MCD)
+   * PFD_GENERIC_ACCELERATED - some parts are accelerated by a display driver (MCD e.g. 3dfx minigl)
    * none set - full hardware accelerated by a ICD
    *
-   * We only set PFD_GENERIC_ACCELERATED on bitmap formats (see get_formats) as that's what ATI and Nvidia Windows drivers do  */
-  ppfd->dwFlags |= fmt->dwFlags & PFD_GENERIC_ACCELERATED;
+   * We only set PFD_GENERIC_FORMAT on bitmap formats (see get_formats) as that's what ATI and Nvidia Windows drivers do  */
+  ppfd->dwFlags |= fmt->dwFlags & (PFD_GENERIC_FORMAT | PFD_GENERIC_ACCELERATED);
 
   pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DOUBLEBUFFER, &value);
   if (value) {
