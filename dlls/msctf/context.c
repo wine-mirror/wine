@@ -430,7 +430,7 @@ static WINAPI HRESULT ContextSource_AdviseSink(ITfSource *iface,
         es = HeapAlloc(GetProcessHeap(),0,sizeof(ContextSink));
         if (!es)
             return E_OUTOFMEMORY;
-        if (!SUCCEEDED(IUnknown_QueryInterface(punk, riid, (LPVOID*)&es->interfaces.pITfTextEditSink)))
+        if (FAILED(IUnknown_QueryInterface(punk, riid, (LPVOID *)&es->interfaces.pITfTextEditSink)))
         {
             HeapFree(GetProcessHeap(),0,es);
             return CONNECT_E_CANNOTCONNECT;

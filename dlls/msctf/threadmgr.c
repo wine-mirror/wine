@@ -442,7 +442,7 @@ static WINAPI HRESULT ThreadMgrSource_AdviseSink(ITfSource *iface,
         tms = HeapAlloc(GetProcessHeap(),0,sizeof(ThreadMgrSink));
         if (!tms)
             return E_OUTOFMEMORY;
-        if (!SUCCEEDED(IUnknown_QueryInterface(punk, riid, (LPVOID*)&tms->interfaces.pITfThreadMgrEventSink)))
+        if (FAILED(IUnknown_QueryInterface(punk, riid, (LPVOID *)&tms->interfaces.pITfThreadMgrEventSink)))
         {
             HeapFree(GetProcessHeap(),0,tms);
             return CONNECT_E_CANNOTCONNECT;

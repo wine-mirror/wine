@@ -1186,7 +1186,7 @@ static void test_startSession(void)
 
     cnt = check_context_refcount(cxt3);
     hr = ITfDocumentMgr_Push(g_dm, cxt3);
-    ok(!SUCCEEDED(hr),"Push Succeeded\n");
+    ok(FAILED(hr),"Push Succeeded\n");
     ok(check_context_refcount(cxt3) == cnt, "Ref changed\n");
 
     cnt = check_context_refcount(cxt2);
@@ -1221,7 +1221,7 @@ static void test_startSession(void)
     ITfContext_Release(cxtTest);
 
     hr = ITfDocumentMgr_Pop(g_dm, 0);
-    ok(!SUCCEEDED(hr),"Pop Succeeded\n");
+    ok(FAILED(hr),"Pop Succeeded\n");
 
     hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
     ok(SUCCEEDED(hr),"GetTop Failed\n");

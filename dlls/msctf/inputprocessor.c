@@ -615,7 +615,7 @@ static WINAPI HRESULT IPPSource_AdviseSink(ITfSource *iface,
         ipps = HeapAlloc(GetProcessHeap(),0,sizeof(InputProcessorProfilesSink));
         if (!ipps)
             return E_OUTOFMEMORY;
-        if (!SUCCEEDED(IUnknown_QueryInterface(punk, riid, (LPVOID*)&ipps->interfaces.pITfLanguageProfileNotifySink)))
+        if (FAILED(IUnknown_QueryInterface(punk, riid, (LPVOID *)&ipps->interfaces.pITfLanguageProfileNotifySink)))
         {
             HeapFree(GetProcessHeap(),0,ipps);
             return CONNECT_E_CANNOTCONNECT;
