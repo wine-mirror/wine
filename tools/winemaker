@@ -663,9 +663,11 @@ sub source_scan_project_file($$$)
                     } elsif (/^D\s*\"(.*)\"/) {
                         # Preprocessor Definitions
                         $prj_target_cflags.="-D".$1." ";
-                    } elsif (/^I/) {
+                    } elsif (/^I\s*\"(.*)\"/) {
                         # Additional Include Directories
-                        #$prj_target_cflags.="-I" fixpath(option)
+                        $sfilet=$1;
+                        $sfilet=~s/\\/\//g;
+                        push @{@$project_settings[$T_INCLUDE_PATH]},"-I".$sfilet." ";
                     } elsif (/^U\s*\"(.*)\"/) {
                         # Undefines a previously defined symbol
                         $prj_target_cflags.="-U".$1." ";
@@ -1847,6 +1849,7 @@ sub get_real_include_name($$$$$)
     foreach my $include (@{@$target[$T_INCLUDE_PATH]}, @{@$project_settings[$T_INCLUDE_PATH]}) {
       my $dirname=$include;
       $dirname=~ s+^-I++;
+      $dirname=~ s+\s$++;
       if (!is_absolute($dirname)) {
 	$dirname="@$project[$P_PATH]$dirname";
       } else {
