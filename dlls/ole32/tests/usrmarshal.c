@@ -633,25 +633,19 @@ static void test_marshal_STGMEDIUM(void)
     USER_MARSHAL_CB umcb;
     MIDL_STUB_MESSAGE stub_msg;
     RPC_MESSAGE rpc_msg;
-    unsigned char *buffer, *buffer_end, *unk_buffer, *unk_buffer_end, *stm_buffer, *stm_buffer_end;
-    ULONG size, unk_size, stm_size;
+    unsigned char *buffer, *buffer_end, *expect_buffer, *expect_buffer_end;
+    ULONG size, expect_size;
     STGMEDIUM med, med2;
     IUnknown *unk = &Test_Unknown;
     IStream *stm = &Test_Stream;
 
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-    unk_size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, unk, &IID_IUnknown);
-    unk_buffer = HeapAlloc(GetProcessHeap(), 0, unk_size);
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, unk_buffer, unk_size, MSHCTX_DIFFERENTMACHINE);
-    unk_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, unk_buffer, unk, &IID_IUnknown);
-
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
-    stm_size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 0, (IUnknown*)stm, &IID_IStream);
-    stm_buffer = HeapAlloc(GetProcessHeap(), 0, stm_size);
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, stm_buffer, stm_size, MSHCTX_DIFFERENTMACHINE);
-    stm_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, stm_buffer, (IUnknown*)stm, &IID_IStream);
-
     /* TYMED_NULL with pUnkForRelease */
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    expect_size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 2 * sizeof(DWORD), unk, &IID_IUnknown);
+    expect_buffer = HeapAlloc(GetProcessHeap(), 0, expect_size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, expect_buffer, expect_size, MSHCTX_DIFFERENTMACHINE);
+    expect_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, expect_buffer + 2 * sizeof(DWORD), unk, &IID_IUnknown);
 
     med.tymed = TYMED_NULL;
     U(med).pstg = NULL;
@@ -659,15 +653,15 @@ static void test_marshal_STGMEDIUM(void)
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = STGMEDIUM_UserSize(&umcb.Flags, 0, &med);
-    ok(size == unk_size + 2 * sizeof(DWORD), "size %d should be %d bytes\n", size, unk_size + 8);
+    ok(size == expect_size, "size %d should be %d bytes\n", size, expect_size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     buffer_end = STGMEDIUM_UserMarshal(&umcb.Flags, buffer, &med);
-    ok(buffer_end - buffer - 2 * sizeof(DWORD) == unk_buffer_end - unk_buffer, "buffer size mismatch\n");
+    ok(buffer_end - buffer == expect_buffer_end - expect_buffer, "buffer size mismatch\n");
     ok(*(DWORD*)buffer == TYMED_NULL, "got %08x\n", *(DWORD*)buffer);
     ok(*((DWORD*)buffer+1) != 0, "got %08x\n", *((DWORD*)buffer+1));
-    ok(!memcmp(buffer+8, unk_buffer, unk_buffer_end - unk_buffer), "buffer mismatch\n");
+    ok(!memcmp(buffer+8, expect_buffer + 8, expect_buffer_end - expect_buffer - 8), "buffer mismatch\n");
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
 
@@ -686,7 +680,20 @@ static void test_marshal_STGMEDIUM(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     STGMEDIUM_UserFree(&umcb.Flags, &med2);
 
+    HeapFree(GetProcessHeap(), 0, expect_buffer);
+
     /* TYMED_ISTREAM with pUnkForRelease */
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    expect_size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 3 * sizeof(DWORD), (IUnknown*)stm, &IID_IStream);
+    expect_size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, expect_size, unk, &IID_IUnknown);
+
+    expect_buffer = HeapAlloc(GetProcessHeap(), 0, expect_size);
+    /* There may be a hole between the two interfaces so init the buffer to something */
+    memset(expect_buffer, 0xcc, expect_size);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, expect_buffer, expect_size, MSHCTX_DIFFERENTMACHINE);
+    expect_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, expect_buffer + 3 * sizeof(DWORD), (IUnknown*)stm, &IID_IStream);
+    expect_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, expect_buffer_end, unk, &IID_IUnknown);
 
     med.tymed = TYMED_ISTREAM;
     U(med).pstm = stm;
@@ -694,17 +701,17 @@ static void test_marshal_STGMEDIUM(void)
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     size = STGMEDIUM_UserSize(&umcb.Flags, 0, &med);
-    ok(size == stm_size + unk_size + 3 * sizeof(DWORD), "size %d should be %d bytes\n", size, stm_size + unk_size + 3 * sizeof(DWORD));
+    ok(size == expect_size, "size %d should be %d bytes\n", size, expect_size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    memset(buffer, 0xcc, size);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
     buffer_end = STGMEDIUM_UserMarshal(&umcb.Flags, buffer, &med);
-    ok(buffer_end - buffer - 3 * sizeof(DWORD) == (unk_buffer_end - unk_buffer) + (stm_buffer_end - stm_buffer), "buffer size mismatch\n");
+    ok(buffer_end - buffer == expect_buffer_end - expect_buffer, "buffer size mismatch\n");
     ok(*(DWORD*)buffer == TYMED_ISTREAM, "got %08x\n", *(DWORD*)buffer);
     ok(*((DWORD*)buffer+1) != 0, "got %08x\n", *((DWORD*)buffer+1));
     ok(*((DWORD*)buffer+2) != 0, "got %08x\n", *((DWORD*)buffer+2));
-    ok(!memcmp(buffer + 12, stm_buffer, stm_buffer_end - stm_buffer), "buffer mismatch\n");
-    ok(!memcmp(buffer + 12 + (stm_buffer_end - stm_buffer), unk_buffer, unk_buffer_end - unk_buffer), "buffer mismatch\n");
+    ok(!memcmp(buffer + 12, expect_buffer + 12, (buffer_end - buffer) - 12), "buffer mismatch\n");
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_DIFFERENTMACHINE);
 
@@ -724,9 +731,7 @@ static void test_marshal_STGMEDIUM(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     STGMEDIUM_UserFree(&umcb.Flags, &med2);
 
-
-    HeapFree(GetProcessHeap(), 0, stm_buffer);
-    HeapFree(GetProcessHeap(), 0, unk_buffer);
+    HeapFree(GetProcessHeap(), 0, expect_buffer);
 }
 
 START_TEST(usrmarshal)
