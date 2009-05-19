@@ -257,11 +257,20 @@ DWORD WINAPI FormatMessageA(
                                 argliststart=(*(DWORD**)args)+insertnr-1;
 
                                 /* FIXME: precision and width components are not handled correctly */
-                            if ( (strcmp(fmtstr, "%ls") == 0) || (strcmp(fmtstr,"%S") == 0) ) {
-                                sz = WideCharToMultiByte( CP_ACP, 0, *(WCHAR**)argliststart, -1, NULL, 0, NULL, NULL);
+                            if (strcmp(fmtstr, "%ls") == 0 || strcmp(fmtstr,"%S") == 0 || strcmp(fmtstr,"%ws") == 0)
+                            {
+                                sz = WideCharToMultiByte(CP_ACP, 0, *(WCHAR**)argliststart, -1, NULL, 0, NULL, NULL);
                                 b = HeapAlloc(GetProcessHeap(), 0, sz);
-                                WideCharToMultiByte( CP_ACP, 0, *(WCHAR**)argliststart, -1, b, sz, NULL, NULL);
-                            } else {
+                                WideCharToMultiByte(CP_ACP, 0, *(WCHAR**)argliststart, -1, b, sz, NULL, NULL);
+                            }
+                            else if (strcmp(fmtstr, "%wc") == 0)
+                            {
+                                sz = WideCharToMultiByte(CP_ACP, 0, (WCHAR *)argliststart, 1, NULL, 0, NULL, NULL);
+                                b = HeapAlloc(GetProcessHeap(), 0, sz);
+                                WideCharToMultiByte(CP_ACP, 0, (WCHAR *)argliststart, 1, b, sz, NULL, NULL);
+                            }
+                            else
+                            {
                                 b = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz = 1000);
                                 /* CMF - This makes a BIG assumption about va_list */
                                 TRACE("A BIG assumption\n");
@@ -367,6 +376,7 @@ DWORD WINAPI FormatMessageW(
     DWORD width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
     BOOL eos = FALSE;
     WCHAR ch;
+    static const WCHAR fmt_wc[] = {'%','w','c',0};
 
     TRACE("(0x%x,%p,%d,0x%x,%p,%d,%p)\n",
           dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,nSize,args);
@@ -483,6 +493,11 @@ DWORD WINAPI FormatMessageW(
 
                             /* CMF - This makes a BIG assumption about va_list */
                             vsprintfW(sprintfbuf, fmtstr, (va_list) xarr);
+                        }
+                        else if (strcmpW(fmtstr, fmt_wc) == 0) {
+                            sprintfbuf = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * 2);
+                            sprintfbuf[0] = *(WCHAR *)argliststart;
+                            sprintfbuf[1] = 0;
                         } else {
                             sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
 
