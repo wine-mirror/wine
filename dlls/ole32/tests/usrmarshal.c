@@ -162,7 +162,7 @@ static void test_marshal_HGLOBAL(void)
     MIDL_STUB_MESSAGE stub_msg;
     RPC_MESSAGE rpc_msg;
     unsigned char *buffer;
-    ULONG size;
+    ULONG size, block_size;
     HGLOBAL hglobal;
     HGLOBAL hglobal2;
     unsigned char *wirehglobal;
@@ -188,39 +188,52 @@ static void test_marshal_HGLOBAL(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
     HGLOBAL_UserFree(&umcb.Flags, &hglobal2);
 
-    hglobal = GlobalAlloc(0, 4);
-    buffer = GlobalLock(hglobal);
-    for (i = 0; i < 4; i++)
-        buffer[i] = i;
-    GlobalUnlock(hglobal);
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
-    size = HGLOBAL_UserSize(&umcb.Flags, 0, &hglobal);
-    /* native is poorly programmed and allocates 4/8 bytes more than it needs to
-     * here - Wine doesn't have to emulate that */
-    ok((size == 24) || broken(size == 28) || broken(size == 32), "Size should be 24, instead of %d\n", size);
-    buffer = HeapAlloc(GetProcessHeap(), 0, size);
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HGLOBAL_UserMarshal(&umcb.Flags, buffer, &hglobal);
-    wirehglobal = buffer;
-    ok(*(ULONG *)wirehglobal == WDT_REMOTE_CALL, "Context should be WDT_REMOTE_CALL instead of 0x%08x\n", *(ULONG *)wirehglobal);
-    wirehglobal += sizeof(ULONG);
-    ok(*(ULONG *)wirehglobal == (ULONG)(ULONG_PTR)hglobal, "buffer+0x4 should be HGLOBAL\n");
-    wirehglobal += sizeof(ULONG);
-    ok(*(ULONG *)wirehglobal == 4, "buffer+0x8 should be size of HGLOBAL instead of %d\n", *(ULONG *)wirehglobal);
-    wirehglobal += sizeof(ULONG);
-    ok(*(ULONG *)wirehglobal == (ULONG)(ULONG_PTR)hglobal, "buffer+0xc should be HGLOBAL\n");
-    wirehglobal += sizeof(ULONG);
-    ok(*(ULONG *)wirehglobal == 4, "buffer+0x10 should be size of HGLOBAL instead of %d\n", *(ULONG *)wirehglobal);
-    wirehglobal += sizeof(ULONG);
-    for (i = 0; i < 4; i++)
-        ok(wirehglobal[i] == i, "buffer+0x%x should be %d\n", 0x10 + i, i);
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
-    HGLOBAL_UserUnmarshal(&umcb.Flags, buffer, &hglobal2);
-    ok(hglobal2 != NULL, "Didn't unmarshal properly\n");
-    HeapFree(GetProcessHeap(), 0, buffer);
-    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
-    HGLOBAL_UserFree(&umcb.Flags, &hglobal2);
-    GlobalFree(hglobal);
+
+    for(block_size = 0; block_size <= 17; block_size++)
+    {
+        ULONG actual_size, expected_size;
+
+        hglobal = GlobalAlloc(0, block_size);
+        buffer = GlobalLock(hglobal);
+        for (i = 0; i < block_size; i++)
+            buffer[i] = i;
+        GlobalUnlock(hglobal);
+        actual_size = GlobalSize(hglobal);
+        expected_size = actual_size + 5 * sizeof(DWORD);
+        trace("%d: actual size %d\n", block_size, actual_size);
+        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+        size = HGLOBAL_UserSize(&umcb.Flags, 0, &hglobal);
+        /* native is poorly programmed and allocates 4/8 bytes more than it needs to
+         * here - Wine doesn't have to emulate that */
+        ok(size == expected_size ||
+           broken(size == expected_size + 4) ||
+           broken(size == expected_size + 8),
+           "%d: got size %d\n", block_size, size);
+        buffer = HeapAlloc(GetProcessHeap(), 0, size);
+        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+        HGLOBAL_UserMarshal(&umcb.Flags, buffer, &hglobal);
+        wirehglobal = buffer;
+        ok(*(ULONG *)wirehglobal == WDT_REMOTE_CALL, "Context should be WDT_REMOTE_CALL instead of 0x%08x\n", *(ULONG *)wirehglobal);
+        wirehglobal += sizeof(ULONG);
+        ok(*(ULONG *)wirehglobal == (ULONG)(ULONG_PTR)hglobal, "buffer+0x4 should be HGLOBAL\n");
+        wirehglobal += sizeof(ULONG);
+        ok(*(ULONG *)wirehglobal == actual_size, "%d: buffer+0x8 %08x\n", block_size, *(ULONG *)wirehglobal);
+        wirehglobal += sizeof(ULONG);
+        ok(*(ULONG *)wirehglobal == (ULONG)(ULONG_PTR)hglobal, "buffer+0xc should be HGLOBAL\n");
+        wirehglobal += sizeof(ULONG);
+        ok(*(ULONG *)wirehglobal == actual_size, "%d: buffer+0x10 %08x\n", block_size, *(ULONG *)wirehglobal);
+        wirehglobal += sizeof(ULONG);
+        for (i = 0; i < block_size; i++)
+            ok(wirehglobal[i] == i, "buffer+0x%x should be %d\n", 0x10 + i, i);
+
+        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, MSHCTX_LOCAL);
+        HGLOBAL_UserUnmarshal(&umcb.Flags, buffer, &hglobal2);
+        ok(hglobal2 != NULL, "Didn't unmarshal properly\n");
+        HeapFree(GetProcessHeap(), 0, buffer);
+        init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_LOCAL);
+        HGLOBAL_UserFree(&umcb.Flags, &hglobal2);
+        GlobalFree(hglobal);
+    }
 }
 
 static HENHMETAFILE create_emf(void)
