@@ -3322,7 +3322,7 @@ static void test_publish(void)
 
     if (!pMsiQueryComponentStateA)
     {
-        skip("MsiQueryComponentStateA is not available\n");
+        win_skip("MsiQueryComponentStateA is not available\n");
         return;
     }
 
@@ -3810,7 +3810,7 @@ static void test_publishsourcelist(void)
 
     if (!pMsiSourceListEnumSourcesA || !pMsiSourceListGetInfoA)
     {
-        skip("MsiSourceListEnumSourcesA and/or MsiSourceListGetInfoA are not available\n");
+        win_skip("MsiSourceListEnumSourcesA and/or MsiSourceListGetInfoA are not available\n");
         return;
     }
 
