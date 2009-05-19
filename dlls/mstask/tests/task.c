@@ -38,7 +38,11 @@ static char *get_tmp_space(int size)
     int idx;
 
     idx = ++pos % (sizeof(list)/sizeof(list[0]));
-    if ((ret = realloc(list[idx], size)))
+    if (list[idx])
+        ret = HeapReAlloc( GetProcessHeap(), 0, list[idx], size );
+    else
+        ret = HeapAlloc( GetProcessHeap(), 0, size );
+    if (ret)
         list[idx] = ret;
     return ret;
 }
