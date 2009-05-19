@@ -64,6 +64,7 @@
 #endif
 #include <errno.h>
 #include <stdarg.h>
+#include <fnmatch.h>
 
 #define COBJMACROS
 
@@ -74,6 +75,7 @@
 #include <appmgmt.h>
 #include <tlhelp32.h>
 #include <intshcut.h>
+#include <shlwapi.h>
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -1251,6 +1253,38 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
     return hr;
 }
 
+static WCHAR* assoc_query(ASSOCSTR assocStr, LPCWSTR name, LPCWSTR extra)
+{
+    HRESULT hr;
+    WCHAR *value = NULL;
+    DWORD size = 0;
+    hr = AssocQueryStringW(0, assocStr, name, extra, NULL, &size);
+    if (SUCCEEDED(hr))
+    {
+        value = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+        if (value)
+        {
+            hr = AssocQueryStringW(0, assocStr, name, extra, value, &size);
+            if (FAILED(hr))
+            {
+                HeapFree(GetProcessHeap(), 0, value);
+                value = NULL;
+            }
+        }
+    }
+    return value;
+}
+
+static char* wchars_to_utf8_chars(LPCWSTR string)
+{
+    char *ret;
+    INT size = WideCharToMultiByte(CP_UTF8, 0, string, -1, NULL, 0, NULL, NULL);
+    ret = HeapAlloc(GetProcessHeap(), 0, size);
+    if (ret)
+        WideCharToMultiByte(CP_UTF8, 0, string, -1, ret, size, NULL, NULL);
+    return ret;
+}
+
 static BOOL next_line(FILE *file, char **line, int *size)
 {
     int pos = 0;
@@ -1316,9 +1350,17 @@ static BOOL add_mimes(const char *xdg_data_dir, struct list *mime_types)
                     if (mime_type_entry)
                     {
                         *pos = 0;
-                        mime_type_entry->mimeType = line;
-                        mime_type_entry->glob = pos + 1;
-                        list_add_tail(mime_types, &mime_type_entry->entry);
+                        mime_type_entry->mimeType = heap_printf("%s", line);
+                        mime_type_entry->glob = heap_printf("%s", pos + 1);
+                        if (mime_type_entry->mimeType && mime_type_entry->glob)
+                            list_add_tail(mime_types, &mime_type_entry->entry);
+                        else
+                        {
+                            HeapFree(GetProcessHeap(), 0, mime_type_entry->mimeType);
+                            HeapFree(GetProcessHeap(), 0, mime_type_entry->glob);
+                            HeapFree(GetProcessHeap(), 0, mime_type_entry);
+                            ret = FALSE;
+                        }
                     }
                     else
                         ret = FALSE;
@@ -1341,6 +1383,7 @@ static void free_native_mime_types(struct list *native_mime_types)
     LIST_FOR_EACH_ENTRY_SAFE(mime_type_entry, mime_type_entry2, native_mime_types, struct xdg_mime_type, entry)
     {
         list_remove(&mime_type_entry->entry);
+        HeapFree(GetProcessHeap(), 0, mime_type_entry->glob);
         HeapFree(GetProcessHeap(), 0, mime_type_entry->mimeType);
         HeapFree(GetProcessHeap(), 0, mime_type_entry);
     }
@@ -1398,16 +1441,130 @@ static BOOL build_native_mime_types(const char *xdg_data_home, struct list **mim
     return ret;
 }
 
+static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const char *dot_extension,
+                                              const char *mime_type, const char *comment)
+{
+    BOOL ret = FALSE;
+    char *filename;
+
+    WINE_TRACE("writing MIME type %s, extension=%s, comment=%s\n", wine_dbgstr_a(mime_type),
+               wine_dbgstr_a(dot_extension), wine_dbgstr_a(comment));
+
+    filename = heap_printf("%s/x-wine-extension-%s.xml", packages_dir, &dot_extension[1]);
+    if (filename)
+    {
+        FILE *packageFile = fopen(filename, "w");
+        if (packageFile)
+        {
+            fprintf(packageFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+            fprintf(packageFile, "<mime-info xmlns=\"http://www.freedesktop.org/standards/shared-mime-info\">\n");
+            fprintf(packageFile, "  <mime-type type=\"%s\">\n", mime_type);
+            fprintf(packageFile, "    <glob pattern=\"*%s\"/>\n", dot_extension);
+            if (comment)
+                fprintf(packageFile, "    <comment>%s</comment>\n", comment);
+            fprintf(packageFile, "  </mime-type>\n");
+            fprintf(packageFile, "</mime-info>\n");
+            ret = TRUE;
+            fclose(packageFile);
+        }
+        else
+            WINE_ERR("error writing file %s\n", filename);
+        HeapFree(GetProcessHeap(), 0, filename);
+    }
+    else
+        WINE_ERR("out of memory\n");
+    return ret;
+}
+
 static BOOL generate_associations(const char *xdg_data_home, const char *packages_dir, const char *applications_dir)
 {
     struct list *nativeMimeTypes = NULL;
+    LSTATUS ret = 0;
+    int i;
+    BOOL hasChanged = FALSE;
 
     if (!build_native_mime_types(xdg_data_home, &nativeMimeTypes))
     {
         WINE_ERR("could not build native MIME types\n");
         return FALSE;
     }
-    return TRUE;
+
+    for (i = 0; ; i++)
+    {
+        WCHAR *extensionW = NULL;
+        DWORD size = 1024;
+
+        do
+        {
+            HeapFree(GetProcessHeap(), 0, extensionW);
+            extensionW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+            if (extensionW == NULL)
+            {
+                WINE_ERR("out of memory\n");
+                ret = ERROR_OUTOFMEMORY;
+                break;
+            }
+            ret = RegEnumKeyExW(HKEY_CLASSES_ROOT, i, extensionW, &size, NULL, NULL, NULL, NULL);
+            size *= 2;
+        } while (ret == ERROR_MORE_DATA);
+
+        if (ret == ERROR_SUCCESS && extensionW[0] == '.')
+        {
+            char *extensionA = NULL;
+            WCHAR *commandW = NULL;
+            WCHAR *friendlyDocNameW = NULL;
+            char *friendlyDocNameA = NULL;
+            WCHAR *contentTypeW = NULL;
+            char *mimeTypeA = NULL;
+
+            extensionA = wchars_to_utf8_chars(extensionW);
+            if (extensionA == NULL)
+            {
+                WINE_ERR("out of memory\n");
+                goto end;
+            }
+
+            commandW = assoc_query(ASSOCSTR_COMMAND, extensionW, NULL);
+            if (commandW == NULL)
+                /* no command -> unusable extension */
+                goto end;
+
+            friendlyDocNameW = assoc_query(ASSOCSTR_FRIENDLYDOCNAME, extensionW, NULL);
+            if (friendlyDocNameW)
+            {
+                friendlyDocNameA = wchars_to_utf8_chars(friendlyDocNameW);
+                if (friendlyDocNameA == NULL)
+                {
+                    WINE_ERR("out of memory\n");
+                    goto end;
+                }
+            }
+
+            contentTypeW = assoc_query(ASSOCSTR_CONTENTTYPE, extensionW, NULL);
+            if (contentTypeW == NULL)
+                goto end;
+
+            mimeTypeA = wchars_to_utf8_chars(contentTypeW);
+            if (mimeTypeA == NULL)
+                goto end;
+
+            write_freedesktop_mime_type_entry(packages_dir, extensionA, mimeTypeA, friendlyDocNameA);
+
+        end:
+            HeapFree(GetProcessHeap(), 0, extensionA);
+            HeapFree(GetProcessHeap(), 0, commandW);
+            HeapFree(GetProcessHeap(), 0, friendlyDocNameW);
+            HeapFree(GetProcessHeap(), 0, friendlyDocNameA);
+            HeapFree(GetProcessHeap(), 0, contentTypeW);
+            HeapFree(GetProcessHeap(), 0, mimeTypeA);
+        }
+        HeapFree(GetProcessHeap(), 0, extensionW);
+        if (ret != ERROR_SUCCESS)
+            break;
+    }
+
+    free_native_mime_types(nativeMimeTypes);
+    return hasChanged;
 }
 
 static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
@@ -1841,6 +1998,7 @@ static void RefreshFileTypeAssociations(void)
     char *mime_dir = NULL;
     char *packages_dir = NULL;
     char *applications_dir = NULL;
+    BOOL hasChanged;
 
     hSem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
     if( WAIT_OBJECT_0 != MsgWaitForMultipleObjects( 1, &hSem, FALSE, INFINITE, QS_ALLINPUT ) )
@@ -1875,7 +2033,21 @@ static void RefreshFileTypeAssociations(void)
     }
     create_directories(applications_dir);
 
-    generate_associations(xdg_data_dir, packages_dir, applications_dir);
+    hasChanged = generate_associations(xdg_data_dir, packages_dir, applications_dir);
+    if (hasChanged)
+    {
+        char *command = heap_printf("update-mime-database %s", mime_dir);
+        if (command)
+        {
+            system(command);
+            HeapFree(GetProcessHeap(), 0, command);
+        }
+        else
+        {
+            WINE_ERR("out of memory\n");
+            goto end;
+        }
+    }
 
 end:
     if (hSem)
