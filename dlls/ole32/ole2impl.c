@@ -98,7 +98,7 @@ static inline void init_fmtetc(FORMATETC *fmt, CLIPFORMAT cf, TYMED tymed)
  *
  * Retrieve an object's storage from a variety of sources.
  *
- * FIXME: CF_EMBEDDEDOBJECT, CF_FILENAME.
+ * FIXME: CF_FILENAME.
  */
 static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf)
 {
@@ -109,6 +109,17 @@ static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf)
     CLSID clsid;
 
     *src_cf = 0;
+
+    /* CF_EMBEDEDOBJECT */
+    init_fmtetc(&fmt, embedded_object_clipboard_format, TYMED_ISTORAGE);
+    med.tymed = TYMED_ISTORAGE;
+    med.u.pstg = stg;
+    hr = IDataObject_GetDataHere(data, &fmt, &med);
+    if(SUCCEEDED(hr))
+    {
+        *src_cf = embedded_object_clipboard_format;
+        return hr;
+    }
 
     /* CF_EMBEDSOURCE */
     init_fmtetc(&fmt, embed_source_clipboard_format, TYMED_ISTORAGE);
