@@ -539,9 +539,8 @@ LPVOID WINAPI MapViewOfFileEx( HANDLE handle, DWORD access,
     offset.u.HighPart = offset_high;
 
     if (access & FILE_MAP_WRITE) protect = PAGE_READWRITE;
-    else if (access & FILE_MAP_READ) protect = PAGE_READONLY;
     else if (access & FILE_MAP_COPY) protect = PAGE_WRITECOPY;
-    else protect = PAGE_NOACCESS;
+    else protect = PAGE_READONLY;
 
     if (access & FILE_MAP_EXECUTE) protect <<= 4;
 

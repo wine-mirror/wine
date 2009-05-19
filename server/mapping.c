@@ -562,7 +562,7 @@ DECL_HANDLER(get_mapping_info)
     struct fd *fd;
 
     if ((mapping = (struct mapping *)get_handle_obj( current->process, req->handle,
-                                                     req->access | SECTION_QUERY, &mapping_ops )))
+                                                     req->access, &mapping_ops )))
     {
         reply->size        = mapping->size;
         reply->protect     = mapping->protect;
