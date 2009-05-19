@@ -1357,7 +1357,8 @@ static void test_RtlUnicodeStringToInteger(void)
 	   test_num, str2int[test_num].str, str2int[test_num].base, result,
            str2int[test_num].result, str2int[test_num].alternative);
         if (result == STATUS_SUCCESS)
-            ok(value == str2int[test_num].value,
+            ok(value == str2int[test_num].value ||
+               broken(str2int[test_num].str[0] == '\0' && str2int[test_num].base == 16), /* nt4 */
                "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) assigns value %d, expected: %d\n",
                test_num, str2int[test_num].str, str2int[test_num].base, value, str2int[test_num].value);
         else
