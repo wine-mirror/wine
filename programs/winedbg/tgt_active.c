@@ -271,7 +271,7 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
             return DBG_CONTINUE;
         }
         if (dbg_read_memory(pThreadName->szName, pThread->name, 9))
-            dbg_printf("Thread ID=%04x renamed using MS VC6 extension (name==\"%s\")\n",
+            dbg_printf("Thread ID=%04x renamed using MS VC6 extension (name==\"%.9s\")\n",
                        pThread->tid, pThread->name);
         return DBG_CONTINUE;
     }
