@@ -770,6 +770,7 @@ static void test_transformpoints(void)
     GpGraphics *graphics = NULL;
     HDC hdc = GetDC(0);
     GpPointF ptf[2];
+    GpPoint pt[2];
 
     status = GdipCreateFromHDC(hdc, &graphics);
     expect(Ok, status);
@@ -867,6 +868,17 @@ static void test_transformpoints(void)
     expectf(0.0, ptf[0].Y);
     expectf(0.0, ptf[1].X);
     expectf(1.0, ptf[1].Y);
+
+    pt[0].X = 1;
+    pt[0].Y = 0;
+    pt[1].X = 0;
+    pt[1].Y = 1;
+    status = GdipTransformPointsI(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 2);
+    expect(Ok, status);
+    expect(18, pt[0].X);
+    expect(15, pt[0].Y);
+    expect(15, pt[1].X);
+    expect(18, pt[1].Y);
 
     GdipDeleteGraphics(graphics);
     ReleaseDC(0, hdc);

@@ -3662,9 +3662,34 @@ GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace 
 GpStatus WINGDIPAPI GdipTransformPointsI(GpGraphics *graphics, GpCoordinateSpace dst_space,
                                          GpCoordinateSpace src_space, GpPoint *points, INT count)
 {
-    FIXME("(%p, %d, %d, %p, %d): stub\n", graphics, dst_space, src_space, points, count);
+    GpPointF *pointsF;
+    GpStatus ret;
+    INT i;
 
-    return NotImplemented;
+    TRACE("(%p, %d, %d, %p, %d)\n", graphics, dst_space, src_space, points, count);
+
+    if(count <= 0)
+        return InvalidParameter;
+
+    pointsF = GdipAlloc(sizeof(GpPointF) * count);
+    if(!pointsF)
+        return OutOfMemory;
+
+    for(i = 0; i < count; i++){
+        pointsF[i].X = (REAL)points[i].X;
+        pointsF[i].Y = (REAL)points[i].Y;
+    }
+
+    ret = GdipTransformPoints(graphics, dst_space, src_space, pointsF, count);
+
+    if(ret == Ok)
+        for(i = 0; i < count; i++){
+            points[i].X = roundr(pointsF[i].X);
+            points[i].Y = roundr(pointsF[i].Y);
+        }
+    GdipFree(pointsF);
+
+    return ret;
 }
 
 HPALETTE WINGDIPAPI GdipCreateHalftonePalette(void)
