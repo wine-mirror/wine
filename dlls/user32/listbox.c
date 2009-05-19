@@ -1725,13 +1725,13 @@ static LRESULT LISTBOX_RemoveItem( LB_DESCR *descr, INT index )
 
     if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
 
+    /* We need to invalidate the original rect instead of the updated one. */
+    LISTBOX_InvalidateItems( descr, index );
+
     descr->nb_items--;
     LISTBOX_DeleteItem( descr, index );
 
     if (!descr->nb_items) return LB_OKAY;
-
-    /* We need to invalidate the original rect instead of the updated one. */
-    LISTBOX_InvalidateItems( descr, index );
 
     /* Remove the item */
 
