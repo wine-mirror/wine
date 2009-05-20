@@ -6536,12 +6536,36 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     TRACE("lpht->iItem=%d\n", iItem); 
     if (iItem == -1) return -1;
 
+    if (uView == LVS_REPORT && subitem)
+    {
+	RECT  bounds, *pRect;
+	INT j;
+
+	/* for top/bottom only */
+	bounds.left = 0;
+	LISTVIEW_GetItemRect(infoPtr, iItem, &bounds);
+
+	for (j = 0; j < DPA_GetPtrCount(infoPtr->hdpaColumns); j++)
+	{
+	    pRect = &LISTVIEW_GetColumnInfo(infoPtr, j)->rcHeader;
+	    bounds.left  = pRect->left;
+	    bounds.right = pRect->right;
+
+	    if (PtInRect(&bounds, lpht->pt))
+	    {
+		lpht->iSubItem = j;
+		break;
+	    }
+	}
+	TRACE("lpht->iSubItem=%d\n", lpht->iSubItem);
+    }
+
     lvItem.mask = LVIF_STATE | LVIF_TEXT;
     if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
     lvItem.stateMask = LVIS_STATEIMAGEMASK;
     if (uView == LVS_ICON) lvItem.stateMask |= LVIS_FOCUSED;
     lvItem.iItem = iItem;
-    lvItem.iSubItem = 0;
+    lvItem.iSubItem = lpht->iSubItem;
     lvItem.pszText = szDispText;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return -1;
@@ -6568,26 +6592,15 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	lpht->flags |= LVHT_ONITEMLABEL;
     else if (infoPtr->himlState && STATEIMAGEINDEX(lvItem.state) && PtInRect(&rcState, opt))
 	lpht->flags |= LVHT_ONITEMSTATEICON;
+    /* special case for LVS_EX_FULLROWSELECT */
+    if (uView == LVS_REPORT && infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT &&
+      !(lpht->flags & LVHT_ONITEM))
+    {
+	lpht->flags = LVHT_ONITEM | LVHT_ABOVE;
+    }
     if (lpht->flags & LVHT_ONITEM)
 	lpht->flags &= ~LVHT_NOWHERE;
-   
     TRACE("lpht->flags=0x%x\n", lpht->flags); 
-    if (uView == LVS_REPORT && subitem)
-    {
-  	INT j;
-
-        rcBounds.right = rcBounds.left;
-        for (j = 0; j < DPA_GetPtrCount(infoPtr->hdpaColumns); j++)
-        {
-	    rcBounds.left = rcBounds.right;
-	    rcBounds.right += LISTVIEW_GetColumnWidth(infoPtr, j);
-	    if (PtInRect(&rcBounds, opt))
-	    {
-		lpht->iSubItem = j;
-		break;
-	    }
-	}
-    }
 
     if (select && !(uView == LVS_REPORT &&
                     ((infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) ||
@@ -6595,6 +6608,9 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     {
         if (uView == LVS_REPORT)
         {
+            /* get main item bounds */
+            lvItem.iSubItem = 0;
+            LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, NULL, &rcIcon, &rcState, &rcLabel);
             UnionRect(&rcBounds, &rcIcon, &rcLabel);
             UnionRect(&rcBounds, &rcBounds, &rcState);
         }
@@ -10054,7 +10070,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   /* case LVM_HASGROUP: */
 
   case LVM_HITTEST:
-    return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, FALSE, FALSE);
+    return LISTVIEW_HitTest(infoPtr, (LPLVHITTESTINFO)lParam, FALSE, TRUE);
 
   case LVM_INSERTCOLUMNA:
     return LISTVIEW_InsertColumnT(infoPtr, (INT)wParam, (LPLVCOLUMNW)lParam, FALSE);
