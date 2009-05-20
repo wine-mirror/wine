@@ -402,7 +402,7 @@ DWORD_PTR WINAPI SetThreadAffinityMask( HANDLE hThread, DWORD_PTR dwThreadAffini
 
 
 /**********************************************************************
- * SetThreadIdealProcessor [KERNEL32.@]  Obtains timing information.
+ * SetThreadIdealProcessor [KERNEL32.@]  Sets preferred processor for thread.
  *
  * RETURNS
  *    Success: Value of last call to SetThreadIdealProcessor
