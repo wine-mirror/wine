@@ -3832,7 +3832,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     TRACE("-->\n");
 
 
-    if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
+    if (lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         goto lend;
