@@ -2215,6 +2215,32 @@ static void test_nosortheader(void)
     DestroyWindow(hwnd);
 }
 
+static void test_setredraw(void)
+{
+    HWND hwnd;
+    DWORD_PTR style;
+    DWORD ret;
+
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    /* Passing WM_SETREDRAW to DefWinProc removes WS_VISIBLE.
+       ListView seems to handle it internally without DefWinProc */
+
+    /* default value first */
+    ret = SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
+    expect(0, ret);
+    /* disable */
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    ok(style & WS_VISIBLE, "Expected WS_VISIBLE to be set\n");
+    ret = SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
+    expect(0, ret);
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    ok(style & WS_VISIBLE, "Expected WS_VISIBLE to be set\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -2257,4 +2283,7 @@ START_TEST(listview)
     test_ownerdata();
     test_norecompute();
     test_nosortheader();
+    test_setredraw();
+
+    DestroyWindow(hwndparent);
 }
