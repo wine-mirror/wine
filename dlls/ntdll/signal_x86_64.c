@@ -1202,7 +1202,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
 
     dump_unwind_info( base, function );
 
-    frame = context->Rsp;
+    frame = *frame_ret = context->Rsp;
     for (;;)
     {
         info = (struct UNWIND_INFO *)((char *)base + function->UnwindData);
@@ -1251,7 +1251,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
                 context->Rsp += (info->opcodes[i].info + 1) * 8;
                 break;
             case UWOP_SET_FPREG:  /* leaq nn(%rsp),%framereg */
-                context->Rsp = frame;
+                context->Rsp = *frame_ret = frame;
                 break;
             case UWOP_SAVE_NONVOL:  /* movq %reg,n(%rsp) */
                 off = frame + *(USHORT *)&info->opcodes[i+1] * 8;
@@ -1285,7 +1285,6 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
     /* now pop return address */
     context->Rip = *(ULONG64 *)context->Rsp;
     context->Rsp += sizeof(ULONG64);
-    *frame_ret = frame;
 
     if (!(info->flags & type)) return NULL;  /* no matching handler */
     if (prolog_offset != ~0) return NULL;  /* inside prolog */
