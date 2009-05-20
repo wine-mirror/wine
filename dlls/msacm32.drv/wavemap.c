@@ -56,8 +56,8 @@ typedef	struct tagWAVEMAPDATA {
     } u;
     HACMSTREAM	hAcmStream;
     /* needed data to filter callbacks. Only needed when hAcmStream is not 0 */
-    DWORD	dwCallback;
-    DWORD	dwClientInstance;
+    DWORD_PTR	dwCallback;
+    DWORD_PTR	dwClientInstance;
     DWORD	dwFlags;
     /* ratio to compute position from a PCM playback to any format */
     DWORD       avgSpeedOuter;
@@ -149,7 +149,7 @@ static	DWORD	wodOpenHelper(WAVEMAPDATA* wom, UINT idx,
     return ret;
 }
 
-static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
+static	DWORD	wodOpen(DWORD_PTR *lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     UINT 		ndlo, ndhi;
     UINT		i;
@@ -627,7 +627,7 @@ DWORD WINAPI WAVEMAP_wodMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     case DRVM_DISABLE:
 	/* FIXME: Pretend this is supported */
 	return 0;
-    case WODM_OPEN:	 	return wodOpen		((LPDWORD)dwUser,      (LPWAVEOPENDESC)dwParam1,dwParam2);
+    case WODM_OPEN:	 	return wodOpen		((DWORD_PTR*)dwUser,      (LPWAVEOPENDESC)dwParam1,dwParam2);
     case WODM_CLOSE:	 	return wodClose		((WAVEMAPDATA*)dwUser);
     case WODM_WRITE:	 	return wodWrite		((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1,	dwParam2);
     case WODM_PAUSE:	 	return wodPause		((WAVEMAPDATA*)dwUser);
@@ -738,7 +738,7 @@ static	DWORD	widOpenHelper(WAVEMAPDATA* wim, UINT idx,
     return ret;
 }
 
-static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
+static	DWORD	widOpen(DWORD_PTR *lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     UINT 		ndlo, ndhi;
     UINT		i;
@@ -1157,7 +1157,7 @@ DWORD WINAPI WAVEMAP_widMessage(WORD wDevID, WORD wMsg, DWORD_PTR dwUser,
 	/* FIXME: Pretend this is supported */
 	return 0;
 
-    case WIDM_OPEN:		return widOpen          ((LPDWORD)dwUser,     (LPWAVEOPENDESC)dwParam1, dwParam2);
+    case WIDM_OPEN:		return widOpen          ((DWORD_PTR*)dwUser,     (LPWAVEOPENDESC)dwParam1, dwParam2);
     case WIDM_CLOSE:		return widClose         ((WAVEMAPDATA*)dwUser);
 
     case WIDM_ADDBUFFER:	return widAddBuffer     ((WAVEMAPDATA*)dwUser, (LPWAVEHDR)dwParam1, 	dwParam2);
