@@ -1002,20 +1002,18 @@ static HRESULT report_data(BindProtocol *This, DWORD bscf, ULONG progress, ULONG
 
         do {
             read = 0;
-            hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size, BUFFER_SIZE-This->buf_size, &read);
-            if(hres != S_OK)
-                break;
+            hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
+                    BUFFER_SIZE-This->buf_size, &read);
+            if(FAILED(hres) && hres != E_PENDING)
+                return hres;
             This->buf_size += read;
-        }while(This->buf_size < MIME_TEST_SIZE);
-        if(FAILED(hres) && hres != E_PENDING)
-            return hres;
+        }while(This->buf_size < MIME_TEST_SIZE && hres == S_OK);
 
-        This->buf_size += read;
         if(This->buf_size < MIME_TEST_SIZE && hres != S_FALSE)
             return S_OK;
 
-
-        hres = FindMimeFromData(NULL, This->url, This->buf, min(This->buf_size, MIME_TEST_SIZE), This->mime, 0, &mime, 0);
+        hres = FindMimeFromData(NULL, This->url, This->buf, min(This->buf_size, MIME_TEST_SIZE),
+                This->mime, 0, &mime, 0);
         if(FAILED(hres))
             return hres;
 
