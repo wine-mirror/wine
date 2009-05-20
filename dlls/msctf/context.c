@@ -69,6 +69,7 @@ typedef struct tagContext {
     BOOL connected;
 
     TfClientId tidOwner;
+    TfEditCookie defaultCookie;
 
     ITextStoreACP   *pITextStoreACP;
     ITfContextOwnerCompositionSink *pITfContextOwnerCompositionSink;
@@ -85,6 +86,10 @@ typedef struct tagContext {
 
 } Context;
 
+typedef struct tagEditCookie {
+    DWORD lockType;
+    Context *pOwningContext;
+} EditCookie;
 
 typedef struct tagTextStoreACPSink {
     const ITextStoreACPSinkVtbl *TextStoreACPSinkVtbl;
@@ -111,6 +116,7 @@ static void free_sink(ContextSink *sink)
 static void Context_Destructor(Context *This)
 {
     struct list *cursor, *cursor2;
+    EditCookie *cookie;
     TRACE("destroying %p\n", This);
 
     if (This->pITextStoreACPSink)
@@ -124,6 +130,13 @@ static void Context_Destructor(Context *This)
 
     if (This->pITfContextOwnerCompositionSink)
         ITextStoreACPSink_Release(This->pITfContextOwnerCompositionSink);
+
+    if (This->defaultCookie)
+    {
+        cookie = remove_Cookie(This->defaultCookie);
+        HeapFree(GetProcessHeap(),0,cookie);
+        This->defaultCookie = 0;
+    }
 
     LIST_FOR_EACH_SAFE(cursor, cursor2, &This->pContextKeyEventSink)
     {
@@ -481,10 +494,18 @@ static const ITfSourceVtbl Context_SourceVtbl =
 HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **ppOut, TfEditCookie *pecTextStore)
 {
     Context *This;
+    EditCookie *cookie;
 
     This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(Context));
     if (This == NULL)
         return E_OUTOFMEMORY;
+
+    cookie = HeapAlloc(GetProcessHeap(),0,sizeof(EditCookie));
+    if (cookie == NULL)
+    {
+        HeapFree(GetProcessHeap(),0,This);
+        return E_OUTOFMEMORY;
+    }
 
     TRACE("(%p) %x %p %p %p\n",This, tidOwner, punk, ppOut, pecTextStore);
 
@@ -493,6 +514,9 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     This->refCount = 1;
     This->tidOwner = tidOwner;
     This->connected = FALSE;
+
+    cookie->lockType = TF_ES_READ;
+    cookie->pOwningContext = This;
 
     if (punk)
     {
@@ -506,16 +530,17 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
             FIXME("Unhandled pUnk\n");
     }
 
-    TRACE("returning %p\n", This);
-    *ppOut = (ITfContext*)This;
-    /* FIXME */
-    *pecTextStore = 0xdeaddead;
+    This->defaultCookie = generate_Cookie(COOKIE_MAGIC_EDITCOOKIE,cookie);
+    *pecTextStore = This->defaultCookie;
 
     list_init(&This->pContextKeyEventSink);
     list_init(&This->pEditTransactionSink);
     list_init(&This->pStatusSink);
     list_init(&This->pTextEditSink);
     list_init(&This->pTextLayoutSink);
+
+    *ppOut = (ITfContext*)This;
+    TRACE("returning %p\n", This);
 
     return S_OK;
 }
