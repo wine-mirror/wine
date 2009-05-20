@@ -47,6 +47,12 @@ static BOOL X11DRV_XRender_Installed = FALSE;
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrender.h>
 
+#ifndef RepeatNone  /* added in 0.10 */
+#define RepeatNone    0
+#define RepeatNormal  1
+#define RepeatPad     2
+#define RepeatReflect 3
+#endif
 
 enum drawable_depth_type {mono_drawable, color_drawable};
 static XRenderPictFormat *pict_formats[2];
@@ -1166,7 +1172,7 @@ static Picture get_tile_pict(enum drawable_depth_type type, int text_pixel)
         wine_tsx11_lock();
         tile->xpm = XCreatePixmap(gdi_display, root_window, 1, 1, pict_formats[type]->depth);
 
-        pa.repeat = True;
+        pa.repeat = RepeatNormal;
         tile->pict = pXRenderCreatePicture(gdi_display, tile->xpm, pict_formats[type], CPRepeat, &pa);
         wine_tsx11_unlock();
 
