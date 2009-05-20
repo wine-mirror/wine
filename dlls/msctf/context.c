@@ -668,6 +668,8 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
 {
     TextStoreACPSink *This = (TextStoreACPSink *)iface;
     HRESULT hr;
+    EditCookie *cookie;
+    TfEditCookie ec;
 
     TRACE("(%p) %x\n",This, dwLockFlags);
 
@@ -677,11 +679,22 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
         return E_FAIL;
     }
 
-    /* TODO:  generate and use an edit cookie */
-    hr = ITfEditSession_DoEditSession(This->pContext->currentEditSession, 0xdeadcafe);
+    cookie = HeapAlloc(GetProcessHeap(),0,sizeof(EditCookie));
+    if (!cookie)
+        return E_OUTOFMEMORY;
+
+    cookie->lockType = dwLockFlags;
+    cookie->pOwningContext = This->pContext;
+    ec = generate_Cookie(COOKIE_MAGIC_EDITCOOKIE, cookie);
+
+    hr = ITfEditSession_DoEditSession(This->pContext->currentEditSession, ec);
 
     ITfEditSession_Release(This->pContext->currentEditSession);
     This->pContext->currentEditSession = NULL;
+
+    /* Edit Cookie is only valid during the edit session */
+    cookie = remove_Cookie(ec);
+    HeapFree(GetProcessHeap(),0,cookie);
 
     return hr;
 }
