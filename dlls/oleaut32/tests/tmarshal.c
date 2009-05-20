@@ -1356,7 +1356,7 @@ static void test_DispCallFunc(void)
     V_VT(&varref) = VT_ERROR;
     V_ERROR(&varref) = DISP_E_PARAMNOTFOUND;
     VariantInit(&varresult);
-    hr = DispCallFunc(pWidget, 36, CC_STDCALL, VT_UI4, 4, rgvt, rgpvarg, &varresult);
+    hr = DispCallFunc(pWidget, 9*sizeof(void*), CC_STDCALL, VT_UI4, 4, rgvt, rgpvarg, &varresult);
     ok_ole_success(hr, DispCallFunc);
     VariantClear(&varresult);
     VariantClear(&vararg[1]);
@@ -1405,7 +1405,8 @@ START_TEST(tmarshal)
     test_DispCallFunc();
     test_StaticWidget();
 
-    hr = UnRegisterTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, 1);
+    hr = UnRegisterTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL,
+                           sizeof(void*) == 8 ? SYS_WIN64 : SYS_WIN32);
     ok_ole_success(hr, UnRegisterTypeLib);
 
     CoUninitialize();
