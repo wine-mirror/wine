@@ -1060,6 +1060,131 @@ static int get_opcode_size( struct opcode op )
     }
 }
 
+static BOOL is_inside_epilog( BYTE *pc )
+{
+    /* add or lea must be the first instruction, and it must have a rex.W prefix */
+    if ((pc[0] & 0xf8) == 0x48)
+    {
+        switch (pc[1])
+        {
+        case 0x81: /* add $nnnn,%rsp */
+            if (pc[0] == 0x48 && pc[2] == 0xc4)
+            {
+                pc += 7;
+                break;
+            }
+            return FALSE;
+        case 0x83: /* add $n,%rsp */
+            if (pc[0] == 0x48 && pc[2] == 0xc4)
+            {
+                pc += 4;
+                break;
+            }
+            return FALSE;
+        case 0x8d: /* lea n(reg),%rsp */
+            if (pc[0] & 0x06) return FALSE;  /* rex.RX must be cleared */
+            if (((pc[2] >> 3) & 7) != 4) return FALSE;  /* dest reg mus be %rsp */
+            if ((pc[2] & 7) == 4) return FALSE;  /* no SIB byte allowed */
+            if ((pc[2] >> 6) == 1)  /* 8-bit offset */
+            {
+                pc += 4;
+                break;
+            }
+            if ((pc[2] >> 6) == 2)  /* 32-bit offset */
+            {
+                pc += 7;
+                break;
+            }
+            return FALSE;
+        }
+    }
+
+    /* now check for various pop instructions */
+
+    for (;;)
+    {
+        BYTE rex = 0;
+
+        if ((*pc & 0xf0) == 0x40) rex = *pc++ & 0x0f;  /* rex prefix */
+
+        switch (*pc)
+        {
+        case 0x58: /* pop %rax/%r8 */
+        case 0x59: /* pop %rcx/%r9 */
+        case 0x5a: /* pop %rdx/%r10 */
+        case 0x5b: /* pop %rbx/%r11 */
+        case 0x5c: /* pop %rsp/%r12 */
+        case 0x5d: /* pop %rbp/%r13 */
+        case 0x5e: /* pop %rsi/%r14 */
+        case 0x5f: /* pop %rdi/%r15 */
+            pc++;
+            continue;
+        case 0xc2: /* ret $nn */
+        case 0xc3: /* ret */
+            return TRUE;
+        /* FIXME: add various jump instructions */
+        }
+        return FALSE;
+    }
+}
+
+/* execute a function epilog, which must have been validated with is_inside_epilog() */
+static void interpret_epilog( BYTE *pc, CONTEXT *context, KNONVOLATILE_CONTEXT_POINTERS *ctx_ptr )
+{
+    for (;;)
+    {
+        BYTE rex = 0;
+
+        if ((*pc & 0xf0) == 0x40) rex = *pc++ & 0x0f;  /* rex prefix */
+
+        switch (*pc)
+        {
+        case 0x58: /* pop %rax/r8 */
+        case 0x59: /* pop %rcx/r9 */
+        case 0x5a: /* pop %rdx/r10 */
+        case 0x5b: /* pop %rbx/r11 */
+        case 0x5c: /* pop %rsp/r12 */
+        case 0x5d: /* pop %rbp/r13 */
+        case 0x5e: /* pop %rsi/r14 */
+        case 0x5f: /* pop %rdi/r15 */
+            set_int_reg( context, ctx_ptr, *pc - 0x58 + (rex & 1) * 8, *(ULONG64 *)context->Rsp );
+            context->Rsp += sizeof(ULONG64);
+            pc++;
+            continue;
+        case 0x81: /* add $nnnn,%rsp */
+            context->Rsp += *(LONG *)(pc + 2);
+            pc += 2 + sizeof(LONG);
+            continue;
+        case 0x83: /* add $n,%rsp */
+            context->Rsp += (signed char)pc[2];
+            pc += 3;
+            continue;
+        case 0x8d:
+            if ((pc[1] >> 6) == 1)  /* lea n(reg),%rsp */
+            {
+                context->Rsp = get_int_reg( context, (pc[1] & 7) + (rex & 1) * 8 ) + (signed char)pc[2];
+                pc += 3;
+            }
+            else  /* lea nnnn(reg),%rsp */
+            {
+                context->Rsp = get_int_reg( context, (pc[1] & 7) + (rex & 1) * 8 ) + *(LONG *)(pc + 2);
+                pc += 2 + sizeof(LONG);
+            }
+            continue;
+        case 0xc2: /* ret $nn */
+            context->Rip = *(ULONG64 *)context->Rsp;
+            context->Rsp += sizeof(ULONG64) + *(WORD *)(pc + 1);
+            return;
+        case 0xc3: /* ret */
+            context->Rip = *(ULONG64 *)context->Rsp;
+            context->Rsp += sizeof(ULONG64);
+            return;
+        /* FIXME: add various jump instructions */
+        }
+        return;
+    }
+}
+
 /**********************************************************************
  *              RtlVirtualUnwind   (NTDLL.@)
  */
@@ -1100,7 +1225,12 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
         else
         {
             prolog_offset = ~0;
-            /* FIXME: check for function epilog */
+            if (is_inside_epilog( (BYTE *)pc ))
+            {
+                interpret_epilog( (BYTE *)pc, context, ctx_ptr );
+                *frame_ret = frame;
+                return NULL;
+            }
         }
 
         for (i = 0; i < info->count; i += get_opcode_size(info->opcodes[i]))
