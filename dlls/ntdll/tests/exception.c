@@ -935,6 +935,24 @@ static void test_fpu_exceptions(void)
 #define UWOP_SAVE_XMM128_FAR 9
 #define UWOP_PUSH_MACHFRAME  10
 
+struct results
+{
+    int rip_offset;   /* rip offset from code start */
+    int rbp_offset;   /* rbp offset from stack pointer */
+    int handler;      /* expect handler to be set? */
+    int rip;          /* expected final rip value */
+    int regs[8][2];   /* expected values for registers */
+};
+
+struct unwind_test
+{
+    const BYTE *function;
+    size_t function_size;
+    const BYTE *unwind_info;
+    const struct results *results;
+    unsigned int nb_results;
+};
+
 enum regs
 {
     rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi,
@@ -949,19 +967,128 @@ static const char * const reg_names[16] =
 
 #define UWOP(code,info) (UWOP_##code | ((info) << 4))
 
+static void call_virtual_unwind( int testnum, const struct unwind_test *test )
+{
+    static const int code_offset = 1024;
+    static const int unwind_offset = 2048;
+    void *handler, *data;
+    CONTEXT context;
+    RUNTIME_FUNCTION runtime_func;
+    KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
+    UINT i, j, k;
+    ULONG64 fake_stack[256];
+    ULONG64 frame, orig_rip, orig_rbp, unset_reg;
+    UINT unwind_size = 4 + 2 * test->unwind_info[2] + 8;
+
+    memcpy( (char *)code_mem + code_offset, test->function, test->function_size );
+    memcpy( (char *)code_mem + unwind_offset, test->unwind_info, unwind_size );
+
+    runtime_func.BeginAddress = code_offset;
+    runtime_func.EndAddress = code_offset + test->function_size;
+    runtime_func.UnwindData = unwind_offset;
+
+    trace( "code: %p stack: %p\n", code_mem, fake_stack );
+
+    for (i = 0; i < test->nb_results; i++)
+    {
+        memset( &ctx_ptr, 0, sizeof(ctx_ptr) );
+        memset( &context, 0x55, sizeof(context) );
+        memset( &unset_reg, 0x55, sizeof(unset_reg) );
+        for (j = 0; j < 256; j++) fake_stack[j] = j * 8;
+
+        context.Rsp = (ULONG_PTR)fake_stack;
+        context.Rbp = (ULONG_PTR)fake_stack + test->results[i].rbp_offset;
+        orig_rbp = context.Rbp;
+        orig_rip = (ULONG64)code_mem + code_offset + test->results[i].rip_offset;
+
+        trace( "%u/%u: rip=%p (%02x) rbp=%p rsp=%p\n", testnum, i,
+               (void *)orig_rip, *(BYTE *)orig_rip, (void *)orig_rbp, (void *)context.Rsp );
+
+        data = (void *)0xdeadbeef;
+        handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_rip,
+                                    &runtime_func, &context, &data, &frame, &ctx_ptr );
+        if (test->results[i].handler)
+        {
+            ok( (char *)handler == (char *)code_mem + 0x200,
+                "%u/%u: wrong handler %p/%p\n", testnum, i, handler, (char *)code_mem + 0x200 );
+            if (handler) ok( *(DWORD *)data == 0x08070605,
+                             "%u/%u: wrong handler data %p\n", testnum, i, data );
+        }
+        else
+        {
+            ok( handler == NULL, "%u/%u: handler %p instead of NULL\n", testnum, i, handler );
+            ok( data == (void *)0xdeadbeef, "%u/%u: handler data set to %p\n", testnum, i, data );
+        }
+
+        ok( context.Rip == test->results[i].rip, "%u/%u: wrong rip %p/%x\n",
+            testnum, i, (void *)context.Rip, test->results[i].rip );
+
+        for (j = 0; j < 16; j++)
+        {
+            static const UINT nb_regs = sizeof(test->results[i].regs) / sizeof(test->results[i].regs[0]);
+
+            for (k = 0; k < nb_regs; k++)
+            {
+                if (test->results[i].regs[k][0] == -1)
+                {
+                    k = nb_regs;
+                    break;
+                }
+                if (test->results[i].regs[k][0] == j) break;
+            }
+
+            if (j == rsp)  /* rsp is special */
+            {
+                ok( !ctx_ptr.u2.IntegerContext[j],
+                    "%u/%u: rsp should not be set in ctx_ptr\n", testnum, i );
+                ok( context.Rsp == (ULONG64)fake_stack + test->results[i].regs[k][1],
+                    "%u/%u: register rsp wrong %p/%p\n",
+                    testnum, i, (void *)context.Rsp, (char *)fake_stack + test->results[i].regs[k][1] );
+                continue;
+            }
+
+            if (ctx_ptr.u2.IntegerContext[j])
+            {
+                ok( k < nb_regs, "%u/%u: register %s should not be set to %lx\n",
+                    testnum, i, reg_names[j], *(&context.Rax + j) );
+                if (k < nb_regs)
+                    ok( *(&context.Rax + j) == test->results[i].regs[k][1],
+                        "%u/%u: register %s wrong %p/%x\n",
+                        testnum, i, reg_names[j], (void *)*(&context.Rax + j), test->results[i].regs[k][1] );
+            }
+            else
+            {
+                ok( k == nb_regs, "%u/%u: register %s should be set\n", testnum, i, reg_names[j] );
+                if (j == rbp)
+                    ok( context.Rbp == orig_rbp, "%u/%u: register rbp wrong %p/unset\n",
+                        testnum, i, (void *)context.Rbp );
+                else
+                    ok( *(&context.Rax + j) == unset_reg,
+                        "%u/%u: register %s wrong %p/unset\n",
+                        testnum, i, reg_names[j], (void *)*(&context.Rax + j));
+            }
+        }
+    }
+}
+
 static void test_virtual_unwind(void)
 {
-    static const BYTE function[] =
+    static const BYTE function_0[] =
     {
         0xff, 0xf5,                                  /* 00: push %rbp */
         0x48, 0x81, 0xec, 0x10, 0x01, 0x00, 0x00,    /* 02: sub $0x110,%rsp */
         0x48, 0x8d, 0x6c, 0x24, 0x30,                /* 09: lea 0x30(%rsp),%rbp */
         0x48, 0x89, 0x9d, 0xf0, 0x00, 0x00, 0x00,    /* 0e: mov %rbx,0xf0(%rbp) */
         0x48, 0x89, 0xb5, 0xf8, 0x00, 0x00, 0x00,    /* 15: mov %rsi,0xf8(%rbp) */
-        0x90                                         /* 1c: nop */
+        0x90,                                        /* 1c: nop */
+        0x48, 0x8b, 0x9d, 0xf0, 0x00, 0x00, 0x00,    /* 1d: mov 0xf0(%rbp),%rbx */
+        0x48, 0x8b, 0xb5, 0xf8, 0x00, 0x00, 0x00,    /* 24: mov 0xf8(%rbp),%rsi */
+        0x48, 0x8d, 0xa5, 0xe0, 0x00, 0x00, 0x00,    /* 2b: lea 0xe0(%rbp),%rsp */
+        0x5d,                                        /* 32: pop %rbp */
+        0xc3                                         /* 33: ret */
     };
 
-    static const BYTE unwind_info[] =
+    static const BYTE unwind_info_0[] =
     {
         1 | (UNW_FLAG_EHANDLER << 3),  /* version + flags */
         0x1c,                          /* prolog size */
@@ -978,14 +1105,7 @@ static void test_virtual_unwind(void)
         0x05, 0x06, 0x07, 0x08,  /* data */
     };
 
-    static const struct
-    {
-        int rip_offset;   /* rip offset from code start */
-        int rbp_offset;   /* rbp offset from stack pointer */
-        int handler;      /* expect handler to be set? */
-        int rip;          /* expected final rip value */
-        int regs[8][2];   /* expected values for registers */
-    } results[] =
+    static const struct results results_0[] =
     {
       /* offset  rbp   handler  rip     registers */
         { 0x00,  0x40,  FALSE, 0x000, { {rsp,0x008}, {-1,-1} }},
@@ -994,103 +1114,70 @@ static void test_virtual_unwind(void)
         { 0x0e,  0x40,  FALSE, 0x128, { {rsp,0x130}, {rbp,0x120}, {-1,-1} }},
         { 0x15,  0x40,  FALSE, 0x128, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {-1,-1} }},
         { 0x1c,  0x40,  TRUE,  0x128, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {rsi,0x138}, {-1,-1}}},
+        { 0x1d,  0x40,  TRUE,  0x128, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {rsi,0x138}, {-1,-1}}},
+        { 0x24,  0x40,  TRUE,  0x128, { {rsp,0x130}, {rbp,0x120}, {rbx,0x130}, {rsi,0x138}, {-1,-1}}},
     };
 
-    static const int code_offset = 1024;
-    static const int unwind_offset = 1024;
-    void *handler, *data;
-    CONTEXT context;
-    RUNTIME_FUNCTION runtime_func;
-    KNONVOLATILE_CONTEXT_POINTERS ctx_ptr;
-    UINT i, j, k;
-    ULONG64 fake_stack[256];
-    ULONG64 frame, orig_rip, orig_rbp, unset_reg;
 
-    memcpy( (char *)code_mem + code_offset, function, sizeof(function) );
-    memcpy( (char *)code_mem + unwind_offset, unwind_info, sizeof(unwind_info) );
-
-    runtime_func.BeginAddress = code_offset;
-    runtime_func.EndAddress = code_offset + sizeof(function);
-    runtime_func.UnwindData = unwind_offset;
-
-    trace( "code: %p stack: %p\n", code_mem, fake_stack );
-
-    for (i = 0; i < sizeof(results)/sizeof(results[0]); i++)
+    static const BYTE function_1[] =
     {
-        memset( &ctx_ptr, 0, sizeof(ctx_ptr) );
-        memset( &context, 0x55, sizeof(context) );
-        memset( &unset_reg, 0x55, sizeof(unset_reg) );
-        for (j = 0; j < 256; j++) fake_stack[j] = j * 8;
+        0x53,                     /* 00: push %rbx */
+        0x55,                     /* 01: push %rbp */
+        0x56,                     /* 02: push %rsi */
+        0x57,                     /* 03: push %rdi */
+        0x41, 0x54,               /* 04: push %r12 */
+        0x48, 0x83, 0xec, 0x30,   /* 06: sub $0x30,%rsp */
+        0x90, 0x90,               /* 0a: nop; nop */
+        0x48, 0x83, 0xc4, 0x30,   /* 0c: add $0x30,%rsp */
+        0x41, 0x5c,               /* 10: pop %r12 */
+        0x5f,                     /* 12: pop %rdi */
+        0x5e,                     /* 13: pop %rsi */
+        0x5d,                     /* 14: pop %rbp */
+        0x5b,                     /* 15: pop %rbx */
+        0xc3                      /* 16: ret */
+     };
 
-        context.Rsp = (ULONG_PTR)fake_stack;
-        context.Rbp = (ULONG_PTR)fake_stack + results[i].rbp_offset;
-        orig_rbp = context.Rbp;
-        orig_rip = (ULONG64)code_mem + code_offset + results[i].rip_offset;
+    static const BYTE unwind_info_1[] =
+    {
+        1 | (UNW_FLAG_EHANDLER << 3),  /* version + flags */
+        0x0a,                          /* prolog size */
+        6,                             /* opcode count */
+        0,                             /* frame reg */
 
-        trace( "%u: rip=%p rbp=%p rsp=%p\n", i, (void *)orig_rip, (void *)orig_rbp, (void *)context.Rsp );
+        0x0a, UWOP(ALLOC_SMALL, 5),   /* 0a: sub $0x30,%rsp */
+        0x06, UWOP(PUSH_NONVOL, r12), /* 06: push %r12 */
+        0x04, UWOP(PUSH_NONVOL, rdi), /* 04: push %rdi */
+        0x03, UWOP(PUSH_NONVOL, rsi), /* 03: push %rsi */
+        0x02, UWOP(PUSH_NONVOL, rbp), /* 02: push %rbp */
+        0x01, UWOP(PUSH_NONVOL, rbx), /* 01: push %rbx */
 
-        data = (void *)0xdeadbeef;
-        handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)code_mem, orig_rip,
-                                    &runtime_func, &context, &data, &frame, &ctx_ptr );
-        if (results[i].handler)
-        {
-            ok( (char *)handler == (char *)code_mem + 0x200,
-                "%u: wrong handler %p/%p\n", i, handler, (char *)code_mem + 0x200 );
-            ok( *(DWORD *)data == 0x08070605, "%u: wrong handler data %p\n", i, data );
-        }
-        else
-        {
-            ok( handler == NULL, "%u: handler %p instead of NULL\n", i, handler );
-            ok( data == (void *)0xdeadbeef, "%u: handler data set to %p\n", i, data );
-        }
+        0x00, 0x02, 0x00, 0x00,  /* handler */
+        0x05, 0x06, 0x07, 0x08,  /* data */
+    };
 
-        ok( context.Rip == results[i].rip, "%u: wrong rip %p/%x\n", i, (void *)context.Rip, results[i].rip );
+    static const struct results results_1[] =
+    {
+      /* offset  rbp   handler  rip     registers */
+        { 0x00,  0x50,  FALSE, 0x000, { {rsp,0x008}, {-1,-1} }},
+        { 0x01,  0x50,  FALSE, 0x008, { {rsp,0x010}, {rbx,0x000}, {-1,-1} }},
+        { 0x02,  0x50,  FALSE, 0x010, { {rsp,0x018}, {rbx,0x008}, {rbp,0x000}, {-1,-1} }},
+        { 0x03,  0x50,  FALSE, 0x018, { {rsp,0x020}, {rbx,0x010}, {rbp,0x008}, {rsi,0x000}, {-1,-1} }},
+        { 0x04,  0x50,  FALSE, 0x020, { {rsp,0x028}, {rbx,0x018}, {rbp,0x010}, {rsi,0x008}, {rdi,0x000}, {-1,-1} }},
+        { 0x06,  0x50,  FALSE, 0x028, { {rsp,0x030}, {rbx,0x020}, {rbp,0x018}, {rsi,0x010}, {rdi,0x008}, {r12,0x000}, {-1,-1} }},
+        { 0x0a,  0x50,  TRUE,  0x058, { {rsp,0x060}, {rbx,0x050}, {rbp,0x048}, {rsi,0x040}, {rdi,0x038}, {r12,0x030}, {-1,-1} }},
+    };
 
-        for (j = 0; j < 16; j++)
-        {
-            static const UINT nb_regs = sizeof(results[i].regs) / sizeof(results[i].regs[0]);
+    static const struct unwind_test tests[] =
+    {
+        { function_0, sizeof(function_0), unwind_info_0,
+          results_0, sizeof(results_0)/sizeof(results_0[0]) },
+        { function_1, sizeof(function_1), unwind_info_1,
+          results_1, sizeof(results_1)/sizeof(results_1[0]) }
+    };
+    unsigned int i;
 
-            for (k = 0; k < nb_regs; k++)
-            {
-                if (results[i].regs[k][0] == -1)
-                {
-                    k = nb_regs;
-                    break;
-                }
-                if (results[i].regs[k][0] == j) break;
-            }
-
-            if (j == rsp)  /* rsp is special */
-            {
-                ok( !ctx_ptr.u2.IntegerContext[j], "%u: rsp should not be set in ctx_ptr\n", i );
-                ok( context.Rsp == (ULONG64)fake_stack + results[i].regs[k][1],
-                    "%u: register rsp wrong %p/%p\n",
-                    i, (void *)context.Rsp, (char *)fake_stack + results[i].regs[k][1] );
-                continue;
-            }
-
-            if (ctx_ptr.u2.IntegerContext[j])
-            {
-                ok( k < nb_regs, "%u: register %s should not be set to %lx\n",
-                    i, reg_names[j], *(&context.Rax + j) );
-                if (k < nb_regs)
-                    ok( *(&context.Rax + j) == results[i].regs[k][1],
-                        "%u: register %s wrong %p/%x\n",
-                        i, reg_names[j], (void *)*(&context.Rax + j), results[i].regs[k][1] );
-            }
-            else
-            {
-                ok( k == nb_regs, "%u: register %s should be set\n", i, reg_names[j] );
-                if (j == rbp)
-                    ok( context.Rbp == orig_rbp, "%u: register rbp wrong %p/unset\n",
-                        i, (void *)context.Rbp );
-                else
-                    ok( *(&context.Rax + j) == unset_reg,
-                        "%u: register %s wrong %p/unset\n",
-                        i, reg_names[j], (void *)*(&context.Rax + j));
-            }
-        }
-    }
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+        call_virtual_unwind( i, &tests[i] );
 }
 
 #endif  /* __x86_64__ */
