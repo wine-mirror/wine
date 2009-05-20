@@ -1631,6 +1631,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     BOOL top_down = FALSE;
     RGNDATA *rgndata;
     enum drawable_depth_type dst_depth_type = (devDst->depth == 1) ? mono_drawable : color_drawable;
+    int repeat_src;
 
     if(!X11DRV_XRender_Installed) {
         FIXME("Unable to AlphaBlend without Xrender\n");
@@ -1657,10 +1658,14 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     heightSrc = pts[1].y - pts[0].y;
     if (!widthDst || !heightDst || !widthSrc || !heightSrc) return TRUE;
 
+    /* If the source is a 1x1 bitmap, tiling is equivalent to stretching, but
+        tiling is much faster. Therefore, we do no stretching in this case. */
+    repeat_src = widthSrc == 1 && heightSrc == 1;
+
 #ifndef HAVE_XRENDERSETPICTURETRANSFORM
-    if(widthDst != widthSrc || heightDst != heightSrc)
+    if((widthDst != widthSrc || heightDst != heightSrc) && !repeat_src)
 #else
-    if(!pXRenderSetPictureTransform)
+    if(!pXRenderSetPictureTransform && !repeat_src)
 #endif
     {
         FIXME("Unable to Stretch, XRenderSetPictureTransform is currently required\n");
@@ -1751,6 +1756,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     TRACE("src_format %p\n", src_format);
 
     pa.subwindow_mode = IncludeInferiors;
+    pa.repeat = repeat_src ? RepeatNormal : RepeatNone;
 
     /* FIXME use devDst->xrender->pict ? */
     dst_pict = pXRenderCreatePicture(gdi_display,
@@ -1769,7 +1775,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
 
     src_pict = pXRenderCreatePicture(gdi_display,
                                      xpm, src_format,
-                                     CPSubwindowMode, &pa);
+                                     CPSubwindowMode|CPRepeat, &pa);
     TRACE("src_pict %08lx\n", src_pict);
 
     if (rgndata)
@@ -1782,7 +1788,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     }
 
 #ifdef HAVE_XRENDERSETPICTURETRANSFORM
-    if(widthDst != widthSrc || heightDst != heightSrc) {
+    if(!repeat_src && (widthDst != widthSrc || heightDst != heightSrc)) {
         double xscale = widthSrc/(double)widthDst;
         double yscale = heightSrc/(double)heightDst;
         XTransform xform = {{
