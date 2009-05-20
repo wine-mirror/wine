@@ -125,7 +125,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
     WINMM_MapType		map;
     int				devID;
 
-    TRACE("(%s %u %u 0x%08x 0x%08lx 0x%08lx %c)\n",
+    TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx %c)\n",
 	  llTypes[mld->type].typestr, mld->uDeviceID, wMsg,
 	  mld->dwDriverInstance, dwParam1, dwParam2, bFrom32?'Y':'N');
 
@@ -159,7 +159,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 	assert(part->u.fnMessage32);
 
 	if (bFrom32) {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08x p1=0x%08lx p2=0x%08lx)\n",
+	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
 		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
             ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 	    TRACE("=> %s\n", WINMM_ErrorToString(ret));
@@ -175,7 +175,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 		break;
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08x p1=0x%08lx p2=0x%08lx)\n",
+		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance,
 					  dwParam1, dwParam2);
@@ -204,7 +204,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 		break;
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08x p1=0x%08lx p2=0x%08lx)\n",
+		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16, 
                                          mld->uDeviceID, wMsg, mld->dwDriverInstance, 
@@ -219,7 +219,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 		break;
 	    }
 	} else {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08x p1=0x%08lx p2=0x%08lx)\n",
+	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
 		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
             ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16, 
                                      mld->uDeviceID, wMsg, mld->dwDriverInstance, 
@@ -237,7 +237,7 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
 			    DWORD_PTR* dwCallback, DWORD_PTR* dwInstance, BOOL bFrom32)
 {
     LPWINE_MLD	mld;
-    UINT i;
+    UINT_PTR i;
     TRACE("(%d, %04x, %p, %p, %p, %p, %c)\n",
           size, type, hndl, dwFlags, dwCallback, dwInstance, bFrom32?'Y':'N');
 
@@ -257,7 +257,7 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
     *hndl = (HANDLE)(i | 0x8000);
 
     mld->type = type;
-    if ((UINT)*hndl < MMDRV_GetNum(type) || HIWORD(*hndl) != 0) {
+    if ((UINT_PTR)*hndl < MMDRV_GetNum(type) || ((UINT_PTR)*hndl >> 16)) {
 	/* FIXME: those conditions must be fulfilled so that:
 	 * - we can distinguish between device IDs and handles
 	 * - we can use handles as 16 or 32 bit entities
@@ -287,8 +287,8 @@ void	MMDRV_Free(HANDLE hndl, LPWINE_MLD mld)
 {
     TRACE("(%p, %p)\n", hndl, mld);
 
-    if ((UINT)hndl & 0x8000) {
-	unsigned idx = (UINT)hndl & ~0x8000;
+    if ((UINT_PTR)hndl & 0x8000) {
+	UINT_PTR idx = (UINT_PTR)hndl & ~0x8000;
 	if (idx < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0])) {
 	    MM_MLDrvs[idx] = NULL;
 	    HeapFree(GetProcessHeap(), 0, mld);
@@ -301,14 +301,14 @@ void	MMDRV_Free(HANDLE hndl, LPWINE_MLD mld)
 /**************************************************************************
  * 				MMDRV_Open			[internal]
  */
-DWORD	MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD dwParam1, DWORD dwFlags)
+DWORD MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwFlags)
 {
     DWORD		dwRet = MMSYSERR_BADDEVICEID;
-    DWORD		dwInstance;
+    DWORD_PTR		dwInstance;
     WINE_LLTYPE*	llType = &llTypes[mld->type];
-    TRACE("(%p, %04x, 0x%08x, 0x%08x)\n", mld, wMsg, dwParam1, dwFlags);
+    TRACE("(%p, %04x, 0x%08lx, 0x%08x)\n", mld, wMsg, dwParam1, dwFlags);
 
-    mld->dwDriverInstance = (DWORD)&dwInstance;
+    mld->dwDriverInstance = (DWORD_PTR)&dwInstance;
 
     if (mld->uDeviceID == (UINT)-1 || mld->uDeviceID == (UINT16)-1) {
 	TRACE("MAPPER mode requested !\n");
@@ -371,7 +371,7 @@ static LPWINE_MLD MMDRV_GetByID(UINT uDevID, UINT type)
 LPWINE_MLD	MMDRV_Get(HANDLE _hndl, UINT type, BOOL bCanBeID)
 {
     LPWINE_MLD	mld = NULL;
-    UINT        hndl = (UINT)_hndl;
+    UINT_PTR    hndl = (UINT_PTR)_hndl;
     TRACE("(%p, %04x, %c)\n", _hndl, type, bCanBeID ? 'Y' : 'N');
 
     assert(type < MMDRV_MAX);

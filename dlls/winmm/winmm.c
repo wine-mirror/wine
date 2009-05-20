@@ -365,7 +365,7 @@ UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
     wmld->uDeviceID = uDeviceID;
     mod.hmx = hMix;
 
-    dwRet = MMDRV_Open(wmld, MXDM_OPEN, (DWORD)&mod, CALLBACK_FUNCTION);
+    dwRet = MMDRV_Open(wmld, MXDM_OPEN, (DWORD_PTR)&mod, CALLBACK_FUNCTION);
 
     if (dwRet != MMSYSERR_NOERROR) {
 	MMDRV_Free(hMix, wmld);
@@ -957,7 +957,7 @@ UINT MIDI_OutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID, DWORD_PTR dwCallback,
 
     lpwm->mld.uDeviceID = uDeviceID;
 
-    dwRet = MMDRV_Open((LPWINE_MLD)lpwm, MODM_OPEN, (DWORD)&lpwm->mod, dwFlags);
+    dwRet = MMDRV_Open((LPWINE_MLD)lpwm, MODM_OPEN, (DWORD_PTR)&lpwm->mod, dwFlags);
 
     if (dwRet != MMSYSERR_NOERROR) {
 	MMDRV_Free(hMidiOut, (LPWINE_MLD)lpwm);
@@ -1258,7 +1258,7 @@ UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,
     lpwm->mod.dwInstance = dwInstance;
 
     lpwm->mld.uDeviceID = uDeviceID;
-    dwRet = MMDRV_Open(&lpwm->mld, MIDM_OPEN, (DWORD)&lpwm->mod, dwFlags);
+    dwRet = MMDRV_Open(&lpwm->mld, MIDM_OPEN, (DWORD_PTR)&lpwm->mod, dwFlags);
 
     if (dwRet != MMSYSERR_NOERROR) {
 	MMDRV_Free(hMidiIn, &lpwm->mld);
@@ -1540,7 +1540,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
 			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
-			   lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
+			   lpwm->mod.dwInstance, (DWORD_PTR)lpMidiHdr, 0);
 	}
 	lpMidiStrm->lpMidiHdr = 0;
 	SetEvent(lpMidiStrm->hEvent);
@@ -1614,7 +1614,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
 			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
-			   lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
+			   lpwm->mod.dwInstance, (DWORD_PTR)lpMidiHdr, 0);
 	    break;
 	}
 
@@ -1749,7 +1749,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 	    lpMidiStrm->lpMidiHdr = lpMidiHdr->lpNext;
 	    DriverCallback(lpwm->mod.dwCallback, lpMidiStrm->wFlags,
 			   (HDRVR)lpMidiStrm->hDevice, MM_MOM_DONE,
-			   lpwm->mod.dwInstance, (DWORD)lpMidiHdr, 0L);
+			   lpwm->mod.dwInstance, (DWORD_PTR)lpMidiHdr, 0);
 	    lpData = 0;
 	}
     }
@@ -1834,7 +1834,7 @@ MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi
 
     lpwm->mld.uDeviceID = *lpuDeviceID;
 
-    ret = MMDRV_Open(&lpwm->mld, MODM_OPEN, (DWORD)&lpwm->mod, fdwOpen);
+    ret = MMDRV_Open(&lpwm->mld, MODM_OPEN, (DWORD_PTR)&lpwm->mod, fdwOpen);
     lpMidiStrm->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     lpMidiStrm->wFlags = HIWORD(fdwOpen);
 
@@ -1894,7 +1894,7 @@ MMRESULT WINAPI midiStreamOut(HMIDISTRM hMidiStrm, LPMIDIHDR lpMidiHdr,
     } else {
 	if (!PostThreadMessageA(lpMidiStrm->dwThreadID,
                                 WINE_MSM_HEADER, cbMidiHdr,
-                                (DWORD)lpMidiHdr)) {
+                                (LPARAM)lpMidiHdr)) {
 	    WARN("bad PostThreadMessageA\n");
 	    ret = MMSYSERR_ERROR;
 	}
@@ -2107,8 +2107,8 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
         }
         wmld->uDeviceID = uDeviceID;
     
-        dwRet = MMDRV_Open(wmld, (uType == MMDRV_WAVEOUT) ? WODM_OPEN : WIDM_OPEN, 
-                           (DWORD)&wod, dwFlags);
+        dwRet = MMDRV_Open(wmld, (uType == MMDRV_WAVEOUT) ? WODM_OPEN : WIDM_OPEN,
+                           (DWORD_PTR)&wod, dwFlags);
 
         TRACE("dwRet = %s\n", WINMM_ErrorToString(dwRet));
         if (dwRet != WAVERR_BADFORMAT ||

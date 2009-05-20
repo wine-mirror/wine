@@ -158,8 +158,8 @@ struct playsound_data
 };
 
 static void CALLBACK PlaySound_Callback(HWAVEOUT hwo, UINT uMsg,
-					DWORD dwInstance,
-					DWORD dwParam1, DWORD dwParam2)
+					DWORD_PTR dwInstance,
+					DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     struct playsound_data*	s = (struct playsound_data*)dwInstance;
 
@@ -169,7 +169,7 @@ static void CALLBACK PlaySound_Callback(HWAVEOUT hwo, UINT uMsg,
 	break;
     case WOM_DONE:
 	InterlockedIncrement(&s->dwEventCount);
-	TRACE("Returning waveHdr=%x\n", dwParam1);
+	TRACE("Returning waveHdr=%lx\n", dwParam1);
 	SetEvent(s->hEvent);
 	break;
     default:
@@ -398,8 +398,8 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 
     s.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    if (waveOutOpen(&wps->hWave, WAVE_MAPPER, lpWaveFormat, (DWORD)PlaySound_Callback,
-		    (DWORD)&s, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
+    if (waveOutOpen(&wps->hWave, WAVE_MAPPER, lpWaveFormat, (DWORD_PTR)PlaySound_Callback,
+		    (DWORD_PTR)&s, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
 	goto errCleanUp;
 
     /* make it so that 3 buffers per second are needed */

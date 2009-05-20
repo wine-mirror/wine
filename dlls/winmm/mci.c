@@ -986,7 +986,7 @@ static	DWORD	MCI_FinishOpen(LPWINE_MCIDRIVER wmd, LPMCI_OPEN_PARMSW lpParms,
     lpParms->wDeviceID = wmd->wDeviceID;
 
     return MCI_SendCommandFrom32(wmd->wDeviceID, MCI_OPEN_DRIVER, dwParam,
-				 (DWORD)lpParms);
+				 (DWORD_PTR)lpParms);
 }
 
 /**************************************************************************
@@ -1470,7 +1470,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	    MCI_UnLoadMciDriver(wmd);
 	/* FIXME: notification is not properly shared across two opens */
     } else {
-	dwRet = MCI_SendCommand(wmd->wDeviceID, MCI_GetMessage(lpCmd), dwFlags, (DWORD)data, TRUE);
+	dwRet = MCI_SendCommand(wmd->wDeviceID, MCI_GetMessage(lpCmd), dwFlags, (DWORD_PTR)data, TRUE);
     }
     TRACE("=> 1/ %x (%s)\n", dwRet, debugstr_w(lpstrRet));
     dwRet = MCI_HandleReturnValues(dwRet, wmd, retType, data, lpstrRet, uRetLen);
@@ -1649,7 +1649,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSW lpParms)
 
     if (dwParam & MCI_OPEN_TYPE) {
 	if (dwParam & MCI_OPEN_TYPE_ID) {
-	    WORD uDevType = LOWORD((DWORD)lpParms->lpstrDeviceType);
+	    WORD uDevType = LOWORD(lpParms->lpstrDeviceType);
 
 	    if (uDevType < MCI_DEVTYPE_FIRST ||
 		uDevType > MCI_DEVTYPE_LAST ||
@@ -1792,7 +1792,7 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
 	return MCIERR_INVALID_DEVICE_ID;
     }
 
-    dwRet = MCI_SendCommandFrom32(wDevID, MCI_CLOSE_DRIVER, dwParam, (DWORD)lpParms);
+    dwRet = MCI_SendCommandFrom32(wDevID, MCI_CLOSE_DRIVER, dwParam, (DWORD_PTR)lpParms);
 
     MCI_UnLoadMciDriver(wmd);
 
@@ -1837,8 +1837,8 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 
     if (lpParms == NULL)			return MCIERR_NULL_PARAMETER_BLOCK;
 
-    TRACE("(%08x, %08X, %08X[num=%d, wDevTyp=%u])\n",
-	  uDevID, dwFlags, (DWORD)lpParms, lpParms->dwNumber, lpParms->wDeviceType);
+    TRACE("(%08x, %08X, %p[num=%d, wDevTyp=%u])\n",
+	  uDevID, dwFlags, lpParms, lpParms->dwNumber, lpParms->wDeviceType);
 
     switch (dwFlags & ~MCI_SYSINFO_OPEN) {
     case MCI_SYSINFO_QUANTITY:
@@ -2066,7 +2066,7 @@ DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1,
  * mciSendString), because MCI drivers return extra information for string
  * transformation. This function gets rid of them.
  */
-LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2)
+LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD_PTR dwParam2)
 {
     if (LOWORD(dwRet))
 	return LOWORD(dwRet);
@@ -2085,7 +2085,7 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2)
 	    {
 		LPMCI_GETDEVCAPS_PARMS	lmgp;
 
-		lmgp = (LPMCI_GETDEVCAPS_PARMS)(void*)dwParam2;
+		lmgp = (LPMCI_GETDEVCAPS_PARMS)dwParam2;
 		TRACE("Changing %08x to %08x\n", lmgp->dwReturn, LOWORD(lmgp->dwReturn));
 		lmgp->dwReturn = LOWORD(lmgp->dwReturn);
 	    }

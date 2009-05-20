@@ -95,7 +95,7 @@ typedef struct tagWINE_MLD {
        UINT			uDeviceID;
        UINT			type;
        UINT			mmdIndex;		/* index to low-level driver in MMDrvs table */
-       DWORD			dwDriverInstance;	/* this value is driver related, as opposed to
+       DWORD_PTR		dwDriverInstance;	/* this value is driver related, as opposed to
 							 * opendesc.dwInstance which is client (callback) related */
        WORD			bFrom32;
        WORD			dwFlags;
@@ -176,9 +176,8 @@ typedef struct tagWINE_MMIO {
 
 /* function prototypes */
 
-typedef LONG			(*MCIPROC)(DWORD, HDRVR, DWORD, DWORD, DWORD);
-typedef	WINMM_MapType	        (*MMDRV_MAPFUNC)(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2);
-typedef	WINMM_MapType	        (*MMDRV_UNMAPFUNC)(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT ret);
+typedef	WINMM_MapType	        (*MMDRV_MAPFUNC)(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2);
+typedef	WINMM_MapType	        (*MMDRV_UNMAPFUNC)(UINT wMsg, DWORD_PTR *lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT ret);
 
 LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr);
 BOOL		DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz);
@@ -191,7 +190,7 @@ UINT		MMDRV_GetNum(UINT);
 LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
                             DWORD_PTR* dwCallback, DWORD_PTR* dwInstance, BOOL bFrom32);
 void		MMDRV_Free(HANDLE hndl, LPWINE_MLD mld);
-DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD dwParam1, DWORD dwParam2);
+DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1, DWORD dwParam2);
 DWORD		MMDRV_Close(LPWINE_MLD mld, UINT wMsg);
 LPWINE_MLD	MMDRV_Get(HANDLE hndl, UINT type, BOOL bCanBeID);
 LPWINE_MLD	MMDRV_GetRelated(HANDLE hndl, UINT srcType, BOOL bSrcCanBeID, UINT dstTyped);
@@ -203,7 +202,7 @@ void            MMDRV_InstallMap(unsigned int, MMDRV_MAPFUNC, MMDRV_UNMAPFUNC,
 
 WINE_MCIDRIVER* MCI_GetDriver(UINT16 uDevID);
 const char* 	MCI_MessageToString(UINT wMsg);
-LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2);
+LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD_PTR dwParam2);
 DWORD		MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2, BOOL bFrom32);
 UINT		MCI_SetCommandTable(void *table, UINT uDevType);
 BOOL	        MCI_DeleteCommandTable(UINT uTbl, BOOL delete);
