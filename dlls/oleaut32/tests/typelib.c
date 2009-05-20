@@ -33,8 +33,8 @@
 #include "tmarshal.h"
 
 #define expect_eq(expr, value, type, format) { type _ret = (expr); ok((value) == _ret, #expr " expected " format " got " format "\n", value, _ret); }
-#define expect_int(expr, value) expect_eq(expr, (int)value, int, "%d")
-#define expect_hex(expr, value) expect_eq(expr, (int)value, int, "0x%x")
+#define expect_int(expr, value) expect_eq(expr, (int)(value), int, "%d")
+#define expect_hex(expr, value) expect_eq(expr, (int)(value), int, "0x%x")
 #define expect_null(expr) expect_eq(expr, NULL, const void *, "%p")
 
 #define expect_wstr_acpval(expr, value) \
