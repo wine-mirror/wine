@@ -258,6 +258,42 @@ COLORREF ARGB2COLORREF(ARGB color)
            ((color & 0xff0000) >> 16);
 }
 
+HBITMAP ARGB2BMP(ARGB color)
+{
+    HDC hdc;
+    BITMAPINFO bi;
+    HBITMAP result;
+    RGBQUAD *bits;
+    int alpha;
+
+    if ((color & 0xff000000) == 0xff000000) return 0;
+
+    hdc = CreateCompatibleDC(NULL);
+
+    bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
+    bi.bmiHeader.biWidth = 1;
+    bi.bmiHeader.biHeight = 1;
+    bi.bmiHeader.biPlanes = 1;
+    bi.bmiHeader.biBitCount = 32;
+    bi.bmiHeader.biCompression = BI_RGB;
+    bi.bmiHeader.biSizeImage = 0;
+    bi.bmiHeader.biXPelsPerMeter = 0;
+    bi.bmiHeader.biYPelsPerMeter = 0;
+    bi.bmiHeader.biClrUsed = 0;
+    bi.bmiHeader.biClrImportant = 0;
+
+    result = CreateDIBSection(hdc, &bi, DIB_RGB_COLORS, (void*)&bits, NULL, 0);
+
+    bits[0].rgbReserved = alpha = (color>>24)&0xff;
+    bits[0].rgbRed = ((color>>16)&0xff)*alpha/255;
+    bits[0].rgbGreen = ((color>>8)&0xff)*alpha/255;
+    bits[0].rgbBlue = (color&0xff)*alpha/255;
+
+    DeleteDC(hdc);
+
+    return result;
+}
+
 /* Like atan2, but puts angle in correct quadrant if dx is 0. */
 REAL gdiplus_atan2(REAL dy, REAL dx)
 {

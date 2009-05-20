@@ -41,6 +41,7 @@
 #define TENSION_CONST (0.3)
 
 COLORREF ARGB2COLORREF(ARGB color);
+HBITMAP ARGB2BMP(ARGB color);
 extern INT arc2polybezier(GpPointF * points, REAL x1, REAL y1, REAL x2, REAL y2,
     REAL startAngle, REAL sweepAngle);
 extern REAL gdiplus_atan2(REAL dy, REAL dx);
@@ -126,6 +127,7 @@ struct GpHatch{
 struct GpSolidFill{
     GpBrush brush;
     ARGB color;
+    HBITMAP bmp;
 };
 
 struct GpPathGradient{

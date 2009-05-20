@@ -346,6 +346,40 @@ static void brush_fill_path(GpGraphics *graphics, GpBrush* brush)
         }
         break;
     }
+    case BrushTypeSolidColor:
+    {
+        GpSolidFill *fill = (GpSolidFill*)brush;
+        if (fill->bmp)
+        {
+            RECT rc;
+            /* partially transparent fill */
+
+            SelectClipPath(graphics->hdc, RGN_AND);
+            if (GetClipBox(graphics->hdc, &rc) != NULLREGION)
+            {
+                HDC hdc = CreateCompatibleDC(NULL);
+                HBITMAP oldbmp;
+                BLENDFUNCTION bf;
+
+                if (!hdc) break;
+
+                oldbmp = SelectObject(hdc, fill->bmp);
+
+                bf.BlendOp = AC_SRC_OVER;
+                bf.BlendFlags = 0;
+                bf.SourceConstantAlpha = 255;
+                bf.AlphaFormat = AC_SRC_ALPHA;
+
+                GdiAlphaBlend(graphics->hdc, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, hdc, 0, 0, 1, 1, bf);
+
+                SelectObject(hdc, oldbmp);
+                DeleteDC(hdc);
+            }
+
+            break;
+        }
+        /* else fall through */
+    }
     default:
         SelectObject(graphics->hdc, brush->gdibrush);
         FillPath(graphics->hdc);
