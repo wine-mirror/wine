@@ -6565,7 +6565,7 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     lvItem.stateMask = LVIS_STATEIMAGEMASK;
     if (uView == LVS_ICON) lvItem.stateMask |= LVIS_FOCUSED;
     lvItem.iItem = iItem;
-    lvItem.iSubItem = lpht->iSubItem;
+    lvItem.iSubItem = subitem ? lpht->iSubItem : 0;
     lvItem.pszText = szDispText;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
     if (!LISTVIEW_GetItemW(infoPtr, &lvItem)) return -1;
