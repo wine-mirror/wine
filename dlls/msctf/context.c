@@ -648,7 +648,7 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
 
     if (!This->pContext || !This->pContext->currentEditSession)
     {
-        ERR("OnLockGranted called on a context without a current edit session\nZ");
+        ERR("OnLockGranted called on a context without a current edit session\n");
         return E_FAIL;
     }
 
