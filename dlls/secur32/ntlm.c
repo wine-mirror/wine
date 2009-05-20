@@ -471,7 +471,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     if((phContext == NULL) && (pInput == NULL))
     {
         static char helper_protocol[] = "--helper-protocol=ntlmssp-client-1";
-        static CHAR credentials_argv[] = "--use-cached-creds";
         SEC_CHAR *client_argv[5];
         int pwlen = 0;
 
@@ -550,10 +549,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 }
                 username = ntlm_GetUsernameArg(ui->wkui1_username, -1);
 
-                TRACE("using cached credentials\n");
+                FIXME("using ntlm_auth cached credentials not supported\n");
 
                 client_argv[2] = username;
-                client_argv[3] = credentials_argv;
+                client_argv[3] = NULL;
                 client_argv[4] = NULL;
             }
         }
@@ -645,8 +644,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         if(fContextReq & ISC_REQ_DELEGATE)
             ctxt_attr |= ISC_RET_DELEGATE;
 
-        /* If no password is given, try to use cached credentials. Fall back to an empty
-         * password if this failed. */
+        /* If no password is given, use an empty password instead. This is the
+         * SMB way to do "anonymous" authentication. */
         if(!password && !ntlm_cred->password)
         {
             lstrcpynA(buffer, "OK", max_len-1);
@@ -655,25 +654,15 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 cleanup_helper(helper);
                 goto isc_end;
             }
-            /* If the helper replied with "PW", using cached credentials failed */
+            /* If the helper replied with "PW", give an empty password. */
             if(!strncmp(buffer, "PW", 2))
             {
                 TRACE("Using cached credentials failed.\n");
-                ret = SEC_E_NO_CREDENTIALS;
-                goto isc_end;
+                lstrcpynA(buffer, "PW AA==", max_len-1);
             }
             else
             {
-                /* Some versions of Samba have a broken ntlm_auth that can
-                 * return "BH" here. Catch this and abort. */
-                if(!strncmp(buffer, "BH", 2))
-                {
-                    ERR("ntlm_auth replied 'BH'. This should not happen. "
-                        "Please fix your ntlm_auth install and try again.\n");
-                    ret = SEC_E_INTERNAL_ERROR;
-                    goto isc_end;
-                }
-                /* Otherwise, just do a noop on the next run */
+                /* Just do a noop on the next run */
                 lstrcpynA(buffer, "OK", max_len-1);
             }
         }
