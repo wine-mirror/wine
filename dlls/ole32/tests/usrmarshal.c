@@ -564,7 +564,8 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
     HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, 0);
     IStream *stm;
     void *marshal_data;
-    LARGE_INTEGER pos;
+    LARGE_INTEGER zero;
+    ULARGE_INTEGER pos;
     DWORD marshal_size;
 
     /* shows that the WdtpInterfacePointer functions don't marshal anything for
@@ -587,8 +588,11 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
 
     CreateStreamOnHGlobal(h, TRUE, &stm);
     CoMarshalInterface(stm, &IID_IUnknown, unk, LOWORD(ctx), NULL, MSHLFLAGS_NORMAL);
-    marshal_size = GlobalSize(h);
+    zero.QuadPart = 0;
+    IStream_Seek(stm, zero, STREAM_SEEK_CUR, &pos);
+    marshal_size = pos.u.LowPart;
     marshal_data = GlobalLock(h);
+    trace("marshal_size %x\n", marshal_size);
 
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, umcb_ctx);
     size = WdtpInterfacePointer_UserSize(&umcb.Flags, ctx, 0, unk, &IID_IUnknown);
@@ -608,8 +612,8 @@ static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
 
     ok(!memcmp(marshal_data, wireip, marshal_size), "buffer mismatch\n");
     GlobalUnlock(h);
-    pos.QuadPart = 0;
-    IStream_Seek(stm, pos, STREAM_SEEK_SET, NULL);
+    zero.QuadPart = 0;
+    IStream_Seek(stm, zero, STREAM_SEEK_SET, NULL);
     CoReleaseMarshalData(stm);
     IStream_Release(stm);
 
