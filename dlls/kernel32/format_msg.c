@@ -266,8 +266,9 @@ DWORD WINAPI FormatMessageA(
                             else if (strcmp(fmtstr, "%wc") == 0)
                             {
                                 sz = WideCharToMultiByte(CP_ACP, 0, (WCHAR *)argliststart, 1, NULL, 0, NULL, NULL);
-                                b = HeapAlloc(GetProcessHeap(), 0, sz);
+                                b = HeapAlloc(GetProcessHeap(), 0, sz + 1);
                                 WideCharToMultiByte(CP_ACP, 0, (WCHAR *)argliststart, 1, b, sz, NULL, NULL);
+                                b[sz] = 0;
                             }
                             else
                             {
