@@ -276,7 +276,11 @@ HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
 
     TRACE("(%p,%p,%p,%p)\n", pidlParent, psfParent, pidl, ppsi);
 
-    if (!pidlParent && !psfParent && pidl)
+    if (!pidl)
+    {
+        return E_INVALIDARG;
+    }
+    else if (!pidlParent && !psfParent)
     {
         new_pidl = ILClone(pidl);
         if (!new_pidl)

@@ -1783,7 +1783,7 @@ static void test_SHCreateShellItem(void)
     pidl_abstestfile = pILCombine(pidl_cwd, pidl_testfile);
 
     ret = pSHCreateShellItem(NULL, NULL, NULL, &shellitem);
-    todo_wine ok(ret == E_INVALIDARG, "SHCreateShellItem returned %x\n", ret);
+    ok(ret == E_INVALIDARG, "SHCreateShellItem returned %x\n", ret);
 
     if (0) /* crashes on Windows XP */
     {
