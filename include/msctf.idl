@@ -25,7 +25,10 @@ import "textstor.idl";
 cpp_quote("#include <winuser.h>")
 
 cpp_quote("#define TF_E_STACKFULL MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0501)")
+cpp_quote("#define TF_E_DISCONNECTED    MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0504)")
 cpp_quote("#define TF_E_ALREADY_EXISTS  MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0506)")
+cpp_quote("#define TF_E_NOLOCK          MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0201)")
+
 cpp_quote("EXTERN_C const CLSID CLSID_TF_ThreadMgr;")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_InputProcessorProfiles;")
 cpp_quote("EXTERN_C const CLSID CLSID_TF_CategoryMgr;")

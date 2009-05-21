@@ -1373,9 +1373,33 @@ static ULONG WINAPI EditSession_Release(ITfEditSession *iface)
 static HRESULT WINAPI EditSession_DoEditSession(ITfEditSession *iface,
 TfEditCookie ec)
 {
+    ITfContext *cxt;
+    ITfDocumentMgr *dm;
+    ITfRange *range;
+    HRESULT hr;
+
     ok(test_DoEditSession == SINK_EXPECTED, "Unexpected DoEditSession\n");
     ok(test_ACP_RequestLock == SINK_FIRED,"Expected RequestLock not fired\n");
     test_DoEditSession = SINK_FIRED;
+
+    ITfThreadMgr_GetFocus(g_tm, &dm);
+    ITfDocumentMgr_GetTop(dm,&cxt);
+
+    hr = ITfContext_GetStart(cxt,ec,NULL);
+    ok(hr == E_INVALIDARG,"Unexpected return code %x\n",hr);
+
+    range = (ITfRange*)0xdeaddead;
+    hr = ITfContext_GetStart(cxt,0xdeadcafe,&range);
+    ok(hr == TF_E_NOLOCK,"Unexpected return code %x\n",hr);
+    ok(range == NULL,"Range not set to NULL\n");
+
+    hr = ITfContext_GetStart(cxt,ec,&range);
+    ok(SUCCEEDED(hr),"Unexpected return code %x\n",hr);
+    ok(range != NULL,"Range set to NULL\n");
+
+    ITfRange_Release(range);
+    ITfContext_Release(cxt);
+    ITfDocumentMgr_Release(dm);
     return 0xdeadcafe;
 }
 

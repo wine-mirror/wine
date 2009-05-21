@@ -299,8 +299,22 @@ static HRESULT WINAPI Context_GetStart (ITfContext *iface,
         TfEditCookie ec, ITfRange **ppStart)
 {
     Context *This = (Context *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    EditCookie *cookie;
+    TRACE("(%p) %i %p\n",This,ec,ppStart);
+
+    if (!ppStart)
+        return E_INVALIDARG;
+
+    *ppStart = NULL;
+
+    if (!This->connected)
+        return TF_E_DISCONNECTED;
+
+    if (get_Cookie_magic(ec)!=COOKIE_MAGIC_EDITCOOKIE)
+        return TF_E_NOLOCK;
+
+    cookie = get_Cookie_data(ec);
+    return Range_Constructor(iface, This->pITextStoreACP, cookie->lockType, 0, 0, ppStart);
 }
 
 static HRESULT WINAPI Context_GetEnd (ITfContext *iface,
