@@ -58,6 +58,7 @@ static INT  test_ACP_AdviseSink = SINK_UNEXPECTED;
 static INT  test_ACP_GetStatus = SINK_UNEXPECTED;
 static INT  test_ACP_RequestLock = SINK_UNEXPECTED;
 static INT  test_ACP_GetEndACP = SINK_UNEXPECTED;
+static INT  test_ACP_GetSelection = SINK_UNEXPECTED;
 static INT  test_DoEditSession = SINK_UNEXPECTED;
 
 
@@ -171,7 +172,15 @@ static HRESULT WINAPI TextStoreACP_QueryInsert(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_GetSelection(ITextStoreACP *iface,
     ULONG ulIndex, ULONG ulCount, TS_SELECTION_ACP *pSelection, ULONG *pcFetched)
 {
-    trace("\n");
+    ok(test_ACP_GetSelection == SINK_EXPECTED, "Unexpected TextStoreACP_GetSelection\n");
+    test_ACP_GetSelection = SINK_FIRED;
+
+    pSelection->acpStart = 10;
+    pSelection->acpEnd = 20;
+    pSelection->style.fInterimChar = 0;
+    pSelection->style.ase = TS_AE_NONE;
+    *pcFetched = 1;
+
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_SetSelection(ITextStoreACP *iface,
@@ -1378,6 +1387,8 @@ TfEditCookie ec)
     ITfContext *cxt;
     ITfDocumentMgr *dm;
     ITfRange *range;
+    TF_SELECTION selection;
+    ULONG fetched;
     HRESULT hr;
 
     ok(test_DoEditSession == SINK_EXPECTED, "Unexpected DoEditSession\n");
@@ -1416,6 +1427,16 @@ TfEditCookie ec)
     ok(test_ACP_GetEndACP == SINK_FIRED, "GetEndACP not fired as expected\n");
 
     ITfRange_Release(range);
+
+    selection.range = NULL;
+    test_ACP_GetSelection = SINK_EXPECTED;
+    hr = ITfContext_GetSelection(cxt, ec, TF_DEFAULT_SELECTION, 1, &selection, &fetched);
+    ok(SUCCEEDED(hr),"ITfContext_GetSelection failed\n");
+    ok(fetched == 1,"fetched incorrect\n");
+    ok(selection.range != NULL,"NULL range\n");
+    ok(test_ACP_GetSelection == SINK_FIRED," expected ACP_GetSepection not fired\n");
+    ITfRange_Release(selection.range);
+
     ITfContext_Release(cxt);
     ITfDocumentMgr_Release(dm);
     return 0xdeadcafe;

@@ -283,8 +283,59 @@ static HRESULT WINAPI Context_GetSelection (ITfContext *iface,
         TF_SELECTION *pSelection, ULONG *pcFetched)
 {
     Context *This = (Context *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    EditCookie *cookie;
+    ULONG count, i;
+    ULONG totalFetched = 0;
+    HRESULT hr = S_OK;
+
+    if (!pSelection || !pcFetched)
+        return E_INVALIDARG;
+
+    *pcFetched = 0;
+
+    if (!This->connected)
+        return TF_E_DISCONNECTED;
+
+    if (get_Cookie_magic(ec)!=COOKIE_MAGIC_EDITCOOKIE)
+        return TF_E_NOLOCK;
+
+    if (!This->pITextStoreACP)
+    {
+        FIXME("Context does not have a ITextStoreACP\n");
+        return E_NOTIMPL;
+    }
+
+    cookie = get_Cookie_data(ec);
+
+    if (ulIndex == TF_DEFAULT_SELECTION)
+        count = 1;
+    else
+        count = ulCount;
+
+    for (i = 0; i < count; i++)
+    {
+        DWORD fetched;
+        TS_SELECTION_ACP acps;
+
+        hr = ITextStoreACP_GetSelection(This->pITextStoreACP, ulIndex + i,
+                1, &acps, &fetched);
+
+        if (hr == TS_E_NOLOCK)
+            return TF_E_NOLOCK;
+        else if (SUCCEEDED(hr))
+        {
+            pSelection[totalFetched].style.ase = acps.style.ase;
+            pSelection[totalFetched].style.fInterimChar = acps.style.fInterimChar;
+            Range_Constructor(iface, This->pITextStoreACP, cookie->lockType, acps.acpStart, acps.acpEnd, &pSelection[totalFetched].range);
+            totalFetched ++;
+        }
+        else
+            break;
+    }
+
+    *pcFetched = totalFetched;
+
+    return hr;
 }
 
 static HRESULT WINAPI Context_SetSelection (ITfContext *iface,

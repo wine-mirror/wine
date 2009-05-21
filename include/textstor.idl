@@ -21,6 +21,8 @@ import "oaidl.idl";
 #endif
 
 cpp_quote("#define TS_E_READONLY        MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0209)")
+cpp_quote("#define TS_E_NOLOCK          MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0x0201)")
+
 
 const ULONG TS_DEFAULT_SELECTION = ~0u;
 
