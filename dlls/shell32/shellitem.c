@@ -126,6 +126,27 @@ static HRESULT ShellItem_get_parent_pidl(ShellItem *This, LPITEMIDLIST *parent_p
     }
 }
 
+static HRESULT ShellItem_get_parent_shellfolder(ShellItem *This, IShellFolder **ppsf)
+{
+    LPITEMIDLIST parent_pidl;
+    IShellFolder *desktop;
+    HRESULT ret;
+
+    ret = ShellItem_get_parent_pidl(This, &parent_pidl);
+    if (SUCCEEDED(ret))
+    {
+        ret = SHGetDesktopFolder(&desktop);
+        if (SUCCEEDED(ret))
+        {
+            ret = IShellFolder_BindToObject(desktop, parent_pidl, NULL, &IID_IShellFolder, (void**)ppsf);
+            IShellFolder_Release(desktop);
+        }
+        ILFree(parent_pidl);
+    }
+
+    return ret;
+}
+
 static HRESULT WINAPI ShellItem_BindToHandler(IShellItem *iface, IBindCtx *pbc,
     REFGUID rbhid, REFIID riid, void **ppvOut)
 {
@@ -167,11 +188,23 @@ static HRESULT WINAPI ShellItem_GetDisplayName(IShellItem *iface, SIGDN sigdnNam
 static HRESULT WINAPI ShellItem_GetAttributes(IShellItem *iface, SFGAOF sfgaoMask,
     SFGAOF *psfgaoAttribs)
 {
-    FIXME("(%p,%x,%p)\n", iface, sfgaoMask, psfgaoAttribs);
+    ShellItem *This = (ShellItem*)iface;
+    IShellFolder *parent_folder;
+    LPITEMIDLIST child_pidl;
+    HRESULT ret;
 
-    *psfgaoAttribs = 0;
+    TRACE("(%p,%x,%p)\n", iface, sfgaoMask, psfgaoAttribs);
 
-    return E_NOTIMPL;
+    ret = ShellItem_get_parent_shellfolder(This, &parent_folder);
+    if (SUCCEEDED(ret))
+    {
+        child_pidl = ILFindLastID(This->pidl);
+        *psfgaoAttribs = sfgaoMask;
+        ret = IShellFolder_GetAttributesOf(parent_folder, 1, (LPCITEMIDLIST*)&child_pidl, psfgaoAttribs);
+        IShellFolder_Release(parent_folder);
+    }
+
+    return ret;
 }
 
 static HRESULT WINAPI ShellItem_Compare(IShellItem *iface, IShellItem *oth,
