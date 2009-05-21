@@ -183,7 +183,7 @@ filter: dummy
 	$(WIDL) $(IDLFLAGS) -s -S $@ $<
 
 .idl.tlb:
-	$(WIDL) $(IDLFLAGS) -t -T $@ $<
+	$(WIDL) $(TARGETFLAGS) $(IDLFLAGS) -t -T $@ $<
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )

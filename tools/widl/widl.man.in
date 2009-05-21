@@ -31,6 +31,10 @@ will print a help message.
 .B General options:
 .IP "\fB-V\fR"
 Print version number and exit.
+.IP "\fB-b \fIcpu-manufacturer[-kernel]-os\fR"
+Set the target architecture when cross-compiling. The target
+specification is in the standard autoconf format as returned by
+config.sub.
 .PP
 .B Header options:
 .IP "\fB-h\fR"
@@ -47,6 +51,8 @@ Generate a type library.
 .IP "\fB-T \fIfile\fR"
 Define the name of the type library to be generated. 
 The default filename is \fIinfile\fR.tlb.
+.IP "\fB-m32, -m64\fR"
+Generate a Win32, respectively Win64, type library.
 .PP
 .B UUID file options:
 .IP "\fB-u\fR"
