@@ -1307,7 +1307,8 @@ NTSTATUS WINAPI NtPowerInformation(
 			return STATUS_SUCCESS;
 		}
 		default:
-			FIXME("Unimplemented NtPowerInformation action: %d\n", InformationLevel);
+			/* FIXME: Needed by .NET Framework */
+			WARN("Unimplemented NtPowerInformation action: %d\n", InformationLevel);
 			return STATUS_NOT_IMPLEMENTED;
 	}
 }
