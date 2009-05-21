@@ -1814,7 +1814,7 @@ static void test_SHCreateShellItem(void)
     }
 
     ret = pSHCreateShellItem(pidl_cwd, NULL, pidl_testfile, &shellitem);
-    todo_wine ok(SUCCEEDED(ret), "SHCreateShellItem returned %x\n", ret);
+    ok(SUCCEEDED(ret), "SHCreateShellItem returned %x\n", ret);
     if (SUCCEEDED(ret))
     {
         ret = IShellItem_QueryInterface(shellitem, &IID_IPersistIDList, (void**)&persistidl);
@@ -1834,7 +1834,7 @@ static void test_SHCreateShellItem(void)
     }
 
     ret = pSHCreateShellItem(NULL, currentfolder, pidl_testfile, &shellitem);
-    todo_wine ok(SUCCEEDED(ret), "SHCreateShellItem returned %x\n", ret);
+    ok(SUCCEEDED(ret), "SHCreateShellItem returned %x\n", ret);
     if (SUCCEEDED(ret))
     {
         ret = IShellItem_QueryInterface(shellitem, &IID_IPersistIDList, (void**)&persistidl);
@@ -1855,7 +1855,7 @@ static void test_SHCreateShellItem(void)
 
     /* if a parent pidl and shellfolder are specified, the shellfolder is ignored */
     ret = pSHCreateShellItem(pidl_cwd, desktopfolder, pidl_testfile, &shellitem);
-    todo_wine ok(SUCCEEDED(ret), "SHCreateShellItem returned %x\n", ret);
+    ok(SUCCEEDED(ret), "SHCreateShellItem returned %x\n", ret);
     if (SUCCEEDED(ret))
     {
         ret = IShellItem_QueryInterface(shellitem, &IID_IPersistIDList, (void**)&persistidl);

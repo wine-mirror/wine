@@ -280,16 +280,41 @@ HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
     {
         return E_INVALIDARG;
     }
-    else if (!pidlParent && !psfParent)
+    else if (pidlParent || psfParent)
     {
-        new_pidl = ILClone(pidl);
+        LPITEMIDLIST temp_parent=NULL;
+        if (!pidlParent)
+        {
+            IPersistFolder2* ppf2Parent;
+
+            if (!SUCCEEDED(IPersistFolder2_QueryInterface(psfParent, &IID_IPersistFolder2, (void**)&ppf2Parent)))
+            {
+                FIXME("couldn't get IPersistFolder2 interface of parent\n");
+                return E_NOINTERFACE;
+            }
+
+            if (!SUCCEEDED(IPersistFolder2_GetCurFolder(ppf2Parent, &temp_parent)))
+            {
+                FIXME("couldn't get parent PIDL\n");
+                IPersistFolder2_Release(ppf2Parent);
+                return E_NOINTERFACE;
+            }
+
+            pidlParent = temp_parent;
+            IPersistFolder2_Release(ppf2Parent);
+        }
+
+        new_pidl = ILCombine(pidlParent, pidl);
+        ILFree(temp_parent);
+
         if (!new_pidl)
             return E_OUTOFMEMORY;
     }
     else
     {
-        FIXME("(%p,%p,%p) not implemented\n", pidlParent, psfParent, pidl);
-        return E_NOINTERFACE;
+        new_pidl = ILClone(pidl);
+        if (!new_pidl)
+            return E_OUTOFMEMORY;
     }
 
     ret = IShellItem_Constructor(NULL, &IID_IShellItem, (void**)&This);
