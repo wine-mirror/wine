@@ -105,6 +105,27 @@ static ULONG WINAPI ShellItem_Release(IShellItem *iface)
     return ref;
 }
 
+static HRESULT ShellItem_get_parent_pidl(ShellItem *This, LPITEMIDLIST *parent_pidl)
+{
+    *parent_pidl = ILClone(This->pidl);
+    if (*parent_pidl)
+    {
+        if (ILRemoveLastID(*parent_pidl))
+            return S_OK;
+        else
+        {
+            ILFree(*parent_pidl);
+            *parent_pidl = NULL;
+            return E_INVALIDARG;
+        }
+    }
+    else
+    {
+        *parent_pidl = NULL;
+        return E_OUTOFMEMORY;
+    }
+}
+
 static HRESULT WINAPI ShellItem_BindToHandler(IShellItem *iface, IBindCtx *pbc,
     REFGUID rbhid, REFIID riid, void **ppvOut)
 {
@@ -117,11 +138,20 @@ static HRESULT WINAPI ShellItem_BindToHandler(IShellItem *iface, IBindCtx *pbc,
 
 static HRESULT WINAPI ShellItem_GetParent(IShellItem *iface, IShellItem **ppsi)
 {
-    FIXME("(%p,%p)\n", iface, ppsi);
+    ShellItem *This = (ShellItem*)iface;
+    LPITEMIDLIST parent_pidl;
+    HRESULT ret;
 
-    *ppsi = NULL;
+    TRACE("(%p,%p)\n", iface, ppsi);
 
-    return E_NOTIMPL;
+    ret = ShellItem_get_parent_pidl(This, &parent_pidl);
+    if (SUCCEEDED(ret))
+    {
+        ret = SHCreateShellItem(NULL, NULL, parent_pidl, ppsi);
+        ILFree(parent_pidl);
+    }
+
+    return ret;
 }
 
 static HRESULT WINAPI ShellItem_GetDisplayName(IShellItem *iface, SIGDN sigdnName,

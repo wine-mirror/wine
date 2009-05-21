@@ -1747,7 +1747,7 @@ cleanup:
 
 static void test_SHCreateShellItem(void)
 {
-    IShellItem *shellitem;
+    IShellItem *shellitem, *shellitem2;
     IPersistIDList *persistidl;
     LPITEMIDLIST pidl_cwd=NULL, pidl_testfile, pidl_abstestfile, pidl_test;
     HRESULT ret;
@@ -1830,6 +1830,27 @@ static void test_SHCreateShellItem(void)
             }
             IPersistIDList_Release(persistidl);
         }
+
+        ret = IShellItem_GetParent(shellitem, &shellitem2);
+        ok(SUCCEEDED(ret), "GetParent returned %x\n", ret);
+        if (SUCCEEDED(ret))
+        {
+            ret = IShellItem_QueryInterface(shellitem2, &IID_IPersistIDList, (void**)&persistidl);
+            ok(SUCCEEDED(ret), "QueryInterface returned %x\n", ret);
+            if (SUCCEEDED(ret))
+            {
+                ret = IPersistIDList_GetIDList(persistidl, &pidl_test);
+                ok(SUCCEEDED(ret), "GetIDList returned %x\n", ret);
+                if (SUCCEEDED(ret))
+                {
+                    ok(ILIsEqual(pidl_cwd, pidl_test), "id lists are not equal\n");
+                    pILFree(pidl_test);
+                }
+                IPersistIDList_Release(persistidl);
+            }
+            IShellItem_Release(shellitem2);
+        }
+
         IShellItem_Release(shellitem);
     }
 
