@@ -811,6 +811,7 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
     char swzstr[20];
     int insert_line;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
+    struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
 
     /* Assume a new line will be added */
     insert_line = 1;
@@ -859,11 +860,20 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
         shader_addline(buffer, "MUL T%c, %s, T%c;\n", 'A' + tmpreg, regstr, 'A' + tmpreg);
         break;
     case WINED3DSPSM_ABS:
-        shader_addline(buffer, "ABS T%c, %s;\n", 'A' + tmpreg, regstr);
+        if(ctx->target_version >= NV2) {
+            sprintf(outregstr, "|%s%s|", regstr, swzstr);
+            insert_line = 0;
+        } else {
+            shader_addline(buffer, "ABS T%c, %s;\n", 'A' + tmpreg, regstr);
+        }
         break;
     case WINED3DSPSM_ABSNEG:
-        shader_addline(buffer, "ABS T%c, %s;\n", 'A' + tmpreg, regstr);
-        sprintf(outregstr, "-T%c%s", 'A' + tmpreg, swzstr);
+        if(ctx->target_version >= NV2) {
+            sprintf(outregstr, "-|%s%s|", regstr, swzstr);
+        } else {
+            shader_addline(buffer, "ABS T%c, %s;\n", 'A' + tmpreg, regstr);
+            sprintf(outregstr, "-T%c%s", 'A' + tmpreg, swzstr);
+        }
         insert_line = 0;
         break;
     default:
