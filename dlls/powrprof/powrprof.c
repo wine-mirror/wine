@@ -299,8 +299,6 @@ BOOLEAN WINAPI WritePwrScheme(PUINT puiID, LPWSTR lpszName, LPWSTR lpszDescripti
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-   FIXME("(%p, %d, %p) not fully implemented\n", hinstDLL, fdwReason, lpvReserved);
-
    switch(fdwReason) {
       case DLL_PROCESS_ATTACH: {
 
