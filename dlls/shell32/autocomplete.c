@@ -160,7 +160,7 @@ static HRESULT WINAPI IAutoComplete2_fnQueryInterface(
 {
     IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
     
-    TRACE("(%p)->(\n\tIID:\t%s,%p)\n", This, shdebugstr_guid(riid), ppvObj);
+    TRACE("(%p)->(IID:%s,%p)\n", This, shdebugstr_guid(riid), ppvObj);
     *ppvObj = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
