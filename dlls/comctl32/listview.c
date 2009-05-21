@@ -3974,7 +3974,8 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 
     	if (nmlvcd.clrTextBk != CLR_NONE) 
             ExtTextOutW(hdc, rcSelect.left, rcSelect.top, ETO_OPAQUE, &rcSelect, 0, 0, 0);
-    	if(lprcFocus) *lprcFocus = rcSelect;
+	/* store new focus rectangle */
+	if (infoPtr->nFocusedItem == nItem) infoPtr->rcFocus = rcSelect;
     }
    
     /* figure out the text drawing flags */
