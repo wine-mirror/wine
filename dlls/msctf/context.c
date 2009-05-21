@@ -321,8 +321,31 @@ static HRESULT WINAPI Context_GetEnd (ITfContext *iface,
         TfEditCookie ec, ITfRange **ppEnd)
 {
     Context *This = (Context *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    EditCookie *cookie;
+    LONG end;
+    TRACE("(%p) %i %p\n",This,ec,ppEnd);
+
+    if (!ppEnd)
+        return E_INVALIDARG;
+
+    *ppEnd = NULL;
+
+    if (!This->connected)
+        return TF_E_DISCONNECTED;
+
+    if (get_Cookie_magic(ec)!=COOKIE_MAGIC_EDITCOOKIE)
+        return TF_E_NOLOCK;
+
+    if (!This->pITextStoreACP)
+    {
+        FIXME("Context does not have a ITextStoreACP\n");
+        return E_NOTIMPL;
+    }
+
+    cookie = get_Cookie_data(ec);
+    ITextStoreACP_GetEndACP(This->pITextStoreACP,&end);
+
+    return Range_Constructor(iface, This->pITextStoreACP, cookie->lockType, end, end, ppEnd);
 }
 
 static HRESULT WINAPI Context_GetActiveView (ITfContext *iface,

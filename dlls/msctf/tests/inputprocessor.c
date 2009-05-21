@@ -57,6 +57,7 @@ static INT  test_KEV_OnSetFocus = SINK_UNEXPECTED;
 static INT  test_ACP_AdviseSink = SINK_UNEXPECTED;
 static INT  test_ACP_GetStatus = SINK_UNEXPECTED;
 static INT  test_ACP_RequestLock = SINK_UNEXPECTED;
+static INT  test_ACP_GetEndACP = SINK_UNEXPECTED;
 static INT  test_DoEditSession = SINK_UNEXPECTED;
 
 
@@ -269,7 +270,8 @@ static HRESULT WINAPI TextStoreACP_RetrieveRequestedAttrs(ITextStoreACP *iface,
 static HRESULT WINAPI TextStoreACP_GetEndACP(ITextStoreACP *iface,
     LONG *pacp)
 {
-    trace("\n");
+    ok(test_ACP_GetEndACP == SINK_EXPECTED,"Unexpected TextStoreACP_GetEndACP\n");
+    test_ACP_GetEndACP = SINK_FIRED;
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_GetActiveView(ITextStoreACP *iface,
@@ -1396,6 +1398,22 @@ TfEditCookie ec)
     hr = ITfContext_GetStart(cxt,ec,&range);
     ok(SUCCEEDED(hr),"Unexpected return code %x\n",hr);
     ok(range != NULL,"Range set to NULL\n");
+
+    ITfRange_Release(range);
+
+    hr = ITfContext_GetEnd(cxt,ec,NULL);
+    ok(hr == E_INVALIDARG,"Unexpected return code %x\n",hr);
+
+    range = (ITfRange*)0xdeaddead;
+    hr = ITfContext_GetEnd(cxt,0xdeadcafe,&range);
+    ok(hr == TF_E_NOLOCK,"Unexpected return code %x\n",hr);
+    ok(range == NULL,"Range not set to NULL\n");
+
+    test_ACP_GetEndACP = SINK_EXPECTED;
+    hr = ITfContext_GetEnd(cxt,ec,&range);
+    ok(SUCCEEDED(hr),"Unexpected return code %x\n",hr);
+    ok(range != NULL,"Range set to NULL\n");
+    ok(test_ACP_GetEndACP == SINK_FIRED, "GetEndACP not fired as expected\n");
 
     ITfRange_Release(range);
     ITfContext_Release(cxt);
