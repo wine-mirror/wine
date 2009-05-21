@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winnls.h"
 
+#include "widltypes.h"
 #include "hash.h"
 
 static const unsigned char Lookup_16[128 * 3] = {

@@ -45,7 +45,7 @@
 #include "winbase.h"
 #include "winnls.h"
 
-#include "widltypes.h"
+#include "widl.h"
 #include "typelib.h"
 #include "typelib_struct.h"
 #include "utils.h"
@@ -1543,7 +1543,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
 
     /* adjust size of VTBL */
     if(funckind != 0x3 /* FUNC_STATIC */)
-        typeinfo->typeinfo->cbSizeVft += 4;
+        typeinfo->typeinfo->cbSizeVft += pointer_size;
 
     /* Increment the number of function elements */
     typeinfo->typeinfo->cElement += 1;
@@ -2031,7 +2031,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
         }
     }
     msft_typeinfo->typeinfo->datatype2 = num_funcs << 16 | num_parents;
-    msft_typeinfo->typeinfo->cbSizeVft = num_funcs * 4;
+    msft_typeinfo->typeinfo->cbSizeVft = num_funcs * pointer_size;
 
     STATEMENTS_FOR_EACH_FUNC( stmt_func, type_iface_get_stmts(interface) ) {
         var_t *func = stmt_func->u.var;
@@ -2539,6 +2539,8 @@ int create_msft_typelib(typelib_t *typelib)
     GUID midl_time_guid    = {0xde77ba63,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
     GUID midl_version_guid = {0xde77ba64,0x517c,0x11d1,{0xa2,0xda,0x00,0x00,0xf8,0x77,0x3c,0xe9}}; 
 
+    pointer_size = (typelib_kind == SYS_WIN64) ? 8 : 4;
+
     msft = xmalloc(sizeof(*msft));
     memset(msft, 0, sizeof(*msft));
     msft->typelib = typelib;
@@ -2546,7 +2548,7 @@ int create_msft_typelib(typelib_t *typelib)
     ctl2_init_header(msft);
     ctl2_init_segdir(msft);
 
-    msft->typelib_header.varflags |= SYS_WIN32;
+    msft->typelib_header.varflags |= typelib_kind;
 
     /*
      * The following two calls return an offset or -1 if out of memory. We

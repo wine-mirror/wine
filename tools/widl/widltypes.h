@@ -487,6 +487,14 @@ struct _statement_t {
     } u;
 };
 
+typedef enum {
+    SYS_WIN16,
+    SYS_WIN32,
+    SYS_MAC,
+    SYS_WIN64
+} syskind_t;
+
+extern syskind_t typelib_kind;
 extern user_type_list_t user_type_list;
 void check_for_additional_prototype_types(const var_list_t *list);
 
