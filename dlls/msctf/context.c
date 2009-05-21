@@ -243,10 +243,10 @@ static HRESULT WINAPI Context_RequestEditSession (ITfContext *iface,
     if (!(dwFlags & TF_ES_ASYNC))
         dwLockFlags |= TS_LF_SYNC;
 
-    if (dwFlags & TF_ES_READ)
-        dwLockFlags |= TS_LF_READ;
-    else if ((dwFlags & TF_ES_READWRITE) == TF_ES_READWRITE)
+    if ((dwFlags & TF_ES_READWRITE) == TF_ES_READWRITE)
         dwLockFlags |= TS_LF_READWRITE;
+    else if (dwFlags & TF_ES_READ)
+        dwLockFlags |= TS_LF_READ;
 
     /* TODO: cache this */
     ITextStoreACP_GetStatus(This->pITextStoreACP, &status);
