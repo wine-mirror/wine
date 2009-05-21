@@ -1005,9 +1005,9 @@ BOOL WINAPI MiniDumpReadDumpStream(PVOID base, ULONG str_idx,
         {
             if (dir->StreamType == str_idx)
             {
-                *pdir = dir;
-                *stream = (char*)base + dir->Location.Rva;
-                *size = dir->Location.DataSize;
+                if (pdir) *pdir = dir;
+                if (stream) *stream = (char*)base + dir->Location.Rva;
+                if (size) *size = dir->Location.DataSize;
                 return TRUE;
             }
         }
