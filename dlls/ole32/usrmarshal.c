@@ -1378,19 +1378,25 @@ ULONG __RPC_USER HMETAFILEPICT_UserSize(ULONG *pFlags, ULONG StartingSize, HMETA
     TRACE("(%s, %d, &%p)\n", debugstr_user_flags(pFlags), StartingSize, *phMfp);
 
     size += sizeof(ULONG);
-    size += sizeof(HMETAFILEPICT);
 
-    if ((LOWORD(*pFlags) != MSHCTX_INPROC) && *phMfp)
+    if(LOWORD(*pFlags) == MSHCTX_INPROC)
+        size += sizeof(HMETAFILEPICT);
+    else
     {
-        METAFILEPICT *mfpict = GlobalLock(*phMfp);
-
-        /* FIXME: raise an exception if mfpict is NULL? */
-        size += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
         size += sizeof(ULONG);
 
-        size = HMETAFILE_UserSize(pFlags, size, &mfpict->hMF);
+        if (*phMfp)
+        {
+            METAFILEPICT *mfpict = GlobalLock(*phMfp);
 
-        GlobalUnlock(*phMfp);
+            /* FIXME: raise an exception if mfpict is NULL? */
+            size += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
+            size += sizeof(ULONG);
+
+            size = HMETAFILE_UserSize(pFlags, size, &mfpict->hMF);
+
+            GlobalUnlock(*phMfp);
+        }
     }
 
     return size;
@@ -1420,32 +1426,40 @@ unsigned char * __RPC_USER HMETAFILEPICT_UserMarshal(ULONG *pFlags, unsigned cha
     TRACE("(%s, %p, &%p)\n", debugstr_user_flags(pFlags), pBuffer, *phMfp);
 
     if (LOWORD(*pFlags) == MSHCTX_INPROC)
-        *(ULONG *)pBuffer = WDT_INPROC_CALL;
-    else
-        *(ULONG *)pBuffer = WDT_REMOTE_CALL;
-    pBuffer += sizeof(ULONG);
-
-    *(HMETAFILEPICT *)pBuffer = *phMfp;
-    pBuffer += sizeof(HMETAFILEPICT);
-
-    if ((LOWORD(*pFlags) != MSHCTX_INPROC) && *phMfp)
     {
-        METAFILEPICT *mfpict = GlobalLock(*phMfp);
-        remoteMETAFILEPICT * remmfpict = (remoteMETAFILEPICT *)pBuffer;
-
-        /* FIXME: raise an exception if mfpict is NULL? */
-        remmfpict->mm = mfpict->mm;
-        remmfpict->xExt = mfpict->xExt;
-        remmfpict->yExt = mfpict->yExt;
-        pBuffer += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
-        *(ULONG *)pBuffer = USER_MARSHAL_PTR_PREFIX;
+        if (sizeof(HMETAFILEPICT) == 8)
+            *(ULONG *)pBuffer = WDT_INPROC64_CALL;
+        else
+            *(ULONG *)pBuffer = WDT_INPROC_CALL;
+        pBuffer += sizeof(ULONG);
+        *(HMETAFILEPICT *)pBuffer = *phMfp;
+        pBuffer += sizeof(HMETAFILEPICT);
+    }
+    else
+    {
+        *(ULONG *)pBuffer = WDT_REMOTE_CALL;
+        pBuffer += sizeof(ULONG);
+        *(ULONG *)pBuffer = (ULONG)(ULONG_PTR)*phMfp;
         pBuffer += sizeof(ULONG);
 
-        pBuffer = HMETAFILE_UserMarshal(pFlags, pBuffer, &mfpict->hMF);
+        if (*phMfp)
+        {
+            METAFILEPICT *mfpict = GlobalLock(*phMfp);
+            remoteMETAFILEPICT * remmfpict = (remoteMETAFILEPICT *)pBuffer;
 
-        GlobalUnlock(*phMfp);
+            /* FIXME: raise an exception if mfpict is NULL? */
+            remmfpict->mm = mfpict->mm;
+            remmfpict->xExt = mfpict->xExt;
+            remmfpict->yExt = mfpict->yExt;
+            pBuffer += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
+            *(ULONG *)pBuffer = USER_MARSHAL_PTR_PREFIX;
+            pBuffer += sizeof(ULONG);
+
+            pBuffer = HMETAFILE_UserMarshal(pFlags, pBuffer, &mfpict->hMF);
+
+            GlobalUnlock(*phMfp);
+        }
     }
-
     return pBuffer;
 }
 
@@ -1477,40 +1491,45 @@ unsigned char * __RPC_USER HMETAFILEPICT_UserUnmarshal(ULONG *pFlags, unsigned c
     fContext = *(ULONG *)pBuffer;
     pBuffer += sizeof(ULONG);
 
-    if ((fContext == WDT_INPROC_CALL) || !*(HMETAFILEPICT *)pBuffer)
+    if ((fContext == WDT_INPROC_CALL) || fContext == WDT_INPROC64_CALL)
     {
         *phMfp = *(HMETAFILEPICT *)pBuffer;
         pBuffer += sizeof(HMETAFILEPICT);
     }
     else
     {
-        METAFILEPICT *mfpict;
-        const remoteMETAFILEPICT *remmfpict;
-        ULONG user_marshal_prefix;
-
-        pBuffer += sizeof(HMETAFILEPICT);
-        remmfpict = (const remoteMETAFILEPICT *)pBuffer;
-
-        *phMfp = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
-        if (!*phMfp)
-            RpcRaiseException(E_OUTOFMEMORY);
-
-        mfpict = GlobalLock(*phMfp);
-        mfpict->mm = remmfpict->mm;
-        mfpict->xExt = remmfpict->xExt;
-        mfpict->yExt = remmfpict->yExt;
-        pBuffer += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
-        user_marshal_prefix = *(ULONG *)pBuffer;
+        ULONG handle = *(ULONG *)pBuffer;
         pBuffer += sizeof(ULONG);
+        *phMfp = NULL;
 
-        if (user_marshal_prefix != USER_MARSHAL_PTR_PREFIX)
-            RpcRaiseException(RPC_X_INVALID_TAG);
+        if(handle)
+        {
+            METAFILEPICT *mfpict;
+            const remoteMETAFILEPICT *remmfpict;
+            ULONG user_marshal_prefix;
 
-        pBuffer = HMETAFILE_UserUnmarshal(pFlags, pBuffer, &mfpict->hMF);
+            remmfpict = (const remoteMETAFILEPICT *)pBuffer;
 
-        GlobalUnlock(*phMfp);
+            *phMfp = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
+            if (!*phMfp)
+                RpcRaiseException(E_OUTOFMEMORY);
+
+            mfpict = GlobalLock(*phMfp);
+            mfpict->mm = remmfpict->mm;
+            mfpict->xExt = remmfpict->xExt;
+            mfpict->yExt = remmfpict->yExt;
+            pBuffer += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
+            user_marshal_prefix = *(ULONG *)pBuffer;
+            pBuffer += sizeof(ULONG);
+
+            if (user_marshal_prefix != USER_MARSHAL_PTR_PREFIX)
+                RpcRaiseException(RPC_X_INVALID_TAG);
+
+            pBuffer = HMETAFILE_UserUnmarshal(pFlags, pBuffer, &mfpict->hMF);
+
+            GlobalUnlock(*phMfp);
+        }
     }
-
     return pBuffer;
 }
 
