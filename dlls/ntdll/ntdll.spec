@@ -1231,6 +1231,7 @@
 @ cdecl -private _CIpow() NTDLL__CIpow
 # @ stub _CIsin
 # @ stub _CIsqrt
+@ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr)
 # @ stub __isascii
 # @ stub __iscsym
 # @ stub __iscsymf

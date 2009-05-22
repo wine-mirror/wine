@@ -54,6 +54,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 struct _DISPATCHER_CONTEXT;
 
+typedef LONG (WINAPI *PC_LANGUAGE_EXCEPTION_HANDLER)( EXCEPTION_POINTERS *ptrs, ULONG64 frame );
 typedef EXCEPTION_DISPOSITION (WINAPI *PEXCEPTION_ROUTINE)( EXCEPTION_RECORD *rec,
                                                             ULONG64 frame,
                                                             CONTEXT *context,
@@ -72,6 +73,18 @@ typedef struct _DISPATCHER_CONTEXT
     PUNWIND_HISTORY_TABLE HistoryTable;
     ULONG                 ScopeIndex;
 } DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
+
+typedef struct _SCOPE_TABLE
+{
+    ULONG Count;
+    struct
+    {
+        ULONG BeginAddress;
+        ULONG EndAddress;
+        ULONG HandlerAddress;
+        ULONG JumpTarget;
+    } ScopeRecord[1];
+} SCOPE_TABLE, *PSCOPE_TABLE;
 
 
 /***********************************************************************
@@ -320,6 +333,19 @@ static void dump_unwind_info( ULONG64 base, RUNTIME_FUNCTION *function )
                    (char *)base + handler_data->handler, &handler_data->handler + 1 );
         break;
     }
+}
+
+static void dump_scope_table( ULONG64 base, const SCOPE_TABLE *table )
+{
+    unsigned int i;
+
+    TRACE( "scope table at %p\n", table );
+    for (i = 0; i < table->Count; i++)
+        TRACE( "  %u: %lx-%lx handler %lx target %lx\n", i,
+               base + table->ScopeRecord[i].BeginAddress,
+               base + table->ScopeRecord[i].EndAddress,
+               base + table->ScopeRecord[i].HandlerAddress,
+               base + table->ScopeRecord[i].JumpTarget );
 }
 
 /***********************************************************************
@@ -1455,7 +1481,6 @@ void WINAPI RtlUnwindEx( ULONG64 frame, ULONG64 target_ip, EXCEPTION_RECORD *rec
     rec->ExceptionFlags |= EH_UNWINDING | (frame ? 0 : EH_EXIT_UNWIND);
 
     FIXME( "code=%x flags=%x not implemented on x86_64\n", rec->ExceptionCode, rec->ExceptionFlags );
-    NtTerminateProcess( GetCurrentProcess(), 1 );
 }
 
 
@@ -1468,6 +1493,57 @@ void WINAPI __regs_RtlUnwind( ULONG64 frame, ULONG64 target_ip, EXCEPTION_RECORD
     RtlUnwindEx( frame, target_ip, rec, retval, context, NULL );
 }
 DEFINE_REGS_ENTRYPOINT( RtlUnwind, 4 )
+
+
+/*******************************************************************
+ *		__C_specific_handler (NTDLL.@)
+ */
+EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
+                                                   ULONG64 frame,
+                                                   CONTEXT *context,
+                                                   struct _DISPATCHER_CONTEXT *dispatch )
+{
+    SCOPE_TABLE *table = dispatch->HandlerData;
+    ULONG i;
+
+    TRACE( "%p %lx %p %p\n", rec, frame, context, dispatch );
+    if (TRACE_ON(seh)) dump_scope_table( dispatch->ImageBase, table );
+
+    if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))  /* FIXME */
+        return ExceptionContinueSearch;
+
+    for (i = 0; i < table->Count; i++)
+    {
+        if (context->Rip >= dispatch->ImageBase + table->ScopeRecord[i].BeginAddress &&
+            context->Rip < dispatch->ImageBase + table->ScopeRecord[i].EndAddress)
+        {
+            if (!table->ScopeRecord[i].JumpTarget) continue;
+            if (table->ScopeRecord[i].HandlerAddress != EXCEPTION_EXECUTE_HANDLER)
+            {
+                EXCEPTION_POINTERS ptrs;
+                PC_LANGUAGE_EXCEPTION_HANDLER filter;
+
+                filter = (PC_LANGUAGE_EXCEPTION_HANDLER)(dispatch->ImageBase + table->ScopeRecord[i].HandlerAddress);
+                ptrs.ExceptionRecord = rec;
+                ptrs.ContextRecord = context;
+                TRACE( "calling filter %p ptrs %p frame %lx\n", filter, &ptrs, frame );
+                switch (filter( &ptrs, frame ))
+                {
+                case EXCEPTION_EXECUTE_HANDLER:
+                    break;
+                case EXCEPTION_CONTINUE_SEARCH:
+                    continue;
+                case EXCEPTION_CONTINUE_EXECUTION:
+                    return ExceptionContinueExecution;
+                }
+            }
+            TRACE( "unwinding to target %lx\n", dispatch->ImageBase + table->ScopeRecord[i].JumpTarget );
+            RtlUnwindEx( frame, dispatch->ImageBase + table->ScopeRecord[i].JumpTarget,
+                         rec, 0, context, dispatch->HistoryTable );
+        }
+    }
+    return ExceptionContinueSearch;
+}
 
 
 /*******************************************************************
