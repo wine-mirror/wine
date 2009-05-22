@@ -620,6 +620,31 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 
 
 /**********************************************************************
+ *           find_function_info
+ */
+static RUNTIME_FUNCTION *find_function_info( ULONG64 pc, HMODULE module,
+                                             RUNTIME_FUNCTION *func, ULONG size )
+{
+    int min = 0;
+    int max = size/sizeof(*func) - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if ((char *)pc < (char *)module + func[pos].BeginAddress) max = pos - 1;
+        else if ((char *)pc >= (char *)module + func[pos].EndAddress) min = pos + 1;
+        else
+        {
+            func += pos;
+            while (func->UnwindData & 1)  /* follow chained entry */
+                func = (RUNTIME_FUNCTION *)((char *)module + (func->UnwindData & ~1));
+            return func;
+        }
+    }
+    return NULL;
+}
+
+/**********************************************************************
  *           call_stack_handlers
  *
  * Call the stack handlers chain.
@@ -1019,11 +1044,28 @@ void signal_init_process(void)
 /**********************************************************************
  *              RtlLookupFunctionEntry   (NTDLL.@)
  */
-PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG64 pc, ULONG64 *base,
-                                                 UNWIND_HISTORY_TABLE *table )
+PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG64 pc, ULONG64 *base, UNWIND_HISTORY_TABLE *table )
 {
-    FIXME("stub\n");
-    return NULL;
+    LDR_MODULE *module;
+    RUNTIME_FUNCTION *func;
+    ULONG size;
+
+    /* FIXME: should use the history table to make things faster */
+
+    if (LdrFindEntryForAddress( (void *)pc, &module ))
+    {
+        WARN( "module not found for %lx\n", pc );
+        return NULL;
+    }
+    if (!(func = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
+                                               IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
+    {
+        WARN( "no exception table found in module %p pc %lx\n", module->BaseAddress, pc );
+        return NULL;
+    }
+    func = find_function_info( pc, module->BaseAddress, func, size );
+    if (func) *base = (ULONG64)module->BaseAddress;
+    return func;
 }
 
 static ULONG64 get_int_reg( CONTEXT *context, int reg )
