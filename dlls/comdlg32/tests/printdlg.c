@@ -246,6 +246,11 @@ static void test_PrintDlgExW(void)
     PrintDlg(NULL);
     SetLastError(0xdeadbeef);
     res = pPrintDlgExW(NULL);
+    if(res == E_NOTIMPL)
+    {
+        win_skip("PrintDlgExW returns not implemented\n");
+        return;
+    }
     ok( (res == E_INVALIDARG),
         "got 0x%x with %u and %u (expected 'E_INVALIDARG')\n",
         res, GetLastError(), CommDlgExtendedError());
