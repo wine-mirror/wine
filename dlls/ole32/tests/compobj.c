@@ -253,6 +253,13 @@ static void test_CoCreateInstance(void)
 
     OleInitialize(NULL);
     hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
+    if(hr == REGDB_E_CLASSNOTREG)
+    {
+        skip("IE not installed so can't test CoCreateInstance\n");
+        OleUninitialize();
+        return;
+    }
+
     ok_ole_success(hr, "CoCreateInstance");
     if(pUnk) IUnknown_Release(pUnk);
     OleUninitialize();
@@ -325,8 +332,13 @@ static void test_CoGetClassObject(void)
 
     pUnk = (IUnknown *)0xdeadbeef;
     hr = CoGetClassObject(rclsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
-    ok(hr == S_OK, "CoGetClassObject should have returned S_OK instead of 0x%08x\n", hr);
-    if (pUnk) IUnknown_Release(pUnk);
+    if(hr == REGDB_E_CLASSNOTREG)
+        skip("IE not installed so can't test CoGetClassObject\n");
+    else
+    {
+        ok(hr == S_OK, "CoGetClassObject should have returned S_OK instead of 0x%08x\n", hr);
+        if (pUnk) IUnknown_Release(pUnk);
+    }
 
     SetEvent(info.stop);
     WaitForSingleObject(thread, INFINITE);
@@ -1030,7 +1042,7 @@ static void test_CoFreeUnusedLibraries(void)
     hr = CoCreateInstance(&CLSID_FileProtocol, NULL, CLSCTX_INPROC_SERVER, &IID_IInternetProtocol, (void **)&pUnk);
     if (hr == REGDB_E_CLASSNOTREG)
     {
-        trace("IE not installed so can't run CoFreeUnusedLibraries test\n");
+        skip("IE not installed so can't run CoFreeUnusedLibraries test\n");
         CoUninitialize();
         return;
     }
