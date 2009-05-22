@@ -67,7 +67,8 @@ static void test_query_dos_deviceA(void)
     }
 
     for (;drivestr[0] <= 'z'; drivestr[0]++) {
-        ret = QueryDosDeviceA( drivestr, buffer, buflen);
+        /* Older W2K fails with ERROR_INSUFFICIENT_BUFFER when buflen is > 32767 big */
+        ret = QueryDosDeviceA( drivestr, buffer, buflen - 1);
         if(ret) {
             for (p = buffer; *p; p++) *p = toupper(*p);
             if (strstr(buffer, "HARDDISK") || strstr(buffer, "RAMDISK")) found = TRUE;
