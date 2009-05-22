@@ -52,6 +52,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
+struct _DISPATCHER_CONTEXT;
+
+typedef EXCEPTION_DISPOSITION (WINAPI *PEXCEPTION_ROUTINE)( EXCEPTION_RECORD *rec,
+                                                            ULONG64 frame,
+                                                            CONTEXT *context,
+                                                            struct _DISPATCHER_CONTEXT *dispatch );
+
+typedef struct _DISPATCHER_CONTEXT
+{
+    ULONG64               ControlPc;
+    ULONG64               ImageBase;
+    PRUNTIME_FUNCTION     FunctionEntry;
+    ULONG64               EstablisherFrame;
+    ULONG64               TargetIp;
+    PCONTEXT              ContextRecord;
+    PEXCEPTION_ROUTINE    LanguageHandler;
+    PVOID                 HandlerData;
+    PUNWIND_HISTORY_TABLE HistoryTable;
+    ULONG                 ScopeIndex;
+} DISPATCHER_CONTEXT, *PDISPATCHER_CONTEXT;
+
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -649,15 +670,92 @@ static RUNTIME_FUNCTION *find_function_info( ULONG64 pc, HMODULE module,
  *
  * Call the stack handlers chain.
  */
-static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
+static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 {
     EXCEPTION_POINTERS ptrs;
+    UNWIND_HISTORY_TABLE table;
+    ULONG64 frame;
+    RUNTIME_FUNCTION *dir, *info;
+    PEXCEPTION_ROUTINE handler;
+    DISPATCHER_CONTEXT dispatch;
+    CONTEXT context, new_context;
+    LDR_MODULE *module;
+    DWORD size;
 
-    FIXME( "not implemented on x86_64\n" );
+    context = *orig_context;
+    for (;;)
+    {
+        /* FIXME: should use the history table to make things faster */
+
+        if (LdrFindEntryForAddress( (void *)context.Rip, &module ))
+        {
+            ERR( "no module found for rip %p, can't dispatch exception\n", (void *)context.Rip );
+            break;
+        }
+        if (!(dir = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
+        {
+            ERR( "module %s doesn't contain exception data, can't dispatch exception\n",
+                 debugstr_w(module->BaseDllName.Buffer) );
+            break;
+        }
+        if (!(info = find_function_info( context.Rip, module->BaseAddress, dir, size )))
+        {
+            /* leaf function */
+            context.Rip = *(ULONG64 *)context.Rsp;
+            context.Rsp += sizeof(ULONG64);
+            continue;
+        }
+
+        new_context = context;
+
+        handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)module->BaseAddress, context.Rip,
+                                    info, &new_context, &dispatch.HandlerData, &frame, NULL );
+
+        if ((frame & 7) ||
+            frame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
+            frame >= (ULONG64)NtCurrentTeb()->Tib.StackBase)
+        {
+            ERR( "invalid frame %lx\n", frame );
+            rec->ExceptionFlags |= EH_STACK_INVALID;
+            break;
+        }
+
+        if (handler)
+        {
+            dispatch.ControlPc        = context.Rip;
+            dispatch.ImageBase        = (ULONG64)module->BaseAddress;
+            dispatch.FunctionEntry    = info;
+            dispatch.EstablisherFrame = frame;
+            dispatch.TargetIp         = 0; /* FIXME */
+            dispatch.ContextRecord    = &context;
+            dispatch.LanguageHandler  = handler;
+            dispatch.HistoryTable     = &table;
+            dispatch.ScopeIndex       = 0; /* FIXME */
+
+            TRACE( "calling handler %p (rec=%p, frame=%lx context=%p, dispatch=%p)\n",
+                   handler, rec, frame, &context, &dispatch );
+
+            switch( handler( rec, frame, &context, &dispatch ))
+            {
+            case ExceptionContinueExecution:
+                if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
+                *orig_context = context;
+                return STATUS_SUCCESS;
+            case ExceptionContinueSearch:
+                break;
+            case ExceptionNestedException:
+                break;
+            default:
+                return STATUS_INVALID_DISPOSITION;
+            }
+        }
+        context = new_context;
+    }
 
     /* hack: call unhandled exception filter directly */
     ptrs.ExceptionRecord = rec;
-    ptrs.ContextRecord = context;
+    ptrs.ContextRecord = orig_context;
     unhandled_exception_filter( &ptrs );
     return STATUS_UNHANDLED_EXCEPTION;
 }
@@ -679,7 +777,7 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
         TRACE( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
                rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
                context->Rip, GetCurrentThreadId() );
-        for (c = 0; c < rec->NumberParameters; c++)
+        for (c = 0; c < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); c++)
             TRACE( " info[%d]=%08lx\n", c, rec->ExceptionInformation[c] );
         if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
         {
@@ -1241,8 +1339,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
     unsigned int i, prolog_offset;
 
     TRACE( "type %x rip %lx rsp %lx\n", type, pc, context->Rsp );
-
-    dump_unwind_info( base, function );
+    if (TRACE_ON(seh)) dump_unwind_info( base, function );
 
     frame = *frame_ret = context->Rsp;
     for (;;)
