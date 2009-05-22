@@ -528,7 +528,7 @@ BOOL WINAPI ImmAssociateContextEx(HWND hWnd, HIMC hIMC, DWORD dwFlags)
     }
     else if (dwFlags == IACE_IGNORENOCONTEXT)
     {
-        if (GetPropW(hWnd,szwWineIMCProperty) > 0)
+        if (GetPropW(hWnd,szwWineIMCProperty))
             ImmAssociateContext(hWnd,hIMC);
         return TRUE;
     }
