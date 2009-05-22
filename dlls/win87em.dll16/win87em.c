@@ -149,7 +149,6 @@ void WINAPI _fpMath( CONTEXT *context )
     case 6: /* round top of stack to integer using method AX & 0x0C00 */
         /* returns current controlword */
         {
-            DWORD dw=0;
             WORD save,mask;
             /* I don't know much about asm() programming. This could be
              * wrong.
@@ -160,10 +159,8 @@ void WINAPI _fpMath( CONTEXT *context )
            __asm__ __volatile__("orw $0xC00,%0" : "=m" (mask) : : "memory");
            __asm__ __volatile__("fldcw %0;wait" : : "m" (mask));
            __asm__ __volatile__("frndint");
-           __asm__ __volatile__("fist %0;wait" : "=m" (dw) : : "memory");
            __asm__ __volatile__("fldcw %0" : : "m" (save));
 #endif
-            TRACE("On top of stack is %d\n",dw);
         }
         break;
 
