@@ -70,6 +70,7 @@ typedef struct tagContext {
 
     TfClientId tidOwner;
     TfEditCookie defaultCookie;
+    TS_STATUS documentStatus;
 
     ITextStoreACP   *pITextStoreACP;
     ITfContextOwnerCompositionSink *pITfContextOwnerCompositionSink;
@@ -223,7 +224,6 @@ static HRESULT WINAPI Context_RequestEditSession (ITfContext *iface,
     HRESULT hr;
     Context *This = (Context *)iface;
     DWORD  dwLockFlags = 0x0;
-    TS_STATUS status;
 
     TRACE("(%p) %i %p %x %p\n",This, tid, pes, dwFlags, phrSession);
 
@@ -248,10 +248,10 @@ static HRESULT WINAPI Context_RequestEditSession (ITfContext *iface,
     else if (dwFlags & TF_ES_READ)
         dwLockFlags |= TS_LF_READ;
 
-    /* TODO: cache this */
-    ITextStoreACP_GetStatus(This->pITextStoreACP, &status);
+    if (!This->documentStatus.dwDynamicFlags)
+        ITextStoreACP_GetStatus(This->pITextStoreACP, &This->documentStatus);
 
-    if (((dwFlags & TF_ES_READWRITE) == TF_ES_READWRITE) && (status.dwDynamicFlags & TS_SD_READONLY))
+    if (((dwFlags & TF_ES_READWRITE) == TF_ES_READWRITE) && (This->documentStatus.dwDynamicFlags & TS_SD_READONLY))
     {
         *phrSession = TS_E_READONLY;
         return S_OK;
@@ -262,7 +262,6 @@ static HRESULT WINAPI Context_RequestEditSession (ITfContext *iface,
         *phrSession = E_FAIL;
         return E_INVALIDARG;
     }
-
 
     hr = ITextStoreACP_RequestLock(This->pITextStoreACP, dwLockFlags, phrSession);
 
@@ -739,8 +738,28 @@ static HRESULT WINAPI TextStoreACPSink_OnStatusChange(ITextStoreACPSink *iface,
         DWORD dwFlags)
 {
     TextStoreACPSink *This = (TextStoreACPSink *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    HRESULT hr, hrSession;
+
+    TRACE("(%p) %x\n",This, dwFlags);
+
+    if (!This->pContext)
+    {
+        ERR("No context?\n");
+        return E_FAIL;
+    }
+
+    if (!This->pContext->pITextStoreACP)
+    {
+        FIXME("Context does not have a ITextStoreACP\n");
+        return E_NOTIMPL;
+    }
+
+    hr = ITextStoreACP_RequestLock(This->pContext->pITextStoreACP, TS_LF_READ, &hrSession);
+
+    if(SUCCEEDED(hr) && SUCCEEDED(hrSession))
+        This->pContext->documentStatus.dwDynamicFlags = dwFlags;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TextStoreACPSink_OnAttrsChange(ITextStoreACPSink *iface,
@@ -761,10 +780,16 @@ static HRESULT WINAPI TextStoreACPSink_OnLockGranted(ITextStoreACPSink *iface,
 
     TRACE("(%p) %x\n",This, dwLockFlags);
 
-    if (!This->pContext || !This->pContext->currentEditSession)
+    if (!This->pContext)
     {
-        ERR("OnLockGranted called on a context without a current edit session\n");
+        ERR("OnLockGranted called without a context\n");
         return E_FAIL;
+    }
+
+    if (!This->pContext->currentEditSession)
+    {
+        FIXME("OnLockGranted called for something other than an EditSession\n");
+        return S_OK;
     }
 
     cookie = HeapAlloc(GetProcessHeap(),0,sizeof(EditCookie));
