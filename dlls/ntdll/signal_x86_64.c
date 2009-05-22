@@ -1462,10 +1462,17 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
 /*******************************************************************
  *		RtlUnwindEx (NTDLL.@)
  */
-void WINAPI RtlUnwindEx( ULONG64 frame, ULONG64 target_ip, EXCEPTION_RECORD *rec,
+void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD *rec,
                          ULONG64 retval, CONTEXT *context, UNWIND_HISTORY_TABLE *table )
 {
     EXCEPTION_RECORD record;
+    ULONG64 frame;
+    RUNTIME_FUNCTION *dir, *info;
+    PEXCEPTION_ROUTINE handler;
+    DISPATCHER_CONTEXT dispatch;
+    CONTEXT new_context;
+    LDR_MODULE *module;
+    DWORD size;
 
     /* build an exception record, if we do not have one */
     if (!rec)
@@ -1478,9 +1485,88 @@ void WINAPI RtlUnwindEx( ULONG64 frame, ULONG64 target_ip, EXCEPTION_RECORD *rec
         rec = &record;
     }
 
-    rec->ExceptionFlags |= EH_UNWINDING | (frame ? 0 : EH_EXIT_UNWIND);
+    rec->ExceptionFlags |= EH_UNWINDING | (end_frame ? 0 : EH_EXIT_UNWIND);
 
-    FIXME( "code=%x flags=%x not implemented on x86_64\n", rec->ExceptionCode, rec->ExceptionFlags );
+    FIXME( "code=%x flags=%x end_frame=%lx target_ip=%lx\n",
+           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip );
+
+    frame = context->Rsp;
+    while (frame != end_frame)
+    {
+        /* FIXME: should use the history table to make things faster */
+
+        if (LdrFindEntryForAddress( (void *)context->Rip, &module ))
+        {
+            ERR( "no module found for rip %p, can't unwind exception\n", (void *)context->Rip );
+            raise_status( STATUS_BAD_FUNCTION_TABLE, rec );
+        }
+        if (!(dir = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
+        {
+            ERR( "module %s doesn't contain exception data, can't unwind exception\n",
+                 debugstr_w(module->BaseDllName.Buffer) );
+            raise_status( STATUS_BAD_FUNCTION_TABLE, rec );
+        }
+        if (!(info = find_function_info( context->Rip, module->BaseAddress, dir, size )))
+        {
+            /* leaf function */
+            context->Rip = *(ULONG64 *)context->Rsp;
+            context->Rsp += sizeof(ULONG64);
+            continue;
+        }
+
+        new_context = *context;
+
+        handler = RtlVirtualUnwind( UNW_FLAG_UHANDLER, (ULONG64)module->BaseAddress, context->Rip,
+                                    info, &new_context, &dispatch.HandlerData, &frame, NULL );
+
+        if ((frame & 7) ||
+            frame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
+            frame >= (ULONG64)NtCurrentTeb()->Tib.StackBase)
+        {
+            ERR( "invalid frame %lx\n", frame );
+            raise_status( STATUS_BAD_STACK, rec );
+        }
+
+        if (end_frame && (frame > end_frame))
+        {
+            ERR( "invalid frame %lx/%lx\n", frame, end_frame );
+            raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
+        }
+
+        if (handler)
+        {
+            dispatch.ControlPc        = context->Rip;
+            dispatch.ImageBase        = (ULONG64)module->BaseAddress;
+            dispatch.FunctionEntry    = info;
+            dispatch.EstablisherFrame = frame;
+            dispatch.TargetIp         = target_ip;
+            dispatch.ContextRecord    = context;
+            dispatch.LanguageHandler  = handler;
+            dispatch.HistoryTable     = table;
+            dispatch.ScopeIndex       = 0; /* FIXME */
+
+            TRACE( "calling handler %p (rec=%p, frame=%lx context=%p, dispatch=%p)\n",
+                   handler, rec, frame, context, &dispatch );
+
+            switch( handler( rec, frame, context, &dispatch ))
+            {
+            case ExceptionContinueSearch:
+                break;
+            case ExceptionCollidedUnwind:
+                FIXME( "ExceptionCollidedUnwind not supported yet\n" );
+                break;
+            default:
+                raise_status( STATUS_INVALID_DISPOSITION, rec );
+                break;
+            }
+        }
+        *context = new_context;
+    }
+    context->Rax = retval;
+    context->Rip = target_ip;
+    TRACE( "returning to %lx stack %lx\n", context->Rip, context->Rsp );
+    set_cpu_context( context );
 }
 
 
