@@ -1390,7 +1390,7 @@ ULONG __RPC_USER HMETAFILEPICT_UserSize(ULONG *pFlags, ULONG StartingSize, HMETA
             METAFILEPICT *mfpict = GlobalLock(*phMfp);
 
             /* FIXME: raise an exception if mfpict is NULL? */
-            size += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
+            size += 3 * sizeof(ULONG);
             size += sizeof(ULONG);
 
             size = HMETAFILE_UserSize(pFlags, size, &mfpict->hMF);
@@ -1451,7 +1451,7 @@ unsigned char * __RPC_USER HMETAFILEPICT_UserMarshal(ULONG *pFlags, unsigned cha
             remmfpict->mm = mfpict->mm;
             remmfpict->xExt = mfpict->xExt;
             remmfpict->yExt = mfpict->yExt;
-            pBuffer += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
+            pBuffer += 3 * sizeof(ULONG);
             *(ULONG *)pBuffer = USER_MARSHAL_PTR_PREFIX;
             pBuffer += sizeof(ULONG);
 
@@ -1518,7 +1518,7 @@ unsigned char * __RPC_USER HMETAFILEPICT_UserUnmarshal(ULONG *pFlags, unsigned c
             mfpict->mm = remmfpict->mm;
             mfpict->xExt = remmfpict->xExt;
             mfpict->yExt = remmfpict->yExt;
-            pBuffer += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
+            pBuffer += 3 * sizeof(ULONG);
             user_marshal_prefix = *(ULONG *)pBuffer;
             pBuffer += sizeof(ULONG);
 
