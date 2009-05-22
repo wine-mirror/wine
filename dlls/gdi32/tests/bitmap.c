@@ -1954,7 +1954,9 @@ static void test_select_object(void)
         ok(bm.bmWidthBytes == BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel), "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
         ok(bm.bmPlanes == planes, "wrong bmPlanes %u\n", bm.bmPlanes);
         if(depths[i] == 15) {
-            ok(bm.bmBitsPixel == 16, "wrong bmBitsPixel %d(15 bpp special)\n", bm.bmBitsPixel);
+            ok(bm.bmBitsPixel == 16 ||
+               broken(bm.bmBitsPixel == 15), /* Win9x/WinME */
+               "wrong bmBitsPixel %d(15 bpp special)\n", bm.bmBitsPixel);
         } else {
             ok(bm.bmBitsPixel == depths[i], "wrong bmBitsPixel %d\n", bm.bmBitsPixel);
         }
