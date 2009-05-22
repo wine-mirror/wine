@@ -1737,7 +1737,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
         strcpy(pIdentifier->Description, This->adapters[Adapter].description);
 
     /* Note dx8 doesn't supply a DeviceName */
-    if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY"); /* FIXME: May depend on desktop? */
+    if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY1"); /* FIXME: May depend on desktop? */
     pIdentifier->DriverVersion->u.HighPart = This->adapters[Adapter].gl_info.driver_version_hipart;
     pIdentifier->DriverVersion->u.LowPart = This->adapters[Adapter].gl_info.driver_version;
     *(pIdentifier->VendorId) = This->adapters[Adapter].gl_info.gl_vendor;
