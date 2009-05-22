@@ -26,3 +26,4 @@
 #include "rsrc_En.rc"
 #include "rsrc_Ko.rc"
 #include "rsrc_Nl.rc"
+#include "rsrc_Ru.rc"
