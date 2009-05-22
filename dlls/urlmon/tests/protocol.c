@@ -786,10 +786,7 @@ static HRESULT WINAPI MimeProtocolSink_ReportData(IInternetProtocolSink *iface, 
         ok(hres == S_OK, "ReportProgress failed: %08x\n", hres);
         CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
 
-        SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
-        hres = IInternetProtocolSink_ReportProgress(filtered_sink, BINDSTATUS_CACHEFILENAMEAVAILABLE, expect_wsz = emptyW);
-        ok(hres == S_OK, "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
-        CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
+        /* FIXME: test BINDSTATUS_CACHEFILENAMEAVAILABLE */
     }
 
     SET_EXPECT(ReportData);
@@ -842,6 +839,8 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &protocol_sink;
     if(IsEqualGUID(&IID_IServiceProvider, riid))
         *ppv = &service_provider;
+    if(IsEqualGUID(&IID_IUriContainer, riid))
+        return E_NOINTERFACE; /* TODO */
 
     if(*ppv)
         return S_OK;
