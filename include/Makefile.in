@@ -420,6 +420,7 @@ SRCDIR_INCLUDES = \
 	textserv.h \
 	tlhelp32.h \
 	tmschema.h \
+	traffic.h \
 	twain.h \
 	userenv.h \
 	usp10.h \
