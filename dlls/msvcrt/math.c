@@ -436,7 +436,7 @@ double CDECL _logb(double num)
 /*********************************************************************
  *		_lrotl (MSVCRT.@)
  */
-unsigned long CDECL _lrotl(unsigned long num, int shift)
+MSVCRT_ulong CDECL _lrotl(MSVCRT_ulong num, int shift)
 {
   shift &= 0x1f;
   return (num << shift) | (num >> (32-shift));
@@ -445,7 +445,7 @@ unsigned long CDECL _lrotl(unsigned long num, int shift)
 /*********************************************************************
  *		_lrotr (MSVCRT.@)
  */
-unsigned long CDECL _lrotr(unsigned long num, int shift)
+MSVCRT_ulong CDECL _lrotr(MSVCRT_ulong num, int shift)
 {
   shift &= 0x1f;
   return (num >> shift) | (num << (32-shift));
@@ -463,7 +463,7 @@ unsigned int CDECL _rotr(unsigned int num, int shift)
 /*********************************************************************
  *		_scalb (MSVCRT.@)
  */
-double CDECL _scalb(double num, long power)
+double CDECL _scalb(double num, MSVCRT_long power)
 {
   /* Note - Can't forward directly as libc expects y as double */
   double dblpower = (double)power;
@@ -592,7 +592,7 @@ int * CDECL __fpecode(void)
 /*********************************************************************
  *		ldexp (MSVCRT.@)
  */
-double CDECL MSVCRT_ldexp(double num, long exp)
+double CDECL MSVCRT_ldexp(double num, MSVCRT_long exp)
 {
   double z = ldexp(num,exp);
 
@@ -1007,10 +1007,10 @@ MSVCRT_div_t CDECL MSVCRT_div(int num, int denom)
  * 	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-unsigned __int64 CDECL MSVCRT_ldiv(long num, long denom)
+unsigned __int64 CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 {
   ldiv_t ldt = ldiv(num,denom);
-  return ((unsigned __int64)ldt.rem << 32) | (unsigned long)ldt.quot;
+  return ((unsigned __int64)ldt.rem << 32) | (MSVCRT_ulong)ldt.quot;
 }
 #else
 /*********************************************************************
@@ -1018,7 +1018,7 @@ unsigned __int64 CDECL MSVCRT_ldiv(long num, long denom)
  * VERSION
  *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
  */
-MSVCRT_ldiv_t CDECL MSVCRT_ldiv(long num, long denom)
+MSVCRT_ldiv_t CDECL MSVCRT_ldiv(MSVCRT_long num, MSVCRT_long denom)
 {
   ldiv_t result = ldiv(num,denom);
 

@@ -447,12 +447,12 @@ int * CDECL __p__dstbias(void)
 /*********************************************************************
  *		_timezone (MSVCRT.@)
  */
-long MSVCRT___timezone = 0;
+MSVCRT_long MSVCRT___timezone = 0;
 
 /*********************************************************************
  *		__p_timezone (MSVCRT.@)
  */
-long * CDECL MSVCRT___p__timezone(void)
+MSVCRT_long * CDECL MSVCRT___p__timezone(void)
 {
 	return &MSVCRT___timezone;
 }
@@ -490,7 +490,7 @@ void CDECL MSVCRT__tzset(void)
         static const time_t seconds_in_year = (365 * 24 + 6) * 3600;
         time_t t;
         struct tm *tmp;
-        long zone_january, zone_july;
+        int zone_january, zone_july;
 
         t = (time(NULL) / seconds_in_year) * seconds_in_year;
         tmp = localtime(&t);

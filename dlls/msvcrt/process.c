@@ -185,7 +185,7 @@ static MSVCRT_intptr_t msvcrt_spawn(int flags, const MSVCRT_wchar_t* exe, MSVCRT
 static MSVCRT_wchar_t* msvcrt_argvtos(const MSVCRT_wchar_t* const* arg, MSVCRT_wchar_t delim)
 {
   const MSVCRT_wchar_t* const* a;
-  long size;
+  int size;
   MSVCRT_wchar_t* p;
   MSVCRT_wchar_t* ret;
 
@@ -230,7 +230,7 @@ static MSVCRT_wchar_t* msvcrt_argvtos(const MSVCRT_wchar_t* const* arg, MSVCRT_w
 static MSVCRT_wchar_t *msvcrt_argvtos_aw(const char * const *arg, MSVCRT_wchar_t delim)
 {
   const char * const *a;
-  unsigned long len;
+  unsigned int len;
   MSVCRT_wchar_t *p, *ret;
 
   if (!arg)

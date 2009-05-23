@@ -122,7 +122,7 @@ unsigned int MSVCRT__sys_nerr = sizeof(MSVCRT__sys_errlist)/sizeof(MSVCRT__sys_e
 void msvcrt_set_errno(int err)
 {
   int *errno = MSVCRT__errno();
-  unsigned long *doserrno = MSVCRT___doserrno();
+  MSVCRT_ulong *doserrno = MSVCRT___doserrno();
 
   *doserrno = err;
 
@@ -189,7 +189,7 @@ int* CDECL MSVCRT__errno(void)
 /*********************************************************************
  *		__doserrno (MSVCRT.@)
  */
-unsigned long* CDECL MSVCRT___doserrno(void)
+MSVCRT_ulong* CDECL MSVCRT___doserrno(void)
 {
     return &msvcrt_get_thread_data()->thread_doserrno;
 }

@@ -46,6 +46,8 @@ typedef unsigned short MSVCRT_wint_t;
 typedef unsigned short MSVCRT_wctype_t;
 typedef unsigned short MSVCRT__ino_t;
 typedef unsigned int   MSVCRT__fsize_t;
+typedef int            MSVCRT_long;
+typedef unsigned int   MSVCRT_ulong;
 #ifdef _WIN64
 typedef unsigned __int64 MSVCRT_size_t;
 typedef __int64 MSVCRT_intptr_t;
@@ -56,8 +58,8 @@ typedef long MSVCRT_intptr_t;
 typedef unsigned long MSVCRT_uintptr_t;
 #endif
 typedef unsigned int   MSVCRT__dev_t;
-typedef int  MSVCRT__off_t;
-typedef long MSVCRT_clock_t;
+typedef int MSVCRT__off_t;
+typedef int MSVCRT_clock_t;
 typedef int MSVCRT___time32_t;
 typedef __int64 MSVCRT___time64_t;
 typedef __int64 MSVCRT_fpos_t;
@@ -91,7 +93,7 @@ extern DWORD msvcrt_tls_index;
 
 struct __thread_data {
     int                             thread_errno;
-    unsigned long                   thread_doserrno;
+    MSVCRT_ulong                    thread_doserrno;
     unsigned int                    random_seed;        /* seed for rand() */
     char                           *strtok_next;        /* next ptr for strtok() */
     unsigned char                  *mbstok_next;        /* next ptr for mbstok() */
@@ -263,8 +265,8 @@ typedef struct MSVCRT__div_t {
 } MSVCRT_div_t;
 
 typedef struct MSVCRT__ldiv_t {
-    long quot;  /* quotient */
-    long rem;   /* remainder */
+    MSVCRT_long quot;  /* quotient */
+    MSVCRT_long rem;   /* remainder */
 } MSVCRT_ldiv_t;
 
 struct MSVCRT__heapinfo {
@@ -715,7 +717,7 @@ MSVCRT_wint_t __cdecl MSVCRT_fgetwc(MSVCRT_FILE*);
 MSVCRT_wint_t __cdecl MSVCRT_ungetwc(MSVCRT_wint_t,MSVCRT_FILE*);
 void __cdecl     MSVCRT__exit(int);
 void __cdecl     MSVCRT_abort(void);
-unsigned long* __cdecl MSVCRT___doserrno(void);
+MSVCRT_ulong* __cdecl MSVCRT___doserrno(void);
 int* __cdecl     MSVCRT__errno(void);
 char* __cdecl    MSVCRT_getenv(const char*);
 char* __cdecl    MSVCRT_setlocale(int,const char*);

@@ -924,7 +924,7 @@ int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
 /*********************************************************************
  *		fseek (MSVCRT.@)
  */
-int CDECL MSVCRT_fseek(MSVCRT_FILE* file, long offset, int whence)
+int CDECL MSVCRT_fseek(MSVCRT_FILE* file, MSVCRT_long offset, int whence)
 {
   /* Flush output if needed */
   if(file->_flag & MSVCRT__IOWRT)
@@ -956,13 +956,13 @@ int CDECL MSVCRT_fseek(MSVCRT_FILE* file, long offset, int whence)
 /*********************************************************************
  *		_chsize (MSVCRT.@)
  */
-int CDECL _chsize(int fd, long size)
+int CDECL _chsize(int fd, MSVCRT_long size)
 {
     LONG cur, pos;
     HANDLE handle;
     BOOL ret = FALSE;
 
-    TRACE("(fd=%d, size=%ld)\n", fd, size);
+    TRACE("(fd=%d, size=%d)\n", fd, size);
 
     LOCK_FILES();
 
@@ -1895,9 +1895,9 @@ int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
   buf->st_atime = dw;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
-  TRACE("%d %d 0x%08lx%08lx %ld %ld %ld\n", buf->st_mode,buf->st_nlink,
-        (long)(buf->st_size >> 32),(long)buf->st_size,
-        (long)buf->st_atime,(long)buf->st_mtime,(long)buf->st_ctime);
+  TRACE("%d %d 0x%08x%08x %d %d %d\n", buf->st_mode,buf->st_nlink,
+        (int)(buf->st_size >> 32),(int)buf->st_size,
+        (int)buf->st_atime,(int)buf->st_mtime,(int)buf->st_ctime);
   return 0;
 }
 
@@ -1984,9 +1984,9 @@ int CDECL MSVCRT__wstat64(const MSVCRT_wchar_t* path, struct MSVCRT__stat64 * bu
   buf->st_atime = dw;
   RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
-  TRACE("%d %d 0x%08lx%08lx %ld %ld %ld\n", buf->st_mode,buf->st_nlink,
-        (long)(buf->st_size >> 32),(long)buf->st_size,
-        (long)buf->st_atime,(long)buf->st_mtime,(long)buf->st_ctime);
+  TRACE("%d %d 0x%08x%08x %d %d %d\n", buf->st_mode,buf->st_nlink,
+        (int)(buf->st_size >> 32),(int)buf->st_size,
+        (int)buf->st_atime,(int)buf->st_mtime,(int)buf->st_ctime);
   return 0;
 }
 
@@ -2020,7 +2020,7 @@ int CDECL MSVCRT__wstat(const MSVCRT_wchar_t* path, struct MSVCRT__stat * buf)
 /*********************************************************************
  *		_tell (MSVCRT.@)
  */
-long CDECL _tell(int fd)
+MSVCRT_long CDECL _tell(int fd)
 {
   return MSVCRT__lseek(fd, 0, SEEK_CUR);
 }
@@ -2872,7 +2872,7 @@ LONG CDECL MSVCRT_ftell(MSVCRT_FILE* file)
 {
   /* TODO: just call fgetpos and return lower half of result */
   int off=0;
-  long pos;
+  MSVCRT_long pos;
   pos = _tell(file->_file);
   if(pos == -1) return -1;
   if(file->_bufsiz)  {
