@@ -33,6 +33,20 @@ struct _timeb
     short          timezone;
     short          dstflag;
 };
+struct __timeb32
+{
+    __time32_t     time;
+    unsigned short millitm;
+    short          timezone;
+    short          dstflag;
+};
+struct __timeb64
+{
+    __time64_t     time;
+    unsigned short millitm;
+    short          timezone;
+    short          dstflag;
+};
 #endif /* _TIMEB_DEFINED */
 
 
@@ -40,12 +54,18 @@ struct _timeb
 extern "C" {
 #endif
 
-void __cdecl _ftime(struct _timeb*);
+void __cdecl _ftime32(struct __timeb32*);
+void __cdecl _ftime64(struct __timeb64*);
 
 #ifdef __cplusplus
 }
 #endif
 
+#ifdef _USE_32BIT_TIME_T
+static inline void __cdecl _ftime(struct _timeb *tb) { return _ftime32((struct __timeb32*)tb); }
+#else
+static inline void __cdecl _ftime(struct _timeb *tb) { return _ftime64((struct __timeb64*)tb); }
+#endif
 
 #define timeb _timeb
 

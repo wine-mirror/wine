@@ -198,8 +198,15 @@ extern unsigned msvcrt_create_io_inherit_block(WORD*, BYTE**);
 #define _RT_CRNL        252
 #define _RT_BANNER      255
 
-struct MSVCRT__timeb {
-    MSVCRT_time_t  time;
+struct MSVCRT___timeb32 {
+    MSVCRT___time32_t  time;
+    unsigned short millitm;
+    short          timezone;
+    short          dstflag;
+};
+
+struct MSVCRT___timeb64 {
+    MSVCRT___time64_t time;
     unsigned short millitm;
     short          timezone;
     short          dstflag;
@@ -659,11 +666,9 @@ char* __cdecl    MSVCRT_setlocale(int,const char*);
 int __cdecl      MSVCRT_fclose(MSVCRT_FILE*);
 void __cdecl     MSVCRT_terminate(void);
 MSVCRT_FILE* __cdecl MSVCRT__iob_func(void);
-MSVCRT_time_t __cdecl MSVCRT_mktime(struct MSVCRT_tm *t);
-struct MSVCRT_tm* __cdecl MSVCRT_localtime(const MSVCRT_time_t* secs);
-struct MSVCRT_tm* __cdecl MSVCRT_gmtime(const MSVCRT_time_t* secs);
 MSVCRT_clock_t __cdecl MSVCRT_clock(void);
-double __cdecl   MSVCRT_difftime(MSVCRT_time_t time1, MSVCRT_time_t time2);
+MSVCRT___time32_t __cdecl MSVCRT__time32(MSVCRT___time32_t*);
+MSVCRT___time64_t __cdecl MSVCRT__time64(MSVCRT___time64_t*);
 MSVCRT_time_t  __cdecl MSVCRT_time(MSVCRT_time_t*);
 MSVCRT_FILE*   __cdecl MSVCRT__fdopen(int, const char *);
 MSVCRT_FILE*   __cdecl MSVCRT__wfdopen(int, const MSVCRT_wchar_t *);
@@ -697,7 +702,6 @@ MSVCRT_wchar_t*** __cdecl __p__wenviron(void);
 char*   __cdecl _strdate(char* date);
 char*   __cdecl _strtime(char* date);
 int     __cdecl _setmbcp(int);
-void    __cdecl MSVCRT__ftime(struct MSVCRT__timeb *buf);
 int     __cdecl MSVCRT__close(int);
 int     __cdecl MSVCRT__dup(int);
 int     __cdecl MSVCRT__dup2(int, int);

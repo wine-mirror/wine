@@ -126,11 +126,19 @@ typedef __int64 __time64_t;
 #define _TIME64_T_DEFINED
 #endif
 
+#ifdef _USE_32BIT_TIME_T
+# ifdef _WIN64
+#  error You cannot use 32-bit time_t in Win64
+# endif
+#elif !defined(_WIN64)
+# define _USE_32BIT_TIME_T
+#endif
+
 #ifndef _TIME_T_DEFINED
-#ifdef _WIN64
-typedef __time64_t time_t;
-#else
+#ifdef _USE_32BIT_TIME_T
 typedef __time32_t time_t;
+#else
+typedef __time64_t time_t;
 #endif
 #define _TIME_T_DEFINED
 #endif

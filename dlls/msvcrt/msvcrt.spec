@@ -210,9 +210,13 @@
 @ cdecl _cputs(str)
 @ cdecl _creat(str long) MSVCRT__creat
 @ varargs _cscanf(str)
+@ cdecl _ctime32(ptr) MSVCRT__ctime32
+@ cdecl _ctime64(ptr) MSVCRT__ctime64
 @ extern _ctype MSVCRT__ctype
 @ cdecl _cwait(ptr long long)
 @ extern _daylight MSVCRT___daylight
+@ cdecl _difftime32(long long) MSVCRT__difftime32
+@ cdecl _difftime64(long long) MSVCRT__difftime64
 @ extern _dstbias MSVCRT__dstbias
 @ cdecl _dup (long) MSVCRT__dup
 @ cdecl _dup2 (long long) MSVCRT__dup2
@@ -263,6 +267,8 @@
 @ cdecl _fstat64(long ptr) MSVCRT__fstat64
 @ cdecl _fstati64(long ptr) MSVCRT__fstati64
 @ cdecl _ftime(ptr) MSVCRT__ftime
+@ cdecl _ftime32(ptr) MSVCRT__ftime32
+@ cdecl _ftime64(ptr) MSVCRT__ftime64
 @ cdecl -ret64 _ftol() ntdll._ftol
 @ cdecl _fullpath(ptr str long)
 @ cdecl _futime(long ptr)
@@ -286,6 +292,8 @@
 @ cdecl _getw(ptr) MSVCRT__getw
 @ cdecl _getws(ptr) MSVCRT__getws
 @ cdecl _global_unwind2(ptr)
+@ cdecl _gmtime32(ptr) MSVCRT__gmtime32
+@ cdecl _gmtime64(ptr) MSVCRT__gmtime64
 @ cdecl _heapadd (ptr long)
 @ cdecl _heapchk()
 @ cdecl _heapmin()
@@ -341,6 +349,8 @@
 @ cdecl _lfind(ptr ptr ptr long ptr)
 @ cdecl _loaddll(str)
 @ cdecl -i386 _local_unwind2(ptr long)
+@ cdecl _localtime32(ptr) MSVCRT__localtime32
+@ cdecl _localtime64(ptr) MSVCRT__localtime64
 @ cdecl _lock(long)
 @ cdecl _locking(long long long) MSVCRT__locking
 @ cdecl _logb( double )
@@ -414,6 +424,8 @@
 @ cdecl _memicmp(str str long) ntdll._memicmp
 @ cdecl _mkdir(str) MSVCRT__mkdir
 @ cdecl _mktemp(str)
+@ cdecl _mktime32(ptr) MSVCRT__mktime32
+@ cdecl _mktime64(ptr) MSVCRT__mktime64
 @ cdecl _msize(ptr)
 @ cdecl _nextafter(double double)
 @ cdecl _onexit(ptr) MSVCRT__onexit
@@ -493,6 +505,8 @@
 @ cdecl _tell(long)
 @ cdecl -ret64 _telli64(long)
 @ cdecl _tempnam(str str)
+@ cdecl _time32(ptr) MSVCRT__time32
+@ cdecl _time64(ptr) MSVCRT__time64
 @ extern _timezone MSVCRT___timezone
 @ cdecl _tolower(long) MSVCRT__tolower
 @ cdecl _toupper(long) MSVCRT__toupper
@@ -530,6 +544,8 @@
 @ cdecl _wcsset(wstr long)
 @ cdecl _wcsupr(wstr) ntdll._wcsupr
 @ cdecl _wctime(ptr) MSVCRT__wctime
+@ cdecl _wctime32(ptr) MSVCRT__wctime32
+@ cdecl _wctime64(ptr) MSVCRT__wctime64
 @ extern _wenviron
 @ varargs _wexecl(wstr wstr)
 @ varargs _wexecle(wstr wstr)

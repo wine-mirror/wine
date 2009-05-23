@@ -370,11 +370,22 @@ size_t   __cdecl wcsxfrm(wchar_t*,const wchar_t*,size_t);
 
 #ifndef _WTIME_DEFINED
 #define _WTIME_DEFINED
+
+#ifdef _USE_32BIT_TIME_T
+#define _wctime32 _wctime
+#endif
+
 wchar_t* __cdecl _wasctime(const struct tm*);
 size_t   __cdecl wcsftime(wchar_t*,size_t,const wchar_t*,const struct tm*);
-wchar_t* __cdecl _wctime(const time_t*);
+wchar_t* __cdecl _wctime32(const __time32_t*);
+wchar_t* __cdecl _wctime64(const __time64_t*);
 wchar_t* __cdecl _wstrdate(wchar_t*);
 wchar_t* __cdecl _wstrtime(wchar_t*);
+
+#ifndef _USE_32BIT_TIME_T
+static inline wchar_t* _wctime(const time_t *t) { return _wctime64(t); }
+#endif
+
 #endif /* _WTIME_DEFINED */
 
 wchar_t __cdecl btowc(int);

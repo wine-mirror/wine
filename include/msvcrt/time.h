@@ -77,6 +77,15 @@ extern long _timezone;
 extern char *_tzname;
 #endif
 
+#ifdef _USE_32BIT_TIME_T
+#define _ctime32     ctime
+#define _difftime32  difftime
+#define _gmtime32    gmtime
+#define _localtime32 localtime
+#define _mktime32    mktime
+#define _time32      time
+#endif
+
 unsigned    __cdecl _getsystime(struct tm*);
 unsigned    __cdecl _setsystime(struct tm*,unsigned);
 char*       __cdecl _strdate(char*);
@@ -85,21 +94,47 @@ void        __cdecl _tzset(void);
 
 char*       __cdecl asctime(const struct tm*);
 clock_t     __cdecl clock(void);
-char*       __cdecl ctime(const time_t*);
-double      __cdecl difftime(time_t,time_t);
-struct tm*  __cdecl gmtime(const time_t*);
-struct tm*  __cdecl localtime(const time_t*);
-time_t      __cdecl mktime(struct tm*);
+char*       __cdecl _ctime32(const __time32_t*);
+char*       __cdecl _ctime64(const __time64_t*);
+double      __cdecl _difftime32(__time32_t,__time32_t);
+double      __cdecl _difftime64(__time64_t,__time64_t);
+struct tm*  __cdecl _gmtime32(const __time32_t*);
+struct tm*  __cdecl _gmtime64(const __time64_t*);
+struct tm*  __cdecl _localtime32(const __time32_t*);
+struct tm*  __cdecl _localtime64(const __time64_t*);
+__time32_t  __cdecl _mktime32(struct tm*);
+__time64_t  __cdecl _mktime64(struct tm*);
 size_t      __cdecl strftime(char*,size_t,const char*,const struct tm*);
-time_t      __cdecl time(time_t*);
+__time32_t  __cdecl _time32(__time32_t*);
+__time64_t  __cdecl _time64(__time64_t*);
+
+#ifndef _USE_32BIT_TIME_T
+static inline char* ctime(const time_t *t) { return _ctime64(t); }
+static inline double difftime(time_t t1, time_t t2) { return _difftime64(t1, t2); }
+static inline struct tm* gmtime(const time_t *t) { return _gmtime64(t); }
+static inline struct tm* localtime(const time_t *t) { return _localtime64(t); }
+static inline time_t mktime(struct tm *tm) { return _mktime64(tm); }
+static inline time_t time(time_t *t) { return _time64(t); }
+#endif
 
 #ifndef _WTIME_DEFINED
 #define _WTIME_DEFINED
+
+#ifdef _USE_32BIT_TIME_T
+#define _wctime32 _wctime
+#endif
+
 wchar_t* __cdecl _wasctime(const struct tm*);
 size_t   __cdecl wcsftime(wchar_t*,size_t,const wchar_t*,const struct tm*);
-wchar_t* __cdecl _wctime(const time_t*);
+wchar_t* __cdecl _wctime32(const __time32_t*);
+wchar_t* __cdecl _wctime64(const __time64_t*);
 wchar_t* __cdecl _wstrdate(wchar_t*);
 wchar_t* __cdecl _wstrtime(wchar_t*);
+
+#ifndef _USE_32BIT_TIME_T
+static inline wchar_t* _wctime(const time_t *t) { return _wctime64(t); }
+#endif
+
 #endif /* _WTIME_DEFINED */
 
 #ifdef __cplusplus
