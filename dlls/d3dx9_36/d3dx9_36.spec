@@ -151,11 +151,11 @@
 @ stub D3DXGetDeclVertexSize
 @ stdcall D3DXGetDriverLevel(ptr)
 @ stdcall D3DXGetFVFVertexSize(long)
-@ stdcall D3DXGetImageInfoFromFileA(ptr ptr) d3dx8.D3DXGetImageInfoFromFileA
-@ stdcall D3DXGetImageInfoFromFileInMemory(ptr long ptr) d3dx8.D3DXGetImageInfoFromFileInMemory
-@ stdcall D3DXGetImageInfoFromFileW(ptr ptr) d3dx8.D3DXGetImageInfoFromFileW
-@ stdcall D3DXGetImageInfoFromResourceA(long ptr ptr) d3dx8.D3DXGetImageInfoFromResourceA
-@ stdcall D3DXGetImageInfoFromResourceW(long ptr ptr) d3dx8.D3DXGetImageInfoFromResourceW
+@ stdcall D3DXGetImageInfoFromFileA(str ptr)
+@ stdcall D3DXGetImageInfoFromFileInMemory(ptr long ptr)
+@ stdcall D3DXGetImageInfoFromFileW(wstr ptr)
+@ stdcall D3DXGetImageInfoFromResourceA(long str ptr)
+@ stdcall D3DXGetImageInfoFromResourceW(long wstr ptr)
 @ stdcall D3DXGetPixelShaderProfile(ptr)
 @ stub D3DXGetShaderConstantTable
 @ stub D3DXGetShaderConstantTableEx
