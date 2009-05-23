@@ -1299,6 +1299,19 @@ dnl **** Check for libpng ****
 if test "$ac_cv_header_png_h" = "yes"
 then
     WINE_CHECK_SONAME(png,png_create_read_struct,,,-lm -lz,[[libpng[[0-9]]*]])
+elif test -n "$X_CFLAGS" -a "x$with_png" != "xno"
+then
+    dnl libpng is in the X directory on Mac OS X
+    ac_save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+    $as_unset ac_cv_header_png_h
+    AC_CHECK_HEADERS([png.h])
+    CPPFLAGS="$ac_save_CPPFLAGS"
+    if test "$ac_cv_header_png_h" = "yes"
+    then
+        AC_SUBST(PNGINCL,"$X_CFLAGS")
+        WINE_CHECK_SONAME(png,png_create_read_struct,,,[$X_LIBS -lm -lz],[[libpng[[0-9]]*]])
+    fi
 fi
 WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
                  [libpng ${notice_platform}development files not found, PNG won't be supported.])
