@@ -45,22 +45,20 @@ typedef unsigned short MSVCRT_wchar_t;
 typedef unsigned short MSVCRT_wint_t;
 typedef unsigned short MSVCRT_wctype_t;
 typedef unsigned short MSVCRT__ino_t;
-typedef unsigned long  MSVCRT__fsize_t;
+typedef unsigned int   MSVCRT__fsize_t;
 #ifdef _WIN64
 typedef unsigned __int64 MSVCRT_size_t;
 typedef __int64 MSVCRT_intptr_t;
 typedef unsigned __int64 MSVCRT_uintptr_t;
-typedef __int64 MSVCRT_time_t;
 #else
 typedef unsigned long MSVCRT_size_t;
 typedef long MSVCRT_intptr_t;
 typedef unsigned long MSVCRT_uintptr_t;
-typedef long MSVCRT_time_t;
 #endif
 typedef unsigned int   MSVCRT__dev_t;
 typedef int  MSVCRT__off_t;
 typedef long MSVCRT_clock_t;
-typedef long MSVCRT___time32_t;
+typedef int MSVCRT___time32_t;
 typedef __int64 MSVCRT___time64_t;
 typedef __int64 MSVCRT_fpos_t;
 
@@ -299,40 +297,76 @@ struct MSVCRT__diskfree_t {
   unsigned int bytes_per_sector;
 };
 
-struct MSVCRT__finddata_t {
-  unsigned attrib;
-  MSVCRT_time_t   time_create;
-  MSVCRT_time_t   time_access;
-  MSVCRT_time_t   time_write;
-  MSVCRT__fsize_t size;
-  char            name[260];
+struct MSVCRT__finddata32_t {
+  unsigned int      attrib;
+  MSVCRT___time32_t time_create;
+  MSVCRT___time32_t time_access;
+  MSVCRT___time32_t time_write;
+  MSVCRT__fsize_t   size;
+  char              name[260];
 };
 
-struct MSVCRT__finddatai64_t {
-  unsigned attrib;
-  MSVCRT_time_t  time_create;
-  MSVCRT_time_t  time_access;
-  MSVCRT_time_t  time_write;
-  __int64        size;
-  char           name[260];
+struct MSVCRT__finddata32i64_t {
+  unsigned int      attrib;
+  MSVCRT___time32_t time_create;
+  MSVCRT___time32_t time_access;
+  MSVCRT___time32_t time_write;
+  __int64           size;
+  char              name[260];
 };
 
-struct MSVCRT__wfinddata_t {
-  unsigned attrib;
-  MSVCRT_time_t   time_create;
-  MSVCRT_time_t   time_access;
-  MSVCRT_time_t   time_write;
-  MSVCRT__fsize_t size;
-  MSVCRT_wchar_t  name[260];
+struct MSVCRT__finddata64i32_t {
+  unsigned int      attrib;
+  MSVCRT___time64_t time_create;
+  MSVCRT___time64_t time_access;
+  MSVCRT___time64_t time_write;
+  MSVCRT__fsize_t   size;
+  char              name[260];
 };
 
-struct MSVCRT__wfinddatai64_t {
-  unsigned attrib;
-  MSVCRT_time_t   time_create;
-  MSVCRT_time_t   time_access;
-  MSVCRT_time_t   time_write;
-  __int64         size;
-  MSVCRT_wchar_t  name[260];
+struct MSVCRT__finddata64_t {
+  unsigned int      attrib;
+  MSVCRT___time64_t time_create;
+  MSVCRT___time64_t time_access;
+  MSVCRT___time64_t time_write;
+  __int64           size;
+  char              name[260];
+};
+
+struct MSVCRT__wfinddata32_t {
+  unsigned int      attrib;
+  MSVCRT___time32_t time_create;
+  MSVCRT___time32_t time_access;
+  MSVCRT___time32_t time_write;
+  MSVCRT__fsize_t   size;
+  MSVCRT_wchar_t    name[260];
+};
+
+struct MSVCRT__wfinddata32i64_t {
+  unsigned int      attrib;
+  MSVCRT___time32_t time_create;
+  MSVCRT___time32_t time_access;
+  MSVCRT___time32_t time_write;
+  __int64           size;
+  MSVCRT_wchar_t    name[260];
+};
+
+struct MSVCRT__wfinddata64i32_t {
+  unsigned int      attrib;
+  MSVCRT___time64_t time_create;
+  MSVCRT___time64_t time_access;
+  MSVCRT___time64_t time_write;
+  MSVCRT__fsize_t   size;
+  MSVCRT_wchar_t    name[260];
+};
+
+struct MSVCRT__wfinddata64_t {
+  unsigned int      attrib;
+  MSVCRT___time64_t time_create;
+  MSVCRT___time64_t time_access;
+  MSVCRT___time64_t time_write;
+  __int64           size;
+  MSVCRT_wchar_t    name[260];
 };
 
 struct MSVCRT___utimbuf32
@@ -352,46 +386,46 @@ struct MSVCRT___utimbuf64
 #undef st_ctime
 #undef st_mtime
 
-struct MSVCRT__stat {
-  MSVCRT__dev_t  st_dev;
-  MSVCRT__ino_t  st_ino;
-  unsigned short st_mode;
-  short          st_nlink;
-  short          st_uid;
-  short          st_gid;
-  MSVCRT__dev_t  st_rdev;
-  MSVCRT__off_t  st_size;
-  MSVCRT_time_t  st_atime;
-  MSVCRT_time_t  st_mtime;
-  MSVCRT_time_t  st_ctime;
+struct MSVCRT__stat32 {
+  MSVCRT__dev_t     st_dev;
+  MSVCRT__ino_t     st_ino;
+  unsigned short    st_mode;
+  short             st_nlink;
+  short             st_uid;
+  short             st_gid;
+  MSVCRT__dev_t     st_rdev;
+  MSVCRT__off_t     st_size;
+  MSVCRT___time32_t st_atime;
+  MSVCRT___time32_t st_mtime;
+  MSVCRT___time32_t st_ctime;
 };
 
-struct MSVCRT_stat {
-  MSVCRT__dev_t  st_dev;
-  MSVCRT__ino_t  st_ino;
-  unsigned short st_mode;
-  short          st_nlink;
-  short          st_uid;
-  short          st_gid;
-  MSVCRT__dev_t  st_rdev;
-  MSVCRT__off_t  st_size;
-  MSVCRT_time_t  st_atime;
-  MSVCRT_time_t  st_mtime;
-  MSVCRT_time_t  st_ctime;
-};
-
-struct MSVCRT__stati64 {
-  MSVCRT__dev_t  st_dev;
-  MSVCRT__ino_t  st_ino;
-  unsigned short st_mode;
-  short          st_nlink;
-  short          st_uid;
-  short          st_gid;
-  MSVCRT__dev_t  st_rdev;
+struct MSVCRT__stat32i64 {
+  MSVCRT__dev_t     st_dev;
+  MSVCRT__ino_t     st_ino;
+  unsigned short    st_mode;
+  short             st_nlink;
+  short             st_uid;
+  short             st_gid;
+  MSVCRT__dev_t     st_rdev;
   __int64 DECLSPEC_ALIGN(8) st_size;
-  MSVCRT_time_t  st_atime;
-  MSVCRT_time_t  st_mtime;
-  MSVCRT_time_t  st_ctime;
+  MSVCRT___time32_t st_atime;
+  MSVCRT___time32_t st_mtime;
+  MSVCRT___time32_t st_ctime;
+};
+
+struct MSVCRT__stat64i32 {
+  MSVCRT__dev_t     st_dev;
+  MSVCRT__ino_t     st_ino;
+  unsigned short    st_mode;
+  short             st_nlink;
+  short             st_uid;
+  short             st_gid;
+  MSVCRT__dev_t     st_rdev;
+  MSVCRT__off_t     st_size;
+  MSVCRT___time64_t st_atime;
+  MSVCRT___time64_t st_mtime;
+  MSVCRT___time64_t st_ctime;
 };
 
 struct MSVCRT__stat64 {
@@ -407,6 +441,22 @@ struct MSVCRT__stat64 {
   MSVCRT___time64_t st_mtime;
   MSVCRT___time64_t st_ctime;
 };
+
+#ifdef _WIN64
+#define MSVCRT__finddata_t     MSVCRT__finddata64i32_t
+#define MSVCRT__finddatai64_t  MSVCRT__finddata64_t
+#define MSVCRT__wfinddata_t    MSVCRT__wfinddata64i32_t
+#define MSVCRT__wfinddatai64_t MSVCRT__wfinddata64_t
+#define MSVCRT__stat           MSVCRT__stat64i32
+#define MSVCRT__stati64        MSVCRT__stat64
+#else
+#define MSVCRT__finddata_t     MSVCRT__finddata32_t
+#define MSVCRT__finddatai64_t  MSVCRT__finddata32i64_t
+#define MSVCRT__wfinddata_t    MSVCRT__wfinddata32_t
+#define MSVCRT__wfinddatai64_t MSVCRT__wfinddata32i64_t
+#define MSVCRT__stat           MSVCRT__stat32
+#define MSVCRT__stati64        MSVCRT__stat32i64
+#endif
 
 #define MSVCRT_WEOF (MSVCRT_wint_t)(0xFFFF)
 #define MSVCRT_EOF       (-1)
@@ -675,7 +725,6 @@ MSVCRT_FILE* __cdecl MSVCRT__iob_func(void);
 MSVCRT_clock_t __cdecl MSVCRT_clock(void);
 MSVCRT___time32_t __cdecl MSVCRT__time32(MSVCRT___time32_t*);
 MSVCRT___time64_t __cdecl MSVCRT__time64(MSVCRT___time64_t*);
-MSVCRT_time_t  __cdecl MSVCRT_time(MSVCRT_time_t*);
 MSVCRT_FILE*   __cdecl MSVCRT__fdopen(int, const char *);
 MSVCRT_FILE*   __cdecl MSVCRT__wfdopen(int, const MSVCRT_wchar_t *);
 int            __cdecl MSVCRT_vsnprintf(char *str, unsigned int len, const char *format, __ms_va_list valist);

@@ -1838,7 +1838,7 @@ int CDECL _setmode(int fd,int mode)
 /*********************************************************************
  *		_stat64 (MSVCRT.@)
  */
-int CDECL MSVCRT__stat64(const char* path, struct MSVCRT__stat64 * buf)
+int CDECL MSVCRT_stat64(const char* path, struct MSVCRT__stat64 * buf)
 {
   DWORD dw;
   WIN32_FILE_ATTRIBUTE_DATA hfi;
@@ -1904,12 +1904,12 @@ int CDECL MSVCRT__stat64(const char* path, struct MSVCRT__stat64 * buf)
 /*********************************************************************
  *		_stati64 (MSVCRT.@)
  */
-int CDECL MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
+int CDECL MSVCRT_stati64(const char* path, struct MSVCRT__stati64 * buf)
 {
   int ret;
   struct MSVCRT__stat64 buf64;
 
-  ret = MSVCRT__stat64(path, &buf64);
+  ret = MSVCRT_stat64(path, &buf64);
   if (!ret)
     msvcrt_stat64_to_stati64(&buf64, buf);
   return ret;
@@ -1918,11 +1918,11 @@ int CDECL MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
 /*********************************************************************
  *		_stat (MSVCRT.@)
  */
-int CDECL MSVCRT__stat(const char* path, struct MSVCRT__stat * buf)
+int CDECL MSVCRT_stat(const char* path, struct MSVCRT__stat * buf)
 { int ret;
   struct MSVCRT__stat64 buf64;
 
-  ret = MSVCRT__stat64( path, &buf64);
+  ret = MSVCRT_stat64( path, &buf64);
   if (!ret)
       msvcrt_stat64_to_stat(&buf64, buf);
   return ret;

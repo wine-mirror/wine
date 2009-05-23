@@ -482,9 +482,9 @@
 @ cdecl _spawnvp(long str ptr)
 @ cdecl _spawnvpe(long str ptr ptr)
 @ cdecl _splitpath(str ptr ptr ptr ptr) ntdll._splitpath
-@ cdecl _stat(str ptr) MSVCRT__stat
-@ cdecl _stat64(str ptr) MSVCRT__stat64
-@ cdecl _stati64(str ptr) MSVCRT__stati64
+@ cdecl _stat(str ptr) MSVCRT_stat
+@ cdecl _stat64(str ptr) MSVCRT_stat64
+@ cdecl _stati64(str ptr) MSVCRT_stati64
 @ cdecl _statusfp()
 @ cdecl _strcmpi(str str) ntdll._strcmpi
 @ cdecl _strdate(ptr)
