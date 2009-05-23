@@ -22,7 +22,7 @@
 #define _A_ARCH   0x00000020
 
 #ifndef _FSIZE_T_DEFINED
-typedef unsigned long _fsize_t;
+typedef __msvcrt_ulong _fsize_t;
 #define _FSIZE_T_DEFINED
 #endif
 
@@ -76,7 +76,7 @@ extern "C" {
 
 int         __cdecl _access(const char*,int);
 int         __cdecl _chmod(const char*,int);
-int         __cdecl _chsize(int,long);
+int         __cdecl _chsize(int,__msvcrt_ulong);
 int         __cdecl _close(int);
 int         __cdecl _commit(int);
 int         __cdecl _creat(const char*,int);
@@ -84,7 +84,7 @@ int         __cdecl _dup(int);
 int         __cdecl _dup2(int,int);
 int         __cdecl _eof(int);
 __int64     __cdecl _filelengthi64(int);
-long        __cdecl _filelength(int);
+__msvcrt_long __cdecl _filelength(int);
 int         __cdecl _findclose(intptr_t);
 intptr_t    __cdecl _findfirst(const char*,struct _finddata_t*);
 intptr_t    __cdecl _findfirsti64(const char*, struct _finddatai64_t*);
@@ -92,8 +92,8 @@ int         __cdecl _findnext(intptr_t,struct _finddata_t*);
 int         __cdecl _findnexti64(intptr_t, struct _finddatai64_t*);
 intptr_t    __cdecl _get_osfhandle(int);
 int         __cdecl _isatty(int);
-int         __cdecl _locking(int,int,long);
-long        __cdecl _lseek(int,long,int);
+int         __cdecl _locking(int,int,__msvcrt_long);
+__msvcrt_long __cdecl _lseek(int,__msvcrt_long,int);
 __int64     __cdecl _lseeki64(int,__int64,int);
 char*       __cdecl _mktemp(char*);
 int         __cdecl _open(const char*,int,...);
@@ -102,7 +102,7 @@ int         __cdecl _pipe(int*,unsigned int,int);
 int         __cdecl _read(int,void*,unsigned int);
 int         __cdecl _setmode(int,int);
 int         __cdecl _sopen(const char*,int,int,...);
-long        __cdecl _tell(int);
+__msvcrt_long __cdecl _tell(int);
 __int64     __cdecl _telli64(int);
 int         __cdecl _umask(int);
 int         __cdecl _unlink(const char*);
@@ -134,20 +134,20 @@ int         __cdecl _wunlink(const wchar_t*);
 
 static inline int access(const char* path, int mode) { return _access(path, mode); }
 static inline int chmod(const char* path, int mode) { return _chmod(path, mode); }
-static inline int chsize(int fd, long size) { return _chsize(fd, size); }
+static inline int chsize(int fd, __msvcrt_long size) { return _chsize(fd, size); }
 static inline int close(int fd) { return _close(fd); }
 static inline int creat(const char* path, int mode) { return _creat(path, mode); }
 static inline int dup(int od) { return _dup(od); }
 static inline int dup2(int od, int nd) { return _dup2(od, nd); }
 static inline int eof(int fd) { return _eof(fd); }
-static inline long filelength(int fd) { return _filelength(fd); }
+static inline __msvcrt_long filelength(int fd) { return _filelength(fd); }
 static inline int isatty(int fd) { return _isatty(fd); }
-static inline int locking(int fd, int mode, long size) { return _locking(fd, mode, size); }
-static inline long lseek(int fd, long off, int where) { return _lseek(fd, off, where); }
+static inline int locking(int fd, int mode, __msvcrt_long size) { return _locking(fd, mode, size); }
+static inline __msvcrt_long lseek(int fd, __msvcrt_long off, int where) { return _lseek(fd, off, where); }
 static inline char* mktemp(char* pat) { return _mktemp(pat); }
 static inline int read(int fd, void* buf, unsigned int size) { return _read(fd, buf, size); }
 static inline int setmode(int fd, int mode) { return _setmode(fd, mode); }
-static inline long tell(int fd) { return _tell(fd); }
+static inline __msvcrt_long tell(int fd) { return _tell(fd); }
 #ifndef _UMASK_DEFINED
 static inline int umask(int fd) { return _umask(fd); }
 #define _UMASK_DEFINED

@@ -31,7 +31,7 @@ int           __cdecl _chdrive(int);
 char*         __cdecl _getcwd(char*,int);
 char*         __cdecl _getdcwd(int,char*,int);
 int           __cdecl _getdrive(void);
-unsigned long __cdecl _getdrives(void);
+__msvcrt_ulong __cdecl _getdrives(void);
 int           __cdecl _mkdir(const char*);
 int           __cdecl _rmdir(const char*);
 

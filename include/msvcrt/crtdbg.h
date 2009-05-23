@@ -44,10 +44,10 @@
 typedef struct _CrtMemState
 {
     struct _CrtMemBlockHeader* pBlockHeader;
-    unsigned long lCounts[_MAX_BLOCKS];
-    unsigned long lSizes[_MAX_BLOCKS];
-    unsigned long lHighWaterCount;
-    unsigned long lTotalCount;
+    __msvcrt_ulong lCounts[_MAX_BLOCKS];
+    __msvcrt_ulong lSizes[_MAX_BLOCKS];
+    __msvcrt_ulong lHighWaterCount;
+    __msvcrt_ulong lTotalCount;
 } _CrtMemState;
 
 
@@ -60,7 +60,7 @@ typedef struct _CrtMemState
 #define _CrtCheckMemory()               ((int)1)
 #define _CrtDbgReport(...)              ((int)0)
 #define _CrtDumpMemoryLeaks()           ((int)0)
-#define _CrtSetBreakAlloc(a)            ((long)0)
+#define _CrtSetBreakAlloc(a)            ((__msvcrt_long)0)
 #define _CrtSetDbgFlag(f)               ((int)0)
 #define _CrtSetDumpClient(f)            ((void)0)
 #define _CrtSetReportMode(t,m)          ((int)0)

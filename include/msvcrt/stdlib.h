@@ -54,8 +54,8 @@ typedef struct _div_t {
 } div_t;
 
 typedef struct _ldiv_t {
-    long quot;
-    long rem;
+    __msvcrt_long quot;
+    __msvcrt_long rem;
 } ldiv_t;
 
 #define __max(a,b) (((a) > (b)) ? (a) : (b))
@@ -116,7 +116,7 @@ extern unsigned int _fmode;
 
 extern int*           __cdecl ___mb_cur_max_func(void);
 #define __mb_cur_max        (*___mb_cur_max_func())
-extern unsigned long* __cdecl __doserrno(void);
+extern __msvcrt_ulong* __cdecl __doserrno(void);
 #define _doserrno           (*__doserrno())
 extern int*           __cdecl _errno(void);
 #define errno               (*_errno())
@@ -142,9 +142,9 @@ char*         __cdecl _fullpath(char*,const char*,size_t);
 char*         __cdecl _gcvt(double,int,char*);
 char*         __cdecl _i64toa(__int64,char*,int);
 char*         __cdecl _itoa(int,char*,int);
-char*         __cdecl _ltoa(long,char*,int);
-unsigned long __cdecl _lrotl(unsigned long,int);
-unsigned long __cdecl _lrotr(unsigned long,int);
+char*         __cdecl _ltoa(__msvcrt_long,char*,int);
+__msvcrt_ulong __cdecl _lrotl(__msvcrt_ulong,int);
+__msvcrt_ulong __cdecl _lrotr(__msvcrt_ulong,int);
 void          __cdecl _makepath(char*,const char*,const char*,const char*,const char*);
 size_t        __cdecl _mbstrlen(const char*);
 _onexit_t     __cdecl _onexit(_onexit_t);
@@ -154,12 +154,12 @@ unsigned int  __cdecl _rotr(unsigned int,int);
 void          __cdecl _searchenv(const char*,const char*,char*);
 int           __cdecl _set_error_mode(int);
 void          __cdecl _seterrormode(int);
-void          __cdecl _sleep(unsigned long);
+void          __cdecl _sleep(__msvcrt_ulong);
 void          __cdecl _splitpath(const char*,char*,char*,char*,char*);
 long double   __cdecl _strtold(const char*,char**);
 void          __cdecl _swab(char*,char*,int);
 char*         __cdecl _ui64toa(unsigned __int64,char*,int);
-char*         __cdecl _ultoa(unsigned long,char*,int);
+char*         __cdecl _ultoa(__msvcrt_ulong,char*,int);
 
 void          __cdecl _exit(int);
 void          __cdecl abort(void);
@@ -167,16 +167,16 @@ int           __cdecl abs(int);
 int           __cdecl atexit(void (*)(void));
 double        __cdecl atof(const char*);
 int           __cdecl atoi(const char*);
-long          __cdecl atol(const char*);
+__msvcrt_long __cdecl atol(const char*);
 void*         __cdecl calloc(size_t,size_t);
 #ifndef __i386__
 div_t  __cdecl div(int,int);
-ldiv_t __cdecl ldiv(long,long);
+ldiv_t __cdecl ldiv(__msvcrt_long,__msvcrt_long);
 #endif
 void          __cdecl exit(int);
 void          __cdecl free(void*);
 char*         __cdecl getenv(const char*);
-long          __cdecl labs(long);
+__msvcrt_long __cdecl labs(__msvcrt_long);
 void*         __cdecl malloc(size_t);
 int           __cdecl mblen(const char*,size_t);
 void          __cdecl perror(const char*);
@@ -184,8 +184,8 @@ int           __cdecl rand(void);
 void*         __cdecl realloc(void*,size_t);
 void          __cdecl srand(unsigned int);
 double        __cdecl strtod(const char*,char**);
-long          __cdecl strtol(const char*,char**,int);
-unsigned long __cdecl strtoul(const char*,char**,int);
+__msvcrt_long __cdecl strtol(const char*,char**,int);
+__msvcrt_ulong __cdecl strtoul(const char*,char**,int);
 int           __cdecl system(const char*);
 void*         __cdecl bsearch(const void*,const void*,size_t,size_t,int (*)(const void*,const void*));
 void          __cdecl qsort(void*,size_t,size_t,int (*)(const void*,const void*));
@@ -194,9 +194,9 @@ void          __cdecl qsort(void*,size_t,size_t,int (*)(const void*,const void*)
 #define _WSTDLIB_DEFINED
 wchar_t*      __cdecl _itow(int,wchar_t*,int);
 wchar_t*      __cdecl _i64tow(__int64,wchar_t*,int);
-wchar_t*      __cdecl _ltow(long,wchar_t*,int);
+wchar_t*      __cdecl _ltow(__msvcrt_long,wchar_t*,int);
 wchar_t*      __cdecl _ui64tow(unsigned __int64,wchar_t*,int);
-wchar_t*      __cdecl _ultow(unsigned long,wchar_t*,int);
+wchar_t*      __cdecl _ultow(__msvcrt_ulong,wchar_t*,int);
 wchar_t*      __cdecl _wfullpath(wchar_t*,const wchar_t*,size_t);
 wchar_t*      __cdecl _wgetenv(const wchar_t*);
 void          __cdecl _wmakepath(wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*,const wchar_t*);
@@ -207,14 +207,14 @@ void          __cdecl _wsplitpath(const wchar_t*,wchar_t*,wchar_t*,wchar_t*,wcha
 int           __cdecl _wsystem(const wchar_t*);
 int           __cdecl _wtoi(const wchar_t*);
 __int64       __cdecl _wtoi64(const wchar_t*);
-long          __cdecl _wtol(const wchar_t*);
+__msvcrt_long __cdecl _wtol(const wchar_t*);
 
 size_t        __cdecl mbstowcs(wchar_t*,const char*,size_t);
 int           __cdecl mbtowc(wchar_t*,const char*,size_t);
 double        __cdecl wcstod(const wchar_t*,wchar_t**);
-long          __cdecl wcstol(const wchar_t*,wchar_t**,int);
+__msvcrt_long __cdecl wcstol(const wchar_t*,wchar_t**,int);
 size_t        __cdecl wcstombs(char*,const wchar_t*,size_t);
-unsigned long __cdecl wcstoul(const wchar_t*,wchar_t**,int);
+__msvcrt_ulong __cdecl wcstoul(const wchar_t*,wchar_t**,int);
 int           __cdecl wctomb(char*,wchar_t);
 #endif /* _WSTDLIB_DEFINED */
 
@@ -230,11 +230,11 @@ static inline char* ecvt(double value, int ndigit, int* decpt, int* sign) { retu
 static inline char* fcvt(double value, int ndigit, int* decpt, int* sign) { return _fcvt(value, ndigit, decpt, sign); }
 static inline char* gcvt(double value, int ndigit, char* buf) { return _gcvt(value, ndigit, buf); }
 static inline char* itoa(int value, char* str, int radix) { return _itoa(value, str, radix); }
-static inline char* ltoa(long value, char* str, int radix) { return _ltoa(value, str, radix); }
+static inline char* ltoa(__msvcrt_long value, char* str, int radix) { return _ltoa(value, str, radix); }
 static inline _onexit_t onexit(_onexit_t func) { return _onexit(func); }
 static inline int putenv(const char* str) { return _putenv(str); }
 static inline void swab(char* src, char* dst, int len) { _swab(src, dst, len); }
-static inline char* ultoa(unsigned long value, char* str, int radix) { return _ultoa(value, str, radix); }
+static inline char* ultoa(__msvcrt_ulong value, char* str, int radix) { return _ultoa(value, str, radix); }
 
 #ifdef __i386__
 static inline div_t __wine_msvcrt_div(int num, int denom)
@@ -246,13 +246,13 @@ static inline div_t __wine_msvcrt_div(int num, int denom)
     ret.rem  = (int)(res >> 32);
     return ret;
 }
-static inline ldiv_t __wine_msvcrt_ldiv(long num, long denom)
+static inline ldiv_t __wine_msvcrt_ldiv(__msvcrt_long num, __msvcrt_long denom)
 {
-    extern unsigned __int64 ldiv(long,long);
+    extern unsigned __int64 ldiv(__msvcrt_long,__msvcrt_long);
     ldiv_t ret;
     unsigned __int64 res = ldiv(num,denom);
-    ret.quot = (long)res;
-    ret.rem  = (long)(res >> 32);
+    ret.quot = (__msvcrt_long)res;
+    ret.rem  = (__msvcrt_long)(res >> 32);
     return ret;
 }
 #define div(num,denom) __wine_msvcrt_div(num,denom)

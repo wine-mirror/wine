@@ -128,7 +128,7 @@ extern "C" {
 
 double __cdecl _copysign (double, double);
 double __cdecl _chgsign (double);
-double __cdecl _scalb(double, long);
+double __cdecl _scalb(double, __msvcrt_long);
 double __cdecl _logb(double);
 double __cdecl _nextafter(double, double);
 int    __cdecl _finite(double);

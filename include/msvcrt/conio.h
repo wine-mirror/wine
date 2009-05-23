@@ -26,10 +26,10 @@ int   __cdecl _ungetch(int);
 
 #ifdef _M_IX86
 int            __cdecl _inp(unsigned short);
-unsigned long  __cdecl _inpd(unsigned short);
+__msvcrt_ulong __cdecl _inpd(unsigned short);
 unsigned short __cdecl _inpw(unsigned short);
 int            __cdecl _outp(unsigned short, int);
-unsigned long  __cdecl _outpd(unsigned short, unsigned long);
+__msvcrt_ulong __cdecl _outpd(unsigned short, __msvcrt_ulong);
 unsigned short __cdecl _outpw(unsigned short, unsigned short);
 #endif
 

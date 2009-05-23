@@ -25,7 +25,7 @@
 #include <pshpack8.h>
 
 #ifndef _CLOCK_T_DEFINED
-typedef long clock_t;
+typedef __msvcrt_long clock_t;
 #define _CLOCK_T_DEFINED
 #endif
 
@@ -67,13 +67,13 @@ extern "C" {
 #define _tzname (__p__tzname())
 
 int *   __cdecl __p__daylight(void);
-long *  __cdecl __p__dstbias(void);
-long *  __cdecl __p__timezone(void);
+__msvcrt_long *  __cdecl __p__dstbias(void);
+__msvcrt_long *  __cdecl __p__timezone(void);
 char ** __cdecl __p__tzname(void);
 #else
 extern int _daylight;
-extern long _dstbias;
-extern long _timezone;
+extern __msvcrt_long _dstbias;
+extern __msvcrt_long _timezone;
 extern char *_tzname;
 #endif
 

@@ -80,6 +80,13 @@
 # endif
 #endif
 
+#ifndef _MSVCRT_LONG_DEFINED
+#define _MSVCRT_LONG_DEFINED
+/* we need 32-bit longs even on 64-bit */
+typedef int __msvcrt_long;
+typedef unsigned int __msvcrt_ulong;
+#endif
+
 #ifndef _INTPTR_T_DEFINED
 #ifdef  _WIN64
 typedef __int64 intptr_t;
@@ -117,7 +124,7 @@ typedef unsigned int size_t;
 #endif
 
 #ifndef _TIME32_T_DEFINED
-typedef long __time32_t;
+typedef __msvcrt_long __time32_t;
 #define _TIME32_T_DEFINED
 #endif
 
