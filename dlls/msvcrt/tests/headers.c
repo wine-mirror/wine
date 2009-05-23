@@ -219,9 +219,12 @@ static void test_structs(void)
     CHECK_FIELD(_wfinddatai64_t, time_write);
     CHECK_FIELD(_wfinddatai64_t, size);
     CHECK_FIELD(_wfinddatai64_t, name[260]);
-    CHECK_STRUCT(_utimbuf);
-    CHECK_FIELD(_utimbuf, actime);
-    CHECK_FIELD(_utimbuf, modtime);
+    CHECK_STRUCT(__utimbuf32);
+    CHECK_FIELD(__utimbuf32, actime);
+    CHECK_FIELD(__utimbuf32, modtime);
+    CHECK_STRUCT(__utimbuf64);
+    CHECK_FIELD(__utimbuf64, actime);
+    CHECK_FIELD(__utimbuf64, modtime);
     CHECK_STRUCT(_stat);
     CHECK_FIELD(_stat, st_dev);
     CHECK_FIELD(_stat, st_ino);

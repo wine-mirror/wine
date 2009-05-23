@@ -272,6 +272,8 @@
 @ cdecl -ret64 _ftol() ntdll._ftol
 @ cdecl _fullpath(ptr str long)
 @ cdecl _futime(long ptr)
+@ cdecl _futime32(long ptr)
+@ cdecl _futime64(long ptr)
 @ cdecl _gcvt(double long str)
 @ cdecl _get_osfhandle(long)
 @ cdecl _get_sbh_threshold()
@@ -521,6 +523,8 @@
 @ cdecl _unlink(str) MSVCRT__unlink
 @ cdecl _unloaddll(long)
 @ cdecl _unlock(long)
+@ cdecl _utime32(str ptr)
+@ cdecl _utime64(str ptr)
 @ cdecl _utime(str ptr)
 @ cdecl _vscprintf(str ptr)
 @ cdecl _vscwprintf(wstr ptr)
@@ -608,6 +612,8 @@
 @ cdecl _wtol(wstr) ntdll._wtol
 @ cdecl _wunlink(wstr)
 @ cdecl _wutime(wstr ptr)
+@ cdecl _wutime32(wstr ptr)
+@ cdecl _wutime64(wstr ptr)
 @ cdecl _y0(double)
 @ cdecl _y1(double)
 @ cdecl _yn(long double )

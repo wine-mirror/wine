@@ -141,6 +141,16 @@ static void msvcrt_stat64_to_stati64(const struct MSVCRT__stat64 *buf64, struct 
     buf->st_ctime = buf64->st_ctime;
 }
 
+static void time_to_filetime( MSVCRT___time64_t time, FILETIME *ft )
+{
+    /* 1601 to 1970 is 369 years plus 89 leap days */
+    static const __int64 secs_1601_to_1970 = ((369 * 365 + 89) * (__int64)86400);
+
+    __int64 ticks = (time + secs_1601_to_1970) * 10000000;
+    ft->dwHighDateTime = ticks >> 32;
+    ft->dwLowDateTime = ticks;
+}
+
 static inline BOOL msvcrt_is_valid_fd(int fd)
 {
   return fd >= 0 && fd < MSVCRT_fdend && (MSVCRT_fdesc[fd].wxflag & WX_OPEN);
@@ -1213,27 +1223,22 @@ int CDECL MSVCRT__fstat(int fd, struct MSVCRT__stat* buf)
 }
 
 /*********************************************************************
- *		_futime (MSVCRT.@)
+ *		_futime64 (MSVCRT.@)
  */
-int CDECL _futime(int fd, struct MSVCRT__utimbuf *t)
+int CDECL _futime64(int fd, struct MSVCRT___utimbuf64 *t)
 {
   HANDLE hand = msvcrt_fdtoh(fd);
   FILETIME at, wt;
 
   if (!t)
   {
-    MSVCRT_time_t currTime;
-    MSVCRT_time(&currTime);
-    RtlSecondsSince1970ToTime(currTime, (LARGE_INTEGER *)&at);
-    wt = at;
+      time_to_filetime( MSVCRT__time64(NULL), &at );
+      wt = at;
   }
   else
   {
-    RtlSecondsSince1970ToTime(t->actime, (LARGE_INTEGER *)&at);
-    if (t->actime == t->modtime)
-      wt = at;
-    else
-      RtlSecondsSince1970ToTime(t->modtime, (LARGE_INTEGER *)&wt);
+      time_to_filetime( t->actime, &at );
+      time_to_filetime( t->modtime, &wt );
   }
 
   if (!SetFileTime(hand, NULL, &at, &wt))
@@ -1243,6 +1248,32 @@ int CDECL _futime(int fd, struct MSVCRT__utimbuf *t)
   }
   return 0;
 }
+
+/*********************************************************************
+ *		_futime32 (MSVCRT.@)
+ */
+int CDECL _futime32(int fd, struct MSVCRT___utimbuf32 *t)
+{
+    struct MSVCRT___utimbuf64 t64;
+    t64.actime = t->actime;
+    t64.modtime = t->modtime;
+    return _futime64( fd, &t64 );
+}
+
+/*********************************************************************
+ *		_futime (MSVCRT.@)
+ */
+#ifdef _WIN64
+int CDECL _futime(int fd, struct MSVCRT___utimbuf64 *t)
+{
+    return _futime64( fd, t );
+}
+#else
+int CDECL _futime(int fd, struct MSVCRT___utimbuf32 *t)
+{
+    return _futime32( fd, t );
+}
+#endif
 
 /*********************************************************************
  *		_get_osfhandle (MSVCRT.@)
@@ -2053,15 +2084,15 @@ int CDECL MSVCRT__umask(int umask)
 }
 
 /*********************************************************************
- *		_utime (MSVCRT.@)
+ *		_utime64 (MSVCRT.@)
  */
-int CDECL _utime(const char* path, struct MSVCRT__utimbuf *t)
+int CDECL _utime64(const char* path, struct MSVCRT___utimbuf64 *t)
 {
   int fd = MSVCRT__open(path, MSVCRT__O_WRONLY | MSVCRT__O_BINARY);
 
   if (fd > 0)
   {
-    int retVal = _futime(fd, t);
+    int retVal = _futime64(fd, t);
     MSVCRT__close(fd);
     return retVal;
   }
@@ -2069,20 +2100,72 @@ int CDECL _utime(const char* path, struct MSVCRT__utimbuf *t)
 }
 
 /*********************************************************************
- *		_wutime (MSVCRT.@)
+ *		_utime32 (MSVCRT.@)
  */
-int CDECL _wutime(const MSVCRT_wchar_t* path, struct MSVCRT__utimbuf *t)
+int CDECL _utime32(const char* path, struct MSVCRT___utimbuf32 *t)
+{
+    struct MSVCRT___utimbuf64 t64;
+    t64.actime = t->actime;
+    t64.modtime = t->modtime;
+    return _utime64( path, &t64 );
+}
+
+/*********************************************************************
+ *		_utime (MSVCRT.@)
+ */
+#ifdef _WIN64
+int CDECL _utime(const char* path, struct MSVCRT___utimbuf64 *t)
+{
+    return _utime64( path, t );
+}
+#else
+int CDECL _utime(const char* path, struct MSVCRT___utimbuf32 *t)
+{
+    return _utime32( path, t );
+}
+#endif
+
+/*********************************************************************
+ *		_wutime64 (MSVCRT.@)
+ */
+int CDECL _wutime64(const MSVCRT_wchar_t* path, struct MSVCRT___utimbuf64 *t)
 {
   int fd = _wopen(path, MSVCRT__O_WRONLY | MSVCRT__O_BINARY);
 
   if (fd > 0)
   {
-    int retVal = _futime(fd, t);
+    int retVal = _futime64(fd, t);
     MSVCRT__close(fd);
     return retVal;
   }
   return -1;
 }
+
+/*********************************************************************
+ *		_wutime32 (MSVCRT.@)
+ */
+int CDECL _wutime32(const MSVCRT_wchar_t* path, struct MSVCRT___utimbuf32 *t)
+{
+    struct MSVCRT___utimbuf64 t64;
+    t64.actime = t->actime;
+    t64.modtime = t->modtime;
+    return _wutime64( path, &t64 );
+}
+
+/*********************************************************************
+ *		_wutime (MSVCRT.@)
+ */
+#ifdef _WIN64
+int CDECL _wutime(const MSVCRT_wchar_t* path, struct MSVCRT___utimbuf64 *t)
+{
+    return _wutime64( path, t );
+}
+#else
+int CDECL _wutime(const MSVCRT_wchar_t* path, struct MSVCRT___utimbuf32 *t)
+{
+    return _wutime32( path, t );
+}
+#endif
 
 /*********************************************************************
  *		_write (MSVCRT.@)

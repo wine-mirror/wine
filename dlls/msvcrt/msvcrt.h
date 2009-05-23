@@ -335,10 +335,16 @@ struct MSVCRT__wfinddatai64_t {
   MSVCRT_wchar_t  name[260];
 };
 
-struct MSVCRT__utimbuf
+struct MSVCRT___utimbuf32
 {
-    MSVCRT_time_t actime;
-    MSVCRT_time_t modtime;
+    MSVCRT___time32_t actime;
+    MSVCRT___time32_t modtime;
+};
+
+struct MSVCRT___utimbuf64
+{
+    MSVCRT___time64_t actime;
+    MSVCRT___time64_t modtime;
 };
 
 /* for FreeBSD */
