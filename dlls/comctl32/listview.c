@@ -9631,7 +9631,7 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 	 * The "2" is there to mimic the native control. I think it may be
 	 * related to either padding or edges.  (GLA 7/2002)
 	 */
-    	if (!(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_HSCROLL))
+	if (!(infoPtr->dwStyle & WS_HSCROLL))
 	    infoPtr->rcList.bottom -= GetSystemMetrics(SM_CYHSCROLL);
         infoPtr->rcList.bottom = max (infoPtr->rcList.bottom - 2, 0);
     }
