@@ -675,4 +675,9 @@ ok(Math.floor(Math.LN2*100) === 69, "Math.LN2 = " + Math.LN2);
 Math.LN2 = "test";
 ok(Math.floor(Math.LN2*100) === 69, "modified Math.LN2 = " + Math.LN2);
 
+ok(typeof(Math.SQRT2) === "number", "typeof(Math.SQRT2) = " + typeof(Math.SQRT2));
+ok(Math.floor(Math.SQRT2*100) === 141, "Math.SQRT2 = " + Math.SQRT2);
+Math.SQRT2 = "test";
+ok(Math.floor(Math.SQRT2*100) === 141, "modified Math.SQRT2 = " + Math.SQRT2);
+
 reportSuccess();

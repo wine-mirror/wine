@@ -120,8 +120,8 @@ static HRESULT Math_PI(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp
 static HRESULT Math_SQRT2(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return math_constant(M_SQRT2, flags, retv);
 }
 
 static HRESULT Math_SQRT1_2(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
