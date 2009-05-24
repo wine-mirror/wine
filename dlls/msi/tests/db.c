@@ -1482,6 +1482,89 @@ static void test_streamtable(void)
     DeleteFile(msifile);
 }
 
+static void test_binary(void)
+{
+    MSIHANDLE hdb = 0, rec;
+    char file[MAX_PATH];
+    char buf[MAX_PATH];
+    DWORD size;
+    LPCSTR query;
+    UINT r;
+
+    /* insert a file into the Binary table */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb );
+    ok( r == ERROR_SUCCESS , "Failed to open database\n" );
+
+    query = "CREATE TABLE `Binary` ( `Name` CHAR(72) NOT NULL, `ID` INT NOT NULL, `Data` OBJECT  PRIMARY KEY `Name`, `ID`)";
+    r = run_query( hdb, 0, query );
+    ok( r == ERROR_SUCCESS, "Cannot create Binary table: %d\n", r );
+
+    create_file( "test.txt" );
+    rec = MsiCreateRecord( 1 );
+    r = MsiRecordSetStream( rec, 1, "test.txt" );
+    ok( r == ERROR_SUCCESS, "Failed to add stream data to the record: %d\n", r);
+    DeleteFile( "test.txt" );
+
+    query = "INSERT INTO `Binary` ( `Name`, `ID`, `Data` ) VALUES ( 'filename1', 1, ? )";
+    r = run_query( hdb, rec, query );
+    ok( r == ERROR_SUCCESS, "Insert into Binary table failed: %d\n", r );
+
+    r = MsiCloseHandle( rec );
+    ok( r == ERROR_SUCCESS , "Failed to close record handle\n" );
+
+    r = MsiDatabaseCommit( hdb );
+    ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
+
+    r = MsiCloseHandle( hdb );
+    ok( r == ERROR_SUCCESS , "Failed to close database\n" );
+
+    /* read file from the Stream table */
+    r = MsiOpenDatabase( msifile, MSIDBOPEN_READONLY, &hdb );
+    ok( r == ERROR_SUCCESS , "Failed to open database\n" );
+
+    query = "SELECT * FROM `_Streams`";
+    r = do_query( hdb, query, &rec );
+    todo_wine ok( r == ERROR_SUCCESS, "SELECT query failed: %d\n", r );
+
+    size = MAX_PATH;
+    r = MsiRecordGetString( rec, 1, file, &size );
+    todo_wine ok( r == ERROR_SUCCESS, "Failed to get string: %d\n", r );
+    todo_wine ok( !lstrcmp(file, "Binary.filename1.1"), "Expected 'Binary.filename1.1', got %s\n", file );
+
+    size = MAX_PATH;
+    memset( buf, 0, MAX_PATH );
+    r = MsiRecordReadStream( rec, 2, buf, &size );
+    todo_wine ok( r == ERROR_SUCCESS, "Failed to get stream: %d\n", r );
+    todo_wine ok( !lstrcmp(buf, "test.txt\n"), "Expected 'test.txt\\n', got %s\n", buf );
+
+    r = MsiCloseHandle( rec );
+    ok( r == ERROR_SUCCESS , "Failed to close record handle\n" );
+
+    /* read file from the Binary table */
+    query = "SELECT * FROM `Binary`";
+    r = do_query( hdb, query, &rec );
+    ok( r == ERROR_SUCCESS, "SELECT query failed: %d\n", r );
+
+    size = MAX_PATH;
+    r = MsiRecordGetString( rec, 1, file, &size );
+    ok( r == ERROR_SUCCESS, "Failed to get string: %d\n", r );
+    ok( !lstrcmp(file, "filename1"), "Expected 'filename1', got %s\n", file );
+
+    size = MAX_PATH;
+    memset( buf, 0, MAX_PATH );
+    r = MsiRecordReadStream( rec, 3, buf, &size );
+    todo_wine ok( r == ERROR_SUCCESS, "Failed to get stream: %d\n", r );
+    todo_wine ok( !lstrcmp(buf, "test.txt\n"), "Expected 'test.txt\\n', got %s\n", buf );
+
+    r = MsiCloseHandle( rec );
+    ok( r == ERROR_SUCCESS , "Failed to close record handle\n" );
+
+    r = MsiCloseHandle( hdb );
+    ok( r == ERROR_SUCCESS , "Failed to close database\n" );
+
+    DeleteFile( msifile );
+}
+
 static void test_where(void)
 {
     MSIHANDLE hdb = 0, rec, view;
@@ -7528,6 +7611,7 @@ START_TEST(db)
     test_msiexport();
     test_longstrings();
     test_streamtable();
+    test_binary();
     test_where();
     test_msiimport();
     test_markers();
