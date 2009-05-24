@@ -4305,6 +4305,7 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *prcEra
     ITERATOR i;
     HDC hdcOrig = hdc;
     HBITMAP hbmp = NULL;
+    RANGE range;
 
     LISTVIEW_DUMP(infoPtr);
 
@@ -4370,11 +4371,11 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *prcEra
 
     /* figure out what we need to draw */
     iterator_visibleitems(&i, infoPtr, hdc);
-    
+    range = iterator_range(&i);
+
     /* send cache hint notification */
     if (infoPtr->dwStyle & LVS_OWNERDATA)
     {
-    	RANGE range = iterator_range(&i);
 	NMLVCACHEHINT nmlv;
 	
     	ZeroMemory(&nmlv, sizeof(NMLVCACHEHINT));
@@ -4392,8 +4393,9 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *prcEra
 	else /* LVS_LIST, LVS_ICON or LVS_SMALLICON */
 	    LISTVIEW_RefreshList(infoPtr, &i, hdc, cdmode);
 
-	/* if we have a focus rect, draw it */
-	if (infoPtr->bFocus)
+	/* if we have a focus rect and it's visible, draw it */
+	if (infoPtr->bFocus && range.lower <= infoPtr->nFocusedItem &&
+                        (range.upper - 1) >= infoPtr->nFocusedItem)
 	    LISTVIEW_DrawFocusRect(infoPtr, hdc);
     }
     iterator_destroy(&i);
