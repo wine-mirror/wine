@@ -708,6 +708,11 @@ ok(Math.floor(Math.LN2*100) === 69, "Math.LN2 = " + Math.LN2);
 Math.LN2 = "test";
 ok(Math.floor(Math.LN2*100) === 69, "modified Math.LN2 = " + Math.LN2);
 
+ok(typeof(Math.LN10) === "number", "typeof(Math.LN10) = " + typeof(Math.LN10));
+ok(Math.floor(Math.LN10*100) === 230, "Math.LN10 = " + Math.LN10);
+Math.LN10 = "test";
+ok(Math.floor(Math.LN10*100) === 230, "modified Math.LN10 = " + Math.LN10);
+
 ok(typeof(Math.SQRT2) === "number", "typeof(Math.SQRT2) = " + typeof(Math.SQRT2));
 ok(Math.floor(Math.SQRT2*100) === 141, "Math.SQRT2 = " + Math.SQRT2);
 Math.SQRT2 = "test";
