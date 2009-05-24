@@ -1939,6 +1939,63 @@ static void test_msiimport(void)
     DeleteFileA(msifile);
 }
 
+static const CHAR bin_import_dat[] = "Name\tData\r\n"
+                                     "s72\tV0\r\n"
+                                     "Binary\tName\r\n"
+                                     "filename1\tfilename1.ibd\r\n";
+
+static void test_binary_import(void)
+{
+    MSIHANDLE hdb = 0, rec;
+    char file[MAX_PATH];
+    char buf[MAX_PATH];
+    char path[MAX_PATH];
+    DWORD size;
+    LPCSTR query;
+    UINT r;
+
+    /* create files to import */
+    write_file("bin_import.idt", bin_import_dat,
+          (sizeof(bin_import_dat) - 1) * sizeof(char));
+    CreateDirectory("bin_import", NULL);
+    create_file_data("bin_import/filename1.ibd", "just some words", 15);
+
+    /* import files into database */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok( r == ERROR_SUCCESS , "Failed to open database\n");
+
+    GetCurrentDirectory(MAX_PATH, path);
+    r = MsiDatabaseImport(hdb, path, "bin_import.idt");
+    todo_wine ok(r == ERROR_SUCCESS , "Failed to import Binary table\n");
+
+    /* read file from the Binary table */
+    query = "SELECT * FROM `Binary`";
+    r = do_query(hdb, query, &rec);
+    todo_wine ok(r == ERROR_SUCCESS, "SELECT query failed: %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, file, &size);
+    todo_wine ok(r == ERROR_SUCCESS, "Failed to get string: %d\n", r);
+    todo_wine ok(!lstrcmp(file, "filename1"), "Expected 'filename1', got %s\n", file);
+
+    size = MAX_PATH;
+    memset(buf, 0, MAX_PATH);
+    r = MsiRecordReadStream(rec, 2, buf, &size);
+    todo_wine ok(r == ERROR_SUCCESS, "Failed to get stream: %d\n", r);
+    todo_wine ok(!lstrcmp(buf, "just some words"),
+        "Expected 'just some words', got %s\n", buf);
+
+    r = MsiCloseHandle(rec);
+    ok(r == ERROR_SUCCESS , "Failed to close record handle\n");
+
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS , "Failed to close database\n");
+
+    DeleteFile("bin_import/filename1.ibd");
+    RemoveDirectory("bin_import");
+    DeleteFile("bin_import.idt");
+}
+
 static void test_markers(void)
 {
     MSIHANDLE hdb, rec;
@@ -7611,6 +7668,7 @@ START_TEST(db)
     test_binary();
     test_where();
     test_msiimport();
+    test_binary_import();
     test_markers();
     test_handle_limit();
     test_try_transform();
