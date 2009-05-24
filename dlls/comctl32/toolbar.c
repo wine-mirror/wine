@@ -5322,8 +5322,8 @@ TOOLBAR_Destroy (TOOLBAR_INFO *infoPtr)
     CloseThemeData (GetWindowTheme (infoPtr->hwndSelf));
 
     /* free toolbar info data */
-    Free (infoPtr);
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
+    Free (infoPtr);
 
     return 0;
 }
