@@ -259,13 +259,14 @@ static void context_reuse_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *ent
 }
 
 /* GL locking is done by the caller */
-static void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, struct fbo_entry *entry)
+static void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, WineD3DContext *context, struct fbo_entry *entry)
 {
     if (entry->id)
     {
         TRACE("Destroy FBO %d\n", entry->id);
         context_destroy_fbo(This, &entry->id);
     }
+    --context->fbo_entry_count;
     list_remove(&entry->entry);
     HeapFree(GetProcessHeap(), 0, entry->render_targets);
     HeapFree(GetProcessHeap(), 0, entry);
@@ -381,11 +382,12 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
         {
             for (i = 0; i < This->numContexts; ++i)
             {
+                WineD3DContext *context = This->contexts[i];
                 struct fbo_entry *entry, *entry2;
 
                 ENTER_GL();
 
-                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->contexts[i]->fbo_list, struct fbo_entry, entry)
+                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry)
                 {
                     BOOL destroyed = FALSE;
                     UINT j;
@@ -394,13 +396,13 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                     {
                         if (entry->render_targets[j] == (IWineD3DSurface *)resource)
                         {
-                            context_destroy_fbo_entry(This, entry);
+                            context_destroy_fbo_entry(This, context, entry);
                             destroyed = TRUE;
                         }
                     }
 
                     if (!destroyed && entry->depth_stencil == (IWineD3DSurface *)resource)
-                        context_destroy_fbo_entry(This, entry);
+                        context_destroy_fbo_entry(This, context, entry);
                 }
 
                 LEAVE_GL();
@@ -1053,7 +1055,7 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     ENTER_GL();
 
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry) {
-        context_destroy_fbo_entry(This, entry);
+        context_destroy_fbo_entry(This, context, entry);
     }
     if (context->src_fbo) {
         TRACE("Destroy src FBO %d\n", context->src_fbo);
