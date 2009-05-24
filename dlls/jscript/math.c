@@ -127,8 +127,8 @@ static HRESULT Math_SQRT2(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS 
 static HRESULT Math_SQRT1_2(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return math_constant(M_SQRT1_2, flags, retv);
 }
 
 /* ECMA-262 3rd Edition    15.8.2.12 */
