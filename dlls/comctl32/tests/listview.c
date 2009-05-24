@@ -2389,13 +2389,17 @@ static void test_hittest(void)
     y = pos.y + (bounds.bottom - bounds.top) / 2;
     test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, FALSE, FALSE, __LINE__);
     test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, TRUE, TRUE, TRUE, __LINE__);
-    /* try with icons */
+    /* try with icons, state icons index is 1 based so at least 2 bitmaps needed */
     himl = ImageList_Create(16, 16, 0, 4, 4);
     ok(himl != NULL, "failed to create imagelist\n");
     hbmp = CreateBitmap(16, 16, 1, 1, NULL);
     ok(hbmp != NULL, "failed to create bitmap\n");
     r = ImageList_Add(himl, hbmp, 0);
     ok(r == 0, "should be zero\n");
+    hbmp = CreateBitmap(16, 16, 1, 1, NULL);
+    ok(hbmp != NULL, "failed to create bitmap\n");
+    r = ImageList_Add(himl, hbmp, 0);
+    ok(r == 1, "should be one\n");
 
     r = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)himl);
     ok(r == 0, "should return zero\n");
@@ -2407,10 +2411,24 @@ static void test_hittest(void)
     r = SendMessage(hwnd, LVM_SETITEM, 0, (LPARAM)&item);
     expect(TRUE, r);
     /* on state icon */
-    x = pos.x + 8; /* outside column */
+    x = pos.x + 8;
     y = pos.y + (bounds.bottom - bounds.top) / 2;
-    test_lvm_hittest(hwnd, x, y, 0, LVHT_ONITEMSTATEICON, FALSE, TRUE, __LINE__);
-    test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, TRUE, __LINE__);
+    test_lvm_hittest(hwnd, x, y, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, FALSE, __LINE__);
+
+    /* state icons indices are 1 based, check with valid index */
+    item.mask = LVIF_STATE;
+    item.state = INDEXTOSTATEIMAGEMASK(1);
+    item.stateMask = LVIS_STATEIMAGEMASK;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_SETITEM, 0, (LPARAM)&item);
+    expect(TRUE, r);
+    /* on state icon */
+    x = pos.x + 8;
+    y = pos.y + (bounds.bottom - bounds.top) / 2;
+    test_lvm_hittest(hwnd, x, y, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, FALSE, __LINE__);
 
     himl2 = (HIMAGELIST)SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)NULL);
     ok(himl2 == himl, "should return handle\n");
@@ -2418,7 +2436,7 @@ static void test_hittest(void)
     r = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)himl);
     ok(r == 0, "should return zero\n");
     /* on item icon */
-    x = pos.x + 8; /* outside column */
+    x = pos.x + 8;
     y = pos.y + (bounds.bottom - bounds.top) / 2;
     test_lvm_hittest(hwnd, x, y, 0, LVHT_ONITEMICON, FALSE, FALSE, __LINE__);
     test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMICON, FALSE, FALSE, FALSE, __LINE__);

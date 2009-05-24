@@ -6593,7 +6593,7 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	lpht->flags |= LVHT_ONITEMICON;
     else if (PtInRect(&rcLabel, opt))
 	lpht->flags |= LVHT_ONITEMLABEL;
-    else if (infoPtr->himlState && STATEIMAGEINDEX(lvItem.state) && PtInRect(&rcState, opt))
+    else if (infoPtr->himlState && PtInRect(&rcState, opt))
 	lpht->flags |= LVHT_ONITEMSTATEICON;
     /* special case for LVS_EX_FULLROWSELECT */
     if (uView == LVS_REPORT && infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT &&
