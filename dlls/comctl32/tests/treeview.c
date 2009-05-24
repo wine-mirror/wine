@@ -276,7 +276,8 @@ static void TestCallback(void)
     CHAR buf[128];
     LRESULT ret;
 
-    TreeView_DeleteAllItems(hTree);
+    ret = TreeView_DeleteAllItems(hTree);
+    ok(ret == TRUE, "ret\n");
     ins.hParent = TVI_ROOT;
     ins.hInsertAfter = TVI_ROOT;
     U(ins).item.mask = TVIF_TEXT;
@@ -301,7 +302,8 @@ static void TestCallback(void)
     assert(hItem1);
 
     tvi.hItem = hItem1;
-    TreeView_GetItem(hTree, &tvi);
+    ret = TreeView_GetItem(hTree, &tvi);
+    ok(ret == TRUE, "ret\n");
     ok(strcmp(tvi.pszText, test_string) == 0, "Item text mismatch %s vs %s\n",
         tvi.pszText, test_string);
 
@@ -310,7 +312,8 @@ static void TestCallback(void)
     ret = TreeView_SetItem(hTree, &tvi);
     ok(ret == 1, "Expected SetItem return 1, got %ld\n", ret);
     tvi.pszText = buf;
-    TreeView_GetItem(hTree, &tvi);
+    ret = TreeView_GetItem(hTree, &tvi);
+    ok(ret == TRUE, "Expected GetItem return TRUE, got %ld\n", ret);
     ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
         tvi.pszText, TEST_CALLBACK_TEXT);
 
@@ -319,7 +322,8 @@ static void TestCallback(void)
     assert(hItem2);
     tvi.hItem = hItem2;
     memset(buf, 0, sizeof(buf));
-    TreeView_GetItem(hTree, &tvi);
+    ret = TreeView_GetItem(hTree, &tvi);
+    ok(ret == TRUE, "Expected GetItem return TRUE, got %ld\n", ret);
     ok(strcmp(tvi.pszText, TEST_CALLBACK_TEXT) == 0, "Item text mismatch %s vs %s\n",
         tvi.pszText, TEST_CALLBACK_TEXT);
 }
@@ -755,6 +759,7 @@ static void TestExpandInvisible(void)
     HTREEITEM node[5];
     RECT dummyRect;
     BOOL nodeVisible;
+    LRESULT ret;
 
     /* The test builds the following tree and expands then node 1, while node 0 is collapsed.
      *
@@ -766,8 +771,8 @@ static void TestExpandInvisible(void)
      *
      */
 
-    TreeView_DeleteAllItems(hTree);
-
+    ret = TreeView_DeleteAllItems(hTree);
+    ok(ret == TRUE, "ret\n");
     ins.hParent = TVI_ROOT;
     ins.hInsertAfter = TVI_ROOT;
     U(ins).item.mask = TVIF_TEXT;
