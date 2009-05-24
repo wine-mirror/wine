@@ -3269,18 +3269,14 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem, BOOL space)
   TRACE("nItem=%d, wShift=%d, wCtrl=%d\n", nItem, wShift, wCtrl);
   if ((nItem >= 0) && (nItem < infoPtr->nItemCount))
   {
-    if (infoPtr->dwStyle & LVS_SINGLESEL)
-    {
-      bResult = TRUE;
+    bResult = TRUE;
+
+    if (infoPtr->dwStyle & LVS_SINGLESEL || (wShift == 0 && wCtrl == 0))
       LISTVIEW_SetSelection(infoPtr, nItem);
-    }
     else
     {
       if (wShift)
-      {
-        bResult = TRUE;
         LISTVIEW_SetGroupSelection(infoPtr, nItem);
-      }
       else if (wCtrl)
       {
         LVITEMW lvItem;
@@ -3293,11 +3289,6 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem, BOOL space)
                 infoPtr->nSelectionMark = nItem;
         }
         bResult = LISTVIEW_SetItemFocus(infoPtr, nItem);
-      }
-      else
-      {
-        bResult = TRUE;
-        LISTVIEW_SetSelection(infoPtr, nItem);
       }
     }
     LISTVIEW_EnsureVisible(infoPtr, nItem, FALSE);
