@@ -3401,8 +3401,6 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
 
         if (!PtInRect(&rect, tmp))
         {
-            NMLISTVIEW nmlv;
-
             /* this path covers the following:
                1. WM_LBUTTONDOWN over selected item (sets focus on it)
                2. change focus with keys
@@ -3419,15 +3417,17 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
                 infoPtr->nLButtonDownItem = -1;
             }
 
-            lvHitTestInfo.pt = infoPtr->ptClickPos;
-            LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
-
-            ZeroMemory(&nmlv, sizeof(nmlv));
-            nmlv.iItem = lvHitTestInfo.iItem;
-            nmlv.ptAction = infoPtr->ptClickPos;
-
             if (!infoPtr->bDragging)
             {
+                NMLISTVIEW nmlv;
+
+                lvHitTestInfo.pt = infoPtr->ptClickPos;
+                LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
+
+                ZeroMemory(&nmlv, sizeof(nmlv));
+                nmlv.iItem = lvHitTestInfo.iItem;
+                nmlv.ptAction = infoPtr->ptClickPos;
+
                 notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
                 infoPtr->bDragging = TRUE;
             }
