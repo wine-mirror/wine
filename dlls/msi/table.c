@@ -2373,7 +2373,67 @@ static UINT read_raw_int(const BYTE *data, UINT col, UINT bytes)
     return ret;
 }
 
+static UINT msi_record_encoded_stream_name( const MSITABLEVIEW *tv, MSIRECORD *rec, LPWSTR *pstname )
+{
+    static const WCHAR szDot[] = { '.', 0 };
+    LPWSTR stname = NULL, sval, p;
+    DWORD len;
+    UINT i, r;
+
+    TRACE("%p %p\n", tv, rec);
+
+    len = lstrlenW( tv->name ) + 1;
+    stname = msi_alloc( len*sizeof(WCHAR) );
+    if ( !stname )
+    {
+       r = ERROR_OUTOFMEMORY;
+       goto err;
+    }
+
+    lstrcpyW( stname, tv->name );
+
+    for ( i = 0; i < tv->num_cols; i++ )
+    {
+        if ( tv->columns[i].type & MSITYPE_KEY )
+        {
+            sval = msi_dup_record_field( rec, i + 1 );
+            if ( !sval )
+            {
+                r = ERROR_OUTOFMEMORY;
+                goto err;
+            }
+
+            len += lstrlenW( szDot ) + lstrlenW ( sval );
+            p = msi_realloc ( stname, len*sizeof(WCHAR) );
+            if ( !p )
+            {
+                r = ERROR_OUTOFMEMORY;
+                goto err;
+            }
+            stname = p;
+
+            lstrcatW( stname, szDot );
+            lstrcatW( stname, sval );
+
+            msi_free( sval );
+        }
+        else
+            continue;
+    }
+
+    *pstname = encode_streamname( FALSE, stname );
+    msi_free( stname );
+
+    return ERROR_SUCCESS;
+
+err:
+    msi_free ( stname );
+    *pstname = NULL;
+    return r;
+}
+
 static MSIRECORD *msi_get_transform_record( const MSITABLEVIEW *tv, const string_table *st,
+                                            IStorage *stg,
                                             const BYTE *rawdata, UINT bytes_per_strref )
 {
     UINT i, val, ofs = 0;
@@ -2397,8 +2457,28 @@ static MSIRECORD *msi_get_transform_record( const MSITABLEVIEW *tv, const string
         if ( (~mask&1) && (~columns[i].type & MSITYPE_KEY) && ((1<<i) & ~mask) )
             continue;
 
-        if( (columns[i].type & MSITYPE_STRING) &&
-            ! MSITYPE_IS_BINARY(tv->columns[i].type) )
+        if( MSITYPE_IS_BINARY(tv->columns[i].type) )
+        {
+            LPWSTR encname;
+            IStream *stm = NULL;
+            UINT r;
+
+            ofs += bytes_per_column( tv->db, &columns[i] );
+
+            r = msi_record_encoded_stream_name( tv, rec, &encname );
+            if ( r != ERROR_SUCCESS )
+                return NULL;
+
+            r = IStorage_OpenStream( stg, encname, NULL,
+                     STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm );
+            msi_free( encname );
+            if ( r != ERROR_SUCCESS )
+                return NULL;
+
+            MSI_RecordSetStream( rec, i+1, stm );
+            TRACE(" field %d [%s]\n", i+1, debugstr_w(encname));
+        }
+        else if( columns[i].type & MSITYPE_STRING )
         {
             LPCWSTR sval;
 
@@ -2659,7 +2739,7 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
             break;
         }
 
-        rec = msi_get_transform_record( tv, st, &rawdata[n], bytes_per_strref );
+        rec = msi_get_transform_record( tv, st, stg, &rawdata[n], bytes_per_strref );
         if (rec)
         {
             if ( mask & 1 )

@@ -661,7 +661,7 @@ static UINT RECORD_StreamFromFile(LPCWSTR szFile, IStream **pstm)
     return ERROR_SUCCESS;
 }
 
-static UINT MSI_RecordSetStream(MSIRECORD *rec, UINT iField, IStream *stream)
+UINT MSI_RecordSetStream(MSIRECORD *rec, UINT iField, IStream *stream)
 {
     if ( (iField == 0) || (iField > rec->count) )
         return ERROR_INVALID_PARAMETER;
