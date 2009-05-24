@@ -1817,7 +1817,7 @@ static void LISTVIEW_ShowFocusRect(const LISTVIEW_INFO *infoPtr, BOOL fShow)
     if (infoPtr->nFocusedItem < 0) return;
 
     /* we need some gymnastics in ICON mode to handle large items */
-    if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_ICON )
+    if (uView == LVS_ICON)
     {
 	RECT rcBox;
 
