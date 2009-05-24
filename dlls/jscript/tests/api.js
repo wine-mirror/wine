@@ -626,6 +626,39 @@ tmp = Math.random(100);
 ok(typeof(tmp) == "number", "typeof(tmp) = " + typeof(tmp));
 ok(0 <= tmp && tmp <= 1, "Math.random(100) = " + tmp);
 
+tmp = Math.acos(0);
+ok(Math.floor(tmp*100) === 157, "Math.acos(0) = " + tmp);
+
+tmp = Math.acos(1);
+ok(Math.floor(tmp*100) === 0, "Math.acos(1) = " + tmp);
+
+tmp = Math.acos(-1);
+ok(Math.floor(tmp*100) === 314, "Math.acos(-1) = " + tmp);
+
+tmp = Math.acos(Math.PI/4, 2);
+ok(Math.floor(tmp*100) === 66, "Math.acos(Math.PI/4, 2) = " + tmp);
+
+tmp = Math.acos(true);
+ok(Math.floor(tmp*100) === 0, "Math.acos(true) = " + tmp);
+
+tmp = Math.acos(false);
+ok(Math.floor(tmp*100) === 157, "Math.acos(false) = " + tmp);
+
+tmp = Math.acos(1.1);
+ok(isNaN(tmp), "Math.acos(1.1) is not NaN");
+
+tmp = Math.acos();
+ok(isNaN(tmp), "Math.acos() is not NaN");
+
+tmp = Math.acos(NaN);
+ok(isNaN(tmp), "Math.acos(NaN) is not NaN");
+
+tmp = Math.acos(Infinity);
+ok(isNaN(tmp), "Math.acos(Infinity) is not NaN");
+
+tmp = Math.acos(-Infinity);
+ok(isNaN(tmp), "Math.acos(-Infinity) is not NaN");
+
 var func = function  (a) {
         var a = 1;
         if(a) return;
