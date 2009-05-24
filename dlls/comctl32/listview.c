@@ -137,7 +137,6 @@
  *   -- LVM_SORTGROUPS
  *
  * Macros:
- *   -- ListView_GetCheckSate, ListView_SetCheckState
  *   -- ListView_GetHoverTime, ListView_SetHoverTime
  *   -- ListView_GetISearchString
  *   -- ListView_GetNumberOfWorkAreas
