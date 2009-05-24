@@ -788,20 +788,132 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointA( LPCSTR path, LPSTR volume, DWORD 
  */
 BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWORD size )
 {
+    static const WCHAR prefixW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
+    static const WCHAR volumeW[] = {'\\','?','?','\\','V','o','l','u','m','e','{',0};
+    static const WCHAR trailingW[] = {'\\',0};
+
+    MOUNTMGR_MOUNT_POINT *input = NULL, *o1;
+    MOUNTMGR_MOUNT_POINTS *output = NULL;
+    WCHAR *p;
+    char *r;
+    DWORD i, i_size = 1024, o_size = 1024;
+    WCHAR nonpersist_name[200];
+    WCHAR symlink_name[MAX_PATH];
+    NTSTATUS status;
+    HANDLE mgr = INVALID_HANDLE_VALUE;
     BOOL ret = FALSE;
-    static const WCHAR fmt[] =
-        { '\\','\\','?','\\','V','o','l','u','m','e','{','%','0','2','x','}','\\',0 };
 
     TRACE("(%s, %p, %x)\n", debugstr_w(path), volume, size);
-
-    if (!path || !path[0]) return FALSE;
-
-    if (size >= sizeof(fmt) / sizeof(WCHAR))
+    if (path[lstrlenW(path)-1] != '\\')
     {
-        /* FIXME: will break when we support volume mounts */
-        sprintfW( volume, fmt, tolowerW( path[0] ) - 'a' );
-        ret = TRUE;
+        SetLastError( ERROR_INVALID_NAME );
+        return FALSE;
     }
+
+    if (size < 50)
+    {
+        SetLastError( ERROR_FILENAME_EXCED_RANGE );
+        return FALSE;
+    }
+    /* if length of input is > 3 then it must be a mounted folder */
+    if (lstrlenW(path) > 3)
+    {
+        FIXME("Mounted Folders are not yet supported\n");
+        SetLastError( ERROR_NOT_A_REPARSE_POINT );
+        return FALSE;
+    }
+
+    mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, 0, FILE_SHARE_READ,
+                        NULL, OPEN_EXISTING, 0, 0 );
+    if (mgr == INVALID_HANDLE_VALUE) return FALSE;
+
+    if (!(input = HeapAlloc( GetProcessHeap(), 0, i_size )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        goto err_ret;
+    }
+
+    if (!(output = HeapAlloc( GetProcessHeap(), 0, o_size )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        goto err_ret;
+    }
+
+    /* construct the symlink name as "\DosDevices\C:" */
+    lstrcpyW( symlink_name, prefixW );
+    lstrcatW( symlink_name, path );
+    symlink_name[lstrlenW(symlink_name)-1] = 0;
+
+    /* Take the mount point and get the "nonpersistent name" */
+    /* We will then take that and get the volume name        */
+    status = read_nt_symlink( symlink_name, nonpersist_name,
+                                sizeof(nonpersist_name)/sizeof(WCHAR) );
+    TRACE("read_nt_symlink got stat=%x, for %s, got <%s>\n", status,
+            debugstr_w(symlink_name), debugstr_w(nonpersist_name));
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        goto err_ret;
+    }
+
+    /* Now take the "nonpersistent name" and ask the mountmgr  */
+    /* to give us all the mount points.  One of them will be   */
+    /* the volume name  (format of \??\Volume{).               */
+    memset( input, 0, sizeof(*input) );  /* clear all input parameters */
+    input->DeviceNameOffset = sizeof(*input);
+    input->DeviceNameLength = lstrlenW( nonpersist_name) * sizeof(WCHAR);
+    memcpy( input + 1, nonpersist_name, input->DeviceNameLength );
+
+    output->Size = o_size;
+
+    /* now get the true volume name from the mountmgr   */
+    if (!DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_POINTS, input, i_size,
+                        output, o_size, NULL, NULL ))
+        goto err_ret;
+
+    /* Verify and return the data, note string is not null terminated  */
+    TRACE("found %d matching mount points\n", output->NumberOfMountPoints);
+    if (output->NumberOfMountPoints < 1)
+    {
+        SetLastError( ERROR_NO_VOLUME_ID );
+        goto err_ret;
+    }
+    o1 = &output->MountPoints[0];
+
+    /* look for the volume name in returned values  */
+    for(i=0;i<output->NumberOfMountPoints;i++)
+    {
+        p = (WCHAR*)((char *)output + o1->SymbolicLinkNameOffset);
+        r = (char *)output + o1->UniqueIdOffset;
+        TRACE("found symlink=%s, unique=%s, devname=%s\n",
+            debugstr_wn(p, o1->SymbolicLinkNameLength/sizeof(WCHAR)),
+            debugstr_an(r, o1->UniqueIdLength),
+            debugstr_wn((WCHAR*)((char *)output + o1->DeviceNameOffset),
+                            o1->DeviceNameLength/sizeof(WCHAR)));
+
+        if (!strncmpW( p, volumeW, (sizeof(volumeW)-1)/sizeof(WCHAR) ))
+        {
+            /* is there space in the return variable ?? */
+            if ((o1->SymbolicLinkNameLength/sizeof(WCHAR))+2 > size)
+            {
+                SetLastError( ERROR_FILENAME_EXCED_RANGE );
+                goto err_ret;
+            }
+            memcpy( volume, p, o1->SymbolicLinkNameLength );
+            volume[o1->SymbolicLinkNameLength / sizeof(WCHAR)] = 0;
+            lstrcatW( volume, trailingW );
+            /* change second char from '?' to '\'  */
+            volume[1] = '\\';
+            ret = TRUE;
+            break;
+        }
+        o1++;
+    }
+
+err_ret:
+    HeapFree( GetProcessHeap(), 0, input );
+    HeapFree( GetProcessHeap(), 0, output );
+    CloseHandle( mgr );
     return ret;
 }
 
