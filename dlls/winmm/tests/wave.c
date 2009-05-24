@@ -799,7 +799,7 @@ static void wave_out_test_deviceOut(int device, double duration,
            "The sound played for %u ms instead of %g ms\n",
            actual,1000*(duration+paused));
         for (i = 0; i < headers; i++) {
-            ok(frags[i].dwFlags=(WHDR_DONE|WHDR_PREPARED),
+            ok(frags[i].dwFlags==(WHDR_DONE|WHDR_PREPARED),
                "WHDR_DONE WHDR_PREPARED expected, got %s\n",
                wave_header_flags(frags[i].dwFlags));
         }
