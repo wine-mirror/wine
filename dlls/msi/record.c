@@ -930,6 +930,7 @@ MSIRECORD *MSI_CloneRecord(MSIRECORD *rec)
                 msiobj_release(&clone->hdr);
                 return NULL;
             }
+            clone->fields[i].type = MSIFIELD_STREAM;
         }
         else
         {

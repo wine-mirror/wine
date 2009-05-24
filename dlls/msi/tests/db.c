@@ -1524,18 +1524,18 @@ static void test_binary(void)
 
     query = "SELECT * FROM `_Streams`";
     r = do_query( hdb, query, &rec );
-    todo_wine ok( r == ERROR_SUCCESS, "SELECT query failed: %d\n", r );
+    ok( r == ERROR_SUCCESS, "SELECT query failed: %d\n", r );
 
     size = MAX_PATH;
     r = MsiRecordGetString( rec, 1, file, &size );
-    todo_wine ok( r == ERROR_SUCCESS, "Failed to get string: %d\n", r );
-    todo_wine ok( !lstrcmp(file, "Binary.filename1.1"), "Expected 'Binary.filename1.1', got %s\n", file );
+    ok( r == ERROR_SUCCESS, "Failed to get string: %d\n", r );
+    ok( !lstrcmp(file, "Binary.filename1.1"), "Expected 'Binary.filename1.1', got %s\n", file );
 
     size = MAX_PATH;
     memset( buf, 0, MAX_PATH );
     r = MsiRecordReadStream( rec, 2, buf, &size );
-    todo_wine ok( r == ERROR_SUCCESS, "Failed to get stream: %d\n", r );
-    todo_wine ok( !lstrcmp(buf, "test.txt\n"), "Expected 'test.txt\\n', got %s\n", buf );
+    ok( r == ERROR_SUCCESS, "Failed to get stream: %d\n", r );
+    ok( !lstrcmp(buf, "test.txt\n"), "Expected 'test.txt\\n', got %s\n", buf );
 
     r = MsiCloseHandle( rec );
     ok( r == ERROR_SUCCESS , "Failed to close record handle\n" );
@@ -1553,8 +1553,8 @@ static void test_binary(void)
     size = MAX_PATH;
     memset( buf, 0, MAX_PATH );
     r = MsiRecordReadStream( rec, 3, buf, &size );
-    todo_wine ok( r == ERROR_SUCCESS, "Failed to get stream: %d\n", r );
-    todo_wine ok( !lstrcmp(buf, "test.txt\n"), "Expected 'test.txt\\n', got %s\n", buf );
+    ok( r == ERROR_SUCCESS, "Failed to get stream: %d\n", r );
+    ok( !lstrcmp(buf, "test.txt\n"), "Expected 'test.txt\\n', got %s\n", buf );
 
     r = MsiCloseHandle( rec );
     ok( r == ERROR_SUCCESS , "Failed to close record handle\n" );
@@ -6982,12 +6982,9 @@ static void test_dbmerge(void)
     size = MAX_PATH;
     ZeroMemory(buf, MAX_PATH);
     r = MsiRecordReadStream(hrec, 2, buf, &size);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        ok(!lstrcmpA(buf, "binary.dat\n"),
-           "Expected \"binary.dat\\n\", got \"%s\"\n", buf);
-    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "binary.dat\n"),
+       "Expected \"binary.dat\\n\", got \"%s\"\n", buf);
 
     MsiCloseHandle(hrec);
 
