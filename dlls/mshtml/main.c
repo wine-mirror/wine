@@ -44,7 +44,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 HINSTANCE hInst;
-DWORD mshtml_tls = 0;
+DWORD mshtml_tls = TLS_OUT_OF_INDEXES;
 
 static HINSTANCE shdoclc = NULL;
 
@@ -69,7 +69,7 @@ static void process_detach(void)
 
     if(shdoclc)
         FreeLibrary(shdoclc);
-    if(mshtml_tls)
+    if(mshtml_tls != TLS_OUT_OF_INDEXES)
         TlsFree(mshtml_tls);
 }
 
