@@ -34,26 +34,35 @@ char CURR_DIR[MAX_PATH];
 
 static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
 
-static void get_user_sid(LPSTR *usersid)
+static LPSTR get_user_sid(LPSTR *usersid)
 {
     HANDLE token;
     BYTE buf[1024];
     DWORD size;
     PTOKEN_USER user;
-    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+    static HMODULE hadvapi32 = NULL;
     static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 
     *usersid = NULL;
-    pConvertSidToStringSidA = (void *)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
-    if (!pConvertSidToStringSidA)
-        return;
+    if (!hadvapi32)
+    {
+        hadvapi32 = GetModuleHandleA("advapi32.dll");
+        pConvertSidToStringSidA = (void *)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
+        if (!pConvertSidToStringSidA)
+        {
+            win_skip("ConvertSidToStringSidA is not available\n");
+            return NULL;
+        }
+    }
 
     OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
     size = sizeof(buf);
     GetTokenInformation(token, TokenUser, buf, size, &size);
     user = (PTOKEN_USER)buf;
     pConvertSidToStringSidA(user->User.Sid, usersid);
+    ok(*usersid != NULL, "pConvertSidToStringSidA failed lre=%d\n", GetLastError());
     CloseHandle(token);
+    return *usersid;
 }
 
 /* RegDeleteTreeW from dlls/advapi32/registry.c */
@@ -7336,12 +7345,8 @@ static void test_appsearch_complocator(void)
     DWORD size;
     UINT r;
 
-    get_user_sid(&usersid);
-    if (!usersid)
-    {
-        skip("ConvertSidToStringSidA is not available\n");
+    if (!get_user_sid(&usersid))
         return;
-    }
 
     create_test_file("FileName1");
     create_test_file("FileName4");
