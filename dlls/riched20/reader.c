@@ -226,10 +226,6 @@ void RTFInit(RTF_Info *info)
 		info->rtfTextBuf[0] = info->pushedTextBuf[0] = '\0';
 	}
 
-	heap_free (info->inputName);
-	heap_free (info->outputName);
-	info->inputName = info->outputName = NULL;
-
 	for (i = 0; i < rtfMaxClass; i++)
 		RTFSetClassCallback (info, i, NULL);
 	for (i = 0; i < rtfMaxDestination; i++)
@@ -276,39 +272,6 @@ void RTFInit(RTF_Info *info)
         info->canInheritInTbl = FALSE;
         info->borderType = 0;
 }
-
-/*
- * Set or get the input or output file name.  These are never guaranteed
- * to be accurate, only insofar as the calling program makes them so.
- */
-
-void RTFSetInputName(RTF_Info *info, const char *name)
-{
-	info->inputName = RTFStrSave (name);
-	if (info->inputName == NULL)
-		ERR ("RTFSetInputName: out of memory\n");
-}
-
-
-char *RTFGetInputName(const RTF_Info *info)
-{
-	return (info->inputName);
-}
-
-
-void RTFSetOutputName(RTF_Info *info, const char *name)
-{
-	info->outputName = RTFStrSave (name);
-	if (info->outputName == NULL)
-		ERR ("RTFSetOutputName: out of memory\n");
-}
-
-
-char *RTFGetOutputName(const RTF_Info *info)
-{
-	return (info->outputName);
-}
-
 
 /*
  * Install or return a writer callback for a destination type
