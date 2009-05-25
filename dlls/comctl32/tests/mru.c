@@ -430,9 +430,9 @@ static void test_CreateMRUListLazyA(void)
     HKEY hKey;
     CREATEMRULISTA listA = { 0 };
 
-    if (!pCreateMRUListLazyA)
+    if (!pCreateMRUListLazyA || !pFreeMRUList)
     {
-        win_skip("CreateMRUListLazyA entry point 157 not found\n");
+        win_skip("CreateMRUListLazyA or FreeMRUList entry points not found\n");
         return;
     }
 
@@ -455,7 +455,9 @@ static void test_CreateMRUListLazyA(void)
     listA.hKey = hKey;
     listA.lpszSubKey = NULL;
     hMRU = pCreateMRUListLazyA(&listA, 0, 0, 0);
-    ok(hMRU == NULL, "Expected NULL handle, got %p\n", hMRU);
+    ok(hMRU == NULL || broken(hMRU != NULL), /* Win9x */
+       "Expected NULL handle, got %p\n", hMRU);
+    if (hMRU) pFreeMRUList(hMRU);
 }
 
 static void test_EnumMRUList(void)
