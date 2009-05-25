@@ -2475,11 +2475,9 @@ static void test_getviewrect(void)
     r = SendMessage(hwnd, LVM_GETVIEWRECT, 0, (LPARAM)&rect);
     expect(TRUE, r);
     /* left is set to (2e31-1) - XP SP2 */
-todo_wine {
     expect(0, rect.right);
     expect(0, rect.top);
     expect(0, rect.bottom);
-}
 
     /* switch to LVS_ICON */
     SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~LVS_REPORT);

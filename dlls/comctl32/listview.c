@@ -2372,6 +2372,7 @@ static BOOL LISTVIEW_Arrange(LISTVIEW_INFO *infoPtr, INT nAlignCode)
 /***
  * DESCRIPTION:
  * Retrieves the bounding rectangle of all the items, not offset by Origin.
+ * For LVS_REPORT always returns empty rectangle.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
@@ -2412,11 +2413,6 @@ static void LISTVIEW_GetAreaRect(const LISTVIEW_INFO *infoPtr, LPRECT lprcView)
 	lprcView->right = x * infoPtr->nItemWidth;
 	lprcView->bottom = y * infoPtr->nItemHeight;
 	break;
-	
-    case LVS_REPORT:	    
-    	lprcView->right = infoPtr->nItemWidth;
-	lprcView->bottom = infoPtr->nItemCount * infoPtr->nItemHeight;
-	break;
     }
 }
 
@@ -2439,10 +2435,14 @@ static BOOL LISTVIEW_GetViewRect(const LISTVIEW_INFO *infoPtr, LPRECT lprcView)
     TRACE("(lprcView=%p)\n", lprcView);
 
     if (!lprcView) return FALSE;
- 
-    LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
-    LISTVIEW_GetAreaRect(infoPtr, lprcView); 
-    OffsetRect(lprcView, ptOrigin.x, ptOrigin.y); 
+
+    LISTVIEW_GetAreaRect(infoPtr, lprcView);
+
+    if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT)
+    {
+        LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
+        OffsetRect(lprcView, ptOrigin.x, ptOrigin.y);
+    }
 
     TRACE("lprcView=%s\n", wine_dbgstr_rect(lprcView));
 
