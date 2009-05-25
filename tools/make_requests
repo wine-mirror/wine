@@ -1,7 +1,7 @@
 #! /usr/bin/perl -w
 #
 # Build the server/trace.c and server/request.h files
-# from the contents of include/wine/server.h.
+# from the contents of server/protocol.def.
 #
 # Copyright (C) 1998 Alexandre Julliard
 #
