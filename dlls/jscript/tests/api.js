@@ -692,6 +692,33 @@ ok(isNaN(tmp), "Math.asin(Infinity) is not NaN");
 tmp = Math.asin(-Infinity);
 ok(isNaN(tmp), "Math.asin(-Infinity) is not NaN");
 
+tmp = Math.atan(0);
+ok(Math.floor(tmp*100) === 0, "Math.atan(0) = " + tmp);
+
+tmp = Math.atan(1);
+ok(Math.floor(tmp*100) === 78, "Math.atan(1) = " + tmp);
+
+tmp = Math.atan(-1);
+ok(Math.floor(tmp*100) === -79, "Math.atan(-1) = " + tmp);
+
+tmp = Math.atan(true);
+ok(Math.floor(tmp*100) === 78, "Math.atan(true) = " + tmp);
+
+tmp = Math.atan(false);
+ok(Math.floor(tmp*100) === 0, "Math.atan(false) = " + tmp);
+
+tmp = Math.atan();
+ok(isNaN(tmp), "Math.atan() is not NaN");
+
+tmp = Math.atan(NaN);
+ok(isNaN(tmp), "Math.atan(NaN) is not NaN");
+
+tmp = Math.atan(Infinity);
+ok(Math.floor(tmp*100) === 157, "Math.atan(Infinity) = " + tmp);
+
+tmp = Math.atan(-Infinity);
+ok(Math.floor(tmp*100) === -158, "Math.atan(Infinity) = " + tmp);
+
 var func = function  (a) {
         var a = 1;
         if(a) return;
