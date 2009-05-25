@@ -69,10 +69,26 @@ static HANDLE (WINAPI *pCreateMRUListA)(LPCREATEMRULISTA);
 static void   (WINAPI *pFreeMRUList)(HANDLE);
 static INT    (WINAPI *pAddMRUStringA)(HANDLE,LPCSTR);
 static INT    (WINAPI *pEnumMRUList)(HANDLE,INT,LPVOID,DWORD);
+static INT    (WINAPI *pEnumMRUListW)(HANDLE,INT,LPVOID,DWORD);
+static HANDLE (WINAPI *pCreateMRUListLazyA)(LPCREATEMRULISTA, DWORD, DWORD, DWORD);
+static INT    (WINAPI *pFindMRUData)(HANDLE, LPCVOID, DWORD, LPINT);
+static INT    (WINAPI *pAddMRUData)(HANDLE, LPCVOID, DWORD);
 /*
 static INT    (WINAPI *pFindMRUStringA)(HANDLE,LPCSTR,LPINT);
 */
 
+
+static void InitPointers(void)
+{
+    pCreateMRUListA = (void*)GetProcAddress(hComctl32,(LPCSTR)151);
+    pFreeMRUList    = (void*)GetProcAddress(hComctl32,(LPCSTR)152);
+    pAddMRUStringA  = (void*)GetProcAddress(hComctl32,(LPCSTR)153);
+    pEnumMRUList    = (void*)GetProcAddress(hComctl32,(LPCSTR)154);
+    pCreateMRUListLazyA = (void*)GetProcAddress(hComctl32,(LPCSTR)157);
+    pAddMRUData     = (void*)GetProcAddress(hComctl32,(LPCSTR)167);
+    pFindMRUData    = (void*)GetProcAddress(hComctl32,(LPCSTR)169);
+    pEnumMRUListW   = (void*)GetProcAddress(hComctl32,(LPCSTR)403);
+}
 
 /* Based on RegDeleteTreeW from dlls/advapi32/registry.c */
 static LSTATUS mru_RegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
@@ -226,11 +242,6 @@ static void test_MRUListA(void)
     HANDLE hMRU;
     HKEY hKey;
     INT iRet;
-
-    pCreateMRUListA = (void*)GetProcAddress(hComctl32,(LPCSTR)151);
-    pFreeMRUList = (void*)GetProcAddress(hComctl32,(LPCSTR)152);
-    pAddMRUStringA = (void*)GetProcAddress(hComctl32,(LPCSTR)153);
-    pEnumMRUList = (void*)GetProcAddress(hComctl32,(LPCSTR)154);
 
     if (!pCreateMRUListA || !pFreeMRUList || !pAddMRUStringA || !pEnumMRUList)
     {
@@ -413,6 +424,89 @@ static void test_MRUListA(void)
     /* FreeMRUList(NULL) crashes on Win98 OSR0 */
 }
 
+static void test_CreateMRUListLazyA(void)
+{
+    HANDLE hMRU;
+    HKEY hKey;
+    CREATEMRULISTA listA = { 0 };
+
+    if (!pCreateMRUListLazyA)
+    {
+        win_skip("CreateMRUListLazyA entry point 157 not found\n");
+        return;
+    }
+
+    /* wrong size */
+    listA.cbSize = sizeof(listA) + 1;
+    hMRU = pCreateMRUListLazyA(&listA, 0, 0, 0);
+    ok(hMRU == NULL, "Expected NULL handle, got %p\n", hMRU);
+    listA.cbSize = 4;
+    hMRU = pCreateMRUListLazyA(&listA, 0, 0, 0);
+    ok(hMRU == NULL, "Expected NULL handle, got %p\n", hMRU);
+    /* NULL hKey */
+    listA.cbSize = sizeof(listA);
+    listA.hKey = NULL;
+    hMRU = pCreateMRUListLazyA(&listA, 0, 0, 0);
+    ok(hMRU == NULL, "Expected NULL handle, got %p\n", hMRU);
+    /* NULL subkey */
+    ok(!RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEYA, &hKey),
+       "Couldn't create test key \"%s\"\n", REG_TEST_KEYA);
+    listA.cbSize = sizeof(listA);
+    listA.hKey = hKey;
+    listA.lpszSubKey = NULL;
+    hMRU = pCreateMRUListLazyA(&listA, 0, 0, 0);
+    ok(hMRU == NULL, "Expected NULL handle, got %p\n", hMRU);
+}
+
+static void test_EnumMRUList(void)
+{
+    if (!pEnumMRUList || !pEnumMRUListW)
+    {
+        win_skip("EnumMRUListA/EnumMRUListW entry point not found\n");
+        return;
+    }
+
+    /* NULL handle */
+    if (0)
+    {
+        INT iRet;
+
+        /* crashes on NT4, passed on Win2k, XP, 2k3, Vista, 2k8 */
+        iRet = pEnumMRUList(NULL, 0, NULL, 0);
+        iRet = pEnumMRUListW(NULL, 0, NULL, 0);
+    }
+}
+
+static void test_FindMRUData(void)
+{
+    INT iRet;
+
+    if (!pFindMRUData)
+    {
+        win_skip("FindMRUData entry point not found\n");
+        return;
+    }
+
+    /* NULL handle */
+    iRet = pFindMRUData(NULL, NULL, 0, NULL);
+    ok(iRet == -1, "FindMRUData expected -1, got %d\n", iRet);
+}
+
+static void test_AddMRUData(void)
+{
+    INT iRet;
+
+    if (!pAddMRUData)
+    {
+        win_skip("AddMRUData entry point not found\n");
+        return;
+    }
+
+    /* NULL handle */
+    iRet = pFindMRUData(NULL, NULL, 0, NULL);
+    ok(iRet == -1, "AddMRUData expected -1, got %d\n", iRet);
+}
+
 START_TEST(mru)
 {
     hComctl32 = GetModuleHandleA("comctl32.dll");
@@ -421,7 +515,13 @@ START_TEST(mru)
     if (!create_reg_entries())
         return;
 
+    InitPointers();
+
     test_MRUListA();
+    test_CreateMRUListLazyA();
+    test_EnumMRUList();
+    test_FindMRUData();
+    test_AddMRUData();
 
     delete_reg_entries();
 }
