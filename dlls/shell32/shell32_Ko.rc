@@ -233,8 +233,8 @@ IDS_DELETESELECTED_TEXT "당신은 선택된 아이템(들)을 지우기를 바랍니까?"
 IDS_TRASHITEM_TEXT "당신은 '%1' 을(를) 휴지통으로 보내기를 바랍니까?"
 IDS_TRASHFOLDER_TEXT "당신은 '%1' 과 그 안의 내용을 휴지통으로 보내기를 바랍니까?"
 IDS_TRASHMULTIPLE_TEXT "당신은 '%1' 들을(를) 휴지통으로 보내기를 바랍니까?"
-IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+IDS_CANTTRASH_TEXT "이 아이템'%1'을 휴지통으로 보낼 수 없습니다. 대신 지우겠습니까?"
+IDS_OVERWRITEFILE_TEXT "이 폴더는 이미 '%1' 파일을 가지고 있습니다.\n\n바꾸겠습니까?"
 IDS_OVERWRITEFILE_CAPTION "파일 덮어쓰기 확인"
 IDS_OVERWRITEFOLDER_TEXT "  이 폴더는 이미 '%1'이란 이름을 가진 폴더를 포함하고 있습니다.\n\n"\
      "만약 당신이 같은 이름으로 대상 폴더를 지정한다면 선택된 폴더는 대체될 것입니다\n"\
@@ -287,6 +287,8 @@ IDS_NEWFOLDER		"새 폴더"
 IDS_CPANEL_TITLE            "Wine 제어판"
 IDS_CPANEL_NAME             "이름"
 IDS_CPANEL_DESCRIPTION      "설명"
+IDS_SHLEXEC_NOASSOC         "이 형식의 파일을 도록 구성된 윈도우 프로그램이 없습니다."
+
 }
 
 STRINGTABLE
