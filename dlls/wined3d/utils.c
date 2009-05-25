@@ -911,9 +911,12 @@ const char* debug_d3ddevicetype(WINED3DDEVTYPE devtype) {
   }
 }
 
-const char* debug_d3dusage(DWORD usage) {
-  switch (usage & WINED3DUSAGE_MASK) {
-#define WINED3DUSAGE_TO_STR(u) case u: return #u
+const char *debug_d3dusage(DWORD usage)
+{
+    char buf[284];
+
+    buf[0] = '\0';
+#define WINED3DUSAGE_TO_STR(u) if (usage & u) { strcat(buf, " | "#u); usage &= ~u; }
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_RENDERTARGET);
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_DEPTHSTENCIL);
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_WRITEONLY);
@@ -926,11 +929,9 @@ const char* debug_d3dusage(DWORD usage) {
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_AUTOGENMIPMAP);
     WINED3DUSAGE_TO_STR(WINED3DUSAGE_DMAP);
 #undef WINED3DUSAGE_TO_STR
-  case 0: return "none";
-  default:
-    FIXME("Unrecognized %u Usage!\n", usage);
-    return "unrecognized";
-  }
+    if (usage) FIXME("Unrecognized usage flag(s) %#x\n", usage);
+
+    return buf[0] ? wine_dbg_sprintf("%s", &buf[3]) : "0";
 }
 
 const char* debug_d3dusagequery(DWORD usagequery) {
