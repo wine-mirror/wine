@@ -719,6 +719,54 @@ ok(Math.floor(tmp*100) === 157, "Math.atan(Infinity) = " + tmp);
 tmp = Math.atan(-Infinity);
 ok(Math.floor(tmp*100) === -158, "Math.atan(Infinity) = " + tmp);
 
+tmp = Math.atan2(0, 0);
+ok(Math.floor(tmp*100) === 0, "Math.atan2(0, 0) = " + tmp);
+
+tmp = Math.atan2(0, 1);
+ok(Math.floor(tmp*100) === 0, "Math.atan2(0, 1) = " + tmp);
+
+tmp = Math.atan2(0, Infinity);
+ok(Math.floor(tmp*100) === 0, "Math.atan2(0, Infinity) = " + tmp);
+
+tmp = Math.atan2(0, -1);
+ok(Math.floor(tmp*100) === 314, "Math.atan2(0, -1) = " + tmp);
+
+tmp = Math.atan2(0, -Infinity);
+ok(Math.floor(tmp*100) === 314, "Math.atan2(0, -Infinity) = " + tmp);
+
+tmp = Math.atan2(1, 0);
+ok(Math.floor(tmp*100) === 157, "Math.atan2(1, 0) = " + tmp);
+
+tmp = Math.atan2(Infinity, 0);
+ok(Math.floor(tmp*100) === 157, "Math.atan2(Infinity, 0) = " + tmp);
+
+tmp = Math.atan2(-1, 0);
+ok(Math.floor(tmp*100) === -158, "Math.atan2(-1, 0) = " + tmp);
+
+tmp = Math.atan2(-Infinity, 0);
+ok(Math.floor(tmp*100) === -158, "Math.atan2(-Infinity, 0) = " + tmp);
+
+tmp = Math.atan2(1, 1);
+ok(Math.floor(tmp*100) === 78, "Math.atan2(1, 1) = " + tmp);
+
+tmp = Math.atan2(-1, -1);
+ok(Math.floor(tmp*100) === -236, "Math.atan2(-1, -1) = " + tmp);
+
+tmp = Math.atan2(-1, 1);
+ok(Math.floor(tmp*100) === -79, "Math.atan2(-1, 1) = " + tmp);
+
+tmp = Math.atan2(Infinity, Infinity);
+ok(Math.floor(tmp*100) === 78, "Math.atan2(Infinity, Infinity) = " + tmp);
+
+tmp = Math.atan2(Infinity, -Infinity, 1);
+ok(Math.floor(tmp*100) === 235, "Math.atan2(Infinity, -Infinity, 1) = " + tmp);
+
+tmp = Math.atan2();
+ok(isNaN(tmp), "Math.atan2() is not NaN");
+
+tmp = Math.atan2(1);
+ok(isNaN(tmp), "Math.atan2(1) is not NaN");
+
 var func = function  (a) {
         var a = 1;
         if(a) return;
