@@ -619,7 +619,11 @@ static int schan_init_sec_ctx_get_next_buffer(const struct schan_transport *t, s
                 idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_EMPTY);
                 if (idx != -1) s->desc->pBuffers[idx].BufferType = SECBUFFER_TOKEN;
             }
-            if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer) s->allow_buffer_resize = TRUE;
+            if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer)
+            {
+                s->desc->pBuffers[idx].cbBuffer = 0;
+                s->allow_buffer_resize = TRUE;
+            }
         }
         return idx;
     }
