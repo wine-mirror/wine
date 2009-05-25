@@ -285,6 +285,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "선택된 키의 이름을 클립보드에 복사"
     ID_EDIT_FIND            "키,값이나 데이타에서 텍스트 문자열 찾기"
     ID_EDIT_FINDNEXT        "이전 찾기에서 지정된 문자열로 다시 찾기"
+    ID_EDIT_EXPORT          "레지스트리의 선택된 부분을 텍스트 파일로 내보내기"
 END
 
 STRINGTABLE DISCARDABLE
@@ -296,7 +297,7 @@ BEGIN
     IDS_TOO_BIG_VALUE       "값이 너무 큽니다 (%u)"
     IDS_DELETE_BOX_TITLE    "값 지우기 확인"
     IDS_DELETE_BOX_TEXT     "당신은 이 값 '%s'을 정말로 지우겠습니까?"
-    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "이 값들을 정말로 지우겠습니까?"
     IDS_NEWKEY              "새 키 #%d"
     IDS_NEWVALUE            "새 값 #%d"
     IDS_NOTFOUND            "'%s'을 찾을 수 없습니다"
