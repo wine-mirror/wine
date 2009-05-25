@@ -185,6 +185,17 @@ static const struct message single_getdispinfo_parent_seq[] = {
     { 0 }
 };
 
+static const struct message getitemposition_seq1[] = {
+    { LVM_GETITEMPOSITION, sent|id, 0, 0, LISTVIEW_ID },
+    { 0 }
+};
+
+static const struct message getitemposition_seq2[] = {
+    { LVM_GETITEMPOSITION, sent|id, 0, 0, LISTVIEW_ID },
+    { HDM_GETITEMRECT, sent|id, 0, 0, HEADER_ID },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -2493,6 +2504,66 @@ static void test_getviewrect(void)
     DestroyWindow(hwnd);
 }
 
+static void test_getitemposition(void)
+{
+    HWND hwnd, header;
+    DWORD r;
+    POINT pt;
+    RECT rect;
+
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    header = subclass_header(hwnd);
+
+    /* LVS_REPORT, single item, no columns added */
+    insert_item(hwnd, 0);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    pt.x = pt.y = -1;
+    r = SendMessage(hwnd, LVM_GETITEMPOSITION, 0, (LPARAM)&pt);
+    expect(TRUE, r);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, getitemposition_seq1, "get item position 1", FALSE);
+
+    /* LVS_REPORT, single item, single column */
+    insert_column(hwnd, 0);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    pt.x = pt.y = -1;
+    r = SendMessage(hwnd, LVM_GETITEMPOSITION, 0, (LPARAM)&pt);
+    expect(TRUE, r);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, getitemposition_seq2, "get item position 2", TRUE);
+
+    memset(&rect, 0, sizeof(rect));
+    SendMessage(header, HDM_GETITEMRECT, 0, (LPARAM)&rect);
+    /* some padding? */
+    todo_wine expect(2, pt.x);
+    /* offset by header height */
+    expect(rect.bottom - rect.top, pt.y);
+
+    DestroyWindow(hwnd);
+}
+
+static void test_columnscreation(void)
+{
+    HWND hwnd, header;
+    DWORD r;
+
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    insert_item(hwnd, 0);
+
+    /* headers columns aren't created automatically */
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "Expected header handle\n");
+    r = SendMessage(header, HDM_GETITEMCOUNT, 0, 0);
+    expect(0, r);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -2538,6 +2609,8 @@ START_TEST(listview)
     test_setredraw();
     test_hittest();
     test_getviewrect();
+    test_getitemposition();
+    test_columnscreation();
 
     DestroyWindow(hwndparent);
 }
