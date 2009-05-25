@@ -659,6 +659,39 @@ ok(isNaN(tmp), "Math.acos(Infinity) is not NaN");
 tmp = Math.acos(-Infinity);
 ok(isNaN(tmp), "Math.acos(-Infinity) is not NaN");
 
+tmp = Math.asin(0);
+ok(Math.floor(tmp*100) === 0, "Math.asin(0) = " + tmp);
+
+tmp = Math.asin(1);
+ok(Math.floor(tmp*100) === 157, "Math.asin(1) = " + tmp);
+
+tmp = Math.asin(-1);
+ok(Math.floor(tmp*100) === -158, "Math.asin(-1) = " + tmp);
+
+tmp = Math.asin(Math.PI/4, 2);
+ok(Math.floor(tmp*100) === 90, "Math.asin(Math.PI/4, 2) = " + tmp);
+
+tmp = Math.asin(true);
+ok(Math.floor(tmp*100) === 157, "Math.asin(true) = " + tmp);
+
+tmp = Math.asin(false);
+ok(Math.floor(tmp*100) === 0, "Math.asin(false) = " + tmp);
+
+tmp = Math.asin(1.1);
+ok(isNaN(tmp), "Math.asin(1.1) is not NaN");
+
+tmp = Math.asin();
+ok(isNaN(tmp), "Math.asin() is not NaN");
+
+tmp = Math.asin(NaN);
+ok(isNaN(tmp), "Math.asin(NaN) is not NaN");
+
+tmp = Math.asin(Infinity);
+ok(isNaN(tmp), "Math.asin(Infinity) is not NaN");
+
+tmp = Math.asin(-Infinity);
+ok(isNaN(tmp), "Math.asin(-Infinity) is not NaN");
+
 var func = function  (a) {
         var a = 1;
         if(a) return;
