@@ -1326,7 +1326,9 @@ static void test_dump_typelib(const char *name)
             expect_int(desc->callconv, fn_info->callconv);
             expect_int(desc->cParams, fn_info->cParams);
             expect_int(desc->cParamsOpt, fn_info->cParamsOpt);
-            expect_int(desc->oVft, fn_info->vtbl_index * sizeof(void*));
+            ok( desc->oVft == fn_info->vtbl_index * sizeof(void*) ||
+                broken(desc->oVft == fn_info->vtbl_index * 4), /* xp64 */
+                "desc->oVft got %u\n", desc->oVft );
             expect_int(desc->cScodes, fn_info->cScodes);
             expect_int(desc->wFuncFlags, fn_info->wFuncFlags);
             ole_check(ITypeInfo_GetNames(typeinfo, desc->memid, namesTab, 256, &cNames));
