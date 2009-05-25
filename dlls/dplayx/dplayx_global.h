@@ -51,8 +51,6 @@ BOOL DPLAYX_AnyLobbiesWaitingForConnSettings(void);
 BOOL DPLAYX_SetLobbyHandles( DWORD dwAppID,
                              HANDLE hStart, HANDLE hDeath, HANDLE hConnRead );
 
-void DPLAYX_SetLocalSession( LPCDPSESSIONDESC2 lpsd );
-
 BOOL DPLAYX_SetLobbyMsgThreadId( DWORD dwAppId, DWORD dwThreadId );
 
 

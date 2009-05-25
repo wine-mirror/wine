@@ -74,10 +74,6 @@ static DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData );
  */
 void NS_SetLocalComputerAsNameServer( LPCDPSESSIONDESC2 lpsd, LPVOID lpNSInfo )
 {
-#if 0
-  /* FIXME: Remove this method? */
-  DPLAYX_SetLocalSession( lpsd );
-#endif
   lpNSCache lpCache = (lpNSCache)lpNSInfo;
 
   lpCache->bNsIsLocal = TRUE;

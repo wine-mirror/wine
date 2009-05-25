@@ -995,49 +995,6 @@ HRESULT DPLAYX_SetConnectionSettingsW
   return DP_OK;
 }
 
-
-
-/* Copy an ANSI session desc structure to the given buffer */
-static BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
-                                   LPCDPSESSIONDESC2 lpSessionSrc )
-{
-  CopyMemory( lpSessionDest, lpSessionSrc, sizeof( *lpSessionSrc ) );
-
-  if( lpSessionSrc->u1.lpszSessionNameA )
-  {
-      if ((lpSessionDest->u1.lpszSessionNameA = HeapAlloc( GetProcessHeap(), 0,
-                                                             strlen(lpSessionSrc->u1.lpszSessionNameA)+1 )))
-          strcpy( lpSessionDest->u1.lpszSessionNameA, lpSessionSrc->u1.lpszSessionNameA );
-  }
-  if( lpSessionSrc->u2.lpszPasswordA )
-  {
-      if ((lpSessionDest->u2.lpszPasswordA = HeapAlloc( GetProcessHeap(), 0,
-                                                          strlen(lpSessionSrc->u2.lpszPasswordA)+1 )))
-          strcpy( lpSessionDest->u2.lpszPasswordA, lpSessionSrc->u2.lpszPasswordA );
-  }
-
-  return TRUE;
-}
-
-void DPLAYX_SetLocalSession( LPCDPSESSIONDESC2 lpsd )
-{
-  UINT i;
-
-  /* FIXME: Is this an error if it exists already? */
-
-  /* Crude/wrong implementation for now. Just always add to first empty spot */
-  for( i=0; i < numSupportedSessions; i++ )
-  {
-    /* Is this one empty? */
-    if( sessionData[i].dwSize == 0 )
-    {
-      DPLAYX_CopyIntoSessionDesc2A( &sessionData[i], lpsd );
-      break;
-    }
-  }
-
-}
-
 BOOL DPLAYX_WaitForConnectionSettings( BOOL bWait )
 {
   LPDPLAYX_LOBBYDATA lpLobbyData;
