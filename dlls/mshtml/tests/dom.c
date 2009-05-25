@@ -2927,7 +2927,9 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_posWidth(style, &f);
     ok(hres == S_OK, "get_posWidth failed: %08x\n", hres);
-    ok(f == 2.0f, "f = %f\n", f);
+    ok(f == 2.0f ||
+       f == 2.2f, /* IE8 */
+       "f = %f\n", f);
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("auto");
@@ -2992,14 +2994,18 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_posLeft(style, &f);
     ok(hres == S_OK, "get_posLeft failed: %08x\n", hres);
-    ok(f == 4.0, "expected 4.0 got %f\n", f);
+    ok(f == 4.0 ||
+       f == 4.9f, /* IE8 */
+       "expected 4.0 or 4.9 (IE8) got %f\n", f);
 
     /* Ensure left is updated correctly. */
     V_VT(&v) = VT_EMPTY;
     hres = IHTMLStyle_get_left(style, &v);
     ok(hres == S_OK, "get_left failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v)=%d\n", V_VT(&v));
-    ok(!strcmp_wa(V_BSTR(&v), "4px"), "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
+    ok(!strcmp_wa(V_BSTR(&v), "4px") ||
+       !strcmp_wa(V_BSTR(&v), "4.9px"), /* IE8 */
+       "V_BSTR(v) = %s\n", dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
     /* Test left */
@@ -3052,7 +3058,9 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_posTop(style, &f);
     ok(hres == S_OK, "get_posTop failed: %08x\n", hres);
-    ok(f == 4.0, "expected 4.0 got %f\n", f);
+    ok(f == 4.0 ||
+       f == 4.9f, /* IE8 */
+       "expected 4.0 or 4.9 (IE8) got %f\n", f);
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("3px");
@@ -3103,7 +3111,9 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_posHeight(style, &f);
     ok(hres == S_OK, "get_posHeight failed: %08x\n", hres);
-    ok(f == 4.0, "expected 4.0 got %f\n", f);
+    ok(f == 4.0 ||
+       f == 4.9f, /* IE8 */
+       "expected 4.0 or 4.9 (IE8) got %f\n", f);
 
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = a2bstr("64px");
