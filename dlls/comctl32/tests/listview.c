@@ -2444,6 +2444,57 @@ static void test_hittest(void)
     DestroyWindow(hwnd);
 }
 
+static void test_getviewrect(void)
+{
+    HWND hwnd;
+    DWORD r;
+    RECT rect;
+    LVITEMA item;
+
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    /* empty */
+    r = SendMessage(hwnd, LVM_GETVIEWRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+
+    insert_column(hwnd, 0);
+    insert_column(hwnd, 1);
+
+    memset(&item, 0, sizeof(item));
+    item.iItem = 0;
+    item.iSubItem = 0;
+    SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+
+    r = SendMessage(hwnd, LVM_SETCOLUMNWIDTH, 0, MAKELPARAM(100, 0));
+    expect(TRUE, r);
+    r = SendMessage(hwnd, LVM_SETCOLUMNWIDTH, 1, MAKELPARAM(120, 0));
+    expect(TRUE, r);
+
+    rect.left = rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETVIEWRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* left is set to (2e31-1) - XP SP2 */
+todo_wine {
+    expect(0, rect.right);
+    expect(0, rect.top);
+    expect(0, rect.bottom);
+}
+
+    /* switch to LVS_ICON */
+    SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~LVS_REPORT);
+
+    rect.left = rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETVIEWRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    expect(0, rect.left);
+    todo_wine expect(104, rect.right);
+    expect(0, rect.top);
+    expect(73, rect.bottom);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -2488,6 +2539,7 @@ START_TEST(listview)
     test_nosortheader();
     test_setredraw();
     test_hittest();
+    test_getviewrect();
 
     DestroyWindow(hwndparent);
 }
