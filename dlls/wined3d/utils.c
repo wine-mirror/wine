@@ -934,9 +934,12 @@ const char *debug_d3dusage(DWORD usage)
     return buf[0] ? wine_dbg_sprintf("%s", &buf[3]) : "0";
 }
 
-const char* debug_d3dusagequery(DWORD usagequery) {
-  switch (usagequery & WINED3DUSAGE_QUERY_MASK) {
-#define WINED3DUSAGEQUERY_TO_STR(u) case u: return #u
+const char *debug_d3dusagequery(DWORD usagequery)
+{
+    char buf[238];
+
+    buf[0] = '\0';
+#define WINED3DUSAGEQUERY_TO_STR(u) if (usagequery & u) { strcat(buf, " | "#u); usagequery &= ~u; }
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_FILTER);
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_LEGACYBUMPMAP);
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING);
@@ -945,11 +948,9 @@ const char* debug_d3dusagequery(DWORD usagequery) {
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_VERTEXTEXTURE);
     WINED3DUSAGEQUERY_TO_STR(WINED3DUSAGE_QUERY_WRAPANDMIP);
 #undef WINED3DUSAGEQUERY_TO_STR
-  case 0: return "none";
-  default:
-    FIXME("Unrecognized %u Usage Query!\n", usagequery);
-    return "unrecognized";
-  }
+    if (usagequery) FIXME("Unrecognized usage query flag(s) %#x\n", usagequery);
+
+    return buf[0] ? wine_dbg_sprintf("%s", &buf[3]) : "0";
 }
 
 const char* debug_d3ddeclmethod(WINED3DDECLMETHOD method) {
