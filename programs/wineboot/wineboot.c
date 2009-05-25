@@ -668,18 +668,22 @@ static void update_wineprefix( int force )
 
     const char *config_dir = wine_get_config_dir();
     char *inf_path = get_wine_inf_path();
+    int fd;
     struct stat st;
 
     if (!inf_path)
     {
-        WINE_WARN( "cannot find path to wine.inf file\n" );
+        WINE_MESSAGE( "wine: failed to update %s, wine.inf not found\n", config_dir );
         return;
     }
-    if (stat( inf_path, &st ) == -1)
+    if ((fd = open( inf_path, O_RDONLY )) == -1)
     {
-        WINE_WARN( "cannot stat wine.inf file: %s\n", strerror(errno) );
+        WINE_MESSAGE( "wine: failed to update %s with %s: %s\n",
+                      config_dir, inf_path, strerror(errno) );
         goto done;
     }
+    fstat( fd, &st );
+    close( fd );
 
     if (update_timestamp( config_dir, st.st_mtime ) || force)
     {
