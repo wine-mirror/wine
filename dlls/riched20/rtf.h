@@ -1191,19 +1191,16 @@ void	        RTFDestroy(RTF_Info *info);
 void		RTFSetDestinationCallback (RTF_Info *, int, RTFFuncPtr);
 void		RTFRead (RTF_Info *);
 int		RTFGetToken (RTF_Info *);	/* writer should rarely need this */
-int		RTFPeekToken (RTF_Info *);
 void		RTFSetReadHook (RTF_Info *, RTFFuncPtr);
 void		RTFRouteToken (RTF_Info *);
 void		RTFSkipGroup (RTF_Info *);
 void		RTFReadGroup (RTF_Info *);
-void		RTFExpandStyle (RTF_Info *, int);
 int		RTFCheckCM (const RTF_Info *, int, int);
 int		RTFCheckCMM (const RTF_Info *, int, int, int);
 int		RTFCheckMM (const RTF_Info *, int, int);
 RTFFont		*RTFGetFont (const RTF_Info *, int);
 RTFColor	*RTFGetColor (const RTF_Info *, int);
 int		RTFCharToHex ( char);
-int		RTFHexToChar ( int );
 
 void	RTFFlushOutputBuffer( RTF_Info *info );
 void	RTFSetEditStream(RTF_Info *info, ME_InStream *stream);
