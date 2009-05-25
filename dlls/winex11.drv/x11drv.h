@@ -226,6 +226,7 @@ extern int CDECL X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 					PIXELFORMATDESCRIPTOR *ppfd);
 extern int CDECL X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev);
 extern BOOL CDECL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev);
+extern void X11DRV_OpenGL_Cleanup(void);
 
 /* X11 driver internal functions */
 
