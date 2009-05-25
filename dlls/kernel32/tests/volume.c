@@ -67,7 +67,7 @@ static void test_query_dos_deviceA(void)
     }
 
     for (;drivestr[0] <= 'z'; drivestr[0]++) {
-        /* Older W2K fails with ERROR_INSUFFICIENT_BUFFER when buflen is > 32767 big */
+        /* Older W2K fails with ERROR_INSUFFICIENT_BUFFER when buflen is > 32767 */
         ret = QueryDosDeviceA( drivestr, buffer, buflen - 1);
         if(ret) {
             for (p = buffer; *p; p++) *p = toupper(*p);
