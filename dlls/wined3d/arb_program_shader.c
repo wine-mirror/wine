@@ -2047,29 +2047,45 @@ static GLuint create_arb_blt_fragment_program(const WineD3D_GL_Info *gl_info, en
 }
 
 static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcolor, const char *tmp1,
-                                      const char *tmp2, const char *tmp3, const char *tmp4) {
+                                      const char *tmp2, const char *tmp3, const char *tmp4, BOOL condcode) {
     /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
 
-    /* Calculate the > 0.0031308 case */
-    shader_addline(buffer, "POW %s.x, %s.x, srgb_consts1.z;\n", tmp1, fragcolor);
-    shader_addline(buffer, "POW %s.y, %s.y, srgb_consts1.z;\n", tmp1, fragcolor);
-    shader_addline(buffer, "POW %s.z, %s.z, srgb_consts1.z;\n", tmp1, fragcolor);
-    shader_addline(buffer, "MUL %s, %s, srgb_consts1.w;\n", tmp1, tmp1);
-    shader_addline(buffer, "SUB %s, %s, srgb_consts2.x;\n", tmp1, tmp1);
-    /* Calculate the < case */
-    shader_addline(buffer, "MUL %s, srgb_consts1.x, %s;\n", tmp2, fragcolor);
-    /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
-    shader_addline(buffer, "SLT %s, srgb_consts1.y, %s;\n", tmp3, fragcolor);
-    shader_addline(buffer, "SGE %s, srgb_consts1.y, %s;\n", tmp4, fragcolor);
-    /* Store the components > 0.0031308 in the destination */
-    shader_addline(buffer, "MUL %s.xyz, %s, %s;\n", fragcolor, tmp1, tmp3);
-    /* Add the components that are < 0.0031308 */
-    shader_addline(buffer, "MAD %s.xyz, %s, %s, %s;\n", fragcolor, tmp2, tmp4, fragcolor);
-    /* Move everything into result.color at once. Nvidia hardware cannot handle partial
-     * result.color writes(.rgb first, then .a), or handle overwriting already written
-     * components. The assembler uses a temporary register in this case, which is usually
-     * not allocated from one of our registers that were used earlier.
-     */
+    if(condcode)
+    {
+        /* Sigh. MOVC CC doesn't work, so use one of the temps as dummy dest */
+        shader_addline(buffer, "SUBC %s, %s.x, srgb_consts1.y;\n", tmp1, fragcolor);
+        /* Calculate the > 0.0031308 case */
+        shader_addline(buffer, "POW %s.x (GE), %s.x, srgb_consts1.z;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "POW %s.y (GE), %s.y, srgb_consts1.z;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "POW %s.z (GE), %s.z, srgb_consts1.z;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "MUL %s.xyz (GE), %s, srgb_consts1.w;\n", fragcolor, fragcolor);
+        shader_addline(buffer, "SUB %s.xyz (GE), %s, srgb_consts2.x;\n", fragcolor, fragcolor);
+        /* Calculate the < case */
+        shader_addline(buffer, "MUL %s.xyz (LT), srgb_consts1.x, %s;\n", fragcolor, fragcolor);
+    }
+    else
+    {
+        /* Calculate the > 0.0031308 case */
+        shader_addline(buffer, "POW %s.x, %s.x, srgb_consts1.z;\n", tmp1, fragcolor);
+        shader_addline(buffer, "POW %s.y, %s.y, srgb_consts1.z;\n", tmp1, fragcolor);
+        shader_addline(buffer, "POW %s.z, %s.z, srgb_consts1.z;\n", tmp1, fragcolor);
+        shader_addline(buffer, "MUL %s, %s, srgb_consts1.w;\n", tmp1, tmp1);
+        shader_addline(buffer, "SUB %s, %s, srgb_consts2.x;\n", tmp1, tmp1);
+        /* Calculate the < case */
+        shader_addline(buffer, "MUL %s, srgb_consts1.x, %s;\n", tmp2, fragcolor);
+        /* Get 1.0 / 0.0 masks for > 0.0031308 and < 0.0031308 */
+        shader_addline(buffer, "SLT %s, srgb_consts1.y, %s;\n", tmp3, fragcolor);
+        shader_addline(buffer, "SGE %s, srgb_consts1.y, %s;\n", tmp4, fragcolor);
+        /* Store the components > 0.0031308 in the destination */
+        shader_addline(buffer, "MUL %s.xyz, %s, %s;\n", fragcolor, tmp1, tmp3);
+        /* Add the components that are < 0.0031308 */
+        shader_addline(buffer, "MAD %s.xyz, %s, %s, %s;\n", fragcolor, tmp2, tmp4, fragcolor);
+        /* Move everything into result.color at once. Nvidia hardware cannot handle partial
+        * result.color writes(.rgb first, then .a), or handle overwriting already written
+        * components. The assembler uses a temporary register in this case, which is usually
+        * not allocated from one of our registers that were used earlier.
+        */
+    }
     shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     /* [0.0;1.0] clamping. Not needed, this is done implicitly */
 }
@@ -2227,7 +2243,8 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
 
     if(args->super.srgb_correction) {
-        arbfp_add_sRGB_correction(buffer, fragcolor, srgbtmp[0], srgbtmp[1], srgbtmp[2], srgbtmp[3]);
+        arbfp_add_sRGB_correction(buffer, fragcolor, srgbtmp[0], srgbtmp[1], srgbtmp[2], srgbtmp[3],
+                                  priv_ctx.target_version >= NV2);
     } else if(reg_maps->shader_version.major < 2) {
         shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     }
@@ -3688,7 +3705,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
 
     if(settings->sRGB_write) {
         shader_addline(&buffer, "MAD ret, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
-        arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2", "tempreg");
+        arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2", "tempreg", FALSE);
     } else {
         shader_addline(&buffer, "MAD result.color, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
     }
