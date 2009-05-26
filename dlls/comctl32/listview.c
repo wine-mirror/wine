@@ -1920,7 +1920,10 @@ static void LISTVIEW_GetItemOrigin(const LISTVIEW_INFO *infoPtr, INT nItem, LPPO
     }
     else /* LVS_REPORT */
     {
-	lpptPosition->x = 0;
+	lpptPosition->x = REPORT_MARGINX;
+	/* item is always at zero indexed column */
+	if (DPA_GetPtrCount(infoPtr->hdpaColumns) > 0)
+	    lpptPosition->x += LISTVIEW_GetColumnInfo(infoPtr, 0)->rcHeader.left;
 	lpptPosition->y = nItem * infoPtr->nItemHeight;
     }
 }

@@ -2538,7 +2538,7 @@ static void test_getitemposition(void)
     memset(&rect, 0, sizeof(rect));
     SendMessage(header, HDM_GETITEMRECT, 0, (LPARAM)&rect);
     /* some padding? */
-    todo_wine expect(2, pt.x);
+    expect(2, pt.x);
     /* offset by header height */
     expect(rect.bottom - rect.top, pt.y);
 
