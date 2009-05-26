@@ -332,21 +332,6 @@ static HRESULT WINAPI IWIneD3DVertexShaderImpl_SetLocalConstantsF(IWineD3DVertex
     return WINED3D_OK;
 }
 
-/* GL locking is done by the caller */
-static GLuint vertexshader_compile(IWineD3DVertexShaderImpl *This, const struct vs_compile_args *args) {
-    IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
-    SHADER_BUFFER buffer;
-    GLuint ret;
-
-    /* Generate the HW shader */
-    TRACE("(%p) : Generating hardware program\n", This);
-    shader_buffer_init(&buffer);
-    ret = deviceImpl->shader_backend->shader_generate_vshader((IWineD3DVertexShader *)This, &buffer, args);
-    shader_buffer_free(&buffer);
-
-    return ret;
-}
-
 const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
 {
     /*** IUnknown methods ***/
@@ -366,54 +351,4 @@ const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
 void find_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct vs_compile_args *args) {
     args->fog_src = stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
     args->swizzle_map = ((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.swizzle_map;
-}
-
-static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const struct vs_compile_args *new,
-                                 const DWORD use_map) {
-    if((stored->swizzle_map & use_map) != new->swizzle_map) return FALSE;
-    return stored->fog_src == new->fog_src;
-}
-
-/* GL locking is done by the caller */
-GLuint find_gl_vshader(IWineD3DVertexShaderImpl *shader, const struct vs_compile_args *args)
-{
-    UINT i;
-    DWORD new_size = shader->shader_array_size;
-    struct vs_compiled_shader *new_array;
-    DWORD use_map = ((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.use_map;
-
-    /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
-     * so a linear search is more performant than a hashmap or a binary search
-     * (cache coherency etc)
-     */
-    for(i = 0; i < shader->num_gl_shaders; i++) {
-        if(vs_args_equal(&shader->gl_shaders[i].args, args, use_map)) {
-            return shader->gl_shaders[i].prgId;
-        }
-    }
-
-    TRACE("No matching GL shader found, compiling a new shader\n");
-
-    if(shader->shader_array_size == shader->num_gl_shaders) {
-        if (shader->num_gl_shaders)
-        {
-            new_size = shader->shader_array_size + max(1, shader->shader_array_size / 2);
-            new_array = HeapReAlloc(GetProcessHeap(), 0, shader->gl_shaders,
-                                    new_size * sizeof(*shader->gl_shaders));
-        } else {
-            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader->gl_shaders));
-            new_size = 1;
-        }
-
-        if(!new_array) {
-            ERR("Out of memory\n");
-            return 0;
-        }
-        shader->gl_shaders = new_array;
-        shader->shader_array_size = new_size;
-    }
-
-    shader->gl_shaders[shader->num_gl_shaders].args = *args;
-    shader->gl_shaders[shader->num_gl_shaders].prgId = vertexshader_compile(shader, args);
-    return shader->gl_shaders[shader->num_gl_shaders++].prgId;
 }

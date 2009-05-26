@@ -809,8 +809,6 @@ typedef struct {
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
-    GLuint (*shader_generate_vshader)(IWineD3DVertexShader *iface,
-            SHADER_BUFFER *buffer, const struct vs_compile_args *args);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
     void (*shader_add_instruction_modifiers)(const struct wined3d_shader_instruction *ins);
@@ -2689,7 +2687,6 @@ typedef struct IWineD3DVertexShaderImpl {
 extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
 
 void find_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct vs_compile_args *args);
-GLuint find_gl_vshader(IWineD3DVertexShaderImpl *shader, const struct vs_compile_args *args);
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure

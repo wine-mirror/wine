@@ -3609,10 +3609,9 @@ static void hardcode_local_constants(IWineD3DBaseShaderImpl *shader, const WineD
 }
 
 /* GL locking is done by the caller */
-static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
+static GLuint shader_glsl_generate_pshader(IWineD3DPixelShaderImpl *This,
         SHADER_BUFFER *buffer, const struct ps_compile_args *args)
 {
-    IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
     const struct shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     const char *fragcolor;
@@ -3646,7 +3645,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
     /* Pack 3.0 inputs */
     if (reg_maps->shader_version.major >= 3 && args->vp_mode != vertexshader)
     {
-        pshader_glsl_input_pack(iface, buffer, This->input_signature, reg_maps, args->vp_mode);
+        pshader_glsl_input_pack((IWineD3DPixelShader *) This, buffer, This->input_signature, reg_maps, args->vp_mode);
     }
 
     /* Base Shader Body */
@@ -3720,11 +3719,9 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
 }
 
 /* GL locking is done by the caller */
-/* GL locking is done by the caller */
-static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface,
+static GLuint shader_glsl_generate_vshader(IWineD3DVertexShaderImpl *This,
         SHADER_BUFFER *buffer, const struct vs_compile_args *args)
 {
-    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     const struct shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
@@ -3831,10 +3828,66 @@ static GLhandleARB find_glsl_pshader(IWineD3DPixelShaderImpl *shader, const stru
             ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
     shader_buffer_init(&buffer);
     shader->gl_shaders[shader->num_gl_shaders].prgId =
-            shader_glsl_generate_pshader((IWineD3DPixelShader*) shader, &buffer, args);
+            shader_glsl_generate_pshader(shader, &buffer, args);
     shader_buffer_free(&buffer);
 
     return shader->gl_shaders[shader->num_gl_shaders++].prgId;
+}
+
+static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const struct vs_compile_args *new,
+                                 const DWORD use_map) {
+    if((stored->swizzle_map & use_map) != new->swizzle_map) return FALSE;
+    return stored->fog_src == new->fog_src;
+}
+
+static GLhandleARB find_glsl_vshader(IWineD3DVertexShaderImpl *shader, const struct vs_compile_args *args)
+{
+    UINT i;
+    DWORD new_size = shader->shader_array_size;
+    struct vs_compiled_shader *new_array;
+    DWORD use_map = ((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.use_map;
+    SHADER_BUFFER buffer;
+    GLhandleARB ret;
+
+    /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
+     * so a linear search is more performant than a hashmap or a binary search
+     * (cache coherency etc)
+     */
+    for(i = 0; i < shader->num_gl_shaders; i++) {
+        if(vs_args_equal(&shader->gl_shaders[i].args, args, use_map)) {
+            return shader->gl_shaders[i].prgId;
+        }
+    }
+
+    TRACE("No matching GL shader found, compiling a new shader\n");
+
+    if(shader->shader_array_size == shader->num_gl_shaders) {
+        if (shader->num_gl_shaders)
+        {
+            new_size = shader->shader_array_size + max(1, shader->shader_array_size / 2);
+            new_array = HeapReAlloc(GetProcessHeap(), 0, shader->gl_shaders,
+                                    new_size * sizeof(*shader->gl_shaders));
+        } else {
+            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader->gl_shaders));
+            new_size = 1;
+        }
+
+        if(!new_array) {
+            ERR("Out of memory\n");
+            return 0;
+        }
+        shader->gl_shaders = new_array;
+        shader->shader_array_size = new_size;
+    }
+
+    shader->gl_shaders[shader->num_gl_shaders].args = *args;
+
+    shader_buffer_init(&buffer);
+    ret = shader_glsl_generate_vshader(shader, &buffer, args);
+    shader_buffer_free(&buffer);
+    shader->gl_shaders[shader->num_gl_shaders++].prgId = ret;
+
+    return ret;
 }
 
 /** Sets the GLSL program ID for the given pixel and vertex shader combination.
@@ -3899,7 +3952,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     priv->glsl_program = entry;
 
     if(use_vs) {
-        vshader_id = find_gl_vshader((IWineD3DVertexShaderImpl *) vshader, &vs_compile_args);
+        vshader_id = find_glsl_vshader((IWineD3DVertexShaderImpl *) vshader, &vs_compile_args);
     } else {
         vshader_id = 0;
     }
@@ -4562,7 +4615,6 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_alloc,
     shader_glsl_free,
     shader_glsl_dirty_const,
-    shader_glsl_generate_vshader,
     shader_glsl_get_caps,
     shader_glsl_color_fixup_supported,
     shader_glsl_add_instruction_modifiers,
