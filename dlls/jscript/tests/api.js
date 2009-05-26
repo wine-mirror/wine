@@ -767,6 +767,33 @@ ok(isNaN(tmp), "Math.atan2() is not NaN");
 tmp = Math.atan2(1);
 ok(isNaN(tmp), "Math.atan2(1) is not NaN");
 
+tmp = Math.exp(0);
+ok(tmp === 1, "Math.exp(0) = " + tmp);
+
+tmp = Math.exp(1);
+ok(Math.floor(tmp*100) === 271, "Math.exp(1) = " + tmp);
+
+tmp = Math.exp(-1);
+ok(Math.floor(tmp*100) === 36, "Math.exp(-1) = " + tmp);
+
+tmp = Math.exp(true);
+ok(Math.floor(tmp*100) === 271, "Math.exp(true) = " + tmp);
+
+tmp = Math.exp(1, 1);
+ok(Math.floor(tmp*100) === 271, "Math.exp(1, 1) = " + tmp);
+
+tmp = Math.exp();
+ok(isNaN(tmp), "Math.exp() is not NaN");
+
+tmp = Math.exp(NaN);
+ok(isNaN(tmp), "Math.exp(NaN) is not NaN");
+
+tmp = Math.exp(Infinity);
+ok(tmp === Infinity, "Math.exp(Infinity) = " + tmp);
+
+tmp = Math.exp(-Infinity);
+ok(tmp === 0, "Math.exp(-Infinity) = " + tmp);
+
 var func = function  (a) {
         var a = 1;
         if(a) return;
