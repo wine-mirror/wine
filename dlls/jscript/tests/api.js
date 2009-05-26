@@ -878,6 +878,33 @@ ok(tmp === Infinity, "Math.sqrt(Infinity) = " + tmp);
 tmp = Math.sqrt(-Infinity);
 ok(isNaN(tmp), "Math.sqrt(-Infinity) is not NaN");
 
+tmp = Math.tan(0);
+ok(tmp === 0, "Math.tan(0) = " + tmp);
+
+tmp = Math.tan(Math.PI);
+ok(Math.floor(tmp*100) === -1, "Math.tan(Math.PI) = " + tmp);
+
+tmp = Math.tan(2, 2);
+ok(Math.floor(tmp*100) === -219, "Math.tan(2, 2) = " + tmp);
+
+tmp = Math.tan(true);
+ok(Math.floor(tmp*100) === 155, "Math.tan(true) = " + tmp);
+
+tmp = Math.tan(false);
+ok(tmp === 0, "Math.tan(false) = " + tmp);
+
+tmp = Math.tan();
+ok(isNaN(tmp), "Math.tan() is not NaN");
+
+tmp = Math.tan(NaN);
+ok(isNaN(tmp), "Math.tan(NaN) is not NaN");
+
+tmp = Math.tan(Infinity);
+ok(isNaN(tmp), "Math.tan(Infinity) is not NaN");
+
+tmp = Math.tan(-Infinity);
+ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
+
 var func = function  (a) {
         var a = 1;
         if(a) return;
