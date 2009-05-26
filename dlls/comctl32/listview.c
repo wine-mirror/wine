@@ -5928,6 +5928,7 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
     BOOL doLabel = TRUE, oversizedBox = FALSE;
     POINT Position, Origin;
     LVITEMW lvItem;
+    INT type;
 
     TRACE("(hwnd=%p, nItem=%d, lprc=%p)\n", infoPtr->hwndSelf, nItem, lprc);
 
@@ -5962,6 +5963,7 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
 	lvItem.state = (oversizedBox ? LVIS_FOCUSED : 0);
     }
 
+    type = lprc->left;
     if (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) && lprc->left == LVIR_SELECTBOUNDS)
 	lprc->left = LVIR_BOUNDS;
     switch(lprc->left)
@@ -5987,7 +5989,10 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
 	return FALSE;
     }
 
-    OffsetRect(lprc, Position.x + Origin.x, Position.y + Origin.y);
+    if ((uView == LVS_REPORT) && (type == LVIR_BOUNDS))
+        OffsetRect(lprc, Origin.x, Origin.y);
+    else
+        OffsetRect(lprc, Position.x + Origin.x, Position.y + Origin.y);
 
     TRACE(" rect=%s\n", wine_dbgstr_rect(lprc));
 

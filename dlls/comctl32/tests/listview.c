@@ -2590,11 +2590,9 @@ static void test_getitemrect(void)
     r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
     expect(TRUE, r);
 
-    /* zero width rectangle */
-todo_wine {
+    /* zero width rectangle with no padding */
     expect(0, rect.left);
-    expect(0, rect.right);
-}
+    todo_wine expect(0, rect.right);
 
     insert_column(hwnd, 0);
     insert_column(hwnd, 1);
@@ -2615,9 +2613,8 @@ todo_wine {
     expect(TRUE, r);
 
     /* still no left padding */
-todo_wine {
     expect(0, rect.left);
-}
+    expect(150, rect.right);
 
     rect.left = LVIR_SELECTBOUNDS;
     rect.right = rect.top = rect.bottom = -1;
@@ -2640,9 +2637,9 @@ todo_wine {
     rect.right = rect.top = rect.bottom = -1;
     r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
     expect(TRUE, r);
-    todo_wine expect(0, rect.left);
+    expect(0, rect.left);
     /* just width sum */
-    todo_wine expect(150, rect.right);
+    expect(150, rect.right);
 
     rect.left = LVIR_SELECTBOUNDS;
     rect.right = rect.top = rect.bottom = -1;
