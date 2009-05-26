@@ -328,7 +328,6 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
         SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info, DWORD *lconst_map)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
-    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     DWORD i, cur, next_local = 0;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     unsigned max_constantsF;
@@ -352,8 +351,6 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
         } else {
             max_constantsF = GL_LIMITS(vshader_constantsF) - 1;
         }
-        /* Temporary Output register */
-        shader_addline(buffer, "TEMP TMP_OUT;\n");
     }
 
     for(i = 0; i < This->baseShader.limits.temporary; i++) {
@@ -371,13 +368,6 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
             if (reg_maps->texcoord[i] && pshader)
                 shader_addline(buffer,"TEMP T%u;\n", i);
         }
-    }
-
-    if(device->stateBlock->renderState[WINED3DRS_SRGBWRITEENABLE] && pshader) {
-        shader_addline(buffer, "PARAM srgb_consts1 = {%f, %f, %f, %f};\n",
-                       srgb_mul_low, srgb_cmp, srgb_pow, srgb_mul_high);
-        shader_addline(buffer, "PARAM srgb_consts2 = {%f, %f, %f, %f};\n",
-                       srgb_sub_high, 0.0, 0.0, 0.0);
     }
 
     /* Load local constants using the program-local space,
@@ -2097,6 +2087,13 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
         }
     }
 
+    if(args->srgb_correction) {
+        shader_addline(buffer, "PARAM srgb_consts1 = {%f, %f, %f, %f};\n",
+                       srgb_mul_low, srgb_cmp, srgb_pow, srgb_mul_high);
+        shader_addline(buffer, "PARAM srgb_consts2 = {%f, %f, %f, %f};\n",
+                       srgb_sub_high, 0.0, 0.0, 0.0);
+    }
+
     /* Base Declarations */
     shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
 
@@ -2168,6 +2165,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
         priv_ctx.target_version = ARB;
     }
 
+    shader_addline(buffer, "TEMP TMP_OUT;\n");
     if(need_helper_const(gl_info)) {
         shader_addline(buffer, "PARAM helper_const = { 2.0, -1.0, %d.0, 0.0 };\n", This->rel_offset);
     }
