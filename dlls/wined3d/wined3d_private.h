@@ -2653,12 +2653,6 @@ static inline BOOL shader_constant_is_local(IWineD3DBaseShaderImpl* This, DWORD 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structures
  */
-
-struct vs_compiled_shader {
-    struct vs_compile_args      args;
-    GLuint                      prgId;
-};
-
 typedef struct IWineD3DVertexShaderImpl {
     /* IUnknown parts*/   
     const IWineD3DVertexShaderVtbl *lpVtbl;
@@ -2672,8 +2666,7 @@ typedef struct IWineD3DVertexShaderImpl {
     DWORD                       usage;
 
     /* The GL shader */
-    struct vs_compiled_shader   *gl_shaders;
-    UINT                        num_gl_shaders, shader_array_size;
+    void                        *backend_priv;
 
     /* Vertex shader input and output semantics */
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
