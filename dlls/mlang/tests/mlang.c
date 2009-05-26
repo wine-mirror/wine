@@ -916,6 +916,28 @@ static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
 
 }
 
+static void test_Rfc1766ToLcid(void)
+{
+    LCID lcid;
+    HRESULT ret;
+    DWORD i;
+
+    for(i = 0; i < sizeof(lcid_table) / sizeof(lcid_table[0]); i++) {
+        lcid = -1;
+        ret = Rfc1766ToLcidA(&lcid, lcid_table[i].rfc1766);
+
+        ok(ret == lcid_table[i].hr,
+            "#%02d: HRESULT 0x%x (expected 0x%x)\n", i, ret, lcid_table[i].hr);
+
+
+        ok(lcid == lcid_table[i].lcid,
+            "#%02d: got LCID 0x%x (expected 0x%x)\n", i, lcid, lcid_table[i].lcid);
+
+    }
+
+}
+
+
 static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
 {
     HRESULT hr;
@@ -1502,6 +1524,8 @@ START_TEST(mlang)
         return;
 
     CoInitialize(NULL);
+    test_Rfc1766ToLcid();
+
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMultiLanguage2, (void **)&iML2);
     if (ret != S_OK || !iML2) return;
