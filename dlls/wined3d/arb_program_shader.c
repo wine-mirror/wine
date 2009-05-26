@@ -2132,11 +2132,6 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
         shader_addline(buffer, "TEMP A0_SHADOW;\n");
     }
 
-    /* Mesa supports only 95 constants */
-    if (GL_VEND(MESA) || GL_VEND(WINE))
-        This->baseShader.limits.constant_float =
-                min(95, This->baseShader.limits.constant_float);
-
     shader_addline(buffer, "TEMP TA;\n");
 
     /* Base Declarations */
