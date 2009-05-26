@@ -48,6 +48,19 @@ static HRESULT (WINAPI *pConvertINetMultiByteToUnicode)(LPDWORD, DWORD, LPCSTR,
                                                         LPINT, LPWSTR, LPINT);
 static HRESULT (WINAPI *pConvertINetUnicodeToMultiByte)(LPDWORD, DWORD, LPCWSTR,
                                                         LPINT, LPSTR, LPINT);
+typedef struct lcid_tag_table {
+    LPCSTR rfc1766;
+    LCID lcid;
+    HRESULT hr;
+} lcid_table_entry;
+
+static const lcid_table_entry  lcid_table[] = {
+    {"en",    9,        S_OK},       /* only en is special (using PRIMARYLANGID) */
+    {"en-gb", 0x809,    S_OK},
+    {"en-us", 0x409,    S_OK}
+
+};
+
 
 static BOOL init_function_ptrs(void)
 {
@@ -832,18 +845,32 @@ static void test_rfc1766(IMultiLanguage2 *iML2)
 
 static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
 {
+    WCHAR rfc1766W[MAX_RFC1766_NAME + 1];
     LCID lcid;
     HRESULT ret;
+    DWORD i;
 
     static WCHAR e[] = { 'e',0 };
     static WCHAR en[] = { 'e','n',0 };
     static WCHAR empty[] = { 0 };
     static WCHAR dash[] = { '-',0 };
     static WCHAR e_dash[] = { 'e','-',0 };
-    static WCHAR en_gb[] = { 'e','n','-','g','b',0 };
-    static WCHAR en_us[] = { 'e','n','-','u','s',0 };
     static WCHAR en_them[] = { 'e','n','-','t','h','e','m',0 };
     static WCHAR english[] = { 'e','n','g','l','i','s','h',0 };
+
+
+    for(i = 0; i < sizeof(lcid_table) / sizeof(lcid_table[0]); i++) {
+        lcid = -1;
+        MultiByteToWideChar(CP_ACP, 0, lcid_table[i].rfc1766, -1, rfc1766W, MAX_RFC1766_NAME);
+        ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, rfc1766W);
+
+        ok(ret == lcid_table[i].hr,
+            "#%02d: HRESULT 0x%x (expected 0x%x)\n", i, ret, lcid_table[i].hr);
+
+        ok(lcid == lcid_table[i].lcid,
+            "#%02d: got LCID 0x%x (expected 0x%x)\n", i, lcid, lcid_table[i].lcid);
+    }
+
 
     ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, NULL, en);
     ok(ret == E_INVALIDARG, "GetLcidFromRfc1766 returned: %08x\n", ret);
@@ -887,19 +914,6 @@ static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
         ok_w2("Expected \"%s\",  got \"%s\"n", en, rfcstr);
     }
 
-    lcid = 0;
-
-    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, en);
-    ok(ret == S_OK, "GetLcidFromRfc1766 returned: %08x\n", ret);
-    ok(lcid == 9, "got wrong lcid: %04x\n", lcid);
-
-    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, en_gb);
-    ok(ret == S_OK, "GetLcidFromRfc1766 returned: %08x\n", ret);
-    ok(lcid == 0x809, "got wrong lcid: %04x\n", lcid);
-
-    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, en_us);
-    ok(ret == S_OK, "GetLcidFromRfc1766 returned: %08x\n", ret);
-    ok(lcid == 0x409, "got wrong lcid: %04x\n", lcid);
 }
 
 static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
