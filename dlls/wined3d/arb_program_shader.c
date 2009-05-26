@@ -1819,6 +1819,28 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static void shader_hw_lrp(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    char dst_name[50];
+    char src_name[3][50];
+
+    /* ARB_fragment_program has a convenient LRP instruction */
+    if(shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)) {
+        shader_hw_map2gl(ins);
+        return;
+    }
+
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
+    shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
+    shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
+    shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
+
+    shader_addline(buffer, "SUB TA, %s, %s;\n", src_name[1], src_name[2]);
+    shader_addline(buffer, "MAD%s %s, %s, TA, %s;\n", shader_arb_get_modifier(ins),
+                   dst_name, src_name[0], src_name[2]);
+}
+
 static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
 {
     /* This instruction exists in ARB, but the d3d instruction takes two extra parameters which
@@ -2820,7 +2842,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_LOG           */ shader_hw_map2gl,
     /* WINED3DSIH_LOGP          */ shader_hw_map2gl,
     /* WINED3DSIH_LOOP          */ NULL,
-    /* WINED3DSIH_LRP           */ shader_hw_map2gl,
+    /* WINED3DSIH_LRP           */ shader_hw_lrp,
     /* WINED3DSIH_M3x2          */ shader_hw_mnxn,
     /* WINED3DSIH_M3x3          */ shader_hw_mnxn,
     /* WINED3DSIH_M3x4          */ shader_hw_mnxn,
