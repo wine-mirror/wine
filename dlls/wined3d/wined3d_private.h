@@ -2711,6 +2711,10 @@ typedef struct IWineD3DPixelShaderImpl {
     unsigned char               numbumpenvmatconsts;
     struct stb_const_desc       luminanceconst[MAX_TEXTURES];
     char                        vpos_uniform;
+
+    BOOL                        color0_mov;
+    DWORD                       color0_reg;
+
 } IWineD3DPixelShaderImpl;
 
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;

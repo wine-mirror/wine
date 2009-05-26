@@ -1130,12 +1130,13 @@ static void shader_hw_nop(const struct wined3d_shader_instruction *ins)
 static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 {
     IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
+    BOOL pshader = shader_is_pshader_version(shader->baseShader.reg_maps.shader_version.type);
+    struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
 
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char src0_param[256];
 
     if(ins->handler_idx == WINED3DSIH_MOVA) {
-        struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
         struct wined3d_shader_src_param tmp_src = ins->src[0];
         char write_mask[6];
 
@@ -1187,6 +1188,16 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
             shader_arb_get_src_param(ins, &tmp_src, 0, src0_param);
             shader_addline(buffer, "ARL A0.x, %s;\n", src0_param);
         }
+    }
+    else if(ins->dst[0].reg.type == WINED3DSPR_COLOROUT && ins->dst[0].reg.idx == 0 && pshader)
+    {
+        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) shader;
+        if(ctx->cur_ps_args->super.srgb_correction && ps->color0_mov)
+        {
+            shader_addline(buffer, "#mov handled in srgb write code\n");
+            return;
+        }
+        shader_hw_map2gl(ins);
     }
     else
     {
@@ -2022,7 +2033,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     const local_constant *lconst;
     GLuint retval;
-    const char *fragcolor;
+    char fragcolor[16];
     DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
     struct shader_arb_ctx_priv priv_ctx;
 
@@ -2065,13 +2076,17 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
 
     if (reg_maps->shader_version.major < 2)
     {
-        fragcolor = "R0";
+        strcpy(fragcolor, "R0");
     } else {
         if(args->super.srgb_correction) {
-            shader_addline(buffer, "TEMP TMP_COLOR;\n");
-            fragcolor = "TMP_COLOR";
+            if(This->color0_mov) {
+                sprintf(fragcolor, "R%u", This->color0_reg);
+            } else {
+                shader_addline(buffer, "TEMP TMP_COLOR;\n");
+                strcpy(fragcolor, "TMP_COLOR");
+            }
         } else {
-            fragcolor = "result.color";
+            strcpy(fragcolor, "result.color");
         }
     }
 

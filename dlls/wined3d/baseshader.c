@@ -588,6 +588,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
         else
         {
             int i, limit;
+            BOOL color0_mov = FALSE;
 
             /* This will loop over all the registers and try to
              * make a bitmask of the ones we're interested in.
@@ -612,6 +613,11 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 }
                 else
                 {
+                    if(pshader && dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
+                    {
+                        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This;
+                        ps->color0_mov = FALSE;
+                    }
                     shader_record_register_usage(This, reg_maps, &dst_param.reg, pshader);
                 }
 
@@ -651,6 +657,22 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 {
                     reg_maps->bumpmat[dst_param.reg.idx] = TRUE;
                 }
+                else if(pshader && ins.handler_idx == WINED3DSIH_MOV)
+                {
+                    /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
+                     * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
+                     * the mov and perform the sRGB write correction from the source register.
+                     *
+                     * However, if the mov is only partial, we can't do this, and if the write
+                     * comes from an instruction other than MOV it is hard to do as well. If
+                     * COLOROUT 0 is overwritten partially later, the marker is dropped again
+                     */
+                    if(dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
+                    {
+                        /* Used later when the source register is read */
+                        color0_mov = TRUE;
+                    }
+                }
             }
 
             if (ins.handler_idx == WINED3DSIH_NRM)
@@ -685,6 +707,17 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                     ++src_param.reg.idx;
                     shader_record_register_usage(This, reg_maps, &src_param.reg, pshader);
                     --count;
+                }
+
+                if(color0_mov)
+                {
+                    IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This;
+                    if(src_param.reg.type == WINED3DSPR_TEMP &&
+                       src_param.swizzle == WINED3DSP_NOSWIZZLE)
+                    {
+                        ps->color0_mov = TRUE;
+                        ps->color0_reg = src_param.reg.idx;
+                    }
                 }
             }
         }
