@@ -2564,6 +2564,95 @@ static void test_columnscreation(void)
     DestroyWindow(hwnd);
 }
 
+static void test_getitemrect(void)
+{
+    HWND hwnd;
+    RECT rect;
+    DWORD r;
+    LVITEMA item;
+    LVCOLUMNA col;
+    INT order[2];
+    POINT pt;
+
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    /* empty item */
+    memset(&item, 0, sizeof(item));
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    expect(0, r);
+
+    rect.left = LVIR_BOUNDS;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+
+    /* zero width rectangle */
+todo_wine {
+    expect(0, rect.left);
+    expect(0, rect.right);
+}
+
+    insert_column(hwnd, 0);
+    insert_column(hwnd, 1);
+
+    col.mask = LVCF_WIDTH;
+    col.cx   = 50;
+    r = SendMessage(hwnd, LVM_SETCOLUMN, 0, (LPARAM)&col);
+    expect(TRUE, r);
+
+    col.mask = LVCF_WIDTH;
+    col.cx   = 100;
+    r = SendMessage(hwnd, LVM_SETCOLUMN, 1, (LPARAM)&col);
+    expect(TRUE, r);
+
+    rect.left = LVIR_BOUNDS;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+
+    /* still no left padding */
+todo_wine {
+    expect(0, rect.left);
+}
+
+    rect.left = LVIR_SELECTBOUNDS;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding */
+    todo_wine expect(2, rect.left);
+
+    /* change order */
+    order[0] = 1; order[1] = 0;
+    r = SendMessage(hwnd, LVM_SETCOLUMNORDERARRAY, 2, (LPARAM)&order);
+    expect(TRUE, r);
+    pt.x = -1;
+    r = SendMessage(hwnd, LVM_GETITEMPOSITION, 0, (LPARAM)&pt);
+    expect(TRUE, r);
+    /* 1 indexed column width + padding */
+    todo_wine expect(102, pt.x);
+    /* rect is at zero too */
+    rect.left = LVIR_BOUNDS;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    todo_wine expect(0, rect.left);
+    /* just width sum */
+    todo_wine expect(150, rect.right);
+
+    rect.left = LVIR_SELECTBOUNDS;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* column width + padding */
+    todo_wine expect(102, rect.left);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -2601,6 +2690,7 @@ START_TEST(listview)
     test_columns();
     test_getorigin();
     test_multiselect();
+    test_getitemrect();
     test_subitem_rect();
     test_sorting();
     test_ownerdata();
