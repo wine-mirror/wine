@@ -794,6 +794,30 @@ ok(tmp === Infinity, "Math.exp(Infinity) = " + tmp);
 tmp = Math.exp(-Infinity);
 ok(tmp === 0, "Math.exp(-Infinity) = " + tmp);
 
+tmp = Math.log(1);
+ok(Math.floor(tmp*100) === 0, "Math.log(1) = " + tmp);
+
+tmp = Math.log(-1);
+ok(isNaN(tmp), "Math.log(-1) is not NaN");
+
+tmp = Math.log(true);
+ok(Math.floor(tmp*100) === 0, "Math.log(true) = " + tmp);
+
+tmp = Math.log(1, 1);
+ok(Math.floor(tmp*100) === 0, "Math.log(1, 1) = " + tmp);
+
+tmp = Math.log();
+ok(isNaN(tmp), "Math.log() is not NaN");
+
+tmp = Math.log(NaN);
+ok(isNaN(tmp), "Math.log(NaN) is not NaN");
+
+tmp = Math.log(Infinity);
+ok(tmp === Infinity, "Math.log(Infinity) = " + tmp);
+
+tmp = Math.log(-Infinity);
+ok(isNaN(tmp), "Math.log(-Infinity) is not NaN");
+
 var func = function  (a) {
         var a = 1;
         if(a) return;
