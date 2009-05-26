@@ -389,6 +389,7 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
     } else {
         if(This->baseShader.reg_maps.usesrelconstF) {
             max_constantsF = GL_LIMITS(vshader_constantsF) - reserved_vs_const(iface, gl_info);
+            if(GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) max_constantsF -= GL_LIMITS(clipplanes);
         } else {
             max_constantsF = GL_LIMITS(vshader_constantsF) - 1;
         }
@@ -2294,6 +2295,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     GLuint ret;
     DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
     struct shader_arb_ctx_priv priv_ctx;
+    unsigned int i;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
@@ -2379,6 +2381,14 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     shader_addline(buffer, "MUL TA, posFixup, TMP_OUT.w;\n");
     shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
     shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
+
+    if(priv_ctx.target_version >= NV2)
+    {
+        for(i = 0; i < GL_LIMITS(clipplanes); i++)
+        {
+            shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
+        }
+    }
 
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
      * and the glsl equivalent
@@ -2776,7 +2786,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
         pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF);
     }
 
-    pCaps->VSClipping = FALSE; /* TODO: GL_NV_vertex_program2_option provides this */
+    pCaps->VSClipping = GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION);
 }
 
 static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)
