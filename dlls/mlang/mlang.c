@@ -1197,7 +1197,7 @@ static HRESULT lcid_from_rfc1766(IEnumRfc1766 *iface, LCID *lcid, LPCWSTR rfc176
 
     while (IEnumRfc1766_Next(iface, 1, &info, &num) == S_OK)
     {
-        if (!strcmpW(info.wszRfc1766, rfc1766))
+        if (!strcmpiW(info.wszRfc1766, rfc1766))
         {
             *lcid = info.lcid;
             return S_OK;

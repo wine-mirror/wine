@@ -62,6 +62,9 @@ static const lcid_table_entry  lcid_table[] = {
 
     {"en",    9,        S_OK},       /* only en is special (using PRIMARYLANGID) */
     {"en-gb", 0x809,    S_OK},
+    {"en-GB", 0x809,    S_OK},
+    {"EN-GB", 0x809,    S_OK},
+    {"en-US", 0x409,    S_OK},
     {"en-us", 0x409,    S_OK}
 
 };
