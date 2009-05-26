@@ -122,6 +122,24 @@ typedef struct {
     struct vs_compile_args      vs_args;
 } glsl_program_key_t;
 
+/* Extract a line from the info log.
+ * Note that this modifies the source string. */
+static char *get_info_log_line(char **ptr)
+{
+    char *p, *q;
+
+    p = *ptr;
+    if (!(q = strstr(p, "\n")))
+    {
+        if (!*p) return NULL;
+        *ptr += strlen(p);
+        return p;
+    }
+    *q = '\0';
+    *ptr = q + 1;
+
+    return p;
+}
 
 /** Prints the GLSL info log which will contain error messages if they exist */
 /* GL locking is done by the caller */
@@ -157,6 +175,8 @@ static void print_glsl_info_log(const WineD3D_GL_Info *gl_info, GLhandleARB obj)
      * that if there are errors. */
     if (infologLength > 1)
     {
+        char *ptr, *line;
+
         /* Fglrx doesn't terminate the string properly, but it tells us the proper length.
          * So use HEAP_ZERO_MEMORY to avoid uninitialized bytes
          */
@@ -170,10 +190,17 @@ static void print_glsl_info_log(const WineD3D_GL_Info *gl_info, GLhandleARB obj)
                 break;
             }
         }
-        if(is_spam) {
-            TRACE("Spam received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
-        } else {
-            FIXME("Error received from GLSL shader #%u: %s\n", obj, debugstr_a(infoLog));
+
+        ptr = infoLog;
+        if (is_spam)
+        {
+            TRACE("Spam received from GLSL shader #%u:\n", obj);
+            while ((line = get_info_log_line(&ptr))) TRACE("    %s\n", line);
+        }
+        else
+        {
+            FIXME("Error received from GLSL shader #%u:\n", obj);
+            while ((line = get_info_log_line(&ptr))) FIXME("    %s\n", line);
         }
         HeapFree(GetProcessHeap(), 0, infoLog);
     }
