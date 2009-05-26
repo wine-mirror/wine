@@ -6944,6 +6944,52 @@ static void test_dbmerge(void)
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    query = "DROP TABLE `One`";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "DROP TABLE `One`";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( "
+            "`A` CHAR(72), `B` INT PRIMARY KEY `A` )";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "CREATE TABLE `One` ( "
+            "`A` CHAR(72), `B` INT PRIMARY KEY `A` )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `One` ( `A`, `B` ) VALUES ( 'hi', 1 )";
+    r = run_query(href, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* primary key is string */
+    r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
+    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `One`";
+    r = do_query(hdb, query, &hrec);
+    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetStringA(hrec, 1, buf, &size);
+    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmpA(buf, "hi"), "Expected \"hi\", got \"%s\"\n", buf);
+
+    r = MsiRecordGetInteger(hrec, 2);
+    todo_wine ok(r == 1, "Expected 1, got %d\n", r);
+
+    MsiCloseHandle(hrec);
+
+    /* nothing in MergeErrors */
+    query = "SELECT * FROM `MergeErrors`";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_BAD_QUERY_SYNTAX,
+       "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
     create_file_data("codepage.idt", "\r\n\r\n850\t_ForceCodepage\r\n", 0);
 
     GetCurrentDirectoryA(MAX_PATH, buf);
