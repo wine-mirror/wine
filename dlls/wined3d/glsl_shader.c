@@ -122,6 +122,11 @@ typedef struct {
     struct vs_compile_args      vs_args;
 } glsl_program_key_t;
 
+struct shader_glsl_ctx_priv {
+    const struct vs_compile_args    *cur_vs_args;
+    const struct ps_compile_args    *cur_ps_args;
+};
+
 /* Extract a line from the info log.
  * Note that this modifies the source string. */
 static char *get_info_log_line(char **ptr)
@@ -1123,7 +1128,8 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             /* vertex shaders */
             if (!pshader)
             {
-                if (((IWineD3DVertexShaderImpl *)This)->cur_args->swizzle_map & (1 << reg->idx)) *is_color = TRUE;
+                struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
+                if (priv->cur_vs_args->swizzle_map & (1 << reg->idx)) *is_color = TRUE;
                 sprintf(register_name, "attrib%u", reg->idx);
                 break;
             }
@@ -1657,11 +1663,11 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
 
     if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
     {
-        IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
-        fixup = This->cur_args->color_fixup[sampler];
+        struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
+        fixup = priv->cur_ps_args->color_fixup[sampler];
         sampler_base = "Psampler";
 
-        if(This->cur_args->np2_fixup & (1 << sampler)) {
+        if(priv->cur_ps_args->np2_fixup & (1 << sampler)) {
             if(bias) {
                 FIXME("Biased sampling from NP2 textures is unsupported\n");
             } else {
@@ -4164,9 +4170,13 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
     CONST DWORD *function = This->baseShader.function;
     const char *fragcolor;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+    struct shader_glsl_ctx_priv priv_ctx;
 
     /* Create the hw GLSL shader object and assign it as the shader->prgId */
     GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
+
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.cur_ps_args = args;
 
     shader_addline(buffer, "#version 120\n");
 
@@ -4193,7 +4203,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
     }
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, NULL);
+    shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
 
     /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
     if (reg_maps->shader_version.major < 2)
@@ -4270,17 +4280,21 @@ static GLuint shader_glsl_generate_vshader(IWineD3DVertexShader *iface,
     const struct shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
+    struct shader_glsl_ctx_priv priv_ctx;
 
     /* Create the hw GLSL shader program and assign it as the shader->prgId */
     GLhandleARB shader_obj = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
 
     shader_addline(buffer, "#version 120\n");
 
+    memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.cur_vs_args = args;
+
     /* Base Declarations */
     shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, NULL);
 
     /* Base Shader Body */
-    shader_generate_main((IWineD3DBaseShader*)This, buffer, reg_maps, function, NULL);
+    shader_generate_main((IWineD3DBaseShader*)This, buffer, reg_maps, function, &priv_ctx);
 
     /* Unpack 3.0 outputs */
     if (reg_maps->shader_version.major >= 3) shader_addline(buffer, "order_ps_input(OUT);\n");

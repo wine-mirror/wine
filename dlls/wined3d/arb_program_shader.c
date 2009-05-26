@@ -93,6 +93,9 @@ struct shader_arb_ctx_priv {
         /* GL_NV_vertex_program3 or GL_NV_fragment_program2 */
         NV3
     } target_version;
+
+    const struct vs_compile_args    *cur_vs_args;
+    const struct ps_compile_args    *cur_ps_args;
 };
 
 /********************************************************
@@ -543,7 +546,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             }
             else
             {
-                if (((IWineD3DVertexShaderImpl *)This)->cur_args->swizzle_map & (1 << reg->idx)) *is_color = TRUE;
+                if (ctx->cur_vs_args->swizzle_map & (1 << reg->idx)) *is_color = TRUE;
                 sprintf(register_name, "vertex.attrib[%u]", reg->idx);
             }
             break;
@@ -606,7 +609,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
         case WINED3DSPR_COLOROUT:
             if (reg->idx == 0)
             {
-                if(((IWineD3DPixelShaderImpl *)This)->cur_args->srgb_correction)
+                if(ctx->cur_ps_args->srgb_correction)
                 {
                     strcpy(register_name, "TMP_COLOR");
                 }
@@ -739,6 +742,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     const char *tex_type;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
 
     switch(sampler_type) {
         case WINED3DSTT_1D:
@@ -754,10 +758,10 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             }
             if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
             {
-               const IWineD3DPixelShaderImpl* const ps = (const IWineD3DPixelShaderImpl*)This;
-               if(ps->cur_args->np2_fixup & (1 << sampler_idx)) {
-                   FIXME("NP2 texcoord fixup is currently not implemented in ARB mode (use GLSL instead).\n");
-               }
+                if(priv->cur_ps_args->np2_fixup & (1 << sampler_idx))
+                {
+                    FIXME("NP2 texcoord fixup is currently not implemented in ARB mode (use GLSL instead).\n");
+                }
             }
             break;
 
@@ -787,9 +791,8 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
 
     if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
     {
-        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)ins->ctx->shader;
         gen_color_correction(buffer, dst_str, ins->dst[0].write_mask,
-                "one", "coefmul.x", ps->cur_args->color_fixup[sampler_idx]);
+                "one", "coefmul.x", priv->cur_ps_args->color_fixup[sampler_idx]);
     }
 }
 
@@ -2128,6 +2131,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
 
     /*  Create the hw ARB shader */
     memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.cur_ps_args = args;
     shader_addline(buffer, "!!ARBfp1.0\n");
     if(GL_SUPPORT(NV_FRAGMENT_PROGRAM_OPTION)) {
         shader_addline(buffer, "OPTION NV_fragment_program;\n");
@@ -2240,6 +2244,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     struct shader_arb_ctx_priv priv_ctx;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
+    priv_ctx.cur_vs_args = args;
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
 

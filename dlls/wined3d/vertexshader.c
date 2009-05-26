@@ -341,9 +341,7 @@ static GLuint vertexshader_compile(IWineD3DVertexShaderImpl *This, const struct 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
     shader_buffer_init(&buffer);
-    This->cur_args = args;
     ret = deviceImpl->shader_backend->shader_generate_vshader((IWineD3DVertexShader *)This, &buffer, args);
-    This->cur_args = NULL;
     shader_buffer_free(&buffer);
 
     return ret;

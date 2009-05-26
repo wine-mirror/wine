@@ -358,11 +358,9 @@ static GLuint pixelshader_compile(IWineD3DPixelShaderImpl *This, const struct ps
 
     /* Generate the HW shader */
     TRACE("(%p) : Generating hardware program\n", This);
-    This->cur_args = args;
     shader_buffer_init(&buffer);
     retval = device->shader_backend->shader_generate_pshader((IWineD3DPixelShader *)This, &buffer, args);
     shader_buffer_free(&buffer);
-    This->cur_args = NULL;
 
     return retval;
 }

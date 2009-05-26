@@ -2687,8 +2687,6 @@ typedef struct IWineD3DVertexShaderImpl {
     UINT                       rel_offset;
 
     UINT                       recompile_count;
-
-    const struct vs_compile_args    *cur_args;
 } IWineD3DVertexShaderImpl;
 extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
 
@@ -2728,8 +2726,6 @@ typedef struct IWineD3DPixelShaderImpl {
     unsigned char               numbumpenvmatconsts;
     struct stb_const_desc       luminanceconst[MAX_TEXTURES];
     char                        vpos_uniform;
-
-    const struct ps_compile_args *cur_args;
 } IWineD3DPixelShaderImpl;
 
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
