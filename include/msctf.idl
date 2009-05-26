@@ -868,3 +868,28 @@ interface ITfRange : IUnknown
     HRESULT GetContext(
         [out] ITfContext **ppContext);
 };
+
+[
+    object,
+    uuid(55ce16ba-3014-41c1-9ceb-fade1446ac6c),
+    pointer_default(unique)
+]
+interface ITfInsertAtSelection : IUnknown
+{
+    const DWORD TF_IAS_NOQUERY   = 0x1;
+    const DWORD TF_IAS_QUERYONLY = 0x2;
+    const DWORD TF_IAS_NO_DEFAULT_COMPOSITION = 0x80000000;
+
+    HRESULT InsertTextAtSelection(
+        [in] TfEditCookie ec,
+        [in] DWORD dwFlags,
+        [in, size_is(cch)] const WCHAR *pchText,
+        [in] LONG cch,
+        [out] ITfRange **ppRange);
+
+    HRESULT InsertEmbeddedAtSelection(
+        [in] TfEditCookie ec,
+        [in] DWORD dwFlags,
+        [in] IDataObject *pDataObject,
+        [out] ITfRange **ppRange);
+};

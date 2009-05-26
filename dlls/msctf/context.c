@@ -61,7 +61,7 @@ typedef struct tagContext {
     /* const ITfContextCompositionVtbl *ContextCompositionVtbl; */
     /* const ITfContextOwnerCompositionServicesVtbl *ContextOwnerCompositionServicesVtbl; */
     /* const ITfContextOwnerServicesVtbl *ContextOwnerServicesVtbl; */
-    /* const ITfInsertAtSelectionVtbl *InsertAtSelectionVtbl; */
+    const ITfInsertAtSelectionVtbl *InsertAtSelectionVtbl;
     /* const ITfMouseTrackerVtbl *MouseTrackerVtbl; */
     /* const ITfQueryEmbeddedVtbl *QueryEmbeddedVtbl; */
     /* const ITfSourceSingleVtbl *SourceSingleVtbl; */
@@ -106,6 +106,11 @@ static HRESULT TextStoreACPSink_Constructor(ITextStoreACPSink **ppOut, Context *
 static inline Context *impl_from_ITfSourceVtbl(ITfSource *iface)
 {
     return (Context *)((char *)iface - FIELD_OFFSET(Context,SourceVtbl));
+}
+
+static inline Context *impl_from_ITfInsertAtSelectionVtbl(ITfInsertAtSelection*iface)
+{
+    return (Context *)((char *)iface - FIELD_OFFSET(Context,InsertAtSelectionVtbl));
 }
 
 static void free_sink(ContextSink *sink)
@@ -185,6 +190,10 @@ static HRESULT WINAPI Context_QueryInterface(ITfContext *iface, REFIID iid, LPVO
     else if (IsEqualIID(iid, &IID_ITfSource))
     {
         *ppvOut = &This->SourceVtbl;
+    }
+    else if (IsEqualIID(iid, &IID_ITfInsertAtSelection))
+    {
+        *ppvOut = &This->InsertAtSelectionVtbl;
     }
 
     if (*ppvOut)
@@ -578,6 +587,55 @@ static const ITfSourceVtbl Context_SourceVtbl =
     ContextSource_UnadviseSink,
 };
 
+/*****************************************************
+ * ITfInsertAtSelection functions
+ *****************************************************/
+static HRESULT WINAPI InsertAtSelection_QueryInterface(ITfInsertAtSelection *iface, REFIID iid, LPVOID *ppvOut)
+{
+    Context *This = impl_from_ITfInsertAtSelectionVtbl(iface);
+    return Context_QueryInterface((ITfContext *)This, iid, *ppvOut);
+}
+
+static ULONG WINAPI InsertAtSelection_AddRef(ITfInsertAtSelection *iface)
+{
+    Context *This = impl_from_ITfInsertAtSelectionVtbl(iface);
+    return Context_AddRef((ITfContext *)This);
+}
+
+static ULONG WINAPI InsertAtSelection_Release(ITfInsertAtSelection *iface)
+{
+    Context *This = impl_from_ITfInsertAtSelectionVtbl(iface);
+    return Context_Release((ITfContext *)This);
+}
+
+static WINAPI HRESULT InsertAtSelection_InsertTextAtSelection(
+        ITfInsertAtSelection *iface, TfEditCookie ec, DWORD dwFlags,
+        const WCHAR *pchText, LONG cch, ITfRange **ppRange)
+{
+    Context *This = impl_from_ITfInsertAtSelectionVtbl(iface);
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT InsertAtSelection_InsertEmbeddedAtSelection(
+        ITfInsertAtSelection *iface, TfEditCookie ec, DWORD dwFlags,
+        IDataObject *pDataObject, ITfRange **ppRange)
+{
+    Context *This = impl_from_ITfInsertAtSelectionVtbl(iface);
+    FIXME("STUB:(%p)\n",This);
+    return E_NOTIMPL;
+}
+
+static const ITfInsertAtSelectionVtbl Context_InsertAtSelectionVtbl =
+{
+    InsertAtSelection_QueryInterface,
+    InsertAtSelection_AddRef,
+    InsertAtSelection_Release,
+
+    InsertAtSelection_InsertTextAtSelection,
+    InsertAtSelection_InsertEmbeddedAtSelection,
+};
+
 HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **ppOut, TfEditCookie *pecTextStore)
 {
     Context *This;
@@ -598,6 +656,7 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
 
     This->ContextVtbl= &Context_ContextVtbl;
     This->SourceVtbl = &Context_SourceVtbl;
+    This->InsertAtSelectionVtbl = &Context_InsertAtSelectionVtbl;
     This->refCount = 1;
     This->tidOwner = tidOwner;
     This->connected = FALSE;
