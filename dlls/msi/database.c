@@ -377,6 +377,7 @@ static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, D
     static const WCHAR type_char[] = {'C','H','A','R',0};
     static const WCHAR type_int[] = {'I','N','T',0};
     static const WCHAR type_long[] = {'L','O','N','G',0};
+    static const WCHAR type_object[] = {'O','B','J','E','C','T',0};
     static const WCHAR type_notnull[] = {' ','N','O','T',' ','N','U','L','L',0};
     static const WCHAR localizable[] = {' ','L','O','C','A','L','I','Z','A','B','L','E',0};
 
@@ -420,6 +421,11 @@ static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, D
                     type = type_int;
                 else
                     type = type_long;
+                break;
+            case 'v':
+                lstrcpyW(extra, type_notnull);
+            case 'V':
+                type = type_object;
                 break;
             default:
                 ERR("Unknown type: %c\n", types[i][0]);
@@ -522,8 +528,32 @@ static UINT msi_add_table_to_db(MSIDATABASE *db, LPWSTR *columns, LPWSTR *types,
     return r;
 }
 
+static LPWSTR msi_import_stream_filename(LPCWSTR path, LPCWSTR name)
+{
+    DWORD len;
+    LPWSTR fullname, ptr;
+
+    len = lstrlenW(path) + lstrlenW(name) + 1;
+    fullname = msi_alloc(len*sizeof(WCHAR));
+    if (!fullname)
+       return NULL;
+
+    lstrcpyW( fullname, path );
+
+    /* chop off extension from path */
+    ptr = strrchrW(fullname, '.');
+    if (!ptr)
+    {
+        msi_free (fullname);
+        return NULL;
+    }
+    *ptr++ = '\\';
+    lstrcpyW( ptr, name );
+    return fullname;
+}
+
 static UINT construct_record(DWORD num_columns, LPWSTR *types,
-                             LPWSTR *data, MSIRECORD **rec)
+                             LPWSTR *data, LPWSTR path, MSIRECORD **rec)
 {
     UINT i;
 
@@ -542,6 +572,20 @@ static UINT construct_record(DWORD num_columns, LPWSTR *types,
                 if (*data[i])
                     MSI_RecordSetInteger(*rec, i + 1, atoiW(data[i]));
                 break;
+            case 'V': case 'v':
+                if (*data[i])
+                {
+                    UINT r;
+                    LPWSTR file = msi_import_stream_filename(path, data[i]);
+                    if (!file)
+                        return ERROR_FUNCTION_FAILED;
+
+                    r = MSI_RecordSetStreamFromFileW(*rec, i + 1, file);
+                    msi_free (file);
+                    if (r != ERROR_SUCCESS)
+                        return ERROR_FUNCTION_FAILED;
+                }
+                break;
             default:
                 ERR("Unhandled column type: %c\n", types[i][0]);
                 msiobj_release(&(*rec)->hdr);
@@ -554,7 +598,8 @@ static UINT construct_record(DWORD num_columns, LPWSTR *types,
 
 static UINT msi_add_records_to_table(MSIDATABASE *db, LPWSTR *columns, LPWSTR *types,
                                      LPWSTR *labels, LPWSTR **records,
-                                     int num_columns, int num_records)
+                                     int num_columns, int num_records,
+                                     LPWSTR path)
 {
     UINT r;
     int i;
@@ -579,7 +624,7 @@ static UINT msi_add_records_to_table(MSIDATABASE *db, LPWSTR *columns, LPWSTR *t
 
     for (i = 0; i < num_records; i++)
     {
-        r = construct_record(num_columns, types, records[i], &rec);
+        r = construct_record(num_columns, types, records[i], path, &rec);
         if (r != ERROR_SUCCESS)
             goto done;
 
@@ -683,7 +728,7 @@ static UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
             }
         }
 
-        r = msi_add_records_to_table( db, columns, types, labels, records, num_columns, num_records );
+        r = msi_add_records_to_table( db, columns, types, labels, records, num_columns, num_records, path );
     }
 
 done:

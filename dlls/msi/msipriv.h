@@ -704,6 +704,7 @@ extern UINT MSI_RecordReadStream( MSIRECORD *, UINT, char *, LPDWORD);
 extern UINT MSI_RecordSetStream(MSIRECORD *, UINT, IStream *);
 extern UINT MSI_RecordGetFieldCount( const MSIRECORD *rec );
 extern UINT MSI_RecordStreamToFile( MSIRECORD *, UINT, LPCWSTR );
+extern UINT MSI_RecordSetStreamFromFileW( MSIRECORD *, UINT, LPCWSTR );
 extern UINT MSI_RecordCopyField( MSIRECORD *, UINT, MSIRECORD *, UINT );
 extern MSIRECORD *MSI_CloneRecord( MSIRECORD * );
 extern BOOL MSI_RecordsAreEqual( MSIRECORD *, MSIRECORD * );

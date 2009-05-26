@@ -1966,23 +1966,23 @@ static void test_binary_import(void)
 
     GetCurrentDirectory(MAX_PATH, path);
     r = MsiDatabaseImport(hdb, path, "bin_import.idt");
-    todo_wine ok(r == ERROR_SUCCESS , "Failed to import Binary table\n");
+    ok(r == ERROR_SUCCESS , "Failed to import Binary table\n");
 
     /* read file from the Binary table */
     query = "SELECT * FROM `Binary`";
     r = do_query(hdb, query, &rec);
-    todo_wine ok(r == ERROR_SUCCESS, "SELECT query failed: %d\n", r);
+    ok(r == ERROR_SUCCESS, "SELECT query failed: %d\n", r);
 
     size = MAX_PATH;
     r = MsiRecordGetString(rec, 1, file, &size);
-    todo_wine ok(r == ERROR_SUCCESS, "Failed to get string: %d\n", r);
-    todo_wine ok(!lstrcmp(file, "filename1"), "Expected 'filename1', got %s\n", file);
+    ok(r == ERROR_SUCCESS, "Failed to get string: %d\n", r);
+    ok(!lstrcmp(file, "filename1"), "Expected 'filename1', got %s\n", file);
 
     size = MAX_PATH;
     memset(buf, 0, MAX_PATH);
     r = MsiRecordReadStream(rec, 2, buf, &size);
-    todo_wine ok(r == ERROR_SUCCESS, "Failed to get stream: %d\n", r);
-    todo_wine ok(!lstrcmp(buf, "just some words"),
+    ok(r == ERROR_SUCCESS, "Failed to get stream: %d\n", r);
+    ok(!lstrcmp(buf, "just some words"),
         "Expected 'just some words', got %s\n", buf);
 
     r = MsiCloseHandle(rec);
