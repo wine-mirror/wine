@@ -17,6 +17,7 @@
  */
 
 #include <math.h>
+#include <limits.h>
 
 #include "jscript.h"
 #include "activscp.h"
@@ -374,12 +375,18 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
 {
     double d, tmp = 1.0;
 
-    if(ctx->ptr == ctx->end || !isdigitW(*ctx->ptr)) {
-        ERR("No digit after point\n");
+    if(ctx->ptr == ctx->end || (!isdigitW(*ctx->ptr) &&
+        *ctx->ptr!='.' && *ctx->ptr!='e' && *ctx->ptr!='E')) {
+        ERR("Illegal character\n");
         return 0;
     }
 
     d = int_part;
+    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
+        d = d*10 + *(ctx->ptr++) - '0';
+
+    if(*ctx->ptr == '.') ctx->ptr++;
+
     while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
         d += (tmp /= 10.0)*(*ctx->ptr++ - '0');
 
@@ -458,13 +465,20 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
     }
 
     while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
-        l = l*10 + *(ctx->ptr++)-'0';
+    {
+        d = l*10 + *(ctx->ptr)-'0';
+
+        /* Check for integer overflow */
+        if (l > INT_MAX/10 || d < 0)
+            return parse_double_literal(ctx, l, literal);
+
+        l = d;
+        ctx->ptr++;
+    }
 
     if(ctx->ptr < ctx->end) {
-        if(*ctx->ptr == '.') {
-            ctx->ptr++;
+        if(*ctx->ptr == '.' || *ctx->ptr == 'e' || *ctx->ptr == 'E')
             return parse_double_literal(ctx, l, literal);
-        }
 
         if(is_identifier_char(*ctx->ptr)) {
             WARN("unexpected identifier char\n");

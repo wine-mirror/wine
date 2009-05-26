@@ -33,6 +33,8 @@ ok(true === true, "true === true is false");
 ok(null === null, "null === null is false");
 ok(undefined === undefined, "undefined === undefined is false");
 ok(!(undefined === null), "!(undefined === null) is false");
+ok(1E0 === 1, "1E0 === 1 is false");
+ok(1000000*1000000 === 1000000000000, "1000000*1000000 === 1000000000000 is false");
 
 ok(1 !== 2, "1 !== 2 is false");
 ok(null !== undefined, "null !== undefined is false");
