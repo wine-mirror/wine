@@ -710,7 +710,7 @@ static void
 TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 			UINT mask)
 {
-    NMTVDISPINFOW callback;
+    NMTVDISPINFOEXW callback;
     HWND hwnd = infoPtr->hwnd;
 
     TRACE("mask %x callbackMask %x\n", mask, wineItem->callbackMask);
