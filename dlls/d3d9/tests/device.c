@@ -136,6 +136,56 @@ static void test_mipmap_levels(void)
     DestroyWindow( hwnd );
 }
 
+static void test_checkdevicemultisampletype(void)
+{
+
+    HRESULT               hr;
+    HWND                  hwnd = NULL;
+
+    IDirect3D9            *pD3d = NULL;
+    IDirect3DDevice9      *pDevice = NULL;
+    D3DPRESENT_PARAMETERS d3dpp;
+    D3DDISPLAYMODE        d3ddm;
+    DWORD                 qualityLevels;
+
+    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to create IDirect3D9Device (%08x)\n", hr);
+    if (FAILED(hr)) {
+        skip("failed to create a d3d device\n");
+        goto cleanup;
+    }
+
+    qualityLevels = 0;
+
+    hr = IDirect3D9_CheckDeviceMultiSampleType(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, TRUE,
+    D3DMULTISAMPLE_NONE, &qualityLevels);
+    ok(SUCCEEDED(hr), "CheckDeviceMultiSampleType failed with (%08x)\n", hr);
+    todo_wine ok(qualityLevels == 1,"qualitylevel is not 1 but %d\n",qualityLevels);
+
+    hr = IDirect3D9_CheckDeviceMultiSampleType(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, FALSE,
+    D3DMULTISAMPLE_NONE, &qualityLevels);
+    ok(SUCCEEDED(hr), "CheckDeviceMultiSampleType failed with (%08x)\n", hr);
+    todo_wine ok(qualityLevels == 1,"qualitylevel is not 1 but %d\n",qualityLevels);
+
+cleanup:
+    if (pD3d)     IUnknown_Release( pD3d );
+    if (pDevice)  IUnknown_Release( pDevice );
+    DestroyWindow( hwnd );
+}
+
 static void test_swapchain(void)
 {
     HRESULT                      hr;
@@ -2230,6 +2280,7 @@ START_TEST(device)
         test_swapchain();
         test_refcount();
         test_mipmap_levels();
+        test_checkdevicemultisampletype();
         test_cursor();
         test_reset();
         test_scene();
