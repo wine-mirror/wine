@@ -818,6 +818,36 @@ ok(tmp === Infinity, "Math.log(Infinity) = " + tmp);
 tmp = Math.log(-Infinity);
 ok(isNaN(tmp), "Math.log(-Infinity) is not NaN");
 
+tmp = Math.sin(0);
+ok(tmp === 0, "Math.sin(0) = " + tmp);
+
+tmp = Math.sin(Math.PI/2);
+ok(tmp === 1, "Math.sin(Math.PI/2) = " + tmp);
+
+tmp = Math.sin(-Math.PI/2);
+ok(tmp === -1, "Math.sin(-Math.PI/2) = " + tmp);
+
+tmp = Math.sin(Math.PI/3, 2);
+ok(Math.floor(tmp*100) === 86, "Math.sin(Math.PI/3, 2) = " + tmp);
+
+tmp = Math.sin(true);
+ok(Math.floor(tmp*100) === 84, "Math.sin(true) = " + tmp);
+
+tmp = Math.sin(false);
+ok(tmp === 0, "Math.sin(false) = " + tmp);
+
+tmp = Math.sin();
+ok(isNaN(tmp), "Math.sin() is not NaN");
+
+tmp = Math.sin(NaN);
+ok(isNaN(tmp), "Math.sin(NaN) is not NaN");
+
+tmp = Math.sin(Infinity);
+ok(isNaN(tmp), "Math.sin(Infinity) is not NaN");
+
+tmp = Math.sin(-Infinity);
+ok(isNaN(tmp), "Math.sin(-Infinity) is not NaN");
+
 var func = function  (a) {
         var a = 1;
         if(a) return;
