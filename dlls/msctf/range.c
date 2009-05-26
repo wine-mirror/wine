@@ -201,8 +201,21 @@ static HRESULT WINAPI Range_Collapse(ITfRange *iface, TfEditCookie ec,
         TfAnchor aPos)
 {
     Range *This = (Range *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %i %i\n",This,ec,aPos);
+
+    switch (aPos)
+    {
+        case TF_ANCHOR_START:
+            This->anchorEnd = This->anchorStart;
+            break;
+        case TF_ANCHOR_END:
+            This->anchorStart = This->anchorEnd;
+            break;
+        default:
+            return E_INVALIDARG;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Range_IsEqualStart(ITfRange *iface, TfEditCookie ec,
