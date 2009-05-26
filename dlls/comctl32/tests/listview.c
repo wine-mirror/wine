@@ -2497,9 +2497,10 @@ static void test_getviewrect(void)
     r = SendMessage(hwnd, LVM_GETVIEWRECT, 0, (LPARAM)&rect);
     expect(TRUE, r);
     expect(0, rect.left);
-    todo_wine expect(104, rect.right);
     expect(0, rect.top);
-    expect(73, rect.bottom);
+    /* precise value differs for 2k, XP and Vista */
+    ok(rect.bottom > 0, "Expected positive bottom value, got %d\n", rect.bottom);
+    ok(rect.right  > 0, "Expected positive right value, got %d\n", rect.right);
 
     DestroyWindow(hwnd);
 }
