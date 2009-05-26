@@ -440,6 +440,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
         struct wined3d_buffer_desc *desc, const void *data, IUnknown *parent, IWineD3DBuffer **buffer)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(WINED3DFMT_UNKNOWN, &This->adapter->gl_info);
     struct wined3d_buffer *object;
     HRESULT hr;
 
@@ -458,7 +459,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
     FIXME("Ignoring access flags (pool)\n");
 
     hr = resource_init(&object->resource, WINED3DRTYPE_BUFFER, This, desc->byte_width,
-            desc->usage, WINED3DFMT_UNKNOWN, WINED3DPOOL_MANAGED, parent);
+            desc->usage, format_desc, WINED3DPOOL_MANAGED, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
