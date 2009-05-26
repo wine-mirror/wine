@@ -176,6 +176,8 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_Release(ID3D10VertexShader *i
 
     if (!refcount)
     {
+        IWineD3DVertexShader_Release(This->wined3d_shader);
+        shader_free_signature(&This->output_signature);
         HeapFree(GetProcessHeap(), 0, This);
     }
 

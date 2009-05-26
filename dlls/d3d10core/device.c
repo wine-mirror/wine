@@ -970,9 +970,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *if
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device *iface,
         const void *byte_code, SIZE_T byte_code_length, ID3D10VertexShader **shader)
 {
+    struct d3d10_device *This = (struct d3d10_device *)iface;
     struct d3d10_vertex_shader *object;
+    struct d3d10_shader_info shader_info;
+    HRESULT hr;
 
-    FIXME("iface %p, byte_code %p, byte_code_length %lu, shader %p stub!\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p\n",
             iface, byte_code, byte_code_length, shader);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -984,6 +987,26 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device *i
 
     object->vtbl = &d3d10_vertex_shader_vtbl;
     object->refcount = 1;
+
+    shader_info.output_signature = &object->output_signature;
+    hr = shader_extract_from_dxbc(byte_code, byte_code_length, &shader_info);
+    if (FAILED(hr))
+    {
+        ERR("Failed to extract shader, hr %#x\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    hr = IWineD3DDevice_CreateVertexShader(This->wined3d_device, NULL,
+            shader_info.shader_code, &object->output_signature,
+            &object->wined3d_shader, (IUnknown *)object);
+    if (FAILED(hr))
+    {
+        ERR("CreateVertexShader failed, hr %#x\n", hr);
+        shader_free_signature(&object->output_signature);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     *shader = (ID3D10VertexShader *)object;
 
