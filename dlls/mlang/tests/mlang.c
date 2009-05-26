@@ -403,7 +403,8 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	if (TranslateCharsetInfo((DWORD *)(INT_PTR)cpinfo[i].uiFamilyCodePage, &csi, TCI_SRCCODEPAGE))
 	    ok(cpinfo[i].bGDICharset == csi.ciCharset, "%d != %d\n", cpinfo[i].bGDICharset, csi.ciCharset);
 	else
-	    trace("TranslateCharsetInfo failed for cp %u\n", cpinfo[i].uiFamilyCodePage);
+            if (winetest_debug > 1)
+                trace("TranslateCharsetInfo failed for cp %u\n", cpinfo[i].uiFamilyCodePage);
 
 #ifdef DUMP_CP_INFO
         trace("%u: codepage %u family %u\n", i, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
@@ -431,7 +432,8 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
             }
 	}
 	else
-	    trace("IsValidCodePage failed for cp %u\n", cpinfo[i].uiCodePage);
+            if (winetest_debug > 1)
+                trace("IsValidCodePage failed for cp %u\n", cpinfo[i].uiCodePage);
 
     if (memcmp(cpinfo[i].wszWebCharset,feffW,sizeof(WCHAR)*11)==0)
         skip("Legacy windows bug returning invalid charset of unicodeFEFF\n");
