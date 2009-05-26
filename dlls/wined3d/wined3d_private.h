@@ -2691,11 +2691,6 @@ void find_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockIm
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
-struct ps_compiled_shader {
-    struct ps_compile_args      args;
-    GLuint                      prgId;
-};
-
 typedef struct IWineD3DPixelShaderImpl {
     /* IUnknown parts */
     const IWineD3DPixelShaderVtbl *lpVtbl;
@@ -2713,8 +2708,7 @@ typedef struct IWineD3DPixelShaderImpl {
     int                         declared_in_count;
 
     /* The GL shader */
-    struct ps_compiled_shader   *gl_shaders;
-    UINT                        num_gl_shaders, shader_array_size;
+    void                        *backend_priv;
 
     /* Some information about the shader behavior */
     struct stb_const_desc       bumpenvmatconst[MAX_TEXTURES];

@@ -98,6 +98,16 @@ struct shader_arb_ctx_priv {
     const struct ps_compile_args    *cur_ps_args;
 };
 
+struct arb_ps_compiled_shader {
+    struct ps_compile_args          args;
+    GLuint                          prgId;
+};
+
+struct arb_pshader_private {
+    struct arb_ps_compiled_shader   *gl_shaders;
+    UINT                            num_gl_shaders, shader_array_size;
+};
+
 /********************************************************
  * ARB_[vertex/fragment]_program helper functions follow
  ********************************************************/
@@ -2204,28 +2214,35 @@ static GLuint find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_
 {
     UINT i;
     DWORD new_size;
-    struct ps_compiled_shader *new_array;
+    struct arb_ps_compiled_shader *new_array;
     SHADER_BUFFER buffer;
+    struct arb_pshader_private *shader_data;
+    GLuint ret;
+
+    if(!shader->backend_priv) {
+        shader->backend_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct arb_pshader_private));
+    }
+    shader_data = shader->backend_priv;
 
     /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
      * so a linear search is more performant than a hashmap or a binary search
      * (cache coherency etc)
      */
-    for(i = 0; i < shader->num_gl_shaders; i++) {
-        if(memcmp(&shader->gl_shaders[i].args, args, sizeof(*args)) == 0) {
-            return shader->gl_shaders[i].prgId;
+    for(i = 0; i < shader_data->num_gl_shaders; i++) {
+        if(memcmp(&shader_data->gl_shaders[i].args, args, sizeof(*args)) == 0) {
+            return shader_data->gl_shaders[i].prgId;
         }
     }
 
     TRACE("No matching GL shader found, compiling a new shader\n");
-    if(shader->shader_array_size == shader->num_gl_shaders) {
-        if (shader->num_gl_shaders)
+    if(shader_data->shader_array_size == shader_data->num_gl_shaders) {
+        if (shader_data->num_gl_shaders)
         {
-            new_size = shader->shader_array_size + max(1, shader->shader_array_size / 2);
-            new_array = HeapReAlloc(GetProcessHeap(), 0, shader->gl_shaders,
-                                    new_size * sizeof(*shader->gl_shaders));
+            new_size = shader_data->shader_array_size + max(1, shader_data->shader_array_size / 2);
+            new_array = HeapReAlloc(GetProcessHeap(), 0, shader_data->gl_shaders,
+                                    new_size * sizeof(*shader_data->gl_shaders));
         } else {
-            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader->gl_shaders));
+            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader_data->gl_shaders));
             new_size = 1;
         }
 
@@ -2233,21 +2250,21 @@ static GLuint find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_
             ERR("Out of memory\n");
             return 0;
         }
-        shader->gl_shaders = new_array;
-        shader->shader_array_size = new_size;
+        shader_data->gl_shaders = new_array;
+        shader_data->shader_array_size = new_size;
     }
 
-    shader->gl_shaders[shader->num_gl_shaders].args = *args;
+    shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
 
     pixelshader_update_samplers(&shader->baseShader.reg_maps,
             ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
 
     shader_buffer_init(&buffer);
-    shader->gl_shaders[shader->num_gl_shaders].prgId =
-            shader_arb_generate_pshader(shader, &buffer, args);
+    ret = shader_arb_generate_pshader(shader, &buffer, args);
     shader_buffer_free(&buffer);
+    shader_data->gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
 
-    return shader->gl_shaders[shader->num_gl_shaders++].prgId;
+    return ret;
 }
 
 static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const struct vs_compile_args *new,
@@ -2419,18 +2436,19 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version.type))
     {
         IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) iface;
+        struct arb_pshader_private *shader_data = This->backend_priv;
         UINT i;
 
+        if(!shader_data) return; /* This can happen if a shader was never compiled */
         ENTER_GL();
-        for(i = 0; i < This->num_gl_shaders; i++) {
-            GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId));
-            checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId))");
+        for(i = 0; i < shader_data->num_gl_shaders; i++) {
+            GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
+            checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId))");
         }
         LEAVE_GL();
-        HeapFree(GetProcessHeap(), 0, This->gl_shaders);
-        This->gl_shaders = NULL;
-        This->num_gl_shaders = 0;
-        This->shader_array_size = 0;
+        HeapFree(GetProcessHeap(), 0, shader_data->gl_shaders);
+        HeapFree(GetProcessHeap(), 0, shader_data);
+        This->backend_priv = NULL;
     } else {
         IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *) iface;
         UINT i;
