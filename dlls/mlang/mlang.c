@@ -1222,8 +1222,6 @@ HRESULT WINAPI Rfc1766ToLcidW(LCID *pLocale, LPCWSTR pszRfc1766)
     if (!pLocale || !pszRfc1766)
         return E_INVALIDARG;
 
-    *pLocale = 0;
-
     hr = EnumRfc1766_create(0, &enumrfc1766);
     if (FAILED(hr))
         return hr;

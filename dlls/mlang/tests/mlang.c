@@ -55,6 +55,11 @@ typedef struct lcid_tag_table {
 } lcid_table_entry;
 
 static const lcid_table_entry  lcid_table[] = {
+    {"e",     -1,       E_FAIL},
+    {"",      -1,       E_FAIL},
+    {"-",     -1,       E_FAIL},
+    {"e-",    -1,       E_FAIL},
+
     {"en",    9,        S_OK},       /* only en is special (using PRIMARYLANGID) */
     {"en-gb", 0x809,    S_OK},
     {"en-us", 0x409,    S_OK}
@@ -850,11 +855,7 @@ static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
     HRESULT ret;
     DWORD i;
 
-    static WCHAR e[] = { 'e',0 };
     static WCHAR en[] = { 'e','n',0 };
-    static WCHAR empty[] = { 0 };
-    static WCHAR dash[] = { '-',0 };
-    static WCHAR e_dash[] = { 'e','-',0 };
     static WCHAR en_them[] = { 'e','n','-','t','h','e','m',0 };
     static WCHAR english[] = { 'e','n','g','l','i','s','h',0 };
 
@@ -877,18 +878,6 @@ static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
 
     ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, NULL);
     ok(ret == E_INVALIDARG, "GetLcidFromRfc1766 returned: %08x\n", ret);
-
-    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, e);
-    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
-
-    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, empty);
-    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
-
-    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, dash);
-    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
-
-    ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, e_dash);
-    ok(ret == E_FAIL, "GetLcidFromRfc1766 returned: %08x\n", ret);
 
     ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, en_them);
     ok((ret == E_FAIL || ret == S_FALSE), "GetLcidFromRfc1766 returned: %08x\n", ret);
