@@ -2506,6 +2506,9 @@ typedef struct {
       INT  cChildren;
       LPARAM lParam;
       INT iIntegral;
+      UINT uStateEx;        /* _WIN32_IE >= 0x600 */
+      HWND hwnd;            /* _WIN32_IE >= 0x600 */
+      INT iExpandedImage;   /* _WIN32_IE >= 0x600 */
 } TVITEMEXA, *LPTVITEMEXA;
 
 typedef struct {
@@ -2520,6 +2523,9 @@ typedef struct {
       INT cChildren;
       LPARAM lParam;
       INT iIntegral;
+      UINT uStateEx;        /* _WIN32_IE >= 0x600 */
+      HWND hwnd;            /* _WIN32_IE >= 0x600 */
+      INT iExpandedImage;   /* _WIN32_IE >= 0x600 */
 } TVITEMEXW, *LPTVITEMEXW;
 
 #define TVITEMEX   WINELIB_NAME_AW(TVITEMEX)
@@ -2595,8 +2601,20 @@ typedef struct tagTVDISPINFOW {
 	TVITEMW	item;
 } NMTVDISPINFOW, *LPNMTVDISPINFOW;
 
+typedef struct tagTVDISPINFOEXA {
+	NMHDR	hdr;
+	TVITEMEXA	item;
+} NMTVDISPINFOEXA, *LPNMTVDISPINFOEXA;
+
+typedef struct tagTVDISPINFOEXW {
+	NMHDR	hdr;
+	TVITEMEXW	item;
+} NMTVDISPINFOEXW, *LPNMTVDISPINFOEXW;
+
 #define NMTVDISPINFO            WINELIB_NAME_AW(NMTVDISPINFO)
 #define LPNMTVDISPINFO          WINELIB_NAME_AW(LPNMTVDISPINFO)
+#define NMTVDISPINFOEX          WINELIB_NAME_AW(NMTVDISPINFOEX)
+#define LPNMTVDISPINFOEX        WINELIB_NAME_AW(LPNMTVDISPINFOEX)
 #define TV_DISPINFOA            NMTVDISPINFOA
 #define TV_DISPINFOW            NMTVDISPINFOW
 #define TV_DISPINFO             NMTVDISPINFO
