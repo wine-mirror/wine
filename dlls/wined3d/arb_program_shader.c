@@ -2046,6 +2046,39 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     char fragcolor[16];
     DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
     struct shader_arb_ctx_priv priv_ctx;
+    BOOL dcl_tmp = args->super.srgb_correction;
+
+    char srgbtmp[3][4];
+    unsigned int i, found = 0;
+
+    for(i = 0; i < This->baseShader.limits.temporary; i++) {
+
+        /* Don't overwrite the color source */
+        if(This->color0_mov && i == This->color0_reg) continue;
+        else if(reg_maps->shader_version.major < 2 && i == 0) continue;
+
+        if(reg_maps->temporary[i]) {
+            sprintf(srgbtmp[found], "R%u", i);
+            found++;
+            if(found == 3) break;
+        }
+    }
+
+    switch(found) {
+        case 3: dcl_tmp = FALSE; break;
+        case 0:
+            sprintf(srgbtmp[0], "TA");
+            sprintf(srgbtmp[1], "TB");
+            sprintf(srgbtmp[2], "TC");
+            break;
+        case 1:
+            sprintf(srgbtmp[1], "TA");
+            sprintf(srgbtmp[2], "TB");
+            break;
+        case 2:
+            sprintf(srgbtmp[2], "TA");
+            break;
+    }
 
     /*  Create the hw ARB shader */
     memset(&priv_ctx, 0, sizeof(priv_ctx));
@@ -2117,7 +2150,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
 
     if(args->super.srgb_correction) {
-        arbfp_add_sRGB_correction(buffer, fragcolor, "TA", "TB", "TC");
+        arbfp_add_sRGB_correction(buffer, fragcolor, srgbtmp[0], srgbtmp[1], srgbtmp[2]);
         shader_addline(buffer, "MOV result.color.a, %s;\n", fragcolor);
     } else if(reg_maps->shader_version.major < 2) {
         shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
