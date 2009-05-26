@@ -1926,6 +1926,60 @@ static GLuint create_arb_blt_fragment_program(const WineD3D_GL_Info *gl_info, en
     return program_id;
 }
 
+static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
+                                          SHADER_BUFFER *buffer, const struct ps_compile_args *args);
+
+/* GL locking is done by the caller */
+static GLuint find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args)
+{
+    UINT i;
+    DWORD new_size;
+    struct ps_compiled_shader *new_array;
+    SHADER_BUFFER buffer;
+
+    /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
+     * so a linear search is more performant than a hashmap or a binary search
+     * (cache coherency etc)
+     */
+    for(i = 0; i < shader->num_gl_shaders; i++) {
+        if(memcmp(&shader->gl_shaders[i].args, args, sizeof(*args)) == 0) {
+            return shader->gl_shaders[i].prgId;
+        }
+    }
+
+    TRACE("No matching GL shader found, compiling a new shader\n");
+    if(shader->shader_array_size == shader->num_gl_shaders) {
+        if (shader->num_gl_shaders)
+        {
+            new_size = shader->shader_array_size + max(1, shader->shader_array_size / 2);
+            new_array = HeapReAlloc(GetProcessHeap(), 0, shader->gl_shaders,
+                                    new_size * sizeof(*shader->gl_shaders));
+        } else {
+            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader->gl_shaders));
+            new_size = 1;
+        }
+
+        if(!new_array) {
+            ERR("Out of memory\n");
+            return 0;
+        }
+        shader->gl_shaders = new_array;
+        shader->shader_array_size = new_size;
+    }
+
+    shader->gl_shaders[shader->num_gl_shaders].args = *args;
+
+    pixelshader_update_samplers(&shader->baseShader.reg_maps,
+            ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
+
+    shader_buffer_init(&buffer);
+    shader->gl_shaders[shader->num_gl_shaders].prgId =
+            shader_arb_generate_pshader((IWineD3DPixelShader *)shader, &buffer, args);
+    shader_buffer_free(&buffer);
+
+    return shader->gl_shaders[shader->num_gl_shaders++].prgId;
+}
+
 /* GL locking is done by the caller */
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -1957,8 +2011,8 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         struct ps_compile_args compile_args;
         TRACE("Using pixel shader\n");
         find_ps_compile_args((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader, This->stateBlock, &compile_args);
-        priv->current_fprogram_id = find_gl_pshader((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader,
-                                                    &compile_args);
+        priv->current_fprogram_id = find_arb_pshader((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader,
+                                                     &compile_args);
 
         /* Bind the fragment program */
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
@@ -2539,7 +2593,6 @@ const shader_backend_t arb_program_shader_backend = {
     shader_arb_alloc,
     shader_arb_free,
     shader_arb_dirty_const,
-    shader_arb_generate_pshader,
     shader_arb_generate_vshader,
     shader_arb_get_caps,
     shader_arb_color_fixup_supported,

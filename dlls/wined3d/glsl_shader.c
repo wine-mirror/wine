@@ -3608,6 +3608,58 @@ static void hardcode_local_constants(IWineD3DBaseShaderImpl *shader, const WineD
     checkGLcall("Hardcoding local constants\n");
 }
 
+static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
+                                           SHADER_BUFFER *buffer, const struct ps_compile_args *args);
+
+static GLhandleARB find_glsl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args)
+{
+    UINT i;
+    DWORD new_size;
+    struct ps_compiled_shader *new_array;
+    SHADER_BUFFER buffer;
+
+    /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
+     * so a linear search is more performant than a hashmap or a binary search
+     * (cache coherency etc)
+     */
+    for(i = 0; i < shader->num_gl_shaders; i++) {
+        if(memcmp(&shader->gl_shaders[i].args, args, sizeof(*args)) == 0) {
+            return shader->gl_shaders[i].prgId;
+        }
+    }
+
+    TRACE("No matching GL shader found, compiling a new shader\n");
+    if(shader->shader_array_size == shader->num_gl_shaders) {
+        if (shader->num_gl_shaders)
+        {
+            new_size = shader->shader_array_size + max(1, shader->shader_array_size / 2);
+            new_array = HeapReAlloc(GetProcessHeap(), 0, shader->gl_shaders,
+                                    new_size * sizeof(*shader->gl_shaders));
+        } else {
+            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader->gl_shaders));
+            new_size = 1;
+        }
+
+        if(!new_array) {
+            ERR("Out of memory\n");
+            return 0;
+        }
+        shader->gl_shaders = new_array;
+        shader->shader_array_size = new_size;
+    }
+
+    shader->gl_shaders[shader->num_gl_shaders].args = *args;
+
+    pixelshader_update_samplers(&shader->baseShader.reg_maps,
+            ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
+    shader_buffer_init(&buffer);
+    shader->gl_shaders[shader->num_gl_shaders].prgId =
+            shader_glsl_generate_pshader((IWineD3DPixelShader*) shader, &buffer, args);
+    shader_buffer_free(&buffer);
+
+    return shader->gl_shaders[shader->num_gl_shaders++].prgId;
+}
+
 /** Sets the GLSL program ID for the given pixel and vertex shader combination.
  * It sets the programId on the current StateBlock (because it should be called
  * inside of the DrawPrimitive() part of the render loop).
@@ -3715,7 +3767,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     }
 
     if(use_ps) {
-        pshader_id = find_gl_pshader((IWineD3DPixelShaderImpl *) pshader, &ps_compile_args);
+        pshader_id = find_glsl_pshader((IWineD3DPixelShaderImpl *) pshader, &ps_compile_args);
     } else {
         pshader_id = 0;
     }
@@ -4512,7 +4564,6 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_alloc,
     shader_glsl_free,
     shader_glsl_dirty_const,
-    shader_glsl_generate_pshader,
     shader_glsl_generate_vshader,
     shader_glsl_get_caps,
     shader_glsl_color_fixup_supported,

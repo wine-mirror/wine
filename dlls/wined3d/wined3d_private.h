@@ -809,8 +809,6 @@ typedef struct {
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
-    GLuint (*shader_generate_pshader)(IWineD3DPixelShader *iface,
-            SHADER_BUFFER *buffer, const struct ps_compile_args *args);
     GLuint (*shader_generate_vshader)(IWineD3DVertexShader *iface,
             SHADER_BUFFER *buffer, const struct vs_compile_args *args);
     void (*shader_get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *caps);
@@ -2729,7 +2727,7 @@ typedef struct IWineD3DPixelShaderImpl {
 } IWineD3DPixelShaderImpl;
 
 extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
-GLuint find_gl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args);
+void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseTexture * const *textures);
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args);
 
 /* sRGB correction constants */
