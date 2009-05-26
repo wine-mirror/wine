@@ -129,9 +129,10 @@ static void test_GetVolumeNameForVolumeMountPointA(void)
     ok(reti < MAX_PATH, "temp path should fit into MAX_PATH\n");
 
     ret = pGetVolumeNameForVolumeMountPointA(path, volume, 0);
-    ok(ret == FALSE && GetLastError() == ERROR_FILENAME_EXCED_RANGE,
-        "GetVolumeNameForVolumeMountPointA succeeded or wrong error, last=%d\n",
-        GetLastError());
+    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
+    ok(GetLastError() == ERROR_FILENAME_EXCED_RANGE ||
+        GetLastError() == ERROR_INVALID_PARAMETER, /* Vista */
+        "wrong error, last=%d\n", GetLastError());
 
     if (0) { /* these crash on XP */
     ret = pGetVolumeNameForVolumeMountPointA(path, NULL, len);
@@ -195,9 +196,10 @@ static void test_GetVolumeNameForVolumeMountPointW(void)
     }
 
     ret = pGetVolumeNameForVolumeMountPointW(path, volume, 0);
-    ok(ret == FALSE && GetLastError() == ERROR_FILENAME_EXCED_RANGE,
-        "GetVolumeNameForVolumeMountPointA succeeded or wrong error, last=%d\n",
-        GetLastError());
+    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
+    ok(GetLastError() == ERROR_FILENAME_EXCED_RANGE ||
+        GetLastError() == ERROR_INVALID_PARAMETER, /* Vista */
+        "wrong error, last=%d\n", GetLastError());
 
     if (0) { /* these crash on XP */
     ret = pGetVolumeNameForVolumeMountPointW(path, NULL, len);
