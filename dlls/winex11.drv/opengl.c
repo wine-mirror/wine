@@ -3635,6 +3635,10 @@ XVisualInfo *visual_from_fbconfig_id( XID fbconfig_id )
 
 #else  /* no OpenGL includes */
 
+void X11DRV_OpenGL_Cleanup(void)
+{
+}
+
 static inline void opengl_error(void)
 {
     static int warned;
