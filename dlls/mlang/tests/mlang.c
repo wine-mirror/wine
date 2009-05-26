@@ -935,6 +935,12 @@ static void test_Rfc1766ToLcid(void)
 
     }
 
+    ret = Rfc1766ToLcidA(&lcid, NULL);
+    ok(ret == E_INVALIDARG, "got 0x%08x (expected E_INVALIDARG)\n", ret);
+
+    ret = Rfc1766ToLcidA(NULL, "en");
+    ok(ret == E_INVALIDARG, "got 0x%08x (expected E_INVALIDARG)\n", ret);
+
 }
 
 

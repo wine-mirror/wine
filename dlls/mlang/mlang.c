@@ -1238,6 +1238,9 @@ HRESULT WINAPI Rfc1766ToLcidA(LCID *lcid, LPCSTR rfc1766A)
 {
     WCHAR rfc1766W[MAX_RFC1766_NAME + 1];
 
+    if (!rfc1766A)
+        return E_INVALIDARG;
+
     MultiByteToWideChar(CP_ACP, 0, rfc1766A, -1, rfc1766W, MAX_RFC1766_NAME);
     rfc1766W[MAX_RFC1766_NAME] = 0;
 
