@@ -1926,232 +1926,6 @@ static GLuint create_arb_blt_fragment_program(const WineD3D_GL_Info *gl_info, en
     return program_id;
 }
 
-static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
-                                          SHADER_BUFFER *buffer, const struct ps_compile_args *args);
-
-/* GL locking is done by the caller */
-static GLuint find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args)
-{
-    UINT i;
-    DWORD new_size;
-    struct ps_compiled_shader *new_array;
-    SHADER_BUFFER buffer;
-
-    /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
-     * so a linear search is more performant than a hashmap or a binary search
-     * (cache coherency etc)
-     */
-    for(i = 0; i < shader->num_gl_shaders; i++) {
-        if(memcmp(&shader->gl_shaders[i].args, args, sizeof(*args)) == 0) {
-            return shader->gl_shaders[i].prgId;
-        }
-    }
-
-    TRACE("No matching GL shader found, compiling a new shader\n");
-    if(shader->shader_array_size == shader->num_gl_shaders) {
-        if (shader->num_gl_shaders)
-        {
-            new_size = shader->shader_array_size + max(1, shader->shader_array_size / 2);
-            new_array = HeapReAlloc(GetProcessHeap(), 0, shader->gl_shaders,
-                                    new_size * sizeof(*shader->gl_shaders));
-        } else {
-            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader->gl_shaders));
-            new_size = 1;
-        }
-
-        if(!new_array) {
-            ERR("Out of memory\n");
-            return 0;
-        }
-        shader->gl_shaders = new_array;
-        shader->shader_array_size = new_size;
-    }
-
-    shader->gl_shaders[shader->num_gl_shaders].args = *args;
-
-    pixelshader_update_samplers(&shader->baseShader.reg_maps,
-            ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
-
-    shader_buffer_init(&buffer);
-    shader->gl_shaders[shader->num_gl_shaders].prgId =
-            shader_arb_generate_pshader((IWineD3DPixelShader *)shader, &buffer, args);
-    shader_buffer_free(&buffer);
-
-    return shader->gl_shaders[shader->num_gl_shaders++].prgId;
-}
-
-/* GL locking is done by the caller */
-static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_arb_priv *priv = This->shader_priv;
-    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-
-    if (useVS) {
-        struct vs_compile_args compile_args;
-
-        TRACE("Using vertex shader\n");
-        find_vs_compile_args((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, This->stateBlock, &compile_args);
-        priv->current_vprogram_id = find_gl_vshader((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, &compile_args);
-
-        /* Bind the vertex program */
-        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
-        checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id);");
-
-        /* Enable OpenGL vertex programs */
-        glEnable(GL_VERTEX_PROGRAM_ARB);
-        checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
-    } else if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
-        priv->current_vprogram_id = 0;
-        glDisable(GL_VERTEX_PROGRAM_ARB);
-        checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
-    }
-
-    if (usePS) {
-        struct ps_compile_args compile_args;
-        TRACE("Using pixel shader\n");
-        find_ps_compile_args((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader, This->stateBlock, &compile_args);
-        priv->current_fprogram_id = find_arb_pshader((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader,
-                                                     &compile_args);
-
-        /* Bind the fragment program */
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
-        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id);");
-
-        if(!priv->use_arbfp_fixed_func) {
-            /* Enable OpenGL fragment programs */
-            glEnable(GL_FRAGMENT_PROGRAM_ARB);
-            checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-        }
-        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
-
-        shader_arb_ps_local_constants(This);
-    } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
-        /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
-         * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
-         * replacement shader
-         */
-        glDisable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
-        priv->current_fprogram_id = 0;
-    }
-}
-
-/* GL locking is done by the caller */
-static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_arb_priv *priv = This->shader_priv;
-    GLuint *blt_fprogram = &priv->depth_blt_fprogram_id[tex_type];
-    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-
-    if (!priv->depth_blt_vprogram_id) priv->depth_blt_vprogram_id = create_arb_blt_vertex_program(gl_info);
-    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->depth_blt_vprogram_id));
-    glEnable(GL_VERTEX_PROGRAM_ARB);
-
-    if (!*blt_fprogram) *blt_fprogram = create_arb_blt_fragment_program(gl_info, tex_type);
-    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, *blt_fprogram));
-    glEnable(GL_FRAGMENT_PROGRAM_ARB);
-}
-
-/* GL locking is done by the caller */
-static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct shader_arb_priv *priv = This->shader_priv;
-    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-
-    if (priv->current_vprogram_id) {
-        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
-        checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
-
-        glEnable(GL_VERTEX_PROGRAM_ARB);
-        checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-
-        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
-    } else {
-        glDisable(GL_VERTEX_PROGRAM_ARB);
-        checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
-    }
-
-    if (priv->current_fprogram_id) {
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
-        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
-
-        glEnable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-
-        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
-    } else {
-        glDisable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
-    }
-}
-
-static void shader_arb_destroy(IWineD3DBaseShader *iface) {
-    IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
-    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)baseShader->baseShader.device)->adapter->gl_info;
-
-    if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version.type))
-    {
-        IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) iface;
-        UINT i;
-
-        ENTER_GL();
-        for(i = 0; i < This->num_gl_shaders; i++) {
-            GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId));
-            checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId))");
-        }
-        LEAVE_GL();
-        HeapFree(GetProcessHeap(), 0, This->gl_shaders);
-        This->gl_shaders = NULL;
-        This->num_gl_shaders = 0;
-        This->shader_array_size = 0;
-    } else {
-        IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *) iface;
-        UINT i;
-
-        ENTER_GL();
-        for(i = 0; i < This->num_gl_shaders; i++) {
-            GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId));
-            checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId))");
-        }
-        LEAVE_GL();
-        HeapFree(GetProcessHeap(), 0, This->gl_shaders);
-        This->gl_shaders = NULL;
-        This->num_gl_shaders = 0;
-        This->shader_array_size = 0;
-    }
-}
-
-static HRESULT shader_arb_alloc(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    This->shader_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_arb_priv));
-    return WINED3D_OK;
-}
-
-static void shader_arb_free(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
-    struct shader_arb_priv *priv = This->shader_priv;
-    int i;
-
-    ENTER_GL();
-    if(priv->depth_blt_vprogram_id) {
-        GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
-    }
-    for (i = 0; i < tex_type_count; ++i) {
-        if (priv->depth_blt_fprogram_id[i]) {
-            GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id[i]));
-        }
-    }
-    LEAVE_GL();
-
-    HeapFree(GetProcessHeap(), 0, This->shader_priv);
-}
-
-static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {
-    return TRUE;
-}
-
 static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcolor, const char *tmp1,
                                       const char *tmp2, const char *tmp3) {
     /* Perform sRGB write correction. See GLX_EXT_framebuffer_sRGB */
@@ -2169,7 +1943,6 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
     shader_addline(buffer, "CMP result.color.xyz, %s, %s, %s;\n", tmp3, tmp2, tmp1);
 }
 
-/* GL locking is done by the caller */
 static GLuint shader_arb_generate_pshader(IWineD3DPixelShader *iface,
         SHADER_BUFFER *buffer, const struct ps_compile_args *args)
 {
@@ -2425,6 +2198,229 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShader *iface,
     HeapFree(GetProcessHeap(), 0, lconst_map);
 
     return ret;
+}
+
+/* GL locking is done by the caller */
+static GLuint find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args)
+{
+    UINT i;
+    DWORD new_size;
+    struct ps_compiled_shader *new_array;
+    SHADER_BUFFER buffer;
+
+    /* Usually we have very few GL shaders for each d3d shader(just 1 or maybe 2),
+     * so a linear search is more performant than a hashmap or a binary search
+     * (cache coherency etc)
+     */
+    for(i = 0; i < shader->num_gl_shaders; i++) {
+        if(memcmp(&shader->gl_shaders[i].args, args, sizeof(*args)) == 0) {
+            return shader->gl_shaders[i].prgId;
+        }
+    }
+
+    TRACE("No matching GL shader found, compiling a new shader\n");
+    if(shader->shader_array_size == shader->num_gl_shaders) {
+        if (shader->num_gl_shaders)
+        {
+            new_size = shader->shader_array_size + max(1, shader->shader_array_size / 2);
+            new_array = HeapReAlloc(GetProcessHeap(), 0, shader->gl_shaders,
+                                    new_size * sizeof(*shader->gl_shaders));
+        } else {
+            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader->gl_shaders));
+            new_size = 1;
+        }
+
+        if(!new_array) {
+            ERR("Out of memory\n");
+            return 0;
+        }
+        shader->gl_shaders = new_array;
+        shader->shader_array_size = new_size;
+    }
+
+    shader->gl_shaders[shader->num_gl_shaders].args = *args;
+
+    pixelshader_update_samplers(&shader->baseShader.reg_maps,
+            ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
+
+    shader_buffer_init(&buffer);
+    shader->gl_shaders[shader->num_gl_shaders].prgId =
+            shader_arb_generate_pshader((IWineD3DPixelShader *)shader, &buffer, args);
+    shader_buffer_free(&buffer);
+
+    return shader->gl_shaders[shader->num_gl_shaders++].prgId;
+}
+
+/* GL locking is done by the caller */
+static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct shader_arb_priv *priv = This->shader_priv;
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+
+    if (useVS) {
+        struct vs_compile_args compile_args;
+
+        TRACE("Using vertex shader\n");
+        find_vs_compile_args((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, This->stateBlock, &compile_args);
+        priv->current_vprogram_id = find_gl_vshader((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, &compile_args);
+
+        /* Bind the vertex program */
+        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
+        checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id);");
+
+        /* Enable OpenGL vertex programs */
+        glEnable(GL_VERTEX_PROGRAM_ARB);
+        checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
+        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
+    } else if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
+        priv->current_vprogram_id = 0;
+        glDisable(GL_VERTEX_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
+    }
+
+    if (usePS) {
+        struct ps_compile_args compile_args;
+        TRACE("Using pixel shader\n");
+        find_ps_compile_args((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader, This->stateBlock, &compile_args);
+        priv->current_fprogram_id = find_arb_pshader((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader,
+                                                     &compile_args);
+
+        /* Bind the fragment program */
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
+        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id);");
+
+        if(!priv->use_arbfp_fixed_func) {
+            /* Enable OpenGL fragment programs */
+            glEnable(GL_FRAGMENT_PROGRAM_ARB);
+            checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
+        }
+        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
+
+        shader_arb_ps_local_constants(This);
+    } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
+        /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
+         * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
+         * replacement shader
+         */
+        glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
+        priv->current_fprogram_id = 0;
+    }
+}
+
+/* GL locking is done by the caller */
+static void shader_arb_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct shader_arb_priv *priv = This->shader_priv;
+    GLuint *blt_fprogram = &priv->depth_blt_fprogram_id[tex_type];
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+
+    if (!priv->depth_blt_vprogram_id) priv->depth_blt_vprogram_id = create_arb_blt_vertex_program(gl_info);
+    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->depth_blt_vprogram_id));
+    glEnable(GL_VERTEX_PROGRAM_ARB);
+
+    if (!*blt_fprogram) *blt_fprogram = create_arb_blt_fragment_program(gl_info, tex_type);
+    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, *blt_fprogram));
+    glEnable(GL_FRAGMENT_PROGRAM_ARB);
+}
+
+/* GL locking is done by the caller */
+static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct shader_arb_priv *priv = This->shader_priv;
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+
+    if (priv->current_vprogram_id) {
+        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
+        checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
+
+        glEnable(GL_VERTEX_PROGRAM_ARB);
+        checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
+
+        TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
+    } else {
+        glDisable(GL_VERTEX_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
+    }
+
+    if (priv->current_fprogram_id) {
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
+        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
+
+        glEnable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
+
+        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
+    } else {
+        glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
+    }
+}
+
+static void shader_arb_destroy(IWineD3DBaseShader *iface) {
+    IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
+    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)baseShader->baseShader.device)->adapter->gl_info;
+
+    if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version.type))
+    {
+        IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) iface;
+        UINT i;
+
+        ENTER_GL();
+        for(i = 0; i < This->num_gl_shaders; i++) {
+            GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId));
+            checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId))");
+        }
+        LEAVE_GL();
+        HeapFree(GetProcessHeap(), 0, This->gl_shaders);
+        This->gl_shaders = NULL;
+        This->num_gl_shaders = 0;
+        This->shader_array_size = 0;
+    } else {
+        IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *) iface;
+        UINT i;
+
+        ENTER_GL();
+        for(i = 0; i < This->num_gl_shaders; i++) {
+            GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId));
+            checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &This->gl_shaders[i].prgId))");
+        }
+        LEAVE_GL();
+        HeapFree(GetProcessHeap(), 0, This->gl_shaders);
+        This->gl_shaders = NULL;
+        This->num_gl_shaders = 0;
+        This->shader_array_size = 0;
+    }
+}
+
+static HRESULT shader_arb_alloc(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    This->shader_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_arb_priv));
+    return WINED3D_OK;
+}
+
+static void shader_arb_free(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    struct shader_arb_priv *priv = This->shader_priv;
+    int i;
+
+    ENTER_GL();
+    if(priv->depth_blt_vprogram_id) {
+        GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_vprogram_id));
+    }
+    for (i = 0; i < tex_type_count; ++i) {
+        if (priv->depth_blt_fprogram_id[i]) {
+            GL_EXTCALL(glDeleteProgramsARB(1, &priv->depth_blt_fprogram_id[i]));
+        }
+    }
+    LEAVE_GL();
+
+    HeapFree(GetProcessHeap(), 0, This->shader_priv);
+}
+
+static BOOL shader_arb_dirty_const(IWineD3DDevice *iface) {
+    return TRUE;
 }
 
 static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *pCaps)
