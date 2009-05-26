@@ -3013,6 +3013,7 @@ interface IWineD3DDevice : IWineD3DBase
     HRESULT CreateVertexShader(
         [in] IWineD3DVertexDeclaration *declaration,
         [in] const DWORD *function,
+        [in] const struct wined3d_shader_signature *output_signature,
         [out] IWineD3DVertexShader **shader,
         [in] IUnknown *parent
     );
