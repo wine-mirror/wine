@@ -2033,9 +2033,15 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
     shader_addline(buffer, "SLT %s, srgb_consts1.y, %s;\n", tmp3, fragcolor);
     shader_addline(buffer, "SGE %s, srgb_consts1.y, %s;\n", tmp4, fragcolor);
     /* Store the components > 0.0031308 in the destination */
-    shader_addline(buffer, "MUL %s, %s, %s;\n", fragcolor, tmp1, tmp3);
+    shader_addline(buffer, "MUL %s.xyz, %s, %s;\n", fragcolor, tmp1, tmp3);
     /* Add the components that are < 0.0031308 */
-    shader_addline(buffer, "MAD result.color.xyz, %s, %s, %s;\n", tmp2, tmp4, fragcolor);
+    shader_addline(buffer, "MAD %s.xyz, %s, %s, %s;\n", fragcolor, tmp2, tmp4, fragcolor);
+    /* Move everything into result.color at once. Nvidia hardware cannot handle partial
+     * result.color writes(.rgb first, then .a), or handle overwriting already written
+     * components. The assembler uses a temporary register in this case, which is usually
+     * not allocated from one of our registers that were used earlier.
+     */
+    shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     /* [0.0;1.0] clamping. Not needed, this is done implicitly */
 }
 
@@ -2164,7 +2170,6 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
 
     if(args->super.srgb_correction) {
         arbfp_add_sRGB_correction(buffer, fragcolor, srgbtmp[0], srgbtmp[1], srgbtmp[2], srgbtmp[3]);
-        shader_addline(buffer, "MOV result.color.a, %s;\n", fragcolor);
     } else if(reg_maps->shader_version.major < 2) {
         shader_addline(buffer, "MOV result.color, %s;\n", fragcolor);
     }
@@ -3623,7 +3628,6 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     if(settings->sRGB_write) {
         shader_addline(&buffer, "MAD ret, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
         arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2", "tempreg");
-        shader_addline(&buffer, "MOV result.color.w, ret.w;\n");
     } else {
         shader_addline(&buffer, "MAD result.color, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
     }
