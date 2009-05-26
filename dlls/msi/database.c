@@ -1174,8 +1174,8 @@ done:
 static LPWSTR get_key_value(MSIQUERY *view, LPCWSTR key, MSIRECORD *rec)
 {
     MSIRECORD *colnames;
-    LPWSTR str;
-    UINT r, i = 0;
+    LPWSTR str, val;
+    UINT r, i = 0, sz = 0;
     int cmp;
 
     r = MSI_ViewGetColumnInfo(view, MSICOLINFO_NAMES, &colnames);
@@ -1190,7 +1190,43 @@ static LPWSTR get_key_value(MSIQUERY *view, LPCWSTR key, MSIRECORD *rec)
     } while (cmp);
 
     msiobj_release(&colnames->hdr);
-    return msi_dup_record_field(rec, i);
+
+    r = MSI_RecordGetStringW(rec, i, NULL, &sz);
+    if (r != ERROR_SUCCESS)
+        return NULL;
+    sz++;
+
+    if (MSI_RecordGetString(rec, i))  /* check record field is a string */
+    {
+        /* quote string record fields */
+        const WCHAR szQuote[] = {'\'', 0};
+        sz += 2;
+        val = msi_alloc(sz*sizeof(WCHAR));
+        if (!val)
+            return NULL;
+
+        lstrcpyW(val, szQuote);
+        r = MSI_RecordGetStringW(rec, i, val+1, &sz);
+        lstrcpyW(val+1+sz, szQuote);
+    }
+    else
+    {
+        /* do not quote integer record fields */
+        val = msi_alloc(sz*sizeof(WCHAR));
+        if (!val)
+            return NULL;
+
+        r = MSI_RecordGetStringW(rec, i, val, &sz);
+    }
+
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to get string!\n");
+        msi_free(val);
+        return NULL;
+    }
+
+    return val;
 }
 
 static LPWSTR create_diff_row_query(MSIDATABASE *merge, MSIQUERY *view,

@@ -6968,19 +6968,19 @@ static void test_dbmerge(void)
 
     /* primary key is string */
     r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "SELECT * FROM `One`";
     r = do_query(hdb, query, &hrec);
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     size = MAX_PATH;
     r = MsiRecordGetStringA(hrec, 1, buf, &size);
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmpA(buf, "hi"), "Expected \"hi\", got \"%s\"\n", buf);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "hi"), "Expected \"hi\", got \"%s\"\n", buf);
 
     r = MsiRecordGetInteger(hrec, 2);
-    todo_wine ok(r == 1, "Expected 1, got %d\n", r);
+    ok(r == 1, "Expected 1, got %d\n", r);
 
     MsiCloseHandle(hrec);
 
