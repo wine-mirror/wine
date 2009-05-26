@@ -1056,6 +1056,12 @@ typedef struct _tagMERGETABLE
     struct list rows;
     LPWSTR name;
     DWORD numconflicts;
+    LPWSTR *columns;
+    DWORD numcolumns;
+    LPWSTR *types;
+    DWORD numtypes;
+    LPWSTR *labels;
+    DWORD numlabels;
 } MERGETABLE;
 
 typedef struct _tagMERGEROW
@@ -1302,29 +1308,32 @@ static UINT merge_diff_row(MSIRECORD *rec, LPVOID param)
     MERGEROW *mergerow;
     MSIQUERY *dbview = NULL;
     MSIRECORD *row = NULL;
-    LPWSTR query;
-    UINT r;
+    LPWSTR query = NULL;
+    UINT r = ERROR_SUCCESS;
 
-    query = create_diff_row_query(data->merge, data->curview, table->name, rec);
-    if (!query)
-        return ERROR_OUTOFMEMORY;
-
-    r = MSI_DatabaseOpenViewW(data->db, query, &dbview);
-    if (r != ERROR_SUCCESS)
-        goto done;
-
-    r = MSI_ViewExecute(dbview, NULL);
-    if (r != ERROR_SUCCESS)
-        goto done;
-
-    r = MSI_ViewFetch(dbview, &row);
-    if (r == ERROR_SUCCESS && !MSI_RecordsAreEqual(rec, row))
+    if (TABLE_Exists(data->db, table->name))
     {
-        table->numconflicts++;
-        goto done;
+        query = create_diff_row_query(data->merge, data->curview, table->name, rec);
+        if (!query)
+            return ERROR_OUTOFMEMORY;
+
+        r = MSI_DatabaseOpenViewW(data->db, query, &dbview);
+        if (r != ERROR_SUCCESS)
+            goto done;
+
+        r = MSI_ViewExecute(dbview, NULL);
+        if (r != ERROR_SUCCESS)
+            goto done;
+
+        r = MSI_ViewFetch(dbview, &row);
+        if (r == ERROR_SUCCESS && !MSI_RecordsAreEqual(rec, row))
+        {
+            table->numconflicts++;
+            goto done;
+        }
+        else if (r != ERROR_NO_MORE_ITEMS)
+            goto done;
     }
-    else if (r != ERROR_NO_MORE_ITEMS)
-        goto done;
 
     mergerow = msi_alloc(sizeof(MERGEROW));
     if (!mergerow)
@@ -1350,11 +1359,188 @@ done:
     return r;
 }
 
+static UINT msi_get_table_labels(MSIDATABASE *db, LPCWSTR table, LPWSTR **labels, DWORD *numlabels)
+{
+    UINT r, i, count;
+    MSIRECORD *prec = NULL;
+
+    r = MSI_DatabaseGetPrimaryKeys(db, table, &prec);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    count = MSI_RecordGetFieldCount(prec);
+    *numlabels = count + 1;
+    *labels = msi_alloc((*numlabels)*sizeof(LPWSTR));
+    if (!labels)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+
+    (*labels)[0] = strdupW(table);
+    for (i=1; i<=count; i++ )
+    {
+        (*labels)[i] = strdupW(MSI_RecordGetString(prec, i));
+    }
+
+end:
+    msiobj_release( &prec->hdr );
+    return r;
+}
+
+static UINT msi_get_query_columns(MSIQUERY *query, LPWSTR **columns, DWORD *numcolumns)
+{
+    UINT r, i, count;
+    MSIRECORD *prec = NULL;
+
+    r = MSI_ViewGetColumnInfo(query, MSICOLINFO_NAMES, &prec);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    count = MSI_RecordGetFieldCount(prec);
+    *columns = msi_alloc(count*sizeof(LPWSTR));
+    if (!columns)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+
+    for (i=1; i<=count; i++ )
+    {
+        (*columns)[i-1] = strdupW(MSI_RecordGetString(prec, i));
+    }
+
+    *numcolumns = count;
+
+end:
+    msiobj_release( &prec->hdr );
+    return r;
+}
+
+static UINT msi_get_query_types(MSIQUERY *query, LPWSTR **types, DWORD *numtypes)
+{
+    UINT r, i, count;
+    MSIRECORD *prec = NULL;
+
+    r = MSI_ViewGetColumnInfo(query, MSICOLINFO_TYPES, &prec);
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    count = MSI_RecordGetFieldCount(prec);
+    *types = msi_alloc(count*sizeof(LPWSTR));
+    if (!types)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+
+    for (i=1; i<=count; i++ )
+    {
+        (*types)[i-1] = strdupW(MSI_RecordGetString(prec, i));
+    }
+
+end:
+    msiobj_release( &prec->hdr );
+    return r;
+}
+
+static void merge_free_rows(MERGETABLE *table)
+{
+    struct list *item, *cursor;
+
+    LIST_FOR_EACH_SAFE(item, cursor, &table->rows)
+    {
+        MERGEROW *row = LIST_ENTRY(item, MERGEROW, entry);
+
+        list_remove(&row->entry);
+        msiobj_release(&row->data->hdr);
+        msi_free(row);
+    }
+}
+
+static void free_merge_table(MERGETABLE *table)
+{
+        UINT i;
+
+        if (table->labels != NULL)
+        {
+            for (i = 0; i < table->numlabels; i++)
+                msi_free(table->labels[i]);
+            msi_free(table->labels);
+        }
+
+        if (table->columns != NULL)
+        {
+            for (i = 0; i < table->numcolumns; i++)
+                msi_free(table->columns[i]);
+            msi_free(table->columns);
+        }
+
+        if (table->types != NULL)
+        {
+            for (i = 0; i < table->numtypes; i++)
+                msi_free(table->types[i]);
+            msi_free(table->types);
+        }
+        msi_free(table->name);
+        merge_free_rows(table);
+
+        msi_free(table);
+}
+
+static UINT msi_get_merge_table (MSIDATABASE *db, LPCWSTR name, MERGETABLE **ptable)
+{
+    UINT r;
+    MERGETABLE *table;
+    MSIQUERY *mergeview = NULL;
+
+    static const WCHAR query[] = {'S','E','L','E','C','T',' ','*',' ',
+        'F','R','O','M',' ','`','%','s','`',0};
+
+    table = msi_alloc_zero(sizeof(MERGETABLE));
+    if (!table)
+    {
+       *ptable = NULL;
+       return ERROR_OUTOFMEMORY;
+    }
+
+    r = msi_get_table_labels(db, name, &table->labels, &table->numlabels);
+    if (r != ERROR_SUCCESS)
+        goto err;
+
+    r = MSI_OpenQuery(db, &mergeview, query, name);
+    if (r != ERROR_SUCCESS)
+        goto err;
+
+    r = msi_get_query_columns(mergeview, &table->columns, &table->numcolumns);
+    if (r != ERROR_SUCCESS)
+        goto err;
+
+    r = msi_get_query_types(mergeview, &table->types, &table->numtypes);
+    if (r != ERROR_SUCCESS)
+        goto err;
+
+    list_init(&table->rows);
+
+    table->name = strdupW(name);
+    table->numconflicts = 0;
+
+    msiobj_release(&mergeview->hdr);
+    *ptable = table;
+    return ERROR_SUCCESS;
+
+err:
+    msiobj_release(&mergeview->hdr);
+    free_merge_table(table);
+    *ptable = NULL;
+    return r;
+}
+
 static UINT merge_diff_tables(MSIRECORD *rec, LPVOID param)
 {
     MERGEDATA *data = param;
     MERGETABLE *table;
-    MSIQUERY *dbview;
+    MSIQUERY *dbview = NULL;
     MSIQUERY *mergeview = NULL;
     LPCWSTR name;
     UINT r;
@@ -1364,40 +1550,35 @@ static UINT merge_diff_tables(MSIRECORD *rec, LPVOID param)
 
     name = MSI_RecordGetString(rec, 1);
 
-    r = MSI_OpenQuery(data->db, &dbview, query, name);
-    if (r != ERROR_SUCCESS)
-        return r;
-
     r = MSI_OpenQuery(data->merge, &mergeview, query, name);
     if (r != ERROR_SUCCESS)
         goto done;
 
-    r = merge_verify_colnames(dbview, mergeview);
-    if (r != ERROR_SUCCESS)
-        goto done;
-
-    r = merge_verify_primary_keys(data->db, data->merge, name);
-    if (r != ERROR_SUCCESS)
-        goto done;
-
-    table = msi_alloc(sizeof(MERGETABLE));
-    if (!table)
+    if (TABLE_Exists(data->db, name))
     {
-        r = ERROR_OUTOFMEMORY;
-        goto done;
+        r = MSI_OpenQuery(data->db, &dbview, query, name);
+        if (r != ERROR_SUCCESS)
+            goto done;
+
+        r = merge_verify_colnames(dbview, mergeview);
+        if (r != ERROR_SUCCESS)
+            goto done;
+
+        r = merge_verify_primary_keys(data->db, data->merge, name);
+        if (r != ERROR_SUCCESS)
+            goto done;
     }
 
-    list_init(&table->rows);
-    table->name = strdupW(name);
-    table->numconflicts = 0;
+    r = msi_get_merge_table(data->merge, name, &table);
+    if (r != ERROR_SUCCESS)
+        goto done;
+
     data->curtable = table;
     data->curview = mergeview;
-
     r = MSI_IterateRecords(mergeview, NULL, merge_diff_row, data);
     if (r != ERROR_SUCCESS)
     {
-        msi_free(table->name);
-        msi_free(table);
+        free_merge_table(table);
         goto done;
     }
 
@@ -1437,6 +1618,14 @@ static UINT merge_table(MSIDATABASE *db, MERGETABLE *table)
     UINT r;
     MERGEROW *row;
     MSIVIEW *tv;
+
+    if (!TABLE_Exists(db, table->name))
+    {
+        r = msi_add_table_to_db(db, table->columns, table->types,
+               table->labels, table->numlabels, table->numcolumns);
+        if (r != ERROR_SUCCESS)
+           return ERROR_FUNCTION_FAILED;
+    }
 
     LIST_FOR_EACH_ENTRY(row, &table->rows, MERGEROW, entry)
     {
@@ -1496,21 +1685,6 @@ static UINT update_merge_errors(MSIDATABASE *db, LPCWSTR error,
     return r;
 }
 
-static void merge_free_rows(MERGETABLE *table)
-{
-    struct list *item, *cursor;
-
-    LIST_FOR_EACH_SAFE(item, cursor, &table->rows)
-    {
-        MERGEROW *row = LIST_ENTRY(item, MERGEROW, entry);
-
-        list_remove(&row->entry);
-        merge_free_rows(table);
-        msiobj_release(&row->data->hdr);
-        msi_free(row);
-    }
-}
-
 UINT WINAPI MsiDatabaseMergeW(MSIHANDLE hDatabase, MSIHANDLE hDatabaseMerge,
                               LPCWSTR szTableName)
 {
@@ -1564,9 +1738,7 @@ UINT WINAPI MsiDatabaseMergeW(MSIHANDLE hDatabase, MSIHANDLE hDatabaseMerge,
         MERGETABLE *table = LIST_ENTRY(item, MERGETABLE, entry);
 
         list_remove(&table->entry);
-        merge_free_rows(table);
-        msi_free(table->name);
-        msi_free(table);
+        free_merge_table(table);
     }
 
     if (conflicts)

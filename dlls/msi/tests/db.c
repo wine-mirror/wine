@@ -6962,19 +6962,19 @@ static void test_dbmerge(void)
 
     /* table from merged database is not in target database */
     r = MsiDatabaseMergeA(hdb, href, "MergeErrors");
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "SELECT * FROM `One`";
     r = do_query(hdb, query, &hrec);
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = MsiRecordGetInteger(hrec, 1);
-    todo_wine ok(r == 1, "Expected 1, got %d\n", r);
+    ok(r == 1, "Expected 1, got %d\n", r);
 
     size = MAX_PATH;
     r = MsiRecordGetStringA(hrec, 2, buf, &size);
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine ok(!lstrcmpA(buf, "hi"), "Expected \"hi\", got \"%s\"\n", buf);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(buf, "hi"), "Expected \"hi\", got \"%s\"\n", buf);
 
     MsiCloseHandle(hrec);
 
@@ -6986,7 +6986,7 @@ static void test_dbmerge(void)
 
     query = "DROP TABLE `One`";
     r = run_query(hdb, 0, query);
-    todo_wine ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "DROP TABLE `One`";
     r = run_query(href, 0, query);
