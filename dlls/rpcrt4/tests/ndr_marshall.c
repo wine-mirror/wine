@@ -301,21 +301,24 @@ todo_wine {
         NdrPointerFree(&StubMsg, mem, formattypes);
  
         /* again pass address of NULL ptr, but pretend we're a server */
-        mem = NULL;
-        StubMsg.Buffer = StubMsg.BufferStart;
-        StubMsg.IsClient = 0;
-        ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
-        ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
-        if (formattypes[2] == 0xd /* FC_ENUM16 */)
-            ok(mem != StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem points to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
-        else
-            ok(mem == StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem doesn't point to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
-        ok(!cmp(mem, memsrc, size), "%s: incorrectly unmarshaled\n", msgpfx);
-        ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
-        ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
-        if (formattypes[2] != 0xd /* FC_ENUM16 */) {
-            ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
-            my_alloc_called = 0;
+        if (0)  /* crashes on Win9x and NT4 */
+        {
+            mem = NULL;
+            StubMsg.Buffer = StubMsg.BufferStart;
+            StubMsg.IsClient = 0;
+            ptr = NdrPointerUnmarshall( &StubMsg, &mem, formattypes, 0 );
+            ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+            if (formattypes[2] == 0xd /* FC_ENUM16 */)
+                ok(mem != StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem points to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
+            else
+                ok(mem == StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem doesn't point to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
+            ok(!cmp(mem, memsrc, size), "%s: incorrectly unmarshaled\n", msgpfx);
+            ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
+            ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
+            if (formattypes[2] != 0xd /* FC_ENUM16 */) {
+                ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+                my_alloc_called = 0;
+            }
         }
     }
     HeapFree(GetProcessHeap(), 0, mem_orig);
@@ -770,16 +773,19 @@ todo_wine {
        Passing a NULL ptr while we're a client && !must_alloc
        crashes on Windows, so we won't do that. */
 
-    mem = NULL;
-    StubMsg.IsClient = 0;
-    StubMsg.Buffer = StubMsg.BufferStart;
-    ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, 0 );
-    ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
-    ok(mem == StubMsg.BufferStart, "%s: mem not equal buffer\n", msgpfx);
-    ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
-    ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
-    my_alloc_called = 0;
-    ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
+    if (0)  /* crashes on Win9x and NT4 */
+    {
+        mem = NULL;
+        StubMsg.IsClient = 0;
+        StubMsg.Buffer = StubMsg.BufferStart;
+        ptr = NdrSimpleStructUnmarshall( &StubMsg, &mem, formattypes, FALSE );
+        ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
+        ok(mem == StubMsg.BufferStart, "%s: mem not equal buffer\n", msgpfx);
+        ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
+        ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called);
+        my_alloc_called = 0;
+        ok(StubMsg.MemorySize == 0, "%s: memorysize touched in unmarshal\n", msgpfx);
+    }
 
     /*** now must_alloc is true ***/
 
