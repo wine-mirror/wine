@@ -127,7 +127,7 @@ static void determine_pointer_marshalling_style(void)
     NdrPointerMarshall(&StubMsg, (unsigned char*)&ch, fmtstr_up_char);
     ok(StubMsg.Buffer == StubMsg.BufferStart + 5, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
 
-    use_pointer_ids = (*(unsigned int *)StubMsg.BufferStart != (unsigned int)&ch);
+    use_pointer_ids = (*(unsigned int *)StubMsg.BufferStart != (UINT_PTR)&ch);
     trace("Pointer marshalling using %s\n", use_pointer_ids ? "pointer ids" : "pointer value");
 
     HeapFree(GetProcessHeap(), 0, StubMsg.BufferStart);
@@ -138,7 +138,7 @@ static void test_ndr_simple_type(void)
     RPC_MESSAGE RpcMessage;
     MIDL_STUB_MESSAGE StubMsg;
     MIDL_STUB_DESC StubDesc;
-    long l, l2 = 0;
+    LONG l, l2 = 0;
 
     StubDesc = Object_StubDesc;
     StubDesc.pFormatTypes = NULL;
@@ -154,28 +154,27 @@ static void test_ndr_simple_type(void)
     l = 0xcafebabe;
     NdrSimpleTypeMarshall(&StubMsg, (unsigned char*)&l, 8 /* FC_LONG */);
     ok(StubMsg.Buffer == StubMsg.BufferStart + 4, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
-    ok(*(long*)StubMsg.BufferStart == l, "%ld\n", *(long*)StubMsg.BufferStart);
+    ok(*(LONG*)StubMsg.BufferStart == l, "%d\n", *(LONG*)StubMsg.BufferStart);
 
     StubMsg.Buffer = StubMsg.BufferStart + 1;
     NdrSimpleTypeMarshall(&StubMsg, (unsigned char*)&l, 8 /* FC_LONG */);
     ok(StubMsg.Buffer == StubMsg.BufferStart + 8, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
-    ok(*(long*)(StubMsg.BufferStart + 4) == l, "%ld\n", *(long*)StubMsg.BufferStart);
+    ok(*(LONG*)(StubMsg.BufferStart + 4) == l, "%d\n", *(LONG*)StubMsg.BufferStart);
 
     StubMsg.Buffer = StubMsg.BufferStart + 1;
     NdrSimpleTypeUnmarshall(&StubMsg, (unsigned char*)&l2, 8 /* FC_LONG */);
     ok(StubMsg.Buffer == StubMsg.BufferStart + 8, "%p %p\n", StubMsg.Buffer, StubMsg.BufferStart);
-    ok(l2 == l, "%ld\n", l2);
+    ok(l2 == l, "%d\n", l2);
 
     HeapFree(GetProcessHeap(), 0, StubMsg.BufferStart);
 }
 
 static void test_pointer_marshal(const unsigned char *formattypes,
-                                 void *memsrc,
-                                 long srcsize,
+                                 void *memsrc, DWORD srcsize,
                                  const void *wiredata,
                                  ULONG wiredatalen,
                                  int(*cmp)(const void*,const void*,size_t),
-                                 long num_additional_allocs,
+                                 int num_additional_allocs,
                                  const char *msgpfx)
 {
     RPC_MESSAGE RpcMessage;
@@ -336,7 +335,7 @@ static void test_simple_types(void)
     unsigned char *ch_ptr;
     unsigned short s;
     unsigned int i;
-    unsigned long l;
+    ULONG l;
     ULONGLONG ll;
     float f;
     double d;
@@ -461,7 +460,7 @@ static void test_simple_types(void)
     if (use_pointer_ids)
         *(unsigned int *)wiredata = 0x20000;
     else
-        *(unsigned int *)wiredata = (unsigned int)ch_ptr;
+        *(unsigned int *)wiredata = (UINT_PTR)ch_ptr;
     wiredata[4] = ch;
  
     test_pointer_marshal(fmtstr_up_char, ch_ptr, 1, wiredata, 5, NULL, 0, "up_char");
@@ -478,7 +477,7 @@ static void test_simple_types(void)
     if (use_pointer_ids)
         *(unsigned int *)wiredata = 0x20000;
     else
-        *(unsigned int *)wiredata = (unsigned int)&s;
+        *(unsigned int *)wiredata = (UINT_PTR)&s;
     *(unsigned short*)(wiredata + 4) = s;
 
     test_pointer_marshal(fmtstr_up_wchar, &s, 2, wiredata, 6, NULL, 0, "up_wchar");
@@ -489,7 +488,7 @@ static void test_simple_types(void)
     if (use_pointer_ids)
         *(unsigned int *)wiredata = 0x20000;
     else
-        *(unsigned int *)wiredata = (unsigned int)&i;
+        *(unsigned int *)wiredata = (UINT_PTR)&i;
     *(unsigned short*)(wiredata + 4) = i;
     test_pointer_marshal(fmtstr_up_enum16, &i, 2, wiredata, 6, NULL, 0, "up_enum16");
 
@@ -497,8 +496,8 @@ static void test_simple_types(void)
     if (use_pointer_ids)
         *(unsigned int *)wiredata = 0x20000;
     else
-        *(unsigned int *)wiredata = (unsigned int)&l;
-    *(unsigned long*)(wiredata + 4) = l;
+        *(unsigned int *)wiredata = (UINT_PTR)&l;
+    *(ULONG*)(wiredata + 4) = l;
 
     test_pointer_marshal(fmtstr_up_long, &l, 4, wiredata, 8, NULL, 0, "up_long");
     test_pointer_marshal(fmtstr_up_ulong, &l, 4, wiredata, 8, NULL, 0,  "up_ulong");
@@ -509,8 +508,8 @@ static void test_simple_types(void)
     if (use_pointer_ids)
         *(unsigned int *)wiredata = 0x20000;
     else
-        *(unsigned int *)wiredata = (unsigned int)&ll;
-    *(unsigned int **)(wiredata + 4) = 0;
+        *(unsigned int *)wiredata = (UINT_PTR)&ll;
+    *(unsigned int *)(wiredata + 4) = 0;
     *(ULONGLONG*)(wiredata + 8) = ll;
     test_pointer_marshal(fmtstr_up_longlong, &ll, 8, wiredata, 16, NULL, 0, "up_longlong");
 
@@ -518,7 +517,7 @@ static void test_simple_types(void)
     if (use_pointer_ids)
         *(unsigned int *)wiredata = 0x20000;
     else
-        *(unsigned int *)wiredata = (unsigned int)&f;
+        *(unsigned int *)wiredata = (UINT_PTR)&f;
     *(float*)(wiredata + 4) = f;
     test_pointer_marshal(fmtstr_up_float, &f, 4, wiredata, 8, NULL, 0, "up_float");
 
@@ -526,7 +525,7 @@ static void test_simple_types(void)
     if (use_pointer_ids)
         *(unsigned int *)wiredata = 0x20000;
     else
-        *(unsigned int *)wiredata = (unsigned int)&d;
+        *(unsigned int *)wiredata = (UINT_PTR)&d;
     *(unsigned int *)(wiredata + 4) = 0;
     *(double*)(wiredata + 8) = d;
     test_pointer_marshal(fmtstr_up_double, &d, 8, wiredata, 16, NULL, 0,  "up_double");
@@ -690,12 +689,11 @@ static void test_nontrivial_pointer_types(void)
 }
 
 static void test_simple_struct_marshal(const unsigned char *formattypes,
-                                       void *memsrc,
-                                       long srcsize,
+                                       void *memsrc, DWORD srcsize,
                                        const void *wiredata,
                                        ULONG wiredatalen,
                                        int(*cmp)(const void*,const void*,size_t),
-                                       long num_additional_allocs,
+                                       int num_additional_allocs,
                                        const char *msgpfx)
 {
     RPC_MESSAGE RpcMessage;
@@ -839,8 +837,8 @@ todo_wine {
 
 typedef struct
 {
-    long l1;
-    long *pl1;
+    LONG l1;
+    LONG *pl1;
     char *pc1;
 } ps1_t;
 
@@ -876,8 +874,8 @@ static int ps1_cmp(const void *s1, const void *s2, size_t num)
 static void test_simple_struct(void)
 {
     unsigned char wiredata[28];
-    unsigned long wiredatalen;
-    long l;
+    ULONG wiredatalen;
+    LONG l;
     char c;
     ps1_t ps1;
 
@@ -899,7 +897,7 @@ static void test_simple_struct(void)
     struct {
         short s;
         char c;
-        long l1, l2;
+        LONG l1, l2;
         LONGLONG ll;
     } s1;
 
@@ -951,7 +949,7 @@ static void test_simple_struct(void)
     if (use_pointer_ids)
         *(unsigned int *)wiredata = 0x20000;
     else
-        *(unsigned int *)wiredata = (unsigned int)&s1;
+        *(unsigned int *)wiredata = (UINT_PTR)&s1;
     memcpy(wiredata + 4, &s1, wiredatalen);
     if (0)
     {
@@ -976,8 +974,8 @@ static void test_simple_struct(void)
     }
     else
     {
-	*(unsigned int *)(wiredata + 8) = (unsigned int)&l;
-	*(unsigned int *)(wiredata + 12) = (unsigned int)&c;
+	*(unsigned int *)(wiredata + 8) = (UINT_PTR)&l;
+	*(unsigned int *)(wiredata + 12) = (UINT_PTR)&c;
     }
     memcpy(wiredata + 16, &l, 4);
     memcpy(wiredata + 20, &c, 1);
@@ -986,7 +984,7 @@ static void test_simple_struct(void)
     if (use_pointer_ids)
         *(unsigned int *)wiredata = 0x20000;
     else
-        *(unsigned int *)wiredata = (unsigned int)&ps1;
+        *(unsigned int *)wiredata = (UINT_PTR)&ps1;
     if (0)
     {
     /* one of the unmarshallings crashes Wine */
@@ -1124,13 +1122,15 @@ static void test_client_init(void)
 {
     MIDL_STUB_MESSAGE stubMsg;
     RPC_MESSAGE rpcMsg;
+    void *unset_ptr;
 
     memset(&rpcMsg, 0xcc, sizeof(rpcMsg));
     memset(&stubMsg, 0xcc, sizeof(stubMsg));
+    memset(&unset_ptr, 0xcc, sizeof(unset_ptr));
 
     NdrClientInitializeNew(&rpcMsg, &stubMsg, &Object_StubDesc, 1);
 
-#define TEST_POINTER_UNSET(field) ok(rpcMsg.field == (void *)0xcccccccc, #field " should have been unset instead of %p\n", rpcMsg.field)
+#define TEST_POINTER_UNSET(field) ok(rpcMsg.field == unset_ptr, #field " should have been unset instead of %p\n", rpcMsg.field)
 
     ok(rpcMsg.Handle == NULL, "rpcMsg.Handle should have been NULL instead of %p\n", rpcMsg.Handle);
     TEST_POINTER_UNSET(Buffer);
@@ -1147,9 +1147,9 @@ static void test_client_init(void)
 #undef TEST_POINTER_UNSET
 
 #define TEST_ZERO(field, fmt) ok(stubMsg.field == 0, #field " should have been set to zero instead of " fmt "\n", stubMsg.field)
-#define TEST_POINTER_UNSET(field) ok(stubMsg.field == (void *)0xcccccccc, #field " should have been unset instead of %p\n", stubMsg.field)
+#define TEST_POINTER_UNSET(field) ok(stubMsg.field == unset_ptr, #field " should have been unset instead of %p\n", stubMsg.field)
 #define TEST_ULONG_UNSET(field) ok(stubMsg.field == 0xcccccccc, #field " should have been unset instead of 0x%x\n", stubMsg.field)
-#define TEST_ULONG_PTR_UNSET(field) ok(stubMsg.field == 0xcccccccc, #field " should have been unset instead of 0x%lx\n", stubMsg.field)
+#define TEST_ULONG_PTR_UNSET(field) ok(stubMsg.field == (ULONG_PTR)unset_ptr, #field " should have been unset instead of 0x%lx\n", stubMsg.field)
 
     ok(stubMsg.RpcMsg == &rpcMsg, "stubMsg.RpcMsg should have been %p instead of %p\n", &rpcMsg, stubMsg.RpcMsg);
     TEST_POINTER_UNSET(Buffer);
@@ -1163,7 +1163,7 @@ static void test_client_init(void)
     TEST_ZERO(ReuseBuffer, "%d");
     TEST_ZERO(pAllocAllNodesContext, "%p");
     ok(stubMsg.pPointerQueueState == 0 ||
-       broken(stubMsg.pPointerQueueState == (void *)0xcccccccc), /* win2k */
+       broken(stubMsg.pPointerQueueState == unset_ptr), /* win2k */
        "stubMsg.pPointerQueueState should have been unset instead of %p\n", stubMsg.pPointerQueueState);
     TEST_ZERO(IgnoreEmbeddedPointers, "%d");
     TEST_ZERO(PointerBufferMark, "%p");
@@ -1228,7 +1228,7 @@ static void test_client_init(void)
     TEST_POINTER_UNSET(pCSInfo);
     TEST_POINTER_UNSET(ConformanceMark);
     TEST_POINTER_UNSET(VarianceMark);
-    ok(stubMsg.Unused == 0xcccccccc, "Unused should have be unset instead of 0x%lx\n", stubMsg.Unused);
+    ok(stubMsg.Unused == (ULONG_PTR)unset_ptr, "Unused should have be unset instead of 0x%lx\n", stubMsg.Unused);
     TEST_POINTER_UNSET(pContext);
     TEST_POINTER_UNSET(ContextHandleHash);
     TEST_POINTER_UNSET(pUserMarshalList);
@@ -1247,6 +1247,7 @@ static void test_server_init(void)
     RPC_MESSAGE rpcMsg;
     unsigned char *ret;
     unsigned char buffer[256];
+    void *unset_ptr;
 
     memset(&rpcMsg, 0, sizeof(rpcMsg));
     rpcMsg.Buffer = buffer;
@@ -1254,14 +1255,15 @@ static void test_server_init(void)
     rpcMsg.RpcFlags = RPC_BUFFER_COMPLETE;
 
     memset(&stubMsg, 0xcc, sizeof(stubMsg));
+    memset(&unset_ptr, 0xcc, sizeof(unset_ptr));
 
     ret = NdrServerInitializeNew(&rpcMsg, &stubMsg, &Object_StubDesc);
     ok(ret == NULL, "NdrServerInitializeNew should have returned NULL instead of %p\n", ret);
 
 #define TEST_ZERO(field, fmt) ok(stubMsg.field == 0, #field " should have been set to zero instead of " fmt "\n", stubMsg.field)
-#define TEST_POINTER_UNSET(field) ok(stubMsg.field == (void *)0xcccccccc, #field " should have been unset instead of %p\n", stubMsg.field)
+#define TEST_POINTER_UNSET(field) ok(stubMsg.field == unset_ptr, #field " should have been unset instead of %p\n", stubMsg.field)
 #define TEST_ULONG_UNSET(field) ok(stubMsg.field == 0xcccccccc, #field " should have been unset instead of 0x%x\n", stubMsg.field)
-#define TEST_ULONG_PTR_UNSET(field) ok(stubMsg.field == 0xcccccccc, #field " should have been unset instead of 0x%lx\n", stubMsg.field)
+#define TEST_ULONG_PTR_UNSET(field) ok(stubMsg.field == (ULONG_PTR)unset_ptr, #field " should have been unset instead of 0x%lx\n", stubMsg.field)
 
     ok(stubMsg.RpcMsg == &rpcMsg, "stubMsg.RpcMsg should have been %p instead of %p\n", &rpcMsg, stubMsg.RpcMsg);
     ok(stubMsg.Buffer == buffer, "stubMsg.Buffer should have been %p instead of %p\n", buffer, stubMsg.Buffer);
@@ -1278,7 +1280,7 @@ todo_wine
        "stubMsg.ReuseBuffer should have been set to zero instead of %d\n", stubMsg.ReuseBuffer);
     TEST_ZERO(pAllocAllNodesContext, "%p");
     ok(stubMsg.pPointerQueueState == 0 ||
-       broken(stubMsg.pPointerQueueState == (void *)0xcccccccc), /* win2k */
+       broken(stubMsg.pPointerQueueState == unset_ptr), /* win2k */
        "stubMsg.pPointerQueueState should have been unset instead of %p\n", stubMsg.pPointerQueueState);
     TEST_ZERO(IgnoreEmbeddedPointers, "%d");
     TEST_ZERO(PointerBufferMark, "%p");
@@ -1345,7 +1347,7 @@ todo_wine
     TEST_POINTER_UNSET(pCSInfo);
     TEST_POINTER_UNSET(ConformanceMark);
     TEST_POINTER_UNSET(VarianceMark);
-    ok(stubMsg.Unused == 0xcccccccc, "Unused should have be unset instead of 0x%lx\n", stubMsg.Unused);
+    ok(stubMsg.Unused == (ULONG_PTR)unset_ptr, "Unused should have be unset instead of 0x%lx\n", stubMsg.Unused);
     TEST_POINTER_UNSET(pContext);
     TEST_POINTER_UNSET(ContextHandleHash);
     TEST_POINTER_UNSET(pUserMarshalList);
