@@ -112,13 +112,13 @@ struct StublessThunk { int dummy; };
 
 #endif  /* __i386__ */
 
-HRESULT WINAPI StdProxy_Construct(REFIID riid,
-                                 LPUNKNOWN pUnkOuter,
-                                 const ProxyFileInfo *ProxyInfo,
-                                 int Index,
-                                 LPPSFACTORYBUFFER pPSFactory,
-                                 LPRPCPROXYBUFFER *ppProxy,
-                                 LPVOID *ppvObj)
+HRESULT StdProxy_Construct(REFIID riid,
+                           LPUNKNOWN pUnkOuter,
+                           const ProxyFileInfo *ProxyInfo,
+                           int Index,
+                           LPPSFACTORYBUFFER pPSFactory,
+                           LPRPCPROXYBUFFER *ppProxy,
+                           LPVOID *ppvObj)
 {
   StdProxyImpl *This;
   const MIDL_STUBLESS_PROXY_INFO *stubless = NULL;

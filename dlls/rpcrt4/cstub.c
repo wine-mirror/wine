@@ -61,12 +61,12 @@ static inline cstdstubbuffer_delegating_t *impl_from_delegating( IRpcStubBuffer 
     return (cstdstubbuffer_delegating_t*)((char *)iface - FIELD_OFFSET(cstdstubbuffer_delegating_t, stub_buffer));
 }
 
-HRESULT WINAPI CStdStubBuffer_Construct(REFIID riid,
-                                       LPUNKNOWN pUnkServer,
-                                       PCInterfaceName name,
-                                       CInterfaceStubVtbl *vtbl,
-                                       LPPSFACTORYBUFFER pPSFactory,
-                                       LPRPCSTUBBUFFER *ppStub)
+HRESULT CStdStubBuffer_Construct(REFIID riid,
+                                 LPUNKNOWN pUnkServer,
+                                 PCInterfaceName name,
+                                 CInterfaceStubVtbl *vtbl,
+                                 LPPSFACTORYBUFFER pPSFactory,
+                                 LPRPCSTUBBUFFER *ppStub)
 {
   CStdStubBuffer *This;
   IUnknown *pvServer;
@@ -262,13 +262,13 @@ static void release_delegating_vtbl(IUnknownVtbl *vtbl)
     LeaveCriticalSection(&delegating_vtbl_section);
 }
 
-HRESULT WINAPI CStdStubBuffer_Delegating_Construct(REFIID riid,
-                                                   LPUNKNOWN pUnkServer,
-                                                   PCInterfaceName name,
-                                                   CInterfaceStubVtbl *vtbl,
-                                                   REFIID delegating_iid,
-                                                   LPPSFACTORYBUFFER pPSFactory,
-                                                   LPRPCSTUBBUFFER *ppStub)
+HRESULT CStdStubBuffer_Delegating_Construct(REFIID riid,
+                                            LPUNKNOWN pUnkServer,
+                                            PCInterfaceName name,
+                                            CInterfaceStubVtbl *vtbl,
+                                            REFIID delegating_iid,
+                                            LPPSFACTORYBUFFER pPSFactory,
+                                            LPRPCSTUBBUFFER *ppStub)
 {
     cstdstubbuffer_delegating_t *This;
     IUnknown *pvServer;
