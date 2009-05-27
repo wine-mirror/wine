@@ -257,7 +257,7 @@ void DoOpenFile(LPCWSTR szFileName)
     SetFocus(Globals.hEdit);
     
     /*  If the file starts with .LOG, add a time/date at the end and set cursor after */
-    if (GetWindowTextW(Globals.hEdit, log, sizeof(log)/sizeof(log[0])) && !lstrcmpW(log, dotlog))
+    if (GetWindowTextW(Globals.hEdit, log, ARRAY_SIZE(log)) && !lstrcmpW(log, dotlog))
     {
 	static const WCHAR lfW[] = { '\r','\n',0 };
         SendMessageW(Globals.hEdit, EM_SETSEL, GetWindowTextLengthW(Globals.hEdit), -1);

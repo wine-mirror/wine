@@ -203,10 +203,10 @@ static VOID NOTEPAD_LoadSettingFromRegistry(void)
     Globals.lfFont.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
     lstrcpyW(Globals.lfFont.lfFaceName, systemW);
 
-    LoadStringW(Globals.hInstance, STRING_PAGESETUP_HEADERVALUE, Globals.szHeader,
-                sizeof(Globals.szHeader) / sizeof(Globals.szHeader[0]));
-    LoadStringW(Globals.hInstance, STRING_PAGESETUP_FOOTERVALUE, Globals.szFooter,
-                sizeof(Globals.szFooter) / sizeof(Globals.szFooter[0]));
+    LoadStringW(Globals.hInstance, STRING_PAGESETUP_HEADERVALUE,
+                Globals.szHeader, ARRAY_SIZE(Globals.szHeader));
+    LoadStringW(Globals.hInstance, STRING_PAGESETUP_FOOTERVALUE,
+                Globals.szFooter, ARRAY_SIZE(Globals.szFooter));
 
     if(RegOpenKeyW(HKEY_CURRENT_USER, notepad_reg_key, &hkey) == ERROR_SUCCESS)
     {
