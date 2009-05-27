@@ -40,6 +40,8 @@ static UINT (WINAPI *pMsiSourceListEnumSourcesA)
 static UINT (WINAPI *pMsiSourceListGetInfoA)
     (LPCSTR, LPCSTR, MSIINSTALLCONTEXT, DWORD, LPCSTR, LPSTR, LPDWORD);
 
+static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
+
 static HMODULE hsrclient = 0;
 static BOOL (WINAPI *pSRRemoveRestorePoint)(DWORD);
 static BOOL (WINAPI *pSRSetRestorePointA)(RESTOREPOINTINFOA*, STATEMGRSTATUS*);
@@ -1316,6 +1318,7 @@ static int CDECL fci_delete(char *pszFile, int *err, void *pv)
 static void init_functionpointers(void)
 {
     HMODULE hmsi = GetModuleHandleA("msi.dll");
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
 
 #define GET_PROC(mod, func) \
     p ## func = (void*)GetProcAddress(mod, #func); \
@@ -1325,6 +1328,8 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiQueryComponentStateA);
     GET_PROC(hmsi, MsiSourceListEnumSourcesA);
     GET_PROC(hmsi, MsiSourceListGetInfoA);
+
+    GET_PROC(hadvapi32, ConvertSidToStringSidA);
 
     hsrclient = LoadLibraryA("srclient.dll");
     GET_PROC(hsrclient, SRRemoveRestorePoint);
@@ -1352,21 +1357,14 @@ static LPSTR get_user_sid(LPSTR *usersid)
     BYTE buf[1024];
     DWORD size;
     PTOKEN_USER user;
-    static HMODULE hadvapi32 = NULL;
-    static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 
-    *usersid = NULL;
-    if (!hadvapi32)
+    if (!pConvertSidToStringSidA)
     {
-        hadvapi32 = GetModuleHandleA("advapi32.dll");
-        pConvertSidToStringSidA = (void *)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
-        if (!pConvertSidToStringSidA)
-        {
-            win_skip("ConvertSidToStringSidA is not available\n");
-            return NULL;
-        }
+        win_skip("ConvertSidToStringSidA is not available\n");
+        return NULL;
     }
 
+    *usersid = NULL;
     OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
     size = sizeof(buf);
     GetTokenInformation(token, TokenUser, buf, size, &size);

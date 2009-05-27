@@ -34,27 +34,38 @@ char CURR_DIR[MAX_PATH];
 
 static UINT (WINAPI *pMsiApplyMultiplePatchesA)(LPCSTR, LPCSTR, LPCSTR);
 
+static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
+
+static void init_functionpointers(void)
+{
+    HMODULE hmsi = GetModuleHandleA("msi.dll");
+    HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+
+#define GET_PROC(mod, func) \
+    p ## func = (void*)GetProcAddress(mod, #func);
+
+    GET_PROC(hmsi, MsiApplyMultiplePatchesA);
+
+    GET_PROC(hadvapi32, ConvertSidToStringSidA);
+
+#undef GET_PROC
+}
+
+
 static LPSTR get_user_sid(LPSTR *usersid)
 {
     HANDLE token;
     BYTE buf[1024];
     DWORD size;
     PTOKEN_USER user;
-    static HMODULE hadvapi32 = NULL;
-    static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 
-    *usersid = NULL;
-    if (!hadvapi32)
+    if (!pConvertSidToStringSidA)
     {
-        hadvapi32 = GetModuleHandleA("advapi32.dll");
-        pConvertSidToStringSidA = (void *)GetProcAddress(hadvapi32, "ConvertSidToStringSidA");
-        if (!pConvertSidToStringSidA)
-        {
-            win_skip("ConvertSidToStringSidA is not available\n");
-            return NULL;
-        }
+        win_skip("ConvertSidToStringSidA is not available\n");
+        return NULL;
     }
 
+    *usersid = NULL;
     OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
     size = sizeof(buf);
     GetTokenInformation(token, TokenUser, buf, size, &size);
@@ -11622,9 +11633,7 @@ static void test_MsiApplyPatch(void)
 
 START_TEST(package)
 {
-    HMODULE hmsi = GetModuleHandleA("msi.dll");
-
-    pMsiApplyMultiplePatchesA = (void *)GetProcAddress(hmsi, "MsiApplyMultiplePatchesA");
+    init_functionpointers();
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
