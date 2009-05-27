@@ -1441,6 +1441,73 @@ static BOOL build_native_mime_types(const char *xdg_data_home, struct list **mim
     return ret;
 }
 
+static BOOL match_glob(struct list *native_mime_types, const char *extension,
+                       char **match)
+{
+    struct xdg_mime_type *mime_type_entry;
+    int matchLength = 0;
+
+    *match = NULL;
+
+    LIST_FOR_EACH_ENTRY(mime_type_entry, native_mime_types, struct xdg_mime_type, entry)
+    {
+        if (fnmatch(mime_type_entry->glob, extension, 0) == 0)
+        {
+            if (*match == NULL || matchLength < strlen(mime_type_entry->glob))
+            {
+                *match = mime_type_entry->mimeType;
+                matchLength = strlen(mime_type_entry->glob);
+            }
+        }
+    }
+
+    if (*match != NULL)
+    {
+        *match = heap_printf("%s", *match);
+        if (*match == NULL)
+            return FALSE;
+    }
+    return TRUE;
+}
+
+static BOOL freedesktop_mime_type_for_extension(struct list *native_mime_types,
+                                                const char *extensionA,
+                                                LPCWSTR extensionW,
+                                                char **mime_type)
+{
+    WCHAR *lower_extensionW;
+    INT len;
+    BOOL ret = match_glob(native_mime_types, extensionA, mime_type);
+    if (ret == FALSE || *mime_type != NULL)
+        return ret;
+    len = strlenW(extensionW);
+    lower_extensionW = HeapAlloc(GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
+    if (lower_extensionW)
+    {
+        char *lower_extensionA;
+        memcpy(lower_extensionW, extensionW, (len + 1)*sizeof(WCHAR));
+        strlwrW(lower_extensionW);
+        lower_extensionA = wchars_to_utf8_chars(lower_extensionW);
+        if (lower_extensionA)
+        {
+            ret = match_glob(native_mime_types, lower_extensionA, mime_type);
+            HeapFree(GetProcessHeap(), 0, lower_extensionA);
+        }
+        else
+        {
+            ret = FALSE;
+            WINE_FIXME("out of memory\n");
+        }
+        HeapFree(GetProcessHeap(), 0, lower_extensionW);
+    }
+    else
+    {
+        ret = FALSE;
+        WINE_FIXME("out of memory\n");
+    }
+    return ret;
+}
+
 static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const char *dot_extension,
                                               const char *mime_type, const char *comment)
 {
@@ -1541,14 +1608,28 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             }
 
             contentTypeW = assoc_query(ASSOCSTR_CONTENTTYPE, extensionW, NULL);
-            if (contentTypeW == NULL)
+
+            if (!freedesktop_mime_type_for_extension(nativeMimeTypes, extensionA, extensionW, &mimeTypeA))
                 goto end;
 
-            mimeTypeA = wchars_to_utf8_chars(contentTypeW);
             if (mimeTypeA == NULL)
-                goto end;
+            {
+                if (contentTypeW != NULL)
+                    mimeTypeA = wchars_to_utf8_chars(contentTypeW);
+                else
+                    mimeTypeA = heap_printf("application/x-wine-extension-%s", &extensionA[1]);
 
-            write_freedesktop_mime_type_entry(packages_dir, extensionA, mimeTypeA, friendlyDocNameA);
+                if (mimeTypeA != NULL)
+                {
+                    write_freedesktop_mime_type_entry(packages_dir, extensionA, mimeTypeA, friendlyDocNameA);
+                    hasChanged = TRUE;
+                }
+                else
+                {
+                    WINE_FIXME("out of memory\n");
+                    goto end;
+                }
+            }
 
         end:
             HeapFree(GetProcessHeap(), 0, extensionA);
