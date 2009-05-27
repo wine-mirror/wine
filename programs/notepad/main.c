@@ -576,7 +576,7 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         WCHAR szFileName[MAX_PATH];
         HANDLE hDrop = (HANDLE) wParam;
 
-        DragQueryFileW(hDrop, 0, szFileName, SIZEOF(szFileName));
+        DragQueryFileW(hDrop, 0, szFileName, ARRAY_SIZE(szFileName));
         DragFinish(hDrop);
         DoOpenFile(szFileName);
         break;
@@ -598,10 +598,10 @@ static int AlertFileDoesNotExist(LPCWSTR szFileName)
    WCHAR szMessage[MAX_STRING_LEN];
    WCHAR szResource[MAX_STRING_LEN];
 
-   LoadStringW(Globals.hInstance, STRING_DOESNOTEXIST, szResource, SIZEOF(szResource));
+   LoadStringW(Globals.hInstance, STRING_DOESNOTEXIST, szResource, ARRAY_SIZE(szResource));
    wsprintfW(szMessage, szResource, szFileName);
 
-   LoadStringW(Globals.hInstance, STRING_ERROR, szResource, SIZEOF(szResource));
+   LoadStringW(Globals.hInstance, STRING_ERROR, szResource, ARRAY_SIZE(szResource));
 
    nResult = MessageBoxW(Globals.hMainWnd, szMessage, szResource,
                          MB_ICONEXCLAMATION | MB_YESNO);

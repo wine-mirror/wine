@@ -45,7 +45,7 @@ VOID ShowLastError(void)
         LPWSTR lpMsgBuf;
         WCHAR szTitle[MAX_STRING_LEN];
 
-        LoadStringW(Globals.hInstance, STRING_ERROR, szTitle, SIZEOF(szTitle));
+        LoadStringW(Globals.hInstance, STRING_ERROR, szTitle, ARRAY_SIZE(szTitle));
         FormatMessageW(
             FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
             NULL, error, 0, (LPWSTR)&lpMsgBuf, 0, NULL);
@@ -68,9 +68,9 @@ static void UpdateWindowCaption(void)
   if (Globals.szFileTitle[0] != '\0')
       lstrcpyW(szCaption, Globals.szFileTitle);
   else
-      LoadStringW(Globals.hInstance, STRING_UNTITLED, szCaption, SIZEOF(szCaption));
+      LoadStringW(Globals.hInstance, STRING_UNTITLED, szCaption, ARRAY_SIZE(szCaption));
 
-  LoadStringW(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
+  LoadStringW(Globals.hInstance, STRING_NOTEPAD, szNotepad, ARRAY_SIZE(szNotepad));
   lstrcatW(szCaption, hyphenW);
   lstrcatW(szCaption, szNotepad);
 
@@ -83,14 +83,14 @@ int DIALOG_StringMsgBox(HWND hParent, int formatId, LPCWSTR szString, DWORD dwFl
    WCHAR szResource[MAX_STRING_LEN];
 
    /* Load and format szMessage */
-   LoadStringW(Globals.hInstance, formatId, szResource, SIZEOF(szResource));
-   wnsprintfW(szMessage, SIZEOF(szMessage), szResource, szString);
+   LoadStringW(Globals.hInstance, formatId, szResource, ARRAY_SIZE(szResource));
+   wnsprintfW(szMessage, ARRAY_SIZE(szMessage), szResource, szString);
 
    /* Load szCaption */
    if ((dwFlags & MB_ICONMASK) == MB_ICONEXCLAMATION)
-     LoadStringW(Globals.hInstance, STRING_ERROR,  szResource, SIZEOF(szResource));
+     LoadStringW(Globals.hInstance, STRING_ERROR,  szResource, ARRAY_SIZE(szResource));
    else
-     LoadStringW(Globals.hInstance, STRING_NOTEPAD,  szResource, SIZEOF(szResource));
+     LoadStringW(Globals.hInstance, STRING_NOTEPAD,  szResource, ARRAY_SIZE(szResource));
 
    /* Display Modal Dialog */
    if (hParent == NULL)
@@ -107,7 +107,7 @@ static int AlertFileNotSaved(LPCWSTR szFileName)
 {
    WCHAR szUntitled[MAX_STRING_LEN];
 
-   LoadStringW(Globals.hInstance, STRING_UNTITLED, szUntitled, SIZEOF(szUntitled));
+   LoadStringW(Globals.hInstance, STRING_UNTITLED, szUntitled, ARRAY_SIZE(szUntitled));
    return DIALOG_StringMsgBox(NULL, STRING_NOTSAVED, szFileName[0] ? szFileName : szUntitled,
      MB_ICONQUESTION|MB_YESNOCANCEL);
 }
@@ -292,7 +292,7 @@ VOID DIALOG_FileOpen(VOID)
 
     ZeroMemory(&openfilename, sizeof(openfilename));
 
-    GetCurrentDirectoryW(SIZEOF(szDir), szDir);
+    GetCurrentDirectoryW(ARRAY_SIZE(szDir), szDir);
     lstrcpyW(szPath, txt_files);
 
     openfilename.lStructSize       = sizeof(openfilename);
@@ -300,7 +300,7 @@ VOID DIALOG_FileOpen(VOID)
     openfilename.hInstance         = Globals.hInstance;
     openfilename.lpstrFilter       = Globals.szFilter;
     openfilename.lpstrFile         = szPath;
-    openfilename.nMaxFile          = SIZEOF(szPath);
+    openfilename.nMaxFile          = ARRAY_SIZE(szPath);
     openfilename.lpstrInitialDir   = szDir;
     openfilename.Flags             = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
         OFN_HIDEREADONLY | OFN_ENABLESIZING;
@@ -331,7 +331,7 @@ BOOL DIALOG_FileSaveAs(VOID)
 
     ZeroMemory(&saveas, sizeof(saveas));
 
-    GetCurrentDirectoryW(SIZEOF(szDir), szDir);
+    GetCurrentDirectoryW(ARRAY_SIZE(szDir), szDir);
     lstrcpyW(szPath, txt_files);
 
     saveas.lStructSize       = sizeof(OPENFILENAMEW);
@@ -339,7 +339,7 @@ BOOL DIALOG_FileSaveAs(VOID)
     saveas.hInstance         = Globals.hInstance;
     saveas.lpstrFilter       = Globals.szFilter;
     saveas.lpstrFile         = szPath;
-    saveas.nMaxFile          = SIZEOF(szPath);
+    saveas.nMaxFile          = ARRAY_SIZE(szPath);
     saveas.lpstrInitialDir   = szDir;
     saveas.Flags             = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT |
         OFN_HIDEREADONLY | OFN_ENABLESIZING;
@@ -733,7 +733,7 @@ VOID DIALOG_Search(VOID)
         Globals.find.hwndOwner        = Globals.hMainWnd;
         Globals.find.hInstance        = Globals.hInstance;
         Globals.find.lpstrFindWhat    = Globals.szFindText;
-        Globals.find.wFindWhatLen     = SIZEOF(Globals.szFindText);
+        Globals.find.wFindWhatLen     = ARRAY_SIZE(Globals.szFindText);
         Globals.find.Flags            = FR_DOWN|FR_HIDEWHOLEWORD;
 
         /* We only need to create the modal FindReplace dialog which will */
@@ -765,9 +765,9 @@ VOID DIALOG_Replace(VOID)
         Globals.find.hwndOwner        = Globals.hMainWnd;
         Globals.find.hInstance        = Globals.hInstance;
         Globals.find.lpstrFindWhat    = Globals.szFindText;
-        Globals.find.wFindWhatLen     = SIZEOF(Globals.szFindText);
+        Globals.find.wFindWhatLen     = ARRAY_SIZE(Globals.szFindText);
         Globals.find.lpstrReplaceWith = Globals.szReplaceText;
-        Globals.find.wReplaceWithLen  = SIZEOF(Globals.szReplaceText);
+        Globals.find.wReplaceWithLen  = ARRAY_SIZE(Globals.szReplaceText);
         Globals.find.Flags            = FR_DOWN|FR_HIDEWHOLEWORD;
 
         /* We only need to create the modal FindReplace dialog which will */
@@ -799,7 +799,7 @@ VOID DIALOG_HelpAboutNotepad(VOID)
     HICON icon = LoadImageW(Globals.hInstance, MAKEINTRESOURCEW(IDI_NOTEPAD),
                             IMAGE_ICON, 48, 48, LR_SHARED);
 
-    LoadStringW(Globals.hInstance, STRING_NOTEPAD, szNotepad, SIZEOF(szNotepad));
+    LoadStringW(Globals.hInstance, STRING_NOTEPAD, szNotepad, ARRAY_SIZE(szNotepad));
     ShellAboutW(Globals.hMainWnd, szNotepad, notepadW, icon);
 }
 
@@ -830,8 +830,8 @@ static INT_PTR WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wPara
         {
         case IDOK:
           /* save user input and close dialog */
-          GetDlgItemTextW(hDlg, IDC_PAGESETUP_HEADERVALUE, Globals.szHeader, SIZEOF(Globals.szHeader));
-          GetDlgItemTextW(hDlg, IDC_PAGESETUP_FOOTERVALUE, Globals.szFooter, SIZEOF(Globals.szFooter));
+          GetDlgItemTextW(hDlg, IDC_PAGESETUP_HEADERVALUE, Globals.szHeader, ARRAY_SIZE(Globals.szHeader));
+          GetDlgItemTextW(hDlg, IDC_PAGESETUP_FOOTERVALUE, Globals.szFooter, ARRAY_SIZE(Globals.szFooter));
 
           Globals.iMarginTop = GetDlgItemInt(hDlg, IDC_PAGESETUP_TOPVALUE, NULL, FALSE) * 100;
           Globals.iMarginBottom = GetDlgItemInt(hDlg, IDC_PAGESETUP_BOTTOMVALUE, NULL, FALSE) * 100;

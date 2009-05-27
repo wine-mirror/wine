@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define SIZEOF(a) sizeof(a)/sizeof((a)[0])
+#define ARRAY_SIZE(a) sizeof(a)/sizeof((a)[0])
 
 #include "notepad_res.h"
 
