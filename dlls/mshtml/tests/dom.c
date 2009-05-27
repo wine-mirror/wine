@@ -4456,15 +4456,17 @@ static void test_elems(IHTMLDocument2 *doc)
             IHTMLDOMNode_Release(node);
         }
 
-        disp = (void*)0xdeadbeef;
+        hres = IHTMLDOMChildrenCollection_item(child_col, length - 1, NULL);
+        ok(hres == E_POINTER, "item failed: %08x, expected E_POINTER\n", hres);
+
+        hres = IHTMLDOMChildrenCollection_item(child_col, length, NULL);
+        ok(hres == E_POINTER, "item failed: %08x, expected E_POINTER\n", hres);
+
         hres = IHTMLDOMChildrenCollection_item(child_col, 6000, &disp);
         ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
-        ok(disp == (void*)0xdeadbeef, "disp=%p\n", disp);
 
-        disp = (void*)0xdeadbeef;
         hres = IHTMLDOMChildrenCollection_item(child_col, length, &disp);
         ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
-        ok(disp == (void*)0xdeadbeef, "disp=%p\n", disp);
 
         test_child_col_disp(child_col);
 
