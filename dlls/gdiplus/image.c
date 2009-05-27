@@ -655,6 +655,13 @@ GpStatus WINGDIPAPI GdipCreateCachedBitmap(GpBitmap *bitmap, GpGraphics *graphic
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCreateHICONFromBitmap(GpBitmap *bitmap, HICON *hicon)
+{
+    FIXME("(%p, %p)\n", bitmap, hicon);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipDeleteCachedBitmap(GpCachedBitmap *cachedbmp)
 {
     TRACE("%p\n", cachedbmp);
