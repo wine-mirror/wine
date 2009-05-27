@@ -621,11 +621,11 @@ typedef struct shader_reg_maps
     char texcoord[MAX_REG_TEXCRD];          /* pixel < 3.0 */
     char temporary[MAX_REG_TEMP];           /* pixel, vertex */
     char address[MAX_REG_ADDR];             /* vertex */
-    char packed_output[MAX_REG_OUTPUT];     /* vertex >= 3.0 */
     char labels[MAX_LABELS];                /* pixel, vertex */
     DWORD *constf;                          /* pixel, vertex */
     DWORD texcoord_mask[MAX_REG_TEXCRD];    /* vertex < 3.0 */
     WORD input_registers;                   /* max(MAX_REG_INPUT, MAX_ATTRIBS), 16 */
+    WORD output_registers;                  /* MAX_REG_OUTPUT, 12 */
     WORD integer_constants;                 /* MAX_CONST_I, 16 */
     WORD boolean_constants;                 /* MAX_CONST_B, 16 */
 

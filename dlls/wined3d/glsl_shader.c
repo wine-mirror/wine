@@ -3288,7 +3288,7 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
     DWORD in_count = vec4_varyings(3, gl_info);
     char reg_mask[6], reg_mask_out[6];
     char destination[50];
-    WORD input_map;
+    WORD input_map, output_map;
 
     set = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*set) * (in_count + 2));
 
@@ -3361,8 +3361,11 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
             }
         } else {
             BOOL found = FALSE;
-            for(j = 0; j < MAX_REG_OUTPUT; j++) {
-                if (!reg_maps_out->packed_output[j]) continue;
+
+            output_map = reg_maps_out->output_registers;
+            for (j = 0; output_map; output_map >>= 1, ++j)
+            {
+                if (!(output_map & 1)) continue;
 
                 usage_out = semantics_out[j].usage;
                 usage_idx_out = semantics_out[j].usage_idx;
@@ -3465,12 +3468,15 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
             shader_addline(&buffer, "void order_ps_input() { /* do nothing */ }\n");
         }
     } else if(ps_major < 3 && vs_major >= 3) {
+        WORD map = vs->baseShader.reg_maps.output_registers;
+
         /* The vertex shader writes to its own varyings, the pixel shader needs them in the builtin ones */
         semantics_out = vs->semantics_out;
 
         shader_addline(&buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
-        for(i = 0; i < MAX_REG_OUTPUT; i++) {
-            if (!vs->baseShader.reg_maps.packed_output[i]) continue;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
 
             usage = semantics_out[i].usage;
             usage_idx = semantics_out[i].usage_idx;
@@ -3515,6 +3521,8 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         shader_addline(&buffer, "}\n");
 
     } else if(ps_major >= 3 && vs_major >= 3) {
+        WORD map = vs->baseShader.reg_maps.output_registers;
+
         semantics_out = vs->semantics_out;
 
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
@@ -3522,8 +3530,9 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         shader_addline(&buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
-        for(i = 0; i < MAX_REG_OUTPUT; i++) {
-            if (!vs->baseShader.reg_maps.packed_output[i]) continue;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
 
             usage = semantics_out[i].usage;
             usage_idx = semantics_out[i].usage_idx;

@@ -416,7 +416,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
 
                 /* Vshader: mark 3.0 output registers used, save token */
                 case WINED3DSPR_OUTPUT:
-                    reg_maps->packed_output[semantic.reg.reg.idx] = 1;
+                    reg_maps->output_registers |= 1 << semantic.reg.reg.idx;
                     semantics_out[semantic.reg.reg.idx] = semantic;
                     if (semantic.usage == WINED3DDECLUSAGE_FOG) reg_maps->fog = 1;
                     break;
