@@ -78,7 +78,7 @@ static const char * const _country_synonyms[] =
 /* INTERNAL: Map a synonym to an ISO code */
 static void remap_synonym(char *name)
 {
-  size_t i;
+  unsigned int i;
   for (i = 0; i < sizeof(_country_synonyms)/sizeof(char*); i += 2 )
   {
     if (!strcasecmp(_country_synonyms[i],name))

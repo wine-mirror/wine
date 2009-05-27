@@ -136,7 +136,7 @@ static void EXCEPTION_ctor(exception *_this, const char** name)
   _this->vtable = &MSVCRT_exception_vtable;
   if (*name)
   {
-    size_t name_len = strlen(*name) + 1;
+    unsigned int name_len = strlen(*name) + 1;
     _this->name = MSVCRT_malloc(name_len);
     memcpy(_this->name, *name, name_len);
     _this->do_free = TRUE;

@@ -231,7 +231,7 @@ MSVCRT_wchar_t*** CDECL __p___winitenv(void) { return &MSVCRT___winitenv; }
 /* INTERNAL: Create a wide string from an ascii string */
 MSVCRT_wchar_t *msvcrt_wstrdupa(const char *str)
 {
-  const size_t len = strlen(str) + 1 ;
+  const unsigned int len = strlen(str) + 1 ;
   MSVCRT_wchar_t *wstr = MSVCRT_malloc(len* sizeof (MSVCRT_wchar_t));
   if (!wstr)
     return NULL;
