@@ -1004,7 +1004,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         status = map_view( &view, base, total_size, mask, FALSE,
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
 
-    if (status == STATUS_CONFLICTING_ADDRESSES)
+    if (status != STATUS_SUCCESS)
         status = map_view( &view, NULL, total_size, mask, FALSE,
                            VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY | VPROT_IMAGE );
 
