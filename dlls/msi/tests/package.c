@@ -11224,7 +11224,6 @@ static void test_MsiGetProductProperty(void)
     CHAR prodcode[MAX_PATH];
     CHAR prod_squashed[MAX_PATH];
     HKEY prodkey, userkey, props;
-    LPSTR usersid;
     DWORD size;
     LONG res;
     UINT r;
@@ -11242,7 +11241,6 @@ static void test_MsiGetProductProperty(void)
     lstrcatA(path, "\\");
 
     create_test_guid(prodcode, prod_squashed);
-    get_user_sid(&usersid);
 
     r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
