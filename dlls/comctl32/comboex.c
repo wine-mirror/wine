@@ -356,7 +356,7 @@ static void COMBOEX_GetComboFontSize (COMBOEX_INFO *infoPtr, SIZE *size)
 }
 
 
-static void COMBOEX_CopyItem (CBE_ITEMDATA *item, COMBOBOXEXITEMW *cit)
+static void COMBOEX_CopyItem (const CBE_ITEMDATA *item, COMBOBOXEXITEMW *cit)
 {
     if (cit->mask & CBEIF_TEXT) {
         /*
@@ -467,7 +467,7 @@ static void COMBOEX_SetEditText (COMBOEX_INFO *infoPtr, CBE_ITEMDATA *item)
 }
 
 
-static CBE_ITEMDATA * COMBOEX_FindItem(COMBOEX_INFO *infoPtr, INT_PTR index)
+static CBE_ITEMDATA * COMBOEX_FindItem(const COMBOEX_INFO *infoPtr, INT_PTR index)
 {
     CBE_ITEMDATA *item;
     INT i;
@@ -542,7 +542,7 @@ static INT COMBOEX_DeleteItem (COMBOEX_INFO *infoPtr, INT_PTR index)
 }
 
 
-static BOOL COMBOEX_GetItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
+static BOOL COMBOEX_GetItemW (const COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
 {
     INT_PTR index = cit->iItem;
     CBE_ITEMDATA *item;
@@ -563,7 +563,7 @@ static BOOL COMBOEX_GetItemW (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMW *cit)
 }
 
 
-static BOOL COMBOEX_GetItemA (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
+static BOOL COMBOEX_GetItemA (const COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
 {
     COMBOBOXEXITEMW tmpcit;
 
