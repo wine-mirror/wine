@@ -797,7 +797,7 @@ struct vs_compile_args {
 };
 
 typedef struct {
-    const SHADER_HANDLER *shader_instruction_handler_table;
+    void (*shader_handle_instruction)(const struct wined3d_shader_instruction *);
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
     void (*shader_select_depth_blt)(IWineD3DDevice *iface, enum tex_types tex_type);
     void (*shader_deselect_depth_blt)(IWineD3DDevice *iface);

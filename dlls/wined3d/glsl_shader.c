@@ -4656,8 +4656,25 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_TEXREG2RGB    */ pshader_glsl_texreg2rgb,
 };
 
+static void shader_glsl_handle_instruction(const struct wined3d_shader_instruction *ins) {
+    SHADER_HANDLER hw_fct;
+
+    /* Select handler */
+    hw_fct = shader_glsl_instruction_handler_table[ins->handler_idx];
+
+    /* Unhandled opcode */
+    if (!hw_fct)
+    {
+        FIXME("Backend can't handle opcode %#x\n", ins->handler_idx);
+        return;
+    }
+    hw_fct(ins);
+
+    shader_glsl_add_instruction_modifiers(ins);
+}
+
 const shader_backend_t glsl_shader_backend = {
-    shader_glsl_instruction_handler_table,
+    shader_glsl_handle_instruction,
     shader_glsl_select,
     shader_glsl_select_depth_blt,
     shader_glsl_deselect_depth_blt,
@@ -4671,5 +4688,4 @@ const shader_backend_t glsl_shader_backend = {
     shader_glsl_dirty_const,
     shader_glsl_get_caps,
     shader_glsl_color_fixup_supported,
-    shader_glsl_add_instruction_modifiers,
 };

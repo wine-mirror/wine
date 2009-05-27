@@ -2666,8 +2666,25 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_TEXREG2RGB    */ pshader_hw_texreg2rgb,
 };
 
+static void shader_arb_handle_instruction(const struct wined3d_shader_instruction *ins) {
+    SHADER_HANDLER hw_fct;
+
+    /* Select handler */
+    hw_fct = shader_arb_instruction_handler_table[ins->handler_idx];
+
+    /* Unhandled opcode */
+    if (!hw_fct)
+    {
+        FIXME("Backend can't handle opcode %#x\n", ins->handler_idx);
+        return;
+    }
+    hw_fct(ins);
+
+    shader_arb_add_instruction_modifiers(ins);
+}
+
 const shader_backend_t arb_program_shader_backend = {
-    shader_arb_instruction_handler_table,
+    shader_arb_handle_instruction,
     shader_arb_select,
     shader_arb_select_depth_blt,
     shader_arb_deselect_depth_blt,
@@ -2681,7 +2698,6 @@ const shader_backend_t arb_program_shader_backend = {
     shader_arb_dirty_const,
     shader_arb_get_caps,
     shader_arb_color_fixup_supported,
-    shader_arb_add_instruction_modifiers,
 };
 
 /* ARB_fragment_program fixed function pipeline replacement definitions */

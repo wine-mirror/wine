@@ -986,7 +986,6 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device; /* To access shader backend callbacks */
-    const SHADER_HANDLER *handler_table = device->shader_backend->shader_instruction_handler_table;
     const struct wined3d_shader_frontend *fe = This->baseShader.frontend;
     void *fe_data = This->baseShader.frontend_data;
     struct wined3d_shader_src_param src_rel_addr[4];
@@ -997,7 +996,6 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
     struct wined3d_shader_instruction ins;
     struct wined3d_shader_context ctx;
     const DWORD *pToken = pFunction;
-    SHADER_HANDLER hw_fct;
     DWORD i;
 
     /* Initialize current parsing state */
@@ -1046,17 +1044,6 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
             continue;
         }
 
-        /* Select handler */
-        hw_fct = handler_table[ins.handler_idx];
-
-        /* Unhandled opcode */
-        if (!hw_fct)
-        {
-            FIXME("Backend can't handle opcode %#x\n", ins.handler_idx);
-            pToken += param_size;
-            continue;
-        }
-
         /* Destination token */
         if (ins.dst_count) fe->shader_read_dst_param(fe_data, &pToken, &dst_param, &dst_rel_addr);
 
@@ -1070,10 +1057,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         }
 
         /* Call appropriate function for output target */
-        hw_fct(&ins);
-
-        /* Process instruction modifiers for GLSL apps ( _sat, etc. ) */
-        device->shader_backend->shader_add_instruction_modifiers(&ins);
+        device->shader_backend->shader_handle_instruction(&ins);
     }
 }
 
@@ -1271,7 +1255,7 @@ void shader_cleanup(IWineD3DBaseShader *iface)
     }
 }
 
-static const SHADER_HANDLER shader_none_instruction_handler_table[WINED3DSIH_TABLE_SIZE] = {0};
+static void shader_none_handle_instruction(const struct wined3d_shader_instruction *ins) {}
 static void shader_none_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {}
 static void shader_none_select_depth_blt(IWineD3DDevice *iface, enum tex_types tex_type) {}
 static void shader_none_deselect_depth_blt(IWineD3DDevice *iface) {}
@@ -1283,7 +1267,6 @@ static void shader_none_destroy(IWineD3DBaseShader *iface) {}
 static HRESULT shader_none_alloc(IWineD3DDevice *iface) {return WINED3D_OK;}
 static void shader_none_free(IWineD3DDevice *iface) {}
 static BOOL shader_none_dirty_const(IWineD3DDevice *iface) {return FALSE;}
-static void shader_none_add_instruction_modifiers(const struct wined3d_shader_instruction *ins) {}
 
 #define GLINFO_LOCATION      (*gl_info)
 static void shader_none_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *pCaps)
@@ -1314,7 +1297,7 @@ static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)
 }
 
 const shader_backend_t none_shader_backend = {
-    shader_none_instruction_handler_table,
+    shader_none_handle_instruction,
     shader_none_select,
     shader_none_select_depth_blt,
     shader_none_deselect_depth_blt,
@@ -1328,5 +1311,4 @@ const shader_backend_t none_shader_backend = {
     shader_none_dirty_const,
     shader_none_get_caps,
     shader_none_color_fixup_supported,
-    shader_none_add_instruction_modifiers,
 };
