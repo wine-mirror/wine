@@ -2761,6 +2761,7 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
             SetLastError(ERROR_NONE_MAPPED);
             ret = FALSE;
         }
+        nameLen = UNLEN + 1;
     }
 
     if (GetUserNameW(userName, &nameLen) && !strcmpW(lpAccountNamePtr, userName))
