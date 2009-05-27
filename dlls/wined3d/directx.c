@@ -1915,7 +1915,10 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, U
 
     /* TODO: handle Windowed, add more quality levels */
 
-    if (WINED3DMULTISAMPLE_NONE == MultiSampleType) return WINED3D_OK;
+    if (WINED3DMULTISAMPLE_NONE == MultiSampleType) {
+        if(pQualityLevels) *pQualityLevels = 1;
+        return WINED3D_OK;
+    }
 
     /* By default multisampling is disabled right now as it causes issues
      * on some Nvidia driver versions and it doesn't work well in combination
