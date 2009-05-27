@@ -170,7 +170,6 @@ typedef struct _NDR_PIPE_MESSAGE *PNDR_PIPE_MESSAGE;
 typedef struct _NDR_ASYNC_MESSAGE *PNDR_ASYNC_MESSAGE;
 typedef struct _NDR_CORRELATION_INFO *PNDR_CORRELATION_INFO;
 
-#include <pshpack4.h>
 typedef struct _MIDL_STUB_MESSAGE
 {
   PRPC_MESSAGE RpcMsg;
@@ -247,7 +246,6 @@ typedef struct _MIDL_STUB_MESSAGE
   INT_PTR Reserved51_4;
   INT_PTR Reserved51_5;
 } MIDL_STUB_MESSAGE, *PMIDL_STUB_MESSAGE;
-#include <poppack.h>
 
 typedef void * (__RPC_API * GENERIC_BINDING_ROUTINE)(void *);
 typedef void (__RPC_API * GENERIC_UNBIND_ROUTINE)(void *, unsigned char *);
