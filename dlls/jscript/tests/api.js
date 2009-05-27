@@ -618,6 +618,12 @@ ok(tmp === 2, "Math.pow(2, 2) = " + tmp);
 tmp = Math.pow(2, 2, 3);
 ok(tmp === 4, "Math.pow(2, 2, 3) = " + tmp);
 
+tmp = Math.pow(2);
+ok(isNaN(tmp), "Math.pow(2) is not NaN");
+
+tmp = Math.pow();
+ok(isNaN(tmp), "Math.pow() is not NaN");
+
 tmp = Math.random();
 ok(typeof(tmp) == "number", "typeof(tmp) = " + typeof(tmp));
 ok(0 <= tmp && tmp <= 1, "Math.random() = " + tmp);

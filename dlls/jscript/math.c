@@ -441,8 +441,8 @@ static HRESULT Math_pow(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *d
     TRACE("\n");
 
     if(arg_cnt(dp) < 2) {
-        FIXME("unimplemented arg_cnt %d\n", arg_cnt(dp));
-        return E_NOTIMPL;
+        if(retv) num_set_nan(retv);
+        return S_OK;
     }
 
     hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &x);
