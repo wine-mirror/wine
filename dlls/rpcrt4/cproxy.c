@@ -147,11 +147,11 @@ HRESULT StdProxy_Construct(REFIID riid,
 
   if (stubless) {
     CInterfaceStubVtbl *svtbl = ProxyInfo->pStubVtblList[Index];
-    unsigned long i, count = svtbl->header.DispatchTableCount;
+    ULONG i, count = svtbl->header.DispatchTableCount;
     /* Maybe the original vtbl is just modified directly to point at
      * ObjectStublessClientXXX thunks in real Windows, but I don't like it
      */
-    TRACE("stubless thunks: count=%ld\n", count);
+    TRACE("stubless thunks: count=%d\n", count);
     This->thunks = HeapAlloc(GetProcessHeap(),0,sizeof(struct StublessThunk)*count);
     This->PVtbl = HeapAlloc(GetProcessHeap(),0,sizeof(LPVOID)*count);
     for (i=0; i<count; i++) {
@@ -159,7 +159,7 @@ HRESULT StdProxy_Construct(REFIID riid,
       if (vtbl->Vtbl[i] == (LPVOID)-1) {
         PFORMAT_STRING fs = stubless->ProcFormatString + stubless->FormatStringOffset[i];
         unsigned bytes = *(const WORD*)(fs+8) - STACK_ADJUST;
-        TRACE("method %ld: stacksize=%d\n", i, bytes);
+        TRACE("method %d: stacksize=%d\n", i, bytes);
         FILL_STUBLESS(thunk, i, bytes)
         This->PVtbl[i] = thunk;
       }
@@ -172,6 +172,7 @@ HRESULT StdProxy_Construct(REFIID riid,
   else 
     This->PVtbl = vtbl->Vtbl;
 
+  if (!pUnkOuter) pUnkOuter = (IUnknown *)This;
   This->lpVtbl = &StdProxy_Vtbl;
   /* one reference for the proxy */
   This->RefCount = 1;
@@ -183,11 +184,7 @@ HRESULT StdProxy_Construct(REFIID riid,
   This->pChannel = NULL;
   *ppProxy = (LPRPCPROXYBUFFER)&This->lpVtbl;
   *ppvObj = &This->PVtbl;
-  /* if there is no outer unknown then the caller will control the lifetime
-   * of the proxy object through the proxy buffer, so no need to increment the
-   * ref count of the proxy object */
-  if (pUnkOuter)
-    IUnknown_AddRef((IUnknown *)*ppvObj);
+  IUnknown_AddRef((IUnknown *)*ppvObj);
   IPSFactoryBuffer_AddRef(pPSFactory);
 
   return S_OK;

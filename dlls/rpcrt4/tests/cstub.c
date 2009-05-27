@@ -613,6 +613,74 @@ static IUnknownVtbl create_stub_test_fail_vtbl =
     NULL
 };
 
+struct dummy_unknown
+{
+    const IUnknownVtbl *vtbl;
+    LONG ref;
+};
+
+static HRESULT WINAPI dummy_QueryInterface(IUnknown *This, REFIID iid, void **ppv)
+{
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dummy_AddRef(LPUNKNOWN iface)
+{
+    struct dummy_unknown *this = (struct dummy_unknown *)iface;
+    return InterlockedIncrement( &this->ref );
+}
+
+ULONG WINAPI dummy_Release(LPUNKNOWN iface)
+{
+    struct dummy_unknown *this = (struct dummy_unknown *)iface;
+    return InterlockedDecrement( &this->ref );
+}
+
+static IUnknownVtbl dummy_unknown_vtbl =
+{
+    dummy_QueryInterface,
+    dummy_AddRef,
+    dummy_Release
+};
+static struct dummy_unknown dummy_unknown = { &dummy_unknown_vtbl, 0 };
+
+static void create_proxy_test( IPSFactoryBuffer *ppsf, REFIID iid, const void *expected_vtbl )
+{
+    IRpcProxyBuffer *proxy = NULL;
+    IUnknown *iface = NULL;
+    HRESULT r;
+    ULONG count;
+
+    r = IPSFactoryBuffer_CreateProxy(ppsf, NULL, iid, &proxy, (void **)&iface);
+    ok( r == S_OK, "IPSFactoryBuffer_CreateProxy failed %x\n", r );
+    ok( *(void **)iface == expected_vtbl, "wrong iface pointer %p/%p\n", *(void **)iface, expected_vtbl );
+    count = IUnknown_Release( iface );
+    ok( count == 1, "wrong refcount %u\n", count );
+    count = IRpcProxyBuffer_Release( proxy );
+    ok( count == 0, "wrong refcount %u\n", count );
+
+    dummy_unknown.ref = 4;
+    r = IPSFactoryBuffer_CreateProxy(ppsf, (IUnknown *)&dummy_unknown, iid, &proxy, (void **)&iface);
+    ok( r == S_OK, "IPSFactoryBuffer_CreateProxy failed %x\n", r );
+    ok( dummy_unknown.ref == 5, "wrong refcount %u\n", dummy_unknown.ref );
+    ok( *(void **)iface == expected_vtbl, "wrong iface pointer %p/%p\n", *(void **)iface, expected_vtbl );
+    count = IUnknown_Release( iface );
+    ok( count == 4, "wrong refcount %u\n", count );
+    ok( dummy_unknown.ref == 4, "wrong refcount %u\n", dummy_unknown.ref );
+    count = IRpcProxyBuffer_Release( proxy );
+    ok( count == 0, "wrong refcount %u\n", count );
+    ok( dummy_unknown.ref == 4, "wrong refcount %u\n", dummy_unknown.ref );
+}
+
+static void test_CreateProxy( IPSFactoryBuffer *ppsf )
+{
+    create_proxy_test( ppsf, &IID_if1, if1_proxy_vtbl.Vtbl );
+    create_proxy_test( ppsf, &IID_if2, if2_proxy_vtbl.Vtbl );
+    create_proxy_test( ppsf, &IID_if3, if3_proxy_vtbl.Vtbl );
+    create_proxy_test( ppsf, &IID_if4, if4_proxy_vtbl.Vtbl );
+}
+
 static void test_CreateStub(IPSFactoryBuffer *ppsf)
 {
     IUnknownVtbl *vtbl = &create_stub_test_vtbl;
@@ -951,6 +1019,7 @@ START_TEST( cstub )
 
     ppsf = test_NdrDllGetClassObject();
     test_NdrStubForwardingFunction();
+    test_CreateProxy(ppsf);
     test_CreateStub(ppsf);
     test_Connect(ppsf);
     test_Disconnect(ppsf);
