@@ -546,6 +546,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             ++pToken;
 
             list_add_head(&This->baseShader.constantsB, &lconst->entry);
+            reg_maps->local_bool_consts |= (1 << dst.reg.idx);
         }
         /* If there's a loop in the shader */
         else if (ins.handler_idx == WINED3DSIH_LOOP

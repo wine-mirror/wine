@@ -628,6 +628,7 @@ typedef struct shader_reg_maps
     WORD output_registers;                  /* MAX_REG_OUTPUT, 12 */
     WORD integer_constants;                 /* MAX_CONST_I, 16 */
     WORD boolean_constants;                 /* MAX_CONST_B, 16 */
+    WORD local_bool_consts;                 /* MAX_CONST_B, 16 */
 
     WINED3DSAMPLER_TEXTURE_TYPE sampler_type[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     BOOL bumpmat[MAX_TEXTURES], luminanceparams[MAX_TEXTURES];
