@@ -134,16 +134,15 @@ static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_id
     return FALSE;
 }
 
-BOOL vshader_get_input(
-    IWineD3DVertexShader* iface,
-    BYTE usage_req, BYTE usage_idx_req,
-    unsigned int* regnum) {
+BOOL vshader_get_input(IWineD3DVertexShader* iface, BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum)
+{
+    IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
+    WORD map = This->baseShader.reg_maps.input_registers;
+    unsigned int i;
 
-    IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) iface;
-    int i;
-
-    for (i = 0; i < MAX_ATTRIBS; i++) {
-        if (!This->baseShader.reg_maps.attributes[i]) continue;
+    for (i = 0; map; map >>= 1, ++i)
+    {
+        if (!(map & 1)) continue;
 
         if (match_usage(This->semantics_in[i].usage,
                 This->semantics_in[i].usage_idx, usage_req, usage_idx_req))

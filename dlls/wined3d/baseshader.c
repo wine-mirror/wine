@@ -260,7 +260,7 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
             break;
 
         case WINED3DSPR_INPUT:
-            if (!pshader) reg_maps->attributes[reg->idx] = 1;
+            if (!pshader) reg_maps->input_registers |= 1 << reg->idx;
             else
             {
                 if (reg->rel_addr)
@@ -410,8 +410,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 /* Vshader: mark attributes used
                  * Pshader: mark 3.0 input registers used, save token */
                 case WINED3DSPR_INPUT:
-                    if (!pshader) reg_maps->attributes[semantic.reg.reg.idx] = 1;
-                    else reg_maps->input_registers |= 1 << semantic.reg.reg.idx;
+                    reg_maps->input_registers |= 1 << semantic.reg.reg.idx;
                     semantics_in[semantic.reg.reg.idx] = semantic;
                     break;
 

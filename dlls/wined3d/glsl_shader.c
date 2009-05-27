@@ -964,9 +964,16 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
     }
 
     /* Declare attributes */
-    for (i = 0; i < This->baseShader.limits.attributes; i++) {
-        if (reg_maps->attributes[i])
+    if (reg_maps->shader_version.type == WINED3D_SHADER_TYPE_VERTEX)
+    {
+        WORD map = reg_maps->input_registers;
+
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
+
             shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
+        }
     }
 
     /* Declare loop registers aLx */
@@ -3652,7 +3659,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
 
     /* Attach GLSL vshader */
     if (vshader_id) {
-        const unsigned int max_attribs = 16;   /* TODO: Will this always be the case? It is at the moment... */
+        WORD map = ((IWineD3DBaseShaderImpl *)vshader)->baseShader.reg_maps.input_registers;
         char tmp_name[10];
 
         reorder_shader_id = generate_param_reorder_function(vshader, pshader, gl_info);
@@ -3677,11 +3684,12 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
          * We have to do this here because we need to know the Program ID
          * in order to make the bindings work, and it has to be done prior
          * to linking the GLSL program. */
-        for (i = 0; i < max_attribs; ++i) {
-            if (((IWineD3DBaseShaderImpl*)vshader)->baseShader.reg_maps.attributes[i]) {
-                snprintf(tmp_name, sizeof(tmp_name), "attrib%i", i);
-                GL_EXTCALL(glBindAttribLocationARB(programId, i, tmp_name));
-            }
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
+
+            snprintf(tmp_name, sizeof(tmp_name), "attrib%u", i);
+            GL_EXTCALL(glBindAttribLocationARB(programId, i, tmp_name));
         }
         checkGLcall("glBindAttribLocationARB");
 
