@@ -19,10 +19,25 @@
  */
 
 #include <winsock.h>
+#include <wininet.h>
 #include <stdio.h>
 #include <errno.h>
 
 #include "winetest.h"
+
+#define USER_AGENT  "Winetest Shell"
+#define SERVER_NAME "test.winehq.org"
+#define URL_PATH "/submit"
+#define SEP "--8<--cut-here--8<--"
+#define CONTENT_HEADERS "Content-Type: multipart/form-data; boundary=\"" SEP "\"\r\n" \
+                        "Content-Length: %u\r\n\r\n"
+static const char body1[] = "--" SEP "\r\n"
+    "Content-Disposition: form-data; name=\"reportfile\"; filename=\"%s\"\r\n"
+    "Content-Type: application/octet-stream\r\n\r\n";
+static const char body2[] = "\r\n--" SEP "\r\n"
+    "Content-Disposition: form-data; name=\"submit\"\r\n\r\n"
+    "Upload File\r\n"
+    "--" SEP "--\r\n";
 
 static SOCKET
 open_http (const char *server)
@@ -101,8 +116,8 @@ send_str (SOCKET s, ...)
     return ret;
 }
 
-int
-send_file (const char *name)
+static int
+send_file_direct (const char *name)
 {
     SOCKET s;
     HANDLE file;
@@ -114,21 +129,13 @@ send_file (const char *name)
     int ret;
 
     /* RFC 2616 */
-#define SEP "--8<--cut-here--8<--"
-    static const char head[] = "POST /submit HTTP/1.0\r\n"
-        "Host: test.winehq.org\r\n"
-        "User-Agent: Winetest Shell\r\n"
-        "Content-Type: multipart/form-data; boundary=\"" SEP "\"\r\n"
-        "Content-Length: %u\r\n\r\n";
-    static const char body1[] = "--" SEP "\r\n"
-        "Content-Disposition: form-data; name=\"reportfile\"; filename=\"%s\"\r\n"
-        "Content-Type: application/octet-stream\r\n\r\n";
-    static const char body2[] = "\r\n--" SEP "\r\n"
-        "Content-Disposition: form-data; name=\"submit\"\r\n\r\n"
-        "Upload File\r\n"
-        "--" SEP "--\r\n";
+    static const char head[] = "POST " URL_PATH " HTTP/1.0\r\n"
+        "Host: " SERVER_NAME "\r\n"
+        "User-Agent: " USER_AGENT "\r\n"
+        CONTENT_HEADERS
+        "\r\n";
 
-    s = open_http ("test.winehq.org");
+    s = open_http (SERVER_NAME);
     if (s == INVALID_SOCKET) return 1;
 
     file = CreateFileA( name, GENERIC_READ,
@@ -152,7 +159,7 @@ send_file (const char *name)
         report (R_WARNING,
                 "File too big (%.1f MB > 1.5 MB); submitting partial report.",
                 filesize/1024.0/1024);
-        filesize = 1.5*1024*1024;
+        filesize = (DWORD) 1.5*1024*1024;
     }
 
     report (R_STATUS, "Sending header");
@@ -210,7 +217,7 @@ send_file (const char *name)
 
     str = strmake (&count, "Received %s (%d bytes).\n",
                    name, filesize);
-    ret = memcmp (str, buffer + total - count, count);
+    ret = total < count || memcmp (str, buffer + total - count, count) != 0;
     heap_free (str);
     if (ret) {
         buffer[total] = 0;
@@ -227,4 +234,181 @@ send_file (const char *name)
  abort1:
     close_http (s);
     return 1;
+}
+
+static int
+send_file_wininet (const char *name)
+{
+    int ret = 0;
+    HMODULE wininet_mod = NULL;
+    HINTERNET (WINAPI *pInternetOpen)(LPCSTR agent, DWORD access_type, LPCSTR proxy_name, LPCSTR proxy_bypass, DWORD flags);
+    HINTERNET (WINAPI *pInternetConnect)(HINTERNET session, LPCSTR server_name, INTERNET_PORT server_port, LPCSTR username, LPCSTR password, DWORD service, DWORD flags, DWORD_PTR *context);
+    HINTERNET (WINAPI *pHttpOpenRequest)(HINTERNET connection, LPCSTR verb, LPCSTR object_name, LPCSTR version, LPCSTR referer, LPCSTR *accept_types, DWORD flags, DWORD_PTR context);
+    BOOL (WINAPI *pHttpSendRequestEx)(HINTERNET request, LPINTERNET_BUFFERSA buffers_in, LPINTERNET_BUFFERSA buffers_out, DWORD flags, DWORD_PTR context);
+    BOOL (WINAPI *pInternetWriteFile)(HINTERNET file, LPCVOID buffer, DWORD number_of_bytes_to_write, LPDWORD number_of_bytes_written);
+    BOOL (WINAPI *pHttpEndRequest)(HINTERNET request, LPINTERNET_BUFFERSA buffers_out, DWORD flags, DWORD_PTR context);
+    BOOL (WINAPI *pInternetReadFile)(HINTERNET file, LPCVOID buffer, DWORD number_of_bytes_to_read, LPDWORD number_of_bytes_read);
+    BOOL (WINAPI *pInternetCloseHandle)(HINTERNET Handle) = NULL;
+    HANDLE file = INVALID_HANDLE_VALUE;
+    DWORD filesize, bytes_read, bytes_written;
+    size_t total, count;
+    char *str = NULL;
+    HINTERNET session = NULL;
+    HINTERNET connection = NULL;
+    HINTERNET request = NULL;
+    INTERNET_BUFFERSA buffers_in = { 0 };
+    char buffer[BUFLEN+1];
+
+    static const char extra_headers[] =
+        CONTENT_HEADERS;
+
+    wininet_mod = LoadLibrary ("wininet.dll");
+    if (wininet_mod == NULL)
+        goto done;
+    pInternetOpen = (void *)GetProcAddress(wininet_mod, "InternetOpenA");
+    pInternetConnect = (void *)GetProcAddress(wininet_mod, "InternetConnectA");
+    pHttpOpenRequest = (void *)GetProcAddress(wininet_mod, "HttpOpenRequestA");
+    pHttpSendRequestEx = (void *)GetProcAddress(wininet_mod, "HttpSendRequestExA");
+    pInternetWriteFile = (void *)GetProcAddress(wininet_mod, "InternetWriteFile");
+    pHttpEndRequest = (void *)GetProcAddress(wininet_mod, "HttpEndRequestA");
+    pInternetReadFile = (void *)GetProcAddress(wininet_mod, "InternetReadFile");
+    pInternetCloseHandle = (void *)GetProcAddress(wininet_mod, "InternetCloseHandle");
+    if (pInternetOpen == NULL || pInternetConnect == NULL || pHttpOpenRequest == NULL || pHttpSendRequestEx == NULL || pHttpEndRequest == NULL ||
+        pInternetWriteFile == NULL || pInternetReadFile == NULL || pInternetCloseHandle == NULL) {
+        goto done;
+    }
+
+    ret = 1;
+
+    file = CreateFileA( name, GENERIC_READ,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                        NULL, OPEN_EXISTING, 0, NULL );
+
+    if ((file == INVALID_HANDLE_VALUE) &&
+        (GetLastError() == ERROR_INVALID_PARAMETER)) {
+        /* FILE_SHARE_DELETE not supported on win9x */
+        file = CreateFileA( name, GENERIC_READ,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            NULL, OPEN_EXISTING, 0, NULL );
+    }
+    if (file == INVALID_HANDLE_VALUE) {
+        report (R_WARNING, "Can't open file '%s': %u", name, GetLastError());
+        goto done;
+    }
+
+    filesize = GetFileSize( file, NULL );
+    if (filesize > 1.5*1024*1024) {
+        report (R_WARNING,
+                "File too big (%.1f MB > 1.5 MB); submitting partial report.",
+                filesize/1024.0/1024);
+        filesize = (DWORD) 1.5*1024*1024;
+    }
+
+    report (R_STATUS, "Opening HTTP connection to " SERVER_NAME);
+    session = pInternetOpen (USER_AGENT, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+    if (session == NULL) {
+        report (R_WARNING, "Unable to open connection, error %u", GetLastError());
+        goto done;
+    }
+    connection = pInternetConnect (session, SERVER_NAME, INTERNET_DEFAULT_HTTP_PORT, "", "", INTERNET_SERVICE_HTTP, 0, 0);
+    if (connection == NULL) {
+        report (R_WARNING, "Unable to connect, error %u", GetLastError());
+        goto done;
+    }
+    request = pHttpOpenRequest (connection, "POST", URL_PATH, NULL, NULL, NULL,
+                                INTERNET_FLAG_NO_CACHE_WRITE | INTERNET_FLAG_NO_COOKIES | INTERNET_FLAG_NO_UI |
+                                INTERNET_FLAG_PRAGMA_NOCACHE | INTERNET_FLAG_RELOAD, 0);
+    if (request == NULL) {
+        report (R_WARNING, "Unable to open request, error %u", GetLastError());
+        goto done;
+    }
+
+    report (R_STATUS, "Sending request");
+    str = strmake (&total, body1, name);
+    memset(&buffers_in, 0, sizeof(INTERNET_BUFFERSA));
+    buffers_in.dwStructSize = sizeof(INTERNET_BUFFERSA);
+    buffers_in.dwBufferTotal = filesize + total + sizeof body2 - 1;
+    buffers_in.lpcszHeader = strmake (&count, extra_headers, buffers_in.dwBufferTotal);
+    buffers_in.dwHeadersLength = count;
+    if (! pHttpSendRequestEx(request, &buffers_in, NULL, 0, 0)) {
+        report (R_WARNING, "Unable to send request, error %u", GetLastError());
+        goto done;
+    }
+
+    if (! pInternetWriteFile(request, str, total, &bytes_written) || bytes_written != total) {
+        report (R_WARNING, "Unable to write body data, error %u", GetLastError());
+        goto done;
+    }
+
+    report (R_STATUS, "Sending %u bytes of data", filesize);
+    report (R_PROGRESS, 2, filesize);
+    total = 0;
+    while (total < filesize && ReadFile( file, buffer, BUFLEN/2, &bytes_read, NULL )) {
+        if (!bytes_read) break;
+        total += bytes_read;
+        if (total > filesize) bytes_read -= total - filesize;
+        if (! pInternetWriteFile (request, buffer, bytes_read, &bytes_written) || bytes_written != bytes_read) {
+            report (R_WARNING, "Error sending body: %u", GetLastError ());
+            goto done;
+        }
+        report (R_DELTA, bytes_read, "Network transfer: In progress");
+    }
+
+    if (! pInternetWriteFile(request, body2, sizeof body2 - 1, &bytes_written) || bytes_written != sizeof body2 - 1) {
+        report (R_WARNING, "Unable to write final body data, error %u", GetLastError());
+        goto done;
+    }
+    if (! pHttpEndRequest(request, NULL, 0, 0)) {
+        report (R_WARNING, "Unable to end request, error %u", GetLastError());
+        goto done;
+    }
+    report (R_DELTA, 0, "Network transfer: Done");
+
+    total = 0;
+    do
+    {
+        if (! pInternetReadFile(request, buffer+total, BUFLEN-total, &bytes_read)) {
+            report (R_WARNING, "Error receiving reply: %u", GetLastError ());
+            goto done;
+        }
+        total += bytes_read;
+        if (total == BUFLEN) {
+            report (R_WARNING, "Buffer overflow");
+            goto done;
+        }
+    }
+    while (bytes_read != 0);
+
+    heap_free (str);
+    str = strmake (&count, "Received %s (%d bytes).\n",
+                   name, filesize);
+    if (total < count || memcmp (str, buffer + total - count, count) != 0) {
+        buffer[total] = 0;
+        report (R_ERROR, "Can't submit logfile '%s'. "
+                "Server response: %s", name, buffer);
+    }
+
+ done:
+    if (buffers_in.lpcszHeader != NULL)
+        heap_free((void *) buffers_in.lpcszHeader);
+    if (str != NULL)
+        heap_free (str);
+    if (pInternetCloseHandle != NULL && request != NULL)
+        pInternetCloseHandle (request);
+    if (pInternetCloseHandle != NULL && connection != NULL)
+        pInternetCloseHandle (connection);
+    if (pInternetCloseHandle != NULL && session != NULL)
+        pInternetCloseHandle (session);
+    if (file != INVALID_HANDLE_VALUE)
+        CloseHandle (file);
+    if (wininet_mod != NULL)
+        FreeLibrary (wininet_mod);
+
+    return ret;
+}
+
+int
+send_file (const char *name)
+{
+    return send_file_wininet( name ) || send_file_direct( name );
 }
