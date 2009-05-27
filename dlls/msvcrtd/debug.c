@@ -31,16 +31,19 @@ int _crtAssertBusy = -1;
 int _crtBreakAlloc = -1;
 int _crtDbgFlag = 0;
 
-extern int _callnewh(unsigned long);
+#ifdef _WIN64
+typedef unsigned __int64 MSVCRT_size_t;
+#else
+typedef unsigned long MSVCRT_size_t;
+#endif
+
+extern int _callnewh(MSVCRT_size_t);
 
 /*********************************************************************
  *		??2@YAPAXIHPBDH@Z (MSVCRTD.@)
  */
-void * CDECL MSVCRTD_operator_new_dbg(
-	unsigned long nSize,
-	int nBlockUse,
-	const char *szFileName,
-	int nLine)
+void * CDECL MSVCRTD_operator_new_dbg(MSVCRT_size_t nSize, int nBlockUse,
+                                      const char *szFileName, int nLine)
 {
     void *retval = NULL;
 
