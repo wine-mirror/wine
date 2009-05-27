@@ -2584,9 +2584,10 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction, void *backend_ctx);
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
         struct shader_reg_maps *reg_maps, struct wined3d_shader_attribute *attributes,
-        struct wined3d_shader_semantic *semantics_in, struct wined3d_shader_semantic *semantics_out,
-        const DWORD *byte_code, DWORD constf_size);
+        struct wined3d_shader_signature_element *input_signature,
+        struct wined3d_shader_signature_element *output_signature, const DWORD *byte_code, DWORD constf_size);
 void shader_init(struct IWineD3DBaseShaderClass *shader, IWineD3DDevice *device);
+BOOL shader_match_semantic(const char *semantic_name, WINED3DDECLUSAGE usage);
 const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token);
 void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *pFunction);
 
@@ -2679,7 +2680,7 @@ typedef struct IWineD3DVertexShaderImpl {
 
     /* Vertex shader input and output semantics */
     struct wined3d_shader_attribute attributes[MAX_ATTRIBS];
-    struct wined3d_shader_semantic semantics_out[MAX_REG_OUTPUT];
+    struct wined3d_shader_signature_element output_signature[MAX_REG_OUTPUT];
 
     UINT                       min_rel_offset, max_rel_offset;
     UINT                       rel_offset;
@@ -2712,7 +2713,7 @@ typedef struct IWineD3DPixelShaderImpl {
     IUnknown                   *parent;
 
     /* Pixel shader input semantics */
-    struct wined3d_shader_semantic semantics_in[MAX_REG_INPUT];
+    struct wined3d_shader_signature_element input_signature[MAX_REG_INPUT];
     DWORD                 input_reg_map[MAX_REG_INPUT];
     BOOL                  input_reg_used[MAX_REG_INPUT];
     int                         declared_in_count;

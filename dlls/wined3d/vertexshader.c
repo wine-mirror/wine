@@ -277,7 +277,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     This->min_rel_offset = GL_LIMITS(vshader_constantsF);
     This->max_rel_offset = 0;
     hr = shader_get_registers_used((IWineD3DBaseShader*) This, fe,
-            reg_maps, This->attributes, NULL, This->semantics_out,
+            reg_maps, This->attributes, NULL, This->output_signature,
             pFunction, GL_LIMITS(vshader_constantsF));
     if (hr != WINED3D_OK) return hr;
 

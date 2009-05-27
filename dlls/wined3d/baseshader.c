@@ -341,13 +341,58 @@ static unsigned int get_instr_extra_regcount(enum WINED3D_SHADER_INSTRUCTION_HAN
     }
 }
 
+static const char *shader_semantic_name_from_usage(WINED3DDECLUSAGE usage)
+{
+    static const char *semantic_names[] =
+    {
+        /* WINED3DDECLUSAGE_POSITION        */ "POSITION",
+        /* WINED3DDECLUSAGE_BLENDWEIGHT     */ "BLENDWEIGHT",
+        /* WINED3DDECLUSAGE_BLENDINDICES    */ "BLENDINDICES",
+        /* WINED3DDECLUSAGE_NORMAL          */ "NORMAL",
+        /* WINED3DDECLUSAGE_PSIZE           */ "PSIZE",
+        /* WINED3DDECLUSAGE_TEXCOORD        */ "TEXCOORD",
+        /* WINED3DDECLUSAGE_TANGENT         */ "TANGENT",
+        /* WINED3DDECLUSAGE_BINORMAL        */ "BINORMAL",
+        /* WINED3DDECLUSAGE_TESSFACTOR      */ "TESSFACTOR",
+        /* WINED3DDECLUSAGE_POSITIONT       */ "POSITIONT",
+        /* WINED3DDECLUSAGE_COLOR           */ "COLOR",
+        /* WINED3DDECLUSAGE_FOG             */ "FOG",
+        /* WINED3DDECLUSAGE_DEPTH           */ "DEPTH",
+        /* WINED3DDECLUSAGE_SAMPLE          */ "SAMPLE",
+    };
+
+    if (usage >= sizeof(semantic_names) / sizeof(*semantic_names))
+    {
+        FIXME("Unrecognized usage %#x\n", usage);
+        return "UNRECOGNIZED";
+    }
+
+    return semantic_names[usage];
+}
+
+BOOL shader_match_semantic(const char *semantic_name, WINED3DDECLUSAGE usage)
+{
+    return !strcmp(semantic_name, shader_semantic_name_from_usage(usage));
+}
+
+static void shader_signature_from_semantic(struct wined3d_shader_signature_element *e,
+        const struct wined3d_shader_semantic *s)
+{
+    e->semantic_name = shader_semantic_name_from_usage(s->usage);
+    e->semantic_idx = s->usage_idx;
+    e->sysval_semantic = 0;
+    e->component_type = 0;
+    e->register_idx = s->reg.reg.idx;
+    e->mask = s->reg.write_mask;
+}
+
 /* Note that this does not count the loop register
  * as an address register. */
 
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
         struct shader_reg_maps *reg_maps, struct wined3d_shader_attribute *attributes,
-        struct wined3d_shader_semantic *semantics_in, struct wined3d_shader_semantic *semantics_out,
-        const DWORD *byte_code, DWORD constf_size)
+        struct wined3d_shader_signature_element *input_signature,
+        struct wined3d_shader_signature_element *output_signature, const DWORD *byte_code, DWORD constf_size)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     void *fe_data = This->baseShader.frontend_data;
@@ -419,14 +464,14 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                     }
                     else
                     {
-                        semantics_in[semantic.reg.reg.idx] = semantic;
+                        shader_signature_from_semantic(&input_signature[semantic.reg.reg.idx], &semantic);
                     }
                     break;
 
                 /* Vshader: mark 3.0 output registers used, save token */
                 case WINED3DSPR_OUTPUT:
                     reg_maps->output_registers |= 1 << semantic.reg.reg.idx;
-                    semantics_out[semantic.reg.reg.idx] = semantic;
+                    shader_signature_from_semantic(&output_signature[semantic.reg.reg.idx], &semantic);
                     if (semantic.usage == WINED3DDECLUSAGE_FOG) reg_maps->fog = 1;
                     break;
 

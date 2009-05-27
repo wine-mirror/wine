@@ -3177,7 +3177,7 @@ static void pshader_glsl_dp2add(const struct wined3d_shader_instruction *ins)
 }
 
 static void pshader_glsl_input_pack(IWineD3DPixelShader *iface, SHADER_BUFFER *buffer,
-        const struct wined3d_shader_semantic *semantics_in, const struct shader_reg_maps *reg_maps,
+        const struct wined3d_shader_signature_element *input_signature, const struct shader_reg_maps *reg_maps,
         enum vertexprocessing_mode vertexprocessing)
 {
     unsigned int i;
@@ -3186,43 +3186,42 @@ static void pshader_glsl_input_pack(IWineD3DPixelShader *iface, SHADER_BUFFER *b
 
     for (i = 0; map; map >>= 1, ++i)
     {
-        DWORD usage, usage_idx;
+        const char *semantic_name;
+        UINT semantic_idx;
         char reg_mask[6];
 
         /* Unused */
         if (!(map & 1)) continue;
 
-        usage = semantics_in[i].usage;
-        usage_idx = semantics_in[i].usage_idx;
-        shader_glsl_get_write_mask(&semantics_in[i].reg, reg_mask);
+        semantic_name = input_signature[i].semantic_name;
+        semantic_idx = input_signature[i].semantic_idx;
+        shader_glsl_write_mask_to_str(input_signature[i].mask, reg_mask);
 
-        switch (usage)
+        if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
         {
-            case WINED3DDECLUSAGE_TEXCOORD:
-                if (usage_idx < 8 && vertexprocessing == pretransformed)
-                    shader_addline(buffer, "IN[%u]%s = gl_TexCoord[%u]%s;\n",
-                            This->input_reg_map[i], reg_mask, usage_idx, reg_mask);
-                else
-                    shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                            This->input_reg_map[i], reg_mask, reg_mask);
-                break;
-
-            case WINED3DDECLUSAGE_COLOR:
-                if (usage_idx == 0)
-                    shader_addline(buffer, "IN[%u]%s = vec4(gl_Color)%s;\n",
-                            This->input_reg_map[i], reg_mask, reg_mask);
-                else if (usage_idx == 1)
-                    shader_addline(buffer, "IN[%u]%s = vec4(gl_SecondaryColor)%s;\n",
-                            This->input_reg_map[i], reg_mask, reg_mask);
-                else
-                    shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                            This->input_reg_map[i], reg_mask, reg_mask);
-                break;
-
-            default:
+            if (semantic_idx < 8 && vertexprocessing == pretransformed)
+                shader_addline(buffer, "IN[%u]%s = gl_TexCoord[%u]%s;\n",
+                        This->input_reg_map[i], reg_mask, semantic_idx, reg_mask);
+            else
                 shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
                         This->input_reg_map[i], reg_mask, reg_mask);
-                break;
+        }
+        else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+        {
+            if (semantic_idx == 0)
+                shader_addline(buffer, "IN[%u]%s = vec4(gl_Color)%s;\n",
+                        This->input_reg_map[i], reg_mask, reg_mask);
+            else if (semantic_idx == 1)
+                shader_addline(buffer, "IN[%u]%s = vec4(gl_SecondaryColor)%s;\n",
+                        This->input_reg_map[i], reg_mask, reg_mask);
+            else
+                shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                        This->input_reg_map[i], reg_mask, reg_mask);
+        }
+        else
+        {
+            shader_addline(buffer, "IN[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                    This->input_reg_map[i], reg_mask, reg_mask);
         }
     }
 }
@@ -3278,11 +3277,12 @@ static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const WineD
 }
 
 static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info, const DWORD *map,
-        const struct wined3d_shader_semantic *semantics_in, const struct shader_reg_maps *reg_maps_in,
-        const struct wined3d_shader_semantic *semantics_out, const struct shader_reg_maps *reg_maps_out)
+        const struct wined3d_shader_signature_element *input_signature, const struct shader_reg_maps *reg_maps_in,
+        const struct wined3d_shader_signature_element *output_signature, const struct shader_reg_maps *reg_maps_out)
 {
     unsigned int i, j;
-    DWORD usage, usage_idx, usage_out, usage_idx_out;
+    const char *semantic_name_in, *semantic_name_out;
+    UINT semantic_idx_in, semantic_idx_out;
     DWORD *set;
     DWORD in_idx;
     DWORD in_count = vec4_varyings(3, gl_info);
@@ -3292,7 +3292,8 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
 
     set = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*set) * (in_count + 2));
 
-    if (!semantics_out) {
+    if (!output_signature)
+    {
         /* Save gl_FrontColor & gl_FrontSecondaryColor before overwriting them. */
         shader_addline(buffer, "vec4 front_color = gl_FrontColor;\n");
         shader_addline(buffer, "vec4 front_secondary_color = gl_FrontSecondaryColor;\n");
@@ -3322,42 +3323,47 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
             sprintf(destination, "IN[%u]", in_idx);
         }
 
-        usage = semantics_in[i].usage;
-        usage_idx = semantics_in[i].usage_idx;
-        set[map[i]] = shader_glsl_get_write_mask(&semantics_in[i].reg, reg_mask);
+        semantic_name_in = input_signature[i].semantic_name;
+        semantic_idx_in = input_signature[i].semantic_idx;
+        set[map[i]] = input_signature[i].mask;
+        shader_glsl_write_mask_to_str(input_signature[i].mask, reg_mask);
 
-        if(!semantics_out) {
-            switch(usage) {
-                case WINED3DDECLUSAGE_COLOR:
-                    if (usage_idx == 0)
-                        shader_addline(buffer, "%s%s = front_color%s;\n",
-                                       destination, reg_mask, reg_mask);
-                    else if (usage_idx == 1)
-                        shader_addline(buffer, "%s%s = front_secondary_color%s;\n",
-                                       destination, reg_mask, reg_mask);
-                    else
-                        shader_addline(buffer, "%s%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                                       destination, reg_mask, reg_mask);
-                    break;
-
-                case WINED3DDECLUSAGE_TEXCOORD:
-                    if (usage_idx < 8) {
-                        shader_addline(buffer, "%s%s = gl_TexCoord[%u]%s;\n",
-                                       destination, reg_mask, usage_idx, reg_mask);
-                    } else {
-                        shader_addline(buffer, "%s%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                                       destination, reg_mask, reg_mask);
-                    }
-                    break;
-
-                case WINED3DDECLUSAGE_FOG:
-                    shader_addline(buffer, "%s%s = vec4(gl_FogFragCoord, 0.0, 0.0, 0.0)%s;\n",
-                                   destination, reg_mask, reg_mask);
-                    break;
-
-                default:
+        if (!output_signature)
+        {
+            if (shader_match_semantic(semantic_name_in, WINED3DDECLUSAGE_COLOR))
+            {
+                if (semantic_idx_in == 0)
+                    shader_addline(buffer, "%s%s = front_color%s;\n",
+                            destination, reg_mask, reg_mask);
+                else if (semantic_idx_in == 1)
+                    shader_addline(buffer, "%s%s = front_secondary_color%s;\n",
+                            destination, reg_mask, reg_mask);
+                else
                     shader_addline(buffer, "%s%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
-                                   destination, reg_mask, reg_mask);
+                            destination, reg_mask, reg_mask);
+            }
+            else if (shader_match_semantic(semantic_name_in, WINED3DDECLUSAGE_TEXCOORD))
+            {
+                if (semantic_idx_in < 8)
+                {
+                    shader_addline(buffer, "%s%s = gl_TexCoord[%u]%s;\n",
+                            destination, reg_mask, semantic_idx_in, reg_mask);
+                }
+                else
+                {
+                    shader_addline(buffer, "%s%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                            destination, reg_mask, reg_mask);
+                }
+            }
+            else if (shader_match_semantic(semantic_name_in, WINED3DDECLUSAGE_FOG))
+            {
+                shader_addline(buffer, "%s%s = vec4(gl_FogFragCoord, 0.0, 0.0, 0.0)%s;\n",
+                        destination, reg_mask, reg_mask);
+            }
+            else
+            {
+                shader_addline(buffer, "%s%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
+                        destination, reg_mask, reg_mask);
             }
         } else {
             BOOL found = FALSE;
@@ -3367,14 +3373,15 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
             {
                 if (!(output_map & 1)) continue;
 
-                usage_out = semantics_out[j].usage;
-                usage_idx_out = semantics_out[j].usage_idx;
-                shader_glsl_get_write_mask(&semantics_out[j].reg, reg_mask_out);
+                semantic_name_out = output_signature[j].semantic_name;
+                semantic_idx_out = output_signature[j].semantic_idx;
+                shader_glsl_write_mask_to_str(output_signature[i].mask, reg_mask_out);
 
-                if(usage == usage_out &&
-                   usage_idx == usage_idx_out) {
+                if (semantic_idx_in == semantic_idx_out
+                        && !strcmp(semantic_name_in, semantic_name_out))
+                {
                     shader_addline(buffer, "%s%s = OUT[%u]%s;\n",
-                                   destination, reg_mask, j, reg_mask);
+                            destination, reg_mask, j, reg_mask);
                     found = TRUE;
                 }
             }
@@ -3441,9 +3448,10 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     DWORD ps_major = ps ? ps->baseShader.reg_maps.shader_version.major : 0;
     unsigned int i;
     SHADER_BUFFER buffer;
-    DWORD usage, usage_idx, writemask;
+    const char *semantic_name;
+    UINT semantic_idx;
     char reg_mask[6];
-    const struct wined3d_shader_semantic *semantics_out;
+    const struct wined3d_shader_signature_element *output_signature;
 
     shader_buffer_init(&buffer);
 
@@ -3471,51 +3479,50 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         WORD map = vs->baseShader.reg_maps.output_registers;
 
         /* The vertex shader writes to its own varyings, the pixel shader needs them in the builtin ones */
-        semantics_out = vs->semantics_out;
+        output_signature = vs->output_signature;
 
         shader_addline(&buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
         for (i = 0; map; map >>= 1, ++i)
         {
+            DWORD write_mask;
+
             if (!(map & 1)) continue;
 
-            usage = semantics_out[i].usage;
-            usage_idx = semantics_out[i].usage_idx;
-            writemask = shader_glsl_get_write_mask(&semantics_out[i].reg, reg_mask);
+            semantic_name = output_signature[i].semantic_name;
+            semantic_idx = output_signature[i].semantic_idx;
+            write_mask = output_signature[i].mask;
+            shader_glsl_write_mask_to_str(write_mask, reg_mask);
 
-            switch(usage) {
-                case WINED3DDECLUSAGE_COLOR:
-                    if (usage_idx == 0)
-                        shader_addline(&buffer, "gl_FrontColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
-                    else if (usage_idx == 1)
-                        shader_addline(&buffer, "gl_FrontSecondaryColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
-                    break;
+            if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+            {
+                if (semantic_idx == 0)
+                    shader_addline(&buffer, "gl_FrontColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+                else if (semantic_idx == 1)
+                    shader_addline(&buffer, "gl_FrontSecondaryColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+            }
+            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
+            {
+                shader_addline(&buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+            }
+            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
+            {
+                if (semantic_idx < 8)
+                {
+                    if (!(GLINFO_LOCATION).set_texcoord_w || ps_major > 0) write_mask |= WINED3DSP_WRITEMASK_3;
 
-                case WINED3DDECLUSAGE_POSITION:
-                    shader_addline(&buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
-                    break;
-
-                case WINED3DDECLUSAGE_TEXCOORD:
-                    if (usage_idx < 8) {
-                        if(!(GLINFO_LOCATION).set_texcoord_w || ps_major > 0) writemask |= WINED3DSP_WRITEMASK_3;
-
-                        shader_addline(&buffer, "gl_TexCoord[%u]%s = OUT[%u]%s;\n",
-                                        usage_idx, reg_mask, i, reg_mask);
-                        if(!(writemask & WINED3DSP_WRITEMASK_3)) {
-                            shader_addline(&buffer, "gl_TexCoord[%u].w = 1.0;\n", usage_idx);
-                        }
-                    }
-                    break;
-
-                case WINED3DDECLUSAGE_PSIZE:
-                    shader_addline(&buffer, "gl_PointSize = OUT[%u].x;\n", i);
-                    break;
-
-                case WINED3DDECLUSAGE_FOG:
-                    shader_addline(&buffer, "gl_FogFragCoord = OUT[%u].%c;\n", i, reg_mask[1]);
-                    break;
-
-                default:
-                    break;
+                    shader_addline(&buffer, "gl_TexCoord[%u]%s = OUT[%u]%s;\n",
+                            semantic_idx, reg_mask, i, reg_mask);
+                    if (!(write_mask & WINED3DSP_WRITEMASK_3))
+                        shader_addline(&buffer, "gl_TexCoord[%u].w = 1.0;\n", semantic_idx);
+                }
+            }
+            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
+            {
+                shader_addline(&buffer, "gl_PointSize = OUT[%u].x;\n", i);
+            }
+            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
+            {
+                shader_addline(&buffer, "gl_FogFragCoord = OUT[%u].%c;\n", i, reg_mask[1]);
             }
         }
         shader_addline(&buffer, "}\n");
@@ -3523,7 +3530,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     } else if(ps_major >= 3 && vs_major >= 3) {
         WORD map = vs->baseShader.reg_maps.output_registers;
 
-        semantics_out = vs->semantics_out;
+        output_signature = vs->output_signature;
 
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
         shader_addline(&buffer, "varying vec4 IN[%u];\n", vec4_varyings(3, gl_info));
@@ -3534,27 +3541,22 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         {
             if (!(map & 1)) continue;
 
-            usage = semantics_out[i].usage;
-            usage_idx = semantics_out[i].usage_idx;
-            shader_glsl_get_write_mask(&semantics_out[i].reg, reg_mask);
+            semantic_name = output_signature[i].semantic_name;
+            shader_glsl_write_mask_to_str(output_signature[i].mask, reg_mask);
 
-            switch(usage) {
-                case WINED3DDECLUSAGE_POSITION:
-                    shader_addline(&buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
-                    break;
-
-                case WINED3DDECLUSAGE_PSIZE:
-                    shader_addline(&buffer, "gl_PointSize = OUT[%u].x;\n", i);
-                    break;
-
-                default:
-                    break;
+            if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
+            {
+                shader_addline(&buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+            }
+            else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
+            {
+                shader_addline(&buffer, "gl_PointSize = OUT[%u].x;\n", i);
             }
         }
 
         /* Then, fix the pixel shader input */
-        handle_ps3_input(&buffer, gl_info, ps->input_reg_map,
-                ps->semantics_in, &ps->baseShader.reg_maps, semantics_out, &vs->baseShader.reg_maps);
+        handle_ps3_input(&buffer, gl_info, ps->input_reg_map, ps->input_signature,
+                &ps->baseShader.reg_maps, output_signature, &vs->baseShader.reg_maps);
 
         shader_addline(&buffer, "}\n");
     } else if(ps_major >= 3 && vs_major < 3) {
@@ -3564,7 +3566,8 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
          * point size, but we depend on the optimizers kindness to find out that the pixel shader doesn't
          * read gl_TexCoord and gl_ColorX, otherwise we'll run out of varyings
          */
-        handle_ps3_input(&buffer, gl_info, ps->input_reg_map, ps->semantics_in, &ps->baseShader.reg_maps, NULL, NULL);
+        handle_ps3_input(&buffer, gl_info, ps->input_reg_map, ps->input_signature,
+                &ps->baseShader.reg_maps, NULL, NULL);
         shader_addline(&buffer, "}\n");
     } else {
         ERR("Unexpected vertex and pixel shader version condition: vs: %d, ps: %d\n", vs_major, ps_major);
@@ -4186,7 +4189,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShader *iface,
     /* Pack 3.0 inputs */
     if (reg_maps->shader_version.major >= 3 && args->vp_mode != vertexshader)
     {
-        pshader_glsl_input_pack(iface, buffer, This->semantics_in, reg_maps, args->vp_mode);
+        pshader_glsl_input_pack(iface, buffer, This->input_signature, reg_maps, args->vp_mode);
     }
 
     /* Base Shader Body */
