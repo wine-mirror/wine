@@ -375,6 +375,9 @@ HGLOBAL WINAPI GlobalAlloc(
       pintern = HeapAlloc(GetProcessHeap(), 0, sizeof(GLOBAL32_INTERN));
       if (pintern)
       {
+          /* Mask out obsolete flags */
+          flags &= ~(GMEM_LOWER | GMEM_NOCOMPACT | GMEM_NOT_BANKED | GMEM_NOTIFY);
+
           pintern->Magic = MAGIC_GLOBAL_USED;
           pintern->Flags = flags >> 8;
           pintern->LockCount = 0;
