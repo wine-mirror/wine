@@ -2925,7 +2925,7 @@ int CDECL MSVCRT_fgetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
  */
 int CDECL MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
 {
-    size_t i, len = strlen(s);
+    MSVCRT_size_t i, len = strlen(s);
     if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
       return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
     for (i=0; i<len; i++)
@@ -2939,7 +2939,7 @@ int CDECL MSVCRT_fputs(const char *s, MSVCRT_FILE* file)
  */
 int CDECL MSVCRT_fputws(const MSVCRT_wchar_t *s, MSVCRT_FILE* file)
 {
-    size_t i, len = strlenW(s);
+    MSVCRT_size_t i, len = strlenW(s);
     if (!(MSVCRT_fdesc[file->_file].wxflag & WX_TEXT))
       return MSVCRT_fwrite(s,sizeof(*s),len,file) == len ? 0 : MSVCRT_EOF;
     for (i=0; i<len; i++)
@@ -3027,7 +3027,7 @@ int CDECL MSVCRT_putchar(int c)
  */
 int CDECL MSVCRT_puts(const char *s)
 {
-    size_t len = strlen(s);
+    MSVCRT_size_t len = strlen(s);
     if (MSVCRT_fwrite(s,sizeof(*s),len,MSVCRT_stdout) != len) return MSVCRT_EOF;
     return MSVCRT_fwrite("\n",1,1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
 }
@@ -3038,7 +3038,7 @@ int CDECL MSVCRT_puts(const char *s)
 int CDECL _putws(const MSVCRT_wchar_t *s)
 {
     static const MSVCRT_wchar_t nl = '\n';
-    size_t len = strlenW(s);
+    MSVCRT_size_t len = strlenW(s);
     if (MSVCRT_fwrite(s,sizeof(*s),len,MSVCRT_stdout) != len) return MSVCRT_EOF;
     return MSVCRT_fwrite(&nl,sizeof(nl),1,MSVCRT_stdout) == 1 ? 0 : MSVCRT_EOF;
 }

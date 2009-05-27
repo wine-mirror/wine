@@ -74,12 +74,12 @@ static MSVCRT_wchar_t msvcrt_mbc_to_wc(unsigned int ch)
   return chW;
 }
 
-static inline size_t u_strlen( const unsigned char *str )
+static inline MSVCRT_size_t u_strlen( const unsigned char *str )
 {
   return strlen( (const char*) str );
 }
 
-static inline unsigned char* u_strncat( unsigned char* dst, const unsigned char* src, size_t len )
+static inline unsigned char* u_strncat( unsigned char* dst, const unsigned char* src, MSVCRT_size_t len )
 {
   return (unsigned char*)strncat( (char*)dst, (const char*)src, len);
 }
@@ -94,12 +94,12 @@ static inline int u_strcasecmp( const unsigned char *s1, const unsigned char *s2
   return strcasecmp( (const char*)s1, (const char*)s2 );
 }
 
-static inline int u_strncmp( const unsigned char *s1, const unsigned char *s2, size_t len )
+static inline int u_strncmp( const unsigned char *s1, const unsigned char *s2, MSVCRT_size_t len )
 {
   return strncmp( (const char*)s1, (const char*)s2, len );
 }
 
-static inline int u_strncasecmp( const unsigned char *s1, const unsigned char *s2, size_t len )
+static inline int u_strncasecmp( const unsigned char *s1, const unsigned char *s2, MSVCRT_size_t len )
 {
   return strncasecmp( (const char*)s1, (const char*)s2, len );
 }
@@ -124,12 +124,12 @@ static inline unsigned char *u__strset( unsigned char *s, unsigned char c )
   return (unsigned char*) _strset( (char*)s, c);
 }
 
-static inline unsigned char *u__strnset( unsigned char *s, unsigned char c, size_t len )
+static inline unsigned char *u__strnset( unsigned char *s, unsigned char c, MSVCRT_size_t len )
 {
   return (unsigned char*) _strnset( (char*)s, c, len );
 }
 
-static inline size_t u_strcspn( const unsigned char *s, const unsigned char *rej )
+static inline MSVCRT_size_t u_strcspn( const unsigned char *s, const unsigned char *rej )
 {
   return strcspn( (const char *)s, (const char*)rej );
 }
