@@ -1376,7 +1376,12 @@ static void test_FindFirstFileA(void)
 
     /* try FindFirstFileA on "C:\foo\" */
     SetLastError( 0xdeadbeaf );
-    GetTempFileNameA( buffer, "foo", 0, nonexistent );
+    if (!GetTempFileNameA( buffer, "foo", 0, nonexistent ) && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        char tmp[MAX_PATH];
+        GetTempPathA( sizeof(tmp), tmp );
+        GetTempFileNameA( tmp, "foo", 0, nonexistent );
+    }
     DeleteFileA( nonexistent );
     strcpy(buffer2, nonexistent);
     strcat(buffer2, "\\");
