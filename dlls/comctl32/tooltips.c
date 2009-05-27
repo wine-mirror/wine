@@ -359,7 +359,7 @@ TOOLTIPS_Refresh (const TOOLTIPS_INFO *infoPtr, HDC hdc)
         DeleteObject(hRgn);
 }
 
-static void TOOLTIPS_GetDispInfoA(TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *toolPtr)
+static void TOOLTIPS_GetDispInfoA(const TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *toolPtr, WCHAR *buffer)
 {
     NMTTDISPINFOA ttnmdi;
 
@@ -377,45 +377,45 @@ static void TOOLTIPS_GetDispInfoA(TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *toolPtr)
 
     if (IS_INTRESOURCE(ttnmdi.lpszText)) {
         LoadStringW(ttnmdi.hinst, LOWORD(ttnmdi.lpszText),
-               infoPtr->szTipText, INFOTIPSIZE);
+               buffer, INFOTIPSIZE);
         if (ttnmdi.uFlags & TTF_DI_SETITEM) {
             toolPtr->hinst = ttnmdi.hinst;
             toolPtr->lpszText = (LPWSTR)ttnmdi.lpszText;
         }
     }
     else if (ttnmdi.lpszText == 0) {
-        infoPtr->szTipText[0] = '\0';
+        buffer[0] = '\0';
     }
     else if (ttnmdi.lpszText != LPSTR_TEXTCALLBACKA) {
-        Str_GetPtrAtoW(ttnmdi.lpszText, infoPtr->szTipText, INFOTIPSIZE);
+        Str_GetPtrAtoW(ttnmdi.lpszText, buffer, INFOTIPSIZE);
         if (ttnmdi.uFlags & TTF_DI_SETITEM) {
             toolPtr->hinst = 0;
             toolPtr->lpszText = NULL;
-            Str_SetPtrW(&toolPtr->lpszText, infoPtr->szTipText);
+            Str_SetPtrW(&toolPtr->lpszText, buffer);
         }
     }
     else {
         ERR("recursive text callback!\n");
-        infoPtr->szTipText[0] = '\0';
+        buffer[0] = '\0';
     }
 
     /* no text available - try calling parent instead as per native */
     /* FIXME: Unsure if SETITEM should save the value or not        */
-    if (infoPtr->szTipText[0] == 0x00) {
+    if (buffer[0] == 0x00) {
 
         SendMessageW(GetParent(toolPtr->hwnd), WM_NOTIFY, toolPtr->uId, (LPARAM)&ttnmdi);
 
         if (IS_INTRESOURCE(ttnmdi.lpszText)) {
             LoadStringW(ttnmdi.hinst, LOWORD(ttnmdi.lpszText),
-                   infoPtr->szTipText, INFOTIPSIZE);
+                   buffer, INFOTIPSIZE);
         } else if (ttnmdi.lpszText &&
                    ttnmdi.lpszText != LPSTR_TEXTCALLBACKA) {
-            Str_GetPtrAtoW(ttnmdi.lpszText, infoPtr->szTipText, INFOTIPSIZE);
+            Str_GetPtrAtoW(ttnmdi.lpszText, buffer, INFOTIPSIZE);
         }
     }
 }
 
-static void TOOLTIPS_GetDispInfoW(TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *toolPtr)
+static void TOOLTIPS_GetDispInfoW(const TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *toolPtr, WCHAR *buffer)
 {
     NMTTDISPINFOW ttnmdi;
 
@@ -433,47 +433,47 @@ static void TOOLTIPS_GetDispInfoW(TOOLTIPS_INFO *infoPtr, TTTOOL_INFO *toolPtr)
 
     if (IS_INTRESOURCE(ttnmdi.lpszText)) {
         LoadStringW(ttnmdi.hinst, LOWORD(ttnmdi.lpszText),
-               infoPtr->szTipText, INFOTIPSIZE);
+               buffer, INFOTIPSIZE);
         if (ttnmdi.uFlags & TTF_DI_SETITEM) {
             toolPtr->hinst = ttnmdi.hinst;
             toolPtr->lpszText = ttnmdi.lpszText;
         }
     }
     else if (ttnmdi.lpszText == 0) {
-        infoPtr->szTipText[0] = '\0';
+        buffer[0] = '\0';
     }
     else if (ttnmdi.lpszText != LPSTR_TEXTCALLBACKW) {
-        Str_GetPtrW(ttnmdi.lpszText, infoPtr->szTipText, INFOTIPSIZE);
+        Str_GetPtrW(ttnmdi.lpszText, buffer, INFOTIPSIZE);
         if (ttnmdi.uFlags & TTF_DI_SETITEM) {
             toolPtr->hinst = 0;
             toolPtr->lpszText = NULL;
-            Str_SetPtrW(&toolPtr->lpszText, infoPtr->szTipText);
+            Str_SetPtrW(&toolPtr->lpszText, buffer);
         }
     }
     else {
         ERR("recursive text callback!\n");
-        infoPtr->szTipText[0] = '\0';
+        buffer[0] = '\0';
     }
 
     /* no text available - try calling parent instead as per native */
     /* FIXME: Unsure if SETITEM should save the value or not        */
-    if (infoPtr->szTipText[0] == 0x00) {
+    if (buffer[0] == 0x00) {
 
         SendMessageW(GetParent(toolPtr->hwnd), WM_NOTIFY, toolPtr->uId, (LPARAM)&ttnmdi);
 
         if (IS_INTRESOURCE(ttnmdi.lpszText)) {
             LoadStringW(ttnmdi.hinst, LOWORD(ttnmdi.lpszText),
-                   infoPtr->szTipText, INFOTIPSIZE);
+                   buffer, INFOTIPSIZE);
         } else if (ttnmdi.lpszText &&
                    ttnmdi.lpszText != LPSTR_TEXTCALLBACKW) {
-            Str_GetPtrW(ttnmdi.lpszText, infoPtr->szTipText, INFOTIPSIZE);
+            Str_GetPtrW(ttnmdi.lpszText, buffer, INFOTIPSIZE);
         }
     }
 
 }
 
 static void
-TOOLTIPS_GetTipText (TOOLTIPS_INFO *infoPtr, INT nTool)
+TOOLTIPS_GetTipText (const TOOLTIPS_INFO *infoPtr, INT nTool, WCHAR *buffer)
 {
     TTTOOL_INFO *toolPtr = &infoPtr->tools[nTool];
 
@@ -482,26 +482,26 @@ TOOLTIPS_GetTipText (TOOLTIPS_INFO *infoPtr, INT nTool)
 	TRACE("load res string %p %x\n",
 	       toolPtr->hinst, LOWORD(toolPtr->lpszText));
 	LoadStringW (toolPtr->hinst, LOWORD(toolPtr->lpszText),
-		       infoPtr->szTipText, INFOTIPSIZE);
+		       buffer, INFOTIPSIZE);
     }
     else if (toolPtr->lpszText) {
 	if (toolPtr->lpszText == LPSTR_TEXTCALLBACKW) {
 	    if (toolPtr->bNotifyUnicode)
-		TOOLTIPS_GetDispInfoW(infoPtr, toolPtr);
+		TOOLTIPS_GetDispInfoW(infoPtr, toolPtr, buffer);
 	    else
-		TOOLTIPS_GetDispInfoA(infoPtr, toolPtr);
+		TOOLTIPS_GetDispInfoA(infoPtr, toolPtr, buffer);
 	}
 	else {
 	    /* the item is a usual (unicode) text */
-	    lstrcpynW (infoPtr->szTipText, toolPtr->lpszText, INFOTIPSIZE);
+	    lstrcpynW (buffer, toolPtr->lpszText, INFOTIPSIZE);
 	}
     }
     else {
 	/* no text available */
-        infoPtr->szTipText[0] = '\0';
+        buffer[0] = '\0';
     }
 
-    TRACE("%s\n", debugstr_w(infoPtr->szTipText));
+    TRACE("%s\n", debugstr_w(buffer));
 }
 
 
@@ -597,7 +597,7 @@ TOOLTIPS_Show (TOOLTIPS_INFO *infoPtr, BOOL track_activate)
 
     TRACE("Show tooltip pre %d! (%p)\n", nTool, infoPtr->hwndSelf);
 
-    TOOLTIPS_GetTipText (infoPtr, nTool);
+    TOOLTIPS_GetTipText (infoPtr, nTool, infoPtr->szTipText);
 
     if (infoPtr->szTipText[0] == '\0')
         return;
@@ -1506,6 +1506,7 @@ TOOLTIPS_GetMaxTipWidth (const TOOLTIPS_INFO *infoPtr)
 static LRESULT
 TOOLTIPS_GetTextA (const TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
 {
+    WCHAR buffer[INFOTIPSIZE];
     INT nTool;
 
     if (lpToolInfo == NULL)
@@ -1520,8 +1521,10 @@ TOOLTIPS_GetTextA (const TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
        what size buffer it requires nor a way to specify how long the
        one it supplies is.  We'll assume it's up to INFOTIPSIZE */
 
-    WideCharToMultiByte(CP_ACP, 0, infoPtr->tools[nTool].lpszText, -1,
-			lpToolInfo->lpszText, INFOTIPSIZE, NULL, NULL);
+    buffer[0] = '\0';
+    TOOLTIPS_GetTipText(infoPtr, nTool, buffer);
+    WideCharToMultiByte(CP_ACP, 0, buffer, -1, lpToolInfo->lpszText,
+                                               INFOTIPSIZE, NULL, NULL);
 
     return 0;
 }
@@ -1543,7 +1546,8 @@ TOOLTIPS_GetTextW (const TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
     if (infoPtr->tools[nTool].lpszText == NULL)
 	return 0;
 
-    strcpyW (lpToolInfo->lpszText, infoPtr->tools[nTool].lpszText);
+    lpToolInfo->lpszText[0] = '\0';
+    TOOLTIPS_GetTipText(infoPtr, nTool, lpToolInfo->lpszText);
 
     return 0;
 }
@@ -2073,7 +2077,7 @@ TOOLTIPS_SetToolInfoW (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
 
     if (infoPtr->nCurrentTool == nTool)
     {
-        TOOLTIPS_GetTipText (infoPtr, infoPtr->nCurrentTool);
+        TOOLTIPS_GetTipText (infoPtr, infoPtr->nCurrentTool, infoPtr->szTipText);
 
         if (infoPtr->szTipText[0] == 0)
             TOOLTIPS_Hide(infoPtr);

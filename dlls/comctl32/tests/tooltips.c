@@ -232,14 +232,63 @@ static void test_customdraw(void) {
 
 }
 
+static const CHAR testcallbackA[]  = "callback";
+
+static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message == WM_NOTIFY && lParam)
+    {
+        NMTTDISPINFOA *ttnmdi = (NMTTDISPINFOA*)lParam;
+
+        if (ttnmdi->hdr.code == TTN_GETDISPINFOA)
+            lstrcpy(ttnmdi->lpszText, testcallbackA);
+    }
+
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
+static BOOL register_parent_wnd_class(void)
+{
+    WNDCLASSA cls;
+
+    cls.style = 0;
+    cls.lpfnWndProc = parent_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "Tooltips test parent class";
+    return RegisterClassA(&cls);
+}
+
+static HWND create_parent_window(void)
+{
+    if (!register_parent_wnd_class())
+        return NULL;
+
+    return CreateWindowEx(0, "Tooltips test parent class",
+                          "Tooltips test parent window",
+                          WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                          WS_MAXIMIZEBOX | WS_VISIBLE,
+                          0, 0, 100, 100,
+                          GetDesktopWindow(), NULL, GetModuleHandleA(NULL), NULL);
+}
+
 static void test_gettext(void)
 {
-    HWND hwnd;
+    HWND hwnd, notify;
     TTTOOLINFOA toolinfoA;
     TTTOOLINFOW toolinfoW;
     LRESULT r;
-    char bufA[10] = "";
+    CHAR bufA[10] = "";
     WCHAR bufW[10] = { 0 };
+    static const CHAR testtipA[] = "testtip";
+
+    notify = create_parent_window();
+    ok(notify != NULL, "Expected notification window to be created\n");
 
     /* For bug 14790 - lpszText is NULL */
     hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0,
@@ -266,7 +315,58 @@ static void test_gettext(void)
         ok(strcmp(toolinfoA.lpszText, "") == 0, "lpszText should be an empty string\n");
     }
 
+    /* add another tool with text */
+    toolinfoA.cbSize = sizeof(TTTOOLINFOA);
+    toolinfoA.hwnd = NULL;
+    toolinfoA.hinst = GetModuleHandleA(NULL);
+    toolinfoA.uFlags = 0;
+    toolinfoA.uId = 0x1235ABCD;
+    strcpy(bufA, testtipA);
+    toolinfoA.lpszText = bufA;
+    toolinfoA.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &toolinfoA.rect);
+    r = SendMessageA(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoA);
+    ok(r, "Adding the tool to the tooltip failed\n");
+    if (r)
+    {
+        DWORD length;
+
+        length = SendMessage(hwnd, WM_GETTEXTLENGTH, 0, 0);
+        ok(length == 0, "Expected 0, got %d\n", length);
+
+        toolinfoA.hwnd = NULL;
+        toolinfoA.uId = 0x1235ABCD;
+        toolinfoA.lpszText = bufA;
+        SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
+        ok(strcmp(toolinfoA.lpszText, testtipA) == 0, "lpszText should be an empty string\n");
+
+        length = SendMessage(hwnd, WM_GETTEXTLENGTH, 0, 0);
+        ok(length == 0, "Expected 0, got %d\n", length);
+    }
+
+    /* add another with callback text */
+    toolinfoA.cbSize = sizeof(TTTOOLINFOA);
+    toolinfoA.hwnd = notify;
+    toolinfoA.hinst = GetModuleHandleA(NULL);
+    toolinfoA.uFlags = 0;
+    toolinfoA.uId = 0x1236ABCD;
+    toolinfoA.lpszText = LPSTR_TEXTCALLBACKA;
+    toolinfoA.lParam = 0xdeadbeef;
+    GetClientRect(hwnd, &toolinfoA.rect);
+    r = SendMessageA(hwnd, TTM_ADDTOOL, 0, (LPARAM)&toolinfoA);
+    ok(r, "Adding the tool to the tooltip failed\n");
+    if (r)
+    {
+        toolinfoA.hwnd = notify;
+        toolinfoA.uId = 0x1236ABCD;
+        toolinfoA.lpszText = bufA;
+        SendMessageA(hwnd, TTM_GETTEXTA, 0, (LPARAM)&toolinfoA);
+        ok(strcmp(toolinfoA.lpszText, testcallbackA) == 0,
+           "lpszText should be an (%s) string\n", testcallbackA);
+    }
+
     DestroyWindow(hwnd);
+    DestroyWindow(notify);
 
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0,
