@@ -3175,14 +3175,15 @@ static void pshader_glsl_input_pack(IWineD3DPixelShader *iface, SHADER_BUFFER *b
 {
     unsigned int i;
     IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *)iface;
+    WORD map = reg_maps->input_registers;
 
-    for (i = 0; i < MAX_REG_INPUT; ++i)
+    for (i = 0; map; map >>= 1, ++i)
     {
         DWORD usage, usage_idx;
         char reg_mask[6];
 
         /* Unused */
-        if (!reg_maps->packed_input[i]) continue;
+        if (!(map & 1)) continue;
 
         usage = semantics_in[i].usage;
         usage_idx = semantics_in[i].usage_idx;
@@ -3280,6 +3281,7 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
     DWORD in_count = vec4_varyings(3, gl_info);
     char reg_mask[6], reg_mask_out[6];
     char destination[50];
+    WORD input_map;
 
     set = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*set) * (in_count + 2));
 
@@ -3289,8 +3291,10 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
         shader_addline(buffer, "vec4 front_secondary_color = gl_FrontSecondaryColor;\n");
     }
 
-    for(i = 0; i < MAX_REG_INPUT; i++) {
-        if (!reg_maps_in->packed_input[i]) continue;
+    input_map = reg_maps_in->input_registers;
+    for (i = 0; input_map; input_map >>= 1, ++i)
+    {
+        if (!(input_map & 1)) continue;
 
         in_idx = map[i];
         if (in_idx >= (in_count + 2)) {

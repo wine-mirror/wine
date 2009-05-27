@@ -411,7 +411,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                  * Pshader: mark 3.0 input registers used, save token */
                 case WINED3DSPR_INPUT:
                     if (!pshader) reg_maps->attributes[semantic.reg.reg.idx] = 1;
-                    else reg_maps->packed_input[semantic.reg.reg.idx] = 1;
+                    else reg_maps->input_registers |= 1 << semantic.reg.reg.idx;
                     semantics_in[semantic.reg.reg.idx] = semantic;
                     break;
 
