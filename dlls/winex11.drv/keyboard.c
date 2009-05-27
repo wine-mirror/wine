@@ -2679,7 +2679,8 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
         if (e.state & ControlMask)
         {
             if (((keysym>=33) && (keysym < 'A')) ||
-                ((keysym > 'Z') && (keysym < 'a')))
+                ((keysym > 'Z') && (keysym < 'a')) ||
+                (keysym == XK_Tab))
             {
                 lpChar[0] = 0;
                 ret = 0;
