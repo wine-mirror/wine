@@ -345,8 +345,9 @@ static unsigned int get_instr_extra_regcount(enum WINED3D_SHADER_INSTRUCTION_HAN
  * as an address register. */
 
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
-        struct shader_reg_maps *reg_maps, struct wined3d_shader_semantic *semantics_in,
-        struct wined3d_shader_semantic *semantics_out, const DWORD *byte_code, DWORD constf_size)
+        struct shader_reg_maps *reg_maps, struct wined3d_shader_attribute *attributes,
+        struct wined3d_shader_semantic *semantics_in, struct wined3d_shader_semantic *semantics_out,
+        const DWORD *byte_code, DWORD constf_size)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     void *fe_data = This->baseShader.frontend_data;
@@ -411,7 +412,15 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                  * Pshader: mark 3.0 input registers used, save token */
                 case WINED3DSPR_INPUT:
                     reg_maps->input_registers |= 1 << semantic.reg.reg.idx;
-                    semantics_in[semantic.reg.reg.idx] = semantic;
+                    if (shader_version.type == WINED3D_SHADER_TYPE_VERTEX)
+                    {
+                        attributes[semantic.reg.reg.idx].usage = semantic.usage;
+                        attributes[semantic.reg.reg.idx].usage_idx = semantic.usage_idx;
+                    }
+                    else
+                    {
+                        semantics_in[semantic.reg.reg.idx] = semantic;
+                    }
                     break;
 
                 /* Vshader: mark 3.0 output registers used, save token */

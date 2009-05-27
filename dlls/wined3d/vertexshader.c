@@ -115,14 +115,8 @@ static void vshader_set_input(
     unsigned int regnum,
     BYTE usage, BYTE usage_idx) {
 
-    This->semantics_in[regnum].usage = usage;
-    This->semantics_in[regnum].usage_idx = usage_idx;
-    This->semantics_in[regnum].reg.reg.type = WINED3DSPR_INPUT;
-    This->semantics_in[regnum].reg.reg.idx = regnum;
-    This->semantics_in[regnum].reg.write_mask = WINED3DSP_WRITEMASK_ALL;
-    This->semantics_in[regnum].reg.modifiers = 0;
-    This->semantics_in[regnum].reg.shift = 0;
-    This->semantics_in[regnum].reg.reg.rel_addr = NULL;
+    This->attributes[regnum].usage = usage;
+    This->attributes[regnum].usage_idx = usage_idx;
 }
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2) {
@@ -144,8 +138,8 @@ BOOL vshader_get_input(IWineD3DVertexShader* iface, BYTE usage_req, BYTE usage_i
     {
         if (!(map & 1)) continue;
 
-        if (match_usage(This->semantics_in[i].usage,
-                This->semantics_in[i].usage_idx, usage_req, usage_idx_req))
+        if (match_usage(This->attributes[i].usage,
+                This->attributes[i].usage_idx, usage_req, usage_idx_req))
         {
             *regnum = i;
             return TRUE;
@@ -283,8 +277,8 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     This->min_rel_offset = GL_LIMITS(vshader_constantsF);
     This->max_rel_offset = 0;
     hr = shader_get_registers_used((IWineD3DBaseShader*) This, fe,
-            reg_maps, This->semantics_in, This->semantics_out, pFunction,
-            GL_LIMITS(vshader_constantsF));
+            reg_maps, This->attributes, NULL, This->semantics_out,
+            pFunction, GL_LIMITS(vshader_constantsF));
     if (hr != WINED3D_OK) return hr;
 
     vshader_set_limits(This);

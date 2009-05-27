@@ -242,8 +242,9 @@ static HRESULT WINAPI IWineD3DPixelShaderImpl_SetFunction(IWineD3DPixelShader *i
     list_init(&This->baseShader.constantsI);
 
     /* Second pass: figure out which registers are used, what the semantics are, etc.. */
-    hr = shader_get_registers_used((IWineD3DBaseShader *)This, fe, reg_maps, This->semantics_in, NULL, pFunction,
-                                    GL_LIMITS(pshader_constantsF));
+    hr = shader_get_registers_used((IWineD3DBaseShader *)This, fe,
+            reg_maps, NULL, This->semantics_in, NULL,
+            pFunction, GL_LIMITS(pshader_constantsF));
     if (FAILED(hr)) return hr;
 
     pshader_set_limits(This);
