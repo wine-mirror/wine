@@ -775,20 +775,20 @@ static inline LRESULT notify_listview(const LISTVIEW_INFO *infoPtr, INT code, LP
 
 static BOOL notify_click(const LISTVIEW_INFO *infoPtr, INT code, const LVHITTESTINFO *lvht)
 {
-    NMLISTVIEW nmlv;
+    NMITEMACTIVATE nmia;
     LVITEMW item;
     HWND hwnd = infoPtr->hwndSelf;
 
     TRACE("code=%d, lvht=%s\n", code, debuglvhittestinfo(lvht)); 
-    ZeroMemory(&nmlv, sizeof(nmlv));
-    nmlv.iItem = lvht->iItem;
-    nmlv.iSubItem = lvht->iSubItem;
-    nmlv.ptAction = lvht->pt;
+    ZeroMemory(&nmia, sizeof(nmia));
+    nmia.iItem = lvht->iItem;
+    nmia.iSubItem = lvht->iSubItem;
+    nmia.ptAction = lvht->pt;
     item.mask = LVIF_PARAM;
     item.iItem = lvht->iItem;
     item.iSubItem = 0;
-    if (LISTVIEW_GetItemT(infoPtr, &item, TRUE)) nmlv.lParam = item.lParam;
-    notify_listview(infoPtr, code, &nmlv);
+    if (LISTVIEW_GetItemT(infoPtr, &item, TRUE)) nmia.lParam = item.lParam;
+    notify_hdr(infoPtr, code, (LPNMHDR)&nmia);
     return IsWindow(hwnd);
 }
 
