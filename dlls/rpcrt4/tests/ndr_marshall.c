@@ -1313,12 +1313,6 @@ static void test_ndr_allocate(void)
     MIDL_STUB_MESSAGE StubMsg;
     MIDL_STUB_DESC StubDesc;
     void *p1, *p2;
-    struct tag_mem_list_v1_t
-    {
-        DWORD magic;
-        void *ptr;
-        struct tag_mem_list_v1_t *next;
-    } *mem_list_v1;
     struct tag_mem_list_v2_t
     {
         DWORD magic;
@@ -1331,7 +1325,6 @@ static void test_ndr_allocate(void)
     StubDesc = Object_StubDesc;
     NdrClientInitializeNew(&RpcMessage, &StubMsg, &StubDesc, 0);
 
-    ok(StubMsg.pMemoryList == NULL, "memlist %p\n", StubMsg.pMemoryList);
     my_alloc_called = my_free_called = 0;
     p1 = NdrAllocate(&StubMsg, 10);
     p2 = NdrAllocate(&StubMsg, 24);
@@ -1358,21 +1351,7 @@ static void test_ndr_allocate(void)
                 ok(mem_list_v2->next == NULL, "next %p\n", mem_list_v2->next);
             }
         }
-        else
-        {
-            trace("v1 mem list format\n");
-            mem_list_v1 = StubMsg.pMemoryList;
-            ok(mem_list_v1->magic == magic_MEML, "magic %08x\n", mem_list_v1->magic);
-            ok(mem_list_v1->ptr == p2, "ptr != p2\n");
-            ok(mem_list_v1->next != NULL, "next NULL\n");
-            mem_list_v1 = mem_list_v1->next;
-            if(mem_list_v1)
-            {
-                ok(mem_list_v1->magic == magic_MEML, "magic %08x\n", mem_list_v1->magic);
-                ok(mem_list_v1->ptr == p1, "ptr != p1\n");
-                ok(mem_list_v1->next == NULL, "next %p\n", mem_list_v1->next);
-            }
-        }
+        else win_skip("v1 mem list format\n");
     }
     /* NdrFree isn't exported so we can't test free'ing */
 }
