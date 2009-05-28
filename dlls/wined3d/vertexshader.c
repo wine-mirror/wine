@@ -246,6 +246,7 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
     IWineD3DDeviceImpl *deviceImpl = (IWineD3DDeviceImpl *) This->baseShader.device;
     const struct wined3d_shader_frontend *fe;
+    unsigned int i;
     HRESULT hr;
     shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
 
@@ -280,6 +281,16 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
             reg_maps, This->attributes, NULL, This->output_signature,
             pFunction, GL_LIMITS(vshader_constantsF));
     if (hr != WINED3D_OK) return hr;
+
+    if (output_signature)
+    {
+        for (i = 0; i < output_signature->element_count; ++i)
+        {
+            struct wined3d_shader_signature_element *e = &output_signature->elements[i];
+            reg_maps->output_registers |= 1 << e->register_idx;
+            This->output_signature[e->register_idx] = *e;
+        }
+    }
 
     vshader_set_limits(This);
 
