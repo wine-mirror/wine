@@ -37,10 +37,21 @@ BOOL WINAPI GetDevicePowerState(HANDLE hDevice, BOOL* pfOn)
 /***********************************************************************
  *           GetSystemPowerStatus      (KERNEL32.@)
  */
-BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS sps_ptr)
+BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS ps)
 {
-    WARN("(): stub, harmless.\n");
-    return FALSE;   /* no power management support */
+    WARN("(%p): stub, harmless.\n", ps);
+
+    if (ps)
+    {
+        ps->ACLineStatus        = 255;
+        ps->BatteryFlag         = 255;
+        ps->BatteryLifePercent  = 255;
+        ps->Reserved1           = 0;
+        ps->BatteryLifeTime     = ~0u;
+        ps->BatteryFullLifeTime = ~0u;
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /***********************************************************************
