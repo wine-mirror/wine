@@ -345,7 +345,7 @@ static const char *shader_semantic_name_from_usage(WINED3DDECLUSAGE usage)
 {
     static const char *semantic_names[] =
     {
-        /* WINED3DDECLUSAGE_POSITION        */ "POSITION",
+        /* WINED3DDECLUSAGE_POSITION        */ "SV_POSITION",
         /* WINED3DDECLUSAGE_BLENDWEIGHT     */ "BLENDWEIGHT",
         /* WINED3DDECLUSAGE_BLENDINDICES    */ "BLENDINDICES",
         /* WINED3DDECLUSAGE_NORMAL          */ "NORMAL",
