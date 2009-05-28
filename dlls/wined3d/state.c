@@ -4348,6 +4348,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     /* Some stuff is in the device until we have per context tracking */
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL wasrhw = context->last_was_rhw;
+    unsigned int i;
 
     transformed = device->strided_streams.position_transformed;
     if(transformed != context->last_was_rhw && !useVertexShaderFunction) {
@@ -4419,13 +4420,15 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
             if(!device->vs_clipping && !isStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPLANEENABLE))) {
                 state_clipping(STATE_RENDER(WINED3DRS_CLIPPLANEENABLE), stateblock, context);
             }
+            for(i = 0; i < GL_LIMITS(clipplanes); i++) {
+                clipplane(STATE_CLIPPLANE(i), stateblock, context);
+            }
         }
         if(!isStateDirty(context, STATE_RENDER(WINED3DRS_NORMALIZENORMALS))) {
             state_normalize(STATE_RENDER(WINED3DRS_NORMALIZENORMALS), stateblock, context);
         }
     } else {
         if(!context->last_was_vshader) {
-            unsigned int i;
             static BOOL warned = FALSE;
             if(!device->vs_clipping) {
                 /* Disable all clip planes to get defined results on all drivers. See comment in the
@@ -4455,6 +4458,14 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
                 }
             }
             updateFog = TRUE;
+
+            /* Vertex shader clipping ignores the view matrix. Update all clipplanes
+             * (Note: ARB shaders can read the clip planes for clipping emulation even if
+             * device->vs_clipping is false.
+             */
+            for(i = 0; i < GL_LIMITS(clipplanes); i++) {
+                clipplane(STATE_CLIPPLANE(i), stateblock, context);
+            }
         }
     }
 
