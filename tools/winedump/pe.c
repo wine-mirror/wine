@@ -669,7 +669,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function *function )
     }
     if (info->flags & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER))
         printf( "    handler %08x data at %08x\n", handler_data->handler,
-                function->UnwindData + (char *)(&handler_data->handler + 1) - (char *)info );
+                (ULONG)(function->UnwindData + (char *)(&handler_data->handler + 1) - (char *)info ));
 }
 
 static void dump_dir_exceptions(void)
