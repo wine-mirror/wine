@@ -910,6 +910,35 @@ static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, DWORD d
     }
 }
 
+static const char *shader_arb_get_modifier(const struct wined3d_shader_instruction *ins)
+{
+    DWORD mod;
+    const char *ret = "";
+    if (!ins->dst_count) return "";
+
+    mod = ins->dst[0].modifiers;
+    if(mod & WINED3DSPDM_SATURATE)
+    {
+        ret = "_SAT";
+        mod &= ~WINED3DSPDM_SATURATE;
+    }
+    if(mod & WINED3DSPDM_PARTIALPRECISION)
+    {
+        FIXME("Unhandled modifier WINED3DSPDM_PARTIALPRECISION\n");
+        mod &= ~WINED3DSPDM_PARTIALPRECISION;
+    }
+    if(mod & WINED3DSPDM_MSAMPCENTROID)
+    {
+        FIXME("Unhandled modifier WINED3DSPDM_MSAMPCENTROID\n");
+        mod &= ~WINED3DSPDM_MSAMPCENTROID;
+    }
+    if(mod)
+    {
+        FIXME("Unknown modifiers 0x%08x\n", mod);
+    }
+    return ret;
+}
+
 #define TEX_PROJ        0x1
 #define TEX_BIAS        0x2
 #define TEX_LOD         0x4
@@ -924,6 +953,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    const char *mod = shader_arb_get_modifier(ins);
 
     switch(sampler_type) {
         case WINED3DSTT_1D:
@@ -963,29 +993,30 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     {
         if(flags & TEX_PROJ) FIXME("Projected texture sampling with custom derivates\n");
         if(flags & TEX_BIAS) FIXME("Biased texture sampling with custom derivates\n");
-        shader_addline(buffer, "TXD %s, %s, %s, %s, texture[%u], %s;\n", dst_str, coord_reg, dsx, dsy,
-                       sampler_idx, tex_type);
+        shader_addline(buffer, "TXD%s %s, %s, %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg,
+                       dsx, dsy,sampler_idx, tex_type);
     }
     else if(flags & TEX_LOD)
     {
         if(flags & TEX_PROJ) FIXME("Projected texture sampling with explicit lod\n");
         if(flags & TEX_BIAS) FIXME("Biased texture sampling with explicit lod\n");
-        shader_addline(buffer, "TXL %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+        shader_addline(buffer, "TXL%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg,
+                       sampler_idx, tex_type);
     }
     else if (flags & TEX_BIAS)
     {
         /* Shouldn't be possible, but let's check for it */
         if(flags & TEX_PROJ) FIXME("Biased and Projected texture sampling\n");
         /* TXB takes the 4th component of the source vector automatically, as d3d. Nothing more to do */
-        shader_addline(buffer, "TXB %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+        shader_addline(buffer, "TXB%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg, sampler_idx, tex_type);
     }
     else if (flags & TEX_PROJ)
     {
-        shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+        shader_addline(buffer, "TXP%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg, sampler_idx, tex_type);
     }
     else
     {
-        shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+        shader_addline(buffer, "TEX%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg, sampler_idx, tex_type);
     }
 
     if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
@@ -1077,31 +1108,6 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
     /* Return modified or original register, with swizzle */
     if (insert_line)
         sprintf(outregstr, "T%c%s", 'A' + tmpreg, swzstr);
-}
-
-static const char *shader_arb_get_modifier(const struct wined3d_shader_instruction *ins)
-{
-    DWORD mod;
-    const char *ret = "";
-    if (!ins->dst_count) return "";
-
-    mod = ins->dst[0].modifiers;
-    if(mod & WINED3DSPDM_SATURATE) {
-        ret = "_SAT";
-        mod &= ~WINED3DSPDM_SATURATE;
-    }
-    if(mod & WINED3DSPDM_PARTIALPRECISION) {
-        FIXME("Unhandled modifier WINED3DSPDM_PARTIALPRECISION\n");
-        mod &= ~WINED3DSPDM_PARTIALPRECISION;
-    }
-    if(mod & WINED3DSPDM_MSAMPCENTROID) {
-        FIXME("Unhandled modifier WINED3DSPDM_MSAMPCENTROID\n");
-        mod &= ~WINED3DSPDM_MSAMPCENTROID;
-    }
-    if(mod) {
-        FIXME("Unknown modifiers 0x%08x\n", mod);
-    }
-    return ret;
 }
 
 static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
