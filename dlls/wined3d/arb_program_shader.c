@@ -1653,8 +1653,8 @@ static void pshader_hw_texm3x3pad(const struct wined3d_shader_instruction *ins)
     shader_arb_get_register_name(ins, &tmp_reg, dst_name, &is_color);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
-    shader_addline(buffer, "DP3 %s%u.%c, fragment.texcoord[%u], %s;\n",
-                   dst_name, tmp_reg.idx, 'x' + current_state->current_row, reg, src0_name);
+    shader_addline(buffer, "DP3 %s.%c, fragment.texcoord[%u], %s;\n",
+                   dst_name, 'x' + current_state->current_row, reg, src0_name);
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
