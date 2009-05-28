@@ -563,7 +563,7 @@ TW_UINT16 SANE_ImageNativeXferGet (pTW_IDENTITY pOrigin,
 
         psane_cancel (activeDS.deviceHandle);
         activeDS.sane_started = FALSE;
-        *pHandle = (TW_UINT32)hDIB;
+        *pHandle = (UINT_PTR)hDIB;
         twRC = TWRC_XFERDONE;
         activeDS.twCC = TWCC_SUCCESS;
         activeDS.currentState = 7;
