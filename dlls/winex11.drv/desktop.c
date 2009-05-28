@@ -137,6 +137,8 @@ Window CDECL X11DRV_create_desktop( UINT width, UINT height )
     Window win;
     Display *display = thread_init_display();
 
+    TRACE( "%u x %u\n", width, height );
+
     wine_tsx11_lock();
 
     /* Create window */
@@ -206,7 +208,7 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
     Display *display = thread_display();
     XEvent xev;
 
-    wine_tsx11_lock();
+    if (!display || root_window != DefaultRootWindow( display )) return;
 
     xev.xclient.type = ClientMessage;
     xev.xclient.window = root_window;
@@ -225,9 +227,9 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
 
     TRACE("action=%li\n", xev.xclient.data.l[0]);
 
+    wine_tsx11_lock();
     XSendEvent( display, DefaultRootWindow(display), False,
                 SubstructureRedirectMask | SubstructureNotifyMask, &xev );
-
     wine_tsx11_unlock();
 }
 
