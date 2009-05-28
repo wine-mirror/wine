@@ -2329,8 +2329,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclarationFromFVF(IWineD3D
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface,
-        IWineD3DVertexDeclaration *vertex_declaration, const DWORD *pFunction,
-        const struct wined3d_shader_signature *output_signature,
+        const DWORD *pFunction, const struct wined3d_shader_signature *output_signature,
         IWineD3DVertexShader **ppVertexShader, IUnknown *parent)
 {
     IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
@@ -2354,10 +2353,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
     *ppVertexShader = (IWineD3DVertexShader *)object;
 
     TRACE("(%p) : Created vertex shader %p\n", This, *ppVertexShader);
-
-    if (vertex_declaration) {
-        IWineD3DVertexShader_FakeSemantics(*ppVertexShader, vertex_declaration);
-    }
 
     hr = IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction, output_signature);
     if (FAILED(hr))

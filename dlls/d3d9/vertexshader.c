@@ -126,7 +126,7 @@ HRESULT WINAPI IDirect3DDevice9Impl_CreateVertexShader(LPDIRECT3DDEVICE9EX iface
     object->ref = 1;
     object->lpVtbl = &Direct3DVertexShader9_Vtbl;
     EnterCriticalSection(&d3d9_cs);
-    hrc= IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, NULL /* declaration */, pFunction,
+    hrc= IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, pFunction,
             NULL /* output signature */, &object->wineD3DVertexShader, (IUnknown *)object);
     LeaveCriticalSection(&d3d9_cs);
 

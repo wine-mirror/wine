@@ -105,20 +105,6 @@ static void vshader_set_limits(IWineD3DVertexShaderImpl *This)
     }
 }
 
-/* This is an internal function,
- * used to create fake semantics for shaders
- * that don't have them - d3d8 shaders where the declaration
- * stores the register for each input
- */
-static void vshader_set_input(
-    IWineD3DVertexShaderImpl* This,
-    unsigned int regnum,
-    BYTE usage, BYTE usage_idx) {
-
-    This->attributes[regnum].usage = usage;
-    This->attributes[regnum].usage_idx = usage_idx;
-}
-
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2) {
     if (usage_idx1 != usage_idx2) return FALSE;
     if (usage1 == usage2) return TRUE;
@@ -320,19 +306,6 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     return WINED3D_OK;
 }
 
-/* Preload semantics for d3d8 shaders */
-static void WINAPI IWineD3DVertexShaderImpl_FakeSemantics(IWineD3DVertexShader *iface, IWineD3DVertexDeclaration *vertex_declaration) {
-    IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
-    IWineD3DVertexDeclarationImpl* vdecl = (IWineD3DVertexDeclarationImpl*)vertex_declaration;
-
-    unsigned int i;
-    for (i = 0; i < vdecl->element_count; ++i)
-    {
-        const struct wined3d_vertex_declaration_element *e = &vdecl->elements[i];
-        vshader_set_input(This, e->output_slot, e->usage, e->usage_idx);
-    }
-}
-
 /* Set local constants for d3d8 shaders */
 static HRESULT WINAPI IWIneD3DVertexShaderImpl_SetLocalConstantsF(IWineD3DVertexShader *iface,
         UINT start_idx, const float *src_data, UINT count) {
@@ -389,7 +362,6 @@ const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     /*** IWineD3DVertexShader methods ***/
     IWineD3DVertexShaderImpl_GetDevice,
     IWineD3DVertexShaderImpl_GetFunction,
-    IWineD3DVertexShaderImpl_FakeSemantics,
     IWIneD3DVertexShaderImpl_SetLocalConstantsF
 };
 

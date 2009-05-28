@@ -1003,7 +1003,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device *i
         return hr;
     }
 
-    hr = IWineD3DDevice_CreateVertexShader(This->wined3d_device, NULL,
+    hr = IWineD3DDevice_CreateVertexShader(This->wined3d_device,
             shader_info.shader_code, &object->output_signature,
             &object->wined3d_shader, (IUnknown *)object);
     if (FAILED(hr))

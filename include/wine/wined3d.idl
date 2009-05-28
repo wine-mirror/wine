@@ -2868,9 +2868,6 @@ interface IWineD3DVertexShader : IWineD3DBaseShader
         [out] void *data,
         [in, out] UINT *data_size
     );
-    void FakeSemantics(
-        [in] IWineD3DVertexDeclaration *vertex_declaration
-    );
     HRESULT SetLocalConstantsF(
         [in] UINT start_idx,
         [in] const float *src_data,
@@ -3011,7 +3008,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] DWORD fvf
     );
     HRESULT CreateVertexShader(
-        [in] IWineD3DVertexDeclaration *declaration,
         [in] const DWORD *function,
         [in] const struct wined3d_shader_signature *output_signature,
         [out] IWineD3DVertexShader **shader,
