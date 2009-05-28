@@ -54,7 +54,7 @@ static UINT SQL_getstring( void *info, const struct sql_str *strdata, LPWSTR *st
 static INT SQL_getint( void *info );
 static int sql_lex( void *SQL_lval, SQL_input *info );
 
-static LPWSTR parser_add_table( LPWSTR list, LPWSTR table );
+static LPWSTR parser_add_table( LPWSTR list, LPCWSTR table );
 static void *parser_alloc( void *info, unsigned int sz );
 static column_info *parser_alloc_column( void *info, LPCWSTR table, LPCWSTR column );
 
@@ -696,7 +696,7 @@ number:
 
 %%
 
-static LPWSTR parser_add_table(LPWSTR list, LPWSTR table)
+static LPWSTR parser_add_table(LPWSTR list, LPCWSTR table)
 {
     DWORD size = lstrlenW(list) + lstrlenW(table) + 2;
     static const WCHAR space[] = {' ',0};
