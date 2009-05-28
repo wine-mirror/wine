@@ -1020,19 +1020,51 @@ static void pshader_hw_dp2add(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[3][50];
+    struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
 
     shader_arb_get_dst_param(ins, dst, dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
-    shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
     shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
 
-    /* Emulate a DP2 with a DP3 and 0.0. Don't use the dest as temp register, it could be src[1] or src[2]
-     * src_name[0] can be TA, but TA is a private temp for modifiers, so it is save to overwrite
-     */
-    shader_addline(buffer, "MOV TA, %s;\n", src_name[0]);
-    shader_addline(buffer, "MOV TA.z, 0.0;\n");
-    shader_addline(buffer, "DP3 TA, TA, %s;\n", src_name[1]);
-    shader_addline(buffer, "ADD%s %s, TA, %s;\n", shader_arb_get_modifier(ins), dst_name, src_name[2]);
+    if(ctx->target_version >= NV3)
+    {
+        /* GL_NV_fragment_program2 has a 1:1 matching instruction */
+        shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
+        shader_addline(buffer, "DP2A%s %s, %s, %s, %s;\n", shader_arb_get_modifier(ins),
+                       dst_name, src_name[0], src_name[1], src_name[2]);
+    }
+    else if(ctx->target_version >= NV2)
+    {
+        /* dst.x = src2.?, src0.x, src1.x + src0.y * src1.y
+         * dst.y = src2.?, src0.x, src1.z + src0.y * src1.w
+         * dst.z = src2.?, src0.x, src1.x + src0.y * src1.y
+         * dst.z = src2.?, src0.x, src1.z + src0.y * src1.w
+         *
+         * Make sure that src1.zw = src1.xy, then we get a classic dp2add
+         *
+         * .xyxy and other swizzles that we could get with this are not valid in
+         * plain ARBfp, but luckily the NV extension grammar lifts this limitation.
+         */
+        struct wined3d_shader_src_param tmp_param = ins->src[1];
+        DWORD swizzle = tmp_param.swizzle & 0xf; /* Selects .xy */
+        tmp_param.swizzle = swizzle | (swizzle << 4); /* Creates .xyxy */
+
+        shader_arb_get_src_param(ins, &tmp_param, 1, src_name[1]);
+
+        shader_addline(buffer, "X2D%s %s, %s, %s, %s;\n", shader_arb_get_modifier(ins),
+                       dst_name, src_name[2], src_name[0], src_name[1]);
+    }
+    else
+    {
+        shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
+        /* Emulate a DP2 with a DP3 and 0.0. Don't use the dest as temp register, it could be src[1] or src[2]
+        * src_name[0] can be TA, but TA is a private temp for modifiers, so it is save to overwrite
+        */
+        shader_addline(buffer, "MOV TA, %s;\n", src_name[0]);
+        shader_addline(buffer, "MOV TA.z, 0.0;\n");
+        shader_addline(buffer, "DP3 TA, TA, %s;\n", src_name[1]);
+        shader_addline(buffer, "ADD%s %s, TA, %s;\n", shader_arb_get_modifier(ins), dst_name, src_name[2]);
+    }
 }
 
 /* Map the opcode 1-to-1 to the GL code */
