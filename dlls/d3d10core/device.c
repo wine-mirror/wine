@@ -141,7 +141,12 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetSamplers(ID3D10Device *iface,
 
 static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device *iface, ID3D10VertexShader *shader)
 {
-    FIXME("iface %p, shader %p stub!\n", iface, shader);
+    struct d3d10_device *This = (struct d3d10_device *)iface;
+    struct d3d10_vertex_shader *vs = (struct d3d10_vertex_shader *)shader;
+
+    TRACE("iface %p, shader %p\n", iface, shader);
+
+    IWineD3DDevice_SetVertexShader(This->wined3d_device, vs ? vs->wined3d_shader : NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device *iface,
