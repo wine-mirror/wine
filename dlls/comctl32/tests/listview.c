@@ -1827,6 +1827,41 @@ todo_wine
 todo_wine
     expect(3, rect.top);
 
+    /* item LVS_REPORT padding isn't applied to subitems */
+    insert_item(hwnd, 0);
+
+    rect.left = LVIR_BOUNDS;
+    rect.top  = 1;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
+    ok(r != 0, "Expected not-null LRESULT\n");
+todo_wine {
+    expect(100, rect.left);
+    expect(250, rect.right);
+}
+
+    rect.left = LVIR_ICON;
+    rect.top  = 1;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
+    ok(r != 0, "Expected not-null LRESULT\n");
+    /* no icon attached - zero width rectangle */
+todo_wine {
+    expect(100, rect.left);
+    expect(100, rect.right);
+}
+
+    rect.left = LVIR_LABEL;
+    rect.top  = 1;
+    rect.right = rect.bottom = 0;
+    r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
+    ok(r != 0, "Expected not-null LRESULT\n");
+    /* should equal to LVIR_BOUNDS */
+todo_wine {
+    expect(100, rect.left);
+    expect(250, rect.right);
+}
+
     DestroyWindow(hwnd);
 
     /* try it for non LVS_REPORT style */
