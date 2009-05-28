@@ -37,12 +37,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 
+#ifdef HAVE_GPHOTO2
 static char* GPHOTO2_StrDup(const char* str)
 {
     char* dst = HeapAlloc(GetProcessHeap(), 0, strlen(str)+1);
     strcpy(dst, str);
     return dst;
 }
+#endif
 
 static void
 load_filesystem(const char *folder) {
