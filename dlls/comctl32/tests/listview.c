@@ -1745,7 +1745,7 @@ todo_wine
     item.stateMask = LVIS_SELECTED;
     r = SendMessage(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
     expect(TRUE, r);
-    ListView_SetSelectionMark(hwnd, -1);
+    SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
 
     item.stateMask = LVIS_SELECTED;
     item.state     = LVIS_SELECTED;
