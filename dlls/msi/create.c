@@ -180,7 +180,7 @@ UINT CREATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR table,
     for( col = col_info; col; col = col->next )
     {
         if (!col->table)
-            col->table = strdupW(table);
+            col->table = table;
 
         if( !col->temporary )
             temp = FALSE;
