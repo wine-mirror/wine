@@ -217,9 +217,6 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
 
-    if (0)
-    {
-    /* NdrPointerMemorySize crashes under Wine */
     size = NdrPointerMemorySize( &StubMsg, formattypes );
     ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
@@ -247,7 +244,6 @@ static void test_pointer_marshal(const unsigned char *formattypes,
         ok(size == srcsize + 4 + (srcsize == 8 ? 8 : 4), "%s: mem size %u\n", msgpfx, size);
     else
         ok(size == srcsize + (srcsize == 8 ? 8 : 4), "%s: mem size %u\n", msgpfx, size);
-    }
 
     size = srcsize;
     if(formattypes[1] & 0x10) size += 4;
@@ -493,7 +489,7 @@ static void test_simple_types(void)
     else
         *(unsigned int *)wiredata = (UINT_PTR)&i;
     *(unsigned short*)(wiredata + 4) = i;
-    test_pointer_marshal(fmtstr_up_enum16, &i, 2, wiredata, 6, NULL, 0, "up_enum16");
+    test_pointer_marshal(fmtstr_up_enum16, &i, 4, wiredata, 6, NULL, 0, "up_enum16");
 
     l = 0xcafebabe;
     if (use_pointer_ids)
@@ -725,9 +721,6 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
     ok(!memcmp(StubMsg.BufferStart, wiredata, wiredatalen), "%s: incorrectly marshaled %08x %08x %08x\n", msgpfx, *(DWORD*)StubMsg.BufferStart,*((DWORD*)StubMsg.BufferStart+1),*((DWORD*)StubMsg.BufferStart+2));
 
-    if (0)
-    {
-    /* FIXME: Causes Wine to crash */
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
     size = NdrSimpleStructMemorySize( &StubMsg, formattypes );
@@ -737,12 +730,9 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
 
     StubMsg.Buffer = StubMsg.BufferStart;
     size = NdrSimpleStructMemorySize( &StubMsg, formattypes );
-todo_wine {
     ok(size == StubMsg.MemorySize, "%s: size != MemorySize\n", msgpfx);
-}
     ok(StubMsg.MemorySize == ((srcsize + 3) & ~3) + srcsize, "%s: mem size %u\n", msgpfx, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
-    }
     size = srcsize;
     /*** Unmarshalling first with must_alloc false ***/
 
