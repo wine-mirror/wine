@@ -895,8 +895,13 @@ static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, DWORD d
     }
 }
 
+#define TEX_PROJ        0x1
+#define TEX_BIAS        0x2
+#define TEX_LOD         0x4
+#define TEX_DERIV       0x10
+
 static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD sampler_idx,
-        const char *dst_str, const char *coord_reg, BOOL projected, BOOL bias)
+        const char *dst_str, const char *coord_reg, WORD flags)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     DWORD sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
@@ -939,14 +944,19 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             tex_type = "";
     }
 
-    if (bias) {
+    if (flags & TEX_BIAS)
+    {
         /* Shouldn't be possible, but let's check for it */
-        if(projected) FIXME("Biased and Projected texture sampling\n");
+        if(flags & TEX_PROJ) FIXME("Biased and Projected texture sampling\n");
         /* TXB takes the 4th component of the source vector automatically, as d3d. Nothing more to do */
         shader_addline(buffer, "TXB %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
-    } else if (projected) {
+    }
+    else if (flags & TEX_PROJ)
+    {
         shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
-    } else {
+    }
+    else
+    {
         shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
     }
 
@@ -1368,12 +1378,12 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
-    BOOL projected = FALSE, bias = FALSE;
     struct wined3d_shader_src_param src;
 
     char reg_dest[40];
     char reg_coord[40];
     DWORD reg_sampler_code;
+    DWORD myflags = 0;
 
     /* All versions have a destination register */
     shader_arb_get_dst_param(ins, dst, reg_dest);
@@ -1409,7 +1419,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
             flags = deviceImpl->stateBlock->textureState[reg_sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS];
         }
         if (flags & WINED3DTTFF_PROJECTED) {
-            projected = TRUE;
+            myflags |= TEX_PROJ;
         }
     }
     else if (shader_version < WINED3D_SHADER_VERSION(2,0))
@@ -1421,15 +1431,15 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
              */
             shader_addline(ins->ctx->buffer, "SWZ TA, %s, x, y, z, z;\n", reg_coord);
             strcpy(reg_coord, "TA");
-            projected = TRUE;
+            myflags |= TEX_PROJ;
         } else if(src_mod == WINED3DSPSM_DW) {
-            projected = TRUE;
+            myflags |= TEX_PROJ;
         }
     } else {
-        if (ins->flags & WINED3DSI_TEXLD_PROJECT) projected = TRUE;
-        if (ins->flags & WINED3DSI_TEXLD_BIAS) bias = TRUE;
+        if (ins->flags & WINED3DSI_TEXLD_PROJECT) myflags |= TEX_PROJ;
+        if (ins->flags & WINED3DSI_TEXLD_BIAS) myflags |= TEX_BIAS;
     }
-    shader_hw_sample(ins, reg_sampler_code, reg_dest, reg_coord, projected, bias);
+    shader_hw_sample(ins, reg_sampler_code, reg_dest, reg_coord, myflags);
 }
 
 static void pshader_hw_texcoord(const struct wined3d_shader_instruction *ins)
@@ -1473,7 +1483,7 @@ static void pshader_hw_texreg2ar(const struct wined3d_shader_instruction *ins)
      shader_addline(buffer, "MOV TA.y, %s.x;\n", src_str);
      shader_addline(buffer, "MOV TA.x, %s.w;\n", src_str);
      flags = reg1 < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg1][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
-     shader_hw_sample(ins, reg1, dst_str, "TA", flags & WINED3DTTFF_PROJECTED, FALSE);
+     shader_hw_sample(ins, reg1, dst_str, "TA", flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0);
 }
 
 static void pshader_hw_texreg2gb(const struct wined3d_shader_instruction *ins)
@@ -1489,7 +1499,7 @@ static void pshader_hw_texreg2gb(const struct wined3d_shader_instruction *ins)
      shader_arb_get_src_param(ins, &ins->src[0], 0, src_str);
      shader_addline(buffer, "MOV TA.x, %s.y;\n", src_str);
      shader_addline(buffer, "MOV TA.y, %s.z;\n", src_str);
-     shader_hw_sample(ins, reg1, dst_str, "TA", FALSE, FALSE);
+     shader_hw_sample(ins, reg1, dst_str, "TA", 0);
 }
 
 static void pshader_hw_texreg2rgb(const struct wined3d_shader_instruction *ins)
@@ -1501,7 +1511,7 @@ static void pshader_hw_texreg2rgb(const struct wined3d_shader_instruction *ins)
     /* Note that texreg2rg treats Tx as a temporary register, not as a varying */
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_str);
-    shader_hw_sample(ins, reg1, dst_str, src_str, FALSE, FALSE);
+    shader_hw_sample(ins, reg1, dst_str, src_str, 0);
 }
 
 static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
@@ -1547,7 +1557,7 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
         shader_addline(buffer, "ADD TA.xy, TA, %s;\n", reg_coord);
     }
 
-    shader_hw_sample(ins, reg_dest_code, dst_reg, "TA", FALSE, FALSE);
+    shader_hw_sample(ins, reg_dest_code, dst_reg, "TA", 0);
 
     if (ins->handler_idx == WINED3DSIH_TEXBEML)
     {
@@ -1594,7 +1604,7 @@ static void pshader_hw_texm3x2tex(const struct wined3d_shader_instruction *ins)
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 %s.y, fragment.texcoord[%u], %s;\n", dst_reg, reg, src0_name);
     flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
-    shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED, FALSE);
+    shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0);
 }
 
 static void pshader_hw_texm3x3pad(const struct wined3d_shader_instruction *ins)
@@ -1639,7 +1649,7 @@ static void pshader_hw_texm3x3tex(const struct wined3d_shader_instruction *ins)
     /* Sample the texture using the calculated coordinates */
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
-    shader_hw_sample(ins, reg, dst_str, dst_name, flags & WINED3DTTFF_PROJECTED, FALSE);
+    shader_hw_sample(ins, reg, dst_str, dst_name, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0);
     current_state->current_row = 0;
 }
 
@@ -1681,7 +1691,7 @@ static void pshader_hw_texm3x3vspec(const struct wined3d_shader_instruction *ins
     /* Sample the texture using the calculated coordinates */
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
-    shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED, FALSE);
+    shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0);
     current_state->current_row = 0;
 }
 
@@ -1723,7 +1733,7 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
     /* Sample the texture using the calculated coordinates */
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
     flags = reg < MAX_TEXTURES ? deviceImpl->stateBlock->textureState[reg][WINED3DTSS_TEXTURETRANSFORMFLAGS] : 0;
-    shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED, FALSE);
+    shader_hw_sample(ins, reg, dst_str, dst_reg, flags & WINED3DTTFF_PROJECTED ? TEX_PROJ : 0);
     current_state->current_row = 0;
 }
 
@@ -1770,7 +1780,7 @@ static void pshader_hw_texdp3tex(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "DP3 TB.x, fragment.texcoord[%u], %s;\n", sampler_idx, src0);
 
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_str);
-    shader_hw_sample(ins, sampler_idx, dst_str, "TB", FALSE /* Only one coord, can't be projected */, FALSE);
+    shader_hw_sample(ins, sampler_idx, dst_str, "TB", 0 /* Only one coord, can't be projected */);
 }
 
 /** Process the WINED3DSIO_TEXDP3 instruction in ARB:
