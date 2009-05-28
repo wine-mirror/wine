@@ -1,0 +1,193 @@
+/*
+ * Copyright 2009 Vincent Povirk for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "wtypes.idl";
+import "propidl.idl";
+import "objidl.idl";
+import "ocidl.idl";
+
+#define CODEC_FORCE_DWORD 0x7fffffff
+
+typedef enum WICDecodeOptions {
+    WICDecodeMetadataCacheOnDemand = 0x00000000,
+    WICDecodeMetadataCacheOnLoad = 0x00000001,
+    WICMETADATACACHEOPTION_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICDecodeOptions;
+
+typedef enum WICBitmapCreateCacheOption {
+    WICBitmapNoCache = 0x00000000,
+    WICBitmapCacheOnDemand = 0x00000001,
+    WICBitmapCacheOnLoad = 0x00000002,
+    WICBITMAPCREATECACHEOPTION_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICBitmapCreateCacheOption;
+
+typedef enum WICBitmapAlphaChannelOption {
+    WICBitmapUseAlpha = 0x00000000,
+    WICBitmapUsePremultipliedAlpha = 0x00000001,
+    WICBitmapIgnoreAlpha = 0x00000002,
+    WICBITMAPALPHACHANNELOPTIONS_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICBitmapAlphaChannelOption;
+
+typedef GUID WICPixelFormatGUID;
+typedef REFGUID REFWICPixelFormatGUID;
+
+interface IWICBitmapSource;
+interface IWICBitmapDecoder;
+interface IWICBitmap;
+interface IWICComponentInfo;
+interface IWICBitmapEncoder;
+interface IWICPalette;
+interface IWICFormatConverter;
+interface IWICBitmapScaler;
+interface IWICBitmapClipper;
+interface IWICBitmapFlipRotator;
+interface IWICStream;
+interface IWICColorContext;
+interface IWICColorTransform;
+interface IWICBitmapFrameDecode;
+interface IWICFastMetadataEncoder;
+interface IWICMetadataQueryReader;
+interface IWICMetadataQueryWriter;
+
+cpp_quote("DEFINE_GUID(CLSID_WICImagingFactory, 0xcacaf262,0x9370,0x4615,0xa1,0x3b,0x9f,0x55,0x39,0xda,0x4c,0x0a);")
+
+[
+    object,
+    uuid(ec5ec8a9-c395-4314-9c77-54d7a935ff70)
+]
+interface IWICImagingFactory : IUnknown
+{
+    HRESULT CreateDecoderFromFilename(
+        [in] LPCWSTR wzFilename,
+        [in, unique] const GUID *pguidVendor,
+        [in] DWORD dwDesiredAccess,
+        [in] WICDecodeOptions metadataOptions,
+        [out, retval] IWICBitmapDecoder **ppIDecoder);
+
+    HRESULT CreateDecoderFromStream(
+        [in] IStream *pIStream,
+        [in, unique] const GUID *pguidVendor,
+        [in] WICDecodeOptions metadataOptions,
+        [out, retval] IWICBitmapDecoder **ppIDecoder);
+
+    HRESULT CreateDecoderFromFileHandle(
+        [in] ULONG_PTR hFile,
+        [in, unique] const GUID *pguidVendor,
+        [in] WICDecodeOptions metadataOptions,
+        [out, retval] IWICBitmapDecoder **ppIDecoder);
+
+    HRESULT CreateComponentInfo(
+        [in] REFCLSID clsidComponent,
+        [out] IWICComponentInfo **ppIInfo);
+
+    HRESULT CreateDecoder(
+        [in] REFGUID guidContainerFormat,
+        [in, unique] const GUID *pguidVendor,
+        [out, retval] IWICBitmapDecoder **ppIDecoder);
+
+    HRESULT CreateEncoder(
+        [in] REFGUID guidContainerFormat,
+        [in, unique] const GUID *pguidVendor,
+        [out, retval] IWICBitmapEncoder **ppIEncoder);
+
+    HRESULT CreatePalette(
+        [out] IWICPalette **ppIPalette);
+
+    HRESULT CreateFormatConverter(
+        [out] IWICFormatConverter **ppIFormatConverter);
+
+    HRESULT CreateBitmapScaler(
+        [out] IWICBitmapScaler **ppIBitmapScaler);
+
+    HRESULT CreateBitmapClipper(
+        [out] IWICBitmapClipper **ppIBitmapClipper);
+
+    HRESULT CreateBitmapFlipRotator(
+        [out] IWICBitmapFlipRotator **ppIBitmapFlipRotator);
+
+    HRESULT CreateStream(
+        [out] IWICStream **ppIWICStream);
+
+    HRESULT CreateColorContext(
+        [out] IWICColorContext **ppIWICColorContext);
+
+    HRESULT CreateColorTransformer(
+        [out] IWICColorTransform **ppIWICColorTransform);
+
+    HRESULT CreateBitmap(
+        [in] UINT uiWidth,
+        [in] UINT uiHeight,
+        [in] REFWICPixelFormatGUID pixelFormat,
+        [in] WICBitmapCreateCacheOption option,
+        [out] IWICBitmap **ppIBitmap);
+
+    HRESULT CreateBitmapFromSource(
+        [in] IWICBitmapSource *piBitmapSource,
+        [in] WICBitmapCreateCacheOption option,
+        [out] IWICBitmap **ppIBitmap);
+
+    HRESULT CreateBitmapFromSourceRect(
+        [in] IWICBitmapSource *piBitmapSource,
+        [in] UINT x,
+        [in] UINT y,
+        [in] UINT width,
+        [in] UINT height,
+        [out] IWICBitmap **ppIBitmap);
+
+    HRESULT CreateBitmapFromMemory(
+        [in] UINT uiWidth,
+        [in] UINT uiHeight,
+        [in] REFWICPixelFormatGUID pixelFormat,
+        [in] UINT cbStride,
+        [in] UINT cbBufferSize,
+        [in, size_is(cbBufferSize)] BYTE *pbBuffer,
+        [out] IWICBitmap **ppIBitmap);
+
+    HRESULT CreateBitmapFromHBITMAP(
+        [in] HBITMAP hBitmap,
+        [in, unique] HPALETTE hPalette,
+        [in] WICBitmapAlphaChannelOption options,
+        [out] IWICBitmap **ppIBitmap);
+
+    HRESULT CreateBitmapFromHICON(
+        [in] HICON hIcon,
+        [out] IWICBitmap **ppIBitmap);
+
+    HRESULT CreateComponentEnumerator(
+        [in] DWORD componentTypes,
+        [in] DWORD options,
+        [out] IEnumUnknown **ppIEnumUnknown);
+
+    HRESULT CreateFastMetadataEncoderFromDecoder(
+        [in] IWICBitmapDecoder *pIDecoder,
+        [out] IWICFastMetadataEncoder **ppIFastEncoder);
+
+    HRESULT CreateFastMetadataEncoderFromFrameDecode(
+        [in] IWICBitmapFrameDecode *pIFrameDecoder,
+        [out] IWICFastMetadataEncoder **ppIFastEncoder);
+
+    HRESULT CreateQueryWriter(
+        [in] REFGUID guidMetadataFormat,
+        [in, unique] const GUID *pguidVendor,
+        [out] IWICMetadataQueryWriter **ppIQueryWriter);
+
+    HRESULT CreateQueryWriterFromReader(
+        [in] IWICMetadataQueryReader *pIQueryReader,
+        [in, unique] const GUID *pguidVendor,
+        [out] IWICMetadataQueryWriter **ppIQueryWriter);
+}

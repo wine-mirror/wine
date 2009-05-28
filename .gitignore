@@ -165,6 +165,7 @@ include/unknwn.h
 include/urlhist.h
 include/urlmon.h
 include/vmr9.h
+include/wincodec.h
 include/wine/itss.h
 include/wine/svcctl.h
 include/wine/wined3d.h
