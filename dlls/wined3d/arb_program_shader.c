@@ -1792,14 +1792,24 @@ static void shader_hw_nrm(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[50];
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    BOOL pshader = shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type);
 
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 1 /* Use TB */, src_name);
-    shader_addline(buffer, "DP3 TA, %s, %s;\n", src_name, src_name);
-    shader_addline(buffer, "RSQ TA, TA.x;\n");
-    /* dst.w = src[0].w * 1 / (src.x^2 + src.y^2 + src.z^2)^(1/2) according to msdn*/
-    shader_addline(buffer, "MUL%s %s, %s, TA;\n", shader_arb_get_modifier(ins), dst_name,
-                   src_name);
+
+    if(pshader && priv->target_version >= NV3)
+    {
+        shader_addline(buffer, "NRM%s %s, %s;\n", shader_arb_get_modifier(ins), dst_name, src_name);
+    }
+    else
+    {
+        shader_addline(buffer, "DP3 TA, %s, %s;\n", src_name, src_name);
+        shader_addline(buffer, "RSQ TA, TA.x;\n");
+        /* dst.w = src[0].w * 1 / (src.x^2 + src.y^2 + src.z^2)^(1/2) according to msdn*/
+        shader_addline(buffer, "MUL%s %s, %s, TA;\n", shader_arb_get_modifier(ins), dst_name,
+                    src_name);
+    }
 }
 
 static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
@@ -2043,7 +2053,10 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     list_init(&priv_ctx.if_frames);
 
     shader_addline(buffer, "!!ARBfp1.0\n");
-    if(GL_SUPPORT(NV_FRAGMENT_PROGRAM_OPTION)) {
+    if(GL_SUPPORT(NV_FRAGMENT_PROGRAM2)) {
+        shader_addline(buffer, "OPTION NV_fragment_program2;\n");
+        priv_ctx.target_version = NV3;
+    } else if(GL_SUPPORT(NV_FRAGMENT_PROGRAM_OPTION)) {
         shader_addline(buffer, "OPTION NV_fragment_program;\n");
         priv_ctx.target_version = NV2;
     } else {
