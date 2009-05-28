@@ -735,7 +735,7 @@ static void test_cf_dataobject(IDataObject *data)
                             DVTARGETDEVICE *target;
 
                             ok(fmt_ptr->fmt.ptd != NULL, "target device offset zero\n");
-                            target = (DVTARGETDEVICE*)((char*)priv + (DWORD)fmt_ptr->fmt.ptd);
+                            target = (DVTARGETDEVICE*)((char*)priv + (DWORD_PTR)fmt_ptr->fmt.ptd);
                             ok(!memcmp(target, fmt.ptd, fmt.ptd->tdSize), "target devices differ\n");
                             CoTaskMemFree(fmt.ptd);
                         }
