@@ -236,7 +236,8 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetConstantBuffers(ID3D10Device *if
 
 static void STDMETHODCALLTYPE d3d10_device_GSSetShader(ID3D10Device *iface, ID3D10GeometryShader *shader)
 {
-    FIXME("iface %p, shader %p stub!\n", iface, shader);
+    if (shader) FIXME("iface %p, shader %p stub!\n", iface, shader);
+    else WARN("iface %p, shader %p stub!\n", iface, shader);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device *iface, D3D10_PRIMITIVE_TOPOLOGY topology)
