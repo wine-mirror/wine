@@ -102,9 +102,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
     } while(0)
 
 #define STD_OVERFLOW_CHECK(_Msg) do { \
-    TRACE("buffer=%d/%d\n", _Msg->Buffer - (unsigned char *)_Msg->RpcMsg->Buffer, _Msg->BufferLength); \
+    TRACE("buffer=%d/%d\n", (ULONG)(_Msg->Buffer - (unsigned char *)_Msg->RpcMsg->Buffer), _Msg->BufferLength); \
     if (_Msg->Buffer > (unsigned char *)_Msg->RpcMsg->Buffer + _Msg->BufferLength) \
-        ERR("buffer overflow %d bytes\n", _Msg->Buffer - ((unsigned char *)_Msg->RpcMsg->Buffer + _Msg->BufferLength)); \
+        ERR("buffer overflow %d bytes\n", (ULONG)(_Msg->Buffer - ((unsigned char *)_Msg->RpcMsg->Buffer + _Msg->BufferLength))); \
   } while (0)
 
 #define NDR_POINTER_ID_BASE 0x20000
@@ -3289,7 +3289,7 @@ unsigned char * WINAPI NdrComplexStructMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     /* save it for use by embedded pointer code later */
     pStubMsg->PointerBufferMark = (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength;
-    TRACE("difference = 0x%x\n", pStubMsg->PointerBufferMark - pStubMsg->Buffer);
+    TRACE("difference = 0x%x\n", (ULONG)(pStubMsg->PointerBufferMark - pStubMsg->Buffer));
     pointer_buffer_mark_set = 1;
 
     /* restore the original buffer length */
@@ -3375,7 +3375,7 @@ unsigned char * WINAPI NdrComplexStructUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     /* save it for use by embedded pointer code later */
     pStubMsg->PointerBufferMark = pStubMsg->Buffer;
-    TRACE("difference = 0x%x\n", pStubMsg->PointerBufferMark - saved_buffer);
+    TRACE("difference = 0x%x\n", (ULONG)(pStubMsg->PointerBufferMark - saved_buffer));
     pointer_buffer_mark_set = 1;
 
     /* restore the original buffer */
@@ -3851,7 +3851,7 @@ unsigned char * WINAPI NdrComplexArrayMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 
     /* save it for use by embedded pointer code later */
     pStubMsg->PointerBufferMark = (unsigned char *)pStubMsg->RpcMsg->Buffer + pStubMsg->BufferLength;
-    TRACE("difference = 0x%x\n", pStubMsg->Buffer - (unsigned char *)pStubMsg->RpcMsg->Buffer);
+    TRACE("difference = 0x%x\n", (ULONG)(pStubMsg->Buffer - (unsigned char *)pStubMsg->RpcMsg->Buffer));
     pointer_buffer_mark_set = 1;
 
     /* restore fields */
@@ -3929,7 +3929,7 @@ unsigned char * WINAPI NdrComplexArrayUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   size = pStubMsg->MemorySize;
   pStubMsg->IgnoreEmbeddedPointers = saved_ignore_embedded;
 
-  TRACE("difference = 0x%x\n", pStubMsg->Buffer - saved_buffer);
+  TRACE("difference = 0x%x\n", (ULONG)(pStubMsg->Buffer - saved_buffer));
   if (!pStubMsg->PointerBufferMark)
   {
     /* save it for use by embedded pointer code later */

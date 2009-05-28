@@ -2568,7 +2568,7 @@ static int rpcrt4_ncacn_http_write(RpcConnection *Connection,
   DWORD bytes_written;
   BOOL ret;
 
-  httpc->last_sent_time = ~0UL; /* disable idle packet sending */
+  httpc->last_sent_time = ~0U; /* disable idle packet sending */
   ret = InternetWriteFile(httpc->in_request, buffer, count, &bytes_written);
   httpc->last_sent_time = GetTickCount();
   TRACE("%p %p %u -> %s\n", httpc->in_request, buffer, count, ret ? "TRUE" : "FALSE");
