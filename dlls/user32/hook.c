@@ -891,6 +891,7 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
  */
 BOOL WINAPI IsWinEventHookInstalled(DWORD dwEvent)
 {
-    FIXME("(%d)-stub!\n", dwEvent);
+    /* FIXME: Needed by Office 2007 installer */
+    WARN("(%d)-stub!\n", dwEvent);
     return TRUE;
 }
