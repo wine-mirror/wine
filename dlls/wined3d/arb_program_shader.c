@@ -913,30 +913,38 @@ static void gen_color_correction(SHADER_BUFFER *buffer, const char *reg, DWORD d
 static const char *shader_arb_get_modifier(const struct wined3d_shader_instruction *ins)
 {
     DWORD mod;
-    const char *ret = "";
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     if (!ins->dst_count) return "";
 
     mod = ins->dst[0].modifiers;
-    if(mod & WINED3DSPDM_SATURATE)
-    {
-        ret = "_SAT";
-        mod &= ~WINED3DSPDM_SATURATE;
-    }
-    if(mod & WINED3DSPDM_PARTIALPRECISION)
-    {
-        FIXME("Unhandled modifier WINED3DSPDM_PARTIALPRECISION\n");
-        mod &= ~WINED3DSPDM_PARTIALPRECISION;
-    }
+
+    /* Silently ignore PARTIALPRECISION if its not supported */
+    if(priv->target_version == ARB) mod &= ~WINED3DSPDM_PARTIALPRECISION;
+
     if(mod & WINED3DSPDM_MSAMPCENTROID)
     {
         FIXME("Unhandled modifier WINED3DSPDM_MSAMPCENTROID\n");
         mod &= ~WINED3DSPDM_MSAMPCENTROID;
     }
-    if(mod)
+
+    switch(mod)
     {
-        FIXME("Unknown modifiers 0x%08x\n", mod);
+        case WINED3DSPDM_SATURATE | WINED3DSPDM_PARTIALPRECISION:
+            return "H_SAT";
+
+        case WINED3DSPDM_SATURATE:
+            return "_SAT";
+
+        case WINED3DSPDM_PARTIALPRECISION:
+            return "H";
+
+        case 0:
+            return "";
+
+        default:
+            FIXME("Unknown modifiers 0x%08x\n", mod);
+            return "";
     }
-    return ret;
 }
 
 #define TEX_PROJ        0x1
@@ -953,7 +961,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
-    const char *mod = shader_arb_get_modifier(ins);
+    const char *mod;
 
     switch(sampler_type) {
         case WINED3DSTT_1D:
@@ -988,6 +996,12 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             ERR("Unexpected texture type %d\n", sampler_type);
             tex_type = "";
     }
+
+    /* TEX, TXL, TXD and TXP do not support the "H" modifier,
+     * so don't use shader_arb_get_modifier
+     */
+    if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE) mod = "_SAT";
+    else mod = "";
 
     if (flags & TEX_DERIV)
     {
