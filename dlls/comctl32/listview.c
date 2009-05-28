@@ -5990,7 +5990,7 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
     }
 
     if ((uView == LVS_REPORT) && (type == LVIR_BOUNDS))
-        OffsetRect(lprc, Origin.x, Origin.y);
+        OffsetRect(lprc, Origin.x, Position.y + Origin.y);
     else
         OffsetRect(lprc, Position.x + Origin.x, Position.y + Origin.y);
 
@@ -6543,7 +6543,7 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	INT j;
 
 	/* for top/bottom only */
-	bounds.left = 0;
+	bounds.left = LVIR_BOUNDS;
 	LISTVIEW_GetItemRect(infoPtr, iItem, &bounds);
 
 	for (j = 0; j < DPA_GetPtrCount(infoPtr->hdpaColumns); j++)
