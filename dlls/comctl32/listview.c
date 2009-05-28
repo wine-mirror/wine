@@ -2044,7 +2044,7 @@ static void LISTVIEW_GetItemMetrics(const LISTVIEW_INFO *infoPtr, const LVITEMW 
 	{
 	    Icon.left   = Box.left + state_width;
 
-	    if (uView == LVS_REPORT)
+	    if (uView == LVS_REPORT && lpLVItem->iSubItem == 0)
 		Icon.left += REPORT_MARGINX;
 
 	    Icon.top    = Box.top;
@@ -2145,7 +2145,7 @@ calc_label:
 	    Label.right = lpColumnInfo->rcHeader.right;
 	    Label.bottom = Label.top + infoPtr->nItemHeight;
 	}
-	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
+	else /* LVS_SMALLICON or LVS_LIST */
 	{
 	    Label.left = Icon.right;
 	    Label.top = Box.top;
@@ -6077,7 +6077,7 @@ static BOOL LISTVIEW_GetSubItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPR
 	return FALSE;
     }
 
-    OffsetRect(lprc, Position.x, Position.y);
+    OffsetRect(lprc, 0, Position.y);
     return TRUE;
 }
 

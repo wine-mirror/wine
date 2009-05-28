@@ -1835,32 +1835,26 @@ todo_wine
     rect.right = rect.bottom = 0;
     r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
     ok(r != 0, "Expected not-null LRESULT\n");
-todo_wine {
     expect(100, rect.left);
     expect(250, rect.right);
-}
 
     rect.left = LVIR_ICON;
     rect.top  = 1;
     rect.right = rect.bottom = 0;
     r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
     ok(r != 0, "Expected not-null LRESULT\n");
-    /* no icon attached - zero width rectangle */
-todo_wine {
+    /* no icon attached - zero width rectangle, with no left padding */
     expect(100, rect.left);
     expect(100, rect.right);
-}
 
     rect.left = LVIR_LABEL;
     rect.top  = 1;
     rect.right = rect.bottom = 0;
     r = SendMessage(hwnd, LVM_GETSUBITEMRECT, 0, (LPARAM)&rect);
     ok(r != 0, "Expected not-null LRESULT\n");
-    /* should equal to LVIR_BOUNDS */
-todo_wine {
+    /* same as full LVIR_BOUNDS */
     expect(100, rect.left);
     expect(250, rect.right);
-}
 
     DestroyWindow(hwnd);
 
