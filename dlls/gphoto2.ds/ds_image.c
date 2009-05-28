@@ -460,7 +460,7 @@ TW_UINT16 GPHOTO2_ImageNativeXferGet (pTW_IDENTITY pOrigin,
     gp_file_unref (activeDS.file);
     activeDS.file = NULL;
     ReleaseDC (activeDS.hwndOwner, dc);
-    *pHandle = (TW_UINT32)hDIB;
+    *pHandle = (UINT_PTR)hDIB;
     activeDS.twCC = TWCC_SUCCESS;
     activeDS.currentState = 7;
     return TWRC_XFERDONE;
