@@ -1376,6 +1376,7 @@ static void HTTPREQ_Destroy(WININETHANDLEHEADER *hdr)
         HeapFree(GetProcessHeap(), 0, lpwhr->lpszCacheFile);
     }
 
+    DeleteCriticalSection( &lpwhr->read_section );
     WININET_Release(&lpwhr->lpHttpSession->hdr);
 
     if (lpwhr->pAuthInfo)
@@ -1615,7 +1616,7 @@ static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buf
     return ERROR_INTERNET_INVALID_OPTION;
 }
 
-/* read some more data into the read buffer */
+/* read some more data into the read buffer (the read section must be held) */
 static BOOL read_more_data( WININETHTTPREQW *req, int maxlen )
 {
     int len;
@@ -1634,7 +1635,7 @@ static BOOL read_more_data( WININETHTTPREQW *req, int maxlen )
     return TRUE;
 }
 
-/* remove some amount of data from the read buffer */
+/* remove some amount of data from the read buffer (the read section must be held) */
 static void remove_data( WININETHTTPREQW *req, int count )
 {
     if (!(req->read_size -= count)) req->read_pos = 0;
@@ -1645,6 +1646,7 @@ static BOOL read_line( WININETHTTPREQW *req, LPSTR buffer, DWORD *len )
 {
     int count, bytes_read, pos = 0;
 
+    EnterCriticalSection( &req->read_section );
     for (;;)
     {
         char *eol = memchr( req->read_buf + req->read_pos, '\n', req->read_size );
@@ -1662,14 +1664,15 @@ static BOOL read_line( WININETHTTPREQW *req, LPSTR buffer, DWORD *len )
         remove_data( req, bytes_read );
         if (eol) break;
 
-        if (!read_more_data( req, -1 )) return FALSE;
-        if (!req->read_size)
+        if (!read_more_data( req, -1 ) || !req->read_size)
         {
             *len = 0;
             TRACE( "returning empty string\n" );
+            LeaveCriticalSection( &req->read_section );
             return FALSE;
         }
     }
+    LeaveCriticalSection( &req->read_section );
 
     if (pos < *len)
     {
@@ -1681,7 +1684,7 @@ static BOOL read_line( WININETHTTPREQW *req, LPSTR buffer, DWORD *len )
     return TRUE;
 }
 
-/* discard data contents until we reach end of line */
+/* discard data contents until we reach end of line (the read section must be held) */
 static BOOL discard_eol( WININETHTTPREQW *req )
 {
     do
@@ -1698,7 +1701,7 @@ static BOOL discard_eol( WININETHTTPREQW *req )
     return TRUE;
 }
 
-/* read the size of the next chunk */
+/* read the size of the next chunk (the read section must be held) */
 static BOOL start_next_chunk( WININETHTTPREQW *req )
 {
     DWORD chunk_size = 0;
@@ -1738,7 +1741,7 @@ static BOOL start_next_chunk( WININETHTTPREQW *req )
     }
 }
 
-/* return the size of data available to be read immediately */
+/* return the size of data available to be read immediately (the read section must be held) */
 static DWORD get_avail_data( WININETHTTPREQW *req )
 {
     if (req->read_chunked && (req->dwContentLength == ~0u || req->dwContentLength == req->dwContentRead))
@@ -1746,7 +1749,7 @@ static DWORD get_avail_data( WININETHTTPREQW *req )
     return min( req->read_size, req->dwContentLength - req->dwContentRead );
 }
 
-/* check if we have reached the end of the data to read */
+/* check if we have reached the end of the data to read (the read section must be held) */
 static BOOL end_of_read_data( WININETHTTPREQW *req )
 {
     if (req->read_chunked) return (req->dwContentLength == 0);
@@ -1754,6 +1757,7 @@ static BOOL end_of_read_data( WININETHTTPREQW *req )
     return (req->dwContentLength == req->dwContentRead);
 }
 
+/* fetch some more data into the read buffer (the read section must be held) */
 static BOOL refill_buffer( WININETHTTPREQW *req )
 {
     int len = sizeof(req->read_buf);
@@ -1777,6 +1781,7 @@ static void HTTP_ReceiveRequestData(WININETHTTPREQW *req, BOOL first_notif)
 
     TRACE("%p\n", req);
 
+    EnterCriticalSection( &req->read_section );
     if (refill_buffer( req )) {
         iar.dwResult = (DWORD_PTR)req->hdr.hInternet;
         iar.dwError = first_notif ? 0 : get_avail_data(req);
@@ -1784,15 +1789,18 @@ static void HTTP_ReceiveRequestData(WININETHTTPREQW *req, BOOL first_notif)
         iar.dwResult = 0;
         iar.dwError = INTERNET_GetLastError();
     }
+    LeaveCriticalSection( &req->read_section );
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_REQUEST_COMPLETE, &iar,
                           sizeof(INTERNET_ASYNC_RESULT));
 }
 
+/* read data from the http connection (the read section must be held) */
 static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
     int len, bytes_read = 0;
 
+    EnterCriticalSection( &req->read_section );
     if (req->read_chunked && (req->dwContentLength == ~0u || req->dwContentLength == req->dwContentRead))
     {
         if (!start_next_chunk( req )) goto done;
@@ -1818,6 +1826,8 @@ done:
     *read = bytes_read;
 
     TRACE( "retrieved %u bytes (%u/%u)\n", bytes_read, req->dwContentRead, req->dwContentLength );
+    LeaveCriticalSection( &req->read_section );
+
     if(req->lpszCacheFile) {
         BOOL res;
         DWORD dwBytesWritten;
@@ -1879,6 +1889,18 @@ static DWORD HTTPREQ_ReadFileExA(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSA *bu
     {
         WORKREQUEST workRequest;
 
+        if (TryEnterCriticalSection( &req->read_section ))
+        {
+            if (get_avail_data(req))
+            {
+                res = HTTPREQ_Read(req, buffers->lpvBuffer, buffers->dwBufferLength,
+                                   &buffers->dwBufferLength, FALSE);
+                LeaveCriticalSection( &req->read_section );
+                goto done;
+            }
+            LeaveCriticalSection( &req->read_section );
+        }
+
         workRequest.asyncproc = HTTPREQ_AsyncReadFileExAProc;
         workRequest.hdr = WININET_AddRef(&req->hdr);
         workRequest.u.InternetReadFileExA.lpBuffersOut = buffers;
@@ -1891,6 +1913,7 @@ static DWORD HTTPREQ_ReadFileExA(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSA *bu
     res = HTTPREQ_Read(req, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength,
             !(flags & IRF_NO_WAIT));
 
+done:
     if (res == ERROR_SUCCESS) {
         DWORD size = buffers->dwBufferLength;
         INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
@@ -1935,9 +1958,21 @@ static DWORD HTTPREQ_ReadFileExW(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSW *bu
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
-    if ((hdr->dwFlags & INTERNET_FLAG_ASYNC) && !get_avail_data(req))
+    if (hdr->dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
+
+        if (TryEnterCriticalSection( &req->read_section ))
+        {
+            if (get_avail_data(req))
+            {
+                res = HTTPREQ_Read(req, buffers->lpvBuffer, buffers->dwBufferLength,
+                                   &buffers->dwBufferLength, FALSE);
+                LeaveCriticalSection( &req->read_section );
+                goto done;
+            }
+            LeaveCriticalSection( &req->read_section );
+        }
 
         workRequest.asyncproc = HTTPREQ_AsyncReadFileExWProc;
         workRequest.hdr = WININET_AddRef(&req->hdr);
@@ -1951,6 +1986,7 @@ static DWORD HTTPREQ_ReadFileExW(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSW *bu
     res = HTTPREQ_Read(req, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength,
             !(flags & IRF_NO_WAIT));
 
+done:
     if (res == ERROR_SUCCESS) {
         DWORD size = buffers->dwBufferLength;
         INTERNET_SendCallback(&req->hdr, req->hdr.dwContext, INTERNET_STATUS_RESPONSE_RECEIVED,
@@ -1988,34 +2024,42 @@ static DWORD HTTPREQ_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *availab
 
     TRACE("(%p %p %x %lx)\n", req, available, flags, ctx);
 
-    if (!(*available = get_avail_data( req )))
+    if (req->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
-        if (end_of_read_data( req )) return ERROR_SUCCESS;
+        WORKREQUEST workRequest;
 
-        if (req->lpHttpSession->lpAppInfo->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+        /* never wait, if we can't enter the section we queue an async request right away */
+        if (TryEnterCriticalSection( &req->read_section ))
         {
-            WORKREQUEST workRequest;
-
-            workRequest.asyncproc = HTTPREQ_AsyncQueryDataAvailableProc;
-            workRequest.hdr = WININET_AddRef( &req->hdr );
-
-            INTERNET_AsyncCall(&workRequest);
-
-            return ERROR_IO_PENDING;
+            if ((*available = get_avail_data( req ))) goto done;
+            if (end_of_read_data( req )) goto done;
+            LeaveCriticalSection( &req->read_section );
         }
-        else
-        {
-            refill_buffer( req );
-            *available = get_avail_data( req );
-        }
+
+        workRequest.asyncproc = HTTPREQ_AsyncQueryDataAvailableProc;
+        workRequest.hdr = WININET_AddRef( &req->hdr );
+
+        INTERNET_AsyncCall(&workRequest);
+
+        return ERROR_IO_PENDING;
     }
 
+    EnterCriticalSection( &req->read_section );
+
+    if (!(*available = get_avail_data( req )) && !end_of_read_data( req ))
+    {
+        refill_buffer( req );
+        *available = get_avail_data( req );
+    }
+
+done:
     if (*available == sizeof(req->read_buf))  /* check if we have even more pending in the socket */
     {
         DWORD extra;
         if (NETCON_query_data_available(&req->netConnection, &extra))
             *available = min( *available + extra, req->dwContentLength - req->dwContentRead );
     }
+    LeaveCriticalSection( &req->read_section );
 
     TRACE( "returning %u\n", *available );
     return ERROR_SUCCESS;
@@ -2075,6 +2119,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     lpwhr->hdr.lpfnStatusCB = lpwhs->hdr.lpfnStatusCB;
     lpwhr->hdr.dwInternalFlags = lpwhs->hdr.dwInternalFlags & INET_CALLBACKW;
     lpwhr->dwContentLength = ~0u;
+    InitializeCriticalSection( &lpwhr->read_section );
 
     WININET_AddRef( &lpwhs->hdr );
     lpwhr->lpHttpSession = lpwhs;

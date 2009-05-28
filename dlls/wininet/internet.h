@@ -193,8 +193,6 @@ typedef struct
     WININET_NETCONNECTION netConnection;
     LPWSTR lpszVersion;
     LPWSTR lpszStatusText;
-    DWORD dwContentLength; /* total number of bytes to be read */
-    DWORD dwContentRead; /* bytes of the content read so far */
     DWORD dwBytesToWrite;
     DWORD dwBytesWritten;
     HTTPHEADERW *pCustHeaders;
@@ -203,6 +201,10 @@ typedef struct
     LPWSTR lpszCacheFile;
     struct HttpAuthInfo *pAuthInfo;
     struct HttpAuthInfo *pProxyAuthInfo;
+
+    CRITICAL_SECTION read_section;  /* section to protect the following fields */
+    DWORD dwContentLength; /* total number of bytes to be read */
+    DWORD dwContentRead;  /* bytes of the content read so far */
     BOOL  read_chunked;   /* are we reading in chunked mode? */
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */
