@@ -27257,6 +27257,14 @@ dlls/windebug.dll16/Makefile: dlls/windebug.dll16/Makefile.in dlls/Makedll.rules
 ac_config_files="$ac_config_files dlls/windebug.dll16/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/windowscodecs/Makefile"
+test "x$enable_windowscodecs" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	windowscodecs"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/windowscodecs/Makefile: dlls/windowscodecs/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/windowscodecs/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/winealsa.drv/Makefile"
 test "x$enable_winealsa_drv" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	winealsa.drv"
@@ -29239,6 +29247,7 @@ do
     "dlls/win87em.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/win87em.dll16/Makefile" ;;
     "dlls/winaspi.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winaspi.dll16/Makefile" ;;
     "dlls/windebug.dll16/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/windebug.dll16/Makefile" ;;
+    "dlls/windowscodecs/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/windowscodecs/Makefile" ;;
     "dlls/winealsa.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winealsa.drv/Makefile" ;;
     "dlls/wineaudioio.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wineaudioio.drv/Makefile" ;;
     "dlls/winecoreaudio.drv/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/winecoreaudio.drv/Makefile" ;;
