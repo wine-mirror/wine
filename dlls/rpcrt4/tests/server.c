@@ -33,6 +33,7 @@
 #define INT_CODE 4198
 
 static const char *progname;
+static BOOL old_windows_version;
 
 static HANDLE stop_event;
 
@@ -48,6 +49,8 @@ static void InitFunctionPointers(void)
     pNDRSContextMarshall2 = (void *)GetProcAddress(hrpcrt4, "NDRSContextMarshall2");
     pNDRSContextUnmarshall2 = (void *)GetProcAddress(hrpcrt4, "NDRSContextUnmarshall2");
     pRpcServerRegisterIfEx = (void *)GetProcAddress(hrpcrt4, "RpcServerRegisterIfEx");
+
+    if (!pNDRSContextMarshall2) old_windows_version = TRUE;
 }
 
 void __RPC_FAR *__RPC_USER
@@ -616,13 +619,13 @@ s_context_handle_test(void)
     ok(*(ULONG *)buf == 0, "attributes should have been set to 0 instead of 0x%x\n", *(ULONG *)buf);
     ok(!UuidIsNil((UUID *)&buf[4], &status), "uuid should not have been nil\n");
 
+    /* raises ERROR_INVALID_HANDLE exception on Vista upwards */
+    if (0)
+    {
     h = pNDRSContextUnmarshall2(binding, buf, NDR_LOCAL_DATA_REPRESENTATION, NULL, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
     ok(h->userContext == (void *)0xdeadbeef, "userContext of interface didn't unmarshal properly: %p\n", h->userContext);
 
-    /* raises ERROR_INVALID_HANDLE exception on Vista upwards */
-    if (0)
-    {
     /* marshal a context handle with an interface specified */
     h = pNDRSContextUnmarshall2(binding, NULL, NDR_LOCAL_DATA_REPRESENTATION, &server_if.InterfaceId, 0);
     ok(h != NULL, "NDRSContextUnmarshall2 returned NULL\n");
@@ -1096,12 +1099,15 @@ pointer_tests(void)
 
   free_list(list);
 
-  name.size = 10;
-  name.name = buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, name.size);
-  get_name(&name);
-  ok(name.name == buffer, "[in,out] pointer should have stayed as %p but instead changed to %p\n", name.name, buffer);
-  ok(!strcmp(name.name, "Jeremy Wh"), "name didn't unmarshall properly, expected \"Jeremy Wh\", but got \"%s\"\n", name.name);
-  HeapFree(GetProcessHeap(), 0, name.name);
+  if (!old_windows_version)
+  {
+      name.size = 10;
+      name.name = buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, name.size);
+      get_name(&name);
+      ok(name.name == buffer, "[in,out] pointer should have stayed as %p but instead changed to %p\n", name.name, buffer);
+      ok(!strcmp(name.name, "Jeremy Wh"), "name didn't unmarshall properly, expected \"Jeremy Wh\", but got \"%s\"\n", name.name);
+      HeapFree(GetProcessHeap(), 0, name.name);
+  }
 
   pa2 = a;
   ok(sum_pcarr2(4, &pa2) == 10, "RPC sum_pcarr2\n");
@@ -1134,7 +1140,6 @@ free_pyramid_doub_carr(doub_carr_t *dc)
 static void
 array_tests(void)
 {
-  const char str1[25] = "Hello";
   int m[2][3][4] =
   {
     {{1, 2, 3, 4}, {-1, -3, -5, -7}, {0, 2, 4, 6}},
@@ -1153,7 +1158,11 @@ array_tests(void)
   pints_t api[5];
   numbers_struct_t *ns;
 
-  ok(cstr_length(str1, sizeof str1) == strlen(str1), "RPC cstr_length\n");
+  if (!old_windows_version)
+  {
+      const char str1[25] = "Hello";
+      ok(cstr_length(str1, sizeof str1) == strlen(str1), "RPC cstr_length\n");
+  }
 
   ok(sum_fixed_int_3d(m) == 4116, "RPC sum_fixed_int_3d\n");
 
@@ -1240,15 +1249,17 @@ array_tests(void)
   ok(api[0].pi == pi, "RPC conformant varying array [out] pointer changed from %p to %p\n", pi, api[0].pi);
   ok(*api[0].pi == 0, "pi unmarshalled incorrectly %d\n", *api[0].pi);
 
-  ns = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(numbers_struct_t, numbers[5]));
-  ns->length = 5;
-  ns->size = 5;
-  ns->numbers[0].pi = pi;
-  get_numbers_struct(&ns);
-  ok(ns->numbers[0].pi == pi, "RPC conformant varying struct embedded pointer changed from %p to %p\n", pi, ns->numbers[0].pi);
-  ok(*ns->numbers[0].pi == 5, "pi unmarshalled incorrectly %d\n", *ns->numbers[0].pi);
-
-  HeapFree(GetProcessHeap(), 0, ns);
+  if (!old_windows_version)
+  {
+      ns = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(numbers_struct_t, numbers[5]));
+      ns->length = 5;
+      ns->size = 5;
+      ns->numbers[0].pi = pi;
+      get_numbers_struct(&ns);
+      ok(ns->numbers[0].pi == pi, "RPC conformant varying struct embedded pointer changed from %p to %p\n", pi, ns->numbers[0].pi);
+      ok(*ns->numbers[0].pi == 5, "pi unmarshalled incorrectly %d\n", *ns->numbers[0].pi);
+      HeapFree(GetProcessHeap(), 0, ns);
+  }
   HeapFree(GetProcessHeap(), 0, pi);
 }
 
