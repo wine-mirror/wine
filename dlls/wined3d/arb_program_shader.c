@@ -352,7 +352,7 @@ static DWORD *local_const_mapping(IWineD3DBaseShaderImpl *This)
 
     if(This->baseShader.load_local_constsF || list_empty(&This->baseShader.constantsF)) return NULL;
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * This->baseShader.limits.temporary);
+    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD) * This->baseShader.limits.constant_float);
     if(!ret) {
         ERR("Out of memory\n");
         return NULL;
