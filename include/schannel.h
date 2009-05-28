@@ -163,9 +163,9 @@ typedef struct _SCHANNEL_CRED
     DWORD grbitEnabledProtocols;
     DWORD dwMinimumCipherStrength;
     DWORD dwMaximumCipherStrength;
-    DWORD dwSessionLength;
+    DWORD dwSessionLifespan;
     DWORD dwFlags;
-    DWORD reserved;
+    DWORD dwCredFormat;
 } SCHANNEL_CRED, *PSCHANNEL_CRED;
 
 typedef struct _SecPkgCred_SupportedAlgs
