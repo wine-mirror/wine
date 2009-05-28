@@ -5594,12 +5594,25 @@ static void vshader_version_varying_test(IDirect3DDevice9 *device) {
     color = getPixelColor(device, 160, 120);
     ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x1a, 0x34, 0x67), 1),
        "vs_3_0 returned color 0x%08x, expected 0x00193366\n", color);
+    /* Accept two ways of oFog handling:
+     *
+     * oFog is supposed to be a scalar. The pixel shader declares a vec4 oFog input and reads all components.
+     * The vertex shader writes oFog without a writemask. There are two ways windows drivers deal with this:
+     *
+     * 1) Keep oFog a scalar, and assign v4 = {oFog, 0, 0, 0}. oFog = 0x33, so the result color is 004d0067.
+     *    This happens with software vertex processing and on Intel cards
+     *
+     * 2) Make oFog a vec4, and assign v4 = {oFog.x, oFog.y, oFog.z, oFog.w}. This way the result color is
+     *    0x004d339a. This happens on Nvidia Geforce 6+ cards
+     */
     color = getPixelColor(device, 160, 360);
-    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x4d, 0x00, 0x67), 1),
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x4d, 0x00, 0x67), 1) ||
+       color_match(color, D3DCOLOR_ARGB(0x00, 0x4d, 0x33, 0x9a), 1),
        "vs_1_1 returned color 0x%08x, expected 0x004c0066\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x4d, 0x00, 0x67), 1),
-       "vs_2_0 returned color 0x%08x, expected 0x004c0066\n", color);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x4d, 0x00, 0x67), 1) ||
+       color_match(color, D3DCOLOR_ARGB(0x00, 0x4d, 0x33, 0x9a), 1),
+       "vs_2_0 returned color 0x%08x, expected 0x004d0067 or 0x004d33a0\n", color);
 
     /* cleanup */
     hr = IDirect3DDevice9_SetPixelShader(device, NULL);
