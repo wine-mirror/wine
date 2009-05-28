@@ -5468,7 +5468,7 @@ static void test_VarCat(void)
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: NUMBER concat with NUMBER returned inncorrect result\n");
+        "VarCat: NUMBER concat with NUMBER returned incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5482,7 +5482,7 @@ static void test_VarCat(void)
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: NUMBER concat with VT_BSTR, inncorrect result\n");
+        "VarCat: NUMBER concat with VT_BSTR, incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5495,7 +5495,7 @@ static void test_VarCat(void)
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_BSTR concat with NUMBER, inncorrect result\n");
+        "VarCat: VT_BSTR concat with NUMBER, incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5512,7 +5512,7 @@ static void test_VarCat(void)
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_BSTR concat with VT_DATE returned inncorrect result\n");
+        "VarCat: VT_BSTR concat with VT_DATE returned incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
@@ -5528,7 +5528,7 @@ static void test_VarCat(void)
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_DATE concat with VT_BSTR returned inncorrect result\n");
+        "VarCat: VT_DATE concat with VT_BSTR returned incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);
