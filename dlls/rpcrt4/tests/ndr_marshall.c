@@ -957,11 +957,7 @@ static void test_simple_struct(void)
     else
         *(unsigned int *)wiredata = (UINT_PTR)&s1;
     memcpy(wiredata + 4, &s1, wiredatalen);
-    if (0)
-    {
-    /* one of the unmarshallings crashes Wine */
     test_pointer_marshal(fmtstr_simple_struct, &s1, 24, wiredata, 28, NULL, 0, "struct");
-    }
 
     /* zero the entire structure, including the hole */
     memset(&ps1, 0, sizeof(ps1));
@@ -988,14 +984,14 @@ static void test_simple_struct(void)
 
     test_simple_struct_marshal(fmtstr_pointer_struct + 4, &ps1, 17, wiredata + 4, 17, ps1_cmp, 2, "pointer_struct");
     if (use_pointer_ids)
+    {
         *(unsigned int *)wiredata = 0x20000;
+	*(unsigned int *)(wiredata + 8) = 0x20004;
+	*(unsigned int *)(wiredata + 12) = 0x20008;
+    }
     else
         *(unsigned int *)wiredata = (UINT_PTR)&ps1;
-    if (0)
-    {
-    /* one of the unmarshallings crashes Wine */
     test_pointer_marshal(fmtstr_pointer_struct, &ps1, 17, wiredata, 21, ps1_cmp, 2, "pointer_struct");
-    }
 }
 
 static void test_fullpointer_xlat(void)
