@@ -88,17 +88,24 @@ my %cat_1_0 = ( "display-list" => 1,
 	     "pixel-op" => 1,
 	     "pixel-rw" => 1,
 	     "state-req" => 1,
-	     "xform" => 1 );
+	     "xform" => 1,
+	     "VERSION_1_0" => 1,
+	     "VERSION_1_0_DEPRECATED" => 1 );
 my %cat_1_1 = ( %cat_1_0,
-	     "1_1" => 1 );
+	     "VERSION_1_1" => 1,
+             "VERSION_1_1_DEPRECATED" => 1 );
 my %cat_1_2 = ( %cat_1_1,
-	     "VERSION_1_2" => 1 );
+	     "VERSION_1_2" => 1,
+             "VERSION_1_2_DEPRECATED" => 1 );
 my %cat_1_3 = ( %cat_1_2,
-	     "VERSION_1_3" => 1 );
+	     "VERSION_1_3" => 1,
+             "VERSION_1_3_DEPRECATED" => 1 );
 my %cat_1_4 = ( %cat_1_3,
-	     "VERSION_1_4" => 1 );
+	     "VERSION_1_4" => 1,
+             "VERSION_1_4_DEPRECATED" => 1 );
 my %cat_1_5 = ( %cat_1_4,
-	     "VERSION_1_5" => 1 );
+	     "VERSION_1_5" => 1,
+             "VERSION_1_5_DEPRECATED" => 1 );
 
 my %norm_categories = ();
 
@@ -130,7 +137,9 @@ my %debug_conv =
      "GLhandleARB" => "%d",
      "GLcharARB" => "%c",
      "GLvoid" => "(void)",
-     "_GLfuncptr" => "%p");
+     "_GLfuncptr" => "%p",
+     "UINT64" => "%s,wine_dbgstr_longlong(%s)"
+    );
 
 #
 # This hash table gives the conversion between OpenGL types and what
@@ -215,6 +224,7 @@ sub GenerateThunk($$$$$)
     my ($func_ref, $comment, $prefix, $thread_safe, $local_var) = @_;
     my $ret = "";
     my $call_arg = "";
+    my $trace_call_arg = "";
     my $trace_arg = "";
 
     return "" if $func_ref->[0] eq "glGetString";
@@ -235,20 +245,32 @@ sub GenerateThunk($$$$$)
 	## print $func_ref->[2]->[$i]->[1] . "\n";
 	my $type = $func_ref->[2]->[$i]->[0];
 	my $name = ConvertVarName($func_ref->[2]->[$i]->[1]);
-	$ret = $ret . ConvertType($type) . " $name";
-	$call_arg = "$call_arg$name";
+	$ret .= ConvertType($type) . " $name";
+	$call_arg .= $name;
 	if ($type =~ /\*/) {
-	    $trace_arg = "$trace_arg\%p";
+	    $trace_arg .= "%p";
+            $trace_call_arg .= $name;
 	} else {
-	    $trace_arg = "$trace_arg$debug_conv{$type}";
+            if ($debug_conv{$type} =~ /(.*),(.*)/)
+            {
+                $trace_arg .= $1;
+                $trace_call_arg .= sprintf $2, $name;
+            }
+            else
+            {
+                $trace_arg .= $debug_conv{$type};
+                $trace_call_arg .= $name;
+            }
 	}
 	if ($i+1 < @{$func_ref->[2]}) {
-	    $ret = "$ret, ";
-	    $call_arg = "$call_arg, ";
-	    $trace_arg = "$trace_arg, ";
+	    $ret .= ", ";
+	    $call_arg .= ", ";
+	    $trace_call_arg .= ", ";
+	    $trace_arg .= ", ";
 	} else {
-	    $ret = "$ret ";
-	    $call_arg = "$call_arg ";
+	    $ret .= " ";
+	    $call_arg .= " ";
+	    $trace_call_arg .= " ";
 	}
     }
     $ret .= 'void ' if (!@{$func_ref->[2]});
@@ -260,7 +282,7 @@ sub GenerateThunk($$$$$)
     if ($gen_traces) {
 	$ret = "$ret  TRACE(\"($trace_arg)\\n\"";
 	if ($trace_arg ne "") {
-	    $ret = "$ret, $call_arg";
+	    $ret .= ", $trace_call_arg";
 	}
 	$ret = "$ret);\n";
     }

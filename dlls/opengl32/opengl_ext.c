@@ -8730,7 +8730,7 @@ static void WINAPI wine_glPolygonOffsetEXT( GLfloat factor, GLfloat bias ) {
 
 static void WINAPI wine_glPresentFrameDualFillNV( GLuint video_slot, UINT64 minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLenum target1, GLuint fill1, GLenum target2, GLuint fill2, GLenum target3, GLuint fill3 ) {
   void (*func_glPresentFrameDualFillNV)( GLuint, UINT64, GLuint, GLuint, GLenum, GLenum, GLuint, GLenum, GLuint, GLenum, GLuint, GLenum, GLuint ) = extension_funcs[EXT_glPresentFrameDualFillNV];
-  TRACE("(%d, %lld, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n", video_slot, minPresentTime, beginPresentTimeId, presentDurationId, type, target0, fill0, target1, fill1, target2, fill2, target3, fill3 );
+  TRACE("(%d, %s, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n", video_slot, wine_dbgstr_longlong(minPresentTime), beginPresentTimeId, presentDurationId, type, target0, fill0, target1, fill1, target2, fill2, target3, fill3 );
   ENTER_GL();
   func_glPresentFrameDualFillNV( video_slot, minPresentTime, beginPresentTimeId, presentDurationId, type, target0, fill0, target1, fill1, target2, fill2, target3, fill3 );
   LEAVE_GL();
@@ -8738,7 +8738,7 @@ static void WINAPI wine_glPresentFrameDualFillNV( GLuint video_slot, UINT64 minP
 
 static void WINAPI wine_glPresentFrameKeyedNV( GLuint video_slot, UINT64 minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLuint key0, GLenum target1, GLuint fill1, GLuint key1 ) {
   void (*func_glPresentFrameKeyedNV)( GLuint, UINT64, GLuint, GLuint, GLenum, GLenum, GLuint, GLuint, GLenum, GLuint, GLuint ) = extension_funcs[EXT_glPresentFrameKeyedNV];
-  TRACE("(%d, %lld, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n", video_slot, minPresentTime, beginPresentTimeId, presentDurationId, type, target0, fill0, key0, target1, fill1, key1 );
+  TRACE("(%d, %s, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n", video_slot, wine_dbgstr_longlong(minPresentTime), beginPresentTimeId, presentDurationId, type, target0, fill0, key0, target1, fill1, key1 );
   ENTER_GL();
   func_glPresentFrameKeyedNV( video_slot, minPresentTime, beginPresentTimeId, presentDurationId, type, target0, fill0, key0, target1, fill1, key1 );
   LEAVE_GL();
