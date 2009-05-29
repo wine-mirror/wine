@@ -2257,6 +2257,8 @@ static HRESULT WINAPI fnIMultiLanguage_GetRfc1766FromLcid(
     WCHAR buf[MAX_RFC1766_NAME];
 
     TRACE("%p %04x %p\n", iface, lcid, pbstrRfc1766);
+    if (!pbstrRfc1766)
+        return E_INVALIDARG;
 
     if (!lcid_to_rfc1766W( lcid, buf, MAX_RFC1766_NAME ))
     {
@@ -2812,6 +2814,8 @@ static HRESULT WINAPI fnIMultiLanguage2_GetRfc1766FromLcid(
     WCHAR buf[MAX_RFC1766_NAME];
 
     TRACE("%p %04x %p\n", iface, lcid, pbstrRfc1766);
+    if (!pbstrRfc1766)
+        return E_INVALIDARG;
 
     if (!lcid_to_rfc1766W( lcid, buf, MAX_RFC1766_NAME ))
     {

@@ -966,6 +966,9 @@ static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
 
         SysFreeString(rfcstr);
     }
+
+    hr = IMultiLanguage2_GetRfc1766FromLcid(iML2, MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), NULL);
+    ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
 }
 
 static void test_IMultiLanguage2_ConvertStringFromUnicode(IMultiLanguage2 *iML2)
