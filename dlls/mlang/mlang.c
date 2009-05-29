@@ -1137,29 +1137,54 @@ HRESULT WINAPI IsConvertINetStringAvailable(
 
 static inline HRESULT lcid_to_rfc1766A( LCID lcid, LPSTR rfc1766, INT len )
 {
-    INT n = GetLocaleInfoA( lcid, LOCALE_SISO639LANGNAME, rfc1766, len );
+    CHAR buffer[MAX_RFC1766_NAME];
+    INT n = GetLocaleInfoA(lcid, LOCALE_SISO639LANGNAME, buffer, MAX_RFC1766_NAME);
+    INT i;
+
     if (n)
     {
-        rfc1766[n - 1] = '-';
-        n += GetLocaleInfoA( lcid, LOCALE_SISO3166CTRYNAME, rfc1766 + n, len - n );
-        LCMapStringA( LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, rfc1766, n, rfc1766, len );
-        return S_OK;
+        i = PRIMARYLANGID(lcid);
+        if ((((i == LANG_ENGLISH) || (i == LANG_CHINESE) || (i == LANG_ARABIC)) &&
+            (SUBLANGID(lcid) == SUBLANG_DEFAULT)) ||
+            (SUBLANGID(lcid) > SUBLANG_DEFAULT)) {
+
+            buffer[n - 1] = '-';
+            i = GetLocaleInfoA(lcid, LOCALE_SISO3166CTRYNAME, buffer + n, MAX_RFC1766_NAME - n);
+            if (!i)
+                buffer[n - 1] = '\0';
+        }
+        else
+            i = 0;
+
+        LCMapStringA( LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, buffer, n + i, rfc1766, len );
+        return ((n + i) > len) ? E_INVALIDARG : S_OK;
     }
     return E_FAIL;
 }
 
 static inline HRESULT lcid_to_rfc1766W( LCID lcid, LPWSTR rfc1766, INT len )
 {
-    INT n = GetLocaleInfoW( lcid, LOCALE_SISO639LANGNAME, rfc1766, len );
-    INT save = n;
+    WCHAR buffer[MAX_RFC1766_NAME];
+    INT n = GetLocaleInfoW(lcid, LOCALE_SISO639LANGNAME, buffer, MAX_RFC1766_NAME);
+    INT i;
+
     if (n)
     {
-        rfc1766[n - 1] = '-';
-        n += GetLocaleInfoW( lcid, LOCALE_SISO3166CTRYNAME, rfc1766 + n, len - n );
-        if (n == save)
-            rfc1766[n - 1] = '\0';
-        LCMapStringW( LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, rfc1766, n, rfc1766, len );
-        return S_OK;
+        i = PRIMARYLANGID(lcid);
+        if ((((i == LANG_ENGLISH) || (i == LANG_CHINESE) || (i == LANG_ARABIC)) &&
+            (SUBLANGID(lcid) == SUBLANG_DEFAULT)) ||
+            (SUBLANGID(lcid) > SUBLANG_DEFAULT)) {
+
+            buffer[n - 1] = '-';
+            i = GetLocaleInfoW(lcid, LOCALE_SISO3166CTRYNAME, buffer + n, MAX_RFC1766_NAME - n);
+            if (!i)
+                buffer[n - 1] = '\0';
+        }
+        else
+            i = 0;
+
+        LCMapStringW(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, buffer, n + i, rfc1766, len);
+        return ((n + i) > len) ? E_INVALIDARG : S_OK;
     }
     return E_FAIL;
 }

@@ -940,25 +940,30 @@ static void test_Rfc1766ToLcid(void)
 
 static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
 {
+    CHAR expected[MAX_RFC1766_NAME];
+    CHAR buffer[MAX_RFC1766_NAME + 1];
+    DWORD i;
     HRESULT hr;
     BSTR rfcstr;
-    LCID lcid;
 
-    static WCHAR kok[] = {'k','o','k',0};
+    for(i = 0; i < sizeof(lcid_table) / sizeof(lcid_table[0]); i++) {
+        buffer[0] = '\0';
 
-    hr = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, kok);
-    /*
-     * S_FALSE happens when 'kok' instead matches to a different Rfc1766 name
-     * for example 'ko' so it is not a failure but does not give us what 
-     * we are looking for
-     */
-    if (hr != S_FALSE)
-    {
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+        rfcstr = NULL;
+        hr = IMultiLanguage2_GetRfc1766FromLcid(iML2, lcid_table[i].lcid, &rfcstr);
+        ok(hr == lcid_table[i].hr,
+            "#%02d: HRESULT 0x%x (expected 0x%x)\n", i, hr, lcid_table[i].hr);
 
-        hr = IMultiLanguage2_GetRfc1766FromLcid(iML2, lcid, &rfcstr);
-        ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
-        ok_w2("Expected \"%s\",  got \"%s\"n", kok, rfcstr);
+        if (hr != S_OK)
+            continue;   /* no result-string created */
+
+        WideCharToMultiByte(CP_ACP, 0, rfcstr, -1, buffer, sizeof(buffer), NULL, NULL);
+        LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, lcid_table[i].rfc1766,
+                    lstrlenA(lcid_table[i].rfc1766) + 1, expected, MAX_RFC1766_NAME);
+
+        ok(!lstrcmpA(buffer, expected),
+            "#%02d: got '%s' (expected '%s')\n", i, buffer, expected);
+
         SysFreeString(rfcstr);
     }
 }
