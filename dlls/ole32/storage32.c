@@ -1232,7 +1232,11 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
      */
     if (STGM_CREATE_MODE(grfMode) == STGM_CREATE &&
         STGM_ACCESS_MODE(This->base.openFlags) != STGM_READ)
-      IStorage_DestroyElement(iface, pwcsName);
+    {
+      hr = IStorage_DestroyElement(iface, pwcsName);
+      if (FAILED(hr))
+        return hr;
+    }
     else
     {
       WARN("file already exists\n");
