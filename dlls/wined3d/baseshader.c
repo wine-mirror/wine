@@ -692,6 +692,10 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             {
                 reg_maps->usestexldd = 1;
             }
+            else if(ins.handler_idx == WINED3DSIH_TEXLDL)
+            {
+                reg_maps->usestexldl = 1;
+            }
             else if(ins.handler_idx == WINED3DSIH_MOVA)
             {
                 reg_maps->usesmova = 1;

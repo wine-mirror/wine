@@ -951,6 +951,12 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
         shader_addline(buffer, "TXD %s, %s, %s, %s, texture[%u], %s;\n", dst_str, coord_reg, dsx, dsy,
                        sampler_idx, tex_type);
     }
+    else if(flags & TEX_LOD)
+    {
+        if(flags & TEX_PROJ) FIXME("Projected texture sampling with explicit lod\n");
+        if(flags & TEX_BIAS) FIXME("Biased texture sampling with explicit lod\n");
+        shader_addline(buffer, "TXL %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+    }
     else if (flags & TEX_BIAS)
     {
         /* Shouldn't be possible, but let's check for it */
@@ -2399,6 +2405,22 @@ static void shader_hw_texldd(const struct wined3d_shader_instruction *ins)
     shader_hw_sample(ins, sampler_idx, reg_dest, reg_src[0], flags, reg_src[1], reg_src[2]);
 }
 
+static void shader_hw_texldl(const struct wined3d_shader_instruction *ins)
+{
+    DWORD sampler_idx = ins->src[1].reg.idx;
+    char reg_dest[40];
+    char reg_coord[40];
+    DWORD flags = TEX_LOD;
+
+    shader_arb_get_dst_param(ins, &ins->dst[0], reg_dest);
+    shader_arb_get_src_param(ins, &ins->src[0], 0, reg_coord);
+
+    if (ins->flags & WINED3DSI_TEXLD_PROJECT) flags |= TEX_PROJ;
+    if (ins->flags & WINED3DSI_TEXLD_BIAS) flags |= TEX_BIAS;
+
+    shader_hw_sample(ins, sampler_idx, reg_dest, reg_coord, flags, NULL, NULL);
+}
+
 static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
 {
     GLuint program_id = 0;
@@ -2603,7 +2625,8 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
      * Testing shows no performance difference between OPTION NV_fragment_program2 and NV_fragment_program.
      * So enable the best we can get.
      */
-    if(reg_maps->usesdsx || reg_maps->usesdsy || reg_maps->loop_depth > 0 || reg_maps->usestexldd)
+    if(reg_maps->usesdsx || reg_maps->usesdsy || reg_maps->loop_depth > 0 || reg_maps->usestexldd ||
+       reg_maps->usestexldl)
     {
         want_nv_prog = TRUE;
     }
@@ -2810,7 +2833,11 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     /* Always enable the NV extension if available. Unlike fragment shaders, there is no
      * mesurable performance penalty, and we can always make use of it for clipplanes.
      */
-    if(GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) {
+    if(GL_SUPPORT(NV_VERTEX_PROGRAM3)) {
+        shader_addline(buffer, "OPTION NV_vertex_program3;\n");
+        priv_ctx.target_version = NV3;
+        shader_addline(buffer, "ADDRESS aL;\n");
+    } else if(GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) {
         shader_addline(buffer, "OPTION NV_vertex_program2;\n");
         priv_ctx.target_version = NV2;
         shader_addline(buffer, "ADDRESS aL;\n");
@@ -3492,7 +3519,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_TEXDP3TEX     */ pshader_hw_texdp3tex,
     /* WINED3DSIH_TEXKILL       */ pshader_hw_texkill,
     /* WINED3DSIH_TEXLDD        */ shader_hw_texldd,
-    /* WINED3DSIH_TEXLDL        */ NULL,
+    /* WINED3DSIH_TEXLDL        */ shader_hw_texldl,
     /* WINED3DSIH_TEXM3x2DEPTH  */ pshader_hw_texm3x2depth,
     /* WINED3DSIH_TEXM3x2PAD    */ pshader_hw_texm3x2pad,
     /* WINED3DSIH_TEXM3x2TEX    */ pshader_hw_texm3x2tex,
