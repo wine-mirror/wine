@@ -1230,7 +1230,8 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
     /*
      * An element with this name already exists
      */
-    if (STGM_CREATE_MODE(grfMode) == STGM_CREATE)
+    if (STGM_CREATE_MODE(grfMode) == STGM_CREATE &&
+        STGM_ACCESS_MODE(This->base.openFlags) != STGM_READ)
       IStorage_DestroyElement(iface, pwcsName);
     else
     {
