@@ -2490,7 +2490,7 @@ static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum)
     rfc->total = 0;
 
     data.total = 0;
-    data.allocated = 32;
+    data.allocated = 160;
     data.info = HeapAlloc(GetProcessHeap(), 0, data.allocated * sizeof(RFC1766INFO));
     if (!data.info)
     {
