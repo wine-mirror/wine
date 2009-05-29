@@ -1797,6 +1797,9 @@ static HRESULT WINAPI StorageImpl_DestroyElement(
   if (pwcsName==NULL)
     return STG_E_INVALIDPOINTER;
 
+  if ( STGM_ACCESS_MODE( This->base.openFlags ) == STGM_READ )
+    return STG_E_ACCESSDENIED;
+
   /*
    * Create a property enumeration to search the property with the given name
    */

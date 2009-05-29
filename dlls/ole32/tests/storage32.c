@@ -1328,11 +1328,11 @@ void test_readonly(void)
 
             /* DestroyElement on read-only storage, name exists */
             hr = IStorage_DestroyElement( stg2, streamW );
-            todo_wine ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
+            ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
 
             /* DestroyElement on read-only storage, name does not exist */
             hr = IStorage_DestroyElement( stg2, storageW );
-            todo_wine ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
+            ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
 
             IStorage_Release(stg2);
         }
