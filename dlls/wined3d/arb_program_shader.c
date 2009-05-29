@@ -2058,6 +2058,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
     struct shader_arb_ctx_priv priv_ctx;
     BOOL dcl_tmp = args->super.srgb_correction, dcl_td = FALSE;
+    BOOL want_nv_prog = FALSE;
 
     char srgbtmp[4][4];
     unsigned int i, found = 0;
@@ -2103,14 +2104,38 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     priv_ctx.cur_ps_args = args;
     list_init(&priv_ctx.if_frames);
 
+    /* Avoid enabling NV_fragment_program* if we do not need it.
+     *
+     * Enabling GL_NV_fragment_program_option causes the driver to occupy a temporary register,
+     * and it slows down the shader execution noticeably(about 5%). Usually our instruction emulation
+     * is faster than what we gain from using higher native instructions. There are some things though
+     * that cannot be emulated. In that case enable the extensions.
+     * If the extension is enabled, instruction handlers that support both ways will use it.
+     *
+     * Testing shows no performance difference between OPTION NV_fragment_program2 and NV_fragment_program.
+     * So enable the best we can get.
+     */
+    if(reg_maps->usesdsx || reg_maps->usesdsy || reg_maps->loop_depth > 0)
+    {
+        want_nv_prog = TRUE;
+    }
+
     shader_addline(buffer, "!!ARBfp1.0\n");
-    if(GL_SUPPORT(NV_FRAGMENT_PROGRAM2)) {
+    if(want_nv_prog && GL_SUPPORT(NV_FRAGMENT_PROGRAM2)) {
         shader_addline(buffer, "OPTION NV_fragment_program2;\n");
         priv_ctx.target_version = NV3;
-    } else if(GL_SUPPORT(NV_FRAGMENT_PROGRAM_OPTION)) {
+    } else if(want_nv_prog && GL_SUPPORT(NV_FRAGMENT_PROGRAM_OPTION)) {
         shader_addline(buffer, "OPTION NV_fragment_program;\n");
         priv_ctx.target_version = NV2;
     } else {
+        if(want_nv_prog)
+        {
+            /* This is an error - either we're advertising the wrong shader version, or aren't enforcing some
+             * limits properly
+             */
+            ERR("The shader requires instructions that are not available in plain GL_ARB_fragment_program\n");
+            ERR("Try GLSL\n");
+        }
         priv_ctx.target_version = ARB;
     }
 
@@ -2131,6 +2156,10 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
         }
     }
 
+    /* For now always declare the temps. At least the Nvidia assembler optimizes completely
+     * unused temps away(but occupies them for the whole shader if they're used once). Always
+     * declaring them avoids tricky bookkeeping work
+     */
     shader_addline(buffer, "TEMP TA;\n");      /* Used for modifiers */
     shader_addline(buffer, "TEMP TB;\n");      /* Used for modifiers */
     shader_addline(buffer, "TEMP TC;\n");      /* Used for modifiers */
@@ -2227,6 +2256,9 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
 
+    /* Always enable the NV extension if available. Unlike fragment shaders, there is no
+     * mesurable performance penalty, and we can always make use of it for clipplanes.
+     */
     if(GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) {
         shader_addline(buffer, "OPTION NV_vertex_program2;\n");
         priv_ctx.target_version = NV2;
