@@ -7786,23 +7786,21 @@ static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResour
     list_add_head(&This->resources, &((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
 }
 
-static void IWineD3DDeviceImpl_RemoveResource(IWineD3DDevice *iface, IWineD3DResource *resource){
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
+static void device_resource_remove(IWineD3DDeviceImpl *This, IWineD3DResource *resource)
+{
     TRACE("(%p) : Removing resource %p\n", This, resource);
 
     list_remove(&((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
 }
 
-
-static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IWineD3DResource *resource){
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resource)
+{
     WINED3DRESOURCETYPE type = IWineD3DResource_GetType(resource);
     int counter;
 
     TRACE("(%p) : resource %p\n", This, resource);
 
-    context_resource_released(iface, resource, type);
+    context_resource_released((IWineD3DDevice *)This, resource, type);
 
     switch (type) {
         /* TODO: check front and back buffers, rendertargets etc..  possibly swapchains? */
@@ -7917,7 +7915,7 @@ static void WINAPI IWineD3DDeviceImpl_ResourceReleased(IWineD3DDevice *iface, IW
 
 
     /* Remove the resource from the resourceStore */
-    IWineD3DDeviceImpl_RemoveResource(iface, resource);
+    device_resource_remove(This, resource);
 
     TRACE("Resource released\n");
 
@@ -8089,7 +8087,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_UpdateSurface,
     IWineD3DDeviceImpl_GetFrontBufferData,
     /*** object tracking ***/
-    IWineD3DDeviceImpl_ResourceReleased,
     IWineD3DDeviceImpl_EnumResources
 };
 

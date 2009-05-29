@@ -1578,6 +1578,7 @@ struct IWineD3DDeviceImpl
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
 
+void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resource);
 void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup);
 void device_stream_info_from_strided(IWineD3DDeviceImpl *This,

@@ -3468,9 +3468,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] UINT swapchain_idx,
         [in] IWineD3DSurface *dst_surface
     );
-    void ResourceReleased(
-        [in] IWineD3DResource *resource
-    );
     HRESULT EnumResources(
         [in] D3DCB_ENUMRESOURCES callback,
         [in] void *data

@@ -96,10 +96,7 @@ void resource_cleanup(IWineD3DResource *iface)
     This->resource.allocatedMemory = 0;
     This->resource.heapMemory = 0;
 
-    if (This->resource.wineD3DDevice != NULL) {
-        IWineD3DDevice_ResourceReleased((IWineD3DDevice *)This->resource.wineD3DDevice, iface);
-    }/* NOTE: this is not really an error for system memory resources */
-    return;
+    if (This->resource.wineD3DDevice) device_resource_released(This->resource.wineD3DDevice, iface);
 }
 
 HRESULT resource_get_device(IWineD3DResource *iface, IWineD3DDevice** ppDevice)
