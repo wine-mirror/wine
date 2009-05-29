@@ -3405,13 +3405,13 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
 
                 semantic_name_out = output_signature[j].semantic_name;
                 semantic_idx_out = output_signature[j].semantic_idx;
-                shader_glsl_write_mask_to_str(output_signature[i].mask, reg_mask_out);
+                shader_glsl_write_mask_to_str(output_signature[j].mask, reg_mask_out);
 
                 if (semantic_idx_in == semantic_idx_out
                         && !strcmp(semantic_name_in, semantic_name_out))
                 {
                     shader_addline(buffer, "%s%s = OUT[%u]%s;\n",
-                            destination, reg_mask, j, reg_mask);
+                            destination, reg_mask, j, reg_mask_out);
                     found = TRUE;
                 }
             }
