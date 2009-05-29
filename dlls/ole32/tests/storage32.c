@@ -1267,6 +1267,86 @@ static void test_access(void)
     DeleteFileA("winetest");
 }
 
+void test_readonly(void)
+{
+    IStorage *stg, *stg2, *stg3;
+    IStream *stream;
+    HRESULT hr;
+    static const WCHAR fileW[] = {'w','i','n','e','t','e','s','t',0};
+    static const WCHAR storageW[] = {'s','t','o','r','a','g','e',0};
+    static const WCHAR streamW[] = {'s','t','r','e','a','m',0};
+
+    hr = StgCreateDocfile( fileW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
+    ok(hr == S_OK, "should succeed, res=%x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IStorage_CreateStorage( stg, storageW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stg2 );
+        ok(hr == S_OK, "should succeed, res=%x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IStorage_CreateStream( stg2, streamW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stream );
+            ok(hr == S_OK, "should succeed, res=%x\n", hr);
+            if (SUCCEEDED(hr))
+                IStream_Release(stream);
+            IStorage_Release(stg2);
+        }
+        IStorage_Release(stg);
+    }
+
+    /* re-open read only */
+    hr = StgOpenStorage( fileW, NULL, STGM_TRANSACTED | STGM_SHARE_DENY_NONE | STGM_READ, NULL, 0, &stg);
+    ok(hr == S_OK, "should succeed, res=%x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IStorage_OpenStorage( stg, storageW, NULL, STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 0, &stg2 );
+        ok(hr == S_OK, "should succeed, res=%x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+#if 0 /* crashes on Wine */
+            /* CreateStream on read-only storage, name exists */
+            hr = IStorage_CreateStream( stg2, streamW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READ, 0, 0, &stream );
+            ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
+            if (SUCCEEDED(hr))
+                IStream_Release(stream);
+#endif
+
+            /* CreateStream on read-only storage, name does not exist */
+            hr = IStorage_CreateStream( stg2, storageW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READ, 0, 0, &stream );
+            ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
+            if (SUCCEEDED(hr))
+                IStream_Release(stream);
+
+#if 0 /* crashes on Wine */
+            /* CreateStorage on read-only storage, name exists */
+            hr = IStorage_CreateStorage( stg2, streamW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READ, 0, 0, &stg3 );
+            ok(hr == STG_E_FILEALREADYEXISTS, "should fail, res=%x\n", hr);
+            if (SUCCEEDED(hr))
+                IStream_Release(stg3);
+#endif
+
+            /* CreateStorage on read-only storage, name does not exist */
+            hr = IStorage_CreateStorage( stg2, storageW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READ, 0, 0, &stg3 );
+            ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
+            if (SUCCEEDED(hr))
+                IStream_Release(stg3);
+
+            /* DestroyElement on read-only storage, name exists */
+            hr = IStorage_DestroyElement( stg2, streamW );
+            todo_wine ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
+
+            /* DestroyElement on read-only storage, name does not exist */
+            hr = IStorage_DestroyElement( stg2, storageW );
+            todo_wine ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
+
+            IStorage_Release(stg2);
+        }
+
+        IStorage_Release(stg);
+    }
+
+    DeleteFileA("winetest");
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
@@ -1280,4 +1360,5 @@ START_TEST(storage32)
     test_ReadClassStm();
     test_access();
     test_writeclassstg();
+    test_readonly();
 }
