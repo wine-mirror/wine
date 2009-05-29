@@ -979,6 +979,10 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
       (grfMode & STGM_TRANSACTED))
     return STG_E_INVALIDFUNCTION;
 
+  /* Can't create a stream on read-only storage */
+  if ( STGM_ACCESS_MODE( This->openFlags ) == STGM_READ )
+    return STG_E_ACCESSDENIED;
+
   /*
    * Check that we're compatible with the parent's storage mode
    * if not in transacted mode

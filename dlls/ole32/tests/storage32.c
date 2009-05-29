@@ -1302,13 +1302,11 @@ void test_readonly(void)
         ok(hr == S_OK, "should succeed, res=%x\n", hr);
         if (SUCCEEDED(hr))
         {
-#if 0 /* crashes on Wine */
             /* CreateStream on read-only storage, name exists */
             hr = IStorage_CreateStream( stg2, streamW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READ, 0, 0, &stream );
             ok(hr == STG_E_ACCESSDENIED, "should fail, res=%x\n", hr);
             if (SUCCEEDED(hr))
                 IStream_Release(stream);
-#endif
 
             /* CreateStream on read-only storage, name does not exist */
             hr = IStorage_CreateStream( stg2, storageW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READ, 0, 0, &stream );
