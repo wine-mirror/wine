@@ -2395,7 +2395,7 @@ static HRESULT StorageImpl_Construct(
   ILockBytes*  pLkbyt,
   DWORD        openFlags,
   BOOL         fileBased,
-  BOOL         fileCreate)
+  BOOL         create)
 {
   HRESULT     hr = S_OK;
   StgProperty currentProperty;
@@ -2457,7 +2457,7 @@ static HRESULT StorageImpl_Construct(
   if (This->bigBlockFile == 0)
     return E_FAIL;
 
-  if (fileCreate)
+  if (create)
   {
     ULARGE_INTEGER size;
     BYTE bigBlockBuffer[BIG_BLOCK_SIZE];
@@ -2538,7 +2538,7 @@ static HRESULT StorageImpl_Construct(
   /*
    * Write the root property (memory only)
    */
-  if (fileCreate)
+  if (create)
   {
     StgProperty rootProp;
     /*
