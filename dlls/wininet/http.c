@@ -2210,6 +2210,10 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
             ERR("Unable to escape string!(%s) (%d)\n",debugstr_w(lpszObjectName),rc);
             strcpyW(lpwhr->lpszPath,lpszObjectName);
         }
+    }else {
+        static const WCHAR slashW[] = {'/',0};
+
+        lpwhr->lpszPath = WININET_strdupW(slashW);
     }
 
     if (lpszReferrer && *lpszReferrer)
