@@ -423,13 +423,6 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
         GL_EXTCALL(glPassTexCoordATI(GL_REG_0_ATI + stage + 1,
                    GL_TEXTURE0_ARB + stage + 1,
                    swizzle));
-
-        /* We need GL_REG_5_ATI as a temporary register to swizzle the bump matrix. So we run into
-         * issues if we're bump mapping on stage 4 or 5
-         */
-        if(stage >= 4) {
-            FIXME("Bump mapping in stage %d\n", stage);
-        }
     }
 
     /* Pass 2: Generate perturbation calculations */
@@ -460,22 +453,24 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
                  ATI_FFP_CONST_BUMPMAT(stage), GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
                  GL_REG_0_ATI + stage + 1, GL_RED, GL_NONE);
 
-        /* FIXME: How can I make GL_DOT2_ADD_ATI read the factors from blue and alpha? It defaults to red and green,
-         * and it is fairly easy to make it read GL_BLUE or BL_ALPHA, but I can't get an R * B + G * A. So we're wasting
-         * one register and two instructions in this pass for a simple swizzling operation.
-         * For starters it might be good enough to merge the two movs into one, but even that isn't possible :-(
+        /* Don't use GL_DOT2_ADD_ATI here because we cannot configure it to read the blue and alpha
+         * component of the bump matrix. Instead do this with two MADs:
          *
-         * NOTE: GL_BLUE | GL_ALPHA is not possible. It doesn't throw a compilation error, but an OR operation on the
-         * constants doesn't make sense, considering their values.
+         * coord.a = tex.r * bump.b + coord.g
+         * coord.g = tex.g * bump.a + coord.a
+         *
+         * The first instruction writes to alpha so it can be coissued with the above DOT2_ADD.
+         * coord.a is unused. If the perturbed texture is projected, this was already handled
+         * in the glPassTexCoordATI above.
          */
-        wrap_op1(gl_info, GL_MOV_ATI, GL_REG_5_ATI, GL_RED_BIT_ATI, GL_NONE,
-                 ATI_FFP_CONST_BUMPMAT(stage), GL_BLUE, GL_NONE);
-        wrap_op1(gl_info, GL_MOV_ATI, GL_REG_5_ATI, GL_GREEN_BIT_ATI, GL_NONE,
-                 ATI_FFP_CONST_BUMPMAT(stage), GL_ALPHA, GL_NONE);
-        wrap_op3(gl_info, GL_DOT2_ADD_ATI, GL_REG_0_ATI + stage + 1, GL_GREEN_BIT_ATI, GL_NONE,
-                 GL_REG_0_ATI + stage, GL_NONE, argmodextra_y,
-                 GL_REG_5_ATI, GL_NONE, GL_2X_BIT_ATI | GL_BIAS_BIT_ATI,
+        wrap_op3(gl_info, GL_MAD_ATI, GL_REG_0_ATI + stage + 1, GL_ALPHA, GL_NONE,
+                 GL_REG_0_ATI + stage, GL_RED, argmodextra_y,
+                 ATI_FFP_CONST_BUMPMAT(stage), GL_BLUE, GL_NONE,
                  GL_REG_0_ATI + stage + 1, GL_GREEN, GL_NONE);
+        wrap_op3(gl_info, GL_MAD_ATI, GL_REG_0_ATI + stage + 1, GL_GREEN_BIT_ATI, GL_NONE,
+                 GL_REG_0_ATI + stage, GL_GREEN, argmodextra_y,
+                 ATI_FFP_CONST_BUMPMAT(stage), GL_ALPHA, GL_NONE,
+                 GL_REG_0_ATI + stage + 1, GL_ALPHA, GL_NONE);
     }
 
     /* Pass 3: Generate sampling instructions for regular textures */
