@@ -2,6 +2,7 @@
  * Unit test suite for MLANG APIs.
  *
  * Copyright 2004 Dmitry Timoshkov
+ * Copyright 2009 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -54,18 +55,48 @@ typedef struct lcid_tag_table {
     HRESULT hr;
 } lcid_table_entry;
 
+/* en, ar and zh use SUBLANG_NEUTRAL for the rfc1766 name without the country
+   all others suppress the country with SUBLANG_DEFAULT.
+   For 3 letter language codes, the rfc1766 is to small for the country */
+
 static const lcid_table_entry  lcid_table[] = {
     {"e",     -1,       E_FAIL},
     {"",      -1,       E_FAIL},
     {"-",     -1,       E_FAIL},
     {"e-",    -1,       E_FAIL},
 
-    {"en",    9,        S_OK},       /* only en is special (using PRIMARYLANGID) */
+    {"ar",    1,        S_OK},
+    {"zh",    4,        S_OK},
+
+    {"de",    0x0407,   S_OK},
+    {"de-ch", 0x0807,   S_OK},
+    {"de-at", 0x0c07,   S_OK},
+    {"de-lu", 0x1007,   S_OK},
+    {"de-li", 0x1407,   S_OK},
+
+    {"en",    9,        S_OK},
     {"en-gb", 0x809,    S_OK},
     {"en-GB", 0x809,    S_OK},
     {"EN-GB", 0x809,    S_OK},
     {"en-US", 0x409,    S_OK},
-    {"en-us", 0x409,    S_OK}
+    {"en-us", 0x409,    S_OK},
+
+    {"fr",    0x040c,   S_OK},
+    {"fr-be", 0x080c,   S_OK},
+    {"fr-ca", 0x0c0c,   S_OK},
+    {"fr-ch", 0x100c,   S_OK},
+    {"fr-lu", 0x140c,   S_OK},
+    {"fr-mc", 0x180c,   S_OK},
+
+    {"it",    0x0410,   S_OK},
+    {"it-ch", 0x0810,   S_OK},
+
+    {"nl",    0x0413,   S_OK},
+    {"nl-be", 0x0813,   S_OK},
+    {"pl",    0x0415,   S_OK},
+    {"ru",    0x0419,   S_OK},
+
+    {"kok",   0x0457,   S_OK}
 
 };
 
@@ -971,6 +1002,54 @@ static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
     ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
 }
 
+static void test_LcidToRfc1766(void)
+{
+    CHAR expected[MAX_RFC1766_NAME];
+    CHAR buffer[MAX_RFC1766_NAME * 2];
+    HRESULT hr;
+    DWORD i;
+
+    for(i = 0; i < sizeof(lcid_table) / sizeof(lcid_table[0]); i++) {
+
+        memset(buffer, '#', sizeof(buffer)-1);
+        buffer[sizeof(buffer)-1] = '\0';
+
+        hr = LcidToRfc1766A(lcid_table[i].lcid, buffer, MAX_RFC1766_NAME);
+
+        ok(hr == lcid_table[i].hr,
+            "#%02d: HRESULT 0x%x (expected 0x%x)\n", i, hr, lcid_table[i].hr);
+
+        if (hr != S_OK)
+            continue;
+
+        LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, lcid_table[i].rfc1766,
+                    lstrlenA(lcid_table[i].rfc1766) + 1, expected, MAX_RFC1766_NAME);
+
+        ok(!lstrcmpA(buffer, expected),
+            "#%02d: got '%s' (expected '%s')\n", i, buffer, expected);
+
+    }
+
+    memset(buffer, '#', sizeof(buffer)-1);
+    buffer[sizeof(buffer)-1] = '\0';
+    hr = LcidToRfc1766A(-1, buffer, MAX_RFC1766_NAME);
+    ok(hr == E_FAIL, "got 0x%08x and '%s' (expected E_FAIL)\n", hr, buffer);
+
+    hr = LcidToRfc1766A(LANG_ENGLISH, NULL, MAX_RFC1766_NAME);
+    ok(hr == E_INVALIDARG, "got 0x%08x (expected E_INVALIDARG)\n", hr);
+
+    memset(buffer, '#', sizeof(buffer)-1);
+    buffer[sizeof(buffer)-1] = '\0';
+    hr = LcidToRfc1766A(LANG_ENGLISH, buffer, -1);
+    ok(hr == E_INVALIDARG, "got 0x%08x and '%s' (expected E_INVALIDARG)\n", hr, buffer);
+
+    memset(buffer, '#', sizeof(buffer)-1);
+    buffer[sizeof(buffer)-1] = '\0';
+    hr = LcidToRfc1766A(LANG_ENGLISH, buffer, 0);
+    ok(hr == E_INVALIDARG, "got 0x%08x and '%s' (expected E_INVALIDARG)\n", hr, buffer);
+
+}
+
 static void test_IMultiLanguage2_ConvertStringFromUnicode(IMultiLanguage2 *iML2)
 {
     CHAR dest[MAX_PATH];
@@ -1533,6 +1612,7 @@ START_TEST(mlang)
 
     CoInitialize(NULL);
     test_Rfc1766ToLcid();
+    test_LcidToRfc1766();
 
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMultiLanguage2, (void **)&iML2);

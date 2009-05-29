@@ -4,6 +4,7 @@
  * Copyright 2002 Lionel Ulmer
  * Copyright 2003,2004 Mike McCormack
  * Copyright 2004,2005 Dmitry Timoshkov
+ * Copyright 2009 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1195,6 +1196,8 @@ HRESULT WINAPI LcidToRfc1766A(
     INT nChar)
 {
     TRACE("%04x %p %u\n", lcid, pszRfc1766, nChar);
+    if (!pszRfc1766)
+        return E_INVALIDARG;
 
     return lcid_to_rfc1766A(lcid, pszRfc1766, nChar);
 }
@@ -1205,6 +1208,8 @@ HRESULT WINAPI LcidToRfc1766W(
     INT nChar)
 {
     TRACE("%04x %p %u\n", lcid, pszRfc1766, nChar);
+    if (!pszRfc1766)
+        return E_INVALIDARG;
 
     return lcid_to_rfc1766W(lcid, pszRfc1766, nChar);
 }
