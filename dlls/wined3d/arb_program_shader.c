@@ -1399,6 +1399,13 @@ static void pshader_hw_texbem(const struct wined3d_shader_instruction *ins)
 
     /* Sampling the perturbation map in Tsrc was done already, including the signedness correction if needed
      * The Tx in which the perturbation map is stored is the tempreg incarnation of the texture register
+     *
+     * GL_NV_fragment_program_option could handle this in one instruction via X2D:
+     * X2D TA.xy, fragment.texcoord, T%u, bumpenvmat%u.xzyw
+     *
+     * However, the NV extensions are never enabled for <= 2.0 shaders because of the performance penalty that
+     * comes with it, and texbem is an 1.x only instruction. No 1.x instruction forces us to enable the NV
+     * extension.
      */
     shader_addline(buffer, "SWZ TB, bumpenvmat%d, x, z, 0, 0;\n", reg_dest_code);
     shader_addline(buffer, "DP3 TA.x, TB, %s;\n", src_reg);
