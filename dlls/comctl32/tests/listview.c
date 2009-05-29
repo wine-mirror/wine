@@ -2597,6 +2597,8 @@ static void test_columnscreation(void)
 static void test_getitemrect(void)
 {
     HWND hwnd;
+    HIMAGELIST himl;
+    HBITMAP hbm;
     RECT rect;
     DWORD r;
     LVITEMA item;
@@ -2650,7 +2652,24 @@ static void test_getitemrect(void)
     r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
     expect(TRUE, r);
     /* padding */
-    todo_wine expect(2, rect.left);
+    expect(2, rect.left);
+
+    rect.left = LVIR_LABEL;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding, column width */
+    expect(2, rect.left);
+    expect(50, rect.right);
+
+    /* no icons attached */
+    rect.left = LVIR_ICON;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding */
+    expect(2, rect.left);
+    expect(2, rect.right);
 
     /* change order */
     order[0] = 1; order[1] = 0;
@@ -2676,6 +2695,51 @@ static void test_getitemrect(void)
     expect(TRUE, r);
     /* column width + padding */
     todo_wine expect(102, rect.left);
+
+    /* back to initial order */
+    order[0] = 0; order[1] = 1;
+    r = SendMessage(hwnd, LVM_SETCOLUMNORDERARRAY, 2, (LPARAM)&order);
+    expect(TRUE, r);
+
+    /* state icons */
+    himl = ImageList_Create(16, 16, 0, 2, 2);
+    ok(himl != NULL, "failed to create imagelist\n");
+    hbm = CreateBitmap(16, 16, 1, 1, NULL);
+    ok(hbm != NULL, "failed to create bitmap\n");
+    r = ImageList_Add(himl, hbm, 0);
+    ok(r == 0, "should be zero\n");
+    hbm = CreateBitmap(16, 16, 1, 1, NULL);
+    ok(hbm != NULL, "failed to create bitmap\n");
+    r = ImageList_Add(himl, hbm, 0);
+    ok(r == 1, "should be one\n");
+
+    r = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)himl);
+    ok(r == 0, "should return zero\n");
+
+    item.mask = LVIF_STATE;
+    item.state = INDEXTOSTATEIMAGEMASK(1);
+    item.stateMask = LVIS_STATEIMAGEMASK;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_SETITEM, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    /* icon bounds */
+    rect.left = LVIR_ICON;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding + stateicon width */
+    expect(18, rect.left);
+    expect(18, rect.right);
+    /* label bounds */
+    rect.left = LVIR_LABEL;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding + stateicon width -> column width */
+    expect(18, rect.left);
+    expect(50, rect.right);
 
     DestroyWindow(hwnd);
 }
