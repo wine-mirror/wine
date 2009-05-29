@@ -1697,7 +1697,7 @@ static BOOL read_line( WININETHTTPREQW *req, LPSTR buffer, DWORD *len )
     EnterCriticalSection( &req->read_section );
     for (;;)
     {
-        char *eol = memchr( req->read_buf + req->read_pos, '\n', req->read_size );
+        BYTE *eol = memchr( req->read_buf + req->read_pos, '\n', req->read_size );
 
         if (eol)
         {
@@ -1737,7 +1737,7 @@ static BOOL discard_eol( WININETHTTPREQW *req )
 {
     do
     {
-        char *eol = memchr( req->read_buf + req->read_pos, '\n', req->read_size );
+        BYTE *eol = memchr( req->read_buf + req->read_pos, '\n', req->read_size );
         if (eol)
         {
             remove_data( req, (eol + 1) - (req->read_buf + req->read_pos) );
