@@ -51,9 +51,6 @@ const WINED3DLIGHT WINED3D_default_light = {
     0.0                       /* Phi */
 };
 
-/* static function declarations */
-static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
-
 /**********************************************************
  * Global variable / Constants follow
  **********************************************************/
@@ -458,7 +455,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
 
     FIXME("Ignoring access flags (pool)\n");
 
-    hr = resource_init(&object->resource, WINED3DRTYPE_BUFFER, This, desc->byte_width,
+    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_BUFFER, This, desc->byte_width,
             desc->usage, format_desc, WINED3DPOOL_MANAGED, parent);
     if (FAILED(hr))
     {
@@ -469,8 +466,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateBuffer(IWineD3DDevice *iface,
     object->buffer_type_hint = GL_ARRAY_BUFFER_ARB;
 
     TRACE("Created resource %p\n", object);
-
-    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     TRACE("size %#x, usage=%#x, format %s, memory @ %p, iface @ %p\n", object->resource.size, object->resource.usage,
             debug_d3dformat(object->resource.format_desc->format), object->resource.allocatedMemory, object);
@@ -536,7 +531,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     }
 
     object->vtbl = &wined3d_buffer_vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_BUFFER, This, Size, Usage, format_desc, Pool, parent);
+    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_BUFFER, This, Size, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -547,8 +542,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     object->buffer_type_hint = GL_ARRAY_BUFFER_ARB;
 
     TRACE("(%p) : Created resource %p\n", This, object);
-
-    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     TRACE("(%p) : Size=%d, Usage=0x%08x, FVF=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
     *ppVertexBuffer = (IWineD3DBuffer *)object;
@@ -603,7 +596,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
     }
 
     object->vtbl = &wined3d_buffer_vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_BUFFER, This, Length, Usage, format_desc, Pool, parent);
+    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_BUFFER, This, Length, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -614,8 +607,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface
     object->buffer_type_hint = GL_ELEMENT_ARRAY_BUFFER_ARB;
 
     TRACE("(%p) : Created resource %p\n", This, object);
-
-    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     if(Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
         object->flags |= WINED3D_BUFFER_CREATEBO;
@@ -979,7 +970,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface,
             return WINED3DERR_INVALIDCALL;
     }
 
-    hr = resource_init(&object->resource, WINED3DRTYPE_SURFACE, This, Size, Usage, glDesc, Pool, parent);
+    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_SURFACE, This, Size, Usage, glDesc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -989,8 +980,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface,
     }
 
     TRACE("(%p) : Created resource %p\n", This, object);
-
-    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     *ppSurface = (IWineD3DSurface *)object;
 
@@ -1170,7 +1159,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     }
 
     object->lpVtbl = &IWineD3DTexture_Vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_TEXTURE, This, 0, Usage, format_desc, Pool, parent);
+    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_TEXTURE, This, 0, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -1180,8 +1169,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     }
 
     TRACE("(%p) : Created resource %p\n", This, object);
-
-    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     *ppTexture = (IWineD3DTexture *)object;
 
@@ -1329,7 +1316,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     }
 
     object->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_VOLUMETEXTURE, This, 0, Usage, format_desc, Pool, parent);
+    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_VOLUMETEXTURE,
+            This, 0, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -1339,8 +1327,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     }
 
     TRACE("(%p) : Created resource %p\n", This, object);
-
-    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     basetexture_init(&object->baseTexture, Levels, Usage);
 
@@ -1418,7 +1404,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     }
 
     object->lpVtbl = &IWineD3DVolume_Vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_VOLUME, This,
+    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_VOLUME, This,
             Width * Height * Depth * format_desc->byte_count, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
@@ -1429,8 +1415,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     }
 
     TRACE("(%p) : Created resource %p\n", This, object);
-
-    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     *ppVolume = (IWineD3DVolume *)object;
 
@@ -1508,7 +1492,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     }
 
     object->lpVtbl = &IWineD3DCubeTexture_Vtbl;
-    hr = resource_init(&object->resource, WINED3DRTYPE_CUBETEXTURE, This, 0, Usage, format_desc, Pool, parent);
+    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_CUBETEXTURE, This, 0, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -1518,8 +1502,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     }
 
     TRACE("(%p) : Created resource %p\n", This, object);
-
-    IWineD3DDeviceImpl_AddResource(iface, (IWineD3DResource *)object);
 
     basetexture_init(&object->baseTexture, Levels, Usage);
 
@@ -7779,10 +7761,10 @@ static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT i
 * any handles to other resource held by the caller must be closed
 * (e.g. a texture should release all held surfaces because telling the device that it's been released.)
  *****************************************************/
-static void IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource){
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+void device_resource_add(IWineD3DDeviceImpl *This, IWineD3DResource *resource)
+{
+    TRACE("(%p) : Adding resource %p\n", This, resource);
 
-    TRACE("(%p) : Adding Resource %p\n", This, resource);
     list_add_head(&This->resources, &((IWineD3DResourceImpl *) resource)->resource.resource_list_entry);
 }
 

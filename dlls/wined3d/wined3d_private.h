@@ -1578,6 +1578,7 @@ struct IWineD3DDeviceImpl
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
 
+void device_resource_add(IWineD3DDeviceImpl *This, IWineD3DResource *resource);
 void device_resource_released(IWineD3DDeviceImpl *This, IWineD3DResource *resource);
 void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup);
@@ -1649,7 +1650,7 @@ HRESULT resource_get_parent(IWineD3DResource *iface, IUnknown **parent);
 DWORD resource_get_priority(IWineD3DResource *iface);
 HRESULT resource_get_private_data(IWineD3DResource *iface, REFGUID guid,
         void *data, DWORD *data_size);
-HRESULT resource_init(struct IWineD3DResourceClass *resource, WINED3DRESOURCETYPE resource_type,
+HRESULT resource_init(IWineD3DResource *iface, WINED3DRESOURCETYPE resource_type,
         IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct GlPixelFormatDesc *format_desc,
         WINED3DPOOL pool, IUnknown *parent);
 WINED3DRESOURCETYPE resource_get_type(IWineD3DResource *iface);
