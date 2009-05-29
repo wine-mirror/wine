@@ -1334,6 +1334,8 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
 
         switch (loc.kind)
         {
+        case loc_error:
+            break;
         case loc_absolute:
             /* it's a global variable */
             /* FIXME: we don't handle its scope yet */
