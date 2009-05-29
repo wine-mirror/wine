@@ -377,7 +377,8 @@ AC_CHECK_HEADERS(\
 	unistd.h \
 	utime.h \
 	valgrind/memcheck.h \
-	valgrind/valgrind.h
+	valgrind/valgrind.h \
+	zlib.h
 )
 AC_HEADER_STAT()
 
@@ -1171,6 +1172,13 @@ WINE_CHECK_LIB_FUNCS(\
         pthread_get_stackaddr_np \
         pthread_get_stacksize_np,
         [$LIBPTHREAD])
+
+dnl **** Check for zlib ****
+if test "$ac_cv_header_zlib_h" = "yes"
+then
+    AC_CHECK_LIB(z,inflate,[AC_DEFINE(HAVE_ZLIB,1,[Define to 1 if you have the `z' library (-lz).])
+                            AC_SUBST(ZLIB,"-lz")])
+fi
 
 dnl **** Check for EsounD ****
 if test "x$with_esd" != xno

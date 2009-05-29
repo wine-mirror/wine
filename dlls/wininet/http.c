@@ -48,6 +48,9 @@
 #endif
 #include <time.h>
 #include <assert.h>
+#ifdef HAVE_ZLIB
+#  include <zlib.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -162,6 +165,15 @@ struct HttpAuthInfo
     BOOL finished; /* finished authenticating */
 };
 
+#ifdef HAVE_ZLIB
+
+struct gzip_stream_t {
+    z_stream zstream;
+    BYTE buf[4096];
+};
+
+#endif
+
 static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr);
 static BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear);
 static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
@@ -188,6 +200,57 @@ static LPHTTPHEADERW HTTP_GetHeader(LPWININETHTTPREQW req, LPCWSTR head)
         return &req->pCustHeaders[HeaderIndex];
 }
 
+#ifdef HAVE_ZLIB
+
+static voidpf wininet_zalloc(voidpf opaque, uInt items, uInt size)
+{
+    return HeapAlloc(GetProcessHeap(), 0, items*size);
+}
+
+static void wininet_zfree(voidpf opaque, voidpf address)
+{
+    HeapFree(GetProcessHeap(), 0, address);
+}
+
+static void init_gzip_stream(WININETHTTPREQW *req)
+{
+    gzip_stream_t *gzip_stream;
+    int zres;
+
+    gzip_stream = HeapAlloc(GetProcessHeap(), 0, sizeof(gzip_stream_t));
+    gzip_stream->zstream.zalloc = wininet_zalloc;
+    gzip_stream->zstream.zfree = wininet_zfree;
+    gzip_stream->zstream.opaque = NULL;
+    gzip_stream->zstream.next_in = NULL;
+    gzip_stream->zstream.avail_in = 0;
+
+    zres = inflateInit2(&gzip_stream->zstream, 0x1f);
+    if(zres != Z_OK) {
+        ERR("inflateInit failed: %d\n", zres);
+        HeapFree(GetProcessHeap(), 0, gzip_stream);
+        return;
+    }
+
+    req->gzip_stream = gzip_stream;
+    req->dwContentLength = ~0u;
+
+    if(req->read_size) {
+        memcpy(gzip_stream->buf, req->read_buf + req->read_pos, req->read_size);
+        gzip_stream->zstream.next_in = gzip_stream->buf;
+        gzip_stream->zstream.avail_in = req->read_size;
+        req->read_size = 0;
+    }
+}
+
+#else
+
+static void init_gzip_stream(WININETHTTPREQW *req)
+{
+    ERR("gzip stream not supported, missing zlib.\n");
+}
+
+#endif
+
 /* set the request content length based on the headers */
 static DWORD set_content_length( LPWININETHTTPREQW lpwhr )
 {
@@ -206,6 +269,16 @@ static DWORD set_content_length( LPWININETHTTPREQW lpwhr )
     {
         lpwhr->dwContentLength = ~0u;
         lpwhr->read_chunked = TRUE;
+    }
+
+    if(lpwhr->decoding) {
+        int encoding_idx;
+
+        static const WCHAR gzipW[] = {'g','z','i','p',0};
+
+        encoding_idx = HTTP_GetCustomHeaderIndex(lpwhr, szContent_Encoding, 0, FALSE);
+        if(encoding_idx != -1 && !strcmpiW(lpwhr->pCustHeaders[encoding_idx].lpszValue, gzipW))
+            init_gzip_stream(lpwhr);
     }
 
     return lpwhr->dwContentLength;
@@ -1476,6 +1549,14 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
 
     TRACE("%p\n",lpwhr);
 
+#ifdef HAVE_ZLIB
+    if(lpwhr->gzip_stream) {
+        inflateEnd(&lpwhr->gzip_stream->zstream);
+        HeapFree(GetProcessHeap(), 0, lpwhr->gzip_stream);
+        lpwhr->gzip_stream = NULL;
+    }
+#endif
+
     if (!NETCON_connected(&lpwhr->netConnection))
         return;
 
@@ -1659,9 +1740,69 @@ static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buf
         HeapFree(GetProcessHeap(), 0, req->lpHttpSession->lpszPassword);
         if (!(req->lpHttpSession->lpszPassword = WININET_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
+    case INTERNET_OPTION_HTTP_DECODING:
+        if(size != sizeof(BOOL))
+            return ERROR_INVALID_PARAMETER;
+        req->decoding = *(BOOL*)buffer;
+        return ERROR_SUCCESS;
     }
 
     return ERROR_INTERNET_INVALID_OPTION;
+}
+
+static inline BOOL is_gzip_buf_empty(gzip_stream_t *gzip_stream)
+{
+#ifdef HAVE_ZLIB
+    return gzip_stream->zstream.avail_in == 0;
+#else
+    return TRUE;
+#endif
+}
+
+static DWORD read_gzip_data(WININETHTTPREQW *req, BYTE *buf, int size, int flags, int *read_ret)
+{
+    DWORD ret = ERROR_SUCCESS;
+    int read = 0;
+
+#ifdef HAVE_ZLIB
+    int res, len, zres;
+    z_stream *zstream;
+
+    zstream = &req->gzip_stream->zstream;
+
+    while(read < size) {
+        if(is_gzip_buf_empty(req->gzip_stream)) {
+            res = NETCON_recv( &req->netConnection, req->gzip_stream->buf,
+                               sizeof(req->gzip_stream->buf), flags, &len);
+            if(!res) {
+                if(!read)
+                    ret = INTERNET_GetLastError();
+                break;
+            }
+
+            zstream->next_in = req->gzip_stream->buf;
+            zstream->avail_in = len;
+        }
+
+        zstream->next_out = buf+read;
+        zstream->avail_out = size-read;
+        zres = inflate(zstream, Z_FULL_FLUSH);
+        read = size - zstream->avail_out;
+        if(zres == Z_STREAM_END) {
+            TRACE("end of data\n");
+            req->dwContentLength = req->dwContentRead + req->read_size + read;
+            break;
+        }else if(zres != Z_OK) {
+            WARN("inflate failed %d\n", zres);
+            if(!read)
+                ret = ERROR_INTERNET_DECODING_FAILED;
+            break;
+        }
+    }
+#endif
+
+    *read_ret = read;
+    return ret;
 }
 
 /* read some more data into the read buffer (the read section must be held) */
@@ -1669,16 +1810,25 @@ static BOOL read_more_data( WININETHTTPREQW *req, int maxlen )
 {
     int len;
 
-    if (req->read_size && req->read_pos)
+    if (req->read_pos)
     {
         /* move existing data to the start of the buffer */
-        memmove( req->read_buf, req->read_buf + req->read_pos, req->read_size );
+        if(req->read_size)
+            memmove( req->read_buf, req->read_buf + req->read_pos, req->read_size );
         req->read_pos = 0;
     }
 
     if (maxlen == -1) maxlen = sizeof(req->read_buf);
-    if (!NETCON_recv( &req->netConnection, req->read_buf + req->read_size,
-                      maxlen - req->read_size, 0, &len )) return FALSE;
+
+    if (req->gzip_stream) {
+        if(read_gzip_data(req, req->read_buf + req->read_size, maxlen - req->read_size, 0, &len) != ERROR_SUCCESS)
+            return FALSE;
+    }else {
+        if(!NETCON_recv( &req->netConnection, req->read_buf + req->read_size,
+                         maxlen - req->read_size, 0, &len ))
+            return FALSE;
+    }
+
     req->read_size += len;
     return TRUE;
 }
@@ -1847,6 +1997,7 @@ static void HTTP_ReceiveRequestData(WININETHTTPREQW *req, BOOL first_notif)
 static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
     int len, bytes_read = 0;
+    DWORD ret = ERROR_SUCCESS;
 
     EnterCriticalSection( &req->read_section );
     if (req->read_chunked && (req->dwContentLength == ~0u || req->dwContentLength == req->dwContentRead))
@@ -1862,12 +2013,20 @@ static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD 
         remove_data( req, bytes_read );
     }
 
-    if (size > bytes_read && (!bytes_read || sync))
+    if (size > bytes_read)
     {
-        if (NETCON_recv( &req->netConnection, (char *)buffer + bytes_read, size - bytes_read,
-                         sync ? MSG_WAITALL : 0, &len))
-            bytes_read += len;
-        /* always return success, even if the network layer returns an error */
+        if (req->gzip_stream) {
+            if(is_gzip_buf_empty(req->gzip_stream) || !bytes_read || sync) {
+                ret = read_gzip_data(req, (BYTE*)buffer+bytes_read, size - bytes_read, sync ? MSG_WAITALL : 0, &len);
+                if(ret == ERROR_SUCCESS)
+                    bytes_read += len;
+            }
+        }else if (!bytes_read || sync) {
+            if (NETCON_recv( &req->netConnection, (char *)buffer + bytes_read, size - bytes_read,
+                             sync ? MSG_WAITALL : 0, &len))
+                bytes_read += len;
+            /* always return success, even if the network layer returns an error */
+        }
     }
 done:
     req->dwContentRead += bytes_read;
@@ -1876,7 +2035,7 @@ done:
     TRACE( "retrieved %u bytes (%u/%u)\n", bytes_read, req->dwContentRead, req->dwContentLength );
     LeaveCriticalSection( &req->read_section );
 
-    if(req->lpszCacheFile) {
+    if(ret == ERROR_SUCCESS && req->lpszCacheFile) {
         BOOL res;
         DWORD dwBytesWritten;
 
@@ -1888,7 +2047,7 @@ done:
     if(!bytes_read && (req->dwContentRead == req->dwContentLength))
         HTTP_FinishedReading(req);
 
-    return ERROR_SUCCESS;
+    return ret;
 }
 
 
@@ -2101,7 +2260,7 @@ static DWORD HTTPREQ_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *availab
     }
 
 done:
-    if (*available == sizeof(req->read_buf))  /* check if we have even more pending in the socket */
+    if (*available == sizeof(req->read_buf) && !req->gzip_stream)  /* check if we have even more pending in the socket */
     {
         DWORD extra;
         if (NETCON_query_data_available(&req->netConnection, &extra))
@@ -2396,6 +2555,16 @@ static BOOL HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
         index = HTTP_GetCustomHeaderIndex(lpwhr, lpBuffer, requested_index, request_only);
         break;
 
+    case HTTP_QUERY_CONTENT_LENGTH:
+        if(lpwhr->gzip_stream) {
+            INTERNET_SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
+            return FALSE;
+        }
+
+        index = HTTP_GetCustomHeaderIndex(lpwhr, header_lookup[level],
+                                          requested_index,request_only);
+        break;
+
     case HTTP_QUERY_RAW_HEADERS_CRLF:
         {
             LPWSTR headers;
@@ -2503,6 +2672,10 @@ static BOOL HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
             *lpdwBufferLength = len * sizeof(WCHAR);
             return TRUE;
         }
+        break;
+    case HTTP_QUERY_CONTENT_ENCODING:
+        index = HTTP_GetCustomHeaderIndex(lpwhr, header_lookup[lpwhr->gzip_stream ? HTTP_QUERY_CONTENT_TYPE : level],
+                requested_index,request_only);
         break;
     default:
         assert (LAST_TABLE_HEADER == (HTTP_QUERY_UNLESS_MODIFIED_SINCE + 1));

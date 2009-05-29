@@ -1041,6 +1041,12 @@
 /* Define if Xrender has the XRenderSetPictureTransform function */
 #undef HAVE_XRENDERSETPICTURETRANSFORM
 
+/* Define to 1 if you have the `z' library (-lz). */
+#undef HAVE_ZLIB
+
+/* Define to 1 if you have the <zlib.h> header file. */
+#undef HAVE_ZLIB_H
+
 /* Define to 1 if you have the `_pclose' function. */
 #undef HAVE__PCLOSE
 

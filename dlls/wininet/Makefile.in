@@ -7,7 +7,7 @@ MODULE    = wininet.dll
 IMPORTLIB = wininet
 IMPORTS   = mpr shlwapi shell32 user32 advapi32 kernel32 ntdll
 DELAYIMPORTS = secur32 crypt32
-EXTRALIBS = @SOCKETLIBS@
+EXTRALIBS = @SOCKETLIBS@ @ZLIB@
 
 C_SRCS = \
 	cookie.c \

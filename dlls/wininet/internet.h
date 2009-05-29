@@ -183,6 +183,8 @@ typedef struct
 
 struct HttpAuthInfo;
 
+typedef struct gzip_stream_t gzip_stream_t;
+
 typedef struct
 {
     WININETHANDLEHEADER hdr;
@@ -209,6 +211,9 @@ typedef struct
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */
     BYTE  read_buf[4096]; /* buffer for already read but not returned data */
+
+    BOOL decoding;
+    gzip_stream_t *gzip_stream;
 } WININETHTTPREQW, *LPWININETHTTPREQW;
 
 
