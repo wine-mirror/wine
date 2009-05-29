@@ -2407,19 +2407,13 @@ static HRESULT StorageImpl_Construct(
 
   memset(This, 0, sizeof(StorageImpl));
 
-  /*
-   * Initialize stream list
-   */
-
   list_init(&This->base.strmHead);
 
-  /*
-   * Initialize the virtual function table.
-   */
   This->base.lpVtbl = &Storage32Impl_Vtbl;
   This->base.pssVtbl = &IPropertySetStorage_Vtbl;
   This->base.v_destructor = StorageImpl_Destroy;
   This->base.openFlags = (openFlags & ~STGM_CREATE);
+  This->create = create;
 
   /*
    * This is the top-level storage so initialize the ancestor pointer
@@ -2427,14 +2421,8 @@ static HRESULT StorageImpl_Construct(
    */
   This->base.ancestorStorage = This;
 
-  /*
-   * Initialize the physical support of the storage.
-   */
   This->hFile = hFile;
 
-  /*
-   * Store copy of file path.
-   */
   if(pwcsName) {
       This->pwcsName = HeapAlloc(GetProcessHeap(), 0,
                                 (lstrlenW(pwcsName)+1)*sizeof(WCHAR));
