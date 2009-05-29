@@ -4250,6 +4250,13 @@ static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     if (program_id) TRACE("Using GLSL program %u\n", program_id);
     GL_EXTCALL(glUseProgramObjectARB(program_id));
     checkGLcall("glUseProgramObjectARB");
+
+    /* In case that NP2 texcoord fixup data is found for the selected program, trigger a reload of the
+     * constants. This has to be done because it can't be guaranteed that sampler() (from state.c) is
+     * called between selecting the shader and using it, which results in wrong fixup for some frames. */
+    if (priv->glsl_program && priv->glsl_program->np2Fixup_info) {
+        This->shader_backend->shader_load_np2fixup_constants(iface, usePS, useVS);
+    }
 }
 
 /* GL locking is done by the caller */
