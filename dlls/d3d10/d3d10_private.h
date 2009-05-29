@@ -90,9 +90,15 @@ struct d3d10_effect
     LONG refcount;
 
     ID3D10Device *device;
+    DWORD version;
+    DWORD localbuffers_count;
+    DWORD localobjects_count;
     DWORD technique_count;
     DWORD index_offset;
+    DWORD dephstencilstate_count;
     DWORD blendstate_count;
+    DWORD rasterizerstate_count;
+    DWORD samplerstate_count;
     struct d3d10_effect_technique *techniques;
 };
 

@@ -448,19 +448,26 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     const char *ptr = data;
     DWORD unknown;
 
-    /* version info? */
-    skip_dword_unknown(&ptr, 2);
+    /* Compiled target version (e.g. fx_4_0=0xfeff1001, fx_4_1=0xfeff1011). */
+    read_dword(&ptr, &e->version);
+    TRACE("Target: %#x\n", e->version);
 
+    read_dword(&ptr, &e->localbuffers_count);
+    TRACE("Localbuffers count: %u\n", e->localbuffers_count);
+
+    /* Number of variables in local buffers? */
     read_dword(&ptr, &unknown);
     FIXME("Unknown 0: %u\n", unknown);
+
+    read_dword(&ptr, &e->localobjects_count);
+    TRACE("Localobjects count: %u\n", e->localobjects_count);
+
     read_dword(&ptr, &unknown);
     FIXME("Unknown 1: %u\n", unknown);
     read_dword(&ptr, &unknown);
     FIXME("Unknown 2: %u\n", unknown);
     read_dword(&ptr, &unknown);
     FIXME("Unknown 3: %u\n", unknown);
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 4: %u\n", unknown);
 
     read_dword(&ptr, &e->technique_count);
     TRACE("Technique count: %u\n", e->technique_count);
@@ -469,27 +476,32 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     TRACE("Index offset: %#x\n", e->index_offset);
 
     read_dword(&ptr, &unknown);
+    FIXME("Unknown 4: %u\n", unknown);
+    read_dword(&ptr, &unknown);
     FIXME("Unknown 5: %u\n", unknown);
+
+    read_dword(&ptr, &e->dephstencilstate_count);
+    TRACE("Depthstencilstate count: %u\n", e->dephstencilstate_count);
+
+    read_dword(&ptr, &e->blendstate_count);
+    TRACE("Blendstate count: %u\n", e->blendstate_count);
+
+    read_dword(&ptr, &e->rasterizerstate_count);
+    TRACE("Rasterizerstate count: %u\n", e->rasterizerstate_count);
+
+    read_dword(&ptr, &e->samplerstate_count);
+    TRACE("Samplerstate count: %u\n", e->samplerstate_count);
+
     read_dword(&ptr, &unknown);
     FIXME("Unknown 6: %u\n", unknown);
     read_dword(&ptr, &unknown);
     FIXME("Unknown 7: %u\n", unknown);
 
-    read_dword(&ptr, &e->blendstate_count);
-    TRACE("Blendstate count: %u\n", e->blendstate_count);
-
+    /* Number of function calls in all passes? */
     read_dword(&ptr, &unknown);
     FIXME("Unknown 8: %u\n", unknown);
     read_dword(&ptr, &unknown);
     FIXME("Unknown 9: %u\n", unknown);
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 10: %u\n", unknown);
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 11: %u\n", unknown);
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 12: %u\n", unknown);
-    read_dword(&ptr, &unknown);
-    FIXME("Unknown 13: %u\n", unknown);
 
     return parse_fx10_body(e, ptr, data_size - (ptr - data));
 }
