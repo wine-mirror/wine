@@ -70,10 +70,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 static const WCHAR g_szHttp1_0[] = {'H','T','T','P','/','1','.','0',0};
 static const WCHAR g_szHttp1_1[] = {'H','T','T','P','/','1','.','1',0};
-static const WCHAR g_szReferer[] = {'R','e','f','e','r','e','r',0};
-static const WCHAR g_szAccept[] = {'A','c','c','e','p','t',0};
-static const WCHAR g_szUserAgent[] = {'U','s','e','r','-','A','g','e','n','t',0};
-static const WCHAR szHost[] = { 'H','o','s','t',0 };
+static const WCHAR hostW[] = { 'H','o','s','t',0 };
 static const WCHAR szAuthorization[] = { 'A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
 static const WCHAR szProxy_Authorization[] = { 'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
 static const WCHAR szStatus[] = { 'S','t','a','t','u','s',0 };
@@ -81,13 +78,66 @@ static const WCHAR szKeepAlive[] = {'K','e','e','p','-','A','l','i','v','e',0};
 static const WCHAR szGET[] = { 'G','E','T', 0 };
 static const WCHAR szCrLf[] = {'\r','\n', 0};
 
+static const WCHAR szAccept[] = { 'A','c','c','e','p','t',0 };
+static const WCHAR szAccept_Charset[] = { 'A','c','c','e','p','t','-','C','h','a','r','s','e','t', 0 };
+static const WCHAR szAccept_Encoding[] = { 'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',0 };
+static const WCHAR szAccept_Language[] = { 'A','c','c','e','p','t','-','L','a','n','g','u','a','g','e',0 };
+static const WCHAR szAccept_Ranges[] = { 'A','c','c','e','p','t','-','R','a','n','g','e','s',0 };
+static const WCHAR szAge[] = { 'A','g','e',0 };
+static const WCHAR szAllow[] = { 'A','l','l','o','w',0 };
+static const WCHAR szCache_Control[] = { 'C','a','c','h','e','-','C','o','n','t','r','o','l',0 };
+static const WCHAR szConnection[] = { 'C','o','n','n','e','c','t','i','o','n',0 };
+static const WCHAR szContent_Base[] = { 'C','o','n','t','e','n','t','-','B','a','s','e',0 };
+static const WCHAR szContent_Encoding[] = { 'C','o','n','t','e','n','t','-','E','n','c','o','d','i','n','g',0 };
+static const WCHAR szContent_ID[] = { 'C','o','n','t','e','n','t','-','I','D',0 };
+static const WCHAR szContent_Language[] = { 'C','o','n','t','e','n','t','-','L','a','n','g','u','a','g','e',0 };
+static const WCHAR szContent_Length[] = { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0 };
+static const WCHAR szContent_Location[] = { 'C','o','n','t','e','n','t','-','L','o','c','a','t','i','o','n',0 };
+static const WCHAR szContent_MD5[] = { 'C','o','n','t','e','n','t','-','M','D','5',0 };
+static const WCHAR szContent_Range[] = { 'C','o','n','t','e','n','t','-','R','a','n','g','e',0 };
+static const WCHAR szContent_Transfer_Encoding[] = { 'C','o','n','t','e','n','t','-','T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0 };
+static const WCHAR szContent_Type[] = { 'C','o','n','t','e','n','t','-','T','y','p','e',0 };
+static const WCHAR szCookie[] = { 'C','o','o','k','i','e',0 };
+static const WCHAR szDate[] = { 'D','a','t','e',0 };
+static const WCHAR szFrom[] = { 'F','r','o','m',0 };
+static const WCHAR szETag[] = { 'E','T','a','g',0 };
+static const WCHAR szExpect[] = { 'E','x','p','e','c','t',0 };
+static const WCHAR szExpires[] = { 'E','x','p','i','r','e','s',0 };
+static const WCHAR szIf_Match[] = { 'I','f','-','M','a','t','c','h',0 };
+static const WCHAR szIf_Modified_Since[] = { 'I','f','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0 };
+static const WCHAR szIf_None_Match[] = { 'I','f','-','N','o','n','e','-','M','a','t','c','h',0 };
+static const WCHAR szIf_Range[] = { 'I','f','-','R','a','n','g','e',0 };
+static const WCHAR szIf_Unmodified_Since[] = { 'I','f','-','U','n','m','o','d','i','f','i','e','d','-','S','i','n','c','e',0 };
+static const WCHAR szLast_Modified[] = { 'L','a','s','t','-','M','o','d','i','f','i','e','d',0 };
+static const WCHAR szLocation[] = { 'L','o','c','a','t','i','o','n',0 };
+static const WCHAR szMax_Forwards[] = { 'M','a','x','-','F','o','r','w','a','r','d','s',0 };
+static const WCHAR szMime_Version[] = { 'M','i','m','e','-','V','e','r','s','i','o','n',0 };
+static const WCHAR szPragma[] = { 'P','r','a','g','m','a',0 };
+static const WCHAR szProxy_Authenticate[] = { 'P','r','o','x','y','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
+static const WCHAR szProxy_Connection[] = { 'P','r','o','x','y','-','C','o','n','n','e','c','t','i','o','n',0 };
+static const WCHAR szPublic[] = { 'P','u','b','l','i','c',0 };
+static const WCHAR szRange[] = { 'R','a','n','g','e',0 };
+static const WCHAR szReferer[] = { 'R','e','f','e','r','e','r',0 };
+static const WCHAR szRetry_After[] = { 'R','e','t','r','y','-','A','f','t','e','r',0 };
+static const WCHAR szServer[] = { 'S','e','r','v','e','r',0 };
+static const WCHAR szSet_Cookie[] = { 'S','e','t','-','C','o','o','k','i','e',0 };
+static const WCHAR szTransfer_Encoding[] = { 'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0 };
+static const WCHAR szUnless_Modified_Since[] = { 'U','n','l','e','s','s','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0 };
+static const WCHAR szUpgrade[] = { 'U','p','g','r','a','d','e',0 };
+static const WCHAR szURI[] = { 'U','R','I',0 };
+static const WCHAR szUser_Agent[] = { 'U','s','e','r','-','A','g','e','n','t',0 };
+static const WCHAR szVary[] = { 'V','a','r','y',0 };
+static const WCHAR szVia[] = { 'V','i','a',0 };
+static const WCHAR szWarning[] = { 'W','a','r','n','i','n','g',0 };
+static const WCHAR szWWW_Authenticate[] = { 'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
+
 #define MAXHOSTNAME 100
 #define MAX_FIELD_VALUE_LEN 256
 #define MAX_FIELD_LEN 256
 
-#define HTTP_REFERER    g_szReferer
-#define HTTP_ACCEPT     g_szAccept
-#define HTTP_USERAGENT  g_szUserAgent
+#define HTTP_REFERER    szReferer
+#define HTTP_ACCEPT     szAccept
+#define HTTP_USERAGENT  szUser_Agent
 
 #define HTTP_ADDHDR_FLAG_ADD				0x20000000
 #define HTTP_ADDHDR_FLAG_ADD_IF_NEW			0x10000000
@@ -342,7 +392,6 @@ static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR ve
 
 static void HTTP_ProcessCookies( LPWININETHTTPREQW lpwhr )
 {
-    static const WCHAR szSet_Cookie[] = { 'S','e','t','-','C','o','o','k','i','e',0 };
     int HeaderIndex;
     int numCookies = 0;
     LPHTTPHEADERW setCookieHeader;
@@ -358,7 +407,7 @@ static void HTTP_ProcessCookies( LPWININETHTTPREQW lpwhr )
             LPWSTR buf_url;
             LPHTTPHEADERW Host;
 
-            Host = HTTP_GetHeader(lpwhr,szHost);
+            Host = HTTP_GetHeader(lpwhr, hostW);
             len = lstrlenW(Host->lpszValue) + 9 + lstrlenW(lpwhr->lpszPath);
             buf_url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
             sprintfW(buf_url, szFmt, Host->lpszValue, lpwhr->lpszPath);
@@ -1461,7 +1510,6 @@ static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
         WCHAR *pch;
 
         static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
-        static const WCHAR hostW[] = {'H','o','s','t',0};
 
         TRACE("INTERNET_OPTION_URL\n");
 
@@ -2192,11 +2240,11 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         lpwhs->nHostPort != INTERNET_DEFAULT_HTTPS_PORT)
     {
         sprintfW(lpszHostName, szHostForm, lpwhs->lpszHostName, lpwhs->nHostPort);
-        HTTP_ProcessHeader(lpwhr, szHost, lpszHostName,
+        HTTP_ProcessHeader(lpwhr, hostW, lpszHostName,
                 HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
     }
     else
-        HTTP_ProcessHeader(lpwhr, szHost, lpwhs->lpszHostName,
+        HTTP_ProcessHeader(lpwhr, hostW, lpwhs->lpszHostName,
                 HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
     if (lpwhs->nServerPort == INTERNET_INVALID_PORT_NUMBER)
@@ -2246,59 +2294,6 @@ static void HTTP_DrainContent(WININETHTTPREQW *req)
             return;
     } while (bytes_read);
 }
-
-static const WCHAR szAccept[] = { 'A','c','c','e','p','t',0 };
-static const WCHAR szAccept_Charset[] = { 'A','c','c','e','p','t','-','C','h','a','r','s','e','t', 0 };
-static const WCHAR szAccept_Encoding[] = { 'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',0 };
-static const WCHAR szAccept_Language[] = { 'A','c','c','e','p','t','-','L','a','n','g','u','a','g','e',0 };
-static const WCHAR szAccept_Ranges[] = { 'A','c','c','e','p','t','-','R','a','n','g','e','s',0 };
-static const WCHAR szAge[] = { 'A','g','e',0 };
-static const WCHAR szAllow[] = { 'A','l','l','o','w',0 };
-static const WCHAR szCache_Control[] = { 'C','a','c','h','e','-','C','o','n','t','r','o','l',0 };
-static const WCHAR szConnection[] = { 'C','o','n','n','e','c','t','i','o','n',0 };
-static const WCHAR szContent_Base[] = { 'C','o','n','t','e','n','t','-','B','a','s','e',0 };
-static const WCHAR szContent_Encoding[] = { 'C','o','n','t','e','n','t','-','E','n','c','o','d','i','n','g',0 };
-static const WCHAR szContent_ID[] = { 'C','o','n','t','e','n','t','-','I','D',0 };
-static const WCHAR szContent_Language[] = { 'C','o','n','t','e','n','t','-','L','a','n','g','u','a','g','e',0 };
-static const WCHAR szContent_Length[] = { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',0 };
-static const WCHAR szContent_Location[] = { 'C','o','n','t','e','n','t','-','L','o','c','a','t','i','o','n',0 };
-static const WCHAR szContent_MD5[] = { 'C','o','n','t','e','n','t','-','M','D','5',0 };
-static const WCHAR szContent_Range[] = { 'C','o','n','t','e','n','t','-','R','a','n','g','e',0 };
-static const WCHAR szContent_Transfer_Encoding[] = { 'C','o','n','t','e','n','t','-','T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0 };
-static const WCHAR szContent_Type[] = { 'C','o','n','t','e','n','t','-','T','y','p','e',0 };
-static const WCHAR szCookie[] = { 'C','o','o','k','i','e',0 };
-static const WCHAR szDate[] = { 'D','a','t','e',0 };
-static const WCHAR szFrom[] = { 'F','r','o','m',0 };
-static const WCHAR szETag[] = { 'E','T','a','g',0 };
-static const WCHAR szExpect[] = { 'E','x','p','e','c','t',0 };
-static const WCHAR szExpires[] = { 'E','x','p','i','r','e','s',0 };
-static const WCHAR szIf_Match[] = { 'I','f','-','M','a','t','c','h',0 };
-static const WCHAR szIf_Modified_Since[] = { 'I','f','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0 };
-static const WCHAR szIf_None_Match[] = { 'I','f','-','N','o','n','e','-','M','a','t','c','h',0 };
-static const WCHAR szIf_Range[] = { 'I','f','-','R','a','n','g','e',0 };
-static const WCHAR szIf_Unmodified_Since[] = { 'I','f','-','U','n','m','o','d','i','f','i','e','d','-','S','i','n','c','e',0 };
-static const WCHAR szLast_Modified[] = { 'L','a','s','t','-','M','o','d','i','f','i','e','d',0 };
-static const WCHAR szLocation[] = { 'L','o','c','a','t','i','o','n',0 };
-static const WCHAR szMax_Forwards[] = { 'M','a','x','-','F','o','r','w','a','r','d','s',0 };
-static const WCHAR szMime_Version[] = { 'M','i','m','e','-','V','e','r','s','i','o','n',0 };
-static const WCHAR szPragma[] = { 'P','r','a','g','m','a',0 };
-static const WCHAR szProxy_Authenticate[] = { 'P','r','o','x','y','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
-static const WCHAR szProxy_Connection[] = { 'P','r','o','x','y','-','C','o','n','n','e','c','t','i','o','n',0 };
-static const WCHAR szPublic[] = { 'P','u','b','l','i','c',0 };
-static const WCHAR szRange[] = { 'R','a','n','g','e',0 };
-static const WCHAR szReferer[] = { 'R','e','f','e','r','e','r',0 };
-static const WCHAR szRetry_After[] = { 'R','e','t','r','y','-','A','f','t','e','r',0 };
-static const WCHAR szServer[] = { 'S','e','r','v','e','r',0 };
-static const WCHAR szSet_Cookie[] = { 'S','e','t','-','C','o','o','k','i','e',0 };
-static const WCHAR szTransfer_Encoding[] = { 'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g',0 };
-static const WCHAR szUnless_Modified_Since[] = { 'U','n','l','e','s','s','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e',0 };
-static const WCHAR szUpgrade[] = { 'U','p','g','r','a','d','e',0 };
-static const WCHAR szURI[] = { 'U','R','I',0 };
-static const WCHAR szUser_Agent[] = { 'U','s','e','r','-','A','g','e','n','t',0 };
-static const WCHAR szVary[] = { 'V','a','r','y',0 };
-static const WCHAR szVia[] = { 'V','i','a',0 };
-static const WCHAR szWarning[] = { 'W','a','r','n','i','n','g',0 };
-static const WCHAR szWWW_Authenticate[] = { 'W','W','W','-','A','u','t','h','e','n','t','i','c','a','t','e',0 };
 
 static const LPCWSTR header_lookup[] = {
     szMime_Version,		/* HTTP_QUERY_MIME_VERSION = 0 */
@@ -2356,7 +2351,7 @@ static const LPCWSTR header_lookup[] = {
     szContent_MD5,		/* HTTP_QUERY_CONTENT_MD5 = 52 */
     szContent_Range,		/* HTTP_QUERY_CONTENT_RANGE = 53 */
     szETag,			/* HTTP_QUERY_ETAG = 54 */
-    szHost,			/* HTTP_QUERY_HOST = 55 */
+    hostW,			/* HTTP_QUERY_HOST = 55 */
     szIf_Match,			/* HTTP_QUERY_IF_MATCH = 56 */
     szIf_None_Match,		/* HTTP_QUERY_IF_NONE_MATCH = 57 */
     szIf_Range,			/* HTTP_QUERY_IF_RANGE = 58 */
@@ -3062,7 +3057,7 @@ static BOOL HTTP_GetRequestURL(WININETHTTPREQW *req, LPWSTR buf)
 
     static const WCHAR formatW[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
 
-    host_header = HTTP_GetHeader(req, szHost);
+    host_header = HTTP_GetHeader(req, hostW);
     if(!host_header)
         return FALSE;
 
@@ -3231,7 +3226,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
         else
             lpwhs->lpszHostName = WININET_strdupW(hostName);
 
-        HTTP_ProcessHeader(lpwhr, szHost, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
+        HTTP_ProcessHeader(lpwhr, hostW, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
         lpwhs->lpszUserName = NULL;
@@ -3358,7 +3353,7 @@ static void HTTP_InsertCookies(LPWININETHTTPREQW lpwhr)
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
     LPWSTR lpszCookies, lpszUrl = NULL;
     DWORD nCookieSize, size;
-    LPHTTPHEADERW Host = HTTP_GetHeader(lpwhr,szHost);
+    LPHTTPHEADERW Host = HTTP_GetHeader(lpwhr, hostW);
 
     size = (strlenW(Host->lpszValue) + strlenW(szUrlForm) + strlenW(lpwhr->lpszPath)) * sizeof(WCHAR);
     if (!(lpszUrl = HeapAlloc(GetProcessHeap(), 0, size))) return;
@@ -3461,7 +3456,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
         if (TRACE_ON(wininet))
         {
-            LPHTTPHEADERW Host = HTTP_GetHeader(lpwhr,szHost);
+            LPHTTPHEADERW Host = HTTP_GetHeader(lpwhr, hostW);
             TRACE("Going to url %s %s\n", debugstr_w(Host->lpszValue), debugstr_w(lpwhr->lpszPath));
         }
 
