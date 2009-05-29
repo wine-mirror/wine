@@ -1135,7 +1135,7 @@ HRESULT WINAPI IsConvertINetStringAvailable(
     return S_FALSE;
 }
 
-static inline INT lcid_to_rfc1766A( LCID lcid, LPSTR rfc1766, INT len )
+static inline HRESULT lcid_to_rfc1766A( LCID lcid, LPSTR rfc1766, INT len )
 {
     INT n = GetLocaleInfoA( lcid, LOCALE_SISO639LANGNAME, rfc1766, len );
     if (n)
@@ -1143,12 +1143,12 @@ static inline INT lcid_to_rfc1766A( LCID lcid, LPSTR rfc1766, INT len )
         rfc1766[n - 1] = '-';
         n += GetLocaleInfoA( lcid, LOCALE_SISO3166CTRYNAME, rfc1766 + n, len - n );
         LCMapStringA( LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, rfc1766, n, rfc1766, len );
-        return n;
+        return S_OK;
     }
-    return 0;
+    return E_FAIL;
 }
 
-static inline INT lcid_to_rfc1766W( LCID lcid, LPWSTR rfc1766, INT len )
+static inline HRESULT lcid_to_rfc1766W( LCID lcid, LPWSTR rfc1766, INT len )
 {
     INT n = GetLocaleInfoW( lcid, LOCALE_SISO639LANGNAME, rfc1766, len );
     INT save = n;
@@ -1159,9 +1159,9 @@ static inline INT lcid_to_rfc1766W( LCID lcid, LPWSTR rfc1766, INT len )
         if (n == save)
             rfc1766[n - 1] = '\0';
         LCMapStringW( LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, rfc1766, n, rfc1766, len );
-        return n;
+        return S_OK;
     }
-    return 0;
+    return E_FAIL;
 }
 
 HRESULT WINAPI LcidToRfc1766A(
@@ -1171,10 +1171,7 @@ HRESULT WINAPI LcidToRfc1766A(
 {
     TRACE("%04x %p %u\n", lcid, pszRfc1766, nChar);
 
-    if (lcid_to_rfc1766A( lcid, pszRfc1766, nChar ))
-        return S_OK;
-
-    return S_FALSE;
+    return lcid_to_rfc1766A(lcid, pszRfc1766, nChar);
 }
 
 HRESULT WINAPI LcidToRfc1766W(
@@ -1184,10 +1181,7 @@ HRESULT WINAPI LcidToRfc1766W(
 {
     TRACE("%04x %p %u\n", lcid, pszRfc1766, nChar);
 
-    if (lcid_to_rfc1766W( lcid, pszRfc1766, nChar ))
-        return S_OK;
-
-    return S_FALSE;
+    return lcid_to_rfc1766W(lcid, pszRfc1766, nChar);
 }
 
 static HRESULT lcid_from_rfc1766(IEnumRfc1766 *iface, LCID *lcid, LPCWSTR rfc1766)
@@ -2239,7 +2233,7 @@ static HRESULT WINAPI fnIMultiLanguage_GetRfc1766FromLcid(
 
     TRACE("%p %04x %p\n", iface, lcid, pbstrRfc1766);
 
-    if (lcid_to_rfc1766W( lcid, buf, MAX_RFC1766_NAME ))
+    if (!lcid_to_rfc1766W( lcid, buf, MAX_RFC1766_NAME ))
     {
         *pbstrRfc1766 = SysAllocString( buf );
         return S_OK;
@@ -2794,7 +2788,7 @@ static HRESULT WINAPI fnIMultiLanguage2_GetRfc1766FromLcid(
 
     TRACE("%p %04x %p\n", iface, lcid, pbstrRfc1766);
 
-    if (lcid_to_rfc1766W( lcid, buf, MAX_RFC1766_NAME ))
+    if (!lcid_to_rfc1766W( lcid, buf, MAX_RFC1766_NAME ))
     {
         *pbstrRfc1766 = SysAllocString( buf );
         return S_OK;
