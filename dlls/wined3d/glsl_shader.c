@@ -4295,6 +4295,8 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
      */
     char pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
 
+    ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
     if(pshader) {
         struct glsl_pshader_private *shader_data;
         ps = (IWineD3DPixelShaderImpl *) This;

@@ -2503,7 +2503,10 @@ static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
 
 static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     IWineD3DBaseShaderImpl *baseShader = (IWineD3DBaseShaderImpl *) iface;
-    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)baseShader->baseShader.device)->adapter->gl_info;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)baseShader->baseShader.device;
+    const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
+
+    ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
 
     if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version.type))
     {
