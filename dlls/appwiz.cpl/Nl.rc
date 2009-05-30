@@ -40,11 +40,11 @@ STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMEN
 CAPTION "Installeren/Verwijderen"
 FONT 8, "MS Shell Dlg"
 {
- CONTROL "Om een programma te installeren vanaf een floppy disk, CD-ROM drive, of uw hard disk, click op Installeren.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "Om een programma te installeren vanaf een floppy disk, CD-ROM drive, of uw hard disk, klik op Installeren.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
  CONTROL "&Installeren...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
- CONTROL "De volgende software kan automatisch verwijderd worden. Om het programma te verwijderen of de geinstalleerde onderdelen te wijzigen, selecteer het in de lijst en druk op Toevoegen/Verwijderen.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "De volgende software kan automatisch verwijderd worden. Om het programma te verwijderen of de geïnstalleerde onderdelen te wijzigen, selecteer het in de lijst en druk op Toevoegen/Verwijderen.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
  CONTROL "Toevoegen/&Verwijderen...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
  CONTROL "&Support Informatie...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 176, 198, 64, 14
