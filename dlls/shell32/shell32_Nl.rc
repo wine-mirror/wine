@@ -84,7 +84,7 @@ BEGIN
 	  MENUITEM "K&nippen",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Kopieren",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "Creeer &Link",	FCIDM_SHVIEW_CREATELINK
+	  MENUITEM "Creëer &Link",	FCIDM_SHVIEW_CREATELINK
 	  MENUITEM "Ver&wijder",		FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Hernoemen",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
@@ -110,7 +110,7 @@ BEGIN
 
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&Over Controle Paneel...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -210,7 +210,7 @@ STRINGTABLE
 	IDS_DESKTOP		"Bureaublad"
 	IDS_MYCOMPUTER		"Mijn Computer"
 	IDS_RECYCLEBIN_FOLDER_NAME      "Vuilnisbak"
-	IDS_CONTROLPANEL	"Control Panel"
+	IDS_CONTROLPANEL	"Controle Paneel"
 
         /* context menus */
 	IDS_VIEW_LARGE		"Grote Icons"
