@@ -20,7 +20,7 @@ use strict;
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
-my $version="0.7.1";
+my $version="0.7.2";
 
 use Cwd;
 use File::Basename;
@@ -845,72 +845,97 @@ sub source_scan_project_file($$$)
         push @{@$project_settings[$T_CXXEXTRA]},$prj_target_cflags;
         push @{@$project_settings[$T_LDFLAGS]},$prj_target_ldflags;
     } elsif ($filename =~ /.vcproj$/i) {
-        # Import des Moduls XML::Simple
-        use XML::Simple;
+        # Import XML::LibXML, you need the libxml package (deb: libxml-libxml-perl, rpm: perl-libxml-perl)
+        require XML::LibXML;
 
-        my $project_xml = XMLin($filename, forcearray=>1);
-
-        $targets{$project_xml->{'Name'}.".exe"}=1;
+        my $xmlparser = XML::LibXML->new();
+        my $project_xml = $xmlparser->parse_file($filename);
         my $sfilet;
-        for my $vc_files (@{$project_xml->{'Files'}}) {
-            for my $vc_filter (@{$vc_files->{'Filter'}}) {
-                for my $vc_file (@{$vc_filter->{'File'}}) {
-                    $sfilet=$vc_file->{'RelativePath'};
-                    $sfilet=~s/\\\\/\\/g; #remove double backslash
-                    $sfilet=~s/^\.\\//; #remove starting 'this directory'
-                    $sfilet=~s/\\/\//g; #make slashes out of backslashes
-                    if ($sfilet =~ /\.(exe|dll)$/i) {
-                        $targets{$sfilet}=1;
-                    } elsif ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
-                        push @sources_c,$sfilet;
-                    } elsif ($sfilet =~ /\.(cpp|cxx)$/i) {
-                        if ($sfilet =~ /^stdafx.cpp$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
+        my $configt;
+
+        foreach my $vc_project ($project_xml->findnodes('/VisualStudioProject')) {
+            foreach my $vc_project_attr ($vc_project->attributes) {
+                if ($vc_project_attr->getName eq "Name") {
+                    $targets{$vc_project_attr->getValue.".exe"}=1;
+                    last;
+                }
+            }
+        }
+
+        for (my $flevel = 0; $flevel <= 5; $flevel++) {
+            foreach my $vc_file ($project_xml->findnodes('/VisualStudioProject/Files/'.('Filter/' x $flevel).'File')) {
+                foreach my $vc_file_attr ($vc_file->attributes) {
+                    if ($vc_file_attr->getName eq "RelativePath") {
+                        $sfilet = $vc_file_attr->getValue;
+                        $sfilet=~s/\\\\/\\/g; #remove double backslash
+                        $sfilet=~s/^\.\\//; #remove starting 'this directory'
+                        $sfilet=~s/\\/\//g; #make slashes out of backslashes
+                        if ($sfilet =~ /\.(exe|dll)$/i) {
+                            $targets{$sfilet}=1;
+                        } elsif ($sfilet =~ /\.c$/i and $sfilet !~ /\.(dbg|spec)\.c$/) {
+                            push @sources_c,$sfilet;
+                        } elsif ($sfilet =~ /\.(cpp|cxx)$/i) {
+                            if ($sfilet =~ /^stdafx.cpp$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
+                                push @sources_misc,$sfilet;
+                                @$project_settings[$T_FLAGS]|=$TF_MFC;
+                            } else {
+                                push @sources_cxx,$sfilet;
+                            }
+                        } elsif ($sfilet =~ /\.rc$/i) {
+                            push @sources_rc,$sfilet;
+                        } elsif ($sfilet =~ /\.(h|hxx|hpp|inl|rc2|dlg)$/i) {
                             push @sources_misc,$sfilet;
-                            @$project_settings[$T_FLAGS]|=$TF_MFC;
-                        } else {
-                            push @sources_cxx,$sfilet;
-                        }
-                    } elsif ($sfilet =~ /\.rc$/i) {
-                        push @sources_rc,$sfilet;
-                    } elsif ($sfilet =~ /\.(h|hxx|hpp|inl|rc2|dlg)$/i) {
-                        push @sources_misc,$sfilet;
-                        if ($sfilet =~ /^stdafx.h$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
-                            @$project_settings[$T_FLAGS]|=$TF_MFC;
+                            if ($sfilet =~ /^stdafx.h$/i && !(@$project_settings[$T_FLAGS] & $TF_NOMFC)) {
+                                @$project_settings[$T_FLAGS]|=$TF_MFC;
+                            }
                         }
                     }
                 }
             }
         }
-        $prj_target_cflags="";
-        for my $vc_configurations (@{$project_xml->{'Configurations'}}) {
-            for my $vc_configuration (@{$vc_configurations->{'Configuration'}}) {
-                for my $vc_tool (@{$vc_configuration->{'Tool'}}) {
-                    if ($vc_tool->{'Name'} ne 'VCCLCompilerTool') { next; }
-                    if (defined $vc_tool->{'Optimization'}) {$prj_target_cflags.="-O".$vc_tool->{'Optimization'}." ";}
-                    if (defined $vc_tool->{'WarningLevel'}) {
-                        if ($vc_tool->{'WarningLevel'}==0) {
-                            $prj_target_cflags.="-w ";
-                        } elsif ($vc_tool->{'WarningLevel'}<4) {
-                            $prj_target_cflags.="-W ";
-                        } elsif ($vc_tool->{'WarningLevel'}==4) {
-                            $prj_target_cflags.="-Wall ";
-                        } elsif ($vc_tool->{'WarningLevel'} eq "X") {
-                            $prj_target_cflags.="-Werror ";
-                        }
-                    }
-                    if (defined $vc_tool->{'PreprocessorDefinitions'}) {
-                        $vc_tool->{'PreprocessorDefinitions'}=~s/;/ -D/g;
-                        $prj_target_cflags.="-D".$vc_tool->{'PreprocessorDefinitions'}." ";
-                    }
-                    if (defined $vc_tool->{'AdditionalIncludeDirectories'}) {
-                        $vc_tool->{'AdditionalIncludeDirectories'}=~s/\\/\//g;
-                        $vc_tool->{'AdditionalIncludeDirectories'}=~s/;/ -I/g;
-                        push @{@$project_settings[$T_INCLUDE_PATH]},"-I".$vc_tool->{'AdditionalIncludeDirectories'};
-                    }
+
+        my @vc_configurations = $project_xml->findnodes('/VisualStudioProject/Configurations/Configuration');
+        my $vc_configuration = $vc_configurations[0];
+        foreach my $vc_configuration_attr ($vc_configuration->attributes) {
+            if ($vc_configuration_attr->getName eq "ConfigurationType") {
+                if ($vc_configuration_attr->getValue==1) {
+                    $prj_target_type=1; # Win32 (x86) Application
+                } elsif ($vc_configuration_attr->getValue==2) {
+                    $prj_target_type=3; # Win32 (x86) Dynamic-Link Library
                 }
-                last;
             }
         }
+
+        foreach my $vc_configuration_tools ($vc_configuration->findnodes('Tool')) {
+            my @find_tool = $vc_configuration_tools->attributes;
+            if ($find_tool[0]->getValue ne "VCCLCompilerTool") {next;}
+            foreach my $vc_configuration_tool ($vc_configuration_tools->attributes) {
+                if ($vc_configuration_tool->getName eq "Optimization") {$prj_target_cflags.="-O".$vc_configuration_tool->getValue." ";}
+                if ($vc_configuration_tool->getName eq "WarningLevel") {
+                    if ($vc_configuration_tool->getValue==0) {
+                        $prj_target_cflags.="-w ";
+                    } elsif ($vc_configuration_tool->getValue<4) {
+                        $prj_target_cflags.="-W ";
+                    } elsif ($vc_configuration_tool->getValue==4) {
+                        $prj_target_cflags.="-Wall ";
+                    } elsif ($vc_configuration_tool->getValue eq "X") {
+                        $prj_target_cflags.="-Werror ";
+                    }
+                }
+                if ($vc_configuration_tool->getName eq "PreprocessorDefinitions") {
+                    $configt=$vc_configuration_tool->getValue;
+                    $configt=~s/;/ -D/g;
+                    $prj_target_cflags.="-D".$configt." ";
+                }
+                if ($vc_configuration_tool->getName eq "AdditionalIncludeDirectories") {
+                    $configt=$vc_configuration_tool->getValue;
+                    $configt=~s/\\/\//g;
+                    $configt=~s/;/ -I/g;
+                    push @{@$project_settings[$T_INCLUDE_PATH]},"-I".$configt;
+                }
+            }
+        }
+
         push @{@$project_settings[$T_CEXTRA]},$prj_target_cflags;
         push @{@$project_settings[$T_CXXEXTRA]},$prj_target_cflags;
     }
