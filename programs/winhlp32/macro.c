@@ -535,7 +535,10 @@ void CALLBACK MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
     HLPFILE*    hlpfile;
 
     WINE_TRACE("(\"%s\", \"%s\", %u)\n", lpszPath, lpszWindow, lHash);
-    hlpfile = WINHELP_LookupHelpFile(lpszPath);
+    if (!lpszPath || !lpszPath[0])
+        hlpfile = MACRO_CurrentWindow()->page->file;
+    else
+        hlpfile = WINHELP_LookupHelpFile(lpszPath);
     WINHELP_OpenHelpWindow(HLPFILE_PageByHash, hlpfile, lHash,
                            WINHELP_GetWindowInfo(hlpfile, lpszWindow),
                            SW_NORMAL);
