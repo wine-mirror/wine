@@ -93,6 +93,8 @@ struct d3d10_effect
     DWORD version;
     DWORD localbuffers_count;
     DWORD localobjects_count;
+    DWORD sharedbuffers_count;
+    DWORD sharedobjects_count;
     DWORD technique_count;
     DWORD index_offset;
     DWORD dephstencilstate_count;
