@@ -911,7 +911,7 @@ static struct MacroDesc MACRO_Builtins[] = {
     {"MPrintHash",          NULL, 0, "U",      (FARPROC)MACRO_MPrintHash},
     {"MPrintID",            NULL, 0, "S",      (FARPROC)MACRO_MPrintID},
     {"Next",                NULL, 0, "",       (FARPROC)MACRO_Next},
-    {"NoShow",              NULL, 0, "",       (FARPROC)MACRO_NoShow},
+    {"NoShow",              "NS", 0, "",       (FARPROC)MACRO_NoShow},
     {"PopupContext",        "PC", 0, "SU",     (FARPROC)MACRO_PopupContext},
     {"PopupHash",           NULL, 0, "SU",     (FARPROC)MACRO_PopupHash},
     {"PopupId",             "PI", 0, "SS",     (FARPROC)MACRO_PopupId},
