@@ -482,6 +482,21 @@ static strarray *get_winebuild_args(struct options *opts)
     return spec_args;
 }
 
+static const char* compile_resources_to_object(struct options* opts, const strarray *resources,
+                                               const char *res_o_name)
+{
+    strarray *winebuild_args = get_winebuild_args( opts );
+
+    strarray_add( winebuild_args, "--resources" );
+    strarray_add( winebuild_args, "-o" );
+    strarray_add( winebuild_args, res_o_name );
+    strarray_addall( winebuild_args, resources );
+
+    spawn( opts->prefix, winebuild_args, 0 );
+    strarray_free( winebuild_args );
+    return res_o_name;
+}
+
 /* check if there is a static lib associated to a given dll */
 static char *find_static_lib( const char *dll )
 {
@@ -633,6 +648,9 @@ static void build(struct options* opts)
 
     if (opts->target_platform == PLATFORM_WINDOWS)
     {
+        strarray *resources = strarray_alloc();
+        char *res_o_name = NULL;
+
         if (opts->shared)
         {
             /* run winebuild to generate the .def file */
@@ -717,10 +735,21 @@ static void build(struct options* opts)
                 }
                 strarray_add(link_args, name);
                 break;
+            case 'r':
+                if (!res_o_name)
+                {
+                    res_o_name = get_temp_file( output_name, ".res.o" );
+                    strarray_add( link_args, res_o_name );
+                }
+                strarray_add( resources, name );
+                break;
             }
         }
 
+        if (res_o_name) compile_resources_to_object( opts, resources, res_o_name );
+
         spawn(opts->prefix, link_args, 0);
+        strarray_free (resources);
         strarray_free (link_args);
         return;
     }
