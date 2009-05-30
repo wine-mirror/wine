@@ -285,7 +285,7 @@ BOOL MACRO_ExecuteMacro(WINHELP_WINDOW* window, LPCSTR macro)
 
     memset(lex_data, 0, sizeof(*lex_data));
     lex_data->macroptr = macro;
-    lex_data->window = window;
+    lex_data->window = WINHELP_GrabWindow(window);
 
     while ((t = yylex()) != EMPTY)
     {
@@ -316,6 +316,7 @@ done:
     for (t = 0; t < lex_data->cache_used; t++)
         HeapFree(GetProcessHeap(), 0, lex_data->cache_string[t]);
     lex_data = prev_lex_data;
+    WINHELP_ReleaseWindow(window);
 
     return ret;
 }

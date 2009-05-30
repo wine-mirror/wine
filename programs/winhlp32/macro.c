@@ -281,7 +281,7 @@ static void CALLBACK MACRO_CloseSecondarys(void)
     WINE_TRACE("()\n");
     for (win = Globals.win_list; win; win = win->next)
         if (lstrcmpi(win->info->name, "main"))
-            DestroyWindow(win->hMainWnd);
+            WINHELP_ReleaseWindow(win);
 }
 
 static void CALLBACK MACRO_CloseWindow(LPCSTR lpszWindow)
@@ -294,7 +294,7 @@ static void CALLBACK MACRO_CloseWindow(LPCSTR lpszWindow)
 
     for (win = Globals.win_list; win; win = win->next)
         if (!lstrcmpi(win->info->name, lpszWindow))
-            DestroyWindow(win->hMainWnd);
+            WINHELP_ReleaseWindow(win);
 }
 
 static void CALLBACK MACRO_Compare(LPCSTR str)
@@ -367,7 +367,7 @@ void CALLBACK MACRO_Exit(void)
     WINE_TRACE("()\n");
 
     while (Globals.win_list)
-        DestroyWindow(Globals.win_list->hMainWnd);
+        WINHELP_ReleaseWindow(Globals.win_list);
 }
 
 static void CALLBACK MACRO_ExtAbleItem(LPCSTR str, LONG u)
