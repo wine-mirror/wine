@@ -604,7 +604,6 @@ static void wave_out_test_deviceOut(int device, double duration,
     DWORD nSamplesPerSec = pwfx->nSamplesPerSec;
     BOOL has_volume = pcaps->dwSupport & WAVECAPS_VOLUME ? TRUE : FALSE;
     double paused = 0.0;
-    DWORD actual;
     DWORD_PTR callback = 0;
     DWORD_PTR callback_instance = 0;
     HANDLE thread = 0;
@@ -724,7 +723,7 @@ static void wave_out_test_deviceOut(int device, double duration,
     }
 
     if (interactive && rc==MMSYSERR_NOERROR) {
-        DWORD start,end;
+        DWORD start;
         trace("Playing %g second %s at %5dx%2dx%d %2d header%s %d loop%s %d bytes %s %s\n",duration,
               sine ? "440Hz tone" : "silence",pwfx->nSamplesPerSec,
               pwfx->wBitsPerSample,pwfx->nChannels, headers, headers > 1 ? "s": " ",
@@ -791,13 +790,6 @@ static void wave_out_test_deviceOut(int device, double duration,
             }
         }
 
-        /* Check the sound duration was at least 90% of the expected value */
-        end=GetTickCount();
-        actual = end - start;
-        trace("sound duration=%u ms\n",actual);
-        ok(actual > 900 * (duration+paused),
-           "The sound played for %u ms instead of %g ms\n",
-           actual,1000*(duration+paused));
         for (i = 0; i < headers; i++) {
             ok(frags[i].dwFlags==(WHDR_DONE|WHDR_PREPARED),
                "WHDR_DONE WHDR_PREPARED expected, got %s\n",
