@@ -293,13 +293,15 @@ BOOL MACRO_ExecuteMacro(LPCSTR macro)
             break;
         default:
             WINE_WARN("got unexpected type %s\n", ts(t));
-            return 0;
+            YY_FLUSH_BUFFER;
+            ret = FALSE;
+            goto done;
         }
         switch (t = yylex())
         {
         case EMPTY:     goto done;
         case ';':       break;
-        default:        ret = FALSE; goto done;
+        default:        ret = FALSE; YY_FLUSH_BUFFER; goto done;
         }
     }
 
