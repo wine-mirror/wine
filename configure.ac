@@ -679,11 +679,11 @@ if test "$cross_compiling" = "no" -a "$LIBEXT" != "dll"
 then
     WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
     WINE_CHECK_MINGW_PROG(DLLTOOL,dlltool,false)
-    WINE_CHECK_MINGW_PROG(CROSSWINDRES,windres,false)
     WINE_CHECK_MINGW_PROG(MINGWAR,ar,false)
     if test "$CROSSCC" != "false"
     then
         AC_SUBST(CROSSTEST,"\$(CROSSTEST)")
+        AC_SUBST(CROSSTARGETFLAGS,"-b `expr $CROSSCC : '\(.*\)-gcc'`")
     fi
 fi
 
