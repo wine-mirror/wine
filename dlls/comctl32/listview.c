@@ -2045,7 +2045,11 @@ static void LISTVIEW_GetItemMetrics(const LISTVIEW_INFO *infoPtr, const LVITEMW 
 	    Icon.left   = Box.left + state_width;
 
 	    if (uView == LVS_REPORT && lpLVItem->iSubItem == 0)
-		Icon.left += REPORT_MARGINX;
+	    {
+		/* we need the indent in report mode */
+		assert(lpLVItem->mask & LVIF_INDENT);
+		Icon.left += infoPtr->iconSize.cx * lpLVItem->iIndent + REPORT_MARGINX;
+	    }
 
 	    Icon.top    = Box.top;
 	    Icon.right  = Icon.left;
@@ -2164,16 +2168,10 @@ calc_label:
     {
 	if (uView == LVS_REPORT)
 	{
-	    SelectBox.left = Icon.right; /* FIXME: should be Icon.left */
+	    SelectBox.left = Icon.left;
 	    SelectBox.top = Box.top;
 	    SelectBox.bottom = Box.bottom;
-	    if (lpLVItem->iSubItem == 0)
-	    {
-		/* we need the indent in report mode */
-		assert(lpLVItem->mask & LVIF_INDENT);
-		SelectBox.left += infoPtr->iconSize.cx * lpLVItem->iIndent;
-	    }
-	    SelectBox.right = min(SelectBox.left + labelSize.cx, Label.right);
+	    SelectBox.right = min(Label.left + labelSize.cx, Label.right);
 	}
 	else
 	{

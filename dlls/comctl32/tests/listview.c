@@ -2741,6 +2741,92 @@ static void test_getitemrect(void)
     expect(18, rect.left);
     expect(50, rect.right);
 
+    r = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)NULL);
+    ok(r != 0, "should return current list handle\n");
+
+    r = SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)himl);
+    ok(r == 0, "should return zero\n");
+
+    item.mask = LVIF_STATE | LVIF_IMAGE;
+    item.iImage = 1;
+    item.state = 0;
+    item.stateMask = ~0;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_SETITEM, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    /* icon bounds */
+    rect.left = LVIR_ICON;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding, icon width */
+    expect(2, rect.left);
+    expect(18, rect.right);
+    /* label bounds */
+    rect.left = LVIR_LABEL;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding + icon width -> column width */
+    expect(18, rect.left);
+    expect(50, rect.right);
+
+    /* select bounds */
+    rect.left = LVIR_SELECTBOUNDS;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding, column width */
+    expect(2, rect.left);
+    todo_wine expect(50, rect.right);
+
+    /* try with indentation */
+    item.mask = LVIF_INDENT;
+    item.iIndent = 1;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_SETITEM, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    /* bounds */
+    rect.left = LVIR_BOUNDS;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding + 1 icon width, column width */
+    expect(0, rect.left);
+    expect(150, rect.right);
+
+    /* select bounds */
+    rect.left = LVIR_SELECTBOUNDS;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding + 1 icon width, column width */
+    expect(2 + 16, rect.left);
+    todo_wine expect(50, rect.right);
+
+    /* label bounds */
+    rect.left = LVIR_LABEL;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding + 2 icon widths, column width */
+    expect(2 + 16*2, rect.left);
+    expect(50, rect.right);
+
+    /* icon bounds */
+    rect.left = LVIR_ICON;
+    rect.right = rect.top = rect.bottom = -1;
+    r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
+    expect(TRUE, r);
+    /* padding + 1 icon width indentation, icon width */
+    expect(2 + 16, rect.left);
+    expect(34, rect.right);
+
+
     DestroyWindow(hwnd);
 }
 
