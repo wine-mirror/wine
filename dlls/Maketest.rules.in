@@ -38,7 +38,7 @@ $(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
 # Rules for .exe main module
 
 $(MODULE): $(OBJS) $(RCOBJS) Makefile.in
-	$(CC) $(APPMODE) $(OBJS) $(RCOBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-L$(DLLDIR)/%) $(ALL_LIBS)
+	$(WINEGCC) $(APPMODE) $(OBJS) $(RCOBJS) -o $@ $(LIBPORT) $(ALL_LIBS)
 
 # Rules for building test list
 

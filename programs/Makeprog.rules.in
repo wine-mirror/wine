@@ -11,7 +11,7 @@
 
 DLLFLAGS    = @DLLFLAGS@
 DEFS        = $(EXTRADEFS)
-ALL_LIBS    = $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
+ALL_LIBS    = $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(EXTRALIBS) -lwine $(LIBPORT) $(LDFLAGS) $(LIBS)
 RUNTESTFLAGS= -q -P wine -T $(TOPOBJDIR)
 INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
@@ -27,7 +27,7 @@ $(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
 # Rules for .exe main module
 
 $(MODULE): $(OBJS) $(RCOBJS) Makefile.in
-	$(CC) $(APPMODE) $(OBJS) $(RCOBJS) -o $@ -L$(DLLDIR) $(IMPORTS:%=-L$(DLLDIR)/%) $(DELAYIMPORTS:%=-L$(DLLDIR)/%) $(LIBWINE) $(ALL_LIBS)
+	$(WINEGCC) $(APPMODE) $(OBJS) $(RCOBJS) -o $@ $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
 
 # Rules for testing
 

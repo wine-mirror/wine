@@ -35,8 +35,8 @@ $(MODULE).so: $(MAINSPEC) $(ALL_OBJS) Makefile.in
 
 # Rules for .dll files
 
-$(MODULE): $(RCOBJS) $(OBJS) $(SPEC_DEF) Makefile.in
-	$(DLLWRAP) -k --def $(SPEC_DEF) -o $@ $(RCOBJS) $(OBJS) $(DLL_LDPATH) $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(LIBWINE) $(ALL_LIBS)
+$(MODULE): $(MAINSPEC) $(RCOBJS) $(OBJS) Makefile.in
+	$(WINEGCC) -shared $(SRCDIR)/$(MAINSPEC) $(OBJS) $(RCOBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for import libraries
 

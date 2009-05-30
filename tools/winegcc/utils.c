@@ -258,36 +258,38 @@ static char* try_lib_path(const char* dir, const char* pre,
     return 0; 
 }
 
-static file_type guess_lib_type(const char* dir, const char* library, char** file)
+static file_type guess_lib_type(enum target_platform platform, const char* dir,
+                                const char* library, char** file)
 {
-    /* Unix shared object */
-    if ((*file = try_lib_path(dir, "lib", library, ".so", file_so)))
-	return file_so;
-	
-    /* Mach-O (Darwin/Mac OS X) Dynamic Library behaves mostly like .so */
-    if ((*file = try_lib_path(dir, "lib", library, ".dylib", file_so)))
-	return file_so;
+    if (platform != PLATFORM_WINDOWS)
+    {
+        /* Unix shared object */
+        if ((*file = try_lib_path(dir, "lib", library, ".so", file_so)))
+            return file_so;
 
-    /* Windows DLL */
-    if ((*file = try_lib_path(dir, "lib", library, ".def", file_def)))
-	return file_dll;
-    if ((*file = try_lib_path(dir, "", library, ".def", file_def)))
-	return file_dll;
+        /* Mach-O (Darwin/Mac OS X) Dynamic Library behaves mostly like .so */
+        if ((*file = try_lib_path(dir, "lib", library, ".dylib", file_so)))
+            return file_so;
 
-    /* Unix static archives */
+        /* Windows DLL */
+        if ((*file = try_lib_path(dir, "lib", library, ".def", file_def)))
+            return file_dll;
+    }
+
+    /* static archives */
     if ((*file = try_lib_path(dir, "lib", library, ".a", file_arh)))
 	return file_arh;
 
     return file_na;
 }
 
-file_type get_lib_type(strarray* path, const char* library, char** file)
+file_type get_lib_type(enum target_platform platform, strarray* path, const char* library, char** file)
 {
     unsigned int i;
 
     for (i = 0; i < path->size; i++)
     {
-        file_type type = guess_lib_type(path->base[i], library, file);
+        file_type type = guess_lib_type(platform, path->base[i], library, file);
 	if (type != file_na) return type;
     }
     return file_na;
