@@ -280,7 +280,7 @@ static void CALLBACK MACRO_CloseSecondarys(void)
 
     WINE_TRACE("()\n");
     for (win = Globals.win_list; win; win = win->next)
-        if (win->lpszName && lstrcmpi(win->lpszName, "main"))
+        if (lstrcmpi(win->info->name, "main"))
             DestroyWindow(win->hMainWnd);
 }
 
@@ -293,7 +293,7 @@ static void CALLBACK MACRO_CloseWindow(LPCSTR lpszWindow)
     if (!lpszWindow || !lpszWindow[0]) lpszWindow = "main";
 
     for (win = Globals.win_list; win; win = win->next)
-        if (win->lpszName && !lstrcmpi(win->lpszName, lpszWindow))
+        if (!lstrcmpi(win->info->name, lpszWindow))
             DestroyWindow(win->hMainWnd);
 }
 
@@ -430,7 +430,7 @@ static void CALLBACK MACRO_FocusWindow(LPCSTR lpszWindow)
     if (!lpszWindow || !lpszWindow[0]) lpszWindow = "main";
 
     for (win = Globals.win_list; win; win = win->next)
-        if (win->lpszName && !lstrcmpi(win->lpszName, lpszWindow))
+        if (!lstrcmpi(win->info->name, lpszWindow))
             SetFocus(win->hMainWnd);
 }
 

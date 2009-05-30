@@ -257,7 +257,7 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
     unsigned int     i;
 
     if (!name || !name[0])
-        name = Globals.active_win->lpszName;
+        name = Globals.active_win->info->name;
 
     if (hlpfile)
         for (i = 0; i < hlpfile->numWindows; i++)
@@ -645,7 +645,6 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
 {
     WINHELP_WINDOW*     win = NULL;
     BOOL                bPrimary, bPopup, bReUsed = FALSE;
-    LPSTR               name;
     HICON               hIcon;
     HWND                hTextWnd = NULL;
 
@@ -656,7 +655,7 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     {
         for (win = Globals.win_list; win; win = win->next)
         {
-            if (!lstrcmpi(win->lpszName, wpage->wininfo->name))
+            if (!lstrcmpi(win->info->name, wpage->wininfo->name))
             {
                 POINT   pt = {0, 0};
                 SIZE    sz = {0, 0};
@@ -699,15 +698,11 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     if (!win)
     {
         /* Initialize WINHELP_WINDOW struct */
-        win = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        sizeof(WINHELP_WINDOW) + strlen(wpage->wininfo->name) + 1);
+        win = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINHELP_WINDOW));
         if (!win) return FALSE;
         win->next = Globals.win_list;
         Globals.win_list = win;
 
-        name = (char*)win + sizeof(WINHELP_WINDOW);
-        lstrcpy(name, wpage->wininfo->name);
-        win->lpszName = name;
         win->hHandCur = LoadCursorW(0, (LPWSTR)IDC_HAND);
         win->back.index = 0;
         win->font_scale = 1;
@@ -1496,7 +1491,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
         {
             BOOL bExit;
             win = (WINHELP_WINDOW*) GetWindowLongPtr(hWnd, 0);
-            bExit = (Globals.wVersion >= 4 && !lstrcmpi(win->lpszName, "main"));
+            bExit = (Globals.wVersion >= 4 && !lstrcmpi(win->info->name, "main"));
             WINHELP_DeleteWindow(win);
 
             if (bExit) MACRO_Exit();

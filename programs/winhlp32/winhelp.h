@@ -71,8 +71,6 @@ typedef struct tagPageSet
 
 typedef struct tagWinHelp
 {
-    LPCSTR              lpszName;
-
     WINHELP_BUTTON*     first_button;
     HLPFILE_PAGE*       page;
 
