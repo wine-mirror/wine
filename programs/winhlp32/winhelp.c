@@ -261,7 +261,7 @@ HLPFILE_WINDOWINFO*     WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name)
 
     if (hlpfile)
         for (i = 0; i < hlpfile->numWindows; i++)
-            if (!strcmp(hlpfile->windows[i].name, name))
+            if (!lstrcmpi(hlpfile->windows[i].name, name))
                 return &hlpfile->windows[i];
 
     if (strcmp(name, "main") != 0)
