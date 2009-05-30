@@ -87,13 +87,11 @@ static inline struct tgt_process_minidump_data* private_data(struct dbg_process*
 static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr, 
                                              void* buffer, SIZE_T len, SIZE_T* rlen)
 {
-    ULONG               size;
-    MINIDUMP_DIRECTORY* dir;
     void*               stream;
 
     if (!private_data(dbg_curr_process)->mapping) return FALSE;
     if (MiniDumpReadDumpStream(private_data(dbg_curr_process)->mapping,
-                               MemoryListStream, &dir, &stream, &size))
+                               MemoryListStream, NULL, &stream, NULL))
     {
         MINIDUMP_MEMORY_LIST*   mml = stream;
         MINIDUMP_MEMORY_DESCRIPTOR* mmd = &mml->MemoryRanges[0];
@@ -141,12 +139,10 @@ static BOOL CALLBACK validate_file(PCWSTR name, void* user)
 static BOOL is_pe_module_embedded(struct tgt_process_minidump_data* data,
                                   MINIDUMP_MODULE* pe_mm)
 {
-    ULONG                       size;
-    MINIDUMP_DIRECTORY*         dir;
     MINIDUMP_MODULE_LIST*       mml;
 
-    if (MiniDumpReadDumpStream(data->mapping, Wine_ElfModuleListStream, &dir,
-                               (void**)&mml, &size))
+    if (MiniDumpReadDumpStream(data->mapping, Wine_ElfModuleListStream, NULL,
+                               (void**)&mml, NULL))
     {
         MINIDUMP_MODULE*        mm;
         unsigned                i;
@@ -163,8 +159,6 @@ static BOOL is_pe_module_embedded(struct tgt_process_minidump_data* data,
 
 static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 {
-    ULONG                       size;
-    MINIDUMP_DIRECTORY*         dir;
     void*                       stream;
     DWORD                       pid = 1; /* by default */
     HANDLE                      hProc = (HANDLE)0x900DBAAD;
@@ -178,7 +172,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     static WCHAR                default_exec_name[] = {'<','m','i','n','i','d','u','m','p','-','e','x','e','c','>',0};
 
     /* fetch PID */
-    if (MiniDumpReadDumpStream(data->mapping, MiscInfoStream, &dir, &stream, &size))
+    if (MiniDumpReadDumpStream(data->mapping, MiscInfoStream, NULL, &stream, NULL))
     {
         MINIDUMP_MISC_INFO* mmi = stream;
         if (mmi->Flags1 & MINIDUMP_MISC1_PROCESS_ID)
@@ -187,7 +181,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 
     /* fetch executable name (it's normally the first one in module list) */
     lstrcpyW(exec_name, default_exec_name);
-    if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, &dir, &stream, &size))
+    if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, NULL, &stream, NULL))
     {
         mml = stream;
         if (mml->NumberOfModules)
@@ -210,7 +204,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         }
     }
 
-    if (MiniDumpReadDumpStream(data->mapping, SystemInfoStream, &dir, &stream, &size))
+    if (MiniDumpReadDumpStream(data->mapping, SystemInfoStream, NULL, &stream, NULL))
     {
         MINIDUMP_SYSTEM_INFO*   msi = stream;
         const char *str;
@@ -306,7 +300,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 
     dbg_init(hProc, NULL, FALSE);
 
-    if (MiniDumpReadDumpStream(data->mapping, ThreadListStream, &dir, &stream, &size))
+    if (MiniDumpReadDumpStream(data->mapping, ThreadListStream, NULL, &stream, NULL))
     {
         MINIDUMP_THREAD_LIST*   mtl = stream;
         ULONG                   i;
@@ -318,8 +312,8 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         }
     }
     /* first load ELF modules, then do the PE ones */
-    if (MiniDumpReadDumpStream(data->mapping, Wine_ElfModuleListStream, &dir,
-                               &stream, &size))
+    if (MiniDumpReadDumpStream(data->mapping, Wine_ElfModuleListStream, NULL,
+                               &stream, NULL))
     {
         WCHAR   buffer[MAX_PATH];
 
@@ -338,7 +332,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
                                  mm->SizeOfImage, NULL, SLMFLAG_VIRTUAL);
         }
     }
-    if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, &dir, &stream, &size))
+    if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, NULL, &stream, NULL))
     {
         WCHAR   buffer[MAX_PATH];
 
@@ -360,7 +354,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
                                  mm->SizeOfImage, NULL, SLMFLAG_VIRTUAL);
         }
     }
-    if (MiniDumpReadDumpStream(data->mapping, ExceptionStream, &dir, &stream, &size))
+    if (MiniDumpReadDumpStream(data->mapping, ExceptionStream, NULL, &stream, NULL))
     {
         MINIDUMP_EXCEPTION_STREAM*      mes = stream;
 
