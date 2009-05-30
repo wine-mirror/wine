@@ -44,9 +44,6 @@ WINDRES   = @WINDRES@
 LN        = @LN@
 LN_S      = @LN_S@
 TOOLSDIR  = @TOOLSDIR@
-AS        = @AS@
-LD        = @LD@
-NM        = @NM@
 LDFLAGS   = @LDFLAGS@
 PRELINK   = @PRELINK@
 RM        = rm -f
@@ -142,9 +139,6 @@ filter: dummy
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
-
-.s.o:
-	$(AS) -o $@ $<
 
 .y.tab.c:
 	$(BISON) $(BISONFLAGS) -p $*_ -o $@ $<

@@ -4,12 +4,9 @@ DEFS = \
 	-DLIBDIR="\"$(libdir)\"" \
 	-DDLLFLAGS="\"@DLLFLAGS@\"" \
 	-DLDDLLFLAGS="\"@LDDLLFLAGS@\"" \
-	-DAS="\"$(AS)\"" \
 	-DCC="\"$(CC)\"" \
 	-DCPP="\"@CPPBIN@\"" \
 	-DCXX="\"@CXX@\"" \
-	-DLD="\"$(LD)\"" \
-	-DNM="\"$(NM)\"" \
 	-DPRELINK="\"$(PRELINK)\""
 
 TOPSRCDIR = @top_srcdir@

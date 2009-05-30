@@ -199,9 +199,6 @@ then
   AC_MSG_ERROR([no suitable bison found. Please install the 'bison' package.])
 fi
 
-AC_CHECK_TOOLS(AS,[gas as],as)
-AC_CHECK_TOOLS(LD,[ld gld],ld)
-AC_CHECK_TOOLS(NM,[nm gnm],nm)
 AC_CHECK_TOOLS(AR,[ar gar],ar)
 AC_SUBST(ARFLAGS,rc)
 AC_PROG_RANLIB

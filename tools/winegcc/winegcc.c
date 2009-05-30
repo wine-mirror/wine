@@ -294,6 +294,7 @@ static const strarray* get_translator(struct options *opts)
         else str = CPP;
         break;
     case proc_cc:
+    case proc_as:
         if (opts->target) str = strmake( "%s-gcc", opts->target );
         else str = CC;
         break;
@@ -301,21 +302,12 @@ static const strarray* get_translator(struct options *opts)
         if (opts->target) str = strmake( "%s-g++", opts->target );
         else str = CXX;
         break;
-    case proc_as:
-        if (opts->target) str = strmake( "%s-as", opts->target );
-        else str = AS;
-        break;
     default:
         assert(0);
     }
     ret = strarray_fromstring( str, " " );
     if (opts->force_pointer_size)
-    {
-        if (opts->processor == proc_as)
-            strarray_add( ret, strmake("--%u", 8 * opts->force_pointer_size ));
-        else
-            strarray_add( ret, strmake("-m%u", 8 * opts->force_pointer_size ));
-    }
+        strarray_add( ret, strmake("-m%u", 8 * opts->force_pointer_size ));
     return ret;
 }
 
