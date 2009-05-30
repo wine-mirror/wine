@@ -25,12 +25,17 @@
 %{
 #include "config.h"
 #include <assert.h>
+#include <stdarg.h>
 
 #ifndef HAVE_UNISTD_H
 #define YY_NO_UNISTD_H
 #endif
 
-#include "macro.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winhelp.h"
 
 #include "wine/debug.h"
 
@@ -43,6 +48,7 @@ struct lex_data {
     unsigned quote_stk_idx;
     LPSTR    cache_string[32];
     int      cache_used;
+    WINHELP_WINDOW* window;
 };
 static struct lex_data* lex_data = NULL;
 
@@ -266,7 +272,7 @@ static int MACRO_CallVoidFunc(FARPROC fn, const char* args)
     return 1;
 }
 
-BOOL MACRO_ExecuteMacro(LPCSTR macro)
+BOOL MACRO_ExecuteMacro(WINHELP_WINDOW* window, LPCSTR macro)
 {
     struct lex_data     curr_lex_data, *prev_lex_data;
     BOOL ret = TRUE;
@@ -279,6 +285,7 @@ BOOL MACRO_ExecuteMacro(LPCSTR macro)
 
     memset(lex_data, 0, sizeof(*lex_data));
     lex_data->macroptr = macro;
+    lex_data->window = window;
 
     while ((t = yylex()) != EMPTY)
     {
@@ -311,6 +318,11 @@ done:
     lex_data = prev_lex_data;
 
     return ret;
+}
+
+WINHELP_WINDOW* MACRO_CurrentWindow(void)
+{
+    return lex_data ? lex_data->window : Globals.active_win;
 }
 
 #ifndef yywrap

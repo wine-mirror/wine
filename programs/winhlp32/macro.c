@@ -473,12 +473,13 @@ void CALLBACK MACRO_History(void)
 
 static void CALLBACK MACRO_IfThen(BOOL b, LPCSTR t)
 {
-    if (b) MACRO_ExecuteMacro(t);
+    if (b) MACRO_ExecuteMacro(MACRO_CurrentWindow(), t);
 }
 
 static void CALLBACK MACRO_IfThenElse(BOOL b, LPCSTR t, LPCSTR f)
 {
-    if (b) MACRO_ExecuteMacro(t); else MACRO_ExecuteMacro(f);
+    if (b) MACRO_ExecuteMacro(MACRO_CurrentWindow(), t);
+    else MACRO_ExecuteMacro(MACRO_CurrentWindow(), f);
 }
 
 static BOOL CALLBACK MACRO_InitMPrint(void)

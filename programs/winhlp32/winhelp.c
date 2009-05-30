@@ -772,10 +772,10 @@ BOOL WINHELP_CreateHelpWindow(WINHELP_WNDPAGE* wpage, int nCmdShow, BOOL remembe
     {
         HLPFILE_MACRO  *macro;
         for (macro = wpage->page->file->first_macro; macro; macro = macro->next)
-            MACRO_ExecuteMacro(macro->lpszMacro);
+            MACRO_ExecuteMacro(win, macro->lpszMacro);
 
         for (macro = wpage->page->first_macro; macro; macro = macro->next)
-            MACRO_ExecuteMacro(macro->lpszMacro);
+            MACRO_ExecuteMacro(win, macro->lpszMacro);
     }
 
     if (bPopup)
@@ -870,7 +870,7 @@ static BOOL WINHELP_HandleTextMouse(WINHELP_WINDOW* win, UINT msg, LPARAM lParam
                                            SW_NORMAL);
                 break;
             case hlp_link_macro:
-                MACRO_ExecuteMacro(link->string);
+                MACRO_ExecuteMacro(win, link->string);
                 break;
             default:
                 WINE_FIXME("Unknown link cookie %d\n", link->cookie);
@@ -1368,7 +1368,7 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             for (button = win->first_button; button; button = button->next)
                 if (wParam == button->wParam) break;
             if (button)
-                MACRO_ExecuteMacro(button->lpszMacro);
+                MACRO_ExecuteMacro(win, button->lpszMacro);
             else if (!HIWORD(wParam))
                 MessageBox(0, MAKEINTRESOURCE(STID_NOT_IMPLEMENTED),
                            MAKEINTRESOURCE(STID_WHERROR), MB_OK);
