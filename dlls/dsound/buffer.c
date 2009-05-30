@@ -82,8 +82,8 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface)
     TRACE("(%p) ref was %d\n", This, ref + 1);
 
     if (!ref) {
-        IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)This->dsb);
         This->dsb->notify = NULL;
+        IDirectSoundBuffer_Release((LPDIRECTSOUNDBUFFER)This->dsb);
         HeapFree(GetProcessHeap(), 0, This);
         TRACE("(%p) released\n", This);
     }
