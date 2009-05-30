@@ -319,6 +319,27 @@ const char *get_nm_command(void)
     return nm_command;
 }
 
+const char *get_windres_command(void)
+{
+    static char *windres_command;
+
+    if (!windres_command)
+    {
+        if (target_alias)
+        {
+            windres_command = xmalloc( strlen(target_alias) + sizeof("-windres") );
+            strcpy( windres_command, target_alias );
+            strcat( windres_command, "-windres" );
+        }
+        else
+        {
+            static const char * const commands[] = { "windres", NULL };
+            if (!(windres_command = find_tool( commands ))) windres_command = xstrdup("windres");
+        }
+    }
+    return windres_command;
+}
+
 /* get a name for a temp file, automatically cleaned up on exit */
 char *get_temp_file_name( const char *prefix, const char *suffix )
 {

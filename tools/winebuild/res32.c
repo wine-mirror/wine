@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,6 +56,7 @@ struct resource
     struct string_id name;
     const void      *data;
     unsigned int     data_size;
+    unsigned short   mem_options;
     unsigned short   lang;
 };
 
@@ -88,6 +90,9 @@ static int byte_swapped;  /* whether the current resource file is byte-swapped *
 static const unsigned char *file_pos;   /* current position in resource file */
 static const unsigned char *file_end;   /* end of resource file */
 static const char *file_name;  /* current resource file name */
+
+static unsigned char *file_out_pos;   /* current position in output resource file */
+static unsigned char *file_out_end;   /* end of output buffer */
 
 /* size of a resource directory with n entries */
 #define RESOURCE_DIR_SIZE        (4 * sizeof(unsigned int))
@@ -178,6 +183,41 @@ static void get_string( struct string_id *str )
     }
 }
 
+/* put a word into the resource file */
+static void put_word( unsigned short val )
+{
+    if (byte_swapped) val = (val << 8) | (val >> 8);
+    *(unsigned short *)file_out_pos = val;
+    file_out_pos += sizeof(unsigned short);
+    assert( file_out_pos <= file_out_end );
+}
+
+/* put a dword into the resource file */
+static void put_dword( unsigned int val )
+{
+    if (byte_swapped)
+        val = ((val << 24) | ((val << 8) & 0x00ff0000) | ((val >> 8) & 0x0000ff00) | (val >> 24));
+    *(unsigned int *)file_out_pos = val;
+    file_out_pos += sizeof(unsigned int);
+    assert( file_out_pos <= file_out_end );
+}
+
+/* put a string into the resource file */
+static void put_string( const struct string_id *str )
+{
+    if (str->str)
+    {
+        const WCHAR *p = str->str;
+        while (*p) put_word( *p++ );
+        put_word( 0 );
+    }
+    else
+    {
+        put_word( 0xffff );
+        put_word( str->id );
+    }
+}
+
 /* check the file header */
 /* all values must be zero except header size */
 static int check_header(void)
@@ -204,7 +244,7 @@ static void load_next_resource( DLLSPEC *spec )
     unsigned int hdr_size;
     struct resource *res = add_resource( spec );
 
-    res->data_size = (get_dword() + 3) & ~3;
+    res->data_size = get_dword();
     hdr_size = get_dword();
     if (hdr_size & 3) fatal_error( "%s header size not aligned\n", file_name );
 
@@ -213,12 +253,12 @@ static void load_next_resource( DLLSPEC *spec )
     get_string( &res->name );
     if ((unsigned long)file_pos & 2) get_word();  /* align to dword boundary */
     get_dword();                        /* skip data version */
-    get_word();                         /* skip mem options */
+    res->mem_options = get_word();
     res->lang = get_word();
     get_dword();                        /* skip version */
     get_dword();                        /* skip characteristics */
 
-    file_pos = (const unsigned char *)res->data + res->data_size;
+    file_pos = (const unsigned char *)res->data + ((res->data_size + 3) & ~3);
     if (file_pos > file_end) fatal_error( "%s is a truncated file\n", file_name );
 }
 
@@ -441,7 +481,7 @@ void output_resources( DLLSPEC *spec )
 
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
         output( "\t.long .L__wine_spec_res_%d-.L__wine_spec_rva_base,%u,0,0\n",
-                 i, res->data_size );
+                i, (res->data_size + 3) & ~3 );
 
     /* dump the name strings */
 
@@ -458,10 +498,98 @@ void output_resources( DLLSPEC *spec )
     {
         output( "\n\t.align %d\n", get_alignment(get_ptr_size()) );
         output( ".L__wine_spec_res_%d:\n", i );
-        dump_bytes( res->data, res->data_size );
+        dump_bytes( res->data, (res->data_size + 3) & ~3 );
     }
     output( ".L__wine_spec_resources_end:\n" );
     output( "\t.byte 0\n" );
 
     free_resource_tree( tree );
+}
+
+static unsigned int get_resource_header_size( const struct resource *res )
+{
+    unsigned int size  = 5 * sizeof(unsigned int) + 2 * sizeof(unsigned short);
+
+    if (!res->type.str) size += 2 * sizeof(unsigned short);
+    else size += (strlenW(res->type.str) + 1) * sizeof(WCHAR);
+
+    if (!res->name.str) size += 2 * sizeof(unsigned short);
+    else size += (strlenW(res->name.str) + 1) * sizeof(WCHAR);
+
+    return size;
+}
+
+/* output the resources into a .o file */
+void output_res_o_file( DLLSPEC *spec )
+{
+    unsigned int i, total_size;
+    unsigned char *data;
+    char *res_file, *cmd;
+    const char *prog;
+    int fd, err;
+
+    if (!spec->nb_resources) fatal_error( "--resources mode needs at least one resource file as input\n" );
+    if (!output_file_name) fatal_error( "No output file name specified\n" );
+
+    total_size = 32;  /* header */
+
+    for (i = 0; i < spec->nb_resources; i++)
+    {
+        total_size += (get_resource_header_size( &spec->resources[i] ) + 3) & ~3;
+        total_size += (spec->resources[i].data_size + 3) & ~3;
+    }
+    data = xmalloc( total_size );
+
+    byte_swapped = 0;
+    file_out_pos = data;
+    file_out_end = data + total_size;
+
+    put_dword( 0 );      /* ResSize */
+    put_dword( 32 );     /* HeaderSize */
+    put_word( 0xffff );  /* ResType */
+    put_word( 0x0000 );
+    put_word( 0xffff );  /* ResName */
+    put_word( 0x0000 );
+    put_dword( 0 );      /* DataVersion */
+    put_word( 0 );       /* Memory options */
+    put_word( 0 );       /* Language */
+    put_dword( 0 );      /* Version */
+    put_dword( 0 );      /* Characteristics */
+
+    for (i = 0; i < spec->nb_resources; i++)
+    {
+        unsigned int header_size = get_resource_header_size( &spec->resources[i] );
+
+        put_dword( spec->resources[i].data_size );
+        put_dword( header_size );
+        put_string( &spec->resources[i].type );
+        put_string( &spec->resources[i].name );
+        if ((unsigned long)file_out_pos & 2) put_word( 0 );
+        put_dword( 0 );
+        put_word( spec->resources[i].mem_options );
+        put_word( spec->resources[i].lang );
+        put_dword( 0 );
+        put_dword( 0 );
+        memcpy( file_out_pos, spec->resources[i].data, spec->resources[i].data_size );
+        file_out_pos += spec->resources[i].data_size;
+        while ((unsigned long)file_out_pos & 3) *file_out_pos++ = 0;
+    }
+    assert( file_out_pos == file_out_end );
+
+    res_file = get_temp_file_name( output_file_name, ".res" );
+    if ((fd = open( res_file, O_WRONLY|O_CREAT|O_TRUNC, 0600 )) == -1)
+        fatal_error( "Cannot create %s\n", res_file );
+    if (write( fd, data, total_size ) != total_size)
+        fatal_error( "Error writing to %s\n", res_file );
+    close( fd );
+    free( data );
+
+    prog = get_windres_command();
+    cmd = xmalloc( strlen(prog) + strlen(res_file) + strlen(output_file_name) + 9 );
+    sprintf( cmd, "%s -i %s -o %s", prog, res_file, output_file_name );
+    if (verbose) fprintf( stderr, "%s\n", cmd );
+    err = system( cmd );
+    if (err) fatal_error( "%s failed with status %d\n", prog, err );
+    free( cmd );
+    output_file_name = NULL;  /* so we don't try to assemble it */
 }

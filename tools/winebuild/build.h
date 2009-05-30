@@ -205,6 +205,7 @@ extern int output( const char *format, ... )
 extern const char *get_as_command(void);
 extern const char *get_ld_command(void);
 extern const char *get_nm_command(void);
+extern const char *get_windres_command(void);
 extern char *get_temp_file_name( const char *prefix, const char *suffix );
 extern void output_standard_file_header(void);
 extern FILE *open_input_file( const char *srcdir, const char *name );
@@ -250,6 +251,7 @@ extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern void output_res16_data( DLLSPEC *spec );
 extern void output_res16_directory( DLLSPEC *spec );
 extern void output_spec16_file( DLLSPEC *spec );
+extern void output_res_o_file( DLLSPEC *spec );
 
 extern void BuildRelays16(void);
 extern void BuildRelays32(void);

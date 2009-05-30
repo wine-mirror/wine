@@ -53,6 +53,13 @@ Wine internal usage only, you should never need to use this option.
 .B \--relay32
 Generate the assembly code for the 32-bit relay routines. This is for
 Wine internal usage only, you should never need to use this option.
+.TP
+.B \--resources
+Generate a .o file containing all the input resources. This is useful
+when building with a PE compiler, since the PE binutils cannot handle
+multiple resource files as input. For a standard Unix build, the
+resource files are automatically included when building the spec file,
+so there's no need for an intermediate .o file.
 .SH OPTIONS
 .TP
 .BI \--as-cmd= as-command
