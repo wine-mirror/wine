@@ -23,6 +23,8 @@
  *
  */
 
+#include "clock_res.h"
+
 #ifdef LANG_WALON
 
 MAIN_MENU MENU LANGUAGE LANG_WALON, SUBLANG_DEFAULT

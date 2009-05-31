@@ -10,7 +10,31 @@ C_SRCS = \
 	main.c \
 	winclock.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	Cs.rc \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Eo.rc \
+	Es.rc \
+	Fi.rc \
+	Fr.rc \
+	Hu.rc \
+	It.rc \
+	Ja.rc \
+	Ko.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ru.rc \
+	Si.rc \
+	Sk.rc \
+	Sv.rc \
+	Th.rc \
+	Tr.rc \
+	Wa.rc \
+	Zh.rc
 
 @MAKE_PROG_RULES@
 

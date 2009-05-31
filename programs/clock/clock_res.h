@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windef.h>
+
 #define MAIN_MENU                 0x100
 #define IDM_ANALOG                0x101
 #define IDM_DIGITAL               0x102
