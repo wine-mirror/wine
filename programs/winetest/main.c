@@ -658,9 +658,6 @@ run_tests (char *logname)
     if (logfile == INVALID_HANDLE_VALUE)
         report (R_FATAL, "Could not open logfile: %u", GetLastError());
 
-    if (!GetTempPathA( MAX_PATH, tmppath ))
-        report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
-
     /* try stable path for ZoneAlarm */
     strcpy( tempdir, tmppath );
     strcat( tempdir, "wct" );
