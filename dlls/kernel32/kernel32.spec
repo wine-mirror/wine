@@ -866,7 +866,7 @@
 @ stdcall QueryDosDeviceA(str ptr long)
 @ stdcall QueryDosDeviceW(wstr ptr long)
 @ stub QueryFullProcessImageNameA
-@ stdcall QueryFullProcessImageNameW(ptr long wstr ptr)
+@ stdcall QueryFullProcessImageNameW(ptr long ptr ptr)
 @ stdcall QueryInformationJobObject(long long ptr long ptr)
 # @ stub QueryMemoryResourceNotification
 @ stub QueryNumberOfEventLogRecords
