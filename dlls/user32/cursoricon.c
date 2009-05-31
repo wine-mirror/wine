@@ -1598,6 +1598,74 @@ BOOL WINAPI DestroyCursor( HCURSOR hCursor )
     return DestroyIcon32(HCURSOR_16(hCursor), CID_WIN32);
 }
 
+/***********************************************************************
+ *      bitmap_has_alpha_channel
+ *
+ * Analyses bits bitmap to determine if alpha data is present.
+ *
+ * PARAMS
+ *      bpp          [I] The bits-per-pixel of the bitmap
+ *      bitmapBits   [I] A pointer to the bitmap data
+ *      bitmapLength [I] The length of the bitmap in bytes
+ *
+ * RETURNS
+ *      TRUE if an alpha channel is discovered, FALSE
+ *
+ * NOTE
+ *      Windows' behaviour is that if the icon bitmap is 32-bit and at
+ *      least one pixel has a non-zero alpha, then the bitmap is a
+ *      treated as having an alpha channel transparentcy. Otherwise,
+ *      it's treated as being completely opaque.
+ *
+ */
+static BOOL bitmap_has_alpha_channel( int bpp, unsigned char *bitmapBits,
+                                      unsigned int bitmapLength )
+{
+    /* Detect an alpha channel by looking for non-zero alpha pixels */
+    if(bpp == 32)
+    {
+        unsigned int offset;
+        for(offset = 3; offset < bitmapLength; offset += 4)
+        {
+            if(bitmapBits[offset] != 0)
+            {
+                return TRUE;
+                break;
+            }
+        }
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *          premultiply_alpha_channel
+ *
+ * Premultiplies the color channels of a 32-bit bitmap by the alpha
+ * channel. This is a necessary step that must be carried out on
+ * the image before it is passed to GdiAlphaBlend
+ *
+ * PARAMS
+ *      destBitmap   [I] The destination bitmap buffer
+ *      srcBitmap    [I] The source bitmap buffer
+ *      bitmapLength [I] The length of the bitmap in bytes
+ *
+ */
+static void premultiply_alpha_channel( unsigned char *destBitmap,
+                                       unsigned char *srcBitmap,
+                                       unsigned int bitmapLength )
+{
+    unsigned char *destPixel = destBitmap;
+    unsigned char *srcPixel = srcBitmap;
+
+    while(destPixel < destBitmap + bitmapLength)
+    {
+        unsigned char alpha = srcPixel[3];
+        *(destPixel++) = *(srcPixel++) * alpha / 255;
+        *(destPixel++) = *(srcPixel++) * alpha / 255;
+        *(destPixel++) = *(srcPixel++) * alpha / 255;
+        *(destPixel++) = *(srcPixel++);
+    }
+}
 
 /***********************************************************************
  *		DrawIcon (USER32.@)
@@ -1606,28 +1674,69 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
 {
     CURSORICONINFO *ptr;
     HDC hMemDC;
-    HBITMAP hXorBits, hAndBits;
+    HBITMAP hXorBits = NULL, hAndBits = NULL, hBitTemp = NULL;
     COLORREF oldFg, oldBg;
+    unsigned char *xorBitmapBits;
+    unsigned int dibLength;
 
     TRACE("%p, (%d,%d), %p\n", hdc, x, y, hIcon);
 
     if (!(ptr = GlobalLock16(HICON_16(hIcon)))) return FALSE;
     if (!(hMemDC = CreateCompatibleDC( hdc ))) return FALSE;
-    hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1, ptr + 1 );
-    hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
-                               ptr->bBitsPerPixel, (char *)(ptr + 1)
-                        + ptr->nHeight * get_bitmap_width_bytes(ptr->nWidth,1) );
+
+    dibLength = ptr->nHeight * get_bitmap_width_bytes(
+        ptr->nWidth, ptr->bBitsPerPixel);
+
+    xorBitmapBits = (unsigned char *)(ptr + 1) + ptr->nHeight *
+                    get_bitmap_width_bytes(ptr->nWidth, 1);
+
     oldFg = SetTextColor( hdc, RGB(0,0,0) );
     oldBg = SetBkColor( hdc, RGB(255,255,255) );
 
-    if (hXorBits && hAndBits)
+    if(bitmap_has_alpha_channel(ptr->bBitsPerPixel, xorBitmapBits, dibLength))
     {
-        HBITMAP hBitTemp = SelectObject( hMemDC, hAndBits );
-        BitBlt( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCAND );
-        SelectObject( hMemDC, hXorBits );
-        BitBlt(hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0,SRCINVERT);
-        SelectObject( hMemDC, hBitTemp );
+        BITMAPINFOHEADER bmih;
+        unsigned char *dibBits;
+
+        memset(&bmih, 0, sizeof(BITMAPINFOHEADER));
+        bmih.biSize = sizeof(BITMAPINFOHEADER);
+        bmih.biWidth = ptr->nWidth;
+        bmih.biHeight = -ptr->nHeight;
+        bmih.biPlanes = ptr->bPlanes;
+        bmih.biBitCount = 32;
+        bmih.biCompression = BI_RGB;
+
+        hXorBits = CreateDIBSection(hdc, (BITMAPINFO*)&bmih, DIB_RGB_COLORS,
+                                    (void*)&dibBits, NULL, 0);
+
+        if (hXorBits && dibBits)
+        {
+            BLENDFUNCTION pixelblend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+
+            /* Do the alpha blending render */
+            premultiply_alpha_channel(dibBits, xorBitmapBits, dibLength);
+            hBitTemp = SelectObject( hMemDC, hXorBits );
+            GdiAlphaBlend(hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC,
+                            0, 0, ptr->nWidth, ptr->nHeight, pixelblend);
+            SelectObject( hMemDC, hBitTemp );
+        }
     }
+    else
+    {
+        hAndBits = CreateBitmap( ptr->nWidth, ptr->nHeight, 1, 1, ptr + 1 );
+        hXorBits = CreateBitmap( ptr->nWidth, ptr->nHeight, ptr->bPlanes,
+                               ptr->bBitsPerPixel, xorBitmapBits);
+
+        if (hXorBits && hAndBits)
+        {
+            hBitTemp = SelectObject( hMemDC, hAndBits );
+            BitBlt( hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0, SRCAND );
+            SelectObject( hMemDC, hXorBits );
+            BitBlt(hdc, x, y, ptr->nWidth, ptr->nHeight, hMemDC, 0, 0,SRCINVERT);
+            SelectObject( hMemDC, hBitTemp );
+        }
+    }
+
     DeleteDC( hMemDC );
     if (hXorBits) DeleteObject( hXorBits );
     if (hAndBits) DeleteObject( hAndBits );

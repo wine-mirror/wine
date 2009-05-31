@@ -1090,26 +1090,22 @@ static void test_DrawIcon(void)
     /* Test alpha blending */
     /* Windows 2000 and up will alpha blend, earlier Windows versions will not */
     check_DrawIcon(hdcDst, FALSE, 0xFFA0B0C0, 32, 0x00FFFFFF, 0x00C0B0A0, 0x00C0B0A0, __LINE__);
+    check_DrawIcon(hdcDst, TRUE, 0xFFA0B0C0, 32, 0x00FFFFFF, 0x00C0B0A0, 0x003F4F5F, __LINE__);
 
-    todo_wine
-    {
-        check_DrawIcon(hdcDst, TRUE, 0xFFA0B0C0, 32, 0x00FFFFFF, 0x00C0B0A0, 0x003F4F5F, __LINE__);
+    check_DrawIcon(hdcDst, FALSE, 0x80A0B0C0, 32, 0x00000000, 0x00605850, 0x00C0B0A0, __LINE__);
+    check_DrawIcon(hdcDst, TRUE, 0x80A0B0C0, 32, 0x00000000, 0x00605850, 0x00C0B0A0, __LINE__);
+    check_DrawIcon(hdcDst, FALSE, 0x80A0B0C0, 32, 0x00FFFFFF, 0x00DFD7CF, 0x00C0B0A0, __LINE__);
+    check_DrawIcon(hdcDst, TRUE, 0x80A0B0C0, 32, 0x00FFFFFF, 0x00DFD7CF, 0x003F4F5F, __LINE__);
 
-        check_DrawIcon(hdcDst, FALSE, 0x80A0B0C0, 32, 0x00000000, 0x00605850, 0x00C0B0A0, __LINE__);
-        check_DrawIcon(hdcDst, TRUE, 0x80A0B0C0, 32, 0x00000000, 0x00605850, 0x00C0B0A0, __LINE__);
-        check_DrawIcon(hdcDst, FALSE, 0x80A0B0C0, 32, 0x00FFFFFF, 0x00DFD7CF, 0x00C0B0A0, __LINE__);
-        check_DrawIcon(hdcDst, TRUE, 0x80A0B0C0, 32, 0x00FFFFFF, 0x00DFD7CF, 0x003F4F5F, __LINE__);
-
-        check_DrawIcon(hdcDst, FALSE, 0x01FFFFFF, 32, 0x00000000, 0x00010101, 0x00FFFFFF, __LINE__);
-        check_DrawIcon(hdcDst, TRUE, 0x01FFFFFF, 32, 0x00000000, 0x00010101, 0x00FFFFFF, __LINE__);
-    }
+    check_DrawIcon(hdcDst, FALSE, 0x01FFFFFF, 32, 0x00000000, 0x00010101, 0x00FFFFFF, __LINE__);
+    check_DrawIcon(hdcDst, TRUE, 0x01FFFFFF, 32, 0x00000000, 0x00010101, 0x00FFFFFF, __LINE__);
 
     /* Test detecting of alpha channel */
     /* If a single pixel's alpha channel is non-zero, the icon
        will be alpha blended, otherwise it will be draw with
        and + xor blts. */
     check_alpha_draw(hdcDst, FALSE, FALSE, 32, __LINE__);
-    todo_wine check_alpha_draw(hdcDst, FALSE, TRUE, 32, __LINE__);
+    check_alpha_draw(hdcDst, FALSE, TRUE, 32, __LINE__);
 
 cleanup:
     if(bmpOld)
