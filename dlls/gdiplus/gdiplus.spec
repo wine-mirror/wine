@@ -33,8 +33,8 @@
 @ stdcall GdipAddPathStringI(ptr wstr long ptr long long ptr ptr)
 @ stdcall GdipAlloc(long)
 @ stdcall GdipBeginContainer2(ptr ptr)
-@ stub GdipBeginContainer
-@ stub GdipBeginContainerI
+@ stdcall GdipBeginContainer(ptr ptr ptr long ptr)
+@ stdcall GdipBeginContainerI(ptr ptr ptr long ptr)
 @ stub GdipBitmapApplyEffect
 @ stub GdipBitmapConvertFormat
 @ stub GdipBitmapCreateApplyEffect
