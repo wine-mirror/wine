@@ -2273,25 +2273,33 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
                             INT cxWidth, INT cyWidth, UINT istep,
                             HBRUSH hbr, UINT flags )
 {
-    CURSORICONINFO *ptr = GlobalLock16(HICON_16(hIcon));
+    CURSORICONINFO *ptr;
     HDC hDC_off = 0, hMemDC;
     BOOL result = FALSE, DoOffscreen;
     HBITMAP hB_off = 0, hOld = 0;
+    unsigned char *xorBitmapBits;
+    unsigned int xorLength;
+    BOOL has_alpha = FALSE;
 
-    if (!ptr) return FALSE;
     TRACE_(icon)("(hdc=%p,pos=%d.%d,hicon=%p,extend=%d.%d,istep=%d,br=%p,flags=0x%08x)\n",
                  hdc,x0,y0,hIcon,cxWidth,cyWidth,istep,hbr,flags );
 
-    hMemDC = CreateCompatibleDC (hdc);
+    if (!(ptr = GlobalLock16(HICON_16(hIcon)))) return FALSE;
+    if (!(hMemDC = CreateCompatibleDC( hdc ))) return FALSE;
+
     if (istep)
         FIXME_(icon)("Ignoring istep=%d\n", istep);
     if (flags & DI_NOMIRROR)
         FIXME_(icon)("Ignoring flag DI_NOMIRROR\n");
 
-    if (!flags) {
-        FIXME_(icon)("no flags set? setting to DI_NORMAL\n");
-        flags = DI_NORMAL;
-    }
+    xorLength = ptr->nHeight * get_bitmap_width_bytes(
+        ptr->nWidth, ptr->bBitsPerPixel);
+    xorBitmapBits = (unsigned char *)(ptr + 1) + ptr->nHeight *
+                    get_bitmap_width_bytes(ptr->nWidth, 1);
+
+    if (flags & DI_IMAGE)
+        has_alpha = bitmap_has_alpha_channel(
+            ptr->bBitsPerPixel, xorBitmapBits, xorLength);
 
     /* Calculate the size of the destination image.  */
     if (cxWidth == 0)
@@ -2329,50 +2337,90 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
 
     if (hMemDC && (!DoOffscreen || (hDC_off && hB_off)))
     {
-        HBITMAP hXorBits, hAndBits;
+        HBITMAP hBitTemp;
+        HBITMAP hXorBits = NULL, hAndBits = NULL;
         COLORREF  oldFg, oldBg;
         INT     nStretchMode;
 
         nStretchMode = SetStretchBltMode (hdc, STRETCH_DELETESCANS);
 
-        hXorBits = CreateBitmap ( ptr->nWidth, ptr->nHeight,
-                                  ptr->bPlanes, ptr->bBitsPerPixel,
-                                  (char *)(ptr + 1)
-                                  + ptr->nHeight *
-                                  get_bitmap_width_bytes(ptr->nWidth,1) );
-        hAndBits = CreateBitmap ( ptr->nWidth, ptr->nHeight, 1, 1, ptr + 1 );
         oldFg = SetTextColor( hdc, RGB(0,0,0) );
         oldBg = SetBkColor( hdc, RGB(255,255,255) );
 
-        if (hXorBits && hAndBits)
+        if (((flags & DI_MASK) && !(flags & DI_IMAGE)) ||
+            ((flags & DI_MASK) && !has_alpha))
         {
-            HBITMAP hBitTemp = SelectObject( hMemDC, hAndBits );
-            if (flags & DI_MASK)
+            hAndBits = CreateBitmap ( ptr->nWidth, ptr->nHeight, 1, 1, ptr + 1 );
+            if (hAndBits)
             {
+                hBitTemp = SelectObject( hMemDC, hAndBits );
                 if (DoOffscreen)
                     StretchBlt (hDC_off, 0, 0, cxWidth, cyWidth,
                                 hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCAND);
                 else
                     StretchBlt (hdc, x0, y0, cxWidth, cyWidth,
                                 hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCAND);
+                SelectObject( hMemDC, hBitTemp );
             }
-            SelectObject( hMemDC, hXorBits );
-            if (flags & DI_IMAGE)
-            {
-                if (DoOffscreen)
-                    StretchBlt (hDC_off, 0, 0, cxWidth, cyWidth,
-                                hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
-                else
-                    StretchBlt (hdc, x0, y0, cxWidth, cyWidth,
-                                hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
-            }
-            SelectObject( hMemDC, hBitTemp );
-            result = TRUE;
         }
+
+        if (flags & DI_IMAGE)
+        {
+            BITMAPINFOHEADER bmih;
+            unsigned char *dibBits;
+
+            memset(&bmih, 0, sizeof(BITMAPINFOHEADER));
+            bmih.biSize = sizeof(BITMAPINFOHEADER);
+            bmih.biWidth = ptr->nWidth;
+            bmih.biHeight = -ptr->nHeight;
+            bmih.biPlanes = ptr->bPlanes;
+            bmih.biBitCount = ptr->bBitsPerPixel;
+            bmih.biCompression = BI_RGB;
+
+            hXorBits = CreateDIBSection(hdc, (BITMAPINFO*)&bmih, DIB_RGB_COLORS,
+                                        (void*)&dibBits, NULL, 0);
+
+            if (hXorBits && dibBits)
+            {
+                if(has_alpha)
+                {
+                    BLENDFUNCTION pixelblend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+
+                    /* Do the alpha blending render */
+                    premultiply_alpha_channel(dibBits, xorBitmapBits, xorLength);
+                    hBitTemp = SelectObject( hMemDC, hXorBits );
+
+                    if (DoOffscreen)
+                        GdiAlphaBlend(hDC_off, 0, 0, cxWidth, cyWidth, hMemDC,
+                                        0, 0, ptr->nWidth, ptr->nHeight, pixelblend);
+                    else
+                        GdiAlphaBlend(hdc, x0, y0, cxWidth, cyWidth, hMemDC,
+                                        0, 0, ptr->nWidth, ptr->nHeight, pixelblend);
+
+                    SelectObject( hMemDC, hBitTemp );
+                }
+                else
+                {
+                    memcpy(dibBits, xorBitmapBits, xorLength);
+                    hBitTemp = SelectObject( hMemDC, hXorBits );
+                    if (DoOffscreen)
+                        StretchBlt (hDC_off, 0, 0, cxWidth, cyWidth,
+                                    hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
+                    else
+                        StretchBlt (hdc, x0, y0, cxWidth, cyWidth,
+                                    hMemDC, 0, 0, ptr->nWidth, ptr->nHeight, SRCPAINT);
+                    SelectObject( hMemDC, hBitTemp );
+                }
+
+                DeleteObject( hXorBits );
+            }
+        }
+
+        result = TRUE;
 
         SetTextColor( hdc, oldFg );
         SetBkColor( hdc, oldBg );
-        if (hXorBits) DeleteObject( hXorBits );
+
         if (hAndBits) DeleteObject( hAndBits );
         SetStretchBltMode (hdc, nStretchMode);
         if (DoOffscreen) {
