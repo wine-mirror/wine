@@ -612,7 +612,7 @@ extract_test_proc (HMODULE hModule, LPCTSTR lpszType,
 }
 
 static char *
-run_tests (char *logname)
+run_tests (char *logname, char *outdir)
 {
     int i;
     char *strres, *eol, *nextline;
@@ -659,16 +659,22 @@ run_tests (char *logname)
         report (R_FATAL, "Could not open logfile: %u", GetLastError());
 
     /* try stable path for ZoneAlarm */
-    strcpy( tempdir, tmppath );
-    strcat( tempdir, "wct" );
-    if (!CreateDirectoryA( tempdir, NULL ))
-    {
-        if (!GetTempFileNameA( tmppath, "wct", 0, tempdir ))
-            report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
-        DeleteFileA( tempdir );
+    if (!outdir) {
+        strcpy( tempdir, tmppath );
+        strcat( tempdir, "wct" );
+
         if (!CreateDirectoryA( tempdir, NULL ))
-            report (R_FATAL, "Could not create directory: %s", tempdir);
+        {
+            if (!GetTempFileNameA( tmppath, "wct", 0, tempdir ))
+                report (R_FATAL, "Can't name temporary dir (check %%TEMP%%).");
+            DeleteFileA( tempdir );
+            if (!CreateDirectoryA( tempdir, NULL ))
+                report (R_FATAL, "Could not create directory: %s", tempdir);
+        }
     }
+    else
+        strcpy( tempdir, outdir);
+
     report (R_DIR, tempdir);
 
     xprintf ("Version 4\n");
@@ -749,7 +755,8 @@ run_tests (char *logname)
     report (R_STATUS, "Cleaning up");
     CloseHandle( logfile );
     logfile = 0;
-    remove_dir (tempdir);
+    if (!outdir)
+        remove_dir (tempdir);
     heap_free(wine_tests);
     heap_free(curpath);
 
@@ -816,6 +823,7 @@ usage (void)
 " --help    print this message and exit\n"
 " --version print the build version and exit\n"
 " -c        console mode, no GUI\n"
+" -d DIR    Use DIR as temp directory (default: %%TEMP%%\\wct)"
 " -e        preserve the environment\n"
 " -h        print this message and exit\n"
 " -p        shutdown when the tests are done\n"
@@ -828,7 +836,7 @@ usage (void)
 
 int main( int argc, char *argv[] )
 {
-    char *logname = NULL;
+    char *logname = NULL, *outdir = NULL;
     const char *extract = NULL;
     const char *cp, *submit = NULL;
     int reset_env = 1;
@@ -915,6 +923,9 @@ int main( int argc, char *argv[] )
 
             extract_only (extract);
             break;
+        case 'd':
+            outdir = argv[++i];
+            break;
         default:
             report (R_ERROR, "invalid option: -%c", argv[i][1]);
             usage ();
@@ -953,12 +964,12 @@ int main( int argc, char *argv[] )
         }
 
         if (!logname) {
-            logname = run_tests (NULL);
+            logname = run_tests (NULL, outdir);
             if (build_id[0] && !nb_filters &&
                 report (R_ASK, MB_YESNO, "Do you want to submit the test results?") == IDYES)
                 if (!send_file (logname) && !DeleteFileA(logname))
                     report (R_WARNING, "Can't remove logfile: %u", GetLastError());
-        } else run_tests (logname);
+        } else run_tests (logname, outdir);
         report (R_STATUS, "Finished");
     }
     if (poweroff)
