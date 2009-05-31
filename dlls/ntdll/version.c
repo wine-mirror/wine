@@ -128,8 +128,8 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
     /* WINXP */
     {
         sizeof(RTL_OSVERSIONINFOEXW), 5, 1, 0xA28, VER_PLATFORM_WIN32_NT,
-        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','2',0},
-        2, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
+        {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','3',0},
+        3, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
     },
     /* WIN2K3 */
     {
