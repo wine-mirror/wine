@@ -29,8 +29,8 @@
 @ stdcall GdipAddPathRectangleI(ptr long long long long)
 @ stdcall GdipAddPathRectangles(ptr ptr long)
 @ stdcall GdipAddPathRectanglesI(ptr ptr long)
-@ stub GdipAddPathString
-@ stub GdipAddPathStringI
+@ stdcall GdipAddPathString(ptr wstr long ptr long long ptr ptr)
+@ stdcall GdipAddPathStringI(ptr wstr long ptr long long ptr ptr)
 @ stdcall GdipAlloc(long)
 @ stdcall GdipBeginContainer2(ptr ptr)
 @ stub GdipBeginContainer
