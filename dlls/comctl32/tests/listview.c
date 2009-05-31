@@ -230,6 +230,10 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
     }
     add_message(sequences, PARENT_FULL_SEQ_INDEX, &msg);
 
+    /* always accept new item text */
+    if (message == WM_NOTIFY && lParam && ((NMHDR*)lParam)->code == LVN_ENDLABELEDIT)
+        return TRUE;
+
     defwndproc_counter++;
     ret = DefWindowProcA(hwnd, message, wParam, lParam);
     defwndproc_counter--;
@@ -2830,6 +2834,58 @@ static void test_getitemrect(void)
     DestroyWindow(hwnd);
 }
 
+static void test_editbox(void)
+{
+    HWND hwnd, hwndedit;
+    LVITEMA item;
+    DWORD r;
+    static CHAR testitemA[]  = "testitem";
+    static CHAR testitem1A[] = "testitem1";
+    static CHAR buffer[10];
+
+    hwnd = create_listview_control(LVS_EDITLABELS);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    insert_column(hwnd, 0);
+
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_TEXT;
+    item.pszText = testitemA;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    expect(0, r);
+
+    /* setting focus is necessary */
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
+
+    /* modify initial string */
+    r = SendMessage(hwndedit, WM_SETTEXT, 0, (LPARAM)testitem1A);
+    expect(TRUE, r);
+    /* return focus to listview */
+    SetFocus(hwnd);
+
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_TEXT;
+    item.pszText = buffer;
+    item.cchTextMax = 10;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
+
+    /* creating label disabled when control isn't focused */
+    SetFocus(0);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    todo_wine ok(hwndedit == NULL, "Expected Edit window not to be created\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -2878,6 +2934,7 @@ START_TEST(listview)
     test_getviewrect();
     test_getitemposition();
     test_columnscreation();
+    test_editbox();
 
     DestroyWindow(hwndparent);
 }
