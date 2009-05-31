@@ -25,6 +25,7 @@
 
 #include "res.h"
 
+#include "De.rc"
 #include "En.rc"
 #include "Fr.rc"
 #include "Ja.rc"
