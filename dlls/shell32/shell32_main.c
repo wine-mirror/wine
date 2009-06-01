@@ -1203,3 +1203,12 @@ BOOL WINAPI ExtractVersionResource16W(LPWSTR s, DWORD d)
     FIXME("(%s %x) stub!\n", debugstr_w(s), d);
     return FALSE;
 }
+
+/***********************************************************************
+ *              InitNetworkAddressControl (SHELL32.@)
+ */
+BOOL WINAPI InitNetworkAddressControl(void)
+{
+    FIXME("stub\n");
+    return FALSE;
+}
