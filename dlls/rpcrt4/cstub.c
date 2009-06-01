@@ -113,7 +113,6 @@ typedef struct
 {
     DWORD ref;
     DWORD size;
-    void **methods;
     IUnknownVtbl vtbl;
     /* remaining entries in vtbl */
 } ref_counted_vtbl;
@@ -161,45 +160,67 @@ typedef struct {
 } vtbl_method_t;
 #include "poppack.h"
 
-static void fill_table(IUnknownVtbl *vtbl, void **methods, DWORD num)
+#define BLOCK_SIZE 1024
+#define MAX_BLOCKS 64  /* 64k methods should be enough for anybody */
+
+static const vtbl_method_t *method_blocks[MAX_BLOCKS];
+
+static const vtbl_method_t *allocate_block( unsigned int num )
 {
-    vtbl_method_t *method;
-    void **entry;
-    DWORD i;
+    unsigned int i;
+    vtbl_method_t *prev, *block;
+
+    block = VirtualAlloc( NULL, BLOCK_SIZE * sizeof(*block),
+                          MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
+    if (!block) return NULL;
+
+    for (i = 0; i < BLOCK_SIZE; i++)
+    {
+        block[i].mov1 = 0x0424448b;
+        block[i].mov2 = 0x408b;
+        block[i].sixteen = 0x10;
+        block[i].mov3 = 0x04244489;
+        block[i].mov4 = 0x008b;
+        block[i].mov5 = 0x808b;
+        block[i].offset = (BLOCK_SIZE * num + i + 3) << 2;
+        block[i].jmp = 0xe0ff;
+        block[i].pad[0] = 0x8d;
+        block[i].pad[1] = 0x76;
+        block[i].pad[2] = 0x00;
+    }
+    VirtualProtect( block, BLOCK_SIZE * sizeof(*block), PAGE_EXECUTE_READ, NULL );
+    prev = InterlockedCompareExchangePointer( (void **)&method_blocks[num], block, NULL );
+    if (prev) /* someone beat us to it */
+    {
+        VirtualFree( block, 0, MEM_RELEASE );
+        block = prev;
+    }
+    return block;
+}
+
+static BOOL fill_delegated_stub_table(IUnknownVtbl *vtbl, DWORD num)
+{
+    const void **entry = (const void **)(vtbl + 1);
+    DWORD i, j;
 
     vtbl->QueryInterface = delegating_QueryInterface;
     vtbl->AddRef = delegating_AddRef;
     vtbl->Release = delegating_Release;
-
-    method = (vtbl_method_t*)methods;
-    entry = (void**)(vtbl + 1);
-
-    for(i = 3; i < num; i++)
+    for (i = 0; i < (num - 3 + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
     {
-        *entry = method;
-        method->mov1 = 0x0424448b;
-        method->mov2 = 0x408b;
-        method->sixteen = 0x10;
-        method->mov3 = 0x04244489;
-        method->mov4 = 0x008b;
-        method->mov5 = 0x808b;
-        method->offset = i << 2;
-        method->jmp = 0xe0ff;
-        method->pad[0] = 0x8d;
-        method->pad[1] = 0x76;
-        method->pad[2] = 0x00;
-
-        method++;
-        entry++;
+        const vtbl_method_t *block = method_blocks[i];
+        if (!block && !(block = allocate_block( i ))) return FALSE;
+        for (j = 0; j < BLOCK_SIZE && j < num - 3 - i * BLOCK_SIZE; j++) *entry++ = &block[j];
     }
+    return TRUE;
 }
 
 #else  /* __i386__ */
 
-typedef struct {int dummy;} vtbl_method_t;
-static void fill_table(IUnknownVtbl *vtbl, void **methods, DWORD num)
+static BOOL fill_delegated_stub_table(IUnknownVtbl *vtbl, DWORD num)
 {
     ERR("delegated stubs are not supported on this architecture\n");
+    return FALSE;
 }
 
 #endif  /* __i386__ */
@@ -216,21 +237,15 @@ void create_delegating_vtbl(DWORD num_methods)
     EnterCriticalSection(&delegating_vtbl_section);
     if(!current_vtbl.table || num_methods > current_vtbl.table->size)
     {
-        DWORD size;
-        DWORD old_protect;
         if(current_vtbl.table && current_vtbl.table->ref == 0)
         {
             TRACE("freeing old table\n");
-            VirtualFree(current_vtbl.table->methods, 0, MEM_RELEASE);
             HeapFree(GetProcessHeap(), 0, current_vtbl.table);
         }
-        size = (num_methods - 3) * sizeof(vtbl_method_t);
         current_vtbl.table = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(ref_counted_vtbl, vtbl) + num_methods * sizeof(void*));
         current_vtbl.table->ref = 0;
         current_vtbl.table->size = num_methods;
-        current_vtbl.table->methods = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-        fill_table(&current_vtbl.table->vtbl, current_vtbl.table->methods, num_methods);
-        VirtualProtect(current_vtbl.table->methods, size, PAGE_EXECUTE_READ, &old_protect);
+        fill_delegated_stub_table(&current_vtbl.table->vtbl, num_methods);
     }
     LeaveCriticalSection(&delegating_vtbl_section);
 }
@@ -256,7 +271,6 @@ static void release_delegating_vtbl(IUnknownVtbl *vtbl)
     if(table->ref == 0 && table != current_vtbl.table)
     {
         TRACE("... and we're not current so free'ing\n");
-        VirtualFree(current_vtbl.table->methods, 0, MEM_RELEASE);
         HeapFree(GetProcessHeap(), 0, table);
     }
     LeaveCriticalSection(&delegating_vtbl_section);
