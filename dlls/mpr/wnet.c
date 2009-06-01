@@ -1949,7 +1949,7 @@ DWORD WINAPI WNetGetUniversalNameW ( LPCWSTR lpLocalPath, DWORD dwInfoLevel,
         break;
     }
 
-    SetLastError(err);
+    if (err != WN_NO_ERROR) SetLastError(err);
     return err;
 }
 
