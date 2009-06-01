@@ -2836,7 +2836,7 @@ static void test_getitemrect(void)
 
 static void test_editbox(void)
 {
-    HWND hwnd, hwndedit;
+    HWND hwnd, hwndedit, hwndedit2;
     LVITEMA item;
     DWORD r;
     static CHAR testitemA[]  = "testitem";
@@ -2878,10 +2878,19 @@ static void test_editbox(void)
 
     ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
 
+    /* send LVM_EDITLABEL on already created edit */
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
+    /* focus will be set to edit */
+    ok(GetFocus() == hwndedit, "Expected Edit window to be focused\n");
+    hwndedit2 = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit2), "Expected Edit window to be created\n");
+
     /* creating label disabled when control isn't focused */
     SetFocus(0);
     hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
-    todo_wine ok(hwndedit == NULL, "Expected Edit window not to be created\n");
+    ok(hwndedit == NULL, "Expected Edit window not to be created\n");
 
     DestroyWindow(hwnd);
 }
