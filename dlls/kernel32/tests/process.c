@@ -386,7 +386,7 @@ static void     doChild(const char* file, const char* option)
         ret = SetConsoleCP(1252);
         if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
         {
-            win_skip("Setting the codepage is not implemented");
+            win_skip("Setting the codepage is not implemented\n");
         }
         else
         {
