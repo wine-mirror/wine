@@ -23,7 +23,9 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "d3dx9.h"
 
 /* for internal use */
