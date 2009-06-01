@@ -336,8 +336,10 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     CHECK_NOTIFIED(INTERNET_STATUS_HANDLE_CREATED);
     CHECK_NOT_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
     CHECK_NOT_NOTIFIED(INTERNET_STATUS_NAME_RESOLVED);
-    if(test->flags & TESTF_ALLOW_COOKIE)
+    if(test->flags & TESTF_ALLOW_COOKIE) {
         SET_OPTIONAL(INTERNET_STATUS_COOKIE_SENT);
+        SET_OPTIONAL(INTERNET_STATUS_COOKIE_RECEIVED);
+    }
     if (first_connection_to_test_url)
     {
         SET_EXPECT(INTERNET_STATUS_RESOLVING_NAME);
@@ -374,7 +376,10 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
         BOOL b = TRUE;
 
         res = InternetSetOption(hor, INTERNET_OPTION_HTTP_DECODING, &b, sizeof(b));
-        ok(res, "InternetSetOption failed: %08x\n", GetLastError());
+        ok(res || broken(!res && GetLastError() == ERROR_INTERNET_INVALID_OPTION),
+           "InternetSetOption failed: %u\n", GetLastError());
+        if(!res)
+            goto abort;
     }
 
     trace("HttpSendRequestA -->\n");
@@ -391,8 +396,10 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     if (flags & INTERNET_FLAG_ASYNC)
         WaitForSingleObject(hCompleteEvent, INFINITE);
 
-    if(test->flags & TESTF_ALLOW_COOKIE)
+    if(test->flags & TESTF_ALLOW_COOKIE) {
         CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_SENT);
+        CLEAR_NOTIFIED(INTERNET_STATUS_COOKIE_RECEIVED);
+    }
     if (first_connection_to_test_url)
     {
         CHECK_NOTIFIED(INTERNET_STATUS_RESOLVING_NAME);
