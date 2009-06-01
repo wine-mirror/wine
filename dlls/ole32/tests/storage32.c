@@ -1354,6 +1354,7 @@ static void test_simple(void)
     HRESULT r;
     IStream *stm;
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    static const WCHAR stmname2[] = { 'S','m','a','l','l',0 };
     LARGE_INTEGER pos;
     ULARGE_INTEGER upos;
     DWORD count;
@@ -1400,6 +1401,19 @@ static void test_simple(void)
 
     IStream_Release(stm);
 
+    r = IStorage_CreateStream(stg, stmname2, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm);
+    ok(r == S_OK, "got %08x\n", r);
+
+    upos.QuadPart = 100;
+    r = IStream_SetSize(stm, upos);
+    ok(r == S_OK, "got %08x\n", r);
+
+    r = IStream_Write(stm, "foo", 3, &count);
+    ok(r == S_OK, "got %08x\n", r);
+    ok(count == 3, "got %d\n", count);
+
+    IStream_Release(stm);
+
     IStorage_Commit(stg, STGC_DEFAULT);
     IStorage_Release(stg);
 
@@ -1414,6 +1428,16 @@ static void test_simple(void)
     ok(stat.cbSize.QuadPart == 6000, "got %d\n", stat.cbSize.u.LowPart);
 
     IStream_Release(stm);
+
+    r = IStorage_OpenStream(stg, stmname2, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stm);
+    ok(r == S_OK, "got %08x\n", r);
+
+    r = IStream_Stat(stm, &stat, STATFLAG_NONAME);
+    ok(r == S_OK, "got %08x\n", r);
+    ok(stat.cbSize.QuadPart == 4096, "got %d\n", stat.cbSize.u.LowPart);
+
+    IStream_Release(stm);
+
 
     IStorage_Release(stg);
 
