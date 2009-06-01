@@ -120,23 +120,61 @@ static void test_GetLocaleInfoA(void)
   int ret;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
   char buffer[BUFFER_SIZE];
+  const char * expected;
 
   ok(lcid == 0x409, "wrong LCID calculated - %d\n", lcid);
+
+  /* en, ar and zh use SUBLANG_NEUTRAL, but GetLocaleInfo assume SUBLANG_DEFAULT */
+  SetLastError(0xdeadbeef);
+  memset(buffer, 0, COUNTOF(buffer));
+  ret = GetLocaleInfoA(LANG_ENGLISH, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
+  expected = "English (United States)";
+  ok((ret == (lstrlenA(expected)+1)) && !lstrcmpA(buffer, expected),
+     "got %d with '%s' (expected %d with '%s')\n",
+     ret, buffer, lstrlenA(expected)+1, expected);
+
+  SetLastError(0xdeadbeef);
+  memset(buffer, 0, COUNTOF(buffer));
+  ret = GetLocaleInfoA(LANG_ARABIC, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
+  expected = "Arabic (Saudi Arabia)";
+  ok((ret == (lstrlenA(expected)+1)) && !lstrcmpA(buffer, expected),
+     "got %d with '%s' (expected %d with '%s')\n",
+     ret, buffer, lstrlenA(expected)+1, expected);
+
+  SetLastError(0xdeadbeef);
+  memset(buffer, 0, COUNTOF(buffer));
+  ret = GetLocaleInfoA(LANG_CHINESE, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
+  expected = "Chinese (Taiwan)";
+  ok((ret == (lstrlenA(expected)+1)) && !lstrcmpA(buffer, expected),
+     "got %d with '%s' (expected %d with '%s')\n",
+     ret, buffer, lstrlenA(expected)+1, expected);
+
+  /* SUBLANG_DEFAULT is not required for GetLocaleInfo */
+  SetLastError(0xdeadbeef);
+  memset(buffer, 0, COUNTOF(buffer));
+  ret = GetLocaleInfoA(LANG_GERMAN, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
+  expected = "German (Germany)";
+  ok((ret == (lstrlenA(expected)+1)) && !lstrcmpA(buffer, expected),
+     "got %d with '%s' (expected %d with '%s')\n",
+     ret, buffer, lstrlenA(expected)+1, expected);
 
   /* HTMLKit and "Font xplorer lite" expect GetLocaleInfoA to
    * partially fill the buffer even if it is too short. See bug 637.
    */
-  SetLastError(0); memset(buffer, 0, COUNTOF(buffer));
+  SetLastError(0xdeadbeef);
+  memset(buffer, 0, COUNTOF(buffer));
   ret = GetLocaleInfoA(lcid, NUO|LOCALE_SDAYNAME1, buffer, 0);
   ok(ret == 7 && !buffer[0], "Expected len=7, got %d\n", ret);
 
-  SetLastError(0); memset(buffer, 0, COUNTOF(buffer));
+  SetLastError(0xdeadbeef);
+  memset(buffer, 0, COUNTOF(buffer));
   ret = GetLocaleInfoA(lcid, NUO|LOCALE_SDAYNAME1, buffer, 3);
   ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
   ok(!strcmp(buffer, "Mon"), "Expected 'Mon', got '%s'\n", buffer);
 
-  SetLastError(0); memset(buffer, 0, COUNTOF(buffer));
+  SetLastError(0xdeadbeef);
+  memset(buffer, 0, COUNTOF(buffer));
   ret = GetLocaleInfoA(lcid, NUO|LOCALE_SDAYNAME1, buffer, 10);
   ok(ret == 7, "Expected ret == 7, got %d, error %d\n", ret, GetLastError());
   ok(!strcmp(buffer, "Monday"), "Expected 'Monday', got '%s'\n", buffer);
