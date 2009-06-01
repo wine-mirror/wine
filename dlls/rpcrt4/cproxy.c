@@ -46,7 +46,6 @@ typedef struct {
   const IRpcProxyBufferVtbl *lpVtbl;
   LPVOID *PVtbl;
   LONG RefCount;
-  const MIDL_STUBLESS_PROXY_INFO *stubless;
   const IID* piid;
   LPUNKNOWN pUnkOuter;
   PCInterfaceName name;
@@ -83,11 +82,9 @@ __ASM_GLOBAL_FUNC(call_stubless_func,
 HRESULT WINAPI ObjectStubless(DWORD *args)
 {
     DWORD index = args[0];
-    LPVOID iface = (LPVOID)args[2];
-
-    ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
-
-    const MIDL_STUBLESS_PROXY_INFO *stubless = This->stubless;
+    void **iface = (void **)args[2];
+    const void **vtbl = (const void **)*iface;
+    const MIDL_STUBLESS_PROXY_INFO *stubless = *(const MIDL_STUBLESS_PROXY_INFO **)(vtbl - 2);
     const PFORMAT_STRING fs = stubless->ProcFormatString + stubless->FormatStringOffset[index];
 
     /* store bytes to remove from stack */
@@ -162,7 +159,6 @@ HRESULT StdProxy_Construct(REFIID riid,
                            LPVOID *ppvObj)
 {
   StdProxyImpl *This;
-  const MIDL_STUBLESS_PROXY_INFO *stubless = NULL;
   PCInterfaceName name = ProxyInfo->pNamesArray[Index];
   CInterfaceProxyVtbl *vtbl = ProxyInfo->pProxyVtblList[Index];
 
@@ -171,9 +167,8 @@ HRESULT StdProxy_Construct(REFIID riid,
   /* TableVersion = 2 means it is the stubless version of CInterfaceProxyVtbl */
   if (ProxyInfo->TableVersion > 1) {
     ULONG count = ProxyInfo->pStubVtblList[Index]->header.DispatchTableCount;
-    stubless = *(const void **)vtbl;
     vtbl = (CInterfaceProxyVtbl *)((const void **)vtbl + 1);
-    TRACE("stubless %p vtbl %p: count=%d\n", stubless, vtbl->Vtbl, count );
+    TRACE("stubless vtbl %p: count=%d\n", vtbl->Vtbl, count );
     fill_stubless_table( (IUnknownVtbl *)vtbl->Vtbl, count );
   }
 
@@ -192,7 +187,6 @@ HRESULT StdProxy_Construct(REFIID riid,
   This->PVtbl = vtbl->Vtbl;
   /* one reference for the proxy */
   This->RefCount = 1;
-  This->stubless = stubless;
   This->piid = vtbl->header.piid;
   This->pUnkOuter = pUnkOuter;
   This->name = name;
