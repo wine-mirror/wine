@@ -20,6 +20,9 @@
  * TODO: Handle non-i386 architectures
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 
 #define COBJMACROS
@@ -65,50 +68,50 @@ static const IRpcProxyBufferVtbl StdProxy_Vtbl;
 struct StublessThunk {
   BYTE push;
   DWORD index;
-  BYTE call;
+  BYTE jmp;
   LONG handler;
-  BYTE ret;
-  WORD bytes;
-  BYTE pad[3];
 };
 
 #include "poppack.h"
 
-/* adjust the stack size since we don't use Windows's method */
-#define STACK_ADJUST sizeof(DWORD)
-
-#define FILL_STUBLESS(x,idx,stk) \
+#define FILL_STUBLESS(x,idx) \
  x->push = 0x68; /* pushl [immediate] */ \
  x->index = (idx); \
- x->call = 0xe8; /* call [near] */ \
- x->handler = (char*)ObjectStubless - (char*)&x->ret; \
- x->ret = 0xc2; /* ret [immediate] */ \
- x->bytes = stk; \
- x->pad[0] = 0x8d; /* leal (%esi),%esi */ \
- x->pad[1] = 0x76; \
- x->pad[2] = 0x00;
+ x->jmp = 0xe9; /* jmp */ \
+ x->handler = (char*)call_stubless_func - (char*)(&x->handler + 1);
 
-static HRESULT WINAPI ObjectStubless(DWORD index)
+extern void call_stubless_func(void);
+__ASM_GLOBAL_FUNC(call_stubless_func,
+                  "pushl %esp\n\t"  /* pointer to index */
+                  "call " __ASM_NAME("ObjectStubless") "\n\t"
+                  "popl %edx\n\t"  /* args size */
+                  "movl (%esp),%ecx\n\t"  /* return address */
+                  "addl %edx,%esp\n\t"
+                  "jmp *%ecx" );
+
+HRESULT WINAPI ObjectStubless(DWORD *args)
 {
-  char *args = (char*)(&index + 2);
-  LPVOID iface = *(LPVOID*)args;
+    DWORD index = args[0];
+    LPVOID iface = (LPVOID)args[2];
 
-  ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
+    ICOM_THIS_MULTI(StdProxyImpl,PVtbl,iface);
 
-  PFORMAT_STRING fs = This->stubless->ProcFormatString + This->stubless->FormatStringOffset[index];
-  unsigned bytes = *(const WORD*)(fs+8) - STACK_ADJUST;
-  TRACE("(%p)->(%d)([%d bytes]) ret=%08x\n", iface, index, bytes, *(DWORD*)(args+bytes));
+    const MIDL_STUBLESS_PROXY_INFO *stubless = This->stubless;
+    const PFORMAT_STRING fs = stubless->ProcFormatString + stubless->FormatStringOffset[index];
 
-  return NdrClientCall2(This->stubless->pStubDesc, fs, args);
+    /* store bytes to remove from stack */
+    args[0] = *(const WORD*)(fs + 8);
+    TRACE("(%p)->(%d)([%d bytes]) ret=%08x\n", iface, index, args[0], args[1]);
+
+    return NdrClientCall2(stubless->pStubDesc, fs, args + 2);
 }
 
 #else  /* __i386__ */
 
 /* can't do that on this arch */
 struct StublessThunk { int dummy; };
-#define FILL_STUBLESS(x,idx,stk) \
+#define FILL_STUBLESS(x,idx) \
  ERR("stubless proxies are not supported on this architecture\n");
-#define STACK_ADJUST 0
 
 #endif  /* __i386__ */
 
@@ -157,10 +160,7 @@ HRESULT StdProxy_Construct(REFIID riid,
     for (i=0; i<count; i++) {
       struct StublessThunk *thunk = &This->thunks[i];
       if (vtbl->Vtbl[i] == (LPVOID)-1) {
-        PFORMAT_STRING fs = stubless->ProcFormatString + stubless->FormatStringOffset[i];
-        unsigned bytes = *(const WORD*)(fs+8) - STACK_ADJUST;
-        TRACE("method %d: stacksize=%d\n", i, bytes);
-        FILL_STUBLESS(thunk, i, bytes)
+        FILL_STUBLESS(thunk, i)
         This->PVtbl[i] = thunk;
       }
       else {
