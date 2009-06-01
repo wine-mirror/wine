@@ -626,6 +626,28 @@ NTSTATUS WINAPI NtConnectPort(
 }
 
 /******************************************************************************
+ *  NtSecureConnectPort                (NTDLL.@)
+ *  ZwSecureConnectPort                (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSecureConnectPort(
+        PHANDLE PortHandle,
+        PUNICODE_STRING PortName,
+        PSECURITY_QUALITY_OF_SERVICE SecurityQos,
+        PLPC_SECTION_WRITE WriteSection,
+        PSID pSid,
+        PLPC_SECTION_READ ReadSection,
+        PULONG MaximumMessageLength,
+        PVOID ConnectInfo,
+        PULONG pConnectInfoLength)
+{
+    FIXME("(%p,%s,%p,%p,%p,%p,%p,%p,%p),stub!\n",
+          PortHandle,debugstr_w(PortName->Buffer),SecurityQos,
+          WriteSection,pSid,ReadSection,MaximumMessageLength,ConnectInfo,
+          pConnectInfoLength);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  *  NtListenPort		[NTDLL.@]
  *  ZwListenPort		[NTDLL.@]
  */
