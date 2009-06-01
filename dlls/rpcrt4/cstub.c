@@ -117,10 +117,7 @@ typedef struct
     /* remaining entries in vtbl */
 } ref_counted_vtbl;
 
-static struct
-{
-    ref_counted_vtbl *table;
-} current_vtbl;
+static ref_counted_vtbl *current_vtbl;
 
 
 static HRESULT WINAPI delegating_QueryInterface(IUnknown *pUnk, REFIID iid, void **ppv)
@@ -225,38 +222,38 @@ static BOOL fill_delegated_stub_table(IUnknownVtbl *vtbl, DWORD num)
 
 #endif  /* __i386__ */
 
-void create_delegating_vtbl(DWORD num_methods)
-{
-    TRACE("%d\n", num_methods);
-    if(num_methods <= 3)
-    {
-        ERR("should have more than %d methods\n", num_methods);
-        return;
-    }
-
-    EnterCriticalSection(&delegating_vtbl_section);
-    if(!current_vtbl.table || num_methods > current_vtbl.table->size)
-    {
-        if(current_vtbl.table && current_vtbl.table->ref == 0)
-        {
-            TRACE("freeing old table\n");
-            HeapFree(GetProcessHeap(), 0, current_vtbl.table);
-        }
-        current_vtbl.table = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(ref_counted_vtbl, vtbl) + num_methods * sizeof(void*));
-        current_vtbl.table->ref = 0;
-        current_vtbl.table->size = num_methods;
-        fill_delegated_stub_table(&current_vtbl.table->vtbl, num_methods);
-    }
-    LeaveCriticalSection(&delegating_vtbl_section);
-}
-
-static IUnknownVtbl *get_delegating_vtbl(void)
+static IUnknownVtbl *get_delegating_vtbl(DWORD num_methods)
 {
     IUnknownVtbl *ret;
 
+    if (num_methods < 256) num_methods = 256;  /* avoid frequent reallocations */
+
     EnterCriticalSection(&delegating_vtbl_section);
-    current_vtbl.table->ref++;
-    ret = &current_vtbl.table->vtbl;
+
+    if(!current_vtbl || num_methods > current_vtbl->size)
+    {
+        ref_counted_vtbl *table = HeapAlloc(GetProcessHeap(), 0,
+                                            FIELD_OFFSET(ref_counted_vtbl, vtbl) + num_methods * sizeof(void*));
+        if (!table)
+        {
+            LeaveCriticalSection(&delegating_vtbl_section);
+            return NULL;
+        }
+
+        table->ref = 0;
+        table->size = num_methods;
+        fill_delegated_stub_table(&table->vtbl, num_methods);
+
+        if (current_vtbl && current_vtbl->ref == 0)
+        {
+            TRACE("freeing old table\n");
+            HeapFree(GetProcessHeap(), 0, current_vtbl);
+        }
+        current_vtbl = table;
+    }
+
+    current_vtbl->ref++;
+    ret = &current_vtbl->vtbl;
     LeaveCriticalSection(&delegating_vtbl_section);
     return ret;
 }
@@ -268,7 +265,7 @@ static void release_delegating_vtbl(IUnknownVtbl *vtbl)
     EnterCriticalSection(&delegating_vtbl_section);
     table->ref--;
     TRACE("ref now %d\n", table->ref);
-    if(table->ref == 0 && table != current_vtbl.table)
+    if(table->ref == 0 && table != current_vtbl)
     {
         TRACE("... and we're not current so free'ing\n");
         HeapFree(GetProcessHeap(), 0, table);
@@ -308,7 +305,7 @@ HRESULT CStdStubBuffer_Delegating_Construct(REFIID riid,
         return E_OUTOFMEMORY;
     }
 
-    This->base_obj = get_delegating_vtbl();
+    This->base_obj = get_delegating_vtbl( vtbl->header.DispatchTableCount );
     r = create_stub(delegating_iid, (IUnknown*)&This->base_obj, &This->base_stub);
     if(FAILED(r))
     {
