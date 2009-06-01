@@ -1343,6 +1343,39 @@ void test_readonly(void)
     DeleteFileA("winetest");
 }
 
+static void test_simple(void)
+{
+    /* Tests for STGM_SIMPLE mode */
+
+    static const WCHAR szPrefix[] = { 's','t','g',0 };
+    static const WCHAR szDot[] = { '.',0 };
+    WCHAR filename[MAX_PATH];
+    IStorage *stg;
+    HRESULT r;
+    IStream *stm;
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+
+    if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
+        return;
+
+    DeleteFileW(filename);
+
+    r = StgCreateDocfile( filename, STGM_SIMPLE | STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
+    ok(r == S_OK, "got %08x\n", r);
+
+    r = IStorage_CreateStream(stg, stmname, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm);
+    ok(r == STG_E_INVALIDFLAG, "got %08x\n", r);
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm);
+    ok(r == S_OK, "got %08x\n", r);
+
+    IStream_Release(stm);
+
+    IStorage_Commit(stg, STGC_DEFAULT);
+    IStorage_Release(stg);
+
+    DeleteFileW(filename);
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
@@ -1357,4 +1390,5 @@ START_TEST(storage32)
     test_access();
     test_writeclassstg();
     test_readonly();
+    test_simple();
 }
