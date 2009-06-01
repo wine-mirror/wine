@@ -3,10 +3,13 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = windowscodecs.dll
-IMPORTS   = kernel32
+IMPORTS   = uuid ole32 advapi32 kernel32
 
 C_SRCS = \
-	main.c
+	clsfactory.c \
+	imgfactory.c \
+	main.c \
+	regsvr.c
 
 @MAKE_DLL_RULES@
 

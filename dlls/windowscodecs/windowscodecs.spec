@@ -1,4 +1,6 @@
-@ stub DllGetClassObject
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub IEnumString_Next_WIC_Proxy
 @ stub IEnumString_Reset_WIC_Proxy
 @ stub IPropertyBag2_Write_Proxy
