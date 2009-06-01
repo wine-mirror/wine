@@ -255,7 +255,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl (LPCGUID lpcGUID, LPVOID* ppobj
 	obj->pCaps.dwMaxVoices = 1000;
 	obj->pCaps.dwMaxAudioChannels = -1;
 	obj->pCaps.dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
-	MultiByteToWideChar (CP_ACP, 0, "Microsotf Synthesizer", -1, obj->pCaps.wszDescription, sizeof(obj->pCaps.wszDescription)/sizeof(WCHAR));
+	MultiByteToWideChar (CP_ACP, 0, "Microsoft Synthesizer", -1, obj->pCaps.wszDescription, sizeof(obj->pCaps.wszDescription)/sizeof(WCHAR));
 	/* assign latency clock */
 	/*DMUSIC_CreateReferenceClockImpl (&IID_IReferenceClock, (LPVOID*)&This->pLatencyClock, NULL); */
 
