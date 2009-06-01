@@ -275,6 +275,7 @@ AC_CHECK_HEADERS(\
 	dlfcn.h \
 	elf.h \
 	float.h \
+	fnmatch.h \
 	fontconfig/fontconfig.h \
 	getopt.h \
 	grp.h \
@@ -1476,6 +1477,7 @@ AC_CHECK_FUNCS(\
 	epoll_create \
 	ffs \
 	finite \
+	fnmatch \
 	fork \
 	fpclass \
 	fstatfs \

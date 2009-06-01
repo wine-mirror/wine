@@ -5780,6 +5780,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -5799,6 +5800,7 @@ for ac_header in \
 	dlfcn.h \
 	elf.h \
 	float.h \
+	fnmatch.h \
 	fontconfig/fontconfig.h \
 	getopt.h \
 	grp.h \
@@ -17988,6 +17990,7 @@ CFLAGS="$CFLAGS $BUILTINFLAG"
 
 
 
+
 for ac_func in \
 	_pclose \
 	_popen \
@@ -18005,6 +18008,7 @@ for ac_func in \
 	epoll_create \
 	ffs \
 	finite \
+	fnmatch \
 	fork \
 	fpclass \
 	fstatfs \

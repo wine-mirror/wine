@@ -64,7 +64,9 @@
 #endif
 #include <errno.h>
 #include <stdarg.h>
+#ifdef HAVE_FNMATCH_H
 #include <fnmatch.h>
+#endif
 
 #define COBJMACROS
 
@@ -1444,6 +1446,7 @@ static BOOL build_native_mime_types(const char *xdg_data_home, struct list **mim
 static BOOL match_glob(struct list *native_mime_types, const char *extension,
                        char **match)
 {
+#ifdef HAVE_FNMATCH
     struct xdg_mime_type *mime_type_entry;
     int matchLength = 0;
 
@@ -1467,6 +1470,9 @@ static BOOL match_glob(struct list *native_mime_types, const char *extension,
         if (*match == NULL)
             return FALSE;
     }
+#else
+    *match = NULL;
+#endif
     return TRUE;
 }
 

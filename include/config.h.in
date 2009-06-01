@@ -93,6 +93,12 @@
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
+/* Define to 1 if you have the `fnmatch' function. */
+#undef HAVE_FNMATCH
+
+/* Define to 1 if you have the <fnmatch.h> header file. */
+#undef HAVE_FNMATCH_H
+
 /* Define to 1 if you have the <fontconfig/fontconfig.h> header file. */
 #undef HAVE_FONTCONFIG_FONTCONFIG_H
 
