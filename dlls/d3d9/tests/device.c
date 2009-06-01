@@ -172,7 +172,12 @@ static void test_checkdevicemultisampletype(void)
 
     hr = IDirect3D9_CheckDeviceMultiSampleType(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, TRUE,
     D3DMULTISAMPLE_NONE, &qualityLevels);
-    ok(SUCCEEDED(hr), "CheckDeviceMultiSampleType failed with (%08x)\n", hr);
+    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "CheckDeviceMultiSampleType failed with (%08x)\n", hr);
+    if(hr == D3DERR_NOTAVAILABLE)
+    {
+        skip("IDirect3D9_CheckDeviceMultiSampleType not available\n");
+        goto cleanup;
+    }
     ok(qualityLevels == 1,"qualitylevel is not 1 but %d\n",qualityLevels);
 
     hr = IDirect3D9_CheckDeviceMultiSampleType(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, FALSE,
