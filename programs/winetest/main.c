@@ -823,7 +823,7 @@ usage (void)
 " --help    print this message and exit\n"
 " --version print the build version and exit\n"
 " -c        console mode, no GUI\n"
-" -d DIR    Use DIR as temp directory (default: %%TEMP%%\\wct)"
+" -d DIR    Use DIR as temp directory (default: %%TEMP%%\\wct)\n"
 " -e        preserve the environment\n"
 " -h        print this message and exit\n"
 " -p        shutdown when the tests are done\n"
