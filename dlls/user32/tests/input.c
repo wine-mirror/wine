@@ -1285,6 +1285,8 @@ static void test_ToUnicode(void)
 
     state[VK_SHIFT] |= HIGHEST_BIT;
     state[VK_LSHIFT] |= HIGHEST_BIT;
+    ret = ToUnicode(VK_TAB, SC_TAB, state, wStr, 2, 0);
+    ok(ret == 0, "ToUnicode for CTRL + SHIFT + Tab didn't return 0 (was %i)\n", ret);
     ret = ToUnicode(VK_RETURN, SC_RETURN, state, wStr, 2, 0);
     todo_wine ok(ret == 0, "ToUnicode for CTRL + SHIFT + Return didn't return 0 (was %i)\n", ret);
 }
