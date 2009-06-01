@@ -1354,6 +1354,10 @@ static void test_simple(void)
     HRESULT r;
     IStream *stm;
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER upos;
+    DWORD count;
+    STATSTG stat;
 
     if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
         return;
@@ -1368,9 +1372,49 @@ static void test_simple(void)
     r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm);
     ok(r == S_OK, "got %08x\n", r);
 
+    upos.QuadPart = 6000;
+    r = IStream_SetSize(stm, upos);
+    ok(r == S_OK, "got %08x\n", r);
+
+    r = IStream_Write(stm, "foo", 3, &count);
+    ok(r == S_OK, "got %08x\n", r);
+    ok(count == 3, "got %d\n", count);
+
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, STREAM_SEEK_CUR, &upos);
+    ok(r == S_OK, "got %08x\n", r);
+    ok(upos.QuadPart == 3, "got %d\n", upos.u.LowPart);
+
+    r = IStream_Stat(stm, &stat, STATFLAG_NONAME);
+    ok(r == S_OK, "got %08x\n", r);
+    ok(stat.cbSize.QuadPart == 3, "got %d\n", stat.cbSize.u.LowPart);
+
+    pos.QuadPart = 1;
+    r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &upos);
+    ok(r == S_OK, "got %08x\n", r);
+    ok(upos.QuadPart == 1, "got %d\n", upos.u.LowPart);
+
+    r = IStream_Stat(stm, &stat, STATFLAG_NONAME);
+    ok(r == S_OK, "got %08x\n", r);
+    ok(stat.cbSize.QuadPart == 1, "got %d\n", stat.cbSize.u.LowPart);
+
     IStream_Release(stm);
 
     IStorage_Commit(stg, STGC_DEFAULT);
+    IStorage_Release(stg);
+
+    r = StgOpenStorage( filename, NULL, STGM_SIMPLE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, NULL, 0, &stg);
+    ok(r == S_OK, "got %08x\n", r);
+
+    r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stm);
+    ok(r == S_OK, "got %08x\n", r);
+
+    r = IStream_Stat(stm, &stat, STATFLAG_NONAME);
+    ok(r == S_OK, "got %08x\n", r);
+    ok(stat.cbSize.QuadPart == 6000, "got %d\n", stat.cbSize.u.LowPart);
+
+    IStream_Release(stm);
+
     IStorage_Release(stg);
 
     DeleteFileW(filename);

@@ -841,11 +841,17 @@ static HRESULT WINAPI StgStreamImpl_Stat(
 
   if (readSuccessful)
   {
+    StorageImpl *root = This->parentStorage->ancestorStorage;
+
     StorageUtl_CopyPropertyToSTATSTG(pstatstg,
 				     &curProperty,
 				     grfStatFlag);
 
     pstatstg->grfMode = This->grfMode;
+
+    /* In simple create mode cbSize is the current pos */
+    if((root->base.openFlags & STGM_SIMPLE) && root->create)
+      pstatstg->cbSize = This->currentPosition;
 
     return S_OK;
   }
