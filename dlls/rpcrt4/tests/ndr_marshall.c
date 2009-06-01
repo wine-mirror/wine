@@ -1444,7 +1444,8 @@ static void test_conformant_array(void)
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrConformantArrayUnmarshall( &StubMsg, &mem, fmtstr_conf_array, 0);
-    ok(mem == StubMsg.BufferStart + 4, "mem not pointing at buffer\n");
+    ok(mem == StubMsg.BufferStart + 4 || broken(!mem),  /* win9x, nt4 */
+       "mem not pointing at buffer %p/%p\n", mem, StubMsg.BufferStart + 4);
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
     my_alloc_called = 0;
     mem = NULL;
@@ -1493,6 +1494,7 @@ static void test_conformant_string(void)
     StubDesc = Object_StubDesc;
     StubDesc.pFormatTypes = fmtstr_conf_str;
 
+    memset( &StubMsg, 0, sizeof(StubMsg) );  /* needed on win9x and nt4 */
     NdrClientInitializeNew(
                            &RpcMessage,
                            &StubMsg,
@@ -1553,7 +1555,8 @@ todo_wine {
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 0);
-    ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
+    ok(mem == StubMsg.BufferStart + 12 || broken(!mem), /* win9x, nt4 */
+       "mem not pointing at buffer %p/%p\n", mem, StubMsg.BufferStart + 12 );
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
 
     my_alloc_called = 0;
@@ -1561,7 +1564,8 @@ todo_wine {
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 1);
 todo_wine {
-    ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
+    ok(mem == StubMsg.BufferStart + 12 || broken(!mem), /* win9x, nt4 */
+       "mem not pointing at buffer %p/%p\n", mem, StubMsg.BufferStart + 12 );
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
 }
 
@@ -1569,7 +1573,8 @@ todo_wine {
     mem = mem_orig;
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 0);
-    ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
+    ok(mem == StubMsg.BufferStart + 12 || broken(!mem), /* win9x, nt4 */
+       "mem not pointing at buffer %p/%p\n", mem, StubMsg.BufferStart + 12 );
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
 
     my_alloc_called = 0;
@@ -1577,7 +1582,8 @@ todo_wine {
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 1);
 todo_wine {
-    ok(mem == StubMsg.BufferStart + 12, "mem not pointing at buffer\n");
+    ok(mem == StubMsg.BufferStart + 12 || broken(!mem), /* win9x, nt4 */
+       "mem not pointing at buffer %p/%p\n", mem, StubMsg.BufferStart + 12 );
     ok(my_alloc_called == 0, "alloc called %d\n", my_alloc_called);
 }
 
