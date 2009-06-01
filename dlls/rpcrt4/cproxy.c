@@ -40,8 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-struct StublessThunk;
-
 /* I don't know what MS's std proxy structure looks like,
    so this probably doesn't match, but that shouldn't matter */
 typedef struct {
@@ -54,7 +52,6 @@ typedef struct {
   PCInterfaceName name;
   LPPSFACTORYBUFFER pPSFactory;
   LPRPCCHANNELBUFFER pChannel;
-  struct StublessThunk *thunks;
 } StdProxyImpl;
 
 static const IRpcProxyBufferVtbl StdProxy_Vtbl;
@@ -65,7 +62,7 @@ static const IRpcProxyBufferVtbl StdProxy_Vtbl;
 
 #include "pshpack1.h"
 
-struct StublessThunk {
+struct thunk {
   BYTE push;
   DWORD index;
   BYTE jmp;
@@ -73,12 +70,6 @@ struct StublessThunk {
 };
 
 #include "poppack.h"
-
-#define FILL_STUBLESS(x,idx) \
- x->push = 0x68; /* pushl [immediate] */ \
- x->index = (idx); \
- x->jmp = 0xe9; /* jmp */ \
- x->handler = (char*)call_stubless_func - (char*)(&x->handler + 1);
 
 extern void call_stubless_func(void);
 __ASM_GLOBAL_FUNC(call_stubless_func,
@@ -106,12 +97,59 @@ HRESULT WINAPI ObjectStubless(DWORD *args)
     return NdrClientCall2(stubless->pStubDesc, fs, args + 2);
 }
 
+#define BLOCK_SIZE 1024
+#define MAX_BLOCKS 64  /* 64k methods should be enough for anybody */
+
+static const struct thunk *method_blocks[MAX_BLOCKS];
+
+static const struct thunk *allocate_block( unsigned int num )
+{
+    unsigned int i;
+    struct thunk *prev, *block;
+
+    block = VirtualAlloc( NULL, BLOCK_SIZE * sizeof(*block),
+                          MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
+    if (!block) return NULL;
+
+    for (i = 0; i < BLOCK_SIZE; i++)
+    {
+        block[i].push    = 0x68; /* pushl */
+        block[i].index   = BLOCK_SIZE * num + i + 3;
+        block[i].jmp     = 0xe9; /* jmp */
+        block[i].handler = (char *)call_stubless_func - (char *)(&block[i].handler + 1);
+    }
+    VirtualProtect( block, BLOCK_SIZE * sizeof(*block), PAGE_EXECUTE_READ, NULL );
+    prev = InterlockedCompareExchangePointer( (void **)&method_blocks[num], block, NULL );
+    if (prev) /* someone beat us to it */
+    {
+        VirtualFree( block, 0, MEM_RELEASE );
+        block = prev;
+    }
+    return block;
+}
+
+static BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
+{
+    const void **entry = (const void **)(vtbl + 1);
+    DWORD i, j;
+
+    for (i = 0; i < (num - 3 + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
+    {
+        const struct thunk *block = method_blocks[i];
+        if (!block && !(block = allocate_block( i ))) return FALSE;
+        for (j = 0; j < BLOCK_SIZE && j < num - 3 - i * BLOCK_SIZE; j++, entry++)
+            if (*entry == (LPVOID)-1) *entry = &block[j];
+    }
+    return TRUE;
+}
+
 #else  /* __i386__ */
 
-/* can't do that on this arch */
-struct StublessThunk { int dummy; };
-#define FILL_STUBLESS(x,idx) \
- ERR("stubless proxies are not supported on this architecture\n");
+static BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
+{
+    ERR("stubless proxies are not supported on this architecture\n");
+    return FALSE;
+}
 
 #endif  /* __i386__ */
 
@@ -132,13 +170,14 @@ HRESULT StdProxy_Construct(REFIID riid,
 
   /* TableVersion = 2 means it is the stubless version of CInterfaceProxyVtbl */
   if (ProxyInfo->TableVersion > 1) {
+    ULONG count = ProxyInfo->pStubVtblList[Index]->header.DispatchTableCount;
     stubless = *(const void **)vtbl;
     vtbl = (CInterfaceProxyVtbl *)((const void **)vtbl + 1);
-    TRACE("stubless=%p\n", stubless);
+    TRACE("stubless %p vtbl %p: count=%d\n", stubless, vtbl->Vtbl, count );
+    fill_stubless_table( (IUnknownVtbl *)vtbl->Vtbl, count );
   }
 
-  TRACE("iid=%s\n", debugstr_guid(vtbl->header.piid));
-  TRACE("vtbl=%p\n", vtbl->Vtbl);
+  TRACE("iid=%s vtbl=%p\n", debugstr_guid(vtbl->header.piid), vtbl->Vtbl);
 
   if (!IsEqualGUID(vtbl->header.piid, riid)) {
     ERR("IID mismatch during proxy creation\n");
@@ -148,32 +187,9 @@ HRESULT StdProxy_Construct(REFIID riid,
   This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(StdProxyImpl));
   if (!This) return E_OUTOFMEMORY;
 
-  if (stubless) {
-    CInterfaceStubVtbl *svtbl = ProxyInfo->pStubVtblList[Index];
-    ULONG i, count = svtbl->header.DispatchTableCount;
-    /* Maybe the original vtbl is just modified directly to point at
-     * ObjectStublessClientXXX thunks in real Windows, but I don't like it
-     */
-    TRACE("stubless thunks: count=%d\n", count);
-    This->thunks = HeapAlloc(GetProcessHeap(),0,sizeof(struct StublessThunk)*count);
-    This->PVtbl = HeapAlloc(GetProcessHeap(),0,sizeof(LPVOID)*count);
-    for (i=0; i<count; i++) {
-      struct StublessThunk *thunk = &This->thunks[i];
-      if (vtbl->Vtbl[i] == (LPVOID)-1) {
-        FILL_STUBLESS(thunk, i)
-        This->PVtbl[i] = thunk;
-      }
-      else {
-        memset(thunk, 0, sizeof(struct StublessThunk));
-        This->PVtbl[i] = vtbl->Vtbl[i];
-      }
-    }
-  }
-  else 
-    This->PVtbl = vtbl->Vtbl;
-
   if (!pUnkOuter) pUnkOuter = (IUnknown *)This;
   This->lpVtbl = &StdProxy_Vtbl;
+  This->PVtbl = vtbl->Vtbl;
   /* one reference for the proxy */
   This->RefCount = 1;
   This->stubless = stubless;
@@ -198,10 +214,6 @@ static void StdProxy_Destruct(LPRPCPROXYBUFFER iface)
     IRpcProxyBuffer_Disconnect(iface);
 
   IPSFactoryBuffer_Release(This->pPSFactory);
-  if (This->thunks) {
-    HeapFree(GetProcessHeap(),0,This->PVtbl);
-    HeapFree(GetProcessHeap(),0,This->thunks);
-  }
   HeapFree(GetProcessHeap(),0,This);
 }
 
