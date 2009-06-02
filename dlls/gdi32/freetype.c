@@ -846,7 +846,7 @@ static inline FT_Fixed FT_FixedFromFloat(double f)
 */
 static inline FT_Fixed FT_FixedFromFIXED(FIXED f)
 {
-	return (FT_Fixed)((long)f.value << 16 | (unsigned long)f.fract);
+    return (FT_Fixed)((int)f.value << 16 | (unsigned int)f.fract);
 }
 
 
