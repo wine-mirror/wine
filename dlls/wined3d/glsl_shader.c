@@ -3411,7 +3411,7 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
                         && !strcmp(semantic_name_in, semantic_name_out))
                 {
                     shader_addline(buffer, "%s%s = OUT[%u]%s;\n",
-                            destination, reg_mask, j, reg_mask_out);
+                            destination, reg_mask, j, reg_mask);
                     found = TRUE;
                 }
             }
