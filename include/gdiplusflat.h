@@ -432,6 +432,8 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE,BOOL,
     GDIPCONST WmfPlaceableFileHeader*,GpMetafile**);
 GpStatus WINGDIPAPI GdipCreateMetafileFromWmfFile(GDIPCONST WCHAR*, GDIPCONST WmfPlaceableFileHeader*,
     GpMetafile**);
+GpStatus WINGDIPAPI GdipCreateMetafileFromFile(GDIPCONST WCHAR*,GpMetafile**);
+GpStatus WINGDIPAPI GdipCreateMetafileFromStream(IStream*,GpMetafile**);
 GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpMetafile*,UINT);
 
 /* MetafileHeader */

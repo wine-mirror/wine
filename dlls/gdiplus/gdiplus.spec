@@ -109,8 +109,8 @@
 @ stdcall GdipCreateMatrix3I(ptr ptr ptr)
 @ stdcall GdipCreateMatrix(ptr)
 @ stdcall GdipCreateMetafileFromEmf(ptr long ptr)
-@ stub GdipCreateMetafileFromFile
-@ stub GdipCreateMetafileFromStream
+@ stdcall GdipCreateMetafileFromFile(ptr ptr)
+@ stdcall GdipCreateMetafileFromStream(ptr ptr)
 @ stdcall GdipCreateMetafileFromWmf(ptr long ptr ptr)
 @ stdcall GdipCreateMetafileFromWmfFile(wstr ptr ptr)
 @ stdcall GdipCreatePath2(ptr ptr long long ptr)

@@ -1116,6 +1116,20 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmfFile(GDIPCONST WCHAR *file,
     return GdipCreateMetafileFromWmf(hmf, TRUE, placeable, metafile);
 }
 
+GpStatus WINGDIPAPI GdipCreateMetafileFromFile(GDIPCONST WCHAR *file,
+    GpMetafile **metafile)
+{
+    FIXME("(%p, %p): stub\n", file, metafile);
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipCreateMetafileFromStream(IStream *stream,
+    GpMetafile **metafile)
+{
+    FIXME("(%p, %p): stub\n", stream, metafile);
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipCreateStreamOnFile(GDIPCONST WCHAR * filename,
     UINT access, IStream **stream)
 {
