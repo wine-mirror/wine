@@ -2002,7 +2002,8 @@ static HRESULT STDMETHODCALLTYPE device_parent_CreateSurface(IWineD3DDeviceParen
             "\tpool %#x, level %u, face %u, surface %p\n",
             iface, superior, width, height, format, usage, pool, level, face, surface);
 
-    if (pool == D3DPOOL_DEFAULT && !(usage & D3DUSAGE_DYNAMIC)) lockable = FALSE;
+    if (pool == WINED3DPOOL_DEFAULT && !(usage & D3DUSAGE_DYNAMIC))
+        lockable = FALSE;
 
     hr = IDirect3DDevice9Impl_CreateSurface((IDirect3DDevice9Ex *)This, width, height,
             d3dformat_from_wined3dformat(format), lockable, FALSE /* Discard */, level,
