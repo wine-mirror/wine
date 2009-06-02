@@ -33,6 +33,10 @@ DEFINE_GUID( test_stg_cls, 0x88888888, 0x0425, 0x0000, 0,0,0,0,0,0,0,0);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 
+static const WCHAR szPrefix[] = { 's','t','g',0 };
+static const WCHAR szDot[] = { '.',0 };
+WCHAR filename[MAX_PATH];
+
 static void test_hglobal_storage_stat(void)
 {
     ILockBytes *ilb = NULL;
@@ -67,9 +71,6 @@ static void test_hglobal_storage_stat(void)
 
 static void test_create_storage_modes(void)
 {
-   static const WCHAR szPrefix[] = { 's','t','g',0 };
-   static const WCHAR szDot[] = { '.',0 };
-   WCHAR filename[MAX_PATH];
    IStorage *stg = NULL;
    HRESULT r;
 
@@ -228,13 +229,10 @@ static void test_create_storage_modes(void)
 static void test_storage_stream(void)
 {
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
-    static const WCHAR szPrefix[] = { 's','t','g',0 };
-    static const WCHAR szDot[] = { '.',0 };
     static const WCHAR longname[] = {
         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
         'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',0
     };
-    WCHAR filename[MAX_PATH];
     IStorage *stg = NULL;
     HRESULT r;
     IStream *stm = NULL;
@@ -389,10 +387,7 @@ static BOOL is_existing_file(LPCWSTR filename)
 
 static void test_open_storage(void)
 {
-    static const WCHAR szPrefix[] = { 's','t','g',0 };
     static const WCHAR szNonExist[] = { 'n','o','n','e','x','i','s','t',0 };
-    static const WCHAR szDot[] = { '.',0 };
-    WCHAR filename[MAX_PATH];
     IStorage *stg = NULL, *stg2 = NULL;
     HRESULT r;
     DWORD stgm;
@@ -564,9 +559,6 @@ static void test_open_storage(void)
 
 static void test_storage_suminfo(void)
 {
-    static const WCHAR szDot[] = { '.',0 };
-    static const WCHAR szPrefix[] = { 's','t','g',0 };
-    WCHAR filename[MAX_PATH];
     IStorage *stg = NULL;
     IPropertySetStorage *propset = NULL;
     IPropertyStorage *ps = NULL;
@@ -678,9 +670,6 @@ static void test_storage_suminfo(void)
 
 static void test_storage_refcount(void)
 {
-    static const WCHAR szPrefix[] = { 's','t','g',0 };
-    static const WCHAR szDot[] = { '.',0 };
-    WCHAR filename[MAX_PATH];
     IStorage *stg = NULL;
     IStorage *stgprio = NULL;
     HRESULT r;
@@ -805,9 +794,6 @@ static void test_storage_refcount(void)
 
 static void test_writeclassstg(void)
 {
-    static const WCHAR szPrefix[] = { 's','t','g',0 };
-    static const WCHAR szDot[] = { '.',0 };
-    WCHAR filename[MAX_PATH];
     IStorage *stg = NULL;
     HRESULT r;
     CLSID temp_cls;
@@ -855,9 +841,6 @@ static void test_writeclassstg(void)
 
 static void test_streamenum(void)
 {
-    static const WCHAR szPrefix[] = { 's','t','g',0 };
-    static const WCHAR szDot[] = { '.',0 };
-    WCHAR filename[MAX_PATH];
     IStorage *stg = NULL;
     HRESULT r;
     IStream *stm = NULL;
@@ -933,9 +916,6 @@ static void test_streamenum(void)
 
 static void test_transact(void)
 {
-    static const WCHAR szPrefix[] = { 's','t','g',0 };
-    static const WCHAR szDot[] = { '.',0 };
-    WCHAR filename[MAX_PATH];
     IStorage *stg = NULL, *stg2 = NULL;
     HRESULT r;
     IStream *stm = NULL;
@@ -1347,9 +1327,6 @@ static void test_simple(void)
 {
     /* Tests for STGM_SIMPLE mode */
 
-    static const WCHAR szPrefix[] = { 's','t','g',0 };
-    static const WCHAR szDot[] = { '.',0 };
-    WCHAR filename[MAX_PATH];
     IStorage *stg;
     HRESULT r;
     IStream *stm;
