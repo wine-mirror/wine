@@ -1367,6 +1367,12 @@ static void test_simple(void)
     IStorage_Release(stg);
 
     r = StgOpenStorage( filename, NULL, STGM_SIMPLE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, NULL, 0, &stg);
+    if (r == STG_E_INVALIDFLAG)
+    {
+        win_skip("Flag combination is not supported on NT4 and below\n");
+        DeleteFileA(filenameA);
+        return;
+    }
     ok(r == S_OK, "got %08x\n", r);
 
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stm);
