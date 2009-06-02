@@ -11072,7 +11072,9 @@ static void check_lb_state_dbg(HWND listbox, int count, int cur_sel,
     ret = CallWindowProcA(listbox_orig_proc, listbox, LB_GETCURSEL, 0, 0);
     ok_(__FILE__, line)(ret == cur_sel, "expected cur sel %d, got %ld\n", cur_sel, ret);
     ret = CallWindowProcA(listbox_orig_proc, listbox, LB_GETCARETINDEX, 0, 0);
-    ok_(__FILE__, line)(ret == caret_index, "expected caret index %d, got %ld\n", caret_index, ret);
+    ok_(__FILE__, line)(ret == caret_index ||
+                        broken(cur_sel == -1 && caret_index == 0 && ret == -1),  /* nt4 */
+                        "expected caret index %d, got %ld\n", caret_index, ret);
     ret = CallWindowProcA(listbox_orig_proc, listbox, LB_GETTOPINDEX, 0, 0);
     ok_(__FILE__, line)(ret == top_index, "expected top index %d, got %ld\n", top_index, ret);
 }
