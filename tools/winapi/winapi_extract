@@ -45,14 +45,14 @@ use winapi_c_parser;
 use winapi_function;
 
 use vars qw($win16api $win32api @winapis);
-if ($options->spec_files || $options->implemented || $options->stub_statistics || $options->winetest) {
+if ($options->implemented || $options->stub_statistics || $options->winetest) {
     require winapi;
     import winapi qw($win16api $win32api @winapis);
 }
 
 my %module2entries;
 my %module2spec_file;
-if($options->spec_files || $options->winetest) {
+if($options->winetest) {
     local $_;
 
     foreach my $spec_file (get_spec_files("winelib")) {
@@ -194,7 +194,7 @@ if($options->headers) {
 }
 
 my @c_files = ();
-if($options->spec_files || $options->pseudo_implemented || $options->pseudo_stub_statistics) {
+if($options->pseudo_implemented || $options->pseudo_stub_statistics) {
     @c_files = $options->c_files;
     @c_files = files_skip(@c_files);
     @c_files = files_filter("winelib", @c_files);
@@ -299,7 +299,7 @@ foreach my $file (@h_files, @c_files) {
 	$old_function->statements_line($function->statements_line);
 	$old_function->statements($function->statements);
 
-	if($options->spec_files || $options->winetest) {
+	if($options->winetest) {
 	    documentation_specifications($old_function);
 	}
 
@@ -442,108 +442,6 @@ sub output_function($$$$$) {
 	print OUT "$ordinal $calling_convention $external_name(@argument_kinds) $internal_name\n";
     } else {
 	print OUT "$ordinal $calling_convention $external_name() $internal_name # FIXME: arguments undefined\n";
-    }
-}
-
-if($options->spec_files) {
-    foreach my $winapi (@winapis) {
-	my $type = $winapi->name;
-
-	if($type eq "win16" && !$options->win16) { next; }
-	if($type eq "win32" && !$options->win32) { next; }
-
-	foreach my $module ($winapi->all_modules) {
-	    my $spec_file = $module2spec_file{$module};
-
-	    if(!defined($spec_file) || !defined($type)) {
-		$output->write("$module: doesn't exist\n");
-		next;
-	    }
-
-	    $spec_file .= "2";
-
-	    $output->progress("$spec_file");
-	    open(OUT, "> $wine_dir/$spec_file") || die "Error: Can't open $wine_dir/$spec_file: $!\n";
-
-	    if(exists($specifications{$module}{init})) {
-		my $function = $specifications{$module}{init}{function};
-		print OUT "init " . $function->internal_name . "\n";
-	    }
-	    print OUT "\n";
-
-	    my %debug_channels;
-	    if(exists($specifications{$module}{init})) {
-		my $function = $specifications{$module}{init}{function};
-		foreach my $debug_channel (@{$function->debug_channels}) {
-		    $debug_channels{$debug_channel}++;
-		}
-	    }
-	    foreach my $ordinal (sort {$a <=> $b} keys(%{$specifications{$module}{fixed}})) {
-		my $function = $specifications{$module}{fixed}{$ordinal}{function};
-		foreach my $debug_channel (@{$function->debug_channels}) {
-		    $debug_channels{$debug_channel}++;
-		}
-	    }
-	    foreach my $name (sort(keys(%{$specifications{$module}{unfixed}}))) {
-		my $function = $specifications{$module}{unfixed}{$name}{function};
-		foreach my $debug_channel (@{$function->debug_channels}) {
-		    $debug_channels{$debug_channel}++;
-		}
-	    }
-	    foreach my $name (sort(keys(%{$specifications{$module}{unknown}}))) {
-		my $function = $specifications{$module}{unknown}{$name}{function};
-		foreach my $debug_channel (@{$function->debug_channels}) {
-		    $debug_channels{$debug_channel}++;
-		}
-	    }
-
-	    my @debug_channels = sort(keys(%debug_channels));
-	    if($#debug_channels >= 0) {
-		print OUT "debug_channels (" .  join(" ", @debug_channels) . ")\n";
-		print OUT "\n";
-	    }
-
-	    my $empty = 1;
-
-	    if(!$empty) {
-		print OUT "\n";
-		$empty = 1;
-	    }
-	    foreach my $external_name (sort(keys(%{$specifications{$module}{unknown}}))) {
-		my $entry = $specifications{$module}{unknown}{$external_name};
-		my $ordinal = $entry->{ordinal};
-		my $function = $entry->{function};
-		print OUT "# ";
-		output_function(\*OUT, $type, $ordinal, $external_name, $function);
-		$empty = 0;
-	    }
-
-	    if(!$empty) {
-		print OUT "\n";
-		$empty = 1;
-	    }
-	    foreach my $ordinal (sort {$a <=> $b} keys(%{$specifications{$module}{fixed}})) {
-		my $entry = $specifications{$module}{fixed}{$ordinal};
-		my $external_name = $entry->{external_name};
-		my $function = $entry->{function};
-		output_function(\*OUT, $type, $ordinal, $external_name, $function);
-		$empty = 0;
-	    }
-
-	    if(!$empty) {
-		print OUT "\n";
-		$empty = 1;
-	    }
-	    foreach my $external_name (sort(keys(%{$specifications{$module}{unfixed}}))) {
-		my $entry = $specifications{$module}{unfixed}{$external_name};
-		my $ordinal = $entry->{ordinal};
-		my $function = $entry->{function};
-		output_function(\*OUT, $type, $ordinal, $external_name, $function);
-		$empty = 0;
-	    }
-
-	    close(OUT);
-	}
     }
 }
 
