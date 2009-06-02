@@ -65,7 +65,7 @@
 @ stdcall GdipCombineRegionRect(ptr ptr long)
 @ stdcall GdipCombineRegionRectI(ptr ptr long)
 @ stdcall GdipCombineRegionRegion(ptr ptr long)
-@ stub GdipComment
+@ stdcall GdipComment(ptr long ptr)
 @ stdcall GdipConvertToEmfPlus(ptr ptr ptr long ptr ptr)
 @ stub GdipConvertToEmfPlusToFile
 @ stub GdipConvertToEmfPlusToStream

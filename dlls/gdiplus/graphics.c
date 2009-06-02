@@ -3164,6 +3164,12 @@ GpStatus WINGDIPAPI GdipBeginContainerI(GpGraphics *graphics, GDIPCONST GpRect *
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipComment(GpGraphics *graphics, UINT sizeData, GDIPCONST BYTE *data)
+{
+    FIXME("(%p, %d, %p): stub\n", graphics, sizeData, data);
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsState state)
 {
     FIXME("(%p, 0x%x)\n", graphics, state);
