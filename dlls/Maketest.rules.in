@@ -29,8 +29,8 @@ CROSSWINEGCC = $(TOOLSDIR)/tools/winegcc/winegcc @CROSSTARGETFLAGS@ -B$(TOOLSDIR
 
 all: $(TESTPROGRAM)
 
-$(MODULE) $(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
-	$(WINEGCC) $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(LIBPORT) $(ALL_LIBS)
+$(MODULE) $(MODULE).so: $(OBJS) Makefile.in
+	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(LIBPORT) $(ALL_LIBS)
 
 # Rules for building test list
 
@@ -47,7 +47,7 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT) ../$(TESTDLL)$(DLLEXT)
 
 # Rules for cross-compiling tests
 
-CROSSOBJS = $(OBJS:.o=.cross.o) $(RC_SRCS:.rc=.res)
+CROSSOBJS = $(OBJS:.o=.cross.o)
 
 .SUFFIXES: .cross.o
 
