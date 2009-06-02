@@ -2892,6 +2892,42 @@ static void test_editbox(void)
     hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
     ok(hwndedit == NULL, "Expected Edit window not to be created\n");
 
+    /* check EN_KILLFOCUS handling */
+    memset(&item, 0, sizeof(item));
+    item.pszText = testitemA;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_SETITEMTEXTA, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
+    /* modify edit and notify control that it lost focus */
+    r = SendMessage(hwndedit, WM_SETTEXT, 0, (LPARAM)testitem1A);
+    expect(TRUE, r);
+    r = SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)hwndedit);
+    expect(0, r);
+    memset(&item, 0, sizeof(item));
+    item.pszText = buffer;
+    item.cchTextMax = 10;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
+    expect(strlen(item.pszText), r);
+    todo_wine ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
+    /* end edit without saving */
+    r = SendMessage(hwndedit, WM_KEYDOWN, VK_ESCAPE, 0);
+    expect(0, r);
+    memset(&item, 0, sizeof(item));
+    item.pszText = buffer;
+    item.cchTextMax = 10;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
+    expect(strlen(item.pszText), r);
+    todo_wine ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
+
     DestroyWindow(hwnd);
 }
 
