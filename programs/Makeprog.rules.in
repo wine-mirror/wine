@@ -19,15 +19,8 @@ INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(mandir)/man$(p
 
 all: $(MODULE)$(DLLEXT)
 
-# Rules for .so main module
-
-$(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
+$(MODULE) $(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
 	$(WINEGCC) $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
-
-# Rules for .exe main module
-
-$(MODULE): $(OBJS) $(RCOBJS) Makefile.in
-	$(WINEGCC) $(APPMODE) $(OBJS) $(RCOBJS) -o $@ $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
 
 # Rules for testing
 

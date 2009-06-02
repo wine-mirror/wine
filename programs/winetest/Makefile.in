@@ -46,11 +46,8 @@ depend: tests.rc
 
 dist: winetest-dist.exe$(DLLEXT)
 
-winetest-dist.exe.so: $(OBJS) dist.res Makefile.in
+winetest-dist.exe winetest-dist.exe.so: $(OBJS) dist.res Makefile.in
 	$(WINEGCC) $(APPMODE) $(OBJS) dist.res -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
-
-winetest-dist.exe: $(OBJS) dist.res.o Makefile.in
-	$(WINEGCC) $(APPMODE) $(OBJS) dist.res.o -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
 	-upx -9 -qqq $@
 
 dist.res: winetest.rc tests.rc build.nfo winetest.ico $(TESTBINS)

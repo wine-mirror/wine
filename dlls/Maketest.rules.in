@@ -30,15 +30,8 @@ CROSSWINDRES = @CROSSWINDRES@
 
 all: $(TESTPROGRAM)
 
-# Rules for .so main module
-
-$(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
-	$(WINEGCC) -mconsole $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(LIBPORT) $(ALL_LIBS)
-
-# Rules for .exe main module
-
-$(MODULE): $(OBJS) $(RCOBJS) Makefile.in
-	$(WINEGCC) $(APPMODE) $(OBJS) $(RCOBJS) -o $@ $(LIBPORT) $(ALL_LIBS)
+$(MODULE) $(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
+	$(WINEGCC) $(APPMODE) $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(LIBPORT) $(ALL_LIBS)
 
 # Rules for building test list
 

@@ -40,7 +40,6 @@ AR        = @AR@
 ARFLAGS   = @ARFLAGS@
 RANLIB    = @RANLIB@
 STRIP     = @STRIP@
-WINDRES   = @WINDRES@
 LN        = @LN@
 LN_S      = @LN_S@
 TOOLSDIR  = @TOOLSDIR@
@@ -121,7 +120,6 @@ CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(EXTRA_OBJS)
 
-RCOBJS = $(RC_SRCS:.rc=.res.o)
 LINTS  = $(C_SRCS:.c=.ln)
 
 # 'all' target first in case the enclosing Makefile didn't define any target
@@ -135,7 +133,7 @@ filter: dummy
 
 # Implicit rules
 
-.SUFFIXES: .mc .rc .mc.rc .res .res.o .spec .spec.o .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c @MAINTAINER_MODE@ .sfd .ttf .svg .ico
+.SUFFIXES: .mc .rc .mc.rc .res .spec .spec.o .idl .tlb .h .y .l .tab.c .tab.h .yy.c .ok .man.in .man _c.c _i.c _p.c _s.c @MAINTAINER_MODE@ .sfd .ttf .svg .ico
 
 .c.o:
 	$(CC) -c $(ALLCFLAGS) -o $@ $<
@@ -154,9 +152,6 @@ filter: dummy
 
 .rc.res:
 	$(LDPATH) $(RC) $(RCFLAGS) -fo$@ $<
-
-.res.res.o:
-	$(WINDRES) -i $< -o $@
 
 .spec.spec.o:
 	$(WINEBUILD) $(WINEBUILDFLAGS) --dll -o $@ --main-module $(MODULE) --export $<

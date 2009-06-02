@@ -28,15 +28,8 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 
 @MAKE_RULES@
 
-# Rules for .so files
-
-$(MODULE).so: $(MAINSPEC) $(ALL_OBJS) Makefile.in
+$(MODULE) $(MODULE).so: $(MAINSPEC) $(ALL_OBJS) Makefile.in
 	$(WINEGCC) -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
-
-# Rules for .dll files
-
-$(MODULE): $(MAINSPEC) $(RCOBJS) $(OBJS) Makefile.in
-	$(WINEGCC) -shared $(SRCDIR)/$(MAINSPEC) $(OBJS) $(RCOBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for import libraries
 
