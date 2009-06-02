@@ -1159,20 +1159,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     }
 
     object->lpVtbl = &IWineD3DTexture_Vtbl;
-    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_TEXTURE, This, 0, Usage, format_desc, Pool, parent);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)object, Levels,
+            WINED3DRTYPE_TEXTURE, This, 0, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize resource, returning %#x\n", hr);
+        WARN("Failed to initialize basetexture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         *ppTexture = NULL;
         return hr;
     }
 
-    TRACE("(%p) : Created resource %p\n", This, object);
+    TRACE("(%p) : Created basetexture %p\n", This, object);
 
     *ppTexture = (IWineD3DTexture *)object;
-
-    basetexture_init(&object->baseTexture, Levels, Usage);
 
     if (object->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
     {
@@ -1316,19 +1315,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     }
 
     object->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
-    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_VOLUMETEXTURE,
-            This, 0, Usage, format_desc, Pool, parent);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)object, Levels,
+            WINED3DRTYPE_VOLUMETEXTURE, This, 0, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize resource, returning %#x\n", hr);
+        WARN("Failed to initialize basetexture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         *ppVolumeTexture = NULL;
         return hr;
     }
 
-    TRACE("(%p) : Created resource %p\n", This, object);
-
-    basetexture_init(&object->baseTexture, Levels, Usage);
+    TRACE("(%p) : Created basetexture %p\n", This, object);
 
     TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
           Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
@@ -1492,18 +1489,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     }
 
     object->lpVtbl = &IWineD3DCubeTexture_Vtbl;
-    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_CUBETEXTURE, This, 0, Usage, format_desc, Pool, parent);
+    hr = basetexture_init((IWineD3DBaseTextureImpl *)object, Levels,
+            WINED3DRTYPE_CUBETEXTURE, This, 0, Usage, format_desc, Pool, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize resource, returning %#x\n", hr);
+        WARN("Failed to initialize basetexture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         *ppCubeTexture = NULL;
         return hr;
     }
 
-    TRACE("(%p) : Created resource %p\n", This, object);
-
-    basetexture_init(&object->baseTexture, Levels, Usage);
+    TRACE("(%p) : Created basetexture %p\n", This, object);
 
     TRACE("(%p) Create Cube Texture\n", This);
 

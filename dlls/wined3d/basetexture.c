@@ -27,15 +27,28 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
-void basetexture_init(struct IWineD3DBaseTextureClass *texture, UINT levels, DWORD usage)
+HRESULT basetexture_init(IWineD3DBaseTextureImpl *texture, UINT levels, WINED3DRESOURCETYPE resource_type,
+        IWineD3DDeviceImpl *device, UINT size, DWORD usage, const struct GlPixelFormatDesc *format_desc,
+        WINED3DPOOL pool, IUnknown *parent)
 {
-    texture->levels = levels;
-    texture->filterType = (usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3DTEXF_LINEAR : WINED3DTEXF_NONE;
-    texture->LOD = 0;
-    texture->dirty = TRUE;
-    texture->srgbDirty = TRUE;
-    texture->is_srgb = FALSE;
-    texture->pow2Matrix_identity = TRUE;
+    HRESULT hr;
+
+    hr = resource_init((IWineD3DResource *)texture, resource_type, device, size, usage, format_desc, pool, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x\n", hr);
+        return hr;
+    }
+
+    texture->baseTexture.levels = levels;
+    texture->baseTexture.filterType = (usage & WINED3DUSAGE_AUTOGENMIPMAP) ? WINED3DTEXF_LINEAR : WINED3DTEXF_NONE;
+    texture->baseTexture.LOD = 0;
+    texture->baseTexture.dirty = TRUE;
+    texture->baseTexture.srgbDirty = TRUE;
+    texture->baseTexture.is_srgb = FALSE;
+    texture->baseTexture.pow2Matrix_identity = TRUE;
+
+    return WINED3D_OK;
 }
 
 void basetexture_cleanup(IWineD3DBaseTexture *iface)
