@@ -41,7 +41,6 @@ use c_parser;
 use function;
 use type;
 
-use winapi_c_parser;
 use winapi_function;
 
 use vars qw($win16api $win32api @winapis);
@@ -223,12 +222,7 @@ foreach my $file (@h_files, @c_files) {
       if($_) { $max_line++; }
     }
 
-    my $parser;
-    if (!$options->old) {
-	$parser = new c_parser($file);
-    } else {
-	$parser = new winapi_c_parser($file);
-    }
+    my $parser = new c_parser($file);
 
     my $function;
     my $line;
