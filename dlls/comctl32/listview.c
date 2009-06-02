@@ -33,7 +33,6 @@
  * TODO:
  *
  * Default Message Processing
- *   -- EN_KILLFOCUS should be handled in WM_COMMAND
  *   -- WM_CREATE: create the icon and small icon image lists at this point only if
  *      the LVS_SHAREIMAGELISTS style is not specified.
  *   -- WM_WINDOWPOSCHANGED: arrange the list items if the current view is icon
@@ -412,7 +411,7 @@ static INT LISTVIEW_GetLabelWidth(const LISTVIEW_INFO *, INT);
 static void LISTVIEW_GetOrigin(const LISTVIEW_INFO *, LPPOINT);
 static BOOL LISTVIEW_GetViewRect(const LISTVIEW_INFO *, LPRECT);
 static void LISTVIEW_UpdateSize(LISTVIEW_INFO *);
-static LRESULT LISTVIEW_Command(const LISTVIEW_INFO *, WPARAM, LPARAM);
+static LRESULT LISTVIEW_Command(LISTVIEW_INFO *, WPARAM, LPARAM);
 static INT LISTVIEW_GetStringWidthT(const LISTVIEW_INFO *, LPCWSTR, BOOL);
 static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *, INT, BOOL);
 static UINT LISTVIEW_GetItemState(const LISTVIEW_INFO *, INT, UINT);
@@ -4920,30 +4919,51 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] pszText : modified text
+ * [I] storeText : store edit box text as item text
  * [I] isW : TRUE if psxText is Unicode, FALSE if it's ANSI
  *
  * RETURN:
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL isW)
+static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, BOOL storeText, BOOL isW)
 {
     HWND hwndSelf = infoPtr->hwndSelf;
     NMLVDISPINFOW dispInfo;
     INT editedItem = infoPtr->nEditLabelItem;
     BOOL bSame;
+    WCHAR *pszText = NULL;
+    BOOL res;
+
+    if (storeText)
+    {
+        DWORD len = isW ? GetWindowTextLengthW(infoPtr->hwndEdit) : GetWindowTextLengthA(infoPtr->hwndEdit);
+
+        if (len)
+        {
+            if ((pszText = Alloc((len+1) * (isW ? sizeof(WCHAR) : sizeof(CHAR)))))
+            {
+                if (isW) GetWindowTextW(infoPtr->hwndEdit, pszText, len+1);
+                else GetWindowTextA(infoPtr->hwndEdit, (CHAR*)pszText, len+1);
+            }
+        }
+    }
 
     TRACE("(pszText=%s, isW=%d)\n", debugtext_t(pszText, isW), isW);
 
     infoPtr->nEditLabelItem = -1;
+    infoPtr->hwndEdit = 0;
 
     ZeroMemory(&dispInfo, sizeof(dispInfo));
     dispInfo.item.mask = LVIF_PARAM | LVIF_STATE | LVIF_TEXT;
     dispInfo.item.iItem = editedItem;
     dispInfo.item.iSubItem = 0;
     dispInfo.item.stateMask = ~0;
-    if (!LISTVIEW_GetItemW(infoPtr, &dispInfo.item)) return FALSE;
+    if (!LISTVIEW_GetItemW(infoPtr, &dispInfo.item))
+    {
+       res = FALSE;
+       goto cleanup;
+    }
 
     if (isW)
         bSame = (lstrcmpW(dispInfo.item.pszText, pszText) == 0);
@@ -4953,7 +4973,11 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
         bSame = (lstrcmpW(dispInfo.item.pszText, tmp) == 0);
         textfreeT(tmp, FALSE);
     }
-    if (bSame) return TRUE;
+    if (bSame)
+    {
+        res = TRUE;
+        goto cleanup;
+    }
 
     /* add the text from the edit in */
     dispInfo.item.mask |= LVIF_TEXT;
@@ -4961,9 +4985,16 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
     dispInfo.item.cchTextMax = textlenT(pszText, isW);
 
     /* Do we need to update the Item Text */
-    if (!notify_dispinfoT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW)) return FALSE;
+    if (!notify_dispinfoT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW))
+    {
+        res = FALSE;
+        goto cleanup;
+    }
     if (!IsWindow(hwndSelf))
-	return FALSE;
+    {
+	res = FALSE;
+	goto cleanup;
+    }
     if (!pszText) return TRUE;
 
     if (!(infoPtr->dwStyle & LVS_OWNERDATA))
@@ -4973,7 +5004,8 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
         if (lpItem && lpItem->hdr.pszText == LPSTR_TEXTCALLBACKW)
         {
             LISTVIEW_InvalidateItem(infoPtr, editedItem);
-            return TRUE;
+            res = TRUE;
+            goto cleanup;
         }
     }
 
@@ -4983,7 +5015,12 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
     dispInfo.item.iSubItem = 0;
     dispInfo.item.pszText = pszText;
     dispInfo.item.cchTextMax = textlenT(pszText, isW);
-    return LISTVIEW_SetItemT(infoPtr, &dispInfo.item, isW);
+    res = LISTVIEW_SetItemT(infoPtr, &dispInfo.item, isW);
+
+cleanup:
+    Free(pszText);
+
+    return res;
 }
 
 /***
@@ -10454,7 +10491,7 @@ void LISTVIEW_Unregister(void)
  * RETURN:
  *   Zero.
  */
-static LRESULT LISTVIEW_Command(const LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     switch (HIWORD(wParam))
     {
@@ -10504,6 +10541,14 @@ static LRESULT LISTVIEW_Command(const LISTVIEW_INFO *infoPtr, WPARAM wParam, LPA
 
 	    break;
 	}
+	case EN_KILLFOCUS:
+	{
+	    /* handle value will be lost after LISTVIEW_EndEditLabelT */
+	    HWND edit = infoPtr->hwndEdit;
+
+	    LISTVIEW_EndEditLabelT(infoPtr, TRUE, IsWindowUnicode(infoPtr->hwndEdit));
+	    SendMessageW(edit, WM_CLOSE, 0, 0);
+	}
 
 	default:
 	  return SendMessageW (infoPtr->hwndNotify, WM_COMMAND, wParam, lParam);
@@ -10530,7 +10575,7 @@ static LRESULT LISTVIEW_Command(const LISTVIEW_INFO *infoPtr, WPARAM wParam, LPA
 static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL isW)
 {
     LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(GetParent(hwnd), 0);
-    BOOL cancel = FALSE;
+    BOOL save = TRUE;
 
     TRACE("(hwnd=%p, uMsg=%x, wParam=%lx, lParam=%lx, isW=%d)\n",
 	  hwnd, uMsg, wParam, lParam, isW);
@@ -10539,9 +10584,6 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
     {
 	case WM_GETDLGCODE:
 	  return DLGC_WANTARROWS | DLGC_WANTALLKEYS;
-
-	case WM_KILLFOCUS:
-	    break;
 
 	case WM_DESTROY:
 	{
@@ -10554,7 +10596,7 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	case WM_KEYDOWN:
 	    if (VK_ESCAPE == (INT)wParam)
 	    {
-		cancel = TRUE;
+		save = FALSE;
                 break;
 	    }
 	    else if (VK_RETURN == (INT)wParam)
@@ -10566,27 +10608,7 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
     /* kill the edit */
     if (infoPtr->hwndEdit)
-    {
-	LPWSTR buffer = NULL;
-
-        infoPtr->hwndEdit = 0;
-	if (!cancel)
-	{
-	    DWORD len = isW ? GetWindowTextLengthW(hwnd) : GetWindowTextLengthA(hwnd);
-
-	    if (len)
-	    {
-		if ( (buffer = Alloc((len+1) * (isW ? sizeof(WCHAR) : sizeof(CHAR)))) )
-		{
-		    if (isW) GetWindowTextW(hwnd, buffer, len+1);
-		    else GetWindowTextA(hwnd, (CHAR*)buffer, len+1);
-		}
-	    }
-	}
-	LISTVIEW_EndEditLabelT(infoPtr, buffer, isW);
-
-	Free(buffer);
-    }
+	LISTVIEW_EndEditLabelT(infoPtr, save, isW);
 
     SendMessageW(hwnd, WM_CLOSE, 0, 0);
     return 0;

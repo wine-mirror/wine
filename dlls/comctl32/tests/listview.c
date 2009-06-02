@@ -2915,7 +2915,7 @@ static void test_editbox(void)
     item.iSubItem = 0;
     r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
     expect(strlen(item.pszText), r);
-    todo_wine ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
+    ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
     /* end edit without saving */
     r = SendMessage(hwndedit, WM_KEYDOWN, VK_ESCAPE, 0);
     expect(0, r);
@@ -2926,7 +2926,7 @@ static void test_editbox(void)
     item.iSubItem = 0;
     r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
     expect(strlen(item.pszText), r);
-    todo_wine ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
+    ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
 
     DestroyWindow(hwnd);
 }
