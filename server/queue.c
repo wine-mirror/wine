@@ -872,6 +872,7 @@ static void msg_queue_poll_event( struct fd *fd, int event )
     assert( queue->obj.ops == &msg_queue_ops );
 
     if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
+    else set_fd_events( queue->fd, 0 );
     wake_up( &queue->obj, 0 );
 }
 
