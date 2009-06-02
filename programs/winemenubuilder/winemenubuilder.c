@@ -1549,6 +1549,20 @@ static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const ch
     return ret;
 }
 
+static BOOL is_extension_blacklisted(LPCWSTR extension)
+{
+    /* These are managed through external tools like wine.desktop, to evade malware created file type associations */
+    static const WCHAR comW[] = {'.','c','o','m',0};
+    static const WCHAR exeW[] = {'.','e','x','e',0};
+    static const WCHAR msiW[] = {'.','m','s','i',0};
+
+    if (!strcmpiW(extension, comW) ||
+        !strcmpiW(extension, exeW) ||
+        !strcmpiW(extension, msiW))
+        return TRUE;
+    return FALSE;
+}
+
 static BOOL generate_associations(const char *xdg_data_home, const char *packages_dir, const char *applications_dir)
 {
     struct list *nativeMimeTypes = NULL;
@@ -1581,7 +1595,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             size *= 2;
         } while (ret == ERROR_MORE_DATA);
 
-        if (ret == ERROR_SUCCESS && extensionW[0] == '.')
+        if (ret == ERROR_SUCCESS && extensionW[0] == '.' && !is_extension_blacklisted(extensionW))
         {
             char *extensionA = NULL;
             WCHAR *commandW = NULL;
