@@ -2322,7 +2322,10 @@ static void check_wnd_state_(const char *file, int line,
                              HWND active, HWND foreground, HWND focus, HWND capture)
 {
     ok_(file, line)(active == GetActiveWindow(), "GetActiveWindow() = %p\n", GetActiveWindow());
-    if (foreground && GetForegroundWindow())
+    /* only check foreground if it belongs to the current thread */
+    /* foreground can be moved to a different app pretty much at any time */
+    if (foreground && GetForegroundWindow() &&
+        GetWindowThreadProcessId(GetForegroundWindow(), NULL) == GetCurrentThreadId())
         ok_(file, line)(foreground == GetForegroundWindow(), "GetForegroundWindow() = %p\n", GetForegroundWindow());
     ok_(file, line)(focus == GetFocus(), "GetFocus() = %p\n", GetFocus());
     ok_(file, line)(capture == GetCapture(), "GetCapture() = %p\n", GetCapture());
