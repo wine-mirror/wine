@@ -271,10 +271,18 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipCloneBitmapArea(REAL x, REAL y, REAL width, REAL height,
+    PixelFormat format, GpBitmap* srcBitmap, GpBitmap** dstBitmap)
+{
+    FIXME("(%f,%f,%f,%f,%i,%p,%p): stub\n", x, y, width, height, format, srcBitmap, dstBitmap);
+
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipCloneBitmapAreaI(INT x, INT y, INT width, INT height,
     PixelFormat format, GpBitmap* srcBitmap, GpBitmap** dstBitmap)
 {
-    FIXME("(%i,%i,%i,%i,%i,%p,%p)\n", x, y, width, height, format, srcBitmap, dstBitmap);
+    FIXME("(%i,%i,%i,%i,%i,%p,%p): stub\n", x, y, width, height, format, srcBitmap, dstBitmap);
 
     return NotImplemented;
 }
