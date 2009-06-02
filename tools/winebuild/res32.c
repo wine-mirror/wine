@@ -318,6 +318,16 @@ static int cmp_res( const void *ptr1, const void *ptr2 )
     return res1->lang - res2->lang;
 }
 
+static char *format_res_string( const struct string_id *str )
+{
+    int i, len = str->str ? strlenW(str->str) + 1 : 5;
+    char *ret = xmalloc( len );
+
+    if (!str->str) sprintf( ret, "%04x", str->id );
+    else for (i = 0; i < len; i++) ret[i] = str->str[i];  /* dumb W->A conversion */
+    return ret;
+}
+
 /* build the 3-level (type,name,language) resource tree */
 static struct res_tree *build_resource_tree( DLLSPEC *spec )
 {
@@ -342,6 +352,13 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec )
         else if (cmp_string( &spec->resources[i].name, &spec->resources[i-1].name )) /* new name */
         {
             name = add_name( type, &spec->resources[i] );
+        }
+        else if (spec->resources[i].lang == spec->resources[i-1].lang)
+        {
+            char *type_str = format_res_string( &spec->resources[i].type );
+            char *name_str = format_res_string( &spec->resources[i].name );
+            error( "winebuild: duplicate resource type %s name %s language %04x\n",
+                   type_str, name_str, spec->resources[i].lang );
         }
         else name->nb_languages++;
     }
