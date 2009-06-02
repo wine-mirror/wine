@@ -1111,7 +1111,7 @@ static void test_http_cache(void)
 
     size = sizeof(url);
     ret = InternetQueryOptionA(request, INTERNET_OPTION_URL, url, &size);
-    ok(ret, "InternetQueryOptionA(INTERNET_OPTION_url) failed: %u\n", GetLastError());
+    ok(ret, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
     ok(!strcmp(url, "http://test.winehq.org/hello.html"), "Wrong URL %s\n", url);
 
     size = sizeof(file_name);
@@ -1146,7 +1146,7 @@ static void test_http_cache(void)
 
     file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                       FILE_ATTRIBUTE_NORMAL, NULL);
-    todo_wine ok(file != INVALID_HANDLE_VALUE, "CreateFile succeeded\n");
+    todo_wine ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
     CloseHandle(file);
 
     request = HttpOpenRequestA(connect, NULL, "/", NULL, NULL, types, INTERNET_FLAG_NO_CACHE_WRITE, 0);
@@ -1167,7 +1167,7 @@ static void test_http_cache(void)
 
     file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                       FILE_ATTRIBUTE_NORMAL, NULL);
-    todo_wine ok(file != INVALID_HANDLE_VALUE, "CreateFile succeeded\n");
+    todo_wine ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
     CloseHandle(file);
 
     ok(InternetCloseHandle(request), "Close request handle failed\n");
