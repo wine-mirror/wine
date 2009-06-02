@@ -118,45 +118,59 @@ static void InitFunctionPointers(void)
 static void test_GetLocaleInfoA(void)
 {
   int ret;
+  int len;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
   char buffer[BUFFER_SIZE];
-  const char * expected;
+  char expected[BUFFER_SIZE];
 
   ok(lcid == 0x409, "wrong LCID calculated - %d\n", lcid);
 
   /* en, ar and zh use SUBLANG_NEUTRAL, but GetLocaleInfo assume SUBLANG_DEFAULT */
+  memset(expected, 0, COUNTOF(expected));
+  len = GetLocaleInfoA(MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), LOCALE_SLANGUAGE, expected, COUNTOF(expected));
   SetLastError(0xdeadbeef);
   memset(buffer, 0, COUNTOF(buffer));
   ret = GetLocaleInfoA(LANG_ENGLISH, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
-  expected = "English (United States)";
-  ok((ret == (lstrlenA(expected)+1)) && !lstrcmpA(buffer, expected),
-     "got %d with '%s' (expected %d with '%s')\n",
-     ret, buffer, lstrlenA(expected)+1, expected);
+  ok((ret == len) && !lstrcmpA(buffer, expected),
+      "got %d with '%s' (expected %d with '%s')\n",
+      ret, buffer, len, expected);
 
-  SetLastError(0xdeadbeef);
-  memset(buffer, 0, COUNTOF(buffer));
-  ret = GetLocaleInfoA(LANG_ARABIC, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
-  expected = "Arabic (Saudi Arabia)";
-  ok((ret == (lstrlenA(expected)+1)) && !lstrcmpA(buffer, expected),
-     "got %d with '%s' (expected %d with '%s')\n",
-     ret, buffer, lstrlenA(expected)+1, expected);
+  memset(expected, 0, COUNTOF(expected));
+  len = GetLocaleInfoA(MAKELANGID(LANG_ARABIC, SUBLANG_DEFAULT), LOCALE_SLANGUAGE, expected, COUNTOF(expected));
+  if (len) {
+      SetLastError(0xdeadbeef);
+      memset(buffer, 0, COUNTOF(buffer));
+      ret = GetLocaleInfoA(LANG_ARABIC, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
+      ok((ret == len) && !lstrcmpA(buffer, expected),
+          "got %d with '%s' (expected %d with '%s')\n",
+          ret, buffer, len, expected);
+  }
+  else
+      win_skip("LANG_ARABIC not installed\n");
 
-  SetLastError(0xdeadbeef);
-  memset(buffer, 0, COUNTOF(buffer));
-  ret = GetLocaleInfoA(LANG_CHINESE, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
-  expected = "Chinese (Taiwan)";
-  ok((ret == (lstrlenA(expected)+1)) && !lstrcmpA(buffer, expected),
-     "got %d with '%s' (expected %d with '%s')\n",
-     ret, buffer, lstrlenA(expected)+1, expected);
+  memset(expected, 0, COUNTOF(expected));
+  len = GetLocaleInfoA(MAKELANGID(LANG_CHINESE, SUBLANG_DEFAULT), LOCALE_SLANGUAGE, expected, COUNTOF(expected));
+  if (len) {
+      SetLastError(0xdeadbeef);
+      memset(buffer, 0, COUNTOF(buffer));
+      ret = GetLocaleInfoA(LANG_CHINESE, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
+      ok((ret == len) && !lstrcmpA(buffer, expected),
+          "got %d with '%s' (expected %d with '%s')\n",
+          ret, buffer, len, expected);
+  }
+  else
+      win_skip("LANG_CHINESE not installed\n");
 
-  /* SUBLANG_DEFAULT is not required for GetLocaleInfo */
+  /* SUBLANG_DEFAULT is required for mlang.dll, but optional for GetLocaleInfo */
+  memset(expected, 0, COUNTOF(expected));
+  len = GetLocaleInfoA(MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT), LOCALE_SLANGUAGE, expected, COUNTOF(expected));
   SetLastError(0xdeadbeef);
   memset(buffer, 0, COUNTOF(buffer));
   ret = GetLocaleInfoA(LANG_GERMAN, LOCALE_SLANGUAGE, buffer, COUNTOF(buffer));
-  expected = "German (Germany)";
-  ok((ret == (lstrlenA(expected)+1)) && !lstrcmpA(buffer, expected),
-     "got %d with '%s' (expected %d with '%s')\n",
-     ret, buffer, lstrlenA(expected)+1, expected);
+  ok((ret == len) && !lstrcmpA(buffer, expected),
+      "got %d with '%s' (expected %d with '%s')\n",
+      ret, buffer, len, expected);
+
 
   /* HTMLKit and "Font xplorer lite" expect GetLocaleInfoA to
    * partially fill the buffer even if it is too short. See bug 637.
