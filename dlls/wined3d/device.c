@@ -1083,72 +1083,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
         WINED3DPOOL Pool, IWineD3DTexture **ppTexture, IUnknown *parent)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
     IWineD3DTextureImpl *object;
-    unsigned int i;
-    UINT tmpW;
-    UINT tmpH;
     HRESULT hr;
-    unsigned int pow2Width;
-    unsigned int pow2Height;
 
     TRACE("(%p) : Width %d, Height %d, Levels %d, Usage %#x\n", This, Width, Height, Levels, Usage);
     TRACE("Format %#x (%s), Pool %#x, ppTexture %p, parent %p\n",
             Format, debug_d3dformat(Format), Pool, ppTexture, parent);
-
-    /* TODO: It should only be possible to create textures for formats
-             that are reported as supported */
-    if (WINED3DFMT_UNKNOWN >= Format) {
-        WARN("(%p) : Texture cannot be created with a format of WINED3DFMT_UNKNOWN\n", This);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* Non-power2 support */
-    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO))
-    {
-        pow2Width = Width;
-        pow2Height = Height;
-    }
-    else
-    {
-        /* Find the nearest pow2 match */
-        pow2Width = pow2Height = 1;
-        while (pow2Width < Width) pow2Width <<= 1;
-        while (pow2Height < Height) pow2Height <<= 1;
-
-        if (pow2Width != Width || pow2Height != Height)
-        {
-            if (Levels > 1)
-            {
-                WARN("Attempted to create a mipmapped np2 texture without unconditional np2 support\n");
-                return WINED3DERR_INVALIDCALL;
-            }
-            Levels = 1;
-        }
-    }
-
-    /* Calculate levels for mip mapping */
-    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP)
-    {
-        if (!GL_SUPPORT(SGIS_GENERATE_MIPMAP))
-        {
-            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        if (Levels > 1)
-        {
-            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        Levels = 1;
-    }
-    else if (!Levels)
-    {
-        Levels = wined3d_log2i(max(Width, Height)) + 1;
-        TRACE("Calculated levels = %d\n", Levels);
-    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1159,103 +1099,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface,
     }
 
     object->lpVtbl = &IWineD3DTexture_Vtbl;
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)object, Levels,
-            WINED3DRTYPE_TEXTURE, This, 0, Usage, format_desc, Pool, parent);
+
+    hr = texture_init(object, Width, Height, Levels, This, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize basetexture, returning %#x\n", hr);
+        WARN("Failed to initialize texture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         *ppTexture = NULL;
         return hr;
     }
 
-    TRACE("(%p) : Created basetexture %p\n", This, object);
-
     *ppTexture = (IWineD3DTexture *)object;
 
-    if (object->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
-    {
-        object->baseTexture.minMipLookup = minMipLookup;
-        object->baseTexture.magLookup    = magLookup;
-    } else {
-        object->baseTexture.minMipLookup = minMipLookup_noFilter;
-        object->baseTexture.magLookup    = magLookup_noFilter;
-    }
+    TRACE("(%p) : Created texture %p\n", This, object);
 
-    /** FIXME: add support for real non-power-two if it's provided by the video card **/
-    /* Precalculated scaling for 'faked' non power of two texture coords.
-       Second also don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
-       is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
-       doesn't work in combination with ARB_TEXTURE_RECTANGLE.
-    */
-    if(GL_SUPPORT(WINE_NORMALIZED_TEXRECT) && (Width != pow2Width || Height != pow2Height)) {
-        object->baseTexture.pow2Matrix[0] =  1.0;
-        object->baseTexture.pow2Matrix[5] =  1.0;
-        object->baseTexture.pow2Matrix[10] = 1.0;
-        object->baseTexture.pow2Matrix[15] = 1.0;
-        object->target = GL_TEXTURE_2D;
-        object->cond_np2 = TRUE;
-        object->baseTexture.minMipLookup = minMipLookup_noFilter;
-    } else if(GL_SUPPORT(ARB_TEXTURE_RECTANGLE) &&
-       (Width != pow2Width || Height != pow2Height) &&
-       !((Format == WINED3DFMT_P8) && GL_SUPPORT(EXT_PALETTED_TEXTURE) && (wined3d_settings.rendertargetlock_mode == RTL_READTEX || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX)))
-    {
-        if ((Width != 1) || (Height != 1)) {
-            object->baseTexture.pow2Matrix_identity = FALSE;
-        }
-
-        object->baseTexture.pow2Matrix[0] =  (float)Width;
-        object->baseTexture.pow2Matrix[5] =  (float)Height;
-        object->baseTexture.pow2Matrix[10] = 1.0;
-        object->baseTexture.pow2Matrix[15] = 1.0;
-        object->target = GL_TEXTURE_RECTANGLE_ARB;
-        object->cond_np2 = TRUE;
-        object->baseTexture.minMipLookup = minMipLookup_noFilter;
-    } else {
-        if ((Width != pow2Width) || (Height != pow2Height)) {
-            object->baseTexture.pow2Matrix_identity = FALSE;
-            object->baseTexture.pow2Matrix[0] =  (((float)Width)  / ((float)pow2Width));
-            object->baseTexture.pow2Matrix[5] =  (((float)Height) / ((float)pow2Height));
-        } else {
-            object->baseTexture.pow2Matrix[0] =  1.0;
-            object->baseTexture.pow2Matrix[5] =  1.0;
-        }
-
-        object->baseTexture.pow2Matrix[10] = 1.0;
-        object->baseTexture.pow2Matrix[15] = 1.0;
-        object->target = GL_TEXTURE_2D;
-        object->cond_np2 = FALSE;
-    }
-    TRACE(" xf(%f) yf(%f)\n", object->baseTexture.pow2Matrix[0], object->baseTexture.pow2Matrix[5]);
-
-    /* Generate all the surfaces */
-    tmpW = Width;
-    tmpH = Height;
-    for (i = 0; i < object->baseTexture.levels; i++)
-    {
-        /* use the callback to create the texture surface */
-        hr = IWineD3DDeviceParent_CreateSurface(This->device_parent, parent, tmpW, tmpH, Format,
-                Usage, Pool, i, WINED3DCUBEMAP_FACE_POSITIVE_X, &object->surfaces[i]);
-        if (hr!= WINED3D_OK || ( (IWineD3DSurfaceImpl *) object->surfaces[i])->Flags & SFLAG_OVERSIZE) {
-            FIXME("Failed to create surface  %p\n", object);
-            /* clean up */
-            object->surfaces[i] = NULL;
-            IWineD3DTexture_Release((IWineD3DTexture *)object);
-
-            *ppTexture = NULL;
-            return hr;
-        }
-
-        IWineD3DSurface_SetContainer(object->surfaces[i], (IWineD3DBase *)object);
-        TRACE("Created surface level %d @ %p\n", i, object->surfaces[i]);
-        surface_set_texture_target(object->surfaces[i], object->target);
-        /* calculate the next mipmap level */
-        tmpW = max(1, tmpW >> 1);
-        tmpH = max(1, tmpH >> 1);
-    }
-    object->baseTexture.internal_preload = texture_internal_preload;
-
-    TRACE("(%p) : Created  texture %p\n", This, object);
     return WINED3D_OK;
 }
 
