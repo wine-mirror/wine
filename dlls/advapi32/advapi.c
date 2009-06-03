@@ -32,6 +32,7 @@
 #include "wincred.h"
 
 #include "wine/library.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
@@ -86,6 +87,7 @@ GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 {
     const char *name = wine_get_user_name();
     DWORD i, len = MultiByteToWideChar( CP_UNIXCP, 0, name, -1, NULL, 0 );
+    LPWSTR backslash;
 
     if (len > *lpSize)
     {
@@ -99,9 +101,22 @@ GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 
     /* Word uses the user name to create named mutexes and file mappings,
      * and backslashes in the name cause the creation to fail.
+     * Also, Windows doesn't return the domain name in the user name even when
+     * joined to a domain. A Unix box joined to a domain using winbindd will
+     * contain the domain name in the username. So we need to cut this off.
+     * FIXME: Only replaces forward and backslashes for now, should get the
+     * winbind separator char from winbindd and replace that.
      */
     for (i = 0; lpszName[i]; i++)
-        if (lpszName[i] == '\\' || lpszName[i] == '/') lpszName[i] = '_';
+        if (lpszName[i] == '/') lpszName[i] = '\\';
+
+    backslash = strrchrW(lpszName, '\\');
+    if (backslash == NULL)
+        return TRUE;
+
+    len = lstrlenW(backslash);
+    memmove(lpszName, backslash + 1, len * sizeof(WCHAR));
+    *lpSize = len;
     return TRUE;
 }
 
