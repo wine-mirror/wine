@@ -74,21 +74,12 @@ static unsigned int reserved_vs_const(IWineD3DBaseShader *shader, const WineD3D_
 #define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
 
 /* ARB_program_shader private data */
-struct shader_arb_priv
+struct control_frame
 {
-    GLuint                  current_vprogram_id;
-    GLuint                  current_fprogram_id;
-    const struct arb_ps_compiled_shader *compiled_fprog;
-    GLuint                  depth_blt_vprogram_id;
-    GLuint                  depth_blt_fprogram_id[tex_type_count];
-    BOOL                    use_arbfp_fixed_func;
-    struct wine_rb_tree     fragment_shaders;
-};
-
-struct if_frame {
     struct list entry;
     BOOL ifc;
     BOOL muting;
+    unsigned int loop_no;
 };
 
 struct arb_ps_compile_args
@@ -107,9 +98,25 @@ struct arb_ps_compiled_shader
 {
     struct arb_ps_compile_args      args;
     GLuint                          prgId;
-    struct stb_const_desc       bumpenvmatconst[MAX_TEXTURES];
-    unsigned char               numbumpenvmatconsts;
-    struct stb_const_desc       luminanceconst[MAX_TEXTURES];
+    struct stb_const_desc           bumpenvmatconst[MAX_TEXTURES];
+    unsigned char                   numbumpenvmatconsts;
+    struct stb_const_desc           luminanceconst[MAX_TEXTURES];
+    UINT                            int_consts[MAX_CONST_I];
+    char                            num_int_consts;
+};
+
+struct arb_vs_compile_args
+{
+    struct vs_compile_args          super;
+    DWORD                           bools; /* WORD is enough, use DWORD for alignment */
+};
+
+struct arb_vs_compiled_shader
+{
+    struct arb_vs_compile_args      args;
+    GLuint                          prgId;
+    UINT                            int_consts[MAX_CONST_I];
+    char                            num_int_consts;
 };
 
 struct shader_arb_ctx_priv {
@@ -126,8 +133,10 @@ struct shader_arb_ctx_priv {
     const struct arb_vs_compile_args    *cur_vs_args;
     const struct arb_ps_compile_args    *cur_ps_args;
     const struct arb_ps_compiled_shader *compiled_fprog;
-    struct list if_frames;
+    const struct arb_vs_compiled_shader *compiled_vprog;
+    struct list control_frames;
     BOOL muted;
+    unsigned int num_loops, loop_depth;
 };
 
 struct arb_pshader_private {
@@ -135,19 +144,21 @@ struct arb_pshader_private {
     UINT                            num_gl_shaders, shader_array_size;
 };
 
-struct arb_vs_compile_args {
-    struct vs_compile_args          super;
-    DWORD                           bools; /* WORD is enough, use DWORD for alignment */
-};
-
-struct arb_vs_compiled_shader {
-    struct arb_vs_compile_args      args;
-    GLuint                          prgId;
-};
-
 struct arb_vshader_private {
     struct arb_vs_compiled_shader   *gl_shaders;
     UINT                            num_gl_shaders, shader_array_size;
+};
+
+struct shader_arb_priv
+{
+    GLuint                  current_vprogram_id;
+    GLuint                  current_fprogram_id;
+    const struct arb_ps_compiled_shader *compiled_fprog;
+    const struct arb_vs_compiled_shader *compiled_vprog;
+    GLuint                  depth_blt_vprogram_id;
+    GLuint                  depth_blt_fprogram_id[tex_type_count];
+    BOOL                    use_arbfp_fixed_func;
+    struct wine_rb_tree     fragment_shaders;
 };
 
 /********************************************************
@@ -294,7 +305,52 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->luminanceconst[i].const_num, scale));
         }
     }
+
+    if(gl_shader->num_int_consts == 0) return;
+
+    for(i = 0; i < MAX_CONST_I; i++)
+    {
+        if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
+        {
+            float val[4];
+            val[0] = stateBlock->pixelShaderConstantI[4 * i];
+            val[1] = stateBlock->pixelShaderConstantI[4 * i + 1];
+            val[2] = stateBlock->pixelShaderConstantI[4 * i + 2];
+            val[3] = -1.0;
+
+            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
+        }
+    }
 }
+
+static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
+{
+    IWineD3DStateBlockImpl* stateBlock;
+    const WineD3D_GL_Info *gl_info;
+    unsigned char i;
+    struct shader_arb_priv *priv = deviceImpl->shader_priv;
+    const struct arb_vs_compiled_shader *gl_shader = priv->compiled_vprog;
+
+    if(gl_shader->num_int_consts == 0) return;
+
+    gl_info = &deviceImpl->adapter->gl_info;
+    stateBlock = deviceImpl->stateBlock;
+
+    for(i = 0; i < MAX_CONST_I; i++)
+    {
+        if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
+        {
+            float val[4];
+            val[0] = stateBlock->vertexShaderConstantI[4 * i];
+            val[1] = stateBlock->vertexShaderConstantI[4 * i + 1];
+            val[2] = stateBlock->vertexShaderConstantI[4 * i + 2];
+            val[3] = -1.0;
+
+            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, gl_shader->int_consts[i], val));
+        }
+    }
+}
+
 /**
  * Loads the app-supplied constants into the currently set ARB_[vertex/fragment]_programs.
  * 
@@ -323,6 +379,8 @@ static void shader_arb_load_constants(
 
         /* Upload the position fixup */
         GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, ARB_SHADER_PRIVCONST_POS, deviceImpl->posFixup));
+
+        shader_arb_vs_local_constants(deviceImpl);
     }
 
     if (usePixelShader) {
@@ -406,6 +464,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
         if(This->baseShader.reg_maps.usesrelconstF) {
             max_constantsF = GL_LIMITS(vshader_constantsF) - reserved_vs_const(iface, gl_info);
             if(GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) max_constantsF -= GL_LIMITS(clipplanes);
+            max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
         } else {
             max_constantsF = GL_LIMITS(vshader_constantsF) - 1;
         }
@@ -668,6 +727,16 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
         case WINED3DSPR_TEXCRDOUT:
             if (pshader) sprintf(register_name, "oT[%u]", reg->idx);
             else sprintf(register_name, "result.texcoord[%u]", reg->idx);
+            break;
+
+        case WINED3DSPR_LOOP:
+            /* Pshader has an implicitly declared loop index counter A0.x that cannot be renamed */
+            if(pshader) sprintf(register_name, "A0.x");
+            else sprintf(register_name, "aL.y");
+            break;
+
+        case WINED3DSPR_CONSTINT:
+            sprintf(register_name, "I%u", reg->idx);
             break;
 
         default:
@@ -1958,6 +2027,106 @@ static void shader_hw_sgn(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static void shader_hw_loop(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    char src_name[50];
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    /* src0 is aL */
+    shader_arb_get_src_param(ins, &ins->src[1], 0, src_name);
+
+    if(vshader)
+    {
+        struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+        struct list *e = list_head(&priv->control_frames);
+        struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+
+        if(priv->loop_depth > 1) shader_addline(buffer, "PUSHA aL;\n");
+        /* The constant loader makes sure to load -1 into iX.w */
+        shader_addline(buffer, "ARLC aL, %s.xywz;\n", src_name);
+        shader_addline(buffer, "BRA loop_%u_end (LE.x);\n", control_frame->loop_no);
+        shader_addline(buffer, "loop_%u_start:\n", control_frame->loop_no);
+    }
+    else
+    {
+        shader_addline(buffer, "LOOP %s;\n", src_name);
+    }
+}
+
+static void shader_hw_rep(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    char src_name[50];
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
+
+    /* The constant loader makes sure to load -1 into iX.w */
+    if(vshader)
+    {
+        struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+        struct list *e = list_head(&priv->control_frames);
+        struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+
+        if(priv->loop_depth > 1) shader_addline(buffer, "PUSHA aL;\n");
+
+        shader_addline(buffer, "ARLC aL, %s.xywz;\n", src_name);
+        shader_addline(buffer, "BRA loop_%u_end (LE.x);\n", control_frame->loop_no);
+        shader_addline(buffer, "loop_%u_start:\n", control_frame->loop_no);
+    }
+    else
+    {
+        shader_addline(buffer, "REP %s;\n", src_name);
+    }
+}
+
+static void shader_hw_endloop(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    if(vshader)
+    {
+        struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+        struct list *e = list_head(&priv->control_frames);
+        struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+
+        shader_addline(buffer, "ARAC aL.xy, aL;\n");
+        shader_addline(buffer, "BRA loop_%u_start (GT.x);\n", control_frame->loop_no);
+        shader_addline(buffer, "loop_%u_end:\n", control_frame->loop_no);
+
+        if(priv->loop_depth > 1) shader_addline(buffer, "POPA aL;\n");
+    }
+    else
+    {
+        shader_addline(buffer, "ENDLOOP;\n");
+    }
+}
+
+static void shader_hw_endrep(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    if(vshader)
+    {
+        struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+        struct list *e = list_head(&priv->control_frames);
+        struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+
+        shader_addline(buffer, "ARAC aL.xy, aL;\n");
+        shader_addline(buffer, "BRA loop_%u_start (GT.x);\n", control_frame->loop_no);
+        shader_addline(buffer, "loop_%u_end:\n", control_frame->loop_no);
+
+        if(priv->loop_depth > 1) shader_addline(buffer, "POPA aL;\n");
+    }
+    else
+    {
+        shader_addline(buffer, "ENDREP;\n");
+    }
+}
+
 static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
 {
     GLuint program_id = 0;
@@ -2077,6 +2246,20 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
     /* [0.0;1.0] clamping. Not needed, this is done implicitly */
 }
 
+static const DWORD *find_loop_control_values(IWineD3DBaseShaderImpl *This, DWORD idx)
+{
+    const local_constant *constant;
+
+    LIST_FOR_EACH_ENTRY(constant, &This->baseShader.constantsI, local_constant, entry)
+    {
+        if (constant->idx == idx)
+        {
+            return constant->value;
+        }
+    }
+    return NULL;
+}
+
 /* GL locking is done by the caller */
 static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
         SHADER_BUFFER *buffer, const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
@@ -2135,7 +2318,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_ps_args = args;
     priv_ctx.compiled_fprog = compiled;
-    list_init(&priv_ctx.if_frames);
+    list_init(&priv_ctx.control_frames);
 
     /* Avoid enabling NV_fragment_program* if we do not need it.
      *
@@ -2231,9 +2414,9 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
         if(!reg_maps->bumpmat[i]) continue;
 
         cur = compiled->numbumpenvmatconsts;
-        compiled->bumpenvmatconst[cur].const_num = -1;
+        compiled->bumpenvmatconst[cur].const_num = WINED3D_CONST_NUM_UNUSED;
         compiled->bumpenvmatconst[cur].texunit = i;
-        compiled->luminanceconst[cur].const_num = -1;
+        compiled->luminanceconst[cur].const_num = WINED3D_CONST_NUM_UNUSED;
         compiled->luminanceconst[cur].texunit = i;
 
         /* We can fit the constants into the constant limit for sure because texbem, texbeml, bem and beml are only supported
@@ -2255,6 +2438,27 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
         compiled->luminanceconst[cur].const_num = next_local++;
         shader_addline(buffer, "PARAM luminance%d = program.local[%d];\n",
                        i, compiled->luminanceconst[cur].const_num);
+    }
+
+    for(i = 0; i < MAX_CONST_I; i++)
+    {
+        compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
+        if (reg_maps->integer_constants & (1 << i) && priv_ctx.target_version >= NV2)
+        {
+            const DWORD *control_values = find_loop_control_values((IWineD3DBaseShaderImpl *) This, i);
+
+            if(control_values)
+            {
+                shader_addline(buffer, "PARAM I%u = {%u, %u, %u, -1};\n", i,
+                                control_values[0], control_values[1], control_values[2]);
+            }
+            else
+            {
+                compiled->int_consts[i] = next_local;
+                compiled->num_int_consts++;
+                shader_addline(buffer, "PARAM I%u = program.local[%u];\n", i, next_local++);
+            }
+        }
     }
 
     /* Base Shader Body */
@@ -2302,7 +2506,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
 
 /* GL locking is done by the caller */
 static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
-        SHADER_BUFFER *buffer, const struct arb_vs_compile_args *args)
+        SHADER_BUFFER *buffer, const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled)
 {
     const shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
@@ -2310,13 +2514,13 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
     const local_constant *lconst;
     GLuint ret;
-    DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
+    DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This), next_local;
     struct shader_arb_ctx_priv priv_ctx;
     unsigned int i;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
-    list_init(&priv_ctx.if_frames);
+    list_init(&priv_ctx.control_frames);
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
@@ -2327,6 +2531,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     if(GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) {
         shader_addline(buffer, "OPTION NV_vertex_program2;\n");
         priv_ctx.target_version = NV2;
+        shader_addline(buffer, "ADDRESS aL;\n");
     } else {
         priv_ctx.target_version = ARB;
     }
@@ -2343,7 +2548,28 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     shader_addline(buffer, "TEMP TA;\n");
 
     /* Base Declarations */
-    shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
+    next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
+
+    for(i = 0; i < MAX_CONST_I; i++)
+    {
+        compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
+        if(reg_maps->integer_constants & (1 << i) && priv_ctx.target_version >= NV2)
+        {
+            const DWORD *control_values = find_loop_control_values((IWineD3DBaseShaderImpl *) This, i);
+
+            if(control_values)
+            {
+                shader_addline(buffer, "PARAM I%u = {%u, %u, %u, -1};\n", i,
+                                control_values[0], control_values[1], control_values[2]);
+            }
+            else
+            {
+                compiled->int_consts[i] = next_local;
+                compiled->num_int_consts++;
+                shader_addline(buffer, "PARAM I%u = program.local[%u];\n", i, next_local++);
+            }
+        }
+    }
 
     /* We need a constant to fixup the final position */
     shader_addline(buffer, "PARAM posFixup = program.env[%d];\n", ARB_SHADER_PRIVCONST_POS);
@@ -2518,7 +2744,7 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
     return stored->bools == new->bools;
 }
 
-static GLuint find_arb_vshader(IWineD3DVertexShaderImpl *shader, const struct arb_vs_compile_args *args)
+static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl *shader, const struct arb_vs_compile_args *args)
 {
     UINT i;
     DWORD new_size;
@@ -2539,7 +2765,7 @@ static GLuint find_arb_vshader(IWineD3DVertexShaderImpl *shader, const struct ar
      */
     for(i = 0; i < shader_data->num_gl_shaders; i++) {
         if(vs_args_equal(&shader_data->gl_shaders[i].args, args, use_map)) {
-            return shader_data->gl_shaders[i].prgId;
+            return &shader_data->gl_shaders[i];
         }
     }
 
@@ -2549,10 +2775,10 @@ static GLuint find_arb_vshader(IWineD3DVertexShaderImpl *shader, const struct ar
         if (shader_data->num_gl_shaders)
         {
             new_size = shader_data->shader_array_size + max(1, shader_data->shader_array_size / 2);
-            new_array = HeapReAlloc(GetProcessHeap(), 0, shader_data->gl_shaders,
+            new_array = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, shader_data->gl_shaders,
                                     new_size * sizeof(*shader_data->gl_shaders));
         } else {
-            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader_data->gl_shaders));
+            new_array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data->gl_shaders));
             new_size = 1;
         }
 
@@ -2567,11 +2793,12 @@ static GLuint find_arb_vshader(IWineD3DVertexShaderImpl *shader, const struct ar
     shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
 
     shader_buffer_init(&buffer);
-    ret = shader_arb_generate_vshader(shader, &buffer, args);
+    ret = shader_arb_generate_vshader(shader, &buffer, args,
+            &shader_data->gl_shaders[shader_data->num_gl_shaders]);
     shader_buffer_free(&buffer);
-    shader_data->gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
+    shader_data->gl_shaders[shader_data->num_gl_shaders].prgId = ret;
 
-    return ret;
+    return &shader_data->gl_shaders[shader_data->num_gl_shaders++];
 }
 
 static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock,
@@ -2587,7 +2814,6 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
     {
         if(stateblock->pixelShaderConstantB[i]) args->bools |= ( 1 << i);
     }
-
 }
 
 static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockImpl *stateblock,
@@ -2615,10 +2841,13 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 
     if (useVS) {
         struct arb_vs_compile_args compile_args;
+        struct arb_vs_compiled_shader *compiled;
 
         TRACE("Using vertex shader\n");
         find_arb_vs_compile_args((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, This->stateBlock, &compile_args);
-        priv->current_vprogram_id = find_arb_vshader((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, &compile_args);
+        compiled = find_arb_vshader((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, &compile_args);
+        priv->current_vprogram_id = compiled->prgId;
+        priv->compiled_vprog = compiled;
 
         /* Bind the vertex program */
         GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
@@ -2628,6 +2857,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         glEnable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
         TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
+        shader_arb_vs_local_constants(This);
     } else if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
         priv->current_vprogram_id = 0;
         glDisable(GL_VERTEX_PROGRAM_ARB);
@@ -2878,8 +3108,8 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_DSY           */ NULL,
     /* WINED3DSIH_ELSE          */ NULL,
     /* WINED3DSIH_ENDIF         */ NULL,
-    /* WINED3DSIH_ENDLOOP       */ NULL,
-    /* WINED3DSIH_ENDREP        */ NULL,
+    /* WINED3DSIH_ENDLOOP       */ shader_hw_endloop,
+    /* WINED3DSIH_ENDREP        */ shader_hw_endrep,
     /* WINED3DSIH_EXP           */ shader_hw_map2gl,
     /* WINED3DSIH_EXPP          */ shader_hw_map2gl,
     /* WINED3DSIH_FRC           */ shader_hw_map2gl,
@@ -2889,7 +3119,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_LIT           */ shader_hw_map2gl,
     /* WINED3DSIH_LOG           */ shader_hw_map2gl,
     /* WINED3DSIH_LOGP          */ shader_hw_map2gl,
-    /* WINED3DSIH_LOOP          */ NULL,
+    /* WINED3DSIH_LOOP          */ shader_hw_loop,
     /* WINED3DSIH_LRP           */ shader_hw_lrp,
     /* WINED3DSIH_M3x2          */ shader_hw_mnxn,
     /* WINED3DSIH_M3x3          */ shader_hw_mnxn,
@@ -2907,7 +3137,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_PHASE         */ NULL,
     /* WINED3DSIH_POW           */ shader_hw_map2gl,
     /* WINED3DSIH_RCP           */ shader_hw_rsq_rcp,
-    /* WINED3DSIH_REP           */ NULL,
+    /* WINED3DSIH_REP           */ shader_hw_rep,
     /* WINED3DSIH_RET           */ NULL,
     /* WINED3DSIH_RSQ           */ shader_hw_rsq_rcp,
     /* WINED3DSIH_SETP          */ NULL,
@@ -2973,20 +3203,20 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     SHADER_HANDLER hw_fct;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
-    struct if_frame *if_frame;
+    struct control_frame *control_frame;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
 
     /* boolean if */
     if(ins->handler_idx == WINED3DSIH_IF)
     {
-        if_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*if_frame));
-        list_add_head(&priv->if_frames, &if_frame->entry);
+        control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
+        list_add_head(&priv->control_frames, &control_frame->entry);
 
         if(!priv->muted && get_bool_const(ins, This, ins->src[0].reg.idx) == FALSE)
         {
             shader_addline(buffer, "#if(FALSE){\n");
             priv->muted = TRUE;
-            if_frame->muting = TRUE;
+            control_frame->muting = TRUE;
         }
         else shader_addline(buffer, "#if(TRUE) {\n");
 
@@ -2995,47 +3225,55 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     else if(ins->handler_idx == WINED3DSIH_IFC)
     {
         /* IF(bool) and if_cond(a, b) use the same ELSE and ENDIF tokens */
-        if_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*if_frame));
-        if_frame->ifc = TRUE;
-        list_add_head(&priv->if_frames, &if_frame->entry);
+        control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
+        control_frame->ifc = TRUE;
+        list_add_head(&priv->control_frames, &control_frame->entry);
     }
     else if(ins->handler_idx == WINED3DSIH_ELSE)
     {
-        struct list *e = list_head(&priv->if_frames);
-        if_frame = LIST_ENTRY(e, struct if_frame, entry);
+        struct list *e = list_head(&priv->control_frames);
+        control_frame = LIST_ENTRY(e, struct control_frame, entry);
 
-        if(if_frame->ifc == FALSE)
+        if(control_frame->ifc == FALSE)
         {
             shader_addline(buffer, "#} else {\n");
-            if(!priv->muted && !if_frame->muting)
+            if(!priv->muted && !control_frame->muting)
             {
                 priv->muted = TRUE;
-                if_frame->muting = TRUE;
+                control_frame->muting = TRUE;
             }
-            else if(if_frame->muting) priv->muted = FALSE;
+            else if(control_frame->muting) priv->muted = FALSE;
             return; /* Instruction is handled. */
         }
         /* In case of an ifc, generate a HW shader instruction */
     }
     else if(ins->handler_idx == WINED3DSIH_ENDIF)
     {
-        struct list *e = list_head(&priv->if_frames);
-        if_frame = LIST_ENTRY(e, struct if_frame, entry);
+        struct list *e = list_head(&priv->control_frames);
+        control_frame = LIST_ENTRY(e, struct control_frame, entry);
 
-        if(!if_frame->ifc)
+        if(!control_frame->ifc)
         {
             shader_addline(buffer, "#} endif\n");
-            if(if_frame->muting) priv->muted = FALSE;
-            list_remove(&if_frame->entry);
-            HeapFree(GetProcessHeap(), 0, if_frame);
+            if(control_frame->muting) priv->muted = FALSE;
+            list_remove(&control_frame->entry);
+            HeapFree(GetProcessHeap(), 0, control_frame);
             return; /* Instruction is handled */
         }
         else
         {
-            list_remove(&if_frame->entry);
-            HeapFree(GetProcessHeap(), 0, if_frame);
+            list_remove(&control_frame->entry);
+            HeapFree(GetProcessHeap(), 0, control_frame);
             /* ifc - generate a hw endif */
         }
+    }
+    else if(ins->handler_idx == WINED3DSIH_LOOP || ins->handler_idx == WINED3DSIH_REP)
+    {
+        control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
+        list_add_head(&priv->control_frames, &control_frame->entry);
+
+        control_frame->loop_no = priv->num_loops++;
+        priv->loop_depth++;
     }
 
     if(priv->muted) return;
@@ -3050,6 +3288,15 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
         return;
     }
     hw_fct(ins);
+
+    if(ins->handler_idx == WINED3DSIH_ENDLOOP || ins->handler_idx == WINED3DSIH_ENDREP)
+    {
+        struct list *e = list_head(&priv->control_frames);
+        control_frame = LIST_ENTRY(e, struct control_frame, entry);
+        list_remove(&control_frame->entry);
+        HeapFree(GetProcessHeap(), 0, control_frame);
+        priv->loop_depth--;
+    }
 
     shader_arb_add_instruction_modifiers(ins);
 }
