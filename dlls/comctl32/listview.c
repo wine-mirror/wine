@@ -4166,10 +4166,11 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     INT rgntype;
     INT y, itemheight;
+    INT col, index;
     HPEN hPen, hOldPen;
     RECT rcClip, rcItem = {0};
     POINT Origin;
-    RANGE colRange;
+    RANGES colRanges;
     ITERATOR j;
     BOOL rmost = FALSE;
 
@@ -4182,21 +4183,23 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
     /* Get scroll info once before loop */
     LISTVIEW_GetOrigin(infoPtr, &Origin);
 
+    colRanges = ranges_create(DPA_GetPtrCount(infoPtr->hdpaColumns));
+
     /* narrow down the columns we need to paint */
-    for(colRange.lower = 0; colRange.lower < DPA_GetPtrCount(infoPtr->hdpaColumns); colRange.lower++)
+    for(col = 0; col < DPA_GetPtrCount(infoPtr->hdpaColumns); col++)
     {
-        LISTVIEW_GetHeaderRect(infoPtr, colRange.lower, &rcItem);
-        if (rcItem.right + Origin.x >= rcClip.left) break;
+        index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX, col, 0);
+
+        LISTVIEW_GetHeaderRect(infoPtr, index, &rcItem);
+        if ((rcItem.right + Origin.x >= rcClip.left) && (rcItem.left + Origin.x < rcClip.right))
+            ranges_additem(colRanges, index);
     }
-    for(colRange.upper = DPA_GetPtrCount(infoPtr->hdpaColumns); colRange.upper > 0; colRange.upper--)
-    {
-        LISTVIEW_GetHeaderRect(infoPtr, colRange.upper - 1, &rcItem);
-        if (rcItem.left + Origin.x < rcClip.right) break;
-    }
+
     /* is right most vertical line visible? */
     if (DPA_GetPtrCount(infoPtr->hdpaColumns) > 0)
     {
-        LISTVIEW_GetHeaderRect(infoPtr, DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, &rcItem);
+        index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX, DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, 0);
+        LISTVIEW_GetHeaderRect(infoPtr, index, &rcItem);
         rmost = (rcItem.right + Origin.x < rcClip.right);
     }
 
@@ -4205,11 +4208,11 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
         hOldPen = SelectObject ( hdc, hPen );
 
         /* draw the vertical lines for the columns */
-        iterator_rangeitems(&j, colRange);
+        iterator_rangesitems(&j, colRanges);
         while(iterator_next(&j))
         {
             LISTVIEW_GetHeaderRect(infoPtr, j.nItem, &rcItem);
-            if (rcItem.left == 0) continue; /* skip first column */
+            if (rcItem.left == 0) continue; /* skip leftmost column */
             rcItem.left += Origin.x;
             rcItem.right += Origin.x;
             rcItem.top = infoPtr->rcList.top;
@@ -4222,8 +4225,14 @@ static void LISTVIEW_RefreshReportGrid(LISTVIEW_INFO *infoPtr, HDC hdc)
         /* draw rightmost grid line if visible */
         if (rmost)
         {
-            MoveToEx (hdc, rcItem.right, rcItem.top, NULL);
-            LineTo (hdc, rcItem.right, rcItem.bottom);
+            index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX,
+                                 DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, 0);
+            LISTVIEW_GetHeaderRect(infoPtr, index, &rcItem);
+
+            rcItem.right += Origin.x;
+
+            MoveToEx (hdc, rcItem.right, infoPtr->rcList.top, NULL);
+            LineTo (hdc, rcItem.right, infoPtr->rcList.bottom);
         }
 
         /* draw the horizontial lines for the rows */
