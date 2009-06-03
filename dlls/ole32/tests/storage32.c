@@ -1336,8 +1336,11 @@ static void test_simple(void)
     ok(upos.QuadPart == 3, "got %d\n", upos.u.LowPart);
 
     r = IStream_Stat(stm, &stat, STATFLAG_NONAME);
-    ok(r == S_OK, "got %08x\n", r);
-    ok(stat.cbSize.QuadPart == 3, "got %d\n", stat.cbSize.u.LowPart);
+    ok(r == S_OK ||
+       broken(r == STG_E_INVALIDFUNCTION), /* NT4 and below */
+       "got %08x\n", r);
+    if (r == S_OK)
+        ok(stat.cbSize.QuadPart == 3, "got %d\n", stat.cbSize.u.LowPart);
 
     pos.QuadPart = 1;
     r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &upos);
@@ -1345,8 +1348,11 @@ static void test_simple(void)
     ok(upos.QuadPart == 1, "got %d\n", upos.u.LowPart);
 
     r = IStream_Stat(stm, &stat, STATFLAG_NONAME);
-    ok(r == S_OK, "got %08x\n", r);
-    ok(stat.cbSize.QuadPart == 1, "got %d\n", stat.cbSize.u.LowPart);
+    ok(r == S_OK ||
+       broken(r == STG_E_INVALIDFUNCTION), /* NT4 and below */
+       "got %08x\n", r);
+    if (r == S_OK)
+        ok(stat.cbSize.QuadPart == 1, "got %d\n", stat.cbSize.u.LowPart);
 
     IStream_Release(stm);
 
