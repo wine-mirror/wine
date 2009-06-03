@@ -26,6 +26,26 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
+static void volumetexture_cleanup(IWineD3DVolumeTextureImpl *This, D3DCB_DESTROYVOLUMEFN volume_destroy_cb)
+{
+    unsigned int i;
+
+    TRACE("(%p) : Cleaning up.\n", This);
+
+    for (i = 0; i < This->baseTexture.levels; ++i)
+    {
+        IWineD3DVolume *volume = This->volumes[i];
+
+        if (volume)
+        {
+            /* Cleanup the container. */
+            IWineD3DVolume_SetContainer(volume, NULL);
+            volume_destroy_cb(volume);
+        }
+    }
+    basetexture_cleanup((IWineD3DBaseTexture *)This);
+}
+
 /* *******************************************
    IWineD3DTexture IUnknown parts follow
    ******************************************* */
@@ -216,16 +236,9 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_IsCondNP2(IWineD3DVolumeTexture *if
    ******************************************* */
 static void WINAPI IWineD3DVolumeTextureImpl_Destroy(IWineD3DVolumeTexture *iface, D3DCB_DESTROYVOLUMEFN D3DCB_DestroyVolume) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    unsigned int i;
-    TRACE("(%p) : Cleaning up\n",This);
-    for (i = 0; i < This->baseTexture.levels; i++) {
-        if (This->volumes[i] != NULL) {
-            /* Cleanup the container */
-            IWineD3DVolume_SetContainer(This->volumes[i], 0);
-            D3DCB_DestroyVolume(This->volumes[i]);
-        }
-    }
-    basetexture_cleanup((IWineD3DBaseTexture *)iface);
+
+    volumetexture_cleanup(This, D3DCB_DestroyVolume);
+
     HeapFree(GetProcessHeap(), 0, This);
 }
 
