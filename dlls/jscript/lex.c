@@ -31,6 +31,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
+#define LONGLONG_MAX (((LONGLONG)0x7fffffff<<32)|0xffffffff)
+
 static const WCHAR breakW[] = {'b','r','e','a','k',0};
 static const WCHAR caseW[] = {'c','a','s','e',0};
 static const WCHAR catchW[] = {'c','a','t','c','h',0};
@@ -373,7 +375,8 @@ static literal_t *alloc_int_literal(parser_ctx_t *ctx, LONG l)
 
 static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **literal)
 {
-    double d, tmp = 1.0;
+    LONGLONG d, hlp;
+    int exp = 0;
 
     if(ctx->ptr == ctx->end || (!isdigitW(*ctx->ptr) &&
         *ctx->ptr!='.' && *ctx->ptr!='e' && *ctx->ptr!='E')) {
@@ -382,13 +385,32 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
     }
 
     d = int_part;
-    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
-        d = d*10 + *(ctx->ptr++) - '0';
+    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+        hlp = d*10 + *(ctx->ptr++) - '0';
+        if(d>LONGLONG_MAX/10 || hlp<0) {
+            exp++;
+            break;
+        }
+        else
+            d = hlp;
+    }
+    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+        exp++;
+        ctx->ptr++;
+    }
 
     if(*ctx->ptr == '.') ctx->ptr++;
 
+    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+        hlp = d*10 + *(ctx->ptr++) - '0';
+        if(d>LONGLONG_MAX/10 || hlp<0)
+            break;
+
+        d = hlp;
+        exp--;
+    }
     while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
-        d += (tmp /= 10.0)*(*ctx->ptr++ - '0');
+        ctx->ptr++;
 
     if(ctx->ptr < ctx->end && (*ctx->ptr == 'e' || *ctx->ptr == 'E')) {
         int sign = 1, e = 0;
@@ -411,16 +433,20 @@ static int parse_double_literal(parser_ctx_t *ctx, LONG int_part, literal_t **li
             return lex_error(ctx, E_FAIL);
         }
 
-        while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
-            e = e*10 + *ctx->ptr++ - '0';
+        while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+            if(e > INT_MAX/10 || (e = e*10 + *ctx->ptr++ - '0')<0)
+                e = INT_MAX;
+        }
         e *= sign;
 
-        d *= pow(10, e);
+        if(exp<0 && e<0 && e+exp>0) exp = INT_MIN;
+        else if(exp>0 && e>0 && e+exp<0) exp = INT_MAX;
+        else exp += e;
     }
 
     *literal = parser_alloc(ctx, sizeof(literal_t));
     (*literal)->vt = VT_R8;
-    (*literal)->u.dval = d;
+    (*literal)->u.dval = (double)d*pow(10, exp);
 
     return tNumericLiteral;
 }
