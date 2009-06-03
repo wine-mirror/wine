@@ -1295,47 +1295,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         WINED3DPOOL Pool, IWineD3DCubeTexture **ppCubeTexture, IUnknown *parent)
 {
     IWineD3DDeviceImpl      *This = (IWineD3DDeviceImpl *)iface;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
     IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
-    unsigned int             i, j;
-    UINT                     tmpW;
     HRESULT                  hr;
-    unsigned int pow2EdgeLength;
-
-    /* TODO: It should only be possible to create textures for formats 
-             that are reported as supported */
-    if (WINED3DFMT_UNKNOWN >= Format) {
-        WARN("(%p) : Texture cannot be created with a format of WINED3DFMT_UNKNOWN\n", This);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (!GL_SUPPORT(ARB_TEXTURE_CUBE_MAP) && Pool != WINED3DPOOL_SCRATCH) {
-        WARN("(%p) : Tried to create not supported cube texture\n", This);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* Calculate levels for mip mapping */
-    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP)
-    {
-        if (!GL_SUPPORT(SGIS_GENERATE_MIPMAP))
-        {
-            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        if (Levels > 1)
-        {
-            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        Levels = 1;
-    }
-    else if (!Levels)
-    {
-        Levels = wined3d_log2i(EdgeLength) + 1;
-        TRACE("Calculated levels = %d\n", Levels);
-    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1346,82 +1307,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
     }
 
     object->lpVtbl = &IWineD3DCubeTexture_Vtbl;
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)object, Levels,
-            WINED3DRTYPE_CUBETEXTURE, This, 0, Usage, format_desc, Pool, parent);
+    hr = cubetexture_init(object, EdgeLength, Levels, This, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize basetexture, returning %#x\n", hr);
+        WARN("Failed to initialize cubetexture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         *ppCubeTexture = NULL;
         return hr;
     }
 
-    TRACE("(%p) : Created basetexture %p\n", This, object);
-
-    TRACE("(%p) Create Cube Texture\n", This);
-
-    /* Find the nearest pow2 match */
-    pow2EdgeLength = 1;
-    while (pow2EdgeLength < EdgeLength) pow2EdgeLength <<= 1;
-
-    if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) || (EdgeLength == pow2EdgeLength)) {
-        /* Precalculated scaling for 'faked' non power of two texture coords */
-        object->baseTexture.pow2Matrix[ 0] = 1.0;
-        object->baseTexture.pow2Matrix[ 5] = 1.0;
-        object->baseTexture.pow2Matrix[10] = 1.0;
-        object->baseTexture.pow2Matrix[15] = 1.0;
-    } else {
-        /* Precalculated scaling for 'faked' non power of two texture coords */
-        object->baseTexture.pow2Matrix[ 0] = ((float)EdgeLength) / ((float)pow2EdgeLength);
-        object->baseTexture.pow2Matrix[ 5] = ((float)EdgeLength) / ((float)pow2EdgeLength);
-        object->baseTexture.pow2Matrix[10] = ((float)EdgeLength) / ((float)pow2EdgeLength);
-        object->baseTexture.pow2Matrix[15] = 1.0;
-        object->baseTexture.pow2Matrix_identity = FALSE;
-    }
-
-    if (object->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
-    {
-        object->baseTexture.minMipLookup = minMipLookup;
-        object->baseTexture.magLookup    = magLookup;
-    } else {
-        object->baseTexture.minMipLookup = minMipLookup_noFilter;
-        object->baseTexture.magLookup    = magLookup_noFilter;
-    }
-
-    /* Generate all the surfaces */
-    tmpW = EdgeLength;
-    for (i = 0; i < object->baseTexture.levels; i++) {
-
-        /* Create the 6 faces */
-        for (j = 0; j < 6; j++) {
-            static const GLenum cube_targets[6] = {
-                GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,
-                GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,
-                GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,
-                GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,
-                GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,
-                GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB
-            };
-
-            hr = IWineD3DDeviceParent_CreateSurface(This->device_parent, parent, tmpW, tmpW,
-                    Format, Usage, Pool, i /* Level */, j, &object->surfaces[j][i]);
-            if (FAILED(hr))
-            {
-                FIXME("(%p) Failed to create surface\n",object);
-                IWineD3DCubeTexture_Release((IWineD3DCubeTexture *)object);
-                *ppCubeTexture = NULL;
-                return hr;
-            }
-            IWineD3DSurface_SetContainer(object->surfaces[j][i], (IWineD3DBase *)object);
-            TRACE("Created surface level %d @ %p,\n", i, object->surfaces[j][i]);
-            surface_set_texture_target(object->surfaces[j][i], cube_targets[j]);
-        }
-        tmpW = max(1, tmpW >> 1);
-    }
-    object->baseTexture.internal_preload = cubetexture_internal_preload;
-
     TRACE("(%p) : Created Cube Texture %p\n", This, object);
-    *ppCubeTexture = (IWineD3DCubeTexture *) object;
+    *ppCubeTexture = (IWineD3DCubeTexture *)object;
+
     return WINED3D_OK;
 }
 
