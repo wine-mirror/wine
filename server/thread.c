@@ -264,9 +264,9 @@ static void cleanup_thread( struct thread *thread )
     if (thread->reply_fd) release_object( thread->reply_fd );
     if (thread->wait_fd) release_object( thread->wait_fd );
     free( thread->suspend_context );
-    free_msg_queue( thread );
     cleanup_clipboard_thread(thread);
     destroy_thread_windows( thread );
+    free_msg_queue( thread );
     close_thread_desktop( thread );
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
     {

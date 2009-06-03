@@ -378,39 +378,6 @@ static void detach_window_thread( struct window *win )
     win->thread = NULL;
 }
 
-/* destroy a window */
-void destroy_window( struct window *win )
-{
-    /* destroy all children */
-    while (!list_empty(&win->children))
-        destroy_window( LIST_ENTRY( list_head(&win->children), struct window, entry ));
-    while (!list_empty(&win->unlinked))
-        destroy_window( LIST_ENTRY( list_head(&win->unlinked), struct window, entry ));
-
-    /* reset global window pointers, if the corresponding window is destroyed */
-    if (win == shell_window) shell_window = NULL;
-    if (win == shell_listview) shell_listview = NULL;
-    if (win == progman_window) progman_window = NULL;
-    if (win == taskman_window) taskman_window = NULL;
-    free_user_handle( win->handle );
-    destroy_properties( win );
-    list_remove( &win->entry );
-    if (is_desktop_window(win))
-    {
-        struct desktop *desktop = win->desktop;
-        assert( desktop->top_window == win || desktop->msg_window == win );
-        if (desktop->top_window == win) desktop->top_window = NULL;
-        else desktop->msg_window = NULL;
-    }
-    detach_window_thread( win );
-    if (win->win_region) free_region( win->win_region );
-    if (win->update_region) free_region( win->update_region );
-    if (win->class) release_class( win->class );
-    free( win->text );
-    memset( win, 0x55, sizeof(*win) + win->nb_extra_bytes - 1 );
-    free( win );
-}
-
 /* get the process owning the top window of a given desktop */
 struct process *get_top_window_owner( struct desktop *desktop )
 {
@@ -1693,6 +1660,55 @@ static void set_window_region( struct window *win, struct region *region, int re
 
     if (old_vis_rgn) free_region( old_vis_rgn );
     clear_error();  /* we ignore out of memory errors since the region has been set */
+}
+
+
+/* destroy a window */
+void destroy_window( struct window *win )
+{
+    /* hide the window */
+    if (is_visible(win))
+    {
+        struct region *vis_rgn = get_visible_region( win, DCX_WINDOW );
+        win->style &= ~WS_VISIBLE;
+        if (vis_rgn)
+        {
+            struct region *exposed_rgn = expose_window( win, &win->window_rect, vis_rgn );
+            if (exposed_rgn) free_region( exposed_rgn );
+            free_region( vis_rgn );
+        }
+        validate_whole_window( win );
+        validate_children( win );
+    }
+
+    /* destroy all children */
+    while (!list_empty(&win->children))
+        destroy_window( LIST_ENTRY( list_head(&win->children), struct window, entry ));
+    while (!list_empty(&win->unlinked))
+        destroy_window( LIST_ENTRY( list_head(&win->unlinked), struct window, entry ));
+
+    /* reset global window pointers, if the corresponding window is destroyed */
+    if (win == shell_window) shell_window = NULL;
+    if (win == shell_listview) shell_listview = NULL;
+    if (win == progman_window) progman_window = NULL;
+    if (win == taskman_window) taskman_window = NULL;
+    free_user_handle( win->handle );
+    destroy_properties( win );
+    list_remove( &win->entry );
+    if (is_desktop_window(win))
+    {
+        struct desktop *desktop = win->desktop;
+        assert( desktop->top_window == win || desktop->msg_window == win );
+        if (desktop->top_window == win) desktop->top_window = NULL;
+        else desktop->msg_window = NULL;
+    }
+    detach_window_thread( win );
+    if (win->win_region) free_region( win->win_region );
+    if (win->update_region) free_region( win->update_region );
+    if (win->class) release_class( win->class );
+    free( win->text );
+    memset( win, 0x55, sizeof(*win) + win->nb_extra_bytes - 1 );
+    free( win );
 }
 
 
