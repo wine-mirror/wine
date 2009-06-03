@@ -53,14 +53,15 @@ static void test_WM_SETTEXT(void)
   static const struct {
     const char *itemtext;
     DWORD lines;
+    DWORD lines_broken;
   } testitems[] = {
     { "TestSomeText", 1},
     { "TestSomeText\r", 1},
-    { "TestSomeText\rSomeMoreText\r", 2},
+    { "TestSomeText\rSomeMoreText\r", 2, 1}, /* NT4 and below */
     { "TestSomeText\n\nTestSomeText", 3},
     { "TestSomeText\r\r\nTestSomeText", 2},
-    { "TestSomeText\r\r\n\rTestSomeText", 3},
-    { "TestSomeText\r\n\r\r\n\rTestSomeText", 4},
+    { "TestSomeText\r\r\n\rTestSomeText", 3, 2}, /* NT4 and below */
+    { "TestSomeText\r\n\r\r\n\rTestSomeText", 4, 3}, /* NT4 and below */
     { "TestSomeText\r\n" ,2},
     { "TestSomeText\r\nSomeMoreText\r\n", 3},
     { "TestSomeText\r\n\r\nTestSomeText", 3},
@@ -68,8 +69,8 @@ static void test_WM_SETTEXT(void)
     { "TestSomeText \r\nTestSomeText", 2},
     { "TestSomeText\r\n \r\nTestSomeText", 3},
     { "TestSomeText\n", 2},
-    { "TestSomeText\r\r\r", 3},
-    { "TestSomeText\r\r\rSomeMoreText", 4}
+    { "TestSomeText\r\r\r", 3, 1}, /* NT4 and below */
+    { "TestSomeText\r\r\rSomeMoreText", 4, 2} /* NT4 and below */
   };
   HWND hwndRichEdit = new_richedit(NULL);
   int i;
@@ -104,7 +105,8 @@ static void test_WM_SETTEXT(void)
     ok (result == 0,
         "[%d] WM_SETTEXT round trip: strcmp = %ld\n", i, result);
     result = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
-    ok (result == testitems[i].lines,
+    ok (result == testitems[i].lines ||
+        broken(testitems[i].lines_broken && result == testitems[i].lines_broken),
         "[%d] EM_GETLINECOUNT returned %ld, expected %d\n", i, result, testitems[i].lines);
   }
 
