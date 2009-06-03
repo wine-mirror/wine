@@ -122,7 +122,7 @@
  *   -- LVM_GETTILEINFO, LVM_SETTILEINFO
  *   -- LVM_GETTILEVIEWINFO, LVM_SETTILEVIEWINFO
  *   -- LVM_GETUNICODEFORMAT, LVM_SETUNICODEFORMAT
- *   -- LVM_GETVIEW, LVM_SETVIEW
+ *   -- LVM_SETVIEW
  *   -- LVM_GETWORKAREAS, LVM_SETWORKAREAS
  *   -- LVM_HASGROUP, LVM_INSERTGROUP, LVM_REMOVEGROUP, LVM_REMOVEALLGROUPS
  *   -- LVM_INSERTGROUPSORTED
@@ -280,6 +280,7 @@ typedef struct tagLISTVIEW_INFO
   RECT rcFocus;
   DWORD dwStyle;		/* the cached window GWL_STYLE */
   DWORD dwLvExStyle;		/* extended listview style */
+  DWORD uView;			/* current view available through LVM_[G,S]ETVIEW */
   INT nItemCount;		/* the number of items in the list */
   HDPA hdpaItems;               /* array ITEM_INFO pointers */
   HDPA hdpaPosX;		/* maintains the (X, Y) coordinates of the */
@@ -1348,6 +1349,26 @@ static void toggle_checkbox_state(LISTVIEW_INFO *infoPtr, INT nItem)
         lvitem.state = INDEXTOSTATEIMAGEMASK(state);
         lvitem.stateMask = LVIS_STATEIMAGEMASK;
         LISTVIEW_SetItemState(infoPtr, nItem, &lvitem);
+    }
+}
+
+/* this should be called after window style got updated,
+   it used to reset view state to match current window style */
+static inline void map_style_view(LISTVIEW_INFO *infoPtr)
+{
+    switch (infoPtr->dwStyle & LVS_TYPEMASK)
+    {
+    case LVS_ICON:
+        infoPtr->uView = LV_VIEW_ICON;
+        break;
+    case LVS_REPORT:
+        infoPtr->uView = LV_VIEW_DETAILS;
+        break;
+    case LVS_SMALLICON:
+        infoPtr->uView = LV_VIEW_SMALLICON;
+        break;
+    case LVS_LIST:
+        infoPtr->uView = LV_VIEW_LIST;
     }
 }
 
@@ -8293,6 +8314,8 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     LISTVIEW_UpdateScroll(infoPtr);
   }
 
+  map_style_view(infoPtr);
+
   OpenThemeData(hwnd, themeClass);
 
   /* initialize the icon sizes */
@@ -9723,6 +9746,8 @@ static INT LISTVIEW_StyleChanged(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
         ((lpss->styleNew & WS_VSCROLL) == 0))
        ShowScrollBar(infoPtr->hwndSelf, SB_VERT, FALSE);
 
+    map_style_view(infoPtr);
+
     if (uNewView != uOldView)
     {
     	SIZE oldIconSize = infoPtr->iconSize;
@@ -10094,7 +10119,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_GETUNICODEFORMAT:
     return (infoPtr->notifyFormat == NFR_UNICODE);
 
-  /* case LVM_GETVIEW: */
+  case LVM_GETVIEW:
+    return infoPtr->uView;
 
   case LVM_GETVIEWRECT:
     return LISTVIEW_GetViewRect(infoPtr, (LPRECT)lParam);
