@@ -712,6 +712,75 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     return 0;
 }
 
+
+/***********************************************************************
+ *		destroy_thread_window
+ *
+ * Destroy a window upon exit of its thread.
+ */
+static void destroy_thread_window( HWND hwnd )
+{
+    WND *wndPtr;
+    HWND *list;
+    HMENU menu = 0, sys_menu = 0;
+    WORD index;
+
+    /* free child windows */
+
+    if ((list = WIN_ListChildren( hwnd )))
+    {
+        int i;
+        for (i = 0; list[i]; i++)
+        {
+            if (WIN_IsCurrentThread( list[i] )) destroy_thread_window( list[i] );
+            else SendMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
+        }
+        HeapFree( GetProcessHeap(), 0, list );
+    }
+
+    /* destroy the client-side storage */
+
+    index = USER_HANDLE_TO_INDEX(hwnd);
+    if (index >= NB_USER_HANDLES) return;
+    USER_Lock();
+    if ((wndPtr = user_handles[index]))
+    {
+        if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD) menu = (HMENU)wndPtr->wIDmenu;
+        sys_menu = wndPtr->hSysMenu;
+        free_dce( wndPtr->dce, hwnd );
+        user_handles[index] = NULL;
+        wndPtr->dwMagic = 0;
+    }
+    USER_Unlock();
+
+    HeapFree( GetProcessHeap(), 0, wndPtr );
+    if (menu) DestroyMenu( menu );
+    if (sys_menu) DestroyMenu( sys_menu );
+}
+
+
+/***********************************************************************
+ *		destroy_thread_child_windows
+ *
+ * Destroy child windows upon exit of its thread.
+ */
+static void destroy_thread_child_windows( HWND hwnd )
+{
+    HWND *list;
+    int i;
+
+    if (WIN_IsCurrentThread( hwnd ))
+    {
+        destroy_thread_window( hwnd );
+    }
+    else if ((list = WIN_ListChildren( hwnd )))
+    {
+        for (i = 0; list[i]; i++) destroy_thread_child_windows( list[i] );
+        HeapFree( GetProcessHeap(), 0, list );
+    }
+}
+
+
 /***********************************************************************
  *           WIN_DestroyThreadWindows
  *
@@ -723,13 +792,18 @@ void WIN_DestroyThreadWindows( HWND hwnd )
     int i;
 
     if (!(list = WIN_ListChildren( hwnd ))) return;
+
+    /* reset owners of top-level windows */
     for (i = 0; list[i]; i++)
     {
-        if (WIN_IsCurrentThread( list[i] ))
-            DestroyWindow( list[i] );
-        else
-            WIN_DestroyThreadWindows( list[i] );
+        if (!WIN_IsCurrentThread( list[i] ))
+        {
+            HWND owner = GetWindow( list[i], GW_OWNER );
+            if (owner && WIN_IsCurrentThread( owner )) WIN_SetOwner( list[i], 0 );
+        }
     }
+
+    for (i = 0; list[i]; i++) destroy_thread_child_windows( list[i] );
     HeapFree( GetProcessHeap(), 0, list );
 }
 
