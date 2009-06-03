@@ -63,6 +63,7 @@ static INT  test_ACP_RequestLock = SINK_UNEXPECTED;
 static INT  test_ACP_GetEndACP = SINK_UNEXPECTED;
 static INT  test_ACP_GetSelection = SINK_UNEXPECTED;
 static INT  test_DoEditSession = SINK_UNEXPECTED;
+static INT  test_ACP_InsertTextAtSelection = SINK_UNEXPECTED;
 
 
 /**********************************************************************
@@ -223,7 +224,8 @@ static HRESULT WINAPI TextStoreACP_InsertTextAtSelection(ITextStoreACP *iface,
     DWORD dwFlags, const WCHAR *pchText, ULONG cch, LONG *pacpStart,
     LONG *pacpEnd, TS_TEXTCHANGE *pChange)
 {
-    trace("\n");
+    ok(test_ACP_InsertTextAtSelection == SINK_EXPECTED,"Unexpected TextStoreACP_InsertTextAtSelection\n");
+    test_ACP_InsertTextAtSelection = SINK_FIRED;
     return S_OK;
 }
 static HRESULT WINAPI TextStoreACP_InsertEmbeddedAtSelection(ITextStoreACP *iface,
@@ -1371,6 +1373,24 @@ static ULONG WINAPI EditSession_Release(ITfEditSession *iface)
     return ret;
 }
 
+static void test_InsertAtSelection(TfEditCookie ec, ITfContext *cxt)
+{
+    HRESULT hr;
+    ITfInsertAtSelection *iis;
+    ITfRange *range=NULL;
+    static const WCHAR txt[] = {'H','e','l','l','o',' ','W','o','r','l','d',0};
+
+    hr = ITfContext_QueryInterface(cxt, &IID_ITfInsertAtSelection , (LPVOID*)&iis);
+    ok(SUCCEEDED(hr),"Failed to get ITfInsertAtSelection interface\n");
+    test_ACP_InsertTextAtSelection = SINK_EXPECTED;
+    hr = ITfInsertAtSelection_InsertTextAtSelection(iis, ec, 0, txt, 11, &range);
+    ok(SUCCEEDED(hr),"ITfInsertAtSelection_InsertTextAtSelection failed %x\n",hr);
+    ok(test_ACP_InsertTextAtSelection == SINK_FIRED,"expected InsertTextAtSelection not fired\n");
+    ok(range != NULL,"No range returned\n");
+    ITfRange_Release(range);
+    ITfInsertAtSelection_Release(iis);
+}
+
 static HRESULT WINAPI EditSession_DoEditSession(ITfEditSession *iface,
 TfEditCookie ec)
 {
@@ -1426,6 +1446,8 @@ TfEditCookie ec)
     ok(selection.range != NULL,"NULL range\n");
     ok(test_ACP_GetSelection == SINK_FIRED," expected ACP_GetSepection not fired\n");
     ITfRange_Release(selection.range);
+
+    test_InsertAtSelection(ec, cxt);
 
     ITfContext_Release(cxt);
     ITfDocumentMgr_Release(dm);

@@ -613,8 +613,35 @@ static WINAPI HRESULT InsertAtSelection_InsertTextAtSelection(
         const WCHAR *pchText, LONG cch, ITfRange **ppRange)
 {
     Context *This = impl_from_ITfInsertAtSelectionVtbl(iface);
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    EditCookie *cookie;
+    LONG acpStart, acpEnd;
+    TS_TEXTCHANGE change;
+    HRESULT hr;
+
+    TRACE("(%p) %i %x %s %p\n",This, ec, dwFlags, debugstr_wn(pchText,cch), ppRange);
+
+    if (!This->connected)
+        return TF_E_DISCONNECTED;
+
+    if (get_Cookie_magic(ec)!=COOKIE_MAGIC_EDITCOOKIE)
+        return TF_E_NOLOCK;
+
+    cookie = get_Cookie_data(ec);
+
+    if ((cookie->lockType & TS_LF_READWRITE) != TS_LF_READWRITE )
+        return TS_E_READONLY;
+
+    if (!This->pITextStoreACP)
+    {
+        FIXME("Context does not have a ITextStoreACP\n");
+        return E_NOTIMPL;
+    }
+
+    hr = ITextStoreACP_InsertTextAtSelection(This->pITextStoreACP, dwFlags, pchText, cch, &acpStart, &acpEnd, &change);
+    if (SUCCEEDED(hr))
+        Range_Constructor((ITfContext*)This, This->pITextStoreACP, cookie->lockType, change.acpStart, change.acpNewEnd, ppRange);
+
+    return hr;
 }
 
 static WINAPI HRESULT InsertAtSelection_InsertEmbeddedAtSelection(
