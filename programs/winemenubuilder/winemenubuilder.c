@@ -1514,6 +1514,21 @@ static BOOL freedesktop_mime_type_for_extension(struct list *native_mime_types,
     return ret;
 }
 
+static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
+{
+    DWORD size;
+    if (RegGetValueW(key, subkey, name, RRF_RT_REG_SZ, NULL, NULL, &size) == ERROR_SUCCESS)
+    {
+        WCHAR *ret = HeapAlloc(GetProcessHeap(), 0, size);
+        if (ret)
+        {
+            if (RegGetValueW(key, subkey, name, RRF_RT_REG_SZ, NULL, ret, &size) == ERROR_SUCCESS)
+                return ret;
+        }
+    }
+    return NULL;
+}
+
 static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const char *dot_extension,
                                               const char *mime_type, const char *comment)
 {
@@ -1563,6 +1578,35 @@ static BOOL is_extension_blacklisted(LPCWSTR extension)
     return FALSE;
 }
 
+static BOOL write_freedesktop_association_entry(const char *desktopPath, const char *dot_extension,
+                                                const char *friendlyAppName, const char *mimeType,
+                                                const char *progId)
+{
+    BOOL ret = FALSE;
+    FILE *desktop;
+
+    WINE_TRACE("writing association for file type %s, friendlyAppName=%s, MIME type %s, progID=%s, to file %s\n",
+               wine_dbgstr_a(dot_extension), wine_dbgstr_a(friendlyAppName), wine_dbgstr_a(mimeType),
+               wine_dbgstr_a(progId), wine_dbgstr_a(desktopPath));
+
+    desktop = fopen(desktopPath, "w");
+    if (desktop)
+    {
+        fprintf(desktop, "[Desktop Entry]\n");
+        fprintf(desktop, "Type=Application\n");
+        fprintf(desktop, "Name=%s\n", friendlyAppName);
+        fprintf(desktop, "MimeType=%s\n", mimeType);
+        fprintf(desktop, "Exec=wine start /ProgIDOpen %s %%f\n", progId);
+        fprintf(desktop, "NoDisplay=true\n");
+        fprintf(desktop, "StartupNotify=true\n");
+        ret = TRUE;
+        fclose(desktop);
+    }
+    else
+        WINE_ERR("error writing association file %s\n", wine_dbgstr_a(desktopPath));
+    return ret;
+}
+
 static BOOL generate_associations(const char *xdg_data_home, const char *packages_dir, const char *applications_dir)
 {
     struct list *nativeMimeTypes = NULL;
@@ -1603,6 +1647,10 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             char *friendlyDocNameA = NULL;
             WCHAR *contentTypeW = NULL;
             char *mimeTypeA = NULL;
+            WCHAR *friendlyAppNameW = NULL;
+            char *friendlyAppNameA = NULL;
+            WCHAR *progIdW = NULL;
+            char *progIdA = NULL;
 
             extensionA = wchars_to_utf8_chars(extensionW);
             if (extensionA == NULL)
@@ -1610,11 +1658,6 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                 WINE_ERR("out of memory\n");
                 goto end;
             }
-
-            commandW = assoc_query(ASSOCSTR_COMMAND, extensionW, NULL);
-            if (commandW == NULL)
-                /* no command -> unusable extension */
-                goto end;
 
             friendlyDocNameW = assoc_query(ASSOCSTR_FRIENDLYDOCNAME, extensionW, NULL);
             if (friendlyDocNameW)
@@ -1651,6 +1694,56 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                 }
             }
 
+            commandW = assoc_query(ASSOCSTR_COMMAND, extensionW, NULL);
+            if (commandW == NULL)
+                /* no command => no application is associated */
+                goto end;
+
+            friendlyAppNameW = assoc_query(ASSOCSTR_FRIENDLYAPPNAME, extensionW, NULL);
+            if (friendlyAppNameW)
+            {
+                friendlyAppNameA = wchars_to_utf8_chars(friendlyAppNameW);
+                if (friendlyAppNameA == NULL)
+                {
+                    WINE_ERR("out of memory\n");
+                    goto end;
+                }
+            }
+            else
+            {
+                friendlyAppNameA = heap_printf("A Wine application");
+                if (friendlyAppNameA == NULL)
+                {
+                    WINE_ERR("out of memory\n");
+                    goto end;
+                }
+            }
+
+            progIdW = reg_get_valW(HKEY_CLASSES_ROOT, extensionW, NULL);
+            if (progIdW)
+            {
+                progIdA = wchars_to_utf8_chars(progIdW);
+                if (progIdA == NULL)
+                {
+                    WINE_ERR("out of memory\n");
+                    goto end;
+                }
+            }
+            else
+                goto end; /* no progID => not a file type association */
+
+            {
+                char *desktopPath = heap_printf("%s/wine-extension-%s.desktop", applications_dir, &extensionA[1]);
+                if (desktopPath)
+                {
+                    if (write_freedesktop_association_entry(desktopPath, extensionA, friendlyAppNameA, mimeTypeA, progIdA))
+                    {
+                        hasChanged = TRUE;
+                    }
+                    HeapFree(GetProcessHeap(), 0, desktopPath);
+                }
+            }
+
         end:
             HeapFree(GetProcessHeap(), 0, extensionA);
             HeapFree(GetProcessHeap(), 0, commandW);
@@ -1658,6 +1751,10 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             HeapFree(GetProcessHeap(), 0, friendlyDocNameA);
             HeapFree(GetProcessHeap(), 0, contentTypeW);
             HeapFree(GetProcessHeap(), 0, mimeTypeA);
+            HeapFree(GetProcessHeap(), 0, friendlyAppNameW);
+            HeapFree(GetProcessHeap(), 0, friendlyAppNameA);
+            HeapFree(GetProcessHeap(), 0, progIdW);
+            HeapFree(GetProcessHeap(), 0, progIdA);
         }
         HeapFree(GetProcessHeap(), 0, extensionW);
         if (ret != ERROR_SUCCESS)
@@ -2138,6 +2235,18 @@ static void RefreshFileTypeAssociations(void)
     if (hasChanged)
     {
         char *command = heap_printf("update-mime-database %s", mime_dir);
+        if (command)
+        {
+            system(command);
+            HeapFree(GetProcessHeap(), 0, command);
+        }
+        else
+        {
+            WINE_ERR("out of memory\n");
+            goto end;
+        }
+
+        command = heap_printf("update-desktop-database %s/applications", xdg_data_dir);
         if (command)
         {
             system(command);
