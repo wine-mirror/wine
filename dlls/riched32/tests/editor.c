@@ -50,25 +50,29 @@ static HWND new_richedit(HWND parent) {
 
 static void test_WM_SETTEXT(void)
 {
+  static const struct {
+    const char *itemtext;
+    DWORD lines;
+  } testitems[] = {
+    { "TestSomeText", 1},
+    { "TestSomeText\r", 1},
+    { "TestSomeText\rSomeMoreText\r", 2},
+    { "TestSomeText\n\nTestSomeText", 3},
+    { "TestSomeText\r\r\nTestSomeText", 2},
+    { "TestSomeText\r\r\n\rTestSomeText", 3},
+    { "TestSomeText\r\n\r\r\n\rTestSomeText", 4},
+    { "TestSomeText\r\n" ,2},
+    { "TestSomeText\r\nSomeMoreText\r\n", 3},
+    { "TestSomeText\r\n\r\nTestSomeText", 3},
+    { "TestSomeText TestSomeText" ,1},
+    { "TestSomeText \r\nTestSomeText", 2},
+    { "TestSomeText\r\n \r\nTestSomeText", 3},
+    { "TestSomeText\n", 2},
+    { "TestSomeText\r\r\r", 3},
+    { "TestSomeText\r\r\rSomeMoreText", 4}
+  };
   HWND hwndRichEdit = new_richedit(NULL);
-  const char * TestItem1 = "TestSomeText";
-  const char * TestItem2 = "TestSomeText\r";
-  const char * TestItem3 = "TestSomeText\rSomeMoreText\r";
-  const char * TestItem4 = "TestSomeText\n\nTestSomeText";
-  const char * TestItem5 = "TestSomeText\r\r\nTestSomeText";
-  const char * TestItem6 = "TestSomeText\r\r\n\rTestSomeText";
-  const char * TestItem7 = "TestSomeText\r\n\r\r\n\rTestSomeText";
-  const char * TestItem8 = "TestSomeText\r\n";
-  const char * TestItem9 = "TestSomeText\r\nSomeMoreText\r\n";
-  const char * TestItem10 = "TestSomeText\r\n\r\nTestSomeText";
-  const char * TestItem11 = "TestSomeText TestSomeText";
-  const char * TestItem12 = "TestSomeText \r\nTestSomeText";
-  const char * TestItem13 = "TestSomeText\r\n \r\nTestSomeText";
-  const char * TestItem14 = "TestSomeText\n";
-  const char * TestItem15 = "TestSomeText\r\r\r";
-  const char * TestItem16 = "TestSomeText\r\r\rSomeMoreText";
-  char buf[1024] = {0};
-  LRESULT result;
+  int i;
 
   /* This test attempts to show that WM_SETTEXT on a riched32 control does not
    * attempt to modify the text that is pasted into the control, and should
@@ -85,37 +89,25 @@ static void test_WM_SETTEXT(void)
    *   where \r at the end of the text is a proper line break.
    */
 
-#define TEST_SETTEXT(a, b, nlines) \
-  result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) a); \
-  ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result); \
-  result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buf); \
-  ok (result == lstrlen(buf), \
-	"WM_GETTEXT returned %ld instead of expected %u\n", \
-	result, lstrlen(buf)); \
-  result = strcmp(b, buf); \
-  ok(result == 0, \
-        "WM_SETTEXT round trip: strcmp = %ld\n", result); \
-  result = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0); \
-  ok(result == nlines, "EM_GETLINECOUNT returned %ld, expected %d\n", result, nlines);
+  for (i = 0; i < sizeof(testitems)/sizeof(testitems[0]); i++) {
 
-  TEST_SETTEXT(TestItem1, TestItem1, 1)
-  TEST_SETTEXT(TestItem2, TestItem2, 1)
-  TEST_SETTEXT(TestItem3, TestItem3, 2)
-  TEST_SETTEXT(TestItem4, TestItem4, 3)
-  TEST_SETTEXT(TestItem5, TestItem5, 2)
-  TEST_SETTEXT(TestItem6, TestItem6, 3)
-  TEST_SETTEXT(TestItem7, TestItem7, 4)
-  TEST_SETTEXT(TestItem8, TestItem8, 2)
-  TEST_SETTEXT(TestItem9, TestItem9, 3)
-  TEST_SETTEXT(TestItem10, TestItem10, 3)
-  TEST_SETTEXT(TestItem11, TestItem11, 1)
-  TEST_SETTEXT(TestItem12, TestItem12, 2)
-  TEST_SETTEXT(TestItem13, TestItem13, 3)
-  TEST_SETTEXT(TestItem14, TestItem14, 2)
-  TEST_SETTEXT(TestItem15, TestItem15, 3)
-  TEST_SETTEXT(TestItem16, TestItem16, 4)
+    char buf[1024] = {0};
+    LRESULT result;
 
-#undef TEST_SETTEXT
+    result = SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) testitems[i].itemtext);
+    ok (result == 1, "[%d] WM_SETTEXT returned %ld instead of 1\n", i, result);
+    result = SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buf);
+    ok (result == lstrlen(buf),
+        "[%d] WM_GETTEXT returned %ld instead of expected %u\n",
+        i, result, lstrlen(buf));
+    result = strcmp(testitems[i].itemtext, buf);
+    ok (result == 0,
+        "[%d] WM_SETTEXT round trip: strcmp = %ld\n", i, result);
+    result = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+    ok (result == testitems[i].lines,
+        "[%d] EM_GETLINECOUNT returned %ld, expected %d\n", i, result, testitems[i].lines);
+  }
+
   DestroyWindow(hwndRichEdit);
 }
 
