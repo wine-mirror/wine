@@ -1121,47 +1121,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
         WINED3DPOOL Pool, IWineD3DVolumeTexture **ppVolumeTexture, IUnknown *parent)
 {
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
-    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(Format, &This->adapter->gl_info);
     IWineD3DVolumeTextureImpl *object;
-    unsigned int               i;
-    UINT                       tmpW;
-    UINT                       tmpH;
-    UINT                       tmpD;
     HRESULT hr;
 
-    /* TODO: It should only be possible to create textures for formats 
-             that are reported as supported */
-    if (WINED3DFMT_UNKNOWN >= Format) {
-        WARN("(%p) : Texture cannot be created with a format of WINED3DFMT_UNKNOWN\n", This);
-        return WINED3DERR_INVALIDCALL;
-    }
-    if(!GL_SUPPORT(EXT_TEXTURE3D)) {
-        WARN("(%p) : Texture cannot be created - no volume texture support\n", This);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    /* Calculate levels for mip mapping */
-    if (Usage & WINED3DUSAGE_AUTOGENMIPMAP)
-    {
-        if (!GL_SUPPORT(SGIS_GENERATE_MIPMAP))
-        {
-            WARN("No mipmap generation support, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        if (Levels > 1)
-        {
-            WARN("D3DUSAGE_AUTOGENMIPMAP is set, and level count > 1, returning D3DERR_INVALIDCALL\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        Levels = 1;
-    }
-    else if (!Levels)
-    {
-        Levels = wined3d_log2i(max(max(Width, Height), Depth)) + 1;
-        TRACE("Calculated levels = %d\n", Levels);
-    }
+    TRACE("(%p) : W(%u) H(%u) D(%u), Lvl(%u) Usage(%#x), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
+          Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -1172,66 +1136,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     }
 
     object->lpVtbl = &IWineD3DVolumeTexture_Vtbl;
-    hr = basetexture_init((IWineD3DBaseTextureImpl *)object, Levels,
-            WINED3DRTYPE_VOLUMETEXTURE, This, 0, Usage, format_desc, Pool, parent);
+    hr = volumetexture_init(object, Width, Height, Depth, Levels, This, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize basetexture, returning %#x\n", hr);
+        WARN("Failed to initialize volumetexture, returning %#x\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         *ppVolumeTexture = NULL;
         return hr;
     }
 
-    TRACE("(%p) : Created basetexture %p\n", This, object);
+    TRACE("(%p) : Created volume texture %p.\n", This, object);
+    *ppVolumeTexture = (IWineD3DVolumeTexture *)object;
 
-    TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%d), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
-          Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
-
-    /* Is NP2 support for volumes needed? */
-    object->baseTexture.pow2Matrix[ 0] = 1.0;
-    object->baseTexture.pow2Matrix[ 5] = 1.0;
-    object->baseTexture.pow2Matrix[10] = 1.0;
-    object->baseTexture.pow2Matrix[15] = 1.0;
-
-    if (object->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
-    {
-        object->baseTexture.minMipLookup = minMipLookup;
-        object->baseTexture.magLookup    = magLookup;
-    } else {
-        object->baseTexture.minMipLookup = minMipLookup_noFilter;
-        object->baseTexture.magLookup    = magLookup_noFilter;
-    }
-
-    /* Generate all the surfaces */
-    tmpW = Width;
-    tmpH = Height;
-    tmpD = Depth;
-
-    for (i = 0; i < object->baseTexture.levels; i++)
-    {
-        HRESULT hr;
-        /* Create the volume */
-        hr = IWineD3DDeviceParent_CreateVolume(This->device_parent, parent,
-                tmpW, tmpH, tmpD, Format, Pool, Usage, &object->volumes[i]);
-        if(FAILED(hr)) {
-            ERR("Creating a volume for the volume texture failed(%08x)\n", hr);
-            IWineD3DVolumeTexture_Release((IWineD3DVolumeTexture *) object);
-            *ppVolumeTexture = NULL;
-            return hr;
-        }
-
-        /* Set its container to this object */
-        IWineD3DVolume_SetContainer(object->volumes[i], (IWineD3DBase *)object);
-
-        /* calculate the next mipmap level */
-        tmpW = max(1, tmpW >> 1);
-        tmpH = max(1, tmpH >> 1);
-        tmpD = max(1, tmpD >> 1);
-    }
-    object->baseTexture.internal_preload = volumetexture_internal_preload;
-
-    *ppVolumeTexture = (IWineD3DVolumeTexture *) object;
-    TRACE("(%p) : Created volume texture %p\n", This, object);
     return WINED3D_OK;
 }
 

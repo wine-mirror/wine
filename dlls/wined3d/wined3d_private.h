@@ -1712,7 +1712,6 @@ typedef struct IWineD3DBaseTextureClass
     void                    (*internal_preload)(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);
 } IWineD3DBaseTextureClass;
 
-void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRGB srgb);
 void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb);
 
 typedef struct IWineD3DBaseTextureImpl
@@ -1832,6 +1831,9 @@ typedef struct IWineD3DVolumeTextureImpl
 } IWineD3DVolumeTextureImpl;
 
 extern const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;
+
+HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT height, UINT depth, UINT levels,
+        IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent);
 
 typedef struct _WINED3DSURFACET_DESC
 {
