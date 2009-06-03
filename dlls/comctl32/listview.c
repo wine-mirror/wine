@@ -4096,7 +4096,8 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
     INT rgntype;
     RECT rcClip, rcItem;
     POINT Origin, Position;
-    RANGE colRange;
+    RANGES colRanges;
+    INT col, index;
     ITERATOR j;
 
     TRACE("()\n");
@@ -4107,19 +4108,19 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
     
     /* Get scroll info once before loop */
     LISTVIEW_GetOrigin(infoPtr, &Origin);
-    
+
+    colRanges = ranges_create(DPA_GetPtrCount(infoPtr->hdpaColumns));
+
     /* narrow down the columns we need to paint */
-    for(colRange.lower = 0; colRange.lower < DPA_GetPtrCount(infoPtr->hdpaColumns); colRange.lower++)
+    for(col = 0; col < DPA_GetPtrCount(infoPtr->hdpaColumns); col++)
     {
-	LISTVIEW_GetHeaderRect(infoPtr, colRange.lower, &rcItem);
-	if (rcItem.right + Origin.x >= rcClip.left) break;
+	index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX, col, 0);
+
+	LISTVIEW_GetHeaderRect(infoPtr, index, &rcItem);
+	if ((rcItem.right + Origin.x >= rcClip.left) && (rcItem.left + Origin.x < rcClip.right))
+	    ranges_additem(colRanges, index);
     }
-    for(colRange.upper = DPA_GetPtrCount(infoPtr->hdpaColumns); colRange.upper > 0; colRange.upper--)
-    {
-	LISTVIEW_GetHeaderRect(infoPtr, colRange.upper - 1, &rcItem);
-	if (rcItem.left + Origin.x < rcClip.right) break;
-    }
-    iterator_rangeitems(&j, colRange);
+    iterator_rangesitems(&j, colRanges);
 
     /* in full row select, we _have_ to draw the main item */
     if (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)
