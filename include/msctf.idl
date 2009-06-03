@@ -904,3 +904,37 @@ interface ITfInsertAtSelection : IUnknown
         [in] IDataObject *pDataObject,
         [out] ITfRange **ppRange);
 };
+
+[
+  object,
+  uuid(bb08f7a9-607a-4384-8623-056892b64371),
+  pointer_default(unique)
+]
+interface ITfCompartment : IUnknown
+{
+    HRESULT SetValue(
+        [in] TfClientId tid,
+        [in] const VARIANT *pvarValue);
+
+    HRESULT GetValue(
+        [out] VARIANT *pvarValue);
+};
+
+[
+  object,
+  uuid(7dcf57ac-18ad-438b-824d-979bffb74b7c),
+  pointer_default(unique)
+]
+interface ITfCompartmentMgr : IUnknown
+{
+    HRESULT GetCompartment(
+        [in] REFGUID rguid,
+        [out] ITfCompartment **ppcomp);
+
+    HRESULT ClearCompartment(
+        [in] TfClientId tid,
+        [in] REFGUID rguid);
+
+    HRESULT EnumCompartments(
+        [out] IEnumGUID **ppEnum);
+};
