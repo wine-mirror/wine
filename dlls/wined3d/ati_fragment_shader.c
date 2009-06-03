@@ -53,8 +53,7 @@ struct atifs_ffp_desc
 
 struct atifs_private_data
 {
-    struct hash_table_t *fragment_shaders; /* A hashtable to track fragment pipeline replacement shaders */
-
+    struct wine_rb_tree fragment_shaders; /* A rb-tree to track fragment pipeline replacement shaders */
 };
 
 static const char *debug_dstmod(GLuint mod) {
@@ -810,7 +809,7 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
     unsigned int i;
 
     gen_ffp_frag_op(stateblock, &settings, TRUE);
-    desc = (const struct atifs_ffp_desc *)find_ffp_frag_shader(priv->fragment_shaders, &settings);
+    desc = (const struct atifs_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
     if(!desc) {
         struct atifs_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_desc));
         if (!new_desc)
@@ -826,7 +825,7 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
 
         memcpy(&new_desc->parent.settings, &settings, sizeof(settings));
         new_desc->shader = gen_ati_shader(settings.op, &GLINFO_LOCATION);
-        add_ffp_frag_shader(priv->fragment_shaders, &new_desc->parent);
+        add_ffp_frag_shader(&priv->fragment_shaders, &new_desc->parent);
         TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);
         desc = new_desc;
     }
@@ -1114,14 +1113,20 @@ static HRESULT atifs_alloc(IWineD3DDevice *iface) {
         return E_OUTOFMEMORY;
     }
     priv = This->fragment_priv;
-    priv->fragment_shaders = hash_table_create(ffp_frag_program_key_hash, ffp_frag_program_key_compare);
+    if (wine_rb_init(&priv->fragment_shaders, &wined3d_ffp_frag_program_rb_functions) == -1)
+    {
+        ERR("Failed to initialize rbtree.\n");
+        HeapFree(GetProcessHeap(), 0, This->fragment_priv);
+        return E_OUTOFMEMORY;
+    }
     return WINED3D_OK;
 }
 
 #define GLINFO_LOCATION This->adapter->gl_info
-static void atifs_free_ffpshader(void *value, void *device) {
-    IWineD3DDeviceImpl *This = device;
-    struct atifs_ffp_desc *entry_ati = value;
+static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *context)
+{
+    IWineD3DDeviceImpl *This = context;
+    struct atifs_ffp_desc *entry_ati = WINE_RB_ENTRY_VALUE(entry, struct atifs_ffp_desc, parent.entry);
 
     ENTER_GL();
     GL_EXTCALL(glDeleteFragmentShaderATI(entry_ati->shader));
@@ -1134,7 +1139,7 @@ static void atifs_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct atifs_private_data *priv = This->fragment_priv;
 
-    hash_table_destroy(priv->fragment_shaders, atifs_free_ffpshader, This);
+    wine_rb_destroy(&priv->fragment_shaders, atifs_free_ffpshader, This);
 
     HeapFree(GetProcessHeap(), 0, priv);
     This->fragment_priv = NULL;

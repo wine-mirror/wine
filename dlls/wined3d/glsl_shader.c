@@ -83,7 +83,7 @@ struct constant_heap
 
 /* GLSL shader private data */
 struct shader_glsl_priv {
-    struct hash_table_t *glsl_program_lookup;
+    struct wine_rb_tree program_lookup;
     struct glsl_shader_prog_link *glsl_program;
     struct constant_heap vconst_heap;
     struct constant_heap pconst_heap;
@@ -94,6 +94,7 @@ struct shader_glsl_priv {
 
 /* Struct to maintain data about a linked GLSL program */
 struct glsl_shader_prog_link {
+    struct wine_rb_entry        program_lookup_entry;
     struct list                 vshader_entry;
     struct list                 pshader_entry;
     GLhandleARB                 programId;
@@ -543,10 +544,9 @@ static void shader_glsl_load_constantsB(IWineD3DBaseShaderImpl *This, const Wine
     }
 }
 
-static void reset_program_constant_version(void *value, void *context)
+static void reset_program_constant_version(struct wine_rb_entry *entry, void *context)
 {
-    struct glsl_shader_prog_link *entry = value;
-    entry->constant_version = 0;
+    WINE_RB_ENTRY_VALUE(entry, struct glsl_shader_prog_link, program_lookup_entry)->constant_version = 0;
 }
 
 /**
@@ -696,7 +696,7 @@ static void shader_glsl_load_constants(
     if (priv->next_constant_version == UINT_MAX)
     {
         TRACE("Max constant version reached, resetting to 0.\n");
-        hash_table_for_each_entry(priv->glsl_program_lookup, reset_program_constant_version, NULL);
+        wine_rb_for_each_entry(&priv->program_lookup, reset_program_constant_version, NULL);
         priv->next_constant_version = 1;
     }
     else
@@ -3261,15 +3261,17 @@ static void pshader_glsl_input_pack(IWineD3DPixelShader *iface, SHADER_BUFFER *b
  ********************************************/
 
 static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_shader_prog_link *entry) {
-    glsl_program_key_t *key;
+    glsl_program_key_t key;
 
-    key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
-    key->vshader = entry->vshader;
-    key->pshader = entry->pshader;
-    key->vs_args = entry->vs_args;
-    key->ps_args = entry->ps_args;
+    key.vshader = entry->vshader;
+    key.pshader = entry->pshader;
+    key.vs_args = entry->vs_args;
+    key.ps_args = entry->ps_args;
 
-    hash_table_put(priv->glsl_program_lookup, key, entry);
+    if (wine_rb_put(&priv->program_lookup, &key, &entry->program_lookup_entry) == -1)
+    {
+        ERR("Failed to insert program entry.\n");
+    }
 }
 
 static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_priv *priv,
@@ -3282,21 +3284,21 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_p
     key.vs_args = *vs_args;
     key.ps_args = *ps_args;
 
-    return hash_table_get(priv->glsl_program_lookup, &key);
+    return WINE_RB_ENTRY_VALUE(wine_rb_get(&priv->program_lookup, &key),
+            struct glsl_shader_prog_link, program_lookup_entry);
 }
 
 /* GL locking is done by the caller */
 static void delete_glsl_program_entry(struct shader_glsl_priv *priv, const WineD3D_GL_Info *gl_info,
         struct glsl_shader_prog_link *entry)
 {
-    glsl_program_key_t *key;
+    glsl_program_key_t key;
 
-    key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
-    key->vshader = entry->vshader;
-    key->pshader = entry->pshader;
-    key->vs_args = entry->vs_args;
-    key->ps_args = entry->ps_args;
-    hash_table_remove(priv->glsl_program_lookup, key);
+    key.vshader = entry->vshader;
+    key.pshader = entry->pshader;
+    key.vs_args = entry->vs_args;
+    key.ps_args = entry->ps_args;
+    wine_rb_remove(&priv->program_lookup, &key);
 
     GL_EXTCALL(glDeleteObjectARB(entry->programId));
     if (entry->vshader) list_remove(&entry->vshader_entry);
@@ -4383,29 +4385,24 @@ static void shader_glsl_destroy(IWineD3DBaseShader *iface) {
     }
 }
 
-static unsigned int glsl_program_key_hash(const void *key)
+static int glsl_program_key_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const glsl_program_key_t *k = key;
+    const struct glsl_shader_prog_link *prog = WINE_RB_ENTRY_VALUE(entry,
+            const struct glsl_shader_prog_link, program_lookup_entry);
+    int cmp;
 
-    unsigned int hash = ((DWORD_PTR) k->vshader) | ((DWORD_PTR) k->pshader) << 16;
-    hash += ~(hash << 15);
-    hash ^=  (hash >> 10);
-    hash +=  (hash << 3);
-    hash ^=  (hash >> 6);
-    hash += ~(hash << 11);
-    hash ^=  (hash >> 16);
+    if (k->vshader > prog->vshader) return 1;
+    else if (k->vshader < prog->vshader) return -1;
 
-    return hash;
-}
+    if (k->pshader > prog->pshader) return 1;
+    else if (k->pshader < prog->pshader) return -1;
 
-static BOOL glsl_program_key_compare(const void *keya, const void *keyb)
-{
-    const glsl_program_key_t *ka = keya;
-    const glsl_program_key_t *kb = keyb;
+    cmp = memcmp(&k->vs_args, &prog->vs_args, sizeof(prog->vs_args));
+    if (cmp) return cmp;
 
-    return ka->vshader == kb->vshader && ka->pshader == kb->pshader &&
-           (memcmp(&ka->ps_args, &kb->ps_args, sizeof(kb->ps_args)) == 0) &&
-           (memcmp(&ka->vs_args, &kb->vs_args, sizeof(kb->vs_args)) == 0);
+    cmp = memcmp(&k->ps_args, &prog->ps_args, sizeof(prog->ps_args));
+    return cmp;
 }
 
 static BOOL constant_heap_init(struct constant_heap *heap, unsigned int constant_count)
@@ -4431,6 +4428,14 @@ static void constant_heap_free(struct constant_heap *heap)
 {
     HeapFree(GetProcessHeap(), 0, heap->entries);
 }
+
+static const struct wine_rb_functions wined3d_glsl_program_rb_functions =
+{
+    wined3d_rb_alloc,
+    wined3d_rb_realloc,
+    wined3d_rb_free,
+    glsl_program_key_compare,
+};
 
 static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -4463,7 +4468,16 @@ static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
         return E_OUTOFMEMORY;
     }
 
-    priv->glsl_program_lookup = hash_table_create(glsl_program_key_hash, glsl_program_key_compare);
+    if (wine_rb_init(&priv->program_lookup, &wined3d_glsl_program_rb_functions) == -1)
+    {
+        ERR("Failed to initialize rbtree.\n");
+        constant_heap_free(&priv->pconst_heap);
+        constant_heap_free(&priv->vconst_heap);
+        HeapFree(GetProcessHeap(), 0, priv->stack);
+        HeapFree(GetProcessHeap(), 0, priv);
+        return E_OUTOFMEMORY;
+    }
+
     priv->next_constant_version = 1;
 
     This->shader_priv = priv;
@@ -4486,7 +4500,7 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
     }
     LEAVE_GL();
 
-    hash_table_destroy(priv->glsl_program_lookup, NULL, NULL);
+    wine_rb_destroy(&priv->program_lookup, NULL, NULL);
     constant_heap_free(&priv->pconst_heap);
     constant_heap_free(&priv->vconst_heap);
 

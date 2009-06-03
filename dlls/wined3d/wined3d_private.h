@@ -41,6 +41,7 @@
 #include "wine/wined3d.h"
 #include "wined3d_gl.h"
 #include "wine/list.h"
+#include "wine/rbtree.h"
 
 /* Texture format fixups */
 
@@ -126,36 +127,9 @@ static inline enum yuv_fixup get_yuv_fixup(struct color_fixup_desc fixup)
     return yuv_fixup;
 }
 
-/* Hash table functions */
-typedef unsigned int (hash_function_t)(const void *key);
-typedef BOOL (compare_function_t)(const void *keya, const void *keyb);
-
-struct hash_table_entry_t {
-    void *key;
-    void *value;
-    unsigned int hash;
-    struct list entry;
-};
-
-struct hash_table_t {
-    hash_function_t *hash_function;
-    compare_function_t *compare_function;
-    struct list *buckets;
-    unsigned int bucket_count;
-    struct hash_table_entry_t *entries;
-    unsigned int entry_count;
-    struct list free_entries;
-    unsigned int count;
-    unsigned int grow_size;
-    unsigned int shrink_size;
-};
-
-struct hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function);
-void hash_table_destroy(struct hash_table_t *table, void (*free_value)(void *value, void *cb), void *cb);
-void hash_table_for_each_entry(struct hash_table_t *table, void (*callback)(void *value, void *context), void *context);
-void *hash_table_get(const struct hash_table_t *table, const void *key);
-void hash_table_put(struct hash_table_t *table, void *key, void *value);
-void hash_table_remove(struct hash_table_t *table, void *key);
+void *wined3d_rb_alloc(size_t size);
+void *wined3d_rb_realloc(void *ptr, size_t size);
+void wined3d_rb_free(void *ptr);
 
 /* Device caps */
 #define MAX_PALETTES            65536
@@ -1384,15 +1358,16 @@ struct ffp_frag_settings {
 
 struct ffp_frag_desc
 {
+    struct wine_rb_entry entry;
     struct ffp_frag_settings    settings;
 };
 
+extern const struct wine_rb_functions wined3d_ffp_frag_program_rb_functions;
+
 void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype);
-const struct ffp_frag_desc *find_ffp_frag_shader(const struct hash_table_t *fragment_shaders,
+const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *fragment_shaders,
         const struct ffp_frag_settings *settings);
-void add_ffp_frag_shader(struct hash_table_t *shaders, struct ffp_frag_desc *desc);
-BOOL ffp_frag_program_key_compare(const void *keya, const void *keyb);
-unsigned int ffp_frag_program_key_hash(const void *key);
+void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *desc);
 
 /*****************************************************************************
  * IWineD3D implementation structure

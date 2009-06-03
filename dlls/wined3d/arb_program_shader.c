@@ -80,7 +80,7 @@ struct shader_arb_priv {
     GLuint                  depth_blt_vprogram_id;
     GLuint                  depth_blt_fprogram_id[tex_type_count];
     BOOL                    use_arbfp_fixed_func;
-    struct hash_table_t     *fragment_shaders;
+    struct wine_rb_tree     fragment_shaders;
 };
 
 struct if_frame {
@@ -3090,14 +3090,20 @@ static HRESULT arbfp_alloc(IWineD3DDevice *iface) {
         if(!This->fragment_priv) return E_OUTOFMEMORY;
     }
     priv = This->fragment_priv;
-    priv->fragment_shaders = hash_table_create(ffp_frag_program_key_hash, ffp_frag_program_key_compare);
+    if (wine_rb_init(&priv->fragment_shaders, &wined3d_ffp_frag_program_rb_functions) == -1)
+    {
+        ERR("Failed to initialize rbtree.\n");
+        HeapFree(GetProcessHeap(), 0, This->fragment_priv);
+        return E_OUTOFMEMORY;
+    }
     priv->use_arbfp_fixed_func = TRUE;
     return WINED3D_OK;
 }
 
-static void arbfp_free_ffpshader(void *value, void *gli) {
-    const WineD3D_GL_Info *gl_info = gli;
-    struct arbfp_ffp_desc *entry_arb = value;
+static void arbfp_free_ffpshader(struct wine_rb_entry *entry, void *context)
+{
+    const WineD3D_GL_Info *gl_info = context;
+    struct arbfp_ffp_desc *entry_arb = WINE_RB_ENTRY_VALUE(entry, struct arbfp_ffp_desc, parent.entry);
 
     ENTER_GL();
     GL_EXTCALL(glDeleteProgramsARB(1, &entry_arb->shader));
@@ -3110,7 +3116,7 @@ static void arbfp_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct shader_arb_priv *priv = This->fragment_priv;
 
-    hash_table_destroy(priv->fragment_shaders, arbfp_free_ffpshader, &This->adapter->gl_info);
+    wine_rb_destroy(&priv->fragment_shaders, arbfp_free_ffpshader, &This->adapter->gl_info);
     priv->use_arbfp_fixed_func = FALSE;
 
     if(This->shader_backend != &arb_program_shader_backend) {
@@ -3766,7 +3772,7 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
     if(!use_pshader) {
         /* Find or create a shader implementing the fixed function pipeline settings, then activate it */
         gen_ffp_frag_op(stateblock, &settings, FALSE);
-        desc = (const struct arbfp_ffp_desc *)find_ffp_frag_shader(priv->fragment_shaders, &settings);
+        desc = (const struct arbfp_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
         if(!desc) {
             struct arbfp_ffp_desc *new_desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_desc));
             if (!new_desc)
@@ -3782,7 +3788,7 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
 
             memcpy(&new_desc->parent.settings, &settings, sizeof(settings));
             new_desc->shader = gen_arbfp_ffp_shader(&settings, stateblock);
-            add_ffp_frag_shader(priv->fragment_shaders, &new_desc->parent);
+            add_ffp_frag_shader(&priv->fragment_shaders, &new_desc->parent);
             TRACE("Allocated fixed function replacement shader descriptor %p\n", new_desc);
             desc = new_desc;
         }

@@ -1901,238 +1901,6 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
 }
 #undef GLINFO_LOCATION
 
-/* Hash table functions */
-
-struct hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function)
-{
-    struct hash_table_t *table;
-    unsigned int initial_size = 8;
-
-    table = HeapAlloc(GetProcessHeap(), 0, sizeof(struct hash_table_t) + (initial_size * sizeof(struct list)));
-    if (!table)
-    {
-        ERR("Failed to allocate table, returning NULL.\n");
-        return NULL;
-    }
-
-    table->hash_function = hash_function;
-    table->compare_function = compare_function;
-
-    table->grow_size = initial_size - (initial_size >> 2);
-    table->shrink_size = 0;
-
-    table->buckets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, initial_size * sizeof(struct list));
-    if (!table->buckets)
-    {
-        ERR("Failed to allocate table buckets, returning NULL.\n");
-        HeapFree(GetProcessHeap(), 0, table);
-        return NULL;
-    }
-    table->bucket_count = initial_size;
-
-    table->entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, table->grow_size * sizeof(struct hash_table_entry_t));
-    if (!table->entries)
-    {
-        ERR("Failed to allocate table entries, returning NULL.\n");
-        HeapFree(GetProcessHeap(), 0, table->buckets);
-        HeapFree(GetProcessHeap(), 0, table);
-        return NULL;
-    }
-    table->entry_count = 0;
-
-    list_init(&table->free_entries);
-    table->count = 0;
-
-    return table;
-}
-
-void hash_table_destroy(struct hash_table_t *table, void (*free_value)(void *value, void *cb), void *cb)
-{
-    unsigned int i = 0;
-
-    for (i = 0; i < table->entry_count; ++i)
-    {
-        if(free_value) {
-            free_value(table->entries[i].value, cb);
-        }
-        HeapFree(GetProcessHeap(), 0, table->entries[i].key);
-    }
-
-    HeapFree(GetProcessHeap(), 0, table->entries);
-    HeapFree(GetProcessHeap(), 0, table->buckets);
-    HeapFree(GetProcessHeap(), 0, table);
-}
-
-void hash_table_for_each_entry(struct hash_table_t *table, void (*callback)(void *value, void *context), void *context)
-{
-    unsigned int i = 0;
-
-    for (i = 0; i < table->entry_count; ++i)
-    {
-        callback(table->entries[i].value, context);
-    }
-}
-
-static inline struct hash_table_entry_t *hash_table_get_by_idx(const struct hash_table_t *table, const void *key,
-        unsigned int idx)
-{
-    struct hash_table_entry_t *entry;
-
-    if (table->buckets[idx].next)
-        LIST_FOR_EACH_ENTRY(entry, &(table->buckets[idx]), struct hash_table_entry_t, entry)
-            if (table->compare_function(entry->key, key)) return entry;
-
-    return NULL;
-}
-
-static BOOL hash_table_resize(struct hash_table_t *table, unsigned int new_bucket_count)
-{
-    unsigned int new_entry_count = 0;
-    struct hash_table_entry_t *new_entries;
-    struct list *new_buckets;
-    unsigned int grow_size = new_bucket_count - (new_bucket_count >> 2);
-    unsigned int i;
-
-    new_buckets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, new_bucket_count * sizeof(struct list));
-    if (!new_buckets)
-    {
-        ERR("Failed to allocate new buckets, returning FALSE.\n");
-        return FALSE;
-    }
-
-    new_entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, grow_size * sizeof(struct hash_table_entry_t));
-    if (!new_entries)
-    {
-        ERR("Failed to allocate new entries, returning FALSE.\n");
-        HeapFree(GetProcessHeap(), 0, new_buckets);
-        return FALSE;
-    }
-
-    for (i = 0; i < table->bucket_count; ++i)
-    {
-        if (table->buckets[i].next)
-        {
-            struct hash_table_entry_t *entry, *entry2;
-
-            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &table->buckets[i], struct hash_table_entry_t, entry)
-            {
-                int j;
-                struct hash_table_entry_t *new_entry = new_entries + (new_entry_count++);
-                *new_entry = *entry;
-
-                j = new_entry->hash & (new_bucket_count - 1);
-
-                if (!new_buckets[j].next) list_init(&new_buckets[j]);
-                list_add_head(&new_buckets[j], &new_entry->entry);
-            }
-        }
-    }
-
-    HeapFree(GetProcessHeap(), 0, table->buckets);
-    table->buckets = new_buckets;
-
-    HeapFree(GetProcessHeap(), 0, table->entries);
-    table->entries = new_entries;
-
-    table->entry_count = new_entry_count;
-    list_init(&table->free_entries);
-
-    table->bucket_count = new_bucket_count;
-    table->grow_size = grow_size;
-    table->shrink_size = new_bucket_count > 8 ? new_bucket_count >> 2 : 0;
-
-    return TRUE;
-}
-
-void hash_table_put(struct hash_table_t *table, void *key, void *value)
-{
-    unsigned int idx;
-    unsigned int hash;
-    struct hash_table_entry_t *entry;
-
-    hash = table->hash_function(key);
-    idx = hash & (table->bucket_count - 1);
-    entry = hash_table_get_by_idx(table, key, idx);
-
-    if (entry)
-    {
-        HeapFree(GetProcessHeap(), 0, key);
-        entry->value = value;
-
-        if (!value)
-        {
-            HeapFree(GetProcessHeap(), 0, entry->key);
-            entry->key = NULL;
-
-            /* Remove the entry */
-            list_remove(&entry->entry);
-            list_add_head(&table->free_entries, &entry->entry);
-
-            --table->count;
-
-            /* Shrink if necessary */
-            if (table->count < table->shrink_size) {
-                if (!hash_table_resize(table, table->bucket_count >> 1))
-                {
-                    ERR("Failed to shrink the table...\n");
-                }
-            }
-        }
-
-        return;
-    }
-
-    if (!value) return;
-
-    /* Grow if necessary */
-    if (table->count >= table->grow_size)
-    {
-        if (!hash_table_resize(table, table->bucket_count << 1))
-        {
-            ERR("Failed to grow the table, returning.\n");
-            return;
-        }
-
-        idx = hash & (table->bucket_count - 1);
-    }
-
-    /* Find an entry to insert */
-    if (!list_empty(&table->free_entries))
-    {
-        struct list *elem = list_head(&table->free_entries);
-
-        list_remove(elem);
-        entry = LIST_ENTRY(elem, struct hash_table_entry_t, entry);
-    } else {
-        entry = table->entries + (table->entry_count++);
-    }
-
-    /* Insert the entry */
-    entry->key = key;
-    entry->value = value;
-    entry->hash = hash;
-    if (!table->buckets[idx].next) list_init(&table->buckets[idx]);
-    list_add_head(&table->buckets[idx], &entry->entry);
-
-    ++table->count;
-}
-
-void hash_table_remove(struct hash_table_t *table, void *key)
-{
-    hash_table_put(table, key, NULL);
-}
-
-void *hash_table_get(const struct hash_table_t *table, const void *key)
-{
-    unsigned int idx;
-    struct hash_table_entry_t *entry;
-
-    idx = table->hash_function(key) & (table->bucket_count - 1);
-    entry = hash_table_get_by_idx(table, key, idx);
-
-    return entry ? entry->value : NULL;
-}
-
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
 void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_settings *settings, BOOL ignore_textype) {
 #define ARG1 0x01
@@ -2366,20 +2134,20 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 }
 #undef GLINFO_LOCATION
 
-const struct ffp_frag_desc *find_ffp_frag_shader(const struct hash_table_t *fragment_shaders,
+const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *fragment_shaders,
         const struct ffp_frag_settings *settings)
 {
-    return hash_table_get(fragment_shaders, settings);
+    return WINE_RB_ENTRY_VALUE(wine_rb_get(fragment_shaders, settings), struct ffp_frag_desc, entry);
 }
 
-void add_ffp_frag_shader(struct hash_table_t *shaders, struct ffp_frag_desc *desc) {
-    struct ffp_frag_settings *key = HeapAlloc(GetProcessHeap(), 0, sizeof(*key));
+void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *desc)
+{
     /* Note that the key is the implementation independent part of the ffp_frag_desc structure,
-     * whereas desc points to an extended structure with implementation specific parts.
-     * Make a copy of the key because hash_table_put takes ownership of it
-     */
-    *key = desc->settings;
-    hash_table_put(shaders, key, desc);
+     * whereas desc points to an extended structure with implementation specific parts. */
+    if (wine_rb_put(shaders, &desc->settings, &desc->entry) == -1)
+    {
+        ERR("Failed to insert ffp frag shader.\n");
+    }
 }
 
 /* Activates the texture dimension according to the bound D3D texture.
@@ -2478,40 +2246,36 @@ void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
 }
 #undef GLINFO_LOCATION
 
-unsigned int ffp_frag_program_key_hash(const void *key)
+void *wined3d_rb_alloc(size_t size)
 {
-    const struct ffp_frag_settings *k = key;
-    unsigned int hash = 0, i;
-    const DWORD *blob;
-
-    /* This takes the texture op settings of stage 0 and 1 into account.
-     * how exactly depends on the memory laybout of the compiler, but it
-     * should not matter too much. Stages > 1 are used rarely, so there's
-     * no need to process them. Even if they're used it is likely that
-     * the ffp setup has distinct stage 0 and 1 settings.
-     */
-    for(i = 0; i < 2; i++) {
-        blob = (const DWORD *)&k->op[i];
-        hash ^= blob[0] ^ blob[1];
-    }
-
-    hash += ~(hash << 15);
-    hash ^=  (hash >> 10);
-    hash +=  (hash << 3);
-    hash ^=  (hash >> 6);
-    hash += ~(hash << 11);
-    hash ^=  (hash >> 16);
-
-    return hash;
+    return HeapAlloc(GetProcessHeap(), 0, size);
 }
 
-BOOL ffp_frag_program_key_compare(const void *keya, const void *keyb)
+void *wined3d_rb_realloc(void *ptr, size_t size)
 {
-    const struct ffp_frag_settings *ka = keya;
-    const struct ffp_frag_settings *kb = keyb;
-
-    return memcmp(ka, kb, sizeof(*ka)) == 0;
+    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
 }
+
+void wined3d_rb_free(void *ptr)
+{
+    HeapFree(GetProcessHeap(), 0, ptr);
+}
+
+static int ffp_frag_program_key_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    const struct ffp_frag_settings *ka = key;
+    const struct ffp_frag_settings *kb = &WINE_RB_ENTRY_VALUE(entry, const struct ffp_frag_desc, entry)->settings;
+
+    return memcmp(ka, kb, sizeof(*ka));
+}
+
+const struct wine_rb_functions wined3d_ffp_frag_program_rb_functions =
+{
+    wined3d_rb_alloc,
+    wined3d_rb_realloc,
+    wined3d_rb_free,
+    ffp_frag_program_key_compare,
+};
 
 UINT wined3d_log2i(UINT32 x)
 {
