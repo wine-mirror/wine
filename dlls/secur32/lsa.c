@@ -73,7 +73,8 @@ NTSTATUS WINAPI LsaGetLogonSessionData(PLUID LogonId,
         PSECURITY_LOGON_SESSION_DATA* ppLogonSessionData)
 {
     FIXME("%p %p stub\n", LogonId, ppLogonSessionData);
-    return STATUS_SUCCESS;
+    *ppLogonSessionData = NULL;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 NTSTATUS WINAPI LsaLogonUser(HANDLE LsaHandle, PLSA_STRING OriginName,
