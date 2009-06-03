@@ -86,8 +86,13 @@ struct control_frame
     } type;
     BOOL                            muting;
     BOOL                            outer_loop;
-    unsigned int                    loop_no;
+    union
+    {
+        unsigned int                loop_no;
+        unsigned int                ifc_no;
+    };
     DWORD                           loop_control[3];
+    BOOL                            had_else;
 };
 
 struct arb_ps_compile_args
@@ -157,7 +162,7 @@ struct shader_arb_ctx_priv
     struct list                         record;
     BOOL                                recording;
     BOOL                                muted;
-    unsigned int                        num_loops, loop_depth;
+    unsigned int                        num_loops, loop_depth, num_ifcs;
     int                                 aL;
 };
 
@@ -2273,6 +2278,92 @@ static void shader_hw_breakc(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static void shader_hw_ifc(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    struct list *e = list_head(&priv->control_frames);
+    struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+    const char *comp;
+    char src_name0[50];
+    char src_name1[50];
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    /* Invert the flag. We jump to the else label if the condition is NOT true */
+    switch(ins->flags)
+    {
+        case COMPARISON_GT: comp = "LE"; break;
+        case COMPARISON_EQ: comp = "NE"; break;
+        case COMPARISON_GE: comp = "LT"; break;
+        case COMPARISON_LT: comp = "GE"; break;
+        case COMPARISON_NE: comp = "EQ"; break;
+        case COMPARISON_LE: comp = "GT"; break;
+        default:
+            FIXME("Unrecognized comparison value: %u\n", ins->flags);
+            comp = "\?\?";
+    }
+
+    shader_arb_get_src_param(ins, &ins->src[0], 0, src_name0);
+    shader_arb_get_src_param(ins, &ins->src[1], 1, src_name1);
+
+    if(vshader)
+    {
+        shader_addline(buffer, "SUBC TA, %s, %s;\n", src_name0, src_name1);
+        shader_addline(buffer, "BRA ifc_%u_endif (%s.x);\n", control_frame->ifc_no, comp);
+    }
+    else
+    {
+        shader_addline(buffer, "SUBC CC, %s, %s;\n", src_name0, src_name1);
+        shader_addline(buffer, "IF %s.x;\n", comp);
+    }
+}
+
+static void shader_hw_else(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    struct list *e = list_head(&priv->control_frames);
+    struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    if(vshader)
+    {
+        shader_addline(buffer, "BRA ifc_%u_endif;\n", control_frame->ifc_no);
+        shader_addline(buffer, "ifc_%u_else:\n", control_frame->ifc_no);
+        control_frame->had_else = TRUE;
+    }
+    else
+    {
+        shader_addline(buffer, "ELSE;\n");
+    }
+}
+
+static void shader_hw_endif(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+    struct list *e = list_head(&priv->control_frames);
+    struct control_frame *control_frame = LIST_ENTRY(e, struct control_frame, entry);
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    if(vshader)
+    {
+        if(control_frame->had_else)
+        {
+            shader_addline(buffer, "ifc_%u_endif:\n", control_frame->ifc_no);
+        }
+        else
+        {
+            shader_addline(buffer, "#No else branch. else is endif\n");
+            shader_addline(buffer, "ifc_%u_else:\n", control_frame->ifc_no);
+        }
+    }
+    else
+    {
+        shader_addline(buffer, "ENDIF;\n");
+    }
+}
+
 static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
 {
     GLuint program_id = 0;
@@ -3317,15 +3408,15 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_DST           */ shader_hw_map2gl,
     /* WINED3DSIH_DSX           */ shader_hw_map2gl,
     /* WINED3DSIH_DSY           */ shader_hw_dsy,
-    /* WINED3DSIH_ELSE          */ NULL,
-    /* WINED3DSIH_ENDIF         */ NULL,
+    /* WINED3DSIH_ELSE          */ shader_hw_else,
+    /* WINED3DSIH_ENDIF         */ shader_hw_endif,
     /* WINED3DSIH_ENDLOOP       */ shader_hw_endloop,
     /* WINED3DSIH_ENDREP        */ shader_hw_endrep,
     /* WINED3DSIH_EXP           */ shader_hw_map2gl,
     /* WINED3DSIH_EXPP          */ shader_hw_map2gl,
     /* WINED3DSIH_FRC           */ shader_hw_map2gl,
-    /* WINED3DSIH_IF            */ NULL,
-    /* WINED3DSIH_IFC           */ NULL,
+    /* WINED3DSIH_IF            */ NULL /* Hardcoded into the shader */,
+    /* WINED3DSIH_IFC           */ shader_hw_ifc,
     /* WINED3DSIH_LABEL         */ NULL,
     /* WINED3DSIH_LIT           */ shader_hw_map2gl,
     /* WINED3DSIH_LOG           */ shader_hw_map2gl,
@@ -3693,6 +3784,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
         /* IF(bool) and if_cond(a, b) use the same ELSE and ENDIF tokens */
         control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
         control_frame->type = IFC;
+        control_frame->ifc_no = priv->num_ifcs++;
         list_add_head(&priv->control_frames, &control_frame->entry);
     }
     else if(ins->handler_idx == WINED3DSIH_ELSE)
@@ -3726,12 +3818,6 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
             HeapFree(GetProcessHeap(), 0, control_frame);
             return; /* Instruction is handled */
         }
-        else
-        {
-            list_remove(&control_frame->entry);
-            HeapFree(GetProcessHeap(), 0, control_frame);
-            /* ifc - generate a hw endif */
-        }
     }
 
     if(priv->muted) return;
@@ -3755,6 +3841,15 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
         HeapFree(GetProcessHeap(), 0, control_frame);
         priv->loop_depth--;
     }
+    else if(ins->handler_idx == WINED3DSIH_ENDIF)
+    {
+        /* Non-ifc ENDIFs don't reach that place because of the return in the if block above */
+        struct list *e = list_head(&priv->control_frames);
+        control_frame = LIST_ENTRY(e, struct control_frame, entry);
+        list_remove(&control_frame->entry);
+        HeapFree(GetProcessHeap(), 0, control_frame);
+    }
+
 
     shader_arb_add_instruction_modifiers(ins);
 }
