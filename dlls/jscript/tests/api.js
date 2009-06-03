@@ -934,6 +934,12 @@ var date = new Date();
 date = new Date(100);
 ok(date.getTime() === 100, "date.getTime() = " + date.getTime());
 ok(Date.prototype.getTime() === 0, "date.prototype.getTime() = " + Date.prototype.getTime());
+date = new Date(8.64e15);
+ok(date.getTime() === 8.64e15, "date.getTime() = " + date.getTime());
+date = new Date(8.64e15+1);
+ok(isNaN(0+date.getTime()), "date.getTime() is not NaN");
+date = new Date(Infinity);
+ok(isNaN(0+date.getTime()), "date.getTime() is not NaN");
 
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);

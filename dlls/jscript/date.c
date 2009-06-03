@@ -81,11 +81,8 @@ static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l',
 /* ECMA-262 3rd Edition    15.9.1.14 */
 static inline DOUBLE time_clip(DOUBLE time)
 {
-    /* FIXME: Handle inf */
-
     if(8.64e15 < time || time < -8.64e15) {
-        FIXME("return NaN\n");
-        return 0.0;
+        return ret_nan();
     }
 
     return floor(time);
