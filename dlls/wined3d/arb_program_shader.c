@@ -77,7 +77,13 @@ static unsigned int reserved_vs_const(IWineD3DBaseShader *shader, const WineD3D_
 struct control_frame
 {
     struct                          list entry;
-    BOOL                            ifc;
+    enum
+    {
+        IF,
+        IFC,
+        LOOP,
+        REP
+    } type;
     BOOL                            muting;
     BOOL                            outer_loop;
     unsigned int                    loop_no;
@@ -2199,6 +2205,74 @@ static void shader_hw_endrep(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static const struct control_frame *find_last_loop(const struct shader_arb_ctx_priv *priv)
+{
+    struct control_frame *control_frame;
+
+    LIST_FOR_EACH_ENTRY(control_frame, &priv->control_frames, struct control_frame, entry)
+    {
+        if(control_frame->type == LOOP || control_frame->type == REP) return control_frame;
+    }
+    ERR("Could not find loop for break\n");
+    return NULL;
+}
+
+static void shader_hw_break(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    const struct control_frame *control_frame = find_last_loop(ins->ctx->backend_data);
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    if(vshader)
+    {
+        shader_addline(buffer, "BRA loop_%u_end;\n", control_frame->loop_no);
+    }
+    else
+    {
+        shader_addline(buffer, "BRK;\n");
+    }
+}
+
+static void shader_hw_breakc(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    const struct control_frame *control_frame = find_last_loop(ins->ctx->backend_data);
+    char src_name0[50];
+    char src_name1[50];
+    const char *comp;
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    shader_arb_get_src_param(ins, &ins->src[0], 0, src_name0);
+    shader_arb_get_src_param(ins, &ins->src[1], 1, src_name1);
+
+    switch (ins->flags)
+    {
+        case COMPARISON_GT: comp = "GT"; break;
+        case COMPARISON_EQ: comp = "EQ"; break;
+        case COMPARISON_GE: comp = "GE"; break;
+        case COMPARISON_LT: comp = "LT"; break;
+        case COMPARISON_NE: comp = "NE"; break;
+        case COMPARISON_LE: comp = "LE"; break;
+        default:
+            FIXME("Unrecognized comparison value: %u\n", ins->flags);
+            comp = "(\?\?)";
+    }
+
+    if(vshader)
+    {
+        /* SUBC CC, src0, src1" works only in pixel shaders, so use TA to throw
+         * away the subtraction result
+         */
+        shader_addline(buffer, "SUBC TA, %s, %s;\n", src_name0, src_name1);
+        shader_addline(buffer, "BRA loop_%u_end (%s.x);\n", control_frame->loop_no, comp);
+    }
+    else
+    {
+        shader_addline(buffer, "SUBC CC, %s, %s;\n", src_name0, src_name1);
+        shader_addline(buffer, "BRK (%s.x);\n", comp);
+    }
+}
+
 static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
 {
     GLuint program_id = 0;
@@ -3225,8 +3299,8 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_ABS           */ shader_hw_map2gl,
     /* WINED3DSIH_ADD           */ shader_hw_map2gl,
     /* WINED3DSIH_BEM           */ pshader_hw_bem,
-    /* WINED3DSIH_BREAK         */ NULL,
-    /* WINED3DSIH_BREAKC        */ NULL,
+    /* WINED3DSIH_BREAK         */ shader_hw_break,
+    /* WINED3DSIH_BREAKC        */ shader_hw_breakc,
     /* WINED3DSIH_BREAKP        */ NULL,
     /* WINED3DSIH_CALL          */ NULL,
     /* WINED3DSIH_CALLNZ        */ NULL,
@@ -3483,6 +3557,9 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
         control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
         list_add_head(&priv->control_frames, &control_frame->entry);
 
+        if(ins->handler_idx == WINED3DSIH_LOOP) control_frame->type = LOOP;
+        if(ins->handler_idx == WINED3DSIH_REP) control_frame->type = REP;
+
         if(priv->target_version >= NV2)
         {
             control_frame->loop_no = priv->num_loops++;
@@ -3599,6 +3676,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     {
         control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
         list_add_head(&priv->control_frames, &control_frame->entry);
+        control_frame->type = IF;
 
         if(!priv->muted && get_bool_const(ins, This, ins->src[0].reg.idx) == FALSE)
         {
@@ -3614,7 +3692,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     {
         /* IF(bool) and if_cond(a, b) use the same ELSE and ENDIF tokens */
         control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
-        control_frame->ifc = TRUE;
+        control_frame->type = IFC;
         list_add_head(&priv->control_frames, &control_frame->entry);
     }
     else if(ins->handler_idx == WINED3DSIH_ELSE)
@@ -3622,7 +3700,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
         struct list *e = list_head(&priv->control_frames);
         control_frame = LIST_ENTRY(e, struct control_frame, entry);
 
-        if(control_frame->ifc == FALSE)
+        if(control_frame->type == IF)
         {
             shader_addline(buffer, "#} else {\n");
             if(!priv->muted && !control_frame->muting)
@@ -3640,7 +3718,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
         struct list *e = list_head(&priv->control_frames);
         control_frame = LIST_ENTRY(e, struct control_frame, entry);
 
-        if(!control_frame->ifc)
+        if(control_frame->type == IF)
         {
             shader_addline(buffer, "#} endif\n");
             if(control_frame->muting) priv->muted = FALSE;
