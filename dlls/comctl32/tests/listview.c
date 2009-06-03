@@ -2226,6 +2226,35 @@ static void test_ownerdata(void)
                 "ownerdata getitem selected state 2", FALSE);
 
     DestroyWindow(hwnd);
+
+    /* LVS_SORTASCENDING/LVS_SORTDESCENDING aren't compatible with LVS_OWNERDATA */
+    hwnd = create_listview_control(LVS_OWNERDATA | LVS_SORTASCENDING);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_OWNERDATA, "Expected LVS_OWNERDATA\n");
+    ok(style & LVS_SORTASCENDING, "Expected LVS_SORTASCENDING to be set\n");
+    SetWindowLongPtrA(hwnd, GWL_STYLE, style & ~LVS_SORTASCENDING);
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(!(style & LVS_SORTASCENDING), "Expected LVS_SORTASCENDING not set\n");
+    DestroyWindow(hwnd);
+    /* apparently it's allowed to switch these style on after creation */
+    hwnd = create_listview_control(LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_OWNERDATA, "Expected LVS_OWNERDATA\n");
+    SetWindowLongPtrA(hwnd, GWL_STYLE, style | LVS_SORTASCENDING);
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_SORTASCENDING, "Expected LVS_SORTASCENDING to be set\n");
+    DestroyWindow(hwnd);
+
+    hwnd = create_listview_control(LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_OWNERDATA, "Expected LVS_OWNERDATA\n");
+    SetWindowLongPtrA(hwnd, GWL_STYLE, style | LVS_SORTDESCENDING);
+    style = GetWindowLongPtrA(hwnd, GWL_STYLE);
+    ok(style & LVS_SORTDESCENDING, "Expected LVS_SORTDESCENDING to be set\n");
+    DestroyWindow(hwnd);
 }
 
 static void test_norecompute(void)
