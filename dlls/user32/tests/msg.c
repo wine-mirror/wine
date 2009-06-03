@@ -885,7 +885,7 @@ static const struct message WmShowVisiblePopupSeq_3[] = {
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|defwinproc },
     { WM_GETTEXT, sent|optional },
-    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE, 0, SWP_SHOWWINDOW },
     { 0 }
 };
 /* CreateWindow (for child window, not initially visible) */
@@ -1123,6 +1123,13 @@ static const struct message WmDestroyChildSeq[] = {
     { WM_DESTROY, sent|optional }, /* some other (IME?) window */
     { WM_NCDESTROY, sent|optional }, /* some other (IME?) window */
     { WM_NCDESTROY, sent },
+    { 0 }
+};
+/* visible child window destroyed by thread exit */
+static const struct message WmExitThreadSeq[] = {
+    { WM_NCDESTROY, sent },  /* actually in grandchild */
+    { WM_PAINT, sent|parent },
+    { WM_ERASEBKGND, sent|parent|beginpaint },
     { 0 }
 };
 /* DestroyWindow for a visible child window with invisible parent */
@@ -6334,6 +6341,53 @@ static DWORD WINAPI thread_proc(void *param)
     return 0;
 }
 
+static DWORD CALLBACK create_grand_child_thread( void *param )
+{
+    struct wnd_event *wnd_event = param;
+    HWND hchild;
+    MSG msg;
+
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child",
+                             WS_CHILD | WS_VISIBLE, 0, 0, 10, 10, wnd_event->hwnd, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+    flush_events();
+    flush_sequence();
+    SetEvent( wnd_event->event );
+
+    while (GetMessage(&msg, 0, 0, 0))
+    {
+	TranslateMessage(&msg);
+	DispatchMessage(&msg);
+        if (!IsWindow( hchild )) break;  /* will be destroyed when parent thread exits */
+    }
+    return 0;
+}
+
+static DWORD CALLBACK create_child_thread( void *param )
+{
+    struct wnd_event *wnd_event = param;
+    struct wnd_event child_event;
+    DWORD tid;
+    MSG msg;
+
+    child_event.hwnd = CreateWindowExA(0, "TestWindowClass", "Test child",
+                             WS_CHILD | WS_VISIBLE, 0, 0, 10, 10, wnd_event->hwnd, 0, 0, NULL);
+    ok (child_event.hwnd != 0, "Failed to create child window\n");
+    SetFocus( child_event.hwnd );
+    flush_events();
+    flush_sequence();
+    child_event.event = wnd_event->event;
+    CloseHandle( CreateThread(NULL, 0, create_grand_child_thread, &child_event, 0, &tid) );
+    for (;;)
+    {
+        DWORD ret = MsgWaitForMultipleObjects(1, &child_event.event, FALSE, 1000, QS_SENDMESSAGE);
+        if (ret != 1) break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    }
+    Sleep( 200 );  /* leave parent the time to finish processing messages */
+    return 0;
+}
+
 static void test_interthread_messages(void)
 {
     HANDLE hThread;
@@ -6401,6 +6455,30 @@ static void test_interthread_messages(void)
     CloseHandle(hThread);
 
     ok(!IsWindow(wnd_event.hwnd), "window should be destroyed on thread exit\n");
+
+    wnd_event.hwnd = CreateWindowExA(0, "TestParentClass", "Test parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                              100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (wnd_event.hwnd != 0, "Failed to create parent window\n");
+    flush_sequence();
+    log_all_parent_messages++;
+    wnd_event.event = CreateEventA( NULL, TRUE, FALSE, NULL );
+    hThread = CreateThread( NULL, 0, create_child_thread, &wnd_event, 0, &tid );
+    for (;;)
+    {
+        ret = MsgWaitForMultipleObjects(1, &wnd_event.event, FALSE, 1000, QS_SENDMESSAGE);
+        if (ret != 1) break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
+    }
+    ok( !ret, "MsgWaitForMultipleObjects failed %x\n", ret );
+    /* now wait for the thread without processing messages; this shouldn't deadlock */
+    ret = WaitForSingleObject( hThread, 5000 );
+    ok( !ret, "WaitForSingleObject failed %x\n", ret );
+    CloseHandle( hThread );
+    CloseHandle( wnd_event.event );
+    flush_events();
+    ok_sequence(WmExitThreadSeq, "destroy child on thread exit", FALSE);
+    log_all_parent_messages--;
+    DestroyWindow( wnd_event.hwnd );
 }
 
 
