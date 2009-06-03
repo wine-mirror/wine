@@ -201,6 +201,11 @@ static BOOL fill_delegated_stub_table(IUnknownVtbl *vtbl, DWORD num)
     const void **entry = (const void **)(vtbl + 1);
     DWORD i, j;
 
+    if (num - 3 > BLOCK_SIZE * MAX_BLOCKS)
+    {
+        FIXME( "%u methods not supported\n", num );
+        return FALSE;
+    }
     vtbl->QueryInterface = delegating_QueryInterface;
     vtbl->AddRef = delegating_AddRef;
     vtbl->Release = delegating_Release;
@@ -218,6 +223,11 @@ BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num)
     const void **entry = (const void **)(vtbl + 1);
     DWORD i, j;
 
+    if (num - 3 > BLOCK_SIZE * MAX_BLOCKS)
+    {
+        FIXME( "%u methods not supported\n", num );
+        return FALSE;
+    }
     vtbl->QueryInterface = IUnknown_QueryInterface_Proxy;
     vtbl->AddRef = IUnknown_AddRef_Proxy;
     vtbl->Release = IUnknown_Release_Proxy;

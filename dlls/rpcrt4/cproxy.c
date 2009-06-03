@@ -133,6 +133,11 @@ static BOOL fill_stubless_table( IUnknownVtbl *vtbl, DWORD num )
     const void **entry = (const void **)(vtbl + 1);
     DWORD i, j;
 
+    if (num - 3 > BLOCK_SIZE * MAX_BLOCKS)
+    {
+        FIXME( "%u methods not supported\n", num );
+        return FALSE;
+    }
     for (i = 0; i < (num - 3 + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
     {
         const struct thunk *block = method_blocks[i];
