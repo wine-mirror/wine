@@ -139,7 +139,7 @@
 @ stdcall GdipDeleteBrush(ptr)
 @ stdcall GdipDeleteCachedBitmap(ptr)
 @ stdcall GdipDeleteCustomLineCap(ptr)
-@ stub GdipDeleteEffect
+@ stdcall GdipDeleteEffect(ptr)
 @ stdcall GdipDeleteFont(ptr)
 @ stdcall GdipDeleteFontFamily(ptr)
 @ stdcall GdipDeleteGraphics(ptr)

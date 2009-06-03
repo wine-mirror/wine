@@ -1601,6 +1601,14 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
     return retval;
 }
 
+GpStatus WINGDIPAPI GdipDeleteEffect(CGpEffect *effect)
+{
+    FIXME("(%p): stub\n", effect);
+    /* note: According to Jose Roca's GDI+ Docs, this is not implemented
+     * in Windows's gdiplus */
+    return NotImplemented;
+}
+
 /*****************************************************************************
  * GdipSetEffectParameters [GDIPLUS.@]
  */
