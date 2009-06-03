@@ -2,6 +2,7 @@
  * COM proxy implementation
  *
  * Copyright 2001 Ove Kåven, TransGaming Technologies
+ * Copyright 2009 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,6 +49,8 @@ typedef struct {
   LONG RefCount;
   const IID* piid;
   LPUNKNOWN pUnkOuter;
+  IUnknown *base_object;  /* must be at offset 0x10 from PVtbl */
+  IRpcProxyBuffer *base_proxy;
   PCInterfaceName name;
   LPPSFACTORYBUFFER pPSFactory;
   LPRPCCHANNELBUFFER pChannel;
@@ -172,8 +175,6 @@ HRESULT StdProxy_Construct(REFIID riid,
     fill_stubless_table( (IUnknownVtbl *)vtbl->Vtbl, count );
   }
 
-  TRACE("iid=%s vtbl=%p\n", debugstr_guid(vtbl->header.piid), vtbl->Vtbl);
-
   if (!IsEqualGUID(vtbl->header.piid, riid)) {
     ERR("IID mismatch during proxy creation\n");
     return RPC_E_UNEXPECTED;
@@ -188,15 +189,31 @@ HRESULT StdProxy_Construct(REFIID riid,
   /* one reference for the proxy */
   This->RefCount = 1;
   This->piid = vtbl->header.piid;
+  This->base_object = NULL;
+  This->base_proxy = NULL;
   This->pUnkOuter = pUnkOuter;
   This->name = name;
   This->pPSFactory = pPSFactory;
   This->pChannel = NULL;
+
+  if(ProxyInfo->pDelegatedIIDs && ProxyInfo->pDelegatedIIDs[Index])
+  {
+      HRESULT r = create_proxy( ProxyInfo->pDelegatedIIDs[Index], NULL,
+                                &This->base_proxy, (void **)&This->base_object );
+      if (FAILED(r))
+      {
+          HeapFree( GetProcessHeap(), 0, This );
+          return r;
+      }
+  }
+
   *ppProxy = (LPRPCPROXYBUFFER)&This->lpVtbl;
   *ppvObj = &This->PVtbl;
   IUnknown_AddRef((IUnknown *)*ppvObj);
   IPSFactoryBuffer_AddRef(pPSFactory);
 
+  TRACE( "iid=%s this %p proxy %p obj %p vtbl %p base proxy %p base obj %p\n",
+         debugstr_guid(riid), This, *ppProxy, *ppvObj, This->PVtbl, This->base_proxy, This->base_object );
   return S_OK;
 }
 
@@ -206,6 +223,9 @@ static void StdProxy_Destruct(LPRPCPROXYBUFFER iface)
 
   if (This->pChannel)
     IRpcProxyBuffer_Disconnect(iface);
+
+  if (This->base_object) IUnknown_Release( This->base_object );
+  if (This->base_proxy) IRpcProxyBuffer_Release( This->base_proxy );
 
   IPSFactoryBuffer_Release(This->pPSFactory);
   HeapFree(GetProcessHeap(),0,This);
@@ -262,6 +282,7 @@ static HRESULT WINAPI StdProxy_Connect(LPRPCPROXYBUFFER iface,
 
   This->pChannel = pChannel;
   IRpcChannelBuffer_AddRef(pChannel);
+  if (This->base_proxy) IRpcProxyBuffer_Connect( This->base_proxy, pChannel );
   return S_OK;
 }
 
@@ -269,6 +290,8 @@ static VOID WINAPI StdProxy_Disconnect(LPRPCPROXYBUFFER iface)
 {
   ICOM_THIS_MULTI(StdProxyImpl,lpVtbl,iface);
   TRACE("(%p)->Disconnect()\n",This);
+
+  if (This->base_proxy) IRpcProxyBuffer_Disconnect( This->base_proxy );
 
   IRpcChannelBuffer_Release(This->pChannel);
   This->pChannel = NULL;

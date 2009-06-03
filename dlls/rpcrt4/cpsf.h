@@ -38,6 +38,8 @@ const MIDL_SERVER_INFO *CStdStubBuffer_GetServerInfo(IRpcStubBuffer *iface);
 const IRpcStubBufferVtbl CStdStubBuffer_Vtbl;
 const IRpcStubBufferVtbl CStdStubBuffer_Delegating_Vtbl;
 
+BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num);
+HRESULT create_proxy(REFIID iid, IUnknown *pUnkOuter, IRpcProxyBuffer **pproxy, void **ppv);
 HRESULT create_stub(REFIID iid, IUnknown *pUnk, IRpcStubBuffer **ppstub);
 
 #endif  /* __WINE_CPSF_H */

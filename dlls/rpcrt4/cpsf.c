@@ -155,6 +155,7 @@ static void init_psfactory( CStdPSFactoryBuffer *psfac, const ProxyFileInfo **fi
     psfac->pProxyFileList = file_list;
     for (i = 0; file_list[i]; i++)
     {
+        const PCInterfaceProxyVtblList *proxies = file_list[i]->pProxyVtblList;
         const PCInterfaceStubVtblList *stubs = file_list[i]->pStubVtblList;
 
         for (j = 0; j < file_list[i]->TableSize; j++)
@@ -165,7 +166,11 @@ static void init_psfactory( CStdPSFactoryBuffer *psfac, const ProxyFileInfo **fi
             void **pRpcStubVtbl = (void **)&stubs[j]->Vtbl;
 
             if (file_list[i]->pDelegatedIIDs && file_list[i]->pDelegatedIIDs[j])
+            {
+                fill_delegated_proxy_table( (IUnknownVtbl *)proxies[j]->Vtbl,
+                                            stubs[j]->header.DispatchTableCount );
                 pSrcRpcStubVtbl = (void * const *)&CStdStubBuffer_Delegating_Vtbl;
+            }
 
             for (k = 0; k < sizeof(IRpcStubBufferVtbl)/sizeof(void *); k++)
                 if (!pRpcStubVtbl[k]) pRpcStubVtbl[k] = pSrcRpcStubVtbl[k];

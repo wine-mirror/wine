@@ -2,6 +2,7 @@
  * COM stub (CStdStubBuffer) implementation
  *
  * Copyright 2001 Ove Kåven, TransGaming Technologies
+ * Copyright 2009 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -212,11 +213,35 @@ static BOOL fill_delegated_stub_table(IUnknownVtbl *vtbl, DWORD num)
     return TRUE;
 }
 
+BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num)
+{
+    const void **entry = (const void **)(vtbl + 1);
+    DWORD i, j;
+
+    vtbl->QueryInterface = IUnknown_QueryInterface_Proxy;
+    vtbl->AddRef = IUnknown_AddRef_Proxy;
+    vtbl->Release = IUnknown_Release_Proxy;
+    for (i = 0; i < (num - 3 + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
+    {
+        const vtbl_method_t *block = method_blocks[i];
+        if (!block && !(block = allocate_block( i ))) return FALSE;
+        for (j = 0; j < BLOCK_SIZE && j < num - 3 - i * BLOCK_SIZE; j++, entry++)
+            if (!*entry) *entry = &block[j];
+    }
+    return TRUE;
+}
+
 #else  /* __i386__ */
 
 static BOOL fill_delegated_stub_table(IUnknownVtbl *vtbl, DWORD num)
 {
     ERR("delegated stubs are not supported on this architecture\n");
+    return FALSE;
+}
+
+BOOL fill_delegated_proxy_table(IUnknownVtbl *vtbl, DWORD num)
+{
+    ERR("delegated proxies are not supported on this architecture\n");
     return FALSE;
 }
 
