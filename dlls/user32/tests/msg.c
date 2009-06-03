@@ -6315,7 +6315,9 @@ static void test_paint_messages(void)
 struct wnd_event
 {
     HWND hwnd;
-    HANDLE event;
+    HANDLE grand_child;
+    HANDLE start_event;
+    HANDLE stop_event;
 };
 
 static DWORD WINAPI thread_proc(void *param)
@@ -6327,7 +6329,7 @@ static DWORD WINAPI thread_proc(void *param)
                                       100, 100, 200, 200, 0, 0, 0, NULL);
     ok(wnd_event->hwnd != 0, "Failed to create overlapped window\n");
 
-    SetEvent(wnd_event->event);
+    SetEvent(wnd_event->start_event);
 
     while (GetMessage(&msg, 0, 0, 0))
     {
@@ -6351,13 +6353,13 @@ static DWORD CALLBACK create_grand_child_thread( void *param )
     ok (hchild != 0, "Failed to create child window\n");
     flush_events();
     flush_sequence();
-    SetEvent( wnd_event->event );
+    SetEvent( wnd_event->start_event );
 
-    while (GetMessage(&msg, 0, 0, 0))
+    for (;;)
     {
-	TranslateMessage(&msg);
-	DispatchMessage(&msg);
+        MsgWaitForMultipleObjects(0, NULL, FALSE, 1000, QS_ALLINPUT);
         if (!IsWindow( hchild )) break;  /* will be destroyed when parent thread exits */
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
     }
     return 0;
 }
@@ -6366,7 +6368,7 @@ static DWORD CALLBACK create_child_thread( void *param )
 {
     struct wnd_event *wnd_event = param;
     struct wnd_event child_event;
-    DWORD tid;
+    DWORD ret, tid;
     MSG msg;
 
     child_event.hwnd = CreateWindowExA(0, "TestWindowClass", "Test child",
@@ -6375,15 +6377,16 @@ static DWORD CALLBACK create_child_thread( void *param )
     SetFocus( child_event.hwnd );
     flush_events();
     flush_sequence();
-    child_event.event = wnd_event->event;
-    CloseHandle( CreateThread(NULL, 0, create_grand_child_thread, &child_event, 0, &tid) );
+    child_event.start_event = wnd_event->start_event;
+    wnd_event->grand_child = CreateThread(NULL, 0, create_grand_child_thread, &child_event, 0, &tid);
     for (;;)
     {
-        DWORD ret = MsgWaitForMultipleObjects(1, &child_event.event, FALSE, 1000, QS_SENDMESSAGE);
+        DWORD ret = MsgWaitForMultipleObjects(1, &child_event.start_event, FALSE, 1000, QS_SENDMESSAGE);
         if (ret != 1) break;
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
     }
-    Sleep( 200 );  /* leave parent the time to finish processing messages */
+    ret = WaitForSingleObject( wnd_event->stop_event, 5000 );
+    ok( !ret, "WaitForSingleObject failed %x\n", ret );
     return 0;
 }
 
@@ -6398,8 +6401,8 @@ static void test_interthread_messages(void)
     struct wnd_event wnd_event;
     BOOL ret;
 
-    wnd_event.event = CreateEventW(NULL, 0, 0, NULL);
-    if (!wnd_event.event)
+    wnd_event.start_event = CreateEventW(NULL, 0, 0, NULL);
+    if (!wnd_event.start_event)
     {
         win_skip("skipping interthread message test under win9x\n");
         return;
@@ -6408,9 +6411,9 @@ static void test_interthread_messages(void)
     hThread = CreateThread(NULL, 0, thread_proc, &wnd_event, 0, &tid);
     ok(hThread != NULL, "CreateThread failed, error %d\n", GetLastError());
 
-    ok(WaitForSingleObject(wnd_event.event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    ok(WaitForSingleObject(wnd_event.start_event, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
 
-    CloseHandle(wnd_event.event);
+    CloseHandle(wnd_event.start_event);
 
     SetLastError(0xdeadbeef);
     ok(!DestroyWindow(wnd_event.hwnd), "DestroyWindow succeded\n");
@@ -6460,20 +6463,28 @@ static void test_interthread_messages(void)
     ok (wnd_event.hwnd != 0, "Failed to create parent window\n");
     flush_sequence();
     log_all_parent_messages++;
-    wnd_event.event = CreateEventA( NULL, TRUE, FALSE, NULL );
+    wnd_event.start_event = CreateEventA( NULL, TRUE, FALSE, NULL );
+    wnd_event.stop_event = CreateEventA( NULL, TRUE, FALSE, NULL );
     hThread = CreateThread( NULL, 0, create_child_thread, &wnd_event, 0, &tid );
     for (;;)
     {
-        ret = MsgWaitForMultipleObjects(1, &wnd_event.event, FALSE, 1000, QS_SENDMESSAGE);
+        ret = MsgWaitForMultipleObjects(1, &wnd_event.start_event, FALSE, 1000, QS_SENDMESSAGE);
         if (ret != 1) break;
         while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessage(&msg);
     }
     ok( !ret, "MsgWaitForMultipleObjects failed %x\n", ret );
     /* now wait for the thread without processing messages; this shouldn't deadlock */
+    SetEvent( wnd_event.stop_event );
     ret = WaitForSingleObject( hThread, 5000 );
     ok( !ret, "WaitForSingleObject failed %x\n", ret );
     CloseHandle( hThread );
-    CloseHandle( wnd_event.event );
+
+    ret = WaitForSingleObject( wnd_event.grand_child, 5000 );
+    ok( !ret, "WaitForSingleObject failed %x\n", ret );
+    CloseHandle( wnd_event.grand_child );
+
+    CloseHandle( wnd_event.start_event );
+    CloseHandle( wnd_event.stop_event );
     flush_events();
     ok_sequence(WmExitThreadSeq, "destroy child on thread exit", FALSE);
     log_all_parent_messages--;
@@ -10210,7 +10221,7 @@ static const struct message WmShowMaximized_2[] = {
 };
 static const struct message WmShowMaximized_3[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMAXIMIZED },
-    { WM_GETMINMAXINFO, sent },
+    { WM_GETMINMAXINFO, sent|optional },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED, 0, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOSIZE|SWP_NOMOVE },
     { HCBT_ACTIVATE, hook|optional }, /* win2000 doesn't send it */
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2000 doesn't send it */
