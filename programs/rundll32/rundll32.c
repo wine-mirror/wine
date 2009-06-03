@@ -88,7 +88,7 @@ static HINSTANCE16 load_dll16( LPCWSTR dll )
     DWORD len = WideCharToMultiByte( CP_ACP, 0, dll, -1, NULL, 0, NULL, NULL );
     char *dllA = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, dll, -1, dllA, len, NULL, NULL );
-    pLoadLibrary16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), "LoadLibrary16" );
+    pLoadLibrary16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), (LPCSTR)35 );
     if (pLoadLibrary16) ret = pLoadLibrary16( dllA );
     HeapFree( GetProcessHeap(), 0, dllA );
     return ret;
@@ -100,7 +100,7 @@ static FARPROC16 get_entry_point16( HINSTANCE16 inst, LPCWSTR entry )
     DWORD len = WideCharToMultiByte( CP_ACP, 0, entry, -1, NULL, 0, NULL, NULL );
     char *entryA = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, entry, -1, entryA, len, NULL, NULL );
-    pGetProcAddress16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), "GetProcAddress16" );
+    pGetProcAddress16 = (void *)GetProcAddress( GetModuleHandleA("kernel32.dll"), (LPCSTR)37 );
     if (pGetProcAddress16) ret = pGetProcAddress16( inst, entryA );
     HeapFree( GetProcessHeap(), 0, entryA );
     return ret;
