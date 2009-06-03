@@ -39,6 +39,7 @@ extern HRESULT Range_Constructor(ITfContext *context, ITextStoreACP *textstore, 
 
 extern HRESULT Context_Initialize(ITfContext *cxt);
 extern HRESULT Context_Uninitialize(ITfContext *cxt);
+extern HRESULT TF_SELECTION_to_TS_SELECTION_ACP(const TF_SELECTION *tf, TS_SELECTION_ACP *tsAcp);
 
 /* cookie function */
 extern DWORD  generate_Cookie(DWORD magic, LPVOID data);

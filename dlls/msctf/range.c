@@ -344,3 +344,19 @@ HRESULT Range_Constructor(ITfContext *context, ITextStoreACP *textstore, DWORD l
 
     return S_OK;
 }
+
+/* Internal conversion functions */
+
+HRESULT TF_SELECTION_to_TS_SELECTION_ACP(const TF_SELECTION *tf, TS_SELECTION_ACP *tsAcp)
+{
+    Range *This = (Range *)tf->range;
+
+    if (!tf || !tsAcp || !tf->range)
+        return E_INVALIDARG;
+
+    tsAcp->acpStart = This->anchorStart;
+    tsAcp->acpEnd = This->anchorEnd;
+    tsAcp->style.ase = tf->style.ase;
+    tsAcp->style.fInterimChar = tf->style.fInterimChar;
+    return S_OK;
+}

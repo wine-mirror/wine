@@ -349,9 +349,39 @@ static HRESULT WINAPI Context_GetSelection (ITfContext *iface,
 static HRESULT WINAPI Context_SetSelection (ITfContext *iface,
         TfEditCookie ec, ULONG ulCount, const TF_SELECTION *pSelection)
 {
+    TS_SELECTION_ACP *acp;
     Context *This = (Context *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    INT i;
+    HRESULT hr;
+
+    TRACE("(%p) %i %i %p\n",This,ec,ulCount,pSelection);
+
+    if (!This->pITextStoreACP)
+    {
+        FIXME("Context does not have a ITextStoreACP\n");
+        return E_NOTIMPL;
+    }
+
+    if (get_Cookie_magic(ec)!=COOKIE_MAGIC_EDITCOOKIE)
+        return TF_E_NOLOCK;
+
+    acp = HeapAlloc(GetProcessHeap(), 0, sizeof(TS_SELECTION_ACP) * ulCount);
+    if (!acp)
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < ulCount; i++)
+        if (FAILED(TF_SELECTION_to_TS_SELECTION_ACP(&pSelection[i], &acp[i])))
+        {
+            TRACE("Selection Conversion Failed\n");
+            HeapFree(GetProcessHeap(), 0 , acp);
+            return E_FAIL;
+        }
+
+    hr = ITextStoreACP_SetSelection(This->pITextStoreACP, ulCount, acp);
+
+    HeapFree(GetProcessHeap(), 0, acp);
+
+    return hr;
 }
 
 static HRESULT WINAPI Context_GetStart (ITfContext *iface,
