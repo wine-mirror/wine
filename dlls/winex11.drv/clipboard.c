@@ -1842,6 +1842,11 @@ static BOOL X11DRV_CLIPBOARD_QueryTargets(Display *display, Window w, Atom selec
         usleep(SELECTION_WAIT);
     }
 
+    if (i == SELECTION_RETRIES)
+    {
+        ERR("Timed out waiting for SelectionNotify event\n");
+        return FALSE;
+    }
     /* Verify that the selection returned a valid TARGETS property */
     if ((xe->xselection.target != target) || (xe->xselection.property == None))
     {
@@ -2111,8 +2116,12 @@ static BOOL X11DRV_CLIPBOARD_ReadSelectionData(Display *display, LPWINE_CLIPDATA
             usleep(SELECTION_WAIT);
         }
 
+        if (i == SELECTION_RETRIES)
+        {
+            ERR("Timed out waiting for SelectionNotify event\n");
+        }
         /* Verify that the selection returned a valid TARGETS property */
-        if (xe.xselection.property != None)
+        else if (xe.xselection.property != None)
         {
             /*
              *  Read the contents of the X selection property 
