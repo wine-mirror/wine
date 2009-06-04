@@ -1620,6 +1620,20 @@ GpStatus WINGDIPAPI GdipDrawImagePointRectI(GpGraphics *graphics, GpImage *image
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipDrawImagePoints(GpGraphics *graphics, GpImage *image,
+    GDIPCONST GpPointF *dstpoints, INT count)
+{
+    FIXME("(%p, %p, %p, %d): stub\n", graphics, image, dstpoints, count);
+    return NotImplemented;
+}
+
+GpStatus WINGDIPAPI GdipDrawImagePointsI(GpGraphics *graphics, GpImage *image,
+    GDIPCONST GpPoint *dstpoints, INT count)
+{
+    FIXME("(%p, %p, %p, %d): stub\n", graphics, image, dstpoints, count);
+    return NotImplemented;
+}
+
 /* FIXME: partially implemented (only works for rectangular parallelograms) */
 GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image,
      GDIPCONST GpPointF *points, INT count, REAL srcx, REAL srcy, REAL srcwidth,

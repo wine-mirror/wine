@@ -177,8 +177,8 @@
 @ stdcall GdipDrawImageI(ptr ptr long long)
 @ stdcall GdipDrawImagePointRect(ptr ptr long long long long long long long)
 @ stdcall GdipDrawImagePointRectI(ptr ptr long long long long long long long)
-@ stub GdipDrawImagePoints
-@ stub GdipDrawImagePointsI
+@ stdcall GdipDrawImagePoints(ptr ptr ptr long)
+@ stdcall GdipDrawImagePointsI(ptr ptr ptr long)
 @ stdcall GdipDrawImagePointsRect(ptr ptr ptr long long long long long long ptr ptr ptr)
 @ stdcall GdipDrawImagePointsRectI(ptr ptr ptr long long long long long long ptr ptr ptr)
 @ stdcall GdipDrawImageRect(ptr ptr long long long long)
