@@ -199,7 +199,7 @@
 @ stdcall GdipDrawRectangles(ptr ptr ptr long)
 @ stdcall GdipDrawRectanglesI(ptr ptr ptr long)
 @ stdcall GdipDrawString(ptr ptr long ptr ptr ptr ptr)
-@ stub GdipEmfToWmfBits
+@ stdcall GdipEmfToWmfBits(ptr long ptr long long)
 @ stdcall GdipEndContainer(ptr ptr)
 @ stub GdipEnumerateMetafileDestPoint
 @ stub GdipEnumerateMetafileDestPointI

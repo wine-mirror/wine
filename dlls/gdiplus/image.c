@@ -694,6 +694,13 @@ GpStatus WINGDIPAPI GdipDrawCachedBitmap(GpGraphics *graphics,
     return GdipDrawImage(graphics, cachedbmp->image, (REAL)x, (REAL)y);
 }
 
+GpStatus WINGDIPAPI GdipEmfToWmfBits(HENHMETAFILE hemf, UINT cbData16,
+    LPBYTE pData16, INT iMapMode, INT eFlags)
+{
+    FIXME("(%p, %d, %p, %d, %d): stub\n", hemf, cbData16, pData16, iMapMode, eFlags);
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage *image)
 {
     HDC hdc;

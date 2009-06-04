@@ -329,6 +329,7 @@ GpStatus WINGDIPAPI GdipTransformPath(GpPath*,GpMatrix*);
 GpStatus WINGDIPAPI GdipCloneImage(GpImage*, GpImage**);
 GpStatus WINGDIPAPI GdipCloneImageAttributes(GDIPCONST GpImageAttributes*,GpImageAttributes**);
 GpStatus WINGDIPAPI GdipDisposeImage(GpImage*);
+GpStatus WINGDIPAPI GdipEmfToWmfBits(HENHMETAFILE,UINT,LPBYTE,INT,INT);
 GpStatus WINGDIPAPI GdipFindFirstImageItem(GpImage*,ImageItemData*);
 GpStatus WINGDIPAPI GdipFindNextImageItem(GpImage*,ImageItemData*);
 GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage*,UINT,UINT,PropertyItem*);
