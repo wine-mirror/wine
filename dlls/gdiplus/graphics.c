@@ -2089,7 +2089,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     POINT corners[4];
     WCHAR* stringdup;
     REAL angle, ang_cos, ang_sin, rel_width, rel_height;
-    INT sum = 0, height = 0, fit, fitcpy, save_state, i, j, lret, nwidth,
+    INT sum = 0, height = 0, offsety = 0, fit, fitcpy, save_state, i, j, lret, nwidth,
         nheight;
     SIZE size;
     RECT drawcoord;
@@ -2105,8 +2105,21 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
         return NotImplemented;
     }
 
-    if(format)
+    if(format){
         TRACE("may be ignoring some format flags: attr %x\n", format->attr);
+
+        /* Should be no need to explicitly test for StringAlignmentNear as
+         * that is default behavior if no alignment is passed. */
+        if(format->vertalign != StringAlignmentNear){
+            RectF bounds;
+            GdipMeasureString(graphics, string, length, font, rect, format, &bounds, 0, 0);
+
+            if(format->vertalign == StringAlignmentCenter)
+                offsety = (rect->Height - bounds.Height) / 2;
+            else if(format->vertalign == StringAlignmentFar)
+                offsety = (rect->Height - bounds.Height);
+        }
+    }
 
     if(length == -1) length = lstrlenW(string);
 
@@ -2118,9 +2131,9 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     SetTextColor(graphics->hdc, brush->lb.lbColor);
 
     rectcpy[3].X = rectcpy[0].X = rect->X;
-    rectcpy[1].Y = rectcpy[0].Y = rect->Y;
+    rectcpy[1].Y = rectcpy[0].Y = rect->Y + offsety;
     rectcpy[2].X = rectcpy[1].X = rect->X + rect->Width;
-    rectcpy[3].Y = rectcpy[2].Y = rect->Y + rect->Height;
+    rectcpy[3].Y = rectcpy[2].Y = rect->Y + offsety + rect->Height;
     transform_and_round_points(graphics, corners, rectcpy, 4);
 
     if (roundr(rect->Width) == 0)
