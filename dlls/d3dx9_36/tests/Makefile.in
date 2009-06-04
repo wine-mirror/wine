@@ -8,7 +8,10 @@ IMPORTS   = d3dx9 d3d9 user32 kernel32
 CTESTS = \
 	core.c \
 	math.c \
-	shader.c
+	shader.c \
+	texture.c
+
+RC_SRCS = rsrc.rc
 
 @MAKE_TEST_RULES@
 
