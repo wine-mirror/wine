@@ -955,7 +955,7 @@ static void test_autoscroll(void)
     hwnd = CreateWindowEx(0, RICHEDIT_CLASS10A, NULL,
                           WS_POPUP|ES_MULTILINE|WS_VSCROLL|WS_HSCROLL,
                           0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
-    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS10A, (int) GetLastError());
     ret = SendMessage(hwnd, EM_GETOPTIONS, 0, 0);
     ok(ret & ECO_AUTOVSCROLL, "ECO_AUTOVSCROLL isn't set.\n");
     ok(!(ret & ECO_AUTOHSCROLL), "ECO_AUTOHSCROLL is set.\n");
@@ -964,10 +964,10 @@ static void test_autoscroll(void)
     ok(!(ret & ES_AUTOHSCROLL), "ES_AUTOHSCROLL is set.\n");
     DestroyWindow(hwnd);
 
-    hwnd = CreateWindowEx(0, RICHEDIT_CLASS, NULL,
+    hwnd = CreateWindowEx(0, RICHEDIT_CLASS10A, NULL,
                           WS_POPUP|ES_MULTILINE,
                           0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
-    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS, (int) GetLastError());
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS10A, (int) GetLastError());
     ret = SendMessage(hwnd, EM_GETOPTIONS, 0, 0);
     ok(!(ret & ECO_AUTOVSCROLL), "ECO_AUTOVSCROLL is set.\n");
     ok(!(ret & ECO_AUTOHSCROLL), "ECO_AUTOHSCROLL is set.\n");
