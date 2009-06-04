@@ -1514,6 +1514,21 @@ static BOOL freedesktop_mime_type_for_extension(struct list *native_mime_types,
     return ret;
 }
 
+static CHAR* reg_get_valA(HKEY key, LPCSTR subkey, LPCSTR name)
+{
+    DWORD size;
+    if (RegGetValueA(key, subkey, name, RRF_RT_REG_SZ, NULL, NULL, &size) == ERROR_SUCCESS)
+    {
+        CHAR *ret = HeapAlloc(GetProcessHeap(), 0, size);
+        if (ret)
+        {
+            if (RegGetValueA(key, subkey, name, RRF_RT_REG_SZ, NULL, ret, &size) == ERROR_SUCCESS)
+                return ret;
+        }
+    }
+    return NULL;
+}
+
 static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
 {
     DWORD size;
@@ -1527,6 +1542,158 @@ static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
         }
     }
     return NULL;
+}
+
+static HKEY open_associations_reg_key(void)
+{
+    static const WCHAR Software_Wine_FileOpenAssociationsW[] = {
+        'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','F','i','l','e','O','p','e','n','A','s','s','o','c','i','a','t','i','o','n','s',0};
+    HKEY assocKey;
+    if (RegCreateKeyW(HKEY_CURRENT_USER, Software_Wine_FileOpenAssociationsW, &assocKey) == ERROR_SUCCESS)
+        return assocKey;
+    return NULL;
+}
+
+static BOOL has_association_changed(LPCSTR extensionA, LPCWSTR extensionW, LPCSTR mimeType, LPCWSTR progId, LPCSTR appName, LPCWSTR docName)
+{
+    static const WCHAR ProgIDW[] = {'P','r','o','g','I','D',0};
+    static const WCHAR DocNameW[] = {'D','o','c','N','a','m','e',0};
+    HKEY assocKey;
+    BOOL ret;
+
+    if ((assocKey = open_associations_reg_key()))
+    {
+        CHAR *valueA;
+        WCHAR *value;
+
+        ret = FALSE;
+
+        valueA = reg_get_valA(assocKey, extensionA, "MimeType");
+        if (!valueA || lstrcmpA(valueA, mimeType))
+            ret = TRUE;
+        HeapFree(GetProcessHeap(), 0, valueA);
+
+        value = reg_get_valW(assocKey, extensionW, ProgIDW);
+        if (!value || strcmpW(value, progId))
+            ret = TRUE;
+        HeapFree(GetProcessHeap(), 0, value);
+
+        valueA = reg_get_valA(assocKey, extensionA, "AppName");
+        if (!valueA || lstrcmpA(valueA, appName))
+            ret = TRUE;
+        HeapFree(GetProcessHeap(), 0, valueA);
+
+        value = reg_get_valW(assocKey, extensionW, DocNameW);
+        if (docName && (!value || strcmpW(value, docName)))
+            ret = TRUE;
+        HeapFree(GetProcessHeap(), 0, value);
+
+        RegCloseKey(assocKey);
+    }
+    else
+    {
+        WINE_ERR("error opening associations registry key\n");
+        ret = FALSE;
+    }
+    return ret;
+}
+
+static void update_association(LPCWSTR extension, LPCSTR mimeType, LPCWSTR progId, LPCSTR appName, LPCWSTR docName, LPCSTR desktopFile)
+{
+    static const WCHAR ProgIDW[] = {'P','r','o','g','I','D',0};
+    static const WCHAR DocNameW[] = {'D','o','c','N','a','m','e',0};
+    HKEY assocKey;
+
+    if ((assocKey = open_associations_reg_key()))
+    {
+        HKEY subkey;
+        if (RegCreateKeyW(assocKey, extension, &subkey) == ERROR_SUCCESS)
+        {
+            RegSetValueExA(subkey, "MimeType", 0, REG_SZ, (BYTE*) mimeType, lstrlenA(mimeType) + 1);
+            RegSetValueExW(subkey, ProgIDW, 0, REG_SZ, (BYTE*) progId, (lstrlenW(progId) + 1) * sizeof(WCHAR));
+            RegSetValueExA(subkey, "AppName", 0, REG_SZ, (BYTE*) appName, lstrlenA(appName) + 1);
+            if (docName)
+                RegSetValueExW(subkey, DocNameW, 0, REG_SZ, (BYTE*) docName, (lstrlenW(docName) + 1) * sizeof(WCHAR));
+            RegSetValueExA(subkey, "DesktopFile", 0, REG_SZ, (BYTE*) desktopFile, (lstrlenA(desktopFile) + 1));
+            RegCloseKey(subkey);
+        }
+        else
+            WINE_ERR("could not create extension subkey\n");
+        RegCloseKey(assocKey);
+    }
+    else
+        WINE_ERR("could not open file associations key\n");
+}
+
+static BOOL cleanup_associations(void)
+{
+    HKEY assocKey;
+    BOOL hasChanged = FALSE;
+    if ((assocKey = open_associations_reg_key()))
+    {
+        int i;
+        BOOL done = FALSE;
+        for (i = 0; !done; i++)
+        {
+            WCHAR *extensionW = NULL;
+            char *extensionA = NULL;
+            DWORD size = 1024;
+            LSTATUS ret;
+
+            do
+            {
+                HeapFree(GetProcessHeap(), 0, extensionW);
+                extensionW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+                if (extensionW == NULL)
+                {
+                    WINE_ERR("out of memory\n");
+                    ret = ERROR_OUTOFMEMORY;
+                    break;
+                }
+                ret = RegEnumKeyExW(assocKey, i, extensionW, &size, NULL, NULL, NULL, NULL);
+                size *= 2;
+            } while (ret == ERROR_MORE_DATA);
+
+            if (ret == ERROR_SUCCESS)
+            {
+                WCHAR *command;
+                extensionA = wchars_to_utf8_chars(extensionW);
+                if (extensionA == NULL)
+                {
+                    WINE_ERR("out of memory\n");
+                    done = TRUE;
+                    goto end;
+                }
+                command = assoc_query(ASSOCSTR_COMMAND, extensionW, NULL);
+                if (command == NULL)
+                {
+                    char *desktopFile = reg_get_valA(assocKey, extensionA, "DesktopFile");
+                    if (desktopFile)
+                    {
+                        WINE_TRACE("removing file type association for %s\n", wine_dbgstr_a(extensionA));
+                        remove(desktopFile);
+                    }
+                    RegDeleteKeyW(assocKey, extensionW);
+                    hasChanged = TRUE;
+                    HeapFree(GetProcessHeap(), 0, desktopFile);
+                }
+                HeapFree(GetProcessHeap(), 0, command);
+            }
+            else
+            {
+                if (ret != ERROR_NO_MORE_ITEMS)
+                    WINE_ERR("error %d while reading registry\n", ret);
+                done = TRUE;
+            }
+        end:
+            HeapFree(GetProcessHeap(), 0, extensionA);
+            HeapFree(GetProcessHeap(), 0, extensionW);
+        }
+        RegCloseKey(assocKey);
+    }
+    else
+        WINE_ERR("could not open file associations key\n");
+    return hasChanged;
 }
 
 static BOOL write_freedesktop_mime_type_entry(const char *packages_dir, const char *dot_extension,
@@ -1732,6 +1899,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             else
                 goto end; /* no progID => not a file type association */
 
+            if (has_association_changed(extensionA, extensionW, mimeTypeA, progIdW, friendlyAppNameA, friendlyDocNameW))
             {
                 char *desktopPath = heap_printf("%s/wine-extension-%s.desktop", applications_dir, &extensionA[1]);
                 if (desktopPath)
@@ -1739,6 +1907,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                     if (write_freedesktop_association_entry(desktopPath, extensionA, friendlyAppNameA, mimeTypeA, progIdA))
                     {
                         hasChanged = TRUE;
+                        update_association(extensionW, mimeTypeA, progIdW, friendlyAppNameA, friendlyDocNameW, desktopPath);
                     }
                     HeapFree(GetProcessHeap(), 0, desktopPath);
                 }
@@ -2232,6 +2401,7 @@ static void RefreshFileTypeAssociations(void)
     create_directories(applications_dir);
 
     hasChanged = generate_associations(xdg_data_dir, packages_dir, applications_dir);
+    hasChanged |= cleanup_associations();
     if (hasChanged)
     {
         char *command = heap_printf("update-mime-database %s", mime_dir);
