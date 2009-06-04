@@ -343,9 +343,6 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_D24FS8,             GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
             GL_DEPTH_COMPONENT,     GL_FLOAT,
             WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL},
-    {WINED3DFMT_R16G16B16A16_SNORM, GL_COLOR_INDEX,                   GL_COLOR_INDEX,                         0,
-            GL_COLOR_INDEX,         GL_UNSIGNED_SHORT,
-            0},
 };
 
 static inline int getFmtIdx(WINED3DFORMAT fmt) {
