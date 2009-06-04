@@ -24,6 +24,7 @@
 
 #include <windows.h>
 #include <msi.h>
+#include <msidefs.h>
 #include <msiquery.h>
 
 #include <objidl.h>
@@ -1711,6 +1712,24 @@ static const CHAR endlines2[] = "A\tB\tC\tD\tE\tF\r"
                                 "a\tb\tc\td\te\tf\n"
                                 "g\th\ti\tj\tk\tl\r\n";
 
+static const CHAR suminfo[] = "PropertyId\tValue\n"
+                              "i2\tl255\n"
+                              "_SummaryInformation\tPropertyId\n"
+                              "1\t1252\n"
+                              "2\tInstaller Database\n"
+                              "3\tInstaller description\n"
+                              "4\tWineHQ\n"
+                              "5\tInstaller\n"
+                              "6\tInstaller comments\n"
+                              "7\tIntel;1033\n"
+                              "9\t{12345678-1234-1234-1234-123456789012}\n"
+                              "12\t2009/04/12 15:46:11\n"
+                              "13\t2009/04/12 15:46:11\n"
+                              "14\t200\n"
+                              "15\t2\n"
+                              "18\tVim\n"
+                              "19\t2\n";
+
 static void write_file(const CHAR *filename, const char *data, int data_size)
 {
     DWORD size;
@@ -1731,6 +1750,128 @@ static UINT add_table_to_db(MSIHANDLE hdb, LPCSTR table_data)
     DeleteFileA("temp_file");
 
     return r;
+}
+
+static void test_suminfo_import(void)
+{
+    MSIHANDLE hdb, hsi, view = 0;
+    LPCSTR query;
+    UINT r, count, size, type;
+    char str_value[50];
+    INT int_value;
+    FILETIME ft_value;
+
+    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+
+    r = MsiOpenDatabaseA(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = add_table_to_db(hdb, suminfo);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    /* _SummaryInformation is not imported as a regular table... */
+
+    query = "SELECT * FROM `_SummaryInformation`";
+    r = MsiDatabaseOpenViewA(hdb, query, &view);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %u\n", r);
+    MsiCloseHandle(view);
+
+    /* ...its data is added to the special summary information stream */
+
+    r = MsiGetSummaryInformationA(hdb, NULL, 0, &hsi);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiSummaryInfoGetPropertyCount(hsi, &count);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(count == 14, "Expected 14, got %u\n", count);
+
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_CODEPAGE, &type, &int_value, NULL, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type ==  VT_I2, "Expected VT_I2, got %u\n", type);
+    ok(int_value == 1252, "Expected 1252, got %d\n", int_value);
+
+    size = sizeof(str_value);
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_TITLE, &type, NULL, NULL, str_value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_LPSTR, "Expected VT_LPSTR, got %u\n", type);
+    ok(size == 18, "Expected 18, got %u\n", size);
+    ok(!strcmp(str_value, "Installer Database"),
+       "Expected \"Installer Database\", got %s\n", str_value);
+
+    size = sizeof(str_value);
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_SUBJECT, &type, NULL, NULL, str_value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_LPSTR, "Expected VT_LPSTR, got %u\n", type);
+    ok(!strcmp(str_value, "Installer description"),
+       "Expected \"Installer description\", got %s\n", str_value);
+
+    size = sizeof(str_value);
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_AUTHOR, &type, NULL, NULL, str_value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_LPSTR, "Expected VT_LPSTR, got %u\n", type);
+    ok(!strcmp(str_value, "WineHQ"),
+       "Expected \"WineHQ\", got %s\n", str_value);
+
+    size = sizeof(str_value);
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_KEYWORDS, &type, NULL, NULL, str_value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_LPSTR, "Expected VT_LPSTR, got %u\n", type);
+    ok(!strcmp(str_value, "Installer"),
+       "Expected \"Installer\", got %s\n", str_value);
+
+    size = sizeof(str_value);
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_COMMENTS, &type, NULL, NULL, str_value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_LPSTR, "Expected VT_LPSTR, got %u\n", type);
+    ok(!strcmp(str_value, "Installer comments"),
+       "Expected \"Installer comments\", got %s\n", str_value);
+
+    size = sizeof(str_value);
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_TEMPLATE, &type, NULL, NULL, str_value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_LPSTR, "Expected VT_LPSTR, got %u\n", type);
+    ok(!strcmp(str_value, "Intel;1033"),
+       "Expected \"Intel;1033\", got %s\n", str_value);
+
+    size = sizeof(str_value);
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_REVNUMBER, &type, NULL, NULL, str_value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_LPSTR, "Expected VT_LPSTR, got %u\n", type);
+    ok(!strcmp(str_value, "{12345678-1234-1234-1234-123456789012}"),
+       "Expected \"{12345678-1234-1234-1234-123456789012}\", got %s\n", str_value);
+
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_CREATE_DTM, &type, NULL, &ft_value, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_FILETIME, "Expected VT_FILETIME, got %u\n", type);
+
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_LASTSAVE_DTM, &type, NULL, &ft_value, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_FILETIME, "Expected VT_FILETIME, got %u\n", type);
+
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_PAGECOUNT, &type, &int_value, NULL, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type ==  VT_I4, "Expected VT_I4, got %u\n", type);
+    ok(int_value == 200, "Expected 200, got %d\n", int_value);
+
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_WORDCOUNT, &type, &int_value, NULL, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type ==  VT_I4, "Expected VT_I4, got %u\n", type);
+    ok(int_value == 2, "Expected 2, got %d\n", int_value);
+
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_SECURITY, &type, &int_value, NULL, NULL, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type ==  VT_I4, "Expected VT_I4, got %u\n", type);
+    ok(int_value == 2, "Expected 2, got %d\n", int_value);
+
+    size = sizeof(str_value);
+    r = MsiSummaryInfoGetPropertyA(hsi, PID_APPNAME, &type, NULL, NULL, str_value, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(type == VT_LPSTR, "Expected VT_LPSTR, got %u\n", type);
+    ok(!strcmp(str_value, "Vim"), "Expected \"Vim\", got %s\n", str_value);
+
+    MsiCloseHandle(hsi);
+    MsiCloseHandle(hdb);
+    DeleteFileA(msifile);
 }
 
 static void test_msiimport(void)
@@ -7784,4 +7925,5 @@ START_TEST(db)
     test_dbmerge();
     test_insertorder();
     test_columnorder();
+    test_suminfo_import();
 }
