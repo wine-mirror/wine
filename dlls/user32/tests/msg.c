@@ -3972,7 +3972,6 @@ static void test_hv_scroll_1(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min
 
     xmin = 0xdeadbeef;
     xmax = 0xdeadbeef;
-    trace("Ignore GetScrollRange error below if you are on Win9x\n");
     ret = GetScrollRange(hwnd, ctl, &xmin, &xmax);
     ok( ret, "GetScrollRange(%d) error %d\n", ctl, GetLastError());
     ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT) empty sequence", FALSE);
