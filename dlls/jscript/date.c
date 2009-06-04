@@ -310,8 +310,33 @@ static HRESULT Date_getTimezoneOffset(DispatchEx *dispex, LCID lcid, WORD flags,
 static HRESULT Date_setTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+    DateInstance *date;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(!arg_cnt(dp)) {
+        if(retv) num_set_nan(retv);
+        return S_OK;
+    }
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+
+    date = (DateInstance*)dispex;
+    date->time = time_clip(num_val(&v));
+
+    if(retv)
+        num_set_val(retv, date->time);
+
+    return S_OK;
 }
 
 static HRESULT Date_setMiliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

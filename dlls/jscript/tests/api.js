@@ -941,6 +941,10 @@ ok(isNaN(0+date.getTime()), "date.getTime() is not NaN");
 date = new Date(Infinity);
 ok(isNaN(0+date.getTime()), "date.getTime() is not NaN");
 
+ok(date.setTime(123) === 123, "date.setTime(123) !== 123");
+ok(date.setTime("123", NaN) === 123, "date.setTime(\"123\") !== 123");
+ok(isNaN(date.setTime(NaN)), "date.setTime(NaN) is not NaN");
+
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
 Math.PI = "test";
