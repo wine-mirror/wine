@@ -939,6 +939,7 @@ static void test_settargetpath(void)
     sz = sizeof tempdir - 1;
     r = MsiGetTargetPath( hpkg, "TARGETDIR", tempdir, &sz );
     sprintf( file, "%srootfile.txt", tempdir );
+    buffer[0] = 0;
     query_file_path( hpkg, "[#RootFile]", buffer );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
     ok( !lstrcmp(buffer, file), "Expected %s, got %s\n", file, buffer );
@@ -11057,8 +11058,8 @@ static void test_access(void)
 
 static void test_emptypackage(void)
 {
-    MSIHANDLE hpkg, hdb, hsuminfo;
-    MSIHANDLE hview, hrec;
+    MSIHANDLE hpkg = 0, hdb = 0, hsuminfo = 0;
+    MSIHANDLE hview = 0, hrec = 0;
     MSICONDITION condition;
     CHAR buffer[MAX_PATH];
     DWORD size;
