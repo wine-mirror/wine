@@ -264,6 +264,7 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
         case DRIVE_REMOTE:    type = DEVICE_NETWORK; break;
         case DRIVE_CDROM:     type = DEVICE_CDROM; break;
         case DRIVE_RAMDISK:   type = DEVICE_RAMDISK; break;
+        case DRIVE_FIXED:     type = DEVICE_HARDDISK_VOL; break;
         }
         return add_dos_device( letter - 'a', NULL, device, mount_point, type );
     }
