@@ -182,9 +182,6 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     /* WINED3DFORMAT                internal                          srgbInternal                            rtInternal
             format                  type
             flags */
-    {WINED3DFMT_UNKNOWN,            0,                                0,                                      0,
-            0,                      0,
-            0},
     /* FourCC formats */
     /* GL_APPLE_ycbcr_422 claims that its '2YUV' format, which is supported via the UNSIGNED_SHORT_8_8_REV_APPLE type
      * is equivalent to 'UYVY' format on Windows, and the 'YUVS' via UNSIGNED_SHORT_8_8_APPLE equates to 'YUY2'. The
@@ -216,15 +213,6 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_DXT5,               GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, 0,
             GL_RGBA,                GL_UNSIGNED_BYTE,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING},
-    {WINED3DFMT_MULTI2_ARGB8,       0,                                0,                                      0,
-            0,                      0,
-            0},
-    {WINED3DFMT_G8R8_G8B8,          0,                                0,                                      0,
-            0,                      0,
-            0},
-    {WINED3DFMT_R8G8_B8G8,          0,                                0,                                      0,
-            0,                      0,
-            0},
     /* IEEE formats */
     {WINED3DFMT_R32_FLOAT,          GL_RGB32F_ARB,                    GL_RGB32F_ARB,                          0,
             GL_RED,                 GL_FLOAT,
@@ -235,10 +223,6 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_R32G32B32A32_FLOAT, GL_RGBA32F_ARB,                   GL_RGBA32F_ARB,                         0,
             GL_RGBA,                GL_FLOAT,
             WINED3DFMT_FLAG_RENDERTARGET},
-    /* Hmm? */
-    {WINED3DFMT_CxV8U8,             0,                                0,                                      0,
-            0,                      0,
-            0},
     /* Float */
     {WINED3DFMT_R16_FLOAT,          GL_RGB16F_ARB,                    GL_RGB16F_ARB,                          0,
             GL_RED,             GL_HALF_FLOAT_ARB,
@@ -250,9 +234,6 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
             GL_RGBA,            GL_HALF_FLOAT_ARB,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET},
     /* Palettized formats */
-    {WINED3DFMT_A8P8,               0,                                0,                                      0,
-            0,                      0,
-            0},
     {WINED3DFMT_P8,                 GL_COLOR_INDEX8_EXT,              GL_COLOR_INDEX8_EXT,                    0,
             GL_COLOR_INDEX,         GL_UNSIGNED_BYTE,
             0},
@@ -284,9 +265,6 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_A8_UNORM,           GL_ALPHA8,                        GL_ALPHA8,                              0,
             GL_ALPHA,               GL_UNSIGNED_BYTE,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING},
-    {WINED3DFMT_A8R3G3B2,           0,                                0,                                      0,
-            0,                      0,
-            0},
     {WINED3DFMT_X4R4G4B4,           GL_RGB4,                          GL_RGB4,                                0,
             GL_BGRA,                GL_UNSIGNED_SHORT_4_4_4_4_REV,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING},
@@ -334,12 +312,6 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_R16G16_SNORM,       GL_SIGNED_HILO16_NV,              GL_SIGNED_HILO16_NV,                    0,
             GL_HILO_NV,             GL_SHORT,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING},
-    {WINED3DFMT_W11V11U10,          0,                                0,                                      0,
-            0,                      0,
-            0},
-    {WINED3DFMT_A2W10V10U10,        0,                                0,                                      0,
-            0,                      0,
-            0},
     /* Depth stencil formats */
     {WINED3DFMT_D16_LOCKABLE,       GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
             GL_DEPTH_COMPONENT,     GL_UNSIGNED_SHORT,
@@ -371,29 +343,9 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     {WINED3DFMT_D24FS8,             GL_DEPTH_COMPONENT24_ARB,         GL_DEPTH_COMPONENT24_ARB,               0,
             GL_DEPTH_COMPONENT,     GL_FLOAT,
             WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL},
-    /* Is this a vertex buffer? */
-    {WINED3DFMT_VERTEXDATA,         0,                                0,                                      0,
-            0,                      0,
-            0},
-    {WINED3DFMT_R16_UINT,           0,                                0,                                      0,
-            0,                      0,
-            0},
-    {WINED3DFMT_R32_UINT,           0,                                0,                                      0,
-            0,                      0,
-            0},
     {WINED3DFMT_R16G16B16A16_SNORM, GL_COLOR_INDEX,                   GL_COLOR_INDEX,                         0,
             GL_COLOR_INDEX,         GL_UNSIGNED_SHORT,
             0},
-    /* Vendor-specific formats */
-    {WINED3DFMT_ATI2N,              0,                                0,                                      0,
-            GL_LUMINANCE_ALPHA,     GL_UNSIGNED_BYTE,
-            0},
-    {WINED3DFMT_NVHU,               0,                                0,                                      0,
-            GL_LUMINANCE_ALPHA,     GL_UNSIGNED_BYTE,
-            0},
-    {WINED3DFMT_NVHS,               0,                                0,                                      0,
-            GL_LUMINANCE_ALPHA,     GL_UNSIGNED_BYTE,
-            0}
 };
 
 static inline int getFmtIdx(WINED3DFORMAT fmt) {
@@ -616,6 +568,8 @@ static void apply_format_fixups(WineD3D_GL_Info *gl_info)
         idx = getFmtIdx(WINED3DFMT_ATI2N);
         gl_info->gl_formats[idx].glInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
         gl_info->gl_formats[idx].glGammaInternal = GL_COMPRESSED_RED_GREEN_RGTC2_EXT;
+        gl_info->gl_formats[idx].glFormat = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[idx].glType = GL_UNSIGNED_BYTE;
         gl_info->gl_formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
@@ -624,6 +578,8 @@ static void apply_format_fixups(WineD3D_GL_Info *gl_info)
         idx = getFmtIdx(WINED3DFMT_ATI2N);
         gl_info->gl_formats[idx].glInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
         gl_info->gl_formats[idx].glGammaInternal = GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI;
+        gl_info->gl_formats[idx].glFormat = GL_LUMINANCE_ALPHA;
+        gl_info->gl_formats[idx].glType = GL_UNSIGNED_BYTE;
         gl_info->gl_formats[idx].color_fixup= create_color_fixup_desc(
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_W, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
