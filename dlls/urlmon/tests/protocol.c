@@ -436,6 +436,10 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
         CHECK_EXPECT(Switch);
 
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
+    if(binding_test) {
+        ok(pProtocolData != &protocoldata, "pProtocolData == &protocoldata\n");
+        ok(!memcmp(pProtocolData, &protocoldata, sizeof(PROTOCOLDATA)), "*pProtocolData != protocoldata\n");
+    }
 
     pdata = pProtocolData;
 
@@ -1321,6 +1325,10 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocol *iface,
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
     if(!pProtocolData || tested_protocol == BIND_TEST)
         return S_OK;
+    if(binding_test) {
+        ok(pProtocolData != &protocoldata, "pProtocolData == &protocoldata\n");
+        ok(!memcmp(pProtocolData, &protocoldata, sizeof(PROTOCOLDATA)), "*pProtocolData != protocoldata\n");
+    }
 
     switch(prot_state) {
     case 1: {
