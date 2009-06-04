@@ -420,6 +420,40 @@ static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_form
     return status == GL_FRAMEBUFFER_COMPLETE_EXT;
 }
 
+static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
+{
+    unsigned int i;
+
+    for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
+    {
+        struct GlPixelFormatDesc *desc = &gl_info->gl_formats[i];
+
+        if (!desc->glInternal) continue;
+
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && desc->rtInternal)
+        {
+            /* Check if the default internal format is supported as a frame buffer target, otherwise
+             * fall back to the render target internal.
+             *
+             * Try to stick to the standard format if possible, this limits precision differences. */
+            if (check_fbo_compat(gl_info, desc->glInternal))
+            {
+                TRACE("Format %s is supported as fbo target\n", debug_d3dformat(desc->format));
+                desc->rtInternal = desc->glInternal;
+            }
+            else
+            {
+                TRACE("Internal format of %s not supported as FBO target, using render target internal instead\n",
+                        debug_d3dformat(desc->format));
+            }
+        }
+        else
+        {
+            desc->rtInternal = desc->glInternal;
+        }
+    }
+}
+
 static BOOL init_format_texture_info(WineD3D_GL_Info *gl_info)
 {
     unsigned int i;
@@ -439,34 +473,12 @@ static BOOL init_format_texture_info(WineD3D_GL_Info *gl_info)
         desc = &gl_info->gl_formats[fmt_idx];
         desc->glInternal = gl_formats_template[i].glInternal;
         desc->glGammaInternal = gl_formats_template[i].glGammaInternal;
+        desc->rtInternal = gl_formats_template[i].rtInternal;
         desc->glFormat = gl_formats_template[i].glFormat;
         desc->glType = gl_formats_template[i].glType;
         desc->color_fixup = COLOR_FIXUP_IDENTITY;
         desc->Flags |= gl_formats_template[i].Flags;
         desc->heightscale = 1.0;
-
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && gl_formats_template[i].rtInternal)
-        {
-            /* Check if the default internal format is supported as a frame buffer target, otherwise
-             * fall back to the render target internal.
-             *
-             * Try to stick to the standard format if possible, this limits precision differences */
-            if (!check_fbo_compat(gl_info, gl_formats_template[i].glInternal))
-            {
-                TRACE("Internal format of %s not supported as FBO target, using render target internal instead\n",
-                        debug_d3dformat(gl_formats_template[i].fmt));
-                desc->rtInternal = gl_formats_template[i].rtInternal;
-            }
-            else
-            {
-                TRACE("Format %s is supported as fbo target\n", debug_d3dformat(gl_formats_template[i].fmt));
-                desc->rtInternal = gl_formats_template[i].glInternal;
-            }
-        }
-        else
-        {
-            desc->rtInternal = gl_formats_template[i].glInternal;
-        }
     }
 
     return TRUE;
@@ -670,6 +682,7 @@ BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
     }
 
     apply_format_fixups(gl_info);
+    init_format_fbo_compat_info(gl_info);
 
     return TRUE;
 }
