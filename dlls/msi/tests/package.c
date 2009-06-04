@@ -10062,6 +10062,14 @@ static void test_MsiGetSourcePath(void)
        "Expected path to be unchanged, got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    /* source path does not exist, but the property exists */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
     /* try SubDir after FileCost */
     size = MAX_PATH;
     lstrcpyA(path, "kiwi");
@@ -10105,6 +10113,14 @@ static void test_MsiGetSourcePath(void)
     ok(!lstrcmpA(path, "kiwi"),
        "Expected path to be unchanged, got \"%s\"\n", path);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* source path does not exist, but the property exists */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     /* try SubDir after CostFinalize */
     size = MAX_PATH;
@@ -10183,10 +10199,224 @@ static void test_MsiGetSourcePath(void)
     hpkg = package_from_db(hdb);
     ok(hpkg, "failed to create package\n");
 
+    /* try TARGETDIR */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
+    ok(!lstrcmpA(path, "kiwi"),
+       "Expected path to be unchanged, got \"%s\"\n", path);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* try SourceDir */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
+    ok(!lstrcmpA(path, "kiwi"),
+       "Expected path to be unchanged, got \"%s\"\n", path);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* try SOURCEDIR */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
+    ok(!lstrcmpA(path, "kiwi"),
+       "Expected path to be unchanged, got \"%s\"\n", path);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* source path nor the property exist */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, ""), "Expected \"\", got \"%s\"\n", path);
+    ok(size == 0, "Expected 0, got %d\n", size);
+
+    /* try SubDir */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
+    ok(!lstrcmpA(path, "kiwi"),
+       "Expected path to be unchanged, got \"%s\"\n", path);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
+    /* try SubDir2 */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    ok(r == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", r);
+    ok(!lstrcmpA(path, "kiwi"),
+       "Expected path to be unchanged, got \"%s\"\n", path);
+    ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
+
     r = MsiDoAction(hpkg, "CostInitialize");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* try TARGETDIR after CostInitialize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SourceDir after CostInitialize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SOURCEDIR after CostInitialize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+        ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+    }
+
+    /* source path does not exist, but the property exists */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+        ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+    }
+
+    /* try SubDir after CostInitialize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SubDir2 after CostInitialize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    r = MsiDoAction(hpkg, "ResolveSource");
+    ok(r == ERROR_SUCCESS, "file cost failed\n");
+
+    /* try TARGETDIR after ResolveSource */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SourceDir after ResolveSource */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SOURCEDIR after ResolveSource */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+        ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+    }
+
+    /* source path and the property exist */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SubDir after ResolveSource */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SubDir2 after ResolveSource */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
     r = MsiDoAction(hpkg, "FileCost");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    /* try TARGETDIR after CostFinalize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "TARGETDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SourceDir after CostFinalize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SourceDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SOURCEDIR after CostFinalize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SOURCEDIR", path, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+        ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+    }
+
+    /* source path and the property exist */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SubDir after CostFinalize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
+    /* try SubDir2 after CostFinalize */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetSourcePath(hpkg, "SubDir2", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
+
     r = MsiDoAction(hpkg, "CostFinalize");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -10216,6 +10446,14 @@ static void test_MsiGetSourcePath(void)
         ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
         ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
     }
+
+    /* source path and the property exist */
+    size = MAX_PATH;
+    lstrcpyA(path, "kiwi");
+    r = MsiGetProperty(hpkg, "SOURCEDIR", path, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmpA(path, cwd), "Expected \"%s\", got \"%s\"\n", cwd, path);
+    ok(size == lstrlenA(cwd), "Expected %d, got %d\n", lstrlenA(cwd), size);
 
     /* try SubDir after CostFinalize */
     size = MAX_PATH;
