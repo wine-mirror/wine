@@ -4160,6 +4160,7 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
     LPWSTR status_code, status_text;
     DWORD cchMaxRawHeaders = 1024;
     LPWSTR lpszRawHeaders = HeapAlloc(GetProcessHeap(), 0, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+    LPWSTR temp;
     DWORD cchRawHeaders = 0;
 
     TRACE("-->\n");
@@ -4213,10 +4214,10 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
 
     /* regenerate raw headers */
     while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
-    {
         cchMaxRawHeaders *= 2;
-        lpszRawHeaders = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
-    }
+    temp = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+    if (temp == NULL) goto lend;
+    lpszRawHeaders = temp;
     memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
     cchRawHeaders += (buflen-1);
     memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
@@ -4242,10 +4243,10 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
             MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
 
             while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
-            {
                 cchMaxRawHeaders *= 2;
-                lpszRawHeaders = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
-            }
+            temp = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+            if (temp == NULL) goto lend;
+            lpszRawHeaders = temp;
             memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
             cchRawHeaders += (buflen-1);
             memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
