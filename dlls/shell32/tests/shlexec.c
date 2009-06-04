@@ -677,6 +677,8 @@ static void test_filename(void)
     test=filename_tests;
     while (test->basename)
     {
+        BOOL quotedfile = FALSE;
+
         sprintf(filename, test->basename, tmpdir);
         if (strchr(filename, '/'))
         {
@@ -695,6 +697,8 @@ static void test_filename(void)
         else
         {
             char quoted[MAX_PATH + 2];
+
+            quotedfile = TRUE;
             sprintf(quoted, "\"%s\"", filename);
             rc=shell_execute(test->verb, quoted, NULL, NULL);
         }
@@ -702,7 +706,9 @@ static void test_filename(void)
             rc=33;
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
+            ok(rc==test->rc ||
+               broken(quotedfile && rc == 2), /* NT4 */
+               "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
         else todo_wine
