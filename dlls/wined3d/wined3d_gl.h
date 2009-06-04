@@ -3381,6 +3381,7 @@ typedef enum _GL_PSVersion {
 
 /* OpenGL Supported Extensions (ARB and EXT) */
 typedef enum _GL_SupportedExt {
+  WINED3D_GL_EXT_NONE,
   /* ARB */
   ARB_COLOR_BUFFER_FLOAT,
   ARB_DRAW_BUFFERS,
@@ -3488,7 +3489,7 @@ typedef enum _GL_SupportedExt {
   WGL_ARB_PIXEL_FORMAT,
   WGL_WINE_PIXEL_FORMAT_PASSTHROUGH,
 
-  OPENGL_SUPPORTED_EXT_END
+  WINED3D_GL_EXT_COUNT,
 } GL_SupportedExt;
 
 
@@ -3973,7 +3974,7 @@ typedef struct _WineD3D_GL_Info {
   DWORD reserved_glsl_constants;
   BOOL glsl_clip_varying;
 
-  BOOL supported[OPENGL_SUPPORTED_EXT_END + 1];
+  BOOL supported[WINED3D_GL_EXT_COUNT];
 
   /** OpenGL EXT and ARB functions ptr */
   GL_EXT_FUNCS_GEN

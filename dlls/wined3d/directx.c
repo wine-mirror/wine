@@ -754,6 +754,8 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     if (NULL == GL_Extensions) {
         ERR("   GL_Extensions returns NULL\n");
     } else {
+        gl_info->supported[WINED3D_GL_EXT_NONE] = TRUE;
+
         while (*GL_Extensions != 0x00) {
             const char *Start;
             char        ThisExtn[256];
