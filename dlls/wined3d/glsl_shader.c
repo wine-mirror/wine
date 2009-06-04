@@ -4503,6 +4503,7 @@ static void shader_glsl_free(IWineD3DDevice *iface) {
     wine_rb_destroy(&priv->program_lookup, NULL, NULL);
     constant_heap_free(&priv->pconst_heap);
     constant_heap_free(&priv->vconst_heap);
+    HeapFree(GetProcessHeap(), 0, priv->stack);
 
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
     This->shader_priv = NULL;
