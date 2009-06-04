@@ -440,6 +440,15 @@ PVOID WINAPI RtlInitializeGenericTable(PVOID pTable, PVOID arg2, PVOID arg3, PVO
 }
 
 /******************************************************************************
+ *  RtlEnumerateGenericTableWithoutSplaying           [NTDLL.@]
+ */
+PVOID RtlEnumerateGenericTableWithoutSplaying(PVOID pTable, PVOID *RestartKey)
+{
+    FIXME("(%p,%p) stub!\n", pTable, RestartKey);
+    return NULL;
+}
+
+/******************************************************************************
  *  RtlMoveMemory   [NTDLL.@]
  *
  * Move a block of memory that may overlap.

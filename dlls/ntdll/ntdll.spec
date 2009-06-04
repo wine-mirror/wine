@@ -553,7 +553,7 @@
 @ stub RtlEnumerateGenericTable
 # @ stub RtlEnumerateGenericTableAvl
 # @ stub RtlEnumerateGenericTableLikeADirectory
-@ stub RtlEnumerateGenericTableWithoutSplaying
+@ stdcall RtlEnumerateGenericTableWithoutSplaying(ptr ptr)
 # @ stub RtlEnumerateGenericTableWithoutSplayingAvl
 @ stub RtlEnumerateProperties
 @ stdcall RtlEqualComputerName(ptr ptr)
