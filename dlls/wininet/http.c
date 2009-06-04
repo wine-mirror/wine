@@ -4235,33 +4235,28 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
             TRACE("got line %s, now interpreting\n", debugstr_a(bufferA));
 
             if (!bufferA[0]) break;
-            if (!strchr(bufferA, ':'))
-            {
-                WARN("invalid header\n");
-                continue;
-            }
             MultiByteToWideChar( CP_ACP, 0, bufferA, buflen, buffer, MAX_REPLY_LEN );
 
-            while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
-                cchMaxRawHeaders *= 2;
-            temp = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
-            if (temp == NULL) goto lend;
-            lpszRawHeaders = temp;
-            memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
-            cchRawHeaders += (buflen-1);
-            memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
-            cchRawHeaders += sizeof(szCrLf)/sizeof(szCrLf[0])-1;
-            lpszRawHeaders[cchRawHeaders] = '\0';
-
             pFieldAndValue = HTTP_InterpretHttpHeader(buffer);
-            if (!pFieldAndValue)
-                break;
+            if (pFieldAndValue)
+            {
+                while (cchRawHeaders + buflen + strlenW(szCrLf) > cchMaxRawHeaders)
+                    cchMaxRawHeaders *= 2;
+                temp = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders+1)*sizeof(WCHAR));
+                if (temp == NULL) goto lend;
+                lpszRawHeaders = temp;
+                memcpy(lpszRawHeaders+cchRawHeaders, buffer, (buflen-1)*sizeof(WCHAR));
+                cchRawHeaders += (buflen-1);
+                memcpy(lpszRawHeaders+cchRawHeaders, szCrLf, sizeof(szCrLf));
+                cchRawHeaders += sizeof(szCrLf)/sizeof(szCrLf[0])-1;
+                lpszRawHeaders[cchRawHeaders] = '\0';
 
-            HTTP_ProcessHeader(lpwhr, pFieldAndValue[0], pFieldAndValue[1], 
-                HTTP_ADDREQ_FLAG_ADD );
+                HTTP_ProcessHeader(lpwhr, pFieldAndValue[0], pFieldAndValue[1],
+                                   HTTP_ADDREQ_FLAG_ADD );
 
-            HTTP_FreeTokens(pFieldAndValue);
-	}
+                HTTP_FreeTokens(pFieldAndValue);
+            }
+        }
 	else
 	{
 	    cbreaks++;
