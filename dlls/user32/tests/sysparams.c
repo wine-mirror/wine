@@ -2731,12 +2731,14 @@ static void test_EnumDisplaySettings(void)
     DWORD num;
 
     memset(&devmode, 0, sizeof(devmode));
-    devmode.dmSize = sizeof(devmode);
+    /* Win95 doesn't handle ENUM_CURRENT_SETTINGS correctly */
     EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode);
 
     hdc = GetDC(0);
     val = GetDeviceCaps(hdc, BITSPIXEL);
-    ok(devmode.dmBitsPerPel == val, "GetDeviceCaps(BITSPIXEL) returned %d, EnumDisplaySettings returned %d\n",
+    ok(devmode.dmBitsPerPel == val ||
+        broken(devmode.dmDeviceName[0] == 0), /* Win95 */
+        "GetDeviceCaps(BITSPIXEL) returned %d, EnumDisplaySettings returned %d\n",
         val, devmode.dmBitsPerPel);
 
     val = GetDeviceCaps(hdc, NUMCOLORS);
