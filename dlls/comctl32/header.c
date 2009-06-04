@@ -1189,7 +1189,7 @@ HEADER_GetOrderArray(const HEADER_INFO *infoPtr, INT size, LPINT order)
 }
 
 static LRESULT
-HEADER_SetOrderArray(HEADER_INFO *infoPtr, INT size, LPINT order)
+HEADER_SetOrderArray(HEADER_INFO *infoPtr, INT size, const INT *order)
 {
     INT i;
     HEADER_ITEM *lpItem;
@@ -1400,7 +1400,7 @@ HEADER_SetUnicodeFormat (HEADER_INFO *infoPtr, WPARAM wParam)
 
 
 static LRESULT
-HEADER_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
+HEADER_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
 {
     HEADER_INFO *infoPtr;
     TEXTMETRICW tm;
@@ -1496,7 +1496,7 @@ HEADER_IsDragDistance(const HEADER_INFO *infoPtr, const POINT *pt)
 }
 
 static LRESULT
-HEADER_LButtonDblClk (HEADER_INFO *infoPtr, INT x, INT y)
+HEADER_LButtonDblClk (const HEADER_INFO *infoPtr, INT x, INT y)
 {
     POINT pt;
     UINT  flags;
@@ -1923,7 +1923,7 @@ static LRESULT HEADER_SetRedraw(HEADER_INFO *infoPtr, WPARAM wParam, LPARAM lPar
 }
 
 static INT HEADER_StyleChanged(HEADER_INFO *infoPtr, WPARAM wStyleType,
-                               const LPSTYLESTRUCT lpss)
+                               const STYLESTRUCT *lpss)
 {
     TRACE("(styletype=%lx, styleOld=0x%08x, styleNew=0x%08x)\n",
           wStyleType, lpss->styleOld, lpss->styleNew);
