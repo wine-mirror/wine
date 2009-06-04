@@ -25,11 +25,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
+/* 1601 to 1970 is 369 years plus 89 leap days */
+#define TIME_EPOCH  ((ULONGLONG)(369 * 365 + 89) * 86400 * 1000)
+
 typedef struct {
     DispatchEx dispex;
 
     /* ECMA-262 3rd Edition    15.9.1.1 */
     DOUBLE time;
+
+    LONG bias;
 } DateInstance;
 
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
@@ -474,6 +479,9 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, Disp
 {
     DateInstance *date;
     HRESULT hres;
+    TIME_ZONE_INFORMATION tzi;
+
+    GetTimeZoneInformation(&tzi);
 
     date = heap_alloc_zero(sizeof(DateInstance));
     if(!date)
@@ -489,6 +497,7 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, Disp
     }
 
     date->time = time;
+    date->bias = tzi.Bias;
 
     *ret = &date->dispex;
     return S_OK;
@@ -508,12 +517,13 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
         /* ECMA-262 3rd Edition    15.9.3.3 */
         case 0: {
             FILETIME time;
+            LONGLONG lltime;
 
             GetSystemTimeAsFileTime(&time);
+            lltime = ((LONGLONG)time.dwHighDateTime<<32)
+                + time.dwLowDateTime;
 
-            hres = create_date(dispex->ctx, TRUE,
-                   floor((DOUBLE)(time.dwLowDateTime/1e6) + (DOUBLE)time.dwHighDateTime*((DOUBLE)UINT_MAX+1.0)/1.e6),
-                   &date);
+            hres = create_date(dispex->ctx, TRUE, lltime/10000-TIME_EPOCH, &date);
             if(FAILED(hres))
                 return hres;
             break;
