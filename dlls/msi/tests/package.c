@@ -980,13 +980,13 @@ static void test_settargetpath(void)
     ok( r == ERROR_SUCCESS, "MsiSetTargetPath returned %d\n", r );
 
     query_file_path( hpkg, "[#TestFile]", buffer );
-    ok( !lstrcmp(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
+    ok( !lstrcmpi(buffer, "C:\\one\\two\\TestDir\\testfile.txt"),
         "Expected C:\\one\\two\\TestDir\\testfile.txt, got %s\n", buffer );
 
     sz = sizeof buffer - 1;
     r = MsiGetTargetPath( hpkg, "TestParent", buffer, &sz );
     ok( r == ERROR_SUCCESS, "failed to get target path: %d\n", r);
-    ok( !lstrcmp(buffer, "C:\\one\\two\\"), "Expected C:\\one\\two\\, got %s\n", buffer);
+    ok( !lstrcmpi(buffer, "C:\\one\\two\\"), "Expected C:\\one\\two\\, got %s\n", buffer);
 
     MsiCloseHandle( hpkg );
 }
@@ -8790,7 +8790,7 @@ static void test_appsearch_drlocator(void)
     search_absolute_directory(path, CURR_DIR + 3);
     r = MsiGetPropertyA(hpkg, "SIGPROP3", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    ok(!lstrcmpiA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     size = MAX_PATH;
     r = MsiGetPropertyA(hpkg, "SIGPROP4", prop, &size);
@@ -8837,7 +8837,7 @@ static void test_appsearch_drlocator(void)
     search_absolute_directory(path, "");
     r = MsiGetPropertyA(hpkg, "SIGPROP11", prop, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    ok(!lstrcmpA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
+    ok(!lstrcmpiA(prop, path), "Expected \"%s\", got \"%s\"\n", path, prop);
 
     DeleteFileA("FileName1");
     DeleteFileA("FileName3.dll");
