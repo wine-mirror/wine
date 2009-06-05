@@ -194,7 +194,7 @@ HRESULT WINAPI D3DXCreateFontA(LPDIRECT3DDEVICE9 device, INT height, UINT width,
 {
     D3DXFONT_DESCA desc;
 
-    if(!facename) return D3DXERR_INVALIDDATA;
+    if( !device || !font ) return D3DERR_INVALIDCALL;
 
     desc.Height=height;
     desc.Width=width;
@@ -205,7 +205,8 @@ HRESULT WINAPI D3DXCreateFontA(LPDIRECT3DDEVICE9 device, INT height, UINT width,
     desc.OutputPrecision=precision;
     desc.Quality=quality;
     desc.PitchAndFamily=pitchandfamily;
-    lstrcpyA(desc.FaceName, facename);
+    if(facename != NULL) lstrcpyA(desc.FaceName, facename);
+    else desc.FaceName[0] = '\0';
 
     return D3DXCreateFontIndirectA(device, &desc, font);
 }
@@ -215,7 +216,7 @@ HRESULT WINAPI D3DXCreateFontW(LPDIRECT3DDEVICE9 device, INT height, UINT width,
 {
     D3DXFONT_DESCW desc;
 
-    if(!facename) return D3DXERR_INVALIDDATA;
+    if( !device || !font ) return D3DERR_INVALIDCALL;
 
     desc.Height=height;
     desc.Width=width;
@@ -226,7 +227,8 @@ HRESULT WINAPI D3DXCreateFontW(LPDIRECT3DDEVICE9 device, INT height, UINT width,
     desc.OutputPrecision=precision;
     desc.Quality=quality;
     desc.PitchAndFamily=pitchandfamily;
-    strcpyW(desc.FaceName, facename);
+    if(facename != NULL) strcpyW(desc.FaceName, facename);
+    else desc.FaceName[0] = '\0';
 
     return D3DXCreateFontIndirectW(device, &desc, font);
 }
@@ -238,8 +240,7 @@ HRESULT WINAPI D3DXCreateFontIndirectA(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_
 {
     D3DXFONT_DESCW widedesc;
 
-    if(!desc) return D3DERR_INVALIDCALL;
-    if(!desc->FaceName) return D3DERR_INVALIDCALL;
+    if( !device || !desc || !font ) return D3DERR_INVALIDCALL;
 
     /* Copy everything but the last structure member. This requires the
        two D3DXFONT_DESC structures to be equal until the FaceName member */
@@ -254,11 +255,25 @@ HRESULT WINAPI D3DXCreateFontIndirectA(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_
  */
 HRESULT WINAPI D3DXCreateFontIndirectW(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_DESCW *desc, LPD3DXFONT *font)
 {
+    D3DDEVICE_CREATION_PARAMETERS cpars;
+    D3DDISPLAYMODE mode;
     ID3DXFontImpl *object;
-
+    IDirect3D9 *d3d;
+    HRESULT hr;
     FIXME("stub\n");
 
-    if(!desc) return D3DERR_INVALIDCALL;
+    if( !device || !desc || !font ) return D3DERR_INVALIDCALL;
+
+    /* the device MUST support D3DFMT_A8R8G8B8 */
+    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    IDirect3DDevice9_GetCreationParameters(device, &cpars);
+    IDirect3DDevice9_GetDisplayMode(device, 0, &mode);
+    hr = IDirect3D9_CheckDeviceFormat(d3d, cpars.AdapterOrdinal, cpars.DeviceType, mode.Format, 0, D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8);
+    if(FAILED(hr)) {
+        IDirect3D9_Release(d3d);
+        return D3DXERR_INVALIDDATA;
+    }
+    IDirect3D9_Release(d3d);
 
     object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ID3DXFontImpl));
     if(object==NULL) {
