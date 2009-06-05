@@ -2103,7 +2103,8 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
 const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *fragment_shaders,
         const struct ffp_frag_settings *settings)
 {
-    return WINE_RB_ENTRY_VALUE(wine_rb_get(fragment_shaders, settings), struct ffp_frag_desc, entry);
+    struct wine_rb_entry *entry = wine_rb_get(fragment_shaders, settings);
+    return entry ? WINE_RB_ENTRY_VALUE(entry, struct ffp_frag_desc, entry) : NULL;
 }
 
 void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *desc)

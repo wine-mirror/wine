@@ -3277,6 +3277,7 @@ static void add_glsl_program_entry(struct shader_glsl_priv *priv, struct glsl_sh
 static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_priv *priv,
         IWineD3DVertexShader *vshader, IWineD3DPixelShader *pshader, struct vs_compile_args *vs_args,
         struct ps_compile_args *ps_args) {
+    struct wine_rb_entry *entry;
     glsl_program_key_t key;
 
     key.vshader = vshader;
@@ -3284,8 +3285,8 @@ static struct glsl_shader_prog_link *get_glsl_program_entry(struct shader_glsl_p
     key.vs_args = *vs_args;
     key.ps_args = *ps_args;
 
-    return WINE_RB_ENTRY_VALUE(wine_rb_get(&priv->program_lookup, &key),
-            struct glsl_shader_prog_link, program_lookup_entry);
+    entry = wine_rb_get(&priv->program_lookup, &key);
+    return entry ? WINE_RB_ENTRY_VALUE(entry, struct glsl_shader_prog_link, program_lookup_entry) : NULL;
 }
 
 /* GL locking is done by the caller */
