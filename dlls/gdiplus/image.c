@@ -81,6 +81,18 @@ GpStatus WINGDIPAPI GdipBitmapApplyEffect(GpBitmap* bitmap, CGpEffect* effect,
     return NotImplemented;
 }
 
+GpStatus WINGDIPAPI GdipBitmapCreateApplyEffect(GpBitmap** inputBitmaps,
+    INT numInputs, CGpEffect* effect, RECT* roi, RECT* outputRect,
+    GpBitmap** outputBitmap, BOOL useAuxData, VOID** auxData, INT* auxDataSize)
+{
+    FIXME("(%p %d %p %p %p %p %d %p %p): stub\n", inputBitmaps, numInputs, effect, roi, outputRect, outputBitmap, useAuxData, auxData, auxDataSize);
+    /*
+     * Note: According to Jose Roca's GDI+ docs, this function is not
+     * implemented in Windows's GDI+.
+     */
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     ARGB *color)
 {
