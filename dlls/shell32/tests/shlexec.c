@@ -1602,6 +1602,8 @@ static void cleanup_test(void)
     while (*testfile)
     {
         sprintf(filename, *testfile, tmpdir);
+        /* Make sure we can delete the files ('test file.noassoc' is read-only now) */
+        SetFileAttributes(filename, FILE_ATTRIBUTE_NORMAL);
         DeleteFile(filename);
         testfile++;
     }
