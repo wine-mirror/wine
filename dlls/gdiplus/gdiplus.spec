@@ -35,7 +35,7 @@
 @ stdcall GdipBeginContainer2(ptr ptr)
 @ stdcall GdipBeginContainer(ptr ptr ptr long ptr)
 @ stdcall GdipBeginContainerI(ptr ptr ptr long ptr)
-@ stub GdipBitmapApplyEffect
+@ stdcall GdipBitmapApplyEffect(ptr ptr ptr long ptr ptr)
 @ stub GdipBitmapConvertFormat
 @ stub GdipBitmapCreateApplyEffect
 @ stub GdipBitmapGetHistogram

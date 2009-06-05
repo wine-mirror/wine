@@ -70,6 +70,17 @@ static INT ipicture_pixel_width(IPicture *pic)
     return x;
 }
 
+GpStatus WINGDIPAPI GdipBitmapApplyEffect(GpBitmap* bitmap, CGpEffect* effect,
+    RECT* roi, BOOL useAuxData, VOID** auxData, INT* auxDataSize)
+{
+    FIXME("(%p %p %p %d %p %p): stub\n", bitmap, effect, roi, useAuxData, auxData, auxDataSize);
+    /*
+     * Note: According to Jose Roca's GDI+ docs, this function is not
+     * implemented in Windows's GDI+.
+     */
+    return NotImplemented;
+}
+
 GpStatus WINGDIPAPI GdipBitmapGetPixel(GpBitmap* bitmap, INT x, INT y,
     ARGB *color)
 {
