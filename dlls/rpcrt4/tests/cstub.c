@@ -685,7 +685,7 @@ static ULONG WINAPI dummy_AddRef(LPUNKNOWN iface)
     return InterlockedIncrement( &this->ref );
 }
 
-ULONG WINAPI dummy_Release(LPUNKNOWN iface)
+static ULONG WINAPI dummy_Release(LPUNKNOWN iface)
 {
     struct dummy_unknown *this = (struct dummy_unknown *)iface;
     return InterlockedDecrement( &this->ref );
