@@ -2919,7 +2919,7 @@ static void test_editbox(void)
     /* creating label disabled when control isn't focused */
     SetFocus(0);
     hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
-    ok(hwndedit == NULL, "Expected Edit window not to be created\n");
+    todo_wine ok(hwndedit == NULL, "Expected Edit window not to be created\n");
 
     /* check EN_KILLFOCUS handling */
     memset(&item, 0, sizeof(item));

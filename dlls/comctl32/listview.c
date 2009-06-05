@@ -5058,8 +5058,6 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 
     if (~infoPtr->dwStyle & LVS_EDITLABELS) return 0;
     if (nItem < 0 || nItem >= infoPtr->nItemCount) return 0;
-    /* Edit could be created only on focused control and if isn't already created */
-    if (GetFocus() != infoPtr->hwndSelf && !IsWindow(infoPtr->hwndEdit)) return 0;
 
     infoPtr->nEditLabelItem = nItem;
 
