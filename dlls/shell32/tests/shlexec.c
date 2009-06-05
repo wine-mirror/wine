@@ -864,7 +864,8 @@ static void test_find_executable(void)
     ok(rc == SE_ERR_NOASSOC /* >= win2000 */ || rc > 32 /* win98, nt4 */, "FindExecutable(NULL) returned %ld\n", rc);
     ok(strcmp(command, "your word") != 0, "FindExecutable(NULL) returned command=[%s]\n", command);
 
-    sprintf(filename, "%s\\test file.sfe", tmpdir);
+    /* Win95 can't cope with double backslashes in FindExecutableA (tmpdir has a trailing backslash) */
+    sprintf(filename, "%stest file.sfe", tmpdir);
     rc=(INT_PTR)FindExecutableA(filename, NULL, command);
     ok(rc > 32, "FindExecutable(%s) returned %ld\n", filename, rc);
     /* Depending on the platform, command could be '%1' or 'test file.sfe' */
@@ -910,6 +911,10 @@ static void test_find_executable(void)
     test=filename_tests;
     while (test->basename)
     {
+        /* Win95 can't cope with double slashes/backslashes in FindExecutableA */
+        if (tmpdir[strlen(tmpdir) - 1] == '\\')
+            tmpdir[strlen(tmpdir) - 1] = 0;
+
         sprintf(filename, test->basename, tmpdir);
         if (strchr(filename, '/'))
         {
