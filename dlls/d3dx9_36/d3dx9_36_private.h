@@ -45,6 +45,7 @@ typedef struct ID3DXFontImpl
     D3DXFONT_DESCW desc;
 
     HDC hdc;
+    HFONT hfont;
 } ID3DXFontImpl;
 
 
