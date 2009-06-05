@@ -1897,6 +1897,15 @@ typedef void (WINE_GLAPI * PGLFNGLBLITFRAMEBUFFEREXTPROC) (GLint srcX0, GLint sr
 #endif
 typedef void (WINE_GLAPI * PGLFNRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC)(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 
+/* GL_EXT_packed_depth_stencil */
+#ifndef GL_EXT_packed_depth_stencil
+#define GL_EXT_packed_depth_stencil 1
+#define GL_DEPTH_STENCIL_EXT                0x84f9
+#define GL_UNSIGNED_INT_24_8_EXT            0x84fa
+#define GL_DEPTH24_STENCIL8_EXT             0x88f0
+#define GL_TEXTURE_STENCIL_SIZE_EXT         0x88f1
+#endif
+
 /* GL_EXT_secondary_color */
 #ifndef GL_EXT_secondary_color
 #define GL_EXT_secondary_color 1
@@ -3424,6 +3433,7 @@ typedef enum _GL_SupportedExt {
   EXT_FRAMEBUFFER_OBJECT,
   EXT_FRAMEBUFFER_BLIT,
   EXT_FRAMEBUFFER_MULTISAMPLE,
+  EXT_PACKED_DEPTH_STENCIL,
   EXT_PALETTED_TEXTURE,
   EXT_PIXEL_BUFFER_OBJECT,
   EXT_POINT_PARAMETERS,

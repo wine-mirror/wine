@@ -104,6 +104,7 @@ static const struct {
     {"GL_EXT_framebuffer_blit",             EXT_FRAMEBUFFER_BLIT,           0                           },
     {"GL_EXT_framebuffer_multisample",      EXT_FRAMEBUFFER_MULTISAMPLE,    0                           },
     {"GL_EXT_framebuffer_object",           EXT_FRAMEBUFFER_OBJECT,         0                           },
+    {"GL_EXT_packed_depth_stencil",         EXT_PACKED_DEPTH_STENCIL,       0                           },
     {"GL_EXT_paletted_texture",             EXT_PALETTED_TEXTURE,           0                           },
     {"GL_EXT_point_parameters",             EXT_POINT_PARAMETERS,           0                           },
     {"GL_EXT_secondary_color",              EXT_SECONDARY_COLOR,            0                           },
