@@ -1267,6 +1267,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
     unsigned int funckind, invokekind = 1 /* INVOKE_FUNC */;
     int help_context = 0, help_string_context = 0, help_string_offset = -1;
     int entry = -1, entry_is_ord = 0;
+    int lcid_retval_count = 0;
 
     chat("add_func_desc(%p,%d)\n", typeinfo, index);
 
@@ -1497,9 +1498,13 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
             case ATTR_OUT:
                 paramflags |= 0x02; /* PARAMFLAG_FOUT */
                 break;
+            case ATTR_PARAMLCID:
+                paramflags |= 0x04; /* PARAMFLAG_LCID */
+                lcid_retval_count++;
+                break;
             case ATTR_RETVAL:
                 paramflags |= 0x08; /* PARAMFLAG_FRETVAL */
-                typedata[4] |= 0x4000;
+                lcid_retval_count++;
                 break;
             default:
                 chat("unhandled param attr %d\n", attr->type);
@@ -1509,6 +1514,12 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
 	paramdata[1] = -1;
 	paramdata[2] = paramflags;
 	typedata[3] += decoded_size << 16;
+
+        if(lcid_retval_count == 1)
+            typedata[4] |= 0x4000;
+        else if(lcid_retval_count == 2)
+            typedata[4] |= 0x8000;
+
         i++;
       }
     }
