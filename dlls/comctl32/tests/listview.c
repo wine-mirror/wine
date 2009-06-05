@@ -2957,6 +2957,38 @@ static void test_editbox(void)
     expect(lstrlen(item.pszText), r);
     ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
 
+    /* LVM_EDITLABEL with -1 destroys current edit */
+    hwndedit = (HWND)SendMessage(hwnd, LVM_GETEDITCONTROL, 0, 0);
+    ok(hwndedit == NULL, "Expected Edit window not to be created\n");
+    /* no edit present */
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, -1, 0);
+    ok(hwndedit == NULL, "Expected Edit window not to be created\n");
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
+    /* edit present */
+    ok(GetFocus() == hwndedit, "Expected Edit to be focused\n");
+    hwndedit2 = (HWND)SendMessage(hwnd, LVM_EDITLABEL, -1, 0);
+    ok(hwndedit2 == NULL, "Expected Edit window not to be created\n");
+    ok(!IsWindow(hwndedit), "Expected Edit window to be destroyed\n");
+    ok(GetFocus() == hwnd, "Expected List to be focused\n");
+    /* check another negative value */
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
+    ok(GetFocus() == hwndedit, "Expected Edit to be focused\n");
+    hwndedit2 = (HWND)SendMessage(hwnd, LVM_EDITLABEL, -2, 0);
+    ok(hwndedit2 == NULL, "Expected Edit window not to be created\n");
+    ok(!IsWindow(hwndedit), "Expected Edit window to be destroyed\n");
+    ok(GetFocus() == hwnd, "Expected List to be focused\n");
+    /* and value greater then max item index */
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
+    ok(GetFocus() == hwndedit, "Expected Edit to be focused\n");
+    r = SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
+    hwndedit2 = (HWND)SendMessage(hwnd, LVM_EDITLABEL, r, 0);
+    ok(hwndedit2 == NULL, "Expected Edit window not to be created\n");
+    ok(!IsWindow(hwndedit), "Expected Edit window to be destroyed\n");
+    ok(GetFocus() == hwnd, "Expected List to be focused\n");
+
     DestroyWindow(hwnd);
 }
 

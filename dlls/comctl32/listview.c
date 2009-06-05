@@ -5060,9 +5060,6 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
     TRACE("(nItem=%d, isW=%d)\n", nItem, isW);
 
     if (~infoPtr->dwStyle & LVS_EDITLABELS) return 0;
-    if (nItem < 0 || nItem >= infoPtr->nItemCount) return 0;
-
-    infoPtr->nEditLabelItem = nItem;
 
     /* Is the EditBox still there, if so remove it */
     if(infoPtr->hwndEdit != 0)
@@ -5070,6 +5067,10 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
         SetFocus(infoPtr->hwndSelf);
         infoPtr->hwndEdit = 0;
     }
+
+    if (nItem < 0 || nItem >= infoPtr->nItemCount) return 0;
+
+    infoPtr->nEditLabelItem = nItem;
 
     LISTVIEW_SetSelection(infoPtr, nItem);
     LISTVIEW_SetItemFocus(infoPtr, nItem);
