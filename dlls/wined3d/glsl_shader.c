@@ -3945,8 +3945,8 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     IWineD3DDeviceImpl *This               = (IWineD3DDeviceImpl *)iface;
     struct shader_glsl_priv *priv          = This->shader_priv;
     const WineD3D_GL_Info *gl_info         = &This->adapter->gl_info;
-    IWineD3DPixelShader  *pshader          = This->stateBlock->pixelShader;
-    IWineD3DVertexShader *vshader          = This->stateBlock->vertexShader;
+    IWineD3DPixelShader  *pshader          = use_ps ? This->stateBlock->pixelShader : NULL;
+    IWineD3DVertexShader *vshader          = use_vs ? This->stateBlock->vertexShader : NULL;
     struct glsl_shader_prog_link *entry    = NULL;
     GLhandleARB programId                  = 0;
     GLhandleARB reorder_shader_id          = 0;
