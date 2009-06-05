@@ -349,10 +349,12 @@ HRESULT Range_Constructor(ITfContext *context, ITextStoreACP *textstore, DWORD l
 
 HRESULT TF_SELECTION_to_TS_SELECTION_ACP(const TF_SELECTION *tf, TS_SELECTION_ACP *tsAcp)
 {
-    Range *This = (Range *)tf->range;
+    Range *This;
 
     if (!tf || !tsAcp || !tf->range)
         return E_INVALIDARG;
+
+    This = (Range *)tf->range;
 
     tsAcp->acpStart = This->anchorStart;
     tsAcp->acpEnd = This->anchorEnd;
