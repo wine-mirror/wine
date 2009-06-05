@@ -2943,7 +2943,7 @@ static void test_editbox(void)
     item.iItem = 0;
     item.iSubItem = 0;
     r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
-    expect(strlen(item.pszText), r);
+    expect(lstrlen(item.pszText), r);
     ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
     /* end edit without saving */
     r = SendMessage(hwndedit, WM_KEYDOWN, VK_ESCAPE, 0);
@@ -2954,7 +2954,7 @@ static void test_editbox(void)
     item.iItem = 0;
     item.iSubItem = 0;
     r = SendMessage(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
-    expect(strlen(item.pszText), r);
+    expect(lstrlen(item.pszText), r);
     ok(strcmp(buffer, testitem1A) == 0, "Expected item text to change\n");
 
     DestroyWindow(hwnd);
