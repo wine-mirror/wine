@@ -46,8 +46,13 @@ typedef enum WICBitmapAlphaChannelOption {
 typedef GUID WICPixelFormatGUID;
 typedef REFGUID REFWICPixelFormatGUID;
 
-interface IWICBitmapSource;
-interface IWICBitmapDecoder;
+typedef struct WICRect {
+    INT X;
+    INT Y;
+    INT Width;
+    INT Height;
+} WICRect;
+
 interface IWICBitmap;
 interface IWICComponentInfo;
 interface IWICBitmapEncoder;
@@ -59,10 +64,100 @@ interface IWICBitmapFlipRotator;
 interface IWICStream;
 interface IWICColorContext;
 interface IWICColorTransform;
-interface IWICBitmapFrameDecode;
 interface IWICFastMetadataEncoder;
 interface IWICMetadataQueryReader;
 interface IWICMetadataQueryWriter;
+interface IWICBitmapDecoderInfo;
+
+[
+    object,
+    uuid(00000120-a8f2-4877-ba0a-fd2b6645fb94)
+]
+interface IWICBitmapSource : IUnknown
+{
+    HRESULT GetSize(
+        [out] UINT *puiWidth,
+        [out] UINT *puiHeight);
+
+    HRESULT GetPixelFormat(
+        [out] WICPixelFormatGUID *pPixelFormat);
+
+    HRESULT GetResolution(
+        [out] double *pDpiX,
+        [out] double *pDpiY);
+
+    HRESULT CopyPalette(
+        [in] IWICPalette *pIPalette);
+
+    HRESULT CopyPixels(
+        [in] const WICRect *prc,
+        [in] UINT cbStride,
+        [in] UINT cbBufferSize,
+        [out, size_is(cbBufferSize)] BYTE *pbBuffer);
+}
+
+[
+    object,
+    uuid(3b16811b-6a43-4ec9-a813-3d930c13b940)
+]
+interface IWICBitmapFrameDecode : IWICBitmapSource
+{
+    HRESULT GetMetadataQueryReader(
+        [out] IWICMetadataQueryReader **ppIMetadataQueryReader);
+
+    HRESULT GetColorContexts(
+        [in] UINT cCount,
+        [in, out, unique, size_is(cCount)] IWICColorContext **ppIColorContexts,
+        [out] UINT *pcActualCount);
+
+    HRESULT GetThumbnail(
+        [out] IWICBitmapSource **ppIThumbnail);
+}
+
+[
+    object,
+    uuid(9edde9e7-8dee-47ea-99df-e6faf2ed44bf)
+]
+interface IWICBitmapDecoder : IUnknown
+{
+    HRESULT QueryCapability(
+        [in] IStream *pIStream,
+        [out] DWORD *pdwCapability);
+
+    HRESULT Initialize(
+        [in] IStream *pIStream,
+        [in] WICDecodeOptions cacheOptions);
+
+    HRESULT GetContainerFormat(
+        [out] GUID *pguidContainerFormat);
+
+    HRESULT GetDecoderInfo(
+        [out] IWICBitmapDecoderInfo **ppIDecoderInfo);
+
+    HRESULT CopyPalette(
+        [in] IWICPalette *pIPalette);
+
+    HRESULT GetMetadataQueryReader(
+        [out] IWICMetadataQueryReader **ppIMetadataQueryReader);
+
+    HRESULT GetPreview(
+        [out] IWICBitmapSource **ppIBitmapSource);
+
+    HRESULT GetColorContexts(
+        [in] UINT cCount,
+        [in, out, unique, size_is(cCount)] IWICColorContext **ppIColorContexts,
+        [out] UINT *pcActualCount);
+
+    HRESULT GetThumbnail(
+        [out] IWICBitmapSource **ppIThumbnail);
+
+    HRESULT GetFrameCount(
+        [out] UINT *pCount);
+
+    HRESULT GetFrame(
+        [in] UINT index,
+        [out] IWICBitmapFrameDecode **ppIBitmapFrame);
+}
 
 cpp_quote("DEFINE_GUID(CLSID_WICImagingFactory, 0xcacaf262,0x9370,0x4615,0xa1,0x3b,0x9f,0x55,0x39,0xda,0x4c,0x0a);")
 
@@ -191,3 +286,19 @@ interface IWICImagingFactory : IUnknown
         [in, unique] const GUID *pguidVendor,
         [out] IWICMetadataQueryWriter **ppIQueryWriter);
 }
+
+cpp_quote("DEFINE_GUID(CLSID_WICBmpDecoder, 0x6b462062,0x7cbf,0x400d,0x9f,0xdb,0x81,0x3d,0xd1,0x0f,0x27,0x78);")
+cpp_quote("DEFINE_GUID(CLSID_WICPngDecoder, 0x389ea17b,0x5078,0x4cde,0xb6,0xef,0x25,0xc1,0x51,0x75,0xc7,0x51);")
+cpp_quote("DEFINE_GUID(CLSID_WICIcoDecoder, 0xc61bfcdf,0x2e0f,0x4aad,0xa8,0xd7,0xe0,0x6b,0xaf,0xeb,0xcd,0xfe);")
+cpp_quote("DEFINE_GUID(CLSID_WICJpegDecoder, 0x9456a480,0xe88b,0x43ea,0x9e,0x73,0x0b,0x2d,0x9b,0x71,0xb1,0xca);")
+cpp_quote("DEFINE_GUID(CLSID_WICGifDecoder, 0x381dda3c,0x9ce9,0x4834,0xa2,0x3e,0x1f,0x98,0xf8,0xfc,0x52,0xbe);")
+cpp_quote("DEFINE_GUID(CLSID_WICTiffDecoder, 0xb54e85d9,0xfe23,0x499f,0x8b,0x88,0x6a,0xce,0xa7,0x13,0x75,0x2b);")
+cpp_quote("DEFINE_GUID(CLSID_WICWmpDecoder, 0xa26cec36,0x234c,0x4950,0xae,0x16,0xe3,0x4a,0xac,0xe7,0x1d,0x0d);")
+
+cpp_quote("DEFINE_GUID(GUID_ContainerFormatBmp, 0x0af1d87e,0xfcfe,0x4188,0xbd,0xeb,0xa7,0x90,0x64,0x71,0xcb,0xe3);")
+cpp_quote("DEFINE_GUID(GUID_ContainerFormatPng, 0x1b7cfaf4,0x713f,0x473c,0xbb,0xcd,0x61,0x37,0x42,0x5f,0xae,0xaf);")
+cpp_quote("DEFINE_GUID(GUID_ContainerFormatIco, 0xa3a860c4,0x338f,0x4c17,0x91,0x9a,0xfb,0xa4,0xb5,0x62,0x8f,0x21);")
+cpp_quote("DEFINE_GUID(GUID_ContainerFormatJpeg, 0x19e4a5aa,0x5662,0x4fc5,0xa0,0xc0,0x17,0x58,0x02,0x8e,0x10,0x57);")
+cpp_quote("DEFINE_GUID(GUID_ContainerFormatTiff, 0x163bcc30,0xe2e9,0x4f0b,0x96,0x1d,0xa3,0xe9,0xfd,0xb7,0x88,0xa3);")
+cpp_quote("DEFINE_GUID(GUID_ContainerFormatGif, 0x1f8a5601,0x7d4d,0x4cbd,0x9c,0x82,0x1b,0xc8,0xd4,0xee,0xb9,0xa5);")
+cpp_quote("DEFINE_GUID(GUID_ContainerFormatWmp, 0x57a37caa,0x367a,0x4540,0x91,0x6b,0xf1,0x83,0xc5,0x09,0x3a,0x4b);")
