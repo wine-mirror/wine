@@ -272,6 +272,151 @@ static void test_ID3DXSprite(IDirect3DDevice9 *device)
     check_release((IUnknown*)tex1, 0);
 }
 
+static void test_ID3DXFont(IDirect3DDevice9 *device)
+{
+    D3DXFONT_DESC desc;
+    ID3DXFont *font;
+    HRESULT hr;
+    int ref;
+
+
+    /* D3DXCreateFont */
+    ref = get_ref((IUnknown*)device);
+    hr = D3DXCreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial", &font);
+    ok(hr == D3D_OK, "D3DXCreateFont returned %#x, expected %#x\n", hr, D3D_OK);
+    check_ref((IUnknown*)device, ref + 1);
+    check_release((IUnknown*)font, 0);
+    check_ref((IUnknown*)device, ref);
+
+    hr = D3DXCreateFontA(device, 0, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial", &font);
+    ok(hr == D3D_OK, "D3DXCreateFont returned %#x, expected %#x\n", hr, D3D_OK);
+    ID3DXFont_Release(font);
+
+    hr = D3DXCreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, NULL, &font);
+    ok(hr == D3D_OK, "D3DXCreateFont returned %#x, expected %#x\n", hr, D3D_OK);
+    ID3DXFont_Release(font);
+
+    hr = D3DXCreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "", &font);
+    ok(hr == D3D_OK, "D3DXCreateFont returned %#x, expected %#x\n", hr, D3D_OK);
+    ID3DXFont_Release(font);
+
+    hr = D3DXCreateFontA(NULL, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial", &font);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateFont returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial", NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateFont returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateFontA(NULL, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial", NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateFont returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+
+    /* D3DXCreateFontIndirect */
+    desc.Height = 12;
+    desc.Width = 0;
+    desc.Weight = FW_DONTCARE;
+    desc.MipLevels = 0;
+    desc.Italic = FALSE;
+    desc.CharSet = DEFAULT_CHARSET;
+    desc.OutputPrecision = OUT_DEFAULT_PRECIS;
+    desc.Quality = DEFAULT_QUALITY;
+    desc.PitchAndFamily = DEFAULT_PITCH;
+    strcpy(desc.FaceName, "Arial");
+    hr = D3DXCreateFontIndirectA(device, &desc, &font);
+    ok(hr == D3D_OK, "D3DXCreateFontIndirect returned %#x, expected %#x\n", hr, D3D_OK);
+    ID3DXFont_Release(font);
+
+    hr = D3DXCreateFontIndirectA(NULL, &desc, &font);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateFontIndirect returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateFontIndirectA(device, NULL, &font);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateFontIndirect returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateFontIndirectA(device, &desc, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateFontIndirect returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+
+    /* ID3DXFont_GetDevice */
+    hr = D3DXCreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial", &font);
+    if(SUCCEEDED(hr)) {
+        IDirect3DDevice9 *bufdev;
+
+        hr = ID3DXFont_GetDevice(font, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXFont_GetDevice returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        ref = get_ref((IUnknown*)device);
+        hr = ID3DXFont_GetDevice(font, &bufdev);
+        ok(hr == D3D_OK, "ID3DXFont_GetDevice returned %#x, expected %#x\n", hr, D3D_OK);
+        check_release((IUnknown*)bufdev, ref);
+
+        ID3DXFont_Release(font);
+    } else skip("Failed to create a ID3DXFont object\n");
+
+
+    /* ID3DXFont_GetDesc */
+    hr = D3DXCreateFontA(device, 12, 8, FW_BOLD, 2, TRUE, ANSI_CHARSET, OUT_RASTER_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH, "Arial", &font);
+    if(SUCCEEDED(hr)) {
+        hr = ID3DXFont_GetDescA(font, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "ID3DXFont_GetDevice returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = ID3DXFont_GetDescA(font, &desc);
+        ok(hr == D3D_OK, "ID3DXFont_GetDevice returned %#x, expected %#x\n", hr, D3D_OK);
+
+        ok(desc.Height == 12, "ID3DXFont_GetDesc returned font height %d, expected %d\n", desc.Height, 12);
+        ok(desc.Width == 8, "ID3DXFont_GetDesc returned font width %d, expected %d\n", desc.Width, 8);
+        ok(desc.Weight == FW_BOLD, "ID3DXFont_GetDesc returned font weight %d, expected %d\n", desc.Weight, FW_BOLD);
+        ok(desc.MipLevels == 2, "ID3DXFont_GetDesc returned font miplevels %d, expected %d\n", desc.MipLevels, 2);
+        ok(desc.Italic == TRUE, "ID3DXFont_GetDesc says Italic was %d, but Italic should be %d\n", desc.Italic, TRUE);
+        ok(desc.CharSet == ANSI_CHARSET, "ID3DXFont_GetDesc returned font charset %d, expected %d\n", desc.CharSet, ANSI_CHARSET);
+        ok(desc.OutputPrecision == OUT_RASTER_PRECIS, "ID3DXFont_GetDesc returned an output precision of %d, expected %d\n", desc.OutputPrecision, OUT_RASTER_PRECIS);
+        ok(desc.Quality == ANTIALIASED_QUALITY, "ID3DXFont_GetDesc returned font quality %d, expected %d\n", desc.Quality, ANTIALIASED_QUALITY);
+        ok(desc.PitchAndFamily == VARIABLE_PITCH, "ID3DXFont_GetDesc returned pitch and family %d, expected %d\n", desc.PitchAndFamily, VARIABLE_PITCH);
+        ok(strcmp(desc.FaceName, "Arial") == 0, "ID3DXFont_GetDesc returned facename \"%s\", expected \"%s\"\n", desc.FaceName, "Arial");
+
+        ID3DXFont_Release(font);
+    } else skip("Failed to create a ID3DXFont object\n");
+
+
+    /* ID3DXFont_GetDC + ID3DXFont_GetTextMetrics */
+    hr = D3DXCreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Arial", &font);
+    if(SUCCEEDED(hr)) {
+        HDC hdc;
+
+        hdc = ID3DXFont_GetDC(font);
+        ok(hdc != NULL, "ID3DXFont_GetDC returned an invalid handle\n");
+        if(hdc) {
+            TEXTMETRICA metrics, expmetrics;
+            BOOL ret;
+
+            ret = ID3DXFont_GetTextMetricsA(font, &metrics);
+            ok(ret, "ID3DXFont_GetTextMetricsA failed\n");
+            ret = GetTextMetricsA(hdc, &expmetrics);
+            ok(ret, "GetTextMetricsA failed\n");
+
+            ok(metrics.tmHeight == expmetrics.tmHeight, "Returned height %d, expected %d\n", metrics.tmHeight, expmetrics.tmHeight);
+            ok(metrics.tmAscent == expmetrics.tmAscent, "Returned ascent %d, expected %d\n", metrics.tmAscent, expmetrics.tmAscent);
+            ok(metrics.tmDescent == expmetrics.tmDescent, "Returned descent %d, expected %d\n", metrics.tmDescent, expmetrics.tmDescent);
+            ok(metrics.tmInternalLeading == expmetrics.tmInternalLeading, "Returned internal leading %d, expected %d\n", metrics.tmInternalLeading, expmetrics.tmInternalLeading);
+            ok(metrics.tmExternalLeading == expmetrics.tmExternalLeading, "Returned external leading %d, expected %d\n", metrics.tmExternalLeading, expmetrics.tmExternalLeading);
+            ok(metrics.tmAveCharWidth == expmetrics.tmAveCharWidth, "Returned average char width %d, expected %d\n", metrics.tmAveCharWidth, expmetrics.tmAveCharWidth);
+            ok(metrics.tmMaxCharWidth == expmetrics.tmMaxCharWidth, "Returned maximum char width %d, expected %d\n", metrics.tmMaxCharWidth, expmetrics.tmMaxCharWidth);
+            ok(metrics.tmWeight == expmetrics.tmWeight, "Returned weight %d, expected %d\n", metrics.tmWeight, expmetrics.tmWeight);
+            ok(metrics.tmOverhang == expmetrics.tmOverhang, "Returned overhang %d, expected %d\n", metrics.tmOverhang, expmetrics.tmOverhang);
+            ok(metrics.tmDigitizedAspectX == expmetrics.tmDigitizedAspectX, "Returned digitized x aspect %d, expected %d\n", metrics.tmDigitizedAspectX, expmetrics.tmDigitizedAspectX);
+            ok(metrics.tmDigitizedAspectY == expmetrics.tmDigitizedAspectY, "Returned digitized y aspect %d, expected %d\n", metrics.tmDigitizedAspectY, expmetrics.tmDigitizedAspectY);
+            ok(metrics.tmFirstChar == expmetrics.tmFirstChar, "Returned first char %d, expected %d\n", metrics.tmFirstChar, expmetrics.tmFirstChar);
+            ok(metrics.tmLastChar == expmetrics.tmLastChar, "Returned last char %d, expected %d\n", metrics.tmLastChar, expmetrics.tmLastChar);
+            ok(metrics.tmDefaultChar == expmetrics.tmDefaultChar, "Returned default char %d, expected %d\n", metrics.tmDefaultChar, expmetrics.tmDefaultChar);
+            ok(metrics.tmBreakChar == expmetrics.tmBreakChar, "Returned break char %d, expected %d\n", metrics.tmBreakChar, expmetrics.tmBreakChar);
+            ok(metrics.tmItalic == expmetrics.tmItalic, "Returned italic %d, expected %d\n", metrics.tmItalic, expmetrics.tmItalic);
+            ok(metrics.tmUnderlined == expmetrics.tmUnderlined, "Returned underlined %d, expected %d\n", metrics.tmUnderlined, expmetrics.tmUnderlined);
+            ok(metrics.tmStruckOut == expmetrics.tmStruckOut, "Returned struck out %d, expected %d\n", metrics.tmStruckOut, expmetrics.tmStruckOut);
+            ok(metrics.tmPitchAndFamily == expmetrics.tmPitchAndFamily, "Returned pitch and family %d, expected %d\n", metrics.tmPitchAndFamily, expmetrics.tmPitchAndFamily);
+            ok(metrics.tmCharSet == expmetrics.tmCharSet, "Returned charset %d, expected %d\n", metrics.tmCharSet, expmetrics.tmCharSet);
+        }
+        ID3DXFont_Release(font);
+    } else skip("Failed to create a ID3DXFont object\n");
+}
+
 START_TEST(core)
 {
     HWND wnd;
@@ -304,6 +449,7 @@ START_TEST(core)
     }
 
     test_ID3DXSprite(device);
+    test_ID3DXFont(device);
 
     check_release((IUnknown*)device, 0);
     check_release((IUnknown*)d3d, 0);
