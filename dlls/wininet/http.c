@@ -3255,8 +3255,6 @@ static LPWSTR HTTP_GetRedirectURL(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
     LPWSTR orig_url;
     LPWSTR combined_url;
 
-    if (lpszUrl[0]=='/') return WININET_strdupW( lpszUrl );
-
     urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
     urlComponents.lpszScheme = (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE) ? szHttps : szHttp;
     urlComponents.dwSchemeLength = 0;
