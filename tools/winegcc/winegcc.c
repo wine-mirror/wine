@@ -768,6 +768,8 @@ static void build(struct options* opts)
         spawn(opts->prefix, link_args, 0);
         strarray_free (resources);
         strarray_free (link_args);
+        strarray_free (lib_dirs);
+        strarray_free (files);
         return;
     }
 
