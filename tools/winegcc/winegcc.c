@@ -694,6 +694,7 @@ static void build(struct options* opts)
         for ( j = 0; j < lib_dirs->size; j++ )
             strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
 
+        if (!opts->nostartfiles) add_library(opts, lib_dirs, files, "winecrt0");
         if (opts->shared && !opts->nostdlib) add_library(opts, lib_dirs, files, "wine");
 
         for ( j = 0; j < files->size; j++ )
