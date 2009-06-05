@@ -533,6 +533,19 @@ static void add_library( struct options *opts, strarray *lib_dirs, strarray *fil
     free(fullname);
 }
 
+/* hack a main or WinMain function to work around Mingw's lack of Unicode support */
+static const char *mingw_unicode_hack( struct options *opts )
+{
+    char *main_stub = get_temp_file( opts->output_name, ".c" );
+
+    create_file( main_stub, 0644,
+                 "#include <stdlib.h>\n"
+                 "extern int wmain(int,wchar_t**);\n"
+                 "int main( int argc, char *argv[] )\n{\n"
+                 "    return wmain( argc, __wargv );\n}\n" );
+    return compile_to_object( opts, main_stub, NULL );
+}
+
 static void build(struct options* opts)
 {
     static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
@@ -690,6 +703,9 @@ static void build(struct options* opts)
 
         if (opts->image_base)
             strarray_add(link_args, strmake("-Wl,--image-base,%s", opts->image_base));
+
+        if (opts->unicode_app && !opts->shared)
+            strarray_add(link_args, mingw_unicode_hack(opts));
 
         for ( j = 0; j < lib_dirs->size; j++ )
             strarray_add(link_args, strmake("-L%s", lib_dirs->base[j]));
