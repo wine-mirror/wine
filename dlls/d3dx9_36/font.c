@@ -76,14 +76,23 @@ static HRESULT WINAPI ID3DXFontImpl_GetDevice(LPD3DXFONT iface, LPDIRECT3DDEVICE
 static HRESULT WINAPI ID3DXFontImpl_GetDescA(LPD3DXFONT iface, D3DXFONT_DESCA *desc)
 {
     ID3DXFontImpl *This=(ID3DXFontImpl*)iface;
-    FIXME("(%p): stub\n", This);
+    TRACE("(%p)\n", This);
+
+    if( !desc ) return D3DERR_INVALIDCALL;
+    memcpy(desc, &This->desc, FIELD_OFFSET(D3DXFONT_DESCA, FaceName));
+    WideCharToMultiByte(CP_ACP, 0, This->desc.FaceName, -1, desc->FaceName, sizeof(desc->FaceName) / sizeof(CHAR), NULL, NULL);
+
     return D3D_OK;
 }
 
 static HRESULT WINAPI ID3DXFontImpl_GetDescW(LPD3DXFONT iface, D3DXFONT_DESCW *desc)
 {
     ID3DXFontImpl *This=(ID3DXFontImpl*)iface;
-    FIXME("(%p): stub\n", This);
+    TRACE("(%p)\n", This);
+
+    if( !desc ) return D3DERR_INVALIDCALL;
+    *desc = This->desc;
+
     return D3D_OK;
 }
 
@@ -289,6 +298,7 @@ HRESULT WINAPI D3DXCreateFontIndirectW(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_
     object->lpVtbl=&D3DXFont_Vtbl;
     object->ref=1;
     object->device=device;
+    object->desc=*desc;
 
     IDirect3DDevice9_AddRef(device);
     *font=(LPD3DXFONT)object;
