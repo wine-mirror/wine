@@ -111,11 +111,23 @@ struct gdb_context
     unsigned long               wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
 };
 
+static BOOL tgt_process_gdbproxy_read(HANDLE hProcess, const void* addr,
+                                      void* buffer, SIZE_T len, SIZE_T* rlen)
+{
+    return ReadProcessMemory( hProcess, addr, buffer, len, rlen );
+}
+
+static BOOL tgt_process_gdbproxy_write(HANDLE hProcess, void* addr,
+                                       const void* buffer, SIZE_T len, SIZE_T* wlen)
+{
+    return WriteProcessMemory( hProcess, addr, buffer, len, wlen );
+}
+
 static struct be_process_io be_process_gdbproxy_io =
 {
     NULL, /* we shouldn't use close_process() in gdbproxy */
-    ReadProcessMemory,
-    WriteProcessMemory
+    tgt_process_gdbproxy_read,
+    tgt_process_gdbproxy_write
 };
 
 /* =============================================== *

@@ -1004,10 +1004,27 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
     return TRUE;
 }
 
+static BOOL tgt_process_active_read(HANDLE hProcess, const void* addr,
+                                    void* buffer, SIZE_T len, SIZE_T* rlen)
+{
+    return ReadProcessMemory( hProcess, addr, buffer, len, rlen );
+}
+
+static BOOL tgt_process_active_write(HANDLE hProcess, void* addr,
+                                     const void* buffer, SIZE_T len, SIZE_T* wlen)
+{
+    return WriteProcessMemory( hProcess, addr, buffer, len, wlen );
+}
+
+static BOOL tgt_process_active_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY* le)
+{
+    return GetThreadSelectorEntry( hThread, sel, le );
+}
+
 static struct be_process_io be_process_active_io =
 {
     tgt_process_active_close_process,
-    ReadProcessMemory,
-    WriteProcessMemory,
-    GetThreadSelectorEntry,
+    tgt_process_active_read,
+    tgt_process_active_write,
+    tgt_process_active_get_selector
 };

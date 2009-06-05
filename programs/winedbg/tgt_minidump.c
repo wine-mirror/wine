@@ -84,8 +84,8 @@ static inline struct tgt_process_minidump_data* private_data(struct dbg_process*
     return pcs->pio_data;
 }
 
-static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr, 
-                                             void* buffer, SIZE_T len, SIZE_T* rlen)
+static BOOL tgt_process_minidump_read(HANDLE hProcess, const void* addr,
+                                      void* buffer, SIZE_T len, SIZE_T* rlen)
 {
     void*               stream;
 
@@ -125,8 +125,8 @@ static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr,
     return FALSE;
 }
 
-static BOOL WINAPI tgt_process_minidump_write(HANDLE hProcess, void* addr,
-                                             const void* buffer, SIZE_T len, SIZE_T* wlen)
+static BOOL tgt_process_minidump_write(HANDLE hProcess, void* addr,
+                                       const void* buffer, SIZE_T len, SIZE_T* wlen)
 {
     return FALSE;
 }
@@ -447,7 +447,7 @@ static BOOL tgt_process_minidump_close_process(struct dbg_process* pcs, BOOL kil
     return TRUE;
 }
 
-static BOOL WINAPI tgt_process_minidump_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY* le)
+static BOOL tgt_process_minidump_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY* le)
 {
     /* so far, pretend all selectors are valid, and mapped to a 32bit flat address space */
     memset(le, 0, sizeof(*le));

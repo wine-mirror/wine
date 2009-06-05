@@ -33,14 +33,14 @@
 
 static struct be_process_io be_process_module_io;
 
-static BOOL WINAPI tgt_process_module_read(HANDLE hProcess, const void* addr,
-                                             void* buffer, SIZE_T len, SIZE_T* rlen)
+static BOOL tgt_process_module_read(HANDLE hProcess, const void* addr,
+                                    void* buffer, SIZE_T len, SIZE_T* rlen)
 {
     return FALSE;
 }
 
-static BOOL WINAPI tgt_process_module_write(HANDLE hProcess, void* addr,
-                                             const void* buffer, SIZE_T len, SIZE_T* wlen)
+static BOOL tgt_process_module_write(HANDLE hProcess, void* addr,
+                                     const void* buffer, SIZE_T len, SIZE_T* wlen)
 {
     return FALSE;
 }
@@ -102,7 +102,7 @@ static BOOL tgt_process_module_close_process(struct dbg_process* pcs, BOOL kill)
     return TRUE;
 }
 
-static BOOL WINAPI tgt_process_module_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY* le)
+static BOOL tgt_process_module_get_selector(HANDLE hThread, DWORD sel, LDT_ENTRY* le)
 {
     return FALSE;
 }
