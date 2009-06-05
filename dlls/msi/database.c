@@ -1371,7 +1371,7 @@ static UINT msi_get_table_labels(MSIDATABASE *db, LPCWSTR table, LPWSTR **labels
     count = MSI_RecordGetFieldCount(prec);
     *numlabels = count + 1;
     *labels = msi_alloc((*numlabels)*sizeof(LPWSTR));
-    if (!labels)
+    if (!*labels)
     {
         r = ERROR_OUTOFMEMORY;
         goto end;
@@ -1399,7 +1399,7 @@ static UINT msi_get_query_columns(MSIQUERY *query, LPWSTR **columns, DWORD *numc
 
     count = MSI_RecordGetFieldCount(prec);
     *columns = msi_alloc(count*sizeof(LPWSTR));
-    if (!columns)
+    if (!*columns)
     {
         r = ERROR_OUTOFMEMORY;
         goto end;
@@ -1428,7 +1428,7 @@ static UINT msi_get_query_types(MSIQUERY *query, LPWSTR **types, DWORD *numtypes
 
     count = MSI_RecordGetFieldCount(prec);
     *types = msi_alloc(count*sizeof(LPWSTR));
-    if (!types)
+    if (!*types)
     {
         r = ERROR_OUTOFMEMORY;
         goto end;
