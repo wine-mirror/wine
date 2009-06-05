@@ -1222,7 +1222,7 @@ static void test_access(void)
     DeleteFileA("winetest");
 }
 
-void test_readonly(void)
+static void test_readonly(void)
 {
     IStorage *stg, *stg2, *stg3;
     IStream *stream;
