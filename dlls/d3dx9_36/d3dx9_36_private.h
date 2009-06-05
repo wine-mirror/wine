@@ -41,6 +41,7 @@ typedef struct ID3DXFontImpl
     LONG ref;
 
     /* ID3DXFont fields */
+    IDirect3DDevice9 *device;
 } ID3DXFontImpl;
 
 
