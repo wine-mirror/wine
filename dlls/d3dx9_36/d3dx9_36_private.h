@@ -43,6 +43,8 @@ typedef struct ID3DXFontImpl
     /* ID3DXFont fields */
     IDirect3DDevice9 *device;
     D3DXFONT_DESCW desc;
+
+    HDC hdc;
 } ID3DXFontImpl;
 
 

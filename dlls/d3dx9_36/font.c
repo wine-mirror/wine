@@ -55,6 +55,7 @@ static ULONG WINAPI ID3DXFontImpl_Release(LPD3DXFONT iface)
     TRACE("(%p): ReleaseRef to %d\n", This, ref);
 
     if(ref==0) {
+        DeleteDC(This->hdc);
         IDirect3DDevice9_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -113,8 +114,8 @@ static BOOL WINAPI ID3DXFontImpl_GetTextMetricsW(LPD3DXFONT iface, TEXTMETRICW *
 static HDC WINAPI ID3DXFontImpl_GetDC(LPD3DXFONT iface)
 {
     ID3DXFontImpl *This=(ID3DXFontImpl*)iface;
-    FIXME("(%p): stub\n", This);
-    return NULL;
+    TRACE("(%p)\n", This);
+    return This->hdc;
 }
 
 static HRESULT WINAPI ID3DXFontImpl_GetGlyphData(LPD3DXFONT iface, UINT glyph, LPDIRECT3DTEXTURE9 *texture, RECT *blackbox, POINT *cellinc)
@@ -299,6 +300,12 @@ HRESULT WINAPI D3DXCreateFontIndirectW(LPDIRECT3DDEVICE9 device, CONST D3DXFONT_
     object->ref=1;
     object->device=device;
     object->desc=*desc;
+
+    object->hdc = CreateCompatibleDC(NULL);
+    if( !object->hdc ) {
+        HeapFree(GetProcessHeap(), 0, object);
+        return D3DXERR_INVALIDDATA;
+    }
 
     IDirect3DDevice9_AddRef(device);
     *font=(LPD3DXFONT)object;
