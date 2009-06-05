@@ -1965,10 +1965,10 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
 
 /******************************************************************************
- *              NtQueryFullAttributesFile   (NTDLL.@)
+ *              FILE_QueryFullAttributesFile   (internal)
  */
-NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
-                                           FILE_NETWORK_OPEN_INFORMATION *info )
+static NTSTATUS FILE_QueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
+                                              FILE_NETWORK_OPEN_INFORMATION *info )
 {
     ANSI_STRING unix_name;
     NTSTATUS status;
@@ -2011,6 +2011,15 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
     return status;
 }
 
+/******************************************************************************
+ *              NtQueryFullAttributesFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
+                                           FILE_NETWORK_OPEN_INFORMATION *info )
+{
+    return FILE_QueryFullAttributesFile( attr, info );
+}
+
 
 /******************************************************************************
  *              NtQueryAttributesFile   (NTDLL.@)
@@ -2021,7 +2030,7 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
     FILE_NETWORK_OPEN_INFORMATION full_info;
     NTSTATUS status;
 
-    if (!(status = NtQueryFullAttributesFile( attr, &full_info )))
+    if (!(status = FILE_QueryFullAttributesFile( attr, &full_info )))
     {
         info->CreationTime.QuadPart   = full_info.CreationTime.QuadPart;
         info->LastAccessTime.QuadPart = full_info.LastAccessTime.QuadPart;
