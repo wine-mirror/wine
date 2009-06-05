@@ -2749,6 +2749,7 @@ extern WINED3DFORMAT pixelformat_for_depth(DWORD depth);
 #define WINED3DFMT_FLAG_STENCIL                  0x8
 #define WINED3DFMT_FLAG_RENDERTARGET             0x10
 #define WINED3DFMT_FLAG_FOURCC                   0x20
+#define WINED3DFMT_FLAG_FBO_ATTACHABLE           0x40
 
 struct GlPixelFormatDesc
 {

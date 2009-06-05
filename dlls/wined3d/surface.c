@@ -523,6 +523,17 @@ void surface_add_dirty_rect(IWineD3DSurface *iface, const RECT *dirty_rect)
     }
 }
 
+static inline BOOL surface_can_stretch_rect(IWineD3DSurfaceImpl *src, IWineD3DSurfaceImpl *dst)
+{
+    return ((src->resource.format_desc->Flags & WINED3DFMT_FLAG_FBO_ATTACHABLE)
+            || (src->resource.usage & WINED3DUSAGE_RENDERTARGET))
+            && ((dst->resource.format_desc->Flags & WINED3DFMT_FLAG_FBO_ATTACHABLE)
+            || (dst->resource.usage & WINED3DUSAGE_RENDERTARGET))
+            && (src->resource.format_desc->format == dst->resource.format_desc->format
+            || (is_identity_fixup(src->resource.format_desc->color_fixup)
+            && is_identity_fixup(dst->resource.format_desc->color_fixup)));
+}
+
 static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
@@ -3408,7 +3419,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
          * FBO support, so it doesn't really make sense to try and make it work with different offscreen rendering
          * backends.
          */
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT)) {
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT)
+                && surface_can_stretch_rect(Src, This))
+        {
             stretch_rect_fbo((IWineD3DDevice *)myDevice, SrcSurface, &srect,
                     (IWineD3DSurface *)This, &rect, Filter, upsideDown);
         } else if((!stretchx) || rect.x2 - rect.x1 > Src->currentDesc.Width ||
@@ -3470,8 +3483,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             Src->palette = This->palette;
         }
 
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT) &&
-            (Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) == 0) {
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && GL_SUPPORT(EXT_FRAMEBUFFER_BLIT)
+                && !(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
+                && surface_can_stretch_rect(Src, This))
+        {
             TRACE("Using stretch_rect_fbo\n");
             /* The source is always a texture, but never the currently active render target, and the texture
              * contents are never upside down

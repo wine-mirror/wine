@@ -549,6 +549,7 @@ static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
             if (check_fbo_compat(gl_info, desc->glInternal, desc->glFormat, desc->glType))
             {
                 TRACE("Format %s is supported as fbo target\n", debug_d3dformat(desc->format));
+                desc->Flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE;
                 desc->rtInternal = desc->glInternal;
             }
             else
