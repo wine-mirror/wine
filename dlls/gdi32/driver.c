@@ -28,6 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "ddrawgdi.h"
 
 #include "gdi_private.h"
 #include "wine/unicode.h"
@@ -739,5 +740,15 @@ INT WINAPI NamedEscape( HDC hdc, LPCWSTR pDriver, INT nEscape, INT cbInput, LPCS
     FIXME("(%p, %s, %d, %d, %p, %d, %p)\n",
           hdc, wine_dbgstr_w(pDriver), nEscape, cbInput, lpszInData, cbOutput,
           lpszOutData);
+    return 0;
+}
+
+/*******************************************************************
+ *      DdQueryDisplaySettingsUniqueness [GDI32.@]
+ *      GdiEntry13                       [GDI32.@]
+ */
+ULONG WINAPI DdQueryDisplaySettingsUniqueness(VOID)
+{
+    FIXME("stub\n");
     return 0;
 }

@@ -174,6 +174,7 @@
 # @ stub GdiDrawStream
 # @ stub GdiEndDocEMF
 # @ stub GdiEndPageEMF
+@ stdcall GdiEntry13()
 # @ stub GdiFixUpHandle
 @ stdcall GdiFlush()
 # @ stub GdiFullscreenControl

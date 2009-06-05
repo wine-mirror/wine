@@ -176,6 +176,7 @@ SRCDIR_INCLUDES = \
 	ddk/winddiui.h \
 	ddk/winsplp.h \
 	ddraw.h \
+	ddrawgdi.h \
 	ddrawi.h \
 	devenum.idl \
 	devguid.h \
