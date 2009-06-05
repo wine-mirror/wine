@@ -4676,11 +4676,14 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
 	rcCol.left = rcCol.right;
     
     /* adjust the other columns */
-    for (nCol = nColumn; nCol < DPA_GetPtrCount(infoPtr->hdpaColumns); nCol++)
+    for (nCol = 0; nCol < DPA_GetPtrCount(infoPtr->hdpaColumns); nCol++)
     {
 	lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nCol);
-        lpColumnInfo->rcHeader.left += dx;
-        lpColumnInfo->rcHeader.right += dx;
+	if (lpColumnInfo->rcHeader.left >= rcCol.left)
+	{
+	    lpColumnInfo->rcHeader.left  += dx;
+	    lpColumnInfo->rcHeader.right += dx;
+	}
     }
 
     /* do not update screen if not in report mode */
