@@ -63,6 +63,7 @@ static const struct {
 
     /* ARB */
     {"GL_ARB_color_buffer_float",           ARB_COLOR_BUFFER_FLOAT,         0                           },
+    {"GL_ARB_depth_texture",                ARB_DEPTH_TEXTURE,              0                           },
     {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS,               0                           },
     {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM,           0                           },
     {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER,            0                           },
