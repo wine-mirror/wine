@@ -102,6 +102,82 @@ static const lcid_table_entry  lcid_table[] = {
 
 };
 
+#define TODO_NAME 1
+
+typedef struct info_table_tag {
+    LCID lcid;
+    LANGID lang;
+    DWORD todo;
+    LPCSTR rfc1766;
+    LPCSTR localename;
+    LPCSTR broken_name;
+} info_table_entry;
+
+static const CHAR fr_enus[] = {'A','n','g','l','a','i','s',' ',
+                               '(',0xC3, 0x89, 't','a','t','s','-','U','n','i','s',')',0};
+
+static const info_table_entry  info_table[] = {
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),        MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
+         0, "en", "English"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),        MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
+         0, "en-us", "English (United States)"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),     MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
+         0, "en-gb", "English (United Kingdom)"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),     MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
+         0, "en-us", "English (United States)"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_CAN),    MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
+         0, "en-ca", "English (Canada)"},
+
+    {MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),         MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
+         0, "de", "German (Germany)"},
+    {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN),          MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
+         0, "de", "German (Germany)"},
+    {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS),    MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
+         0, "de-ch", "German (Switzerland)"},
+    {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN), MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
+         0, "de-at", "German (Austria)"},
+
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),        MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+         TODO_NAME, "en", "Englisch"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),        MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+         TODO_NAME, "en-us", "Englisch (USA)"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),     MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+         TODO_NAME, "en-gb", "Englisch (Großbritannien)", "Englisch (Vereinigtes Königreic" },
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),     MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+         TODO_NAME, "en-us", "Englisch (USA)"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_CAN),    MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+         TODO_NAME, "en-ca", "Englisch (Kanada)"},
+
+    {MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),         MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+         TODO_NAME, "de", "Deutsch (Deutschland)"},
+    {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN),          MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+         TODO_NAME, "de", "Deutsch (Deutschland)"},
+    {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS),    MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+         TODO_NAME, "de-ch", "Deutsch (Schweiz)"},
+    {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN), MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
+         TODO_NAME, "de-at", "Deutsch (Österreich)"},
+
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),        MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+         TODO_NAME, "en", "Anglais"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),        MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+         TODO_NAME, "en-us", fr_enus, "Anglais (U.S.)"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),     MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+         TODO_NAME, "en-gb", "Anglais (Royaume-Uni)"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),     MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+         TODO_NAME, "en-us", fr_enus, "Anglais (U.S.)"},
+    {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_CAN),    MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+         TODO_NAME, "en-ca", "Anglais (Canada)"},
+
+    {MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),         MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+         TODO_NAME, "de", "Allemand (Allemagne)", "Allemand (Standard)"},
+    {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN),          MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+         TODO_NAME, "de", "Allemand (Allemagne)", "Allemand (Standard)"},
+    {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS),    MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+         TODO_NAME, "de-ch", "Allemand (Suisse)"},
+    {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN), MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
+         TODO_NAME, "de-at", "Allemand (Autriche)"}
+
+};
 
 static BOOL init_function_ptrs(void)
 {
@@ -1063,6 +1139,58 @@ static void test_LcidToRfc1766(void)
 
 }
 
+static void test_GetRfc1766Info(IMultiLanguage2 *iML2)
+{
+    CHAR rfc1766A[MAX_RFC1766_NAME + 1];
+    CHAR localenameA[MAX_LOCALE_NAME * 3];
+    BYTE buffer[sizeof(RFC1766INFO) + 4];
+    PRFC1766INFO prfc = (RFC1766INFO *) buffer;
+    HRESULT ret;
+    DWORD i;
+
+    for(i = 0; i < sizeof(info_table) / sizeof(info_table[0]); i++) {
+        memset(buffer, 'x', sizeof(RFC1766INFO) + 2);
+        buffer[sizeof(buffer) -1] = 0;
+        buffer[sizeof(buffer) -2] = 0;
+
+        ret = IMultiLanguage2_GetRfc1766Info(iML2, info_table[i].lcid, info_table[i].lang, prfc);
+        WideCharToMultiByte(CP_ACP, 0, prfc->wszRfc1766, -1, rfc1766A, MAX_RFC1766_NAME, NULL, NULL);
+        WideCharToMultiByte(CP_UTF8, 0, prfc->wszLocaleName, -1, localenameA, MAX_LOCALE_NAME * 3, NULL, NULL);
+        ok(ret == S_OK, "#%02d: got 0x%x (expected S_OK)\n", i, ret);
+        ok(prfc->lcid == info_table[i].lcid,
+            "#%02d: got 0x%04x (expected 0x%04x)\n", i, prfc->lcid, info_table[i].lcid);
+
+        ok(!lstrcmpA(rfc1766A, info_table[i].rfc1766),
+            "#%02d: got '%s' (expected '%s')\n", i, rfc1766A, info_table[i].rfc1766);
+
+        if (info_table[i].todo & TODO_NAME) {
+            todo_wine
+            ok( (!lstrcmpA(localenameA, info_table[i].localename)) ||
+                broken(!lstrcmpA(localenameA, info_table[i].broken_name)),   /* IE < 6.0 */
+                "#%02d: got '%s' (expected '%s')\n", i, localenameA, info_table[i].localename);
+        }
+        else
+            ok( (!lstrcmpA(localenameA, info_table[i].localename)) ||
+                broken(!lstrcmpA(localenameA, info_table[i].broken_name)),   /* IE < 6.0 */
+                "#%02d: got '%s' (expected '%s')\n", i, localenameA, info_table[i].localename);
+
+    }
+
+    /* SUBLANG_NEUTRAL only allowed for english, arabic, chinese */
+    ret = IMultiLanguage2_GetRfc1766Info(iML2, MAKELANGID(LANG_GERMAN, SUBLANG_NEUTRAL), LANG_ENGLISH, prfc);
+    ok(ret == E_FAIL, "got 0x%x (expected E_FAIL)\n", ret);
+
+    ret = IMultiLanguage2_GetRfc1766Info(iML2, MAKELANGID(LANG_ITALIAN, SUBLANG_NEUTRAL), LANG_ENGLISH, prfc);
+    ok(ret == E_FAIL, "got 0x%x (expected E_FAIL)\n", ret);
+
+    /* NULL not allowed */
+    ret = IMultiLanguage2_GetRfc1766Info(iML2, 0, LANG_ENGLISH, prfc);
+    ok(ret == E_FAIL, "got 0x%x (expected E_FAIL)\n", ret);
+
+    ret = IMultiLanguage2_GetRfc1766Info(iML2, LANG_ENGLISH, LANG_ENGLISH, NULL);
+    ok(ret == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", ret);
+}
+
 static void test_IMultiLanguage2_ConvertStringFromUnicode(IMultiLanguage2 *iML2)
 {
     CHAR dest[MAX_PATH];
@@ -1634,6 +1762,7 @@ START_TEST(mlang)
     test_rfc1766(iML2);
     test_GetLcidFromRfc1766(iML2);
     test_GetRfc1766FromLcid(iML2);
+    test_GetRfc1766Info(iML2);
 
     test_EnumCodePages(iML2, 0);
     test_EnumCodePages(iML2, MIMECONTF_MIME_LATEST);
