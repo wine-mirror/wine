@@ -1467,7 +1467,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 {
     void *module;
     HANDLE mapping;
-    OBJECT_ATTRIBUTES attr;
     LARGE_INTEGER size;
     IMAGE_NT_HEADERS *nt;
     SIZE_T len = 0;
@@ -1476,16 +1475,9 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     TRACE("Trying native dll %s\n", debugstr_w(name));
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
     size.QuadPart = 0;
-
     status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
-                              &attr, &size, PAGE_READONLY, SEC_IMAGE, file );
+                              NULL, &size, PAGE_READONLY, SEC_IMAGE, file );
     if (status != STATUS_SUCCESS) return status;
 
     module = NULL;
