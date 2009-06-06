@@ -2871,8 +2871,45 @@ static HRESULT WINAPI fnIMultiLanguage2_GetRfc1766Info(
     LANGID LangId,
     PRFC1766INFO pRfc1766Info)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static LANGID last_lang = -1;
+    LCTYPE type = LOCALE_SLANGUAGE;
+
+    TRACE("(%p, 0x%04x, 0x%04x, %p)\n", iface, Locale, LangId, pRfc1766Info);
+
+    if (!pRfc1766Info)
+        return E_INVALIDARG;
+
+    if ((PRIMARYLANGID(Locale) == LANG_ENGLISH) ||
+        (PRIMARYLANGID(Locale) == LANG_CHINESE) ||
+        (PRIMARYLANGID(Locale) == LANG_ARABIC)) {
+
+        if (!SUBLANGID(Locale))
+            type = LOCALE_SENGLANGUAGE; /* suppress country */
+    }
+    else
+    {
+        if (!SUBLANGID(Locale)) {
+            TRACE("SUBLANGID missing in 0x%04x\n", Locale);
+            return E_FAIL;
+        }
+    }
+
+    pRfc1766Info->lcid = Locale;
+    pRfc1766Info->wszRfc1766[0] = 0;
+    pRfc1766Info->wszLocaleName[0] = 0;
+
+    if ((PRIMARYLANGID(LangId) != LANG_ENGLISH) &&
+        (last_lang != LangId)) {
+        FIXME("Only english names supported (requested: 0x%04x)\n", LangId);
+        last_lang = LangId;
+    }
+
+    if ((!lcid_to_rfc1766W(Locale, pRfc1766Info->wszRfc1766, MAX_RFC1766_NAME)) &&
+        (GetLocaleInfoW(Locale, type, pRfc1766Info->wszLocaleName, MAX_LOCALE_NAME) > 0))
+            return S_OK;
+
+    /* Locale not supported */
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_CreateConvertCharset(
