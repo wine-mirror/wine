@@ -71,15 +71,15 @@ static void testwindow_setpos(HWND hwnd)
             abd.rc.top = abd.rc.bottom - (info->desired_rect.bottom - info->desired_rect.top);
             break;
         case ABE_LEFT:
-            ok(info->desired_rect.right == abd.rc.right, "ABM_QUERYPOS changed right of rect from %i to %i\n", info->desired_rect.top, abd.rc.top);
+            ok(info->desired_rect.right == abd.rc.right, "ABM_QUERYPOS changed right of rect from %i to %i\n", info->desired_rect.right, abd.rc.right);
             abd.rc.right = abd.rc.left + (info->desired_rect.right - info->desired_rect.left);
             break;
         case ABE_RIGHT:
-            ok(info->desired_rect.left == abd.rc.left, "ABM_QUERYPOS changed left of rect from %i to %i\n", info->desired_rect.top, abd.rc.top);
+            ok(info->desired_rect.left == abd.rc.left, "ABM_QUERYPOS changed left of rect from %i to %i\n", info->desired_rect.left, abd.rc.left);
             abd.rc.left = abd.rc.right - (info->desired_rect.right - info->desired_rect.left);
             break;
         case ABE_TOP:
-            ok(info->desired_rect.bottom == abd.rc.bottom, "ABM_QUERYPOS changed bottom of rect from %i to %i\n", info->desired_rect.top, abd.rc.top);
+            ok(info->desired_rect.bottom == abd.rc.bottom, "ABM_QUERYPOS changed bottom of rect from %i to %i\n", info->desired_rect.bottom, abd.rc.bottom);
             abd.rc.bottom = abd.rc.top + (info->desired_rect.bottom - info->desired_rect.top);
             break;
     }
