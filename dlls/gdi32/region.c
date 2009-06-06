@@ -1144,27 +1144,45 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 {
     RGNOBJ * obj;
     BOOL ret = FALSE;
+    RECT rc;
+
+    /* swap the coordinates to make right >= left and bottom >= top */
+    /* (region building rectangles are normalized the same way) */
+    if( rect->top > rect->bottom) {
+        rc.top = rect->bottom;
+        rc.bottom = rect->top;
+    } else {
+        rc.top = rect->top;
+        rc.bottom = rect->bottom;
+    }
+    if( rect->right < rect->left) {
+        rc.right = rect->left;
+        rc.left = rect->right;
+    } else {
+        rc.right = rect->right;
+        rc.left = rect->left;
+    }
 
     if ((obj = GDI_GetObjPtr( hrgn, OBJ_REGION )))
     {
 	RECT *pCurRect, *pRectEnd;
 
     /* this is (just) a useful optimization */
-	if ((obj->rgn.numRects > 0) && EXTENTCHECK(&obj->rgn.extents, rect))
+	if ((obj->rgn.numRects > 0) && EXTENTCHECK(&obj->rgn.extents, &rc))
 	{
 	    for (pCurRect = obj->rgn.rects, pRectEnd = pCurRect +
 	     obj->rgn.numRects; pCurRect < pRectEnd; pCurRect++)
 	    {
-	        if (pCurRect->bottom <= rect->top)
+	        if (pCurRect->bottom <= rc.top)
 		    continue;             /* not far enough down yet */
 
-		if (pCurRect->top >= rect->bottom)
+		if (pCurRect->top >= rc.bottom)
 		    break;                /* too far down */
 
-		if (pCurRect->right <= rect->left)
+		if (pCurRect->right <= rc.left)
 		    continue;              /* not far enough over yet */
 
-		if (pCurRect->left >= rect->right) {
+		if (pCurRect->left >= rc.right) {
 		    continue;
 		}
 
