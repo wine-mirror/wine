@@ -1525,6 +1525,7 @@ static CHAR* reg_get_valA(HKEY key, LPCSTR subkey, LPCSTR name)
             if (RegGetValueA(key, subkey, name, RRF_RT_REG_SZ, NULL, ret, &size) == ERROR_SUCCESS)
                 return ret;
         }
+        HeapFree(GetProcessHeap(), 0, ret);
     }
     return NULL;
 }
@@ -1540,6 +1541,7 @@ static WCHAR* reg_get_valW(HKEY key, LPCWSTR subkey, LPCWSTR name)
             if (RegGetValueW(key, subkey, name, RRF_RT_REG_SZ, NULL, ret, &size) == ERROR_SUCCESS)
                 return ret;
         }
+        HeapFree(GetProcessHeap(), 0, ret);
     }
     return NULL;
 }
