@@ -29,7 +29,8 @@
 #define PARENT_SEQ_INDEX       0
 #define PARENT_FULL_SEQ_INDEX  1
 #define LISTVIEW_SEQ_INDEX     2
-#define NUM_MSG_SEQUENCES      3
+#define EDITBOX_SEQ_INDEX      3
+#define NUM_MSG_SEQUENCES      4
 
 #define LISTVIEW_ID 0
 #define HEADER_ID   1
@@ -39,6 +40,9 @@
        "expected (%d,%d), got (%d,%d)\n", expected1, expected2, got1, got2)
 
 HWND hwndparent;
+/* prevents edit box creation, LVN_BEGINLABELEDIT return value */
+BOOL blockEdit;
+static HWND subclass_editbox(HWND hwndListview);
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
@@ -196,6 +200,18 @@ static const struct message getitemposition_seq2[] = {
     { 0 }
 };
 
+static const struct message editbox_create_pos[] = {
+    /* sequence sent after LVN_BEGINLABELEDIT */
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_NCCALCSIZE, sent },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|defwinproc },
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_WINDOWPOSCHANGED, sent },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -230,9 +246,22 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
     }
     add_message(sequences, PARENT_FULL_SEQ_INDEX, &msg);
 
-    /* always accept new item text */
-    if (message == WM_NOTIFY && lParam && ((NMHDR*)lParam)->code == LVN_ENDLABELEDIT)
-        return TRUE;
+    if (message == WM_NOTIFY && lParam)
+    {
+        switch (((NMHDR*)lParam)->code)
+        {
+        case LVN_BEGINLABELEDIT:
+            /* subclass edit box */
+            if (!blockEdit)
+                subclass_editbox(((NMHDR*)lParam)->hwndFrom);
+
+            return blockEdit;
+
+        case LVN_ENDLABELEDIT:
+            /* always accept new item text */
+            return TRUE;
+        }
+    }
 
     defwndproc_counter++;
     ret = DefWindowProcA(hwnd, message, wParam, lParam);
@@ -262,6 +291,8 @@ static HWND create_parent_window(void)
 {
     if (!register_parent_wnd_class())
         return NULL;
+
+    blockEdit = FALSE;
 
     return CreateWindowEx(0, "Listview test parent class",
                           "Listview test parent window",
@@ -397,6 +428,52 @@ static HWND subclass_header(HWND hwndListview)
     hwnd = ListView_GetHeader(hwndListview);
     info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
                                             (LONG_PTR)header_subclass_proc);
+    SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
+
+    return hwnd;
+}
+
+static LRESULT WINAPI editbox_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    static LONG defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+
+    /* all we need is sizing */
+    if (message == WM_WINDOWPOSCHANGING ||
+        message == WM_NCCALCSIZE ||
+        message == WM_WINDOWPOSCHANGED ||
+        message == WM_MOVE ||
+        message == WM_SIZE)
+    {
+        add_message(sequences, EDITBOX_SEQ_INDEX, &msg);
+    }
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+    return ret;
+}
+
+static HWND subclass_editbox(HWND hwndListview)
+{
+    struct subclass_info *info;
+    HWND hwnd;
+
+    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
+    if (!info)
+        return NULL;
+
+    hwnd = (HWND)SendMessage(hwndListview, LVM_GETEDITCONTROL, 0, 0);
+    info->oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
+                                            (LONG_PTR)editbox_subclass_proc);
     SetWindowLongPtrA(hwnd, GWLP_USERDATA, (LONG_PTR)info);
 
     return hwnd;
@@ -2988,6 +3065,16 @@ static void test_editbox(void)
     ok(hwndedit2 == NULL, "Expected Edit window not to be created\n");
     ok(!IsWindow(hwndedit), "Expected Edit window to be destroyed\n");
     ok(GetFocus() == hwnd, "Expected List to be focused\n");
+
+    /* messaging tests */
+    SetFocus(hwnd);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    blockEdit = FALSE;
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
+    /* testing only sizing messages */
+    ok_sequence(sequences, EDITBOX_SEQ_INDEX, editbox_create_pos,
+                "edit box create - sizing", TRUE);
 
     DestroyWindow(hwnd);
 }
