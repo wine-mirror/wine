@@ -207,6 +207,7 @@ static const struct message editbox_create_pos[] = {
     { WM_WINDOWPOSCHANGED, sent },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc },
+    /* the rest is todo */
     { WM_WINDOWPOSCHANGING, sent },
     { WM_WINDOWPOSCHANGED, sent },
     { 0 }

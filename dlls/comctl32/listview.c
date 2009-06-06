@@ -418,7 +418,7 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *, INT, const LVITEMW *);
 static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static LRESULT LISTVIEW_HScroll(LISTVIEW_INFO *, INT, INT, HWND);
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *, INT, BOOL);
-static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, INT, INT, INT, INT, BOOL);
+static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, BOOL);
 static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *, INT, HIMAGELIST);
 static INT LISTVIEW_HitTest(const LISTVIEW_INFO *, LPLVHITTESTINFO, BOOL, BOOL);
 
@@ -5055,7 +5055,11 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
     WCHAR szDispText[DISP_TEXT_SIZE] = { 0 };
     NMLVDISPINFOW dispInfo;
     RECT rect;
+    SIZE sz;
     HWND hwndSelf = infoPtr->hwndSelf;
+    HDC hdc;
+    HFONT hOldFont = NULL;
+    TEXTMETRICW textMetric;
 
     TRACE("(nItem=%d, isW=%d)\n", nItem, isW);
 
@@ -5088,8 +5092,7 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
     dispInfo.item.cchTextMax = DISP_TEXT_SIZE;
     if (!LISTVIEW_GetItemT(infoPtr, &dispInfo.item, isW)) return 0;
 
-    infoPtr->hwndEdit = CreateEditLabelT(infoPtr, dispInfo.item.pszText, WS_VISIBLE,
-		    rect.left-2, rect.top-1, 0, rect.bottom - rect.top+2, isW);
+    infoPtr->hwndEdit = CreateEditLabelT(infoPtr, dispInfo.item.pszText, WS_VISIBLE, isW);
     if (!infoPtr->hwndEdit) return 0;
     
     if (notify_dispinfoT(infoPtr, LVN_BEGINLABELEDITW, &dispInfo, isW))
@@ -5101,6 +5104,27 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
 	return 0;
     }
 
+    /* Now position and display edit box */
+    hdc = GetDC(infoPtr->hwndSelf);
+
+    /* Select the font to get appropriate metric dimensions */
+    if(infoPtr->hFont != 0)
+        hOldFont = SelectObject(hdc, infoPtr->hFont);
+
+    /* Get String Length in pixels */
+    GetTextExtentPoint32W(hdc, dispInfo.item.pszText, lstrlenW(dispInfo.item.pszText), &sz);
+
+    /* Add Extra spacing for the next character */
+    GetTextMetricsW(hdc, &textMetric);
+    sz.cx += (textMetric.tmMaxCharWidth * 2);
+
+    if(infoPtr->hFont != 0)
+        SelectObject(hdc, hOldFont);
+
+    ReleaseDC(infoPtr->hwndSelf, hdc);
+
+    MoveWindow(infoPtr->hwndEdit, rect.left - 2, rect.top - 1, sz.cx,
+                                  rect.bottom - rect.top + 2, FALSE);
     ShowWindow(infoPtr->hwndEdit, SW_NORMAL);
     SetFocus(infoPtr->hwndEdit);
     SendMessageW(infoPtr->hwndEdit, EM_SETSEL, 0, -1);
@@ -10735,41 +10759,21 @@ static LRESULT CALLBACK EditLblWndProcA(HWND hwnd, UINT uMsg, WPARAM wParam, LPA
  *
  * RETURN:
  */
-static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, DWORD style,
-	INT x, INT y, INT width, INT height, BOOL isW)
+static HWND CreateEditLabelT(LISTVIEW_INFO *infoPtr, LPCWSTR text, DWORD style, BOOL isW)
 {
     WCHAR editName[5] = { 'E', 'd', 'i', 't', '\0' };
     HWND hedit;
-    SIZE sz;
-    HDC hdc;
-    HDC hOldFont=0;
-    TEXTMETRICW textMetric;
     HINSTANCE hinst = (HINSTANCE)GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_HINSTANCE);
 
     TRACE("(text=%s, ..., isW=%d)\n", debugtext_t(text, isW), isW);
 
     style |= WS_CHILDWINDOW|WS_CLIPSIBLINGS|ES_LEFT|ES_AUTOHSCROLL|WS_BORDER;
-    hdc = GetDC(infoPtr->hwndSelf);
 
-    /* Select the font to get appropriate metric dimensions */
-    if(infoPtr->hFont != 0)
-        hOldFont = SelectObject(hdc, infoPtr->hFont);
-
-    /*Get String Length in pixels */
-    GetTextExtentPoint32W(hdc, text, lstrlenW(text), &sz);
-
-    /*Add Extra spacing for the next character */
-    GetTextMetricsW(hdc, &textMetric);
-    sz.cx += (textMetric.tmMaxCharWidth * 2);
-
-    if(infoPtr->hFont != 0)
-        SelectObject(hdc, hOldFont);
-
-    ReleaseDC(infoPtr->hwndSelf, hdc);
+    /* Window will be resized and positioned after LVN_BEGINLABELEDIT */
     if (isW)
-	hedit = CreateWindowW(editName, text, style, x, y, sz.cx, height, infoPtr->hwndSelf, 0, hinst, 0);
+	hedit = CreateWindowW(editName, text, style, 0, 0, 0, 0, infoPtr->hwndSelf, 0, hinst, 0);
     else
-	hedit = CreateWindowA("Edit", (LPCSTR)text, style, x, y, sz.cx, height, infoPtr->hwndSelf, 0, hinst, 0);
+	hedit = CreateWindowA("Edit", (LPCSTR)text, style, 0, 0, 0, 0, infoPtr->hwndSelf, 0, hinst, 0);
 
     if (!hedit) return 0;
 
