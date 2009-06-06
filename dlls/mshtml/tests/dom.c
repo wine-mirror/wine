@@ -3688,12 +3688,13 @@ static void test_default_body(IHTMLBodyElement *body)
     V_BSTR(&v) = SysAllocString(sTextInvalid);
     hres = IHTMLBodyElement_put_text(body, v);
     ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
+    VariantClear(&v);
 
     V_VT(&v) = VT_NULL;
     hres = IHTMLBodyElement_get_text(body, &v);
     ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
     ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR got %d\n", V_VT(&v));
-    ok(!lstrcmpW(sResInvalid, V_BSTR(&v)), "bstr != sResInvalid\n");
+    ok(!lstrcmpW(sResInvalid, V_BSTR(&v)), "v != sResInvalid\n");
     VariantClear(&v);
 
     /* get_text - Valid Text */
@@ -3701,12 +3702,13 @@ static void test_default_body(IHTMLBodyElement *body)
     V_BSTR(&v) = SysAllocString(sBodyText);
     hres = IHTMLBodyElement_put_text(body, v);
     ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
+    VariantClear(&v);
 
     V_VT(&v) = VT_NULL;
     hres = IHTMLBodyElement_get_text(body, &v);
     ok(hres == S_OK, "expect S_OK got 0x%08d\n", hres);
     ok(V_VT(&v) == VT_BSTR, "Expected VT_BSTR got %d\n", V_VT(&v));
-    ok(lstrcmpW(bstr, V_BSTR(&v)), "bstr != V_BSTR(&v)\n");
+    ok(!strcmp_wa(V_BSTR(&v), "#ff0000"), "v != '#ff0000'\n");
     VariantClear(&v);
 }
 
