@@ -70,7 +70,10 @@ doc-html: $(C_SRCS) dummy
 doc-sgml: $(C_SRCS) dummy
 	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Ts $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
 
-.PHONY: man doc-html doc-sgml
+doc-xml: $(C_SRCS) dummy
+	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide-xml -R$(TOPOBJDIR) -C$(SRCDIR) $(INCLUDES) -Tx $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
+
+.PHONY: man doc-html doc-sgml doc-xml
 
 # Rules for installation
 

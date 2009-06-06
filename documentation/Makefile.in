@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 
-INSTALLDIRS = man$(api_manext) html api-guide $(DESTDIR)$(mandir)/man$(api_manext)
+INSTALLDIRS = man$(api_manext) html api-guide api-guide-xml $(DESTDIR)$(mandir)/man$(api_manext)
 
 @MAKE_RULES@
 
@@ -17,10 +17,13 @@ htmlpages: html dummy
 sgmlpages: api-guide dummy
 	@cd $(DLLDIR) && $(MAKE) doc-sgml
 
-.PHONY: manpages htmlpages sgmlpages install-man
+xmlpages: api-guide-xml dummy
+	@cd $(DLLDIR) && $(MAKE) doc-xml
+
+.PHONY: manpages htmlpages sgmlpages xmlpages install-man
 
 install-man:: manpages $(DESTDIR)$(mandir)/man$(api_manext)
 	for i in man$(api_manext)/*.$(api_manext); do $(INSTALL_DATA) $$i $(DESTDIR)$(mandir)/$$i; done
 
 clean::
-	$(RM) -r html api-guide man$(api_manext)
+	$(RM) -r html api-guide api-guide-xml man$(api_manext)

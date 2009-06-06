@@ -302,11 +302,15 @@ $(DOCSUBDIRS:%=%/__doc_html__): dummy
 $(DOCSUBDIRS:%=%/__doc_sgml__): dummy
 	@cd `dirname $@` && $(MAKE) doc-sgml
 
+$(DOCSUBDIRS:%=%/__doc_xml__): dummy
+	@cd `dirname $@` && $(MAKE) doc-xml
+
 man: $(DOCSUBDIRS:%=%/__man__)
 doc-html: $(DOCSUBDIRS:%=%/__doc_html__)
 doc-sgml: $(DOCSUBDIRS:%=%/__doc_sgml__)
+doc-xml: $(DOCSUBDIRS:%=%/__doc_xml__)
 
-.PHONY: man doc-html doc-sgml $(DOCSUBDIRS:%=%/__man__) $(DOCSUBDIRS:%=%/__doc_html__) $(DOCSUBDIRS:%=%/__doc_sgml__)
+.PHONY: man doc-html doc-sgml doc-xml $(DOCSUBDIRS:%=%/__man__) $(DOCSUBDIRS:%=%/__doc_html__) $(DOCSUBDIRS:%=%/__doc_sgml__) $(DOCSUBDIRS:%=%/__doc_xml__)
 
 # Misc. rules
 

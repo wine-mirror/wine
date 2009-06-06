@@ -16,6 +16,7 @@
 # manpages:        compile manpages for Wine API
 # htmlpages:       compile html pages for Wine API
 # sgmlpages:       compile sgml source for the Wine API Guide
+# xmlpages:        compile xml source for the Wine API Guide
 
 # Directories
 
@@ -132,14 +133,14 @@ tags ctags:
 	$(RM) tags
 	(test -d .git && git ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | xargs ctags -a
 
-manpages htmlpages sgmlpages: dummy
+manpages htmlpages sgmlpages xmlpages: dummy
 	@cd documentation && $(MAKE) $@
 
 distclean:: clean
 	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h
 	$(RM) -r autom4te.cache
 
-.PHONY: manpages htmlpages sgmlpages distclean
+.PHONY: manpages htmlpages sgmlpages xmlpages distclean
 
 # Makefile rules
 
