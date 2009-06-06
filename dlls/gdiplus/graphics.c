@@ -1459,7 +1459,13 @@ GpStatus WINGDIPAPI GdipDrawCurve2(GpGraphics *graphics, GpPen *pen,
     if(graphics->busy)
         return ObjectBusy;
 
+    if(count < 2)
+        return InvalidParameter;
+
     pt = GdipAlloc(len_pt * sizeof(GpPointF));
+    if(!pt)
+        return OutOfMemory;
+
     tension = tension * TENSION_CONST;
 
     calc_curve_bezier_endp(points[0].X, points[0].Y, points[1].X, points[1].Y,
