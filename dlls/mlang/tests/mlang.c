@@ -53,6 +53,8 @@ typedef struct lcid_tag_table {
     LPCSTR rfc1766;
     LCID lcid;
     HRESULT hr;
+    LCID broken_lcid;
+    LPCSTR broken_rfc;
 } lcid_table_entry;
 
 /* en, ar and zh use SUBLANG_NEUTRAL for the rfc1766 name without the country
@@ -86,7 +88,7 @@ static const lcid_table_entry  lcid_table[] = {
     {"fr-ca", 0x0c0c,   S_OK},
     {"fr-ch", 0x100c,   S_OK},
     {"fr-lu", 0x140c,   S_OK},
-    {"fr-mc", 0x180c,   S_OK},
+    {"fr-mc", 0x180c,   S_OK, 0x040c},
 
     {"it",    0x0410,   S_OK},
     {"it-ch", 0x0810,   S_OK},
@@ -96,7 +98,7 @@ static const lcid_table_entry  lcid_table[] = {
     {"pl",    0x0415,   S_OK},
     {"ru",    0x0419,   S_OK},
 
-    {"kok",   0x0457,   S_OK}
+    {"kok",   0x0457,   S_OK, 0x0412, "x-kok"}
 
 };
 
@@ -901,10 +903,13 @@ static void test_GetLcidFromRfc1766(IMultiLanguage2 *iML2)
         MultiByteToWideChar(CP_ACP, 0, lcid_table[i].rfc1766, -1, rfc1766W, MAX_RFC1766_NAME);
         ret = IMultiLanguage2_GetLcidFromRfc1766(iML2, &lcid, rfc1766W);
 
-        ok(ret == lcid_table[i].hr,
+        /* IE <6.0 guess 0x412 (ko) from "kok" */
+        ok((ret == lcid_table[i].hr) ||
+            broken(lcid_table[i].broken_lcid && (ret == S_FALSE)),
             "#%02d: HRESULT 0x%x (expected 0x%x)\n", i, ret, lcid_table[i].hr);
 
-        ok(lcid == lcid_table[i].lcid,
+        ok((lcid == lcid_table[i].lcid) ||
+            broken(lcid == lcid_table[i].broken_lcid),   /* IE <6.0 */
             "#%02d: got LCID 0x%x (expected 0x%x)\n", i, lcid, lcid_table[i].lcid);
     }
 
@@ -951,11 +956,13 @@ static void test_Rfc1766ToLcid(void)
         lcid = -1;
         ret = Rfc1766ToLcidA(&lcid, lcid_table[i].rfc1766);
 
-        ok(ret == lcid_table[i].hr,
+        /* IE <6.0 guess 0x412 (ko) from "kok" */
+        ok( (ret == lcid_table[i].hr) ||
+            broken(lcid_table[i].broken_lcid && (ret == S_FALSE)),
             "#%02d: HRESULT 0x%x (expected 0x%x)\n", i, ret, lcid_table[i].hr);
 
-
-        ok(lcid == lcid_table[i].lcid,
+        ok( (lcid == lcid_table[i].lcid) ||
+            broken(lcid == lcid_table[i].broken_lcid),  /* IE <6.0 */
             "#%02d: got LCID 0x%x (expected 0x%x)\n", i, lcid, lcid_table[i].lcid);
 
     }
@@ -992,7 +999,9 @@ static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
         LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, lcid_table[i].rfc1766,
                     lstrlenA(lcid_table[i].rfc1766) + 1, expected, MAX_RFC1766_NAME);
 
-        ok(!lstrcmpA(buffer, expected),
+        /* IE <6.0 return "x-kok" for LCID 0x457 ("kok") */
+        ok( (!lstrcmpA(buffer, expected)) ||
+            broken(!lstrcmpA(buffer, lcid_table[i].broken_rfc)),
             "#%02d: got '%s' (expected '%s')\n", i, buffer, expected);
 
         SysFreeString(rfcstr);
@@ -1016,7 +1025,9 @@ static void test_LcidToRfc1766(void)
 
         hr = LcidToRfc1766A(lcid_table[i].lcid, buffer, MAX_RFC1766_NAME);
 
-        ok(hr == lcid_table[i].hr,
+        /* IE <5.0 does not recognize 0x180c (fr-mc) and 0x457 (kok) */
+        ok( (hr == lcid_table[i].hr) ||
+            broken(lcid_table[i].broken_lcid && (hr == E_FAIL)),
             "#%02d: HRESULT 0x%x (expected 0x%x)\n", i, hr, lcid_table[i].hr);
 
         if (hr != S_OK)
@@ -1025,7 +1036,9 @@ static void test_LcidToRfc1766(void)
         LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_LOWERCASE, lcid_table[i].rfc1766,
                     lstrlenA(lcid_table[i].rfc1766) + 1, expected, MAX_RFC1766_NAME);
 
-        ok(!lstrcmpA(buffer, expected),
+        /* IE <6.0 return "x-kok" for LCID 0x457 ("kok") */
+        ok( (!lstrcmpA(buffer, expected)) ||
+            broken(!lstrcmpA(buffer, lcid_table[i].broken_rfc)),
             "#%02d: got '%s' (expected '%s')\n", i, buffer, expected);
 
     }
