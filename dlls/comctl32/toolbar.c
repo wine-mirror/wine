@@ -240,7 +240,7 @@ typedef enum
 static const WCHAR themeClass[] = { 'T','o','o','l','b','a','r',0 };
 
 static BOOL TOOLBAR_GetButtonInfo(const TOOLBAR_INFO *infoPtr, NMTOOLBARW *nmtb);
-static BOOL TOOLBAR_IsButtonRemovable(const TOOLBAR_INFO *infoPtr, int iItem, PCUSTOMBUTTON btnInfo);
+static BOOL TOOLBAR_IsButtonRemovable(const TOOLBAR_INFO *infoPtr, int iItem, const CUSTOMBUTTON *btnInfo);
 static HIMAGELIST TOOLBAR_GetImageList(const PIMLENTRY *pies, INT cies, INT id);
 static PIMLENTRY TOOLBAR_GetImageListEntry(const PIMLENTRY *pies, INT cies, INT id);
 static VOID TOOLBAR_DeleteImageList(PIMLENTRY **pies, INT *cies);
@@ -1770,7 +1770,7 @@ TOOLBAR_LayoutToolbar(TOOLBAR_INFO *infoPtr)
 
 
 static INT
-TOOLBAR_InternalHitTest (TOOLBAR_INFO *infoPtr, const POINT *lpPt)
+TOOLBAR_InternalHitTest (const TOOLBAR_INFO *infoPtr, const POINT *lpPt)
 {
     TBUTTON_INFO *btnPtr;
     INT i;
@@ -3676,7 +3676,7 @@ TOOLBAR_HideButton (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
 
 static inline LRESULT
-TOOLBAR_HitTest (TOOLBAR_INFO *infoPtr, LPARAM lParam)
+TOOLBAR_HitTest (const TOOLBAR_INFO *infoPtr, LPARAM lParam)
 {
     return TOOLBAR_InternalHitTest (infoPtr, (LPPOINT)lParam);
 }
@@ -7039,7 +7039,7 @@ static BOOL TOOLBAR_GetButtonInfo(const TOOLBAR_INFO *infoPtr, NMTOOLBARW *nmtb)
 }
 
 
-static BOOL TOOLBAR_IsButtonRemovable(const TOOLBAR_INFO *infoPtr, int iItem, PCUSTOMBUTTON btnInfo)
+static BOOL TOOLBAR_IsButtonRemovable(const TOOLBAR_INFO *infoPtr, int iItem, const CUSTOMBUTTON *btnInfo)
 {
     NMTOOLBARW nmtb;
 

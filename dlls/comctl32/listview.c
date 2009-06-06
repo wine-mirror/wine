@@ -9942,7 +9942,7 @@ static LRESULT LISTVIEW_ShowWindow(LISTVIEW_INFO *infoPtr, BOOL bShown, INT iSta
  * RETURN:
  * Current version
  */
-static inline LRESULT LISTVIEW_GetVersion(LISTVIEW_INFO *infoPtr)
+static inline LRESULT LISTVIEW_GetVersion(const LISTVIEW_INFO *infoPtr)
 {
   return infoPtr->iVersion;
 }

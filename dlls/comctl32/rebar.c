@@ -452,7 +452,7 @@ static int get_rect_cy(const REBAR_INFO *infoPtr, const RECT *lpRect)
     return lpRect->bottom - lpRect->top;
 }
 
-static int round_child_height(REBAR_BAND *lpBand, int cyHeight)
+static int round_child_height(const REBAR_BAND *lpBand, int cyHeight)
 {
     int cy = 0;
     if (lpBand->cyIntegral == 0)
