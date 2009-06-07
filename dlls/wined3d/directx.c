@@ -615,21 +615,15 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             major = minor = 0;
             gl_string_cursor = strchr(gl_string, '-');
             if (gl_string_cursor) {
-                int error = 0;
                 gl_string_cursor++;
 
                 /* Check if version number is of the form x.y.z */
-                if (*gl_string_cursor > '9' && *gl_string_cursor < '0')
-                    error = 1;
-                if (!error && *(gl_string_cursor+2) > '9' && *(gl_string_cursor+2) < '0')
-                    error = 1;
-                if (!error && *(gl_string_cursor+4) > '9' && *(gl_string_cursor+4) < '0')
-                    error = 1;
-                if (!error && *(gl_string_cursor+1) != '.' && *(gl_string_cursor+3) != '.')
-                    error = 1;
-
-                /* Mark version number as malformed */
-                if (error)
+                if ( *gl_string_cursor < '0' || *gl_string_cursor > '9'
+                     || *(gl_string_cursor+1) != '.'
+                     || *(gl_string_cursor+2) < '0' || *(gl_string_cursor+2) > '9'
+                     || *(gl_string_cursor+3) != '.'
+                     || *(gl_string_cursor+4) < '0' || *(gl_string_cursor+4) > '9' )
+                    /* Mark version number as malformed */
                     gl_string_cursor = 0;
             }
 
