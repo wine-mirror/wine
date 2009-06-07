@@ -515,7 +515,7 @@ BOOL load_gecko(BOOL silent)
            || (install_wine_gecko(silent) && load_wine_gecko(gre_path)))
             ret = init_xpcom(gre_path);
         else
-           MESSAGE("Could not load Mozilla. HTML rendering will be disabled.\n");
+           MESSAGE("Could not load wine-gecko. HTML rendering will be disabled.\n");
     }else {
         ret = pCompMgr != NULL;
     }
