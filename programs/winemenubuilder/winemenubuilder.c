@@ -50,7 +50,18 @@
  * shared location for an "All Users" entry then do so.  As a suggestion the
  * shared menu Wine base could be writable to the wine group, or a wineadm 
  * group.
- * 
+ *  Clean up fd.o menus when they are deleted in Windows.
+ *  Generate icons for file open handlers to go into the "Open with..."
+ * list. What does Windows use, the default icon for the .EXE file? It's
+ * not in the registry.
+ *  Associate applications under HKCR\Applications to open any MIME type
+ * (by associating with application/octet-stream, or how?).
+ *  Clean up fd.o MIME types when they are deleted in Windows, their icons
+ * too. Very hard - once we associate them with fd.o, we can't tell whether
+ * they are ours or not, and the extension <-> MIME type mapping isn't
+ * one-to-one either.
+ *  Wine's HKCR is broken - it doesn't merge HKCU\Software\Classes, so apps
+ * that write associations there won't associate (#17019).
  */
 
 #include "config.h"
@@ -1287,6 +1298,25 @@ static char* wchars_to_utf8_chars(LPCWSTR string)
     return ret;
 }
 
+static char *slashes_to_minuses(const char *string)
+{
+    int i;
+    char *ret = HeapAlloc(GetProcessHeap(), 0, lstrlenA(string) + 1);
+    if (ret)
+    {
+        for (i = 0; string[i]; i++)
+        {
+            if (string[i] == '/')
+                ret[i] = '-';
+            else
+                ret[i] = string[i];
+        }
+        ret[i] = 0;
+        return ret;
+    }
+    return NULL;
+}
+
 static BOOL next_line(FILE *file, char **line, int *size)
 {
     int pos = 0;
@@ -1814,6 +1844,8 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             WCHAR *commandW = NULL;
             WCHAR *friendlyDocNameW = NULL;
             char *friendlyDocNameA = NULL;
+            WCHAR *iconW = NULL;
+            char *iconA = NULL;
             WCHAR *contentTypeW = NULL;
             char *mimeTypeA = NULL;
             WCHAR *friendlyAppNameW = NULL;
@@ -1839,6 +1871,19 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                 }
             }
 
+            iconW = assoc_query(ASSOCSTR_DEFAULTICON, extensionW, NULL);
+            if (iconW)
+            {
+                WCHAR *comma = strrchrW(iconW, ',');
+                int index = 0;
+                if (comma)
+                {
+                    *comma = 0;
+                    index = atoiW(comma + 1);
+                }
+                iconA = extract_icon(iconW, index, FALSE);
+            }
+
             contentTypeW = assoc_query(ASSOCSTR_CONTENTTYPE, extensionW, NULL);
 
             if (!freedesktop_mime_type_for_extension(nativeMimeTypes, extensionA, extensionW, &mimeTypeA))
@@ -1853,6 +1898,25 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
 
                 if (mimeTypeA != NULL)
                 {
+                    /* Gnome seems to ignore the <icon> tag in MIME packages,
+                     * and the default name is more intuitive anyway.
+                     */
+                    if (iconA)
+                    {
+                        char *flattened_mime = slashes_to_minuses(mimeTypeA);
+                        if (flattened_mime)
+                        {
+                            char *dstIconPath = heap_printf("%s/icons/%s%s", xdg_data_dir,
+                                                            flattened_mime, strrchr(iconA, '.'));
+                            if (dstIconPath)
+                            {
+                                rename(iconA, dstIconPath);
+                                HeapFree(GetProcessHeap(), 0, dstIconPath);
+                            }
+                            HeapFree(GetProcessHeap(), 0, flattened_mime);
+                        }
+                    }
+
                     write_freedesktop_mime_type_entry(packages_dir, extensionA, mimeTypeA, friendlyDocNameA);
                     hasChanged = TRUE;
                 }
@@ -1920,6 +1984,8 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             HeapFree(GetProcessHeap(), 0, commandW);
             HeapFree(GetProcessHeap(), 0, friendlyDocNameW);
             HeapFree(GetProcessHeap(), 0, friendlyDocNameA);
+            HeapFree(GetProcessHeap(), 0, iconW);
+            HeapFree(GetProcessHeap(), 0, iconA);
             HeapFree(GetProcessHeap(), 0, contentTypeW);
             HeapFree(GetProcessHeap(), 0, mimeTypeA);
             HeapFree(GetProcessHeap(), 0, friendlyAppNameW);
