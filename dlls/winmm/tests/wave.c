@@ -640,7 +640,7 @@ static void wave_out_test_deviceOut(int device, double duration,
         trace("CALLBACK_THREAD not implemented\n");
         CloseHandle(hevent);
         return;
-    } else if (flags && CALLBACK_TYPEMASK) {
+    } else if (flags & CALLBACK_TYPEMASK) {
         trace("Undefined callback type!\n");
         CloseHandle(hevent);
         return;
