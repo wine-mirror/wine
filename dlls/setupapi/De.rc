@@ -2,6 +2,7 @@
  * German resources for SETUPAPI
  *
  * Copyright 2004 Henning Gerhardt
+ * Copyright 2009 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,7 +19,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+
+STRINGTABLE DISCARDABLE
+{
+        IDS_PROMPTDISK   "Die Datei '%s' von %s wird benötigt."
+        IDS_UNKNOWN      "Unbekannt"
+        IDS_COPYFROM     "Dateien kopieren von:"
+        IDS_INFO         "Geben Sie den Pfad zur Datei ein und klicken Sie OK."
+}
 
 COPYFILEDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
@@ -32,3 +43,19 @@ BEGIN
 	LTEXT "", DESTSTRORD, 7, 41, 194, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "", PROGRESSORD, "setupx_progress", 7, 63, 194, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
+
+IDPROMPTFORDISK DIALOG MOVEABLE DISCARDABLE 0, 0, 250, 120
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Erforderliche Dateien"
+FONT 8, "MS Shell Dlg"
+BEGIN
+	LTEXT "Legen Sie das Installationsmedium des Herstellers in\ndas ausgewählte Laufwerk ein", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Dateien des Herstellers kopieren von:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
+	PUSHBUTTON "OK", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Abbrechen", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Durchsuchen...", IDC_RUNDLG_BROWSE, 190, 100, 55, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
+
+#pragma code_page(default)
