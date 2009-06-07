@@ -2489,7 +2489,8 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                         SetLastError(save_error);
                         if (strcmpW(TOOLBARCLASSNAMEW, from_class) == 0)
                             dumplen = sizeof(NMTBCUSTOMDRAW)-sizeof(NMHDR);
-                    } else if ((pnmh->code >= HDN_ITEMCHANGINGA) && (pnmh->code <= HDN_ENDDRAG)) {
+                    } else if ( pnmh->code >= HDN_ENDDRAG
+                                && pnmh->code <= HDN_ITEMCHANGINGA ) {
                         dumplen = sizeof(NMHEADERA)-sizeof(NMHDR);
                     }
                     if (dumplen > 0) {
