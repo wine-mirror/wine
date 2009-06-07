@@ -7391,6 +7391,43 @@ static void test_insertorder(void)
 
     MsiViewClose(view);
     MsiCloseHandle(view);
+
+    query = "DELETE FROM `T` WHERE `A` IS NULL";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "INSERT INTO `T` ( `B`, `C` ) VALUES ( 12, 13 ) TEMPORARY";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    query = "SELECT * FROM `T`";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    for (i = 0; i < 6; i++)
+    {
+        r = MsiViewFetch(view, &rec);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+        r = MsiRecordGetInteger(rec, 1);
+        ok(r == ordervals[i][0], "Expected %d, got %d\n", ordervals[i][0], r);
+
+        r = MsiRecordGetInteger(rec, 2);
+        ok(r == ordervals[i][1], "Expected %d, got %d\n", ordervals[i][1], r);
+
+        r = MsiRecordGetInteger(rec, 3);
+        ok(r == ordervals[i][2], "Expected %d, got %d\n", ordervals[i][2], r);
+
+        MsiCloseHandle(rec);
+    }
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    MsiViewClose(view);
+    MsiCloseHandle(view);
     MsiCloseHandle(hdb);
     DeleteFileA(msifile);
 }
