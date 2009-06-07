@@ -957,78 +957,86 @@ static void test_CreateFileA(void)
         strcpy(filename, "c:\\");
         filename[0] = windowsdir[0];
         ret = pGetVolumeNameForVolumeMountPointA( filename, Volume_1, MAX_PATH );
-        ok(ret == TRUE, "GetVolumeNameForVolumeMountPointA failed\n");
-        ok(strlen(Volume_1) == 49, "GetVolumeNameForVolumeMountPointA returned wrong length name %s\n", Volume_1);
+        ok(ret, "GetVolumeNameForVolumeMountPointA failed, for %s, last error=%d\n", filename, GetLastError());
+        if (ret)
+        {
+            ok(strlen(Volume_1) == 49, "GetVolumeNameForVolumeMountPointA returned wrong length name <%s>\n", Volume_1);
 
-        /* test the result of opening a unique volume name (GUID)   */
-        /* with the trailing \                                      */
-        /* this should error out                                    */
-        strcpy(filename, Volume_1);
-        hFile = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
+            /* test the result of opening a unique volume name (GUID)
+             *  with the trailing \
+             *  this should error out
+             */
+            strcpy(filename, Volume_1);
+            hFile = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
                         NULL, OPEN_EXISTING,
                         FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING, NULL );
-        todo_wine
-        ok(hFile == INVALID_HANDLE_VALUE,
-            "CreateFileA should not have opened %s, hFile %p\n",
-            filename, hFile);
-        todo_wine
-        ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
-            "CreateFileA should have returned ERROR_PATH_NOT_FOUND on %s, but got %u\n",
-            filename, GetLastError());
-        if (hFile != INVALID_HANDLE_VALUE)
-            CloseHandle( hFile );
+            todo_wine
+            ok(hFile == INVALID_HANDLE_VALUE,
+                "CreateFileA should not have opened %s, hFile %p\n",
+                filename, hFile);
+            todo_wine
+            ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
+                "CreateFileA should have returned ERROR_PATH_NOT_FOUND on %s, but got %u\n",
+                filename, GetLastError());
+            if (hFile != INVALID_HANDLE_VALUE)
+                CloseHandle( hFile );
 
-        /* test the result of opening a unique volume name (GUID)   */
-        /* with the temp path string as dir                         */
-        /* this should work                                         */
-        strcpy(filename, Volume_1);
-        strcat(filename, temp_path+3);
-        hFile = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
+            /* test the result of opening a unique volume name (GUID)
+             * with the temp path string as dir
+             * this should work
+             */
+            strcpy(filename, Volume_1);
+            strcat(filename, temp_path+3);
+            hFile = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
                         NULL, OPEN_EXISTING,
                         FILE_FLAG_BACKUP_SEMANTICS, NULL );
-        todo_wine
-        ok(hFile != INVALID_HANDLE_VALUE,
-            "CreateFileA should have opened %s, but got %u\n",
-            filename, GetLastError());
-        if (hFile != INVALID_HANDLE_VALUE)
-            CloseHandle( hFile );
+            todo_wine
+            ok(hFile != INVALID_HANDLE_VALUE,
+                "CreateFileA should have opened %s, but got %u\n",
+                filename, GetLastError());
+            if (hFile != INVALID_HANDLE_VALUE)
+                CloseHandle( hFile );
 
-        /* test the result of opening a unique volume name (GUID)   */
-        /* without the trailing \ and in device namespace           */
-        /* this should work                                         */
-        strcpy(filename, Volume_1);
-        filename[2] = '.';
-        filename[48] = 0;
-        hFile = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
+            /* test the result of opening a unique volume name (GUID)
+             * without the trailing \ and in device namespace
+             * this should work
+             */
+            strcpy(filename, Volume_1);
+            filename[2] = '.';
+            filename[48] = 0;
+            hFile = CreateFileA( filename, GENERIC_READ | GENERIC_WRITE,
                         FILE_SHARE_READ | FILE_SHARE_WRITE,
                         NULL, OPEN_EXISTING,
                         FILE_ATTRIBUTE_NORMAL | FILE_FLAG_NO_BUFFERING, NULL );
-        if (hFile != INVALID_HANDLE_VALUE || GetLastError() != ERROR_ACCESS_DENIED)
-        {
-            /* if we have adm rights to volume, then try rest of tests */
-            ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA did not open %s, last error=%u\n",
-                filename, GetLastError());
-            if (hFile != INVALID_HANDLE_VALUE)
+            if (hFile != INVALID_HANDLE_VALUE || GetLastError() != ERROR_ACCESS_DENIED)
             {
-                /* if we opened the volume/device, try to read it. Since it  */
-                /* opened, we should be able to read it.  We don't care about*/
-                /* what the data is at this time.                            */
-                len = 512;
-                ret = ReadFile( hFile, buffer, len, &len, NULL );
-                todo_wine ok(ret, "Failed to read volume, last error %u, %u, for %s\n",
-                    GetLastError(), ret, filename);
-                if (ret)
+                /* if we have adm rights to volume, then try rest of tests */
+                ok(hFile != INVALID_HANDLE_VALUE, "CreateFileA did not open %s, last error=%u\n",
+                    filename, GetLastError());
+                if (hFile != INVALID_HANDLE_VALUE)
                 {
-                    trace("buffer is\n");
-                    dumpmem(buffer, 64);
-                }
-                CloseHandle( hFile );
-			}
+                    /* if we opened the volume/device, try to read it. Since it  */
+                    /* opened, we should be able to read it.  We don't care about*/
+                    /* what the data is at this time.                            */
+                    len = 512;
+                    ret = ReadFile( hFile, buffer, len, &len, NULL );
+                    todo_wine ok(ret, "Failed to read volume, last error %u, %u, for %s\n",
+                        GetLastError(), ret, filename);
+                    if (ret)
+                    {
+                        trace("buffer is\n");
+                        dumpmem(buffer, 64);
+                    }
+                    CloseHandle( hFile );
+	        }
+            }
+            else
+                skip("Do not have authority to access volumes. Tests skipped\n");
         }
         else
-            skip("Do not have authority to access volumes. Tests skipped\n");
+            win_skip("GetVolumeNameForVolumeMountPointA not functioning\n");
     }
     else
         win_skip("GetVolumeNameForVolumeMountPointA not found\n");
