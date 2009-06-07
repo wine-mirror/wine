@@ -3494,7 +3494,6 @@ static inline BOOL is_assignable_item(const LVITEMW *lpLVItem, LONG lStyle)
  */
 static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL isNew, BOOL isW, BOOL *bChanged)
 {
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     ITEM_INFO *lpItem;
     NMLISTVIEW nmlv;
     UINT uChanged = 0;
@@ -3619,7 +3618,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL 
 		}
 
 		infoPtr->nFocusedItem = lpLVItem->iItem;
-    	        LISTVIEW_EnsureVisible(infoPtr, lpLVItem->iItem, uView == LVS_LIST);
+	        LISTVIEW_EnsureVisible(infoPtr, lpLVItem->iItem, infoPtr->uView == LV_VIEW_LIST);
 	    }
 	    else if (infoPtr->nFocusedItem == lpLVItem->iItem)
 	    {
@@ -4800,7 +4799,6 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
  */
 static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
 {
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     INT nPerCol, nItemCol, nItemRow;
     RECT rcScroll;
     POINT Origin;
@@ -4823,9 +4821,9 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     LISTVIEW_UpdateScroll(infoPtr);
 
     /* figure out the item's position */ 
-    if (uView == LVS_REPORT)
+    if (infoPtr->uView == LV_VIEW_DETAILS)
 	nPerCol = infoPtr->nItemCount + 1;
-    else if (uView == LVS_LIST)
+    else if (infoPtr->uView == LV_VIEW_LIST)
 	nPerCol = LISTVIEW_GetCountPerColumn(infoPtr);
     else /* LV_VIEW_ICON, or LV_VIEW_SMALLICON */
 	return;
@@ -4849,7 +4847,7 @@ static void LISTVIEW_ScrollOnInsert(LISTVIEW_INFO *infoPtr, INT nItem, INT dir)
     }
 
     /* report has only that column, so we're done */
-    if (uView == LVS_REPORT) return;
+    if (infoPtr->uView == LV_VIEW_DETAILS) return;
 
     /* now for LISTs, we have to deal with the columns to the right */
     rcScroll.left = (nItemCol + 1) * infoPtr->nItemWidth;
@@ -5147,7 +5145,6 @@ static HWND LISTVIEW_EditLabelT(LISTVIEW_INFO *infoPtr, INT nItem, BOOL isW)
  */
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPartial)
 {
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     INT nScrollPosHeight = 0;
     INT nScrollPosWidth = 0;
     INT nHorzAdjust = 0;
@@ -5163,41 +5160,41 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *infoPtr, INT nItem, BOOL bPart
     
     if (rcItem.left < infoPtr->rcList.left || rcItem.right > infoPtr->rcList.right)
     {
-        /* scroll left/right, but in LVS_REPORT mode */
-        if (uView == LVS_LIST)
+        /* scroll left/right, but in LV_VIEW_DETAILS mode */
+        if (infoPtr->uView == LV_VIEW_LIST)
             nScrollPosWidth = infoPtr->nItemWidth;
-        else if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
+        else if ((infoPtr->uView == LV_VIEW_SMALLICON) || (infoPtr->uView == LV_VIEW_ICON))
             nScrollPosWidth = 1;
 
 	if (rcItem.left < infoPtr->rcList.left)
 	{
 	    nHorzAdjust = -1;
-	    if (uView != LVS_REPORT) nHorzDiff = rcItem.left - infoPtr->rcList.left;
+	    if (infoPtr->uView != LV_VIEW_DETAILS) nHorzDiff = rcItem.left - infoPtr->rcList.left;
 	}
 	else
 	{
 	    nHorzAdjust = 1;
-	    if (uView != LVS_REPORT) nHorzDiff = rcItem.right - infoPtr->rcList.right;
+	    if (infoPtr->uView != LV_VIEW_DETAILS) nHorzDiff = rcItem.right - infoPtr->rcList.right;
 	}
     }
 
     if (rcItem.top < infoPtr->rcList.top || rcItem.bottom > infoPtr->rcList.bottom)
     {
 	/* scroll up/down, but not in LVS_LIST mode */
-        if (uView == LVS_REPORT)
+        if (infoPtr->uView == LV_VIEW_DETAILS)
             nScrollPosHeight = infoPtr->nItemHeight;
-        else if ((uView == LVS_ICON) || (uView == LVS_SMALLICON))
+        else if ((infoPtr->uView == LV_VIEW_ICON) || (infoPtr->uView == LV_VIEW_SMALLICON))
             nScrollPosHeight = 1;
 
 	if (rcItem.top < infoPtr->rcList.top)
 	{
 	    nVertAdjust = -1;
-	    if (uView != LVS_LIST) nVertDiff = rcItem.top - infoPtr->rcList.top;
+	    if (infoPtr->uView != LV_VIEW_LIST) nVertDiff = rcItem.top - infoPtr->rcList.top;
 	}
 	else
 	{
 	    nVertAdjust = 1;
-	    if (uView != LVS_LIST) nVertDiff = rcItem.bottom - infoPtr->rcList.bottom;
+	    if (infoPtr->uView != LV_VIEW_LIST) nVertDiff = rcItem.bottom - infoPtr->rcList.bottom;
 	}
     }
 
@@ -6701,7 +6698,6 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
  */
 static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL isW)
 {
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     INT nItem;
     HDPA hdpaSubItems;
     NMLISTVIEW nmlv;
@@ -6788,7 +6784,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     if (!set_main_item(infoPtr, &item, TRUE, isW, &has_changed)) goto undo;
 
     /* make room for the position, if we are in the right mode */
-    if ((uView == LVS_SMALLICON) || (uView == LVS_ICON))
+    if ((infoPtr->uView == LV_VIEW_SMALLICON) || (infoPtr->uView == LV_VIEW_ICON))
     {
         if (DPA_InsertPtr(infoPtr->hdpaPosX, nItem, 0) == -1)
 	    goto undo;
@@ -6808,7 +6804,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
 	return -1;
 
     /* align items (set position of each item) */
-    if ((uView == LVS_SMALLICON || uView == LVS_ICON))
+    if (infoPtr->uView == LV_VIEW_SMALLICON || infoPtr->uView == LV_VIEW_ICON)
     {
 	POINT pt;
 
@@ -8368,7 +8364,6 @@ fail:
 static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(hwnd, 0);
-  UINT uView = lpcs->style & LVS_TYPEMASK;
 
   TRACE("(lpcs=%p)\n", lpcs);
 
@@ -8380,7 +8375,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   /* on error defaulting to ANSI notifications */
   if (infoPtr->notifyFormat == 0) infoPtr->notifyFormat = NFR_ANSI;
 
-  if ((uView == LVS_REPORT) && (lpcs->style & WS_VISIBLE))
+  if ((infoPtr->uView == LV_VIEW_DETAILS) && (lpcs->style & WS_VISIBLE))
   {
     if (LISTVIEW_CreateHeader(infoPtr) < 0)  return -1;
   }
@@ -8390,7 +8385,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   /* init item size to avoid division by 0 */
   LISTVIEW_UpdateItemSize (infoPtr);
 
-  if (uView == LVS_REPORT)
+  if (infoPtr->uView == LV_VIEW_DETAILS)
   {
     if (!(LVS_NOCOLUMNHEADER & lpcs->style) && (WS_VISIBLE & lpcs->style))
     {
@@ -8402,7 +8397,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   OpenThemeData(hwnd, themeClass);
 
   /* initialize the icon sizes */
-  set_icon_size(&infoPtr->iconSize, infoPtr->himlNormal, uView != LVS_ICON);
+  set_icon_size(&infoPtr->iconSize, infoPtr->himlNormal, infoPtr->uView != LV_VIEW_ICON);
   set_icon_size(&infoPtr->iconStateSize, infoPtr->himlState, TRUE);
   return 0;
 }
@@ -9748,13 +9743,11 @@ static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
  */
 static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 {
-    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-
-    TRACE("uView=%d, rcList(old)=%s\n", uView, wine_dbgstr_rect(&infoPtr->rcList));
+    TRACE("uView=%d, rcList(old)=%s\n", infoPtr->uView, wine_dbgstr_rect(&infoPtr->rcList));
     
     GetClientRect(infoPtr->hwndSelf, &infoPtr->rcList);
 
-    if (uView == LVS_LIST)
+    if (infoPtr->uView == LV_VIEW_LIST)
     {
 	/* Apparently the "LIST" style is supposed to have the same
 	 * number of items in a column even if there is no scroll bar.
@@ -9767,7 +9760,7 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 	    infoPtr->rcList.bottom -= GetSystemMetrics(SM_CYHSCROLL);
         infoPtr->rcList.bottom = max (infoPtr->rcList.bottom - 2, 0);
     }
-    else if (uView == LVS_REPORT)
+    else if (infoPtr->uView == LV_VIEW_DETAILS)
     {
 	HDLAYOUT hl;
 	WINDOWPOS wp;
@@ -9945,10 +9938,8 @@ static INT LISTVIEW_StyleChanging(LISTVIEW_INFO *infoPtr, WPARAM wStyleType,
  */
 static LRESULT LISTVIEW_ShowWindow(LISTVIEW_INFO *infoPtr, BOOL bShown, INT iStatus)
 {
-  UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
-
   /* header delayed creation */
-  if ((uView == LVS_REPORT) && bShown)
+  if ((infoPtr->uView == LV_VIEW_DETAILS) && bShown)
   {
     LISTVIEW_CreateHeader(infoPtr);
 
