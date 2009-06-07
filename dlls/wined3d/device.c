@@ -1022,7 +1022,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface,
     break;
     case WINED3DPOOL_DEFAULT: /*TODO: Create offscreen plain can cause this check to fail..., find out if it should */
         if(!(Usage & WINED3DUSAGE_DYNAMIC) && !(Usage & WINED3DUSAGE_RENDERTARGET)
-           && !(Usage && WINED3DUSAGE_DEPTHSTENCIL ) && Lockable)
+           && !(Usage & WINED3DUSAGE_DEPTHSTENCIL ) && Lockable)
             WARN("Creating a surface with a POOL of DEFAULT with Lockable true, that doesn't specify DYNAMIC usage.\n");
     break;
     default:
