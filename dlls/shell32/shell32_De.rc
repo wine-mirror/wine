@@ -242,6 +242,12 @@ STRINGTABLE
         IDS_SHUTDOWN_TITLE      "Beenden"
         IDS_SHUTDOWN_PROMPT     "Möchten Sie die aktuelle Wine Sitzung beenden?"
 
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Konnte Ausführen-Dialog nicht anzeigen (interner Fehler)"
+        IDS_RUNDLG_BROWSE_ERROR    "Konnte Durchsuchen-Dialog nicht anzeigen (interner Fehler)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Durchsuchen"
+        IDS_RUNDLG_BROWSE_FILTER   "Programme\0*.exe\0Alle Dateien\0*.*\0\0"
+
         /* shell folder path default values */
 	IDS_PROGRAMS		"Startmenü\\Programme"
 	IDS_PERSONAL		"Eigene Dateien"
@@ -276,6 +282,7 @@ STRINGTABLE
 	IDS_CPANEL_TITLE	"Wine Control Panel"
 	IDS_CPANEL_NAME		"Name"
 	IDS_CPANEL_DESCRIPTION	"Description"
+	IDS_SHLEXEC_NOASSOC	"Es ist kein Programm mit diesem Dateityp verknüpft."
 }
 
 STRINGTABLE
