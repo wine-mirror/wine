@@ -7962,9 +7962,9 @@ static HWND LISTVIEW_SetToolTips( LISTVIEW_INFO *infoPtr, HWND hwndNewToolTip)
  */
 static BOOL LISTVIEW_SetUnicodeFormat( LISTVIEW_INFO *infoPtr, BOOL fUnicode)
 {
-  BOOL rc = infoPtr->notifyFormat;
-  infoPtr->notifyFormat = (fUnicode)?NFR_UNICODE:NFR_ANSI;
-  return rc;
+  SHORT rc = infoPtr->notifyFormat;
+  infoPtr->notifyFormat = (fUnicode) ? NFR_UNICODE : NFR_ANSI;
+  return rc == NFR_UNICODE;
 }
 
 /*
@@ -8377,6 +8377,8 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 
   infoPtr->notifyFormat = SendMessageW(infoPtr->hwndNotify, WM_NOTIFYFORMAT,
                                        (WPARAM)infoPtr->hwndSelf, (LPARAM)NF_QUERY);
+  /* on error defaulting to ANSI notifications */
+  if (infoPtr->notifyFormat == 0) infoPtr->notifyFormat = NFR_ANSI;
 
   if ((uView == LVS_REPORT) && (lpcs->style & WS_VISIBLE))
   {
@@ -9367,7 +9369,7 @@ static LRESULT LISTVIEW_NotifyFormat(LISTVIEW_INFO *infoPtr, HWND hwndFrom, INT 
     TRACE("(hwndFrom=%p, nCommand=%d)\n", hwndFrom, nCommand);
 
     if (nCommand == NF_REQUERY)
-        infoPtr->notifyFormat = SendMessageW(hwndFrom, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
+        infoPtr->notifyFormat = SendMessageW(infoPtr->hwndNotify, WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
 
     return infoPtr->notifyFormat;
 }
