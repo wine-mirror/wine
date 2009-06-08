@@ -485,7 +485,10 @@ DWORD WINAPI FormatMessageW(
 
                         if (fmtstr[strlenW(fmtstr)-1]=='s' && argliststart[0]) {
                             DWORD xarr[3];
+                            WCHAR *fmt_end = fmtstr + strlenW(fmtstr) - 1;
 
+                            /* remap %ws to %ls */
+                            if (fmt_end > fmtstr && (fmt_end[-1] == 'w')) fmt_end[-1] = 'l';
                             xarr[0]=*(argliststart+0);
                             /* possible invalid pointers */
                             xarr[1]=*(argliststart+1);
