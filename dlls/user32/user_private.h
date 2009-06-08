@@ -354,4 +354,10 @@ typedef struct
 
 extern void CURSORICON_FreeModuleIcons( HMODULE16 hModule ) DECLSPEC_HIDDEN;
 
+/* Mingw's assert() imports MessageBoxA and gets confused by user32 exporting it */
+#ifdef __MINGW32__
+#undef assert
+#define assert(expr) ((void)0)
+#endif
+
 #endif /* __WINE_USER_PRIVATE_H */
