@@ -1660,8 +1660,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                     ENTER_GL();
                     context_bind_fbo((IWineD3DDevice *)This, GL_FRAMEBUFFER_EXT, &context->dst_fbo);
                     context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, target);
-                    GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, 0));
-                    checkGLcall("glFramebufferRenderbufferEXT");
+                    context_attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, NULL, FALSE);
                     LEAVE_GL();
                 } else {
                     ENTER_GL();
