@@ -3,7 +3,7 @@
  * French language support
  *
  * Copyright 1998 Juergen Schmied
- * Copyright 2006-2008 Jonathan Ernst
+ * Copyright 2006-2009 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -288,6 +288,8 @@ STRINGTABLE
  IDS_CPANEL_TITLE            "Wine Control Panel"
  IDS_CPANEL_NAME             "Name"
  IDS_CPANEL_DESCRIPTION      "Description"
+
+ IDS_SHLEXEC_NOASSOC         "Il n'y a aucun programme Windows configuré pour ouvrir ce type de fichier."
 }
 
 STRINGTABLE
