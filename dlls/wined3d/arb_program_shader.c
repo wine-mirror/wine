@@ -125,6 +125,11 @@ struct arb_vs_compile_args
     struct vs_compile_args          super;
     DWORD                           bools; /* WORD is enough, use DWORD for alignment */
     DWORD                           ps_signature;
+    union
+    {
+        unsigned char               vertex_samplers[4];
+        DWORD                       vertex_samplers_compare;
+    };
     unsigned char                   loop_ctrl[MAX_CONST_I][3];
 };
 
@@ -1089,6 +1094,10 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     const char *mod;
+    BOOL pshader = shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type);
+
+    /* D3D vertex shader sampler IDs are vertex samplers(0-3), not global d3d samplers */
+    if(!pshader) sampler_idx += MAX_FRAGMENT_SAMPLERS;
 
     switch(sampler_type) {
         case WINED3DSTT_1D:
@@ -1130,6 +1139,12 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE) mod = "_SAT";
     else mod = "";
 
+    /* Fragment samplers always have indentity mapping */
+    if(sampler_idx >= MAX_FRAGMENT_SAMPLERS)
+    {
+        sampler_idx = priv->cur_vs_args->vertex_samplers[sampler_idx - MAX_FRAGMENT_SAMPLERS];
+    }
+
     if (flags & TEX_DERIV)
     {
         if(flags & TEX_PROJ) FIXME("Projected texture sampling with custom derivates\n");
@@ -1160,7 +1175,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
         shader_addline(buffer, "TEX%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg, sampler_idx, tex_type);
     }
 
-    if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
+    if (pshader)
     {
         gen_color_correction(buffer, dst_str, ins->dst[0].write_mask,
                 "one", "coefmul.x", priv->cur_ps_args->super.color_fixup[sampler_idx]);
@@ -3556,6 +3571,7 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
     if(stored->super.fog_src != new->super.fog_src) return FALSE;
     if(stored->bools != new->bools) return FALSE;
     if(stored->ps_signature != new->ps_signature) return FALSE;
+    if(stored->vertex_samplers_compare != new->vertex_samplers_compare) return FALSE;
     if(skip_int) return TRUE;
 
     return memcmp(stored->loop_ctrl, new->loop_ctrl, sizeof(stored->loop_ctrl)) == 0;
@@ -3665,7 +3681,8 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
 {
     int i;
     WORD int_skip;
-    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)shader->baseShader.device)->adapter->gl_info;
+    IWineD3DDeviceImpl *dev = (IWineD3DDeviceImpl *)shader->baseShader.device;
+    const WineD3D_GL_Info *gl_info = &dev->adapter->gl_info;
     find_vs_compile_args(shader, stateblock, &args->super);
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
@@ -3684,6 +3701,11 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     {
         if(stateblock->vertexShaderConstantB[i]) args->bools |= ( 1 << i);
     }
+
+    args->vertex_samplers[0] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 0];
+    args->vertex_samplers[1] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 1];
+    args->vertex_samplers[2] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 2];
+    args->vertex_samplers[3] = 0;
 
     /* Skip if unused or local */
     int_skip = ~shader->baseShader.reg_maps.integer_constants | shader->baseShader.reg_maps.local_int_consts;
