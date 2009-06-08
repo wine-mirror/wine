@@ -81,7 +81,6 @@
  *   -- LVS_NOLABELWRAP
  *   -- LVS_NOSCROLL (see Q137520)
  *   -- LVS_ALIGNTOP
- *   -- LVS_TYPESTYLEMASK
  *
  * Extended Styles
  *   -- LVS_EX_BORDERSELECT
@@ -120,7 +119,6 @@
  *   -- LVM_GETISEARCHSTRINGW, LVM_GETISEARCHSTRINGA
  *   -- LVM_GETTILEINFO, LVM_SETTILEINFO
  *   -- LVM_GETTILEVIEWINFO, LVM_SETTILEVIEWINFO
- *   -- LVM_GETUNICODEFORMAT, LVM_SETUNICODEFORMAT
  *   -- LVM_GETWORKAREAS, LVM_SETWORKAREAS
  *   -- LVM_HASGROUP, LVM_INSERTGROUP, LVM_REMOVEGROUP, LVM_REMOVEALLGROUPS
  *   -- LVM_INSERTGROUPSORTED
@@ -137,7 +135,6 @@
  *   -- ListView_GetHoverTime, ListView_SetHoverTime
  *   -- ListView_GetISearchString
  *   -- ListView_GetNumberOfWorkAreas
- *   -- ListView_GetUnicodeFormat, ListView_SetUnicodeFormat
  *   -- ListView_GetWorkAreas, ListView_SetWorkAreas
  *
  * Functions:
