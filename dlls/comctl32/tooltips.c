@@ -1020,7 +1020,7 @@ TOOLTIPS_Activate (TOOLTIPS_INFO *infoPtr, BOOL activate)
 
 
 static LRESULT
-TOOLTIPS_AddToolA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
+TOOLTIPS_AddToolA (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOA *lpToolInfo)
 {
     TTTOOL_INFO *toolPtr;
     INT nResult;
@@ -1109,7 +1109,7 @@ TOOLTIPS_AddToolA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
 
 
 static LRESULT
-TOOLTIPS_AddToolW (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
+TOOLTIPS_AddToolW (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpToolInfo)
 {
     TTTOOL_INFO *toolPtr;
     INT nResult;
@@ -1376,7 +1376,7 @@ TOOLTIPS_EnumToolsW (const TOOLTIPS_INFO *infoPtr, UINT uIndex, LPTTTOOLINFOW lp
 }
 
 static LRESULT
-TOOLTIPS_GetBubbleSize (const TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
+TOOLTIPS_GetBubbleSize (const TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpToolInfo)
 {
     INT nTool;
     SIZE size;
@@ -1711,7 +1711,7 @@ TOOLTIPS_HitTestW (const TOOLTIPS_INFO *infoPtr, LPTTHITTESTINFOW lptthit)
 
 
 static LRESULT
-TOOLTIPS_NewToolRectA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpti)
+TOOLTIPS_NewToolRectA (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOA *lpti)
 {
     INT nTool;
 
@@ -1733,7 +1733,7 @@ TOOLTIPS_NewToolRectA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpti)
 
 
 static LRESULT
-TOOLTIPS_NewToolRectW (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpti)
+TOOLTIPS_NewToolRectW (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpti)
 {
     INT nTool;
 
@@ -1867,7 +1867,7 @@ TOOLTIPS_SetDelayTime (TOOLTIPS_INFO *infoPtr, DWORD duration, INT nTime)
 
 
 static LRESULT
-TOOLTIPS_SetMargin (TOOLTIPS_INFO *infoPtr, LPRECT lpRect)
+TOOLTIPS_SetMargin (TOOLTIPS_INFO *infoPtr, const RECT *lpRect)
 {
     infoPtr->rcMargin.left   = lpRect->left;
     infoPtr->rcMargin.right  = lpRect->right;
@@ -1970,7 +1970,7 @@ TOOLTIPS_SetTitleW (TOOLTIPS_INFO *infoPtr, UINT_PTR uTitleIcon, LPCWSTR pszTitl
 
 
 static LRESULT
-TOOLTIPS_SetToolInfoA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
+TOOLTIPS_SetToolInfoA (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOA *lpToolInfo)
 {
     TTTOOL_INFO *toolPtr;
     INT nTool;
@@ -2026,7 +2026,7 @@ TOOLTIPS_SetToolInfoA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
 
 
 static LRESULT
-TOOLTIPS_SetToolInfoW (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
+TOOLTIPS_SetToolInfoW (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpToolInfo)
 {
     TTTOOL_INFO *toolPtr;
     INT nTool;
@@ -2090,7 +2090,7 @@ TOOLTIPS_SetToolInfoW (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
 
 
 static LRESULT
-TOOLTIPS_TrackActivate (TOOLTIPS_INFO *infoPtr, BOOL track_activate, LPTTTOOLINFOA lpToolInfo)
+TOOLTIPS_TrackActivate (TOOLTIPS_INFO *infoPtr, BOOL track_activate, const TTTOOLINFOA *lpToolInfo)
 {
     if (track_activate) {
 
@@ -2149,7 +2149,7 @@ TOOLTIPS_Update (TOOLTIPS_INFO *infoPtr)
 
 
 static LRESULT
-TOOLTIPS_UpdateTipTextA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
+TOOLTIPS_UpdateTipTextA (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOA *lpToolInfo)
 {
     TTTOOL_INFO *toolPtr;
     INT nTool;
@@ -2204,7 +2204,7 @@ TOOLTIPS_UpdateTipTextA (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOA lpToolInfo)
 
 
 static LRESULT
-TOOLTIPS_UpdateTipTextW (TOOLTIPS_INFO *infoPtr, LPTTTOOLINFOW lpToolInfo)
+TOOLTIPS_UpdateTipTextW (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *lpToolInfo)
 {
     TTTOOL_INFO *toolPtr;
     INT nTool;
