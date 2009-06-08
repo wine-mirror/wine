@@ -2352,7 +2352,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
       {
           MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpBuffer, nSize);
           lpBuffer[nSize - 1] = 0;
-          return 1;
+          return nSize;
       }
   }
 
