@@ -1570,6 +1570,11 @@ static void test_item_count(void)
 
     HWND hwnd;
     DWORD r;
+    HDC hdc;
+    HFONT hOldFont;
+    TEXTMETRICA tm;
+    RECT rect;
+    INT height;
 
     LVITEM item0;
     LVITEM item1;
@@ -1580,6 +1585,19 @@ static void test_item_count(void)
 
     hwnd = create_listview_control(0);
     ok(hwnd != NULL, "failed to create a listview window\n");
+
+    /* resize in dpiaware manner to fit all 3 items added */
+    hdc = GetDC(0);
+    hOldFont = SelectObject(hdc, GetStockObject(SYSTEM_FONT));
+    GetTextMetricsA(hdc, &tm);
+    /* 2 extra pixels for bounds and header border */
+    height = tm.tmHeight + 2;
+    SelectObject(hdc, hOldFont);
+    ReleaseDC(0, hdc);
+
+    GetWindowRect(hwnd, &rect);
+    /* 3 items + 1 header + 1 to be sure */
+    MoveWindow(hwnd, 0, 0, rect.right - rect.left, 5 * height, FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
