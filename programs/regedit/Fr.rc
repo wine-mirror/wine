@@ -3,7 +3,7 @@
  *
  * Copyright 2002 Robert Dickenson
  * Copyright 2003 Vincent Béron
- * Copyright 2005-2007 Jonathan Ernst
+ * Copyright 2005-2009 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -283,6 +283,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Copie le nom de la clé sélectionnée vers le presse-papier"
     ID_EDIT_FIND            "Recherche du texte dans une clé, une valeur ou des données"
     ID_EDIT_FINDNEXT        "Recherche l'occurence suivante du texte de la dernière recherche"
+    ID_EDIT_EXPORT          "Exporte la branche du registre sélectionnée dans un fichier texte"
 END
 
 STRINGTABLE DISCARDABLE
