@@ -3,6 +3,7 @@
  * French language support
  *
  * Copyright 2008 Francois Gouget
+ * Copyright 2009 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,4 +28,9 @@ STRINGTABLE
     STRING_ADD_USAGE, "REG ADD nom_de_clé [/v nom_de_valeur | /ve] [/t type] [/s séparateur] [/d donnée] [/f]\n"
     STRING_DELETE_USAGE, "REG DELETE nom_de_clé [/v nom_de_valeur | /ve | /va] [/f]\n"
     STRING_QUERY_USAGE, "REG QUERY nom_de_clé [/v nom_de_valeur | /ve] [/s]\n"
+    STRING_SUCCESS, "L'opération s'est terminée avec succès\n"
+    STRING_INVALID_KEY, "Erreur : Nom de clé non valable\n"
+    STRING_INVALID_CMDLINE, "Erreur : Paramètre de ligne de commande non valable\n"
+    STRING_NO_REMOTE, "Erreur : Impossible d'ajouter des clés à une machine distante\n"
+    STRING_CANNOT_FIND, "Erreur : Le système n'a pas été en mesure de trouver la clé ou la valeur de registre spécifiée\n"
 }
