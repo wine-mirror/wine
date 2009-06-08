@@ -88,7 +88,7 @@ static const lcid_table_entry  lcid_table[] = {
     {"fr-ca", 0x0c0c,   S_OK},
     {"fr-ch", 0x100c,   S_OK},
     {"fr-lu", 0x140c,   S_OK},
-    {"fr-mc", 0x180c,   S_OK, 0x040c},
+    {"fr-mc", 0x180c,   S_OK, 0x040c, "fr"},
 
     {"it",    0x0410,   S_OK},
     {"it-ch", 0x0810,   S_OK},
@@ -1113,6 +1113,7 @@ static void test_LcidToRfc1766(void)
                     lstrlenA(lcid_table[i].rfc1766) + 1, expected, MAX_RFC1766_NAME);
 
         /* IE <6.0 return "x-kok" for LCID 0x457 ("kok") */
+        /* IE <5.0 return "fr" for LCID 0x180c ("fr-mc") */
         ok( (!lstrcmpA(buffer, expected)) ||
             broken(!lstrcmpA(buffer, lcid_table[i].broken_rfc)),
             "#%02d: got '%s' (expected '%s')\n", i, buffer, expected);
