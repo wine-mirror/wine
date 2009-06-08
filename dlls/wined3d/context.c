@@ -66,6 +66,9 @@ static void context_clean_fbo_attachments(IWineD3DDeviceImpl *This)
     }
     GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
     checkGLcall("glFramebufferTexture2D()");
+
+    GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
+    checkGLcall("glFramebufferTexture2D()");
 }
 
 /* GL locking is done by the caller */
@@ -146,7 +149,6 @@ static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD
     checkGLcall("apply_attachment_filter_states()");
 }
 
-/* TODO: Handle stencil attachments */
 /* GL locking is done by the caller */
 void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer)
 {
@@ -156,19 +158,63 @@ void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_targe
 
     if (depth_stencil)
     {
+        DWORD format_flags = depth_stencil_impl->resource.format_desc->Flags;
+
         if (use_render_buffer && depth_stencil_impl->current_renderbuffer)
         {
-            GL_EXTCALL(glFramebufferRenderbufferEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, depth_stencil_impl->current_renderbuffer->id));
-            checkGLcall("glFramebufferRenderbufferEXT()");
-        } else {
+            if (format_flags & WINED3DFMT_FLAG_DEPTH)
+            {
+                GL_EXTCALL(glFramebufferRenderbufferEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT,
+                        GL_RENDERBUFFER_EXT, depth_stencil_impl->current_renderbuffer->id));
+                checkGLcall("glFramebufferRenderbufferEXT()");
+            }
+
+            if (format_flags & WINED3DFMT_FLAG_STENCIL)
+            {
+                GL_EXTCALL(glFramebufferRenderbufferEXT(fbo_target, GL_STENCIL_ATTACHMENT_EXT,
+                        GL_RENDERBUFFER_EXT, depth_stencil_impl->current_renderbuffer->id));
+                checkGLcall("glFramebufferRenderbufferEXT()");
+            }
+        }
+        else
+        {
             context_apply_attachment_filter_states((IWineD3DDevice *)This, depth_stencil, TRUE);
 
-            GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, depth_stencil_impl->glDescription.target,
-                        depth_stencil_impl->glDescription.textureName, depth_stencil_impl->glDescription.level));
+            if (format_flags & WINED3DFMT_FLAG_DEPTH)
+            {
+                GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT,
+                        depth_stencil_impl->glDescription.target, depth_stencil_impl->glDescription.textureName,
+                        depth_stencil_impl->glDescription.level));
+                checkGLcall("glFramebufferTexture2DEXT()");
+            }
+
+            if (format_flags & WINED3DFMT_FLAG_STENCIL)
+            {
+                GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_STENCIL_ATTACHMENT_EXT,
+                        depth_stencil_impl->glDescription.target, depth_stencil_impl->glDescription.textureName,
+                        depth_stencil_impl->glDescription.level));
+                checkGLcall("glFramebufferTexture2DEXT()");
+            }
+        }
+
+        if (!(format_flags & WINED3DFMT_FLAG_DEPTH))
+        {
+            GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
             checkGLcall("glFramebufferTexture2DEXT()");
         }
-    } else {
+
+        if (!(format_flags & WINED3DFMT_FLAG_STENCIL))
+        {
+            GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
+            checkGLcall("glFramebufferTexture2DEXT()");
+        }
+    }
+    else
+    {
         GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
+        checkGLcall("glFramebufferTexture2DEXT()");
+
+        GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
     }
 }
