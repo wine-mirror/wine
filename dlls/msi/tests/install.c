@@ -5688,7 +5688,7 @@ static void test_propcase(void)
 START_TEST(install)
 {
     DWORD len;
-    char temp_path[MAX_PATH], prev_path[MAX_PATH];
+    char temp_path[MAX_PATH], prev_path[MAX_PATH], log_file[MAX_PATH];
     STATEMGRSTATUS status;
     BOOL ret = FALSE;
 
@@ -5718,9 +5718,13 @@ START_TEST(install)
     }
 
     /* Create only one log file and don't append. We have to pass something
-     * for the log mode for this to work.
+     * for the log mode for this to work. The logfile needs to have an absolute
+     * path otherwise we still end up with some extra logfiles as some tests
+     * change the current directory.
      */
-    MsiEnableLogA(INSTALLLOGMODE_FATALEXIT, "msitest.log", 0);
+    lstrcpyA(log_file, temp_path);
+    lstrcatA(log_file, "\\msitest.log");
+    MsiEnableLogA(INSTALLLOGMODE_FATALEXIT, log_file, 0);
 
     test_MsiInstallProduct();
     test_MsiSetComponentState();
@@ -5761,7 +5765,7 @@ START_TEST(install)
     test_adminimage();
     test_propcase();
 
-    DeleteFileA("msitest.log");
+    DeleteFileA(log_file);
 
     if (pSRSetRestorePointA && ret)
     {
