@@ -4,6 +4,7 @@
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
  *  Translation by Laurent Buffler <laurent@bluewin.ch>
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ *  Copytight 2009 Jonathan Ernst <jonathan@ernstfamily.ch>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -53,6 +54,7 @@ POPUP "É&dition" {
 POPUP "&Rechercher" {
   MENUITEM "&Rechercher...\tCtrl+F", CMD_SEARCH
   MENUITEM "&Suivant\tF3",      CMD_SEARCH_NEXT
+  MENUITEM "&Remplacer...\tCtrl+H", CMD_REPLACE
  }
 POPUP "Aid&e" {
   MENUITEM "&Sommaire",         CMD_HELP_CONTENTS
