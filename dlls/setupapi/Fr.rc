@@ -3,6 +3,7 @@
  *
  * Copyright 2001 Andreas Mohr
  * Copyright 2003 Vincent Béron
+ * Copyright 2009 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,15 +22,37 @@
 
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
+STRINGTABLE DISCARDABLE
+{
+        IDS_PROMPTDISK   "Le fichier « %s » sur %s est requis"
+        IDS_UNKNOWN      "Inconnu"
+        IDS_COPYFROM     "Copier les fichiers depuis :"
+        IDS_INFO         "Saisissez le chemin du fichier, puis cliquez sur OK."
+}
+
 COPYFILEDLGORD DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 208, 105
 STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Copie de fichiers..."
 FONT 8, "MS Shell Dlg"
 BEGIN
 	PUSHBUTTON "Annuler", IDCANCEL, 79, 84, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-	LTEXT "Source:", -1, 7, 7, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Source :", -1, 7, 7, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", SOURCESTRORD, 7, 18, 194, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
-	LTEXT "Destination:", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Destination :", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", DESTSTRORD, 7, 41, 194, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "", PROGRESSORD, "setupx_progress", 7, 63, 194, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
+
+IDPROMPTFORDISK DIALOG MOVEABLE DISCARDABLE 0, 0, 250, 120
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Fichiers requis"
+FONT 8, "MS Shell Dlg"
+BEGIN
+	LTEXT "Veuillez insérer le disque d'installation du fabriquant et\nassurez vous que le lecteur correct est sélectionné ci-dessous", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Copier les fichiers du fabriquan depuis :", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
+	PUSHBUTTON "OK", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Annuler", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Parcourir...", IDC_RUNDLG_BROWSE, 195, 100, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
