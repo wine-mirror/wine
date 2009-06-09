@@ -955,7 +955,7 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     TRACE("(%p, %p, %p)\n", hdc, hDevice, graphics);
 
     if(hDevice != NULL) {
-        FIXME("Don't know how to hadle parameter hDevice\n");
+        FIXME("Don't know how to handle parameter hDevice\n");
         return NotImplemented;
     }
 
@@ -3844,4 +3844,37 @@ GpStatus WINGDIPAPI GdipTranslateClipI(GpGraphics *graphics, INT dx, INT dy)
         return ObjectBusy;
 
     return GdipTranslateRegion(graphics->clip, (REAL)dx, (REAL)dy);
+}
+
+
+/*****************************************************************************
+ * GdipMeasureDriverString [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT16 *text, INT length,
+                                            GDIPCONST GpFont *font, GDIPCONST PointF *positions,
+                                            INT flags, GDIPCONST GpMatrix *matrix, RectF *boundingBox)
+{
+    FIXME("(%p %p %d %p %p %d %p %p): stub\n", graphics, text, length, font, positions, flags, matrix, boundingBox);
+    return NotImplemented;
+}
+
+/*****************************************************************************
+ * GdipGetVisibleClipBoundsI [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetVisibleClipBoundsI(GpGraphics *graphics, GpRect *rect)
+{
+    FIXME("(%p %p): stub\n", graphics, rect);
+    return NotImplemented;
+}
+
+/*****************************************************************************
+ * GdipDrawDriverString [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 *text, INT length,
+                                         GDIPCONST GpFont *font, GDIPCONST GpBrush *brush,
+                                         GDIPCONST PointF *positions, INT flags,
+                                         GDIPCONST GpMatrix *matrix )
+{
+    FIXME("(%p %p %d %p %p %p %d %p): stub \n", graphics, text, length, font, brush, positions, flags, matrix);
+    return NotImplemented;
 }

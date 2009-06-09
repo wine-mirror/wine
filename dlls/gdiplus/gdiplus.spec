@@ -169,7 +169,7 @@
 @ stub GdipDrawCurve3I
 @ stdcall GdipDrawCurve(ptr ptr ptr long)
 @ stdcall GdipDrawCurveI(ptr ptr ptr long)
-@ stub GdipDrawDriverString
+@ stdcall GdipDrawDriverString(ptr ptr long ptr ptr ptr long ptr)
 @ stdcall GdipDrawEllipse(ptr ptr long long long long)
 @ stdcall GdipDrawEllipseI(ptr ptr long long long long)
 @ stdcall GdipDrawImage(ptr ptr long long)
@@ -401,7 +401,7 @@
 @ stdcall GdipGetTextureTransform(ptr ptr)
 @ stdcall GdipGetTextureWrapMode(ptr ptr)
 @ stub GdipGetVisibleClipBounds
-@ stub GdipGetVisibleClipBoundsI
+@ stdcall GdipGetVisibleClipBoundsI(ptr ptr)
 @ stdcall GdipGetWorldTransform(ptr ptr)
 @ stdcall GdipGraphicsClear(ptr long)
 @ stub GdipGraphicsSetAbort
@@ -440,7 +440,7 @@
 @ stdcall GdipLoadImageFromStream(ptr ptr)
 @ stdcall GdipLoadImageFromStreamICM(ptr ptr)
 @ stdcall GdipMeasureCharacterRanges(ptr wstr long ptr ptr ptr long ptr)
-@ stub GdipMeasureDriverString
+@ stdcall GdipMeasureDriverString(ptr ptr long ptr ptr long ptr ptr)
 @ stdcall GdipMeasureString(ptr wstr long ptr ptr ptr ptr ptr ptr)
 @ stub GdipMultiplyLineTransform
 @ stdcall GdipMultiplyMatrix(ptr ptr long)
