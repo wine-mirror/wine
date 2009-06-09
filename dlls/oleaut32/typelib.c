@@ -2872,13 +2872,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     /* TLIBATTR fields */
     MSFT_ReadGuid(&pTypeLibImpl->LibAttr.guid, tlbHeader.posguid, &cx);
 
-    /*    pTypeLibImpl->LibAttr.lcid = tlbHeader.lcid;*/
-    /* Windows seems to have zero here, is this correct? */
-    if(SUBLANGID(tlbHeader.lcid) == SUBLANG_NEUTRAL)
-      pTypeLibImpl->LibAttr.lcid = MAKELCID(MAKELANGID(PRIMARYLANGID(tlbHeader.lcid),0),0);
-    else
-      pTypeLibImpl->LibAttr.lcid = 0;
-
+    pTypeLibImpl->LibAttr.lcid = tlbHeader.lcid2;
     pTypeLibImpl->LibAttr.syskind = tlbHeader.varflags & 0x0f; /* check the mask */
     pTypeLibImpl->LibAttr.wMajorVerNum = LOWORD(tlbHeader.version);
     pTypeLibImpl->LibAttr.wMinorVerNum = HIWORD(tlbHeader.version);
