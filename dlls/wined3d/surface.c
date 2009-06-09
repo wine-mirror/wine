@@ -3540,6 +3540,20 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             rect.y1 += This->currentDesc.Height - h; rect.y2 += This->currentDesc.Height - h;
         }
 
+        if (!is_identity_fixup(This->resource.format_desc->color_fixup))
+        {
+            FIXME("Destination format %s has a fixup, this is not supported.\n",
+                    debug_d3dformat(This->resource.format_desc->format));
+            dump_color_fixup_desc(This->resource.format_desc->color_fixup);
+        }
+
+        if (!myDevice->blitter->color_fixup_supported(Src->resource.format_desc->color_fixup))
+        {
+            FIXME("Source format %s has an unsupported fixup:\n",
+                    debug_d3dformat(Src->resource.format_desc->format));
+            dump_color_fixup_desc(Src->resource.format_desc->color_fixup);
+        }
+
         myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format_desc,
                 Src->glDescription.target, Src->pow2Width, Src->pow2Height);
 
