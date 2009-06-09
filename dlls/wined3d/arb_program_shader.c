@@ -74,9 +74,11 @@ static unsigned int reserved_vs_const(IWineD3DBaseShader *shader, const WineD3D_
 #define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
 
 /* ARB_program_shader private data */
-struct shader_arb_priv {
+struct shader_arb_priv
+{
     GLuint                  current_vprogram_id;
     GLuint                  current_fprogram_id;
+    const struct arb_ps_compiled_shader *compiled_fprog;
     GLuint                  depth_blt_vprogram_id;
     GLuint                  depth_blt_fprogram_id[tex_type_count];
     BOOL                    use_arbfp_fixed_func;
@@ -87,6 +89,27 @@ struct if_frame {
     struct list entry;
     BOOL ifc;
     BOOL muting;
+};
+
+struct arb_ps_compile_args
+{
+    struct ps_compile_args          super;
+    DWORD                           bools; /* WORD is enough, use DWORD for alignment */
+};
+
+struct stb_const_desc
+{
+    unsigned char           texunit;
+    UINT                    const_num;
+};
+
+struct arb_ps_compiled_shader
+{
+    struct arb_ps_compile_args      args;
+    GLuint                          prgId;
+    struct stb_const_desc       bumpenvmatconst[MAX_TEXTURES];
+    unsigned char               numbumpenvmatconsts;
+    struct stb_const_desc       luminanceconst[MAX_TEXTURES];
 };
 
 struct shader_arb_ctx_priv {
@@ -102,18 +125,9 @@ struct shader_arb_ctx_priv {
 
     const struct arb_vs_compile_args    *cur_vs_args;
     const struct arb_ps_compile_args    *cur_ps_args;
+    const struct arb_ps_compiled_shader *compiled_fprog;
     struct list if_frames;
     BOOL muted;
-};
-
-struct arb_ps_compile_args {
-    struct ps_compile_args          super;
-    DWORD                           bools; /* WORD is enough, use DWORD for alignment */
-};
-
-struct arb_ps_compiled_shader {
-    struct arb_ps_compile_args      args;
-    GLuint                          prgId;
 };
 
 struct arb_pshader_private {
@@ -256,26 +270,28 @@ static void shader_arb_load_np2fixup_constants(
 static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
 {
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
-    IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
-    IWineD3DPixelShaderImpl *psi = (IWineD3DPixelShaderImpl *) pshader;
     const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
     unsigned char i;
+    struct shader_arb_priv *priv = deviceImpl->shader_priv;
+    const struct arb_ps_compiled_shader *gl_shader = priv->compiled_fprog;
 
-    for(i = 0; i < psi->numbumpenvmatconsts; i++)
+    for(i = 0; i < gl_shader->numbumpenvmatconsts; i++)
     {
-        /* The state manager takes care that this function is always called if the bump env matrix changes */
-        const float *data = (const float *)&stateBlock->textureState[(int) psi->bumpenvmatconst[i].texunit][WINED3DTSS_BUMPENVMAT00];
-        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->bumpenvmatconst[i].const_num, data));
+        int texunit = gl_shader->bumpenvmatconst[i].texunit;
 
-        if (psi->luminanceconst[i].const_num != WINED3D_CONST_NUM_UNUSED)
+        /* The state manager takes care that this function is always called if the bump env matrix changes */
+        const float *data = (const float *)&stateBlock->textureState[texunit][WINED3DTSS_BUMPENVMAT00];
+        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->bumpenvmatconst[i].const_num, data));
+
+        if (gl_shader->luminanceconst[i].const_num != WINED3D_CONST_NUM_UNUSED)
         {
             /* WINED3DTSS_BUMPENVLSCALE and WINED3DTSS_BUMPENVLOFFSET are next to each other.
              * point gl to the scale, and load 4 floats. x = scale, y = offset, z and w are junk, we
              * don't care about them. The pointers are valid for sure because the stateblock is bigger.
              * (they're WINED3DTSS_TEXTURETRANSFORMFLAGS and WINED3DTSS_ADDRESSW, so most likely 0 or NaN
             */
-            const float *scale = (const float *)&stateBlock->textureState[(int) psi->luminanceconst[i].texunit][WINED3DTSS_BUMPENVLSCALE];
-            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, psi->luminanceconst[i].const_num, scale));
+            const float *scale = (const float *)&stateBlock->textureState[texunit][WINED3DTSS_BUMPENVLSCALE];
+            GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->luminanceconst[i].const_num, scale));
         }
     }
 }
@@ -365,11 +381,11 @@ static DWORD *local_const_mapping(IWineD3DBaseShaderImpl *This)
 }
 
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
-static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const shader_reg_maps *reg_maps,
+static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const shader_reg_maps *reg_maps,
         SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info, DWORD *lconst_map)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
-    DWORD i, cur, next_local = 0;
+    DWORD i, next_local = 0;
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     unsigned max_constantsF;
     const local_constant *lconst;
@@ -444,37 +460,7 @@ static void shader_generate_arb_declarations(IWineD3DBaseShader *iface, const sh
         }
     }
 
-    for(i = 0; i < (sizeof(reg_maps->bumpmat) / sizeof(reg_maps->bumpmat[0])); i++) {
-        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This;
-        if(!reg_maps->bumpmat[i]) continue;
-
-        cur = ps->numbumpenvmatconsts;
-        ps->bumpenvmatconst[cur].const_num = -1;
-        ps->bumpenvmatconst[cur].texunit = i;
-        ps->luminanceconst[cur].const_num = -1;
-        ps->luminanceconst[cur].texunit = i;
-
-        /* We can fit the constants into the constant limit for sure because texbem, texbeml, bem and beml are only supported
-         * in 1.x shaders, and GL_ARB_fragment_program has a constant limit of 24 constants. So in the worst case we're loading
-         * 8 shader constants, 8 bump matrices and 8 luminance parameters and are perfectly fine. (No NP2 fixup on bumpmapped
-         * textures due to conditional NP2 restrictions)
-         *
-         * Use local constants to load the bump env parameters, not program.env. This avoids collisions with d3d constants of
-         * shaders in newer shader models. Since the bump env parameters have to share their space with NP2 fixup constants,
-         * their location is shader dependent anyway and they cannot be loaded globally.
-         */
-        ps->bumpenvmatconst[cur].const_num = next_local++;
-        shader_addline(buffer, "PARAM bumpenvmat%d = program.local[%d];\n",
-                       i, ps->bumpenvmatconst[cur].const_num);
-        ps->numbumpenvmatconsts = cur + 1;
-
-        if(!reg_maps->luminanceparams[i]) continue;
-
-        ((IWineD3DPixelShaderImpl *)This)->luminanceconst[cur].const_num = next_local++;
-        shader_addline(buffer, "PARAM luminance%d = program.local[%d];\n",
-                        i, ps->luminanceconst[cur].const_num);
-    }
-
+    return next_local;
 }
 
 static const char * const shift_tab[] = {
@@ -2093,7 +2079,7 @@ static void arbfp_add_sRGB_correction(SHADER_BUFFER *buffer, const char *fragcol
 
 /* GL locking is done by the caller */
 static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
-        SHADER_BUFFER *buffer, const struct arb_ps_compile_args *args)
+        SHADER_BUFFER *buffer, const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
 {
     const shader_reg_maps* reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
@@ -2101,7 +2087,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     const local_constant *lconst;
     GLuint retval;
     char fragcolor[16];
-    DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
+    DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This), next_local, cur;
     struct shader_arb_ctx_priv priv_ctx;
     BOOL dcl_tmp = args->super.srgb_correction, dcl_td = FALSE;
     BOOL want_nv_prog = FALSE;
@@ -2148,6 +2134,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     /*  Create the hw ARB shader */
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_ps_args = args;
+    priv_ctx.compiled_fprog = compiled;
     list_init(&priv_ctx.if_frames);
 
     /* Avoid enabling NV_fragment_program* if we do not need it.
@@ -2238,7 +2225,37 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     }
 
     /* Base Declarations */
-    shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
+    next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
+
+    for(i = 0; i < (sizeof(reg_maps->bumpmat) / sizeof(reg_maps->bumpmat[0])); i++) {
+        if(!reg_maps->bumpmat[i]) continue;
+
+        cur = compiled->numbumpenvmatconsts;
+        compiled->bumpenvmatconst[cur].const_num = -1;
+        compiled->bumpenvmatconst[cur].texunit = i;
+        compiled->luminanceconst[cur].const_num = -1;
+        compiled->luminanceconst[cur].texunit = i;
+
+        /* We can fit the constants into the constant limit for sure because texbem, texbeml, bem and beml are only supported
+         * in 1.x shaders, and GL_ARB_fragment_program has a constant limit of 24 constants. So in the worst case we're loading
+         * 8 shader constants, 8 bump matrices and 8 luminance parameters and are perfectly fine. (No NP2 fixup on bumpmapped
+         * textures due to conditional NP2 restrictions)
+         *
+         * Use local constants to load the bump env parameters, not program.env. This avoids collisions with d3d constants of
+         * shaders in newer shader models. Since the bump env parameters have to share their space with NP2 fixup constants,
+         * their location is shader dependent anyway and they cannot be loaded globally.
+         */
+        compiled->bumpenvmatconst[cur].const_num = next_local++;
+        shader_addline(buffer, "PARAM bumpenvmat%d = program.local[%d];\n",
+                       i, compiled->bumpenvmatconst[cur].const_num);
+        compiled->numbumpenvmatconsts = cur + 1;
+
+        if(!reg_maps->luminanceparams[i]) continue;
+
+        compiled->luminanceconst[cur].const_num = next_local++;
+        shader_addline(buffer, "PARAM luminance%d = program.local[%d];\n",
+                       i, compiled->luminanceconst[cur].const_num);
+    }
 
     /* Base Shader Body */
     shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
@@ -2436,7 +2453,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
 }
 
 /* GL locking is done by the caller */
-static GLuint find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb_ps_compile_args *args)
+static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb_ps_compile_args *args)
 {
     UINT i;
     DWORD new_size;
@@ -2456,7 +2473,7 @@ static GLuint find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb
      */
     for(i = 0; i < shader_data->num_gl_shaders; i++) {
         if(memcmp(&shader_data->gl_shaders[i].args, args, sizeof(*args)) == 0) {
-            return shader_data->gl_shaders[i].prgId;
+            return &shader_data->gl_shaders[i];
         }
     }
 
@@ -2465,10 +2482,10 @@ static GLuint find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb
         if (shader_data->num_gl_shaders)
         {
             new_size = shader_data->shader_array_size + max(1, shader_data->shader_array_size / 2);
-            new_array = HeapReAlloc(GetProcessHeap(), 0, shader_data->gl_shaders,
+            new_array = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, shader_data->gl_shaders,
                                     new_size * sizeof(*shader_data->gl_shaders));
         } else {
-            new_array = HeapAlloc(GetProcessHeap(), 0, sizeof(*shader_data->gl_shaders));
+            new_array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data->gl_shaders));
             new_size = 1;
         }
 
@@ -2486,11 +2503,12 @@ static GLuint find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb
             ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
 
     shader_buffer_init(&buffer);
-    ret = shader_arb_generate_pshader(shader, &buffer, args);
+    ret = shader_arb_generate_pshader(shader, &buffer, args,
+                                      &shader_data->gl_shaders[shader_data->num_gl_shaders]);
     shader_buffer_free(&buffer);
-    shader_data->gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
+    shader_data->gl_shaders[shader_data->num_gl_shaders].prgId = ret;
 
-    return ret;
+    return &shader_data->gl_shaders[shader_data->num_gl_shaders++];
 }
 
 static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const struct arb_vs_compile_args *new,
@@ -2618,10 +2636,13 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 
     if (usePS) {
         struct arb_ps_compile_args compile_args;
+        struct arb_ps_compiled_shader *compiled;
         TRACE("Using pixel shader\n");
         find_arb_ps_compile_args((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader, This->stateBlock, &compile_args);
-        priv->current_fprogram_id = find_arb_pshader((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader,
-                                                     &compile_args);
+        compiled = find_arb_pshader((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader,
+                                    &compile_args);
+        priv->current_fprogram_id = compiled->prgId;
+        priv->compiled_fprog = compiled;
 
         /* Bind the fragment program */
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));

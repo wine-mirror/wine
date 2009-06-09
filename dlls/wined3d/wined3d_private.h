@@ -733,11 +733,6 @@ enum vertexprocessing_mode {
 
 #define WINED3D_CONST_NUM_UNUSED ~0U
 
-struct stb_const_desc {
-    unsigned char           texunit;
-    UINT                    const_num;
-};
-
 enum fogmode {
     FOG_OFF,
     FOG_LINEAR,
@@ -2690,9 +2685,6 @@ typedef struct IWineD3DPixelShaderImpl {
     void                        *backend_priv;
 
     /* Some information about the shader behavior */
-    struct stb_const_desc       bumpenvmatconst[MAX_TEXTURES];
-    unsigned char               numbumpenvmatconsts;
-    struct stb_const_desc       luminanceconst[MAX_TEXTURES];
     char                        vpos_uniform;
 
     BOOL                        color0_mov;

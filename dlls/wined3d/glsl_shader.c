@@ -657,20 +657,21 @@ static void shader_glsl_load_constants(
         /* Upload the environment bump map matrix if needed. The needsbumpmat member specifies the texture stage to load the matrix from.
          * It can't be 0 for a valid texbem instruction.
          */
-        for(i = 0; i < ((IWineD3DPixelShaderImpl *) pshader)->numbumpenvmatconsts; i++) {
-            IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) pshader;
-            int stage = ps->luminanceconst[i].texunit;
+        for(i = 0; i < MAX_TEXTURES; i++) {
+            const float *data;
 
-            const float *data = (const float *)&stateBlock->textureState[(int)ps->bumpenvmatconst[i].texunit][WINED3DTSS_BUMPENVMAT00];
+            if(prog->bumpenvmat_location[i] == -1) continue;
+
+            data = (const float *)&stateBlock->textureState[i][WINED3DTSS_BUMPENVMAT00];
             GL_EXTCALL(glUniformMatrix2fvARB(prog->bumpenvmat_location[i], 1, 0, data));
             checkGLcall("glUniformMatrix2fvARB");
 
             /* texbeml needs the luminance scale and offset too. If texbeml is used, needsbumpmat
              * is set too, so we can check that in the needsbumpmat check
              */
-            if(ps->baseShader.reg_maps.luminanceparams[stage]) {
-                const GLfloat *scale = (const GLfloat *)&stateBlock->textureState[stage][WINED3DTSS_BUMPENVLSCALE];
-                const GLfloat *offset = (const GLfloat *)&stateBlock->textureState[stage][WINED3DTSS_BUMPENVLOFFSET];
+            if(prog->luminancescale_location[i] != -1) {
+                const GLfloat *scale = (const GLfloat *)&stateBlock->textureState[i][WINED3DTSS_BUMPENVLSCALE];
+                const GLfloat *offset = (const GLfloat *)&stateBlock->textureState[i][WINED3DTSS_BUMPENVLOFFSET];
 
                 GL_EXTCALL(glUniform1fvARB(prog->luminancescale_location[i], 1, scale));
                 checkGLcall("glUniform1fvARB");
@@ -864,28 +865,20 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
             shader_addline(buffer, "void order_ps_input();\n");
         }
     } else {
-        IWineD3DPixelShaderImpl *ps_impl = (IWineD3DPixelShaderImpl *) This;
-
-        ps_impl->numbumpenvmatconsts = 0;
         for(i = 0; i < (sizeof(reg_maps->bumpmat) / sizeof(reg_maps->bumpmat[0])); i++) {
             if(!reg_maps->bumpmat[i]) {
                 continue;
             }
 
-            ps_impl->bumpenvmatconst[(int) ps_impl->numbumpenvmatconsts].texunit = i;
             shader_addline(buffer, "uniform mat2 bumpenvmat%d;\n", i);
 
             if(reg_maps->luminanceparams) {
-                ps_impl->luminanceconst[(int) ps_impl->numbumpenvmatconsts].texunit = i;
                 shader_addline(buffer, "uniform float luminancescale%d;\n", i);
                 shader_addline(buffer, "uniform float luminanceoffset%d;\n", i);
                 extra_constants_needed++;
-            } else {
-                ps_impl->luminanceconst[(int) ps_impl->numbumpenvmatconsts].texunit = -1;
             }
 
             extra_constants_needed++;
-            ps_impl->numbumpenvmatconsts++;
         }
 
         if(ps_args->srgb_correction) {
@@ -4062,12 +4055,12 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
         char name[32];
         WORD map;
 
-        for(i = 0; i < ((IWineD3DPixelShaderImpl*)pshader)->numbumpenvmatconsts; i++) {
-            sprintf(name, "bumpenvmat%d", ((IWineD3DPixelShaderImpl*)pshader)->bumpenvmatconst[i].texunit);
+        for(i = 0; i < MAX_TEXTURES; i++) {
+            sprintf(name, "bumpenvmat%u", i);
             entry->bumpenvmat_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
-            sprintf(name, "luminancescale%d", ((IWineD3DPixelShaderImpl*)pshader)->luminanceconst[i].texunit);
+            sprintf(name, "luminancescale%u", i);
             entry->luminancescale_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
-            sprintf(name, "luminanceoffset%d", ((IWineD3DPixelShaderImpl*)pshader)->luminanceconst[i].texunit);
+            sprintf(name, "luminanceoffset%u", i);
             entry->luminanceoffset_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
         }
 
