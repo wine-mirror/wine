@@ -1737,14 +1737,14 @@ typedef struct _WINED3DSURFACE_DESC
 
 typedef struct _WINED3DVOLUME_DESC
 {
-    WINED3DFORMAT *Format;
-    WINED3DRESOURCETYPE *Type;
-    DWORD *Usage;
-    WINED3DPOOL *Pool;
-    UINT *Size;
-    UINT *Width;
-    UINT *Height;
-    UINT *Depth;
+    WINED3DFORMAT Format;
+    WINED3DRESOURCETYPE Type;
+    DWORD Usage;
+    WINED3DPOOL Pool;
+    UINT Size;
+    UINT Width;
+    UINT Height;
+    UINT Depth;
 } WINED3DVOLUME_DESC;
 
 typedef struct _WINED3DCLIPSTATUS

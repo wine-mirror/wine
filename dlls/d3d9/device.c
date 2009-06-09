@@ -454,15 +454,8 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
             break;
 
         case D3DRTYPE_VOLUME:
-            volume_desc.Format = &dummy_format;
-            volume_desc.Type = &type;
-            volume_desc.Usage = &dummy_dword;
-            volume_desc.Pool = &pool;
-            volume_desc.Size = &dummy_dword;
-            volume_desc.Width = &dummy_dword;
-            volume_desc.Height = &dummy_dword;
-            volume_desc.Depth = &dummy_dword;
             IWineD3DVolume_GetDesc((IWineD3DVolume *) resource, &volume_desc);
+            pool = volume_desc.Pool;
             break;
 
         case D3DRTYPE_INDEXBUFFER:

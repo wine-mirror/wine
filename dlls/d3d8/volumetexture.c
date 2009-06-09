@@ -197,26 +197,25 @@ static DWORD WINAPI IDirect3DVolumeTexture8Impl_GetLevelCount(LPDIRECT3DVOLUMETE
 static HRESULT WINAPI IDirect3DVolumeTexture8Impl_GetLevelDesc(LPDIRECT3DVOLUMETEXTURE8 iface, UINT Level, D3DVOLUME_DESC* pDesc) {
     IDirect3DVolumeTexture8Impl *This = (IDirect3DVolumeTexture8Impl *)iface;
     WINED3DVOLUME_DESC     wined3ddesc;
-    UINT                   tmpInt = -1;
     HRESULT hr;
 
     TRACE("(%p) Relay\n", This);
-
-    /* As d3d8 and d3d8 structures differ, pass in ptrs to where data needs to go */
-    wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
-    wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
-    wined3ddesc.Usage               = &pDesc->Usage;
-    wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
-    wined3ddesc.Size                = &tmpInt;
-    wined3ddesc.Width               = &pDesc->Width;
-    wined3ddesc.Height              = &pDesc->Height;
-    wined3ddesc.Depth               = &pDesc->Depth;
 
     EnterCriticalSection(&d3d8_cs);
     hr = IWineD3DVolumeTexture_GetLevelDesc(This->wineD3DVolumeTexture, Level, &wined3ddesc);
     LeaveCriticalSection(&d3d8_cs);
 
-    if (SUCCEEDED(hr)) pDesc->Format = d3dformat_from_wined3dformat(pDesc->Format);
+    if (SUCCEEDED(hr))
+    {
+        pDesc->Format = d3dformat_from_wined3dformat(wined3ddesc.Format);
+        pDesc->Type = wined3ddesc.Type;
+        pDesc->Usage = wined3ddesc.Usage;
+        pDesc->Pool = wined3ddesc.Pool;
+        pDesc->Size = wined3ddesc.Size;
+        pDesc->Width = wined3ddesc.Width;
+        pDesc->Height = wined3ddesc.Height;
+        pDesc->Depth = wined3ddesc.Depth;
+    }
 
     return hr;
 }
