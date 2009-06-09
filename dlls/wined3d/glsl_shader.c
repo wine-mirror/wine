@@ -3952,16 +3952,12 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     GLhandleARB reorder_shader_id          = 0;
     unsigned int i;
     char glsl_name[8];
-    GLhandleARB vshader_id, pshader_id;
     struct ps_compile_args ps_compile_args;
     struct vs_compile_args vs_compile_args;
 
-    if(use_vs) {
-        find_vs_compile_args((IWineD3DVertexShaderImpl*)This->stateBlock->vertexShader, This->stateBlock, &vs_compile_args);
-    }
-    if(use_ps) {
-        find_ps_compile_args((IWineD3DPixelShaderImpl*)This->stateBlock->pixelShader, This->stateBlock, &ps_compile_args);
-    }
+    if (vshader) find_vs_compile_args((IWineD3DVertexShaderImpl *)vshader, This->stateBlock, &vs_compile_args);
+    if (pshader) find_ps_compile_args((IWineD3DPixelShaderImpl *)pshader, This->stateBlock, &ps_compile_args);
+
     entry = get_glsl_program_entry(priv, vshader, pshader, &vs_compile_args, &ps_compile_args);
     if (entry) {
         priv->glsl_program = entry;
@@ -3986,14 +3982,10 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     /* Set the current program */
     priv->glsl_program = entry;
 
-    if(use_vs) {
-        vshader_id = find_glsl_vshader((IWineD3DVertexShaderImpl *) vshader, &vs_compile_args);
-    } else {
-        vshader_id = 0;
-    }
-
     /* Attach GLSL vshader */
-    if (vshader_id) {
+    if (vshader)
+    {
+        GLhandleARB vshader_id = find_glsl_vshader((IWineD3DVertexShaderImpl *)vshader, &vs_compile_args);
         WORD map = ((IWineD3DBaseShaderImpl *)vshader)->baseShader.reg_maps.input_registers;
         char tmp_name[10];
 
@@ -4031,14 +4023,10 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
         list_add_head(&((IWineD3DBaseShaderImpl *)vshader)->baseShader.linked_programs, &entry->vshader_entry);
     }
 
-    if(use_ps) {
-        pshader_id = find_glsl_pshader((IWineD3DPixelShaderImpl *) pshader, &ps_compile_args);
-    } else {
-        pshader_id = 0;
-    }
-
     /* Attach GLSL pshader */
-    if (pshader_id) {
+    if (pshader)
+    {
+        GLhandleARB pshader_id = find_glsl_pshader((IWineD3DPixelShaderImpl *)pshader, &ps_compile_args);
         TRACE("Attaching GLSL shader object %u to program %u\n", pshader_id, programId);
         GL_EXTCALL(glAttachObjectARB(programId, pshader_id));
         checkGLcall("glAttachObjectARB");
@@ -4071,8 +4059,10 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     }
 
     if(pshader) {
+        char name[32];
+        WORD map;
+
         for(i = 0; i < ((IWineD3DPixelShaderImpl*)pshader)->numbumpenvmatconsts; i++) {
-            char name[32];
             sprintf(name, "bumpenvmat%d", ((IWineD3DPixelShaderImpl*)pshader)->bumpenvmatconst[i].texunit);
             entry->bumpenvmat_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
             sprintf(name, "luminancescale%d", ((IWineD3DPixelShaderImpl*)pshader)->luminanceconst[i].texunit);
@@ -4080,17 +4070,14 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
             sprintf(name, "luminanceoffset%d", ((IWineD3DPixelShaderImpl*)pshader)->luminanceconst[i].texunit);
             entry->luminanceoffset_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
         }
-    }
 
-    if (use_ps && ps_compile_args.np2_fixup) {
-        char name[32];
-        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
-            if (ps_compile_args.np2_fixup & (1 << i)) {
-                sprintf(name, "PsamplerNP2Fixup%u", i);
-                entry->np2Fixup_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
-            } else {
-                entry->np2Fixup_location[i] = -1;
-            }
+        map = ps_compile_args.np2_fixup;
+        for (i = 0; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
+
+            sprintf(name, "PsamplerNP2Fixup%u", i);
+            entry->np2Fixup_location[i] = GL_EXTCALL(glGetUniformLocationARB(programId, name));
         }
     }
 
@@ -4120,14 +4107,8 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
      * fixed function fragment processing setups. So once the program is linked these samplers
      * won't change.
      */
-    if(vshader_id) {
-        /* Load vertex shader samplers */
-        shader_glsl_load_vsamplers(gl_info, This->texUnitMap, programId);
-    }
-    if(pshader_id) {
-        /* Load pixel shader samplers */
-        shader_glsl_load_psamplers(gl_info, This->texUnitMap, programId);
-    }
+    if (vshader) shader_glsl_load_vsamplers(gl_info, This->texUnitMap, programId);
+    if (pshader) shader_glsl_load_psamplers(gl_info, This->texUnitMap, programId);
 
     /* If the local constants do not have to be loaded with the environment constants,
      * load them now to have them hardcoded in the GLSL program. This saves some CPU cycles
