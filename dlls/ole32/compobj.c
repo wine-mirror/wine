@@ -2265,7 +2265,7 @@ HRESULT WINAPI CoGetClassObject(
     APARTMENT  *apt;
     BOOL release_apt = FALSE;
 
-    TRACE("\n\tCLSID:\t%s,\n\tIID:\t%s\n", debugstr_guid(rclsid), debugstr_guid(iid));
+    TRACE("CLSID: %s,IID: %s\n", debugstr_guid(rclsid), debugstr_guid(iid));
 
     if (!ppv)
         return E_INVALIDARG;
@@ -2283,8 +2283,8 @@ HRESULT WINAPI CoGetClassObject(
     }
 
     if (pServerInfo) {
-	FIXME("\tpServerInfo: name=%s\n",debugstr_w(pServerInfo->pwszName));
-	FIXME("\t\tpAuthInfo=%p\n",pServerInfo->pAuthInfo);
+	FIXME("pServerInfo->name=%s pAuthInfo=%p\n",
+              debugstr_w(pServerInfo->pwszName), pServerInfo->pAuthInfo);
     }
 
     /*

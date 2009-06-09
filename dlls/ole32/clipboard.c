@@ -997,8 +997,7 @@ static HRESULT get_priv_data(ole_priv_data **data)
         {
             char buf[100];
             GetClipboardFormatNameA(cf, buf, sizeof(buf));
-            TRACE("\tcf %04x %s\n", cf, buf);
-            ;
+            TRACE("cf %04x %s\n", cf, buf);
         }
         TRACE("count %d\n", count);
         size += count * sizeof(ret->entries[0]);
