@@ -3297,7 +3297,7 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
  * Although shell32 is already linked the behaviour of exported StrRetToStrN
  * is dependent on whether emulated OS is unicode or not.
  */
-static HRESULT COMDLG32_StrRetToStrNW (LPWSTR dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
+static HRESULT COMDLG32_StrRetToStrNW (LPWSTR dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
 	switch (src->uType)
 	{

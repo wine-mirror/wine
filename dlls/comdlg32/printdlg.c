@@ -2364,7 +2364,7 @@ static inline BOOL is_metric(const pagesetup_data *data)
     return pagesetup_get_flags(data) & PSD_INHUNDREDTHSOFMILLIMETERS;
 }
 
-static inline LONG tenths_mm_to_size(pagesetup_data *data, LONG size)
+static inline LONG tenths_mm_to_size(const pagesetup_data *data, LONG size)
 {
     if (is_metric(data))
         return 10 * size;
@@ -2372,7 +2372,7 @@ static inline LONG tenths_mm_to_size(pagesetup_data *data, LONG size)
         return 10 * size * 100 / 254;
 }
 
-static inline LONG thousandths_inch_to_size(pagesetup_data *data, LONG size)
+static inline LONG thousandths_inch_to_size(const pagesetup_data *data, LONG size)
 {
     if (is_metric(data))
         return size * 254 / 100;
@@ -2537,7 +2537,7 @@ typedef enum
 } devnames_name;
 
 
-static inline WORD get_devname_offset(DEVNAMES *dn, devnames_name which)
+static inline WORD get_devname_offset(const DEVNAMES *dn, devnames_name which)
 {
     switch(which)
     {
@@ -3010,7 +3010,7 @@ static void update_margin_edits(HWND hDlg, const pagesetup_data *data, WORD id)
     }
 }
 
-static void margin_edit_notification(HWND hDlg, pagesetup_data *data, WORD msg, WORD id)
+static void margin_edit_notification(HWND hDlg, const pagesetup_data *data, WORD msg, WORD id)
 {
     switch (msg)
     {
