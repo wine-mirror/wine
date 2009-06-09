@@ -206,6 +206,15 @@ static inline DOUBLE date_from_time(DOUBLE time)
     return dwy-333-ily;
 }
 
+/* ECMA-262 3th Edition    15.9.1.6 */
+static inline DOUBLE week_day(DOUBLE time)
+{
+    if(isnan(time))
+        return ret_nan();
+
+    return (int)(day(time)+4) % 7;
+}
+
 /* ECMA-262 3rd Edition    15.9.1.14 */
 static inline DOUBLE time_clip(DOUBLE time)
 {
@@ -425,18 +434,42 @@ static HRESULT Date_getUTCDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.6 */
 static HRESULT Date_getDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+
+        num_set_val(retv, week_day(time));
+    }
+    return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.6 */
 static HRESULT Date_getUTCDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, week_day(date->time));
+    }
+    return S_OK;
 }
 
 static HRESULT Date_getHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
