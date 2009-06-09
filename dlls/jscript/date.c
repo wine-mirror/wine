@@ -83,6 +83,47 @@ static const WCHAR setUTCMonthW[] = {'s','e','t','U','T','C','M','o','n','t','h'
 static const WCHAR setFullYearW[] = {'s','e','t','F','u','l','l','Y','e','a','r',0};
 static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l','Y','e','a','r',0};
 
+/*ECMA-262 3th Edition    15.9.1.2 */
+#define MS_PER_DAY 86400000
+#define MS_PER_MINUTE 60000
+
+/* ECMA-262 3th Edition    15.9.1.3 */
+static inline DOUBLE day_from_year(DOUBLE year)
+{
+    int y;
+
+    if(year != (int)year)
+        return ret_nan();
+
+    y = year;
+    return 365*(y-1970) + floor((y-1969)/4)
+        - floor((y-1901)/100) + floor((y-1601)/400);
+}
+
+/* ECMA-262 3th Edition    15.9.1.3 */
+static inline DOUBLE time_from_year(DOUBLE year)
+{
+    return MS_PER_DAY*day_from_year(year);
+}
+
+/* ECMA-262 3th Edition    15.9.1.3 */
+static inline DOUBLE year_from_time(DOUBLE time)
+{
+    int y;
+
+    if(isnan(time))
+        return ret_nan();
+
+    y = 1970 + time/365.25/MS_PER_DAY;
+
+    if(time_from_year(y) > time)
+        while(time_from_year(y) > time) y--;
+    else
+        while(time_from_year(y+1)<=time) y++;
+
+    return y;
+}
+
 /* ECMA-262 3rd Edition    15.9.1.14 */
 static inline DOUBLE time_clip(DOUBLE time)
 {
@@ -188,18 +229,42 @@ static HRESULT Date_getTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.3 */
 static HRESULT Date_getFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+
+        num_set_val(retv, year_from_time(time));
+    }
+    return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.3 */
 static HRESULT Date_getUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, year_from_time(date->time));
+    }
+    return S_OK;
 }
 
 static HRESULT Date_getMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

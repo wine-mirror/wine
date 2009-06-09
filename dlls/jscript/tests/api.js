@@ -945,6 +945,15 @@ ok(date.setTime(123) === 123, "date.setTime(123) !== 123");
 ok(date.setTime("123", NaN) === 123, "date.setTime(\"123\") !== 123");
 ok(isNaN(date.setTime(NaN)), "date.setTime(NaN) is not NaN");
 
+ok(date.setTime(0) === date.getTime(), "date.setTime(0) !== date.getTime()");
+ok(date.getUTCFullYear() === 1970, "date.getUTCFullYear() = " + date.getUTCFullYear());
+date.setTime(60*24*60*60*1000);
+ok(date.getUTCFullYear() === 1970, "date.getUTCFullYear() = " + date.getUTCFullYear());
+date.setTime(59*24*60*60*1000 + 4*365*24*60*60*1000);
+ok(date.getUTCFullYear() === 1974, "date.getUTCFullYear() = " + date.getUTCFullYear());
+date.setTime(Infinity);
+ok(isNaN(date.getUTCFullYear()), "date.getUTCFullYear() is not NaN");
+
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
 Math.PI = "test";
