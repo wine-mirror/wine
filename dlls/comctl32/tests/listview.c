@@ -3304,7 +3304,7 @@ static void test_indentation(void)
     expect(TRUE, r);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, single_getdispinfo_parent_seq,
-                "get indent dispinfo", TRUE);
+                "get indent dispinfo", FALSE);
 
     DestroyWindow(hwnd);
 }

@@ -6,6 +6,7 @@
  * Copyright 2000 Jason Mawdsley
  * Copyright 2001 CodeWeavers Inc.
  * Copyright 2002 Dimitrie O. Paun
+ * Copyright 2009 Nikolay Sivov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -5746,6 +5747,14 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
         dispInfo.item.iImage = I_IMAGECALLBACK;
     }
 
+    /* Only items support indentation */
+    if ((lpLVItem->mask & LVIF_INDENT) && lpItem->iIndent == I_INDENTCALLBACK &&
+        (isubitem == 0))
+    {
+        dispInfo.item.mask |= LVIF_INDENT;
+        dispInfo.item.iIndent = I_INDENTCALLBACK;
+    }
+
     /* Apps depend on calling back for text if it is NULL or LPSTR_TEXTCALLBACKW */
     if ((lpLVItem->mask & LVIF_TEXT) && !(lpLVItem->mask & LVIF_NORECOMPUTE) &&
         !is_textW(pItemHdr->pszText))
@@ -5837,8 +5846,16 @@ static BOOL LISTVIEW_GetItemT(const LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     }
 
     /* and last, but not least, the indent field */
-    if (lpLVItem->mask & LVIF_INDENT)
-	lpLVItem->iIndent = lpItem->iIndent;
+    if (dispInfo.item.mask & LVIF_INDENT)
+    {
+	lpLVItem->iIndent = dispInfo.item.iIndent;
+	if ((dispInfo.item.mask & LVIF_DI_SETITEM) && lpItem->iIndent == I_INDENTCALLBACK)
+	    lpItem->iIndent = dispInfo.item.iIndent;
+    }
+    else if (lpLVItem->mask & LVIF_INDENT)
+    {
+        lpLVItem->iIndent = lpItem->iIndent;
+    }
 
     return TRUE;
 }
