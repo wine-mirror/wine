@@ -87,6 +87,27 @@ static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l',
 #define MS_PER_DAY 86400000
 #define MS_PER_MINUTE 60000
 
+/* ECMA-262 3th Edition    15.9.1.2 */
+static inline DOUBLE day(DOUBLE time)
+{
+    return floor(time / MS_PER_DAY);
+}
+
+/* ECMA-262 3th Edition    15.9.1.3 */
+static inline DOUBLE days_in_year(DOUBLE year)
+{
+    int y;
+
+    if(year != (int)year)
+        return ret_nan();
+
+    y = year;
+    if(y%4 != 0) return 365;
+    if(y%100 != 0) return 366;
+    if(y%400 != 0) return 365;
+    return 366;
+}
+
 /* ECMA-262 3th Edition    15.9.1.3 */
 static inline DOUBLE day_from_year(DOUBLE year)
 {
@@ -122,6 +143,43 @@ static inline DOUBLE year_from_time(DOUBLE time)
         while(time_from_year(y+1)<=time) y++;
 
     return y;
+}
+
+/* ECMA-262 3th Edition    15.9.1.3 */
+static inline int in_leap_year(DOUBLE time)
+{
+    if(days_in_year(year_from_time(time))==366)
+        return 1;
+    return 0;
+}
+
+/* ECMA-262 3th Edition    15.9.1.4 */
+static inline int day_within_year(DOUBLE time)
+{
+    return day(time) - day_from_year(year_from_time(time));
+}
+
+/* ECMA-262 3th Edition    15.9.1.4 */
+static inline DOUBLE month_from_time(DOUBLE time)
+{
+    int ily = in_leap_year(time);
+    int dwy = day_within_year(time);
+
+    if(isnan(time))
+        return ret_nan();
+
+    if(0<=dwy && dwy<31) return 0;
+    if(dwy < 59+ily) return 1;
+    if(dwy < 90+ily) return 2;
+    if(dwy < 120+ily) return 3;
+    if(dwy < 151+ily) return 4;
+    if(dwy < 181+ily) return 5;
+    if(dwy < 212+ily) return 6;
+    if(dwy < 243+ily) return 7;
+    if(dwy < 273+ily) return 8;
+    if(dwy < 304+ily) return  9;
+    if(dwy < 334+ily) return  10;
+    return  11;
 }
 
 /* ECMA-262 3rd Edition    15.9.1.14 */
@@ -267,18 +325,42 @@ static HRESULT Date_getUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DI
     return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.4 */
 static HRESULT Date_getMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+
+        num_set_val(retv, month_from_time(time));
+    }
+    return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.4 */
 static HRESULT Date_getUTCMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, month_from_time(date->time));
+    }
+    return S_OK;
 }
 
 static HRESULT Date_getDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

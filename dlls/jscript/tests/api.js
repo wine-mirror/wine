@@ -947,12 +947,17 @@ ok(isNaN(date.setTime(NaN)), "date.setTime(NaN) is not NaN");
 
 ok(date.setTime(0) === date.getTime(), "date.setTime(0) !== date.getTime()");
 ok(date.getUTCFullYear() === 1970, "date.getUTCFullYear() = " + date.getUTCFullYear());
+ok(date.getUTCMonth() === 0, "date.getUTCMonth() = " + date.getUTCMonth());
 date.setTime(60*24*60*60*1000);
 ok(date.getUTCFullYear() === 1970, "date.getUTCFullYear() = " + date.getUTCFullYear());
+ok(date.getUTCMonth() === 2, "date.getUTCMonth() = " + date.getUTCMonth());
 date.setTime(59*24*60*60*1000 + 4*365*24*60*60*1000);
 ok(date.getUTCFullYear() === 1974, "date.getUTCFullYear() = " + date.getUTCFullYear());
+ok(date.getUTCMonth() === 1, "date.getUTCMonth() = " + date.getUTCMonth());
+ok(date.getUTCMonth(123) === 1, "date.getUTCMonth() = " + date.getUTCMonth());
 date.setTime(Infinity);
 ok(isNaN(date.getUTCFullYear()), "date.getUTCFullYear() is not NaN");
+ok(isNaN(date.getUTCMonth()), "date.getUTCMonth() is not NaN");
 
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
