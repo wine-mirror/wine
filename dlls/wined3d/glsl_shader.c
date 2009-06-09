@@ -3958,15 +3958,9 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
 
     if(use_vs) {
         find_vs_compile_args((IWineD3DVertexShaderImpl*)This->stateBlock->vertexShader, This->stateBlock, &vs_compile_args);
-    } else {
-        /* FIXME: Do we really have to spend CPU cycles to generate a few zeroed bytes? */
-        memset(&vs_compile_args, 0, sizeof(vs_compile_args));
     }
     if(use_ps) {
         find_ps_compile_args((IWineD3DPixelShaderImpl*)This->stateBlock->pixelShader, This->stateBlock, &ps_compile_args);
-    } else {
-        /* FIXME: Do we really have to spend CPU cycles to generate a few zeroed bytes? */
-        memset(&ps_compile_args, 0, sizeof(ps_compile_args));
     }
     entry = get_glsl_program_entry(priv, vshader, pshader, &vs_compile_args, &ps_compile_args);
     if (entry) {
@@ -4399,11 +4393,10 @@ static int glsl_program_key_compare(const void *key, const struct wine_rb_entry 
     if (k->pshader > prog->pshader) return 1;
     else if (k->pshader < prog->pshader) return -1;
 
-    cmp = memcmp(&k->vs_args, &prog->vs_args, sizeof(prog->vs_args));
-    if (cmp) return cmp;
+    if (k->vshader && (cmp = memcmp(&k->vs_args, &prog->vs_args, sizeof(prog->vs_args)))) return cmp;
+    if (k->pshader && (cmp = memcmp(&k->ps_args, &prog->ps_args, sizeof(prog->ps_args)))) return cmp;
 
-    cmp = memcmp(&k->ps_args, &prog->ps_args, sizeof(prog->ps_args));
-    return cmp;
+    return 0;
 }
 
 static BOOL constant_heap_init(struct constant_heap *heap, unsigned int constant_count)
