@@ -556,7 +556,7 @@
 @ stdcall GdipSetPathGradientGammaCorrection(ptr long)
 @ stub GdipSetPathGradientLinearBlend
 @ stub GdipSetPathGradientPath
-@ stub GdipSetPathGradientPresetBlend
+@ stdcall GdipSetPathGradientPresetBlend(ptr ptr ptr long)
 @ stdcall GdipSetPathGradientSigmaBlend(ptr long long)
 @ stdcall GdipSetPathGradientSurroundColorsWithCount(ptr ptr ptr)
 @ stub GdipSetPathGradientTransform
