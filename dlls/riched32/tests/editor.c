@@ -650,6 +650,7 @@ static void check_EM_FINDTEXTEX(HWND hwnd, const char *name, struct find_s *f,
   ft.chrg.cpMin = f->start;
   ft.chrg.cpMax = f->end;
   ft.lpstrText = f->needle;
+  ft.chrgText.cpMax = 0xdeadbeef;
   findloc = SendMessage(hwnd, EM_FINDTEXTEX, f->flags, (LPARAM) &ft);
   ok(findloc == f->expected_loc,
       "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, start at %d\n",
@@ -659,7 +660,8 @@ static void check_EM_FINDTEXTEX(HWND hwnd, const char *name, struct find_s *f,
       name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMin, f->expected_loc);
   expected_end_loc = ((f->expected_loc == -1) ? -1
         : f->expected_loc + strlen(f->needle));
-  ok(ft.chrgText.cpMax == expected_end_loc,
+  ok(ft.chrgText.cpMax == expected_end_loc ||
+      broken(ft.chrgText.cpMin == -1 && ft.chrgText.cpMax == 0xdeadbeef), /* Win9x, WinME and NT4 */
       "EM_FINDTEXTEX(%s,%d) '%s' in range(%d,%d), flags %08x, end at %d, expected %d\n",
       name, id, f->needle, f->start, f->end, f->flags, ft.chrgText.cpMax, expected_end_loc);
 }
