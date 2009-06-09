@@ -3280,6 +3280,35 @@ static void test_notifyformat(void)
     DestroyWindow(hwndparentW);
 }
 
+static void test_indentation(void)
+{
+    HWND hwnd;
+    LVITEMA item;
+    DWORD r;
+
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_INDENT;
+    item.iItem = 0;
+    item.iIndent = I_INDENTCALLBACK;
+    r = SendMessage(hwnd, LVM_INSERTITEMA, 0, (LPARAM)&item);
+    expect(0, r);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    item.iItem = 0;
+    item.mask = LVIF_INDENT;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM)&item);
+    expect(TRUE, r);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, single_getdispinfo_parent_seq,
+                "get indent dispinfo", TRUE);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -3330,6 +3359,7 @@ START_TEST(listview)
     test_columnscreation();
     test_editbox();
     test_notifyformat();
+    test_indentation();
 
     DestroyWindow(hwndparent);
 }
