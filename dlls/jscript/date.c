@@ -182,6 +182,30 @@ static inline DOUBLE month_from_time(DOUBLE time)
     return  11;
 }
 
+/* ECMA-262 3th Edition    15.9.1.5 */
+static inline DOUBLE date_from_time(DOUBLE time)
+{
+    int dwy = day_within_year(time);
+    int ily = in_leap_year(time);
+    int mft = month_from_time(time);
+
+    if(isnan(time))
+        return ret_nan();
+
+    if(mft==0) return dwy+1;
+    if(mft==1) return dwy-30;
+    if(mft==2) return dwy-58-ily;
+    if(mft==3) return dwy-89-ily;
+    if(mft==4) return dwy-119-ily;
+    if(mft==5) return dwy-150-ily;
+    if(mft==6) return dwy-180-ily;
+    if(mft==7) return dwy-211-ily;
+    if(mft==8) return dwy-242-ily;
+    if(mft==9) return dwy-272-ily;
+    if(mft==10) return dwy-303-ily;
+    return dwy-333-ily;
+}
+
 /* ECMA-262 3rd Edition    15.9.1.14 */
 static inline DOUBLE time_clip(DOUBLE time)
 {
@@ -363,18 +387,42 @@ static HRESULT Date_getUTCMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.5 */
 static HRESULT Date_getDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+
+        num_set_val(retv, date_from_time(time));
+    }
+    return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.5 */
 static HRESULT Date_getUTCDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, date_from_time(date->time));
+    }
+    return S_OK;
 }
 
 static HRESULT Date_getDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
