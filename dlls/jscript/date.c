@@ -85,6 +85,7 @@ static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l',
 
 /*ECMA-262 3th Edition    15.9.1.2 */
 #define MS_PER_DAY 86400000
+#define MS_PER_HOUR 3600000
 #define MS_PER_MINUTE 60000
 
 /* ECMA-262 3th Edition    15.9.1.2 */
@@ -213,6 +214,15 @@ static inline DOUBLE week_day(DOUBLE time)
         return ret_nan();
 
     return (int)(day(time)+4) % 7;
+}
+
+/* ECMA-262 3th Edition    15.9.1.10 */
+static inline DOUBLE hour_from_time(DOUBLE time)
+{
+    if(isnan(time))
+        return ret_nan();
+
+    return (int)floor(time/MS_PER_HOUR) % 24;
 }
 
 /* ECMA-262 3rd Edition    15.9.1.14 */
@@ -472,18 +482,42 @@ static HRESULT Date_getUTCDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.10 */
 static HRESULT Date_getHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+
+        num_set_val(retv, hour_from_time(time));
+    }
+    return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.10 */
 static HRESULT Date_getUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, hour_from_time(date->time));
+    }
+    return S_OK;
 }
 
 static HRESULT Date_getMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
