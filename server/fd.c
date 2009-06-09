@@ -1710,6 +1710,12 @@ void set_fd_signaled( struct fd *fd, int signaled )
     if (signaled) wake_up( fd->user, 0 );
 }
 
+/* set or clear the fd signaled state */
+int is_fd_signaled( struct fd *fd )
+{
+    return fd->signaled;
+}
+
 /* handler for close_handle that refuses to close fd-associated handles in other processes */
 int fd_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {

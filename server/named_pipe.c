@@ -176,6 +176,7 @@ static const struct fd_ops pipe_server_fd_ops =
 
 /* client end functions */
 static void pipe_client_dump( struct object *obj, int verbose );
+static int pipe_client_signaled( struct object *obj, struct thread *thread );
 static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
 static void pipe_client_flush( struct fd *fd, struct event **event );
@@ -188,7 +189,7 @@ static const struct object_ops pipe_client_ops =
     no_get_type,                  /* get_type */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
-    default_fd_signaled,          /* signaled */
+    pipe_client_signaled,         /* signaled */
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_client_get_fd,           /* get_fd */
@@ -287,6 +288,13 @@ static void pipe_client_dump( struct object *obj, int verbose )
     struct pipe_client *client = (struct pipe_client *) obj;
     assert( obj->ops == &pipe_client_ops );
     fprintf( stderr, "Named pipe client server=%p\n", client->server );
+}
+
+static int pipe_client_signaled( struct object *obj, struct thread *thread )
+{
+    struct pipe_client *client = (struct pipe_client *) obj;
+
+    return client->fd && is_fd_signaled(client->fd);
 }
 
 static void named_pipe_destroy( struct object *obj)
