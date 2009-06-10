@@ -827,7 +827,7 @@ static void test_word_wrap(void)
     POINTL point = {0, 60}; /* This point must be below the first line */
     const char *text = "Must be long enough to test line wrapping";
     DWORD dwCommonStyle = WS_VISIBLE|WS_POPUP|WS_VSCROLL|ES_MULTILINE;
-    int res, pos, lines;
+    int res, pos, lines, prevlines, reflines[3];
 
     /* Test the effect of WS_HSCROLL and ES_AUTOHSCROLL styles on wrapping
      * when specified on window creation and set later. */
@@ -920,29 +920,55 @@ static void test_word_wrap(void)
     ok(pos, "pos=%d indicating no word wrap when it is expected.\n", pos);
     DestroyWindow(hwnd);
 
-    /* Test to see if wrapping happens with redraw disabled. */
+    /* First lets see if the text would wrap normally (needed for reference) */
     hwnd = CreateWindow(RICHEDIT_CLASS10A, NULL, dwCommonStyle,
-                        0, 0, 400, 80, NULL, NULL, hmoduleRichEdit, NULL);
+                        0, 0, 200, 80, NULL, NULL, hmoduleRichEdit, NULL);
     ok(hwnd != NULL, "error: %d\n", (int) GetLastError());
     ok(IsWindowVisible(hwnd), "Window should be visible.\n");
+    res = SendMessage(hwnd, EM_REPLACESEL, FALSE, (LPARAM) text);
+    ok(res, "EM_REPLACESEL failed.\n");
+    /* Should have wrapped */
+    reflines[0] = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(reflines[0] > 1, "Line was expected to wrap (%d lines).\n", reflines[0]);
+    /* Resize the window to fit the line */
+    MoveWindow(hwnd, 0, 0, 600, 80, TRUE);
+    /* Text should not be wrapped */
+    reflines[1] = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(reflines[1] == 1, "Line wasn't expected to wrap (%d lines).\n", reflines[1]);
+    /* Resize the window again to make sure the line wraps again */
+    MoveWindow(hwnd, 0, 0, 10, 80, TRUE);
+    reflines[2] = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(reflines[2] > 1, "Line was expected to wrap (%d lines).\n", reflines[2]);
+    DestroyWindow(hwnd);
+
+    /* Same test with redraw disabled */
+    hwnd = CreateWindow(RICHEDIT_CLASS10A, NULL, dwCommonStyle,
+                        0, 0, 200, 80, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "error: %d\n", (int) GetLastError());
+    ok(IsWindowVisible(hwnd), "Window should be visible.\n");
+    /* Redraw is disabled by making the window invisible. */
     SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
-    /* redraw is disabled by making the window invisible. */
     ok(!IsWindowVisible(hwnd), "Window shouldn't be visible.\n");
     res = SendMessage(hwnd, EM_REPLACESEL, FALSE, (LPARAM) text);
     ok(res, "EM_REPLACESEL failed.\n");
-    MoveWindow(hwnd, 0, 0, 100, 80, TRUE);
-    SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
-    /* Wrapping didn't happen while redraw was disabled. */
+    /* Should have wrapped */
+    prevlines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(prevlines == reflines[0],
+        "Line was expected to wrap (%d lines).\n", prevlines);
+    /* Resize the window to fit the line, no change to the number of lines */
+    MoveWindow(hwnd, 0, 0, 600, 80, TRUE);
     lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
-    todo_wine ok(lines == 1, "Line wasn't expected to wrap (lines=%d).\n", lines);
-    /* There isn't even a rewrap from resizing the window. */
+    todo_wine
+    ok(lines == prevlines ||
+        broken(lines == reflines[1]), /* Win98, WinME and NT4 */
+        "Expected no change in the number of lines\n");
+    /* Resize the window again to make sure the line wraps again */
+    MoveWindow(hwnd, 0, 0, 10, 80, TRUE);
     lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
-    todo_wine ok(lines == 1, "Line wasn't expected to wrap (lines=%d).\n", lines);
-    res = SendMessage(hwnd, EM_REPLACESEL, FALSE, (LPARAM) text);
-    ok(res, "EM_REPLACESEL failed.\n");
-    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
-    ok(lines > 1, "Line was expected to wrap (lines=%d).\n", lines);
-
+    todo_wine
+    ok(lines == prevlines ||
+        broken(lines == reflines[2]), /* Win98, WinME and NT4 */
+        "Expected no change in the number of lines\n");
     DestroyWindow(hwnd);
 }
 
