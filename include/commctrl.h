@@ -736,6 +736,8 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDS_FILTERBAR           0x0100
 #define HDS_FLAT                0x0200
 #define HDS_CHECKBOXES          0x0400
+#define HDS_NOSIZING            0x0800
+#define HDS_OVERFLOW            0x1000
 
 #define HDI_WIDTH               0x0001
 #define HDI_HEIGHT              HDI_WIDTH
@@ -747,6 +749,9 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDI_DI_SETITEM          0x0040
 #define HDI_ORDER               0x0080
 #define HDI_FILTER              0x0100
+#define HDI_STATE               0x0200
+
+#define HDIS_FOCUSED        0x00000001
 
 #define HDF_LEFT                0x0000
 #define HDF_RIGHT               0x0001
@@ -763,6 +768,7 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HDF_BITMAP              0x2000
 #define HDF_STRING              0x4000
 #define HDF_OWNERDRAW           0x8000
+#define HDF_SPLITBUTTON      0x1000000
 
 #define HHT_NOWHERE             0x0001
 #define HHT_ONHEADER            0x0002
@@ -775,6 +781,8 @@ static const WCHAR WC_HEADERW[] = { 'S','y','s','H','e','a','d','e','r','3','2',
 #define HHT_TORIGHT             0x0400
 #define HHT_TOLEFT              0x0800
 #define HHT_ONITEMSTATEICON     0x1000
+#define HHT_ONDROPDOWN          0x2000
+#define HHT_ONOVERFLOW          0x4000
 
 #define HDM_FIRST               0x1200
 #define HDM_GETITEMCOUNT        (HDM_FIRST+0)
@@ -862,10 +870,14 @@ typedef struct _HD_ITEMA
     INT     cchTextMax;
     INT     fmt;
     LPARAM    lParam;
+    /* (_WIN32_IE >= 0x0300) */
     INT     iImage;
     INT     iOrder;
+    /* (_WIN32_IE >= 0x0500) */
     UINT    type;
     LPVOID  pvFilter;
+    /* (_WIN32_WINNT >= 0x0600) */
+    UINT    state;
 } HDITEMA, *LPHDITEMA;
 
 typedef struct _HD_ITEMW
@@ -877,10 +889,14 @@ typedef struct _HD_ITEMW
     INT     cchTextMax;
     INT     fmt;
     LPARAM    lParam;
+    /* (_WIN32_IE >= 0x0300) */
     INT     iImage;
     INT     iOrder;
+    /* (_WIN32_IE >= 0x0500) */
     UINT    type;
     LPVOID  pvFilter;
+    /* (_WIN32_WINNT >= 0x0600) */
+    UINT    state;
 } HDITEMW, *LPHDITEMW;
 
 #define HDITEM   WINELIB_NAME_AW(HDITEM)
