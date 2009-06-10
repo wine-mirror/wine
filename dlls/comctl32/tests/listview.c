@@ -2829,7 +2829,7 @@ static void test_getitemrect(void)
 
     /* zero width rectangle with no padding */
     expect(0, rect.left);
-    todo_wine expect(0, rect.right);
+    expect(0, rect.right);
 
     insert_column(hwnd, 0);
     insert_column(hwnd, 1);

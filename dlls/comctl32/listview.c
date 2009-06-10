@@ -1239,11 +1239,24 @@ static BOOL iterator_frameditems(ITERATOR* i, const LISTVIEW_INFO* infoPtr, cons
 	INT nPerCol = max((infoPtr->rcList.bottom - infoPtr->rcList.top) / infoPtr->nItemHeight, 1);
 	INT nFirstRow = max(frame.top / infoPtr->nItemHeight, 0);
 	INT nLastRow = min((frame.bottom - 1) / infoPtr->nItemHeight, nPerCol - 1);
-	INT nFirstCol = max(frame.left / infoPtr->nItemWidth, 0);
-	INT nLastCol = min((frame.right - 1) / infoPtr->nItemWidth, (infoPtr->nItemCount + nPerCol - 1) / nPerCol);
-	INT lower = nFirstCol * nPerCol + nFirstRow;
+	INT nFirstCol;
+	INT nLastCol;
+	INT lower;
 	RANGE item_range;
 	INT nCol;
+
+	if (infoPtr->nItemWidth)
+	{
+	    nFirstCol = max(frame.left / infoPtr->nItemWidth, 0);
+            nLastCol  = min((frame.right - 1) / infoPtr->nItemWidth, (infoPtr->nItemCount + nPerCol - 1) / nPerCol);
+	}
+	else
+	{
+	    nFirstCol = max(frame.left, 0);
+            nLastCol  = min(frame.right - 1, (infoPtr->nItemCount + nPerCol - 1) / nPerCol);
+	}
+
+	lower = nFirstCol * nPerCol + nFirstRow;
 
 	TRACE("nPerCol=%d, nFirstRow=%d, nLastRow=%d, nFirstCol=%d, nLastCol=%d, lower=%d\n",
 	      nPerCol, nFirstRow, nLastRow, nFirstCol, nLastCol, lower);
@@ -1493,7 +1506,7 @@ static inline INT LISTVIEW_GetCountPerRow(const LISTVIEW_INFO *infoPtr)
 {
     INT nListWidth = infoPtr->rcList.right - infoPtr->rcList.left;
 
-    return max(nListWidth/infoPtr->nItemWidth, 1);
+    return max(nListWidth/(infoPtr->nItemWidth ? infoPtr->nItemWidth : 1), 1);
 }
 
 /***
@@ -1736,7 +1749,8 @@ static void LISTVIEW_UpdateScroll(const LISTVIEW_INFO *infoPtr)
 	if(horzInfo.nPage < infoPtr->nItemWidth)
 		horzInfo.nPage = infoPtr->nItemWidth;
 
-	horzInfo.nPage /= infoPtr->nItemWidth;
+	if (infoPtr->nItemWidth)
+	    horzInfo.nPage /= infoPtr->nItemWidth;
     }
     else if (infoPtr->uView == LV_VIEW_DETAILS)
     {
@@ -2530,7 +2544,7 @@ static INT LISTVIEW_CalculateItemWidth(const LISTVIEW_INFO *infoPtr)
 	nItemWidth = max(DEFAULT_COLUMN_WIDTH, nItemWidth + WIDTH_PADDING);
     }
 
-    return max(nItemWidth, 1);
+    return nItemWidth;
 }
 
 /***
