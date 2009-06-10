@@ -863,6 +863,7 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
         IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
     }
     IWineD3DSurface_ModifyLocation(iface, SFLAG_INTEXTURE, FALSE);
+    IWineD3DSurface_ModifyLocation(iface, SFLAG_INSRGBTEX, FALSE);
     This->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
 
     /* Destroy PBOs, but load them into real sysmem before */
