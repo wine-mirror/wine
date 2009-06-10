@@ -5,8 +5,6 @@
 @  stdcall glBegin( long ) wine_glBegin
 @  stdcall glBindTexture( long long ) wine_glBindTexture
 @  stdcall glBitmap( long long long long long long ptr ) wine_glBitmap
-@  stdcall glBlendColor( long long long long ) wine_glBlendColor
-@  stdcall glBlendEquation( long ) wine_glBlendEquation
 @  stdcall glBlendFunc( long long ) wine_glBlendFunc
 @  stdcall glCallList( long ) wine_glCallList
 @  stdcall glCallLists( long long ptr ) wine_glCallLists
@@ -52,26 +50,11 @@
 @  stdcall glColorMask( long long long long ) wine_glColorMask
 @  stdcall glColorMaterial( long long ) wine_glColorMaterial
 @  stdcall glColorPointer( long long long ptr ) wine_glColorPointer
-@  stdcall glColorSubTable( long long long long long ptr ) wine_glColorSubTable
-@  stdcall glColorTable( long long long long long ptr ) wine_glColorTable
-@  stdcall glColorTableParameterfv( long long ptr ) wine_glColorTableParameterfv
-@  stdcall glColorTableParameteriv( long long ptr ) wine_glColorTableParameteriv
-@  stdcall glConvolutionFilter1D( long long long long long ptr ) wine_glConvolutionFilter1D
-@  stdcall glConvolutionFilter2D( long long long long long long ptr ) wine_glConvolutionFilter2D
-@  stdcall glConvolutionParameterf( long long long ) wine_glConvolutionParameterf
-@  stdcall glConvolutionParameterfv( long long ptr ) wine_glConvolutionParameterfv
-@  stdcall glConvolutionParameteri( long long long ) wine_glConvolutionParameteri
-@  stdcall glConvolutionParameteriv( long long ptr ) wine_glConvolutionParameteriv
-@  stdcall glCopyColorSubTable( long long long long long ) wine_glCopyColorSubTable
-@  stdcall glCopyColorTable( long long long long long ) wine_glCopyColorTable
-@  stdcall glCopyConvolutionFilter1D( long long long long long ) wine_glCopyConvolutionFilter1D
-@  stdcall glCopyConvolutionFilter2D( long long long long long long ) wine_glCopyConvolutionFilter2D
 @  stdcall glCopyPixels( long long long long long ) wine_glCopyPixels
 @  stdcall glCopyTexImage1D( long long long long long long long ) wine_glCopyTexImage1D
 @  stdcall glCopyTexImage2D( long long long long long long long long ) wine_glCopyTexImage2D
 @  stdcall glCopyTexSubImage1D( long long long long long long ) wine_glCopyTexSubImage1D
 @  stdcall glCopyTexSubImage2D( long long long long long long long long ) wine_glCopyTexSubImage2D
-@  stdcall glCopyTexSubImage3D( long long long long long long long long long ) wine_glCopyTexSubImage3D
 @  stdcall glCullFace( long ) wine_glCullFace
 @  stdcall glDeleteLists( long long ) wine_glDeleteLists
 @  stdcall glDeleteTextures( long ptr ) wine_glDeleteTextures
@@ -84,7 +67,6 @@
 @  stdcall glDrawBuffer( long ) wine_glDrawBuffer
 @  stdcall glDrawElements( long long long ptr ) wine_glDrawElements
 @  stdcall glDrawPixels( long long long long ptr ) wine_glDrawPixels
-@  stdcall glDrawRangeElements( long long long long long ptr ) wine_glDrawRangeElements
 @  stdcall glEdgeFlag( long ) wine_glEdgeFlag
 @  stdcall glEdgeFlagPointer( long ptr ) wine_glEdgeFlagPointer
 @  stdcall glEdgeFlagv( ptr ) wine_glEdgeFlagv
@@ -117,21 +99,10 @@
 @  stdcall glGenTextures( long ptr ) wine_glGenTextures
 @  stdcall glGetBooleanv( long ptr ) wine_glGetBooleanv
 @  stdcall glGetClipPlane( long ptr ) wine_glGetClipPlane
-@  stdcall glGetColorTable( long long long ptr ) wine_glGetColorTable
-@  stdcall glGetColorTableParameterfv( long long ptr ) wine_glGetColorTableParameterfv
-@  stdcall glGetColorTableParameteriv( long long ptr ) wine_glGetColorTableParameteriv
-@  stdcall glGetConvolutionFilter( long long long ptr ) wine_glGetConvolutionFilter
-@  stdcall glGetConvolutionParameterfv( long long ptr ) wine_glGetConvolutionParameterfv
-@  stdcall glGetConvolutionParameteriv( long long ptr ) wine_glGetConvolutionParameteriv
 @  stdcall glGetDoublev( long ptr ) wine_glGetDoublev
 @  stdcall glGetError( ) wine_glGetError
 @  stdcall glGetFloatv( long ptr ) wine_glGetFloatv
-@  stdcall glGetHistogram( long long long long ptr ) wine_glGetHistogram
-@  stdcall glGetHistogramParameterfv( long long ptr ) wine_glGetHistogramParameterfv
-@  stdcall glGetHistogramParameteriv( long long ptr ) wine_glGetHistogramParameteriv
 @  stdcall glGetIntegerv( long ptr ) wine_glGetIntegerv
-@  stub    glGetLevelParameterfv
-@  stub    glGetLevelParameteriv
 @  stdcall glGetLightfv( long long ptr ) wine_glGetLightfv
 @  stdcall glGetLightiv( long long ptr ) wine_glGetLightiv
 @  stdcall glGetMapdv( long long ptr ) wine_glGetMapdv
@@ -139,15 +110,11 @@
 @  stdcall glGetMapiv( long long ptr ) wine_glGetMapiv
 @  stdcall glGetMaterialfv( long long ptr ) wine_glGetMaterialfv
 @  stdcall glGetMaterialiv( long long ptr ) wine_glGetMaterialiv
-@  stdcall glGetMinmax( long long long long ptr ) wine_glGetMinmax
-@  stdcall glGetMinmaxParameterfv( long long ptr ) wine_glGetMinmaxParameterfv
-@  stdcall glGetMinmaxParameteriv( long long ptr ) wine_glGetMinmaxParameteriv
 @  stdcall glGetPixelMapfv( long ptr ) wine_glGetPixelMapfv
 @  stdcall glGetPixelMapuiv( long ptr ) wine_glGetPixelMapuiv
 @  stdcall glGetPixelMapusv( long ptr ) wine_glGetPixelMapusv
 @  stdcall glGetPointerv( long ptr ) wine_glGetPointerv
 @  stdcall glGetPolygonStipple( ptr ) wine_glGetPolygonStipple
-@  stdcall glGetSeparableFilter( long long long ptr ptr ptr ) wine_glGetSeparableFilter
 @  stdcall glGetString( long ) wine_glGetString
 @  stdcall glGetTexEnvfv( long long ptr ) wine_glGetTexEnvfv
 @  stdcall glGetTexEnviv( long long ptr ) wine_glGetTexEnviv
@@ -160,7 +127,6 @@
 @  stdcall glGetTexParameterfv( long long ptr ) wine_glGetTexParameterfv
 @  stdcall glGetTexParameteriv( long long ptr ) wine_glGetTexParameteriv
 @  stdcall glHint( long long ) wine_glHint
-@  stdcall glHistogram( long long long long ) wine_glHistogram
 @  stdcall glIndexMask( long ) wine_glIndexMask
 @  stdcall glIndexPointer( long long ptr ) wine_glIndexPointer
 @  stdcall glIndexd( double ) wine_glIndexd
@@ -207,7 +173,6 @@
 @  stdcall glMateriali( long long long ) wine_glMateriali
 @  stdcall glMaterialiv( long long ptr ) wine_glMaterialiv
 @  stdcall glMatrixMode( long ) wine_glMatrixMode
-@  stdcall glMinmax( long long long ) wine_glMinmax
 @  stdcall glMultMatrixd( ptr ) wine_glMultMatrixd
 @  stdcall glMultMatrixf( ptr ) wine_glMultMatrixf
 @  stdcall glNewList( long long ) wine_glNewList
@@ -280,15 +245,12 @@
 @  stdcall glRects( long long long long ) wine_glRects
 @  stdcall glRectsv( ptr ptr ) wine_glRectsv
 @  stdcall glRenderMode( long ) wine_glRenderMode
-@  stdcall glResetHistogram( long ) wine_glResetHistogram
-@  stdcall glResetMinmax( long ) wine_glResetMinmax
 @  stdcall glRotated( double double double double ) wine_glRotated
 @  stdcall glRotatef( long long long long ) wine_glRotatef
 @  stdcall glScaled( double double double ) wine_glScaled
 @  stdcall glScalef( long long long ) wine_glScalef
 @  stdcall glScissor( long long long long ) wine_glScissor
 @  stdcall glSelectBuffer( long ptr ) wine_glSelectBuffer
-@  stdcall glSeparableFilter2D( long long long long long long ptr ptr ) wine_glSeparableFilter2D
 @  stdcall glShadeModel( long ) wine_glShadeModel
 @  stdcall glStencilFunc( long long long ) wine_glStencilFunc
 @  stdcall glStencilMask( long ) wine_glStencilMask
@@ -338,14 +300,12 @@
 @  stdcall glTexGeniv( long long ptr ) wine_glTexGeniv
 @  stdcall glTexImage1D( long long long long long long long ptr ) wine_glTexImage1D
 @  stdcall glTexImage2D( long long long long long long long long ptr ) wine_glTexImage2D
-@  stdcall glTexImage3D( long long long long long long long long long ptr ) wine_glTexImage3D
 @  stdcall glTexParameterf( long long long ) wine_glTexParameterf
 @  stdcall glTexParameterfv( long long ptr ) wine_glTexParameterfv
 @  stdcall glTexParameteri( long long long ) wine_glTexParameteri
 @  stdcall glTexParameteriv( long long ptr ) wine_glTexParameteriv
 @  stdcall glTexSubImage1D( long long long long long long ptr ) wine_glTexSubImage1D
 @  stdcall glTexSubImage2D( long long long long long long long long ptr ) wine_glTexSubImage2D
-@  stdcall glTexSubImage3D( long long long long long long long long long long ptr ) wine_glTexSubImage3D
 @  stdcall glTranslated( double double double ) wine_glTranslated
 @  stdcall glTranslatef( long long long ) wine_glTranslatef
 @  stdcall glVertex2d( double double ) wine_glVertex2d
@@ -374,6 +334,8 @@
 @  stdcall glVertex4sv( ptr ) wine_glVertex4sv
 @  stdcall glVertexPointer( long long long ptr ) wine_glVertexPointer
 @  stdcall glViewport( long long long long ) wine_glViewport
+@  stub    glGetLevelParameterfv
+@  stub    glGetLevelParameteriv
 @  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
 @  stdcall wglCopyContext(long long long) gdi32.wglCopyContext
 @  stdcall wglCreateContext(long) gdi32.wglCreateContext

@@ -78,7 +78,9 @@ enum extensions
     EXT_glBinormal3sEXT,
     EXT_glBinormal3svEXT,
     EXT_glBinormalPointerEXT,
+    EXT_glBlendColor,
     EXT_glBlendColorEXT,
+    EXT_glBlendEquation,
     EXT_glBlendEquationEXT,
     EXT_glBlendEquationSeparate,
     EXT_glBlendEquationSeparateEXT,
@@ -129,9 +131,13 @@ enum extensions
     EXT_glColorPointerEXT,
     EXT_glColorPointerListIBM,
     EXT_glColorPointervINTEL,
+    EXT_glColorSubTable,
     EXT_glColorSubTableEXT,
+    EXT_glColorTable,
     EXT_glColorTableEXT,
+    EXT_glColorTableParameterfv,
     EXT_glColorTableParameterfvSGI,
+    EXT_glColorTableParameteriv,
     EXT_glColorTableParameterivSGI,
     EXT_glColorTableSGI,
     EXT_glCombinerInputNV,
@@ -167,16 +173,26 @@ enum extensions
     EXT_glCompressedTextureSubImage1DEXT,
     EXT_glCompressedTextureSubImage2DEXT,
     EXT_glCompressedTextureSubImage3DEXT,
+    EXT_glConvolutionFilter1D,
     EXT_glConvolutionFilter1DEXT,
+    EXT_glConvolutionFilter2D,
     EXT_glConvolutionFilter2DEXT,
+    EXT_glConvolutionParameterf,
     EXT_glConvolutionParameterfEXT,
+    EXT_glConvolutionParameterfv,
     EXT_glConvolutionParameterfvEXT,
+    EXT_glConvolutionParameteri,
     EXT_glConvolutionParameteriEXT,
+    EXT_glConvolutionParameteriv,
     EXT_glConvolutionParameterivEXT,
     EXT_glCopyBufferSubData,
+    EXT_glCopyColorSubTable,
     EXT_glCopyColorSubTableEXT,
+    EXT_glCopyColorTable,
     EXT_glCopyColorTableSGI,
+    EXT_glCopyConvolutionFilter1D,
     EXT_glCopyConvolutionFilter1DEXT,
+    EXT_glCopyConvolutionFilter2D,
     EXT_glCopyConvolutionFilter2DEXT,
     EXT_glCopyMultiTexImage1DEXT,
     EXT_glCopyMultiTexImage2DEXT,
@@ -187,6 +203,7 @@ enum extensions
     EXT_glCopyTexImage2DEXT,
     EXT_glCopyTexSubImage1DEXT,
     EXT_glCopyTexSubImage2DEXT,
+    EXT_glCopyTexSubImage3D,
     EXT_glCopyTexSubImage3DEXT,
     EXT_glCopyTextureImage1DEXT,
     EXT_glCopyTextureImage2DEXT,
@@ -242,6 +259,7 @@ enum extensions
     EXT_glDisableVertexAttribArrayARB,
     EXT_glDisablei,
     EXT_glDrawArraysEXT,
+    EXT_glDrawArraysInstanced,
     EXT_glDrawArraysInstancedARB,
     EXT_glDrawArraysInstancedEXT,
     EXT_glDrawBufferRegion,
@@ -250,11 +268,13 @@ enum extensions
     EXT_glDrawBuffersATI,
     EXT_glDrawElementArrayAPPLE,
     EXT_glDrawElementArrayATI,
+    EXT_glDrawElementsInstanced,
     EXT_glDrawElementsInstancedARB,
     EXT_glDrawElementsInstancedEXT,
     EXT_glDrawMeshArraysSUN,
     EXT_glDrawRangeElementArrayAPPLE,
     EXT_glDrawRangeElementArrayATI,
+    EXT_glDrawRangeElements,
     EXT_glDrawRangeElementsEXT,
     EXT_glDrawTransformFeedbackNV,
     EXT_glEdgeFlagPointerEXT,
@@ -390,9 +410,12 @@ enum extensions
     EXT_glGetBufferPointervARB,
     EXT_glGetBufferSubData,
     EXT_glGetBufferSubDataARB,
+    EXT_glGetColorTable,
     EXT_glGetColorTableEXT,
+    EXT_glGetColorTableParameterfv,
     EXT_glGetColorTableParameterfvEXT,
     EXT_glGetColorTableParameterfvSGI,
+    EXT_glGetColorTableParameteriv,
     EXT_glGetColorTableParameterivEXT,
     EXT_glGetColorTableParameterivSGI,
     EXT_glGetColorTableSGI,
@@ -405,8 +428,11 @@ enum extensions
     EXT_glGetCompressedTexImage,
     EXT_glGetCompressedTexImageARB,
     EXT_glGetCompressedTextureImageEXT,
+    EXT_glGetConvolutionFilter,
     EXT_glGetConvolutionFilterEXT,
+    EXT_glGetConvolutionParameterfv,
     EXT_glGetConvolutionParameterfvEXT,
+    EXT_glGetConvolutionParameteriv,
     EXT_glGetConvolutionParameterivEXT,
     EXT_glGetDetailTexFuncSGIS,
     EXT_glGetDoubleIndexedvEXT,
@@ -425,8 +451,11 @@ enum extensions
     EXT_glGetFramebufferAttachmentParameterivEXT,
     EXT_glGetFramebufferParameterivEXT,
     EXT_glGetHandleARB,
+    EXT_glGetHistogram,
     EXT_glGetHistogramEXT,
+    EXT_glGetHistogramParameterfv,
     EXT_glGetHistogramParameterfvEXT,
+    EXT_glGetHistogramParameteriv,
     EXT_glGetHistogramParameterivEXT,
     EXT_glGetImageTransformParameterfvHP,
     EXT_glGetImageTransformParameterivHP,
@@ -447,8 +476,11 @@ enum extensions
     EXT_glGetMapControlPointsNV,
     EXT_glGetMapParameterfvNV,
     EXT_glGetMapParameterivNV,
+    EXT_glGetMinmax,
     EXT_glGetMinmaxEXT,
+    EXT_glGetMinmaxParameterfv,
     EXT_glGetMinmaxParameterfvEXT,
+    EXT_glGetMinmaxParameteriv,
     EXT_glGetMinmaxParameterivEXT,
     EXT_glGetMultiTexEnvfvEXT,
     EXT_glGetMultiTexEnvivEXT,
@@ -518,6 +550,7 @@ enum extensions
     EXT_glGetQueryivARB,
     EXT_glGetRenderbufferParameteriv,
     EXT_glGetRenderbufferParameterivEXT,
+    EXT_glGetSeparableFilter,
     EXT_glGetSeparableFilterEXT,
     EXT_glGetShaderInfoLog,
     EXT_glGetShaderSource,
@@ -593,6 +626,7 @@ enum extensions
     EXT_glGlobalAlphaFactoruiSUN,
     EXT_glGlobalAlphaFactorusSUN,
     EXT_glHintPGI,
+    EXT_glHistogram,
     EXT_glHistogramEXT,
     EXT_glIglooInterfaceSGIX,
     EXT_glImageTransformParameterfHP,
@@ -676,6 +710,7 @@ enum extensions
     EXT_glMatrixScalefEXT,
     EXT_glMatrixTranslatedEXT,
     EXT_glMatrixTranslatefEXT,
+    EXT_glMinmax,
     EXT_glMinmaxEXT,
     EXT_glMultTransposeMatrixd,
     EXT_glMultTransposeMatrixdARB,
@@ -893,6 +928,7 @@ enum extensions
     EXT_glPolygonOffsetEXT,
     EXT_glPresentFrameDualFillNV,
     EXT_glPresentFrameKeyedNV,
+    EXT_glPrimitiveRestartIndex,
     EXT_glPrimitiveRestartIndexNV,
     EXT_glPrimitiveRestartNV,
     EXT_glPrioritizeTexturesEXT,
@@ -1002,7 +1038,9 @@ enum extensions
     EXT_glReplacementCodeusSUN,
     EXT_glReplacementCodeusvSUN,
     EXT_glRequestResidentProgramsNV,
+    EXT_glResetHistogram,
     EXT_glResetHistogramEXT,
+    EXT_glResetMinmax,
     EXT_glResetMinmaxEXT,
     EXT_glResizeBuffersMESA,
     EXT_glResumeTransformFeedbackNV,
@@ -1054,6 +1092,7 @@ enum extensions
     EXT_glSelectPerfMonitorCountersAMD,
     EXT_glSelectTextureCoordSetSGIS,
     EXT_glSelectTextureSGIS,
+    EXT_glSeparableFilter2D,
     EXT_glSeparableFilter2DEXT,
     EXT_glSetFenceAPPLE,
     EXT_glSetFenceNV,
@@ -1098,6 +1137,7 @@ enum extensions
     EXT_glTestFenceAPPLE,
     EXT_glTestFenceNV,
     EXT_glTestObjectAPPLE,
+    EXT_glTexBuffer,
     EXT_glTexBufferARB,
     EXT_glTexBufferEXT,
     EXT_glTexBumpParameterfvATI,
@@ -1128,6 +1168,7 @@ enum extensions
     EXT_glTexCoordPointerListIBM,
     EXT_glTexCoordPointervINTEL,
     EXT_glTexFilterFuncSGIS,
+    EXT_glTexImage3D,
     EXT_glTexImage3DEXT,
     EXT_glTexImage4DSGIS,
     EXT_glTexParameterIiv,
@@ -1137,6 +1178,7 @@ enum extensions
     EXT_glTexRenderbufferNV,
     EXT_glTexSubImage1DEXT,
     EXT_glTexSubImage2DEXT,
+    EXT_glTexSubImage3D,
     EXT_glTexSubImage3DEXT,
     EXT_glTexSubImage4DSGIS,
     EXT_glTextureBufferEXT,
@@ -1360,7 +1402,7 @@ enum extensions
     EXT_glVertexAttrib4usv,
     EXT_glVertexAttrib4usvARB,
     EXT_glVertexAttribArrayObjectATI,
-    EXT_glVertexAttribDivisor,
+    EXT_glVertexAttribDivisorARB,
     EXT_glVertexAttribI1i,
     EXT_glVertexAttribI1iEXT,
     EXT_glVertexAttribI1iv,
@@ -1466,7 +1508,6 @@ enum extensions
     EXT_glVertexWeightfvEXT,
     EXT_glVertexWeighthNV,
     EXT_glVertexWeighthvNV,
-    EXT_glVideoParameterivNV,
     EXT_glWeightPointerARB,
     EXT_glWeightbvARB,
     EXT_glWeightdvARB,
@@ -2106,11 +2147,27 @@ static void WINAPI wine_glBinormalPointerEXT( GLenum type, GLsizei stride, GLvoi
   LEAVE_GL();
 }
 
+static void WINAPI wine_glBlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
+  void (*func_glBlendColor)( GLclampf, GLclampf, GLclampf, GLclampf ) = extension_funcs[EXT_glBlendColor];
+  TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
+  ENTER_GL();
+  func_glBlendColor( red, green, blue, alpha );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glBlendColorEXT( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
   void (*func_glBlendColorEXT)( GLclampf, GLclampf, GLclampf, GLclampf ) = extension_funcs[EXT_glBlendColorEXT];
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
   ENTER_GL();
   func_glBlendColorEXT( red, green, blue, alpha );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glBlendEquation( GLenum mode ) {
+  void (*func_glBlendEquation)( GLenum ) = extension_funcs[EXT_glBlendEquation];
+  TRACE("(%d)\n", mode );
+  ENTER_GL();
+  func_glBlendEquation( mode );
   LEAVE_GL();
 }
 
@@ -2522,11 +2579,27 @@ static void WINAPI wine_glColorPointervINTEL( GLint size, GLenum type, GLvoid** 
   LEAVE_GL();
 }
 
+static void WINAPI wine_glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, GLvoid* data ) {
+  void (*func_glColorSubTable)( GLenum, GLsizei, GLsizei, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glColorSubTable];
+  TRACE("(%d, %d, %d, %d, %d, %p)\n", target, start, count, format, type, data );
+  ENTER_GL();
+  func_glColorSubTable( target, start, count, format, type, data );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glColorSubTableEXT( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, GLvoid* data ) {
   void (*func_glColorSubTableEXT)( GLenum, GLsizei, GLsizei, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glColorSubTableEXT];
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, start, count, format, type, data );
   ENTER_GL();
   func_glColorSubTableEXT( target, start, count, format, type, data );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, GLvoid* table ) {
+  void (*func_glColorTable)( GLenum, GLenum, GLsizei, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glColorTable];
+  TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, table );
+  ENTER_GL();
+  func_glColorTable( target, internalformat, width, format, type, table );
   LEAVE_GL();
 }
 
@@ -2538,11 +2611,27 @@ static void WINAPI wine_glColorTableEXT( GLenum target, GLenum internalFormat, G
   LEAVE_GL();
 }
 
+static void WINAPI wine_glColorTableParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
+  void (*func_glColorTableParameterfv)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glColorTableParameterfv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glColorTableParameterfv( target, pname, params );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glColorTableParameterfvSGI( GLenum target, GLenum pname, GLfloat* params ) {
   void (*func_glColorTableParameterfvSGI)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glColorTableParameterfvSGI];
   TRACE("(%d, %d, %p)\n", target, pname, params );
   ENTER_GL();
   func_glColorTableParameterfvSGI( target, pname, params );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glColorTableParameteriv( GLenum target, GLenum pname, GLint* params ) {
+  void (*func_glColorTableParameteriv)( GLenum, GLenum, GLint* ) = extension_funcs[EXT_glColorTableParameteriv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glColorTableParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
@@ -2826,11 +2915,27 @@ static void WINAPI wine_glCompressedTextureSubImage3DEXT( GLuint texture, GLenum
   LEAVE_GL();
 }
 
+static void WINAPI wine_glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, GLvoid* image ) {
+  void (*func_glConvolutionFilter1D)( GLenum, GLenum, GLsizei, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glConvolutionFilter1D];
+  TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, image );
+  ENTER_GL();
+  func_glConvolutionFilter1D( target, internalformat, width, format, type, image );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, GLvoid* image ) {
   void (*func_glConvolutionFilter1DEXT)( GLenum, GLenum, GLsizei, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glConvolutionFilter1DEXT];
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, image );
   ENTER_GL();
   func_glConvolutionFilter1DEXT( target, internalformat, width, format, type, image );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* image ) {
+  void (*func_glConvolutionFilter2D)( GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glConvolutionFilter2D];
+  TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, internalformat, width, height, format, type, image );
+  ENTER_GL();
+  func_glConvolutionFilter2D( target, internalformat, width, height, format, type, image );
   LEAVE_GL();
 }
 
@@ -2842,11 +2947,27 @@ static void WINAPI wine_glConvolutionFilter2DEXT( GLenum target, GLenum internal
   LEAVE_GL();
 }
 
+static void WINAPI wine_glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params ) {
+  void (*func_glConvolutionParameterf)( GLenum, GLenum, GLfloat ) = extension_funcs[EXT_glConvolutionParameterf];
+  TRACE("(%d, %d, %f)\n", target, pname, params );
+  ENTER_GL();
+  func_glConvolutionParameterf( target, pname, params );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glConvolutionParameterfEXT( GLenum target, GLenum pname, GLfloat params ) {
   void (*func_glConvolutionParameterfEXT)( GLenum, GLenum, GLfloat ) = extension_funcs[EXT_glConvolutionParameterfEXT];
   TRACE("(%d, %d, %f)\n", target, pname, params );
   ENTER_GL();
   func_glConvolutionParameterfEXT( target, pname, params );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glConvolutionParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
+  void (*func_glConvolutionParameterfv)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glConvolutionParameterfv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glConvolutionParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
@@ -2858,11 +2979,27 @@ static void WINAPI wine_glConvolutionParameterfvEXT( GLenum target, GLenum pname
   LEAVE_GL();
 }
 
+static void WINAPI wine_glConvolutionParameteri( GLenum target, GLenum pname, GLint params ) {
+  void (*func_glConvolutionParameteri)( GLenum, GLenum, GLint ) = extension_funcs[EXT_glConvolutionParameteri];
+  TRACE("(%d, %d, %d)\n", target, pname, params );
+  ENTER_GL();
+  func_glConvolutionParameteri( target, pname, params );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glConvolutionParameteriEXT( GLenum target, GLenum pname, GLint params ) {
   void (*func_glConvolutionParameteriEXT)( GLenum, GLenum, GLint ) = extension_funcs[EXT_glConvolutionParameteriEXT];
   TRACE("(%d, %d, %d)\n", target, pname, params );
   ENTER_GL();
   func_glConvolutionParameteriEXT( target, pname, params );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glConvolutionParameteriv( GLenum target, GLenum pname, GLint* params ) {
+  void (*func_glConvolutionParameteriv)( GLenum, GLenum, GLint* ) = extension_funcs[EXT_glConvolutionParameteriv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glConvolutionParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
@@ -2882,11 +3019,27 @@ static void WINAPI wine_glCopyBufferSubData( GLenum readTarget, GLenum writeTarg
   LEAVE_GL();
 }
 
+static void WINAPI wine_glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width ) {
+  void (*func_glCopyColorSubTable)( GLenum, GLsizei, GLint, GLint, GLsizei ) = extension_funcs[EXT_glCopyColorSubTable];
+  TRACE("(%d, %d, %d, %d, %d)\n", target, start, x, y, width );
+  ENTER_GL();
+  func_glCopyColorSubTable( target, start, x, y, width );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glCopyColorSubTableEXT( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width ) {
   void (*func_glCopyColorSubTableEXT)( GLenum, GLsizei, GLint, GLint, GLsizei ) = extension_funcs[EXT_glCopyColorSubTableEXT];
   TRACE("(%d, %d, %d, %d, %d)\n", target, start, x, y, width );
   ENTER_GL();
   func_glCopyColorSubTableEXT( target, start, x, y, width );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glCopyColorTable( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
+  void (*func_glCopyColorTable)( GLenum, GLenum, GLint, GLint, GLsizei ) = extension_funcs[EXT_glCopyColorTable];
+  TRACE("(%d, %d, %d, %d, %d)\n", target, internalformat, x, y, width );
+  ENTER_GL();
+  func_glCopyColorTable( target, internalformat, x, y, width );
   LEAVE_GL();
 }
 
@@ -2898,11 +3051,27 @@ static void WINAPI wine_glCopyColorTableSGI( GLenum target, GLenum internalforma
   LEAVE_GL();
 }
 
+static void WINAPI wine_glCopyConvolutionFilter1D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
+  void (*func_glCopyConvolutionFilter1D)( GLenum, GLenum, GLint, GLint, GLsizei ) = extension_funcs[EXT_glCopyConvolutionFilter1D];
+  TRACE("(%d, %d, %d, %d, %d)\n", target, internalformat, x, y, width );
+  ENTER_GL();
+  func_glCopyConvolutionFilter1D( target, internalformat, x, y, width );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glCopyConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
   void (*func_glCopyConvolutionFilter1DEXT)( GLenum, GLenum, GLint, GLint, GLsizei ) = extension_funcs[EXT_glCopyConvolutionFilter1DEXT];
   TRACE("(%d, %d, %d, %d, %d)\n", target, internalformat, x, y, width );
   ENTER_GL();
   func_glCopyConvolutionFilter1DEXT( target, internalformat, x, y, width );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glCopyConvolutionFilter2D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height ) {
+  void (*func_glCopyConvolutionFilter2D)( GLenum, GLenum, GLint, GLint, GLsizei, GLsizei ) = extension_funcs[EXT_glCopyConvolutionFilter2D];
+  TRACE("(%d, %d, %d, %d, %d, %d)\n", target, internalformat, x, y, width, height );
+  ENTER_GL();
+  func_glCopyConvolutionFilter2D( target, internalformat, x, y, width, height );
   LEAVE_GL();
 }
 
@@ -2983,6 +3152,14 @@ static void WINAPI wine_glCopyTexSubImage2DEXT( GLenum target, GLint level, GLin
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, xoffset, yoffset, x, y, width, height );
   ENTER_GL();
   func_glCopyTexSubImage2DEXT( target, level, xoffset, yoffset, x, y, width, height );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {
+  void (*func_glCopyTexSubImage3D)( GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei ) = extension_funcs[EXT_glCopyTexSubImage3D];
+  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, xoffset, yoffset, zoffset, x, y, width, height );
+  ENTER_GL();
+  func_glCopyTexSubImage3D( target, level, xoffset, yoffset, zoffset, x, y, width, height );
   LEAVE_GL();
 }
 
@@ -3434,6 +3611,14 @@ static void WINAPI wine_glDrawArraysEXT( GLenum mode, GLint first, GLsizei count
   LEAVE_GL();
 }
 
+static void WINAPI wine_glDrawArraysInstanced( GLenum mode, GLint first, GLsizei count, GLsizei primcount ) {
+  void (*func_glDrawArraysInstanced)( GLenum, GLint, GLsizei, GLsizei ) = extension_funcs[EXT_glDrawArraysInstanced];
+  TRACE("(%d, %d, %d, %d)\n", mode, first, count, primcount );
+  ENTER_GL();
+  func_glDrawArraysInstanced( mode, first, count, primcount );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glDrawArraysInstancedARB( GLenum mode, GLint first, GLsizei count, GLsizei primcount ) {
   void (*func_glDrawArraysInstancedARB)( GLenum, GLint, GLsizei, GLsizei ) = extension_funcs[EXT_glDrawArraysInstancedARB];
   TRACE("(%d, %d, %d, %d)\n", mode, first, count, primcount );
@@ -3498,6 +3683,14 @@ static void WINAPI wine_glDrawElementArrayATI( GLenum mode, GLsizei count ) {
   LEAVE_GL();
 }
 
+static void WINAPI wine_glDrawElementsInstanced( GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount ) {
+  void (*func_glDrawElementsInstanced)( GLenum, GLsizei, GLenum, GLvoid*, GLsizei ) = extension_funcs[EXT_glDrawElementsInstanced];
+  TRACE("(%d, %d, %d, %p, %d)\n", mode, count, type, indices, primcount );
+  ENTER_GL();
+  func_glDrawElementsInstanced( mode, count, type, indices, primcount );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glDrawElementsInstancedARB( GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount ) {
   void (*func_glDrawElementsInstancedARB)( GLenum, GLsizei, GLenum, GLvoid*, GLsizei ) = extension_funcs[EXT_glDrawElementsInstancedARB];
   TRACE("(%d, %d, %d, %p, %d)\n", mode, count, type, indices, primcount );
@@ -3535,6 +3728,14 @@ static void WINAPI wine_glDrawRangeElementArrayATI( GLenum mode, GLuint start, G
   TRACE("(%d, %d, %d, %d)\n", mode, start, end, count );
   ENTER_GL();
   func_glDrawRangeElementArrayATI( mode, start, end, count );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, GLvoid* indices ) {
+  void (*func_glDrawRangeElements)( GLenum, GLuint, GLuint, GLsizei, GLenum, GLvoid* ) = extension_funcs[EXT_glDrawRangeElements];
+  TRACE("(%d, %d, %d, %d, %d, %p)\n", mode, start, end, count, type, indices );
+  ENTER_GL();
+  func_glDrawRangeElements( mode, start, end, count, type, indices );
   LEAVE_GL();
 }
 
@@ -4632,11 +4833,27 @@ static void WINAPI wine_glGetBufferSubDataARB( GLenum target, INT_PTR offset, IN
   LEAVE_GL();
 }
 
+static void WINAPI wine_glGetColorTable( GLenum target, GLenum format, GLenum type, GLvoid* table ) {
+  void (*func_glGetColorTable)( GLenum, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glGetColorTable];
+  TRACE("(%d, %d, %d, %p)\n", target, format, type, table );
+  ENTER_GL();
+  func_glGetColorTable( target, format, type, table );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glGetColorTableEXT( GLenum target, GLenum format, GLenum type, GLvoid* data ) {
   void (*func_glGetColorTableEXT)( GLenum, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glGetColorTableEXT];
   TRACE("(%d, %d, %d, %p)\n", target, format, type, data );
   ENTER_GL();
   func_glGetColorTableEXT( target, format, type, data );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
+  void (*func_glGetColorTableParameterfv)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glGetColorTableParameterfv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glGetColorTableParameterfv( target, pname, params );
   LEAVE_GL();
 }
 
@@ -4653,6 +4870,14 @@ static void WINAPI wine_glGetColorTableParameterfvSGI( GLenum target, GLenum pna
   TRACE("(%d, %d, %p)\n", target, pname, params );
   ENTER_GL();
   func_glGetColorTableParameterfvSGI( target, pname, params );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glGetColorTableParameteriv( GLenum target, GLenum pname, GLint* params ) {
+  void (*func_glGetColorTableParameteriv)( GLenum, GLenum, GLint* ) = extension_funcs[EXT_glGetColorTableParameteriv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glGetColorTableParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
@@ -4752,6 +4977,14 @@ static void WINAPI wine_glGetCompressedTextureImageEXT( GLuint texture, GLenum t
   LEAVE_GL();
 }
 
+static void WINAPI wine_glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, GLvoid* image ) {
+  void (*func_glGetConvolutionFilter)( GLenum, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glGetConvolutionFilter];
+  TRACE("(%d, %d, %d, %p)\n", target, format, type, image );
+  ENTER_GL();
+  func_glGetConvolutionFilter( target, format, type, image );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glGetConvolutionFilterEXT( GLenum target, GLenum format, GLenum type, GLvoid* image ) {
   void (*func_glGetConvolutionFilterEXT)( GLenum, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glGetConvolutionFilterEXT];
   TRACE("(%d, %d, %d, %p)\n", target, format, type, image );
@@ -4760,11 +4993,27 @@ static void WINAPI wine_glGetConvolutionFilterEXT( GLenum target, GLenum format,
   LEAVE_GL();
 }
 
+static void WINAPI wine_glGetConvolutionParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
+  void (*func_glGetConvolutionParameterfv)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glGetConvolutionParameterfv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glGetConvolutionParameterfv( target, pname, params );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glGetConvolutionParameterfvEXT( GLenum target, GLenum pname, GLfloat* params ) {
   void (*func_glGetConvolutionParameterfvEXT)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glGetConvolutionParameterfvEXT];
   TRACE("(%d, %d, %p)\n", target, pname, params );
   ENTER_GL();
   func_glGetConvolutionParameterfvEXT( target, pname, params );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint* params ) {
+  void (*func_glGetConvolutionParameteriv)( GLenum, GLenum, GLint* ) = extension_funcs[EXT_glGetConvolutionParameteriv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glGetConvolutionParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
@@ -4918,6 +5167,14 @@ static unsigned int WINAPI wine_glGetHandleARB( GLenum pname ) {
   return ret_value;
 }
 
+static void WINAPI wine_glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
+  void (*func_glGetHistogram)( GLenum, GLboolean, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glGetHistogram];
+  TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
+  ENTER_GL();
+  func_glGetHistogram( target, reset, format, type, values );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glGetHistogramEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
   void (*func_glGetHistogramEXT)( GLenum, GLboolean, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glGetHistogramEXT];
   TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
@@ -4926,11 +5183,27 @@ static void WINAPI wine_glGetHistogramEXT( GLenum target, GLboolean reset, GLenu
   LEAVE_GL();
 }
 
+static void WINAPI wine_glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
+  void (*func_glGetHistogramParameterfv)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glGetHistogramParameterfv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glGetHistogramParameterfv( target, pname, params );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glGetHistogramParameterfvEXT( GLenum target, GLenum pname, GLfloat* params ) {
   void (*func_glGetHistogramParameterfvEXT)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glGetHistogramParameterfvEXT];
   TRACE("(%d, %d, %p)\n", target, pname, params );
   ENTER_GL();
   func_glGetHistogramParameterfvEXT( target, pname, params );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glGetHistogramParameteriv( GLenum target, GLenum pname, GLint* params ) {
+  void (*func_glGetHistogramParameteriv)( GLenum, GLenum, GLint* ) = extension_funcs[EXT_glGetHistogramParameteriv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glGetHistogramParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
@@ -5096,6 +5369,14 @@ static void WINAPI wine_glGetMapParameterivNV( GLenum target, GLenum pname, GLin
   LEAVE_GL();
 }
 
+static void WINAPI wine_glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
+  void (*func_glGetMinmax)( GLenum, GLboolean, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glGetMinmax];
+  TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
+  ENTER_GL();
+  func_glGetMinmax( target, reset, format, type, values );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glGetMinmaxEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
   void (*func_glGetMinmaxEXT)( GLenum, GLboolean, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glGetMinmaxEXT];
   TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
@@ -5104,11 +5385,27 @@ static void WINAPI wine_glGetMinmaxEXT( GLenum target, GLboolean reset, GLenum f
   LEAVE_GL();
 }
 
+static void WINAPI wine_glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
+  void (*func_glGetMinmaxParameterfv)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glGetMinmaxParameterfv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glGetMinmaxParameterfv( target, pname, params );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glGetMinmaxParameterfvEXT( GLenum target, GLenum pname, GLfloat* params ) {
   void (*func_glGetMinmaxParameterfvEXT)( GLenum, GLenum, GLfloat* ) = extension_funcs[EXT_glGetMinmaxParameterfvEXT];
   TRACE("(%d, %d, %p)\n", target, pname, params );
   ENTER_GL();
   func_glGetMinmaxParameterfvEXT( target, pname, params );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint* params ) {
+  void (*func_glGetMinmaxParameteriv)( GLenum, GLenum, GLint* ) = extension_funcs[EXT_glGetMinmaxParameteriv];
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  ENTER_GL();
+  func_glGetMinmaxParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
@@ -5661,6 +5958,14 @@ static void WINAPI wine_glGetRenderbufferParameterivEXT( GLenum target, GLenum p
   TRACE("(%d, %d, %p)\n", target, pname, params );
   ENTER_GL();
   func_glGetRenderbufferParameterivEXT( target, pname, params );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glGetSeparableFilter( GLenum target, GLenum format, GLenum type, GLvoid* row, GLvoid* column, GLvoid* span ) {
+  void (*func_glGetSeparableFilter)( GLenum, GLenum, GLenum, GLvoid*, GLvoid*, GLvoid* ) = extension_funcs[EXT_glGetSeparableFilter];
+  TRACE("(%d, %d, %d, %p, %p, %p)\n", target, format, type, row, column, span );
+  ENTER_GL();
+  func_glGetSeparableFilter( target, format, type, row, column, span );
   LEAVE_GL();
 }
 
@@ -6275,6 +6580,14 @@ static void WINAPI wine_glHintPGI( GLenum target, GLint mode ) {
   TRACE("(%d, %d)\n", target, mode );
   ENTER_GL();
   func_glHintPGI( target, mode );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glHistogram( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink ) {
+  void (*func_glHistogram)( GLenum, GLsizei, GLenum, GLboolean ) = extension_funcs[EXT_glHistogram];
+  TRACE("(%d, %d, %d, %d)\n", target, width, internalformat, sink );
+  ENTER_GL();
+  func_glHistogram( target, width, internalformat, sink );
   LEAVE_GL();
 }
 
@@ -6997,6 +7310,14 @@ static void WINAPI wine_glMatrixTranslatefEXT( GLenum mode, GLfloat x, GLfloat y
   TRACE("(%d, %f, %f, %f)\n", mode, x, y, z );
   ENTER_GL();
   func_glMatrixTranslatefEXT( mode, x, y, z );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glMinmax( GLenum target, GLenum internalformat, GLboolean sink ) {
+  void (*func_glMinmax)( GLenum, GLenum, GLboolean ) = extension_funcs[EXT_glMinmax];
+  TRACE("(%d, %d, %d)\n", target, internalformat, sink );
+  ENTER_GL();
+  func_glMinmax( target, internalformat, sink );
   LEAVE_GL();
 }
 
@@ -8744,6 +9065,14 @@ static void WINAPI wine_glPresentFrameKeyedNV( GLuint video_slot, UINT64 minPres
   LEAVE_GL();
 }
 
+static void WINAPI wine_glPrimitiveRestartIndex( GLuint index ) {
+  void (*func_glPrimitiveRestartIndex)( GLuint ) = extension_funcs[EXT_glPrimitiveRestartIndex];
+  TRACE("(%d)\n", index );
+  ENTER_GL();
+  func_glPrimitiveRestartIndex( index );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glPrimitiveRestartIndexNV( GLuint index ) {
   void (*func_glPrimitiveRestartIndexNV)( GLuint ) = extension_funcs[EXT_glPrimitiveRestartIndexNV];
   TRACE("(%d)\n", index );
@@ -9616,11 +9945,27 @@ static void WINAPI wine_glRequestResidentProgramsNV( GLsizei n, GLuint* programs
   LEAVE_GL();
 }
 
+static void WINAPI wine_glResetHistogram( GLenum target ) {
+  void (*func_glResetHistogram)( GLenum ) = extension_funcs[EXT_glResetHistogram];
+  TRACE("(%d)\n", target );
+  ENTER_GL();
+  func_glResetHistogram( target );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glResetHistogramEXT( GLenum target ) {
   void (*func_glResetHistogramEXT)( GLenum ) = extension_funcs[EXT_glResetHistogramEXT];
   TRACE("(%d)\n", target );
   ENTER_GL();
   func_glResetHistogramEXT( target );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glResetMinmax( GLenum target ) {
+  void (*func_glResetMinmax)( GLenum ) = extension_funcs[EXT_glResetMinmax];
+  TRACE("(%d)\n", target );
+  ENTER_GL();
+  func_glResetMinmax( target );
   LEAVE_GL();
 }
 
@@ -10032,6 +10377,14 @@ static void WINAPI wine_glSelectTextureSGIS( GLenum target ) {
   LEAVE_GL();
 }
 
+static void WINAPI wine_glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column ) {
+  void (*func_glSeparableFilter2D)( GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, GLvoid*, GLvoid* ) = extension_funcs[EXT_glSeparableFilter2D];
+  TRACE("(%d, %d, %d, %d, %d, %d, %p, %p)\n", target, internalformat, width, height, format, type, row, column );
+  ENTER_GL();
+  func_glSeparableFilter2D( target, internalformat, width, height, format, type, row, column );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glSeparableFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column ) {
   void (*func_glSeparableFilter2DEXT)( GLenum, GLenum, GLsizei, GLsizei, GLenum, GLenum, GLvoid*, GLvoid* ) = extension_funcs[EXT_glSeparableFilter2DEXT];
   TRACE("(%d, %d, %d, %d, %d, %d, %p, %p)\n", target, internalformat, width, height, format, type, row, column );
@@ -10390,6 +10743,14 @@ static GLboolean WINAPI wine_glTestObjectAPPLE( GLenum object, GLuint name ) {
   return ret_value;
 }
 
+static void WINAPI wine_glTexBuffer( GLenum target, GLenum internalformat, GLuint buffer ) {
+  void (*func_glTexBuffer)( GLenum, GLenum, GLuint ) = extension_funcs[EXT_glTexBuffer];
+  TRACE("(%d, %d, %d)\n", target, internalformat, buffer );
+  ENTER_GL();
+  func_glTexBuffer( target, internalformat, buffer );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glTexBufferARB( GLenum target, GLenum internalformat, GLuint buffer ) {
   void (*func_glTexBufferARB)( GLenum, GLenum, GLuint ) = extension_funcs[EXT_glTexBufferARB];
   TRACE("(%d, %d, %d)\n", target, internalformat, buffer );
@@ -10630,6 +10991,14 @@ static void WINAPI wine_glTexFilterFuncSGIS( GLenum target, GLenum filter, GLsiz
   LEAVE_GL();
 }
 
+static void WINAPI wine_glTexImage3D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
+  void (*func_glTexImage3D)( GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glTexImage3D];
+  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, format, type, pixels );
+  ENTER_GL();
+  func_glTexImage3D( target, level, internalformat, width, height, depth, border, format, type, pixels );
+  LEAVE_GL();
+}
+
 static void WINAPI wine_glTexImage3DEXT( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
   void (*func_glTexImage3DEXT)( GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glTexImage3DEXT];
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, format, type, pixels );
@@ -10699,6 +11068,14 @@ static void WINAPI wine_glTexSubImage2DEXT( GLenum target, GLint level, GLint xo
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, type, pixels );
   ENTER_GL();
   func_glTexSubImage2DEXT( target, level, xoffset, yoffset, width, height, format, type, pixels );
+  LEAVE_GL();
+}
+
+static void WINAPI wine_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLvoid* pixels ) {
+  void (*func_glTexSubImage3D)( GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, GLvoid* ) = extension_funcs[EXT_glTexSubImage3D];
+  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
+  ENTER_GL();
+  func_glTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
   LEAVE_GL();
 }
 
@@ -12492,11 +12869,11 @@ static void WINAPI wine_glVertexAttribArrayObjectATI( GLuint index, GLint size, 
   LEAVE_GL();
 }
 
-static void WINAPI wine_glVertexAttribDivisor( GLuint index, GLuint divisor ) {
-  void (*func_glVertexAttribDivisor)( GLuint, GLuint ) = extension_funcs[EXT_glVertexAttribDivisor];
+static void WINAPI wine_glVertexAttribDivisorARB( GLuint index, GLuint divisor ) {
+  void (*func_glVertexAttribDivisorARB)( GLuint, GLuint ) = extension_funcs[EXT_glVertexAttribDivisorARB];
   TRACE("(%d, %d)\n", index, divisor );
   ENTER_GL();
-  func_glVertexAttribDivisor( index, divisor );
+  func_glVertexAttribDivisorARB( index, divisor );
   LEAVE_GL();
 }
 
@@ -13340,14 +13717,6 @@ static void WINAPI wine_glVertexWeighthvNV( unsigned short* weight ) {
   LEAVE_GL();
 }
 
-static void WINAPI wine_glVideoParameterivNV( GLuint video_slot, GLenum pname, GLint* params ) {
-  void (*func_glVideoParameterivNV)( GLuint, GLenum, GLint* ) = extension_funcs[EXT_glVideoParameterivNV];
-  TRACE("(%d, %d, %p)\n", video_slot, pname, params );
-  ENTER_GL();
-  func_glVideoParameterivNV( video_slot, pname, params );
-  LEAVE_GL();
-}
-
 static void WINAPI wine_glWeightPointerARB( GLint size, GLenum type, GLsizei stride, GLvoid* pointer ) {
   void (*func_glWeightPointerARB)( GLint, GLenum, GLsizei, GLvoid* ) = extension_funcs[EXT_glWeightPointerARB];
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
@@ -13948,7 +14317,9 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glBinormal3sEXT", "GL_EXT_coordinate_frame", wine_glBinormal3sEXT },
   { "glBinormal3svEXT", "GL_EXT_coordinate_frame", wine_glBinormal3svEXT },
   { "glBinormalPointerEXT", "GL_EXT_coordinate_frame", wine_glBinormalPointerEXT },
+  { "glBlendColor", "GL_VERSION_1_2", wine_glBlendColor },
   { "glBlendColorEXT", "GL_EXT_blend_color", wine_glBlendColorEXT },
+  { "glBlendEquation", "GL_VERSION_1_2", wine_glBlendEquation },
   { "glBlendEquationEXT", "GL_EXT_blend_minmax", wine_glBlendEquationEXT },
   { "glBlendEquationSeparate", "GL_VERSION_2_0", wine_glBlendEquationSeparate },
   { "glBlendEquationSeparateEXT", "GL_EXT_blend_equation_separate", wine_glBlendEquationSeparateEXT },
@@ -13975,7 +14346,7 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glClearColorIiEXT", "GL_EXT_texture_integer", wine_glClearColorIiEXT },
   { "glClearColorIuiEXT", "GL_EXT_texture_integer", wine_glClearColorIuiEXT },
   { "glClearDepthdNV", "GL_NV_depth_buffer_float", wine_glClearDepthdNV },
-  { "glClientActiveTexture", "GL_VERSION_1_3", wine_glClientActiveTexture },
+  { "glClientActiveTexture", "GL_VERSION_1_3_DEPRECATED", wine_glClientActiveTexture },
   { "glClientActiveTextureARB", "GL_ARB_multitexture", wine_glClientActiveTextureARB },
   { "glClientActiveVertexStreamATI", "GL_ATI_vertex_streams", wine_glClientActiveVertexStreamATI },
   { "glClientAttribDefaultEXT", "GL_EXT_direct_state_access", wine_glClientAttribDefaultEXT },
@@ -13999,9 +14370,13 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glColorPointerEXT", "GL_EXT_vertex_array", wine_glColorPointerEXT },
   { "glColorPointerListIBM", "GL_IBM_vertex_array_lists", wine_glColorPointerListIBM },
   { "glColorPointervINTEL", "GL_INTEL_parallel_arrays", wine_glColorPointervINTEL },
+  { "glColorSubTable", "GL_VERSION_1_2_DEPRECATED", wine_glColorSubTable },
   { "glColorSubTableEXT", "GL_EXT_color_subtable", wine_glColorSubTableEXT },
+  { "glColorTable", "GL_VERSION_1_2_DEPRECATED", wine_glColorTable },
   { "glColorTableEXT", "GL_EXT_paletted_texture", wine_glColorTableEXT },
+  { "glColorTableParameterfv", "GL_VERSION_1_2_DEPRECATED", wine_glColorTableParameterfv },
   { "glColorTableParameterfvSGI", "GL_SGI_color_table", wine_glColorTableParameterfvSGI },
+  { "glColorTableParameteriv", "GL_VERSION_1_2_DEPRECATED", wine_glColorTableParameteriv },
   { "glColorTableParameterivSGI", "GL_SGI_color_table", wine_glColorTableParameterivSGI },
   { "glColorTableSGI", "GL_SGI_color_table", wine_glColorTableSGI },
   { "glCombinerInputNV", "GL_NV_register_combiners", wine_glCombinerInputNV },
@@ -14037,16 +14412,26 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glCompressedTextureSubImage1DEXT", "GL_EXT_direct_state_access", wine_glCompressedTextureSubImage1DEXT },
   { "glCompressedTextureSubImage2DEXT", "GL_EXT_direct_state_access", wine_glCompressedTextureSubImage2DEXT },
   { "glCompressedTextureSubImage3DEXT", "GL_EXT_direct_state_access", wine_glCompressedTextureSubImage3DEXT },
+  { "glConvolutionFilter1D", "GL_VERSION_1_2_DEPRECATED", wine_glConvolutionFilter1D },
   { "glConvolutionFilter1DEXT", "GL_EXT_convolution", wine_glConvolutionFilter1DEXT },
+  { "glConvolutionFilter2D", "GL_VERSION_1_2_DEPRECATED", wine_glConvolutionFilter2D },
   { "glConvolutionFilter2DEXT", "GL_EXT_convolution", wine_glConvolutionFilter2DEXT },
+  { "glConvolutionParameterf", "GL_VERSION_1_2_DEPRECATED", wine_glConvolutionParameterf },
   { "glConvolutionParameterfEXT", "GL_EXT_convolution", wine_glConvolutionParameterfEXT },
+  { "glConvolutionParameterfv", "GL_VERSION_1_2_DEPRECATED", wine_glConvolutionParameterfv },
   { "glConvolutionParameterfvEXT", "GL_EXT_convolution", wine_glConvolutionParameterfvEXT },
+  { "glConvolutionParameteri", "GL_VERSION_1_2_DEPRECATED", wine_glConvolutionParameteri },
   { "glConvolutionParameteriEXT", "GL_EXT_convolution", wine_glConvolutionParameteriEXT },
+  { "glConvolutionParameteriv", "GL_VERSION_1_2_DEPRECATED", wine_glConvolutionParameteriv },
   { "glConvolutionParameterivEXT", "GL_EXT_convolution", wine_glConvolutionParameterivEXT },
   { "glCopyBufferSubData", "GL_ARB_copy_buffer", wine_glCopyBufferSubData },
+  { "glCopyColorSubTable", "GL_VERSION_1_2_DEPRECATED", wine_glCopyColorSubTable },
   { "glCopyColorSubTableEXT", "GL_EXT_color_subtable", wine_glCopyColorSubTableEXT },
+  { "glCopyColorTable", "GL_VERSION_1_2_DEPRECATED", wine_glCopyColorTable },
   { "glCopyColorTableSGI", "GL_SGI_color_table", wine_glCopyColorTableSGI },
+  { "glCopyConvolutionFilter1D", "GL_VERSION_1_2_DEPRECATED", wine_glCopyConvolutionFilter1D },
   { "glCopyConvolutionFilter1DEXT", "GL_EXT_convolution", wine_glCopyConvolutionFilter1DEXT },
+  { "glCopyConvolutionFilter2D", "GL_VERSION_1_2_DEPRECATED", wine_glCopyConvolutionFilter2D },
   { "glCopyConvolutionFilter2DEXT", "GL_EXT_convolution", wine_glCopyConvolutionFilter2DEXT },
   { "glCopyMultiTexImage1DEXT", "GL_EXT_direct_state_access", wine_glCopyMultiTexImage1DEXT },
   { "glCopyMultiTexImage2DEXT", "GL_EXT_direct_state_access", wine_glCopyMultiTexImage2DEXT },
@@ -14057,6 +14442,7 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glCopyTexImage2DEXT", "GL_EXT_copy_texture", wine_glCopyTexImage2DEXT },
   { "glCopyTexSubImage1DEXT", "GL_EXT_copy_texture", wine_glCopyTexSubImage1DEXT },
   { "glCopyTexSubImage2DEXT", "GL_EXT_copy_texture", wine_glCopyTexSubImage2DEXT },
+  { "glCopyTexSubImage3D", "GL_VERSION_1_2", wine_glCopyTexSubImage3D },
   { "glCopyTexSubImage3DEXT", "GL_EXT_copy_texture", wine_glCopyTexSubImage3DEXT },
   { "glCopyTextureImage1DEXT", "GL_EXT_direct_state_access", wine_glCopyTextureImage1DEXT },
   { "glCopyTextureImage2DEXT", "GL_EXT_direct_state_access", wine_glCopyTextureImage2DEXT },
@@ -14112,6 +14498,7 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glDisableVertexAttribArrayARB", "GL_ARB_vertex_program", wine_glDisableVertexAttribArrayARB },
   { "glDisablei", "GL_VERSION_3_0", wine_glDisablei },
   { "glDrawArraysEXT", "GL_EXT_vertex_array", wine_glDrawArraysEXT },
+  { "glDrawArraysInstanced", "GL_VERSION_3_1", wine_glDrawArraysInstanced },
   { "glDrawArraysInstancedARB", "GL_ARB_draw_instanced", wine_glDrawArraysInstancedARB },
   { "glDrawArraysInstancedEXT", "GL_EXT_draw_instanced", wine_glDrawArraysInstancedEXT },
   { "glDrawBufferRegion", "GL_KTX_buffer_region", wine_glDrawBufferRegion },
@@ -14120,11 +14507,13 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glDrawBuffersATI", "GL_ATI_draw_buffers", wine_glDrawBuffersATI },
   { "glDrawElementArrayAPPLE", "GL_APPLE_element_array", wine_glDrawElementArrayAPPLE },
   { "glDrawElementArrayATI", "GL_ATI_element_array", wine_glDrawElementArrayATI },
+  { "glDrawElementsInstanced", "GL_VERSION_3_1", wine_glDrawElementsInstanced },
   { "glDrawElementsInstancedARB", "GL_ARB_draw_instanced", wine_glDrawElementsInstancedARB },
   { "glDrawElementsInstancedEXT", "GL_EXT_draw_instanced", wine_glDrawElementsInstancedEXT },
   { "glDrawMeshArraysSUN", "GL_SUN_mesh_array", wine_glDrawMeshArraysSUN },
   { "glDrawRangeElementArrayAPPLE", "GL_APPLE_element_array", wine_glDrawRangeElementArrayAPPLE },
   { "glDrawRangeElementArrayATI", "GL_ATI_element_array", wine_glDrawRangeElementArrayATI },
+  { "glDrawRangeElements", "GL_VERSION_1_2", wine_glDrawRangeElements },
   { "glDrawRangeElementsEXT", "GL_EXT_draw_range_elements", wine_glDrawRangeElementsEXT },
   { "glDrawTransformFeedbackNV", "GL_NV_transform_feedback2", wine_glDrawTransformFeedbackNV },
   { "glEdgeFlagPointerEXT", "GL_EXT_vertex_array", wine_glEdgeFlagPointerEXT },
@@ -14163,16 +14552,16 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glFlushRasterSGIX", "GL_SGIX_flush_raster", wine_glFlushRasterSGIX },
   { "glFlushVertexArrayRangeAPPLE", "GL_APPLE_vertex_array_range", wine_glFlushVertexArrayRangeAPPLE },
   { "glFlushVertexArrayRangeNV", "GL_NV_vertex_array_range", wine_glFlushVertexArrayRangeNV },
-  { "glFogCoordPointer", "GL_VERSION_1_4", wine_glFogCoordPointer },
+  { "glFogCoordPointer", "GL_VERSION_1_4_DEPRECATED", wine_glFogCoordPointer },
   { "glFogCoordPointerEXT", "GL_EXT_fog_coord", wine_glFogCoordPointerEXT },
   { "glFogCoordPointerListIBM", "GL_IBM_vertex_array_lists", wine_glFogCoordPointerListIBM },
-  { "glFogCoordd", "GL_VERSION_1_4", wine_glFogCoordd },
+  { "glFogCoordd", "GL_VERSION_1_4_DEPRECATED", wine_glFogCoordd },
   { "glFogCoorddEXT", "GL_EXT_fog_coord", wine_glFogCoorddEXT },
-  { "glFogCoorddv", "GL_VERSION_1_4", wine_glFogCoorddv },
+  { "glFogCoorddv", "GL_VERSION_1_4_DEPRECATED", wine_glFogCoorddv },
   { "glFogCoorddvEXT", "GL_EXT_fog_coord", wine_glFogCoorddvEXT },
-  { "glFogCoordf", "GL_VERSION_1_4", wine_glFogCoordf },
+  { "glFogCoordf", "GL_VERSION_1_4_DEPRECATED", wine_glFogCoordf },
   { "glFogCoordfEXT", "GL_EXT_fog_coord", wine_glFogCoordfEXT },
-  { "glFogCoordfv", "GL_VERSION_1_4", wine_glFogCoordfv },
+  { "glFogCoordfv", "GL_VERSION_1_4_DEPRECATED", wine_glFogCoordfv },
   { "glFogCoordfvEXT", "GL_EXT_fog_coord", wine_glFogCoordfvEXT },
   { "glFogCoordhNV", "GL_NV_half_float", wine_glFogCoordhNV },
   { "glFogCoordhvNV", "GL_NV_half_float", wine_glFogCoordhvNV },
@@ -14260,9 +14649,12 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glGetBufferPointervARB", "GL_ARB_vertex_buffer_object", wine_glGetBufferPointervARB },
   { "glGetBufferSubData", "GL_VERSION_1_5", wine_glGetBufferSubData },
   { "glGetBufferSubDataARB", "GL_ARB_vertex_buffer_object", wine_glGetBufferSubDataARB },
+  { "glGetColorTable", "GL_VERSION_1_2_DEPRECATED", wine_glGetColorTable },
   { "glGetColorTableEXT", "GL_EXT_paletted_texture", wine_glGetColorTableEXT },
+  { "glGetColorTableParameterfv", "GL_VERSION_1_2_DEPRECATED", wine_glGetColorTableParameterfv },
   { "glGetColorTableParameterfvEXT", "GL_EXT_paletted_texture", wine_glGetColorTableParameterfvEXT },
   { "glGetColorTableParameterfvSGI", "GL_SGI_color_table", wine_glGetColorTableParameterfvSGI },
+  { "glGetColorTableParameteriv", "GL_VERSION_1_2_DEPRECATED", wine_glGetColorTableParameteriv },
   { "glGetColorTableParameterivEXT", "GL_EXT_paletted_texture", wine_glGetColorTableParameterivEXT },
   { "glGetColorTableParameterivSGI", "GL_SGI_color_table", wine_glGetColorTableParameterivSGI },
   { "glGetColorTableSGI", "GL_SGI_color_table", wine_glGetColorTableSGI },
@@ -14275,8 +14667,11 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glGetCompressedTexImage", "GL_VERSION_1_3", wine_glGetCompressedTexImage },
   { "glGetCompressedTexImageARB", "GL_ARB_texture_compression", wine_glGetCompressedTexImageARB },
   { "glGetCompressedTextureImageEXT", "GL_EXT_direct_state_access", wine_glGetCompressedTextureImageEXT },
+  { "glGetConvolutionFilter", "GL_VERSION_1_2_DEPRECATED", wine_glGetConvolutionFilter },
   { "glGetConvolutionFilterEXT", "GL_EXT_convolution", wine_glGetConvolutionFilterEXT },
+  { "glGetConvolutionParameterfv", "GL_VERSION_1_2_DEPRECATED", wine_glGetConvolutionParameterfv },
   { "glGetConvolutionParameterfvEXT", "GL_EXT_convolution", wine_glGetConvolutionParameterfvEXT },
+  { "glGetConvolutionParameteriv", "GL_VERSION_1_2_DEPRECATED", wine_glGetConvolutionParameteriv },
   { "glGetConvolutionParameterivEXT", "GL_EXT_convolution", wine_glGetConvolutionParameterivEXT },
   { "glGetDetailTexFuncSGIS", "GL_SGIS_detail_texture", wine_glGetDetailTexFuncSGIS },
   { "glGetDoubleIndexedvEXT", "GL_EXT_direct_state_access", wine_glGetDoubleIndexedvEXT },
@@ -14295,8 +14690,11 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glGetFramebufferAttachmentParameterivEXT", "GL_EXT_framebuffer_object", wine_glGetFramebufferAttachmentParameterivEXT },
   { "glGetFramebufferParameterivEXT", "GL_EXT_direct_state_access", wine_glGetFramebufferParameterivEXT },
   { "glGetHandleARB", "GL_ARB_shader_objects", wine_glGetHandleARB },
+  { "glGetHistogram", "GL_VERSION_1_2_DEPRECATED", wine_glGetHistogram },
   { "glGetHistogramEXT", "GL_EXT_histogram", wine_glGetHistogramEXT },
+  { "glGetHistogramParameterfv", "GL_VERSION_1_2_DEPRECATED", wine_glGetHistogramParameterfv },
   { "glGetHistogramParameterfvEXT", "GL_EXT_histogram", wine_glGetHistogramParameterfvEXT },
+  { "glGetHistogramParameteriv", "GL_VERSION_1_2_DEPRECATED", wine_glGetHistogramParameteriv },
   { "glGetHistogramParameterivEXT", "GL_EXT_histogram", wine_glGetHistogramParameterivEXT },
   { "glGetImageTransformParameterfvHP", "GL_HP_image_transform", wine_glGetImageTransformParameterfvHP },
   { "glGetImageTransformParameterivHP", "GL_HP_image_transform", wine_glGetImageTransformParameterivHP },
@@ -14317,8 +14715,11 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glGetMapControlPointsNV", "GL_NV_evaluators", wine_glGetMapControlPointsNV },
   { "glGetMapParameterfvNV", "GL_NV_evaluators", wine_glGetMapParameterfvNV },
   { "glGetMapParameterivNV", "GL_NV_evaluators", wine_glGetMapParameterivNV },
+  { "glGetMinmax", "GL_VERSION_1_2_DEPRECATED", wine_glGetMinmax },
   { "glGetMinmaxEXT", "GL_EXT_histogram", wine_glGetMinmaxEXT },
+  { "glGetMinmaxParameterfv", "GL_VERSION_1_2_DEPRECATED", wine_glGetMinmaxParameterfv },
   { "glGetMinmaxParameterfvEXT", "GL_EXT_histogram", wine_glGetMinmaxParameterfvEXT },
+  { "glGetMinmaxParameteriv", "GL_VERSION_1_2_DEPRECATED", wine_glGetMinmaxParameteriv },
   { "glGetMinmaxParameterivEXT", "GL_EXT_histogram", wine_glGetMinmaxParameterivEXT },
   { "glGetMultiTexEnvfvEXT", "GL_EXT_direct_state_access", wine_glGetMultiTexEnvfvEXT },
   { "glGetMultiTexEnvivEXT", "GL_EXT_direct_state_access", wine_glGetMultiTexEnvivEXT },
@@ -14388,6 +14789,7 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glGetQueryivARB", "GL_ARB_occlusion_query", wine_glGetQueryivARB },
   { "glGetRenderbufferParameteriv", "GL_ARB_framebuffer_object", wine_glGetRenderbufferParameteriv },
   { "glGetRenderbufferParameterivEXT", "GL_EXT_framebuffer_object", wine_glGetRenderbufferParameterivEXT },
+  { "glGetSeparableFilter", "GL_VERSION_1_2_DEPRECATED", wine_glGetSeparableFilter },
   { "glGetSeparableFilterEXT", "GL_EXT_convolution", wine_glGetSeparableFilterEXT },
   { "glGetShaderInfoLog", "GL_VERSION_2_0", wine_glGetShaderInfoLog },
   { "glGetShaderSource", "GL_VERSION_2_0", wine_glGetShaderSource },
@@ -14463,6 +14865,7 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glGlobalAlphaFactoruiSUN", "GL_SUN_global_alpha", wine_glGlobalAlphaFactoruiSUN },
   { "glGlobalAlphaFactorusSUN", "GL_SUN_global_alpha", wine_glGlobalAlphaFactorusSUN },
   { "glHintPGI", "GL_PGI_misc_hints", wine_glHintPGI },
+  { "glHistogram", "GL_VERSION_1_2_DEPRECATED", wine_glHistogram },
   { "glHistogramEXT", "GL_EXT_histogram", wine_glHistogramEXT },
   { "glIglooInterfaceSGIX", "GL_SGIX_igloo_interface", wine_glIglooInterfaceSGIX },
   { "glImageTransformParameterfHP", "GL_HP_image_transform", wine_glImageTransformParameterfHP },
@@ -14508,9 +14911,9 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glListParameterivSGIX", "GL_SGIX_list_priority", wine_glListParameterivSGIX },
   { "glLoadIdentityDeformationMapSGIX", "GL_SGIX_polynomial_ffd", wine_glLoadIdentityDeformationMapSGIX },
   { "glLoadProgramNV", "GL_NV_vertex_program", wine_glLoadProgramNV },
-  { "glLoadTransposeMatrixd", "GL_VERSION_1_3", wine_glLoadTransposeMatrixd },
+  { "glLoadTransposeMatrixd", "GL_VERSION_1_3_DEPRECATED", wine_glLoadTransposeMatrixd },
   { "glLoadTransposeMatrixdARB", "GL_ARB_transpose_matrix", wine_glLoadTransposeMatrixdARB },
-  { "glLoadTransposeMatrixf", "GL_VERSION_1_3", wine_glLoadTransposeMatrixf },
+  { "glLoadTransposeMatrixf", "GL_VERSION_1_3_DEPRECATED", wine_glLoadTransposeMatrixf },
   { "glLoadTransposeMatrixfARB", "GL_ARB_transpose_matrix", wine_glLoadTransposeMatrixfARB },
   { "glLockArraysEXT", "GL_EXT_compiled_vertex_array", wine_glLockArraysEXT },
   { "glMTexCoord2fSGIS", "GL_SGIS_multitexture", wine_glMTexCoord2fSGIS },
@@ -14546,10 +14949,11 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glMatrixScalefEXT", "GL_EXT_direct_state_access", wine_glMatrixScalefEXT },
   { "glMatrixTranslatedEXT", "GL_EXT_direct_state_access", wine_glMatrixTranslatedEXT },
   { "glMatrixTranslatefEXT", "GL_EXT_direct_state_access", wine_glMatrixTranslatefEXT },
+  { "glMinmax", "GL_VERSION_1_2_DEPRECATED", wine_glMinmax },
   { "glMinmaxEXT", "GL_EXT_histogram", wine_glMinmaxEXT },
-  { "glMultTransposeMatrixd", "GL_VERSION_1_3", wine_glMultTransposeMatrixd },
+  { "glMultTransposeMatrixd", "GL_VERSION_1_3_DEPRECATED", wine_glMultTransposeMatrixd },
   { "glMultTransposeMatrixdARB", "GL_ARB_transpose_matrix", wine_glMultTransposeMatrixdARB },
-  { "glMultTransposeMatrixf", "GL_VERSION_1_3", wine_glMultTransposeMatrixf },
+  { "glMultTransposeMatrixf", "GL_VERSION_1_3_DEPRECATED", wine_glMultTransposeMatrixf },
   { "glMultTransposeMatrixfARB", "GL_ARB_transpose_matrix", wine_glMultTransposeMatrixfARB },
   { "glMultiDrawArrays", "GL_VERSION_1_4", wine_glMultiDrawArrays },
   { "glMultiDrawArraysEXT", "GL_EXT_multi_draw_arrays", wine_glMultiDrawArraysEXT },
@@ -14560,108 +14964,108 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glMultiModeDrawArraysIBM", "GL_IBM_multimode_draw_arrays", wine_glMultiModeDrawArraysIBM },
   { "glMultiModeDrawElementsIBM", "GL_IBM_multimode_draw_arrays", wine_glMultiModeDrawElementsIBM },
   { "glMultiTexBufferEXT", "GL_EXT_direct_state_access", wine_glMultiTexBufferEXT },
-  { "glMultiTexCoord1d", "GL_VERSION_1_3", wine_glMultiTexCoord1d },
+  { "glMultiTexCoord1d", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord1d },
   { "glMultiTexCoord1dARB", "GL_ARB_multitexture", wine_glMultiTexCoord1dARB },
   { "glMultiTexCoord1dSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord1dSGIS },
-  { "glMultiTexCoord1dv", "GL_VERSION_1_3", wine_glMultiTexCoord1dv },
+  { "glMultiTexCoord1dv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord1dv },
   { "glMultiTexCoord1dvARB", "GL_ARB_multitexture", wine_glMultiTexCoord1dvARB },
   { "glMultiTexCoord1dvSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord1dvSGIS },
-  { "glMultiTexCoord1f", "GL_VERSION_1_3", wine_glMultiTexCoord1f },
+  { "glMultiTexCoord1f", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord1f },
   { "glMultiTexCoord1fARB", "GL_ARB_multitexture", wine_glMultiTexCoord1fARB },
   { "glMultiTexCoord1fSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord1fSGIS },
-  { "glMultiTexCoord1fv", "GL_VERSION_1_3", wine_glMultiTexCoord1fv },
+  { "glMultiTexCoord1fv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord1fv },
   { "glMultiTexCoord1fvARB", "GL_ARB_multitexture", wine_glMultiTexCoord1fvARB },
   { "glMultiTexCoord1fvSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord1fvSGIS },
   { "glMultiTexCoord1hNV", "GL_NV_half_float", wine_glMultiTexCoord1hNV },
   { "glMultiTexCoord1hvNV", "GL_NV_half_float", wine_glMultiTexCoord1hvNV },
-  { "glMultiTexCoord1i", "GL_VERSION_1_3", wine_glMultiTexCoord1i },
+  { "glMultiTexCoord1i", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord1i },
   { "glMultiTexCoord1iARB", "GL_ARB_multitexture", wine_glMultiTexCoord1iARB },
   { "glMultiTexCoord1iSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord1iSGIS },
-  { "glMultiTexCoord1iv", "GL_VERSION_1_3", wine_glMultiTexCoord1iv },
+  { "glMultiTexCoord1iv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord1iv },
   { "glMultiTexCoord1ivARB", "GL_ARB_multitexture", wine_glMultiTexCoord1ivARB },
   { "glMultiTexCoord1ivSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord1ivSGIS },
-  { "glMultiTexCoord1s", "GL_VERSION_1_3", wine_glMultiTexCoord1s },
+  { "glMultiTexCoord1s", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord1s },
   { "glMultiTexCoord1sARB", "GL_ARB_multitexture", wine_glMultiTexCoord1sARB },
   { "glMultiTexCoord1sSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord1sSGIS },
-  { "glMultiTexCoord1sv", "GL_VERSION_1_3", wine_glMultiTexCoord1sv },
+  { "glMultiTexCoord1sv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord1sv },
   { "glMultiTexCoord1svARB", "GL_ARB_multitexture", wine_glMultiTexCoord1svARB },
   { "glMultiTexCoord1svSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord1svSGIS },
-  { "glMultiTexCoord2d", "GL_VERSION_1_3", wine_glMultiTexCoord2d },
+  { "glMultiTexCoord2d", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord2d },
   { "glMultiTexCoord2dARB", "GL_ARB_multitexture", wine_glMultiTexCoord2dARB },
   { "glMultiTexCoord2dSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord2dSGIS },
-  { "glMultiTexCoord2dv", "GL_VERSION_1_3", wine_glMultiTexCoord2dv },
+  { "glMultiTexCoord2dv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord2dv },
   { "glMultiTexCoord2dvARB", "GL_ARB_multitexture", wine_glMultiTexCoord2dvARB },
   { "glMultiTexCoord2dvSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord2dvSGIS },
-  { "glMultiTexCoord2f", "GL_VERSION_1_3", wine_glMultiTexCoord2f },
+  { "glMultiTexCoord2f", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord2f },
   { "glMultiTexCoord2fARB", "GL_ARB_multitexture", wine_glMultiTexCoord2fARB },
   { "glMultiTexCoord2fSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord2fSGIS },
-  { "glMultiTexCoord2fv", "GL_VERSION_1_3", wine_glMultiTexCoord2fv },
+  { "glMultiTexCoord2fv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord2fv },
   { "glMultiTexCoord2fvARB", "GL_ARB_multitexture", wine_glMultiTexCoord2fvARB },
   { "glMultiTexCoord2fvSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord2fvSGIS },
   { "glMultiTexCoord2hNV", "GL_NV_half_float", wine_glMultiTexCoord2hNV },
   { "glMultiTexCoord2hvNV", "GL_NV_half_float", wine_glMultiTexCoord2hvNV },
-  { "glMultiTexCoord2i", "GL_VERSION_1_3", wine_glMultiTexCoord2i },
+  { "glMultiTexCoord2i", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord2i },
   { "glMultiTexCoord2iARB", "GL_ARB_multitexture", wine_glMultiTexCoord2iARB },
   { "glMultiTexCoord2iSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord2iSGIS },
-  { "glMultiTexCoord2iv", "GL_VERSION_1_3", wine_glMultiTexCoord2iv },
+  { "glMultiTexCoord2iv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord2iv },
   { "glMultiTexCoord2ivARB", "GL_ARB_multitexture", wine_glMultiTexCoord2ivARB },
   { "glMultiTexCoord2ivSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord2ivSGIS },
-  { "glMultiTexCoord2s", "GL_VERSION_1_3", wine_glMultiTexCoord2s },
+  { "glMultiTexCoord2s", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord2s },
   { "glMultiTexCoord2sARB", "GL_ARB_multitexture", wine_glMultiTexCoord2sARB },
   { "glMultiTexCoord2sSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord2sSGIS },
-  { "glMultiTexCoord2sv", "GL_VERSION_1_3", wine_glMultiTexCoord2sv },
+  { "glMultiTexCoord2sv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord2sv },
   { "glMultiTexCoord2svARB", "GL_ARB_multitexture", wine_glMultiTexCoord2svARB },
   { "glMultiTexCoord2svSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord2svSGIS },
-  { "glMultiTexCoord3d", "GL_VERSION_1_3", wine_glMultiTexCoord3d },
+  { "glMultiTexCoord3d", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord3d },
   { "glMultiTexCoord3dARB", "GL_ARB_multitexture", wine_glMultiTexCoord3dARB },
   { "glMultiTexCoord3dSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord3dSGIS },
-  { "glMultiTexCoord3dv", "GL_VERSION_1_3", wine_glMultiTexCoord3dv },
+  { "glMultiTexCoord3dv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord3dv },
   { "glMultiTexCoord3dvARB", "GL_ARB_multitexture", wine_glMultiTexCoord3dvARB },
   { "glMultiTexCoord3dvSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord3dvSGIS },
-  { "glMultiTexCoord3f", "GL_VERSION_1_3", wine_glMultiTexCoord3f },
+  { "glMultiTexCoord3f", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord3f },
   { "glMultiTexCoord3fARB", "GL_ARB_multitexture", wine_glMultiTexCoord3fARB },
   { "glMultiTexCoord3fSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord3fSGIS },
-  { "glMultiTexCoord3fv", "GL_VERSION_1_3", wine_glMultiTexCoord3fv },
+  { "glMultiTexCoord3fv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord3fv },
   { "glMultiTexCoord3fvARB", "GL_ARB_multitexture", wine_glMultiTexCoord3fvARB },
   { "glMultiTexCoord3fvSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord3fvSGIS },
   { "glMultiTexCoord3hNV", "GL_NV_half_float", wine_glMultiTexCoord3hNV },
   { "glMultiTexCoord3hvNV", "GL_NV_half_float", wine_glMultiTexCoord3hvNV },
-  { "glMultiTexCoord3i", "GL_VERSION_1_3", wine_glMultiTexCoord3i },
+  { "glMultiTexCoord3i", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord3i },
   { "glMultiTexCoord3iARB", "GL_ARB_multitexture", wine_glMultiTexCoord3iARB },
   { "glMultiTexCoord3iSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord3iSGIS },
-  { "glMultiTexCoord3iv", "GL_VERSION_1_3", wine_glMultiTexCoord3iv },
+  { "glMultiTexCoord3iv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord3iv },
   { "glMultiTexCoord3ivARB", "GL_ARB_multitexture", wine_glMultiTexCoord3ivARB },
   { "glMultiTexCoord3ivSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord3ivSGIS },
-  { "glMultiTexCoord3s", "GL_VERSION_1_3", wine_glMultiTexCoord3s },
+  { "glMultiTexCoord3s", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord3s },
   { "glMultiTexCoord3sARB", "GL_ARB_multitexture", wine_glMultiTexCoord3sARB },
   { "glMultiTexCoord3sSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord3sSGIS },
-  { "glMultiTexCoord3sv", "GL_VERSION_1_3", wine_glMultiTexCoord3sv },
+  { "glMultiTexCoord3sv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord3sv },
   { "glMultiTexCoord3svARB", "GL_ARB_multitexture", wine_glMultiTexCoord3svARB },
   { "glMultiTexCoord3svSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord3svSGIS },
-  { "glMultiTexCoord4d", "GL_VERSION_1_3", wine_glMultiTexCoord4d },
+  { "glMultiTexCoord4d", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord4d },
   { "glMultiTexCoord4dARB", "GL_ARB_multitexture", wine_glMultiTexCoord4dARB },
   { "glMultiTexCoord4dSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord4dSGIS },
-  { "glMultiTexCoord4dv", "GL_VERSION_1_3", wine_glMultiTexCoord4dv },
+  { "glMultiTexCoord4dv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord4dv },
   { "glMultiTexCoord4dvARB", "GL_ARB_multitexture", wine_glMultiTexCoord4dvARB },
   { "glMultiTexCoord4dvSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord4dvSGIS },
-  { "glMultiTexCoord4f", "GL_VERSION_1_3", wine_glMultiTexCoord4f },
+  { "glMultiTexCoord4f", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord4f },
   { "glMultiTexCoord4fARB", "GL_ARB_multitexture", wine_glMultiTexCoord4fARB },
   { "glMultiTexCoord4fSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord4fSGIS },
-  { "glMultiTexCoord4fv", "GL_VERSION_1_3", wine_glMultiTexCoord4fv },
+  { "glMultiTexCoord4fv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord4fv },
   { "glMultiTexCoord4fvARB", "GL_ARB_multitexture", wine_glMultiTexCoord4fvARB },
   { "glMultiTexCoord4fvSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord4fvSGIS },
   { "glMultiTexCoord4hNV", "GL_NV_half_float", wine_glMultiTexCoord4hNV },
   { "glMultiTexCoord4hvNV", "GL_NV_half_float", wine_glMultiTexCoord4hvNV },
-  { "glMultiTexCoord4i", "GL_VERSION_1_3", wine_glMultiTexCoord4i },
+  { "glMultiTexCoord4i", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord4i },
   { "glMultiTexCoord4iARB", "GL_ARB_multitexture", wine_glMultiTexCoord4iARB },
   { "glMultiTexCoord4iSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord4iSGIS },
-  { "glMultiTexCoord4iv", "GL_VERSION_1_3", wine_glMultiTexCoord4iv },
+  { "glMultiTexCoord4iv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord4iv },
   { "glMultiTexCoord4ivARB", "GL_ARB_multitexture", wine_glMultiTexCoord4ivARB },
   { "glMultiTexCoord4ivSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord4ivSGIS },
-  { "glMultiTexCoord4s", "GL_VERSION_1_3", wine_glMultiTexCoord4s },
+  { "glMultiTexCoord4s", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord4s },
   { "glMultiTexCoord4sARB", "GL_ARB_multitexture", wine_glMultiTexCoord4sARB },
   { "glMultiTexCoord4sSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord4sSGIS },
-  { "glMultiTexCoord4sv", "GL_VERSION_1_3", wine_glMultiTexCoord4sv },
+  { "glMultiTexCoord4sv", "GL_VERSION_1_3_DEPRECATED", wine_glMultiTexCoord4sv },
   { "glMultiTexCoord4svARB", "GL_ARB_multitexture", wine_glMultiTexCoord4svARB },
   { "glMultiTexCoord4svSGIS", "GL_SGIS_multitexture", wine_glMultiTexCoord4svSGIS },
   { "glMultiTexCoordPointerEXT", "GL_EXT_direct_state_access", wine_glMultiTexCoordPointerEXT },
@@ -14763,6 +15167,7 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glPolygonOffsetEXT", "GL_EXT_polygon_offset", wine_glPolygonOffsetEXT },
   { "glPresentFrameDualFillNV", "GL_NV_present_video", wine_glPresentFrameDualFillNV },
   { "glPresentFrameKeyedNV", "GL_NV_present_video", wine_glPresentFrameKeyedNV },
+  { "glPrimitiveRestartIndex", "GL_VERSION_3_1", wine_glPrimitiveRestartIndex },
   { "glPrimitiveRestartIndexNV", "GL_NV_primitive_restart", wine_glPrimitiveRestartIndexNV },
   { "glPrimitiveRestartNV", "GL_NV_primitive_restart", wine_glPrimitiveRestartNV },
   { "glPrioritizeTexturesEXT", "GL_EXT_texture_object", wine_glPrioritizeTexturesEXT },
@@ -14872,7 +15277,9 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glReplacementCodeusSUN", "GL_SUN_triangle_list", wine_glReplacementCodeusSUN },
   { "glReplacementCodeusvSUN", "GL_SUN_triangle_list", wine_glReplacementCodeusvSUN },
   { "glRequestResidentProgramsNV", "GL_NV_vertex_program", wine_glRequestResidentProgramsNV },
+  { "glResetHistogram", "GL_VERSION_1_2_DEPRECATED", wine_glResetHistogram },
   { "glResetHistogramEXT", "GL_EXT_histogram", wine_glResetHistogramEXT },
+  { "glResetMinmax", "GL_VERSION_1_2_DEPRECATED", wine_glResetMinmax },
   { "glResetMinmaxEXT", "GL_EXT_histogram", wine_glResetMinmaxEXT },
   { "glResizeBuffersMESA", "GL_MESA_resize_buffers", wine_glResizeBuffersMESA },
   { "glResumeTransformFeedbackNV", "GL_NV_transform_feedback2", wine_glResumeTransformFeedbackNV },
@@ -14884,46 +15291,47 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glSampleMaskSGIS", "GL_SGIS_multisample", wine_glSampleMaskSGIS },
   { "glSamplePatternEXT", "GL_EXT_multisample", wine_glSamplePatternEXT },
   { "glSamplePatternSGIS", "GL_SGIS_multisample", wine_glSamplePatternSGIS },
-  { "glSecondaryColor3b", "GL_VERSION_1_4", wine_glSecondaryColor3b },
+  { "glSecondaryColor3b", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3b },
   { "glSecondaryColor3bEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3bEXT },
-  { "glSecondaryColor3bv", "GL_VERSION_1_4", wine_glSecondaryColor3bv },
+  { "glSecondaryColor3bv", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3bv },
   { "glSecondaryColor3bvEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3bvEXT },
-  { "glSecondaryColor3d", "GL_VERSION_1_4", wine_glSecondaryColor3d },
+  { "glSecondaryColor3d", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3d },
   { "glSecondaryColor3dEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3dEXT },
-  { "glSecondaryColor3dv", "GL_VERSION_1_4", wine_glSecondaryColor3dv },
+  { "glSecondaryColor3dv", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3dv },
   { "glSecondaryColor3dvEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3dvEXT },
-  { "glSecondaryColor3f", "GL_VERSION_1_4", wine_glSecondaryColor3f },
+  { "glSecondaryColor3f", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3f },
   { "glSecondaryColor3fEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3fEXT },
-  { "glSecondaryColor3fv", "GL_VERSION_1_4", wine_glSecondaryColor3fv },
+  { "glSecondaryColor3fv", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3fv },
   { "glSecondaryColor3fvEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3fvEXT },
   { "glSecondaryColor3hNV", "GL_NV_half_float", wine_glSecondaryColor3hNV },
   { "glSecondaryColor3hvNV", "GL_NV_half_float", wine_glSecondaryColor3hvNV },
-  { "glSecondaryColor3i", "GL_VERSION_1_4", wine_glSecondaryColor3i },
+  { "glSecondaryColor3i", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3i },
   { "glSecondaryColor3iEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3iEXT },
-  { "glSecondaryColor3iv", "GL_VERSION_1_4", wine_glSecondaryColor3iv },
+  { "glSecondaryColor3iv", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3iv },
   { "glSecondaryColor3ivEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3ivEXT },
-  { "glSecondaryColor3s", "GL_VERSION_1_4", wine_glSecondaryColor3s },
+  { "glSecondaryColor3s", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3s },
   { "glSecondaryColor3sEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3sEXT },
-  { "glSecondaryColor3sv", "GL_VERSION_1_4", wine_glSecondaryColor3sv },
+  { "glSecondaryColor3sv", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3sv },
   { "glSecondaryColor3svEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3svEXT },
-  { "glSecondaryColor3ub", "GL_VERSION_1_4", wine_glSecondaryColor3ub },
+  { "glSecondaryColor3ub", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3ub },
   { "glSecondaryColor3ubEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3ubEXT },
-  { "glSecondaryColor3ubv", "GL_VERSION_1_4", wine_glSecondaryColor3ubv },
+  { "glSecondaryColor3ubv", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3ubv },
   { "glSecondaryColor3ubvEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3ubvEXT },
-  { "glSecondaryColor3ui", "GL_VERSION_1_4", wine_glSecondaryColor3ui },
+  { "glSecondaryColor3ui", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3ui },
   { "glSecondaryColor3uiEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3uiEXT },
-  { "glSecondaryColor3uiv", "GL_VERSION_1_4", wine_glSecondaryColor3uiv },
+  { "glSecondaryColor3uiv", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3uiv },
   { "glSecondaryColor3uivEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3uivEXT },
-  { "glSecondaryColor3us", "GL_VERSION_1_4", wine_glSecondaryColor3us },
+  { "glSecondaryColor3us", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3us },
   { "glSecondaryColor3usEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3usEXT },
-  { "glSecondaryColor3usv", "GL_VERSION_1_4", wine_glSecondaryColor3usv },
+  { "glSecondaryColor3usv", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColor3usv },
   { "glSecondaryColor3usvEXT", "GL_EXT_secondary_color", wine_glSecondaryColor3usvEXT },
-  { "glSecondaryColorPointer", "GL_VERSION_1_4", wine_glSecondaryColorPointer },
+  { "glSecondaryColorPointer", "GL_VERSION_1_4_DEPRECATED", wine_glSecondaryColorPointer },
   { "glSecondaryColorPointerEXT", "GL_EXT_secondary_color", wine_glSecondaryColorPointerEXT },
   { "glSecondaryColorPointerListIBM", "GL_IBM_vertex_array_lists", wine_glSecondaryColorPointerListIBM },
   { "glSelectPerfMonitorCountersAMD", "GL_AMD_performance_monitor", wine_glSelectPerfMonitorCountersAMD },
   { "glSelectTextureCoordSetSGIS", "GL_SGIS_multitexture", wine_glSelectTextureCoordSetSGIS },
   { "glSelectTextureSGIS", "GL_SGIS_multitexture", wine_glSelectTextureSGIS },
+  { "glSeparableFilter2D", "GL_VERSION_1_2_DEPRECATED", wine_glSeparableFilter2D },
   { "glSeparableFilter2DEXT", "GL_EXT_convolution", wine_glSeparableFilter2DEXT },
   { "glSetFenceAPPLE", "GL_APPLE_fence", wine_glSetFenceAPPLE },
   { "glSetFenceNV", "GL_NV_fence", wine_glSetFenceNV },
@@ -14968,6 +15376,7 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glTestFenceAPPLE", "GL_APPLE_fence", wine_glTestFenceAPPLE },
   { "glTestFenceNV", "GL_NV_fence", wine_glTestFenceNV },
   { "glTestObjectAPPLE", "GL_APPLE_fence", wine_glTestObjectAPPLE },
+  { "glTexBuffer", "GL_VERSION_3_1", wine_glTexBuffer },
   { "glTexBufferARB", "GL_ARB_texture_buffer_object", wine_glTexBufferARB },
   { "glTexBufferEXT", "GL_EXT_texture_buffer_object", wine_glTexBufferEXT },
   { "glTexBumpParameterfvATI", "GL_ATI_envmap_bumpmap", wine_glTexBumpParameterfvATI },
@@ -14998,6 +15407,7 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glTexCoordPointerListIBM", "GL_IBM_vertex_array_lists", wine_glTexCoordPointerListIBM },
   { "glTexCoordPointervINTEL", "GL_INTEL_parallel_arrays", wine_glTexCoordPointervINTEL },
   { "glTexFilterFuncSGIS", "GL_SGIS_texture_filter4", wine_glTexFilterFuncSGIS },
+  { "glTexImage3D", "GL_VERSION_1_2", wine_glTexImage3D },
   { "glTexImage3DEXT", "GL_EXT_texture3D", wine_glTexImage3DEXT },
   { "glTexImage4DSGIS", "GL_SGIS_texture4D", wine_glTexImage4DSGIS },
   { "glTexParameterIiv", "GL_VERSION_3_0", wine_glTexParameterIiv },
@@ -15007,6 +15417,7 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glTexRenderbufferNV", "GL_NV_explicit_multisample", wine_glTexRenderbufferNV },
   { "glTexSubImage1DEXT", "GL_EXT_subtexture", wine_glTexSubImage1DEXT },
   { "glTexSubImage2DEXT", "GL_EXT_subtexture", wine_glTexSubImage2DEXT },
+  { "glTexSubImage3D", "GL_VERSION_1_2", wine_glTexSubImage3D },
   { "glTexSubImage3DEXT", "GL_EXT_texture3D", wine_glTexSubImage3DEXT },
   { "glTexSubImage4DSGIS", "GL_SGIS_texture4D", wine_glTexSubImage4DSGIS },
   { "glTextureBufferEXT", "GL_EXT_direct_state_access", wine_glTextureBufferEXT },
@@ -15230,46 +15641,46 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glVertexAttrib4usv", "GL_VERSION_2_0", wine_glVertexAttrib4usv },
   { "glVertexAttrib4usvARB", "GL_ARB_vertex_program", wine_glVertexAttrib4usvARB },
   { "glVertexAttribArrayObjectATI", "GL_ATI_vertex_attrib_array_object", wine_glVertexAttribArrayObjectATI },
-  { "glVertexAttribDivisor", "GL_ARB_instanced_arrays", wine_glVertexAttribDivisor },
-  { "glVertexAttribI1i", "GL_VERSION_3_0", wine_glVertexAttribI1i },
+  { "glVertexAttribDivisorARB", "GL_ARB_instanced_arrays", wine_glVertexAttribDivisorARB },
+  { "glVertexAttribI1i", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI1i },
   { "glVertexAttribI1iEXT", "GL_NV_vertex_program4", wine_glVertexAttribI1iEXT },
-  { "glVertexAttribI1iv", "GL_VERSION_3_0", wine_glVertexAttribI1iv },
+  { "glVertexAttribI1iv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI1iv },
   { "glVertexAttribI1ivEXT", "GL_NV_vertex_program4", wine_glVertexAttribI1ivEXT },
-  { "glVertexAttribI1ui", "GL_VERSION_3_0", wine_glVertexAttribI1ui },
+  { "glVertexAttribI1ui", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI1ui },
   { "glVertexAttribI1uiEXT", "GL_NV_vertex_program4", wine_glVertexAttribI1uiEXT },
-  { "glVertexAttribI1uiv", "GL_VERSION_3_0", wine_glVertexAttribI1uiv },
+  { "glVertexAttribI1uiv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI1uiv },
   { "glVertexAttribI1uivEXT", "GL_NV_vertex_program4", wine_glVertexAttribI1uivEXT },
-  { "glVertexAttribI2i", "GL_VERSION_3_0", wine_glVertexAttribI2i },
+  { "glVertexAttribI2i", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI2i },
   { "glVertexAttribI2iEXT", "GL_NV_vertex_program4", wine_glVertexAttribI2iEXT },
-  { "glVertexAttribI2iv", "GL_VERSION_3_0", wine_glVertexAttribI2iv },
+  { "glVertexAttribI2iv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI2iv },
   { "glVertexAttribI2ivEXT", "GL_NV_vertex_program4", wine_glVertexAttribI2ivEXT },
-  { "glVertexAttribI2ui", "GL_VERSION_3_0", wine_glVertexAttribI2ui },
+  { "glVertexAttribI2ui", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI2ui },
   { "glVertexAttribI2uiEXT", "GL_NV_vertex_program4", wine_glVertexAttribI2uiEXT },
-  { "glVertexAttribI2uiv", "GL_VERSION_3_0", wine_glVertexAttribI2uiv },
+  { "glVertexAttribI2uiv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI2uiv },
   { "glVertexAttribI2uivEXT", "GL_NV_vertex_program4", wine_glVertexAttribI2uivEXT },
-  { "glVertexAttribI3i", "GL_VERSION_3_0", wine_glVertexAttribI3i },
+  { "glVertexAttribI3i", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI3i },
   { "glVertexAttribI3iEXT", "GL_NV_vertex_program4", wine_glVertexAttribI3iEXT },
-  { "glVertexAttribI3iv", "GL_VERSION_3_0", wine_glVertexAttribI3iv },
+  { "glVertexAttribI3iv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI3iv },
   { "glVertexAttribI3ivEXT", "GL_NV_vertex_program4", wine_glVertexAttribI3ivEXT },
-  { "glVertexAttribI3ui", "GL_VERSION_3_0", wine_glVertexAttribI3ui },
+  { "glVertexAttribI3ui", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI3ui },
   { "glVertexAttribI3uiEXT", "GL_NV_vertex_program4", wine_glVertexAttribI3uiEXT },
-  { "glVertexAttribI3uiv", "GL_VERSION_3_0", wine_glVertexAttribI3uiv },
+  { "glVertexAttribI3uiv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI3uiv },
   { "glVertexAttribI3uivEXT", "GL_NV_vertex_program4", wine_glVertexAttribI3uivEXT },
-  { "glVertexAttribI4bv", "GL_VERSION_3_0", wine_glVertexAttribI4bv },
+  { "glVertexAttribI4bv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI4bv },
   { "glVertexAttribI4bvEXT", "GL_NV_vertex_program4", wine_glVertexAttribI4bvEXT },
-  { "glVertexAttribI4i", "GL_VERSION_3_0", wine_glVertexAttribI4i },
+  { "glVertexAttribI4i", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI4i },
   { "glVertexAttribI4iEXT", "GL_NV_vertex_program4", wine_glVertexAttribI4iEXT },
-  { "glVertexAttribI4iv", "GL_VERSION_3_0", wine_glVertexAttribI4iv },
+  { "glVertexAttribI4iv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI4iv },
   { "glVertexAttribI4ivEXT", "GL_NV_vertex_program4", wine_glVertexAttribI4ivEXT },
-  { "glVertexAttribI4sv", "GL_VERSION_3_0", wine_glVertexAttribI4sv },
+  { "glVertexAttribI4sv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI4sv },
   { "glVertexAttribI4svEXT", "GL_NV_vertex_program4", wine_glVertexAttribI4svEXT },
-  { "glVertexAttribI4ubv", "GL_VERSION_3_0", wine_glVertexAttribI4ubv },
+  { "glVertexAttribI4ubv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI4ubv },
   { "glVertexAttribI4ubvEXT", "GL_NV_vertex_program4", wine_glVertexAttribI4ubvEXT },
-  { "glVertexAttribI4ui", "GL_VERSION_3_0", wine_glVertexAttribI4ui },
+  { "glVertexAttribI4ui", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI4ui },
   { "glVertexAttribI4uiEXT", "GL_NV_vertex_program4", wine_glVertexAttribI4uiEXT },
-  { "glVertexAttribI4uiv", "GL_VERSION_3_0", wine_glVertexAttribI4uiv },
+  { "glVertexAttribI4uiv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI4uiv },
   { "glVertexAttribI4uivEXT", "GL_NV_vertex_program4", wine_glVertexAttribI4uivEXT },
-  { "glVertexAttribI4usv", "GL_VERSION_3_0", wine_glVertexAttribI4usv },
+  { "glVertexAttribI4usv", "GL_VERSION_3_0_DEPRECATED", wine_glVertexAttribI4usv },
   { "glVertexAttribI4usvEXT", "GL_NV_vertex_program4", wine_glVertexAttribI4usvEXT },
   { "glVertexAttribIPointer", "GL_VERSION_3_0", wine_glVertexAttribIPointer },
   { "glVertexAttribIPointerEXT", "GL_NV_vertex_program4", wine_glVertexAttribIPointerEXT },
@@ -15336,7 +15747,6 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glVertexWeightfvEXT", "GL_EXT_vertex_weighting", wine_glVertexWeightfvEXT },
   { "glVertexWeighthNV", "GL_NV_half_float", wine_glVertexWeighthNV },
   { "glVertexWeighthvNV", "GL_NV_half_float", wine_glVertexWeighthvNV },
-  { "glVideoParameterivNV", "GL_NV_present_video", wine_glVideoParameterivNV },
   { "glWeightPointerARB", "GL_ARB_vertex_blend", wine_glWeightPointerARB },
   { "glWeightbvARB", "GL_ARB_vertex_blend", wine_glWeightbvARB },
   { "glWeightdvARB", "GL_ARB_vertex_blend", wine_glWeightdvARB },
@@ -15346,52 +15756,52 @@ const OpenGL_extension extension_registry[NB_EXTENSIONS] = {
   { "glWeightubvARB", "GL_ARB_vertex_blend", wine_glWeightubvARB },
   { "glWeightuivARB", "GL_ARB_vertex_blend", wine_glWeightuivARB },
   { "glWeightusvARB", "GL_ARB_vertex_blend", wine_glWeightusvARB },
-  { "glWindowPos2d", "GL_VERSION_1_4", wine_glWindowPos2d },
+  { "glWindowPos2d", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos2d },
   { "glWindowPos2dARB", "GL_ARB_window_pos", wine_glWindowPos2dARB },
   { "glWindowPos2dMESA", "GL_MESA_window_pos", wine_glWindowPos2dMESA },
-  { "glWindowPos2dv", "GL_VERSION_1_4", wine_glWindowPos2dv },
+  { "glWindowPos2dv", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos2dv },
   { "glWindowPos2dvARB", "GL_ARB_window_pos", wine_glWindowPos2dvARB },
   { "glWindowPos2dvMESA", "GL_MESA_window_pos", wine_glWindowPos2dvMESA },
-  { "glWindowPos2f", "GL_VERSION_1_4", wine_glWindowPos2f },
+  { "glWindowPos2f", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos2f },
   { "glWindowPos2fARB", "GL_ARB_window_pos", wine_glWindowPos2fARB },
   { "glWindowPos2fMESA", "GL_MESA_window_pos", wine_glWindowPos2fMESA },
-  { "glWindowPos2fv", "GL_VERSION_1_4", wine_glWindowPos2fv },
+  { "glWindowPos2fv", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos2fv },
   { "glWindowPos2fvARB", "GL_ARB_window_pos", wine_glWindowPos2fvARB },
   { "glWindowPos2fvMESA", "GL_MESA_window_pos", wine_glWindowPos2fvMESA },
-  { "glWindowPos2i", "GL_VERSION_1_4", wine_glWindowPos2i },
+  { "glWindowPos2i", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos2i },
   { "glWindowPos2iARB", "GL_ARB_window_pos", wine_glWindowPos2iARB },
   { "glWindowPos2iMESA", "GL_MESA_window_pos", wine_glWindowPos2iMESA },
-  { "glWindowPos2iv", "GL_VERSION_1_4", wine_glWindowPos2iv },
+  { "glWindowPos2iv", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos2iv },
   { "glWindowPos2ivARB", "GL_ARB_window_pos", wine_glWindowPos2ivARB },
   { "glWindowPos2ivMESA", "GL_MESA_window_pos", wine_glWindowPos2ivMESA },
-  { "glWindowPos2s", "GL_VERSION_1_4", wine_glWindowPos2s },
+  { "glWindowPos2s", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos2s },
   { "glWindowPos2sARB", "GL_ARB_window_pos", wine_glWindowPos2sARB },
   { "glWindowPos2sMESA", "GL_MESA_window_pos", wine_glWindowPos2sMESA },
-  { "glWindowPos2sv", "GL_VERSION_1_4", wine_glWindowPos2sv },
+  { "glWindowPos2sv", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos2sv },
   { "glWindowPos2svARB", "GL_ARB_window_pos", wine_glWindowPos2svARB },
   { "glWindowPos2svMESA", "GL_MESA_window_pos", wine_glWindowPos2svMESA },
-  { "glWindowPos3d", "GL_VERSION_1_4", wine_glWindowPos3d },
+  { "glWindowPos3d", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos3d },
   { "glWindowPos3dARB", "GL_ARB_window_pos", wine_glWindowPos3dARB },
   { "glWindowPos3dMESA", "GL_MESA_window_pos", wine_glWindowPos3dMESA },
-  { "glWindowPos3dv", "GL_VERSION_1_4", wine_glWindowPos3dv },
+  { "glWindowPos3dv", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos3dv },
   { "glWindowPos3dvARB", "GL_ARB_window_pos", wine_glWindowPos3dvARB },
   { "glWindowPos3dvMESA", "GL_MESA_window_pos", wine_glWindowPos3dvMESA },
-  { "glWindowPos3f", "GL_VERSION_1_4", wine_glWindowPos3f },
+  { "glWindowPos3f", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos3f },
   { "glWindowPos3fARB", "GL_ARB_window_pos", wine_glWindowPos3fARB },
   { "glWindowPos3fMESA", "GL_MESA_window_pos", wine_glWindowPos3fMESA },
-  { "glWindowPos3fv", "GL_VERSION_1_4", wine_glWindowPos3fv },
+  { "glWindowPos3fv", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos3fv },
   { "glWindowPos3fvARB", "GL_ARB_window_pos", wine_glWindowPos3fvARB },
   { "glWindowPos3fvMESA", "GL_MESA_window_pos", wine_glWindowPos3fvMESA },
-  { "glWindowPos3i", "GL_VERSION_1_4", wine_glWindowPos3i },
+  { "glWindowPos3i", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos3i },
   { "glWindowPos3iARB", "GL_ARB_window_pos", wine_glWindowPos3iARB },
   { "glWindowPos3iMESA", "GL_MESA_window_pos", wine_glWindowPos3iMESA },
-  { "glWindowPos3iv", "GL_VERSION_1_4", wine_glWindowPos3iv },
+  { "glWindowPos3iv", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos3iv },
   { "glWindowPos3ivARB", "GL_ARB_window_pos", wine_glWindowPos3ivARB },
   { "glWindowPos3ivMESA", "GL_MESA_window_pos", wine_glWindowPos3ivMESA },
-  { "glWindowPos3s", "GL_VERSION_1_4", wine_glWindowPos3s },
+  { "glWindowPos3s", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos3s },
   { "glWindowPos3sARB", "GL_ARB_window_pos", wine_glWindowPos3sARB },
   { "glWindowPos3sMESA", "GL_MESA_window_pos", wine_glWindowPos3sMESA },
-  { "glWindowPos3sv", "GL_VERSION_1_4", wine_glWindowPos3sv },
+  { "glWindowPos3sv", "GL_VERSION_1_4_DEPRECATED", wine_glWindowPos3sv },
   { "glWindowPos3svARB", "GL_ARB_window_pos", wine_glWindowPos3svARB },
   { "glWindowPos3svMESA", "GL_MESA_window_pos", wine_glWindowPos3svMESA },
   { "glWindowPos4dMESA", "GL_MESA_window_pos", wine_glWindowPos4dMESA },

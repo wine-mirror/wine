@@ -80,26 +80,6 @@ void WINAPI wine_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat
 }
 
 /***********************************************************************
- *              glBlendColor (OPENGL32.@)
- */
-void WINAPI wine_glBlendColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha ) {
-  TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
-  ENTER_GL();
-  glBlendColor( red, green, blue, alpha );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glBlendEquation (OPENGL32.@)
- */
-void WINAPI wine_glBlendEquation( GLenum mode ) {
-  TRACE("(%d)\n", mode );
-  ENTER_GL();
-  glBlendEquation( mode );
-  LEAVE_GL();
-}
-
-/***********************************************************************
  *              glBlendFunc (OPENGL32.@)
  */
 void WINAPI wine_glBlendFunc( GLenum sfactor, GLenum dfactor ) {
@@ -550,146 +530,6 @@ void WINAPI wine_glColorPointer( GLint size, GLenum type, GLsizei stride, GLvoid
 }
 
 /***********************************************************************
- *              glColorSubTable (OPENGL32.@)
- */
-void WINAPI wine_glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, GLvoid* data ) {
-  TRACE("(%d, %d, %d, %d, %d, %p)\n", target, start, count, format, type, data );
-  ENTER_GL();
-  glColorSubTable( target, start, count, format, type, data );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glColorTable (OPENGL32.@)
- */
-void WINAPI wine_glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, GLvoid* table ) {
-  TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, table );
-  ENTER_GL();
-  glColorTable( target, internalformat, width, format, type, table );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glColorTableParameterfv (OPENGL32.@)
- */
-void WINAPI wine_glColorTableParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glColorTableParameterfv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glColorTableParameteriv (OPENGL32.@)
- */
-void WINAPI wine_glColorTableParameteriv( GLenum target, GLenum pname, GLint* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glColorTableParameteriv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glConvolutionFilter1D (OPENGL32.@)
- */
-void WINAPI wine_glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, GLvoid* image ) {
-  TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, image );
-  ENTER_GL();
-  glConvolutionFilter1D( target, internalformat, width, format, type, image );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glConvolutionFilter2D (OPENGL32.@)
- */
-void WINAPI wine_glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* image ) {
-  TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, internalformat, width, height, format, type, image );
-  ENTER_GL();
-  glConvolutionFilter2D( target, internalformat, width, height, format, type, image );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glConvolutionParameterf (OPENGL32.@)
- */
-void WINAPI wine_glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params ) {
-  TRACE("(%d, %d, %f)\n", target, pname, params );
-  ENTER_GL();
-  glConvolutionParameterf( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glConvolutionParameterfv (OPENGL32.@)
- */
-void WINAPI wine_glConvolutionParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glConvolutionParameterfv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glConvolutionParameteri (OPENGL32.@)
- */
-void WINAPI wine_glConvolutionParameteri( GLenum target, GLenum pname, GLint params ) {
-  TRACE("(%d, %d, %d)\n", target, pname, params );
-  ENTER_GL();
-  glConvolutionParameteri( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glConvolutionParameteriv (OPENGL32.@)
- */
-void WINAPI wine_glConvolutionParameteriv( GLenum target, GLenum pname, GLint* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glConvolutionParameteriv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glCopyColorSubTable (OPENGL32.@)
- */
-void WINAPI wine_glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width ) {
-  TRACE("(%d, %d, %d, %d, %d)\n", target, start, x, y, width );
-  ENTER_GL();
-  glCopyColorSubTable( target, start, x, y, width );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glCopyColorTable (OPENGL32.@)
- */
-void WINAPI wine_glCopyColorTable( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
-  TRACE("(%d, %d, %d, %d, %d)\n", target, internalformat, x, y, width );
-  ENTER_GL();
-  glCopyColorTable( target, internalformat, x, y, width );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glCopyConvolutionFilter1D (OPENGL32.@)
- */
-void WINAPI wine_glCopyConvolutionFilter1D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) {
-  TRACE("(%d, %d, %d, %d, %d)\n", target, internalformat, x, y, width );
-  ENTER_GL();
-  glCopyConvolutionFilter1D( target, internalformat, x, y, width );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glCopyConvolutionFilter2D (OPENGL32.@)
- */
-void WINAPI wine_glCopyConvolutionFilter2D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height ) {
-  TRACE("(%d, %d, %d, %d, %d, %d)\n", target, internalformat, x, y, width, height );
-  ENTER_GL();
-  glCopyConvolutionFilter2D( target, internalformat, x, y, width, height );
-  LEAVE_GL();
-}
-
-/***********************************************************************
  *              glCopyPixels (OPENGL32.@)
  */
 void WINAPI wine_glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type ) {
@@ -736,16 +576,6 @@ void WINAPI wine_glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset,
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, xoffset, yoffset, x, y, width, height );
   ENTER_GL();
   glCopyTexSubImage2D( target, level, xoffset, yoffset, x, y, width, height );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glCopyTexSubImage3D (OPENGL32.@)
- */
-void WINAPI wine_glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) {
-  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, xoffset, yoffset, zoffset, x, y, width, height );
-  ENTER_GL();
-  glCopyTexSubImage3D( target, level, xoffset, yoffset, zoffset, x, y, width, height );
   LEAVE_GL();
 }
 
@@ -866,16 +696,6 @@ void WINAPI wine_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLe
   TRACE("(%d, %d, %d, %d, %p)\n", width, height, format, type, pixels );
   ENTER_GL();
   glDrawPixels( width, height, format, type, pixels );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glDrawRangeElements (OPENGL32.@)
- */
-void WINAPI wine_glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, GLvoid* indices ) {
-  TRACE("(%d, %d, %d, %d, %d, %p)\n", mode, start, end, count, type, indices );
-  ENTER_GL();
-  glDrawRangeElements( mode, start, end, count, type, indices );
   LEAVE_GL();
 }
 
@@ -1182,66 +1002,6 @@ void WINAPI wine_glGetClipPlane( GLenum plane, GLdouble* equation ) {
 }
 
 /***********************************************************************
- *              glGetColorTable (OPENGL32.@)
- */
-void WINAPI wine_glGetColorTable( GLenum target, GLenum format, GLenum type, GLvoid* table ) {
-  TRACE("(%d, %d, %d, %p)\n", target, format, type, table );
-  ENTER_GL();
-  glGetColorTable( target, format, type, table );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetColorTableParameterfv (OPENGL32.@)
- */
-void WINAPI wine_glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glGetColorTableParameterfv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetColorTableParameteriv (OPENGL32.@)
- */
-void WINAPI wine_glGetColorTableParameteriv( GLenum target, GLenum pname, GLint* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glGetColorTableParameteriv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetConvolutionFilter (OPENGL32.@)
- */
-void WINAPI wine_glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, GLvoid* image ) {
-  TRACE("(%d, %d, %d, %p)\n", target, format, type, image );
-  ENTER_GL();
-  glGetConvolutionFilter( target, format, type, image );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetConvolutionParameterfv (OPENGL32.@)
- */
-void WINAPI wine_glGetConvolutionParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glGetConvolutionParameterfv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetConvolutionParameteriv (OPENGL32.@)
- */
-void WINAPI wine_glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glGetConvolutionParameteriv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
  *              glGetDoublev (OPENGL32.@)
  */
 void WINAPI wine_glGetDoublev( GLenum pname, GLdouble* params ) {
@@ -1270,36 +1030,6 @@ void WINAPI wine_glGetFloatv( GLenum pname, GLfloat* params ) {
   TRACE("(%d, %p)\n", pname, params );
   ENTER_GL();
   glGetFloatv( pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetHistogram (OPENGL32.@)
- */
-void WINAPI wine_glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
-  TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
-  ENTER_GL();
-  glGetHistogram( target, reset, format, type, values );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetHistogramParameterfv (OPENGL32.@)
- */
-void WINAPI wine_glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glGetHistogramParameterfv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetHistogramParameteriv (OPENGL32.@)
- */
-void WINAPI wine_glGetHistogramParameteriv( GLenum target, GLenum pname, GLint* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glGetHistogramParameteriv( target, pname, params );
   LEAVE_GL();
 }
 
@@ -1374,36 +1104,6 @@ void WINAPI wine_glGetMaterialiv( GLenum face, GLenum pname, GLint* params ) {
 }
 
 /***********************************************************************
- *              glGetMinmax (OPENGL32.@)
- */
-void WINAPI wine_glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
-  TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
-  ENTER_GL();
-  glGetMinmax( target, reset, format, type, values );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetMinmaxParameterfv (OPENGL32.@)
- */
-void WINAPI wine_glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glGetMinmaxParameterfv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetMinmaxParameteriv (OPENGL32.@)
- */
-void WINAPI wine_glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint* params ) {
-  TRACE("(%d, %d, %p)\n", target, pname, params );
-  ENTER_GL();
-  glGetMinmaxParameteriv( target, pname, params );
-  LEAVE_GL();
-}
-
-/***********************************************************************
  *              glGetPixelMapfv (OPENGL32.@)
  */
 void WINAPI wine_glGetPixelMapfv( GLenum map, GLfloat* values ) {
@@ -1450,16 +1150,6 @@ void WINAPI wine_glGetPolygonStipple( GLubyte* mask ) {
   TRACE("(%p)\n", mask );
   ENTER_GL();
   glGetPolygonStipple( mask );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glGetSeparableFilter (OPENGL32.@)
- */
-void WINAPI wine_glGetSeparableFilter( GLenum target, GLenum format, GLenum type, GLvoid* row, GLvoid* column, GLvoid* span ) {
-  TRACE("(%d, %d, %d, %p, %p, %p)\n", target, format, type, row, column, span );
-  ENTER_GL();
-  glGetSeparableFilter( target, format, type, row, column, span );
   LEAVE_GL();
 }
 
@@ -1570,16 +1260,6 @@ void WINAPI wine_glHint( GLenum target, GLenum mode ) {
   TRACE("(%d, %d)\n", target, mode );
   ENTER_GL();
   glHint( target, mode );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glHistogram (OPENGL32.@)
- */
-void WINAPI wine_glHistogram( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink ) {
-  TRACE("(%d, %d, %d, %d)\n", target, width, internalformat, sink );
-  ENTER_GL();
-  glHistogram( target, width, internalformat, sink );
   LEAVE_GL();
 }
 
@@ -2046,16 +1726,6 @@ void WINAPI wine_glMatrixMode( GLenum mode ) {
   TRACE("(%d)\n", mode );
   ENTER_GL();
   glMatrixMode( mode );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glMinmax (OPENGL32.@)
- */
-void WINAPI wine_glMinmax( GLenum target, GLenum internalformat, GLboolean sink ) {
-  TRACE("(%d, %d, %d)\n", target, internalformat, sink );
-  ENTER_GL();
-  glMinmax( target, internalformat, sink );
   LEAVE_GL();
 }
 
@@ -2782,26 +2452,6 @@ GLint WINAPI wine_glRenderMode( GLenum mode ) {
 }
 
 /***********************************************************************
- *              glResetHistogram (OPENGL32.@)
- */
-void WINAPI wine_glResetHistogram( GLenum target ) {
-  TRACE("(%d)\n", target );
-  ENTER_GL();
-  glResetHistogram( target );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glResetMinmax (OPENGL32.@)
- */
-void WINAPI wine_glResetMinmax( GLenum target ) {
-  TRACE("(%d)\n", target );
-  ENTER_GL();
-  glResetMinmax( target );
-  LEAVE_GL();
-}
-
-/***********************************************************************
  *              glRotated (OPENGL32.@)
  */
 void WINAPI wine_glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z ) {
@@ -2858,16 +2508,6 @@ void WINAPI wine_glSelectBuffer( GLsizei size, GLuint* buffer ) {
   TRACE("(%d, %p)\n", size, buffer );
   ENTER_GL();
   glSelectBuffer( size, buffer );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glSeparableFilter2D (OPENGL32.@)
- */
-void WINAPI wine_glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* row, GLvoid* column ) {
-  TRACE("(%d, %d, %d, %d, %d, %d, %p, %p)\n", target, internalformat, width, height, format, type, row, column );
-  ENTER_GL();
-  glSeparableFilter2D( target, internalformat, width, height, format, type, row, column );
   LEAVE_GL();
 }
 
@@ -3362,16 +3002,6 @@ void WINAPI wine_glTexImage2D( GLenum target, GLint level, GLint internalformat,
 }
 
 /***********************************************************************
- *              glTexImage3D (OPENGL32.@)
- */
-void WINAPI wine_glTexImage3D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, GLvoid* pixels ) {
-  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, format, type, pixels );
-  ENTER_GL();
-  glTexImage3D( target, level, internalformat, width, height, depth, border, format, type, pixels );
-  LEAVE_GL();
-}
-
-/***********************************************************************
  *              glTexParameterf (OPENGL32.@)
  */
 void WINAPI wine_glTexParameterf( GLenum target, GLenum pname, GLfloat param ) {
@@ -3428,16 +3058,6 @@ void WINAPI wine_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLi
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, type, pixels );
   ENTER_GL();
   glTexSubImage2D( target, level, xoffset, yoffset, width, height, format, type, pixels );
-  LEAVE_GL();
-}
-
-/***********************************************************************
- *              glTexSubImage3D (OPENGL32.@)
- */
-void WINAPI wine_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLvoid* pixels ) {
-  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
-  ENTER_GL();
-  glTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
   LEAVE_GL();
 }
 
