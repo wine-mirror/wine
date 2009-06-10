@@ -1725,7 +1725,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_R8G8_SNORM:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
+            if (GL_SUPPORT(NV_TEXTURE_SHADER)) break;
             *convert = CONVERT_V8U8;
             *format = GL_BGR;
             *type = GL_UNSIGNED_BYTE;
@@ -1762,7 +1762,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_R8G8B8A8_SNORM:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
+            if (GL_SUPPORT(NV_TEXTURE_SHADER)) break;
             *convert = CONVERT_Q8W8V8U8;
             *format = GL_BGRA;
             *type = GL_UNSIGNED_BYTE;
@@ -1770,7 +1770,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_R16G16_SNORM:
-            if(GL_SUPPORT(NV_TEXTURE_SHADER3)) break;
+            if (GL_SUPPORT(NV_TEXTURE_SHADER)) break;
             *convert = CONVERT_V16U16;
             *format = GL_BGR;
             *type = GL_UNSIGNED_SHORT;
