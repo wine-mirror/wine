@@ -1656,6 +1656,7 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         UINT block_width;
         UINT block_height;
         UINT block_byte_size;
+        UINT row_block_count;
 
         TRACE("Fourcc -> Fourcc copy\n");
         if (trans)
@@ -1692,9 +1693,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
             block_byte_size = This->resource.format_desc->byte_count;
         }
 
+        row_block_count = (w + block_width - 1) / block_width;
         for (y = 0; y < h; y += block_height)
         {
-            memcpy(dbuf, sbuf, (w / block_width) * block_byte_size);
+            memcpy(dbuf, sbuf, row_block_count * block_byte_size);
             dbuf += dlock.Pitch;
             sbuf += slock.Pitch;
         }
