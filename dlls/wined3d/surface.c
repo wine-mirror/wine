@@ -1691,7 +1691,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             if (colorkey_active) {
                 *convert = CONVERT_CK_565;
                 *format = GL_RGBA;
-                *internal = GL_RGBA;
+                *internal = GL_RGB5_A1;
                 *type = GL_UNSIGNED_SHORT_5_5_5_1;
             }
             break;
@@ -1700,7 +1700,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             if (colorkey_active) {
                 *convert = CONVERT_CK_5551;
                 *format = GL_BGRA;
-                *internal = GL_RGBA;
+                *internal = GL_RGB5_A1;
                 *type = GL_UNSIGNED_SHORT_1_5_5_5_REV;
             }
             break;
@@ -1709,7 +1709,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             if (colorkey_active) {
                 *convert = CONVERT_CK_RGB24;
                 *format = GL_RGBA;
-                *internal = GL_RGBA;
+                *internal = GL_RGBA8;
                 *type = GL_UNSIGNED_INT_8_8_8_8;
                 *target_bpp = 4;
             }
@@ -1719,7 +1719,7 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             if (colorkey_active) {
                 *convert = CONVERT_RGB32_888;
                 *format = GL_RGBA;
-                *internal = GL_RGBA;
+                *internal = GL_RGBA8;
                 *type = GL_UNSIGNED_INT_8_8_8_8;
             }
             break;
