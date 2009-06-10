@@ -212,6 +212,7 @@ IMPORT_LIBS = \
 	uxtheme/libuxtheme.$(IMPLIBEXT) \
 	vdmdbg/libvdmdbg.$(IMPLIBEXT) \
 	version/libversion.$(IMPLIBEXT) \
+	windowscodecs/libwindowscodecs.$(IMPLIBEXT) \
 	wined3d/libwined3d.$(IMPLIBEXT) \
 	winhttp/libwinhttp.$(IMPLIBEXT) \
 	wininet/libwininet.$(IMPLIBEXT) \
@@ -355,6 +356,7 @@ CROSS_IMPLIBS = \
 	uxtheme/libuxtheme.a \
 	vdmdbg/libvdmdbg.a \
 	version/libversion.a \
+	windowscodecs/libwindowscodecs.a \
 	wined3d/libwined3d.a \
 	winhttp/libwinhttp.a \
 	wininet/libwininet.a \
@@ -751,6 +753,9 @@ vdmdbg/libvdmdbg.def vdmdbg/libvdmdbg.a: vdmdbg/vdmdbg.spec $(WINEBUILD)
 
 version/libversion.def version/libversion.a: version/version.spec $(WINEBUILD)
 	@cd version && $(MAKE) `basename $@`
+
+windowscodecs/libwindowscodecs.def windowscodecs/libwindowscodecs.a: windowscodecs/windowscodecs.spec $(WINEBUILD)
+	@cd windowscodecs && $(MAKE) `basename $@`
 
 wined3d/libwined3d.def wined3d/libwined3d.a: wined3d/wined3d.spec $(WINEBUILD)
 	@cd wined3d && $(MAKE) `basename $@`
