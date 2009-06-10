@@ -34,6 +34,7 @@ Options:\n\
 /MAX[imized] Inicia o programa maximizado.\n\
 /R[estored]  Inicia o programa normalmente (sem minimizar nem maximizar).\n\
 /W[ait]      Aguarda que o programa iniciado termine e então retorno um código (exit code).\n\
+/ProgIDOpen  Open a document using the following progID.\n\
 /L           Mostra a licença ao usuário.\n\
 \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\

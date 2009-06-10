@@ -33,6 +33,7 @@ Seçenekler:\n\
 /MAX[imized] Ekraný kaplayacak þekilde baþlat.\n\
 /R[estored]  Programý normal bir þekilde baþlat (simge halinde veya büyütülmüþ halde olabilir).\n\
 /W[ait]      Baþlatýlmýþ programýn bitmesini bekle, sonra çýkýþ koduyla çýk.\n\
+/ProgIDOpen  Open a document using the following progID.\n\
 /L           Son-kullanýcý lisansýný göster.\n\
 \n\
 start.exe sürüm 0.2 Telif Hakký (C) 2003, Dan Kegel\n\

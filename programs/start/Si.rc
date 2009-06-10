@@ -35,6 +35,7 @@ Možnosti:\n\
 /MAX[imized] Zažene program z razširjenim oknom.\n\
 /R[estored]  Zažene program z običajno velikostjo okna.\n\
 /W[ait]      Počaka, da se zagnani program zaključi, nato se zaključi in vrne izhodno kodo programa.\n\
+/ProgIDOpen  Open a document using the following progID.\n\
 /L           Prikaže licenčno pogodbo.\n\
 \n\
 start.exe različica 0.2 Copyright (C) 2003, Dan Kegel\n\

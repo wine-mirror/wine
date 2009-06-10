@@ -37,6 +37,7 @@ Volby:\n\
 /MAX[imalizovanì] Spustí program maximalizovanì.\n\
 /R Spustí program normálnì (ani minimalizovaný ani maximalizovaný).\n\
 /W Èeká na dokonèení spuštìného programu, vrací návratový kód.\n\
+/ProgIDOpen  Open a document using the following progID.\n\
 /L Zobrazí licenci.\n\
 \n\
 start.exe verze 0.2 Copyright (C) 2003, Dan Kegel\n\

@@ -34,6 +34,7 @@ Options:\n\
 /R[estored]  Start the program normally (neither minimized nor maximized).\n\
 /W[ait]      Wait for started program to finish, then exit with its exit code.\n\
 /Unix        Use a Unix filename and start the file like windows explorer.\n\
+/ProgIDOpen  Open a document using the following progID.\n\
 /L           Show end-user license.\n\
 \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\

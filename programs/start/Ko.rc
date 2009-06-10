@@ -35,6 +35,7 @@ Options:\n\
 /R[estored]  풀그림을 보통상태로 시작시키기 (최소화도 아니고 최대화도 아님).\n\
 /W[ait]      시작된 풀그림이 끝날 때까지 기다림, 끝날 때 종료코드를 남김.\n\
 /Unix        윈도우 익스플로어같이 유닉스 파일이름을 사용해서 시작.\n\
+/ProgIDOpen  Open a document using the following progID.\n\
 /L           사용자 라이센스 보여줌\n\
 \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\

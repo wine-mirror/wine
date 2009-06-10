@@ -34,6 +34,7 @@ Opciones:\n\
 /R[estored]  Inicia el programa normalmente (ni minimizado ni maximizado).\n\
 /W[ait]      Espera que termine el programa iniciado y después sale con su código de salida.\n\
 /Unix        Usa un nombre de archivo de Unix e inicia el archivo como en el explorador de windows.\n\
+/ProgIDOpen  Open a document using the following progID.\n\
 /L           Muestra la licencia para el usuario final.\n\
 \n\
 start.exe versión 0.2 Copyright (C) 2003, Dan Kegel\n\

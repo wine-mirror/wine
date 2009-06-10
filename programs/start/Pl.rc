@@ -35,6 +35,7 @@ Opcje:\n\
 /R[estored]  Uruchamia program normalnie (bez minimalizacji ani maksymalizacji).\n\
 /W[ait]      Zaczekaj a¿ program zakoñczy dzia³anie (i zakoñcz\n\
 \t     kodem wyjœcia programu).\n\
+/ProgIDOpen  Open a document using the following progID.\n\
 /L           Poka¿ licencjê u¿ytkownika.\n\
 \n\
 start.exe wersja 0.2 Copyright (C) 2003, Dan Kegel\n\

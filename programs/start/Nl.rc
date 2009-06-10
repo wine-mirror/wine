@@ -34,6 +34,7 @@ Options:\n\
 /R[estored]  Start het programma normaal (noch geminimaliseerd noch gemaximaliseerd).\n\
 /W[ait]      Wacht totdat het gestarte programma is beëindigd, eindig dan met de exit code van dat programma.\n\
 /Unix        Gebruik een Unix bestandsnaam en start het bestand als de windows verkenner.\n\
+/ProgIDOpen  Open a document using the following progID.\n\
 /L           Laat de gebruikerslicentie zien.\n\
 \n\
 start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
