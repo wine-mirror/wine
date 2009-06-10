@@ -20,5 +20,6 @@
 #define WINCODECS_PRIVATE_H
 
 extern HRESULT ImagingFactory_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv);
+extern HRESULT BmpDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv);
 
 #endif /* WINCODECS_PRIVATE_H */
