@@ -868,11 +868,19 @@ static void test_word_wrap(void)
     res = SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) text);
     ok(res, "WM_SETTEXT failed.\n");
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
-    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+    ok(!pos ||
+        broken(pos == lstrlen(text)), /* Win9x, WinME and NT4 */
+        "pos=%d indicating word wrap when none is expected.\n", pos);
+    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(lines == 1, "Line was not expected to wrap (lines=%d).\n", lines);
 
     SetWindowLong(hwnd, GWL_STYLE, dwCommonStyle);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
-    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+    ok(!pos ||
+        broken(pos == lstrlen(text)), /* Win9x, WinME and NT4 */
+        "pos=%d indicating word wrap when none is expected.\n", pos);
+    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(lines == 1, "Line was not expected to wrap (lines=%d).\n", lines);
     DestroyWindow(hwnd);
 
     hwnd = CreateWindow(RICHEDIT_CLASS10A, NULL,
@@ -882,17 +890,29 @@ static void test_word_wrap(void)
     res = SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM) text);
     ok(res, "WM_SETTEXT failed.\n");
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
-    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+    ok(!pos ||
+        broken(pos == lstrlen(text)), /* Win9x, WinME and NT4 */
+        "pos=%d indicating word wrap when none is expected.\n", pos);
+    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(lines == 1, "Line was not expected to wrap (lines=%d).\n", lines);
 
     SetWindowLong(hwnd, GWL_STYLE, dwCommonStyle);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
-    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+    ok(!pos ||
+        broken(pos == lstrlen(text)), /* Win9x, WinME and NT4 */
+        "pos=%d indicating word wrap when none is expected.\n", pos);
+    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(lines == 1, "Line was not expected to wrap (lines=%d).\n", lines);
 
     /* Test the effect of EM_SETTARGETDEVICE on word wrap. */
     res = SendMessage(hwnd, EM_SETTARGETDEVICE, 0, 1);
     ok(res, "EM_SETTARGETDEVICE failed (returned %d).\n", res);
     pos = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM) &point);
-    ok(!pos, "pos=%d indicating word wrap when none is expected.\n", pos);
+    ok(!pos ||
+        broken(pos == lstrlen(text)), /* Win9x, WinME and NT4 */
+        "pos=%d indicating word wrap when none is expected.\n", pos);
+    lines = SendMessage(hwnd, EM_GETLINECOUNT, 0, 0);
+    ok(lines == 1, "Line was not expected to wrap (lines=%d).\n", lines);
 
     res = SendMessage(hwnd, EM_SETTARGETDEVICE, 0, 0);
     ok(res, "EM_SETTARGETDEVICE failed (returned %d).\n", res);
