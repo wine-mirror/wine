@@ -1650,65 +1650,39 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         dEntry = This->resource.format_desc;
     }
 
-    /* Handle first the FOURCC surfaces... */
-    if (sEntry->Flags & dEntry->Flags & WINED3DFMT_FLAG_FOURCC)
+    /* Handle compressed surfaces first... */
+    if (sEntry->Flags & dEntry->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        UINT block_width;
-        UINT block_height;
-        UINT block_byte_size;
         UINT row_block_count;
 
-        TRACE("Fourcc -> Fourcc copy\n");
+        TRACE("compressed -> compressed copy\n");
         if (trans)
-            FIXME("trans arg not supported when a FOURCC surface is involved\n");
+            FIXME("trans arg not supported when a compressed surface is involved\n");
         if (dstx || dsty)
             FIXME("offset for destination surface is not supported\n");
         if (Src->resource.format_desc->format != This->resource.format_desc->format)
         {
-            FIXME("FOURCC->FOURCC copy only supported for the same type of surface\n");
+            FIXME("compressed -> compressed copy only supported for the same type of surface\n");
             ret = WINED3DERR_WRONGTEXTUREFORMAT;
             goto error;
         }
 
-        if (This->resource.format_desc->format == WINED3DFMT_DXT1)
+        row_block_count = (w + dEntry->block_width - 1) / dEntry->block_width;
+        for (y = 0; y < h; y += dEntry->block_height)
         {
-            block_width = 4;
-            block_height = 4;
-            block_byte_size = 8;
-        }
-        else if (This->resource.format_desc->format == WINED3DFMT_DXT2
-                || This->resource.format_desc->format == WINED3DFMT_DXT3
-                || This->resource.format_desc->format == WINED3DFMT_DXT4
-                || This->resource.format_desc->format == WINED3DFMT_DXT5)
-        {
-            block_width = 4;
-            block_height = 4;
-            block_byte_size = 16;
-        }
-        else
-        {
-            FIXME("Unsupported FourCC format %s.\n", debug_d3dformat(This->resource.format_desc->format));
-            block_width = 1;
-            block_height = 1;
-            block_byte_size = This->resource.format_desc->byte_count;
-        }
-
-        row_block_count = (w + block_width - 1) / block_width;
-        for (y = 0; y < h; y += block_height)
-        {
-            memcpy(dbuf, sbuf, row_block_count * block_byte_size);
+            memcpy(dbuf, sbuf, row_block_count * dEntry->block_byte_count);
             dbuf += dlock.Pitch;
             sbuf += slock.Pitch;
         }
 
         goto error;
     }
-    if ((sEntry->Flags & WINED3DFMT_FLAG_FOURCC) && !(dEntry->Flags & WINED3DFMT_FLAG_FOURCC))
+    if ((sEntry->Flags & WINED3DFMT_FLAG_COMPRESSED) && !(dEntry->Flags & WINED3DFMT_FLAG_COMPRESSED))
     {
         /* TODO: Use the libtxc_dxtn.so shared library to do
          * software decompression
          */
-        ERR("DXTC decompression not supported by now\n");
+        ERR("Software decompression not supported.\n");
         goto error;
     }
 
