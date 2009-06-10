@@ -103,6 +103,7 @@ struct arb_ps_compiled_shader
     struct stb_const_desc           luminanceconst[MAX_TEXTURES];
     UINT                            int_consts[MAX_CONST_I];
     char                            num_int_consts;
+    UINT                            ycorrection;
 };
 
 struct arb_vs_compile_args
@@ -320,6 +321,22 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
         }
+    }
+
+    if(gl_shader->ycorrection != WINED3D_CONST_NUM_UNUSED)
+    {
+        /* ycorrection.x: Backbuffer height(onscreen) or 0(offscreen).
+         * ycorrection.y: -1.0(onscreen), 1.0(offscreen)
+         * ycorrection.z: 1.0
+         * ycorrection.w: 0.0
+         */
+        float val[4];
+        val[0] = deviceImpl->render_offscreen ? 0.0 : ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
+        val[1] = deviceImpl->render_offscreen ? 1.0 : -1.0;
+        val[2] = 1.0;
+        val[3] = 0.0;
+        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->ycorrection, val));
+        checkGLcall("y correction loading\n");
     }
 }
 
@@ -2027,6 +2044,22 @@ static void shader_hw_sgn(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static void shader_hw_dsy(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    char src[50];
+    char dst[50];
+    char dst_name[50];
+    BOOL is_color;
+
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst);
+    shader_arb_get_src_param(ins, &ins->src[0], 0, src);
+    shader_arb_get_register_name(ins, &ins->dst[0].reg, dst_name, &is_color);
+
+    shader_addline(buffer, "DDY %s, %s;\n", dst, src);
+    shader_addline(buffer, "MUL%s %s, %s, ycorrection.y;\n", shader_arb_get_modifier(ins), dst, dst_name);
+}
+
 static void shader_hw_loop(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
@@ -2459,6 +2492,16 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
                 shader_addline(buffer, "PARAM I%u = program.local[%u];\n", i, next_local++);
             }
         }
+    }
+
+    if(reg_maps->vpos || reg_maps->usesdsy)
+    {
+        compiled->ycorrection = next_local;
+        shader_addline(buffer, "PARAM ycorrection = program.local[%u];\n", next_local++);
+    }
+    else
+    {
+        compiled->ycorrection = WINED3D_CONST_NUM_UNUSED;
     }
 
     /* Base Shader Body */
@@ -3105,7 +3148,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_DP4           */ shader_hw_map2gl,
     /* WINED3DSIH_DST           */ shader_hw_map2gl,
     /* WINED3DSIH_DSX           */ shader_hw_map2gl,
-    /* WINED3DSIH_DSY           */ NULL,
+    /* WINED3DSIH_DSY           */ shader_hw_dsy,
     /* WINED3DSIH_ELSE          */ NULL,
     /* WINED3DSIH_ENDIF         */ NULL,
     /* WINED3DSIH_ENDLOOP       */ shader_hw_endloop,
