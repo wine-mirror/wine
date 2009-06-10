@@ -3301,10 +3301,15 @@ typedef struct tagLVITEMA
     INT  cchTextMax;
     INT  iImage;
     LPARAM lParam;
-    INT  iIndent;	/* (_WIN32_IE >= 0x0300) */
-    int iGroupId;       /* (_WIN32_IE >= 0x560) */
-    UINT cColumns;      /* (_WIN32_IE >= 0x560) */
-    PUINT puColumns;	/* (_WIN32_IE >= 0x560) */
+    /* (_WIN32_IE >= 0x0300) */
+    INT  iIndent;
+    /* (_WIN32_IE >= 0x0560) */
+    INT iGroupId;
+    UINT cColumns;
+    PUINT puColumns;
+    /* (_WIN32_WINNT >= 0x0600) */
+    PINT piColFmt;
+    INT iGroup;
 } LVITEMA, *LPLVITEMA;
 
 typedef struct tagLVITEMW
@@ -3318,10 +3323,15 @@ typedef struct tagLVITEMW
     INT  cchTextMax;
     INT  iImage;
     LPARAM lParam;
-    INT  iIndent;	/* (_WIN32_IE >= 0x0300) */
-    int iGroupId;       /* (_WIN32_IE >= 0x560) */
-    UINT cColumns;      /* (_WIN32_IE >= 0x560) */
-    PUINT puColumns;	/* (_WIN32_IE >= 0x560) */
+    /* (_WIN32_IE >= 0x0300) */
+    INT  iIndent;
+    /* (_WIN32_IE >= 0x0560) */
+    INT iGroupId;
+    UINT cColumns;
+    PUINT puColumns;
+    /* (_WIN32_WINNT >= 0x0600) */
+    PINT piColFmt;
+    INT iGroup;
 } LVITEMW, *LPLVITEMW;
 
 #define LVITEM   WINELIB_NAME_AW(LVITEM)
@@ -3330,6 +3340,10 @@ typedef struct tagLVITEMW
 #define LVITEM_V1_SIZEA CCSIZEOF_STRUCT(LVITEMA, lParam)
 #define LVITEM_V1_SIZEW CCSIZEOF_STRUCT(LVITEMW, lParam)
 #define LVITEM_V1_SIZE WINELIB_NAME_AW(LVITEM_V1_SIZE)
+
+#define LVITEMA_V5_SIZE CCSIZEOF_STRUCT(LVITEMA, puColumns)
+#define LVITEMW_V5_SIZE CCSIZEOF_STRUCT(LVITEMW, puColumns)
+#define LVITEM_V5_SIZE WINELIB_NAME_AW(LVITEM_V5_SIZE)
 
 #define LV_ITEM  LVITEM
 #define LV_ITEMA LVITEMA
@@ -3394,8 +3408,13 @@ typedef struct tagLVCOLUMNA
     LPSTR  pszText;
     INT  cchTextMax;
     INT  iSubItem;
-    INT  iImage;  /* (_WIN32_IE >= 0x0300) */
-    INT  iOrder;  /* (_WIN32_IE >= 0x0300) */
+    /* (_WIN32_IE >= 0x0300) */
+    INT  iImage;
+    INT  iOrder;
+    /* (_WIN32_WINNT >= 0x0600) */
+    INT  cxMin;
+    INT  cxDefault;
+    INT  cxIdeal;
 } LVCOLUMNA, *LPLVCOLUMNA;
 
 typedef struct tagLVCOLUMNW
@@ -3406,8 +3425,13 @@ typedef struct tagLVCOLUMNW
     LPWSTR pszText;
     INT  cchTextMax;
     INT  iSubItem;
-    INT  iImage;	/* (_WIN32_IE >= 0x0300) */
-    INT  iOrder;	/* (_WIN32_IE >= 0x0300) */
+    /* (_WIN32_IE >= 0x0300) */
+    INT  iImage;
+    INT  iOrder;
+    /* (_WIN32_WINNT >= 0x0600) */
+    INT  cxMin;
+    INT  cxDefault;
+    INT  cxIdeal;
 } LVCOLUMNW, *LPLVCOLUMNW;
 
 #define LVCOLUMN   WINELIB_NAME_AW(LVCOLUMN)
@@ -3513,6 +3537,8 @@ typedef struct tagLVHITTESTINFO
     UINT  flags;
     INT   iItem;
     INT   iSubItem;
+    /* (_WIN32_WINNT >= 0x0600) */
+    INT   iGroup;
 } LVHITTESTINFO, *LPLVHITTESTINFO;
 
 #define LV_HITTESTINFO LVHITTESTINFO
@@ -3551,14 +3577,31 @@ typedef struct LVGROUP
 	UINT cbSize;
 	UINT mask;
 	LPWSTR pszHeader;
-	int cchHeader;
+	INT cchHeader;
 	LPWSTR pszFooter;
-	int cchFooter;
-	int iGroupId;
+	INT cchFooter;
+	INT iGroupId;
 	UINT stateMask;
 	UINT state;
 	UINT uAlign;
+        /* (_WIN32_WINNT >= 0x0600) */
+	LPWSTR  pszSubtitle;
+	UINT    cchSubtitle;
+	LPWSTR  pszTask;
+	UINT    cchTask;
+	LPWSTR  pszDescriptionTop;
+	UINT    cchDescriptionTop;
+	LPWSTR  pszDescriptionBottom;
+	UINT    cchDescriptionBottom;
+	INT     iTitleImage;
+	INT     iExtendedImage;
+	INT     iFirstItem;
+	UINT    cItems;
+	LPWSTR  pszSubsetTitle;
+	UINT    cchSubsetTitle;
 } LVGROUP, *PLVGROUP;
+
+#define LVGROUP_V5_SIZE CCSIZEOF_STRUCT(LVGROUP, uAlign)
 
 typedef struct LVGROUPMETRICS
 {
