@@ -1121,6 +1121,8 @@ static void build_call_from_regs_x86_64(void)
     output( "\tmovq %%rax,0x18(%%rsp)\n" );
     output( "\tmovw 0x42(%%rbx),%%ax\n" );   /* ss */
     output( "\tmovq %%rax,0x20(%%rsp)\n" );
+    output( "\tmovq 0x78(%%rbx),%%rax\n" );
+    output( "\tmovq 0x90(%%rbx),%%rbx\n" );
     output( "\tiretq\n" );
 
     output_function_size( "__wine_call_from_regs" );
