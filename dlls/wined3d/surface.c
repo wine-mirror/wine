@@ -892,6 +892,8 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
         ENTER_GL();
         glDeleteTextures(1, &This->glDescription.textureName);
         This->glDescription.textureName = 0;
+        glDeleteTextures(1, &This->glDescription.srgbTextureName);
+        This->glDescription.srgbTextureName = 0;
         LEAVE_GL();
     } else {
         IWineD3DBaseTexture_Release(texture);
