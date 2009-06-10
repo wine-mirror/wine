@@ -1378,6 +1378,58 @@ static const char *create_test_typelib(void)
     return filename;
 }
 
+static void test_create_typelib_lcid(LCID lcid)
+{
+    char filename[MAX_PATH];
+    WCHAR name[MAX_PATH];
+    HRESULT hr;
+    ICreateTypeLib2 *tl;
+    HANDLE file;
+    DWORD msft_header[5]; /* five is enough for now */
+    DWORD read;
+
+    GetTempFileNameA( ".", "tlb", 0, filename );
+    MultiByteToWideChar(CP_ACP, 0, filename, -1, name, MAX_PATH);
+
+    hr = CreateTypeLib2(SYS_WIN32, name, &tl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SetLcid(tl, lcid);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_SaveAllChanges(tl);
+    ICreateTypeLib2_Release(tl);
+
+    file = CreateFileA( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "file creation failed\n" );
+
+    ReadFile( file, msft_header, sizeof(msft_header), &read, NULL );
+    ok(read == sizeof(msft_header), "read %d\n", read);
+    CloseHandle( file );
+
+    ok(msft_header[0] == 0x5446534d, "got %08x\n", msft_header[0]);
+    ok(msft_header[1] == 0x00010002, "got %08x\n", msft_header[1]);
+    ok(msft_header[2] == 0xffffffff, "got %08x\n", msft_header[2]);
+    ok(msft_header[3] == (lcid ? lcid : 0x409), "got %08x (lcid %08x)\n", msft_header[3], lcid);
+    ok(msft_header[4] == lcid, "got %08x (lcid %08x)\n", msft_header[4], lcid);
+
+    DeleteFileA(filename);
+}
+
+static void test_create_typelibs(void)
+{
+    test_create_typelib_lcid(LOCALE_SYSTEM_DEFAULT);
+    test_create_typelib_lcid(LOCALE_USER_DEFAULT);
+    test_create_typelib_lcid(LOCALE_NEUTRAL);
+
+    test_create_typelib_lcid(0x009);
+    test_create_typelib_lcid(0x409);
+    test_create_typelib_lcid(0x809);
+
+    test_create_typelib_lcid(0x007);
+    test_create_typelib_lcid(0x407);
+}
+
 START_TEST(typelib)
 {
     const char *filename;
@@ -1394,4 +1446,7 @@ START_TEST(typelib)
         test_dump_typelib( filename );
         DeleteFile( filename );
     }
+
+    test_create_typelibs();
+
 }
