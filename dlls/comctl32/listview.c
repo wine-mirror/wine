@@ -2505,11 +2505,15 @@ static INT LISTVIEW_CalculateItemWidth(const LISTVIEW_INFO *infoPtr)
 	nItemWidth = infoPtr->iconSpacing.cx;
     else if (infoPtr->uView == LV_VIEW_DETAILS)
     {
-	RECT rcHeader;
-
 	if (DPA_GetPtrCount(infoPtr->hdpaColumns) > 0)
 	{
-	    LISTVIEW_GetHeaderRect(infoPtr, DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, &rcHeader);
+	    RECT rcHeader;
+	    INT index;
+
+	    index = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX,
+                                 DPA_GetPtrCount(infoPtr->hdpaColumns) - 1, 0);
+
+	    LISTVIEW_GetHeaderRect(infoPtr, index, &rcHeader);
             nItemWidth = rcHeader.right;
 	}
     }
