@@ -3134,6 +3134,27 @@ BOOL WINAPI GetProcessHandleCount(HANDLE hProcess, DWORD *cnt)
 }
 
 /******************************************************************
+ *		QueryFullProcessImageNameA (KERNEL32.@)
+ */
+BOOL WINAPI QueryFullProcessImageNameA(HANDLE hProcess, DWORD dwFlags, LPSTR lpExeName, PDWORD pdwSize)
+{
+    BOOL retval;
+    DWORD pdwSizeW = *pdwSize;
+    LPWSTR lpExeNameW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *pdwSize * sizeof(WCHAR));
+
+    retval = QueryFullProcessImageNameW(hProcess, dwFlags, lpExeNameW, &pdwSizeW);
+
+    if(retval)
+        retval = (0 != WideCharToMultiByte(CP_ACP, 0, lpExeNameW, -1,
+                               lpExeName, *pdwSize, NULL, NULL));
+    if(retval)
+        *pdwSize = strlen(lpExeName);
+
+    HeapFree(GetProcessHeap(), 0, lpExeNameW);
+    return retval;
+}
+
+/******************************************************************
  *		QueryFullProcessImageNameW (KERNEL32.@)
  */
 BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lpExeName, PDWORD pdwSize)
