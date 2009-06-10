@@ -134,6 +134,24 @@ static const struct StaticPixelFormatDesc formats[] =
     {WINED3DFMT_NVHS,               0x0,        0x0,        0x0,        0x0,        2,      0,      0,      TRUE },
 };
 
+struct wined3d_format_compression_info
+{
+    WINED3DFORMAT format;
+    UINT block_width;
+    UINT block_height;
+    UINT block_byte_count;
+};
+
+static const struct wined3d_format_compression_info format_compression_info[] =
+{
+    {WINED3DFMT_DXT1,   4,  4,  8},
+    {WINED3DFMT_DXT2,   4,  4,  16},
+    {WINED3DFMT_DXT3,   4,  4,  16},
+    {WINED3DFMT_DXT4,   4,  4,  16},
+    {WINED3DFMT_DXT5,   4,  4,  16},
+    {WINED3DFMT_ATI2N,  4,  4,  16},
+};
+
 struct wined3d_format_vertex_info
 {
     WINED3DFORMAT format;
@@ -511,6 +529,32 @@ static BOOL init_format_base_info(WineD3D_GL_Info *gl_info)
     return TRUE;
 }
 
+static BOOL init_format_compression_info(WineD3D_GL_Info *gl_info)
+{
+    unsigned int i;
+
+    for (i = 0; i < (sizeof(format_compression_info) / sizeof(*format_compression_info)); ++i)
+    {
+        struct GlPixelFormatDesc *format_desc;
+        int fmt_idx = getFmtIdx(format_compression_info[i].format);
+
+        if (fmt_idx == -1)
+        {
+            ERR("Format %s (%#x) not found.\n",
+                    debug_d3dformat(format_compression_info[i].format), format_compression_info[i].format);
+            return FALSE;
+        }
+
+        format_desc = &gl_info->gl_formats[fmt_idx];
+        format_desc->block_width = format_compression_info[i].block_width;
+        format_desc->block_height = format_compression_info[i].block_height;
+        format_desc->block_byte_count = format_compression_info[i].block_byte_count;
+        format_desc->Flags |= WINED3DFMT_FLAG_COMPRESSED;
+    }
+
+    return TRUE;
+}
+
 #define GLINFO_LOCATION (*gl_info)
 
 static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_format, GLenum format, GLenum type)
@@ -772,29 +816,33 @@ static BOOL init_format_vertex_info(WineD3D_GL_Info *gl_info)
 
 BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
 {
-    return init_format_base_info(gl_info);
+    if (!init_format_base_info(gl_info)) return FALSE;
+
+    if (!init_format_compression_info(gl_info))
+    {
+        HeapFree(GetProcessHeap(), 0, gl_info->gl_formats);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 {
     if (!init_format_base_info(gl_info)) return FALSE;
 
-    if (!init_format_texture_info(gl_info))
-    {
-        HeapFree(GetProcessHeap(), 0, gl_info->gl_formats);
-        return FALSE;
-    }
-
-    if (!init_format_vertex_info(gl_info))
-    {
-        HeapFree(GetProcessHeap(), 0, gl_info->gl_formats);
-        return FALSE;
-    }
+    if (!init_format_compression_info(gl_info)) goto fail;
+    if (!init_format_texture_info(gl_info)) goto fail;
+    if (!init_format_vertex_info(gl_info)) goto fail;
 
     apply_format_fixups(gl_info);
     init_format_fbo_compat_info(gl_info);
 
     return TRUE;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, gl_info->gl_formats);
+    return FALSE;
 }
 
 #undef GLINFO_LOCATION

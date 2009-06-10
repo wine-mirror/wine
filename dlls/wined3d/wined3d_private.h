@@ -2750,6 +2750,7 @@ extern WINED3DFORMAT pixelformat_for_depth(DWORD depth);
 #define WINED3DFMT_FLAG_RENDERTARGET             0x10
 #define WINED3DFMT_FLAG_FOURCC                   0x20
 #define WINED3DFMT_FLAG_FBO_ATTACHABLE           0x40
+#define WINED3DFMT_FLAG_COMPRESSED               0x80
 
 struct GlPixelFormatDesc
 {
@@ -2761,6 +2762,10 @@ struct GlPixelFormatDesc
     UINT byte_count;
     WORD depth_size;
     WORD stencil_size;
+
+    UINT block_width;
+    UINT block_height;
+    UINT block_byte_count;
 
     enum wined3d_ffp_emit_idx emit_idx;
     GLint component_count;
