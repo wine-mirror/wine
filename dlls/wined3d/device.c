@@ -6856,14 +6856,21 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_TestCooperativeLevel(IWineD3DDevice* 
     return WINED3DERR_DRIVERINTERNALERROR;
 }
 
+static HRESULT WINAPI evict_managed_resource(IWineD3DResource *resource, void *data) {
+    TRACE("checking resource %p for eviction\n", resource);
+    if(((IWineD3DResourceImpl *) resource)->resource.pool == WINED3DPOOL_MANAGED) {
+        TRACE("Evicting %p\n", resource);
+        IWineD3DResource_UnLoad(resource);
+    }
+    IWineD3DResource_Release(resource);
+    return S_OK;
+}
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice* iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    /** FIXME: Resource tracking needs to be done,
-    * The closes we can do to this is set the priorities of all managed textures low
-    * and then reset them.
-     ***********************************************************/
-    FIXME("(%p) : stub\n", This);
+    TRACE("(%p)\n", This);
+
+    IWineD3DDevice_EnumResources(iface, evict_managed_resource, NULL);
     return WINED3D_OK;
 }
 
