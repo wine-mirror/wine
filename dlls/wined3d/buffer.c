@@ -985,6 +985,16 @@ static HRESULT STDMETHODCALLTYPE buffer_Unmap(IWineD3DBuffer *iface)
 
     TRACE("(%p)\n", This);
 
+    /* In the case that the number of Unmap calls > the
+     * number of Map calls, d3d returns always D3D_OK.
+     * This is also needed to prevent Map from returning garbage on
+     * the next call (this will happen if the lock_count is < 0). */
+    if(This->lock_count == 0)
+    {
+        TRACE("Unmap called without a previous Map call!\n");
+        return WINED3D_OK;
+    }
+
     if (InterlockedDecrement(&This->lock_count))
     {
         /* Delay loading the buffer until everything is unlocked */
