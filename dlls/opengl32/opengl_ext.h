@@ -24,11 +24,7 @@
 #undef WINAPI
 
 #define XMD_H /* This is to prevent the Xmd.h inclusion bug :-/ */
-#define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
-#ifdef HAVE_GL_GLEXT_H
-# include <GL/glext.h>
-#endif
 #undef  XMD_H
 
 #undef APIENTRY
