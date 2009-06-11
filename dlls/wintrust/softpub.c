@@ -90,7 +90,9 @@ static BOOL SOFTPUB_GetFileSubject(CRYPT_PROVIDER_DATA *data)
 {
     BOOL ret;
 
-    if (!data->pWintrustData->u.pFile->pgKnownSubject)
+    if (!WVT_ISINSTRUCT(WINTRUST_FILE_INFO,
+     data->pWintrustData->u.pFile->cbStruct, pgKnownSubject) ||
+     !data->pWintrustData->u.pFile->pgKnownSubject)
     {
         ret = CryptSIPRetrieveSubjectGuid(
          data->pWintrustData->u.pFile->pcwszFilePath,
