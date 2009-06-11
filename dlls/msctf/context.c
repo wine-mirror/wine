@@ -68,6 +68,9 @@ typedef struct tagContext {
     LONG refCount;
     BOOL connected;
 
+    /* Aggregation */
+    ITfCompartmentMgr  *CompartmentMgr;
+
     TfClientId tidOwner;
     TfEditCookie defaultCookie;
     TS_STATUS documentStatus;
@@ -175,6 +178,7 @@ static void Context_Destructor(Context *This)
         free_sink(sink);
     }
 
+    CompartmentMgr_Destructor(This->CompartmentMgr);
     HeapFree(GetProcessHeap(),0,This);
 }
 
@@ -194,6 +198,10 @@ static HRESULT WINAPI Context_QueryInterface(ITfContext *iface, REFIID iid, LPVO
     else if (IsEqualIID(iid, &IID_ITfInsertAtSelection))
     {
         *ppvOut = &This->InsertAtSelectionVtbl;
+    }
+    else if (IsEqualIID(iid, &IID_ITfCompartmentMgr))
+    {
+        *ppvOut = This->CompartmentMgr;
     }
 
     if (*ppvOut)
@@ -717,6 +725,8 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     This->refCount = 1;
     This->tidOwner = tidOwner;
     This->connected = FALSE;
+
+    CompartmentMgr_Constructor((IUnknown*)This, &IID_IUnknown, (IUnknown**)&This->CompartmentMgr);
 
     cookie->lockType = TF_ES_READ;
     cookie->pOwningContext = This;
