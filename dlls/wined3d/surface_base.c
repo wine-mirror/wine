@@ -521,14 +521,15 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3D
     TRACE("(%p) : Setting texture format to (%d,%s)\n", This, format, debug_d3dformat(format));
     if (format == WINED3DFMT_UNKNOWN) {
         This->resource.size = 0;
-    } else if (format == WINED3DFMT_DXT1) {
-        /* DXT1 is half byte per pixel */
-        This->resource.size = ((max(This->pow2Width, 4) * format_desc->byte_count) * max(This->pow2Height, 4)) >> 1;
-
-    } else if (format == WINED3DFMT_DXT2 || format == WINED3DFMT_DXT3 ||
-               format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5) {
-        This->resource.size = ((max(This->pow2Width, 4) * format_desc->byte_count) * max(This->pow2Height, 4));
-    } else {
+    }
+    else if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    {
+        UINT row_block_count = (This->pow2Width + format_desc->block_width - 1) / format_desc->block_width;
+        UINT row_count = (This->pow2Height + format_desc->block_height - 1) / format_desc->block_height;
+        This->resource.size = row_count * row_block_count * format_desc->block_byte_count;
+    }
+    else
+    {
         unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
         This->resource.size = ((This->pow2Width * format_desc->byte_count) + alignment - 1) & ~(alignment - 1);
         This->resource.size *= This->pow2Height;
