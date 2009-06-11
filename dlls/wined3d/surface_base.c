@@ -332,19 +332,19 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetPalette(IWineD3DSurface *iface, IWineD
 
 DWORD WINAPI IWineD3DBaseSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
-    WINED3DFORMAT format = This->resource.format_desc->format;
+    const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
     DWORD ret;
     TRACE("(%p)\n", This);
 
-    /* DXTn formats don't have exact pitches as they are to the new row of blocks,
-    where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt2/3/4/5)
-    ie pitch = (width/4) * bytes per block                                  */
-    if (format == WINED3DFMT_DXT1) /* DXT1 is 8 bytes per block */
-        ret = ((This->currentDesc.Width + 3) >> 2) << 3;
-    else if (format == WINED3DFMT_DXT2 || format == WINED3DFMT_DXT3 ||
-             format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
-        ret = ((This->currentDesc.Width + 3) >> 2) << 4;
-    else {
+    if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    {
+        /* Since compressed formats are block based, pitch means the amount of
+         * bytes to the next row of block rather than the next row of pixels. */
+        UINT row_block_count = (This->currentDesc.Width + format_desc->block_width - 1) / format_desc->block_width;
+        ret = row_block_count * format_desc->block_byte_count;
+    }
+    else
+    {
         unsigned char alignment = This->resource.wineD3DDevice->surface_alignment;
         ret = This->resource.format_desc->byte_count * This->currentDesc.Width;  /* Bytes / row */
         ret = (ret + alignment - 1) & ~(alignment - 1);
