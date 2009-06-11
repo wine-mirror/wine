@@ -105,6 +105,31 @@ static const char * DumpEvent( LONG event )
 #undef DUMPEV
 }
 
+static BOOL RefreshFileTypeAssociations(void)
+{
+    static WCHAR szWinemenubuilder[] = {
+        'w','i','n','e','m','e','n','u','b','u','i','l','d','e','r','.','e','x','e',
+        ' ','-','a',0 };
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    BOOL ret;
+
+    TRACE("starting %s\n",debugstr_w(szWinemenubuilder));
+
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+
+    ret = CreateProcessW( NULL, szWinemenubuilder, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+
+    if (ret)
+    {
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+    }
+
+    return ret;
+}
+
 static const char * NodeName(const NOTIFICATIONLIST *item)
 {
     const char *str;
@@ -397,6 +422,12 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     }
     TRACE("notify Done\n");
     LeaveCriticalSection(&SHELL32_ChangenotifyCS);
+
+    if (wEventId & SHCNE_ASSOCCHANGED)
+    {
+        TRACE("refreshing file type associations\n");
+        RefreshFileTypeAssociations();
+    }
     
     /* if we allocated it, free it. The ANSI flag is also set in its Unicode sibling. */
     if ((typeFlag & SHCNF_PATHA) || (typeFlag & SHCNF_PRINTERA))
