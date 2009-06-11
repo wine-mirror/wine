@@ -1963,7 +1963,7 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     if(SUCCEEDED(hres)) {
         have_IHttpNegotiate2 = TRUE;
         hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
-        ok(hres == E_FAIL, "GetRootSecurityId failed: %08x\n", hres);
+        ok(hres == E_FAIL || hres == E_NOTIMPL, "GetRootSecurityId failed: %08x\n", hres);
 
         SET_EXPECT(QueryInterface_IHttpNegotiate2);
         hres = IServiceProvider_QueryService(serv_prov, &IID_IHttpNegotiate2, &IID_IHttpNegotiate2,
