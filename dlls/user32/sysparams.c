@@ -2435,10 +2435,17 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = FALSE;
         break;
 
-    WINE_SPI_FIXME(SPI_GETFOCUSBORDERWIDTH);    /* 0x200E  _WIN32_WINNT >= 0x510 */
-    WINE_SPI_FIXME(SPI_SETFOCUSBORDERWIDTH);    /* 0x200F  _WIN32_WINNT >= 0x510 */
-    WINE_SPI_FIXME(SPI_GETFOCUSBORDERHEIGHT);    /* 0x2010  _WIN32_WINNT >= 0x510 */
+    case SPI_GETFOCUSBORDERWIDTH: /* 0x200E  _WIN32_WINNT >= 0x510 */
+    case SPI_GETFOCUSBORDERHEIGHT: /* 0x200F  _WIN32_WINNT >= 0x510 */
+        if (!pvParam)
+            ret = FALSE;
+        else
+            *(UINT *)pvParam = 1;
+        break;
+
+    WINE_SPI_FIXME(SPI_SETFOCUSBORDERWIDTH);     /* 0x2010  _WIN32_WINNT >= 0x510 */
     WINE_SPI_FIXME(SPI_SETFOCUSBORDERHEIGHT);    /* 0x2011  _WIN32_WINNT >= 0x510 */
+
     case SPI_GETFONTSMOOTHINGORIENTATION:       /* 0x2012 */
         spi_idx = SPI_SETFONTSMOOTHINGORIENTATION_IDX;
         if (!spi_loaded[spi_idx])
