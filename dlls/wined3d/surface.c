@@ -150,25 +150,26 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
             || format_desc->format == WINED3DFMT_DXT3 || format_desc->format == WINED3DFMT_DXT4
             || format_desc->format == WINED3DFMT_DXT5 || format_desc->format == WINED3DFMT_ATI2N)
     {
-        if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) { /* We can assume this as the texture would not have been created otherwise */
-            FIXME("(%p) : Attempting to lock a compressed texture when texture compression isn't supported by opengl\n", This);
-        } else {
-            TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p\n",
-                    This, This->glDescription.level, format_desc->glFormat, format_desc->glType,
-                    This->resource.allocatedMemory);
+        TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p.\n",
+                This, This->glDescription.level, format_desc->glFormat, format_desc->glType,
+                This->resource.allocatedMemory);
 
-            if(This->Flags & SFLAG_PBO) {
-                GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
-                checkGLcall("glBindBufferARB");
-                GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target, This->glDescription.level, NULL));
-                checkGLcall("glGetCompressedTexImageARB()");
-                GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
-                checkGLcall("glBindBufferARB");
-            } else {
-                GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target, This->glDescription.level, This->resource.allocatedMemory));
-                checkGLcall("glGetCompressedTexImageARB()");
-            }
+        if (This->Flags & SFLAG_PBO)
+        {
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
+            checkGLcall("glBindBufferARB");
+            GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target, This->glDescription.level, NULL));
+            checkGLcall("glGetCompressedTexImageARB()");
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
+            checkGLcall("glBindBufferARB");
         }
+        else
+        {
+            GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target,
+                    This->glDescription.level, This->resource.allocatedMemory));
+            checkGLcall("glGetCompressedTexImageARB()");
+        }
+
         LEAVE_GL();
     } else {
         void *mem;
@@ -297,35 +298,41 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
             || format_desc->format == WINED3DFMT_DXT3 || format_desc->format == WINED3DFMT_DXT4
             || format_desc->format == WINED3DFMT_DXT5 || format_desc->format == WINED3DFMT_ATI2N)
     {
-        if (!GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
-            FIXME("Using DXT1/3/5 without advertized support\n");
-        } else {
-            /* glCompressedTexSubImage2D for uploading and glTexImage2D for allocating does not work well on some drivers(r200 dri, MacOS ATI driver)
-             * glCompressedTexImage2D does not accept NULL pointers. So for compressed textures surface_allocate_surface does nothing, and this
-             * function uses glCompressedTexImage2D instead of the SubImage call
-             */
-            TRACE("(%p) : Calling glCompressedTexSubImage2D w %d, h %d, data %p\n", This, width, height, data);
-            ENTER_GL();
+        /* glCompressedTexSubImage2D() for uploading and glTexImage2D() for
+         * allocating does not work well on some drivers (r200 dri, MacOS ATI
+         * driver). glCompressedTexImage2D() does not accept NULL pointers. So
+         * for compressed textures surface_allocate_surface() does nothing,
+         * and this function uses glCompressedTexImage2D() instead of
+         * glCompressedTexSubImage2D(). */
+        TRACE("(%p) : Calling glCompressedTexImage2DARB w %u, h %u, data %p.\n", This, width, height, data);
 
-            if(This->Flags & SFLAG_PBO) {
-                GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
-                checkGLcall("glBindBufferARB");
-                TRACE("(%p) pbo: %#x, data: %p\n", This, This->pbo, data);
+        ENTER_GL();
 
-                GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, internal,
-                        width, height, 0 /* border */, This->resource.size, NULL));
-                checkGLcall("glCompressedTexSubImage2D");
+        if (This->Flags & SFLAG_PBO)
+        {
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+            checkGLcall("glBindBufferARB");
 
-                GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-                checkGLcall("glBindBufferARB");
-            } else {
-                GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, internal,
-                        width, height, 0 /* border */, This->resource.size, data));
-                checkGLcall("glCompressedTexSubImage2D");
-            }
-            LEAVE_GL();
+            TRACE("(%p) pbo: %#x, data: %p.\n", This, This->pbo, data);
+
+            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level,
+                    internal, width, height, 0 /* border */, This->resource.size, NULL));
+            checkGLcall("glCompressedTexImage2DARB");
+
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+            checkGLcall("glBindBufferARB");
         }
-    } else {
+        else
+        {
+            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level,
+                    internal, width, height, 0 /* border */, This->resource.size, data));
+            checkGLcall("glCompressedTexSubImage2D");
+        }
+
+        LEAVE_GL();
+    }
+    else
+    {
         TRACE("(%p) : Calling glTexSubImage2D w %d,  h %d, data, %p\n", This, width, height, data);
         ENTER_GL();
 

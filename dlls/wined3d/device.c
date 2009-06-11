@@ -5987,22 +5987,24 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
             WINED3DFMT_DXT3 == destFormat ||
             WINED3DFMT_DXT4 == destFormat ||
             WINED3DFMT_DXT5 == destFormat) {
-            if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
-                if (destSurfaceHeight != srcHeight || destSurfaceWidth != srcWidth) {
-                    /* FIXME: The easy way to do this is to lock the destination, and copy the bits across */
-                    FIXME("Updating part of a compressed texture is not supported at the moment\n");
-                } if (destFormat != srcFormat) {
-                    FIXME("Updating mixed format compressed texture is not curretly support\n");
-                } else {
-                    GL_EXTCALL(glCompressedTexImage2DARB(glDescription->target, glDescription->level,
-                            dst_format_desc->glInternal, srcWidth, srcHeight, 0, destSize, data));
-                }
-            } else {
-                FIXME("Attempting to update a DXT compressed texture without hardware support\n");
+
+            if (destSurfaceHeight != srcHeight || destSurfaceWidth != srcWidth)
+            {
+                /* FIXME: The easy way to do this is to lock the destination, and copy the bits across. */
+                FIXME("Updating part of a compressed texture is not supported.\n");
             }
-
-
-        } else {
+            if (destFormat != srcFormat)
+            {
+                FIXME("Updating mixed format compressed textures is not supported.\n");
+            }
+            else
+            {
+                GL_EXTCALL(glCompressedTexImage2DARB(glDescription->target, glDescription->level,
+                        dst_format_desc->glInternal, srcWidth, srcHeight, 0, destSize, data));
+            }
+        }
+        else
+        {
             glTexSubImage2D(glDescription->target, glDescription->level, destLeft, destTop,
                     srcWidth, srcHeight, dst_format_desc->glFormat, dst_format_desc->glType, data);
         }
