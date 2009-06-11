@@ -17865,12 +17865,69 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_c_dot_previous" >&5
 $as_echo "$ac_cv_c_dot_previous" >&6; }
 
+{ $as_echo "$as_me:$LINENO: checking whether CFI directives are supported in assembly code" >&5
+$as_echo_n "checking whether CFI directives are supported in assembly code... " >&6; }
+if test "${ac_cv_c_cfi_support+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+asm(".text\nac_test:\t.cfi_startproc\n\t.long 0\n\t.cfi_endproc");
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_cv_c_cfi_support="yes"
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_c_cfi_support="no"
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_c_cfi_support" >&5
+$as_echo "$ac_cv_c_cfi_support" >&6; }
+
 asm_func_header=".globl $asm_name_prefix\" #name \"\\n\\t$asm_func_header\\n$asm_name_prefix\" #name \":\\n\\t"
 asm_func_trailer=""
 if test "$ac_cv_c_dot_previous" = "yes"
 then
    asm_func_trailer="\\n\\t.previous"
 fi
+if test "$ac_cv_c_cfi_support" = "yes"
+then
+   asm_func_header="$asm_func_header.cfi_startproc\\n\\t"
+   asm_func_trailer="\\n\\t.cfi_endproc$asm_func_trailer"
+fi
+
 asm_func_code="$asm_func_header\" code \"$asm_func_trailer"
 
 

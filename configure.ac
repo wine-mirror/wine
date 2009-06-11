@@ -1438,12 +1438,22 @@ AC_CACHE_CHECK([whether .previous is supported in assembly code], ac_cv_c_dot_pr
     WINE_TRY_ASM_LINK([".text\nac_test:\t.long 0\n\t.previous"],,,
                       ac_cv_c_dot_previous="yes",ac_cv_c_dot_previous="no"))
 
+AC_CACHE_CHECK([whether CFI directives are supported in assembly code], ac_cv_c_cfi_support,
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\nac_test:\t.cfi_startproc\n\t.long 0\n\t.cfi_endproc");]])],
+                      ac_cv_c_cfi_support="yes",ac_cv_c_cfi_support="no"))
+
 asm_func_header=".globl $asm_name_prefix\" #name \"\\n\\t$asm_func_header\\n$asm_name_prefix\" #name \":\\n\\t"
 asm_func_trailer=""
 if test "$ac_cv_c_dot_previous" = "yes"
 then
    asm_func_trailer="\\n\\t.previous"
 fi
+if test "$ac_cv_c_cfi_support" = "yes"
+then
+   asm_func_header="$asm_func_header.cfi_startproc\\n\\t"
+   asm_func_trailer="\\n\\t.cfi_endproc$asm_func_trailer"
+fi
+
 asm_func_code="$asm_func_header\" code \"$asm_func_trailer"
 
 AH_TEMPLATE(__ASM_GLOBAL_FUNC,[Define to a macro to generate an assembly function])
