@@ -17507,6 +17507,80 @@ $as_echo "$ac_cv_c_string_h_warnings" >&6; }
 fi
 
 
+{ $as_echo "$as_me:$LINENO: checking whether external symbols need an underscore prefix" >&5
+$as_echo_n "checking whether external symbols need an underscore prefix... " >&6; }
+if test "${ac_cv_c_extern_prefix+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+extern int ac_test;
+int
+main ()
+{
+asm(".globl _ac_test\n_ac_test:\t.long 0"); if (ac_test) return 1
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_c_extern_prefix="yes"
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_c_extern_prefix="no"
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_c_extern_prefix" >&5
+$as_echo "$ac_cv_c_extern_prefix" >&6; }
+
+
+
+if test "$ac_cv_c_extern_prefix" = "yes"
+then
+    cat >>confdefs.h <<\_ACEOF
+#define __ASM_NAME(name) "_" name
+_ACEOF
+
+    asm_name_prefix="_"
+else
+    cat >>confdefs.h <<\_ACEOF
+#define __ASM_NAME(name) name
+_ACEOF
+
+    asm_name_prefix=""
+fi
+
+
 { $as_echo "$as_me:$LINENO: checking how to define a function in assembly code" >&5
 $as_echo_n "checking how to define a function in assembly code... " >&6; }
 if test "${ac_cv_asm_func_def+set}" = set; then
@@ -17662,28 +17736,31 @@ case "$ac_cv_asm_func_def" in
      cat >>confdefs.h <<\_ACEOF
 #define __ASM_FUNC(name) ".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"
 _ACEOF
- ;;
+
+     asm_func_header=".def $asm_name_prefix\" #name \"; .scl 2; .type 32; .endef" ;;
   ".type @function")
      cat >>confdefs.h <<\_ACEOF
 #define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",@function"
 _ACEOF
- ;;
+
+     asm_func_header=".type $asm_name_prefix\" #name \",@function" ;;
   ".type 2")
      cat >>confdefs.h <<\_ACEOF
 #define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",2"
 _ACEOF
- ;;
+
+     asm_func_header=".type $asm_name_prefix\" #name \",2" ;;
   *)
      cat >>confdefs.h <<\_ACEOF
 #define __ASM_FUNC(name) ""
 _ACEOF
- ;;
+
+     asm_func_header="" ;;
 esac
 
-
-{ $as_echo "$as_me:$LINENO: checking whether external symbols need an underscore prefix" >&5
-$as_echo_n "checking whether external symbols need an underscore prefix... " >&6; }
-if test "${ac_cv_c_extern_prefix+set}" = set; then
+{ $as_echo "$as_me:$LINENO: checking whether asm() works outside of functions" >&5
+$as_echo_n "checking whether asm() works outside of functions... " >&6; }
+if test "${ac_cv_c_asm_outside_funcs+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -17692,11 +17769,62 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-extern int ac_test;
+asm(".text\n\t.long 0");
 int
 main ()
 {
-asm(".globl _ac_test\n_ac_test:\t.long 0"); if (ac_test) return 1
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_cv_c_asm_outside_funcs="yes"
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_c_asm_outside_funcs="no"
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_c_asm_outside_funcs" >&5
+$as_echo "$ac_cv_c_asm_outside_funcs" >&6; }
+
+{ $as_echo "$as_me:$LINENO: checking whether .previous is supported in assembly code" >&5
+$as_echo_n "checking whether .previous is supported in assembly code... " >&6; }
+if test "${ac_cv_c_dot_previous+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+asm(".text\nac_test:\t.long 0\n\t.previous");
   ;
   return 0;
 }
@@ -17722,32 +17850,40 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-  ac_cv_c_extern_prefix="yes"
+  ac_cv_c_dot_previous="yes"
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_c_extern_prefix="no"
+	ac_cv_c_dot_previous="no"
 fi
 
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_c_extern_prefix" >&5
-$as_echo "$ac_cv_c_extern_prefix" >&6; }
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_c_dot_previous" >&5
+$as_echo "$ac_cv_c_dot_previous" >&6; }
 
-
-
-if test "$ac_cv_c_extern_prefix" = "yes"
+asm_func_header=".globl $asm_name_prefix\" #name \"\\n\\t$asm_func_header\\n$asm_name_prefix\" #name \":\\n\\t"
+asm_func_trailer=""
+if test "$ac_cv_c_dot_previous" = "yes"
 then
-  cat >>confdefs.h <<\_ACEOF
-#define __ASM_NAME(name) "_" name
+   asm_func_trailer="\\n\\t.previous"
+fi
+asm_func_code="$asm_func_header\" code \"$asm_func_trailer"
+
+
+
+if test "$ac_cv_c_asm_outside_funcs" = "yes"
+then
+    cat >>confdefs.h <<_ACEOF
+#define __ASM_GLOBAL_FUNC(name,code) asm(".text\n\t.align 4\n\t$asm_func_code");
 _ACEOF
 
 else
-  cat >>confdefs.h <<\_ACEOF
-#define __ASM_NAME(name) name
+    cat >>confdefs.h <<_ACEOF
+#define __ASM_GLOBAL_FUNC(name,code) void __asm_dummy_##name(void) { asm(".text\n\t.align 4\n\t$asm_func_code"); }
 _ACEOF
 
 fi

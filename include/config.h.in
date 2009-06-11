@@ -1191,6 +1191,9 @@
 /* Define to a macro to generate an assembly function directive */
 #undef __ASM_FUNC
 
+/* Define to a macro to generate an assembly function */
+#undef __ASM_GLOBAL_FUNC
+
 /* Define to a macro to generate an assembly name from a C symbol */
 #undef __ASM_NAME
 

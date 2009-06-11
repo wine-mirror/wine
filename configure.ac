@@ -1384,6 +1384,24 @@ then
   fi
 fi
 
+dnl **** Check for underscore on external symbols ****
+
+AC_CACHE_CHECK([whether external symbols need an underscore prefix], ac_cv_c_extern_prefix,
+    WINE_TRY_ASM_LINK([".globl _ac_test\n_ac_test:\t.long 0"],
+                      [extern int ac_test;],
+                      [if (ac_test) return 1],
+                      ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no"))
+
+AH_TEMPLATE(__ASM_NAME,[Define to a macro to generate an assembly name from a C symbol])
+if test "$ac_cv_c_extern_prefix" = "yes"
+then
+    AC_DEFINE([__ASM_NAME(name)], ["_" name])
+    asm_name_prefix="_"
+else
+    AC_DEFINE([__ASM_NAME(name)], [name])
+    asm_name_prefix=""
+fi
+
 dnl **** Check how to define a function in assembly code ****
 
 AC_CACHE_CHECK([how to define a function in assembly code], ac_cv_asm_func_def,
@@ -1399,29 +1417,41 @@ AC_CACHE_CHECK([how to define a function in assembly code], ac_cv_asm_func_def,
 AH_TEMPLATE(__ASM_FUNC,[Define to a macro to generate an assembly function directive])
 case "$ac_cv_asm_func_def" in
   ".def")
-     AC_DEFINE([__ASM_FUNC(name)], [".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"]) ;;
+     AC_DEFINE([__ASM_FUNC(name)], [".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"])
+     asm_func_header=".def $asm_name_prefix\" #name \"; .scl 2; .type 32; .endef" ;;
   ".type @function")
-     AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",@function"]) ;;
+     AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",@function"])
+     asm_func_header=".type $asm_name_prefix\" #name \",@function" ;;
   ".type 2")
-     AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",2"]) ;;
+     AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",2"])
+     asm_func_header=".type $asm_name_prefix\" #name \",2" ;;
   *)
-     AC_DEFINE([__ASM_FUNC(name)], [""]) ;;
+     AC_DEFINE([__ASM_FUNC(name)], [""])
+     asm_func_header="" ;;
 esac
 
-dnl **** Check for underscore on external symbols ****
+AC_CACHE_CHECK([whether asm() works outside of functions], ac_cv_c_asm_outside_funcs,
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\n\t.long 0");]],)],
+                      ac_cv_c_asm_outside_funcs="yes",ac_cv_c_asm_outside_funcs="no"))
 
-AC_CACHE_CHECK([whether external symbols need an underscore prefix], ac_cv_c_extern_prefix,
-    WINE_TRY_ASM_LINK([".globl _ac_test\n_ac_test:\t.long 0"],
-                      [extern int ac_test;],
-                      [if (ac_test) return 1],
-                      ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no"))
+AC_CACHE_CHECK([whether .previous is supported in assembly code], ac_cv_c_dot_previous,
+    WINE_TRY_ASM_LINK([".text\nac_test:\t.long 0\n\t.previous"],,,
+                      ac_cv_c_dot_previous="yes",ac_cv_c_dot_previous="no"))
 
-AH_TEMPLATE(__ASM_NAME,[Define to a macro to generate an assembly name from a C symbol])
-if test "$ac_cv_c_extern_prefix" = "yes"
+asm_func_header=".globl $asm_name_prefix\" #name \"\\n\\t$asm_func_header\\n$asm_name_prefix\" #name \":\\n\\t"
+asm_func_trailer=""
+if test "$ac_cv_c_dot_previous" = "yes"
 then
-  AC_DEFINE([__ASM_NAME(name)], ["_" name])
+   asm_func_trailer="\\n\\t.previous"
+fi
+asm_func_code="$asm_func_header\" code \"$asm_func_trailer"
+
+AH_TEMPLATE(__ASM_GLOBAL_FUNC,[Define to a macro to generate an assembly function])
+if test "$ac_cv_c_asm_outside_funcs" = "yes"
+then
+    AC_DEFINE_UNQUOTED([__ASM_GLOBAL_FUNC(name,code)],[asm(".text\n\t.align 4\n\t$asm_func_code");])
 else
-  AC_DEFINE([__ASM_NAME(name)], [name])
+    AC_DEFINE_UNQUOTED([__ASM_GLOBAL_FUNC(name,code)],[void __asm_dummy_##name(void) { asm(".text\n\t.align 4\n\t$asm_func_code"); }])
 fi
 
 dnl **** Platform-specific checks ****
