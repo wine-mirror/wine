@@ -598,13 +598,15 @@ static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
 
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
+            TRACE("Checking if format %s is supported as FBO color attachment...\n", debug_d3dformat(desc->format));
+
             /* Check if the default internal format is supported as a frame buffer target, otherwise
              * fall back to the render target internal.
              *
              * Try to stick to the standard format if possible, this limits precision differences. */
             if (check_fbo_compat(gl_info, desc->glInternal, desc->glFormat, desc->glType))
             {
-                TRACE("Format %s is supported as fbo target\n", debug_d3dformat(desc->format));
+                TRACE("Format %s is supported as FBO color attachment\n", debug_d3dformat(desc->format));
                 desc->Flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE;
                 desc->rtInternal = desc->glInternal;
             }
@@ -614,15 +616,19 @@ static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
                 {
                     if (desc->Flags & WINED3DFMT_FLAG_RENDERTARGET)
                     {
-                        FIXME("Internal format of %s not supported as FBO target, and no fallback specified.\n",
-                                debug_d3dformat(desc->format));
+                        FIXME("Format %s with rendertarget flag is not supported as FBO color attachment,"
+                                " and no fallback specified.\n", debug_d3dformat(desc->format));
                         desc->Flags &= ~WINED3DFMT_FLAG_RENDERTARGET;
+                    }
+                    else
+                    {
+                        TRACE("Format %s is not supported as FBO color attachment.\n", debug_d3dformat(desc->format));
                     }
                     desc->rtInternal = desc->glInternal;
                 }
                 else
                 {
-                    TRACE("Internal format of %s not supported as FBO target, using render target internal instead.\n",
+                    TRACE("Format %s is not supported as FBO color attachment, using rtInternal format as fallback.\n",
                             debug_d3dformat(desc->format));
                 }
             }
