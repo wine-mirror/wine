@@ -22,6 +22,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -109,73 +110,119 @@ typedef struct info_table_tag {
     LANGID lang;
     DWORD todo;
     LPCSTR rfc1766;
-    LPCSTR localename;
-    LPCSTR broken_name;
+    LPCWSTR localename;
+    LPCWSTR broken_name;
 } info_table_entry;
 
-static const CHAR fr_enus[] = {'A','n','g','l','a','i','s',' ',
-                               '(',0xC3, 0x89, 't','a','t','s','-','U','n','i','s',')',0};
+static const WCHAR de_en[] =   {'E','n','g','l','i','s','c','h',0};
+static const WCHAR de_enca[] = {'E','n','g','l','i','s','c','h',' ',
+                                '(','K','a','n','a','d','a',')',0};
+static const WCHAR de_engb[] = {'E','n','g','l','i','s','c','h',' ',
+                                '(','G','r','o',0xDF,'b','r','i','t','a','n','n','i','e','n',')',0};
+static const WCHAR de_engb2[] ={'E','n','g','l','i','s','c','h',' ',
+                                '(','V','e','r','e','i','n','i','g','t','e','s',' ',
+                                'K',0xF6,'n','i','g','r','e','i','c',0};
+static const WCHAR de_enus[] = {'E','n','g','l','i','s','c','h',' ',
+                                '(','U','S','A',')',0};
+static const WCHAR de_de[] =   {'D','e','u','t','s','c','h',' ',
+                                '(','D','e','u','t','s','c','h','l','a','n','d',')',0};
+static const WCHAR de_deat[] = {'D','e','u','t','s','c','h',' ',
+                                '(',0xD6,'s','t','e','r','r','e','i','c','h',')',0};
+static const WCHAR de_dech[] = {'D','e','u','t','s','c','h',' ',
+                                '(','S','c','h','w','e','i','z',')',0};
+
+static const WCHAR en_en[] =   {'E','n','g','l','i','s','h',0};
+static const WCHAR en_enca[] = {'E','n','g','l','i','s','h',' ',
+                                '(','C','a','n','a','d','a',')',0};
+static const WCHAR en_engb[] = {'E','n','g','l','i','s','h',' ',
+                                '(','U','n','i','t','e','d',' ','K','i','n','g','d','o','m',')',0};
+static const WCHAR en_enus[] = {'E','n','g','l','i','s','h',' ',
+                                '(','U','n','i','t','e','d',' ','S','t','a','t','e','s',')',0};
+static const WCHAR en_de[] =   {'G','e','r','m','a','n',' ',
+                                '(','G','e','r','m','a','n','y',')',0};
+static const WCHAR en_deat[] = {'G','e','r','m','a','n',' ',
+                                '(','A','u','s','t','r','i','a',')',0};
+static const WCHAR en_dech[] = {'G','e','r','m','a','n',' ',
+                                '(','S','w','i','t','z','e','r','l','a','n','d',')',0};
+
+static const WCHAR fr_en[] =   {'A','n','g','l','a','i','s',0};
+static const WCHAR fr_enca[] = {'A','n','g','l','a','i','s',' ',
+                                '(','C','a','n','a','d','a',')',0};
+static const WCHAR fr_engb[] = {'A','n','g','l','a','i','s',' ',
+                                '(','R','o','y','a','u','m','e','-','U','n','i',')',0};
+static const WCHAR fr_enus[] = {'A','n','g','l','a','i','s',' ',
+                                '(',0xC9, 't','a','t','s','-','U','n','i','s',')',0};
+static const WCHAR fr_enus2[] ={'A','n','g','l','a','i','s',' ',
+                                '(','U','.','S','.',')',0};
+static const WCHAR fr_de[] =   {'A','l','l','e','m','a','n','d',' ',
+                                '(','A','l','l','e','m','a','g','n','e',')',0};
+static const WCHAR fr_de2[] =  {'A','l','l','e','m','a','n','d',' ',
+                                '(','S','t','a','n','d','a','r','d',')',0};
+static const WCHAR fr_deat[] = {'A','l','l','e','m','a','n','d',' ',
+                                '(','A','u','t','r','i','c','h','e',')',0};
+static const WCHAR fr_dech[] = {'A','l','l','e','m','a','n','d',' ',
+                                '(','S','u','i','s','s','e',')',0};
 
 static const info_table_entry  info_table[] = {
     {MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),        MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-         0, "en", "English"},
+         0, "en", en_en},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),        MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-         0, "en-us", "English (United States)"},
+         0, "en-us", en_enus},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),     MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-         0, "en-gb", "English (United Kingdom)"},
+         0, "en-gb", en_engb},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),     MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-         0, "en-us", "English (United States)"},
+         0, "en-us", en_enus},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_CAN),    MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-         0, "en-ca", "English (Canada)"},
+         0, "en-ca", en_enca},
 
     {MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),         MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-         0, "de", "German (Germany)"},
+         0, "de", en_de},
     {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN),          MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-         0, "de", "German (Germany)"},
+         0, "de", en_de},
     {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS),    MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-         0, "de-ch", "German (Switzerland)"},
+         0, "de-ch", en_dech},
     {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN), MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-         0, "de-at", "German (Austria)"},
+         0, "de-at", en_deat},
 
     {MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),        MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "en", "Englisch"},
+         TODO_NAME, "en", de_en},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),        MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "en-us", "Englisch (USA)"},
+         TODO_NAME, "en-us", de_enus},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),     MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "en-gb", "Englisch (Großbritannien)", "Englisch (Vereinigtes Königreic" },
+         TODO_NAME, "en-gb", de_engb, de_engb2},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),     MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "en-us", "Englisch (USA)"},
+         TODO_NAME, "en-us", de_enus},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_CAN),    MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "en-ca", "Englisch (Kanada)"},
+         TODO_NAME, "en-ca", de_enca},
 
     {MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),         MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "de", "Deutsch (Deutschland)"},
+         TODO_NAME, "de", de_de},
     {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN),          MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "de", "Deutsch (Deutschland)"},
+         TODO_NAME, "de",de_de},
     {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS),    MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "de-ch", "Deutsch (Schweiz)"},
+         TODO_NAME, "de-ch", de_dech},
     {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN), MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),
-         TODO_NAME, "de-at", "Deutsch (Österreich)"},
+         TODO_NAME, "de-at", de_deat},
 
     {MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),        MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
-         TODO_NAME, "en", "Anglais"},
+         TODO_NAME, "en", fr_en},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),        MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
-         TODO_NAME, "en-us", fr_enus, "Anglais (U.S.)"},
+         TODO_NAME, "en-us", fr_enus, fr_enus2},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),     MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
-         TODO_NAME, "en-gb", "Anglais (Royaume-Uni)"},
+         TODO_NAME, "en-gb", fr_engb},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),     MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
-         TODO_NAME, "en-us", fr_enus, "Anglais (U.S.)"},
+         TODO_NAME, "en-us", fr_enus, fr_enus2},
     {MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_CAN),    MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
-         TODO_NAME, "en-ca", "Anglais (Canada)"},
+         TODO_NAME, "en-ca", fr_enca},
 
     {MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT),         MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
-         TODO_NAME, "de", "Allemand (Allemagne)", "Allemand (Standard)"},
+         TODO_NAME, "de", fr_de, fr_de2},
     {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN),          MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
-         TODO_NAME, "de", "Allemand (Allemagne)", "Allemand (Standard)"},
+         TODO_NAME, "de", fr_de, fr_de2},
     {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_SWISS),    MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
-         TODO_NAME, "de-ch", "Allemand (Suisse)"},
+         TODO_NAME, "de-ch", fr_dech},
     {MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN_AUSTRIAN), MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT),
-         TODO_NAME, "de-at", "Allemand (Autriche)"}
+         TODO_NAME, "de-at", fr_deat}
 
 };
 
@@ -207,6 +254,55 @@ static BOOL init_function_ptrs(void)
         WideCharToMultiByte(CP_ACP, 0, (szString2), -1, string2, 256, NULL, NULL); \
         ok(0, (format), string1, string2); \
     }
+
+/* lstrcmpW is not supported on Win9x! */
+static int mylstrcmpW(const WCHAR* str1, const WCHAR* str2)
+{
+    if (!str2) return 1;
+    while (*str1 && *str1==*str2) {
+        str1++;
+        str2++;
+    }
+    return *str1-*str2;
+}
+
+#define DEBUGSTR_W_MAXLEN 64
+
+static CHAR * debugstr_w(const WCHAR * strW)
+{
+    static CHAR buffers[DEBUGSTR_W_MAXLEN * 2];
+    static DWORD pos = 0;
+    CHAR * strA;
+    DWORD len = DEBUGSTR_W_MAXLEN - 4;
+
+    strA = &buffers[pos];
+
+    *strA++ = 'L';
+    *strA++ = '"';
+
+    while (*strW && (len > 4)) {
+        if ((*strW < ' ') || (*strW > 126)) {
+            sprintf(strA, "\\%04x", *strW);
+            strA +=5;
+            len -=5;
+        }
+        else
+        {
+            *strA++ = *strW;
+            len--;
+        }
+        strW++;
+    }
+    *strA++ = '"';
+    *strA = '\0';
+
+    strA = &buffers[pos];
+    pos += DEBUGSTR_W_MAXLEN;
+    if (pos >= sizeof(buffers)) pos = 0;
+
+    return strA;
+
+}
 
 static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
 {
@@ -1143,7 +1239,6 @@ static void test_LcidToRfc1766(void)
 static void test_GetRfc1766Info(IMultiLanguage2 *iML2)
 {
     CHAR rfc1766A[MAX_RFC1766_NAME + 1];
-    CHAR localenameA[MAX_LOCALE_NAME * 3];
     BYTE buffer[sizeof(RFC1766INFO) + 4];
     PRFC1766INFO prfc = (RFC1766INFO *) buffer;
     HRESULT ret;
@@ -1156,7 +1251,6 @@ static void test_GetRfc1766Info(IMultiLanguage2 *iML2)
 
         ret = IMultiLanguage2_GetRfc1766Info(iML2, info_table[i].lcid, info_table[i].lang, prfc);
         WideCharToMultiByte(CP_ACP, 0, prfc->wszRfc1766, -1, rfc1766A, MAX_RFC1766_NAME, NULL, NULL);
-        WideCharToMultiByte(CP_UTF8, 0, prfc->wszLocaleName, -1, localenameA, MAX_LOCALE_NAME * 3, NULL, NULL);
         ok(ret == S_OK, "#%02d: got 0x%x (expected S_OK)\n", i, ret);
         ok(prfc->lcid == info_table[i].lcid,
             "#%02d: got 0x%04x (expected 0x%04x)\n", i, prfc->lcid, info_table[i].lcid);
@@ -1166,14 +1260,16 @@ static void test_GetRfc1766Info(IMultiLanguage2 *iML2)
 
         if (info_table[i].todo & TODO_NAME) {
             todo_wine
-            ok( (!lstrcmpA(localenameA, info_table[i].localename)) ||
-                broken(!lstrcmpA(localenameA, info_table[i].broken_name)),   /* IE < 6.0 */
-                "#%02d: got '%s' (expected '%s')\n", i, localenameA, info_table[i].localename);
+            ok( (!mylstrcmpW(prfc->wszLocaleName, info_table[i].localename)) ||
+                broken(!mylstrcmpW(prfc->wszLocaleName, info_table[i].broken_name)), /* IE < 6.0 */
+                "#%02d: got %s (expected %s)\n", i,
+                debugstr_w(prfc->wszLocaleName), debugstr_w(info_table[i].localename));
         }
         else
-            ok( (!lstrcmpA(localenameA, info_table[i].localename)) ||
-                broken(!lstrcmpA(localenameA, info_table[i].broken_name)),   /* IE < 6.0 */
-                "#%02d: got '%s' (expected '%s')\n", i, localenameA, info_table[i].localename);
+            ok( (!mylstrcmpW(prfc->wszLocaleName, info_table[i].localename)) ||
+                broken(!mylstrcmpW(prfc->wszLocaleName, info_table[i].broken_name)),   /* IE < 6.0 */
+                "#%02d: got %s (expected %s)\n", i,
+                debugstr_w(prfc->wszLocaleName), debugstr_w(info_table[i].localename));
 
     }
 
