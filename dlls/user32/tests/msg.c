@@ -11592,6 +11592,59 @@ static void test_defwinproc(void)
     DestroyWindow( hwnd);
 }
 
+static void test_PostMessage(void)
+{
+    static const struct
+    {
+        HWND hwnd;
+        BOOL ret;
+    } data[] =
+    {
+        { HWND_TOP /* 0 */, TRUE },
+        { HWND_BROADCAST, TRUE },
+        { HWND_BOTTOM, TRUE },
+        { HWND_TOPMOST, TRUE },
+        { HWND_NOTOPMOST, FALSE },
+        { HWND_MESSAGE, FALSE },
+        { (HWND)0xdeadbeef, FALSE }
+    };
+    int i;
+    HWND hwnd;
+    BOOL ret;
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL);
+    assert(hwnd);
+
+    flush_events();
+
+    PostMessage(hwnd, WM_USER+1, 0x1234, 0x5678);
+    PostMessage(0, WM_USER+2, 0x5678, 0x1234);
+
+    for (i = 0; i < sizeof(data)/sizeof(data[0]); i++)
+    {
+        memset(&msg, 0xab, sizeof(msg));
+        ret = PeekMessageA(&msg, data[i].hwnd, 0, 0, PM_NOREMOVE);
+        ok(ret == data[i].ret, "%d: hwnd %p expected %d, got %d\n", i, data[i].hwnd, data[i].ret, ret);
+        if (data[i].ret)
+        {
+            if (data[i].hwnd)
+                ok(ret && msg.hwnd == 0 && msg.message == WM_USER+2 &&
+                   msg.wParam == 0x5678 && msg.lParam == 0x1234,
+                   "got ret %d hwnd %p msg %04x wParam %08lx lParam %08lx instead of TRUE/0/WM_USER/0x1234/0x5678\n",
+                   ret, msg.hwnd, msg.message, msg.wParam, msg.lParam);
+            else
+                ok(ret && msg.hwnd == hwnd && msg.message == WM_USER+1 &&
+                   msg.wParam == 0x1234 && msg.lParam == 0x5678,
+                   "got ret %d hwnd %p msg %04x wParam %08lx lParam %08lx instead of TRUE/0/WM_USER/0x1234/0x5678\n",
+                   ret, msg.hwnd, msg.message, msg.wParam, msg.lParam);
+        }
+    }
+
+    DestroyWindow(hwnd);
+    flush_events();
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -11633,6 +11686,7 @@ START_TEST(msg)
     hEvent_hook = 0;
 #endif
 
+    test_PostMessage();
     test_ShowWindow();
     test_PeekMessage();
     test_PeekMessage2();

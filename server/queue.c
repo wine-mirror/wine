@@ -648,6 +648,14 @@ static void reply_message( struct msg_queue *queue, lparam_t result,
     }
 }
 
+static int match_window( user_handle_t win, user_handle_t msg_win )
+{
+    if (!win) return 1;
+    if (win == (user_handle_t)-1) return !msg_win;
+    if (msg_win == win) return 1;
+    return is_child_window( win, msg_win );
+}
+
 /* retrieve a posted message */
 static int get_posted_message( struct msg_queue *queue, user_handle_t win,
                                unsigned int first, unsigned int last, unsigned int flags,
@@ -658,7 +666,7 @@ static int get_posted_message( struct msg_queue *queue, user_handle_t win,
     /* check against the filters */
     LIST_FOR_EACH_ENTRY( msg, &queue->msg_list[POST_MESSAGE], struct message, entry )
     {
-        if (win && msg->win && msg->win != win && !is_child_window( win, msg->win )) continue;
+        if (!match_window( win, msg->win )) continue;
         if (!check_msg_filter( msg->msg, first, last )) continue;
         goto found; /* found one */
     }
