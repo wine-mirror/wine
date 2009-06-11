@@ -78,6 +78,9 @@ typedef struct tagACLMulti {
     /* const ITfSourceSingleVtbl *SourceSingleVtbl; */
     LONG refCount;
 
+    /* Aggregation */
+    ITfCompartmentMgr  *CompartmentMgr;
+
     const ITfThreadMgrEventSinkVtbl *ThreadMgrEventSinkVtbl; /* internal */
 
     ITfDocumentMgr *focus;
@@ -183,6 +186,8 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
         HeapFree(GetProcessHeap(),0,key);
     }
 
+    CompartmentMgr_Destructor(This->CompartmentMgr);
+
     HeapFree(GetProcessHeap(),0,This);
 }
 
@@ -210,6 +215,10 @@ static HRESULT WINAPI ThreadMgr_QueryInterface(ITfThreadMgr *iface, REFIID iid, 
     else if (IsEqualIID(iid, &IID_ITfClientId))
     {
         *ppvOut = &This->ClientIdVtbl;
+    }
+    else if (IsEqualIID(iid, &IID_ITfCompartmentMgr))
+    {
+        *ppvOut = This->CompartmentMgr;
     }
 
     if (*ppvOut)
@@ -1053,6 +1062,8 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->ThreadMgrEventSinkVtbl = &ThreadMgr_ThreadMgrEventSinkVtbl;
     This->refCount = 1;
     TlsSetValue(tlsIndex,This);
+
+    CompartmentMgr_Constructor((IUnknown*)This, &IID_IUnknown, (IUnknown**)&This->CompartmentMgr);
 
     list_init(&This->CurrentPreservedKeys);
 
