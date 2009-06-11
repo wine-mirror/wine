@@ -22,7 +22,7 @@ use strict;
 #         http://oss.sgi.com/cgi-bin/cvsweb.cgi/projects/ogl-sample/main/doc/registry/specs/
 #
 #     - opengl_version is the OpenGL version emulated by the library
-#       (can be 1.0 to 1.5). The default is 1.2.
+#       (can be 1.0 to 1.5). The default is 1.1.
 #
 # This script generates the three following files :
 #
@@ -314,7 +314,7 @@ if (@ARGV > 1) {
     $name0=~s%^.*/%%;
     die "Usage: $name0 [version]\n";
 }
-my $version = $ARGV[0] || "1.2";
+my $version = $ARGV[0] || "1.1";
 if ($version eq "1.0") {
     %norm_categories = %cat_1_0;
 } elsif ($version eq "1.1") {
@@ -644,9 +644,7 @@ foreach (sort keys %norm_functions) {
     print SPEC ") wine_$func_name\n";
 }
 
-print SPEC "@  stub    glGetLevelParameterfv
-@  stub    glGetLevelParameteriv
-@  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
+print SPEC "@  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
 @  stdcall wglCopyContext(long long long) gdi32.wglCopyContext
 @  stdcall wglCreateContext(long) gdi32.wglCreateContext
 @  stdcall wglCreateLayerContext(long long)

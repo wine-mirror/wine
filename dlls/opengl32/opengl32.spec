@@ -334,8 +334,6 @@
 @  stdcall glVertex4sv( ptr ) wine_glVertex4sv
 @  stdcall glVertexPointer( long long long ptr ) wine_glVertexPointer
 @  stdcall glViewport( long long long long ) wine_glViewport
-@  stub    glGetLevelParameterfv
-@  stub    glGetLevelParameteriv
 @  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
 @  stdcall wglCopyContext(long long long) gdi32.wglCopyContext
 @  stdcall wglCreateContext(long) gdi32.wglCreateContext
