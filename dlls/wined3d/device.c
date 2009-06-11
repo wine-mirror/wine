@@ -898,7 +898,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface,
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int Size       = 1;
     const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(Format, &GLINFO_LOCATION);
-    UINT mul_4w, mul_4h;
     HRESULT hr;
 
     TRACE("(%p) Create surface\n",This);
@@ -912,24 +911,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface,
     *    by the device.
       *******************************/
 
-    /** DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
-     *  it is based around 4x4 pixel blocks it requires padding, so allocate enough
-     *  space!
-      *********************************/
-    mul_4w = (Width + 3) & ~3;
-    mul_4h = (Height + 3) & ~3;
     if (WINED3DFMT_UNKNOWN == Format) {
         Size = 0;
-    } else if (Format == WINED3DFMT_DXT1) {
-        /* DXT1 is half byte per pixel */
-        Size = (mul_4w * glDesc->byte_count * mul_4h) >> 1;
-
-    } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
-               Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5 ||
-               Format == WINED3DFMT_ATI2N) {
-        Size = (mul_4w * glDesc->byte_count * mul_4h);
-    } else {
-       /* The pitch is a multiple of 4 bytes */
+    }
+    else if (glDesc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    {
+        UINT row_block_count = (Width + glDesc->block_width - 1) / glDesc->block_width;
+        UINT row_count = (Height + glDesc->block_height - 1) / glDesc->block_height;
+        Size = row_count * row_block_count * glDesc->block_byte_count;
+    }
+    else
+    {
+        /* The pitch is a multiple of 4 bytes */
         Size = ((Width * glDesc->byte_count) + This->surface_alignment - 1) & ~(This->surface_alignment - 1);
         Size *= Height;
     }
