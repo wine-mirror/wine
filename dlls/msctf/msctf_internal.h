@@ -36,6 +36,8 @@ extern HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfConte
 extern HRESULT InputProcessorProfiles_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
 extern HRESULT CategoryMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
 extern HRESULT Range_Constructor(ITfContext *context, ITextStoreACP *textstore, DWORD lockType, DWORD anchorStart, DWORD anchorEnd, ITfRange **ppOut);
+extern HRESULT CompartmentMgr_Constructor(IUnknown *pUnkOuter, REFIID riid, IUnknown **ppOut);
+extern HRESULT CompartmentMgr_Destructor(ITfCompartmentMgr *This);
 
 extern HRESULT Context_Initialize(ITfContext *cxt);
 extern HRESULT Context_Uninitialize(ITfContext *cxt);
