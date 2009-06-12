@@ -13028,11 +13028,11 @@ fi
 fi
 if test "x$ac_cv_lib_soname_hal" = "x"; then
   case "x$with_hal" in
-  x)   wine_notices="$wine_notices|libhal ${notice_platform}development files not found, no dynamic device support." ;;
+  x)   wine_notices="$wine_notices|libhal/libdbus ${notice_platform}development files not found, no dynamic device support." ;;
   xno) ;;
-  *)   { { $as_echo "$as_me:$LINENO: error: libhal ${notice_platform}development files not found, no dynamic device support.
+  *)   { { $as_echo "$as_me:$LINENO: error: libhal/libdbus ${notice_platform}development files not found, no dynamic device support.
 This is an error since --with-hal was requested." >&5
-$as_echo "$as_me: error: libhal ${notice_platform}development files not found, no dynamic device support.
+$as_echo "$as_me: error: libhal/libdbus ${notice_platform}development files not found, no dynamic device support.
 This is an error since --with-hal was requested." >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
