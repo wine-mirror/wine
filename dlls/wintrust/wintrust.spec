@@ -48,8 +48,8 @@
 @ stub FindCertsByIssuer
 @ stdcall GenericChainCertificateTrust(ptr)
 @ stdcall GenericChainFinalProv(ptr)
-@ stub HTTPSCertificateTrust
-@ stub HTTPSFinalProv
+@ stdcall HTTPSCertificateTrust(ptr)
+@ stdcall HTTPSFinalProv(ptr)
 @ stub IsCatalogFile
 @ stub MsCatConstructHashTag
 @ stub MsCatFreeHashTag

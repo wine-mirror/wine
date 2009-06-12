@@ -1060,3 +1060,15 @@ HRESULT WINAPI SoftpubCleanup(CRYPT_PROVIDER_DATA *data)
 
     return S_OK;
 }
+
+HRESULT WINAPI HTTPSCertificateTrust(CRYPT_PROVIDER_DATA *data)
+{
+    FIXME("(%p)\n", data);
+    return S_OK;
+}
+
+HRESULT WINAPI HTTPSFinalProv(CRYPT_PROVIDER_DATA *data)
+{
+    FIXME("(%p)\n", data);
+    return S_OK;
+}
