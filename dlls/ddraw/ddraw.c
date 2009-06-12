@@ -1729,7 +1729,7 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
     /* Create the new surface */
     hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, Width, Height, Format,
             TRUE /* Lockable */, FALSE /* Discard */, surfImpl->mipmap_level, &surfImpl->WineD3DSurface,
-            Type, Usage, Pool, MultiSampleType, MultiSampleQuality, This->ImplType, Parent);
+            Usage, Pool, MultiSampleType, MultiSampleQuality, This->ImplType, Parent);
 
     if(hr != D3D_OK)
         return hr;
@@ -1842,7 +1842,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     HRESULT hr;
     UINT Width = 0, Height = 0;
     WINED3DFORMAT Format = WINED3DFMT_UNKNOWN;
-    WINED3DRESOURCETYPE ResType = WINED3DRTYPE_SURFACE;
+    WINED3DRESOURCETYPE ResType;
     DWORD Usage = 0;
     WINED3DSURFTYPE ImplType = This->ImplType;
     WINED3DSURFACE_DESC Desc;
@@ -2026,8 +2026,8 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
 
     /* Now create the WineD3D Surface */
     hr = IWineD3DDevice_CreateSurface(This->wineD3DDevice, pDDSD->dwWidth, pDDSD->dwHeight, Format,
-            TRUE /* Lockable */, FALSE /* Discard */, level, &(*ppSurf)->WineD3DSurface, ResType, Usage,
-            Pool, WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, ImplType, Parent);
+            TRUE /* Lockable */, FALSE /* Discard */, level, &(*ppSurf)->WineD3DSurface,
+            Usage, Pool, WINED3DMULTISAMPLE_NONE, 0 /* MultiSampleQuality */, ImplType, Parent);
 
     if(hr != D3D_OK)
     {

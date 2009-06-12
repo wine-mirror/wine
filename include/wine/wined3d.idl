@@ -2932,7 +2932,6 @@ interface IWineD3DDevice : IWineD3DBase
         [in] BOOL discard,
         [in] UINT level,
         [out] IWineD3DSurface **surface,
-        [in] WINED3DRESOURCETYPE resource_type,
         [in] DWORD usage,
         [in] WINED3DPOOL pool,
         [in] WINED3DMULTISAMPLE_TYPE multisample_type,

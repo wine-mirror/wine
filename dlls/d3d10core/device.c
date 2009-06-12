@@ -700,7 +700,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
 
         hr = IWineD3DDevice_CreateSurface(This->wined3d_device, desc->Width, desc->Height,
                 wined3dformat_from_dxgi_format(desc->Format), FALSE, FALSE, 0,
-                &object->wined3d_surface, WINED3DRTYPE_SURFACE, desc->Usage, WINED3DPOOL_DEFAULT,
+                &object->wined3d_surface, desc->Usage, WINED3DPOOL_DEFAULT,
                 desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3DMULTISAMPLE_NONE,
                 desc->SampleDesc.Quality, SURFACE_OPENGL, (IUnknown *)object);
         if (FAILED(hr))
