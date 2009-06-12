@@ -348,11 +348,12 @@ static const struct getline_s {
   int line;
   size_t buffer_len;
   const char *text;
+  const char *broken_text;
 } gl[] = {
-  {0, 10, "foo bar\r\n"},
-  {1, 10, "\r"},
-  {2, 10, "\r\r\n"},
-  {3, 10, "bar\n"},
+  {0, 10, "foo bar\r\n", "foo bar\r\n"},
+  {1, 10, "\r",          "\r\r\r\n"},
+  {2, 10, "\r\r\n",      "bar\n"},
+  {3, 10, "bar\n",       "\r\n"},
   {4, 10, "\r\n"},
 
   /* Buffer smaller than line length */
@@ -367,19 +368,40 @@ static void test_EM_GETLINE(void)
   HWND hwndRichEdit = new_richedit(NULL);
   static const int nBuf = 1024;
   char dest[1024], origdest[1024];
+  LRESULT linecount;
   const char text[] = "foo bar\r\n"
       "\r"
       "\r\r\n"
       "bar\n";
+  BOOL broken_os = FALSE;
 
   SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text);
+  linecount = SendMessage(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
+  if (linecount == 4)
+  {
+    broken_os = TRUE;
+    win_skip("Win9x, WinME and NT4 handle '\\r only' differently\n");
+  }
 
   memset(origdest, 0xBB, nBuf);
   for (i = 0; i < sizeof(gl)/sizeof(struct getline_s); i++)
   {
-    int nCopied;
-    int expected_nCopied = min(gl[i].buffer_len, strlen(gl[i].text));
-    int expected_bytes_written = min(gl[i].buffer_len, strlen(gl[i].text) + 1);
+    int nCopied, expected_nCopied, expected_bytes_written;
+    char gl_text[1024];
+
+    if (gl[i].line >= linecount)
+      continue; /* Win9x, WinME and NT4 */
+
+    if (broken_os && gl[i].broken_text)
+      /* Win9x, WinME and NT4 */
+      strcpy(gl_text, gl[i].broken_text);
+    else
+      strcpy(gl_text, gl[i].text);
+
+    expected_nCopied = min(gl[i].buffer_len, strlen(gl_text));
+    /* Cater for the fact that Win9x, WinME and NT4 don't append the '\0' */
+    expected_bytes_written = min(gl[i].buffer_len, strlen(gl_text) + (broken_os ? 0 : 1));
+
     memset(dest, 0xBB, nBuf);
     *(WORD *) dest = gl[i].buffer_len;
 
@@ -393,11 +415,11 @@ static void test_EM_GETLINE(void)
       ok(!dest[0] && !dest[1] && !strncmp(dest+2, origdest+2, nBuf-2),
          "buffer_len=0\n");
     else if (gl[i].buffer_len == 1)
-      ok(dest[0] == gl[i].text[0] && !dest[1] &&
+      ok(dest[0] == gl_text[0] && !dest[1] &&
          !strncmp(dest+2, origdest+2, nBuf-2), "buffer_len=1\n");
     else
     {
-      ok(!strncmp(dest, gl[i].text, expected_bytes_written),
+      ok(!strncmp(dest, gl_text, expected_bytes_written),
          "%d: expected_bytes_written=%d\n", i, expected_bytes_written);
       ok(!strncmp(dest + expected_bytes_written, origdest
                   + expected_bytes_written, nBuf - expected_bytes_written),
