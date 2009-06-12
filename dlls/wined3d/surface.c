@@ -2479,7 +2479,7 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL 
             ERR("Mipmap surface has a glTexture bound to it!\n");
         }
 
-        glBindTexture(This->glDescription.target, This->glDescription.textureName);
+        glBindTexture(This->glDescription.target, *name);
         checkGLcall("glBindTexture");
 
         LEAVE_GL();
