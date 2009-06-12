@@ -988,7 +988,8 @@ static void test_EM_GETOPTIONS(void)
                         WS_POPUP|WS_VSCROLL|WS_HSCROLL,
                         0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
     options = SendMessage(hwnd, EM_GETOPTIONS, 0, 0);
-    ok(options == ECO_AUTOVSCROLL,
+    ok(options == ECO_AUTOVSCROLL ||
+       broken(options == 0), /* Win9x, WinME and NT4 */
        "Incorrect initial options %x\n", options);
     DestroyWindow(hwnd);
 }
@@ -1005,10 +1006,15 @@ static void test_autoscroll(void)
                           0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
     ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS10A, (int) GetLastError());
     ret = SendMessage(hwnd, EM_GETOPTIONS, 0, 0);
-    ok(ret & ECO_AUTOVSCROLL, "ECO_AUTOVSCROLL isn't set.\n");
+    ok(ret & ECO_AUTOVSCROLL ||
+        broken(!(ret & ECO_AUTOVSCROLL)), /* Win9x, WinME and NT4 */
+        "ECO_AUTOVSCROLL isn't set.\n");
     ok(!(ret & ECO_AUTOHSCROLL), "ECO_AUTOHSCROLL is set.\n");
     ret = GetWindowLong(hwnd, GWL_STYLE);
-    todo_wine ok(ret & ES_AUTOVSCROLL, "ES_AUTOVSCROLL isn't set.\n");
+    todo_wine
+    ok(ret & ES_AUTOVSCROLL ||
+        broken(!(ret & ES_AUTOVSCROLL)), /* Win9x, WinMe and NT4 */
+        "ES_AUTOVSCROLL isn't set.\n");
     ok(!(ret & ES_AUTOHSCROLL), "ES_AUTOHSCROLL is set.\n");
     DestroyWindow(hwnd);
 
