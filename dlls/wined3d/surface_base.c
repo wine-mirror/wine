@@ -1821,32 +1821,24 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
     }
     else
     {
+        const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
+
         TRACE("Lock Rect (%p) = l %d, t %d, r %d, b %d\n",
               pRect, pRect->left, pRect->top, pRect->right, pRect->bottom);
 
-        /* DXTn textures are based on compressed blocks of 4x4 pixels, each
-         * 16 bytes large (8 bytes in case of DXT1). Because of that Pitch has
-         * slightly different meaning compared to regular textures. For DXTn
-         * textures Pitch is the size of a row of blocks, 4 high and "width"
-         * long. The x offset is calculated differently as well, since moving 4
-         * pixels to the right actually moves an entire 4x4 block to right, ie
-         * 16 bytes (8 in case of DXT1). */
-        if (This->resource.format_desc->format == WINED3DFMT_DXT1)
+        if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
         {
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 2);
-        }
-        else if (This->resource.format_desc->format == WINED3DFMT_DXT2
-                || This->resource.format_desc->format == WINED3DFMT_DXT3
-                || This->resource.format_desc->format == WINED3DFMT_DXT4
-                || This->resource.format_desc->format == WINED3DFMT_DXT5)
-        {
-            pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top / 4) + (pRect->left * 4);
+            /* Compressed textures are block based, so calculate the offset of
+             * the block that contains the top-left pixel of the locked rectangle. */
+            pLockedRect->pBits = This->resource.allocatedMemory
+                    + ((pRect->top / format_desc->block_height) * pLockedRect->Pitch)
+                    + ((pRect->left / format_desc->block_width) * format_desc->block_byte_count);
         }
         else
         {
             pLockedRect->pBits = This->resource.allocatedMemory +
                     (pLockedRect->Pitch * pRect->top) +
-                    (pRect->left * This->resource.format_desc->byte_count);
+                    (pRect->left * format_desc->byte_count);
         }
         This->lockedRect.left   = pRect->left;
         This->lockedRect.top    = pRect->top;
