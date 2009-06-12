@@ -146,9 +146,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
 
     ENTER_GL();
 
-    if (format_desc->format == WINED3DFMT_DXT1 || format_desc->format == WINED3DFMT_DXT2
-            || format_desc->format == WINED3DFMT_DXT3 || format_desc->format == WINED3DFMT_DXT4
-            || format_desc->format == WINED3DFMT_DXT5 || format_desc->format == WINED3DFMT_ATI2N)
+    if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p.\n",
                 This, This->glDescription.level, format_desc->glFormat, format_desc->glType,
@@ -294,9 +292,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
 
     if (format_desc->heightscale != 1.0 && format_desc->heightscale != 0.0) height *= format_desc->heightscale;
 
-    if (format_desc->format == WINED3DFMT_DXT1 || format_desc->format == WINED3DFMT_DXT2
-            || format_desc->format == WINED3DFMT_DXT3 || format_desc->format == WINED3DFMT_DXT4
-            || format_desc->format == WINED3DFMT_DXT5 || format_desc->format == WINED3DFMT_ATI2N)
+    if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         /* glCompressedTexSubImage2D() for uploading and glTexImage2D() for
          * allocating does not work well on some drivers (r200 dri, MacOS ATI
@@ -369,9 +365,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
             This, This->glDescription.target, This->glDescription.level, debug_d3dformat(format_desc->format),
             internal, width, height, format, type);
 
-    if (format_desc->format == WINED3DFMT_DXT1 || format_desc->format == WINED3DFMT_DXT2
-            || format_desc->format == WINED3DFMT_DXT3 || format_desc->format == WINED3DFMT_DXT4
-            || format_desc->format == WINED3DFMT_DXT5 || format_desc->format == WINED3DFMT_ATI2N)
+    if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         /* glCompressedTexImage2D does not accept NULL pointers, so we cannot allocate a compressed texture without uploading data */
         TRACE("Not allocating compressed surfaces, surface_upload_data will specify them\n");
@@ -3958,11 +3952,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     This->pow2Height = pow2Height;
 
     if (pow2Width > This->currentDesc.Width || pow2Height > This->currentDesc.Height) {
-        WINED3DFORMAT Format = This->resource.format_desc->format;
         /** TODO: add support for non power two compressed textures **/
-        if (Format == WINED3DFMT_DXT1 || Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3
-            || Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5
-            || Format == WINED3DFMT_ATI2N)
+        if (This->resource.format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
         {
             FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d)\n",
                   This, This->currentDesc.Width, This->currentDesc.Height);

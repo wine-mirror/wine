@@ -5975,12 +5975,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     } else { /* Full width, so just write out the whole texture */
         const unsigned char* data = ((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
 
-        if (WINED3DFMT_DXT1 == destFormat ||
-            WINED3DFMT_DXT2 == destFormat ||
-            WINED3DFMT_DXT3 == destFormat ||
-            WINED3DFMT_DXT4 == destFormat ||
-            WINED3DFMT_DXT5 == destFormat) {
-
+        if (dst_format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+        {
             if (destSurfaceHeight != srcHeight || destSurfaceWidth != srcWidth)
             {
                 /* FIXME: The easy way to do this is to lock the destination, and copy the bits across. */
