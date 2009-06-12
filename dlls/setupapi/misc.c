@@ -30,6 +30,7 @@
 #include "lzexpand.h"
 #include "softpub.h"
 #include "mscat.h"
+#include "shlobj.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -197,67 +198,8 @@ LONG WINAPI QueryRegistryValue(HKEY hKey,
  */
 BOOL WINAPI IsUserAdmin(VOID)
 {
-    SID_IDENTIFIER_AUTHORITY Authority = {SECURITY_NT_AUTHORITY};
-    HANDLE hToken;
-    DWORD dwSize;
-    PTOKEN_GROUPS lpGroups;
-    PSID lpSid;
-    DWORD i;
-    BOOL bResult = FALSE;
-
     TRACE("\n");
-
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
-    {
-        return FALSE;
-    }
-
-    if (!GetTokenInformation(hToken, TokenGroups, NULL, 0, &dwSize))
-    {
-        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-        {
-            CloseHandle(hToken);
-            return FALSE;
-        }
-    }
-
-    lpGroups = MyMalloc(dwSize);
-    if (lpGroups == NULL)
-    {
-        CloseHandle(hToken);
-        return FALSE;
-    }
-
-    if (!GetTokenInformation(hToken, TokenGroups, lpGroups, dwSize, &dwSize))
-    {
-        MyFree(lpGroups);
-        CloseHandle(hToken);
-        return FALSE;
-    }
-
-    CloseHandle(hToken);
-
-    if (!AllocateAndInitializeSid(&Authority, 2, SECURITY_BUILTIN_DOMAIN_RID,
-                                  DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0,
-                                  &lpSid))
-    {
-        MyFree(lpGroups);
-        return FALSE;
-    }
-
-    for (i = 0; i < lpGroups->GroupCount; i++)
-    {
-        if (EqualSid(lpSid, lpGroups->Groups[i].Sid))
-        {
-            bResult = TRUE;
-            break;
-        }
-    }
-
-    FreeSid(lpSid);
-    MyFree(lpGroups);
-
-    return bResult;
+    return IsUserAnAdmin();
 }
 
 

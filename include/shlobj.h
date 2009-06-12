@@ -77,6 +77,7 @@ VOID         WINAPI SHUpdateImageW(LPCWSTR,INT,UINT,INT);
 #define             SHUpdateImage WINELIB_NAME_AW(SHUpdateImage)
 int          WINAPI RestartDialog(HWND,LPCWSTR,DWORD);
 int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
+BOOL         WINAPI IsUserAnAdmin(void);
 
 #define SHFMT_ERROR     0xFFFFFFFFL  /* Error on last format, drive may be formattable */
 #define SHFMT_CANCEL    0xFFFFFFFEL  /* Last format was cancelled */
