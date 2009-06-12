@@ -596,6 +596,20 @@ static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
 
         if (!desc->glInternal) continue;
 
+        if (desc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+        {
+            TRACE("Skipping format %s because it's a depth/stencil format.\n",
+                    debug_d3dformat(desc->format));
+            continue;
+        }
+
+        if (desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+        {
+            TRACE("Skipping format %s because it's a compressed format.\n",
+                    debug_d3dformat(desc->format));
+            continue;
+        }
+
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
             TRACE("Checking if format %s is supported as FBO color attachment...\n", debug_d3dformat(desc->format));
