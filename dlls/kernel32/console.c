@@ -2680,14 +2680,7 @@ BOOL CONSOLE_GetEditionMode(HANDLE hConIn, int* mode)
 DWORD WINAPI GetConsoleAliasW(LPWSTR lpSource, LPWSTR lpTargetBuffer,
                               DWORD TargetBufferLength, LPWSTR lpExename)
 {
-    static const WCHAR empty[] = {' ',0};
-
     FIXME("(%s,%p,%d,%s): stub\n", debugstr_w(lpSource), lpTargetBuffer, TargetBufferLength, debugstr_w(lpExename));
-
-    if(TargetBufferLength < sizeof(empty)/sizeof(WCHAR))
-        return 0;
-
-    lstrcpyW(lpTargetBuffer, empty);
-
-    return 1;
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
 }
