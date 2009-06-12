@@ -121,7 +121,7 @@ static const WCHAR de_engb[] = {'E','n','g','l','i','s','c','h',' ',
                                 '(','G','r','o',0xDF,'b','r','i','t','a','n','n','i','e','n',')',0};
 static const WCHAR de_engb2[] ={'E','n','g','l','i','s','c','h',' ',
                                 '(','V','e','r','e','i','n','i','g','t','e','s',' ',
-                                'K',0xF6,'n','i','g','r','e','i','c',0};
+                                'K',0xF6,'n','i','g','r','e','i',0};
 static const WCHAR de_enus[] = {'E','n','g','l','i','s','c','h',' ',
                                 '(','U','S','A',')',0};
 static const WCHAR de_de[] =   {'D','e','u','t','s','c','h',' ',
