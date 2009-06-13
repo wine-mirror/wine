@@ -101,8 +101,8 @@ static HRESULT WINAPI BmpDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
 static HRESULT WINAPI BmpDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
     GUID *pguidContainerFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pguidContainerFormat);
-    return E_NOTIMPL;
+    memcpy(pguidContainerFormat, &GUID_ContainerFormatBmp, sizeof(GUID));
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
@@ -150,8 +150,8 @@ static HRESULT WINAPI BmpDecoder_GetThumbnail(IWICBitmapDecoder *iface,
 static HRESULT WINAPI BmpDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
-    FIXME("(%p,%p): stub\n", iface, pCount);
-    return E_NOTIMPL;
+    *pCount = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpDecoder_GetFrame(IWICBitmapDecoder *iface,
