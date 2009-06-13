@@ -9,6 +9,7 @@ CTESTS = \
 	generated.c \
 	misc.c \
 	protocol.c \
+	sec_mgr.c \
 	stream.c \
 	url.c
 
