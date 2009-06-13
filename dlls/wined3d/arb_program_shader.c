@@ -507,7 +507,8 @@ static DWORD *local_const_mapping(IWineD3DBaseShaderImpl *This)
 
 /* Generate the variable & register declarations for the ARB_vertex_program output target */
 static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const shader_reg_maps *reg_maps,
-        SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info, DWORD *lconst_map)
+        SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_info, DWORD *lconst_map, DWORD *num_clipplanes,
+        struct shader_arb_ctx_priv *ctx)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     DWORD i, next_local = 0;
@@ -530,9 +531,27 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
     } else {
         if(This->baseShader.reg_maps.usesrelconstF) {
             max_constantsF = GL_LIMITS(vshader_constantsF) - reserved_vs_const(iface, gl_info);
-            if(GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) max_constantsF -= GL_LIMITS(clipplanes);
             max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
+            if(ctx->target_version >= NV2)
+            {
+                DWORD highest_constf = 0;
+                for(i = 0; i < This->baseShader.limits.constant_float; i++)
+                {
+                    DWORD idx = i >> 5;
+                    DWORD shift = i & 0x1f;
+                    if(reg_maps->constf[idx] & (1 << shift)) highest_constf = i;
+                }
+
+                *num_clipplanes = min(GL_LIMITS(clipplanes), max_constantsF - highest_constf - 1);
+                max_constantsF -= *num_clipplanes;
+                if(*num_clipplanes < GL_LIMITS(clipplanes))
+                {
+                    WARN("Only %u clipplanes out of %u enabled\n", *num_clipplanes, GL_LIMITS(clipplanes));
+                }
+            }
         } else {
+            if(ctx->target_version >= NV2) *num_clipplanes = GL_LIMITS(clipplanes);
+            else *num_clipplanes = 0;
             max_constantsF = GL_LIMITS(vshader_constantsF) - 1;
         }
     }
@@ -2943,7 +2962,8 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     }
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
+    next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION,
+            lconst_map, NULL, &priv_ctx);
 
     for(i = 0; i < (sizeof(reg_maps->bumpmat) / sizeof(reg_maps->bumpmat[0])); i++) {
         if(!reg_maps->bumpmat[i]) continue;
@@ -3306,6 +3326,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     DWORD next_local, *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
     struct shader_arb_ctx_priv priv_ctx;
     unsigned int i;
+    DWORD num_clipplanes = 0;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
@@ -3342,7 +3363,8 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     shader_addline(buffer, "TEMP TA;\n");
 
     /* Base Declarations */
-    next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION, lconst_map);
+    next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION,
+            lconst_map, &num_clipplanes, &priv_ctx);
 
     for(i = 0; i < MAX_CONST_I; i++)
     {
@@ -3419,12 +3441,9 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
     shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
 
-    if(priv_ctx.target_version >= NV2)
+    for(i = 0; i < num_clipplanes; i++)
     {
-        for(i = 0; i < GL_LIMITS(clipplanes); i++)
-        {
-            shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
-        }
+        shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
     }
 
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
