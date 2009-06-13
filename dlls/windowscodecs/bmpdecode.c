@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
+#include "wingdi.h"
 #include "objbase.h"
 #include "wincodec.h"
 
@@ -35,9 +36,67 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 typedef struct {
+    DWORD bc2Size;
+    DWORD bc2Width;
+    DWORD bc2Height;
+    WORD  bc2Planes;
+    WORD  bc2BitCount;
+    DWORD bc2Compression;
+    DWORD bc2SizeImage;
+    DWORD bc2XRes;
+    DWORD bc2YRes;
+    DWORD bc2ClrUsed;
+    DWORD bc2ClrImportant;
+    /* same as BITMAPINFOHEADER until this point */
+    WORD  bc2ResUnit;
+    WORD  bc2Reserved;
+    WORD  bc2Orientation;
+    WORD  bc2Halftoning;
+    DWORD bc2HalftoneSize1;
+    DWORD bc2HalftoneSize2;
+    DWORD bc2ColorSpace;
+    DWORD bc2AppData;
+} BITMAPCOREHEADER2;
+
+typedef struct {
     const IWICBitmapDecoderVtbl *lpVtbl;
     LONG ref;
+    BOOL initialized;
+    IStream *stream;
+    BITMAPFILEHEADER bfh;
+    BITMAPV5HEADER bih;
 } BmpDecoder;
+
+static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
+{
+    HRESULT hr;
+    ULONG bytestoread, bytesread;
+
+    if (This->initialized) return WINCODEC_ERR_WRONGSTATE;
+
+    hr = IStream_Read(stream, &This->bfh, sizeof(BITMAPFILEHEADER), &bytesread);
+    if (FAILED(hr)) return hr;
+    if (bytesread != sizeof(BITMAPFILEHEADER) ||
+        This->bfh.bfType != 0x4d42 /* "BM" */) return E_FAIL;
+
+    hr = IStream_Read(stream, &This->bih.bV5Size, sizeof(DWORD), &bytesread);
+    if (FAILED(hr)) return hr;
+    if (bytesread != sizeof(DWORD) ||
+        (This->bih.bV5Size != sizeof(BITMAPCOREHEADER) &&
+         This->bih.bV5Size != sizeof(BITMAPCOREHEADER2) &&
+         This->bih.bV5Size != sizeof(BITMAPINFOHEADER) &&
+         This->bih.bV5Size != sizeof(BITMAPV4HEADER) &&
+         This->bih.bV5Size != sizeof(BITMAPV5HEADER))) return E_FAIL;
+
+    bytestoread = This->bih.bV5Size-sizeof(DWORD);
+    hr = IStream_Read(stream, &This->bih.bV5Width, bytestoread, &bytesread);
+    if (FAILED(hr)) return hr;
+    if (bytestoread != bytesread) return E_FAIL;
+
+    This->initialized = TRUE;
+
+    return S_OK;
+}
 
 HRESULT WINAPI BmpDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
@@ -79,7 +138,10 @@ static ULONG WINAPI BmpDecoder_Release(IWICBitmapDecoder *iface)
     TRACE("(%p) refcount=%u\n", iface, ref);
 
     if (ref == 0)
+    {
+        if (This->stream) IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -94,8 +156,18 @@ static HRESULT WINAPI BmpDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
 static HRESULT WINAPI BmpDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    FIXME("(%p,%p,%x): stub\n", iface, pIStream, cacheOptions);
-    return E_NOTIMPL;
+    HRESULT hr;
+    BmpDecoder *This = (BmpDecoder*)iface;
+
+    hr = BmpDecoder_ReadHeaders(This, pIStream);
+
+    if (SUCCEEDED(hr))
+    {
+        This->stream = pIStream;
+        IStream_AddRef(pIStream);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI BmpDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
@@ -194,6 +266,8 @@ HRESULT BmpDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->lpVtbl = &BmpDecoder_Vtbl;
     This->ref = 1;
+    This->initialized = FALSE;
+    This->stream = NULL;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
