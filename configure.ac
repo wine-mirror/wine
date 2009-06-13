@@ -309,7 +309,6 @@ AC_CHECK_HEADERS(\
 	linux/serial.h \
 	linux/types.h \
 	linux/ucdrom.h \
-	mach-o/dyld_images.h \
 	mach-o/nlist.h \
 	mach/mach.h \
 	mach/machine.h \
@@ -336,6 +335,7 @@ AC_CHECK_HEADERS(\
 	scsi/scsi_ioctl.h \
 	scsi/sg.h \
 	soundcard.h \
+	stdbool.h \
 	stdint.h \
 	strings.h \
 	stropts.h \
@@ -484,6 +484,14 @@ AC_CHECK_HEADERS([linux/ipx.h],,,
      #endif
      #ifdef HAVE_LINUX_TYPES_H
      # include <linux/types.h>
+     #endif])
+
+AC_CHECK_HEADERS([mach-o/dyld_images.h],,,
+    [#ifdef HAVE_STDBOOL_H
+     # include <stdbool.h>
+     #endif
+     #ifdef HAVE_STDINT_H
+     # include <stdint.h>
      #endif])
 
 AC_CHECK_HEADERS([resolv.h],,,
