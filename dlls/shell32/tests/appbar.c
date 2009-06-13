@@ -399,7 +399,9 @@ static void test_appbarget(void)
     if(ret)
     {
         ok(abd.hWnd == (HWND)0xcccccccc, "hWnd overwritten\n");
-        ok(abd.uEdge <= ABE_BOTTOM, "uEdge not returned\n");
+        ok(abd.uEdge <= ABE_BOTTOM ||
+            broken(abd.uEdge == 0xcccccccc), /* Some Win95 and NT4 */
+            "uEdge not returned\n");
         ok(abd.rc.left != 0xcccccccc, "rc not updated\n");
     }
 
