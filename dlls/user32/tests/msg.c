@@ -11612,8 +11612,15 @@ static void test_PostMessage(void)
     HWND hwnd;
     BOOL ret;
     MSG msg;
+    static const WCHAR staticW[] = {'s','t','a','t','i','c',0};
 
-    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL);
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowExW(0, staticW, NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL);
+    if (!hwnd && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        win_skip("Skipping some PostMessage tests on Win9x/WinMe\n");
+        return;
+    }
     assert(hwnd);
 
     flush_events();
@@ -11631,13 +11638,13 @@ static void test_PostMessage(void)
             if (data[i].hwnd)
                 ok(ret && msg.hwnd == 0 && msg.message == WM_USER+2 &&
                    msg.wParam == 0x5678 && msg.lParam == 0x1234,
-                   "got ret %d hwnd %p msg %04x wParam %08lx lParam %08lx instead of TRUE/0/WM_USER/0x1234/0x5678\n",
-                   ret, msg.hwnd, msg.message, msg.wParam, msg.lParam);
+                   "%d: got ret %d hwnd %p msg %04x wParam %08lx lParam %08lx instead of TRUE/0/WM_USER+2/0x5678/0x1234\n",
+                   i, ret, msg.hwnd, msg.message, msg.wParam, msg.lParam);
             else
                 ok(ret && msg.hwnd == hwnd && msg.message == WM_USER+1 &&
                    msg.wParam == 0x1234 && msg.lParam == 0x5678,
-                   "got ret %d hwnd %p msg %04x wParam %08lx lParam %08lx instead of TRUE/0/WM_USER/0x1234/0x5678\n",
-                   ret, msg.hwnd, msg.message, msg.wParam, msg.lParam);
+                   "%d: got ret %d hwnd %p msg %04x wParam %08lx lParam %08lx instead of TRUE/%p/WM_USER+1/0x1234/0x5678\n",
+                   i, ret, msg.hwnd, msg.message, msg.wParam, msg.lParam, msg.hwnd);
         }
     }
 
