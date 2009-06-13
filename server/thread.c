@@ -712,15 +712,15 @@ done:
 /* attempt to wake threads sleeping on the object wait queue */
 void wake_up( struct object *obj, int max )
 {
-    struct list *ptr, *next;
+    struct list *ptr;
 
-    LIST_FOR_EACH_SAFE( ptr, next, &obj->wait_queue )
+    LIST_FOR_EACH( ptr, &obj->wait_queue )
     {
         struct wait_queue_entry *entry = LIST_ENTRY( ptr, struct wait_queue_entry, entry );
-        if (wake_thread( entry->thread ))
-        {
-            if (max && !--max) break;
-        }
+        if (!wake_thread( entry->thread )) continue;
+        if (max && !--max) break;
+        /* restart at the head of the list since a wake up can change the object wait queue */
+        ptr = &obj->wait_queue;
     }
 }
 
