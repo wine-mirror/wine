@@ -4592,7 +4592,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
             if (INT21_FillDrivePB( drive ))
             {
                 SET_AL( context, 0x00 ); /* success */
-                SET_DX( context, offsetof( INT21_HEAP, misc_dpb_list[drive] ) );
+                SET_BX( context, offsetof( INT21_HEAP, misc_dpb_list[drive] ) );
                 context->SegDs = INT21_GetHeapSelector( context );
             }
             else
