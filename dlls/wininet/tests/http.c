@@ -1453,6 +1453,29 @@ static void HttpHeaders_test(void)
     ok(index == 1, "Index was not incremented\n");
     ok(strcmp(buffer,"value")==0, "incorrect string was returned(%s)\n",buffer);
 
+    /* Ensure that malformed header separators are ignored and don't cause a failure */
+    ok(HttpAddRequestHeaders(hRequest,"\r\rMalformedTest:value\n\nMalformedTestTwo: value2\rMalformedTestThree: value3\n\n\r\r\n",-1, HTTP_ADDREQ_FLAG_ADD|HTTP_ADDREQ_FLAG_REPLACE),
+        "Failed to add header with malformed entries in list\n");
+
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"MalformedTest");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"value")==0, "incorrect string was returned(%s)\n",buffer);
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"MalformedTestTwo");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"value2")==0, "incorrect string was returned(%s)\n",buffer);
+    index = 0;
+    len = sizeof(buffer);
+    strcpy(buffer,"MalformedTestThree");
+    ok(HttpQueryInfo(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer,&len,&index),"Unable to query header\n");
+    ok(index == 1, "Index was not incremented\n");
+    ok(strcmp(buffer,"value3")==0, "incorrect string was returned(%s)\n",buffer);
+
     ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
 done:
     ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
