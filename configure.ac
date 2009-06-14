@@ -139,6 +139,14 @@ case $host in
       AC_SUBST(TARGETFLAGS,"-m32")
       enable_win16=${enable_win16:-yes}
     else
+      if test "x${GCC}" = "xyes"
+      then
+        AC_MSG_CHECKING([whether $CC supports __builtin_ms_va_list])
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[void func(__builtin_ms_va_list *args);]])],
+                          [AC_MSG_RESULT([yes])],
+                          [AC_MSG_RESULT([no])
+                           AC_MSG_ERROR([You need gcc >= 4.4 to build Wine as 64-bit.])])
+      fi
       AC_SUBST(TARGETFLAGS,"-m64")
     fi
     ;;
