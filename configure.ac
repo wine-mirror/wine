@@ -1400,6 +1400,19 @@ AC_CACHE_CHECK([whether external symbols need an underscore prefix], ac_cv_c_ext
                       [if (ac_test) return 1],
                       ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no"))
 
+case $host_cpu in
+  *i[[3456789]]86*)
+    AC_CACHE_CHECK([whether external symbols need stdcall decoration], ac_cv_c_stdcall_suffix,
+        WINE_TRY_ASM_LINK(["jmp _ac_test@4"],
+[#ifndef _MSC_VER
+#define __stdcall __attribute__((__stdcall__))
+#endif
+int __stdcall ac_test(int i) { return i; }],
+                          [if (ac_test(1)) return 1],
+                          ac_cv_c_stdcall_suffix="yes",ac_cv_c_stdcall_suffix="no")) ;;
+  *) ac_cv_c_stdcall_suffix="no" ;;
+esac
+
 AH_TEMPLATE(__ASM_NAME,[Define to a macro to generate an assembly name from a C symbol])
 if test "$ac_cv_c_extern_prefix" = "yes"
 then
@@ -1408,6 +1421,14 @@ then
 else
     AC_DEFINE([__ASM_NAME(name)], [name])
     asm_name_prefix=""
+fi
+
+AH_TEMPLATE(__ASM_STDCALL,[Define to a macro to generate an stdcall suffix])
+if test "$ac_cv_c_stdcall_suffix" = "yes"
+then
+    AC_DEFINE([__ASM_STDCALL(args)],["@" #args])
+else
+    AC_DEFINE([__ASM_STDCALL(args)],[""])
 fi
 
 dnl **** Check how to define a function in assembly code ****

@@ -17615,6 +17615,69 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_c_extern_prefix" >&5
 $as_echo "$ac_cv_c_extern_prefix" >&6; }
 
+case $host_cpu in
+  *i[3456789]86*)
+    { $as_echo "$as_me:$LINENO: checking whether external symbols need stdcall decoration" >&5
+$as_echo_n "checking whether external symbols need stdcall decoration... " >&6; }
+if test "${ac_cv_c_stdcall_suffix+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#ifndef _MSC_VER
+#define __stdcall __attribute__((__stdcall__))
+#endif
+int __stdcall ac_test(int i) { return i; }
+int
+main ()
+{
+asm("jmp _ac_test@4"); if (ac_test(1)) return 1
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  ac_cv_c_stdcall_suffix="yes"
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_c_stdcall_suffix="no"
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_c_stdcall_suffix" >&5
+$as_echo "$ac_cv_c_stdcall_suffix" >&6; } ;;
+  *) ac_cv_c_stdcall_suffix="no" ;;
+esac
+
 
 
 if test "$ac_cv_c_extern_prefix" = "yes"
@@ -17630,6 +17693,21 @@ else
 _ACEOF
 
     asm_name_prefix=""
+fi
+
+
+
+if test "$ac_cv_c_stdcall_suffix" = "yes"
+then
+    cat >>confdefs.h <<\_ACEOF
+#define __ASM_STDCALL(args) "@" #args
+_ACEOF
+
+else
+    cat >>confdefs.h <<\_ACEOF
+#define __ASM_STDCALL(args) ""
+_ACEOF
+
 fi
 
 

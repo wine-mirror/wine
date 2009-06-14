@@ -1197,6 +1197,9 @@
 /* Define to a macro to generate an assembly name from a C symbol */
 #undef __ASM_NAME
 
+/* Define to a macro to generate an stdcall suffix */
+#undef __ASM_STDCALL
+
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 
