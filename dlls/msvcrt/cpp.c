@@ -73,18 +73,18 @@ typedef struct _rtti_object_locator
 
 #define THISCALL(func) __thiscall_ ## func
 #define THISCALL_NAME(func) __ASM_NAME("__thiscall_" #func)
-#define DEFINE_THISCALL_WRAPPER(func) \
+#define DEFINE_THISCALL_WRAPPER(func,args) \
     extern void THISCALL(func)(); \
     __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
                       "popl %eax\n\t" \
                       "pushl %ecx\n\t" \
                       "pushl %eax\n\t" \
-                      "jmp " __ASM_NAME(#func) )
+                      "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
 #else /* __i386__ */
 
 #define THISCALL(func) func
 #define THISCALL_NAME(func) __ASM_NAME(#func)
-#define DEFINE_THISCALL_WRAPPER(func) /* nothing */
+#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
 
 #endif /* __i386__ */
 
@@ -151,7 +151,7 @@ static void EXCEPTION_ctor(exception *_this, const char** name)
 /******************************************************************
  *		??0exception@@QAE@ABQBD@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_exception_ctor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_exception_ctor,8)
 exception * __stdcall MSVCRT_exception_ctor(exception * _this, const char ** name)
 {
   TRACE("(%p,%s)\n", _this, *name);
@@ -162,7 +162,7 @@ exception * __stdcall MSVCRT_exception_ctor(exception * _this, const char ** nam
 /******************************************************************
  *		??0exception@@QAE@ABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_exception_copy_ctor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_exception_copy_ctor,8)
 exception * __stdcall MSVCRT_exception_copy_ctor(exception * _this, const exception * rhs)
 {
   TRACE("(%p,%p)\n", _this, rhs);
@@ -182,7 +182,7 @@ exception * __stdcall MSVCRT_exception_copy_ctor(exception * _this, const except
 /******************************************************************
  *		??0exception@@QAE@XZ (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_exception_default_ctor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_exception_default_ctor,4)
 exception * __stdcall MSVCRT_exception_default_ctor(exception * _this)
 {
   static const char* empty = NULL;
@@ -195,7 +195,7 @@ exception * __stdcall MSVCRT_exception_default_ctor(exception * _this)
 /******************************************************************
  *		??1exception@@UAE@XZ (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_exception_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_exception_dtor,4)
 void __stdcall MSVCRT_exception_dtor(exception * _this)
 {
   TRACE("(%p)\n", _this);
@@ -206,7 +206,7 @@ void __stdcall MSVCRT_exception_dtor(exception * _this)
 /******************************************************************
  *		??4exception@@QAEAAV0@ABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_exception_opequals)
+DEFINE_THISCALL_WRAPPER(MSVCRT_exception_opequals,8)
 exception * __stdcall MSVCRT_exception_opequals(exception * _this, const exception * rhs)
 {
   TRACE("(%p %p)\n", _this, rhs);
@@ -222,7 +222,7 @@ exception * __stdcall MSVCRT_exception_opequals(exception * _this, const excepti
 /******************************************************************
  *		??_Eexception@@UAEPAXI@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_exception_vector_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_exception_vector_dtor,8)
 void * __stdcall MSVCRT_exception_vector_dtor(exception * _this, unsigned int flags)
 {
     TRACE("(%p %x)\n", _this, flags);
@@ -245,7 +245,7 @@ void * __stdcall MSVCRT_exception_vector_dtor(exception * _this, unsigned int fl
 /******************************************************************
  *		??_Gexception@@UAEPAXI@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_exception_scalar_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_exception_scalar_dtor,8)
 void * __stdcall MSVCRT_exception_scalar_dtor(exception * _this, unsigned int flags)
 {
     TRACE("(%p %x)\n", _this, flags);
@@ -257,7 +257,7 @@ void * __stdcall MSVCRT_exception_scalar_dtor(exception * _this, unsigned int fl
 /******************************************************************
  *		?what@exception@@UBEPBDXZ (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_what_exception)
+DEFINE_THISCALL_WRAPPER(MSVCRT_what_exception,4)
 const char * __stdcall MSVCRT_what_exception(exception * _this)
 {
   TRACE("(%p) returning %s\n", _this, _this->name);
@@ -267,7 +267,7 @@ const char * __stdcall MSVCRT_what_exception(exception * _this)
 /******************************************************************
  *		??0bad_typeid@@QAE@ABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_copy_ctor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_copy_ctor,8)
 bad_typeid * __stdcall MSVCRT_bad_typeid_copy_ctor(bad_typeid * _this, const bad_typeid * rhs)
 {
   TRACE("(%p %p)\n", _this, rhs);
@@ -279,7 +279,7 @@ bad_typeid * __stdcall MSVCRT_bad_typeid_copy_ctor(bad_typeid * _this, const bad
 /******************************************************************
  *		??0bad_typeid@@QAE@PBD@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_ctor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_ctor,8)
 bad_typeid * __stdcall MSVCRT_bad_typeid_ctor(bad_typeid * _this, const char * name)
 {
   TRACE("(%p %s)\n", _this, name);
@@ -291,7 +291,7 @@ bad_typeid * __stdcall MSVCRT_bad_typeid_ctor(bad_typeid * _this, const char * n
 /******************************************************************
  *		??1bad_typeid@@UAE@XZ (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_dtor,4)
 void __stdcall MSVCRT_bad_typeid_dtor(bad_typeid * _this)
 {
   TRACE("(%p)\n", _this);
@@ -301,7 +301,7 @@ void __stdcall MSVCRT_bad_typeid_dtor(bad_typeid * _this)
 /******************************************************************
  *		??4bad_typeid@@QAEAAV0@ABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_opequals)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_opequals,8)
 bad_typeid * __stdcall MSVCRT_bad_typeid_opequals(bad_typeid * _this, const bad_typeid * rhs)
 {
   TRACE("(%p %p)\n", _this, rhs);
@@ -312,7 +312,7 @@ bad_typeid * __stdcall MSVCRT_bad_typeid_opequals(bad_typeid * _this, const bad_
 /******************************************************************
  *              ??_Ebad_typeid@@UAEPAXI@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_vector_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_vector_dtor,8)
 void * __stdcall MSVCRT_bad_typeid_vector_dtor(bad_typeid * _this, unsigned int flags)
 {
     TRACE("(%p %x)\n", _this, flags);
@@ -335,7 +335,7 @@ void * __stdcall MSVCRT_bad_typeid_vector_dtor(bad_typeid * _this, unsigned int 
 /******************************************************************
  *		??_Gbad_typeid@@UAEPAXI@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_scalar_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_typeid_scalar_dtor,8)
 void * __stdcall MSVCRT_bad_typeid_scalar_dtor(bad_typeid * _this, unsigned int flags)
 {
     TRACE("(%p %x)\n", _this, flags);
@@ -347,7 +347,7 @@ void * __stdcall MSVCRT_bad_typeid_scalar_dtor(bad_typeid * _this, unsigned int 
 /******************************************************************
  *		??0__non_rtti_object@@QAE@ABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_copy_ctor)
+DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_copy_ctor,8)
 __non_rtti_object * __stdcall MSVCRT___non_rtti_object_copy_ctor(__non_rtti_object * _this,
                                                                  const __non_rtti_object * rhs)
 {
@@ -360,7 +360,7 @@ __non_rtti_object * __stdcall MSVCRT___non_rtti_object_copy_ctor(__non_rtti_obje
 /******************************************************************
  *		??0__non_rtti_object@@QAE@PBD@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_ctor)
+DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_ctor,8)
 __non_rtti_object * __stdcall MSVCRT___non_rtti_object_ctor(__non_rtti_object * _this,
                                                             const char * name)
 {
@@ -373,7 +373,7 @@ __non_rtti_object * __stdcall MSVCRT___non_rtti_object_ctor(__non_rtti_object * 
 /******************************************************************
  *		??1__non_rtti_object@@UAE@XZ (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_dtor,4)
 void __stdcall MSVCRT___non_rtti_object_dtor(__non_rtti_object * _this)
 {
   TRACE("(%p)\n", _this);
@@ -383,7 +383,7 @@ void __stdcall MSVCRT___non_rtti_object_dtor(__non_rtti_object * _this)
 /******************************************************************
  *		??4__non_rtti_object@@QAEAAV0@ABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_opequals)
+DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_opequals,8)
 __non_rtti_object * __stdcall MSVCRT___non_rtti_object_opequals(__non_rtti_object * _this,
                                                                 const __non_rtti_object *rhs)
 {
@@ -395,7 +395,7 @@ __non_rtti_object * __stdcall MSVCRT___non_rtti_object_opequals(__non_rtti_objec
 /******************************************************************
  *		??_E__non_rtti_object@@UAEPAXI@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_vector_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_vector_dtor,8)
 void * __stdcall MSVCRT___non_rtti_object_vector_dtor(__non_rtti_object * _this, unsigned int flags)
 {
     TRACE("(%p %x)\n", _this, flags);
@@ -418,7 +418,7 @@ void * __stdcall MSVCRT___non_rtti_object_vector_dtor(__non_rtti_object * _this,
 /******************************************************************
  *		??_G__non_rtti_object@@UAEPAXI@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_scalar_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT___non_rtti_object_scalar_dtor,8)
 void * __stdcall MSVCRT___non_rtti_object_scalar_dtor(__non_rtti_object * _this, unsigned int flags)
 {
   TRACE("(%p %x)\n", _this, flags);
@@ -430,7 +430,7 @@ void * __stdcall MSVCRT___non_rtti_object_scalar_dtor(__non_rtti_object * _this,
 /******************************************************************
  *		??0bad_cast@@QAE@ABQBD@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_ctor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_ctor,8)
 bad_cast * __stdcall MSVCRT_bad_cast_ctor(bad_cast * _this, const char ** name)
 {
   TRACE("(%p %s)\n", _this, *name);
@@ -442,7 +442,7 @@ bad_cast * __stdcall MSVCRT_bad_cast_ctor(bad_cast * _this, const char ** name)
 /******************************************************************
  *		??0bad_cast@@QAE@ABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_copy_ctor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_copy_ctor,8)
 bad_cast * __stdcall MSVCRT_bad_cast_copy_ctor(bad_cast * _this, const bad_cast * rhs)
 {
   TRACE("(%p %p)\n", _this, rhs);
@@ -454,7 +454,7 @@ bad_cast * __stdcall MSVCRT_bad_cast_copy_ctor(bad_cast * _this, const bad_cast 
 /******************************************************************
  *		??1bad_cast@@UAE@XZ (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_dtor,4)
 void __stdcall MSVCRT_bad_cast_dtor(bad_cast * _this)
 {
   TRACE("(%p)\n", _this);
@@ -464,7 +464,7 @@ void __stdcall MSVCRT_bad_cast_dtor(bad_cast * _this)
 /******************************************************************
  *		??4bad_cast@@QAEAAV0@ABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_opequals)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_opequals,8)
 bad_cast * __stdcall MSVCRT_bad_cast_opequals(bad_cast * _this, const bad_cast * rhs)
 {
   TRACE("(%p %p)\n", _this, rhs);
@@ -475,7 +475,7 @@ bad_cast * __stdcall MSVCRT_bad_cast_opequals(bad_cast * _this, const bad_cast *
 /******************************************************************
  *              ??_Ebad_cast@@UAEPAXI@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_vector_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_vector_dtor,8)
 void * __stdcall MSVCRT_bad_cast_vector_dtor(bad_cast * _this, unsigned int flags)
 {
     TRACE("(%p %x)\n", _this, flags);
@@ -498,7 +498,7 @@ void * __stdcall MSVCRT_bad_cast_vector_dtor(bad_cast * _this, unsigned int flag
 /******************************************************************
  *		??_Gbad_cast@@UAEPAXI@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_scalar_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_bad_cast_scalar_dtor,8)
 void * __stdcall MSVCRT_bad_cast_scalar_dtor(bad_cast * _this, unsigned int flags)
 {
   TRACE("(%p %x)\n", _this, flags);
@@ -510,7 +510,7 @@ void * __stdcall MSVCRT_bad_cast_scalar_dtor(bad_cast * _this, unsigned int flag
 /******************************************************************
  *		??8type_info@@QBEHABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_opequals_equals)
+DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_opequals_equals,8)
 int __stdcall MSVCRT_type_info_opequals_equals(type_info * _this, const type_info * rhs)
 {
     int ret = !strcmp(_this->mangled + 1, rhs->mangled + 1);
@@ -521,7 +521,7 @@ int __stdcall MSVCRT_type_info_opequals_equals(type_info * _this, const type_inf
 /******************************************************************
  *		??9type_info@@QBEHABV0@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_opnot_equals)
+DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_opnot_equals,8)
 int __stdcall MSVCRT_type_info_opnot_equals(type_info * _this, const type_info * rhs)
 {
     int ret = !!strcmp(_this->mangled + 1, rhs->mangled + 1);
@@ -532,7 +532,7 @@ int __stdcall MSVCRT_type_info_opnot_equals(type_info * _this, const type_info *
 /******************************************************************
  *		?before@type_info@@QBEHABV1@@Z (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_before)
+DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_before,8)
 int __stdcall MSVCRT_type_info_before(type_info * _this, const type_info * rhs)
 {
     int ret = strcmp(_this->mangled + 1, rhs->mangled + 1) < 0;
@@ -543,7 +543,7 @@ int __stdcall MSVCRT_type_info_before(type_info * _this, const type_info * rhs)
 /******************************************************************
  *		??1type_info@@UAE@XZ (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_dtor,4)
 void __stdcall MSVCRT_type_info_dtor(type_info * _this)
 {
   TRACE("(%p)\n", _this);
@@ -553,7 +553,7 @@ void __stdcall MSVCRT_type_info_dtor(type_info * _this)
 /******************************************************************
  *		?name@type_info@@QBEPBDXZ (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_name)
+DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_name,4)
 const char * __stdcall MSVCRT_type_info_name(type_info * _this)
 {
   if (!_this->name)
@@ -594,7 +594,7 @@ const char * __stdcall MSVCRT_type_info_name(type_info * _this)
 /******************************************************************
  *		?raw_name@type_info@@QBEPBDXZ (MSVCRT.@)
  */
-DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_raw_name)
+DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_raw_name,4)
 const char * __stdcall MSVCRT_type_info_raw_name(type_info * _this)
 {
   TRACE("(%p) returning %s\n", _this, _this->mangled);
@@ -602,7 +602,7 @@ const char * __stdcall MSVCRT_type_info_raw_name(type_info * _this)
 }
 
 /* Unexported */
-DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_vector_dtor)
+DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_vector_dtor,8)
 void * __stdcall MSVCRT_type_info_vector_dtor(type_info * _this, unsigned int flags)
 {
     TRACE("(%p %x)\n", _this, flags);
