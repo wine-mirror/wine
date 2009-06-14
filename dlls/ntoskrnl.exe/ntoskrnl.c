@@ -987,6 +987,20 @@ ULONG WINAPI KeQueryTimeIncrement(void)
 
 
 /***********************************************************************
+ *           KeWaitForSingleObject   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI KeWaitForSingleObject(PVOID Object,
+                                      KWAIT_REASON WaitReason,
+                                      KPROCESSOR_MODE WaitMode,
+                                      BOOLEAN Alertable,
+                                      PLARGE_INTEGER Timeout)
+{
+    FIXME( "stub: %p, %d, %d, %d, %p\n", Object, WaitReason, WaitMode, Alertable, Timeout );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           MmAllocateNonCachedMemory   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI MmAllocateNonCachedMemory( SIZE_T size )

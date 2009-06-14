@@ -629,7 +629,7 @@
 @ stub KeUserModeCallback
 @ stub KeWaitForMultipleObjects
 @ stub KeWaitForMutexObject
-@ stub KeWaitForSingleObject
+@ stdcall KeWaitForSingleObject(ptr long long long ptr)
 @ stub KiBugCheckData
 @ stub KiCoprocessorError
 @ stub KiDeliverApc
