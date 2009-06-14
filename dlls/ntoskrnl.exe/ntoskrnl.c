@@ -66,18 +66,25 @@ struct IrpInstance
 
 #ifdef __i386__
 #define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
-    __ASM_GLOBAL_FUNC( name, \
+    __ASM_STDCALL_FUNC( name, 4, \
                        "popl %eax\n\t" \
                        "pushl %ecx\n\t" \
                        "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name )
+                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(4))
 #define DEFINE_FASTCALL2_ENTRYPOINT( name ) \
-    __ASM_GLOBAL_FUNC( name, \
+    __ASM_STDCALL_FUNC( name, 8, \
                        "popl %eax\n\t" \
                        "pushl %edx\n\t" \
                        "pushl %ecx\n\t" \
                        "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name )
+                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(8))
+#define DEFINE_FASTCALL3_ENTRYPOINT( name ) \
+    __ASM_STDCALL_FUNC( name, 12, \
+                       "popl %eax\n\t" \
+                       "pushl %edx\n\t" \
+                       "pushl %ecx\n\t" \
+                       "pushl %eax\n\t" \
+                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(12))
 #endif
 
 static inline LPCSTR debugstr_us( const UNICODE_STRING *us )
@@ -745,8 +752,8 @@ void WINAPI IofCompleteRequest( IRP *irp, UCHAR priority_boost )
 /***********************************************************************
  *           InterlockedCompareExchange   (NTOSKRNL.EXE.@)
  */
-#ifdef DEFINE_FASTCALL2_ENTRYPOINT
-DEFINE_FASTCALL2_ENTRYPOINT( NTOSKRNL_InterlockedCompareExchange )
+#ifdef DEFINE_FASTCALL3_ENTRYPOINT
+DEFINE_FASTCALL3_ENTRYPOINT( NTOSKRNL_InterlockedCompareExchange )
 LONG WINAPI __regs_NTOSKRNL_InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
 #else
 LONG WINAPI NTOSKRNL_InterlockedCompareExchange( LONG volatile *dest, LONG xchg, LONG compare )
