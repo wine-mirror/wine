@@ -80,11 +80,17 @@ struct hash_table_elt
     struct hash_table_elt*      next;
 };
 
+struct hash_table_bucket
+{
+    struct hash_table_elt*      first;
+    struct hash_table_elt*      last;
+};
+
 struct hash_table
 {
     unsigned                    num_elts;
     unsigned                    num_buckets;
-    struct hash_table_elt**     buckets;
+    struct hash_table_bucket*   buckets;
     struct pool*                pool;
 };
 
