@@ -741,7 +741,7 @@ static BOOL HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
 
         while (*lpszEnd != '\0')
         {
-            if (*lpszEnd == '\r' && *(lpszEnd + 1) == '\n')
+            if (*lpszEnd == '\r' || *lpszEnd == '\n')
                  break;
             lpszEnd++;
         }
@@ -749,10 +749,10 @@ static BOOL HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
         if (*lpszStart == '\0')
 	    break;
 
-        if (*lpszEnd == '\r')
+        if (*lpszEnd == '\r' || *lpszEnd == '\n')
         {
             *lpszEnd = '\0';
-            lpszEnd += 2; /* Jump over \r\n */
+            lpszEnd++; /* Jump over newline */
         }
         TRACE("interpreting header %s\n", debugstr_w(lpszStart));
         if (*lpszStart == '\0')
