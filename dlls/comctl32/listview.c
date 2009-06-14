@@ -4151,15 +4151,16 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
     while(iterator_next(i))
     {
 	LISTVIEW_GetItemOrigin(infoPtr, i->nItem, &Position);
-	Position.x += Origin.x;
 	Position.y += Origin.y;
 
 	/* iterate through the invalidated columns */
 	while(iterator_next(&j))
 	{
+	    LISTVIEW_GetHeaderRect(infoPtr, j.nItem, &rcItem);
+	    Position.x = (j.nItem == 0) ? rcItem.left + Origin.x : Origin.x;
+
 	    if (rgntype == COMPLEXREGION && !((infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) && j.nItem == 0))
 	    {
-		LISTVIEW_GetHeaderRect(infoPtr, j.nItem, &rcItem);
 		rcItem.top = 0;
 	        rcItem.bottom = infoPtr->nItemHeight;
 		OffsetRect(&rcItem, Position.x, Position.y);
