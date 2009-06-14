@@ -141,7 +141,7 @@
 @ stub ExGetSharedWaiterCount
 @ stub ExInitializeNPagedLookasideList
 @ stub ExInitializePagedLookasideList
-@ stub ExInitializeResourceLite
+@ stdcall ExInitializeResourceLite(ptr)
 @ stub ExInitializeZone
 @ stub ExInterlockedAddLargeInteger
 @ stub ExInterlockedAddUlong

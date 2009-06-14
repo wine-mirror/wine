@@ -899,6 +899,16 @@ void WINAPI ExFreePoolWithTag( void *ptr, ULONG tag )
 
 
 /***********************************************************************
+ *           ExInitializeResourceLite   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ExInitializeResourceLite(PERESOURCE Resource)
+{
+    FIXME( "stub: %p\n", Resource );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           KeInitializeEvent   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeInitializeEvent( PRKEVENT Event, EVENT_TYPE Type, BOOLEAN State )
