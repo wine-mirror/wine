@@ -565,7 +565,7 @@ LPVOID WINAPI MapSLFix( SEGPTR sptr )
  * Must not change EAX, hence defined as asm function.
  */
 #ifdef __i386__
-__ASM_GLOBAL_FUNC( UnMapSLFixArray, "ret $8" )
+__ASM_STDCALL_FUNC( UnMapSLFixArray, 8, "ret $8" )
 #endif
 
 
@@ -595,22 +595,22 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
 /***********************************************************************
  *		SMapLS (KERNEL32.@)
  */
-__ASM_GLOBAL_FUNC( SMapLS,
+__ASM_STDCALL_FUNC( SMapLS, 0,
                    "xor %edx,%edx\n\t"
                    "testl $0xffff0000,%eax\n\t"
                    "jz 1f\n\t"
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("MapLS") "\n\t"
+                   "call " __ASM_NAME("MapLS") __ASM_STDCALL(4) "\n\t"
                    "movl %eax,%edx\n"
                    "1:\tret" )
 
 /***********************************************************************
  *		SUnMapLS (KERNEL32.@)
  */
-__ASM_GLOBAL_FUNC( SUnMapLS,
+__ASM_STDCALL_FUNC( SUnMapLS, 0,
                    "pushl %eax\n\t"  /* preserve eax */
                    "pushl %eax\n\t"
-                   "call " __ASM_NAME("UnMapLS") "\n\t"
+                   "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t"
                    "popl %eax\n\t"
                    "ret" )
 
@@ -631,9 +631,9 @@ __ASM_GLOBAL_FUNC( SUnMapLS,
  * unravel them at SUnMapLS. We just store the segmented pointer there.
  */
 #define DEFINE_SMapLS(n) \
-  __ASM_GLOBAL_FUNC( SMapLS_IP_EBP_ ## n, \
+  __ASM_STDCALL_FUNC( SMapLS_IP_EBP_ ## n, 0, \
                      "movl " #n "(%ebp),%eax\n\t" \
-                     "call " __ASM_NAME("SMapLS") "\n\t" \
+                     "call " __ASM_NAME("SMapLS") __ASM_STDCALL(4) "\n\t" \
                      "movl %edx," #n "(%ebp)\n\t" \
                      "ret" )
 
@@ -661,10 +661,10 @@ DEFINE_SMapLS(40)
  */
 
 #define DEFINE_SUnMapLS(n) \
-  __ASM_GLOBAL_FUNC( SUnMapLS_IP_EBP_ ## n, \
+  __ASM_STDCALL_FUNC( SUnMapLS_IP_EBP_ ## n, 0, \
                      "pushl %eax\n\t"  /* preserve eax */ \
                      "pushl " #n "(%ebp)\n\t" \
-                     "call " __ASM_NAME("UnMapLS") "\n\t" \
+                     "call " __ASM_NAME("UnMapLS") __ASM_STDCALL(4) "\n\t" \
                      "movl $0," #n "(%ebp)\n\t" \
                      "popl %eax\n\t" \
                      "ret" )

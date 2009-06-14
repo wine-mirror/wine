@@ -645,7 +645,7 @@ DEFINE_REGS_ENTRYPOINT( FT_Thunk, 0 )
     "leave\n\t"
 
 #define DEFINE_FT_Exit(n) \
-    __ASM_GLOBAL_FUNC( FT_Exit ## n, FT_EXIT_RESTORE_REGS "ret $" #n )
+    __ASM_STDCALL_FUNC( FT_Exit ## n, 0, FT_EXIT_RESTORE_REGS "ret $" #n )
 
 DEFINE_FT_Exit(0)
 DEFINE_FT_Exit(4)
