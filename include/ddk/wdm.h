@@ -125,6 +125,7 @@ typedef enum _KWAIT_REASON
 } KWAIT_REASON;
 
 typedef struct _IO_TIMER *PIO_TIMER;
+typedef struct _IO_TIMER_ROUTINE *PIO_TIMER_ROUTINE;
 typedef struct _ETHREAD *PETHREAD;
 typedef struct _KTHREAD *PKTHREAD;
 typedef struct _EPROCESS *PEPROCESS;

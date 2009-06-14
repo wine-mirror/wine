@@ -399,7 +399,7 @@
 @ stub IoGetTopLevelIrp
 @ stdcall IoInitializeIrp(ptr long long)
 @ stub IoInitializeRemoveLockEx
-@ stub IoInitializeTimer
+@ stdcall IoInitializeTimer(ptr ptr ptr)
 @ stub IoInvalidateDeviceRelations
 @ stub IoInvalidateDeviceState
 @ stub IoIsFileOriginRemote

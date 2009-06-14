@@ -320,6 +320,18 @@ void WINAPI IoInitializeIrp( IRP *irp, USHORT size, CCHAR stack_size )
 
 
 /***********************************************************************
+ *           IoInitializeTimer   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoInitializeTimer(PDEVICE_OBJECT DeviceObject,
+                                  PIO_TIMER_ROUTINE TimerRoutine,
+                                  PVOID Context)
+{
+    FIXME( "stub: %p, %p, %p\n", DeviceObject, TimerRoutine, Context );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           IoAllocateIrp  (NTOSKRNL.EXE.@)
  */
 PIRP WINAPI IoAllocateIrp( CCHAR stack_size, BOOLEAN charge_quota )
