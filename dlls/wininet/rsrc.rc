@@ -53,6 +53,7 @@
 #include "wininet_It.rc"
 #include "wininet_Ja.rc"
 #include "wininet_Ko.rc"
+#include "wininet_Lt.rc"
 #include "wininet_Nl.rc"
 #include "wininet_No.rc"
 #include "wininet_Pl.rc"
