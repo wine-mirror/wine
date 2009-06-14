@@ -7194,7 +7194,7 @@ static BOOL LISTVIEW_SetColumnT(const LISTVIEW_INFO *infoPtr, INT nColumn,
     {
         hdi.mask |= HDI_FORMAT;
         hdiget.mask = HDI_FORMAT;
-        if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdiget))
+        if (SendMessageW(infoPtr->hwndHeader, HDM_GETITEMW, nColumn, (LPARAM)&hdiget))
 	    hdi.fmt = hdiget.fmt & HDF_STRING;
     }
     column_fill_hditem(infoPtr, &hdi, nColumn, lpColumn, isW);
@@ -7330,7 +7330,7 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
 	    hdi.mask = HDI_TEXT;
 	    hdi.cchTextMax = DISP_TEXT_SIZE;
 	    hdi.pszText = szDispText;
-	    if (Header_GetItemW(infoPtr->hwndHeader, nColumn, &hdi))
+	    if (SendMessageW(infoPtr->hwndHeader, HDM_GETITEMW, nColumn, (LPARAM)&hdi))
 	    {
 		HDC hdc = GetDC(infoPtr->hwndSelf);
 		HFONT old_font = SelectObject(hdc, (HFONT)SendMessageW(infoPtr->hwndHeader, WM_GETFONT, 0, 0));
@@ -7352,7 +7352,7 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
     hdi.mask = HDI_WIDTH;
     hdi.cxy = cx;
     TRACE("hdi.cxy=%d\n", hdi.cxy);
-    return Header_SetItemW(infoPtr->hwndHeader, nColumn, &hdi);
+    return SendMessageW(infoPtr->hwndHeader, HDM_SETITEMW, nColumn, (LPARAM)&hdi);
 }
 
 /***
@@ -9258,7 +9258,7 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
     		HDITEMW hdi;
     
 		hdi.mask = HDI_WIDTH;
-    		if (!Header_GetItemW(infoPtr->hwndHeader, lpnmh->iItem, &hdi)) return 0;
+		if (!SendMessageW(infoPtr->hwndHeader, HDM_GETITEMW, lpnmh->iItem, (LPARAM)&hdi)) return 0;
 		cxy = hdi.cxy;
 	    }
 	    else
