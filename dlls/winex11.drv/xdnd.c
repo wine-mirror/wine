@@ -375,9 +375,7 @@ static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len)
     {
         while (end < len && uriList[end] != '\r')
             ++end;
-        if (end == len)
-            break;
-        if (uriList[end+1] != '\n')
+        if (end < (len - 1) && uriList[end+1] != '\n')
         {
             WARN("URI list line doesn't end in \\r\\n\n");
             break;
@@ -412,7 +410,7 @@ static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len)
         start = end + 2;
         end = start;
     }
-    if (out && end == len)
+    if (out && end >= len)
     {
         DROPFILES *dropFiles;
         dropFiles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DROPFILES) + size + 1);
