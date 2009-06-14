@@ -2249,7 +2249,13 @@ static void LISTVIEW_GetItemBox(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT 
     }
     LISTVIEW_GetItemMetrics(infoPtr, &lvItem, lprcBox, 0, 0, 0, 0);
 
-    OffsetRect(lprcBox, Position.x + Origin.x, Position.y + Origin.y);
+    if (infoPtr->uView == LV_VIEW_DETAILS && infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT &&
+        SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX, 0, 0))
+    {
+        OffsetRect(lprcBox, Origin.x, Position.y + Origin.y);
+    }
+    else
+        OffsetRect(lprcBox, Position.x + Origin.x, Position.y + Origin.y);
 }
 
 
