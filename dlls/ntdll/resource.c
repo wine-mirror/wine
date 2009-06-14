@@ -357,7 +357,7 @@ static inline NTSTATUS access_resource( HMODULE hmod, const IMAGE_RESOURCE_DATA_
  * "call access_resource" instruction being there.
  */
 #ifdef __i386__
-__ASM_GLOBAL_FUNC( LdrAccessResource,
+__ASM_STDCALL_FUNC( LdrAccessResource, 16,
     "pushl %ebp\n\t"
     "movl %esp, %ebp\n\t"
     "subl $4,%esp\n\t"

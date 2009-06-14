@@ -2267,17 +2267,17 @@ DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
  */
-__ASM_GLOBAL_FUNC( DbgBreakPoint, "int $3; ret")
+__ASM_STDCALL_FUNC( DbgBreakPoint, 0, "int $3; ret")
 
 /**********************************************************************
  *		DbgUserBreakPoint   (NTDLL.@)
  */
-__ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret")
+__ASM_STDCALL_FUNC( DbgUserBreakPoint, 0, "int $3; ret")
 
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
  */
-__ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" )
+__ASM_STDCALL_FUNC( NtCurrentTeb, 0, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" )
 
 
 /**********************************************************************

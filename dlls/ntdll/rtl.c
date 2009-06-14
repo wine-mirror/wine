@@ -405,7 +405,7 @@ RtlDeleteSecurityObject( PSECURITY_DESCRIPTOR *ObjectDescriptor )
  * Glorified "enter xxxx".
  */
 #ifdef __i386__
-__ASM_GLOBAL_FUNC( _chkstk,
+__ASM_STDCALL_FUNC( _chkstk, 0,
                    "negl %eax\n\t"
                    "addl %esp,%eax\n\t"
                    "xchgl %esp,%eax\n\t"
@@ -420,7 +420,7 @@ __ASM_GLOBAL_FUNC( _chkstk,
  * Glorified "enter xxxx".
  */
 #ifdef __i386__
-__ASM_GLOBAL_FUNC( _alloca_probe,
+__ASM_STDCALL_FUNC( _alloca_probe, 0,
                    "negl %eax\n\t"
                    "addl %esp,%eax\n\t"
                    "xchgl %esp,%eax\n\t"

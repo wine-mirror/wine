@@ -1668,11 +1668,11 @@ void __wine_enter_vm86( CONTEXT *context )
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
  */
-__ASM_GLOBAL_FUNC( DbgBreakPoint, "int $3; ret")
+__ASM_STDCALL_FUNC( DbgBreakPoint, 0, "int $3; ret")
 
 /**********************************************************************
  *		DbgUserBreakPoint   (NTDLL.@)
  */
-__ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret")
+__ASM_STDCALL_FUNC( DbgUserBreakPoint, 0, "int $3; ret")
 
 #endif  /* __x86_64__ */
