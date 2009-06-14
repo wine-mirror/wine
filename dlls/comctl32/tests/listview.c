@@ -1118,7 +1118,7 @@ static void test_items(void)
     expect(TRUE, r);
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, textcallback_set_again_parent_seq,
-                "check callback text comparison rule", TRUE);
+                "check callback text comparison rule", FALSE);
 
     DestroyWindow(hwnd);
 }

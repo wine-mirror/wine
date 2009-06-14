@@ -507,7 +507,7 @@ static inline int textcmpWT(LPCWSTR aw, LPCWSTR bt, BOOL isW)
     if (!aw) return bt ? -1 : 0;
     if (!bt) return aw ? 1 : 0;
     if (aw == LPSTR_TEXTCALLBACKW)
-	return bt == LPSTR_TEXTCALLBACKW ? 0 : -1;
+	return bt == LPSTR_TEXTCALLBACKW ? 1 : -1;
     if (bt != LPSTR_TEXTCALLBACKW)
     {
 	LPWSTR bw = textdupTtoW(bt, isW);
@@ -3727,12 +3727,11 @@ static BOOL set_sub_item(const LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, 
 	    *bChanged = TRUE;
 	}
 
-    if (lpLVItem->mask & LVIF_TEXT)
-	if (lpSubItem->hdr.pszText != lpLVItem->pszText)
-	{
-	    textsetptrT(&lpSubItem->hdr.pszText, lpLVItem->pszText, isW);
-	    *bChanged = TRUE;
-	}
+    if ((lpLVItem->mask & LVIF_TEXT) && textcmpWT(lpSubItem->hdr.pszText, lpLVItem->pszText, isW))
+    {
+        textsetptrT(&lpSubItem->hdr.pszText, lpLVItem->pszText, isW);
+        *bChanged = TRUE;
+    }
 
     return TRUE;
 }
