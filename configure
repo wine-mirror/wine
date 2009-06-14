@@ -17867,19 +17867,19 @@ case "$ac_cv_asm_func_def" in
 #define __ASM_FUNC(name) ".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"
 _ACEOF
 
-     asm_func_header=".def $asm_name_prefix\" #name \"; .scl 2; .type 32; .endef" ;;
+     asm_func_header=".def $asm_name_prefix\" #name suffix \"; .scl 2; .type 32; .endef" ;;
   ".type @function")
      cat >>confdefs.h <<\_ACEOF
 #define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",@function"
 _ACEOF
 
-     asm_func_header=".type $asm_name_prefix\" #name \",@function" ;;
+     asm_func_header=".type $asm_name_prefix\" #name suffix \",@function" ;;
   ".type 2")
      cat >>confdefs.h <<\_ACEOF
 #define __ASM_FUNC(name) ".type " __ASM_NAME(name) ",2"
 _ACEOF
 
-     asm_func_header=".type $asm_name_prefix\" #name \",2" ;;
+     asm_func_header=".type $asm_name_prefix\" #name suffix \",2" ;;
   *)
      cat >>confdefs.h <<\_ACEOF
 #define __ASM_FUNC(name) ""
@@ -18046,7 +18046,7 @@ fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_c_cfi_support" >&5
 $as_echo "$ac_cv_c_cfi_support" >&6; }
 
-asm_func_header=".globl $asm_name_prefix\" #name \"\\n\\t$asm_func_header\\n$asm_name_prefix\" #name \":\\n\\t"
+asm_func_header=".globl $asm_name_prefix\" #name suffix \"\\n\\t$asm_func_header\\n$asm_name_prefix\" #name suffix \":\\n\\t"
 asm_func_trailer=""
 if test "$ac_cv_c_dot_previous" = "yes"
 then
@@ -18065,15 +18065,25 @@ asm_func_code="$asm_func_header\" code \"$asm_func_trailer"
 if test "$ac_cv_c_asm_outside_funcs" = "yes"
 then
     cat >>confdefs.h <<_ACEOF
-#define __ASM_GLOBAL_FUNC(name,code) asm(".text\n\t.align 4\n\t$asm_func_code");
+#define __ASM_DEFINE_FUNC(name,suffix,code) asm(".text\n\t.align 4\n\t$asm_func_code");
 _ACEOF
 
 else
     cat >>confdefs.h <<_ACEOF
-#define __ASM_GLOBAL_FUNC(name,code) void __asm_dummy_##name(void) { asm(".text\n\t.align 4\n\t$asm_func_code"); }
+#define __ASM_DEFINE_FUNC(name,suffix,code) void __asm_dummy_##name(void) { asm(".text\n\t.align 4\n\t$asm_func_code"); }
 _ACEOF
 
 fi
+
+cat >>confdefs.h <<\_ACEOF
+#define __ASM_GLOBAL_FUNC(name,code) __ASM_DEFINE_FUNC(name,"",code)
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define __ASM_STDCALL_FUNC(name,args,code) __ASM_DEFINE_FUNC(name,__ASM_STDCALL(args),code)
+_ACEOF
+
 
 
 LDPATH=""

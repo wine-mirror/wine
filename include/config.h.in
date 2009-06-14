@@ -1188,10 +1188,14 @@
 /* Define to 1 if the X Window System is missing or not being used. */
 #undef X_DISPLAY_MISSING
 
+/* Define to a macro to define an assembly function */
+#undef __ASM_DEFINE_FUNC
+
 /* Define to a macro to generate an assembly function directive */
 #undef __ASM_FUNC
 
-/* Define to a macro to generate an assembly function */
+/* Define to a macro to generate an assembly function with C calling
+   convention */
 #undef __ASM_GLOBAL_FUNC
 
 /* Define to a macro to generate an assembly name from a C symbol */
@@ -1199,6 +1203,10 @@
 
 /* Define to a macro to generate an stdcall suffix */
 #undef __ASM_STDCALL
+
+/* Define to a macro to generate an assembly function with stdcall calling
+   convention */
+#undef __ASM_STDCALL_FUNC
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

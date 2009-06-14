@@ -1447,13 +1447,13 @@ AH_TEMPLATE(__ASM_FUNC,[Define to a macro to generate an assembly function direc
 case "$ac_cv_asm_func_def" in
   ".def")
      AC_DEFINE([__ASM_FUNC(name)], [".def " __ASM_NAME(name) "; .scl 2; .type 32; .endef"])
-     asm_func_header=".def $asm_name_prefix\" #name \"; .scl 2; .type 32; .endef" ;;
+     asm_func_header=".def $asm_name_prefix\" #name suffix \"; .scl 2; .type 32; .endef" ;;
   ".type @function")
      AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",@function"])
-     asm_func_header=".type $asm_name_prefix\" #name \",@function" ;;
+     asm_func_header=".type $asm_name_prefix\" #name suffix \",@function" ;;
   ".type 2")
      AC_DEFINE([__ASM_FUNC(name)], [".type " __ASM_NAME(name) ",2"])
-     asm_func_header=".type $asm_name_prefix\" #name \",2" ;;
+     asm_func_header=".type $asm_name_prefix\" #name suffix \",2" ;;
   *)
      AC_DEFINE([__ASM_FUNC(name)], [""])
      asm_func_header="" ;;
@@ -1471,7 +1471,7 @@ AC_CACHE_CHECK([whether CFI directives are supported in assembly code], ac_cv_c_
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[asm(".text\nac_test:\t.cfi_startproc\n\t.long 0\n\t.cfi_endproc");]])],
                       ac_cv_c_cfi_support="yes",ac_cv_c_cfi_support="no"))
 
-asm_func_header=".globl $asm_name_prefix\" #name \"\\n\\t$asm_func_header\\n$asm_name_prefix\" #name \":\\n\\t"
+asm_func_header=".globl $asm_name_prefix\" #name suffix \"\\n\\t$asm_func_header\\n$asm_name_prefix\" #name suffix \":\\n\\t"
 asm_func_trailer=""
 if test "$ac_cv_c_dot_previous" = "yes"
 then
@@ -1485,13 +1485,17 @@ fi
 
 asm_func_code="$asm_func_header\" code \"$asm_func_trailer"
 
-AH_TEMPLATE(__ASM_GLOBAL_FUNC,[Define to a macro to generate an assembly function])
+AH_TEMPLATE(__ASM_DEFINE_FUNC,[Define to a macro to define an assembly function])
 if test "$ac_cv_c_asm_outside_funcs" = "yes"
 then
-    AC_DEFINE_UNQUOTED([__ASM_GLOBAL_FUNC(name,code)],[asm(".text\n\t.align 4\n\t$asm_func_code");])
+    AC_DEFINE_UNQUOTED([__ASM_DEFINE_FUNC(name,suffix,code)],[asm(".text\n\t.align 4\n\t$asm_func_code");])
 else
-    AC_DEFINE_UNQUOTED([__ASM_GLOBAL_FUNC(name,code)],[void __asm_dummy_##name(void) { asm(".text\n\t.align 4\n\t$asm_func_code"); }])
+    AC_DEFINE_UNQUOTED([__ASM_DEFINE_FUNC(name,suffix,code)],[void __asm_dummy_##name(void) { asm(".text\n\t.align 4\n\t$asm_func_code"); }])
 fi
+AC_DEFINE([__ASM_GLOBAL_FUNC(name,code)],[__ASM_DEFINE_FUNC(name,"",code)],
+          [Define to a macro to generate an assembly function with C calling convention])
+AC_DEFINE([__ASM_STDCALL_FUNC(name,args,code)],[__ASM_DEFINE_FUNC(name,__ASM_STDCALL(args),code)],
+          [Define to a macro to generate an assembly function with stdcall calling convention])
 
 dnl **** Platform-specific checks ****
 
