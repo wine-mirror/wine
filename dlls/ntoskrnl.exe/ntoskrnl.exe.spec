@@ -142,7 +142,7 @@
 @ stub ExInitializeNPagedLookasideList
 @ stub ExInitializePagedLookasideList
 @ stdcall ExInitializeResourceLite(ptr)
-@ stub ExInitializeZone
+@ stdcall ExInitializeZone(ptr long ptr long)
 @ stub ExInterlockedAddLargeInteger
 @ stub ExInterlockedAddUlong
 @ stub ExInterlockedDecrementLong

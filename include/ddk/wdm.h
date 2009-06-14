@@ -133,6 +133,7 @@ typedef struct _ERESOURCE *PERESOURCE;
 typedef struct _IO_WORKITEM *PIO_WORKITEM;
 typedef struct _OBJECT_TYPE *POBJECT_TYPE;
 typedef struct _OBJECT_HANDLE_INFORMATION *POBJECT_HANDLE_INFORMATION;
+typedef struct _ZONE_HEADER *PZONE_HEADER;
 
 typedef struct _FAST_MUTEX
 {

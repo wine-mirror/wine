@@ -909,6 +909,19 @@ NTSTATUS WINAPI ExInitializeResourceLite(PERESOURCE Resource)
 
 
 /***********************************************************************
+ *           ExInitializeZone   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ExInitializeZone(PZONE_HEADER Zone,
+                                 ULONG BlockSize,
+                                 PVOID InitialSegment,
+                                 ULONG InitialSegmentSize)
+{
+    FIXME( "stub: %p, %u, %p, %u\n", Zone, BlockSize, InitialSegment, InitialSegmentSize );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           KeInitializeEvent   (NTOSKRNL.EXE.@)
  */
 void WINAPI KeInitializeEvent( PRKEVENT Event, EVENT_TYPE Type, BOOLEAN State )
