@@ -886,6 +886,15 @@ void WINAPI KeInitializeEvent( PRKEVENT Event, EVENT_TYPE Type, BOOLEAN State )
 }
 
 
+ /***********************************************************************
+ *           KeInitializeMutex   (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeInitializeMutex(PRKMUTEX Mutex, ULONG Level)
+{
+    FIXME( "stub: %p, %u\n", Mutex, Level );
+}
+
+
 /***********************************************************************
  *           KeInitializeSpinLock   (NTOSKRNL.EXE.@)
  */

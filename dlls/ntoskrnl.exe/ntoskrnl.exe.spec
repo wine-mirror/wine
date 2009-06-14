@@ -549,7 +549,7 @@
 @ stdcall KeInitializeEvent(ptr long long)
 @ stub KeInitializeInterrupt
 @ stub KeInitializeMutant
-@ stub KeInitializeMutex
+@ stdcall KeInitializeMutex(ptr long)
 @ stub KeInitializeQueue
 @ stub KeInitializeSemaphore
 @ stdcall KeInitializeSpinLock(ptr)
