@@ -6643,6 +6643,8 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	/* for top/bottom only */
 	bounds.left = LVIR_BOUNDS;
 	LISTVIEW_GetItemRect(infoPtr, iItem, &bounds);
+	opt.x = lpht->pt.x - Origin.x;
+	opt.y = lpht->pt.y;
 
 	for (j = 0; j < DPA_GetPtrCount(infoPtr->hdpaColumns); j++)
 	{
@@ -6650,7 +6652,7 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	    bounds.left  = pRect->left;
 	    bounds.right = pRect->right;
 
-	    if (PtInRect(&bounds, lpht->pt))
+	    if (PtInRect(&bounds, opt))
 	    {
 		lpht->iSubItem = j;
 		break;
@@ -6676,7 +6678,11 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     opt.y = lpht->pt.y - Position.y - Origin.y;
     
     if (infoPtr->uView == LV_VIEW_DETAILS)
+    {
 	rcBounds = rcBox;
+	if (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)
+	    opt.x = lpht->pt.x - Origin.x;
+    }
     else
     {
         UnionRect(&rcBounds, &rcIcon, &rcLabel);
