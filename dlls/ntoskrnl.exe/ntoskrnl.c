@@ -1205,6 +1205,16 @@ NTSTATUS WINAPI PsSetCreateThreadNotifyRoutine( PCREATE_THREAD_NOTIFY_ROUTINE No
 
 
 /***********************************************************************
+ *           PsTerminateSystemThread   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PsTerminateSystemThread(NTSTATUS ExitStatus)
+{
+    FIXME( "stub: %u\n", ExitStatus );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           MmGetSystemRoutineAddress   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI MmGetSystemRoutineAddress(PUNICODE_STRING SystemRoutineName)

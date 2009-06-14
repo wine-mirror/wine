@@ -919,7 +919,7 @@
 @ stub PsSetProcessWindowStation
 @ stub PsSetThreadHardErrorsAreDisabled
 @ stub PsSetThreadWin32Thread
-@ stub PsTerminateSystemThread
+@ stdcall PsTerminateSystemThread(long)
 @ stub PsThreadType
 @ stub READ_REGISTER_BUFFER_UCHAR
 @ stub READ_REGISTER_BUFFER_ULONG
