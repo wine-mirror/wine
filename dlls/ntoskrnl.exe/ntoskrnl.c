@@ -332,6 +332,15 @@ NTSTATUS WINAPI IoInitializeTimer(PDEVICE_OBJECT DeviceObject,
 
 
 /***********************************************************************
+ *           IoStartTimer   (NTOSKRNL.EXE.@)
+ */
+void WINAPI IoStartTimer(PDEVICE_OBJECT DeviceObject)
+{
+    FIXME( "stub: %p\n", DeviceObject );
+}
+
+
+/***********************************************************************
  *           IoAllocateIrp  (NTOSKRNL.EXE.@)
  */
 PIRP WINAPI IoAllocateIrp( CCHAR stack_size, BOOLEAN charge_quota )

@@ -461,7 +461,7 @@
 @ stub IoStartNextPacket
 @ stub IoStartNextPacketByKey
 @ stub IoStartPacket
-@ stub IoStartTimer
+@ stdcall IoStartTimer(ptr)
 @ stub IoStatisticsLock
 @ stub IoStopTimer
 @ stub IoSynchronousInvalidateDeviceRelations
