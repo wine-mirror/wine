@@ -38,18 +38,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 
 #ifdef __i386__
 #define DEFINE_FASTCALL1_ENTRYPOINT( name ) \
-    __ASM_GLOBAL_FUNC( name, \
+    __ASM_STDCALL_FUNC( name, 4, \
                        "popl %eax\n\t" \
                        "pushl %ecx\n\t" \
                        "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name )
+                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(4))
 #define DEFINE_FASTCALL2_ENTRYPOINT( name ) \
-    __ASM_GLOBAL_FUNC( name, \
+    __ASM_STDCALL_FUNC( name, 8, \
                        "popl %eax\n\t" \
                        "pushl %edx\n\t" \
                        "pushl %ecx\n\t" \
                        "pushl %eax\n\t" \
-                       "jmp " __ASM_NAME("__regs_") #name )
+                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(8))
 #endif
 
 
