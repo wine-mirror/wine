@@ -44,7 +44,10 @@
 # define UINT8 JPEG_UINT8
 # define UINT16 JPEG_UINT16
 # undef FAR
+# undef HAVE_STDLIB_H
 #  include <jpeglib.h>
+# undef HAVE_STDLIB_H
+# define HAVE_STDLIB_H 1
 # undef UINT16
 #endif
 
