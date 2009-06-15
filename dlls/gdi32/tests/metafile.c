@@ -1302,15 +1302,22 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
                             BOOL ignore_scaling)
 {
     unsigned char buf[MF_BUFSIZE];
-    UINT mfsize, offset;
+    UINT mfsize, offset1, offset2, diff_nt4, diff_9x;
     const ENHMETAHEADER *emh1, *emh2;
 
     mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
     ok (mfsize > 0, "%s: GetEnhMetaFileBits error %d\n", desc, GetLastError());
 
+    /* ENHMETAHEADER size could differ, depending on platform */
+    diff_nt4 = sizeof(SIZEL);
+    diff_9x = sizeof(SIZEL) + 3 * sizeof(DWORD);
+
     if (mfsize < MF_BUFSIZE)
     {
-        ok(mfsize == bsize, "%s: mfsize=%d, bsize=%d\n", desc, mfsize, bsize);
+        ok(mfsize == bsize ||
+           broken(mfsize == bsize - diff_nt4) ||  /* NT4 */
+           broken(mfsize == bsize - diff_9x), /* Win9x/WinME */
+           "%s: mfsize=%d, bsize=%d\n", desc, mfsize, bsize);
     }
     else
         ok(bsize >= MF_BUFSIZE, "%s: mfsize > bufsize (%d bytes), bsize=%d\n",
@@ -1325,23 +1332,32 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
     ok(emh1->dSignature == ENHMETA_SIGNATURE, "expected ENHMETA_SIGNATURE, got %u\n", emh1->dSignature);
 
     ok(emh1->iType == emh2->iType, "expected EMR_HEADER, got %u\n", emh2->iType);
-    ok(emh1->nSize == emh2->nSize, "expected nSize %u, got %u\n", emh1->nSize, emh2->nSize);
+    ok(emh1->nSize == emh2->nSize ||
+       broken(emh1->nSize - diff_nt4 == emh2->nSize) ||
+       broken(emh1->nSize - diff_9x == emh2->nSize),
+       "expected nSize %u, got %u\n", emh1->nSize, emh2->nSize);
     ok(emh1->dSignature == emh2->dSignature, "expected dSignature %u, got %u\n", emh1->dSignature, emh2->dSignature);
-    ok(emh1->nBytes == emh2->nBytes, "expected nBytes %u, got %u\n", emh1->nBytes, emh2->nBytes);
-    ok(emh1->nRecords == emh2->nRecords, "expected nBytes %u, got %u\n", emh1->nRecords, emh2->nRecords);
+    ok(emh1->nBytes == emh2->nBytes ||
+       broken(emh1->nBytes - diff_nt4 == emh2->nBytes) ||
+       broken(emh1->nBytes - diff_9x == emh2->nBytes),
+       "expected nBytes %u, got %u\n", emh1->nBytes, emh2->nBytes);
+    ok(emh1->nRecords == emh2->nRecords, "expected nRecords %u, got %u\n", emh1->nRecords, emh2->nRecords);
 
-    offset = emh1->nSize;
-    while (offset < emh1->nBytes)
+    offset1 = emh1->nSize;
+    offset2 = emh2->nSize; /* Needed for Win9x/WinME/NT4 */
+    while (offset1 < emh1->nBytes)
     {
-	const ENHMETARECORD *emr1 = (const ENHMETARECORD *)(bits + offset);
-	const ENHMETARECORD *emr2 = (const ENHMETARECORD *)(buf + offset);
+	const ENHMETARECORD *emr1 = (const ENHMETARECORD *)(bits + offset1);
+	const ENHMETARECORD *emr2 = (const ENHMETARECORD *)(buf + offset2);
 
-	trace("EMF record %u, size %u/record %u, size %u\n",
-              emr1->iType, emr1->nSize, emr2->iType, emr2->nSize);
+	trace("%s: EMF record %u, size %u/record %u, size %u\n",
+              desc, emr1->iType, emr1->nSize, emr2->iType, emr2->nSize);
 
         if (!match_emf_record(emr1, emr2, desc, ignore_scaling)) return -1;
 
-	offset += emr1->nSize;
+        /* We have already bailed out if iType or nSize don't match */
+	offset1 += emr1->nSize;
+	offset2 += emr2->nSize;
     }
     return 0;
 }
