@@ -242,11 +242,6 @@ sub _parse_c_warning($$$$$$) {
         $current .= $lines[1] . "\n" if $lines[1];
     }
 
-    if (0) {
-	(my $package, my $filename, my $line) = caller(0);
-	$output->write("*** caller ***: $filename:$line\n");
-    }
-
     if($current) {
 	$output->write("$$file:$line." . ($column + 1) . ": $context: $message: \\\n$current");
     } else {
@@ -854,8 +849,6 @@ sub parse_c_file($$$$) {
 
 	if($line != $previous_line) {
 	    &$$found_line($line);
-	} elsif(0 && $column == $previous_column) {
-	    $self->_parse_c_error($_, $line, $column, "file", "no progress");
 	} else {
 	    # &$$found_line("$line.$column");
 	}
@@ -1098,14 +1091,7 @@ sub parse_c_file($$$$) {
 	    }
 	} elsif(s/^;//) {
 	    $declaration .= $&;
-	    if(0 && $blevel == 1 &&
-	       $declaration !~ /^typedef/ &&
-	       $declaration !~ /^(?:const\s+|extern\s+|static\s+|volatile\s+)?(?:interface|struct|union)(?:\s+\w+)?\s*\{/s &&
-	       $declaration =~ /^(?:\w+(?:\s*\*)*\s+)*(\w+)\s*\(\s*(?:(?:\w+\s*,\s*)*(\w+))?\s*\)\s*(.*?);$/s &&
-	       $1 ne "ICOM_VTABLE" && defined($2) && $2 ne "void" && $3) # K&R
-	    {
-		$self->_parse_c_warning("", $line, $column, "file", "function $1: warning: function has K&R format");
-	    } elsif($plevel == 1 && $blevel == 1) {
+	    if($plevel == 1 && $blevel == 1) {
 		$declaration =~ s/\s*;$//;
 		if($declaration && !$self->parse_c_declaration(\$declaration, \$declaration_line, \$declaration_column)) {
 		    return 0;
