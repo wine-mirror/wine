@@ -55,7 +55,6 @@ const VGA_MODE *VGA_GetModeInfo(WORD mode);
 int VGA_SetMode(WORD mode);
 
 /* graphics mode */
-int VGA_SetGraphicMode(WORD mode);
 int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth);
 void VGA_SetPalette(PALETTEENTRY*pal,int start,int len);
 void VGA_SetColor16(int reg,int color);

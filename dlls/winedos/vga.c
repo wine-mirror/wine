@@ -884,41 +884,7 @@ const VGA_MODE *VGA_GetModeInfo(WORD mode)
     return NULL;
 }
 
-const VGA_MODE *VGA_GetModeInfoList(void)
-{
-    return VGA_modelist;
-}
-
-int VGA_SetMode(WORD mode)
-{
-    const VGA_MODE *ModeInfo;
-    /* get info on VGA mode & set appropriately */
-    VGA_CurrentMode = mode;
-    ModeInfo = VGA_GetModeInfo(VGA_CurrentMode);
-
-    /* check if mode is supported */
-    if (ModeInfo->Supported)
-    {
-       FIXME("Setting VGA mode %i - Supported mode - Improve reporting of missing capabilities for modes & modetypes.\n", mode);
-    }
-    else
-    {
-       FIXME("Setting VGA mode %i - Unsupported mode - Will doubtfully work at all, but we'll try anyways.\n", mode);
-    }
-
-    /* set up graphic or text display */
-    if (ModeInfo->ModeType == TEXT)
-    {
-       VGA_SetAlphaMode(ModeInfo->TextCols, ModeInfo->TextRows);
-    }
-    else
-    {
-       return VGA_SetGraphicMode(mode);
-    }
-    return 0; /* assume all good & return zero */
-}
-
-int VGA_SetGraphicMode(WORD mode)
+static int VGA_SetGraphicMode(WORD mode)
 {
     ModeSet par;
     int     newSize;
@@ -998,6 +964,35 @@ int VGA_SetGraphicMode(WORD mode)
 
     MZ_RunInThread(VGA_DoSetMode, (ULONG_PTR)&par);
     return par.ret;
+}
+
+int VGA_SetMode(WORD mode)
+{
+    const VGA_MODE *ModeInfo;
+    /* get info on VGA mode & set appropriately */
+    VGA_CurrentMode = mode;
+    ModeInfo = VGA_GetModeInfo(VGA_CurrentMode);
+
+    /* check if mode is supported */
+    if (ModeInfo->Supported)
+    {
+       FIXME("Setting VGA mode %i - Supported mode - Improve reporting of missing capabilities for modes & modetypes.\n", mode);
+    }
+    else
+    {
+       FIXME("Setting VGA mode %i - Unsupported mode - Will doubtfully work at all, but we'll try anyways.\n", mode);
+    }
+
+    /* set up graphic or text display */
+    if (ModeInfo->ModeType == TEXT)
+    {
+       VGA_SetAlphaMode(ModeInfo->TextCols, ModeInfo->TextRows);
+    }
+    else
+    {
+       return VGA_SetGraphicMode(mode);
+    }
+    return 0; /* assume all good & return zero */
 }
 
 int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth)
