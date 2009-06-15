@@ -390,8 +390,22 @@ static HRESULT WINAPI ThreadMgr_GetGlobalCompartment( ITfThreadMgr* iface,
 ITfCompartmentMgr **ppCompMgr)
 {
     ThreadMgr *This = (ThreadMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    HRESULT hr;
+    TRACE("(%p) %p\n",This, ppCompMgr);
+
+    if (!ppCompMgr)
+        return E_INVALIDARG;
+
+    if (!globalCompartmentMgr)
+    {
+        hr = CompartmentMgr_Constructor(NULL,&IID_ITfCompartmentMgr,(IUnknown**)&globalCompartmentMgr);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    ITfCompartmentMgr_AddRef(globalCompartmentMgr);
+    *ppCompMgr = globalCompartmentMgr;
+    return S_OK;
 }
 
 static const ITfThreadMgrVtbl ThreadMgr_ThreadMgrVtbl =

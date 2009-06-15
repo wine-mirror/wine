@@ -29,6 +29,7 @@
 
 extern DWORD tlsIndex;
 extern TfClientId processId;
+extern ITfCompartmentMgr *globalCompartmentMgr;
 
 extern HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut);
 extern HRESULT DocumentMgr_Constructor(ITfThreadMgrEventSink*, ITfDocumentMgr **ppOut);

@@ -74,6 +74,7 @@ static UINT activated = 0;
 
 DWORD tlsIndex = 0;
 TfClientId processId = 0;
+ITfCompartmentMgr *globalCompartmentMgr = NULL;
 
 const WCHAR szwSystemTIPKey[] = {'S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\','C','T','F','\\','T','I','P',0};
 
