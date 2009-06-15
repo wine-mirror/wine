@@ -251,7 +251,7 @@ static void test_special_url_action(IInternetSecurityManager *secmgr, IInternetZ
     hres = IInternetZoneManager_GetZoneActionPolicy(zonemgr, 3, action, (BYTE*)&policy,
             sizeof(DWORD), URLZONEREG_DEFAULT);
     ok(hres == S_OK, "GetZoneActionPolicy failed: %08x\n", hres);
-    ok(policy == URLPOLICY_DISALLOW, "(%x) policy=%x, expected URLPOLIVY_DISALLOW\n", action, policy);
+    ok(policy == URLPOLICY_DISALLOW, "(%x) policy=%x, expected URLPOLICY_DISALLOW\n", action, policy);
 
     policy = 0xdeadbeef;
     hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url1, action, (BYTE*)&policy,
