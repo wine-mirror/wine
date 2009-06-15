@@ -416,8 +416,7 @@ static void WCMD_show_prompt (void) {
  */
 WCHAR *WCMD_strdupW(WCHAR *input) {
    int len=strlenW(input)+1;
-   /* Note: Use malloc not HeapAlloc to emulate strdup */
-   WCHAR *result = malloc(len * sizeof(WCHAR));
+   WCHAR *result = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
    memcpy(result, input, len * sizeof(WCHAR));
    return result;
 }
@@ -749,9 +748,9 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
                 thisVarContents + (lastFound-searchIn));
         strcatW(outputposn, s);
       }
-      free(s);
-      free(searchIn);
-      free(searchFor);
+      HeapFree(GetProcessHeap(), 0, s);
+      HeapFree(GetProcessHeap(), 0, searchIn);
+      HeapFree(GetProcessHeap(), 0, searchFor);
       return start;
     }
     return start+1;

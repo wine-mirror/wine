@@ -1033,7 +1033,7 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
   if (conditionTRUE && firstcmd && *firstcmd) {
     WCHAR *command = WCMD_strdupW(firstcmd);
     WCMD_execute (firstcmd, (*cmdList)->redirects, variable, value, cmdList);
-    free (command);
+    HeapFree(GetProcessHeap(), 0, command);
   }
 
 
