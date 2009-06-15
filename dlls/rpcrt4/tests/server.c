@@ -56,13 +56,13 @@ static void InitFunctionPointers(void)
 void __RPC_FAR *__RPC_USER
 midl_user_allocate(SIZE_T n)
 {
-  return malloc(n);
+  return HeapAlloc(GetProcessHeap(), 0, n);
 }
 
 void __RPC_USER
 midl_user_free(void __RPC_FAR *p)
 {
-  free(p);
+  HeapFree(GetProcessHeap(), 0, p);
 }
 
 static char *
@@ -1218,21 +1218,21 @@ array_tests(void)
   ok(sum_toplev_conf_cond(c, 5, 6, 1) == 10, "RPC sum_toplev_conf_cond\n");
   ok(sum_toplev_conf_cond(c, 5, 6, 0) == 15, "RPC sum_toplev_conf_cond\n");
 
-  dc = malloc(FIELD_OFFSET(doub_carr_t, a[2]));
+  dc = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(doub_carr_t, a[2]));
   dc->n = 2;
-  dc->a[0] = malloc(FIELD_OFFSET(doub_carr_1_t, a[3]));
+  dc->a[0] = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(doub_carr_1_t, a[3]));
   dc->a[0]->n = 3;
   dc->a[0]->a[0] = 5;
   dc->a[0]->a[1] = 1;
   dc->a[0]->a[2] = 8;
-  dc->a[1] = malloc(FIELD_OFFSET(doub_carr_1_t, a[2]));
+  dc->a[1] = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(doub_carr_1_t, a[2]));
   dc->a[1]->n = 2;
   dc->a[1]->a[0] = 2;
   dc->a[1]->a[1] = 3;
   ok(sum_doub_carr(dc) == 19, "RPC sum_doub_carr\n");
-  free(dc->a[0]);
-  free(dc->a[1]);
-  free(dc);
+  HeapFree(GetProcessHeap(), 0, dc->a[0]);
+  HeapFree(GetProcessHeap(), 0, dc->a[1]);
+  HeapFree(GetProcessHeap(), 0, dc);
 
   dc = NULL;
   make_pyramid_doub_carr(4, &dc);
