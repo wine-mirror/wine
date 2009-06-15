@@ -101,6 +101,7 @@ void WCMD_HandleTildaModifiers(WCHAR **start, WCHAR *forVariable, WCHAR *forValu
 void WCMD_splitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
 WCHAR *WCMD_LoadMessage(UINT id);
 WCHAR *WCMD_strdupW(WCHAR *input);
+void WCMD_strsubstW(WCHAR *start, WCHAR* next, WCHAR* insert, int len);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars,
                    LPDWORD charsRead, const LPOVERLAPPED unused);
 

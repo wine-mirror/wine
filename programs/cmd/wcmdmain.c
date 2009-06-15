@@ -422,6 +422,22 @@ WCHAR *WCMD_strdupW(WCHAR *input) {
    return result;
 }
 
+/*************************************************************************
+ * WCMD_strsubstW
+ *    Replaces a portion of a Unicode string with the specified string.
+ *    It's up to the caller to ensure there is enough space in the
+ *    destination buffer.
+ */
+void WCMD_strsubstW(WCHAR* start, WCHAR* next, WCHAR* insert, int len) {
+
+   if (len < 0)
+      len=insert ? lstrlenW(insert) : 0;
+   if (start+len != next)
+       memmove(start+len, next, (strlenW(next) + 1) * sizeof(*next));
+   if (insert)
+       memcpy(start, insert, len * sizeof(*insert));
+}
+
 /***************************************************************************
  * WCMD_strtrim_leading_spaces
  *
@@ -493,9 +509,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
       /* In batch program, missing terminator for % and no following
          ':' just removes the '%'                                   */
       if (context) {
-        s = WCMD_strdupW(start + 1);
-        strcpyW (start, s);
-        free(s);
+        WCMD_strsubstW(start, start + 1, NULL, 0);
         return start;
       } else {
 
@@ -608,24 +622,20 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
       /* Command line - just ignore this */
       if (context == NULL) return endOfVar+1;
 
-      s = WCMD_strdupW(endOfVar + 1);
 
       /* Batch - replace unknown env var with nothing */
       if (colonpos == NULL) {
-        strcpyW (start, s);
-
+        WCMD_strsubstW(start, endOfVar + 1, NULL, 0);
       } else {
         len = strlenW(thisVar);
         thisVar[len-1] = 0x00;
         /* If %:...% supplied, : is retained */
         if (colonpos == thisVar+1) {
-          strcpyW (start, colonpos);
+          WCMD_strsubstW(start, endOfVar + 1, colonpos, -1);
         } else {
-          strcpyW (start, colonpos+1);
+          WCMD_strsubstW(start, endOfVar + 1, colonpos + 1, -1);
         }
-        strcatW (start, s);
       }
-      free (s);
       return start;
 
     }
@@ -633,10 +643,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
     /* See if we need to do complex substitution (any ':'s), if not
        then our work here is done                                  */
     if (colonpos == NULL) {
-      s = WCMD_strdupW(endOfVar + 1);
-      strcpyW (start, thisVarContents);
-      strcatW (start, s);
-      free(s);
+      WCMD_strsubstW(start, endOfVar + 1, thisVarContents, -1);
       return start;
     }
 
@@ -664,8 +671,6 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
       substrposition = atolW(colonpos+2);
       if (commapos) substrlength = atolW(commapos+1);
 
-      s = WCMD_strdupW(endOfVar + 1);
-
       /* Check bounds */
       if (substrposition >= 0) {
         startCopy = &thisVarContents[min(substrposition, len)];
@@ -674,21 +679,18 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
       }
 
       if (commapos == NULL) {
-        strcpyW (start, startCopy); /* Copy the lot */
+        /* Copy the lot */
+        WCMD_strsubstW(start, endOfVar + 1, startCopy, -1);
       } else if (substrlength < 0) {
 
         int copybytes = (len+substrlength-1)-(startCopy-thisVarContents);
         if (copybytes > len) copybytes = len;
         else if (copybytes < 0) copybytes = 0;
-        memcpy (start, startCopy, copybytes * sizeof(WCHAR)); /* Copy the lot */
-        start[copybytes] = 0x00;
+        WCMD_strsubstW(start, endOfVar + 1, startCopy, copybytes);
       } else {
-        memcpy (start, startCopy, substrlength * sizeof(WCHAR)); /* Copy the lot */
-        start[substrlength] = 0x00;
+        WCMD_strsubstW(start, endOfVar + 1, startCopy, substrlength);
       }
 
-      strcatW (start, s);
-      free(s);
       return start;
 
     /* search and replace manipulation */
@@ -723,7 +725,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR *forVar, WCHAR *forVal) {
           strcatW(start, thisVarContents + (found-searchIn) + strlenW(searchFor+1));
           strcatW(start, s);
         } else {
-          /* Copy as it */
+          /* Copy as is */
           strcpyW(start, thisVarContents);
           strcatW(start, s);
         }
@@ -772,7 +774,7 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR
   /*   manual expansion of environment variables here            */
 
   WCHAR *p = cmd;
-  WCHAR *s, *t;
+  WCHAR *t;
   int   i;
 
   while ((p = strchrW(p, '%'))) {
@@ -784,9 +786,7 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR
     /* Don't touch %% unless its in Batch */
     if (!justFors && *(p+1) == '%') {
       if (context) {
-        s = WCMD_strdupW(p+1);
-        strcpyW (p, s);
-        free (s);
+        WCMD_strsubstW(p, p+1, NULL, 0);
       }
       p+=1;
 
@@ -797,21 +797,17 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR
 
     /* Replace use of %0...%9 if in batch program*/
     } else if (!justFors && context && (i >= 0) && (i <= 9)) {
-      s = WCMD_strdupW(p+2);
       t = WCMD_parameter (context -> command, i + context -> shift_count[i], NULL);
-      strcpyW (p, t);
-      strcatW (p, s);
-      free (s);
+      WCMD_strsubstW(p, p+2, t, -1);
 
     /* Replace use of %* if in batch program*/
     } else if (!justFors && context && *(p+1)=='*') {
       WCHAR *startOfParms = NULL;
-      s = WCMD_strdupW(p+2);
       t = WCMD_parameter (context -> command, 1, &startOfParms);
-      if (startOfParms != NULL) strcpyW (p, startOfParms);
-      else *p = 0x00;
-      strcatW (p, s);
-      free (s);
+      if (startOfParms != NULL)
+        WCMD_strsubstW(p, p+2, startOfParms, -1);
+      else
+        WCMD_strsubstW(p, p+2, NULL, 0);
 
     } else if (forVariable &&
                (CompareString (LOCALE_USER_DEFAULT,
@@ -819,10 +815,7 @@ static void handleExpansion(WCHAR *cmd, BOOL justFors, WCHAR *forVariable, WCHAR
                                p,
                                strlenW(forVariable),
                                forVariable, -1) == 2)) {
-      s = WCMD_strdupW(p + strlenW(forVariable));
-      strcpyW(p, forValue);
-      strcatW(p, s);
-      free(s);
+      WCMD_strsubstW(p, p + strlenW(forVariable), forValue, -1);
 
     } else if (!justFors) {
       p = WCMD_expand_envvar(p, forVariable, forValue);
