@@ -64,6 +64,9 @@ NetBSD-Info:
   Stellen Sie sicher, dass Sie die Optionen USER_LDT, SYSVSHM, SYSVSEM und
   SYSVMSG in Ihrem Kernel aktiviert haben.
 
+Mac OS X Info:
+  Sie benötigen mindestens Xcode 2.4 um richtig unter x86 kompilieren zu können.
+
 Unterstützte Dateisysteme:
   Wine sollte auf den meisten Dateisystemen laufen. Jedoch wird Wine nicht
   starten, wenn umsdos für das Verzeichnis /tmp benutzt wird. Ein paar
@@ -85,6 +88,9 @@ Optionale Support-Bibliotheken:
   Der ./configure Aufruf zeigt am Ende optionale Bibliotheken an,
   die von Wine benutzt werden können, aber auf dem System nicht vorhanden
   sind.
+
+  Auf 64-Bit Plattformen benötigen Sie die 32-bit
+  Versionen dieser Bibliotheken; siehe dazu http://wiki.winehq.org/WineOn64bit
 
 4. KOMPILIEREN
 
@@ -109,10 +115,10 @@ wechsen Sie erst mit cd in das Wurzelverzeichnis dieses Releases (das,
 welches diese README-Datei enthält). Geben Sie dann "make clean" ein
 und patchen Sie das Release mit dem Kommando:
 
-    gunzip -c patch-file | patch -p1
+    bunzip2 -c Patch-Datei | patch -p1
 
-wobei "patch-file" der Name der Patch-Datei ist (etwas wie
-Wine-yymmdd.diff.gz). Sie können dann erneut "./configure" und danach
+wobei "Patch-Datei" der Name der Patch-Datei ist (sowas wie
+wine-1.0.x.diff.bz2). Sie können dann erneut "./configure" und danach
 "make depend && make" aufrufen.
 
 5. SETUP
@@ -137,16 +143,16 @@ und führen Sie ldconfig als root aus.
 Wenn Sie Wine aufrufen, können Sie den vollständigen Pfad zur ausführbaren
 Datei angeben oder nur einen Dateinamen.
 
-Beispiel: Um Solitaire auszuführen:
+Beispiel: Um Notepad auszuführen:
 
-	wine sol		   (den Suchpfad, der in der Konfiguartions-Datei 
-	wine sol.exe		   angegeben wurde, benutzend)
+	wine notepad		   (den Suchpfad, der in der Konfiguartions-Datei
+	wine notepad.exe	   angegeben wurde, benutzend)
 
-	wine c:\\windows\\sol.exe  (die Dateinamen-Syntax von DOS benutzend)
+	wine c:\\windows\\notepad.exe  (die Dateinamen-Syntax von DOS benutzend)
 
-	wine /usr/windows/sol.exe  (die Dateinamen-Syntax von Unix benutzend)
+	wine ~/.wine/drive_c/windows/notepad.exe  (die Dateinamen-Syntax von Unix benutzend)
 
-        wine sol.exe /parameter1 -parameter2 parameter3
+        wine notepad.exe /parameter1 -parameter2 parameter3
 				   (Programmaufruf mit Parametern)
 
 Hinweis: Der Pfad zur Datei wird auch zum Pfad hinzugefügt, wenn ein vollständiger
@@ -188,12 +194,14 @@ Fehler:	Melden Sie Fehler bitte an Wine-Bugzilla unter http://bugs.winehq.org
 
 IRC:	Online-Hilfe wird Ihnen im Chat-Kanal #WineHQ unter irc.freenode.net gewährt.
 
-CVS:	Der aktuelle Wine-Entwicklungs-Tree ist über CVS verfügbar.
-	Besuchen Sie http://www.winehq.org/cvs für weitere Informationen.
+GIT:	Der aktuelle Wine-Entwicklungs-Zweig ist über GIT verfügbar.
+	Besuchen Sie http://www.winehq.org/site/git für weitere Informationen.
 
 Mailing-Listen:
 	Es gibt mehrere Mailing-Listen für die Wine-Entwickler; Schauen Sie
 	sich bitte dazu http://www.winehq.org/forums an.
+
+Wiki:	Das Wine-Wiki finden Sie unter http://wiki.winehq.org
 
 Wenn Sie etwas hinzufügen oder einen Fehler beheben, senden Sie den Patch bitte 
 (im 'diff -u'-Format) an die Liste wine-patches@winehq.org, um ihn in die nächste
