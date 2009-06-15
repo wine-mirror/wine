@@ -705,12 +705,6 @@ static int DPMI_FreeRMCB( DWORD address )
 }
 
 
-void WINAPI DPMI_FreeInternalRMCB( FARPROC16 proc )
-{
-    DPMI_FreeRMCB( (DWORD)proc );
-}
-
-
 /**********************************************************************
  *	    DOSVM_RawModeSwitchHandler
  *
