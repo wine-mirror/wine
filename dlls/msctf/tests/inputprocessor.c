@@ -1479,10 +1479,11 @@ static const ITfEditSessionVtbl EditSession_EditSessionVtbl =
     EditSession_DoEditSession
 };
 
-HRESULT EditSession_Constructor(ITfEditSession **ppOut)
+static HRESULT EditSession_Constructor(ITfEditSession **ppOut)
 {
     EditSession *This;
 
+    *ppOut = NULL;
     This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(EditSession));
     if (This == NULL)
         return E_OUTOFMEMORY;
