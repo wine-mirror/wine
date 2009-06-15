@@ -3652,6 +3652,8 @@ typedef struct LVTILEINFO
 	int iItem;
 	UINT cColumns;
 	PUINT puColumns;
+        /* (_WIN32_WINNT >= 0x0600) */
+	int* piColFmt;
 } LVTILEINFO, *PLVTILEINFO;
 
 typedef struct LVTILEVIEWINFO
