@@ -9233,11 +9233,16 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 	    LISTVIEW_DrawTrackLine(infoPtr);
 	    infoPtr->xTrackLine = -1;
 	    break;
-	    
+
+        case HDN_BEGINDRAG:
+            notify_forward_header(infoPtr, lpnmh);
+            return (infoPtr->dwLvExStyle & LVS_EX_HEADERDRAGDROP) == 0;
+
         case HDN_ENDDRAG:
             FIXME("Changing column order not implemented\n");
+            notify_forward_header(infoPtr, lpnmh);
             return TRUE;
-            
+
         case HDN_ITEMCHANGINGW:
         case HDN_ITEMCHANGINGA:
             return notify_forward_header(infoPtr, lpnmh);
