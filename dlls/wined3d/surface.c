@@ -34,6 +34,64 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
+static void surface_cleanup(IWineD3DSurfaceImpl *This)
+{
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    renderbuffer_entry_t *entry, *entry2;
+
+    TRACE("(%p) : Cleaning up.\n", This);
+
+    /* Need a context to destroy the texture. Use the currently active render
+     * target, but only if the primary render target exists. Otherwise
+     * lastActiveRenderTarget is garbage. When destroying the primary render
+     * target, Uninit3D() will activate a context before doing anything. */
+    if (device->render_targets && device->render_targets[0])
+    {
+        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    }
+
+    ENTER_GL();
+
+    if (This->glDescription.textureName)
+    {
+        /* Release the OpenGL texture. */
+        TRACE("Deleting texture %u.\n", This->glDescription.textureName);
+        glDeleteTextures(1, &This->glDescription.textureName);
+    }
+
+    if (This->Flags & SFLAG_PBO)
+    {
+        /* Delete the PBO. */
+        GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry)
+    {
+        GL_EXTCALL(glDeleteRenderbuffersEXT(1, &entry->id));
+        HeapFree(GetProcessHeap(), 0, entry);
+    }
+
+    LEAVE_GL();
+
+    if (This->Flags & SFLAG_DIBSECTION)
+    {
+        /* Release the DC. */
+        SelectObject(This->hDC, This->dib.holdbitmap);
+        DeleteDC(This->hDC);
+        /* Release the DIB section. */
+        DeleteObject(This->dib.DIBsection);
+        This->dib.bitmap_data = NULL;
+        This->resource.allocatedMemory = NULL;
+    }
+
+    if (This->Flags & SFLAG_USERPTR) IWineD3DSurface_SetMem((IWineD3DSurface *)This, NULL);
+    if (This->overlay_dest) list_remove(&This->overlay_entry);
+
+    HeapFree(GetProcessHeap(), 0, This->palette9);
+
+    resource_cleanup((IWineD3DResource *)This);
+}
+
 static void surface_force_reload(IWineD3DSurface *iface)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
@@ -540,59 +598,15 @@ static ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface)
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %d\n", This, ref + 1);
-    if (ref == 0) {
-        IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
-        renderbuffer_entry_t *entry, *entry2;
-        TRACE("(%p) : cleaning up\n", This);
 
-        /* Need a context to destroy the texture. Use the currently active render target, but only if
-         * the primary render target exists. Otherwise lastActiveRenderTarget is garbage, see above.
-         * When destroying the primary rt, Uninit3D will activate a context before doing anything
-         */
-        if(device->render_targets && device->render_targets[0]) {
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        }
+    if (!ref)
+    {
+        surface_cleanup(This);
 
-        ENTER_GL();
-        if (This->glDescription.textureName != 0) { /* release the openGL texture.. */
-            TRACE("Deleting texture %d\n", This->glDescription.textureName);
-            glDeleteTextures(1, &This->glDescription.textureName);
-        }
-
-        if(This->Flags & SFLAG_PBO) {
-            /* Delete the PBO */
-            GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
-        }
-
-        LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &This->renderbuffers, renderbuffer_entry_t, entry) {
-            GL_EXTCALL(glDeleteRenderbuffersEXT(1, &entry->id));
-            HeapFree(GetProcessHeap(), 0, entry);
-        }
-        LEAVE_GL();
-
-        if(This->Flags & SFLAG_DIBSECTION) {
-            /* Release the DC */
-            SelectObject(This->hDC, This->dib.holdbitmap);
-            DeleteDC(This->hDC);
-            /* Release the DIB section */
-            DeleteObject(This->dib.DIBsection);
-            This->dib.bitmap_data = NULL;
-            This->resource.allocatedMemory = NULL;
-        }
-        if(This->Flags & SFLAG_USERPTR) IWineD3DSurface_SetMem(iface, NULL);
-
-        HeapFree(GetProcessHeap(), 0, This->palette9);
-
-        resource_cleanup((IWineD3DResource *)iface);
-
-        if(This->overlay_dest) {
-            list_remove(&This->overlay_entry);
-        }
-
-        TRACE("(%p) Released\n", This);
+        TRACE("(%p) Released.\n", This);
         HeapFree(GetProcessHeap(), 0, This);
-
     }
+
     return ref;
 }
 
