@@ -142,27 +142,6 @@ static void WINAPI TIMER_DoSetTimer( ULONG_PTR arg )
 
 
 /***********************************************************************
- *              DOSVM_GetTimer
- */
-UINT WINAPI DOSVM_GetTimer( void )
-{
-    if (!DOSVM_IsWin16())
-    {
-        DWORD millis = GetTickCount() - TIMER_stamp;
-        INT   ticks = MulDiv( millis, TIMER_FREQ, 1000 );
-
-        /* sanity check - tick wrap or suspended process or update race */
-        if (ticks < 0 || ticks >= TIMER_ticks)
-            ticks = 0;
-
-        return ticks;
-    }
-
-    return 0;
-}
-
-
-/***********************************************************************
  *              DOSVM_SetTimer
  */
 void WINAPI DOSVM_SetTimer( UINT ticks )

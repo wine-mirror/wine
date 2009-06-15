@@ -363,7 +363,6 @@ extern DWORD WINAPI DOSVM_Loop( HANDLE hThread );
 extern void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data );
 extern void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void WINAPI DOSVM_SetTimer( UINT ticks );
-extern UINT WINAPI DOSVM_GetTimer( void );
 
 /* devices.c */
 extern void DOSDEV_InstallDOSDevices(void);
