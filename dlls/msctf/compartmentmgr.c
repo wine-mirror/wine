@@ -129,7 +129,7 @@ static ULONG WINAPI CompartmentMgr_Release(ITfCompartmentMgr *iface)
     }
 }
 
-HRESULT WINAPI CompartmentMgr_GetCompartment(ITfCompartmentMgr *iface,
+static HRESULT WINAPI CompartmentMgr_GetCompartment(ITfCompartmentMgr *iface,
         REFGUID rguid, ITfCompartment **ppcomp)
 {
     CompartmentMgr *This = (CompartmentMgr *)iface;
@@ -137,7 +137,7 @@ HRESULT WINAPI CompartmentMgr_GetCompartment(ITfCompartmentMgr *iface,
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI CompartmentMgr_ClearCompartment(ITfCompartmentMgr *iface,
+static HRESULT WINAPI CompartmentMgr_ClearCompartment(ITfCompartmentMgr *iface,
     TfClientId tid, REFGUID rguid)
 {
     CompartmentMgr *This = (CompartmentMgr *)iface;
@@ -145,7 +145,7 @@ HRESULT WINAPI CompartmentMgr_ClearCompartment(ITfCompartmentMgr *iface,
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI CompartmentMgr_EnumCompartments(ITfCompartmentMgr *iface,
+static HRESULT WINAPI CompartmentMgr_EnumCompartments(ITfCompartmentMgr *iface,
  IEnumGUID **ppEnum)
 {
     CompartmentMgr *This = (CompartmentMgr *)iface;
