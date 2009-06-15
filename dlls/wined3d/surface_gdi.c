@@ -35,6 +35,29 @@
 /* Use the d3d_surface debug channel to have one channel for all surfaces */
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
+static void surface_gdi_cleanup(IWineD3DSurfaceImpl *This)
+{
+    TRACE("(%p) : Cleaning up.\n", This);
+
+    if (This->Flags & SFLAG_DIBSECTION)
+    {
+        /* Release the DC. */
+        SelectObject(This->hDC, This->dib.holdbitmap);
+        DeleteDC(This->hDC);
+        /* Release the DIB section. */
+        DeleteObject(This->dib.DIBsection);
+        This->dib.bitmap_data = NULL;
+        This->resource.allocatedMemory = NULL;
+    }
+
+    if (This->Flags & SFLAG_USERPTR) IWineD3DSurface_SetMem((IWineD3DSurface *)This, NULL);
+    if (This->overlay_dest) list_remove(&This->overlay_entry);
+
+    HeapFree(GetProcessHeap(), 0, This->palette9);
+
+    resource_cleanup((IWineD3DResource *)This);
+}
+
 /*****************************************************************************
  * IWineD3DSurface::Release, GDI version
  *
@@ -46,32 +69,15 @@ static ULONG WINAPI IWineGDISurfaceImpl_Release(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %d\n", This, ref + 1);
-    if (ref == 0) {
-        TRACE("(%p) : cleaning up\n", This);
 
-        if(This->Flags & SFLAG_DIBSECTION) {
-            /* Release the DC */
-            SelectObject(This->hDC, This->dib.holdbitmap);
-            DeleteDC(This->hDC);
-            /* Release the DIB section */
-            DeleteObject(This->dib.DIBsection);
-            This->dib.bitmap_data = NULL;
-            This->resource.allocatedMemory = NULL;
-        }
-        if(This->Flags & SFLAG_USERPTR) IWineD3DSurface_SetMem(iface, NULL);
+    if (!ref)
+    {
+        surface_gdi_cleanup(This);
 
-        HeapFree(GetProcessHeap(), 0, This->palette9);
-
-        resource_cleanup((IWineD3DResource *)iface);
-
-        if(This->overlay_dest) {
-            list_remove(&This->overlay_entry);
-        }
-
-        TRACE("(%p) Released\n", This);
+        TRACE("(%p) Released.\n", This);
         HeapFree(GetProcessHeap(), 0, This);
-
     }
+
     return ref;
 }
 
