@@ -3875,6 +3875,6 @@ GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 
                                          GDIPCONST PointF *positions, INT flags,
                                          GDIPCONST GpMatrix *matrix )
 {
-    FIXME("(%p %p %d %p %p %p %d %p): stub \n", graphics, text, length, font, brush, positions, flags, matrix);
+    FIXME("(%p %p %d %p %p %p %d %p): stub\n", graphics, text, length, font, brush, positions, flags, matrix);
     return NotImplemented;
 }
