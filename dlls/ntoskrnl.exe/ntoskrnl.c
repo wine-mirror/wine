@@ -909,6 +909,21 @@ NTSTATUS WINAPI ExInitializeResourceLite(PERESOURCE Resource)
 
 
 /***********************************************************************
+ *           ExInitializeNPagedLookasideList   (NTOSKRNL.EXE.@)
+ */
+void WINAPI ExInitializeNPagedLookasideList(PNPAGED_LOOKASIDE_LIST Lookaside,
+                                            PALLOCATE_FUNCTION Allocate,
+                                            PFREE_FUNCTION Free,
+                                            ULONG Flags,
+                                            SIZE_T Size,
+                                            ULONG Tag,
+                                            USHORT Depth)
+{
+    FIXME( "stub: %p, %p, %p, %u, %lu, %u, %u\n", Lookaside, Allocate, Free, Flags, Size, Tag, Depth );
+}
+
+
+/***********************************************************************
  *           ExInitializeZone   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI ExInitializeZone(PZONE_HEADER Zone,

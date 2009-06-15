@@ -124,13 +124,16 @@ typedef enum _KWAIT_REASON
     MaximumWaitReason,
 } KWAIT_REASON;
 
+typedef struct _ALLOCATE_FUNCTION *PALLOCATE_FUNCTION;
 typedef struct _IO_TIMER *PIO_TIMER;
 typedef struct _IO_TIMER_ROUTINE *PIO_TIMER_ROUTINE;
 typedef struct _ETHREAD *PETHREAD;
+typedef struct _FREE_FUNCTION *PFREE_FUNCTION;
 typedef struct _KTHREAD *PKTHREAD;
 typedef struct _EPROCESS *PEPROCESS;
 typedef struct _ERESOURCE *PERESOURCE;
 typedef struct _IO_WORKITEM *PIO_WORKITEM;
+typedef struct _NPAGED_LOOKASIDE_LIST *PNPAGED_LOOKASIDE_LIST;
 typedef struct _OBJECT_TYPE *POBJECT_TYPE;
 typedef struct _OBJECT_HANDLE_INFORMATION *POBJECT_HANDLE_INFORMATION;
 typedef struct _ZONE_HEADER *PZONE_HEADER;
