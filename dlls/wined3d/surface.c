@@ -94,6 +94,31 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
     resource_cleanup((IWineD3DResource *)This);
 }
 
+UINT surface_calculate_size(const struct GlPixelFormatDesc *format_desc, UINT alignment, UINT width, UINT height)
+{
+    UINT size;
+
+    if (format_desc->format == WINED3DFMT_UNKNOWN)
+    {
+        size = 0;
+    }
+    else if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    {
+        UINT row_block_count = (width + format_desc->block_width - 1) / format_desc->block_width;
+        UINT row_count = (height + format_desc->block_height - 1) / format_desc->block_height;
+        size = row_count * row_block_count * format_desc->block_byte_count;
+    }
+    else
+    {
+        /* The pitch is a multiple of 4 bytes. */
+        size = height * (((width * format_desc->byte_count) + alignment - 1) & ~(alignment - 1));
+    }
+
+    if (format_desc->heightscale != 0.0) size *= format_desc->heightscale;
+
+    return size;
+}
+
 HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
         UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
         UINT multisample_quality, IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format,
@@ -113,24 +138,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
 
     /* FIXME: Check that the format is supported by the device. */
 
-    if (format == WINED3DFMT_UNKNOWN)
-    {
-        resource_size = 0;
-    }
-    else if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
-    {
-        UINT row_block_count = (width + format_desc->block_width - 1) / format_desc->block_width;
-        UINT row_count = (height + format_desc->block_height - 1) / format_desc->block_height;
-        resource_size = row_count * row_block_count * format_desc->block_byte_count;
-    }
-    else
-    {
-        /* The pitch is a multiple of 4 bytes. */
-        resource_size = ((width * format_desc->byte_count) + alignment - 1) & ~(alignment - 1);
-        resource_size *= height;
-    }
-
-    if (format_desc->heightscale != 0.0) resource_size *= format_desc->heightscale;
+    resource_size = surface_calculate_size(format_desc, alignment, width, height);
 
     /* Look at the implementation and set the correct Vtable. */
     switch (surface_type)
