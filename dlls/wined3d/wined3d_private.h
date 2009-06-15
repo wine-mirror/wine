@@ -1920,6 +1920,12 @@ struct IWineD3DSurfaceImpl
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
 extern const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl;
 
+void surface_gdi_cleanup(IWineD3DSurfaceImpl *This);
+HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
+        UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
+        UINT multisample_quality, IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format,
+        WINED3DPOOL pool, IUnknown *parent);
+
 /* Predeclare the shared Surface functions */
 HRESULT WINAPI IWineD3DBaseSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID riid, LPVOID *ppobj);
 ULONG WINAPI IWineD3DBaseSurfaceImpl_AddRef(IWineD3DSurface *iface);

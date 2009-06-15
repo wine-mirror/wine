@@ -32,11 +32,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 WINE_DECLARE_DEBUG_CHANNEL(d3d);
-#define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
+
+#define GLINFO_LOCATION (*gl_info)
 
 static void surface_cleanup(IWineD3DSurfaceImpl *This)
 {
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+    const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
     renderbuffer_entry_t *entry, *entry2;
 
     TRACE("(%p) : Cleaning up.\n", This);
@@ -90,6 +92,143 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
     HeapFree(GetProcessHeap(), 0, This->palette9);
 
     resource_cleanup((IWineD3DResource *)This);
+}
+
+HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type, UINT alignment,
+        UINT width, UINT height, UINT level, BOOL lockable, BOOL discard, WINED3DMULTISAMPLE_TYPE multisample_type,
+        UINT multisample_quality, IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format,
+        WINED3DPOOL pool, IUnknown *parent)
+{
+    const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
+    const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, &GLINFO_LOCATION);
+    void (*cleanup)(IWineD3DSurfaceImpl *This);
+    unsigned int resource_size;
+    HRESULT hr;
+
+    if (multisample_quality > 0)
+    {
+        FIXME("multisample_quality set to %u, substituting 0\n", multisample_quality);
+        multisample_quality = 0;
+    }
+
+    /* FIXME: Check that the format is supported by the device. */
+
+    if (format == WINED3DFMT_UNKNOWN)
+    {
+        resource_size = 0;
+    }
+    else if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    {
+        UINT row_block_count = (width + format_desc->block_width - 1) / format_desc->block_width;
+        UINT row_count = (height + format_desc->block_height - 1) / format_desc->block_height;
+        resource_size = row_count * row_block_count * format_desc->block_byte_count;
+    }
+    else
+    {
+        /* The pitch is a multiple of 4 bytes. */
+        resource_size = ((width * format_desc->byte_count) + alignment - 1) & ~(alignment - 1);
+        resource_size *= height;
+    }
+
+    if (format_desc->heightscale != 0.0) resource_size *= format_desc->heightscale;
+
+    /* Look at the implementation and set the correct Vtable. */
+    switch (surface_type)
+    {
+        case SURFACE_OPENGL:
+            surface->lpVtbl = &IWineD3DSurface_Vtbl;
+            cleanup = surface_cleanup;
+            break;
+
+        case SURFACE_GDI:
+            surface->lpVtbl = &IWineGDISurface_Vtbl;
+            cleanup = surface_gdi_cleanup;
+            break;
+
+        default:
+            ERR("Requested unknown surface implementation %#x.\n", surface_type);
+            return WINED3DERR_INVALIDCALL;
+    }
+
+    hr = resource_init((IWineD3DResource *)surface, WINED3DRTYPE_SURFACE,
+            device, resource_size, usage, format_desc, pool, parent);
+    if (FAILED(hr))
+    {
+        WARN("Failed to initialize resource, returning %#x.\n", hr);
+        return hr;
+    }
+
+    /* "Standalone" surface. */
+    IWineD3DSurface_SetContainer((IWineD3DSurface *)surface, NULL);
+
+    surface->currentDesc.Width = width;
+    surface->currentDesc.Height = height;
+    surface->currentDesc.MultiSampleType = multisample_type;
+    surface->currentDesc.MultiSampleQuality = multisample_quality;
+    surface->glDescription.level = level;
+    list_init(&surface->overlays);
+
+    /* Flags */
+    surface->Flags = SFLAG_NORMCOORD; /* Default to normalized coords. */
+    if (discard) surface->Flags |= SFLAG_DISCARD;
+    if (lockable || format == WINED3DFMT_D16_LOCKABLE) surface->Flags |= SFLAG_LOCKABLE;
+
+    /* Quick lockable sanity check.
+     * TODO: remove this after surfaces, usage and lockability have been debugged properly
+     * this function is too deep to need to care about things like this.
+     * Levels need to be checked too, since they all affect what can be done. */
+    switch (pool)
+    {
+        case WINED3DPOOL_SCRATCH:
+            if(!lockable)
+            {
+                FIXME("Called with a pool of SCRATCH and a lockable of FALSE "
+                        "which are mutually exclusive, setting lockable to TRUE.\n");
+                lockable = TRUE;
+            }
+            break;
+
+        case WINED3DPOOL_SYSTEMMEM:
+            if (!lockable)
+                FIXME("Called with a pool of SYSTEMMEM and a lockable of FALSE, this is acceptable but unexpected.\n");
+            break;
+
+        case WINED3DPOOL_MANAGED:
+            if (usage & WINED3DUSAGE_DYNAMIC)
+                FIXME("Called with a pool of MANAGED and a usage of DYNAMIC which are mutually exclusive.\n");
+            break;
+
+        case WINED3DPOOL_DEFAULT:
+            if (lockable && !(usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_RENDERTARGET | WINED3DUSAGE_DEPTHSTENCIL)))
+                WARN("Creating a lockable surface with a POOL of DEFAULT, that doesn't specify DYNAMIC usage.\n");
+            break;
+
+        default:
+            FIXME("Unknown pool %#x.\n", pool);
+            break;
+    };
+
+    if (usage & WINED3DUSAGE_RENDERTARGET && pool != WINED3DPOOL_DEFAULT)
+    {
+        FIXME("Trying to create a render target that isn't in the default pool.\n");
+    }
+
+    /* Mark the texture as dirty so that it gets loaded first time around. */
+    surface_add_dirty_rect((IWineD3DSurface *)surface, NULL);
+    list_init(&surface->renderbuffers);
+
+    TRACE("surface %p, memory %p, size %u\n", surface, surface->resource.allocatedMemory, surface->resource.size);
+
+    /* Call the private setup routine */
+    hr = IWineD3DSurface_PrivateSetup((IWineD3DSurface *)surface);
+    if (FAILED(hr))
+    {
+        ERR("Private setup failed, returning %#x\n", hr);
+        cleanup(surface);
+        return hr;
+    }
+
+    return hr;
 }
 
 static void surface_force_reload(IWineD3DSurface *iface)
@@ -189,6 +328,10 @@ static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
     }
     return FALSE;
 }
+
+#undef GLINFO_LOCATION
+
+#define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
 /* This call just downloads data, the caller is responsible for activating the
  * right context and binding the correct texture. */

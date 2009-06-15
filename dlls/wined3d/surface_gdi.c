@@ -35,7 +35,7 @@
 /* Use the d3d_surface debug channel to have one channel for all surfaces */
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
-static void surface_gdi_cleanup(IWineD3DSurfaceImpl *This)
+void surface_gdi_cleanup(IWineD3DSurfaceImpl *This)
 {
     TRACE("(%p) : Cleaning up.\n", This);
 

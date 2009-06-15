@@ -895,155 +895,38 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UI
         WINED3DSURFTYPE Impl, IUnknown *parent)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
-    unsigned int Size       = 1;
-    const struct GlPixelFormatDesc *glDesc = getFormatDescEntry(Format, &GLINFO_LOCATION);
+    IWineD3DSurfaceImpl *object;
     HRESULT hr;
 
     TRACE("(%p) Create surface\n",This);
 
-    if(MultisampleQuality > 0) {
-        FIXME("MultisampleQuality set to %d, substituting 0\n", MultisampleQuality);
-        MultisampleQuality=0;
-    }
-
-    /** FIXME: Check that the format is supported
-    *    by the device.
-      *******************************/
-
-    if (WINED3DFMT_UNKNOWN == Format) {
-        Size = 0;
-    }
-    else if (glDesc->Flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (Impl == SURFACE_OPENGL && !This->adapter)
     {
-        UINT row_block_count = (Width + glDesc->block_width - 1) / glDesc->block_width;
-        UINT row_count = (Height + glDesc->block_height - 1) / glDesc->block_height;
-        Size = row_count * row_block_count * glDesc->block_byte_count;
-    }
-    else
-    {
-        /* The pitch is a multiple of 4 bytes */
-        Size = ((Width * glDesc->byte_count) + This->surface_alignment - 1) & ~(This->surface_alignment - 1);
-        Size *= Height;
+        ERR("OpenGL surfaces are not available without OpenGL.\n");
+        return WINED3DERR_NOTAVAILABLE;
     }
 
-    if(glDesc->heightscale != 0.0) Size *= glDesc->heightscale;
-
-    /** Create and initialise the surface resource **/
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
     {
-        ERR("Out of memory\n");
+        ERR("Failed to allocate surface memory.\n");
         *ppSurface = NULL;
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    /* Look at the implementation and set the correct Vtable */
-    switch(Impl)
-    {
-        case SURFACE_OPENGL:
-            /* Check if a 3D adapter is available when creating gl surfaces */
-            if (!This->adapter)
-            {
-                ERR("OpenGL surfaces are not available without opengl\n");
-                HeapFree(GetProcessHeap(), 0, object);
-                return WINED3DERR_NOTAVAILABLE;
-            }
-            object->lpVtbl = &IWineD3DSurface_Vtbl;
-            break;
-
-        case SURFACE_GDI:
-            object->lpVtbl = &IWineGDISurface_Vtbl;
-            break;
-
-        default:
-            /* To be sure to catch this */
-            ERR("Unknown requested surface implementation %d!\n", Impl);
-            HeapFree(GetProcessHeap(), 0, object);
-            return WINED3DERR_INVALIDCALL;
-    }
-
-    hr = resource_init((IWineD3DResource *)object, WINED3DRTYPE_SURFACE, This, Size, Usage, glDesc, Pool, parent);
+    hr = surface_init(object, Impl, This->surface_alignment, Width, Height, Level, Lockable,
+            Discard, MultiSample, MultisampleQuality, This, Usage, Format, Pool, parent);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize resource, returning %#x\n", hr);
+        WARN("Failed to initialize surface, returning %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         *ppSurface = NULL;
         return hr;
     }
 
-    TRACE("(%p) : Created resource %p\n", This, object);
+    TRACE("(%p) : Created surface %p\n", This, object);
 
     *ppSurface = (IWineD3DSurface *)object;
-
-    /* "Standalone" surface */
-    IWineD3DSurface_SetContainer((IWineD3DSurface *)object, NULL);
-
-    object->currentDesc.Width      = Width;
-    object->currentDesc.Height     = Height;
-    object->currentDesc.MultiSampleType    = MultiSample;
-    object->currentDesc.MultiSampleQuality = MultisampleQuality;
-    object->glDescription.level            = Level;
-    list_init(&object->overlays);
-
-    /* Flags */
-    object->Flags      = SFLAG_NORMCOORD; /* Default to normalized coords */
-    object->Flags     |= Discard ? SFLAG_DISCARD : 0;
-    object->Flags     |= (WINED3DFMT_D16_LOCKABLE == Format) ? SFLAG_LOCKABLE : 0;
-    object->Flags     |= Lockable ? SFLAG_LOCKABLE : 0;
-
-    TRACE("Pool %d %d %d %d\n",Pool, WINED3DPOOL_DEFAULT, WINED3DPOOL_MANAGED, WINED3DPOOL_SYSTEMMEM);
-
-    /** Quick lockable sanity check TODO: remove this after surfaces, usage and lockability have been debugged properly
-    * this function is too deep to need to care about things like this.
-    * Levels need to be checked too, and possibly Type since they all affect what can be done.
-    * ****************************************/
-    switch(Pool) {
-    case WINED3DPOOL_SCRATCH:
-        if(!Lockable)
-            FIXME("Create surface called with a pool of SCRATCH and a Lockable of FALSE "
-                "which are mutually exclusive, setting lockable to TRUE\n");
-                Lockable = TRUE;
-    break;
-    case WINED3DPOOL_SYSTEMMEM:
-        if(!Lockable) FIXME("Create surface called with a pool of SYSTEMMEM and a Lockable of FALSE, "
-                                    "this is acceptable but unexpected (I can't know how the surface can be usable!)\n");
-    case WINED3DPOOL_MANAGED:
-        if(Usage == WINED3DUSAGE_DYNAMIC) FIXME("Create surface called with a pool of MANAGED and a "
-                                                "Usage of DYNAMIC which are mutually exclusive, not doing "
-                                                "anything just telling you.\n");
-    break;
-    case WINED3DPOOL_DEFAULT: /*TODO: Create offscreen plain can cause this check to fail..., find out if it should */
-        if(!(Usage & WINED3DUSAGE_DYNAMIC) && !(Usage & WINED3DUSAGE_RENDERTARGET)
-           && !(Usage & WINED3DUSAGE_DEPTHSTENCIL ) && Lockable)
-            WARN("Creating a surface with a POOL of DEFAULT with Lockable true, that doesn't specify DYNAMIC usage.\n");
-    break;
-    default:
-        FIXME("(%p) Unknown pool %d\n", This, Pool);
-    break;
-    };
-
-    if (Usage & WINED3DUSAGE_RENDERTARGET && Pool != WINED3DPOOL_DEFAULT) {
-        FIXME("Trying to create a render target that isn't in the default pool\n");
-    }
-
-    /* mark the texture as dirty so that it gets loaded first time around*/
-    surface_add_dirty_rect(*ppSurface, NULL);
-    TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
-           This, Width, Height, Format, debug_d3dformat(Format),
-           (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->resource.allocatedMemory, object->resource.size);
-
-    list_init(&object->renderbuffers);
-
-    /* Call the private setup routine */
-    hr = IWineD3DSurface_PrivateSetup((IWineD3DSurface *)object);
-    if (FAILED(hr))
-    {
-        ERR("Private setup failed, returning %#x\n", hr);
-        IWineD3DSurface_Release(*ppSurface);
-        *ppSurface = NULL;
-        return hr;
-    }
 
     return hr;
 }
