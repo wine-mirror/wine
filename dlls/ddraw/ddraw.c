@@ -1664,10 +1664,8 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
 
     WINED3DSURFACE_DESC     Desc;
     WINED3DFORMAT           Format;
-    WINED3DRESOURCETYPE     Type;
     DWORD                   Usage;
     WINED3DPOOL             Pool;
-    UINT                    Size;
 
     WINED3DMULTISAMPLE_TYPE MultiSampleType;
     DWORD                   MultiSampleQuality;
@@ -1702,18 +1700,16 @@ IDirectDrawImpl_RecreateSurfacesCallback(IDirectDrawSurface7 *surf,
     IWineD3DSurface_GetClipper(wineD3DSurface, &clipper);
 
     /* Get the surface properties */
-    Desc.Format = &Format;
-    Desc.Type = &Type;
-    Desc.Usage = &Usage;
-    Desc.Pool = &Pool;
-    Desc.Size = &Size;
-    Desc.MultiSampleType = &MultiSampleType;
-    Desc.MultiSampleQuality = &MultiSampleQuality;
-    Desc.Width = &Width;
-    Desc.Height = &Height;
-
     hr = IWineD3DSurface_GetDesc(wineD3DSurface, &Desc);
     if(hr != D3D_OK) return hr;
+
+    Format = Desc.format;
+    Usage = Desc.usage;
+    Pool = Desc.pool;
+    MultiSampleType = Desc.multisample_type;
+    MultiSampleQuality = Desc.multisample_quality;
+    Width = Desc.width;
+    Height = Desc.height;
 
     if(swapchain) {
         /* If there's a swapchain, it owns the IParent interface. Create a new one for the
@@ -1840,21 +1836,14 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
                                  UINT level)
 {
     HRESULT hr;
-    UINT Width = 0, Height = 0;
+    UINT Width, Height;
     WINED3DFORMAT Format = WINED3DFMT_UNKNOWN;
-    WINED3DRESOURCETYPE ResType;
     DWORD Usage = 0;
     WINED3DSURFTYPE ImplType = This->ImplType;
     WINED3DSURFACE_DESC Desc;
     IUnknown *Parent;
     IParentImpl *parImpl = NULL;
     WINED3DPOOL Pool = WINED3DPOOL_DEFAULT;
-
-    /* Dummies for GetDesc */
-    WINED3DPOOL dummy_d3dpool;
-    WINED3DMULTISAMPLE_TYPE dummy_mst;
-    UINT dummy_uint;
-    DWORD dummy_dword;
 
     if (TRACE_ON(ddraw))
     {
@@ -2058,16 +2047,6 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
      * Don't use the Format choosen above, WineD3D might have
      * changed it
      */
-    Desc.Format = &Format;
-    Desc.Type = &ResType;
-    Desc.Usage = &Usage;
-    Desc.Pool = &dummy_d3dpool;
-    Desc.Size = &dummy_uint;
-    Desc.MultiSampleType = &dummy_mst;
-    Desc.MultiSampleQuality = &dummy_dword;
-    Desc.Width = &Width;
-    Desc.Height = &Height;
-
     (*ppSurf)->surface_desc.dwFlags |= DDSD_PIXELFORMAT;
     hr = IWineD3DSurface_GetDesc((*ppSurf)->WineD3DSurface, &Desc);
     if(hr != D3D_OK)
@@ -2076,6 +2055,10 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
         IDirectDrawSurface7_Release( (IDirectDrawSurface7 *) *ppSurf);
         return hr;
     }
+
+    Format = Desc.format;
+    Width = Desc.width;
+    Height = Desc.height;
 
     if(Format == WINED3DFMT_UNKNOWN)
     {

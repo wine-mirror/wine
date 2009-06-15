@@ -2558,7 +2558,6 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
                 BOOL tex_alpha = FALSE;
                 IWineD3DBaseTexture *tex = NULL;
                 WINED3DSURFACE_DESC desc;
-                WINED3DFORMAT fmt;
                 DDPIXELFORMAT ddfmt;
 
                 hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
@@ -2567,13 +2566,11 @@ IDirect3DDeviceImpl_3_GetRenderState(IDirect3DDevice3 *iface,
 
                 if(hr == WINED3D_OK && tex)
                 {
-                    memset(&desc, 0, sizeof(desc));
-                    desc.Format = &fmt;
                     hr = IWineD3DTexture_GetLevelDesc((IWineD3DTexture*) tex, 0, &desc);
                     if (SUCCEEDED(hr))
                     {
                         ddfmt.dwSize = sizeof(ddfmt);
-                        PixelFormat_WineD3DtoDD(&ddfmt, fmt);
+                        PixelFormat_WineD3DtoDD(&ddfmt, desc.format);
                         if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
                     }
 
@@ -2833,7 +2830,6 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     BOOL tex_alpha = FALSE;
                     IWineD3DBaseTexture *tex = NULL;
                     WINED3DSURFACE_DESC desc;
-                    WINED3DFORMAT fmt;
                     DDPIXELFORMAT ddfmt;
 
                     hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
@@ -2843,12 +2839,11 @@ IDirect3DDeviceImpl_3_SetRenderState(IDirect3DDevice3 *iface,
                     if(hr == WINED3D_OK && tex)
                     {
                         memset(&desc, 0, sizeof(desc));
-                        desc.Format = &fmt;
                         hr = IWineD3DTexture_GetLevelDesc((IWineD3DTexture*) tex, 0, &desc);
                         if (SUCCEEDED(hr))
                         {
                             ddfmt.dwSize = sizeof(ddfmt);
-                            PixelFormat_WineD3DtoDD(&ddfmt, fmt);
+                            PixelFormat_WineD3DtoDD(&ddfmt, desc.format);
                             if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
                         }
 
@@ -4648,7 +4643,6 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
         BOOL tex_alpha = FALSE;
         IWineD3DBaseTexture *tex = NULL;
         WINED3DSURFACE_DESC desc;
-        WINED3DFORMAT fmt;
         DDPIXELFORMAT ddfmt;
         HRESULT result;
 
@@ -4659,12 +4653,11 @@ IDirect3DDeviceImpl_3_SetTexture(IDirect3DDevice3 *iface,
         if(result == WINED3D_OK && tex)
         {
             memset(&desc, 0, sizeof(desc));
-            desc.Format = &fmt;
             result = IWineD3DTexture_GetLevelDesc((IWineD3DTexture*) tex, 0, &desc);
             if (SUCCEEDED(result))
             {
                 ddfmt.dwSize = sizeof(ddfmt);
-                PixelFormat_WineD3DtoDD(&ddfmt, fmt);
+                PixelFormat_WineD3DtoDD(&ddfmt, desc.format);
                 if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
             }
 

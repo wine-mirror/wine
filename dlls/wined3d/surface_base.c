@@ -181,15 +181,17 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSU
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
     TRACE("(%p) : copying into %p\n", This, pDesc);
-    if(pDesc->Format != NULL)             *(pDesc->Format) = This->resource.format_desc->format;
-    if(pDesc->Type != NULL)               *(pDesc->Type)   = This->resource.resourceType;
-    if(pDesc->Usage != NULL)              *(pDesc->Usage)              = This->resource.usage;
-    if(pDesc->Pool != NULL)               *(pDesc->Pool)               = This->resource.pool;
-    if(pDesc->Size != NULL)               *(pDesc->Size)               = This->resource.size;   /* dx8 only */
-    if(pDesc->MultiSampleType != NULL)    *(pDesc->MultiSampleType)    = This->currentDesc.MultiSampleType;
-    if(pDesc->MultiSampleQuality != NULL) *(pDesc->MultiSampleQuality) = This->currentDesc.MultiSampleQuality;
-    if(pDesc->Width != NULL)              *(pDesc->Width)              = This->currentDesc.Width;
-    if(pDesc->Height != NULL)             *(pDesc->Height)             = This->currentDesc.Height;
+
+    pDesc->format = This->resource.format_desc->format;
+    pDesc->resource_type = This->resource.resourceType;
+    pDesc->usage = This->resource.usage;
+    pDesc->pool = This->resource.pool;
+    pDesc->size = This->resource.size; /* dx8 only */
+    pDesc->multisample_type = This->currentDesc.MultiSampleType;
+    pDesc->multisample_quality = This->currentDesc.MultiSampleQuality;
+    pDesc->width = This->currentDesc.Width;
+    pDesc->height = This->currentDesc.Height;
+
     return WINED3D_OK;
 }
 

@@ -229,30 +229,26 @@ static void WINAPI IDirect3DTexture9Impl_GenerateMipSubLevels(LPDIRECT3DTEXTURE9
 /* IDirect3DTexture9 Interface follow: */
 static HRESULT WINAPI IDirect3DTexture9Impl_GetLevelDesc(LPDIRECT3DTEXTURE9 iface, UINT Level, D3DSURFACE_DESC* pDesc) {
     IDirect3DTexture9Impl *This = (IDirect3DTexture9Impl *)iface;
-
-    WINED3DSURFACE_DESC    wined3ddesc;
-    UINT                   tmpInt = -1;
-    HRESULT                hr;
-    WINED3DFORMAT format;
+    WINED3DSURFACE_DESC wined3ddesc;
+    HRESULT hr;
 
     TRACE("(%p) Relay\n", This);
-
-    /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
-    wined3ddesc.Format              = &format;
-    wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
-    wined3ddesc.Usage               = &pDesc->Usage;
-    wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
-    wined3ddesc.Size                = &tmpInt; /* required for d3d8 */
-    wined3ddesc.MultiSampleType     = (WINED3DMULTISAMPLE_TYPE *) &pDesc->MultiSampleType;
-    wined3ddesc.MultiSampleQuality  = &pDesc->MultiSampleQuality;
-    wined3ddesc.Width               = &pDesc->Width;
-    wined3ddesc.Height              = &pDesc->Height;
 
     EnterCriticalSection(&d3d9_cs);
     hr = IWineD3DTexture_GetLevelDesc(This->wineD3DTexture, Level, &wined3ddesc);
     LeaveCriticalSection(&d3d9_cs);
 
-    if (SUCCEEDED(hr)) pDesc->Format = d3dformat_from_wined3dformat(format);
+    if (SUCCEEDED(hr))
+    {
+        pDesc->Format = d3dformat_from_wined3dformat(wined3ddesc.format);
+        pDesc->Type = wined3ddesc.resource_type;
+        pDesc->Usage = wined3ddesc.usage;
+        pDesc->Pool = wined3ddesc.pool;
+        pDesc->MultiSampleType = wined3ddesc.multisample_type;
+        pDesc->MultiSampleQuality = wined3ddesc.multisample_quality;
+        pDesc->Width = wined3ddesc.width;
+        pDesc->Height = wined3ddesc.height;
+    }
 
     return hr;
 }

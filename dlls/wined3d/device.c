@@ -5748,21 +5748,19 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     WINED3DSURFACE_DESC  winedesc;
 
     TRACE("(%p) : Source (%p)  Rect (%p) Destination (%p) Point(%p)\n", This, pSourceSurface, pSourceRect, pDestinationSurface, pDestPoint);
-    memset(&winedesc, 0, sizeof(winedesc));
-    winedesc.Width  = &srcSurfaceWidth;
-    winedesc.Height = &srcSurfaceHeight;
-    winedesc.Pool   = &srcPool;
-    winedesc.Format = &srcFormat;
 
     IWineD3DSurface_GetDesc(pSourceSurface, &winedesc);
-
-    winedesc.Width  = &destSurfaceWidth;
-    winedesc.Height = &destSurfaceHeight;
-    winedesc.Pool   = &destPool;
-    winedesc.Format = &destFormat;
-    winedesc.Size   = &destSize;
+    srcSurfaceWidth = winedesc.width;
+    srcSurfaceHeight = winedesc.height;
+    srcPool = winedesc.pool;
+    srcFormat = winedesc.format;
 
     IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
+    destSurfaceWidth = winedesc.width;
+    destSurfaceHeight = winedesc.height;
+    destPool = winedesc.pool;
+    destFormat = winedesc.format;
+    destSize = winedesc.size;
 
     if(srcPool != WINED3DPOOL_SYSTEMMEM  || destPool != WINED3DPOOL_DEFAULT){
         WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n", pSourceSurface, pDestinationSurface);

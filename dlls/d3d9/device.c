@@ -430,27 +430,15 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
     WINED3DVOLUME_DESC volume_desc;
     D3DINDEXBUFFER_DESC index_desc;
     D3DVERTEXBUFFER_DESC vertex_desc;
-    WINED3DFORMAT dummy_format;
-    WINED3DMULTISAMPLE_TYPE dummy_multisampletype;
-    DWORD dummy_dword;
-    WINED3DPOOL pool = WINED3DPOOL_SCRATCH; /* a harmless pool */
+    WINED3DPOOL pool;
     IDirect3DResource9 *parent;
 
     IWineD3DResource_GetParent(resource, (IUnknown **) &parent);
     type = IDirect3DResource9_GetType(parent);
     switch(type) {
         case D3DRTYPE_SURFACE:
-            surface_desc.Format = &dummy_format;
-            surface_desc.Type = &type;
-            surface_desc.Usage = &dummy_dword;
-            surface_desc.Pool = &pool;
-            surface_desc.Size = &dummy_dword;
-            surface_desc.MultiSampleType = &dummy_multisampletype;
-            surface_desc.MultiSampleQuality = &dummy_dword;
-            surface_desc.Width = &dummy_dword;
-            surface_desc.Height = &dummy_dword;
-
             IWineD3DSurface_GetDesc((IWineD3DSurface *) resource, &surface_desc);
+            pool = surface_desc.pool;
             break;
 
         case D3DRTYPE_VOLUME:
@@ -472,6 +460,7 @@ static HRESULT WINAPI reset_enum_callback(IWineD3DResource *resource, void *data
          * is a D3DPOOL_DEFAULT surface or volume as well
          */
         default:
+            pool = WINED3DPOOL_SCRATCH; /* a harmless pool */
             break;
     }
 
@@ -791,13 +780,11 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9EX iface
     HRESULT hr;
     TRACE("(%p) Relay\n" , This);
 
-    memset(&desc, 0, sizeof(desc));
-    desc.Usage = &usage;
-    desc.Pool = &pool;
-    desc.Type = &restype;
-
     EnterCriticalSection(&d3d9_cs);
     IWineD3DSurface_GetDesc(surface->wineD3DSurface, &desc);
+    usage = desc.usage;
+    pool = desc.pool;
+    restype = desc.resource_type;
 
     /* This method is only allowed with surfaces that are render targets, or offscreen plain surfaces
      * in D3DPOOL_DEFAULT

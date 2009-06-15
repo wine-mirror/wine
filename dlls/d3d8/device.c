@@ -893,20 +893,18 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface, ID
 
 
     /* Check that the source texture is in WINED3DPOOL_SYSTEMMEM and the destination texture is in WINED3DPOOL_DEFAULT */
-    memset(&winedesc, 0, sizeof(winedesc));
 
-    winedesc.Format = &srcFormat;
-    winedesc.Width  = &srcWidth;
-    winedesc.Height = &srcHeight;
-    winedesc.Size   = &srcSize;
     EnterCriticalSection(&d3d8_cs);
     IWineD3DSurface_GetDesc(Source->wineD3DSurface, &winedesc);
+    srcFormat = winedesc.format;
+    srcWidth = winedesc.width;
+    srcHeight = winedesc.height;
+    srcSize = winedesc.size;
 
-    winedesc.Format = &destFormat;
-    winedesc.Width  = &destWidth;
-    winedesc.Height = &destHeight;
-    winedesc.Size   = NULL;
     IWineD3DSurface_GetDesc(Dest->wineD3DSurface, &winedesc);
+    destFormat = winedesc.format;
+    destWidth = winedesc.width;
+    destHeight = winedesc.height;
 
     /* Check that the source and destination formats match */
     if (srcFormat != destFormat && WINED3DFMT_UNKNOWN != destFormat) {

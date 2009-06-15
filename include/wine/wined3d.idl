@@ -1724,15 +1724,15 @@ typedef struct _WINED3DPRESENT_PARAMETERS
 
 typedef struct _WINED3DSURFACE_DESC
 {
-    WINED3DFORMAT *Format;
-    WINED3DRESOURCETYPE *Type;
-    DWORD *Usage;
-    WINED3DPOOL *Pool;
-    UINT *Size;
-    WINED3DMULTISAMPLE_TYPE *MultiSampleType;
-    DWORD *MultiSampleQuality;
-    UINT *Width;
-    UINT *Height;
+    WINED3DFORMAT format;
+    WINED3DRESOURCETYPE resource_type;
+    DWORD usage;
+    WINED3DPOOL pool;
+    UINT size;
+    WINED3DMULTISAMPLE_TYPE multisample_type;
+    DWORD multisample_quality;
+    UINT width;
+    UINT height;
 } WINED3DSURFACE_DESC;
 
 typedef struct _WINED3DVOLUME_DESC

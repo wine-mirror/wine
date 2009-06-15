@@ -159,22 +159,21 @@ static HRESULT WINAPI IDirect3DSurface8Impl_GetDesc(LPDIRECT3DSURFACE8 iface, D3
     HRESULT hr;
     TRACE("(%p) Relay\n", This);
 
-    /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
-    memset(&wined3ddesc, 0, sizeof(wined3ddesc));
-    wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
-    wined3ddesc.Type                = (WINED3DRESOURCETYPE *)&pDesc->Type;
-    wined3ddesc.Usage               = &pDesc->Usage;
-    wined3ddesc.Pool                = (WINED3DPOOL *) &pDesc->Pool;
-    wined3ddesc.Size                = &pDesc->Size;
-    wined3ddesc.MultiSampleType     = (WINED3DMULTISAMPLE_TYPE *) &pDesc->MultiSampleType;
-    wined3ddesc.Width               = &pDesc->Width;
-    wined3ddesc.Height              = &pDesc->Height;
-
     EnterCriticalSection(&d3d8_cs);
     hr = IWineD3DSurface_GetDesc(This->wineD3DSurface, &wined3ddesc);
     LeaveCriticalSection(&d3d8_cs);
 
-    if (SUCCEEDED(hr)) pDesc->Format = d3dformat_from_wined3dformat(pDesc->Format);
+    if (SUCCEEDED(hr))
+    {
+        pDesc->Format = d3dformat_from_wined3dformat(wined3ddesc.format);
+        pDesc->Type = wined3ddesc.resource_type;
+        pDesc->Usage = wined3ddesc.usage;
+        pDesc->Pool = wined3ddesc.pool;
+        pDesc->Size = wined3ddesc.size;
+        pDesc->MultiSampleType = wined3ddesc.multisample_type;
+        pDesc->Width = wined3ddesc.width;
+        pDesc->Height = wined3ddesc.height;
+    }
 
     return hr;
 }
