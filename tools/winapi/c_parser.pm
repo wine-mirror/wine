@@ -1050,7 +1050,7 @@ sub parse_c_file($$$$) {
 	    $declaration .= $&;
 	} elsif(s/^\)//) {
 	    $plevel--;
-	    if($blevel <= 0) {
+	    if($plevel <= 0) {
 		$self->_parse_c_error($_, $line, $column, "file", ") without (");
 	    }
 	    $declaration .= $&;
