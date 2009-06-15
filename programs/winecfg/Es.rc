@@ -2,7 +2,7 @@
  * WineCfg resources
  * Spanish Language Support
  *
- * Copyright 2003-2008 José Manuel Ferrer Ortiz
+ * Copyright 2003-2009 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,9 +52,9 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Configuración de aplicaciones ",IDC_STATIC, 8,4,244,240
     LTEXT           "Wine puede imitar distintas versiones de Windows para cada aplicación. Esta pestaña está enlazada a las de Librerías y Gráficos para poder cambiar en ellas la configuración global y/o la de por aplicación.",
-                    IDC_STATIC,15,20,227,32
+                    IDC_STATIC,15,16,227,32
     CONTROL         "Aplicaciones",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,56,230,144
+                    15,50,230,150
     PUSHBUTTON      "&Añadir aplicación...",IDC_APP_ADDAPP, 90,204,75,14
     PUSHBUTTON      "&Eliminar aplicación...",IDC_APP_REMOVEAPP, 170,204,75,14
     LTEXT           "&Versión a imitar:",IDC_STATIC,17,226,58,16
@@ -67,7 +67,7 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Configuración de ventanas ",IDC_STATIC,8,4,244,84
     CONTROL     "Permitir a los programas DirectX retener el ratón en sus ventanas",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Allow the window manager to &decorate the windows",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Permitir al gestor de ventanas decorar las ventanas",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Permitir al gestor de ventanas controlar las ventanas",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "Emular un escritorio virtual",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
@@ -81,11 +81,11 @@ BEGIN
     COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL     "Permitir Pixel Shader (si hay soporte por hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    GROUPBOX    " Screen &Resolution ",IDC_STATIC,8,151,244,93
+    GROUPBOX    " Resolución de pantalla ",IDC_STATIC,8,151,244,93
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
-    LTEXT       "dpi",IDC_STATIC,235,163,10,8
-    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
+    LTEXT       "ppp",IDC_STATIC,235,163,10,8
+    LTEXT       "Esto es un texto de ejemplo usando Tahoma de 10 puntos",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -124,12 +124,12 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Mapeos de unidad ",IDC_STATIC,8,4,244,240
-    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
+    LTEXT           "Conexión fallida al gestor de montaje, la configuración de unidades no se puede editar.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Añadir...",IDC_BUTTON_ADD,15,98,37,14
     PUSHBUTTON      "&Eliminar",IDC_BUTTON_REMOVE,56,98,37,14
-    PUSHBUTTON      "Auto&detectar...",IDC_BUTTON_AUTODETECT,197,98,49,14
+    PUSHBUTTON      "Auto&detectar...",IDC_BUTTON_AUTODETECT,187,98,59,14
 
     /* editing drive details */
     LTEXT           "&Ruta:",IDC_STATIC_PATH,15,123,20,9
@@ -316,7 +316,7 @@ BEGIN
     IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Sombra oscura del control"
     IDC_SYSPARAMS_BUTTON_LIGHT      "Parte iluminada del control"
     IDC_SYSPARAMS_BUTTON_ALTERNATE  "Fondo alternativo del control"
-    IDC_SYSPARAMS_HOT_TRACKING      "Elemento Hot Tracked"
+    IDC_SYSPARAMS_HOT_TRACKING      "Elemento resaltado"
     IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Gradiente barra título activa"
     IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Gradiente barra título inactiva"
     IDC_SYSPARAMS_MENU_HILIGHT      "Resaltado del menú"
