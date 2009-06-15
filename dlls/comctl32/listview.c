@@ -701,10 +701,78 @@ static inline LPCSTR debugscrollcode(int nScrollCode)
 
 /******** Notification functions ************************************/
 
+static int get_ansi_notification(UINT unicodeNotificationCode)
+{
+    switch (unicodeNotificationCode)
+    {
+    case LVN_BEGINLABELEDITW: return LVN_BEGINLABELEDITA;
+    case LVN_ENDLABELEDITW: return LVN_ENDLABELEDITA;
+    case LVN_GETDISPINFOW: return LVN_GETDISPINFOA;
+    case LVN_SETDISPINFOW: return LVN_SETDISPINFOA;
+    case LVN_ODFINDITEMW: return LVN_ODFINDITEMA;
+    case LVN_GETINFOTIPW: return LVN_GETINFOTIPA;
+    /* header forwards */
+    case HDN_TRACKW: return HDN_TRACKA;
+    case HDN_ENDTRACKW: return HDN_ENDTRACKA;
+    case HDN_BEGINDRAG: return HDN_BEGINDRAG;
+    case HDN_ENDDRAG: return HDN_ENDDRAG;
+    case HDN_ITEMCHANGINGW: return HDN_ITEMCHANGINGA;
+    case HDN_ITEMCHANGEDW: return HDN_ITEMCHANGEDA;
+    case HDN_ITEMCLICKW: return HDN_ITEMCLICKA;
+    case HDN_DIVIDERDBLCLICKW: return HDN_DIVIDERDBLCLICKA;
+    }
+    ERR("unknown notification %x\n", unicodeNotificationCode);
+    assert(FALSE);
+    return 0;
+}
+
+/* forwards header notifications to listview parent */
 static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, const NMHEADERW *lpnmh)
 {
-    return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY,
-                        (WPARAM)lpnmh->hdr.idFrom, (LPARAM)lpnmh);
+    NMHEADERA nmhA;
+    HDITEMA hditema;
+    HD_TEXTFILTERA textfilter;
+    LPSTR text = NULL, filter = NULL;
+    LRESULT ret;
+
+    /* on unicode format exit earlier */
+    if (infoPtr->notifyFormat == NFR_UNICODE)
+        return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY,
+                            (WPARAM)lpnmh->hdr.idFrom, (LPARAM)lpnmh);
+
+    /* header always supplies unicode notifications,
+       all we have to do is to convert strings to ANSI */
+    nmhA = *(NMHEADERA*)lpnmh;
+    if (lpnmh->pitem)
+    {
+        hditema = *(HDITEMA*)lpnmh->pitem;
+        nmhA.pitem = &hditema;
+        /* convert item text */
+        if (lpnmh->pitem->mask & HDI_TEXT)
+        {
+            Str_SetPtrWtoA(&hditema.pszText, lpnmh->pitem->pszText);
+            text = hditema.pszText;
+        }
+        /* convert filter text */
+        if ((lpnmh->pitem->mask & HDI_FILTER) && (lpnmh->pitem->type == HDFT_ISSTRING) &&
+             lpnmh->pitem->pvFilter)
+        {
+            hditema.pvFilter = &textfilter;
+            textfilter = *(HD_TEXTFILTERA*)(lpnmh->pitem->pvFilter);
+            Str_SetPtrWtoA(&textfilter.pszText, ((HD_TEXTFILTERW*)lpnmh->pitem->pvFilter)->pszText);
+            filter = textfilter.pszText;
+        }
+    }
+    nmhA.hdr.code = get_ansi_notification(lpnmh->hdr.code);
+
+    ret = SendMessageW(infoPtr->hwndNotify, WM_NOTIFY,
+                       (WPARAM)nmhA.hdr.idFrom, (LPARAM)&nmhA);
+
+    /* cleanup */
+    Free(text);
+    Free(filter);
+
+    return ret;
 }
 
 static LRESULT notify_hdr(const LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
@@ -802,22 +870,6 @@ static BOOL notify_deleteitem(const LISTVIEW_INFO *infoPtr, INT nItem)
     if (LISTVIEW_GetItemT(infoPtr, &item, TRUE)) nmlv.lParam = item.lParam;
     notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
     return IsWindow(hwnd);
-}
-
-static int get_ansi_notification(UINT unicodeNotificationCode)
-{
-    switch (unicodeNotificationCode)
-    {
-    case LVN_BEGINLABELEDITW: return LVN_BEGINLABELEDITA;
-    case LVN_ENDLABELEDITW: return LVN_ENDLABELEDITA;
-    case LVN_GETDISPINFOW: return LVN_GETDISPINFOA;
-    case LVN_SETDISPINFOW: return LVN_SETDISPINFOA;
-    case LVN_ODFINDITEMW: return LVN_ODFINDITEMA;
-    case LVN_GETINFOTIPW: return LVN_GETINFOTIPA;
-    }
-    ERR("unknown notification %x\n", unicodeNotificationCode);
-    assert(FALSE);
-    return 0;
 }
 
 /*

@@ -3177,7 +3177,7 @@ static void test_editbox(void)
 
 static void test_notifyformat(void)
 {
-    HWND hwnd;
+    HWND hwnd, header;
     DWORD r;
 
     hwnd = create_listview_control(0);
@@ -3212,8 +3212,12 @@ static void test_notifyformat(void)
     notifyFormat = 0;
     hwnd = create_listview_control(0);
     ok(hwnd != NULL, "failed to create a listview window\n");
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "expected header to be created\n");
     r = SendMessage(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(0, r);
+    r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
+    expect(1, r);
     r = SendMessage(hwnd, WM_NOTIFYFORMAT, 0, NF_QUERY);
     ok(r != 0, "Expected valid format\n");
 
@@ -3222,12 +3226,16 @@ static void test_notifyformat(void)
     expect(NFR_UNICODE, r);
     r = SendMessage(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(1, r);
+    r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
+    expect(1, r);
 
     notifyFormat = NFR_ANSI;
     r = SendMessage(hwnd, WM_NOTIFYFORMAT, 0, NF_REQUERY);
     expect(NFR_ANSI, r);
     r = SendMessage(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(0, r);
+    r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
+    expect(1, r);
 
     DestroyWindow(hwnd);
 
@@ -3245,36 +3253,56 @@ static void test_notifyformat(void)
     notifyFormat = -1;
     hwnd = create_listview_controlW(0, hwndparentW);
     ok(hwnd != NULL, "failed to create a listview window\n");
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "expected header to be created\n");
     r = SendMessageW(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
+    expect(1, r);
+    r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
     expect(1, r);
     DestroyWindow(hwnd);
     /* recieving error code defaulting to ansi */
     notifyFormat = 0;
     hwnd = create_listview_controlW(0, hwndparentW);
     ok(hwnd != NULL, "failed to create a listview window\n");
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "expected header to be created\n");
     r = SendMessageW(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(0, r);
+    r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
+    expect(1, r);
     DestroyWindow(hwnd);
     /* recieving ansi code from unicode window, use it */
     notifyFormat = NFR_ANSI;
     hwnd = create_listview_controlW(0, hwndparentW);
     ok(hwnd != NULL, "failed to create a listview window\n");
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "expected header to be created\n");
     r = SendMessageW(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(0, r);
+    r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
+    expect(1, r);
     DestroyWindow(hwnd);
     /* unicode listview with ansi parent window */
     notifyFormat = -1;
     hwnd = create_listview_controlW(0, hwndparent);
     ok(hwnd != NULL, "failed to create a listview window\n");
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "expected header to be created\n");
     r = SendMessageW(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(0, r);
+    r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
+    expect(1, r);
     DestroyWindow(hwnd);
     /* unicode listview with ansi parent window, return error code */
     notifyFormat = 0;
     hwnd = create_listview_controlW(0, hwndparent);
     ok(hwnd != NULL, "failed to create a listview window\n");
+    header = (HWND)SendMessage(hwnd, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(header), "expected header to be created\n");
     r = SendMessageW(hwnd, LVM_GETUNICODEFORMAT, 0, 0);
     expect(0, r);
+    r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
+    expect(1, r);
     DestroyWindow(hwnd);
 
     DestroyWindow(hwndparentW);
