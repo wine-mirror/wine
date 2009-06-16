@@ -146,6 +146,7 @@ static const WineGLExtension *WineGLExtensionList[MAX_EXTENSIONS];
 static int WineGLExtensionListSize;
 
 static void X11DRV_WineGL_LoadExtensions(void);
+static WineGLPixelFormat* ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, BOOL AllowOffscreen, int *fmt_count);
 static BOOL glxRequireVersion(int requiredVersion);
 static BOOL glxRequireExtension(const char *requiredExtension);
 
@@ -582,37 +583,23 @@ static int describeContext(Wine_GLContext* ctx) {
     return ctx_vis_id;
 }
 
-static int describeDrawable(Wine_GLContext* ctx, Drawable drawable) {
+static BOOL describeDrawable(X11DRV_PDEVICE *physDev) {
     int tmp;
-    int nElements;
-    int attribList[3] = { GLX_FBCONFIG_ID, 0, None };
-    GLXFBConfig *fbCfgs;
+    WineGLPixelFormat *fmt;
+    int fmt_count = 0;
 
-    if (pglXQueryDrawable == NULL)  {
-        /** glXQueryDrawable not available so returns not supported */
-        return -1;
-    }
+    fmt = ConvertPixelFormatWGLtoGLX(gdi_display, physDev->current_pf, TRUE /* Offscreen */, &fmt_count);
+    if(!fmt) return FALSE;
 
-    TRACE(" Drawable %p have :\n", (void*) drawable);
-    pglXQueryDrawable(gdi_display, drawable, GLX_WIDTH, (unsigned int*) &tmp);
-    TRACE(" - WIDTH as %d\n", tmp);
-    pglXQueryDrawable(gdi_display, drawable, GLX_HEIGHT, (unsigned int*) &tmp);
-    TRACE(" - HEIGHT as %d\n", tmp);
-    pglXQueryDrawable(gdi_display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
-    TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
+    TRACE(" HDC %p has:\n", physDev->hdc);
+    TRACE(" - iPixelFormat %d\n", fmt->iPixelFormat);
+    TRACE(" - Drawable %p\n", (void*) get_glxdrawable(physDev));
+    TRACE(" - FBCONFIG_ID 0x%x\n", fmt->fmt_id);
 
-    attribList[1] = tmp;
-    fbCfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), attribList, &nElements);
-    if (fbCfgs == NULL) {
-        return -1;
-    }
+    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_VISUAL_ID, &tmp);
+    TRACE(" - VISUAL_ID 0x%x\n", tmp);
 
-    pglXGetFBConfigAttrib(gdi_display, fbCfgs[0], GLX_VISUAL_ID, &tmp);
-    TRACE(" - VISUAL_ID as 0x%x\n", tmp);
-
-    XFree(fbCfgs);
-
-    return tmp;
+    return TRUE;
 }
 
 static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuffer* pbuf) {
@@ -1842,7 +1829,7 @@ BOOL CDECL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
         if (ctx->ctx == NULL) {
             /* The describe lines below are for debugging purposes only */
             if (TRACE_ON(wgl)) {
-                describeDrawable(ctx, drawable);
+                describeDrawable(physDev);
                 describeContext(ctx);
             }
 
