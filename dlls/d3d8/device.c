@@ -2308,7 +2308,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 i
     {
         WARN("Invalid handle (%#x) passed.\n", pShader);
         LeaveCriticalSection(&d3d8_cs);
-        return D3DERR_INVALIDCALL;
+        return D3D_OK;
     }
 
     IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &cur);
