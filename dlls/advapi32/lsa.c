@@ -177,6 +177,8 @@ NTSTATUS WINAPI LsaEnumerateAccountRights(
     PULONG count)
 {
     FIXME("(%p,%p,%p,%p) stub\n", policy, sid, rights, count);
+    *rights = 0;
+    *count = 0;
     return STATUS_OBJECT_NAME_NOT_FOUND;
 }
 
