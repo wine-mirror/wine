@@ -1272,16 +1272,43 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             }
             break;
         case VENDOR_ATI:
+            /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
+             *
+             * beware: renderer string do not match exact card model,
+             * eg HD 4800 is returned for multiple card, even for RV790 based one
+             */
             if(WINE_D3D9_CAPABLE(gl_info)) {
                 /* Radeon R7xx HD4800 - highend */
-                if (strstr(gl_info->gl_renderer, "HD 4800") ||
-                    strstr(gl_info->gl_renderer, "HD 4830") ||
-                    strstr(gl_info->gl_renderer, "HD 4850") ||
-                    strstr(gl_info->gl_renderer, "HD 4870") ||
-                    strstr(gl_info->gl_renderer, "HD 4890"))
+                if (strstr(gl_info->gl_renderer, "HD 4800") || /* Radeon RV7xx HD48xx generic renderer string */
+                    strstr(gl_info->gl_renderer, "HD 4830") || /* Radeon RV770 */
+                    strstr(gl_info->gl_renderer, "HD 4850") || /* Radeon RV770 */
+                    strstr(gl_info->gl_renderer, "HD 4870") || /* Radeon RV770 */
+                    strstr(gl_info->gl_renderer, "HD 4890"))   /* Radeon RV790 */
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD4800;
-                    vidmem = 512; /* HD4800 cards use 512-1024MB */
+                    vidmem = 512; /* note: HD4890 cards use 1024MB */
+                }
+                /* Radeon R740 HD4700 - midend */
+                else if (strstr(gl_info->gl_renderer, "HD 4700") || /* Radeon RV770 */
+                         strstr(gl_info->gl_renderer, "HD 4770"))   /* Radeon RV740 */
+                {
+                    gl_info->gl_card = CARD_ATI_RADEON_HD4700;
+                    vidmem = 512;
+                }
+                /* Radeon R730 HD4600 - midend */
+                else if (strstr(gl_info->gl_renderer, "HD 4600") || /* Radeon RV730 */
+                         strstr(gl_info->gl_renderer, "HD 4650") || /* Radeon RV730 */
+                         strstr(gl_info->gl_renderer, "HD 4670"))   /* Radeon RV730 */
+                {
+                    gl_info->gl_card = CARD_ATI_RADEON_HD4600;
+                    vidmem = 512;
+                }
+                /* Radeon R710 HD4500/HD4350 - lowend */
+                else if (strstr(gl_info->gl_renderer, "HD 4350") || /* Radeon RV710 */
+                         strstr(gl_info->gl_renderer, "HD 4550"))   /* Radeon RV710 */
+                {
+                    gl_info->gl_card = CARD_ATI_RADEON_HD4350;
+                    vidmem = 256;
                 }
                 /* Radeon R6xx HD2900/HD3800 - highend */
                 else if (strstr(gl_info->gl_renderer, "HD 2900") ||
@@ -4023,6 +4050,9 @@ static const struct driver_version_information driver_version_table[] = {
     {VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         "ATI Mobility Radeon HD 2300",      6,  14, 10, 6764    },
     {VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      6,  14, 10, 6764    },
     {VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        6,  14, 10, 6764    },
     {VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        6,  14, 10, 6764    },
 
     /* TODO: Add information about legacy ATI hardware, Intel and other cards */
