@@ -36,6 +36,7 @@ struct testwindow_info
 {
     HWND hwnd;
     BOOL registered;
+    BOOL to_be_deleted;
     RECT desired_rect;
     UINT edge;
     RECT allocated_rect;
@@ -55,6 +56,12 @@ static void testwindow_setpos(HWND hwnd)
 
     if (!info || !info->registered)
     {
+        return;
+    }
+
+    if (info->to_be_deleted)
+    {
+        win_skip("Some Win95 and NT4 systems send messages to removed taskbars\n");
         return;
     }
 
@@ -221,6 +228,7 @@ static void test_setpos(void)
 
     /* dock windows[0] to the bottom of the screen */
     windows[0].registered = TRUE;
+    windows[0].to_be_deleted = FALSE;
     windows[0].edge = ABE_BOTTOM;
     windows[0].desired_rect.left = 0;
     windows[0].desired_rect.right = screen_width;
@@ -241,6 +249,7 @@ static void test_setpos(void)
 
     /* dock windows[1] to the bottom of the screen */
     windows[1].registered = TRUE;
+    windows[1].to_be_deleted = FALSE;
     windows[1].edge = ABE_BOTTOM;
     windows[1].desired_rect.left = 0;
     windows[1].desired_rect.right = screen_width;
@@ -272,6 +281,7 @@ static void test_setpos(void)
 
     /* dock windows[2] to the bottom of the screen */
     windows[2].registered = TRUE;
+    windows[2].to_be_deleted = FALSE;
     windows[2].edge = ABE_BOTTOM;
     windows[2].desired_rect.left = 0;
     windows[2].desired_rect.right = screen_width;
@@ -328,6 +338,7 @@ static void test_setpos(void)
     expected_bottom = max(windows[0].allocated_rect.bottom, windows[1].allocated_rect.bottom);
 
     abd.hWnd = windows[0].hwnd;
+    windows[0].to_be_deleted = TRUE;
     ret = SHAppBarMessage(ABM_REMOVE, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
     windows[0].registered = FALSE;
@@ -341,12 +352,14 @@ static void test_setpos(void)
 
     /* remove the other windows */
     abd.hWnd = windows[1].hwnd;
+    windows[1].to_be_deleted = TRUE;
     ret = SHAppBarMessage(ABM_REMOVE, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
     windows[1].registered = FALSE;
     DestroyWindow(windows[1].hwnd);
 
     abd.hWnd = windows[2].hwnd;
+    windows[2].to_be_deleted = TRUE;
     ret = SHAppBarMessage(ABM_REMOVE, &abd);
     ok(ret == TRUE, "SHAppBarMessage returned %i\n", ret);
     windows[2].registered = FALSE;
