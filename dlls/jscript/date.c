@@ -64,12 +64,12 @@ static const WCHAR getMinutesW[] = {'g','e','t','M','i','n','u','t','e','s',0};
 static const WCHAR getUTCMinutesW[] = {'g','e','t','U','T','C','M','i','n','u','t','e','s',0};
 static const WCHAR getSecondsW[] = {'g','e','t','S','e','c','o','n','d','s',0};
 static const WCHAR getUTCSecondsW[] = {'g','e','t','U','T','C','S','e','c','o','n','d','s',0};
-static const WCHAR getMilisecondsW[] = {'g','e','t','M','i','l','i','s','e','c','o','n','d','s',0};
-static const WCHAR getUTCMilisecondsW[] = {'g','e','t','U','T','C','M','i','l','i','s','e','c','o','n','d','s',0};
+static const WCHAR getMillisecondsW[] = {'g','e','t','M','i','l','l','i','s','e','c','o','n','d','s',0};
+static const WCHAR getUTCMillisecondsW[] = {'g','e','t','U','T','C','M','i','l','l','i','s','e','c','o','n','d','s',0};
 static const WCHAR getTimezoneOffsetW[] = {'g','e','t','T','i','m','e','z','o','n','e','O','f','f','s','e','t',0};
 static const WCHAR setTimeW[] = {'s','e','t','T','i','m','e',0};
-static const WCHAR setMilisecondsW[] = {'s','e','t','M','i','l','i','s','e','c','o','n','d','s',0};
-static const WCHAR setUTCMilisecondsW[] = {'s','e','t','U','T','C','M','i','l','i','s','e','c','o','n','d','s',0};
+static const WCHAR setMillisecondsW[] = {'s','e','t','M','i','l','l','i','s','e','c','o','n','d','s',0};
+static const WCHAR setUTCMillisecondsW[] = {'s','e','t','U','T','C','M','i','l','l','i','s','e','c','o','n','d','s',0};
 static const WCHAR setSecondsW[] = {'s','e','t','S','e','c','o','n','d','s',0};
 static const WCHAR setUTCSecondsW[] = {'s','e','t','U','T','C','S','e','c','o','n','d','s',0};
 static const WCHAR setMinutesW[] = {'s','e','t','M','i','n','u','t','e','s',0};
@@ -259,6 +259,20 @@ static inline DOUBLE sec_from_time(DOUBLE time)
 
     ret = fmod(floor(time/1000), 60);
     if(ret<0) ret += 60;
+
+    return ret;
+}
+
+/* ECMA-262 3th Edition    15.9.1.10 */
+static inline DOUBLE ms_from_time(DOUBLE time)
+{
+    DOUBLE ret;
+
+    if(isnan(time))
+        return ret_nan();
+
+    ret = fmod(time, 1000);
+    if(ret<0) ret += 1000;
 
     return ret;
 }
@@ -634,18 +648,42 @@ static HRESULT Date_getUTCSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DIS
     return S_OK;
 }
 
-static HRESULT Date_getMiliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+/* ECMA-262 3th Edition    15.9.1.10 */
+static HRESULT Date_getMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+
+        num_set_val(retv, ms_from_time(time));
+    }
+    return S_OK;
 }
 
-static HRESULT Date_getUTCMiliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+/* ECMA-262 3th Edition    15.9.1.10 */
+static HRESULT Date_getUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, ms_from_time(date->time));
+    }
+    return S_OK;
 }
 
 static HRESULT Date_getTimezoneOffset(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -687,14 +725,14 @@ static HRESULT Date_setTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return S_OK;
 }
 
-static HRESULT Date_setMiliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     FIXME("\n");
     return E_NOTIMPL;
 }
 
-static HRESULT Date_setUTCMiliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+static HRESULT Date_setUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     FIXME("\n");
@@ -797,7 +835,7 @@ static const builtin_prop_t Date_props[] = {
     {getDayW,                Date_getDay,                PROPF_METHOD},
     {getFullYearW,           Date_getFullYear,           PROPF_METHOD},
     {getHoursW,              Date_getHours,              PROPF_METHOD},
-    {getMilisecondsW,        Date_getMiliseconds,        PROPF_METHOD},
+    {getMillisecondsW,       Date_getMilliseconds,       PROPF_METHOD},
     {getMinutesW,            Date_getMinutes,            PROPF_METHOD},
     {getMonthW,              Date_getMonth,              PROPF_METHOD},
     {getSecondsW,            Date_getSeconds,            PROPF_METHOD},
@@ -807,7 +845,7 @@ static const builtin_prop_t Date_props[] = {
     {getUTCDayW,             Date_getUTCDay,             PROPF_METHOD},
     {getUTCFullYearW,        Date_getUTCFullYear,        PROPF_METHOD},
     {getUTCHoursW,           Date_getUTCHours,           PROPF_METHOD},
-    {getUTCMilisecondsW,     Date_getUTCMiliseconds,     PROPF_METHOD},
+    {getUTCMillisecondsW,    Date_getUTCMilliseconds,    PROPF_METHOD},
     {getUTCMinutesW,         Date_getUTCMinutes,         PROPF_METHOD},
     {getUTCMonthW,           Date_getUTCMonth,           PROPF_METHOD},
     {getUTCSecondsW,         Date_getUTCSeconds,         PROPF_METHOD},
@@ -817,7 +855,7 @@ static const builtin_prop_t Date_props[] = {
     {setDateW,               Date_setDate,               PROPF_METHOD},
     {setFullYearW,           Date_setFullYear,           PROPF_METHOD},
     {setHoursW,              Date_setHours,              PROPF_METHOD},
-    {setMilisecondsW,        Date_setMiliseconds,        PROPF_METHOD},
+    {setMillisecondsW,       Date_setMilliseconds,       PROPF_METHOD},
     {setMinutesW,            Date_setMinutes,            PROPF_METHOD},
     {setMonthW,              Date_setMonth,              PROPF_METHOD},
     {setSecondsW,            Date_setSeconds,            PROPF_METHOD},
@@ -825,7 +863,7 @@ static const builtin_prop_t Date_props[] = {
     {setUTCDateW,            Date_setUTCDate,            PROPF_METHOD},
     {setUTCFullYearW,        Date_setUTCFullYear,        PROPF_METHOD},
     {setUTCHoursW,           Date_setUTCHours,           PROPF_METHOD},
-    {setUTCMilisecondsW,     Date_setUTCMiliseconds,     PROPF_METHOD},
+    {setUTCMillisecondsW,    Date_setUTCMilliseconds,    PROPF_METHOD},
     {setUTCMinutesW,         Date_setUTCMinutes,         PROPF_METHOD},
     {setUTCMonthW,           Date_setUTCMonth,           PROPF_METHOD},
     {setUTCSecondsW,         Date_setUTCSeconds,         PROPF_METHOD},
