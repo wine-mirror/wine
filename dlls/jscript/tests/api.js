@@ -991,6 +991,9 @@ ok(date.setMilliseconds(10) === date.setUTCMilliseconds(10), "date.setUTCMillise
 date.setSeconds(-10);
 ok(date.getUTCSeconds() === 50, "date.getUTCSeconds() = " + date.getUTCSeconds());
 ok(date.setSeconds(10) === date.setUTCSeconds(10), "date.setUTCSeconds(10) !== date.setUTCSeconds(10)");
+date.setMinutes(-10);
+ok(date.getUTCMinutes() === 50, "date.getUTCMinutes() = " + date.getUTCMinutes());
+ok(date.setMinutes(10) === date.setUTCMinutes(10), "date.setUTCMinutes(10) !== date.setUTCMinutes(10)");
 
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
