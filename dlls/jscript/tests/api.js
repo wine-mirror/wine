@@ -994,6 +994,12 @@ ok(date.setSeconds(10) === date.setUTCSeconds(10), "date.setUTCSeconds(10) !== d
 date.setMinutes(-10);
 ok(date.getUTCMinutes() === 50, "date.getUTCMinutes() = " + date.getUTCMinutes());
 ok(date.setMinutes(10) === date.setUTCMinutes(10), "date.setUTCMinutes(10) !== date.setUTCMinutes(10)");
+date.setUTCHours(-10);
+ok(date.getUTCHours() === 14, "date.getUTCHours() = " + date.getUTCHours());
+date.setUTCHours(-123);
+ok(date.getTime() === -614989990, "date.getTime() = " + date.getTime());
+date.setHours(20);
+ok(date.getHours() === 20, "date.getHours() = " + date.getHours());
 
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
