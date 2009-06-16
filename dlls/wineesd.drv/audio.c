@@ -1416,6 +1416,7 @@ static esd_player_info_t* wod_get_player(WINE_WAVEOUT* wwo, esd_info_t** esd_all
         if (wwo->esd_fd < 0)
         {
             WARN("esd_open_sound() failed (%d)\n", errno);
+            *esd_all_info = NULL;
             return NULL;
         }
     }
@@ -1468,7 +1469,8 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
     else
         ret = MMSYSERR_ERROR;
 
-    esd_free_all_info(esd_all_info);
+    if (esd_all_info)
+        esd_free_all_info(esd_all_info);
     return ret;
 }
 
@@ -1493,7 +1495,8 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
         esd_info_t* esd_all_info;
         /* wod_get_player sets the stream_id as a side effect */
         wod_get_player(wwo, &esd_all_info);
-        esd_free_all_info(esd_all_info);
+        if (esd_all_info)
+            esd_free_all_info(esd_all_info);
     }
     if (!wwo->stream_id)
         return MMSYSERR_ERROR;
