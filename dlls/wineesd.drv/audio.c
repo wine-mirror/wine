@@ -1466,8 +1466,6 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
         *lpdwVol = left + (right << 16);
         ret = MMSYSERR_NOERROR;
     }
-    else
-        ret = MMSYSERR_ERROR;
 
     if (esd_all_info)
         esd_free_all_info(esd_all_info);
