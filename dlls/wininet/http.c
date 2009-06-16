@@ -1568,6 +1568,20 @@ static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
+static BOOL HTTP_GetRequestURL(WININETHTTPREQW *req, LPWSTR buf)
+{
+    LPHTTPHEADERW host_header;
+
+    static const WCHAR formatW[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
+
+    host_header = HTTP_GetHeader(req, hostW);
+    if(!host_header)
+        return FALSE;
+
+    sprintfW(buf, formatW, host_header->lpszValue, req->lpszPath); /* FIXME */
+    return TRUE;
+}
+
 static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
@@ -1618,6 +1632,41 @@ static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
             *size = len;
             return ERROR_SUCCESS;
         }
+    }
+
+    case INTERNET_OPTION_CACHE_TIMESTAMPS: {
+        INTERNET_CACHE_ENTRY_INFOW *info;
+        INTERNET_CACHE_TIMESTAMPS *ts = buffer;
+        WCHAR url[INTERNET_MAX_URL_LENGTH];
+        DWORD nbytes, error;
+        BOOL ret;
+
+        TRACE("INTERNET_OPTION_CACHE_TIMESTAMPS\n");
+
+        if (*size < sizeof(*ts))
+        {
+            *size = sizeof(*ts);
+            return ERROR_INSUFFICIENT_BUFFER;
+        }
+        nbytes = 0;
+        HTTP_GetRequestURL(req, url);
+        ret = GetUrlCacheEntryInfoW(url, NULL, &nbytes);
+        error = GetLastError();
+        if (!ret && error == ERROR_INSUFFICIENT_BUFFER)
+        {
+            if (!(info = HeapAlloc(GetProcessHeap(), 0, nbytes)))
+                return ERROR_OUTOFMEMORY;
+
+            GetUrlCacheEntryInfoW(url, info, &nbytes);
+
+            ts->ftExpires = info->ExpireTime;
+            ts->ftLastModified = info->LastModifiedTime;
+
+            HeapFree(GetProcessHeap(), 0, info);
+            *size = sizeof(*ts);
+            return ERROR_SUCCESS;
+        }
+        return error;
     }
 
     case INTERNET_OPTION_DATAFILE_NAME: {
@@ -3242,20 +3291,6 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
     result=HttpSendRequestW(hHttpRequest, szHeaders, nLen, lpOptional, dwOptionalLength);
     HeapFree(GetProcessHeap(),0,szHeaders);
     return result;
-}
-
-static BOOL HTTP_GetRequestURL(WININETHTTPREQW *req, LPWSTR buf)
-{
-    LPHTTPHEADERW host_header;
-
-    static const WCHAR formatW[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
-
-    host_header = HTTP_GetHeader(req, hostW);
-    if(!host_header)
-        return FALSE;
-
-    sprintfW(buf, formatW, host_header->lpszValue, req->lpszPath); /* FIXME */
-    return TRUE;
 }
 
 /***********************************************************************
