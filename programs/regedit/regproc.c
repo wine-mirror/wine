@@ -610,20 +610,29 @@ static void processRegEntry(WCHAR* stdInput, BOOL isUnicode)
  *
  * Parameters:
  *   in - input stream to read from
+ *   first_chars - beginning of stream, read due to Unicode check
  */
-static void processRegLinesA(FILE *in)
+static void processRegLinesA(FILE *in, char* first_chars)
 {
     LPSTR line           = NULL;  /* line read from input stream */
     ULONG lineSize       = REG_VAL_BUF_SIZE;
 
     line = HeapAlloc(GetProcessHeap(), 0, lineSize);
     CHECK_ENOUGH_MEMORY(line);
+    memcpy(line, first_chars, 2);
 
     while (!feof(in)) {
         LPSTR s; /* The pointer into line for where the current fgets should read */
         LPSTR check;
         WCHAR* lineW;
         s = line;
+
+        if(first_chars)
+        {
+            s += 2;
+            first_chars = NULL;
+        }
+
         for (;;) {
             size_t size_remaining;
             int size_to_get;
@@ -1373,8 +1382,7 @@ BOOL import_registry_file(FILE* reg_file)
                 processRegLinesW(reg_file);
             } else
             {
-                rewind(reg_file);
-                processRegLinesA(reg_file);
+                processRegLinesA(reg_file, (char*)s);
             }
         }
         return TRUE;
