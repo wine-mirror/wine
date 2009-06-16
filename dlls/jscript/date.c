@@ -210,19 +210,29 @@ static inline DOUBLE date_from_time(DOUBLE time)
 /* ECMA-262 3th Edition    15.9.1.6 */
 static inline DOUBLE week_day(DOUBLE time)
 {
+    DOUBLE ret;
+
     if(isnan(time))
         return ret_nan();
 
-    return (int)(day(time)+4) % 7;
+    ret = fmod(day(time)+4, 7);
+    if(ret<0) ret += 7;
+
+    return ret;
 }
 
 /* ECMA-262 3th Edition    15.9.1.10 */
 static inline DOUBLE hour_from_time(DOUBLE time)
 {
+    DOUBLE ret;
+
     if(isnan(time))
         return ret_nan();
 
-    return (int)floor(time/MS_PER_HOUR) % 24;
+    ret = fmod(floor(time/MS_PER_HOUR), 24);
+    if(ret<0) ret += 24;
+
+    return ret;
 }
 
 /* ECMA-262 3rd Edition    15.9.1.14 */
