@@ -988,6 +988,9 @@ date.setTime(0);
 date.setMilliseconds(-10, 2);
 ok(date.getUTCMilliseconds() === 990, "date.getUTCMilliseconds() = " + date.getUTCMilliseconds());
 ok(date.setMilliseconds(10) === date.setUTCMilliseconds(10), "date.setUTCMilliseconds(10) !== date.setUTCMilliseconds(10)");
+date.setSeconds(-10);
+ok(date.getUTCSeconds() === 50, "date.getUTCSeconds() = " + date.getUTCSeconds());
+ok(date.setSeconds(10) === date.setUTCSeconds(10), "date.setUTCSeconds(10) !== date.setUTCSeconds(10)");
 
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
