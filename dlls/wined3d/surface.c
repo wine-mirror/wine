@@ -1975,6 +1975,29 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             *target_bpp = 12;
             break;
 
+        case WINED3DFMT_D15S1:
+            if (GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+            {
+                *convert = CONVERT_D15S1;
+                *target_bpp = 4;
+            }
+            break;
+
+        case WINED3DFMT_D24X4S4:
+            if (GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+            {
+                *convert = CONVERT_D24X4S4;
+            }
+            break;
+
+        case WINED3DFMT_D24FS8:
+            if (GL_SUPPORT(ARB_DEPTH_BUFFER_FLOAT))
+            {
+                *convert = CONVERT_D24FS8;
+                *target_bpp = 8;
+            }
+            break;
+
         default:
             break;
     }
@@ -2422,6 +2445,63 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     Dest[1] = red;
                     Dest[2] = 1.0;
                     Dest += 3;
+                }
+            }
+            break;
+        }
+
+        case CONVERT_D15S1:
+        {
+            unsigned int x, y;
+
+            for (y = 0; y < height; ++y)
+            {
+                const WORD *source = (const WORD *)(src + y * pitch);
+                DWORD *dest = (DWORD *)(dst + y * outpitch);
+
+                for (x = 0; x < width; ++x)
+                {
+                    /* The depth data is normalized, so needs to be scaled, the stencil data isn't. */
+                    WORD d15 = source[x] & 0xfffe;
+                    DWORD d24 = d15 * 0x100 + (d15 * 0xff80 + 0x3fff80) / 0x7fff00;
+                    dest[x] = (d24 << 8) | (source[x] & 0x1);
+                }
+            }
+            break;
+        }
+
+        case CONVERT_D24X4S4:
+        {
+            unsigned int x, y;
+
+            for (y = 0; y < height; ++y)
+            {
+                const DWORD *source = (const DWORD *)(src + y * pitch);
+                DWORD *dest = (DWORD *)(dst + y * outpitch);
+
+                for (x = 0; x < width; ++x)
+                {
+                    /* Just need to clear out the X4 part. */
+                    dest[x] = source[x] & ~0xf0;
+                }
+            }
+            break;
+        }
+
+        case CONVERT_D24FS8:
+        {
+            unsigned int x, y;
+
+            for (y = 0; y < height; ++y)
+            {
+                const DWORD *source = (const DWORD *)(src + y * pitch);
+                float *dest_f = (float *)(dst + y * outpitch);
+                DWORD *dest_s = (DWORD *)(dst + y * outpitch);
+
+                for (x = 0; x < width; ++x)
+                {
+                    dest_f[x * 2] = float_24_to_32((source[x] & 0xffffff00) >> 8);
+                    dest_s[x * 2 + 1] = source[x] & 0xff;
                 }
             }
             break;

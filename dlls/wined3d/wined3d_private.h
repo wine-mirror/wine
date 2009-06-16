@@ -205,6 +205,28 @@ static inline float float_16_to_32(const unsigned short *in) {
     }
 }
 
+static inline float float_24_to_32(DWORD in)
+{
+    const float sgn = in & 0x800000 ? -1.0f : 1.0f;
+    const unsigned short e = (in & 0x780000) >> 19;
+    const unsigned short m = in & 0x7ffff;
+
+    if (e == 0)
+    {
+        if (m == 0) return sgn * 0.0f; /* +0.0 or -0.0 */
+        else return sgn * pow(2, -6.0f) * ((float)m / 524288.0f);
+    }
+    else if (e < 15)
+    {
+        return sgn * pow(2, (float)e - 7.0f) * (1.0f + ((float)m / 524288.0f));
+    }
+    else
+    {
+        if (m == 0) return sgn / 0.0; /* +INF / -INF */
+        else return 0.0 / 0.0; /* NAN */
+    }
+}
+
 /**
  * Settings 
  */
@@ -2053,6 +2075,9 @@ typedef enum {
     CONVERT_G16R16,
     CONVERT_R16G16F,
     CONVERT_R32G32F,
+    CONVERT_D15S1,
+    CONVERT_D24X4S4,
+    CONVERT_D24FS8,
 } CONVERT_TYPES;
 
 HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_texturing, GLenum *format, GLenum *internal, GLenum *type, CONVERT_TYPES *convert, int *target_bpp, BOOL srgb_mode);
