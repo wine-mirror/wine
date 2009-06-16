@@ -76,16 +76,19 @@ static unsigned int reserved_vs_const(IWineD3DBaseShader *shader, const WineD3D_
 /* ARB_program_shader private data */
 struct control_frame
 {
-    struct list entry;
-    BOOL ifc;
-    BOOL muting;
-    unsigned int loop_no;
+    struct                          list entry;
+    BOOL                            ifc;
+    BOOL                            muting;
+    BOOL                            outer_loop;
+    unsigned int                    loop_no;
+    DWORD                           loop_control[3];
 };
 
 struct arb_ps_compile_args
 {
     struct ps_compile_args          super;
     DWORD                           bools; /* WORD is enough, use DWORD for alignment */
+    unsigned char                   loop_ctrl[MAX_CONST_I][3];
 };
 
 struct stb_const_desc
@@ -110,6 +113,7 @@ struct arb_vs_compile_args
 {
     struct vs_compile_args          super;
     DWORD                           bools; /* WORD is enough, use DWORD for alignment */
+    unsigned char                   loop_ctrl[MAX_CONST_I][3];
 };
 
 struct arb_vs_compiled_shader
@@ -120,9 +124,17 @@ struct arb_vs_compiled_shader
     char                            num_int_consts;
 };
 
-struct shader_arb_ctx_priv {
+struct recorded_instruction
+{
+    struct wined3d_shader_instruction ins;
+    struct list entry;
+};
+
+struct shader_arb_ctx_priv
+{
     char addr_reg[20];
-    enum {
+    enum
+    {
         /* plain GL_ARB_vertex_program or GL_ARB_fragment_program */
         ARB,
         /* GL_NV_vertex_progam2_option or GL_NV_fragment_program_option */
@@ -135,9 +147,12 @@ struct shader_arb_ctx_priv {
     const struct arb_ps_compile_args    *cur_ps_args;
     const struct arb_ps_compiled_shader *compiled_fprog;
     const struct arb_vs_compiled_shader *compiled_vprog;
-    struct list control_frames;
-    BOOL muted;
-    unsigned int num_loops, loop_depth;
+    struct list                         control_frames;
+    struct list                         record;
+    BOOL                                recording;
+    BOOL                                muted;
+    unsigned int                        num_loops, loop_depth;
+    int                                 aL;
 };
 
 struct arb_pshader_private {
@@ -306,6 +321,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->luminanceconst[i].const_num, scale));
         }
     }
+    checkGLcall("Load bumpmap consts\n");
 
     if(gl_shader->num_int_consts == 0) return;
 
@@ -322,6 +338,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
         }
     }
+    checkGLcall("Load ps int consts\n");
 
     if(gl_shader->ycorrection != WINED3D_CONST_NUM_UNUSED)
     {
@@ -366,6 +383,7 @@ static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, gl_shader->int_consts[i], val));
         }
     }
+    checkGLcall("Load vs int consts\n");
 }
 
 /**
@@ -655,6 +673,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
         case WINED3DSPR_CONST:
             if (!pshader && reg->rel_addr)
             {
+                BOOL aL = FALSE;
                 char rel_reg[50];
                 UINT rel_offset = ((IWineD3DVertexShaderImpl *)This)->rel_offset;
                 if(This->baseShader.reg_maps.shader_version.major < 2) {
@@ -662,11 +681,17 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
                 } else {
                     shader_arb_get_src_param(ins, reg->rel_addr, 0, rel_reg);
                     if(ctx->target_version == ARB) {
-                        shader_arb_request_a0(ins, rel_reg);
-                        sprintf(rel_reg, "A0.x");
+                        if(strcmp(rel_reg, "**aL_emul**") == 0) {
+                            aL = TRUE;
+                        } else {
+                            shader_arb_request_a0(ins, rel_reg);
+                            sprintf(rel_reg, "A0.x");
+                        }
                     }
                 }
-                if (reg->idx >= rel_offset)
+                if(aL)
+                    sprintf(register_name, "C[%u]", ctx->aL + reg->idx);
+                else if (reg->idx >= rel_offset)
                     sprintf(register_name, "C[%s + %u]", rel_reg, reg->idx - rel_offset);
                 else
                     sprintf(register_name, "C[%s - %u]", rel_reg, -reg->idx + rel_offset);
@@ -747,9 +772,23 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             break;
 
         case WINED3DSPR_LOOP:
-            /* Pshader has an implicitly declared loop index counter A0.x that cannot be renamed */
-            if(pshader) sprintf(register_name, "A0.x");
-            else sprintf(register_name, "aL.y");
+            if(ctx->target_version >= NV2)
+            {
+                /* Pshader has an implicitly declared loop index counter A0.x that cannot be renamed */
+                if(pshader) sprintf(register_name, "A0.x");
+                else sprintf(register_name, "aL.y");
+            }
+            else
+            {
+                /* Unfortunately this code cannot return the value of ctx->aL here. An immediate value
+                 * would be valid, but if aL is used for indexing(its only use), there's likely an offset,
+                 * thus the result would be something like C[15 + 30], which is not valid in the ARB program
+                 * grammar. So return a marker for the emulated aL and intercept it in constant and varying
+                 * indexing
+                 */
+                sprintf(register_name, "**aL_emul**");
+            }
+
             break;
 
         case WINED3DSPR_CONSTINT:
@@ -2781,10 +2820,13 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
 }
 
 static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const struct arb_vs_compile_args *new,
-                                 const DWORD use_map) {
+                                 const DWORD use_map, BOOL skip_int) {
     if((stored->super.swizzle_map & use_map) != new->super.swizzle_map) return FALSE;
     if(stored->super.fog_src != new->super.fog_src) return FALSE;
-    return stored->bools == new->bools;
+    if(stored->bools != new->bools) return FALSE;
+    if(skip_int) return TRUE;
+
+    return memcmp(stored->loop_ctrl, new->loop_ctrl, sizeof(stored->loop_ctrl)) == 0;
 }
 
 static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl *shader, const struct arb_vs_compile_args *args)
@@ -2796,6 +2838,7 @@ static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl 
     SHADER_BUFFER buffer;
     struct arb_vshader_private *shader_data;
     GLuint ret;
+    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)shader->baseShader.device)->adapter->gl_info;
 
     if(!shader->backend_priv) {
         shader->backend_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data));
@@ -2807,7 +2850,7 @@ static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl 
      * (cache coherency etc)
      */
     for(i = 0; i < shader_data->num_gl_shaders; i++) {
-        if(vs_args_equal(&shader_data->gl_shaders[i].args, args, use_map)) {
+        if(vs_args_equal(&shader_data->gl_shaders[i].args, args, use_map, GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION))) {
             return &shader_data->gl_shaders[i];
         }
     }
@@ -2848,6 +2891,8 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
         struct arb_ps_compile_args *args)
 {
     int i;
+    WORD int_skip;
+    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)shader->baseShader.device)->adapter->gl_info;
     find_ps_compile_args(shader, stateblock, &args->super);
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
@@ -2857,12 +2902,38 @@ static inline void find_arb_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWi
     {
         if(stateblock->pixelShaderConstantB[i]) args->bools |= ( 1 << i);
     }
+
+    /* Skip if unused or local, or supported natively */
+    int_skip = ~shader->baseShader.reg_maps.integer_constants | shader->baseShader.reg_maps.local_int_consts;
+    if(int_skip == 0xffff || GL_SUPPORT(NV_FRAGMENT_PROGRAM_OPTION))
+    {
+        memset(&args->loop_ctrl, 0, sizeof(args->loop_ctrl));
+        return;
+    }
+
+    for(i = 0; i < MAX_CONST_I; i++)
+    {
+        if(int_skip & (1 << i))
+        {
+            args->loop_ctrl[i][0] = 0;
+            args->loop_ctrl[i][1] = 0;
+            args->loop_ctrl[i][2] = 0;
+        }
+        else
+        {
+            args->loop_ctrl[i][0] = stateblock->pixelShaderConstantI[i * 4];
+            args->loop_ctrl[i][1] = stateblock->pixelShaderConstantI[i * 4 + 1];
+            args->loop_ctrl[i][2] = stateblock->pixelShaderConstantI[i * 4 + 2];
+        }
+    }
 }
 
 static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockImpl *stateblock,
         struct arb_vs_compile_args *args)
 {
     int i;
+    WORD int_skip;
+    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)shader->baseShader.device)->adapter->gl_info;
     find_vs_compile_args(shader, stateblock, &args->super);
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
@@ -2874,6 +2945,29 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
         if(stateblock->vertexShaderConstantB[i]) args->bools |= ( 1 << i);
     }
 
+    /* Skip if unused or local */
+    int_skip = ~shader->baseShader.reg_maps.integer_constants | shader->baseShader.reg_maps.local_int_consts;
+    if(int_skip == 0xffff || GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION))
+    {
+        memset(&args->loop_ctrl, 0, sizeof(args->loop_ctrl));
+        return;
+    }
+
+    for(i = 0; i < MAX_CONST_I; i++)
+    {
+        if(int_skip & (1 << i))
+        {
+            args->loop_ctrl[i][0] = 0;
+            args->loop_ctrl[i][1] = 0;
+            args->loop_ctrl[i][2] = 0;
+        }
+        else
+        {
+            args->loop_ctrl[i][0] = stateblock->vertexShaderConstantI[i * 4];
+            args->loop_ctrl[i][1] = stateblock->vertexShaderConstantI[i * 4 + 1];
+            args->loop_ctrl[i][2] = stateblock->vertexShaderConstantI[i * 4 + 2];
+        }
+    }
 }
 
 /* GL locking is done by the caller */
@@ -2886,7 +2980,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         struct arb_vs_compile_args compile_args;
         struct arb_vs_compiled_shader *compiled;
 
-        TRACE("Using vertex shader\n");
+        TRACE("Using vertex shader %p\n", This->stateBlock->vertexShader);
         find_arb_vs_compile_args((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, This->stateBlock, &compile_args);
         compiled = find_arb_vshader((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, &compile_args);
         priv->current_vprogram_id = compiled->prgId;
@@ -3242,12 +3336,263 @@ static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, 
     }
 }
 
+static inline void get_int_const(const struct wined3d_shader_instruction *ins, IWineD3DBaseShaderImpl *This, DWORD idx, int *ret)
+{
+    BOOL vshader = shader_is_vshader_version(This->baseShader.reg_maps.shader_version.type);
+    WORD flag = (1 << idx);
+    const local_constant *constant;
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+
+    /* Integer constants can either be a local constant, or they can be stored in the shader
+     * type specific compile args
+     */
+    if(This->baseShader.reg_maps.local_int_consts & flag)
+    {
+        LIST_FOR_EACH_ENTRY(constant, &This->baseShader.constantsI, local_constant, entry)
+        {
+            if (constant->idx == idx)
+            {
+                ret[0] = constant->value[0];
+                ret[1] = constant->value[1];
+                /* Step / stride is signed */
+                ret[2] = (int) constant->value[2];
+                return;
+            }
+        }
+        /* If this happens the flag was set incorrectly */
+        ERR("Local constant not found\n");
+        ret[0] = 0;
+        ret[1] = 0;
+        ret[2] = 0;
+        return;
+    }
+    else
+    {
+        if(vshader)
+        {
+            /* Count and aL start value are unsigned */
+            ret[0] = priv->cur_vs_args->loop_ctrl[idx][0];
+            ret[1] = priv->cur_vs_args->loop_ctrl[idx][1];
+            /* The step/stride is signed */
+            ret[2] = ((char) priv->cur_vs_args->loop_ctrl[idx][2]);
+        }
+        else
+        {
+            ret[0] = priv->cur_ps_args->loop_ctrl[idx][0];
+            ret[1] = priv->cur_ps_args->loop_ctrl[idx][1];
+            ret[2] = ((char) priv->cur_ps_args->loop_ctrl[idx][2]);
+        }
+        return;
+    }
+}
+
+static void record_instruction(struct list *list, const struct wined3d_shader_instruction *ins)
+{
+    unsigned int i;
+    struct wined3d_shader_dst_param *dst_param = NULL;
+    struct wined3d_shader_src_param *src_param = NULL, *rel_addr = NULL;
+    struct recorded_instruction *rec = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rec));
+    if(!rec)
+    {
+        ERR("Out of memory\n");
+        return;
+    }
+
+    rec->ins = *ins;
+    dst_param = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst_param));
+    if(!dst_param) goto free;
+    *dst_param = *ins->dst;
+    if(ins->dst->reg.rel_addr)
+    {
+        rel_addr = HeapAlloc(GetProcessHeap(), 0, sizeof(*dst_param->reg.rel_addr));
+        if(!rel_addr) goto free;
+        *rel_addr = *ins->dst->reg.rel_addr;
+        dst_param->reg.rel_addr = rel_addr;
+    }
+    rec->ins.dst = dst_param;
+
+    src_param = HeapAlloc(GetProcessHeap(), 0, sizeof(*src_param) * ins->src_count);
+    if(!src_param) goto free;
+    for(i = 0; i < ins->src_count; i++)
+    {
+        src_param[i] = ins->src[i];
+        if(ins->src[i].reg.rel_addr)
+        {
+            rel_addr = HeapAlloc(GetProcessHeap(), 0, sizeof(*rel_addr));
+            if(!rel_addr) goto free;
+            *rel_addr = *ins->src[i].reg.rel_addr;
+            src_param[i].reg.rel_addr = rel_addr;
+        }
+    }
+    rec->ins.src = src_param;
+    list_add_tail(list, &rec->entry);
+    return;
+
+free:
+    ERR("Out of memory\n");
+    if(dst_param)
+    {
+        HeapFree(GetProcessHeap(), 0, (void *) dst_param->reg.rel_addr);
+        HeapFree(GetProcessHeap(), 0, dst_param);
+    }
+    if(src_param)
+    {
+        for(i = 0; i < ins->src_count; i++)
+        {
+            HeapFree(GetProcessHeap(), 0, (void *) src_param[i].reg.rel_addr);
+        }
+        HeapFree(GetProcessHeap(), 0, src_param);
+    }
+    HeapFree(GetProcessHeap(), 0, rec);
+}
+
+static void free_recorded_instruction(struct list *list)
+{
+    struct recorded_instruction *rec_ins, *entry2;
+    unsigned int i;
+
+    LIST_FOR_EACH_ENTRY_SAFE(rec_ins, entry2, list, struct recorded_instruction, entry)
+    {
+        list_remove(&rec_ins->entry);
+        if(rec_ins->ins.dst)
+        {
+            HeapFree(GetProcessHeap(), 0, (void *) rec_ins->ins.dst->reg.rel_addr);
+            HeapFree(GetProcessHeap(), 0, (void *) rec_ins->ins.dst);
+        }
+        if(rec_ins->ins.src)
+        {
+            for(i = 0; i < rec_ins->ins.src_count; i++)
+            {
+                HeapFree(GetProcessHeap(), 0, (void *) rec_ins->ins.src[i].reg.rel_addr);
+            }
+            HeapFree(GetProcessHeap(), 0, (void *) rec_ins->ins.src);
+        }
+        HeapFree(GetProcessHeap(), 0, rec_ins);
+    }
+}
+
 static void shader_arb_handle_instruction(const struct wined3d_shader_instruction *ins) {
     SHADER_HANDLER hw_fct;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     struct control_frame *control_frame;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
+
+    if(ins->handler_idx == WINED3DSIH_LOOP || ins->handler_idx == WINED3DSIH_REP)
+    {
+        control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
+        list_add_head(&priv->control_frames, &control_frame->entry);
+
+        if(priv->target_version >= NV2)
+        {
+            control_frame->loop_no = priv->num_loops++;
+            priv->loop_depth++;
+        }
+        else
+        {
+            /* Don't bother recording when we're in a not used if branch */
+            if(priv->muted)
+            {
+                return;
+            }
+
+            if(!priv->recording)
+            {
+                int control_values[3];
+                get_int_const(ins, This, ins->src[0].reg.idx, control_values);
+                list_init(&priv->record);
+                priv->recording = TRUE;
+                control_frame->outer_loop = TRUE;
+                control_frame->loop_control[0] = control_values[0];
+                control_frame->loop_control[1] = control_values[1];
+                control_frame->loop_control[2] = control_values[2];
+                return; /* Instruction is handled */
+            }
+            /* Record this loop in the outer loop's recording */
+        }
+    }
+    else if(ins->handler_idx == WINED3DSIH_ENDLOOP || ins->handler_idx == WINED3DSIH_ENDREP)
+    {
+        if(priv->target_version >= NV2)
+        {
+            /* Nothing to do. The control frame is popped after the HW instr handler */
+        }
+        else
+        {
+            struct list *e = list_head(&priv->control_frames);
+            control_frame = LIST_ENTRY(e, struct control_frame, entry);
+            list_remove(&control_frame->entry);
+
+            if(control_frame->outer_loop)
+            {
+                int iteration, aL = 0;
+                struct list copy;
+
+                /* Turn off recording before playback */
+                priv->recording = FALSE;
+
+                /* Move the recorded instructions to a separate list and get them out of the private data
+                 * structure. If there are nested loops, the shader_arb_handle_instruction below will
+                 * be recorded again, thus priv->record might be overwritten
+                 */
+                list_init(&copy);
+                list_move_tail(&copy, &priv->record);
+                list_init(&priv->record);
+
+                if(ins->handler_idx == WINED3DSIH_ENDLOOP)
+                {
+                    shader_addline(buffer, "#unrolling loop: %d iterations, aL=%d, inc %d\n",
+                                   control_frame->loop_control[0], control_frame->loop_control[1],
+                                   control_frame->loop_control[2]);
+                    aL = control_frame->loop_control[1];
+                }
+                else
+                {
+                    shader_addline(buffer, "#unrolling rep: %d iterations\n", control_frame->loop_control[0]);
+                }
+
+                for(iteration = 0; iteration < control_frame->loop_control[0]; iteration++)
+                {
+                    struct recorded_instruction *rec_ins;
+                    if(ins->handler_idx == WINED3DSIH_ENDLOOP)
+                    {
+                        priv->aL = aL;
+                        shader_addline(buffer, "#Iteration %d, aL=%d\n", iteration, aL);
+                    }
+                    else
+                    {
+                        shader_addline(buffer, "#Iteration %d\n", iteration);
+                    }
+
+                    LIST_FOR_EACH_ENTRY(rec_ins, &copy, struct recorded_instruction, entry)
+                    {
+                        shader_arb_handle_instruction(&rec_ins->ins);
+                    }
+
+                    if(ins->handler_idx == WINED3DSIH_ENDLOOP)
+                    {
+                        aL += control_frame->loop_control[2];
+                    }
+                }
+                shader_addline(buffer, "#end loop/rep\n");
+
+                free_recorded_instruction(&copy);
+                HeapFree(GetProcessHeap(), 0, control_frame);
+                return; /* Instruction is handled */
+            }
+            else
+            {
+                /* This is a nested loop. Proceed to the normal recording function */
+                HeapFree(GetProcessHeap(), 0, control_frame);
+            }
+        }
+    }
+
+    if(priv->recording)
+    {
+        record_instruction(&priv->record, ins);
+        return;
+    }
 
     /* boolean if */
     if(ins->handler_idx == WINED3DSIH_IF)
@@ -3309,14 +3654,6 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
             HeapFree(GetProcessHeap(), 0, control_frame);
             /* ifc - generate a hw endif */
         }
-    }
-    else if(ins->handler_idx == WINED3DSIH_LOOP || ins->handler_idx == WINED3DSIH_REP)
-    {
-        control_frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*control_frame));
-        list_add_head(&priv->control_frames, &control_frame->entry);
-
-        control_frame->loop_no = priv->num_loops++;
-        priv->loop_depth++;
     }
 
     if(priv->muted) return;

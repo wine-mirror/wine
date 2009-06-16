@@ -530,6 +530,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             pToken += 4;
 
             list_add_head(&This->baseShader.constantsI, &lconst->entry);
+            reg_maps->local_int_consts |= (1 << dst.reg.idx);
         }
         else if (ins.handler_idx == WINED3DSIH_DEFB)
         {
