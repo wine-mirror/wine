@@ -40,7 +40,7 @@ extern HRESULT Range_Constructor(ITfContext *context, ITextStoreACP *textstore, 
 extern HRESULT CompartmentMgr_Constructor(IUnknown *pUnkOuter, REFIID riid, IUnknown **ppOut);
 extern HRESULT CompartmentMgr_Destructor(ITfCompartmentMgr *This);
 
-extern HRESULT Context_Initialize(ITfContext *cxt);
+extern HRESULT Context_Initialize(ITfContext *cxt, ITfDocumentMgr *manager);
 extern HRESULT Context_Uninitialize(ITfContext *cxt);
 extern HRESULT TF_SELECTION_to_TS_SELECTION_ACP(const TF_SELECTION *tf, TS_SELECTION_ACP *tsAcp);
 

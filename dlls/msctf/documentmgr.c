@@ -146,7 +146,7 @@ static HRESULT WINAPI DocumentMgr_Push(ITfDocumentMgr *iface, ITfContext *pic)
     This->contextStack[0] = check;
 
     ITfThreadMgrEventSink_OnPushContext(This->ThreadMgrSink,check);
-    Context_Initialize(check);
+    Context_Initialize(check, iface);
 
     return S_OK;
 }

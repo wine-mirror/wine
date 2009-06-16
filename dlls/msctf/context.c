@@ -74,6 +74,7 @@ typedef struct tagContext {
     TfClientId tidOwner;
     TfEditCookie defaultCookie;
     TS_STATUS documentStatus;
+    ITfDocumentMgr *manager;
 
     ITextStoreACP   *pITextStoreACP;
     ITfContextOwnerCompositionSink *pITfContextOwnerCompositionSink;
@@ -506,8 +507,15 @@ static HRESULT WINAPI Context_GetDocumentMgr (ITfContext *iface,
         ITfDocumentMgr **ppDm)
 {
     Context *This = (Context *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %p\n",This,ppDm);
+
+    if (!ppDm)
+        return E_INVALIDARG;
+
+    *ppDm = This->manager;
+    if (!This->manager)
+        return S_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI Context_CreateRangeBackup (ITfContext *iface,
@@ -758,7 +766,7 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     return S_OK;
 }
 
-HRESULT Context_Initialize(ITfContext *iface)
+HRESULT Context_Initialize(ITfContext *iface, ITfDocumentMgr *manager)
 {
     Context *This = (Context *)iface;
 
@@ -769,6 +777,7 @@ HRESULT Context_Initialize(ITfContext *iface)
                             (IUnknown*)This->pITextStoreACPSink, TS_AS_ALL_SINKS);
     }
     This->connected = TRUE;
+    This->manager = manager;
     return S_OK;
 }
 
@@ -783,6 +792,7 @@ HRESULT Context_Uninitialize(ITfContext *iface)
             This->pITextStoreACPSink = NULL;
     }
     This->connected = FALSE;
+    This->manager = NULL;
     return S_OK;
 }
 
