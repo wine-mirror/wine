@@ -1061,6 +1061,12 @@ static void test_shader(void)
         ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
         hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
         ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
+
+        /* Check for double delete. */
+        hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader2);
+        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
+        hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
+        ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %#08x\n", hr);
     }
     else
     {
@@ -1082,6 +1088,12 @@ static void test_shader(void)
     ok(hTempHandle == hVertexShader, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, hVertexShader);
     hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
     ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %#08x\n", hr);
+
+    /* Check for double delete. */
+    hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader2);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_DeleteVertexShader returned %#08x\n", hr);
+    hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_DeleteVertexShader returned %#08x\n", hr);
 
 cleanup:
     if(pD3d) IDirect3D8_Release(pD3d);
