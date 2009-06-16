@@ -1158,6 +1158,7 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     char src_name[3][50];
     DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
             ins->ctx->reg_maps->shader_version.minor);
+    BOOL is_color;
 
     shader_arb_get_dst_param(ins, dst, dst_name);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
@@ -1170,8 +1171,15 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
         shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
         shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
         shader_addline(buffer, "ADD TA, -%s, coefdiv.x;\n", src_name[0]);
-        shader_addline(buffer, "CMP%s %s, TA, %s, %s;\n",
-                       shader_arb_get_modifier(ins), dst_name, src_name[1], src_name[2]);
+        /* No modifiers supported on CMP */
+        shader_addline(buffer, "CMP %s, TA, %s, %s;\n", dst_name, src_name[1], src_name[2]);
+
+        /* _SAT on CMP doesn't make much sense, but it is not a pure NOP */
+        if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE)
+        {
+            shader_arb_get_register_name(ins, &dst->reg, src_name[0], &is_color);
+            shader_addline(buffer, "MOV_SAT %s, %s;\n", dst_name, dst_name);
+        }
     }
 }
 
@@ -1181,6 +1189,7 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     char dst_name[50];
     char src_name[3][50];
+    BOOL is_color;
 
     shader_arb_get_dst_param(ins, dst, dst_name);
 
@@ -1189,8 +1198,15 @@ static void pshader_hw_cmp(const struct wined3d_shader_instruction *ins)
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name[1]);
     shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
 
-    shader_addline(buffer, "CMP%s %s, %s, %s, %s;\n", shader_arb_get_modifier(ins), dst_name,
+    /* No modifiers are supported on CMP */
+    shader_addline(buffer, "CMP %s, %s, %s, %s;\n", dst_name,
                    src_name[0], src_name[2], src_name[1]);
+
+    if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE)
+    {
+        shader_arb_get_register_name(ins, &dst->reg, src_name[0], &is_color);
+        shader_addline(buffer, "MOV_SAT %s, %s;\n", dst_name, src_name[0]);
+    }
 }
 
 /** Process the WINED3DSIO_DP2ADD instruction in ARB.
@@ -2038,8 +2054,14 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name0);
     if(shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type)) {
         shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
-        shader_addline(buffer, "SCS%s %s, %s;\n", shader_arb_get_modifier(ins), dst_name,
-                       src_name0);
+        /* No modifiers are supported on SCS */
+        shader_addline(buffer, "SCS %s, %s;\n", dst_name, src_name0);
+
+        if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE)
+        {
+            shader_arb_get_register_name(ins, &dst->reg, src_name0, &is_color);
+            shader_addline(buffer, "MOV_SAT %s, %s;\n", dst_name, src_name0);
+        }
     } else if(priv->target_version >= NV2) {
         shader_arb_get_register_name(ins, &dst->reg, dst_name, &is_color);
 
