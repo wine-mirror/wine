@@ -1809,7 +1809,9 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         ok(rgn1->data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u\n", rgn1->data.rdh.dwSize);
         ok(rgn1->data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn1->data.rdh.iType);
         ok(rgn1->data.rdh.nCount == 1, "expected 1, got %u\n", rgn1->data.rdh.nCount);
-        ok(rgn1->data.rdh.nRgnSize == sizeof(RECT),  "expected sizeof(RECT), got %u\n", rgn1->data.rdh.nRgnSize);
+        ok(rgn1->data.rdh.nRgnSize == sizeof(RECT) ||
+           broken(rgn1->data.rdh.nRgnSize == 168), /* NT4 */
+           "expected sizeof(RECT), got %u\n", rgn1->data.rdh.nRgnSize);
 
         hrgn = CreateRectRgn(0, 0, 0, 0);
 
@@ -1828,7 +1830,7 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         PlayEnhMetaFileRecord(hdc, handle_table, emr, n_objs);
 
         ret = GetClipRgn(hdc, hrgn);
-        ok(ret == 1, "GetClipRgn returned %d, expected 0\n", ret);
+        ok(ret == 1, "GetClipRgn returned %d, expected 1\n", ret);
 
         /* Win9x returns empty clipping region */
         if (is_win9x) return 1;
@@ -1862,7 +1864,9 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         ok(rgn2.data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u\n", rgn2.data.rdh.dwSize);
         ok(rgn2.data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn2.data.rdh.iType);
         ok(rgn2.data.rdh.nCount == 1, "expected 1, got %u\n", rgn2.data.rdh.nCount);
-        ok(rgn2.data.rdh.nRgnSize == sizeof(RECT),  "expected sizeof(RECT), got %u\n", rgn2.data.rdh.nRgnSize);
+        ok(rgn2.data.rdh.nRgnSize == sizeof(RECT) ||
+           broken(rgn2.data.rdh.nRgnSize == 168), /* NT4 */
+           "expected sizeof(RECT), got %u\n", rgn2.data.rdh.nRgnSize);
 
         DeleteObject(hrgn);
     }
