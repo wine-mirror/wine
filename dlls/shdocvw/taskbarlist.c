@@ -71,6 +71,7 @@ static ULONG STDMETHODCALLTYPE taskbar_list_Release(ITaskbarList *iface)
     if (!refcount)
     {
         HeapFree(GetProcessHeap(), 0, This);
+        SHDOCVW_UnlockModule();
     }
 
     return refcount;
@@ -160,6 +161,8 @@ HRESULT TaskbarList_Create(IUnknown *outer, REFIID riid, void **taskbar_list)
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
+
+    SHDOCVW_LockModule();
 
     return S_OK;
 }
