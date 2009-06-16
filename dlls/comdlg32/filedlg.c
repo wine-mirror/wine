@@ -1111,7 +1111,7 @@ static LRESULT FILEDLG95_OnWMSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 #if 0
-  TRACE("0x%04x 0x%04x\n", hwnd, uMsg);
+  TRACE("%p 0x%04x\n", hwnd, uMsg);
 #endif
 
   switch(uMsg)
@@ -1146,6 +1146,9 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
          FILEDLG95_ResizeControls(hwnd, wParam, lParam);
       	 FILEDLG95_FillControls(hwnd, wParam, lParam);
 
+         if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+             SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
+
          if (fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)
          {
              GetWindowRect( hwnd, &rc);
@@ -1162,7 +1165,6 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 
          if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
          {
-             SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
              SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
              SendCustomDlgNotificationMessage(hwnd,CDN_SELCHANGE);
          }

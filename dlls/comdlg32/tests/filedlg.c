@@ -270,9 +270,135 @@ static void test_create_view_template(void)
     ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
 }
 
+/* test cases for resizing of the file dialog */
+struct {
+    DWORD flags;
+    int resize_init;       /* change in CDN_INITDONE handler */
+    int resize_folderchg;  /* change in CDN_FOLDERCHANGE handler */
+    int resize_timer1;     /* change in first WM_TIMER handler */
+    int resize_check;      /* expected change (in second  WM_TIMER handler) */
+    BOOL todo;             /* mark that test todo_wine */
+} resize_testcases[] = {
+    { 0                , 10, 10, 10, 30,FALSE},   /* 0 */
+    { 0                ,-10,-10,-10,-30,FALSE},
+    { OFN_ENABLESIZING ,  0,  0,  0,  0,FALSE},
+    { OFN_ENABLESIZING ,  0,  0,-10,  0,FALSE},
+    { OFN_ENABLESIZING ,  0,  0, 10, 10,FALSE},
+    { OFN_ENABLESIZING ,  0,-10,  0, 10, TRUE},   /* 5 */
+    { OFN_ENABLESIZING ,  0, 10,  0, 10,FALSE},
+    { OFN_ENABLESIZING ,-10,  0,  0, 10, TRUE},
+    { OFN_ENABLESIZING , 10,  0,  0, 10,FALSE},
+    /* mark the end */
+    { 0xffffffff }
+};
+
+static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    static RECT initrc, rc;
+    static int index, count;
+    HWND parent = GetParent( dlg);
+    int resize;
+    switch( msg)
+    {
+        case WM_INITDIALOG:
+        {
+            DWORD style;
+
+            index = ((OPENFILENAME*)lParam)->lCustData;
+            count = 0;
+            /* test style */
+            style = GetWindowLong( parent, GWL_STYLE);
+            if( resize_testcases[index].flags & OFN_ENABLESIZING)
+                ok( style & WS_SIZEBOX,
+                        "testid %d: dialog should have a WS_SIZEBOX style.\n", index);
+            else
+                ok( !(style & WS_SIZEBOX),
+                        "testid %d: dialog should not have a WS_SIZEBOX style.\n", index);
+            break;
+        }
+        case WM_NOTIFY:
+        {
+            if(( (LPNMHDR)lParam)->code == CDN_INITDONE){
+                GetWindowRect( parent, &initrc);
+                if( (resize  = resize_testcases[index].resize_init)){
+                    MoveWindow( parent, initrc.left,initrc.top, initrc.right - initrc.left + resize,
+                            initrc.bottom - initrc.top + resize, TRUE);
+                }
+            } else if(( (LPNMHDR)lParam)->code == CDN_FOLDERCHANGE){
+                if( (resize  = resize_testcases[index].resize_folderchg)){
+                    GetWindowRect( parent, &rc);
+                    MoveWindow( parent, rc.left,rc.top, rc.right - rc.left + resize,
+                            rc.bottom - rc.top + resize, TRUE);
+                }
+                SetTimer( dlg, 0, 100, 0);
+            }
+            break;
+        }
+        case WM_TIMER:
+        {
+            if( count == 0){
+                if( (resize  = resize_testcases[index].resize_timer1)){
+                    GetWindowRect( parent, &rc);
+                    MoveWindow( parent, rc.left,rc.top, rc.right - rc.left + resize,
+                            rc.bottom - rc.top + resize, TRUE);
+                }
+            } else if( count == 1){
+                resize  = resize_testcases[index].resize_check;
+                GetWindowRect( parent, &rc);
+                if( resize_testcases[index].todo){
+                    todo_wine {
+                        ok( resize == rc.right - rc.left - initrc.right + initrc.left,
+                            "testid %d size-x change %d expected %d\n", index,
+                            rc.right - rc.left - initrc.right + initrc.left, resize);
+                        ok( resize == rc.bottom - rc.top - initrc.bottom + initrc.top,
+                            "testid %d size-y change %d expected %d\n", index,
+                            rc.bottom - rc.top - initrc.bottom + initrc.top, resize);
+                    }
+                }else{
+                    ok( resize == rc.right - rc.left - initrc.right + initrc.left,
+                        "testid %d size-x change %d expected %d\n", index,
+                        rc.right - rc.left - initrc.right + initrc.left, resize);
+                    ok( resize == rc.bottom - rc.top - initrc.bottom + initrc.top,
+                        "testid %d size-y change %d expected %d\n", index,
+                        rc.bottom - rc.top - initrc.bottom + initrc.top, resize);
+                }
+                KillTimer( dlg, 0);
+                PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
+            }
+            count++;
+        }
+        break;
+    }
+    return 0;
+}
+
+static void test_resize(void)
+{
+    OPENFILENAME ofn = { sizeof(OPENFILENAME)};
+    char filename[1024] = {0};
+    DWORD ret;
+    int i;
+
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = 1042;
+    ofn.lpfnHook = (LPOFNHOOKPROC) resize_template_hook;
+    ofn.hInstance = GetModuleHandle(NULL);
+    ofn.lpTemplateName = "template1";
+    for( i = 0; resize_testcases[i].flags != 0xffffffff; i++) {
+        ofn.lCustData = i;
+        ofn.Flags = resize_testcases[i].flags |
+            OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE ;
+        ret = GetOpenFileName(&ofn);
+        ok(!ret, "GetOpenFileName returned %#x\n", ret);
+        ret = CommDlgExtendedError();
+        ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+    }
+}
+
 START_TEST(filedlg)
 {
     test_DialogCancel();
     test_create_view_window2();
     test_create_view_template();
+    test_resize();
 }
