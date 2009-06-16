@@ -982,6 +982,12 @@ ok(isNaN(date.getUTCHours()), "date.getUTCHours() is not NaN");
 ok(isNaN(date.getUTCMinutes()), "date.getUTCMinutes() is not NaN");
 ok(isNaN(date.getUTCSeconds()), "date.getUTCSeconds() is not NaN");
 ok(isNaN(date.getUTCMilliseconds()), "date.getUTCMilliseconds() is not NaN");
+ok(isNaN(date.setMilliseconds(0)), "date.setMilliseconds() is not NaN");
+
+date.setTime(0);
+date.setMilliseconds(-10, 2);
+ok(date.getUTCMilliseconds() === 990, "date.getUTCMilliseconds() = " + date.getUTCMilliseconds());
+ok(date.setMilliseconds(10) === date.setUTCMilliseconds(10), "date.setUTCMilliseconds(10) !== date.setUTCMilliseconds(10)");
 
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
