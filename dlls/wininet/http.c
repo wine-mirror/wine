@@ -3807,8 +3807,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     }
     while (loop_next);
 
-    /* FIXME: Better check, when we have to create the cache file */
-    if(bSuccess && (lpwhr->hdr.dwFlags & INTERNET_FLAG_NEED_FILE)) {
+    if(bSuccess) {
         WCHAR url[INTERNET_MAX_URL_LENGTH];
         WCHAR cacheFileName[MAX_PATH+1];
         BOOL b;

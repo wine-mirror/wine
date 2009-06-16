@@ -1163,11 +1163,11 @@ static void test_http_cache(void)
 
     size = sizeof(file_name);
     ret = InternetQueryOptionA(request, INTERNET_OPTION_DATAFILE_NAME, file_name, &size);
-    todo_wine ok(ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) failed %u\n", GetLastError());
+    ok(ret, "InternetQueryOptionA(INTERNET_OPTION_DATAFILE_NAME) failed %u\n", GetLastError());
 
     file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                       FILE_ATTRIBUTE_NORMAL, NULL);
-    todo_wine ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
     CloseHandle(file);
 
     ok(InternetCloseHandle(request), "Close request handle failed\n");
