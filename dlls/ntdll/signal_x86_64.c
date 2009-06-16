@@ -188,6 +188,10 @@ enum i386_trap_code
     TRAP_x86_CACHEFLT   = 19   /* Cache flush exception */
 };
 
+static const size_t teb_size = 0x2000;  /* we reserve two pages for the TEB */
+static size_t signal_stack_size;
+
+typedef void (*raise_func)( EXCEPTION_RECORD *rec, CONTEXT *context );
 typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
@@ -355,6 +359,16 @@ static inline int dispatch_signal(unsigned int sig)
 {
     if (handlers[sig] == NULL) return 0;
     return handlers[sig](sig);
+}
+
+/***********************************************************************
+ *           get_signal_stack
+ *
+ * Get the base of the signal stack for the current thread.
+ */
+static inline void *get_signal_stack(void)
+{
+    return (char *)NtCurrentTeb() + teb_size;
 }
 
 /***********************************************************************
@@ -666,6 +680,108 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 }
 
 
+extern void raise_func_trampoline( EXCEPTION_RECORD *rec, CONTEXT *context, raise_func func );
+__ASM_GLOBAL_FUNC( raise_func_trampoline,
+                   ".cfi_signal_frame\n\t"
+                   ".cfi_def_cfa %rbp,144\n\t"  /* red zone + rip + rbp */
+                   ".cfi_rel_offset %rip,8\n\t"
+                   ".cfi_rel_offset %rbp,0\n\t"
+                   "call *%rdx\n\t"
+                   "int $3")
+
+/***********************************************************************
+ *           setup_exception
+ *
+ * Setup a proper stack frame for the raise function, and modify the
+ * sigcontext so that the return from the signal handler will call
+ * the raise function.
+ */
+static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func func )
+{
+    struct stack_layout
+    {
+        CONTEXT           context;
+        EXCEPTION_RECORD  rec;
+        ULONG64           rbp;
+        ULONG64           rip;
+        ULONG64           red_zone[16];
+    } *stack;
+    ULONG64 *rsp_ptr;
+    DWORD exception_code = 0;
+
+    stack = (struct stack_layout *)(RSP_sig(sigcontext) & ~15);
+
+    /* stack sanity checks */
+
+    if ((char *)stack >= (char *)get_signal_stack() &&
+        (char *)stack < (char *)get_signal_stack() + signal_stack_size)
+    {
+        ERR( "nested exception on signal stack in thread %04x eip %016lx esp %016lx stack %p-%p\n",
+             GetCurrentThreadId(), RIP_sig(sigcontext), RSP_sig(sigcontext),
+             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        abort_thread(1);
+    }
+
+    if (stack - 1 > stack || /* check for overflow in subtraction */
+        (char *)stack <= (char *)NtCurrentTeb()->DeallocationStack ||
+        (char *)stack > (char *)NtCurrentTeb()->Tib.StackBase)
+    {
+        WARN( "exception outside of stack limits in thread %04x eip %016lx esp %016lx stack %p-%p\n",
+              GetCurrentThreadId(), RIP_sig(sigcontext), RSP_sig(sigcontext),
+              NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+    }
+    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->DeallocationStack + 4096)
+    {
+        /* stack overflow on last page, unrecoverable */
+        UINT diff = (char *)NtCurrentTeb()->DeallocationStack + 4096 - (char *)(stack - 1);
+        ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
+             diff, GetCurrentThreadId(), RIP_sig(sigcontext),
+             RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
+             NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+        abort_thread(1);
+    }
+    else if ((char *)(stack - 1) < (char *)NtCurrentTeb()->Tib.StackLimit)
+    {
+        /* stack access below stack limit, may be recoverable */
+        if (virtual_handle_stack_fault( stack - 1 )) exception_code = EXCEPTION_STACK_OVERFLOW;
+        else
+        {
+            UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)(stack - 1);
+            ERR( "stack overflow %u bytes in thread %04x eip %016lx esp %016lx stack %p-%p-%p\n",
+                 diff, GetCurrentThreadId(), RIP_sig(sigcontext),
+                 RSP_sig(sigcontext), NtCurrentTeb()->DeallocationStack,
+                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+            abort_thread(1);
+        }
+    }
+
+    stack--;  /* push the stack_layout structure */
+    stack->rec.ExceptionRecord  = NULL;
+    stack->rec.ExceptionCode    = exception_code;
+    stack->rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
+    stack->rec.ExceptionAddress = (void *)RIP_sig(sigcontext);
+    stack->rec.NumberParameters = 0;
+    save_context( &stack->context, sigcontext );
+
+    /* store return address and %rbp without aligning, so that the offset is fixed */
+    rsp_ptr = (ULONG64 *)RSP_sig(sigcontext) - 16;
+    *(--rsp_ptr) = RIP_sig(sigcontext);
+    *(--rsp_ptr) = RBP_sig(sigcontext);
+
+    /* now modify the sigcontext to return to the raise function */
+    RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
+    RDI_sig(sigcontext) = (ULONG_PTR)&stack->rec;
+    RSI_sig(sigcontext) = (ULONG_PTR)&stack->context;
+    RDX_sig(sigcontext) = (ULONG_PTR)func;
+    RBP_sig(sigcontext) = (ULONG_PTR)rsp_ptr;
+    RSP_sig(sigcontext) = (ULONG_PTR)stack;
+    /* clear single-step, direction, and align check flag */
+    EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
+
+    return &stack->rec;
+}
+
+
 /**********************************************************************
  *           find_function_info
  */
@@ -857,54 +973,78 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
 
 
 /**********************************************************************
+ *		raise_segv_exception
+ */
+static void raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status;
+
+    switch(rec->ExceptionCode)
+    {
+    case EXCEPTION_ACCESS_VIOLATION:
+        if (rec->NumberParameters == 2)
+        {
+            if (!(rec->ExceptionCode = virtual_handle_fault( (void *)rec->ExceptionInformation[1],
+                                                             rec->ExceptionInformation[0] )))
+                set_cpu_context( context );
+        }
+        break;
+    }
+    status = raise_exception( rec, context, TRUE );
+    if (status) raise_status( status, rec );
+}
+
+
+/**********************************************************************
+ *		raise_generic_exception
+ *
+ * Generic raise function for exceptions that don't need special treatment.
+ */
+static void raise_generic_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    NTSTATUS status = raise_exception( rec, context, TRUE );
+    if (status) raise_status( status, rec );
+}
+
+
+/**********************************************************************
  *		segv_handler
  *
  * Handler for SIGSEGV and related errors.
  */
 static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_segv_exception );
     ucontext_t *ucontext = sigcontext;
-
-    save_context( &context, ucontext );
-
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionAddress = (LPVOID)context.Rip;
-    rec.NumberParameters = 0;
 
     switch(TRAP_sig(ucontext))
     {
     case TRAP_x86_OFLOW:   /* Overflow exception */
-        rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+        rec->ExceptionCode = EXCEPTION_INT_OVERFLOW;
         break;
     case TRAP_x86_BOUND:   /* Bound range exception */
-        rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
+        rec->ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
         break;
     case TRAP_x86_PRIVINFLT:   /* Invalid opcode exception */
-        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     case TRAP_x86_STKFLT:  /* Stack fault */
-        rec.ExceptionCode = EXCEPTION_STACK_OVERFLOW;
+        rec->ExceptionCode = EXCEPTION_STACK_OVERFLOW;
         break;
     case TRAP_x86_SEGNPFLT:  /* Segment not present exception */
     case TRAP_x86_PROTFLT:   /* General protection fault */
     case TRAP_x86_UNKNOWN:   /* Unknown fault code */
-        rec.ExceptionCode = ERROR_sig(ucontext) ? EXCEPTION_ACCESS_VIOLATION
-                                                : EXCEPTION_PRIV_INSTRUCTION;
+        rec->ExceptionCode = ERROR_sig(ucontext) ? EXCEPTION_ACCESS_VIOLATION : EXCEPTION_PRIV_INSTRUCTION;
+        rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         break;
     case TRAP_x86_PAGEFLT:  /* Page fault */
-        rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
-        rec.NumberParameters = 2;
-        rec.ExceptionInformation[0] = (ERROR_sig(ucontext) & 2) != 0;
-        rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
-        if (!(rec.ExceptionCode = virtual_handle_fault( siginfo->si_addr, rec.ExceptionInformation[0] )))
-            goto done;
+        rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+        rec->NumberParameters = 2;
+        rec->ExceptionInformation[0] = (ERROR_sig(ucontext) & 2) != 0;
+        rec->ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
-        rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
+        rec->ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
         ERR( "Got unexpected trap %ld\n", TRAP_sig(ucontext) );
@@ -915,14 +1055,9 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     case TRAP_x86_TSSFLT:    /* Invalid TSS exception */
     case TRAP_x86_MCHK:      /* Machine check exception */
     case TRAP_x86_CACHEFLT:  /* Cache flush exception */
-        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+        rec->ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
-
-    status = raise_exception( &rec, &context, TRUE );
-    if (status) raise_status( status, &rec );
-done:
-    restore_context( &context, ucontext );
 }
 
 /**********************************************************************
@@ -932,34 +1067,20 @@ done:
  */
 static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
-    ucontext_t *ucontext = sigcontext;
-
-    save_context( &context, ucontext );
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Rip;
-    rec.NumberParameters = 0;
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
 
     switch (siginfo->si_code)
     {
     case TRAP_TRACE:  /* Single-step exception */
-        rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
-        EFL_sig(ucontext) &= ~0x100;  /* clear single-step flag */
+        rec->ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
     case TRAP_BRKPT:   /* Breakpoint exception */
-        rec.ExceptionAddress = (char *)rec.ExceptionAddress - 1;  /* back up over the int3 instruction */
+        rec->ExceptionAddress = (char *)rec->ExceptionAddress - 1;  /* back up over the int3 instruction */
         /* fall through */
     default:
-        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+        rec->ExceptionCode = EXCEPTION_BREAKPOINT;
         break;
     }
-
-    status = raise_exception( &rec, &context, TRUE );
-    if (status) raise_status( status, &rec );
-    restore_context( &context, ucontext );
 }
 
 /**********************************************************************
@@ -967,50 +1088,38 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  *
  * Handler for SIGFPE.
  */
-static void fpe_handler( int signal, siginfo_t *siginfo, void *ucontext )
+static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
-
-    save_context( &context, ucontext );
-    rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Rip;
-    rec.NumberParameters = 0;
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
 
     switch (siginfo->si_code)
     {
     case FPE_FLTSUB:
-        rec.ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
+        rec->ExceptionCode = EXCEPTION_ARRAY_BOUNDS_EXCEEDED;
         break;
     case FPE_INTDIV:
-        rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+        rec->ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
         break;
     case FPE_INTOVF:
-        rec.ExceptionCode = EXCEPTION_INT_OVERFLOW;
+        rec->ExceptionCode = EXCEPTION_INT_OVERFLOW;
         break;
     case FPE_FLTDIV:
-        rec.ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+        rec->ExceptionCode = EXCEPTION_FLT_DIVIDE_BY_ZERO;
         break;
     case FPE_FLTOVF:
-        rec.ExceptionCode = EXCEPTION_FLT_OVERFLOW;
+        rec->ExceptionCode = EXCEPTION_FLT_OVERFLOW;
         break;
     case FPE_FLTUND:
-        rec.ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
+        rec->ExceptionCode = EXCEPTION_FLT_UNDERFLOW;
         break;
     case FPE_FLTRES:
-        rec.ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
+        rec->ExceptionCode = EXCEPTION_FLT_INEXACT_RESULT;
         break;
     case FPE_FLTINV:
     default:
-        rec.ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
+        rec->ExceptionCode = EXCEPTION_FLT_INVALID_OPERATION;
         break;
     }
-
-    status = raise_exception( &rec, &context, TRUE );
-    if (status) raise_status( status, &rec );
-    restore_context( &context, ucontext );
 }
 
 /**********************************************************************
@@ -1018,23 +1127,12 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *ucontext )
  *
  * Handler for SIGINT.
  */
-static void int_handler( int signal, siginfo_t *siginfo, void *ucontext )
+static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     if (!dispatch_signal(SIGINT))
     {
-        EXCEPTION_RECORD rec;
-        CONTEXT context;
-        NTSTATUS status;
-
-        save_context( &context, ucontext );
-        rec.ExceptionCode    = CONTROL_C_EXIT;
-        rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
-        rec.ExceptionRecord  = NULL;
-        rec.ExceptionAddress = (LPVOID)context.Rip;
-        rec.NumberParameters = 0;
-        status = raise_exception( &rec, &context, TRUE );
-        if (status) raise_status( status, &rec );
-        restore_context( &context, ucontext );
+        EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
+        rec->ExceptionCode = CONTROL_C_EXIT;
     }
 }
 
@@ -1044,21 +1142,11 @@ static void int_handler( int signal, siginfo_t *siginfo, void *ucontext )
  *
  * Handler for SIGABRT.
  */
-static void abrt_handler( int signal, siginfo_t *siginfo, void *ucontext )
+static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec;
-    CONTEXT context;
-    NTSTATUS status;
-
-    save_context( &context, ucontext );
-    rec.ExceptionCode    = EXCEPTION_WINE_ASSERTION;
-    rec.ExceptionFlags   = EH_NONCONTINUABLE;
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context.Rip;
-    rec.NumberParameters = 0;
-    status = raise_exception( &rec, &context, TRUE );
-    if (status) raise_status( status, &rec );
-    restore_context( &context, ucontext );
+    EXCEPTION_RECORD *rec = setup_exception( sigcontext, raise_generic_exception );
+    rec->ExceptionCode = EXCEPTION_WINE_ASSERTION;
+    rec->ExceptionFlags = EH_NONCONTINUABLE;
 }
 
 
@@ -1096,8 +1184,15 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *ucontext )
  */
 size_t get_signal_stack_total_size(void)
 {
-    assert( sizeof(TEB) <= 2*getpagesize() );
-    return 2*getpagesize();  /* this is just for the TEB, we don't need a signal stack */
+    assert( sizeof(TEB) <= teb_size );
+    if (!signal_stack_size)
+    {
+        size_t size = 8192, min_size = teb_size + max( MINSIGSTKSZ, 8192 );
+        /* find the first power of two not smaller than min_size */
+        while (size < min_size) size *= 2;
+        signal_stack_size = size - teb_size;
+    }
+    return signal_stack_size + teb_size;
 }
 
 
@@ -1118,11 +1213,18 @@ int CDECL __wine_set_signal_handler(unsigned int sig, wine_signal_handler wsh)
  */
 void signal_init_thread( TEB *teb )
 {
+    stack_t ss;
+
 #ifdef __linux__
     arch_prctl( ARCH_SET_GS, teb );
 #else
 # error Please define setting %gs for your architecture
 #endif
+
+    ss.ss_sp    = (char *)teb + teb_size;
+    ss.ss_size  = signal_stack_size;
+    ss.ss_flags = 0;
+    if (sigaltstack(&ss, NULL) == -1) perror( "sigaltstack" );
 }
 
 /**********************************************************************
@@ -1133,7 +1235,7 @@ void signal_init_process(void)
     struct sigaction sig_act;
 
     sig_act.sa_mask = server_block_set;
-    sig_act.sa_flags = SA_RESTART | SA_SIGINFO;
+    sig_act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
 
     sig_act.sa_sigaction = int_handler;
     if (sigaction( SIGINT, &sig_act, NULL ) == -1) goto error;
