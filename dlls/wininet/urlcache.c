@@ -2222,11 +2222,7 @@ BOOL WINAPI CreateUrlCacheEntryW(
         dwReserved);
 
     if (dwReserved)
-    {
-        ERR("dwReserved != 0\n");
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+        FIXME("dwReserved 0x%08x\n", dwReserved);
 
    lpszUrlEnd = lpszUrlName + strlenW(lpszUrlName);
     
