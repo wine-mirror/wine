@@ -1176,11 +1176,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     out_rate = (int) wwo->waveFormat.Format.nSamplesPerSec;
 	TRACE("esd output format = 0x%08x, rate = %d\n", out_format, out_rate);
 
+    wwo->stream_name = get_stream_name("out", wDevID);
     wwo->stream_fd = esd_play_stream(out_format, out_rate, NULL, wwo->stream_name);
     TRACE("wwo->stream_fd=%d\n", wwo->stream_fd);
-    if(wwo->stream_fd < 0) return MMSYSERR_ALLOCATED;
+    if(wwo->stream_fd < 0)
+    {
+        HeapFree(GetProcessHeap(), 0, wwo->stream_name);
+        return MMSYSERR_ALLOCATED;
+    }
 
-    wwo->stream_name = get_stream_name("out", wDevID);
     wwo->stream_id = 0;
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
@@ -1899,14 +1903,18 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     in_rate = (int) wwi->waveFormat.Format.nSamplesPerSec;
 	TRACE("esd input format = 0x%08x, rate = %d\n", in_format, in_rate);
 
+    wwi->stream_name = get_stream_name("in", wDevID);
 #ifdef WID_USE_ESDMON
     wwi->stream_fd = esd_monitor_stream(in_format, in_rate, NULL, wwi->stream_name);
 #else
     wwi->stream_fd = esd_record_stream(in_format, in_rate, NULL, wwi->stream_name);
 #endif
     TRACE("wwi->stream_fd=%d\n",wwi->stream_fd);
-    if(wwi->stream_fd < 0) return MMSYSERR_ALLOCATED;
-    wwi->stream_name = get_stream_name("in", wDevID);
+    if(wwi->stream_fd < 0)
+    {
+        HeapFree(GetProcessHeap(), 0, wwi->stream_name);
+        return MMSYSERR_ALLOCATED;
+    }
     wwi->state = WINE_WS_STOPPED;
 
     if (wwi->lpQueuePtr) {
