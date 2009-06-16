@@ -1277,6 +1277,26 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
         HeapFree(GetProcessHeap(), 0, eto1);
         HeapFree(GetProcessHeap(), 0, eto2);
     }
+    else if (emr1->iType == EMR_EXTSELECTCLIPRGN && !lstrcmpA(desc, "emf_clipping"))
+    {
+        /* We have to take care of NT4 differences here */
+        diff = memcmp(emr1, emr2, emr1->nSize);
+        if (diff)
+        {
+            ENHMETARECORD *emr_nt4;
+
+            emr_nt4 = HeapAlloc(GetProcessHeap(), 0, emr2->nSize);
+            memcpy(emr_nt4, emr2, emr2->nSize);
+            /* Correct the nRgnSize field */
+            emr_nt4->dParm[5] = sizeof(RECT);
+
+            diff = memcmp(emr1, emr_nt4, emr1->nSize);
+            if (!diff)
+                win_skip("Catered for NT4 differences\n");
+
+            HeapFree(GetProcessHeap(), 0, emr_nt4);
+        }
+    }
     else
         diff = memcmp(emr1, emr2, emr1->nSize);
 
