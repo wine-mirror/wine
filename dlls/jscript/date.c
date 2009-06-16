@@ -249,6 +249,20 @@ static inline DOUBLE min_from_time(DOUBLE time)
     return ret;
 }
 
+/* ECMA-262 3th Edition    15.9.1.10 */
+static inline DOUBLE sec_from_time(DOUBLE time)
+{
+    DOUBLE ret;
+
+    if(isnan(time))
+        return ret_nan();
+
+    ret = fmod(floor(time/1000), 60);
+    if(ret<0) ret += 60;
+
+    return ret;
+}
+
 /* ECMA-262 3rd Edition    15.9.1.14 */
 static inline DOUBLE time_clip(DOUBLE time)
 {
@@ -582,18 +596,42 @@ static HRESULT Date_getUTCMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DIS
     return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.10 */
 static HRESULT Date_getSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+
+        num_set_val(retv, sec_from_time(time));
+    }
+    return S_OK;
 }
 
+/* ECMA-262 3th Edition    15.9.1.10 */
 static HRESULT Date_getUTCSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, sec_from_time(date->time));
+    }
+    return S_OK;
 }
 
 static HRESULT Date_getMiliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
