@@ -2461,9 +2461,11 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
 
                 for (x = 0; x < width; ++x)
                 {
-                    /* The depth data is normalized, so needs to be scaled, the stencil data isn't. */
-                    WORD d15 = source[x] & 0xfffe;
-                    DWORD d24 = d15 * 0x100 + (d15 * 0xff80 + 0x3fff80) / 0x7fff00;
+                    /* The depth data is normalized, so needs to be scaled,
+                     * the stencil data isn't.  Scale depth data by
+                     *      (2^24-1)/(2^15-1) ~~ (2^9 + 2^-6). */
+                    WORD d15 = source[x] >> 1;
+                    DWORD d24 = (d15 << 9) + (d15 >> 6);
                     dest[x] = (d24 << 8) | (source[x] & 0x1);
                 }
             }
