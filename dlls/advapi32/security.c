@@ -54,7 +54,7 @@ static BYTE ParseAceStringType(LPCWSTR* StringAcl);
 static DWORD ParseAceStringRights(LPCWSTR* StringAcl);
 static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
     LPCWSTR StringSecurityDescriptor,
-    SECURITY_DESCRIPTOR* SecurityDescriptor,
+    SECURITY_DESCRIPTOR_RELATIVE* SecurityDescriptor,
     LPDWORD cBytes);
 static DWORD ParseAclStringFlags(LPCWSTR* StringAcl);
 
@@ -4060,7 +4060,7 @@ lerr:
  */
 static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
     LPCWSTR StringSecurityDescriptor,
-    SECURITY_DESCRIPTOR* SecurityDescriptor,
+    SECURITY_DESCRIPTOR_RELATIVE* SecurityDescriptor,
     LPDWORD cBytes)
 {
     BOOL bret = FALSE;
@@ -4073,7 +4073,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
     *cBytes = sizeof(SECURITY_DESCRIPTOR);
 
     if (SecurityDescriptor)
-        lpNext = ((LPBYTE) SecurityDescriptor) + sizeof(SECURITY_DESCRIPTOR);
+        lpNext = (LPBYTE)(SecurityDescriptor + 1);
 
     while (*StringSecurityDescriptor)
     {
@@ -4111,7 +4111,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
 
                 if (SecurityDescriptor)
                 {
-                    SecurityDescriptor->Owner = (PSID)(lpNext - (LPBYTE)SecurityDescriptor);
+                    SecurityDescriptor->Owner = lpNext - (LPBYTE)SecurityDescriptor;
                     lpNext += bytes; /* Advance to next token */
                 }
 
@@ -4129,7 +4129,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
 
                 if (SecurityDescriptor)
                 {
-                    SecurityDescriptor->Group = (PSID)(lpNext - (LPBYTE)SecurityDescriptor);
+                    SecurityDescriptor->Group = lpNext - (LPBYTE)SecurityDescriptor;
                     lpNext += bytes; /* Advance to next token */
                 }
 
@@ -4149,7 +4149,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
                 if (SecurityDescriptor)
                 {
                     SecurityDescriptor->Control |= SE_DACL_PRESENT | flags;
-                    SecurityDescriptor->Dacl = (PACL)(lpNext - (LPBYTE)SecurityDescriptor);
+                    SecurityDescriptor->Dacl = lpNext - (LPBYTE)SecurityDescriptor;
                     lpNext += bytes; /* Advance to next token */
 		}
 
@@ -4169,7 +4169,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
                 if (SecurityDescriptor)
                 {
                     SecurityDescriptor->Control |= SE_SACL_PRESENT | flags;
-                    SecurityDescriptor->Sacl = (PACL)(lpNext - (LPBYTE)SecurityDescriptor);
+                    SecurityDescriptor->Sacl = lpNext - (LPBYTE)SecurityDescriptor;
                     lpNext += bytes; /* Advance to next token */
 		}
 
@@ -4265,7 +4265,7 @@ BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(
     psd->Control |= SE_SELF_RELATIVE;
 
     if (!ParseStringSecurityDescriptorToSecurityDescriptor(StringSecurityDescriptor,
-        psd, &cBytes))
+             (SECURITY_DESCRIPTOR_RELATIVE *)psd, &cBytes))
     {
         LocalFree(psd);
 	goto lend;
