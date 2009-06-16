@@ -987,55 +987,62 @@ void BuildRelays16(void)
 static void build_call_from_regs_x86_64(void)
 {
     static const int STACK_SPACE = 128 + 0x4d0; /* size of x86_64 context */
+    int i;
 
     /* Function header */
 
     function_header( "__wine_call_from_regs" );
 
+    output( "\t.cfi_startproc\n" );
     output( "\tsubq $%u,%%rsp\n", STACK_SPACE );
+    output( "\t.cfi_adjust_cfa_offset %u\n", STACK_SPACE );
 
     /* save registers into the context */
 
     output( "\tmovq %%rax,0x78(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%rax,0x78\n" );
     output( "\tmovq %u(%%rsp),%%rax\n", STACK_SPACE + 16 );  /* saved %rcx on stack */
     output( "\tmovq %%rax,0x80(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%rcx,0x80\n" );
     output( "\tmovq %u(%%rsp),%%rax\n", STACK_SPACE + 24 );  /* saved %rdx on stack */
+    output( "\t.cfi_rel_offset %%rdx,0x88\n" );
     output( "\tmovq %%rax,0x88(%%rsp)\n" );
     output( "\tmovq %%rbx,0x90(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%rbx,0x90\n" );
     output( "\tleaq %u(%%rsp),%%rax\n", STACK_SPACE + 16 );
     output( "\tmovq %%rax,0x98(%%rsp)\n" );
     output( "\tmovq %%rbp,0xa0(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%rbp,0xa0\n" );
     output( "\tmovq %%rsi,0xa8(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%rsi,0xa8\n" );
     output( "\tmovq %%rdi,0xb0(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%rdi,0xb0\n" );
     output( "\tmovq %%r8,0xb8(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%r8,0xb8\n" );
     output( "\tmovq %%r9,0xc0(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%r9,0xc0\n" );
     output( "\tmovq %%r10,0xc8(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%r10,0xc8\n" );
     output( "\tmovq %%r11,0xd0(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%r11,0xd0\n" );
     output( "\tmovq %%r12,0xd8(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%r12,0xd8\n" );
     output( "\tmovq %%r13,0xe0(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%r13,0xe0\n" );
     output( "\tmovq %%r14,0xe8(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%r14,0xe8\n" );
     output( "\tmovq %%r15,0xf0(%%rsp)\n" );
+    output( "\t.cfi_rel_offset %%r15,0xf0\n" );
     output( "\tmovq %u(%%rsp),%%rax\n", STACK_SPACE + 8 );
     output( "\tmovq %%rax,0xf8(%%rsp)\n" );
 
     output( "\tstmxcsr 0x34(%%rsp)\n" );
     output( "\tfxsave 0x100(%%rsp)\n" );
-    output( "\tmovdqa %%xmm0,0x1a0(%%rsp)\n" );
-    output( "\tmovdqa %%xmm1,0x1b0(%%rsp)\n" );
-    output( "\tmovdqa %%xmm2,0x1c0(%%rsp)\n" );
-    output( "\tmovdqa %%xmm3,0x1d0(%%rsp)\n" );
-    output( "\tmovdqa %%xmm4,0x1e0(%%rsp)\n" );
-    output( "\tmovdqa %%xmm5,0x1f0(%%rsp)\n" );
-    output( "\tmovdqa %%xmm6,0x200(%%rsp)\n" );
-    output( "\tmovdqa %%xmm7,0x210(%%rsp)\n" );
-    output( "\tmovdqa %%xmm8,0x220(%%rsp)\n" );
-    output( "\tmovdqa %%xmm9,0x230(%%rsp)\n" );
-    output( "\tmovdqa %%xmm10,0x240(%%rsp)\n" );
-    output( "\tmovdqa %%xmm11,0x250(%%rsp)\n" );
-    output( "\tmovdqa %%xmm12,0x260(%%rsp)\n" );
-    output( "\tmovdqa %%xmm13,0x270(%%rsp)\n" );
-    output( "\tmovdqa %%xmm14,0x280(%%rsp)\n" );
-    output( "\tmovdqa %%xmm15,0x290(%%rsp)\n" );
+    for (i = 0; i < 16; i++)
+    {
+        output( "\tmovdqa %%xmm%u,0x%x(%%rsp)\n", i, 0x1a0 + 16 * i );
+        output( "\t.cfi_rel_offset %%xmm%u,0x%x\n", i, 0x1a0 + 16 * i );
+    }
 
     output( "\tmovw %%cs,0x38(%%rsp)\n" );
     output( "\tmovw %%ds,0x3a(%%rsp)\n" );
@@ -1058,6 +1065,7 @@ static void build_call_from_regs_x86_64(void)
     output( "\tcmpq %%rax,%%rcx\n" );
     output( "\tcmovgq %%rcx,%%rax\n" );
     output( "\tmovq %%rsp,%%rbx\n" );
+    output( "\t.cfi_def_cfa_register %%rbx\n" );
     output( "\tleaq 16(,%%rax,8),%%rax\n" );  /* add 8 for context arg and 8 for rounding */
     output( "\tandq $~15,%%rax\n" );
     output( "\tsubq %%rax,%%rsp\n" );
@@ -1079,35 +1087,37 @@ static void build_call_from_regs_x86_64(void)
     /* restore the context structure */
 
     output( "1:\tmovq 0x80(%%rbx),%%rcx\n" );
+    output( "\t.cfi_same_value %%rcx\n" );
     output( "\tmovq 0x88(%%rbx),%%rdx\n" );
+    output( "\t.cfi_same_value %%rdx\n" );
     output( "\tmovq 0xa0(%%rbx),%%rbp\n" );
+    output( "\t.cfi_same_value %%rbp\n" );
     output( "\tmovq 0xa8(%%rbx),%%rsi\n" );
+    output( "\t.cfi_same_value %%rsi\n" );
     output( "\tmovq 0xb0(%%rbx),%%rdi\n" );
+    output( "\t.cfi_same_value %%rdi\n" );
     output( "\tmovq 0xb8(%%rbx),%%r8\n" );
+    output( "\t.cfi_same_value %%r8\n" );
     output( "\tmovq 0xc0(%%rbx),%%r9\n" );
+    output( "\t.cfi_same_value %%r9\n" );
     output( "\tmovq 0xc8(%%rbx),%%r10\n" );
+    output( "\t.cfi_same_value %%r10\n" );
     output( "\tmovq 0xd0(%%rbx),%%r11\n" );
+    output( "\t.cfi_same_value %%r11\n" );
     output( "\tmovq 0xd8(%%rbx),%%r12\n" );
+    output( "\t.cfi_same_value %%r12\n" );
     output( "\tmovq 0xe0(%%rbx),%%r13\n" );
+    output( "\t.cfi_same_value %%r13\n" );
     output( "\tmovq 0xe8(%%rbx),%%r14\n" );
+    output( "\t.cfi_same_value %%r14\n" );
     output( "\tmovq 0xf0(%%rbx),%%r15\n" );
+    output( "\t.cfi_same_value %%r15\n" );
 
-    output( "\tmovdqa 0x1a0(%%rbx),%%xmm0\n" );
-    output( "\tmovdqa 0x1b0(%%rbx),%%xmm1\n" );
-    output( "\tmovdqa 0x1c0(%%rbx),%%xmm2\n" );
-    output( "\tmovdqa 0x1d0(%%rbx),%%xmm3\n" );
-    output( "\tmovdqa 0x1e0(%%rbx),%%xmm4\n" );
-    output( "\tmovdqa 0x1f0(%%rbx),%%xmm5\n" );
-    output( "\tmovdqa 0x200(%%rbx),%%xmm6\n" );
-    output( "\tmovdqa 0x210(%%rbx),%%xmm7\n" );
-    output( "\tmovdqa 0x220(%%rbx),%%xmm8\n" );
-    output( "\tmovdqa 0x230(%%rbx),%%xmm9\n" );
-    output( "\tmovdqa 0x240(%%rbx),%%xmm10\n" );
-    output( "\tmovdqa 0x250(%%rbx),%%xmm11\n" );
-    output( "\tmovdqa 0x260(%%rbx),%%xmm12\n" );
-    output( "\tmovdqa 0x270(%%rbx),%%xmm13\n" );
-    output( "\tmovdqa 0x280(%%rbx),%%xmm14\n" );
-    output( "\tmovdqa 0x290(%%rbx),%%xmm15\n" );
+    for (i = 0; i < 16; i++)
+    {
+        output( "\tmovdqa 0x%x(%%rbx),%%xmm%u\n", 0x1a0 + 16 * i, i );
+        output( "\t.cfi_same_value %%xmm%u\n", i );
+    }
     output( "\tfxrstor 0x100(%%rbx)\n" );
     output( "\tldmxcsr 0x34(%%rbx)\n" );
 
@@ -1124,12 +1134,15 @@ static void build_call_from_regs_x86_64(void)
     output( "\tmovq 0x78(%%rbx),%%rax\n" );
     output( "\tmovq 0x90(%%rbx),%%rbx\n" );
     output( "\tiretq\n" );
+    output( "\t.cfi_endproc\n" );
 
     output_function_size( "__wine_call_from_regs" );
 
     function_header( "__wine_restore_regs" );
+    output( "\t.cfi_startproc\n" );
     output( "\tmovq %%rcx,%%rbx\n" );
     output( "\tjmp 1b\n" );
+    output( "\t.cfi_endproc\n" );
     output_function_size( "__wine_restore_regs" );
 }
 

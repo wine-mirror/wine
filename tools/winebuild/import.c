@@ -668,7 +668,9 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         }
         break;
     case CPU_x86_64:
+        output( "\t.cfi_startproc\n" );
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
+        output( "\t.cfi_endproc\n" );
         break;
     case CPU_SPARC:
         if ( !UsePIC )
@@ -970,23 +972,27 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tjmp *%%eax\n" );
         break;
     case CPU_x86_64:
-        output( "\tpushq %%rdx\n" );
-        output( "\tpushq %%rcx\n" );
-        output( "\tpushq %%r8\n" );
-        output( "\tpushq %%r9\n" );
-        output( "\tpushq %%r10\n" );
-        output( "\tpushq %%r11\n" );
-        output( "\tsubq $40,%%rsp\n" );
+        output( "\t.cfi_startproc\n" );
+        output( "\tsubq $88,%%rsp\n" );
+        output( "\t.cfi_adjust_cfa_offset 88\n" );
+        output( "\tmovq %%rdx,80(%%rsp)\n" );
+        output( "\tmovq %%rcx,72(%%rsp)\n" );
+        output( "\tmovq %%r8,64(%%rsp)\n" );
+        output( "\tmovq %%r9,56(%%rsp)\n" );
+        output( "\tmovq %%r10,48(%%rsp)\n" );
+        output( "\tmovq %%r11,40(%%rsp)\n" );
         output( "\tmovq %%rax,%%rcx\n" );
         output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\taddq $40,%%rsp\n" );
-        output( "\tpopq %%r11\n" );
-        output( "\tpopq %%r10\n" );
-        output( "\tpopq %%r9\n" );
-        output( "\tpopq %%r8\n" );
-        output( "\tpopq %%rcx\n" );
-        output( "\tpopq %%rdx\n" );
+        output( "\tmovq 40(%%rsp),%%r11\n" );
+        output( "\tmovq 48(%%rsp),%%r10\n" );
+        output( "\tmovq 56(%%rsp),%%r9\n" );
+        output( "\tmovq 64(%%rsp),%%r8\n" );
+        output( "\tmovq 72(%%rsp),%%rcx\n" );
+        output( "\tmovq 80(%%rsp),%%rdx\n" );
+        output( "\taddq $88,%%rsp\n" );
+        output( "\t.cfi_adjust_cfa_offset -88\n" );
         output( "\tjmp *%%rax\n" );
+        output( "\t.cfi_endproc\n" );
         break;
     case CPU_SPARC:
         output( "\tsave %%sp, -96, %%sp\n" );
@@ -1068,8 +1074,10 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_x86_64:
+                output( "\t.cfi_startproc\n" );
                 output( "\tmovq $%d,%%rax\n", (idx << 16) | j );
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
+                output( "\t.cfi_endproc\n" );
                 break;
             case CPU_SPARC:
                 output( "\tset %d, %%g1\n", (idx << 16) | j );
@@ -1235,6 +1243,9 @@ void output_stubs( DLLSPEC *spec )
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_x86_64:
+            output( "\t.cfi_startproc\n" );
+            output( "\tsubq $8,%%rsp\n" );
+            output( "\t.cfi_adjust_cfa_offset 8\n" );
             output( "\tleaq .L__wine_spec_file_name(%%rip),%%rdi\n" );
             if (exp_name)
             {
@@ -1243,8 +1254,8 @@ void output_stubs( DLLSPEC *spec )
             }
             else
                 output( "\tmovq $%d,%%rsi\n", odp->ordinal );
-            output( "\tsubq $8,%%rsp\n" );
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output( "\t.cfi_endproc\n" );
             break;
         default:
             assert(0);

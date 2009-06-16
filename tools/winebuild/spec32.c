@@ -171,17 +171,21 @@ static void output_relay_debug( DLLSPEC *spec )
             break;
 
         case CPU_x86_64:
-            output( "\tmovq %%rcx,8(%%rsp)\n" );
-            output( "\tmovq %%rdx,16(%%rsp)\n" );
-            output( "\tmovq %%r8,24(%%rsp)\n" );
-            output( "\tmovq %%r9,32(%%rsp)\n" );
-            output( "\tmovq %%rsp,%%r8\n" );
+            output( "\t.cfi_startproc\n" );
+            output( "\tsubq $40,%%rsp\n" );
+            output( "\t.cfi_adjust_cfa_offset 40\n" );
+            output( "\tmovq %%rcx,48(%%rsp)\n" );
+            output( "\tmovq %%rdx,56(%%rsp)\n" );
+            output( "\tmovq %%r8,64(%%rsp)\n" );
+            output( "\tmovq %%r9,72(%%rsp)\n" );
+            output( "\tleaq 40(%%rsp),%%r8\n" );
             output( "\tmovq $%u,%%rdx\n", (flags << 24) | (args << 16) | (i - spec->base) );
             output( "\tleaq .L__wine_spec_relay_descr(%%rip),%%rcx\n" );
-            output( "\tsubq $40,%%rsp\n" );
             output( "\tcallq *%u(%%rcx)\n", (odp->flags & FLAG_REGISTER) ? 16 : 8 );
             output( "\taddq $40,%%rsp\n" );
+            output( "\t.cfi_adjust_cfa_offset -40\n" );
             output( "\tret\n" );
+            output( "\t.cfi_endproc\n" );
             break;
 
         default:
