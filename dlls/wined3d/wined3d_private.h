@@ -2707,6 +2707,24 @@ void find_vs_compile_args(IWineD3DVertexShaderImpl *shader, IWineD3DStateBlockIm
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
+
+/* Using additional shader constants (uniforms in GLSL / program environment
+ * or local parameters in ARB) is costly:
+ * ARB only knows float4 parameters and GLSL compiler are not really smart
+ * when it comes to efficiently pack float2 uniforms, so no space is wasted
+ * (in fact most compilers map a float2 to a full float4 uniform).
+ *
+ * For NP2 texcoord fixup we only need 2 floats (width and height) for each
+ * 2D texture used in the shader. We therefore pack fixup info for 2 textures
+ * into a single shader constant (uniform / program parameter).
+ *
+ * This structure is shared between the GLSL and the ARB backend.*/
+struct ps_np2fixup_info {
+    unsigned char     idx[MAX_FRAGMENT_SAMPLERS]; /* indices to the real constant */
+    WORD              active; /* bitfield indicating if we can apply the fixup */
+    WORD              num_consts;
+};
+
 typedef struct IWineD3DPixelShaderImpl {
     /* IUnknown parts */
     const IWineD3DPixelShaderVtbl *lpVtbl;

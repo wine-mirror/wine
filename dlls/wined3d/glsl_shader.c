@@ -114,6 +114,7 @@ struct glsl_shader_prog_link {
     struct vs_compile_args      vs_args;
     struct ps_compile_args      ps_args;
     UINT                        constant_version;
+    const struct ps_np2fixup_info *np2Fixup_info;
 };
 
 typedef struct {
@@ -126,11 +127,13 @@ typedef struct {
 struct shader_glsl_ctx_priv {
     const struct vs_compile_args    *cur_vs_args;
     const struct ps_compile_args    *cur_ps_args;
+    struct ps_np2fixup_info         *cur_np2fixup_info;
 };
 
 struct glsl_ps_compiled_shader
 {
     struct ps_compile_args          args;
+    struct ps_np2fixup_info         np2fixup;
     GLhandleARB                     prgId;
 };
 
@@ -3627,7 +3630,7 @@ static void hardcode_local_constants(IWineD3DBaseShaderImpl *shader, const WineD
 
 /* GL locking is done by the caller */
 static GLuint shader_glsl_generate_pshader(IWineD3DPixelShaderImpl *This,
-        SHADER_BUFFER *buffer, const struct ps_compile_args *args)
+        SHADER_BUFFER *buffer, const struct ps_compile_args *args, struct ps_np2fixup_info *np2fixup_info)
 {
     const struct shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
@@ -3640,6 +3643,7 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShaderImpl *This,
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_ps_args = args;
+    priv_ctx.cur_np2fixup_info = np2fixup_info;
 
     shader_addline(buffer, "#version 120\n");
 
@@ -3792,13 +3796,15 @@ static GLuint shader_glsl_generate_vshader(IWineD3DVertexShaderImpl *This,
     return shader_obj;
 }
 
-static GLhandleARB find_glsl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args)
+static GLhandleARB find_glsl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args,
+                                     const struct ps_np2fixup_info **np2fixup_info)
 {
     UINT i;
     DWORD new_size;
     struct glsl_ps_compiled_shader *new_array;
+    struct glsl_pshader_private    *shader_data;
+    struct ps_np2fixup_info        *np2fixup = NULL;
     SHADER_BUFFER buffer;
-    struct glsl_pshader_private *shader_data;
     GLhandleARB ret;
 
     if(!shader->backend_priv) {
@@ -3812,6 +3818,7 @@ static GLhandleARB find_glsl_pshader(IWineD3DPixelShaderImpl *shader, const stru
      */
     for(i = 0; i < shader_data->num_gl_shaders; i++) {
         if(memcmp(&shader_data->gl_shaders[i].args, args, sizeof(*args)) == 0) {
+            if(args->np2_fixup) *np2fixup_info = &shader_data->gl_shaders[i].np2fixup;
             return shader_data->gl_shaders[i].prgId;
         }
     }
@@ -3838,13 +3845,17 @@ static GLhandleARB find_glsl_pshader(IWineD3DPixelShaderImpl *shader, const stru
 
     shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
 
+    memset(&shader_data->gl_shaders[shader_data->num_gl_shaders].np2fixup, 0, sizeof(struct ps_np2fixup_info));
+    if (args->np2_fixup) np2fixup = &shader_data->gl_shaders[shader_data->num_gl_shaders].np2fixup;
+
     pixelshader_update_samplers(&shader->baseShader.reg_maps,
             ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
 
     shader_buffer_init(&buffer);
-    ret = shader_glsl_generate_pshader(shader, &buffer, args);
+    ret = shader_glsl_generate_pshader(shader, &buffer, args, np2fixup);
     shader_buffer_free(&buffer);
     shader_data->gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
+    *np2fixup_info = np2fixup;
 
     return ret;
 }
@@ -3956,6 +3967,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     entry->vs_args = vs_compile_args;
     entry->ps_args = ps_compile_args;
     entry->constant_version = 0;
+    entry->np2Fixup_info = NULL;
     /* Add the hash table entry */
     add_glsl_program_entry(priv, entry);
 
@@ -4006,7 +4018,8 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     /* Attach GLSL pshader */
     if (pshader)
     {
-        GLhandleARB pshader_id = find_glsl_pshader((IWineD3DPixelShaderImpl *)pshader, &ps_compile_args);
+        GLhandleARB pshader_id = find_glsl_pshader((IWineD3DPixelShaderImpl *)pshader, &ps_compile_args,
+                                                   &entry->np2Fixup_info);
         TRACE("Attaching GLSL shader object %u to program %u\n", pshader_id, programId);
         GL_EXTCALL(glAttachObjectARB(programId, pshader_id));
         checkGLcall("glAttachObjectARB");
