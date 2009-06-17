@@ -1447,12 +1447,47 @@ static NTSTATUS call_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatc
 
 
 /**********************************************************************
+ *           call_teb_handler
+ *
+ * Call a single exception handler from the TEB chain.
+ * FIXME: Handle nested exceptions.
+ */
+static NTSTATUS call_teb_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch,
+                                  EXCEPTION_REGISTRATION_RECORD *teb_frame, CONTEXT *orig_context )
+{
+    EXCEPTION_REGISTRATION_RECORD *dispatcher;
+    DWORD res;
+
+    TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatcher=%p)\n",
+           teb_frame->Handler, rec, teb_frame, dispatch->ContextRecord, &dispatcher );
+    res = teb_frame->Handler( rec, teb_frame, dispatch->ContextRecord, &dispatcher );
+    TRACE( "handler at %p returned %u\n", teb_frame->Handler, res );
+
+    switch (res)
+    {
+    case ExceptionContinueExecution:
+        if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
+        *orig_context = *dispatch->ContextRecord;
+        return STATUS_SUCCESS;
+    case ExceptionContinueSearch:
+        break;
+    case ExceptionNestedException:
+        break;
+    default:
+        return STATUS_INVALID_DISPOSITION;
+    }
+    return STATUS_UNHANDLED_EXCEPTION;
+}
+
+
+/**********************************************************************
  *           call_stack_handlers
  *
  * Call the stack handlers chain.
  */
 static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 {
+    EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
     UNWIND_HISTORY_TABLE table;
     RUNTIME_FUNCTION *dir;
     DISPATCHER_CONTEXT dispatch;
@@ -1541,6 +1576,17 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
         {
             status = call_handler( rec, &dispatch, orig_context );
             if (status != STATUS_UNHANDLED_EXCEPTION) return status;
+        }
+        /* hack: call wine handlers registered in the tib list */
+        else while ((ULONG64)teb_frame < new_context.Rsp)
+        {
+            TRACE( "found wine frame %p rsp %lx handler %p\n",
+                   teb_frame, new_context.Rsp, teb_frame->Handler );
+            dispatch.EstablisherFrame = (ULONG64)teb_frame;
+            context = *orig_context;
+            status = call_teb_handler( rec, &dispatch, teb_frame, orig_context );
+            if (status != STATUS_UNHANDLED_EXCEPTION) return status;
+            teb_frame = teb_frame->Prev;
         }
 
         if (new_context.Rsp == (ULONG64)NtCurrentTeb()->Tib.StackBase) break;
@@ -2239,12 +2285,44 @@ static void call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *disp
 }
 
 
+/**********************************************************************
+ *           call_teb_unwind_handler
+ *
+ * Call a single unwind handler from the TEB chain.
+ * FIXME: Handle nested exceptions.
+ */
+static void call_teb_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch,
+                                     EXCEPTION_REGISTRATION_RECORD *teb_frame )
+{
+    EXCEPTION_REGISTRATION_RECORD *dispatcher;
+    DWORD res;
+
+    TRACE( "calling TEB handler %p (rec=%p, frame=%p context=%p, dispatcher=%p)\n",
+           teb_frame->Handler, rec, teb_frame, dispatch->ContextRecord, &dispatcher );
+    res = teb_frame->Handler( rec, teb_frame, dispatch->ContextRecord, &dispatcher );
+    TRACE( "handler at %p returned %u\n", teb_frame->Handler, res );
+
+    switch (res)
+    {
+    case ExceptionContinueSearch:
+        break;
+    case ExceptionCollidedUnwind:
+        FIXME( "ExceptionCollidedUnwind not supported yet\n" );
+        break;
+    default:
+        raise_status( STATUS_INVALID_DISPOSITION, rec );
+        break;
+    }
+}
+
+
 /*******************************************************************
  *		RtlUnwindEx (NTDLL.@)
  */
 void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD *rec,
                          ULONG64 retval, CONTEXT *orig_context, UNWIND_HISTORY_TABLE *table )
 {
+    EXCEPTION_REGISTRATION_RECORD *teb_frame = NtCurrentTeb()->Tib.ExceptionList;
     EXCEPTION_RECORD record;
     RUNTIME_FUNCTION *dir;
     DISPATCHER_CONTEXT dispatch;
@@ -2363,6 +2441,18 @@ void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD 
                 raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
             }
             call_unwind_handler( rec, &dispatch );
+        }
+        else  /* hack: call builtin handlers registered in the tib list */
+        {
+            while ((ULONG64)teb_frame < new_context.Rsp && (ULONG64)teb_frame < end_frame)
+            {
+                TRACE( "found builtin frame %p handler %p\n", teb_frame, teb_frame->Handler );
+                dispatch.EstablisherFrame = (ULONG64)teb_frame;
+                call_teb_unwind_handler( rec, &dispatch, teb_frame );
+                teb_frame = __wine_pop_frame( teb_frame );
+            }
+            if ((ULONG64)teb_frame == end_frame && end_frame < new_context.Rsp) break;
+            dispatch.EstablisherFrame = new_context.Rsp;
         }
 
         context = new_context;
