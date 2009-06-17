@@ -1031,8 +1031,8 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
 
     /* We can only use ORM_FBO when the hardware supports it. */
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !gl_info->supported[EXT_FRAMEBUFFER_OBJECT]) {
-        WARN_(d3d_caps)("GL_EXT_framebuffer_object not supported, falling back to PBuffer offscreen rendering mode.\n");
-        wined3d_settings.offscreen_rendering_mode = ORM_PBUFFER;
+        WARN_(d3d_caps)("GL_EXT_framebuffer_object not supported, falling back to backbuffer offscreen rendering mode.\n");
+        wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
     }
 
     /* MRTs are currently only supported when FBOs are used. */
