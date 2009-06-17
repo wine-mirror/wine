@@ -67,6 +67,11 @@ static unsigned int reserved_vs_const(IWineD3DBaseShader *shader, const WineD3D_
     return ret;
 }
 
+static inline BOOL ffp_clip_emul(IWineD3DStateBlockImpl *stateblock)
+{
+    return stateblock->lowest_disabled_stage < 7;
+}
+
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
  * so upload them above that
  */
@@ -123,7 +128,15 @@ struct arb_ps_compiled_shader
 struct arb_vs_compile_args
 {
     struct vs_compile_args          super;
-    DWORD                           bools; /* WORD is enough, use DWORD for alignment */
+    union
+    {
+        struct
+        {
+            WORD                    bools;
+            char                    clip_control[2];
+        }                           boolclip;
+        DWORD                       boolclip_compare;
+    };
     DWORD                           ps_signature;
     union
     {
@@ -192,6 +205,7 @@ struct arb_pshader_private {
     UINT                            num_gl_shaders, shader_array_size;
     BOOL                            has_signature_idx;
     DWORD                           input_signature_idx;
+    DWORD                           clipplane_emulation;
 };
 
 struct arb_vshader_private {
@@ -535,28 +549,30 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
         max_constantsF = GL_LIMITS(pshader_constantsF);
     } else {
         if(This->baseShader.reg_maps.usesrelconstF) {
+            DWORD highest_constf = 0, clip_limit;
             max_constantsF = GL_LIMITS(vshader_constantsF) - reserved_vs_const(iface, gl_info);
             max_constantsF -= count_bits(This->baseShader.reg_maps.integer_constants);
-            if(ctx->target_version >= NV2)
-            {
-                DWORD highest_constf = 0;
-                for(i = 0; i < This->baseShader.limits.constant_float; i++)
-                {
-                    DWORD idx = i >> 5;
-                    DWORD shift = i & 0x1f;
-                    if(reg_maps->constf[idx] & (1 << shift)) highest_constf = i;
-                }
 
-                *num_clipplanes = min(GL_LIMITS(clipplanes), max_constantsF - highest_constf - 1);
-                max_constantsF -= *num_clipplanes;
-                if(*num_clipplanes < GL_LIMITS(clipplanes))
-                {
-                    WARN("Only %u clipplanes out of %u enabled\n", *num_clipplanes, GL_LIMITS(clipplanes));
-                }
+            for(i = 0; i < This->baseShader.limits.constant_float; i++)
+            {
+                DWORD idx = i >> 5;
+                DWORD shift = i & 0x1f;
+                if(reg_maps->constf[idx] & (1 << shift)) highest_constf = i;
             }
-        } else {
+
+            clip_limit = GL_LIMITS(clipplanes);
+            if(ctx->target_version == ARB) clip_limit = min(clip_limit, 4);
+            *num_clipplanes = min(clip_limit, max_constantsF - highest_constf - 1);
+            max_constantsF -= *num_clipplanes;
+            if(*num_clipplanes < clip_limit)
+            {
+                WARN("Only %u clipplanes out of %u enabled\n", *num_clipplanes, GL_LIMITS(clipplanes));
+            }
+        }
+        else
+        {
             if(ctx->target_version >= NV2) *num_clipplanes = GL_LIMITS(clipplanes);
-            else *num_clipplanes = 0;
+            else *num_clipplanes = min(GL_LIMITS(clipplanes), 4);
             max_constantsF = GL_LIMITS(vshader_constantsF) - 1;
         }
     }
@@ -2841,6 +2857,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     struct shader_arb_ctx_priv priv_ctx;
     BOOL dcl_tmp = args->super.srgb_correction, dcl_td = FALSE;
     BOOL want_nv_prog = FALSE;
+    struct arb_pshader_private *shader_priv = This->backend_priv;
 
     char srgbtmp[4][4];
     unsigned int i, found = 0;
@@ -3051,6 +3068,11 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     else
     {
         compiled->ycorrection = WINED3D_CONST_NUM_UNUSED;
+    }
+
+    if(shader_priv->clipplane_emulation)
+    {
+        shader_addline(buffer, "KIL fragment.texcoord[%u];\n", shader_priv->clipplane_emulation - 1);
     }
 
     /* Base Shader Body */
@@ -3456,9 +3478,43 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
     shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
 
-    for(i = 0; i < num_clipplanes; i++)
+    if(priv_ctx.target_version >= NV2)
     {
-        shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
+        for(i = 0; i < num_clipplanes; i++)
+        {
+            shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
+        }
+    }
+    else if(args->boolclip.clip_control[0])
+    {
+        unsigned int cur_clip = 0;
+        char component[4] = {'x', 'y', 'z', 'w'};
+
+        for(i = 0; i < GL_LIMITS(clipplanes); i++)
+        {
+            if(args->boolclip.clip_control[1] & (1 << i))
+            {
+                shader_addline(buffer, "DP4 TA.%c, TMP_OUT, state.clip[%u].plane;\n",
+                               component[cur_clip++], i);
+            }
+        }
+        switch(cur_clip)
+        {
+            case 0:
+                shader_addline(buffer, "MOV TA, -helper_const.w;\n");
+                break;
+            case 1:
+                shader_addline(buffer, "MOV TA.yzw, -helper_const.w;\n");
+                break;
+            case 2:
+                shader_addline(buffer, "MOV TA.zw, -helper_const.w;\n");
+                break;
+            case 3:
+                shader_addline(buffer, "MOV TA.w, -helper_const.w;\n");
+                break;
+        }
+        shader_addline(buffer, "MOV result.texcoord[%u], TA;\n",
+                       args->boolclip.clip_control[0] - 1);
     }
 
     /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
@@ -3569,7 +3625,7 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
                                  const DWORD use_map, BOOL skip_int) {
     if((stored->super.swizzle_map & use_map) != new->super.swizzle_map) return FALSE;
     if(stored->super.fog_src != new->super.fog_src) return FALSE;
-    if(stored->bools != new->bools) return FALSE;
+    if(stored->boolclip_compare != new->boolclip_compare) return FALSE;
     if(stored->ps_signature != new->ps_signature) return FALSE;
     if(stored->vertex_samplers_compare != new->vertex_samplers_compare) return FALSE;
     if(skip_int) return TRUE;
@@ -3686,20 +3742,38 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     find_vs_compile_args(shader, stateblock, &args->super);
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
-    args->bools = shader->baseShader.reg_maps.local_bool_consts;
+    args->boolclip.bools = shader->baseShader.reg_maps.local_bool_consts;
 
     if(use_ps(stateblock))
     {
         IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) stateblock->pixelShader;
         struct arb_pshader_private *shader_priv = ps->backend_priv;
         args->ps_signature = shader_priv->input_signature_idx;
+
+        args->boolclip.clip_control[0] = shader_priv->clipplane_emulation;
     }
-    else args->ps_signature = ~0;
+    else
+    {
+        args->ps_signature = ~0;
+        args->boolclip.clip_control[0] = ffp_clip_emul(stateblock) ? GL_LIMITS(texture_stages) : 0;
+    }
+
+    if(args->boolclip.clip_control[0])
+    {
+        if(stateblock->renderState[WINED3DRS_CLIPPING])
+        {
+            args->boolclip.clip_control[1] = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
+        }
+        else
+        {
+            args->boolclip.clip_control[1] = 0;
+        }
+    }
 
     /* TODO: Figure out if it would be better to store bool constants as bitmasks in the stateblock */
     for(i = 0; i < MAX_CONST_B; i++)
     {
-        if(stateblock->vertexShaderConstantB[i]) args->bools |= ( 1 << i);
+        if(stateblock->vertexShaderConstantB[i]) args->boolclip.bools |= ( 1 << i);
     }
 
     args->vertex_samplers[0] = dev->texUnitMap[MAX_FRAGMENT_SAMPLERS + 0];
@@ -3732,6 +3806,39 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     }
 }
 
+static void find_clip_texcoord(IWineD3DPixelShaderImpl *ps, const WineD3D_GL_Info *gl_info)
+{
+    struct arb_pshader_private *shader_priv = ps->backend_priv;
+    int i;
+
+    /* See if we can use fragment.texcoord[7] for clipplane emulation
+     *
+     * Don't do this if it is not supported, or fragment.texcoord[7] is used
+     */
+    if(ps->baseShader.reg_maps.shader_version.major < 3)
+    {
+        for(i = GL_LIMITS(texture_stages); i > 0; i--)
+        {
+            if(!ps->baseShader.reg_maps.texcoord[i - 1])
+            {
+                shader_priv->clipplane_emulation = i;
+                break;
+            }
+        }
+    }
+    else
+    {
+        for(i = GL_LIMITS(texture_stages); i > 0; i--)
+        {
+            if(!ps->baseShader.reg_maps.input_registers & (1 << (i - 1)))
+            {
+                shader_priv->clipplane_emulation = i;
+                break;
+            }
+        }
+    }
+}
+
 /* GL locking is done by the caller */
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -3759,6 +3866,8 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
 
             shader_priv->has_signature_idx = TRUE;
             TRACE("Shader got assigned input signature index %u\n", shader_priv->input_signature_idx);
+
+            if(!This->vs_clipping) find_clip_texcoord(ps, gl_info);
         }
 
         /* Bind the fragment program */
@@ -4139,7 +4248,7 @@ static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, 
     }
     else
     {
-        if(vshader) bools = priv->cur_vs_args->bools;
+        if(vshader) bools = priv->cur_vs_args->boolclip.bools;
         else bools = priv->cur_ps_args->bools;
         return bools & flag;
     }
@@ -4970,6 +5079,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
     BOOL op_equal;
     const char *final_combiner_src = "ret";
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
 
     /* Find out which textures are read */
     for(stage = 0; stage < MAX_TEXTURES; stage++) {
@@ -5059,6 +5169,8 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
         shader_addline(&buffer, "PARAM srgb_consts2 = {%f, %f, %f, %f};\n",
                        srgb_sub_high, 0.0, 0.0, 0.0);
     }
+
+    if(ffp_clip_emul(stateblock) && device->vs_clipping) shader_addline(&buffer, "KIL fragment.texcoord[7];\n");
 
     /* Generate texture sampling instructions) */
     for(stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3DTOP_DISABLE; stage++) {
