@@ -207,44 +207,45 @@ static void exit_on_signal( int sig )
 static const char usage_str[] =
 "Usage: winebuild [OPTIONS] [FILES]\n\n"
 "Options:\n"
-"       --as-cmd=AS          Command to use for assembling (default: as)\n"
-"   -b, --target=TARGET      Specify target CPU and platform for cross-compiling\n"
-"   -d, --delay-lib=LIB      Import the specified library in delayed mode\n"
-"   -D SYM                   Ignored for C flags compatibility\n"
-"   -e, --entry=FUNC         Set the DLL entry point function (default: DllMain)\n"
-"   -E, --export=FILE        Export the symbols defined in the .spec or .def file\n"
-"       --external-symbols   Allow linking to external symbols\n"
-"   -f FLAGS                 Compiler flags (only -fPIC is supported)\n"
-"   -F, --filename=DLLFILE   Set the DLL filename (default: from input file name)\n"
-"   -h, --help               Display this help message\n"
-"   -H, --heap=SIZE          Set the heap size for a Win16 dll\n"
-"   -i, --ignore=SYM[,SYM]   Ignore specified symbols when resolving imports\n"
-"   -I DIR                   Ignored for C flags compatibility\n"
-"   -k, --kill-at            Kill stdcall decorations in generated .def files\n"
-"   -K, FLAGS                Compiler flags (only -KPIC is supported)\n"
-"       --ld-cmd=LD          Command to use for linking (default: ld)\n"
-"   -l, --library=LIB        Import the specified library\n"
-"   -L, --library-path=DIR   Look for imports libraries in DIR\n"
-"   -m32, -m64               Force building 32-bit resp. 64-bit code\n"
-"   -M, --main-module=MODULE Set the name of the main module for a Win16 dll\n"
-"       --nm-cmd=NM          Command to use to get undefined symbols (default: nm)\n"
-"       --nxcompat=y|n       Set the NX compatibility flag (default: yes)\n"
-"   -N, --dll-name=DLLNAME   Set the DLL name (default: from input file name)\n"
-"   -o, --output=NAME        Set the output file name (default: stdout)\n"
-"   -r, --res=RSRC.RES       Load resources from RSRC.RES\n"
-"       --save-temps         Do not delete the generated intermediate files\n"
-"       --subsystem=SUBSYS   Set the subsystem (one of native, windows, console)\n"
-"   -u, --undefined=SYMBOL   Add an undefined reference to SYMBOL when linking\n"
-"   -v, --verbose            Display the programs invoked\n"
-"       --version            Print the version and exit\n"
-"   -w, --warnings           Turn on warnings\n"
+"       --as-cmd=AS           Command to use for assembling (default: as)\n"
+"   -b, --target=TARGET       Specify target CPU and platform for cross-compiling\n"
+"   -d, --delay-lib=LIB       Import the specified library in delayed mode\n"
+"   -D SYM                    Ignored for C flags compatibility\n"
+"   -e, --entry=FUNC          Set the DLL entry point function (default: DllMain)\n"
+"   -E, --export=FILE         Export the symbols defined in the .spec or .def file\n"
+"       --external-symbols    Allow linking to external symbols\n"
+"   -f FLAGS                  Compiler flags (only -fPIC is supported)\n"
+"   -F, --filename=DLLFILE    Set the DLL filename (default: from input file name)\n"
+"   -h, --help                Display this help message\n"
+"   -H, --heap=SIZE           Set the heap size for a Win16 dll\n"
+"   -i, --ignore=SYM[,SYM]    Ignore specified symbols when resolving imports\n"
+"   -I DIR                    Ignored for C flags compatibility\n"
+"   -k, --kill-at             Kill stdcall decorations in generated .def files\n"
+"   -K, FLAGS                 Compiler flags (only -KPIC is supported)\n"
+"       --large-address-aware Support an address space larger than 2Gb\n"
+"       --ld-cmd=LD           Command to use for linking (default: ld)\n"
+"   -l, --library=LIB         Import the specified library\n"
+"   -L, --library-path=DIR    Look for imports libraries in DIR\n"
+"   -m32, -m64                Force building 32-bit resp. 64-bit code\n"
+"   -M, --main-module=MODULE  Set the name of the main module for a Win16 dll\n"
+"       --nm-cmd=NM           Command to use to get undefined symbols (default: nm)\n"
+"       --nxcompat=y|n        Set the NX compatibility flag (default: yes)\n"
+"   -N, --dll-name=DLLNAME    Set the DLL name (default: from input file name)\n"
+"   -o, --output=NAME         Set the output file name (default: stdout)\n"
+"   -r, --res=RSRC.RES        Load resources from RSRC.RES\n"
+"       --save-temps          Do not delete the generated intermediate files\n"
+"       --subsystem=SUBSYS    Set the subsystem (one of native, windows, console)\n"
+"   -u, --undefined=SYMBOL    Add an undefined reference to SYMBOL when linking\n"
+"   -v, --verbose             Display the programs invoked\n"
+"       --version             Print the version and exit\n"
+"   -w, --warnings            Turn on warnings\n"
 "\nMode options:\n"
-"       --dll                Build a .c file from a .spec or .def file\n"
-"       --def                Build a .def file from a .spec file\n"
-"       --exe                Build a .c file for an executable\n"
-"       --relay16            Build the 16-bit relay assembly routines\n"
-"       --relay32            Build the 32-bit relay assembly routines\n\n"
-"       --resources          Build a .o file for the resource files\n\n"
+"       --dll                 Build a .c file from a .spec or .def file\n"
+"       --def                 Build a .def file from a .spec file\n"
+"       --exe                 Build a .c file for an executable\n"
+"       --relay16             Build the 16-bit relay assembly routines\n"
+"       --relay32             Build the 32-bit relay assembly routines\n\n"
+"       --resources           Build a .o file for the resource files\n\n"
 "The mode options are mutually exclusive; you must specify one and only one.\n\n";
 
 enum long_options_values
@@ -254,6 +255,7 @@ enum long_options_values
     LONG_OPT_EXE,
     LONG_OPT_ASCMD,
     LONG_OPT_EXTERNAL_SYMS,
+    LONG_OPT_LARGE_ADDRESS_AWARE,
     LONG_OPT_LDCMD,
     LONG_OPT_NMCMD,
     LONG_OPT_NXCOMPAT,
@@ -274,6 +276,7 @@ static const struct option long_options[] =
     { "exe",           0, 0, LONG_OPT_EXE },
     { "as-cmd",        1, 0, LONG_OPT_ASCMD },
     { "external-symbols", 0, 0, LONG_OPT_EXTERNAL_SYMS },
+    { "large-address-aware", 0, 0, LONG_OPT_LARGE_ADDRESS_AWARE },
     { "ld-cmd",        1, 0, LONG_OPT_LDCMD },
     { "nm-cmd",        1, 0, LONG_OPT_NMCMD },
     { "nxcompat",      1, 0, LONG_OPT_NXCOMPAT },
@@ -450,6 +453,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_EXTERNAL_SYMS:
             link_ext_symbols = 1;
+            break;
+        case LONG_OPT_LARGE_ADDRESS_AWARE:
+            spec->characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
             break;
         case LONG_OPT_LDCMD:
             ld_command = xstrdup( optarg );

@@ -137,6 +137,10 @@ generated .def file. Only meaningful in \fB--def\fR mode.
 .BI \-K\  flags
 Ignored for compatibility with the C compiler.
 .TP
+.BI \--large-address-aware
+Set a flag in the executable to notify the loader that this
+application supports address spaces larger than 2 gigabytes.
+.TP
 .BI \--ld-cmd= ld-command
 Specify the command to use to link the object files; the default is
 \fBld\fR.
