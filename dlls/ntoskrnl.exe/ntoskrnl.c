@@ -1114,6 +1114,13 @@ void WINAPI MmResetDriverPaging(PVOID AddrInSection)
     TRACE("%p\n", AddrInSection);
 }
 
+/***********************************************************************
+ *           ObfReferenceObject   (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI ObfReferenceObject(PVOID Object)
+{
+    FIXME("(%p): stub\n", Object);
+}
 
  /***********************************************************************
  *           ObReferenceObjectByHandle    (NTOSKRNL.EXE.@)
