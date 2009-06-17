@@ -320,7 +320,7 @@ BOOL WINAPI HeapSetInformation( HANDLE heap, HEAP_INFORMATION_CLASS infoclass, P
  * size = 8*k, where k=1,2,3,... alloc's exactly the given size.
  * The Minolta DiMAGE Image Viewer heavily relies on this, corrupting
  * the output jpeg's > 1 MB if not */
-#define HGLOBAL_STORAGE      8  /* sizeof(HGLOBAL)*2 */
+#define HGLOBAL_STORAGE      (sizeof(HGLOBAL)*2)
 
 #include "pshpack1.h"
 
