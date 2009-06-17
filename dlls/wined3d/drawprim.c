@@ -554,16 +554,22 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl          *target;
+    BOOL load_rt, modify_rt;
     unsigned int i;
 
     if (!index_count) return;
+
+    load_rt = This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE]
+            || This->stateBlock->renderState[WINED3DRS_ALPHATESTENABLE]
+            || This->stateBlock->renderState[WINED3DRS_COLORKEYENABLE];
+    modify_rt = This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE];
 
     /* Invalidate the back buffer memory so LockRect will read it the next time */
     for(i = 0; i < GL_LIMITS(buffers); i++) {
         target = (IWineD3DSurfaceImpl *) This->render_targets[i];
         if (target) {
-            IWineD3DSurface_LoadLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, NULL);
-            IWineD3DSurface_ModifyLocation((IWineD3DSurface *) target, SFLAG_INDRAWABLE, TRUE);
+            if (load_rt) IWineD3DSurface_LoadLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, NULL);
+            if (modify_rt) IWineD3DSurface_ModifyLocation((IWineD3DSurface *)target, SFLAG_INDRAWABLE, TRUE);
         }
     }
 
