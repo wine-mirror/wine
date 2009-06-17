@@ -467,7 +467,7 @@
 @ stub IoSynchronousInvalidateDeviceRelations
 @ stub IoSynchronousPageWrite
 @ stub IoThreadToProcess
-@ stub IoUnregisterFileSystem
+@ stdcall IoUnregisterFileSystem(ptr)
 @ stub IoUnregisterFsRegistrationChange
 @ stub IoUnregisterPlugPlayNotification
 @ stub IoUnregisterShutdownNotification

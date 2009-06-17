@@ -1067,6 +1067,14 @@ VOID WINAPI IoRegisterFileSystem(PDEVICE_OBJECT DeviceObject)
 }
 
 /***********************************************************************
+*           IoUnregisterFileSystem   (NTOSKRNL.EXE.@)
+*/
+VOID WINAPI IoUnregisterFileSystem(PDEVICE_OBJECT DeviceObject)
+{
+    FIXME("(%p): stub\n", DeviceObject);
+}
+
+/***********************************************************************
  *           MmAllocateNonCachedMemory   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI MmAllocateNonCachedMemory( SIZE_T size )
