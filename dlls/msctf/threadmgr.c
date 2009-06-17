@@ -365,9 +365,12 @@ ITfDocumentMgr *pdimNew, ITfDocumentMgr **ppdimPrev)
 
 static HRESULT WINAPI ThreadMgr_IsThreadFocus( ITfThreadMgr* iface, BOOL *pfThreadFocus)
 {
+    HWND focus;
     ThreadMgr *This = (ThreadMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %p\n",This,pfThreadFocus);
+    focus = GetFocus();
+    *pfThreadFocus = (focus == NULL);
+    return S_OK;
 }
 
 static HRESULT WINAPI ThreadMgr_GetFunctionProvider( ITfThreadMgr* iface, REFCLSID clsid,
