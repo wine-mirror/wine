@@ -123,7 +123,7 @@ static HRESULT WINAPI DocumentMgr_CreateContext(ITfDocumentMgr *iface,
 {
     DocumentMgr *This = (DocumentMgr *)iface;
     TRACE("(%p) 0x%x 0x%x %p %p %p\n",This,tidOwner,dwFlags,punk,ppic,pecTextStore);
-    return Context_Constructor(tidOwner, punk, ppic, pecTextStore);
+    return Context_Constructor(tidOwner, punk, iface, ppic, pecTextStore);
 }
 
 static HRESULT WINAPI DocumentMgr_Push(ITfDocumentMgr *iface, ITfContext *pic)

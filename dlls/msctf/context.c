@@ -709,7 +709,7 @@ static const ITfInsertAtSelectionVtbl Context_InsertAtSelectionVtbl =
     InsertAtSelection_InsertEmbeddedAtSelection,
 };
 
-HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **ppOut, TfEditCookie *pecTextStore)
+HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfDocumentMgr *mgr, ITfContext **ppOut, TfEditCookie *pecTextStore)
 {
     Context *This;
     EditCookie *cookie;
@@ -733,6 +733,7 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfContext **pp
     This->refCount = 1;
     This->tidOwner = tidOwner;
     This->connected = FALSE;
+    This->manager = mgr;
 
     CompartmentMgr_Constructor((IUnknown*)This, &IID_IUnknown, (IUnknown**)&This->CompartmentMgr);
 

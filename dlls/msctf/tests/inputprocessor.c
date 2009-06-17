@@ -1146,6 +1146,11 @@ static void test_startSession(void)
     hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, NULL, &cxt3, &editCookie);
     ok(SUCCEEDED(hr),"CreateContext Failed\n");
 
+    hr = ITfContext_GetDocumentMgr(cxt,&dmtest);
+    ok(hr == S_OK, "ITfContext_GetDocumentMgr failed with %x\n",hr);
+    ok(dmtest == g_dm, "Wrong documentmgr\n");
+    ITfDocumentMgr_Release(dmtest);
+
     cnt = check_context_refcount(cxt);
     test_OnPushContext = SINK_EXPECTED;
     test_ACP_AdviseSink = SINK_EXPECTED;
@@ -1214,6 +1219,11 @@ static void test_startSession(void)
     ok(SUCCEEDED(hr),"Pop Failed\n");
     ok(check_context_refcount(cxt2) < cnt, "Ref count did not decrease\n");
     ok(test_OnPopContext == SINK_FIRED, "OnPopContext sink not fired\n");
+
+    dmtest = (void *)0xfeedface;
+    hr = ITfContext_GetDocumentMgr(cxt2,&dmtest);
+    ok(hr == S_FALSE, "ITfContext_GetDocumentMgr wrong rc %x\n",hr);
+    ok(dmtest == NULL,"returned documentmgr should be null\n");
 
     hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
     ok(SUCCEEDED(hr),"GetTop Failed\n");
