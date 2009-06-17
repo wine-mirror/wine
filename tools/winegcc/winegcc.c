@@ -193,6 +193,7 @@ struct options
     int unicode_app;
     int compile_only;
     int force_pointer_size;
+    int large_address_aware;
     const char* wine_objdir;
     const char* output_name;
     const char* image_base;
@@ -704,6 +705,8 @@ static void build(struct options* opts)
         if (opts->image_base)
             strarray_add(link_args, strmake("-Wl,--image-base,%s", opts->image_base));
 
+        if (opts->large_address_aware) strarray_add( link_args, "-Wl,--large-address-aware" );
+
         if (opts->unicode_app && !opts->shared)
             strarray_add(link_args, mingw_unicode_hack(opts));
 
@@ -818,6 +821,7 @@ static void build(struct options* opts)
             strarray_add(spec_args, "--entry");
             strarray_add(spec_args, "__wine_spec_exe_wentry");
         }
+        if (opts->large_address_aware) strarray_add( spec_args, "--large-address-aware" );
     }
 
     for ( j = 0; j < lib_dirs->size; j++ )
@@ -1269,6 +1273,11 @@ int main(int argc, char **argv)
                             if (!strcmp(Wl->base[j], "--section-alignment") && j < Wl->size - 1)
                             {
                                 opts.section_align = strdup( Wl->base[++j] );
+                                continue;
+                            }
+                            if (!strcmp(Wl->base[j], "--large-address-aware"))
+                            {
+                                opts.large_address_aware = 1;
                                 continue;
                             }
                             if (!strcmp(Wl->base[j], "-static")) linking = -1;
