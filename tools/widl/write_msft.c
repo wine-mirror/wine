@@ -1515,14 +1515,14 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
 	paramdata[2] = paramflags;
 	typedata[3] += decoded_size << 16;
 
-        if(lcid_retval_count == 1)
-            typedata[4] |= 0x4000;
-        else if(lcid_retval_count == 2)
-            typedata[4] |= 0x8000;
-
         i++;
       }
     }
+
+    if(lcid_retval_count == 1)
+        typedata[4] |= 0x4000;
+    else if(lcid_retval_count == 2)
+        typedata[4] |= 0x8000;
 
     if(typeinfo->funcs_allocated == 0) {
         typeinfo->funcs_allocated = 10;
