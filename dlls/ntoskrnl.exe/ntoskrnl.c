@@ -935,6 +935,15 @@ NTSTATUS WINAPI ExInitializeZone(PZONE_HEADER Zone,
     return STATUS_NOT_IMPLEMENTED;
 }
 
+/***********************************************************************
+*           FsRtlRegisterUncProvider   (NTOSKRNL.EXE.@)
+*/
+NTSTATUS WINAPI FsRtlRegisterUncProvider(PHANDLE MupHandle, PUNICODE_STRING RedirDevName,
+                                         BOOLEAN MailslotsSupported)
+{
+    FIXME("(%p %p %d): stub\n", MupHandle, RedirDevName, MailslotsSupported);
+    return STATUS_NOT_IMPLEMENTED;
+}
 
 /***********************************************************************
  *           KeInitializeEvent   (NTOSKRNL.EXE.@)
