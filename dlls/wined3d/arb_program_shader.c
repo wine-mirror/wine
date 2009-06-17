@@ -806,6 +806,21 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             sprintf(register_name, "I%u", reg->idx);
             break;
 
+        case WINED3DSPR_MISCTYPE:
+            if(reg->idx == 0)
+            {
+                sprintf(register_name, "vpos");
+            }
+            else if(reg->idx == 1)
+            {
+                sprintf(register_name, "fragment.facing.x");
+            }
+            else
+            {
+                FIXME("Unknown MISCTYPE register index %u\n", reg->idx);
+            }
+            break;
+
         default:
             FIXME("Unhandled register type %#x[%u]\n", reg->type, reg->idx);
             sprintf(register_name, "unrecognized_register[%u]", reg->idx);
@@ -2626,7 +2641,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
      * So enable the best we can get.
      */
     if(reg_maps->usesdsx || reg_maps->usesdsy || reg_maps->loop_depth > 0 || reg_maps->usestexldd ||
-       reg_maps->usestexldl)
+       reg_maps->usestexldl || reg_maps->usesfacing)
     {
         want_nv_prog = TRUE;
     }
@@ -2760,6 +2775,18 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     {
         compiled->ycorrection = next_local;
         shader_addline(buffer, "PARAM ycorrection = program.local[%u];\n", next_local++);
+
+        if(reg_maps->vpos)
+        {
+            shader_addline(buffer, "TEMP vpos;\n");
+            /* ycorrection.x: Backbuffer height(onscreen) or 0(offscreen).
+             * ycorrection.y: -1.0(onscreen), 1.0(offscreen)
+             * ycorrection.z: 1.0
+             * ycorrection.w: 0.0
+             */
+            shader_addline(buffer, "MAD vpos, fragment.position, ycorrection.zyww, ycorrection.wxww;\n");
+            shader_addline(buffer, "FLR vpos.xy, vpos;\n");
+        }
     }
     else
     {

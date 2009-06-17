@@ -287,6 +287,7 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
 
         case WINED3DSPR_MISCTYPE:
             if (pshader && reg->idx == 0) reg_maps->vpos = 1;
+            if (pshader && reg->idx == 1) reg_maps->usesfacing = 1;
             break;
 
         case WINED3DSPR_CONST:

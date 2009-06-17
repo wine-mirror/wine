@@ -629,7 +629,7 @@ typedef struct shader_reg_maps
 
     WINED3DSAMPLER_TEXTURE_TYPE sampler_type[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     BOOL bumpmat[MAX_TEXTURES], luminanceparams[MAX_TEXTURES];
-    char usesnrm, vpos, usesdsx, usesdsy, usestexldd, usesmova, usestexldl;
+    char usesnrm, vpos, usesdsx, usesdsy, usestexldd, usesmova, usestexldl, usesfacing;
     char usesrelconstF;
 
     /* Whether or not loops are used in this shader, and nesting depth */
