@@ -121,7 +121,7 @@ static const WCHAR de_engb[] = {'E','n','g','l','i','s','c','h',' ',
                                 '(','G','r','o',0xDF,'b','r','i','t','a','n','n','i','e','n',')',0};
 static const WCHAR de_engb2[] ={'E','n','g','l','i','s','c','h',' ',
                                 '(','V','e','r','e','i','n','i','g','t','e','s',' ',
-                                'K',0xF6,'n','i','g','r','e','i',0};
+                                'K',0xF6,'n','i','g','r','e','i','c',0};
 static const WCHAR de_enus[] = {'E','n','g','l','i','s','c','h',' ',
                                 '(','U','S','A',')',0};
 static const WCHAR de_de[] =   {'D','e','u','t','s','c','h',' ',
@@ -264,6 +264,17 @@ static int mylstrcmpW(const WCHAR* str1, const WCHAR* str2)
         str2++;
     }
     return *str1-*str2;
+}
+
+/* lstrcpyW is not supported on Win95 */
+static void mylstrcpyW(WCHAR* str1, const WCHAR* str2)
+{
+    while (str2 && *str2) {
+        *str1 = *str2;
+        str1++;
+        str2++;
+    }
+    *str1 = '\0';
 }
 
 #define DEBUGSTR_W_MAXLEN 64
@@ -1238,6 +1249,7 @@ static void test_LcidToRfc1766(void)
 
 static void test_GetRfc1766Info(IMultiLanguage2 *iML2)
 {
+    WCHAR short_broken_name[MAX_LOCALE_NAME];
     CHAR rfc1766A[MAX_RFC1766_NAME + 1];
     BYTE buffer[sizeof(RFC1766INFO) + 4];
     PRFC1766INFO prfc = (RFC1766INFO *) buffer;
@@ -1258,16 +1270,22 @@ static void test_GetRfc1766Info(IMultiLanguage2 *iML2)
         ok(!lstrcmpA(rfc1766A, info_table[i].rfc1766),
             "#%02d: got '%s' (expected '%s')\n", i, rfc1766A, info_table[i].rfc1766);
 
+        /* Some IE versions truncate an oversized name one character to short */
+        mylstrcpyW(short_broken_name, info_table[i].broken_name);
+        short_broken_name[MAX_LOCALE_NAME - 2] = '\0';
+
         if (info_table[i].todo & TODO_NAME) {
             todo_wine
             ok( (!mylstrcmpW(prfc->wszLocaleName, info_table[i].localename)) ||
-                broken(!mylstrcmpW(prfc->wszLocaleName, info_table[i].broken_name)), /* IE < 6.0 */
+                broken(!mylstrcmpW(prfc->wszLocaleName, info_table[i].broken_name)) || /* IE < 6.0 */
+                broken(!mylstrcmpW(prfc->wszLocaleName, short_broken_name)),
                 "#%02d: got %s (expected %s)\n", i,
                 debugstr_w(prfc->wszLocaleName), debugstr_w(info_table[i].localename));
         }
         else
             ok( (!mylstrcmpW(prfc->wszLocaleName, info_table[i].localename)) ||
-                broken(!mylstrcmpW(prfc->wszLocaleName, info_table[i].broken_name)),   /* IE < 6.0 */
+                broken(!mylstrcmpW(prfc->wszLocaleName, info_table[i].broken_name)) || /* IE < 6.0 */
+                broken(!mylstrcmpW(prfc->wszLocaleName, short_broken_name)),
                 "#%02d: got %s (expected %s)\n", i,
                 debugstr_w(prfc->wszLocaleName), debugstr_w(info_table[i].localename));
 
