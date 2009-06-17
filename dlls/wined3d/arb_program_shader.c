@@ -2319,16 +2319,30 @@ static void shader_hw_sgn(const struct wined3d_shader_instruction *ins)
     shader_arb_get_dst_param(ins, &ins->dst[0], dst_name);
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name);
 
-    FIXME("Emulated SGN untested\n");
     /* If SRC > 0.0, -SRC < SRC = TRUE, otherwise false.
      * if SRC < 0.0,  SRC < -SRC = TRUE. If neither is true, src = 0.0
      */
     if(ins->dst[0].modifiers & WINED3DSPDM_SATURATE) {
         shader_addline(buffer, "SLT %s, -%s, %s;\n", dst_name, src_name, src_name);
     } else {
-        shader_addline(buffer, "SLT TB, -%s, %s;\n", src_name, src_name);
-        shader_addline(buffer, "SLT TC,  %s, -%s;\n", src_name, src_name);
-        shader_addline(buffer, "ADD %s, TB, -TC;\n", dst_name);
+        /* src contains TA? Write to the dest first. This won't overwrite our destination.
+         * Then use TA, and calculate the final result
+         *
+         * Not reading from TA? Store the first result in TA to avoid overwriting the
+         * destination if src reg = dst reg
+         */
+        if(strstr(src_name, "TA"))
+        {
+            shader_addline(buffer, "SLT %s,  %s, -%s;\n", dst_name, src_name, src_name);
+            shader_addline(buffer, "SLT TA, -%s, %s;\n", src_name, src_name);
+            shader_addline(buffer, "ADD %s, %s, -TA;\n", dst_name, dst_name);
+        }
+        else
+        {
+            shader_addline(buffer, "SLT TA, -%s, %s;\n", src_name, src_name);
+            shader_addline(buffer, "SLT %s,  %s, -%s;\n", dst_name, src_name, src_name);
+            shader_addline(buffer, "ADD %s, TA, -%s;\n", dst_name, dst_name);
+        }
     }
 }
 

@@ -10278,6 +10278,57 @@ static void loop_index_test(IDirect3DDevice9 *device) {
     IDirect3DVertexShader9_Release(shader);
 }
 
+static void sgn_test(IDirect3DDevice9 *device) {
+    const DWORD shader_code[] = {
+        0xfffe0200,                                                             /* vs_2_0                       */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position o0              */
+        0x05000051, 0xa00f0000, 0xbf000000, 0x00000000, 0x3f000000, 0x41400000, /* def c0, -0.5, 0.0, 0.5, 12.0 */
+        0x05000051, 0xa00f0001, 0x3fc00000, 0x00000000, 0x00000000, 0x00000000, /* def c1, 1.5, 0.0, 0.0, 0.0   */
+        0x02000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
+        0x02000022, 0x800f0000, 0xa0e40000,                                     /* sgn r0, c0                   */
+        0x03000002, 0xd00f0000, 0x80e40000, 0xa0e40001,                         /* add oD0, r0, c1              */
+        0x0000ffff                                                              /* end                          */
+    };
+    IDirect3DVertexShader9 *shader;
+    HRESULT hr;
+    DWORD color;
+    const float quad[] = {
+        -1.0,   -1.0,   0.1,
+         1.0,   -1.0,   0.1,
+        -1.0,    1.0,   0.1,
+         1.0,    1.0,   0.1
+    };
+
+    hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader failed with %08x\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(device, shader);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed with %08x\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff0000, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
+        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
+    }
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x008000ff, 1),
+       "sgn test returned color 0x%08x, expected 0x008000ff\n", color);
+
+    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed with %08x\n", hr);
+    IDirect3DVertexShader9_Release(shader);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice9 *device_ptr;
@@ -10389,6 +10440,7 @@ START_TEST(visual)
         test_mova(device_ptr);
         loop_index_test(device_ptr);
         sincos_test(device_ptr);
+        sgn_test(device_ptr);
         if (caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
             test_vshader_input(device_ptr);
             test_vshader_float16(device_ptr);
