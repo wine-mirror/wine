@@ -427,7 +427,7 @@
 @ stub IoRegisterBootDriverReinitialization
 @ stub IoRegisterDeviceInterface
 @ stdcall IoRegisterDriverReinitialization(ptr ptr ptr)
-@ stub IoRegisterFileSystem
+@ stdcall IoRegisterFileSystem(ptr)
 @ stub IoRegisterFsRegistrationChange
 @ stub IoRegisterLastChanceShutdownNotification
 @ stub IoRegisterPlugPlayNotification

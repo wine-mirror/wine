@@ -1058,6 +1058,13 @@ NTSTATUS WINAPI KeWaitForSingleObject(PVOID Object,
     return STATUS_NOT_IMPLEMENTED;
 }
 
+/***********************************************************************
+ *           IoRegisterFileSystem   (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI IoRegisterFileSystem(PDEVICE_OBJECT DeviceObject)
+{
+    FIXME("(%p): stub\n", DeviceObject);
+}
 
 /***********************************************************************
  *           MmAllocateNonCachedMemory   (NTOSKRNL.EXE.@)
