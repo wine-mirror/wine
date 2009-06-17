@@ -313,8 +313,8 @@ static int suspend_for_ptrace( struct thread *thread )
     return 0;
 }
 
-/* read an int from a thread address space */
-static int read_thread_int( struct thread *thread, int *addr, int *data )
+/* read a long from a thread address space */
+static long read_thread_long( struct thread *thread, long *addr, long *data )
 {
     errno = 0;
     *data = ptrace( PTRACE_PEEKDATA, get_ptrace_pid(thread), (caddr_t)addr, 0 );
@@ -326,13 +326,13 @@ static int read_thread_int( struct thread *thread, int *addr, int *data )
     return 0;
 }
 
-/* write an int to a thread address space */
-static int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask )
+/* write a long to a thread address space */
+static long write_thread_long( struct thread *thread, long *addr, long data, unsigned long mask )
 {
-    int res;
+    long res;
     if (mask != ~0u)
     {
-        if (read_thread_int( thread, addr, &res ) == -1) return -1;
+        if (read_thread_long( thread, addr, &res ) == -1) return -1;
         data = (data & mask) | (res & ~mask);
     }
     if ((res = ptrace( PTRACE_POKEDATA, get_ptrace_pid(thread), (caddr_t)addr, data )) == -1)
@@ -358,7 +358,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 {
     struct thread *thread = get_ptrace_thread( process );
     unsigned int first_offset, last_offset, len;
-    int data, *addr;
+    long data, *addr;
 
     if (!thread) return 0;
 
@@ -368,33 +368,33 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
         return 0;
     }
 
-    first_offset = ptr % sizeof(int);
-    last_offset = (size + first_offset) % sizeof(int);
-    if (!last_offset) last_offset = sizeof(int);
+    first_offset = ptr % sizeof(long);
+    last_offset = (size + first_offset) % sizeof(long);
+    if (!last_offset) last_offset = sizeof(long);
 
-    addr = (int *)(unsigned long)(ptr - first_offset);
-    len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
+    addr = (long *)(unsigned long)(ptr - first_offset);
+    len = (size + first_offset + sizeof(long) - 1) / sizeof(long);
 
     if (suspend_for_ptrace( thread ))
     {
         if (len > 1)
         {
-            if (read_thread_int( thread, addr++, &data ) == -1) goto done;
-            memcpy( dest, (char *)&data + first_offset, sizeof(int) - first_offset );
-            dest += sizeof(int) - first_offset;
+            if (read_thread_long( thread, addr++, &data ) == -1) goto done;
+            memcpy( dest, (char *)&data + first_offset, sizeof(long) - first_offset );
+            dest += sizeof(long) - first_offset;
             first_offset = 0;
             len--;
         }
 
         while (len > 1)
         {
-            if (read_thread_int( thread, addr++, &data ) == -1) goto done;
-            memcpy( dest, &data, sizeof(int) );
-            dest += sizeof(int);
+            if (read_thread_long( thread, addr++, &data ) == -1) goto done;
+            memcpy( dest, &data, sizeof(long) );
+            dest += sizeof(long);
             len--;
         }
 
-        if (read_thread_int( thread, addr++, &data ) == -1) goto done;
+        if (read_thread_long( thread, addr++, &data ) == -1) goto done;
         memcpy( dest, (char *)&data + first_offset, last_offset - first_offset );
         len--;
 
@@ -406,28 +406,29 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 
 /* make sure we can write to the whole address range */
 /* len is the total size (in ints) */
-static int check_process_write_access( struct thread *thread, int *addr, data_size_t len )
+static int check_process_write_access( struct thread *thread, long *addr, data_size_t len )
 {
     int page = get_page_size() / sizeof(int);
 
     for (;;)
     {
-        if (write_thread_int( thread, addr, 0, 0 ) == -1) return 0;
+        if (write_thread_long( thread, addr, 0, 0 ) == -1) return 0;
         if (len <= page) break;
         addr += page;
         len -= page;
     }
-    return (write_thread_int( thread, addr + len - 1, 0, 0 ) != -1);
+    return (write_thread_long( thread, addr + len - 1, 0, 0 ) != -1);
 }
 
 /* write data to a process memory space */
 int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
 {
     struct thread *thread = get_ptrace_thread( process );
-    int ret = 0, data = 0;
+    int ret = 0;
+    long data = 0;
     data_size_t len;
-    int *addr;
-    unsigned int first_mask, first_offset, last_mask, last_offset;
+    long *addr;
+    unsigned long first_mask, first_offset, last_mask, last_offset;
 
     if (!thread) return 0;
 
@@ -437,19 +438,19 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         return 0;
     }
 
-    /* compute the mask for the first int */
+    /* compute the mask for the first long */
     first_mask = ~0;
-    first_offset = ptr % sizeof(int);
+    first_offset = ptr % sizeof(long);
     memset( &first_mask, 0, first_offset );
 
-    /* compute the mask for the last int */
-    last_offset = (size + first_offset) % sizeof(int);
-    if (!last_offset) last_offset = sizeof(int);
+    /* compute the mask for the last long */
+    last_offset = (size + first_offset) % sizeof(long);
+    if (!last_offset) last_offset = sizeof(long);
     last_mask = 0;
     memset( &last_mask, 0xff, last_offset );
 
-    addr = (int *)(unsigned long)(ptr - first_offset);
-    len = (size + first_offset + sizeof(int) - 1) / sizeof(int);
+    addr = (long *)(unsigned long)(ptr - first_offset);
+    len = (size + first_offset + sizeof(long) - 1) / sizeof(long);
 
     if (suspend_for_ptrace( thread ))
     {
@@ -461,9 +462,9 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         /* first word is special */
         if (len > 1)
         {
-            memcpy( (char *)&data + first_offset, src, sizeof(int) - first_offset );
-            src += sizeof(int) - first_offset;
-            if (write_thread_int( thread, addr++, data, first_mask ) == -1) goto done;
+            memcpy( (char *)&data + first_offset, src, sizeof(long) - first_offset );
+            src += sizeof(long) - first_offset;
+            if (write_thread_long( thread, addr++, data, first_mask ) == -1) goto done;
             first_offset = 0;
             len--;
         }
@@ -471,15 +472,15 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
 
         while (len > 1)
         {
-            memcpy( &data, src, sizeof(int) );
-            src += sizeof(int);
-            if (write_thread_int( thread, addr++, data, ~0 ) == -1) goto done;
+            memcpy( &data, src, sizeof(long) );
+            src += sizeof(long);
+            if (write_thread_long( thread, addr++, data, ~0ul ) == -1) goto done;
             len--;
         }
 
         /* last word is special too */
         memcpy( (char *)&data + first_offset, src, last_offset - first_offset );
-        if (write_thread_int( thread, addr, data, last_mask ) == -1) goto done;
+        if (write_thread_long( thread, addr, data, last_mask ) == -1) goto done;
         ret = 1;
 
     done:
@@ -504,13 +505,13 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
     }
     if (suspend_for_ptrace( thread ))
     {
-        unsigned char flags_buf[4];
-        int *addr = (int *)(unsigned long)thread->process->ldt_copy + entry;
-        if (read_thread_int( thread, addr, (int *)base ) == -1) goto done;
-        if (read_thread_int( thread, addr + 8192, (int *)limit ) == -1) goto done;
-        addr = (int *)(unsigned long)thread->process->ldt_copy + 2*8192 + (entry >> 2);
-        if (read_thread_int( thread, addr, (int *)flags_buf ) == -1) goto done;
-        *flags = flags_buf[entry & 3];
+        unsigned char flags_buf[sizeof(long)];
+        long *addr = (long *)(unsigned long)thread->process->ldt_copy + entry;
+        if (read_thread_long( thread, addr, (long *)base ) == -1) goto done;
+        if (read_thread_long( thread, addr + 8192, (long *)limit ) == -1) goto done;
+        addr = (long *)(unsigned long)thread->process->ldt_copy + 2*8192 + (entry / sizeof(long));
+        if (read_thread_long( thread, addr, (long *)flags_buf ) == -1) goto done;
+        *flags = flags_buf[entry % sizeof(long)];
     done:
         resume_after_ptrace( thread );
     }
