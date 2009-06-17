@@ -574,10 +574,16 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
 
     if (This->stencilBufferTarget) {
         /* Note that this depends on the ActivateContext call above to set
-         * This->render_offscreen properly */
+         * This->render_offscreen properly. We don't currently take the
+         * Z-compare function into account, but we could skip loading the
+         * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
+         * that we never copy the stencil data.*/
         DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
-        surface_load_ds_location(This->stencilBufferTarget, location);
-        surface_modify_ds_location(This->stencilBufferTarget, location);
+        if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE]
+                || This->stateBlock->renderState[WINED3DRS_ZENABLE])
+            surface_load_ds_location(This->stencilBufferTarget, location);
+        if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE])
+            surface_modify_ds_location(This->stencilBufferTarget, location);
     }
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
