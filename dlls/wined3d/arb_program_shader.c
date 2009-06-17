@@ -206,6 +206,7 @@ struct arb_pshader_private {
     BOOL                            has_signature_idx;
     DWORD                           input_signature_idx;
     DWORD                           clipplane_emulation;
+    BOOL                            clamp_consts;
 };
 
 struct arb_vshader_private {
@@ -223,6 +224,7 @@ struct shader_arb_priv
     GLuint                  depth_blt_fprogram_id[tex_type_count];
     BOOL                    use_arbfp_fixed_func;
     struct wine_rb_tree     fragment_shaders;
+    BOOL                    last_ps_const_clamped;
 
     struct wine_rb_tree     signature_tree;
     DWORD ps_sig_number;
@@ -3588,6 +3590,8 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
 
     if(!shader->backend_priv) {
         shader->backend_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data));
+        shader_data = shader->backend_priv;
+        shader_data->clamp_consts = shader->baseShader.reg_maps.shader_version.major == 1;
     }
     shader_data = shader->backend_priv;
 
@@ -3858,6 +3862,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = This->shader_priv;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
+    int i;
 
     /* Deal with pixel shaders first so the vertex shader arg function has the input signature ready */
     if (usePS) {
@@ -3895,7 +3900,24 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         }
         TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
 
-        shader_arb_ps_local_constants(This);
+        /* Pixel Shader 1.x constants are clamped to [-1;1], Pixel Shader 2.0 constants are not. If switching between
+         * a 1.x and newer shader, reload the first 8 constants
+         */
+        if(priv->last_ps_const_clamped != ((struct arb_pshader_private *) ps->backend_priv)->clamp_consts)
+        {
+            priv->last_ps_const_clamped = ((struct arb_pshader_private *) ps->backend_priv)->clamp_consts;
+            This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, 8);
+            for(i = 0; i < 8; i++)
+            {
+                This->activeContext->pshader_const_dirty[i] = 1;
+            }
+            /* Also takes care of loading local constants */
+            shader_arb_load_constants(iface, TRUE, FALSE);
+        }
+        else
+        {
+            shader_arb_ps_local_constants(This);
+        }
     } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
         /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
         * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
