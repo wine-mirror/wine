@@ -33,6 +33,7 @@
 #include "winerror.h"
 #include "objbase.h"
 #include "oleauto.h"
+#include "olectl.h"
 
 #include "wine/unicode.h"
 #include "wine/list.h"
@@ -140,9 +141,25 @@ static HRESULT WINAPI CompartmentMgr_GetCompartment(ITfCompartmentMgr *iface,
 static HRESULT WINAPI CompartmentMgr_ClearCompartment(ITfCompartmentMgr *iface,
     TfClientId tid, REFGUID rguid)
 {
+    struct list *cursor;
     CompartmentMgr *This = (CompartmentMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %i %s\n",This,tid,debugstr_guid(rguid));
+
+    LIST_FOR_EACH(cursor, &This->values)
+    {
+        CompartmentValue* value = LIST_ENTRY(cursor,CompartmentValue,entry);
+        if (IsEqualGUID(rguid,&value->guid))
+        {
+            if (value->owner && tid != value->owner)
+                return E_UNEXPECTED;
+            list_remove(cursor);
+            ITfCompartment_Release(value->compartment);
+            HeapFree(GetProcessHeap(),0,value);
+            return S_OK;
+        }
+    }
+
+    return CONNECT_E_NOCONNECTION;
 }
 
 static HRESULT WINAPI CompartmentMgr_EnumCompartments(ITfCompartmentMgr *iface,
