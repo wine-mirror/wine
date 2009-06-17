@@ -241,7 +241,7 @@ static void test_create_view_window2(void)
 
     ofn.lStructSize = sizeof(ofn);
     ofn.lpstrFile = filename;
-    ofn.nMaxFile = 1042;
+    ofn.nMaxFile = 1024;
     ofn.lpfnHook = create_view_window2_hook;
     ofn.Flags = OFN_ENABLEHOOK | OFN_EXPLORER;
     ret = GetOpenFileNameA(&ofn);
@@ -258,7 +258,7 @@ static void test_create_view_template(void)
 
     ofn.lStructSize = sizeof(ofn);
     ofn.lpstrFile = filename;
-    ofn.nMaxFile = 1042;
+    ofn.nMaxFile = 1024;
     ofn.lpfnHook = (LPOFNHOOKPROC)template_hook;
     ofn.Flags = OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE;
     ofn.hInstance = GetModuleHandleA(NULL);
@@ -384,7 +384,7 @@ static void test_resize(void)
     int i;
 
     ofn.lpstrFile = filename;
-    ofn.nMaxFile = 1042;
+    ofn.nMaxFile = 1024;
     ofn.lpfnHook = (LPOFNHOOKPROC) resize_template_hook;
     ofn.hInstance = GetModuleHandle(NULL);
     ofn.lpTemplateName = "template_sz";
