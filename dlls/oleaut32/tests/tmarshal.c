@@ -624,6 +624,24 @@ static HRESULT WINAPI Widget_CloneInterface(
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_put_prop_with_lcid(
+    IWidget* iface, LONG lcid, INT i)
+{
+    trace("put_prop_with_lcid(%08x, %x)\n", lcid, i);
+    ok(lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), "got lcid %08x\n", lcid);
+    ok(i == 0xcafe, "got %08x\n", i);
+    return S_OK;
+}
+
+static HRESULT WINAPI Widget_get_prop_with_lcid(
+    IWidget* iface, LONG lcid, INT *i)
+{
+    trace("get_prop_with_lcid(%08x, %p)\n", lcid, i);
+    ok(lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), "got lcid %08x\n", lcid);
+    *i = lcid;
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -651,7 +669,9 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_VarArg,
     Widget_StructArgs,
     Widget_Error,
-    Widget_CloneInterface
+    Widget_CloneInterface,
+    Widget_put_prop_with_lcid,
+    Widget_get_prop_with_lcid
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -1327,6 +1347,37 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = vararg;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_STATE, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
     ok(hr == DISP_E_NOTACOLLECTION, "IDispatch_Invoke should have returned DISP_E_NOTACOLLECTION instead of 0x%08x\n", hr);
+
+    /* test propput with lcid */
+
+    /* the lcid passed to the function is the first lcid in the typelib header.
+       Since we don't explicitly set an lcid in the idl, it'll default to US English. */
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = 0xcafe;
+    dispparams.cNamedArgs = 1;
+    dispparams.rgdispidNamedArgs = &dispidNamed;
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = vararg;
+    VariantInit(&varresult);
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_WITH_LCID, &IID_NULL, 0x40c, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
+todo_wine
+    ok_ole_success(hr, ITypeInfo_Invoke);
+    VariantClear(&varresult);
+
+    /* test propget with lcid */
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 0;
+    dispparams.rgvarg = NULL;
+    dispparams.rgdispidNamedArgs = NULL;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_WITH_LCID, &IID_NULL, 0x40c, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
+todo_wine
+{
+    ok_ole_success(hr, ITypeInfo_Invoke);
+    ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
+    ok(V_I4(&varresult) == 0x409, "got %x\n", V_I4(&varresult));
+}
+    VariantClear(&varresult);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);

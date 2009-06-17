@@ -125,6 +125,12 @@ library TestTypelib
 
         [propget, id(DISPID_TM_CLONEINTERFACE)]
         HRESULT CloneInterface([out, retval] ISomethingFromDispatch **ppVal);
+
+        [id(DISPID_TM_PROP_WITH_LCID), propput]
+        HRESULT prop_with_lcid([in,lcid] long lcid, [in] INT i);
+
+        [id(DISPID_TM_PROP_WITH_LCID), propget]
+        HRESULT prop_with_lcid([in,lcid] long lcid, [out,retval] INT *i);
     }
 
     [
