@@ -2508,7 +2508,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         }
 
         default:
-            ERR("Unsupported conversation type %d\n", convert);
+            ERR("Unsupported conversion type %#x.\n", convert);
     }
     return WINED3D_OK;
 }
