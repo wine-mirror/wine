@@ -334,6 +334,22 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
     }
     checkGLcall("Load bumpmap consts\n");
 
+    if(gl_shader->ycorrection != WINED3D_CONST_NUM_UNUSED)
+    {
+        /* ycorrection.x: Backbuffer height(onscreen) or 0(offscreen).
+        * ycorrection.y: -1.0(onscreen), 1.0(offscreen)
+        * ycorrection.z: 1.0
+        * ycorrection.w: 0.0
+        */
+        float val[4];
+        val[0] = deviceImpl->render_offscreen ? 0.0 : ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
+        val[1] = deviceImpl->render_offscreen ? 1.0 : -1.0;
+        val[2] = 1.0;
+        val[3] = 0.0;
+        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->ycorrection, val));
+        checkGLcall("y correction loading\n");
+    }
+
     if(gl_shader->num_int_consts == 0) return;
 
     for(i = 0; i < MAX_CONST_I; i++)
@@ -350,22 +366,6 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         }
     }
     checkGLcall("Load ps int consts\n");
-
-    if(gl_shader->ycorrection != WINED3D_CONST_NUM_UNUSED)
-    {
-        /* ycorrection.x: Backbuffer height(onscreen) or 0(offscreen).
-         * ycorrection.y: -1.0(onscreen), 1.0(offscreen)
-         * ycorrection.z: 1.0
-         * ycorrection.w: 0.0
-         */
-        float val[4];
-        val[0] = deviceImpl->render_offscreen ? 0.0 : ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
-        val[1] = deviceImpl->render_offscreen ? 1.0 : -1.0;
-        val[2] = 1.0;
-        val[3] = 0.0;
-        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->ycorrection, val));
-        checkGLcall("y correction loading\n");
-    }
 }
 
 static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
