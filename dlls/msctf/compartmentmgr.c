@@ -59,6 +59,15 @@ typedef struct tagCompartmentMgr {
     struct list values;
 } CompartmentMgr;
 
+typedef struct tagCompartmentEnumGuid {
+    const IEnumGUIDVtbl *Vtbl;
+    LONG refCount;
+
+    struct list *values;
+    struct list *cursor;
+} CompartmentEnumGuid;
+
+static HRESULT CompartmentEnumGuid_Constructor(struct list* values, IEnumGUID **ppOut);
 
 HRESULT CompartmentMgr_Destructor(ITfCompartmentMgr *iface)
 {
@@ -166,8 +175,10 @@ static HRESULT WINAPI CompartmentMgr_EnumCompartments(ITfCompartmentMgr *iface,
  IEnumGUID **ppEnum)
 {
     CompartmentMgr *This = (CompartmentMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %p\n",This,ppEnum);
+    if (!ppEnum)
+        return E_INVALIDARG;
+    return CompartmentEnumGuid_Constructor(&This->values, ppEnum);
 }
 
 static const ITfCompartmentMgrVtbl CompartmentMgr_CompartmentMgrVtbl =
@@ -213,4 +224,146 @@ HRESULT CompartmentMgr_Constructor(IUnknown *pUnkOuter, REFIID riid, IUnknown **
             HeapFree(GetProcessHeap(),0,This);
         return hr;
     }
+}
+
+/**************************************************
+ * IEnumGUID implementaion for ITfCompartmentMgr::EnumCompartments
+ **************************************************/
+static void CompartmentEnumGuid_Destructor(CompartmentEnumGuid *This)
+{
+    TRACE("destroying %p\n", This);
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI CompartmentEnumGuid_QueryInterface(IEnumGUID *iface, REFIID iid, LPVOID *ppvOut)
+{
+    CompartmentEnumGuid *This = (CompartmentEnumGuid *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IEnumGUID))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("unsupported interface: %s\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI CompartmentEnumGuid_AddRef(IEnumGUID *iface)
+{
+    CompartmentEnumGuid *This = (CompartmentEnumGuid*)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI CompartmentEnumGuid_Release(IEnumGUID *iface)
+{
+    CompartmentEnumGuid *This = (CompartmentEnumGuid *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        CompartmentEnumGuid_Destructor(This);
+    return ret;
+}
+
+/*****************************************************
+ * IEnumGuid functions
+ *****************************************************/
+static HRESULT WINAPI CompartmentEnumGuid_Next( LPENUMGUID iface,
+    ULONG celt, GUID *rgelt, ULONG *pceltFetched)
+{
+    CompartmentEnumGuid *This = (CompartmentEnumGuid *)iface;
+    ULONG fetched = 0;
+
+    TRACE("(%p)\n",This);
+
+    if (rgelt == NULL) return E_POINTER;
+
+    while (fetched < celt && This->cursor)
+    {
+        CompartmentValue* value = LIST_ENTRY(This->cursor,CompartmentValue,entry);
+        if (!value)
+            break;
+
+        This->cursor = list_next(This->values,This->cursor);
+        *rgelt = value->guid;
+
+        ++fetched;
+        ++rgelt;
+    }
+
+    if (pceltFetched) *pceltFetched = fetched;
+    return fetched == celt ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI CompartmentEnumGuid_Skip( LPENUMGUID iface, ULONG celt)
+{
+    CompartmentEnumGuid *This = (CompartmentEnumGuid *)iface;
+    TRACE("(%p)\n",This);
+
+    This->cursor = list_next(This->values,This->cursor);
+    return S_OK;
+}
+
+static HRESULT WINAPI CompartmentEnumGuid_Reset( LPENUMGUID iface)
+{
+    CompartmentEnumGuid *This = (CompartmentEnumGuid *)iface;
+    TRACE("(%p)\n",This);
+    This->cursor = list_head(This->values);
+    return S_OK;
+}
+
+static HRESULT WINAPI CompartmentEnumGuid_Clone( LPENUMGUID iface,
+    IEnumGUID **ppenum)
+{
+    CompartmentEnumGuid *This = (CompartmentEnumGuid *)iface;
+    HRESULT res;
+
+    TRACE("(%p)\n",This);
+
+    if (ppenum == NULL) return E_POINTER;
+
+    res = CompartmentEnumGuid_Constructor(This->values, ppenum);
+    if (SUCCEEDED(res))
+    {
+        CompartmentEnumGuid *new_This = (CompartmentEnumGuid *)*ppenum;
+        new_This->cursor = This->cursor;
+    }
+    return res;
+}
+
+static const IEnumGUIDVtbl IEnumGUID_Vtbl ={
+    CompartmentEnumGuid_QueryInterface,
+    CompartmentEnumGuid_AddRef,
+    CompartmentEnumGuid_Release,
+
+    CompartmentEnumGuid_Next,
+    CompartmentEnumGuid_Skip,
+    CompartmentEnumGuid_Reset,
+    CompartmentEnumGuid_Clone
+};
+
+static HRESULT CompartmentEnumGuid_Constructor(struct list *values, IEnumGUID **ppOut)
+{
+    CompartmentEnumGuid *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(CompartmentEnumGuid));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->Vtbl= &IEnumGUID_Vtbl;
+    This->refCount = 1;
+
+    This->values = values;
+    This->cursor = list_head(values);
+
+    TRACE("returning %p\n", This);
+    *ppOut = (IEnumGUID*)This;
+    return S_OK;
 }
