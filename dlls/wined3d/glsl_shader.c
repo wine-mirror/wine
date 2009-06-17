@@ -3423,7 +3423,8 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
      * input varyings are assigned above, if the optimizer works properly.
      */
     for(i = 0; i < in_count + 2; i++) {
-        if(set[i] != WINED3DSP_WRITEMASK_ALL) {
+        if (set[i] && set[i] != WINED3DSP_WRITEMASK_ALL)
+        {
             unsigned int size = 0;
             memset(reg_mask, 0, sizeof(reg_mask));
             if(!(set[i] & WINED3DSP_WRITEMASK_0)) {
