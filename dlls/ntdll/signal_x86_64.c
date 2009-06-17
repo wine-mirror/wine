@@ -196,7 +196,10 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
-/* definitions for unwind tables */
+
+/***********************************************************************
+ * Definitions for Win32 unwind tables
+ */
 
 union handler_data
 {
@@ -351,6 +354,607 @@ static void dump_scope_table( ULONG64 base, const SCOPE_TABLE *table )
                base + table->ScopeRecord[i].HandlerAddress,
                base + table->ScopeRecord[i].JumpTarget );
 }
+
+
+/***********************************************************************
+ * Definitions for Dwarf unwind tables
+ */
+
+enum dwarf_call_frame_info
+{
+    DW_CFA_advance_loc = 0x40,
+    DW_CFA_offset = 0x80,
+    DW_CFA_restore = 0xc0,
+    DW_CFA_nop = 0x00,
+    DW_CFA_set_loc = 0x01,
+    DW_CFA_advance_loc1 = 0x02,
+    DW_CFA_advance_loc2 = 0x03,
+    DW_CFA_advance_loc4 = 0x04,
+    DW_CFA_offset_extended = 0x05,
+    DW_CFA_restore_extended = 0x06,
+    DW_CFA_undefined = 0x07,
+    DW_CFA_same_value = 0x08,
+    DW_CFA_register = 0x09,
+    DW_CFA_remember_state = 0x0a,
+    DW_CFA_restore_state = 0x0b,
+    DW_CFA_def_cfa = 0x0c,
+    DW_CFA_def_cfa_register = 0x0d,
+    DW_CFA_def_cfa_offset = 0x0e,
+    DW_CFA_def_cfa_expression = 0x0f,
+    DW_CFA_expression = 0x10,
+    DW_CFA_offset_extended_sf = 0x11,
+    DW_CFA_def_cfa_sf = 0x12,
+    DW_CFA_def_cfa_offset_sf = 0x13,
+    DW_CFA_val_offset = 0x14,
+    DW_CFA_val_offset_sf = 0x15,
+    DW_CFA_val_expression = 0x16,
+};
+
+#define DW_EH_PE_native   0x00
+#define DW_EH_PE_leb128   0x01
+#define DW_EH_PE_data2    0x02
+#define DW_EH_PE_data4    0x03
+#define DW_EH_PE_data8    0x04
+#define DW_EH_PE_signed   0x08
+#define DW_EH_PE_abs      0x00
+#define DW_EH_PE_pcrel    0x10
+#define DW_EH_PE_textrel  0x20
+#define DW_EH_PE_datarel  0x30
+#define DW_EH_PE_funcrel  0x40
+#define DW_EH_PE_aligned  0x50
+#define DW_EH_PE_indirect 0x80
+#define DW_EH_PE_omit     0xff
+
+struct dwarf_eh_bases
+{
+    void *tbase;
+    void *dbase;
+    void *func;
+};
+
+struct dwarf_cie
+{
+    unsigned int  length;
+    int           id;
+    unsigned char version;
+    unsigned char augmentation[1];
+};
+
+struct dwarf_fde
+{
+    unsigned int length;
+    unsigned int cie_offset;
+};
+
+extern const struct dwarf_fde *_Unwind_Find_FDE (void *, struct dwarf_eh_bases *);
+
+static unsigned short dwarf_get_u2( const unsigned char **p )
+{
+    unsigned int ret = (*p)[0] | ((*p)[1] << 8);
+    (*p) += 2;
+    return ret;
+}
+
+static unsigned int dwarf_get_u4( const unsigned char **p )
+{
+    unsigned int ret = (*p)[0] | ((*p)[1] << 8) | ((*p)[2] << 16) | ((*p)[3] << 24);
+    (*p) += 4;
+    return ret;
+}
+
+static ULONG64 dwarf_get_u8( const unsigned char **p )
+{
+    ULONG64 low  = dwarf_get_u4( p );
+    ULONG64 high = dwarf_get_u4( p );
+    return low | (high << 32);
+}
+
+static ULONG_PTR dwarf_get_uleb128( const unsigned char **p )
+{
+    ULONG_PTR ret = 0;
+    unsigned int shift = 0;
+    unsigned char byte;
+
+    do
+    {
+        byte = **p;
+        ret |= (ULONG_PTR)(byte & 0x7f) << shift;
+        shift += 7;
+        (*p)++;
+    } while (byte & 0x80);
+    return ret;
+}
+
+static LONG_PTR dwarf_get_sleb128( const unsigned char **p )
+{
+    ULONG_PTR ret = 0;
+    unsigned int shift = 0;
+    unsigned char byte;
+
+    do
+    {
+        byte = **p;
+        ret |= (ULONG_PTR)(byte & 0x7f) << shift;
+        shift += 7;
+        (*p)++;
+    } while (byte & 0x80);
+
+    if ((shift < 8 * sizeof(ret)) && (byte & 0x40)) ret |= -((ULONG_PTR)1 << shift);
+    return ret;
+}
+
+static ULONG_PTR dwarf_get_ptr( const unsigned char **p, unsigned char encoding )
+{
+    ULONG_PTR base;
+
+    if (encoding == DW_EH_PE_omit) return 0;
+
+    switch (encoding & 0xf0)
+    {
+    case DW_EH_PE_abs:
+        base = 0;
+        break;
+    case DW_EH_PE_pcrel:
+        base = (ULONG_PTR)*p;
+        break;
+    default:
+        FIXME( "unsupported encoding %02x\n", encoding );
+        return 0;
+    }
+
+    switch (encoding & 0x0f)
+    {
+    case DW_EH_PE_native:
+        return base + dwarf_get_u8( p );
+    case DW_EH_PE_leb128:
+        return base + dwarf_get_uleb128( p );
+    case DW_EH_PE_data2:
+        return base + dwarf_get_u2( p );
+    case DW_EH_PE_data4:
+        return base + dwarf_get_u4( p );
+    case DW_EH_PE_data8:
+        return base + dwarf_get_u8( p );
+    case DW_EH_PE_signed|DW_EH_PE_leb128:
+        return base + dwarf_get_sleb128( p );
+    case DW_EH_PE_signed|DW_EH_PE_data2:
+        return base + (signed short)dwarf_get_u2( p );
+    case DW_EH_PE_signed|DW_EH_PE_data4:
+        return base + (signed int)dwarf_get_u4( p );
+    case DW_EH_PE_signed|DW_EH_PE_data8:
+        return base + (LONG64)dwarf_get_u8( p );
+    default:
+        FIXME( "unsupported encoding %02x\n", encoding );
+        return 0;
+    }
+}
+
+enum reg_rule
+{
+    RULE_UNSET,       /* not set at all */
+    RULE_UNDEFINED,   /* undefined value */
+    RULE_SAME,        /* same value as previous frame */
+    RULE_CFA_OFFSET,  /* stored at cfa offset */
+    RULE_OTHER_REG    /* stored in other register */
+};
+
+#define NB_FRAME_REGS 41
+
+struct frame_info
+{
+    ULONG_PTR     ip;
+    ULONG_PTR     code_align;
+    LONG_PTR      data_align;
+    ULONG_PTR     cfa_offset;
+    unsigned char cfa_reg;
+    unsigned char retaddr_reg;
+    unsigned char fde_encoding;
+    unsigned char signal_frame;
+    enum reg_rule rules[NB_FRAME_REGS];
+    ULONG64       regs[NB_FRAME_REGS];
+};
+
+static const char *dwarf_reg_names[NB_FRAME_REGS] =
+{
+/*  0-7  */ "%rax", "%rdx", "%rcx", "%rbx", "%rsi", "%rdi", "%rbp", "%rsp",
+/*  8-16 */ "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15", "%rip",
+/* 17-24 */ "%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7",
+/* 25-32 */ "%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13", "%xmm14", "%xmm15",
+/* 33-40 */ "%st0", "%st1", "%st2", "%st3", "%st4", "%st5", "%st6", "%st7"
+};
+
+static int valid_reg( ULONG_PTR reg )
+{
+    if (reg >= NB_FRAME_REGS) FIXME( "unsupported reg %lx\n", reg );
+    return (reg < NB_FRAME_REGS);
+}
+
+static void execute_cfa_instructions( const unsigned char *ptr, const unsigned char *end,
+                                      ULONG_PTR last_ip, struct frame_info *info )
+{
+    while (ptr < end && info->ip < last_ip + info->signal_frame)
+    {
+        enum dwarf_call_frame_info op = *ptr++;
+
+        if (op & 0xc0)
+        {
+            switch (op & 0xc0)
+            {
+            case DW_CFA_advance_loc:
+            {
+                ULONG_PTR offset = (op & 0x3f) * info->code_align;
+                TRACE( "%lx: DW_CFA_advance_loc %lu\n", info->ip, offset );
+                info->ip += offset;
+                break;
+            }
+            case DW_CFA_offset:
+            {
+                ULONG_PTR reg = op & 0x3f;
+                LONG_PTR offset = dwarf_get_uleb128( &ptr ) * info->data_align;
+                if (!valid_reg( reg )) break;
+                TRACE( "%lx: DW_CFA_offset %s, %ld\n", info->ip, dwarf_reg_names[reg], offset );
+                info->regs[reg]  = offset;
+                info->rules[reg] = RULE_CFA_OFFSET;
+                break;
+            }
+            case DW_CFA_restore:
+            {
+                ULONG_PTR reg = op & 0x3f;
+                if (!valid_reg( reg )) break;
+                TRACE( "%lx: DW_CFA_restore %s\n", info->ip, dwarf_reg_names[reg] );
+                info->rules[reg] = RULE_UNSET;
+                break;
+            }
+            }
+        }
+        else switch (op)
+        {
+        case DW_CFA_nop:
+            break;
+        case DW_CFA_set_loc:
+        {
+            ULONG_PTR loc = dwarf_get_ptr( &ptr, info->fde_encoding );
+            TRACE( "%lx: DW_CFA_set_loc %lx\n", info->ip, loc );
+            info->ip = loc;
+            break;
+        }
+        case DW_CFA_advance_loc1:
+        {
+            ULONG_PTR offset = *ptr++ * info->code_align;
+            TRACE( "%lx: DW_CFA_advance_loc1 %lu\n", info->ip, offset );
+            info->ip += offset;
+            break;
+        }
+        case DW_CFA_advance_loc2:
+        {
+            ULONG_PTR offset = dwarf_get_u2( &ptr ) * info->code_align;
+            TRACE( "%lx: DW_CFA_advance_loc2 %lu\n", info->ip, offset );
+            info->ip += offset;
+            break;
+        }
+        case DW_CFA_advance_loc4:
+        {
+            ULONG_PTR offset = dwarf_get_u4( &ptr ) * info->code_align;
+            TRACE( "%lx: DW_CFA_advance_loc4 %lu\n", info->ip, offset );
+            info->ip += offset;
+            break;
+        }
+        case DW_CFA_offset_extended:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            LONG_PTR offset = dwarf_get_uleb128( &ptr ) * info->data_align;
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_offset_extended %s, %ld\n", info->ip, dwarf_reg_names[reg], offset );
+            info->regs[reg]  = offset;
+            info->rules[reg] = RULE_CFA_OFFSET;
+            break;
+        }
+        case DW_CFA_restore_extended:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_restore_extended %s\n", info->ip, dwarf_reg_names[reg] );
+            info->rules[reg] = RULE_UNSET;
+            break;
+        }
+        case DW_CFA_undefined:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_undefined %s\n", info->ip, dwarf_reg_names[reg] );
+            info->rules[reg] = RULE_UNDEFINED;
+            break;
+        }
+        case DW_CFA_same_value:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_same_value %s\n", info->ip, dwarf_reg_names[reg] );
+            info->regs[reg]  = reg;
+            info->rules[reg] = RULE_SAME;
+            break;
+        }
+        case DW_CFA_register:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            ULONG_PTR reg2 = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg ) || !valid_reg( reg2 )) break;
+            TRACE( "%lx: DW_CFA_register %s == %s\n", info->ip, dwarf_reg_names[reg], dwarf_reg_names[reg2] );
+            info->regs[reg]  = reg2;
+            info->rules[reg] = RULE_OTHER_REG;
+            break;
+        }
+        case DW_CFA_remember_state:
+            FIXME( "%lx: DW_CFA_remember_state not implemented\n", info->ip );
+            break;
+        case DW_CFA_restore_state:
+            FIXME( "%lx: DW_CFA_restore_state not implemented\n", info->ip );
+            break;
+        case DW_CFA_def_cfa:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            ULONG_PTR offset = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_def_cfa %s, %lu\n", info->ip, dwarf_reg_names[reg], offset );
+            info->cfa_reg    = reg;
+            info->cfa_offset = offset;
+            break;
+        }
+        case DW_CFA_def_cfa_register:
+        {
+            ULONG_PTR reg = dwarf_get_uleb128( &ptr );
+            if (!valid_reg( reg )) break;
+            TRACE( "%lx: DW_CFA_def_cfa_register %s\n", info->ip, dwarf_reg_names[reg] );
+            info->cfa_reg = reg;
+            break;
+        }
+        case DW_CFA_def_cfa_offset:
+        {
+            ULONG_PTR offset = dwarf_get_uleb128( &ptr );
+            TRACE( "%lx: DW_CFA_def_cfa_offset %lu\n", info->ip, offset );
+            info->cfa_offset = offset;
+            break;
+        }
+        default:
+            FIXME( "%lx: unknown CFA opcode %02x\n", info->ip, op );
+            break;
+        }
+    }
+}
+
+/* retrieve a context register from its dwarf number */
+static void *get_context_reg( CONTEXT *context, ULONG_PTR dw_reg )
+{
+    switch (dw_reg)
+    {
+    case 0:  return &context->Rax;
+    case 1:  return &context->Rdx;
+    case 2:  return &context->Rcx;
+    case 3:  return &context->Rbx;
+    case 4:  return &context->Rsi;
+    case 5:  return &context->Rdi;
+    case 6:  return &context->Rbp;
+    case 7:  return &context->Rsp;
+    case 8:  return &context->R8;
+    case 9:  return &context->R9;
+    case 10: return &context->R10;
+    case 11: return &context->R11;
+    case 12: return &context->R12;
+    case 13: return &context->R13;
+    case 14: return &context->R14;
+    case 15: return &context->R15;
+    case 16: return &context->Rip;
+    case 17: return &context->u.s.Xmm0;
+    case 18: return &context->u.s.Xmm1;
+    case 19: return &context->u.s.Xmm2;
+    case 20: return &context->u.s.Xmm3;
+    case 21: return &context->u.s.Xmm4;
+    case 22: return &context->u.s.Xmm5;
+    case 23: return &context->u.s.Xmm6;
+    case 24: return &context->u.s.Xmm7;
+    case 25: return &context->u.s.Xmm8;
+    case 26: return &context->u.s.Xmm9;
+    case 27: return &context->u.s.Xmm10;
+    case 28: return &context->u.s.Xmm11;
+    case 29: return &context->u.s.Xmm12;
+    case 30: return &context->u.s.Xmm13;
+    case 31: return &context->u.s.Xmm14;
+    case 32: return &context->u.s.Xmm15;
+    case 33: return &context->u.s.Legacy[0];
+    case 34: return &context->u.s.Legacy[1];
+    case 35: return &context->u.s.Legacy[2];
+    case 36: return &context->u.s.Legacy[3];
+    case 37: return &context->u.s.Legacy[4];
+    case 38: return &context->u.s.Legacy[5];
+    case 39: return &context->u.s.Legacy[6];
+    case 40: return &context->u.s.Legacy[7];
+    default: return NULL;
+    }
+}
+
+/* set a context register from its dwarf number */
+static void set_context_reg( CONTEXT *context, ULONG_PTR dw_reg, void *val )
+{
+    switch (dw_reg)
+    {
+    case 0:  context->Rax = *(ULONG64 *)val; break;
+    case 1:  context->Rdx = *(ULONG64 *)val; break;
+    case 2:  context->Rcx = *(ULONG64 *)val; break;
+    case 3:  context->Rbx = *(ULONG64 *)val; break;
+    case 4:  context->Rsi = *(ULONG64 *)val; break;
+    case 5:  context->Rdi = *(ULONG64 *)val; break;
+    case 6:  context->Rbp = *(ULONG64 *)val; break;
+    case 7:  context->Rsp = *(ULONG64 *)val; break;
+    case 8:  context->R8  = *(ULONG64 *)val; break;
+    case 9:  context->R9  = *(ULONG64 *)val; break;
+    case 10: context->R10 = *(ULONG64 *)val; break;
+    case 11: context->R11 = *(ULONG64 *)val; break;
+    case 12: context->R12 = *(ULONG64 *)val; break;
+    case 13: context->R13 = *(ULONG64 *)val; break;
+    case 14: context->R14 = *(ULONG64 *)val; break;
+    case 15: context->R15 = *(ULONG64 *)val; break;
+    case 16: context->Rip = *(ULONG64 *)val; break;
+    case 17: context->u.s.Xmm0  = *(M128A *)val; break;
+    case 18: context->u.s.Xmm1  = *(M128A *)val; break;
+    case 19: context->u.s.Xmm2  = *(M128A *)val; break;
+    case 20: context->u.s.Xmm3  = *(M128A *)val; break;
+    case 21: context->u.s.Xmm4  = *(M128A *)val; break;
+    case 22: context->u.s.Xmm5  = *(M128A *)val; break;
+    case 23: context->u.s.Xmm6  = *(M128A *)val; break;
+    case 24: context->u.s.Xmm7  = *(M128A *)val; break;
+    case 25: context->u.s.Xmm8  = *(M128A *)val; break;
+    case 26: context->u.s.Xmm9  = *(M128A *)val; break;
+    case 27: context->u.s.Xmm10 = *(M128A *)val; break;
+    case 28: context->u.s.Xmm11 = *(M128A *)val; break;
+    case 29: context->u.s.Xmm12 = *(M128A *)val; break;
+    case 30: context->u.s.Xmm13 = *(M128A *)val; break;
+    case 31: context->u.s.Xmm14 = *(M128A *)val; break;
+    case 32: context->u.s.Xmm15 = *(M128A *)val; break;
+    case 33: context->u.s.Legacy[0] = *(M128A *)val; break;
+    case 34: context->u.s.Legacy[1] = *(M128A *)val; break;
+    case 35: context->u.s.Legacy[2] = *(M128A *)val; break;
+    case 36: context->u.s.Legacy[3] = *(M128A *)val; break;
+    case 37: context->u.s.Legacy[4] = *(M128A *)val; break;
+    case 38: context->u.s.Legacy[5] = *(M128A *)val; break;
+    case 39: context->u.s.Legacy[6] = *(M128A *)val; break;
+    case 40: context->u.s.Legacy[7] = *(M128A *)val; break;
+    }
+}
+
+/* apply the computed frame info to the actual context */
+static void apply_frame_info( CONTEXT *context, struct frame_info *info, ULONG_PTR cfa )
+{
+    unsigned int i;
+
+    for (i = 0; i < NB_FRAME_REGS; i++)
+    {
+        switch (info->rules[i])
+        {
+        case RULE_UNSET:
+        case RULE_UNDEFINED:
+        case RULE_SAME:
+            break;
+        case RULE_CFA_OFFSET:
+            set_context_reg( context, i, (char *)cfa + info->regs[i] );
+            break;
+        case RULE_OTHER_REG:
+            FIXME( "other reg rule (%s == %s) not supported yet\n",
+                   dwarf_reg_names[i], dwarf_reg_names[info->regs[i]] );
+            break;
+        }
+    }
+    context->Rsp = cfa;
+}
+
+
+/***********************************************************************
+ *           dwarf_virtual_unwind
+ *
+ * Equivalent of RtlVirtualUnwind for builtin modules.
+ */
+static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *context,
+                                      const struct dwarf_fde *fde, const struct dwarf_eh_bases *bases,
+                                      PEXCEPTION_ROUTINE *handler, void **handler_data )
+{
+    const struct dwarf_cie *cie;
+    const unsigned char *ptr, *augmentation, *end;
+    ULONG_PTR len, cfa, code_end;
+    struct frame_info info;
+    int aug_z_format = 0;
+    unsigned char lsda_encoding = DW_EH_PE_omit;
+
+    memset( &info, 0, sizeof(info) );
+    info.ip = (ULONG_PTR)bases->func;
+    *handler = NULL;
+
+    cie = (const struct dwarf_cie *)((const char *)&fde->cie_offset - fde->cie_offset);
+
+    /* parse the CIE first */
+
+    if (cie->version != 1)
+    {
+        FIXME( "unknown CIE version %u at %p\n", cie->version, cie );
+        return STATUS_INVALID_DISPOSITION;
+    }
+    ptr = cie->augmentation + strlen((const char *)cie->augmentation) + 1;
+
+    info.code_align = dwarf_get_uleb128( &ptr );
+    info.data_align = dwarf_get_sleb128( &ptr );
+    info.retaddr_reg = *ptr++;
+
+    TRACE( "function %lx base %p cie %p len %x id %x version %x aug '%s' code_align %lu data_align %ld retaddr %s\n",
+           ip, bases->func, cie, cie->length, cie->id, cie->version, cie->augmentation,
+           info.code_align, info.data_align, dwarf_reg_names[info.retaddr_reg] );
+
+    end = NULL;
+    for (augmentation = cie->augmentation; *augmentation; augmentation++)
+    {
+        switch (*augmentation)
+        {
+        case 'z':
+            len = dwarf_get_uleb128( &ptr );
+            end = ptr + len;
+            aug_z_format = 1;
+            continue;
+        case 'L':
+            lsda_encoding = *ptr++;
+            continue;
+        case 'P':
+        {
+            unsigned char encoding = *ptr++;
+            *handler = (void *)dwarf_get_ptr( &ptr, encoding );
+            continue;
+        }
+        case 'R':
+            info.fde_encoding = *ptr++;
+            continue;
+        case 'S':
+            info.signal_frame = 1;
+            continue;
+        }
+        FIXME( "unknown augmentation '%c'\n", *augmentation );
+        if (!end) return STATUS_INVALID_DISPOSITION;  /* cannot continue */
+        break;
+    }
+    if (end) ptr = end;
+
+    end = (const unsigned char *)(&cie->length + 1) + cie->length;
+    execute_cfa_instructions( ptr, end, ip, &info );
+
+    ptr = (const unsigned char *)(fde + 1);
+    info.ip = dwarf_get_ptr( &ptr, info.fde_encoding );  /* fde code start */
+    code_end = info.ip + dwarf_get_ptr( &ptr, info.fde_encoding & 0x0f );  /* fde code length */
+
+    if (aug_z_format)  /* get length of augmentation data */
+    {
+        len = dwarf_get_uleb128( &ptr );
+        end = ptr + len;
+    }
+    else end = NULL;
+
+    *handler_data = (void *)dwarf_get_ptr( &ptr, lsda_encoding );
+    if (end) ptr = end;
+
+    end = (const unsigned char *)(&fde->length + 1) + fde->length;
+    TRACE( "fde %p len %x personality %p lsda %p code %lx-%lx\n",
+           fde, fde->length, *handler, *handler_data, info.ip, code_end );
+    execute_cfa_instructions( ptr, end, ip, &info );
+
+    *frame = cfa = *(ULONG_PTR *)get_context_reg( context, info.cfa_reg ) + info.cfa_offset;
+    if (cfa) apply_frame_info( context, &info, cfa );
+
+    TRACE( "next function rip=%016lx\n", context->Rip );
+    TRACE( "  rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+           context->Rax, context->Rbx, context->Rcx, context->Rdx );
+    TRACE( "  rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+           context->Rsi, context->Rdi, context->Rbp, context->Rsp );
+    TRACE( "   r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+           context->R8, context->R9, context->R10, context->R11 );
+    TRACE( "  r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+           context->R12, context->R13, context->R14, context->R15 );
+
+    return STATUS_SUCCESS;
+}
+
 
 /***********************************************************************
  *           dispatch_signal
@@ -807,6 +1411,41 @@ static RUNTIME_FUNCTION *find_function_info( ULONG64 pc, HMODULE module,
     return NULL;
 }
 
+
+/**********************************************************************
+ *           call_handler
+ *
+ * Call a single exception handler.
+ * FIXME: Handle nested exceptions.
+ */
+static NTSTATUS call_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch, CONTEXT *orig_context )
+{
+    DWORD res;
+
+    dispatch->ControlPc = dispatch->ContextRecord->Rip;
+
+    TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
+           dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
+    res = dispatch->LanguageHandler( rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
+    TRACE( "handler at %p returned %u\n", dispatch->LanguageHandler, res );
+
+    switch (res)
+    {
+    case ExceptionContinueExecution:
+        if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
+        *orig_context = *dispatch->ContextRecord;
+        return STATUS_SUCCESS;
+    case ExceptionContinueSearch:
+        break;
+    case ExceptionNestedException:
+        break;
+    default:
+        return STATUS_INVALID_DISPOSITION;
+    }
+    return STATUS_UNHANDLED_EXCEPTION;
+}
+
+
 /**********************************************************************
  *           call_stack_handlers
  *
@@ -814,91 +1453,99 @@ static RUNTIME_FUNCTION *find_function_info( ULONG64 pc, HMODULE module,
  */
 static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_context )
 {
-    EXCEPTION_POINTERS ptrs;
     UNWIND_HISTORY_TABLE table;
-    ULONG64 frame;
-    RUNTIME_FUNCTION *dir, *info;
-    PEXCEPTION_ROUTINE handler;
+    RUNTIME_FUNCTION *dir;
     DISPATCHER_CONTEXT dispatch;
     CONTEXT context, new_context;
     LDR_MODULE *module;
     DWORD size;
+    NTSTATUS status;
 
     context = *orig_context;
+    dispatch.TargetIp      = 0;
+    dispatch.ContextRecord = &context;
+    dispatch.HistoryTable  = &table;
+    dispatch.ScopeIndex    = 0; /* FIXME */
     for (;;)
     {
-        /* FIXME: should use the history table to make things faster */
-
-        if (LdrFindEntryForAddress( (void *)context.Rip, &module ))
-        {
-            ERR( "no module found for rip %p, can't dispatch exception\n", (void *)context.Rip );
-            break;
-        }
-        if (!(dir = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
-                                                  IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
-        {
-            ERR( "module %s doesn't contain exception data, can't dispatch exception\n",
-                 debugstr_w(module->BaseDllName.Buffer) );
-            break;
-        }
-        if (!(info = find_function_info( context.Rip, module->BaseAddress, dir, size )))
-        {
-            /* leaf function */
-            context.Rip = *(ULONG64 *)context.Rsp;
-            context.Rsp += sizeof(ULONG64);
-            continue;
-        }
-
         new_context = context;
 
-        handler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, (ULONG64)module->BaseAddress, context.Rip,
-                                    info, &new_context, &dispatch.HandlerData, &frame, NULL );
+        /* FIXME: should use the history table to make things faster */
 
-        if ((frame & 7) ||
-            frame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
-            frame >= (ULONG64)NtCurrentTeb()->Tib.StackBase)
+        dir = NULL;
+        module = NULL;
+        dispatch.ImageBase = 0;
+
+        if (!LdrFindEntryForAddress( (void *)context.Rip, &module ))
         {
-            ERR( "invalid frame %lx\n", frame );
+            if (!(dir = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
+                                                      IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )) &&
+                !(module->Flags & LDR_WINE_INTERNAL))
+            {
+                ERR( "module %s doesn't contain exception data, can't dispatch exception\n",
+                     debugstr_w(module->BaseDllName.Buffer) );
+                break;
+            }
+            dispatch.ImageBase = (ULONG64)module->BaseAddress;
+        }
+
+        if (!dir)
+        {
+            struct dwarf_eh_bases bases;
+            const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context.Rip - 1), &bases );
+            if (!fde)
+            {
+                ERR( "no exception data found in %s for function %lx\n",
+                     module ? debugstr_w(module->BaseDllName.Buffer) : "system library", context.Rip );
+                break;
+            }
+            status = dwarf_virtual_unwind( context.Rip, &dispatch.EstablisherFrame, &new_context,
+                                           fde, &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
+            if (status != STATUS_SUCCESS) return status;
+            dispatch.FunctionEntry = NULL;
+            if (dispatch.LanguageHandler && !module)
+            {
+                FIXME( "calling personality routine in system library not supported yet\n" );
+                dispatch.LanguageHandler = NULL;
+            }
+        }
+        else
+        {
+            if (!(dispatch.FunctionEntry = find_function_info( context.Rip, module->BaseAddress,
+                                                               dir, size )))
+            {
+                /* leaf function */
+                context.Rip = *(ULONG64 *)context.Rsp;
+                context.Rsp += sizeof(ULONG64);
+                continue;
+            }
+            dispatch.LanguageHandler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, dispatch.ImageBase,
+                                                         context.Rip, dispatch.FunctionEntry,
+                                                         &new_context, &dispatch.HandlerData,
+                                                         &dispatch.EstablisherFrame, NULL );
+        }
+
+        if (!dispatch.EstablisherFrame) break;
+
+        if ((dispatch.EstablisherFrame & 7) ||
+            dispatch.EstablisherFrame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
+            dispatch.EstablisherFrame > (ULONG64)NtCurrentTeb()->Tib.StackBase)
+        {
+            ERR( "invalid frame %lx (%p-%p)\n", dispatch.EstablisherFrame,
+                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
             rec->ExceptionFlags |= EH_STACK_INVALID;
             break;
         }
 
-        if (handler)
+        if (dispatch.LanguageHandler)
         {
-            dispatch.ControlPc        = context.Rip;
-            dispatch.ImageBase        = (ULONG64)module->BaseAddress;
-            dispatch.FunctionEntry    = info;
-            dispatch.EstablisherFrame = frame;
-            dispatch.TargetIp         = 0; /* FIXME */
-            dispatch.ContextRecord    = &context;
-            dispatch.LanguageHandler  = handler;
-            dispatch.HistoryTable     = &table;
-            dispatch.ScopeIndex       = 0; /* FIXME */
-
-            TRACE( "calling handler %p (rec=%p, frame=%lx context=%p, dispatch=%p)\n",
-                   handler, rec, frame, &context, &dispatch );
-
-            switch( handler( rec, frame, &context, &dispatch ))
-            {
-            case ExceptionContinueExecution:
-                if (rec->ExceptionFlags & EH_NONCONTINUABLE) return STATUS_NONCONTINUABLE_EXCEPTION;
-                *orig_context = context;
-                return STATUS_SUCCESS;
-            case ExceptionContinueSearch:
-                break;
-            case ExceptionNestedException:
-                break;
-            default:
-                return STATUS_INVALID_DISPOSITION;
-            }
+            status = call_handler( rec, &dispatch, orig_context );
+            if (status != STATUS_UNHANDLED_EXCEPTION) return status;
         }
+
+        if (new_context.Rsp == (ULONG64)NtCurrentTeb()->Tib.StackBase) break;
         context = new_context;
     }
-
-    /* hack: call unhandled exception filter directly */
-    ptrs.ExceptionRecord = rec;
-    ptrs.ContextRecord = orig_context;
-    unhandled_exception_filter( &ptrs );
     return STATUS_UNHANDLED_EXCEPTION;
 }
 
@@ -1561,19 +2208,49 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG64 base, ULONG64 pc,
 }
 
 
+/**********************************************************************
+ *           call_unwind_handler
+ *
+ * Call a single unwind handler.
+ * FIXME: Handle nested exceptions.
+ */
+static void call_unwind_handler( EXCEPTION_RECORD *rec, DISPATCHER_CONTEXT *dispatch )
+{
+    DWORD res;
+
+    dispatch->ControlPc = dispatch->ContextRecord->Rip;
+
+    TRACE( "calling handler %p (rec=%p, frame=0x%lx context=%p, dispatch=%p)\n",
+         dispatch->LanguageHandler, rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
+    res = dispatch->LanguageHandler( rec, dispatch->EstablisherFrame, dispatch->ContextRecord, dispatch );
+    TRACE( "handler %p returned %x\n", dispatch->LanguageHandler, res );
+
+    switch (res)
+    {
+    case ExceptionContinueSearch:
+        break;
+    case ExceptionCollidedUnwind:
+        FIXME( "ExceptionCollidedUnwind not supported yet\n" );
+        break;
+    default:
+        raise_status( STATUS_INVALID_DISPOSITION, rec );
+        break;
+    }
+}
+
+
 /*******************************************************************
  *		RtlUnwindEx (NTDLL.@)
  */
 void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD *rec,
-                         ULONG64 retval, CONTEXT *context, UNWIND_HISTORY_TABLE *table )
+                         ULONG64 retval, CONTEXT *orig_context, UNWIND_HISTORY_TABLE *table )
 {
     EXCEPTION_RECORD record;
-    ULONG64 frame;
-    RUNTIME_FUNCTION *dir, *info;
-    PEXCEPTION_ROUTINE handler;
+    RUNTIME_FUNCTION *dir;
     DISPATCHER_CONTEXT dispatch;
-    CONTEXT new_context;
+    CONTEXT context, new_context;
     LDR_MODULE *module;
+    NTSTATUS status;
     DWORD size;
 
     /* build an exception record, if we do not have one */
@@ -1582,93 +2259,118 @@ void WINAPI RtlUnwindEx( ULONG64 end_frame, ULONG64 target_ip, EXCEPTION_RECORD 
         record.ExceptionCode    = STATUS_UNWIND;
         record.ExceptionFlags   = 0;
         record.ExceptionRecord  = NULL;
-        record.ExceptionAddress = (void *)context->Rip;
+        record.ExceptionAddress = (void *)orig_context->Rip;
         record.NumberParameters = 0;
         rec = &record;
     }
 
     rec->ExceptionFlags |= EH_UNWINDING | (end_frame ? 0 : EH_EXIT_UNWIND);
 
-    FIXME( "code=%x flags=%x end_frame=%lx target_ip=%lx\n",
-           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip );
+    TRACE( "code=%x flags=%x end_frame=%lx target_ip=%lx rip=%016lx\n",
+           rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip, orig_context->Rip );
+    TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+          orig_context->Rax, orig_context->Rbx, orig_context->Rcx, orig_context->Rdx );
+    TRACE(" rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+          orig_context->Rsi, orig_context->Rdi, orig_context->Rbp, orig_context->Rsp );
+    TRACE("  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+          orig_context->R8, orig_context->R9, orig_context->R10, orig_context->R11 );
+    TRACE(" r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+          orig_context->R12, orig_context->R13, orig_context->R14, orig_context->R15 );
 
-    frame = context->Rsp;
-    while (frame != end_frame)
+    context = *orig_context;
+    dispatch.EstablisherFrame = context.Rsp;
+    dispatch.TargetIp         = target_ip;
+    dispatch.ContextRecord    = &context;
+    dispatch.HistoryTable     = table;
+
+    while (dispatch.EstablisherFrame != end_frame)
     {
+        new_context = context;
+
         /* FIXME: should use the history table to make things faster */
 
-        if (LdrFindEntryForAddress( (void *)context->Rip, &module ))
+        dir = NULL;
+        module = NULL;
+        dispatch.ImageBase = 0;
+        dispatch.ScopeIndex = 0; /* FIXME */
+
+        if (!LdrFindEntryForAddress( (void *)context.Rip, &module ))
         {
-            ERR( "no module found for rip %p, can't unwind exception\n", (void *)context->Rip );
-            raise_status( STATUS_BAD_FUNCTION_TABLE, rec );
-        }
-        if (!(dir = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
-                                                  IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
-        {
-            ERR( "module %s doesn't contain exception data, can't unwind exception\n",
-                 debugstr_w(module->BaseDllName.Buffer) );
-            raise_status( STATUS_BAD_FUNCTION_TABLE, rec );
-        }
-        if (!(info = find_function_info( context->Rip, module->BaseAddress, dir, size )))
-        {
-            /* leaf function */
-            context->Rip = *(ULONG64 *)context->Rsp;
-            context->Rsp += sizeof(ULONG64);
-            continue;
-        }
-
-        new_context = *context;
-
-        handler = RtlVirtualUnwind( UNW_FLAG_UHANDLER, (ULONG64)module->BaseAddress, context->Rip,
-                                    info, &new_context, &dispatch.HandlerData, &frame, NULL );
-
-        if ((frame & 7) ||
-            frame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
-            frame >= (ULONG64)NtCurrentTeb()->Tib.StackBase)
-        {
-            ERR( "invalid frame %lx\n", frame );
-            raise_status( STATUS_BAD_STACK, rec );
-        }
-
-        if (end_frame && (frame > end_frame))
-        {
-            ERR( "invalid frame %lx/%lx\n", frame, end_frame );
-            raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
-        }
-
-        if (handler)
-        {
-            dispatch.ControlPc        = context->Rip;
-            dispatch.ImageBase        = (ULONG64)module->BaseAddress;
-            dispatch.FunctionEntry    = info;
-            dispatch.EstablisherFrame = frame;
-            dispatch.TargetIp         = target_ip;
-            dispatch.ContextRecord    = context;
-            dispatch.LanguageHandler  = handler;
-            dispatch.HistoryTable     = table;
-            dispatch.ScopeIndex       = 0; /* FIXME */
-
-            TRACE( "calling handler %p (rec=%p, frame=%lx context=%p, dispatch=%p)\n",
-                   handler, rec, frame, context, &dispatch );
-
-            switch( handler( rec, frame, context, &dispatch ))
+            if (!(dir = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
+                                                      IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )) &&
+                !(module->Flags & LDR_WINE_INTERNAL))
             {
-            case ExceptionContinueSearch:
-                break;
-            case ExceptionCollidedUnwind:
-                FIXME( "ExceptionCollidedUnwind not supported yet\n" );
-                break;
-            default:
-                raise_status( STATUS_INVALID_DISPOSITION, rec );
-                break;
+                ERR( "module %s doesn't contain exception data, can't unwind exception\n",
+                     debugstr_w(module->BaseDllName.Buffer) );
+                raise_status( STATUS_BAD_FUNCTION_TABLE, rec );
+            }
+            dispatch.ImageBase = (ULONG64)module->BaseAddress;
+        }
+
+        if (!dir)
+        {
+            struct dwarf_eh_bases bases;
+            const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context.Rip - 1), &bases );
+            if (!fde)
+            {
+                ERR( "no exception data found in %s for function %lx\n",
+                     module ? debugstr_w(module->BaseDllName.Buffer) : "system library", context.Rip );
+                raise_status( STATUS_BAD_FUNCTION_TABLE, rec );
+            }
+            dispatch.FunctionEntry = NULL;
+            status = dwarf_virtual_unwind( context.Rip, &dispatch.EstablisherFrame, &new_context, fde,
+                                           &bases, &dispatch.LanguageHandler, &dispatch.HandlerData );
+            if (status != STATUS_SUCCESS) raise_status( status, rec );
+            if (dispatch.LanguageHandler && !module)
+            {
+                FIXME( "calling personality routine in system library not supported yet\n" );
+                dispatch.LanguageHandler = NULL;
             }
         }
-        *context = new_context;
+        else
+        {
+            if (!(dispatch.FunctionEntry = find_function_info( context.Rip, module->BaseAddress,
+                                                               dir, size )))
+            {
+                /* leaf function */
+                context.Rip = *(ULONG64 *)context.Rsp;
+                context.Rsp += sizeof(ULONG64);
+                continue;
+            }
+            dispatch.LanguageHandler = RtlVirtualUnwind( UNW_FLAG_UHANDLER, dispatch.ImageBase,
+                                                         context.Rip, dispatch.FunctionEntry,
+                                                         &new_context, &dispatch.HandlerData,
+                                                         &dispatch.EstablisherFrame, NULL );
+        }
+
+        if (!dispatch.EstablisherFrame) break;
+
+        if ((dispatch.EstablisherFrame & 7) ||
+            dispatch.EstablisherFrame < (ULONG64)NtCurrentTeb()->Tib.StackLimit ||
+            dispatch.EstablisherFrame > (ULONG64)NtCurrentTeb()->Tib.StackBase)
+        {
+            ERR( "invalid frame %lx (%p-%p)\n", dispatch.EstablisherFrame,
+                 NtCurrentTeb()->Tib.StackLimit, NtCurrentTeb()->Tib.StackBase );
+            rec->ExceptionFlags |= EH_STACK_INVALID;
+            break;
+        }
+
+        if (dispatch.LanguageHandler)
+        {
+            if (end_frame && (dispatch.EstablisherFrame > end_frame))
+            {
+                ERR( "invalid end frame %lx/%lx\n", dispatch.EstablisherFrame, end_frame );
+                raise_status( STATUS_INVALID_UNWIND_TARGET, rec );
+            }
+            call_unwind_handler( rec, &dispatch );
+        }
+
+        context = new_context;
     }
-    context->Rax = retval;
-    context->Rip = target_ip;
-    TRACE( "returning to %lx stack %lx\n", context->Rip, context->Rsp );
-    set_cpu_context( context );
+    context.Rax = retval;
+    context.Rip = target_ip;
+    TRACE( "returning to %lx stack %lx\n", context.Rip, context.Rsp );
+    set_cpu_context( &context );
 }
 
 
