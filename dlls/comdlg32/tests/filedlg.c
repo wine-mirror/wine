@@ -309,8 +309,12 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
             /* test style */
             style = GetWindowLong( parent, GWL_STYLE);
             if( resize_testcases[index].flags & OFN_ENABLESIZING)
-                ok( style & WS_SIZEBOX,
-                        "testid %d: dialog should have a WS_SIZEBOX style.\n", index);
+                if( !(style & WS_SIZEBOX)) {
+                    win_skip( "OFN_ENABLESIZING flag not supported.\n");
+                    PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
+                } else
+                    ok( style & WS_SIZEBOX,
+                            "testid %d: dialog should have a WS_SIZEBOX style.\n", index);
             else
                 ok( !(style & WS_SIZEBOX),
                         "testid %d: dialog should not have a WS_SIZEBOX style.\n", index);
@@ -383,7 +387,7 @@ static void test_resize(void)
     ofn.nMaxFile = 1042;
     ofn.lpfnHook = (LPOFNHOOKPROC) resize_template_hook;
     ofn.hInstance = GetModuleHandle(NULL);
-    ofn.lpTemplateName = "template1";
+    ofn.lpTemplateName = "template_sz";
     for( i = 0; resize_testcases[i].flags != 0xffffffff; i++) {
         ofn.lCustData = i;
         ofn.Flags = resize_testcases[i].flags |
