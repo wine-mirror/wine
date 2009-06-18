@@ -469,7 +469,8 @@ static void test_GetDisplayName(void)
     }
     /* WinXP and up store the filenames as both ANSI and UNICODE in the pidls */
     if (pidlLast->mkid.cb >= 76) {
-        ok(!lstrcmpW((WCHAR*)&pidlLast->mkid.abID[46], wszFileName),
+        ok(!lstrcmpW((WCHAR*)&pidlLast->mkid.abID[46], wszFileName) ||
+            (pidlLast->mkid.cb >= 94 && !lstrcmpW((WCHAR*)&pidlLast->mkid.abID[64], wszFileName)), /* Vista */
             "Filename should be stored as wchar-string at this position!\n");
     }
     
