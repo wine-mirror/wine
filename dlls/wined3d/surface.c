@@ -1296,6 +1296,7 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
 static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
+    const RECT *pass_rect = pRect;
 
     TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
 
@@ -1328,72 +1329,19 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         goto lock_end;
     }
 
-    /* Now download the surface content from opengl
-     * Use the render target readback if the surface is on a swapchain(=onscreen render target) or the current primary target
-     * Offscreen targets which are not active at the moment or are higher targets(FBOs) can be locked with the texture path
-     */
-    if ((This->Flags & SFLAG_SWAPCHAIN) || iface == myDevice->render_targets[0])
+    /* IWineD3DSurface_LoadLocation() does not check if the rectangle specifies
+     * the full surface. Most callers don't need that, so do it here. */
+    if (pRect && pRect->top == 0 && pRect->left == 0
+            && pRect->right == This->currentDesc.Width
+            && pRect->bottom == This->currentDesc.Height)
     {
-        const RECT *pass_rect = pRect;
+        pass_rect = NULL;
+    }
 
-        /* IWineD3DSurface_LoadLocation does not check if the rectangle specifies the full surfaces
-         * because most caller functions do not need that. So do that here
-         */
-        if(pRect &&
-           pRect->top    == 0 &&
-           pRect->left   == 0 &&
-           pRect->right  == This->currentDesc.Width &&
-           pRect->bottom == This->currentDesc.Height) {
-            pass_rect = NULL;
-        }
-
-        switch(wined3d_settings.rendertargetlock_mode) {
-            case RTL_TEXDRAW:
-            case RTL_TEXTEX:
-                FIXME("Reading from render target with a texture isn't implemented yet, falling back to framebuffer reading\n");
-#if 0
-                /* Disabled for now. LoadLocation prefers the texture over the drawable as the source. So if we copy to the
-                 * texture first, then to sysmem, we'll avoid glReadPixels and use glCopyTexImage and glGetTexImage2D instead.
-                 * This may be faster on some cards
-                 */
-                IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL /* No partial texture copy yet */);
-#endif
-                /* drop through */
-
-            case RTL_AUTO:
-            case RTL_READDRAW:
-            case RTL_READTEX:
-                IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, pass_rect);
-                break;
-
-            case RTL_DISABLE:
-                break;
-        }
-    } else if(iface == myDevice->stencilBufferTarget) {
-        /** the depth stencil in openGL has a format of GL_FLOAT
-         * which should be good for WINED3DFMT_D16_LOCKABLE
-         * and WINED3DFMT_D16
-         * it is unclear what format the stencil buffer is in except.
-         * 'Each index is converted to fixed point...
-         * If GL_MAP_STENCIL is GL_TRUE, indices are replaced by their
-         * mappings in the table GL_PIXEL_MAP_S_TO_S.
-         * glReadPixels(This->lockedRect.left,
-         *             This->lockedRect.bottom - j - 1,
-         *             This->lockedRect.right - This->lockedRect.left,
-         *             1,
-         *             GL_DEPTH_COMPONENT,
-         *             type,
-         *             (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
-         *
-         * Depth Stencil surfaces which are not the current depth stencil target should have their data in a
-         * gl texture(next path), or in local memory(early return because of set SFLAG_INSYSMEM above). If
-         * none of that is the case the problem is not in this function :-)
-         ********************************************/
-        FIXME("Depth stencil locking not supported yet\n");
-    } else {
-        /* This path is for normal surfaces, offscreen render targets and everything else that is in a gl texture */
-        TRACE("locking an ordinary surface\n");
-        IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, NULL /* no partial locking for textures yet */);
+    if (!(wined3d_settings.rendertargetlock_mode == RTL_DISABLE
+            && ((This->Flags & SFLAG_SWAPCHAIN) || iface == myDevice->render_targets[0])))
+    {
+        IWineD3DSurface_LoadLocation(iface, SFLAG_INSYSMEM, pass_rect);
     }
 
 lock_end:
@@ -4848,6 +4796,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
             surface_download_data(This);
         } else {
+            /* Note: It might be faster to download into a texture first. */
             read_from_framebuffer(This, rect,
                                   This->resource.allocatedMemory,
                                   IWineD3DSurface_GetPitch(iface));
