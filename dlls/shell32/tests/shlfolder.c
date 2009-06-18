@@ -1558,7 +1558,7 @@ static void testSHGetFolderPathAndSubDirA(void)
     static char toolongpath[MAX_PATH+1];
 
     if(!pSHGetFolderPathA) {
-        skip("SHGetFolderPathA not present!\n");
+        win_skip("SHGetFolderPathA not present!\n");
         return;
     }
     if(FAILED(pSHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, appdata)))
@@ -1580,16 +1580,13 @@ static void testSHGetFolderPathAndSubDirA(void)
         skip("RemoveDirectoryA(%s) failed with error %u\n", testpath, GetLastError());
         return;
     }
-    for(i=0; i< MAX_PATH; i++)
-        toolongpath[i] = '0' + i % 10;
-    toolongpath[MAX_PATH] = '\0';
 
     /* test invalid second parameter */
     ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | 0xff, NULL, SHGFP_TYPE_CURRENT, wine, testpath);
     ok(E_INVALIDARG == ret, "expected E_INVALIDARG, got  %x\n", ret);
 
-    /* test invalid forth parameter */
-    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, 2, wine, testpath);
+    /* test fourth parameter */
+    ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, 2, winetemp, testpath);
     switch(ret) {
         case S_OK: /* winvista */
             ok(!strncmp(appdata, testpath, strlen(appdata)),
@@ -1619,6 +1616,9 @@ static void testSHGetFolderPathAndSubDirA(void)
     ok(S_OK == ret, "expected S_OK, got %x\n", ret);
     ok(!lstrcmpA(appdata, testpath), "expected %s, got %s\n", appdata, testpath);
 
+    for(i=0; i< MAX_PATH; i++)
+        toolongpath[i] = '0' + i % 10;
+    toolongpath[MAX_PATH] = '\0';
     ret = pSHGetFolderPathAndSubDirA(NULL, CSIDL_FLAG_DONT_VERIFY | CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, toolongpath, testpath);
     ok(HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE) == ret,
         "expected %x, got %x\n", HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), ret);
