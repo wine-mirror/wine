@@ -316,6 +316,10 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
             reg_maps->boolean_constants |= (1 << reg->idx);
             break;
 
+        case WINED3DSPR_COLOROUT:
+            reg_maps->highest_render_target = max(reg_maps->highest_render_target, reg->idx);
+            break;
+
         default:
             TRACE("Not recording register of type %#x and idx %u\n", reg->type, reg->idx);
             break;

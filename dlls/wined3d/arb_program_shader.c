@@ -880,22 +880,21 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             break;
 
         case WINED3DSPR_COLOROUT:
-            if (reg->idx == 0)
+            if(ctx->cur_ps_args->super.srgb_correction && reg->idx == 0)
             {
-                if(ctx->cur_ps_args->super.srgb_correction)
+                strcpy(register_name, "TMP_COLOR");
+            }
+            else
+            {
+                if(ctx->cur_ps_args->super.srgb_correction) FIXME("sRGB correction on higher render targets\n");
+                if(This->baseShader.reg_maps.highest_render_target > 0)
                 {
-                    strcpy(register_name, "TMP_COLOR");
+                    sprintf(register_name, "result.color[%u]", reg->idx);
                 }
                 else
                 {
                     strcpy(register_name, "result.color");
                 }
-            }
-            else
-            {
-                /* TODO: See GL_ARB_draw_buffers */
-                FIXME("Unsupported write to render target %u\n", reg->idx);
-                sprintf(register_name, "unsupported_register");
             }
             break;
 
@@ -2955,6 +2954,11 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
             ERR("Try GLSL\n");
         }
         priv_ctx.target_version = ARB;
+    }
+
+    if(This->baseShader.reg_maps.highest_render_target > 0)
+    {
+        shader_addline(buffer, "OPTION ARB_draw_buffers;\n");
     }
 
     if (reg_maps->shader_version.major < 3)

@@ -644,6 +644,7 @@ typedef struct shader_reg_maps
 
     /* Whether or not loops are used in this shader, and nesting depth */
     unsigned loop_depth;
+    unsigned highest_render_target;
 
 } shader_reg_maps;
 
