@@ -479,6 +479,7 @@ static void test_GetDisplayName(void)
     hr = IShellFolder_BindToObject(psfDesktop, pidlTestFile, NULL, &IID_IUnknown, (VOID**)&psfFile);
     todo_wine
     ok (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) ||
+        hr == E_NOTIMPL || /* Vista */
         broken(SUCCEEDED(hr)), /* Win9x, W2K */
         "hr = %08x\n", hr);
     if (SUCCEEDED(hr)) {
