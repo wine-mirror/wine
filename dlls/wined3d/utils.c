@@ -559,8 +559,8 @@ static BOOL init_format_compression_info(WineD3D_GL_Info *gl_info)
 
 static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_format, GLenum format, GLenum type)
 {
-    GLuint tex, fb;
     GLenum status;
+    GLuint tex;
 
     ENTER_GL();
 
@@ -571,12 +571,9 @@ static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_form
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    GL_EXTCALL(glGenFramebuffersEXT(1, &fb));
-    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fb));
     GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tex, 0));
 
     status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
-    GL_EXTCALL(glDeleteFramebuffersEXT(1, &fb));
     glDeleteTextures(1, &tex);
 
     checkGLcall("Framebuffer format check");
@@ -589,6 +586,13 @@ static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_form
 static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
 {
     unsigned int i;
+    GLuint fbo;
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        GL_EXTCALL(glGenFramebuffersEXT(1, &fbo));
+        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo));
+    }
 
     for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
     {
@@ -651,6 +655,11 @@ static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
         {
             desc->rtInternal = desc->glInternal;
         }
+    }
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        GL_EXTCALL(glDeleteFramebuffersEXT(1, &fbo));
     }
 }
 
