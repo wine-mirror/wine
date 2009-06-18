@@ -962,7 +962,9 @@ static void test_SHGetPathFromIDList(void)
     wszPath[1] = '\0';
     result = pSHGetPathFromIDListW(pidlMyComputer, wszPath);
     ok (!result, "SHGetPathFromIDListW succeeded where it shouldn't!\n");
-    ok (GetLastError()==0xdeadbeef, "SHGetPathFromIDListW shouldn't set last error! Last error: %u\n", GetLastError());
+    ok (GetLastError()==0xdeadbeef ||
+        GetLastError()==ERROR_SUCCESS, /* Vista and higher */
+        "Unexpected last error from SHGetPathFromIDListW: %u\n", GetLastError());
     ok (!wszPath[0], "Expected empty path\n");
     if (result) {
         IShellFolder_Release(psfDesktop);
