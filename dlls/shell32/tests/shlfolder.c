@@ -81,6 +81,15 @@ static void init_function_pointers(void)
     ok(hr == S_OK, "SHGetMalloc failed %08x\n", hr);
 }
 
+static const char *wine_dbgstr_w(LPCWSTR str)
+{
+    static char buf[512];
+    if (!str)
+        return "(null)";
+    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
+    return buf;
+}
+
 static void test_ParseDisplayName(void)
 {
     HRESULT hr;
@@ -1120,6 +1129,10 @@ static HRESULT WINAPI InitPropertyBag_IPropertyBag_Read(IPropertyBag *iface, LPC
         'A','t','t','r','i','b','u','t','e','s',0 };
     static const WCHAR wszResolveLinkFlags[] = {
         'R','e','s','o','l','v','e','L','i','n','k','F','l','a','g','s',0 };
+    static const WCHAR wszTargetKnownFolder[] = {
+        'T','a','r','g','e','t','K','n','o','w','n','F','o','l','d','e','r',0 };
+    static const WCHAR wszCLSID[] = {
+        'C','L','S','I','D',0 };
        
     if (!lstrcmpW(pszPropName, wszTargetSpecialFolder)) {
         ok(V_VT(pVar) == VT_I4 ||
@@ -1159,7 +1172,19 @@ static HRESULT WINAPI InitPropertyBag_IPropertyBag_Read(IPropertyBag *iface, LPC
         return S_OK;
     }
 
-    ok(FALSE, "PropertyBag was asked for unknown property (vt=%d)!\n", V_VT(pVar));
+    if (!lstrcmpW(pszPropName, wszTargetKnownFolder)) {
+        ok(V_VT(pVar) == VT_BSTR, "Wrong variant type for 'TargetKnownFolder' property!\n");
+        /* TODO */
+        return E_INVALIDARG;
+    }
+
+    if (!lstrcmpW(pszPropName, wszCLSID)) {
+        ok(V_VT(pVar) == VT_EMPTY, "Wrong variant type for 'CLSID' property!\n");
+        /* TODO */
+        return E_INVALIDARG;
+    }
+
+    ok(FALSE, "PropertyBag was asked for unknown property %s (vt=%d)!\n", wine_dbgstr_w(pszPropName), V_VT(pVar));
     return E_INVALIDARG;
 }
 
@@ -1624,15 +1649,6 @@ static void testSHGetFolderPathAndSubDirA(void)
     RemoveDirectoryA(testpath);
     sprintf(testpath, "%s\\%s", appdata, wine);
     RemoveDirectoryA(testpath);
-}
-
-static const char *wine_dbgstr_w(LPCWSTR str)
-{
-    static char buf[512];
-    if (!str)
-        return "(null)";
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
 }
 
 static void test_LocalizedNames(void)
