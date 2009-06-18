@@ -2526,7 +2526,7 @@ static void shader_hw_breakc(const struct wined3d_shader_instruction *ins)
     }
     else
     {
-        shader_addline(buffer, "SUBC CC, %s, %s;\n", src_name0, src_name1);
+        shader_addline(buffer, "SUBC TA, %s, %s;\n", src_name0, src_name1);
         shader_addline(buffer, "BRK (%s.x);\n", comp);
     }
 }
@@ -2566,7 +2566,7 @@ static void shader_hw_ifc(const struct wined3d_shader_instruction *ins)
     }
     else
     {
-        shader_addline(buffer, "SUBC CC, %s, %s;\n", src_name0, src_name1);
+        shader_addline(buffer, "SUBC TA, %s, %s;\n", src_name0, src_name1);
         shader_addline(buffer, "IF %s.x;\n", comp);
     }
 }
