@@ -2551,6 +2551,24 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
 
 
+/***********************************************************************
+ *           call_thread_entry_point
+ */
+void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
+{
+    __TRY
+    {
+        RtlExitUserThread( entry( arg ));
+    }
+    __EXCEPT(unhandled_exception_filter)
+    {
+        NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
+    abort();  /* should not be reached */
+}
+
+
 /**********************************************************************
  *              __wine_enter_vm86   (NTDLL.@)
  */

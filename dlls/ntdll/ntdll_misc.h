@@ -48,6 +48,7 @@ extern void set_cpu_context( const CONTEXT *context );
 extern void copy_context( CONTEXT *to, const CONTEXT *from, DWORD flags );
 extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from );
 extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from );
+extern void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg ) DECLSPEC_NORETURN;
 
 /* debug helpers */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );

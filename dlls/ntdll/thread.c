@@ -388,66 +388,6 @@ static void DECLSPEC_NORETURN exit_thread( int status )
 }
 
 
-#ifdef __i386__
-/* wrapper for apps that don't declare the thread function correctly */
-extern DWORD call_thread_entry_point( PRTL_THREAD_START_ROUTINE entry, void *arg );
-__ASM_GLOBAL_FUNC(call_thread_entry_point,
-                  "pushl %ebp\n\t"
-                  "movl %esp,%ebp\n\t"
-                  "subl $4,%esp\n\t"
-                  "pushl 12(%ebp)\n\t"
-                  "movl 8(%ebp),%eax\n\t"
-                  "call *%eax\n\t"
-                  "leave\n\t"
-                  "ret" )
-#else
-static inline DWORD call_thread_entry_point( PRTL_THREAD_START_ROUTINE entry, void *arg )
-{
-    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)entry;
-    return func( arg );
-}
-#endif
-
-/***********************************************************************
- *           call_thread_func
- *
- * Hack to make things compatible with the thread procedures used by kernel32.CreateThread.
- */
-static void DECLSPEC_NORETURN call_thread_func( PRTL_THREAD_START_ROUTINE rtl_func, void *arg )
-{
-    DWORD exit_code;
-    BOOL last;
-
-    MODULE_DllThreadAttach( NULL );
-
-    if (TRACE_ON(relay))
-        DPRINTF( "%04x:Starting thread proc %p (arg=%p)\n", GetCurrentThreadId(), rtl_func, arg );
-
-    exit_code = call_thread_entry_point( rtl_func, arg );
-
-    /* send the exit code to the server */
-    SERVER_START_REQ( terminate_thread )
-    {
-        req->handle    = wine_server_obj_handle( GetCurrentThread() );
-        req->exit_code = exit_code;
-        wine_server_call( req );
-        last = reply->last;
-    }
-    SERVER_END_REQ;
-
-    if (last)
-    {
-        LdrShutdownProcess();
-        exit( exit_code );
-    }
-    else
-    {
-        LdrShutdownThread();
-        exit_thread( exit_code );
-    }
-}
-
-
 /***********************************************************************
  *           start_thread
  *
@@ -474,22 +414,12 @@ static void start_thread( struct startup_info *info )
     InsertHeadList( &tls_links, &teb->TlsLinks );
     RtlReleasePebLock();
 
-    /* NOTE: Windows does not have an exception handler around the call to
-     * the thread attach. We do for ease of debugging */
-    if (unhandled_exception_filter)
-    {
-        __TRY
-        {
-            call_thread_func( func, arg );
-        }
-        __EXCEPT(unhandled_exception_filter)
-        {
-            NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
-        }
-        __ENDTRY
-    }
-    else
-        call_thread_func( func, arg );
+    MODULE_DllThreadAttach( NULL );
+
+    if (TRACE_ON(relay))
+        DPRINTF( "%04x:Starting thread proc %p (arg=%p)\n", GetCurrentThreadId(), func, arg );
+
+    call_thread_entry_point( (LPTHREAD_START_ROUTINE)func, arg );
 }
 
 

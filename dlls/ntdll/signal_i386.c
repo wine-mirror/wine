@@ -2264,6 +2264,37 @@ void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
 
 
+/* wrapper for apps that don't declare the thread function correctly */
+extern void DECLSPEC_NORETURN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg );
+__ASM_GLOBAL_FUNC(call_thread_func,
+                  "pushl %ebp\n\t"
+                  "movl %esp,%ebp\n\t"
+                  "subl $4,%esp\n\t"
+                  "pushl 12(%ebp)\n\t"
+                  "call *8(%ebp)\n\t"
+                  "leal -4(%ebp),%esp\n\t"
+                  "pushl %eax\n\t"
+                  "call " __ASM_NAME("RtlExitUserThread") "\n\t"
+                  "int $3" )
+
+/***********************************************************************
+ *           call_thread_entry_point
+ */
+void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
+{
+    __TRY
+    {
+        call_thread_func( entry, arg );
+    }
+    __EXCEPT(unhandled_exception_filter)
+    {
+        NtTerminateThread( GetCurrentThread(), GetExceptionCode() );
+    }
+    __ENDTRY
+    abort();  /* should not be reached */
+}
+
+
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
  */
