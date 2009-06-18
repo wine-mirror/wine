@@ -27,11 +27,11 @@ LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
 STRINGTABLE
 {
    IDS_CPL_TITLE, "プログラムの追加と削除"
-   IDS_CPL_DESC, "Allows you to install new software, or remove existing software from your computer."
+   IDS_CPL_DESC, "新しいソフトウェアをインストールするか、既存のソフトウェアを削除することができます。"
    IDS_TAB1_TITLE, "アプリケーション"
 
-   IDS_UNINSTALL_FAILED, "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall entry for this program from the registry?"
-   IDS_NOT_SPECIFIED, "Not specified"
+   IDS_UNINSTALL_FAILED, "アンインストーラーを起動することができません。 '%s'. レジストリからアンインストールできるプログラム登録を削除しますか？"
+   IDS_NOT_SPECIFIED, "指定されません"
 
    IDS_COLUMN_NAME, "名前"
    IDS_COLUMN_PUBLISHER, "発行元"
