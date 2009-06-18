@@ -4124,9 +4124,14 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
     none_shader_backend.shader_get_caps(devtype, gl_info, pCaps);
 
     if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
-        /* Shader Model 2.0 requires at least 256 vertex shader constants */
-        if(GL_LIMITS(vshader_constantsF) >= 256)
+        if(GL_SUPPORT(NV_VERTEX_PROGRAM3))
         {
+            pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
+            TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (NV_VERTEX_PROGRAM3)\n");
+        }
+        else if(GL_LIMITS(vshader_constantsF) >= 256)
+        {
+            /* Shader Model 2.0 requires at least 256 vertex shader constants */
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
             TRACE_(d3d_caps)("Hardware vertex shader version 2.0 enabled (ARB_PROGRAM)\n");
         }
@@ -4139,9 +4144,14 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
     }
 
     if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
-        /* Shader Model 2.0 requires at least 32 pixel shader constants */
-        if(GL_LIMITS(vshader_constantsF) >= 32)
+        if(GL_SUPPORT(NV_FRAGMENT_PROGRAM2))
         {
+            pCaps->PixelShaderVersion    = WINED3DPS_VERSION(3,0);
+            TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (NV_FRAGMENT_PROGRAM2)\n");
+        }
+        else if(GL_LIMITS(vshader_constantsF) >= 32)
+        {
+            /* Shader Model 2.0 requires at least 32 pixel shader constants */
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(2,0);
             TRACE_(d3d_caps)("Hardware pixel shader version 2.0 enabled (ARB_PROGRAM)\n");
         }
