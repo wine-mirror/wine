@@ -6432,11 +6432,16 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
 
     /* Attach src surface to src fbo */
     src_swapchain = get_swapchain(src_surface);
+    dst_swapchain = get_swapchain(dst_surface);
+
+    if (src_swapchain) ActivateContext(This, src_surface, CTXUSAGE_RESOURCELOAD);
+    else if (dst_swapchain) ActivateContext(This, dst_surface, CTXUSAGE_RESOURCELOAD);
+    else ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
     if (src_swapchain) {
         GLenum buffer = surface_get_gl_buffer(src_surface, src_swapchain);
 
         TRACE("Source surface %p is onscreen\n", src_surface);
-        ActivateContext(This, src_surface, CTXUSAGE_RESOURCELOAD);
         /* Make sure the drawable is up to date. In the offscreen case
          * attach_surface_fbo() implicitly takes care of this. */
         IWineD3DSurface_LoadLocation(src_surface, SFLAG_INDRAWABLE, NULL);
@@ -6471,12 +6476,10 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     LEAVE_GL();
 
     /* Attach dst surface to dst fbo */
-    dst_swapchain = get_swapchain(dst_surface);
     if (dst_swapchain) {
         GLenum buffer = surface_get_gl_buffer(dst_surface, dst_swapchain);
 
         TRACE("Destination surface %p is onscreen\n", dst_surface);
-        ActivateContext(This, dst_surface, CTXUSAGE_RESOURCELOAD);
         /* Make sure the drawable is up to date. In the offscreen case
          * attach_surface_fbo() implicitly takes care of this. */
         IWineD3DSurface_LoadLocation(dst_surface, SFLAG_INDRAWABLE, NULL);
@@ -6502,11 +6505,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         checkGLcall("glDrawBuffer()");
     } else {
         TRACE("Destination surface %p is offscreen\n", dst_surface);
-
-        /* No src or dst swapchain? Make sure some context is active(multithreading) */
-        if(!src_swapchain) {
-            ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-        }
 
         ENTER_GL();
         context_bind_fbo(iface, GL_DRAW_FRAMEBUFFER_EXT, &This->activeContext->dst_fbo);
