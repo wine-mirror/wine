@@ -3353,7 +3353,7 @@ static void test_indentation(void)
     DestroyWindow(hwnd);
 }
 
-INT CALLBACK DummyCompareEx(LPARAM first, LPARAM second, LPARAM param)
+static INT CALLBACK DummyCompareEx(LPARAM first, LPARAM second, LPARAM param)
 {
     return 0;
 }
