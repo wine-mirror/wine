@@ -1332,7 +1332,8 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                          strstr(gl_info->gl_renderer, "HD 2400") ||
                          strstr(gl_info->gl_renderer, "HD 3470") ||
                          strstr(gl_info->gl_renderer, "HD 3450") ||
-                         strstr(gl_info->gl_renderer, "HD 3430"))
+                         strstr(gl_info->gl_renderer, "HD 3430") ||
+                         strstr(gl_info->gl_renderer, "HD 3400"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD2300;
                     vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
