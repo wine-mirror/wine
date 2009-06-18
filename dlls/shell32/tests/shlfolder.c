@@ -274,13 +274,15 @@ static void test_EnumObjects(IShellFolder *iFolder)
     for (i = 0; i < 5; i++)
     {
         SFGAOF flags;
+#define SFGAO_VISTA SFGAO_DROPTARGET | SFGAO_CANLINK | SFGAO_CANCOPY
         /* Native returns all flags no matter what we ask for */
         flags = SFGAO_CANCOPY;
         hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
         flags &= SFGAO_testfor;
         ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
         ok(flags == (attrs[i]) ||
-           flags == (attrs[i] & ~SFGAO_FILESYSANCESTOR), /* Win9x, NT4 */
+           flags == (attrs[i] & ~SFGAO_FILESYSANCESTOR) || /* Win9x, NT4 */
+           flags == ((attrs[i] & ~SFGAO_CAPABILITYMASK) | SFGAO_VISTA), /* Vista and higher */
            "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
 
         flags = SFGAO_testfor;
