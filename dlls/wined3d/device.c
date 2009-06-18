@@ -2947,9 +2947,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
     struct list *e;
     TRACE("(%p) : Idx(%d), enable? %d\n", This, Index, Enable);
 
-    /* Tests show true = 128...not clear why */
-    Enable = Enable? 128: 0;
-
     LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi]) {
         lightInfo = LIST_ENTRY(e, PLIGHTINFOEL, entry);
         if(lightInfo->OriginalIndex == Index) break;
