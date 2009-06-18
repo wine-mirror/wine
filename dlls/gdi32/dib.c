@@ -1120,7 +1120,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 
     if (handle)
     {
-        if (init == CBM_INIT)
+        if (init & CBM_INIT)
         {
             if (SetDIBits( hdc, handle, 0, height, bits, data, coloruse ) == 0)
             {
