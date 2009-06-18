@@ -353,11 +353,29 @@ void abort_thread( int status )
 /***********************************************************************
  *           exit_thread
  */
-static void DECLSPEC_NORETURN exit_thread( int status )
+void exit_thread( int status )
 {
     static void *prev_teb;
     TEB *teb;
 
+    if (status)  /* send the exit code to the server (0 is already the default) */
+    {
+        SERVER_START_REQ( terminate_thread )
+        {
+            req->handle    = wine_server_obj_handle( GetCurrentThread() );
+            req->exit_code = status;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
+
+    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1)
+    {
+        LdrShutdownProcess();
+        exit( status );
+    }
+
+    LdrShutdownThread();
     RtlAcquirePebLock();
     RemoveEntryList( &NtCurrentTeb()->TlsLinks );
     RtlReleasePebLock();
@@ -365,7 +383,6 @@ static void DECLSPEC_NORETURN exit_thread( int status )
     RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->TlsExpansionSlots );
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    if (interlocked_xchg_add( &nb_threads, -1 ) <= 1) exit( status );
 
     if ((teb = interlocked_xchg_ptr( &prev_teb, NtCurrentTeb() )))
     {
@@ -563,36 +580,6 @@ error:
     pthread_sigmask( SIG_SETMASK, &sigset, NULL );
     close( request_pipe[1] );
     return status;
-}
-
-
-/***********************************************************************
- *           RtlExitUserThread  (NTDLL.@)
- */
-void WINAPI RtlExitUserThread( ULONG status )
-{
-    BOOL last;
-
-    SERVER_START_REQ( terminate_thread )
-    {
-        /* send the exit code to the server */
-        req->handle    = wine_server_obj_handle( GetCurrentThread() );
-        req->exit_code = status;
-        wine_server_call( req );
-        last = reply->last;
-    }
-    SERVER_END_REQ;
-
-    if (last)
-    {
-        LdrShutdownProcess();
-        exit( status );
-    }
-    else
-    {
-        LdrShutdownThread();
-        exit_thread( status );
-    }
 }
 
 

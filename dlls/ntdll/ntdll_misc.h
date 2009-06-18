@@ -78,6 +78,7 @@ extern size_t server_init_thread( void *entry_point );
 extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... );
 extern void DECLSPEC_NORETURN server_protocol_perror( const char *err );
 extern void DECLSPEC_NORETURN abort_thread( int status );
+extern void DECLSPEC_NORETURN exit_thread( int status );
 extern sigset_t server_block_set;
 extern void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset );
 extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset );

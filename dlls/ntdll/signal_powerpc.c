@@ -1093,7 +1093,7 @@ void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
 {
     __TRY
     {
-        RtlExitUserThread( entry( arg ));
+        exit_thread( entry( arg ));
     }
     __EXCEPT(unhandled_exception_filter)
     {
@@ -1101,6 +1101,14 @@ void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
     }
     __ENDTRY
     abort();  /* should not be reached */
+}
+
+/***********************************************************************
+ *           RtlExitUserThread  (NTDLL.@)
+ */
+void WINAPI RtlExitUserThread( ULONG status )
+{
+    exit_thread( status );
 }
 
 /**********************************************************************

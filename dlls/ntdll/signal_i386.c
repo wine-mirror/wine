@@ -2274,7 +2274,7 @@ __ASM_GLOBAL_FUNC(call_thread_func,
                   "call *8(%ebp)\n\t"
                   "leal -4(%ebp),%esp\n\t"
                   "pushl %eax\n\t"
-                  "call " __ASM_NAME("RtlExitUserThread") "\n\t"
+                  "call " __ASM_NAME("exit_thread") "\n\t"
                   "int $3" )
 
 /***********************************************************************
@@ -2294,6 +2294,13 @@ void call_thread_entry_point( LPTHREAD_START_ROUTINE entry, void *arg )
     abort();  /* should not be reached */
 }
 
+/***********************************************************************
+ *           RtlExitUserThread  (NTDLL.@)
+ */
+void WINAPI RtlExitUserThread( ULONG status )
+{
+    exit_thread( status );
+}
 
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
