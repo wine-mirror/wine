@@ -13,7 +13,6 @@ C_SRCS = \
 	lyricstrack.c \
 	markertrack.c \
 	paramcontroltrack.c \
-	patterntrack.c \
 	performance.c \
 	regsvr.c \
 	segment.c \
@@ -23,7 +22,6 @@ C_SRCS = \
 	sysextrack.c \
 	tempotrack.c \
 	timesigtrack.c \
-	tool.c \
 	wavetrack.c
 
 RC_SRCS = version.rc

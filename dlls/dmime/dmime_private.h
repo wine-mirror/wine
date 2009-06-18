@@ -51,8 +51,6 @@ typedef struct IDirectMusicSegment8Impl IDirectMusicSegment8Impl;
 typedef struct IDirectMusicSegmentState8Impl IDirectMusicSegmentState8Impl;
 typedef struct IDirectMusicGraphImpl IDirectMusicGraphImpl;
 typedef struct IDirectMusicAudioPathImpl IDirectMusicAudioPathImpl;
-typedef struct IDirectMusicTool8Impl IDirectMusicTool8Impl;
-typedef struct IDirectMusicPatternTrackImpl IDirectMusicPatternTrackImpl;
 
 typedef struct IDirectMusicLyricsTrack IDirectMusicLyricsTrack;
 typedef struct IDirectMusicMarkerTrack IDirectMusicMarkerTrack;
@@ -72,8 +70,6 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentImpl (LPCGUID lpcGUID, LPVO
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentStateImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicGraphImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicAudioPathImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicToolImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicPatternTrackImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter);
 
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicLyricsTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicMarkerTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
@@ -234,28 +230,6 @@ struct IDirectMusicAudioPathImpl {
   IDirectSoundBuffer*       pPrimary;
 
   BOOL fActive;
-};
-
-/*****************************************************************************
- * IDirectMusicTool8Impl implementation structure
- */
-struct IDirectMusicTool8Impl {
-  /* IUnknown fields */
-  const IDirectMusicTool8Vtbl *lpVtbl;
-  LONG           ref;
-
-  /* IDirectMusicTool8Impl fields */
-};
-
-/*****************************************************************************
- * IDirectMusicPatternTrackImpl implementation structure
- */
-struct IDirectMusicPatternTrackImpl {
-  /* IUnknown fields */
-  const IDirectMusicPatternTrackVtbl *lpVtbl;
-  LONG           ref;
-
-  /* IDirectMusicPatternTrackImpl fields */
 };
 
 /*****************************************************************************
