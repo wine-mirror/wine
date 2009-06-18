@@ -213,6 +213,18 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_pop_frame( EXCEPTION_REGISTR
 #endif
 }
 
+static inline EXCEPTION_REGISTRATION_RECORD *__wine_get_frame(void)
+{
+#if defined(__GNUC__) && defined(__i386__)
+    EXCEPTION_REGISTRATION_RECORD *ret;
+    __asm__ __volatile__(".byte 0x64\n\tmovl (0),%0" : "=r" (ret) );
+    return ret;
+#else
+    NT_TIB *teb = (NT_TIB *)NtCurrentTeb();
+    return teb->ExceptionList;
+#endif
+}
+
 /* Exception handling flags - from OS/2 2.0 exception handling */
 
 /* Win32 seems to use the same flags as ExceptionFlags in an EXCEPTION_RECORD */
@@ -238,26 +250,36 @@ extern void __wine_enter_vm86( CONTEXT *context );
 
 NTSYSAPI void WINAPI RtlUnwind(PVOID,PVOID,PEXCEPTION_RECORD,PVOID);
 
+static inline void DECLSPEC_NORETURN __wine_unwind_target(void)
+{
+    __WINE_FRAME *wine_frame = (__WINE_FRAME *)__wine_get_frame();
+    __wine_pop_frame( &wine_frame->frame );
+    siglongjmp( wine_frame->jmp, 1 );
+}
+
 /* wrapper for RtlUnwind since it clobbers registers on Windows */
-static inline void __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame, EXCEPTION_RECORD *record )
+static inline void DECLSPEC_NORETURN __wine_rtl_unwind( EXCEPTION_REGISTRATION_RECORD* frame,
+                                                        EXCEPTION_RECORD *record,
+                                                        void (*target)(void) )
 {
 #if defined(__GNUC__) && defined(__i386__)
-    int dummy1, dummy2, dummy3;
+    int dummy1, dummy2, dummy3, dummy4;
     __asm__ __volatile__("pushl %%ebp\n\t"
                          "pushl %%ebx\n\t"
                          "pushl $0\n\t"
+                         "pushl %3\n\t"
                          "pushl %2\n\t"
-                         "pushl $0\n\t"
                          "pushl %1\n\t"
                          "call *%0\n\t"
                          "popl %%ebx\n\t"
                          "popl %%ebp"
-                         : "=a" (dummy1), "=S" (dummy2), "=D" (dummy3)
-                         : "0" (RtlUnwind), "1" (frame), "2" (record)
-                         : "ecx", "edx", "memory" );
+                         : "=a" (dummy1), "=S" (dummy2), "=D" (dummy3), "=c" (dummy4)
+                         : "0" (RtlUnwind), "1" (frame), "2" (target), "3" (record)
+                         : "edx", "memory" );
 #else
-    RtlUnwind( frame, 0, record, 0 );
+    RtlUnwind( frame, target, record, 0 );
 #endif
+    for (;;) target();
 }
 
 static inline void DECLSPEC_NORETURN __wine_unwind_frame( EXCEPTION_RECORD *record,
@@ -269,9 +291,7 @@ static inline void DECLSPEC_NORETURN __wine_unwind_frame( EXCEPTION_RECORD *reco
     wine_frame->ExceptionCode   = record->ExceptionCode;
     wine_frame->ExceptionRecord = wine_frame;
 
-    __wine_rtl_unwind( frame, record );
-    __wine_pop_frame( frame );
-    siglongjmp( wine_frame->jmp, 1 );
+    __wine_rtl_unwind( frame, record, __wine_unwind_target );
 }
 
 static inline DWORD __wine_exception_handler( EXCEPTION_RECORD *record,
