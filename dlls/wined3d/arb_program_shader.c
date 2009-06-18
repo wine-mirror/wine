@@ -124,6 +124,7 @@ struct arb_vs_compile_args
 {
     struct vs_compile_args          super;
     DWORD                           bools; /* WORD is enough, use DWORD for alignment */
+    DWORD                           ps_signature;
     unsigned char                   loop_ctrl[MAX_CONST_I][3];
 };
 
@@ -164,11 +165,28 @@ struct shader_arb_ctx_priv
     BOOL                                muted;
     unsigned int                        num_loops, loop_depth, num_ifcs;
     int                                 aL;
+
+    /* For 3.0 vertex shaders */
+    const char                          *vs_output[MAX_REG_OUTPUT];
+    /* For 2.x and earlier vertex shaders */
+    const char                          *texcrd_output[8], *color_output[2], *fog_output;
+
+    /* 3.0 pshader input for compatibility with fixed function */
+    const char                          *ps_input[MAX_REG_INPUT];
+};
+
+struct ps_signature
+{
+    struct wined3d_shader_signature_element *sig;
+    DWORD                               idx;
+    struct wine_rb_entry                entry;
 };
 
 struct arb_pshader_private {
     struct arb_ps_compiled_shader   *gl_shaders;
     UINT                            num_gl_shaders, shader_array_size;
+    BOOL                            has_signature_idx;
+    DWORD                           input_signature_idx;
 };
 
 struct arb_vshader_private {
@@ -186,6 +204,9 @@ struct shader_arb_priv
     GLuint                  depth_blt_fprogram_id[tex_type_count];
     BOOL                    use_arbfp_fixed_func;
     struct wine_rb_tree     fragment_shaders;
+
+    struct wine_rb_tree     signature_tree;
+    DWORD ps_sig_number;
 };
 
 /********************************************************
@@ -671,8 +692,81 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
         case WINED3DSPR_INPUT:
             if (pshader)
             {
-                if (reg->idx == 0) strcpy(register_name, "fragment.color.primary");
-                else strcpy(register_name, "fragment.color.secondary");
+                if(This->baseShader.reg_maps.shader_version.major < 3)
+                {
+                    if (reg->idx == 0) strcpy(register_name, "fragment.color.primary");
+                    else strcpy(register_name, "fragment.color.secondary");
+                }
+                else
+                {
+                    if(reg->rel_addr)
+                    {
+                        char rel_reg[50];
+                        shader_arb_get_src_param(ins, reg->rel_addr, 0, rel_reg);
+
+                        if(strcmp(rel_reg, "**aL_emul**") == 0)
+                        {
+                            DWORD idx = ctx->aL + reg->idx;
+                            if(idx < MAX_REG_INPUT)
+                            {
+                                strcpy(register_name, ctx->ps_input[idx]);
+                            }
+                            else
+                            {
+                                ERR("Pixel shader input register out of bounds: %u\n", idx);
+                                sprintf(register_name, "out_of_bounds_%u", idx);
+                            }
+                        }
+                        else if(This->baseShader.reg_maps.input_registers & 0x0300)
+                        {
+                            /* There are two ways basically:
+                             *
+                             * 1) Use the unrolling code that is used for loop emulation and unroll the loop.
+                             *    That means trouble if the loop also contains a breakc or if the control values
+                             *    aren't local constants.
+                             * 2) Generate an if block that checks if aL.y < 8, == 8 or == 9 and selects the
+                             *    source dynamically. The trouble is that we cannot simply read aL.y because it
+                             *    is an ADDRESS register. We could however push it, load .zw with a value and use
+                             *    ADAC to load the condition code register and pop it again afterwards
+                             */
+                            FIXME("Relative input register addressing with more than 8 registers\n");
+
+                            /* This is better than nothing for now */
+                            sprintf(register_name, "fragment.texcoord[%s + %u]", rel_reg, reg->idx);
+                        }
+                        else if(ctx->cur_ps_args->super.vp_mode != vertexshader)
+                        {
+                            /* This is problematic because we'd have to consult the ctx->ps_input strings
+                             * for where to find the varying. Some may be "0.0", others can be texcoords or
+                             * colors. This needs either a pipeline replacement to make the vertex shader feed
+                             * proper varyings, or loop unrolling
+                             *
+                             * For now use the texcoords and hope for the best
+                             */
+                            FIXME("Non-vertex shader varying input with indirect addressing\n");
+                            sprintf(register_name, "fragment.texcoord[%s + %u]", rel_reg, reg->idx);
+                        }
+                        else
+                        {
+                            /* D3D supports indirect addressing only with aL in loop registers. The loop instruction
+                             * pulls GL_NV_fragment_program2 in
+                             */
+                            sprintf(register_name, "fragment.texcoord[%s + %u]", rel_reg, reg->idx);
+                        }
+                    }
+                    else
+                    {
+                        if(reg->idx < MAX_REG_INPUT)
+                        {
+                            strcpy(register_name, ctx->ps_input[reg->idx]);
+                        }
+                        else
+                        {
+                            ERR("Pixel shader input register out of bounds: %u\n", reg->idx);
+                            sprintf(register_name, "out_of_bounds_%u", reg->idx);
+                        }
+                    }
+                }
             }
             else
             {
@@ -764,7 +858,8 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             break;
 
         case WINED3DSPR_RASTOUT:
-            sprintf(register_name, "%s", rastout_reg_names[reg->idx]);
+            if(reg->idx == 1) sprintf(register_name, "%s", ctx->fog_output);
+            else sprintf(register_name, "%s", rastout_reg_names[reg->idx]);
             break;
 
         case WINED3DSPR_DEPTHOUT:
@@ -772,14 +867,27 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             break;
 
         case WINED3DSPR_ATTROUT:
+        /* case WINED3DSPR_OUTPUT: */
             if (pshader) sprintf(register_name, "oD[%u]", reg->idx);
-            else if (reg->idx == 0) strcpy(register_name, "result.color.primary");
-            else strcpy(register_name, "result.color.secondary");
+            else strcpy(register_name, ctx->color_output[reg->idx]);
             break;
 
         case WINED3DSPR_TEXCRDOUT:
-            if (pshader) sprintf(register_name, "oT[%u]", reg->idx);
-            else sprintf(register_name, "result.texcoord[%u]", reg->idx);
+            if (pshader)
+            {
+                sprintf(register_name, "oT[%u]", reg->idx);
+            }
+            else
+            {
+                if(This->baseShader.reg_maps.shader_version.major < 3)
+                {
+                    sprintf(register_name, ctx->texcrd_output[reg->idx]);
+                }
+                else
+                {
+                    sprintf(register_name, ctx->vs_output[reg->idx]);
+                }
+            }
             break;
 
         case WINED3DSPR_LOOP:
@@ -2321,11 +2429,11 @@ static void shader_hw_break(const struct wined3d_shader_instruction *ins)
 static void shader_hw_breakc(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
+    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
     const struct control_frame *control_frame = find_last_loop(ins->ctx->backend_data);
     char src_name0[50];
     char src_name1[50];
     const char *comp;
-    BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name0);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name1);
@@ -2611,6 +2719,80 @@ static const DWORD *find_loop_control_values(IWineD3DBaseShaderImpl *This, DWORD
     return NULL;
 }
 
+static void init_ps_input(const IWineD3DPixelShaderImpl *This, const struct arb_ps_compile_args *args,
+                          struct shader_arb_ctx_priv *priv)
+{
+    const char *texcoords[8] =
+    {
+        "fragment.texcoord[0]", "fragment.texcoord[1]", "fragment.texcoord[2]", "fragment.texcoord[3]",
+        "fragment.texcoord[4]", "fragment.texcoord[5]", "fragment.texcoord[6]", "fragment.texcoord[7]"
+    };
+    unsigned int i;
+    const struct wined3d_shader_signature_element *sig = This->input_signature;
+    const char *semantic_name;
+    DWORD semantic_idx;
+
+    switch(args->super.vp_mode)
+    {
+        case pretransformed:
+        case fixedfunction:
+            /* The pixelshader has to collect the varyings on its own. In any case properly load
+             * color0 and color1. In the case of pretransformed vertices also load texcoords. Set
+             * other attribs to 0.0.
+             *
+             * For fixedfunction this behavior is correct, according to the tests. For pretransformed
+             * we'd either need a replacement shader that can load other attribs like BINORMAL, or
+             * load the texcoord attrib pointers to match the pixel shader signature
+             */
+            for(i = 0; i < MAX_REG_INPUT; i++)
+            {
+                semantic_name = sig[i].semantic_name;
+                semantic_idx = sig[i].semantic_idx;
+                if(semantic_name == NULL) continue;
+
+                if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+                {
+                    if(semantic_idx == 0) priv->ps_input[i] = "fragment.color.primary";
+                    else if(semantic_idx == 1) priv->ps_input[i] = "fragment.color.secondary";
+                    else priv->ps_input[i] = "0.0";
+                }
+                else if(args->super.vp_mode == fixedfunction)
+                {
+                    priv->ps_input[i] = "0.0";
+                }
+                else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
+                {
+                    if(semantic_idx < 8) priv->ps_input[i] = texcoords[semantic_idx];
+                    else priv->ps_input[i] = "0.0";
+                }
+                else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
+                {
+                    if(semantic_idx == 0) priv->ps_input[i] = "fragment.fogcoord";
+                    else priv->ps_input[i] = "0.0";
+                }
+                else
+                {
+                    priv->ps_input[i] = "0.0";
+                }
+
+                TRACE("v%u, semantic %s%u is %s\n", i, semantic_name, semantic_idx, priv->ps_input[i]);
+            }
+            break;
+
+        case vertexshader:
+            /* That one is easy. The vertex shaders provide v0-v7 in fragment.texcoord and v8 and v9 in
+             * fragment.color
+             */
+            for(i = 0; i < 8; i++)
+            {
+                priv->ps_input[i] = texcoords[i];
+            }
+            priv->ps_input[8] = "fragment.color.primary";
+            priv->ps_input[9] = "fragment.color.secondary";
+            break;
+    }
+}
+
 /* GL locking is done by the caller */
 static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
         SHADER_BUFFER *buffer, const struct arb_ps_compile_args *args, struct arb_ps_compiled_shader *compiled)
@@ -2669,6 +2851,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_ps_args = args;
     priv_ctx.compiled_fprog = compiled;
+    init_ps_input(This, args, &priv_ctx);
     list_init(&priv_ctx.control_frames);
 
     /* Avoid enabling NV_fragment_program* if we do not need it.
@@ -2878,6 +3061,238 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     return retval;
 }
 
+static int compare_sig(const struct wined3d_shader_signature_element *sig1, const struct wined3d_shader_signature_element *sig2)
+{
+    unsigned int i;
+    int ret;
+
+    for(i = 0; i < MAX_REG_INPUT; i++)
+    {
+        if(sig1[i].semantic_name == NULL || sig2[i].semantic_name == NULL)
+        {
+            /* Compare pointers, not contents. One string is NULL(element does not exist), the other one is not NULL */
+            if(sig1[i].semantic_name != sig2[i].semantic_name) return sig1[i].semantic_name < sig2[i].semantic_name ? -1 : 1;
+            continue;
+        }
+
+        ret = strcmp(sig1[i].semantic_name, sig2[i].semantic_name);
+        if(ret != 0) return ret;
+        if(sig1[i].semantic_idx    != sig2[i].semantic_idx)    return sig1[i].semantic_idx    < sig2[i].semantic_idx    ? -1 : 1;
+        if(sig1[i].sysval_semantic != sig2[i].sysval_semantic) return sig1[i].sysval_semantic < sig2[i].sysval_semantic ? -1 : 1;
+        if(sig1[i].component_type  != sig2[i].component_type)  return sig1[i].sysval_semantic < sig2[i].component_type  ? -1 : 1;
+        if(sig1[i].register_idx    != sig2[i].register_idx)    return sig1[i].register_idx    < sig2[i].register_idx    ? -1 : 1;
+        if(sig1[i].mask            != sig2->mask)              return sig1[i].mask            < sig2[i].mask            ? -1 : 1;
+    }
+    return 0;
+}
+
+static struct wined3d_shader_signature_element *clone_sig(const struct wined3d_shader_signature_element *sig)
+{
+    struct wined3d_shader_signature_element *new;
+    int i;
+    char *name;
+
+    new = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*new) * MAX_REG_INPUT);
+    for(i = 0; i < MAX_REG_INPUT; i++)
+    {
+        if(sig[i].semantic_name == NULL)
+        {
+            continue;
+        }
+
+        new[i] = sig[i];
+        /* Clone the semantic string */
+        name = HeapAlloc(GetProcessHeap(), 0, strlen(sig[i].semantic_name) + 1);
+        strcpy(name, sig[i].semantic_name);
+        new[i].semantic_name = name;
+    }
+    return new;
+}
+
+static DWORD find_input_signature(struct shader_arb_priv *priv, const struct wined3d_shader_signature_element *sig)
+{
+    struct wine_rb_entry *entry = wine_rb_get(&priv->signature_tree, sig);
+    struct ps_signature *found_sig;
+
+    if(entry != NULL)
+    {
+        found_sig = WINE_RB_ENTRY_VALUE(entry, struct ps_signature, entry);
+        TRACE("Found existing signature %u\n", found_sig->idx);
+        return found_sig->idx;
+    }
+    found_sig = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*sig));
+    found_sig->sig = clone_sig(sig);
+    found_sig->idx = priv->ps_sig_number++;
+    TRACE("New signature stored and assigned number %u\n", found_sig->idx);
+    if(wine_rb_put(&priv->signature_tree, sig, &found_sig->entry) == -1)
+    {
+        ERR("Failed to insert program entry.\n");
+    }
+    return found_sig->idx;
+}
+
+static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_num, struct shader_arb_ctx_priv *priv_ctx)
+{
+    unsigned int i, j;
+    static const char *texcoords[8] =
+    {
+        "result.texcoord[0]", "result.texcoord[1]", "result.texcoord[2]", "result.texcoord[3]",
+        "result.texcoord[4]", "result.texcoord[5]", "result.texcoord[6]", "result.texcoord[7]"
+    };
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) shader->baseShader.device;
+    const struct wined3d_shader_signature_element *sig;
+    const char *semantic_name;
+    DWORD semantic_idx, reg_idx;
+
+    /* Write generic input varyings 0 to 7 to result.texcoord[], varying 8 to result.color.primary
+     * and varying 9 to result.color.secondary
+     */
+    const char *decl_idx_to_string[MAX_REG_INPUT] =
+    {
+        texcoords[0], texcoords[1], texcoords[2], texcoords[3],
+        texcoords[4], texcoords[5], texcoords[6], texcoords[7],
+        "result.color.primary", "result.color.secondary"
+    };
+
+    if(sig_num == ~0)
+    {
+        TRACE("Pixel shader uses builtin varyings\n");
+        /* Map builtins to builtins */
+        for(i = 0; i < 8; i++)
+        {
+            priv_ctx->texcrd_output[i] = texcoords[i];
+        }
+        priv_ctx->color_output[0] = "result.color.primary";
+        priv_ctx->color_output[1] = "result.color.secondary";
+        priv_ctx->fog_output = "result.fogcoord";
+
+        /* Map declared regs to builtins. Use "TA" to /dev/null unread output */
+        for(i = 0; i < (sizeof(shader->output_signature) / sizeof(*shader->output_signature)); i++)
+        {
+            semantic_name = shader->output_signature[i].semantic_name;
+            if(semantic_name == NULL) continue;
+
+            if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
+            {
+                TRACE("o%u is TMP_OUT\n", i);
+                if(shader->output_signature[i].semantic_idx == 0) priv_ctx->vs_output[i] = "TMP_OUT";
+                else priv_ctx->vs_output[i] = "TA";
+            }
+            else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
+            {
+                TRACE("o%u is result.pointsize\n", i);
+                if(shader->output_signature[i].semantic_idx == 0) priv_ctx->vs_output[i] = "result.pointsize";
+                else priv_ctx->vs_output[i] = "TA";
+            }
+            else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+            {
+                TRACE("o%u is result.color.?, idx %u\n", i, shader->output_signature[i].semantic_idx);
+                if(shader->output_signature[i].semantic_idx == 0) priv_ctx->vs_output[i] = "result.color.primary";
+                else if(shader->output_signature[i].semantic_idx == 1) priv_ctx->vs_output[i] = "result.color.secondary";
+                else priv_ctx->vs_output[i] = "TA";
+            }
+            else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
+            {
+                TRACE("o%u is %s\n", i, texcoords[shader->output_signature[i].semantic_idx]);
+                if(shader->output_signature[i].semantic_idx >= 8) priv_ctx->vs_output[i] = "TA";
+                else priv_ctx->vs_output[i] = texcoords[shader->output_signature[i].semantic_idx];
+            }
+            else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
+            {
+                TRACE("o%u is result.fogcoord\n", i);
+                if(shader->output_signature[i].semantic_idx > 0) priv_ctx->vs_output[i] = "TA";
+                else priv_ctx->vs_output[i] = "result.fogcoord";
+            }
+            else
+            {
+                priv_ctx->vs_output[i] = "TA";
+            }
+        }
+        return;
+    }
+
+    /* Instead of searching for the signature in the signature list, read the one from the current pixel shader.
+     * Its maybe not the shader where the signature came from, but it is the same signature and faster to find
+     */
+    sig = ((IWineD3DPixelShaderImpl *)device->stateBlock->pixelShader)->input_signature;
+    TRACE("Pixel shader uses declared varyings\n");
+
+    /* Map builtin to declared. /dev/null the results by default to the TA temp reg */
+    for(i = 0; i < 8; i++)
+    {
+        priv_ctx->texcrd_output[i] = "TA";
+    }
+    priv_ctx->color_output[0] = "TA";
+    priv_ctx->color_output[1] = "TA";
+    priv_ctx->fog_output = "TA";
+
+    for(i = 0; i < MAX_REG_INPUT; i++)
+    {
+        semantic_name = sig[i].semantic_name;
+        semantic_idx = sig[i].semantic_idx;
+        reg_idx = sig[i].register_idx;
+        if(semantic_name == NULL) continue;
+
+        /* If a declared input register is not written by builtin arguments, don't write to it.
+         * GL_NV_vertex_program makes sure the input defaults to 0.0, which is correct with D3D
+         *
+         * Don't care about POSITION and PSIZE here - this is a builtin vertex shader, position goes
+         * to TMP_OUT in any case
+         */
+        if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
+        {
+            if(semantic_idx < 8) priv_ctx->texcrd_output[semantic_idx] = decl_idx_to_string[reg_idx];
+        }
+        else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
+        {
+            if(semantic_idx < 2) priv_ctx->color_output[semantic_idx] = decl_idx_to_string[reg_idx];
+        }
+        else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
+        {
+            if(semantic_idx == 0) priv_ctx->fog_output = decl_idx_to_string[reg_idx];
+        }
+    }
+
+    /* Map declared to declared */
+    for(i = 0; i < (sizeof(shader->output_signature) / sizeof(*shader->output_signature)); i++)
+    {
+        /* Write unread output to TA to throw them away */
+        priv_ctx->vs_output[i] = "TA";
+        semantic_name = shader->output_signature[i].semantic_name;
+        if(semantic_name == NULL)
+        {
+            continue;
+        }
+
+        if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION) &&
+           shader->output_signature[i].semantic_idx == 0)
+        {
+            priv_ctx->vs_output[i] = "TMP_OUT";
+            continue;
+        }
+        else if(shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE) &&
+           shader->output_signature[i].semantic_idx == 0)
+        {
+            priv_ctx->vs_output[i] = "result.pointsize";
+            continue;
+        }
+
+        for(j = 0; j < MAX_REG_INPUT; j++)
+        {
+            if(sig[j].semantic_name == NULL)
+            {
+                continue;
+            }
+
+            if(strcmp(sig[j].semantic_name, semantic_name) == 0 &&
+               sig[j].semantic_idx == shader->output_signature[i].semantic_idx)
+            {
+                priv_ctx->vs_output[i] = decl_idx_to_string[sig[j].register_idx];
+            }
+        }
+    }
+}
+
 /* GL locking is done by the caller */
 static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
         SHADER_BUFFER *buffer, const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled)
@@ -2888,13 +3303,14 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
     const local_constant *lconst;
     GLuint ret;
-    DWORD *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This), next_local;
+    DWORD next_local, *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
     struct shader_arb_ctx_priv priv_ctx;
     unsigned int i;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
     list_init(&priv_ctx.control_frames);
+    init_output_registers(This, args->ps_signature, &priv_ctx);
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
@@ -3120,6 +3536,7 @@ static inline BOOL vs_args_equal(const struct arb_vs_compile_args *stored, const
     if((stored->super.swizzle_map & use_map) != new->super.swizzle_map) return FALSE;
     if(stored->super.fog_src != new->super.fog_src) return FALSE;
     if(stored->bools != new->bools) return FALSE;
+    if(stored->ps_signature != new->ps_signature) return FALSE;
     if(skip_int) return TRUE;
 
     return memcmp(stored->loop_ctrl, new->loop_ctrl, sizeof(stored->loop_ctrl)) == 0;
@@ -3235,6 +3652,14 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     /* This forces all local boolean constants to 1 to make them stateblock independent */
     args->bools = shader->baseShader.reg_maps.local_bool_consts;
 
+    if(use_ps(stateblock))
+    {
+        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) stateblock->pixelShader;
+        struct arb_pshader_private *shader_priv = ps->backend_priv;
+        args->ps_signature = shader_priv->input_signature_idx;
+    }
+    else args->ps_signature = ~0;
+
     /* TODO: Figure out if it would be better to store bool constants as bitmasks in the stateblock */
     for(i = 0; i < MAX_CONST_B; i++)
     {
@@ -3272,6 +3697,51 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     struct shader_arb_priv *priv = This->shader_priv;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
 
+    /* Deal with pixel shaders first so the vertex shader arg function has the input signature ready */
+    if (usePS) {
+        struct arb_ps_compile_args compile_args;
+        struct arb_ps_compiled_shader *compiled;
+        struct arb_pshader_private *shader_priv;
+        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader;
+
+        TRACE("Using pixel shader %p\n", This->stateBlock->pixelShader);
+        find_arb_ps_compile_args(ps, This->stateBlock, &compile_args);
+        compiled = find_arb_pshader(ps, &compile_args);
+        priv->current_fprogram_id = compiled->prgId;
+        priv->compiled_fprog = compiled;
+
+        shader_priv = ps->backend_priv;
+        if(!shader_priv->has_signature_idx)
+        {
+            if(ps->baseShader.reg_maps.shader_version.major < 3) shader_priv->input_signature_idx = ~0;
+            else shader_priv->input_signature_idx = find_input_signature(priv, ps->input_signature);
+
+            shader_priv->has_signature_idx = TRUE;
+            TRACE("Shader got assigned input signature index %u\n", shader_priv->input_signature_idx);
+        }
+
+        /* Bind the fragment program */
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
+        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id);");
+
+        if(!priv->use_arbfp_fixed_func) {
+            /* Enable OpenGL fragment programs */
+            glEnable(GL_FRAGMENT_PROGRAM_ARB);
+            checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
+        }
+        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
+
+        shader_arb_ps_local_constants(This);
+    } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
+        /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
+        * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
+        * replacement shader
+        */
+        glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
+        priv->current_fprogram_id = 0;
+    }
+
     if (useVS) {
         struct arb_vs_compile_args compile_args;
         struct arb_vs_compiled_shader *compiled;
@@ -3295,38 +3765,6 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         priv->current_vprogram_id = 0;
         glDisable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
-    }
-
-    if (usePS) {
-        struct arb_ps_compile_args compile_args;
-        struct arb_ps_compiled_shader *compiled;
-        TRACE("Using pixel shader\n");
-        find_arb_ps_compile_args((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader, This->stateBlock, &compile_args);
-        compiled = find_arb_pshader((IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader,
-                                    &compile_args);
-        priv->current_fprogram_id = compiled->prgId;
-        priv->compiled_fprog = compiled;
-
-        /* Bind the fragment program */
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
-        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id);");
-
-        if(!priv->use_arbfp_fixed_func) {
-            /* Enable OpenGL fragment programs */
-            glEnable(GL_FRAGMENT_PROGRAM_ARB);
-            checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-        }
-        TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
-
-        shader_arb_ps_local_constants(This);
-    } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
-        /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
-         * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
-         * replacement shader
-         */
-        glDisable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
-        priv->current_fprogram_id = 0;
     }
 }
 
@@ -3420,10 +3858,43 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     }
 }
 
+static int sig_tree_compare(const void *key, const struct wine_rb_entry *entry)
+{
+    struct ps_signature *e = WINE_RB_ENTRY_VALUE(entry, struct ps_signature, entry);
+    return compare_sig(key, e->sig);
+}
+
+struct wine_rb_functions sig_tree_functions =
+{
+    wined3d_rb_alloc,
+    wined3d_rb_realloc,
+    wined3d_rb_free,
+    sig_tree_compare
+};
+
 static HRESULT shader_arb_alloc(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    This->shader_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_arb_priv));
+    struct shader_arb_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*priv));
+    if(wine_rb_init(&priv->signature_tree, &sig_tree_functions) == -1)
+    {
+        ERR("RB tree init failed\n");
+        HeapFree(GetProcessHeap(), 0, priv);
+        return E_OUTOFMEMORY;
+    }
+    This->shader_priv = priv;
     return WINED3D_OK;
+}
+
+static void release_signature(struct wine_rb_entry *entry, void *context)
+{
+    struct ps_signature *sig = WINE_RB_ENTRY_VALUE(entry, struct ps_signature, entry);
+    int i;
+    for(i = 0; i < MAX_REG_INPUT; i++)
+    {
+        HeapFree(GetProcessHeap(), 0, (char *) sig->sig[i].semantic_name);
+    }
+    HeapFree(GetProcessHeap(), 0, sig->sig);
+    HeapFree(GetProcessHeap(), 0, sig);
 }
 
 static void shader_arb_free(IWineD3DDevice *iface) {
@@ -3443,6 +3914,7 @@ static void shader_arb_free(IWineD3DDevice *iface) {
     }
     LEAVE_GL();
 
+    wine_rb_destroy(&priv->signature_tree, release_signature, NULL);
     HeapFree(GetProcessHeap(), 0, This->shader_priv);
 }
 
