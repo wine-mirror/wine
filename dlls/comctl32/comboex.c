@@ -860,10 +860,12 @@ COMBOEX_FindStringExact (COMBOEX_INFO *infoPtr, INT start, LPCWSTR str)
     /* now search from after starting loc and wrapping back to start */
     for(i=start+1; i<count; i++) {
 	CBE_ITEMDATA *item = get_item_data(infoPtr, i);
+	if ((LRESULT)item == CB_ERR) continue;
 	if (cmptext(COMBOEX_GetText(infoPtr, item), str) == 0) return i;
     }
     for(i=0; i<=start; i++) {
 	CBE_ITEMDATA *item = get_item_data(infoPtr, i);
+	if ((LRESULT)item == CB_ERR) continue;
 	if (cmptext(COMBOEX_GetText(infoPtr, item), str) == 0) return i;
     }
     return CB_ERR;
