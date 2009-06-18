@@ -189,10 +189,8 @@ static void print_glsl_info_log(const WineD3D_GL_Info *gl_info, GLhandleARB obj)
         "Vertex shader(s) linked, no fragment shader(s) defined. \n ",      /* fglrx, with \n */
         "Vertex shader(s) linked, no fragment shader(s) defined.",          /* fglrx, no \n   */
         "Fragment shader was successfully compiled to run on hardware.\n"
-        "WARNING: 0:2: extension 'GL_ARB_draw_buffers' is not supported",
         "Fragment shader(s) linked, no vertex shader(s) defined.",          /* fglrx, no \n   */
         "Fragment shader(s) linked, no vertex shader(s) defined. \n ",      /* fglrx, with \n */
-        "WARNING: 0:2: extension 'GL_ARB_draw_buffers' is not supported\n"  /* MacOS ati      */
     };
 
     if (!TRACE_ON(d3d_shader) && !FIXME_ON(d3d_shader)) return;
@@ -1258,9 +1256,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             if (reg->idx >= GL_LIMITS(buffers))
                 WARN("Write to render target %u, only %d supported\n", reg->idx, GL_LIMITS(buffers));
 
-            if (GL_SUPPORT(ARB_DRAW_BUFFERS)) sprintf(register_name, "gl_FragData[%u]", reg->idx);
-            /* On older cards with GLSL support like the GeforceFX there's only one buffer. */
-            else sprintf(register_name, "gl_FragColor");
+            sprintf(register_name, "gl_FragData[%u]", reg->idx);
             break;
 
         case WINED3DSPR_RASTOUT:
@@ -3647,9 +3643,6 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShaderImpl *This,
 
     shader_addline(buffer, "#version 120\n");
 
-    if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
-        shader_addline(buffer, "#extension GL_ARB_draw_buffers : enable\n");
-    }
     if(GL_SUPPORT(ARB_SHADER_TEXTURE_LOD) && reg_maps->usestexldd) {
         shader_addline(buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
     }
@@ -3676,17 +3669,10 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShaderImpl *This,
     if (reg_maps->shader_version.major < 2)
     {
         /* Some older cards like GeforceFX ones don't support multiple buffers, so also not gl_FragData */
-        if(GL_SUPPORT(ARB_DRAW_BUFFERS))
-            shader_addline(buffer, "gl_FragData[0] = R0;\n");
-        else
-            shader_addline(buffer, "gl_FragColor = R0;\n");
+        shader_addline(buffer, "gl_FragData[0] = R0;\n");
     }
 
-    if(GL_SUPPORT(ARB_DRAW_BUFFERS)) {
-        fragcolor = "gl_FragData[0]";
-    } else {
-        fragcolor = "gl_FragColor";
-    }
+    fragcolor = "gl_FragData[0]";
     if(args->srgb_correction) {
         shader_addline(buffer, "tmp0.xyz = pow(%s.xyz, vec3(%f, %f, %f)) * vec3(%f, %f, %f) - vec3(%f, %f, %f);\n",
                         fragcolor, srgb_pow, srgb_pow, srgb_pow, srgb_mul_high, srgb_mul_high, srgb_mul_high,
