@@ -1158,6 +1158,20 @@ static void test_Rfc1766ToLcid(void)
 
 }
 
+static void test_GetNumberOfCodePageInfo(IMultiLanguage2 *iML2)
+{
+    HRESULT hr;
+    UINT value;
+
+    value = 0xdeadbeef;
+    hr = IMultiLanguage2_GetNumberOfCodePageInfo(iML2, &value);
+    ok( (hr == S_OK) && value,
+        "got 0x%x with %d (expected S_OK with '!= 0')\n", hr, value);
+
+    hr = IMultiLanguage2_GetNumberOfCodePageInfo(iML2, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
+
+}
 
 static void test_GetRfc1766FromLcid(IMultiLanguage2 *iML2)
 {
@@ -1858,6 +1872,7 @@ static void test_GetScriptFontInfo(IMLangFontLink2 *font_link)
 
 START_TEST(mlang)
 {
+    IMultiLanguage  *iML = NULL;
     IMultiLanguage2 *iML2 = NULL;
     IMLangFontLink  *iMLFL = NULL;
     IMLangFontLink2 *iMLFL2 = NULL;
@@ -1870,6 +1885,21 @@ START_TEST(mlang)
     test_Rfc1766ToLcid();
     test_LcidToRfc1766();
 
+    test_ConvertINetUnicodeToMultiByte();
+    test_JapaneseConversion();
+
+
+    trace("IMultiLanguage\n");
+    ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
+                           &IID_IMultiLanguage, (void **)&iML);
+    if (ret != S_OK || !iML) return;
+
+    test_GetNumberOfCodePageInfo((IMultiLanguage2 *)iML);
+    IMultiLanguage_Release(iML);
+
+
+    /* IMultiLanguage2 (IE5.0 and above) */
+    trace("IMultiLanguage2\n");
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMultiLanguage2, (void **)&iML2);
     if (ret != S_OK || !iML2) return;
@@ -1878,6 +1908,7 @@ START_TEST(mlang)
     test_GetLcidFromRfc1766(iML2);
     test_GetRfc1766FromLcid(iML2);
     test_GetRfc1766Info(iML2);
+    test_GetNumberOfCodePageInfo(iML2);
 
     test_EnumCodePages(iML2, 0);
     test_EnumCodePages(iML2, MIMECONTF_MIME_LATEST);
@@ -1901,10 +1932,8 @@ START_TEST(mlang)
 
     IMultiLanguage2_Release(iML2);
 
-    test_ConvertINetUnicodeToMultiByte();
 
-    test_JapaneseConversion();
-
+    /* IMLangFontLink */
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMLangFontLink, (void **)&iMLFL);
     if (ret != S_OK || !iMLFL) return;
@@ -1912,6 +1941,7 @@ START_TEST(mlang)
     IMLangFontLink_Test(iMLFL);
     IMLangFontLink_Release(iMLFL);
 
+    /* IMLangFontLink2 */
     ret = CoCreateInstance(&CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER,
                            &IID_IMLangFontLink2, (void **)&iMLFL2);
     if (ret != S_OK || !iMLFL2) return;

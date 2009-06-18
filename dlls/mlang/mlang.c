@@ -2141,8 +2141,14 @@ static HRESULT WINAPI fnIMultiLanguage_GetNumberOfCodePageInfo(
     IMultiLanguage* iface,
     UINT* pcCodePage)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    MLang_impl *This = impl_from_IMultiLanguage( iface );
+
+    TRACE("(%p, %p)\n", This, pcCodePage);
+
+    if (!pcCodePage) return E_INVALIDARG;
+
+    *pcCodePage = This->total_cp;
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMultiLanguage_GetCodePageInfo(
@@ -2640,7 +2646,7 @@ static HRESULT WINAPI fnIMultiLanguage2_GetNumberOfCodePageInfo(
 
     TRACE("%p, %p\n", This, pcCodePage);
 
-    if (!pcCodePage) return S_FALSE;
+    if (!pcCodePage) return E_INVALIDARG;
 
     *pcCodePage = This->total_cp;
     return S_OK;
