@@ -211,8 +211,16 @@ static void test_pointer_marshal(const unsigned char *formattypes,
 
     ptr = NdrPointerMarshall( &StubMsg,  memsrc, formattypes );
     ok(ptr == NULL, "%s: ret %p\n", msgpfx, ptr);
-    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
-    ok(!memcmp(StubMsg.BufferStart, wiredata, wiredatalen), "%s: incorrectly marshaled\n", msgpfx);
+    if (srcsize == 8 && wiredatalen == 16 && StubMsg.Buffer - StubMsg.BufferStart == 12)
+    {
+        /* win9x doesn't align 8-byte types properly */
+        wiredatalen = 12;
+    }
+    else
+    {
+        ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
+        ok(!memcmp(StubMsg.BufferStart, wiredata, wiredatalen), "%s: incorrectly marshaled\n", msgpfx);
+    }
 
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
