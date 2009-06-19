@@ -39,6 +39,40 @@
 #define expect2(expected1, expected2, got1, got2) ok(expected1 == got1 && expected2 == got2, \
        "expected (%d,%d), got (%d,%d)\n", expected1, expected2, got1, got2)
 
+#ifdef __i386__
+#define ARCH "x86"
+#elif defined __x86_64__
+#define ARCH "amd64"
+#else
+#define ARCH "none"
+#endif
+
+static const CHAR manifest_name[] = "cc6.manifest";
+
+static const CHAR manifest[] =
+    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+    "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">\n"
+    "  <assemblyIdentity\n"
+    "      type=\"win32\"\n"
+    "      name=\"Wine.ComCtl32.Tests\"\n"
+    "      version=\"1.0.0.0\"\n"
+    "      processorArchitecture=\"" ARCH "\"\n"
+    "  />\n"
+    "<description>Wine comctl32 test suite</description>\n"
+    "<dependency>\n"
+    "  <dependentAssembly>\n"
+    "    <assemblyIdentity\n"
+    "        type=\"win32\"\n"
+    "        name=\"microsoft.windows.common-controls\"\n"
+    "        version=\"6.0.0.0\"\n"
+    "        processorArchitecture=\"" ARCH "\"\n"
+    "        publicKeyToken=\"6595b64144ccf1df\"\n"
+    "        language=\"*\"\n"
+    "    />\n"
+    "</dependentAssembly>\n"
+    "</dependency>\n"
+    "</assembly>\n";
+
 static const WCHAR testparentclassW[] =
     {'L','i','s','t','v','i','e','w',' ','t','e','s','t',' ','p','a','r','e','n','t','W', 0};
 
@@ -3374,10 +3408,138 @@ static BOOL is_below_comctl_5(void)
     return !ret;
 }
 
+static BOOL load_v6_module(ULONG_PTR *pcookie)
+{
+    HANDLE hKernel32;
+    HANDLE (WINAPI *pCreateActCtxA)(ACTCTXA*);
+    BOOL (WINAPI *pActivateActCtx)(HANDLE, ULONG_PTR*);
+
+    ACTCTXA ctx;
+    HANDLE hCtx;
+    BOOL ret;
+    HANDLE file;
+    DWORD written;
+
+    hKernel32 = GetModuleHandleA("kernel32.dll");
+    pCreateActCtxA = (void*)GetProcAddress(hKernel32, "CreateActCtxA");
+    pActivateActCtx = (void*)GetProcAddress(hKernel32, "ActivateActCtx");
+    if (!(pCreateActCtxA && pActivateActCtx))
+    {
+        win_skip("Activation contexts unsupported. No version 6 tests possible.\n");
+        return FALSE;
+    }
+
+    /* create manifest */
+    file = CreateFileA( manifest_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL );
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        ret = (WriteFile( file, manifest, sizeof(manifest)-1, &written, NULL ) &&
+               written == sizeof(manifest)-1);
+        CloseHandle( file );
+        if (!ret)
+        {
+            DeleteFileA( manifest_name );
+            skip("Failed to fill manifest file. Skipping comctl32 V6 tests.\n");
+            return FALSE;
+        }
+        else
+            trace("created %s\n", manifest_name);
+    }
+    else
+    {
+        skip("Failed to create manifest file. Skipping comctl32 V6 tests.\n");
+        return FALSE;
+    }
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.cbSize = sizeof(ctx);
+    ctx.lpSource = manifest_name;
+
+    hCtx = pCreateActCtxA(&ctx);
+    ok(hCtx != 0, "Expected context handle\n");
+
+    ret = pActivateActCtx(hCtx, pcookie);
+    expect(TRUE, ret);
+
+    if (!ret)
+    {
+        win_skip("A problem during context activation occured.\n");
+        DeleteFileA(manifest_name);
+    }
+
+    return ret;
+}
+
+static void unload_v6_module(ULONG_PTR cookie)
+{
+    HANDLE hKernel32;
+    BOOL (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
+
+    hKernel32 = GetModuleHandleA("kernel32.dll");
+    pDeactivateActCtx = (void*)GetProcAddress(hKernel32, "DeactivateActCtx");
+    if (!pDeactivateActCtx)
+    {
+        win_skip("Activation contexts unsupported\n");
+        return;
+    }
+
+    pDeactivateActCtx(0, cookie);
+
+    DeleteFileA(manifest_name);
+}
+
+static void test_get_set_view(void)
+{
+    HWND hwnd;
+    DWORD ret;
+    DWORD_PTR style;
+
+    /* test style->view mapping */
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    ret = SendMessage(hwnd, LVM_GETVIEW, 0, 0);
+    expect(LV_VIEW_DETAILS, ret);
+
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    /* LVS_ICON == 0 */
+    SetWindowLongPtr(hwnd, GWL_STYLE, style & ~LVS_REPORT);
+    ret = SendMessage(hwnd, LVM_GETVIEW, 0, 0);
+    expect(LV_VIEW_ICON, ret);
+
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    SetWindowLongPtr(hwnd, GWL_STYLE, style | LVS_SMALLICON);
+    ret = SendMessage(hwnd, LVM_GETVIEW, 0, 0);
+    expect(LV_VIEW_SMALLICON, ret);
+
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    SetWindowLongPtr(hwnd, GWL_STYLE, (style & ~LVS_SMALLICON) | LVS_LIST);
+    ret = SendMessage(hwnd, LVM_GETVIEW, 0, 0);
+    expect(LV_VIEW_LIST, ret);
+
+    /* switching view doesn't touch window style */
+    ret = SendMessage(hwnd, LVM_SETVIEW, LV_VIEW_DETAILS, 0);
+    expect(1, ret);
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    ok(style & LVS_LIST, "Expected style to be preserved\n");
+    ret = SendMessage(hwnd, LVM_SETVIEW, LV_VIEW_ICON, 0);
+    expect(1, ret);
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    ok(style & LVS_LIST, "Expected style to be preserved\n");
+    ret = SendMessage(hwnd, LVM_SETVIEW, LV_VIEW_SMALLICON, 0);
+    expect(1, ret);
+    style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    ok(style & LVS_LIST, "Expected style to be preserved\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
+
+    ULONG_PTR ctx_cookie;
 
     hComctl32 = GetModuleHandleA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
@@ -3427,6 +3589,17 @@ START_TEST(listview)
     test_editbox();
     test_notifyformat();
     test_indentation();
+
+    if (!load_v6_module(&ctx_cookie))
+    {
+        DestroyWindow(hwndparent);
+        return;
+    }
+
+    /* comctl32 version 6 tests start here */
+    test_get_set_view();
+
+    unload_v6_module(ctx_cookie);
 
     DestroyWindow(hwndparent);
 }
