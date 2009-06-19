@@ -221,7 +221,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
-        ok(size == srcsize + 4, "%s: mem size %u\n", msgpfx, size);
+        ok(size == srcsize + sizeof(void *), "%s: mem size %u\n", msgpfx, size);
     else
         ok(size == srcsize, "%s: mem size %u\n", msgpfx, size);
 
@@ -231,7 +231,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
-        ok(size == srcsize + 4 + 16, "%s: mem size %u\n", msgpfx, size);
+        ok(size == srcsize + sizeof(void *) + 16, "%s: mem size %u\n", msgpfx, size);
     else
         ok(size == srcsize + 16, "%s: mem size %u\n", msgpfx, size);
 
@@ -241,9 +241,9 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %d\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
-        ok(size == srcsize + 4 + (srcsize == 8 ? 8 : 4), "%s: mem size %u\n", msgpfx, size);
+        ok(size == srcsize + sizeof(void *) + (srcsize == 8 ? 8 : sizeof(void *)), "%s: mem size %u\n", msgpfx, size);
     else
-        ok(size == srcsize + (srcsize == 8 ? 8 : 4), "%s: mem size %u\n", msgpfx, size);
+        ok(size == srcsize + (srcsize == 8 ? 8 : sizeof(void *)), "%s: mem size %u\n", msgpfx, size);
 
     size = srcsize;
     if(formattypes[1] & 0x10) size += 4;
@@ -901,6 +901,25 @@ static void test_simple_struct(void)
     { 
         0x12, 0x0,      /* FC_UP */
         NdrFcShort( 0x2 ), /* Offset=2 */
+#ifdef _WIN64
+        0x1a,	/* FC_BOGUS_STRUCT */
+        0x3,	/* 3 */
+        NdrFcShort(0x18),	/* [size 24] */
+        NdrFcShort(0x0),
+        NdrFcShort(0x8),	/* Offset= 8 (266) */
+        0x08,	/* FC_LONG */
+        0x39,	/* FC_ALIGNM8 */
+        0x36,	/* FC_POINTER */
+        0x36,	/* FC_POINTER */
+        0x5c,		/* FC_PAD */
+        0x5b,		/* FC_END */
+        0x12, 0x8,	/* FC_UP [simple_pointer] */
+        0x08,	/* FC_LONG */
+        0x5c,	/* FC_PAD */
+        0x12, 0x8,	/* FC_UP [simple_pointer] */
+        0x02,	/* FC_CHAR */
+        0x5c,	/* FC_PAD */
+#else
         0x16, 0x3,      /* FC_PSTRUCT [align 4] */
         NdrFcShort( 0xc ),      /* [size 12] */
         0x4b,		/* FC_PP */
@@ -925,7 +944,7 @@ static void test_simple_struct(void)
         0x8,		/* FC_LONG */
         0x5c,		/* FC_PAD */
         0x5b,		/* FC_END */
-
+#endif
     };
 
     /* zero the entire structure, including the holes */
@@ -948,6 +967,8 @@ static void test_simple_struct(void)
         *(unsigned int *)wiredata = (UINT_PTR)&s1;
     memcpy(wiredata + 4, &s1, wiredatalen);
     test_pointer_marshal(fmtstr_simple_struct, &s1, 24, wiredata, 28, NULL, 0, "struct");
+
+    if (sizeof(void *) == 8) return;  /* it cannot be represented as a simple struct on Win64 */
 
     /* zero the entire structure, including the hole */
     memset(&ps1, 0, sizeof(ps1));
@@ -1570,7 +1591,7 @@ todo_wine {
 }
 
     my_alloc_called = 0;
-    mem = mem_orig;
+    mem = mem_orig = HeapAlloc(GetProcessHeap(), 0, sizeof(memsrc));
     StubMsg.Buffer = StubMsg.BufferStart;
     NdrPointerUnmarshall( &StubMsg, &mem, fmtstr_conf_str, 0);
     ok(mem == StubMsg.BufferStart + 12 || broken(!mem), /* win9x, nt4 */
