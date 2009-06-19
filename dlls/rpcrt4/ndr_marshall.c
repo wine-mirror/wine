@@ -1562,7 +1562,7 @@ ULONG WINAPI NdrPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
         ALIGN_POINTER(pStubMsg->Buffer, 4);
         safe_buffer_increment(pStubMsg, 4);
     }
-    ALIGN_LENGTH(pStubMsg->MemorySize, 4);
+    ALIGN_LENGTH(pStubMsg->MemorySize, sizeof(void *));
     return PointerMemorySize(pStubMsg, Buffer, pFormat);
 }
 
@@ -2724,7 +2724,7 @@ static unsigned char * ComplexMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       }
       TRACE("pStubMsg->Buffer after %p\n", pStubMsg->Buffer);
       pPointer += 4;
-      pMemory += 4;
+      pMemory += sizeof(void *);
       break;
     }
     case RPC_FC_ALIGNM4:
@@ -2849,7 +2849,7 @@ static unsigned char * ComplexUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
           safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
       }
       pPointer += 4;
-      pMemory += 4;
+      pMemory += sizeof(void *);
       break;
     }
     case RPC_FC_ALIGNM4:
@@ -2964,7 +2964,7 @@ static unsigned char * ComplexBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
         safe_buffer_length_increment(pStubMsg, 4);
       }
       pPointer += 4;
-      pMemory += 4;
+      pMemory += sizeof(void*);
       break;
     case RPC_FC_ALIGNM4:
       ALIGN_POINTER(pMemory, 4);
@@ -3047,7 +3047,7 @@ static unsigned char * ComplexFree(PMIDL_STUB_MESSAGE pStubMsg,
     case RPC_FC_POINTER:
       NdrPointerFree(pStubMsg, *(unsigned char**)pMemory, pPointer);
       pPointer += 4;
-      pMemory += 4;
+      pMemory += sizeof(void *);
       break;
     case RPC_FC_ALIGNM4:
       ALIGN_POINTER(pMemory, 4);
@@ -3158,7 +3158,7 @@ static ULONG ComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
           safe_buffer_increment(pStubMsg, 4); /* for pointer ID */
       }
       pPointer += 4;
-      size += 4;
+      size += sizeof(void *);
       break;
     }
     case RPC_FC_ALIGNM4:
@@ -5684,8 +5684,8 @@ static ULONG union_arm_memory_size(PMIDL_STUB_MESSAGE pStubMsg,
                 ALIGN_POINTER(pStubMsg->Buffer, 4);
                 saved_buffer = pStubMsg->Buffer;
                 safe_buffer_increment(pStubMsg, 4);
-                ALIGN_LENGTH(pStubMsg->MemorySize, 4);
-                pStubMsg->MemorySize += 4;
+                ALIGN_LENGTH(pStubMsg->MemorySize, sizeof(void *));
+                pStubMsg->MemorySize += sizeof(void *);
                 if (!pStubMsg->IgnoreEmbeddedPointers)
                     PointerMemorySize(pStubMsg, saved_buffer, pFormat);
                 break;
