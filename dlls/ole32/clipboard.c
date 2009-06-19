@@ -744,6 +744,30 @@ static HRESULT get_data_from_global(IDataObject *data, FORMATETC *fmt, HGLOBAL *
     return hr;
 }
 
+static HRESULT get_data_from_enhmetafile(IDataObject *data, FORMATETC *fmt, HGLOBAL *mem)
+{
+    HENHMETAFILE copy;
+    HRESULT hr;
+    FORMATETC mem_fmt;
+    STGMEDIUM med;
+
+    *mem = NULL;
+
+    mem_fmt = *fmt;
+    mem_fmt.tymed = TYMED_ENHMF;
+
+    hr = IDataObject_GetData(data, &mem_fmt, &med);
+    if(FAILED(hr)) return hr;
+
+    copy = CopyEnhMetaFileW(med.u.hEnhMetaFile, NULL);
+    if(copy) *mem = (HGLOBAL)copy;
+    else hr = E_FAIL;
+
+    ReleaseStgMedium(&med);
+
+    return hr;
+}
+
 /***********************************************************************
  *                render_format
  *
@@ -772,6 +796,10 @@ static HRESULT render_format(IDataObject *data, LPFORMATETC fmt)
     else if(fmt->tymed & TYMED_HGLOBAL)
     {
         hr = get_data_from_global(data, fmt, &clip_data);
+    }
+    else if(fmt->tymed & TYMED_ENHMF)
+    {
+        hr = get_data_from_enhmetafile(data, fmt, &clip_data);
     }
     else
     {
