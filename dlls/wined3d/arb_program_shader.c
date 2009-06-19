@@ -1520,6 +1520,10 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
         shader_addline(buffer, "ABS TA%s, %s;\n", write_mask, src0_param);
         shader_addline(buffer, "ADD TA%s, TA, mova_const.x;\n", write_mask);
         shader_addline(buffer, "FLR TA%s, TA;\n", write_mask);
+        if (((IWineD3DVertexShaderImpl *)shader)->rel_offset)
+        {
+            shader_addline(buffer, "ADD TA%s, TA, helper_const.z;\n", write_mask);
+        }
         shader_addline(buffer, "MUL A0_SHADOW%s, TA, A0_SHADOW;\n", write_mask);
 
         ((struct shader_arb_ctx_priv *)ins->ctx->backend_data)->addr_reg[0] = '\0';
