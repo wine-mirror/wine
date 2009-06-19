@@ -48,9 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 #ifdef HAVE_GL_GLX_H
 # include <GL/glx.h>
 #endif
-#ifdef HAVE_GL_GLEXT_H
-# include <GL/glext.h>
-#endif
 
 #include "wine/wgl.h"
 

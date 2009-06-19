@@ -850,7 +850,7 @@ then
     opengl_msg=""
     if test "x$with_opengl" != "xno"
     then
-	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glext.h GL/glu.h,,,
+	AC_CHECK_HEADERS(GL/gl.h GL/glx.h GL/glu.h,,,
 [#ifdef HAVE_GL_GLX_H
 # include <GL/glx.h>
 #endif])

@@ -11317,8 +11317,7 @@ fi
 
 
 
-
-for ac_header in GL/gl.h GL/glx.h GL/glext.h GL/glu.h
+for ac_header in GL/gl.h GL/glx.h GL/glu.h
 do
 as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for $ac_header" >&5
