@@ -172,6 +172,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "XdndTypeList",
     "WCF_DIB",
     "image/gif",
+    "image/png",
     "text/html",
     "text/plain",
     "text/rtf",
