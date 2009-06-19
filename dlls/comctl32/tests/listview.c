@@ -3534,6 +3534,55 @@ static void test_get_set_view(void)
     DestroyWindow(hwnd);
 }
 
+static void test_canceleditlabel(void)
+{
+    HWND hwnd, hwndedit;
+    DWORD ret;
+    CHAR buff[10];
+    LVITEMA itema;
+    static CHAR test[] = "test";
+    static const CHAR test1[] = "test1";
+
+    hwnd = create_listview_control(LVS_EDITLABELS);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    insert_item(hwnd, 0);
+
+    /* try without edit created */
+    ret = SendMessage(hwnd, LVM_CANCELEDITLABEL, 0, 0);
+    expect(TRUE, ret);
+
+    /* cancel without data change */
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected edit control to be created\n");
+    ret = SendMessage(hwnd, LVM_CANCELEDITLABEL, 0, 0);
+    expect(TRUE, ret);
+    ok(!IsWindow(hwndedit), "Expected edit control to be destroyed\n");
+
+    /* cancel after data change */
+    memset(&itema, 0, sizeof(itema));
+    itema.pszText = test;
+    ret = SendMessage(hwnd, LVM_SETITEMTEXT, 0, (LPARAM)&itema);
+    expect(TRUE, ret);
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
+    ok(IsWindow(hwndedit), "Expected edit control to be created\n");
+    ret = SetWindowText(hwndedit, test1);
+    ok(ret != 0, "Expected edit text to change\n");
+    ret = SendMessage(hwnd, LVM_CANCELEDITLABEL, 0, 0);
+    expect(TRUE, ret);
+    ok(!IsWindow(hwndedit), "Expected edit control to be destroyed\n");
+    memset(&itema, 0, sizeof(itema));
+    itema.pszText = buff;
+    itema.cchTextMax = sizeof(buff)/sizeof(CHAR);
+    ret = SendMessage(hwnd, LVM_GETITEMTEXT, 0, (LPARAM)&itema);
+    expect(5, ret);
+    ok(strcmp(buff, test1) == 0, "Expected label text not to change\n");
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -3598,6 +3647,7 @@ START_TEST(listview)
 
     /* comctl32 version 6 tests start here */
     test_get_set_view();
+    test_canceleditlabel();
 
     unload_v6_module(ctx_cookie);
 

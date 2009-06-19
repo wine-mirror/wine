@@ -106,7 +106,6 @@
  *   -- LVN_BEGINRDRAG
  *
  * Messages:
- *   -- LVM_CANCELEDITLABEL
  *   -- LVM_ENABLEGROUPVIEW
  *   -- LVM_GETBKIMAGE, LVM_SETBKIMAGE
  *   -- LVM_GETGROUPINFO, LVM_SETGROUPINFO
@@ -419,6 +418,7 @@ static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *, INT, BOOL);
 static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, BOOL);
 static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *, INT, HIMAGELIST);
 static INT LISTVIEW_HitTest(const LISTVIEW_INFO *, LPLVHITTESTINFO, BOOL, BOOL);
+static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *, BOOL, BOOL);
 
 /******** Text handling functions *************************************/
 
@@ -4591,6 +4591,26 @@ static DWORD LISTVIEW_ApproximateViewRect(const LISTVIEW_INFO *infoPtr, INT nIte
   return dwViewRect;
 }
 
+/***
+ * DESCRIPTION:
+ * Cancel edit label with saving item text.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ *
+ * RETURN:
+ * Always returns TRUE.
+ */
+static LRESULT LISTVIEW_CancelEditLabel(LISTVIEW_INFO *infoPtr)
+{
+    /* handle value will be lost after LISTVIEW_EndEditLabelT */
+    HWND edit = infoPtr->hwndEdit;
+
+    LISTVIEW_EndEditLabelT(infoPtr, TRUE, IsWindowUnicode(infoPtr->hwndEdit));
+    SendMessageW(edit, WM_CLOSE, 0, 0);
+
+    return TRUE;
+}
 
 /***
  * DESCRIPTION:
@@ -10113,7 +10133,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_ARRANGE:
     return LISTVIEW_Arrange(infoPtr, (INT)wParam);
 
-/* case LVM_CANCELEDITLABEL: */
+  case LVM_CANCELEDITLABEL:
+    return LISTVIEW_CancelEditLabel(infoPtr);
 
   case LVM_CREATEDRAGIMAGE:
     return (LRESULT)LISTVIEW_CreateDragImage(infoPtr, (INT)wParam, (LPPOINT)lParam);
@@ -10734,11 +10755,7 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
 	}
 	case EN_KILLFOCUS:
 	{
-	    /* handle value will be lost after LISTVIEW_EndEditLabelT */
-	    HWND edit = infoPtr->hwndEdit;
-
-	    LISTVIEW_EndEditLabelT(infoPtr, TRUE, IsWindowUnicode(infoPtr->hwndEdit));
-	    SendMessageW(edit, WM_CLOSE, 0, 0);
+	    LISTVIEW_CancelEditLabel(infoPtr);
 	}
 
 	default:
