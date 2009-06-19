@@ -3252,6 +3252,7 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVM_CANCELEDITLABEL     (LVM_FIRST + 179)
 #define LVM_MAPINDEXTOID        (LVM_FIRST + 180)
 #define LVM_MAPIDTOINDEX        (LVM_FIRST + 181)
+#define LVM_ISITEMVISIBLE       (LVM_FIRST + 182)
 
 #define LVN_FIRST               (0U-100U)
 #define LVN_LAST                (0U-199U)

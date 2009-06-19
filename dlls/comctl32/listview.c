@@ -6946,6 +6946,44 @@ fail:
 
 /***
  * DESCRIPTION:
+ * Checks item visibility.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] nFirst : item index to check for
+ *
+ * RETURN:
+ *   Item visible : TRUE
+ *   Item invisible or failure : FALSE
+ */
+static BOOL LISTVIEW_IsItemVisible(const LISTVIEW_INFO *infoPtr, INT nItem)
+{
+    POINT Origin, Position;
+    RECT rcItem;
+    HDC hdc;
+    BOOL ret;
+
+    TRACE("nItem=%d\n", nItem);
+
+    if (nItem < 0 || nItem >= DPA_GetPtrCount(infoPtr->hdpaItems)) return FALSE;
+
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+    LISTVIEW_GetItemOrigin(infoPtr, nItem, &Position);
+    rcItem.left = Position.x + Origin.x;
+    rcItem.top  = Position.y + Origin.y;
+    rcItem.right  = rcItem.left + infoPtr->nItemWidth;
+    rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
+
+    hdc = GetDC(infoPtr->hwndSelf);
+    if (!hdc) return FALSE;
+    ret = RectVisible(hdc, &rcItem);
+    ReleaseDC(infoPtr->hwndSelf, hdc);
+
+    return ret;
+}
+
+/***
+ * DESCRIPTION:
  * Redraws a range of items.
  *
  * PARAMETER(S):
@@ -10339,6 +10377,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   /* case LVM_INSERTMARKHITTEST: */
 
   /* case LVM_ISGROUPVIEWENABLED: */
+
+  case LVM_ISITEMVISIBLE:
+    return LISTVIEW_IsItemVisible(infoPtr, (INT)wParam);
 
   /* case LVM_MAPIDTOINDEX: */
 
