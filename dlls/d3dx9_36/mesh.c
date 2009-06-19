@@ -19,10 +19,13 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
+#include "wine/debug.h"
 #include "windef.h"
 #include "wingdi.h"
 #include "d3dx9.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 /*************************************************************************
  * D3DXComputeBoundingBox
@@ -122,6 +125,55 @@ UINT WINAPI D3DXGetFVFVertexSize(DWORD FVF)
     for (i = 0; i < numTextures; i++)
     {
         size += Get_TexCoord_Size_From_FVF(FVF, i) * sizeof(FLOAT);
+    }
+
+    return size;
+}
+
+/*************************************************************************
+ * D3DXGetFVFVertexSize
+ */
+UINT WINAPI D3DXGetDeclVertexSize(const D3DVERTEXELEMENT9 *decl, DWORD stream_idx)
+{
+    const D3DVERTEXELEMENT9 *element;
+    UINT size = 0;
+
+    TRACE("decl %p, stream_idx %u\n", decl, stream_idx);
+
+    if (!decl) return 0;
+
+    for (element = decl; element->Stream != 0xff; ++element)
+    {
+        UINT type_size;
+
+        if (element->Stream != stream_idx) continue;
+
+        switch (element->Type)
+        {
+            case D3DDECLTYPE_FLOAT1: type_size = 1 * 4; break;
+            case D3DDECLTYPE_FLOAT2: type_size = 2 * 4; break;
+            case D3DDECLTYPE_FLOAT3: type_size = 3 * 4; break;
+            case D3DDECLTYPE_FLOAT4: type_size = 4 * 4; break;
+            case D3DDECLTYPE_D3DCOLOR: type_size = 4 * 1; break;
+            case D3DDECLTYPE_UBYTE4: type_size = 4 * 1; break;
+            case D3DDECLTYPE_SHORT2: type_size = 2 * 2; break;
+            case D3DDECLTYPE_SHORT4: type_size = 4 * 2; break;
+            case D3DDECLTYPE_UBYTE4N: type_size = 4 * 1; break;
+            case D3DDECLTYPE_SHORT2N: type_size = 2 * 2; break;
+            case D3DDECLTYPE_SHORT4N: type_size = 4 * 2; break;
+            case D3DDECLTYPE_USHORT2N: type_size = 2 * 2; break;
+            case D3DDECLTYPE_USHORT4N: type_size = 4 * 2; break;
+            case D3DDECLTYPE_UDEC3: type_size = 4; break; /* 3 * 10 bits + 2 padding */
+            case D3DDECLTYPE_DEC3N: type_size = 4; break;
+            case D3DDECLTYPE_FLOAT16_2: type_size = 2 * 2; break;
+            case D3DDECLTYPE_FLOAT16_4: type_size = 4 * 2; break;
+            default:
+                FIXME("Unhandled element type %#x, size will be incorrect.\n", element->Type);
+                type_size = 0;
+                break;
+        }
+
+        if (element->Offset + type_size > size) size = element->Offset + type_size;
     }
 
     return size;
