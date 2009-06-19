@@ -645,11 +645,11 @@ static void offscreen_test(IDirect3DDevice8 *device)
     ok(hr == D3D_OK, "Clear failed, hr = %#08x\n", hr);
 
     hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture);
-    ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
     if(!offscreenTexture) {
         trace("Failed to create an X8R8G8B8 offscreen texture, trying R5G6B5\n");
         hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &offscreenTexture);
-        ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
+        ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
         if(!offscreenTexture) {
             skip("Cannot create an offscreen render target\n");
             goto out;
@@ -776,7 +776,7 @@ static void alpha_test(IDirect3DDevice8 *device)
     ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
     hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture);
-    ok(hr == D3D_OK || D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
 
     hr = IDirect3DDevice8_GetDepthStencilSurface(device, &depthstencil);
     ok(hr == D3D_OK, "IDirect3DDevice8_GetDepthStencilSurface failed, hr = %#08x\n", hr);
