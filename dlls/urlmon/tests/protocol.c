@@ -438,7 +438,14 @@ static HRESULT WINAPI ProtocolSink_Switch(IInternetProtocolSink *iface, PROTOCOL
     ok(pProtocolData != NULL, "pProtocolData == NULL\n");
     if(binding_test) {
         ok(pProtocolData != &protocoldata, "pProtocolData == &protocoldata\n");
-        ok(!memcmp(pProtocolData, &protocoldata, sizeof(PROTOCOLDATA)), "*pProtocolData != protocoldata\n");
+        ok(pProtocolData->grfFlags == protocoldata.grfFlags, "grfFlags wrong %x/%x\n",
+           pProtocolData->grfFlags, protocoldata.grfFlags );
+        ok(pProtocolData->dwState == protocoldata.dwState, "dwState wrong %x/%x\n",
+           pProtocolData->dwState, protocoldata.dwState );
+        ok(pProtocolData->pData == protocoldata.pData, "pData wrong %p/%p\n",
+           pProtocolData->pData, protocoldata.pData );
+        ok(pProtocolData->cbData == protocoldata.cbData, "cbData wrong %x/%x\n",
+           pProtocolData->cbData, protocoldata.cbData );
     }
 
     pdata = pProtocolData;
@@ -1327,7 +1334,14 @@ static HRESULT WINAPI ProtocolEmul_Continue(IInternetProtocol *iface,
         return S_OK;
     if(binding_test) {
         ok(pProtocolData != &protocoldata, "pProtocolData == &protocoldata\n");
-        ok(!memcmp(pProtocolData, &protocoldata, sizeof(PROTOCOLDATA)), "*pProtocolData != protocoldata\n");
+        ok(pProtocolData->grfFlags == protocoldata.grfFlags, "grfFlags wrong %x/%x\n",
+           pProtocolData->grfFlags, protocoldata.grfFlags );
+        ok(pProtocolData->dwState == protocoldata.dwState, "dwState wrong %x/%x\n",
+           pProtocolData->dwState, protocoldata.dwState );
+        ok(pProtocolData->pData == protocoldata.pData, "pData wrong %p/%p\n",
+           pProtocolData->pData, protocoldata.pData );
+        ok(pProtocolData->cbData == protocoldata.cbData, "cbData wrong %x/%x\n",
+           pProtocolData->cbData, protocoldata.cbData );
     }
 
     switch(prot_state) {
