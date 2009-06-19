@@ -2500,6 +2500,38 @@ static void shader_hw_break(const struct wined3d_shader_instruction *ins)
     }
 }
 
+static const char *get_compare(COMPARISON_TYPE flags)
+{
+    switch (flags)
+    {
+        case COMPARISON_GT: return "GT";
+        case COMPARISON_EQ: return "EQ";
+        case COMPARISON_GE: return "GE";
+        case COMPARISON_LT: return "LT";
+        case COMPARISON_NE: return "NE";
+        case COMPARISON_LE: return "LE";
+        default:
+            FIXME("Unrecognized comparison value: %u\n", flags);
+            return "(\?\?)";
+    }
+}
+
+static COMPARISON_TYPE invert_compare(COMPARISON_TYPE flags)
+{
+    switch (flags)
+    {
+        case COMPARISON_GT: return COMPARISON_LE;
+        case COMPARISON_EQ: return COMPARISON_NE;
+        case COMPARISON_GE: return COMPARISON_LT;
+        case COMPARISON_LT: return COMPARISON_GE;
+        case COMPARISON_NE: return COMPARISON_EQ;
+        case COMPARISON_LE: return COMPARISON_GT;
+        default:
+            FIXME("Unrecognized comparison value: %u\n", flags);
+            return -1;
+    }
+}
+
 static void shader_hw_breakc(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
@@ -2507,23 +2539,10 @@ static void shader_hw_breakc(const struct wined3d_shader_instruction *ins)
     const struct control_frame *control_frame = find_last_loop(ins->ctx->backend_data);
     char src_name0[50];
     char src_name1[50];
-    const char *comp;
+    const char *comp = get_compare(ins->flags);
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name0);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name1);
-
-    switch (ins->flags)
-    {
-        case COMPARISON_GT: comp = "GT"; break;
-        case COMPARISON_EQ: comp = "EQ"; break;
-        case COMPARISON_GE: comp = "GE"; break;
-        case COMPARISON_LT: comp = "LT"; break;
-        case COMPARISON_NE: comp = "NE"; break;
-        case COMPARISON_LE: comp = "LE"; break;
-        default:
-            FIXME("Unrecognized comparison value: %u\n", ins->flags);
-            comp = "(\?\?)";
-    }
 
     if(vshader)
     {
@@ -2551,30 +2570,19 @@ static void shader_hw_ifc(const struct wined3d_shader_instruction *ins)
     char src_name1[50];
     BOOL vshader = shader_is_vshader_version(ins->ctx->reg_maps->shader_version.type);
 
-    /* Invert the flag. We jump to the else label if the condition is NOT true */
-    switch(ins->flags)
-    {
-        case COMPARISON_GT: comp = "LE"; break;
-        case COMPARISON_EQ: comp = "NE"; break;
-        case COMPARISON_GE: comp = "LT"; break;
-        case COMPARISON_LT: comp = "GE"; break;
-        case COMPARISON_NE: comp = "EQ"; break;
-        case COMPARISON_LE: comp = "GT"; break;
-        default:
-            FIXME("Unrecognized comparison value: %u\n", ins->flags);
-            comp = "\?\?";
-    }
-
     shader_arb_get_src_param(ins, &ins->src[0], 0, src_name0);
     shader_arb_get_src_param(ins, &ins->src[1], 1, src_name1);
 
     if(vshader)
     {
+        /* Invert the flag. We jump to the else label if the condition is NOT true */
+        comp = get_compare(invert_compare(ins->flags));
         shader_addline(buffer, "SUBC TA, %s, %s;\n", src_name0, src_name1);
         shader_addline(buffer, "BRA ifc_%u_endif (%s.x);\n", control_frame->ifc_no, comp);
     }
     else
     {
+        comp = get_compare(ins->flags);
         shader_addline(buffer, "SUBC TA, %s, %s;\n", src_name0, src_name1);
         shader_addline(buffer, "IF %s.x;\n", comp);
     }
