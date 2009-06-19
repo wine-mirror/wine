@@ -36,6 +36,7 @@
 #include "mpr_It.rc"
 #include "mpr_Ja.rc"
 #include "mpr_Ko.rc"
+#include "mpr_Lt.rc"
 #include "mpr_Nl.rc"
 #include "mpr_No.rc"
 #include "mpr_Pl.rc"
