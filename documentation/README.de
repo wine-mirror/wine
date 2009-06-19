@@ -111,9 +111,9 @@ Mit ./configure --help können Sie sich die Konfigurations-Optionen für
 die Kompilierung anzeigen lassen.
 
 Um mit Hilfe einer Patch-Datei auf ein neueres Release zu aktualisieren,
-wechsen Sie erst mit cd in das Wurzelverzeichnis dieses Releases (das,
-welches diese README-Datei enthält). Geben Sie dann "make clean" ein
-und patchen Sie das Release mit dem Kommando:
+wechseln Sie erst mit cd in das Wurzelverzeichnis dieses Releases (eins
+über dem, welches diese README-Datei enthält). Geben Sie dann
+"make clean" ein und patchen Sie das Release mit dem Kommando:
 
     bunzip2 -c Patch-Datei | patch -p1
 
@@ -145,7 +145,7 @@ Datei angeben oder nur einen Dateinamen.
 
 Beispiel: Um Notepad auszuführen:
 
-	wine notepad		   (den Suchpfad, der in der Konfiguartions-Datei
+	wine notepad		   (den Suchpfad, der in der Konfigurations-Datei
 	wine notepad.exe	   angegeben wurde, benutzend)
 
 	wine c:\\windows\\notepad.exe  (die Dateinamen-Syntax von DOS benutzend)
