@@ -106,6 +106,12 @@ START_TEST(imalloc)
         FreeLibrary(hMapi32);
         return;
     }
+    else if ((ret == E_FAIL) && (GetLastError() == ERROR_INVALID_HANDLE))
+    {
+        win_skip("ScInitMapiUtil doesn't work on some Win98 and WinME systems\n");
+        FreeLibrary(hMapi32);
+        return;
+    }
 
     test_IMalloc();
 
