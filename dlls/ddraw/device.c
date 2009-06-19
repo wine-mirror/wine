@@ -2956,7 +2956,7 @@ IDirect3DDeviceImpl_3_SetLightState(IDirect3DDevice3 *iface,
 
     TRACE("(%p)->(%08x,%08x)\n", This, LightStateType, Value);
 
-    if (!LightStateType && (LightStateType > D3DLIGHTSTATE_COLORVERTEX))
+    if (!LightStateType || (LightStateType > D3DLIGHTSTATE_COLORVERTEX))
     {
         TRACE("Unexpected Light State Type\n");
         return DDERR_INVALIDPARAMS;
@@ -3089,7 +3089,7 @@ IDirect3DDeviceImpl_3_GetLightState(IDirect3DDevice3 *iface,
 
     TRACE("(%p)->(%08x,%p)\n", This, LightStateType, Value);
 
-    if (!LightStateType && (LightStateType > D3DLIGHTSTATE_COLORVERTEX))
+    if (!LightStateType || (LightStateType > D3DLIGHTSTATE_COLORVERTEX))
     {
         TRACE("Unexpected Light State Type\n");
         return DDERR_INVALIDPARAMS;
