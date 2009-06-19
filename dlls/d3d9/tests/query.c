@@ -105,7 +105,7 @@ static void test_query_support(IDirect3D9 *pD3d, HWND hwnd)
     for(i = 0; i < sizeof(queries) / sizeof(queries[0]); i++)
     {
         hr = IDirect3DDevice9_CreateQuery(pDevice, queries[i].type, NULL);
-        ok(hr == D3D_OK || D3DERR_NOTAVAILABLE,
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE,
            "IDirect3DDevice9_CreateQuery returned unexpected return value %08x for query %s\n", hr, queryName(queries[i].type));
 
         supported = (hr == D3D_OK ? TRUE : FALSE);
@@ -119,7 +119,7 @@ static void test_query_support(IDirect3D9 *pD3d, HWND hwnd)
             queryName(queries[i].type));
 
         hr = IDirect3DDevice9_CreateQuery(pDevice, queries[i].type, &pQuery);
-        ok(hr == D3D_OK || D3DERR_NOTAVAILABLE,
+        ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE,
            "IDirect3DDevice9_CreateQuery returned unexpected return value %08x for query %s\n", hr, queryName(queries[i].type));
         ok(!(supported && !pQuery), "Query %s was claimed to be supported, but can't be created\n", queryName(queries[i].type));
         ok(!(!supported && pQuery), "Query %s was claimed not to be supported, but can be created\n", queryName(queries[i].type));
@@ -163,7 +163,7 @@ static void test_occlusion_query_states(IDirect3D9 *pD3d, HWND hwnd)
     }
 
     hr = IDirect3DDevice9_CreateQuery(pDevice, D3DQUERYTYPE_OCCLUSION, &pQuery);
-    ok(hr == D3D_OK || D3DERR_NOTAVAILABLE,
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE,
        "IDirect3DDevice9_CreateQuery returned unexpected return value %08x\n", hr);
     if(!pQuery) {
         skip("Occlusion queries not supported\n");
