@@ -124,7 +124,6 @@
  *   -- LVM_INSERTGROUPSORTED
  *   -- LVM_INSERTMARKHITTEST
  *   -- LVM_ISGROUPVIEWENABLED
- *   -- LVM_MAPIDTOINDEX, LVM_MAPINDEXTOID
  *   -- LVM_MOVEGROUP
  *   -- LVM_MOVEITEMTOGROUP
  *   -- LVM_SETINFOTIP
@@ -194,13 +193,22 @@ typedef struct tagSUBITEM_INFO
   INT iSubItem;
 } SUBITEM_INFO;
 
+typedef struct tagITEM_ID ITEM_ID;
+
 typedef struct tagITEM_INFO
 {
   ITEMHDR hdr;
   UINT state;
   LPARAM lParam;
   INT iIndent;
+  ITEM_ID *id;
 } ITEM_INFO;
+
+struct tagITEM_ID
+{
+  UINT id;   /* item id */
+  HDPA item; /* link to item data */
+};
 
 typedef struct tagRANGE
 {
@@ -278,6 +286,7 @@ typedef struct tagLISTVIEW_INFO
   DWORD uView;			/* current view available through LVM_[G,S]ETVIEW */
   INT nItemCount;		/* the number of items in the list */
   HDPA hdpaItems;               /* array ITEM_INFO pointers */
+  HDPA hdpaItemIds;             /* array of ITEM_ID pointers */
   HDPA hdpaPosX;		/* maintains the (X, Y) coordinates of the */
   HDPA hdpaPosY;		/* items in LVS_ICON, and LVS_SMALLICON modes */
   HDPA hdpaColumns;		/* array of COLUMN_INFO pointers */
@@ -1430,6 +1439,19 @@ static inline void map_style_view(LISTVIEW_INFO *infoPtr)
     }
 }
 
+/* computes next item id value */
+static DWORD get_next_itemid(const LISTVIEW_INFO *infoPtr)
+{
+    INT count = DPA_GetPtrCount(infoPtr->hdpaItemIds);
+
+    if (count > 0)
+    {
+        ITEM_ID *lpID = DPA_GetPtr(infoPtr->hdpaItemIds, count - 1);
+        return lpID->id + 1;
+    }
+    return 0;
+}
+
 /******** Internal API functions ************************************/
 
 static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(const LISTVIEW_INFO *infoPtr, INT nSubItem)
@@ -2310,6 +2332,76 @@ static void LISTVIEW_GetItemBox(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT 
         OffsetRect(lprcBox, Position.x + Origin.x, Position.y + Origin.y);
 }
 
+/* LISTVIEW_MapIdToIndex helper */
+INT CALLBACK MapIdSearchCompare(LPVOID p1, LPVOID p2, LPARAM lParam)
+{
+    ITEM_ID *id1 = (ITEM_ID*)p1;
+    ITEM_ID *id2 = (ITEM_ID*)p2;
+
+    if (id1->id == id2->id) return 0;
+
+    return (id1->id < id2->id) ? -1 : 1;
+}
+
+/***
+ * DESCRIPTION:
+ * Returns the item index for id specified.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] iID : item id to get index for
+ *
+ * RETURN:
+ * Item index, or -1 on failure.
+ */
+static INT LISTVIEW_MapIdToIndex(const LISTVIEW_INFO *infoPtr, UINT iID)
+{
+    ITEM_ID ID;
+    INT index;
+
+    TRACE("iID=%d\n", iID);
+
+    if (infoPtr->dwStyle & LVS_OWNERDATA) return -1;
+    if (infoPtr->nItemCount == 0) return -1;
+
+    ID.id = iID;
+    index = DPA_Search(infoPtr->hdpaItemIds, &ID, -1, &MapIdSearchCompare, 0, DPAS_SORTED);
+
+    if (index != -1)
+    {
+        ITEM_ID *lpID = DPA_GetPtr(infoPtr->hdpaItemIds, index);
+        return DPA_GetPtrIndex(infoPtr->hdpaItems, lpID->item);
+    }
+
+    return -1;
+}
+
+/***
+ * DESCRIPTION:
+ * Returns the item id for index given.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] iItem : item index to get id for
+ *
+ * RETURN:
+ * Item id.
+ */
+static DWORD LISTVIEW_MapIndexToId(const LISTVIEW_INFO *infoPtr, INT iItem)
+{
+    ITEM_INFO *lpItem;
+    HDPA hdpaSubItems;
+
+    TRACE("iItem=%d\n", iItem);
+
+    if (infoPtr->dwStyle & LVS_OWNERDATA) return -1;
+    if (iItem < 0 || iItem >= infoPtr->nItemCount) return -1;
+
+    hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, iItem);
+    lpItem = DPA_GetPtr(hdpaSubItems, 0);
+
+    return lpItem->id->id;
+}
 
 /***
  * DESCRIPTION:
@@ -4988,9 +5080,18 @@ static BOOL LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
     {
         HDPA hdpaSubItems;
 	ITEMHDR *hdrItem;
+	ITEM_INFO *lpItem;
+	ITEM_ID *lpID;
 	INT i;
 
 	hdpaSubItems = DPA_DeletePtr(infoPtr->hdpaItems, nItem);
+	lpItem = DPA_GetPtr(hdpaSubItems, 0);
+
+	/* free id struct */
+	i = DPA_GetPtrIndex(infoPtr->hdpaItemIds, lpItem->id);
+	lpID = DPA_GetPtr(infoPtr->hdpaItemIds, i);
+	DPA_DeletePtr(infoPtr->hdpaItemIds, i);
+	Free(lpID);
 	for (i = 0; i < DPA_GetPtrCount(hdpaSubItems); i++)
     	{
             hdrItem = DPA_GetPtr(hdpaSubItems, i);
@@ -6815,6 +6916,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     HDPA hdpaSubItems;
     NMLISTVIEW nmlv;
     ITEM_INFO *lpItem;
+    ITEM_ID *lpID;
     BOOL is_sorted, has_changed;
     LVITEMW item;
     HWND hwndSelf = infoPtr->hwndSelf;
@@ -6833,6 +6935,13 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
     /* insert item in listview control data structure */
     if ( !(hdpaSubItems = DPA_Create(8)) ) goto fail;
     if ( !DPA_SetPtr(hdpaSubItems, 0, lpItem) ) assert (FALSE);
+
+    /* link with id struct */
+    if (!(lpID = Alloc(sizeof(ITEM_ID)))) goto fail;
+    lpItem->id = lpID;
+    lpID->item = hdpaSubItems;
+    lpID->id = get_next_itemid(infoPtr);
+    if ( DPA_InsertPtr(infoPtr->hdpaItemIds, infoPtr->nItemCount, lpID) == -1) goto fail;
 
     is_sorted = (infoPtr->dwStyle & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) &&
 	        !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (LPSTR_TEXTCALLBACKW != lpLVItem->pszText);
@@ -8483,6 +8592,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   /* allocate memory for the data structure */
   if (!(infoPtr->selectionRanges = ranges_create(10))) goto fail;
   if (!(infoPtr->hdpaItems = DPA_Create(10))) goto fail;
+  if (!(infoPtr->hdpaItemIds = DPA_Create(10))) goto fail;
   if (!(infoPtr->hdpaPosX  = DPA_Create(10))) goto fail;
   if (!(infoPtr->hdpaPosY  = DPA_Create(10))) goto fail;
   if (!(infoPtr->hdpaColumns = DPA_Create(10))) goto fail;
@@ -8492,6 +8602,7 @@ fail:
     DestroyWindow(infoPtr->hwndHeader);
     ranges_destroy(infoPtr->selectionRanges);
     DPA_Destroy(infoPtr->hdpaItems);
+    DPA_Destroy(infoPtr->hdpaItemIds);
     DPA_Destroy(infoPtr->hdpaPosX);
     DPA_Destroy(infoPtr->hdpaPosY);
     DPA_Destroy(infoPtr->hdpaColumns);
@@ -9264,6 +9375,7 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
 
   /* destroy data structure */
   DPA_Destroy(infoPtr->hdpaItems);
+  DPA_Destroy(infoPtr->hdpaItemIds);
   DPA_Destroy(infoPtr->hdpaPosX);
   DPA_Destroy(infoPtr->hdpaPosY);
   DPA_Destroy(infoPtr->hdpaColumns);
@@ -10381,9 +10493,11 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_ISITEMVISIBLE:
     return LISTVIEW_IsItemVisible(infoPtr, (INT)wParam);
 
-  /* case LVM_MAPIDTOINDEX: */
+  case LVM_MAPIDTOINDEX:
+    return LISTVIEW_MapIdToIndex(infoPtr, (UINT)wParam);
 
-  /* case LVM_MAPINDEXTOID: */
+  case LVM_MAPINDEXTOID:
+    return LISTVIEW_MapIndexToId(infoPtr, (INT)wParam);
 
   /* case LVM_MOVEGROUP: */
 
