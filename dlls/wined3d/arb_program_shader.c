@@ -3856,7 +3856,7 @@ static void find_clip_texcoord(IWineD3DPixelShaderImpl *ps, const WineD3D_GL_Inf
     {
         for(i = GL_LIMITS(texture_stages); i > 0; i--)
         {
-            if(!ps->baseShader.reg_maps.input_registers & (1 << (i - 1)))
+            if(!(ps->baseShader.reg_maps.input_registers & (1 << (i - 1))))
             {
                 shader_priv->clipplane_emulation = i;
                 break;
