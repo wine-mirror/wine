@@ -824,7 +824,8 @@ static LRESULT CALLBACK WndProc2(HWND hWnd, UINT Msg, WPARAM wParam,
         Msg != WM_GETTEXT &&
         Msg != WM_GETICON &&
         Msg != WM_IME_SELECT &&
-        Msg != WM_DEVICECHANGE)
+        Msg != WM_DEVICECHANGE &&
+        Msg != WM_TIMECHANGE)
     {
         ok(sent_messages_cnt < MAXKEYMESSAGES, "Too many messages\n");
         if (sent_messages_cnt < MAXKEYMESSAGES)
