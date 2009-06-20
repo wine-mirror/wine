@@ -163,7 +163,7 @@
 @ stdcall CryptQueryObject(long ptr long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall CryptRegisterDefaultOIDFunction(long str long wstr)
 @ stdcall CryptRegisterOIDFunction(long str str wstr str)
-@ stub CryptRegisterOIDInfo
+@ stdcall CryptRegisterOIDInfo(ptr long)
 @ stdcall CryptSIPAddProvider(ptr)
 @ stdcall CryptSIPCreateIndirectData(ptr ptr ptr)
 @ stdcall CryptSIPGetSignedDataMsg(ptr ptr long ptr ptr)
