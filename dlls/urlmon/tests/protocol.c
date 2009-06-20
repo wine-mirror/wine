@@ -195,9 +195,18 @@ static const char *debugstr_guid(REFIID riid)
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
-    WCHAR buf[512];
-    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(WCHAR));
-    return lstrcmpW(strw, buf);
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+    return lstrcmpA(stra, buf);
+}
+
+/* lstrcmpW is not implemented on Win9x */
+static int strcmp_ww(LPCWSTR strw1, LPCWSTR strw2)
+{
+    CHAR stra1[512], stra2[512];
+    WideCharToMultiByte(CP_ACP, 0, strw1, -1, stra1, MAX_PATH, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, strw2, -1, stra2, MAX_PATH, NULL, NULL);
+    return lstrcmpA(stra1, stra2);
 }
 
 static HRESULT WINAPI HttpSecurity_QueryInterface(IHttpSecurity *iface, REFIID riid, void **ppv)
@@ -290,9 +299,9 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
     CHECK_EXPECT(BeginningTransaction);
 
     if(binding_test)
-        ok(!lstrcmpW(szURL, binding_urls[tested_protocol]), "szURL != http_url\n");
+        ok(!strcmp_ww(szURL, binding_urls[tested_protocol]), "szURL != http_url\n");
     else
-        ok(!lstrcmpW(szURL, http_url), "szURL != http_url\n");
+        ok(!strcmp_ww(szURL, http_url), "szURL != http_url\n");
     ok(!dwReserved, "dwReserved=%d, expected 0\n", dwReserved);
     ok(pszAdditionalHeaders != NULL, "pszAdditionalHeaders == NULL\n");
     if(pszAdditionalHeaders)
@@ -307,7 +316,7 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
                 skip("Out of memory\n");
                 return E_OUTOFMEMORY;
             }
-            lstrcpyW(addl_headers, wszHeaders);
+            memcpy(addl_headers, wszHeaders, sizeof(wszHeaders));
             *pszAdditionalHeaders = addl_headers;
         }
     }
@@ -556,9 +565,9 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText) {
             if(binding_test)
-                ok(!lstrcmpW(szStatusText, expect_wsz), "unexpected szStatusText\n");
+                ok(!strcmp_ww(szStatusText, expect_wsz), "unexpected szStatusText\n");
             else if(tested_protocol == FILE_TEST)
-                ok(!lstrcmpW(szStatusText, file_name), "szStatusText = \"%s\"\n", debugstr_w(szStatusText));
+                ok(!strcmp_ww(szStatusText, file_name), "szStatusText = \"%s\"\n", debugstr_w(szStatusText));
             else
                 ok(szStatusText != NULL, "szStatusText == NULL\n");
         }
@@ -583,12 +592,12 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         CHECK_EXPECT(ReportProgress_VERIFIEDMIMETYPEAVAILABLE);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
         if(szStatusText)
-            ok(!lstrcmpW(szStatusText, text_htmlW), "szStatusText != text/html\n");
+            ok(!strcmp_ww(szStatusText, text_htmlW), "szStatusText != text/html\n");
         break;
     case BINDSTATUS_PROTOCOLCLASSID:
         CHECK_EXPECT(ReportProgress_PROTOCOLCLASSID);
         ok(szStatusText != NULL, "szStatusText == NULL\n");
-        ok(!lstrcmpW(szStatusText, null_guid), "unexpected szStatusText\n");
+        ok(!strcmp_ww(szStatusText, null_guid), "unexpected szStatusText\n");
         break;
     case BINDSTATUS_COOKIE_SENT:
         CHECK_EXPECT(ReportProgress_COOKIE_SENT);
@@ -617,7 +626,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         break;
     case BINDSTATUS_DECODING:
         CHECK_EXPECT(ReportProgress_DECODING);
-        ok(!lstrcmpW(szStatusText, gzipW), "szStatusText = %s\n", debugstr_w(szStatusText));
+        ok(!strcmp_ww(szStatusText, gzipW), "szStatusText = %s\n", debugstr_w(szStatusText));
         break;
     default:
         ok(0, "Unexpected status %d\n", ulStatusCode);
@@ -1212,7 +1221,7 @@ static HRESULT WINAPI ProtocolEmul_Start(IInternetProtocol *iface, LPCWSTR szUrl
         ok(hres == S_OK, "GetBindString(BINDSTRING_USER_AGETNT) failed: %08x\n", hres);
         ok(fetched == 1, "fetched = %d, expected 254\n", fetched);
         ok(ua != NULL, "ua =  %p\n", ua);
-        ok(!lstrcmpW(ua, user_agentW), "unexpected user agent %s\n", debugstr_w(ua));
+        ok(!strcmp_ww(ua, user_agentW), "unexpected user agent %s\n", debugstr_w(ua));
         CoTaskMemFree(ua);
 
         fetched = 256;
@@ -1224,7 +1233,7 @@ static HRESULT WINAPI ProtocolEmul_Start(IInternetProtocol *iface, LPCWSTR szUrl
         ok(hres == S_OK,
            "GetBindString(BINDSTRING_ACCEPT_MIMES) failed: %08x\n", hres);
         ok(fetched == 1, "fetched = %d, expected 1\n", fetched);
-        ok(!lstrcmpW(acc_mimeW, accept_mimes[0]), "unexpected mimes %s\n", debugstr_w(accept_mimes[0]));
+        ok(!strcmp_ww(acc_mimeW, accept_mimes[0]), "unexpected mimes %s\n", debugstr_w(accept_mimes[0]));
 
         hres = IInternetBindInfo_QueryInterface(pOIBindInfo, &IID_IServiceProvider,
                                                 (void**)&service_provider);
@@ -1555,7 +1564,7 @@ static HRESULT WINAPI MimeProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     CHECK_EXPECT(MimeFilter_Start);
 
-    ok(!lstrcmpW(szUrl, gzipW), "wrong url %s\n", debugstr_w(szUrl));
+    ok(!strcmp_ww(szUrl, gzipW), "wrong url %s\n", debugstr_w(szUrl));
     ok(grfPI == (PI_FILTER_MODE|PI_FORCE_ASYNC), "grfPI=%x, expected PI_FILTER_MODE|PI_FORCE_ASYNC\n", grfPI);
     ok(dwReserved, "dwReserved == 0\n");
     ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
@@ -1615,7 +1624,7 @@ static HRESULT WINAPI MimeProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
     hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_URL, &url_str, 1, &fetched);
     ok(hres == S_OK, "GetBindString(BINDSTRING_URL) failed: %08x\n", hres);
     ok(fetched == 1, "fetched = %d\n", fetched);
-    ok(!lstrcmpW(url_str, binding_urls[tested_protocol]), "wrong url_str %s\n", debugstr_w(url_str));
+    ok(!strcmp_ww(url_str, binding_urls[tested_protocol]), "wrong url_str %s\n", debugstr_w(url_str));
     CoTaskMemFree(url_str);
     CHECK_CALLED(GetBindString_URL);
 
