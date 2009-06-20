@@ -1949,7 +1949,7 @@ START_TEST(shlfolder)
     if(pSHCreateShellItem)
         test_SHCreateShellItem();
     else
-        win_skip("test_SHCreateShellItem not present\n");
+        win_skip("SHCreateShellItem not present\n");
 
     OleUninitialize();
 }
