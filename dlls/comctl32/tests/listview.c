@@ -3583,6 +3583,33 @@ static void test_canceleditlabel(void)
     DestroyWindow(hwnd);
 }
 
+static void test_mapidindex(void)
+{
+    HWND hwnd;
+    DWORD ret;
+
+    hwnd = create_listview_control(0);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+
+    insert_item(hwnd, 0);
+    insert_item(hwnd, 1);
+
+    ret = SendMessage(hwnd, LVM_MAPINDEXTOID, 0, 0);
+    expect(0, ret);
+    ret = SendMessage(hwnd, LVM_MAPINDEXTOID, 1, 0);
+    todo_wine expect(1, ret);
+    /* remove 0 indexed item, id retained */
+    SendMessage(hwnd, LVM_DELETEITEM, 0, 0);
+    ret = SendMessage(hwnd, LVM_MAPINDEXTOID, 0, 0);
+    todo_wine expect(1, ret);
+    /* new id starts from previous value */
+    insert_item(hwnd, 1);
+    ret = SendMessage(hwnd, LVM_MAPINDEXTOID, 1, 0);
+    todo_wine expect(2, ret);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -3648,6 +3675,7 @@ START_TEST(listview)
     /* comctl32 version 6 tests start here */
     test_get_set_view();
     test_canceleditlabel();
+    test_mapidindex();
 
     unload_v6_module(ctx_cookie);
 
