@@ -29,7 +29,67 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
+static const WCHAR currentlevelW[] = {'C','u','r','r','e','n','t','L','e','v','e','l',0};
+static const WCHAR descriptionW[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
+static const WCHAR displaynameW[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
 static const WCHAR fileW[] = {'f','i','l','e',0};
+static const WCHAR flagsW[] = {'F','l','a','g','s',0};
+static const WCHAR iconW[] = {'I','c','o','n',0};
+static const WCHAR minlevelW[] = {'M','i','n','L','e','v','e','l',0};
+static const WCHAR recommendedlevelW[] = {'R','e','c','o','m','m','e','n','d','e','d',
+                                          'L','e','v','e','l',0};
+
+/********************************************************************
+ * get_string_from_reg [internal]
+ *
+ * helper to get a string from the reg.
+ *
+ */
+static void get_string_from_reg(HKEY hcu, HKEY hklm, LPCWSTR name, LPWSTR out, DWORD maxlen)
+{
+    DWORD type = REG_SZ;
+    DWORD len = maxlen * sizeof(WCHAR);
+    DWORD res;
+
+    res = RegQueryValueExW(hcu, name, NULL, &type, (LPBYTE) out, &len);
+
+    if (res && hklm) {
+        len = maxlen * sizeof(WCHAR);
+        type = REG_SZ;
+        res = RegQueryValueExW(hklm, name, NULL, &type, (LPBYTE) out, &len);
+    }
+
+    if (res) {
+        TRACE("%s failed: %d\n", debugstr_w(name), res);
+        *out = '\0';
+    }
+}
+
+/********************************************************************
+ * get_dword_from_reg [internal]
+ *
+ * helper to get a dword from the reg.
+ *
+ */
+static void get_dword_from_reg(HKEY hcu, HKEY hklm, LPCWSTR name, LPDWORD out)
+{
+    DWORD type = REG_DWORD;
+    DWORD len = sizeof(DWORD);
+    DWORD res;
+
+    res = RegQueryValueExW(hcu, name, NULL, &type, (LPBYTE) out, &len);
+
+    if (res && hklm) {
+        len = sizeof(DWORD);
+        type = REG_DWORD;
+        res = RegQueryValueExW(hklm, name, NULL, &type, (LPBYTE) out, &len);
+    }
+
+    if (res) {
+        TRACE("%s failed: %d\n", debugstr_w(name), res);
+        *out = 0;
+    }
+}
 
 static HRESULT get_zone_from_reg(LPCWSTR schema, DWORD *zone)
 {
@@ -677,8 +737,35 @@ static HRESULT WINAPI ZoneMgrImpl_GetZoneAttributes(IInternetZoneManager* iface,
                                                     DWORD dwZone,
                                                     ZONEATTRIBUTES* pZoneAttributes)
 {
-    FIXME("(%p)->(%d %p) stub\n", iface, dwZone, pZoneAttributes);
-    return E_NOTIMPL;
+    ZoneMgrImpl* This = (ZoneMgrImpl*)iface;
+    HRESULT hr;
+    HKEY hcu;
+    HKEY hklm = NULL;
+
+    TRACE("(%p)->(%d %p)\n", This, dwZone, pZoneAttributes);
+
+    if (!pZoneAttributes)
+        return E_INVALIDARG;
+
+    hr = open_zone_key(HKEY_CURRENT_USER, dwZone, &hcu);
+    if (FAILED(hr))
+        return S_OK;  /* IE6 and older returned E_FAIL here */
+
+    hr = open_zone_key(HKEY_LOCAL_MACHINE, dwZone, &hklm);
+    if (FAILED(hr))
+        TRACE("Zone %d not in HKLM\n", dwZone);
+
+    get_string_from_reg(hcu, hklm, displaynameW, pZoneAttributes->szDisplayName, MAX_ZONE_PATH);
+    get_string_from_reg(hcu, hklm, descriptionW, pZoneAttributes->szDescription, MAX_ZONE_DESCRIPTION);
+    get_string_from_reg(hcu, hklm, iconW, pZoneAttributes->szIconPath, MAX_ZONE_PATH);
+    get_dword_from_reg(hcu, hklm, minlevelW, &pZoneAttributes->dwTemplateMinLevel);
+    get_dword_from_reg(hcu, hklm, currentlevelW, &pZoneAttributes->dwTemplateCurrentLevel);
+    get_dword_from_reg(hcu, hklm, recommendedlevelW, &pZoneAttributes->dwTemplateRecommended);
+    get_dword_from_reg(hcu, hklm, flagsW, &pZoneAttributes->dwFlags);
+
+    RegCloseKey(hklm);
+    RegCloseKey(hcu);
+    return S_OK;
 }
 
 /********************************************************************
