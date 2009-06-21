@@ -41,6 +41,7 @@
 #include "spl_De.rc"
 #include "spl_Fr.rc"
 #include "spl_Ko.rc"
+#include "spl_Lt.rc"
 #include "spl_Nl.rc"
 #include "spl_No.rc"
 #include "spl_Pl.rc"
