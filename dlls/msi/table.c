@@ -121,6 +121,7 @@ static void table_calc_column_offsets( MSIDATABASE *db, MSICOLUMNINFO *colinfo,
 static UINT get_tablecolumns( MSIDATABASE *db,
        LPCWSTR szTableName, MSICOLUMNINFO *colinfo, UINT *sz);
 static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count );
+static UINT table_find_insert_idx (MSIVIEW *view, LPCWSTR name, INT *pidx);
 
 static inline UINT bytes_per_column( MSIDATABASE *db, const MSICOLUMNINFO *col )
 {
@@ -620,6 +621,7 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     column_info *col;
     MSITABLE *table;
     UINT i;
+    INT idx;
 
     /* only add tables that don't exist already */
     if( TABLE_Exists(db, name ) )
@@ -685,7 +687,11 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
     if( r )
         goto err;
 
-    r = tv->ops->insert_row( tv, rec, -1, persistent == MSICONDITION_FALSE );
+    r = table_find_insert_idx (tv, name, &idx);
+    if (r != ERROR_SUCCESS)
+       idx = -1;
+
+    r = tv->ops->insert_row( tv, rec, idx, persistent == MSICONDITION_FALSE );
     TRACE("insert_row returned %x\n", r);
     if( r )
         goto err;
@@ -735,7 +741,11 @@ UINT msi_create_table( MSIDATABASE *db, LPCWSTR name, column_info *col_info,
             if( r )
                 goto err;
 
-            r = tv->ops->insert_row( tv, rec, -1, FALSE );
+            r = table_find_insert_idx (tv, name, &idx);
+            if (r != ERROR_SUCCESS)
+                idx = -1;
+
+            r = tv->ops->insert_row( tv, rec, idx, FALSE );
             if( r )
                 goto err;
 
@@ -2922,4 +2932,30 @@ void msi_free_transforms( MSIDATABASE *db )
         IStorage_Release( t->stg );
         msi_free( t );
     }
+}
+
+static UINT table_find_insert_idx (MSIVIEW *view, LPCWSTR name, INT *pidx)
+{
+    UINT r, name_id, row_id;
+    INT idx;
+    MSITABLEVIEW *tv = (MSITABLEVIEW *)view;
+
+    TRACE ("%p %s\n", view, debugstr_w(name));
+
+    r = msi_string2idW(tv->db->strings, name, &name_id);
+    if (r != ERROR_SUCCESS)
+    {
+        *pidx = -1;
+        return r;
+    }
+
+    for( idx = 0; idx < tv->table->row_count; idx++ )
+    {
+        r = TABLE_fetch_int( &tv->view, idx, 1, &row_id );
+        if (row_id > name_id)
+            break;
+    }
+
+    *pidx = idx;
+    return ERROR_SUCCESS;
 }
