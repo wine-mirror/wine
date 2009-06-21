@@ -3410,6 +3410,24 @@ static BOOL is_below_comctl_5(void)
     return !ret;
 }
 
+static void unload_v6_module(ULONG_PTR cookie)
+{
+    HANDLE hKernel32;
+    BOOL (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
+
+    hKernel32 = GetModuleHandleA("kernel32.dll");
+    pDeactivateActCtx = (void*)GetProcAddress(hKernel32, "DeactivateActCtx");
+    if (!pDeactivateActCtx)
+    {
+        win_skip("Activation contexts unsupported\n");
+        return;
+    }
+
+    pDeactivateActCtx(0, cookie);
+
+    DeleteFileA(manifest_name);
+}
+
 static BOOL load_v6_module(ULONG_PTR *pcookie)
 {
     HANDLE hKernel32;
@@ -3421,6 +3439,7 @@ static BOOL load_v6_module(ULONG_PTR *pcookie)
     BOOL ret;
     HANDLE file;
     DWORD written;
+    HWND hwnd;
 
     hKernel32 = GetModuleHandleA("kernel32.dll");
     pCreateActCtxA = (void*)GetProcAddress(hKernel32, "CreateActCtxA");
@@ -3468,26 +3487,24 @@ static BOOL load_v6_module(ULONG_PTR *pcookie)
         win_skip("A problem during context activation occured.\n");
         DeleteFileA(manifest_name);
     }
-
-    return ret;
-}
-
-static void unload_v6_module(ULONG_PTR cookie)
-{
-    HANDLE hKernel32;
-    BOOL (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
-
-    hKernel32 = GetModuleHandleA("kernel32.dll");
-    pDeactivateActCtx = (void*)GetProcAddress(hKernel32, "DeactivateActCtx");
-    if (!pDeactivateActCtx)
+    else
     {
-        win_skip("Activation contexts unsupported\n");
-        return;
+        /* this is a XP SP3 failure workaround */
+        hwnd = CreateWindowExA(0, WC_LISTVIEW, "foo",
+                               WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT,
+                               0, 0, 100, 100,
+                               hwndparent, NULL, GetModuleHandleA(NULL), NULL);
+        if (!IsWindow(hwnd))
+        {
+            win_skip("FIXME: failed to create ListView window.\n");
+            unload_v6_module(*pcookie);
+            return FALSE;
+        }
+        else
+            DestroyWindow(hwnd);
     }
 
-    pDeactivateActCtx(0, cookie);
-
-    DeleteFileA(manifest_name);
+    return ret;
 }
 
 static void test_get_set_view(void)
