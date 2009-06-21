@@ -122,9 +122,13 @@ static BOOL OnCreate(HWND hWnd)
     RECT    rc;
     TCITEMW item;
 
-    static WCHAR wszApplications[] = {'A','p','p','l','i','c','a','t','i','o','n','s',0};
-    static WCHAR wszProcesses[] = {'P','r','o','c','e','s','s','e','s',0};
-    static WCHAR wszPerformance[] = {'P','e','r','f','o','r','m','a','n','c','e',0};
+    static WCHAR wszApplications[255];
+    static WCHAR wszProcesses[255];
+    static WCHAR wszPerformance[255];
+
+    LoadStringW(hInst, IDS_APPLICATIONS, wszApplications, sizeof(wszApplications)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_PROCESSES, wszProcesses, sizeof(wszProcesses)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_PERFORMANCE, wszPerformance, sizeof(wszPerformance)/sizeof(WCHAR));
 
     SendMessageW(hMainWnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_TASKMANAGER)));
 
@@ -621,21 +625,27 @@ static void TaskManager_OnTabWndSelChange(void)
     HMENU hViewMenu;
     HMENU hSubMenu;
 
-    static const WCHAR    wszLargeIcons[] = {'L','a','r','&','g','e',' ','I','c','o','n','s',0};
-    static const WCHAR    wszSmallIcons[] = {'S','&','m','a','l','l',' ','I','c','o','n','s',0};
-    static const WCHAR    wszDetails[] = {'&','D','e','t','a','i','l','s',0};
-    static const WCHAR    wszWindows[] = {'&','W','i','n','d','o','w','s',0};
-    static const WCHAR    wszSelectColumns[] = {'&','S','e','l','e','c','t',' ',
-                                                'C','o','l','u','m','n','s','.','.','.',0};
-    static const WCHAR    wszShow16bTasks[] = {'&','S','h','o','w',' ','1','6','-','b','i','t',' ',
-                                               't','a','s','k','s',0};
-    static const WCHAR    wszOneGraphAllCPU[] = {'&','O','n','e',' ','G','r','a','p','h',',',' ',
-                                                 'A','l','l',' ','C','P','U','s',0};
-    static const WCHAR    wszOneGraphPerCPU[] = {'O','n','e',' ','G','r','a','p','h',' ',
-                                                 '&','P','e','r',' ','C','P','U',0};
-    static const WCHAR    wszCPUHistory[] = {'&','C','P','U',' ','H','i','s','t','o','r','y',0};
-    static const WCHAR    wszShowKernelTimes[] = {'&','S','h','o','w',' ','K','e','r','n','e','l',' ',
-                                                  'T','i','m','e','s',0};
+    WCHAR wszLargeIcons[255];
+    WCHAR wszSmallIcons[255];
+    WCHAR wszDetails[255];
+    WCHAR wszWindows[255];
+    WCHAR wszSelectColumns[255];
+    WCHAR wszShow16bTasks[255];
+    WCHAR wszOneGraphAllCPU[255];
+    WCHAR wszOneGraphPerCPU[255];
+    WCHAR wszCPUHistory[255];
+    WCHAR wszShowKernelTimes[255];
+
+    LoadStringW(hInst, IDS_VIEW_LARGE, wszLargeIcons, sizeof(wszLargeIcons)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_VIEW_SMALL, wszSmallIcons, sizeof(wszSmallIcons)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_VIEW_DETAILS, wszDetails, sizeof(wszDetails)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_WINDOWS, wszWindows, sizeof(wszWindows)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_VIEW_SELECTCOLUMNS, wszSelectColumns, sizeof(wszSelectColumns)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_OPTIONS_SHOW16BITTASKS, wszShow16bTasks, sizeof(wszShow16bTasks)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_VIEW_CPUHISTORY_ONEGRAPHALL, wszOneGraphAllCPU, sizeof(wszOneGraphAllCPU)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU, wszOneGraphPerCPU, sizeof(wszOneGraphPerCPU)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_VIEW_CPUHISTORY, wszCPUHistory, sizeof(wszCPUHistory)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_VIEW_SHOWKERNELTIMES, wszShowKernelTimes, sizeof(wszShowKernelTimes)/sizeof(WCHAR));
 
     hMenu = GetMenu(hMainWnd);
     hViewMenu = GetSubMenu(hMenu, 2);

@@ -484,3 +484,20 @@ BEGIN
                             "Sets process to the BELOW NORMAL priority class"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Sets process to the LOW priority class"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "Lar&ge Icons"
+    IDS_VIEW_SMALL                     "S&mall Icons"
+    IDS_VIEW_DETAILS                   "&Details"
+    IDS_WINDOWS                        "&Windows"
+    IDS_VIEW_SELECTCOLUMNS             "&Select Columns..."
+    IDS_OPTIONS_SHOW16BITTASKS         "&Show 16-bit tasks"
+    IDS_VIEW_CPUHISTORY                "&CPU History"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&One Graph, All CPUs"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "One Graph &Per CPU"
+    IDS_VIEW_SHOWKERNELTIMES           "&Show Kernel Times"
+    IDS_APPLICATIONS                   "Applications"
+    IDS_PROCESSES                      "Processes"
+    IDS_PERFORMANCE                    "Performance"
+END
