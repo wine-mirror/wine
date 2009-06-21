@@ -1362,7 +1362,9 @@ static void test_create(void)
     ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
     SendMessage(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_HEADERDRAGDROP);
     hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
-    ok(IsWindow(hHeader), "Header should be created\n");
+    ok(IsWindow(hHeader) ||
+       broken(!IsWindow(hHeader)), /* 4.7x common controls */
+       "Header should be created\n");
     ok(hHeader == GetDlgItem(hList, 0), "Expected header as dialog item\n");
     DestroyWindow(hList);
 
