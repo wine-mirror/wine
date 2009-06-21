@@ -281,7 +281,7 @@ static void test_polices(void)
     IInternetZoneManager_Release(zonemgr);
 }
 
-static void test_ZoneManager(void)
+static void test_GetZoneActionPolicy(void)
 {
     IInternetZoneManager *zonemgr = NULL;
     BYTE buf[32];
@@ -321,6 +321,59 @@ static void test_ZoneManager(void)
     IInternetZoneManager_Release(zonemgr);
 }
 
+static void test_GetZoneAttributes(void)
+{
+    IInternetZoneManager *zonemgr = NULL;
+    CHAR buffer [sizeof(ZONEATTRIBUTES) + 32];
+    ZONEATTRIBUTES* pZA = (ZONEATTRIBUTES*) buffer;
+    HRESULT hr;
+    DWORD i;
+
+    hr = CoInternetCreateZoneManager(NULL, &zonemgr, 0);
+    ok(hr == S_OK, "CoInternetCreateZoneManager result: 0x%x\n", hr);
+    if (FAILED(hr))
+        return;
+
+    /* native urlmon has Zone "0" upto Zone "4" since IE4 */
+    for (i = 0; i < 5; i++) {
+        memset(buffer, -1, sizeof(buffer));
+        hr = IInternetZoneManager_GetZoneAttributes(zonemgr, i, pZA);
+        ok(hr == S_OK, "#%d: got 0x%x (expected S_OK)\n", i, hr);
+    }
+
+    /* IE8 no longer set cbSize */
+    memset(buffer, -1, sizeof(buffer));
+    pZA->cbSize = 0;
+    hr = IInternetZoneManager_GetZoneAttributes(zonemgr, 0, pZA);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+    ok((pZA->cbSize == 0) || (pZA->cbSize == sizeof(ZONEATTRIBUTES)),
+        "got cbSize = %d (expected 0)\n", pZA->cbSize);
+
+    memset(buffer, -1, sizeof(buffer));
+    pZA->cbSize = 64;
+    hr = IInternetZoneManager_GetZoneAttributes(zonemgr, 0, pZA);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+    ok((pZA->cbSize == 64) || (pZA->cbSize == sizeof(ZONEATTRIBUTES)),
+        "got cbSize = %d (expected 64)\n", pZA->cbSize);
+
+    memset(buffer, -1, sizeof(buffer));
+    hr = IInternetZoneManager_GetZoneAttributes(zonemgr, 0, pZA);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+    ok((pZA->cbSize == 0xffffffff) || (pZA->cbSize == sizeof(ZONEATTRIBUTES)),
+        "got cbSize = 0x%x (expected 0xffffffff)\n", pZA->cbSize);
+
+    /* IE8 no longer fail on invalid zones */
+    memset(buffer, -1, sizeof(buffer));
+    hr = IInternetZoneManager_GetZoneAttributes(zonemgr, 0xdeadbeef, pZA);
+    ok(hr == S_OK || (hr == E_FAIL),
+        "got 0x%x (expected S_OK or E_FAIL)\n", hr);
+
+    hr = IInternetZoneManager_GetZoneAttributes(zonemgr, 0, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%x (expected E_INVALIDARG)\n", hr);
+
+    hr = IInternetZoneManager_Release(zonemgr);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+}
 
 
 START_TEST(sec_mgr)
@@ -329,7 +382,8 @@ START_TEST(sec_mgr)
 
     test_SecurityManager();
     test_polices();
-    test_ZoneManager();
+    test_GetZoneActionPolicy();
+    test_GetZoneAttributes();
 
     OleUninitialize();
 }
