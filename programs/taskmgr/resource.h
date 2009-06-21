@@ -195,6 +195,9 @@
 #define IDS_APPLICATIONS                32826
 #define IDS_PROCESSES                   32827
 #define IDS_PERFORMANCE                 32828
+#define IDS_STATUS_BAR_CPU_USAGE        32829
+#define IDS_STATUS_BAR_PROCESSES        32830
+#define IDS_STATUS_BAR_MEMORY_USAGE     32831
 #define IDC_STATIC                      -1
 
 /*

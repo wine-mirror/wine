@@ -141,8 +141,9 @@ static DWORD WINAPI PerformancePageRefreshThread(void *lpParameter)
 	WCHAR	Text[256];
 
 	static const WCHAR    wszFormatDigit[] = {'%','d',0};
-	static const WCHAR    wszMemUsage[] = {'M','e','m',' ','U','s','a','g','e',':',' ',
-                                               '%','d','K',' ','/',' ','%','d','K',0};
+	WCHAR    wszMemUsage[255];
+
+	LoadStringW(hInst, IDS_STATUS_BAR_MEMORY_USAGE, wszMemUsage, sizeof(wszMemUsage)/sizeof(WCHAR));
 
 	/*  Create the event */
 	hPerformancePageEvent = CreateEvent(NULL, TRUE, TRUE, NULL);

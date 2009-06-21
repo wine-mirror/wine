@@ -386,6 +386,12 @@ static DWORD WINAPI ProcessPageRefreshThread(void *lpParameter)
     ULONG    OldProcessorUsage = 0;
     ULONG    OldProcessCount = 0;
 
+    WCHAR    wszCPU_Usage[255];
+    WCHAR    wszProcesses[255];
+
+    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, sizeof(wszCPU_Usage)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_STATUS_BAR_PROCESSES, wszProcesses, sizeof(wszProcesses)/sizeof(WCHAR));
+
     /* Create the event */
     hProcessPageEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
 
@@ -405,7 +411,7 @@ static DWORD WINAPI ProcessPageRefreshThread(void *lpParameter)
             return 0;
 
         if (dwWaitVal == WAIT_OBJECT_0) {
-            TCHAR    text[260];
+            WCHAR    text[256];
 
             /* Reset our event */
             ResetEvent(hProcessPageEvent);
@@ -418,13 +424,13 @@ static DWORD WINAPI ProcessPageRefreshThread(void *lpParameter)
 
             if (OldProcessorUsage != PerfDataGetProcessorUsage()) {
                 OldProcessorUsage = PerfDataGetProcessorUsage();
-                wsprintf(text, _T("CPU Usage: %3d%%"), OldProcessorUsage);
-                SendMessage(hStatusWnd, SB_SETTEXT, 1, (LPARAM)text);
+                wsprintfW(text, wszCPU_Usage, OldProcessorUsage);
+                SendMessageW(hStatusWnd, SB_SETTEXTW, 1, (LPARAM)text);
             }
             if (OldProcessCount != PerfDataGetProcessCount()) {
                 OldProcessCount = PerfDataGetProcessCount();
-                wsprintf(text, _T("Processes: %d"), OldProcessCount);
-                SendMessage(hStatusWnd, SB_SETTEXT, 0, (LPARAM)text);
+                wsprintfW(text, wszProcesses, OldProcessCount);
+                SendMessageW(hStatusWnd, SB_SETTEXTW, 0, (LPARAM)text);
             }
         }
     }

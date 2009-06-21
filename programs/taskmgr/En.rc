@@ -500,4 +500,7 @@ BEGIN
     IDS_APPLICATIONS                   "Applications"
     IDS_PROCESSES                      "Processes"
     IDS_PERFORMANCE                    "Performance"
+    IDS_STATUS_BAR_CPU_USAGE           "CPU Usage: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "Processes: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Mem Usage: %dK / %dK"
 END

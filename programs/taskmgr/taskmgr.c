@@ -527,8 +527,11 @@ static void TaskManager_OnExitMenuLoop(HWND hWnd)
     int   nParts[3];
     WCHAR text[256];
 
-    static const WCHAR wszCPU_Usage[] = {'C','P','U',' ','U','s','a','g','e',':',' ','%','3','d','%','%',0};
-    static const WCHAR wszProcesses[] = {'P','r','o','c','e','s','s','e','s',':',' ','%','d',0};
+    WCHAR wszCPU_Usage[255];
+    WCHAR wszProcesses[255];
+
+    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, sizeof(wszCPU_Usage)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_STATUS_BAR_PROCESSES, wszProcesses, sizeof(wszProcesses)/sizeof(WCHAR));
 
     bInMenuLoop = FALSE;
     /* Update the status bar pane sizes */
