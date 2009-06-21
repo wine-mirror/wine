@@ -2,6 +2,7 @@
  * Regedit resources
  *
  * Copyright 2003,2004,2007,2008 José Manuel Ferrer Ortiz
+ * Copyright 2009 Jaime Andres Rave Torres
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -283,6 +284,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Copia el nombre de la clave seleccionada al portapapeles"
     ID_EDIT_FIND            "Busca una cadena de texto en una clave, valor o datos"
     ID_EDIT_FINDNEXT        "Busca la siguiente ocurrencia del texto especificado en la búsqueda anterior"
+    ID_EDIT_EXPORT          "Exporta la rama seleccionada del registro a un archivo de texto"
 END
 
 STRINGTABLE DISCARDABLE
