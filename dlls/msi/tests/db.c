@@ -4295,6 +4295,160 @@ static void test_special_tables(void)
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
 }
 
+static void test_tables_order(void)
+{
+    const char *query;
+    MSIHANDLE hdb = 0, hview = 0, hrec = 0;
+    UINT r;
+    char buffer[100];
+    DWORD sz;
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    query = "CREATE TABLE `foo` ( "
+        "`baz` INT NOT NULL PRIMARY KEY `baz`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to create table\n");
+
+    query = "CREATE TABLE `bar` ( "
+        "`foo` INT NOT NULL PRIMARY KEY `foo`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to create table\n");
+
+    query = "CREATE TABLE `baz` ( "
+        "`bar` INT NOT NULL, "
+        "`baz` INT NOT NULL, "
+        "`foo` INT NOT NULL PRIMARY KEY `bar`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to create table\n");
+
+    /* The names of the tables in the _Tables table must
+       be in the same order as these names are created in
+       the strings table. */
+    query = "SELECT * FROM `_Tables`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buffer, "foo"), "Expected foo, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "baz"), "Expected baz, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "bar"), "Expected bar, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* The names of the tables in the _Columns table must
+       be in the same order as these names are created in
+       the strings table. */
+    query = "SELECT * FROM `_Columns`";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(hview, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buffer, "foo"), "Expected foo, got %s\n", buffer);
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 3, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buffer, "baz"), "Expected baz, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "baz"), "Expected baz, got %s\n", buffer);
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 3, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "bar"), "Expected bar, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buffer, "baz"), "Expected baz, got %s\n", buffer);
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 3, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "baz"), "Expected baz, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buffer, "baz"), "Expected baz, got %s\n", buffer);
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 3, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "foo"), "Expected foo, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewFetch(hview, &hrec);
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 1, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine ok(!lstrcmp(buffer, "bar"), "Expected bar, got %s\n", buffer);
+    sz = sizeof(buffer);
+    r = MsiRecordGetString(hrec, 3, buffer, &sz);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrcmp(buffer, "foo"), "Expected foo, got %s\n", buffer);
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "failed to close record\n");
+
+    r = MsiViewClose(hview);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(hview);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    DeleteFile(msifile);
+}
+
 static void test_select_markers(void)
 {
     MSIHANDLE hdb = 0, rec, view, res;
@@ -7942,6 +8096,7 @@ START_TEST(db)
     test_integers();
     test_update();
     test_special_tables();
+    test_tables_order();
     test_select_markers();
     test_viewmodify_update();
     test_stringtable();
