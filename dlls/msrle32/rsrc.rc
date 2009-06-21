@@ -42,6 +42,7 @@
 #include "msrle_It.rc"
 #include "msrle_Ja.rc"
 #include "msrle_Ko.rc"
+#include "msrle_Lt.rc"
 #include "msrle_Nl.rc"
 #include "msrle_No.rc"
 #include "msrle_Pl.rc"
