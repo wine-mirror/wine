@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Dmitry Timoshkov
+ * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,22 +16,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "msvidc32_private.h"
+/* UTF-8 */
+#pragma code_page(65001)
 
-#include "msvidc32_Da.rc"
-#include "msvidc32_De.rc"
-#include "msvidc32_Fr.rc"
-#include "msvidc32_En.rc"
-#include "msvidc32_Hu.rc"
-#include "msvidc32_Ko.rc"
-#include "msvidc32_Lt.rc"
-#include "msvidc32_Nl.rc"
-#include "msvidc32_No.rc"
-#include "msvidc32_Pl.rc"
-#include "msvidc32_Pt.rc"
-#include "msvidc32_Ro.rc"
-#include "msvidc32_Ru.rc"
-#include "msvidc32_Si.rc"
-#include "msvidc32_Sv.rc"
-#include "msvidc32_Tr.rc"
+LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_NAME "MS-CRAM"
+    IDS_DESCRIPTION "Wine Video 1 vaizdo kodekas"
+}
+
+#pragma code_page(default)
