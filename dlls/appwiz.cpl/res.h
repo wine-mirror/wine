@@ -53,3 +53,4 @@
 #define IDS_COLUMN_NAME        6
 #define IDS_COLUMN_PUBLISHER   7
 #define IDS_COLUMN_VERSION     8
+#define IDS_INSTALL_FILTER     9

@@ -41,6 +41,7 @@
 #include <winreg.h>
 #include <shellapi.h>
 #include <commctrl.h>
+#include <commdlg.h>
 #include <cpl.h>
 
 #include "res.h"
@@ -70,6 +71,8 @@ typedef struct APPINFO {
 
 static struct APPINFO *AppInfo = NULL;
 static HINSTANCE hInst;
+
+static const WCHAR openW[] = {'o','p','e','n',0};
 
 /* names of registry keys */
 static const WCHAR BackSlashW[] = { '\\', 0 };
@@ -369,6 +372,49 @@ static void UpdateButtons(HWND hWnd)
 
     EnableWindow(GetDlgItem(hWnd, IDC_ADDREMOVE), sel);
     EnableWindow(GetDlgItem(hWnd, IDC_SUPPORT_INFO), sel);
+}
+
+/******************************************************************************
+ * Name       : InstallProgram
+ * Description: Search for potential Installer and execute it.
+ * Parameters : hWnd    - Handle of the dialog box
+ */
+static void InstallProgram(HWND hWnd)
+{
+    OPENFILENAMEW ofn;
+    WCHAR titleW[MAX_STRING_LEN];
+    WCHAR FilterBufferW[MAX_STRING_LEN];
+    WCHAR FileNameBufferW[MAX_PATH];
+
+    LoadStringW(hInst, IDS_CPL_TITLE, titleW, sizeof(titleW)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_INSTALL_FILTER, FilterBufferW, sizeof(FilterBufferW)/sizeof(WCHAR));
+
+    memset(&ofn, 0, sizeof(OPENFILENAMEW));
+    ofn.lStructSize = sizeof(OPENFILENAMEW);
+    ofn.hwndOwner = hWnd;
+    ofn.hInstance = hInst;
+    ofn.lpstrFilter = FilterBufferW;
+    ofn.nFilterIndex = 0;
+    ofn.lpstrFile = FileNameBufferW;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrTitle = titleW;
+    ofn.Flags = OFN_HIDEREADONLY | OFN_ENABLESIZING;
+    FileNameBufferW[0] = 0;
+
+    if (GetOpenFileNameW(&ofn))
+    {
+        SHELLEXECUTEINFOW sei;
+        memset(&sei, 0, sizeof(sei));
+        sei.cbSize = sizeof(sei);
+        sei.lpVerb = openW;
+        sei.nShow = SW_SHOWDEFAULT;
+        sei.fMask = SEE_MASK_NO_CONSOLE;
+        sei.lpFile = ofn.lpstrFile;
+
+        ShellExecuteExW(&sei);
+    }
 }
 
 /******************************************************************************
@@ -737,6 +783,10 @@ static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
         case WM_COMMAND:
             switch (LOWORD(wParam))
             {
+                case IDC_INSTALL:
+                    InstallProgram(hWnd);
+                    break;
+
                 case IDC_ADDREMOVE:
                     selitem = SendDlgItemMessageW(hWnd, IDL_PROGRAMS,
                         LVM_GETNEXTITEM, -1, LVNI_FOCUSED|LVNI_SELECTED);

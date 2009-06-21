@@ -35,6 +35,7 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Name"
    IDS_COLUMN_PUBLISHER, "Herausgeber"
    IDS_COLUMN_VERSION, "Version"
+   IDS_INSTALL_FILTER, "Setup-Programme\0*instal*.exe;*setup*.exe;*.msi\0Programme (*.exe)\0*.exe\0Alle Dateien (*.*)\0*.*\0\0"
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
