@@ -1235,6 +1235,8 @@ static void test_nonole_clipboard(void)
     FORMATETC fmt;
     HGLOBAL h, hblob, htext;
     HENHMETAFILE emf;
+    STGMEDIUM med;
+    DWORD obj_type;
 
     r = OpenClipboard(NULL);
     ok(r, "gle %d\n", GetLastError());
@@ -1348,6 +1350,13 @@ static void test_nonole_clipboard(void)
     hr = IEnumFORMATETC_Next(enum_fmt, 1, &fmt, NULL);
     ok(hr == S_FALSE, "got %08x\n", hr);
     IEnumFORMATETC_Release(enum_fmt);
+
+    InitFormatEtc(fmt, CF_ENHMETAFILE, TYMED_ENHMF);
+    hr = IDataObject_GetData(get, &fmt, &med);
+    ok(hr == S_OK, "got %08x\n", hr);
+    obj_type = GetObjectType(U(med).hEnhMetaFile);
+    ok(obj_type == OBJ_ENHMETAFILE, "got %d\n", obj_type);
+    ReleaseStgMedium(&med);
 
     IDataObject_Release(get);
 
