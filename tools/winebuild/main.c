@@ -244,7 +244,7 @@ static const char usage_str[] =
 "       --def                 Build a .def file from a .spec file\n"
 "       --exe                 Build a .c file for an executable\n"
 "       --relay16             Build the 16-bit relay assembly routines\n"
-"       --relay32             Build the 32-bit relay assembly routines\n\n"
+"       --relay32             Build the 32-bit relay assembly routines\n"
 "       --resources           Build a .o file for the resource files\n\n"
 "The mode options are mutually exclusive; you must specify one and only one.\n\n";
 

@@ -541,8 +541,7 @@ void output_res_o_file( DLLSPEC *spec )
 {
     unsigned int i, total_size;
     unsigned char *data;
-    char *res_file, *cmd;
-    const char *prog;
+    char *res_file = NULL;
     int fd, err;
 
     if (!spec->nb_resources) fatal_error( "--resources mode needs at least one resource file as input\n" );
@@ -593,20 +592,32 @@ void output_res_o_file( DLLSPEC *spec )
     }
     assert( file_out_pos == file_out_end );
 
-    res_file = get_temp_file_name( output_file_name, ".res" );
-    if ((fd = open( res_file, O_WRONLY|O_CREAT|O_TRUNC, 0600 )) == -1)
-        fatal_error( "Cannot create %s\n", res_file );
+    /* if the output file name is a .res too, don't run the results through windres */
+    if (strendswith( output_file_name, ".res"))
+    {
+        if ((fd = open( output_file_name, O_WRONLY|O_CREAT|O_TRUNC, 0666 )) == -1)
+            fatal_error( "Cannot create %s\n", output_file_name );
+    }
+    else
+    {
+        res_file = get_temp_file_name( output_file_name, ".res" );
+        if ((fd = open( res_file, O_WRONLY|O_CREAT|O_TRUNC, 0600 )) == -1)
+            fatal_error( "Cannot create %s\n", res_file );
+    }
     if (write( fd, data, total_size ) != total_size)
         fatal_error( "Error writing to %s\n", res_file );
     close( fd );
     free( data );
 
-    prog = get_windres_command();
-    cmd = xmalloc( strlen(prog) + strlen(res_file) + strlen(output_file_name) + 9 );
-    sprintf( cmd, "%s -i %s -o %s", prog, res_file, output_file_name );
-    if (verbose) fprintf( stderr, "%s\n", cmd );
-    err = system( cmd );
-    if (err) fatal_error( "%s failed with status %d\n", prog, err );
-    free( cmd );
+    if (res_file)
+    {
+        const char *prog = get_windres_command();
+        char *cmd = xmalloc( strlen(prog) + strlen(res_file) + strlen(output_file_name) + 9 );
+        sprintf( cmd, "%s -i %s -o %s", prog, res_file, output_file_name );
+        if (verbose) fprintf( stderr, "%s\n", cmd );
+        err = system( cmd );
+        if (err) fatal_error( "%s failed with status %d\n", prog, err );
+        free( cmd );
+    }
     output_file_name = NULL;  /* so we don't try to assemble it */
 }
