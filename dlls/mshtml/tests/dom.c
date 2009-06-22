@@ -438,18 +438,19 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
     }
 }
 
-#define test_disp(u,id) _test_disp(__LINE__,u,id)
-static void _test_disp(unsigned line, IUnknown *unk, const IID *diid)
+#define test_get_dispid(u,id) _test_disp(__LINE__,u,id)
+static BOOL _test_get_dispid(unsigned line, IUnknown *unk, IID *iid)
 {
     IDispatchEx *dispex;
     ITypeInfo *typeinfo;
+    BOOL ret = FALSE;
     UINT ticnt;
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IDispatchEx, (void**)&dispex);
     ok_(__FILE__,line) (hres == S_OK, "Could not get IDispatch: %08x\n", hres);
     if(FAILED(hres))
-        return;
+        return FALSE;
 
     ticnt = 0xdeadbeef;
     hres = IDispatchEx_GetTypeInfoCount(dispex, &ticnt);
@@ -464,13 +465,36 @@ static void _test_disp(unsigned line, IUnknown *unk, const IID *diid)
 
         hres = ITypeInfo_GetTypeAttr(typeinfo, &type_attr);
         ok_(__FILE__,line) (hres == S_OK, "GetTypeAttr failed: %08x\n", hres);
-        ok_(__FILE__,line) (IsEqualGUID(&type_attr->guid, diid), "unexpected guid %s\n", dbgstr_guid(&type_attr->guid));
+        if(hres == S_OK) {
+            *iid = type_attr->guid;
+            ret = TRUE;
+        }
 
         ITypeInfo_ReleaseTypeAttr(typeinfo, type_attr);
         ITypeInfo_Release(typeinfo);
     }
 
     IDispatchEx_Release(dispex);
+    return ret;
+}
+
+#define test_disp(u,id) _test_disp(__LINE__,u,id)
+static void _test_disp(unsigned line, IUnknown *unk, const IID *diid)
+{
+    IID iid;
+
+    if(_test_get_dispid(line, unk, &iid))
+        ok_(__FILE__,line) (IsEqualGUID(&iid, diid), "unexpected guid %s\n", dbgstr_guid(&iid));
+}
+
+#define test_disp2(u,id,id2) _test_disp2(__LINE__,u,id,id2)
+static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID *diid2)
+{
+    IID iid;
+
+    if(_test_get_dispid(line, unk, &iid))
+        ok_(__FILE__,line) (IsEqualGUID(&iid, diid) || broken(IsEqualGUID(&iid, diid2)),
+                "unexpected guid %s\n", dbgstr_guid(&iid));
 }
 
 #define get_elem_iface(u) _get_elem_iface(__LINE__,u)
@@ -2366,7 +2390,7 @@ static void test_location(IHTMLDocument2 *doc)
     IHTMLLocation_Release(location2);
 
     test_ifaces((IUnknown*)location, location_iids);
-    test_disp((IUnknown*)location, &IID_IHTMLLocation);
+    test_disp2((IUnknown*)location, &DIID_DispHTMLLocation, &IID_IHTMLLocation);
 
     ref = IHTMLLocation_Release(location);
     ok(!ref, "location chould be destroyed here\n");
@@ -2388,7 +2412,7 @@ static void test_navigator(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_get_navigator(window, &navigator);
     ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
     ok(navigator != NULL, "navigator == NULL\n");
-    test_disp((IUnknown*)navigator, &IID_IOmNavigator);
+    test_disp2((IUnknown*)navigator, &DIID_DispHTMLNavigator, &IID_IOmNavigator);
 
     hres = IHTMLWindow2_get_navigator(window, &navigator2);
     ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
