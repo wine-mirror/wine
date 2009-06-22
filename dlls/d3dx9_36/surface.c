@@ -322,3 +322,51 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceW(LPDIRECT3DSURFACE9 pDestSurface,
     }
     return D3DXERR_INVALIDDATA;
 }
+
+/************************************************************
+ * D3DXLoadSurfaceFromMemory
+ *
+ * Loads data from a given memory chunk into a surface,
+ * applying any of the specified filters.
+ *
+ * PARAMS
+ *   pDestSurface [I] pointer to the surface
+ *   pDestPalette [I] palette to use
+ *   pDestRect    [I] to be filled area of the surface
+ *   pSrcMemory   [I] pointer to the source data
+ *   SrcFormat    [I] format of the source pixel data
+ *   SrcPitch     [I] number of bytes in a row
+ *   pSrcPalette  [I] palette used in the source image
+ *   pSrcRect     [I] area of the source data to load
+ *   dwFilter     [I] filter to apply on stretching
+ *   Colorkey     [I] colorkey
+ *
+ * RETURNS
+ *   Success: D3D_OK, if we successfully load the pixel data into our surface or
+ *                    if pSrcMemory is NULL but the other parameters are valid
+ *   Failure: D3DERR_INVALIDCALL, if pDestSurface, SrcPitch or pSrcRect are NULL or
+ *                                if SrcFormat is an invalid format (other than D3DFMT_UNKNOWN)
+ *            D3DXERR_INVALIDDATA, if we fail to lock pDestSurface
+ *            E_FAIL, if SrcFormat is D3DFMT_UNKNOWN or the dimensions of pSrcRect are invalid
+ *
+ * NOTES
+ *   pSrcRect specifies the dimensions of the source data
+ *
+ */
+HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
+                                         CONST PALETTEENTRY *pDestPalette,
+                                         CONST RECT *pDestRect,
+                                         LPCVOID pSrcMemory,
+                                         D3DFORMAT SrcFormat,
+                                         UINT SrcPitch,
+                                         CONST PALETTEENTRY *pSrcPalette,
+                                         CONST RECT *pSrcRect,
+                                         DWORD dwFilter,
+                                         D3DCOLOR Colorkey)
+{
+    TRACE("stub\n");
+
+    if( !pDestSurface || !pSrcMemory || !pSrcRect ) return D3DERR_INVALIDCALL;
+    if(SrcFormat == D3DFMT_UNKNOWN || pSrcRect->left >= pSrcRect->right || pSrcRect->top >= pSrcRect->bottom) return E_FAIL;
+    return E_NOTIMPL;
+}

@@ -185,7 +185,7 @@
 @ stdcall D3DXLoadSurfaceFromFileA(ptr ptr ptr str ptr long long ptr)
 @ stdcall D3DXLoadSurfaceFromFileInMemory(ptr ptr ptr ptr long ptr long long ptr)
 @ stdcall D3DXLoadSurfaceFromFileW(ptr ptr ptr wstr ptr long long ptr)
-@ stub D3DXLoadSurfaceFromMemory
+@ stdcall D3DXLoadSurfaceFromMemory(ptr ptr ptr ptr long long ptr ptr long long)
 @ stdcall D3DXLoadSurfaceFromResourceA(ptr ptr ptr ptr str ptr long long ptr)
 @ stdcall D3DXLoadSurfaceFromResourceW(ptr ptr ptr ptr wstr ptr long long ptr)
 @ stub D3DXLoadSurfaceFromSurface
