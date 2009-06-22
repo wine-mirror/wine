@@ -1166,6 +1166,7 @@ static HRESULT Date_setHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     VARIANT v;
     HRESULT hres;
     DateInstance *date;
+    DOUBLE t, hour, min, sec, ms;
 
     TRACE("\n");
 
@@ -1180,14 +1181,40 @@ static HRESULT Date_setHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
         return S_OK;
     }
 
+    date = (DateInstance*)dispex;
+    t = local_time(date->time, date);
+
     hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
+    hour = num_val(&v);
 
-    date = (DateInstance*)dispex;
-    date->time = time_clip(date->time
-            - (hour_from_time(date->time - date->bias*MS_PER_MINUTE)
-                - num_val(&v))*MS_PER_HOUR);
+    if(arg_cnt(dp) > 1) {
+        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        min = num_val(&v);
+    }
+    else min = min_from_time(t);
+
+    if(arg_cnt(dp) > 2) {
+        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        sec = num_val(&v);
+    }
+    else sec = sec_from_time(t);
+
+    if(arg_cnt(dp) > 3) {
+        hres = to_number(dispex->ctx, get_arg(dp, 3), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        ms = num_val(&v);
+    }
+    else ms = ms_from_time(t);
+
+    t = make_date(day(t), make_time(hour, min, sec, ms));
+    date->time = time_clip(utc(t, date));
 
     if(retv)
         num_set_val(retv, date->time);
@@ -1202,6 +1229,7 @@ static HRESULT Date_setUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     VARIANT v;
     HRESULT hres;
     DateInstance *date;
+    DOUBLE t, hour, min, sec, ms;
 
     TRACE("\n");
 
@@ -1216,13 +1244,40 @@ static HRESULT Date_setUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
         return S_OK;
     }
 
+    date = (DateInstance*)dispex;
+    t = date->time;
+
     hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
+    hour = num_val(&v);
 
-    date = (DateInstance*)dispex;
-    date->time = time_clip(date->time
-            - (hour_from_time(date->time) - num_val(&v))*MS_PER_HOUR);
+    if(arg_cnt(dp) > 1) {
+        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        min = num_val(&v);
+    }
+    else min = min_from_time(t);
+
+    if(arg_cnt(dp) > 2) {
+        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        sec = num_val(&v);
+    }
+    else sec = sec_from_time(t);
+
+    if(arg_cnt(dp) > 3) {
+        hres = to_number(dispex->ctx, get_arg(dp, 3), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        ms = num_val(&v);
+    }
+    else ms = ms_from_time(t);
+
+    t = make_date(day(t), make_time(hour, min, sec, ms));
+    date->time = time_clip(t);
 
     if(retv)
         num_set_val(retv, date->time);
