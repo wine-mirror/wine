@@ -158,6 +158,7 @@ struct arb_vs_compiled_shader
     GLuint                          prgId;
     UINT                            int_consts[MAX_CONST_I];
     char                            num_int_consts;
+    UINT                            pos_fixup;
 };
 
 struct recorded_instruction
@@ -419,14 +420,16 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
 static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
 {
     IWineD3DStateBlockImpl* stateBlock;
-    const WineD3D_GL_Info *gl_info;
+    const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
     unsigned char i;
     struct shader_arb_priv *priv = deviceImpl->shader_priv;
     const struct arb_vs_compiled_shader *gl_shader = priv->compiled_vprog;
 
+    /* Upload the position fixup */
+    GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, gl_shader->pos_fixup, deviceImpl->posFixup));
+
     if(gl_shader->num_int_consts == 0) return;
 
-    gl_info = &deviceImpl->adapter->gl_info;
     stateBlock = deviceImpl->stateBlock;
 
     for(i = 0; i < MAX_CONST_I; i++)
@@ -470,9 +473,6 @@ static void shader_arb_load_constants(
                 deviceImpl->highest_dirty_vs_const,
                 stateBlock->vertexShaderConstantF,
                 deviceImpl->activeContext->vshader_const_dirty);
-
-        /* Upload the position fixup */
-        GL_EXTCALL(glProgramEnvParameter4fvARB(GL_VERTEX_PROGRAM_ARB, ARB_SHADER_PRIVCONST_POS, deviceImpl->posFixup));
 
         shader_arb_vs_local_constants(deviceImpl);
     }
@@ -581,7 +581,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
         {
             if(ctx->target_version >= NV2) *num_clipplanes = GL_LIMITS(clipplanes);
             else *num_clipplanes = min(GL_LIMITS(clipplanes), 4);
-            max_constantsF = GL_LIMITS(vshader_constantsF) - 1;
+            max_constantsF = GL_LIMITS(vshader_constantsF);
         }
     }
 
@@ -3455,7 +3455,8 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     }
 
     /* We need a constant to fixup the final position */
-    shader_addline(buffer, "PARAM posFixup = program.env[%d];\n", ARB_SHADER_PRIVCONST_POS);
+    shader_addline(buffer, "PARAM posFixup = program.local[%u];\n", next_local);
+    compiled->pos_fixup = next_local++;
 
     /* Initialize output parameters. GL_ARB_vertex_program does not require special initialization values
      * for output parameters. D3D in theory does not do that either, but some applications depend on a
@@ -4154,7 +4155,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
             pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
             TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
         }
-        pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF) - 1;
+        pCaps->MaxVertexShaderConst = GL_LIMITS(vshader_constantsF);
     }
 
     if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
