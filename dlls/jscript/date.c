@@ -882,6 +882,7 @@ static HRESULT Date_setMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, D
     VARIANT v;
     HRESULT hres;
     DateInstance *date;
+    DOUBLE t;
 
     TRACE("\n");
 
@@ -901,7 +902,10 @@ static HRESULT Date_setMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, D
         return hres;
 
     date = (DateInstance*)dispex;
-    date->time = time_clip(date->time - ms_from_time(date->time) + num_val(&v));
+    t = local_time(date->time, date);
+    t = make_date(day(t), make_time(hour_from_time(t), min_from_time(t),
+                sec_from_time(t), num_val(&v)));
+    date->time = time_clip(utc(t, date));
 
     if(retv)
         num_set_val(retv, date->time);
@@ -913,7 +917,38 @@ static HRESULT Date_setMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, D
 static HRESULT Date_setUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    return Date_setMilliseconds(dispex, lcid, flags, dp, retv, ei, caller);
+    VARIANT v;
+    HRESULT hres;
+    DateInstance *date;
+    DOUBLE t;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(!arg_cnt(dp)) {
+        FIXME("throw ArgumentNotOptional\n");
+        if(retv) num_set_nan(retv);
+        return S_OK;
+    }
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+
+    date = (DateInstance*)dispex;
+    t = date->time;
+    t = make_date(day(t), make_time(hour_from_time(t), min_from_time(t),
+                sec_from_time(t), num_val(&v)));
+    date->time = time_clip(t);
+
+    if(retv)
+        num_set_val(retv, date->time);
+
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.30 */
