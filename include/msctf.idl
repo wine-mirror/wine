@@ -938,3 +938,14 @@ interface ITfCompartmentMgr : IUnknown
     HRESULT EnumCompartments(
         [out] IEnumGUID **ppEnum);
 };
+
+[
+  object,
+  uuid(743abd5f-f26d-48df-8cc5-238492419b64),
+  pointer_default(unique)
+]
+interface ITfCompartmentEventSink : IUnknown
+{
+    HRESULT OnChange(
+        [in] REFGUID rguid);
+}

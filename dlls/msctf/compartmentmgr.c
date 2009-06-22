@@ -72,7 +72,7 @@ typedef struct tagCompartmentSink {
     struct list         entry;
     union {
         IUnknown            *pIUnknown;
-        /* ITfCompartmentEventSink *pITfCompartmentEventSink; */
+        ITfCompartmentEventSink *pITfCompartmentEventSink;
     } interfaces;
 } CompartmentSink;
 
@@ -493,6 +493,7 @@ static HRESULT WINAPI Compartment_SetValue(ITfCompartment *iface,
     TfClientId tid, const VARIANT *pvarValue)
 {
     Compartment *This = (Compartment *)iface;
+    struct list *cursor;
 
     TRACE("(%p) %i %p\n",This,tid,pvarValue);
 
@@ -516,6 +517,12 @@ static HRESULT WINAPI Compartment_SetValue(ITfCompartment *iface,
                 SysStringByteLen(V_BSTR(pvarValue)));
     else if (V_VT(pvarValue) == VT_UNKNOWN)
         IUnknown_AddRef(V_UNKNOWN(&This->variant));
+
+    LIST_FOR_EACH(cursor, &This->CompartmentEventSink)
+    {
+        CompartmentSink* sink = LIST_ENTRY(cursor,CompartmentSink,entry);
+        ITfCompartmentEventSink_OnChange(sink->interfaces.pITfCompartmentEventSink,&This->valueData->guid);
+    }
 
     return S_OK;
 }
@@ -570,6 +577,7 @@ static ULONG WINAPI Source_Release(ITfSource *iface)
 static WINAPI HRESULT CompartmentSource_AdviseSink(ITfSource *iface,
         REFIID riid, IUnknown *punk, DWORD *pdwCookie)
 {
+    CompartmentSink *cs;
     Compartment *This = impl_from_ITfSourceVtbl(iface);
 
     TRACE("(%p) %s %p %p\n",This,debugstr_guid(riid),punk,pdwCookie);
@@ -577,8 +585,28 @@ static WINAPI HRESULT CompartmentSource_AdviseSink(ITfSource *iface,
     if (!riid || !punk || !pdwCookie)
         return E_INVALIDARG;
 
-    FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
-    return E_NOTIMPL;
+    if (IsEqualIID(riid, &IID_ITfCompartmentEventSink))
+    {
+        cs = HeapAlloc(GetProcessHeap(),0,sizeof(CompartmentSink));
+        if (!cs)
+            return E_OUTOFMEMORY;
+        if (FAILED(IUnknown_QueryInterface(punk, riid, (LPVOID *)&cs->interfaces.pITfCompartmentEventSink)))
+        {
+            HeapFree(GetProcessHeap(),0,cs);
+            return CONNECT_E_CANNOTCONNECT;
+        }
+        list_add_head(&This->CompartmentEventSink,&cs->entry);
+        *pdwCookie = generate_Cookie(COOKIE_MAGIC_COMPARTMENTSINK , cs);
+    }
+    else
+    {
+        FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
+        return E_NOTIMPL;
+    }
+
+    TRACE("cookie %x\n",*pdwCookie);
+
+    return S_OK;
 }
 
 static WINAPI HRESULT CompartmentSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
