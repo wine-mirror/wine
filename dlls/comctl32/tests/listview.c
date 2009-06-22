@@ -1405,7 +1405,7 @@ static void test_create(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hList = create_listview_control(LVS_OWNERDRAWFIXED);
     ok_sequence(sequences, PARENT_SEQ_INDEX, create_ownerdrawfixed_parent_seq,
-                "created with LVS_OWNERDRAWFIXED - parent seq", TRUE);
+                "created with LVS_OWNERDRAWFIXED|LVS_REPORT - parent seq", FALSE);
     DestroyWindow(hList);
 }
 

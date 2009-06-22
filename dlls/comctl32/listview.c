@@ -1027,6 +1027,20 @@ static inline DWORD notify_postpaint (const LISTVIEW_INFO *infoPtr, NMLVCUSTOMDR
     return notify_customdraw(infoPtr, CDDS_POSTPAINT, lpnmlvcd);
 }
 
+static void notify_measureitem(LISTVIEW_INFO *infoPtr)
+{
+    MEASUREITEMSTRUCT mis;
+    mis.CtlType = ODT_LISTVIEW;
+    mis.CtlID = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
+    mis.itemID = -1;
+    mis.itemWidth = 0;
+    mis.itemData = 0;
+    mis.itemHeight= infoPtr->nItemHeight;
+    SendMessageW(infoPtr->hwndNotify, WM_MEASUREITEM, mis.CtlID, (LPARAM)&mis);
+    if (infoPtr->nItemHeight != max(mis.itemHeight, 1))
+        infoPtr->nMeasureItemHeight = infoPtr->nItemHeight = max(mis.itemHeight, 1);
+}
+
 /******** Item iterator functions **********************************/
 
 static RANGES ranges_create(int count);
@@ -8654,6 +8668,8 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
       ShowWindow(infoPtr->hwndHeader, SW_SHOWNORMAL);
     }
     LISTVIEW_UpdateScroll(infoPtr);
+    /* send WM_MEASUREITEM notification */
+    if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED) notify_measureitem(infoPtr);
   }
 
   OpenThemeData(hwnd, themeClass);
@@ -10776,16 +10792,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (infoPtr->uView == LV_VIEW_DETAILS))
       {
-          MEASUREITEMSTRUCT mis;
-          mis.CtlType = ODT_LISTVIEW;
-          mis.CtlID = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
-          mis.itemID = -1;
-          mis.itemWidth = 0;
-          mis.itemData = 0;
-          mis.itemHeight= infoPtr->nItemHeight;
-          SendMessageW(infoPtr->hwndNotify, WM_MEASUREITEM, mis.CtlID, (LPARAM)&mis);
-          if (infoPtr->nItemHeight != max(mis.itemHeight, 1))
-              infoPtr->nMeasureItemHeight = infoPtr->nItemHeight = max(mis.itemHeight, 1);
+          notify_measureitem(infoPtr);
       }
 
 	  LISTVIEW_UpdateSize(infoPtr);
