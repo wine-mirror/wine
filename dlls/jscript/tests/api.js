@@ -1017,6 +1017,8 @@ date.setUTCHours(20);
 ok(date.getUTCHours() === 20, "date.getUTCHours() = " + date.getUTCHours());
 date.setUTCDate(32);
 ok(date.getUTCDate() === 1, "date.getUTCDate() = " + date.getUTCDate());
+date.setUTCMonth(22, 37);
+ok(date.getTime() === 60987050010, "date.getTime() = " + date.getTime());
 
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);
