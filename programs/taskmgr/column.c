@@ -35,32 +35,61 @@
 UINT    ColumnDataHints[25];
 
 /* Column Headers; Begin */
-static const WCHAR    wszImageName[] = {'I','m','a','g','e',' ','N','a','m','e',0};
-static const WCHAR    wszPID[] = {'P','I','D',0};
-static const WCHAR    wszUserName[] = {'U','s','e','r','n','a','m','e',0};
-static const WCHAR    wszSessionID[] = {'S','e','s','s','i','o','n',' ','I','D',0};
-static const WCHAR    wszCPU[] = {'C','P','U',0};
-static const WCHAR    wszCPUTime[] = {'C','P','U',' ','T','i','m','e',0};
-static const WCHAR    wszMemUsage[] = {'M','e','m',' ','U','s','a','g','e',0};
-static const WCHAR    wszPeakMemUsage[] = {'P','e','a','k',' ','M','e','m',' ','U','s','a','g','e',0};
-static const WCHAR    wszMemDelta[] = {'M','e','m',' ','D','e','l','t','a',0};
-static const WCHAR    wszPageFaults[] = {'P','a','g','e',' ','F','a','u','l','t','s',0};
-static const WCHAR    wszPFDelta[] = {'P','F',' ','D','e','l','t','a',0};
-static const WCHAR    wszVMSize[] = {'V','M',' ','S','i','z','e',0};
-static const WCHAR    wszPagedPool[] = {'P','a','g','e','d',' ','P','o','o','l',0};
-static const WCHAR    wszNPPool[] = {'N','P',' ','P','o','o','l',0};
-static const WCHAR    wszBasePri[] = {'B','a','s','e',' ','P','r','i',0};
-static const WCHAR    wszHandles[] = {'H','a','n','d','l','e','s',0};
-static const WCHAR    wszThreads[] = {'T','h','r','e','a','d','s',0};
-static const WCHAR    wszUSERObjects[] = {'U','S','E','R',' ','O','b','j','e','c','t','s',0};
-static const WCHAR    wszGDIObjects[] = {'G','D','I',' ','O','b','j','e','c','t','s',0};
-static const WCHAR    wszIOReads[] = {'I','/','O',' ','R','e','a','d','s',0};
-static const WCHAR    wszIOWrites[] = {'I','/','O',' ','W','r','i','t','e','s',0};
-static const WCHAR    wszIOOther[] = {'I','/','O',' ','O','t','h','e','r',0};
-static const WCHAR    wszIOReadBytes[] = {'I','/','O',' ','R','e','a','d',' ','B','y','t','e','s',0};
-static const WCHAR    wszIOWriteBytes[] = {'I','/','O',' ','W','r','i','t','e',' ','B','y','t','e','s',0};
-static const WCHAR    wszIOOtherBytes[] = {'I','/','O',' ','O','t','h','e','r',' ','B','y','t','e','s',0};
+WCHAR    wszImageName[255];
+WCHAR    wszPID[255];
+WCHAR    wszUserName[255];
+WCHAR    wszSessionID[255];
+WCHAR    wszCPU[255];
+WCHAR    wszCPUTime[255];
+WCHAR    wszMemUsage[255];
+WCHAR    wszPeakMemUsage[255];
+WCHAR    wszMemDelta[255];
+WCHAR    wszPageFaults[255];
+WCHAR    wszPFDelta[255];
+WCHAR    wszVMSize[255];
+WCHAR    wszPagedPool[255];
+WCHAR    wszNPPool[255];
+WCHAR    wszBasePri[255];
+WCHAR    wszHandles[255];
+WCHAR    wszThreads[255];
+WCHAR    wszUSERObjects[255];
+WCHAR    wszGDIObjects[255];
+WCHAR    wszIOReads[255];
+WCHAR    wszIOWrites[255];
+WCHAR    wszIOOther[255];
+WCHAR    wszIOReadBytes[255];
+WCHAR    wszIOWriteBytes[255];
+WCHAR    wszIOOtherBytes[255];
 /* Column Headers; End */
+
+static void load_column_headers(void)
+{
+    LoadStringW(hInst, IDS_IMAGENAME, wszImageName, sizeof(wszImageName)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_PID, wszPID, sizeof(wszPID)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_USERNAME, wszUserName, sizeof(wszUserName)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_SESSIONID, wszSessionID, sizeof(wszSessionID)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_CPUUSAGE, wszCPU, sizeof(wszCPU)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_CPUTIME, wszCPUTime, sizeof(wszCPUTime)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_MEMORYUSAGE, wszMemUsage, sizeof(wszMemUsage)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_PEAKMEMORYUSAGE, wszPeakMemUsage, sizeof(wszPeakMemUsage)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_MEMORYUSAGEDELTA, wszMemDelta, sizeof(wszMemDelta)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_PAGEFAULTS, wszPageFaults, sizeof(wszPageFaults)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_PAGEFAULTSDELTA, wszPFDelta, sizeof(wszPFDelta)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_VIRTUALMEMORYSIZE, wszVMSize, sizeof(wszVMSize)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_PAGEDPOOL, wszPagedPool, sizeof(wszPagedPool)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_NONPAGEDPOOL, wszNPPool, sizeof(wszNPPool)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_BASEPRIORITY, wszBasePri, sizeof(wszBasePri)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_HANDLECOUNT, wszHandles, sizeof(wszHandles)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_THREADCOUNT, wszThreads, sizeof(wszThreads)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_USEROBJECTS, wszUSERObjects, sizeof(wszUSERObjects)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_GDIOBJECTS, wszGDIObjects, sizeof(wszGDIObjects)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_IOREADS, wszIOReads, sizeof(wszIOReads)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_IOWRITES, wszIOWrites, sizeof(wszIOWrites)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_IOOTHER, wszIOOther, sizeof(wszIOOther)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_IOREADBYTES, wszIOReadBytes, sizeof(wszIOReadBytes)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_IOWRITEBYTES, wszIOWriteBytes, sizeof(wszIOWriteBytes)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_IOOTHERBYTES, wszIOOtherBytes, sizeof(wszIOOtherBytes)/sizeof(WCHAR));
+}
 
 static int InsertColumn(int nCol, LPCWSTR lpszColumnHeading, int nFormat, int nWidth, int nSubItem)
 {
@@ -88,6 +117,8 @@ static int InsertColumn(int nCol, LPCWSTR lpszColumnHeading, int nFormat, int nW
 void AddColumns(void)
 {
     int        size;
+
+    load_column_headers();
 
     if (TaskManagerSettings.Column_ImageName)
         InsertColumn(0, wszImageName, LVCFMT_LEFT, TaskManagerSettings.ColumnSizeArray[0], -1);

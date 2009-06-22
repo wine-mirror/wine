@@ -198,6 +198,31 @@
 #define IDS_STATUS_BAR_CPU_USAGE        32829
 #define IDS_STATUS_BAR_PROCESSES        32830
 #define IDS_STATUS_BAR_MEMORY_USAGE     32831
+#define IDS_IMAGENAME                   32832
+#define IDS_PID                         32833
+#define IDS_CPUUSAGE                    32834
+#define IDS_CPUTIME                     32835
+#define IDS_MEMORYUSAGE                 32836
+#define IDS_MEMORYUSAGEDELTA            32837
+#define IDS_PEAKMEMORYUSAGE             32838
+#define IDS_PAGEFAULTS                  32839
+#define IDS_USEROBJECTS                 32840
+#define IDS_IOREADS                     32841
+#define IDS_IOREADBYTES                 32842
+#define IDS_SESSIONID                   32843
+#define IDS_USERNAME                    32844
+#define IDS_PAGEFAULTSDELTA             32845
+#define IDS_VIRTUALMEMORYSIZE           32846
+#define IDS_PAGEDPOOL                   32847
+#define IDS_NONPAGEDPOOL                32848
+#define IDS_BASEPRIORITY                32849
+#define IDS_HANDLECOUNT                 32850
+#define IDS_THREADCOUNT                 32851
+#define IDS_GDIOBJECTS                  32852
+#define IDS_IOWRITES                    32853
+#define IDS_IOWRITEBYTES                32854
+#define IDS_IOOTHER                     32855
+#define IDS_IOOTHERBYTES                32856
 #define IDC_STATIC                      -1
 
 /*

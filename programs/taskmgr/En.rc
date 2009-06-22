@@ -504,3 +504,32 @@ BEGIN
     IDS_STATUS_BAR_PROCESSES           "Processes: %d"
     IDS_STATUS_BAR_MEMORY_USAGE        "Mem Usage: %dK / %dK"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "Image Name"
+    IDS_PID               "PID"
+    IDS_CPUUSAGE          "CPU"
+    IDS_CPUTIME           "CPU Time"
+    IDS_MEMORYUSAGE       "Mem Usage"
+    IDS_MEMORYUSAGEDELTA  "Mem Delta"
+    IDS_PEAKMEMORYUSAGE   "Peak Mem Usage"
+    IDS_PAGEFAULTS        "Page Faults"
+    IDS_USEROBJECTS       "USER Objects"
+    IDS_IOREADS           "I/O Reads"
+    IDS_IOREADBYTES       "I/O Read Bytes"
+    IDS_SESSIONID         "Session ID"
+    IDS_USERNAME          "Username"
+    IDS_PAGEFAULTSDELTA   "PF Delta"
+    IDS_VIRTUALMEMORYSIZE "VM Size"
+    IDS_PAGEDPOOL         "Paged Pool"
+    IDS_NONPAGEDPOOL      "NP Pool"
+    IDS_BASEPRIORITY      "Base Pri"
+    IDS_HANDLECOUNT       "Handles"
+    IDS_THREADCOUNT       "Threads"
+    IDS_GDIOBJECTS        "GDI Objects"
+    IDS_IOWRITES          "I/O Writes"
+    IDS_IOWRITEBYTES      "I/O Write Bytes"
+    IDS_IOOTHER           "I/O Other"
+    IDS_IOOTHERBYTES      "I/O Other Bytes"
+END
