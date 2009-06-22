@@ -35,6 +35,10 @@ typedef struct {
     DOUBLE time;
 
     LONG bias;
+    SYSTEMTIME standardDate;
+    LONG standardBias;
+    SYSTEMTIME daylightDate;
+    LONG daylightBias;
 } DateInstance;
 
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
@@ -112,14 +116,42 @@ static inline DOUBLE days_in_year(DOUBLE year)
 /* ECMA-262 3th Edition    15.9.1.3 */
 static inline DOUBLE day_from_year(DOUBLE year)
 {
-    int y;
-
     if(year != (int)year)
         return ret_nan();
 
-    y = year;
-    return 365*(y-1970) + floor((y-1969)/4)
-        - floor((y-1901)/100) + floor((y-1601)/400);
+    return floor(365.0*(year-1970) + floor((year-1969)/4)
+        - floor((year-1901)/100) + floor((year-1601)/400));
+}
+
+static inline int day_from_month(int month, int in_leap_year)
+{
+    switch(month)
+    {
+        case 0:
+            return 0;
+        case 1:
+            return 31;
+        case 2:
+            return 59+in_leap_year;
+        case 3:
+            return 90+in_leap_year;
+        case 4:
+            return 120+in_leap_year;
+        case 5:
+            return 151+in_leap_year;
+        case 6:
+            return 181+in_leap_year;
+        case 7:
+            return 212+in_leap_year;
+        case 8:
+            return 243+in_leap_year;
+        case 9:
+            return 273+in_leap_year;
+        case 10:
+            return 304+in_leap_year;
+        default:
+            return 334+in_leap_year;
+    }
 }
 
 /* ECMA-262 3th Edition    15.9.1.3 */
@@ -221,6 +253,74 @@ static inline DOUBLE week_day(DOUBLE time)
     return ret;
 }
 
+static inline DOUBLE convert_time(int year, SYSTEMTIME st)
+{
+    DOUBLE time;
+    int set_week_day;
+
+    if(st.wMonth == 0)
+        return ret_nan();
+
+    if(st.wYear != 0)
+        year = st.wYear;
+
+    time = time_from_year(year);
+    time += (DOUBLE)day_from_month(st.wMonth-1, in_leap_year(time)) * MS_PER_DAY;
+
+    if(st.wYear == 0) {
+        set_week_day = st.wDayOfWeek-week_day(time);
+        if(set_week_day < 0)
+            set_week_day += 7;
+        time += set_week_day * MS_PER_DAY;
+
+        time += (DOUBLE)(st.wDay-1) * 7 * MS_PER_DAY;
+        if(month_from_time(time) != st.wMonth-1)
+            time -= 7 * MS_PER_DAY;
+    }
+    else
+        time += st.wDay * MS_PER_DAY;
+
+    time += st.wHour * MS_PER_HOUR;
+    time += st.wMinute * MS_PER_MINUTE;
+
+    return time;
+}
+
+/* ECMA-262 3rd Edition    15.9.1.9 */
+static inline DOUBLE daylight_saving_ta(DOUBLE time, DateInstance *date)
+{
+    int year = year_from_time(time);
+    DOUBLE standardTime, daylightTime;
+
+    if(isnan(time))
+        return 0;
+
+    standardTime = convert_time(year, date->standardDate);
+    daylightTime = convert_time(year, date->daylightDate);
+
+    if(isnan(standardTime) || isnan(daylightTime))
+        return 0;
+    else if(standardTime > daylightTime) {
+        if(daylightTime <= time && time < standardTime)
+            return date->daylightBias;
+
+        return date->standardBias;
+    }
+    else {
+        if(standardTime <= time && time < daylightTime)
+            return date->standardBias;
+
+        return date->daylightBias;
+    }
+}
+
+/* ECMA-262 3rd Edition    15.9.1.9 */
+static inline DOUBLE utc(DOUBLE time, DateInstance *date)
+{
+    time += date->bias * MS_PER_MINUTE;
+    return time + daylight_saving_ta(time, date)*MS_PER_MINUTE;
+}
+
 /* ECMA-262 3th Edition    15.9.1.10 */
 static inline DOUBLE hour_from_time(DOUBLE time)
 {
@@ -275,6 +375,36 @@ static inline DOUBLE ms_from_time(DOUBLE time)
     if(ret<0) ret += 1000;
 
     return ret;
+}
+
+/* ECMA-262 3rd Edition    15.9.1.11 */
+static inline DOUBLE make_time(DOUBLE hour, DOUBLE min, DOUBLE sec, DOUBLE ms)
+{
+    return hour*MS_PER_HOUR + min*MS_PER_MINUTE + sec*1000 + ms;
+}
+
+/* ECMA-262 3rd Edition    15.9.1.12 */
+static inline DOUBLE make_day(DOUBLE year, DOUBLE month, DOUBLE day)
+{
+    DOUBLE time;
+
+    year += floor(month/12);
+
+    month = fmod(month, 12);
+    if(month<0) month += 12;
+
+    time = time_from_year(year);
+
+    day += floor(time / MS_PER_DAY);
+    day += day_from_month(month, in_leap_year(time));
+
+    return day-1;
+}
+
+/* ECMA-262 3rd Edition    15.9.1.13 */
+static inline DOUBLE make_date(DOUBLE day, DOUBLE time)
+{
+    return day*MS_PER_DAY + time;
 }
 
 /* ECMA-262 3rd Edition    15.9.1.14 */
@@ -1022,8 +1152,9 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, Disp
     DateInstance *date;
     HRESULT hres;
     TIME_ZONE_INFORMATION tzi;
+    DWORD dret;
 
-    GetTimeZoneInformation(&tzi);
+    dret = GetTimeZoneInformation(&tzi);
 
     date = heap_alloc_zero(sizeof(DateInstance));
     if(!date)
@@ -1040,6 +1171,10 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, Disp
 
     date->time = time;
     date->bias = tzi.Bias;
+    date->standardDate = tzi.StandardDate;
+    date->standardBias = tzi.StandardBias;
+    date->daylightDate = tzi.DaylightDate;
+    date->daylightBias = tzi.DaylightBias;
 
     *ret = &date->dispex;
     return S_OK;
@@ -1095,9 +1230,84 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
             break;
         }
 
-        default:
-            FIXME("unimplemented argcnt %d\n", arg_cnt(dp));
-            return E_NOTIMPL;
+        /* ECMA-262 3rd Edition    15.9.3.1 */
+        default: {
+            VARIANT year, month, vdate, hours, minutes, seconds, ms;
+            DateInstance *di;
+            int arg_no = arg_cnt(dp), y;
+
+            hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &year);
+            if(FAILED(hres))
+                return hres;
+            y = num_val(&year);
+            if(0<=y && y<=99)
+                y += 1900;
+
+
+            hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &month);
+            if(FAILED(hres))
+                return hres;
+
+            if(arg_no>2) {
+                hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &vdate);
+                if(FAILED(hres))
+                    return hres;
+            }
+            else {
+                V_VT(&vdate) = VT_R8;
+                V_R8(&vdate) = 1;
+            }
+
+            if(arg_no>3) {
+                hres = to_number(dispex->ctx, get_arg(dp, 3), ei, &hours);
+                if(FAILED(hres))
+                    return hres;
+            }
+            else {
+                V_VT(&hours) = VT_R8;
+                V_R8(&hours) = 0;
+            }
+
+            if(arg_no>4) {
+                hres = to_number(dispex->ctx, get_arg(dp, 4), ei, &minutes);
+                if(FAILED(hres))
+                    return hres;
+            }
+            else {
+                V_VT(&minutes) = VT_R8;
+                V_R8(&minutes) = 0;
+            }
+
+            if(arg_no>5) {
+                hres = to_number(dispex->ctx, get_arg(dp, 5), ei, &seconds);
+                if(FAILED(hres))
+                    return hres;
+            }
+            else {
+                V_VT(&seconds) = VT_R8;
+                V_R8(&seconds) = 0;
+            }
+
+            if(arg_no>6) {
+                hres = to_number(dispex->ctx, get_arg(dp, 6), ei, &ms);
+                if(FAILED(hres))
+                    return hres;
+            }
+            else {
+                V_VT(&ms) = VT_R8;
+                V_R8(&ms) = 0;
+            }
+
+            hres = create_date(dispex->ctx, TRUE, time_clip(
+                        make_date(make_day(y, num_val(&month), num_val(&vdate)),
+                        make_time(num_val(&hours), num_val(&minutes),
+                        num_val(&seconds), num_val(&ms)))), &date);
+            if(FAILED(hres))
+                return hres;
+
+            di = (DateInstance*)date;
+            di->time = utc(di->time, di);
+        }
         }
 
         V_VT(retv) = VT_DISPATCH;
