@@ -41,7 +41,6 @@ typedef struct tagWINE_HIC {
     struct tagWINE_HIC* next;
 } WINE_HIC;
 
-LRESULT         MSVIDEO_SendMessage(WINE_HIC*, UINT, DWORD_PTR, DWORD_PTR);
 
 #define IDC_CONFIGURE 882
 #define IDC_ABOUT 883

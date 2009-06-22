@@ -91,6 +91,92 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
+/******************************************************************
+ *		MSVIDEO_SendMessage
+ *
+ *
+ */
+static LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD_PTR lParam1, DWORD_PTR lParam2)
+{
+    LRESULT     ret;
+
+#define XX(x) case x: TRACE("(%p,"#x",0x%08lx,0x%08lx)\n",whic,lParam1,lParam2); break
+
+    switch (msg) {
+        /* DRV_* */
+        XX(DRV_LOAD);
+        XX(DRV_ENABLE);
+        XX(DRV_OPEN);
+        XX(DRV_CLOSE);
+        XX(DRV_DISABLE);
+        XX(DRV_FREE);
+        /* ICM_RESERVED+X */
+        XX(ICM_ABOUT);
+        XX(ICM_CONFIGURE);
+        XX(ICM_GET);
+        XX(ICM_GETINFO);
+        XX(ICM_GETDEFAULTQUALITY);
+        XX(ICM_GETQUALITY);
+        XX(ICM_GETSTATE);
+        XX(ICM_SETQUALITY);
+        XX(ICM_SET);
+        XX(ICM_SETSTATE);
+        /* ICM_USER+X */
+        XX(ICM_COMPRESS_FRAMES_INFO);
+        XX(ICM_COMPRESS_GET_FORMAT);
+        XX(ICM_COMPRESS_GET_SIZE);
+        XX(ICM_COMPRESS_QUERY);
+        XX(ICM_COMPRESS_BEGIN);
+        XX(ICM_COMPRESS);
+        XX(ICM_COMPRESS_END);
+        XX(ICM_DECOMPRESS_GET_FORMAT);
+        XX(ICM_DECOMPRESS_QUERY);
+        XX(ICM_DECOMPRESS_BEGIN);
+        XX(ICM_DECOMPRESS);
+        XX(ICM_DECOMPRESS_END);
+        XX(ICM_DECOMPRESS_SET_PALETTE);
+        XX(ICM_DECOMPRESS_GET_PALETTE);
+        XX(ICM_DRAW_QUERY);
+        XX(ICM_DRAW_BEGIN);
+        XX(ICM_DRAW_GET_PALETTE);
+        XX(ICM_DRAW_START);
+        XX(ICM_DRAW_STOP);
+        XX(ICM_DRAW_END);
+        XX(ICM_DRAW_GETTIME);
+        XX(ICM_DRAW);
+        XX(ICM_DRAW_WINDOW);
+        XX(ICM_DRAW_SETTIME);
+        XX(ICM_DRAW_REALIZE);
+        XX(ICM_DRAW_FLUSH);
+        XX(ICM_DRAW_RENDERBUFFER);
+        XX(ICM_DRAW_START_PLAY);
+        XX(ICM_DRAW_STOP_PLAY);
+        XX(ICM_DRAW_SUGGESTFORMAT);
+        XX(ICM_DRAW_CHANGEPALETTE);
+        XX(ICM_GETBUFFERSWANTED);
+        XX(ICM_GETDEFAULTKEYFRAMERATE);
+        XX(ICM_DECOMPRESSEX_BEGIN);
+        XX(ICM_DECOMPRESSEX_QUERY);
+        XX(ICM_DECOMPRESSEX);
+        XX(ICM_DECOMPRESSEX_END);
+        XX(ICM_SET_STATUS_PROC);
+    default:
+        FIXME("(%p,0x%08x,0x%08lx,0x%08lx) unknown message\n",whic,msg,lParam1,lParam2);
+    }
+
+#undef XX
+
+    if (whic->driverproc) {
+	/* dwDriverId parameter is the value returned by the DRV_OPEN */
+        ret = whic->driverproc(whic->driverId, whic->hdrv, msg, lParam1, lParam2);
+    } else {
+        ret = SendDriverMessage(whic->hdrv, msg, lParam1, lParam2);
+    }
+
+    TRACE("	-> 0x%08lx\n", ret);
+    return ret;
+}
+
 static int compare_fourcc(DWORD fcc1, DWORD fcc2)
 {
   char fcc_str1[4];
@@ -152,7 +238,7 @@ static BOOL enum_drivers(DWORD fccType, enum_handler_t handler, void* param)
  *
  *
  */
-WINE_HIC*   MSVIDEO_GetHicPtr(HIC hic)
+static WINE_HIC*   MSVIDEO_GetHicPtr(HIC hic)
 {
     WINE_HIC*   whic;
 
@@ -998,93 +1084,6 @@ void VFWAPI ICCompressorFree(PCOMPVARS pc)
     pc->lpState = NULL;
     pc->dwFlags = 0;
   }
-}
-
-
-/******************************************************************
- *		MSVIDEO_SendMessage
- *
- *
- */
-LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD_PTR lParam1, DWORD_PTR lParam2)
-{
-    LRESULT     ret;
-
-#define XX(x) case x: TRACE("(%p,"#x",0x%08lx,0x%08lx)\n",whic,lParam1,lParam2); break
-
-    switch (msg) {
-        /* DRV_* */
-        XX(DRV_LOAD);
-        XX(DRV_ENABLE);
-        XX(DRV_OPEN);
-        XX(DRV_CLOSE);
-        XX(DRV_DISABLE);
-        XX(DRV_FREE);
-        /* ICM_RESERVED+X */
-        XX(ICM_ABOUT);
-        XX(ICM_CONFIGURE);
-        XX(ICM_GET);
-        XX(ICM_GETINFO);
-        XX(ICM_GETDEFAULTQUALITY);
-        XX(ICM_GETQUALITY);
-        XX(ICM_GETSTATE);
-        XX(ICM_SETQUALITY);
-        XX(ICM_SET);
-        XX(ICM_SETSTATE);
-        /* ICM_USER+X */
-        XX(ICM_COMPRESS_FRAMES_INFO);
-        XX(ICM_COMPRESS_GET_FORMAT);
-        XX(ICM_COMPRESS_GET_SIZE);
-        XX(ICM_COMPRESS_QUERY);
-        XX(ICM_COMPRESS_BEGIN);
-        XX(ICM_COMPRESS);
-        XX(ICM_COMPRESS_END);
-        XX(ICM_DECOMPRESS_GET_FORMAT);
-        XX(ICM_DECOMPRESS_QUERY);
-        XX(ICM_DECOMPRESS_BEGIN);
-        XX(ICM_DECOMPRESS);
-        XX(ICM_DECOMPRESS_END);
-        XX(ICM_DECOMPRESS_SET_PALETTE);
-        XX(ICM_DECOMPRESS_GET_PALETTE);
-        XX(ICM_DRAW_QUERY);
-        XX(ICM_DRAW_BEGIN);
-        XX(ICM_DRAW_GET_PALETTE);
-        XX(ICM_DRAW_START);
-        XX(ICM_DRAW_STOP);
-        XX(ICM_DRAW_END);
-        XX(ICM_DRAW_GETTIME);
-        XX(ICM_DRAW);
-        XX(ICM_DRAW_WINDOW);
-        XX(ICM_DRAW_SETTIME);
-        XX(ICM_DRAW_REALIZE);
-        XX(ICM_DRAW_FLUSH);
-        XX(ICM_DRAW_RENDERBUFFER);
-        XX(ICM_DRAW_START_PLAY);
-        XX(ICM_DRAW_STOP_PLAY);
-        XX(ICM_DRAW_SUGGESTFORMAT);
-        XX(ICM_DRAW_CHANGEPALETTE);
-        XX(ICM_GETBUFFERSWANTED);
-        XX(ICM_GETDEFAULTKEYFRAMERATE);
-        XX(ICM_DECOMPRESSEX_BEGIN);
-        XX(ICM_DECOMPRESSEX_QUERY);
-        XX(ICM_DECOMPRESSEX);
-        XX(ICM_DECOMPRESSEX_END);
-        XX(ICM_SET_STATUS_PROC);
-    default:
-        FIXME("(%p,0x%08x,0x%08lx,0x%08lx) unknown message\n",whic,msg,lParam1,lParam2);
-    }
-    
-#undef XX
-    
-    if (whic->driverproc) {
-	/* dwDriverId parameter is the value returned by the DRV_OPEN */
-        ret = whic->driverproc(whic->driverId, whic->hdrv, msg, lParam1, lParam2);
-    } else {
-        ret = SendDriverMessage(whic->hdrv, msg, lParam1, lParam2);
-    }
-
-    TRACE("	-> 0x%08lx\n", ret);
-    return ret;
 }
 
 /***********************************************************************
