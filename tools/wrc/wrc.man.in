@@ -3,7 +3,7 @@
 .SH NAME
 wrc \- Wine Resource Compiler
 .SH SYNOPSIS
-.BI "wrc " "[options] " "[inputfile]"
+.BI "wrc " "[options] " "[inputfiles]"
 .SH DESCRIPTION
 .B wrc
 compiles resources from \fBinputfile\fR
@@ -14,7 +14,7 @@ preprocessor before the resources are compiled. See \fBPREPROCESSOR\fR
 below.
 .PP
 .B wrc
-takes only one \fBinputfile\fR as argument. The resources are read from 
+takes a series of \fBinputfile\fR as argument. The resources are read from 
 standard input if no inputfile is given. If the output file is not 
 specified with \fI-o\fR, then \fBwrc\fR will write the output to 
 \fBinputfile.res\fR with \fB.rc\fR stripped, or to \fBwrc.tab.res\fR if 

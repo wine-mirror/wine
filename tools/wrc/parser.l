@@ -121,6 +121,8 @@ cident	[a-zA-Z_][0-9a-zA-Z_]*
 /* Always update the current character position within a line */
 #define YY_USER_ACTION	char_number+=yyleng; wanted_id = want_id; want_id = 0;
 
+#define YY_USER_INIT current_codepage = -1;
+
 static void addcchar(char c);
 static void addwchar(WCHAR s);
 static string_t *get_buffered_cstring(void);

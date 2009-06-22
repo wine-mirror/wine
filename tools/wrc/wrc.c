@@ -232,6 +232,68 @@ static void exit_on_signal( int sig )
     exit(1);  /* this will call the atexit functions */
 }
 
+/* load a single input file */
+static int load_file( const char *input_name, const char *output_name )
+{
+    int ret;
+
+    /* Run the preprocessor on the input */
+    if(!no_preprocess)
+    {
+        /*
+         * Preprocess the input to a temp-file, or stdout if
+         * no output was given.
+         */
+
+        chat("Starting preprocess\n");
+
+        if (!preprocess_only)
+        {
+            ret = wpp_parse_temp( input_name, output_name, &temp_name );
+        }
+        else if (output_name)
+        {
+            FILE *output;
+
+            if (!(output = fopen( output_name, "w" )))
+                fatal_perror( "Could not open %s for writing", output_name );
+            ret = wpp_parse( input_name, output );
+            fclose( output );
+        }
+        else
+        {
+            ret = wpp_parse( input_name, stdout );
+        }
+
+        if (ret) return ret;
+
+        if(preprocess_only)
+        {
+            output_name = NULL;
+            exit(0);
+        }
+
+        input_name = temp_name;
+    }
+
+    /* Go from .rc to .res */
+    chat("Starting parse\n");
+
+    if(!(parser_in = fopen(input_name, "rb")))
+        fatal_perror("Could not open %s for input", input_name);
+
+    ret = parser_parse();
+    fclose(parser_in);
+    parser_lex_destroy();
+    if (temp_name)
+    {
+        unlink( temp_name );
+        temp_name = NULL;
+    }
+    return ret;
+}
+
+
 int main(int argc,char *argv[])
 {
 	extern char* optarg;
@@ -240,7 +302,6 @@ int main(int argc,char *argv[])
 	int opti = 0;
 	int stdinc = 1;
 	int lose = 0;
-	int ret;
 	int i;
 	int cmdlen;
 
@@ -402,20 +463,6 @@ int main(int argc,char *argv[])
 		wpp_add_include_path(INCLUDEDIR"/msvcrt");
 		wpp_add_include_path(INCLUDEDIR"/windows");
 	}
-	
-	/* Check for input file on command-line */
-	if(optind < argc)
-	{
-		if (!input_name) input_name = argv[optind++];
-		else error("Too many input files.\n");
-	}
-
-	/* Check for output file on command-line */
-	if(optind < argc)
-	{
-		if (!output_name) output_name = argv[optind++];
-		else error("Too many output files.\n");
-	}
 
 	/* Kill io buffering when some kind of debuglevel is enabled */
 	if(debuglevel)
@@ -435,65 +482,28 @@ int main(int argc,char *argv[])
 	if(!currentlanguage)
 		currentlanguage = new_language(0, 0);
 
-	/* Generate appropriate outfile names */
-	if(!output_name && !preprocess_only)
-	{
-		output_name = dup_basename(input_name, ".rc");
-		strcat(output_name, ".res");
-	}
 	atexit(cleanup_files);
 
-	/* Run the preprocessor on the input */
-	if(!no_preprocess)
-	{
-		/*
-		 * Preprocess the input to a temp-file, or stdout if
-		 * no output was given.
-		 */
+        if (input_name)  /* specified with -i option */
+        {
+            if(!output_name && !preprocess_only)
+            {
+		output_name = dup_basename(input_name, ".rc");
+		strcat(output_name, ".res");
+            }
+            if (load_file( input_name, output_name )) exit(1);
+        }
 
-		chat("Starting preprocess\n");
-
-                if (!preprocess_only)
-                {
-                    ret = wpp_parse_temp( input_name, output_name, &temp_name );
-                }
-                else if (output_name)
-                {
-                    FILE *output;
-
-                    if (!(output = fopen( output_name, "w" )))
-                        fatal_perror( "Could not open %s for writing", output_name );
-                    ret = wpp_parse( input_name, output );
-                    fclose( output );
-                }
-                else
-                {
-                    ret = wpp_parse( input_name, stdout );
-                }
-
-		if(ret)
-			exit(1);	/* Error during preprocess */
-
-		if(preprocess_only)
-		{
-			output_name = NULL;
-			exit(0);
-		}
-
-		input_name = temp_name;
-	}
-
-	/* Go from .rc to .res */
-	chat("Starting parse\n");
-
-	if(!(parser_in = fopen(input_name, "rb")))
-            fatal_perror("Could not open %s for input", input_name);
-
-	ret = parser_parse();
-
-	if(input_name) fclose(parser_in);
-
-	if(ret) exit(1); /* Error during parse */
+        while (optind < argc)
+        {
+            input_name = argv[optind++];
+            if(!output_name && !preprocess_only)
+            {
+		output_name = dup_basename(input_name, ".rc");
+		strcat(output_name, ".res");
+            }
+            if (load_file( input_name, output_name )) exit(1);
+        }
 
 	if(debuglevel & DEBUGLEVEL_DUMP)
 		dump_resources(resource_top);
