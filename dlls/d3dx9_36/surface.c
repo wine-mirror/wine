@@ -159,3 +159,41 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceW(HMODULE module, LPCWSTR resource, D
     }
     return D3DXERR_INVALIDDATA;
 }
+
+/************************************************************
+ * D3DXLoadSurfaceFromFileInMemory
+ *
+ * Loads data from a given buffer into a surface and fills a given
+ * D3DXIMAGE_INFO structure with info about the source data.
+ *
+ * PARAMS
+ *   pDestSurface [I] pointer to the surface
+ *   pDestPalette [I] palette to use
+ *   pDestRect    [I] to be filled area of the surface
+ *   pSrcData     [I] pointer to the source data
+ *   SrcDataSize  [I] size of the source data in bytes
+ *   pSrcRect     [I] area of the source data to load
+ *   dwFilter     [I] filter to apply on stretching
+ *   Colorkey     [I] colorkey
+ *   pSrcInfo     [O] pointer to a D3DXIMAGE_INFO structure
+ *
+ * RETURNS
+ *   Success: D3D_OK
+ *   Failure: D3DERR_INVALIDCALL, if pDestSurface or pSrcData or SrcDataSize are NULL
+ *            D3DXERR_INVALIDDATA, if pSrcData is no valid image file
+ *
+ */
+HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(LPDIRECT3DSURFACE9 pDestSurface,
+                                               CONST PALETTEENTRY *pDestPalette,
+                                               CONST RECT *pDestRect,
+                                               LPCVOID pSrcData,
+                                               UINT SrcDataSize,
+                                               CONST RECT *pSrcRect,
+                                               DWORD dwFilter,
+                                               D3DCOLOR Colorkey,
+                                               D3DXIMAGE_INFO *pSrcInfo)
+{
+    FIXME("stub\n");
+    if( !pDestSurface || !pSrcData | !SrcDataSize ) return D3DERR_INVALIDCALL;
+    return E_NOTIMPL;
+}

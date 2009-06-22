@@ -183,7 +183,7 @@
 @ stub D3DXLoadPRTCompBufferFromFileW
 @ stub D3DXLoadSkinMeshFromXof
 @ stub D3DXLoadSurfaceFromFileA
-@ stub D3DXLoadSurfaceFromFileInMemory
+@ stdcall D3DXLoadSurfaceFromFileInMemory(ptr ptr ptr ptr long ptr long long ptr)
 @ stub D3DXLoadSurfaceFromFileW
 @ stub D3DXLoadSurfaceFromMemory
 @ stub D3DXLoadSurfaceFromResourceA
