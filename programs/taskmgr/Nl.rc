@@ -54,7 +54,7 @@ BEGIN
             MENUITEM "&Normaal",                    ID_VIEW_UPDATESPEED_NORMAL
             , CHECKED
             MENUITEM "&Laag",                       ID_VIEW_UPDATESPEED_LOW
-            MENUITEM "&Pause",                      ID_VIEW_UPDATESPEED_PAUSED
+            MENUITEM "&Pauze",                      ID_VIEW_UPDATESPEED_PAUSED
 
         END
         MENUITEM SEPARATOR
@@ -197,7 +197,7 @@ BEGIN
                     WS_BORDER | WS_TABSTOP,7,7,233,177
     PUSHBUTTON      "&Beëindig proces",IDC_ENDPROCESS,171,189,69,14
     CONTROL         "&Toon processen van alle gebruikers",IDC_SHOWALLPROCESSES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,121,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,125,10
 END
 
 /*IDD_PERFORMANCE_PAGE DIALOGEX 0, 0, 247, 210*/
@@ -414,7 +414,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Task Manager"
     IDC_TASKMGR             "Task Manager"
-    IDS_RUNDLG_CAPTION      "Create New Task"
+    IDS_RUNDLG_CAPTION      "Start nieuwe taak"
 END
 
 STRINGTABLE DISCARDABLE
@@ -467,4 +467,21 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "Zet het proces in de NORMAAL-prioriteitsklasse"
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "Zet het proces in de LAGER DAN NORMAAL-prioriteitsklasse"
     ID_PROCESS_PAGE_SETPRIORITY_LOW         "Zet het proces in de LAGE-prioriteitsklasse"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "&Grote symbolen"
+    IDS_VIEW_SMALL                     "&Kleine symbolen"
+    IDS_VIEW_DETAILS                   "&Details"
+    IDS_WINDOWS                        "&Vensters"
+    IDS_VIEW_SELECTCOLUMNS             "&Selecteer kolommen"
+    IDS_OPTIONS_SHOW16BITTASKS         "&Toon 16-bit taken"
+    IDS_VIEW_CPUHISTORY                "&CPU historie"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&Eén grafiek, alle CPUs"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Eén grafiek &per CPU"
+    IDS_VIEW_SHOWKERNELTIMES           "&Toon kerneltijden"
+    IDS_APPLICATIONS                   "Toepassingen"
+    IDS_PROCESSES                      "Processen"
+    IDS_PERFORMANCE                    "Prestaties"
 END
