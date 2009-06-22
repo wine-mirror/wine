@@ -251,3 +251,74 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileW(LPDIRECT3DSURFACE9 pDestSurface,
 
     return hr;
 }
+
+/************************************************************
+ * D3DXLoadSurfaceFromResource
+ */
+HRESULT WINAPI D3DXLoadSurfaceFromResourceA(LPDIRECT3DSURFACE9 pDestSurface,
+                                            CONST PALETTEENTRY *pDestPalette,
+                                            CONST RECT *pDestRect,
+                                            HMODULE hSrcModule,
+                                            LPCSTR pResource,
+                                            CONST RECT *pSrcRect,
+                                            DWORD dwFilter,
+                                            D3DCOLOR Colorkey,
+                                            D3DXIMAGE_INFO *pSrcInfo)
+{
+    HRSRC hResInfo;
+    TRACE("(void): relay\n");
+
+    if( !pDestSurface ) return D3DERR_INVALIDCALL;
+
+    hResInfo = FindResourceA(hSrcModule, pResource, (LPCSTR)RT_RCDATA);
+    if(hResInfo) {
+        LPVOID pBuffer;
+        HRESULT hr;
+        DWORD dwSize;
+
+        hr = load_resource_into_memory(hSrcModule, hResInfo, &pBuffer, &dwSize);
+        if(FAILED(hr)) return D3DXERR_INVALIDDATA;
+        return D3DXLoadSurfaceFromFileInMemory(pDestSurface, pDestPalette, pDestRect, pBuffer, dwSize, pSrcRect, dwFilter, Colorkey, pSrcInfo);
+    }
+
+    hResInfo = FindResourceA(hSrcModule, pResource, (LPCSTR)RT_BITMAP);
+    if(hResInfo) {
+        FIXME("Implement loading bitmaps from resource type RT_BITMAP\n");
+        return E_NOTIMPL;
+    }
+    return D3DXERR_INVALIDDATA;
+}
+
+HRESULT WINAPI D3DXLoadSurfaceFromResourceW(LPDIRECT3DSURFACE9 pDestSurface,
+                                            CONST PALETTEENTRY *pDestPalette,
+                                            CONST RECT *pDestRect,
+                                            HMODULE hSrcModule,
+                                            LPCWSTR pResource,
+                                            CONST RECT *pSrcRect,
+                                            DWORD dwFilter,
+                                            D3DCOLOR Colorkey,
+                                            D3DXIMAGE_INFO *pSrcInfo)
+{
+    HRSRC hResInfo;
+    TRACE("(void): relay\n");
+
+    if( !pDestSurface ) return D3DERR_INVALIDCALL;
+
+    hResInfo = FindResourceW(hSrcModule, pResource, (LPCWSTR)RT_RCDATA);
+    if(hResInfo) {
+        LPVOID pBuffer;
+        HRESULT hr;
+        DWORD dwSize;
+
+        hr = load_resource_into_memory(hSrcModule, hResInfo, &pBuffer, &dwSize);
+        if(FAILED(hr)) return D3DXERR_INVALIDDATA;
+        return D3DXLoadSurfaceFromFileInMemory(pDestSurface, pDestPalette, pDestRect, pBuffer, dwSize, pSrcRect, dwFilter, Colorkey, pSrcInfo);
+    }
+
+    hResInfo = FindResourceW(hSrcModule, pResource, (LPCWSTR)RT_BITMAP);
+    if(hResInfo) {
+        FIXME("Implement loading bitmaps from resource type RT_BITMAP\n");
+        return E_NOTIMPL;
+    }
+    return D3DXERR_INVALIDDATA;
+}
