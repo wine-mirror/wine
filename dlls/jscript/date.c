@@ -1054,6 +1054,7 @@ static HRESULT Date_setMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     VARIANT v;
     HRESULT hres;
     DateInstance *date;
+    DOUBLE t, min, sec, ms;
 
     TRACE("\n");
 
@@ -1068,12 +1069,33 @@ static HRESULT Date_setMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
         return S_OK;
     }
 
+    date = (DateInstance*)dispex;
+    t = local_time(date->time, date);
+
     hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
     if(FAILED(hres))
         return hres;
+    min = num_val(&v);
 
-    date = (DateInstance*)dispex;
-    date->time = time_clip(date->time - (min_from_time(date->time) - num_val(&v))*MS_PER_MINUTE);
+    if(arg_cnt(dp) > 1) {
+        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        sec = num_val(&v);
+    }
+    else sec = sec_from_time(t);
+
+    if(arg_cnt(dp) > 2) {
+        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        ms = num_val(&v);
+    }
+    else ms = ms_from_time(t);
+
+    t = make_date(day(t), make_time(hour_from_time(t),
+                min, sec, ms));
+    date->time = time_clip(utc(t, date));
 
     if(retv)
         num_set_val(retv, date->time);
@@ -1085,7 +1107,56 @@ static HRESULT Date_setMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 static HRESULT Date_setUTCMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    return Date_setMinutes(dispex, lcid, flags, dp, retv, ei, caller);
+    VARIANT v;
+    HRESULT hres;
+    DateInstance *date;
+    DOUBLE t, min, sec, ms;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(!arg_cnt(dp)) {
+        FIXME("throw ArgumentNotOptional\n");
+        if(retv) num_set_nan(retv);
+        return S_OK;
+    }
+
+    date = (DateInstance*)dispex;
+    t = date->time;
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+    min = num_val(&v);
+
+    if(arg_cnt(dp) > 1) {
+        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        sec = num_val(&v);
+    }
+    else sec = sec_from_time(t);
+
+    if(arg_cnt(dp) > 2) {
+        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        ms = num_val(&v);
+    }
+    else ms = ms_from_time(t);
+
+    t = make_date(day(t), make_time(hour_from_time(t),
+                min, sec, ms));
+    date->time = time_clip(t);
+
+    if(retv)
+        num_set_val(retv, date->time);
+
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.35 */
