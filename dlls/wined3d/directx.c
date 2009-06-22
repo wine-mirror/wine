@@ -4316,12 +4316,15 @@ static void WINE_GLAPI position_float4(const void *data)
 {
     const GLfloat *pos = data;
 
-    if (pos[3] < eps && pos[3] > -eps)
-        glVertex3fv(pos);
-    else {
+    if (pos[3] != 0.0 && pos[3] != 1.0)
+    {
         float w = 1.0 / pos[3];
 
         glVertex4f(pos[0] * w, pos[1] * w, pos[2] * w, w);
+    }
+    else
+    {
+        glVertex3fv(pos);
     }
 }
 

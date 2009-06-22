@@ -506,27 +506,15 @@ static inline void fixup_d3dcolor(DWORD *dst_color)
 
 static inline void fixup_transformed_pos(float *p)
 {
-    float x, y, z, w;
-
-    /* rhw conversion like in drawStridedSlow */
-    if (p[3] == 1.0 || ((p[3] < eps) && (p[3] > -eps)))
+    /* rhw conversion like in position_float4(). */
+    if (p[3] != 1.0 && p[3] != 0.0)
     {
-        x = p[0];
-        y = p[1];
-        z = p[2];
-        w = 1.0;
+        float w = 1.0 / p[3];
+        p[0] *= w;
+        p[1] *= w;
+        p[2] *= w;
+        p[3] = w;
     }
-    else
-    {
-        w = 1.0 / p[3];
-        x = p[0] * w;
-        y = p[1] * w;
-        z = p[2] * w;
-    }
-    p[0] = x;
-    p[1] = y;
-    p[2] = z;
-    p[3] = w;
 }
 
 const BYTE *buffer_get_memory(IWineD3DBuffer *iface, UINT offset, GLuint *buffer_object)
