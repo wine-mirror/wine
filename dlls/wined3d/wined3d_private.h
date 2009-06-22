@@ -1378,8 +1378,9 @@ struct texture_stage_op
 struct ffp_frag_settings {
     struct texture_stage_op     op[MAX_TEXTURES];
     enum fogmode fog;
-    /* Use an int instead of a char to get dword alignment */
-    unsigned int sRGB_write;
+    /* Use shorts instead of chars to get dword alignment */
+    unsigned short sRGB_write;
+    unsigned short emul_clipplanes;
 };
 
 struct ffp_frag_desc

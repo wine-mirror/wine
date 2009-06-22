@@ -5151,7 +5151,6 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
     BOOL op_equal;
     const char *final_combiner_src = "ret";
-    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
 
     /* Find out which textures are read */
     for(stage = 0; stage < MAX_TEXTURES; stage++) {
@@ -5242,7 +5241,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
                        srgb_sub_high, 0.0, 0.0, 0.0);
     }
 
-    if(ffp_clip_emul(stateblock) && device->vs_clipping) shader_addline(&buffer, "KIL fragment.texcoord[7];\n");
+    if(ffp_clip_emul(stateblock) && settings->emul_clipplanes) shader_addline(&buffer, "KIL fragment.texcoord[7];\n");
 
     /* Generate texture sampling instructions) */
     for(stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3DTOP_DISABLE; stage++) {

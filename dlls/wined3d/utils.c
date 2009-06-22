@@ -2091,6 +2091,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
     unsigned int i;
     DWORD ttff;
     DWORD cop, aop, carg0, carg1, carg2, aarg0, aarg1, aarg2;
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
 
     for(i = 0; i < GL_LIMITS(texture_stages); i++) {
         IWineD3DBaseTextureImpl *texture;
@@ -2144,8 +2145,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
         carg2 = (args[cop] & ARG2) ? stateblock->textureState[i][WINED3DTSS_COLORARG2] : ARG_UNUSED;
         carg0 = (args[cop] & ARG0) ? stateblock->textureState[i][WINED3DTSS_COLORARG0] : ARG_UNUSED;
 
-        if(is_invalid_op(stateblock->wineD3DDevice, i, cop,
-                         carg1, carg2, carg0)) {
+        if(is_invalid_op(device, i, cop, carg1, carg2, carg0)) {
             carg0 = ARG_UNUSED;
             carg2 = ARG_UNUSED;
             carg1 = WINED3DTA_CURRENT;
@@ -2204,8 +2204,7 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
             }
         }
 
-        if(is_invalid_op(stateblock->wineD3DDevice, i, aop,
-           aarg1, aarg2, aarg0)) {
+        if(is_invalid_op(device, i, aop, aarg1, aarg2, aarg0)) {
                aarg0 = ARG_UNUSED;
                aarg2 = ARG_UNUSED;
                aarg1 = WINED3DTA_CURRENT;
@@ -2283,6 +2282,14 @@ void gen_ffp_frag_op(IWineD3DStateBlockImpl *stateblock, struct ffp_frag_setting
         settings->sRGB_write = 1;
     } else {
         settings->sRGB_write = 0;
+    }
+    if(device->vs_clipping || !use_vs(stateblock)) {
+        /* No need to emulate clipplanes if GL supports native vertex shader clipping or if
+         * the fixed function vertex pipeline is used(which always supports clipplanes)
+         */
+        settings->emul_clipplanes = 0;
+    } else {
+        settings->emul_clipplanes = 1;
     }
 }
 #undef GLINFO_LOCATION
