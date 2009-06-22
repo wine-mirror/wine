@@ -1019,6 +1019,8 @@ date.setUTCDate(32);
 ok(date.getUTCDate() === 1, "date.getUTCDate() = " + date.getUTCDate());
 date.setUTCMonth(22, 37);
 ok(date.getTime() === 60987050010, "date.getTime() = " + date.getTime());
+date.setUTCFullYear(83, 21, 321);
+ok(date.getTime() === -59464984149990, "date.getTime() = " + date.getTime());
 
 ok(typeof(Math.PI) === "number", "typeof(Math.PI) = " + typeof(Math.PI));
 ok(Math.floor(Math.PI*100) === 314, "Math.PI = " + Math.PI);

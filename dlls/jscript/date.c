@@ -1469,18 +1469,114 @@ static HRESULT Date_setUTCMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.40 */
 static HRESULT Date_setFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+    DateInstance *date;
+    DOUBLE t, year, month, ddate;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(!arg_cnt(dp)) {
+        FIXME("throw ArgumentNotOptional\n");
+        if(retv) num_set_nan(retv);
+        return S_OK;
+    }
+
+    date = (DateInstance*)dispex;
+    t = local_time(date->time, date);
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+    year = num_val(&v);
+
+    if(arg_cnt(dp) > 1) {
+        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        month = num_val(&v);
+    }
+    else month = month_from_time(t);
+
+    if(arg_cnt(dp) > 2) {
+        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        ddate = num_val(&v);
+    }
+    else ddate = date_from_time(t);
+
+    t = make_date(make_day(year, month, ddate), time_within_day(t));
+    date->time = time_clip(utc(t, date));
+
+    if(retv)
+        num_set_val(retv, date->time);
+
+    return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.41 */
 static HRESULT Date_setUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+    DateInstance *date;
+    DOUBLE t, year, month, ddate;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(!arg_cnt(dp)) {
+        FIXME("throw ArgumentNotOptional\n");
+        if(retv) num_set_nan(retv);
+        return S_OK;
+    }
+
+    date = (DateInstance*)dispex;
+    t = date->time;
+
+    hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+    if(FAILED(hres))
+        return hres;
+    year = num_val(&v);
+
+    if(arg_cnt(dp) > 1) {
+        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        month = num_val(&v);
+    }
+    else month = month_from_time(t);
+
+    if(arg_cnt(dp) > 2) {
+        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &v);
+        if(FAILED(hres))
+            return hres;
+        ddate = num_val(&v);
+    }
+    else ddate = date_from_time(t);
+
+    t = make_date(make_day(year, month, ddate), time_within_day(t));
+    date->time = time_clip(t);
+
+    if(retv)
+        num_set_val(retv, date->time);
+
+    return S_OK;
 }
 
 static HRESULT Date_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
