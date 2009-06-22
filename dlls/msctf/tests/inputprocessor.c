@@ -694,7 +694,15 @@ DEFINE_GUID (GUID_TFCAT_DISPLAYATTRIBUTEPROVIDER,  0x046B8C80,0x1647,0x40F7,0x9B
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(CLSID_TF_ThreadMgr,           0x529a9e6b,0x6587,0x4f23,0xab,0x9e,0x9c,0x7d,0x68,0x3e,0x3c,0x50);
 DEFINE_GUID(CLSID_PreservedKey,           0xA0ED8E55,0xCD3B,0x4274,0xB2,0x95,0xF6,0xC9,0xBA,0x2B,0x84,0x72);
-
+DEFINE_GUID(GUID_COMPARTMENT_KEYBOARD_DISABLED,     0x71a5b253,0x1951,0x466b,0x9f,0xbc,0x9c,0x88,0x08,0xfa,0x84,0xf2);
+DEFINE_GUID(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,    0x58273aad,0x01bb,0x4164,0x95,0xc6,0x75,0x5b,0xa0,0xb5,0x16,0x2d);
+DEFINE_GUID(GUID_COMPARTMENT_HANDWRITING_OPENCLOSE, 0xf9ae2c6b,0x1866,0x4361,0xaf,0x72,0x7a,0xa3,0x09,0x48,0x89,0x0e);
+DEFINE_GUID(GUID_COMPARTMENT_SPEECH_DISABLED,       0x56c5c607,0x0703,0x4e59,0x8e,0x52,0xcb,0xc8,0x4e,0x8b,0xbe,0x35);
+DEFINE_GUID(GUID_COMPARTMENT_SPEECH_OPENCLOSE,      0x544d6a63,0xe2e8,0x4752,0xbb,0xd1,0x00,0x09,0x60,0xbc,0xa0,0x83);
+DEFINE_GUID(GUID_COMPARTMENT_SPEECH_GLOBALSTATE,    0x2a54fe8e,0x0d08,0x460c,0xa7,0x5d,0x87,0x03,0x5f,0xf4,0x36,0xc5);
+DEFINE_GUID(GUID_COMPARTMENT_PERSISTMENUENABLED,    0x575f3783,0x70c8,0x47c8,0xae,0x5d,0x91,0xa0,0x1a,0x1f,0x75,0x92);
+DEFINE_GUID(GUID_COMPARTMENT_EMPTYCONTEXT,          0xd7487dbf,0x804e,0x41c5,0x89,0x4d,0xad,0x96,0xfd,0x4e,0xea,0x13);
+DEFINE_GUID(GUID_COMPARTMENT_TIPUISTATUS,           0x148ca3ec,0x0366,0x401c,0x8d,0x75,0xed,0x97,0x8d,0x85,0xfb,0xc9);
 
 static HRESULT initialize(void)
 {
@@ -1552,6 +1560,86 @@ static void test_TStoApplicationText(void)
     ITfEditSession_Release(es);
 }
 
+static void enum_compartments(ITfCompartmentMgr *cmpmgr, REFGUID present, REFGUID absent)
+{
+    BOOL found,found2;
+    IEnumGUID *ppEnum;
+    found = FALSE;
+    found2 = FALSE;
+    if (SUCCEEDED(ITfCompartmentMgr_EnumCompartments(cmpmgr, &ppEnum)))
+    {
+        ULONG fetched;
+        GUID g;
+        while (IEnumGUID_Next(ppEnum, 1, &g, &fetched) == S_OK)
+        {
+            WCHAR str[50];
+            CHAR strA[50];
+            StringFromGUID2(&g,str,50);
+            WideCharToMultiByte(CP_ACP,0,str,50,strA,50,0,0);
+            trace("found %s\n",strA);
+            if (present && IsEqualGUID(present,&g))
+                found = TRUE;
+            if (absent && IsEqualGUID(absent, &g))
+                found2 = TRUE;
+        }
+        IEnumGUID_Release(ppEnum);
+    }
+    if (present)
+        ok(found,"Did not find compartment\n");
+    if (absent)
+        ok(!found2,"Found compartment that should be absent\n");
+}
+
+static void test_Compartments(void)
+{
+    ITfContext *cxt;
+    ITfDocumentMgr *dm;
+    ITfCompartmentMgr *cmpmgr;
+    ITfCompartment *cmp;
+    HRESULT hr;
+
+    ITfThreadMgr_GetFocus(g_tm, &dm);
+    ITfDocumentMgr_GetTop(dm,&cxt);
+
+    /* Global */
+    hr = ITfThreadMgr_GetGlobalCompartment(g_tm, &cmpmgr);
+    ok(SUCCEEDED(hr),"GetGlobalCompartment failed\n");
+    hr = ITfCompartmentMgr_GetCompartment(cmpmgr, &GUID_COMPARTMENT_SPEECH_OPENCLOSE, &cmp);
+    ok(SUCCEEDED(hr),"GetCompartment failed\n");
+    ITfCompartment_Release(cmp);
+    enum_compartments(cmpmgr,&GUID_COMPARTMENT_SPEECH_OPENCLOSE,NULL);
+    ITfCompartmentMgr_Release(cmpmgr);
+
+    /* Thread */
+    hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfCompartmentMgr, (LPVOID*)&cmpmgr);
+    ok(SUCCEEDED(hr),"ThreadMgr QI for IID_ITfCompartmentMgr failed\n");
+    hr = ITfCompartmentMgr_GetCompartment(cmpmgr, &CLSID_FakeService, &cmp);
+    ok(SUCCEEDED(hr),"GetCompartment failed\n");
+    enum_compartments(cmpmgr,&CLSID_FakeService,&GUID_COMPARTMENT_SPEECH_OPENCLOSE);
+    ITfCompartmentMgr_ClearCompartment(cmpmgr,tid,&CLSID_FakeService);
+    enum_compartments(cmpmgr,NULL,&CLSID_FakeService);
+    ITfCompartmentMgr_Release(cmpmgr);
+    ITfCompartment_Release(cmp);
+
+    /* DocumentMgr */
+    hr = ITfDocumentMgr_QueryInterface(dm, &IID_ITfCompartmentMgr, (LPVOID*)&cmpmgr);
+    ok(SUCCEEDED(hr),"DocumentMgr QI for IID_ITfCompartmentMgr failed\n");
+
+    hr = ITfCompartmentMgr_GetCompartment(cmpmgr, &GUID_COMPARTMENT_PERSISTMENUENABLED, &cmp);
+    ok(SUCCEEDED(hr),"GetCompartment failed\n");
+    enum_compartments(cmpmgr,&GUID_COMPARTMENT_PERSISTMENUENABLED,&GUID_COMPARTMENT_SPEECH_OPENCLOSE);
+    ITfCompartmentMgr_Release(cmpmgr);
+
+    /* Context */
+    hr = ITfContext_QueryInterface(cxt, &IID_ITfCompartmentMgr, (LPVOID*)&cmpmgr);
+    ok(SUCCEEDED(hr),"Context QI for IID_ITfCompartmentMgr failed\n");
+    enum_compartments(cmpmgr,NULL,&GUID_COMPARTMENT_PERSISTMENUENABLED);
+    ITfCompartmentMgr_Release(cmpmgr);
+
+    ITfContext_Release(cxt);
+    ITfDocumentMgr_Release(dm);
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -1567,6 +1655,7 @@ START_TEST(inputprocessor)
         test_ClientId();
         test_KeystrokeMgr();
         test_TStoApplicationText();
+        test_Compartments();
         test_endSession();
         test_EnumLanguageProfiles();
         test_FindClosestCategory();
