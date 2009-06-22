@@ -114,6 +114,14 @@ static const struct message create_parent_wnd_seq[] = {
     { 0 }
 };
 
+static const struct message create_ownerdrawfixed_parent_seq[] = {
+    { WM_NOTIFYFORMAT, sent },
+    { WM_QUERYUISTATE, sent|optional }, /* Win2K and higher */
+    { WM_MEASUREITEM, sent },
+    { WM_PARENTNOTIFY, sent },
+    { 0 }
+};
+
 static const struct message redraw_listview_seq[] = {
     { WM_PAINT,      sent|id,            0, 0, LISTVIEW_ID },
     { WM_PAINT,      sent|id,            0, 0, HEADER_ID },
@@ -1391,6 +1399,13 @@ static void test_create(void)
     ok(!IsWindow(hHeader), "Header shouldn't be created\n");
     ok(NULL == GetDlgItem(hList, 0), "NULL dialog item expected\n");
 
+    DestroyWindow(hList);
+
+    /* WM_MEASUREITEM should be sent when created with LVS_OWNERDRAWFIXED */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    hList = create_listview_control(LVS_OWNERDRAWFIXED);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, create_ownerdrawfixed_parent_seq,
+                "created with LVS_OWNERDRAWFIXED - parent seq", TRUE);
     DestroyWindow(hList);
 }
 
