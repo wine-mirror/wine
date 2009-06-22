@@ -468,3 +468,20 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "Setzt den Prozess in die NIEDRIGER ALS NORMAL-Priorit‰tsklasse"
     ID_PROCESS_PAGE_SETPRIORITY_LOW         "Setzt den Prozess in die NIEDRIG-Priorit‰tsklasse"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "&Groﬂe Symbole"
+    IDS_VIEW_SMALL                     "&Kleine Symbole"
+    IDS_VIEW_DETAILS                   "&Details"
+    IDS_WINDOWS                        "&Windows"
+    IDS_VIEW_SELECTCOLUMNS             "&Spalten ausw‰hlen..."
+    IDS_OPTIONS_SHOW16BITTASKS         "&16-bit-Tasks anzeigen"
+    IDS_VIEW_CPUHISTORY                "&CPU Verlauf"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&Ein Graph, Alle CPUs"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Ein Graph &pro CPU"
+    IDS_VIEW_SHOWKERNELTIMES           "K&ernelzeiten anzeigen"
+    IDS_APPLICATIONS                   "Anwendungen"
+    IDS_PROCESSES                      "Prozesse"
+    IDS_PERFORMANCE                    "Systemleistung"
+END
