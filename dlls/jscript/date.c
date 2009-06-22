@@ -87,18 +87,18 @@ static const WCHAR setUTCMonthW[] = {'s','e','t','U','T','C','M','o','n','t','h'
 static const WCHAR setFullYearW[] = {'s','e','t','F','u','l','l','Y','e','a','r',0};
 static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l','Y','e','a','r',0};
 
-/*ECMA-262 3th Edition    15.9.1.2 */
+/*ECMA-262 3rd Edition    15.9.1.2 */
 #define MS_PER_DAY 86400000
 #define MS_PER_HOUR 3600000
 #define MS_PER_MINUTE 60000
 
-/* ECMA-262 3th Edition    15.9.1.2 */
+/* ECMA-262 3rd Edition    15.9.1.2 */
 static inline DOUBLE day(DOUBLE time)
 {
     return floor(time / MS_PER_DAY);
 }
 
-/* ECMA-262 3th Edition    15.9.1.3 */
+/* ECMA-262 3rd Edition    15.9.1.3 */
 static inline DOUBLE days_in_year(DOUBLE year)
 {
     int y;
@@ -113,7 +113,7 @@ static inline DOUBLE days_in_year(DOUBLE year)
     return 366;
 }
 
-/* ECMA-262 3th Edition    15.9.1.3 */
+/* ECMA-262 3rd Edition    15.9.1.3 */
 static inline DOUBLE day_from_year(DOUBLE year)
 {
     if(year != (int)year)
@@ -154,13 +154,13 @@ static inline int day_from_month(int month, int in_leap_year)
     }
 }
 
-/* ECMA-262 3th Edition    15.9.1.3 */
+/* ECMA-262 3rd Edition    15.9.1.3 */
 static inline DOUBLE time_from_year(DOUBLE year)
 {
     return MS_PER_DAY*day_from_year(year);
 }
 
-/* ECMA-262 3th Edition    15.9.1.3 */
+/* ECMA-262 3rd Edition    15.9.1.3 */
 static inline DOUBLE year_from_time(DOUBLE time)
 {
     int y;
@@ -178,7 +178,7 @@ static inline DOUBLE year_from_time(DOUBLE time)
     return y;
 }
 
-/* ECMA-262 3th Edition    15.9.1.3 */
+/* ECMA-262 3rd Edition    15.9.1.3 */
 static inline int in_leap_year(DOUBLE time)
 {
     if(days_in_year(year_from_time(time))==366)
@@ -186,13 +186,13 @@ static inline int in_leap_year(DOUBLE time)
     return 0;
 }
 
-/* ECMA-262 3th Edition    15.9.1.4 */
+/* ECMA-262 3rd Edition    15.9.1.4 */
 static inline int day_within_year(DOUBLE time)
 {
     return day(time) - day_from_year(year_from_time(time));
 }
 
-/* ECMA-262 3th Edition    15.9.1.4 */
+/* ECMA-262 3rd Edition    15.9.1.4 */
 static inline DOUBLE month_from_time(DOUBLE time)
 {
     int ily = in_leap_year(time);
@@ -215,7 +215,7 @@ static inline DOUBLE month_from_time(DOUBLE time)
     return  11;
 }
 
-/* ECMA-262 3th Edition    15.9.1.5 */
+/* ECMA-262 3rd Edition    15.9.1.5 */
 static inline DOUBLE date_from_time(DOUBLE time)
 {
     int dwy = day_within_year(time);
@@ -239,7 +239,7 @@ static inline DOUBLE date_from_time(DOUBLE time)
     return dwy-333-ily;
 }
 
-/* ECMA-262 3th Edition    15.9.1.6 */
+/* ECMA-262 3rd Edition    15.9.1.6 */
 static inline DOUBLE week_day(DOUBLE time)
 {
     DOUBLE ret;
@@ -327,7 +327,7 @@ static inline DOUBLE utc(DOUBLE time, DateInstance *date)
     return time + daylight_saving_ta(time, date)*MS_PER_MINUTE;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.1.10 */
 static inline DOUBLE hour_from_time(DOUBLE time)
 {
     DOUBLE ret;
@@ -341,7 +341,7 @@ static inline DOUBLE hour_from_time(DOUBLE time)
     return ret;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.1.10 */
 static inline DOUBLE min_from_time(DOUBLE time)
 {
     DOUBLE ret;
@@ -355,7 +355,7 @@ static inline DOUBLE min_from_time(DOUBLE time)
     return ret;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.1.10 */
 static inline DOUBLE sec_from_time(DOUBLE time)
 {
     DOUBLE ret;
@@ -369,7 +369,7 @@ static inline DOUBLE sec_from_time(DOUBLE time)
     return ret;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.1.10 */
 static inline DOUBLE ms_from_time(DOUBLE time)
 {
     DOUBLE ret;
@@ -518,7 +518,7 @@ static HRESULT Date_getTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.3 */
+/* ECMA-262 3rd Edition    15.9.5.10 */
 static HRESULT Date_getFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -538,7 +538,7 @@ static HRESULT Date_getFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.3 */
+/* ECMA-262 3rd Edition    15.9.5.11 */
 static HRESULT Date_getUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -556,7 +556,7 @@ static HRESULT Date_getUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DI
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.4 */
+/* ECMA-262 3rd Edition    15.9.5.12 */
 static HRESULT Date_getMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -576,7 +576,7 @@ static HRESULT Date_getMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.4 */
+/* ECMA-262 3rd Edition    15.9.5.13 */
 static HRESULT Date_getUTCMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -594,7 +594,7 @@ static HRESULT Date_getUTCMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.5 */
+/* ECMA-262 3rd Edition    15.9.5.14 */
 static HRESULT Date_getDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -614,7 +614,7 @@ static HRESULT Date_getDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.5 */
+/* ECMA-262 3rd Edition    15.9.5.15 */
 static HRESULT Date_getUTCDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -632,7 +632,7 @@ static HRESULT Date_getUTCDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.6 */
+/* ECMA-262 3rd Edition    15.9.5.16 */
 static HRESULT Date_getDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -652,7 +652,7 @@ static HRESULT Date_getDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.6 */
+/* ECMA-262 3rd Edition    15.9.5.17 */
 static HRESULT Date_getUTCDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -670,7 +670,7 @@ static HRESULT Date_getUTCDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.5.18 */
 static HRESULT Date_getHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -690,7 +690,7 @@ static HRESULT Date_getHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.5.19 */
 static HRESULT Date_getUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -708,7 +708,7 @@ static HRESULT Date_getUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.5.20 */
 static HRESULT Date_getMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -728,7 +728,7 @@ static HRESULT Date_getMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.5.21 */
 static HRESULT Date_getUTCMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -746,7 +746,7 @@ static HRESULT Date_getUTCMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DIS
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.5.22 */
 static HRESULT Date_getSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -766,7 +766,7 @@ static HRESULT Date_getSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.5.23 */
 static HRESULT Date_getUTCSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -784,7 +784,7 @@ static HRESULT Date_getUTCSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DIS
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.5.24 */
 static HRESULT Date_getMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -804,7 +804,7 @@ static HRESULT Date_getMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, D
     return S_OK;
 }
 
-/* ECMA-262 3th Edition    15.9.1.10 */
+/* ECMA-262 3rd Edition    15.9.5.25 */
 static HRESULT Date_getUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -822,6 +822,7 @@ static HRESULT Date_getUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.26 */
 static HRESULT Date_getTimezoneOffset(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -840,6 +841,7 @@ static HRESULT Date_getTimezoneOffset(DispatchEx *dispex, LCID lcid, WORD flags,
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.27 */
 static HRESULT Date_setTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -873,6 +875,7 @@ static HRESULT Date_setTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.28 */
 static HRESULT Date_setMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -906,12 +909,14 @@ static HRESULT Date_setMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, D
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.29 */
 static HRESULT Date_setUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     return Date_setMilliseconds(dispex, lcid, flags, dp, retv, ei, caller);
 }
 
+/* ECMA-262 3rd Edition    15.9.5.30 */
 static HRESULT Date_setSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -945,12 +950,14 @@ static HRESULT Date_setSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.31 */
 static HRESULT Date_setUTCSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     return Date_setSeconds(dispex, lcid, flags, dp, retv, ei, caller);
 }
 
+/* ECMA-262 3rd Edition    15.9.5.33 */
 static HRESULT Date_setMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -984,12 +991,14 @@ static HRESULT Date_setMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.34 */
 static HRESULT Date_setUTCMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
     return Date_setMinutes(dispex, lcid, flags, dp, retv, ei, caller);
 }
 
+/* ECMA-262 3rd Edition    15.9.5.35 */
 static HRESULT Date_setHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -1025,6 +1034,7 @@ static HRESULT Date_setHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.36 */
 static HRESULT Date_setUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -1059,6 +1069,7 @@ static HRESULT Date_setUTCHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.36 */
 static HRESULT Date_setDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -1066,6 +1077,7 @@ static HRESULT Date_setDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.37 */
 static HRESULT Date_setUTCDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
