@@ -197,3 +197,57 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(LPDIRECT3DSURFACE9 pDestSurface,
     if( !pDestSurface || !pSrcData | !SrcDataSize ) return D3DERR_INVALIDCALL;
     return E_NOTIMPL;
 }
+
+/************************************************************
+ * D3DXLoadSurfaceFromFile
+ */
+HRESULT WINAPI D3DXLoadSurfaceFromFileA(LPDIRECT3DSURFACE9 pDestSurface,
+                                        CONST PALETTEENTRY *pDestPalette,
+                                        CONST RECT *pDestRect,
+                                        LPCSTR pSrcFile,
+                                        CONST RECT *pSrcRect,
+                                        DWORD dwFilter,
+                                        D3DCOLOR Colorkey,
+                                        D3DXIMAGE_INFO *pSrcInfo)
+{
+    LPWSTR pWidename;
+    HRESULT hr;
+    int strlength;
+    TRACE("(void): relay\n");
+
+    if( !pSrcFile || !pDestSurface ) return D3DERR_INVALIDCALL;
+
+    strlength = MultiByteToWideChar(CP_ACP, 0, pSrcFile, -1, NULL, 0);
+    pWidename = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, strlength * sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, pSrcFile, -1, pWidename, strlength);
+
+    hr = D3DXLoadSurfaceFromFileW(pDestSurface, pDestPalette, pDestRect, pWidename, pSrcRect, dwFilter, Colorkey, pSrcInfo);
+    HeapFree(GetProcessHeap(), 0, pWidename);
+
+    return hr;
+}
+
+HRESULT WINAPI D3DXLoadSurfaceFromFileW(LPDIRECT3DSURFACE9 pDestSurface,
+                                        CONST PALETTEENTRY *pDestPalette,
+                                        CONST RECT *pDestRect,
+                                        LPCWSTR pSrcFile,
+                                        CONST RECT *pSrcRect,
+                                        DWORD Filter,
+                                        D3DCOLOR Colorkey,
+                                        D3DXIMAGE_INFO *pSrcInfo)
+{
+    HRESULT hr;
+    DWORD dwSize;
+    LPVOID pBuffer;
+    TRACE("(void): relay\n");
+
+    if( !pSrcFile || !pDestSurface ) return D3DERR_INVALIDCALL;
+
+    hr = map_view_of_file(pSrcFile, &pBuffer, &dwSize);
+    if(FAILED(hr)) return D3DXERR_INVALIDDATA;
+
+    hr = D3DXLoadSurfaceFromFileInMemory(pDestSurface, pDestPalette, pDestRect, pBuffer, dwSize, pSrcRect, Filter, Colorkey, pSrcInfo);
+    UnmapViewOfFile(pBuffer);
+
+    return hr;
+}
