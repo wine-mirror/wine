@@ -86,6 +86,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
     const BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
     const BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
     const struct wined3d_stream_info_element *element;
+    UINT num_untracked_materials;
     DWORD tex_mask = 0;
 
     TRACE("Using slow vertex array code\n");
@@ -121,7 +122,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
     element = &si->elements[WINED3D_FFP_DIFFUSE];
     if (element->data) diffuse = element->data + streamOffset[element->stream_idx];
     else glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    if (This->activeContext->num_untracked_materials && element->format_desc->format != WINED3DFMT_A8R8G8B8)
+    num_untracked_materials = This->activeContext->num_untracked_materials;
+    if (num_untracked_materials && element->format_desc->format != WINED3DFMT_A8R8G8B8)
         FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format_desc->format));
 
     element = &si->elements[WINED3D_FFP_SPECULAR];
@@ -246,7 +248,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
             const void *ptrToCoords = diffuse + SkipnStrides * si->elements[WINED3D_FFP_DIFFUSE].stride;
 
             diffuse_funcs[si->elements[WINED3D_FFP_DIFFUSE].format_desc->emit_idx](ptrToCoords);
-            if(This->activeContext->num_untracked_materials) {
+            if (num_untracked_materials)
+            {
                 DWORD diffuseColor = ((const DWORD *)ptrToCoords)[0];
                 unsigned char i;
                 float color[4];
@@ -256,7 +259,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
                 color[2] = D3DCOLOR_B_B(diffuseColor) / 255.0;
                 color[3] = D3DCOLOR_B_A(diffuseColor) / 255.0;
 
-                for(i = 0; i < This->activeContext->num_untracked_materials; i++) {
+                for (i = 0; i < num_untracked_materials; ++i)
+                {
                     glMaterialfv(GL_FRONT_AND_BACK, This->activeContext->untracked_materials[i], color);
                 }
             }
