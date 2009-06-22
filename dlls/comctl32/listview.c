@@ -1027,7 +1027,8 @@ static inline DWORD notify_postpaint (const LISTVIEW_INFO *infoPtr, NMLVCUSTOMDR
     return notify_customdraw(infoPtr, CDDS_POSTPAINT, lpnmlvcd);
 }
 
-static void notify_measureitem(LISTVIEW_INFO *infoPtr)
+/* returns TRUE when repaint needed, FALSE otherwise */
+static BOOL notify_measureitem(LISTVIEW_INFO *infoPtr)
 {
     MEASUREITEMSTRUCT mis;
     mis.CtlType = ODT_LISTVIEW;
@@ -1038,7 +1039,11 @@ static void notify_measureitem(LISTVIEW_INFO *infoPtr)
     mis.itemHeight= infoPtr->nItemHeight;
     SendMessageW(infoPtr->hwndNotify, WM_MEASUREITEM, mis.CtlID, (LPARAM)&mis);
     if (infoPtr->nItemHeight != max(mis.itemHeight, 1))
+    {
         infoPtr->nMeasureItemHeight = infoPtr->nItemHeight = max(mis.itemHeight, 1);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /******** Item iterator functions **********************************/
@@ -10792,7 +10797,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (infoPtr->uView == LV_VIEW_DETAILS))
       {
-          notify_measureitem(infoPtr);
+          if (notify_measureitem(infoPtr)) LISTVIEW_InvalidateList(infoPtr);
       }
 
 	  LISTVIEW_UpdateSize(infoPtr);
