@@ -3878,3 +3878,12 @@ GpStatus WINGDIPAPI GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UINT16 
     FIXME("(%p %p %d %p %p %p %d %p): stub\n", graphics, text, length, font, brush, positions, flags, matrix);
     return NotImplemented;
 }
+
+/*****************************************************************************
+ * GdipIsVisibleRegionPointI [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipIsVisibleRegionPointI(GpRegion *region, INT x, INT y, GpGraphics *graphics, BOOL *result)
+{
+    FIXME("(%p %d %d %p %p): stub\n", region, x, y, graphics, result);
+    return NotImplemented;
+}

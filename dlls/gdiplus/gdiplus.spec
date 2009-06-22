@@ -432,7 +432,7 @@
 @ stub GdipIsVisibleRect
 @ stub GdipIsVisibleRectI
 @ stub GdipIsVisibleRegionPoint
-@ stub GdipIsVisibleRegionPointI
+@ stdcall GdipIsVisibleRegionPointI(ptr long long ptr ptr)
 @ stub GdipIsVisibleRegionRect
 @ stub GdipIsVisibleRegionRectI
 @ stdcall GdipLoadImageFromFile(wstr ptr)
