@@ -251,7 +251,7 @@ static void stub_manager_delete(struct stub_manager *m)
 }
 
 /* increments the internal refcount */
-ULONG stub_manager_int_addref(struct stub_manager *This)
+static ULONG stub_manager_int_addref(struct stub_manager *This)
 {
     ULONG refs;
 
