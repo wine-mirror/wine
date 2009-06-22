@@ -67,17 +67,33 @@ typedef struct tagCompartmentEnumGuid {
     struct list *cursor;
 } CompartmentEnumGuid;
 
+
+typedef struct tagCompartmentSink {
+    struct list         entry;
+    union {
+        IUnknown            *pIUnknown;
+        /* ITfCompartmentEventSink *pITfCompartmentEventSink; */
+    } interfaces;
+} CompartmentSink;
+
 typedef struct tagCompartment {
     const ITfCompartmentVtbl *Vtbl;
+    const ITfSourceVtbl *SourceVtbl;
     LONG refCount;
 
     /* Only VT_I4, VT_UNKNOWN and VT_BSTR data types are allowed */
     VARIANT variant;
     CompartmentValue *valueData;
+    struct list CompartmentEventSink;
 } Compartment;
 
 static HRESULT CompartmentEnumGuid_Constructor(struct list* values, IEnumGUID **ppOut);
 static HRESULT Compartment_Constructor(CompartmentValue *value, ITfCompartment **ppOut);
+
+static inline Compartment *impl_from_ITfSourceVtbl(ITfSource *iface)
+{
+    return (Compartment *)((char *)iface - FIELD_OFFSET(Compartment,SourceVtbl));
+}
 
 HRESULT CompartmentMgr_Destructor(ITfCompartmentMgr *iface)
 {
@@ -412,10 +428,23 @@ static HRESULT CompartmentEnumGuid_Constructor(struct list *values, IEnumGUID **
 /**************************************************
  * ITfCompartment
  **************************************************/
+static void free_sink(CompartmentSink *sink)
+{
+        IUnknown_Release(sink->interfaces.pIUnknown);
+        HeapFree(GetProcessHeap(),0,sink);
+}
+
 static void Compartment_Destructor(Compartment *This)
 {
+    struct list *cursor, *cursor2;
     TRACE("destroying %p\n", This);
     VariantClear(&This->variant);
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->CompartmentEventSink)
+    {
+        CompartmentSink* sink = LIST_ENTRY(cursor,CompartmentSink,entry);
+        list_remove(cursor);
+        free_sink(sink);
+    }
     HeapFree(GetProcessHeap(),0,This);
 }
 
@@ -427,6 +456,10 @@ static HRESULT WINAPI Compartment_QueryInterface(ITfCompartment *iface, REFIID i
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfCompartment))
     {
         *ppvOut = This;
+    }
+    else if (IsEqualIID(iid, &IID_ITfSource))
+    {
+        *ppvOut = &This->SourceVtbl;
     }
 
     if (*ppvOut)
@@ -512,6 +545,72 @@ static const ITfCompartmentVtbl ITfCompartment_Vtbl ={
     Compartment_GetValue
 };
 
+/*****************************************************
+ * ITfSource functions
+ *****************************************************/
+
+static HRESULT WINAPI Source_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
+{
+    Compartment *This = impl_from_ITfSourceVtbl(iface);
+    return Compartment_QueryInterface((ITfCompartment *)This, iid, *ppvOut);
+}
+
+static ULONG WINAPI Source_AddRef(ITfSource *iface)
+{
+    Compartment *This = impl_from_ITfSourceVtbl(iface);
+    return Compartment_AddRef((ITfCompartment*)This);
+}
+
+static ULONG WINAPI Source_Release(ITfSource *iface)
+{
+    Compartment *This = impl_from_ITfSourceVtbl(iface);
+    return Compartment_Release((ITfCompartment *)This);
+}
+
+static WINAPI HRESULT CompartmentSource_AdviseSink(ITfSource *iface,
+        REFIID riid, IUnknown *punk, DWORD *pdwCookie)
+{
+    Compartment *This = impl_from_ITfSourceVtbl(iface);
+
+    TRACE("(%p) %s %p %p\n",This,debugstr_guid(riid),punk,pdwCookie);
+
+    if (!riid || !punk || !pdwCookie)
+        return E_INVALIDARG;
+
+    FIXME("(%p) Unhandled Sink: %s\n",This,debugstr_guid(riid));
+    return E_NOTIMPL;
+}
+
+static WINAPI HRESULT CompartmentSource_UnadviseSink(ITfSource *iface, DWORD pdwCookie)
+{
+    CompartmentSink *sink;
+    Compartment *This = impl_from_ITfSourceVtbl(iface);
+
+    TRACE("(%p) %x\n",This,pdwCookie);
+
+    if (get_Cookie_magic(pdwCookie)!=COOKIE_MAGIC_COMPARTMENTSINK)
+        return E_INVALIDARG;
+
+    sink = (CompartmentSink*)remove_Cookie(pdwCookie);
+    if (!sink)
+        return CONNECT_E_NOCONNECTION;
+
+    list_remove(&sink->entry);
+    free_sink(sink);
+
+    return S_OK;
+}
+
+static const ITfSourceVtbl Compartment_SourceVtbl =
+{
+    Source_QueryInterface,
+    Source_AddRef,
+    Source_Release,
+
+    CompartmentSource_AdviseSink,
+    CompartmentSource_UnadviseSink,
+};
+
 static HRESULT Compartment_Constructor(CompartmentValue *valueData, ITfCompartment **ppOut)
 {
     Compartment *This;
@@ -521,10 +620,13 @@ static HRESULT Compartment_Constructor(CompartmentValue *valueData, ITfCompartme
         return E_OUTOFMEMORY;
 
     This->Vtbl= &ITfCompartment_Vtbl;
+    This->SourceVtbl = &Compartment_SourceVtbl;
     This->refCount = 1;
 
     This->valueData = valueData;
     VariantInit(&This->variant);
+
+    list_init(&This->CompartmentEventSink);
 
     TRACE("returning %p\n", This);
     *ppOut = (ITfCompartment*)This;
