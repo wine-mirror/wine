@@ -3204,7 +3204,7 @@ static void test_editbox(void)
     ok(hwndedit2 == NULL, "Expected Edit window not to be created\n");
     ok(!IsWindow(hwndedit), "Expected Edit window to be destroyed\n");
     ok(GetFocus() == hwnd, "Expected List to be focused\n");
-    /* and value greater then max item index */
+    /* and value greater than max item index */
     hwndedit = (HWND)SendMessage(hwnd, LVM_EDITLABEL, 0, 0);
     ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
     ok(GetFocus() == hwndedit, "Expected Edit to be focused\n");
@@ -3312,7 +3312,7 @@ static void test_notifyformat(void)
     r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
     expect(1, r);
     DestroyWindow(hwnd);
-    /* recieving error code defaulting to ansi */
+    /* receiving error code defaulting to ansi */
     notifyFormat = 0;
     hwnd = create_listview_controlW(0, hwndparentW);
     ok(hwnd != NULL, "failed to create a listview window\n");
@@ -3323,7 +3323,7 @@ static void test_notifyformat(void)
     r = SendMessage(header, HDM_GETUNICODEFORMAT, 0, 0);
     expect(1, r);
     DestroyWindow(hwnd);
-    /* recieving ansi code from unicode window, use it */
+    /* receiving ansi code from unicode window, use it */
     notifyFormat = NFR_ANSI;
     hwnd = create_listview_controlW(0, hwndparentW);
     ok(hwnd != NULL, "failed to create a listview window\n");
@@ -3484,9 +3484,10 @@ static BOOL load_v6_module(ULONG_PTR *pcookie)
 
     if (!ret)
     {
-        win_skip("A problem during context activation occured.\n");
+        win_skip("A problem during context activation occurred.\n");
         DeleteFileA(manifest_name);
     }
+
     else
     {
         /* this is a XP SP3 failure workaround */

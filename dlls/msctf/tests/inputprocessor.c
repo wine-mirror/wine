@@ -1321,7 +1321,7 @@ static void test_ClientId(void)
     GUID g2;
 
     hr = ITfThreadMgr_QueryInterface(g_tm, &IID_ITfClientId, (LPVOID*)&pcid);
-    ok(SUCCEEDED(hr),"Unable to aquire ITfClientId interface\n");
+    ok(SUCCEEDED(hr),"Unable to acquire ITfClientId interface\n");
 
     CoCreateGuid(&g2);
 

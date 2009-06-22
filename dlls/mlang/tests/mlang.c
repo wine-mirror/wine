@@ -60,7 +60,7 @@ typedef struct lcid_tag_table {
 
 /* en, ar and zh use SUBLANG_NEUTRAL for the rfc1766 name without the country
    all others suppress the country with SUBLANG_DEFAULT.
-   For 3 letter language codes, the rfc1766 is to small for the country */
+   For 3 letter language codes, the rfc1766 is too small for the country */
 
 static const lcid_table_entry  lcid_table[] = {
     {"e",     -1,       E_FAIL},

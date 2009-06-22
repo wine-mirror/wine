@@ -320,7 +320,7 @@ static void test_sharelists(HDC winhdc)
     }
 
     /* Test 3: Share display lists with a context which already shares display lists with another context.
-     * According to MSDN the second paramater can't share any display lists but some buggy drivers might allow it */
+     * According to MSDN the second parameter cannot share any display lists but some buggy drivers might allow it */
     hglrc3 = wglCreateContext(winhdc);
     if(hglrc3)
     {

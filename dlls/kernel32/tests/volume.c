@@ -160,7 +160,7 @@ static void test_GetVolumeNameForVolumeMountPointA(void)
         "GetVolumeNameForVolumeMountPointA failed on %s, last=%d\n",
         temp_path, GetLastError());
 
-    /* Try on a non-existent dos drive */
+    /* Try on a nonexistent dos drive */
     path[2] = 0;
     for (;path[0] <= 'z'; path[0]++) {
         ret = QueryDosDeviceA( path, volume, len);
@@ -174,7 +174,7 @@ static void test_GetVolumeNameForVolumeMountPointA(void)
             "GetVolumeNameForVolumeMountPointA failed on %s, last=%d\n",
             path, GetLastError());
 
-        /* Try without trailing \ and on a non-existent dos drive  */
+        /* Try without trailing \ and on a nonexistent dos drive  */
         path[2] = 0;
         ret = pGetVolumeNameForVolumeMountPointA(path, volume, len);
         ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
