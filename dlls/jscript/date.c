@@ -315,6 +315,12 @@ static inline DOUBLE daylight_saving_ta(DOUBLE time, DateInstance *date)
 }
 
 /* ECMA-262 3rd Edition    15.9.1.9 */
+static inline DOUBLE local_time(DOUBLE time, DateInstance *date)
+{
+    return time - (daylight_saving_ta(time, date)+date->bias)*MS_PER_MINUTE;
+}
+
+/* ECMA-262 3rd Edition    15.9.1.9 */
 static inline DOUBLE utc(DOUBLE time, DateInstance *date)
 {
     time += date->bias * MS_PER_MINUTE;
@@ -525,7 +531,7 @@ static HRESULT Date_getFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
-        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+        DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, year_from_time(time));
     }
@@ -563,7 +569,7 @@ static HRESULT Date_getMonth(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
-        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+        DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, month_from_time(time));
     }
@@ -601,7 +607,7 @@ static HRESULT Date_getDate(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
-        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+        DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, date_from_time(time));
     }
@@ -639,7 +645,7 @@ static HRESULT Date_getDay(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
-        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+        DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, week_day(time));
     }
@@ -677,7 +683,7 @@ static HRESULT Date_getHours(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
-        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+        DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, hour_from_time(time));
     }
@@ -715,7 +721,7 @@ static HRESULT Date_getMinutes(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
-        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+        DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, min_from_time(time));
     }
@@ -753,7 +759,7 @@ static HRESULT Date_getSeconds(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
-        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+        DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, sec_from_time(time));
     }
@@ -791,7 +797,7 @@ static HRESULT Date_getMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags, D
 
     if(retv) {
         DateInstance *date = (DateInstance*)dispex;
-        DOUBLE time = date->time - date->bias*MS_PER_MINUTE;
+        DOUBLE time = local_time(date->time, date);
 
         num_set_val(retv, ms_from_time(time));
     }
@@ -819,8 +825,19 @@ static HRESULT Date_getUTCMilliseconds(DispatchEx *dispex, LCID lcid, WORD flags
 static HRESULT Date_getTimezoneOffset(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, floor(
+                    (date->time-local_time(date->time, date))/MS_PER_MINUTE));
+    }
+    return S_OK;
 }
 
 static HRESULT Date_setTime(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
