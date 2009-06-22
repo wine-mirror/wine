@@ -72,6 +72,12 @@ static inline BOOL ffp_clip_emul(IWineD3DStateBlockImpl *stateblock)
     return stateblock->lowest_disabled_stage < 7;
 }
 
+/* Returns TRUE if result.clip from GL_NV_vertex_program2 should be used and FALSE otherwise */
+static inline BOOL use_nv_clip(const WineD3D_GL_Info *gl_info)
+{
+    return GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION);
+}
+
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
  * so upload them above that
  */
@@ -3502,7 +3508,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
     shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
 
-    if(priv_ctx.target_version >= NV2)
+    if(use_nv_clip(gl_info) && priv_ctx.target_version >= NV2)
     {
         for(i = 0; i < num_clipplanes; i++)
         {
@@ -3781,7 +3787,14 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     else
     {
         args->ps_signature = ~0;
-        args->boolclip.clip_control[0] = ffp_clip_emul(stateblock) ? GL_LIMITS(texture_stages) : 0;
+        if(dev->vs_clipping)
+        {
+            args->boolclip.clip_control[0] = 0;
+        }
+        else
+        {
+            args->boolclip.clip_control[0] = ffp_clip_emul(stateblock) ? GL_LIMITS(texture_stages) : 0;
+        }
     }
 
     if(args->boolclip.clip_control[0])
@@ -3809,7 +3822,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
 
     /* Skip if unused or local */
     int_skip = ~shader->baseShader.reg_maps.integer_constants | shader->baseShader.reg_maps.local_int_consts;
-    if(int_skip == 0xffff || GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION))
+    if(int_skip == 0xffff || GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION)) /* This is about flow control, not clipping */
     {
         memset(&args->loop_ctrl, 0, sizeof(args->loop_ctrl));
         return;
@@ -4164,7 +4177,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
         pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF);
     }
 
-    pCaps->VSClipping = GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION);
+    pCaps->VSClipping = use_nv_clip(gl_info);
 }
 
 static BOOL shader_arb_color_fixup_supported(struct color_fixup_desc fixup)
