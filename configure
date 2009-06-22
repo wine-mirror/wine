@@ -8366,8 +8366,21 @@ test -n "$MINGWAR" || MINGWAR="false"
     then
         CROSSTEST="\$(CROSSTEST)"
 
-        CROSSTARGETFLAGS="-b `expr $CROSSCC : '\(.*\)-gcc'`"
+        set x $CROSSCC
+        shift
+        target=""
+        while test $# -ge 1
+        do
+            case "$1" in
+              *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
+            esac
+            shift
+        done
+        if test -n "$target"
+        then
+            CROSSTARGETFLAGS="-b $target"
 
+        fi
     fi
 fi
 

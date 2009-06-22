@@ -699,7 +699,20 @@ then
     if test "$CROSSCC" != "false"
     then
         AC_SUBST(CROSSTEST,"\$(CROSSTEST)")
-        AC_SUBST(CROSSTARGETFLAGS,"-b `expr $CROSSCC : '\(.*\)-gcc'`")
+        set x $CROSSCC
+        shift
+        target=""
+        while test $# -ge 1
+        do
+            case "$1" in
+              *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
+            esac
+            shift
+        done
+        if test -n "$target"
+        then
+            AC_SUBST(CROSSTARGETFLAGS,"-b $target")
+        fi
     fi
 fi
 
