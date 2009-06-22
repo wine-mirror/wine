@@ -153,8 +153,39 @@ static HRESULT WINAPI CompartmentMgr_GetCompartment(ITfCompartmentMgr *iface,
         REFGUID rguid, ITfCompartment **ppcomp)
 {
     CompartmentMgr *This = (CompartmentMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    CompartmentValue* value;
+    struct list *cursor;
+    HRESULT hr;
+
+    TRACE("(%p) %s  %p\n",This,debugstr_guid(rguid),ppcomp);
+
+    LIST_FOR_EACH(cursor, &This->values)
+    {
+        value = LIST_ENTRY(cursor,CompartmentValue,entry);
+        if (IsEqualGUID(rguid,&value->guid))
+        {
+            ITfCompartment_AddRef(value->compartment);
+            *ppcomp = value->compartment;
+            return S_OK;
+        }
+    }
+
+    value = HeapAlloc(GetProcessHeap(),0,sizeof(CompartmentValue));
+    value->guid = *rguid;
+    value->owner = 0;
+    hr = Compartment_Constructor(value,&value->compartment);
+    if (SUCCEEDED(hr))
+    {
+        list_add_head(&This->values,&value->entry);
+        ITfCompartment_AddRef(value->compartment);
+        *ppcomp = value->compartment;
+    }
+    else
+    {
+        HeapFree(GetProcessHeap(),0,value);
+        *ppcomp = NULL;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI CompartmentMgr_ClearCompartment(ITfCompartmentMgr *iface,
