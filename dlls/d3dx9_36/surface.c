@@ -370,3 +370,58 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(LPDIRECT3DSURFACE9 pDestSurface,
     if(SrcFormat == D3DFMT_UNKNOWN || pSrcRect->left >= pSrcRect->right || pSrcRect->top >= pSrcRect->bottom) return E_FAIL;
     return E_NOTIMPL;
 }
+
+/************************************************************
+ * D3DXLoadSurfaceFromSurface
+ *
+ * Copies the contents from one surface to another, performing any required
+ * format conversion, resizing or filtering.
+ *
+ * PARAMS
+ *   pDestSurface [I] pointer to the destination surface
+ *   pDestPalette [I] palette to use
+ *   pDestRect    [I] to be filled area of the surface
+ *   pSrcSurface  [I] pointer to the source surface
+ *   pSrcPalette  [I] palette used for the source surface
+ *   pSrcRect     [I] area of the source data to load
+ *   dwFilter     [I] filter to apply on resizing
+ *   Colorkey     [I] any ARGB value or 0 to disable color-keying
+ *
+ * RETURNS
+ *   Success: D3D_OK
+ *   Failure: D3DERR_INVALIDCALL, if pDestSurface or pSrcSurface are NULL
+ *            D3DXERR_INVALIDDATA, if one of the surfaces is not lockable
+ *
+ */
+HRESULT WINAPI D3DXLoadSurfaceFromSurface(LPDIRECT3DSURFACE9 pDestSurface,
+                                          CONST PALETTEENTRY *pDestPalette,
+                                          CONST RECT *pDestRect,
+                                          LPDIRECT3DSURFACE9 pSrcSurface,
+                                          CONST PALETTEENTRY *pSrcPalette,
+                                          CONST RECT *pSrcRect,
+                                          DWORD dwFilter,
+                                          D3DCOLOR Colorkey)
+{
+    RECT rect;
+    D3DLOCKED_RECT lock;
+    D3DSURFACE_DESC SrcDesc;
+    HRESULT hr;
+    TRACE("(void): relay\n");
+
+    if( !pDestSurface || !pSrcSurface ) return D3DERR_INVALIDCALL;
+
+    IDirect3DSurface9_GetDesc(pSrcSurface, &SrcDesc);
+
+    if( !pSrcRect ) SetRect(&rect, 0, 0, SrcDesc.Width, SrcDesc.Height);
+    else rect = *pSrcRect;
+
+    hr = IDirect3DSurface9_LockRect(pSrcSurface, &lock, NULL, D3DLOCK_READONLY);
+    if(FAILED(hr)) return D3DXERR_INVALIDDATA;
+
+    hr = D3DXLoadSurfaceFromMemory(pDestSurface, pDestPalette, pDestRect,
+                                   lock.pBits, SrcDesc.Format, lock.Pitch,
+                                   pSrcPalette, &rect, dwFilter, Colorkey);
+
+    IDirect3DSurface9_UnlockRect(pSrcSurface);
+    return hr;
+}
