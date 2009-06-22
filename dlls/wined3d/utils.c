@@ -353,7 +353,7 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
             GL_RGBA,                GL_UNSIGNED_INT_8_8_8_8_REV,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
             WINED3D_GL_EXT_NONE},
-    {WINED3DFMT_R16G16_UNORM,       GL_RGB16_EXT,                     GL_RGB16_EXT,                           0,
+    {WINED3DFMT_R16G16_UNORM,       GL_RGB16_EXT,                     GL_RGB16_EXT,                           GL_RGBA16_EXT,
             GL_RGB,                 GL_UNSIGNED_SHORT,
             WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
             WINED3D_GL_EXT_NONE},
