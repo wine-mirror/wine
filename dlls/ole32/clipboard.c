@@ -1133,6 +1133,22 @@ static HRESULT get_stgmed_for_storage(HGLOBAL h, STGMEDIUM *med)
     return hr;
 }
 
+/************************************************************************
+ *                    get_stgmed_for_emf
+ *
+ * Returns a stg medium with an enhanced metafile based on the handle
+ */
+static HRESULT get_stgmed_for_emf(HENHMETAFILE hemf, STGMEDIUM *med)
+{
+    med->pUnkForRelease = NULL;
+    med->tymed = TYMED_NULL;
+
+    med->u.hEnhMetaFile = CopyEnhMetaFileW(hemf, NULL);
+    if(!med->u.hEnhMetaFile) return E_OUTOFMEMORY;
+    med->tymed = TYMED_ENHMF;
+    return S_OK;
+}
+
 static inline BOOL string_off_equal(const DVTARGETDEVICE *t1, WORD off1, const DVTARGETDEVICE *t2, WORD off2)
 {
     const WCHAR *str1, *str2;
@@ -1222,6 +1238,8 @@ static HRESULT WINAPI snapshot_GetData(IDataObject *iface, FORMATETC *fmt,
         hr = get_stgmed_for_global(h, med);
     else if(mask & TYMED_ISTREAM)
         hr = get_stgmed_for_stream(h, med);
+    else if(mask & TYMED_ENHMF)
+        hr = get_stgmed_for_emf((HENHMETAFILE)h, med);
     else
     {
         FIXME("Unhandled tymed - mask %x req tymed %x\n", mask, fmt->tymed);
