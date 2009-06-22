@@ -3592,6 +3592,42 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     return ret;
 }
 
+static void find_clip_texcoord(IWineD3DPixelShaderImpl *ps)
+{
+    struct arb_pshader_private *shader_priv = ps->backend_priv;
+    int i;
+    const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)ps->baseShader.device)->adapter->gl_info;
+
+    /* See if we can use fragment.texcoord[7] for clipplane emulation
+     *
+     * Don't do this if it is not supported, or fragment.texcoord[7] is used
+     */
+    if(ps->baseShader.reg_maps.shader_version.major < 3)
+    {
+        for(i = GL_LIMITS(texture_stages); i > 0; i--)
+        {
+            if(!ps->baseShader.reg_maps.texcoord[i - 1])
+            {
+                shader_priv->clipplane_emulation = i;
+                return;
+            }
+        }
+        WARN("Did not find a free clip reg(2.0)\n");
+    }
+    else
+    {
+        for(i = GL_LIMITS(texture_stages); i > 0; i--)
+        {
+            if(!(ps->baseShader.reg_maps.input_registers & (1 << (i - 1))))
+            {
+                shader_priv->clipplane_emulation = i;
+                return;
+            }
+        }
+        WARN("Did not find a free clip reg(3.0)\n");
+    }
+}
+
 /* GL locking is done by the caller */
 static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *shader, const struct arb_ps_compile_args *args)
 {
@@ -3603,9 +3639,20 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
     GLuint ret;
 
     if(!shader->backend_priv) {
+        IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) shader->baseShader.device;
+        struct shader_arb_priv *priv = device->shader_priv;
+
         shader->backend_priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*shader_data));
         shader_data = shader->backend_priv;
         shader_data->clamp_consts = shader->baseShader.reg_maps.shader_version.major == 1;
+
+        if(shader->baseShader.reg_maps.shader_version.major < 3) shader_data->input_signature_idx = ~0;
+        else shader_data->input_signature_idx = find_input_signature(priv, shader->input_signature);
+
+        shader_data->has_signature_idx = TRUE;
+        TRACE("Shader got assigned input signature index %u\n", shader_data->input_signature_idx);
+
+        if(!device->vs_clipping) find_clip_texcoord(shader);
     }
     shader_data = shader->backend_priv;
 
@@ -3845,39 +3892,6 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     }
 }
 
-static void find_clip_texcoord(IWineD3DPixelShaderImpl *ps, const WineD3D_GL_Info *gl_info)
-{
-    struct arb_pshader_private *shader_priv = ps->backend_priv;
-    int i;
-
-    /* See if we can use fragment.texcoord[7] for clipplane emulation
-     *
-     * Don't do this if it is not supported, or fragment.texcoord[7] is used
-     */
-    if(ps->baseShader.reg_maps.shader_version.major < 3)
-    {
-        for(i = GL_LIMITS(texture_stages); i > 0; i--)
-        {
-            if(!ps->baseShader.reg_maps.texcoord[i - 1])
-            {
-                shader_priv->clipplane_emulation = i;
-                break;
-            }
-        }
-    }
-    else
-    {
-        for(i = GL_LIMITS(texture_stages); i > 0; i--)
-        {
-            if(!(ps->baseShader.reg_maps.input_registers & (1 << (i - 1))))
-            {
-                shader_priv->clipplane_emulation = i;
-                break;
-            }
-        }
-    }
-}
-
 /* GL locking is done by the caller */
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -3889,7 +3903,6 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     if (usePS) {
         struct arb_ps_compile_args compile_args;
         struct arb_ps_compiled_shader *compiled;
-        struct arb_pshader_private *shader_priv;
         IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This->stateBlock->pixelShader;
 
         TRACE("Using pixel shader %p\n", This->stateBlock->pixelShader);
@@ -3897,18 +3910,6 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         compiled = find_arb_pshader(ps, &compile_args);
         priv->current_fprogram_id = compiled->prgId;
         priv->compiled_fprog = compiled;
-
-        shader_priv = ps->backend_priv;
-        if(!shader_priv->has_signature_idx)
-        {
-            if(ps->baseShader.reg_maps.shader_version.major < 3) shader_priv->input_signature_idx = ~0;
-            else shader_priv->input_signature_idx = find_input_signature(priv, ps->input_signature);
-
-            shader_priv->has_signature_idx = TRUE;
-            TRACE("Shader got assigned input signature index %u\n", shader_priv->input_signature_idx);
-
-            if(!This->vs_clipping) find_clip_texcoord(ps, gl_info);
-        }
 
         /* Bind the fragment program */
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
