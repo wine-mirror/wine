@@ -429,8 +429,31 @@ static HRESULT WINAPI Compartment_SetValue(ITfCompartment *iface,
     TfClientId tid, const VARIANT *pvarValue)
 {
     Compartment *This = (Compartment *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("(%p) %i %p\n",This,tid,pvarValue);
+
+    if (!pvarValue)
+        return E_INVALIDARG;
+
+    if (!(V_VT(pvarValue) == VT_BSTR || V_VT(pvarValue) == VT_I4 ||
+          V_VT(pvarValue) == VT_UNKNOWN))
+        return E_INVALIDARG;
+
+    if (!This->valueData->owner)
+        This->valueData->owner = tid;
+
+    VariantClear(&This->variant);
+
+    /* Shallow copy of value and type */
+    This->variant = *pvarValue;
+
+    if (V_VT(pvarValue) == VT_BSTR)
+        V_BSTR(&This->variant) = SysAllocStringByteLen((char*)V_BSTR(pvarValue),
+                SysStringByteLen(V_BSTR(pvarValue)));
+    else if (V_VT(pvarValue) == VT_UNKNOWN)
+        IUnknown_AddRef(V_UNKNOWN(&This->variant));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Compartment_GetValue(ITfCompartment *iface,
