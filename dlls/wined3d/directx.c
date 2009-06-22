@@ -22,13 +22,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* Compile time diagnostics: */
-
-#ifndef DEBUG_SINGLE_MODE
-/* Set to 1 to force only a single display mode to be exposed: */
-#define DEBUG_SINGLE_MODE 0
-#endif
-
 #include "config.h"
 #include <assert.h>
 #include "wined3d_private.h"
@@ -1572,40 +1565,39 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
 
     /* TODO: Store modes per adapter and read it from the adapter structure */
     if (Adapter == 0) { /* Display */
-        int i = 0;
-        int j = 0;
+        unsigned int i = 0;
+        unsigned int j = 0;
+        DEVMODEW mode;
 
-        if (!DEBUG_SINGLE_MODE) {
-            DEVMODEW DevModeW;
+        memset(&mode, 0, sizeof(mode));
+        mode.dmSize = sizeof(mode);
 
-            ZeroMemory(&DevModeW, sizeof(DevModeW));
-            DevModeW.dmSize = sizeof(DevModeW);
-            while (EnumDisplaySettingsExW(NULL, j, &DevModeW, 0)) {
-                j++;
-                switch (Format)
-                {
-                    case WINED3DFMT_UNKNOWN:
-                        /* This is for D3D8, do not enumerate P8 here */
-                        if (DevModeW.dmBitsPerPel == 32 ||
-                            DevModeW.dmBitsPerPel == 16) i++;
-                        break;
-                    case WINED3DFMT_X8R8G8B8:
-                        if (DevModeW.dmBitsPerPel == 32) i++;
-                        break;
-                    case WINED3DFMT_R5G6B5:
-                        if (DevModeW.dmBitsPerPel == 16) i++;
-                        break;
-                    case WINED3DFMT_P8:
-                        if (DevModeW.dmBitsPerPel == 8) i++;
-                        break;
-                    default:
-                        /* Skip other modes as they do not match the requested format */
-                        break;
-                }
+        while (EnumDisplaySettingsExW(NULL, j, &mode, 0))
+        {
+            ++j;
+            switch (Format)
+            {
+                case WINED3DFMT_UNKNOWN:
+                    /* This is for D3D8, do not enumerate P8 here */
+                    if (mode.dmBitsPerPel == 32 || mode.dmBitsPerPel == 16) ++i;
+                    break;
+
+                case WINED3DFMT_X8R8G8B8:
+                    if (mode.dmBitsPerPel == 32) ++i;
+                    break;
+
+                case WINED3DFMT_R5G6B5:
+                    if (mode.dmBitsPerPel == 16) ++i;
+                    break;
+
+                case WINED3DFMT_P8:
+                    if (mode.dmBitsPerPel == 8) ++i;
+                    break;
+
+                default:
+                    /* Skip other modes as they do not match the requested format */
+                    break;
             }
-        } else {
-            i = 1;
-            j = 1;
         }
 
         TRACE_(d3d_caps)("(%p}->(Adapter: %d) => %d (out of %d)\n", This, Adapter, i, j);
@@ -1629,7 +1621,8 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
     }
 
     /* TODO: Store modes per adapter and read it from the adapter structure */
-    if (Adapter == 0 && !DEBUG_SINGLE_MODE) { /* Display */
+    if (Adapter == 0)
+    {
         DEVMODEW DevModeW;
         int ModeIdx = 0;
         UINT i = 0;
@@ -1693,14 +1686,9 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
                 pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format),
                 DevModeW.dmBitsPerPel);
 
-    } else if (DEBUG_SINGLE_MODE) {
-        /* Return one setting of the format requested */
-        if (Mode > 0) return WINED3DERR_INVALIDCALL;
-        pMode->Width        = 800;
-        pMode->Height       = 600;
-        pMode->RefreshRate  = 60;
-        pMode->Format       = (Format == WINED3DFMT_UNKNOWN) ? WINED3DFMT_X8R8G8B8 : Format;
-    } else {
+    }
+    else
+    {
         FIXME_(d3d_caps)("Adapter not primary display\n");
     }
 
