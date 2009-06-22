@@ -13017,13 +13017,89 @@ interface IOmNavigator : IDispatch
     HRESULT userProfile([retval, out] IHTMLOpsProfile **p);
 }
 
+/*****************************************************************************
+ *    DispHTMLNavigator dispinterface
+ */
+[
+    hidden,
+    uuid(3050f54c-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLNavigator
+{
+properties:
+methods:
+    [propget, id(DISPID_IOMNAVIGATOR_APPCODENAME)]
+    BSTR appCodeName();
+
+    [propget, id(DISPID_IOMNAVIGATOR_APPNAME)]
+    BSTR appName();
+
+    [propget, id(DISPID_IOMNAVIGATOR_APPVERSION)]
+    BSTR appVersion();
+
+    [propget, id(DISPID_IOMNAVIGATOR_USERAGENT)]
+    BSTR userAgent();
+
+    [id(DISPID_IOMNAVIGATOR_JAVAENABLED)]
+    VARIANT_BOOL javaEnabled();
+
+    [id(DISPID_IOMNAVIGATOR_TAINTENABLED)]
+    VARIANT_BOOL taintEnabled();
+
+    [propget, id(DISPID_IOMNAVIGATOR_MIMETYPES)]
+    IHTMLMimeTypesCollection *mimeTypes();
+
+    [propget, id(DISPID_IOMNAVIGATOR_PLUGINS)]
+    IHTMLPluginsCollection *plugins();
+
+    [propget, id(DISPID_IOMNAVIGATOR_COOKIEENABLED)]
+    VARIANT_BOOL cookieEnabled();
+
+    [propget, id(DISPID_IOMNAVIGATOR_OPSPROFILE)]
+    IHTMLOpsProfile *opsProfile();
+
+    [id(DISPID_IOMNAVIGATOR_TOSTRING)]
+    BSTR toString();
+
+    [propget, id(DISPID_IOMNAVIGATOR_CPUCLASS)]
+    BSTR cpuClass();
+
+    [propget, id(DISPID_IOMNAVIGATOR_SYSTEMLANGUAGE)]
+    BSTR systemLanguage();
+
+    [propget, id(DISPID_IOMNAVIGATOR_BROWSERLANGUAGE), hidden]
+    BSTR browserLanguage();
+
+    [propget, id(DISPID_IOMNAVIGATOR_USERLANGUAGE)]
+    BSTR userLanguage();
+
+    [propget, id(DISPID_IOMNAVIGATOR_PLATFORM)]
+    BSTR platform();
+
+    [propget, id(DISPID_IOMNAVIGATOR_APPMINORVERSION)]
+    BSTR appMinorVersion();
+
+    [propget, id(DISPID_IOMNAVIGATOR_CONNECTIONSPEED), hidden]
+    LONG connectionSpeed();
+
+    [propget, id(DISPID_IOMNAVIGATOR_ONLINE)]
+    VARIANT_BOOL onLine();
+
+    [propget, id(DISPID_IOMNAVIGATOR_USERPROFILE)]
+    IHTMLOpsProfile *userProfile();
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
+}
+
 [
     noncreatable,
     uuid(FECEAAA6-8405-11cf-8BA1-00AA00476DA6)
 ]
 coclass HTMLNavigator
 {
-    [default]           interface IOmNavigator;
+    [default]  dispinterface DispHTMLNavigator;
+               interface IOmNavigator;
 }
 
 /*****************************************************************************
@@ -13098,13 +13174,89 @@ interface IHTMLLocation : IDispatch
     HRESULT toString([retval, out] BSTR *String);
 }
 
+/*****************************************************************************
+ *    DispHTMLLocation dispinterface
+ */
+[
+    hidden,
+    uuid(3050f54e-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLLocation
+{
+properties:
+methods:
+    [propput, id(DISPID_IHTMLLOCATION_HREF)]
+    void href(BSTR v);
+
+    [propget, id(DISPID_IHTMLLOCATION_HREF)]
+    BSTR href();
+
+    [propput, id(DISPID_IHTMLLOCATION_PROTOCOL)]
+    void protocol(BSTR v);
+
+    [propget, id(DISPID_IHTMLLOCATION_PROTOCOL)]
+    BSTR protocol();
+
+    [propput, id(DISPID_IHTMLLOCATION_HOST)]
+    void host(BSTR v);
+
+    [propget, id(DISPID_IHTMLLOCATION_HOST)]
+    BSTR host();
+
+    [propput, id(DISPID_IHTMLLOCATION_HOSTNAME)]
+    void hostname(BSTR v);
+
+    [propget, id(DISPID_IHTMLLOCATION_HOSTNAME)]
+    BSTR hostname();
+
+    [propput, id(DISPID_IHTMLLOCATION_PORT)]
+    void port(BSTR v);
+
+    [propget, id(DISPID_IHTMLLOCATION_PORT)]
+    BSTR port();
+
+    [propput, id(DISPID_IHTMLLOCATION_PATHNAME)]
+    void pathname(BSTR v);
+
+    [propget, id(DISPID_IHTMLLOCATION_PATHNAME)]
+    BSTR pathname();
+
+    [propput, id(DISPID_IHTMLLOCATION_SEARCH)]
+    void search(BSTR v);
+
+    [propget, id(DISPID_IHTMLLOCATION_SEARCH)]
+    BSTR search();
+
+    [propput, id(DISPID_IHTMLLOCATION_HASH)]
+    void hash(BSTR v);
+
+    [propget, id(DISPID_IHTMLLOCATION_HASH)]
+    BSTR hash();
+
+    [id(DISPID_IHTMLLOCATION_RELOAD)]
+    void reload([in, defaultvalue(0)] VARIANT_BOOL flag);
+
+    [id(DISPID_IHTMLLOCATION_REPLACE)]
+    void replace([in] BSTR bstr);
+
+    [id(DISPID_IHTMLLOCATION_ASSIGN)]
+    void assign([in] BSTR bstr);
+
+    [id(DISPID_IHTMLLOCATION_TOSTRING)]
+    BSTR toString();
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
+}
+
 [
     noncreatable,
     uuid(163BB1E1-6E00-11cf-837A-48DC04C10000)
 ]
 coclass HTMLLocation
 {
-    [default]           interface IHTMLLocation;
+    [default]  dispinterface DispHTMLLocation;
+               interface IHTMLLocation;
 }
 
 [
