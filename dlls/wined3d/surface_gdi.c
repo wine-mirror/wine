@@ -29,7 +29,6 @@
 #include "wine/port.h"
 #include "wined3d_private.h"
 
-#include <assert.h>
 #include <stdio.h>
 
 /* Use the d3d_surface debug channel to have one channel for all surfaces */

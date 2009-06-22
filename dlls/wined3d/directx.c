@@ -23,7 +23,6 @@
  */
 
 #include "config.h"
-#include <assert.h>
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
@@ -242,7 +241,6 @@ static void WineD3D_ReleaseFakeGLContext(void) {
         wined3d_fake_gl_context_hwnd = NULL;
         wined3d_fake_gl_context_available = FALSE;
     }
-    assert(wined3d_fake_gl_context_ref >= 0);
 
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
 }
@@ -254,7 +252,6 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
 
     TRACE("getting context...\n");
     if(wined3d_fake_gl_context_ref > 0) goto ret;
-    assert(0 == wined3d_fake_gl_context_ref);
 
     wined3d_fake_gl_context_foreign = TRUE;
 

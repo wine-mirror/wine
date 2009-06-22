@@ -30,8 +30,6 @@
 #include "wine/port.h"
 #include "wined3d_private.h"
 
-#include <assert.h>
-
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 
 /* See also float_16_to_32() in wined3d_private.h */
@@ -1117,8 +1115,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_Blt(IWineD3DSurface *iface, const RECT *D
     dstwidth = xdst.right - xdst.left;
     width = (xdst.right - xdst.left) * bpp;
 
-    assert(width <= dlock.Pitch);
-
     if (DestRect && Src != This)
         dbuf = dlock.pBits;
     else
@@ -1619,7 +1615,6 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_BltFast(IWineD3DSurface *iface, DWORD dst
         slock.Pitch = dlock.Pitch;
 
         /* Since slock was originally copied from this surface's description, we can just reuse it */
-        assert(This->resource.allocatedMemory != NULL);
         sbuf = This->resource.allocatedMemory + lock_src.top * pitch + lock_src.left * bpp;
         dbuf = This->resource.allocatedMemory + lock_dst.top * pitch + lock_dst.left * bpp;
         sEntry = Src->resource.format_desc;
