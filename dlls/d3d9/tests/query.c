@@ -228,6 +228,7 @@ static void test_occlusion_query_states(IDirect3D9 *pD3d, HWND hwnd)
 
     cleanup:
     HeapFree(GetProcessHeap(), 0, data);
+    if (pQuery) IDirect3DQuery9_Release(pQuery);
     if(pDevice) IDirect3DDevice9_Release(pDevice);
 }
 
