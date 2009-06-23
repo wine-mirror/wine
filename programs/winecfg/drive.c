@@ -260,7 +260,7 @@ BOOL load_drives(void)
 {
     DWORD i, size = 1024;
     HANDLE mgr;
-    WCHAR root[] = {'A',':',0};
+    WCHAR root[] = {'A',':','\\',0};
 
     if ((mgr = open_mountmgr()) == INVALID_HANDLE_VALUE) return FALSE;
 
