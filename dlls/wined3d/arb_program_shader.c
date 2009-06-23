@@ -2308,7 +2308,6 @@ static void shader_hw_sincos(const struct wined3d_shader_instruction *ins)
     }
 }
 
-/* GL locking is done by the caller */
 static void shader_hw_sgn(const struct wined3d_shader_instruction *ins)
 {
     SHADER_BUFFER *buffer = ins->ctx->buffer;
@@ -2655,6 +2654,7 @@ static void shader_hw_texldl(const struct wined3d_shader_instruction *ins)
     shader_hw_sample(ins, sampler_idx, reg_dest, reg_coord, flags, NULL, NULL);
 }
 
+/* GL locking is done by the caller */
 static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
 {
     GLuint program_id = 0;
