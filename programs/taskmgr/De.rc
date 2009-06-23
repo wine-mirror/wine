@@ -484,4 +484,7 @@ BEGIN
     IDS_APPLICATIONS                   "Anwendungen"
     IDS_PROCESSES                      "Prozesse"
     IDS_PERFORMANCE                    "Systemleistung"
+    IDS_STATUS_BAR_CPU_USAGE           "CPU-Auslastung: %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "Prozesse: %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Speicherauslastung: %dK / %dK"
 END
