@@ -1584,6 +1584,23 @@ static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
     WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
 
     switch(option) {
+    case INTERNET_OPTION_SECURITY_FLAGS:
+    {
+        LPWININETHTTPSESSIONW lpwhs;
+        lpwhs = req->lpHttpSession;
+
+        if (*size < sizeof(ULONG))
+            return ERROR_INSUFFICIENT_BUFFER;
+
+        *size = sizeof(DWORD);
+        if (lpwhs->hdr.dwFlags & INTERNET_FLAG_SECURE)
+            *(DWORD*)buffer = SECURITY_FLAG_SECURE;
+        else
+            *(DWORD*)buffer = 0;
+        FIXME("Semi-STUB INTERNET_OPTION_SECURITY_FLAGS: %x\n",*(DWORD*)buffer);
+        return ERROR_SUCCESS;
+    }
+
     case INTERNET_OPTION_HANDLE_TYPE:
         TRACE("INTERNET_OPTION_HANDLE_TYPE\n");
 
