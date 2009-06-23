@@ -1624,12 +1624,14 @@ static void testSignCert(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
     algoID.pszObjId = (LPSTR)sigOID;
     ret = CryptSignCertificate(0, 0, 0, toBeSigned->pbData, toBeSigned->cbData,
      &algoID, NULL, NULL, &size);
-    ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER || NTE_BAD_ALGID),
+    ok(!ret &&
+     (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == NTE_BAD_ALGID),
      "Expected ERROR_INVALID_PARAMETER or NTE_BAD_ALGID, got %08x\n",
      GetLastError());
     ret = CryptSignCertificate(0, AT_SIGNATURE, 0, toBeSigned->pbData,
      toBeSigned->cbData, &algoID, NULL, NULL, &size);
-    ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER || NTE_BAD_ALGID),
+    ok(!ret &&
+     (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == NTE_BAD_ALGID),
      "Expected ERROR_INVALID_PARAMETER or NTE_BAD_ALGID, got %08x\n",
      GetLastError());
 
@@ -1851,7 +1853,8 @@ static void testSignAndEncodeCert(void)
     algID.pszObjId = oid_rsa_md5rsa;
     ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
      X509_CERT_TO_BE_SIGNED, &info, &algID, NULL, NULL, &size);
-    ok(!ret && (GetLastError() == ERROR_INVALID_PARAMETER || NTE_BAD_ALGID),
+    ok(!ret &&
+     (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == NTE_BAD_ALGID),
      "Expected ERROR_INVALID_PARAMETER or NTE_BAD_ALGID, got %08x\n",
      GetLastError());
     algID.pszObjId = oid_rsa_md5;
