@@ -144,9 +144,13 @@ static void test_mipmap_levels(void)
     check_mipmap_levels(pDevice, 1, 256, 9);
     check_mipmap_levels(pDevice, 1, 1, 1);
 
-    cleanup:
-    if (pD3d)     IUnknown_Release( pD3d );
-    if (pDevice)  IUnknown_Release( pDevice );
+cleanup:
+    if (pDevice)
+    {
+        UINT refcount = IUnknown_Release( pDevice );
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (pD3d) IUnknown_Release( pD3d );
     DestroyWindow( hwnd );
 }
 
@@ -259,12 +263,16 @@ static void test_swapchain(void)
     ok(backbuffer == (void *) 0xdeadbeef, "The back buffer pointer was modified (%p)\n", backbuffer);
     if(backbuffer && backbuffer != (void *) 0xdeadbeef) IDirect3DSurface8_Release(backbuffer);
 
-    cleanup:
+cleanup:
     if(swapchain1) IDirect3DSwapChain8_Release(swapchain1);
     if(swapchain2) IDirect3DSwapChain8_Release(swapchain2);
     if(swapchain3) IDirect3DSwapChain8_Release(swapchain3);
-    if(pDevice) IDirect3DDevice8_Release(pDevice);
-    if(pD3d) IDirect3DDevice8_Release(pD3d);
+    if (pDevice)
+    {
+        UINT refcount = IDirect3DDevice8_Release(pDevice);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (pD3d) IDirect3D8_Release(pD3d);
     DestroyWindow( hwnd );
 }
 
@@ -691,8 +699,12 @@ static void test_cursor(void)
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
 cleanup:
-    if(pD3d) IDirect3D8_Release(pD3d);
-    if(pDevice) IDirect3D8_Release(pDevice);
+    if (pDevice)
+    {
+        UINT refcount = IDirect3DDevice8_Release(pDevice);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (pD3d) IDirect3D8_Release(pD3d);
 }
 
 static void test_states(void)
@@ -732,8 +744,12 @@ static void test_states(void)
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState(D3DRS_ZVISIBLE, FALSE) returned %#08x\n", hr);
 
 cleanup:
-    if(pD3d) IDirect3D8_Release(pD3d);
-    if(pDevice) IDirect3D8_Release(pDevice);
+    if (pDevice)
+    {
+        UINT refcount = IDirect3DDevice8_Release(pDevice);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (pD3d) IDirect3D8_Release(pD3d);
 }
 
 static void test_shader_versions(void)
@@ -851,8 +867,12 @@ static void test_scene(void)
     /* StretchRect does not exit in Direct3D8, so no equivalent to the d3d9 stretchrect tests */
 
 cleanup:
-    if(pD3d) IDirect3D8_Release(pD3d);
-    if(pDevice) IDirect3D8_Release(pDevice);
+    if (pDevice)
+    {
+        UINT refcount = IDirect3DDevice8_Release(pDevice);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (pD3d) IDirect3D8_Release(pD3d);
     if(hwnd) DestroyWindow(hwnd);
 }
 
@@ -1096,8 +1116,12 @@ static void test_shader(void)
     ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_DeleteVertexShader returned %#08x\n", hr);
 
 cleanup:
-    if(pD3d) IDirect3D8_Release(pD3d);
-    if(pDevice) IDirect3D8_Release(pDevice);
+    if (pDevice)
+    {
+        UINT refcount = IDirect3DDevice8_Release(pDevice);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (pD3d) IDirect3D8_Release(pD3d);
     if(hwnd) DestroyWindow(hwnd);
 }
 
@@ -1158,8 +1182,12 @@ static void test_limits(void)
 
 cleanup:
     if(pTexture) IDirect3DTexture8_Release(pTexture);
-    if(pD3d) IDirect3D8_Release(pD3d);
-    if(pDevice) IDirect3D8_Release(pDevice);
+    if (pDevice)
+    {
+        UINT refcount = IDirect3DDevice8_Release(pDevice);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (pD3d) IDirect3D8_Release(pD3d);
     if(hwnd) DestroyWindow(hwnd);
 }
 
@@ -1230,9 +1258,13 @@ static void test_lights(void)
         ok(hr == D3D_OK, "Disabling light %u failed with %08x\n", i, hr);
     }
 
-    cleanup:
-    if(device) IDirect3DDevice8_Release(device);
-    if(d3d8) IDirect3D8_Release(d3d8);
+cleanup:
+    if (device)
+    {
+        UINT refcount = IDirect3DDevice8_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (d3d8) IDirect3D8_Release(d3d8);
 }
 
 static void test_render_zero_triangles(void)
@@ -1300,9 +1332,13 @@ static void test_render_zero_triangles(void)
 
     IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
-    cleanup:
-    if(device) IDirect3DDevice8_Release(device);
-    if(d3d8) IDirect3D8_Release(d3d8);
+cleanup:
+    if (device)
+    {
+        UINT refcount = IDirect3DDevice8_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (d3d8) IDirect3D8_Release(d3d8);
 }
 
 static void test_depth_stencil_reset(void)
@@ -1410,8 +1446,12 @@ static void test_depth_stencil_reset(void)
     if (surface) IDirect3DSurface8_Release(surface);
 
 cleanup:
-    if(d3d8) IDirect3D8_Release(d3d8);
-    if(device) IDirect3D8_Release(device);
+    if (device)
+    {
+        UINT refcount = IDirect3DDevice8_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (d3d8) IDirect3D8_Release(d3d8);
 }
 
 START_TEST(device)
