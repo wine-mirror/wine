@@ -28,6 +28,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "initguid.h"
 #include "comcat.h"
 #include "olectl.h"
 

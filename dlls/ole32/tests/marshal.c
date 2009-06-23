@@ -27,11 +27,11 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "initguid.h"
 #include "objbase.h"
 #include "olectl.h"
 #include "shlguid.h"
 #include "shobjidl.h"
+#include "initguid.h"
 
 #include "wine/test.h"
 

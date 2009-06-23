@@ -25,11 +25,12 @@
 
 #include "windef.h"
 #include "winbase.h"
+#define USE_COM_CONTEXT_DEF
+#include "initguid.h"
 #include "objbase.h"
 #include "shlguid.h"
 #include "urlmon.h" /* for CLSID_FileProtocol */
 
-#include "initguid.h"
 #include "ctxtcall.h"
 
 #include "wine/test.h"
@@ -39,6 +40,7 @@ HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 HRESULT (WINAPI * pCoGetObjectContext)(REFIID riid, LPVOID *ppv);
 HRESULT (WINAPI * pCoSwitchCallContext)(IUnknown *pObject, IUnknown **ppOldObject);
 HRESULT (WINAPI * pCoGetTreatAsClass)(REFCLSID clsidOld, LPCLSID pClsidNew);
+HRESULT (WINAPI * pCoGetContextToken)(ULONG_PTR *token);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 #define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
@@ -1077,6 +1079,7 @@ static void test_CoGetObjectContext(void)
     ULONG refs;
     IComThreadingInfo *pComThreadingInfo;
     IContextCallback *pContextCallback;
+    IObjContext *pObjContext;
     APTTYPE apttype;
     THDTYPE thdtype;
 
@@ -1141,6 +1144,12 @@ static void test_CoGetObjectContext(void)
         refs = IContextCallback_Release(pContextCallback);
         ok(refs == 0, "pContextCallback should have 0 refs instead of %d refs\n", refs);
     }
+
+    hr = pCoGetObjectContext(&IID_IObjContext, (void **)&pObjContext);
+    ok_ole_success(hr, "CoGetObjectContext");
+
+    refs = IObjContext_Release(pObjContext);
+    ok(refs == 0, "pObjContext should have 0 refs instead of %d refs\n", refs);
 
     CoUninitialize();
 }
@@ -1245,6 +1254,66 @@ static void test_CoGetCallContext(void)
     CoUninitialize();
 }
 
+static void test_CoGetContextToken(void)
+{
+    HRESULT hr;
+    ULONG refs;
+    ULONG_PTR token;
+    IObjContext *ctx;
+
+    if (!pCoGetContextToken)
+    {
+        win_skip("CoGetContextToken not present\n");
+        return;
+    }
+
+    token = 0xdeadbeef;
+    hr = pCoGetContextToken(&token);
+    ok(hr == CO_E_NOTINITIALIZED, "Expected CO_E_NOTINITIALIZED, got 0x%08x\n", hr);
+    ok(token == 0xdeadbeef, "Expected 0, got 0x%lx\n", token);
+
+    CoInitialize(NULL);
+
+    hr = pCoGetContextToken(NULL);
+    ok(hr == E_POINTER, "Expected E_POINTER, got 0x%08x\n", hr);
+
+    token = 0;
+    hr = pCoGetContextToken(&token);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+    ok(token, "Expected token != 0\n");
+
+    refs = IUnknown_AddRef((IUnknown *)token);
+    todo_wine ok(refs == 1, "Expected 1, got %u\n", refs);
+
+    refs = IUnknown_Release((IUnknown *)token);
+    todo_wine ok(refs == 0, "Expected 0, got %u\n", refs);
+
+    hr = pCoGetObjectContext(&IID_IObjContext, (void **)&ctx);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+    todo_wine ok(ctx == (IObjContext *)token, "Expected interface pointers to be the same\n");
+
+    refs = IUnknown_AddRef((IUnknown *)ctx);
+    ok(refs == 2, "Expected 1, got %u\n", refs);
+
+    refs = IUnknown_Release((IUnknown *)ctx);
+    ok(refs == 1, "Expected 0, got %u\n", refs);
+
+    /* CoGetContextToken does not add a reference */
+    token = 0;
+    hr = pCoGetContextToken(&token);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+    ok(token, "Expected token != 0\n");
+    todo_wine ok(ctx == (IObjContext *)token, "Expected interface pointers to be the same\n");
+
+    refs = IUnknown_AddRef((IUnknown *)ctx);
+    ok(refs == 2, "Expected 1, got %u\n", refs);
+
+    refs = IUnknown_Release((IUnknown *)ctx);
+    ok(refs == 1, "Expected 0, got %u\n", refs);
+
+    CoUninitialize();
+}
+
 static void test_CoGetTreatAsClass(void)
 {
     HRESULT hr;
@@ -1288,6 +1357,7 @@ START_TEST(compobj)
     pCoGetObjectContext = (void*)GetProcAddress(hOle32, "CoGetObjectContext");
     pCoSwitchCallContext = (void*)GetProcAddress(hOle32, "CoSwitchCallContext");
     pCoGetTreatAsClass = (void*)GetProcAddress(hOle32,"CoGetTreatAsClass");
+    pCoGetContextToken = (void*)GetProcAddress(hOle32, "CoGetContextToken");
     if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx")))
     {
         trace("You need DCOM95 installed to run this test\n");
@@ -1313,6 +1383,7 @@ START_TEST(compobj)
     test_CoFreeUnusedLibraries();
     test_CoGetObjectContext();
     test_CoGetCallContext();
+    test_CoGetContextToken();
     test_CoGetTreatAsClass();
     test_CoInitializeEx();
 }
