@@ -562,10 +562,9 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         SET_EXPECT(QueryService_IInternetBindInfo);
         hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_USER_AGENT,
                                                &ua, 1, &fetched);
-        todo_wine {
-        CHECK_CALLED(QueryInterface_IInternetBindInfo);
-        CHECK_CALLED(QueryService_IInternetBindInfo);
-        }
+        CLEAR_CALLED(QueryInterface_IInternetBindInfo); /* IE <8 */
+        CLEAR_CALLED(QueryService_IInternetBindInfo); /* IE <8 */
+
         ok(hres == E_NOINTERFACE,
            "GetBindString(BINDSTRING_USER_AGETNT) failed: %08x\n", hres);
         ok(fetched == 256, "fetched = %d, expected 254\n", fetched);
@@ -595,12 +594,15 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         SET_EXPECT(QueryInterface_IHttpNegotiate);
         hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate,
                 &IID_IHttpNegotiate, (void**)&http_negotiate);
-        CHECK_CALLED(QueryInterface_IHttpNegotiate);
+        CLEAR_CALLED(QueryInterface_IHttpNegotiate); /* IE <8 */
         ok(hres == S_OK, "QueryService failed: %08x\n", hres);
 
         SET_EXPECT(BeginningTransaction);
+        SET_EXPECT(QueryInterface_IHttpNegotiate);
         hres = IHttpNegotiate_BeginningTransaction(http_negotiate, urls[test_protocol],
                                                    NULL, 0, &additional_headers);
+        todo_wine
+        CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate);
         CHECK_CALLED(BeginningTransaction);
         IHttpNegotiate_Release(http_negotiate);
         ok(hres == S_OK, "BeginningTransction failed: %08x\n", hres);
@@ -609,12 +611,15 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         SET_EXPECT(QueryInterface_IHttpNegotiate2);
         hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate2,
                 &IID_IHttpNegotiate2, (void**)&http_negotiate2);
-        CHECK_CALLED(QueryInterface_IHttpNegotiate2);
+        CLEAR_CALLED(QueryInterface_IHttpNegotiate2); /* IE <8 */
         ok(hres == S_OK, "QueryService failed: %08x\n", hres);
 
         size = 512;
+        SET_EXPECT(QueryInterface_IHttpNegotiate2);
         SET_EXPECT(GetRootSecurityId);
         hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, sec_id, &size, 0);
+        todo_wine
+        CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate2);
         CHECK_CALLED(GetRootSecurityId);
         IHttpNegotiate2_Release(http_negotiate2);
         ok(hres == E_FAIL, "GetRootSecurityId failed: %08x, expected E_FAIL\n", hres);
@@ -765,8 +770,11 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
                                              &IID_IHttpNegotiate, (void**)&http_negotiate);
         ok(hres == S_OK, "Could not get IHttpNegotiate\n");
 
+        SET_EXPECT(QueryInterface_IHttpNegotiate);
         SET_EXPECT(OnResponse);
         hres = IHttpNegotiate_OnResponse(http_negotiate, 200, header, NULL, NULL);
+        todo_wine
+        CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate);
         CHECK_CALLED(OnResponse);
         IHttpNegotiate_Release(http_negotiate);
         ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
@@ -1135,7 +1143,7 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFII
     }
     else if (IsEqualGUID(&IID_IHttpNegotiate, riid))
     {
-        CHECK_EXPECT(QueryInterface_IHttpNegotiate);
+        CHECK_EXPECT2(QueryInterface_IHttpNegotiate);
         *ppv = &HttpNegotiate;
         return S_OK;
     }
@@ -1931,22 +1939,20 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     hres = IBindStatusCallback_QueryInterface(holder, &IID_IHttpNegotiate, (void**)&http_negotiate);
     ok(hres == S_OK, "Could not get IHttpNegotiate interface: %08x\n", hres);
 
-    wstr = (void*)0xdeadbeef;
-    hres = IHttpNegotiate_BeginningTransaction(http_negotiate, urls[test_protocol], (void*)0xdeadbeef, 0xff, &wstr);
-    ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
-    ok(wstr == NULL, "wstr = %p\n", wstr);
-
     SET_EXPECT(QueryInterface_IHttpNegotiate);
     hres = IServiceProvider_QueryService(serv_prov, &IID_IHttpNegotiate, &IID_IHttpNegotiate,
                                          (void**)&http_negotiate_serv);
     ok(hres == S_OK, "Could not get IHttpNegotiate service: %08x\n", hres);
-    CHECK_CALLED(QueryInterface_IHttpNegotiate);
+    CLEAR_CALLED(QueryInterface_IHttpNegotiate); /* IE <8 */
 
     ok(http_negotiate == http_negotiate_serv, "http_negotiate != http_negotiate_serv\n");
 
     wstr = (void*)0xdeadbeef;
+    SET_EXPECT(QueryInterface_IHttpNegotiate);
     SET_EXPECT(BeginningTransaction);
     hres = IHttpNegotiate_BeginningTransaction(http_negotiate_serv, urls[test_protocol], emptyW, 0, &wstr);
+    todo_wine
+    CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate); /* IE8 */
     CHECK_CALLED(BeginningTransaction);
     ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
     ok(wstr == NULL, "wstr = %p\n", wstr);
@@ -1962,19 +1968,20 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     hres = IBindStatusCallback_QueryInterface(holder, &IID_IHttpNegotiate2, (void**)&http_negotiate2);
     if(SUCCEEDED(hres)) {
         have_IHttpNegotiate2 = TRUE;
-        hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
-        ok(hres == E_FAIL || hres == E_NOTIMPL, "GetRootSecurityId failed: %08x\n", hres);
 
         SET_EXPECT(QueryInterface_IHttpNegotiate2);
         hres = IServiceProvider_QueryService(serv_prov, &IID_IHttpNegotiate2, &IID_IHttpNegotiate2,
                                              (void**)&http_negotiate2_serv);
         ok(hres == S_OK, "Could not get IHttpNegotiate2 service: %08x\n", hres);
-        CHECK_CALLED(QueryInterface_IHttpNegotiate2);
+        CLEAR_CALLED(QueryInterface_IHttpNegotiate2); /* IE <8 */
         ok(http_negotiate2 == http_negotiate2_serv, "http_negotiate != http_negotiate_serv\n");
 
+        SET_EXPECT(QueryInterface_IHttpNegotiate2);
         SET_EXPECT(GetRootSecurityId);
         hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
         ok(hres == E_NOTIMPL, "GetRootSecurityId failed: %08x\n", hres);
+        todo_wine
+        CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate2); /* IE8 */
         CHECK_CALLED(GetRootSecurityId);
 
         IHttpNegotiate_Release(http_negotiate2_serv);
@@ -1989,10 +1996,13 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     ok(hres == S_OK, "OnProgress failed: %08x\n", hres);
     CHECK_CALLED(OnProgress_FINDINGRESOURCE);
 
+    SET_EXPECT(QueryInterface_IHttpNegotiate);
     SET_EXPECT(OnResponse);
     wstr = (void*)0xdeadbeef;
     hres = IHttpNegotiate_OnResponse(http_negotiate, 200, emptyW, NULL, NULL);
     ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
+    todo_wine
+    CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate); /* IE8 */
     CHECK_CALLED(OnResponse);
 
     IHttpNegotiate_Release(http_negotiate);
@@ -2005,8 +2015,8 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     hres = IServiceProvider_QueryService(serv_prov, &IID_IAuthenticate, &IID_IAuthenticate,
                                          (void**)&authenticate_serv);
     ok(hres == S_OK, "Could not get IAuthenticate service: %08x\n", hres);
-    CHECK_CALLED(QueryInterface_IAuthenticate);
-    CHECK_CALLED(QueryService_IAuthenticate);
+    CLEAR_CALLED(QueryInterface_IAuthenticate); /* IE <8 */
+    CLEAR_CALLED(QueryService_IAuthenticate); /* IE <8 */
     ok(authenticate == authenticate_serv, "authenticate != authenticate_serv\n");
     IAuthenticate_Release(authenticate_serv);
 
@@ -2194,8 +2204,10 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FTP_TEST
            || test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_SENDINGREQUEST);
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
+            SET_EXPECT(QueryInterface_IHttpNegotiate);
             SET_EXPECT(OnResponse);
+        }
         SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
@@ -2280,8 +2292,10 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
         else if(test_protocol == FTP_TEST)
             todo_wine CHECK_CALLED(OnProgress_SENDINGREQUEST);
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
+            CLEAR_CALLED(QueryInterface_IHttpNegotiate);
             CHECK_CALLED(OnResponse);
+        }
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
@@ -2366,8 +2380,10 @@ static void test_BindToObject(int protocol, BOOL emul)
         }
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             SET_EXPECT(Obj_OnProgress_SENDINGREQUEST);
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
+            SET_EXPECT(QueryInterface_IHttpNegotiate);
             SET_EXPECT(OnResponse);
+        }
         SET_EXPECT(Obj_OnProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(Obj_OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
@@ -2450,8 +2466,10 @@ static void test_BindToObject(int protocol, BOOL emul)
             else
                 CHECK_CALLED(Obj_OnProgress_SENDINGREQUEST);
         }
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
+            CLEAR_CALLED(QueryInterface_IHttpNegotiate);
             CHECK_CALLED(OnResponse);
+        }
         CHECK_CALLED(Obj_OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(Obj_OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
@@ -2513,8 +2531,10 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
         }
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == FILE_TEST)
             SET_EXPECT(OnProgress_SENDINGREQUEST);
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
+            SET_EXPECT(QueryInterface_IHttpNegotiate);
             SET_EXPECT(OnResponse);
+        }
         SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
@@ -2554,8 +2574,10 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
             CHECK_CALLED(OnProgress_SENDINGREQUEST);
         else if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CLEAR_CALLED(OnProgress_SENDINGREQUEST); /* not called by IE7 */
-        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
+        if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST) {
+            CLEAR_CALLED(QueryInterface_IHttpNegotiate);
             CHECK_CALLED(OnResponse);
+        }
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
         if(test_protocol == FILE_TEST)
@@ -2751,10 +2773,16 @@ START_TEST(url)
     create_file();
 
     test_create();
+
+    trace("test CreateAsyncBindCtx...\n");
     test_CreateAsyncBindCtx();
+
+    trace("test CreateAsyncBindCtxEx...\n");
     test_CreateAsyncBindCtxEx();
 
+    trace("test RegisterBindStatusCallback...\n");
     if(test_RegisterBindStatusCallback()) {
+        trace("test BindToStorage failures...\n");
         test_BindToStorage_fail();
 
         trace("synchronous http test (COM not initialised)...\n");
