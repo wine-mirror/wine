@@ -2352,7 +2352,7 @@ static void LISTVIEW_GetItemBox(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT 
 }
 
 /* LISTVIEW_MapIdToIndex helper */
-INT CALLBACK MapIdSearchCompare(LPVOID p1, LPVOID p2, LPARAM lParam)
+static INT CALLBACK MapIdSearchCompare(LPVOID p1, LPVOID p2, LPARAM lParam)
 {
     ITEM_ID *id1 = (ITEM_ID*)p1;
     ITEM_ID *id2 = (ITEM_ID*)p2;
