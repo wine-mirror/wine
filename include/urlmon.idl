@@ -311,6 +311,45 @@ interface IBindStatusCallback : IUnknown
 }
 
 /*****************************************************************************
+ * IBindStatusCallbackEx interface
+ */
+[
+    object,
+    uuid(aaa74ef9-8ee7-4659-88d9-f8c504da73cc),
+    pointer_default(unique)
+]
+interface IBindStatusCallbackEx : IBindStatusCallback
+{
+    typedef [unique] IBindStatusCallbackEx *LPBINDSTATUSCALLBACKEX;
+
+    typedef enum {
+        BINDF2_DISABLEBASICOVERHTTP               = 0x00000001,
+        BINDF2_DISABLEAUTOCOOKIEHANDLING          = 0x00000002,
+        BINDF2_READ_DATA_GREATER_THAN_4GB         = 0x00000004,
+        BINDF2_DISABLE_HTTP_REDIRECT_XSECURITYID  = 0x00000008,
+        BINDF2_RESERVED_3                         = 0x20000000,
+        BINDF2_RESERVED_2                         = 0x40000000,
+        BINDF2_RESERVED_1                         = 0x80000000,
+    } BINDF2;
+
+    [local]
+    HRESULT GetBindInfoEx(
+            [out] DWORD *grfBINDF,
+            [in, out, unique] BINDINFO *pbindinfo,
+            [out] DWORD *grfBINDF2,
+            [out] DWORD *pdwReserved);
+
+    [call_as(GetBindInfoEx)]
+    HRESULT RemoteGetBindInfoEx(
+            [out] DWORD *grfBINDF,
+            [in, out, unique] RemBINDINFO *pbindinfo,
+            [in, out, unique] RemSTGMEDIUM *pstgmed,
+            [out] DWORD *grfBINDF2,
+            [out] DWORD *pdwReserved);
+}
+
+
+/*****************************************************************************
  * IAuthenticate interface
  */
 [
