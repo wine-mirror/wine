@@ -577,7 +577,7 @@ void output_res_o_file( DLLSPEC *spec )
         unsigned int header_size = get_resource_header_size( &spec->resources[i] );
 
         put_dword( spec->resources[i].data_size );
-        put_dword( header_size );
+        put_dword( (header_size + 3) & ~3 );
         put_string( &spec->resources[i].type );
         put_string( &spec->resources[i].name );
         if ((unsigned long)file_out_pos & 2) put_word( 0 );
