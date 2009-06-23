@@ -601,7 +601,6 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         SET_EXPECT(QueryInterface_IHttpNegotiate);
         hres = IHttpNegotiate_BeginningTransaction(http_negotiate, urls[test_protocol],
                                                    NULL, 0, &additional_headers);
-        todo_wine
         CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate);
         CHECK_CALLED(BeginningTransaction);
         IHttpNegotiate_Release(http_negotiate);
@@ -618,7 +617,6 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         SET_EXPECT(QueryInterface_IHttpNegotiate2);
         SET_EXPECT(GetRootSecurityId);
         hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, sec_id, &size, 0);
-        todo_wine
         CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate2);
         CHECK_CALLED(GetRootSecurityId);
         IHttpNegotiate2_Release(http_negotiate2);
@@ -773,7 +771,6 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
         SET_EXPECT(QueryInterface_IHttpNegotiate);
         SET_EXPECT(OnResponse);
         hres = IHttpNegotiate_OnResponse(http_negotiate, 200, header, NULL, NULL);
-        todo_wine
         CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate);
         CHECK_CALLED(OnResponse);
         IHttpNegotiate_Release(http_negotiate);
@@ -1951,7 +1948,6 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     SET_EXPECT(QueryInterface_IHttpNegotiate);
     SET_EXPECT(BeginningTransaction);
     hres = IHttpNegotiate_BeginningTransaction(http_negotiate_serv, urls[test_protocol], emptyW, 0, &wstr);
-    todo_wine
     CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate); /* IE8 */
     CHECK_CALLED(BeginningTransaction);
     ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
@@ -1980,7 +1976,6 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
         SET_EXPECT(GetRootSecurityId);
         hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, (void*)0xdeadbeef, (void*)0xdeadbeef, 0);
         ok(hres == E_NOTIMPL, "GetRootSecurityId failed: %08x\n", hres);
-        todo_wine
         CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate2); /* IE8 */
         CHECK_CALLED(GetRootSecurityId);
 
@@ -2001,7 +1996,6 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     wstr = (void*)0xdeadbeef;
     hres = IHttpNegotiate_OnResponse(http_negotiate, 200, emptyW, NULL, NULL);
     ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
-    todo_wine
     CHECK_CALLED_BROKEN(QueryInterface_IHttpNegotiate); /* IE8 */
     CHECK_CALLED(OnResponse);
 

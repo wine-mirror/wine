@@ -37,19 +37,24 @@ typedef struct {
 
     IBindStatusCallback *callback;
     IServiceProvider *serv_prov;
-
-    IHttpNegotiate *http_negotiate;
-    BOOL init_http_negotiate;
-    IHttpNegotiate2 *http_negotiate2;
-    BOOL init_http_negotiate2;
-    IAuthenticate *authenticate;
-    BOOL init_authenticate;
 } BindStatusCallback;
 
 #define STATUSCLB(x)     ((IBindStatusCallback*)  &(x)->lpBindStatusCallbackVtbl)
 #define SERVPROV(x)      ((IServiceProvider*)     &(x)->lpServiceProviderVtbl)
 #define HTTPNEG2(x)      ((IHttpNegotiate2*)      &(x)->lpHttpNegotiate2Vtbl)
 #define AUTHENTICATE(x)  ((IAuthenticate*)        &(x)->lpAuthenticateVtbl)
+
+static void *get_callback_iface(BindStatusCallback *This, REFIID riid)
+{
+    void *ret;
+    HRESULT hres;
+
+    hres = IBindStatusCallback_QueryInterface(This->callback, riid, (void**)&ret);
+    if(FAILED(hres) && This->serv_prov)
+        IServiceProvider_QueryService(This->serv_prov, riid, riid, &ret);
+
+    return ret;
+}
 
 #define STATUSCLB_THIS(iface) DEFINE_THIS(BindStatusCallback, BindStatusCallback, iface)
 
@@ -112,12 +117,6 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
     if(!ref) {
         if(This->serv_prov)
             IServiceProvider_Release(This->serv_prov);
-        if(This->http_negotiate)
-            IHttpNegotiate_Release(This->http_negotiate);
-        if(This->http_negotiate2)
-            IHttpNegotiate2_Release(This->http_negotiate2);
-        if(This->authenticate)
-            IAuthenticate_Release(This->authenticate);
         IBindStatusCallback_Release(This->callback);
         heap_free(This);
     }
@@ -250,46 +249,16 @@ static HRESULT WINAPI BSCServiceProvider_QueryService(IServiceProvider *iface,
 
     if(IsEqualGUID(&IID_IHttpNegotiate, guidService)) {
         TRACE("(%p)->(IID_IHttpNegotiate %s %p)\n", This, debugstr_guid(riid), ppv);
-
-        if(!This->init_http_negotiate) {
-            This->init_http_negotiate = TRUE;
-            hres = IBindStatusCallback_QueryInterface(This->callback, &IID_IHttpNegotiate,
-                    (void**)&This->http_negotiate);
-            if(FAILED(hres) && This->serv_prov)
-                IServiceProvider_QueryService(This->serv_prov, &IID_IHttpNegotiate,
-                        &IID_IHttpNegotiate, (void**)&This->http_negotiate);
-        }
-
         return IBindStatusCallback_QueryInterface(STATUSCLB(This), riid, ppv);
     }
 
     if(IsEqualGUID(&IID_IHttpNegotiate2, guidService)) {
         TRACE("(%p)->(IID_IHttpNegotiate2 %s %p)\n", This, debugstr_guid(riid), ppv);
-
-        if(!This->init_http_negotiate2) {
-            This->init_http_negotiate2 = TRUE;
-            hres = IBindStatusCallback_QueryInterface(This->callback, &IID_IHttpNegotiate2,
-                    (void**)&This->http_negotiate2);
-            if(FAILED(hres) && This->serv_prov)
-                IServiceProvider_QueryService(This->serv_prov, &IID_IHttpNegotiate2,
-                        &IID_IHttpNegotiate2, (void**)&This->http_negotiate2);
-        }
-
         return IBindStatusCallback_QueryInterface(STATUSCLB(This), riid, ppv);
     }
 
     if(IsEqualGUID(&IID_IAuthenticate, guidService)) {
         TRACE("(%p)->(IID_IAuthenticate %s %p)\n", This, debugstr_guid(riid), ppv);
-
-        if(!This->init_authenticate) {
-            This->init_authenticate = TRUE;
-            hres = IBindStatusCallback_QueryInterface(This->callback, &IID_IAuthenticate,
-                    (void**)&This->authenticate);
-            if(FAILED(hres) && This->serv_prov)
-                IServiceProvider_QueryService(This->serv_prov, &IID_IAuthenticate,
-                        &IID_IAuthenticate, (void**)&This->authenticate);
-        }
-
         return IBindStatusCallback_QueryInterface(STATUSCLB(This), riid, ppv);
     }
 
@@ -342,17 +311,22 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate2 *ifa
         LPCWSTR szURL, LPCWSTR szHeaders, DWORD dwReserved, LPWSTR *pszAdditionalHeaders)
 {
     BindStatusCallback *This = HTTPNEG2_THIS(iface);
+    IHttpNegotiate *http_negotiate;
+    HRESULT hres = S_OK;
 
     TRACE("(%p)->(%s %s %d %p)\n", This, debugstr_w(szURL), debugstr_w(szHeaders), dwReserved,
           pszAdditionalHeaders);
 
     *pszAdditionalHeaders = NULL;
 
-    if(!This->http_negotiate)
-        return S_OK;
+    http_negotiate = get_callback_iface(This, &IID_IHttpNegotiate);
+    if(http_negotiate) {
+        hres = IHttpNegotiate_BeginningTransaction(http_negotiate, szURL, szHeaders,
+                dwReserved, pszAdditionalHeaders);
+        IHttpNegotiate_Release(http_negotiate);
+    }
 
-    return IHttpNegotiate_BeginningTransaction(This->http_negotiate, szURL, szHeaders,
-                                               dwReserved, pszAdditionalHeaders);
+    return hres;
 }
 
 static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate2 *iface, DWORD dwResponseCode,
@@ -361,14 +335,18 @@ static HRESULT WINAPI BSCHttpNegotiate_OnResponse(IHttpNegotiate2 *iface, DWORD 
 {
     BindStatusCallback *This = HTTPNEG2_THIS(iface);
     LPWSTR additional_headers = NULL;
+    IHttpNegotiate *http_negotiate;
     HRESULT hres = S_OK;
 
     TRACE("(%p)->(%d %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
           debugstr_w(szRequestHeaders), pszAdditionalRequestHeaders);
 
-    if(This->http_negotiate)
-        hres = IHttpNegotiate_OnResponse(This->http_negotiate, dwResponseCode, szResponseHeaders,
-                                         szRequestHeaders, &additional_headers);
+    http_negotiate = get_callback_iface(This, &IID_IHttpNegotiate);
+    if(http_negotiate) {
+        hres = IHttpNegotiate_OnResponse(http_negotiate, dwResponseCode, szResponseHeaders,
+                szRequestHeaders, &additional_headers);
+        IHttpNegotiate_Release(http_negotiate);
+    }
 
     if(pszAdditionalRequestHeaders)
         *pszAdditionalRequestHeaders = additional_headers;
@@ -382,14 +360,19 @@ static HRESULT WINAPI BSCHttpNegotiate_GetRootSecurityId(IHttpNegotiate2 *iface,
         BYTE *pbSecurityId, DWORD *pcbSecurityId, DWORD_PTR dwReserved)
 {
     BindStatusCallback *This = HTTPNEG2_THIS(iface);
+    IHttpNegotiate2 *http_negotiate2;
+    HRESULT hres = E_FAIL;
 
     TRACE("(%p)->(%p %p %ld)\n", This, pbSecurityId, pcbSecurityId, dwReserved);
 
-    if(!This->http_negotiate2)
-        return E_NOTIMPL;
+    http_negotiate2 = get_callback_iface(This, &IID_IHttpNegotiate2);
+    if(http_negotiate2) {
+        hres = IHttpNegotiate2_GetRootSecurityId(http_negotiate2, pbSecurityId,
+                pcbSecurityId, dwReserved);
+        IHttpNegotiate2_Release(http_negotiate2);
+    }
 
-    return IHttpNegotiate2_GetRootSecurityId(This->http_negotiate2, pbSecurityId,
-                                             pcbSecurityId, dwReserved);
+    return hres;
 }
 
 #undef HTTPNEG2_THIS
