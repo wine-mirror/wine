@@ -20,6 +20,7 @@
 @ stdcall CertCreateCTLContext(long ptr long)
 @ stdcall CertCreateCertificateChainEngine(ptr ptr)
 @ stdcall CertCreateCertificateContext(long ptr long)
+@ stdcall CertCreateContext(long long ptr long long ptr)
 @ stdcall CertCreateSelfSignCertificate(long ptr long ptr ptr ptr ptr ptr)
 @ stdcall CertDeleteCRLFromStore(ptr)
 @ stdcall CertDeleteCTLFromStore(ptr)
