@@ -759,6 +759,7 @@ static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, const NMHEADE
         /* convert item text */
         if (lpnmh->pitem->mask & HDI_TEXT)
         {
+            hditema.pszText = NULL;
             Str_SetPtrWtoA(&hditema.pszText, lpnmh->pitem->pszText);
             text = hditema.pszText;
         }
@@ -768,6 +769,7 @@ static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, const NMHEADE
         {
             hditema.pvFilter = &textfilter;
             textfilter = *(HD_TEXTFILTERA*)(lpnmh->pitem->pvFilter);
+            textfilter.pszText = NULL;
             Str_SetPtrWtoA(&textfilter.pszText, ((HD_TEXTFILTERW*)lpnmh->pitem->pvFilter)->pszText);
             filter = textfilter.pszText;
         }
