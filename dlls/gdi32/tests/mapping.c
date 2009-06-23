@@ -342,9 +342,101 @@ static void test_isotropic_mapping(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_setvirtualresolution(void)
+{
+    HDC hdc = CreateICA("DISPLAY", NULL, NULL, NULL);
+    DWORD r;
+    DWORD (WINAPI *pSetVirtualResolution)(HDC, DWORD, DWORD, DWORD, DWORD);
+    INT horz_res = GetDeviceCaps(hdc, HORZRES);
+    INT horz_size = GetDeviceCaps(hdc, HORZSIZE);
+    INT log_pixels_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    SIZE orig_lometric_vp, orig_lometric_wnd;
+
+    pSetVirtualResolution = (void *)GetProcAddress(GetModuleHandleA("gdi32.dll"), "SetVirtualResolution");
+
+    if(!pSetVirtualResolution)
+    {
+        win_skip("Don't have SetVirtualResolution\n");
+        return;
+    }
+
+    /* Get the true resolution limits */
+    SetMapMode(hdc, MM_LOMETRIC);
+    GetViewportExtEx(hdc, &orig_lometric_vp);
+    GetWindowExtEx(hdc, &orig_lometric_wnd);
+    SetMapMode(hdc, MM_TEXT);
+
+    r = pSetVirtualResolution(hdc, 4000, 1000, 400, 200); /* 10 pix/mm x 5 pix/mm */
+    ok(r == TRUE, "got %d\n", r);
+    expect_LPtoDP(hdc, 1000, 1000);
+    expect_viewport_ext(hdc, 1, 1);
+    expect_window_ext(hdc, 1, 1);
+
+    SetMapMode(hdc, MM_LOMETRIC);
+    expect_LPtoDP(hdc, 1000, -500);
+    expect_viewport_ext(hdc, 4000, -1000);
+    expect_window_ext(hdc, 4000, 2000);
+
+    /* Doesn't change the device caps */
+    ok(horz_res == GetDeviceCaps(hdc, HORZRES), "horz_res changed\n");
+    ok(horz_size == GetDeviceCaps(hdc, HORZSIZE), "horz_size changed\n");
+    ok(log_pixels_x == GetDeviceCaps(hdc, LOGPIXELSX), "log_pixels_x changed\n");
+
+    r = pSetVirtualResolution(hdc, 8000, 1000, 400, 200); /* 20 pix/mm x 5 pix/mm */
+    ok(r == TRUE, "got %d\n", r);
+    expect_LPtoDP(hdc, 1000, -500); /* No change, need to re-set the mapping mode */
+    SetMapMode(hdc, MM_TEXT);
+    SetMapMode(hdc, MM_LOMETRIC);
+    expect_LPtoDP(hdc, 2000, -500);
+    expect_viewport_ext(hdc, 8000, -1000);
+    expect_window_ext(hdc, 4000, 2000);
+
+    r = pSetVirtualResolution(hdc, 8000, 1000, 200, 200); /* 40 pix/mm x 5 pix/mm */
+    ok(r == TRUE, "got %d\n", r);
+    SetMapMode(hdc, MM_TEXT);
+    SetMapMode(hdc, MM_LOMETRIC);
+    expect_LPtoDP(hdc, 4000, -500);
+    expect_viewport_ext(hdc, 8000, -1000);
+    expect_window_ext(hdc, 2000, 2000);
+
+    r = pSetVirtualResolution(hdc, 8000, 1000, 200, 200); /* 40 pix/mm x 5 pix/mm */
+    ok(r == TRUE, "got %d\n", r);
+    SetMapMode(hdc, MM_TEXT);
+    SetMapMode(hdc, MM_LOMETRIC);
+    expect_LPtoDP(hdc, 4000, -500);
+    expect_viewport_ext(hdc, 8000, -1000);
+    expect_window_ext(hdc, 2000, 2000);
+
+    r = pSetVirtualResolution(hdc, 8000, 2000, 200, 200); /* 40 pix/mm x 10 pix/mm */
+    ok(r == TRUE, "got %d\n", r);
+    SetMapMode(hdc, MM_TEXT);
+    SetMapMode(hdc, MM_LOMETRIC);
+    expect_LPtoDP(hdc, 4000, -1000);
+    expect_viewport_ext(hdc, 8000, -2000);
+    expect_window_ext(hdc, 2000, 2000);
+
+    r = pSetVirtualResolution(hdc, 0, 0, 10, 0); /* Error */
+    ok(r == FALSE, "got %d\n", r);
+    SetMapMode(hdc, MM_TEXT);
+    SetMapMode(hdc, MM_LOMETRIC);
+    expect_LPtoDP(hdc, 4000, -1000);
+    expect_viewport_ext(hdc, 8000, -2000);
+    expect_window_ext(hdc, 2000, 2000);
+
+    r = pSetVirtualResolution(hdc, 0, 0, 0, 0); /* Reset to true resolution */
+    ok(r == TRUE, "got %d\n", r);
+    SetMapMode(hdc, MM_TEXT);
+    SetMapMode(hdc, MM_LOMETRIC);
+    expect_viewport_ext(hdc, orig_lometric_vp.cx, orig_lometric_vp.cy);
+    expect_window_ext(hdc, orig_lometric_wnd.cx, orig_lometric_wnd.cy);
+
+    DeleteDC(hdc);
+}
+
 START_TEST(mapping)
 {
     test_modify_world_transform();
     test_world_transform();
     test_isotropic_mapping();
+    test_setvirtualresolution();
 }
