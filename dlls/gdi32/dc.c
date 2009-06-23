@@ -252,6 +252,7 @@ void DC_InitDC( DC* dc )
     SelectObject( dc->hSelf, dc->hBrush );
     SelectObject( dc->hSelf, dc->hFont );
     CLIPPING_UpdateGCRegion( dc );
+    SetVirtualResolution( dc->hSelf, 0, 0, 0, 0 );
 }
 
 
@@ -386,6 +387,8 @@ INT save_dc_state( HDC hdc )
     newdc->vportOrgY        = dc->vportOrgY;
     newdc->vportExtX        = dc->vportExtX;
     newdc->vportExtY        = dc->vportExtY;
+    newdc->virtual_res      = dc->virtual_res;
+    newdc->virtual_size     = dc->virtual_size;
     newdc->BoundsRect       = dc->BoundsRect;
     newdc->gdiFont          = dc->gdiFont;
 
@@ -524,6 +527,8 @@ BOOL restore_dc_state( HDC hdc, INT level )
     dc->vportOrgY        = dcs->vportOrgY;
     dc->vportExtX        = dcs->vportExtX;
     dc->vportExtY        = dcs->vportExtY;
+    dc->virtual_res      = dcs->virtual_res;
+    dc->virtual_size     = dcs->virtual_size;
 
     if (dcs->hClipRgn)
     {
@@ -2101,17 +2106,6 @@ BOOL WINAPI CancelDC(HDC hdc)
 {
     FIXME("stub\n");
     return TRUE;
-}
-
-/***********************************************************************
- *           SetVirtualResolution   (GDI32.@)
- *
- * Undocumented on msdn.  Called when PowerPoint XP saves a file.
- */
-DWORD WINAPI SetVirtualResolution(HDC hdc, DWORD dw2, DWORD dw3, DWORD dw4, DWORD dw5)
-{
-    FIXME("(%p %08x %08x %08x %08x): stub!\n", hdc, dw2, dw3, dw4, dw5);
-    return FALSE;
 }
 
 /*******************************************************************

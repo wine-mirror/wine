@@ -358,6 +358,8 @@ HDC WINAPI CreateEnhMetaFileW(
     physDev->numcolors = GetDeviceCaps(hRefDC, NUMCOLORS);
     physDev->restoring = 0;
 
+    SetVirtualResolution(dc->hSelf, 0, 0, 0, 0);
+
     physDev->emh->iType = EMR_HEADER;
     physDev->emh->nSize = size;
 

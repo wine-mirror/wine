@@ -197,6 +197,8 @@ static DC *MFDRV_AllocMetaFile(void)
     physDev->mh->mtMaxRecord    = 0;
     physDev->mh->mtNoParameters = 0;
 
+    SetVirtualResolution(dc->hSelf, 0, 0, 0, 0);
+
     return dc;
 }
 

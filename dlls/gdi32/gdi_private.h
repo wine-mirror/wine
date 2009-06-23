@@ -263,6 +263,8 @@ typedef struct tagDC
     INT          vportOrgY;
     INT          vportExtX;        /* Viewport extent */
     INT          vportExtY;
+    SIZE         virtual_res;      /* Initially HORZRES,VERTRES. Changed by SetVirtualResolution */
+    SIZE         virtual_size;     /* Initially HORZSIZE,VERTSIZE. Changed by SetVirtualResolution */
     FLOAT        miterLimit;
 
     int           flags;
@@ -510,5 +512,7 @@ extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y ) DECLSPEC_HIDDEN
 #define DIB_PAL_MONO 2
 
 BOOL WINAPI FontIsLinked(HDC);
+
+BOOL WINAPI SetVirtualResolution(HDC hdc, DWORD horz_res, DWORD vert_res, DWORD horz_size, DWORD vert_size);
 
 #endif /* __WINE_GDI_PRIVATE_H */

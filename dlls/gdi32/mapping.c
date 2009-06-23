@@ -37,10 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dc);
  */
 static void MAPPING_FixIsotropic( DC * dc )
 {
-    double xdim = fabs((double)dc->vportExtX * GetDeviceCaps( dc->hSelf, HORZSIZE ) /
-                  (GetDeviceCaps( dc->hSelf, HORZRES ) * dc->wndExtX));
-    double ydim = fabs((double)dc->vportExtY * GetDeviceCaps( dc->hSelf, VERTSIZE ) /
-                  (GetDeviceCaps( dc->hSelf, VERTRES ) * dc->wndExtY));
+    double xdim = fabs((double)dc->vportExtX * dc->virtual_size.cx /
+                  (dc->virtual_res.cx * dc->wndExtX));
+    double ydim = fabs((double)dc->vportExtY * dc->virtual_size.cy /
+                  (dc->virtual_res.cy * dc->wndExtY));
 
     if (xdim > ydim)
     {
@@ -137,10 +137,10 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
     if (mode == dc->MapMode && (mode == MM_ISOTROPIC || mode == MM_ANISOTROPIC))
         goto done;
 
-    horzSize = GetDeviceCaps( hdc, HORZSIZE );
-    vertSize = GetDeviceCaps( hdc, VERTSIZE );
-    horzRes  = GetDeviceCaps( hdc, HORZRES );
-    vertRes  = GetDeviceCaps( hdc, VERTRES );
+    horzSize = dc->virtual_size.cx;
+    vertSize = dc->virtual_size.cy;
+    horzRes  = dc->virtual_res.cx;
+    vertRes  = dc->virtual_res.cy;
     switch(mode)
     {
     case MM_TEXT:
@@ -480,4 +480,58 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT xNum, INT xDenom,
  done:
     release_dc_ptr( dc );
     return ret;
+}
+
+/***********************************************************************
+ *           SetVirtualResolution   (GDI32.@)
+ *
+ * Undocumented on msdn.
+ *
+ * Changes the values of screen size in pixels and millimeters used by
+ * the mapping mode functions.
+ *
+ * PARAMS
+ *     hdc       [I] Device context
+ *     horz_res  [I] Width in pixels  (equivalent to HORZRES device cap).
+ *     vert_res  [I] Height in pixels (equivalent to VERTRES device cap).
+ *     horz_size [I] Width in mm      (equivalent to HORZSIZE device cap).
+ *     vert_size [I] Height in mm     (equivalent to VERTSIZE device cap).
+ *
+ * RETURNS
+ *    TRUE if successful.
+ *    FALSE if any (but not all) of the last four params are zero.
+ *
+ * NOTES
+ *    This doesn't change the values returned by GetDeviceCaps, just the
+ *    scaling of the mapping modes.
+ *
+ *    Calling with the last four params equal to zero sets the values
+ *    back to their defaults obtained by calls to GetDeviceCaps.
+ */
+BOOL WINAPI SetVirtualResolution(HDC hdc, DWORD horz_res, DWORD vert_res,
+                                 DWORD horz_size, DWORD vert_size)
+{
+    DC * dc;
+    TRACE("(%p %d %d %d %d)\n", hdc, horz_res, vert_res, horz_size, vert_size);
+
+    if(horz_res == 0 && vert_res == 0 && horz_size == 0 && vert_size == 0)
+    {
+        horz_res  = GetDeviceCaps(hdc, HORZRES);
+        vert_res  = GetDeviceCaps(hdc, VERTRES);
+        horz_size = GetDeviceCaps(hdc, HORZSIZE);
+        vert_size = GetDeviceCaps(hdc, VERTSIZE);
+    }
+    else if(horz_res == 0 || vert_res == 0 || horz_size == 0 || vert_size == 0)
+        return FALSE;
+
+    dc = get_dc_ptr( hdc );
+    if (!dc) return FALSE;
+
+    dc->virtual_res.cx  = horz_res;
+    dc->virtual_res.cy  = vert_res;
+    dc->virtual_size.cx = horz_size;
+    dc->virtual_size.cy = vert_size;
+
+    release_dc_ptr( dc );
+    return TRUE;
 }
