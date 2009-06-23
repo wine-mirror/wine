@@ -402,7 +402,7 @@ NTSTATUS WINAPI NtQueryEvent (
 	OUT PULONG  ReturnLength)
 {
 	FIXME("(%p)\n", EventHandle);
-	return STATUS_SUCCESS;
+	return STATUS_NOT_IMPLEMENTED;
 }
 
 /*
