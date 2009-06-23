@@ -1146,7 +1146,7 @@ static void test_http_cache(void)
 
     file = CreateFile(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                       FILE_ATTRIBUTE_NORMAL, NULL);
-    todo_wine ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
+    ok(file != INVALID_HANDLE_VALUE, "Could not create file: %u\n", GetLastError());
     CloseHandle(file);
 
     request = HttpOpenRequestA(connect, NULL, "/", NULL, NULL, types, INTERNET_FLAG_NO_CACHE_WRITE, 0);

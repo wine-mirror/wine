@@ -1492,10 +1492,7 @@ static void HTTPREQ_Destroy(WININETHANDLEHEADER *hdr)
     if(lpwhr->hCacheFile)
         CloseHandle(lpwhr->hCacheFile);
 
-    if(lpwhr->lpszCacheFile) {
-        DeleteFileW(lpwhr->lpszCacheFile); /* FIXME */
-        HeapFree(GetProcessHeap(), 0, lpwhr->lpszCacheFile);
-    }
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszCacheFile);
 
     DeleteCriticalSection( &lpwhr->read_section );
     WININET_Release(&lpwhr->lpHttpSession->hdr);
