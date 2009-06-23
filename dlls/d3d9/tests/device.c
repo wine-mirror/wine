@@ -1828,6 +1828,7 @@ static void test_null_stream(void)
     IDirect3DDevice9_SetVertexDeclaration(device, NULL);
 
 cleanup:
+    if (buffer) IDirect3DVertexBuffer9_Release(buffer);
     if(decl) IDirect3DVertexDeclaration9_Release(decl);
     if(shader) IDirect3DVertexShader9_Release(shader);
     if(device) IDirect3DDevice9_Release(device);
