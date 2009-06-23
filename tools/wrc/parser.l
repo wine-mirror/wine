@@ -586,6 +586,7 @@ L\"			{
 					isprint(*yytext & 0xff) ? *yytext : '.', *yytext, YY_START);
 			}
 
+<<EOF>>			current_codepage = -1; yyterminate();
 %%
 
 /* These dup functions copy the enclosed '\0' from

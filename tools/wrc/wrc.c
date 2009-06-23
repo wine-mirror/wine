@@ -284,7 +284,6 @@ static int load_file( const char *input_name, const char *output_name )
 
     ret = parser_parse();
     fclose(parser_in);
-    parser_lex_destroy();
     if (temp_name)
     {
         unlink( temp_name );
