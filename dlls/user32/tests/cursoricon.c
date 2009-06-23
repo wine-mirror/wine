@@ -1218,11 +1218,6 @@ static void test_DrawIconEx(void)
     check_alpha_draw(hdcDst, TRUE, FALSE, 32, __LINE__);
     todo_wine check_alpha_draw(hdcDst, TRUE, TRUE, 32, __LINE__);
 
-    SelectObject(hdcDst, bmpOld);
-    DeleteObject(bmpDst);
-    bmpOld = NULL;
-    bmpDst = NULL;
-
 cleanup:
     if(bmpOld)
         SelectObject(hdcDst, bmpOld);
