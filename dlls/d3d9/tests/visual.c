@@ -3265,13 +3265,13 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
     color = getPixelColor(device, 160, 360);
-    ok(color == 0x00FFFF00 || color == 0x00FEFE00, "quad 1 has color %08x, expected 0x00FFFF00\n", color);
+    ok(color_match(color, 0x00FFFF00, 1), "quad 1 has color %08x, expected 0x00FFFF00\n", color);
     color = getPixelColor(device, 160, 120);
     ok(color == 0x00000000, "quad 2 has color %08x, expected 0x0000000\n", color);
     color = getPixelColor(device, 480, 120);
-    ok(color == 0x0000FF00 || color == 0x0000FE00, "quad 3 has color %08x, expected 0x0000FF00\n", color);
+    ok(color_match(color, 0x0000FF00, 1), "quad 3 has color %08x, expected 0x0000FF00\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color == 0x00FF0000 || 0x00FE0000, "quad 4 has color %08x, expected 0x00FF0000\n", color);
+    ok(color_match(color, 0x00FF0000, 1), "quad 4 has color %08x, expected 0x00FF0000\n", color);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
@@ -3352,14 +3352,14 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
     color = getPixelColor(device, 160, 360);
-    ok(color == 0x00FF0000 || color == 0x00FE0000, "quad 1 has color %08x, expected 0x00FF0000\n", color);
+    ok(color_match(color, 0x00FF0000, 1), "quad 1 has color %08x, expected 0x00FF0000\n", color);
     color = getPixelColor(device, 160, 120);
     ok(color == 0x00000000, "quad 2 has color %08x, expected 0x0000000\n", color);
     color = getPixelColor(device, 480, 120);
-    ok(color == 0x00ff8000 || color == 0x00fe7f00 || color == 0x00000000,
+    ok(color_match(color, 0x00ff8000, 1) || color == 0x00000000,
        "quad 3 has color %08x, expected 0x00ff8000\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color == 0x0033cc00 || color == 0x0032cb00 || color == 0x00FF0000 || color == 0x00FE0000,
+    ok(color_match(color, 0x0033cc00, 1) || color_match(color, 0x00FF0000, 1),
        "quad 4 has color %08x, expected 0x0033cc00\n", color);
 
     IDirect3DTexture9_Release(texture);
