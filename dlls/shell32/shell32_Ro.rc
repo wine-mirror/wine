@@ -26,7 +26,7 @@ BEGIN
         MENUITEM "Pictograme &mari",    FCIDM_SHVIEW_BIGICON
         MENUITEM "Pictograme m&ici",    FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Listă",              FCIDM_SHVIEW_LISTVIEW
-        MENUITEM "&Detailii",           FCIDM_SHVIEW_REPORTVIEW
+        MENUITEM "&Detalii",            FCIDM_SHVIEW_REPORTVIEW
 END
 
 /*
@@ -41,7 +41,7 @@ BEGIN
             MENUITEM "Pictograme &mari",        FCIDM_SHVIEW_BIGICON
             MENUITEM "Pictograme m&ici",        FCIDM_SHVIEW_SMALLICON
             MENUITEM "&Listă",                  FCIDM_SHVIEW_LISTVIEW
-            MENUITEM "&Detailii",               FCIDM_SHVIEW_REPORTVIEW
+            MENUITEM "&Detalii",                FCIDM_SHVIEW_REPORTVIEW
           END
           MENUITEM SEPARATOR
           POPUP "Aranjează &pictogramele"
@@ -53,7 +53,7 @@ BEGIN
             MENUITEM SEPARATOR
             MENUITEM "&Aranjează automat",      FCIDM_SHVIEW_AUTOARRANGE
           END
-          MENUITEM "Alinează pictogramele",     FCIDM_SHVIEW_SNAPTOGRID
+          MENUITEM "Aliniază pictogramele",     FCIDM_SHVIEW_SNAPTOGRID
           MENUITEM SEPARATOR
           MENUITEM "Actualizează",              FCIDM_SHVIEW_REFRESH
           MENUITEM SEPARATOR
@@ -106,7 +106,7 @@ BEGIN
         MENUITEM "Pictograme &mari",    FCIDM_SHVIEW_BIGICON
         MENUITEM "Pictograme m&ici",    FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Listă",              FCIDM_SHVIEW_LISTVIEW
-        MENUITEM "&Detailii",           FCIDM_SHVIEW_REPORTVIEW
+        MENUITEM "&Detalii",            FCIDM_SHVIEW_REPORTVIEW
     END
 
     POPUP "&Help"
@@ -187,7 +187,7 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 39, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Renunță", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "&Navigează...", 12288, 170, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Navighează...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
 STRINGTABLE
@@ -197,7 +197,7 @@ STRINGTABLE
         IDS_SHV_COLUMN2         "Mărime"
         IDS_SHV_COLUMN3         "Tip"
         IDS_SHV_COLUMN4         "Modificat"
-        IDS_SHV_COLUMN5         "Atributuri"
+        IDS_SHV_COLUMN5         "Atribute"
         IDS_SHV_COLUMN6         "Mărime"
         IDS_SHV_COLUMN7         "Spațiu disponibil"
         IDS_SHV_COLUMN8         "Nume"
@@ -211,15 +211,32 @@ STRINGTABLE
         IDS_DESKTOP             "Birou"
         IDS_MYCOMPUTER          "Computerul meu"
         IDS_RECYCLEBIN_FOLDER_NAME      "Gunoi"
-	IDS_CONTROLPANEL	"Control Panel"
+	IDS_CONTROLPANEL	"Panoul de control"
 
         /* context menus */
         IDS_VIEW_LARGE          "Pictograme &mari"
         IDS_VIEW_SMALL          "Pictograme m&ici"
         IDS_VIEW_LIST           "&Listă"
-        IDS_VIEW_DETAILS        "&Detailii"
+        IDS_VIEW_DETAILS        "&Detalii"
         IDS_SELECT              "Selectează"
         IDS_OPEN                "Deschide"
+
+	IDS_CREATEFOLDER_DENIED "Nu se poate crea un nou dosar: Permisiune refuzată."
+	IDS_CREATEFOLDER_CAPTION "Eroare la crearea unui nou dosar"
+	IDS_DELETEITEM_CAPTION "Confirmați ștergerea fișierului"
+	IDS_DELETEFOLDER_CAPTION "Confirmați ștergerea dosarului"
+	IDS_DELETEITEM_TEXT "Sunteți sigur că vreți să ștergeți '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Sunteți sigur că vreți să ștergeți acest %1 elemente?"
+	IDS_DELETESELECTED_TEXT "Sunteți sigur că vreți să ștergeți elementele selectate?"
+	IDS_TRASHITEM_TEXT "Sunteți sigur că vreți să trimiteți '%1' la gunoi?"
+	IDS_TRASHFOLDER_TEXT "Sunteți sigur că vreți să trimiteți '%1' și tot conținutul lui la gunoi?"
+	IDS_TRASHMULTIPLE_TEXT "Sunteți sigur că vreți să trimiteți aceste %1 elemente la gunoi?"
+	IDS_CANTTRASH_TEXT "Elementul '%1' nu poate fi trimis la gunoi. Vreți să îl ștergeți?"
+	IDS_OVERWRITEFILE_TEXT "Acest dosar conține deja un fișier numit '%1'.\n\nVreți să îl înlocuiți?"
+	IDS_OVERWRITEFILE_CAPTION "Confirmați suprascrierea fișierului"
+	IDS_OVERWRITEFOLDER_TEXT "Acest dosar conține deja un dosar numit '%1'.\n\n"\
+	    "Dacă fișierele din dosarul destinație au același nume cu fișierele din dosarul\n"\
+	    "selectat vor fi înlocuite. Mai vreți să mutați sau să copiați dosarul?"
 
         /* message box strings */
         IDS_RESTART_TITLE       "Repornire"
@@ -227,13 +244,46 @@ STRINGTABLE
         IDS_SHUTDOWN_TITLE      "Oprire"
         IDS_SHUTDOWN_PROMPT     "Vreți să opriți sesiunea de Wine?"
 
-        /* shell folder path default values */
-        IDS_PROGRAMS            "Meniu Start\\Programe"
-        IDS_PERSONAL            "Documentele mele"
-        IDS_FAVORITES           "Favorite"
+        /* Run File dialog */
+        IDS_RUNDLG_ERROR           "Nu se poate afișa caseta de rulare fișier (eroare internă)"
+        IDS_RUNDLG_BROWSE_ERROR    "Nu se poate afișa caseta de navigare (eroare internă)"
+        IDS_RUNDLG_BROWSE_CAPTION  "Navighează"
+        IDS_RUNDLG_BROWSE_FILTER   "Fișiere executabile\0*.exe\0Toate fișierele\0*.*\0\0"
 
-        IDS_CPANEL_NAME         "Name"
-        IDS_CPANEL_DESCRIPTION  "Description"
+        /* shell folder path default values */
+	IDS_PROGRAMS                "Meniu Start\\Programe"
+	IDS_PERSONAL                "Documentele mele"
+	IDS_FAVORITES               "Favorite"
+	IDS_STARTUP                 "Meniu Start\\Programe\\AutoStart"
+	IDS_RECENT                  "Recente"
+	IDS_SENDTO                  "SendTo"
+	IDS_STARTMENU               "Meniu Start"
+	IDS_MYMUSIC                 "Muzica mea"
+	IDS_MYVIDEO                 "Filmele mele"
+	IDS_DESKTOPDIRECTORY        "Desktop"
+	IDS_NETHOOD                 "NetHood"
+	IDS_TEMPLATES               "Templates"
+	IDS_APPDATA                 "Application Data"
+	IDS_PRINTHOOD               "PrintHood"
+	IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
+	IDS_INTERNET_CACHE          "Local Settings\\Temporary Internet Files"
+	IDS_COOKIES                 "Cookies"
+	IDS_HISTORY                 "Local Settings\\History"
+	IDS_PROGRAM_FILES           "Program Files"
+	IDS_MYPICTURES              "My Pictures"
+	IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
+	IDS_COMMON_DOCUMENTS        "Documente"
+	IDS_ADMINTOOLS              "Meniu Start\\Programe\\Scule administrative"
+	IDS_COMMON_MUSIC            "Documente\\Muzica mea"
+	IDS_COMMON_PICTURES         "Documente\\Pozele mele"
+	IDS_COMMON_VIDEO            "Documente\\Filmele mele"
+	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
+
+	IDS_NEWFOLDER		"Dosar nou"
+
+	IDS_CPANEL_TITLE        "Panoul de control al Wine"
+	IDS_CPANEL_NAME         "Nume"
+	IDS_CPANEL_DESCRIPTION  "Descriere"
 }
 
 STRINGTABLE
