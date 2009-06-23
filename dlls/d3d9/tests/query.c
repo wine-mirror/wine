@@ -130,8 +130,12 @@ static void test_query_support(IDirect3D9 *pD3d, HWND hwnd)
         }
     }
 
-    cleanup:
-    if(pDevice) IDirect3DDevice9_Release(pDevice);
+cleanup:
+    if (pDevice)
+    {
+        UINT refcount = IDirect3DDevice9_Release(pDevice);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
 }
 
 static void test_occlusion_query_states(IDirect3D9 *pD3d, HWND hwnd)
@@ -226,10 +230,14 @@ static void test_occlusion_query_states(IDirect3D9 *pD3d, HWND hwnd)
     hr = IDirect3DQuery9_Issue(pQuery, D3DISSUE_END);
     ok(hr == D3D_OK, "IDirect3DQuery9_Issue(D3DISSUE_END) on a ended query returned %08x\n", hr);
 
-    cleanup:
+cleanup:
     HeapFree(GetProcessHeap(), 0, data);
     if (pQuery) IDirect3DQuery9_Release(pQuery);
-    if(pDevice) IDirect3DDevice9_Release(pDevice);
+    if (pDevice)
+    {
+        UINT refcount = IDirect3DDevice9_Release(pDevice);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
 }
 
 START_TEST(query)
