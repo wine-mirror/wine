@@ -3419,7 +3419,7 @@ static BOOL INT21_NetworkFunc (CONTEXT86 *context)
 static int INT21_GetDiskSerialNumber( CONTEXT86 *context )
 {
     BYTE *dataptr = CTX_SEG_OFF_TO_LIN(context, context->SegDs, context->Edx);
-    WCHAR path[] = {'A',':',0}, label[11];
+    WCHAR path[] = {'A',':','\\',0}, label[11];
     DWORD serial;
 
     path[0] += INT21_MapDrive(BL_reg(context));
@@ -3877,7 +3877,7 @@ static unsigned INT21_FindHelper(LPCWSTR fullPath, unsigned drive, unsigned coun
 
     if ((search_attr & ~(FA_UNUSED | FA_ARCHIVE | FA_RDONLY)) == FA_LABEL)
     {
-        WCHAR path[] = {' ',':',0};
+        WCHAR path[] = {' ',':','\\',0};
 
         if (count) return 0;
         path[0] = drive + 'A';
