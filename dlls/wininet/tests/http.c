@@ -1482,8 +1482,17 @@ done:
     ok(InternetCloseHandle(hSession), "Close session handle failed\n");
 }
 
+static const char garbagemsg[] =
+"Garbage: Header\r\n";
+
 static const char contmsg[] =
 "HTTP/1.1 100 Continue\r\n";
+
+static const char expandcontmsg[] =
+"HTTP/1.1 100 Continue\r\n"
+"Server: winecontinue\r\n"
+"Tag: something witty\r\n"
+"\r\n";
 
 static const char okmsg[] =
 "HTTP/1.1 200 OK\r\n"
@@ -1709,6 +1718,15 @@ static DWORD CALLBACK server_thread(LPVOID param)
             send(c, okmsg, sizeof okmsg-1, 0);
             send(c, page1, sizeof page1-1, 0);
             last_request = 1;
+        }
+        if (strstr(buffer, "GET /testF"))
+        {
+            send(c, expandcontmsg, sizeof expandcontmsg-1, 0);
+            send(c, garbagemsg, sizeof garbagemsg-1, 0);
+            send(c, contmsg, sizeof contmsg-1, 0);
+            send(c, garbagemsg, sizeof garbagemsg-1, 0);
+            send(c, okmsg, sizeof okmsg-1, 0);
+            send(c, page1, sizeof page1-1, 0);
         }
 
         shutdown(c, 2);
@@ -2316,6 +2334,7 @@ static void test_http_connection(void)
     test_basic_request(si.port, "RPC_IN_DATA", "/test5");
     test_basic_request(si.port, "RPC_OUT_DATA", "/test5");
     test_basic_request(si.port, "GET", "/test6");
+    test_basic_request(si.port, "GET", "/testF");
     test_connection_header(si.port);
     test_http1_1(si.port);
     test_cookie_header(si.port);
