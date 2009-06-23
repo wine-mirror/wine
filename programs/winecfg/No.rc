@@ -41,8 +41,8 @@ BEGIN
                     IDC_STATIC,119,44,124,72
     GROUPBOX        " Brukerinformasjon ", IDC_STATIC, 15, 110, 230, 55
     LTEXT           "Eier:", IDC_STATIC, 22, 126, 40, 20
-    LTEXT           "Organisasjon:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Organisasjon:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 

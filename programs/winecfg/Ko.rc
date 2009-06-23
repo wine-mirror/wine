@@ -44,8 +44,8 @@ BEGIN
                     IDC_STATIC,119,44,131,66
     GROUPBOX        " 윈도우즈 등록 정보 ", IDC_STATIC, 15, 110, 230, 55
     LTEXT           "소유자:", IDC_STATIC, 22, 126, 40, 20
-    LTEXT           "단체:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "단체:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 

@@ -44,8 +44,8 @@ BEGIN
                     IDC_STATIC,119,44,124,72
     GROUPBOX        " Windows registracijos informacija ", IDC_STATIC, 15, 120, 230, 55
     LTEXT           "Savininkas:", IDC_STATIC, 22, 136, 40, 20
-    LTEXT           "Organizacija:", IDC_STATIC, 22, 150, 50, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 136, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
+    LTEXT           "Organizacija:", IDC_STATIC, 22, 150, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 150, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
