@@ -183,7 +183,7 @@ struct oletls
     LONG             pending_call_count_client; /* number of client calls pending */
     LONG             pending_call_count_server; /* number of server calls pending */
     DWORD            unknown;
-    ULONG_PTR        context_token; /* (+38h on x86) */
+    IObjContext     *context_token; /* (+38h on x86) */
     IUnknown        *call_state;    /* current call context (+3Ch on x86) */
     DWORD            unknown2[46];
     IUnknown        *cancel_object; /* cancel object set by CoSetCancelObject (+F8h on x86) */

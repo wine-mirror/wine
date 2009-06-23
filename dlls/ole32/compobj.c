@@ -52,6 +52,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "winuser.h"
+#define USE_COM_CONTEXT_DEF
 #include "objbase.h"
 #include "ole2.h"
 #include "ole2ver.h"
@@ -228,6 +229,7 @@ static void COM_TlsDestroy(void)
         if (info->errorinfo) IErrorInfo_Release(info->errorinfo);
         if (info->state) IUnknown_Release(info->state);
         if (info->spy) IUnknown_Release(info->spy);
+        if (info->context_token) IObjContext_Release(info->context_token);
         HeapFree(GetProcessHeap(), 0, info);
         NtCurrentTeb()->ReservedForOle = NULL;
     }
@@ -3748,6 +3750,7 @@ typedef struct Context
 {
     const IComThreadingInfoVtbl *lpVtbl;
     const IContextCallbackVtbl  *lpCallbackVtbl;
+    const IObjContextVtbl  *lpContextVtbl;
     LONG refs;
     APTTYPE apttype;
 } Context;
@@ -3762,6 +3765,11 @@ static inline Context *impl_from_IContextCallback( IContextCallback *iface )
         return (Context *)((char*)iface - FIELD_OFFSET(Context, lpCallbackVtbl));
 }
 
+static inline Context *impl_from_IObjContext( IObjContext *iface )
+{
+        return (Context *)((char*)iface - FIELD_OFFSET(Context, lpContextVtbl));
+}
+
 static HRESULT Context_QueryInterface(Context *iface, REFIID riid, LPVOID *ppv)
 {
     *ppv = NULL;
@@ -3770,9 +3778,14 @@ static HRESULT Context_QueryInterface(Context *iface, REFIID riid, LPVOID *ppv)
         IsEqualIID(riid, &IID_IUnknown))
     {
         *ppv = &iface->lpVtbl;
-    } else if (IsEqualIID(riid, &IID_IContextCallback))
+    }
+    else if (IsEqualIID(riid, &IID_IContextCallback))
     {
         *ppv = &iface->lpCallbackVtbl;
+    }
+    else if (IsEqualIID(riid, &IID_IObjContext))
+    {
+        *ppv = &iface->lpContextVtbl;
     }
 
     if (*ppv)
@@ -3903,6 +3916,115 @@ static const IContextCallbackVtbl Context_Callback_Vtbl =
     Context_CC_ContextCallback
 };
 
+static HRESULT WINAPI Context_OC_QueryInterface(IObjContext *iface, REFIID riid, LPVOID *ppv)
+{
+    Context *This = impl_from_IObjContext(iface);
+    return Context_QueryInterface(This, riid, ppv);
+}
+
+static ULONG WINAPI Context_OC_AddRef(IObjContext *iface)
+{
+    Context *This = impl_from_IObjContext(iface);
+    return Context_AddRef(This);
+}
+
+static ULONG WINAPI Context_OC_Release(IObjContext *iface)
+{
+    Context *This = impl_from_IObjContext(iface);
+    return Context_Release(This);
+}
+
+static HRESULT WINAPI Context_OC_SetProperty(IObjContext *iface, REFGUID propid, CPFLAGS flags, IUnknown *punk)
+{
+    Context *This = impl_from_IObjContext(iface);
+
+    FIXME("(%p/%p)->(%s, %x, %p)\n", This, iface, debugstr_guid(propid), flags, punk);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Context_OC_RemoveProperty(IObjContext *iface, REFGUID propid)
+{
+    Context *This = impl_from_IObjContext(iface);
+
+    FIXME("(%p/%p)->(%s)\n", This, iface, debugstr_guid(propid));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Context_OC_GetProperty(IObjContext *iface, REFGUID propid, CPFLAGS *flags, IUnknown **punk)
+{
+    Context *This = impl_from_IObjContext(iface);
+
+    FIXME("(%p/%p)->(%s, %p, %p)\n", This, iface, debugstr_guid(propid), flags, punk);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Context_OC_EnumContextProps(IObjContext *iface, IEnumContextProps **props)
+{
+    Context *This = impl_from_IObjContext(iface);
+
+    FIXME("(%p/%p)->(%p)\n", This, iface, props);
+    return E_NOTIMPL;
+}
+
+static void WINAPI Context_OC_Reserved1(IObjContext *iface)
+{
+    Context *This = impl_from_IObjContext(iface);
+    FIXME("(%p/%p)\n", This, iface);
+}
+
+static void WINAPI Context_OC_Reserved2(IObjContext *iface)
+{
+    Context *This = impl_from_IObjContext(iface);
+    FIXME("(%p/%p)\n", This, iface);
+}
+
+static void WINAPI Context_OC_Reserved3(IObjContext *iface)
+{
+    Context *This = impl_from_IObjContext(iface);
+    FIXME("(%p/%p)\n", This, iface);
+}
+
+static void WINAPI Context_OC_Reserved4(IObjContext *iface)
+{
+    Context *This = impl_from_IObjContext(iface);
+    FIXME("(%p/%p)\n", This, iface);
+}
+
+static void WINAPI Context_OC_Reserved5(IObjContext *iface)
+{
+    Context *This = impl_from_IObjContext(iface);
+    FIXME("(%p/%p)\n", This, iface);
+}
+
+static void WINAPI Context_OC_Reserved6(IObjContext *iface)
+{
+    Context *This = impl_from_IObjContext(iface);
+    FIXME("(%p/%p)\n", This, iface);
+}
+
+static void WINAPI Context_OC_Reserved7(IObjContext *iface)
+{
+    Context *This = impl_from_IObjContext(iface);
+    FIXME("(%p/%p)\n", This, iface);
+}
+
+static const IObjContextVtbl Context_Object_Vtbl =
+{
+    Context_OC_QueryInterface,
+    Context_OC_AddRef,
+    Context_OC_Release,
+    Context_OC_SetProperty,
+    Context_OC_RemoveProperty,
+    Context_OC_GetProperty,
+    Context_OC_EnumContextProps,
+    Context_OC_Reserved1,
+    Context_OC_Reserved2,
+    Context_OC_Reserved3,
+    Context_OC_Reserved4,
+    Context_OC_Reserved5,
+    Context_OC_Reserved6,
+    Context_OC_Reserved7
+};
 
 /***********************************************************************
  *           CoGetObjectContext [OLE32.@]
@@ -3938,6 +4060,7 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
 
     context->lpVtbl = &Context_Threading_Vtbl;
     context->lpCallbackVtbl = &Context_Callback_Vtbl;
+    context->lpContextVtbl = &Context_Object_Vtbl;
     context->refs = 1;
     if (apt->multi_threaded)
         context->apttype = APTTYPE_MTA;
@@ -3959,12 +4082,32 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
 HRESULT WINAPI CoGetContextToken( ULONG_PTR *token )
 {
     struct oletls *info = COM_CurrentInfo();
-    static int calls;
-    if(!(calls++)) FIXME( "stub\n" );
+
+    TRACE("(%p)\n", token);
+
     if (!info)
         return E_OUTOFMEMORY;
-    if (token) *token = info->context_token;
-    return E_NOTIMPL;
+
+    if (!info->apt)
+        return CO_E_NOTINITIALIZED;
+
+    if (!token)
+        return E_POINTER;
+
+    if (!info->context_token)
+    {
+        HRESULT hr;
+        IObjContext *ctx;
+
+        hr = CoGetObjectContext(&IID_IObjContext, (void **)&ctx);
+        if (FAILED(hr)) return hr;
+        info->context_token = ctx;
+    }
+
+    *token = (ULONG_PTR)info->context_token;
+    TRACE("apt->context_token=%p\n", info->context_token);
+
+    return S_OK;
 }
 
 
