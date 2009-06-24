@@ -433,10 +433,136 @@ static void test_setvirtualresolution(void)
     DeleteDC(hdc);
 }
 
+
+static inline void expect_identity(int line, XFORM *xf)
+{
+    ok(xf->eM11 == 1.0, "%d: got %f\n", line, xf->eM11);
+    ok(xf->eM12 == 0.0, "%d: got %f\n", line, xf->eM12);
+    ok(xf->eM21 == 0.0, "%d: got %f\n", line, xf->eM21);
+    ok(xf->eM22 == 1.0, "%d: got %f\n", line, xf->eM22);
+    ok(xf->eDx == 0.0, "%d: got %f\n", line, xf->eDx);
+    ok(xf->eDy == 0.0, "%d: got %f\n", line, xf->eDy);
+}
+
+static inline void xform_near_match(int line, XFORM *got, XFORM *expect)
+{
+    ok(fabs(got->eM11 - expect->eM11) < 0.001, "%d: got %f expect %f\n", line, got->eM11, expect->eM11);
+    ok(fabs(got->eM12 - expect->eM12) < 0.001, "%d: got %f expect %f\n", line, got->eM12, expect->eM12);
+    ok(fabs(got->eM21 - expect->eM21) < 0.001, "%d: got %f expect %f\n", line, got->eM21, expect->eM21);
+    ok(fabs(got->eM22 - expect->eM22) < 0.001, "%d: got %f expect %f\n", line, got->eM22, expect->eM22);
+    ok(fabs(got->eDx - expect->eDx) < 0.001, "%d: got %f expect %f\n", line, got->eDx, expect->eDx);
+    ok(fabs(got->eDy - expect->eDy) < 0.001, "%d: got %f expect %f\n", line, got->eDy, expect->eDy);
+}
+
+
+static void test_gettransform(void)
+{
+    HDC hdc = CreateICA("DISPLAY", NULL, NULL, NULL);
+    BOOL (WINAPI *pGetTransform)(HDC, DWORD, XFORM *);
+    XFORM xform, expect;
+    BOOL r;
+    SIZE lometric_vp, lometric_wnd;
+
+    pGetTransform = (void *)GetProcAddress(GetModuleHandleA("gdi32.dll"), "GetTransform");
+
+    if(!pGetTransform)
+    {
+        win_skip("Don't have GetTransform\n");
+        return;
+    }
+
+    r = pGetTransform(hdc, 0x203, &xform); /* World -> Page */
+    ok(r == TRUE, "got %d\n", r);
+    expect_identity(__LINE__, &xform);
+    r = pGetTransform(hdc, 0x304, &xform); /* Page -> Device */
+    ok(r == TRUE, "got %d\n", r);
+    expect_identity(__LINE__, &xform);
+    r = pGetTransform(hdc, 0x204, &xform); /* World -> Device */
+    ok(r == TRUE, "got %d\n", r);
+    expect_identity(__LINE__, &xform);
+    r = pGetTransform(hdc, 0x402, &xform); /* Device -> World */
+    ok(r == TRUE, "got %d\n", r);
+    expect_identity(__LINE__, &xform);
+
+    SetMapMode(hdc, MM_LOMETRIC);
+    GetViewportExtEx(hdc, &lometric_vp);
+    GetWindowExtEx(hdc, &lometric_wnd);
+
+    r = pGetTransform(hdc, 0x203, &xform); /* World -> Page */
+    ok(r == TRUE, "got %d\n", r);
+    expect_identity(__LINE__, &xform);
+
+    r = pGetTransform(hdc, 0x304, &xform); /* Page -> Device */
+    ok(r == TRUE, "got %d\n", r);
+    expect.eM11 = (FLOAT) lometric_vp.cx / lometric_wnd.cx;
+    expect.eM12 = expect.eM21 = 0.0;
+    expect.eM22 = (FLOAT) lometric_vp.cy / lometric_wnd.cy;
+    expect.eDx = expect.eDy = 0.0;
+    xform_near_match(__LINE__, &xform, &expect);
+
+    r = pGetTransform(hdc, 0x204, &xform);  /* World -> Device */
+    ok(r == TRUE, "got %d\n", r);
+    xform_near_match(__LINE__, &xform, &expect);
+
+    r = pGetTransform(hdc, 0x402, &xform); /* Device -> World */
+    ok(r == TRUE, "got %d\n", r);
+    expect.eM11 = (FLOAT) lometric_wnd.cx / lometric_vp.cx;
+    expect.eM22 = (FLOAT) lometric_wnd.cy / lometric_vp.cy;
+    xform_near_match(__LINE__, &xform, &expect);
+
+
+    SetGraphicsMode(hdc, GM_ADVANCED);
+
+    expect.eM11 = 10.0;
+    expect.eM22 = 20.0;
+    SetWorldTransform(hdc, &expect);
+    r = pGetTransform(hdc, 0x203, &xform);  /* World -> Page */
+    ok(r == TRUE, "got %d\n", r);
+    xform_near_match(__LINE__, &xform, &expect);
+
+    r = pGetTransform(hdc, 0x304, &xform); /* Page -> Device */
+    ok(r == TRUE, "got %d\n", r);
+    expect.eM11 = (FLOAT) lometric_vp.cx / lometric_wnd.cx;
+    expect.eM22 = (FLOAT) lometric_vp.cy / lometric_wnd.cy;
+    xform_near_match(__LINE__, &xform, &expect);
+
+    r = pGetTransform(hdc, 0x204, &xform); /* World -> Device */
+    ok(r == TRUE, "got %d\n", r);
+    expect.eM11 *= 10.0;
+    expect.eM22 *= 20.0;
+    xform_near_match(__LINE__, &xform, &expect);
+
+    r = pGetTransform(hdc, 0x402, &xform); /* Device -> World */
+    ok(r == TRUE, "got %d\n", r);
+    expect.eM11 = 1 / expect.eM11;
+    expect.eM22 = 1 / expect.eM22;
+    xform_near_match(__LINE__, &xform, &expect);
+
+    r = pGetTransform(hdc, 0x102, &xform);
+    ok(r == FALSE, "got %d\n", r);
+    r = pGetTransform(hdc, 0x103, &xform);
+    ok(r == FALSE, "got %d\n", r);
+    r = pGetTransform(hdc, 0x104, &xform);
+    ok(r == FALSE, "got %d\n", r);
+    r = pGetTransform(hdc, 0x202, &xform);
+    ok(r == FALSE, "got %d\n", r);
+    r = pGetTransform(hdc, 0x302, &xform);
+    ok(r == FALSE, "got %d\n", r);
+    r = pGetTransform(hdc, 0x303, &xform);
+    ok(r == FALSE, "got %d\n", r);
+    r = pGetTransform(hdc, 0x403, &xform);
+    ok(r == FALSE, "got %d\n", r);
+    r = pGetTransform(hdc, 0x404, &xform);
+    ok(r == FALSE, "got %d\n", r);
+    r = pGetTransform(hdc, 0xffff, &xform);
+    ok(r == FALSE, "got %d\n", r);
+}
+
 START_TEST(mapping)
 {
     test_modify_world_transform();
     test_world_transform();
     test_isotropic_mapping();
     test_setvirtualresolution();
+    test_gettransform();
 }
