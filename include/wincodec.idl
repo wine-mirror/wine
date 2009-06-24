@@ -43,6 +43,14 @@ typedef enum WICBitmapAlphaChannelOption {
     WICBITMAPALPHACHANNELOPTIONS_FORCE_DWORD = CODEC_FORCE_DWORD
 } WICBitmapAlphaChannelOption;
 
+typedef enum WICBitmapDecoderCapabilities {
+    WICBitmapDecoderCapabilitySameEncoder = 0x00000001,
+    WICBitmapDecoderCapabilityCanDecodeAllImages = 0x00000002,
+    WICBitmapDecoderCapabilityCanDecodeSomeImages = 0x00000004,
+    WICBitmapDecoderCapabilityCanEnumerateMetadata = 0x00000008,
+    WICBitmapDecoderCapabilityCanDecodeThumbnail = 0x00000010,
+} WICBitmapDecoderCapabilities;
+
 typedef GUID WICPixelFormatGUID;
 typedef REFGUID REFWICPixelFormatGUID;
 
@@ -52,6 +60,9 @@ typedef struct WICRect {
     INT Width;
     INT Height;
 } WICRect;
+
+cpp_quote("#define WINCODEC_ERR_WRONGSTATE 0x88982f04")
+cpp_quote("#define WINCODEC_ERR_CODECNOTHUMBNAIL 0x88982f44")
 
 interface IWICBitmap;
 interface IWICComponentInfo;
