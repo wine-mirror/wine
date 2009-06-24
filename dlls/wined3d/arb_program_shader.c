@@ -1325,6 +1325,29 @@ static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "ADD %s, %s, TC;\n", dst_name, src_name[0]);
 }
 
+static DWORD negate_modifiers(DWORD mod, char *extra_char)
+{
+    *extra_char = ' ';
+    switch(mod)
+    {
+        case WINED3DSPSM_NONE:      return WINED3DSPSM_NEG;
+        case WINED3DSPSM_NEG:       return WINED3DSPSM_NONE;
+        case WINED3DSPSM_BIAS:      return WINED3DSPSM_BIASNEG;
+        case WINED3DSPSM_BIASNEG:   return WINED3DSPSM_BIAS;
+        case WINED3DSPSM_SIGN:      return WINED3DSPSM_SIGNNEG;
+        case WINED3DSPSM_SIGNNEG:   return WINED3DSPSM_SIGN;
+        case WINED3DSPSM_COMP:      *extra_char = '-'; return WINED3DSPSM_COMP;
+        case WINED3DSPSM_X2:        return WINED3DSPSM_X2NEG;
+        case WINED3DSPSM_X2NEG:     return WINED3DSPSM_X2;
+        case WINED3DSPSM_DZ:        *extra_char = '-'; return WINED3DSPSM_DZ;
+        case WINED3DSPSM_DW:        *extra_char = '-'; return WINED3DSPSM_DW;
+        case WINED3DSPSM_ABS:       return WINED3DSPSM_ABSNEG;
+        case WINED3DSPSM_ABSNEG:    return WINED3DSPSM_ABS;
+    }
+    FIXME("Unknown modifier %u\n", mod);
+    return mod;
+}
+
 static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader_dst_param *dst = &ins->dst[0];
@@ -1343,9 +1366,15 @@ static void pshader_hw_cnd(const struct wined3d_shader_instruction *ins)
     {
         shader_addline(buffer, "MOV%s %s, %s;\n", shader_arb_get_modifier(ins), dst_name, src_name[1]);
     } else {
-        shader_arb_get_src_param(ins, &ins->src[0], 0, src_name[0]);
+        struct wined3d_shader_src_param src0_copy = ins->src[0];
+        char extra_neg;
+
+        /* src0 may have a negate srcmod set, so we can't blindly add "-" to the name */
+        src0_copy.modifiers = negate_modifiers(src0_copy.modifiers, &extra_neg);
+
+        shader_arb_get_src_param(ins, &src0_copy, 0, src_name[0]);
         shader_arb_get_src_param(ins, &ins->src[2], 2, src_name[2]);
-        shader_addline(buffer, "ADD TA, -%s, coefdiv.x;\n", src_name[0]);
+        shader_addline(buffer, "ADD TA, %c%s, coefdiv.x;\n", extra_neg, src_name[0]);
         /* No modifiers supported on CMP */
         shader_addline(buffer, "CMP %s, TA, %s, %s;\n", dst_name, src_name[1], src_name[2]);
 
