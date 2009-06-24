@@ -354,6 +354,7 @@ static void shader_arb_load_np2fixup_constants(
     /* not implemented */
 }
 
+/* GL locking is done by the caller. */
 static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
 {
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
@@ -417,6 +418,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
     checkGLcall("Load ps int consts\n");
 }
 
+/* GL locking is done by the caller. */
 static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
 {
     IWineD3DStateBlockImpl* stateBlock;
