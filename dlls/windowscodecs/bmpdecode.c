@@ -155,11 +155,33 @@ static HRESULT WINAPI BmpFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface
     return E_NOTIMPL;
 }
 
+static HRESULT BmpHeader_GetResolution(BITMAPV5HEADER *bih, double *pDpiX, double *pDpiY)
+{
+    switch (bih->bV5Size)
+    {
+    case sizeof(BITMAPCOREHEADER):
+        *pDpiX = 96.0;
+        *pDpiY = 96.0;
+        return S_OK;
+    case sizeof(BITMAPCOREHEADER2):
+    case sizeof(BITMAPINFOHEADER):
+    case sizeof(BITMAPV4HEADER):
+    case sizeof(BITMAPV5HEADER):
+        *pDpiX = bih->bV5XPelsPerMeter * 0.0254;
+        *pDpiY = bih->bV5YPelsPerMeter * 0.0254;
+        return S_OK;
+    default:
+        return E_FAIL;
+    }
+}
+
 static HRESULT WINAPI BmpFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
-    return E_NOTIMPL;
+    BmpFrameDecode *This = (BmpFrameDecode*)iface;
+    TRACE("(%p,%p,%p)\n", iface, pDpiX, pDpiY);
+
+    return BmpHeader_GetResolution(&This->bih, pDpiX, pDpiY);
 }
 
 static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
