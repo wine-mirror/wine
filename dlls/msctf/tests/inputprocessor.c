@@ -439,6 +439,20 @@ ITfDocumentMgr *pdimFocus, ITfDocumentMgr *pdimPrevFocus)
 static HRESULT WINAPI ThreadMgrEventSink_OnPushContext(ITfThreadMgrEventSink *iface,
 ITfContext *pic)
 {
+    HRESULT hr;
+    ITfDocumentMgr *docmgr;
+    ITfContext *test;
+
+    hr = ITfContext_GetDocumentMgr(pic,&docmgr);
+    ok(SUCCEEDED(hr),"GetDocumenMgr failed\n");
+    test = (ITfContext*)0xdeadbeef;
+    ITfDocumentMgr_Release(docmgr);
+    hr = ITfDocumentMgr_GetTop(docmgr,&test);
+    ok(SUCCEEDED(hr),"GetTop failed\n");
+    ok(test == pic, "Wrong context is on top\n");
+    if (test)
+        ITfContext_Release(test);
+
     ok(test_OnPushContext == SINK_EXPECTED, "Unexpected OnPushContext sink\n");
     test_OnPushContext = SINK_FIRED;
     return S_OK;
