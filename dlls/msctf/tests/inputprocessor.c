@@ -461,6 +461,20 @@ ITfContext *pic)
 static HRESULT WINAPI ThreadMgrEventSink_OnPopContext(ITfThreadMgrEventSink *iface,
 ITfContext *pic)
 {
+    HRESULT hr;
+    ITfDocumentMgr *docmgr;
+    ITfContext *test;
+
+    hr = ITfContext_GetDocumentMgr(pic,&docmgr);
+    ok(SUCCEEDED(hr),"GetDocumenMgr failed\n");
+    ITfDocumentMgr_Release(docmgr);
+    test = (ITfContext*)0xdeadbeef;
+    hr = ITfDocumentMgr_GetTop(docmgr,&test);
+    ok(SUCCEEDED(hr),"GetTop failed\n");
+    ok(test == pic, "Wrong context is on top\n");
+    if (test)
+        ITfContext_Release(test);
+
     ok(test_OnPopContext == SINK_EXPECTED, "Unexpected OnPopContext sink\n");
     test_OnPopContext = SINK_FIRED;
     return S_OK;
