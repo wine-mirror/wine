@@ -284,6 +284,8 @@ STRINGTABLE
 	IDS_CPANEL_TITLE        "Panoul de control al Wine"
 	IDS_CPANEL_NAME         "Nume"
 	IDS_CPANEL_DESCRIPTION  "Descriere"
+
+	IDS_SHLEXEC_NOASSOC     "Nici un program Windows nu este configurat să deschidă fișiere de acest tip."
 }
 
 STRINGTABLE
