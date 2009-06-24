@@ -4359,7 +4359,8 @@ static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, 
     }
 }
 
-static inline void get_int_const(const struct wined3d_shader_instruction *ins, IWineD3DBaseShaderImpl *This, DWORD idx, int *ret)
+static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
+        IWineD3DBaseShaderImpl *This, UINT idx, struct loop_control *loop_control)
 {
     BOOL vshader = shader_is_vshader_version(This->baseShader.reg_maps.shader_version.type);
     WORD flag = (1 << idx);
@@ -4375,18 +4376,18 @@ static inline void get_int_const(const struct wined3d_shader_instruction *ins, I
         {
             if (constant->idx == idx)
             {
-                ret[0] = constant->value[0];
-                ret[1] = constant->value[1];
-                /* Step / stride is signed */
-                ret[2] = (int) constant->value[2];
+                loop_control->count = constant->value[0];
+                loop_control->start = constant->value[1];
+                /* Step is signed. */
+                loop_control->step = (int)constant->value[2];
                 return;
             }
         }
         /* If this happens the flag was set incorrectly */
         ERR("Local constant not found\n");
-        ret[0] = 0;
-        ret[1] = 0;
-        ret[2] = 0;
+        loop_control->count = 0;
+        loop_control->start = 0;
+        loop_control->step = 0;
         return;
     }
     else
@@ -4394,16 +4395,16 @@ static inline void get_int_const(const struct wined3d_shader_instruction *ins, I
         if(vshader)
         {
             /* Count and aL start value are unsigned */
-            ret[0] = priv->cur_vs_args->loop_ctrl[idx][0];
-            ret[1] = priv->cur_vs_args->loop_ctrl[idx][1];
-            /* The step/stride is signed */
-            ret[2] = ((char) priv->cur_vs_args->loop_ctrl[idx][2]);
+            loop_control->count = priv->cur_vs_args->loop_ctrl[idx][0];
+            loop_control->start = priv->cur_vs_args->loop_ctrl[idx][1];
+            /* Step is signed. */
+            loop_control->step = ((char)priv->cur_vs_args->loop_ctrl[idx][2]);
         }
         else
         {
-            ret[0] = priv->cur_ps_args->loop_ctrl[idx][0];
-            ret[1] = priv->cur_ps_args->loop_ctrl[idx][1];
-            ret[2] = ((char) priv->cur_ps_args->loop_ctrl[idx][2]);
+            loop_control->count = priv->cur_ps_args->loop_ctrl[idx][0];
+            loop_control->start = priv->cur_ps_args->loop_ctrl[idx][1];
+            loop_control->step = ((char)priv->cur_ps_args->loop_ctrl[idx][2]);
         }
         return;
     }
@@ -4524,14 +4525,10 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
 
             if(!priv->recording)
             {
-                int control_values[3];
-                get_int_const(ins, This, ins->src[0].reg.idx, control_values);
                 list_init(&priv->record);
                 priv->recording = TRUE;
                 control_frame->outer_loop = TRUE;
-                control_frame->loop_control.count = control_values[0];
-                control_frame->loop_control.start = control_values[1];
-                control_frame->loop_control.step = control_values[2];
+                get_loop_control_const(ins, This, ins->src[0].reg.idx, &control_frame->loop_control);
                 return; /* Instruction is handled */
             }
             /* Record this loop in the outer loop's recording */
