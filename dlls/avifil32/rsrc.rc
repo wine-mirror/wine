@@ -53,6 +53,7 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #include "avifile_No.rc"
 #include "avifile_Pl.rc"
 #include "avifile_Pt.rc"
+#include "avifile_Ro.rc"
 #include "avifile_Ru.rc"
 #include "avifile_Si.rc"
 #include "avifile_Sv.rc"
