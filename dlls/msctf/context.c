@@ -466,8 +466,25 @@ static HRESULT WINAPI Context_GetStatus (ITfContext *iface,
         TF_STATUS *pdcs)
 {
     Context *This = (Context *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %p\n",This,pdcs);
+
+    if (!This->connected)
+        return TF_E_DISCONNECTED;
+
+    if (!pdcs)
+        return E_INVALIDARG;
+
+    if (!This->pITextStoreACP)
+    {
+        FIXME("Context does not have a ITextStoreACP\n");
+        return E_NOTIMPL;
+    }
+
+    ITextStoreACP_GetStatus(This->pITextStoreACP, &This->documentStatus);
+
+    *pdcs = This->documentStatus;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Context_GetProperty (ITfContext *iface,
