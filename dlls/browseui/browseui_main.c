@@ -212,3 +212,12 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *ppvOut)
     FIXME("CLSID %s not supported\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }
+
+/***********************************************************************
+ *  DllInstall (BROWSEUI.@)
+ */
+HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
+{
+    FIXME("(%s, %s): stub\n", bInstall ? "TRUE" : "FALSE", debugstr_w(cmdline));
+    return S_OK;
+}
