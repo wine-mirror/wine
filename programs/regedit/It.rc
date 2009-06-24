@@ -188,7 +188,7 @@ END
 
 IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "Edita Binario"
+CAPTION "Modifica Binario"
 FONT 8, "MS Shell Dlg"
 BEGIN
    LTEXT           "Nome del valore:",IDC_STATIC,5,5,119,8
@@ -264,14 +264,14 @@ BEGIN
     IDS_ERROR		    "Errore"
     IDS_BAD_KEY		    "Impossibile trovare la chiave '%s'"
     IDS_BAD_VALUE           "Impossibile trovare il valore '%s'"
-    IDS_UNSUPPORTED_TYPE    "Impossibile editare valori di questo tipo (%u)"
+    IDS_UNSUPPORTED_TYPE    "Impossibile modificare valori di questo tipo (%u)"
     IDS_TOO_BIG_VALUE       "Valore troppo grande (%u)"
-    IDS_DELETE_BOX_TITLE    "Confermare Cancellazione del Valore"
-    IDS_DELETE_BOX_TEXT     "Sei sicuro di voler cancellare il valore '%s'?"
-    IDS_DELETE_BOX_TEXT_MULTIPLE "Are you sure you want to delete these values?"
+    IDS_DELETE_BOX_TITLE    "Confermare Eliminazione del Valore"
+    IDS_DELETE_BOX_TEXT     "Sei sicuro di volere eliminare il valore '%s'?"
+    IDS_DELETE_BOX_TEXT_MULTIPLE "Sei sicuro di volere eliminare questi valori?"
     IDS_NEWKEY              "Nuova Chiave #%d"
     IDS_NEWVALUE            "Nuovo Valore #%d"
-    IDS_NOTFOUND            "Search string '%s' not found"
+    IDS_NOTFOUND            "Stringa di ricerca '%s' non trovata"
 END
 
 /*****************************************************************/
