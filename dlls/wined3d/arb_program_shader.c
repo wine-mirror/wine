@@ -928,11 +928,11 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             {
                 if(This->baseShader.reg_maps.shader_version.major < 3)
                 {
-                    sprintf(register_name, ctx->texcrd_output[reg->idx]);
+                    strcpy(register_name, ctx->texcrd_output[reg->idx]);
                 }
                 else
                 {
-                    sprintf(register_name, ctx->vs_output[reg->idx]);
+                    strcpy(register_name, ctx->vs_output[reg->idx]);
                 }
             }
             break;
