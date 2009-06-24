@@ -1169,7 +1169,6 @@ then
                          freetype/ftglyph.h \
                          freetype/fttypes.h \
                          freetype/tttables.h \
-                         freetype/ftnames.h \
                          freetype/ftsnames.h \
                          freetype/ttnameid.h \
                          freetype/ftoutln.h \

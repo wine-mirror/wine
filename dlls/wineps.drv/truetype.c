@@ -49,10 +49,6 @@
 #endif
 #ifdef HAVE_FREETYPE_FTSNAMES_H
 #include <freetype/ftsnames.h>
-#else
-# ifdef HAVE_FREETYPE_FTNAMES_H
-# include <freetype/ftnames.h>
-# endif
 #endif
 #ifdef HAVE_FREETYPE_TTNAMEID_H
 #include <freetype/ttnameid.h>

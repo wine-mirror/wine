@@ -123,9 +123,6 @@
 /* Define to 1 if you have the <freetype/ftmodapi.h> header file. */
 #undef HAVE_FREETYPE_FTMODAPI_H
 
-/* Define to 1 if you have the <freetype/ftnames.h> header file. */
-#undef HAVE_FREETYPE_FTNAMES_H
-
 /* Define to 1 if you have the <freetype/ftoutln.h> header file. */
 #undef HAVE_FREETYPE_FTOUTLN_H
 
