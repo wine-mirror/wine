@@ -55,7 +55,7 @@ POPUP "&Aiuto" {
    MENUITEM "&Tutorial",         PM_TUTORIAL
    MENUITEM SEPARATOR
 
-   POPUP "&Informazioni sul Program Manager" {
+   POPUP "&Informazioni sul Gestore Del Programma" {
      MENUITEM "&Licenza",        PM_LICENSE
      MENUITEM "&Garanzia",    PM_NO_WARRANTY
      MENUITEM "&Informazioni su WINE",     PM_ABOUT_WINE
@@ -84,7 +84,7 @@ PUSHBUTTON    "&Aiuto",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 DIALOG_MOVE DIALOG 0, 0, 250, 65
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Move Program"
+CAPTION "Sposta Programma"
 {
 LTEXT         "Sposta programma:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
@@ -108,7 +108,7 @@ LTEXT         "Copia programma:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
 LTEXT         "Dal gruppo:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&Al grouppo:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&Al gruppo:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annulla",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
@@ -195,9 +195,9 @@ PUSHBUTTON    "&Aiuto",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 {
-IDS_PROGRAM_MANAGER,		"Program Manager"
+IDS_PROGRAM_MANAGER,		"Gestore Programma"
 IDS_ERROR,			"ERRORE"
-IDS_WARNING,			"ATTENZONE"
+IDS_WARNING,			"ATTENZIONE"
 IDS_INFO,			"Informazioni"
 IDS_DELETE,			"Elimina"
 IDS_DELETE_GROUP_s,		"Eliminare il gruppo `%s' ?"
