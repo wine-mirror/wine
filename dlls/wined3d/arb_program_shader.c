@@ -4362,7 +4362,6 @@ static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, 
 static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
         IWineD3DBaseShaderImpl *This, UINT idx, struct loop_control *loop_control)
 {
-    BOOL vshader = shader_is_vshader_version(This->baseShader.reg_maps.shader_version.type);
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
 
     /* Integer constants can either be a local constant, or they can be stored in the shader
@@ -4389,23 +4388,26 @@ static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
         loop_control->step = 0;
         return;
     }
-    else
+
+    switch (This->baseShader.reg_maps.shader_version.type)
     {
-        if(vshader)
-        {
+        case WINED3D_SHADER_TYPE_VERTEX:
             /* Count and aL start value are unsigned */
             loop_control->count = priv->cur_vs_args->loop_ctrl[idx][0];
             loop_control->start = priv->cur_vs_args->loop_ctrl[idx][1];
             /* Step is signed. */
             loop_control->step = ((char)priv->cur_vs_args->loop_ctrl[idx][2]);
-        }
-        else
-        {
+            break;
+
+        case WINED3D_SHADER_TYPE_PIXEL:
             loop_control->count = priv->cur_ps_args->loop_ctrl[idx][0];
             loop_control->start = priv->cur_ps_args->loop_ctrl[idx][1];
             loop_control->step = ((char)priv->cur_ps_args->loop_ctrl[idx][2]);
-        }
-        return;
+            break;
+
+        default:
+            FIXME("Unhandled shader type %#x.\n", This->baseShader.reg_maps.shader_version.type);
+            break;
     }
 }
 
