@@ -85,6 +85,14 @@ static inline BOOL use_nv_clip(const WineD3D_GL_Info *gl_info)
 #define ARB_SHADER_PRIVCONST_POS ARB_SHADER_PRIVCONST_BASE + 0
 
 /* ARB_program_shader private data */
+
+struct loop_control
+{
+    unsigned int count;
+    unsigned int start;
+    int step;
+};
+
 struct control_frame
 {
     struct                          list entry;
@@ -102,7 +110,7 @@ struct control_frame
         unsigned int                loop_no;
         unsigned int                ifc_no;
     };
-    DWORD                           loop_control[3];
+    struct loop_control             loop_control;
     BOOL                            had_else;
 };
 
@@ -4521,9 +4529,9 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
                 list_init(&priv->record);
                 priv->recording = TRUE;
                 control_frame->outer_loop = TRUE;
-                control_frame->loop_control[0] = control_values[0];
-                control_frame->loop_control[1] = control_values[1];
-                control_frame->loop_control[2] = control_values[2];
+                control_frame->loop_control.count = control_values[0];
+                control_frame->loop_control.start = control_values[1];
+                control_frame->loop_control.step = control_values[2];
                 return; /* Instruction is handled */
             }
             /* Record this loop in the outer loop's recording */
@@ -4559,17 +4567,17 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
 
                 if(ins->handler_idx == WINED3DSIH_ENDLOOP)
                 {
-                    shader_addline(buffer, "#unrolling loop: %d iterations, aL=%d, inc %d\n",
-                                   control_frame->loop_control[0], control_frame->loop_control[1],
-                                   control_frame->loop_control[2]);
-                    aL = control_frame->loop_control[1];
+                    shader_addline(buffer, "#unrolling loop: %u iterations, aL=%u, inc %d\n",
+                                   control_frame->loop_control.count, control_frame->loop_control.start,
+                                   control_frame->loop_control.step);
+                    aL = control_frame->loop_control.start;
                 }
                 else
                 {
-                    shader_addline(buffer, "#unrolling rep: %d iterations\n", control_frame->loop_control[0]);
+                    shader_addline(buffer, "#unrolling rep: %u iterations\n", control_frame->loop_control.count);
                 }
 
-                for(iteration = 0; iteration < control_frame->loop_control[0]; iteration++)
+                for (iteration = 0; iteration < control_frame->loop_control.count; ++iteration)
                 {
                     struct recorded_instruction *rec_ins;
                     if(ins->handler_idx == WINED3DSIH_ENDLOOP)
@@ -4589,7 +4597,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
 
                     if(ins->handler_idx == WINED3DSIH_ENDLOOP)
                     {
-                        aL += control_frame->loop_control[2];
+                        aL += control_frame->loop_control.step;
                     }
                 }
                 shader_addline(buffer, "#end loop/rep\n");
