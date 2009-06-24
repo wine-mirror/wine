@@ -168,7 +168,7 @@ void load_res16_file( const char *name, DLLSPEC *spec )
     void *base;
     struct stat st;
 
-    if ((fd = open( name, O_RDONLY )) == -1) fatal_perror( "Cannot open %s", name );
+    if ((fd = open( name, O_RDONLY | O_BINARY )) == -1) fatal_perror( "Cannot open %s", name );
     if ((fstat( fd, &st ) == -1)) fatal_perror( "Cannot stat %s", name );
     if (!st.st_size) fatal_error( "%s is an empty file\n", name );
 #ifdef	HAVE_MMAP
