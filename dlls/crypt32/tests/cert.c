@@ -1854,7 +1854,9 @@ static void testSignAndEncodeCert(void)
     ret = CryptSignAndEncodeCertificate(0, 0, X509_ASN_ENCODING,
      X509_CERT_TO_BE_SIGNED, &info, &algID, NULL, NULL, &size);
     ok(!ret &&
-     (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == NTE_BAD_ALGID),
+     (GetLastError() == ERROR_INVALID_PARAMETER ||
+      GetLastError() == NTE_BAD_ALGID ||
+      GetLastError() == OSS_BAD_PTR), /* Win9x */
      "Expected ERROR_INVALID_PARAMETER or NTE_BAD_ALGID, got %08x\n",
      GetLastError());
     algID.pszObjId = oid_rsa_md5;
