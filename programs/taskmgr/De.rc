@@ -488,3 +488,32 @@ BEGIN
     IDS_STATUS_BAR_PROCESSES           "Prozesse: %d"
     IDS_STATUS_BAR_MEMORY_USAGE        "Speicherauslastung: %dK / %dK"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "Name"
+    IDS_PID               "PID (Prozess-ID)"
+    IDS_CPUUSAGE          "CPU-Auslastung"
+    IDS_CPUTIME           "CPU-Zeit"
+    IDS_MEMORYUSAGE       "Speicherauslastung"
+    IDS_MEMORYUSAGEDELTA  "Veränd. der Speicherauslastung"
+    IDS_PEAKMEMORYUSAGE   "Maximale Speicherauslastung"
+    IDS_PAGEFAULTS        "Seitenfehler"
+    IDS_USEROBJECTS       "Benutzer-Objekte"
+    IDS_IOREADS           "E/A (Lesen)"
+    IDS_IOREADBYTES       "E/A-Bytes (Lesen)"
+    IDS_SESSIONID         "Sitzungs-ID"
+    IDS_USERNAME          "Benutzername"
+    IDS_PAGEFAULTSDELTA   "Veränd. der Seiten"
+    IDS_VIRTUALMEMORYSIZE "Größe des virt. Speichers"
+    IDS_PAGEDPOOL         "Ausgelagerter Pool"
+    IDS_NONPAGEDPOOL      "Nichtausgelagerter Pool"
+    IDS_BASEPRIORITY      "Basispriorität"
+    IDS_HANDLECOUNT       "Handle-Anzahl"
+    IDS_THREADCOUNT       "Thread-Anzahl"
+    IDS_GDIOBJECTS        "GDI-Objekte"
+    IDS_IOWRITES          "E/A (Schreiben)"
+    IDS_IOWRITEBYTES      "E/A-Bytes (Schreiben)"
+    IDS_IOOTHER           "E/A (Andere)"
+    IDS_IOOTHERBYTES      "E/A-Bytes (Andere)"
+END
