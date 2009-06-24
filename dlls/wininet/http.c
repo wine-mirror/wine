@@ -4337,6 +4337,19 @@ static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
 	}
     }while(1);
 
+    /* make sure the response header is terminated with an empty line.  Some apps really
+       truly care about that empty line being there for some reason.  Just add it to the
+       header. */
+    if (cchRawHeaders + strlenW(szCrLf) > cchMaxRawHeaders)
+    {
+        cchMaxRawHeaders = cchRawHeaders + strlenW(szCrLf);
+        temp = HeapReAlloc(GetProcessHeap(), 0, lpszRawHeaders, (cchMaxRawHeaders + 1) * sizeof(WCHAR));
+        if (temp == NULL) goto lend;
+        lpszRawHeaders = temp;
+    }
+
+    memcpy(&lpszRawHeaders[cchRawHeaders], szCrLf, sizeof(szCrLf));
+
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
     lpwhr->lpszRawHeaders = lpszRawHeaders;
     TRACE("raw headers: %s\n", debugstr_w(lpszRawHeaders));
