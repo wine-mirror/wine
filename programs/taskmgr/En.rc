@@ -483,6 +483,8 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
                             "Sets process to the BELOW NORMAL priority class"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Sets process to the LOW priority class"
+    ID_PROCESS_PAGE_DEBUGCHANNELS
+                            "Controls Debug Channels"
 END
 
 STRINGTABLE DISCARDABLE
