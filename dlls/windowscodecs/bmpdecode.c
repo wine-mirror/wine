@@ -116,11 +116,36 @@ static ULONG WINAPI BmpFrameDecode_Release(IWICBitmapFrameDecode *iface)
     return ref;
 }
 
+static HRESULT BmpHeader_GetSize(BITMAPV5HEADER *bih, UINT *puiWidth, UINT *puiHeight)
+{
+    switch (bih->bV5Size)
+    {
+    case sizeof(BITMAPCOREHEADER):
+    {
+        BITMAPCOREHEADER *bch = (BITMAPCOREHEADER*)bih;
+        *puiWidth = bch->bcWidth;
+        *puiHeight = bch->bcHeight;
+        return S_OK;
+    }
+    case sizeof(BITMAPCOREHEADER2):
+    case sizeof(BITMAPINFOHEADER):
+    case sizeof(BITMAPV4HEADER):
+    case sizeof(BITMAPV5HEADER):
+        *puiWidth = bih->bV5Width;
+        *puiHeight = bih->bV5Height;
+        return S_OK;
+    default:
+        return E_FAIL;
+    }
+}
+
 static HRESULT WINAPI BmpFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, puiWidth, puiHeight);
-    return E_NOTIMPL;
+    BmpFrameDecode *This = (BmpFrameDecode*)iface;
+    TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
+
+    return BmpHeader_GetSize(&This->bih, puiWidth, puiHeight);
 }
 
 static HRESULT WINAPI BmpFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface,
