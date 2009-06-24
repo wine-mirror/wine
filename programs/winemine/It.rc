@@ -25,7 +25,7 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE {
      IDS_APPNAME, "WineMine"
-     IDS_NOBODY,  "Nobody"
+     IDS_NOBODY,  "Nessuno"
      IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
 }
 
@@ -39,7 +39,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "&Principiante",      IDM_BEGINNER
         MENUITEM "&Avanzato",      IDM_ADVANCED
         MENUITEM "&Esperto",        IDM_EXPERT
-        MENUITEM "&Presonalizza",        IDM_CUSTOM
+        MENUITEM "&Personalizza",        IDM_CUSTOM
         MENUITEM SEPARATOR
         MENUITEM "E&sci\tAlt+X",          IDM_EXIT
     }
