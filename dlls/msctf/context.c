@@ -532,6 +532,9 @@ static HRESULT WINAPI Context_GetDocumentMgr (ITfContext *iface,
     *ppDm = This->manager;
     if (!This->manager)
         return S_FALSE;
+
+    ITfDocumentMgr_AddRef(This->manager);
+
     return S_OK;
 }
 
