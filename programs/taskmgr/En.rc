@@ -533,3 +533,24 @@ BEGIN
     IDS_IOOTHER           "I/O Other"
     IDS_IOOTHERBYTES      "I/O Other Bytes"
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "Task Manager Warning"
+    IDS_PRIORITY_CHANGE_MESSAGE     "WARNING: Changing the priority class of this process may\n\
+                                     cause undesired results including system instability. Are you\n\
+                                     sure you want to change the priority class?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Unable to Change Priority"
+    IDS_TERMINATE_MESSAGE           "WARNING: Terminating a process can cause undesired\n\
+                                     results including loss of data and system instability. The\n\
+                                     process will not be given the chance to save its state or\n\
+                                     data before it is terminated. Are you sure you want to\n\
+                                     terminate the process?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Unable to Terminate Process"
+    IDS_DEBUG_MESSAGE               "WARNING: Debugging this process may result in loss of data.\n\
+                                     Are you sure you wish to attach the debugger?"
+    IDS_DEBUG_UNABLE2DEBUG          "Unable to Debug Process"
+    IDS_AFFINITY_ERROR_MESSAGE      "The process must have affinity with at least one processor"
+    IDS_AFFINITY_ERROR_TITLE        "Invalid Option"
+    IDS_AFFINITY_UNABLE2ACCESS      "Unable to Access or Set Process Affinity"
+END

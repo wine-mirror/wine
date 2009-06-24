@@ -223,6 +223,16 @@
 #define IDS_IOWRITEBYTES                32854
 #define IDS_IOOTHER                     32855
 #define IDS_IOOTHERBYTES                32856
+#define IDS_WARNING_TITLE               32857
+#define IDS_PRIORITY_CHANGE_MESSAGE     32858
+#define IDS_PRIORITY_UNABLE2CHANGE      32859
+#define IDS_TERMINATE_MESSAGE           32860
+#define IDS_TERMINATE_UNABLE2TERMINATE  32861
+#define IDS_DEBUG_MESSAGE               32862
+#define IDS_DEBUG_UNABLE2DEBUG          32863
+#define IDS_AFFINITY_ERROR_MESSAGE      32864
+#define IDS_AFFINITY_ERROR_TITLE        32865
+#define IDS_AFFINITY_UNABLE2ACCESS      32866
 #define IDC_STATIC                      -1
 
 /*

@@ -47,22 +47,20 @@ void ProcessPage_OnDebug(void)
     STARTUPINFOW         si;
     HANDLE               hDebugEvent;
 
-    static const WCHAR    wszWarnTitle[] = {'T','a','s','k',' ','M','a','n','a','g','e','r',' ',
-                                            'W','a','r','n','i','n','g',0};
-    static const WCHAR    wszUnable2Debug[] = {'U','n','a','b','l','e',' ','t','o',' ','D','e','b','u','g',' ',
-                                              'P','r','o','c','e','s','s',0};
+    WCHAR    wszWarnTitle[255];
+    WCHAR    wszUnable2Debug[255];
+    WCHAR    wszWarnMsg[255];
+
     static const WCHAR    wszSubKey[] = {'S','o','f','t','w','a','r','e','\\',
                                          'M','i','c','r','o','s','o','f','t','\\',
                                          'W','i','n','d','o','w','s',' ','N','T','\\',
                                          'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                          'A','e','D','e','b','u','g',0};
     static const WCHAR    wszDebugger[] = {'D','e','b','u','g','g','e','r',0};
-    static const WCHAR    wszWarnMsg[] = {'W','A','R','N','I','N','G',':',' ','D','e','b','u','g','g','i','n','g',' ',
-                                          't','h','i','s',' ','p','r','o','c','e','s','s',' ','m','a','y',' ',
-                                          'r','e','s','u','l','t',' ','i','n',' ','l','o','s','s',' ','o','f',' ',
-                                          'd','a','t','a','.','\n','A','r','e',' ','y','o','u',' ','s','u','r','e',' ',
-                                          'y','o','u',' ','w','i','s','h',' ','t','o',' ','a','t','t','a','c','h',' ',
-                                          't','h','e',' ','d','e','b','u','g','g','e','r','?',0};
+
+    LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, sizeof(wszWarnTitle)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_DEBUG_UNABLE2DEBUG, wszUnable2Debug, sizeof(wszUnable2Debug)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_DEBUG_MESSAGE, wszWarnMsg, sizeof(wszWarnMsg)/sizeof(WCHAR));
 
     for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
     {

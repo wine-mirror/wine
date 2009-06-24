@@ -41,10 +41,13 @@ static void DoSetPriority(DWORD priority)
     HANDLE           hProcess;
     WCHAR            wstrErrorText[256];
 
-    static const WCHAR    wszWarnMsg[] = {'W','A','R','N','I','N','G',':',' ','C','h','a','n','g','i','n','g',
-' ','t','h','e',' ','p','r','i','o','r','i','t','y',' ','c','l','a','s','s',' ','o','f',' ','t','h','i','s',' ','p','r','o','c','e','s','s',' ','m','a','y','\n','c','a','u','s','e',' ','u','n','d','e','s','i','r','e','d',' ','r','e','s','u','l','t','s',' ','i','n','c','l','u','d','i','n','g',' ','s','y','s','t','e','m',' ','i','n','s','t','a','b','i','l','i','t','y','.',' ','A','r','e',' ','y','o','u','\n','s','u','r','e',' ','y','o','u',' ','w','a','n','t',' ','t','o',' ','c','h','a','n','g','e',' ','t','h','e',' ','p','r','i','o','r','i','t','y',' ','c','l','a','s','s','?',0};
-    static const WCHAR    wszWarnTitle[] = {'T','a','s','k',' ','M','a','n','a','g','e','r',' ','W','a','r','n','i','n','g',0};
-    static const WCHAR    wszUnable2Change[] = {'U','n','a','b','l','e',' ','t','o',' ','C','h','a','n','g','e',' ','P','r','i','o','r','i','t','y',0};
+    WCHAR    wszWarnMsg[255];
+    WCHAR    wszWarnTitle[255];
+    WCHAR    wszUnable2Change[255];
+
+    LoadStringW(hInst, IDS_PRIORITY_CHANGE_MESSAGE, wszWarnMsg, sizeof(wszWarnMsg)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, sizeof(wszWarnTitle)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_PRIORITY_UNABLE2CHANGE, wszUnable2Change, sizeof(wszUnable2Change)/sizeof(WCHAR));
 
     for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
     {

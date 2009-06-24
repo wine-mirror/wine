@@ -33,9 +33,16 @@
 #include "taskmgr.h"
 #include "perfdata.h"
 
-static const WCHAR    wszWarnMsg[] = {'W','A','R','N','I','N','G',':',' ','T','e','r','m','i','n','a','t','i','n','g',' ','a',' ','p','r','o','c','e','s','s',' ','c','a','n',' ','c','a','u','s','e',' ','u','n','d','e','s','i','r','e','d','\n','r','e','s','u','l','t','s',' ','i','n','c','l','u','d','i','n','g',' ','l','o','s','s',' ','o','f',' ','d','a','t','a',' ','a','n','d',' ','s','y','s','t','e','m',' ','i','n','s','t','a','b','i','l','i','t','y','.',' ','T','h','e','\n','p','r','o','c','e','s','s',' ','w','i','l','l',' ','n','o','t',' ','b','e',' ','g','i','v','e','n',' ','t','h','e',' ','c','h','a','n','c','e',' ','t','o',' ','s','a','v','e',' ','i','t','s',' ','s','t','a','t','e',' ','o','r','\n','d','a','t','a',' ','b','e','f','o','r','e',' ','i','t',' ','i','s',' ','t','e','r','m','i','n','a','t','e','d','.',' ','A','r','e',' ','y','o','u',' ','s','u','r','e',' ','y','o','u',' ','w','a','n','t',' ','t','o','\n','t','e','r','m','i','n','a','t','e',' ','t','h','e',' ','p','r','o','c','e','s','s','?',0};
-static const WCHAR    wszWarnTitle[] = {'T','a','s','k',' ','M','a','n','a','g','e','r',' ','W','a','r','n','i','n','g',0};
-static const WCHAR    wszUnable2Terminate[] = {'U','n','a','b','l','e',' ','t','o',' ','T','e','r','m','i','n','a','t','e',' ','P','r','o','c','e','s','s',0};
+WCHAR    wszWarnMsg[511];
+WCHAR    wszWarnTitle[255];
+WCHAR    wszUnable2Terminate[255];
+
+static void load_message_strings(void)
+{
+    LoadStringW(hInst, IDS_TERMINATE_MESSAGE, wszWarnMsg, sizeof(wszWarnMsg)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_TERMINATE_UNABLE2TERMINATE, wszUnable2Terminate, sizeof(wszUnable2Terminate)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, sizeof(wszWarnTitle)/sizeof(WCHAR));
+}
 
 void ProcessPage_OnEndProcess(void)
 {
@@ -44,6 +51,8 @@ void ProcessPage_OnEndProcess(void)
     DWORD            dwProcessId;
     HANDLE           hProcess;
     WCHAR            wstrErrorText[256];
+
+    load_message_strings();
 
     for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
     {
@@ -91,6 +100,8 @@ void ProcessPage_OnEndProcessTree(void)
     DWORD            dwProcessId;
     HANDLE           hProcess;
     WCHAR            wstrErrorText[256];
+
+    load_message_strings();
 
     for (Index=0; Index<(ULONG)ListView_GetItemCount(hProcessPageListCtrl); Index++)
     {
