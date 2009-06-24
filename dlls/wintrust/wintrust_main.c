@@ -1085,3 +1085,12 @@ BOOL WINAPI OpenPersonalTrustDBDialog(HWND hwnd)
     uiCertMgr.pszInitUsageOID = NULL;
     return CryptUIDlgCertMgr(&uiCertMgr);
 }
+
+/***********************************************************************
+ *		WTHelperCertCheckValidSignature
+ */
+HRESULT WINAPI WTHelperCertCheckValidSignature(CRYPT_PROVIDER_DATA *pProvData)
+{
+    FIXME("Stub\n");
+    return S_OK;
+}

@@ -73,6 +73,7 @@
 @ stub TrustFreeDecode
 @ stdcall TrustIsCertificateSelfSigned(ptr)
 @ stub TrustOpenStores
+@ stdcall WTHelperCertCheckValidSignature(ptr)
 @ stub WTHelperCertFindIssuerCertificate
 @ stub WTHelperCertIsSelfSigned
 @ stub WTHelperCheckCertUsage
