@@ -453,6 +453,12 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     BOOL expired = FALSE;
 
     value = data = HeapAlloc(GetProcessHeap(), 0, (strlenW(cookie_data) + 1) * sizeof(WCHAR));
+    if (data == NULL)
+    {
+        ERR("could not allocate %zu bytes for the cookie data buffer\n", (strlenW(cookie_data) + 1) * sizeof(WCHAR));
+        return FALSE;
+    }
+
     strcpyW(data,cookie_data);
     memset(&expiry,0,sizeof(expiry));
 
@@ -470,7 +476,15 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
         if (!(ptr = strchrW(ptr,';'))) break;
         *ptr++ = 0;
 
+        if (value != data)
+            HeapFree(GetProcessHeap(), 0, value);
         value = HeapAlloc(GetProcessHeap(), 0, (ptr - data) * sizeof(WCHAR));
+        if (value == NULL)
+        {
+            HeapFree(GetProcessHeap(), 0, data);
+            ERR("could not allocate %zu bytes for the cookie value buffer\n", (ptr - data) * sizeof(WCHAR));
+            return FALSE;
+        }
         strcpyW(value, data);
 
         while (*ptr == ' ') ptr++; /* whitespace */
