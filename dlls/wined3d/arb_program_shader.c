@@ -4363,15 +4363,14 @@ static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
         IWineD3DBaseShaderImpl *This, UINT idx, struct loop_control *loop_control)
 {
     BOOL vshader = shader_is_vshader_version(This->baseShader.reg_maps.shader_version.type);
-    WORD flag = (1 << idx);
-    const local_constant *constant;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
 
     /* Integer constants can either be a local constant, or they can be stored in the shader
-     * type specific compile args
-     */
-    if(This->baseShader.reg_maps.local_int_consts & flag)
+     * type specific compile args. */
+    if (This->baseShader.reg_maps.local_int_consts & (1 << idx))
     {
+        const local_constant *constant;
+
         LIST_FOR_EACH_ENTRY(constant, &This->baseShader.constantsI, local_constant, entry)
         {
             if (constant->idx == idx)
