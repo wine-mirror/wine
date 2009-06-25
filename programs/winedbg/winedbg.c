@@ -587,7 +587,7 @@ static int dbg_winedbg_usage(BOOL advanced)
     }
     else
         dbg_printf("Usage:\n\twinedbg [ [ --gdb ] [ prog-name [ prog-args ] | <num> | file.mdmp | --help ]\n");
-    return -1;
+    return 0;
 }
 
 void dbg_start_interactive(HANDLE hFile)
