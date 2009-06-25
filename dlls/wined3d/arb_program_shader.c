@@ -2707,7 +2707,7 @@ static void shader_hw_ifc(const struct wined3d_shader_instruction *ins)
         /* Invert the flag. We jump to the else label if the condition is NOT true */
         comp = get_compare(invert_compare(ins->flags));
         shader_addline(buffer, "SUBC TA, %s, %s;\n", src_name0, src_name1);
-        shader_addline(buffer, "BRA ifc_%u_endif (%s.x);\n", control_frame->ifc_no, comp);
+        shader_addline(buffer, "BRA ifc_%u_else (%s.x);\n", control_frame->ifc_no, comp);
     }
     else
     {
