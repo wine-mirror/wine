@@ -209,7 +209,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     BOOL testdummy_ok, testbitmap_ok;
-    IDirect3DSurface9 *surf;
+    IDirect3DSurface9 *surf, *newsurf;
     RECT rect;
 
     hr = create_file("testdummy.bmp", noimage, sizeof(noimage));  /* invalid image */
@@ -317,6 +317,23 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_UNKNOWN, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
     ok(hr == E_FAIL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, E_FAIL);
+
+
+    /* D3DXLoadSurfaceFromSurface */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 256, 256, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &newsurf, NULL);
+    if(SUCCEEDED(hr)) {
+        todo_wine {
+            hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_DEFAULT, 0);
+            ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3D_OK);
+        }
+
+        hr = D3DXLoadSurfaceFromSurface(NULL, NULL, NULL, surf, NULL, NULL, D3DX_DEFAULT, 0);
+        ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+        hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, NULL, NULL, NULL, D3DX_DEFAULT, 0);
+        ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    } else skip("Failed to create a second surface\n");
+    check_release((IUnknown*)newsurf, 0);
 
 
     /* cleanup */
