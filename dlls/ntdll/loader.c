@@ -148,8 +148,12 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 extern BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module, UINT reason, void *reserved );
 __ASM_GLOBAL_FUNC(call_dll_entry_point,
                   "pushl %ebp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
                   "movl %esp,%ebp\n\t"
+                  __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
                   "pushl %ebx\n\t"
+                  __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
                   "subl $8,%esp\n\t"
                   "pushl 20(%ebp)\n\t"
                   "pushl 16(%ebp)\n\t"
@@ -158,7 +162,10 @@ __ASM_GLOBAL_FUNC(call_dll_entry_point,
                   "call *%eax\n\t"
                   "leal -4(%ebp),%esp\n\t"
                   "popl %ebx\n\t"
+                  __ASM_CFI(".cfi_same_value %ebx\n\t")
                   "popl %ebp\n\t"
+                  __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                  __ASM_CFI(".cfi_same_value %ebp\n\t")
                   "ret" )
 #else /* __i386__ */
 static inline BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module,

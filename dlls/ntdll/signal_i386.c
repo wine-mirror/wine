@@ -137,11 +137,15 @@ void vm86_return(void);
 void vm86_return_end(void);
 __ASM_GLOBAL_FUNC(vm86_enter,
                   "pushl %ebp\n\t"
-                  "movl %esp, %ebp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                  "movl %esp,%ebp\n\t"
+                  __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                  "pushl %ebx\n\t"
+                  __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
                   "movl $166,%eax\n\t"  /*SYS_vm86*/
                   "movl 8(%ebp),%ecx\n\t" /* vm86_ptr */
                   "movl (%ecx),%ecx\n\t"
-                  "pushl %ebx\n\t"
                   "movl $1,%ebx\n\t"    /*VM86_ENTER*/
                   "pushl %ecx\n\t"      /* put vm86plus_struct ptr somewhere we can find it */
                   "pushl %fs\n\t"
@@ -154,7 +158,10 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   "popl %fs\n\t"
                   "popl %ecx\n\t"
                   "popl %ebx\n\t"
+                  __ASM_CFI(".cfi_same_value %ebx\n\t")
                   "popl %ebp\n\t"
+                  __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                  __ASM_CFI(".cfi_same_value %ebp\n\t")
                   "testl %eax,%eax\n\t"
                   "jl 0f\n\t"
                   "cmpb $0,%al\n\t" /* VM86_SIGNAL */
@@ -2268,7 +2275,10 @@ DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 1 )
 extern void DECLSPEC_NORETURN call_thread_func( LPTHREAD_START_ROUTINE entry, void *arg );
 __ASM_GLOBAL_FUNC(call_thread_func,
                   "pushl %ebp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
                   "movl %esp,%ebp\n\t"
+                  __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
                   "subl $4,%esp\n\t"
                   "pushl 12(%ebp)\n\t"
                   "call *8(%ebp)\n\t"
@@ -2329,42 +2339,53 @@ __ASM_STDCALL_FUNC( NtCurrentTeb, 0, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" )
  * function calling the handler having only 5 parameters (*4).
  */
 __ASM_GLOBAL_FUNC( EXC_CallHandler,
-"	pushl	%ebp\n"
-"	movl	%esp, %ebp\n"
-"	pushl	%ebx\n"
-"	movl	28(%ebp), %edx\n" /* ugly hack to pass the 6th param needed because of Shrinker */
-"	pushl	24(%ebp)\n"
-"	pushl	20(%ebp)\n"
-"	pushl	16(%ebp)\n"
-"	pushl	12(%ebp)\n"
-"	pushl	8(%ebp)\n"
-"	call	" __ASM_NAME("call_exception_handler") "\n"
-"	popl	%ebx\n"
-"	leave\n"
-"	ret\n"
-)
+                  "pushl %ebp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                  "movl %esp,%ebp\n\t"
+                  __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %ebx\n\t"
+                   __ASM_CFI(".cfi_rel_offset %ebx,-4\n\t")
+                   "movl 28(%ebp), %edx\n\t" /* ugly hack to pass the 6th param needed because of Shrinker */
+                   "pushl 24(%ebp)\n\t"
+                   "pushl 20(%ebp)\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "pushl 12(%ebp)\n\t"
+                   "pushl 8(%ebp)\n\t"
+                   "call " __ASM_NAME("call_exception_handler") "\n\t"
+                   "popl %ebx\n\t"
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
+                   "leave\n"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret" )
 __ASM_GLOBAL_FUNC(call_exception_handler,
-"	pushl	%ebp\n"
-"	movl	%esp, %ebp\n"
-"	subl    $12,%esp\n"
-"	pushl	12(%ebp)\n"       /* make any exceptions in this... */
-"	pushl	%edx\n"           /* handler be handled by... */
-"	.byte	0x64\n"
-"	pushl	(0)\n"            /* nested_handler (passed in edx). */
-"	.byte	0x64\n"
-"	movl	%esp,(0)\n"       /* push the new exception frame onto the exception stack. */
-"	pushl	20(%ebp)\n"
-"	pushl	16(%ebp)\n"
-"	pushl	12(%ebp)\n"
-"	pushl	8(%ebp)\n"
-"	movl	24(%ebp), %ecx\n" /* (*1) */
-"	call	*%ecx\n"          /* call handler. (*2) */
-"	.byte	0x64\n"
-"	movl	(0), %esp\n"      /* restore previous... (*3) */
-"	.byte	0x64\n"
-"	popl	(0)\n"            /* exception frame. */
-"	movl	%ebp, %esp\n"     /* restore saved stack, in case it was corrupted */
-"	popl	%ebp\n"
-"	ret	$20\n"            /* (*4) */
-)
+                  "pushl %ebp\n\t"
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                  __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                  "movl %esp,%ebp\n\t"
+                  __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                  "subl $12,%esp\n\t"
+                  "pushl 12(%ebp)\n\t"      /* make any exceptions in this... */
+                  "pushl %edx\n\t"          /* handler be handled by... */
+                  ".byte 0x64\n\t"
+                  "pushl (0)\n\t"           /* nested_handler (passed in edx). */
+                  ".byte 0x64\n\t"
+                  "movl %esp,(0)\n\t"       /* push the new exception frame onto the exception stack. */
+                  "pushl 20(%ebp)\n\t"
+                  "pushl 16(%ebp)\n\t"
+                  "pushl 12(%ebp)\n\t"
+                  "pushl 8(%ebp)\n\t"
+                  "movl 24(%ebp), %ecx\n\t" /* (*1) */
+                  "call *%ecx\n\t"          /* call handler. (*2) */
+                  ".byte 0x64\n\t"
+                  "movl (0), %esp\n\t"      /* restore previous... (*3) */
+                  ".byte 0x64\n\t"
+                  "popl (0)\n\t"            /* exception frame. */
+                  "movl %ebp, %esp\n\t"     /* restore saved stack, in case it was corrupted */
+                  "popl %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                  "ret $20" )            /* (*4) */
+
 #endif  /* __i386__ */

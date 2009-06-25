@@ -320,26 +320,35 @@ static inline void RELAY_PrintArgs( const INT_PTR *args, int nb_args, unsigned i
 extern LONGLONG CDECL call_entry_point( void *func, int nb_args, const INT_PTR *args );
 #ifdef __i386__
 __ASM_GLOBAL_FUNC( call_entry_point,
-                   "\tpushl %ebp\n"
-                   "\tmovl %esp,%ebp\n"
-                   "\tpushl %esi\n"
-                   "\tpushl %edi\n"
-                   "\tmovl 12(%ebp),%edx\n"
-                   "\tshll $2,%edx\n"
-                   "\tjz 1f\n"
-                   "\tsubl %edx,%esp\n"
-                   "\tandl $~15,%esp\n"
-                   "\tmovl 12(%ebp),%ecx\n"
-                   "\tmovl 16(%ebp),%esi\n"
-                   "\tmovl %esp,%edi\n"
-                   "\tcld\n"
-                   "\trep; movsl\n"
-                   "1:\tcall *8(%ebp)\n"
-                   "\tleal -8(%ebp),%esp\n"
-                   "\tpopl %edi\n"
-                   "\tpopl %esi\n"
-                   "\tpopl %ebp\n"
-                   "\tret" )
+                   "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+                   "movl %esp,%ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+                   "pushl %esi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %esi,-4\n\t")
+                   "pushl %edi\n\t"
+                  __ASM_CFI(".cfi_rel_offset %edi,-8\n\t")
+                   "movl 12(%ebp),%edx\n\t"
+                   "shll $2,%edx\n\t"
+                   "jz 1f\n\t"
+                   "subl %edx,%esp\n\t"
+                   "andl $~15,%esp\n\t"
+                   "movl 12(%ebp),%ecx\n\t"
+                   "movl 16(%ebp),%esi\n\t"
+                   "movl %esp,%edi\n\t"
+                   "cld\n\t"
+                   "rep; movsl\n"
+                   "1:\tcall *8(%ebp)\n\t"
+                   "leal -8(%ebp),%esp\n\t"
+                   "popl %edi\n\t"
+                   __ASM_CFI(".cfi_same_value %edi\n\t")
+                   "popl %esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   "popl %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
+                   "ret" )
 #else
 __ASM_GLOBAL_FUNC( call_entry_point,
                    "pushq %rbp\n\t"
