@@ -94,19 +94,29 @@ void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, vo
 #if defined(__i386__) && defined(__GNUC__)
 __ASM_GLOBAL_FUNC( wine_call_on_stack,
                    "pushl %ebp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
                    "pushl %esi\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %esi,0\n\t")
+                   "movl %esp,%esi\n\t"
+                   __ASM_CFI(".cfi_def_cfa_register %esi\n\t")
                    "movl 12(%esp),%ecx\n\t"  /* func */
                    "movl 16(%esp),%edx\n\t"  /* arg */
-                   "movl 20(%esp),%esi\n\t"  /* stack */
-                   "andl $~15,%esi\n\t"
-                   "subl $12,%esi\n\t"
-                   "xchgl %esi,%esp\n\t"
+                   "movl 20(%esp),%eax\n\t"  /* stack */
+                   "andl $~15,%eax\n\t"
+                   "subl $12,%eax\n\t"
+                   "movl %eax,%esp\n\t"
                    "pushl %edx\n\t"
                    "xorl %ebp,%ebp\n\t"
                    "call *%ecx\n\t"
                    "movl %esi,%esp\n\t"
                    "popl %esi\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
                    "popl %ebp\n\t"
+                   __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+                   __ASM_CFI(".cfi_same_value %ebp\n\t")
                    "ret" )
 #elif defined(__i386__) && defined(_MSC_VER)
 __declspec(naked) int wine_call_on_stack( int (*func)(void *), void *arg, void *stack )

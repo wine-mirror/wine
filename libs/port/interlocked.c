@@ -40,7 +40,11 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                   "ret")
  __ASM_GLOBAL_FUNC(interlocked_cmpxchg64,
                    "push %ebx\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %ebx,0\n\t")
                    "push %esi\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   __ASM_CFI(".cfi_rel_offset %esi,0\n\t")
                    "movl 12(%esp),%esi\n\t"
                    "movl 16(%esp),%ebx\n\t"
                    "movl 20(%esp),%ecx\n\t"
@@ -48,7 +52,11 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                    "movl 28(%esp),%edx\n\t"
                    "lock; cmpxchg8b (%esi)\n\t"
                    "pop %esi\n\t"
+                   __ASM_CFI(".cfi_same_value %esi\n\t")
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    "pop %ebx\n\t"
+                   __ASM_CFI(".cfi_same_value %ebx\n\t")
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    "ret")
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "movl 8(%esp),%eax\n\t"
