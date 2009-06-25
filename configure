@@ -25613,6 +25613,14 @@ dlls/dpwsockx/Makefile: dlls/dpwsockx/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/dpwsockx/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/drmclien/Makefile"
+test "x$enable_drmclien" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	drmclien"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/drmclien/Makefile: dlls/drmclien/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/drmclien/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/dsound/Makefile"
 test "x$enable_dsound" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	dsound"
@@ -29472,6 +29480,7 @@ do
     "dlls/dpnhpast/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnhpast/Makefile" ;;
     "dlls/dpnlobby/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnlobby/Makefile" ;;
     "dlls/dpwsockx/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpwsockx/Makefile" ;;
+    "dlls/drmclien/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/drmclien/Makefile" ;;
     "dlls/dsound/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dsound/Makefile" ;;
     "dlls/dsound/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dsound/tests/Makefile" ;;
     "dlls/dssenh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dssenh/Makefile" ;;

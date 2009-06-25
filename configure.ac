@@ -2131,6 +2131,7 @@ WINE_CONFIG_MAKEFILE([dlls/dpnet/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_
 WINE_CONFIG_MAKEFILE([dlls/dpnhpast/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/dpnlobby/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/dpwsockx/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/drmclien/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/dsound/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/dsound/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/dssenh/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
