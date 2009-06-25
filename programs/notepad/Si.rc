@@ -53,6 +53,7 @@ POPUP "&Urejanje" {
 POPUP "&Iskanje" {
   MENUITEM "&Najdi ...\tCtrl+F",   CMD_SEARCH
   MENUITEM "Najdi na&slednje\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Zamenjaj...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Pomoč" {
   MENUITEM "&Teme pomoči",         CMD_HELP_CONTENTS
