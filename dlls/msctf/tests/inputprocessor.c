@@ -1170,6 +1170,7 @@ static void test_startSession(void)
     hr = ITfThreadMgr_GetFocus(g_tm,&dmtest);
     ok(SUCCEEDED(hr),"GetFocus Failed\n");
     ok(g_dm == dmtest,"Expected DocumentMgr not focused\n");
+    ITfDocumentMgr_Release(dmtest);
 
     TextStoreACP_Constructor((IUnknown**)&ts);
 
