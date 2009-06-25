@@ -37,13 +37,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 static void buffer_create_buffer_object(struct wined3d_buffer *This)
 {
     GLenum error, gl_usage;
-    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
     TRACE("Creating an OpenGL vertex buffer object for IWineD3DVertexBuffer %p Usage(%s)\n",
             This, debug_d3dusage(This->resource.usage));
 
-    /* Make sure that a context is there. Needed in a multithreaded environment. Otherwise this call is a nop */
-    ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
     ENTER_GL();
 
     /* Make sure that the gl error is cleared. Do not use checkGLcall
@@ -689,6 +686,8 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
 
     TRACE("iface %p\n", iface);
 
+    ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
     if (!This->buffer_object)
     {
         /* TODO: Make converting independent from VBOs */
@@ -724,7 +723,7 @@ static void STDMETHODCALLTYPE buffer_PreLoad(IWineD3DBuffer *iface)
         if (This->conversion_count > VB_MAXDECLCHANGES)
         {
             FIXME("Too many declaration changes, stopping converting\n");
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
             ENTER_GL();
             GL_EXTCALL(glDeleteBuffersARB(1, &This->buffer_object));
             checkGLcall("glDeleteBuffersARB");

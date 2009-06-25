@@ -756,6 +756,11 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     GLenum feedback_type;
     GLfloat *feedbuffer;
 
+    /* Simply activate the context for blitting. This disables all the things we don't want and
+     * takes care of dirtifying. Dirtifying is preferred over pushing / popping, since drawing the
+     * patch (as opposed to normal draws) will most likely need different changes anyway. */
+    ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_BLIT);
+
     /* First, locate the position data. This is provided in a vertex buffer in the stateblock.
      * Beware of vbos
      */
@@ -806,11 +811,6 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     patch->has_normals = TRUE;
     patch->has_texcoords = FALSE;
 
-    /* Simply activate the context for blitting. This disables all the things we don't want and
-     * takes care of dirtifying. Dirtifying is preferred over pushing / popping, since drawing the
-     * patch (as opposed to normal draws) will most likely need different changes anyway
-     */
-    ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_BLIT);
     ENTER_GL();
 
     glMatrixMode(GL_PROJECTION);
