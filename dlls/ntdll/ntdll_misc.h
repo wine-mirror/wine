@@ -150,7 +150,7 @@ extern NTSTATUS virtual_handle_fault( LPCVOID addr, DWORD err );
 extern BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size );
 extern BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size );
 extern void VIRTUAL_SetForceExec( BOOL enable );
-extern void VIRTUAL_UseLargeAddressSpace(void);
+extern void virtual_release_address_space( BOOL free_high_mem );
 extern struct _KUSER_SHARED_DATA *user_shared_data;
 
 /* completion */

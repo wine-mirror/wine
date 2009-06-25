@@ -370,6 +370,36 @@ static void add_reserved_area( void *addr, size_t size )
 
 
 /***********************************************************************
+ *           remove_reserved_area
+ *
+ * Remove a reserved area from the list maintained by libwine.
+ * The csVirtual section must be held by caller.
+ */
+static void remove_reserved_area( void *addr, size_t size )
+{
+    struct file_view *view;
+
+    TRACE( "removing %p-%p\n", addr, (char *)addr + size );
+    wine_mmap_remove_reserved_area( addr, size, 0 );
+
+    /* unmap areas not covered by an existing view */
+    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
+    {
+        if ((char *)view->base >= (char *)addr + size)
+        {
+            munmap( addr, size );
+            break;
+        }
+        if ((char *)view->base + view->size <= (char *)addr) continue;
+        if (view->base > addr) munmap( addr, (char *)view->base - (char *)addr );
+        if ((char *)view->base + view->size > (char *)addr + size) break;
+        size = (char *)addr + size - ((char *)view->base + view->size);
+        addr = (char *)view->base + view->size;
+    }
+}
+
+
+/***********************************************************************
  *           is_beyond_limit
  *
  * Check if an address range goes beyond a given limit.
@@ -1615,17 +1645,56 @@ void VIRTUAL_SetForceExec( BOOL enable )
     server_leave_uninterrupted_section( &csVirtual, &sigset );
 }
 
+struct free_range
+{
+    char *base;
+    char *limit;
+};
+
+/* free reserved areas above the limit; callback for wine_mmap_enum_reserved_areas */
+static int free_reserved_memory( void *base, size_t size, void *arg )
+{
+    struct free_range *range = arg;
+
+    if ((char *)base >= range->limit) return 0;
+    if ((char *)base + size <= range->base) return 0;
+    if ((char *)base < range->base)
+    {
+        size -= range->base - (char *)base;
+        base = range->base;
+    }
+    if ((char *)base + size > range->limit) size = range->limit - (char *)base;
+    remove_reserved_area( base, size );
+    return 1;  /* stop enumeration since the list has changed */
+}
 
 /***********************************************************************
- *           VIRTUAL_UseLargeAddressSpace
+ *           virtual_release_address_space
  *
- * Increase the address space size for apps that support it.
+ * Release some address space once we have loaded and initialized the app.
  */
-void VIRTUAL_UseLargeAddressSpace(void)
+void virtual_release_address_space( BOOL free_high_mem )
 {
+#ifdef __i386__
+    struct free_range range;
+    sigset_t sigset;
+
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
+
+    range.base  = (char *)0x20000000;
+    range.limit = (char *)0x7f000000;
+    while (wine_mmap_enum_reserved_areas( free_reserved_memory, &range, 0 )) /* nothing */;
+
     /* no large address space on win9x */
-    if (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
-    user_space_limit = working_set_limit = address_space_limit;
+    if (free_high_mem && NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32_NT)
+    {
+        range.base  = (char *)0x80000000;
+        range.limit = address_space_limit;
+        while (wine_mmap_enum_reserved_areas( free_reserved_memory, &range, 1 )) /* nothing */;
+        user_space_limit = working_set_limit = address_space_limit;
+    }
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
+#endif
 }
 
 
