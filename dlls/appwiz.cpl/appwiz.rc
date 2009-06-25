@@ -41,4 +41,5 @@
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+/* @makedep: appwiz.ico */
 ICO_MAIN ICON "appwiz.ico"
