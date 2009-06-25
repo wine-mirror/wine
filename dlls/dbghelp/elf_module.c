@@ -650,8 +650,8 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
             ULONG64     ref_addr;
 
             symt = symt_find_nearest(module, addr);
-            if (symt)
-                symt_get_info(&symt->symt, TI_GET_ADDRESS, &ref_addr);
+            if (symt && !symt_get_info(&symt->symt, TI_GET_ADDRESS, &ref_addr))
+                ref_addr = addr;
             if (!symt || addr != ref_addr)
             {
                 /* creating public symbols for all the ELF symbols which haven't been
