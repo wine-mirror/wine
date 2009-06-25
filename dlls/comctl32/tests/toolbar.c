@@ -415,7 +415,7 @@ static void test_add_bitmap(void)
                 ok(strcmp(_buf, (tab)[_i]) == 0, "Invalid string #%d - '%s' vs '%s'\n", _i, (tab)[_i], _buf); \
         } \
         ok(SendMessageA(hToolbar, TB_GETSTRING, MAKEWPARAM(260, (count)), (LPARAM)_buf) == -1, \
-            "Too many string in table\n"); \
+            "Too many strings in table\n"); \
     }
 
 static void test_add_string(void)
@@ -432,10 +432,17 @@ static void test_add_string(void)
     HWND hToolbar = NULL;
     TBBUTTON button;
     int ret;
+    CHAR buf[260];
 
     rebuild_toolbar(&hToolbar);
     ret = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)test1);
     ok(ret == 0, "TB_ADDSTRINGA - unexpected return %d\n", ret);
+    ret = SendMessageA(hToolbar, TB_GETSTRING, MAKEWPARAM(260, 1), (LPARAM)buf);
+    if (ret == 0)
+    {
+        win_skip("TB_GETSTRING needs 5.80\n");
+        return;
+    }
     CHECK_STRING_TABLE(2, ret1);
     ret = SendMessageA(hToolbar, TB_ADDSTRINGA, 0, (LPARAM)test2);
     ok(ret == 2, "TB_ADDSTRINGA - unexpected return %d\n", ret);
@@ -1281,6 +1288,12 @@ static void test_getstring(void)
     ok(hToolbar != NULL, "Toolbar creation problem\n");
 
     r = SendMessage(hToolbar, TB_GETSTRING, MAKEWPARAM(0, 0), 0);
+    if (r == 0)
+    {
+        win_skip("TB_GETSTRING and TB_GETSTRINGW need 5.80\n");
+        DestroyWindow(hToolbar);
+        return;
+    }
     expect(-1, r);
     r = SendMessage(hToolbar, TB_GETSTRINGW, MAKEWPARAM(0, 0), 0);
     expect(-1, r);
