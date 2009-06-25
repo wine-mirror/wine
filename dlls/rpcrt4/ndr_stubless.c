@@ -867,9 +867,14 @@ __declspec(naked) LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigne
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned int stack_size);
 __ASM_GLOBAL_FUNC(call_server_func,
     "pushl %ebp\n\t"
-    "movl %esp, %ebp\n\t"
+    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+    "movl %esp,%ebp\n\t"
+    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
     "pushl %edi\n\t"            /* Save registers */
+    __ASM_CFI(".cfi_rel_offset %edi,-4\n\t")
     "pushl %esi\n\t"
+    __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
     "movl 16(%ebp), %eax\n\t"   /* Get stack size */
     "subl %eax, %esp\n\t"       /* Make room in stack for arguments */
     "andl $~15, %esp\n\t"	/* Make sure stack has 16-byte alignment for Mac OS X */
@@ -882,9 +887,13 @@ __ASM_GLOBAL_FUNC(call_server_func,
     "call *8(%ebp)\n\t"         /* Call function */
     "leal -8(%ebp), %esp\n\t"   /* Restore stack */
     "popl %esi\n\t"             /* Restore registers */
+    __ASM_CFI(".cfi_same_value %esi\n\t")
     "popl %edi\n\t"
+    __ASM_CFI(".cfi_same_value %edi\n\t")
     "popl %ebp\n\t"
-    "ret\n" )
+    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+    __ASM_CFI(".cfi_same_value %ebp\n\t")
+    "ret" )
 #else
 #warning call_server_func not implemented for your architecture
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned short stack_size)

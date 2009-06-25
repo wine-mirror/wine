@@ -76,8 +76,10 @@ struct thunk {
 extern void call_stubless_func(void);
 __ASM_GLOBAL_FUNC(call_stubless_func,
                   "pushl %esp\n\t"  /* pointer to index */
+                  __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                   "call " __ASM_NAME("ObjectStubless") __ASM_STDCALL(4) "\n\t"
                   "popl %edx\n\t"  /* args size */
+                  __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                   "movl (%esp),%ecx\n\t"  /* return address */
                   "addl %edx,%esp\n\t"
                   "jmp *%ecx" );
