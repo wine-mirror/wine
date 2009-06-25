@@ -472,6 +472,10 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                     This->lastActiveRenderTarget = (IWineD3DSurface *)0xdeadcafe;
                 }
             }
+            else if (This->d3d_initialized)
+            {
+                ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            }
 
             for (i = 0; i < This->numContexts; ++i)
             {
