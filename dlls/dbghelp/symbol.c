@@ -67,6 +67,12 @@ int symt_cmp_addr(const void* p1, const void* p2)
     return cmp_addr(a1, a2);
 }
 
+static void symt_add_module_ht(struct module* module, struct symt_ht* ht)
+{
+    hash_table_add(&module->ht_symbols, &ht->hash_elt);
+    module->sortlist_valid = FALSE;
+}
+
 #ifdef HAVE_REGEX_H
 
 /* transforms a dbghelp's regular expression into a POSIX one
@@ -247,13 +253,12 @@ struct symt_public* symt_new_public(struct module* module,
     {
         sym->symt.tag      = SymTagPublicSymbol;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
-        hash_table_add(&module->ht_symbols, &sym->hash_elt);
-        module->sortlist_valid = FALSE;
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->address       = address;
         sym->size          = size;
         sym->in_code       = in_code;
         sym->is_function   = is_func;
+        symt_add_module_ht(module, (struct symt_ht*)sym);
         if (compiland)
         {
             p = vector_add(&compiland->vchildren, &module->pool);
@@ -279,8 +284,6 @@ struct symt_data* symt_new_global_variable(struct module* module,
     {
         sym->symt.tag      = SymTagData;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
-        hash_table_add(&module->ht_symbols, &sym->hash_elt);
-        module->sortlist_valid = FALSE;
         sym->kind          = is_static ? DataIsFileStatic : DataIsGlobal;
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->type          = type;
@@ -292,6 +295,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
                       debugstr_w(module->module.ModuleName), name,
                       wine_dbgstr_longlong(tsz), size);
         }
+        symt_add_module_ht(module, (struct symt_ht*)sym);
         if (compiland)
         {
             p = vector_add(&compiland->vchildren, &module->pool);
@@ -318,14 +322,13 @@ struct symt_function* symt_new_function(struct module* module,
     {
         sym->symt.tag  = SymTagFunction;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
-        hash_table_add(&module->ht_symbols, &sym->hash_elt);
-        module->sortlist_valid = FALSE;
         sym->container = &compiland->symt;
         sym->address   = addr;
         sym->type      = sig_type;
         sym->size      = size;
         vector_init(&sym->vlines,  sizeof(struct line_info), 64);
         vector_init(&sym->vchildren, sizeof(struct symt*), 8);
+        symt_add_module_ht(module, (struct symt_ht*)sym);
         if (compiland)
         {
             p = vector_add(&compiland->vchildren, &module->pool);
@@ -519,12 +522,11 @@ struct symt_thunk* symt_new_thunk(struct module* module,
     {
         sym->symt.tag  = SymTagThunk;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
-        hash_table_add(&module->ht_symbols, &sym->hash_elt);
-        module->sortlist_valid = FALSE;
         sym->container = &compiland->symt;
         sym->address   = addr;
         sym->size      = size;
         sym->ordinal   = ord;
+        symt_add_module_ht(module, (struct symt_ht*)sym);
         if (compiland)
         {
             struct symt**       p;
@@ -549,12 +551,11 @@ struct symt_data* symt_new_constant(struct module* module,
     {
         sym->symt.tag      = SymTagData;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
-        hash_table_add(&module->ht_symbols, &sym->hash_elt);
-        module->sortlist_valid = FALSE;
         sym->kind          = DataIsConstant;
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->type          = type;
         sym->u.value       = *v;
+        symt_add_module_ht(module, (struct symt_ht*)sym);
         if (compiland)
         {
             struct symt**       p;
@@ -578,11 +579,10 @@ struct symt_hierarchy_point* symt_new_label(struct module* module,
     {
         sym->symt.tag      = SymTagLabel;
         sym->hash_elt.name = pool_strdup(&module->pool, name);
-        hash_table_add(&module->ht_symbols, &sym->hash_elt);
-        module->sortlist_valid = FALSE;
         sym->loc.kind      = loc_absolute;
         sym->loc.offset    = address;
         sym->parent        = compiland ? &compiland->symt : NULL;
+        symt_add_module_ht(module, (struct symt_ht*)sym);
         if (compiland)
         {
             struct symt**       p;
