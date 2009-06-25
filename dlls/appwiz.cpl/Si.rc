@@ -35,6 +35,7 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Ime"
    IDS_COLUMN_PUBLISHER, "Založnik"
    IDS_COLUMN_VERSION, "Različica"
+   IDS_INSTALL_FILTER, "Instalacijski programi\0*instal*.exe;*setup*.exe;*.msi\0Programi (*.exe)\0*.exe\0Vse datoteke (*.*)\0*.*\0\0"
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
