@@ -125,6 +125,7 @@ typedef struct tagSUBHEAP
 {
     void               *base;       /* Base address of the sub-heap memory block */
     SIZE_T              size;       /* Size of the whole sub-heap */
+    SIZE_T              min_commit; /* Minimum committed size */
     SIZE_T              commitSize; /* Committed size of the sub-heap */
     struct list         entry;      /* Entry in sub-heap list */
     struct tagHEAP     *heap;       /* Main heap structure */
@@ -490,6 +491,7 @@ static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 
     /* round to next block and add one full block */
     size = ((size + COMMIT_MASK) & ~COMMIT_MASK) + COMMIT_MASK + 1;
+    size = max( size, subheap->min_commit );
     if (size >= subheap->commitSize) return TRUE;
     decommit_size = subheap->commitSize - size;
     addr = (char *)subheap->base + size;
@@ -799,6 +801,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         subheap->base       = address;
         subheap->heap       = heap;
         subheap->size       = totalSize;
+        subheap->min_commit = 0x10000;
         subheap->commitSize = commitSize;
         subheap->magic      = SUBHEAP_MAGIC;
         subheap->headerSize = ROUND_SIZE( sizeof(SUBHEAP) );
@@ -819,6 +822,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         subheap->base       = address;
         subheap->heap       = heap;
         subheap->size       = totalSize;
+        subheap->min_commit = commitSize;
         subheap->commitSize = commitSize;
         subheap->magic      = SUBHEAP_MAGIC;
         subheap->headerSize = ROUND_SIZE( sizeof(HEAP) );
