@@ -91,6 +91,8 @@ typedef struct
 #define LARGE_ALIGNMENT        16  /* large blocks have stricter alignment */
 #define ARENA_OFFSET           (ALIGNMENT - sizeof(ARENA_INUSE))
 
+C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
+
 #define ROUND_SIZE(size)       ((((size) + ALIGNMENT - 1) & ~(ALIGNMENT-1)) + ARENA_OFFSET)
 
 #define QUIET                  1           /* Suppress messages  */
@@ -144,7 +146,7 @@ typedef struct tagHEAP
     SIZE_T           grow_size;     /* Size of next subheap for growing heap */
     DWORD            magic;         /* Magic number */
     RTL_CRITICAL_SECTION critSection; /* Critical section for serialization */
-    FREE_LIST_ENTRY  freeList[HEAP_NB_FREE_LISTS] DECLSPEC_ALIGN(8);  /* Free lists */
+    FREE_LIST_ENTRY *freeList;      /* Free lists */
 } HEAP;
 
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
@@ -824,6 +826,8 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
         /* Build the free lists */
 
+        heap->freeList = (FREE_LIST_ENTRY *)((char *)heap + subheap->headerSize);
+        subheap->headerSize += HEAP_NB_FREE_LISTS * sizeof(FREE_LIST_ENTRY);
         list_init( &heap->freeList[0].arena.entry );
         for (i = 0, pEntry = heap->freeList; i < HEAP_NB_FREE_LISTS; i++, pEntry++)
         {
@@ -1261,9 +1265,6 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
     {
         processHeap = subheap->heap;  /* assume the first heap we create is the process main heap */
         list_init( &processHeap->entry );
-        /* make sure structure alignment is correct */
-        assert( (ULONG_PTR)processHeap->freeList % ALIGNMENT == ARENA_OFFSET );
-        assert( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
     }
 
     return subheap->heap;
