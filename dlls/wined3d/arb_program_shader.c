@@ -2797,6 +2797,35 @@ static void shader_hw_texldl(const struct wined3d_shader_instruction *ins)
     shader_hw_sample(ins, sampler_idx, reg_dest, reg_coord, flags, NULL, NULL);
 }
 
+static void shader_hw_label(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+
+    /* Call instructions activate the NV extensions, not labels and rets. If there is an uncalled
+     * subroutine, don't generate a label that will make GL complain
+     */
+    if(priv->target_version == ARB) return;
+
+    shader_addline(buffer, "l%u:\n", ins->src[0].reg.idx);
+}
+
+static void shader_hw_ret(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
+
+    if(priv->target_version == ARB) return;
+
+    shader_addline(buffer, "RET;\n");
+}
+
+static void shader_hw_call(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    shader_addline(buffer, "CAL l%u;\n", ins->src[0].reg.idx);
+}
+
 /* GL locking is done by the caller */
 static GLuint create_arb_blt_vertex_program(const WineD3D_GL_Info *gl_info)
 {
@@ -3079,7 +3108,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
      * So enable the best we can get.
      */
     if(reg_maps->usesdsx || reg_maps->usesdsy || reg_maps->loop_depth > 0 || reg_maps->usestexldd ||
-       reg_maps->usestexldl || reg_maps->usesfacing || reg_maps->usesifc)
+       reg_maps->usestexldl || reg_maps->usesfacing || reg_maps->usesifc || reg_maps->usescall)
     {
         want_nv_prog = TRUE;
     }
@@ -4388,7 +4417,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_BREAK         */ shader_hw_break,
     /* WINED3DSIH_BREAKC        */ shader_hw_breakc,
     /* WINED3DSIH_BREAKP        */ NULL,
-    /* WINED3DSIH_CALL          */ NULL,
+    /* WINED3DSIH_CALL          */ shader_hw_call,
     /* WINED3DSIH_CALLNZ        */ NULL,
     /* WINED3DSIH_CMP           */ pshader_hw_cmp,
     /* WINED3DSIH_CND           */ pshader_hw_cnd,
@@ -4412,7 +4441,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_FRC           */ shader_hw_map2gl,
     /* WINED3DSIH_IF            */ NULL /* Hardcoded into the shader */,
     /* WINED3DSIH_IFC           */ shader_hw_ifc,
-    /* WINED3DSIH_LABEL         */ NULL,
+    /* WINED3DSIH_LABEL         */ shader_hw_label,
     /* WINED3DSIH_LIT           */ shader_hw_map2gl,
     /* WINED3DSIH_LOG           */ shader_hw_log_pow,
     /* WINED3DSIH_LOGP          */ shader_hw_log_pow,
@@ -4435,7 +4464,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_POW           */ shader_hw_log_pow,
     /* WINED3DSIH_RCP           */ shader_hw_rsq_rcp,
     /* WINED3DSIH_REP           */ shader_hw_rep,
-    /* WINED3DSIH_RET           */ NULL,
+    /* WINED3DSIH_RET           */ shader_hw_ret,
     /* WINED3DSIH_RSQ           */ shader_hw_rsq_rcp,
     /* WINED3DSIH_SETP          */ NULL,
     /* WINED3DSIH_SGE           */ shader_hw_map2gl,

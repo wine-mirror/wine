@@ -709,6 +709,10 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             {
                 reg_maps->usesifc = 1;
             }
+            else if(ins.handler_idx == WINED3DSIH_CALL)
+            {
+                reg_maps->usescall = 1;
+            }
 
             limit = ins.src_count + (ins.predicate ? 1 : 0);
             for (i = 0; i < limit; ++i)
@@ -1089,8 +1093,7 @@ void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
                 || ins.handler_idx == WINED3DSIH_DEF
                 || ins.handler_idx == WINED3DSIH_DEFI
                 || ins.handler_idx == WINED3DSIH_DEFB
-                || ins.handler_idx == WINED3DSIH_PHASE
-                || ins.handler_idx == WINED3DSIH_RET)
+                || ins.handler_idx == WINED3DSIH_PHASE)
         {
             pToken += param_size;
             continue;
