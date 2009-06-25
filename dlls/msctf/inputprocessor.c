@@ -43,7 +43,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
 static const WCHAR szwLngp[] = {'L','a','n','g','u','a','g','e','P','r','o','f','i','l','e',0};
-static const WCHAR szwEnabled[] = {'E','n','a','b','l','e','d',0};
+static const WCHAR szwEnable[] = {'E','n','a','b','l','e',0};
 static const WCHAR szwTipfmt[] = {'%','s','\\','%','s',0};
 static const WCHAR szwFullLangfmt[] = {'%','s','\\','%','s','\\','%','s','\\','0','x','%','0','8','x','\\','%','s',0};
 
@@ -144,7 +144,7 @@ static void add_userkey( REFCLSID rclsid, LANGID langid,
     if (!res && disposition == REG_CREATED_NEW_KEY)
     {
         DWORD zero = 0x0;
-        RegSetValueExW(key, szwEnabled, 0, REG_DWORD, (LPBYTE)&zero, sizeof(DWORD));
+        RegSetValueExW(key, szwEnable, 0, REG_DWORD, (LPBYTE)&zero, sizeof(DWORD));
     }
 
     if (!res)
@@ -278,7 +278,7 @@ static HRESULT WINAPI InputProcessorProfiles_AddLanguageProfile(
         RegSetValueExW(fmtkey, icnf, 0, REG_SZ, (LPBYTE)pchIconFile, cchFile * sizeof(WCHAR));
         RegSetValueExW(fmtkey, icni, 0, REG_DWORD, (LPBYTE)&uIconIndex, sizeof(DWORD));
         if (disposition == REG_CREATED_NEW_KEY)
-            RegSetValueExW(fmtkey, szwEnabled, 0, REG_DWORD, (LPBYTE)&zero, sizeof(DWORD));
+            RegSetValueExW(fmtkey, szwEnable, 0, REG_DWORD, (LPBYTE)&zero, sizeof(DWORD));
         RegCloseKey(fmtkey);
 
         add_userkey(rclsid, langid, guidProfile);
@@ -456,7 +456,7 @@ static HRESULT WINAPI InputProcessorProfiles_EnableLanguageProfile(
 
     if (!res)
     {
-        RegSetValueExW(key, szwEnabled, 0, REG_DWORD, (LPBYTE)&fEnable, sizeof(DWORD));
+        RegSetValueExW(key, szwEnable, 0, REG_DWORD, (LPBYTE)&fEnable, sizeof(DWORD));
         RegCloseKey(key);
     }
     else
@@ -490,7 +490,7 @@ static HRESULT WINAPI InputProcessorProfiles_IsEnabledLanguageProfile(
     if (!res)
     {
         DWORD count = sizeof(DWORD);
-        res = RegQueryValueExW(key, szwEnabled, 0, NULL, (LPBYTE)pfEnable, &count);
+        res = RegQueryValueExW(key, szwEnable, 0, NULL, (LPBYTE)pfEnable, &count);
         RegCloseKey(key);
     }
 
@@ -501,7 +501,7 @@ static HRESULT WINAPI InputProcessorProfiles_IsEnabledLanguageProfile(
         if (!res)
         {
             DWORD count = sizeof(DWORD);
-            res = RegQueryValueExW(key, szwEnabled, 0, NULL, (LPBYTE)pfEnable, &count);
+            res = RegQueryValueExW(key, szwEnable, 0, NULL, (LPBYTE)pfEnable, &count);
             RegCloseKey(key);
         }
     }
@@ -533,7 +533,7 @@ static HRESULT WINAPI InputProcessorProfiles_EnableLanguageProfileByDefault(
 
     if (!res)
     {
-        RegSetValueExW(key, szwEnabled, 0, REG_DWORD, (LPBYTE)&fEnable, sizeof(DWORD));
+        RegSetValueExW(key, szwEnable, 0, REG_DWORD, (LPBYTE)&fEnable, sizeof(DWORD));
         RegCloseKey(key);
     }
     else
