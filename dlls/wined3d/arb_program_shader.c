@@ -1489,15 +1489,12 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_EXPP: instruction = "EXP"; break;
         case WINED3DSIH_FRC: instruction = "FRC"; break;
         case WINED3DSIH_LIT: instruction = "LIT"; break;
-        case WINED3DSIH_LOG: instruction = "LG2"; break;
-        case WINED3DSIH_LOGP: instruction = "LOG"; break;
         case WINED3DSIH_LRP: instruction = "LRP"; break;
         case WINED3DSIH_MAD: instruction = "MAD"; break;
         case WINED3DSIH_MAX: instruction = "MAX"; break;
         case WINED3DSIH_MIN: instruction = "MIN"; break;
         case WINED3DSIH_MOV: instruction = "MOV"; break;
         case WINED3DSIH_MUL: instruction = "MUL"; break;
-        case WINED3DSIH_POW: instruction = "POW"; break;
         case WINED3DSIH_SGE: instruction = "SGE"; break;
         case WINED3DSIH_SLT: instruction = "SLT"; break;
         case WINED3DSIH_SUB: instruction = "SUB"; break;
@@ -2409,6 +2406,78 @@ static void shader_hw_dsy(const struct wined3d_shader_instruction *ins)
 
     shader_addline(buffer, "DDY %s, %s;\n", dst, src);
     shader_addline(buffer, "MUL%s %s, %s, ycorrection.y;\n", shader_arb_get_modifier(ins), dst, dst_name);
+}
+
+static DWORD abs_modifier(DWORD mod, BOOL *need_abs)
+{
+    *need_abs = FALSE;
+
+    switch(mod)
+    {
+        case WINED3DSPSM_NONE:      return WINED3DSPSM_ABS;
+        case WINED3DSPSM_NEG:       return WINED3DSPSM_ABS;
+        case WINED3DSPSM_BIAS:      *need_abs = TRUE; return WINED3DSPSM_BIAS;
+        case WINED3DSPSM_BIASNEG:   *need_abs = TRUE; return WINED3DSPSM_BIASNEG;
+        case WINED3DSPSM_SIGN:      *need_abs = TRUE; return WINED3DSPSM_SIGN;
+        case WINED3DSPSM_SIGNNEG:   *need_abs = TRUE; return WINED3DSPSM_SIGNNEG;
+        case WINED3DSPSM_COMP:      *need_abs = TRUE; return WINED3DSPSM_COMP;
+        case WINED3DSPSM_X2:        *need_abs = TRUE; return WINED3DSPSM_X2;
+        case WINED3DSPSM_X2NEG:     *need_abs = TRUE; return WINED3DSPSM_X2NEG;
+        case WINED3DSPSM_DZ:        *need_abs = TRUE; return WINED3DSPSM_DZ;
+        case WINED3DSPSM_DW:        *need_abs = TRUE; return WINED3DSPSM_DW;
+        case WINED3DSPSM_ABS:       return WINED3DSPSM_ABS;
+        case WINED3DSPSM_ABSNEG:    return WINED3DSPSM_ABS;
+    }
+    FIXME("Unknown modifier %u\n", mod);
+    return mod;
+}
+
+static void shader_hw_log_pow(const struct wined3d_shader_instruction *ins)
+{
+    SHADER_BUFFER *buffer = ins->ctx->buffer;
+    char src0[50], src1[50], dst[50];
+    struct wined3d_shader_src_param src0_copy = ins->src[0];
+    BOOL need_abs = FALSE;
+    const char *instr;
+    BOOL arg2 = FALSE;
+
+    switch(ins->handler_idx)
+    {
+        case WINED3DSIH_LOG:  instr = "LG2"; break;
+        case WINED3DSIH_LOGP: instr = "LOG"; break;
+        case WINED3DSIH_POW:  instr = "POW"; arg2 = TRUE; break;
+        default:
+            ERR("Unexpected instruction %d\n", ins->handler_idx);
+            return;
+    }
+
+    /* LOG, LOGP and POW operate on the absolute value of the input */
+    src0_copy.modifiers = abs_modifier(src0_copy.modifiers, &need_abs);
+
+    shader_arb_get_dst_param(ins, &ins->dst[0], dst);
+    shader_arb_get_src_param(ins, &src0_copy, 0, src0);
+    if(arg2) shader_arb_get_src_param(ins, &ins->src[1], 1, src1);
+
+    if(need_abs)
+    {
+        shader_addline(buffer, "ABS TA, %s;\n", src0);
+        if(arg2)
+        {
+            shader_addline(buffer, "%s%s %s, TA, %s;\n", instr, shader_arb_get_modifier(ins), dst, src1);
+        }
+        else
+        {
+            shader_addline(buffer, "%s%s %s, TA;\n", instr, shader_arb_get_modifier(ins), dst);
+        }
+    }
+    else if(arg2)
+    {
+        shader_addline(buffer, "%s%s %s, %s, %s;\n", instr, shader_arb_get_modifier(ins), dst, src0, src1);
+    }
+    else
+    {
+        shader_addline(buffer, "%s%s %s, %s;\n", instr, shader_arb_get_modifier(ins), dst, src0);
+    }
 }
 
 static void shader_hw_loop(const struct wined3d_shader_instruction *ins)
@@ -4306,8 +4375,8 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_IFC           */ shader_hw_ifc,
     /* WINED3DSIH_LABEL         */ NULL,
     /* WINED3DSIH_LIT           */ shader_hw_map2gl,
-    /* WINED3DSIH_LOG           */ shader_hw_map2gl,
-    /* WINED3DSIH_LOGP          */ shader_hw_map2gl,
+    /* WINED3DSIH_LOG           */ shader_hw_log_pow,
+    /* WINED3DSIH_LOGP          */ shader_hw_log_pow,
     /* WINED3DSIH_LOOP          */ shader_hw_loop,
     /* WINED3DSIH_LRP           */ shader_hw_lrp,
     /* WINED3DSIH_M3x2          */ shader_hw_mnxn,
@@ -4324,7 +4393,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_NOP           */ shader_hw_nop,
     /* WINED3DSIH_NRM           */ shader_hw_nrm,
     /* WINED3DSIH_PHASE         */ NULL,
-    /* WINED3DSIH_POW           */ shader_hw_map2gl,
+    /* WINED3DSIH_POW           */ shader_hw_log_pow,
     /* WINED3DSIH_RCP           */ shader_hw_rsq_rcp,
     /* WINED3DSIH_REP           */ shader_hw_rep,
     /* WINED3DSIH_RET           */ NULL,
