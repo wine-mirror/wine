@@ -3956,9 +3956,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     const WineD3D_GL_Info *gl_info = &dev->adapter->gl_info;
     find_vs_compile_args(shader, stateblock, &args->super);
 
-    /* This forces all local boolean constants to 1 to make them stateblock independent */
-    args->boolclip.bools = shader->baseShader.reg_maps.local_bool_consts;
-
+    args->boolclip_compare = 0;
     if(use_ps(stateblock))
     {
         IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) stateblock->pixelShader;
@@ -3970,14 +3968,11 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
     else
     {
         args->ps_signature = ~0;
-        if(dev->vs_clipping)
-        {
-            args->boolclip.clip_control[0] = 0;
-        }
-        else
+        if(!dev->vs_clipping)
         {
             args->boolclip.clip_control[0] = ffp_clip_emul(stateblock) ? GL_LIMITS(texture_stages) : 0;
         }
+        /* Otherwise: Setting boolclip_compare set clip_control[0] to 0 */
     }
 
     if(args->boolclip.clip_control[0])
@@ -3986,12 +3981,11 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
         {
             args->boolclip.clip_control[1] = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
         }
-        else
-        {
-            args->boolclip.clip_control[1] = 0;
-        }
+        /* clip_control[1] was set to 0 by setting boolclip_compare to 0 */
     }
 
+    /* This forces all local boolean constants to 1 to make them stateblock independent */
+    args->boolclip.bools = shader->baseShader.reg_maps.local_bool_consts;
     /* TODO: Figure out if it would be better to store bool constants as bitmasks in the stateblock */
     for(i = 0; i < MAX_CONST_B; i++)
     {
