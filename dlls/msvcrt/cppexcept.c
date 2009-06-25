@@ -413,14 +413,22 @@ extern DWORD CDECL __CxxFrameHandler( PEXCEPTION_RECORD rec, EXCEPTION_REGISTRAT
                                       PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch );
 __ASM_GLOBAL_FUNC( __CxxFrameHandler,
                    "pushl $0\n\t"        /* nested_trylevel */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "pushl $0\n\t"        /* nested_frame */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "pushl %eax\n\t"      /* descr */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "pushl 28(%esp)\n\t"  /* dispatch */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "pushl 28(%esp)\n\t"  /* context */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "pushl 28(%esp)\n\t"  /* frame */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "pushl 28(%esp)\n\t"  /* rec */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
                    "call " __ASM_NAME("cxx_frame_handler") "\n\t"
                    "add $28,%esp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset -28\n\t")
                    "ret" )
 
 
