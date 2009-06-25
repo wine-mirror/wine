@@ -1622,9 +1622,28 @@ static void pshader_hw_texkill(const struct wined3d_shader_instruction *ins)
 
     if (ins->ctx->reg_maps->shader_version.major >= 2)
     {
-        /* The arb backend doesn't claim ps 2.0 support, but try to eat what the app feeds to us */
-        shader_arb_get_dst_param(ins, dst, reg_dest);
-        shader_addline(buffer, "KIL %s;\n", reg_dest);
+        const char *kilsrc = "TA";
+        BOOL is_color;
+
+        shader_arb_get_register_name(ins, &dst->reg, reg_dest, &is_color);
+        if(dst->write_mask == WINED3DSP_WRITEMASK_ALL)
+        {
+            kilsrc = reg_dest;
+        }
+        else
+        {
+            /* Sigh. KIL doesn't support swizzles/writemasks. KIL passes a writemask, but ".xy" for example
+             * is not valid as a swizzle in ARB (needs ".xyyy"). Use SWZ to load the register properly, and set
+             * masked out components to 0(won't kill)
+             */
+            char x = '0', y = '0', z = '0', w = '0';
+            if(dst->write_mask & WINED3DSP_WRITEMASK_0) x = 'x';
+            if(dst->write_mask & WINED3DSP_WRITEMASK_1) y = 'y';
+            if(dst->write_mask & WINED3DSP_WRITEMASK_2) z = 'z';
+            if(dst->write_mask & WINED3DSP_WRITEMASK_3) w = 'w';
+            shader_addline(buffer, "SWZ TA, %s, %c, %c, %c, %c;\n", reg_dest, x, y, z, w);
+        }
+        shader_addline(buffer, "KIL %s;\n", kilsrc);
     } else {
         /* ARB fp doesn't like swizzles on the parameter of the KIL instruction. To mask the 4th component,
          * copy the register into our general purpose TMP variable, overwrite .w and pass TMP to KIL
