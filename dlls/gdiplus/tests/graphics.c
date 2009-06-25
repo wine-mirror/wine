@@ -243,8 +243,6 @@ static void test_GdipDrawArc(void)
     HDC hdc = GetDC(0);
 
     /* make a graphics object and pen object */
-    status = GdipCreateFromHDC(hdc, &graphics);
-    expect(Ok, status);
     ok(hdc != NULL, "Expected HDC to be initialized\n");
 
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -289,8 +287,6 @@ static void test_GdipDrawArcI(void)
     HDC hdc = GetDC(0);
 
     /* make a graphics object and pen object */
-    status = GdipCreateFromHDC(hdc, &graphics);
-    expect(Ok, status);
     ok(hdc != NULL, "Expected HDC to be initialized\n");
 
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -335,8 +331,6 @@ static void test_GdipDrawBezierI(void)
     HDC hdc = GetDC(0);
 
     /* make a graphics object and pen object */
-    status = GdipCreateFromHDC(hdc, &graphics);
-    expect(Ok, status);
     ok(hdc != NULL, "Expected HDC to be initialized\n");
 
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -436,8 +430,6 @@ static void test_GdipDrawLineI(void)
     HDC hdc = GetDC(0);
 
     /* make a graphics object and pen object */
-    status = GdipCreateFromHDC(hdc, &graphics);
-    expect(Ok, status);
     ok(hdc != NULL, "Expected HDC to be initialized\n");
 
     status = GdipCreateFromHDC(hdc, &graphics);
@@ -477,8 +469,6 @@ static void test_GdipDrawLinesI(void)
     HDC hdc = GetDC(0);
 
     /* make a graphics object and pen object */
-    status = GdipCreateFromHDC(hdc, &graphics);
-    expect(Ok, status);
     ok(hdc != NULL, "Expected HDC to be initialized\n");
 
     status = GdipCreateFromHDC(hdc, &graphics);
