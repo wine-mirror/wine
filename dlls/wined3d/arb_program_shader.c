@@ -4644,6 +4644,7 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     struct control_frame *control_frame;
     SHADER_BUFFER *buffer = ins->ctx->buffer;
+    BOOL bool_const;
 
     if(ins->handler_idx == WINED3DSIH_LOOP || ins->handler_idx == WINED3DSIH_REP)
     {
@@ -4767,7 +4768,9 @@ static void shader_arb_handle_instruction(const struct wined3d_shader_instructio
         list_add_head(&priv->control_frames, &control_frame->entry);
         control_frame->type = IF;
 
-        if(!priv->muted && get_bool_const(ins, This, ins->src[0].reg.idx) == FALSE)
+        bool_const = get_bool_const(ins, This, ins->src[0].reg.idx);
+        if(ins->src[0].modifiers == WINED3DSPSM_NOT) bool_const = !bool_const;
+        if(!priv->muted && bool_const == FALSE)
         {
             shader_addline(buffer, "#if(FALSE){\n");
             priv->muted = TRUE;
