@@ -6708,6 +6708,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
                 for(i = 0; i < height; i++)
                     memcpy(&mem[width * bpp * i], &bits[rect.Pitch * i], width * bpp);
                 IWineD3DSurface_UnlockRect(pCursorBitmap);
+
+                ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
                 ENTER_GL();
 
                 if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
