@@ -1519,6 +1519,9 @@ if test "$ac_cv_c_cfi_support" = "yes"
 then
    asm_func_header="$asm_func_header.cfi_startproc\\n\\t"
    asm_func_trailer="\\n\\t.cfi_endproc$asm_func_trailer"
+   AC_DEFINE([__ASM_CFI(str)],[str],[Define to a macro to output a .cfi assembly pseudo-op])
+else
+   AC_DEFINE([__ASM_CFI(str)],[""])
 fi
 
 asm_func_code="$asm_func_header\" code \"$asm_func_trailer"

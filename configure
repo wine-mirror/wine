@@ -18207,6 +18207,16 @@ if test "$ac_cv_c_cfi_support" = "yes"
 then
    asm_func_header="$asm_func_header.cfi_startproc\\n\\t"
    asm_func_trailer="\\n\\t.cfi_endproc$asm_func_trailer"
+
+cat >>confdefs.h <<\_ACEOF
+#define __ASM_CFI(str) str
+_ACEOF
+
+else
+   cat >>confdefs.h <<\_ACEOF
+#define __ASM_CFI(str) ""
+_ACEOF
+
 fi
 
 asm_func_code="$asm_func_header\" code \"$asm_func_trailer"

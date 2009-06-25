@@ -1188,6 +1188,9 @@
 /* Define to 1 if the X Window System is missing or not being used. */
 #undef X_DISPLAY_MISSING
 
+/* Define to a macro to output a .cfi assembly pseudo-op */
+#undef __ASM_CFI
+
 /* Define to a macro to define an assembly function */
 #undef __ASM_DEFINE_FUNC
 
