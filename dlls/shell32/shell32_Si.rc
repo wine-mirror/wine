@@ -280,9 +280,11 @@ STRINGTABLE
 
 	IDS_NEWFOLDER		"Nova mapa"
 
-	IDS_CPANEL_TITLE            "Wine Control Panel"
-	IDS_CPANEL_NAME             "Name"
-	IDS_CPANEL_DESCRIPTION      "Description"
+	IDS_CPANEL_TITLE            "Wine Nadzorna Plošča"
+	IDS_CPANEL_NAME             "Ime"
+	IDS_CPANEL_DESCRIPTION      "Opis"
+
+        IDS_SHLEXEC_NOASSOC         "Noben Okenski program ni nastavljen, da bi odpiral ta tip datotek."
 }
 
 STRINGTABLE
