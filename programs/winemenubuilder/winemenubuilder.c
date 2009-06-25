@@ -2714,12 +2714,12 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
         if( !lstrcmpA( token, "-a" ) )
         {
             RefreshFileTypeAssociations();
-            break;
+            continue;
         }
         if( !lstrcmpA( token, "-r" ) )
         {
             cleanup_menus();
-            break;
+            continue;
         }
         if( !lstrcmpA( token, "-w" ) )
             bWait = TRUE;
