@@ -50,6 +50,9 @@ static HRESULT (WINAPI *pConvertINetMultiByteToUnicode)(LPDWORD, DWORD, LPCSTR,
                                                         LPINT, LPWSTR, LPINT);
 static HRESULT (WINAPI *pConvertINetUnicodeToMultiByte)(LPDWORD, DWORD, LPCWSTR,
                                                         LPINT, LPSTR, LPINT);
+static HRESULT (WINAPI *pRfc1766ToLcidA)(LCID *, LPCSTR);
+static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
+
 typedef struct lcid_tag_table {
     LPCSTR rfc1766;
     LCID lcid;
@@ -239,6 +242,8 @@ static BOOL init_function_ptrs(void)
 
     pConvertINetMultiByteToUnicode = (void *)GetProcAddress(hMlang, "ConvertINetMultiByteToUnicode");
     pConvertINetUnicodeToMultiByte = (void *)GetProcAddress(hMlang, "ConvertINetUnicodeToMultiByte");
+    pRfc1766ToLcidA = (void *)GetProcAddress(hMlang, "Rfc1766ToLcidA");
+    pLcidToRfc1766A = (void *)GetProcAddress(hMlang, "LcidToRfc1766A");
 
     pGetCPInfoExA = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetCPInfoExA");
 
@@ -1137,7 +1142,7 @@ static void test_Rfc1766ToLcid(void)
 
     for(i = 0; i < sizeof(lcid_table) / sizeof(lcid_table[0]); i++) {
         lcid = -1;
-        ret = Rfc1766ToLcidA(&lcid, lcid_table[i].rfc1766);
+        ret = pRfc1766ToLcidA(&lcid, lcid_table[i].rfc1766);
 
         /* IE <6.0 guess 0x412 (ko) from "kok" */
         ok( (ret == lcid_table[i].hr) ||
@@ -1147,15 +1152,13 @@ static void test_Rfc1766ToLcid(void)
         ok( (lcid == lcid_table[i].lcid) ||
             broken(lcid == lcid_table[i].broken_lcid),  /* IE <6.0 */
             "#%02d: got LCID 0x%x (expected 0x%x)\n", i, lcid, lcid_table[i].lcid);
-
     }
 
-    ret = Rfc1766ToLcidA(&lcid, NULL);
+    ret = pRfc1766ToLcidA(&lcid, NULL);
     ok(ret == E_INVALIDARG, "got 0x%08x (expected E_INVALIDARG)\n", ret);
 
-    ret = Rfc1766ToLcidA(NULL, "en");
+    ret = pRfc1766ToLcidA(NULL, "en");
     ok(ret == E_INVALIDARG, "got 0x%08x (expected E_INVALIDARG)\n", ret);
-
 }
 
 static void test_GetNumberOfCodePageInfo(IMultiLanguage2 *iML2)
@@ -1220,7 +1223,7 @@ static void test_LcidToRfc1766(void)
         memset(buffer, '#', sizeof(buffer)-1);
         buffer[sizeof(buffer)-1] = '\0';
 
-        hr = LcidToRfc1766A(lcid_table[i].lcid, buffer, MAX_RFC1766_NAME);
+        hr = pLcidToRfc1766A(lcid_table[i].lcid, buffer, MAX_RFC1766_NAME);
 
         /* IE <5.0 does not recognize 0x180c (fr-mc) and 0x457 (kok) */
         ok( (hr == lcid_table[i].hr) ||
@@ -1243,22 +1246,21 @@ static void test_LcidToRfc1766(void)
 
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
-    hr = LcidToRfc1766A(-1, buffer, MAX_RFC1766_NAME);
+    hr = pLcidToRfc1766A(-1, buffer, MAX_RFC1766_NAME);
     ok(hr == E_FAIL, "got 0x%08x and '%s' (expected E_FAIL)\n", hr, buffer);
 
-    hr = LcidToRfc1766A(LANG_ENGLISH, NULL, MAX_RFC1766_NAME);
+    hr = pLcidToRfc1766A(LANG_ENGLISH, NULL, MAX_RFC1766_NAME);
     ok(hr == E_INVALIDARG, "got 0x%08x (expected E_INVALIDARG)\n", hr);
 
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
-    hr = LcidToRfc1766A(LANG_ENGLISH, buffer, -1);
+    hr = pLcidToRfc1766A(LANG_ENGLISH, buffer, -1);
     ok(hr == E_INVALIDARG, "got 0x%08x and '%s' (expected E_INVALIDARG)\n", hr, buffer);
 
     memset(buffer, '#', sizeof(buffer)-1);
     buffer[sizeof(buffer)-1] = '\0';
-    hr = LcidToRfc1766A(LANG_ENGLISH, buffer, 0);
+    hr = pLcidToRfc1766A(LANG_ENGLISH, buffer, 0);
     ok(hr == E_INVALIDARG, "got 0x%08x and '%s' (expected E_INVALIDARG)\n", hr, buffer);
-
 }
 
 static void test_GetRfc1766Info(IMultiLanguage2 *iML2)
