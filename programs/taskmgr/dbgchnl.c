@@ -224,11 +224,17 @@ static void DebugChannels_OnCreate(HWND hwndDlg)
     HWND        hLV = GetDlgItem(hwndDlg, IDC_DEBUG_CHANNELS_LIST);
     LVCOLUMNW   lvc;
 
-    static WCHAR debug_channelW[] = {'D','e','b','u','g',' ','C','h','a','n','n','e','l',0},
-                 fixmeW[]         = {'F','i','x','m','e',0},
-                 errW[]           = {'E','r','r',0},
-                 warnW[]          = {'W','a','r','n',0},
-                 traceW[]         = {'T','r','a','c','e',0};
+    WCHAR debug_channelW[255];
+    WCHAR fixmeW[255];
+    WCHAR errW[255];
+    WCHAR warnW[255];
+    WCHAR traceW[255];
+
+    LoadStringW(hInst, IDS_DEBUG_CHANNEL, debug_channelW, sizeof(debug_channelW)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_DEBUG_CHANNEL_FIXME, fixmeW, sizeof(fixmeW)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_DEBUG_CHANNEL_ERR, errW, sizeof(errW)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_DEBUG_CHANNEL_WARN, warnW, sizeof(warnW)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_DEBUG_CHANNEL_TRACE, traceW, sizeof(traceW)/sizeof(WCHAR));
 
     lvc.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
     lvc.fmt = LVCFMT_LEFT;

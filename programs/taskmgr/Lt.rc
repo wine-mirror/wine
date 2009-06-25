@@ -547,4 +547,18 @@ BEGIN
     IDS_AFFINITY_UNABLE2ACCESS      "Nepavyko prieiti prie ar nustatyti proceso atitikimo"
 END
 
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "Sistemos neveikos procesas"
+    IDS_APPLICATION_NOT_RESPONDING     "Neatsako"
+    IDS_APPLICATION_RUNNING            "Vykdoma"
+    IDS_APPLICATION_TASK               "Užduotis"
+    IDS_APPLICATION_STATUS             "Būsena"
+    IDS_DEBUG_CHANNEL                  "Derinimo kanalai"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme (pataisyk)"
+    IDS_DEBUG_CHANNEL_ERR              "Err (klaida)"
+    IDS_DEBUG_CHANNEL_WARN             "Warn (įspėjimas)"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace (pėdsakas)"
+END
+
 #pragma code_page(default)

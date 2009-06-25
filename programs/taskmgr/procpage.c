@@ -466,9 +466,8 @@ ProcessPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         hProcessPageShowAllProcessesButton = GetDlgItem(hDlg, IDC_SHOWALLPROCESSES);
 
         /*
-         * Set the title and extended window styles for the list control
+         * Set the extended window styles for the list control
          */
-        SetWindowText(hProcessPageListCtrl, _T("Processes"));
         SendMessage(hProcessPageListCtrl, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, ListView_GetExtendedListViewStyle(hProcessPageListCtrl) | LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP);
 
         AddColumns();

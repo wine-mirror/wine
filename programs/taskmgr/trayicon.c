@@ -142,7 +142,9 @@ BOOL TrayIcon_ShellAddTrayIcon(void)
     NOTIFYICONDATAW    nid;
     HICON            hIcon = NULL;
     BOOL            bRetVal;
-    WCHAR           wszCPU_Usage[] = {'C','P','U',' ','U','s','a','g','e',':',' ','%','d','%','%',0};
+    WCHAR           wszCPU_Usage[255];
+
+    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, sizeof(wszCPU_Usage)/sizeof(WCHAR));
 
     memset(&nid, 0, sizeof(NOTIFYICONDATAW));
 
@@ -187,7 +189,9 @@ BOOL TrayIcon_ShellUpdateTrayIcon(void)
     NOTIFYICONDATAW    nid;
     HICON            hIcon = NULL;
     BOOL            bRetVal;
-    WCHAR           wszCPU_Usage[] = {'C','P','U',' ','U','s','a','g','e',':',' ','%','d','%','%',0};
+    WCHAR           wszCPU_Usage[255];
+
+    LoadStringW(hInst, IDS_STATUS_BAR_CPU_USAGE, wszCPU_Usage, sizeof(wszCPU_Usage)/sizeof(WCHAR));
     
     memset(&nid, 0, sizeof(NOTIFYICONDATAW));
     

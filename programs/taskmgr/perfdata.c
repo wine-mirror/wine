@@ -253,7 +253,8 @@ void PerfDataRefresh(void)
             lstrcpyW(pPerfData[Idx].ImageName, pSPI->Name.Buffer);
         else
         {
-            static const WCHAR idleW[] = {'S','y','s','t','e','m',' ','I','d','l','e',' ','P','r','o','c','e','s','s',0};
+            WCHAR idleW[255];
+            LoadStringW(hInst, IDS_SYSTEM_IDLE_PROCESS, idleW, sizeof(idleW)/sizeof(WCHAR));
             lstrcpyW(pPerfData[Idx].ImageName, idleW );
         }
 

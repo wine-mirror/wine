@@ -417,9 +417,11 @@ static void ApplicationPageOnNotify(WPARAM wParam, LPARAM lParam)
     LV_DISPINFOW*   pnmdi;
     LPAPPLICATION_PAGE_LIST_ITEM pAPLI;
 
-    static const WCHAR    wszNotResponding[] = {'N','o','t',' ','R','e','s','p','o','n','d','i','n','g',0};
-    static const WCHAR    wszRunning[] = {'R','u','n','n','i','n','g',0};
+    WCHAR    wszNotResponding[255];
+    WCHAR    wszRunning[255];
 
+    LoadStringW(hInst, IDS_APPLICATION_NOT_RESPONDING, wszNotResponding, sizeof(wszNotResponding)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_APPLICATION_RUNNING, wszRunning, sizeof(wszRunning)/sizeof(WCHAR));
 
     idctrl = (int) wParam;
     pnmh = (LPNMHDR) lParam;
@@ -837,9 +839,11 @@ ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     int         cx, cy;
     LVCOLUMNW   column;
 
-    static const WCHAR wszTasks[] = {'T','a','s','k','s',0};
-    static WCHAR wszTask[] = {'T','a','s','k',0};
-    static WCHAR wszStatus[] = {'S','t','a','t','u','s',0};
+    WCHAR wszTask[255];
+    WCHAR wszStatus[255];
+
+    LoadStringW(hInst, IDS_APPLICATION_TASK, wszTask, sizeof(wszTask)/sizeof(WCHAR));
+    LoadStringW(hInst, IDS_APPLICATION_STATUS, wszStatus, sizeof(wszStatus)/sizeof(WCHAR));
 
     switch (message) {
     case WM_INITDIALOG:
@@ -857,8 +861,6 @@ ApplicationPageWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         hApplicationPageEndTaskButton = GetDlgItem(hDlg, IDC_ENDTASK);
         hApplicationPageSwitchToButton = GetDlgItem(hDlg, IDC_SWITCHTO);
         hApplicationPageNewTaskButton = GetDlgItem(hDlg, IDC_NEWTASK);
-
-        SetWindowTextW(hApplicationPageListCtrl, wszTasks);
 
         /* Initialize the application page's controls */
         column.mask = LVCF_TEXT|LVCF_WIDTH;
