@@ -390,9 +390,7 @@ static int macho_accum_segs_range(struct macho_file_map* fmap,
     TRACE("Segment command vm: 0x%08x - 0x%08x\n", (unsigned)sc->vmaddr,
             (unsigned)sc->vmaddr + sc->vmsize);
 
-    if (!strncmp(sc->segname, "WINE_DOS", sizeof(sc->segname)) ||
-        !strncmp(sc->segname, "WINE_OLE32", sizeof(sc->segname)) ||
-        !strncmp(sc->segname, "WINE_SHARED_HEAP", sizeof(sc->segname)))
+    if (!strncmp(sc->segname, "WINE_", 5))
     {
         TRACE("Ignoring special Wine segment %s\n", debugstr_an(sc->segname, sizeof(sc->segname)));
         return 0;
