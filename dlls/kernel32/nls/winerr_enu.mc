@@ -3728,3 +3728,8 @@ SymbolicName=RPC_S_GRP_ELT_NOT_REMOVED
 Language=ENU
 RPC_S_GRP_ELT_NOT_REMOVED
 .
+MessageId=2221
+SymbolicName=NERR_UserNotFound
+Language=ENU
+The username could not be found
+.
