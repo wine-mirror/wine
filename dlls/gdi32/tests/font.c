@@ -2911,10 +2911,82 @@ static void test_GetGlyphOutline(void)
     DeleteDC(hdc);
 }
 
+/* bug #9995: there is a limit to the character width that can be specified */
+void test_GetTextMetrics2(  const char *fontname)
+{
+    HFONT of, hf;
+    HDC hdc;
+    TEXTMETRICA tm;
+    LOGFONTA lf;
+    BOOL ret;
+    int avecharw[3], maxcharw[3];
+
+    if (!is_truetype_font_installed( fontname)) {
+        skip("%s is not installed\n", fontname);
+        return;
+    }
+    hdc = CreateCompatibleDC(0);
+    ok( hdc != NULL, "CreateCompatibleDC failed\n");
+    /* select width = 0 */
+    hf = CreateFontA( -11, 0, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_LH_ANGLES,
+            DEFAULT_QUALITY, VARIABLE_PITCH,
+            fontname);
+    ok( hf != NULL, "CreateFontA failed\n");
+    of = SelectObject( hdc, hf);
+    ret = GetObjectA( hf, sizeof( lf), &lf);
+    ret = GetTextMetricsA( hdc, &tm);
+    ok(ret, "GetTextMetricsA error %u, ", GetLastError());
+    avecharw[0] =tm.tmAveCharWidth;
+    maxcharw[0] =tm.tmMaxCharWidth;
+    SelectObject( hdc, of);
+    DeleteObject( hf);
+    /* select LARGE width = 1023 */
+    hf = CreateFontA( -11, 1023, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_LH_ANGLES,
+            DEFAULT_QUALITY, VARIABLE_PITCH,
+            fontname);
+    ok( hf != NULL, "CreateFontA failed\n");
+    of = SelectObject( hdc, hf);
+    ret = GetObjectA( hf, sizeof( lf), &lf);
+    ret = GetTextMetricsA( hdc, &tm);
+    ok(ret, "GetTextMetricsA error %u, ", GetLastError());
+    avecharw[1] =tm.tmAveCharWidth;
+    maxcharw[1] =tm.tmMaxCharWidth;
+    SelectObject( hdc, of);
+    DeleteObject( hf);
+    /* select TOOLARGE width = 1536 */
+    hf = CreateFontA( -11, 1536, 0, 0, FW_REGULAR, FALSE, FALSE, FALSE,
+            DEFAULT_CHARSET, OUT_TT_PRECIS, CLIP_LH_ANGLES,
+            DEFAULT_QUALITY, VARIABLE_PITCH,
+            fontname);
+    ok( hf != NULL, "CreateFontA failed\n");
+    of = SelectObject( hdc, hf);
+    ret = GetObjectA( hf, sizeof( lf), &lf);
+    ret = GetTextMetricsA( hdc, &tm);
+    ok(ret, "GetTextMetricsA error %u, ", GetLastError());
+    avecharw[2] =tm.tmAveCharWidth;
+    maxcharw[2] =tm.tmMaxCharWidth;
+    SelectObject( hdc, of);
+    DeleteObject( hf);
+    /* tests */
+    ok( avecharw[1] > 10 * avecharw[0], "Av. charwidth not large ( %d cmp.to %d)\n",
+            avecharw[1], avecharw[0]);
+    ok( maxcharw[1] > 10 * maxcharw[0], "Max charwidth not large ( %d cmp.to %d)\n",
+            maxcharw[1], maxcharw[0]);
+todo_wine {
+    ok( avecharw[2] ==  avecharw[0], "Unexpected Av. charwidth ( %d cmp.to %d)\n",
+            avecharw[2], avecharw[0]);
+    ok( maxcharw[2] ==  maxcharw[0], "Unexpected Max charwidth ( %d cmp.to %d)\n",
+            maxcharw[2], maxcharw[0]);
+}
+    /* clean up */
+    DeleteDC(hdc);
+}
+
 START_TEST(font)
 {
     init();
-
     test_logfont();
     test_bitmap_font();
     test_outline_font();
@@ -2949,4 +3021,6 @@ START_TEST(font)
     test_GdiRealizationInfo();
     test_GetTextFace();
     test_GetGlyphOutline();
+    test_GetTextMetrics2( "Tahoma");
+    test_GetTextMetrics2( "Arial");
 }
