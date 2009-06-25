@@ -906,10 +906,10 @@ static BOOL write_menu_file(const char *unix_link, const char *filename)
 
     while (1)
     {
-        tempfilename = tempnam(xdg_config_dir, "_wine");
+        tempfilename = heap_printf("%s/wine-menu-XXXXXX", xdg_config_dir);
         if (tempfilename)
         {
-            int tempfd = open(tempfilename, O_EXCL | O_CREAT | O_WRONLY, 0666);
+            int tempfd = mkstemps(tempfilename, 0);
             if (tempfd >= 0)
             {
                 tempfile = fdopen(tempfd, "w");
@@ -920,10 +920,10 @@ static BOOL write_menu_file(const char *unix_link, const char *filename)
             }
             else if (errno == EEXIST)
             {
-                free(tempfilename);
+                HeapFree(GetProcessHeap(), 0, tempfilename);
                 continue;
             }
-            free(tempfilename);
+            HeapFree(GetProcessHeap(), 0, tempfilename);
         }
         return FALSE;
     }
@@ -981,7 +981,7 @@ end:
         ret = (rename(tempfilename, menuPath) == 0);
     if (!ret && tempfilename)
         remove(tempfilename);
-    free(tempfilename);
+    HeapFree(GetProcessHeap(), 0, tempfilename);
     if (ret)
     {
         HKEY hkey = open_menus_reg_key();
