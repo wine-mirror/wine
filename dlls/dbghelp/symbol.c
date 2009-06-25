@@ -783,6 +783,26 @@ static BOOL symt_enum_module(struct module_pair* pair, const regex_t* regex,
     return FALSE;
 }
 
+static inline unsigned where_to_insert(const struct module* module, unsigned high, struct symt_ht* elt)
+{
+    unsigned    low = 0, mid = high / 2;
+    ULONG64     addr;
+
+    if (!high) return 0;
+    symt_get_info(&elt->symt, TI_GET_ADDRESS, &addr);
+    do
+    {
+        switch (cmp_sorttab_addr(module, mid, addr))
+        {
+        case 0: return mid;
+        case -1: low = mid + 1; break;
+        case 1: high = mid; break;
+        }
+        mid = low + (high - low) / 2;
+    } while (low < high);
+    return mid;
+}
+
 /***********************************************************************
  *              resort_symbols
  *
@@ -793,7 +813,28 @@ static BOOL resort_symbols(struct module* module)
     if (!(module->module.NumSyms = module->num_symbols))
         return FALSE;
 
-    qsort(module->addr_sorttab, module->num_symbols, sizeof(struct symt_ht*), symt_cmp_addr);
+    /* FIXME: what's the optimal value here ??? */
+    if (module->num_sorttab && module->num_symbols <= module->num_sorttab + 30)
+    {
+        int     i, delta, ins_idx = module->num_sorttab, prev_ins_idx;
+        struct symt_ht* tmp[30];
+
+        delta = module->num_symbols - module->num_sorttab;
+        memcpy(tmp, &module->addr_sorttab[module->num_sorttab], delta * sizeof(struct symt_ht*));
+        qsort(tmp, delta, sizeof(struct symt_ht*), symt_cmp_addr);
+
+        for (i = delta - 1; i >= 0; i--)
+        {
+            prev_ins_idx = ins_idx;
+            ins_idx = where_to_insert(module, prev_ins_idx = ins_idx, tmp[i]);
+            memmove(&module->addr_sorttab[ins_idx + i + 1],
+                    &module->addr_sorttab[ins_idx],
+                    (prev_ins_idx - ins_idx) * sizeof(struct symt_ht*));
+            module->addr_sorttab[ins_idx + i] = tmp[i];
+        }
+    }
+    else
+        qsort(module->addr_sorttab, module->num_symbols, sizeof(struct symt_ht*), symt_cmp_addr);
     module->num_sorttab = module->num_symbols;
     return module->sortlist_valid = TRUE;
 }
