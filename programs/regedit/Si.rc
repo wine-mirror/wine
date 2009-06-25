@@ -283,6 +283,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Kopira ime izbranega ključa na odložišče"
     ID_EDIT_FIND            "Poišče znakovni niz v ključu, vrednosti ali vsebini vrednosti"
     ID_EDIT_FINDNEXT        "Poišče naslednjo ponovitev iskanega besedila"
+    ID_EDIT_EXPORT          "Izvozi izbrano vejo registra v tekstovno datoteko"
 END
 
 STRINGTABLE DISCARDABLE
