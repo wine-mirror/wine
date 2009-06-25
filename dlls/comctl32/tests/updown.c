@@ -426,8 +426,14 @@ static void test_updown_pos32(void)
     expect(0,low);
     expect(1000,high);
 
-    /* Set position to 500, don't check return since it is unset*/
-    SendMessage(updown, UDM_SETPOS32, 0 , 500 );
+    /* Set position to 500 */
+    r = SendMessage(updown, UDM_SETPOS32, 0 , 500 );
+    if (!r)
+    {
+        win_skip("UDM_SETPOS32 and UDM_GETPOS32 need 5.80\n");
+        return;
+    }
+    expect(100,r); /* As set by test_updown_pos() */
 
     /* Since UDM_SETBUDDYINT was not set at creation bRet will always be true as a return from UDM_GETPOS32 */
 
