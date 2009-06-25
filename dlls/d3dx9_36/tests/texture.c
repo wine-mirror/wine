@@ -50,6 +50,11 @@ static const unsigned char bmp01[66] = {
 0x00,0x00
 };
 
+/* 2x2 A8R8G8B8 pixel data */
+static const unsigned char pixdata[] = {
+0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
+};
+
 /* invalid image file */
 static const unsigned char noimage[4] = {
 0x11,0x22,0x33,0x44
@@ -205,6 +210,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     HRESULT hr;
     BOOL testdummy_ok, testbitmap_ok;
     IDirect3DSurface9 *surf;
+    RECT rect;
 
     hr = create_file("testdummy.bmp", noimage, sizeof(noimage));  /* invalid image */
     testdummy_ok = SUCCEEDED(hr);
@@ -287,6 +293,30 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
     hr = D3DXLoadSurfaceFromFileInMemory(NULL, NULL, NULL, NULL, 0, NULL, D3DX_DEFAULT, 0, NULL);
     ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+
+    /* D3DXLoadSurfaceFromMemory */
+    SetRect(&rect, 0, 0, 2, 2);
+
+    todo_wine {
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+
+        hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, 0, NULL, &rect, D3DX_DEFAULT, 0);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    }
+
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, NULL, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXLoadSurfaceFromMemory(NULL, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, NULL, D3DX_DEFAULT, 0);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_UNKNOWN, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
+    ok(hr == E_FAIL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, E_FAIL);
 
 
     /* cleanup */
