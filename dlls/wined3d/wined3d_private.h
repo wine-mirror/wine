@@ -640,7 +640,8 @@ typedef struct shader_reg_maps
     unsigned usesrelconstF  : 1;
     unsigned fog            : 1;
     unsigned usestexldl     : 1;
-    unsigned padding        : 6;
+    unsigned usesifc        : 1;
+    unsigned padding        : 5;
 
     /* Whether or not loops are used in this shader, and nesting depth */
     unsigned loop_depth;

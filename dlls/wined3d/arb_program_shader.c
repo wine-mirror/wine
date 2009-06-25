@@ -2989,7 +2989,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
      * So enable the best we can get.
      */
     if(reg_maps->usesdsx || reg_maps->usesdsy || reg_maps->loop_depth > 0 || reg_maps->usestexldd ||
-       reg_maps->usestexldl || reg_maps->usesfacing)
+       reg_maps->usestexldl || reg_maps->usesfacing || reg_maps->usesifc)
     {
         want_nv_prog = TRUE;
     }
