@@ -795,6 +795,33 @@ static void test_IsDomainLegalCookieDomainW(void)
     ok(!ret, "IsDomainLegalCookieDomainW succeeded\n");
 }
 
+static void test_PrivacyGetSetZonePreferenceW(void)
+{
+    DWORD ret, zone, type, template, old_template;
+
+    zone = 3;
+    type = 0;
+    ret = PrivacyGetZonePreferenceW(zone, type, NULL, NULL, NULL);
+    ok(ret == 0, "expected ret == 0, got %u\n", ret);
+
+    old_template = 0;
+    ret = PrivacyGetZonePreferenceW(zone, type, &old_template, NULL, NULL);
+    ok(ret == 0, "expected ret == 0, got %u\n", ret);
+
+    template = 5;
+    ret = PrivacySetZonePreferenceW(zone, type, template, NULL);
+    ok(ret == 0, "expected ret == 0, got %u\n", ret);
+
+    template = 0;
+    ret = PrivacyGetZonePreferenceW(zone, type, &template, NULL, NULL);
+    ok(ret == 0, "expected ret == 0, got %u\n", ret);
+    ok(template == 5, "expected template == 5, got %u\n", template);
+
+    template = 5;
+    ret = PrivacySetZonePreferenceW(zone, type, old_template, NULL);
+    ok(ret == 0, "expected ret == 0, got %u\n", ret);
+}
+
 /* ############################### */
 
 START_TEST(internet)
@@ -833,4 +860,6 @@ START_TEST(internet)
         win_skip("IsDomainLegalCookieDomainW (or ordinal 117) is not available\n");
     else
         test_IsDomainLegalCookieDomainW();
+
+    test_PrivacyGetSetZonePreferenceW();
 }

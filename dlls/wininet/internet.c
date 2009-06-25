@@ -3815,12 +3815,16 @@ DWORD WINAPI InternetConfirmZoneCrossingW( HWND hWnd, LPWSTR szUrlPrev, LPWSTR s
     return ERROR_SUCCESS;
 }
 
+static DWORD zone_preference = 3;
+
 /***********************************************************************
  *      PrivacySetZonePreferenceW (WININET.@)
  */
 DWORD WINAPI PrivacySetZonePreferenceW( DWORD zone, DWORD type, DWORD template, LPCWSTR preference )
 {
     FIXME( "%x %x %x %s: stub\n", zone, type, template, debugstr_w(preference) );
+
+    zone_preference = template;
     return 0;
 }
 
@@ -3830,7 +3834,9 @@ DWORD WINAPI PrivacySetZonePreferenceW( DWORD zone, DWORD type, DWORD template, 
 DWORD WINAPI PrivacyGetZonePreferenceW( DWORD zone, DWORD type, LPDWORD template,
                                         LPWSTR preference, LPDWORD length )
 {
-    FIXME( "%x %x: stub\n", zone, type );
+    FIXME( "%x %x %p %p %p: stub\n", zone, type, template, preference, length );
+
+    if (template) *template = zone_preference;
     return 0;
 }
 
