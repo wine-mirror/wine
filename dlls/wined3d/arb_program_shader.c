@@ -200,6 +200,8 @@ struct shader_arb_ctx_priv
     unsigned int                        num_loops, loop_depth, num_ifcs;
     int                                 aL;
 
+    unsigned int                        vs_clipplanes;
+
     /* For 3.0 vertex shaders */
     const char                          *vs_output[MAX_REG_OUTPUT];
     /* For 2.x and earlier vertex shaders */
@@ -3563,6 +3565,89 @@ static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_nu
     }
 }
 
+static void vshader_add_footer(IWineD3DVertexShaderImpl *This, SHADER_BUFFER *buffer, const struct arb_vs_compile_args *args,
+                               struct shader_arb_ctx_priv *priv_ctx)
+{
+    const shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)This->baseShader.device;
+    const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
+    unsigned int i;
+
+    /* The D3DRS_FOGTABLEMODE render state defines if the shader-generated fog coord is used
+     * or if the fragment depth is used. If the fragment depth is used(FOGTABLEMODE != NONE),
+     * the fog frag coord is thrown away. If the fog frag coord is used, but not written by
+     * the shader, it is set to 0.0(fully fogged, since start = 1.0, end = 0.0)
+     */
+    if(args->super.fog_src == VS_FOG_Z) {
+        shader_addline(buffer, "MOV result.fogcoord, TMP_OUT.z;\n");
+    } else if (!reg_maps->fog) {
+        /* posFixup.x is always 1.0, so we can savely use it */
+        shader_addline(buffer, "ADD result.fogcoord, posFixup.x, -posFixup.x;\n");
+    }
+
+    /* Write the final position.
+     *
+     * OpenGL coordinates specify the center of the pixel while d3d coords specify
+     * the corner. The offsets are stored in z and w in posFixup. posFixup.y contains
+     * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
+     * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
+     */
+    shader_addline(buffer, "MUL TA, posFixup, TMP_OUT.w;\n");
+    shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
+    shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
+
+    if(use_nv_clip(gl_info) && priv_ctx->target_version >= NV2)
+    {
+        for(i = 0; i < priv_ctx->vs_clipplanes; i++)
+        {
+            shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
+        }
+    }
+    else if(args->boolclip.clip_control[0])
+    {
+        unsigned int cur_clip = 0;
+        char component[4] = {'x', 'y', 'z', 'w'};
+
+        for(i = 0; i < GL_LIMITS(clipplanes); i++)
+        {
+            if(args->boolclip.clip_control[1] & (1 << i))
+            {
+                shader_addline(buffer, "DP4 TA.%c, TMP_OUT, state.clip[%u].plane;\n",
+                               component[cur_clip++], i);
+            }
+        }
+        switch(cur_clip)
+        {
+            case 0:
+                shader_addline(buffer, "MOV TA, -helper_const.w;\n");
+                break;
+            case 1:
+                shader_addline(buffer, "MOV TA.yzw, -helper_const.w;\n");
+                break;
+            case 2:
+                shader_addline(buffer, "MOV TA.zw, -helper_const.w;\n");
+                break;
+            case 3:
+                shader_addline(buffer, "MOV TA.w, -helper_const.w;\n");
+                break;
+        }
+        shader_addline(buffer, "MOV result.texcoord[%u], TA;\n",
+                       args->boolclip.clip_control[0] - 1);
+    }
+
+    /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
+     * and the glsl equivalent
+     */
+    if(need_helper_const(gl_info)) {
+        shader_addline(buffer, "MAD TMP_OUT.z, TMP_OUT.z, helper_const.x, -TMP_OUT.w;\n");
+    } else {
+        shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, TMP_OUT.z;\n");
+        shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, -TMP_OUT.w;\n");
+    }
+
+    shader_addline(buffer, "MOV result.position, TMP_OUT;\n");
+}
+
 /* GL locking is done by the caller */
 static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
         SHADER_BUFFER *buffer, const struct arb_vs_compile_args *args, struct arb_vs_compiled_shader *compiled)
@@ -3576,7 +3661,6 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     DWORD next_local, *lconst_map = local_const_mapping((IWineD3DBaseShaderImpl *) This);
     struct shader_arb_ctx_priv priv_ctx;
     unsigned int i;
-    DWORD num_clipplanes = 0;
 
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
@@ -3614,7 +3698,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
 
     /* Base Declarations */
     next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION,
-            lconst_map, &num_clipplanes, &priv_ctx);
+            lconst_map, &priv_ctx.vs_clipplanes, &priv_ctx);
 
     for(i = 0; i < MAX_CONST_I; i++)
     {
@@ -3669,79 +3753,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     /* Base Shader Body */
     shader_generate_main((IWineD3DBaseShader *)This, buffer, reg_maps, function, &priv_ctx);
 
-    /* The D3DRS_FOGTABLEMODE render state defines if the shader-generated fog coord is used
-     * or if the fragment depth is used. If the fragment depth is used(FOGTABLEMODE != NONE),
-     * the fog frag coord is thrown away. If the fog frag coord is used, but not written by
-     * the shader, it is set to 0.0(fully fogged, since start = 1.0, end = 0.0)
-     */
-    if(args->super.fog_src == VS_FOG_Z) {
-        shader_addline(buffer, "MOV result.fogcoord, TMP_OUT.z;\n");
-    } else if (!reg_maps->fog) {
-        /* posFixup.x is always 1.0, so we can savely use it */
-        shader_addline(buffer, "ADD result.fogcoord, posFixup.x, -posFixup.x;\n");
-    }
-
-    /* Write the final position.
-     *
-     * OpenGL coordinates specify the center of the pixel while d3d coords specify
-     * the corner. The offsets are stored in z and w in posFixup. posFixup.y contains
-     * 1.0 or -1.0 to turn the rendering upside down for offscreen rendering. PosFixup.x
-     * contains 1.0 to allow a mad, but arb vs swizzles are too restricted for that.
-     */
-    shader_addline(buffer, "MUL TA, posFixup, TMP_OUT.w;\n");
-    shader_addline(buffer, "ADD TMP_OUT.x, TMP_OUT.x, TA.z;\n");
-    shader_addline(buffer, "MAD TMP_OUT.y, TMP_OUT.y, posFixup.y, TA.w;\n");
-
-    if(use_nv_clip(gl_info) && priv_ctx.target_version >= NV2)
-    {
-        for(i = 0; i < num_clipplanes; i++)
-        {
-            shader_addline(buffer, "DP4 result.clip[%u].x, TMP_OUT, state.clip[%u].plane;\n", i, i);
-        }
-    }
-    else if(args->boolclip.clip_control[0])
-    {
-        unsigned int cur_clip = 0;
-        char component[4] = {'x', 'y', 'z', 'w'};
-
-        for(i = 0; i < GL_LIMITS(clipplanes); i++)
-        {
-            if(args->boolclip.clip_control[1] & (1 << i))
-            {
-                shader_addline(buffer, "DP4 TA.%c, TMP_OUT, state.clip[%u].plane;\n",
-                               component[cur_clip++], i);
-            }
-        }
-        switch(cur_clip)
-        {
-            case 0:
-                shader_addline(buffer, "MOV TA, -helper_const.w;\n");
-                break;
-            case 1:
-                shader_addline(buffer, "MOV TA.yzw, -helper_const.w;\n");
-                break;
-            case 2:
-                shader_addline(buffer, "MOV TA.zw, -helper_const.w;\n");
-                break;
-            case 3:
-                shader_addline(buffer, "MOV TA.w, -helper_const.w;\n");
-                break;
-        }
-        shader_addline(buffer, "MOV result.texcoord[%u], TA;\n",
-                       args->boolclip.clip_control[0] - 1);
-    }
-
-    /* Z coord [0;1]->[-1;1] mapping, see comment in transform_projection in state.c
-     * and the glsl equivalent
-     */
-    if(need_helper_const(gl_info)) {
-        shader_addline(buffer, "MAD TMP_OUT.z, TMP_OUT.z, helper_const.x, -TMP_OUT.w;\n");
-    } else {
-        shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, TMP_OUT.z;\n");
-        shader_addline(buffer, "ADD TMP_OUT.z, TMP_OUT.z, -TMP_OUT.w;\n");
-    }
-
-    shader_addline(buffer, "MOV result.position, TMP_OUT;\n");
+    vshader_add_footer(This, buffer, args, &priv_ctx);
 
     shader_addline(buffer, "END\n");
 
