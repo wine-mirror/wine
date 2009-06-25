@@ -169,6 +169,8 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->is_virtual        = virtual ? TRUE : FALSE;
     module->sortlist_valid    = FALSE;
     module->addr_sorttab      = NULL;
+    module->num_sorttab       = 0;
+    module->num_symbols       = 0;
     /* FIXME: this seems a bit too high (on a per module basis)
      * need some statistics about this
      */
@@ -1036,6 +1038,7 @@ void module_reset_debug_info(struct module* module)
 {
     module->sortlist_valid = TRUE;
     module->addr_sorttab = NULL;
+    module->num_sorttab = module->num_symbols = 0;
     hash_table_destroy(&module->ht_symbols);
     module->ht_symbols.num_buckets = 0;
     module->ht_symbols.buckets = NULL;

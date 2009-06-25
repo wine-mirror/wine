@@ -337,6 +337,7 @@ struct module
     /* symbols & symbol tables */
     int                         sortlist_valid;
     unsigned                    num_sorttab;    /* number of symbols with addresses */
+    unsigned                    num_symbols;
     struct symt_ht**            addr_sorttab;
     struct hash_table           ht_symbols;
     void                        (*loc_compute)(struct process* pcs,
