@@ -171,7 +171,7 @@ static HWND hMsiHiddenWindow;
 
 static INT msi_dialog_scale_unit( msi_dialog *dialog, INT val )
 {
-    return (dialog->scale * val + 5) / 10;
+    return MulDiv( val, dialog->scale, 12 );
 }
 
 static msi_control *msi_dialog_find_control( msi_dialog *dialog, LPCWSTR name )
@@ -2911,7 +2911,7 @@ static INT msi_dialog_get_sans_serif_height( HWND hwnd )
     if (hdc)
     {
         memset( &lf, 0, sizeof lf );
-        lf.lfHeight = MulDiv(10, GetDeviceCaps(hdc, LOGPIXELSY), 72);
+        lf.lfHeight = MulDiv(12, GetDeviceCaps(hdc, LOGPIXELSY), 72);
         strcpyW( lf.lfFaceName, szSansSerif );
         hFont = CreateFontIndirectW(&lf);
         if (hFont)
