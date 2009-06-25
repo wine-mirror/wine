@@ -422,8 +422,11 @@ static HRESULT WINAPI InputProcessorProfiles_GetLanguageList(
         ITfInputProcessorProfiles *iface, LANGID **ppLangId, ULONG *pulCount)
 {
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    FIXME("Semi-STUB:(%p)\n",This);
+    *ppLangId = CoTaskMemAlloc(sizeof(LANGID));
+    **ppLangId = This->currentLanguage;
+    *pulCount = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI InputProcessorProfiles_EnumLanguageProfiles(
