@@ -1443,11 +1443,6 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     BYTE alpha;
     DWORD layered_flags;
 
-    if (!(cx = data->window_rect.right - data->window_rect.left)) cx = 1;
-    else if (cx > 65535) cx = 65535;
-    if (!(cy = data->window_rect.bottom - data->window_rect.top)) cy = 1;
-    else if (cy > 65535) cy = 65535;
-
     if (!data->managed && is_window_managed( data->hwnd, SWP_NOACTIVATE, &data->window_rect ))
     {
         TRACE( "making win %p/%lx managed\n", data->hwnd, data->whole_window );
@@ -1457,12 +1452,17 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
 
     mask = get_window_attributes( display, data, &attr );
 
-    wine_tsx11_lock();
-
     data->whole_rect = data->window_rect;
+    X11DRV_window_to_X_rect( data, &data->whole_rect );
+    if (!(cx = data->whole_rect.right - data->whole_rect.left)) cx = 1;
+    else if (cx > 65535) cx = 65535;
+    if (!(cy = data->whole_rect.bottom - data->whole_rect.top)) cy = 1;
+    else if (cy > 65535) cy = 65535;
+
+    wine_tsx11_lock();
     data->whole_window = XCreateWindow( display, root_window,
-                                        data->window_rect.left - virtual_screen_rect.left,
-                                        data->window_rect.top - virtual_screen_rect.top,
+                                        data->whole_rect.left - virtual_screen_rect.left,
+                                        data->whole_rect.top - virtual_screen_rect.top,
                                         cx, cy, 0, screen_depth, InputOutput,
                                         visual, mask, &attr );
 
