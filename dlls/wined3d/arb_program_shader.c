@@ -166,6 +166,7 @@ struct arb_vs_compiled_shader
     GLuint                          prgId;
     UINT                            int_consts[MAX_CONST_I];
     char                            num_int_consts;
+    char                            need_color_unclamp;
     UINT                            pos_fixup;
 };
 
@@ -240,6 +241,7 @@ struct shader_arb_priv
     BOOL                    use_arbfp_fixed_func;
     struct wine_rb_tree     fragment_shaders;
     BOOL                    last_ps_const_clamped;
+    BOOL                    last_vs_color_unclamp;
 
     struct wine_rb_tree     signature_tree;
     DWORD ps_sig_number;
@@ -3334,7 +3336,8 @@ static DWORD find_input_signature(struct shader_arb_priv *priv, const struct win
     return found_sig->idx;
 }
 
-static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_num, struct shader_arb_ctx_priv *priv_ctx)
+static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_num, struct shader_arb_ctx_priv *priv_ctx,
+                                  struct arb_vs_compiled_shader *compiled)
 {
     unsigned int i, j;
     static const char *texcoords[8] =
@@ -3454,6 +3457,16 @@ static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_nu
         {
             if(semantic_idx == 0) priv_ctx->fog_output = decl_idx_to_string[reg_idx];
         }
+        else
+        {
+            continue;
+        }
+
+        if(strcmp(decl_idx_to_string[reg_idx], "result.color.primary") == 0 ||
+           strcmp(decl_idx_to_string[reg_idx], "result.color.secondary") == 0)
+        {
+            compiled->need_color_unclamp = TRUE;
+        }
     }
 
     /* Map declared to declared */
@@ -3491,6 +3504,12 @@ static void init_output_registers(IWineD3DVertexShaderImpl *shader, DWORD sig_nu
                sig[j].semantic_idx == shader->output_signature[i].semantic_idx)
             {
                 priv_ctx->vs_output[i] = decl_idx_to_string[sig[j].register_idx];
+
+                if(strcmp(priv_ctx->vs_output[i], "result.color.primary") == 0 ||
+                   strcmp(priv_ctx->vs_output[i], "result.color.secondary") == 0)
+                {
+                    compiled->need_color_unclamp = TRUE;
+                }
             }
         }
     }
@@ -3514,7 +3533,7 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_vs_args = args;
     list_init(&priv_ctx.control_frames);
-    init_output_registers(This, args->ps_signature, &priv_ctx);
+    init_output_registers(This, args->ps_signature, &priv_ctx, compiled);
 
     /*  Create the hw ARB shader */
     shader_addline(buffer, "!!ARBvp1.0\n");
@@ -4070,10 +4089,11 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     if (useVS) {
         struct arb_vs_compile_args compile_args;
         struct arb_vs_compiled_shader *compiled;
+        IWineD3DVertexShaderImpl *vs = (IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader;
 
         TRACE("Using vertex shader %p\n", This->stateBlock->vertexShader);
-        find_arb_vs_compile_args((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, This->stateBlock, &compile_args);
-        compiled = find_arb_vshader((IWineD3DVertexShaderImpl *) This->stateBlock->vertexShader, &compile_args);
+        find_arb_vs_compile_args(vs, This->stateBlock, &compile_args);
+        compiled = find_arb_vshader(vs, &compile_args);
         priv->current_vprogram_id = compiled->prgId;
         priv->compiled_vprog = compiled;
 
@@ -4086,6 +4106,17 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
         TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
         shader_arb_vs_local_constants(This);
+
+        if(priv->last_vs_color_unclamp != compiled->need_color_unclamp) {
+            priv->last_vs_color_unclamp = compiled->need_color_unclamp;
+
+            if (GL_SUPPORT(ARB_COLOR_BUFFER_FLOAT)) {
+                GL_EXTCALL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, !compiled->need_color_unclamp));
+                checkGLcall("glClampColorARB");
+            } else {
+                FIXME("vertex color clamp needs to be changed, but extension not supported.\n");
+            }
+        }
     } else if(GL_SUPPORT(ARB_VERTEX_PROGRAM)) {
         priv->current_vprogram_id = 0;
         glDisable(GL_VERTEX_PROGRAM_ARB);
