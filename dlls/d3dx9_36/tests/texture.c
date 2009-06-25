@@ -18,9 +18,28 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include "wine/test.h"
 #include "d3dx9tex.h"
 #include "resources.h"
+
+static inline int get_ref(IUnknown *obj)
+{
+    IUnknown_AddRef(obj);
+    return IUnknown_Release(obj);
+}
+
+static inline void check_ref(IUnknown *obj, int exp)
+{
+    int ref = get_ref(obj);
+    ok (exp == ref, "Invalid refcount. Expected %d, got %d\n", exp, ref);
+}
+
+static inline void check_release(IUnknown *obj, int exp)
+{
+    int ref = IUnknown_Release(obj);
+    ok (ref == exp, "Invalid refcount. Expected %d, got %d\n", exp, ref);
+}
 
 /* 1x1 bmp (1 bpp) */
 static const unsigned char bmp01[66] = {
@@ -181,7 +200,93 @@ static void test_D3DXGetImageInfo()
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
 }
 
+static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    BOOL testdummy_ok, testbitmap_ok;
+    IDirect3DSurface9 *surf;
+
+    hr = create_file("testdummy.bmp", noimage, sizeof(noimage));  /* invalid image */
+    testdummy_ok = SUCCEEDED(hr);
+
+    hr = create_file("testbitmap.bmp", bmp01, sizeof(bmp01));  /* valid image */
+    testbitmap_ok = SUCCEEDED(hr);
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 256, 256, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf, NULL);
+    if(FAILED(hr)) {
+        skip("Failed to create a surface (%#x)\n", hr);
+        if(testdummy_ok) DeleteFileA("testdummy.bmp");
+        if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
+        return;
+    }
+
+    /* D3DXLoadSurfaceFromFile */
+    if(testbitmap_ok) {
+        todo_wine {
+            hr = D3DXLoadSurfaceFromFileA(surf, NULL, NULL, "testbitmap.bmp", NULL, D3DX_DEFAULT, 0, NULL);
+            ok(hr == D3D_OK, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3D_OK);
+        }
+
+        hr = D3DXLoadSurfaceFromFileA(NULL, NULL, NULL, "testbitmap.bmp", NULL, D3DX_DEFAULT, 0, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    } else skip("Couldn't create \"testbitmap.bmp\"\n");
+
+    if(testdummy_ok) {
+        todo_wine {
+            hr = D3DXLoadSurfaceFromFileA(surf, NULL, NULL, "testdummy.bmp", NULL, D3DX_DEFAULT, 0, NULL);
+            ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+        }
+    } else skip("Couldn't create \"testdummy.bmp\"\n");
+
+    hr = D3DXLoadSurfaceFromFileA(surf, NULL, NULL, NULL, NULL, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXLoadSurfaceFromFileA(surf, NULL, NULL, "", NULL, D3DX_DEFAULT, 0, NULL);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+
+
+    /* cleanup */
+    check_release((IUnknown*)surf, 0);
+
+    if(testdummy_ok) DeleteFileA("testdummy.bmp");
+    if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
+}
+
 START_TEST(texture)
 {
+    HWND wnd;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    HRESULT hr;
+
+    wnd = CreateWindow("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    if (!wnd) {
+        skip("Couldn't create application window\n");
+        return;
+    }
+    if (!d3d) {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed   = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if(FAILED(hr)) {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
     test_D3DXGetImageInfo();
+    test_D3DXLoadSurface(device);
+
+    check_release((IUnknown*)device, 0);
+    check_release((IUnknown*)d3d, 0);
+    if (wnd) DestroyWindow(wnd);
 }
