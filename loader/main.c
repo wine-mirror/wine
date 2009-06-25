@@ -40,9 +40,9 @@
 
 #ifdef __APPLE__
 
-asm(".zerofill WINE_DOS, WINE_DOS, ___wine_dos, 0x60000000");
+asm(".zerofill WINE_DOS, WINE_DOS, ___wine_dos, 0x70000000");
 asm(".zerofill WINE_SHAREDHEAP, WINE_SHAREDHEAP, ___wine_shared_heap, 0x03000000");
-extern char __wine_dos[0x60000000], __wine_shared_heap[0x03000000];
+extern char __wine_dos[0x70000000], __wine_shared_heap[0x03000000];
 
 static const struct wine_preload_info wine_main_preload_info[] =
 {
