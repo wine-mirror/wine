@@ -62,6 +62,8 @@ static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
+        ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
         ENTER_GL();
         /* Queries are specific to the GL context that created them. Not
          * deleting the query will obviously leak it, but that's still better
@@ -316,6 +318,8 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
         return S_OK;
     }
 
+    ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
     if (((WineQueryOcclusionData *)This->extendedData)->ctx != This->wineD3DDevice->activeContext
             || This->wineD3DDevice->activeContext->tid != GetCurrentThreadId())
     {
@@ -356,6 +360,8 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void
     BOOL* data = pData;
     WineD3DContext *ctx;
     TRACE("(%p) : type D3DQUERY_EVENT, pData %p, dwSize %#x, dwGetDataFlags %#x\n", This, pData, dwSize, dwGetDataFlags);
+
+    ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
 
     ctx = ((WineQueryEventData *)This->extendedData)->ctx;
     if(pData == NULL || dwSize == 0) {
@@ -457,6 +463,9 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
     TRACE("(%p) : dwIssueFlags %#x, type D3DQUERY_EVENT\n", This, dwIssueFlags);
     if (dwIssueFlags & WINED3DISSUE_END) {
         WineD3DContext *ctx = ((WineQueryEventData *)This->extendedData)->ctx;
+
+        ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
         if(ctx != This->wineD3DDevice->activeContext || ctx->tid != GetCurrentThreadId()) {
             /* GL fences can be used only from the context that created them,
              * so if a different context is active, don't bother setting the query. The penalty
@@ -496,6 +505,8 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_Issue(IWineD3DQuery* iface,  D
 
     if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
         WineD3DContext *ctx = ((WineQueryOcclusionData *)This->extendedData)->ctx;
+
+        ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
 
         if(ctx != This->wineD3DDevice->activeContext || ctx->tid != GetCurrentThreadId()) {
             FIXME("Not the owning context, can't start query\n");
