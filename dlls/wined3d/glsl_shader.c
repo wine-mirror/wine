@@ -4101,7 +4101,7 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
             if (entry->np2Fixup_info) {
                 entry->np2Fixup_location = GL_EXTCALL(glGetUniformLocationARB(programId, "PsamplerNP2Fixup"));
             } else {
-                FIXME("NP2 texcoord fixup needed for this pixelshader, but no fixup uniform found.");
+                FIXME("NP2 texcoord fixup needed for this pixelshader, but no fixup uniform found.\n");
             }
         }
     }
