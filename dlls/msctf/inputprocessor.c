@@ -358,9 +358,50 @@ static HRESULT WINAPI InputProcessorProfiles_SetDefaultLanguageProfile(
         ITfInputProcessorProfiles *iface, LANGID langid, REFCLSID rclsid,
         REFGUID guidProfiles)
 {
+    WCHAR fullkey[168];
+    WCHAR buf[39];
+    HKEY hkey;
+    GUID catid;
+    HRESULT hr;
+    ITfCategoryMgr *catmgr;
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    static const GUID * tipcats[3] = { &GUID_TFCAT_TIP_KEYBOARD,
+                                       &GUID_TFCAT_TIP_SPEECH,
+                                       &GUID_TFCAT_TIP_HANDWRITING };
+
+    TRACE("%p) %x %s %s\n",This, langid, debugstr_guid(rclsid),debugstr_guid(guidProfiles));
+
+    if (!rclsid || !guidProfiles)
+        return E_INVALIDARG;
+
+    hr = CategoryMgr_Constructor(NULL,(IUnknown**)&catmgr);
+
+    if (FAILED(hr))
+        return hr;
+
+    if (ITfCategoryMgr_FindClosestCategory(catmgr, rclsid,
+            &catid, tipcats, 3) != S_OK)
+        hr = ITfCategoryMgr_FindClosestCategory(catmgr, rclsid,
+                &catid, NULL, 0);
+    ITfCategoryMgr_Release(catmgr);
+
+    if (FAILED(hr))
+        return E_FAIL;
+
+    StringFromGUID2(&catid, buf, 39);
+    sprintfW(fullkey, szwDefaultFmt, szwSystemCTFKey, szwAssemblies, langid, buf);
+
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, fullkey, 0, NULL, 0, KEY_READ | KEY_WRITE,
+                NULL, &hkey, NULL ) != ERROR_SUCCESS)
+        return E_FAIL;
+
+    StringFromGUID2(rclsid, buf, 39);
+    RegSetValueExW(hkey, szwDefault, 0, REG_SZ, (LPBYTE)buf, sizeof(buf));
+    StringFromGUID2(guidProfiles, buf, 39);
+    RegSetValueExW(hkey, szwProfile, 0, REG_SZ, (LPBYTE)buf, sizeof(buf));
+    RegCloseKey(hkey);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InputProcessorProfiles_ActivateLanguageProfile(
