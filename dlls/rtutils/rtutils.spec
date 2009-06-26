@@ -47,8 +47,8 @@
 @ stub TracePrintfW
 @ stub TracePutsExA
 @ stub TracePutsExW
-@ stub TraceRegisterExA
-@ stub TraceRegisterExW
+@ stdcall TraceRegisterExA(str long)
+@ stdcall TraceRegisterExW(wstr long)
 @ stub TraceVprintfExA
 @ stub TraceVprintfExW
 @ stub UpdateWaitTimer
