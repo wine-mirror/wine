@@ -1914,6 +1914,49 @@ static void test_CodePageToScriptID(IMLangFontLink2 *font_link)
     }
 }
 
+static void test_GetFontUnicodeRanges(IMLangFontLink2 *font_link)
+{
+    HRESULT hr;
+    UINT count;
+    HFONT hfont, old_hfont;
+    LOGFONTA lf;
+    HDC hdc;
+    UNICODERANGE *ur;
+
+    hdc = CreateCompatibleDC(0);
+    memset(&lf, 0, sizeof(lf));
+    lstrcpyA(lf.lfFaceName, "Arial");
+    hfont = CreateFontIndirectA(&lf);
+    old_hfont = SelectObject(hdc, hfont);
+
+    count = 0;
+    hr = IMLangFontLink2_GetFontUnicodeRanges(font_link, NULL, &count, NULL);
+    ok(hr == E_FAIL, "expected E_FAIL, got 0x%08x\n", hr);
+
+    hr = IMLangFontLink2_GetFontUnicodeRanges(font_link, hdc, NULL, NULL);
+    ok(hr == E_INVALIDARG, "expected E_FAIL, got 0x%08x\n", hr);
+
+    count = 0;
+    hr = IMLangFontLink2_GetFontUnicodeRanges(font_link, hdc, &count, NULL);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+    ok(count, "expected count > 0\n");
+
+    ur = HeapAlloc(GetProcessHeap(), 0, sizeof(*ur) * count);
+
+    hr = IMLangFontLink2_GetFontUnicodeRanges(font_link, hdc, &count, ur);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+
+    count--;
+    hr = IMLangFontLink2_GetFontUnicodeRanges(font_link, hdc, &count, ur);
+    ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
+
+    HeapFree(GetProcessHeap(), 0, ur);
+
+    SelectObject(hdc, old_hfont);
+    DeleteObject(hfont);
+    DeleteDC(hdc);
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage  *iML = NULL;
@@ -1991,6 +2034,7 @@ START_TEST(mlang)
     if (ret != S_OK || !iMLFL2) return;
 
     test_GetScriptFontInfo(iMLFL2);
+    test_GetFontUnicodeRanges(iMLFL2);
     test_CodePageToScriptID(iMLFL2);
     IMLangFontLink2_Release(iMLFL2);
 

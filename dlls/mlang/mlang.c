@@ -3357,8 +3357,30 @@ static HRESULT WINAPI fnIMLangFontLink2_MapFont(IMLangFontLink2* This,
 static HRESULT WINAPI fnIMLangFontLink2_GetFontUnicodeRanges(IMLangFontLink2* This,
         HDC hDC, UINT *puiRanges, UNICODERANGE *pUranges)
 {
-    FIXME("(%p)->%p %p %p\n",This, hDC, puiRanges, pUranges);
-    return E_NOTIMPL;
+    DWORD size;
+    GLYPHSET *gs;
+
+    TRACE("(%p)->%p %p %p\n", This, hDC, puiRanges, pUranges);
+
+    if (!puiRanges) return E_INVALIDARG;
+    if (!(size = GetFontUnicodeRanges(hDC, NULL))) return E_FAIL;
+    if (!(gs = HeapAlloc(GetProcessHeap(), 0, size))) return E_OUTOFMEMORY;
+
+    GetFontUnicodeRanges(hDC, gs);
+    *puiRanges = gs->cRanges;
+    if (pUranges)
+    {
+        UINT i;
+        for (i = 0; i < gs->cRanges; i++)
+        {
+            if (i >= *puiRanges) break;
+            pUranges[i].wcFrom = gs->ranges[i].wcLow;
+            pUranges[i].wcTo   = gs->ranges[i].wcLow + gs->ranges[i].cGlyphs;
+        }
+        *puiRanges = i;
+    }
+    HeapFree(GetProcessHeap(), 0, gs);
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMLangFontLink2_GetScriptFontInfo(IMLangFontLink2* This,
