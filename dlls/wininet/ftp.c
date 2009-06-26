@@ -2462,6 +2462,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     {
 	ERR("Unable to connect (%s)\n", strerror(errno));
 	INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
+	closesocket(nsocket);
     }
     else
     {
