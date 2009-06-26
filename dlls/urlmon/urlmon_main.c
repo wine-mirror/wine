@@ -139,6 +139,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
             FreeLibrary(hCabinet);
         hCabinet = NULL;
         init_session(FALSE);
+        free_session();
         free_tls_list();
         URLMON_hInstance = 0;
 	break;
