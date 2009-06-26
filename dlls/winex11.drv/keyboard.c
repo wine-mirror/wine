@@ -2349,11 +2349,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
       TRACE("found scan=%04x keyc=%04x keysym=%04x string=%s\n",
             scanCode, keyc, (int)keys, name);
       if (lpBuffer && nSize && name)
-      {
-          MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpBuffer, nSize);
-          lpBuffer[nSize - 1] = 0;
-          return nSize;
-      }
+          return MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpBuffer, nSize);
   }
 
   /* Finally issue WARN for unknown keys   */
