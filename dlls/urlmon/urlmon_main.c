@@ -362,31 +362,6 @@ HRESULT WINAPI DllRegisterServerEx(void)
     return E_FAIL;
 }
 
-static const CHAR Agent[] = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)";
-
-/**************************************************************************
- *                 ObtainUserAgentString (URLMON.@)
- */
-HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbSize)
-{
-    FIXME("(%d, %p, %p): stub\n", dwOption, pcszUAOut, cbSize);
-
-    if (pcszUAOut == NULL || cbSize == NULL)
-        return E_INVALIDARG;
-
-    if (*cbSize < sizeof(Agent))
-    {
-        *cbSize = sizeof(Agent);
-        return E_OUTOFMEMORY;
-    }
-
-    if (sizeof(Agent) < *cbSize)
-        *cbSize = sizeof(Agent);
-    lstrcpynA(pcszUAOut, Agent, *cbSize);
-
-    return S_OK;
-}
-
 /**************************************************************************
  *                 IsValidURL (URLMON.@)
  * 

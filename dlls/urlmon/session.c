@@ -631,6 +631,39 @@ HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBuf
     return S_OK;
 }
 
+/**************************************************************************
+ *                 ObtainUserAgentString (URLMON.@)
+ */
+HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbSize)
+{
+    DWORD size;
+    HRESULT hres = E_FAIL;
+
+    TRACE("(%d %p %p)\n", dwOption, pcszUAOut, cbSize);
+
+    if(!pcszUAOut || !cbSize)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&session_cs);
+
+    ensure_useragent();
+    if(user_agent) {
+        size = WideCharToMultiByte(CP_ACP, 0, user_agent, -1, NULL, 0, NULL, NULL);
+
+        if(size <= *cbSize) {
+            WideCharToMultiByte(CP_ACP, 0, user_agent, -1, pcszUAOut, *cbSize, NULL, NULL);
+            hres = S_OK;
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+
+        *cbSize = size;
+    }
+
+    LeaveCriticalSection(&session_cs);
+    return hres;
+}
+
 void free_session(void)
 {
     heap_free(user_agent);
