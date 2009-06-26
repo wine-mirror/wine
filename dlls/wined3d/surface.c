@@ -4826,6 +4826,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
              * but it isn't set (yet) in all cases it is getting called. */
             if((convert != NO_CONVERSION) && (This->Flags & SFLAG_PBO)) {
                 TRACE("Removing the pbo attached to surface %p\n", This);
+                if (!device->isInDraw) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
                 surface_remove_pbo(This);
             }
 
