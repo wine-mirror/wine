@@ -65,7 +65,10 @@
 
 /* inotify support */
 
-#if defined(__linux__) && defined(__i386__)
+#ifdef HAVE_SYS_INOTIFY_H
+#include <sys/inotify.h>
+#define USE_INOTIFY
+#elif defined(__linux__) && defined(__i386__)
 
 #define SYS_inotify_init	291
 #define SYS_inotify_add_watch	292
@@ -114,7 +117,7 @@ static inline int inotify_add_watch( int fd, const char *name, unsigned int mask
     return ret;
 }
 
-static inline int inotify_remove_watch( int fd, int wd )
+static inline int inotify_rm_watch( int fd, int wd )
 {
     int ret;
     __asm__ __volatile__( "pushl %%ebx;\n\t"
@@ -568,7 +571,7 @@ static void free_inode( struct inode *inode )
 
     if (inode->wd != -1)
     {
-        inotify_remove_watch( get_unix_fd( inotify_fd ), inode->wd );
+        inotify_rm_watch( get_unix_fd( inotify_fd ), inode->wd );
         list_remove( &inode->wd_entry );
     }
     list_remove( &inode->ino_entry );

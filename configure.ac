@@ -347,6 +347,7 @@ AC_CHECK_HEADERS(\
 	sys/event.h \
 	sys/exec_elf.h \
 	sys/filio.h \
+	sys/inotify.h \
 	sys/ioctl.h \
 	sys/ipc.h \
 	sys/limits.h \
