@@ -210,7 +210,7 @@
  249 stdcall -noname PathParseIconLocation(ptr) PathParseIconLocationAW
  250 stdcall -noname PathRemoveExtension(ptr) PathRemoveExtensionAW
  251 stdcall -noname PathRemoveArgs(ptr) PathRemoveArgsAW
- 256 stdcall @(ptr ptr) SHELL32_256
+ 256 stdcall SHCreateShellFolderView(ptr ptr)
  258 stdcall -noname LinkWindow_RegisterClass()
  259 stdcall -noname LinkWindow_UnregisterClass()
 #299 stub Shl1632_ThunkData32
