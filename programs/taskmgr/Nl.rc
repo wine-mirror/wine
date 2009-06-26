@@ -376,14 +376,14 @@ BEGIN
                     WS_TABSTOP,7,127,49,10
     CONTROL         "I/O - Bytes (Lezen)",IDC_IOREADBYTES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,138,75,10
-    CONTROL         "&Session-ID",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "&Sessie-ID",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,149,50,10
     CONTROL         "Gebruikers&naam",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,160,80,10
     CONTROL         "Delta van de &page faults",IDC_PAGEFAULTSDELTA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,28,72,10
-    CONTROL         "&Grootte van het virtuele geheugen",IDC_VIRTUALMEMORYSIZE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,132,39,105,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,28,100,10
+    CONTROL         "&Grootte van virtueel geheugen",IDC_VIRTUALMEMORYSIZE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,132,39,115,10
     CONTROL         "&Paged Pool",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,132,50,90,10
     CONTROL         "Non&paged Pool",IDC_NONPAGEDPOOL,"Button",
@@ -467,6 +467,7 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "Zet het proces in de NORMAAL-prioriteitsklasse"
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "Zet het proces in de LAGER DAN NORMAAL-prioriteitsklasse"
     ID_PROCESS_PAGE_SETPRIORITY_LOW         "Zet het proces in de LAGE-prioriteitsklasse"
+    ID_PROCESS_PAGE_DEBUGCHANNELS           "Beheer van debugkanalen"
 END
 
 STRINGTABLE DISCARDABLE
@@ -487,4 +488,68 @@ BEGIN
     IDS_STATUS_BAR_CPU_USAGE           "CPU-gebruik: %3d%%"
     IDS_STATUS_BAR_PROCESSES           "Processen: %d"
     IDS_STATUS_BAR_MEMORY_USAGE        "Geheugengebruik: %dK / %dK"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "Procesnaam"
+    IDS_PID               "Process ID"
+    IDS_CPUUSAGE          "CPU-gebruik"
+    IDS_CPUTIME           "CPU-tijd"
+    IDS_MEMORYUSAGE       "Geheugengebruik"
+    IDS_MEMORYUSAGEDELTA  "Delta in geheugengebruik"
+    IDS_PEAKMEMORYUSAGE   "Maximale geheugengebruik"
+    IDS_PAGEFAULTS        "Page Faults"
+    IDS_USEROBJECTS       "USER-objecten"
+    IDS_IOREADS           "I/O (Lezen)"
+    IDS_IOREADBYTES       "I/O - Bytes (Lezen)"
+    IDS_SESSIONID         "Sessie-ID"
+    IDS_USERNAME          "Gebruikersnaam"
+    IDS_PAGEFAULTSDELTA   "Delta van de Page Faults"
+    IDS_VIRTUALMEMORYSIZE "VM-grootte"
+    IDS_PAGEDPOOL         "Paged Pool"
+    IDS_NONPAGEDPOOL      "NP Pool"
+    IDS_BASEPRIORITY      "Basisprioriteit"
+    IDS_HANDLECOUNT       "Aantal handles"
+    IDS_THREADCOUNT       "Aantal threads"
+    IDS_GDIOBJECTS        "GDI-objecten"
+    IDS_IOWRITES          "I/O (Schrijven)"
+    IDS_IOWRITEBYTES      "I/O - Bytes (Schrijven)"
+    IDS_IOOTHER           "I/O (Anders)"
+    IDS_IOOTHERBYTES      "I/O - Bytes (Anders)"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "Task Manager Waarschuwing"
+    IDS_PRIORITY_CHANGE_MESSAGE     "WAARSCHUWING: Het veranderen van de prioriteits klasse van dit\n\
+                                     proces kan ongewenste gevolgen hebben zoals instabiliteit van\n\
+                                     het systeem. Weet u zeker dat u de prioriteits klasse wilt veranderen?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Prioriteit kan niet worden verandered"
+    IDS_TERMINATE_MESSAGE           "WAARSCHUWING: Het stoppen van een proces kan ongewenste\n\
+                                     gevolgen hebben zoals verlies van gegevens en instabiliteit\n\
+                                     van het systeem. Het proces zal geen mogelijkheid worden gegeven\n\
+                                     om zijn gegevens of status op te slaan. Weet u zeker dat u dit process\n\
+                                     wilt stoppen?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Proces kan niet worden gestopt"
+    IDS_DEBUG_MESSAGE               "WAARSCHUWING: Het debuggen van dit proces kan verlies van data tot\n\
+                                     gevolg hebben. Weet u zeker dat u de debugger wilt koppelen?"
+    IDS_DEBUG_UNABLE2DEBUG          "Proces kan niet worden gedebugged"
+    IDS_AFFINITY_ERROR_MESSAGE      "Het proces moet aan tenminste 1 processor worden gekoppeld"
+    IDS_AFFINITY_ERROR_TITLE        "Ongeldige optie"
+    IDS_AFFINITY_UNABLE2ACCESS      "Proces affiniteit kan niet worden gelezen of gezet"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "Niet actief proces"
+    IDS_APPLICATION_NOT_RESPONDING     "Reageert niet"
+    IDS_APPLICATION_RUNNING            "Geactiveerd"
+    IDS_APPLICATION_TASK               "Taak"
+    IDS_APPLICATION_STATUS             "Status"
+    IDS_DEBUG_CHANNEL                  "Debugkanalen"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
 END
