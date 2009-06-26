@@ -1155,9 +1155,11 @@ static void test_UrlMkGetSessionOption(void)
     ok(encoding == 0xdeadbeef, "encoding = %08x, exepcted 0xdeadbeef\n", encoding);
 }
 
-static void test_ObtainUserAgentString(void)
+static void test_user_agent(void)
 {
     static const CHAR expected[] = "Mozilla/4.0 (compatible; MSIE ";
+    static char test_str[] = "test";
+    static char test2_str[] = "test\0test";
     static CHAR str[3];
     LPSTR str2 = NULL;
     HRESULT hres;
@@ -1209,6 +1211,84 @@ static void test_ObtainUserAgentString(void)
         ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
         ok(size == saved, "size=%d, expected %d\n", size, saved);
     }
+
+    size = 0;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, NULL, 0, &size, 0);
+    ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
+    ok(size, "size == 0\n");
+
+    size = 0xdeadbeef;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, NULL, 1000, &size, 0);
+    ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08x\n", hres);
+    ok(size, "size == 0\n");
+
+    saved = size;
+    size = 0;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved+10, &size, 0);
+    ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
+    ok(size == saved, "size = %d, expected %d\n", size, saved);
+    ok(sizeof(expected) <= strlen(str2) && !memcmp(expected, str2, sizeof(expected)-1),
+       "user agent was \"%s\", expected to start with \"%s\"\n",
+       str2, expected);
+
+    size = 0;
+    str2[0] = 0;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
+    ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
+    ok(size == saved, "size = %d, expected %d\n", size, saved);
+    ok(sizeof(expected) <= strlen(str2) && !memcmp(expected, str2, sizeof(expected)-1),
+       "user agent was \"%s\", expected to start with \"%s\"\n",
+       str2, expected);
+
+    size = saved;
+    str2[0] = 0;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved-1, &size, 0);
+    ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
+    ok(size == saved, "size = %d, expected %d\n", size, saved);
+    ok(!str2[0], "buf changed\n");
+
+    size = saved;
+    str2[0] = 0;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, NULL, 0);
+    ok(hres == E_INVALIDARG, "UrlMkGetSessionOption failed: %08x\n", hres);
+    ok(!str2[0], "buf changed\n");
+
+    hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, test_str, sizeof(test_str), 0);
+    ok(hres == S_OK, "UrlMkSetSessionOption failed: %08x\n", hres);
+
+    size = 0;
+    str2[0] = 0;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
+    ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
+    ok(size == sizeof(test_str) && !memcmp(str2, test_str, sizeof(test_str)), "wrong user agent\n");
+
+    hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, test2_str, sizeof(test2_str), 0);
+    ok(hres == S_OK, "UrlMkSetSessionOption failed: %08x\n", hres);
+
+    size = 0;
+    str2[0] = 0;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
+    ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
+    ok(size == sizeof(test_str) && !memcmp(str2, test_str, sizeof(test_str)), "wrong user agent\n");
+
+    hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, test_str, 2, 0);
+    ok(hres == S_OK, "UrlMkSetSessionOption failed: %08x\n", hres);
+
+    size = 0;
+    str2[0] = 0;
+    hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, str2, saved, &size, 0);
+    ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08x\n", hres);
+    ok(size == 3 && !strcmp(str2, "te"), "wrong user agent\n");
+
+    hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, test_str, 0, 0);
+    ok(hres == E_INVALIDARG, "UrlMkSetSessionOption failed: %08x\n", hres);
+
+    hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, NULL, sizeof(test_str), 0);
+    ok(hres == E_INVALIDARG, "UrlMkSetSessionOption failed: %08x\n", hres);
+
+    hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, NULL, 0, 0);
+    ok(hres == E_INVALIDARG, "UrlMkSetSessionOption failed: %08x\n", hres);
+
     HeapFree(GetProcessHeap(), 0, str2);
 }
 
@@ -1277,7 +1357,7 @@ START_TEST(misc)
     test_ReleaseBindInfo();
     test_CopyStgMedium();
     test_UrlMkGetSessionOption();
-    test_ObtainUserAgentString();
+    test_user_agent();
     test_MkParseDisplayNameEx();
 
     OleUninitialize();
