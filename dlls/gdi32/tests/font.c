@@ -2936,7 +2936,7 @@ void test_GetTextMetrics2(  const char *fontname)
     of = SelectObject( hdc, hf);
     ret = GetObjectA( hf, sizeof( lf), &lf);
     ret = GetTextMetricsA( hdc, &tm);
-    ok(ret, "GetTextMetricsA error %u, ", GetLastError());
+    ok(ret, "GetTextMetricsA error %u\n", GetLastError());
     avecharw[0] =tm.tmAveCharWidth;
     maxcharw[0] =tm.tmMaxCharWidth;
     SelectObject( hdc, of);
@@ -2950,7 +2950,7 @@ void test_GetTextMetrics2(  const char *fontname)
     of = SelectObject( hdc, hf);
     ret = GetObjectA( hf, sizeof( lf), &lf);
     ret = GetTextMetricsA( hdc, &tm);
-    ok(ret, "GetTextMetricsA error %u, ", GetLastError());
+    ok(ret, "GetTextMetricsA error %u\n", GetLastError());
     avecharw[1] =tm.tmAveCharWidth;
     maxcharw[1] =tm.tmMaxCharWidth;
     SelectObject( hdc, of);
@@ -2964,7 +2964,7 @@ void test_GetTextMetrics2(  const char *fontname)
     of = SelectObject( hdc, hf);
     ret = GetObjectA( hf, sizeof( lf), &lf);
     ret = GetTextMetricsA( hdc, &tm);
-    ok(ret, "GetTextMetricsA error %u, ", GetLastError());
+    ok(ret, "GetTextMetricsA error %u\n", GetLastError());
     avecharw[2] =tm.tmAveCharWidth;
     maxcharw[2] =tm.tmMaxCharWidth;
     SelectObject( hdc, of);
