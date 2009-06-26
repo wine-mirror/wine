@@ -56,8 +56,10 @@ typedef struct
 static const DEV_NODES sDeviceNodes[] = {
   {"/dev/fd", DRIVE_REMOVABLE},
   {"/dev/pf", DRIVE_REMOVABLE},
+  {"/dev/acd", DRIVE_CDROM},
   {"/dev/aztcd", DRIVE_CDROM},
   {"/dev/bpcd", DRIVE_CDROM},
+  {"/dev/cd", DRIVE_CDROM},
   {"/dev/cdrom", DRIVE_CDROM},
   {"/dev/cdu535", DRIVE_CDROM},
   {"/dev/cdwriter", DRIVE_CDROM},
