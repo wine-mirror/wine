@@ -51,9 +51,9 @@ static void *get_callback_iface(BindStatusCallback *This, REFIID riid)
 
     hres = IBindStatusCallback_QueryInterface(This->callback, riid, (void**)&ret);
     if(FAILED(hres) && This->serv_prov)
-        IServiceProvider_QueryService(This->serv_prov, riid, riid, &ret);
+        hres = IServiceProvider_QueryService(This->serv_prov, riid, riid, &ret);
 
-    return ret;
+    return SUCCEEDED(hres) ? ret : NULL;
 }
 
 #define STATUSCLB_THIS(iface) DEFINE_THIS(BindStatusCallback, BindStatusCallback, iface)
