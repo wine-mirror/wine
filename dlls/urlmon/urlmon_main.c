@@ -362,17 +362,6 @@ HRESULT WINAPI DllRegisterServerEx(void)
     return E_FAIL;
 }
 
-/**************************************************************************
- *                 UrlMkSetSessionOption (URLMON.@)
- */
-HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength,
- 					DWORD Reserved)
-{
-    FIXME("(%#x, %p, %#x): stub\n", dwOption, pBuffer, dwBufferLength);
-
-    return S_OK;
-}
-
 static const CHAR Agent[] = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)";
 
 /**************************************************************************

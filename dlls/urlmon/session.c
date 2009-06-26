@@ -587,6 +587,50 @@ HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBuf
     return E_INVALIDARG;
 }
 
+/**************************************************************************
+ *                 UrlMkSetSessionOption (URLMON.@)
+ */
+HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength,
+        DWORD Reserved)
+{
+    TRACE("(%x %p %x)\n", dwOption, pBuffer, dwBufferLength);
+
+    switch(dwOption) {
+    case URLMON_OPTION_USERAGENT: {
+        LPWSTR new_user_agent;
+        char *buf = pBuffer;
+        DWORD len, size;
+
+        if(!pBuffer || !dwBufferLength)
+            return E_INVALIDARG;
+
+        for(len=0; len<dwBufferLength && buf[len]; len++);
+
+        TRACE("Setting user agent %s\n", debugstr_an(buf, len));
+
+        size = MultiByteToWideChar(CP_ACP, 0, buf, len, NULL, 0);
+        new_user_agent = heap_alloc((size+1)*sizeof(WCHAR));
+        if(!new_user_agent)
+            return E_OUTOFMEMORY;
+        MultiByteToWideChar(CP_ACP, 0, buf, len, new_user_agent, size);
+        new_user_agent[size] = 0;
+
+        EnterCriticalSection(&session_cs);
+
+        heap_free(user_agent);
+        user_agent = new_user_agent;
+
+        LeaveCriticalSection(&session_cs);
+        break;
+    }
+    default:
+        FIXME("Unknown option %x\n", dwOption);
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
+}
+
 void free_session(void)
 {
     heap_free(user_agent);
