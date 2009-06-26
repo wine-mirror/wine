@@ -5358,6 +5358,7 @@ static const struct StateEntryTemplate ffp_fragmentstate_template[] = {
 #undef GLINFO_LOCATION
 
 #define GLINFO_LOCATION (*gl_info)
+/* Context activation is done by the caller. */
 static void ffp_enable(IWineD3DDevice *iface, BOOL enable) { }
 
 static void ffp_fragment_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *pCaps)

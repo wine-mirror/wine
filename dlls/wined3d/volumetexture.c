@@ -331,6 +331,7 @@ static BOOL WINAPI IWineD3DVolumeTextureImpl_GetDirty(IWineD3DVolumeTexture *ifa
     return basetexture_get_dirty((IWineD3DBaseTexture *)iface);
 }
 
+/* Context activation is done by the caller. */
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface, BOOL srgb) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     BOOL dummy;

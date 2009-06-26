@@ -4491,6 +4491,7 @@ static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
     return WINED3D_OK;
 }
 
+/* Context activation is done by the caller. */
 static void shader_glsl_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;

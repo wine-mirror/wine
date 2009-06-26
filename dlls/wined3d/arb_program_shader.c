@@ -4266,6 +4266,7 @@ static void release_signature(struct wine_rb_entry *entry, void *context)
     HeapFree(GetProcessHeap(), 0, sig);
 }
 
+/* Context activation is done by the caller. */
 static void shader_arb_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const WineD3D_GL_Info *gl_info = &This->adapter->gl_info;
@@ -4886,6 +4887,7 @@ struct arbfp_ffp_desc
     unsigned int num_textures_used;
 };
 
+/* Context activation is done by the caller. */
 static void arbfp_enable(IWineD3DDevice *iface, BOOL enable) {
     ENTER_GL();
     if(enable) {
@@ -4922,6 +4924,7 @@ static HRESULT arbfp_alloc(IWineD3DDevice *iface) {
     return WINED3D_OK;
 }
 
+/* Context activation is done by the caller. */
 static void arbfp_free_ffpshader(struct wine_rb_entry *entry, void *context)
 {
     const WineD3D_GL_Info *gl_info = context;
@@ -4934,6 +4937,7 @@ static void arbfp_free_ffpshader(struct wine_rb_entry *entry, void *context)
     LEAVE_GL();
 }
 
+/* Context activation is done by the caller. */
 static void arbfp_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct shader_arb_priv *priv = This->fragment_priv;
@@ -5881,6 +5885,8 @@ static HRESULT arbfp_blit_alloc(IWineD3DDevice *iface) {
     }
     return WINED3D_OK;
 }
+
+/* Context activation is done by the caller. */
 static void arbfp_blit_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
     struct arbfp_blit_priv *priv = device->blit_priv;
@@ -6129,6 +6135,7 @@ static BOOL gen_yv12_read(SHADER_BUFFER *buffer, GLenum textype, char *luminance
     return TRUE;
 }
 
+/* Context activation is done by the caller. */
 static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixup, GLenum textype)
 {
     GLenum shader;
@@ -6265,6 +6272,7 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
     return shader;
 }
 
+/* Context activation is done by the caller. */
 static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
         GLenum textype, UINT width, UINT height)
 {
@@ -6325,6 +6333,7 @@ static HRESULT arbfp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatD
     return WINED3D_OK;
 }
 
+/* Context activation is done by the caller. */
 static void arbfp_blit_unset(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
 

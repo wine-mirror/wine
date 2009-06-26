@@ -557,6 +557,7 @@ static BOOL init_format_compression_info(WineD3D_GL_Info *gl_info)
 
 #define GLINFO_LOCATION (*gl_info)
 
+/* Context activation is done by the caller. */
 static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_format, GLenum format, GLenum type)
 {
     GLenum status;
@@ -583,6 +584,7 @@ static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_form
     return status == GL_FRAMEBUFFER_COMPLETE_EXT;
 }
 
+/* Context activation is done by the caller. */
 static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
 {
     unsigned int i;
@@ -856,6 +858,7 @@ BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
     return TRUE;
 }
 
+/* Context activation is done by the caller. */
 BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
 {
     if (!init_format_base_info(gl_info)) return FALSE;

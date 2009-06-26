@@ -595,8 +595,10 @@ static void nvrc_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 #undef GLINFO_LOCATION
 
 #define GLINFO_LOCATION (*gl_info)
+/* Context activation is done by the caller. */
 static void nvrc_enable(IWineD3DDevice *iface, BOOL enable) { }
 
+/* Context activation is done by the caller. */
 static void nvts_enable(IWineD3DDevice *iface, BOOL enable) {
     ENTER_GL();
     if(enable) {
@@ -664,6 +666,7 @@ static void nvrc_fragment_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info
 }
 
 static HRESULT nvrc_fragment_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
+/* Context activation is done by the caller. */
 static void nvrc_fragment_free(IWineD3DDevice *iface) {}
 
 /* Two fixed function pipeline implementations using GL_NV_register_combiners and

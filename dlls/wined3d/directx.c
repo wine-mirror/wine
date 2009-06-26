@@ -494,6 +494,7 @@ static DWORD ver_for_ext(GL_SupportedExt ext)
     return 0;
 }
 
+/* Context activation is done by the caller. */
 static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     const char *GL_Extensions    = NULL;
     const char *WGL_Extensions   = NULL;
@@ -3910,6 +3911,7 @@ static BOOL match_apple(const WineD3D_GL_Info *gl_info)
     }
 }
 
+/* Context activation is done by the caller. */
 static void test_pbo_functionality(WineD3D_GL_Info *gl_info) {
     /* Some OpenGL implementations, namely Apple's Geforce 8 driver, advertises PBOs,
      * but glTexSubImage from a PBO fails miserably, with the first line repeated over
@@ -4243,6 +4245,7 @@ struct driver_quirk quirk_table[] = {
     }
 };
 
+/* Context activation is done by the caller. */
 static void fixup_extensions(WineD3D_GL_Info *gl_info) {
     unsigned int i;
 

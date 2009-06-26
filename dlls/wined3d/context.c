@@ -1235,6 +1235,7 @@ static inline void set_blit_dimension(UINT width, UINT height) {
  *  height: render target height
  *
  *****************************************************************************/
+/* Context activation is done by the caller. */
 static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *context, UINT width, UINT height) {
     int i, sampler;
     const struct StateEntry *StateTable = This->StateTable;
@@ -1630,6 +1631,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     return context;
 }
 
+/* Context activation is done by the caller. */
 static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target, BOOL blit)
 {
     IWineD3DSwapChain *swapchain;

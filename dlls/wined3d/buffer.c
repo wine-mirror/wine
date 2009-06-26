@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define VB_MAXDECLCHANGES     100     /* After that number we stop converting */
 #define VB_RESETDECLCHANGE    1000    /* Reset the changecount after that number of draws */
 
+/* Context activation is done by the caller. */
 static void buffer_create_buffer_object(struct wined3d_buffer *This)
 {
     GLenum error, gl_usage;
@@ -454,6 +455,7 @@ static BOOL buffer_find_decl(struct wined3d_buffer *This)
     return ret;
 }
 
+/* Context activation is done by the caller. */
 static void buffer_check_buffer_object_size(struct wined3d_buffer *This)
 {
     UINT size = This->conversion_stride ?
@@ -514,6 +516,7 @@ static inline void fixup_transformed_pos(float *p)
     }
 }
 
+/* Context activation is done by the caller. */
 const BYTE *buffer_get_memory(IWineD3DBuffer *iface, UINT offset, GLuint *buffer_object)
 {
     struct wined3d_buffer *This = (struct wined3d_buffer *)iface;
@@ -573,6 +576,7 @@ static ULONG STDMETHODCALLTYPE buffer_AddRef(IWineD3DBuffer *iface)
     return refcount;
 }
 
+/* Context activation is done by the caller. */
 const BYTE *buffer_get_sysmem(struct wined3d_buffer *This)
 {
     /* AllocatedMemory exists if the buffer is double buffered or has no buffer object at all */

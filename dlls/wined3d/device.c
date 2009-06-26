@@ -166,6 +166,7 @@ static BOOL fixed_get_input(BYTE usage, BYTE usage_idx, unsigned int *regnum)
     return TRUE;
 }
 
+/* Context activation is done by the caller. */
 void device_stream_info_from_declaration(IWineD3DDeviceImpl *This,
         BOOL use_vshader, struct wined3d_stream_info *stream_info, BOOL *fixup)
 {
@@ -2023,6 +2024,7 @@ static void IWineD3DDeviceImpl_LoadLogo(IWineD3DDeviceImpl *This, const char *fi
     return;
 }
 
+/* Context activation is done by the caller. */
 static void create_dummy_textures(IWineD3DDeviceImpl *This) {
     unsigned int i;
     /* Under DirectX you can have texture stage operations even if no texture is
@@ -2129,7 +2131,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
         }
     }
 
-    /* Setup the implicit swapchain */
+    /* Setup the implicit swapchain. This also initializes a context. */
     TRACE("Creating implicit swapchain\n");
     hr = IWineD3DDeviceParent_CreateSwapChain(This->device_parent,
             pPresentationParameters, (IWineD3DSwapChain **)&swapchain);
@@ -4034,6 +4036,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
     return WINED3D_OK;
 }
 
+/* Context activation is done by the caller. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount,
         const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD dwFlags,

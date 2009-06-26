@@ -1038,6 +1038,7 @@ static const struct StateEntryTemplate atifs_fragmentstate_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                       }, WINED3D_GL_EXT_NONE             },
 };
 
+/* Context activation is done by the caller. */
 static void atifs_enable(IWineD3DDevice *iface, BOOL enable) {
     ENTER_GL();
     if(enable) {
@@ -1118,6 +1119,7 @@ static HRESULT atifs_alloc(IWineD3DDevice *iface) {
 }
 
 #define GLINFO_LOCATION This->adapter->gl_info
+/* Context activation is done by the caller. */
 static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *context)
 {
     IWineD3DDeviceImpl *This = context;
@@ -1130,6 +1132,7 @@ static void atifs_free_ffpshader(struct wine_rb_entry *entry, void *context)
     LEAVE_GL();
 }
 
+/* Context activation is done by the caller. */
 static void atifs_free(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     struct atifs_private_data *priv = This->fragment_priv;

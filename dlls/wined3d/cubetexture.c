@@ -401,6 +401,7 @@ static BOOL WINAPI IWineD3DCubeTextureImpl_GetDirty(IWineD3DCubeTexture *iface) 
     return basetexture_get_dirty((IWineD3DBaseTexture *)iface);
 }
 
+/* Context activation is done by the caller. */
 static HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *iface, BOOL srgb) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     BOOL set_gl_texture_desc;

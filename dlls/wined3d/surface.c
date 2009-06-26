@@ -299,6 +299,7 @@ void surface_set_texture_target(IWineD3DSurface *iface, GLenum target)
     surface_force_reload(iface);
 }
 
+/* Context activation is done by the caller. */
 static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This, BOOL srgb) {
     int active_sampler;
 
@@ -341,8 +342,9 @@ static BOOL primary_render_target_is_p8(IWineD3DDeviceImpl *device)
 
 #define GLINFO_LOCATION This->resource.wineD3DDevice->adapter->gl_info
 
-/* This call just downloads data, the caller is responsible for activating the
- * right context and binding the correct texture. */
+/* This call just downloads data, the caller is responsible for binding the
+ * correct texture. */
+/* Context activation is done by the caller. */
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
     const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
 
@@ -494,8 +496,9 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
     This->Flags |= SFLAG_INSYSMEM;
 }
 
-/* This call just uploads data, the caller is responsible for activating the
- * right context and binding the correct texture. */
+/* This call just uploads data, the caller is responsible for binding the
+ * correct texture. */
+/* Context activation is done by the caller. */
 static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data) {
     const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
 
@@ -561,8 +564,9 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
     }
 }
 
-/* This call just allocates the texture, the caller is responsible for
- * activating the right context and binding the correct texture. */
+/* This call just allocates the texture, the caller is responsible for binding
+ * the correct texture. */
+/* Context activation is done by the caller. */
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type) {
     const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
     BOOL enable_client_storage = FALSE;
@@ -815,6 +819,7 @@ static void WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     surface_internal_preload(iface, SRGB_ANY);
 }
 
+/* Context activation is done by the caller. */
 static void surface_remove_pbo(IWineD3DSurfaceImpl *This) {
     This->resource.heapMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + RESOURCE_ALIGNMENT);
     This->resource.allocatedMemory =
@@ -2472,6 +2477,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
    It supports GL_EXT_paletted_texture and GL_ARB_fragment_program, support for other
    extensions like ATI_fragment_shaders is possible.
 */
+/* Context activation is done by the caller. */
 static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES convert) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     BYTE table[256][4];
@@ -2632,6 +2638,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
     return WINED3D_OK;
 }
 
+/* Context activation is done by the caller. */
 static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL srgb) {
     /* TODO: check for locks */
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
@@ -4375,6 +4382,7 @@ void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location) {
     This->Flags |= location;
 }
 
+/* Context activation is done by the caller. */
 void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
@@ -5089,8 +5097,10 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 
 #define GLINFO_LOCATION device->adapter->gl_info
 static HRESULT ffp_blit_alloc(IWineD3DDevice *iface) { return WINED3D_OK; }
+/* Context activation is done by the caller. */
 static void ffp_blit_free(IWineD3DDevice *iface) { }
 
+/* Context activation is done by the caller. */
 static HRESULT ffp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
         GLenum textype, UINT width, UINT height)
 {
@@ -5101,6 +5111,7 @@ static HRESULT ffp_blit_set(IWineD3DDevice *iface, const struct GlPixelFormatDes
     return WINED3D_OK;
 }
 
+/* Context activation is done by the caller. */
 static void ffp_blit_unset(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) iface;
     ENTER_GL();
