@@ -4094,6 +4094,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
 
         if((This->resource.usage & WINED3DUSAGE_RENDERTARGET) && (convert == NO_CONVERSION))
         {
+            IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
             /* Make sure the texture is up to date. This call doesn't do anything if the texture is already up to date. */
             IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL);
 
@@ -4101,6 +4103,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
             IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
 
             /* Re-upload the palette */
+            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
             d3dfmt_p8_upload_palette(iface, convert);
         } else {
             if(!(This->Flags & SFLAG_INSYSMEM)) {
