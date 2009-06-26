@@ -187,7 +187,19 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
     }
     else if (strchrW(lpszDisplayName,':'))
     {
-        return IEParseDisplayNameWithBCW(CP_ACP,lpszDisplayName,pbc,ppidl);
+        PARSEDURLW urldata;
+
+        urldata.cbSize = sizeof(urldata);
+        ParseURLW(lpszDisplayName,&urldata);
+
+        if (urldata.nScheme == URL_SCHEME_SHELL) /* handle shell: urls */
+        {
+            TRACE ("-- shell url: %s\n", debugstr_w(urldata.pszSuffix));
+            SHCLSIDFromStringW (urldata.pszSuffix+2, &clsid);
+            pidlTemp = _ILCreateGuid (PT_GUID, &clsid);
+        }
+        else
+            return IEParseDisplayNameWithBCW(CP_ACP,lpszDisplayName,pbc,ppidl);
     }
     else
     {
