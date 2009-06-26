@@ -1025,9 +1025,16 @@ static void test_hdm_filterMessages(HWND hParent)
     todo_wine
     {
         retVal = SendMessage(hChild, HDM_CLEARFILTER, 0, 1);
-        expect(1, retVal);
+        if (retVal == 0)
+            win_skip("HDM_CLEARFILTER needs 5.80\n");
+        else
+            expect(1, retVal);
+
         retVal = SendMessage(hChild, HDM_EDITFILTER, 1, 0);
-        expect(1, retVal);
+        if (retVal == 0)
+            win_skip("HDM_EDITFILTER needs 5.80\n");
+        else
+            expect(1, retVal);
     }
     if (winetest_interactive)
          ok_sequence(sequences, HEADER_SEQ_INDEX, filterMessages_seq_interactive,
@@ -1076,7 +1083,10 @@ static void test_hdm_bitmapmarginMessages(HWND hParent)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     retVal = SendMessage(hChild, HDM_GETBITMAPMARGIN, 0, 0);
-    expect(6, retVal);
+    if (retVal == 0)
+        win_skip("HDM_GETBITMAPMARGIN needs 5.80\n");
+    else
+        expect(6, retVal);
 
     ok_sequence(sequences, HEADER_SEQ_INDEX, bitmapmarginMessages_seq,
                       "bitmapmarginMessages sequence testing", FALSE);
@@ -1192,7 +1202,8 @@ static void test_hdm_index_messages(HWND hParent)
     if (item_spec != -1) \
         ok(nm->dwItemSpec == item_spec, "Invalid dwItemSpec %d vs %ld\n", item_spec, nm->dwItemSpec); \
     ok(nm->lItemlParam == lparam, "Invalid lItemlParam %d vs %ld\n", lparam, nm->lItemlParam); \
-    ok(nm->rc.top == _top && nm->rc.bottom == _bottom && nm->rc.left == _left && nm->rc.right == _right, \
+    ok((nm->rc.top == _top && nm->rc.bottom == _bottom && nm->rc.left == _left && nm->rc.right == _right) || \
+        broken(draw_stage != CDDS_ITEMPREPAINT), /* comctl32 < 5.80 */ \
         "Invalid rect (%d,%d) (%d,%d) vs (%d,%d) (%d,%d)\n", _left, _top, _right, _bottom, \
         nm->rc.left, nm->rc.top, nm->rc.right, nm->rc.bottom);
 
