@@ -188,6 +188,7 @@ IMPORT_LIBS = \
 	riched20/libriched20.$(IMPLIBEXT) \
 	rpcrt4/librpcrt4.$(IMPLIBEXT) \
 	rsaenh/librsaenh.$(IMPLIBEXT) \
+	rtutils/librtutils.$(IMPLIBEXT) \
 	secur32/libsecur32.$(IMPLIBEXT) \
 	sensapi/libsensapi.$(IMPLIBEXT) \
 	serialui/libserialui.$(IMPLIBEXT) \
@@ -332,6 +333,7 @@ CROSS_IMPLIBS = \
 	riched20/libriched20.a \
 	rpcrt4/librpcrt4.a \
 	rsaenh/librsaenh.a \
+	rtutils/librtutils.a \
 	secur32/libsecur32.a \
 	sensapi/libsensapi.a \
 	serialui/libserialui.a \
@@ -681,6 +683,9 @@ rpcrt4/librpcrt4.def rpcrt4/librpcrt4.a: rpcrt4/rpcrt4.spec $(WINEBUILD)
 
 rsaenh/librsaenh.def rsaenh/librsaenh.a: rsaenh/rsaenh.spec $(WINEBUILD)
 	@cd rsaenh && $(MAKE) `basename $@`
+
+rtutils/librtutils.def rtutils/librtutils.a: rtutils/rtutils.spec $(WINEBUILD)
+	@cd rtutils && $(MAKE) `basename $@`
 
 secur32/libsecur32.def secur32/libsecur32.a: secur32/secur32.spec $(WINEBUILD)
 	@cd secur32 && $(MAKE) `basename $@`

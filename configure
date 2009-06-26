@@ -27151,6 +27151,14 @@ dlls/rsaenh/tests/Makefile: dlls/rsaenh/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/rsaenh/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/rtutils/Makefile"
+test "x$enable_rtutils" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	rtutils"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/rtutils/Makefile: dlls/rtutils/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/rtutils/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/sane.ds/Makefile"
 test "x$enable_sane_ds" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	sane.ds"
@@ -29682,6 +29690,7 @@ do
     "dlls/rsabase/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rsabase/Makefile" ;;
     "dlls/rsaenh/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rsaenh/Makefile" ;;
     "dlls/rsaenh/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rsaenh/tests/Makefile" ;;
+    "dlls/rtutils/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/rtutils/Makefile" ;;
     "dlls/sane.ds/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sane.ds/Makefile" ;;
     "dlls/sccbase/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/sccbase/Makefile" ;;
     "dlls/schannel/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/schannel/Makefile" ;;

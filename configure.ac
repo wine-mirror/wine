@@ -2324,6 +2324,7 @@ WINE_CONFIG_MAKEFILE([dlls/rpcrt4/tests/Makefile],[dlls/Maketest.rules],[dlls],[
 WINE_CONFIG_MAKEFILE([dlls/rsabase/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/rsaenh/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/rsaenh/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
+WINE_CONFIG_MAKEFILE([dlls/rtutils/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/sane.ds/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/sccbase/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/schannel/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
