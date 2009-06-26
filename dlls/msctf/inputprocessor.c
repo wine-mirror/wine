@@ -47,6 +47,11 @@ static const WCHAR szwEnable[] = {'E','n','a','b','l','e',0};
 static const WCHAR szwTipfmt[] = {'%','s','\\','%','s',0};
 static const WCHAR szwFullLangfmt[] = {'%','s','\\','%','s','\\','%','s','\\','0','x','%','0','8','x','\\','%','s',0};
 
+static const WCHAR szwAssemblies[] = {'A','s','s','e','m','b','l','i','e','s',0};
+static const WCHAR szwDefault[] = {'D','e','f','a','u','l','t',0};
+static const WCHAR szwProfile[] = {'P','r','o','f','i','l','e',0};
+static const WCHAR szwDefaultFmt[] = {'%','s','\\','%','s','\\','0','x','%','0','8','x','\\','%','s',0};
+
 typedef struct tagInputProcessorProfilesSink {
     struct list         entry;
     union {
@@ -312,9 +317,41 @@ static HRESULT WINAPI InputProcessorProfiles_GetDefaultLanguageProfile(
         ITfInputProcessorProfiles *iface, LANGID langid, REFGUID catid,
         CLSID *pclsid, GUID *pguidProfile)
 {
+    WCHAR fullkey[168];
+    WCHAR buf[39];
+    HKEY hkey;
+    DWORD count;
+    ULONG res;
     InputProcessorProfiles *This = (InputProcessorProfiles*)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+
+    TRACE("%p) %x %s %p %p\n",This, langid, debugstr_guid(catid),pclsid,pguidProfile);
+
+    if (!catid || !pclsid || !pguidProfile)
+        return E_INVALIDARG;
+
+    StringFromGUID2(catid, buf, 39);
+    sprintfW(fullkey, szwDefaultFmt, szwSystemCTFKey, szwAssemblies, langid, buf);
+
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, fullkey, 0, KEY_READ | KEY_WRITE,
+                &hkey ) != ERROR_SUCCESS)
+        return S_FALSE;
+
+    count = sizeof(buf);
+    res = RegQueryValueExW(hkey, szwDefault, 0, NULL, (LPBYTE)buf, &count);
+    if (res != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkey);
+        return S_FALSE;
+    }
+    CLSIDFromString(buf,pclsid);
+
+    res = RegQueryValueExW(hkey, szwProfile, 0, NULL, (LPBYTE)buf, &count);
+    if (res == ERROR_SUCCESS)
+        CLSIDFromString(buf,pguidProfile);
+
+    RegCloseKey(hkey);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI InputProcessorProfiles_SetDefaultLanguageProfile(

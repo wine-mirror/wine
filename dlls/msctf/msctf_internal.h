@@ -63,4 +63,5 @@ extern HRESULT get_textservice_sink(TfClientId tid, REFCLSID iid, IUnknown** sin
 extern HRESULT set_textservice_sink(TfClientId tid, REFCLSID iid, IUnknown* sink);
 
 extern const WCHAR szwSystemTIPKey[];
+extern const WCHAR szwSystemCTFKey[];
 #endif /* __WINE_MSCTF_I_H */
