@@ -5237,38 +5237,7 @@ TOOLBAR_Create (HWND hwnd, LPARAM lParam)
 
     TRACE("hwnd = %p\n", hwnd);
 
-    /* initialize info structure */
-    infoPtr->nButtonWidth = 23;
-    infoPtr->nButtonHeight = 22;
-    infoPtr->nBitmapHeight = 16;
-    infoPtr->nBitmapWidth = 16;
-
-    infoPtr->nMaxTextRows = 1;
-    infoPtr->cxMin = -1;
-    infoPtr->cxMax = -1;
-    infoPtr->nNumBitmaps = 0;
-    infoPtr->nNumStrings = 0;
-
-    infoPtr->bCaptured = FALSE;
-    infoPtr->nButtonDown = -1;
-    infoPtr->nButtonDrag = -1;
-    infoPtr->nOldHit = -1;
-    infoPtr->nHotItem = -1;
-    infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
-    infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS: DT_CENTER | DT_END_ELLIPSIS;
-    infoPtr->bAnchor = FALSE; /* no anchor highlighting */
-    infoPtr->bDragOutSent = FALSE;
-    infoPtr->iVersion = 0;
-    infoPtr->hwndSelf = hwnd;
-    infoPtr->bDoRedraw = TRUE;
-    infoPtr->clrBtnHighlight = CLR_DEFAULT;
-    infoPtr->clrBtnShadow = CLR_DEFAULT;
-    infoPtr->szPadding.cx = DEFPAD_CX;
-    infoPtr->szPadding.cy = DEFPAD_CY;
-    infoPtr->iListGap = DEFLISTGAP;
-    infoPtr->iTopMargin = default_top_margin(infoPtr);
     infoPtr->dwStyle = dwStyle;
-    infoPtr->tbim.iButton = -1;
     GetClientRect(hwnd, &infoPtr->client_rect);
     infoPtr->bUnicode = infoPtr->hwndNotify && 
         (NFR_UNICODE == SendMessageW(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwnd, (LPARAM)NF_REQUERY));
@@ -6002,7 +5971,7 @@ static LRESULT
 TOOLBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr;
-    LPCREATESTRUCTA cs = (LPCREATESTRUCTA)lParam;
+    LPCREATESTRUCTW cs = (LPCREATESTRUCTW)lParam;
     DWORD styleadd = 0;
 
     /* allocate memory for info structure */
@@ -6013,6 +5982,39 @@ TOOLBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->dwStructSize = sizeof(TBBUTTON);
     infoPtr->nRows = 1;
     infoPtr->nWidth = 0;
+
+    /* initialize info structure */
+    infoPtr->nButtonWidth = 23;
+    infoPtr->nButtonHeight = 22;
+    infoPtr->nBitmapHeight = 16;
+    infoPtr->nBitmapWidth = 16;
+
+    infoPtr->nMaxTextRows = 1;
+    infoPtr->cxMin = -1;
+    infoPtr->cxMax = -1;
+    infoPtr->nNumBitmaps = 0;
+    infoPtr->nNumStrings = 0;
+
+    infoPtr->bCaptured = FALSE;
+    infoPtr->nButtonDown = -1;
+    infoPtr->nButtonDrag = -1;
+    infoPtr->nOldHit = -1;
+    infoPtr->nHotItem = -1;
+    infoPtr->hwndNotify = cs->hwndParent;
+    infoPtr->dwDTFlags = (cs->style & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS: DT_CENTER | DT_END_ELLIPSIS;
+    infoPtr->bAnchor = FALSE; /* no anchor highlighting */
+    infoPtr->bDragOutSent = FALSE;
+    infoPtr->iVersion = 0;
+    infoPtr->hwndSelf = hwnd;
+    infoPtr->bDoRedraw = TRUE;
+    infoPtr->clrBtnHighlight = CLR_DEFAULT;
+    infoPtr->clrBtnShadow = CLR_DEFAULT;
+    infoPtr->szPadding.cx = DEFPAD_CX;
+    infoPtr->szPadding.cy = DEFPAD_CY;
+    infoPtr->iListGap = DEFLISTGAP;
+    infoPtr->iTopMargin = default_top_margin(infoPtr);
+    infoPtr->dwStyle = cs->style;
+    infoPtr->tbim.iButton = -1;
 
     /* fix instance handle, if the toolbar was created by CreateToolbarEx() */
     if (!GetWindowLongPtrW (hwnd, GWLP_HINSTANCE)) {
