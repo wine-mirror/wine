@@ -1841,23 +1841,23 @@ static void test_GetScriptFontInfo(IMLangFontLink2 *font_link)
     SCRIPTFONTINFO sfi[1];
 
     nfonts = 0;
-    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, 0, &nfonts, NULL);
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidAsciiLatin, 0, &nfonts, NULL);
     ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
     ok(nfonts, "unexpected result\n");
 
     nfonts = 0;
-    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, SCRIPTCONTF_FIXED_FONT, &nfonts, NULL);
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidAsciiLatin, SCRIPTCONTF_FIXED_FONT, &nfonts, NULL);
     ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
     ok(nfonts, "unexpected result\n");
 
     nfonts = 0;
-    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, SCRIPTCONTF_PROPORTIONAL_FONT, &nfonts, NULL);
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidAsciiLatin, SCRIPTCONTF_PROPORTIONAL_FONT, &nfonts, NULL);
     ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
     ok(nfonts, "unexpected result\n");
 
     nfonts = 1;
     memset(sfi, 0, sizeof(sfi));
-    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, SCRIPTCONTF_FIXED_FONT, &nfonts, sfi);
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidAsciiLatin, SCRIPTCONTF_FIXED_FONT, &nfonts, sfi);
     ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
     ok(nfonts == 1, "got %u, expected 1\n", nfonts);
     ok(sfi[0].scripts != 0, "unexpected result\n");
@@ -1865,11 +1865,53 @@ static void test_GetScriptFontInfo(IMLangFontLink2 *font_link)
 
     nfonts = 1;
     memset(sfi, 0, sizeof(sfi));
-    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidLatin, SCRIPTCONTF_PROPORTIONAL_FONT, &nfonts, sfi);
+    hr = IMLangFontLink2_GetScriptFontInfo(font_link, sidAsciiLatin, SCRIPTCONTF_PROPORTIONAL_FONT, &nfonts, sfi);
     ok(hr == S_OK, "GetScriptFontInfo failed %u\n", GetLastError());
     ok(nfonts == 1, "got %u, expected 1\n", nfonts);
     ok(sfi[0].scripts != 0, "unexpected result\n");
     ok(sfi[0].wszFont[0], "unexpected result\n");
+}
+
+static void test_CodePageToScriptID(IMLangFontLink2 *font_link)
+{
+    HRESULT hr;
+    UINT i;
+    SCRIPT_ID sid;
+    static const struct
+    {
+        UINT cp;
+        SCRIPT_ID sid;
+        HRESULT hr;
+    }
+    cp_sid[] =
+    {
+        {874,  sidThai},
+        {932,  sidKana},
+        {936,  sidHan},
+        {949,  sidHangul},
+        {950,  sidBopomofo},
+        {1250, sidAsciiLatin},
+        {1251, sidCyrillic},
+        {1252, sidAsciiLatin},
+        {1253, sidGreek},
+        {1254, sidAsciiLatin},
+        {1255, sidHebrew},
+        {1256, sidArabic},
+        {1257, sidAsciiLatin},
+        {1258, sidAsciiLatin},
+        {CP_UNICODE, 0, E_FAIL}
+    };
+
+    for (i = 0; i < sizeof(cp_sid)/sizeof(cp_sid[0]); i++)
+    {
+        hr = IMLangFontLink2_CodePageToScriptID(font_link, cp_sid[i].cp, &sid);
+        ok(hr == cp_sid[i].hr, "%u CodePageToScriptID failed 0x%08x %u\n", i, hr, GetLastError());
+        if (SUCCEEDED(hr))
+        {
+            ok(sid == cp_sid[i].sid,
+               "%u got sid %u for codepage %u, expected %u\n", i, sid, cp_sid[i].cp, cp_sid[i].sid);
+        }
+    }
 }
 
 START_TEST(mlang)
@@ -1949,6 +1991,7 @@ START_TEST(mlang)
     if (ret != S_OK || !iMLFL2) return;
 
     test_GetScriptFontInfo(iMLFL2);
+    test_CodePageToScriptID(iMLFL2);
     IMLangFontLink2_Release(iMLFL2);
 
     CoUninitialize();
