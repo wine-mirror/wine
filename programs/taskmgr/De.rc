@@ -3,6 +3,7 @@
  *  German Language Support
  *
  *  Copyright 2005 Henning Gerhardt
+ *  Copyright 2009 André Hentschel
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -467,6 +468,7 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "Setzt den Prozess in die NORMAL-Prioritätsklasse"
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "Setzt den Prozess in die NIEDRIGER ALS NORMAL-Prioritätsklasse"
     ID_PROCESS_PAGE_SETPRIORITY_LOW         "Setzt den Prozess in die NIEDRIG-Prioritätsklasse"
+    ID_PROCESS_PAGE_DEBUGCHANNELS           "Stellt Debug-Kanäle ein"
 END
 
 STRINGTABLE DISCARDABLE
@@ -516,4 +518,39 @@ BEGIN
     IDS_IOWRITEBYTES      "E/A-Bytes (Schreiben)"
     IDS_IOOTHER           "E/A (Andere)"
     IDS_IOOTHERBYTES      "E/A-Bytes (Andere)"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "Task Manager Warnung"
+    IDS_PRIORITY_CHANGE_MESSAGE     "WARNUNG: Änderung der Prioritätsklasse dieses Prozesses\n\
+                                     kann zu unerwünschten Ergebnissen und Systeminstabilität\n\
+                                     führen. Sind Sie sicher, dass Sie sie ändern möchten?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Die Priorität kann nicht geändert werden "
+    IDS_TERMINATE_MESSAGE           "WARNUNG: Beenden des Prozesses kann zu unerwünschten\n\
+                                     Ergebnissen und Systeminstabilität, sowie Datenverlust\n\
+                                     führen. Dem Prozess wird es nicht möglich sein geänderte\n\
+                                     Daten oder seinen Zustand zu speichern.\n\
+                                     Sind Sie sicher, dass Sie inh beenden möchten?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Der Prozess konnte nicht beendet werden"
+    IDS_DEBUG_MESSAGE               "WARNUNG: Den Prozess zu debuggen kann zu Datenverlust\n\
+                                     führen. Sind Sie sicher, dass Sie ihn debuggen möchten?"
+    IDS_DEBUG_UNABLE2DEBUG          "Konnte den Prozess nicht debuggen"
+    IDS_AFFINITY_ERROR_MESSAGE      "Der Prozess muss mindestens mit einem Prozessor affin sein"
+    IDS_AFFINITY_ERROR_TITLE        "Option nicht möglich"
+    IDS_AFFINITY_UNABLE2ACCESS      "Die Prozessoraffinität konnte nicht geändert werden"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "Leerlauf Prozess"
+    IDS_APPLICATION_NOT_RESPONDING     "Anwortet nicht"
+    IDS_APPLICATION_RUNNING            "läuft"
+    IDS_APPLICATION_TASK               "Task"
+    IDS_APPLICATION_STATUS             "Status"
+    IDS_DEBUG_CHANNEL                  "Debug Kanäle"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
 END
