@@ -287,10 +287,9 @@ static void createTestFile(const CHAR *name)
 
 static void create_test_files(void)
 {
-    int len;
+    DWORD len;
 
-    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
-    len = lstrlenA(CURR_DIR);
+    len = GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
 
     if(len && (CURR_DIR[len-1] == '\\'))
         CURR_DIR[len-1] = 0;
