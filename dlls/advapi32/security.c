@@ -1073,6 +1073,7 @@ GetSidIdentifierAuthority( PSID pSid )
 PDWORD WINAPI
 GetSidSubAuthority( PSID pSid, DWORD nSubAuthority )
 {
+        SetLastError(ERROR_SUCCESS);
 	return RtlSubAuthoritySid(pSid, nSubAuthority);
 }
 
@@ -1085,6 +1086,7 @@ GetSidSubAuthority( PSID pSid, DWORD nSubAuthority )
 PUCHAR WINAPI
 GetSidSubAuthorityCount (PSID pSid)
 {
+        SetLastError(ERROR_SUCCESS);
 	return RtlSubAuthorityCountSid(pSid);
 }
 
