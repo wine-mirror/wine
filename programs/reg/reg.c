@@ -442,6 +442,9 @@ int wmain(int argc, WCHAR *argvW[])
         }
         return reg_query(key_name, value_name, value_empty, subkey);
     }
-
-    return 0;
+    else
+    {
+        reg_message(STRING_INVALID_CMDLINE);
+        return 1;
+    }
 }
