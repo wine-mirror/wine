@@ -29,7 +29,7 @@ MAIN_MENU MENU
   MENUITEM "&Naujas\tCtrl+N",            CMD_NEW
   MENUITEM "&Atverti...\tCtrl+O",        CMD_OPEN
   MENUITEM "&Išsaugoti\tCtrl+S",         CMD_SAVE
-  MENUITEM "Išsaugoti k&aip...",         CMD_SAVE_AS
+  MENUITEM "Išsaugoti &kaip...",         CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "S&pausdinti...\tCtrl+P",     CMD_PRINT
   MENUITEM "Puslapio &nuostatos...",     CMD_PAGE_SETUP
@@ -48,12 +48,12 @@ POPUP "&Taisa" {
   MENUITEM "&Pažymėti viską\tCtrl+A", CMD_SELECT_ALL
   MENUITEM "&Laikas/Data\tF5",        CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "Laužyti ilgas &eilutes",  CMD_WRAP
+  MENUITEM "Skaidyti ilgas &eilutes", CMD_WRAP
   MENUITEM "Š&riftas...",             CMD_FONT
  }
 POPUP "&Paieška" {
   MENUITEM "&Ieškoti...\tCtrl+F",  CMD_SEARCH
-  MENUITEM "Ieškoti k&ito\tF3",    CMD_SEARCH_NEXT
+  MENUITEM "Ieškoti ki&to\tF3",    CMD_SEARCH_NEXT
   MENUITEM "Pa&keisti...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Žinynas" {
@@ -61,7 +61,7 @@ POPUP "&Žinynas" {
   MENUITEM "&Paieška...",          CMD_HELP_SEARCH
   MENUITEM "Pa&galba apie žinyną", CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&Apie Notepad",        CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&Apie užrašinę",       CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -97,7 +97,7 @@ STRINGTABLE DISCARDABLE
 STRING_PAGESETUP_HEADERVALUE,   "&f"
 STRING_PAGESETUP_FOOTERVALUE,   "Puslapis &p"
 
-STRING_NOTEPAD,                        "Notepad"
+STRING_NOTEPAD,                        "Užrašinė"
 STRING_ERROR,                          "KLAIDA"
 STRING_WARNING,                        "ĮSPĖJIMAS"
 STRING_INFO,                           "Informacija"
@@ -107,17 +107,17 @@ STRING_UNTITLED,                       "Be pavadinimo"
 STRING_ALL_FILES,                      "Visi failai (*.*)"
 STRING_TEXT_FILES_TXT,                 "Tekstiniai failai (*.txt)"
 
-STRING_TOOLARGE,                       "Failas '%s' yra per didelis notepad programai.\n\
-Prašome naudoti kitą tekstų rengyklę."
+STRING_TOOLARGE,                       "Failas „%s“ yra per didelis užrašinei.\n\
+                                       Prašome naudoti kitą tekstų rengyklę."
 STRING_NOTEXT,                         "Jūs neįvedėte jokio teksto.\n\
-Prašome ką nors įvesti ir mėginti dar kartą"
-STRING_DOESNOTEXIST,                   "Failas '%s'\nneegzistuoja\n\n\
-Ar norite sukurti naują failą?"
-STRING_NOTSAVED,                       "Failas '%s'\nbuvo pakeistas\n\n\
-Ar norite išsaugoti pakeitimus?"
-STRING_NOTFOUND,                       "Frazė '%s' nerasta."
-STRING_OUT_OF_MEMORY,                  "Neužtenka atminties operacijai užbaigti.\
-\nNorėdami atlaisvinti atminties uždarykite vieną ar daugiau programų."
+                                       Prašome ką nors įvesti ir mėginti dar kartą"
+STRING_DOESNOTEXIST,                   "Failas „%s“\nneegzistuoja\n\n\
+                                       Ar norite sukurti naują failą?"
+STRING_NOTSAVED,                       "Failas „%s“\nbuvo pakeistas\n\n\
+                                       Ar norite išsaugoti pakeitimus?"
+STRING_NOTFOUND,                       "Frazė „%s“ nerasta."
+STRING_OUT_OF_MEMORY,                  "Neužtenka atminties operacijai užbaigti.\n\
+                                       Norėdami atlaisvinti atminties uždarykite vieną ar daugiau programų."
 
 }
 #pragma code_page(default)
