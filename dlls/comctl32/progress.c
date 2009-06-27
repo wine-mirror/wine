@@ -31,7 +31,6 @@
  *
  * Messages:
  *    -- PBM_GETSTEP
- *    -- PBM_GETBKCOLOR
  *    -- PBM_SETSTATE
  *    -- PBM_GETSTATE
  *
@@ -721,6 +720,9 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         infoPtr->ColorBk = (COLORREF)lParam;
 	InvalidateRect(hwnd, NULL, TRUE);
 	return 0;
+
+    case PBM_GETBKCOLOR:
+	return infoPtr->ColorBk;
 
     case PBM_SETMARQUEE:
 	if(wParam != 0)

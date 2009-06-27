@@ -484,6 +484,7 @@ static const WCHAR PROGRESS_CLASSW[] = { 'm','s','c','t','l','s','_',
 #define PBM_GETPOS          (WM_USER+8)
 #define PBM_SETBARCOLOR     (WM_USER+9)
 #define PBM_SETMARQUEE      (WM_USER+10)
+#define PBM_GETBKCOLOR      (WM_USER+14)
 #define PBM_GETBARCOLOR     (WM_USER+15)
 #define PBM_SETBKCOLOR      CCM_SETBKCOLOR
 
