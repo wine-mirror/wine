@@ -357,11 +357,12 @@ int wmain(int argc, WCHAR *argvW[])
     static const WCHAR slashVW[] = {'/','v',0};
     static const WCHAR slashVAW[] = {'/','v','a',0};
     static const WCHAR slashVEW[] = {'/','v','e',0};
+    static const WCHAR slashHelpW[] = {'/','?',0};
 
-    if (argc < 2)
+    if (argc < 2 || !lstrcmpW(argvW[1], slashHelpW))
     {
         reg_message(STRING_USAGE);
-        return 1;
+        return 0;
     }
 
     if (!lstrcmpiW(argvW[1], addW))
@@ -371,8 +372,13 @@ int wmain(int argc, WCHAR *argvW[])
 
         if (argc < 3)
         {
-            reg_message(STRING_ADD_USAGE);
+            reg_message(STRING_INVALID_CMDLINE);
             return 1;
+        }
+        else if (argc == 3 && !lstrcmpW(argvW[2], slashHelpW))
+        {
+            reg_message(STRING_ADD_USAGE);
+            return 0;
         }
 
         key_name = argvW[2];
@@ -401,8 +407,13 @@ int wmain(int argc, WCHAR *argvW[])
 
         if (argc < 3)
         {
-            reg_message(STRING_DELETE_USAGE);
+            reg_message(STRING_INVALID_CMDLINE);
             return 1;
+        }
+        else if (argc == 3 && !lstrcmpW(argvW[2], slashHelpW))
+        {
+            reg_message(STRING_DELETE_USAGE);
+            return 0;
         }
 
         key_name = argvW[2];
@@ -426,8 +437,13 @@ int wmain(int argc, WCHAR *argvW[])
 
         if (argc < 3)
         {
-            reg_message(STRING_QUERY_USAGE);
+            reg_message(STRING_INVALID_CMDLINE);
             return 1;
+        }
+        else if (argc == 3 && !lstrcmpW(argvW[2], slashHelpW))
+        {
+            reg_message(STRING_QUERY_USAGE);
+            return 0;
         }
 
         key_name = argvW[2];
