@@ -1692,6 +1692,7 @@ static void update_association(LPCWSTR extension, LPCSTR mimeType, LPCWSTR progI
 
 static BOOL cleanup_associations(void)
 {
+    static const WCHAR openW[] = {'o','p','e','n',0};
     HKEY assocKey;
     BOOL hasChanged = FALSE;
     if ((assocKey = open_associations_reg_key()))
@@ -1729,7 +1730,7 @@ static BOOL cleanup_associations(void)
                     done = TRUE;
                     goto end;
                 }
-                command = assoc_query(ASSOCSTR_COMMAND, extensionW, NULL);
+                command = assoc_query(ASSOCSTR_COMMAND, extensionW, openW);
                 if (command == NULL)
                 {
                     char *desktopFile = reg_get_valA(assocKey, extensionA, "DesktopFile");
@@ -1841,6 +1842,7 @@ static BOOL write_freedesktop_association_entry(const char *desktopPath, const c
 
 static BOOL generate_associations(const char *xdg_data_home, const char *packages_dir, const char *applications_dir)
 {
+    static const WCHAR openW[] = {'o','p','e','n',0};
     struct list *nativeMimeTypes = NULL;
     LSTATUS ret = 0;
     int i;
@@ -1960,7 +1962,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                 }
             }
 
-            commandW = assoc_query(ASSOCSTR_COMMAND, extensionW, NULL);
+            commandW = assoc_query(ASSOCSTR_COMMAND, extensionW, openW);
             if (commandW == NULL)
                 /* no command => no application is associated */
                 goto end;
