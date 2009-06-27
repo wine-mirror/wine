@@ -4180,7 +4180,7 @@ static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
 
         TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
-    } else {
+    } else if(!priv->use_arbfp_fixed_func) {
         glDisable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     }
