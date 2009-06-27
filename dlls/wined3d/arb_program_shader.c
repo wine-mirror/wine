@@ -4163,9 +4163,6 @@ static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
         GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
         checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
 
-        glEnable(GL_VERTEX_PROGRAM_ARB);
-        checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-
         TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", This, priv->current_vprogram_id);
     } else {
         glDisable(GL_VERTEX_PROGRAM_ARB);
@@ -4175,9 +4172,6 @@ static void shader_arb_deselect_depth_blt(IWineD3DDevice *iface) {
     if (priv->current_fprogram_id) {
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
-
-        glEnable(GL_FRAGMENT_PROGRAM_ARB);
-        checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
 
         TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", This, priv->current_fprogram_id);
     } else if(!priv->use_arbfp_fixed_func) {
