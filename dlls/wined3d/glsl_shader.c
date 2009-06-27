@@ -2602,6 +2602,13 @@ static void shader_glsl_callnz(const struct wined3d_shader_instruction *ins)
     shader_addline(ins->ctx->buffer, "if (%s) subroutine%u();\n", src1_param.param_str, ins->src[0].reg.idx);
 }
 
+static void shader_glsl_ret(const struct wined3d_shader_instruction *ins)
+{
+    /* No-op. The closing } is written when a new function is started, and at the end of the shader. This
+     * function only suppresses the unhandled instruction warning
+     */
+}
+
 /*********************************************
  * Pixel Shader Specific Code begins here
  ********************************************/
@@ -4649,7 +4656,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_POW           */ shader_glsl_pow,
     /* WINED3DSIH_RCP           */ shader_glsl_rcp,
     /* WINED3DSIH_REP           */ shader_glsl_rep,
-    /* WINED3DSIH_RET           */ NULL,
+    /* WINED3DSIH_RET           */ shader_glsl_ret,
     /* WINED3DSIH_RSQ           */ shader_glsl_rsq,
     /* WINED3DSIH_SETP          */ NULL,
     /* WINED3DSIH_SGE           */ shader_glsl_compare,
