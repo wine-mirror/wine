@@ -1988,6 +1988,9 @@ typedef struct tagREBARBANDINFOA
     UINT    cxIdeal;
     LPARAM    lParam;
     UINT    cxHeader;
+    /* _WIN32_WINNT >= 0x0600 */
+    RECT    rcChevronLocation;
+    UINT    uChevronState;
 } REBARBANDINFOA, *LPREBARBANDINFOA;
 
 typedef REBARBANDINFOA const *LPCREBARBANDINFOA;
@@ -2014,6 +2017,9 @@ typedef struct tagREBARBANDINFOW
     UINT    cxIdeal;
     LPARAM    lParam;
     UINT    cxHeader;
+    /* _WIN32_WINNT >= 0x0600 */
+    RECT    rcChevronLocation;
+    UINT    uChevronState;
 } REBARBANDINFOW, *LPREBARBANDINFOW;
 
 typedef REBARBANDINFOW const *LPCREBARBANDINFOW;
