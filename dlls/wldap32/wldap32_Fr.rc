@@ -2,6 +2,7 @@
  * French resources for WLDAP32
  *
  * Copyright 2005 Jonathan Ernst
+ * Copyright 2009 Frédéric Delanoy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,8 +28,8 @@ STRINGTABLE DISCARDABLE
     2 "Erreur de protocole"
     3 "Limite de temps dépassée"
     4 "Limite de taille dépassée"
-    5 "Comparaison Fausse"
-    6 "Comparaison Vraie"
+    5 "Comparaison fausse"
+    6 "Comparaison vraie"
     7 "Méthode d'authentification non supportée"
     8 "Authentification forte requise"
     9 "Référant (v2)"
@@ -40,7 +41,7 @@ STRINGTABLE DISCARDABLE
     15 ""
     16 "Attribut inconnu"
     17 "Type indéfini"
-    18 "Inappropriate Matching"
+    18 "Correspondance inappropriée"
     19 "Violation de contrainte"
     20 "Attribut ou valeur existant"
     21 "Syntaxe invalide"
@@ -71,7 +72,7 @@ STRINGTABLE DISCARDABLE
     46 ""
     47 ""
     48 "Authentification inappropriée"
-    49 "Droits invalides"
+    49 "Autorisations invalides"
     50 "Droits insuffisants"
     51 "Occupé"
     52 "Indisponible"
@@ -92,8 +93,8 @@ STRINGTABLE DISCARDABLE
     67 "Interdit sur RDN"
     68 "Existe déjà"
     69 "Pas de Mods de classe d'objet"
-    70 "Résultat trop grand"
-    71 "Affecte de multiple DSAs"
+    70 "Résultats trop grands"
+    71 "Affecte de multiples DSA"
     72 ""
     73 ""
     74 ""
@@ -108,9 +109,9 @@ STRINGTABLE DISCARDABLE
     83 "Erreur d'encodage"
     84 "Erreur de décodage"
     85 "Délai d'attente dépassé"
-    86 "Auth inconnue"
+    86 "Auth. inconnue"
     87 "Erreur de filtre"
-    88 "Annulation de l'utilisateur"
+    88 "Annulation par l'utilisateur"
     89 "Erreur de paramètre"
     90 "Pas de mémoire"
     91 "Impossible de se connecter au serveur LDAP"
@@ -119,5 +120,5 @@ STRINGTABLE DISCARDABLE
     94 "Pas de résultat dans le message"
     95 "Plus de résultats retournés"
     96 "Boucle lors du traitement des référants"
-    97 "Limite du nombre de référents dépassée"
+    97 "Limite du nombre de référants dépassée"
 }
