@@ -956,7 +956,16 @@ static void test_reg_open_key(void)
     RegCloseKey(hkResult);
 
     /* send in NULL hkResult */
+    SetLastError(0xdeadbeef);
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    ret = RegOpenKeyA(NULL, NULL, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", ret);
 
     /*  beginning backslash character */

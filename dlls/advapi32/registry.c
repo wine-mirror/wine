@@ -381,6 +381,9 @@ LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acc
  */
 LSTATUS WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
 {
+    if (!retkey)
+        return ERROR_INVALID_PARAMETER;
+
     if (!name || !*name)
     {
         *retkey = hkey;
@@ -402,10 +405,13 @@ LSTATUS WINAPI RegOpenKeyW( HKEY hkey, LPCWSTR name, PHKEY retkey )
  *
  * RETURNS
  *  Success: ERROR_SUCCESS
- *  Failure: A standard Win32 error code. retkey is set to 0.
+ *  Failure: A standard Win32 error code. When retkey is valid, *retkey is set to 0.
  */
 LSTATUS WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
 {
+    if (!retkey)
+        return ERROR_INVALID_PARAMETER;
+
     if (!name || !*name)
     {
         *retkey = hkey;
