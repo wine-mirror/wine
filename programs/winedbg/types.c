@@ -699,7 +699,8 @@ int types_print_type(const struct dbg_type* type, BOOL details)
             int                         i;
 
             fcp->Start = 0;
-            while (count)
+            if (!count) dbg_printf("void");
+            else while (count)
             {
                 fcp->Count = min(count, 256);
                 if (types_get_info(type, TI_FINDCHILDREN, fcp))
