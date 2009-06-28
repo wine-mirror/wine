@@ -515,7 +515,7 @@ static void shader_arb_update_float_vertex_constants(IWineD3DDevice *iface, UINT
      * context. On a context switch the old context will be fully dirtified */
     memset(This->activeContext->vshader_const_dirty + start, 1,
             sizeof(*This->activeContext->vshader_const_dirty) * count);
-    This->highest_dirty_vs_const = max(This->highest_dirty_vs_const, start + count + 1);
+    This->highest_dirty_vs_const = max(This->highest_dirty_vs_const, start + count);
 }
 
 static void shader_arb_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count)
@@ -526,7 +526,7 @@ static void shader_arb_update_float_pixel_constants(IWineD3DDevice *iface, UINT 
      * context. On a context switch the old context will be fully dirtified */
     memset(This->activeContext->pshader_const_dirty + start, 1,
             sizeof(*This->activeContext->pshader_const_dirty) * count);
-    This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, start + count + 1);
+    This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, start + count);
 }
 
 static DWORD *local_const_mapping(IWineD3DBaseShaderImpl *This)
