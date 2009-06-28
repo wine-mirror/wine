@@ -1,5 +1,7 @@
 /*
- * Copyright 2007 Mikolaj Zalewski
+ * Lithuanian language support
+ *
+ * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,23 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windef.h>
+/* UTF-8 */
+#pragma code_page(65001)
 
-#include "resources.h"
+LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+STRINGTABLE
+{
+    IDS_FAILED, "Nepavyko paleisti Wordpad"
+}
 
-#include "De.rc"
-#include "En.rc"
-#include "Fr.rc"
-#include "Ja.rc"
-#include "Ko.rc"
-#include "Lt.rc"
-#include "Nl.rc"
-#include "No.rc"
-#include "Pl.rc"
-#include "Pt.rc"
-#include "Ro.rc"
-#include "Ru.rc"
-#include "Si.rc"
-#include "Sv.rc"
+#pragma code_page(default)
