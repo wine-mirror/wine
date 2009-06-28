@@ -58,7 +58,7 @@ CmdlgtstMenu MENU
   MENUITEM "Mise en pa&ge", CM_F_PAGESETUP
  }
 
- POPUP "Aid&e"
+ POPUP "&Aide"
  {
   MENUITEM "&Usage", CM_H_USAGE
   MENUITEM "À &propos", CM_H_ABOUT
@@ -147,7 +147,7 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 168, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 180, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 24, 228, 11, 13
- CONTROL "Indique les drapeaux qui sont fournis par le système et qui doivent être effacés par l'usager.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
+ CONTROL "Indique les drapeaux qui sont fournis par le système et qui doivent être effacés par l'utilisateur.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
 }
 
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
@@ -243,8 +243,8 @@ CAPTION "À propos"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
- LTEXT "Gabarit de test des boîtes de dialogue standards, version 1.20", -1, 13, 36, 168, 12
- LTEXT "(c) 1999-2000, Eric Williams.  Droits tels qu'accordés par la licence de Wine.  N'accumulez pas du code tout seul... partagez-le !", -1, 18, 60, 157, 24
+ LTEXT "Test des boîtes de dialogue standard, version 1.20", -1, 13, 36, 168, 12
+ LTEXT "(c) 1999-2000, Eric Williams. Droits tels qu'accordés par la licence de Wine. N'accumulez pas du code tout seul... partagez-le !", -1, 18, 60, 157, 24
  ICON "AboutIcon", -1, 84, 12, 18, 20
 }
 
@@ -254,20 +254,20 @@ CAPTION "Usage"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 70, 276, 50, 14
- LTEXT "Gabarit de test des boîtes de dialogue standards, version 1.20", -1, 13, 48, 168, 12
+ LTEXT "Test des boîtes de dialogue standard, version 1.20", -1, 13, 48, 168, 12
  LTEXT "Cet outil teste COMMDLG pour Wine.", -1, 12, 72, 168, 12
- LTEXT "Les drapeaux sont spécifés dans le menu Drapeaux.", -1, 12, 96, 168, 12
- LTEXT "La boîte de dialogue de choix de la couleur change la couleur de l'arrière-plan.", -1, 12, 120, 168, 12
+ LTEXT "Drapeaux spécifiés dans le menu Drapeaux.", -1, 12, 96, 168, 12
+ LTEXT "La boîte de dialogue de choix de la couleur change la couleur de l'arrière-plan.", -1, 12, 114, 168, 18
  LTEXT "La boîte de dialogue de choix de la police change toutes les polices, et la couleur de la police si CF_EFFECTS est sélectionné.", -1, 12, 144, 168, 24
  LTEXT "Le nom complet et le titre de la dernière opération réussie d'ouverture ou d'enregistrement se trouvent dans le coin en haut à gauche.", -1, 12, 180, 168, 24
- LTEXT "(c) 1999-2000, Eric Williams.  Droits tels qu'accordés par la licence de Wine.  N'accumulez pas du code tout seul... partagez-le !", -1, 12, 228, 168, 36
+ LTEXT "(c) 1999-2000, Eric Williams. Droits tels qu'accordés par la licence de Wine. N'accumulez pas du code tout seul... partagez-le !", -1, 12, 228, 168, 36
  ICON "AboutIcon", -1, 86, 12, 18, 20
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 216, 168, 2
 }
 
 PAGESETUPDLGORD_CSTM DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "TFT test dialog"
+CAPTION "Boîte de dialogue de test TFT"
 FONT 8, "MS Shell Dlg"
 BEGIN
   CONTROL "", rct1, "Static", SS_WHITERECT, 80, 8, 80, 80
@@ -277,11 +277,11 @@ BEGIN
   LTEXT "&Taille :", stc2, 16, 112, 36, 8
   COMBOBOX cmb2, 64, 110, 80, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   COMBOBOX cmb1, 150, 110, 80, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
-  LTEXT "&Bac :", stc3, 16, 132, 36, 8
+  LTEXT "Ba&c :", stc3, 16, 132, 36, 8
   COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   GROUPBOX "Orientation", grp1, 8, 156, 64, 56, BS_GROUPBOX
   AUTORADIOBUTTON "&Portrait", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
-  AUTORADIOBUTTON "&Paysage", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
+  AUTORADIOBUTTON "Pa&ysage", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
   GROUPBOX "Bordures", grp4, 80, 156, 152, 56, BS_GROUPBOX
   LTEXT "&Gauche :", stc15, 88, 172, 21, 8
   EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
