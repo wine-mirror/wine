@@ -2912,7 +2912,7 @@ static void test_GetGlyphOutline(void)
 }
 
 /* bug #9995: there is a limit to the character width that can be specified */
-void test_GetTextMetrics2(  const char *fontname)
+static void test_GetTextMetrics2(  const char *fontname)
 {
     HFONT of, hf;
     HDC hdc;
