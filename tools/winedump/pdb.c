@@ -456,6 +456,7 @@ static void pdb_dump_types(struct pdb_reader* reader)
     case 19951122:
     case 19961031:      /* VC 5.0 / 6.0 */
     case 19990903:      /* VC 7.0 */
+    case 20040203:      /* VC 8.0 */
         break;
     default:
         printf("-Unknown type info version %d\n", types->version);
