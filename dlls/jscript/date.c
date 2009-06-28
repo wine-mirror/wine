@@ -458,11 +458,54 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.9.1.5 */
 static HRESULT Date_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR NaNW[] = { 'N','a','N',0 };
+    SYSTEMTIME st;
+    DateInstance *date;
+    BSTR date_str;
+    int date_len, time_len;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    date = (DateInstance*)dispex;
+
+    if(isnan(date->time)) {
+        if(retv) {
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = SysAllocString(NaNW);
+            if(!V_BSTR(retv))
+                return E_OUTOFMEMORY;
+        }
+        return S_OK;
+    }
+
+    st = create_systemtime(local_time(date->time, date));
+
+    if(st.wYear<1601 || st.wYear>9999)
+        return Date_toString(dispex, lcid, flags, dp, retv, ei, caller);
+
+    if(retv) {
+        date_len = GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
+        time_len = GetTimeFormatW(lcid, 0, &st, NULL, NULL, 0);
+        date_str = SysAllocStringLen(NULL, date_len+time_len-1);
+        if(!date_str)
+            return E_OUTOFMEMORY;
+        GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, date_str, date_len);
+        GetTimeFormatW(lcid, 0, &st, NULL, &date_str[date_len], time_len);
+        date_str[date_len-1] = ' ';
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = date_str;
+    }
+    return S_OK;
 }
 
 static HRESULT Date_hasOwnProperty(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
