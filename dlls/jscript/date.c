@@ -507,11 +507,68 @@ static HRESULT Date_toDateString(DispatchEx *dispex, LCID lcid, WORD flags, DISP
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.4 */
 static HRESULT Date_toTimeString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR NaNW[] = { 'N','a','N',0 };
+    static const WCHAR formatW[] = { '%','0','2','d',':','%','0','2','d',':','%','0','2','d',
+        ' ','U','T','C','%','c','%','0','2','d','%','0','2','d',0 };
+    static const WCHAR formatUTCW[] = { '%','0','2','d',':','%','0','2','d',
+        ':','%','0','2','d',' ','U','T','C',0 };
+    DateInstance *date;
+    BSTR date_str;
+    DOUBLE time;
+    WCHAR sign;
+    int offset;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    date = (DateInstance*)dispex;
+
+    if(isnan(date->time)) {
+        if(retv) {
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = SysAllocString(NaNW);
+            if(!V_BSTR(retv))
+                return E_OUTOFMEMORY;
+        }
+        return S_OK;
+    }
+
+    time = local_time(date->time, date);
+
+    if(retv) {
+        date_str = SysAllocStringLen(NULL, 17);
+        if(!date_str)
+            return E_OUTOFMEMORY;
+
+        offset = date->bias +
+            daylight_saving_ta(time, date);
+
+        if(offset < 0) {
+            sign = '+';
+            offset = -offset;
+        }
+        else sign = '-';
+
+        if(offset)
+            sprintfW(date_str, formatW, (int)hour_from_time(time),
+                    (int)min_from_time(time), (int)sec_from_time(time),
+                    sign, offset/60, offset%60);
+        else
+            sprintfW(date_str, formatUTCW, (int)hour_from_time(time),
+                    (int)min_from_time(time), (int)sec_from_time(time));
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = date_str;
+    }
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.6 */
