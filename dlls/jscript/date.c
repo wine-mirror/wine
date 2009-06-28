@@ -500,11 +500,111 @@ static HRESULT Date_toUTCString(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.3 */
 static HRESULT Date_toDateString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR NaNW[] = { 'N','a','N',0 };
+    static const WCHAR formatADW[] = { '%','s',' ','%','s',' ','%','d',' ','%','d',0 };
+    static const WCHAR formatBCW[] = { '%','s',' ','%','s',' ','%','d',' ','%','d',' ','B','.','C','.',0 };
+
+    static const DWORD week_ids[] = { LOCALE_SABBREVDAYNAME7, LOCALE_SABBREVDAYNAME1,
+        LOCALE_SABBREVDAYNAME2, LOCALE_SABBREVDAYNAME3, LOCALE_SABBREVDAYNAME4,
+        LOCALE_SABBREVDAYNAME5, LOCALE_SABBREVDAYNAME6 };
+    static const DWORD month_ids[] = { LOCALE_SABBREVMONTHNAME1, LOCALE_SABBREVMONTHNAME2,
+        LOCALE_SABBREVMONTHNAME3, LOCALE_SABBREVMONTHNAME4,
+        LOCALE_SABBREVMONTHNAME5, LOCALE_SABBREVMONTHNAME6,
+        LOCALE_SABBREVMONTHNAME7, LOCALE_SABBREVMONTHNAME8,
+        LOCALE_SABBREVMONTHNAME9, LOCALE_SABBREVMONTHNAME10,
+        LOCALE_SABBREVMONTHNAME11, LOCALE_SABBREVMONTHNAME12 };
+
+    BOOL formatAD = TRUE;
+    BSTR week, month;
+    DateInstance *date;
+    BSTR date_str;
+    DOUBLE time;
+    int len, size, year, day;
+    DWORD lcid_en, week_id, month_id;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    date = (DateInstance*)dispex;
+
+    if(isnan(date->time)) {
+        if(retv) {
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = SysAllocString(NaNW);
+            if(!V_BSTR(retv))
+                return E_OUTOFMEMORY;
+        }
+        return S_OK;
+    }
+
+    time = local_time(date->time, date);
+
+    if(retv) {
+        len = 5;
+
+        lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+
+        week_id = week_ids[(int)week_day(time)];
+        size = GetLocaleInfoW(lcid_en, week_id, NULL, 0);
+        week = SysAllocStringLen(NULL, size);
+        if(!week)
+            return E_OUTOFMEMORY;
+        GetLocaleInfoW(lcid_en, week_id, week, size);
+        len += size-1;
+
+        month_id = month_ids[(int)month_from_time(time)];
+        size = GetLocaleInfoW(lcid_en, month_id, NULL, 0);
+        month = SysAllocStringLen(NULL, size);
+        if(!month) {
+            SysFreeString(week);
+            return E_OUTOFMEMORY;
+        }
+        GetLocaleInfoW(lcid_en, month_id, month, size);
+        len += size-1;
+
+        year = year_from_time(time)/10;
+        while(year) {
+            year /= 10;
+            len++;
+        }
+
+        year = year_from_time(time);
+        if(year<0) {
+            formatAD = FALSE;
+            year = -year+1;
+            len += 5;
+        }
+
+        day = date_from_time(time)/10;
+        while(day) {
+            day /= 10;
+            len++;
+        }
+        day = date_from_time(time);
+
+        date_str = SysAllocStringLen(NULL, len);
+        if(!date_str) {
+            SysFreeString(week);
+            SysFreeString(month);
+            return E_OUTOFMEMORY;
+        }
+        sprintfW(date_str, formatAD?formatADW:formatBCW, week, month, day, year);
+
+        SysFreeString(week);
+        SysFreeString(month);
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = date_str;
+    }
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.4 */
