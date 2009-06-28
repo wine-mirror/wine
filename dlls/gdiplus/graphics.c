@@ -1423,7 +1423,7 @@ GpStatus WINGDIPAPI GdipDrawCurveI(GpGraphics *graphics, GpPen *pen,
 
     TRACE("(%p, %p, %p, %d)\n", graphics, pen, points, count);
 
-    if(!points || count <= 0)
+    if(!points)
         return InvalidParameter;
 
     pointsF = GdipAlloc(sizeof(GpPointF)*count);

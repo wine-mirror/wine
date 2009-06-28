@@ -489,6 +489,67 @@ static void test_GdipDrawCurve(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_GdipDrawCurveI(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    GpPen *pen = NULL;
+    HDC hdc = GetDC(0);
+    GpPoint points[3];
+
+    points[0].X = 0;
+    points[0].Y = 0;
+
+    points[1].X = 40;
+    points[1].Y = 20;
+
+    points[2].X = 10;
+    points[2].Y = 40;
+
+    /* make a graphics object and pen object */
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    ok(pen != NULL, "Expected pen to be initialized\n");
+
+    /* InvalidParameter cases: null graphics, null pen */
+    status = GdipDrawCurveI(NULL, NULL, points, 3);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurveI(graphics, NULL, points, 3);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurveI(NULL, pen, points, 3);
+    expect(InvalidParameter, status);
+
+    /* InvalidParameter cases: invalid count */
+    status = GdipDrawCurveI(graphics, pen, points, -1);
+    expect(OutOfMemory, status);
+
+    status = GdipDrawCurveI(graphics, pen, points, 0);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurveI(graphics, pen, points, 1);
+    expect(InvalidParameter, status);
+
+    /* Valid test cases */
+    status = GdipDrawCurveI(graphics, pen, points, 2);
+    expect(Ok, status);
+
+    status = GdipDrawCurveI(graphics, pen, points, 3);
+    expect(Ok, status);
+
+    GdipDeletePen(pen);
+    GdipDeleteGraphics(graphics);
+
+    ReleaseDC(0, hdc);
+}
+
 static void test_GdipDrawLineI(void)
 {
     GpStatus status;
@@ -1214,6 +1275,7 @@ START_TEST(graphics)
     test_GdipDrawArc();
     test_GdipDrawArcI();
     test_GdipDrawCurve();
+    test_GdipDrawCurveI();
     test_GdipDrawCurve2();
     test_GdipDrawLineI();
     test_GdipDrawLinesI();
