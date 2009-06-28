@@ -781,7 +781,9 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
             }
             break;
         default:
-            FIXME("Unhandled attr op: %x\n", op);
+            if (op < DW_OP_lo_user) /* as DW_OP_hi_user is 0xFF, we don't need to test against it */
+                FIXME("Unhandled attr op: %x\n", op);
+            /* FIXME else unhandled extension */
             return loc_err_internal;
         }
     }
