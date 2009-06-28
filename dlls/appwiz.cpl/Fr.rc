@@ -1,5 +1,5 @@
 /*
-* Ajoute/Supprime des programmes resources francaises
+* Ressources françaises pour Ajout/suppression de programmes
 *
 * Copyright 2008 David Adam
 *
@@ -23,16 +23,17 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-   IDS_CPL_TITLE, "Ajouter/Supprimer des programmes"
-   IDS_CPL_DESC, "Vous autorise à installer un nouveau logiciel, ou supprimer un logiciel existant de votre ordinateur."
+   IDS_CPL_TITLE, "Ajout/Suppression de programmes"
+   IDS_CPL_DESC, "Vous permet d'installer un nouveau logiciel, ou supprimer un logiciel existant de votre ordinateur."
    IDS_TAB1_TITLE, "Applications"
 
-   IDS_UNINSTALL_FAILED, "Incapable d'exécuter le désinstalleur, '%s'. Voulez-vous supprimer l'entrée de ce programme du registre?"
+   IDS_UNINSTALL_FAILED, "Impossible d'exécuter le désinstalleur '%s'. Voulez-vous supprimer l'entrée de désinstallation de ce programme dans la base de registres ?"
    IDS_NOT_SPECIFIED, "Non spécifié"
 
    IDS_COLUMN_NAME, "Nom"
-   IDS_COLUMN_PUBLISHER, "Editeur"
+   IDS_COLUMN_PUBLISHER, "Éditeur"
    IDS_COLUMN_VERSION, "Version"
+   IDS_INSTALL_FILTER, "Programmes d'installation\0*instal*.exe;*setup*.exe;*.msi\0Programmes (*.exe)\0*.exe\0Tous les fichiers (*.*)\0*.*\0\0"
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -40,32 +41,32 @@ STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMEN
 CAPTION "Installation/Désinstallation"
 FONT 8, "MS Shell Dlg"
 {
-CONTROL "Pour installer un nouveau programme à partir d'une disquette, d'un cdrom ou de votre disque dur, cliquer sur Installer.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+CONTROL "Pour installer un nouveau programme à partir d'une disquette, d'un cdrom ou de votre disque dur, cliquez sur Installer.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
  CONTROL "&Installer", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
- CONTROL "Les logiciels suivants peuvent être automatiquement désinstallés. Pour supprimer un programme ou modifier ses composants, le sélectionner dans la liste, et cliquer sur Ajouter/Supprimer.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "Les logiciels suivants peuvent être désinstallés automatiquement.\nPour supprimer un programme ou modifier ses composants, sélectionnez-le dans la liste, et cliquez sur Modifier/Supprimer.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
- CONTROL "Ajouter/&Supprimer", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
- CONTROL "&Info. support", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 176, 198, 64, 14
+ CONTROL "Modifier/&Supprimer", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
+ CONTROL "&Infos de support", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 176, 198, 64, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
 
 IDD_INFO DIALOG 0, 0, 256, 138
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Information pour support"
+CAPTION "Informations de support"
 FONT 8, "MS Shell Dlg"
 {
  CONTROL "OK", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
- CONTROL "Les informations suivantes peuvent être utilisées pour obtenir un support technique pour %s:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
- CONTROL "Editeur:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
- CONTROL "Version:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
- CONTROL "Contact:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
- CONTROL "Support Information:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
- CONTROL "Support Telephone:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
- CONTROL "Lisez-moi:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
- CONTROL "Mise à jour des produits:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
- CONTROL "Commentaires:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
+ CONTROL "Les informations suivantes peuvent être utilisées pour obtenir du support technique pour %s :", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
+ CONTROL "Éditeur :", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
+ CONTROL "Version :", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
+ CONTROL "Contact :", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
+ CONTROL "Support :", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
+ CONTROL "Téléphone :", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
+ CONTROL "Lisez-moi :", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
+ CONTROL "Mises à jour :", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
+ CONTROL "Commentaires :", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
  CONTROL "", IDC_INFO_PUBLISHER, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 30, 136, 8
  CONTROL "", IDC_INFO_VERSION, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 40, 136, 8
  CONTROL "", IDC_INFO_CONTACT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 50, 136, 8
