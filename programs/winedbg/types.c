@@ -671,7 +671,10 @@ int types_print_type(const struct dbg_type* type, BOOL details)
         types_get_info(type, TI_GET_TYPE, &subtype.id);
         subtype.module = type->module;
         types_print_type(&subtype, details);
-        dbg_printf(" %s[]", name);
+        if (types_get_info(type, TI_GET_COUNT, &count))
+            dbg_printf(" %s[%d]", name, count);
+        else
+            dbg_printf(" %s[]", name);
         break;
     case SymTagEnum:
         dbg_printf("enum %s", name);
