@@ -435,6 +435,22 @@ static inline DOUBLE time_clip(DOUBLE time)
     return floor(time);
 }
 
+static SYSTEMTIME create_systemtime(DOUBLE time)
+{
+    SYSTEMTIME st;
+
+    st.wYear = year_from_time(time);
+    st.wMonth = month_from_time(time) + 1;
+    st.wDayOfWeek = week_day(time);
+    st.wDay = date_from_time(time);
+    st.wHour = hour_from_time(time);
+    st.wMinute = min_from_time(time);
+    st.wSecond = sec_from_time(time);
+    st.wMilliseconds = ms_from_time(time);
+
+    return st;
+}
+
 static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -498,11 +514,51 @@ static HRESULT Date_toTimeString(DispatchEx *dispex, LCID lcid, WORD flags, DISP
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.9.5.6 */
 static HRESULT Date_toLocaleDateString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR NaNW[] = { 'N','a','N',0 };
+    SYSTEMTIME st;
+    DateInstance *date;
+    BSTR date_str;
+    int len;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    date = (DateInstance*)dispex;
+
+    if(isnan(date->time)) {
+        if(retv) {
+            V_VT(retv) = VT_BSTR;
+            V_BSTR(retv) = SysAllocString(NaNW);
+            if(!V_BSTR(retv))
+                return E_OUTOFMEMORY;
+        }
+        return S_OK;
+    }
+
+    st = create_systemtime(local_time(date->time, date));
+
+    if(st.wYear<1601 || st.wYear>9999)
+        return Date_toDateString(dispex, lcid, flags, dp, retv, ei, caller);
+
+    if(retv) {
+        len = GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, NULL, 0);
+        date_str = SysAllocStringLen(NULL, len);
+        if(!date_str)
+            return E_OUTOFMEMORY;
+        GetDateFormatW(lcid, DATE_LONGDATE, &st, NULL, date_str, len);
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = date_str;
+    }
+    return S_OK;
 }
 
 static HRESULT Date_toLocaleTimeString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
