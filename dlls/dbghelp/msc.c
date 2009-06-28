@@ -2217,7 +2217,8 @@ static void pdb_process_types(const struct msc_debug_info* msc_dbg,
         case 19950410:      /* VC 4.0 */
         case 19951122:
         case 19961031:      /* VC 5.0 / 6.0 */
-        case 19990903:
+        case 19990903:      /* VC 7.0 */
+        case 20040203:      /* VC 8.0 */
             break;
         default:
             ERR("-Unknown type info version %d\n", types.version);
