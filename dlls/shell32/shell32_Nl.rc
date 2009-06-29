@@ -94,13 +94,13 @@ END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "&Bestand"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "&Afsluiten", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "B&eeld"
     BEGIN
         MENUITEM "&Grote Icons", FCIDM_SHVIEW_BIGICON
         MENUITEM "&Kleine Icons", FCIDM_SHVIEW_SMALLICON
