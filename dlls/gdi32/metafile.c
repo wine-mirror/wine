@@ -1147,6 +1147,81 @@ UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
     return mfSize;
 }
 
+#include <pshpack2.h>
+typedef struct
+{
+    DWORD magic;   /* WMFC */
+    WORD unk04;    /* 1 */
+    WORD unk06;    /* 0 */
+    WORD unk08;    /* 0 */
+    WORD unk0a;    /* 1 */
+    WORD checksum;
+    DWORD unk0e;   /* 0 */
+    DWORD num_chunks;
+    DWORD chunk_size;
+    DWORD remaining_size;
+    DWORD emf_size;
+    BYTE *emf_data;
+} mf_comment_chunk;
+#include <poppack.h>
+
+static const DWORD wmfc_magic = 0x43464d57;
+
+/******************************************************************
+ *         add_mf_comment
+ *
+ * Helper for GetWinMetaFileBits
+ *
+ * Add the MFCOMMENT record[s] which is essentially a copy
+ * of the original emf.
+ */
+static BOOL add_mf_comment(HDC hdc, HENHMETAFILE emf)
+{
+    DWORD size = GetEnhMetaFileBits(emf, 0, NULL), i;
+    BYTE *bits, *chunk_data;
+    mf_comment_chunk *chunk = NULL;
+    BOOL ret = FALSE;
+    static const DWORD max_chunk_size = 0x2000;
+
+    if(!size) return FALSE;
+    chunk_data = bits = HeapAlloc(GetProcessHeap(), 0, size);
+    if(!bits) return FALSE;
+    if(!GetEnhMetaFileBits(emf, size, bits)) goto end;
+
+    chunk = HeapAlloc(GetProcessHeap(), 0, max_chunk_size + FIELD_OFFSET(mf_comment_chunk, emf_data));
+    if(!chunk) goto end;
+
+    chunk->magic = wmfc_magic;
+    chunk->unk04 = 1;
+    chunk->unk06 = 0;
+    chunk->unk08 = 0;
+    chunk->unk0a = 1;
+    chunk->checksum = 0; /* We fixup the first chunk's checksum before returning from GetWinMetaFileBits */
+    chunk->unk0e = 0;
+    chunk->num_chunks = (size + max_chunk_size - 1) / max_chunk_size;
+    chunk->chunk_size = max_chunk_size;
+    chunk->remaining_size = size;
+    chunk->emf_size = size;
+
+    for(i = 0; i < chunk->num_chunks; i++)
+    {
+        if(i == chunk->num_chunks - 1) /* last chunk */
+            chunk->chunk_size = chunk->remaining_size;
+
+        chunk->remaining_size -= chunk->chunk_size;
+        memcpy(&chunk->emf_data, chunk_data, chunk->chunk_size);
+        chunk_data += chunk->chunk_size;
+
+        if(!Escape(hdc, MFCOMMENT, chunk->chunk_size + FIELD_OFFSET(mf_comment_chunk, emf_data), (char*)chunk, NULL))
+            goto end;
+    }
+    ret = TRUE;
+end:
+    HeapFree(GetProcessHeap(), 0, chunk);
+    HeapFree(GetProcessHeap(), 0, bits);
+    return ret;
+}
+
 /******************************************************************
  *         GetWinMetaFileBits [GDI32.@]
  */
@@ -1156,7 +1231,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
 {
     HDC hdcmf;
     HMETAFILE hmf;
-    UINT ret;
+    UINT ret, full_size;
     RECT rc;
 
     GetClipBox(hdcRef, &rc);
@@ -1165,11 +1240,25 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
         fnMapMode, hdcRef, wine_dbgstr_rect(&rc));
 
     hdcmf = CreateMetaFileW(NULL);
+
+    add_mf_comment(hdcmf, hemf);
+
     PlayEnhMetaFile(hdcmf, hemf, &rc);
     hmf = CloseMetaFile(hdcmf);
+    full_size = GetMetaFileBitsEx(hmf, 0, NULL);
     ret = GetMetaFileBitsEx(hmf, cbBuffer, lpbBuffer);
     DeleteMetaFile(hmf);
 
+    if(ret && ret == full_size && lpbBuffer) /* fixup checksum, but only if retrieving all of the bits */
+    {
+        WORD checksum = 0;
+        METARECORD *comment_rec = (METARECORD*)(lpbBuffer + sizeof(METAHEADER));
+        UINT i;
+
+        for(i = 0; i < full_size / 2; i++)
+            checksum += ((WORD*)lpbBuffer)[i];
+        comment_rec->rdParm[8] = ~checksum + 1;
+    }
     return ret;
 }
 
