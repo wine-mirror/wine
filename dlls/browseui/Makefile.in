@@ -14,7 +14,24 @@ C_SRCS = \
 	progressdlg.c \
 	regsvr.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	rsrc_De.rc \
+	rsrc_En.rc \
+	rsrc_Es.rc \
+	rsrc_Fr.rc \
+	rsrc_Ja.rc \
+	rsrc_Ko.rc \
+	rsrc_Lt.rc \
+	rsrc_Nl.rc \
+	rsrc_No.rc \
+	rsrc_Pl.rc \
+	rsrc_Pt.rc \
+	rsrc_Ro.rc \
+	rsrc_Ru.rc \
+	rsrc_Si.rc \
+	rsrc_Sv.rc \
+	rsrc_Zh.rc \
+	version.rc
 
 @MAKE_DLL_RULES@
 

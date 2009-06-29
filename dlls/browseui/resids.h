@@ -16,6 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "windef.h"
+#include "winuser.h"
+#include "commctrl.h"
+
 #define IDS_CANCELLING      16
 
 #define IDC_ANIMATION           100
