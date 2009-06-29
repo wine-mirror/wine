@@ -1166,7 +1166,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
     TRACE("(%p,%d,%p,%d,%p) rc=%s\n", hemf, cbBuffer, lpbBuffer,
         fnMapMode, hdcRef, wine_dbgstr_rect(&rc));
 
-    hdcmf = CreateMetaFileA(NULL);
+    hdcmf = CreateMetaFileW(NULL);
     PlayEnhMetaFile(hdcmf, hemf, &rc);
     hmf = CloseMetaFile(hdcmf);
     ret = GetMetaFileBitsEx(hmf, cbBuffer, lpbBuffer);
