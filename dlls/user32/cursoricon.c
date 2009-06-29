@@ -1630,7 +1630,6 @@ static BOOL bitmap_has_alpha_channel( int bpp, unsigned char *bitmapBits,
             if(bitmapBits[offset] != 0)
             {
                 return TRUE;
-                break;
             }
         }
     }
