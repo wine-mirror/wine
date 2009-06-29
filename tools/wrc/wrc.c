@@ -55,7 +55,7 @@
 #endif
 
 static const char usage[] =
-	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
+	"Usage: wrc [options...] [infile[.rc|.res]]\n"
 	"   -D id[=val] Define preprocessor identifier id=val\n"
 	"   -E          Preprocess only\n"
 	"   -F target   Ignored for compatibility with windres\n"
@@ -174,29 +174,42 @@ int getopt (int argc, char *const *argv, const char *optstring);
 static void cleanup_files(void);
 static void segvhandler(int sig);
 
+enum long_options_values
+{
+    LONG_OPT_NOSTDINC = 1,
+    LONG_OPT_TMPFILE,
+    LONG_OPT_NOTMPFILE,
+    LONG_OPT_PREPROCESSOR,
+    LONG_OPT_VERSION,
+    LONG_OPT_DEBUG,
+    LONG_OPT_ENDIANESS,
+    LONG_OPT_PEDANTIC,
+    LONG_OPT_VERIFY_TRANSL
+};
+
 static const char short_options[] =
 	"D:Ef:F:hi:I:J:l:o:O:rU:v";
 static const struct option long_options[] = {
-	{ "debug", 1, 0, 6 },
+	{ "debug", 1, 0, LONG_OPT_DEBUG },
 	{ "define", 1, 0, 'D' },
-	{ "endianess", 1, 0, 7 },
+	{ "endianess", 1, 0, LONG_OPT_ENDIANESS },
 	{ "help", 0, 0, 'h' },
 	{ "include-dir", 1, 0, 'I' },
 	{ "input", 1, 0, 'i' },
 	{ "input-format", 1, 0, 'J' },
 	{ "language", 1, 0, 'l' },
-	{ "no-use-temp-file", 0, 0, 3 },
-	{ "nostdinc", 0, 0, 1 },
+	{ "no-use-temp-file", 0, 0, LONG_OPT_NOTMPFILE },
+	{ "nostdinc", 0, 0, LONG_OPT_NOSTDINC },
 	{ "output", 1, 0, 'o' },
 	{ "output-format", 1, 0, 'O' },
-	{ "pedantic", 0, 0, 8 },
-	{ "preprocessor", 1, 0, 4 },
+	{ "pedantic", 0, 0, LONG_OPT_PEDANTIC },
+	{ "preprocessor", 1, 0, LONG_OPT_PREPROCESSOR },
 	{ "target", 1, 0, 'F' },
 	{ "undefine", 1, 0, 'U' },
-	{ "use-temp-file", 0, 0, 2 },
+	{ "use-temp-file", 0, 0, LONG_OPT_TMPFILE },
 	{ "verbose", 0, 0, 'v' },
-	{ "verify-translations", 0, 0, 9 },
-	{ "version", 0, 0, 5 },
+	{ "verify-translations", 0, 0, LONG_OPT_VERIFY_TRANSL },
+	{ "version", 0, 0, LONG_OPT_VERSION },
 	{ 0, 0, 0, 0 }
 };
 
@@ -301,8 +314,10 @@ int main(int argc,char *argv[])
 	int opti = 0;
 	int stdinc = 1;
 	int lose = 0;
+	int nb_files = 0;
 	int i;
 	int cmdlen;
+        char **files = xmalloc( argc * sizeof(*files) );
 
 	signal(SIGSEGV, segvhandler);
         signal( SIGTERM, exit_on_signal );
@@ -339,27 +354,27 @@ int main(int argc,char *argv[])
 	{
 		switch(optc)
 		{
-		case 1:
+		case LONG_OPT_NOSTDINC:
 			stdinc = 0;
 			break;
-		case 2:
+		case LONG_OPT_TMPFILE:
 			if (debuglevel) warning("--use-temp-file option not yet supported, ignored.\n");
 			break;
-		case 3:
+		case LONG_OPT_NOTMPFILE:
 			if (debuglevel) warning("--no-use-temp-file option not yet supported, ignored.\n");
 			break;
-		case 4:
+		case LONG_OPT_PREPROCESSOR:
 			if (strcmp(optarg, "cat") == 0) no_preprocess = 1;
 			else fprintf(stderr, "-P option not yet supported, ignored.\n");
 			break;
-		case 5:
+		case LONG_OPT_VERSION:
 			printf(version_string);
 			exit(0);
 			break;
-		case 6:
+		case LONG_OPT_DEBUG:
 			debuglevel = strtol(optarg, NULL, 0);
 			break;
-		case 7:
+		case LONG_OPT_ENDIANESS:
 			switch(optarg[0])
 			{
 			case 'n':
@@ -379,11 +394,11 @@ int main(int argc,char *argv[])
 				lose++;
 			}
 			break;
-		case 8:
+		case LONG_OPT_PEDANTIC:
 			pedantic = 1;
 			wpp_set_pedantic(1);
 			break;
-		case 9:
+		case LONG_OPT_VERIFY_TRANSL:
 			verify_translations_mode = 1;
 			break;
 		case 'D':
@@ -399,8 +414,7 @@ int main(int argc,char *argv[])
 			printf(usage);
 			exit(0);
 		case 'i':
-			if (!input_name) input_name = strdup(optarg);
-			else error("Too many input files.\n");
+			files[nb_files++] = optarg;
 			break;
 		case 'I':
 			wpp_add_include_path(optarg);
@@ -483,19 +497,11 @@ int main(int argc,char *argv[])
 
 	atexit(cleanup_files);
 
-        if (input_name)  /* specified with -i option */
-        {
-            if(!output_name && !preprocess_only)
-            {
-		output_name = dup_basename(input_name, ".rc");
-		strcat(output_name, ".res");
-            }
-            if (load_file( input_name, output_name )) exit(1);
-        }
+        while (optind < argc) files[nb_files++] = argv[optind++];
 
-        while (optind < argc)
+        for (i = 0; i < nb_files; i++)
         {
-            input_name = argv[optind++];
+            input_name = files[i];
             if(!output_name && !preprocess_only)
             {
 		output_name = dup_basename(input_name, ".rc");
