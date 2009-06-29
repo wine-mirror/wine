@@ -830,18 +830,20 @@ static void build(struct options* opts)
     for ( j = 0 ; j < opts->winebuild_args->size ; j++ )
         strarray_add(spec_args, opts->winebuild_args->base[j]);
 
+    /* add resource files */
+    for ( j = 0; j < files->size; j++ )
+	if (files->base[j][1] == 'r') strarray_add(spec_args, files->base[j]);
+
+    /* add other files */
+    strarray_add(spec_args, "--");
     for ( j = 0; j < files->size; j++ )
     {
-	const char* name = files->base[j] + 2;
 	switch(files->base[j][1])
 	{
-	    case 'r':
-		strarray_add(spec_args, files->base[j]);
-		break;
 	    case 'd':
 	    case 'a':
 	    case 'o':
-		strarray_add(spec_args, name);
+		strarray_add(spec_args, files->base[j] + 2);
 		break;
 	}
     }
