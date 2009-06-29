@@ -36,7 +36,7 @@ BEGIN
     END
     POPUP "&Options"
     BEGIN
-        MENUITEM "&Always On Top",              ID_OPTIONS_ALWAYSONTOP
+        MENUITEM "Toujours &visible",              ID_OPTIONS_ALWAYSONTOP
         , CHECKED
         MENUITEM "Réd&uire à l'exécution",      ID_OPTIONS_MINIMIZEONUSE
         , CHECKED
@@ -58,8 +58,8 @@ BEGIN
 
         END
         MENUITEM SEPARATOR
-        MENUITEM "G&randes Icônes",                ID_VIEW_LARGE
-        MENUITEM "P&etites Icônes",                ID_VIEW_SMALL
+        MENUITEM "G&randes icônes",                ID_VIEW_LARGE
+        MENUITEM "P&etites icônes",                ID_VIEW_SMALL
         MENUITEM "&Détails",                       ID_VIEW_DETAILS, CHECKED
         MENUITEM "&Sélectionner les colonnes...",           ID_VIEW_SELECTCOLUMNS
         POPUP "&Historique du processeur"
@@ -71,7 +71,7 @@ BEGIN
         END
         MENUITEM "Aff&icher les temps du noyau",          ID_VIEW_SHOWKERNELTIMES
     END
-    POPUP "&Fenêtres"
+    POPUP "Fe&nêtres"
     BEGIN
         MENUITEM "Arranger &Horizontallement",          ID_WINDOWS_TILEHORIZONTALLY
         MENUITEM "Arranger &Verticallement",            ID_WINDOWS_TILEVERTICALLY
@@ -124,7 +124,7 @@ BEGIN
         MENUITEM "&Cascade",                      ID_WINDOWS_CASCADE
         MENUITEM SEPARATOR
         MENUITEM "F&in de tâche",                 ID_APPLICATION_PAGE_ENDTASK
-        MENUITEM "&Basculer vers",                ID_APPLICATION_PAGE_GOTOPROCESS
+        MENUITEM "&Suivre le processus",                ID_APPLICATION_PAGE_GOTOPROCESS
     END
 END
 
@@ -189,9 +189,9 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_APPLIST,"SysListView32",LVS_REPORT |
                     LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Nouvelle tâche...",IDC_NEWTASK,187,189,53,14
+    PUSHBUTTON      "&Nouvelle tâche",IDC_NEWTASK,187,189,53,14
     PUSHBUTTON      "&Basculer vers",IDC_SWITCHTO,131,189,53,14,WS_DISABLED
-    PUSHBUTTON      "&Fin de tâche",IDC_ENDTASK,75,189,53,14,WS_DISABLED
+    PUSHBUTTON      "&Fin de tâche",IDC_ENDTASK,75,189,56,14,WS_DISABLED
 END
 
 IDD_PROCESS_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
@@ -201,9 +201,9 @@ BEGIN
     CONTROL         "List2",IDC_PROCESSLIST,"SysListView32",LVS_REPORT |
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
                     WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Terminer le processus",IDC_ENDPROCESS,171,189,69,14
+    PUSHBUTTON      "&Terminer le processus",IDC_ENDPROCESS,161,189,79,14
     CONTROL         "&Afficher les processus de tous les utilisateurs",IDC_SHOWALLPROCESSES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,111,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,161,10
 END
 
 /*IDD_PERFORMANCE_PAGE DIALOGEX 0, 0, 247, 210*/
@@ -420,7 +420,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Gestionnaire des tâches"
     IDC_TASKMGR             "Gestionnaire des tâches"
-    IDS_RUNDLG_CAPTION      "Create New Task"
+    IDS_RUNDLG_CAPTION      "Nouvelle tâche..."
 END
 
 STRINGTABLE DISCARDABLE
