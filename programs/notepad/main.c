@@ -64,15 +64,18 @@ static const WCHAR value_szFooter[]         = {'s','z','T','r','a','i','l','e','
 
 /***********************************************************************
  *
- *           SetFileName
+ *           SetFileNameAndEncoding
  *
- *  Sets Global File Name.
+ *  Sets global file name and encoding (which is used to preselect original
+ *  encoding in Save As dialog, and when saving without using the Save As
+ *  dialog).
  */
-VOID SetFileName(LPCWSTR szFileName)
+VOID SetFileNameAndEncoding(LPCWSTR szFileName, ENCODING enc)
 {
     lstrcpyW(Globals.szFileName, szFileName);
     Globals.szFileTitle[0] = 0;
     GetFileTitleW(szFileName, Globals.szFileTitle, sizeof(Globals.szFileTitle));
+    Globals.encFile = enc;
 }
 
 /******************************************************************************
@@ -698,7 +701,7 @@ static void HandleCommandLine(LPWSTR cmdline)
         {
             switch (AlertFileDoesNotExist(file_name)) {
             case IDYES:
-                SetFileName(file_name);
+                SetFileNameAndEncoding(file_name, ENCODING_ANSI);
                 UpdateWindowCaption();
                 break;
 

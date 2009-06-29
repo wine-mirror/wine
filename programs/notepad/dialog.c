@@ -139,37 +139,82 @@ BOOL FileExists(LPCWSTR szFilename)
 
 static VOID DoSaveFile(VOID)
 {
+    int lenW;
+    WCHAR* textW;
     HANDLE hFile;
     DWORD dwNumWrite;
-    LPSTR pTemp;
+    PVOID pBytes;
     DWORD size;
+
+    /* lenW includes the byte-order mark, but not the \0. */
+    lenW = GetWindowTextLengthW(Globals.hEdit) + 1;
+    textW = HeapAlloc(GetProcessHeap(), 0, (lenW+1) * sizeof(WCHAR));
+    if (!textW)
+    {
+        ShowLastError();
+        return;
+    }
+    textW[0] = (WCHAR) 0xfeff;
+    lenW = GetWindowTextW(Globals.hEdit, textW+1, lenW) + 1;
+
+    switch (Globals.encFile)
+    {
+    case ENCODING_UTF16BE:
+        byteswap_wide_string(textW, lenW);
+        /* fall through */
+
+    case ENCODING_UTF16LE:
+        size = lenW * sizeof(WCHAR);
+        pBytes = textW;
+        break;
+
+    case ENCODING_UTF8:
+        size = WideCharToMultiByte(CP_UTF8, 0, textW, lenW, NULL, 0, NULL, NULL);
+        pBytes = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!pBytes)
+        {
+            ShowLastError();
+            HeapFree(GetProcessHeap(), 0, textW);
+            return;
+        }
+        WideCharToMultiByte(CP_UTF8, 0, textW, lenW, pBytes, size, NULL, NULL);
+        HeapFree(GetProcessHeap(), 0, textW);
+        break;
+
+    default:
+        size = WideCharToMultiByte(CP_ACP, 0, textW+1, lenW-1, NULL, 0, NULL, NULL);
+        pBytes = HeapAlloc(GetProcessHeap(), 0, size);
+        if (!pBytes)
+        {
+            ShowLastError();
+            HeapFree(GetProcessHeap(), 0, textW);
+            return;
+        }
+        WideCharToMultiByte(CP_ACP, 0, textW+1, lenW-1, pBytes, size, NULL, NULL);
+        HeapFree(GetProcessHeap(), 0, textW);
+        break;
+    }
 
     hFile = CreateFileW(Globals.szFileName, GENERIC_WRITE, FILE_SHARE_WRITE,
                        NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if(hFile == INVALID_HANDLE_VALUE)
     {
         ShowLastError();
+        HeapFree(GetProcessHeap(), 0, pBytes);
         return;
     }
-
-    size = GetWindowTextLengthA(Globals.hEdit) + 1;
-    pTemp = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!pTemp)
+    if (!WriteFile(hFile, pBytes, size, &dwNumWrite, NULL))
     {
-	CloseHandle(hFile);
         ShowLastError();
+        CloseHandle(hFile);
+        HeapFree(GetProcessHeap(), 0, pBytes);
         return;
     }
-    size = GetWindowTextA(Globals.hEdit, pTemp, size);
-
-    if (!WriteFile(hFile, pTemp, size, &dwNumWrite, NULL))
-        ShowLastError();
-    else
-        SendMessageW(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
-
     SetEndOfFile(hFile);
     CloseHandle(hFile);
-    HeapFree(GetProcessHeap(), 0, pTemp);
+    HeapFree(GetProcessHeap(), 0, pBytes);
+
+    SendMessageW(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
 }
 
 /**
@@ -197,7 +242,7 @@ BOOL DoCloseFile(void)
         } /* switch */
     } /* if */
 
-    SetFileName(empty_strW);
+    SetFileNameAndEncoding(empty_strW, ENCODING_ANSI);
 
     UpdateWindowCaption();
     return(TRUE);
@@ -304,6 +349,9 @@ void DoOpenFile(LPCWSTR szFileName)
     {
     case ENCODING_UTF16BE:
         byteswap_wide_string((WCHAR*) pTemp, size/sizeof(WCHAR));
+        /* Forget whether the file is BE or LE, like native Notepad. */
+        enc = ENCODING_UTF16LE;
+
         /* fall through */
 
     case ENCODING_UTF16LE:
@@ -349,7 +397,7 @@ void DoOpenFile(LPCWSTR szFileName)
         SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)lfW);
     }
 
-    SetFileName(szFileName);
+    SetFileNameAndEncoding(szFileName, enc);
     UpdateWindowCaption();
 }
 
@@ -429,7 +477,7 @@ BOOL DIALOG_FileSaveAs(VOID)
     saveas.lpstrDefExt       = szDefaultExt;
 
     if (GetSaveFileNameW(&saveas)) {
-        SetFileName(szPath);
+        SetFileNameAndEncoding(szPath, Globals.encFile);
         UpdateWindowCaption();
         DoSaveFile();
         return TRUE;

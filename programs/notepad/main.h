@@ -46,6 +46,7 @@ typedef struct
   WCHAR    szReplaceText[MAX_PATH];
   WCHAR    szFileName[MAX_PATH];
   WCHAR    szFileTitle[MAX_PATH];
+  ENCODING encFile;
   WCHAR    szFilter[2 * MAX_STRING_LEN + 100];
   INT      iMarginTop;
   INT      iMarginBottom;
@@ -62,6 +63,6 @@ typedef struct
 
 extern NOTEPAD_GLOBALS Globals;
 
-VOID SetFileName(LPCWSTR szFileName);
+VOID SetFileNameAndEncoding(LPCWSTR szFileName, ENCODING enc);
 void NOTEPAD_DoFind(FINDREPLACEW *fr);
 DWORD get_dpi(void);
