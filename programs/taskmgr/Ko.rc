@@ -483,4 +483,89 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
                             "작업을 보통보다 낮은 순위 클래스로 설정"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "작업을 낮은 순위 클래스로 설정"
+    ID_PROCESS_PAGE_DEBUGCHANNELS "디버그 채널 제어"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+	IDS_VIEW_LARGE                     "큰 아이콘(&G)"
+	IDS_VIEW_SMALL                     "작은 아이콘(&M)"
+	IDS_VIEW_DETAILS                   "항목(&D)"
+	IDS_WINDOWS                        "창(&W)"
+	IDS_VIEW_SELECTCOLUMNS             "컬럼 선택(&S)..."
+	IDS_OPTIONS_SHOW16BITTASKS         "16비트 작업 보여주기(&S)"
+	IDS_VIEW_CPUHISTORY                "&CPU 기록"
+	IDS_VIEW_CPUHISTORY_ONEGRAPHALL    " 모든 CPU를 하나의 그래프로(&O)"
+	IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "CPU마다 각각의 그래프(&P)"
+	IDS_VIEW_SHOWKERNELTIMES           "커널 시간 보여주기(&S)"
+	IDS_APPLICATIONS                   "프로그램"
+	IDS_PROCESSES                      "작업"
+	IDS_PERFORMANCE                    "퍼포먼스"
+	IDS_STATUS_BAR_CPU_USAGE           "CPU 사용량: %3d%%"
+	IDS_STATUS_BAR_PROCESSES           "프로세스: %d"
+	IDS_STATUS_BAR_MEMORY_USAGE        "메모리 사용량: %dK / %dK"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+	IDS_IMAGENAME        "이미지 이름"
+	IDS_PID               "PID"
+	IDS_CPUUSAGE          "CPU"
+	IDS_CPUTIME           "CPU 시간"
+	IDS_MEMORYUSAGE       "메모리 사용량"
+	IDS_MEMORYUSAGEDELTA  "메모리 델타"
+	IDS_PEAKMEMORYUSAGE   "피크 메모리 사용"
+	IDS_PAGEFAULTS        "페이지 실패"
+	IDS_USEROBJECTS       "사용자 객체"
+	IDS_IOREADS           "I/O 읽기"
+	IDS_IOREADBYTES       "I/O 읽은 바이트"
+	IDS_SESSIONID         "세션 ID"
+	IDS_USERNAME          "사용자 이름"
+	IDS_PAGEFAULTSDELTA   "PF 델타"
+	IDS_VIRTUALMEMORYSIZE "VM 크기"
+	IDS_PAGEDPOOL         "페이지된 풀"
+	IDS_NONPAGEDPOOL      "NP 풀"
+	IDS_BASEPRIORITY      "기본 Pri"
+	IDS_HANDLECOUNT       "핸들"
+	IDS_THREADCOUNT       "쓰레드"
+	IDS_GDIOBJECTS        "GDI 객체"
+	IDS_IOWRITES          "I/O 쓰기"
+	IDS_IOWRITEBYTES      "I/O 쓴 바이트"
+	IDS_IOOTHER           "I/O 기타"
+	IDS_IOOTHERBYTES      "I/O 기타 바이트"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+	IDS_WARNING_TITLE               "작업 관리자 경고"
+	IDS_PRIORITY_CHANGE_MESSAGE     "경고: 프로세스의 우선 순위 클래그를 변경하는 것은\n\
+	시스템 불안정을 포함해서 바람직하지 않은 결과를 가져 올 수 있습니다. 당신은\n\
+	우선 순위 수준을 변경하시겠습니까?"
+	IDS_PRIORITY_UNABLE2CHANGE      "우선순위를 바꿀 수 없습니다"
+	IDS_TERMINATE_MESSAGE           "경고: 프로세스를 중단시키는 것은 데이타 손실과\n\
+	시스템 불안정을 포함해서 바람직하지 않은 결과를 가져올 수\n\
+	있습니다. 이 프로세스 데이터나 상태를 저장할 기회가\n\
+	주어지기 전에 종료될 것입니다. \n\
+	정말로 중단시키겠습니까?"
+	IDS_TERMINATE_UNABLE2TERMINATE  "프로세스를 중단시킬 수 없습니다"
+	IDS_DEBUG_MESSAGE               "경고: 프로세스를 디버그 하는 것은 데이터의 손실을 가져올 수 있습니다.\n\
+	디버거를  사용하시겠습니까?"
+	IDS_DEBUG_UNABLE2DEBUG          "프로세스를 디버그 할 수 없습니다"
+	IDS_AFFINITY_ERROR_MESSAGE      "	이 과정은 적어도 하나의 프로세서와 동질성이 있어야합니다"
+	IDS_AFFINITY_ERROR_TITLE        "올바르지 않은 옵션"
+	IDS_AFFINITY_UNABLE2ACCESS      "접근할수 없거나 프로세스 동질성을 설정할수 없습니다"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+	IDS_SYSTEM_IDLE_PROCESS            "시스템 유휴 작업"
+	IDS_APPLICATION_NOT_RESPONDING     "반응이 없음"
+	IDS_APPLICATION_RUNNING            "실행중"
+	IDS_APPLICATION_TASK               "태스크"
+	IDS_APPLICATION_STATUS             "상태"
+	IDS_DEBUG_CHANNEL                  "디버그 채널"
+	IDS_DEBUG_CHANNEL_FIXME            " 고정"
+	IDS_DEBUG_CHANNEL_ERR              " 에러"
+	IDS_DEBUG_CHANNEL_WARN             "경고"
+	IDS_DEBUG_CHANNEL_TRACE            "추적"
 END
