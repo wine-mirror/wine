@@ -55,4 +55,4 @@ VOID ShowLastError(void);
 void UpdateWindowCaption(void);
 BOOL FileExists(LPCWSTR szFilename);
 BOOL DoCloseFile(void);
-void DoOpenFile(LPCWSTR szFileName);
+void DoOpenFile(LPCWSTR szFileName, ENCODING enc);

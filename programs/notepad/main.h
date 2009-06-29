@@ -25,13 +25,18 @@
 
 #define MAX_STRING_LEN      255
 
+/* Values are indexes of the items in the Encoding combobox. */
 typedef enum
 {
-    ENCODING_ANSI,
-    ENCODING_UTF16LE,
-    ENCODING_UTF16BE,
-    ENCODING_UTF8
+    ENCODING_AUTO    = -1,
+    ENCODING_ANSI    =  0,
+    ENCODING_UTF16LE =  1,
+    ENCODING_UTF16BE =  2,
+    ENCODING_UTF8    =  3
 } ENCODING;
+
+#define MIN_ENCODING   0
+#define MAX_ENCODING   3
 
 typedef struct
 {
@@ -48,6 +53,8 @@ typedef struct
   WCHAR    szFileTitle[MAX_PATH];
   ENCODING encFile;
   WCHAR    szFilter[2 * MAX_STRING_LEN + 100];
+  ENCODING encOfnCombo;  /* Encoding selected in IDC_OFN_ENCCOMBO */
+  BOOL     bOfnIsOpenDialog;
   INT      iMarginTop;
   INT      iMarginBottom;
   INT      iMarginLeft;

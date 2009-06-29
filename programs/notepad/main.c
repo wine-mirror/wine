@@ -581,7 +581,7 @@ static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
 
         DragQueryFileW(hDrop, 0, szFileName, ARRAY_SIZE(szFileName));
         DragFinish(hDrop);
-        DoOpenFile(szFileName);
+        DoOpenFile(szFileName, ENCODING_AUTO);
         break;
     }
     
@@ -692,7 +692,7 @@ static void HandleCommandLine(LPWSTR cmdline)
 
         if (file_exists)
         {
-            DoOpenFile(file_name);
+            DoOpenFile(file_name, ENCODING_AUTO);
             InvalidateRect(Globals.hMainWnd, NULL, FALSE);
             if (opt_print)
                 DIALOG_FilePrint();

@@ -45,6 +45,28 @@ static inline void byteswap_wide_string(LPWSTR str, UINT num)
     for (i = 0; i < num; i++) str[i] = RtlUshortByteSwap(str[i]);
 }
 
+static void load_encoding_name(ENCODING enc, WCHAR* buffer, int length)
+{
+    switch (enc)
+    {
+        case ENCODING_UTF16LE:
+            LoadStringW(Globals.hInstance, STRING_UNICODE_LE, buffer, length);
+            break;
+
+        case ENCODING_UTF16BE:
+            LoadStringW(Globals.hInstance, STRING_UNICODE_BE, buffer, length);
+            break;
+
+        default:
+        {
+            CPINFOEXW cpi;
+            GetCPInfoExW((enc==ENCODING_UTF8) ? CP_UTF8 : CP_ACP, 0, &cpi);
+            lstrcpynW(buffer, cpi.CodePageName, length);
+            break;
+        }
+    }
+}
+
 VOID ShowLastError(void)
 {
     DWORD error = GetLastError();
@@ -286,14 +308,13 @@ static BOOL SetWindowTextUtf8(HWND hwnd, LPCSTR lpTextInUtf8)
     return ret;
 }
 
-void DoOpenFile(LPCWSTR szFileName)
+void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
 {
     static const WCHAR dotlog[] = { '.','L','O','G',0 };
     HANDLE hFile;
     LPSTR pTemp;
     DWORD size;
     DWORD dwNumRead;
-    ENCODING enc;
     BOOL succeeded;
     WCHAR log[5];
 
@@ -340,7 +361,18 @@ void DoOpenFile(LPCWSTR szFileName)
     pTemp[size] = 0;    /* make sure it's  (char)'\0'-terminated */
     pTemp[size+1] = 0;  /* make sure it's (WCHAR)'\0'-terminated */
 
-    enc = detect_encoding_of_buffer(pTemp, size);
+    if (enc == ENCODING_AUTO)
+        enc = detect_encoding_of_buffer(pTemp, size);
+    else if (size >= 2 && (enc==ENCODING_UTF16LE || enc==ENCODING_UTF16BE))
+    {
+        /* If UTF-16 (BE or LE) is selected, and there is a UTF-16 BOM,
+         * override the selection (like native Notepad).
+         */
+        if ((BYTE)pTemp[0] == 0xff && (BYTE)pTemp[1] == 0xfe)
+            enc = ENCODING_UTF16LE;
+        else if ((BYTE)pTemp[0] == 0xfe && (BYTE)pTemp[1] == 0xff)
+            enc = ENCODING_UTF16BE;
+    }
 
     /* SetWindowTextUtf8 and SetWindowTextA try to allocate memory, so we
      * check if they succeed.
@@ -413,6 +445,97 @@ VOID DIALOG_FileNew(VOID)
     }
 }
 
+/* Used to detect encoding of files selected in Open dialog.
+ * Returns ENCODING_AUTO if file can't be read, etc.
+ */
+static ENCODING detect_encoding_of_file(LPCWSTR szFileName)
+{
+    DWORD size;
+    HANDLE hFile = CreateFileW(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
+                               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return ENCODING_AUTO;
+    size = GetFileSize(hFile, NULL);
+    if (size == INVALID_FILE_SIZE)
+    {
+        CloseHandle(hFile);
+        return ENCODING_AUTO;
+    }
+    else
+    {
+        DWORD dwNumRead;
+        BYTE buffer[MAX_STRING_LEN];
+        if (!ReadFile(hFile, buffer, min(size, sizeof(buffer)), &dwNumRead, NULL))
+        {
+            CloseHandle(hFile);
+            return ENCODING_AUTO;
+        }
+        CloseHandle(hFile);
+        return detect_encoding_of_buffer(buffer, dwNumRead);
+    }
+}
+
+static UINT_PTR CALLBACK OfnHookProc(HWND hdlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    static HWND hEncCombo;
+
+    switch (uMsg)
+    {
+    case WM_INITDIALOG:
+        {
+            ENCODING enc;
+            hEncCombo = GetDlgItem(hdlg, IDC_OFN_ENCCOMBO);
+            for (enc = MIN_ENCODING; enc <= MAX_ENCODING; enc++)
+            {
+                WCHAR szEnc[MAX_STRING_LEN];
+                load_encoding_name(enc, szEnc, ARRAY_SIZE(szEnc));
+                SendMessageW(hEncCombo, CB_ADDSTRING, 0, (LPARAM)szEnc);
+            }
+            SendMessageW(hEncCombo, CB_SETCURSEL, (WPARAM)Globals.encOfnCombo, 0);
+        }
+        break;
+
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDC_OFN_ENCCOMBO &&
+            HIWORD(wParam) == CBN_SELCHANGE)
+        {
+            int index = SendMessageW(hEncCombo, CB_GETCURSEL, 0, 0);
+            Globals.encOfnCombo = index==CB_ERR ? ENCODING_ANSI : (ENCODING)index;
+        }
+
+        break;
+
+    case WM_NOTIFY:
+        switch (((OFNOTIFYW*)lParam)->hdr.code)
+        {
+            case CDN_SELCHANGE:
+                if (Globals.bOfnIsOpenDialog)
+                {
+                    /* Check the start of the selected file for a BOM. */
+                    ENCODING enc;
+                    WCHAR szFileName[MAX_PATH];
+                    SendMessageW(GetParent(hdlg), CDM_GETFILEPATH,
+                                 ARRAY_SIZE(szFileName), (LPARAM)szFileName);
+                    enc = detect_encoding_of_file(szFileName);
+                    if (enc != ENCODING_AUTO)
+                    {
+                        Globals.encOfnCombo = enc;
+                        SendMessageW(hEncCombo, CB_SETCURSEL, (WPARAM)enc, 0);
+                    }
+                }
+                break;
+
+            default:
+                break;
+        }
+        break;
+
+    default:
+        break;
+    }
+    return 0;
+}
+
 VOID DIALOG_FileOpen(VOID)
 {
     OPENFILENAMEW openfilename;
@@ -433,13 +556,18 @@ VOID DIALOG_FileOpen(VOID)
     openfilename.lpstrFile         = szPath;
     openfilename.nMaxFile          = ARRAY_SIZE(szPath);
     openfilename.lpstrInitialDir   = szDir;
-    openfilename.Flags             = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
-        OFN_HIDEREADONLY | OFN_ENABLESIZING;
+    openfilename.Flags = OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_EXPLORER |
+                         OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST |
+                         OFN_HIDEREADONLY | OFN_ENABLESIZING;
+    openfilename.lpfnHook          = OfnHookProc;
+    openfilename.lpTemplateName    = MAKEINTRESOURCEW(IDD_OFN_TEMPLATE);
     openfilename.lpstrDefExt       = szDefaultExt;
 
+    Globals.encOfnCombo = ENCODING_ANSI;
+    Globals.bOfnIsOpenDialog = TRUE;
 
     if (GetOpenFileNameW(&openfilename))
-        DoOpenFile(openfilename.lpstrFile);
+        DoOpenFile(openfilename.lpstrFile, Globals.encOfnCombo);
 }
 
 
@@ -472,12 +600,19 @@ BOOL DIALOG_FileSaveAs(VOID)
     saveas.lpstrFile         = szPath;
     saveas.nMaxFile          = ARRAY_SIZE(szPath);
     saveas.lpstrInitialDir   = szDir;
-    saveas.Flags             = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT |
-        OFN_HIDEREADONLY | OFN_ENABLESIZING;
+    saveas.Flags          = OFN_ENABLETEMPLATE | OFN_ENABLEHOOK | OFN_EXPLORER |
+                            OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT |
+                            OFN_HIDEREADONLY | OFN_ENABLESIZING;
+    saveas.lpfnHook          = OfnHookProc;
+    saveas.lpTemplateName    = MAKEINTRESOURCEW(IDD_OFN_TEMPLATE);
     saveas.lpstrDefExt       = szDefaultExt;
 
+    /* Preset encoding to what file was opened/saved last with. */
+    Globals.encOfnCombo = Globals.encFile;
+    Globals.bOfnIsOpenDialog = FALSE;
+
     if (GetSaveFileNameW(&saveas)) {
-        SetFileNameAndEncoding(szPath, Globals.encFile);
+        SetFileNameAndEncoding(szPath, Globals.encOfnCombo);
         UpdateWindowCaption();
         DoSaveFile();
         return TRUE;

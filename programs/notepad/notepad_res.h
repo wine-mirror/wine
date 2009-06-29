@@ -84,3 +84,10 @@
 
 #define STRING_NOTFOUND 0x17B
 #define STRING_OUT_OF_MEMORY 0x17C
+
+#define STRING_UNICODE_LE      0x180
+#define STRING_UNICODE_BE      0x181
+
+/* Open/Save As dialog template */
+#define IDD_OFN_TEMPLATE       0x190
+#define IDC_OFN_ENCCOMBO       0x191
