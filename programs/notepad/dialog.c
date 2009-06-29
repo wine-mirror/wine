@@ -142,6 +142,23 @@ static int AlertFileNotSaved(LPCWSTR szFileName)
      MB_ICONQUESTION|MB_YESNOCANCEL);
 }
 
+static int AlertUnicodeCharactersLost(LPCWSTR szFileName)
+{
+    WCHAR szMsgFormat[MAX_STRING_LEN];
+    WCHAR szEnc[MAX_STRING_LEN];
+    WCHAR szMsg[ARRAY_SIZE(szMsgFormat) + MAX_PATH + ARRAY_SIZE(szEnc)];
+    WCHAR szCaption[MAX_STRING_LEN];
+
+    LoadStringW(Globals.hInstance, STRING_LOSS_OF_UNICODE_CHARACTERS,
+                szMsgFormat, ARRAY_SIZE(szMsgFormat));
+    load_encoding_name(ENCODING_ANSI, szEnc, ARRAY_SIZE(szEnc));
+    wnsprintfW(szMsg, ARRAY_SIZE(szMsg), szMsgFormat, szFileName, szEnc);
+    LoadStringW(Globals.hInstance, STRING_NOTEPAD, szCaption,
+                ARRAY_SIZE(szCaption));
+    return MessageBoxW(Globals.hMainWnd, szMsg, szCaption,
+                       MB_OKCANCEL|MB_ICONEXCLAMATION);
+}
+
 /**
  * Returns:
  *   TRUE  - if file exists
@@ -158,8 +175,30 @@ BOOL FileExists(LPCWSTR szFilename)
    return (hFile != INVALID_HANDLE_VALUE);
 }
 
+static inline BOOL is_conversion_to_ansi_lossy(LPCWSTR textW, int lenW)
+{
+    BOOL ret = FALSE;
+    WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS, textW, lenW, NULL, 0,
+                        NULL, &ret);
+    return ret;
+}
 
-static VOID DoSaveFile(VOID)
+typedef enum
+{
+    SAVED_OK,
+    SAVE_FAILED,
+    SHOW_SAVEAS_DIALOG
+} SAVE_STATUS;
+
+/* szFileName is the filename to save under; enc is the encoding to use.
+ *
+ * If the function succeeds, it returns SAVED_OK.
+ * If the function fails, it returns SAVE_FAILED.
+ * If Unicode data could be lost due to conversion to a non-Unicode character
+ * set, a warning is displayed. The user can continue (and the function carries
+ * on), or cancel (and the function returns SHOW_SAVEAS_DIALOG).
+ */
+static SAVE_STATUS DoSaveFile(LPCWSTR szFileName, ENCODING enc)
 {
     int lenW;
     WCHAR* textW;
@@ -174,12 +213,12 @@ static VOID DoSaveFile(VOID)
     if (!textW)
     {
         ShowLastError();
-        return;
+        return SAVE_FAILED;
     }
     textW[0] = (WCHAR) 0xfeff;
     lenW = GetWindowTextW(Globals.hEdit, textW+1, lenW) + 1;
 
-    switch (Globals.encFile)
+    switch (enc)
     {
     case ENCODING_UTF16BE:
         byteswap_wide_string(textW, lenW);
@@ -197,46 +236,54 @@ static VOID DoSaveFile(VOID)
         {
             ShowLastError();
             HeapFree(GetProcessHeap(), 0, textW);
-            return;
+            return SAVE_FAILED;
         }
         WideCharToMultiByte(CP_UTF8, 0, textW, lenW, pBytes, size, NULL, NULL);
         HeapFree(GetProcessHeap(), 0, textW);
         break;
 
     default:
+        if (is_conversion_to_ansi_lossy(textW+1, lenW-1)
+            && AlertUnicodeCharactersLost(szFileName) == IDCANCEL)
+        {
+            HeapFree(GetProcessHeap(), 0, textW);
+            return SHOW_SAVEAS_DIALOG;
+        }
+
         size = WideCharToMultiByte(CP_ACP, 0, textW+1, lenW-1, NULL, 0, NULL, NULL);
         pBytes = HeapAlloc(GetProcessHeap(), 0, size);
         if (!pBytes)
         {
             ShowLastError();
             HeapFree(GetProcessHeap(), 0, textW);
-            return;
+            return SAVE_FAILED;
         }
         WideCharToMultiByte(CP_ACP, 0, textW+1, lenW-1, pBytes, size, NULL, NULL);
         HeapFree(GetProcessHeap(), 0, textW);
         break;
     }
 
-    hFile = CreateFileW(Globals.szFileName, GENERIC_WRITE, FILE_SHARE_WRITE,
+    hFile = CreateFileW(szFileName, GENERIC_WRITE, FILE_SHARE_WRITE,
                        NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if(hFile == INVALID_HANDLE_VALUE)
     {
         ShowLastError();
         HeapFree(GetProcessHeap(), 0, pBytes);
-        return;
+        return SAVE_FAILED;
     }
     if (!WriteFile(hFile, pBytes, size, &dwNumWrite, NULL))
     {
         ShowLastError();
         CloseHandle(hFile);
         HeapFree(GetProcessHeap(), 0, pBytes);
-        return;
+        return SAVE_FAILED;
     }
     SetEndOfFile(hFile);
     CloseHandle(hFile);
     HeapFree(GetProcessHeap(), 0, pBytes);
 
     SendMessageW(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
+    return SAVED_OK;
 }
 
 /**
@@ -570,14 +617,20 @@ VOID DIALOG_FileOpen(VOID)
         DoOpenFile(openfilename.lpstrFile, Globals.encOfnCombo);
 }
 
-
+/* Return FALSE to cancel close */
 BOOL DIALOG_FileSave(VOID)
 {
     if (Globals.szFileName[0] == '\0')
         return DIALOG_FileSaveAs();
     else
-        DoSaveFile();
-    return TRUE;
+    {
+        switch (DoSaveFile(Globals.szFileName, Globals.encFile))
+        {
+            case SAVED_OK:           return TRUE;
+            case SHOW_SAVEAS_DIALOG: return DIALOG_FileSaveAs();
+            default:                 return FALSE;
+        }
+    }
 }
 
 BOOL DIALOG_FileSaveAs(VOID)
@@ -611,13 +664,23 @@ BOOL DIALOG_FileSaveAs(VOID)
     Globals.encOfnCombo = Globals.encFile;
     Globals.bOfnIsOpenDialog = FALSE;
 
-    if (GetSaveFileNameW(&saveas)) {
-        SetFileNameAndEncoding(szPath, Globals.encOfnCombo);
-        UpdateWindowCaption();
-        DoSaveFile();
-        return TRUE;
+retry:
+    if (!GetSaveFileNameW(&saveas))
+        return FALSE;
+
+    switch (DoSaveFile(szPath, Globals.encOfnCombo))
+    {
+        case SAVED_OK:
+            SetFileNameAndEncoding(szPath, Globals.encOfnCombo);
+            UpdateWindowCaption();
+            return TRUE;
+
+        case SHOW_SAVEAS_DIALOG:
+            goto retry;
+
+        default:
+            return FALSE;
     }
-    return FALSE;
 }
 
 typedef struct {

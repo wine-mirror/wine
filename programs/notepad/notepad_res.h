@@ -88,6 +88,8 @@
 #define STRING_UNICODE_LE      0x180
 #define STRING_UNICODE_BE      0x181
 
+#define STRING_LOSS_OF_UNICODE_CHARACTERS 0x182
+
 /* Open/Save As dialog template */
 #define IDD_OFN_TEMPLATE       0x190
 #define IDC_OFN_ENCCOMBO       0x191
