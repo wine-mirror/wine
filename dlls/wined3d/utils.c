@@ -592,8 +592,12 @@ static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
+        ENTER_GL();
+
         GL_EXTCALL(glGenFramebuffersEXT(1, &fbo));
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo));
+
+        LEAVE_GL();
     }
 
     for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
@@ -661,7 +665,11 @@ static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
+        ENTER_GL();
+
         GL_EXTCALL(glDeleteFramebuffersEXT(1, &fbo));
+
+        LEAVE_GL();
     }
 }
 
