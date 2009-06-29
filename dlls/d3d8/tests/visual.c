@@ -1348,8 +1348,8 @@ cleanup:
         ULONG refcount;
 
         IDirect3DDevice8_GetCreationParameters(device_ptr, &creation_parameters);
+        DestroyWindow(creation_parameters.hFocusWindow);
         refcount = IDirect3DDevice8_Release(device_ptr);
         ok(!refcount, "Device has %u references left\n", refcount);
-        DestroyWindow(creation_parameters.hFocusWindow);
     }
 }

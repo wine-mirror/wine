@@ -10498,15 +10498,15 @@ START_TEST(visual)
 
 cleanup:
     if(device_ptr) {
-        ULONG ref;
-
         D3DPRESENT_PARAMETERS present_parameters;
         IDirect3DSwapChain9 *swapchain;
+        ULONG ref;
+
         IDirect3DDevice9_GetSwapChain(device_ptr, 0, &swapchain);
         IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters);
+        DestroyWindow(present_parameters.hDeviceWindow);
         IDirect3DSwapChain9_Release(swapchain);
         ref = IDirect3DDevice9_Release(device_ptr);
-        DestroyWindow(present_parameters.hDeviceWindow);
         ok(ref == 0, "The device was not properly freed: refcount %u\n", ref);
     }
 }
