@@ -3729,3 +3729,8 @@ SymbolicName=RPC_S_GRP_ELT_NOT_REMOVED
 Language=KOR
 RPC_S_GRP_ELT_NOT_REMOVED
 .
+MessageId=2221
+SymbolicName=NERR_UserNotFound
+Language=KOR
+사용자 이름을 찾을 수 없습니다
+.
