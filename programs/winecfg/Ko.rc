@@ -43,9 +43,9 @@ BEGIN
     LTEXT           "이 라이브러리는 자유 소프트웨어입니다. 당신은 자유 소프트웨어 재단(Free Software Foundation)에서 만든 GNU LGPL(Lesser General Public License) 아래에서 이 프로그램을 재배포 또는 수정할 수 있습니다. 라이센스의 버전은 2.1 또는 (선택적으로) 그 이후 버전을 따르면 됩니다.",
                     IDC_STATIC,119,44,131,66
     GROUPBOX        " 윈도우즈 등록 정보 ", IDC_STATIC, 15, 110, 230, 55
-    LTEXT           "소유자:", IDC_STATIC, 22, 126, 40, 20
+    LTEXT           "소유자(&O):", IDC_STATIC, 22, 126, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "단체:", IDC_STATIC, 22, 140, 50, 20
+    LTEXT           "단체(&Z):", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
@@ -56,7 +56,7 @@ FONT 9, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " 프로그램 설정 ",IDC_STATIC, 8,4,244,240
     LTEXT           "Wine은 각각의 프로그램에 대해서 다른 버전의 윈도우즈를 흉내낼 수 있습니다. 이 탭은 라이브러리 탭, 그래픽 탭과 연결되어 있어서, 이들 탭을 이용하여 시스템 전체 또는 프로그램별로 설정이 가능합니다.",
-                    IDC_STATIC,15,20,227,30
+                    IDC_STATIC,17,14,227,33
     CONTROL         "프로그램",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,50,230,150
     PUSHBUTTON      "프로그램 추가(&A)...",IDC_APP_ADDAPP, 90,204,75,14
@@ -89,7 +89,7 @@ BEGIN
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
-    LTEXT       "This is a sample text using 10 point Tahoma( 타호마 10포인트 글꼴을 사용한 샘플 텍스트입니다",IDC_RES_FONT_PREVIEW,15,181,230,55
+    LTEXT       "This is a sample text using 10 point Tahoma",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -205,7 +205,7 @@ BEGIN
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
     CONTROL         "연결 위치(&L):",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,55,13
     EDITTEXT         IDC_EDIT_SFPATH,75,195,135,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "찾기(&R)...",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "찾기(&R)...",IDC_BROWSE_SFPATH,215,195,34,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -225,7 +225,7 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "%s를 위한 Wine 설정"
     IDS_THEMEFILE           "테마 파일"
     IDS_THEMEFILE_SELECT    "테마 파일 선택"
-    IDS_AUDIO_MISSING       "현재 레지스트리에 오디오 드라이버가 지정되어 있지 않습니다.\n\n추천 드라이버가 선택었습니다.\n이 드라이버를 사용하거나 가능한 다른 드라이버를 선택할 수 있습니다.\n\n선택 사항이 효과를 나타내기 위해서는 적용 버튼을 눌러야 합니다."
+    IDS_AUDIO_MISSING       "현재 레지스트리에 오디오 드라이버가 지정되어 있지 않습니다.\n\n추천 드라이버가 선택되었습니다.\n이 드라이버를 사용하거나 가능한 다른 드라이버를 선택할 수 있습니다.\n\n선택 사항이 효과를 나타내기 위해서는 적용 버튼을 눌러야 합니다."
     IDS_SHELL_FOLDER        "폴더"
     IDS_LINKS_TO            "연결 위치"
 END
