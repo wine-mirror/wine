@@ -1158,30 +1158,38 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *con
  *****************************************************************************/
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     struct fbo_entry *entry, *entry2;
+    BOOL has_glctx;
 
     TRACE("Destroying ctx %p\n", context);
 
     /* The correct GL context needs to be active to cleanup the GL resources below */
-    if(pwglGetCurrentContext() != context->glCtx){
-        pwglMakeCurrent(context->hdc, context->glCtx);
-        last_device = NULL;
-    }
+    has_glctx = pwglMakeCurrent(context->hdc, context->glCtx);
+    last_device = NULL;
+
+    if (!has_glctx) WARN("Failed to activate context. Window already destroyed?\n");
 
     ENTER_GL();
 
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry) {
+        if (!has_glctx) entry->id = 0;
         context_destroy_fbo_entry(This, context, entry);
     }
-    if (context->src_fbo) {
-        TRACE("Destroy src FBO %d\n", context->src_fbo);
-        context_destroy_fbo(This, &context->src_fbo);
-    }
-    if (context->dst_fbo) {
-        TRACE("Destroy dst FBO %d\n", context->dst_fbo);
-        context_destroy_fbo(This, &context->dst_fbo);
-    }
-    if(context->dummy_arbfp_prog) {
-        GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
+    if (has_glctx)
+    {
+        if (context->src_fbo)
+        {
+            TRACE("Destroy src FBO %d\n", context->src_fbo);
+            context_destroy_fbo(This, &context->src_fbo);
+        }
+        if (context->dst_fbo)
+        {
+            TRACE("Destroy dst FBO %d\n", context->dst_fbo);
+            context_destroy_fbo(This, &context->dst_fbo);
+        }
+        if (context->dummy_arbfp_prog)
+        {
+            GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
+        }
     }
 
     LEAVE_GL();
