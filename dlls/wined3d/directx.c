@@ -230,7 +230,10 @@ static void WineD3D_ReleaseFakeGLContext(void) {
     if (0 == (--wined3d_fake_gl_context_ref) ) {
         if(!wined3d_fake_gl_context_foreign && glCtx) {
             TRACE_(d3d_caps)("destroying fake GL context\n");
-            pwglMakeCurrent(NULL, NULL);
+            if (!pwglMakeCurrent(NULL, NULL))
+            {
+                ERR("Failed to disable fake GL context.\n");
+            }
             pwglDeleteContext(glCtx);
         }
         if(wined3d_fake_gl_context_hdc)
@@ -301,7 +304,7 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
 
         /* Make it the current GL context */
         if (!pwglMakeCurrent(wined3d_fake_gl_context_hdc, glCtx)) {
-            WARN_(d3d_caps)("Error setting default context as current for capabilities initialization\n");
+            ERR_(d3d_caps)("Failed to make fake GL context current.\n");
             goto fail;
         }
     }

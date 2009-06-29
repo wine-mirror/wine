@@ -1073,7 +1073,10 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
      * but enable it for the first context we create, and reenable it on the old context
      */
     if(oldDrawable && oldCtx) {
-        pwglMakeCurrent(oldDrawable, oldCtx);
+        if (!pwglMakeCurrent(oldDrawable, oldCtx))
+        {
+            ERR("Failed to make previous GL context %p current.\n", oldCtx);
+        }
     } else {
         last_device = This;
     }
@@ -1201,7 +1204,11 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
     }
 
     /* Cleanup the GL context */
-    pwglMakeCurrent(NULL, NULL);
+    if (!pwglMakeCurrent(NULL, NULL))
+    {
+        ERR("Failed to disable GL context.\n");
+    }
+
     if(context->isPBuffer) {
         GL_EXTCALL(wglReleasePbufferDCARB(context->pbuffer, context->hdc));
         GL_EXTCALL(wglDestroyPbufferARB(context->pbuffer));
