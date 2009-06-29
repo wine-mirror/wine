@@ -1158,10 +1158,8 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
     HMETAFILE hmf;
     UINT ret;
     RECT rc;
-    INT oldMapMode;
 
     GetClipBox(hdcRef, &rc);
-    oldMapMode = SetMapMode(hdcRef, fnMapMode);
 
     TRACE("(%p,%d,%p,%d,%p) rc=%s\n", hemf, cbBuffer, lpbBuffer,
         fnMapMode, hdcRef, wine_dbgstr_rect(&rc));
@@ -1171,8 +1169,6 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
     hmf = CloseMetaFile(hdcmf);
     ret = GetMetaFileBitsEx(hmf, cbBuffer, lpbBuffer);
     DeleteMetaFile(hmf);
-
-    SetMapMode(hdcRef, oldMapMode);
 
     return ret;
 }
