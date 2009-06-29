@@ -6351,6 +6351,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         /* What to do about the context here in the case of multithreading? Not sure.
          * This function is called by IDirect3D7::CreateDevice so in theory its initialization code
          */
+        WARN("No active context?\n");
+
         ENTER_GL();
         if(!Swapchain->backBuffer[0]) {
             /* GL was told to draw to the front buffer at creation,
