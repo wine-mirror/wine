@@ -33,6 +33,7 @@ STRINGTABLE
    IDS_COLUMN_NAME, "이름"
    IDS_COLUMN_PUBLISHER, "제작사"
    IDS_COLUMN_VERSION, "버젼"
+   IDS_INSTALL_FILTER, "설치 프로그램0*instal*.exe;*setup*.exe;*.msi\0프로그램 (*.exe)\0*.exe\0모든 파일들 (*.*)\0*.*\0\0"
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
