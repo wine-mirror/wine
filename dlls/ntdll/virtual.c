@@ -1681,14 +1681,16 @@ void virtual_release_address_space( BOOL free_high_mem )
 
     server_enter_uninterrupted_section( &csVirtual, &sigset );
 
+#ifndef __APPLE__  /* dyld doesn't support parts of the WINE_DOS segment being unmapped */
     range.base  = (char *)0x20000000;
     range.limit = (char *)0x7f000000;
     while (wine_mmap_enum_reserved_areas( free_reserved_memory, &range, 0 )) /* nothing */;
+#endif
 
     /* no large address space on win9x */
     if (free_high_mem && NtCurrentTeb()->Peb->OSPlatformId == VER_PLATFORM_WIN32_NT)
     {
-        range.base  = (char *)0x80000000;
+        range.base  = (char *)0x82000000;
         range.limit = address_space_limit;
         while (wine_mmap_enum_reserved_areas( free_reserved_memory, &range, 1 )) /* nothing */;
         user_space_limit = working_set_limit = address_space_limit;
