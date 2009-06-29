@@ -25,6 +25,14 @@
 
 #define MAX_STRING_LEN      255
 
+typedef enum
+{
+    ENCODING_ANSI,
+    ENCODING_UTF16LE,
+    ENCODING_UTF16BE,
+    ENCODING_UTF8
+} ENCODING;
+
 typedef struct
 {
   HANDLE   hInstance;

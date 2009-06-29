@@ -26,6 +26,7 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <shlwapi.h>
+#include <winternl.h>
 
 #include "main.h"
 #include "dialog.h"
@@ -36,6 +37,13 @@
 static const WCHAR helpfileW[] = { 'n','o','t','e','p','a','d','.','h','l','p',0 };
 
 static INT_PTR WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+
+/* Swap bytes of WCHAR buffer (big-endian <-> little-endian). */
+static inline void byteswap_wide_string(LPWSTR str, UINT num)
+{
+    UINT i;
+    for (i = 0; i < num; i++) str[i] = RtlUshortByteSwap(str[i]);
+}
 
 VOID ShowLastError(void)
 {
@@ -195,6 +203,43 @@ BOOL DoCloseFile(void)
     return(TRUE);
 }
 
+static inline ENCODING detect_encoding_of_buffer(const void* buffer, int size)
+{
+    static const char bom_utf8[] = { 0xef, 0xbb, 0xbf };
+    if (size >= sizeof(bom_utf8) && !memcmp(buffer, bom_utf8, sizeof(bom_utf8)))
+        return ENCODING_UTF8;
+    else
+    {
+        int flags = IS_TEXT_UNICODE_SIGNATURE |
+                    IS_TEXT_UNICODE_REVERSE_SIGNATURE |
+                    IS_TEXT_UNICODE_ODD_LENGTH;
+        IsTextUnicode(buffer, size, &flags);
+        if (flags & IS_TEXT_UNICODE_SIGNATURE)
+            return ENCODING_UTF16LE;
+        else if (flags & IS_TEXT_UNICODE_REVERSE_SIGNATURE)
+            return ENCODING_UTF16BE;
+        else
+            return ENCODING_ANSI;
+    }
+}
+
+/* Similar to SetWindowTextA, but uses a CP_UTF8 encoded input, not CP_ACP.
+ * lpTextInUtf8 should be NUL-terminated and not include the BOM.
+ *
+ * Returns FALSE on failure, TRUE on success, like SetWindowTextA/W.
+ */
+static BOOL SetWindowTextUtf8(HWND hwnd, LPCSTR lpTextInUtf8)
+{
+    BOOL ret;
+    int lenW = MultiByteToWideChar(CP_UTF8, 0, lpTextInUtf8, -1, NULL, 0);
+    LPWSTR textW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+    if (!textW)
+        return FALSE;
+    MultiByteToWideChar(CP_UTF8, 0, lpTextInUtf8, -1, textW, lenW);
+    ret = SetWindowTextW(hwnd, textW);
+    HeapFree(GetProcessHeap(), 0, textW);
+    return ret;
+}
 
 void DoOpenFile(LPCWSTR szFileName)
 {
@@ -203,6 +248,8 @@ void DoOpenFile(LPCWSTR szFileName)
     LPSTR pTemp;
     DWORD size;
     DWORD dwNumRead;
+    ENCODING enc;
+    BOOL succeeded;
     WCHAR log[5];
 
     /* Close any files and prompt to save changes */
@@ -224,9 +271,9 @@ void DoOpenFile(LPCWSTR szFileName)
 	ShowLastError();
 	return;
     }
-    size++;
 
-    pTemp = HeapAlloc(GetProcessHeap(), 0, size);
+    /* Extra memory for (WCHAR)'\0'-termination. */
+    pTemp = HeapAlloc(GetProcessHeap(), 0, size+2);
     if (!pTemp)
     {
 	CloseHandle(hFile);
@@ -243,12 +290,48 @@ void DoOpenFile(LPCWSTR szFileName)
     }
 
     CloseHandle(hFile);
-    pTemp[dwNumRead] = 0;
 
-    if((size -1) >= 2 && (BYTE)pTemp[0] == 0xff && (BYTE)pTemp[1] == 0xfe)
-	SetWindowTextW(Globals.hEdit, (LPWSTR)pTemp + 1);
-    else
-	SetWindowTextA(Globals.hEdit, pTemp);
+    size = dwNumRead;
+    pTemp[size] = 0;    /* make sure it's  (char)'\0'-terminated */
+    pTemp[size+1] = 0;  /* make sure it's (WCHAR)'\0'-terminated */
+
+    enc = detect_encoding_of_buffer(pTemp, size);
+
+    /* SetWindowTextUtf8 and SetWindowTextA try to allocate memory, so we
+     * check if they succeed.
+     */
+    switch (enc)
+    {
+    case ENCODING_UTF16BE:
+        byteswap_wide_string((WCHAR*) pTemp, size/sizeof(WCHAR));
+        /* fall through */
+
+    case ENCODING_UTF16LE:
+        if (size >= 2 && (BYTE)pTemp[0] == 0xff && (BYTE)pTemp[1] == 0xfe)
+            succeeded = SetWindowTextW(Globals.hEdit, (LPWSTR)pTemp + 1);
+        else
+            succeeded = SetWindowTextW(Globals.hEdit, (LPWSTR)pTemp);
+        break;
+
+    case ENCODING_UTF8:
+        if (size >= 3 && (BYTE)pTemp[0] == 0xef && (BYTE)pTemp[1] == 0xbb &&
+                                                   (BYTE)pTemp[2] == 0xbf)
+            succeeded = SetWindowTextUtf8(Globals.hEdit, pTemp+3);
+        else
+            succeeded = SetWindowTextUtf8(Globals.hEdit, pTemp);
+        break;
+
+    default:
+        succeeded = SetWindowTextA(Globals.hEdit, pTemp);
+        break;
+    }
+
+    if (!succeeded)
+    {
+        ShowLastError();
+        HeapFree(GetProcessHeap(), 0, pTemp);
+        return;
+    }
 
     HeapFree(GetProcessHeap(), 0, pTemp);
 
