@@ -98,13 +98,13 @@ END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "&Fichier"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "&Quitter", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "&Affichage"
     BEGIN
         MENUITEM "&Grandes icônes", FCIDM_SHVIEW_BIGICON
         MENUITEM "&Petites icônes", FCIDM_SHVIEW_SMALLICON
@@ -112,9 +112,9 @@ BEGIN
         MENUITEM "&Détails", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "Ai&de"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "À &propos du panneau de configuration...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -239,7 +239,7 @@ STRINGTABLE
 	IDS_OVERWRITEFILE_CAPTION "Confirmer l'écrasement du fichier"
 	IDS_OVERWRITEFOLDER_TEXT "Ce dossier contient déjà un dossier nommé « %1 ».\n\n"\
 	    "Si des fichiers dans le dossier de destination ont le même nom que ceux dans le dossier\n"\
-	    "sélectionné, ils seront remplacés. Voulez-vous quand même déplacer ou copier\n"\
+	    "sélectionné, ils seront écrasés. Voulez-vous quand même déplacer ou copier\n"\
 	    "le dossier ?"
 
         /* message box strings */
@@ -259,8 +259,8 @@ STRINGTABLE
  IDS_PERSONAL                "Mes documents"
  IDS_FAVORITES               "Favoris"
  IDS_STARTUP                 "Menu Démarrer\\Programmes\\Démarrage"
- IDS_RECENT                  "Recent"
- IDS_SENDTO                  "SendTo"
+ IDS_RECENT                  "Documents récents"
+ IDS_SENDTO                  "Envoyer vers"
  IDS_STARTMENU               "Menu Démarrer"
  IDS_MYMUSIC                 "Ma musique"
  IDS_MYVIDEO                 "Mes vidéos"
@@ -285,11 +285,11 @@ STRINGTABLE
 
  IDS_NEWFOLDER		"Nouveau dossier"
 
- IDS_CPANEL_TITLE            "Wine Control Panel"
- IDS_CPANEL_NAME             "Name"
+ IDS_CPANEL_TITLE            "Panneau de configuration de Wine"
+ IDS_CPANEL_NAME             "Nom"
  IDS_CPANEL_DESCRIPTION      "Description"
 
- IDS_SHLEXEC_NOASSOC         "Il n'y a aucun programme Windows configuré pour ouvrir ce type de fichier."
+ IDS_SHLEXEC_NOASSOC         "Aucun programme Windows n'est configuré pour ouvrir ce type de fichier."
 }
 
 STRINGTABLE
