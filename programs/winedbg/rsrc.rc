@@ -25,6 +25,7 @@
 
 #include "rsrc_De.rc"
 #include "rsrc_En.rc"
+#include "rsrc_Fr.rc"
 #include "rsrc_Ko.rc"
 #include "rsrc_Lt.rc"
 #include "rsrc_Nl.rc"
