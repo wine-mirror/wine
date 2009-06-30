@@ -887,7 +887,6 @@ void output_spec16_file( DLLSPEC *spec16 )
     output_stubs( spec16 );
     output_exports( spec32 );
     output_imports( spec16 );
-    output_resources( spec16 );
     if (spec16->main_module)
     {
         output( "\n\t%s\n", get_asm_string_section() );
