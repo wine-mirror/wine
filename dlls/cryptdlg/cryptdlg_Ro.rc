@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "cryptres.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -37,5 +39,3 @@ STRINGTABLE DISCARDABLE
     IDS_NOTICE_NUM "Numărul notiței="
     IDS_NOTICE_TEXT "Textul notiței="
 }
-
-#pragma code_page(default)
