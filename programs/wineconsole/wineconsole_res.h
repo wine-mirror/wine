@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windef.h>
+#include <winuser.h>
+#include <commctrl.h>
+
 /* strings */
 #define IDS_EDIT		0x100
 #define IDS_DEFAULT		0x101

@@ -15,7 +15,25 @@ C_SRCS = \
 	user.c \
 	wineconsole.c
 
-RC_SRCS = wineconsole_res.rc
+RC_SRCS = \
+	wineconsole_Cs.rc \
+	wineconsole_De.rc \
+	wineconsole_En.rc \
+	wineconsole_Eo.rc \
+	wineconsole_Es.rc \
+	wineconsole_Fr.rc \
+	wineconsole_Hu.rc \
+	wineconsole_It.rc \
+	wineconsole_Ko.rc \
+	wineconsole_Nl.rc \
+	wineconsole_No.rc \
+	wineconsole_Pl.rc \
+	wineconsole_Pt.rc \
+	wineconsole_Ru.rc \
+	wineconsole_Si.rc \
+	wineconsole_Sv.rc \
+	wineconsole_Tr.rc \
+	wineconsole_Zh.rc
 
 @MAKE_PROG_RULES@
 

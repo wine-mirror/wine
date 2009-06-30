@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wineconsole_res.h"
+
 #pragma code_page(65001)
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
@@ -135,5 +137,3 @@ FONT 8, "MS Shell Dlg"
 	PUSHBUTTON "V redu", IDOK, 35, 45, 35, 12
     PUSHBUTTON "Prekliči", IDCANCEL, 80, 45, 35, 12
 }
-
-#pragma code_page(default)
