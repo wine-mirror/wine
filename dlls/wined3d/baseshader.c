@@ -608,6 +608,8 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
 
                 fe->shader_read_dst_param(fe_data, &pToken, &dst_param, &dst_rel_addr);
 
+                shader_record_register_usage(This, reg_maps, &dst_param.reg, shader_version.type);
+
                 /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and
                  * is used in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel
                  * shaders because TECRDOUT isn't used in them, but future register types might cause issues */
@@ -615,14 +617,24 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 {
                     reg_maps->texcoord_mask[dst_param.reg.idx] |= dst_param.write_mask;
                 }
-                else
+
+                if (pshader && dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
                 {
-                    if(pshader && dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
+                    /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
+                     * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
+                     * the mov and perform the sRGB write correction from the source register.
+                     *
+                     * However, if the mov is only partial, we can't do this, and if the write
+                     * comes from an instruction other than MOV it is hard to do as well. If
+                     * COLOROUT 0 is overwritten partially later, the marker is dropped again. */
+                    IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)This;
+
+                    ps->color0_mov = FALSE;
+                    if (ins.handler_idx == WINED3DSIH_MOV)
                     {
-                        IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This;
-                        ps->color0_mov = FALSE;
+                        /* Used later when the source register is read. */
+                        color0_mov = TRUE;
                     }
-                    shader_record_register_usage(This, reg_maps, &dst_param.reg, shader_version.type);
                 }
 
                 /* Declare 1.X samplers implicitly, based on the destination reg. number */
@@ -659,22 +671,6 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 else if (ins.handler_idx == WINED3DSIH_BEM)
                 {
                     reg_maps->bumpmat[dst_param.reg.idx] = TRUE;
-                }
-                else if (ins.handler_idx == WINED3DSIH_MOV)
-                {
-                    /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
-                     * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
-                     * the mov and perform the sRGB write correction from the source register.
-                     *
-                     * However, if the mov is only partial, we can't do this, and if the write
-                     * comes from an instruction other than MOV it is hard to do as well. If
-                     * COLOROUT 0 is overwritten partially later, the marker is dropped again
-                     */
-                    if(dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
-                    {
-                        /* Used later when the source register is read */
-                        color0_mov = TRUE;
-                    }
                 }
             }
 
