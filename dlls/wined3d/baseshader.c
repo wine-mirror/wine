@@ -138,11 +138,6 @@ const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token
     }
 }
 
-static inline BOOL shader_is_version_token(DWORD token) {
-    return shader_is_pshader_version(token) ||
-           shader_is_vshader_version(token);
-}
-
 void shader_buffer_init(struct SHADER_BUFFER *buffer)
 {
     buffer->buffer = HeapAlloc(GetProcessHeap(), 0, SHADER_PGMSIZE);
