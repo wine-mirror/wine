@@ -1113,6 +1113,35 @@ static void test_Activate(void)
     ok(SUCCEEDED(hr),"Failed to Activate text service\n");
 }
 
+
+static void test_EnumContexts(ITfDocumentMgr *dm, ITfContext *search)
+{
+    HRESULT hr;
+    IEnumTfContexts* pEnum;
+    BOOL found = FALSE;
+
+    hr = ITfDocumentMgr_EnumContexts(dm,&pEnum);
+    ok(SUCCEEDED(hr),"EnumContexts failed\n");
+    if (SUCCEEDED(hr))
+    {
+        ULONG fetched;
+        ITfContext *cxt;
+        while (IEnumTfContexts_Next(pEnum, 1, &cxt, &fetched) == S_OK)
+        {
+            if (!search)
+                found = TRUE;
+            else if (search == cxt)
+                found = TRUE;
+            ITfContext_Release(cxt);
+        }
+        IEnumTfContexts_Release(pEnum);
+    }
+    if (search)
+        ok(found,"Did not find proper ITfContext\n");
+    else
+        ok(!found,"Found an ITfContext we should should not have\n");
+}
+
 static inline int check_context_refcount(ITfContext *iface)
 {
     IUnknown_AddRef(iface);
@@ -1183,6 +1212,8 @@ static void test_startSession(void)
     hr = ITfDocumentMgr_CreateContext(g_dm, cid, 0, NULL, &cxt3, &editCookie);
     ok(SUCCEEDED(hr),"CreateContext Failed\n");
 
+    test_EnumContexts(g_dm, NULL);
+
     hr = ITfContext_GetDocumentMgr(cxt,&dmtest);
     ok(hr == S_OK, "ITfContext_GetDocumentMgr failed with %x\n",hr);
     ok(dmtest == g_dm, "Wrong documentmgr\n");
@@ -1198,6 +1229,8 @@ static void test_startSession(void)
     ok(test_OnPushContext == SINK_FIRED, "OnPushContext sink not fired\n");
     ok(test_OnInitDocumentMgr == SINK_FIRED, "OnInitDocumentMgr sink not fired\n");
     ok(test_ACP_AdviseSink == SINK_FIRED,"TextStoreACP_AdviseSink not fired\n");
+
+    test_EnumContexts(g_dm, cxt);
 
     hr = ITfDocumentMgr_GetTop(g_dm, &cxtTest);
     ok(SUCCEEDED(hr),"GetTop Failed\n");

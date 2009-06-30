@@ -953,3 +953,24 @@ interface ITfCompartmentEventSink : IUnknown
     HRESULT OnChange(
         [in] REFGUID rguid);
 }
+
+[
+  object,
+  uuid(8f1a7ea6-1654-4502-a86e-b2902344d507),
+  pointer_default(unique)
+]
+interface IEnumTfContexts : IUnknown
+{
+    HRESULT Clone(
+        [out] IEnumTfContexts **ppEnum);
+
+    HRESULT Next(
+        [in] ULONG ulCount,
+        [out, size_is(ulCount), length_is(*pcFetched)] ITfContext **rgContext,
+        [out] ULONG *pcFetched);
+
+    HRESULT Reset();
+
+    HRESULT Skip(
+        [in] ULONG ulCount);
+};

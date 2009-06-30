@@ -52,6 +52,16 @@ typedef struct tagDocumentMgr {
     ITfThreadMgrEventSink* ThreadMgrSink;
 } DocumentMgr;
 
+typedef struct tagEnumTfContext {
+    const IEnumTfContextsVtbl *Vtbl;
+    LONG refCount;
+
+    DWORD   index;
+    DocumentMgr *docmgr;
+} EnumTfContext;
+
+static HRESULT EnumTfContext_Constructor(DocumentMgr* mgr, IEnumTfContexts **ppOut);
+
 static inline DocumentMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
 {
     return (DocumentMgr *)((char *)iface - FIELD_OFFSET(DocumentMgr,SourceVtbl));
@@ -233,8 +243,8 @@ static HRESULT WINAPI DocumentMgr_GetBase(ITfDocumentMgr *iface, ITfContext **pp
 static HRESULT WINAPI DocumentMgr_EnumContexts(ITfDocumentMgr *iface, IEnumTfContexts **ppEnum)
 {
     DocumentMgr *This = (DocumentMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %p\n",This,ppEnum);
+    return EnumTfContext_Constructor(This, ppEnum);
 }
 
 static const ITfDocumentMgrVtbl DocumentMgr_DocumentMgrVtbl =
@@ -315,5 +325,144 @@ HRESULT DocumentMgr_Constructor(ITfThreadMgrEventSink *ThreadMgrSink, ITfDocumen
 
     TRACE("returning %p\n", This);
     *ppOut = (ITfDocumentMgr*)This;
+    return S_OK;
+}
+
+/**************************************************
+ * IEnumTfContexts implementaion
+ **************************************************/
+static void EnumTfContext_Destructor(EnumTfContext *This)
+{
+    TRACE("destroying %p\n", This);
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI EnumTfContext_QueryInterface(IEnumTfContexts *iface, REFIID iid, LPVOID *ppvOut)
+{
+    EnumTfContext *This = (EnumTfContext *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IEnumTfContexts))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("unsupported interface: %s\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI EnumTfContext_AddRef(IEnumTfContexts *iface)
+{
+    EnumTfContext *This = (EnumTfContext*)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI EnumTfContext_Release(IEnumTfContexts *iface)
+{
+    EnumTfContext *This = (EnumTfContext *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        EnumTfContext_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI EnumTfContext_Next(IEnumTfContexts *iface,
+    ULONG ulCount, ITfContext **rgContext, ULONG *pcFetched)
+{
+    EnumTfContext *This = (EnumTfContext *)iface;
+    ULONG fetched = 0;
+
+    TRACE("(%p)\n",This);
+
+    if (rgContext == NULL) return E_POINTER;
+
+    while (fetched < ulCount)
+    {
+        if (This->index > 1)
+            break;
+
+        if (!This->docmgr->contextStack[This->index])
+            break;
+
+        *rgContext = This->docmgr->contextStack[This->index];
+        ITfContext_AddRef(*rgContext);
+
+        ++This->index;
+        ++fetched;
+        ++rgContext;
+    }
+
+    if (pcFetched) *pcFetched = fetched;
+    return fetched == ulCount ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI EnumTfContext_Skip( IEnumTfContexts* iface, ULONG celt)
+{
+    EnumTfContext *This = (EnumTfContext *)iface;
+    TRACE("(%p)\n",This);
+    This->index += celt;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumTfContext_Reset( IEnumTfContexts* iface)
+{
+    EnumTfContext *This = (EnumTfContext *)iface;
+    TRACE("(%p)\n",This);
+    This->index = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumTfContext_Clone( IEnumTfContexts *iface,
+    IEnumTfContexts **ppenum)
+{
+    EnumTfContext *This = (EnumTfContext *)iface;
+    HRESULT res;
+
+    TRACE("(%p)\n",This);
+
+    if (ppenum == NULL) return E_POINTER;
+
+    res = EnumTfContext_Constructor(This->docmgr, ppenum);
+    if (SUCCEEDED(res))
+    {
+        EnumTfContext *new_This = (EnumTfContext *)*ppenum;
+        new_This->index = This->index;
+    }
+    return res;
+}
+
+static const IEnumTfContextsVtbl IEnumTfContexts_Vtbl ={
+    EnumTfContext_QueryInterface,
+    EnumTfContext_AddRef,
+    EnumTfContext_Release,
+
+    EnumTfContext_Clone,
+    EnumTfContext_Next,
+    EnumTfContext_Reset,
+    EnumTfContext_Skip
+};
+
+static HRESULT EnumTfContext_Constructor(DocumentMgr *mgr, IEnumTfContexts **ppOut)
+{
+    EnumTfContext *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(EnumTfContext));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->Vtbl= &IEnumTfContexts_Vtbl;
+    This->refCount = 1;
+    This->docmgr = mgr;
+
+    TRACE("returning %p\n", This);
+    *ppOut = (IEnumTfContexts*)This;
     return S_OK;
 }
