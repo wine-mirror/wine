@@ -23,6 +23,7 @@
 
 #define COBJMACROS
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "dxdiag_private.h"
 #include "wine/unicode.h"
 #include "winver.h"
@@ -33,6 +34,9 @@
 #include "mmddk.h"
 #include "ddraw.h"
 #include "d3d9.h"
+#include "strmif.h"
+#include "initguid.h"
+#include "fil_data.h"
 
 #include "wine/debug.h"
 
@@ -572,28 +576,6 @@ static HRESULT DXDiag_InitDXDiagDirectPlayContainer(IDxDiagContainer* pSubCont) 
   return hr;
 }
 
-struct REG_RF {
-  DWORD dwVersion;
-  DWORD dwMerit;
-  DWORD dwPins;
-  DWORD dwUnused;
-};
-struct REG_RFP {
-  BYTE signature[4]; /* e.g. "0pi3" */
-  DWORD dwFlags;
-  DWORD dwInstances;
-  DWORD dwMediaTypes;
-  DWORD dwMediums;
-  DWORD bCategory; /* is there a category clsid? */
-  /* optional: dwOffsetCategoryClsid */
-};
-struct REG_TYPE {
-  BYTE signature[4]; /* e.g. "0ty3" */
-  DWORD dwUnused;
-  DWORD dwOffsetMajor;
-  DWORD dwOffsetMinor;
-};
-
 static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSubCont) {
   HRESULT hr = S_OK;
   static const WCHAR szName[] = {'s','z','N','a','m','e',0};
@@ -603,7 +585,7 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
   static const WCHAR ClsidFilterW[] = {'C','l','s','i','d','F','i','l','t','e','r',0};
   static const WCHAR dwInputs[] = {'d','w','I','n','p','u','t','s',0};
   static const WCHAR dwOutputs[] = {'d','w','O','u','t','p','u','t','s',0};
-  static const WCHAR dwMerit[] = {'d','w','M','e','r','i','t',0};
+  static const WCHAR dwMeritW[] = {'d','w','M','e','r','i','t',0};
   /*
   static const WCHAR szFileName[] = {'s','z','F','i','l','e','N','a','m','e',0};
   static const WCHAR szFileVersion[] = {'s','z','F','i','l','e','V','e','r','s','i','o','n',0};
@@ -672,13 +654,13 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 	  hr = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (void**) &pPropFilterBag);
 	  if (SUCCEEDED(hr)) {
 	    LPBYTE pData = NULL;
-	    LPBYTE pCurrent = NULL;
-	    struct REG_RF* prrf = NULL;
-	    DWORD it;
 	    DWORD dwNOutputs = 0;
 	    DWORD dwNInputs = 0;
+	    DWORD dwMerit = 0;
             WCHAR bufferW[10];
             IDxDiagContainer *pDShowSubCont = NULL;
+            IFilterMapper2 *pFileMapper = NULL;
+            IAMFilterData *pFilterData = NULL;
 
             snprintfW(bufferW, sizeof(bufferW)/sizeof(bufferW[0]), szIdFormat, i);
             if (FAILED(DXDiag_CreateDXDiagContainer(&IID_IDxDiagContainer, (void**) &pDShowSubCont)) ||
@@ -689,6 +671,7 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
               continue;
             }
 
+            bufferW[0] = 0;
 	    hr = IPropertyBag_Read(pPropFilterBag, wszFriendlyName, &v, 0);
 	    hr = IDxDiagContainerImpl_AddProp(pDShowSubCont, szName, &v);
             TRACE("\tName:%s\n", debugstr_w(V_BSTR(&v)));
@@ -699,45 +682,61 @@ static HRESULT DXDiag_InitDXDiagDirectShowFiltersContainer(IDxDiagContainer* pSu
 	    hr = IDxDiagContainerImpl_AddProp(pDShowSubCont, ClsidFilterW, &v);
 	    VariantClear(&v);
 
+            hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC, &IID_IFilterMapper2,
+                                  (LPVOID*)&pFileMapper);
+            if (SUCCEEDED(hr) &&
+                SUCCEEDED(IFilterMapper2_QueryInterface(pFileMapper, &IID_IAMFilterData, (void **)&pFilterData)))
+            {
+              DWORD array_size;
+              BYTE *tmp;
+              REGFILTER2 *pRF = NULL;
+
+              if (SUCCEEDED(IPropertyBag_Read(pPropFilterBag, wszFilterDataName, &v, NULL)) &&
+                  SUCCEEDED(SafeArrayAccessData(V_UNION(&v, parray), (LPVOID*) &pData)))
+              {
+                ULONG j;
+                array_size = V_UNION(&v, parray)->rgsabound->cElements;
+
+                if (SUCCEEDED(IAMFilterData_ParseFilterData(pFilterData, pData, array_size, &tmp)))
+                {
+                  pRF = ((REGFILTER2 **)tmp)[0];
+
+                  snprintfW(bufferW, sizeof(bufferW)/sizeof(bufferW[0]), szVersionFormat, pRF->dwVersion);
+                  if (pRF->dwVersion == 1)
+                  {
+                    for (j = 0; j < pRF->u.s.cPins; j++)
+                      if (pRF->u.s.rgPins[j].bOutput)
+                        dwNOutputs++;
+                      else
+                        dwNInputs++;
+                  }
+                  else if (pRF->dwVersion == 2)
+                  {
+                    for (j = 0; j < pRF->u.s1.cPins2; j++)
+                      if (pRF->u.s1.rgPins2[j].dwFlags & REG_PINFLAG_B_OUTPUT)
+                        dwNOutputs++;
+                      else
+                        dwNInputs++;
+                  }
+
+                  dwMerit = pRF->dwMerit;
+                  CoTaskMemFree(tmp);
+                }
+
+                SafeArrayUnaccessData(V_UNION(&v, parray));
+                VariantClear(&v);
+              }
+              IFilterMapper2_Release(pFilterData);
+            }
+            if (pFileMapper) IFilterMapper2_Release(pFileMapper);
+
+            add_prop_str(pDShowSubCont, szVersionW, bufferW);
             add_prop_str(pDShowSubCont, szCatName, wszCatName);
             add_prop_str(pDShowSubCont, ClsidCatW, wszCatClsid);
-
-	    hr = IPropertyBag_Read(pPropFilterBag, wszFilterDataName, &v, NULL);
-	    hr = SafeArrayAccessData(V_UNION(&v, parray), (LPVOID*) &pData);	    
-	    prrf = (struct REG_RF*) pData;
-	    pCurrent = pData;
-
-            snprintfW(bufferW, sizeof(bufferW)/sizeof(bufferW[0]), szVersionFormat, prrf->dwVersion);
-            add_prop_str(pDShowSubCont, szVersionW, bufferW);
-
-	    pCurrent += sizeof(struct REG_RF);
-	    for (it = 0; it < prrf->dwPins; ++it) {
-	      struct REG_RFP* prrfp = (struct REG_RFP*) pCurrent;
-	      UINT j;
-
-	      if (prrfp->dwFlags & REG_PINFLAG_B_OUTPUT) ++dwNOutputs;
-	      else ++dwNInputs;
-
-	      pCurrent += sizeof(struct REG_RFP);
-	      if (prrfp->bCategory) {
-		pCurrent += sizeof(DWORD);
-	      }
-	      for (j = 0; j < prrfp->dwMediaTypes; ++j) {
-                struct REG_TYPE* prt = (struct REG_TYPE *)pCurrent;
-                pCurrent += sizeof(*prt);
-	      }
-	      for (j = 0; j < prrfp->dwMediums; ++j) {
-		DWORD dwOffset = *(DWORD*) pCurrent;
-		pCurrent += sizeof(dwOffset);
-	      }
-	    }
-
             add_prop_ui4(pDShowSubCont, dwInputs,  dwNInputs);
             add_prop_ui4(pDShowSubCont, dwOutputs, dwNOutputs);
-            add_prop_ui4(pDShowSubCont, dwMerit, prrf->dwMerit);
+            add_prop_ui4(pDShowSubCont, dwMeritW, dwMerit);
 
-	    SafeArrayUnaccessData(V_UNION(&v, parray));
-	    VariantClear(&v);
             i++;
 	  }
 	  IPropertyBag_Release(pPropFilterBag); pPropFilterBag = NULL;
