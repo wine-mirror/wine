@@ -739,7 +739,7 @@ static BOOL create_directories(char *directory)
 }
 
 /* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
-static char *extract_icon( LPCWSTR path, int index, BOOL bWait )
+static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BOOL bWait )
 {
     unsigned short crc;
     char *iconsdir = NULL, *ico_path = NULL, *ico_name, *xpm_path = NULL;
@@ -785,18 +785,35 @@ static char *extract_icon( LPCWSTR path, int index, BOOL bWait )
     crc=crc16(ico_path);
 
     /* Try to treat the source file as an exe */
-    xpm_path=HeapAlloc(GetProcessHeap(), 0, strlen(iconsdir)+1+4+1+strlen(ico_name)+1+12+1+3);
-    sprintf(xpm_path,"%s/%04x_%s.%d.png",iconsdir,crc,ico_name,index);
+    if (destFilename)
+        xpm_path=HeapAlloc(GetProcessHeap(),0,strlen(iconsdir)+1+strlen(destFilename)+1+3);
+    else
+        xpm_path=HeapAlloc(GetProcessHeap(), 0, strlen(iconsdir)+1+4+1+strlen(ico_name)+1+12+1+3);
+    if (xpm_path == NULL)
+    {
+        WINE_ERR("could not extract icon %s, out of memory\n", wine_dbgstr_a(ico_name));
+        return NULL;
+    }
+    if (destFilename)
+        sprintf(xpm_path,"%s/%s.png",iconsdir,destFilename);
+    else
+        sprintf(xpm_path,"%s/%04x_%s.%d.png",iconsdir,crc,ico_name,index);
     if (ExtractFromEXEDLL( path, index, xpm_path ))
         goto end;
 
     /* Must be something else, ignore the index in that case */
-    sprintf(xpm_path,"%s/%04x_%s.png",iconsdir,crc,ico_name);
+    if (destFilename)
+        sprintf(xpm_path,"%s/%s.png",iconsdir,destFilename);
+    else
+        sprintf(xpm_path,"%s/%04x_%s.png",iconsdir,crc,ico_name);
     if (ExtractFromICO( path, xpm_path))
         goto end;
     if (!bWait)
     {
-        sprintf(xpm_path,"%s/%04x_%s.xpm",iconsdir,crc,ico_name);
+        if (destFilename)
+            sprintf(xpm_path,"%s/%s.xpm",iconsdir,destFilename);
+        else
+            sprintf(xpm_path,"%s/%04x_%s.xpm",iconsdir,crc,ico_name);
         if (create_default_icon( xpm_path, ico_path ))
             goto end;
     }
@@ -1907,17 +1924,6 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             }
 
             iconW = assoc_query(ASSOCSTR_DEFAULTICON, extensionW, NULL);
-            if (iconW)
-            {
-                WCHAR *comma = strrchrW(iconW, ',');
-                int index = 0;
-                if (comma)
-                {
-                    *comma = 0;
-                    index = atoiW(comma + 1);
-                }
-                iconA = extract_icon(iconW, index, FALSE);
-            }
 
             contentTypeW = assoc_query(ASSOCSTR_CONTENTTYPE, extensionW, NULL);
 
@@ -1936,18 +1942,19 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
                     /* Gnome seems to ignore the <icon> tag in MIME packages,
                      * and the default name is more intuitive anyway.
                      */
-                    if (iconA)
+                    if (iconW)
                     {
                         char *flattened_mime = slashes_to_minuses(mimeTypeA);
                         if (flattened_mime)
                         {
-                            char *dstIconPath = heap_printf("%s/icons/%s%s", xdg_data_dir,
-                                                            flattened_mime, strrchr(iconA, '.'));
-                            if (dstIconPath)
+                            int index = 0;
+                            WCHAR *comma = strrchrW(iconW, ',');
+                            if (comma)
                             {
-                                rename(iconA, dstIconPath);
-                                HeapFree(GetProcessHeap(), 0, dstIconPath);
+                                *comma = 0;
+                                index = atoiW(comma + 1);
                             }
+                            iconA = extract_icon(iconW, index, flattened_mime, FALSE);
                             HeapFree(GetProcessHeap(), 0, flattened_mime);
                         }
                     }
@@ -2098,9 +2105,9 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bWait )
 
     /* extract the icon */
     if( szIconPath[0] )
-        icon_name = extract_icon( szIconPath , iIconId, bWait );
+        icon_name = extract_icon( szIconPath , iIconId, NULL, bWait );
     else
-        icon_name = extract_icon( szPath, iIconId, bWait );
+        icon_name = extract_icon( szPath, iIconId, NULL, bWait );
 
     /* fail - try once again after parent process exit */
     if( !icon_name )
