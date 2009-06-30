@@ -698,7 +698,8 @@ static void HandleCommandLine(LPWSTR cmdline)
         {
             switch (AlertFileDoesNotExist(file_name)) {
             case IDYES:
-                DoOpenFile(file_name);
+                SetFileName(file_name);
+                UpdateWindowCaption();
                 break;
 
             case IDNO:

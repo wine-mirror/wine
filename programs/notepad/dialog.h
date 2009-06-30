@@ -52,6 +52,7 @@ int DIALOG_StringMsgBox(HWND hParent, int formatId, LPCWSTR szString, DWORD dwFl
 
 /* utility functions */
 VOID ShowLastError(void);
+void UpdateWindowCaption(void);
 BOOL FileExists(LPCWSTR szFilename);
 BOOL DoCloseFile(void);
 void DoOpenFile(LPCWSTR szFileName);

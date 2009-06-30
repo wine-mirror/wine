@@ -59,7 +59,7 @@ VOID ShowLastError(void)
  *    Untitled - Notepad        if no file is open
  *    filename - Notepad        if a file is given
  */
-static void UpdateWindowCaption(void)
+void UpdateWindowCaption(void)
 {
   WCHAR szCaption[MAX_STRING_LEN];
   WCHAR szNotepad[MAX_STRING_LEN];
