@@ -2302,6 +2302,85 @@ static void test_SetWinMetaFileBits(void)
   HeapFree(GetProcessHeap(), 0, buffer);
 }
 
+static void test_GetWinMetaFileBits(void)
+{
+    HENHMETAFILE emf;
+    HDC display_dc, emf_dc;
+    RECT rc;
+    ENHMETAHEADER *enh_header;
+    UINT size, emf_size, i, mode;
+    WORD check = 0;
+    DWORD rec_num = 0;
+    METAHEADER *mh;
+    METARECORD *rec;
+
+    display_dc = GetDC(NULL);
+
+    SetRect(&rc, 1000, 2000, 3000, 6000);
+    emf_dc = CreateEnhMetaFileA(display_dc, NULL, &rc, NULL);
+    for(i = 0; i < 3000; i++) /* This is enough to take emf_size > 0xffff */
+        Rectangle(emf_dc, 0, 0, 1000, 20);
+    emf = CloseEnhMetaFile(emf_dc);
+
+    emf_size = GetEnhMetaFileBits(emf, 0, NULL);
+    enh_header = HeapAlloc(GetProcessHeap(), 0, emf_size);
+    emf_size = GetEnhMetaFileBits(emf, emf_size, (BYTE*)enh_header);
+
+    mode = MM_ANISOTROPIC;
+    size = GetWinMetaFileBits(emf, 0, NULL, mode, display_dc);
+    mh = HeapAlloc(GetProcessHeap(), 0, size);
+    GetWinMetaFileBits(emf, size, (BYTE*)mh, mode, display_dc);
+
+    for(i = 0; i < size / 2; i++) check += ((WORD*)mh)[i];
+    ok(check == 0, "check %04x\n", check);
+
+    rec = (METARECORD*)(mh + 1);
+
+    while(rec->rdSize && rec->rdFunction)
+    {
+        const DWORD chunk_size = 0x2000;
+        DWORD mfcomment_chunks = (emf_size + chunk_size - 1) / chunk_size;
+
+        if(rec_num < mfcomment_chunks)
+        {
+            DWORD this_chunk_size = chunk_size;
+
+            if(rec_num == mfcomment_chunks - 1)
+                this_chunk_size = emf_size - rec_num * chunk_size;
+
+            ok(rec->rdFunction == META_ESCAPE, "got %04x\n", rec->rdFunction);
+            ok(rec->rdParm[0] == MFCOMMENT, "got %04x\n", rec->rdParm[0]);
+            ok(rec->rdParm[1] == this_chunk_size + 34, "got %04x %x\n", rec->rdParm[1], emf_size + 34);
+            ok(rec->rdParm[2] == 0x4d57, "got %04x\n", rec->rdParm[2]); /* WMFC */
+            ok(rec->rdParm[3] == 0x4346, "got %04x\n", rec->rdParm[3]); /*  "   */
+            ok(rec->rdParm[4] == 1, "got %04x\n", rec->rdParm[4]);
+            ok(rec->rdParm[5] == 0, "got %04x\n", rec->rdParm[5]);
+            ok(rec->rdParm[6] == 0, "got %04x\n", rec->rdParm[6]);
+            ok(rec->rdParm[7] == 1, "got %04x\n", rec->rdParm[7]);
+            /* parm[8] is the checksum, tested above */
+            if(rec_num > 0) ok(rec->rdParm[8] == 0, "got %04x\n", rec->rdParm[8]);
+            ok(rec->rdParm[9] == 0, "got %04x\n", rec->rdParm[9]);
+            ok(rec->rdParm[10] == 0, "got %04x\n", rec->rdParm[10]);
+            ok(rec->rdParm[11] == mfcomment_chunks, "got %04x\n", rec->rdParm[11]); /* num chunks */
+            ok(rec->rdParm[12] == 0, "got %04x\n", rec->rdParm[12]);
+            ok(rec->rdParm[13] == this_chunk_size, "got %04x expected %04x\n", rec->rdParm[13], this_chunk_size);
+            ok(rec->rdParm[14] == 0, "got %04x\n", rec->rdParm[14]);
+            ok(*(DWORD*)(rec->rdParm + 15) == emf_size - this_chunk_size - rec_num * chunk_size, "got %08x\n", *(DWORD*)(rec->rdParm + 15));  /* DWORD size remaining after current chunk */
+            ok(*(DWORD*)(rec->rdParm + 17) == emf_size, "got %08x emf_size %08x\n", *(DWORD*)(rec->rdParm + 17), emf_size);
+            ok(!memcmp(rec->rdParm + 19, (char*)enh_header + rec_num * chunk_size, this_chunk_size), "bits mismatch\n");
+        }
+
+        rec_num++;
+        rec = (METARECORD*)((WORD*)rec + rec->rdSize);
+    }
+
+    HeapFree(GetProcessHeap(), 0, mh);
+    HeapFree(GetProcessHeap(), 0, enh_header);
+    DeleteEnhMetaFile(emf);
+
+    ReleaseDC(NULL, display_dc);
+}
+
 static BOOL (WINAPI *pGdiIsMetaPrintDC)(HDC);
 static BOOL (WINAPI *pGdiIsMetaFileDC)(HDC);
 static BOOL (WINAPI *pGdiIsPlayMetafileDC)(HDC);
@@ -2425,6 +2504,7 @@ START_TEST(metafile)
     /* For metafile conversions */
     test_mf_conversions();
     test_SetWinMetaFileBits();
+    test_GetWinMetaFileBits();
 
     test_gdiis();
     test_SetEnhMetaFileBits();
