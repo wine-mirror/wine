@@ -627,7 +627,6 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
 
                 /* Declare 1.X samplers implicitly, based on the destination reg. number */
                 if (shader_version.major == 1
-                        && pshader /* Filter different instructions with the same enum values in VS */
                         && (ins.handler_idx == WINED3DSIH_TEX
                             || ins.handler_idx == WINED3DSIH_TEXBEM
                             || ins.handler_idx == WINED3DSIH_TEXBEML
@@ -657,11 +656,11 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                         }
                     }
                 }
-                else if (pshader && ins.handler_idx == WINED3DSIH_BEM)
+                else if (ins.handler_idx == WINED3DSIH_BEM)
                 {
                     reg_maps->bumpmat[dst_param.reg.idx] = TRUE;
                 }
-                else if(pshader && ins.handler_idx == WINED3DSIH_MOV)
+                else if (ins.handler_idx == WINED3DSIH_MOV)
                 {
                     /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
                      * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
