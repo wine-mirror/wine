@@ -24,6 +24,7 @@ EXTRA_OBJS   = testlist.o
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
 CROSSCC      = @CROSSCC@
 CROSSWINEGCC = $(TOOLSDIR)/tools/winegcc/winegcc @CROSSTARGETFLAGS@ -B$(TOOLSDIR)/tools/winebuild --sysroot=$(TOPOBJDIR)
+MAKEDEPFLAGS = -xo -xcross.o
 
 @MAKE_RULES@
 

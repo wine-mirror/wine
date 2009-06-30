@@ -229,7 +229,7 @@ $(SUBDIRS:%=%/__depend__): dummy
 	@cd `dirname $@` && $(MAKE) depend
 
 depend: $(SUBDIRS:%=%/__depend__) dummy
-	$(MAKEDEP) -C$(SRCDIR) -S$(TOPSRCDIR) -T$(TOPOBJDIR) $(EXTRAINCL) $(DEPEND_SRCS)
+	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(SRCDIR) -S$(TOPSRCDIR) -T$(TOPOBJDIR) $(EXTRAINCL) $(DEPEND_SRCS)
 
 .PHONY: depend $(SUBDIRS:%=%/__depend__)
 
