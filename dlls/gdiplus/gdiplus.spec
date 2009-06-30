@@ -165,8 +165,8 @@
 @ stdcall GdipDrawClosedCurveI(ptr ptr ptr long)
 @ stdcall GdipDrawCurve2(ptr ptr ptr long long)
 @ stdcall GdipDrawCurve2I(ptr ptr ptr long long)
-@ stub GdipDrawCurve3
-@ stub GdipDrawCurve3I
+@ stdcall GdipDrawCurve3(ptr ptr ptr long long long long)
+@ stdcall GdipDrawCurve3I(ptr ptr ptr long long long long)
 @ stdcall GdipDrawCurve(ptr ptr ptr long)
 @ stdcall GdipDrawCurveI(ptr ptr ptr long)
 @ stdcall GdipDrawDriverString(ptr ptr long ptr ptr ptr long ptr)

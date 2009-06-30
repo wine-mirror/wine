@@ -361,6 +361,166 @@ static void test_GdipDrawBezierI(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_GdipDrawCurve3(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    GpPen *pen = NULL;
+    HDC hdc = GetDC(0);
+    GpPointF points[3];
+
+    points[0].X = 0;
+    points[0].Y = 0;
+
+    points[1].X = 40;
+    points[1].Y = 20;
+
+    points[2].X = 10;
+    points[2].Y = 40;
+
+    /* make a graphics object and pen object */
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    ok(pen != NULL, "Expected pen to be initialized\n");
+
+    /* InvalidParameter cases: null graphics, null pen */
+    status = GdipDrawCurve3(NULL, NULL, points, 3, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, NULL, points, 3, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(NULL, pen, points, 3, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    /* InvalidParameter cases: invalid count */
+    status = GdipDrawCurve3(graphics, pen, points, -1, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, pen, points, 0, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, pen, points, 1, 0, 0, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, pen, points, 3, 4, 2, 1);
+    expect(InvalidParameter, status);
+
+    /* InvalidParameter cases: invalid number of segments */
+    status = GdipDrawCurve3(graphics, pen, points, 3, 0, -1, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, pen, points, 3, 1, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3(graphics, pen, points, 2, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    /* Valid test cases */
+    status = GdipDrawCurve3(graphics, pen, points, 2, 0, 1, 1);
+    expect(Ok, status);
+
+    status = GdipDrawCurve3(graphics, pen, points, 3, 0, 2, 2);
+    expect(Ok, status);
+
+    status = GdipDrawCurve3(graphics, pen, points, 2, 0, 1, -2);
+    expect(Ok, status);
+
+    status = GdipDrawCurve3(graphics, pen, points, 3, 1, 1, 0);
+    expect(Ok, status);
+
+    GdipDeletePen(pen);
+    GdipDeleteGraphics(graphics);
+
+    ReleaseDC(0, hdc);
+}
+
+static void test_GdipDrawCurve3I(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    GpPen *pen = NULL;
+    HDC hdc = GetDC(0);
+    GpPoint points[3];
+
+    points[0].X = 0;
+    points[0].Y = 0;
+
+    points[1].X = 40;
+    points[1].Y = 20;
+
+    points[2].X = 10;
+    points[2].Y = 40;
+
+    /* make a graphics object and pen object */
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    status = GdipCreatePen1((ARGB)0xffff00ff, 10.0f, UnitPixel, &pen);
+    expect(Ok, status);
+    ok(pen != NULL, "Expected pen to be initialized\n");
+
+    /* InvalidParameter cases: null graphics, null pen */
+    status = GdipDrawCurve3I(NULL, NULL, points, 3, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3I(graphics, NULL, points, 3, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3I(NULL, pen, points, 3, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    /* InvalidParameter cases: invalid count */
+    status = GdipDrawCurve3I(graphics, pen, points, -1, -1, -1, 1);
+    expect(OutOfMemory, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 0, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 1, 0, 0, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 3, 4, 2, 1);
+    expect(InvalidParameter, status);
+
+    /* InvalidParameter cases: invalid number of segments */
+    status = GdipDrawCurve3I(graphics, pen, points, 3, 0, -1, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 3, 1, 2, 1);
+    expect(InvalidParameter, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 2, 0, 2, 1);
+    expect(InvalidParameter, status);
+
+    /* Valid test cases */
+    status = GdipDrawCurve3I(graphics, pen, points, 2, 0, 1, 1);
+    expect(Ok, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 3, 0, 2, 2);
+    expect(Ok, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 2, 0, 1, -2);
+    expect(Ok, status);
+
+    status = GdipDrawCurve3I(graphics, pen, points, 3, 1, 1, 0);
+    expect(Ok, status);
+
+    GdipDeletePen(pen);
+    GdipDeleteGraphics(graphics);
+
+    ReleaseDC(0, hdc);
+}
+
 static void test_GdipDrawCurve2(void)
 {
     GpStatus status;
@@ -1345,6 +1505,8 @@ START_TEST(graphics)
     test_GdipDrawCurveI();
     test_GdipDrawCurve2();
     test_GdipDrawCurve2I();
+    test_GdipDrawCurve3();
+    test_GdipDrawCurve3I();
     test_GdipDrawLineI();
     test_GdipDrawLinesI();
     test_GdipDrawString();

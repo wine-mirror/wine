@@ -1532,6 +1532,36 @@ GpStatus WINGDIPAPI GdipDrawCurve2I(GpGraphics *graphics, GpPen *pen,
     return ret;
 }
 
+GpStatus WINGDIPAPI GdipDrawCurve3(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPointF *points, INT count, INT offset, INT numberOfSegments,
+    REAL tension)
+{
+    TRACE("(%p, %p, %p, %d, %d, %d, %.2f)\n", graphics, pen, points, count, offset, numberOfSegments, tension);
+
+    if(offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
+        return InvalidParameter;
+    }
+
+    return GdipDrawCurve2(graphics, pen, points + offset, numberOfSegments + 1, tension);
+}
+
+GpStatus WINGDIPAPI GdipDrawCurve3I(GpGraphics *graphics, GpPen *pen,
+    GDIPCONST GpPoint *points, INT count, INT offset, INT numberOfSegments,
+    REAL tension)
+{
+    TRACE("(%p, %p, %p, %d, %d, %d, %.2f)\n", graphics, pen, points, count, offset, numberOfSegments, tension);
+
+    if(count < 0){
+        return OutOfMemory;
+    }
+
+    if(offset >= count || numberOfSegments > count - offset - 1 || numberOfSegments <= 0){
+        return InvalidParameter;
+    }
+
+    return GdipDrawCurve2I(graphics, pen, points + offset, numberOfSegments + 1, tension);
+}
+
 GpStatus WINGDIPAPI GdipDrawEllipse(GpGraphics *graphics, GpPen *pen, REAL x,
     REAL y, REAL width, REAL height)
 {
