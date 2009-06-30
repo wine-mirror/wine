@@ -1590,6 +1590,9 @@ HEADER_LButtonUp (HEADER_INFO *infoPtr, INT x, INT y)
     HEADER_InternalHitTest (infoPtr, &pt, &flags, &nItem);
 
     if (infoPtr->bPressed) {
+
+	infoPtr->items[infoPtr->iMoveItem].bDown = FALSE;
+
 	if (infoPtr->bDragging)
 	{
             HEADER_ITEM *lpItem = &infoPtr->items[infoPtr->iMoveItem];
@@ -1597,8 +1600,7 @@ HEADER_LButtonUp (HEADER_INFO *infoPtr, INT x, INT y)
             
 	    ImageList_DragShowNolock(FALSE);
 	    ImageList_EndDrag();
-            lpItem->bDown=FALSE;
-            
+
             if (infoPtr->iHotDivider == -1)
                 iNewOrder = -1;
             else if (infoPtr->iHotDivider == infoPtr->uNumItem)
@@ -1623,14 +1625,14 @@ HEADER_LButtonUp (HEADER_INFO *infoPtr, INT x, INT y)
             infoPtr->bDragging = FALSE;
             HEADER_SetHotDivider(infoPtr, FALSE, -1);
 	}
-	else if (!(infoPtr->dwStyle & HDS_DRAGDROP) || !HEADER_IsDragDistance(infoPtr, &pt))
+	else
 	{
-	    infoPtr->items[infoPtr->iMoveItem].bDown = FALSE;
 	    hdc = GetDC (infoPtr->hwndSelf);
 	    HEADER_RefreshItem (infoPtr, infoPtr->iMoveItem);
 	    ReleaseDC (infoPtr->hwndSelf, hdc);
 
-	    HEADER_SendNotifyWithHDItemT(infoPtr, HDN_ITEMCLICKW, infoPtr->iMoveItem, NULL);
+	    if (!(infoPtr->dwStyle & HDS_DRAGDROP) || !HEADER_IsDragDistance(infoPtr, &pt))
+		HEADER_SendNotifyWithHDItemT(infoPtr, HDN_ITEMCLICKW, infoPtr->iMoveItem, NULL);
 	}
 
 	TRACE("Released item %d!\n", infoPtr->iMoveItem);
