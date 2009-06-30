@@ -3199,10 +3199,10 @@ static void test_GetSidSubAuthority(void)
     ok(*pGetSidSubAuthorityCount(psid) == 4,"GetSidSubAuthorityCount gave %d expected 4\n",*pGetSidSubAuthorityCount(psid));
     ok(GetLastError() == 0,"GetLastError returned %d instead of 0\n",GetLastError());
     SetLastError(0xbebecaca);
-    ok(*pGetSidSubAuthority(psid,0) == 21,"GetSidSubAuthority gave %d expected 21",*pGetSidSubAuthority(psid,0));
+    ok(*pGetSidSubAuthority(psid,0) == 21,"GetSidSubAuthority gave %d expected 21\n",*pGetSidSubAuthority(psid,0));
     ok(GetLastError() == 0,"GetLastError returned %d instead of 0\n",GetLastError());
     SetLastError(0xbebecaca);
-    ok(*pGetSidSubAuthority(psid,1) == 93476,"GetSidSubAuthority gave %d expected 93476",*pGetSidSubAuthority(psid,1));
+    ok(*pGetSidSubAuthority(psid,1) == 93476,"GetSidSubAuthority gave %d expected 93476\n",*pGetSidSubAuthority(psid,1));
     ok(GetLastError() == 0,"GetLastError returned %d instead of 0\n",GetLastError());
     SetLastError(0xbebecaca);
     todo_wine ok(*pGetSidSubAuthority(psid,4) == 0,"GetSidSubAuthority gave %d,expected 0\n",*pGetSidSubAuthority(psid,4));
