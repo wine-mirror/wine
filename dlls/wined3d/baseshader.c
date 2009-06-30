@@ -241,12 +241,12 @@ static inline void set_bitmap_bit(DWORD *bitmap, DWORD bit)
 }
 
 static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct shader_reg_maps *reg_maps,
-        const struct wined3d_shader_register *reg, BOOL pshader)
+        const struct wined3d_shader_register *reg, enum wined3d_shader_type shader_type)
 {
     switch (reg->type)
     {
         case WINED3DSPR_TEXTURE: /* WINED3DSPR_ADDR */
-            if (pshader) reg_maps->texcoord[reg->idx] = 1;
+            if (shader_type == WINED3D_SHADER_TYPE_PIXEL) reg_maps->texcoord[reg->idx] = 1;
             else reg_maps->address[reg->idx] = 1;
             break;
 
@@ -255,8 +255,7 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
             break;
 
         case WINED3DSPR_INPUT:
-            if (!pshader) reg_maps->input_registers |= 1 << reg->idx;
-            else
+            if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
             {
                 if (reg->rel_addr)
                 {
@@ -274,6 +273,7 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
                     ((IWineD3DPixelShaderImpl *)This)->input_reg_used[reg->idx] = TRUE;
                 }
             }
+            else reg_maps->input_registers |= 1 << reg->idx;
             break;
 
         case WINED3DSPR_RASTOUT:
@@ -281,14 +281,17 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
             break;
 
         case WINED3DSPR_MISCTYPE:
-            if (pshader && reg->idx == 0) reg_maps->vpos = 1;
-            if (pshader && reg->idx == 1) reg_maps->usesfacing = 1;
+            if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
+            {
+                if (reg->idx == 0) reg_maps->vpos = 1;
+                else if (reg->idx == 1) reg_maps->usesfacing = 1;
+            }
             break;
 
         case WINED3DSPR_CONST:
             if (reg->rel_addr)
             {
-                if (!pshader)
+                if (shader_type != WINED3D_SHADER_TYPE_PIXEL)
                 {
                     if (reg->idx <= ((IWineD3DVertexShaderImpl *)This)->min_rel_offset)
                         ((IWineD3DVertexShaderImpl *)This)->min_rel_offset = reg->idx;
@@ -619,7 +622,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                         IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *) This;
                         ps->color0_mov = FALSE;
                     }
-                    shader_record_register_usage(This, reg_maps, &dst_param.reg, pshader);
+                    shader_record_register_usage(This, reg_maps, &dst_param.reg, shader_version.type);
                 }
 
                 /* Declare 1.X samplers implicitly, based on the destination reg. number */
@@ -718,11 +721,11 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 fe->shader_read_src_param(fe_data, &pToken, &src_param, &src_rel_addr);
                 count = get_instr_extra_regcount(ins.handler_idx, i);
 
-                shader_record_register_usage(This, reg_maps, &src_param.reg, pshader);
+                shader_record_register_usage(This, reg_maps, &src_param.reg, shader_version.type);
                 while (count)
                 {
                     ++src_param.reg.idx;
-                    shader_record_register_usage(This, reg_maps, &src_param.reg, pshader);
+                    shader_record_register_usage(This, reg_maps, &src_param.reg, shader_version.type);
                     --count;
                 }
 
