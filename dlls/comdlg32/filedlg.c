@@ -1051,6 +1051,13 @@ static LRESULT FILEDLG95_OnWMSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
                     0, 0,
                     SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
         }
+        else if( GetDlgCtrlID( ctrl) == IDC_SHELLSTATIC)
+        {
+            DeferWindowPos( hdwp, ctrl, NULL, 0, 0,
+                    rc.right - rc.left + chgx,
+                    rc.bottom - rc.top + chgy,
+                    SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
+        }
         else if( rc.top > rcview.bottom)
         {
             /* if it was below the shell view
