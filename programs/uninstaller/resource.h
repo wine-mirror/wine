@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windef.h>
+
 #define IDS_APPNAME                     1000
 #define IDS_UNINSTALLFAILED             1001
 #define MAX_STRING_LEN                  255

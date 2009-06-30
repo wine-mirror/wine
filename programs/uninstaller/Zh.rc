@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -34,5 +36,3 @@ STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine 應有程式卸載管理器"
      IDS_UNINSTALLFAILED, "卸載指令執行失敗 '%s', 可能是找不到可執行程式.\r\n你想把這項卸載指令從註冊表中刪除嗎?"
 }
-
-#pragma code_page(default)

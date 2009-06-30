@@ -11,7 +11,30 @@ DELAYIMPORTS = shlwapi shell32 user32 gdi32
 C_SRCS = \
 	main.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	Bg.rc \
+	Cs.rc \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Eo.rc \
+	Es.rc \
+	Fi.rc \
+	Fr.rc \
+	Hu.rc \
+	It.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ro.rc \
+	Ru.rc \
+	Si.rc \
+	Sv.rc \
+	Tr.rc \
+	Zh.rc
 
 @MAKE_PROG_RULES@
 
