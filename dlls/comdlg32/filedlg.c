@@ -1760,19 +1760,19 @@ static BOOL FILEDLG95_SendFileOK( HWND hwnd, FileOpenDlgInfos *fodInfos )
         /* First send CDN_FILEOK as MSDN doc says */
         if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
             retval = SendCustomDlgNotificationMessage(hwnd,CDN_FILEOK);
-        if (GetWindowLongPtrW(fodInfos->DlgInfos.hwndCustomDlg, DWLP_MSGRESULT))
+        if( retval)
         {
             TRACE("canceled\n");
-            return (retval == 0);
+            return FALSE;
         }
 
         /* fodInfos->ofnInfos points to an ASCII or UNICODE structure as appropriate */
         retval = SendMessageW(fodInfos->DlgInfos.hwndCustomDlg,
                               fodInfos->HookMsg.fileokstring, 0, (LPARAM)fodInfos->ofnInfos);
-        if (GetWindowLongPtrW(fodInfos->DlgInfos.hwndCustomDlg, DWLP_MSGRESULT))
+        if( retval)
         {
             TRACE("canceled\n");
-            return (retval == 0);
+            return FALSE;
         }
     }
     return TRUE;
