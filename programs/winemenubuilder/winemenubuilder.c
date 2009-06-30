@@ -2525,29 +2525,16 @@ static void RefreshFileTypeAssociations(void)
     hasChanged |= cleanup_associations();
     if (hasChanged)
     {
-        char *command = heap_printf("update-mime-database %s", mime_dir);
-        if (command)
-        {
-            system(command);
-            HeapFree(GetProcessHeap(), 0, command);
-        }
-        else
-        {
-            WINE_ERR("out of memory\n");
-            goto end;
-        }
+        const char *argv[3];
 
-        command = heap_printf("update-desktop-database %s/applications", xdg_data_dir);
-        if (command)
-        {
-            system(command);
-            HeapFree(GetProcessHeap(), 0, command);
-        }
-        else
-        {
-            WINE_ERR("out of memory\n");
-            goto end;
-        }
+        argv[0] = "update-mime-database";
+        argv[1] = mime_dir;
+        argv[2] = NULL;
+        spawnvp( _P_NOWAIT, argv[0], argv );
+
+        argv[0] = "update-desktop-database";
+        argv[1] = applications_dir;
+        spawnvp( _P_NOWAIT, argv[0], argv );
     }
 
 end:
