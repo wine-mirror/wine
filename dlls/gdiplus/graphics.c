@@ -2239,7 +2239,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 
     length = j;
 
-    if (format->align == StringAlignmentNear)
+    if (!format || format->align == StringAlignmentNear)
     {
         drawbase.x = corners[0].x;
         drawbase.y = corners[0].y;
