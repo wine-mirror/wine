@@ -600,3 +600,12 @@ HRESULT WINAPI SetInputScopes(HWND hwnd, const INT *pInputScopes,
 
     return S_OK;
 }
+
+/***********************************************************************
+ *              TF_CreateInputProcessorProfiles(MSCTF.@)
+ */
+HRESULT WINAPI TF_CreateInputProcessorProfiles(
+                        ITfInputProcessorProfiles **ppipr)
+{
+    return InputProcessorProfiles_Constructor(NULL,(IUnknown**)ppipr);
+}
