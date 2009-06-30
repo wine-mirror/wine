@@ -53,6 +53,14 @@ typedef struct _INCL_FILE
 static struct list sources = LIST_INIT(sources);
 static struct list includes = LIST_INIT(includes);
 
+typedef struct _OBJECT_EXTENSION
+{
+    struct list entry;
+    const char *extension;
+} OBJECT_EXTENSION;
+
+static struct list object_extensions = LIST_INIT(object_extensions);
+
 typedef struct _INCL_PATH
 {
     struct list entry;
@@ -215,6 +223,18 @@ static char *get_line( FILE *file )
         }
         return buffer;
     }
+}
+
+/*******************************************************************
+ *         add_object_extension
+ *
+ * Add an extension for object files.
+ */
+static void add_object_extension( const char *ext )
+{
+    OBJECT_EXTENSION *object_extension = xmalloc( sizeof(*object_extension) );
+    list_add_tail( &object_extensions, &object_extension->entry );
+    object_extension->extension = ext;
 }
 
 /*******************************************************************
@@ -857,7 +877,10 @@ static int output_src( FILE *file, INCL_FILE *pFile, int *column )
         }
         else
         {
-            *column += fprintf( file, "%s.o: %s", obj, pFile->filename );
+            OBJECT_EXTENSION *ext;
+            LIST_FOR_EACH_ENTRY( ext, &object_extensions, OBJECT_EXTENSION, entry )
+                *column += fprintf( file, "%s.%s ", obj, ext->extension );
+            *column += fprintf( file, ": %s", pFile->filename );
         }
     }
     free( obj );
@@ -973,6 +996,9 @@ static void parse_option( const char *opt )
         if (opt[2]) Separator = opt + 2;
         else Separator = NULL;
         break;
+    case 'x':
+        if (opt[2]) add_object_extension( opt + 2 );
+        break;
     default:
         fprintf( stderr, "Unknown option '%s'\n", opt );
         fprintf( stderr, Usage, ProgramName );
@@ -1007,6 +1033,10 @@ int main( int argc, char *argv[] )
     /* ignore redundant source paths */
     if (src_dir && !strcmp( src_dir, "." )) src_dir = NULL;
     if (top_src_dir && top_obj_dir && !strcmp( top_src_dir, top_obj_dir )) top_src_dir = NULL;
+
+    /* set the default extension list for object files */
+    if (list_empty( &object_extensions ))
+        add_object_extension( "o" );
 
     /* get rid of absolute paths that don't point into the source dir */
     LIST_FOR_EACH_ENTRY_SAFE( path, next, &paths, INCL_PATH, entry )
