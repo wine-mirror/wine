@@ -147,49 +147,49 @@ static HRESULT WINAPI ImagingFactory_CreatePalette(IWICImagingFactory *iface,
 static HRESULT WINAPI ImagingFactory_CreateFormatConverter(IWICImagingFactory *iface,
     IWICFormatConverter **ppIFormatConverter)
 {
-    FIXME("(%p,%p): stub", iface, ppIFormatConverter);
+    FIXME("(%p,%p): stub\n", iface, ppIFormatConverter);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ImagingFactory_CreateBitmapScaler(IWICImagingFactory *iface,
     IWICBitmapScaler **ppIBitmapScaler)
 {
-    FIXME("(%p,%p): stub", iface, ppIBitmapScaler);
+    FIXME("(%p,%p): stub\n", iface, ppIBitmapScaler);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ImagingFactory_CreateBitmapClipper(IWICImagingFactory *iface,
     IWICBitmapClipper **ppIBitmapClipper)
 {
-    FIXME("(%p,%p): stub", iface, ppIBitmapClipper);
+    FIXME("(%p,%p): stub\n", iface, ppIBitmapClipper);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ImagingFactory_CreateBitmapFlipRotator(IWICImagingFactory *iface,
     IWICBitmapFlipRotator **ppIBitmapFlipRotator)
 {
-    FIXME("(%p,%p): stub", iface, ppIBitmapFlipRotator);
+    FIXME("(%p,%p): stub\n", iface, ppIBitmapFlipRotator);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ImagingFactory_CreateStream(IWICImagingFactory *iface,
     IWICStream **ppIWICStream)
 {
-    FIXME("(%p,%p): stub", iface, ppIWICStream);
+    FIXME("(%p,%p): stub\n", iface, ppIWICStream);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ImagingFactory_CreateColorContext(IWICImagingFactory *iface,
     IWICColorContext **ppIColorContext)
 {
-    FIXME("(%p,%p): stub", iface, ppIColorContext);
+    FIXME("(%p,%p): stub\n", iface, ppIColorContext);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ImagingFactory_CreateColorTransformer(IWICImagingFactory *iface,
     IWICColorTransform **ppIColorTransform)
 {
-    FIXME("(%p,%p): stub", iface, ppIColorTransform);
+    FIXME("(%p,%p): stub\n", iface, ppIColorTransform);
     return E_NOTIMPL;
 }
 
