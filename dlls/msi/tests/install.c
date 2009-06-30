@@ -4386,31 +4386,19 @@ static void set_transform_summary_info(void)
 
     /* build summary info */
     r = MsiGetSummaryInformation(0, mstfile, 3, &suminfo);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS , "Failed to open summaryinfo\n");
-    }
+    ok(r == ERROR_SUCCESS , "Failed to open summaryinfo\n");
 
     r = MsiSummaryInfoSetProperty(suminfo, PID_TITLE, VT_LPSTR, 0, NULL, "MSITEST");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Failed to set summary info\n");
-    }
+    ok(r == ERROR_SUCCESS, "Failed to set summary info\n");
 
     r = MsiSummaryInfoSetProperty(suminfo, PID_REVNUMBER, VT_LPSTR, 0, NULL,
                         "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}1.1.1;"
                         "{7DF88A48-996F-4EC8-A022-BF956F9B2CBB}1.1.1;"
                         "{4C0EAA15-0264-4E5A-8758-609EF142B92D}");
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS , "Failed to set summary info\n");
-    }
+    ok(r == ERROR_SUCCESS , "Failed to set summary info\n");
 
     r = MsiSummaryInfoSetProperty(suminfo, PID_PAGECOUNT, VT_I4, 100, NULL, NULL);
-    todo_wine
-    {
-        ok(r == ERROR_SUCCESS, "Failed to set summary info\n");
-    }
+    ok(r == ERROR_SUCCESS, "Failed to set summary info\n");
 
     r = MsiSummaryInfoPersist(suminfo);
     todo_wine
