@@ -613,7 +613,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                  * shaders because TECRDOUT isn't used in them, but future register types might cause issues */
                 if (!pshader && shader_version.major < 3 && dst_param.reg.type == WINED3DSPR_TEXCRDOUT)
                 {
-                    reg_maps->texcoord_mask[dst_param.reg.type] |= dst_param.write_mask;
+                    reg_maps->texcoord_mask[dst_param.reg.idx] |= dst_param.write_mask;
                 }
                 else
                 {
