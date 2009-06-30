@@ -2684,7 +2684,16 @@ static void test_hittest(void)
     x = pos.x + 150; /* outside column */
     y = pos.y + (bounds.bottom - bounds.top) / 2;
     test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, FALSE, FALSE, __LINE__);
-    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, TRUE, TRUE, TRUE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
+    /* outside possible client rectangle (to right) */
+    x = pos.x + 500;
+    y = pos.y + (bounds.bottom - bounds.top) / 2;
+    test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, FALSE, FALSE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, FALSE, __LINE__);
+    /* subitem returned with -1 item too */
+    x = pos.x + 150;
+    y = -10;
+    test_lvm_subitemhittest(hwnd, x, y, -1, 1, LVHT_NOWHERE, FALSE, FALSE, TRUE, __LINE__);
     /* parent client area is 100x100 by default */
     MoveWindow(hwnd, 0, 0, 300, 100, FALSE);
     x = pos.x + 150; /* outside column */
@@ -2701,7 +2710,12 @@ static void test_hittest(void)
     x = pos.x + 150; /* outside column */
     y = pos.y + (bounds.bottom - bounds.top) / 2;
     test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, FALSE, FALSE, __LINE__);
-    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, TRUE, TRUE, TRUE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
+    /* outside possible client rectangle (to right) */
+    x = pos.x + 500;
+    y = pos.y + (bounds.bottom - bounds.top) / 2;
+    test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, FALSE, FALSE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, FALSE, __LINE__);
     /* try with icons, state icons index is 1 based so at least 2 bitmaps needed */
     himl = ImageList_Create(16, 16, 0, 4, 4);
     ok(himl != NULL, "failed to create imagelist\n");

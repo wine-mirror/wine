@@ -6798,55 +6798,42 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     lpht->iItem = -1;
     if (subitem) lpht->iSubItem = 0;
 
-    if (infoPtr->rcList.left > lpht->pt.x)
-	lpht->flags |= LVHT_TOLEFT;
-    else if (infoPtr->rcList.right < lpht->pt.x)
-	lpht->flags |= LVHT_TORIGHT;
+    LISTVIEW_GetOrigin(infoPtr, &Origin);
+
+    /* set whole list relation flags */
+    if (subitem && infoPtr->uView == LV_VIEW_DETAILS)
+    {
+        /* LVM_SUBITEMHITTEST checks left bound of possible client area */
+        if (infoPtr->rcList.left > lpht->pt.x && Origin.x < lpht->pt.x)
+	    lpht->flags |= LVHT_TOLEFT;
+    }
+    else
+    {
+	if (infoPtr->rcList.left > lpht->pt.x)
+	    lpht->flags |= LVHT_TOLEFT;
+	else if (infoPtr->rcList.right < lpht->pt.x)
+	    lpht->flags |= LVHT_TORIGHT;
+    }
     
     if (infoPtr->rcList.top > lpht->pt.y)
 	lpht->flags |= LVHT_ABOVE;
     else if (infoPtr->rcList.bottom < lpht->pt.y)
 	lpht->flags |= LVHT_BELOW;
 
-    TRACE("lpht->flags=0x%x\n", lpht->flags);
-    if (lpht->flags) return -1;
-
-    lpht->flags |= LVHT_NOWHERE;
-
-    LISTVIEW_GetOrigin(infoPtr, &Origin);
-   
-    /* first deal with the large items */
-    rcSearch.left = lpht->pt.x;
-    rcSearch.top = lpht->pt.y;
-    rcSearch.right = rcSearch.left + 1;
-    rcSearch.bottom = rcSearch.top + 1;
-    
-    iterator_frameditems(&i, infoPtr, &rcSearch);
-    iterator_next(&i); /* go to first item in the sequence */
-    iItem = i.nItem;
-    iterator_destroy(&i);
-   
-    TRACE("lpht->iItem=%d\n", iItem); 
-    if (iItem == -1) return -1;
-
+    /* even if item is invalid try to find subitem */
     if (infoPtr->uView == LV_VIEW_DETAILS && subitem)
     {
-	RECT  bounds, *pRect;
+	RECT *pRect;
 	INT j;
 
-	/* for top/bottom only */
-	bounds.left = LVIR_BOUNDS;
-	LISTVIEW_GetItemRect(infoPtr, iItem, &bounds);
 	opt.x = lpht->pt.x - Origin.x;
-	opt.y = lpht->pt.y;
 
+	lpht->iSubItem = -1;
 	for (j = 0; j < DPA_GetPtrCount(infoPtr->hdpaColumns); j++)
 	{
 	    pRect = &LISTVIEW_GetColumnInfo(infoPtr, j)->rcHeader;
-	    bounds.left  = pRect->left;
-	    bounds.right = pRect->right;
 
-	    if (PtInRect(&bounds, opt))
+	    if ((opt.x >= pRect->left) && (opt.x < pRect->right))
 	    {
 		lpht->iSubItem = j;
 		break;
@@ -6854,6 +6841,25 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	}
 	TRACE("lpht->iSubItem=%d\n", lpht->iSubItem);
     }
+
+    TRACE("lpht->flags=0x%x\n", lpht->flags);
+    if (lpht->flags) return -1;
+
+    lpht->flags |= LVHT_NOWHERE;
+
+    /* first deal with the large items */
+    rcSearch.left = lpht->pt.x;
+    rcSearch.top = lpht->pt.y;
+    rcSearch.right = rcSearch.left + 1;
+    rcSearch.bottom = rcSearch.top + 1;
+
+    iterator_frameditems(&i, infoPtr, &rcSearch);
+    iterator_next(&i); /* go to first item in the sequence */
+    iItem = i.nItem;
+    iterator_destroy(&i);
+
+    TRACE("lpht->iItem=%d\n", iItem);
+    if (iItem == -1) return -1;
 
     lvItem.mask = LVIF_STATE | LVIF_TEXT;
     if (infoPtr->uView == LV_VIEW_DETAILS) lvItem.mask |= LVIF_INDENT;
