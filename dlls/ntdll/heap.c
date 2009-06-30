@@ -927,11 +927,18 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
     total_size = size + ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + sizeof(ARENA_FREE);
     if (total_size < size) return NULL;  /* overflow */
 
-    if (!(subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
-                                        max( heap->grow_size, total_size ) )))
-        return NULL;
-
-    if (heap->grow_size < 128 * 1024 * 1024) heap->grow_size *= 2;
+    if ((subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
+                                       max( heap->grow_size, total_size ) )))
+    {
+        if (heap->grow_size < 128 * 1024 * 1024) heap->grow_size *= 2;
+    }
+    else while (!subheap)  /* shrink the grow size again if we are running out of space */
+    {
+        if (heap->grow_size <= total_size || heap->grow_size <= 4 * 1024 * 1024) return NULL;
+        heap->grow_size /= 2;
+        subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
+                                      max( heap->grow_size, total_size ) );
+    }
 
     TRACE("created new sub-heap %p of %08lx bytes for heap %p\n",
           subheap, subheap->size, heap );
