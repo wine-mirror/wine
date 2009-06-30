@@ -39,7 +39,7 @@ typedef struct {
     LONG ref;
 } ImagingFactory;
 
-HRESULT WINAPI ImagingFactory_QueryInterface(IWICImagingFactory *iface, REFIID iid,
+static HRESULT WINAPI ImagingFactory_QueryInterface(IWICImagingFactory *iface, REFIID iid,
     void **ppv)
 {
     ImagingFactory *This = (ImagingFactory*)iface;

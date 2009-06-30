@@ -66,7 +66,7 @@ typedef struct {
     BITMAPV5HEADER bih;
 } BmpFrameDecode;
 
-HRESULT WINAPI BmpFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
+static HRESULT WINAPI BmpFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
     void **ppv)
 {
     BmpFrameDecode *This = (BmpFrameDecode*)iface;
@@ -274,7 +274,7 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
     return S_OK;
 }
 
-HRESULT WINAPI BmpDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
+static HRESULT WINAPI BmpDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
     void **ppv)
 {
     BmpDecoder *This = (BmpDecoder*)iface;
