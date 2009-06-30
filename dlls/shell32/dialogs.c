@@ -230,13 +230,13 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                         else
                             sei.lpDirectory = parent = RunDlg_GetParentDir(sei.lpFile);
 
-                        if (ShellExecuteExW( &sei ) < 33)
-                            {
+                        if (!ShellExecuteExW( &sei ))
+                        {
                             HeapFree(GetProcessHeap(), 0, psz);
                             HeapFree(GetProcessHeap(), 0, parent);
                             SendMessageA (htxt, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                             return TRUE ;
-                            }
+                        }
 
                         /* FillList is still ANSI */
                         GetWindowTextA (htxt, (LPSTR)psz, ic + 1) ;
@@ -244,7 +244,7 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                         HeapFree(GetProcessHeap(), 0, psz);
                         HeapFree(GetProcessHeap(), 0, parent);
-                        EndDialog (hwnd, 0) ;
+                        EndDialog (hwnd, 0);
                         }
                     }
 
