@@ -1,0 +1,218 @@
+/*
+ * OLE žiuryklė
+ * Lithuanian Language Support
+ *
+ * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
+
+IDM_MENU MENU
+{
+    POPUP "&Failas"
+    {
+        MENUITEM "Susieti su &failu...",                      IDM_BIND
+        MENUITEM "&Peržiūrėti TypeLib...",                    IDM_TYPELIB
+        MENUITEM SEPARATOR
+        MENUITEM "&Sistemos konfigūracija...",                IDM_SYSCONF
+        MENUITEM "Paleisti &registro tvarkytuvę",             IDM_REGEDIT
+        MENUITEM SEPARATOR
+        MENUITEM "Iš&eiti",                                   IDM_EXIT
+    }
+    POPUP "&Objektas"
+    {
+        POPUP "&CoCreateInstance žymos bitai"
+        {
+            MENUITEM "CLSCTX_&INPROC_SERVER",                 IDM_FLAG_INSERV,CHECKED
+            MENUITEM "CLSCTX_INPROC_&HANDLER",                IDM_FLAG_INHANDL
+            MENUITEM "CLSCTX_&LOCAL_SERVER",                  IDM_FLAG_LOCSERV,CHECKED
+            MENUITEM "CLSCTX_&REMOTE_SERVER",                 IDM_FLAG_REMSERV
+        }
+        MENUITEM SEPARATOR
+        MENUITEM "Peržiūrėti &tipų informaciją",              IDM_TYPEINFO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Sukurti &egzempliorių",                     IDM_CREATEINST, GRAYED
+        MENUITEM "Sukurti egzempliorių &kompiuteryje...",     IDM_CREATEINSTON, GRAYED
+        MENUITEM "&Naikinti egzempliorių",                    IDM_RELEASEINST, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Kopijuoti C&LSID į iškarpinę",              IDM_COPYCLSID, GRAYED
+        MENUITEM "Kopijuoti &HTML objekto gairę į iškarpinę", IDM_HTMLTAG, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Peržiūrėti...",                            IDM_VIEW, GRAYED
+    }
+    POPUP "&Rodinys"
+    {
+        MENUITEM "&Eksperto režimas",                         IDM_EXPERT,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&Paslėptų komponentų kategorijos",          IDM_HIDDEN, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Įrankių juosta",                           IDM_TOOLBAR,CHECKED
+        MENUITEM "&Būsenos juosta",                           IDM_STATUSBAR,CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&Atnaujinti\tF5",                           IDM_REFRESH
+    }
+    POPUP "&Žinynas"
+    {
+        MENUITEM "&Apie OLE žiurykę",                         IDM_ABOUT
+    }
+}
+
+IDM_TYPELIB MENU
+{
+    POPUP "&Failas"
+    {
+        MENUITEM "Išsaugoti &kaip...",   IDM_SAVEAS
+        MENUITEM "&Užverti",             IDM_CLOSE
+    }
+    POPUP "&Rodinys"
+    {
+        MENUITEM "&Grupuoti pagal rūšį", IDM_GROUP
+        MENUITEM SEPARATOR
+        MENUITEM "&Įrankių juosta",      IDM_TOOLBAR
+        MENUITEM "&Būsenos juosta",      IDM_STATUSBAR,CHECKED
+    }
+}
+
+STRINGTABLE
+{
+    IDS_APPNAME            "OLE žiuryklė"
+    IDS_APPTITLE           "OLE žiuryklė"
+    IDS_READY              "Parengta"
+    IDS_ABOUT              "OLE žiuryklė - OLE/COM objektų žiūryklė"
+    IDS_ABOUTVER           "versija 1.0"
+    IDS_TYPELIBTITLE       "ITypeLib žiūryklė"
+    IDS_OPEN               "Atverti"
+    IDS_OPEN_TYPELIB_FILTER "TypeLib failai (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0Visi failai (*.*)\0*.*\0\0"
+
+    IDM_BIND,              "Susieti su failu per failo vardą"
+    IDM_TYPELIB,           "Atverti TypeLib failą ir peržiūrėti jo turinį"
+    IDM_SYSCONF,           "Keisti paskirstytojo COM kompiuterio nustatymus"
+    IDM_REGEDIT,           "Paleisti Wine registro tvarkytuvę"
+    IDM_EXIT,              "Išeiti iš programos. Paragina išsaugoti pakeitimus"
+    IDM_CREATEINST,        "Sukurti pažymėto objekto egzempliorių"
+    IDM_CREATEINSTON,      "Sukurti pažymėto objekto egzempliorių nurodytame kompiuteryje"
+    IDM_RELEASEINST,       "Naikinti pažymėto objekto egzempliorių"
+    IDM_COPYCLSID,         "Kopijuoti pažymėto elemento GUID į iškarpinę"
+    IDM_VIEW,              "Rodyti žiūryklę pasirinktam elementui"
+    IDM_FLAG_INSERV,       "Naudoti CLSCTX_INPROC_SERVER iškviečiant CoGetClassObject"
+    IDM_FLAG_INHANDL,      "Naudoti CLSCTX_INPROC_HANDLER iškviečiant CoGetClassObject"
+    IDM_FLAG_LOCSERV,      "Naudoti CLSCTX_LOCAL_SERVER iškviečiant CoGetClassObject"
+    IDM_FLAG_REMSERV,      "Naudoti CLSCTX_REMOTE_SERVER iškviečiant CoGetClassObject"
+    IDM_EXPERT,            "Perjungti tarp eksperto ir naujoko rodymo režimų"
+    IDM_HIDDEN,            "Perjungti komponentų kategorijų, kurios turėjo būti nematomos, rodymą"
+    IDM_TOOLBAR,           "Rodyti ar slėpti įrankių juostą"
+    IDM_STATUSBAR,         "Rodyti ar slėpti būsenos juostą"
+    IDM_REFRESH,           "Atnaujinti visus sąrašus"
+    IDM_ABOUT,             "Parodo programos informaciją, versijos numerį ir autoriaus teises"
+
+    IDM_SAVEAS,            "Išsaugoti kaip .IDL ar .H failą"
+    IDM_CLOSE,             "Užverti langą"
+    IDM_GROUP,             "Grupuoti tipų informaciją pagal rūšį"
+
+    IDS_TREE_OC,           "Objektų klasės"
+    IDS_TREE_GBCC,         "Sugrupuotos pagal komponento kategoriją"
+    IDS_TREE_O1O,          "OLE 1.0 objektai"
+    IDS_TREE_CLO,          "COM bibliotekos objektai"
+    IDS_TREE_AO,           "Visi objektai"
+    IDS_TREE_AID,          "Programų identifikatoriai"
+    IDS_TREE_TL,           "Tipų bibliotekos"
+    IDS_TL_VER,            "ver."
+    IDS_TREE_I,            "Sąsajos"
+
+    IDS_TAB_REG,           "Registras"
+    IDS_TAB_IMPL,          "Realizacija"
+    IDS_TAB_ACTIV,         "Aktyvinimas"
+
+    IDS_CGCOFAIL,          "CoGetClassObject nepavyko."
+    IDS_ERROR_UNKN,        "Nežinoma klaida"
+    IDS_TRUE,              "Tiesa"
+    IDS_FALSE,             "Netiesa"
+    IDS_BYTES,             "baitai"
+
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) nepavyko ($%x)"
+    IDS_INHERITINTERFACES, "Paveldėtos sąsajos"
+}
+
+DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Jungtis prie kito kompiuterio"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "&Kompiuterio vardas:", -1, 5, 6, 190, 8
+    EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&Gerai", IDOK, 200, 5, 45, 14
+    PUSHBUTTON  "&Atsisakyti", IDCANCEL, 200, 22, 45, 14
+}
+
+DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Sistemos konfigūracija"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Sistemos nuostatos", -1, 5, 6, 160, 8
+    CHECKBOX    "Įjungti &paskirstytąjį COM", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "Įjungti &nuotolinį prisijungimą (tik Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT   "Šios nuostatos keičia tik registro reikšmes.\nTai neturi jokios įtakos Wine našumui.", -1, 5, 50, 160, 40
+    DEFPUSHBUTTON   "&Gerai", IDOK, 70, 80, 45, 14
+    PUSHBUTTON  "&Atsisakyti", IDCANCEL, 120, 80, 45, 14
+}
+
+DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Numatytosios sąsajos žiūryklė"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Sąsaja", -1, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "IID:", -1, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Užverti", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&Peržiūrėti tipų informaciją", IDC_VIEWTYPEINFO, 6, 31, 90, 14, WS_DISABLED
+}
+
+DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersist sąsajos žiūryklė"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Klasės vardas:", -1, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Užverti", IDCANCEL, 230, 6, 45, 14
+}
+
+DLG_IPERSISTSTREAM_IV DIALOG DISCARDABLE 0, 0, 280, 68
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "IPersistStream sąsajos žiūryklė"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT   "Klasės vardas:", -1, 5, 6, 50, 8
+    LTEXT   "", IDC_LABEL, 60, 6, 145, 8
+    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
+    DEFPUSHBUTTON   "&Užverti", IDCANCEL, 230, 6, 45, 14
+    PUSHBUTTON  "&IsDirty()", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
+    LTEXT   "???", IDC_ISDIRTY, 60, 34, 145, 8
+    PUSHBUTTON  "&GetSizeMax()", IDC_GETSIZEMAX_BUTTON, 6, 49, 50, 14
+    LTEXT   "???", IDC_GETSIZEMAX, 60, 52, 145, 8
+}
+
+#pragma code_page(default)
