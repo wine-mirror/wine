@@ -1138,14 +1138,34 @@ void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, 
 {
     struct wined3d_shader_version shader_version;
     const DWORD* pToken = pFunction;
+    const char *type_prefix;
     DWORD i;
 
     TRACE("Parsing %p\n", pFunction);
 
     fe->shader_read_header(fe_data, &pToken, &shader_version);
 
-    TRACE("%s_%u_%u\n", shader_is_pshader_version(shader_version.type) ? "ps": "vs",
-            shader_version.major, shader_version.minor);
+    switch (shader_version.type)
+    {
+        case WINED3D_SHADER_TYPE_VERTEX:
+            type_prefix = "vs";
+            break;
+
+        case WINED3D_SHADER_TYPE_GEOMETRY:
+            type_prefix = "gs";
+            break;
+
+        case WINED3D_SHADER_TYPE_PIXEL:
+            type_prefix = "ps";
+            break;
+
+        default:
+            FIXME("Unhandled shader type %#x.\n", shader_version.type);
+            type_prefix = "unknown";
+            break;
+    }
+
+    TRACE("%s_%u_%u\n", type_prefix, shader_version.major, shader_version.minor);
 
     while (!fe->shader_is_end(fe_data, &pToken))
     {
