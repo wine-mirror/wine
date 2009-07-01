@@ -950,7 +950,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             gl_info->vs_arb_max_instructions = gl_max;
             TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native instructions: %d\n", gl_info->vs_arb_max_instructions);
 
-            gl_info->arb_vs_offset_limit = test_arb_vs_offset_limit(gl_info);
+            if (test_arb_vs_offset_limit(gl_info)) gl_info->quirks |= WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT;
         }
         if (gl_info->supported[ARB_VERTEX_SHADER]) {
             glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
@@ -4196,11 +4196,11 @@ static void quirk_texcoord_w(WineD3D_GL_Info *gl_info) {
      * performance negatively.
      */
     TRACE("Enabling vertex texture coord fixes in vertex shaders\n");
-    gl_info->set_texcoord_w = TRUE;
+    gl_info->quirks |= WINED3D_QUIRK_SET_TEXCOORD_W;
 }
 
 static void quirk_clip_varying(WineD3D_GL_Info *gl_info) {
-    gl_info->glsl_clip_varying = TRUE;
+    gl_info->quirks |= WINED3D_QUIRK_GLSL_CLIP_VARYING;
 }
 
 struct driver_quirk

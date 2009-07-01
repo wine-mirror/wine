@@ -43,6 +43,11 @@
 #include "wine/list.h"
 #include "wine/rbtree.h"
 
+/* Driver quirks */
+#define WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT       0x00000001
+#define WINED3D_QUIRK_SET_TEXCOORD_W            0x00000002
+#define WINED3D_QUIRK_GLSL_CLIP_VARYING         0x00000004
+
 /* Texture format fixups */
 
 enum fixup_channel_source

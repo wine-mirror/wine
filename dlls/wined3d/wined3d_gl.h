@@ -4000,10 +4000,9 @@ typedef struct _WineD3D_GL_Info {
   GL_VSVersion vs_nv_version;
   GL_VSVersion vs_ati_version;
 
-  BOOL arb_vs_offset_limit;
-  BOOL set_texcoord_w;
   DWORD reserved_glsl_constants;
-  BOOL glsl_clip_varying;
+
+  DWORD quirks;
 
   BOOL supported[WINED3D_GL_EXT_COUNT];
 

@@ -49,9 +49,10 @@ static BOOL need_mova_const(IWineD3DBaseShader *shader, const WineD3D_GL_Info *g
 }
 
 static BOOL need_helper_const(const WineD3D_GL_Info *gl_info) {
-    if(!GL_SUPPORT(NV_VERTEX_PROGRAM)   || /* Need to init colors */
-       gl_info->arb_vs_offset_limit     || /* Have to init texcoords */
-       gl_info->set_texcoord_w) {          /* Load the immval offset */
+    if (!GL_SUPPORT(NV_VERTEX_PROGRAM) /* Need to init colors. */
+            || gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT /* Load the immval offset. */
+            || gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) /* Have to init texcoords. */
+    {
         return TRUE;
     }
     return FALSE;
@@ -3751,7 +3752,8 @@ static GLuint shader_arb_generate_vshader(IWineD3DVertexShaderImpl *This,
     if(!GL_SUPPORT(NV_VERTEX_PROGRAM)) {
         shader_addline(buffer, "MOV result.color.secondary, -helper_const.wwwy;\n");
 
-        if((GLINFO_LOCATION).set_texcoord_w && !device->frag_pipe->ffp_proj_control) {
+        if ((GLINFO_LOCATION).quirks & WINED3D_QUIRK_SET_TEXCOORD_W && !device->frag_pipe->ffp_proj_control)
+        {
             int i;
             for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
                 if(This->baseShader.reg_maps.texcoord_mask[i] != 0 &&

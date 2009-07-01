@@ -280,10 +280,10 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
 
     vshader_set_limits(This);
 
-    if(deviceImpl->vs_selected_mode == SHADER_ARB &&
-       (GLINFO_LOCATION).arb_vs_offset_limit      &&
-       This->min_rel_offset <= This->max_rel_offset) {
-
+    if (deviceImpl->vs_selected_mode == SHADER_ARB
+            && ((GLINFO_LOCATION).quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT)
+            && This->min_rel_offset <= This->max_rel_offset)
+    {
         if(This->max_rel_offset - This->min_rel_offset > 127) {
             FIXME("The difference between the minimum and maximum relative offset is > 127\n");
             FIXME("Which this OpenGL implementation does not support. Try using GLSL\n");

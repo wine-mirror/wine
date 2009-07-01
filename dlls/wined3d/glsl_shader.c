@@ -776,7 +776,7 @@ static int vec4_varyings(DWORD shader_major, const WineD3D_GL_Info *gl_info)
     if(shader_major > 3) return ret;
 
     /* 3.0 shaders may need an extra varying for the clip coord on some cards(mostly dx10 ones) */
-    if(gl_info->glsl_clip_varying) ret -= 1;
+    if (gl_info->quirks & WINED3D_QUIRK_GLSL_CLIP_VARYING) ret -= 1;
     return ret;
 }
 
@@ -3529,8 +3529,9 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
          * Take care about the texcoord .w fixup though if we're using the fixed function fragment pipeline
          */
         device = (IWineD3DDeviceImpl *) vs->baseShader.device;
-        if((GLINFO_LOCATION).set_texcoord_w && ps_major == 0 && vs_major > 0 &&
-            !device->frag_pipe->ffp_proj_control) {
+        if (((GLINFO_LOCATION).quirks & WINED3D_QUIRK_SET_TEXCOORD_W)
+                && ps_major == 0 && vs_major > 0 && !device->frag_pipe->ffp_proj_control)
+        {
             shader_addline(&buffer, "void order_ps_input() {\n");
             for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
                 if(vs->baseShader.reg_maps.texcoord_mask[i] != 0 &&
@@ -3575,7 +3576,8 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
             {
                 if (semantic_idx < 8)
                 {
-                    if (!(GLINFO_LOCATION).set_texcoord_w || ps_major > 0) write_mask |= WINED3DSP_WRITEMASK_3;
+                    if (!((GLINFO_LOCATION).quirks & WINED3D_QUIRK_SET_TEXCOORD_W) || ps_major > 0)
+                        write_mask |= WINED3DSP_WRITEMASK_3;
 
                     shader_addline(&buffer, "gl_TexCoord[%u]%s = OUT[%u]%s;\n",
                             semantic_idx, reg_mask, i, reg_mask);
