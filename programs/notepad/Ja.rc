@@ -56,6 +56,7 @@ POPUP "編集(&E)" {
 POPUP "検索(&S)" {
   MENUITEM "検索(&S)...\tCtrl+F",   CMD_SEARCH
   MENUITEM "次を検索(&S)\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "置き換える(&R)...\tCtrl+H",  CMD_REPLACE
  }
 POPUP "ヘルプ(&H)" {
   MENUITEM "目次(&C)",         CMD_HELP_CONTENTS
