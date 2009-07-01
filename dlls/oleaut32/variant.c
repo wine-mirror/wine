@@ -588,7 +588,7 @@ void WINAPI VariantInit(VARIANTARG* pVarg)
  *
  * RETURNS
  *  Success: S_OK. Any previous value in pVarg is freed and its type is set to VT_EMPTY.
- *  Failure: DISP_E_BADVARTYPE, if the variant is a not a valid variant type.
+ *  Failure: DISP_E_BADVARTYPE, if the variant is not a valid variant type.
  */
 HRESULT WINAPI VariantClear(VARIANTARG* pVarg)
 {
