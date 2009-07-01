@@ -3988,6 +3988,7 @@ typedef struct _WineD3D_GL_Info {
   unsigned vs_arb_max_instructions;
   unsigned vs_arb_max_temps;
   unsigned ps_arb_constantsF;
+  unsigned ps_arb_max_local_constants;
   unsigned ps_arb_max_instructions;
   unsigned ps_arb_max_temps;
   unsigned vs_glsl_constantsF;

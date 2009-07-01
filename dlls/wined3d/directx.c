@@ -719,6 +719,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     gl_info->ps_glsl_constantsF = 0;
     gl_info->vs_arb_constantsF = 0;
     gl_info->ps_arb_constantsF = 0;
+    gl_info->ps_arb_max_local_constants = 0;
 
     /* Retrieve opengl defaults */
     glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
@@ -931,6 +932,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
             gl_info->ps_arb_constantsF = gl_max;
             TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM float constants: %d\n", gl_info->ps_arb_constantsF);
+            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &gl_max));
+            gl_info->ps_arb_max_local_constants = gl_max;
+            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM local float constants: %d\n", gl_info->ps_arb_max_local_constants);
             GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
             gl_info->ps_arb_max_temps = gl_max;
             TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native temporaries: %d\n", gl_info->ps_arb_max_temps);
