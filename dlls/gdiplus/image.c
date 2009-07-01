@@ -449,7 +449,7 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
 {
     FIXME("stub\n");
 
-    hbmReturn = NULL;
+    if (hbmReturn) *hbmReturn = NULL;
 
     return NotImplemented;
 }
