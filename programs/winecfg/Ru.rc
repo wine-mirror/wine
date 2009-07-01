@@ -21,6 +21,8 @@
  *
  */
 
+#include "resource.h"
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
                                                                                 
 IDR_WINECFG MENU DISCARDABLE

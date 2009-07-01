@@ -22,6 +22,8 @@
  *
  */
 
+#include "resource.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -327,5 +329,3 @@ BEGIN
     IDC_SYSPARAMS_MENU_HILIGHT      "Menu Highlight"
     IDC_SYSPARAMS_MENUBAR           "メニュー バー"
 END
-
-#pragma code_page(default)

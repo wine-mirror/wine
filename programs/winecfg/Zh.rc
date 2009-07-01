@@ -21,6 +21,8 @@
  *
  */
 
+#include "resource.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -594,5 +596,3 @@ BEGIN
     IDC_SYSPARAMS_INACTIVE_TITLE    "非當前標題欄"
     IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "非當前標題欄文字"
 END
-
-#pragma code_page(default)

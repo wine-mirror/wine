@@ -20,6 +20,8 @@
  *
  */
 
+#include "resource.h"
+
 LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
@@ -324,5 +326,3 @@ BEGIN
     IDC_SYSPARAMS_MENU_HILIGHT      "Evidențiere meniu"
     IDC_SYSPARAMS_MENUBAR           "Bară de meniu"
 END
-
-#pragma code_page(default)

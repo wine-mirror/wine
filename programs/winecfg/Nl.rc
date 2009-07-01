@@ -22,6 +22,8 @@
  *
  */
 
+#include "resource.h"
+
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
                                                                                 
 IDR_WINECFG MENU DISCARDABLE

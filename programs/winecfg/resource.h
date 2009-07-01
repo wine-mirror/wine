@@ -23,6 +23,10 @@
  *
  */
 
+#include <windef.h>
+#include <winuser.h>
+#include <commctrl.h>
+
 #define IDC_STATIC                     -1
 #define IDS_TAB_APPLICATIONS            2
 #define IDS_TAB_DLLS                    3

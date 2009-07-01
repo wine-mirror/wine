@@ -20,6 +20,8 @@
  *
  */
 
+#include "resource.h"
+
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
 IDD_ABOUTCFG DIALOGEX 0, 0, 260, 270

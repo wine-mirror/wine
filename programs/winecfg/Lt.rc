@@ -20,6 +20,8 @@
  *
  */
 
+#include "resource.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -325,5 +327,3 @@ BEGIN
     IDC_SYSPARAMS_MENU_HILIGHT      "Meniu paryškinimas"
     IDC_SYSPARAMS_MENUBAR           "Meniu juosta"
 END
-
-#pragma code_page(default)
