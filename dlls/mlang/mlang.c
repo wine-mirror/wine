@@ -3125,8 +3125,10 @@ static HRESULT WINAPI fnIMultiLanguage2_IsCodePageInstallable(
     IMultiLanguage3* iface,
     UINT uiCodePage)
 {
-    FIXME("%u\n", uiCodePage);
-    return E_NOTIMPL;
+    TRACE("%u\n", uiCodePage);
+
+    /* FIXME: the installable set is usually larger than the set of valid codepages */
+    return IMultiLanguage2_ValidateCodePageEx(iface, uiCodePage, NULL, CPIOD_PEEK);
 }
 
 static HRESULT WINAPI fnIMultiLanguage2_SetMimeDBSource(
