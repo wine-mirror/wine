@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
 #pragma code_page(65001)
 
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
@@ -53,5 +55,3 @@ BEGIN
     IDS_INVALID_PARAMS   "Interne Fehler - ungültige Parameter empfangen"
     IDS_UNIDENTIFIED     "(unbekannt)"
 END
-
-#pragma code_page(default)
