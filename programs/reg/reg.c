@@ -147,14 +147,14 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     if (key_name[0]=='\\' && key_name[1]=='\\')
     {
         reg_message(STRING_NO_REMOTE);
-        return 0;
+        return 1;
     }
 
     p = strchrW(key_name,'\\');
     if (!p)
     {
         reg_message(STRING_INVALID_KEY);
-        return 0;
+        return 1;
     }
     p++;
 
@@ -162,13 +162,13 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     if (!root)
     {
         reg_message(STRING_INVALID_KEY);
-        return 0;
+        return 1;
     }
 
     if(RegCreateKeyW(root,p,&subkey)!=ERROR_SUCCESS)
     {
         reg_message(STRING_INVALID_KEY);
-        return 0;
+        return 1;
     }
 
     if (value_name || data)
@@ -190,7 +190,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         {
             RegCloseKey(subkey);
             reg_message(STRING_INVALID_CMDLINE);
-            return 0;
+            return 1;
         }
 
         if (data)
@@ -203,7 +203,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     RegCloseKey(subkey);
     reg_message(STRING_SUCCESS);
 
-    return 1;
+    return 0;
 }
 
 static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
@@ -220,14 +220,14 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     if (key_name[0]=='\\' && key_name[1]=='\\')
     {
         reg_message(STRING_NO_REMOTE);
-        return 0;
+        return 1;
     }
 
     p = strchrW(key_name,'\\');
     if (!p)
     {
         reg_message(STRING_INVALID_KEY);
-        return 0;
+        return 1;
     }
     p++;
 
@@ -235,19 +235,19 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     if (!root)
     {
         reg_message(STRING_INVALID_KEY);
-        return 0;
+        return 1;
     }
 
     if (value_name && value_empty)
     {
         reg_message(STRING_INVALID_CMDLINE);
-        return 0;
+        return 1;
     }
 
     if (value_empty && value_all)
     {
         reg_message(STRING_INVALID_CMDLINE);
-        return 0;
+        return 1;
     }
 
     if (!force)
@@ -260,16 +260,16 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         if (RegDeleteTreeW(root,p)!=ERROR_SUCCESS)
         {
             reg_message(STRING_CANNOT_FIND);
-            return 0;
+            return 1;
         }
         reg_message(STRING_SUCCESS);
-        return 1;
+        return 0;
     }
 
     if(RegOpenKeyW(root,p,&subkey)!=ERROR_SUCCESS)
     {
         reg_message(STRING_CANNOT_FIND);
-        return 0;
+        return 1;
     }
 
     if (value_all)
@@ -283,7 +283,7 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         {
             RegCloseKey(subkey);
             reg_message(STRING_INVALID_CMDLINE);
-            return 0;
+            return 1;
         }
 
         rc = RegQueryInfoKeyW(subkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -292,7 +292,7 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         {
             /* FIXME: failure */
             RegCloseKey(subkey);
-            return 0;
+            return 1;
         }
         maxValue++;
         szValue = HeapAlloc(GetProcessHeap(),0,maxValue*sizeof(WCHAR));
@@ -320,7 +320,7 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         {
             RegCloseKey(subkey);
             reg_message(STRING_CANNOT_FIND);
-            return 0;
+            return 1;
         }
     }
     else if (value_empty)
@@ -330,7 +330,7 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 
     RegCloseKey(subkey);
     reg_message(STRING_SUCCESS);
-    return 1;
+    return 0;
 }
 
 static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
