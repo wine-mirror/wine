@@ -11,7 +11,27 @@ C_SRCS = \
 	oledlg_main.c \
 	pastespl.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	oledlg_Cs.rc \
+	oledlg_Da.rc \
+	oledlg_De.rc \
+	oledlg_En.rc \
+	oledlg_Es.rc \
+	oledlg_Fr.rc \
+	oledlg_Hu.rc \
+	oledlg_It.rc \
+	oledlg_Ja.rc \
+	oledlg_Ko.rc \
+	oledlg_Lt.rc \
+	oledlg_Nl.rc \
+	oledlg_No.rc \
+	oledlg_Pl.rc \
+	oledlg_Pt.rc \
+	oledlg_Ru.rc \
+	oledlg_Si.rc \
+	oledlg_Sv.rc \
+	oledlg_Tr.rc \
+	oledlg_Zh.rc
 
 @MAKE_DLL_RULES@
 
