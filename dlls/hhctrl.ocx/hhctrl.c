@@ -119,11 +119,6 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
             filename = chm_file;
             index += 2; /* advance beyond "::" for calling NavigateToChm() later */
         }
-        else
-        {
-            if (command!=HH_DISPLAY_SEARCH) /* FIXME - use HH_FTS_QUERYW structure in data */
-                index = (const WCHAR*)data;
-        }
 
         info = CreateHelpViewer(filename);
         if(!info)
