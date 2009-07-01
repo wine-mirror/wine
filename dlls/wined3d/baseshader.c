@@ -402,7 +402,6 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
     struct wined3d_shader_version shader_version;
     unsigned int cur_loop_depth = 0, max_loop_depth = 0;
     const DWORD* pToken = byte_code;
-    char pshader;
 
     /* There are some minor differences between pixel and vertex shaders */
 
@@ -417,7 +416,6 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
 
     fe->shader_read_header(fe_data, &pToken, &shader_version);
     reg_maps->shader_version = shader_version;
-    pshader = shader_is_pshader_version(shader_version.type);
 
     reg_maps->constf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                  sizeof(*reg_maps->constf) * ((constf_size + 31) / 32));
@@ -503,7 +501,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             pToken += 4;
 
             /* In pixel shader 1.X shaders, the constants are clamped between [-1;1] */
-            if (shader_version.major == 1 && pshader)
+            if (shader_version.major == 1 && shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
             {
                 float *value = (float *) lconst->value;
                 if(value[0] < -1.0) value[0] = -1.0;
@@ -613,12 +611,14 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 /* WINED3DSPR_TEXCRDOUT is the same as WINED3DSPR_OUTPUT. _OUTPUT can be > MAX_REG_TEXCRD and
                  * is used in >= 3.0 shaders. Filter 3.0 shaders to prevent overflows, and also filter pixel
                  * shaders because TECRDOUT isn't used in them, but future register types might cause issues */
-                if (!pshader && shader_version.major < 3 && dst_param.reg.type == WINED3DSPR_TEXCRDOUT)
+                if (shader_version.type == WINED3D_SHADER_TYPE_VERTEX && shader_version.major < 3
+                        && dst_param.reg.type == WINED3DSPR_TEXCRDOUT)
                 {
                     reg_maps->texcoord_mask[dst_param.reg.idx] |= dst_param.write_mask;
                 }
 
-                if (pshader && dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
+                if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL
+                        && dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
                 {
                     /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
                      * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
