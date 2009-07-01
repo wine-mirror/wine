@@ -9,7 +9,24 @@ IMPORTS   = comctl32 user32 advapi32 kernel32
 C_SRCS = \
 	credui_main.c
 
-RC_SRCS = credui.rc
+RC_SRCS = \
+	credui.rc \
+	credui_Da.rc \
+	credui_De.rc \
+	credui_En.rc \
+	credui_Es.rc \
+	credui_Fr.rc \
+	credui_Ko.rc \
+	credui_Lt.rc \
+	credui_Nl.rc \
+	credui_No.rc \
+	credui_Pl.rc \
+	credui_Pt.rc \
+	credui_Ro.rc \
+	credui_Ru.rc \
+	credui_Si.rc \
+	credui_Sv.rc \
+	credui_Zh.rc
 
 @MAKE_DLL_RULES@
 
