@@ -1304,12 +1304,18 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline, const WCHA
 
     if (!env) env = GetEnvironmentStringsW();
 
-    if (pipe(fd) == -1)
+#ifdef HAVE_PIPE2
+    if (pipe2( fd, O_CLOEXEC ) == -1)
+#endif
     {
-        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
-        return -1;
+        if (pipe(fd) == -1)
+        {
+            SetLastError( ERROR_TOO_MANY_OPEN_FILES );
+            return -1;
+        }
+        fcntl( fd[0], F_SETFD, FD_CLOEXEC );
+        fcntl( fd[1], F_SETFD, FD_CLOEXEC );
     }
-    fcntl( fd[1], F_SETFD, 1 );  /* set close on exec */
 
     if (!(flags & (CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE | DETACHED_PROCESS)))
     {
