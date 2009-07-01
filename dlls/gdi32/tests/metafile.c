@@ -2348,7 +2348,9 @@ static void test_GetWinMetaFileBits(void)
             if(rec_num == mfcomment_chunks - 1)
                 this_chunk_size = emf_size - rec_num * chunk_size;
 
-            ok(rec->rdFunction == META_ESCAPE, "got %04x\n", rec->rdFunction);
+            ok(rec->rdSize == (this_chunk_size + 44) / 2, "%04x: got %04x expected %04x\n", rec_num, rec->rdSize, (this_chunk_size + 44) / 2);
+            ok(rec->rdFunction == META_ESCAPE, "%04x: got %04x\n", rec_num, rec->rdFunction);
+            if(rec->rdSize < (this_chunk_size + 44) / 2) break;
             ok(rec->rdParm[0] == MFCOMMENT, "got %04x\n", rec->rdParm[0]);
             ok(rec->rdParm[1] == this_chunk_size + 34, "got %04x %x\n", rec->rdParm[1], emf_size + 34);
             ok(rec->rdParm[2] == 0x4d57, "got %04x\n", rec->rdParm[2]); /* WMFC */
