@@ -8,7 +8,19 @@ IMPORTS   = netapi32 user32 advapi32 kernel32
 
 C_SRCS = net.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Fr.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ru.rc \
+	Si.rc
 
 @MAKE_PROG_RULES@
 
