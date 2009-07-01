@@ -1142,6 +1142,7 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     SHADER_BUFFER *buffer = ins->ctx->buffer;
     DWORD sampler_type = ins->ctx->reg_maps->sampler_type[sampler_idx];
     const char *tex_type;
+    BOOL np2_fixup = FALSE;
     IWineD3DBaseShaderImpl *This = (IWineD3DBaseShaderImpl *)ins->ctx->shader;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
@@ -1165,9 +1166,10 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             }
             if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
             {
-                if(priv->cur_ps_args->super.np2_fixup & (1 << sampler_idx))
+                if (priv->cur_np2fixup_info->super.active & (1 << sampler_idx))
                 {
-                    FIXME("NP2 texcoord fixup is currently not implemented in ARB mode (use GLSL instead).\n");
+                    if (flags) FIXME("Only ordinary sampling from NP2 textures is supported.\n");
+                    else np2_fixup = TRUE;
                 }
             }
             break;
@@ -1224,7 +1226,16 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
     }
     else
     {
-        shader_addline(buffer, "TEX%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg, sampler_idx, tex_type);
+        if (np2_fixup)
+        {
+            const unsigned char idx = priv->cur_np2fixup_info->super.idx[sampler_idx];
+            shader_addline(buffer, "MUL TA, np2fixup[%u].%s, %s;\n", idx >> 1,
+                           (idx % 2) ? "zwxy" : "xyzw", coord_reg);
+
+            shader_addline(buffer, "TEX%s %s, TA, texture[%u], %s;\n", mod, dst_str, sampler_idx, tex_type);
+        }
+        else
+            shader_addline(buffer, "TEX%s %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg, sampler_idx, tex_type);
     }
 
     if (pshader)
