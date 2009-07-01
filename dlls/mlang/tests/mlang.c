@@ -1957,6 +1957,23 @@ static void test_GetFontUnicodeRanges(IMLangFontLink2 *font_link)
     DeleteDC(hdc);
 }
 
+static void test_IsCodePageInstallable(IMultiLanguage2 *ml2)
+{
+    UINT i;
+    HRESULT hr;
+
+    for (i = 0; i < 0xffff; i++)
+    {
+        hr = IMultiLanguage2_IsCodePageInstallable(ml2, i);
+
+        /* it would be better to use IMultiLanguage2_ValidateCodePageEx here but that brings
+         * up an installation dialog on some platforms, even when specifying CPIOD_PEEK.
+         */
+        if (IsValidCodePage(i))
+            ok(hr == S_OK, "code page %u is valid but not installable 0x%08x\n", i, hr);
+    }
+}
+
 START_TEST(mlang)
 {
     IMultiLanguage  *iML = NULL;
@@ -2016,6 +2033,7 @@ START_TEST(mlang)
 
     test_multibyte_to_unicode_translations(iML2);
     test_IMultiLanguage2_ConvertStringFromUnicode(iML2);
+    test_IsCodePageInstallable(iML2);
 
     IMultiLanguage2_Release(iML2);
 
