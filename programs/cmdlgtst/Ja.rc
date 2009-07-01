@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "cmdlgtst.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -296,5 +298,3 @@ BEGIN
   PUSHBUTTON "キャンセル", IDCANCEL, 126, 220, 50, 14
   PUSHBUTTON "プリンタ(&R)...", psh3, 184, 220, 48, 14
 END
-
-#pragma code_page(default)

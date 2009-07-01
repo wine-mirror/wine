@@ -16,6 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windef.h>
+#include <winuser.h>
+#include <dlgs.h>
+
 #define CM_U_COLOR	105
 #define CM_U_SAVE	104
 #define CM_U_OPEN 	107
