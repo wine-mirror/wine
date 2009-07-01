@@ -265,15 +265,16 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 
     if (format)
     {
-        cmdline = HeapAlloc(GetProcessHeap(), 0, strlen(format) + 2*20);
-        sprintf(cmdline, format, GetCurrentProcessId(), hEvent);
+        size_t format_size = strlen(format) + 2*20;
+        cmdline = HeapAlloc(GetProcessHeap(), 0, format_size);
+        snprintf(cmdline, format_size, format, (long)GetCurrentProcessId(), (long)HandleToLong(hEvent));
         HeapFree(GetProcessHeap(), 0, format);
     }
     else
     {
         cmdline = HeapAlloc(GetProcessHeap(), 0, 80);
-        sprintf(cmdline, "winedbg --auto %d %ld",
-                GetCurrentProcessId(), (ULONG_PTR)hEvent);
+        snprintf(cmdline, 80, "winedbg --auto %ld %ld", /* as in tools/wine.inf */
+                 (long)GetCurrentProcessId(), (long)HandleToLong(hEvent));
     }
 
     if (!bAuto)
