@@ -41,10 +41,10 @@ FONT 8, "MS Shell Dlg"
  COMBOBOX cmb1, 6, 114, 90, 36, CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  LTEXT "&Lecteurs :", 1091, 110, 104, 92, 9
  COMBOBOX cmb2, 110, 114, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
- DEFPUSHBUTTON "OK", 1, 208, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "Ouvrir", 1, 208, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Annuler", 2, 208, 24, 56, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Aid&e", pshHelp, 208, 46, 56, 14, WS_GROUP | WS_TABSTOP
- CHECKBOX "Lecture seule", chx1, 208, 68, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
+ CHECKBOX "&Lecture seule", chx1, 208, 68, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
 }
 
 
@@ -63,7 +63,7 @@ FONT 8, "MS Shell Dlg"
  COMBOBOX cmb1, 6, 114, 90, 36, CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_BORDER | WS_VSCROLL | WS_TABSTOP
  LTEXT "&Lecteurs:", 1091, 110, 104, 92, 9
  COMBOBOX cmb2, 110, 114, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
- DEFPUSHBUTTON "OK", 1, 208, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "Enregistrer", 1, 208, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Annuler", 2, 208, 24, 56, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Aid&e", pshHelp, 208, 46, 56, 14, WS_GROUP | WS_TABSTOP
  CHECKBOX "Lecture seule", chx1, 208, 68, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
@@ -81,14 +81,14 @@ FONT 8, "MS Shell Dlg"
  RADIOBUTTON "&Tout", rad1, 16, 45, 60, 12
  RADIOBUTTON "&Sélection", rad2, 16, 60, 60, 12
  RADIOBUTTON "&Pages", rad3, 16, 75, 60, 12
- DEFPUSHBUTTON "OK", 1, 206, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "Imprimer", 1, 206, 6, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Annuler", 2, 206, 24, 56, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "&Configurer...", psh1, 206, 46, 56, 14, WS_GROUP | WS_TABSTOP
  LTEXT "&De:", 1090, 60, 80, 30, 9
- LTEXT "&A:", 1091, 120, 80, 30, 9
+ LTEXT "&À:", 1091, 120, 80, 30, 9
  LTEXT "&Qualité d'impression:", 1092, 6, 100, 76, 9
  COMBOBOX cmb1, 80, 100, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
- CHECKBOX "&Fichier d'impression", chx1, 20, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
+ CHECKBOX "Imprimer dans un &fichier", chx1, 20, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
  CHECKBOX "Copies t&riées", chx2, 160, 100, 50, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
 }
 
@@ -108,7 +108,7 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "&Options...", psh1, 206, 46, 56, 14, WS_GROUP | WS_TABSTOP
  GROUPBOX "Orientation", grp2, 6, 85, 100, 50, BS_GROUPBOX
  RADIOBUTTON "&Portrait", rad3, 50, 100, 40, 12
- RADIOBUTTON "Paysag&e", rad4, 50, 115, 40, 12
+ RADIOBUTTON "Pa&ysage", rad4, 50, 115, 40, 12
  ICON "LANDSCAP", stc10, 10, 95, 32, 32
  ICON "PORTRAIT", stc11, 10, 95, 32, 32
  GROUPBOX "Papier", grp3, 120, 85, 180, 50, BS_GROUPBOX
@@ -121,16 +121,16 @@ FONT 8, "MS Shell Dlg"
 
 CHOOSE_FONT DIALOG DISCARDABLE  13, 54, 264, 147
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Polices"
+CAPTION "Police"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT           "&Police:",stc1 ,6,3,40,9
+    LTEXT           "&Police :",stc1 ,6,3,40,9
     COMBOBOX        cmb1 ,6,13,94,54,  CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
                     CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE
-    LTEXT           "St&yle de police:",stc2 ,108,3,44,9
+    LTEXT           "St&yle :",stc2 ,108,3,44,9
     COMBOBOX        cmb2,108,13,64,54, CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
                     WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE
-    LTEXT           "&Taille:",stc3,179,3,30,9
+    LTEXT           "&Taille :",stc3,179,3,30,9
     COMBOBOX        cmb3,179,13,32,54, CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | CBS_DISABLENOSCROLL |
                     WS_VSCROLL | WS_TABSTOP | CBS_SIMPLE | CBS_SORT
     DEFPUSHBUTTON   "OK",IDOK,218,6,40,14,WS_GROUP
@@ -140,12 +140,12 @@ FONT 8, "MS Shell Dlg"
     GROUPBOX        "Effets",grp1,6,72,84,34,WS_GROUP
     CHECKBOX        "&Barré", chx1, 10,82,50,10, BS_AUTOCHECKBOX | WS_TABSTOP
     CHECKBOX        "&Souligné", chx2, 10,94,50,10, BS_AUTOCHECKBOX
-    LTEXT           "&Couleur:", stc4 ,6,110,30,9
+    LTEXT           "&Couleur :", stc4 ,6,110,30,9
     COMBOBOX        cmb4,6,120,84,100,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS |
                     CBS_AUTOHSCROLL |  WS_BORDER | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Exemple",grp2,98,72,120,36,WS_GROUP
+    GROUPBOX        "Aperçu",grp2,98,72,120,36,WS_GROUP
     CTEXT           "AaBbYyZz",stc5,103,80,109,24,SS_NOPREFIX | NOT WS_VISIBLE
-    LTEXT           "Scr&ipt (translate):",stc7 ,98,114,80,9
+    LTEXT           "Sc&ript :",stc7 ,98,114,80,9
     COMBOBOX        cmb5,98,124,120,90,CBS_DROPDOWNLIST | CBS_HASSTRINGS |
 		    CBS_AUTOHSCROLL |   WS_VSCROLL | WS_TABSTOP
 }
@@ -156,8 +156,8 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Couleurs"
 FONT 8, "MS Shell Dlg"
 {
- LTEXT "Couleurs de &base :",   1088, 4,    4,  140, 10
- LTEXT "&Couleurs personnalisées :",  1089, 4,   106, 140, 10
+ LTEXT "Couleurs de base :",   1088, 4,    4,  140, 10
+ LTEXT "Couleurs personnalisées :",  1089, 4,   106, 140, 10
  LTEXT "Couleur |  &Uni",  1090, 150, 151,  48, 10
  LTEXT   "&Rouge :", 726 /*1094*/,249,126,24,10
  EDITTEXT 706, 275,124,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
@@ -167,7 +167,7 @@ FONT 8, "MS Shell Dlg"
  EDITTEXT 708, 275,152,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
  LTEXT  "&Teinte :" ,723 /*1091*/,202,126,22,10
  EDITTEXT 703, 226,124,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
- LTEXT  "&Sat. :" ,724 /*1092*/,202,140,22,10
+ LTEXT  "&Satur. :" ,724 /*1092*/,202,140,22,10
  EDITTEXT 704, 226,138,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
  LTEXT  "&Lum. :" ,725 /*1093*/,202,154,22,10
  EDITTEXT 705, 226,152,21,12, WS_BORDER | WS_GROUP | WS_TABSTOP
@@ -179,8 +179,8 @@ FONT 8, "MS Shell Dlg"
  DEFPUSHBUTTON "Ok",  1,  4, 166, 44, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Annuler", 2, 52, 166, 44, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Aid&e", pshHelp,100,166, 44, 14
- PUSHBUTTON "A&jouter couleur personnalisées", 712/*1024*/, 152, 166, 142, 14, WS_GROUP | WS_TABSTOP
- PUSHBUTTON "&Définir couleurs personnalisées >>", 719/*1025*/,   4, 150, 142, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Ajouter aux couleurs personnalisées", 712/*1024*/, 152, 166, 142, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Définir les couleurs personnalisées >>", 719/*1025*/,   4, 150, 142, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON  "&i",713,300,200,4,14   /* just a dummy:  'i' is  like  &i in "sol&id" */
 }
 
@@ -192,13 +192,13 @@ FONT 8, "MS Shell Dlg"
 {
  LTEXT "&Rechercher :", -1, 4, 8, 42, 8
  EDITTEXT edt1, 47, 7, 128, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
- CHECKBOX "M&ot seulement", chx1, 4, 26, 100, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- CHECKBOX "Respect des &majuscules/minuscules", chx2, 4, 42, 64, 12, BS_AUTOCHECKBOX | WS_TABSTOP
- GROUPBOX "Direction", grp1, 107, 26, 68, 28
- CONTROL "&Haut", rad1, "BUTTON", BS_AUTORADIOBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP, 111, 38, 20, 12
- CONTROL "&Bas", rad2, "BUTTON", BS_AUTORADIOBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 138, 38, 30, 12
+ CHECKBOX "Mots &entiers seulement", chx1, 4, 26, 100, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
+ CHECKBOX "Respecter la &casse", chx2, 4, 42, 74, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+ GROUPBOX "Direction", grp1, 103, 26, 72, 28
+ CONTROL "&Haut", rad1, "BUTTON", BS_AUTORADIOBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP | WS_TABSTOP, 108, 38, 30, 12
+ CONTROL "&Bas", rad2, "BUTTON", BS_AUTORADIOBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 140, 38, 30, 12
 
- DEFPUSHBUTTON "&Poursuivre", 1, 182, 5, 50, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "&Suivant", 1, 182, 5, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Annuler", 2, 182, 23, 50, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Aid&e", pshHelp, 182, 45, 50, 14, WS_GROUP | WS_TABSTOP
 }
@@ -210,17 +210,17 @@ CAPTION "Remplacer"
 FONT 8, "MS Shell Dlg"
 {
  LTEXT "&Rechercher :", -1, 4, 9, 48, 8
- EDITTEXT edt1, 54, 7, 114, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
+ EDITTEXT edt1, 54, 7, 108, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
  LTEXT "R&emplacer par :", -1, 4, 26, 48, 8
- EDITTEXT edt2, 54, 24, 114, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
- CHECKBOX "M&ot seulement", chx1, 5, 46, 104, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
- CHECKBOX "Respect des &majuscules/minuscules", chx2, 5, 62, 59, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+ EDITTEXT edt2, 54, 24, 108, 12, ES_AUTOHSCROLL | WS_BORDER | WS_GROUP | WS_TABSTOP
+ CHECKBOX "Mots &entiers seulement", chx1, 5, 46, 104, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
+ CHECKBOX "Respecter la &casse", chx2, 5, 62, 74, 12, BS_AUTOCHECKBOX | WS_TABSTOP
 
- DEFPUSHBUTTON "&Poursuivre", 1, 174, 4, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "Rempla&cer", psh1, 174, 21, 50, 14, WS_GROUP | WS_TABSTOP
- PUSHBUTTON "Remplacer &tout", psh2, 174, 38, 50, 14, WS_GROUP | WS_TABSTOP
- PUSHBUTTON "&Annuler", IDCANCEL, 174, 55, 50, 14, WS_GROUP | WS_TABSTOP
- PUSHBUTTON "Aid&e", pshHelp, 174, 75, 50, 14, WS_GROUP | WS_TABSTOP
+ DEFPUSHBUTTON "&Suivant", 1, 168, 4, 56, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Remplacer", psh1, 168, 21, 56, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Remplacer &tout", psh2, 168, 38, 56, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Annuler", IDCANCEL, 168, 55, 56, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "Aid&e", pshHelp, 168, 75, 56, 14, WS_GROUP | WS_TABSTOP
 }
 
 
@@ -236,17 +236,17 @@ FONT 8, "MS Shell Dlg"
 
     GROUPBOX        "Imprimante",     grp4,   8,  4, 272,84, WS_GROUP
     CONTROL         "Imprimer dans un fichier", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
-    PUSHBUTTON      "Propriétés",     psh2, 212, 17,  60,14, WS_GROUP
+    PUSHBUTTON      "&Propriétés",     psh2, 212, 17,  60,14, WS_GROUP
     LTEXT           "&Nom :",          stc6,  16, 20,  36,8
     COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
     LTEXT           "État :",          stc8,  16, 36,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "État factice",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Type :",          stc7,  16, 48,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Type factice",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Emplacement :",   stc10, 16, 60,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Emplacement factice", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Commentaire:",   stc9,  16, 72,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Remark",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Remarque factice",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "Copies",         grp2, 160, 92, 120,64, WS_GROUP
     LTEXT           "Nombre de copies:",stc5,168,108,68,8
@@ -254,10 +254,10 @@ FONT 8, "MS Shell Dlg"
     CONTROL         "Copies assemblées",chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
     EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
 
-    GROUPBOX        "Etendue de pages",  grp1,   8,92,  144,64, WS_GROUP
-    CONTROL         "Toutes",         rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
-    CONTROL         "Pages",          rad3,"Button",BS_AUTORADIOBUTTON,16,122,36,12
-    CONTROL         "Selection",      rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
+    GROUPBOX        "Étendue",  grp1,   8,92,  144,64, WS_GROUP
+    CONTROL         "&Tout",         rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
+    CONTROL         "&Pages",          rad3,"Button",BS_AUTORADIOBUTTON,16,122,36,12
+    CONTROL         "&Sélection",      rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
     EDITTEXT                          edt1,  74,122,  26,12, WS_GROUP | ES_NUMBER
     EDITTEXT                          edt2, 118,122,  26,12, WS_GROUP | ES_NUMBER
     RTEXT           "&de :",           stc2,  52,124,  20,8
@@ -340,13 +340,13 @@ FONT 8, "MS Shell Dlg"
     LTEXT	"" , IDC_TOOLBARSTATIC, 181, 2, 102, 17, NOT WS_GROUP | NOT WS_VISIBLE
     LISTBOX	IDC_SHELLSTATIC,4,20,272,85, LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_MULTICOLUMN | WS_HSCROLL | NOT WS_VISIBLE
 
-    LTEXT	"&Nom du fichier :",IDC_FILENAMESTATIC,5,112,46,8, SS_NOTIFY
-    EDITTEXT	IDC_FILENAME,54,110,155,12,ES_AUTOHSCROLL
+    LTEXT	"&Nom du fichier",IDC_FILENAMESTATIC,5,112,50,8, SS_NOTIFY
+    EDITTEXT	IDC_FILENAME,59,110,155,12,ES_AUTOHSCROLL
 
-    LTEXT	"&Type du fichier",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
-    COMBOBOX	IDC_FILETYPE,54,126,155,53,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT	"Fichiers de &type",IDC_FILETYPESTATIC,5,128,52,8, SS_NOTIFY
+    COMBOBOX	IDC_FILETYPE,59,126,155,53,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL	"&Protection écriture",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
+    CONTROL	"&Lecture seule",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,59,145,100,10
 
     DEFPUSHBUTTON	"Ouvrir",		 IDOK,222,110,50,14
     PUSHBUTTON		"Annuler",		 IDCANCEL,222,128,50,14
@@ -359,7 +359,7 @@ STRINGTABLE DISCARDABLE
     IDS_DOCUMENTFOLDERS     "Répertoire documents"
     IDS_PERSONAL            "Mes documents"
     IDS_FAVORITES           "Mes favoris"
-    IDS_PATH                "Répertoire système"
+    IDS_PATH                "Chemin système (path)"
     IDS_DESKTOP             "Bureau"
     IDS_FONTS               "Polices"
     IDS_MYCOMPUTER          "Poste de travail"
@@ -403,11 +403,11 @@ Veuillez indiquer de nouvelles valeurs."
 Veuillez entrer un nombre et r&essayer."
     PD32_TOO_LARGE_COPIES                 "Votre imprimante ne peut gérer autant de copies.\n\
 Veuillez indiquer un nombre de copies entre 1 et %d."
-    PD32_PRINT_ERROR                      "Une erreur d'impression est intervenue."
+    PD32_PRINT_ERROR                      "Une erreur d'impression s'est produite."
     PD32_NO_DEFAULT_PRINTER               "Pas d'imprimante par défaut."
     PD32_CANT_FIND_PRINTER                "Impossible de trouver l'imprimante."
     PD32_OUT_OF_MEMORY                    "Pas assez de mémoire."
-    PD32_GENERIC_ERROR                    "Une erreur est intervenue."
+    PD32_GENERIC_ERROR                    "Une erreur s'est produite."
     PD32_DRIVER_UNKNOWN                   "Pilote d'imprimante inconnu."
     PD32_NO_DEVICES                       "Avant de pouvoir effectuer des opérations en relation avec l'impression \
 comme la configuration de l'imprimante ou l'impression d'un document, vous devez installer une imprimante. \
@@ -479,9 +479,9 @@ STRINGTABLE DISCARDABLE /* Color names */
 STRINGTABLE DISCARDABLE
 {
     IDS_FONT_SIZE   "Sélectionnez une taille de police entre %d et %d points."
-    IDS_SAVE_BUTTON "&Sauver"
-    IDS_SAVE_IN     "Sauver &dans :"
+    IDS_SAVE_BUTTON "&Enregistrer"
+    IDS_SAVE_IN     "Enregistrer &dans :"
     IDS_SAVE        "Enregistrer"
     IDS_SAVE_AS     "Enregistrer sous"
-    IDS_OPEN_FILE   "Ouvrir Fichier"
+    IDS_OPEN_FILE   "Ouvrir fichier"
 }
