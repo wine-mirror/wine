@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "notepad_res.h"
+
 #pragma code_page(65001)
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
@@ -119,5 +121,3 @@ STRING_OUT_OF_MEMORY,                   "Za dokončanje operacije je na voljo pr
 pomnilnika.\nZaprite enega ali več programov in poskusite znova."
 
 }
-
-#pragma code_page(default)

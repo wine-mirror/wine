@@ -19,6 +19,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windef.h>
+#include <winuser.h>
+
 #define MAIN_MENU               0x201
 #define DIALOG_PAGESETUP        0x202
 #define ID_ACCEL                0x203

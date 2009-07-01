@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "notepad_res.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -212,5 +214,3 @@ STRING_NOTSAVED,       "檔案 '%s'\n正文已更改\n\n是否儲存更改？"
 STRING_NOTFOUND,       "找不到: '%s'"
 STRING_OUT_OF_MEMORY,  "沒有足夠的內存來完成此項任務,\n請關閉一些程式後再試。"
 }
-
-#pragma code_page(default)
