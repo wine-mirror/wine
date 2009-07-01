@@ -329,8 +329,13 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
 {
     HRESULT hr;
     ULONG bytestoread, bytesread;
+    LARGE_INTEGER seek;
 
     if (This->initialized) return WINCODEC_ERR_WRONGSTATE;
+
+    seek.QuadPart = 0;
+    hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr)) return hr;
 
     hr = IStream_Read(stream, &This->bfh, sizeof(BITMAPFILEHEADER), &bytesread);
     if (FAILED(hr)) return hr;
@@ -483,8 +488,18 @@ static ULONG WINAPI BmpDecoder_Release(IWICBitmapDecoder *iface)
 static HRESULT WINAPI BmpDecoder_QueryCapability(IWICBitmapDecoder *iface, IStream *pIStream,
     DWORD *pdwCapability)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pIStream, pdwCapability);
-    return E_NOTIMPL;
+    HRESULT hr;
+    BmpDecoder *This = (BmpDecoder*)iface;
+
+    hr = BmpDecoder_ReadHeaders(This, pIStream);
+    if (FAILED(hr)) return hr;
+
+    if (This->read_data_func == BmpFrameDecode_ReadUnsupported)
+        *pdwCapability = 0;
+    else
+        *pdwCapability = WICBitmapDecoderCapabilityCanDecodeAllImages;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,

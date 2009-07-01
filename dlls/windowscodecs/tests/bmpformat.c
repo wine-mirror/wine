@@ -157,7 +157,7 @@ static void test_decode_24bpp(void)
 
             /* cannot querycapability after initialize */
             hr = IWICBitmapDecoder_QueryCapability(decoder, bmpstream, &capability);
-            todo_wine ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, hr=%x\n", hr);
+            ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, hr=%x\n", hr);
 
             hr = CoCreateInstance(&CLSID_WICBmpDecoder, NULL, CLSCTX_INPROC_SERVER,
                 &IID_IWICBitmapDecoder, (void**)&decoder2);
@@ -165,17 +165,17 @@ static void test_decode_24bpp(void)
             if (SUCCEEDED(hr))
             {
                 hr = IWICBitmapDecoder_QueryCapability(decoder2, bmpstream, &capability);
-                todo_wine ok(hr == S_OK, "QueryCapability failed, hr=%x\n", hr);
-                todo_wine ok(capability == (WICBitmapDecoderCapabilityCanDecodeAllImages),
+                ok(hr == S_OK, "QueryCapability failed, hr=%x\n", hr);
+                ok(capability == (WICBitmapDecoderCapabilityCanDecodeAllImages),
                     "unexpected capabilities: %x\n", capability);
 
                 /* cannot initialize after querycapability */
                 hr = IWICBitmapDecoder_Initialize(decoder2, bmpstream, WICDecodeMetadataCacheOnLoad);
-                todo_wine ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, hr=%x\n", hr);
+                ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, hr=%x\n", hr);
 
                 /* cannot querycapability twice */
                 hr = IWICBitmapDecoder_QueryCapability(decoder2, bmpstream, &capability);
-                todo_wine ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, hr=%x\n", hr);
+                ok(hr == WINCODEC_ERR_WRONGSTATE, "expected WINCODEC_ERR_WRONGSTATE, hr=%x\n", hr);
             }
 
             IStream_Release(bmpstream);
