@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wcmd.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -279,5 +281,3 @@ EXIT\t\tCMDを終了\n\n\
   WCMD_MOREPROMPT, "More? "
   WCMD_LINETOOLONG, "The input line is too long.\n"
 }
-
-#pragma code_page(default)

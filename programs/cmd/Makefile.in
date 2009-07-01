@@ -13,7 +13,23 @@ C_SRCS = \
 	directory.c \
 	wcmdmain.c
 
-RC_SRCS = wcmdrc.rc
+RC_SRCS = \
+	Cs.rc \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Es.rc \
+	Fr.rc \
+	Ja.rc \
+	Ko.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ru.rc \
+	Si.rc \
+	Tr.rc \
+	wcmdrc.rc
 
 SVG_SRCS = wcmd.svg
 
