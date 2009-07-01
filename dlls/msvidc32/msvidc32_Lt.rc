@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "msvidc32_private.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -26,5 +28,3 @@ STRINGTABLE DISCARDABLE
     IDS_NAME "MS-CRAM"
     IDS_DESCRIPTION "Wine Video 1 vaizdo kodekas"
 }
-
-#pragma code_page(default)
