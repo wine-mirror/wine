@@ -488,8 +488,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         return result.create_thread.status;
     }
 
-    if (pipe( request_pipe ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
-    fcntl( request_pipe[1], F_SETFD, 1 ); /* set close on exec flag */
+    if (server_pipe( request_pipe ) == -1) return STATUS_TOO_MANY_OPENED_FILES;
     wine_server_send_fd( request_pipe[0] );
 
     SERVER_START_REQ( new_thread )

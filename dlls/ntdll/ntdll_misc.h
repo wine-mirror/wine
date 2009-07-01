@@ -85,6 +85,7 @@ extern void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset
 extern int server_remove_fd_from_cache( HANDLE handle );
 extern int server_get_unix_fd( HANDLE handle, unsigned int access, int *unix_fd,
                                int *needs_close, enum server_fd_type *type, unsigned int *options );
+extern int server_pipe( int fd[2] );
 
 /* security descriptors */
 NTSTATUS NTDLL_create_struct_sd(PSECURITY_DESCRIPTOR nt_sd, struct security_descriptor **server_sd,

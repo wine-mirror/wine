@@ -1610,6 +1610,7 @@ AC_CHECK_FUNCS(\
 	memmove \
 	mmap \
 	pclose \
+	pipe2 \
 	poll \
 	popen \
 	prctl \
