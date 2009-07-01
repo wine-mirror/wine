@@ -423,6 +423,7 @@ CHMInfo *CloseCHM(CHMInfo *chm)
     heap_free(chm->defTitle);
     heap_free(chm->defTopic);
     heap_free(chm->defToc);
+    heap_free(chm->szFile);
     heap_free(chm);
 
     return NULL;

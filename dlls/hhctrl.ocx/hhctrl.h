@@ -69,7 +69,7 @@ typedef struct CHMInfo
 {
     IITStorage *pITStorage;
     IStorage *pStorage;
-    LPCWSTR szFile;
+    WCHAR *szFile;
 
     IStream *strings_stream;
     char **strings;
