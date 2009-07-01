@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -92,5 +94,3 @@ BEGIN
     LTEXT           "正在連接照相機... 請稍候",IDC_STATIC,128,58,
                     116,8
 END
-
-#pragma code_page(default)
