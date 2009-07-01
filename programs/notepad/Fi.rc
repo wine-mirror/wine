@@ -52,6 +52,7 @@ POPUP "&Muokkaa" {
 POPUP "&Etsi" {
   MENUITEM "Etsi...",		CMD_SEARCH
   MENUITEM "Etsi &seuraava\tF3",	CMD_SEARCH_NEXT
+  MENUITEM "&Korvaa...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Apua" {
   MENUITEM "&Sisältö",		CMD_HELP_CONTENTS
