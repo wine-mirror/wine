@@ -65,7 +65,29 @@ C_SRCS = \
 	txtrange.c \
 	view.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	Bg.rc \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Es.rc \
+	Fi.rc \
+	Fr.rc \
+	Hu.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ro.rc \
+	Ru.rc \
+	Si.rc \
+	Sv.rc \
+	Tr.rc \
+	Zh.rc \
+	rsrc.rc
 
 IDL_H_SRCS = nsiface.idl
 
