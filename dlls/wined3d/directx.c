@@ -4203,6 +4203,13 @@ static void quirk_clip_varying(WineD3D_GL_Info *gl_info) {
     gl_info->glsl_clip_varying = TRUE;
 }
 
+struct driver_quirk
+{
+    BOOL (*match)(const WineD3D_GL_Info *gl_info);
+    void (*apply)(WineD3D_GL_Info *gl_info);
+    const char *description;
+};
+
 struct driver_quirk quirk_table[] = {
     {
         match_ati_r300_to_500,

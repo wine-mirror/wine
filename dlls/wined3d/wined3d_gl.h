@@ -4016,10 +4016,4 @@ typedef struct _WineD3D_GL_Info {
 } WineD3D_GL_Info;
 #undef USE_GL_FUNC
 
-struct driver_quirk {
-    BOOL        (*match)(const WineD3D_GL_Info *gl_info);
-    void        (*apply)(WineD3D_GL_Info *gl_info);
-    const char  *description;
-};
-
 #endif /* __WINE_WINED3D_GL */
