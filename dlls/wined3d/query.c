@@ -62,40 +62,58 @@ static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-
-        ENTER_GL();
         /* Queries are specific to the GL context that created them. Not
          * deleting the query will obviously leak it, but that's still better
          * than potentially deleting a different query with the same id in this
          * context, and (still) leaking the actual query. */
-        if(This->type == WINED3DQUERYTYPE_EVENT) {
-            if (((WineQueryEventData *)This->extendedData)->ctx != This->wineD3DDevice->activeContext
-                    || This->wineD3DDevice->activeContext->tid != GetCurrentThreadId())
+        if (This->type == WINED3DQUERYTYPE_EVENT)
+        {
+            WineQueryEventData *query_data = (WineQueryEventData *)This->extendedData;
+
+            if (query_data->ctx->tid != GetCurrentThreadId())
             {
-                FIXME("Query was created in a different context, skipping deletion\n");
-            }
-            else if(GL_SUPPORT(APPLE_FENCE))
-            {
-                GL_EXTCALL(glDeleteFencesAPPLE(1, &((WineQueryEventData *)(This->extendedData))->fenceId));
-                checkGLcall("glDeleteFencesAPPLE");
-            } else if(GL_SUPPORT(NV_FENCE)) {
-                GL_EXTCALL(glDeleteFencesNV(1, &((WineQueryEventData *)(This->extendedData))->fenceId));
-                checkGLcall("glDeleteFencesNV");
-            }
-        } else if(This->type == WINED3DQUERYTYPE_OCCLUSION && GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
-            if (((WineQueryOcclusionData *)This->extendedData)->ctx != This->wineD3DDevice->activeContext
-                    || This->wineD3DDevice->activeContext->tid != GetCurrentThreadId())
-            {
-                FIXME("Query was created in a different context, skipping deletion\n");
+                FIXME("Query was created in a different thread, skipping deletion.\n");
             }
             else
             {
-                GL_EXTCALL(glDeleteQueriesARB(1, &((WineQueryOcclusionData *)(This->extendedData))->queryId));
-                checkGLcall("glDeleteQueriesARB");
+                ActivateContext(This->wineD3DDevice, query_data->ctx->surface, CTXUSAGE_RESOURCELOAD);
+
+                ENTER_GL();
+
+                if (GL_SUPPORT(APPLE_FENCE))
+                {
+                    GL_EXTCALL(glDeleteFencesAPPLE(1, &query_data->fenceId));
+                    checkGLcall("glDeleteFencesAPPLE");
+                }
+                else if (GL_SUPPORT(NV_FENCE))
+                {
+                    GL_EXTCALL(glDeleteFencesNV(1, &query_data->fenceId));
+                    checkGLcall("glDeleteFencesNV");
+                }
+
+                LEAVE_GL();
             }
         }
-        LEAVE_GL();
+        else if (This->type == WINED3DQUERYTYPE_OCCLUSION && GL_SUPPORT(ARB_OCCLUSION_QUERY))
+        {
+            WineQueryOcclusionData *query_data = (WineQueryOcclusionData *)This->extendedData;
+
+            if (query_data->ctx->tid != GetCurrentThreadId())
+            {
+                FIXME("Query was created in a different thread, skipping deletion.\n");
+            }
+            else
+            {
+                ActivateContext(This->wineD3DDevice, query_data->ctx->surface, CTXUSAGE_RESOURCELOAD);
+
+                ENTER_GL();
+
+                GL_EXTCALL(glDeleteQueriesARB(1, &query_data->queryId));
+                checkGLcall("glDeleteQueriesARB");
+
+                LEAVE_GL();
+            }
+        }
 
         HeapFree(GetProcessHeap(), 0, This->extendedData);
         HeapFree(GetProcessHeap(), 0, This);
@@ -288,7 +306,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
 
 static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *) iface;
-    GLuint queryId = ((WineQueryOcclusionData *)This->extendedData)->queryId;
+    WineQueryOcclusionData *query_data = (WineQueryOcclusionData *)This->extendedData;
     DWORD* data = pData;
     GLuint available;
     GLuint samples;
@@ -318,19 +336,18 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
         return S_OK;
     }
 
-    ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-
-    if (((WineQueryOcclusionData *)This->extendedData)->ctx != This->wineD3DDevice->activeContext
-            || This->wineD3DDevice->activeContext->tid != GetCurrentThreadId())
+    if (query_data->ctx->tid != GetCurrentThreadId())
     {
-        FIXME("%p Wrong context, returning 1.\n", This);
+        FIXME("%p Wrong thread, returning 1.\n", This);
         *data = 1;
         return S_OK;
     }
 
+    ActivateContext(This->wineD3DDevice, query_data->ctx->surface, CTXUSAGE_RESOURCELOAD);
+
     ENTER_GL();
 
-    GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_AVAILABLE_ARB, &available));
+    GL_EXTCALL(glGetQueryObjectuivARB(query_data->queryId, GL_QUERY_RESULT_AVAILABLE_ARB, &available));
     checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT_AVAILABLE)\n");
     TRACE("(%p) : available %d.\n", This, available);
 
@@ -338,7 +355,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
     {
         if (data)
         {
-            GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_ARB, &samples));
+            GL_EXTCALL(glGetQueryObjectuivARB(query_data->queryId, GL_QUERY_RESULT_ARB, &samples));
             checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT)\n");
             TRACE("(%p) : Returning %d samples.\n", This, samples);
             *data = samples;
@@ -358,32 +375,42 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
 static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void* pData, DWORD dwSize, DWORD dwGetDataFlags) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *) iface;
     BOOL* data = pData;
-    WineD3DContext *ctx;
+    WineQueryEventData *query_data = (WineQueryEventData *)This->extendedData;
+
     TRACE("(%p) : type D3DQUERY_EVENT, pData %p, dwSize %#x, dwGetDataFlags %#x\n", This, pData, dwSize, dwGetDataFlags);
 
-    ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    if (!pData || !dwSize) return S_OK;
 
-    ctx = ((WineQueryEventData *)This->extendedData)->ctx;
-    if(pData == NULL || dwSize == 0) {
-        return S_OK;
-    } if(ctx != This->wineD3DDevice->activeContext || ctx->tid != GetCurrentThreadId()) {
+    if (query_data->ctx->tid != GetCurrentThreadId())
+    {
         /* See comment in IWineD3DQuery::Issue, event query codeblock */
-        FIXME("Query context not active, reporting GPU idle\n");
+        FIXME("Wrong thread, reporting GPU idle.\n");
         *data = TRUE;
-    } else if(GL_SUPPORT(APPLE_FENCE)) {
-        ENTER_GL();
-        *data = GL_EXTCALL(glTestFenceAPPLE(((WineQueryEventData *)This->extendedData)->fenceId));
+
+        return S_OK;
+    }
+
+    ActivateContext(This->wineD3DDevice, query_data->ctx->surface, CTXUSAGE_RESOURCELOAD);
+
+    ENTER_GL();
+
+    if (GL_SUPPORT(APPLE_FENCE))
+    {
+        *data = GL_EXTCALL(glTestFenceAPPLE(query_data->fenceId));
         checkGLcall("glTestFenceAPPLE");
-        LEAVE_GL();
-    } else if(GL_SUPPORT(NV_FENCE)) {
-        ENTER_GL();
-        *data = GL_EXTCALL(glTestFenceNV(((WineQueryEventData *)This->extendedData)->fenceId));
+    }
+    else if (GL_SUPPORT(NV_FENCE))
+    {
+        *data = GL_EXTCALL(glTestFenceNV(query_data->fenceId));
         checkGLcall("glTestFenceNV");
-        LEAVE_GL();
-    } else {
+    }
+    else
+    {
         WARN("(%p): reporting GPU idle\n", This);
         *data = TRUE;
     }
+
+    LEAVE_GL();
 
     return S_OK;
 }
@@ -461,12 +488,12 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
 
     TRACE("(%p) : dwIssueFlags %#x, type D3DQUERY_EVENT\n", This, dwIssueFlags);
-    if (dwIssueFlags & WINED3DISSUE_END) {
-        WineD3DContext *ctx = ((WineQueryEventData *)This->extendedData)->ctx;
+    if (dwIssueFlags & WINED3DISSUE_END)
+    {
+        WineQueryEventData *query_data = (WineQueryEventData *)This->extendedData;
 
-        ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-
-        if(ctx != This->wineD3DDevice->activeContext || ctx->tid != GetCurrentThreadId()) {
+        if (query_data->ctx->tid != GetCurrentThreadId())
+        {
             /* GL fences can be used only from the context that created them,
              * so if a different context is active, don't bother setting the query. The penalty
              * of a context switch is most likely higher than the gain of a correct query result
@@ -475,15 +502,24 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
              * context - there's no point in doing that as the query would be unusable anyway
              */
             WARN("Query context not active\n");
-        } else if(GL_SUPPORT(APPLE_FENCE)) {
+        }
+        else
+        {
+            ActivateContext(This->wineD3DDevice, query_data->ctx->surface, CTXUSAGE_RESOURCELOAD);
+
             ENTER_GL();
-            GL_EXTCALL(glSetFenceAPPLE(((WineQueryEventData *)This->extendedData)->fenceId));
-            checkGLcall("glSetFenceAPPLE");
-            LEAVE_GL();
-        } else if (GL_SUPPORT(NV_FENCE)) {
-            ENTER_GL();
-            GL_EXTCALL(glSetFenceNV(((WineQueryEventData *)This->extendedData)->fenceId, GL_ALL_COMPLETED_NV));
-            checkGLcall("glSetFenceNV");
+
+            if (GL_SUPPORT(APPLE_FENCE))
+            {
+                GL_EXTCALL(glSetFenceAPPLE(query_data->fenceId));
+                checkGLcall("glSetFenceAPPLE");
+            }
+            else if (GL_SUPPORT(NV_FENCE))
+            {
+                GL_EXTCALL(glSetFenceNV(query_data->fenceId, GL_ALL_COMPLETED_NV));
+                checkGLcall("glSetFenceNV");
+            }
+
             LEAVE_GL();
         }
     } else if(dwIssueFlags & WINED3DISSUE_BEGIN) {
@@ -503,14 +539,18 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
 static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags) {
     IWineD3DQueryImpl *This = (IWineD3DQueryImpl *)iface;
 
-    if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
-        WineD3DContext *ctx = ((WineQueryOcclusionData *)This->extendedData)->ctx;
+    if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
+    {
+        WineQueryOcclusionData *query_data = (WineQueryOcclusionData *)This->extendedData;
 
-        ActivateContext(This->wineD3DDevice, This->wineD3DDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        if (query_data->ctx->tid != GetCurrentThreadId())
+        {
+            FIXME("Not the owning context, can't start query.\n");
+        }
+        else
+        {
+            ActivateContext(This->wineD3DDevice, query_data->ctx->surface, CTXUSAGE_RESOURCELOAD);
 
-        if(ctx != This->wineD3DDevice->activeContext || ctx->tid != GetCurrentThreadId()) {
-            FIXME("Not the owning context, can't start query\n");
-        } else {
             ENTER_GL();
             /* This is allowed according to msdn and our tests. Reset the query and restart */
             if (dwIssueFlags & WINED3DISSUE_BEGIN) {
@@ -519,7 +559,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_Issue(IWineD3DQuery* iface,  D
                     checkGLcall("glEndQuery()");
                 }
 
-                GL_EXTCALL(glBeginQueryARB(GL_SAMPLES_PASSED_ARB, ((WineQueryOcclusionData *)This->extendedData)->queryId));
+                GL_EXTCALL(glBeginQueryARB(GL_SAMPLES_PASSED_ARB, query_data->queryId));
                 checkGLcall("glBeginQuery()");
             }
             if (dwIssueFlags & WINED3DISSUE_END) {
