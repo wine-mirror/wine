@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resources.h"
+
 #pragma code_page(65001)
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
@@ -66,5 +68,3 @@ STRING_EXECFAIL "Programa ni mogoče zagnati ali pa z datoteko te vrste ni povez
 
 STRING_UNIXFAIL "Navedenega Unix imena datoteke ni mogoče prevesti v DOS ime datoteke."
 }
-
-#pragma code_page(default)

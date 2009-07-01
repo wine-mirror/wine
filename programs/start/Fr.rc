@@ -21,6 +21,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resources.h"
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 #pragma code_page(65001) /* UTF-8 */
@@ -69,5 +71,3 @@ STRING_EXECFAIL "Le programme n'a pas pu être lancé, ou il n'y a pas de progra
 
 STRING_UNIXFAIL, "Le nom de fichier Unix spécifié n'a pas pu être converti en nom de fichier DOS."
 }
-
-#pragma code_page(default) /* Return to default encoding */

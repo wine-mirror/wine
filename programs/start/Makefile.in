@@ -9,7 +9,22 @@ IMPORTS   = shell32 user32 kernel32
 
 C_SRCS = start.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	Cs.rc \
+	De.rc \
+	En.rc \
+	Es.rc \
+	Fr.rc \
+	It.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ru.rc \
+	Si.rc \
+	Tr.rc
 
 @MAKE_PROG_RULES@
 

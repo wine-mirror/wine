@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resources.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -69,5 +71,3 @@ STRING_EXECFAIL, "Nepavyko paleisti programos arba nėra programos susietos su n
 
 STRING_UNIXFAIL "Nepavyko paversti nurodyto Unix failo pavadinimo į DOS failo pavadinimą."
 }
-
-#pragma code_page(default)

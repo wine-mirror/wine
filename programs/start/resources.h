@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windef.h>
+
 #define STRING_USAGE 101
 #define STRING_LICENSE 102
 #define STRING_EXECFAIL 103
