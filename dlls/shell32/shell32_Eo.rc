@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "shresdef.h"
+
 LANGUAGE LANG_ESPERANTO, SUBLANG_DEFAULT
 
 /* Cxapelitaj literoj estas en Latin-3 iso8895-3 */

@@ -18,16 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winnls.h"
-#include "wingdi.h"
-#include "shlobj.h"
 #include "shresdef.h"
-#include "dlgs.h"
-
-#include "version.rc"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
@@ -131,40 +122,3 @@ IDR_AVI_FILENUKE AVI searching.avi
 
 /* @makedep: searching.avi */
 IDR_AVI_FILEDELETE AVI searching.avi
-
-
-/*
- * Everything specific to any language goes
- * in one of the specific files.
- * Note that you can and may override resources
- * which also have a neutral version. This is to
- * get localized bitmaps for example.
- */
-#include "shell32_Bg.rc"
-#include "shell32_Ca.rc"
-#include "shell32_Cs.rc"
-#include "shell32_Da.rc"
-#include "shell32_De.rc"
-#include "shell32_En.rc"
-#include "shell32_Eo.rc"
-#include "shell32_Es.rc"
-#include "shell32_Fi.rc"
-#include "shell32_Fr.rc"
-#include "shell32_Hu.rc"
-#include "shell32_It.rc"
-#include "shell32_Ja.rc"
-#include "shell32_Ko.rc"
-#include "shell32_Lt.rc"
-#include "shell32_Nl.rc"
-#include "shell32_No.rc"
-#include "shell32_Pl.rc"
-#include "shell32_Pt.rc"
-#include "shell32_Ro.rc"
-#include "shell32_Ru.rc"
-#include "shell32_Si.rc"
-#include "shell32_Sk.rc"
-#include "shell32_Sv.rc"
-#include "shell32_Tr.rc"
-#include "shell32_Uk.rc"
-#include "shell32_Wa.rc"
-#include "shell32_Zh.rc"

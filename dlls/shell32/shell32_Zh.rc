@@ -20,6 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "shresdef.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -209,5 +211,3 @@ BEGIN
 	IDS_CPANEL_NAME		"名稱"
 	IDS_CPANEL_DESCRIPTION	"描述"
 END
-
-#pragma code_page(default)

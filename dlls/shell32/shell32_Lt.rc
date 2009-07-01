@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "shresdef.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -307,5 +309,3 @@ kopiją kartu su Wine; jei negavote, rašykite adresu \
 Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, \
 Boston, MA 02110-1301, USA."
 }
-
-#pragma code_page(default)

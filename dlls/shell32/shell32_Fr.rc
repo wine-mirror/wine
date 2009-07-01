@@ -20,6 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "shresdef.h"
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 #pragma code_page(65001) /* UTF-8 */
@@ -309,5 +311,3 @@ GNU avec Wine ; si ce n’est pas le cas, écrivez à la : \
 Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, \
 MA 02110-1301, USA."
 }
-
-#pragma code_page(default) /* Return to default encoding */

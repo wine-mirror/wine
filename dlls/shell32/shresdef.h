@@ -19,6 +19,13 @@
 #ifndef __WINE_SHELL_RES_H
 #define __WINE_SHELL_RES_H
 
+#include <windef.h>
+#include <winbase.h>
+#include <winuser.h>
+#include <winnls.h>
+#include <shlobj.h>
+#include <dlgs.h>
+
 /*
 	columntitles for the shellview
 */
