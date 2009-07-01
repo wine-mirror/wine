@@ -73,6 +73,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(server);
 #define SCM_RIGHTS 1
 #endif
 
+#ifndef MSG_CMSG_CLOEXEC
+#define MSG_CMSG_CLOEXEC 0
+#endif
+
 #define SOCKETNAME "socket"        /* name of the socket file */
 #define LOCKNAME   "lock"          /* name of the lock file */
 
@@ -408,12 +412,12 @@ static int receive_fd( obj_handle_t *handle )
 
     for (;;)
     {
-        if ((ret = recvmsg( fd_socket, &msghdr, 0 )) > 0)
+        if ((ret = recvmsg( fd_socket, &msghdr, MSG_CMSG_CLOEXEC )) > 0)
         {
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
             fd = cmsg.fd;
 #endif
-            if (fd != -1) fcntl( fd, F_SETFD, 1 ); /* set close on exec flag */
+            if (fd != -1) fcntl( fd, F_SETFD, FD_CLOEXEC ); /* in case MSG_CMSG_CLOEXEC is not supported */
             return fd;
         }
         if (!ret) break;
