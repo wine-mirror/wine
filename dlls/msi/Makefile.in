@@ -59,7 +59,31 @@ BISON_SRCS = \
 	cond.y \
 	sql.y
 
-RC_SRCS = msi.rc
+RC_SRCS = \
+	msi.rc \
+	msi_Bg.rc \
+	msi_Da.rc \
+	msi_De.rc \
+	msi_En.rc \
+	msi_Eo.rc \
+	msi_Es.rc \
+	msi_Fi.rc \
+	msi_Fr.rc \
+	msi_Hu.rc \
+	msi_It.rc \
+	msi_Ko.rc \
+	msi_Lt.rc \
+	msi_Nl.rc \
+	msi_No.rc \
+	msi_Pl.rc \
+	msi_Pt.rc \
+	msi_Ro.rc \
+	msi_Ru.rc \
+	msi_Si.rc \
+	msi_Sv.rc \
+	msi_Tr.rc \
+	msi_Zh.rc \
+	version.rc
 
 @MAKE_DLL_RULES@
 

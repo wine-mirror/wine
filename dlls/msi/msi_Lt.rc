@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "windef.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -35,5 +37,3 @@ STRINGTABLE DISCARDABLE
 	14 "komponentas iš:"
 	15 "parinkite aplanką, kuris turi %s"
 }
-
-#pragma code_page(default)
