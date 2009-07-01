@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "resource.h"
 #include "debugger.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -27,6 +26,7 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
+#include "resource.h"
 
 #define MAX_PROGRAM_NAME_LENGTH 80
 
