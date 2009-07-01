@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windef.h>
+
 #define IDS_DESCRIPTION                 2
 #define IDI_APPICON                     101
 #define IDM_EXIT                        1000

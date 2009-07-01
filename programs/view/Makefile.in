@@ -11,7 +11,28 @@ C_SRCS = \
 	view.c \
 	winmain.c
 
-RC_SRCS = viewrc.rc
+RC_SRCS = \
+	Cs.rc \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Eo.rc \
+	Es.rc \
+	Fr.rc \
+	It.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ro.rc \
+	Ru.rc \
+	Si.rc \
+	Sv.rc \
+	Tr.rc \
+	Zh.rc
 
 @MAKE_PROG_RULES@
 

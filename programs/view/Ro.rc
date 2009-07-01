@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
 LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
@@ -69,5 +71,3 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_DESCRIPTION         "Vizualizator de fișiere metafile normale"
 END
-
-#pragma code_page(default)

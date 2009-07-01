@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -120,5 +122,3 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_DESCRIPTION         "普通 Metafile 閱讀器"
 END
-
-#pragma code_page(default)
