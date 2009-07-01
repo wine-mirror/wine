@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -162,5 +164,3 @@ CAPTION "自定義遊戲"
     DEFPUSHBUTTON   "確定", IDOK,      40,  30,  50,  15
     PUSHBUTTON      "取消", IDCANCEL,  40,  50,  50,  15
 }
-
-#pragma code_page(default)

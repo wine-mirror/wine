@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
 #pragma code_page(65001)
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
@@ -91,5 +93,3 @@ CAPTION "Poljubna igra"
     DEFPUSHBUTTON   "V redu",     IDOK,      40,  30,  50,  15
     PUSHBUTTON      "Prekliči", IDCANCEL,  40,  50,  50,  15
 }
-
-#pragma code_page(default)
