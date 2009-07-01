@@ -8,7 +8,21 @@ IMPORTS   = kernel32 comctl32 advapi32 shell32 user32 comdlg32
 C_SRCS = \
 	appwiz.c
 
-RC_SRCS = appwiz.rc
+RC_SRCS = \
+	De.rc \
+	En.rc \
+	Fr.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pt.rc \
+	Ro.rc \
+	Ru.rc \
+	Si.rc \
+	Zh.rc \
+	appwiz.rc
 
 @MAKE_DLL_RULES@
 

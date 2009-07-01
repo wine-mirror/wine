@@ -19,6 +19,10 @@
 *
 */
 
+#include <windef.h>
+#include <winuser.h>
+#include <commctrl.h>
+
 /* Dialogs */
 
 #define IDD_MAIN               1

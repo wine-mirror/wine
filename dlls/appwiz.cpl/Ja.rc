@@ -19,6 +19,8 @@
 *
 */
 
+#include "res.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -78,5 +80,3 @@ FONT 9, "MS Shell Dlg"
  CONTROL "", IDC_INFO_UPDATES, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 90, 136, 8
  CONTROL "", IDC_INFO_COMMENTS, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 100, 136, 8
 }
-
-#pragma code_page(default)

@@ -20,6 +20,8 @@
 *
 */
 
+#include "res.h"
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 STRINGTABLE
