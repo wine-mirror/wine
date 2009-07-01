@@ -370,8 +370,10 @@ CHMInfo *OpenCHM(LPCWSTR szFile)
     if (!(ret = heap_alloc_zero(sizeof(CHMInfo))))
         return NULL;
 
-    if (!(ret->szFile = strdupW(szFile)))
+    if (!(ret->szFile = strdupW(szFile))) {
+        heap_free(ret);
         return NULL;
+    }
 
     hres = CoCreateInstance(&CLSID_ITStorage, NULL, CLSCTX_INPROC_SERVER,
             &IID_IITStorage, (void **) &ret->pITStorage) ;
