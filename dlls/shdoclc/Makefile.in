@@ -5,7 +5,25 @@ VPATH     = @srcdir@
 MODULE    = shdoclc.dll
 IMPORTS   = kernel32
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	Bg.rc \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Es.rc \
+	Fi.rc \
+	Fr.rc \
+	Hu.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pt.rc \
+	Ru.rc \
+	Si.rc \
+	Sv.rc \
+	Tr.rc \
+	Zh.rc
 
 @MAKE_DLL_RULES@
 
