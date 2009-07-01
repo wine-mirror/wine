@@ -1457,8 +1457,8 @@ static void test_CopyMetaFile(void)
 
     if (compare_mf_disk_bits(mf_name, MF_BLANK_BITS, sizeof(MF_BLANK_BITS), "mf_blank") != 0)
     {
-        dump_mf_bits(hMetafile, "mf_Blank");
-        EnumMetaFile(0, hMetafile, mf_enum_proc, 0);
+        dump_mf_bits(hmf_copy, "mf_Blank");
+        EnumMetaFile(0, hmf_copy, mf_enum_proc, 0);
     }
 
     ret = DeleteMetaFile(hmf_copy);
