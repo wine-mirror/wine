@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -329,5 +331,3 @@ BEGIN
 END
 
 /*****************************************************************/
-
-#pragma code_page(default)
