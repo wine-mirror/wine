@@ -3035,8 +3035,8 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         if(generated) {
             FIXME("Non-power2 texture being used with generated texture coords\n");
         }
-        /* NP2 texcoord fixup is implemented for pixelshaders (currently only in GLSL backend) so
-           only enable the fixed-function-pipeline fixup via pow2Matrix when no PS is used. */
+        /* NP2 texcoord fixup is implemented for pixelshaders so only enable the
+           fixed-function-pipeline fixup via pow2Matrix when no PS is used. */
         if (!use_ps(stateblock)) {
             TRACE("Non power two matrix multiply fixup\n");
             glMultMatrixf(((IWineD3DTextureImpl *) stateblock->textures[texUnit])->baseTexture.pow2Matrix);
@@ -3379,8 +3379,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
             }
         }
 
-        /* Trigger shader constant reloading (for NP2 texcoord fixup)
-         * Only do this if pshaders are used (note: fixup is currently only implemented in GLSL). */
+        /* Trigger shader constant reloading (for NP2 texcoord fixup) */
         if (!tex_impl->baseTexture.pow2Matrix_identity) {
             IWineD3DDeviceImpl* d3ddevice = stateblock->wineD3DDevice;
             d3ddevice->shader_backend->shader_load_np2fixup_constants(
