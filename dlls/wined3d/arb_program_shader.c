@@ -378,7 +378,47 @@ static void shader_arb_load_np2fixup_constants(
     IWineD3DDevice* device,
     char usePixelShader,
     char useVertexShader) {
-    /* not implemented */
+
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl *) device;
+    const struct shader_arb_priv* const priv = (const struct shader_arb_priv *) deviceImpl->shader_priv;
+    IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
+    const WineD3D_GL_Info *gl_info = &deviceImpl->adapter->gl_info;
+
+    if (!usePixelShader) {
+        /* NP2 texcoord fixup is (currently) only done for pixelshaders. */
+        return;
+    }
+
+    if (priv->compiled_fprog && priv->compiled_fprog->np2fixup_info.super.active) {
+        const struct arb_ps_np2fixup_info* const fixup = &priv->compiled_fprog->np2fixup_info;
+        UINT i;
+        WORD active = fixup->super.active;
+        GLfloat np2fixup_constants[4 * MAX_FRAGMENT_SAMPLERS];
+
+        for (i = 0; active; active >>= 1, ++i) {
+            const unsigned char idx = fixup->super.idx[i];
+            const IWineD3DTextureImpl* const tex = (const IWineD3DTextureImpl*) stateBlock->textures[i];
+            GLfloat* tex_dim = &np2fixup_constants[(idx >> 1) * 4];
+
+            if (!(active & 1)) continue;
+
+            if (!tex) {
+                FIXME("Nonexistent texture is flagged for NP2 texcoord fixup\n");
+                continue;
+            }
+
+            if (idx % 2) {
+                tex_dim[2] = tex->baseTexture.pow2Matrix[0]; tex_dim[3] = tex->baseTexture.pow2Matrix[5];
+            } else {
+                tex_dim[0] = tex->baseTexture.pow2Matrix[0]; tex_dim[1] = tex->baseTexture.pow2Matrix[5];
+            }
+        }
+
+        for (i = 0; i < fixup->super.num_consts; ++i) {
+            GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
+                                                   fixup->offset + i, &np2fixup_constants[i * 4]));
+        }
+    }
 }
 
 /* GL locking is done by the caller. */
