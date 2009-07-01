@@ -51,6 +51,24 @@ typedef enum WICBitmapDecoderCapabilities {
     WICBitmapDecoderCapabilityCanDecodeThumbnail = 0x00000010,
 } WICBitmapDecoderCapabilities;
 
+typedef enum WICBitmapPaletteType {
+    WICBitmapPaletteTypeCustom = 0x00000000,
+    WICBitmapPaletteTypeMedianCut = 0x00000001,
+    WICBitmapPaletteTypeFixedBW = 0x00000002,
+    WICBitmapPaletteTypeFixedHalftone8 = 0x00000003,
+    WICBitmapPaletteTypeFixedHalftone27 = 0x00000004,
+    WICBitmapPaletteTypeFixedHalftone64 = 0x00000005,
+    WICBitmapPaletteTypeFixedHalftone125 = 0x00000006,
+    WICBitmapPaletteTypeFixedHalftone216 = 0x00000007,
+    WICBitmapPaletteTypeFixedWebPalette = WICBitmapPaletteTypeFixedHalftone216,
+    WICBitmapPaletteTypeFixedHalftone252 = 0x00000008,
+    WICBitmapPaletteTypeFixedHalftone256 = 0x00000009,
+    WICBitmapPaletteTypeFixedGray4 = 0x0000000A,
+    WICBitmapPaletteTypeFixedGray16 = 0x0000000B,
+    WICBitmapPaletteTypeFixedGray256 = 0x0000000C,
+    WICBITMAPPALETTETYPE_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICBitmapPaletteType;
+
 typedef GUID WICPixelFormatGUID;
 typedef REFGUID REFWICPixelFormatGUID;
 
@@ -72,6 +90,8 @@ typedef struct WICRect {
     INT Width;
     INT Height;
 } WICRect;
+
+typedef UINT32 WICColor;
 
 cpp_quote("#define WINCODEC_ERR_WRONGSTATE 0x88982f04")
 cpp_quote("#define WINCODEC_ERR_CODECNOTHUMBNAIL 0x88982f44")
@@ -117,6 +137,49 @@ interface IWICBitmapSource : IUnknown
         [in] UINT cbStride,
         [in] UINT cbBufferSize,
         [out, size_is(cbBufferSize)] BYTE *pbBuffer);
+}
+
+[
+    object,
+    uuid(00000040-a8f2-4877-ba0a-fd2b6645fb94)
+]
+interface IWICPalette : IUnknown
+{
+    HRESULT InitializePredefined(
+        [in] WICBitmapPaletteType ePaletteType,
+        [in] BOOL fAddTransparentColor);
+
+    HRESULT InitializeCustom(
+        [in, size_is(colorCount)] WICColor *pColors,
+        [in] UINT colorCount);
+
+    HRESULT InitializeFromBitmap(
+        [in] IWICBitmapSource *pISurface,
+        [in] UINT colorCount,
+        [in] BOOL fAddTransparentColor);
+
+    HRESULT InitializeFromPalette(
+        [in] IWICPalette *pIPalette);
+
+    HRESULT GetType(
+        [out] WICBitmapPaletteType *pePaletteType);
+
+    HRESULT GetColorCount(
+        [out] UINT *pcCount);
+
+    HRESULT GetColors(
+        [in] UINT colorCount,
+        [out, size_is(colorCount)] WICColor *pColors,
+        [out] UINT *pcActualColors);
+
+    HRESULT IsBlackWhite(
+        [out] BOOL *pfIsBlackWhite);
+
+    HRESULT IsGrayscale(
+        [out] BOOL *pfIsGrayscale);
+
+    HRESULT HasAlpha(
+        [out] BOOL *pfHasAlpha);
 }
 
 [
