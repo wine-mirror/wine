@@ -3377,6 +3377,44 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
         compiled->ycorrection = WINED3D_CONST_NUM_UNUSED;
     }
 
+    /* Load constants to fixup NP2 texcoords if there are still free constants left:
+     * Constants (texture dimensions) for the NP2 fixup are loaded as local program parameters. This will consume
+     * at most 8 (MAX_FRAGMENT_SAMPLERS / 2) parameters, which is highly unlikely, since the application had to
+     * use 16 NP2 textures at the same time. In case that we run out of constants the fixup is simply not
+     * applied / activated. This will probably result in wrong rendering of the texture, but will save us from
+     * shader compilation errors and the subsequent errors when drawing with this shader. */
+    if (priv_ctx.cur_ps_args->super.np2_fixup) {
+
+        struct arb_ps_np2fixup_info* const fixup = priv_ctx.cur_np2fixup_info;
+        const WORD map = priv_ctx.cur_ps_args->super.np2_fixup;
+        const UINT max_lconsts = gl_info->ps_arb_max_local_constants;
+
+        fixup->offset = next_local;
+        fixup->super.active = 0;
+
+        cur = 0;
+        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
+            if (!(map & (1 << i))) continue;
+
+            if (fixup->offset + (cur >> 1) < max_lconsts) {
+                fixup->super.active |= (1 << i);
+                fixup->super.idx[i] = cur++;
+            } else {
+                FIXME("No free constant found to load NP2 fixup data into shader. "
+                      "Sampling from this texture will probably look wrong.\n");
+                break;
+            }
+        }
+
+        fixup->super.num_consts = (cur + 1) >> 1;
+        if (fixup->super.num_consts) {
+            shader_addline(buffer, "PARAM np2fixup[%u] = { program.env[%u..%u] };\n",
+                           fixup->super.num_consts, fixup->offset, fixup->super.num_consts + fixup->offset - 1);
+        }
+
+        next_local += fixup->super.num_consts;
+    }
+
     if(shader_priv->clipplane_emulation)
     {
         shader_addline(buffer, "KIL fragment.texcoord[%u];\n", shader_priv->clipplane_emulation - 1);
