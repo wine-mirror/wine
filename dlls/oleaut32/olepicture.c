@@ -1232,7 +1232,6 @@ static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
                 if (pixel == (transparent & 0x000000FFU)) monoPointer[j >> 3] |= 1 << (7 - (j & 7));
             }
         }
-        hdcref = GetDC(0);
         hTempMask = CreateDIBitmap(
                 hdcref,
                 &bmi->bmiHeader,
@@ -1241,7 +1240,6 @@ static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
                 bmi,
                 DIB_RGB_COLORS
         );
-        DeleteDC(hdcref);
 
         bmi->bmiHeader.biHeight = -bmi->bmiHeader.biHeight;
         This->hbmMask = CreateBitmap(bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, 1, 1, NULL);
@@ -1266,7 +1264,7 @@ static HRESULT OLEPictureImpl_LoadGif(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
         DeleteObject(hTempMask);
     }
     
-    DeleteDC(hdcref);
+    ReleaseDC(0, hdcref);
     This->desc.picType = PICTYPE_BITMAP;
     OLEPictureImpl_SetBitmap(This);
     DGifCloseFile(gif);
@@ -1369,7 +1367,7 @@ static HRESULT OLEPictureImpl_LoadJpeg(OLEPictureImpl *This, BYTE *xbuf, ULONG x
 	    (BITMAPINFO*)&bmi,
 	    DIB_RGB_COLORS
     );
-    DeleteDC(hdcref);
+    ReleaseDC(0, hdcref);
     This->desc.picType = PICTYPE_BITMAP;
     OLEPictureImpl_SetBitmap(This);
     HeapFree(GetProcessHeap(),0,bits);
@@ -1398,7 +1396,7 @@ static HRESULT OLEPictureImpl_LoadDIB(OLEPictureImpl *This, BYTE *xbuf, ULONG xr
 	bi,
        DIB_RGB_COLORS
     );
-    DeleteDC(hdcref);
+    ReleaseDC(0, hdcref);
     if (This->desc.u.bmp.hbitmap == 0)
         return E_FAIL;
     This->desc.picType = PICTYPE_BITMAP;
