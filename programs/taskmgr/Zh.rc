@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resource.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -931,5 +933,3 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "將進程設為中等以下優先級"
     ID_PROCESS_PAGE_SETPRIORITY_LOW          "將進程設為低優先級"
 END
-
-#pragma code_page(default)

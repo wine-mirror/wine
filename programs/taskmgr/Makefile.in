@@ -29,7 +29,24 @@ C_SRCS = \
 	taskmgr.c \
 	trayicon.c
 
-RC_SRCS = taskmgr.rc
+RC_SRCS = \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Fr.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ru.rc \
+	Si.rc \
+	Sv.rc \
+	Tr.rc \
+	Zh.rc \
+	taskmgr.rc
 
 @MAKE_PROG_RULES@
 

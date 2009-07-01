@@ -4,6 +4,11 @@
  * Used by taskmgr.rc
  *
  */
+
+#include <windef.h>
+#include <winuser.h>
+#include <commctrl.h>
+
 #define IDS_APP_TITLE                   103
 #define IDC_TASKMGR                     109
 #define IDS_RUNDLG_CAPTION              110
