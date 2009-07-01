@@ -20,6 +20,8 @@
  *
  */
 
+#include "resource.h"
+
 LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
@@ -36,5 +38,3 @@ BEGIN
     LTEXT           "Prin terminarea acestui proces se pot pierde datele nesalvate.",
                     IDC_STATIC,7,28,172,15
 END
-
-#pragma code_page(default)

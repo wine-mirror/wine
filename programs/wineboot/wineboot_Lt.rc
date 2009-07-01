@@ -19,6 +19,8 @@
  *
  */
 
+#include "resource.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -36,5 +38,3 @@ BEGIN
     LTEXT           "Jei nutrauksite procesą, tai galite prarasti visus neišsaugotus duomenis.",
                     IDC_STATIC,7,28,172,17
 END
-
-#pragma code_page(default)

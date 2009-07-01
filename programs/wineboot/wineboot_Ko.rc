@@ -20,6 +20,8 @@
  *
  */
 
+#include "resource.h"
+
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 

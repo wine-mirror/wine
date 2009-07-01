@@ -19,6 +19,8 @@
  *
  */
 
+#include "resource.h"
+
 #pragma code_page(65001)
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
@@ -35,5 +37,3 @@ BEGIN
     LTEXT           "Če se odločite za končanje programa, lahko izgubite neshranjene podatke.",
                     IDC_STATIC,7,28,172,15
 END
-
-#pragma code_page(default)

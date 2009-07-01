@@ -19,6 +19,8 @@
  *
  */
 
+#include "resource.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -51,5 +53,3 @@ BEGIN
     LTEXT           "如果你中斷進程，有可能丟失沒有儲存的數據.",
                     IDC_STATIC,7,28,172,15
 END
-
-#pragma code_page(default)

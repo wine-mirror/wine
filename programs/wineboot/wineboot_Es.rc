@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  */
+
+#include "resource.h"
+
 #pragma code_page(65001)
 
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
@@ -34,5 +37,3 @@ BEGIN
     LTEXT           "Si termina el programa puede perder los datos no grabados.",
                     IDC_STATIC,7,28,172,15
 END
-
-#pragma code_page(default)

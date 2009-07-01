@@ -19,6 +19,8 @@
  *
  */
 
+#include "resource.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -36,5 +38,3 @@ BEGIN
     LTEXT           "プロセスを終了させると、保存していないデータは全て失われます。",
                     IDC_STATIC,7,28,262,15
 END
-
-#pragma code_page(default)
