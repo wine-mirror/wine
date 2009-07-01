@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "resources.h"
+
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
 
 #pragma code_page(65001)
@@ -26,5 +28,3 @@ STRINGTABLE
 {
     IDS_FAILED, "Zagon programa Wordpad ni uspel"
 }
-
-#pragma code_page(default)

@@ -9,7 +9,21 @@ IMPORTS   = user32 gdi32 kernel32
 
 C_SRCS = write.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	De.rc \
+	En.rc \
+	Fr.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ro.rc \
+	Ru.rc \
+	Si.rc \
+	Sv.rc
 
 @MAKE_PROG_RULES@
 
