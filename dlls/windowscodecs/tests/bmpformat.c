@@ -102,6 +102,10 @@ static void test_decode_24bpp(void)
                 ok(dpiX == 96.0, "expected dpiX=96.0, got %f\n", dpiX);
                 ok(dpiY == 96.0, "expected dpiY=96.0, got %f\n", dpiY);
 
+                hr = IWICBitmapFrameDecode_GetPixelFormat(framedecode, &guidresult);
+                ok(SUCCEEDED(hr), "GetPixelFormat failed, hr=%x\n", hr);
+                ok(IsEqualGUID(&guidresult, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
+
                 IWICBitmapFrameDecode_Release(framedecode);
             }
 

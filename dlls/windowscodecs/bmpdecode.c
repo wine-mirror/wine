@@ -64,6 +64,8 @@ typedef struct {
     IStream *stream;
     BITMAPFILEHEADER bfh;
     BITMAPV5HEADER bih;
+    const WICPixelFormatGUID *pixelformat;
+    int bitsperpixel;
 } BmpFrameDecode;
 
 static HRESULT WINAPI BmpFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
@@ -151,8 +153,12 @@ static HRESULT WINAPI BmpFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI BmpFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pPixelFormat);
-    return E_NOTIMPL;
+    BmpFrameDecode *This = (BmpFrameDecode*)iface;
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
+
+    memcpy(pPixelFormat, This->pixelformat, sizeof(GUID));
+
+    return S_OK;
 }
 
 static HRESULT BmpHeader_GetResolution(BITMAPV5HEADER *bih, double *pDpiX, double *pDpiY)
@@ -241,6 +247,8 @@ typedef struct {
     BITMAPFILEHEADER bfh;
     BITMAPV5HEADER bih;
     BmpFrameDecode *framedecode;
+    const WICPixelFormatGUID *pixelformat;
+    int bitsperpixel;
 } BmpDecoder;
 
 static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
@@ -268,6 +276,78 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
     hr = IStream_Read(stream, &This->bih.bV5Width, bytestoread, &bytesread);
     if (FAILED(hr)) return hr;
     if (bytestoread != bytesread) return E_FAIL;
+
+    /* decide what kind of bitmap this is and how/if we can read it */
+    if (This->bih.bV5Size == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREHEADER *bch = (BITMAPCOREHEADER*)&This->bih;
+        TRACE("BITMAPCOREHEADER with depth=%i\n", bch->bcBitCount);
+        This->bitsperpixel = bch->bcBitCount;
+        switch(bch->bcBitCount)
+        {
+        case 1:
+            This->pixelformat = &GUID_WICPixelFormat1bppIndexed;
+            break;
+        case 2:
+            This->pixelformat = &GUID_WICPixelFormat2bppIndexed;
+            break;
+        case 4:
+            This->pixelformat = &GUID_WICPixelFormat4bppIndexed;
+            break;
+        case 8:
+            This->pixelformat = &GUID_WICPixelFormat8bppIndexed;
+            break;
+        case 24:
+            This->pixelformat = &GUID_WICPixelFormat24bppBGR;
+            break;
+        default:
+            This->pixelformat = &GUID_WICPixelFormatUndefined;
+            WARN("unsupported bit depth %i for BITMAPCOREHEADER\n", bch->bcBitCount);
+            break;
+        }
+    }
+    else /* struct is compatible with BITMAPINFOHEADER */
+    {
+        TRACE("bitmap header=%i compression=%i depth=%i\n", This->bih.bV5Size, This->bih.bV5Compression, This->bih.bV5BitCount);
+        switch(This->bih.bV5Compression)
+        {
+        case BI_RGB:
+            This->bitsperpixel = This->bih.bV5BitCount;
+            switch(This->bih.bV5BitCount)
+            {
+            case 1:
+                This->pixelformat = &GUID_WICPixelFormat1bppIndexed;
+                break;
+            case 2:
+                This->pixelformat = &GUID_WICPixelFormat2bppIndexed;
+                break;
+            case 4:
+                This->pixelformat = &GUID_WICPixelFormat4bppIndexed;
+                break;
+            case 8:
+                This->pixelformat = &GUID_WICPixelFormat8bppIndexed;
+                break;
+            case 16:
+                This->pixelformat = &GUID_WICPixelFormat16bppBGR555;
+                break;
+            case 24:
+                This->pixelformat = &GUID_WICPixelFormat24bppBGR;
+                break;
+            case 32:
+                This->pixelformat = &GUID_WICPixelFormat32bppBGR;
+                break;
+            default:
+                This->pixelformat = &GUID_WICPixelFormatUndefined;
+                FIXME("unsupported bit depth %i for uncompressed RGB\n", This->bih.bV5BitCount);
+            }
+            break;
+        default:
+            This->bitsperpixel = 0;
+            This->pixelformat = &GUID_WICPixelFormatUndefined;
+            FIXME("unsupported bitmap type header=%i compression=%i depth=%i\n", This->bih.bV5Size, This->bih.bV5Compression, This->bih.bV5BitCount);
+            break;
+        }
+    }
 
     This->initialized = TRUE;
 
@@ -423,6 +503,8 @@ static HRESULT WINAPI BmpDecoder_GetFrame(IWICBitmapDecoder *iface,
         IStream_AddRef(This->stream);
         This->framedecode->bfh = This->bfh;
         This->framedecode->bih = This->bih;
+        This->framedecode->pixelformat = This->pixelformat;
+        This->framedecode->bitsperpixel = This->bitsperpixel;
     }
 
     *ppIBitmapFrame = (IWICBitmapFrameDecode*)This->framedecode;
