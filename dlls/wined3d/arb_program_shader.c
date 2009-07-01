@@ -115,6 +115,16 @@ struct control_frame
     BOOL                            had_else;
 };
 
+struct arb_ps_np2fixup_info
+{
+    struct ps_np2fixup_info         super;
+    /* For ARB we need a offset value:
+     * With both GLSL and ARB mode the NP2 fixup information (the texture dimensions) are stored in a
+     * consecutive way (GLSL uses a uniform array). Since ARB doesn't know the notion of a "standalone"
+     * array we need an offset to the index inside the program local parameter array. */
+    UINT                            offset;
+};
+
 struct arb_ps_compile_args
 {
     struct ps_compile_args          super;
@@ -131,13 +141,14 @@ struct stb_const_desc
 struct arb_ps_compiled_shader
 {
     struct arb_ps_compile_args      args;
-    GLuint                          prgId;
+    struct arb_ps_np2fixup_info     np2fixup_info;
     struct stb_const_desc           bumpenvmatconst[MAX_TEXTURES];
-    unsigned char                   numbumpenvmatconsts;
     struct stb_const_desc           luminanceconst[MAX_TEXTURES];
     UINT                            int_consts[MAX_CONST_I];
-    char                            num_int_consts;
+    GLuint                          prgId;
     UINT                            ycorrection;
+    unsigned char                   numbumpenvmatconsts;
+    char                            num_int_consts;
 };
 
 struct arb_vs_compile_args
@@ -194,6 +205,7 @@ struct shader_arb_ctx_priv
     const struct arb_ps_compile_args    *cur_ps_args;
     const struct arb_ps_compiled_shader *compiled_fprog;
     const struct arb_vs_compiled_shader *compiled_vprog;
+    struct arb_ps_np2fixup_info         *cur_np2fixup_info;
     struct list                         control_frames;
     struct list                         record;
     BOOL                                recording;
@@ -3191,6 +3203,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This,
     memset(&priv_ctx, 0, sizeof(priv_ctx));
     priv_ctx.cur_ps_args = args;
     priv_ctx.compiled_fprog = compiled;
+    priv_ctx.cur_np2fixup_info = &compiled->np2fixup_info;
     init_ps_input(This, args, &priv_ctx);
     list_init(&priv_ctx.control_frames);
 
