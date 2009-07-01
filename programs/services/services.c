@@ -349,7 +349,7 @@ struct service_entry *scmdatabase_find_service_by_displayname(struct scmdatabase
 
     LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
     {
-        if (strcmpiW(name, service->config.lpDisplayName) == 0)
+        if (service->config.lpDisplayName && strcmpiW(name, service->config.lpDisplayName) == 0)
             return service;
     }
 
