@@ -10,7 +10,23 @@ C_SRCS = \
 	localspl_main.c \
 	provider.c
 
-RC_SRCS = localspl.rc
+RC_SRCS = \
+	localspl.rc \
+	spl_Da.rc \
+	spl_De.rc \
+	spl_En.rc \
+	spl_Fr.rc \
+	spl_Ko.rc \
+	spl_Lt.rc \
+	spl_Nl.rc \
+	spl_No.rc \
+	spl_Pl.rc \
+	spl_Pt.rc \
+	spl_Ro.rc \
+	spl_Ru.rc \
+	spl_Si.rc \
+	spl_Sv.rc \
+	spl_Zh.rc
 
 @MAKE_DLL_RULES@
 
