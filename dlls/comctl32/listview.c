@@ -360,6 +360,8 @@ typedef struct tagLISTVIEW_INFO
 
 /* default label width for items in list and small icon display modes */
 #define DEFAULT_LABEL_WIDTH 40
+/* maximum select rectangle width for empty text item in LV_VIEW_DETAILS */
+#define MAX_EMPTYTEXT_SELECT_WIDTH 80
 
 /* default column width for items in list display mode */
 #define DEFAULT_COLUMN_WIDTH 128
@@ -2235,7 +2237,9 @@ static void LISTVIEW_GetItemMetrics(const LISTVIEW_INFO *infoPtr, const LVITEMW 
 	    
     	    DrawTextW (hdc, lpLVItem->pszText, -1, &rcText, uFormat | DT_CALCRECT);
 
-	    labelSize.cx = min(rcText.right - rcText.left + TRAILING_LABEL_PADDING, infoPtr->nItemWidth);
+	    if (rcText.right != rcText.left)
+	        labelSize.cx = min(rcText.right - rcText.left + TRAILING_LABEL_PADDING, infoPtr->nItemWidth);
+
 	    labelSize.cy = rcText.bottom - rcText.top;
 
     	    SelectObject(hdc, hOldFont);
@@ -2288,7 +2292,11 @@ calc_label:
 	    SelectBox.left = Icon.left;
 	    SelectBox.top = Box.top;
 	    SelectBox.bottom = Box.bottom;
-	    SelectBox.right = min(Label.left + labelSize.cx, Label.right);
+
+	    if (labelSize.cx)
+	        SelectBox.right = min(Label.left + labelSize.cx, Label.right);
+	    else
+	        SelectBox.right = min(Label.left + MAX_EMPTYTEXT_SELECT_WIDTH, Label.right);
 	}
 	else
 	{

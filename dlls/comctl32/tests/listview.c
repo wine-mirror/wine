@@ -3067,7 +3067,7 @@ static void test_getitemrect(void)
     expect(TRUE, r);
     /* padding, column width */
     expect(2, rect.left);
-    todo_wine expect(50, rect.right);
+    expect(50, rect.right);
 
     /* try with indentation */
     item.mask = LVIF_INDENT;
@@ -3093,7 +3093,7 @@ static void test_getitemrect(void)
     expect(TRUE, r);
     /* padding + 1 icon width, column width */
     expect(2 + 16, rect.left);
-    todo_wine expect(50, rect.right);
+    expect(50, rect.right);
 
     /* label bounds */
     rect.left = LVIR_LABEL;
