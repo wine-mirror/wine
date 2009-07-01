@@ -56,6 +56,12 @@ static void test_decode_24bpp(void)
     GUID guidresult;
     UINT count=0, width=0, height=0;
     double dpiX, dpiY;
+    BYTE imagedata[36] = {1};
+    const BYTE expected_imagedata[36] = {
+        255,0,255, 255,255,255,
+        255,0,0,   255,255,0,
+        0,0,0,     0,255,0};
+    WICRect rc;
 
     hr = CoCreateInstance(&CLSID_WICBmpDecoder, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICBitmapDecoder, (void**)&decoder);
@@ -105,6 +111,42 @@ static void test_decode_24bpp(void)
                 hr = IWICBitmapFrameDecode_GetPixelFormat(framedecode, &guidresult);
                 ok(SUCCEEDED(hr), "GetPixelFormat failed, hr=%x\n", hr);
                 ok(IsEqualGUID(&guidresult, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
+
+                rc.X = 0;
+                rc.Y = 0;
+                rc.Width = 3;
+                rc.Height = 3;
+                hr = IWICBitmapFrameDecode_CopyPixels(framedecode, &rc, 6, sizeof(imagedata), imagedata);
+                ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %x\n", hr);
+
+                rc.X = -1;
+                rc.Y = 0;
+                rc.Width = 2;
+                rc.Height = 3;
+                hr = IWICBitmapFrameDecode_CopyPixels(framedecode, &rc, 6, sizeof(imagedata), imagedata);
+                ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %x\n", hr);
+
+                rc.X = 0;
+                rc.Y = 0;
+                rc.Width = 2;
+                rc.Height = 3;
+                hr = IWICBitmapFrameDecode_CopyPixels(framedecode, &rc, 4, sizeof(imagedata), imagedata);
+                ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %x\n", hr);
+
+                rc.X = 0;
+                rc.Y = 0;
+                rc.Width = 2;
+                rc.Height = 3;
+                hr = IWICBitmapFrameDecode_CopyPixels(framedecode, &rc, 4, 5, imagedata);
+                ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %x\n", hr);
+
+                rc.X = 0;
+                rc.Y = 0;
+                rc.Width = 2;
+                rc.Height = 3;
+                hr = IWICBitmapFrameDecode_CopyPixels(framedecode, &rc, 6, sizeof(imagedata), imagedata);
+                ok(SUCCEEDED(hr), "CopyPixels failed, hr=%x\n", hr);
+                ok(!memcmp(imagedata, expected_imagedata, sizeof(imagedata)), "unexpected image data\n");
 
                 IWICBitmapFrameDecode_Release(framedecode);
             }
