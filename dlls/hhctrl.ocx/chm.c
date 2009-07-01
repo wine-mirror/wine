@@ -362,15 +362,16 @@ IStream *GetChmStream(CHMInfo *info, LPCWSTR parent_chm, ChmPath *chm_file)
 /* Opens the CHM file for reading */
 CHMInfo *OpenCHM(LPCWSTR szFile)
 {
-    WCHAR file[MAX_PATH] = {0};
     HRESULT hres;
+    CHMInfo *ret;
 
     static const WCHAR wszSTRINGS[] = {'#','S','T','R','I','N','G','S',0};
 
-    CHMInfo *ret = heap_alloc_zero(sizeof(CHMInfo));
+    if (!(ret = heap_alloc_zero(sizeof(CHMInfo))))
+        return NULL;
 
-    GetFullPathNameW(szFile, sizeof(file)/sizeof(file[0]), file, NULL);
-    ret->szFile = strdupW(file);
+    if (!(ret->szFile = strdupW(szFile)))
+        return NULL;
 
     hres = CoCreateInstance(&CLSID_ITStorage, NULL, CLSCTX_INPROC_SERVER,
             &IID_IITStorage, (void **) &ret->pITStorage) ;

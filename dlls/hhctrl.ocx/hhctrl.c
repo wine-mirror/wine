@@ -86,11 +86,27 @@ static const char *command_to_string(UINT command)
 #undef X
 }
 
+static BOOL resolve_filename(const WCHAR *filename, WCHAR *fullname, DWORD buflen)
+{
+    static const WCHAR helpW[] = {'\\','h','e','l','p','\\',0};
+
+    GetFullPathNameW(filename, buflen, fullname, NULL);
+    if (GetFileAttributesW(fullname) == INVALID_FILE_ATTRIBUTES)
+    {
+        GetWindowsDirectoryW(fullname, buflen);
+        strcatW(fullname, helpW);
+        strcatW(fullname, filename);
+    }
+    return (GetFileAttributesW(fullname) != INVALID_FILE_ATTRIBUTES);
+}
+
 /******************************************************************
  *		HtmlHelpW (HHCTRL.OCX.15)
  */
 HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR data)
 {
+    WCHAR fullname[MAX_PATH];
+
     TRACE("(%p, %s, command=%s, data=%lx)\n",
           caller, debugstr_w( filename ),
           command_to_string( command ), data);
@@ -120,7 +136,13 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
             index += 2; /* advance beyond "::" for calling NavigateToChm() later */
         }
 
-        info = CreateHelpViewer(filename);
+        if (!resolve_filename(filename, fullname, MAX_PATH))
+        {
+            WARN("can't find %s\n", debugstr_w(filename));
+            return 0;
+        }
+
+        info = CreateHelpViewer(fullname);
         if(!info)
             return NULL;
 
@@ -142,7 +164,13 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         if (!filename)
             return NULL;
 
-        info = CreateHelpViewer(filename);
+        if (!resolve_filename(filename, fullname, MAX_PATH))
+        {
+            WARN("can't find %s\n", debugstr_w(filename));
+            return 0;
+        }
+
+        info = CreateHelpViewer(fullname);
         if(!info)
             return NULL;
 
