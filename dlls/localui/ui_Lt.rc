@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "localui.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -55,5 +57,3 @@ STRINGTABLE DISCARDABLE
     IDS_PORTEXISTS "Prievadas %s jau egzistuoja"
     IDS_NOTHINGTOCONFIG "Šis prievadas neturi parinkčių konfigūravimui"
 }
-
-#pragma code_page(default)

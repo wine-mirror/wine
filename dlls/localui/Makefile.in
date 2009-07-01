@@ -8,7 +8,23 @@ IMPORTS   = winspool user32 kernel32
 C_SRCS = \
 	localui.c
 
-RC_SRCS = localui.rc
+RC_SRCS = \
+	localui.rc \
+	ui_Da.rc \
+	ui_De.rc \
+	ui_En.rc \
+	ui_Fr.rc \
+	ui_Ko.rc \
+	ui_Lt.rc \
+	ui_Nl.rc \
+	ui_No.rc \
+	ui_Pl.rc \
+	ui_Pt.rc \
+	ui_Ro.rc \
+	ui_Ru.rc \
+	ui_Si.rc \
+	ui_Sv.rc \
+	ui_Zh.rc
 
 @MAKE_DLL_RULES@
 
