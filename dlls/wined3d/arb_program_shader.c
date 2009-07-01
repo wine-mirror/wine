@@ -4248,6 +4248,9 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         {
             shader_arb_ps_local_constants(This);
         }
+
+        /* Force constant reloading for the NP2 fixup (see comment in shader_glsl_select for more info) */
+        if (compiled->np2fixup_info.super.active) This->shader_backend->shader_load_np2fixup_constants(iface, usePS, useVS);
     } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
         /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
         * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
