@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "reg.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -31,5 +33,3 @@ STRINGTABLE
     STRING_DELETE_USAGE, "REG DELETE キー名 [/v 値名 | /ve | /va] [/f]\n"
     STRING_QUERY_USAGE, "REG QUERY キー名 [/v 値名 | /ve] [/s]\n"
 }
-
-#pragma code_page(default)

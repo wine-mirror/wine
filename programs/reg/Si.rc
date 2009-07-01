@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "reg.h"
+
 #pragma code_page(65001)
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
@@ -35,5 +37,3 @@ STRINGTABLE
     STRING_NO_REMOTE, "Napaka: Na morem dodati ključa na oddaljen računalnik\n"
     STRING_CANNOT_FIND, "Napaka: Sistem ni našel zahtevanega ključa ali vrednosti\n"
 }
-
-#pragma code_page(default)

@@ -10,7 +10,20 @@ DELAYIMPORTS = user32
 
 C_SRCS = reg.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Fr.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ru.rc \
+	Si.rc
 
 @MAKE_PROG_RULES@
 

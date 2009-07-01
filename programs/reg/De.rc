@@ -20,6 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "reg.h"
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
@@ -36,5 +38,3 @@ STRINGTABLE
     STRING_NO_REMOTE, "Fehler: Konnte Schlüssel nicht zum remote Rechner hinzufügen\n"
     STRING_CANNOT_FIND, "Fehler: Der angegebene Schlüssel oder Wert konnte nicht gefunden werden\n"
 }
-
-#pragma code_page(default)

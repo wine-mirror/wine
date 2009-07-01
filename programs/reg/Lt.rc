@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "reg.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -36,5 +38,3 @@ STRINGTABLE
     STRING_NO_REMOTE, "Klaida: Negalima pridėti raktų nuotoliniame kompiuteryje\n"
     STRING_CANNOT_FIND, "Klaida: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"
 }
-
-#pragma code_page(default)
