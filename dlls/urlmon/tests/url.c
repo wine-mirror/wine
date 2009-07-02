@@ -1941,7 +1941,6 @@ static void test_GetBindInfoEx(IBindStatusCallback *holder)
 
     hres = IBindStatusCallback_QueryInterface(holder, &IID_IBindStatusCallbackEx, (void**)&bscex);
     if(FAILED(hres)) {
-        todo_wine
         win_skip("IBindStatusCallbackEx not supported\n");
         return;
     }
