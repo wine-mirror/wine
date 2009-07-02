@@ -6,8 +6,6 @@ MODULE    = w32sys.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,w32skrnl.dll
 
-SPEC_SRCS = w32sys.dll16.spec
-
 C_SRCS = w32sys.c
 
 @MAKE_DLL_RULES@

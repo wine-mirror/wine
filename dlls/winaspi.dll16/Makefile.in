@@ -6,8 +6,6 @@ MODULE    = winaspi.dll16
 IMPORTS   = advapi32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,wnaspi32.dll
 
-SPEC_SRCS = winaspi.dll16.spec
-
 C_SRCS = winaspi.c
 
 @MAKE_DLL_RULES@

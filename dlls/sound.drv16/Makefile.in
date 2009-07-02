@@ -6,8 +6,6 @@ MODULE    = sound.drv16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,winmm.dll
 
-SPEC_SRCS = sound.drv16.spec
-
 C_SRCS = sound.c
 
 @MAKE_DLL_RULES@

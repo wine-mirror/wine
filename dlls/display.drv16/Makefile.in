@@ -8,8 +8,6 @@ IMPORTS   = user32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16
 EXTRARCFLAGS  = -O res16
 
-SPEC_SRCS = display.drv16.spec
-
 C_SRCS = display.c
 
 RC_SRCS = display.rc

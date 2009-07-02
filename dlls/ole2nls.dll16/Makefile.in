@@ -8,8 +8,6 @@ IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,ole32.dll
 EXTRARCFLAGS  = -O res16
 
-SPEC_SRCS = ole2nls.dll16.spec
-
 C_SRCS = ole2nls.c
 
 RC_SRCS = version.rc

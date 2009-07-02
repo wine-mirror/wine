@@ -6,8 +6,6 @@ MODULE    = lzexpand.dll16
 IMPORTS   = lz32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,lz32.dll
 
-SPEC_SRCS = lzexpand.dll16.spec
-
 C_SRCS = lzexpand.c
 
 @MAKE_DLL_RULES@

@@ -6,8 +6,6 @@ MODULE    = imm.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,imm32.dll
 
-SPEC_SRCS = imm.dll16.spec
-
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

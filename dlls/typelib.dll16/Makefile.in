@@ -6,8 +6,6 @@ MODULE    = typelib.dll16
 IMPORTS   = oleaut32 advapi32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,oleaut32.dll
 
-SPEC_SRCS = typelib.dll16.spec
-
 C_SRCS = typelib.c
 
 @MAKE_DLL_RULES@

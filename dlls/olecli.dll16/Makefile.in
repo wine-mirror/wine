@@ -6,8 +6,6 @@ MODULE    = olecli.dll16
 IMPORTS   = gdi32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,olecli32.dll
 
-SPEC_SRCS = olecli.dll16.spec
-
 C_SRCS = olecli.c
 
 @MAKE_DLL_RULES@

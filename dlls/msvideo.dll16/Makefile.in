@@ -7,8 +7,6 @@ IMPORTS   = msvfw32 version advapi32 kernel32
 
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,msvfw32.dll
 
-SPEC_SRCS = msvideo.dll16.spec
-
 C_SRCS = msvideo16.c
 
 @MAKE_DLL_RULES@

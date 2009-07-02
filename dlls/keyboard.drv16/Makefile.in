@@ -6,8 +6,6 @@ MODULE    = keyboard.drv16
 IMPORTS   = user32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16
 
-SPEC_SRCS = keyboard.drv16.spec
-
 C_SRCS = keyboard.c
 
 @MAKE_DLL_RULES@

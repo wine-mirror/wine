@@ -6,8 +6,6 @@ MODULE    = wintab.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,wintab32.dll
 
-SPEC_SRCS = wintab.dll16.spec
-
 C_SRCS = wintab.c
 
 @MAKE_DLL_RULES@

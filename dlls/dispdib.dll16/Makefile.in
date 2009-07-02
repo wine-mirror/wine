@@ -6,8 +6,6 @@ MODULE    = dispdib.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16
 
-SPEC_SRCS = dispdib.dll16.spec
-
 C_SRCS = dispdib.c
 
 @MAKE_DLL_RULES@

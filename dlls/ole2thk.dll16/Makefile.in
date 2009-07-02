@@ -6,8 +6,6 @@ MODULE    = ole2thk.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,ole32.dll
 
-SPEC_SRCS = ole2thk.dll16.spec
-
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

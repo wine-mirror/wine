@@ -6,8 +6,6 @@ MODULE    = windebug.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16
 
-SPEC_SRCS = windebug.dll16.spec
-
 C_SRCS = windebug.c
 
 @MAKE_DLL_RULES@

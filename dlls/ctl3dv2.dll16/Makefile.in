@@ -6,8 +6,6 @@ MODULE    = ctl3dv2.dll16
 IMPORTS   = user32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,ctl3d32.dll
 
-SPEC_SRCS = ctl3dv2.dll16.spec
-
 C_SRCS = ctl3d.c
 
 @MAKE_DLL_RULES@

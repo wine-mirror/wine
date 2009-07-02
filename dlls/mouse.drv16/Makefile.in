@@ -8,8 +8,6 @@ IMPORTS   = user32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16
 EXTRARCFLAGS  = -O res16
 
-SPEC_SRCS = mouse.drv16.spec
-
 C_SRCS = mouse.c
 
 RC_SRCS = mouse.rc

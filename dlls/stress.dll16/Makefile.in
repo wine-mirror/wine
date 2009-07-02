@@ -6,8 +6,6 @@ MODULE    = stress.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16
 
-SPEC_SRCS = stress.dll16.spec
-
 C_SRCS = stress.c
 
 @MAKE_DLL_RULES@

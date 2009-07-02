@@ -6,8 +6,6 @@ MODULE    = win87em.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16
 
-SPEC_SRCS = win87em.dll16.spec
-
 C_SRCS = win87em.c
 
 @MAKE_DLL_RULES@

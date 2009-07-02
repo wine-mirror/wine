@@ -6,8 +6,6 @@ MODULE    = olesvr.dll16
 IMPORTS   = gdi32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,olesvr32.dll
 
-SPEC_SRCS = olesvr.dll16.spec
-
 C_SRCS = olesvr.c
 
 @MAKE_DLL_RULES@

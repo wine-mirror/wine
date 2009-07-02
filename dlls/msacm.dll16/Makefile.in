@@ -6,8 +6,6 @@ MODULE    = msacm.dll16
 IMPORTS   = msacm32 kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,msacm32.dll
 
-SPEC_SRCS = msacm.dll16.spec
-
 C_SRCS = msacm.c
 
 @MAKE_DLL_RULES@

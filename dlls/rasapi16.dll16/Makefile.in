@@ -6,8 +6,6 @@ MODULE    = rasapi16.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,rasapi32.dll
 
-SPEC_SRCS = rasapi16.dll16.spec
-
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

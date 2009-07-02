@@ -7,8 +7,6 @@ IMPORTS   = user32 kernel32
 
 EXTRADLLFLAGS = -Wb,--subsystem,win16
 
-SPEC_SRCS = ddeml.dll16.spec
-
 C_SRCS = ddeml.c
 
 @MAKE_DLL_RULES@

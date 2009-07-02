@@ -6,8 +6,6 @@ MODULE    = twain.dll16
 IMPORTS   = kernel32
 EXTRADLLFLAGS = -Wb,--subsystem,win16,--main-module,twain_32.dll
 
-SPEC_SRCS = twain.dll16.spec
-
 C_SRCS = twain.c
 
 @MAKE_DLL_RULES@
