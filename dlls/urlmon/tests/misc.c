@@ -1191,26 +1191,19 @@ static void test_user_agent(void)
     ok(size > 0, "size=%d, expected non-zero\n", size);
 
     str2 = HeapAlloc(GetProcessHeap(), 0, (size+20)*sizeof(CHAR));
-    if (!str2)
-    {
-        skip("skipping rest of ObtainUserAgent tests, out of memory\n");
-    }
-    else
-    {
-        saved = size;
-        hres = ObtainUserAgentString(0, str2, &size);
-        ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
-        ok(size == saved, "size=%d, expected %d\n", size, saved);
-        ok(strlen(expected) <= strlen(str2) &&
-           !memcmp(expected, str2, strlen(expected)*sizeof(CHAR)),
-           "user agent was \"%s\", expected to start with \"%s\"\n",
-           str2, expected);
+    saved = size;
+    hres = ObtainUserAgentString(0, str2, &size);
+    ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
+    ok(size == saved, "size=%d, expected %d\n", size, saved);
+    ok(strlen(expected) <= strlen(str2) &&
+       !memcmp(expected, str2, strlen(expected)*sizeof(CHAR)),
+       "user agent was \"%s\", expected to start with \"%s\"\n",
+       str2, expected);
 
-        size = saved+10;
-        hres = ObtainUserAgentString(0, str2, &size);
-        ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
-        ok(size == saved, "size=%d, expected %d\n", size, saved);
-    }
+    size = saved+10;
+    hres = ObtainUserAgentString(0, str2, &size);
+    ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
+    ok(size == saved, "size=%d, expected %d\n", size, saved);
 
     size = 0;
     hres = UrlMkGetSessionOption(URLMON_OPTION_USERAGENT, NULL, 0, &size, 0);
