@@ -1223,11 +1223,71 @@ end:
 }
 
 /******************************************************************
+ *         set_window
+ *
+ * Helper for GetWinMetaFileBits
+ *
+ * Add the SetWindowOrg and SetWindowExt records
+ */
+static BOOL set_window(HDC hdc, HENHMETAFILE emf, HDC ref_dc, INT map_mode)
+{
+    ENHMETAHEADER header;
+    INT horz_res, vert_res, horz_size, vert_size;
+    POINT pt;
+
+    if(!GetEnhMetaFileHeader(emf, sizeof(header), &header)) return FALSE;
+
+    horz_res = GetDeviceCaps(ref_dc, HORZRES);
+    vert_res = GetDeviceCaps(ref_dc, VERTRES);
+    horz_size = GetDeviceCaps(ref_dc, HORZSIZE);
+    vert_size = GetDeviceCaps(ref_dc, VERTSIZE);
+
+    switch(map_mode)
+    {
+    case MM_TEXT:
+    case MM_ISOTROPIC:
+    case MM_ANISOTROPIC:
+        pt.y = MulDiv(header.rclFrame.top, vert_res, vert_size * 100);
+        pt.x = MulDiv(header.rclFrame.left, horz_res, horz_size * 100);
+        break;
+    case MM_LOMETRIC:
+        pt.y = MulDiv(-header.rclFrame.top, 1, 10) + 1;
+        pt.x = MulDiv( header.rclFrame.left, 1, 10);
+        break;
+    case MM_HIMETRIC:
+        pt.y = -header.rclFrame.top + 1;
+        pt.x = header.rclFrame.left;
+        break;
+    case MM_LOENGLISH:
+        pt.y = MulDiv(-header.rclFrame.top, 10, 254) + 1;
+        pt.x = MulDiv( header.rclFrame.left, 10, 254);
+        break;
+    case MM_HIENGLISH:
+        pt.y = MulDiv(-header.rclFrame.top, 100, 254) + 1;
+        pt.x = MulDiv( header.rclFrame.left, 100, 254);
+        break;
+    case MM_TWIPS:
+        pt.y = MulDiv(-header.rclFrame.top, 72 * 20, 2540) + 1;
+        pt.x = MulDiv( header.rclFrame.left, 72 * 20, 2540);
+        break;
+    default:
+        WARN("Unknown map mode %d\n", map_mode);
+        return FALSE;
+    }
+    SetWindowOrgEx(hdc, pt.x, pt.y, NULL);
+
+    pt.x = MulDiv(header.rclFrame.right - header.rclFrame.left, horz_res, horz_size * 100);
+    pt.y = MulDiv(header.rclFrame.bottom - header.rclFrame.top, vert_res, vert_size * 100);
+    SetWindowExtEx(hdc, pt.x, pt.y, NULL);
+    return TRUE;
+}
+
+/******************************************************************
  *         GetWinMetaFileBits [GDI32.@]
  */
 UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
                                 UINT cbBuffer, LPBYTE lpbBuffer,
-                                INT fnMapMode, HDC hdcRef)
+                                INT map_mode, HDC hdcRef)
 {
     HDC hdcmf;
     HMETAFILE hmf;
@@ -1237,11 +1297,14 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
     GetClipBox(hdcRef, &rc);
 
     TRACE("(%p,%d,%p,%d,%p) rc=%s\n", hemf, cbBuffer, lpbBuffer,
-        fnMapMode, hdcRef, wine_dbgstr_rect(&rc));
+          map_mode, hdcRef, wine_dbgstr_rect(&rc));
 
     hdcmf = CreateMetaFileW(NULL);
 
     add_mf_comment(hdcmf, hemf);
+    SetMapMode(hdcmf, map_mode);
+    if(!set_window(hdcmf, hemf, hdcRef, map_mode))
+        goto error;
 
     PlayEnhMetaFile(hdcmf, hemf, &rc);
     hmf = CloseMetaFile(hdcmf);
@@ -1260,6 +1323,10 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
         comment_rec->rdParm[8] = ~checksum + 1;
     }
     return ret;
+
+error:
+    DeleteMetaFile(CloseMetaFile(hdcmf));
+    return 0;
 }
 
 /******************************************************************
