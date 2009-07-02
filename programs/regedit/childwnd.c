@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include "main.h"
+#include "regproc.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -32,6 +33,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
 ChildWnd* g_pChildWnd;
 static int last_split;
+
+static const WCHAR wszLastKey[] = {'L','a','s','t','K','e','y',0};
+static const WCHAR wszKeyName[] = {'S','o','f','t','w','a','r','e','\\',
+                                   'M','i','c','r','o','s','o','f','t','\\',
+                                   'W','i','n','d','o','w','s','\\',
+                                   'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                   'A','p','p','l','e','t','s','\\','R','e','g','e','d','i','t',0};
 
 /*******************************************************************************
  * Local module support methods
@@ -222,6 +230,47 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 /*******************************************************************************
+ * get_last_key [internal]
+ *
+ * open last key
+ *
+ */
+static void get_last_key(HWND hwndTV)
+{
+    HKEY hkey;
+    WCHAR wszVal[KEY_MAX_LEN];
+    DWORD dwSize = sizeof(wszVal);
+
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, wszKeyName, 0, NULL, 0, KEY_READ, NULL, &hkey, NULL) == ERROR_SUCCESS)
+    {
+        if (RegQueryValueExW(hkey, wszLastKey, NULL, NULL, (LPBYTE)wszVal, &dwSize) == ERROR_SUCCESS)
+            SendMessageW(hwndTV, TVM_SELECTITEM, TVGN_CARET, (LPARAM)FindPathInTree(hwndTV, wszVal));
+
+        RegCloseKey(hkey);
+    }
+}
+
+/*******************************************************************************
+ * set_last_key [internal]
+ *
+ * save last key
+ *
+ */
+static void set_last_key(HWND hwndTV)
+{
+    HKEY hkey;
+    WCHAR *wszVal;
+
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, wszKeyName, 0, NULL, 0, KEY_WRITE, NULL, &hkey, NULL) == ERROR_SUCCESS)
+    {
+        wszVal = GetItemFullPath(g_pChildWnd->hTreeWnd, TreeView_GetSelection(g_pChildWnd->hTreeWnd), FALSE);
+        RegSetValueExW(hkey, wszLastKey, 0, REG_SZ, (LPBYTE)wszVal, KEY_MAX_LEN * sizeof(WCHAR));
+        HeapFree(GetProcessHeap(), 0, wszVal);
+        RegCloseKey(hkey);
+    }
+}
+
+/*******************************************************************************
  *
  *  FUNCTION: ChildWndProc(HWND, unsigned, WORD, LONG)
  *
@@ -245,6 +294,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         g_pChildWnd->hListWnd = CreateListView(hWnd, LIST_WINDOW/*, g_pChildWnd->szPath*/);
         g_pChildWnd->nFocusPanel = 1;
         SetFocus(g_pChildWnd->hTreeWnd);
+        get_last_key(g_pChildWnd->hTreeWnd);
         break;
     case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam)) {
@@ -266,6 +316,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         }
         goto def;
     case WM_DESTROY:
+        set_last_key(g_pChildWnd->hTreeWnd);
         HeapFree(GetProcessHeap(), 0, g_pChildWnd);
         g_pChildWnd = NULL;
         PostQuitMessage(0);
