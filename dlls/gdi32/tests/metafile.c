@@ -2302,19 +2302,25 @@ static void test_SetWinMetaFileBits(void)
   HeapFree(GetProcessHeap(), 0, buffer);
 }
 
-static void test_GetWinMetaFileBits(void)
+static void getwinmetafilebits(UINT mode, int scale)
 {
     HENHMETAFILE emf;
     HDC display_dc, emf_dc;
     RECT rc;
     ENHMETAHEADER *enh_header;
-    UINT size, emf_size, i, mode;
+    UINT size, emf_size, i;
     WORD check = 0;
     DWORD rec_num = 0;
     METAHEADER *mh;
     METARECORD *rec;
+    INT horz_res, vert_res, horz_size, vert_size;
 
     display_dc = GetDC(NULL);
+
+    horz_res = GetDeviceCaps(display_dc, HORZRES);
+    vert_res = GetDeviceCaps(display_dc, VERTRES);
+    horz_size = GetDeviceCaps(display_dc, HORZSIZE);
+    vert_size = GetDeviceCaps(display_dc, VERTSIZE);
 
     SetRect(&rc, 1000, 2000, 3000, 6000);
     emf_dc = CreateEnhMetaFileA(display_dc, NULL, &rc, NULL);
@@ -2325,9 +2331,14 @@ static void test_GetWinMetaFileBits(void)
     emf_size = GetEnhMetaFileBits(emf, 0, NULL);
     enh_header = HeapAlloc(GetProcessHeap(), 0, emf_size);
     emf_size = GetEnhMetaFileBits(emf, emf_size, (BYTE*)enh_header);
+    DeleteEnhMetaFile(emf);
+    /* multiply szlDevice.cx by scale, when scale != 1 the recording and playback dcs
+       have different resolutions */
+    enh_header->szlDevice.cx *= scale;
+    emf = SetEnhMetaFileBits(emf_size, (BYTE*)enh_header);
 
-    mode = MM_ANISOTROPIC;
     size = GetWinMetaFileBits(emf, 0, NULL, mode, display_dc);
+    ok(size, "GetWinMetaFileBits returns 0\n");
     mh = HeapAlloc(GetProcessHeap(), 0, size);
     GetWinMetaFileBits(emf, size, (BYTE*)mh, mode, display_dc);
 
@@ -2372,6 +2383,56 @@ static void test_GetWinMetaFileBits(void)
             ok(!memcmp(rec->rdParm + 19, (char*)enh_header + rec_num * chunk_size, this_chunk_size), "bits mismatch\n");
         }
 
+        else if(rec_num == mfcomment_chunks)
+        {
+            ok(rec->rdFunction == META_SETMAPMODE, "got %04x\n", rec->rdFunction);
+            ok(rec->rdParm[0] == mode, "got %04x\n", rec->rdParm[0]);
+        }
+        else if(rec_num == mfcomment_chunks + 1)
+        {
+            POINT pt;
+            ok(rec->rdFunction == META_SETWINDOWORG, "got %04x\n", rec->rdFunction);
+            switch(mode)
+            {
+            case MM_TEXT:
+            case MM_ISOTROPIC:
+            case MM_ANISOTROPIC:
+                pt.y = MulDiv(rc.top, vert_res, vert_size * 100);
+                pt.x = MulDiv(rc.left, horz_res, horz_size * 100);
+                break;
+            case MM_LOMETRIC:
+                pt.y = MulDiv(-rc.top, 1, 10) + 1;
+                pt.x = MulDiv(rc.left, 1, 10);
+                break;
+            case MM_HIMETRIC:
+                pt.y = -rc.top + 1;
+                pt.x = rc.left;
+                break;
+            case MM_LOENGLISH:
+                pt.y = MulDiv(-rc.top, 10, 254) + 1;
+                pt.x = MulDiv( rc.left, 10, 254);
+                break;
+            case MM_HIENGLISH:
+                pt.y = MulDiv(-rc.top, 100, 254) + 1;
+                pt.x = MulDiv( rc.left, 100, 254);
+                break;
+            case MM_TWIPS:
+                pt.y = MulDiv(-rc.top, 72 * 20, 2540) + 1;
+                pt.x = MulDiv( rc.left, 72 * 20, 2540);
+                break;
+            default:
+                pt.x = pt.y = 0;
+            }
+            ok((short)rec->rdParm[0] == pt.y, "got %d expect %d\n", (short)rec->rdParm[0], pt.y);
+            ok((short)rec->rdParm[1] == pt.x, "got %d expect %d\n", (short)rec->rdParm[1], pt.x);
+        }
+        if(rec_num == mfcomment_chunks + 2)
+        {
+            ok(rec->rdFunction == META_SETWINDOWEXT, "got %04x\n", rec->rdFunction);
+            ok((short)rec->rdParm[0] == MulDiv(rc.bottom - rc.top, vert_res, vert_size * 100), "got %d\n", (short)rec->rdParm[0]);
+            ok((short)rec->rdParm[1] == MulDiv(rc.right - rc.left, horz_res, horz_size * 100), "got %d\n", (short)rec->rdParm[1]);
+        }
+
         rec_num++;
         rec = (METARECORD*)((WORD*)rec + rec->rdSize);
     }
@@ -2381,6 +2442,17 @@ static void test_GetWinMetaFileBits(void)
     DeleteEnhMetaFile(emf);
 
     ReleaseDC(NULL, display_dc);
+}
+
+static void test_GetWinMetaFileBits(void)
+{
+    UINT mode;
+
+    for(mode = MM_MIN; mode <= MM_MAX; mode++)
+    {
+        getwinmetafilebits(mode, 1);
+        getwinmetafilebits(mode, 2);
+    }
 }
 
 static BOOL (WINAPI *pGdiIsMetaPrintDC)(HDC);
