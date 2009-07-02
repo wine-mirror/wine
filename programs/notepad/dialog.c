@@ -337,24 +337,6 @@ static inline ENCODING detect_encoding_of_buffer(const void* buffer, int size)
     }
 }
 
-/* Similar to SetWindowTextA, but uses a CP_UTF8 encoded input, not CP_ACP.
- * lpTextInUtf8 should be NUL-terminated and not include the BOM.
- *
- * Returns FALSE on failure, TRUE on success, like SetWindowTextA/W.
- */
-static BOOL SetWindowTextUtf8(HWND hwnd, LPCSTR lpTextInUtf8)
-{
-    BOOL ret;
-    int lenW = MultiByteToWideChar(CP_UTF8, 0, lpTextInUtf8, -1, NULL, 0);
-    LPWSTR textW = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
-    if (!textW)
-        return FALSE;
-    MultiByteToWideChar(CP_UTF8, 0, lpTextInUtf8, -1, textW, lenW);
-    ret = SetWindowTextW(hwnd, textW);
-    HeapFree(GetProcessHeap(), 0, textW);
-    return ret;
-}
-
 void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
 {
     static const WCHAR dotlog[] = { '.','L','O','G',0 };
@@ -362,7 +344,8 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
     LPSTR pTemp;
     DWORD size;
     DWORD dwNumRead;
-    BOOL succeeded;
+    int lenW;
+    WCHAR* textW;
     WCHAR log[5];
 
     /* Close any files and prompt to save changes */
@@ -405,8 +388,6 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
     CloseHandle(hFile);
 
     size = dwNumRead;
-    pTemp[size] = 0;    /* make sure it's  (char)'\0'-terminated */
-    pTemp[size+1] = 0;  /* make sure it's (WCHAR)'\0'-terminated */
 
     if (enc == ENCODING_AUTO)
         enc = detect_encoding_of_buffer(pTemp, size);
@@ -421,9 +402,6 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
             enc = ENCODING_UTF16BE;
     }
 
-    /* SetWindowTextUtf8 and SetWindowTextA try to allocate memory, so we
-     * check if they succeed.
-     */
     switch (enc)
     {
     case ENCODING_UTF16BE:
@@ -434,33 +412,35 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
         /* fall through */
 
     case ENCODING_UTF16LE:
-        if (size >= 2 && (BYTE)pTemp[0] == 0xff && (BYTE)pTemp[1] == 0xfe)
-            succeeded = SetWindowTextW(Globals.hEdit, (LPWSTR)pTemp + 1);
-        else
-            succeeded = SetWindowTextW(Globals.hEdit, (LPWSTR)pTemp);
-        break;
-
-    case ENCODING_UTF8:
-        if (size >= 3 && (BYTE)pTemp[0] == 0xef && (BYTE)pTemp[1] == 0xbb &&
-                                                   (BYTE)pTemp[2] == 0xbf)
-            succeeded = SetWindowTextUtf8(Globals.hEdit, pTemp+3);
-        else
-            succeeded = SetWindowTextUtf8(Globals.hEdit, pTemp);
+        textW = (LPWSTR)pTemp;
+        lenW  = size/sizeof(WCHAR);
         break;
 
     default:
-        succeeded = SetWindowTextA(Globals.hEdit, pTemp);
-        break;
+        {
+            int cp = (enc==ENCODING_UTF8) ? CP_UTF8 : CP_ACP;
+            lenW = MultiByteToWideChar(cp, 0, pTemp, size, NULL, 0);
+            textW = HeapAlloc(GetProcessHeap(), 0, (lenW+1) * sizeof(WCHAR));
+            if (!textW)
+            {
+                ShowLastError();
+                HeapFree(GetProcessHeap(), 0, pTemp);
+                return;
+            }
+            MultiByteToWideChar(cp, 0, pTemp, size, textW, lenW);
+            HeapFree(GetProcessHeap(), 0, pTemp);
+            break;
+        }
     }
 
-    if (!succeeded)
-    {
-        ShowLastError();
-        HeapFree(GetProcessHeap(), 0, pTemp);
-        return;
-    }
+    textW[lenW] = '\0';
 
-    HeapFree(GetProcessHeap(), 0, pTemp);
+    if (lenW >= 1 && textW[0] == 0xfeff)
+        SetWindowTextW(Globals.hEdit, textW+1);
+    else
+        SetWindowTextW(Globals.hEdit, textW);
+
+    HeapFree(GetProcessHeap(), 0, textW);
 
     SendMessageW(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
     SendMessageW(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
