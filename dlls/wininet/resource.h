@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <windef.h>
+#include <winuser.h>
+
 #define IDD_PROXYDLG     0x400
 
 #define IDC_PROXY        0x401
