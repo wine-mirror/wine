@@ -308,6 +308,7 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
             goto fail;
         }
     }
+    context_set_last_device(NULL);
 
   ret:
     TRACE("incrementing ref from %i\n", wined3d_fake_gl_context_ref);

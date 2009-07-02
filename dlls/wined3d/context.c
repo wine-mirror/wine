@@ -36,6 +36,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
  */
 static IWineD3DDeviceImpl *last_device;
 
+void context_set_last_device(IWineD3DDeviceImpl *device)
+{
+    last_device = device;
+}
+
 /* FBO helper functions */
 
 /* GL locking is done by the caller */
@@ -1078,7 +1083,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
             ERR("Failed to make previous GL context %p current.\n", oldCtx);
         }
     } else {
-        last_device = This;
+        context_set_last_device(This);
     }
     This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
 
@@ -1167,7 +1172,7 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
 
     /* The correct GL context needs to be active to cleanup the GL resources below */
     has_glctx = pwglMakeCurrent(context->hdc, context->glCtx);
-    last_device = NULL;
+    context_set_last_device(NULL);
 
     if (!has_glctx) WARN("Failed to activate context. Window already destroyed?\n");
 
@@ -1750,7 +1755,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                    sizeof(*This->activeContext->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
         }
         This->activeContext = context;
-        last_device = This;
+        context_set_last_device(This);
     }
 
     switch (usage) {
