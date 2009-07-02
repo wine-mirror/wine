@@ -296,6 +296,7 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
 {
     static RECT initrc, rc;
     static int index, count;
+    static int gotSWP_bottom, gotShowWindow;
     HWND parent = GetParent( dlg);
     int resize;
     switch( msg)
@@ -306,6 +307,7 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
 
             index = ((OPENFILENAME*)lParam)->lCustData;
             count = 0;
+            gotSWP_bottom = gotShowWindow = 0;
             /* test style */
             style = GetWindowLong( parent, GWL_STYLE);
             if( resize_testcases[index].flags & OFN_ENABLESIZING)
@@ -370,6 +372,23 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
                 PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
             }
             count++;
+        }
+        break;
+        case WM_WINDOWPOSCHANGING:
+        {
+            WINDOWPOS *pwp = (WINDOWPOS *)lParam;
+            if(  !index && pwp->hwndInsertAfter == HWND_BOTTOM){
+                gotSWP_bottom = 1;
+                ok( gotShowWindow == 0, "The WM_WINDOWPOSCHANGING message came after a WM_SHOWWINDOW message\n");
+            }
+        }
+        break;
+        case WM_SHOWWINDOW:
+        {
+            if(  !index){
+                gotShowWindow = 1;
+                ok( gotSWP_bottom == 1, "No WM_WINDOWPOSCHANGING message came before a WM_SHOWWINDOW message\n");
+            }
         }
         break;
     }

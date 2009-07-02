@@ -789,11 +789,7 @@ static HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
           hChildDlg = CreateDialogIndirectParamA(hinst, template, hwnd,
               IsHooked(fodInfos) ? (DLGPROC)fodInfos->ofnInfos->lpfnHook : FileOpenDlgProcUserTemplate,
               (LPARAM)fodInfos->ofnInfos);
-      if(hChildDlg)
-      {
-        ShowWindow(hChildDlg,SW_SHOW);
-        return hChildDlg;
-      }
+      return hChildDlg;
     }
     else if( IsHooked(fodInfos))
     {
@@ -1152,6 +1148,9 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
 
          FILEDLG95_ResizeControls(hwnd, wParam, lParam);
       	 FILEDLG95_FillControls(hwnd, wParam, lParam);
+
+         if( fodInfos->DlgInfos.hwndCustomDlg)
+             ShowWindow( fodInfos->DlgInfos.hwndCustomDlg, SW_SHOW);
 
          if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
              SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
