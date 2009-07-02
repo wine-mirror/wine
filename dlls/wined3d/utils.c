@@ -570,6 +570,7 @@ static void check_fbo_compat(const WineD3D_GL_Info *gl_info, struct GlPixelForma
     ENTER_GL();
 
     while(glGetError());
+    glDisable(GL_BLEND);
 
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -636,6 +637,42 @@ static void check_fbo_compat(const WineD3D_GL_Info *gl_info, struct GlPixelForma
                         debug_d3dformat(format_desc->format));
                 format_desc->Flags &= ~WINED3DFMT_FLAG_RENDERTARGET;
             }
+        }
+    }
+
+    if (status == GL_FRAMEBUFFER_COMPLETE_EXT && format_desc->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
+    {
+        GLuint rb;
+
+        if (GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+        {
+            GL_EXTCALL(glGenRenderbuffersEXT(1, &rb));
+            GL_EXTCALL(glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rb));
+            GL_EXTCALL(glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH24_STENCIL8_EXT, 16, 16));
+            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+                    GL_RENDERBUFFER_EXT, rb));
+            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT,
+                    GL_RENDERBUFFER_EXT, rb));
+            checkGLcall("RB attachment");
+        }
+
+        glEnable(GL_BLEND);
+        glClear(GL_COLOR_BUFFER_BIT);
+        if (glGetError() == GL_INVALID_FRAMEBUFFER_OPERATION_EXT)
+        {
+            while(glGetError());
+            TRACE("Format doesn't support post-pixelshader blending.\n");
+            format_desc->Flags &= ~WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
+        }
+
+        if (GL_SUPPORT(EXT_PACKED_DEPTH_STENCIL))
+        {
+            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
+                    GL_RENDERBUFFER_EXT, 0));
+            GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT,
+                    GL_RENDERBUFFER_EXT, 0));
+            GL_EXTCALL(glDeleteRenderbuffersEXT(1, &rb));
+            checkGLcall("RB cleanup");
         }
     }
 
