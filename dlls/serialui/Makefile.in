@@ -9,7 +9,29 @@ IMPORTS   = user32 advapi32 kernel32
 C_SRCS = \
 	confdlg.c
 
-RC_SRCS= serialui_rc.rc
+RC_SRCS = \
+	Bg.rc \
+	Cs.rc \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Eo.rc \
+	Es.rc \
+	Fi.rc \
+	Fr.rc \
+	Hu.rc \
+	It.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pt.rc \
+	Ru.rc \
+	Si.rc \
+	Sv.rc \
+	Tr.rc \
+	Zh.rc
 
 @MAKE_DLL_RULES@
 

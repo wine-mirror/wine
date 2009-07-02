@@ -19,6 +19,9 @@
 #ifndef __WINE_SERIALUI_H
 #define __WINE_SERIALUI_H
 
+#include <windef.h>
+#include <winuser.h>
+
 #define IDD_SERIALUICONFIG 0x401
 #define IDC_BAUD 0x402
 #define IDC_PARITY 0x0403

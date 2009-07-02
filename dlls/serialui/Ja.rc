@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "serialui.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -42,5 +44,3 @@ BEGIN
   /* PUSHBUTTON    "標準値をロード", ID_GETDEFAULT,30,115,50,14 */
   /* PUSHBUTTON    "標準値として設定", ID_SETDEFAULT,85,115,50,14 */
 END
-
-#pragma code_page(default)
