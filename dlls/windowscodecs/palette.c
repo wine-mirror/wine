@@ -225,8 +225,23 @@ static HRESULT WINAPI PaletteImpl_IsGrayscale(IWICPalette *iface, BOOL *pfIsGray
 
 static HRESULT WINAPI PaletteImpl_HasAlpha(IWICPalette *iface, BOOL *pfHasAlpha)
 {
-    FIXME("(%p,%p): stub\n", iface, pfHasAlpha);
-    return E_NOTIMPL;
+    PaletteImpl *This = (PaletteImpl*)iface;
+    int i;
+
+    TRACE("(%p,%p)\n", iface, pfHasAlpha);
+
+    if (!pfHasAlpha) return E_INVALIDARG;
+
+    *pfHasAlpha = FALSE;
+
+    for (i=0; i<This->count; i++)
+        if ((This->colors[i]&0xff000000) != 0xff000000)
+        {
+            *pfHasAlpha = TRUE;
+            break;
+        }
+
+    return S_OK;
 }
 
 static const IWICPaletteVtbl PaletteImpl_Vtbl = {
