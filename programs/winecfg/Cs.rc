@@ -227,7 +227,7 @@ BEGIN
     IDS_TAB_ABOUT           "O programu"
     IDS_WINECFG_TITLE       "Konfigurace Wine"
     IDS_WINECFG_TITLE_APP   "Úprava Wine pro %s"
-    IDS_THEMEFILE           "Soubory s tématy vzhledu"
+    IDS_THEMEFILE           "Soubory s tématy vzhledu (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Zvolte soubor s tématem vzhledu"
     IDS_AUDIO_MISSING       "V registrech chybí záznam o vybraném zvukovém ovladaèi.\n\nAutomaticky byl zvolen doporuèený ovladaè.\nMùžete použít tento ovladaè nebo si z ostatních dostupných vybrat jiný.\n\nDokud nekliknete na tlaèítko Provést, nebude vybraný ovladaè použit."
     IDS_SHELL_FOLDER        "Domácí adresáøe"

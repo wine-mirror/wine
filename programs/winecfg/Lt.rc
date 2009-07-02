@@ -234,7 +234,7 @@ BEGIN
     IDS_TAB_ABOUT           "Apie"
     IDS_WINECFG_TITLE       "Wine konfigūravimas"
     IDS_WINECFG_TITLE_APP   "Wine konfigūravimas: %s"
-    IDS_THEMEFILE           "Apipavidalinimo failai"
+    IDS_THEMEFILE           "Apipavidalinimo failai (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Pasirinkite apipavidalinimo failą"
     IDS_AUDIO_MISSING       "Registre nėra nurodyta garso tvarkyklė.\n\nRekomenduojama tvarkyklė buvo parinkta.\nGalite naudoti šią tvarkyklę ar pasirinkti kitą, jei tokių yra.\n\nTurite paspausti „Vykdyti“, kad pasirinkimas įsigaliotų."
     IDS_SHELL_FOLDER        "Aplankas"

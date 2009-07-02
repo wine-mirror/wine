@@ -233,7 +233,7 @@ BEGIN
     IDS_TAB_ABOUT           "Despre"
     IDS_WINECFG_TITLE       "Setări Wine"
     IDS_WINECFG_TITLE_APP   "Setări Wine pentru %s"
-    IDS_THEMEFILE           "Fișere de tematică"
+    IDS_THEMEFILE           "Fișere de tematică (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Selectează un fișier de tematică"
     IDS_AUDIO_MISSING       "Nici un driver audio nu este specificat în registru.\n\nUn driver recomandat a fost ales pentru D-voastră.\nPuteți folosi acest driver ori alegeți un alt driver disponibil.\n\nDați clic pe OK ca să activați setarea."
     IDS_SHELL_FOLDER        "Dosarul de sistem"

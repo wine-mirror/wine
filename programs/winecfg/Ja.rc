@@ -236,7 +236,7 @@ BEGIN
     IDS_TAB_ABOUT           "Wineについて"
     IDS_WINECFG_TITLE       "Wine設定"
     IDS_WINECFG_TITLE_APP   "Wine設定 %s用"
-    IDS_THEMEFILE           "テーマファイル"
+    IDS_THEMEFILE           "テーマファイル (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "テーマファイルを選んでください"
     IDS_AUDIO_MISSING       "レジストリでオーディオドライバが指定されていません。\n\n推奨するドライバが自動的に選択されました。\nこのドライバを使うか、利用可能ならば他のドライバを選択できます。\n\n選択を有効にするには [適用] をクリックする必要があります。"
     IDS_SHELL_FOLDER        "シェルフォルダ"

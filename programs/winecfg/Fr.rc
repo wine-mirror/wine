@@ -235,7 +235,7 @@ BEGIN
     IDS_TAB_ABOUT           "À propos"
     IDS_WINECFG_TITLE       "Configuration de Wine"
     IDS_WINECFG_TITLE_APP   "Configuration de Wine pour %s"
-    IDS_THEMEFILE           "Fichiers de thèmes"
+    IDS_THEMEFILE           "Fichiers de thèmes (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Sélectionnez un fichier de thème"
     IDS_AUDIO_MISSING       "Aucun pilote audio n'est actuellement défini dans la base de registre.\n\nLe pilote recommandé a été sélectionné pour vous.\nVous pouvez utiliser ce pilote ou en sélectionner un autre si disponible.\n\nVous devez cliquer sur Appliquer pour que la sélection prenne effet."
     IDS_SHELL_FOLDER        "Dossier système"

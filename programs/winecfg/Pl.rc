@@ -224,7 +224,7 @@ BEGIN
     IDS_TAB_ABOUT           "Informacje"
     IDS_WINECFG_TITLE       "Konfiguracje Wine"
     IDS_WINECFG_TITLE_APP   "Konfiguracje Wine dla %s"
-    IDS_THEMEFILE           "Pliki motywu"
+    IDS_THEMEFILE           "Pliki motywu (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Wybierz plik motywu"
     IDS_AUDIO_MISSING       "Nie wybrano sterownika dŸwiêku.\n\nZalecany sterownik zosta³ w³aœnie zaznaczony.\nMo¿esz go u¿yæ lub wybraæ jakiœ inny.\n\nAby wybór zosta³ zapamiêtany, u¿yj 'Zastosuj'."
     IDS_SHELL_FOLDER        "Folder"

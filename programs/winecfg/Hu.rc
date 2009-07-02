@@ -221,7 +221,7 @@ BEGIN
     IDS_TAB_ABOUT           "Névjegy"
     IDS_WINECFG_TITLE       "Wine konfiguráció"
     IDS_WINECFG_TITLE_APP   "Wine konfiguráció %s számára"
-    IDS_THEMEFILE           "Témafájlok"
+    IDS_THEMEFILE           "Témafájlok (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Témafájl választása"
     IDS_AUDIO_MISSING       "Jelenleg nincs hangmeghajtó kiválasztva a regisztrációs adatbázisban.\n\nEgy ajánlott meghajtóprogram ki lett választva Önnek.\nÖn használhatja ezt a meghajtót, vagy választhat másikat ha elérhetõ.\n\nÖnnek az alkalmazásra kell kattintani a kiválasztás érvénybe léptetéséhez."
     IDS_SHELL_FOLDER        "Rendszermappa"

@@ -235,7 +235,7 @@ BEGIN
     IDS_TAB_ABOUT           "Riguardo A"
     IDS_WINECFG_TITLE       "Configurazione di Wine"
     IDS_WINECFG_TITLE_APP   "Configurazione di Wine per %s"
-    IDS_THEMEFILE           "File del tema"
+    IDS_THEMEFILE           "File del tema (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Seleziona un file di tema"
     IDS_AUDIO_MISSING       "Non c'è un driver audio attualmente specificato nel registro.\n\nUn driver raccomandato è stato selezionato per te.\nPuoi usare questo driver o selezionarne un altro se disponibile.\n\nDevi cliccare Applica affinchè la selezione abbia effetto."
     IDS_SHELL_FOLDER        "Cartella"

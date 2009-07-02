@@ -221,7 +221,7 @@ BEGIN
     IDS_TAB_ABOUT           "Acerca de"
     IDS_WINECFG_TITLE       "Configuración de Wine"
     IDS_WINECFG_TITLE_APP   "Configuración de Wine para %s"
-    IDS_THEMEFILE           "Ficheros de tema"
+    IDS_THEMEFILE           "Ficheros de tema (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Seleccione un fichero de tema"
     IDS_AUDIO_MISSING       "Actualmente no hay ningún manejador de audio especificado en el registro.\n\nSe ha seleccionado para usted un manejador recomendado. Puede usar éste o seleccionar otro manejador disponible.\n\nDebe pulsar Aplicar para que la selección surja efecto."
     IDS_SHELL_FOLDER        "Carpeta del sistema"

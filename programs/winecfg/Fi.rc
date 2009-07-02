@@ -222,7 +222,7 @@ BEGIN
     IDS_TAB_ABOUT           "Tietoja"
     IDS_WINECFG_TITLE       "Winen asetukset"
     IDS_WINECFG_TITLE_APP   "Wine configuration for %s"
-    IDS_THEMEFILE           "Teematiedostot"
+    IDS_THEMEFILE           "Teematiedostot (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Valitse teematiedosto"
     IDS_SHELL_FOLDER        "Shell Folder"
     IDS_LINKS_TO            "Links to"

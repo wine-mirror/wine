@@ -223,7 +223,7 @@ BEGIN
     IDS_TAB_ABOUT           "O programu"
     IDS_WINECFG_TITLE       "Wine nastavitve"
     IDS_WINECFG_TITLE_APP   "Wine nastavitve za %s"
-    IDS_THEMEFILE           "Datoteke s temami"
+    IDS_THEMEFILE           "Datoteke s temami (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Izberite datoteko s temo"
     IDS_AUDIO_MISSING       "V registru trenutno ni naveden noben zvočni gonilnik.\n\nKot privzeta nastavitev bo izbran priporočen gonilnik.\nČe želite, lahko uporabite drug razpoložljiv gonilnik\n\nZa uporabo izbranega gonilnika kliknite na gumb Uporabi."
     IDS_SHELL_FOLDER        "Mapa"

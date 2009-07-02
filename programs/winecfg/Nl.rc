@@ -234,7 +234,7 @@ BEGIN
     IDS_TAB_ABOUT           "Over wine"
     IDS_WINECFG_TITLE       "Wine configuratie"
     IDS_WINECFG_TITLE_APP   "Wine configuratie voor %s"
-    IDS_THEMEFILE           "Thema-bestanden"
+    IDS_THEMEFILE           "Thema-bestanden (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Thema-bestanden kiezen"
     IDS_AUDIO_MISSING       "Op dit moment is er geen stuurprogramma voor geluid gespecificeerd in het register.\n\nEen aanbevolen stuurprogramma is voor u geselecteerd.\nU kunt dit stuurprogramma gebruiken of (indien beschikbaar) een ander selecteren.\n\nKlik op Toepassen om deze selectie te activeren."
     IDS_SHELL_FOLDER        "Persoonlijke map"

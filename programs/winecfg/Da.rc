@@ -221,7 +221,7 @@ BEGIN
     IDS_TAB_ABOUT           "Om"
     IDS_WINECFG_TITLE       "Wine configurering"
     IDS_WINECFG_TITLE_APP   "Wine configurering for %s"
-    IDS_THEMEFILE           "Tema filer"
+    IDS_THEMEFILE           "Tema filer (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Vælg en tema fil"
     IDS_AUDIO_MISSING       "Der er ikke nogen lyd driver valgt i registrings databasen.\n\nEn rekommenderet driver er blevet valgt for dig.\nDu kan bruge denne driver eller vælge en anden.\nDu skal klikke anvend for at valget bliver taget i brug."
     IDS_SHELL_FOLDER        "Shell folder"

@@ -221,7 +221,7 @@ BEGIN
     IDS_TAB_ABOUT           "Om"
     IDS_WINECFG_TITLE       "Konfiguration av Wine"
     IDS_WINECFG_TITLE_APP   "Wine-konfiguration för %s"
-    IDS_THEMEFILE           "Temafiler"
+    IDS_THEMEFILE           "Temafiler (*.msstyles; *.theme)"
     IDS_THEMEFILE_SELECT    "Välj en temafil"
     IDS_AUDIO_MISSING       "Det finns ingen ljuddrivrutin för närvarande angiven i registret.\n\nEn rekommenderad drivrutin har valts åt dig.\nDu kan använda denna drivrutin eller välja en annan tillgänglig drivrutin.\n\nDu måste klicka på Verkställ för att valet ska börja gälla."
     IDS_SHELL_FOLDER        "Shell-mapp"
