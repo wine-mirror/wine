@@ -10,7 +10,13 @@ IMPORTLIB = cryptui
 C_SRCS = \
 	main.c
 
-RC_SRCS = cryptui.rc
+RC_SRCS = \
+	cryptui.rc \
+	cryptui_De.rc \
+	cryptui_En.rc \
+	cryptui_Fr.rc \
+	cryptui_Ko.rc \
+	cryptui_Nl.rc
 
 @MAKE_DLL_RULES@
 
