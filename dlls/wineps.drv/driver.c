@@ -30,12 +30,12 @@
 #include <string.h>
 
 #include "wine/debug.h"
-#include "psdlg.h"
 #include "psdrv.h"
 
 #include "winuser.h"
 #include "wownt32.h"
 #include "prsht.h"
+#include "psdlg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
