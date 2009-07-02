@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wspool.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -40,5 +42,3 @@ STRINGTABLE DISCARDABLE
     IDS_FILE_EXISTS "Išvesties failas jau egzistouja.  Norėdami failą keisti spauskite Gerai."
     IDS_CANNOT_OPEN "Nepavyko sukurti išvesties failo."
 }
-
-#pragma code_page(default)

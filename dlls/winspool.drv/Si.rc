@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wspool.h"
+
 #pragma code_page(65001)
 
 LANGUAGE LANG_SLOVENIAN, SUBLANG_DEFAULT
@@ -39,5 +41,3 @@ STRINGTABLE DISCARDABLE
     IDS_FILE_EXISTS "Izhodna datoteka že obstaja. Za prepis kliknite gumb V redu."
     IDS_CANNOT_OPEN "Izhodne datoteke ni mogoče ustvariti."
 }
-
-#pragma code_page(default)
