@@ -15,7 +15,22 @@ C_SRCS = \
 	tree.c \
 	typelib.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Fr.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ru.rc \
+	Sv.rc \
+	Zh.rc \
+	rsrc.rc
 
 @MAKE_PROG_RULES@
 
