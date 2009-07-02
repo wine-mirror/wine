@@ -37,6 +37,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct {
     const IWICPaletteVtbl *lpIWICPaletteVtbl;
     LONG ref;
+    UINT count;
+    WICColor *colors;
+    WICBitmapPaletteType type;
 } PaletteImpl;
 
 static HRESULT WINAPI PaletteImpl_QueryInterface(IWICPalette *iface, REFIID iid,
@@ -79,7 +82,10 @@ static ULONG WINAPI PaletteImpl_Release(IWICPalette *iface)
     TRACE("(%p) refcount=%u\n", iface, ref);
 
     if (ref == 0)
+    {
+        HeapFree(GetProcessHeap(), 0, This->colors);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -94,8 +100,29 @@ static HRESULT WINAPI PaletteImpl_InitializePredefined(IWICPalette *iface,
 static HRESULT WINAPI PaletteImpl_InitializeCustom(IWICPalette *iface,
     WICColor *pColors, UINT colorCount)
 {
-    FIXME("(%p,%p,%u): stub\n", iface, pColors, colorCount);
-    return E_NOTIMPL;
+    PaletteImpl *This = (PaletteImpl*)iface;
+    WICColor *new_colors;
+
+    TRACE("(%p,%p,%u)\n", iface, pColors, colorCount);
+
+    if (colorCount == 0)
+    {
+        new_colors = NULL;
+    }
+    else
+    {
+        if (!pColors) return E_INVALIDARG;
+        new_colors = HeapAlloc(GetProcessHeap(), 0, sizeof(WICColor) * colorCount);
+        if (!new_colors) return E_OUTOFMEMORY;
+        memcpy(new_colors, pColors, sizeof(WICColor) * colorCount);
+    }
+
+    HeapFree(GetProcessHeap(), 0, This->colors);
+    This->colors = new_colors;
+    This->count = colorCount;
+    This->type = WICBitmapPaletteTypeCustom;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PaletteImpl_InitializeFromBitmap(IWICPalette *iface,
@@ -128,8 +155,19 @@ static HRESULT WINAPI PaletteImpl_GetColorCount(IWICPalette *iface, UINT *pcCoun
 static HRESULT WINAPI PaletteImpl_GetColors(IWICPalette *iface, UINT colorCount,
     WICColor *pColors, UINT *pcActualColors)
 {
-    FIXME("(%p,%i,%p,%p): stub\n", iface, colorCount, pColors, pcActualColors);
-    return E_NOTIMPL;
+    PaletteImpl *This = (PaletteImpl*)iface;
+
+    TRACE("(%p,%i,%p,%p)\n", iface, colorCount, pColors, pcActualColors);
+
+    if (!pColors || !pcActualColors) return E_INVALIDARG;
+
+    if (This->count < colorCount) colorCount = This->count;
+
+    memcpy(pColors, This->colors, sizeof(WICColor) * colorCount);
+
+    *pcActualColors = colorCount;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PaletteImpl_IsBlackWhite(IWICPalette *iface, BOOL *pfIsBlackWhite)
@@ -175,6 +213,9 @@ HRESULT PaletteImpl_Create(IWICPalette **palette)
 
     This->lpIWICPaletteVtbl = &PaletteImpl_Vtbl;
     This->ref = 1;
+    This->count = 0;
+    This->colors = NULL;
+    This->type = WICBitmapPaletteTypeCustom;
 
     *palette = (IWICPalette*)This;
 
