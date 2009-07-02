@@ -1,5 +1,5 @@
 /*
- * Copyright 2001 Dmitry Timoshkov
+ * Copyright 1999 Bertho Stultiens
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,12 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define OEMRESOURCE
 #include <windef.h>
+#include <winbase.h>
+#include <winuser.h>
+#include <winnls.h>
+#include <dlgs.h>
 
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-
-#define WINE_FILEVERSION_STR "1.0"
-#define WINE_FILEDESCRIPTION_STR "Wine core dll"
-#define WINE_FILENAME_STR "user32.dll"
-
-#include "wine/wine_common_ver.rc"
+#define MDI_IDC_LISTBOX         100
+#define IDS_MDI_MOREWINDOWS     13
+#define IDS_ERROR               2
