@@ -186,14 +186,41 @@ static HRESULT WINAPI PaletteImpl_GetColors(IWICPalette *iface, UINT colorCount,
 
 static HRESULT WINAPI PaletteImpl_IsBlackWhite(IWICPalette *iface, BOOL *pfIsBlackWhite)
 {
-    FIXME("(%p,%p): stub\n", iface, pfIsBlackWhite);
-    return E_NOTIMPL;
+    PaletteImpl *This = (PaletteImpl*)iface;
+
+    TRACE("(%p,%p)\n", iface, pfIsBlackWhite);
+
+    if (!pfIsBlackWhite) return E_INVALIDARG;
+
+    if (This->type == WICBitmapPaletteTypeFixedBW)
+        *pfIsBlackWhite = TRUE;
+    else
+        *pfIsBlackWhite = FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PaletteImpl_IsGrayscale(IWICPalette *iface, BOOL *pfIsGrayscale)
 {
-    FIXME("(%p,%p): stub\n", iface, pfIsGrayscale);
-    return E_NOTIMPL;
+    PaletteImpl *This = (PaletteImpl*)iface;
+
+    TRACE("(%p,%p)\n", iface, pfIsGrayscale);
+
+    if (!pfIsGrayscale) return E_INVALIDARG;
+
+    switch(This->type)
+    {
+        case WICBitmapPaletteTypeFixedBW:
+        case WICBitmapPaletteTypeFixedGray4:
+        case WICBitmapPaletteTypeFixedGray16:
+        case WICBitmapPaletteTypeFixedGray256:
+            *pfIsGrayscale = TRUE;
+            break;
+        default:
+            *pfIsGrayscale = FALSE;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PaletteImpl_HasAlpha(IWICPalette *iface, BOOL *pfHasAlpha)
