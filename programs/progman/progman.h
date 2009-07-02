@@ -26,7 +26,8 @@
 #define MAX_PATHNAME_LEN    1024
 #define MAX_LANGUAGE_NUMBER (PM_LAST_LANGUAGE - PM_FIRST_LANGUAGE)
 
-#include "windows.h"
+#include <windows.h>
+#include <windef.h>
 
 /* Fallback icon */
 #define DEFAULTICON OIC_WINLOGO

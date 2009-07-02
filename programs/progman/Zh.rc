@@ -20,6 +20,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "progman.h"
+
 /* Chinese text is encoded in UTF-8 */
 #pragma code_page(65001)
 
@@ -410,5 +412,3 @@ IDS_LIBRARIES_DLL,		"動態連接庫 (*.dll)"
 IDS_SYMBOL_FILES,		"圖標檔案"
 IDS_SYMBOLS_ICO,		"圖標 (*.ico)"
 }
-
-#pragma code_page(default)
