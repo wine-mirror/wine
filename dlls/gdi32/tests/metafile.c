@@ -2429,7 +2429,9 @@ static void getwinmetafilebits(UINT mode, int scale)
             default:
                 pt.x = pt.y = 0;
             }
-            ok((short)rec->rdParm[0] == pt.y, "got %d expect %d\n", (short)rec->rdParm[0], pt.y);
+            ok((short)rec->rdParm[0] == pt.y ||
+               broken(mode >= MM_LOMETRIC && mode <= MM_TWIPS && (short)rec->rdParm[0] == pt.y - 1), /* win9x, winme */
+                      "got %d expect %d\n", (short)rec->rdParm[0], pt.y);
             ok((short)rec->rdParm[1] == pt.x, "got %d expect %d\n", (short)rec->rdParm[1], pt.x);
         }
         if(rec_num == mfcomment_chunks + 2)
