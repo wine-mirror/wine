@@ -11,7 +11,28 @@ C_SRCS = \
 	splitpath.c \
 	winefile.c
 
-RC_SRCS = rsrc.rc
+RC_SRCS = \
+	Cs.rc \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Es.rc \
+	Fr.rc \
+	Hu.rc \
+	It.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ru.rc \
+	Si.rc \
+	Sv.rc \
+	Tr.rc \
+	Zh.rc \
+	rsrc.rc
 
 SVG_SRCS = winefile.svg
 
