@@ -81,6 +81,7 @@ DEFINE_GUID(IID_IBindStatusCallbackHolder,0x79eac9cc,0xbaf9,0x11ce,0x8c,0x82,0x0
 DEFINE_EXPECT(QueryInterface_IServiceProvider);
 DEFINE_EXPECT(QueryInterface_IHttpNegotiate);
 DEFINE_EXPECT(QueryInterface_IBindStatusCallback);
+DEFINE_EXPECT(QueryInterface_IBindStatusCallbackEx);
 DEFINE_EXPECT(QueryInterface_IBindStatusCallbackHolder);
 DEFINE_EXPECT(QueryInterface_IInternetBindInfo);
 DEFINE_EXPECT(QueryInterface_IAuthenticate);
@@ -93,6 +94,7 @@ DEFINE_EXPECT(OnResponse);
 DEFINE_EXPECT(QueryInterface_IHttpNegotiate2);
 DEFINE_EXPECT(GetRootSecurityId);
 DEFINE_EXPECT(GetBindInfo);
+DEFINE_EXPECT(GetBindInfoEx);
 DEFINE_EXPECT(OnStartBinding);
 DEFINE_EXPECT(OnProgress_FINDINGRESOURCE);
 DEFINE_EXPECT(OnProgress_CONNECTING);
@@ -176,7 +178,7 @@ static IInternetProtocolSink *protocol_sink = NULL;
 static IBinding *current_binding;
 static HANDLE complete_event, complete_event2;
 static HRESULT binding_hres;
-static BOOL have_IHttpNegotiate2;
+static BOOL have_IHttpNegotiate2, use_bscex;
 
 static LPCWSTR urls[] = {
     WINE_ABOUT_URL,
@@ -1117,9 +1119,9 @@ static IServiceProviderVtbl ServiceProviderVtbl = {
 
 static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
 
-static IBindStatusCallback objbsc;
+static IBindStatusCallbackEx objbsc;
 
-static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFIID riid, void **ppv)
+static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REFIID riid, void **ppv)
 {
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
 
@@ -1166,6 +1168,14 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFII
         CHECK_EXPECT2(QueryInterface_IBindStatusCallbackHolder);
         return E_NOINTERFACE;
     }
+    else if(IsEqualGUID(&IID_IBindStatusCallbackEx, riid))
+    {
+        CHECK_EXPECT(QueryInterface_IBindStatusCallbackEx);
+        if(!use_bscex)
+            return E_NOINTERFACE;
+        *ppv = iface;
+        return S_OK;
+    }
     else if(IsEqualGUID(&IID_IInternetBindInfo, riid))
     {
         /* TODO */
@@ -1179,17 +1189,17 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFII
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI statusclb_AddRef(IBindStatusCallback *iface)
+static ULONG WINAPI statusclb_AddRef(IBindStatusCallbackEx *iface)
 {
     return 2;
 }
 
-static ULONG WINAPI statusclb_Release(IBindStatusCallback *iface)
+static ULONG WINAPI statusclb_Release(IBindStatusCallbackEx *iface)
 {
     return 1;
 }
 
-static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD dwReserved,
+static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallbackEx *iface, DWORD dwReserved,
         IBinding *pib)
 {
     IWinInetHttpInfo *http_info;
@@ -1222,19 +1232,19 @@ static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD
     return S_OK;
 }
 
-static HRESULT WINAPI statusclb_GetPriority(IBindStatusCallback *iface, LONG *pnPriority)
+static HRESULT WINAPI statusclb_GetPriority(IBindStatusCallbackEx *iface, LONG *pnPriority)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI statusclb_OnLowResource(IBindStatusCallback *iface, DWORD reserved)
+static HRESULT WINAPI statusclb_OnLowResource(IBindStatusCallbackEx *iface, DWORD reserved)
 {
     ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulProgress,
+static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG ulProgress,
         ULONG ulProgressMax, ULONG ulStatusCode, LPCWSTR szStatusText)
 {
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
@@ -1391,7 +1401,7 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulP
     return S_OK;
 }
 
-static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallback *iface, HRESULT hresult, LPCWSTR szError)
+static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallbackEx *iface, HRESULT hresult, LPCWSTR szError)
 {
     if(iface == &objbsc) {
         CHECK_EXPECT(Obj_OnStopBinding);
@@ -1422,7 +1432,7 @@ static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallback *iface, HRESUL
     return S_OK;
 }
 
-static HRESULT WINAPI statusclb_GetBindInfo(IBindStatusCallback *iface, DWORD *grfBINDF, BINDINFO *pbindinfo)
+static HRESULT WINAPI statusclb_GetBindInfo(IBindStatusCallbackEx *iface, DWORD *grfBINDF, BINDINFO *pbindinfo)
 {
     DWORD cbSize;
 
@@ -1441,7 +1451,7 @@ static HRESULT WINAPI statusclb_GetBindInfo(IBindStatusCallback *iface, DWORD *g
     return S_OK;
 }
 
-static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWORD grfBSCF,
+static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DWORD grfBSCF,
         DWORD dwSize, FORMATETC* pformatetc, STGMEDIUM* pstgmed)
 {
     HRESULT hres;
@@ -1520,7 +1530,7 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWOR
     return S_OK;
 }
 
-static HRESULT WINAPI statusclb_OnObjectAvailable(IBindStatusCallback *iface, REFIID riid, IUnknown *punk)
+static HRESULT WINAPI statusclb_OnObjectAvailable(IBindStatusCallbackEx *iface, REFIID riid, IUnknown *punk)
 {
     CHECK_EXPECT(OnObjectAvailable);
 
@@ -1533,7 +1543,20 @@ static HRESULT WINAPI statusclb_OnObjectAvailable(IBindStatusCallback *iface, RE
     return S_OK;
 }
 
-static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
+static HRESULT WINAPI statusclb_GetBindInfoEx(IBindStatusCallbackEx *iface, DWORD *grfBINDF, BINDINFO *pbindinfo,
+        DWORD *grfBINDF2, DWORD *pdwReserved)
+{
+    CHECK_EXPECT(GetBindInfoEx);
+
+    ok(grfBINDF != NULL, "grfBINDF == NULL\n");
+    ok(grfBINDF2 != NULL, "grfBINDF2 == NULL\n");
+    ok(pbindinfo != NULL, "pbindinfo == NULL\n");
+    ok(pdwReserved != NULL, "dwReserved == NULL\n");
+
+    return S_OK;
+}
+
+static const IBindStatusCallbackExVtbl BindStatusCallbackVtbl = {
     statusclb_QueryInterface,
     statusclb_AddRef,
     statusclb_Release,
@@ -1544,11 +1567,12 @@ static const IBindStatusCallbackVtbl BindStatusCallbackVtbl = {
     statusclb_OnStopBinding,
     statusclb_GetBindInfo,
     statusclb_OnDataAvailable,
-    statusclb_OnObjectAvailable
+    statusclb_OnObjectAvailable,
+    statusclb_GetBindInfoEx
 };
 
-static IBindStatusCallback bsc = { &BindStatusCallbackVtbl };
-static IBindStatusCallback objbsc = { &BindStatusCallbackVtbl };
+static IBindStatusCallbackEx bsc = { &BindStatusCallbackVtbl };
+static IBindStatusCallbackEx objbsc = { &BindStatusCallbackVtbl };
 
 static HRESULT WINAPI MonikerProp_QueryInterface(IMonikerProp *iface, REFIID riid, void **ppv)
 {
@@ -1664,10 +1688,11 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     }
 
     SET_EXPECT(QueryInterface_IServiceProvider);
-    hres = RegisterBindStatusCallback(pibc, &bsc, NULL, 0);
+    hres = RegisterBindStatusCallback(pibc, (IBindStatusCallback*)&bsc, NULL, 0);
     ok(hres == S_OK, "RegisterBindStatusCallback failed: %08x\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
 
+    SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(OnStartBinding);
     SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
@@ -1683,6 +1708,7 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
     hres = IMoniker_BindToStorage(pimkName, pibc, NULL, &IID_IStream, (void**)&unk);
     ok(hres == S_OK, "Load failed: %08x\n", hres);
 
+    CLEAR_CALLED(QueryInterface_IBindStatusCallbackEx); /* IE 8 */
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(OnStartBinding);
     CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
@@ -1802,7 +1828,7 @@ static void test_CreateAsyncBindCtx(void)
     ok(hres == E_INVALIDARG, "CreateAsyncBindCtx failed. expected: E_INVALIDARG, got: %08x\n", hres);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
-    hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
+    hres = CreateAsyncBindCtx(0, (IBindStatusCallback*)&bsc, NULL, &bctx);
     ok(hres == S_OK, "CreateAsyncBindCtx failed: %08x\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
 
@@ -1878,7 +1904,7 @@ static void test_CreateAsyncBindCtxEx(void)
     IBindCtx_Release(bctx_arg);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
-    hres = CreateAsyncBindCtxEx(NULL, 0, &bsc, NULL, &bctx, 0);
+    hres = CreateAsyncBindCtxEx(NULL, 0, (IBindStatusCallback*)&bsc, NULL, &bctx, 0);
     ok(hres == S_OK, "CreateAsyncBindCtxEx failed: %08x\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
 
@@ -1906,6 +1932,53 @@ static void test_CreateAsyncBindCtxEx(void)
     IBindCtx_Release(bctx2);
 }
 
+static void test_GetBindInfoEx(IBindStatusCallback *holder)
+{
+    IBindStatusCallbackEx *bscex;
+    BINDINFO bindinfo = {sizeof(bindinfo)};
+    DWORD bindf, bindf2, dw;
+    HRESULT hres;
+
+    hres = IBindStatusCallback_QueryInterface(holder, &IID_IBindStatusCallbackEx, (void**)&bscex);
+    if(FAILED(hres)) {
+        todo_wine
+        win_skip("IBindStatusCallbackEx not supported\n");
+        return;
+    }
+
+    use_bscex = TRUE;
+
+    bindf = 0;
+    SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
+    SET_EXPECT(GetBindInfoEx);
+    hres = IBindStatusCallback_GetBindInfo(holder, &bindf, &bindinfo);
+    ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IBindStatusCallbackEx);
+    CHECK_CALLED(GetBindInfoEx);
+
+    bindf = bindf2 = dw = 0;
+    SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
+    SET_EXPECT(GetBindInfoEx);
+    hres = IBindStatusCallbackEx_GetBindInfoEx(bscex, &bindf, &bindinfo, &bindf2, &dw);
+    ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IBindStatusCallbackEx);
+    CHECK_CALLED(GetBindInfoEx);
+
+    use_bscex = FALSE;
+
+    bindf = bindf2 = dw = 0xdeadbeef;
+    SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
+    SET_EXPECT(GetBindInfo);
+    hres = IBindStatusCallbackEx_GetBindInfoEx(bscex, &bindf, &bindinfo, &bindf2, &dw);
+    ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
+    CHECK_CALLED(QueryInterface_IBindStatusCallbackEx);
+    CHECK_CALLED(GetBindInfo);
+    ok(bindf2 == 0xdeadbeef, "bindf2 = %x\n", bindf2);
+    ok(dw == 0xdeadbeef, "dw = %x\n", dw);
+
+    IBindStatusCallbackEx_Release(bscex);
+}
+
 static BOOL test_bscholder(IBindStatusCallback *holder)
 {
     IServiceProvider *serv_prov;
@@ -1923,10 +1996,14 @@ static BOOL test_bscholder(IBindStatusCallback *holder)
     ok(hres == S_OK, "Could not get IServiceProvider interface: %08x\n", hres);
 
     dw = 0xdeadbeef;
+    SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
     SET_EXPECT(GetBindInfo);
     hres = IBindStatusCallback_GetBindInfo(holder, &dw, &bindinfo);
     ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
+    CLEAR_CALLED(QueryInterface_IBindStatusCallbackEx); /* IE 8 */
     CHECK_CALLED(GetBindInfo);
+
+    test_GetBindInfoEx(holder);
 
     SET_EXPECT(OnStartBinding);
     hres = IBindStatusCallback_OnStartBinding(holder, 0, (void*)0xdeadbeef);
@@ -2058,9 +2135,9 @@ static BOOL test_RegisterBindStatusCallback(void)
     SET_EXPECT(QueryInterface_IBindStatusCallback);
     SET_EXPECT(QueryInterface_IBindStatusCallbackHolder);
     prevbsc = (void*)0xdeadbeef;
-    hres = RegisterBindStatusCallback(bindctx, &bsc, &prevbsc, 0);
+    hres = RegisterBindStatusCallback(bindctx, (IBindStatusCallback*)&bsc, &prevbsc, 0);
     ok(hres == S_OK, "RegisterBindStatusCallback failed: %08x\n", hres);
-    ok(prevbsc == &bsc, "prevbsc=%p\n", prevbsc);
+    ok(prevbsc == (IBindStatusCallback*)&bsc, "prevbsc=%p\n", prevbsc);
     CHECK_CALLED(QueryInterface_IBindStatusCallback);
     CHECK_CALLED(QueryInterface_IBindStatusCallbackHolder);
 
@@ -2072,14 +2149,14 @@ static BOOL test_RegisterBindStatusCallback(void)
     hres = IUnknown_QueryInterface(unk, &IID_IBindStatusCallback, (void**)&clb);
     IUnknown_Release(unk);
     ok(hres == S_OK, "QueryInterface(IID_IBindStatusCallback) failed: %08x\n", hres);
-    ok(clb != &bsc, "bsc == clb\n");
+    ok(clb != (IBindStatusCallback*)&bsc, "bsc == clb\n");
 
     if(!test_bscholder(clb))
         ret = FALSE;
 
     IBindStatusCallback_Release(clb);
 
-    hres = RevokeBindStatusCallback(bindctx, &bsc);
+    hres = RevokeBindStatusCallback(bindctx, (IBindStatusCallback*)&bsc);
     ok(hres == S_OK, "RevokeBindStatusCallback failed: %08x\n", hres);
 
     unk = (void*)0xdeadbeef;
@@ -2136,16 +2213,16 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
     init_bind_test(protocol, emul ? BINDTEST_EMULATE : 0, t);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
-    hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
+    hres = CreateAsyncBindCtx(0, (IBindStatusCallback*)&bsc, NULL, &bctx);
     ok(hres == S_OK, "CreateAsyncBindCtx failed: %08x\n\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
     if(FAILED(hres))
         return;
 
     SET_EXPECT(QueryInterface_IServiceProvider);
-    hres = RegisterBindStatusCallback(bctx, &bsc, &previousclb, 0);
+    hres = RegisterBindStatusCallback(bctx, (IBindStatusCallback*)&bsc, &previousclb, 0);
     ok(hres == S_OK, "RegisterBindStatusCallback failed: %08x\n", hres);
-    ok(previousclb == &bsc, "previousclb(%p) != sclb(%p)\n", previousclb, &bsc);
+    ok(previousclb == (IBindStatusCallback*)&bsc, "previousclb(%p) != sclb(%p)\n", previousclb, &bsc);
     CHECK_CALLED(QueryInterface_IServiceProvider);
     if(previousclb)
         IBindStatusCallback_Release(previousclb);
@@ -2171,6 +2248,7 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
     if(tymed == TYMED_FILE && (test_protocol == ABOUT_TEST || test_protocol == ITS_TEST))
         binding_hres = INET_E_DATA_NOT_AVAILABLE;
 
+    SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(QueryInterface_IInternetProtocol);
     if(!emulate_protocol)
@@ -2246,6 +2324,7 @@ static void test_BindToStorage(int protocol, BOOL emul, DWORD t)
         DispatchMessage(&msg);
     }
 
+    CLEAR_CALLED(QueryInterface_IBindStatusCallbackEx); /* IE 8 */
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(QueryInterface_IInternetProtocol);
     if(!emulate_protocol)
@@ -2327,7 +2406,7 @@ static void test_BindToObject(int protocol, BOOL emul)
                               CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &regid);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
-    hres = CreateAsyncBindCtx(0, &objbsc, NULL, &bctx);
+    hres = CreateAsyncBindCtx(0, (IBindStatusCallback*)&objbsc, NULL, &bctx);
     ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
     if(FAILED(hres))
@@ -2349,6 +2428,7 @@ static void test_BindToObject(int protocol, BOOL emul)
     ok(hres == S_OK, "GetDisplayName failed %08x\n", hres);
     ok(!lstrcmpW(display_name, urls[test_protocol]), "GetDisplayName got wrong name\n");
 
+    SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
     SET_EXPECT(Obj_GetBindInfo);
     SET_EXPECT(QueryInterface_IInternetProtocol);
     if(!emulate_protocol)
@@ -2422,6 +2502,7 @@ static void test_BindToObject(int protocol, BOOL emul)
         DispatchMessage(&msg);
     }
 
+    CLEAR_CALLED(QueryInterface_IBindStatusCallbackEx);
     CHECK_CALLED(Obj_GetBindInfo);
     CHECK_CALLED(QueryInterface_IInternetProtocol);
     if(!emulate_protocol)
@@ -2539,7 +2620,8 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
         SET_EXPECT(OnStopBinding);
     }
 
-    hres = URLDownloadToFileW(NULL, test_protocol == FILE_TEST ? file_url : urls[test_protocol], dwl_htmlW, 0, &bsc);
+    hres = URLDownloadToFileW(NULL, test_protocol == FILE_TEST ? file_url : urls[test_protocol],
+            dwl_htmlW, 0, (IBindStatusCallback*)&bsc);
     ok(hres == S_OK, "URLDownloadToFile failed: %08x\n", hres);
 
     CHECK_CALLED(GetBindInfo);
@@ -2646,10 +2728,11 @@ static void test_ReportResult(HRESULT exhres)
     ok(hres == S_OK, "CreateURLMoniker failed: %08x\n", hres);
 
     SET_EXPECT(QueryInterface_IServiceProvider);
-    hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
+    hres = CreateAsyncBindCtx(0, (IBindStatusCallback*)&bsc, NULL, &bctx);
     ok(hres == S_OK, "CreateAsyncBindCtx failed: %08x\n\n", hres);
     CHECK_CALLED(QueryInterface_IServiceProvider);
 
+    SET_EXPECT(QueryInterface_IBindStatusCallbackEx);
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(QueryInterface_IInternetProtocol);
     SET_EXPECT(OnStartBinding);
@@ -2664,6 +2747,7 @@ static void test_ReportResult(HRESULT exhres)
         ok(hres == exhres || hres == MK_S_ASYNCHRONOUS,
            "BindToStorage failed: %08x, expected %08x or MK_S_ASYNCHRONOUS\n", hres, exhres);
 
+    CLEAR_CALLED(QueryInterface_IBindStatusCallbackEx); /* IE 8 */
     CHECK_CALLED(GetBindInfo);
     CHECK_CALLED(QueryInterface_IInternetProtocol);
     CHECK_CALLED(OnStartBinding);
