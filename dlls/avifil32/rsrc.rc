@@ -18,13 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winuser.h"
-#include "winver.h"
 #include "avifile_private.h"
-
-LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #define WINE_OLESELFREGISTER
 #define WINE_FILEDESCRIPTION_STR "Wine AVI file support library"
@@ -33,30 +27,3 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #define WINE_FILEVERSION_STR "4.03.1998"
 
 #include "wine/wine_common_ver.rc"
-
-/*
- * Everything specific to any language goes
- * in one of the specific files.
- */
-#include "avifile_Cs.rc"
-#include "avifile_Da.rc"
-#include "avifile_De.rc"
-#include "avifile_En.rc"
-#include "avifile_Es.rc"
-#include "avifile_Fr.rc"
-#include "avifile_Hu.rc"
-#include "avifile_It.rc"
-#include "avifile_Ja.rc"
-#include "avifile_Ko.rc"
-#include "avifile_Lt.rc"
-#include "avifile_Nl.rc"
-#include "avifile_No.rc"
-#include "avifile_Pl.rc"
-#include "avifile_Pt.rc"
-#include "avifile_Ro.rc"
-#include "avifile_Ru.rc"
-#include "avifile_Si.rc"
-#include "avifile_Sv.rc"
-#include "avifile_Tr.rc"
-#include "avifile_Uk.rc"
-#include "avifile_Zh.rc"
