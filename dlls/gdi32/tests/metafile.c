@@ -1476,6 +1476,7 @@ static void test_SetMetaFileBits(void)
     METAHEADER *mh;
 
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), MF_GRAPHICS_BITS);
+    trace("hmf %p\n", hmf);
     ok(hmf != 0, "SetMetaFileBitsEx error %d\n", GetLastError());
     type = GetObjectType(hmf);
     ok(type == OBJ_METAFILE, "SetMetaFileBitsEx created object with type %d\n", type);
@@ -1492,21 +1493,23 @@ static void test_SetMetaFileBits(void)
     /* NULL data crashes XP SP1 */
     /*hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), NULL);*/
 
-    /* Now with not zero size */
+    /* Now with zero size */
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(0, MF_GRAPHICS_BITS);
+    trace("hmf %p\n", hmf);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
     ok(GetLastError() == ERROR_INVALID_DATA ||
        broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
        "wrong error %d\n", GetLastError());
 
-    /* Now with not even size */
+    /* Now with odd size */
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS) - 1, MF_GRAPHICS_BITS);
+    trace("hmf %p\n", hmf);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
     ok(GetLastError() == 0xdeadbeef /* XP SP1 */, "wrong error %d\n", GetLastError());
 
-    /* Now with zeroed out or faked some header fields */
+    /* Now with zeroed out header fields */
     assert(sizeof(buf) >= sizeof(MF_GRAPHICS_BITS));
     memcpy(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS));
     mh = (METAHEADER *)buf;
@@ -1516,6 +1519,7 @@ static void test_SetMetaFileBits(void)
     mh->mtHeaderSize = 0;
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
+    trace("hmf %p\n", hmf);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
     ok(GetLastError() == ERROR_INVALID_DATA ||
        broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
@@ -1527,6 +1531,7 @@ static void test_SetMetaFileBits(void)
     /* corruption of mtSize doesn't lead to a failure */
     mh->mtSize *= 2;
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
+    trace("hmf %p\n", hmf);
     ok(hmf != 0, "SetMetaFileBitsEx error %d\n", GetLastError());
 
     if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
@@ -1544,6 +1549,7 @@ static void test_SetMetaFileBits(void)
     /* zeroing mtSize doesn't lead to a failure */
     mh->mtSize = 0;
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
+    trace("hmf %p\n", hmf);
     ok(hmf != 0, "SetMetaFileBitsEx error %d\n", GetLastError());
 
     if (compare_mf_bits(hmf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
