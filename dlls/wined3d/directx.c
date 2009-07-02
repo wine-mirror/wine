@@ -198,7 +198,6 @@ glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT];
  */
 
 static int             wined3d_fake_gl_context_ref = 0;
-static BOOL            wined3d_fake_gl_context_foreign;
 static BOOL            wined3d_fake_gl_context_available = FALSE;
 static HDC             wined3d_fake_gl_context_hdc = NULL;
 static HWND            wined3d_fake_gl_context_hwnd = NULL;
@@ -228,7 +227,8 @@ static void WineD3D_ReleaseFakeGLContext(void) {
 
     TRACE_(d3d_caps)("decrementing ref from %i\n", wined3d_fake_gl_context_ref);
     if (0 == (--wined3d_fake_gl_context_ref) ) {
-        if(!wined3d_fake_gl_context_foreign && glCtx) {
+        if (glCtx)
+        {
             TRACE_(d3d_caps)("destroying fake GL context\n");
             if (!pwglMakeCurrent(NULL, NULL))
             {
@@ -249,64 +249,63 @@ static void WineD3D_ReleaseFakeGLContext(void) {
 }
 
 static BOOL WineD3D_CreateFakeGLContext(void) {
+    PIXELFORMATDESCRIPTOR pfd;
     HGLRC glCtx = NULL;
+    int iPixelFormat;
 
     EnterCriticalSection(&wined3d_fake_gl_context_cs);
 
     TRACE("getting context...\n");
     if(wined3d_fake_gl_context_ref > 0) goto ret;
 
-    wined3d_fake_gl_context_foreign = TRUE;
+    /* We need a fake window as a hdc retrieved using GetDC(0) can't be used for much GL purposes. */
+    wined3d_fake_gl_context_hwnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
+            WS_OVERLAPPEDWINDOW, 10, 10, 10, 10, NULL, NULL, NULL, NULL);
+    if (!wined3d_fake_gl_context_hwnd)
+    {
+        ERR("HWND creation failed!\n");
+        goto fail;
+    }
 
-    glCtx = pwglGetCurrentContext();
-    if (!glCtx) {
-        PIXELFORMATDESCRIPTOR pfd;
-        int iPixelFormat;
+    wined3d_fake_gl_context_hdc = GetDC(wined3d_fake_gl_context_hwnd);
+    if (!wined3d_fake_gl_context_hdc)
+    {
+        ERR("GetDC failed!\n");
+        goto fail;
+    }
 
-        wined3d_fake_gl_context_foreign = FALSE;
+    /* PixelFormat selection */
+    ZeroMemory(&pfd, sizeof(pfd));
+    pfd.nSize = sizeof(pfd);
+    pfd.nVersion = 1;
+    pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW; /* PFD_GENERIC_ACCELERATED */
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.cColorBits = 32;
+    pfd.iLayerType = PFD_MAIN_PLANE;
 
-        /* We need a fake window as a hdc retrieved using GetDC(0) can't be used for much GL purposes */
-        wined3d_fake_gl_context_hwnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window", WS_OVERLAPPEDWINDOW, 10, 10, 10, 10, NULL, NULL, NULL, NULL);
-        if(!wined3d_fake_gl_context_hwnd) {
-            ERR("HWND creation failed!\n");
-            goto fail;
-        }
-        wined3d_fake_gl_context_hdc = GetDC(wined3d_fake_gl_context_hwnd);
-        if(!wined3d_fake_gl_context_hdc) {
-            ERR("GetDC failed!\n");
-            goto fail;
-        }
+    iPixelFormat = ChoosePixelFormat(wined3d_fake_gl_context_hdc, &pfd);
+    if (!iPixelFormat)
+    {
+        /* If this happens something is very wrong as ChoosePixelFormat barely fails. */
+        ERR("Can't find a suitable iPixelFormat.\n");
+        goto fail;
+    }
+    DescribePixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, sizeof(pfd), &pfd);
+    SetPixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, &pfd);
 
-        /* PixelFormat selection */
-        ZeroMemory(&pfd, sizeof(pfd));
-        pfd.nSize      = sizeof(pfd);
-        pfd.nVersion   = 1;
-        pfd.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;/*PFD_GENERIC_ACCELERATED*/
-        pfd.iPixelType = PFD_TYPE_RGBA;
-        pfd.cColorBits = 32;
-        pfd.iLayerType = PFD_MAIN_PLANE;
+    /* Create a GL context. */
+    glCtx = pwglCreateContext(wined3d_fake_gl_context_hdc);
+    if (!glCtx)
+    {
+        WARN_(d3d_caps)("Error creating default context for capabilities initialization.\n");
+        goto fail;
+    }
 
-        iPixelFormat = ChoosePixelFormat(wined3d_fake_gl_context_hdc, &pfd);
-        if(!iPixelFormat) {
-            /* If this happens something is very wrong as ChoosePixelFormat barely fails */
-            ERR("Can't find a suitable iPixelFormat\n");
-            goto fail;
-        }
-        DescribePixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, sizeof(pfd), &pfd);
-        SetPixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, &pfd);
-
-        /* Create a GL context */
-        glCtx = pwglCreateContext(wined3d_fake_gl_context_hdc);
-        if (!glCtx) {
-            WARN_(d3d_caps)("Error creating default context for capabilities initialization\n");
-            goto fail;
-        }
-
-        /* Make it the current GL context */
-        if (!pwglMakeCurrent(wined3d_fake_gl_context_hdc, glCtx)) {
-            ERR_(d3d_caps)("Failed to make fake GL context current.\n");
-            goto fail;
-        }
+    /* Make it the current GL context. */
+    if (!pwglMakeCurrent(wined3d_fake_gl_context_hdc, glCtx))
+    {
+        ERR_(d3d_caps)("Failed to make fake GL context current.\n");
+        goto fail;
     }
     context_set_last_device(NULL);
 
