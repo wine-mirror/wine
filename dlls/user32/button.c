@@ -75,6 +75,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "controls.h"
+#include "win.h"
 #include "user_private.h"
 #include "wine/debug.h"
 
@@ -271,6 +272,13 @@ static LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg,
         }
         if (btn_type >= MAX_BTN_TYPE)
             return -1; /* abort */
+
+        /* XP turns a BS_USERBUTTON into BS_PUSHBUTTON */
+        if (btn_type == BS_USERBUTTON )
+        {
+            style = (style & ~0x0f) | BS_PUSHBUTTON;
+            WIN_SetStyle( hWnd, style, 0x0f & ~style );
+        }
         set_button_state( hWnd, BUTTON_UNCHECKED );
         return 0;
 
@@ -458,11 +466,11 @@ static LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg,
         if ((wParam & 0x0f) >= MAX_BTN_TYPE) break;
         btn_type = wParam & 0x0f;
         style = (style & ~0x0f) | btn_type;
-        SetWindowLongW( hWnd, GWL_STYLE, style );
+        WIN_SetStyle( hWnd, style, 0x0f & ~style );
 
         /* Only redraw if lParam flag is set.*/
         if (lParam)
-           paint_button( hWnd, btn_type, ODA_DRAWENTIRE );
+            InvalidateRect( hWnd, NULL, TRUE );
 
         break;
 
@@ -1105,6 +1113,8 @@ static void UB_Paint( HWND hwnd, HDC hDC, UINT action )
     if ((action == ODA_FOCUS) ||
         ((action == ODA_DRAWENTIRE) && (state & BUTTON_HASFOCUS)))
         DrawFocusRect( hDC, &rc );
+
+    BUTTON_NOTIFY_PARENT( hwnd, BN_PAINT );
 }
 
 
