@@ -21,6 +21,9 @@
 #ifndef __WINE_PSDLG_H
 #define __WINE_PSDLG_H
 
+#include <windef.h>
+#include <winuser.h>
+
 #define IDD_PAPERS 100
 #define IDD_ORIENT_PORTRAIT  101
 #define IDD_ORIENT_LANDSCAPE 102
