@@ -555,6 +555,15 @@ static void check_variant_header(DWORD *wirev, VARIANT *v, ULONG size)
     ok(*wirev == switch_is, "switch_is %08x expected %08x\n", *wirev, switch_is);
 }
 
+/* Win9x and WinME don't always align as needed. Variants have
+ * an alignment of 8.
+ */
+static void *alloc_aligned(SIZE_T size, void **buf)
+{
+    *buf = HeapAlloc(GetProcessHeap(), 0, size + 7);
+    return (void *)(((UINT_PTR)*buf + 7) & ~7);
+}
+
 static void test_marshal_VARIANT(void)
 {
     VARIANT v, v2;
@@ -562,6 +571,7 @@ static void test_marshal_VARIANT(void)
     RPC_MESSAGE rpcMsg = { 0 };
     USER_MARSHAL_CB umcb = { 0 };
     unsigned char *buffer, *next;
+    void *oldbuffer;
     ULONG ul;
     short s;
     double d;
@@ -600,7 +610,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 21, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -620,7 +630,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** I2 ***/
     VariantInit(&v);
@@ -630,7 +640,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 22, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -650,7 +660,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** I2 BYREF ***/
     VariantInit(&v);
@@ -661,7 +671,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 26, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -687,7 +697,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** I4 ***/
     VariantInit(&v);
@@ -697,7 +707,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 24, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -718,8 +728,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** UI4 ***/
     VariantInit(&v);
@@ -729,7 +738,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 24, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -749,8 +758,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** UI4 BYREF ***/
     VariantInit(&v);
@@ -761,7 +769,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 28, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -784,7 +792,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** R4 ***/
     VariantInit(&v);
@@ -794,7 +802,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 24, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -814,7 +822,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** R8 ***/
     VariantInit(&v);
@@ -824,7 +832,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 32, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     memset(buffer, 0xcc, stubMsg.BufferLength);
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
@@ -847,7 +855,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** R8 BYREF ***/
     VariantInit(&v);
@@ -858,7 +866,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 32, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -880,7 +888,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** VARIANT_BOOL ***/
     VariantInit(&v);
@@ -890,7 +898,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 22, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -910,7 +918,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** DECIMAL ***/
     VarDecFromI4(0x12345678, &dec);
@@ -922,7 +930,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 40, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     memset(buffer, 0xcc, stubMsg.BufferLength);
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
@@ -948,7 +956,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** DECIMAL BYREF ***/
     VariantInit(&v);
@@ -958,7 +966,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 40, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -987,7 +995,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** EMPTY ***/
     VariantInit(&v);
@@ -996,7 +1004,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 20, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -1013,7 +1021,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** NULL ***/
     VariantInit(&v);
@@ -1022,7 +1030,7 @@ static void test_marshal_VARIANT(void)
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 20, "size %d\n", stubMsg.BufferLength);
 
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -1039,7 +1047,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** BSTR ***/
     b = SysAllocString(str);
@@ -1049,7 +1057,7 @@ static void test_marshal_VARIANT(void)
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 60, "size %d\n", stubMsg.BufferLength);
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -1072,7 +1080,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** BSTR BYREF ***/
     VariantInit(&v);
@@ -1081,7 +1089,7 @@ static void test_marshal_VARIANT(void)
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 64, "size %d\n", stubMsg.BufferLength);
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -1106,7 +1114,7 @@ static void test_marshal_VARIANT(void)
 
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
     SysFreeString(b);
 
     /*** ARRAY ***/
@@ -1123,7 +1131,7 @@ static void test_marshal_VARIANT(void)
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 152, "size %d\n", stubMsg.BufferLength);
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -1155,7 +1163,7 @@ static void test_marshal_VARIANT(void)
         ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** ARRAY BYREF ***/
     VariantInit(&v);
@@ -1164,7 +1172,7 @@ static void test_marshal_VARIANT(void)
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 152, "size %d\n", stubMsg.BufferLength);
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
@@ -1198,7 +1206,7 @@ static void test_marshal_VARIANT(void)
         ok(vt == vt2, "array vts differ %x %x\n", vt, vt2);
         VARIANT_UserFree(&umcb.Flags, &v2);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
     SafeArrayDestroy(lpsa);
 
     /*** VARIANT BYREF ***/
@@ -1211,7 +1219,7 @@ static void test_marshal_VARIANT(void)
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength == 64, "size %d\n", stubMsg.BufferLength);
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     memset(buffer, 0xcc, stubMsg.BufferLength);
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
@@ -1244,7 +1252,7 @@ static void test_marshal_VARIANT(void)
         ok(V_R8(V_VARIANTREF(&v)) == V_R8(V_VARIANTREF(&v3)), "r8s differ\n"); 
         VARIANT_UserFree(&umcb.Flags, &v3);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** UNKNOWN ***/
     heap_unknown = HeapAlloc(GetProcessHeap(), 0, sizeof(*heap_unknown));
@@ -1257,7 +1265,7 @@ static void test_marshal_VARIANT(void)
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength > 32, "size %d\n", stubMsg.BufferLength);
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     memset(buffer, 0xcc, stubMsg.BufferLength);
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
@@ -1292,7 +1300,7 @@ static void test_marshal_VARIANT(void)
         ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
         IUnknown_Release((IUnknown *)heap_unknown);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 
     /*** UNKNOWN BYREF ***/
     heap_unknown = HeapAlloc(GetProcessHeap(), 0, sizeof(*heap_unknown));
@@ -1305,7 +1313,7 @@ static void test_marshal_VARIANT(void)
 
     rpcMsg.BufferLength = stubMsg.BufferLength = VARIANT_UserSize(&umcb.Flags, 0, &v);
     ok(stubMsg.BufferLength > 36, "size %d\n", stubMsg.BufferLength);
-    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = HeapAlloc(GetProcessHeap(), 0, stubMsg.BufferLength);
+    buffer = rpcMsg.Buffer = stubMsg.Buffer = stubMsg.BufferStart = alloc_aligned(stubMsg.BufferLength, &oldbuffer);
     stubMsg.BufferEnd = stubMsg.Buffer + stubMsg.BufferLength;
     memset(buffer, 0xcc, stubMsg.BufferLength);
     next = VARIANT_UserMarshal(&umcb.Flags, buffer, &v);
@@ -1342,7 +1350,7 @@ static void test_marshal_VARIANT(void)
         ok(heap_unknown->refs == 1, "%d refcounts of IUnknown leaked\n", heap_unknown->refs - 1);
         IUnknown_Release((IUnknown *)heap_unknown);
     }
-    HeapFree(GetProcessHeap(), 0, buffer);
+    HeapFree(GetProcessHeap(), 0, oldbuffer);
 }
 
 
