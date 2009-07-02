@@ -558,30 +558,90 @@ static BOOL init_format_compression_info(WineD3D_GL_Info *gl_info)
 #define GLINFO_LOCATION (*gl_info)
 
 /* Context activation is done by the caller. */
-static BOOL check_fbo_compat(const WineD3D_GL_Info *gl_info, GLint internal_format, GLenum format, GLenum type)
+static void check_fbo_compat(const WineD3D_GL_Info *gl_info, struct GlPixelFormatDesc *format_desc)
 {
+    /* Check if the default internal format is supported as a frame buffer
+     * target, otherwise fall back to the render target internal.
+     *
+     * Try to stick to the standard format if possible, this limits precision differences. */
     GLenum status;
     GLuint tex;
 
     ENTER_GL();
 
     while(glGetError());
+
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, internal_format, 16, 16, 0, format, type, NULL);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format_desc->glInternal, 16, 16, 0,
+            format_desc->glFormat, format_desc->glType, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tex, 0));
 
     status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
-    glDeleteTextures(1, &tex);
-
     checkGLcall("Framebuffer format check");
 
-    LEAVE_GL();
+    if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
+    {
+        TRACE("Format %s is supported as FBO color attachment\n", debug_d3dformat(format_desc->format));
+        format_desc->Flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE;
+        format_desc->rtInternal = format_desc->glInternal;
+    }
+    else
+    {
+        if (!format_desc->rtInternal)
+        {
+            if (format_desc->Flags & WINED3DFMT_FLAG_RENDERTARGET)
+            {
+                FIXME("Format %s with rendertarget flag is not supported as FBO color attachment,"
+                        " and no fallback specified.\n", debug_d3dformat(format_desc->format));
+                format_desc->Flags &= ~WINED3DFMT_FLAG_RENDERTARGET;
+            }
+            else
+            {
+                TRACE("Format %s is not supported as FBO color attachment.\n", debug_d3dformat(format_desc->format));
+            }
+            format_desc->rtInternal = format_desc->glInternal;
+        }
+        else
+        {
+            TRACE("Format %s is not supported as FBO color attachment, trying rtInternal format as fallback.\n",
+                    debug_d3dformat(format_desc->format));
 
-    return status == GL_FRAMEBUFFER_COMPLETE_EXT;
+            while(glGetError());
+
+            GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, 0, 0));
+
+            glTexImage2D(GL_TEXTURE_2D, 0, format_desc->rtInternal, 16, 16, 0,
+                    format_desc->glFormat, format_desc->glType, NULL);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+            GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tex, 0));
+
+            status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
+            checkGLcall("Framebuffer format check");
+
+            if (status == GL_FRAMEBUFFER_COMPLETE_EXT)
+            {
+                TRACE("Format %s rtInternal format is supported as FBO color attachment\n",
+                        debug_d3dformat(format_desc->format));
+            }
+            else
+            {
+                FIXME("Format %s rtInternal format is not supported as FBO color attachment.\n",
+                        debug_d3dformat(format_desc->format));
+                format_desc->Flags &= ~WINED3DFMT_FLAG_RENDERTARGET;
+            }
+        }
+    }
+
+    glDeleteTextures(1, &tex);
+
+    LEAVE_GL();
 }
 
 /* Context activation is done by the caller. */
@@ -623,39 +683,7 @@ static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
             TRACE("Checking if format %s is supported as FBO color attachment...\n", debug_d3dformat(desc->format));
-
-            /* Check if the default internal format is supported as a frame buffer target, otherwise
-             * fall back to the render target internal.
-             *
-             * Try to stick to the standard format if possible, this limits precision differences. */
-            if (check_fbo_compat(gl_info, desc->glInternal, desc->glFormat, desc->glType))
-            {
-                TRACE("Format %s is supported as FBO color attachment\n", debug_d3dformat(desc->format));
-                desc->Flags |= WINED3DFMT_FLAG_FBO_ATTACHABLE;
-                desc->rtInternal = desc->glInternal;
-            }
-            else
-            {
-                if (!desc->rtInternal)
-                {
-                    if (desc->Flags & WINED3DFMT_FLAG_RENDERTARGET)
-                    {
-                        FIXME("Format %s with rendertarget flag is not supported as FBO color attachment,"
-                                " and no fallback specified.\n", debug_d3dformat(desc->format));
-                        desc->Flags &= ~WINED3DFMT_FLAG_RENDERTARGET;
-                    }
-                    else
-                    {
-                        TRACE("Format %s is not supported as FBO color attachment.\n", debug_d3dformat(desc->format));
-                    }
-                    desc->rtInternal = desc->glInternal;
-                }
-                else
-                {
-                    TRACE("Format %s is not supported as FBO color attachment, using rtInternal format as fallback.\n",
-                            debug_d3dformat(desc->format));
-                }
-            }
+            check_fbo_compat(gl_info, desc);
         }
         else
         {
