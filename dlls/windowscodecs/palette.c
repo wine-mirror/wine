@@ -142,14 +142,28 @@ static HRESULT WINAPI PaletteImpl_InitializeFromPalette(IWICPalette *iface,
 static HRESULT WINAPI PaletteImpl_GetType(IWICPalette *iface,
     WICBitmapPaletteType *pePaletteType)
 {
-    FIXME("(%p,%p): stub\n", iface, pePaletteType);
-    return E_NOTIMPL;
+    PaletteImpl *This = (PaletteImpl*)iface;
+
+    TRACE("(%p,%p)\n", iface, pePaletteType);
+
+    if (!pePaletteType) return E_INVALIDARG;
+
+    *pePaletteType = This->type;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PaletteImpl_GetColorCount(IWICPalette *iface, UINT *pcCount)
 {
-    FIXME("(%p,%p): stub\n", iface, pcCount);
-    return E_NOTIMPL;
+    PaletteImpl *This = (PaletteImpl*)iface;
+
+    TRACE("(%p,%p)\n", iface, pcCount);
+
+    if (!pcCount) return E_INVALIDARG;
+
+    *pcCount = This->count;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PaletteImpl_GetColors(IWICPalette *iface, UINT colorCount,
