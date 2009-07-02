@@ -197,7 +197,6 @@ glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT];
  * function query some info from GL.
  */
 
-static int             wined3d_fake_gl_context_ref = 0;
 static BOOL            wined3d_fake_gl_context_available = FALSE;
 static HDC             wined3d_fake_gl_context_hdc = NULL;
 static HWND            wined3d_fake_gl_context_hwnd = NULL;
@@ -224,26 +223,22 @@ static void WineD3D_ReleaseFakeGLContext(void) {
     }
 
     glCtx = pwglGetCurrentContext();
-
-    TRACE_(d3d_caps)("decrementing ref from %i\n", wined3d_fake_gl_context_ref);
-    if (0 == (--wined3d_fake_gl_context_ref) ) {
-        if (glCtx)
+    if (glCtx)
+    {
+        TRACE_(d3d_caps)("destroying fake GL context\n");
+        if (!pwglMakeCurrent(NULL, NULL))
         {
-            TRACE_(d3d_caps)("destroying fake GL context\n");
-            if (!pwglMakeCurrent(NULL, NULL))
-            {
-                ERR("Failed to disable fake GL context.\n");
-            }
-            pwglDeleteContext(glCtx);
+            ERR("Failed to disable fake GL context.\n");
         }
-        if(wined3d_fake_gl_context_hdc)
-            ReleaseDC(wined3d_fake_gl_context_hwnd, wined3d_fake_gl_context_hdc);
-        wined3d_fake_gl_context_hdc = NULL; /* Make sure we don't think that it is still around */
-        if(wined3d_fake_gl_context_hwnd)
-            DestroyWindow(wined3d_fake_gl_context_hwnd);
-        wined3d_fake_gl_context_hwnd = NULL;
-        wined3d_fake_gl_context_available = FALSE;
+        pwglDeleteContext(glCtx);
     }
+    if (wined3d_fake_gl_context_hdc)
+        ReleaseDC(wined3d_fake_gl_context_hwnd, wined3d_fake_gl_context_hdc);
+    wined3d_fake_gl_context_hdc = NULL; /* Make sure we don't think that it is still around */
+    if (wined3d_fake_gl_context_hwnd)
+        DestroyWindow(wined3d_fake_gl_context_hwnd);
+    wined3d_fake_gl_context_hwnd = NULL;
+    wined3d_fake_gl_context_available = FALSE;
 
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
 }
@@ -256,7 +251,6 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
     EnterCriticalSection(&wined3d_fake_gl_context_cs);
 
     TRACE("getting context...\n");
-    if(wined3d_fake_gl_context_ref > 0) goto ret;
 
     /* We need a fake window as a hdc retrieved using GetDC(0) can't be used for much GL purposes. */
     wined3d_fake_gl_context_hwnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
@@ -309,9 +303,6 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
     }
     context_set_last_device(NULL);
 
-  ret:
-    TRACE("incrementing ref from %i\n", wined3d_fake_gl_context_ref);
-    wined3d_fake_gl_context_ref++;
     wined3d_fake_gl_context_available = TRUE;
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     return TRUE;
