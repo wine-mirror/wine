@@ -1,0 +1,279 @@
+/*
+ * Wine command prompt
+ * Lithuanian Language Support
+ *
+ * Copyright 2009 Aurimas Fišeras <aurimas@gmail.com>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "wcmd.h"
+
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
+
+STRINGTABLE
+{
+  WCMD_ATTRIB, "Informacija apie ATTRIB\n"
+  WCMD_CALL,
+"CALL <komandųfailovardas> yra naudojama komandų failo viduje komandoms iš\n\
+kito komandų failo vykdyti. Kai komandų failas egzistuoja, valdymas\n\
+grąžinamas kvietusiam failui. CALL komanda gali pateikti parametrus\n\
+kviečiamai procedūrai.\n\
+\n\
+Numatytojo katalogo, aplinkos kintamųjų ir pan. pakeitimai atlikti\n\
+iškviestoje procedūroje yra paveldimi kviečiančiosios procedūros.\n"
+
+  WCMD_CD,     "Informacija apie CD\n"
+  WCMD_CHDIR,  "Informacija apie CHDIR\n"
+
+  WCMD_CLS,    "CLS išvalo pulto ekraną\n"
+
+  WCMD_COPY,   "Informacija apie COPY\n"
+  WCMD_CTTY,   "Informacija apie CTTY\n"
+  WCMD_DATE,   "Informacija apie DATE\n"
+  WCMD_DEL,    "Informacija apie DEL\n"
+  WCMD_DIR,    "Informacija apie DIR\n"
+
+  WCMD_ECHO,
+"ECHO <eilutė> parodo <eilutę> dabartiniame terminale.\n\
+\n\
+ECHO ON priverčia visas vėlesnes komandų failo komandas būti parodytas\n\
+terminale prieš įvykdymą.\n\
+\n\
+ECHO OFF panaikina ankstesnės ECHO ON komandos veikimą (ECHO OFF yra\n\
+numatyta). ECHO OFF komandos rodymo galima išvengti prieš ją pridedant\n\
+simbolį @.\n"
+
+  WCMD_ERASE,  "Informacija apie ERASE\n"
+
+  WCMD_FOR,
+"FOR komanda yra naudojama įvykdyti komandą kiekvienam failų aibės elementui.\n\
+\n\
+Sintaksė: FOR %kintamasis IN (aibė) DO komanda\n\
+\n\
+Reikalavimas dubliuoti % simbolį naudojant FOR komandų faile neegzistuoja\n\
+wine komandų interpretatoriuje.\n"
+
+  WCMD_GOTO,
+"GOTO komanda perduoda vykdymą kitam teiginiui komandų faile.\n\
+\n\
+Žymė, kuri yra GOTO komandos tikslas gali būti 255 simbolių ilgio,\n\
+bet be tarpų (tai skiriasi nuo kitų operacinių sistemų). Jei komandų\n\
+faile egzistuoja dvi ar daugiau identiškos žymės, visuomet bus vykdoma\n\
+pirmoji. Mėginimas perduoti vykdymą į neegzistuojančią žymę nutraukia\n\
+komandų failo vykdymą.\n\
+\n\
+GOTO neturi poveikio naudojant interaktyviai.\n"
+
+  WCMD_HELP,   "Informacija apie HELP\n"
+
+  WCMD_IF,
+"IF yra naudojama vykdyti komandą su sąlyga.\n\
+\n\
+Sintaksė:	IF [NOT] EXIST failas komanda\n\
+	IF [NOT] eilutė1==eilutė2 komanda\n\
+	IF [NOT] ERRORLEVEL skaičius komanda\n\
+\n\
+Antroje komandos formoje, eilutė1 ir eilutė2 privalo būti tarp dvigubų\n\
+kabučių. Palyginimas neskiria didžiųjų ir mažųjų raidžių.\n"
+
+  WCMD_LABEL,  "LABEL yra naudojamas disko tomo vardui nustatyti.\n\
+\n\
+Sintaksė: LABEL [diskas:]\n\
+Komanda paklaus naujo tomo vardo duotam diskui.\n\
+Parodyti disko tomo vardą galima su komanda VOL.\n"
+
+  WCMD_MD,     "Informacija apie MD\n"
+  WCMD_MKDIR,  "Informacija apie MKDIR\n"
+  WCMD_MOVE,
+"MOVE perkelia failą ar katalogą į naują failų sistemos vietą.\n\
+\n\
+Jei perkeliamas objektas yra katalogas, tai taip pat perkeliami visi\n\
+katalogo failai ir pakatalogiai.\n\
+\n\
+MOVE nepavyksta jei sena ir nauja vietos yra su skirtingomis DOS raidėmis.\n"
+
+  WCMD_PATH,
+"PATH parodo ar pakeičia paieškos kelią.\n\
+\n\
+Įvedus PATH bus parodyta dabartinė PATH reikšmė (iš pradžių tai reikšmė\n\
+nurodyta jūsų wine.conf faile). Norėdami pakeisti nuostatą nurodykite PATH\n\
+komandai naują reikšmę kaip parametrą.\n\
+\n\
+PATH modifikuoti taip pat galima naudojant PATH aplinkos kintamąjį,\n\
+pavyzdžiui:\n\
+		PATH %PATH%;c:\\laikinas\n"
+
+  WCMD_PAUSE,
+"PAUSE ekrane parodo pranešimą „Norėdami tęsti spauskite įvedimo klavišą“\n\
+ir laukia kol naudotojas paspaus įvedimo klavišą. Ši komanda naudingiausia\n\
+komandų failuose, kad leistų naudotojui perskaityti ankstesnės komandos\n\
+rezultatą kol jis nepasislinko už ekrano ribų.\n"
+
+  WCMD_PROMPT,
+"PROMPT nustato komandinės eilutės raginimą.\n\
+\n\
+Simbolių eilutė, einanti po PROMPT komandos (ir tarpas iškart po to),\n\
+atsiranda eilutės pradžioje, kai CMD laukia įvedimo.\n\
+\n\
+Šie simboliai turi nurodytą specialią reikšmę:\n\
+\n\
+$$    Dolerio ženklas     $_    Eilutės patraukimas $b    Status brūkšnys (|)\n\
+$d    Dabartinė data      $e    Grįžimo klavišas    $g    > ženklas\n\
+$l    < ženklas           $n    Dabartinis diskas   $p    Dabartinis kelias\n\
+$q    Lygybės ženklas     $t    Dabartinis laikas   $v    CMD versija\n\
+\n\
+Pastebėkite, kad PROMPT komandos be raginimo eilutės įvedimas atkuria\n\
+numatytą raginimo reikšmę, kuri yra dabartinis kelias (įskaitant\n\
+dabartinio disko raidę) ir daugiau-už (>) simbolis.\n\
+(Taip pat, kaip komanda PROMPT $p$g).\n\
+\n\
+Raginimas taip pat gali būti pakeistas keičiant PROMPT aplinkos kintamąjį,\n\
+taigi, komanda „SET PROMPT=tekstas“ turi tą patį efektą kaip „PROMPT tekstas“\n"
+
+  WCMD_REM,
+"Komandos eilutė prasidedanti REM (ir tarpu) neatlieka jokio veiksmo\n\
+ir todėl gali būti naudojama kaip komentaras komandų faile.\n"
+
+  WCMD_REN,    "Informacija apie REN\n"
+  WCMD_RENAME, "Informacija apie RENAME\n"
+  WCMD_RD,     "Informacija apie RD\n"
+  WCMD_RMDIR,  "Informacija apie RMDIR\n"
+
+  WCMD_SET,
+"SET parodo ar pakeičia CMD aplinkos kintamuosius.\n\
+\n\
+SET be parametrų parodo visus dabartinius aplinkos kintamuosius.\n\
+\n\
+Aplinkos kintamojo sukūrimo ar modifikavimo sintaksė yra:\n\
+\n\
+      SET <kintamasis>=<reikšmė>\n\
+\n\
+kur <kintamasis> ir <reikšmė> yra simbolių eilutės. Prieš lygybės ženklą\n\
+neturi būti tarpų, taip pat kintamojo vardas negali turėti įterptų tarpų.\n\
+\n\
+Naudojant Wine, pagrindinės operacinės sistemos aplinka yra įtraukiama į\n\
+Win32 aplinką, todėl paprastai bus žymiai daugiau reikšmių negu savoje\n\
+Win32 realizacijoje. Pastebėkite, kad neįmanoma įtakoti operacinės sistemos\n\
+aplinkos iš komandų interpretatoriaus.\n"
+
+  WCMD_SHIFT,
+"SHIFT yra naudojamas komandų faile pašalinti vienam parametrui iš sąrašo\n\
+priekio, taip parametras 2 tampa parametru 1 ir t.t. Ši komanda neturi\n\
+jokio poveikio, kai kviečiama iš komandos eilutės.\n"
+
+  WCMD_TIME,   "Informacija apie TIME\n"
+
+  WCMD_TITLE,  "Nustato CMD lango antraštę, sintaksė TITLE [tekstas]\n"
+
+  WCMD_TYPE,
+"TYPE <failas> nukopijuoja <failą> į pulto įrenginį (arba kitur, jei\n\
+nukreipta). Nėra tikrinama ar faile yra skaitomas tekstas.\n"
+
+  WCMD_VERIFY,
+"VERIFY yra naudojama nustatyti, išvalyti ar testuoti tikrinimo žymos bitą.\n\
+Galimos formos yra:\n\
+\n\
+VERIFY ON	Nustatyti žymos bitą\n\
+VERIFY OFF	Išvalyti žymos bitą\n\
+VERIFY		Parodo ON arba OFF, kuris tinkamas.\n\
+\n\
+Tikrinimo žymos bitas neturi jokios funkcijos Wine.\n"
+
+  WCMD_VER,
+"VER parodo dabar vykdomo CMD versiją\n"
+
+  WCMD_VOL,    "Informacija apie VOL\n"
+
+  WCMD_PUSHD,  "PUSHD <katalogas> išsaugo dabartinį katalogą į dėklą,\n\
+o po to pakeičia dabartinį katalogą į nurodytą.\n"
+
+  WCMD_POPD,   "POPD pakeičia dabartinį katalogą į paskutinį išsaugotą su PUSHD.\n"
+
+  WCMD_MORE,   "MORE parodo failo išvedimą ar kanalo įvedimą puslapiais.\n"
+
+  WCMD_EXIT,
+"EXIT baigia dabartinį komandų seansą ir grįžta į operacinę sistemą\n\
+ar apvalkalą iš kur CMD buvo iškviestas.\n"
+
+  WCMD_ALLHELP, "CMD įtaisytos komandos yra:\n\
+ATTRIB\t\tRodyti ar keisti DOS failo požymius\n\
+CALL\t\tKviesti komandų failą iš kito komandų failo\n\
+CD (CHDIR)\tPakeisti dabartinį numatytą katalogą\n\
+CLS\t\tIšvalyti pulto ekraną\n\
+COPY\t\tKopijuoti failą\n\
+CTTY\t\tPakeisti įvedimo/išvedimo įrenginį\n\
+DATE\t\tRodyti ar keisti sistemos datą\n\
+DEL (ERASE)\tŠalinti failą ar failų aibę\n\
+DIR\t\tPateikti katalogo turinį\n\
+ECHO\t\tKopijuoti tekstą tiesiai į pulto išvedimą\n\
+HELP\t\tParodyti trumpą pagalbą apie temą\n\
+MD (MKDIR)\tSukurti pakatalogį\n\
+MORE\t\tRodyti išvedimą puslapiais\n\
+MOVE\t\tPerkelti failą, failų aibę ar katalogų medį\n\
+PATH\t\tNustatyti ar parodyti paieškos kelią\n\
+POPD\t\tAtstato katalogą į paskutinį išsaugotą su PUSHD\n\
+PROMPT\t\tKeičia komandos raginimą\n\
+PUSHD\t\tPakeičia į naują katalogą, išsaugo dabartinį\n\
+REN (RENAME)\tPervadinti failą\n\
+RD (RMDIR)\tŠalinti pakatalogį\n\
+SET\t\tNustatyti ar parodyti aplinkos kintamuosius\n\
+TIME\t\tNustatyti ar parodyti dabartinį sistemos laiką\n\
+TITLE\t\tNustatyti CMD seanso lango antraštę\n\
+TYPE\t\tIšvesti tekstinio failo turinį\n\
+VER\t\tParodyti dabartinę CMD versiją\n\
+VOL\t\tParodyti tomo vardą\n\
+EXIT\t\tUžveria CMD\n\n\
+Įveskite HELP <komanda> platesnei informacijai apie išvardintas komandas gauti\n"
+
+  WCMD_CONFIRM,       "Ar tikrai"
+  WCMD_YES,           "T"
+  WCMD_NO,            "N"
+  WCMD_NOASSOC,       "Trūksta failo susiejimo prievardžiui %s\n"
+  WCMD_NOFTYPE,       "Jokia atvėrimo komanda nesusieta su failo tipu „%s“\n"
+  WCMD_OVERWRITE,     "Perrašyti %s"
+  WCMD_MORESTR,       "Daugiau..."
+  WCMD_TRUNCATEDLINE, "Paketinio apdorojimo eilutė galimai nukirsta. Naudojama:\n"
+  WCMD_NYI,           "Dar nerealizuota\n\n"
+  WCMD_NOARG,         "Trūksta argumento\n"
+  WCMD_SYNTAXERR,     "Sintaksės klaida\n"
+  WCMD_FILENOTFOUND,  "%s: failas nerastas\n"
+  WCMD_NOCMDHELP,     "Nėra informacijos apie %s\n"
+  WCMD_NOTARGET,      "GOTO tikslas nerastas\n"
+  WCMD_CURRENTDATE,   "Dabartinė data yra %s\n"
+  WCMD_CURRENTTIME,   "Dabartinis laikas yra %s\n"
+  WCMD_NEWDATE,       "Įveskite naują datą: "
+  WCMD_NEWTIME,       "Įveskite naują laiką: "
+  WCMD_MISSINGENV,    "Aplinkos kintamasis %s neapibrėžtas\n"
+  WCMD_READFAIL,      "Nepavyko atverti „%s“\n"
+  WCMD_CALLINSCRIPT,  "Negalima iškviesti žymės esančios už komandos failo ribų\n"
+  WCMD_ALL,           "V"
+  WCMD_DELPROMPT,     "%s, trinti"
+  WCMD_ECHOPROMPT,    "ECHO yra %s\n"
+  WCMD_VERIFYPROMPT,  "VERIFY yra %s\n"
+  WCMD_VERIFYERR,     "VERIFY turi būti ON arba OFF\n";
+  WCMD_ARGERR,        "Parametro klaida\n"
+  WCMD_VOLUMEDETAIL,  "Tomas diske %c yra %s\nTomo serijos numeris yra %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT,  "Tomo vardas (11 simbolių, ENTER - bevardis)?"
+  WCMD_NOPATH,        "KELIAS nerastas\n"
+  WCMD_ANYKEY,        "Norėdami tęsti spauskite įvedimo klavišą: "
+  WCMD_CONSTITLE,     "Wine komandų interpretatorius"
+  WCMD_VERSION,       "CMD versija %s\n\n"
+  WCMD_MOREPROMPT,    "Daugiau? "
+  WCMD_LINETOOLONG,   "Įvedimo eilutė per ilga.\n"
+}
