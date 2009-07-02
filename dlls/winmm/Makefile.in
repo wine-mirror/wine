@@ -24,7 +24,26 @@ C_SRCS16 = \
 SPEC_SRCS16 = \
 	mmsystem.spec
 
-RC_SRCS = winmm_res.rc
+RC_SRCS = \
+	winmm_Cs.rc \
+	winmm_Da.rc \
+	winmm_De.rc \
+	winmm_En.rc \
+	winmm_Es.rc \
+	winmm_Fr.rc \
+	winmm_It.rc \
+	winmm_Ja.rc \
+	winmm_Ko.rc \
+	winmm_Lt.rc \
+	winmm_Nl.rc \
+	winmm_No.rc \
+	winmm_Pl.rc \
+	winmm_Pt.rc \
+	winmm_Ru.rc \
+	winmm_Si.rc \
+	winmm_Sk.rc \
+	winmm_Tr.rc \
+	winmm_res.rc
 
 @MAKE_DLL_RULES@
 

@@ -23,31 +23,7 @@
  */
 
 #include "windef.h"
-#include "winbase.h"
 #include "mmddk.h"
-#include "winnls.h"
-
-/* Add your language specific defines here */
-#include "winmm_Cs.rc"
-#include "winmm_Da.rc"
-#include "winmm_De.rc"
-#include "winmm_En.rc"
-#include "winmm_Es.rc"
-#include "winmm_Fr.rc"
-#include "winmm_It.rc"
-#include "winmm_Ko.rc"
-#include "winmm_Lt.rc"
-#include "winmm_Ja.rc"
-#include "winmm_Nl.rc"
-#include "winmm_No.rc"
-#include "winmm_Pl.rc"
-#include "winmm_Pt.rc"
-#include "winmm_Ru.rc"
-#include "winmm_Si.rc"
-#include "winmm_Sk.rc"
-#include "winmm_Tr.rc"
-
-/* do not add NLS specific stuff below that line */
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 

@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "windef.h"
+#include "mmddk.h"
+
 /* UTF-8 */
 #pragma code_page(65001)
 
@@ -127,5 +130,3 @@ MCIERR_SEQ_PORTUNSPECIFIED, 	"システムに現在のMIDIポートが指定さ�
 MCIERR_SEQ_TIMER, 		"全てのマルチメディアタイマは他のアプリケーションによって使用されています。タイマを使用しているアプリケーションを一つ終了してからやり直して下さい。"
 
 END
-
-#pragma code_page(default)
