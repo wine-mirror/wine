@@ -144,7 +144,7 @@ BEGIN
     LTEXT           "&Tipas:",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    LTEXT           "Žymė ir numeris",IDC_LABELSERIAL_STATIC,15,155,95,10
+    LTEXT           "Vardas ir serijos numeris",IDC_LABELSERIAL_STATIC,15,155,80,10
 
     PUSHBUTTON      "Rodyti papil&domas",IDC_BUTTON_SHOW_HIDE_ADVANCED,180,136,66,13
     CONTROL         "Automatiškai aptikti iš įrenginio:",IDC_RADIO_AUTODETECT,"Button",
@@ -154,7 +154,7 @@ BEGIN
     CONTROL         "P&riskirti rankiniu būdu:",IDC_RADIO_ASSIGN,"Button",
                     BS_AUTORADIOBUTTON,15,195,85,10
 
-    LTEXT           "&Žymė:",IDC_STATIC_LABEL,33,208,29,12
+    LTEXT           "&Vardas:",IDC_STATIC_LABEL,33,208,29,12
     EDITTEXT        IDC_EDIT_LABEL,63,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
     LTEXT           "N&umeris:",IDC_STATIC_SERIAL,33,225,29,12
     EDITTEXT        IDC_EDIT_SERIAL,63,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
@@ -217,7 +217,7 @@ BEGIN
     IDS_CHOOSE_PATH         "Prašome išsirinkti unix paskirties aplanką."
     IDS_HIDE_ADVANCED       "Slėpti papil&domas"
     IDS_SHOW_ADVANCED       "Rodyti papil&domas"
-    IDS_NOTHEME             "(Nėra apipavidalinimo)"
+    IDS_NOTHEME             "(nėra apipavidalinimo)"
     IDS_TAB_GRAPHICS        "Grafika"
     IDS_TAB_DESKTOP_INTEGRATION "Darbalaukio integravimas"
     IDS_TAB_AUDIO           "Garsas"
@@ -226,7 +226,7 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "Wine konfigūravimas: %s"
     IDS_THEMEFILE           "Apipavidalinimo failai"
     IDS_THEMEFILE_SELECT    "Pasirinkite apipavidalinimo failą"
-    IDS_AUDIO_MISSING       "Registre nėra nurodyta garso tvarkyklė.\n\nRekomenduojama tvarkyklė buvo parinkta.\nGalite naudoti šią tvarkyklę ar pasirinkti kitą, jei tokių yra.\n\nTurite paspausti 'Vykdyti', kad pasirinkimas įsigaliotų."
+    IDS_AUDIO_MISSING       "Registre nėra nurodyta garso tvarkyklė.\n\nRekomenduojama tvarkyklė buvo parinkta.\nGalite naudoti šią tvarkyklę ar pasirinkti kitą, jei tokių yra.\n\nTurite paspausti „Vykdyti“, kad pasirinkimas įsigaliotų."
     IDS_SHELL_FOLDER        "Aplankas"
     IDS_LINKS_TO            "Susietas su"
 END
@@ -261,10 +261,10 @@ BEGIN
     IDS_DRIVE_CDROM             "CD-ROM"
     IDS_DRIVE_LETTERS_EXCEEDED  "Nebegalite pridėti daugiau diskų.\n\nKiekvienas diskas turi turėti raidę, nuo A iki Z, todėl negalite turėti daugiau nei 26"
     IDS_SYSTEM_DRIVE_LABEL      "Sisteminis diskas"
-    IDS_CONFIRM_DELETE_C        "Ar tikrai norite ištrinti C diską?\n\nDaugelis Windows programų mano, kad C diskas egzistuoja ir neveikia, jei jis neegzistuoja. Jei tęsite, nepamirškite atkurti C disko!"
+    IDS_CONFIRM_DELETE_C        "Ar tikrai norite pašalinti C diską?\n\nDaugelis Windows programų mano, kad C diskas egzistuoja ir neveikia, kai jis neegzistuoja. Jei tęsite, nepamirškite atkurti C disko!"
     IDS_COL_DRIVELETTER         "Raidė"
     IDS_COL_DRIVEMAPPING        "Disko atvaizdavimas"
-    IDS_NO_DRIVE_C              "Neturite C disko. Tai nėra gerai.\n\nNepamirškite paspausti 'Pridėti' diskų kortelėje, kad jį sukurtumėte!\n"
+    IDS_NO_DRIVE_C              "Neturite C disko. Tai nėra gerai.\n\nNepamirškite paspausti „Pridėti“ diskų kortelėje, kad jį sukurtumėte!\n"
 END
 
 STRINGTABLE DISCARDABLE
@@ -288,7 +288,7 @@ BEGIN
     IDS_DEVICES_MIDIIN          "MIDI In įrenginiai"
     IDS_DEVICES_AUX             "Aux įrenginiai"
     IDS_DEVICES_MIXER           "Mixer įrenginiai"
-    IDS_UNAVAILABLE_DRIVER      "Registre rasta tvarkyklė, kuri yra neprieinama!\n\nPašalinti '%s' iš registro?"
+    IDS_UNAVAILABLE_DRIVER      "Registre rasta tvarkyklė, kuri yra neprieinama!\n\nPašalinti „%s“ iš registro?"
     IDS_WARNING                 "Įspėjimas"
 END
 
