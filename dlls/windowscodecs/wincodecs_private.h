@@ -22,6 +22,8 @@
 extern HRESULT ImagingFactory_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv);
 extern HRESULT BmpDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv);
 
+extern HRESULT PaletteImpl_Create(IWICPalette **palette);
+
 extern HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
     UINT srcwidth, UINT srcheight, INT srcstride,
     const WICRect *rc, UINT dststride, UINT dstbuffersize, BYTE *dstbuffer);

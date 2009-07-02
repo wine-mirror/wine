@@ -140,8 +140,8 @@ static HRESULT WINAPI ImagingFactory_CreateEncoder(IWICImagingFactory *iface,
 static HRESULT WINAPI ImagingFactory_CreatePalette(IWICImagingFactory *iface,
     IWICPalette **ppIPalette)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIPalette);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIPalette);
+    return PaletteImpl_Create(ppIPalette);
 }
 
 static HRESULT WINAPI ImagingFactory_CreateFormatConverter(IWICImagingFactory *iface,

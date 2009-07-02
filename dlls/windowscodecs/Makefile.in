@@ -11,6 +11,7 @@ C_SRCS = \
 	clsfactory.c \
 	imgfactory.c \
 	main.c \
+	palette.c \
 	regsvr.c
 
 @MAKE_DLL_RULES@
