@@ -94,6 +94,14 @@ PUSHBUTTON    "Atsisakyti",    IDCANCEL,            180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Žinynas",      IDHELP,              180, 39, 40, 15, WS_TABSTOP
 }
 
+IDD_OFN_TEMPLATE  DIALOG  DISCARDABLE 50,50,300,15
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Koduotė:", -1, 5,0, 50,12
+  COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
+END
+
 STRINGTABLE DISCARDABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&f"
@@ -121,4 +129,12 @@ STRING_NOTFOUND,                       "Frazė „%s“ nerasta."
 STRING_OUT_OF_MEMORY,                  "Neužtenka atminties operacijai užbaigti.\n\
                                        Norėdami atlaisvinti atminties uždarykite vieną ar daugiau programų."
 
+STRING_UNICODE_LE,                    "Unikodas (UTF-16)"
+STRING_UNICODE_BE,                    "Unikodas (UTF-16 mažėjantys baitai)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,    "%s\n\
+                                      Šiame faile yra unikodo ženklų, kurie bus prarasti, jei išsaugosite failą %s koduotėje.\n\
+                                      Norėdami išsaugoti šiuos ženklus, spauskite „Atsisakyti“ ir pasirinkite vieną iš \
+                                      unikodo nuostatų koduotės išskleidžiamajame sąraše.\n\
+                                      Tęsti?"
 }
