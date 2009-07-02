@@ -178,10 +178,22 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
         DWORD *grfBINDF, BINDINFO *pbindinfo)
 {
     BindStatusCallback *This = STATUSCLB_THIS(iface);
+    IBindStatusCallbackEx *bscex;
+    HRESULT hres;
 
     TRACE("(%p)->(%p %p)\n", This, grfBINDF, pbindinfo);
 
-    return IBindStatusCallback_GetBindInfo(This->callback, grfBINDF, pbindinfo);
+    hres = IBindStatusCallback_QueryInterface(This->callback, &IID_IBindStatusCallbackEx, (void**)&bscex);
+    if(SUCCEEDED(hres)) {
+        DWORD bindf2 = 0, reserv = 0;
+
+        hres = IBindStatusCallbackEx_GetBindInfoEx(bscex, grfBINDF, pbindinfo, &bindf2, &reserv);
+        IBindStatusCallbackEx_Release(bscex);
+    }else {
+        hres = IBindStatusCallback_GetBindInfo(This->callback, grfBINDF, pbindinfo);
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *iface,
