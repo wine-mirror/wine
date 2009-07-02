@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2004 Huw D M Davies
  * Copyright 2004 Jacek Caban
+ * Copyright 2009 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,6 +39,12 @@ static const WCHAR iconW[] = {'I','c','o','n',0};
 static const WCHAR minlevelW[] = {'M','i','n','L','e','v','e','l',0};
 static const WCHAR recommendedlevelW[] = {'R','e','c','o','m','m','e','n','d','e','d',
                                           'L','e','v','e','l',0};
+static const WCHAR wszZonesKey[] = {'S','o','f','t','w','a','r','e','\\',
+                                    'M','i','c','r','o','s','o','f','t','\\',
+                                    'W','i','n','d','o','w','s','\\',
+                                    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                    'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
+                                    'Z','o','n','e','s','\\',0};
 
 /********************************************************************
  * get_string_from_reg [internal]
@@ -205,13 +212,6 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone, LPWSTR *ret_url)
 
 static HRESULT open_zone_key(HKEY parent_key, DWORD zone, HKEY *hkey)
 {
-    static const WCHAR wszZonesKey[] =
-        {'S','o','f','t','w','a','r','e','\\',
-         'M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s','\\',
-         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-         'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
-         'Z','o','n','e','s','\\',0};
     static const WCHAR wszFormat[] = {'%','s','%','l','d',0};
 
     WCHAR key_name[sizeof(wszZonesKey)/sizeof(WCHAR)+8];
@@ -673,7 +673,68 @@ HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 typedef struct {
     const IInternetZoneManagerVtbl* lpVtbl;
     LONG ref;
+    LPDWORD *zonemaps;
+    DWORD zonemap_count;
 } ZoneMgrImpl;
+
+
+/***********************************************************************
+ * build_zonemap_from_reg [internal]
+ *
+ * Enumerate the Zones in the Registry and return the Zones in a DWORD-array
+ * The number of the Zones is returned in data[0]
+ */
+static LPDWORD build_zonemap_from_reg(void)
+{
+    WCHAR name[32];
+    HKEY hkey;
+    LPDWORD data = NULL;
+    DWORD allocated = 6; /* space for the zonecount and Zone "0" upto Zone "4" */
+    DWORD used = 0;
+    DWORD res;
+    DWORD len;
+
+
+    res = RegOpenKeyW(HKEY_CURRENT_USER, wszZonesKey, &hkey);
+    if (res)
+        return NULL;
+
+    data = heap_alloc(allocated * sizeof(DWORD));
+    if (!data)
+        goto cleanup;
+
+    while (!res) {
+        name[0] = '\0';
+        len = sizeof(name) / sizeof(name[0]);
+        res = RegEnumKeyExW(hkey, used, name, &len, NULL, NULL, NULL, NULL);
+
+        if (!res) {
+            used++;
+            if (used == allocated) {
+                LPDWORD new_data;
+
+                allocated *= 2;
+                new_data = heap_realloc_zero(data, allocated * sizeof(DWORD));
+                if (!new_data)
+                    goto cleanup;
+
+                data = new_data;
+            }
+            data[used] = atoiW(name);
+        }
+    }
+    if (used) {
+        RegCloseKey(hkey);
+        data[0] = used;
+        return data;
+    }
+
+cleanup:
+    /* something failed */
+    RegCloseKey(hkey);
+    heap_free(data);
+    return NULL;
+}
 
 /********************************************************************
  *      IInternetZoneManager_QueryInterface
@@ -723,6 +784,8 @@ static ULONG WINAPI ZoneMgrImpl_Release(IInternetZoneManager* iface)
     TRACE("(%p)->(ref before=%u)\n",This, refCount + 1);
 
     if(!refCount) {
+        while (This->zonemap_count) heap_free(This->zonemaps[--This->zonemap_count]);
+        heap_free(This->zonemaps);
         heap_free(This);
         URLMON_UnlockModule();
     }
@@ -876,8 +939,51 @@ static HRESULT WINAPI ZoneMgrImpl_CreateZoneEnumerator(IInternetZoneManager* ifa
                                                        DWORD* pdwCount,
                                                        DWORD dwFlags)
 {
-    FIXME("(%p)->(%p %p %08x) stub\n", iface, pdwEnum, pdwCount, dwFlags);
-    return E_NOTIMPL;
+    ZoneMgrImpl* This = (ZoneMgrImpl*)iface;
+    LPDWORD * new_maps;
+    LPDWORD data;
+    DWORD i;
+
+    TRACE("(%p)->(%p, %p, 0x%08x)\n", This, pdwEnum, pdwCount, dwFlags);
+    if (!pdwEnum || !pdwCount || (dwFlags != 0))
+        return E_INVALIDARG;
+
+    data = build_zonemap_from_reg();
+    TRACE("found %d zones\n", data ? data[0] : -1);
+
+    if (!data)
+        return E_FAIL;
+
+    for (i = 0; i < This->zonemap_count; i++) {
+        if (This->zonemaps && !This->zonemaps[i]) {
+            This->zonemaps[i] = data;
+            *pdwEnum = i;
+            *pdwCount = data[0];
+            return S_OK;
+        }
+    }
+
+    if (This->zonemaps) {
+        /* try to double the nr. of pointers in the array */
+        new_maps = heap_realloc_zero(This->zonemaps, This->zonemap_count * 2 * sizeof(LPDWORD));
+        if (new_maps)
+            This->zonemap_count *= 2;
+    }
+    else
+    {
+        This->zonemap_count = 2;
+        new_maps = heap_alloc_zero(This->zonemap_count * sizeof(LPDWORD));
+    }
+
+    if (!new_maps) {
+        heap_free(data);
+        return E_FAIL;
+    }
+    This->zonemaps = new_maps;
+    This->zonemaps[i] = data;
+    *pdwEnum = i;
+    *pdwCount = data[0];
+    return S_OK;
 }
 
 /********************************************************************
@@ -888,8 +994,21 @@ static HRESULT WINAPI ZoneMgrImpl_GetZoneAt(IInternetZoneManager* iface,
                                             DWORD dwIndex,
                                             DWORD* pdwZone)
 {
-    FIXME("(%p)->(%08x %08x %p) stub\n", iface, dwEnum, dwIndex, pdwZone);
-    return E_NOTIMPL;
+    ZoneMgrImpl* This = (ZoneMgrImpl*)iface;
+    LPDWORD data;
+
+    TRACE("(%p)->(0x%08x, %d, %p)\n", This, dwEnum, dwIndex, pdwZone);
+
+    /* make sure, that dwEnum and dwIndex are in the valid range */
+    if (dwEnum < This->zonemap_count) {
+        if ((data = This->zonemaps[dwEnum])) {
+            if (dwIndex < data[0]) {
+                *pdwZone = data[dwIndex + 1];
+                return S_OK;
+            }
+        }
+    }
+    return E_INVALIDARG;
 }
 
 /********************************************************************
@@ -898,8 +1017,19 @@ static HRESULT WINAPI ZoneMgrImpl_GetZoneAt(IInternetZoneManager* iface,
 static HRESULT WINAPI ZoneMgrImpl_DestroyZoneEnumerator(IInternetZoneManager* iface,
                                                         DWORD dwEnum)
 {
-    FIXME("(%p)->(%08x) stub\n", iface, dwEnum);
-    return E_NOTIMPL;
+    ZoneMgrImpl* This = (ZoneMgrImpl*)iface;
+    LPDWORD data;
+
+    TRACE("(%p)->(0x%08x)\n", This, dwEnum);
+    /* make sure, that dwEnum is valid */
+    if (dwEnum < This->zonemap_count) {
+        if ((data = This->zonemaps[dwEnum])) {
+            This->zonemaps[dwEnum] = NULL;
+            heap_free(data);
+            return S_OK;
+        }
+    }
+    return E_INVALIDARG;
 }
 
 /********************************************************************
@@ -937,7 +1067,7 @@ static const IInternetZoneManagerVtbl ZoneMgrImplVtbl = {
 
 HRESULT ZoneMgrImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 {
-    ZoneMgrImpl* ret = heap_alloc(sizeof(ZoneMgrImpl));
+    ZoneMgrImpl* ret = heap_alloc_zero(sizeof(ZoneMgrImpl));
 
     TRACE("(%p %p)\n", pUnkOuter, ppobj);
     ret->lpVtbl = &ZoneMgrImplVtbl;
