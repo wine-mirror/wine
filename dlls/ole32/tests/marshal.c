@@ -2071,7 +2071,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
     {
         DWORD expected_size = round_global_size(3*sizeof(DWORD) + sizeof(GUID));
         ok(size == expected_size ||
-           broken(size == round_global_size(2*sizeof(DWORD))) /* Win9x & NT4 */,
+           broken(size == (2*sizeof(DWORD))) /* Win9x & NT4 */,
            "size should have been %d instead of %d\n", expected_size, size);
 
         ok(*(DWORD *)marshal_data == mshlflags, "expected 0x%x, but got 0x%x for mshctx\n", mshlflags, *(DWORD *)marshal_data);
