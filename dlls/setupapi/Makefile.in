@@ -31,7 +31,32 @@ C_SRCS16 = \
 
 SPEC_SRCS16 = setupx.spec
 
-RC_SRCS= setupapi.rc
+RC_SRCS = \
+	Bg.rc \
+	Cs.rc \
+	Da.rc \
+	De.rc \
+	En.rc \
+	Eo.rc \
+	Es.rc \
+	Fi.rc \
+	Fr.rc \
+	Hu.rc \
+	It.rc \
+	Ja.rc \
+	Ko.rc \
+	Lt.rc \
+	Nl.rc \
+	No.rc \
+	Pl.rc \
+	Pt.rc \
+	Ro.rc \
+	Ru.rc \
+	Si.rc \
+	Sk.rc \
+	Sv.rc \
+	Tr.rc \
+	Zh.rc
 
 @MAKE_DLL_RULES@
 

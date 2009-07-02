@@ -19,6 +19,9 @@
 #ifndef __SETUPAPI_PRIVATE_H
 #define __SETUPAPI_PRIVATE_H
 
+#include <windef.h>
+#include <winuser.h>
+
 #define COPYFILEDLGORD	1000
 #define SOURCESTRORD	500
 #define DESTSTRORD	501

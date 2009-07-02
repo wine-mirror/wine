@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "setupapi_private.h"
+
 LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 #pragma code_page(65001)
@@ -55,5 +57,3 @@ BEGIN
         PUSHBUTTON "Renunță", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
         PUSHBUTTON "Navigează...", IDC_RUNDLG_BROWSE, 195, 100, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
-
-#pragma code_page(default)
