@@ -1962,6 +1962,20 @@ static void test_IsCodePageInstallable(IMultiLanguage2 *ml2)
     UINT i;
     HRESULT hr;
 
+    SetLastError(0xdeadbeef);
+    lstrcmpW(NULL, NULL);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        /* This corruption leads (sometimes) to test failures in oleaut32 but also
+         * to the inability to use the Regional Settings.
+         * This only seems to be an issue with Win98 and IE6 (mlang version 6.0.2800.1106).
+         *
+         * A reboot restores the codepages again.
+         */
+        win_skip("IsCodePageInstallable could mess up the codepages on Win98\n");
+        return;
+    }
+
     for (i = 0; i < 0xffff; i++)
     {
         hr = IMultiLanguage2_IsCodePageInstallable(ml2, i);
@@ -2033,6 +2047,7 @@ START_TEST(mlang)
 
     test_multibyte_to_unicode_translations(iML2);
     test_IMultiLanguage2_ConvertStringFromUnicode(iML2);
+
     test_IsCodePageInstallable(iML2);
 
     IMultiLanguage2_Release(iML2);
