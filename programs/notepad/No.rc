@@ -1,7 +1,7 @@
 /*
- *  Notepad (Norwegian Bokmål resources)
+ *  Notepad (Norwegian BokmÃ¥l resources)
  *
- *  Copyright 2005-2006 Alexander N. Sørnes <alex@thehandofagony.com>
+ *  Copyright 2005-2006 Alexander N. SÃ¸rnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,13 +20,15 @@
 
 #include "notepad_res.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 MAIN_MENU MENU
 {
  POPUP "&Fil" {
   MENUITEM "&Ny\tCtrl+N",           CMD_NEW
-  MENUITEM "&Åpne...\tCtrl+O",     CMD_OPEN
+  MENUITEM "&Ã…pne...\tCtrl+O",     CMD_OPEN
   MENUITEM "&Lagre\tCtrl+S",     CMD_SAVE
   MENUITEM "Lagr&e som...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
@@ -50,13 +52,14 @@ POPUP "R&ediger" {
   MENUITEM "Tekstbrytin&g",  CMD_WRAP
   MENUITEM "Skr&ift...",          CMD_FONT
  }
-POPUP "&Søk" {
-  MENUITEM "&Søk...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "&Søk etter nest&e\tF3",  CMD_SEARCH_NEXT
+POPUP "&SÃ¸k" {
+  MENUITEM "&SÃ¸k...\tCtrl+F",   CMD_SEARCH
+  MENUITEM "SÃ¸k etter nest&e\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "E&rstatt...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Hjelp" {
   MENUITEM "&Innhold",         CMD_HELP_CONTENTS
-  MENUITEM "&Søk...",        CMD_HELP_SEARCH
+  MENUITEM "&SÃ¸k...",        CMD_HELP_SEARCH
   MENUITEM "&Hjelp om hjelp",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   MENUITEM "&Om Notepad", CMD_HELP_ABOUT_NOTEPAD
@@ -80,7 +83,7 @@ LTEXT    "&Venstre:",        0x145,   20, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_LEFTVALUE,     50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "&Topp:",         0x148,    20, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_TOPVALUE,      50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "Høy&re:",       0x14B, 100, 55, 30, 10, WS_CHILD
+LTEXT    "HÃ¸y&re:",       0x14B, 100, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_RIGHTVALUE,   130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "&Bunn:",      0x14E,100, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
@@ -89,6 +92,14 @@ DEFPUSHBUTTON "OK",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Avbryt",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Hjelp",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
 }
+
+IDD_OFN_TEMPLATE  DIALOG  DISCARDABLE 50,50,300,15
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Tegnkoding:", -1, 5,0, 50,12
+  COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
+END
 
 STRINGTABLE DISCARDABLE
 {
@@ -105,17 +116,26 @@ STRING_UNTITLED,                                "(Uten navn)"
 STRING_ALL_FILES,                               "Alle filer (*.*)"
 STRING_TEXT_FILES_TXT,                  "Tekstfiler (*.txt)"
 
-STRING_TOOLARGE,                                "Filen «%s» er for stor for Notisblokk.\n \
+STRING_TOOLARGE,                                "Filen Â«%sÂ» er for stor for Notisblokk.\n \
 Bruk en annen redigerer."
 STRING_NOTEXT,                                  "Du skrev ikke inn noe tekst. \
-\nSkriv noe og prøv igjen."
-STRING_DOESNOTEXIST,                            "Filen «%s» finnes ikke.\n\n \
+\nSkriv noe og prÃ¸v igjen."
+STRING_DOESNOTEXIST,                            "Filen Â«%sÂ» finnes ikke.\n\n \
 Opprette en ny fil?"
-STRING_NOTSAVED,                                "Filen «%s» er endret.\n\n \
+STRING_NOTSAVED,                                "Filen Â«%sÂ» er endret.\n\n \
 Lagre endringene?"
-STRING_NOTFOUND,                                        "Klarte ikke finne «%s»."
-STRING_OUT_OF_MEMORY,                   "Ikke nok minne for å fullføre \
-operasjonen.\nLukk et eller flere programmer for å frigjøre\nmer \
+STRING_NOTFOUND,                                        "Klarte ikke finne Â«%sÂ»."
+STRING_OUT_OF_MEMORY,                   "Ikke nok minne for Ã¥ fullfÃ¸re \
+operasjonen.\nLukk et eller flere programmer for Ã¥ frigjÃ¸re\nmer \
 minne."
 
+STRING_UNICODE_LE,     "Unicode (UTF-16)"
+STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "Â«%sÂ»\n\
+Denne filen inneholder Unicode-tegn som vil gÃ¥ tapt hvis \n\
+filen lagres med tegnkodingen %s. \n\
+Trykk Avbryt og velg et av Unicode-valgene fra listen \n\
+hvis du vil beholde tegnene. \n\
+Fortsette?"
 }
