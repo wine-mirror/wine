@@ -1521,8 +1521,11 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
         type_t *ft = f->type;
         if (type_get_type(ft) == TYPE_UNION && is_attr(f->attrs, ATTR_SWITCHIS))
         {
+            short reloff;
             unsigned int absoff = ft->typestring_offset;
-            short reloff = absoff - (*tfsoff + 6);
+            if (is_attr(ft->attrs, ATTR_SWITCHTYPE))
+                absoff += 8; /* we already have a corr descr, skip it */
+            reloff = absoff - (*tfsoff + 6);
             print_file(file, 0, "/* %d */\n", *tfsoff);
             print_file(file, 2, "0x%x,\t/* FC_NON_ENCAPSULATED_UNION */\n", RPC_FC_NON_ENCAPSULATED_UNION);
             print_file(file, 2, "0x%x,\t/* FIXME: always FC_LONG */\n", RPC_FC_LONG);
@@ -2509,6 +2512,7 @@ static unsigned int write_union_tfs(FILE *file, type_t *type, unsigned int *tfso
         *tfsoff += write_conf_or_var_desc(file, NULL, *tfsoff, st, &dummy_expr );
         print_file(file, 2, "NdrFcShort(0x2),\t/* Offset= 2 (%u) */\n", *tfsoff + 2);
         *tfsoff += 2;
+        print_file(file, 0, "/* %u */\n", *tfsoff);
     }
 
     print_file(file, 2, "NdrFcShort(0x%hx),\t/* %d */\n", size, size);
