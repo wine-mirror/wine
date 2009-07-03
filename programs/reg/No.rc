@@ -1,8 +1,8 @@
 /*
  * REG.EXE - Wine-compatible reg program.
- * Norwegian (Bokmål) language support
+ * Norwegian (BokmÃ¥l) language support
  *
- * Copyright 2008 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2008-2009 Alexander N. SÃ¸rnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,12 +21,19 @@
 
 #include "reg.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 STRINGTABLE
 {
-    STRING_USAGE, "Programmer kjøres som følger:\n\nREG [ ADD | DELETE | QUERY ]\nREG kommando /?\n"
-    STRING_ADD_USAGE, "REG ADD nøkkelnavn [/v verdi | /ve] [/t type] [/s separator] [/d data] [/f]\n"
-    STRING_DELETE_USAGE, "REG DELETE nøkkelnavn [/v verdi | /ve | /va] [/f]\n"
-    STRING_QUERY_USAGE, "REG QUERY nøkkelnavn [/v verdi | /ve] [/s]\n"
+    STRING_USAGE, "Programmer kjÃ¸res som fÃ¸lger:\n\nREG [ ADD | DELETE | QUERY ]\nREG kommando /?\n"
+    STRING_ADD_USAGE, "REG ADD nÃ¸kkelnavn [/v verdi | /ve] [/t type] [/s separator] [/d data] [/f]\n"
+    STRING_DELETE_USAGE, "REG DELETE nÃ¸kkelnavn [/v verdi | /ve | /va] [/f]\n"
+    STRING_QUERY_USAGE, "REG QUERY nÃ¸kkelnavn [/v verdi | /ve] [/s]\n"
+    STRING_SUCCESS, "Operasjonen ble utfÃ¸rt\n"
+    STRING_INVALID_KEY, "Feil: Ugyldig nÃ¸kkelnavn\n"
+    STRING_INVALID_CMDLINE, "Feil: Ugyldige parametere pÃ¥ kommandolinjen\n"
+    STRING_NO_REMOTE, "Feil: Kan ikke legge til nÃ¸kler pÃ¥ ekstern maskin\n"
+    STRING_CANNOT_FIND, "Feil: Systemet klarte ikke finne den angitte registernÃ¸kkelen eller -verdien\n"
 }
