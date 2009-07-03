@@ -726,6 +726,7 @@ static void test_CreateAssemblyNameObject(void)
     ok(name != NULL, "Expected non-NULL name\n");
 
     size = MAX_PATH;
+    str[0] = '\0';
     hr = IAssemblyName_GetDisplayName(name, str, &size, ASM_DISPLAYF_FULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     todo_wine
