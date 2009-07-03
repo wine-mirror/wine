@@ -2312,6 +2312,70 @@ err_out:
     return;
 }
 
+static void test_multi_device(void)
+{
+    IDirect3DDevice9 *device1 = NULL, *device2 = NULL;
+    D3DPRESENT_PARAMETERS present_parameters;
+    HWND hwnd1 = NULL, hwnd2 = NULL;
+    IDirect3D9 *d3d9;
+    ULONG refcount;
+    HRESULT hr;
+
+    d3d9 = pDirect3DCreate9(D3D_SDK_VERSION);
+    ok(d3d9 != NULL, "Failed to create a d3d9 object.\n");
+    if (!d3d9) goto fail;
+
+    hwnd1 = CreateWindow("static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    ok(hwnd1 != NULL, "Failed to create a window.\n");
+    if (!hwnd1) goto fail;
+
+    memset(&present_parameters, 0, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = hwnd1;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd1,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device1);
+    ok(SUCCEEDED(hr), "Failed to create a device, hr %#x\n", hr);
+    IDirect3D9_Release(d3d9);
+    d3d9 = NULL;
+    if (FAILED(hr)) goto fail;
+
+    d3d9 = pDirect3DCreate9(D3D_SDK_VERSION);
+    ok(d3d9 != NULL, "Failed to create a d3d9 object.\n");
+    if (!d3d9) goto fail;
+
+    hwnd2 = CreateWindow("static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    ok(hwnd2 != NULL, "Failed to create a window.\n");
+    if (!hwnd2) goto fail;
+
+    memset(&present_parameters, 0, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = hwnd2;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd2,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device2);
+    ok(SUCCEEDED(hr), "Failed to create a device, hr %#x\n", hr);
+    IDirect3D9_Release(d3d9);
+    d3d9 = NULL;
+    if (FAILED(hr)) goto fail;
+
+fail:
+    if (d3d9) IDirect3D9_Release(d3d9);
+    if (device1)
+    {
+        refcount = IDirect3DDevice9_Release(device1);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (device2)
+    {
+        refcount = IDirect3DDevice9_Release(device2);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (hwnd1) DestroyWindow(hwnd1);
+    if (hwnd2) DestroyWindow(hwnd2);
+}
 
 START_TEST(device)
 {
@@ -2334,6 +2398,7 @@ START_TEST(device)
         }
         IDirect3D9_Release(d3d9);
 
+        test_multi_device();
         test_display_formats();
         test_display_modes();
         test_swapchain();
