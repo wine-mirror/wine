@@ -87,6 +87,9 @@ static const WCHAR setUTCMonthW[] = {'s','e','t','U','T','C','M','o','n','t','h'
 static const WCHAR setFullYearW[] = {'s','e','t','F','u','l','l','Y','e','a','r',0};
 static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l','Y','e','a','r',0};
 
+static const WCHAR UTCW[] = {'U','T','C',0};
+static const WCHAR parseW[] = {'p','a','r','s','e',0};
+
 /*ECMA-262 3rd Edition    15.9.1.2 */
 #define MS_PER_DAY 86400000
 #define MS_PER_HOUR 3600000
@@ -2197,6 +2200,20 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, Disp
     return S_OK;
 }
 
+static HRESULT DateConstr_parse(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT DateConstr_UTC(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -2339,6 +2356,20 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     return S_OK;
 }
 
+static const builtin_prop_t DateConstr_props[] = {
+    {UTCW,    DateConstr_UTC,    PROPF_METHOD},
+    {parseW,  DateConstr_parse,  PROPF_METHOD}
+};
+
+static const builtin_info_t DateConstr_info = {
+    JSCLASS_FUNCTION,
+    {NULL, Function_value, 0},
+    sizeof(DateConstr_props)/sizeof(*DateConstr_props),
+    DateConstr_props,
+    NULL,
+    NULL
+};
+
 HRESULT create_date_constr(script_ctx_t *ctx, DispatchEx **ret)
 {
     DispatchEx *date;
@@ -2348,7 +2379,7 @@ HRESULT create_date_constr(script_ctx_t *ctx, DispatchEx **ret)
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, DateConstr_value, PROPF_CONSTR, date, ret);
+    hres = create_builtin_function(ctx, DateConstr_value, &DateConstr_info, PROPF_CONSTR, date, ret);
 
     jsdisp_release(date);
     return hres;
