@@ -725,6 +725,7 @@ static void test_decodeCatNameValue(void)
     DWORD size;
     CAT_NAMEVALUE *value;
 
+    buf = NULL;
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
      emptyCatNameValue, sizeof(emptyCatNameValue),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
@@ -739,6 +740,7 @@ static void test_decodeCatNameValue(void)
          value->Value.cbData);
         LocalFree(buf);
     }
+    buf = NULL;
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
      catNameValueWithTag, sizeof(catNameValueWithTag),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
@@ -754,6 +756,7 @@ static void test_decodeCatNameValue(void)
          value->Value.cbData);
         LocalFree(buf);
     }
+    buf = NULL;
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
      catNameValueWithFlags, sizeof(catNameValueWithFlags),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
@@ -768,6 +771,7 @@ static void test_decodeCatNameValue(void)
          value->Value.cbData);
         LocalFree(buf);
     }
+    buf = NULL;
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, CAT_NAMEVALUE_STRUCT,
      catNameValueWithValue, sizeof(catNameValueWithValue),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
