@@ -346,6 +346,7 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
     DWORD dwNumRead;
     int lenW;
     WCHAR* textW;
+    int i;
     WCHAR log[5];
 
     /* Close any files and prompt to save changes */
@@ -433,6 +434,12 @@ void DoOpenFile(LPCWSTR szFileName, ENCODING enc)
         }
     }
 
+    /* Replace '\0's with spaces. Other than creating a custom control that
+     * can deal with '\0' characters, it's the best that can be done.
+     */
+    for (i = 0; i < lenW; i++)
+        if (textW[i] == '\0')
+            textW[i] = ' ';
     textW[lenW] = '\0';
 
     if (lenW >= 1 && textW[0] == 0xfeff)
