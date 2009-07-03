@@ -829,6 +829,7 @@ static void test_GetAdaptersAddresses(void)
     ret = gGetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, NULL);
     ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got %u\n", ret);
 
+    size = 0;
     ret = gGetAdaptersAddresses(AF_UNSPEC, 0, NULL, NULL, &size);
     ok(ret == ERROR_BUFFER_OVERFLOW, "expected ERROR_BUFFER_OVERFLOW, got %u\n", ret);
     if (ret != ERROR_BUFFER_OVERFLOW) return;
