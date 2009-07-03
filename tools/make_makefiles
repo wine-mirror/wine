@@ -118,7 +118,21 @@ my %private_idl_headers = (
     "wine/winedxgi.idl" => 1,
 );
 
-my (@makefiles, %makefiles);
+my %ignored_source_files = (
+    "dlls/wineps.drv/afm2c.c" => 1,
+    "dlls/wineps.drv/mkagl.c" => 1,
+    "programs/winetest/dist.rc" => 1,
+);
+
+my (@all_files, @makefiles, %makefiles);
+
+sub dirname($)
+{
+    my $ret = shift;
+    return "" unless $ret =~ /\//;
+    $ret =~ s!/[^/]*$!!;
+    return $ret;
+}
 
 # update a file if changed
 sub update_file($)
@@ -178,6 +192,49 @@ sub replace_in_file($$$@)
     return update_file($file);
 }
 
+# replace a variable in a makefile
+sub replace_makefile_variable($$)
+{
+    my ($file, $var) = @_;
+    my $make = $makefiles{$file};
+
+    return unless defined ${$make}{"=$var"};
+
+    my @values = @{${$make}{"=$var"}};
+    ${$make}{$var} = \@values;
+
+    open NEW_FILE, ">$file.in.new" or die "cannot create $file.in.new";
+
+    open OLD_FILE, "$file.in" or die "cannot open $file.in";
+    while (<OLD_FILE>)
+    {
+        if (/^\s*($var\s+)=/)
+        {
+            # try to preserve formatting
+            my $prefix = $1;
+            my $multiline = /\\$/ || (@values > 1);
+            while (/\\$/)
+            {
+                $_ = <OLD_FILE>;
+                last unless $_;
+            }
+            if ($multiline)
+            {
+                print NEW_FILE "$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
+            }
+            else
+            {
+                print NEW_FILE "$prefix= @values\n";
+            }
+            next;
+        }
+        print NEW_FILE $_;
+    }
+    close OLD_FILE;
+    close NEW_FILE;
+    return update_file("$file.in");
+}
+
 # parse the specified makefile to identify the rules file
 sub parse_makefile($)
 {
@@ -191,7 +248,9 @@ sub parse_makefile($)
     while (<MAKE>)
     {
         chomp;
+        next if (/^\s*#/);
         while (/\\$/) { chop; $_ .= <MAKE>; chomp; }  # merge continued lines
+        next if (/^\s*$/);
 
         if (/^\@(MAKE.*RULES)\@/)
         {
@@ -199,12 +258,12 @@ sub parse_makefile($)
             $make{"=rules"} = $makerules{$var};
             next;
         }
-        if (/^(MODULE|IMPORTLIB|TESTDLL)\s*=\s*(.*)/)
+        if (/^\s*(MODULE|IMPORTLIB|TESTDLL)\s*=\s*(.*)/)
         {
             $make{$1} = $2;
             next;
         }
-        if (/^(BISON_SRCS|LEX_SRCS|IDL_[CHIPS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|MC_SRCS|RC_SRCS|RC_SRCS16|RC_BINARIES|SPEC_SRCS16|EXTRA_OBJS16|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|C_SRCS16|RC_SRCS16|SPEC_SRCS16|EXTRA_OBJS16|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
         {
             my @list = split(/\s+/, $2);
             $make{$1} = \@list;
@@ -214,6 +273,30 @@ sub parse_makefile($)
     return %make;
 }
 
+# assign source files to their respective makefile
+sub assign_sources_to_makefiles()
+{
+    foreach my $file (@all_files)
+    {
+        next if defined $ignored_source_files{$file};
+        my $dir = dirname( $file );
+
+        while ($dir && !defined $makefiles{"$dir/Makefile"}) { $dir = dirname( $dir ); }
+        next unless $dir;
+
+        die "no makefile found for $file\n" unless defined $makefiles{"$dir/Makefile"};
+
+        my $make = $makefiles{"$dir/Makefile"};
+        my $basename = substr( $file, length($dir) + 1 );
+
+        if ($basename =~ /\.c$/) { push @{${$make}{"=C_SRCS"}}, $basename; }
+        elsif ($basename =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $basename; }
+        elsif ($basename =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $basename; }
+        elsif ($basename =~ /\.rc$/) { push @{${$make}{"=RC_SRCS"}}, $basename; }
+        elsif ($basename =~ /\.rc$/) { push @{${$make}{"=RC_SRCS"}}, $basename; }
+        elsif ($basename =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $basename; }
+    }
+}
 
 ################################################################
 # update the makefile list in configure.ac
@@ -254,6 +337,20 @@ sub update_makefiles(@)
         }
         elsif ($file =~ /^[^\/]*\/Makefile$/) { $args = ",[],[ALL_TOP_DIRS]"; }
         push @lines, "WINE_CONFIG_MAKEFILE([$file],[$rules]$args)\n";
+    }
+
+    # update the source variables in all the makefiles
+
+    foreach my $file (sort @_)
+    {
+        my %make = %{$makefiles{$file}};
+
+        replace_makefile_variable( $file, "LEX_SRCS" );
+        replace_makefile_variable( $file, "BISON_SRCS" );
+        replace_makefile_variable( $file, "MC_SRCS" );
+        replace_makefile_variable( $file, "SVG_SRCS" );
+        replace_makefile_variable( $file, "C_SRCS" ) unless defined $make{"C_SRCS16"};
+        replace_makefile_variable( $file, "RC_SRCS" ) unless defined $make{"RC_SRCS16"};
     }
 
     push @lines, "\ndnl Build dependencies for test files compiled into winetest\n";
@@ -491,9 +588,8 @@ sub update_dlls(@)
 
 sub update_includes()
 {
-    return unless -d ".git";
     my (@h_srcs, @private_idl_srcs, @public_idl_srcs, @tlb_srcs, %subdirs);
-    my @includes = map { s/^include\///; $_; } split /\0/, `git ls-files -c -z include`;
+    my @includes = map { (my $ret = $_) =~ s/^include\///; $ret; } grep /^include\//, @all_files;
     foreach my $incl (@includes)
     {
         if ($incl =~ /(.*)\//) { $subdirs{$1} = 1; }
@@ -561,14 +657,10 @@ sub update_gitignore(@)
 }
 
 
-if (-d ".git")
-{
-    @makefiles = map { s/\.in$//; $_; } split /\0/, `git ls-files -c -z Makefile.in \\*/Makefile.in`;
-}
-else
-{
-    @makefiles = map { s/^\.\/(.*)\.in/$1/; $_; } split(/\s/,`find . -name Makefile.in -print`);
-}
+die "needs to be run from a git checkout" unless -d ".git";
+
+@all_files = split /\0/, `git ls-files -c -z`;
+@makefiles = map { my $ret = $_; $ret =~ s/\.in$//; $ret; } grep /Makefile.in$/, @all_files;
 
 foreach my $file (sort values %makerules, @makefiles)
 {
@@ -576,6 +668,7 @@ foreach my $file (sort values %makerules, @makefiles)
     $makefiles{$file} = \%make;
 }
 
+assign_sources_to_makefiles();
 update_makefiles( @makefiles );
 push @ignores, update_includes();
 push @ignores, update_ignores( @makefiles );
