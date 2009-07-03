@@ -2210,8 +2210,92 @@ static HRESULT DateConstr_parse(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 static HRESULT DateConstr_UTC(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT year, month, vdate, hours, minutes, seconds, ms;
+    DOUBLE y;
+    int arg_no = arg_cnt(dp);
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(arg_no>0) {
+        hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &year);
+        if(FAILED(hres))
+            return hres;
+        y = num_val(&year);
+        if(0<=y && y<=99)
+            y += 1900;
+    }
+    else y = 1900;
+
+    if(arg_no>1) {
+        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &month);
+        if(FAILED(hres))
+            return hres;
+    }
+    else {
+        V_VT(&month) = VT_R8;
+        V_R8(&month) = 0;
+    }
+
+    if(arg_no>2) {
+        hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &vdate);
+        if(FAILED(hres))
+            return hres;
+    }
+    else {
+        V_VT(&vdate) = VT_R8;
+        V_R8(&vdate) = 1;
+    }
+
+    if(arg_no>3) {
+        hres = to_number(dispex->ctx, get_arg(dp, 3), ei, &hours);
+        if(FAILED(hres))
+            return hres;
+    }
+    else {
+        V_VT(&hours) = VT_R8;
+        V_R8(&hours) = 0;
+    }
+
+    if(arg_no>4) {
+        hres = to_number(dispex->ctx, get_arg(dp, 4), ei, &minutes);
+        if(FAILED(hres))
+            return hres;
+    }
+    else {
+        V_VT(&minutes) = VT_R8;
+        V_R8(&minutes) = 0;
+    }
+
+    if(arg_no>5) {
+        hres = to_number(dispex->ctx, get_arg(dp, 5), ei, &seconds);
+        if(FAILED(hres))
+            return hres;
+    }
+    else {
+        V_VT(&seconds) = VT_R8;
+        V_R8(&seconds) = 0;
+    }
+
+    if(arg_no>6) {
+        hres = to_number(dispex->ctx, get_arg(dp, 6), ei, &ms);
+        if(FAILED(hres))
+            return hres;
+    }
+    else {
+        V_VT(&ms) = VT_R8;
+        V_R8(&ms) = 0;
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_R8;
+        V_R8(retv) = time_clip(make_date(
+                    make_day(y, num_val(&month), num_val(&vdate)),
+                    make_time(num_val(&hours), num_val(&minutes),
+                    num_val(&seconds), num_val(&ms))));
+    }
+
+    return S_OK;
 }
 
 static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -2266,76 +2350,12 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 
         /* ECMA-262 3rd Edition    15.9.3.1 */
         default: {
-            VARIANT year, month, vdate, hours, minutes, seconds, ms;
+            VARIANT ret_date;
             DateInstance *di;
-            int arg_no = arg_cnt(dp), y;
 
-            hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &year);
-            if(FAILED(hres))
-                return hres;
-            y = num_val(&year);
-            if(0<=y && y<=99)
-                y += 1900;
+            DateConstr_UTC(dispex, lcid, flags, dp, &ret_date, ei, sp);
 
-
-            hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &month);
-            if(FAILED(hres))
-                return hres;
-
-            if(arg_no>2) {
-                hres = to_number(dispex->ctx, get_arg(dp, 2), ei, &vdate);
-                if(FAILED(hres))
-                    return hres;
-            }
-            else {
-                V_VT(&vdate) = VT_R8;
-                V_R8(&vdate) = 1;
-            }
-
-            if(arg_no>3) {
-                hres = to_number(dispex->ctx, get_arg(dp, 3), ei, &hours);
-                if(FAILED(hres))
-                    return hres;
-            }
-            else {
-                V_VT(&hours) = VT_R8;
-                V_R8(&hours) = 0;
-            }
-
-            if(arg_no>4) {
-                hres = to_number(dispex->ctx, get_arg(dp, 4), ei, &minutes);
-                if(FAILED(hres))
-                    return hres;
-            }
-            else {
-                V_VT(&minutes) = VT_R8;
-                V_R8(&minutes) = 0;
-            }
-
-            if(arg_no>5) {
-                hres = to_number(dispex->ctx, get_arg(dp, 5), ei, &seconds);
-                if(FAILED(hres))
-                    return hres;
-            }
-            else {
-                V_VT(&seconds) = VT_R8;
-                V_R8(&seconds) = 0;
-            }
-
-            if(arg_no>6) {
-                hres = to_number(dispex->ctx, get_arg(dp, 6), ei, &ms);
-                if(FAILED(hres))
-                    return hres;
-            }
-            else {
-                V_VT(&ms) = VT_R8;
-                V_R8(&ms) = 0;
-            }
-
-            hres = create_date(dispex->ctx, TRUE, time_clip(
-                        make_date(make_day(y, num_val(&month), num_val(&vdate)),
-                        make_time(num_val(&hours), num_val(&minutes),
-                        num_val(&seconds), num_val(&ms)))), &date);
+            hres = create_date(dispex->ctx, TRUE, num_val(&ret_date), &date);
             if(FAILED(hres))
                 return hres;
 
