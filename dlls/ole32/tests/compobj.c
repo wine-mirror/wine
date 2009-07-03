@@ -1082,6 +1082,9 @@ static void test_CoGetObjectContext(void)
     IObjContext *pObjContext;
     APTTYPE apttype;
     THDTYPE thdtype;
+    struct info info;
+    HANDLE thread;
+    DWORD tid, exitcode;
 
     if (!pCoGetObjectContext)
     {
@@ -1092,6 +1095,36 @@ static void test_CoGetObjectContext(void)
     hr = pCoGetObjectContext(&IID_IComThreadingInfo, (void **)&pComThreadingInfo);
     ok(hr == CO_E_NOTINITIALIZED, "CoGetObjectContext should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
     ok(pComThreadingInfo == NULL, "pComThreadingInfo should have been set to NULL\n");
+
+    /* show that COM doesn't have to be initialized for multi-threaded apartments if another
+       thread has already done so */
+
+    info.wait = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ok(info.wait != NULL, "CreateEvent failed with error %d\n", GetLastError());
+
+    info.stop = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ok(info.stop != NULL, "CreateEvent failed with error %d\n", GetLastError());
+
+    thread = CreateThread(NULL, 0, ole_initialize_thread, &info, 0, &tid);
+    ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
+
+    WaitForSingleObject(info.wait, INFINITE);
+
+    pComThreadingInfo = NULL;
+    hr = pCoGetObjectContext(&IID_IComThreadingInfo, (void **)&pComThreadingInfo);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+    IComThreadingInfo_Release(pComThreadingInfo);
+
+    SetEvent(info.stop);
+    WaitForSingleObject(thread, INFINITE);
+
+    GetExitCodeThread(thread, &exitcode);
+    hr = exitcode;
+    ok(hr == S_OK, "thread should have returned S_OK instead of 0x%08x\n", hr);
+
+    CloseHandle(thread);
+    CloseHandle(info.wait);
+    CloseHandle(info.stop);
 
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
@@ -1260,6 +1293,9 @@ static void test_CoGetContextToken(void)
     ULONG refs;
     ULONG_PTR token;
     IObjContext *ctx;
+    struct info info;
+    HANDLE thread;
+    DWORD tid, exitcode;
 
     if (!pCoGetContextToken)
     {
@@ -1272,6 +1308,36 @@ static void test_CoGetContextToken(void)
     ok(hr == CO_E_NOTINITIALIZED, "Expected CO_E_NOTINITIALIZED, got 0x%08x\n", hr);
     ok(token == 0xdeadbeef, "Expected 0, got 0x%lx\n", token);
 
+    /* show that COM doesn't have to be initialized for multi-threaded apartments if another
+       thread has already done so */
+
+    info.wait = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ok(info.wait != NULL, "CreateEvent failed with error %d\n", GetLastError());
+
+    info.stop = CreateEvent(NULL, TRUE, FALSE, NULL);
+    ok(info.stop != NULL, "CreateEvent failed with error %d\n", GetLastError());
+
+    thread = CreateThread(NULL, 0, ole_initialize_thread, &info, 0, &tid);
+    ok(thread != NULL, "CreateThread failed with error %d\n", GetLastError());
+
+    WaitForSingleObject(info.wait, INFINITE);
+
+    token = 0;
+    hr = pCoGetContextToken(&token);
+    ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
+    IUnknown_Release((IUnknown *)token);
+
+    SetEvent(info.stop);
+    WaitForSingleObject(thread, INFINITE);
+
+    GetExitCodeThread(thread, &exitcode);
+    hr = exitcode;
+    ok(hr == S_OK, "thread should have returned S_OK instead of 0x%08x\n", hr);
+
+    CloseHandle(thread);
+    CloseHandle(info.wait);
+    CloseHandle(info.stop);
+
     CoInitialize(NULL);
 
     hr = pCoGetContextToken(NULL);
@@ -1283,10 +1349,10 @@ static void test_CoGetContextToken(void)
     ok(token, "Expected token != 0\n");
 
     refs = IUnknown_AddRef((IUnknown *)token);
-    todo_wine ok(refs == 1, "Expected 1, got %u\n", refs);
+    ok(refs == 1, "Expected 1, got %u\n", refs);
 
     refs = IUnknown_Release((IUnknown *)token);
-    todo_wine ok(refs == 0, "Expected 0, got %u\n", refs);
+    ok(refs == 0, "Expected 0, got %u\n", refs);
 
     hr = pCoGetObjectContext(&IID_IObjContext, (void **)&ctx);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);

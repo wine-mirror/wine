@@ -4050,8 +4050,12 @@ HRESULT WINAPI CoGetObjectContext(REFIID riid, void **ppv)
     *ppv = NULL;
     if (!apt)
     {
-        ERR("apartment not initialised\n");
-        return CO_E_NOTINITIALIZED;
+        if (!(apt = apartment_find_multi_threaded()))
+        {
+            ERR("apartment not initialised\n");
+            return CO_E_NOTINITIALIZED;
+        }
+        apartment_release(apt);
     }
 
     context = HeapAlloc(GetProcessHeap(), 0, sizeof(*context));
@@ -4089,7 +4093,15 @@ HRESULT WINAPI CoGetContextToken( ULONG_PTR *token )
         return E_OUTOFMEMORY;
 
     if (!info->apt)
-        return CO_E_NOTINITIALIZED;
+    {
+        APARTMENT *apt;
+        if (!(apt = apartment_find_multi_threaded()))
+        {
+            ERR("apartment not initialised\n");
+            return CO_E_NOTINITIALIZED;
+        }
+        apartment_release(apt);
+    }
 
     if (!token)
         return E_POINTER;
