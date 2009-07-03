@@ -477,162 +477,184 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
 
     ENTER_GL();
 
-    gl_string = (const char *) glGetString(GL_RENDERER);
-    if (!gl_string) gl_string = "None";
+    gl_string = (const char *)glGetString(GL_RENDERER);
+    TRACE_(d3d_caps)("GL_RENDERER: %s.\n", gl_string);
+    if (!gl_string)
+    {
+        ERR_(d3d_caps)("Received a NULL GL_RENDERER.\n");
+        return FALSE;
+    }
     strcpy(gl_info->gl_renderer, gl_string);
 
-    gl_string = (const char *) glGetString(GL_VENDOR);
-    TRACE_(d3d_caps)("Filling vendor string %s\n", gl_string);
-    if (gl_string != NULL) {
-        /* Fill in the GL vendor */
-        if (strstr(gl_string, "NVIDIA")) {
-            gl_info->gl_vendor = VENDOR_NVIDIA;
-        } else if (strstr(gl_string, "ATI")) {
-            gl_info->gl_vendor = VENDOR_ATI;
-        } else if (strstr(gl_string, "Intel(R)") ||
-                   strstr(gl_info->gl_renderer, "Intel(R)") ||
-                   strstr(gl_string, "Intel Inc.")) {
-            gl_info->gl_vendor = VENDOR_INTEL;
-        } else if (strstr(gl_string, "Mesa")) {
-            gl_info->gl_vendor = VENDOR_MESA;
-        } else {
-            gl_info->gl_vendor = VENDOR_WINE;
-        }
-    } else {
-        gl_info->gl_vendor = VENDOR_WINE;
+    gl_string = (const char *)glGetString(GL_VENDOR);
+    TRACE_(d3d_caps)("GL_VENDOR: %s.\n", gl_string);
+    if (!gl_string)
+    {
+        ERR_(d3d_caps)("Received a NULL GL_VENDOR.\n");
+        return FALSE;
     }
 
-
+    /* Fill in the GL vendor */
+    if (strstr(gl_string, "NVIDIA"))
+    {
+        gl_info->gl_vendor = VENDOR_NVIDIA;
+    }
+    else if (strstr(gl_string, "ATI"))
+    {
+        gl_info->gl_vendor = VENDOR_ATI;
+    }
+    else if (strstr(gl_string, "Intel(R)")
+            || strstr(gl_info->gl_renderer, "Intel(R)")
+            || strstr(gl_string, "Intel Inc."))
+    {
+        gl_info->gl_vendor = VENDOR_INTEL;
+    }
+    else if (strstr(gl_string, "Mesa"))
+    {
+        gl_info->gl_vendor = VENDOR_MESA;
+    }
+    else
+    {
+        FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Setting VENDOR_WINE.\n", gl_string);
+        gl_info->gl_vendor = VENDOR_WINE;
+    }
     TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), gl_info->gl_vendor);
 
     /* Parse the GL_VERSION field into major and minor information */
-    gl_string = (const char *) glGetString(GL_VERSION);
-    if (gl_string != NULL) {
+    gl_string = (const char *)glGetString(GL_VERSION);
+    TRACE_(d3d_caps)("GL_VERSION: %s.\n", gl_string);
+    if (!gl_string)
+    {
+        ERR_(d3d_caps)("Received a NULL GL_VERSION.\n");
+        return FALSE;
+    }
 
-        /* First, parse the generic opengl version. This is supposed not to be convoluted with
-         * driver specific information
-         */
-        gl_string_cursor = gl_string;
-        major = atoi(gl_string_cursor);
-        if(major <= 0) {
-            ERR("Invalid opengl major version: %d\n", major);
-        }
-        while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
-            ++gl_string_cursor;
-        }
-        if (*gl_string_cursor++ != '.') {
-            ERR_(d3d_caps)("Invalid opengl version string: %s\n", debugstr_a(gl_string));
-        }
-        minor = atoi(gl_string_cursor);
-        TRACE_(d3d_caps)("Found OpenGL version: %d.%d\n", major, minor);
-        gl_info->gl_version = MAKEDWORD_VERSION(major, minor);
+    /* First, parse the generic opengl version. This is supposed not to be
+     * convoluted with driver specific information. */
+    gl_string_cursor = gl_string;
 
-        /* Now parse the driver specific string which we'll report to the app */
-        switch (gl_info->gl_vendor) {
+    major = atoi(gl_string_cursor);
+    if (major <= 0) ERR_(d3d_caps)("Invalid opengl major version: %d.\n", major);
+    while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') ++gl_string_cursor;
+    if (*gl_string_cursor++ != '.') ERR_(d3d_caps)("Invalid opengl version string: %s.\n", debugstr_a(gl_string));
+
+    minor = atoi(gl_string_cursor);
+    TRACE_(d3d_caps)("Found OpenGL version: %d.%d.\n", major, minor);
+    gl_info->gl_version = MAKEDWORD_VERSION(major, minor);
+
+    /* Now parse the driver specific string which we'll report to the app. */
+    switch (gl_info->gl_vendor)
+    {
         case VENDOR_NVIDIA:
             gl_string_cursor = strstr(gl_string, "NVIDIA");
-            if (!gl_string_cursor) {
-                ERR_(d3d_caps)("Invalid nVidia version string: %s\n", debugstr_a(gl_string));
+            if (!gl_string_cursor)
+            {
+                ERR_(d3d_caps)("Invalid nVidia version string: %s.\n", debugstr_a(gl_string));
                 break;
             }
 
             gl_string_cursor = strstr(gl_string_cursor, " ");
-            if (!gl_string_cursor) {
-                ERR_(d3d_caps)("Invalid nVidia version string: %s\n", debugstr_a(gl_string));
+            if (!gl_string_cursor)
+            {
+                ERR_(d3d_caps)("Invalid nVidia version string: %s.\n", debugstr_a(gl_string));
                 break;
             }
 
-            while (*gl_string_cursor == ' ') {
-                ++gl_string_cursor;
-            }
+            while (*gl_string_cursor == ' ') ++gl_string_cursor;
 
-            if (!*gl_string_cursor) {
-                ERR_(d3d_caps)("Invalid nVidia version string: %s\n", debugstr_a(gl_string));
+            if (!*gl_string_cursor)
+            {
+                ERR_(d3d_caps)("Invalid nVidia version string: %s.\n", debugstr_a(gl_string));
                 break;
             }
 
             major = atoi(gl_string_cursor);
-            while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
-                ++gl_string_cursor;
-            }
+            while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') ++gl_string_cursor;
 
-            if (*gl_string_cursor++ != '.') {
-                ERR_(d3d_caps)("Invalid nVidia version string: %s\n", debugstr_a(gl_string));
+            if (*gl_string_cursor++ != '.')
+            {
+                ERR_(d3d_caps)("Invalid nVidia version string: %s.\n", debugstr_a(gl_string));
                 break;
             }
 
             minor = atoi(gl_string_cursor);
-            minor = major*100+minor;
+            minor = major * 100 + minor;
             major = 10;
-
             break;
 
         case VENDOR_ATI:
             major = minor = 0;
             gl_string_cursor = strchr(gl_string, '-');
-            if (gl_string_cursor) {
-                gl_string_cursor++;
+            if (gl_string_cursor)
+            {
+                ++gl_string_cursor;
 
-                /* Check if version number is of the form x.y.z */
-                if ( *gl_string_cursor < '0' || *gl_string_cursor > '9'
-                     || *(gl_string_cursor+1) != '.'
-                     || *(gl_string_cursor+2) < '0' || *(gl_string_cursor+2) > '9'
-                     || *(gl_string_cursor+3) != '.'
-                     || *(gl_string_cursor+4) < '0' || *(gl_string_cursor+4) > '9' )
-                    /* Mark version number as malformed */
+                /* Check if version number is of the form x.y.z. */
+                if (*gl_string_cursor < '0' || *gl_string_cursor > '9'
+                        || gl_string_cursor[1] != '.'
+                        || gl_string_cursor[2] < '0' || gl_string_cursor[2] > '9'
+                        || gl_string_cursor[3] != '.'
+                        || gl_string_cursor[4] < '0' || gl_string_cursor[4] > '9')
+                    /* Mark version number as malformed. */
                     gl_string_cursor = 0;
             }
 
             if (!gl_string_cursor)
-                WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
-            else {
+            {
+                WARN_(d3d_caps)("malformed GL_VERSION (%s).\n", debugstr_a(gl_string));
+            }
+            else
+            {
                 major = *gl_string_cursor - '0';
-                minor = (*(gl_string_cursor+2) - '0') * 256 + (*(gl_string_cursor+4) - '0');
+                minor = (gl_string_cursor[2] - '0') * 256 + (gl_string_cursor[4] - '0');
             }
             break;
 
         case VENDOR_INTEL:
-            /* Apple and Mesa version strings look differently, but both provide intel drivers */
-            if(strstr(gl_string, "APPLE")) {
+            /* Apple and Mesa version strings look differently, but both provide intel drivers. */
+            if (strstr(gl_string, "APPLE"))
+            {
                 /* [0-9]+.[0-9]+ APPLE-[0-9]+.[0.9]+.[0.9]+
                  * We only need the first part, and use the APPLE as identification
-                 * "1.2 APPLE-1.4.56"
-                 */
+                 * "1.2 APPLE-1.4.56". */
                 gl_string_cursor = gl_string;
                 major = atoi(gl_string_cursor);
-                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
-                    ++gl_string_cursor;
-                }
+                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') ++gl_string_cursor;
 
-                if (*gl_string_cursor++ != '.') {
-                    ERR_(d3d_caps)("Invalid MacOS-Intel version string: %s\n", debugstr_a(gl_string));
+                if (*gl_string_cursor++ != '.')
+                {
+                    ERR_(d3d_caps)("Invalid MacOS-Intel version string: %s.\n", debugstr_a(gl_string));
                     break;
                 }
 
                 minor = atoi(gl_string_cursor);
                 break;
             }
+            /* Fallthrough */
 
         case VENDOR_MESA:
             gl_string_cursor = strstr(gl_string, "Mesa");
             gl_string_cursor = strstr(gl_string_cursor, " ");
             while (*gl_string_cursor && ' ' == *gl_string_cursor) ++gl_string_cursor;
-            if (*gl_string_cursor) {
+            if (*gl_string_cursor)
+            {
                 char tmp[16];
                 int cursor = 0;
 
-                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0')
+                {
                     tmp[cursor++] = *gl_string_cursor;
                     ++gl_string_cursor;
                 }
                 tmp[cursor] = 0;
                 major = atoi(tmp);
 
-                if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
+                if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s).\n", debugstr_a(gl_string));
                 ++gl_string_cursor;
 
                 cursor = 0;
-                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0')
+                {
                     tmp[cursor++] = *gl_string_cursor;
                     ++gl_string_cursor;
                 }
@@ -644,16 +666,14 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         default:
             major = 0;
             minor = 9;
-        }
-        gl_info->driver_version = MAKEDWORD_VERSION(major, minor);
-        TRACE_(d3d_caps)("found driver version (%s)->%i.%i->(0x%08x)\n", debugstr_a(gl_string), major, minor, gl_info->driver_version);
-        /* Current Windows drivers have versions like 6.14.... (some older have an earlier version) */
-        gl_info->driver_version_hipart = MAKEDWORD_VERSION(6, 14);
-    } else {
-        FIXME("OpenGL driver did not return version information\n");
-        gl_info->driver_version = MAKEDWORD_VERSION(0, 0);
-        gl_info->driver_version_hipart = MAKEDWORD_VERSION(6, 14);
+            break;
     }
+
+    gl_info->driver_version = MAKEDWORD_VERSION(major, minor);
+    TRACE_(d3d_caps)("found driver version (%s)->%i.%i->(0x%08x).\n",
+            debugstr_a(gl_string), major, minor, gl_info->driver_version);
+    /* Current Windows drivers have versions like 6.14.... (some older have an earlier version). */
+    gl_info->driver_version_hipart = MAKEDWORD_VERSION(6, 14);
 
     TRACE_(d3d_caps)("found GL_RENDERER (%s)->(0x%04x)\n", debugstr_a(gl_info->gl_renderer), gl_info->gl_card);
 
@@ -701,286 +721,329 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     gl_info->max_pointsize = gl_floatv[1];
     TRACE_(d3d_caps)("Maximum point size support - max point size=%f\n", gl_floatv[1]);
 
-    /* Parse the gl supported features, in theory enabling parts of our code appropriately */
-    GL_Extensions = (const char *) glGetString(GL_EXTENSIONS);
+    /* Parse the gl supported features, in theory enabling parts of our code appropriately. */
+    GL_Extensions = (const char *)glGetString(GL_EXTENSIONS);
+    if (!GL_Extensions)
+    {
+        ERR_(d3d_caps)("Received a NULL GL_EXTENSIONS.\n");
+        return FALSE;
+    }
+
     TRACE_(d3d_caps)("GL_Extensions reported:\n");
 
-    if (NULL == GL_Extensions) {
-        ERR("   GL_Extensions returns NULL\n");
-    } else {
-        gl_info->supported[WINED3D_GL_EXT_NONE] = TRUE;
+    gl_info->supported[WINED3D_GL_EXT_NONE] = TRUE;
 
-        while (*GL_Extensions != 0x00) {
-            const char *Start;
-            char        ThisExtn[256];
-            size_t      len;
+    while (*GL_Extensions)
+    {
+        const char *start;
+        char current_ext[256];
+        size_t len;
 
-            while (isspace(*GL_Extensions)) GL_Extensions++;
-            Start = GL_Extensions;
-            while (!isspace(*GL_Extensions) && *GL_Extensions != 0x00) {
-                GL_Extensions++;
-            }
+        while (isspace(*GL_Extensions)) ++GL_Extensions;
+        start = GL_Extensions;
+        while (!isspace(*GL_Extensions) && *GL_Extensions) ++GL_Extensions;
 
-            len = GL_Extensions - Start;
-            if (len == 0 || len >= sizeof(ThisExtn))
-                continue;
+        len = GL_Extensions - start;
+        if (!len || len >= sizeof(current_ext)) continue;
 
-            memcpy(ThisExtn, Start, len);
-            ThisExtn[len] = '\0';
-            TRACE_(d3d_caps)("- %s\n", ThisExtn);
+        memcpy(current_ext, start, len);
+        current_ext[len] = '\0';
+        TRACE_(d3d_caps)("- %s\n", current_ext);
 
-            for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i) {
-                if (!strcmp(ThisExtn, EXTENSION_MAP[i].extension_string)) {
-                    TRACE_(d3d_caps)(" FOUND: %s support\n", EXTENSION_MAP[i].extension_string);
-                    gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;
-                    break;
-                }
-            }
-        }
-
-        LEAVE_GL();
-
-        /* Now work out what GL support this card really has */
-#define USE_GL_FUNC(type, pfn, ext, replace) { \
-            DWORD ver = ver_for_ext(ext); \
-            if(gl_info->supported[ext]) gl_info->pfn = (type) pwglGetProcAddress(#pfn); \
-            else if(ver && ver <= gl_info->gl_version) gl_info->pfn = (type) pwglGetProcAddress(#replace); \
-            else gl_info->pfn = NULL; \
-        }
-        GL_EXT_FUNCS_GEN;
-#undef USE_GL_FUNC
-
-#define USE_GL_FUNC(type, pfn, ext, replace) gl_info->pfn = (type) pwglGetProcAddress(#pfn);
-        WGL_EXT_FUNCS_GEN;
-#undef USE_GL_FUNC
-
-        ENTER_GL();
-        /* Now mark all the extensions supported which are included in the opengl core version. Do this *after*
-         * loading the functions, otherwise the code above will load the extension entry points instead of the
-         * core functions, which may not work
-         */
-        for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i) {
-            if (gl_info->supported[EXTENSION_MAP[i].extension] == FALSE &&
-                EXTENSION_MAP[i].version <= gl_info->gl_version && EXTENSION_MAP[i].version) {
-                TRACE_(d3d_caps)(" GL CORE: %s support\n", EXTENSION_MAP[i].extension_string);
+        for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i)
+        {
+            if (!strcmp(current_ext, EXTENSION_MAP[i].extension_string))
+            {
+                TRACE_(d3d_caps)(" FOUND: %s support.\n", EXTENSION_MAP[i].extension_string);
                 gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;
+                break;
             }
         }
+    }
 
-        if (gl_info->supported[APPLE_FENCE]) {
-            /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
-             * The apple extension interacts with some other apple exts. Disable the NV
-             * extension if the apple one is support to prevent confusion in other parts
-             * of the code
-             */
-            gl_info->supported[NV_FENCE] = FALSE;
+    LEAVE_GL();
+
+    /* Now work out what GL support this card really has */
+#define USE_GL_FUNC(type, pfn, ext, replace) \
+{ \
+    DWORD ver = ver_for_ext(ext); \
+    if (gl_info->supported[ext]) gl_info->pfn = (type)pwglGetProcAddress(#pfn); \
+    else if (ver && ver <= gl_info->gl_version) gl_info->pfn = (type)pwglGetProcAddress(#replace); \
+    else gl_info->pfn = NULL; \
+}
+    GL_EXT_FUNCS_GEN;
+#undef USE_GL_FUNC
+
+#define USE_GL_FUNC(type, pfn, ext, replace) gl_info->pfn = (type)pwglGetProcAddress(#pfn);
+    WGL_EXT_FUNCS_GEN;
+#undef USE_GL_FUNC
+
+    ENTER_GL();
+
+    /* Now mark all the extensions supported which are included in the opengl core version. Do this *after*
+     * loading the functions, otherwise the code above will load the extension entry points instead of the
+     * core functions, which may not work. */
+    for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i)
+    {
+        if (!gl_info->supported[EXTENSION_MAP[i].extension]
+                && EXTENSION_MAP[i].version <= gl_info->gl_version && EXTENSION_MAP[i].version)
+        {
+            TRACE_(d3d_caps)(" GL CORE: %s support.\n", EXTENSION_MAP[i].extension_string);
+            gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;
         }
-        if (gl_info->supported[APPLE_FLOAT_PIXELS]) {
-            /* GL_APPLE_float_pixels == GL_ARB_texture_float + GL_ARB_half_float_pixel
+    }
+
+    if (gl_info->supported[APPLE_FENCE])
+    {
+        /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
+         * The apple extension interacts with some other apple exts. Disable the NV
+         * extension if the apple one is support to prevent confusion in other parts
+         * of the code. */
+        gl_info->supported[NV_FENCE] = FALSE;
+    }
+    if (gl_info->supported[APPLE_FLOAT_PIXELS])
+    {
+        /* GL_APPLE_float_pixels == GL_ARB_texture_float + GL_ARB_half_float_pixel
+         *
+         * The enums are the same:
+         * GL_RGBA16F_ARB     = GL_RGBA_FLOAT16_APPLE = 0x881A
+         * GL_RGB16F_ARB      = GL_RGB_FLOAT16_APPLE  = 0x881B
+         * GL_RGBA32F_ARB     = GL_RGBA_FLOAT32_APPLE = 0x8814
+         * GL_RGB32F_ARB      = GL_RGB_FLOAT32_APPLE  = 0x8815
+         * GL_HALF_FLOAT_ARB  = GL_HALF_APPLE         = 0x140B
+         */
+        if (!gl_info->supported[ARB_TEXTURE_FLOAT])
+        {
+            TRACE_(d3d_caps)(" IMPLIED: GL_ARB_texture_float support(from GL_APPLE_float_pixels.\n");
+            gl_info->supported[ARB_TEXTURE_FLOAT] = TRUE;
+        }
+        if (!gl_info->supported[ARB_HALF_FLOAT_PIXEL])
+        {
+            TRACE_(d3d_caps)(" IMPLIED: GL_ARB_half_float_pixel support(from GL_APPLE_float_pixels.\n");
+            gl_info->supported[ARB_HALF_FLOAT_PIXEL] = TRUE;
+        }
+    }
+    if (gl_info->supported[ARB_TEXTURE_CUBE_MAP])
+    {
+        TRACE_(d3d_caps)(" IMPLIED: NVIDIA (NV) Texture Gen Reflection support.\n");
+        gl_info->supported[NV_TEXGEN_REFLECTION] = TRUE;
+    }
+    if (gl_info->supported[NV_TEXTURE_SHADER2])
+    {
+        if (gl_info->supported[NV_REGISTER_COMBINERS])
+        {
+            /* Also disable ATI_FRAGMENT_SHADER if register combiners and texture_shader2
+             * are supported. The nv extensions provide the same functionality as the
+             * ATI one, and a bit more(signed pixelformats). */
+            gl_info->supported[ATI_FRAGMENT_SHADER] = FALSE;
+        }
+    }
+    if (gl_info->supported[ARB_DRAW_BUFFERS])
+    {
+        glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
+        gl_info->max_buffers = gl_max;
+        TRACE_(d3d_caps)("Max draw buffers: %u.\n", gl_max);
+    }
+    if (gl_info->supported[ARB_MULTITEXTURE])
+    {
+        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
+        gl_info->max_textures = min(MAX_TEXTURES, gl_max);
+        TRACE_(d3d_caps)("Max textures: %d.\n", gl_info->max_textures);
+
+        if (gl_info->supported[NV_REGISTER_COMBINERS])
+        {
+            GLint tmp;
+            glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &tmp);
+            gl_info->max_texture_stages = min(MAX_TEXTURES, tmp);
+        }
+        else
+        {
+            gl_info->max_texture_stages = min(MAX_TEXTURES, gl_max);
+        }
+        TRACE_(d3d_caps)("Max texture stages: %d.\n", gl_info->max_texture_stages);
+
+        if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
+        {
+            GLint tmp;
+            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+            gl_info->max_fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, tmp);
+        }
+        else
+        {
+            gl_info->max_fragment_samplers = max(gl_info->max_fragment_samplers, gl_max);
+        }
+        TRACE_(d3d_caps)("Max fragment samplers: %d.\n", gl_info->max_fragment_samplers);
+
+        if (gl_info->supported[ARB_VERTEX_SHADER])
+        {
+            GLint tmp;
+            glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+            gl_info->max_vertex_samplers = tmp;
+            glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+            gl_info->max_combined_samplers = tmp;
+
+            /* Loading GLSL sampler uniforms is much simpler if we can assume that the sampler setup
+             * is known at shader link time. In a vertex shader + pixel shader combination this isn't
+             * an issue because then the sampler setup only depends on the two shaders. If a pixel
+             * shader is used with fixed function vertex processing we're fine too because fixed function
+             * vertex processing doesn't use any samplers. If fixed function fragment processing is
+             * used we have to make sure that all vertex sampler setups are valid together with all
+             * possible fixed function fragment processing setups. This is true if vsamplers + MAX_TEXTURES
+             * <= max_samplers. This is true on all d3d9 cards that support vtf(gf 6 and gf7 cards).
+             * dx9 radeon cards do not support vertex texture fetch. DX10 cards have 128 samplers, and
+             * dx9 is limited to 8 fixed function texture stages and 4 vertex samplers. DX10 does not have
+             * a fixed function pipeline anymore.
              *
-             * The enums are the same:
-             * GL_RGBA16F_ARB     = GL_RGBA_FLOAT16_APPLE = 0x881A
-             * GL_RGB16F_ARB      = GL_RGB_FLOAT16_APPLE  = 0x881B
-             * GL_RGBA32F_ARB     = GL_RGBA_FLOAT32_APPLE = 0x8814
-             * GL_RGB32F_ARB      = GL_RGB_FLOAT32_APPLE  = 0x8815
-             * GL_HALF_FLOAT_ARB  = GL_HALF_APPLE         =  0x140B
-             */
-            if(!gl_info->supported[ARB_TEXTURE_FLOAT]) {
-                TRACE_(d3d_caps)(" IMPLIED: GL_ARB_texture_float support(from GL_APPLE_float_pixels\n");
-                gl_info->supported[ARB_TEXTURE_FLOAT] = TRUE;
-            }
-            if(!gl_info->supported[ARB_HALF_FLOAT_PIXEL]) {
-                TRACE_(d3d_caps)(" IMPLIED: GL_ARB_half_float_pixel support(from GL_APPLE_float_pixels\n");
-                gl_info->supported[ARB_HALF_FLOAT_PIXEL] = TRUE;
+             * So this is just a check to check that our assumption holds true. If not, write a warning
+             * and reduce the number of vertex samplers or probably disable vertex texture fetch. */
+            if (gl_info->max_vertex_samplers && gl_info->max_combined_samplers < 12
+                    && MAX_TEXTURES + gl_info->max_vertex_samplers > gl_info->max_combined_samplers)
+            {
+                FIXME("OpenGL implementation supports %u vertex samplers and %u total samplers.\n",
+                        gl_info->max_vertex_samplers, gl_info->max_combined_samplers);
+                FIXME("Expected vertex samplers + MAX_TEXTURES(=8) > combined_samplers.\n");
+                if (gl_info->max_combined_samplers > MAX_TEXTURES)
+                    gl_info->max_vertex_samplers = gl_info->max_combined_samplers - MAX_TEXTURES;
+                else
+                    gl_info->max_vertex_samplers = 0;
             }
         }
-        if (gl_info->supported[ARB_TEXTURE_CUBE_MAP]) {
-            TRACE_(d3d_caps)(" IMPLIED: NVIDIA (NV) Texture Gen Reflection support\n");
-            gl_info->supported[NV_TEXGEN_REFLECTION] = TRUE;
+        else
+        {
+            gl_info->max_combined_samplers = gl_info->max_fragment_samplers;
         }
-        if (gl_info->supported[NV_TEXTURE_SHADER2]) {
-            if(gl_info->supported[NV_REGISTER_COMBINERS]) {
-                /* Also disable ATI_FRAGMENT_SHADER if register combiners and texture_shader2
-                 * are supported. The nv extensions provide the same functionality as the
-                 * ATI one, and a bit more(signed pixelformats)
-                 */
-                gl_info->supported[ATI_FRAGMENT_SHADER] = FALSE;
-            }
-        }
-        if (gl_info->supported[ARB_DRAW_BUFFERS]) {
-            glGetIntegerv(GL_MAX_DRAW_BUFFERS_ARB, &gl_max);
-            gl_info->max_buffers = gl_max;
-            TRACE_(d3d_caps)("Max draw buffers: %u\n", gl_max);
-        }
-        if (gl_info->supported[ARB_MULTITEXTURE]) {
-            glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
-            gl_info->max_textures = min(MAX_TEXTURES, gl_max);
-            TRACE_(d3d_caps)("Max textures: %d\n", gl_info->max_textures);
+        TRACE_(d3d_caps)("Max vertex samplers: %u.\n", gl_info->max_vertex_samplers);
+        TRACE_(d3d_caps)("Max combined samplers: %u.\n", gl_info->max_combined_samplers);
+    }
+    if (gl_info->supported[ARB_VERTEX_BLEND])
+    {
+        glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
+        gl_info->max_blends = gl_max;
+        TRACE_(d3d_caps)("Max blends: %u.\n", gl_info->max_blends);
+    }
+    if (gl_info->supported[EXT_TEXTURE3D])
+    {
+        glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE_EXT, &gl_max);
+        gl_info->max_texture3d_size = gl_max;
+        TRACE_(d3d_caps)("Max texture3D size: %d.\n", gl_info->max_texture3d_size);
+    }
+    if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC])
+    {
+        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
+        gl_info->max_anisotropy = gl_max;
+        TRACE_(d3d_caps)("Max anisotropy: %d.\n", gl_info->max_anisotropy);
+    }
+    if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
+    {
+        gl_info->ps_arb_version = PS_VERSION_11;
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
+        gl_info->ps_arb_constantsF = gl_max;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM float constants: %d.\n", gl_info->ps_arb_constantsF);
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
+        gl_info->ps_arb_max_temps = gl_max;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native temporaries: %d.\n", gl_info->ps_arb_max_temps);
+        GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
+        gl_info->ps_arb_max_instructions = gl_max;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native instructions: %d.\n", gl_info->ps_arb_max_instructions);
+    }
+    if (gl_info->supported[ARB_VERTEX_PROGRAM])
+    {
+        gl_info->vs_arb_version = VS_VERSION_11;
+        GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
+        gl_info->vs_arb_constantsF = gl_max;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM float constants: %d.\n", gl_info->vs_arb_constantsF);
+        GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
+        gl_info->vs_arb_max_temps = gl_max;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native temporaries: %d.\n", gl_info->vs_arb_max_temps);
+        GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
+        gl_info->vs_arb_max_instructions = gl_max;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native instructions: %d.\n", gl_info->vs_arb_max_instructions);
 
-            if (gl_info->supported[NV_REGISTER_COMBINERS]) {
-                GLint tmp;
-                glGetIntegerv(GL_MAX_GENERAL_COMBINERS_NV, &tmp);
-                gl_info->max_texture_stages = min(MAX_TEXTURES, tmp);
-            } else {
-                gl_info->max_texture_stages = min(MAX_TEXTURES, gl_max);
-            }
-            TRACE_(d3d_caps)("Max texture stages: %d\n", gl_info->max_texture_stages);
-
-            if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
-                GLint tmp;
-                glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-                gl_info->max_fragment_samplers = min(MAX_FRAGMENT_SAMPLERS, tmp);
-            } else {
-                gl_info->max_fragment_samplers = max(gl_info->max_fragment_samplers, gl_max);
-            }
-            TRACE_(d3d_caps)("Max fragment samplers: %d\n", gl_info->max_fragment_samplers);
-
-            if (gl_info->supported[ARB_VERTEX_SHADER]) {
-                GLint tmp;
-                glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-                gl_info->max_vertex_samplers = tmp;
-                glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-                gl_info->max_combined_samplers = tmp;
-
-                /* Loading GLSL sampler uniforms is much simpler if we can assume that the sampler setup
-                 * is known at shader link time. In a vertex shader + pixel shader combination this isn't
-                 * an issue because then the sampler setup only depends on the two shaders. If a pixel
-                 * shader is used with fixed function vertex processing we're fine too because fixed function
-                 * vertex processing doesn't use any samplers. If fixed function fragment processing is
-                 * used we have to make sure that all vertex sampler setups are valid together with all
-                 * possible fixed function fragment processing setups. This is true if vsamplers + MAX_TEXTURES
-                 * <= max_samplers. This is true on all d3d9 cards that support vtf(gf 6 and gf7 cards).
-                 * dx9 radeon cards do not support vertex texture fetch. DX10 cards have 128 samplers, and
-                 * dx9 is limited to 8 fixed function texture stages and 4 vertex samplers. DX10 does not have
-                 * a fixed function pipeline anymore.
-                 *
-                 * So this is just a check to check that our assumption holds true. If not, write a warning
-                 * and reduce the number of vertex samplers or probably disable vertex texture fetch.
-                 */
-                if(gl_info->max_vertex_samplers && gl_info->max_combined_samplers < 12 &&
-                   MAX_TEXTURES + gl_info->max_vertex_samplers > gl_info->max_combined_samplers) {
-                    FIXME("OpenGL implementation supports %u vertex samplers and %u total samplers\n",
-                          gl_info->max_vertex_samplers, gl_info->max_combined_samplers);
-                    FIXME("Expected vertex samplers + MAX_TEXTURES(=8) > combined_samplers\n");
-                    if( gl_info->max_combined_samplers > MAX_TEXTURES )
-                        gl_info->max_vertex_samplers =
-                            gl_info->max_combined_samplers - MAX_TEXTURES;
-                    else
-                        gl_info->max_vertex_samplers = 0;
-                }
-            } else {
-                gl_info->max_combined_samplers = gl_info->max_fragment_samplers;
-            }
-            TRACE_(d3d_caps)("Max vertex samplers: %u\n", gl_info->max_vertex_samplers);
-            TRACE_(d3d_caps)("Max combined samplers: %u\n", gl_info->max_combined_samplers);
-        }
-        if (gl_info->supported[ARB_VERTEX_BLEND]) {
-            glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
-            gl_info->max_blends = gl_max;
-            TRACE_(d3d_caps)("Max blends: %u\n", gl_info->max_blends);
-        }
-        if (gl_info->supported[EXT_TEXTURE3D]) {
-            glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE_EXT, &gl_max);
-            gl_info->max_texture3d_size = gl_max;
-            TRACE_(d3d_caps)("Max texture3D size: %d\n", gl_info->max_texture3d_size);
-        }
-        if (gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC]) {
-            glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
-            gl_info->max_anisotropy = gl_max;
-            TRACE_(d3d_caps)("Max anisotropy: %d\n", gl_info->max_anisotropy);
-        }
-        if (gl_info->supported[ARB_FRAGMENT_PROGRAM]) {
-            gl_info->ps_arb_version = PS_VERSION_11;
-            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
-            gl_info->ps_arb_constantsF = gl_max;
-            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM float constants: %d\n", gl_info->ps_arb_constantsF);
-            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_LOCAL_PARAMETERS_ARB, &gl_max));
-            gl_info->ps_arb_max_local_constants = gl_max;
-            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM local float constants: %d\n", gl_info->ps_arb_max_local_constants);
-            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
-            gl_info->ps_arb_max_temps = gl_max;
-            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native temporaries: %d\n", gl_info->ps_arb_max_temps);
-            GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
-            gl_info->ps_arb_max_instructions = gl_max;
-            TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM native instructions: %d\n", gl_info->ps_arb_max_instructions);
-        }
-        if (gl_info->supported[ARB_VERTEX_PROGRAM]) {
-            gl_info->vs_arb_version = VS_VERSION_11;
-            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
-            gl_info->vs_arb_constantsF = gl_max;
-            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM float constants: %d\n", gl_info->vs_arb_constantsF);
-            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_TEMPORARIES_ARB, &gl_max));
-            gl_info->vs_arb_max_temps = gl_max;
-            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native temporaries: %d\n", gl_info->vs_arb_max_temps);
-            GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_INSTRUCTIONS_ARB, &gl_max));
-            gl_info->vs_arb_max_instructions = gl_max;
-            TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM native instructions: %d\n", gl_info->vs_arb_max_instructions);
-
-            if (test_arb_vs_offset_limit(gl_info)) gl_info->quirks |= WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT;
-        }
-        if (gl_info->supported[ARB_VERTEX_SHADER]) {
-            glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
-            gl_info->vs_glsl_constantsF = gl_max / 4;
-            TRACE_(d3d_caps)("Max ARB_VERTEX_SHADER float constants: %u\n", gl_info->vs_glsl_constantsF);
-        }
-        if (gl_info->supported[ARB_FRAGMENT_SHADER]) {
-            glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
-            gl_info->ps_glsl_constantsF = gl_max / 4;
-            TRACE_(d3d_caps)("Max ARB_FRAGMENT_SHADER float constants: %u\n", gl_info->ps_glsl_constantsF);
-            glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &gl_max);
-            gl_info->max_glsl_varyings = gl_max;
-            TRACE_(d3d_caps)("Max GLSL varyings: %u (%u 4 component varyings)\n", gl_max, gl_max / 4);
-        }
-        if (gl_info->supported[EXT_VERTEX_SHADER]) {
-            gl_info->vs_ati_version = VS_VERSION_11;
-        }
-        if (gl_info->supported[NV_VERTEX_PROGRAM3]) {
-            gl_info->vs_nv_version = VS_VERSION_30;
-        } else if (gl_info->supported[NV_VERTEX_PROGRAM2]) {
-            gl_info->vs_nv_version = VS_VERSION_20;
-        } else if (gl_info->supported[NV_VERTEX_PROGRAM1_1]) {
-            gl_info->vs_nv_version = VS_VERSION_11;
-        } else if (gl_info->supported[NV_VERTEX_PROGRAM]) {
-            gl_info->vs_nv_version = VS_VERSION_10;
-        }
-        if (gl_info->supported[NV_FRAGMENT_PROGRAM2]) {
-            gl_info->ps_nv_version = PS_VERSION_30;
-        } else if (gl_info->supported[NV_FRAGMENT_PROGRAM]) {
-            gl_info->ps_nv_version = PS_VERSION_20;
-        }
-        if (gl_info->supported[NV_LIGHT_MAX_EXPONENT]) {
-            glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->max_shininess);
-        } else {
-            gl_info->max_shininess = 128.0;
-        }
-        if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]) {
-            /* If we have full NP2 texture support, disable GL_ARB_texture_rectangle because we will never use it.
-             * This saves a few redundant glDisable calls
-             */
-            gl_info->supported[ARB_TEXTURE_RECTANGLE] = FALSE;
-        }
-        if(gl_info->supported[ATI_FRAGMENT_SHADER]) {
-            /* Disable NV_register_combiners and fragment shader if this is supported.
-             * generally the NV extensions are preferred over the ATI ones, and this
-             * extension is disabled if register_combiners and texture_shader2 are both
-             * supported. So we reach this place only if we have incomplete NV dxlevel 8
-             * fragment processing support
-             */
-            gl_info->supported[NV_REGISTER_COMBINERS] = FALSE;
-            gl_info->supported[NV_REGISTER_COMBINERS2] = FALSE;
-            gl_info->supported[NV_TEXTURE_SHADER] = FALSE;
-            gl_info->supported[NV_TEXTURE_SHADER2] = FALSE;
-            gl_info->supported[NV_TEXTURE_SHADER3] = FALSE;
-        }
-        if(gl_info->supported[NV_HALF_FLOAT]) {
-            /* GL_ARB_half_float_vertex is a subset of GL_NV_half_float */
-            gl_info->supported[ARB_HALF_FLOAT_VERTEX] = TRUE;
-        }
-        if(gl_info->supported[ARB_POINT_SPRITE]) {
-            gl_info->max_point_sprite_units = gl_info->max_textures;
-        } else {
-            gl_info->max_point_sprite_units = 0;
-        }
+        if (test_arb_vs_offset_limit(gl_info)) gl_info->quirks |= WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT;
+    }
+    if (gl_info->supported[ARB_VERTEX_SHADER])
+    {
+        glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &gl_max);
+        gl_info->vs_glsl_constantsF = gl_max / 4;
+        TRACE_(d3d_caps)("Max ARB_VERTEX_SHADER float constants: %u.\n", gl_info->vs_glsl_constantsF);
+    }
+    if (gl_info->supported[ARB_FRAGMENT_SHADER])
+    {
+        glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &gl_max);
+        gl_info->ps_glsl_constantsF = gl_max / 4;
+        TRACE_(d3d_caps)("Max ARB_FRAGMENT_SHADER float constants: %u.\n", gl_info->ps_glsl_constantsF);
+        glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &gl_max);
+        gl_info->max_glsl_varyings = gl_max;
+        TRACE_(d3d_caps)("Max GLSL varyings: %u (%u 4 component varyings).\n", gl_max, gl_max / 4);
+    }
+    if (gl_info->supported[EXT_VERTEX_SHADER])
+    {
+        gl_info->vs_ati_version = VS_VERSION_11;
+    }
+    if (gl_info->supported[NV_VERTEX_PROGRAM3])
+    {
+        gl_info->vs_nv_version = VS_VERSION_30;
+    }
+    else if (gl_info->supported[NV_VERTEX_PROGRAM2])
+    {
+        gl_info->vs_nv_version = VS_VERSION_20;
+    }
+    else if (gl_info->supported[NV_VERTEX_PROGRAM1_1])
+    {
+        gl_info->vs_nv_version = VS_VERSION_11;
+    }
+    else if (gl_info->supported[NV_VERTEX_PROGRAM])
+    {
+        gl_info->vs_nv_version = VS_VERSION_10;
+    }
+    if (gl_info->supported[NV_FRAGMENT_PROGRAM2])
+    {
+        gl_info->ps_nv_version = PS_VERSION_30;
+    }
+    else if (gl_info->supported[NV_FRAGMENT_PROGRAM])
+    {
+        gl_info->ps_nv_version = PS_VERSION_20;
+    }
+    if (gl_info->supported[NV_LIGHT_MAX_EXPONENT])
+    {
+        glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->max_shininess);
+    }
+    else
+    {
+        gl_info->max_shininess = 128.0;
+    }
+    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
+    {
+        /* If we have full NP2 texture support, disable
+         * GL_ARB_texture_rectangle because we will never use it.
+         * This saves a few redundant glDisable calls. */
+        gl_info->supported[ARB_TEXTURE_RECTANGLE] = FALSE;
+    }
+    if (gl_info->supported[ATI_FRAGMENT_SHADER])
+    {
+        /* Disable NV_register_combiners and fragment shader if this is supported.
+         * generally the NV extensions are preferred over the ATI ones, and this
+         * extension is disabled if register_combiners and texture_shader2 are both
+         * supported. So we reach this place only if we have incomplete NV dxlevel 8
+         * fragment processing support. */
+        gl_info->supported[NV_REGISTER_COMBINERS] = FALSE;
+        gl_info->supported[NV_REGISTER_COMBINERS2] = FALSE;
+        gl_info->supported[NV_TEXTURE_SHADER] = FALSE;
+        gl_info->supported[NV_TEXTURE_SHADER2] = FALSE;
+        gl_info->supported[NV_TEXTURE_SHADER3] = FALSE;
+    }
+    if (gl_info->supported[NV_HALF_FLOAT])
+    {
+        /* GL_ARB_half_float_vertex is a subset of GL_NV_half_float. */
+        gl_info->supported[ARB_HALF_FLOAT_VERTEX] = TRUE;
+    }
+    if (gl_info->supported[ARB_POINT_SPRITE])
+    {
+        gl_info->max_point_sprite_units = gl_info->max_textures;
+    }
+    else
+    {
+        gl_info->max_point_sprite_units = 0;
     }
     checkGLcall("extension detection\n");
 
