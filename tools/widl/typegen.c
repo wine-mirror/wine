@@ -59,6 +59,7 @@ struct expr_eval_routine
     const expr_t *expr;
 };
 
+static unsigned int field_memsize(const type_t *type, unsigned int *offset);
 static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align);
 static unsigned int write_struct_tfs(FILE *file, type_t *type, const char *name, unsigned int *tfsoff);
 static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
@@ -978,14 +979,13 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
 
         if (fields) LIST_FOR_EACH_ENTRY( var, fields, const var_t, entry )
         {
-            unsigned int align = 0;
-            /* FIXME: take alignment into account */
+            unsigned int size = field_memsize( var->type, &offset );
             if (var->name && !strcmp(var->name, subexpr->u.sval))
             {
                 correlation_variable = var->type;
                 break;
             }
-            offset += type_memsize(var->type, &align);
+            offset += size;
         }
         if (!correlation_variable)
             error("write_conf_or_var_desc: couldn't find variable %s in structure\n",
@@ -1079,6 +1079,16 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
         print_file(file, 2, "NdrFcShort(0x%hx),\t/* %u */\n", callback_offset, callback_offset);
     }
     return 4;
+}
+
+/* return size and start offset of a data field based on current offset */
+static unsigned int field_memsize(const type_t *type, unsigned int *offset)
+{
+    unsigned int align = 0;
+    unsigned int size = type_memsize( type, &align );
+
+    *offset = ROUND_SIZE( *offset, align );
+    return size;
 }
 
 static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align)
@@ -1511,8 +1521,8 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
 
     if (fs) LIST_FOR_EACH_ENTRY(f, fs, var_t, entry)
     {
-        unsigned int align = 0;
         type_t *ft = f->type;
+        unsigned int size = field_memsize( ft, &offset );
         if (type_get_type(ft) == TYPE_UNION && is_attr(f->attrs, ATTR_SWITCHIS))
         {
             short reloff;
@@ -1529,9 +1539,7 @@ static void write_descriptors(FILE *file, type_t *type, unsigned int *tfsoff)
                        reloff, reloff, absoff);
             *tfsoff += 8;
         }
-
-        /* FIXME: take alignment into account */
-        offset += type_memsize(ft, &align);
+        offset += size;
     }
 }
 
