@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2009 Alexander N. SÃ¸rnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,12 +18,14 @@
 
 #include "shresdef.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NORWEGIAN_BOKMAL
 
 MENU_001 MENU DISCARDABLE
 BEGIN
 	MENUITEM "&Store ikoner",	FCIDM_SHVIEW_BIGICON
-	MENUITEM "&Små ikoner",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&SmÃ¥ ikoner",	FCIDM_SHVIEW_SMALLICON
 	MENUITEM "&Liste",		FCIDM_SHVIEW_LISTVIEW
 	MENUITEM "&Detaljer",		FCIDM_SHVIEW_REPORTVIEW
 END
@@ -38,7 +40,7 @@ BEGIN
 	  POPUP "&Vis"
 	  BEGIN
 	    MENUITEM "&Store ikoner",	FCIDM_SHVIEW_BIGICON
-	    MENUITEM "S&må ikoner",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "S&mÃ¥ ikoner",	FCIDM_SHVIEW_SMALLICON
 	    MENUITEM "&Liste",		FCIDM_SHVIEW_LISTVIEW
 	    MENUITEM "&Detaljer",	FCIDM_SHVIEW_REPORTVIEW
 	  END
@@ -47,7 +49,7 @@ BEGIN
 	  BEGIN
 	    MENUITEM "Etter &navn",	0x30	/* column 0 */
 	    MENUITEM "Etter &type",	0x32	/* column 2 */
-	    MENUITEM "Etter &størrelse",	0x31	/* ... */
+	    MENUITEM "Etter &stÃ¸rrelse",	0x31	/* ... */
 	    MENUITEM "Etter &dato",	0x33
 	    MENUITEM SEPARATOR
 	    MENUITEM "Ordne &automatisk",	FCIDM_SHVIEW_AUTOARRANGE
@@ -79,7 +81,7 @@ BEGIN
 	BEGIN
 	  MENUITEM "&Velg"		FCIDM_SHVIEW_OPEN
 	  MENUITEM "&Utforsk",		FCIDM_SHVIEW_EXPLORE
-	  MENUITEM "&Åpne",		FCIDM_SHVIEW_OPEN
+	  MENUITEM "&Ã…pne",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
 	  MENUITEM "Klipp &ut",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Kopier",		FCIDM_SHVIEW_COPY
@@ -103,7 +105,7 @@ BEGIN
     POPUP "&Vis"
     BEGIN
         MENUITEM "&Store ikoner", FCIDM_SHVIEW_BIGICON
-        MENUITEM "&Små ikoner", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&SmÃ¥ ikoner", FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Liste", FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Detaljer", FCIDM_SHVIEW_REPORTVIEW
     END
@@ -171,7 +173,7 @@ FONT 10, "MS Shell Dlg"
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
- LTEXT "Kjører på %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "KjÃ¸rer pÃ¥ %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
  LTEXT "Wine er laget av", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
@@ -181,8 +183,8 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Skriv inn navnet på programmet, mappen, dokumentet etter Internett-ressursen du ønsker å åpne.", 12289, 36, 11, 182, 18
- LTEXT "&Åpne:", 12305, 7, 39, 24, 10
+ LTEXT "Skriv inn navnet pÃ¥ programmet, mappen, dokumentet etter Internett-ressursen du Ã¸nsker Ã¥ Ã¥pne.", 12289, 36, 11, 182, 18
+ LTEXT "&Ã…pne:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Avbryt", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
@@ -193,11 +195,11 @@ STRINGTABLE
 {
         /* columns in the shellview */
 	IDS_SHV_COLUMN1		"Fil"
-	IDS_SHV_COLUMN2		"Størrelse"
+	IDS_SHV_COLUMN2		"StÃ¸rrelse"
 	IDS_SHV_COLUMN3		"Type"
 	IDS_SHV_COLUMN4		"Endret"
 	IDS_SHV_COLUMN5		"Egenskaper"
-	IDS_SHV_COLUMN6		"Størrelse"
+	IDS_SHV_COLUMN6		"StÃ¸rrelse"
 	IDS_SHV_COLUMN7		"Ledig plass"
 	IDS_SHV_COLUMN8		"Navn"
 	IDS_SHV_COLUMN9		"Kommentarer"
@@ -214,23 +216,23 @@ STRINGTABLE
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Store ikoner"
-	IDS_VIEW_SMALL		"S&må ikoner"
+	IDS_VIEW_SMALL		"S&mÃ¥ ikoner"
 	IDS_VIEW_LIST		"&Liste"
 	IDS_VIEW_DETAILS	"&Detaljer"
 	IDS_SELECT		"Velg"
-	IDS_OPEN		"Åpne"
+	IDS_OPEN		"Ã…pne"
 
 	IDS_CREATEFOLDER_DENIED "Kunne ikke opprette ny mappe: tilgang nektet."
 	IDS_CREATEFOLDER_CAPTION "Klarte ikke opprette ny mappe"
 	IDS_DELETEITEM_CAPTION "Bekreft filsletting"
 	IDS_DELETEFOLDER_CAPTION "Bekreft sletting av mappe"
-	IDS_DELETEITEM_TEXT "Virkelig slette «%1»?"
+	IDS_DELETEITEM_TEXT "Virkelig slette Â«%1Â»?"
 	IDS_DELETEMULTIPLE_TEXT "Virkelig slette disse %1 elementene?"
 	IDS_DELETESELECTED_TEXT "Virkelig slette valgte element(er)??"
-	IDS_TRASHITEM_TEXT "Virkelig legge «%1» i papirkurven?"
-	IDS_TRASHFOLDER_TEXT "Virkelig legge «%1» og alt innholdet i papirkurven?"
+	IDS_TRASHITEM_TEXT "Virkelig legge Â«%1Â» i papirkurven?"
+	IDS_TRASHFOLDER_TEXT "Virkelig legge Â«%1Â» og alt innholdet i papirkurven?"
 	IDS_TRASHMULTIPLE_TEXT "Virkelig legge disse %1 valgte elementene i papirkurven?"
-	IDS_CANTTRASH_TEXT "Elementet «%1» kan ikke legges i papirkurven. Vil du slette det i stedet?"
+	IDS_CANTTRASH_TEXT "Elementet Â«%1Â» kan ikke legges i papirkurven. Vil du slette det i stedet?"
 	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
 	IDS_OVERWRITEFILE_CAPTION "Bekreft overskriving av fil"
 	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
@@ -239,13 +241,13 @@ STRINGTABLE
 	    "the folder?"
 
         /* message box strings */
-        IDS_RESTART_TITLE       "Starte på nytt"
+        IDS_RESTART_TITLE       "Starte pÃ¥ nytt"
         IDS_RESTART_PROMPT      "Vil du simulere en omstart av Windows?"
         IDS_SHUTDOWN_TITLE      "Avslutt"
-        IDS_SHUTDOWN_PROMPT     "Vil du avslutte Wine-økten?"
+        IDS_SHUTDOWN_PROMPT     "Vil du avslutte Wine-Ã¸kten?"
 
         /* Run File dialog */
-        IDS_RUNDLG_ERROR           "Klarte ikke vise Kjør-vinduet (intern feil)"
+        IDS_RUNDLG_ERROR           "Klarte ikke vise KjÃ¸r-vinduet (intern feil)"
         IDS_RUNDLG_BROWSE_ERROR    "Klarte ikke vise Bla-vinduet (intern feil)"
         IDS_RUNDLG_BROWSE_CAPTION  "Bla"
         IDS_RUNDLG_BROWSE_FILTER   "Programfiler\0*.exe\0Alle filer\0*.*\0\0"
@@ -273,7 +275,7 @@ STRINGTABLE
 	IDS_MYPICTURES              "Mine bilder"
 	IDS_PROGRAM_FILES_COMMON    "Programfiler\\Fellesfiler"
 	IDS_COMMON_DOCUMENTS        "Dokumenter"
-	IDS_ADMINTOOLS              "Start-meny\\Programmer\\Administrative verktøy"
+	IDS_ADMINTOOLS              "Start-meny\\Programmer\\Administrative verktÃ¸y"
 	IDS_COMMON_MUSIC            "Dokumenter\\Min musikk"
 	IDS_COMMON_PICTURES         "Dokumenter\\Mine bilder"
 	IDS_COMMON_VIDEO            "Dokumenter\\Mine videoklipp"
@@ -284,6 +286,8 @@ STRINGTABLE
 	IDS_CPANEL_TITLE            "Wine Kontrollpanel"
 	IDS_CPANEL_NAME             "Navn"
 	IDS_CPANEL_DESCRIPTION      "Beskrivelse"
+
+	IDS_SHLEXEC_NOASSOC         "Intet Windows-program er satt opp til Ã¥ Ã¥pne denne filtypen."
 }
 
 STRINGTABLE
@@ -291,14 +295,14 @@ STRINGTABLE
 IDS_LICENSE_CAPTION,            "Lisensbetingelser"
 IDS_LICENSE,
 "Wine er fri programvare; du kan distribuere det og/eller \
-endre det i henhold til vilkårene i «GNU Lesser General Public \
-License», utgitt av the Free Software Foundation; enten \
-versjon 2.1 av Lisensen, eller (hvis du ønsker det) en nyere versjon.\n\n\
-Wine utgis i håp om at det er nyttig, \
+endre det i henhold til vilkÃ¥rene i Â«GNU Lesser General Public \
+LicenseÂ», utgitt av the Free Software Foundation; enten \
+versjon 2.1 av Lisensen, eller (hvis du Ã¸nsker det) en nyere versjon.\n\n\
+Wine utgis i hÃ¥p om at det er nyttig, \
 men UTEN ENHVER GARANTI; uten engang den antydede garantien om \
-HANDELSEGNETHET eller EGNETHET FOR ET SPESIELT FORMÅL.  Se «GNU \
-Lesser General Public License» for flere detaljer.\n\n\
-Du skal ha mottatt et eksemplar av «GNU Lesser General Public \
-License» sammen med dette programmet; hvis ikke, skriv til: the Free Software \
+HANDELSEGNETHET eller EGNETHET FOR ET SPESIELT FORMÃ…L.  Se Â«GNU \
+Lesser General Public LicenseÂ» for flere detaljer.\n\n\
+Du skal ha mottatt et eksemplar av Â«GNU Lesser General Public \
+LicenseÂ» sammen med dette programmet; hvis ikke, skriv til: the Free Software \
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
 }
