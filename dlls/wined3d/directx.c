@@ -197,9 +197,12 @@ glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT];
  * function query some info from GL.
  */
 
-static BOOL            wined3d_fake_gl_context_available = FALSE;
-static HDC             wined3d_fake_gl_context_hdc = NULL;
-static HWND            wined3d_fake_gl_context_hwnd = NULL;
+struct wined3d_fake_gl_ctx
+{
+    HDC dc;
+    HWND wnd;
+    HGLRC gl_ctx;
+};
 
 static CRITICAL_SECTION wined3d_fake_gl_context_cs;
 static CRITICAL_SECTION_DEBUG wined3d_fake_gl_context_cs_debug =
@@ -211,41 +214,27 @@ static CRITICAL_SECTION_DEBUG wined3d_fake_gl_context_cs_debug =
 };
 static CRITICAL_SECTION wined3d_fake_gl_context_cs = { &wined3d_fake_gl_context_cs_debug, -1, 0, 0, 0, 0 };
 
-static void WineD3D_ReleaseFakeGLContext(void) {
-    HGLRC glCtx;
-
+static void WineD3D_ReleaseFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
+{
     EnterCriticalSection(&wined3d_fake_gl_context_cs);
 
-    if(!wined3d_fake_gl_context_available) {
-        TRACE_(d3d_caps)("context not available\n");
-        LeaveCriticalSection(&wined3d_fake_gl_context_cs);
-        return;
+    TRACE_(d3d_caps)("Destroying fake GL context.\n");
+
+    if (!pwglMakeCurrent(NULL, NULL))
+    {
+        ERR_(d3d_caps)("Failed to disable fake GL context.\n");
     }
 
-    glCtx = pwglGetCurrentContext();
-    if (glCtx)
-    {
-        TRACE_(d3d_caps)("destroying fake GL context\n");
-        if (!pwglMakeCurrent(NULL, NULL))
-        {
-            ERR("Failed to disable fake GL context.\n");
-        }
-        pwglDeleteContext(glCtx);
-    }
-    if (wined3d_fake_gl_context_hdc)
-        ReleaseDC(wined3d_fake_gl_context_hwnd, wined3d_fake_gl_context_hdc);
-    wined3d_fake_gl_context_hdc = NULL; /* Make sure we don't think that it is still around */
-    if (wined3d_fake_gl_context_hwnd)
-        DestroyWindow(wined3d_fake_gl_context_hwnd);
-    wined3d_fake_gl_context_hwnd = NULL;
-    wined3d_fake_gl_context_available = FALSE;
+    pwglDeleteContext(ctx->gl_ctx);
+    ReleaseDC(ctx->wnd, ctx->dc);
+    DestroyWindow(ctx->wnd);
 
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
 }
 
-static BOOL WineD3D_CreateFakeGLContext(void) {
+static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
+{
     PIXELFORMATDESCRIPTOR pfd;
-    HGLRC glCtx = NULL;
     int iPixelFormat;
 
     EnterCriticalSection(&wined3d_fake_gl_context_cs);
@@ -253,18 +242,18 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
     TRACE("getting context...\n");
 
     /* We need a fake window as a hdc retrieved using GetDC(0) can't be used for much GL purposes. */
-    wined3d_fake_gl_context_hwnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
+    ctx->wnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
             WS_OVERLAPPEDWINDOW, 10, 10, 10, 10, NULL, NULL, NULL, NULL);
-    if (!wined3d_fake_gl_context_hwnd)
+    if (!ctx->wnd)
     {
-        ERR("HWND creation failed!\n");
+        ERR_(d3d_caps)("Failed to create a window.\n");
         goto fail;
     }
 
-    wined3d_fake_gl_context_hdc = GetDC(wined3d_fake_gl_context_hwnd);
-    if (!wined3d_fake_gl_context_hdc)
+    ctx->dc = GetDC(ctx->wnd);
+    if (!ctx->dc)
     {
-        ERR("GetDC failed!\n");
+        ERR_(d3d_caps)("Failed to get a DC.\n");
         goto fail;
     }
 
@@ -277,43 +266,43 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
     pfd.cColorBits = 32;
     pfd.iLayerType = PFD_MAIN_PLANE;
 
-    iPixelFormat = ChoosePixelFormat(wined3d_fake_gl_context_hdc, &pfd);
+    iPixelFormat = ChoosePixelFormat(ctx->dc, &pfd);
     if (!iPixelFormat)
     {
         /* If this happens something is very wrong as ChoosePixelFormat barely fails. */
-        ERR("Can't find a suitable iPixelFormat.\n");
+        ERR_(d3d_caps)("Can't find a suitable iPixelFormat.\n");
         goto fail;
     }
-    DescribePixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, sizeof(pfd), &pfd);
-    SetPixelFormat(wined3d_fake_gl_context_hdc, iPixelFormat, &pfd);
+    DescribePixelFormat(ctx->dc, iPixelFormat, sizeof(pfd), &pfd);
+    SetPixelFormat(ctx->dc, iPixelFormat, &pfd);
 
     /* Create a GL context. */
-    glCtx = pwglCreateContext(wined3d_fake_gl_context_hdc);
-    if (!glCtx)
+    ctx->gl_ctx = pwglCreateContext(ctx->dc);
+    if (!ctx->gl_ctx)
     {
         WARN_(d3d_caps)("Error creating default context for capabilities initialization.\n");
         goto fail;
     }
 
     /* Make it the current GL context. */
-    if (!pwglMakeCurrent(wined3d_fake_gl_context_hdc, glCtx))
+    if (!pwglMakeCurrent(ctx->dc, ctx->gl_ctx))
     {
         ERR_(d3d_caps)("Failed to make fake GL context current.\n");
         goto fail;
     }
     context_set_last_device(NULL);
 
-    wined3d_fake_gl_context_available = TRUE;
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     return TRUE;
-  fail:
-    if(wined3d_fake_gl_context_hdc)
-        ReleaseDC(wined3d_fake_gl_context_hwnd, wined3d_fake_gl_context_hdc);
-    wined3d_fake_gl_context_hdc = NULL;
-    if(wined3d_fake_gl_context_hwnd)
-        DestroyWindow(wined3d_fake_gl_context_hwnd);
-    wined3d_fake_gl_context_hwnd = NULL;
-    if(glCtx) pwglDeleteContext(glCtx);
+
+fail:
+    if (ctx->gl_ctx) pwglDeleteContext(ctx->gl_ctx);
+    ctx->gl_ctx = NULL;
+    if (ctx->dc) ReleaseDC(ctx->wnd, ctx->dc);
+    ctx->dc = NULL;
+    if (ctx->wnd) DestroyWindow(ctx->wnd);
+    ctx->wnd = NULL;
+
     LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     return FALSE;
 }
@@ -4518,6 +4507,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
     {
         struct WineD3DAdapter *adapter = &This->adapters[0];
         const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+        struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
         int iPixelFormat;
         int res;
         int i;
@@ -4530,31 +4520,26 @@ BOOL InitAdapters(IWineD3DImpl *This)
         adapter->monitorPoint.x = -1;
         adapter->monitorPoint.y = -1;
 
-        if (!WineD3D_CreateFakeGLContext()) {
+        if (!WineD3D_CreateFakeGLContext(&fake_gl_ctx))
+        {
             ERR("Failed to get a gl context for default adapter\n");
-            WineD3D_ReleaseFakeGLContext();
             goto nogl_adapter;
         }
 
         ret = IWineD3DImpl_FillGLCaps(&adapter->gl_info);
         if(!ret) {
             ERR("Failed to initialize gl caps for default adapter\n");
-            WineD3D_ReleaseFakeGLContext();
+            WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
             goto nogl_adapter;
         }
         ret = initPixelFormats(&adapter->gl_info);
         if(!ret) {
             ERR("Failed to init gl formats\n");
-            WineD3D_ReleaseFakeGLContext();
+            WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
             goto nogl_adapter;
         }
 
-        hdc = pwglGetCurrentDC();
-        if(!hdc) {
-            ERR("Failed to get gl HDC\n");
-            WineD3D_ReleaseFakeGLContext();
-            goto nogl_adapter;
-        }
+        hdc = fake_gl_ctx.dc;
 
         adapter->driver = "Display";
         adapter->description = "Direct3D HAL";
@@ -4691,7 +4676,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
             {
                 ERR("Disabling Direct3D because no hardware accelerated pixel formats have been found!\n");
 
-                WineD3D_ReleaseFakeGLContext();
+                WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
                 HeapFree(GetProcessHeap(), 0, adapter->cfgs);
                 goto nogl_adapter;
             }
@@ -4719,7 +4704,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
         fixup_extensions(&adapter->gl_info);
         add_gl_compat_wrappers(&adapter->gl_info);
 
-        WineD3D_ReleaseFakeGLContext();
+        WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
 
         select_shader_mode(&adapter->gl_info, WINED3DDEVTYPE_HAL, &ps_selected_mode, &vs_selected_mode);
         select_shader_max_constants(ps_selected_mode, vs_selected_mode, &adapter->gl_info);
