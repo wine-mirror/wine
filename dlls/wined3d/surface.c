@@ -4334,14 +4334,14 @@ static void surface_depth_blt(IWineD3DSurfaceImpl *This, GLuint texture, GLsizei
     glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_VIEWPORT_BIT);
 
     glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
+    glDisable(GL_BLEND);
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_ALWAYS);
     glDepthMask(GL_TRUE);
-    glBlendFunc(GL_ZERO, GL_ONE);
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glViewport(0, 0, w, h);
 
     surface_get_depth_blt_info(target, w, h, &info);
