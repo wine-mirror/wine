@@ -75,7 +75,7 @@ static void test_ID3DXSprite(IDirect3DDevice9 *device)
     HRESULT hr;
 
     IDirect3DDevice9_GetDirect3D(device, &d3d);
-    hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_UNKNOWN, 0, D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8);
+    hr = IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, D3DUSAGE_DYNAMIC, D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8);
     IDirect3D9_Release(d3d);
     ok (hr == D3D_OK, "D3DFMT_A8R8G8B8 not supported\n");
     if (FAILED(hr)) return;
