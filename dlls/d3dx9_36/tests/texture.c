@@ -62,15 +62,20 @@ static const unsigned char noimage[4] = {
 
 static HRESULT create_file(const char *filename, const unsigned char *data, const unsigned int size)
 {
+    DWORD received;
     HANDLE hfile;
 
-    hfile = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    hfile = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
     if(hfile == INVALID_HANDLE_VALUE) return HRESULT_FROM_WIN32(GetLastError());
 
-    WriteFile(hfile, data, size, NULL, NULL);
-    CloseHandle(hfile);
+    if(WriteFile(hfile, data, size, &received, NULL))
+    {
+        CloseHandle(hfile);
+        return D3D_OK;
+    }
 
-    return D3D_OK;
+    CloseHandle(hfile);
+    return D3DERR_INVALIDCALL;
 }
 
 static void test_D3DXGetImageInfo()
