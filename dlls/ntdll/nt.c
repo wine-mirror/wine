@@ -321,7 +321,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
                     struct token_groups *tg = buffer;
                     unsigned int *attr = (unsigned int *)(tg + 1);
                     ULONG i;
-                    const int non_sid_portion = (sizeof(struct token_groups) + tg->count * sizeof(unsigned long));
+                    const int non_sid_portion = (sizeof(struct token_groups) + tg->count * sizeof(unsigned int));
                     SID *sids = (SID *)((char *)tokeninfo + FIELD_OFFSET( TOKEN_GROUPS, Groups[tg->count] ));
                     ULONG needed_bytes = FIELD_OFFSET( TOKEN_GROUPS, Groups[tg->count] ) +
                         reply->user_len - non_sid_portion;
