@@ -76,7 +76,9 @@ C_SRCS16 = \
 	registry16.c \
 	toolhelp16.c
 
-RC_SRCS = kernel.rc
+RC_SRCS = \
+	locale_rc.rc \
+	version.rc
 
 RC_SRCS16 = \
 	version16.rc
@@ -94,8 +96,6 @@ EXTRA_OBJS   = relay16asm.o
 EXTRASUBDIRS = nls
 
 @MAKE_DLL_RULES@
-
-kernel.res: $(MC_SRCS:.mc=.mc.rc)
 
 relay16asm.o: $(WINEBUILD)
 	$(WINEBUILD) $(WINEBUILDFLAGS) -o $@ --relay16

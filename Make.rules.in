@@ -118,7 +118,8 @@ IDL_GEN_HEADERS = $(IDL_H_SRCS:.idl=.h) $(IDL_C_SRCS:.idl=.h) $(IDL_I_SRCS:.idl=
 CLEAN_TARGETS = $(IDL_GEN_C_SRCS) $(IDL_GEN_HEADERS) $(IDL_TLB_SRCS:.idl=.tlb) $(IDL_P_SRCS:%=dlldata.c) \
                 $(BISON_SRCS:.y=.tab.c) $(BISON_SRCS:.y=.tab.h) $(LEX_SRCS:.l=.yy.c) $(MC_SRCS:.mc=.mc.rc)
 
-OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(RC_SRCS:.rc=.res) $(EXTRA_OBJS)
+OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) \
+       $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res) $(EXTRA_OBJS)
 
 LINTS  = $(C_SRCS:.c=.ln)
 
@@ -318,7 +319,7 @@ $(MC_SRCS:.mc=.mc.rc): $(WMC)
 
 $(IDL_GEN_HEADERS) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb): $(WIDL)
 
-$(RC_SRCS:.rc=.res) $(RC_SRCS16:.rc=.res): $(WRC)
+$(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.mc.res) $(RC_SRCS16:.rc=.res): $(WRC)
 
 $(SUBDIRS): dummy
 	@cd $@ && $(MAKE)
