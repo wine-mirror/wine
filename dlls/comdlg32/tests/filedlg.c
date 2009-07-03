@@ -457,7 +457,7 @@ static LONG_PTR WINAPI test_ok_wndproc(HWND dlg, UINT msg, WPARAM wParam, LPARAM
         msgFILEOKSTRING = RegisterWindowMessageA( FILEOKSTRING);
     }
     if( msg == WM_NOTIFY) {
-        if(((LPNMHDR)lParam)->code == CDN_INITDONE) {
+        if(((LPNMHDR)lParam)->code == CDN_FOLDERCHANGE) {
             SetTimer( dlg, 0, 100, 0);
             PostMessage( parent, WM_COMMAND, IDOK, 0);
             return FALSE;
@@ -520,9 +520,9 @@ static void test_ok(void)
             : (LPOFNHOOKPROC) test_ok_wndproc;
         ret = GetOpenFileNameA(&ofn);
         ok( ok_testcases[i].expclose == ok_testcases[i].actclose,
-                "Open File dialog should %shave closed.\n",
+                "testid %d: Open File dialog should %shave closed.\n", i,
                 ok_testcases[i].expclose ? "" : "NOT ");
-        ok(ret == ok_testcases[i].expclose, "GetOpenFileName returned %#x\n", ret);
+        ok(ret == ok_testcases[i].expclose, "testid %d: GetOpenFileName returned %#x\n", i, ret);
         ret = CommDlgExtendedError();
         ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
     }
