@@ -240,5 +240,3 @@ unused2 BITMAP b2fv.bmp
 
 /* @makedep: theo.bmp */
 68 BITMAP theo.bmp
-
-#include "version.rc"
