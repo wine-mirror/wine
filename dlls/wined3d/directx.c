@@ -204,20 +204,8 @@ struct wined3d_fake_gl_ctx
     HGLRC gl_ctx;
 };
 
-static CRITICAL_SECTION wined3d_fake_gl_context_cs;
-static CRITICAL_SECTION_DEBUG wined3d_fake_gl_context_cs_debug =
-{
-    0, 0, &wined3d_fake_gl_context_cs,
-    { &wined3d_fake_gl_context_cs_debug.ProcessLocksList,
-      &wined3d_fake_gl_context_cs_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": wined3d_fake_gl_context_cs") }
-};
-static CRITICAL_SECTION wined3d_fake_gl_context_cs = { &wined3d_fake_gl_context_cs_debug, -1, 0, 0, 0, 0 };
-
 static void WineD3D_ReleaseFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
 {
-    EnterCriticalSection(&wined3d_fake_gl_context_cs);
-
     TRACE_(d3d_caps)("Destroying fake GL context.\n");
 
     if (!pwglMakeCurrent(NULL, NULL))
@@ -228,16 +216,12 @@ static void WineD3D_ReleaseFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
     pwglDeleteContext(ctx->gl_ctx);
     ReleaseDC(ctx->wnd, ctx->dc);
     DestroyWindow(ctx->wnd);
-
-    LeaveCriticalSection(&wined3d_fake_gl_context_cs);
 }
 
 static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
 {
     PIXELFORMATDESCRIPTOR pfd;
     int iPixelFormat;
-
-    EnterCriticalSection(&wined3d_fake_gl_context_cs);
 
     TRACE("getting context...\n");
 
@@ -292,7 +276,6 @@ static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
     }
     context_set_last_device(NULL);
 
-    LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     return TRUE;
 
 fail:
@@ -303,7 +286,6 @@ fail:
     if (ctx->wnd) DestroyWindow(ctx->wnd);
     ctx->wnd = NULL;
 
-    LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     return FALSE;
 }
 
