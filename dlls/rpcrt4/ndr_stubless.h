@@ -85,7 +85,7 @@ typedef struct _NDR_PROC_HEADER_RPC
      * RPCF_Asynchronous = 0x4000 - [async] MIDL attribute
      * Reserved = 0x8000
      */
-    unsigned long rpc_flags;
+    unsigned int rpc_flags;
     unsigned short proc_num;
     unsigned short stack_size;
 

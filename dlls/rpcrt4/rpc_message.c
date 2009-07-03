@@ -96,7 +96,7 @@ static int packet_has_auth_verifier(const RpcPktHdr *Header)
 }
 
 static VOID RPCRT4_BuildCommonHeader(RpcPktHdr *Header, unsigned char PacketType,
-                              unsigned long DataRepresentation)
+                                     ULONG DataRepresentation)
 {
   Header->common.rpc_ver = RPC_VER_MAJOR;
   Header->common.rpc_ver_minor = RPC_VER_MINOR;
@@ -111,8 +111,8 @@ static VOID RPCRT4_BuildCommonHeader(RpcPktHdr *Header, unsigned char PacketType
   /* Flags and fragment length are computed in RPCRT4_Send. */
 }                              
 
-static RpcPktHdr *RPCRT4_BuildRequestHeader(unsigned long DataRepresentation,
-                                     unsigned long BufferLength,
+static RpcPktHdr *RPCRT4_BuildRequestHeader(ULONG DataRepresentation,
+                                     ULONG BufferLength,
                                      unsigned short ProcNum,
                                      UUID *ObjectUuid)
 {
@@ -141,8 +141,7 @@ static RpcPktHdr *RPCRT4_BuildRequestHeader(unsigned long DataRepresentation,
   return header;
 }
 
-RpcPktHdr *RPCRT4_BuildResponseHeader(unsigned long DataRepresentation,
-                                      unsigned long BufferLength)
+RpcPktHdr *RPCRT4_BuildResponseHeader(ULONG DataRepresentation, ULONG BufferLength)
 {
   RpcPktHdr *header;
 
@@ -158,8 +157,7 @@ RpcPktHdr *RPCRT4_BuildResponseHeader(unsigned long DataRepresentation,
   return header;
 }
 
-RpcPktHdr *RPCRT4_BuildFaultHeader(unsigned long DataRepresentation,
-                                   RPC_STATUS Status)
+RpcPktHdr *RPCRT4_BuildFaultHeader(ULONG DataRepresentation, RPC_STATUS Status)
 {
   RpcPktHdr *header;
 
@@ -175,10 +173,10 @@ RpcPktHdr *RPCRT4_BuildFaultHeader(unsigned long DataRepresentation,
   return header;
 }
 
-RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation,
+RpcPktHdr *RPCRT4_BuildBindHeader(ULONG DataRepresentation,
                                   unsigned short MaxTransmissionSize,
                                   unsigned short MaxReceiveSize,
-                                  unsigned long  AssocGroupId,
+                                  ULONG  AssocGroupId,
                                   const RPC_SYNTAX_IDENTIFIER *AbstractId,
                                   const RPC_SYNTAX_IDENTIFIER *TransferId)
 {
@@ -202,7 +200,7 @@ RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation,
   return header;
 }
 
-static RpcPktHdr *RPCRT4_BuildAuthHeader(unsigned long DataRepresentation)
+static RpcPktHdr *RPCRT4_BuildAuthHeader(ULONG DataRepresentation)
 {
   RpcPktHdr *header;
 
@@ -218,7 +216,7 @@ static RpcPktHdr *RPCRT4_BuildAuthHeader(unsigned long DataRepresentation)
   return header;
 }
 
-RpcPktHdr *RPCRT4_BuildBindNackHeader(unsigned long DataRepresentation,
+RpcPktHdr *RPCRT4_BuildBindNackHeader(ULONG DataRepresentation,
                                       unsigned char RpcVersion,
                                       unsigned char RpcVersionMinor)
 {
@@ -239,17 +237,17 @@ RpcPktHdr *RPCRT4_BuildBindNackHeader(unsigned long DataRepresentation,
   return header;
 }
 
-RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation,
+RpcPktHdr *RPCRT4_BuildBindAckHeader(ULONG DataRepresentation,
                                      unsigned short MaxTransmissionSize,
                                      unsigned short MaxReceiveSize,
-                                     unsigned long AssocGroupId,
+                                     ULONG AssocGroupId,
                                      LPCSTR ServerAddress,
-                                     unsigned long Result,
-                                     unsigned long Reason,
+                                     unsigned short Result,
+                                     unsigned short Reason,
                                      const RPC_SYNTAX_IDENTIFIER *TransferId)
 {
   RpcPktHdr *header;
-  unsigned long header_size;
+  ULONG header_size;
   RpcAddressString *server_address;
   RpcResults *results;
   RPC_SYNTAX_IDENTIFIER *transfer_id;
@@ -283,7 +281,7 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation,
   return header;
 }
 
-RpcPktHdr *RPCRT4_BuildHttpHeader(unsigned long DataRepresentation,
+RpcPktHdr *RPCRT4_BuildHttpHeader(ULONG DataRepresentation,
                                   unsigned short flags,
                                   unsigned short num_data_items,
                                   unsigned int payload_size)
@@ -815,13 +813,14 @@ static RPC_STATUS RPCRT4_SendWithAuth(RpcConnection *Connection, RpcPktHdr *Head
     if (Connection->AuthInfo && packet_has_auth_verifier(Header))
     {
       RpcAuthVerifier *auth_hdr = (RpcAuthVerifier *)&pkt[Header->common.frag_len - alen];
+      static LONG next_id;
 
       auth_hdr->auth_type = Connection->AuthInfo->AuthnSvc;
       auth_hdr->auth_level = Connection->AuthInfo->AuthnLevel;
       auth_hdr->auth_pad_length = auth_pad_len;
       auth_hdr->auth_reserved = 0;
       /* a unique number... */
-      auth_hdr->auth_context_id = (unsigned long)Connection;
+      auth_hdr->auth_context_id = InterlockedIncrement(&next_id);
 
       if (AuthLength)
         memcpy(auth_hdr + 1, Auth, AuthLength);
@@ -1123,14 +1122,14 @@ static RPC_STATUS RPCRT4_receive_fragment(RpcConnection *Connection, RpcPktHdr *
 RPC_STATUS RPCRT4_ReceiveWithAuth(RpcConnection *Connection, RpcPktHdr **Header,
                                   PRPC_MESSAGE pMsg,
                                   unsigned char **auth_data_out,
-                                  unsigned long *auth_length_out)
+                                  ULONG *auth_length_out)
 {
   RPC_STATUS status;
   DWORD hdr_length;
   unsigned short first_flag;
-  unsigned long data_length;
-  unsigned long buffer_length;
-  unsigned long auth_length = 0;
+  ULONG data_length;
+  ULONG buffer_length;
+  ULONG auth_length = 0;
   unsigned char *auth_data = NULL;
   RpcPktHdr *CurrentHeader = NULL;
   void *payload = NULL;
@@ -1194,7 +1193,7 @@ RPC_STATUS RPCRT4_ReceiveWithAuth(RpcConnection *Connection, RpcPktHdr **Header,
     }
 
     if (CurrentHeader->common.auth_len != auth_length) {
-      WARN("auth_len header field changed from %ld to %d\n",
+      WARN("auth_len header field changed from %d to %d\n",
         auth_length, CurrentHeader->common.auth_len);
       status = RPC_S_PROTOCOL_ERROR;
       goto fail;
@@ -1208,7 +1207,7 @@ RPC_STATUS RPCRT4_ReceiveWithAuth(RpcConnection *Connection, RpcPktHdr **Header,
 
     data_length = CurrentHeader->common.frag_len - hdr_length - header_auth_len;
     if (data_length + buffer_length > pMsg->BufferLength) {
-      TRACE("allocation hint exceeded, new buffer length = %ld\n",
+      TRACE("allocation hint exceeded, new buffer length = %d\n",
         data_length + buffer_length);
       pMsg->BufferLength = data_length + buffer_length;
       status = I_RpcReAllocateBuffer(pMsg);
@@ -1607,7 +1606,7 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
   case PKT_RESPONSE:
     break;
   case PKT_FAULT:
-    ERR ("we got fault packet with status 0x%lx\n", hdr->fault.status);
+    ERR ("we got fault packet with status 0x%x\n", hdr->fault.status);
     status = NCA2RPC_STATUS(hdr->fault.status);
     if (is_hard_error(status))
         goto fail;

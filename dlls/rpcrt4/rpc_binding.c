@@ -796,7 +796,7 @@ RPC_STATUS WINAPI RpcBindingFree( RPC_BINDING_HANDLE* Binding )
 RPC_STATUS WINAPI RpcBindingVectorFree( RPC_BINDING_VECTOR** BindingVector )
 {
   RPC_STATUS status;
-  unsigned long c;
+  ULONG c;
 
   TRACE("(%p)\n", BindingVector);
   for (c=0; c<(*BindingVector)->Count; c++) {

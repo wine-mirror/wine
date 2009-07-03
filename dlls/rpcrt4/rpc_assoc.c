@@ -125,7 +125,7 @@ RPC_STATUS RPCRT4_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr,
 
 RPC_STATUS RpcServerAssoc_GetAssociation(LPCSTR Protseq, LPCSTR NetworkAddr,
                                          LPCSTR Endpoint, LPCWSTR NetworkOptions,
-                                         unsigned long assoc_gid,
+                                         ULONG assoc_gid,
                                          RpcAssoc **assoc_out)
 {
     RpcAssoc *assoc;
@@ -223,7 +223,7 @@ static RPC_STATUS RpcAssoc_BindConnection(const RpcAssoc *assoc, RpcConnection *
     RPC_MESSAGE msg;
     RPC_STATUS status;
     unsigned char *auth_data = NULL;
-    unsigned long auth_length;
+    ULONG auth_length;
 
     TRACE("sending bind request to server\n");
 

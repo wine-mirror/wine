@@ -188,7 +188,7 @@ RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
                                   UUID_VECTOR *UuidVector, RPC_CSTR Annotation )
 {
   PRPC_SERVER_INTERFACE If = IfSpec;
-  unsigned long i;
+  ULONG i;
   RPC_STATUS status = RPC_S_OK;
   error_status_t status2;
   ept_entry_t *entries;
@@ -198,12 +198,12 @@ RPC_STATUS WINAPI RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
   TRACE(" ifid=%s\n", debugstr_guid(&If->InterfaceId.SyntaxGUID));
   for (i=0; i<BindingVector->Count; i++) {
     RpcBinding* bind = BindingVector->BindingH[i];
-    TRACE(" protseq[%ld]=%s\n", i, debugstr_a(bind->Protseq));
-    TRACE(" endpoint[%ld]=%s\n", i, debugstr_a(bind->Endpoint));
+    TRACE(" protseq[%d]=%s\n", i, debugstr_a(bind->Protseq));
+    TRACE(" endpoint[%d]=%s\n", i, debugstr_a(bind->Endpoint));
   }
   if (UuidVector) {
     for (i=0; i<UuidVector->Count; i++)
-      TRACE(" obj[%ld]=%s\n", i, debugstr_guid(UuidVector->Uuid[i]));
+      TRACE(" obj[%d]=%s\n", i, debugstr_guid(UuidVector->Uuid[i]));
   }
 
   if (!BindingVector->Count) return RPC_S_OK;
@@ -302,7 +302,7 @@ RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bin
                                    UUID_VECTOR *UuidVector )
 {
   PRPC_SERVER_INTERFACE If = IfSpec;
-  unsigned long i;
+  ULONG i;
   RPC_STATUS status = RPC_S_OK;
   error_status_t status2;
   ept_entry_t *entries;
@@ -312,12 +312,12 @@ RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bin
   TRACE(" ifid=%s\n", debugstr_guid(&If->InterfaceId.SyntaxGUID));
   for (i=0; i<BindingVector->Count; i++) {
     RpcBinding* bind = BindingVector->BindingH[i];
-    TRACE(" protseq[%ld]=%s\n", i, debugstr_a(bind->Protseq));
-    TRACE(" endpoint[%ld]=%s\n", i, debugstr_a(bind->Endpoint));
+    TRACE(" protseq[%d]=%s\n", i, debugstr_a(bind->Protseq));
+    TRACE(" endpoint[%d]=%s\n", i, debugstr_a(bind->Endpoint));
   }
   if (UuidVector) {
     for (i=0; i<UuidVector->Count; i++)
-      TRACE(" obj[%ld]=%s\n", i, debugstr_guid(UuidVector->Uuid[i]));
+      TRACE(" obj[%d]=%s\n", i, debugstr_guid(UuidVector->Uuid[i]));
   }
 
   entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*entries) * BindingVector->Count * (UuidVector ? UuidVector->Count : 1));
