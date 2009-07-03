@@ -531,11 +531,13 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
         GetLocaleInfoW(lcid_en, month_id, month, size);
         len += size-1;
 
-        year = year_from_time(time)/10;
-        while(year) {
+        year = year_from_time(time);
+        if(year<0)
+            year = -year+1;
+        do {
             year /= 10;
             len++;
-        }
+        } while(year);
 
         year = year_from_time(time);
         if(year<0) {
@@ -544,11 +546,11 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
             len += 5;
         }
 
-        day = date_from_time(time)/10;
-        while(day) {
+        day = date_from_time(time);
+        do {
             day /= 10;
             len++;
-        }
+        } while(day);
         day = date_from_time(time);
 
         offset = date->bias +
@@ -733,11 +735,13 @@ static HRESULT Date_toUTCString(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
         GetLocaleInfoW(lcid_en, month_id, month, size);
         len += size-1;
 
-        year = year_from_time(date->time)/10;
-        while(year) {
+        year = year_from_time(date->time);
+        if(year<0)
+            year = -year+1;
+        do {
             year /= 10;
             len++;
-        }
+        } while(year);
 
         year = year_from_time(date->time);
         if(year<0) {
@@ -746,11 +750,11 @@ static HRESULT Date_toUTCString(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
             len += 5;
         }
 
-        day = date_from_time(date->time)/10;
-        while(day) {
+        day = date_from_time(date->time);
+        do {
             day /= 10;
             len++;
-        }
+        } while(day);
         day = date_from_time(date->time);
 
         date_str = SysAllocStringLen(NULL, len);
@@ -842,11 +846,13 @@ static HRESULT Date_toDateString(DispatchEx *dispex, LCID lcid, WORD flags, DISP
         GetLocaleInfoW(lcid_en, month_id, month, size);
         len += size-1;
 
-        year = year_from_time(time)/10;
-        while(year) {
+        year = year_from_time(time);
+        if(year<0)
+            year = -year+1;
+        do {
             year /= 10;
             len++;
-        }
+        } while(year);
 
         year = year_from_time(time);
         if(year<0) {
@@ -855,11 +861,11 @@ static HRESULT Date_toDateString(DispatchEx *dispex, LCID lcid, WORD flags, DISP
             len += 5;
         }
 
-        day = date_from_time(time)/10;
-        while(day) {
+        day = date_from_time(time);
+        do {
             day /= 10;
             len++;
-        }
+        } while(day);
         day = date_from_time(time);
 
         date_str = SysAllocStringLen(NULL, len);
@@ -2172,9 +2178,8 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, Disp
     DateInstance *date;
     HRESULT hres;
     TIME_ZONE_INFORMATION tzi;
-    DWORD dret;
 
-    dret = GetTimeZoneInformation(&tzi);
+    GetTimeZoneInformation(&tzi);
 
     date = heap_alloc_zero(sizeof(DateInstance));
     if(!date)
