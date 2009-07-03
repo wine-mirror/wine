@@ -1083,7 +1083,6 @@ static unsigned int write_conf_or_var_desc(FILE *file, const type_t *structure,
 
 static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align)
 {
-    int have_align = FALSE;
     unsigned int size = 0;
     const var_t *v;
 
@@ -1092,11 +1091,7 @@ static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align
     {
         unsigned int falign = 0;
         unsigned int fsize = type_memsize(v->type, &falign);
-        if (!have_align)
-        {
-            *align = falign;
-            have_align = TRUE;
-        }
+        if (*align < falign) *align = falign;
         size = ROUND_SIZE(size, falign);
         size += fsize;
     }
@@ -1128,7 +1123,7 @@ static unsigned int union_memsize(const var_list_t *fields, unsigned int *pmaxa)
 int get_padding(const var_list_t *fields)
 {
     unsigned short offset = 0;
-    int salign = -1;
+    unsigned int salign = 1;
     const var_t *f;
 
     if (!fields)
@@ -1139,8 +1134,7 @@ int get_padding(const var_list_t *fields)
         type_t *ft = f->type;
         unsigned int align = 0;
         unsigned int size = type_memsize(ft, &align);
-        if (salign == -1)
-            salign = align;
+        if (align > salign) salign = align;
         offset = ROUND_SIZE(offset, align);
         offset += size;
     }
@@ -2202,7 +2196,7 @@ static void write_struct_members(FILE *file, const type_t *type,
 {
     const var_t *field;
     unsigned short offset = 0;
-    int salign = -1;
+    unsigned int salign = 1;
     int padding;
     var_list_t *fields = type_struct_get_fields(type);
 
@@ -2213,8 +2207,7 @@ static void write_struct_members(FILE *file, const type_t *type,
         {
             unsigned int align = 0;
             unsigned int size = type_memsize(ft, &align);
-            if (salign == -1)
-                salign = align;
+            if (salign < align) salign = align;
             if ((align - 1) & offset)
             {
                 unsigned char fc = 0;
