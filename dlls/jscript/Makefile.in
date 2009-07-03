@@ -28,7 +28,7 @@ C_SRCS = \
 IDL_TLB_SRCS = jsglobal.idl
 
 BISON_SRCS = \
-        parser.y
+	parser.y
 
 @MAKE_DLL_RULES@
 

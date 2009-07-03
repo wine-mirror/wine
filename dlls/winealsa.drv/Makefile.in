@@ -12,8 +12,8 @@ C_SRCS = \
 	dsoutput.c \
 	midi.c \
 	mixer.c \
-	waveinit.c \
 	wavein.c \
+	waveinit.c \
 	waveout.c
 
 @MAKE_DLL_RULES@

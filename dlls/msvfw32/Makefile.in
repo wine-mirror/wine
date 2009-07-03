@@ -7,9 +7,9 @@ IMPORTLIB = msvfw32
 IMPORTS   = winmm version comctl32 user32 gdi32 advapi32 kernel32 ntdll
 
 C_SRCS = \
+	drawdib.c \
 	mciwnd.c \
-	msvideo_main.c \
-	drawdib.c
+	msvideo_main.c
 
 RC_SRCS = \
 	msvfw32_Da.rc \

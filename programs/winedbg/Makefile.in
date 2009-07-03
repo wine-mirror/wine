@@ -22,8 +22,8 @@ C_SRCS = \
 	info.c \
 	memory.c \
 	source.c \
-	symbol.c \
 	stack.c \
+	symbol.c \
 	tgt_active.c \
 	tgt_minidump.c \
 	tgt_module.c \

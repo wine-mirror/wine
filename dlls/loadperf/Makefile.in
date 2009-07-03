@@ -7,7 +7,7 @@ IMPORTLIB = loadperf
 IMPORTS   = kernel32
 
 C_SRCS = \
-           loadperf_main.c
+	loadperf_main.c
 
 @MAKE_DLL_RULES@
 

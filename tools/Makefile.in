@@ -27,7 +27,7 @@ C_SRCS = \
 	make_ctests.c \
 	makedep.c \
 	relpath.c \
-	sfnt2fnt.c \
+	sfnt2fnt.c
 
 INSTALLSUBDIRS = \
 	widl \

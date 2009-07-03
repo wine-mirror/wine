@@ -8,7 +8,7 @@ APPMODE   = -mconsole
 IMPORTS   = kernel32
 
 C_SRCS = \
-	main.c \
+	main.c
 
 @MAKE_PROG_RULES@
 

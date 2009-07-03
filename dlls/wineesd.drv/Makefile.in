@@ -8,8 +8,8 @@ EXTRAINCL = @ESDINCL@
 EXTRALIBS = @ESDLIBS@
 
 C_SRCS = \
-	esound.c \
-	audio.c
+	audio.c \
+	esound.c
 
 @MAKE_DLL_RULES@
 

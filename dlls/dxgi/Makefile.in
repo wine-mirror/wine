@@ -11,9 +11,9 @@ C_SRCS = \
 	device.c \
 	dxgi_main.c \
 	factory.c \
-	utils.c \
 	surface.c \
-	swapchain.c
+	swapchain.c \
+	utils.c
 
 RC_SRCS = version.rc
 

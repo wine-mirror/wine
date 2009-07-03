@@ -7,8 +7,8 @@ IMPORTLIB = d3dxof
 IMPORTS   = dxguid uuid ole32 advapi32 kernel32
 
 C_SRCS = \
-	main.c \
 	d3dxof.c \
+	main.c \
 	parsing.c \
 	regsvr.c
 

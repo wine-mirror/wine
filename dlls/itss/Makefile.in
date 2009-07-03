@@ -8,8 +8,8 @@ EXTRADEFS = -DCOM_NO_WINDOWS_H
 
 C_SRCS = \
 	chm_lib.c \
-	lzx.c \
 	itss.c \
+	lzx.c \
 	moniker.c \
 	protocol.c \
 	storage.c

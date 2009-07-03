@@ -31,8 +31,8 @@ C_SRCS = \
 	memlockbytes.c \
 	moniker.c \
 	ole2.c \
-	ole2stubs.c \
 	ole2impl.c \
+	ole2stubs.c \
 	ole32_main.c \
 	oleobj.c \
 	oleproxy.c \

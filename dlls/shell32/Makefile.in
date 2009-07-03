@@ -17,8 +17,8 @@ C_SRCS = \
 	clipboard.c \
 	control.c \
 	cpanelfolder.c \
-	dde.c \
 	dataobject.c \
+	dde.c \
 	debughlp.c \
 	dialogs.c \
 	dragdrophelper.c \

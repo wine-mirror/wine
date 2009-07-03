@@ -29,12 +29,12 @@ C_SRCS = \
 	shader_sm4.c \
 	state.c \
 	stateblock.c \
-	surface_base.c \
 	surface.c \
+	surface_base.c \
 	surface_gdi.c \
 	swapchain.c \
-	swapchain_gdi.c \
 	swapchain_base.c \
+	swapchain_gdi.c \
 	texture.c \
 	utils.c \
 	vertexdeclaration.c \
