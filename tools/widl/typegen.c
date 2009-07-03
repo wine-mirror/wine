@@ -1194,12 +1194,9 @@ unsigned int type_memsize(const type_t *t, unsigned int *align)
     case TYPE_ENUM:
         switch (get_enum_fc(t))
         {
+        case RPC_FC_ENUM16:
         case RPC_FC_ENUM32:
             size = 4;
-            if (size > *align) *align = size;
-            break;
-        case RPC_FC_ENUM16:
-            size = 2;
             if (size > *align) *align = size;
             break;
         default:
