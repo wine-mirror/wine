@@ -29,7 +29,7 @@
 
 #include "wine/test.h"
 
-ULONG __RPC_USER HMETAFILE_UserSize(ULONG *, unsigned long, HMETAFILE *);
+ULONG __RPC_USER HMETAFILE_UserSize(ULONG *, ULONG, HMETAFILE *);
 unsigned char * __RPC_USER HMETAFILE_UserMarshal(ULONG *, unsigned char *, HMETAFILE *);
 unsigned char * __RPC_USER HMETAFILE_UserUnmarshal(ULONG *, unsigned char *, HMETAFILE *);
 void __RPC_USER HMETAFILE_UserFree(ULONG *, HMETAFILE *);
