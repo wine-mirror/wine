@@ -20,9 +20,15 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
+
 STRINGTABLE DISCARDABLE {
-     IDS_APPNAME, "Désinstalleur d'applications de Wine"
-     IDS_UNINSTALLFAILED, "Erreur lors de l'excution de la commande de désinstallation « %s ». L'exécutable ne peut peut être pas être trouvé.\r\nSouhaitez-vous supprimmer l'entrée de la base de registre ?"
+     IDS_APPNAME, "DÃ©sinstalleur d'applications de Wine"
+     IDS_UNINSTALLFAILED, "Erreur lors de l'excution de la commande de \
+dÃ©sinstallation Â« %s Â». L'exÃ©cutable n'a peut-Ãªtre pas Ã©tÃ© trouvÃ©.\
+\nSouhaitez-vous supprimmer l'entrÃ©e de la base de registre ?"
 }
