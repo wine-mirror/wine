@@ -74,8 +74,8 @@ my @ignores = (
     "dlls/*/tests/testlist.c",
     "include/config.h",
     "include/stamp-h",
-    "programs/winetest/tests.rc",
     "programs/winetest/*_test.exe",
+    "programs/winetest/*_test.rc",
 );
 
 # Source files and their resulting target to ignore

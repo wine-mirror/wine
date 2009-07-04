@@ -2527,10 +2527,14 @@ for dir in $ALL_TEST_DIRS
 do
     if test "$dir" != "\\"
     then
-        testname=`expr $dir : '\(.*\)/tests'`_test.exe
+        testname=`expr $dir : '\(.*\)/tests'`_test
         ALL_WINETEST_DEPENDS="$ALL_WINETEST_DEPENDS
-$testname: \$(DLLDIR)/$dir/$testname\$(DLLEXT)
-	cp \$(DLLDIR)/$dir/$testname\$(DLLEXT) \$@ && \$(STRIP) \$@"
+
+$testname.exe: \$(DLLDIR)/$dir/$testname.exe\$(DLLEXT)
+	cp \$(DLLDIR)/$dir/$testname.exe\$(DLLEXT) \$@ && \$(STRIP) \$@
+$testname.rc:
+	echo \"$testname.exe TESTRES \\\"$testname.exe\\\"\" >\$@ || (\$(RM) \$@ && false)
+$testname.res: $testname.rc $testname.exe"
     fi
 done
 

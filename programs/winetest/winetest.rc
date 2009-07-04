@@ -82,5 +82,3 @@ END
 
 /* @makedep: winetest.ico */
 IDI_WINE ICON "winetest.ico"
-
-#include "tests.rc"

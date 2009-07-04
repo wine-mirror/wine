@@ -20,25 +20,18 @@ RC_SRCS = \
 
 SVG_SRCS = winetest.svg
 
-@MAKE_PROG_RULES@
-
 ALL_TEST_DIRS = @ALL_TEST_DIRS@
 
-TESTBINS = $(ALL_TEST_DIRS:%/tests=%_test.exe)
+TESTBINS   = $(ALL_TEST_DIRS:%/tests=%_test.exe)
+TESTRCS    = $(TESTBINS:.exe=.rc)
+EXTRA_OBJS = $(TESTRCS:.rc=.res)
+
+@MAKE_PROG_RULES@
 
 @ALL_WINETEST_DEPENDS@
 
-# Special rules
-
-winetest.res: $(TESTBINS)
-
-tests.rc: Makefile.in $(TOPOBJDIR)/config.status
-	(for i in $(TESTBINS); do echo "$$i TESTRES \"$$i\""; done) >$@ || ($(RM) $@ && false)
-
 clean::
-	$(RM) tests.rc dist.res winetest-dist.exe $(TESTBINS)
-
-depend: tests.rc
+	$(RM) winetest-dist.exe $(TESTBINS) $(TESTRCS)
 
 # Rules for building distributable executable
 
@@ -53,5 +46,3 @@ winetest-dist.exe winetest-dist.exe.so: $(OBJS) dist.res Makefile.in
 dist.res: build.nfo
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
-
-winetest.res: tests.rc

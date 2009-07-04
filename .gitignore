@@ -197,7 +197,7 @@ programs/winedbg/dbg.tab.h
 programs/winedbg/debug.yy.c
 programs/winedbg/winedbg.man
 programs/winetest/*_test.exe
-programs/winetest/tests.rc
+programs/winetest/*_test.rc
 programs/winhlp32/macro.lex.yy.c
 server/wineserver
 server/wineserver-installed
