@@ -26,9 +26,10 @@
 #include <sys/types.h>
 
 #include "wine/library.h"
-#include "wine/pthread.h"
 
-static struct wine_pthread_functions pthread_functions;
+/* no longer used, for backwards compatibility only */
+struct wine_pthread_functions;
+static void *pthread_functions[8];
 
 /***********************************************************************
  *           wine_pthread_get_functions
