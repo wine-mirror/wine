@@ -3,6 +3,7 @@
  *  French Language Support
  *
  *  Copyright 2005-2006 Jonathan Ernst
+ *  Copyright 2009 Fr√©d√©ric Delanoy
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +23,9 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 /*
@@ -32,25 +36,25 @@ IDR_TASKMANAGER MENU DISCARDABLE
 BEGIN
     POPUP "&Fichier"
     BEGIN
-        MENUITEM "&Nouvelle t‚che (ExÈcuter...)",          ID_FILE_NEW
+        MENUITEM "&Nouvelle t√¢che (Ex√©cuter...)",          ID_FILE_NEW
         MENUITEM SEPARATOR
-        MENUITEM "&Quitter le gestionnaire des t‚ches",          ID_FILE_EXIT
+        MENUITEM "&Quitter le gestionnaire des t√¢ches",          ID_FILE_EXIT
     END
     POPUP "&Options"
     BEGIN
         MENUITEM "Toujours &visible",              ID_OPTIONS_ALWAYSONTOP
         , CHECKED
-        MENUITEM "RÈd&uire ‡ l'exÈcution",      ID_OPTIONS_MINIMIZEONUSE
+        MENUITEM "R√©d&uire √† l'ex√©cution",      ID_OPTIONS_MINIMIZEONUSE
         , CHECKED
-        MENUITEM "&Masquer l'icÙne rÈduite",    ID_OPTIONS_HIDEWHENMINIMIZED
+        MENUITEM "&Masquer l'ic√¥ne r√©duite",    ID_OPTIONS_HIDEWHENMINIMIZED
         , CHECKED
-        MENUITEM "&Montrer les t‚ches 16-bit",  ID_OPTIONS_SHOW16BITTASKS
+        MENUITEM "&Montrer les t√¢ches 16 bits",  ID_OPTIONS_SHOW16BITTASKS
         , CHECKED
     END
     POPUP "&Affichage"
     BEGIN
         MENUITEM "&Actualiser maintenant",                ID_VIEW_REFRESH
-        POPUP "&FrÈquence d'actualisation"
+        POPUP "&Fr√©quence d'actualisation"
         BEGIN
             MENUITEM "&Haute",                       ID_VIEW_UPDATESPEED_HIGH
             MENUITEM "&Normale",                     ID_VIEW_UPDATESPEED_NORMAL
@@ -60,10 +64,10 @@ BEGIN
 
         END
         MENUITEM SEPARATOR
-        MENUITEM "G&randes icÙnes",                ID_VIEW_LARGE
-        MENUITEM "P&etites icÙnes",                ID_VIEW_SMALL
-        MENUITEM "&DÈtails",                       ID_VIEW_DETAILS, CHECKED
-        MENUITEM "&SÈlectionner les colonnes...",           ID_VIEW_SELECTCOLUMNS
+        MENUITEM "G&randes ic√¥nes",                ID_VIEW_LARGE
+        MENUITEM "P&etites ic√¥nes",                ID_VIEW_SMALL
+        MENUITEM "&D√©tails",                       ID_VIEW_DETAILS, CHECKED
+        MENUITEM "&S√©lectionner les colonnes...",           ID_VIEW_SELECTCOLUMNS
         POPUP "&Historique du processeur"
         BEGIN
             MENUITEM "Un seul graphique pour &tous les processeurs",        ID_VIEW_CPUHISTORY_ONEGRAPHALL
@@ -71,30 +75,30 @@ BEGIN
             MENUITEM "Un graphique &par processeur",          ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU
             , CHECKED
         END
-        MENUITEM "Aff&icher les temps du noyau",          ID_VIEW_SHOWKERNELTIMES
+        MENUITEM "Aff&icher les temps noyau",          ID_VIEW_SHOWKERNELTIMES
     END
-    POPUP "Fe&nÍtres"
+    POPUP "Fe&n√™tres"
     BEGIN
-        MENUITEM "Arranger &Horizontallement",          ID_WINDOWS_TILEHORIZONTALLY
-        MENUITEM "Arranger &Verticallement",            ID_WINDOWS_TILEVERTICALLY
-        MENUITEM "&RÈduire",                   ID_WINDOWS_MINIMIZE
+        MENUITEM "Arranger &Horizontalement",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "Arranger &Verticalement",            ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "&R√©duire",                   ID_WINDOWS_MINIMIZE
         MENUITEM "&Agrandir",                   ID_WINDOWS_MAXIMIZE
         MENUITEM "&Cascade",                    ID_WINDOWS_CASCADE
         MENUITEM "Toujours &visible",             ID_WINDOWS_BRINGTOFRONT
     END
     POPUP "Aid&e"
     BEGIN
-        MENUITEM "Rubriques d'aide du Gestionnaire des t‚ches",   ID_HELP_TOPICS
+        MENUITEM "Rubriques d'aide du Gestionnaire des t√¢ches",   ID_HELP_TOPICS
         MENUITEM SEPARATOR
-        MENUITEM "¿ &propos du Gestionnaire des t‚ches",         ID_HELP_ABOUT
+        MENUITEM "√Ä &propos du Gestionnaire des t√¢ches",         ID_HELP_ABOUT
     END
 END
 
 IDR_WINDOWSMENU MENU DISCARDABLE
 BEGIN
-    MENUITEM "Arranger &Horizontallement",          ID_WINDOWS_TILEHORIZONTALLY
-    MENUITEM "Arranger &Verticallement",            ID_WINDOWS_TILEVERTICALLY
-    MENUITEM "&RÈduire",                            ID_WINDOWS_MINIMIZE
+    MENUITEM "Arranger &Horizontalement",          ID_WINDOWS_TILEHORIZONTALLY
+    MENUITEM "Arranger &Verticalement",            ID_WINDOWS_TILEVERTICALLY
+    MENUITEM "&R√©duire",                            ID_WINDOWS_MINIMIZE
     MENUITEM "&Agrandir",                           ID_WINDOWS_MAXIMIZE
     MENUITEM "&Cascade",                            ID_WINDOWS_CASCADE
     MENUITEM "Toujours &visible",                   ID_WINDOWS_BRINGTOFRONT
@@ -104,11 +108,11 @@ IDR_APPLICATION_PAGE_CONTEXT1 MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "&Nouvelle T‚che (ExÈcuter...)",   ID_FILE_NEW
+        MENUITEM "&Nouvelle T√¢che (Ex√©cuter...)",   ID_FILE_NEW
         MENUITEM SEPARATOR
-        MENUITEM "G&randes IcÙnes",                 ID_VIEW_LARGE
-        MENUITEM "P&etites IcÙnes",                 ID_VIEW_SMALL
-        MENUITEM "&DÈtails",                        ID_VIEW_DETAILS, CHECKED
+        MENUITEM "G&randes Ic√¥nes",                 ID_VIEW_LARGE
+        MENUITEM "P&etites Ic√¥nes",                 ID_VIEW_SMALL
+        MENUITEM "&D√©tails",                        ID_VIEW_DETAILS, CHECKED
     END
 END
 
@@ -119,13 +123,13 @@ BEGIN
         MENUITEM "&Basculer vers",                ID_APPLICATION_PAGE_SWITCHTO
         MENUITEM "Toujours &visible",             ID_WINDOWS_BRINGTOFRONT
         MENUITEM SEPARATOR
-        MENUITEM "Arranger &Horizontallement",    ID_WINDOWS_TILEHORIZONTALLY
-        MENUITEM "Arranger &Verticallement",      ID_WINDOWS_TILEVERTICALLY
-        MENUITEM "&RÈduire",                      ID_WINDOWS_MINIMIZE
+        MENUITEM "Arranger &Horizontalement",    ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "Arranger &Verticalement",      ID_WINDOWS_TILEVERTICALLY
+        MENUITEM "&R√©duire",                      ID_WINDOWS_MINIMIZE
         MENUITEM "&Agrandir",                     ID_WINDOWS_MAXIMIZE
         MENUITEM "&Cascade",                      ID_WINDOWS_CASCADE
         MENUITEM SEPARATOR
-        MENUITEM "F&in de t‚che",                 ID_APPLICATION_PAGE_ENDTASK
+        MENUITEM "F&in de t√¢che",                 ID_APPLICATION_PAGE_ENDTASK
         MENUITEM "&Suivre le processus",                ID_APPLICATION_PAGE_GOTOPROCESS
     END
 END
@@ -148,25 +152,25 @@ BEGIN
         MENUITEM "&Terminer le processus",                ID_PROCESS_PAGE_ENDPROCESS
         MENUITEM "Terminer l'&arborescence du processus", ID_PROCESS_PAGE_ENDPROCESSTREE
 
-        MENUITEM "&DÈboguer",                      ID_PROCESS_PAGE_DEBUG
+        MENUITEM "&D√©boguer",                      ID_PROCESS_PAGE_DEBUG
         MENUITEM SEPARATOR
-        POPUP "DÈfinir la &prioritÈ"
+        POPUP "D√©finir la &priorit√©"
         BEGIN
-            MENUITEM "Temps &rÈel",                   ID_PROCESS_PAGE_SETPRIORITY_REALTIME
+            MENUITEM "Temps &r√©el",                   ID_PROCESS_PAGE_SETPRIORITY_REALTIME
 
             MENUITEM "&Haute",                        ID_PROCESS_PAGE_SETPRIORITY_HIGH
 
-            MENUITEM "&SupÈrieure ‡ la normale",      ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+            MENUITEM "&Sup√©rieure √† la normale",      ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
 
             MENUITEM "&Normale",                      ID_PROCESS_PAGE_SETPRIORITY_NORMAL
 
-            MENUITEM "&InfÈrieure ‡ la normale",      ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
+            MENUITEM "&Inf√©rieure √† la normale",      ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
 
             MENUITEM "&Basse",                        ID_PROCESS_PAGE_SETPRIORITY_LOW
 
         END
-        MENUITEM "DÈfinir l'&affinitÈ...",            ID_PROCESS_PAGE_SETAFFINITY
-	MENUITEM "Modifier les &canaux de dÈbogage...",	ID_PROCESS_PAGE_DEBUGCHANNELS
+        MENUITEM "D√©finir l'&affinit√©...",            ID_PROCESS_PAGE_SETAFFINITY
+	MENUITEM "Modifier les &canaux de d√©boguage...",	ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
 
@@ -178,7 +182,7 @@ IDD_TASKMGR_DIALOG DIALOG DISCARDABLE  0, 0, 264, 246
 STYLE DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP |
     WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
     WS_THICKFRAME
-CAPTION "Gestionnaire des t‚ches"
+CAPTION "Gestionnaire des t√¢ches"
 MENU IDR_TASKMANAGER
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -191,9 +195,9 @@ FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_APPLIST,"SysListView32",LVS_REPORT |
                     LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,7,233,177
-    PUSHBUTTON      "&Nouvelle t‚che",IDC_NEWTASK,187,189,53,14
-    PUSHBUTTON      "&Basculer vers",IDC_SWITCHTO,131,189,53,14,WS_DISABLED
-    PUSHBUTTON      "&Fin de t‚che",IDC_ENDTASK,75,189,56,14,WS_DISABLED
+    PUSHBUTTON      "&Nouvelle t√¢che",IDC_NEWTASK,187,189,55,14
+    PUSHBUTTON      "&Basculer vers",IDC_SWITCHTO,129,189,55,14,WS_DISABLED
+    PUSHBUTTON      "&Fin de t√¢che",IDC_ENDTASK,71,189,55,14,WS_DISABLED
 END
 
 IDD_PROCESS_PAGE DIALOG DISCARDABLE  0, 0, 247, 210
@@ -204,7 +208,7 @@ BEGIN
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDATA |
                     WS_BORDER | WS_TABSTOP,7,7,233,177
     PUSHBUTTON      "&Terminer le processus",IDC_ENDPROCESS,161,189,79,14
-    CONTROL         "&Afficher les processus de tous les utilisateurs",IDC_SHOWALLPROCESSES,
+    CONTROL         "Afficher les processus de &tous les utilisateurs",IDC_SHOWALLPROCESSES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,191,161,10
 END
 
@@ -213,12 +217,12 @@ IDD_PERFORMANCE_PAGE DIALOGEX DISCARDABLE  0, 0, 247, 210
 STYLE DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Utilisation du processeur",IDC_CPU_USAGE_FRAME,5,5,60,54,WS_TABSTOP, WS_EX_TRANSPARENT
-    GROUPBOX        "Utilisation de la mÈmoire",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
+    GROUPBOX        "Util. processeur",IDC_CPU_USAGE_FRAME,5,5,60,54,WS_TABSTOP, WS_EX_TRANSPARENT
+    GROUPBOX        "Util. m√©moire",IDC_MEM_USAGE_FRAME,5,63,60,54,BS_LEFTTEXT, WS_EX_TRANSPARENT
     GROUPBOX        "Totaux",IDC_TOTALS_FRAME,5,122,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "Charge dÈdiÈe (Kio)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "MÈmoire physique (Kio)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
-    GROUPBOX        "MÈmoire pour le noyau (Kio)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Charge d√©di√©e (Kio)",IDC_COMMIT_CHARGE_FRAME,5,166,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "M√©moire physique (Kio)",IDC_PHYSICAL_MEMORY_FRAME,131,122,111,39,0,WS_EX_TRANSPARENT
+    GROUPBOX        "M√©moire pour le noyau (Kio)",IDC_KERNEL_MEMORY_FRAME,131,166,111,39,0,WS_EX_TRANSPARENT
     LTEXT           "Handles",IDS_TOTALS_HANDLE_COUNT,12,131,27,8
     LTEXT           "Threads",IDS_TOTALS_THREAD_COUNT,12,140,27,8
     LTEXT           "Processus",IDS_TOTALS_PROCESS_COUNT,12,149,34,8
@@ -228,8 +232,8 @@ BEGIN
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_TOTALS_PROCESS_COUNT,65,149,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
-    LTEXT           "Total",IDS_COMMIT_CHARGE_TOTAL,12,175,27,8
-    LTEXT           "Limite",IDS_COMMIT_CHARGE_LIMIT,12,184,15,8
+    LTEXT           "Total",IDS_COMMIT_CHARGE_TOTAL,12,175,34,8
+    LTEXT           "Limite",IDS_COMMIT_CHARGE_LIMIT,12,184,34,8
     LTEXT           "Pic",IDS_COMMIT_CHARGE_PEAK,12,193,34,8
     EDITTEXT        IDC_COMMIT_CHARGE_TOTAL,65,174,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
@@ -237,18 +241,18 @@ BEGIN
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_COMMIT_CHARGE_PEAK,65,193,45,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
-    LTEXT           "Total",IDS_PHYSICAL_MEMORY_TOTAL,137,131,27,8
-    LTEXT           "Disponible",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,30,8
-    LTEXT           "Cache systËme",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,46,8
+    LTEXT           "Total",IDS_PHYSICAL_MEMORY_TOTAL,137,131,50,8
+    LTEXT           "Disponible",IDS_PHYSICAL_MEMORY_AVAILABLE,137,140,50,8
+    LTEXT           "Cache syst√®me",IDS_PHYSICAL_MEMORY_SYSTEM_CACHE,137,149,50,8
     EDITTEXT        IDC_PHYSICAL_MEMORY_TOTAL,185,131,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_PHYSICAL_MEMORY_AVAILABLE,185,140,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_PHYSICAL_MEMORY_SYSTEM_CACHE,185,149,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
-    LTEXT           "Total",IDS_KERNEL_MEMORY_TOTAL,137,174,27,8
-    LTEXT           "PaginÈe",IDS_KERNEL_MEMORY_PAGED,137,184,21,8
-    LTEXT           "Non paginÈe",IDS_KERNEL_MEMORY_NONPAGED,137,193,34,8
+    LTEXT           "Total",IDS_KERNEL_MEMORY_TOTAL,137,174,44,8
+    LTEXT           "Pagin√©e",IDS_KERNEL_MEMORY_PAGED,137,184,44,8
+    LTEXT           "Non pagin√©e",IDS_KERNEL_MEMORY_NONPAGED,137,193,34,8
     EDITTEXT        IDC_KERNEL_MEMORY_TOTAL,185,174,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     EDITTEXT        IDC_KERNEL_MEMORY_PAGED,185,184,48,8,ES_RIGHT |
@@ -256,20 +260,20 @@ BEGIN
     EDITTEXT        IDC_KERNEL_MEMORY_NONPAGED,185,193,48,8,ES_RIGHT |
                     ES_READONLY | ES_NUMBER | NOT WS_BORDER
     GROUPBOX        "Historique de l'utilisation du processeur",IDC_CPU_USAGE_HISTORY_FRAME,74,5,168,54,0,WS_EX_TRANSPARENT
-    GROUPBOX        "Historique de l'utilisation de la mÈmoire",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Historique de l'utilisation de la m√©moire",IDC_MEMORY_USAGE_HISTORY_FRAME,74,63,168,54,0,WS_EX_TRANSPARENT
     PUSHBUTTON      "Affichage de l'utilisation du processeur",IDC_CPU_USAGE_GRAPH,12,17,47,37,0,
 		    WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Affichage de l'utilisation de la mÈmoire",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
+    PUSHBUTTON      "Affichage de l'utilisation de la m√©moire",IDC_MEM_USAGE_GRAPH,12,75,47,37,0,
                     WS_EX_CLIENTEDGE
     PUSHBUTTON      "Historique de l'utilisation du processeur",IDC_CPU_USAGE_HISTORY_GRAPH,81,17,
                     153,37,0,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Historique de l'utilisation de la mÈmoire",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
+    PUSHBUTTON      "Historique de l'utilisation de la m√©moire",IDC_MEM_USAGE_HISTORY_GRAPH,81,75,
                     153,37,0,WS_EX_CLIENTEDGE
 END
 
 IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Canaux de dÈbogage"
+CAPTION "Canaux de d√©boguage"
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
@@ -280,12 +284,12 @@ END
 
 IDD_AFFINITY_DIALOG DIALOG DISCARDABLE  0, 0, 231, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Processor Affinity"
+CAPTION "Affinit√© du processeur"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,120,133,50,14
     PUSHBUTTON      "Annuler",IDCANCEL,174,133,50,14
-    LTEXT           "Le paramËtre ´†affinitÈ du processeur†ª contrÙle sur quels processeurs le processus sera autorisÈ ‡ s'exÈcuter.",
+    LTEXT           "Le param√®tre ¬´¬†affinit√© du processeur¬†¬ª d√©termine sur quels processeurs le processus pourra s'ex√©cuter.",
                     IDC_STATIC,5,5,220,16
     CONTROL         "CPU 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     11,28,37,10
@@ -353,65 +357,65 @@ BEGIN
                     WS_DISABLED | WS_TABSTOP,175,119,41,10
 END
 
-IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  0, 0, 195, 199
+IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  0, 0, 218, 199
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Select Columns"
+CAPTION "S√©lection des colonnes"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,84,178,50,14
     PUSHBUTTON      "Annuler",IDCANCEL,138,178,50,14
-    LTEXT           "SÈlectionnez les colonnes qui apparaÓtront dans la page Processus du Gestionnaire des t‚ches.",
+    LTEXT           "S√©lectionnez les colonnes qui appara√Ætront dans la page Processus du Gestionnaire des t√¢ches.",
                     IDC_STATIC,7,7,181,17
     CONTROL         "Nom de l'&image",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
-                    WS_DISABLED | WS_TABSTOP,7,28,56,10
-    CONTROL         "&PID (Process Identifier)",IDC_PID,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,39,88,10
+                    WS_DISABLED | WS_TABSTOP,7,28,66,10
+    CONTROL         "&PID (ident. de processus)",IDC_PID,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,39,94,10
     CONTROL         "Uti&lisation du processeur",IDC_CPUUSAGE,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,7,50,53,10
-    CONTROL         "T&emps CPU",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,7,61,48,10
-    CONTROL         "Utilisation de la &mÈmoire",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,7,72,63,10
-    CONTROL         "…cart &d'utilisation de la mÈmoire",IDC_MEMORYUSAGEDELTA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,83,82,10
-    CONTROL         "Utilisation ma&ximale de la mÈmoire",IDC_PEAKMEMORYUSAGE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,94,82,10
-    CONTROL         "Erreur&s de page",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,7,105,53,10
+                    WS_TABSTOP,7,50,93,10
+    CONTROL         "T&emps processeur",IDC_CPUTIME,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,61,70,10
+    CONTROL         "Utilisation &m√©moire",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,72,73,10
+    CONTROL         "√âcart &d'utilisation m√©moire",IDC_MEMORYUSAGEDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,83,95,10
+    CONTROL         "Ma&x. utilisation m√©moire",IDC_PEAKMEMORYUSAGE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,94,98,10
+    CONTROL         "D√©fauts de pa&ges",IDC_PAGEFAULTS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,7,105,73,10
     CONTROL         "Objets &USER",IDC_USEROBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,116,62,10
     CONTROL         "Lectures E/S",IDC_IOREADS,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,7,127,49,10
+                    WS_TABSTOP,7,127,59,10
     CONTROL         "Octets de lecture E/S",IDC_IOREADBYTES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,138,65,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,138,80,10
     CONTROL         "Identi&ficateur de session",IDC_SESSIONID,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,7,149,50,10
+                    WS_TABSTOP,7,149,91,10
     CONTROL         "&Nom de l'utilisateur",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,7,160,51,10
-    CONTROL         "…&cart d'erreurs de pagination",IDC_PAGEFAULTSDELTA,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,28,72,10
-    CONTROL         "Taille de la mÈmoire &virtuelle",IDC_VIRTUALMEMORYSIZE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,39,77,10
-    CONTROL         "RÈserve pa&ginÈe",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,107,50,53,10
-    CONTROL         "RÈserve n&on paginÈe",IDC_NONPAGEDPOOL,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,61,67,10
-    CONTROL         "P&rioritÈ de base",IDC_BASEPRIORITY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,72,55,10
+                    WS_TABSTOP,7,160,81,10
+    CONTROL         "√â&cart de d√©fauts de pages",IDC_PAGEFAULTSDELTA,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,28,106,10
+    CONTROL         "Taille de la m√©moire &virtuelle",IDC_VIRTUALMEMORYSIZE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,39,102,10
+    CONTROL         "R√©serve pa&gin√©e",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,50,73,10
+    CONTROL         "R√©serve n&on pagin√©e",IDC_NONPAGEDPOOL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,61,80,10
+    CONTROL         "P&riorit√© de base",IDC_BASEPRIORITY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,72,65,10
     CONTROL         "Nombre de &handles",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,107,83,59,10
+                    WS_TABSTOP,107,83,79,10
     CONTROL         "Nombre de &threads",IDC_THREADCOUNT,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,107,94,59,10
+                    WS_TABSTOP,107,94,79,10
     CONTROL         "Ob&jets GDI",IDC_GDIOBJECTS,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,105,55,10
-    CONTROL         "Ecritures E/S",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,107,116,49,10
-    CONTROL         "Octets d'Ècriture E/S",IDC_IOWRITEBYTES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,127,65,10
+    CONTROL         "√âcritures E/S",IDC_IOWRITES,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,107,116,59,10
+    CONTROL         "Octets d'√©criture E/S",IDC_IOWRITEBYTES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,127,80,10
     CONTROL         "Autres E/S",IDC_IOOTHER,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,107,138,46,10
     CONTROL         "Octets d'autres E/S",IDC_IOOTHERBYTES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,107,149,65,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,149,75,10
 END
 
 /*
@@ -420,22 +424,22 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_APP_TITLE           "Gestionnaire des t‚ches"
-    IDC_TASKMGR             "Gestionnaire des t‚ches"
-    IDS_RUNDLG_CAPTION      "Nouvelle t‚che..."
+    IDS_APP_TITLE           "Gestionnaire des t√¢ches"
+    IDC_TASKMGR             "Gestionnaire des t√¢ches"
+    IDS_RUNDLG_CAPTION      "Nouvelle t√¢che..."
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_FILE_NEW             "ExÈcute un nouveau programme"
-    ID_OPTIONS_ALWAYSONTOP  "Le gestionnaire des t‚ches reste au premier plan de toutes les autres fenÍtres sauf s'il est rÈduit"
+    ID_FILE_NEW             "Ex√©cute un nouveau programme"
+    ID_OPTIONS_ALWAYSONTOP  "Le gestionnaire des t√¢ches reste devant toutes les autres fen√™tres sauf s'il est r√©duit"
     ID_OPTIONS_MINIMIZEONUSE
-                            "Le gestionnaire des t‚ches est minimisÈ quand une opÈration Basculer vers est effectuÈe"
-    ID_OPTIONS_HIDEWHENMINIMIZED "Cache le gestionnaire des t‚ches lorsqu'il est rÈduit"
-    ID_VIEW_REFRESH         "Force le gestionnaire des t‚ches ‡ s'actualiser maintenant sans tenir compte du paramËtre de frÈquence d'actualisation"
-    ID_VIEW_LARGE           "Affiche les t‚ches en utilisant de grandes icÙnes"
-    ID_VIEW_SMALL           "Affiche les t‚ches en utilisant de petites icÙnes"
-    ID_VIEW_DETAILS         "Affiche des informations sur chacune des t‚ches"
+                            "Le gestionnaire des t√¢ches est minimis√© quand une op√©ration ¬´ Basculer vers ¬ª est effectu√©e"
+    ID_OPTIONS_HIDEWHENMINIMIZED "Cache le gestionnaire des t√¢ches lorsqu'il est r√©duit"
+    ID_VIEW_REFRESH         "Force le gestionnaire des t√¢ches √† s'actualiser maintenant sans tenir compte du param√®tre de fr√©quence d'actualisation"
+    ID_VIEW_LARGE           "Affiche les t√¢ches en utilisant de grandes ic√¥nes"
+    ID_VIEW_SMALL           "Affiche les t√¢ches en utilisant de petites ic√¥nes"
+    ID_VIEW_DETAILS         "Affiche des informations sur chacune des t√¢ches"
     ID_VIEW_UPDATESPEED_HIGH "Actualise l'affichage deux fois par seconde"
     ID_VIEW_UPDATESPEED_NORMAL "Actualise l'affichage toutes les deux secondes"
     ID_VIEW_UPDATESPEED_LOW "Actualise l'affichage toutes les quatre secondes"
@@ -445,45 +449,131 @@ STRINGTABLE DISCARDABLE
 BEGIN
     ID_VIEW_UPDATESPEED_PAUSED "N'actualise pas l'affichage automatiquement"
     ID_WINDOWS_TILEHORIZONTALLY
-                            "Arrange les fenÍtres horizontalement sur le bureau"
-    ID_WINDOWS_TILEVERTICALLY "Arrange les fenÍtres verticalement sur le bureau"
-    ID_WINDOWS_MINIMIZE     "RÈduit les fenÍtres"
-    ID_WINDOWS_MAXIMIZE     "Agrandit les fenÍtres"
-    ID_WINDOWS_CASCADE      "Place les fenÍtres en cascade sur le bureau"
-    ID_WINDOWS_BRINGTOFRONT "Affiche la fenÍtre au premier plan, mais ne bascule pas vers celle-ci"
-    ID_HELP_TOPICS          "Affiche les rubriques d'aide du gestionnaire des t‚ches"
+                            "Arrange les fen√™tres horizontalement sur le bureau"
+    ID_WINDOWS_TILEVERTICALLY "Arrange les fen√™tres verticalement sur le bureau"
+    ID_WINDOWS_MINIMIZE     "R√©duit les fen√™tres"
+    ID_WINDOWS_MAXIMIZE     "Agrandit les fen√™tres"
+    ID_WINDOWS_CASCADE      "Place les fen√™tres en cascade sur le bureau"
+    ID_WINDOWS_BRINGTOFRONT "Am√®ne la fen√™tre au premier plan, mais ne bascule pas vers celle-ci"
+    ID_HELP_TOPICS          "Affiche les rubriques d'aide du gestionnaire des t√¢ches"
     ID_HELP_ABOUT           "Affiche le informations sur le programme, la version et le copyright"
-    ID_FILE_EXIT            "Quitte le gestionnaire des t‚ches"
+    ID_FILE_EXIT            "Quitte le gestionnaire des t√¢ches"
     ID_OPTIONS_SHOW16BITTASKS
-                            "Affiche les t‚ches 16-bit sous le ntvdm.exe associÈ"
-    ID_VIEW_SELECTCOLUMNS   "SÈlectionne quelles colonnes seront affichÈes dans la page des processus"
-    ID_VIEW_SHOWKERNELTIMES "Affiche le temps noyau dans les graphiques de performances"
+                            "Affiche les t√¢ches 16 bits sous le ntvdm.exe associ√©"
+    ID_VIEW_SELECTCOLUMNS   "S√©lectionne les colonnes √† afficher dans la page des processus"
+    ID_VIEW_SHOWKERNELTIMES "Affiche le temps noyau dans les graphiques de performance"
     ID_VIEW_CPUHISTORY_ONEGRAPHALL
-                            "L'utilisation des processeurs est affichÈe sur un seul graphique"
-    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Chaque processeur ‡ son propre graphique"
+                            "L'utilisation des processeurs est affich√©e sur un seul graphique"
+    ID_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Chaque processeur a son propre graphique"
     ID_APPLICATION_PAGE_SWITCHTO
-                            "AmËne la t‚che au premier plan et bascule vers celle-ci"
+                            "Am√®ne la t√¢che √† l'avant-plan et bascule vers celle-ci"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_ENDTASK              "Demande ‡ la t‚che sÈlectionner de se terminer"
-    ID_GOTOPROCESS          "Bascule vers le processus de la t‚che sÈlectionnÈe"
-    ID_RESTORE              "Restaure le gestionnaire des t‚ches"
-    ID_PROCESS_PAGE_ENDPROCESS "Retire le processus du systËme"
+    ID_ENDTASK              "Demande aux t√¢ches s√©lectionn√©es de se terminer"
+    ID_GOTOPROCESS          "Bascule vers le processus de la t√¢che s√©lectionn√©e"
+    ID_RESTORE              "Restaure le gestionnaire des t√¢ches"
+    ID_PROCESS_PAGE_ENDPROCESS "Retire le processus du syst√®me"
     ID_PROCESS_PAGE_ENDPROCESSTREE
-                            "Retire ce processus et tous ces fils du systËme"
-    ID_PROCESS_PAGE_DEBUG   "Attache le dÈbuggeur ‡ ce processus"
+                            "Retire ce processus et tous ses fils du syst√®me"
+    ID_PROCESS_PAGE_DEBUG   "Attache le d√©bogueur √† ce processus"
     ID_PROCESS_PAGE_SETAFFINITY
-                            "ContrÙle sur quel processeur le processus sera autorisÈ ‡ s'exÈcuter"
+                            "D√©termine sur quels processeurs le processus sera autoris√© √† s'ex√©cuter"
     ID_PROCESS_PAGE_SETPRIORITY_REALTIME
-                            "Place le processus dans la classe de prioritÈ TEMPS R…EL"
-    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Place le processus dans la classe de prioritÈ HAUTE"
+                            "Place le processus dans la classe de priorit√© TEMPS R√âEL"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH "Place le processus dans la classe de priorit√© HAUTE"
     ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
-                            "Place le processus dans la classe de prioritÈ SUP…RIEURE ¿ LA NORMALE"
+                            "Place le processus dans la classe de priorit√© SUP√âRIEURE √Ä LA NORMALE"
     ID_PROCESS_PAGE_SETPRIORITY_NORMAL
-                            "Place le processus dans la classe de prioritÈ NORMALE"
+                            "Place le processus dans la classe de priorit√© NORMALE"
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
-                            "Place le processus dans la classe de prioritÈ INF…RIEURE ¿ LA NORMALE"
-    ID_PROCESS_PAGE_SETPRIORITY_LOW "Place le processus dans la classe de prioritÈ BASSE"
+                            "Place le processus dans la classe de priorit√© INF√âRIEURE √Ä LA NORMALE"
+    ID_PROCESS_PAGE_SETPRIORITY_LOW "Place le processus dans la classe de priorit√© BASSE"
+    ID_PROCESS_PAGE_DEBUGCHANNELS
+                            "Contr√¥le les canaux de d√©boguage"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_VIEW_LARGE                     "G&randes ic√¥nes"
+    IDS_VIEW_SMALL                     "P&etites ic√¥nes"
+    IDS_VIEW_DETAILS                   "&D√©tails"
+    IDS_WINDOWS                        "Fe&n√™tres"
+    IDS_VIEW_SELECTCOLUMNS             "&S√©lectionner les colonnes..."
+    IDS_OPTIONS_SHOW16BITTASKS         "&Montrer les t√¢ches 16 bits"
+    IDS_VIEW_CPUHISTORY                "&Historique du processeur"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "Un seul graphique pour &tous les processeurs"
+    IDS_VIEW_CPUHISTORY_ONEGRAPHPERCPU "Un graphique &par processeur"
+    IDS_VIEW_SHOWKERNELTIMES           "Aff&icher les temps noyau"
+    IDS_APPLICATIONS                   "Applications"
+    IDS_PROCESSES                      "Processus"
+    IDS_PERFORMANCE                    "Performance"
+    IDS_STATUS_BAR_CPU_USAGE           "Utilisation CPU : %3d%%"
+    IDS_STATUS_BAR_PROCESSES           "Processus : %d"
+    IDS_STATUS_BAR_MEMORY_USAGE        "Utilisation m√©moire : %dK / %dK"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_IMAGENAME         "Image"
+    IDS_PID               "PID"
+    IDS_CPUUSAGE          "CPU"
+    IDS_CPUTIME           "Temps CPU"
+    IDS_MEMORYUSAGE       "M√©moire"
+    IDS_MEMORYUSAGEDELTA  "√âcart util. m√©moire"
+    IDS_PEAKMEMORYUSAGE   "Util. m√©moire max"
+    IDS_PAGEFAULTS        "D√©fauts de pages"
+    IDS_USEROBJECTS       "Objets USER"
+    IDS_IOREADS           "Lectures E/S"
+    IDS_IOREADBYTES       "Octets de lecture E/S"
+    IDS_SESSIONID         "ID session"
+    IDS_USERNAME          "Utilisateur"
+    IDS_PAGEFAULTSDELTA   "√âcart d√©f. pages"
+    IDS_VIRTUALMEMORYSIZE "M√©m. virtuelle"
+    IDS_PAGEDPOOL         "R√©serve pagin√©e"
+    IDS_NONPAGEDPOOL      "R√©serve non pagin√©e"
+    IDS_BASEPRIORITY      "Prio. de base"
+    IDS_HANDLECOUNT       "Handles"
+    IDS_THREADCOUNT       "Threads"
+    IDS_GDIOBJECTS        "Objets GDI"
+    IDS_IOWRITES          "√âcritures E/S"
+    IDS_IOWRITEBYTES      "Octets √©criture E/S"
+    IDS_IOOTHER           "Autres E/S"
+    IDS_IOOTHERBYTES      "Octets autres E/S"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_WARNING_TITLE               "Avertissement du gestionnaire de t√¢ches"
+    IDS_PRIORITY_CHANGE_MESSAGE     "ATTENTION : modifier la classe de priorit√© de ce processus peut\n\
+                                     causer des r√©sultats impr√©vus y compris une instabilit√© syst√®me. √ätes-vous\n\
+                                     s√ªr(e) de vouloir modifier la classe de priorit√© ?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Impossible de modifier la priorit√©"
+    IDS_TERMINATE_MESSAGE           "ATTENTION : stopper un processus peut causer des r√©sultats\n\
+                                     impr√©vus y compris une perte de donn√©es ou une instabilit√© syst√®me. Le\n\
+                                     processus n'aura pas l'occasion de sauver son √©tat ou ses\n\
+                                     donn√©es avant d'√™tre arr√™t√©. √ätes-vous s√ªr(e) de vouloir\n\
+                                     stopper le processus ?"
+    IDS_TERMINATE_UNABLE2TERMINATE  "Impossible de stopper le processus"
+    IDS_DEBUG_MESSAGE               "ATTENTION : d√©boguer ce processus peut causer des pertes de donn√©es.\n\
+                                     Voulez-vous r√©ellement attacher le d√©bogueur ?"
+    IDS_DEBUG_UNABLE2DEBUG          "Impossible de d√©boguer le processus"
+    IDS_AFFINITY_ERROR_MESSAGE      "Le processus doit avoir une affinit√© avec au moins un processeur"
+    IDS_AFFINITY_ERROR_TITLE        "Option invalide"
+    IDS_AFFINITY_UNABLE2ACCESS      "Impossible d'acc√©der ou de modifier l'affinit√© du processus"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_SYSTEM_IDLE_PROCESS            "Processus inactifs"
+    IDS_APPLICATION_NOT_RESPONDING     "Ne r√©pond pas"
+    IDS_APPLICATION_RUNNING            "En cours d'ex√©cution"
+    IDS_APPLICATION_TASK               "T√¢che"
+    IDS_APPLICATION_STATUS             "Statut"
+    IDS_DEBUG_CHANNEL                  "Canaux de d√©boguage"
+    IDS_DEBUG_CHANNEL_FIXME            "Fixme"
+    IDS_DEBUG_CHANNEL_ERR              "Err"
+    IDS_DEBUG_CHANNEL_WARN             "Warn"
+    IDS_DEBUG_CHANNEL_TRACE            "Trace"
 END
