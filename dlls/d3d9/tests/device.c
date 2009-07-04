@@ -2336,10 +2336,12 @@ static void test_multi_device(void)
 
     hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd1,
             D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device1);
-    ok(SUCCEEDED(hr), "Failed to create a device, hr %#x\n", hr);
     IDirect3D9_Release(d3d9);
     d3d9 = NULL;
-    if (FAILED(hr)) goto fail;
+    if (FAILED(hr)) {
+        skip("Failed to create a device\n");
+        goto fail;
+    }
 
     d3d9 = pDirect3DCreate9(D3D_SDK_VERSION);
     ok(d3d9 != NULL, "Failed to create a d3d9 object.\n");
