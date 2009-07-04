@@ -22,25 +22,28 @@
 
 #include "wcmd.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
   WCMD_ATTRIB, "Aide d'ATTRIB\n"
   WCMD_CALL,
-"CALL <fichierbatch> sert à appeler un fichier batch\n\
-depuis un autre fichier batch. Quand le fichier batch sort, le contrôle revient\n\
-au fichier qui l'a appelé. La commande CALL doit être suivie des paramètres\n\
-de la procédure appelée.\n\
+"CALL <fichierbatch> sert Ã  appeler un fichier batch\n\
+depuis un autre fichier batch. Quand le fichier batch sort, le contrÃ´le revient\n\
+au fichier qui l'a appelÃ©. La commande CALL doit Ãªtre suivie des paramÃ¨tres\n\
+de la procÃ©dure appelÃ©e.\n\
 \n\
-Les changements de répertoire courant, de variables d'environment etc. faits\n\
-dans une procédure appelée sont transmis à l'appelant.\n"
+Les changements de rÃ©pertoire courant, de variables d'environnement etc. faits\n\
+dans une procÃ©dure appelÃ©e sont transmis Ã  l'appelant.\n"
 
-  WCMD_CD,     "Change le répertoire courant par défaut\n"
-  WCMD_CHDIR,  "Change le répertoire courant par défaut\n"
+  WCMD_CD,     "Aide de CD\n"
+  WCMD_CHDIR,  "Aide de CHDIR\n"
 
   WCMD_CLS,
-"CLS efface l'écran\n"
+"CLS efface l'Ã©cran de la console\n"
 
   WCMD_COPY,   "Aide de COPY\n"
   WCMD_CTTY,   "Aide de CTTY\n"
@@ -49,228 +52,231 @@ dans une procédure appelée sont transmis à l'appelant.\n"
   WCMD_DIR,    "Aide de DIR\n"
 
   WCMD_ECHO,
-"ECHO <chaîne> affiche <chaîne> sur la console courante.\n\
+"ECHO <chaÃ®ne> affiche <chaÃ®ne> sur la console courante.\n\
 \n\
 ECHO ON provoque l'affichage de toutes les commandes sur la console\n\
-avant leur exécution.\n\
+avant leur exÃ©cution.\n\
 \n\
-ECHO OFF annule l'effet de tout précédent ECHO ON (ECHO est OFF par\n\
-défaut). On peut empêcher l'affichage de ECHO OFF en le faisant\n\
-précéder d'un signe @.\n"
+ECHO OFF annule l'effet de tout ECHO ON antÃ©rieur (ECHO est OFF par\n\
+dÃ©faut). On peut empÃªcher l'affichage de ECHO OFF en le faisant\n\
+prÃ©cÃ©der d'un signe @.\n"
 
   WCMD_ERASE,  "Aide de ERASE\n"
 
   WCMD_FOR,
-"La commande FOR sert à exécuter une commande pour un groupe de fichiers.\n\
+"La commande FOR sert Ã  exÃ©cuter une commande pour chaque fichier d'un groupe de fichiers.\n\
 \n\
-Syntaxe : FOR %variable IN (groupe) DO commande\n\
+SyntaxeÂ : FOR %variable IN (groupe) DO commande\n\
 \n\
-La nécessité de doubler le signe '%' en utilisant FOR dans un fichier batch\n\
+La nÃ©cessitÃ© de doubler le signe '%' lorsque l'on utilise FOR dans un fichier batch\n\
 n'existe pas dans cmd.\n"
 
   WCMD_GOTO,
-"La commande GOTO transfère l'exécution à un autre label dans un\n\
-fichier batch.\n\
+"La commande GOTO transfÃ¨re l'exÃ©cution Ã  une autre commande (situÃ©e\n\
+aprÃ¨s une Ã©tiquette donnÃ©e) dans un fichier batch.\n\
 \n\
-Le label cible de GOTO peut être long de 255 caractères\n\
-mais ne peut inclure d'espaces (ceci est différent d'autres systèmes\n\
-d'exploitation). Si deux ou plusieurs labels identiques sont dans le même fichier\n\
-seul le premier sera exécuté. Essayer de sauter à un label non-existant\n\
-termine l'exécution du fichier batch .\n\
+L'Ã©tiquette cible du GOTO a une longueur de maximum 255 caractÃ¨res\n\
+mais ne peut inclure d'espaces (Ã  la diffÃ©rence d'autres systÃ¨mes\n\
+d'exploitation). Si deux Ã©tiquettes identiques (ou plus) sont dans le mÃªme\n\
+fichier, seule la premiÃ¨re sera utilisÃ©e. Essayer de sauter vers une Ã©tiquette\n\
+non existante termine l'exÃ©cution du fichier batch.\n\
 \n\
-GOTO n'a pas d'effet si utilisé interactivement.\n"
+GOTO n'a pas d'effet si utilisÃ© interactivement.\n"
 
-  WCMD_HELP,   "Affiche une brève aide sur les commandes internes de CMD\n"
+  WCMD_HELP,   "Affiche une brÃ¨ve aide sur les commandes internes de CMD\n"
 
   WCMD_IF,
-"IF est utilisé pour exécuter une commande de façon conditionnelle.\n\
+"IF est utilisÃ© pour exÃ©cuter une commande de faÃ§on conditionnelle.\n\
 \n\
-Syntaxe :	IF [NOT] EXIST nomfichier commande\n\
-		IF [NOT] chaîne1==chaîne2 commande\n\
+SyntaxeÂ :	IF [NOT] EXIST nomfichier commande\n\
+		IF [NOT] chaÃ®ne1==chaÃ®ne2 commande\n\
 		IF [NOT] ERRORLEVEL nombre commande\n\
 \n\
-Dans la deuxième forme de la commande, chaîne1 et chaîne2 doivent être\n\
-entre guillemets doubles. La comparaison est insensible à la casse.\n"
+Dans la deuxiÃ¨me forme de la commande, chaÃ®ne1 et chaÃ®ne2 doivent Ãªtre\n\
+entre guillemets. La comparaison est insensible Ã  la casse.\n"
 
-  WCMD_LABEL,  "LABEL sert à modifier le nom de volume d'un disque.\n\
+  WCMD_LABEL,  "LABEL sert Ã  modifier le nom de volume d'un disque.\n\
 \n\
-Syntaxe : LABEL [lecteur:]\n\
-La commnande demandera le nouveau nom de volume pour le lecteur donné.\n\
+SyntaxeÂ : LABEL [lecteur:]\n\
+La commande demande le nouveau nom de volume pour le lecteur spÃ©cifiÃ©.\n\
 Vous pouvez afficher le nom de volume avec la commande VOL.\n"
 
-  WCMD_MD,     "Crée  le répertoire donné en paramètre.\n"
-  WCMD_MKDIR,  "Crée  le répertoire donné en paramètre.\n"
+  WCMD_MD,     "Aide de MD\n"
+  WCMD_MKDIR,  "Aide de MKDIR\n"
   WCMD_MOVE,
-"MOVE déplace un fichier, un groupe de fichiers ou un répertoire\n\
-à un autre endroit. Si l'objet déplacé est un répertoire alors\n\
-tous les fichiers et sous-répertoires de l'objet sont également déplacés.\n\
-MOVE échoue si l'ancien et le nouvel emplacement sont sur des lecteurs DOS différents.\n"
+"MOVE dÃ©place un fichier, un groupe de fichiers ou un rÃ©pertoire\n\
+Ã  un autre endroit dans le systÃ¨me de fichiers. Si l'objet dÃ©placÃ© est un rÃ©pertoire, alors\n\
+tous les fichiers et sous-rÃ©pertoires de l'objet sont Ã©galement dÃ©placÃ©s.\n\
+MOVE Ã©choue si l'ancien et le nouvel emplacement sont sur des lecteurs DOS diffÃ©rents.\n"
 
   WCMD_PATH,
 "PATH affiche ou change le chemin de recherche de cmd.\n\
-Entrer PATH affichera le réglage courant de PATH (au départ\n\
-c'est la valeur donnée dans le fichier de configuration wine). Pour changer\n\
-le réglage, faites suivre la commande PATH de la nouvelle valeur.\n\
-Il est possible de modifier le PATH en utilisant la variable d'environment PATH,\n\
-par exemple :\n\
+\n\
+Entrer PATH seul affiche le rÃ©glage courant de PATH (initialement\n\
+c'est la valeur donnÃ©e dans le fichier wine.conf). Pour changer\n\
+le rÃ©glage, faites suivre la commande PATH par la nouvelle valeur.\n\
+Il est aussi possible de modifier le PATH en utilisant la variable\n\
+d'environnement PATH, par exemple :\n\
 		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
-"PAUSE affiche un message sur l'écran : 'Pressez Entrée pour continuer'\n\
-et attend que l'utilisateur presse la touche Entrée. PAUSE est surtout utilisé dans\n\
-les fichiers batchs pour permettre à l'utilisateur de lire la sortie de\n\
-la dernière commande avant qu'elle ne disparaisse de l'écran.\n"
+"PAUSE affiche un message sur l'Ã©cran : 'Pressez EntrÃ©e pour continuer'\n\
+et attend que l'utilisateur presse la touche EntrÃ©e. PAUSE est surtout utilisÃ© dans\n\
+les fichiers batchs pour permettre Ã  l'utilisateur de lire la sortie de\n\
+la derniÃ¨re commande avant qu'elle ne disparaisse de l'Ã©cran.\n"
 
   WCMD_PROMPT,
-"PROMPT règle l'invite de commande.\n\
+"PROMPT rÃ¨gle l'invite de commande.\n\
 \n\
-La chaîne suivant la commande PROMPT (and the space immediately after)\n\
-apparaît au début de la ligne quand cmd attend une entrée texte.\n\
+La chaÃ®ne suivant la commande PROMPT (ainsi que le blanc la suivant directement)\n\
+apparaÃ®t au dÃ©but de la ligne quand cmd attend une entrÃ©e texte.\n\
 \n\
-Les chaînes de caractères suivantes ont une signification spéciale :\n\
+Les chaÃ®nes de caractÃ¨res suivantes ont une signification spÃ©ciale :\n\
 \n\
-$$    Signe Dollar        $_    Saut de ligne       $b    Signe Pipe (|)\n\
+$$    Signe dollar        $_    Saut de ligne       $b    Barre verticale (|)\n\
 $d    Date courante       $e    Escape              $g    Signe >\n\
-$l    Signe <             $n    Lecteur courant     $p    Répertoire courant\n\
+$l    Signe <             $n    Lecteur courant     $p    RÃ©pertoire courant\n\
 $q    Signe =             $t    Heure courante      $v    Version de cmd\n\
 \n\
 Notez qu'entrer la commande PROMPT sans texte d'invite remet l'invite\n\
-à la valeur par défaut, qui est la lettre du lecteur courant suivie de\n\
-son répertoire courant et d'un signe plus-grand-que (>).\n\
-(Tel que la commande PROMPT $p$g).\n\
+Ã  sa valeur par dÃ©faut, Ã  savoir la lettre du lecteur courant suivie de\n\
+son rÃ©pertoire courant et d'un signe plus-grand-que (>).\n\
+(c.-Ã -d. la commande PROMPT $p$g).\n\
 \n\
-L'invite peut aussi être modifiée en changeant la variable d'environment PROMPT,\n\
-donc la commande 'SET PROMPT=texte' a le même effet que 'PROMPT texte'\n"
+L'invite peut aussi Ãªtre adaptÃ©e en modifiant la variable d'environnement\n\
+ PROMPT ; ainsi la commande 'SET PROMPT=texte' a le mÃªme effet que 'PROMPT texte'\n"
 
   WCMD_REM,
-"Une ligne de commande commençant par REM (suivi d'une espace) n'engendre\n\
+"Une ligne de commande commenÃ§ant par REM (suivi d'une espace) n'engendre\n\
 aucune action, et peut donc servir de commentaire dans un fichier batch.\n"
 
   WCMD_REN,    "Aide de REN\n"
   WCMD_RENAME, "Aide de RENAME\n"
-  WCMD_RD,     "Efface le répertoire donné en paramètre.\n"
-  WCMD_RMDIR,  "Efface le répertoire donné en paramètre.\n"
+  WCMD_RD,     "Aide de RD.\n"
+  WCMD_RMDIR,  "Aide de RMDIR.\n"
 
   WCMD_SET,
 "SET affiche ou change les variables d'environnement de cmd.\n\
 \n\
-SET sans paramètre affiche l'environnement courant.\n\
+SET sans paramÃ¨tre affiche l'environnement courant.\n\
 \n\
-Pour créer et modifier une variable d'environnement la syntaxe est:\n\
+Pour crÃ©er et modifier une variable d'environnement, la syntaxe est :\n\
 \n\
       SET <variable>=<valeur>\n\
 \n\
-où <variable> et <valeur> sont des chaînes de caractères. Il est à noter que <variable>\n\
-ne peut contenir d'espace, et qu'il ne doit pas y en avoir non plus autour du signe d'égalité.\n\
+oÃ¹ <variable> et <valeur> sont des chaÃ®nes de caractÃ¨res. Il ne peut y avoir aucun\n\
+espace autour du signe '=', ni dans <variable>.\n\
 \n\
-Sous Wine, l'environment du système hôte est\n\
-inclus dans l'environnment Win32, il y aura par conséquent généralement\n\
-bien plus de valeurs que dans un système Win32 natif. Notez qu'il\n\
-n'est pas possible de modifier l'environnement du système d'exploitation dans cmd.\n"
+\n\
+Sous Wine, l'environnement du systÃ¨me hÃ´te est\n\
+inclus dans l'environnement Win32, il y aura par consÃ©quent gÃ©nÃ©ralement\n\
+bien plus de valeurs que dans un systÃ¨me Win32 natif. Notez qu'il\n\
+n'est pas possible de modifier l'environnement du systÃ¨me d'exploitation dans cmd.\n"
 
   WCMD_SHIFT,
-"SHIFT est utilisé dans un fichier batch pour enlever un paramètre de la\n\
-liste, ainsi le paramètre 2 devient paramètre 1 et ainsi de suite. Il est sans effet\n\
-s'il est appelé depuis la ligne de commande.\n"
+"SHIFT est utilisÃ© dans un fichier batch pour enlever le premier paramÃ¨tre de la\n\
+liste ; ainsi, le paramÃ¨tre 2 devient paramÃ¨tre 1 et ainsi de suite. Il est sans effet\n\
+s'il est appelÃ© depuis la ligne de commande.\n"
 
   WCMD_TIME,   "Aide de TIME\n"
 
   WCMD_TITLE,
-"Règle le titre de la fenêtre pour la session cmd, Syntaxe : TITLE [chaîne]\n"
+"DÃ©finit le titre de la fenÃªtre pour la session cmd, SyntaxeÂ : TITLE [chaÃ®ne]\n"
 
   WCMD_TYPE,
 "TYPE <nomfichier> affiche <nomfichier> sur la console (ou ailleurs\n\
-si redirigé). Aucun test n'est fait quand au format texte du fichier.\n"
+si redirigÃ©). Aucun test n'est fait pour voir si le fichier contient bien du texte.\n"
 
   WCMD_VERIFY,
-"VERIFY est utilisé pour positionner, effacer ou tester le flag de vérification.\n\
-Les formes suivantes sont correctes :\n\
-VERIFY ON	Positionne le flag\n\
-VERIFY OFF	Efface le flag\n\
-VERIFY\t\tAffiche l'état ON ou OFF du flag.\n\
+"VERIFY est utilisÃ© pour positionner, effacer ou tester l'indicateur de vÃ©rification.\n\
 \n\
-Le flag de verification n'a pas de fonction dans Wine.\n"
+Les formes suivantes sont correctes :\n\
+VERIFY ON	Positionne l'indicateur\n\
+VERIFY OFF	Efface l'indicateur\n\
+VERIFY\t\tAffiche l'Ã©tat ON ou OFF de l'indicateur.\n\
+\n\
+L'indicateur de vÃ©rification n'a pas de fonction dans Wine.\n"
 
   WCMD_VER,
-"VER affiche la version de cmd actuellement en mémoire.\n"
+"VER affiche la version de cmd utilisÃ©e.\n"
 
   WCMD_VOL,    "Aide de VOL\n"
 
-  WCMD_PUSHD,  "PUSHD <répertoire> enregistre le répertoire courant sur\n\
-une pile et change le répertoire courrant par le répertoire spécifié.\n"
+  WCMD_PUSHD,  "PUSHD <rÃ©pertoire> enregistre le rÃ©pertoire courant sur\n\
+une pile et remplace le rÃ©pertoire courant par le rÃ©pertoire spÃ©cifiÃ©.\n"
 
-  WCMD_POPD,   "POPD change le répertoire courant par le dernier enregistré à l'aide de\n\
+  WCMD_POPD,   "POPD change le rÃ©pertoire courant par le dernier enregistrÃ© Ã  l'aide de\n\
 PUSHD.\n"
 
-  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+  WCMD_MORE,   "MORE affiche le contenu de fichiers ou l'entrÃ©e standard par pages.\n"
 
   WCMD_EXIT,
 "EXIT termine la session de ligne de commande et retourne\n\
-au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
+au systÃ¨me d'exploitation ou au shell oÃ¹ vous avez invoquÃ© cmd.\n"
 
-  WCMD_ALLHELP, "Les commandes internes CMD sont :\n\
-ATTRIB\t\tAffiche ou change les attributs de fichiers DOS\n\
-CALL\t\tInvoque un fichier batch à l'intérieur d'un autre\n\
-CD (CHDIR)\tChange le répertoire courant par défaut\n\
-CLS\t\tEfface l'écran\n\
+  WCMD_ALLHELP, "Les commandes intÃ©grÃ©es de CMD sontÂ :\n\
+ATTRIB\t\tAffiche ou modifie les attributs de fichiers DOS\n\
+CALL\t\tInvoque un fichier batch Ã  l'intÃ©rieur d'un autre\n\
+CD (CHDIR)\tChange le rÃ©pertoire courant par dÃ©faut\n\
+CLS\t\tEfface l'Ã©cran\n\
 COPY\t\tCopie un ou plusieurs fichiers\n\
-CTTY\t\tChange le périphérique d'entrée/sortie\n\
-DATE\t\tAffiche ou change la date système\n\
+CTTY\t\tChange le pÃ©riphÃ©rique d'entrÃ©e/sortie\n\
+DATE\t\tAffiche ou modifie la date systÃ¨me\n\
 DEL (ERASE)\tEfface un fichier ou un groupe de fichiers\n\
-DIR\t\tListe le contenu d'un répertoire\n\
+DIR\t\tListe le contenu d'un rÃ©pertoire\n\
 ECHO\t\tAffiche du texte sur la console\n\
-HELP\t\tAffiche de brefs détails sur l'utilisation d'une commande\n\
-MD (MKDIR)\tCrée un répertoire\n\
-MORE\t\tDisplay output in pages\n\
-MOVE\t\tDéplace un fichier, un groupe de fichiers ou un répertoire\n\
-PATH\t\tRègle ou affiche le chemin de recherche\n\
-POPD\t\tChange le répertoire courant par le dernier enregistré avec PUSHD\n\
+HELP\t\tAffiche de brefs dÃ©tails sur l'utilisation d'une commande\n\
+MD (MKDIR)\tCrÃ©e un rÃ©pertoire\n\
+MORE\t\tAffiche du texte par pages\n\
+MOVE\t\tDÃ©place un fichier, un groupe de fichiers ou un rÃ©pertoire\n\
+PATH\t\tRÃ¨gle ou affiche le chemin de recherche\n\
+POPD\t\tRemplace le rÃ©pertoire courant par le dernier enregistrÃ© avec PUSHD\n\
 PROMPT\t\tChange l'invite de commande\n\
-PUSHD\t\tChange de répertoire en enregistrant le répertoire courant\n\
-REN (RENAME)\tRenomme un fichier, un groupe de fichiers ou un répertoire\n\
-RD (RMDIR)\tEfface un répertoire\n\
-SET\t\tRègle ou affiche les variables d'environment\n\
-TIME\t\tRègle ou affiche l'heure système courante\n\
-TITLE\t\tRègle le titre de la fenêtre pour la session CMD\n\
+PUSHD\t\tChange de rÃ©pertoire en enregistrant le rÃ©pertoire courant\n\
+REN (RENAME)\tRenomme un fichier\n\
+RD (RMDIR)\tEfface un rÃ©pertoire\n\
+SET\t\tRÃ¨gle ou affiche les variables d'environnement\n\
+TIME\t\tRÃ¨gle ou affiche l'heure systÃ¨me courante\n\
+TITLE\t\tRÃ¨gle le titre de la fenÃªtre pour la session CMD\n\
 TYPE\t\tAffiche le contenu d'un fichier texte\n\
-VER\t\tAffiche la version de cmd actuellement en mémoire.\n\
+VER\t\tAffiche la version de cmd utilisÃ©e.\n\
 VOL\t\tAffiche le nom de volume d'un lecteur de disque\n\
 EXIT\t\tQuitte CMD\n\n\
 Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
 
-  WCMD_CONFIRM, "Êtes-vous sûr"
+  WCMD_CONFIRM, "ÃŠtes-vous sÃ»r"
   WCMD_YES, "O"
   WCMD_NO, "N"
   WCMD_NOASSOC, "Association de fichier manquante pour l'extension %s\n"
-  WCMD_NOFTYPE, "Aucun commande d'ouverture associée avec le type de fichier « %s »\n"
-  WCMD_OVERWRITE, "Écraser %s"
+  WCMD_NOFTYPE, "Aucune commande d'ouverture n'est associÃ©e avec le type de fichier Â«Â %sÂ Â»\n"
+  WCMD_OVERWRITE, "Ã‰craser %s"
   WCMD_MORESTR, "Plus..."
-  WCMD_TRUNCATEDLINE, "Ligne du processus batch probablement tronquée. Utilisation de :\n"
-  WCMD_NYI, "Pas encore implémenté\n\n"
+  WCMD_TRUNCATEDLINE, "Ligne du processus batch probablement tronquÃ©e. Utilisation deÂ :\n"
+  WCMD_NYI, "Pas encore implÃ©mentÃ©\n\n"
   WCMD_NOARG, "Argument manquant\n"
   WCMD_SYNTAXERR, "Erreur de syntaxe\n"
-  WCMD_FILENOTFOUND, "%s : Fichier non trouvé\n"
+  WCMD_FILENOTFOUND, "%s : fichier non trouvÃ©\n"
   WCMD_NOCMDHELP, "Pas d'aide disponible pour %s\n"
-  WCMD_NOTARGET, "La destination de l'instruction GOTO n'a pas été trouvée\n"
+  WCMD_NOTARGET, "La destination de l'instruction GOTO n'a pas Ã©tÃ© trouvÃ©e\n"
   WCMD_CURRENTDATE, "La date courante est %s\n"
   WCMD_CURRENTTIME, "L'heure courante est %s\n"
-  WCMD_NEWDATE, "Saisissez la nouvelle date : "
-  WCMD_NEWTIME, "Saisissez la nouvelle heure : "
-  WCMD_MISSINGENV, "La variable d'environnement %s n'est pas définie\n"
-  WCMD_READFAIL, "Impossible d'ouvrir « %s »\n"
-  WCMD_CALLINSCRIPT, "Impossible d'appeler une étiquette de batch hors d'un script batch\n"
+  WCMD_NEWDATE, "Saisissez la nouvelle dateÂ : "
+  WCMD_NEWTIME, "Saisissez la nouvelle heureÂ : "
+  WCMD_MISSINGENV, "La variable d'environnement %s n'est pas dÃ©finie\n"
+  WCMD_READFAIL, "Impossible d'ouvrir Â«Â %sÂ Â»\n"
+  WCMD_CALLINSCRIPT, "Impossible d'appeler une Ã©tiquette de batch hors d'un script batch\n"
   WCMD_ALL, "T"
   WCMD_DELPROMPT, "%s, Supprimer"
   WCMD_ECHOPROMPT, "Echo est %s\n"
   WCMD_VERIFYPROMPT, "Verify est %s\n"
-  WCMD_VERIFYERR, "Verify doit être ON ou OFF\n";
-  WCMD_ARGERR, "Erreur de paramètre\n"
-  WCMD_VOLUMEDETAIL, "Le volume dans le lecteur %c est %s\nLe numéro de série du volume est %04x-%04x\n\n"
-  WCMD_VOLUMEPROMPT, "Étiquette du volume (11 caractères, ENTRÉE pour aucun) ?"
-  WCMD_NOPATH, "PATH not found\n"
-  WCMD_ANYKEY,"Appuyez sur ENTRÉE pour continuer : "
+  WCMD_VERIFYERR, "Verify doit Ãªtre ON ou OFF\n";
+  WCMD_ARGERR, "Erreur de paramÃ¨tre\n"
+  WCMD_VOLUMEDETAIL, "Le volume dans le lecteur %c est %s\nLe numÃ©ro de sÃ©rie du volume est %04x-%04x\n\n"
+  WCMD_VOLUMEPROMPT, "Ã‰tiquette du volume (11 caractÃ¨res, ENTRÃ‰E pour aucun)Â ?"
+  WCMD_NOPATH, "PATH non trouvÃ©\n"
+  WCMD_ANYKEY,"Appuyez sur ENTRÃ‰E pour continuerÂ : "
   WCMD_CONSTITLE,"Invite de commande Wine"
   WCMD_VERSION,"CMD version %s\n\n"
-  WCMD_MOREPROMPT, "Plus ? "
-  WCMD_LINETOOLONG, "The input line is too long.\n"
+  WCMD_MOREPROMPT, "PlusÂ ? "
+  WCMD_LINETOOLONG, "La ligne d'entrÃ©e est trop longue.\n"
 }
