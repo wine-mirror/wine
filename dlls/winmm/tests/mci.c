@@ -53,7 +53,7 @@ START_TEST(mci)
     memset(buf, 0, sizeof(buf));
     err = mciSendString(command_close_all, buf, sizeof(buf), hwnd);
     todo_wine ok(!err,"mciSendString(%s, buf, sizeof(buf) , NULL) returned error: %d\n", command_close_all, err);
-    todo_wine ok(buf[0] == 0, "mciSendString(%s, buf, sizeof(buf) , NULL) changed output buffer: %s\n", command_close_all, buf);
+    ok(buf[0] == 0, "mciSendString(%s, buf, sizeof(buf) , NULL) changed output buffer: %s\n", command_close_all, buf);
 
     memset(buf, 0, sizeof(buf));
     err = mciSendString(command_sysinfo, buf, sizeof(buf), NULL);

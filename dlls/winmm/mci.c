@@ -1506,7 +1506,7 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
         }
     }
     ret = mciSendStringW(lpwstrCommand, lpwstrRet, uRetLen, hwndCallback);
-    if (lpwstrRet)
+    if (!ret && lpwstrRet)
         WideCharToMultiByte( CP_ACP, 0, lpwstrRet, -1, lpstrRet, uRetLen, NULL, NULL );
     HeapFree(GetProcessHeap(), 0, lpwstrCommand);
     HeapFree(GetProcessHeap(), 0, lpwstrRet);
