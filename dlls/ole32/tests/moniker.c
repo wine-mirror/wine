@@ -1143,7 +1143,7 @@ static void test_moniker(
     LPBYTE moniker_data;
     DWORD moniker_size;
     DWORD i;
-    BOOL same = TRUE;
+    BOOL same;
     BYTE buffer[128];
     IMoniker * moniker_proxy;
     LPOLESTR display_name;
@@ -1183,6 +1183,7 @@ static void test_moniker(
         testname, sizeof_expected_moniker_comparison_data, moniker_size);
 
     /* then do a byte-by-byte comparison */
+    same = TRUE;
     for (i = 0; i < min(moniker_size, sizeof_expected_moniker_comparison_data); i++)
     {
         if (expected_moniker_comparison_data[i] != buffer[i])
@@ -1226,6 +1227,7 @@ static void test_moniker(
         testname, (DWORD)round_global_size(sizeof_expected_moniker_saved_data), moniker_size);
 
     /* then do a byte-by-byte comparison */
+    same = TRUE;
     for (i = 0; i < min(moniker_size, round_global_size(sizeof_expected_moniker_saved_data)); i++)
     {
         if (expected_moniker_saved_data[i] != moniker_data[i])
@@ -1272,6 +1274,7 @@ static void test_moniker(
         testname, (DWORD)round_global_size(sizeof_expected_moniker_marshal_data), moniker_size);
 
     /* then do a byte-by-byte comparison */
+    same = TRUE;
     if (expected_moniker_marshal_data)
     {
         for (i = 0; i < min(moniker_size, round_global_size(sizeof_expected_moniker_marshal_data)); i++)
