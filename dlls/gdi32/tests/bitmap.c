@@ -780,7 +780,9 @@ static void test_dibsections(void)
     BitBlt(hdcmem2, 0, 0, 16,16, hdcmem, 0, 0, SRCCOPY);
 
     ok(bits32[0] == 0xff00, "lower left pixel is %08x\n", bits32[0]);
-    ok(bits32[17] == 0xff00ff, "bottom but one, left pixel is %08x\n", bits32[17]);
+    ok(bits32[17] == 0xff00ff ||
+       broken(bits32[17] == 0x00ff00), /* Intermittent on Win9x/ME */
+       "bottom but one, left pixel is %08x\n", bits32[17]);
 
     SelectObject(hdcmem2, oldbm2);
     test_dib_info(hdib2, bits32, &pbmi->bmiHeader);
