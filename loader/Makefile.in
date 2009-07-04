@@ -6,10 +6,7 @@ MODULE    = wine
 
 C_SRCS = \
 	main.c \
-	preloader.c \
-	pthread.c
-
-MAIN_OBJS = pthread.o main.o
+	preloader.c
 
 EXTRA_BINARIES = @EXTRA_BINARIES@
 
@@ -39,11 +36,11 @@ LDEXECFLAGS = @LDEXECFLAGS@
 wine-preloader: preloader.o Makefile.in
 	$(CC) -o $@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c000000 preloader.o $(LIBPORT) $(LDFLAGS)
 
-wine: $(MAIN_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(MAIN_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
+wine: main.o Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) main.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_LOCAL)
 
-wine-installed: $(MAIN_OBJS) Makefile.in
-	$(CC) -o $@ $(LDEXECFLAGS) $(MAIN_OBJS) $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
+wine-installed: main.o Makefile.in
+	$(CC) -o $@ $(LDEXECFLAGS) main.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS) $(LDRPATH_INSTALL)
 
 $(EXTRA_BINARIES:%=__install__%): $(EXTRA_BINARIES) $(DESTDIR)$(bindir) dummy
 	f=`expr $@ : '__install__\(.*\)'` && $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f
