@@ -1,6 +1,6 @@
 /*
  * OleView (Fr.rc)
- * Frencg Language Support
+ * French Language Support
  *
  * Copyright 2006 Jonathan Ernst
  *
@@ -21,6 +21,9 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 IDM_MENU MENU
@@ -30,14 +33,14 @@ IDM_MENU MENU
         MENUITEM "&Lier au fichier...",    IDM_BIND
         MENUITEM "&Afficher la TypeLib...",    IDM_TYPELIB
         MENUITEM SEPARATOR
-        MENUITEM "&Configuration système...",    IDM_SYSCONF
-        MENUITEM "&Exécuter l'éditeur de la base de registre",    IDM_REGEDIT
+        MENUITEM "&Configuration systÃ¨me...",    IDM_SYSCONF
+        MENUITEM "&ExÃ©cuter l'Ã©diteur de la base de registre",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "&Quitter",    IDM_EXIT
     }
     POPUP "&Objet"
     {
-        POPUP "&CoCreateInstance Flag"
+        POPUP "Indicateur &CoCreateInstance"
         {
             MENUITEM "CLSCTX_&INPROC_SERVER",    IDM_FLAG_INSERV,CHECKED
             MENUITEM "CLSCTX_INPROC_&HANDLER",    IDM_FLAG_INHANDL
@@ -47,12 +50,12 @@ IDM_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "Afficher les informations sur le &type",    IDM_TYPEINFO, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "Créer une &instance",    IDM_CREATEINST, GRAYED
-        MENUITEM "Créer une instance &sur...",    IDM_CREATEINSTON, GRAYED
-        MENUITEM "&Libérer l'instance",    IDM_RELEASEINST, GRAYED
+        MENUITEM "CrÃ©er une &instance",    IDM_CREATEINST, GRAYED
+        MENUITEM "CrÃ©er une instance &sur...",    IDM_CREATEINSTON, GRAYED
+        MENUITEM "&LibÃ©rer l'instance",    IDM_RELEASEINST, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Copier le &CLSID dans le presse-papiers",    IDM_COPYCLSID, GRAYED
-        MENUITEM "Copier la balse &HTML de l'objet dans le presse-papiers", IDM_HTMLTAG, GRAYED
+        MENUITEM "Copier la balise &HTML de l'objet dans le presse-papiers", IDM_HTMLTAG, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Afficher...",    IDM_VIEW, GRAYED
     }
@@ -60,16 +63,16 @@ IDM_MENU MENU
     {
         MENUITEM "Mode &expert",    IDM_EXPERT,CHECKED
         MENUITEM SEPARATOR
-        MENUITEM "Catégories de compsants &cachés",    IDM_HIDDEN, GRAYED
+        MENUITEM "CatÃ©gories de composants &cachÃ©s",    IDM_HIDDEN, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Barre d'outils",    IDM_TOOLBAR,CHECKED
-        MENUITEM "Barre d'é&tat",    IDM_STATUSBAR,CHECKED
+        MENUITEM "Barre d'Ã©&tat",    IDM_STATUSBAR,CHECKED
         MENUITEM SEPARATOR
         MENUITEM "A&ctualiser\tF5",    IDM_REFRESH
     }
     POPUP "Aid&e"
     {
-        MENUITEM "À &propos de OleView",    IDM_ABOUT
+        MENUITEM "Ã€ &propos de OleView",    IDM_ABOUT
     }
 }
 
@@ -85,7 +88,7 @@ IDM_TYPELIB MENU
         MENUITEM "&Grouper par type", IDM_GROUP
         MENUITEM SEPARATOR
         MENUITEM "Barre d'&outils",    IDM_TOOLBAR
-        MENUITEM "&Barre d'état", IDM_STATUSBAR,CHECKED
+        MENUITEM "&Barre d'Ã©tat", IDM_STATUSBAR,CHECKED
     }
 }
 
@@ -93,97 +96,97 @@ STRINGTABLE
 {
     IDS_APPNAME            "OleView"
     IDS_APPTITLE           "OleView"
-    IDS_READY              "Prêt"
+    IDS_READY              "PrÃªt"
     IDS_ABOUT              "OleView - Visionneur d'objets OLE/COM"
     IDS_ABOUTVER           "version 1.0"
     IDS_TYPELIBTITLE       "Visionneur d'ITypeLib"
     IDS_OPEN               "Ouvrir"
-    IDS_OPEN_TYPELIB_FILTER "TypeLib Files (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
+    IDS_OPEN_TYPELIB_FILTER "Fichiers TypeLib (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0Tous les fichiers (*.*)\0*.*\0\0"
 
-    IDM_BIND,              "Lie à un fichier à l'aide d'un File Moniker"
-    IDM_TYPELIB,           "Ouvre un fichier TypeLib et afficher son contenu"
-    IDM_SYSCONF,           "Modifie les paramètres COM distribuées pour l'ensemble de la machine"
-    IDM_REGEDIT,           "Exécute l'éditeur de base de registre de Wine"
-    IDM_EXIT,              "Quitte l'application après avoir demandé s'il faut enregistrer les modifications"
-    IDM_CREATEINST,        "Crée une instance de l'objet sélectionné"
-    IDM_CREATEINSTON,      "Crée une instance de l'objet sélectionné sur une machine spécifique"
-    IDM_RELEASEINST,       "Libère l'instance de l'objet actuellement sélectionné"
-    IDM_COPYCLSID,         "Copie le GUID de l'objet actuellement sélectionné dans le presse-papiers"
-    IDM_VIEW,              "Affiche le visionneur pour l'objet actuellement sélectionné"
-    IDM_FLAG_INSERV,       "Utilise CLSCTX_INPROC_SERVER lors de l'appel à CoGetClassObject"
-    IDM_FLAG_INHANDL,      "Utilise CLSCTX_INPROC_HANDLER lors de l'appel à CoGetClassObject"
-    IDM_FLAG_LOCSERV,      "Utilise CLSCTX_LOCAL_SERVER lors de l'appel à CoGetClassObject"
-    IDM_FLAG_REMSERV,      "Utilise CLSCTX_REMOTE_SERVER lors de l'appel à CoGetClassObject"
-    IDM_EXPERT,            "Bascule entre le mode d'affichage expert et le mode d'affichage débutant"
-    IDM_HIDDEN,            "Bascule l'affichage des catégories des composant qui ne sont pas prévue pour être visible"
-    IDM_TOOLBAR,           "Affiche ou masque la barre d'outils"
-    IDM_STATUSBAR,         "Affiche ou masque la barre d'état"
-    IDM_REFRESH,           "Actualise toutes les listes"
-    IDM_ABOUT,             "Affiche les informations sur le programme ; le numéro de version et la licence"
+    IDM_BIND,              "Lier Ã  un fichier Ã  l'aide d'un File Moniker"
+    IDM_TYPELIB,           "Ouvrir un fichier TypeLib et afficher son contenu"
+    IDM_SYSCONF,           "Modifier les paramÃ¨tres COM distribuÃ©es pour l'ensemble de la machine"
+    IDM_REGEDIT,           "ExÃ©cuter l'Ã©diteur de base de registre de Wine"
+    IDM_EXIT,              "Quitter l'application. Demande s'il faut enregistrer les modifications au prÃ©alable"
+    IDM_CREATEINST,        "CrÃ©er une instance de l'objet sÃ©lectionnÃ©"
+    IDM_CREATEINSTON,      "CrÃ©er une instance de l'objet sÃ©lectionnÃ© sur une machine spÃ©cifique"
+    IDM_RELEASEINST,       "LibÃ©rer l'instance de l'objet actuellement sÃ©lectionnÃ©"
+    IDM_COPYCLSID,         "Copier le GUID de l'objet actuellement sÃ©lectionnÃ© dans le presse-papiers"
+    IDM_VIEW,              "Afficher le visionneur pour l'objet actuellement sÃ©lectionnÃ©"
+    IDM_FLAG_INSERV,       "Utiliser CLSCTX_INPROC_SERVER lors de l'appel Ã  CoGetClassObject"
+    IDM_FLAG_INHANDL,      "Utiliser CLSCTX_INPROC_HANDLER lors de l'appel Ã  CoGetClassObject"
+    IDM_FLAG_LOCSERV,      "Utiliser CLSCTX_LOCAL_SERVER lors de l'appel Ã  CoGetClassObject"
+    IDM_FLAG_REMSERV,      "Utiliser CLSCTX_REMOTE_SERVER lors de l'appel Ã  CoGetClassObject"
+    IDM_EXPERT,            "Basculer entre le mode d'affichage expert et le mode d'affichage dÃ©butant"
+    IDM_HIDDEN,            "Activer/dÃ©sactiver l'affichage des catÃ©gories des composant qui ne sont pas prÃ©vues pour Ãªtre visibles"
+    IDM_TOOLBAR,           "Afficher ou masquer la barre d'outils"
+    IDM_STATUSBAR,         "Afficher ou masquer la barre d'Ã©tat"
+    IDM_REFRESH,           "Actualiser toutes les listes"
+    IDM_ABOUT,             "Afficher les informations sur le programme, le numÃ©ro de version et la licence"
 
     IDM_SAVEAS,            "Enregistrer en tant que fichier .IDL ou .H"
-    IDM_CLOSE,             "Fermer la fenêtre"
-    IDM_GROUP,             "Grouper par typeinfos"
+    IDM_CLOSE,             "Fermer la fenÃªtre"
+    IDM_GROUP,             "Grouper les typeinfos par catÃ©gorie"
 
-    IDS_TREE_OC,           "ObjectClasses"
-    IDS_TREE_GBCC,         "Groupés par catégorie de composants"
+    IDS_TREE_OC,           "Classes d'objets"
+    IDS_TREE_GBCC,         "GroupÃ©s par catÃ©gorie de composants"
     IDS_TREE_O1O,          "Objets OLE 1.0"
-    IDS_TREE_CLO,          "Objets de la bibliothèque COM"
+    IDS_TREE_CLO,          "Objets de la bibliothÃ¨que COM"
     IDS_TREE_AO,           "Tous les objets"
     IDS_TREE_AID,          "Identificateurs d'application"
-    IDS_TREE_TL,           "Bibliothèques type"
+    IDS_TREE_TL,           "BibliothÃ¨ques de types"
     IDS_TL_VER,            "ver."
     IDS_TREE_I,            "Interfaces"
 
     IDS_TAB_REG,           "Base de registre"
-    IDS_TAB_IMPL,          "Implémentation"
+    IDS_TAB_IMPL,          "ImplÃ©mentation"
     IDS_TAB_ACTIV,         "Activation"
 
-    IDS_CGCOFAIL,          "CoGetClassObject a échoué."
+    IDS_CGCOFAIL,          "CoGetClassObject a Ã©chouÃ©."
     IDS_ERROR_UNKN,        "Erreur inconnue"
-    IDS_TRUE,              "True"
+    IDS_TRUE,              "Vrai"
     IDS_FALSE,             "Faux"
     IDS_BYTES,             "octets"
 
-    IDS_ERROR_LOADTYPELIB, "Échec de LoadTypeLib( %s ) ($%x)"
-    IDS_INHERITINTERFACES, "Interfaces héritées"
+    IDS_ERROR_LOADTYPELIB, "Ã‰chec de LoadTypeLib( %s ) ($%x)"
+    IDS_INHERITINTERFACES, "Interfaces hÃ©ritÃ©es"
 }
 
 DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "Se connecter à une autre machine"
+CAPTION "Se connecter Ã  une autre machine"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT   "Nom de la &machine :", -1, 5, 6, 190, 8
+    LTEXT   "Nom de la &machineÂ :", -1, 5, 6, 190, 8
     EDITTEXT    IDC_MACHINE, 5, 16, 190, 12, WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL
     DEFPUSHBUTTON   "&OK", IDOK, 200, 5, 45, 14
     PUSHBUTTON  "&Annuler", IDCANCEL, 200, 22, 45, 14
 }
 
-DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 170, 100
+DLG_SYSCONF DIALOG DISCARDABLE 0, 0, 210, 100
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "Configuration système"
+CAPTION "Configuration systÃ¨me"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT   "Paramètres système", -1, 5, 6, 160, 8
-    CHECKBOX    "&Activer le COM distribué", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    CHECKBOX    "Activer les connexions à &distance (seulement Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    LTEXT   "Ces paramètres ne font que modifier les valeurs du registre.\nIls n'ont pas d'effet sur les performances de Wine.", -1, 5, 50, 160, 40
-    DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
-    PUSHBUTTON  "&Annuler", IDCANCEL, 120, 80, 45, 14
+    LTEXT   "ParamÃ¨tres systÃ¨me", -1, 5, 6, 160, 8
+    CHECKBOX    "&Activer le COM distribuÃ©", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    CHECKBOX    "Activer les connexions Ã  &distance (Win95 uniquement)", IDC_ENABLEREMOTE, 5, 35, 190, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
+    LTEXT   "Ces paramÃ¨tres ne font que modifier des valeurs du registre.\nIls n'ont pas d'effet sur les performances de Wine.", -1, 5, 50, 200, 40
+    DEFPUSHBUTTON   "&OK", IDOK, 100, 80, 45, 14
+    PUSHBUTTON  "&Annuler", IDCANCEL, 150, 80, 45, 14
 }
 
 DLG_DEFAULT_IV DIALOG DISCARDABLE 0, 0, 280, 50
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "Visionneur d'interface par défaut"
+CAPTION "Visionneur d'interface par dÃ©faut"
 FONT 8, "MS Shell Dlg"
 {
     LTEXT   "Interface", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "IID:", -1, 5, 16, 50, 8
+    LTEXT   "IID :", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON   "&Fermer", IDCANCEL, 230, 6, 45, 14
-    PUSHBUTTON  "&Afficher les informations de type", IDC_VIEWTYPEINFO, 6, 31, 70, 14, WS_DISABLED
+    PUSHBUTTON  "&Afficher les informations de type", IDC_VIEWTYPEINFO, 6, 31, 120, 14, WS_DISABLED
 }
 
 DLG_IPERSIST_IV DIALOG DISCARDABLE 0, 0, 280, 29
@@ -191,9 +194,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "IPersist Interface Viewer"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT   "Nom de la classe :", -1, 5, 6, 50, 8
+    LTEXT   "Nom de classeÂ :", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "CLSID :", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON   "&Fermer", IDCANCEL, 230, 6, 45, 14
 }
@@ -203,9 +206,9 @@ STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Visionneur d'interface IPersistStream"
 FONT 8, "MS Shell Dlg"
 {
-    LTEXT   "Nom de la classe :", -1, 5, 6, 50, 8
+    LTEXT   "Nom de classeÂ :", -1, 5, 6, 50, 8
     LTEXT   "", IDC_LABEL, 60, 6, 145, 8
-    LTEXT   "CLSID:", -1, 5, 16, 50, 8
+    LTEXT   "CLSID :", -1, 5, 16, 50, 8
     LTEXT   "", IDC_IDENTIFIER, 60, 16, 165, 8
     DEFPUSHBUTTON   "&Fermer", IDCANCEL, 230, 6, 45, 14
     PUSHBUTTON  "&IsDirty", IDC_ISDIRTY_BUTTON, 6, 31, 50, 14
