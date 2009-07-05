@@ -29,6 +29,7 @@
 
 #include "objbase.h"
 #include "ocidl.h"
+#include "wine/list.h"
 
 #include "gdiplus.h"
 
@@ -109,6 +110,8 @@ struct GpGraphics{
     BOOL busy;      /* hdc handle obtained by GdipGetDC */
     GpRegion *clip;
     UINT textcontrast; /* not used yet. get/set only */
+    struct list containers;
+    GraphicsContainer contid; /* last-issued container ID */
 };
 
 struct GpBrush{

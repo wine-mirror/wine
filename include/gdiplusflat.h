@@ -127,6 +127,7 @@ GpStatus WINGDIPAPI GdipFlush(GpGraphics*, GpFlushIntention);
 GpStatus WINGDIPAPI GdipBeginContainer(GpGraphics*,GDIPCONST GpRectF*,GDIPCONST GpRectF*,GpUnit,GraphicsContainer*);
 GpStatus WINGDIPAPI GdipBeginContainer2(GpGraphics*,GraphicsContainer*);
 GpStatus WINGDIPAPI GdipBeginContainerI(GpGraphics*,GDIPCONST GpRect*,GDIPCONST GpRect*,GpUnit,GraphicsContainer*);
+GpStatus WINGDIPAPI GdipEndContainer(GpGraphics*,GraphicsContainer);
 GpStatus WINGDIPAPI GdipComment(GpGraphics*,UINT,GDIPCONST BYTE*);
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC,GpGraphics**);
 GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC,HANDLE,GpGraphics**);
