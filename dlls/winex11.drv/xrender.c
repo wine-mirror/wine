@@ -54,8 +54,57 @@ static BOOL X11DRV_XRender_Installed = FALSE;
 #define RepeatReflect 3
 #endif
 
-enum drawable_depth_type {mono_drawable, color_drawable};
-static XRenderPictFormat *pict_formats[2];
+#define MAX_FORMATS 9
+typedef enum wine_xrformat
+{
+  WXR_FORMAT_MONO,
+  WXR_FORMAT_X1R5G5B5,
+  WXR_FORMAT_X1B5G5R5,
+  WXR_FORMAT_R5G6B5,
+  WXR_FORMAT_B5G6R5,
+  WXR_FORMAT_R8G8B8,
+  WXR_FORMAT_B8G8R8,
+  WXR_FORMAT_A8R8G8B8,
+  WXR_FORMAT_X8R8G8B8,
+} WXRFormat;
+
+typedef struct wine_xrender_format_template
+{
+    WXRFormat wxr_format;
+    unsigned int depth;
+    unsigned int alpha;
+    unsigned int alphaMask;
+    unsigned int red;
+    unsigned int redMask;
+    unsigned int green;
+    unsigned int greenMask;
+    unsigned int blue;
+    unsigned int blueMask;
+} WineXRenderFormatTemplate;
+
+static const WineXRenderFormatTemplate wxr_formats_template[] =
+{
+    /* Format               depth   alpha   mask    red     mask    green   mask    blue    mask*/
+    {WXR_FORMAT_MONO,       1,      0,      0x01,   0,      0,      0,      0,      0,      0       },
+    {WXR_FORMAT_X1R5G5B5,   16,     0,      0,      10,     0x1f,   5,      0x1f,   0,      0x1f    },
+    {WXR_FORMAT_X1B5G5R5,   16,     0,      0,      0,      0x1f,   5,      0x1f,   10,     0x1f    },
+    {WXR_FORMAT_R5G6B5,     16,     0,      0,      11,     0x1f,   5,      0x3f,   0,      0x1f    },
+    {WXR_FORMAT_B5G6R5,     16,     0,      0,      0,      0x1f,   5,      0x3f,   11,     0x1f    },
+    {WXR_FORMAT_R8G8B8,     24,     0,      0,      16,     0xff,   8,      0xff,   0,      0xff    },
+    {WXR_FORMAT_B8G8R8,     24,     0,      0,      0,      0xff,   8,      0xff,   16,     0xff    },
+    {WXR_FORMAT_A8R8G8B8,   32,     24,     0xff,   16,     0xff,   8,      0xff,   0,      0xff    },
+    {WXR_FORMAT_X8R8G8B8,   32,     0,      0,      16,     0xff,   8,      0xff,   0,      0xff    }
+};
+
+typedef struct wine_xrender_format
+{
+    WXRFormat               format;
+    XRenderPictFormat       *pict_format;
+} WineXRenderFormat;
+
+static WineXRenderFormat wxr_formats[MAX_FORMATS];
+static int WineXRenderFormatsListSize = 0;
+static WineXRenderFormat *default_format = NULL;
 
 typedef struct
 {
@@ -155,6 +204,101 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 #define NATIVE_BYTE_ORDER LSBFirst
 #endif
 
+static BOOL get_xrender_template(const WineXRenderFormatTemplate *fmt, XRenderPictFormat *templ, unsigned long *mask)
+{
+    templ->id = 0;
+    templ->type = PictTypeDirect;
+    templ->depth = fmt->depth;
+    templ->direct.alpha = fmt->alpha;
+    templ->direct.alphaMask = fmt->alphaMask;
+    templ->direct.red = fmt->red;
+    templ->direct.redMask = fmt->redMask;
+    templ->direct.green = fmt->green;
+    templ->direct.greenMask = fmt->greenMask;
+    templ->direct.blue = fmt->blue;
+    templ->direct.blueMask = fmt->blueMask;
+    templ->colormap = 0;
+
+    *mask = PictFormatType | PictFormatDepth | PictFormatAlpha | PictFormatAlphaMask | PictFormatRed | PictFormatRedMask | PictFormatGreen | PictFormatGreenMask | PictFormatBlue | PictFormatBlueMask;
+
+    return TRUE;
+}
+
+static BOOL is_wxrformat_compatible_with_default_visual(const WineXRenderFormatTemplate *fmt)
+{
+    if(fmt->depth != screen_depth)
+        return FALSE;
+    if( (fmt->redMask << fmt->red) != visual->red_mask)
+        return FALSE;
+    if( (fmt->greenMask << fmt->green) != visual->green_mask)
+        return FALSE;
+    if( (fmt->blueMask << fmt->blue) != visual->blue_mask)
+        return FALSE;
+
+    /* We never select a default ARGB visual */
+    if(fmt->alphaMask)
+        return FALSE;
+
+    return TRUE;
+}
+
+static int load_xrender_formats(void)
+{
+    unsigned int i;
+    for(i = 0; i < (sizeof(wxr_formats_template) / sizeof(wxr_formats_template[0])); i++)
+    {
+        XRenderPictFormat templ, *pict_format;
+
+        if(is_wxrformat_compatible_with_default_visual(&wxr_formats_template[i]))
+        {
+            wine_tsx11_lock();
+            pict_format = pXRenderFindVisualFormat(gdi_display, visual);
+            if(!pict_format)
+            {
+                /* Xrender doesn't like DirectColor visuals, try to find a TrueColor one instead */
+                if (visual->class == DirectColor)
+                {
+                    XVisualInfo info;
+                    if (XMatchVisualInfo( gdi_display, DefaultScreen(gdi_display),
+                                          screen_depth, TrueColor, &info ))
+                    {
+                        pict_format = pXRenderFindVisualFormat(gdi_display, info.visual);
+                        if (pict_format) visual = info.visual;
+                    }
+                }
+            }
+            wine_tsx11_unlock();
+
+            if(pict_format)
+            {
+                wxr_formats[WineXRenderFormatsListSize].format = wxr_formats_template[i].wxr_format;
+                wxr_formats[WineXRenderFormatsListSize].pict_format = pict_format;
+                default_format = &wxr_formats[WineXRenderFormatsListSize];
+                WineXRenderFormatsListSize++;
+                TRACE("Loaded pict_format with id=%#lx for wxr_format=%#x\n", pict_format->id, wxr_formats_template[i].wxr_format);
+            }
+        }
+        else
+        {
+            unsigned long mask = 0;
+            get_xrender_template(&wxr_formats_template[i], &templ, &mask);
+
+            wine_tsx11_lock();
+            pict_format = pXRenderFindFormat(gdi_display, mask, &templ, 0);
+            wine_tsx11_unlock();
+
+            if(pict_format)
+            {
+                wxr_formats[WineXRenderFormatsListSize].format = wxr_formats_template[i].wxr_format;
+                wxr_formats[WineXRenderFormatsListSize].pict_format = pict_format;
+                WineXRenderFormatsListSize++;
+                TRACE("Loaded pict_format with id=%#lx for wxr_format=%#x\n", pict_format->id, wxr_formats_template[i].wxr_format);
+            }
+        }
+    }
+    return WineXRenderFormatsListSize;
+}
+
 /***********************************************************************
  *   X11DRV_XRender_Init
  *
@@ -164,7 +308,6 @@ static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 void X11DRV_XRender_Init(void)
 {
     int event_base, i;
-    XRenderPictFormat pf;
 
     if (client_side_with_render &&
 	wine_dlopen(SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL, NULL, 0) &&
@@ -195,27 +338,12 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
 #undef LOAD_OPTIONAL_FUNCPTR
 #endif
 
-
         wine_tsx11_lock();
-        if(pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base)) {
-            X11DRV_XRender_Installed = TRUE;
+        X11DRV_XRender_Installed = pXRenderQueryExtension(gdi_display, &event_base, &xrender_error_base);
+        wine_tsx11_unlock();
+        if(X11DRV_XRender_Installed) {
             TRACE("Xrender is up and running error_base = %d\n", xrender_error_base);
-            pict_formats[color_drawable] = pXRenderFindVisualFormat(gdi_display, visual);
-            if(!pict_formats[color_drawable])
-            {
-                /* Xrender doesn't like DirectColor visuals, try to find a TrueColor one instead */
-                if (visual->class == DirectColor)
-                {
-                    XVisualInfo info;
-                    if (XMatchVisualInfo( gdi_display, DefaultScreen(gdi_display),
-                                          screen_depth, TrueColor, &info ))
-                    {
-                        pict_formats[color_drawable] = pXRenderFindVisualFormat(gdi_display, info.visual);
-                        if (pict_formats[color_drawable]) visual = info.visual;
-                    }
-                }
-            }
-            if(!pict_formats[color_drawable]) /* This fails in buggy versions of libXrender.so */
+            if(!load_xrender_formats()) /* This fails in buggy versions of libXrender.so */
             {
                 wine_tsx11_unlock();
                 WINE_MESSAGE(
@@ -225,23 +353,12 @@ LOAD_OPTIONAL_FUNCPTR(XRenderSetPictureTransform)
                 X11DRV_XRender_Installed = FALSE;
                 return;
             }
-            pf.type = PictTypeDirect;
-            pf.depth = 1;
-            pf.direct.alpha = 0;
-            pf.direct.alphaMask = 1;
-            pict_formats[mono_drawable] = pXRenderFindFormat(gdi_display, PictFormatType |
-                                                             PictFormatDepth | PictFormatAlpha |
-                                                             PictFormatAlphaMask, &pf, 0);
-            if(!pict_formats[mono_drawable]) {
-                ERR("mono_format == NULL?\n");
-                X11DRV_XRender_Installed = FALSE;
-            }
+
             if (!visual->red_mask || !visual->green_mask || !visual->blue_mask) {
                 WARN("one or more of the colour masks are 0, disabling XRENDER. Try running in 16-bit mode or higher.\n");
                 X11DRV_XRender_Installed = FALSE;
             }
         }
-        wine_tsx11_unlock();
     }
 
 sym_not_found:
@@ -269,6 +386,39 @@ sym_not_found:
 	}
     }
     else TRACE("Using X11 core fonts\n");
+}
+
+static WineXRenderFormat *get_xrender_format(WXRFormat format)
+{
+    int i;
+    for(i=0; i<WineXRenderFormatsListSize; i++)
+    {
+        if(wxr_formats[i].format == format)
+        {
+            TRACE("Returning wxr_format=%#x\n", format);
+            return &wxr_formats[i];
+        }
+    }
+    return NULL;
+}
+
+static WineXRenderFormat *get_xrender_format_from_pdevice(X11DRV_PDEVICE *physDev)
+{
+    WXRFormat format;
+
+    switch(physDev->depth)
+    {
+        case 1:
+            format = WXR_FORMAT_MONO;
+            break;
+        default:
+            /* For now fall back to the format of the default visual.
+               In the future we should check if we are using a DDB/DIB and what exact format we need.
+             */
+            return default_format;
+    }
+
+    return get_xrender_format(format);
 }
 
 static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
@@ -1153,33 +1303,33 @@ static void SmoothGlyphGray(XImage *image, int x, int y, void *bitmap, XGlyphInf
  * Returns an appropriate Picture for tiling the text colour.
  * Call and use result within the xrender_cs
  */
-static Picture get_tile_pict(enum drawable_depth_type type, int text_pixel)
+static Picture get_tile_pict(WineXRenderFormat *wxr_format, int text_pixel)
 {
     static struct
     {
         Pixmap xpm;
         Picture pict;
         int current_color;
-    } tiles[2], *tile;
+    } tiles[MAX_FORMATS], *tile;
     XRenderColor col;
 
-    tile = &tiles[type];
+    tile = &tiles[wxr_format->format];
 
     if(!tile->xpm)
     {
         XRenderPictureAttributes pa;
 
         wine_tsx11_lock();
-        tile->xpm = XCreatePixmap(gdi_display, root_window, 1, 1, pict_formats[type]->depth);
+        tile->xpm = XCreatePixmap(gdi_display, root_window, 1, 1, wxr_format->pict_format->depth);
 
         pa.repeat = RepeatNormal;
-        tile->pict = pXRenderCreatePicture(gdi_display, tile->xpm, pict_formats[type], CPRepeat, &pa);
+        tile->pict = pXRenderCreatePicture(gdi_display, tile->xpm, wxr_format->pict_format, CPRepeat, &pa);
         wine_tsx11_unlock();
 
         /* init current_color to something different from text_pixel */
         tile->current_color = ~text_pixel;
 
-        if(type == mono_drawable)
+        if(wxr_format->format == WXR_FORMAT_MONO)
         {
             /* for a 1bpp bitmap we always need a 1 in the tile */
             col.red = col.green = col.blue = 0;
@@ -1190,7 +1340,7 @@ static Picture get_tile_pict(enum drawable_depth_type type, int text_pixel)
         }
     }
 
-    if(text_pixel != tile->current_color && type == color_drawable)
+    if(text_pixel != tile->current_color && wxr_format->format != WXR_FORMAT_MONO)
     {
         /* Map 0 -- 0xff onto 0 -- 0xffff */
         int r_shift, r_len;
@@ -1243,7 +1393,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     unsigned int idx;
     double cosEsc, sinEsc;
     LOGFONTW lf;
-    enum drawable_depth_type depth_type = (physDev->depth == 1) ? mono_drawable : color_drawable;
+    WineXRenderFormat *dst_format = get_xrender_format_from_pdevice(physDev);
     Picture tile_pict = 0;
 
     /* Do we need to disable antialiasing because of palette mode? */
@@ -1322,8 +1472,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
 	    wine_tsx11_lock();
 	    physDev->xrender->pict = pXRenderCreatePicture(gdi_display,
-							   physDev->drawable,
-                                                           pict_formats[depth_type],
+							   physDev->drawable, dst_format->pict_format,
 							   CPSubwindowMode, &pa);
 	    wine_tsx11_unlock();
 
@@ -1388,11 +1537,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         desired.y = physDev->dc_rect.top + y;
         current.x = current.y = 0;
 
-        tile_pict = get_tile_pict(depth_type, physDev->textPixel);
+        tile_pict = get_tile_pict(dst_format, physDev->textPixel);
 
 	/* FIXME the mapping of Text/BkColor onto 1 or 0 needs investigation.
 	 */
-	if((depth_type == mono_drawable) && (textPixel == 0))
+	if((dst_format->format == WXR_FORMAT_MONO) && (textPixel == 0))
 	    render_op = PictOpOutReverse; /* This gives us 'black' text */
 
         for(idx = 0; idx < count; idx++)
@@ -1630,7 +1779,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     POINT pts[2];
     BOOL top_down = FALSE;
     RGNDATA *rgndata;
-    enum drawable_depth_type dst_depth_type = (devDst->depth == 1) ? mono_drawable : color_drawable;
+    WineXRenderFormat *dst_format = get_xrender_format_from_pdevice(devDst);
     int repeat_src;
 
     if(!X11DRV_XRender_Installed) {
@@ -1761,7 +1910,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     /* FIXME use devDst->xrender->pict ? */
     dst_pict = pXRenderCreatePicture(gdi_display,
                                      devDst->drawable,
-                                     pict_formats[dst_depth_type],
+                                     dst_format->pict_format,
                                      CPSubwindowMode, &pa);
     TRACE("dst_pict %08lx\n", dst_pict);
     TRACE("src_drawable = %08lx\n", devSrc->drawable);
