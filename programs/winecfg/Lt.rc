@@ -111,7 +111,7 @@ END
 
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Edit Override"
+CAPTION "Redaguoti nustelbimą"
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Įkėlimo tvarka ",IDC_STATIC,8,4,94,66
@@ -243,7 +243,7 @@ BEGIN
     IDS_DEFAULT_SETTINGS    "Numatytosios nuostatos"
     IDS_EXECUTABLE_FILTER   "Wine programos (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
     IDS_USE_GLOBAL_SETTINGS "Naudoti globalias nuostatas"
-    IDS_SELECT_EXECUTABLE   "Pasirikite vykdomąjį failą"
+    IDS_SELECT_EXECUTABLE   "Pasirinkite vykdomąjį failą"
 END
 
 STRINGTABLE DISCARDABLE

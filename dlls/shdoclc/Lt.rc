@@ -71,7 +71,7 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "Rod&yti paveikslą",                  IDM_SHOWPICTURE
         MENUITEM "Įrašyti pa&veikslą kaip...",         IDM_SAVEPICTURE
-        MENUITEM "Išsiųsti pev&eikslą el. paštu...",   IDM_MP_EMAILPICTURE
+        MENUITEM "Išsiųsti pav&eikslą el. paštu...",   IDM_MP_EMAILPICTURE
         MENUITEM "S&pausdinti paveikslą...",           IDM_MP_PRINTPICTURE
         MENUITEM "Ei&ti į paveikslų aplanką",          IDM_MP_MYPICS
         MENUITEM "Parinkti užsk&landos piešiniu",      IDM_SETWALLPAPER

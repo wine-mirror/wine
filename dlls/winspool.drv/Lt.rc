@@ -39,6 +39,6 @@ END
 STRINGTABLE DISCARDABLE
 {
     IDS_CAPTION "Lokalus prievadas"
-    IDS_FILE_EXISTS "Išvesties failas jau egzistouja.  Norėdami failą keisti spauskite Gerai."
+    IDS_FILE_EXISTS "Išvesties failas jau egzistuoja.  Norėdami failą keisti spauskite Gerai."
     IDS_CANNOT_OPEN "Nepavyko sukurti išvesties failo."
 }

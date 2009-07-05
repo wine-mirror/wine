@@ -411,7 +411,7 @@ STRINGTABLE DISCARDABLE
     PD32_DRIVER_UNKNOWN                   "Nežinoma spausdintuvo tvarkyklė."
     PD32_NO_DEVICES                       "Prieš atlikdami su spausdintuvu susijusius veiksmus, \
 tokius kaip puslapio nuostatų keitimas ar dokumento spausdinimas, turite įdiegti spausdintuvą. \
-Prašome įdeigti spausdintuvą ir pakartoti."
+Prašome įdiegti spausdintuvą ir pakartoti."
 
     PD32_DEFAULT_PRINTER                  "Pagrindinis spausdintuvas; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "Eilėje yra %d dokumentų"

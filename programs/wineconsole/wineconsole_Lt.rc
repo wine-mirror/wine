@@ -26,7 +26,7 @@ LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 STRINGTABLE
 BEGIN
 IDS_EDIT,                  "&Taisa"
-IDS_DEFAULT,               "Nustatyti &numatytasias"
+IDS_DEFAULT,               "Nustatyti &numatytąsias"
 IDS_PROPERTIES,            "&Savybės"
 IDS_MARK,                  "&Žymėti"
 IDS_COPY,                  "&Kopijuoti"
