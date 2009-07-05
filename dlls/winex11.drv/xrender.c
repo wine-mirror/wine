@@ -1739,35 +1739,6 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
                              BLENDFUNCTION blendfn)
 {
     XRenderPictureAttributes pa;
-    XRenderPictFormat *src_format;
-    XRenderPictFormat argb32_templ = {
-        0,                          /* id */
-        PictTypeDirect,             /* type */
-        32,                         /* depth */
-        {                           /* direct */
-            16,                     /* direct.red */
-            0xff,                   /* direct.redMask */
-            8,                      /* direct.green */
-            0xff,                   /* direct.greenMask */
-            0,                      /* direct.blue */
-            0xff,                   /* direct.blueMask */
-            24,                     /* direct.alpha */
-            0xff,                   /* direct.alphaMask */
-        },
-        0,                          /* colormap */
-    };
-    unsigned long argb32_templ_mask = 
-        PictFormatType |
-        PictFormatDepth |
-        PictFormatRed |
-        PictFormatRedMask |
-        PictFormatGreen |
-        PictFormatGreenMask |
-        PictFormatBlue |
-        PictFormatBlueMask |
-        PictFormatAlpha |
-        PictFormatAlphaMask;
-
     Picture dst_pict, src_pict;
     Pixmap xpm;
     DIBSECTION dib;
@@ -1780,6 +1751,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     BOOL top_down = FALSE;
     RGNDATA *rgndata;
     WineXRenderFormat *dst_format = get_xrender_format_from_pdevice(devDst);
+    WineXRenderFormat *src_format;
     int repeat_src;
 
     if(!X11DRV_XRender_Installed) {
@@ -1896,13 +1868,13 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     image = XCreateImage(gdi_display, visual, 32, ZPixmap, 0,
                          (char*) data, widthSrc, heightSrc, 32, widthSrc * 4);
 
-    /*
-      Avoid using XRenderFindStandardFormat as older libraries don't have it
-      src_format = pXRenderFindStandardFormat(gdi_display, PictStandardARGB32);
-    */
-    src_format = pXRenderFindFormat(gdi_display, argb32_templ_mask, &argb32_templ, 0);
-
+    src_format = get_xrender_format(WXR_FORMAT_A8R8G8B8);
     TRACE("src_format %p\n", src_format);
+    if(!src_format)
+    {
+        WARN("Unable to find a picture format supporting alpha, make sure X is running at 24-bit\n");
+        return FALSE;
+    }
 
     pa.subwindow_mode = IncludeInferiors;
     pa.repeat = repeat_src ? RepeatNormal : RepeatNone;
@@ -1923,7 +1895,7 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     XPutImage(gdi_display, xpm, gc, image, 0, 0, 0, 0, widthSrc, heightSrc);
 
     src_pict = pXRenderCreatePicture(gdi_display,
-                                     xpm, src_format,
+                                     xpm, src_format->pict_format,
                                      CPSubwindowMode|CPRepeat, &pa);
     TRACE("src_pict %08lx\n", src_pict);
 
