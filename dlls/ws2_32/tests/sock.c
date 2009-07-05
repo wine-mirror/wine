@@ -2539,6 +2539,134 @@ static void test_GetAddrInfoW(void)
     pFreeAddrInfoW(result);
 }
 
+static void test_AcceptEx(void)
+{
+    SOCKET listener = INVALID_SOCKET;
+    SOCKET acceptor = INVALID_SOCKET;
+    SOCKET connector = INVALID_SOCKET;
+    struct sockaddr_in bindAddress;
+    int socklen;
+    GUID acceptExGuid = WSAID_ACCEPTEX;
+    BOOL WINAPI (*pAcceptEx)(SOCKET listener, SOCKET acceptor, PVOID dest, DWORD dest_len,
+        DWORD local_addr_len, DWORD rem_addr_len, LPDWORD received,
+        LPOVERLAPPED overlapped);
+    DWORD bytesReturned;
+    char buffer[1024];
+    OVERLAPPED overlapped;
+    int iret;
+    BOOL bret;
+    DWORD dwret;
+
+    memset(&overlapped, 0, sizeof(overlapped));
+
+    listener = socket(AF_INET, SOCK_STREAM, 0);
+    if (listener == INVALID_SOCKET) {
+        skip("could not create listener socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    acceptor = socket(AF_INET, SOCK_STREAM, 0);
+    if (acceptor == INVALID_SOCKET) {
+        skip("could not create acceptor socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    connector = socket(AF_INET, SOCK_STREAM, 0);
+    if (connector == INVALID_SOCKET) {
+        skip("could not create connector socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    memset(&bindAddress, 0, sizeof(bindAddress));
+    bindAddress.sin_family = AF_INET;
+    bindAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
+    iret = bind(listener, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    if (iret != 0) {
+        skip("failed to bind, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    socklen = sizeof(bindAddress);
+    iret = getsockname(listener, (struct sockaddr*)&bindAddress, &socklen);
+    if (iret != 0) {
+        skip("failed to lookup bind address, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    if (set_blocking(listener, FALSE)) {
+        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    iret = WSAIoctl(listener, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptExGuid, sizeof(acceptExGuid),
+        &pAcceptEx, sizeof(pAcceptEx), &bytesReturned, NULL, NULL);
+    if (iret) {
+        skip("WSAIoctl failed to get AcceptEx with ret %d + errno %d\n", iret, WSAGetLastError());
+        goto end;
+    }
+
+    bret = pAcceptEx(INVALID_SOCKET, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
+        sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+        &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "AcceptEx on invalid listening socket "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+
+    bret = pAcceptEx(listener, INVALID_SOCKET, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
+        sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+        &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on invalid accepting socket "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+
+    bret = pAcceptEx(listener, acceptor, NULL, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
+        sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+        &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on NULL buffer "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+
+    bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
+        sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+        &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on a non-listening socket "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+
+    iret = listen(listener, 5);
+    if (iret != 0) {
+        skip("listening failed, errno = %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (overlapped.hEvent == NULL) {
+        skip("could not create event object, errno = %d\n", GetLastError());
+        goto end;
+    }
+
+    bret = pAcceptEx(listener, acceptor, buffer, 0,
+        sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+        &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
+
+    iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    ok(iret == 0, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
+
+    dwret = WaitForSingleObject(overlapped.hEvent, INFINITE);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
+
+    bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
+    ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
+    ok(bytesReturned == 0, "bytesReturned isn't supposed to be %d\n", bytesReturned);
+
+end:
+    if (overlapped.hEvent)
+        WSACloseEvent(overlapped.hEvent);
+    if (listener != INVALID_SOCKET)
+        closesocket(listener);
+    if (acceptor != INVALID_SOCKET)
+        closesocket(acceptor);
+    if (connector != INVALID_SOCKET)
+        closesocket(connector);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -2590,6 +2718,8 @@ START_TEST( sock )
 
     test_ipv6only();
     test_GetAddrInfoW();
+
+    test_AcceptEx();
 
     Exit();
 }
