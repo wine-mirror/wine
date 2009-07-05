@@ -88,6 +88,7 @@ MC_SRCS = \
 	nls/winerr_enu.mc \
 	nls/winerr_fra.mc \
 	nls/winerr_kor.mc \
+	nls/winerr_lth.mc \
 	nls/winerr_nld.mc \
 	nls/winerr_nor.mc \
 	nls/winerr_plk.mc
