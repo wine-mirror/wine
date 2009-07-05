@@ -54,10 +54,11 @@ static BOOL X11DRV_XRender_Installed = FALSE;
 #define RepeatReflect 3
 #endif
 
-#define MAX_FORMATS 9
+#define MAX_FORMATS 10
 typedef enum wine_xrformat
 {
   WXR_FORMAT_MONO,
+  WXR_FORMAT_GRAY,
   WXR_FORMAT_X1R5G5B5,
   WXR_FORMAT_X1B5G5R5,
   WXR_FORMAT_R5G6B5,
@@ -86,6 +87,7 @@ static const WineXRenderFormatTemplate wxr_formats_template[] =
 {
     /* Format               depth   alpha   mask    red     mask    green   mask    blue    mask*/
     {WXR_FORMAT_MONO,       1,      0,      0x01,   0,      0,      0,      0,      0,      0       },
+    {WXR_FORMAT_GRAY,       8,      0,      0xff,   0,      0,      0,      0,      0,      0       },
     {WXR_FORMAT_X1R5G5B5,   16,     0,      0,      10,     0x1f,   5,      0x1f,   0,      0x1f    },
     {WXR_FORMAT_X1B5G5R5,   16,     0,      0,      0,      0x1f,   5,      0x1f,   10,     0x1f    },
     {WXR_FORMAT_R5G6B5,     16,     0,      0,      11,     0x1f,   5,      0x3f,   0,      0x1f    },
@@ -121,7 +123,7 @@ typedef enum { AA_None = 0, AA_Grey, AA_RGB, AA_BGR, AA_VRGB, AA_VBGR, AA_MAXVAL
 typedef struct
 {
     GlyphSet glyphset;
-    XRenderPictFormat *font_format;
+    WineXRenderFormat *font_format;
     int nrealized;
     BOOL *realized;
     void **bitmaps;
@@ -828,8 +830,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
     gsCacheEntry *entry = glyphsetCache + physDev->xrender->cache_index;
     gsCacheEntryFormat *formatEntry;
     UINT ggo_format = GGO_GLYPH_INDEX;
-    XRenderPictFormat pf;
-    unsigned long pf_mask;
+    WXRFormat wxr_format;
     static const char zero[4];
     static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 
@@ -918,48 +919,28 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph, AA_Type format)
 
     if(formatEntry->glyphset == 0 && X11DRV_XRender_Installed) {
         switch(format) {
-	case AA_Grey:
-	    pf_mask = PictFormatType | PictFormatDepth | PictFormatAlpha | PictFormatAlphaMask,
-	    pf.type = PictTypeDirect;
-	    pf.depth = 8;
-	    pf.direct.alpha = 0;
-	    pf.direct.alphaMask = 0xff;
-	    break;
+            case AA_Grey:
+                wxr_format = WXR_FORMAT_GRAY;
+                break;
 
-        case AA_RGB:
-        case AA_BGR:
-        case AA_VRGB:
-        case AA_VBGR:
-	    pf_mask = PictFormatType | PictFormatDepth | PictFormatRed | PictFormatRedMask |
-                      PictFormatGreen | PictFormatGreenMask | PictFormatBlue |
-                      PictFormatBlueMask | PictFormatAlpha | PictFormatAlphaMask;
-            pf.type             = PictTypeDirect;
-            pf.depth            = 32;
-            pf.direct.red       = 16;
-            pf.direct.redMask   = 0xff;
-            pf.direct.green     = 8;
-            pf.direct.greenMask = 0xff;
-            pf.direct.blue      = 0;
-            pf.direct.blueMask  = 0xff;
-            pf.direct.alpha     = 24;
-            pf.direct.alphaMask = 0xff;
-            break;
+            case AA_RGB:
+            case AA_BGR:
+            case AA_VRGB:
+            case AA_VBGR:
+                wxr_format = WXR_FORMAT_A8R8G8B8;
+                break;
 
-	default:
-	    ERR("aa = %d - not implemented\n", format);
-	case AA_None:
-	    pf_mask = PictFormatType | PictFormatDepth | PictFormatAlpha | PictFormatAlphaMask,
-	    pf.type = PictTypeDirect;
-	    pf.depth = 1;
-	    pf.direct.alpha = 0;
-	    pf.direct.alphaMask = 1;
-	    break;
-	}
+            default:
+                ERR("aa = %d - not implemented\n", format);
+            case AA_None:
+                wxr_format = WXR_FORMAT_MONO;
+                break;
+        }
 
-	wine_tsx11_lock();
-	formatEntry->font_format = pXRenderFindFormat(gdi_display, pf_mask, &pf, 0);
-	formatEntry->glyphset = pXRenderCreateGlyphSet(gdi_display, formatEntry->font_format);
-	wine_tsx11_unlock();
+        wine_tsx11_lock();
+        formatEntry->font_format = get_xrender_format(wxr_format);
+        formatEntry->glyphset = pXRenderCreateGlyphSet(gdi_display, formatEntry->font_format->pict_format);
+        wine_tsx11_unlock();
     }
 
 
@@ -1571,7 +1552,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         pXRenderCompositeText16(gdi_display, render_op,
                                 tile_pict,
                                 physDev->xrender->pict,
-                                formatEntry->font_format,
+                                formatEntry->font_format->pict_format,
                                 0, 0, 0, 0, elts, count);
         wine_tsx11_unlock();
         HeapFree(GetProcessHeap(), 0, elts);
