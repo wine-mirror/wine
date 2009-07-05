@@ -3661,6 +3661,74 @@ static void test_mapidindex(void)
     DestroyWindow(hwnd);
 }
 
+static void test_getitemspacing(void)
+{
+    HWND hwnd;
+    DWORD ret;
+    INT cx, cy;
+    HIMAGELIST himl;
+    HBITMAP hbmp;
+    LVITEMA itema;
+
+    cx = GetSystemMetrics(SM_CXICONSPACING) - GetSystemMetrics(SM_CXICON);
+    cy = GetSystemMetrics(SM_CYICONSPACING) - GetSystemMetrics(SM_CYICON);
+
+    /* LVS_ICON */
+    hwnd = create_custom_listview_control(0);
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+todo_wine {
+    expect(cx, LOWORD(ret));
+    expect(cy, HIWORD(ret));
+}
+    /* now try with icons */
+    himl = ImageList_Create(40, 40, 0, 4, 4);
+    ok(himl != NULL, "failed to create imagelist\n");
+    hbmp = CreateBitmap(40, 40, 1, 1, NULL);
+    ok(hbmp != NULL, "failed to create bitmap\n");
+    ret = ImageList_Add(himl, hbmp, 0);
+    expect(0, ret);
+    ret = SendMessage(hwnd, LVM_SETIMAGELIST, 0, (LPARAM)himl);
+    expect(0, ret);
+
+    itema.mask = LVIF_IMAGE;
+    itema.iImage = 0;
+    itema.iItem = 0;
+    itema.iSubItem = 0;
+    ret = SendMessage(hwnd, LVM_INSERTITEM, 0, (LPARAM)&itema);
+    expect(0, ret);
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+todo_wine {
+    /* spacing + icon size returned */
+    expect(cx + 40, LOWORD(ret));
+    expect(cy + 40, HIWORD(ret));
+}
+    DestroyWindow(hwnd);
+    /* LVS_SMALLICON */
+    hwnd = create_custom_listview_control(LVS_SMALLICON);
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+todo_wine {
+    expect(cx, LOWORD(ret));
+    expect(cy, HIWORD(ret));
+}
+    DestroyWindow(hwnd);
+    /* LVS_REPORT */
+    hwnd = create_custom_listview_control(LVS_REPORT);
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+todo_wine {
+    expect(cx, LOWORD(ret));
+    expect(cy, HIWORD(ret));
+}
+    DestroyWindow(hwnd);
+    /* LVS_LIST */
+    hwnd = create_custom_listview_control(LVS_LIST);
+    ret = SendMessage(hwnd, LVM_GETITEMSPACING, FALSE, 0);
+todo_wine {
+    expect(cx, LOWORD(ret));
+    expect(cy, HIWORD(ret));
+}
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -3714,6 +3782,7 @@ START_TEST(listview)
     test_editbox();
     test_notifyformat();
     test_indentation();
+    test_getitemspacing();
 
     if (!load_v6_module(&ctx_cookie))
     {
