@@ -98,6 +98,9 @@ static void test_decode_24bpp(void)
             ok(SUCCEEDED(hr), "GetFrame failed, hr=%x\n", hr);
             if (SUCCEEDED(hr))
             {
+                IWICImagingFactory *factory;
+                IWICPalette *palette;
+
                 hr = IWICBitmapFrameDecode_GetSize(framedecode, &width, &height);
                 ok(SUCCEEDED(hr), "GetSize failed, hr=%x\n", hr);
                 ok(width == 2, "expected width=2, got %u\n", width);
@@ -111,6 +114,27 @@ static void test_decode_24bpp(void)
                 hr = IWICBitmapFrameDecode_GetPixelFormat(framedecode, &guidresult);
                 ok(SUCCEEDED(hr), "GetPixelFormat failed, hr=%x\n", hr);
                 ok(IsEqualGUID(&guidresult, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
+
+                hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+                    &IID_IWICImagingFactory, (void**)&factory);
+                ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IWICImagingFactory_CreatePalette(factory, &palette);
+                    ok(SUCCEEDED(hr), "CreatePalette failed, hr=%x\n", hr);
+                    if (SUCCEEDED(hr))
+                    {
+                        hr = IWICBitmapDecoder_CopyPalette(decoder, palette);
+                        ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "expected WINCODEC_ERR_PALETTEUNAVAILABLE, got %x\n", hr);
+
+                        hr = IWICBitmapFrameDecode_CopyPalette(framedecode, palette);
+                        ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "expected WINCODEC_ERR_PALETTEUNAVAILABLE, got %x\n", hr);
+
+                        IWICPalette_Release(palette);
+                    }
+
+                    IWICImagingFactory_Release(factory);
+                }
 
                 rc.X = 0;
                 rc.Y = 0;

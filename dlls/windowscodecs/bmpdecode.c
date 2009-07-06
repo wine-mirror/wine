@@ -189,8 +189,101 @@ static HRESULT WINAPI BmpFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return E_NOTIMPL;
+    HRESULT hr;
+    BmpFrameDecode *This = (BmpFrameDecode*)iface;
+    TRACE("(%p,%p)\n", iface, pIPalette);
+
+    if (This->bih.bV5Size == sizeof(BITMAPCOREHEADER))
+    {
+        BITMAPCOREHEADER *bch = (BITMAPCOREHEADER*)&This->bih;
+        if (bch->bcBitCount <= 8)
+        {
+            /* 2**n colors in BGR format after the header */
+            int count = 1 << bch->bcBitCount;
+            WICColor *wiccolors;
+            ULONG tablesize, bytesread;
+            RGBTRIPLE *bgrcolors;
+            LARGE_INTEGER offset;
+            int i;
+
+            wiccolors = HeapAlloc(GetProcessHeap(), 0, sizeof(WICColor) * count);
+            tablesize = sizeof(RGBTRIPLE) * count;
+            bgrcolors = HeapAlloc(GetProcessHeap(), 0, tablesize);
+            if (!wiccolors || !bgrcolors)
+            {
+                HeapFree(GetProcessHeap(), 0, wiccolors);
+                HeapFree(GetProcessHeap(), 0, bgrcolors);
+                return E_OUTOFMEMORY;
+            }
+
+            offset.QuadPart = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPCOREHEADER);
+            hr = IStream_Seek(This->stream, offset, STREAM_SEEK_SET, NULL);
+            if (FAILED(hr)) return hr;
+
+            hr = IStream_Read(This->stream, bgrcolors, tablesize, &bytesread);
+            if (FAILED(hr)) return hr;
+            if (bytesread != tablesize) return E_FAIL;
+
+            for (i=0; i<count; i++)
+            {
+                wiccolors[i] = 0xff000000|
+                               (bgrcolors[i].rgbtRed<<16)|
+                               (bgrcolors[i].rgbtGreen<<8)|
+                               bgrcolors[i].rgbtBlue;
+            }
+
+            hr = IWICPalette_InitializeCustom(pIPalette, wiccolors, count);
+
+            HeapFree(GetProcessHeap(), 0, wiccolors);
+            HeapFree(GetProcessHeap(), 0, bgrcolors);
+            return hr;
+        }
+        else
+        {
+            return WINCODEC_ERR_PALETTEUNAVAILABLE;
+        }
+    }
+    else
+    {
+        if (This->bih.bV5BitCount <= 8)
+        {
+            int count;
+            WICColor *wiccolors;
+            ULONG tablesize, bytesread;
+            LARGE_INTEGER offset;
+            int i;
+
+            if (This->bih.bV5ClrUsed == 0)
+                count = 1 << This->bih.bV5BitCount;
+            else
+                count = This->bih.bV5ClrUsed;
+
+            tablesize = sizeof(WICColor) * count;
+            wiccolors = HeapAlloc(GetProcessHeap(), 0, tablesize);
+            if (!wiccolors) return E_OUTOFMEMORY;
+
+            offset.QuadPart = sizeof(BITMAPFILEHEADER) + This->bih.bV5Size;
+            hr = IStream_Seek(This->stream, offset, STREAM_SEEK_SET, NULL);
+            if (FAILED(hr)) return hr;
+
+            hr = IStream_Read(This->stream, wiccolors, tablesize, &bytesread);
+            if (FAILED(hr)) return hr;
+            if (bytesread != tablesize) return E_FAIL;
+
+            /* convert from BGR to BGRA by setting alpha to 100% */
+            for (i=0; i<count; i++)
+                wiccolors[i] |= 0xff000000;
+
+            hr = IWICPalette_InitializeCustom(pIPalette, wiccolors, count);
+
+            HeapFree(GetProcessHeap(), 0, wiccolors);
+            return hr;
+        }
+        else
+        {
+            return WINCODEC_ERR_PALETTEUNAVAILABLE;
+        }
+    }
 }
 
 static HRESULT WINAPI BmpFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
@@ -536,8 +629,9 @@ static HRESULT WINAPI BmpDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
 static HRESULT WINAPI BmpDecoder_CopyPalette(IWICBitmapDecoder *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, pIPalette);
+
+    return WINCODEC_ERR_PALETTEUNAVAILABLE;
 }
 
 static HRESULT WINAPI BmpDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface,
