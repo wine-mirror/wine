@@ -6820,9 +6820,7 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	else
 	    opt.y = lpht->pt.y;
 
-	if (infoPtr->rcList.top > opt.y)
-	    lpht->flags |= LVHT_ABOVE;
-	else if (infoPtr->rcList.bottom < opt.y)
+	if (infoPtr->rcList.bottom < opt.y)
 	    lpht->flags |= LVHT_BELOW;
     }
     else
