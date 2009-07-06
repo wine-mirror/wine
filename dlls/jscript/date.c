@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Jacek Caban for CodeWeavers
+ * Copyright 2009 Piotr Caban
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2205,11 +2206,290 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, Disp
     return S_OK;
 }
 
+static inline HRESULT date_parse(BSTR input, VARIANT *retv) {
+    static const DWORD string_ids[] = { LOCALE_SMONTHNAME12, LOCALE_SMONTHNAME11,
+        LOCALE_SMONTHNAME10, LOCALE_SMONTHNAME9, LOCALE_SMONTHNAME8,
+        LOCALE_SMONTHNAME7, LOCALE_SMONTHNAME6, LOCALE_SMONTHNAME5,
+        LOCALE_SMONTHNAME4, LOCALE_SMONTHNAME3, LOCALE_SMONTHNAME2,
+        LOCALE_SMONTHNAME1, LOCALE_SDAYNAME7, LOCALE_SDAYNAME1,
+        LOCALE_SDAYNAME2, LOCALE_SDAYNAME3, LOCALE_SDAYNAME4,
+        LOCALE_SDAYNAME5, LOCALE_SDAYNAME6 };
+    BSTR strings[sizeof(string_ids)/sizeof(DWORD)];
+
+    BSTR parse;
+    int input_len, parse_len = 0, nest_level = 0, i, size;
+    int year = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0;
+    int ms = 0, offset = 0, hour_adjust = 0;
+    BOOL set_year = FALSE, set_month = FALSE, set_day = FALSE, set_hour = FALSE;
+    BOOL set_offset = FALSE, set_era = FALSE, ad = TRUE, set_am = FALSE, am = TRUE;
+    BOOL set_hour_adjust = TRUE;
+    TIME_ZONE_INFORMATION tzi;
+    DateInstance di;
+    DWORD lcid_en;
+
+    if(retv) num_set_nan(retv);
+
+    input_len = SysStringLen(input);
+    for(i=0; i<input_len; i++) {
+        if(input[i] == '(') nest_level++;
+        else if(input[i] == ')') {
+            nest_level--;
+            if(nest_level<0)
+                return S_OK;
+        }
+        else if(!nest_level) parse_len++;
+    }
+
+    parse = SysAllocStringLen(NULL, parse_len);
+    if(!parse)
+        return E_OUTOFMEMORY;
+    nest_level = 0;
+    parse_len = 0;
+    for(i=0; i<input_len; i++) {
+        if(input[i] == '(') nest_level++;
+        else if(input[i] == ')') nest_level--;
+        else if(!nest_level) parse[parse_len++] = toupperW(input[i]);
+    }
+
+    GetTimeZoneInformation(&tzi);
+    di.bias = tzi.Bias;
+    di.standardDate = tzi.StandardDate;
+    di.standardBias = tzi.StandardBias;
+    di.daylightDate = tzi.DaylightDate;
+    di.daylightBias = tzi.DaylightBias;
+
+    lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+    for(i=0; i<sizeof(string_ids)/sizeof(DWORD); i++) {
+        size = GetLocaleInfoW(lcid_en, string_ids[i], NULL, 0);
+        strings[i] = SysAllocStringLen(NULL, size);
+        if(!strings[i]) {
+            i--;
+            while(i-- >= 0)
+                SysFreeString(strings[i]);
+            SysFreeString(parse);
+            return E_OUTOFMEMORY;
+        }
+        GetLocaleInfoW(lcid_en, string_ids[i], strings[i], size);
+    }
+
+    for(i=0; i<parse_len;) {
+        while(isspaceW(parse[i])) i++;
+        if(parse[i] == ',') {
+            while(parse[i] == ',') i++;
+            continue;
+        }
+
+        if(parse[i]>='0' && parse[i]<='9') {
+            int tmp = atoiW(&parse[i]);
+            while(parse[i]>='0' && parse[i]<='9') i++;
+            while(isspaceW(parse[i])) i++;
+
+            if(parse[i] == ':') {
+                /* Time */
+                if(set_hour) break;
+                set_hour = TRUE;
+
+                hour = tmp;
+
+                while(parse[i] == ':') i++;
+                while(isspaceW(parse[i])) i++;
+                if(parse[i]>='0' && parse[i]<='9') {
+                    min = atoiW(&parse[i]);
+                    while(parse[i]>='0' && parse[i]<='9') i++;
+                }
+
+                while(isspaceW(parse[i])) i++;
+                while(parse[i] == ':') i++;
+                while(isspaceW(parse[i])) i++;
+                if(parse[i]>='0' && parse[i]<='9') {
+                    sec = atoiW(&parse[i]);
+                    while(parse[i]>='0' && parse[i]<='9') i++;
+                }
+            }
+            else if(parse[i]=='-' || parse[i]=='/') {
+                /* Short date */
+                if(set_day || set_month || set_year) break;
+                set_day = TRUE;
+                set_month = TRUE;
+                set_year = TRUE;
+
+                month = tmp-1;
+
+                while(isspaceW(parse[i])) i++;
+                while(parse[i]=='-' || parse[i]=='/') i++;
+                while(isspaceW(parse[i])) i++;
+                if(parse[i]<'0' || parse[i]>'9') break;
+                day = atoiW(&parse[i]);
+                while(parse[i]>='0' && parse[i]<='9') i++;
+
+                while(parse[i]=='-' || parse[i]=='/') i++;
+                while(isspaceW(parse[i])) i++;
+                if(parse[i]<'0' || parse[i]>'9') break;
+                year = atoiW(&parse[i]);
+                while(parse[i]>='0' && parse[i]<='9') i++;
+            }
+            else if(tmp<0) break;
+            else if(tmp<70) {
+                /* Day */
+                if(set_day) break;
+                set_day = TRUE;
+                day = tmp;
+            }
+            else {
+                /* Year */
+                if(set_year) break;
+                set_year = TRUE;
+                year = tmp;
+            }
+        }
+        else {
+            if(parse[i]<'A' || parse[i]>'Z') break;
+            else if(parse[i]=='B' && (parse[i+1]=='C' ||
+                        (parse[i+1]=='.' && parse[i+2]=='C'))) {
+                /* AD/BC */
+                if(set_era) break;
+                set_era = TRUE;
+                ad = FALSE;
+
+                i++;
+                if(parse[i] == '.') i++;
+                i++;
+                if(parse[i] == '.') i++;
+            }
+            else if(parse[i]=='A' && (parse[i+1]=='D' ||
+                        (parse[i+1]=='.' && parse[i+2]=='D'))) {
+                /* AD/BC */
+                if(set_era) break;
+                set_era = TRUE;
+
+                i++;
+                if(parse[i] == '.') i++;
+                i++;
+                if(parse[i] == '.') i++;
+            }
+            else if(parse[i+1]<'A' || parse[i+1]>'Z') {
+                /* Timezone */
+                if(set_offset) break;
+                set_offset = TRUE;
+
+                if(parse[i] <= 'I') hour_adjust = parse[i]-'A'+2;
+                else if(parse[i] == 'J') break;
+                else if(parse[i] <= 'M') hour_adjust = parse[i]-'K'+11;
+                else if(parse[i] <= 'Y') hour_adjust = parse[i]-'N';
+                else hour_adjust = 1;
+
+                i++;
+                if(parse[i] == '.') i++;
+            }
+            else if(parse[i]=='A' && parse[i+1]=='M') {
+                /* AM/PM */
+                if(set_am) break;
+                set_am = TRUE;
+                am = TRUE;
+                i += 2;
+            }
+            else if(parse[i]=='P' && parse[i+1]=='M') {
+                /* AM/PM */
+                if(set_am) break;
+                set_am = TRUE;
+                am = FALSE;
+                i += 2;
+            }
+            else if((parse[i]=='U' && parse[i+1]=='T' && parse[i+2]=='C')
+                    || (parse[i]=='G' && parse[i+1]=='M' && parse[i+2]=='T')) {
+                /* Timezone */
+                BOOL positive = TRUE;
+
+                if(set_offset) break;
+                set_offset = TRUE;
+                set_hour_adjust = FALSE;
+
+                i += 3;
+                while(isspaceW(parse[i])) i++;
+                if(parse[i] == '-')  positive = FALSE;
+                else if(parse[i] != '+') continue;
+
+                i++;
+                while(isspaceW(parse[i])) i++;
+                if(parse[i]<'0' || parse[i]>'9') break;
+                offset = atoiW(&parse[i]);
+                while(parse[i]>='0' && parse[i]<='9') i++;
+
+                if(offset<24) offset *= 60;
+                else offset = (offset/100)*60 + offset%100;
+
+                if(positive) offset = -offset;
+            }
+            else {
+                /* Month or garbage */
+                int j;
+
+                for(size=i; parse[size]>='A' && parse[size]<='Z'; size++);
+                size -= i;
+
+                for(j=0; j<sizeof(string_ids)/sizeof(DWORD); j++)
+                    if(!memicmpW(&parse[i], strings[j], size)) break;
+
+                if(j < 12) {
+                    if(set_month) break;
+                    set_month = TRUE;
+                    month = 11-j;
+                }
+                else if(j == sizeof(string_ids)/sizeof(DWORD)) break;
+
+                i += size;
+            }
+        }
+    }
+
+    if(retv && i==parse_len && set_year && set_month
+            && set_day && (!set_am || hour<13)) {
+        if(set_am) {
+            if(hour == 12) hour = 0;
+            if(!am) hour += 12;
+        }
+
+        if(!ad) year = -year+1;
+        else if(year<100) year += 1900;
+
+        V_VT(retv) = VT_R8;
+        V_R8(retv) = time_clip(make_date(make_day(year, month, day),
+                    make_time(hour+hour_adjust, min, sec, ms)) + offset*MS_PER_MINUTE);
+
+        if(set_hour_adjust) V_R8(retv) = utc(V_R8(retv), &di);
+    }
+
+    for(i=0; i<sizeof(string_ids)/sizeof(DWORD); i++)
+        SysFreeString(strings[i]);
+    SysFreeString(parse);
+
+    return S_OK;
+}
+
 static HRESULT DateConstr_parse(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT prim;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(!arg_cnt(dp)) {
+        if(retv)
+            num_set_nan(retv);
+        return S_OK;
+    }
+
+    hres = to_primitive(dispex->ctx, get_arg(dp,0), ei, &prim);
+    if(FAILED(hres))
+        return hres;
+    if(V_VT(&prim) != VT_BSTR) {
+        if(retv)
+            num_set_nan(retv);
+        return S_OK;
+    }
+
+    return date_parse(V_BSTR(&prim), retv);
 }
 
 static HRESULT DateConstr_UTC(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
