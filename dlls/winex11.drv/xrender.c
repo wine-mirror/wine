@@ -390,6 +390,29 @@ sym_not_found:
     else TRACE("Using X11 core fonts\n");
 }
 
+/* Helper function to convert from a color packed in a 32-bit integer to a XRenderColor */
+static void get_xrender_color(WineXRenderFormat *wxr_format, int src_color, XRenderColor *dst_color)
+{
+    XRenderPictFormat *pf = wxr_format->pict_format;
+
+    if(pf->direct.redMask)
+        dst_color->red = ((src_color >> pf->direct.red) & pf->direct.redMask) * 65535/pf->direct.redMask;
+    else
+       dst_color->red = 0;
+
+    if(pf->direct.greenMask)
+        dst_color->green = ((src_color >> pf->direct.green) & pf->direct.greenMask) * 65535/pf->direct.greenMask;
+    else
+        dst_color->green = 0;
+
+    if(pf->direct.blueMask)
+        dst_color->blue = ((src_color >> pf->direct.blue) & pf->direct.blueMask) * 65535/pf->direct.blueMask;
+    else
+        dst_color->blue = 0;
+
+    dst_color->alpha = 0xffff;
+}
+
 static WineXRenderFormat *get_xrender_format(WXRFormat format)
 {
     int i;
@@ -1323,23 +1346,7 @@ static Picture get_tile_pict(WineXRenderFormat *wxr_format, int text_pixel)
 
     if(text_pixel != tile->current_color && wxr_format->format != WXR_FORMAT_MONO)
     {
-        /* Map 0 -- 0xff onto 0 -- 0xffff */
-        int r_shift, r_len;
-        int g_shift, g_len;
-        int b_shift, b_len;
-
-        ExamineBitfield (visual->red_mask, &r_shift, &r_len );
-        ExamineBitfield (visual->green_mask, &g_shift, &g_len);
-        ExamineBitfield (visual->blue_mask, &b_shift, &b_len);
-
-        col.red = GetField(text_pixel, r_shift, r_len);
-        col.red |= col.red << 8;
-        col.green = GetField(text_pixel, g_shift, g_len);
-        col.green |= col.green << 8;
-        col.blue = GetField(text_pixel, b_shift, b_len);
-        col.blue |= col.blue << 8;
-        col.alpha = 0xffff;
-
+        get_xrender_color(wxr_format, text_pixel, &col);
         wine_tsx11_lock();
         pXRenderFillRectangle(gdi_display, PictOpSrc, tile->pict, &col, 0, 0, 1, 1);
         wine_tsx11_unlock();
