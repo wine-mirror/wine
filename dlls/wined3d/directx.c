@@ -471,6 +471,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     unsigned    i;
     HDC         hdc;
     unsigned int vidmem=0;
+    DWORD gl_version;
 
     TRACE_(d3d_caps)("(%p)\n", gl_info);
 
@@ -539,7 +540,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
 
     minor = atoi(gl_string_cursor);
     TRACE_(d3d_caps)("Found OpenGL version: %d.%d.\n", major, minor);
-    gl_info->gl_version = MAKEDWORD_VERSION(major, minor);
+    gl_version = MAKEDWORD_VERSION(major, minor);
 
     /* Now parse the driver specific string which we'll report to the app. */
     switch (gl_info->gl_vendor)
@@ -765,7 +766,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
 { \
     DWORD ver = ver_for_ext(ext); \
     if (gl_info->supported[ext]) gl_info->pfn = (type)pwglGetProcAddress(#pfn); \
-    else if (ver && ver <= gl_info->gl_version) gl_info->pfn = (type)pwglGetProcAddress(#replace); \
+    else if (ver && ver <= gl_version) gl_info->pfn = (type)pwglGetProcAddress(#replace); \
     else gl_info->pfn = NULL; \
 }
     GL_EXT_FUNCS_GEN;
@@ -783,7 +784,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i)
     {
         if (!gl_info->supported[EXTENSION_MAP[i].extension]
-                && EXTENSION_MAP[i].version <= gl_info->gl_version && EXTENSION_MAP[i].version)
+                && EXTENSION_MAP[i].version <= gl_version && EXTENSION_MAP[i].version)
         {
             TRACE_(d3d_caps)(" GL CORE: %s support.\n", EXTENSION_MAP[i].extension_string);
             gl_info->supported[EXTENSION_MAP[i].extension] = TRUE;

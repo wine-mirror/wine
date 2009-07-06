@@ -3949,10 +3949,6 @@ typedef BOOL (WINAPI * WINED3D_PFNWGLSETPIXELFORMATWINE) (HDC hdc, int iPixelFor
 
 #define USE_GL_FUNC(type, pfn, ext, replace) type pfn;
 typedef struct _WineD3D_GL_Info {
-
-  DWORD  glx_version;
-  DWORD  gl_version;
-
   GL_Vendors gl_vendor;
   GL_Cards   gl_card;
   UINT   vidmem;
