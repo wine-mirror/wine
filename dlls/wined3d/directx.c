@@ -459,6 +459,8 @@ static DWORD ver_for_ext(GL_SupportedExt ext)
     return 0;
 }
 
+static void fixup_extensions(WineD3D_GL_Info *gl_info, const char *gl_renderer);
+
 /* Context activation is done by the caller. */
 static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     const char *GL_Extensions    = NULL;
@@ -471,7 +473,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     unsigned    i;
     HDC         hdc;
     unsigned int vidmem=0;
+    char *gl_renderer;
     DWORD gl_version;
+    size_t len;
 
     TRACE_(d3d_caps)("(%p)\n", gl_info);
 
@@ -484,13 +488,22 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         ERR_(d3d_caps)("Received a NULL GL_RENDERER.\n");
         return FALSE;
     }
-    strcpy(gl_info->gl_renderer, gl_string);
+
+    len = strlen(gl_string) + 1;
+    gl_renderer = HeapAlloc(GetProcessHeap(), 0, len);
+    if (!gl_renderer)
+    {
+        ERR_(d3d_caps)("Failed to allocate gl_renderer memory.\n");
+        return FALSE;
+    }
+    memcpy(gl_renderer, gl_string, len);
 
     gl_string = (const char *)glGetString(GL_VENDOR);
     TRACE_(d3d_caps)("GL_VENDOR: %s.\n", gl_string);
     if (!gl_string)
     {
         ERR_(d3d_caps)("Received a NULL GL_VENDOR.\n");
+        HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
 
@@ -504,7 +517,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
         gl_info->gl_vendor = VENDOR_ATI;
     }
     else if (strstr(gl_string, "Intel(R)")
-            || strstr(gl_info->gl_renderer, "Intel(R)")
+            || strstr(gl_renderer, "Intel(R)")
             || strstr(gl_string, "Intel Inc."))
     {
         gl_info->gl_vendor = VENDOR_INTEL;
@@ -526,6 +539,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     if (!gl_string)
     {
         ERR_(d3d_caps)("Received a NULL GL_VERSION.\n");
+        HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
 
@@ -724,6 +738,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     if (!GL_Extensions)
     {
         ERR_(d3d_caps)("Received a NULL GL_EXTENSIONS.\n");
+        HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
 
@@ -735,7 +750,6 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     {
         const char *start;
         char current_ext[256];
-        size_t len;
 
         while (isspace(*GL_Extensions)) ++GL_Extensions;
         start = GL_Extensions;
@@ -1110,118 +1124,128 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              */
             if(WINE_D3D9_CAPABLE(gl_info) && (gl_info->vs_nv_version == VS_VERSION_30)) {
                 /* Geforce 200 - highend */
-                if(strstr(gl_info->gl_renderer, "GTX 280") ||
-                   strstr(gl_info->gl_renderer, "GTX 285") ||
-                   strstr(gl_info->gl_renderer, "GTX 295"))
+                if (strstr(gl_renderer, "GTX 280")
+                        || strstr(gl_renderer, "GTX 285")
+                        || strstr(gl_renderer, "GTX 295"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_GTX280;
                     vidmem = 1024;
                 }
                 /* Geforce 200 - midend high */
-                if(strstr(gl_info->gl_renderer, "GTX 275")) {
+                if (strstr(gl_renderer, "GTX 275"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_GTX275;
                     vidmem = 896;
                 }
                 /* Geforce 200 - midend */
-                if(strstr(gl_info->gl_renderer, "GTX 260")) {
+                if (strstr(gl_renderer, "GTX 260"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_GTX260;
                     vidmem = 1024;
                 }
                 /* Geforce9 - highend / Geforce 200 - midend (GTS 150/250 are based on the same core) */
-                else if(strstr(gl_info->gl_renderer, "9800") ||
-                        strstr(gl_info->gl_renderer, "GTS 150") ||
-                        strstr(gl_info->gl_renderer, "GTS 250"))
+                else if (strstr(gl_renderer, "9800")
+                        || strstr(gl_renderer, "GTS 150")
+                        || strstr(gl_renderer, "GTS 250"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_9800GT;
                     vidmem = 512;
                 }
                 /* Geforce9 - midend */
-                else if(strstr(gl_info->gl_renderer, "9600")) {
+                else if (strstr(gl_renderer, "9600"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_9600GT;
                     vidmem = 384; /* The 9600GSO has 384MB, the 9600GT has 512-1024MB */
                 }
                 /* Geforce9 - midend low / Geforce 200 - low*/
-                else if(strstr(gl_info->gl_renderer, "9500") ||
-                        strstr(gl_info->gl_renderer, "GT 120") ||
-                        strstr(gl_info->gl_renderer, "GT 130"))
+                else if (strstr(gl_renderer, "9500")
+                        || strstr(gl_renderer, "GT 120")
+                        || strstr(gl_renderer, "GT 130"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_9500GT;
                     vidmem = 256; /* The 9500GT has 256-1024MB */
                 }
                 /* Geforce9 - lowend */
-                else if(strstr(gl_info->gl_renderer, "9400")) {
+                else if (strstr(gl_renderer, "9400"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_9400GT;
                     vidmem = 256; /* The 9400GT has 256-1024MB */
                 }
                 /* Geforce9 - lowend low */
-                else if(strstr(gl_info->gl_renderer, "9100") ||
-                        strstr(gl_info->gl_renderer, "9200") ||
-                        strstr(gl_info->gl_renderer, "9300") ||
-                        strstr(gl_info->gl_renderer, "G 100"))
+                else if (strstr(gl_renderer, "9100")
+                        || strstr(gl_renderer, "9200")
+                        || strstr(gl_renderer, "9300")
+                        || strstr(gl_renderer, "G 100"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_9200;
                     vidmem = 256; /* The 9100-9300 cards have 256MB */
                 }
                 /* Geforce8 - highend */
-                else if (strstr(gl_info->gl_renderer, "8800")) {
+                else if (strstr(gl_renderer, "8800"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_8800GTS;
                     vidmem = 320; /* The 8800GTS uses 320MB, a 8800GTX can have 768MB */
                 }
                 /* Geforce8 - midend mobile */
-                else if(strstr(gl_info->gl_renderer, "8600 M")) {
+                else if (strstr(gl_renderer, "8600 M"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_8600MGT;
                     vidmem = 512;
                 }
                 /* Geforce8 - midend */
-                else if(strstr(gl_info->gl_renderer, "8600") ||
-                        strstr(gl_info->gl_renderer, "8700"))
+                else if (strstr(gl_renderer, "8600")
+                        || strstr(gl_renderer, "8700"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_8600GT;
                     vidmem = 256;
                 }
                 /* Geforce8 - lowend */
-                else if(strstr(gl_info->gl_renderer, "8300") ||
-                        strstr(gl_info->gl_renderer, "8400") ||
-                        strstr(gl_info->gl_renderer, "8500"))
+                else if (strstr(gl_renderer, "8300")
+                        || strstr(gl_renderer, "8400")
+                        || strstr(gl_renderer, "8500"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_8300GS;
                     vidmem = 128; /* 128-256MB for a 8300, 256-512MB for a 8400 */
                 }
                 /* Geforce7 - highend */
-                else if(strstr(gl_info->gl_renderer, "7800") ||
-                        strstr(gl_info->gl_renderer, "7900") ||
-                        strstr(gl_info->gl_renderer, "7950") ||
-                        strstr(gl_info->gl_renderer, "Quadro FX 4") ||
-                        strstr(gl_info->gl_renderer, "Quadro FX 5"))
+                else if (strstr(gl_renderer, "7800")
+                        || strstr(gl_renderer, "7900")
+                        || strstr(gl_renderer, "7950")
+                        || strstr(gl_renderer, "Quadro FX 4")
+                        || strstr(gl_renderer, "Quadro FX 5"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_7800GT;
                     vidmem = 256; /* A 7800GT uses 256MB while highend 7900 cards can use 512MB */
                 }
                 /* Geforce7 midend */
-                else if(strstr(gl_info->gl_renderer, "7600") ||
-                        strstr(gl_info->gl_renderer, "7700")) {
+                else if (strstr(gl_renderer, "7600")
+                        || strstr(gl_renderer, "7700"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_7600;
                     vidmem = 256; /* The 7600 uses 256-512MB */
                 /* Geforce7 lower medium */
-                } else if(strstr(gl_info->gl_renderer, "7400")) {
+                }
+                else if (strstr(gl_renderer, "7400"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_7400;
                     vidmem = 256; /* The 7400 uses 256-512MB */
                 }
                 /* Geforce7 lowend */
-                else if(strstr(gl_info->gl_renderer, "7300")) {
+                else if (strstr(gl_renderer, "7300"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_7300;
                     vidmem = 256; /* Mac Pros with this card have 256 MB */
                 }
                 /* Geforce6 highend */
-                else if(strstr(gl_info->gl_renderer, "6800"))
+                else if (strstr(gl_renderer, "6800"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_6800;
                     vidmem = 128; /* The 6800 uses 128-256MB, the 7600 uses 256-512MB */
                 }
                 /* Geforce6 - midend */
-                else if(strstr(gl_info->gl_renderer, "6600") ||
-                        strstr(gl_info->gl_renderer, "6610") ||
-                        strstr(gl_info->gl_renderer, "6700"))
+                else if (strstr(gl_renderer, "6600")
+                        || strstr(gl_renderer, "6610")
+                        || strstr(gl_renderer, "6700"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_6600GT;
                     vidmem = 128; /* A 6600GT has 128-256MB */
@@ -1233,19 +1257,19 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                 }
             } else if(WINE_D3D9_CAPABLE(gl_info)) {
                 /* GeforceFX - highend */
-                if (strstr(gl_info->gl_renderer, "5800") ||
-                    strstr(gl_info->gl_renderer, "5900") ||
-                    strstr(gl_info->gl_renderer, "5950") ||
-                    strstr(gl_info->gl_renderer, "Quadro FX"))
+                if (strstr(gl_renderer, "5800")
+                        || strstr(gl_renderer, "5900")
+                        || strstr(gl_renderer, "5950")
+                        || strstr(gl_renderer, "Quadro FX"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5800;
                     vidmem = 256; /* 5800-5900 cards use 256MB */
                 }
                 /* GeforceFX - midend */
-                else if(strstr(gl_info->gl_renderer, "5600") ||
-                        strstr(gl_info->gl_renderer, "5650") ||
-                        strstr(gl_info->gl_renderer, "5700") ||
-                        strstr(gl_info->gl_renderer, "5750"))
+                else if (strstr(gl_renderer, "5600")
+                        || strstr(gl_renderer, "5650")
+                        || strstr(gl_renderer, "5700")
+                        || strstr(gl_renderer, "5750"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5600;
                     vidmem = 128; /* A 5600 uses 128-256MB */
@@ -1256,37 +1280,45 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     vidmem = 64; /* Normal FX5200 cards use 64-256MB; laptop (non-standard) can have less */
                 }
             } else if(WINE_D3D8_CAPABLE(gl_info)) {
-                if (strstr(gl_info->gl_renderer, "GeForce4 Ti") || strstr(gl_info->gl_renderer, "Quadro4")) {
+                if (strstr(gl_renderer, "GeForce4 Ti") || strstr(gl_renderer, "Quadro4"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4200; /* Geforce4 Ti4200/Ti4400/Ti4600/Ti4800, Quadro4 */
                     vidmem = 64; /* Geforce4 Ti cards have 64-128MB */
                 }
-                else {
+                else
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE3; /* Geforce3 standard/Ti200/Ti500, Quadro DCC */
                     vidmem = 64; /* Geforce3 cards have 64-128MB */
                 }
             } else if(WINE_D3D7_CAPABLE(gl_info)) {
-                if (strstr(gl_info->gl_renderer, "GeForce4 MX")) {
+                if (strstr(gl_renderer, "GeForce4 MX"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE4_MX; /* MX420/MX440/MX460/MX4000 */
                     vidmem = 64; /* Most Geforce4MX GPUs have at least 64MB of memory, some early models had 32MB but most have 64MB or even 128MB */
                 }
-                else if(strstr(gl_info->gl_renderer, "GeForce2 MX") || strstr(gl_info->gl_renderer, "Quadro2 MXR")) {
+                else if(strstr(gl_renderer, "GeForce2 MX") || strstr(gl_renderer, "Quadro2 MXR"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE2_MX; /* Geforce2 standard/MX100/MX200/MX400, Quadro2 MXR */
                     vidmem = 32; /* Geforce2MX GPUs have 32-64MB of video memory */
                 }
-                else if(strstr(gl_info->gl_renderer, "GeForce2") || strstr(gl_info->gl_renderer, "Quadro2")) {
+                else if(strstr(gl_renderer, "GeForce2") || strstr(gl_renderer, "Quadro2"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE2; /* Geforce2 GTS/Pro/Ti/Ultra, Quadro2 */
                     vidmem = 32; /* Geforce2 GPUs have 32-64MB of video memory */
                 }
-                else {
+                else
+                {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE; /* Geforce 256/DDR, Quadro */
                     vidmem = 32; /* Most Geforce1 cards have 32MB, there are also some rare 16 and 64MB (Dell) models */
                 }
             } else {
-                if (strstr(gl_info->gl_renderer, "TNT2")) {
+                if (strstr(gl_renderer, "TNT2"))
+                {
                     gl_info->gl_card = CARD_NVIDIA_RIVA_TNT2; /* Riva TNT2 standard/M64/Pro/Ultra */
                     vidmem = 32; /* Most TNT2 boards have 32MB, though there are 16MB boards too */
                 }
-                else {
+                else
+                {
                     gl_info->gl_card = CARD_NVIDIA_RIVA_TNT; /* Riva TNT, Vanta */
                     vidmem = 16; /* Most TNT boards have 16MB, some rare models have 8MB */
                 }
@@ -1300,97 +1332,97 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
              */
             if(WINE_D3D9_CAPABLE(gl_info)) {
                 /* Radeon R7xx HD4800 - highend */
-                if (strstr(gl_info->gl_renderer, "HD 4800") || /* Radeon RV7xx HD48xx generic renderer string */
-                    strstr(gl_info->gl_renderer, "HD 4830") || /* Radeon RV770 */
-                    strstr(gl_info->gl_renderer, "HD 4850") || /* Radeon RV770 */
-                    strstr(gl_info->gl_renderer, "HD 4870") || /* Radeon RV770 */
-                    strstr(gl_info->gl_renderer, "HD 4890"))   /* Radeon RV790 */
+                if (strstr(gl_renderer, "HD 4800")          /* Radeon RV7xx HD48xx generic renderer string */
+                        || strstr(gl_renderer, "HD 4830")   /* Radeon RV770 */
+                        || strstr(gl_renderer, "HD 4850")   /* Radeon RV770 */
+                        || strstr(gl_renderer, "HD 4870")   /* Radeon RV770 */
+                        || strstr(gl_renderer, "HD 4890"))  /* Radeon RV790 */
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD4800;
                     vidmem = 512; /* note: HD4890 cards use 1024MB */
                 }
                 /* Radeon R740 HD4700 - midend */
-                else if (strstr(gl_info->gl_renderer, "HD 4700") || /* Radeon RV770 */
-                         strstr(gl_info->gl_renderer, "HD 4770"))   /* Radeon RV740 */
+                else if (strstr(gl_renderer, "HD 4700")     /* Radeon RV770 */
+                        || strstr(gl_renderer, "HD 4770"))  /* Radeon RV740 */
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD4700;
                     vidmem = 512;
                 }
                 /* Radeon R730 HD4600 - midend */
-                else if (strstr(gl_info->gl_renderer, "HD 4600") || /* Radeon RV730 */
-                         strstr(gl_info->gl_renderer, "HD 4650") || /* Radeon RV730 */
-                         strstr(gl_info->gl_renderer, "HD 4670"))   /* Radeon RV730 */
+                else if (strstr(gl_renderer, "HD 4600")     /* Radeon RV730 */
+                        || strstr(gl_renderer, "HD 4650")   /* Radeon RV730 */
+                        || strstr(gl_renderer, "HD 4670"))  /* Radeon RV730 */
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD4600;
                     vidmem = 512;
                 }
                 /* Radeon R710 HD4500/HD4350 - lowend */
-                else if (strstr(gl_info->gl_renderer, "HD 4350") || /* Radeon RV710 */
-                         strstr(gl_info->gl_renderer, "HD 4550"))   /* Radeon RV710 */
+                else if (strstr(gl_renderer, "HD 4350")     /* Radeon RV710 */
+                        || strstr(gl_renderer, "HD 4550"))  /* Radeon RV710 */
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD4350;
                     vidmem = 256;
                 }
                 /* Radeon R6xx HD2900/HD3800 - highend */
-                else if (strstr(gl_info->gl_renderer, "HD 2900") ||
-                         strstr(gl_info->gl_renderer, "HD 3870") ||
-                         strstr(gl_info->gl_renderer, "HD 3850"))
+                else if (strstr(gl_renderer, "HD 2900")
+                        || strstr(gl_renderer, "HD 3870")
+                        || strstr(gl_renderer, "HD 3850"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD2900;
                     vidmem = 512; /* HD2900/HD3800 uses 256-1024MB */
                 }
                 /* Radeon R6xx HD2600/HD3600 - midend; HD3830 is China-only midend */
-                else if (strstr(gl_info->gl_renderer, "HD 2600") ||
-                         strstr(gl_info->gl_renderer, "HD 3830") ||
-                         strstr(gl_info->gl_renderer, "HD 3690") ||
-                         strstr(gl_info->gl_renderer, "HD 3650"))
+                else if (strstr(gl_renderer, "HD 2600")
+                        || strstr(gl_renderer, "HD 3830")
+                        || strstr(gl_renderer, "HD 3690")
+                        || strstr(gl_renderer, "HD 3650"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD2600;
                     vidmem = 256; /* HD2600/HD3600 uses 256-512MB */
                 }
                 /* Radeon R6xx HD2300/HD2400/HD3400 - lowend */
-                else if (strstr(gl_info->gl_renderer, "HD 2300") ||
-                         strstr(gl_info->gl_renderer, "HD 2400") ||
-                         strstr(gl_info->gl_renderer, "HD 3470") ||
-                         strstr(gl_info->gl_renderer, "HD 3450") ||
-                         strstr(gl_info->gl_renderer, "HD 3430") ||
-                         strstr(gl_info->gl_renderer, "HD 3400"))
+                else if (strstr(gl_renderer, "HD 2300")
+                        || strstr(gl_renderer, "HD 2400")
+                        || strstr(gl_renderer, "HD 3470")
+                        || strstr(gl_renderer, "HD 3450")
+                        || strstr(gl_renderer, "HD 3430")
+                        || strstr(gl_renderer, "HD 3400"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD2300;
                     vidmem = 128; /* HD2300 uses at least 128MB, HD2400 uses 256MB */
                 }
                 /* Radeon R6xx/R7xx integrated */
-                else if (strstr(gl_info->gl_renderer, "HD 3100") ||
-                         strstr(gl_info->gl_renderer, "HD 3200") ||
-                         strstr(gl_info->gl_renderer, "HD 3300"))
+                else if (strstr(gl_renderer, "HD 3100")
+                        || strstr(gl_renderer, "HD 3200")
+                        || strstr(gl_renderer, "HD 3300"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_HD3200;
                     vidmem = 128; /* 128MB */
                 }
                 /* Radeon R5xx */
-                else if (strstr(gl_info->gl_renderer, "X1600") ||
-                         strstr(gl_info->gl_renderer, "X1650") ||
-                         strstr(gl_info->gl_renderer, "X1800") ||
-                         strstr(gl_info->gl_renderer, "X1900") ||
-                         strstr(gl_info->gl_renderer, "X1950"))
+                else if (strstr(gl_renderer, "X1600")
+                        || strstr(gl_renderer, "X1650")
+                        || strstr(gl_renderer, "X1800")
+                        || strstr(gl_renderer, "X1900")
+                        || strstr(gl_renderer, "X1950"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_X1600;
                     vidmem = 128; /* X1600 uses 128-256MB, >=X1800 uses 256MB */
                 }
                 /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300 (lowend R5xx) */
-                else if(strstr(gl_info->gl_renderer, "X700") ||
-                        strstr(gl_info->gl_renderer, "X800") ||
-                        strstr(gl_info->gl_renderer, "X850") ||
-                        strstr(gl_info->gl_renderer, "X1300") ||
-                        strstr(gl_info->gl_renderer, "X1400") ||
-                        strstr(gl_info->gl_renderer, "X1450") ||
-                        strstr(gl_info->gl_renderer, "X1550"))
+                else if(strstr(gl_renderer, "X700")
+                        || strstr(gl_renderer, "X800")
+                        || strstr(gl_renderer, "X850")
+                        || strstr(gl_renderer, "X1300")
+                        || strstr(gl_renderer, "X1400")
+                        || strstr(gl_renderer, "X1450")
+                        || strstr(gl_renderer, "X1550"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_X700;
                     vidmem = 128; /* x700/x8*0 use 128-256MB, >=x1300 128-512MB */
                 }
                 /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400MHz */
-                else if(strstr(gl_info->gl_renderer, "Radeon Xpress"))
+                else if(strstr(gl_renderer, "Radeon Xpress"))
                 {
                     gl_info->gl_card = CARD_ATI_RADEON_XPRESS_200M;
                     vidmem = 64; /* Shared RAM, BIOS configurable, 64-256M */
@@ -1412,20 +1444,31 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             }
             break;
         case VENDOR_INTEL:
-            if (strstr(gl_info->gl_renderer, "GMA 950") ||
-                strstr(gl_info->gl_renderer, "945GM")) {
+            if (strstr(gl_renderer, "GMA 950")
+                    || strstr(gl_renderer, "945GM"))
+            {
                 /* MacOS calls the card GMA 950, but everywhere else the PCI ID is named 945GM */
                 gl_info->gl_card = CARD_INTEL_I945GM;
                 vidmem = 64;
-            } else if (strstr(gl_info->gl_renderer, "915GM")) {
+            }
+            else if (strstr(gl_renderer, "915GM"))
+            {
                 gl_info->gl_card = CARD_INTEL_I915GM;
-            } else if (strstr(gl_info->gl_renderer, "915G")) {
+            }
+            else if (strstr(gl_renderer, "915G"))
+            {
                 gl_info->gl_card = CARD_INTEL_I915G;
-            } else if (strstr(gl_info->gl_renderer, "865G")) {
+            }
+            else if (strstr(gl_renderer, "865G"))
+            {
                 gl_info->gl_card = CARD_INTEL_I865G;
-            } else if (strstr(gl_info->gl_renderer, "855G")) {
+            }
+            else if (strstr(gl_renderer, "855G"))
+            {
                 gl_info->gl_card = CARD_INTEL_I855G;
-            } else if (strstr(gl_info->gl_renderer, "830G")) {
+            }
+            else if (strstr(gl_renderer, "830G"))
+            {
                 gl_info->gl_card = CARD_INTEL_I830G;
             } else {
                 gl_info->gl_card = CARD_INTEL_I915G;
@@ -1513,7 +1556,6 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
             while (*WGL_Extensions != 0x00) {
                 const char *Start;
                 char ThisExtn[256];
-                size_t len;
 
                 while (isspace(*WGL_Extensions)) WGL_Extensions++;
                 Start = WGL_Extensions;
@@ -1546,6 +1588,10 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     }
     LEAVE_GL();
 
+    fixup_extensions(gl_info, gl_renderer);
+    add_gl_compat_wrappers(gl_info);
+
+    HeapFree(GetProcessHeap(), 0, gl_renderer);
     return TRUE;
 }
 
@@ -3913,7 +3959,7 @@ ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
     return IUnknown_Release(volumeParent);
 }
 
-static BOOL match_apple(const WineD3D_GL_Info *gl_info)
+static BOOL match_apple(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
 {
     /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
      * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
@@ -4076,7 +4122,8 @@ static const struct driver_version_information driver_version_table[] = {
     /* TODO: Add information about legacy ATI hardware, Intel and other cards */
 };
 
-static BOOL match_ati_r300_to_500(const WineD3D_GL_Info *gl_info) {
+static BOOL match_ati_r300_to_500(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
     if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
     if(gl_info->gl_card == CARD_ATI_RADEON_9500) return TRUE;
     if(gl_info->gl_card == CARD_ATI_RADEON_X700) return TRUE;
@@ -4084,7 +4131,8 @@ static BOOL match_ati_r300_to_500(const WineD3D_GL_Info *gl_info) {
     return FALSE;
 }
 
-static BOOL match_geforce5(const WineD3D_GL_Info *gl_info) {
+static BOOL match_geforce5(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
     if(gl_info->gl_vendor == VENDOR_NVIDIA) {
         if(gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5800 || gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5600) {
             return TRUE;
@@ -4093,25 +4141,29 @@ static BOOL match_geforce5(const WineD3D_GL_Info *gl_info) {
     return FALSE;
 }
 
-static BOOL match_apple_intel(const WineD3D_GL_Info *gl_info) {
-    return gl_info->gl_vendor == VENDOR_INTEL && match_apple(gl_info);
+static BOOL match_apple_intel(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    return gl_info->gl_vendor == VENDOR_INTEL && match_apple(gl_info, gl_renderer);
 }
 
-static BOOL match_apple_nonr500ati(const WineD3D_GL_Info *gl_info) {
-    if(!match_apple(gl_info)) return FALSE;
+static BOOL match_apple_nonr500ati(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    if(!match_apple(gl_info, gl_renderer)) return FALSE;
     if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
     if(gl_info->gl_card == CARD_ATI_RADEON_X1600) return FALSE;
     return TRUE;
 }
 
-static BOOL match_fglrx(const WineD3D_GL_Info *gl_info) {
+static BOOL match_fglrx(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
     if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
-    if(match_apple(gl_info)) return FALSE;
-    if(strstr(gl_info->gl_renderer, "DRI")) return FALSE; /* Filter out Mesa DRI drivers */
+    if(match_apple(gl_info, gl_renderer)) return FALSE;
+    if (strstr(gl_renderer, "DRI")) return FALSE; /* Filter out Mesa DRI drivers */
     return TRUE;
 }
 
-static BOOL match_dx10_capable(const WineD3D_GL_Info *gl_info) {
+static BOOL match_dx10_capable(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
     /* DX9 cards support 40 single float varyings in hardware, most drivers report 32. ATI misreports
      * 44 varyings. So assume that if we have more than 44 varyings we have a dx10 card.
      * This detection is for the gl_ClipPos varying quirk. If a d3d9 card really supports more than 44
@@ -4232,7 +4284,7 @@ static void quirk_clip_varying(WineD3D_GL_Info *gl_info) {
 
 struct driver_quirk
 {
-    BOOL (*match)(const WineD3D_GL_Info *gl_info);
+    BOOL (*match)(const WineD3D_GL_Info *gl_info, const char *gl_renderer);
     void (*apply)(WineD3D_GL_Info *gl_info);
     const char *description;
 };
@@ -4283,11 +4335,12 @@ struct driver_quirk quirk_table[] = {
 };
 
 /* Context activation is done by the caller. */
-static void fixup_extensions(WineD3D_GL_Info *gl_info) {
+static void fixup_extensions(WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
     unsigned int i;
 
     for(i = 0; i < (sizeof(quirk_table) / sizeof(*quirk_table)); i++) {
-        if(!quirk_table[i].match(gl_info)) continue;
+        if (!quirk_table[i].match(gl_info, gl_renderer)) continue;
         TRACE_(d3d_caps)("Applying driver quirk \"%s\"\n", quirk_table[i].description);
         quirk_table[i].apply(gl_info);
     }
@@ -4743,9 +4796,6 @@ BOOL InitAdapters(IWineD3DImpl *This)
                 break;
             }
         }
-
-        fixup_extensions(&adapter->gl_info);
-        add_gl_compat_wrappers(&adapter->gl_info);
 
         WineD3D_ReleaseFakeGLContext(&fake_gl_ctx);
 
