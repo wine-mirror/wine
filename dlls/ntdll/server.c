@@ -94,7 +94,8 @@ static const enum cpu_type client_cpu = CPU_SPARC;
 #error Unsupported CPU
 #endif
 
-unsigned int server_cpus = 0;
+static unsigned int server_cpus;
+int is_wow64 = FALSE;
 
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
 /* data structure used to pass an fd with sendmsg/recvmsg */
@@ -1080,6 +1081,11 @@ size_t server_init_thread( void *entry_point )
         server_cpus       = reply->all_cpus;
     }
     SERVER_END_REQ;
+
+#ifndef _WIN64
+    is_wow64 = (server_cpus & (1 << CPU_x86_64)) != 0;
+#endif
+    ntdll_get_thread_data()->wow64_redir = is_wow64;
 
     if (ret)
     {

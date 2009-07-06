@@ -307,11 +307,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     case ProcessWow64Information:
         if (ProcessInformationLength == sizeof(DWORD))
         {
-#ifdef __i386__
-            *(DWORD *)ProcessInformation = (server_cpus & (1 << CPU_x86_64)) != 0;
-#else
-            *(DWORD *)ProcessInformation = FALSE;
-#endif
+            *(DWORD *)ProcessInformation = is_wow64;
             len = sizeof(DWORD);
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;

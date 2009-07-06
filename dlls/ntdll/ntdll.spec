@@ -913,6 +913,8 @@
 @ stdcall -arch=x86_64 RtlVirtualUnwind(long long long ptr ptr ptr ptr ptr)
 @ stub RtlWalkFrameChain
 @ stdcall RtlWalkHeap(long ptr)
+@ stdcall RtlWow64EnableFsRedirection(long)
+@ stdcall RtlWow64EnableFsRedirectionEx(long ptr)
 @ stub RtlWriteMemoryStream
 @ stdcall RtlWriteRegistryValue(long ptr ptr long ptr long)
 @ stub RtlZeroHeap

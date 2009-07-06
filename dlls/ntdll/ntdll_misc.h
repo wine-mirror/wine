@@ -71,7 +71,7 @@ extern void virtual_init_threading(void);
 
 /* server support */
 extern timeout_t server_start_time;
-extern unsigned int server_cpus;
+extern int is_wow64;
 extern void server_init_process(void);
 extern NTSTATUS server_init_process_done(void);
 extern size_t server_init_thread( void *entry_point );
@@ -198,8 +198,9 @@ struct ntdll_thread_data
     int                request_fd;    /* 1e0/310 fd for sending server requests */
     int                reply_fd;      /* 1e4/314 fd for receiving server replies */
     int                wait_fd[2];    /* 1e8/318 fd for sleeping server requests */
-    void              *vm86_ptr;      /* 1f0/320 data for vm86 mode */
-    pthread_t          pthread_id;    /* 1f4/328 pthread thread id */
+    BOOL               wow64_redir;   /* 1f0/320 Wow64 filesystem redirection flag */
+    void              *vm86_ptr;      /* 1f4/328 data for vm86 mode */
+    pthread_t          pthread_id;    /* 1f8/330 pthread thread id */
 };
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
