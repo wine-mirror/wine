@@ -312,7 +312,7 @@ static void COMPOBJ_DllList_Free(void)
  * Manage apartments.
  */
 
-DWORD apartment_addref(struct apartment *apt)
+static DWORD apartment_addref(struct apartment *apt)
 {
     DWORD refs = InterlockedIncrement(&apt->refs);
     TRACE("%s: before = %d\n", wine_dbgstr_longlong(apt->oxid), refs - 1);

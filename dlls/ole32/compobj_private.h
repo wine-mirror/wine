@@ -252,7 +252,6 @@ void OLEDD_UnInitialize(void);
 
 APARTMENT *apartment_findfromoxid(OXID oxid, BOOL ref);
 APARTMENT *apartment_findfromtid(DWORD tid);
-DWORD apartment_addref(struct apartment *apt);
 DWORD apartment_release(struct apartment *apt);
 HRESULT apartment_disconnectproxies(struct apartment *apt);
 void apartment_disconnectobject(struct apartment *apt, void *object);
