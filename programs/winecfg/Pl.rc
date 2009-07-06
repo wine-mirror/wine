@@ -23,6 +23,7 @@
  *
  */
 
+#include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "resource.h"
 
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT

@@ -25,6 +25,7 @@
  *
  */
 
+#include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "resource.h"
 
 /* Czech strings in CP1250 */

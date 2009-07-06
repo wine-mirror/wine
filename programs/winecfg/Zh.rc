@@ -21,6 +21,7 @@
  *
  */
 
+#include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "resource.h"
 
 /* Chinese text is encoded in UTF-8 */

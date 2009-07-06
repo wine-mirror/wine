@@ -22,6 +22,7 @@
  *
  */
 
+#include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "resource.h"
 
 /* UTF-8 */
