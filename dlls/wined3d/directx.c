@@ -468,7 +468,6 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     GLint       gl_max;
     GLfloat     gl_floatv[2];
     int         major = 1, minor = 0;
-    BOOL        return_value = TRUE;
     unsigned    i;
     HDC         hdc;
     unsigned int vidmem=0;
@@ -1548,7 +1547,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     }
     LEAVE_GL();
 
-    return return_value;
+    return TRUE;
 }
 
 /**********************************************************
