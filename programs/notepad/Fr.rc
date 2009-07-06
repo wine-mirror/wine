@@ -117,20 +117,29 @@ STRING_INFO,                                    "Information"
 
 STRING_UNTITLED,                                "(sans titre)"
 
-STRING_ALL_FILES,                               "Tous fichiers (*.*)"
+STRING_ALL_FILES,                               "Tous les fichiers (*.*)"
 STRING_TEXT_FILES_TXT,                          "Fichiers texte (*.txt)"
 
-STRING_TOOLARGE,                                "Le fichier '%s' est trop grand pour le bloc-notes.\n\
+STRING_TOOLARGE,                                "Le fichier « %s » est trop grand pour le bloc-notes.\n\
 Veuillez utiliser un autre éditeur."
 STRING_NOTEXT,                                  "Vous n'avez pas entré de texte. \
 Veuillez taper quelque chose et recommencer"
-STRING_DOESNOTEXIST,                            "Le fichier '%s'\nn'existe pas.\n\n\
+STRING_DOESNOTEXIST,                            "Le fichier « %s »\nn'existe pas.\n\n\
 Voulez-vous créer un nouveau fichier ?"
-STRING_NOTSAVED,                                "Le fichier '%s'\na été modifié\n\n \
+STRING_NOTSAVED,                                "Le fichier « %s »\na été modifié\n\n \
 Voulez-vous enregistrer vos modifications ?"
-STRING_NOTFOUND,                                "'%s' non trouvé."
+STRING_NOTFOUND,                                "« %s » non trouvé."
 STRING_OUT_OF_MEMORY,                           "Pas assez de mémoire pour terminer cette \
 tâche.\nFermez une ou plusieurs applications pour libérer\n\
 de la mémoire."
 
+STRING_UNICODE_LE,     "Unicode (UTF-16)"
+STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+Ce fichier contient des caractères Unicode qui seront perdus si \n\
+vous le sauvez dans le codage %s. \n\
+Pour conserver ces caractères, cliquez sur Annuler et sélectionnez \n\
+une des alternatives Unicode dans la liste déroulante Codage. \n\
+Continuer ?"
 }
