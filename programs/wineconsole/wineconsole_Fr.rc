@@ -1,6 +1,7 @@
 /*
  * Copyright 2001 Eric Pouech
  * Copyright 2006 Jonathan Ernst
+ * Copyright 2009 FrÃ©dÃ©ric Delanoy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,67 +20,70 @@
 
 #include "wineconsole_res.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 BEGIN
-IDS_EDIT,		"É&dition"
-IDS_DEFAULT,		"Par &défaut"
-IDS_PROPERTIES,		"&Propriétés"
+IDS_EDIT,		"Ã‰&dition"
+IDS_DEFAULT,		"Par &dÃ©faut"
+IDS_PROPERTIES,		"&PropriÃ©tÃ©s"
 IDS_MARK,		"&Marquer"
 IDS_COPY,		"&Copier"
 IDS_PASTE,		"C&oller"
-IDS_SELECTALL,		"&Sélectionner tout"
-IDS_SCROLL,		"&Défiler"
+IDS_SELECTALL,		"&SÃ©lectionner tout"
+IDS_SCROLL,		"&DÃ©filer"
 IDS_SEARCH,		"C&hercher"
-IDS_FNT_DISPLAY,	"Chaque caractère a %ld points en largeur et %ld points en hauteur"
+IDS_FNT_DISPLAY,	"Chaque caractÃ¨re a %ld pixels de largeur et %ld pixels de hauteur"
 IDS_FNT_PREVIEW_1,	"Ceci est un test"
-IDS_FNT_PREVIEW_2,	"éèàôë"
-IDS_DLG_TIT_DEFAULT,    "Configuration par défaut"
+IDS_FNT_PREVIEW_2,	"Ã©Ã¨Ã Ã´Ã«"
+IDS_DLG_TIT_DEFAULT,    "Configuration par dÃ©faut"
 IDS_DLG_TIT_CURRENT,    "Configuration courante"
 IDS_DLG_TIT_ERROR,	"Erreur de configuration"
-IDS_DLG_ERR_SBWINSIZE,	"La taille du tampon écran doit être plus grande que celle de la fenêtre"
+IDS_DLG_ERR_SBWINSIZE,	"La taille du tampon Ã©cran doit Ãªtre plus grande ou Ã©gale Ã  celle du tampon de la fenÃªtre"
 
-IDS_CMD_INVALID_EVENT_ID   "wineconsole : Impossible d'analyser l'événement\n"
-IDS_CMD_INVALID_BACKEND    "wineconsole : Moteur invalide\n"
-IDS_CMD_INVALID_OPTION     "wineconsole : Option de la ligne de commande non reconnue\n"
-IDS_CMD_ABOUT              "Démarre un programme dans une console Wine\n"
-IDS_CMD_LAUNCH_FAILED      "wineconsole : Échec lors du démarrage du programme %s.\n"\
+IDS_CMD_INVALID_EVENT_ID   "wineconsole : impossible de dÃ©chiffrer l'identifiant d'Ã©vÃ©nement\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole : moteur invalide\n"
+IDS_CMD_INVALID_OPTION     "wineconsole : option de ligne de commande non reconnue\n"
+IDS_CMD_ABOUT              "DÃ©marre un programme dans une console Wine\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole : Ã©chec lors du dÃ©marrage du programme %s.\n"\
                            "La commande est invalide.\n"
 
 IDS_USAGE_HEADER           "\nUsage :\n  wineconsole [options] <commande>\n\nOptions :\n"
-IDS_USAGE_BACKEND          "  --backend={user|curses}  En choisissant « user » une nouvelle fenêtre sera créée, « curses »\n"\
-                           "                            essaiera de convertir le terminal courant en console Wine\n"
-IDS_USAGE_COMMAND          "  <command>                 Le programme Wine à exécuter dans la console\n"
-IDS_USAGE_FOOTER           "\nExemple :\n  wineconsole cmd\nDémarre l'interpréteur de commandes de Wine dans une console Wine\n\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Utilisez Â« user Â»   pour utiliser une nouvelle fenÃªtre\n"\
+                           "                                    Â« curses Â» pour essayer de convertir le terminal courant en console Wine\n"
+IDS_USAGE_COMMAND          "  <commande>               Le programme Wine Ã  exÃ©cuter dans la console\n"
+IDS_USAGE_FOOTER           "\nExemple : Â« wineconsole cmd Â» dÃ©marre l'interprÃ©teur de commandes de Wine dans une console Wine\n\n"
 
 END
 
-IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 214, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Options "
 FONT 8, "MS Shell Dlg"
 {
-	GROUPBOX "Taille du curseur", -1, 10, 11, 60, 44, BS_GROUPBOX
-	AUTORADIOBUTTON "&Petit", IDC_OPT_CURSOR_SMALL, 14, 23, 44, 10, WS_TABSTOP
-	AUTORADIOBUTTON "&Moyen", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
-	AUTORADIOBUTTON "&Grand", IDC_OPT_CURSOR_LARGE, 14, 43, 44, 10, WS_TABSTOP
+	GROUPBOX "Taille du curseur", -1, 10, 11, 63, 49, BS_GROUPBOX
+	AUTORADIOBUTTON "&Petit", IDC_OPT_CURSOR_SMALL, 14, 25, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&Moyen", IDC_OPT_CURSOR_MEDIUM, 14, 35, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&Grand", IDC_OPT_CURSOR_LARGE, 14, 45, 44, 10, WS_TABSTOP
 
-	GROUPBOX "Contrôle", -1, 75, 11, 125, 44, BS_GROUPBOX
-	LTEXT "Popup menu", -1, 79, 23, 50, 10
-	AUTOCHECKBOX "&Control", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
-	AUTOCHECKBOX "S&hift", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
-	LTEXT "Édition rapide", -1, 79, 43, 50, 10
-	AUTOCHECKBOX "&activer", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
+	GROUPBOX "ContrÃ´le", -1, 75, 11, 129, 49, BS_GROUPBOX
+	LTEXT "Menu contextuel", -1, 83, 23, 53, 10
+	AUTOCHECKBOX "&Control", IDC_OPT_CONF_CTRL, 142, 23, 60, 10, WS_TABSTOP
+	AUTOCHECKBOX "S&hift", IDC_OPT_CONF_SHIFT, 142, 33, 60, 10, WS_TABSTOP
+	LTEXT "Ã‰dition rapide", -1, 83, 48, 53, 10
+	AUTOCHECKBOX "&activer", IDC_OPT_QUICK_EDIT, 142, 48, 60, 10, WS_TABSTOP
 
-	GROUPBOX "Historique des commandes", -1, 10, 57, 190, 35, BS_GROUPBOX
-	LTEXT "&Taille de la mémoire tampon :", -1, 14, 67, 78, 18
-	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
+	GROUPBOX "Historique des commandes", -1, 10, 62, 194, 35, BS_GROUPBOX
+	LTEXT "&Nombre de commandes mÃ©morisÃ©es :", -1, 14, 72, 78, 18
+	EDITTEXT IDC_OPT_HIST_SIZE, 94, 74, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
-	AUTOCHECKBOX "&Supprimer les doublons", IDC_OPT_HIST_NODOUBLE, 130, 67, 60, 18, WS_TABSTOP|BS_MULTILINE
+	AUTOCHECKBOX "&Supprimer les doublons", IDC_OPT_HIST_NODOUBLE, 142, 72, 60, 18, WS_TABSTOP|BS_MULTILINE
 }
 
-IDD_FONT DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+IDD_FONT DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 205, 106
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Police "
 FONT 8, "MS Shell Dlg"
@@ -90,17 +94,17 @@ FONT 8, "MS Shell Dlg"
 	CONTROL "", IDC_FNT_COLOR_FG, "WineConColorPreview", 0L, 100, 18, 48, 16
 	CONTROL "", IDC_FNT_COLOR_BK, "WineConColorPreview", 0L, 100, 40, 48, 16
 	LTEXT "&Taille", -1, 158, 5, 40, 8
-	LISTBOX IDC_FNT_LIST_SIZE, 158, 18, 40, 60, WS_VSCROLL
+	LISTBOX IDC_FNT_LIST_SIZE, 158, 18, 40, 43, WS_VSCROLL
 	CONTROL "", IDC_FNT_PREVIEW, "WineConFontPreview", 0L, 5, 60, 109, 40
-	LTEXT "", IDC_FNT_FONT_INFO, 128, 76, 80, 18
+	LTEXT "", IDC_FNT_FONT_INFO, 120, 69, 78, 28
 }
 
-IDD_CONFIG DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
+IDD_CONFIG DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 205, 107
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION " Configuration "
 FONT 8, "MS Shell Dlg"
 {
-	GROUPBOX "Taille mémoire tampon écran", -1, 10, 11, 100, 42, BS_GROUPBOX
+	GROUPBOX "Taille mÃ©moire tampon Ã©cran", -1, 10, 11, 100, 42, BS_GROUPBOX
 	LTEXT "&Largeur :", -1, 14, 25, 54, 9
 	EDITTEXT IDC_CNF_SB_WIDTH, 68, 23, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
@@ -108,7 +112,7 @@ FONT 8, "MS Shell Dlg"
 	EDITTEXT IDC_CNF_SB_HEIGHT, 68, 37, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_SB_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
-	GROUPBOX "Taille de la fenêtre", -1, 10, 55, 100, 42
+	GROUPBOX "Taille de la fenÃªtre", -1, 10, 55, 100, 42
 	LTEXT "La&rgeur :", -1, 14, 69, 54, 9
 	EDITTEXT IDC_CNF_WIN_WIDTH, 68, 67, 36, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_CNF_WIN_WIDTH_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
@@ -117,21 +121,21 @@ FONT 8, "MS Shell Dlg"
 	CONTROL "", IDC_CNF_WIN_HEIGHT_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 
 	GROUPBOX "Fin du programme", -1, 115, 11, 80, 42, BS_GROUPBOX
-	AUTOCHECKBOX "&Fermer la console", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
+	AUTOCHECKBOX "&Fermer la console", IDC_CNF_CLOSE_EXIT, 119, 25, 70, 20, WS_TABSTOP
 
-	GROUPBOX "Édition", -1, 115, 55, 80, 42
-	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 75, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
+	GROUPBOX "Ã‰dition", -1, 115, 55, 80, 42
+	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 73, 13, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
 }
 
-IDD_SAVE_SETTINGS DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 200, 60
+IDD_SAVE_SETTINGS DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 206, 60
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "Paramètres de la console"
+CAPTION "ParamÃ¨tres de la console"
 FONT 8, "MS Shell Dlg"
 {
-	GROUPBOX "", -1, 10, 10, 180, 31, BS_GROUPBOX
-	AUTORADIOBUTTON "Sauver les paramètres pour les prochaines sessions", IDC_SAV_SAVE, 14, 15, 170, 10, WS_TABSTOP
-	AUTORADIOBUTTON "Appliquer uniquement à la session courante", IDC_SAV_SESSION, 14, 27, 170, 10, WS_TABSTOP
+	GROUPBOX "", -1, 10, 10, 185, 31, BS_GROUPBOX
+	AUTORADIOBUTTON "Sauver les paramÃ¨tres pour les prochaines sessions", IDC_SAV_SAVE, 14, 15, 180, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Appliquer uniquement Ã  la session courante", IDC_SAV_SESSION, 14, 27, 180, 10, WS_TABSTOP
 
-	PUSHBUTTON "OK", IDOK, 50, 45, 35, 12
-	PUSHBUTTON "Annuler", IDCANCEL, 115, 45, 35, 12
+	PUSHBUTTON "OK", IDOK, 55, 45, 35, 12
+	PUSHBUTTON "Annuler", IDCANCEL, 120, 45, 35, 12
 }
