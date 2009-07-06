@@ -1084,5 +1084,6 @@ var bool = new Boolean();
 ok(bool.toString() === "false", "bool.toString() = " + bool.toString());
 var bool = new Boolean("false");
 ok(bool.toString() === "true", "bool.toString() = " + bool.toString());
+ok(bool.valueOf() === Boolean(1), "bool.valueOf() = " + bool.valueOf());
 
 reportSuccess();

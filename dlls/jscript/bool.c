@@ -74,11 +74,25 @@ static HRESULT Bool_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DI
     return E_NOTIMPL;
 }
 
+/* ECMA-262 3rd Edition    15.6.4.3 */
 static HRESULT Bool_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_BOOLEAN)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        BoolInstance *bool = (BoolInstance*)dispex;
+
+        V_VT(retv) = VT_BOOL;
+        V_BOOL(retv) = bool->val;
+    }
+
+    return S_OK;
 }
 
 static HRESULT Bool_hasOwnProperty(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
