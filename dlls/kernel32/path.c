@@ -1539,24 +1539,37 @@ UINT WINAPI GetSystemWow64DirectoryA( LPSTR lpBuffer, UINT uSize )
     return 0;
 }
 
+
+/***********************************************************************
+ *           Wow64EnableWow64FsRedirection   (KERNEL32.@)
+ */
+BOOLEAN WINAPI Wow64EnableWow64FsRedirection( BOOLEAN enable )
+{
+    NTSTATUS status = RtlWow64EnableFsRedirection( enable );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
+}
+
+
 /***********************************************************************
  *           Wow64DisableWow64FsRedirection   (KERNEL32.@)
  */
 BOOL WINAPI Wow64DisableWow64FsRedirection( PVOID *old_value )
 {
-    FIXME("%p\n", old_value);
-
-    if (old_value) *old_value = (void *)0xdeadbeef;
-    return TRUE;
+    NTSTATUS status = RtlWow64EnableFsRedirectionEx( TRUE, (ULONG *)old_value );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
+
 
 /***********************************************************************
  *           Wow64RevertWow64FsRedirection   (KERNEL32.@)
  */
 BOOL WINAPI Wow64RevertWow64FsRedirection( PVOID old_value )
 {
-    FIXME("%p\n", old_value);
-    return TRUE;
+    NTSTATUS status = RtlWow64EnableFsRedirection( (UINT_PTR)old_value );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 

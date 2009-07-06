@@ -1144,6 +1144,7 @@
 @ stdcall WaitNamedPipeW (wstr long)
 @ stdcall WideCharToMultiByte(long long wstr long ptr long ptr ptr)
 @ stdcall WinExec(str long)
+@ stdcall Wow64EnableWow64FsRedirection(long)
 @ stdcall Wow64DisableWow64FsRedirection(ptr)
 @ stdcall Wow64RevertWow64FsRedirection(ptr)
 @ stdcall WriteConsoleA(long ptr long ptr ptr)
