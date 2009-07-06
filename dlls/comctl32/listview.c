@@ -6814,6 +6814,16 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
         /* LVM_SUBITEMHITTEST checks left bound of possible client area */
         if (infoPtr->rcList.left > lpht->pt.x && Origin.x < lpht->pt.x)
 	    lpht->flags |= LVHT_TOLEFT;
+
+	if (lpht->pt.y < infoPtr->rcList.top && lpht->pt.y >= 0)
+	    opt.y = lpht->pt.y + infoPtr->rcList.top;
+	else
+	    opt.y = lpht->pt.y;
+
+	if (infoPtr->rcList.top > opt.y)
+	    lpht->flags |= LVHT_ABOVE;
+	else if (infoPtr->rcList.bottom < opt.y)
+	    lpht->flags |= LVHT_BELOW;
     }
     else
     {
@@ -6821,12 +6831,12 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
 	    lpht->flags |= LVHT_TOLEFT;
 	else if (infoPtr->rcList.right < lpht->pt.x)
 	    lpht->flags |= LVHT_TORIGHT;
+
+	if (infoPtr->rcList.top > lpht->pt.y)
+	    lpht->flags |= LVHT_ABOVE;
+	else if (infoPtr->rcList.bottom < lpht->pt.y)
+	    lpht->flags |= LVHT_BELOW;
     }
-    
-    if (infoPtr->rcList.top > lpht->pt.y)
-	lpht->flags |= LVHT_ABOVE;
-    else if (infoPtr->rcList.bottom < lpht->pt.y)
-	lpht->flags |= LVHT_BELOW;
 
     /* even if item is invalid try to find subitem */
     if (infoPtr->uView == LV_VIEW_DETAILS && subitem)
@@ -6883,8 +6893,12 @@ static INT LISTVIEW_HitTest(const LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, 
     LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, NULL, &rcIcon, &rcState, &rcLabel);
     LISTVIEW_GetItemOrigin(infoPtr, iItem, &Position);
     opt.x = lpht->pt.x - Position.x - Origin.x;
-    opt.y = lpht->pt.y - Position.y - Origin.y;
-    
+
+    if (lpht->pt.y < infoPtr->rcList.top && lpht->pt.y >= 0)
+	opt.y = lpht->pt.y - Position.y - Origin.y + infoPtr->rcList.top;
+    else
+	opt.y = lpht->pt.y - Position.y - Origin.y;
+
     if (infoPtr->uView == LV_VIEW_DETAILS)
     {
 	rcBounds = rcBox;

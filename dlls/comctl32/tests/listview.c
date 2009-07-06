@@ -2663,7 +2663,7 @@ static void test_hittest(void)
     test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
     y = (bounds.bottom - bounds.top) / 2;
     test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, FALSE, TRUE, __LINE__);
-    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, TRUE, FALSE, TRUE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
     /* outside possible client rectangle (to right) */
     x = pos.x + 500;
     y = pos.y + (bounds.bottom - bounds.top) / 2;
@@ -2671,7 +2671,7 @@ static void test_hittest(void)
     test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, FALSE, __LINE__);
     y = (bounds.bottom - bounds.top) / 2;
     test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, FALSE, TRUE, __LINE__);
-    test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, TRUE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, FALSE, __LINE__);
     /* subitem returned with -1 item too */
     x = pos.x + 150;
     y = -10;
@@ -2684,7 +2684,7 @@ static void test_hittest(void)
     test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
     y = (bounds.bottom - bounds.top) / 2;
     test_lvm_hittest(hwnd, x, y, -1, LVHT_NOWHERE, FALSE, TRUE, __LINE__);
-    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, TRUE, FALSE, TRUE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
     /* the same with LVS_EX_FULLROWSELECT */
     SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
     x = pos.x + 150; /* outside column */
@@ -2692,7 +2692,7 @@ static void test_hittest(void)
     test_lvm_hittest(hwnd, x, y, 0, LVHT_ONITEM, FALSE, FALSE, __LINE__);
     test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
     y = (bounds.bottom - bounds.top) / 2;
-    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, TRUE, FALSE, TRUE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
     MoveWindow(hwnd, 0, 0, 100, 100, FALSE);
     x = pos.x + 150; /* outside column */
     y = pos.y + (bounds.bottom - bounds.top) / 2;
@@ -2700,7 +2700,7 @@ static void test_hittest(void)
     test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
     y = (bounds.bottom - bounds.top) / 2;
     test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, FALSE, TRUE, __LINE__);
-    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, TRUE, FALSE, TRUE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 1, LVHT_ONITEMLABEL, FALSE, FALSE, FALSE, __LINE__);
     /* outside possible client rectangle (to right) */
     x = pos.x + 500;
     y = pos.y + (bounds.bottom - bounds.top) / 2;
@@ -2708,7 +2708,7 @@ static void test_hittest(void)
     test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, FALSE, __LINE__);
     y = (bounds.bottom - bounds.top) / 2;
     test_lvm_hittest(hwnd, x, y, -1, LVHT_TORIGHT, FALSE, TRUE, __LINE__);
-    test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, TRUE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, -1, -1, LVHT_NOWHERE, FALSE, FALSE, FALSE, __LINE__);
     /* try with icons, state icons index is 1 based so at least 2 bitmaps needed */
     himl = ImageList_Create(16, 16, 0, 4, 4);
     ok(himl != NULL, "failed to create imagelist\n");
@@ -2736,7 +2736,7 @@ static void test_hittest(void)
     test_lvm_hittest(hwnd, x, y, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, __LINE__);
     test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, FALSE, __LINE__);
     y = (bounds.bottom - bounds.top) / 2;
-    test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, TRUE, FALSE, FALSE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, FALSE, __LINE__);
 
     /* state icons indices are 1 based, check with valid index */
     item.mask = LVIF_STATE;
@@ -2752,7 +2752,7 @@ static void test_hittest(void)
     test_lvm_hittest(hwnd, x, y, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, __LINE__);
     test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, FALSE, __LINE__);
     y = (bounds.bottom - bounds.top) / 2;
-    test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, TRUE, FALSE, FALSE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMSTATEICON, FALSE, FALSE, FALSE, __LINE__);
 
     himl2 = (HIMAGELIST)SendMessage(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)NULL);
     ok(himl2 == himl, "should return handle\n");
@@ -2765,7 +2765,7 @@ static void test_hittest(void)
     test_lvm_hittest(hwnd, x, y, 0, LVHT_ONITEMICON, FALSE, FALSE, __LINE__);
     test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMICON, FALSE, FALSE, FALSE, __LINE__);
     y = (bounds.bottom - bounds.top) / 2;
-    test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMICON, TRUE, FALSE, TRUE, __LINE__);
+    test_lvm_subitemhittest(hwnd, x, y, 0, 0, LVHT_ONITEMICON, FALSE, FALSE, FALSE, __LINE__);
 
     DestroyWindow(hwnd);
 }
