@@ -106,8 +106,41 @@ static const builtin_info_t Bool_info = {
 static HRESULT BoolConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+    VARIANT_BOOL value = VARIANT_FALSE;
+
+    if(arg_cnt(dp)) {
+        hres = to_boolean(get_arg(dp,0), &value);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT: {
+        DispatchEx *bool;
+
+        hres = create_bool(dispex->ctx, value, &bool);
+        if(FAILED(hres))
+            return hres;
+
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(bool);
+        return S_OK;
+    }
+
+    case INVOKE_FUNC:
+        if(retv) {
+            V_VT(retv) = VT_BOOL;
+            V_BOOL(retv) = value;
+        }
+        return S_OK;
+
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT alloc_bool(script_ctx_t *ctx, BOOL use_constr, BoolInstance **ret)
