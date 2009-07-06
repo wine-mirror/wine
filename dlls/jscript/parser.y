@@ -386,7 +386,7 @@ IfStatement
 
 /* ECMA-262 3rd Edition    12.6 */
 IterationStatement
-        : kDO Statement kWHILE '(' Expression ')' ';'
+        : kDO Statement kWHILE '(' Expression ')' semicolon_opt
                                 { $$ = new_while_statement(ctx, TRUE, $5, $2); }
         | kWHILE '(' Expression ')' Statement
                                 { $$ = new_while_statement(ctx, FALSE, $3, $5); }

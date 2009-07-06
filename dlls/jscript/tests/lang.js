@@ -672,6 +672,13 @@ do {
 ok(tmp === 1, "tmp !== 1");
 
 tmp = 0;
+do {
+    ok(tmp < 4, "tmp >= 4");
+    tmp++;
+} while(tmp < 4)
+ok(tmp === 4, "tmp !== 4")
+
+tmp = 0;
 while(tmp < 4) {
     tmp++;
     if(tmp === 2) {
