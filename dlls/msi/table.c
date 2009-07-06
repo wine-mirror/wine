@@ -1711,6 +1711,21 @@ static UINT msi_table_update(struct tagMSIVIEW *view, MSIRECORD *rec, UINT row)
     return TABLE_set_row(view, new_row, rec, (1 << tv->num_cols) - 1);
 }
 
+static UINT msi_table_assign(struct tagMSIVIEW *view, MSIRECORD *rec)
+{
+    MSITABLEVIEW *tv = (MSITABLEVIEW *)view;
+    UINT r, row;
+
+    if (!tv->table)
+        return ERROR_INVALID_PARAMETER;
+
+    r = msi_table_find_row(tv, rec, &row);
+    if (r == ERROR_SUCCESS)
+        return TABLE_set_row(view, row, rec, (1 << tv->num_cols) - 1);
+    else
+        return TABLE_insert_row( view, rec, -1, FALSE );
+}
+
 static UINT modify_delete_row( struct tagMSIVIEW *view, MSIRECORD *rec )
 {
     MSITABLEVIEW *tv = (MSITABLEVIEW *)view;
@@ -1780,6 +1795,9 @@ static UINT TABLE_modify( struct tagMSIVIEW *view, MSIMODIFY eModifyMode,
         break;
 
     case MSIMODIFY_ASSIGN:
+        r = msi_table_assign( view, rec );
+        break;
+
     case MSIMODIFY_REPLACE:
     case MSIMODIFY_MERGE:
     case MSIMODIFY_VALIDATE:

@@ -4795,7 +4795,7 @@ static void test_viewmodify_assign(void)
     ok(r == ERROR_SUCCESS, "failed to set integer\n");
 
     r = MsiViewModify(hview, MSIMODIFY_ASSIGN, hrec);
-    todo_wine ok(r == ERROR_SUCCESS, "MsiViewModify failed: %d\n", r);
+    ok(r == ERROR_SUCCESS, "MsiViewModify failed: %d\n", r);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
@@ -4811,12 +4811,12 @@ static void test_viewmodify_assign(void)
     r = MsiViewExecute(hview, 0);
     ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
     r = MsiViewFetch(hview, &hrec);
-    todo_wine ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
 
     r = MsiRecordGetInteger(hrec, 1);
-    todo_wine ok(r == 1, "Expected 1, got %d\n", r);
+    ok(r == 1, "Expected 1, got %d\n", r);
     r = MsiRecordGetInteger(hrec, 2);
-    todo_wine ok(r == 2, "Expected 2, got %d\n", r);
+    ok(r == 2, "Expected 2, got %d\n", r);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
@@ -4845,7 +4845,7 @@ static void test_viewmodify_assign(void)
     ok(r == ERROR_SUCCESS, "failed to set integer\n");
 
     r = MsiViewModify(hview, MSIMODIFY_ASSIGN, hrec);
-    todo_wine ok(r == ERROR_SUCCESS, "MsiViewModify failed: %d\n", r);
+    ok(r == ERROR_SUCCESS, "MsiViewModify failed: %d\n", r);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
@@ -4861,12 +4861,12 @@ static void test_viewmodify_assign(void)
     r = MsiViewExecute(hview, 0);
     ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
     r = MsiViewFetch(hview, &hrec);
-    todo_wine ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
+    ok(r == ERROR_SUCCESS, "MsiViewFetch failed\n");
 
     r = MsiRecordGetInteger(hrec, 1);
-    todo_wine ok(r == 1, "Expected 1, got %d\n", r);
+    ok(r == 1, "Expected 1, got %d\n", r);
     r = MsiRecordGetInteger(hrec, 2);
-    todo_wine ok(r == 4, "Expected 4, got %d\n", r);
+    ok(r == 4, "Expected 4, got %d\n", r);
 
     r = MsiCloseHandle(hrec);
     ok(r == ERROR_SUCCESS, "failed to close record\n");
