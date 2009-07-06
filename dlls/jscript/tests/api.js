@@ -940,6 +940,8 @@ date = new Date(8.64e15+1);
 ok(isNaN(0+date.getTime()), "date.getTime() is not NaN");
 date = new Date(Infinity);
 ok(isNaN(0+date.getTime()), "date.getTime() is not NaN");
+date = new Date("3 July 2009 22:28:00 UTC+0100");
+ok(date.getTime() === 1246656480000, "date.getTime() = " + date.getTime());
 date = new Date(1984, 11, 29, 13, 51, 24, 120);
 ok(date.getFullYear() === 1984, "date.getFullYear() = " + date.getFullYear());
 ok(date.getMonth() === 11, "date.getMonth() = " + date.getMonth());

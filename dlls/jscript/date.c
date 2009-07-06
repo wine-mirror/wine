@@ -2617,12 +2617,11 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
             if(FAILED(hres))
                 return hres;
 
-            if(V_VT(&prim) == VT_BSTR) {
-                FIXME("VT_BSTR not supported\n");
-                return E_NOTIMPL;
-            }
+            if(V_VT(&prim) == VT_BSTR)
+                hres = date_parse(V_BSTR(&prim), &num);
+            else
+                hres = to_number(dispex->ctx, &prim, ei, &num);
 
-            hres = to_number(dispex->ctx, &prim, ei, &num);
             VariantClear(&prim);
             if(FAILED(hres))
                 return hres;
