@@ -676,8 +676,18 @@ static HRESULT Date_isPrototypeOf(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 static HRESULT Date_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        DateInstance *date = (DateInstance*)dispex;
+        num_set_val(retv, date->time);
+    }
+    return S_OK;
 }
 
 /* ECMA-262 3rd Edition    15.9.5.42 */
