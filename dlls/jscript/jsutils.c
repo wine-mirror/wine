@@ -211,7 +211,8 @@ HRESULT to_boolean(VARIANT *v, VARIANT_BOOL *b)
         *b = V_I4(v) ? VARIANT_TRUE : VARIANT_FALSE;
         break;
     case VT_R8:
-        *b = V_R8(v) ? VARIANT_TRUE : VARIANT_FALSE;
+        if(isnan(V_R8(v))) *b = VARIANT_FALSE;
+        else *b = V_R8(v) ? VARIANT_TRUE : VARIANT_FALSE;
         break;
     case VT_BSTR:
         *b = V_BSTR(v) && *V_BSTR(v) ? VARIANT_TRUE : VARIANT_FALSE;
