@@ -1,5 +1,6 @@
 /*
  * Copyright 2008 Jacek Caban for CodeWeavers
+ * Copyright 2009 Piotr Caban
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -70,8 +71,8 @@ static HRESULT Bool_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 static HRESULT Bool_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return Bool_toString(dispex, lcid, flags, dp, retv, ei, sp);
 }
 
 /* ECMA-262 3rd Edition    15.6.4.3 */
