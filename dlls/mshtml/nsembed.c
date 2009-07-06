@@ -448,10 +448,6 @@ static BOOL init_xpcom(const PRUnichar *gre_path)
         if(NS_FAILED(nsres))
             ERR("AutoRegister(NULL) failed: %08x\n", nsres);
 
-        nsres = nsIComponentRegistrar_AutoRegister(registrar, gre_dir);
-        if(NS_FAILED(nsres))
-            ERR("AutoRegister(gre_dir) failed: %08x\n", nsres);
-
         init_nsio(pCompMgr, registrar);
     }else {
         ERR("NS_GetComponentRegistrar failed: %08x\n", nsres);
