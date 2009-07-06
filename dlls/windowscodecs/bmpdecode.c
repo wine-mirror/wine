@@ -386,6 +386,112 @@ fail:
     return hr;
 }
 
+static HRESULT BmpFrameDecode_ReadRLE8(BmpFrameDecode* This)
+{
+    UINT bytesperrow;
+    UINT width, height;
+    BYTE *rledata, *cursor, *rledataend;
+    UINT rlesize, datasize, palettesize;
+    DWORD palette[256];
+    UINT x, y;
+    DWORD *bgrdata;
+    HRESULT hr;
+    LARGE_INTEGER offbits;
+    ULONG bytesread;
+
+    width = This->bih.bV5Width;
+    height = abs(This->bih.bV5Height);
+    bytesperrow = width * 4;
+    datasize = bytesperrow * height;
+    rlesize = This->bih.bV5SizeImage;
+    if (This->bih.bV5ClrUsed && This->bih.bV5ClrUsed < 256)
+        palettesize = 4 * This->bih.bV5ClrUsed;
+    else
+        palettesize = 4 * 256;
+
+    rledata = HeapAlloc(GetProcessHeap(), 0, rlesize);
+    This->imagedata = HeapAlloc(GetProcessHeap(), 0, datasize);
+    if (!This->imagedata || !rledata)
+    {
+        hr = E_OUTOFMEMORY;
+        goto fail;
+    }
+
+    /* read palette */
+    offbits.QuadPart = sizeof(BITMAPFILEHEADER) + This->bih.bV5Size;
+    hr = IStream_Seek(This->stream, offbits, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr)) goto fail;
+
+    hr = IStream_Read(This->stream, palette, palettesize, &bytesread);
+    if (FAILED(hr) || bytesread != palettesize) goto fail;
+
+    /* read RLE data */
+    offbits.QuadPart = This->bfh.bfOffBits;
+    hr = IStream_Seek(This->stream, offbits, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr)) goto fail;
+
+    hr = IStream_Read(This->stream, rledata, rlesize, &bytesread);
+    if (FAILED(hr) || bytesread != rlesize) goto fail;
+
+    /* decode RLE */
+    bgrdata = (DWORD*)This->imagedata;
+    x = 0;
+    y = 0;
+    rledataend = rledata + rlesize;
+    cursor = rledata;
+    while (cursor < rledataend && y < height)
+    {
+        BYTE length = *cursor++;
+        if (length == 0)
+        {
+            /* escape code */
+            BYTE escape = *cursor++;
+            switch(escape)
+            {
+            case 0: /* end of line */
+                x = 0;
+                y++;
+                break;
+            case 1: /* end of bitmap */
+                goto end;
+            case 2: /* delta */
+                if (cursor < rledataend)
+                {
+                    x += *cursor++;
+                    y += *cursor++;
+                }
+                break;
+            default: /* absolute mode */
+                length = escape;
+                while (cursor < rledataend && length-- && x < width)
+                    bgrdata[y*width + x++] = palette[*cursor++];
+                if (escape & 1) cursor++; /* skip pad byte */
+            }
+        }
+        else
+        {
+            DWORD color = palette[*cursor++];
+            while (length-- && x < width)
+                bgrdata[y*width + x++] = color;
+        }
+    }
+
+end:
+    HeapFree(GetProcessHeap(), 0, rledata);
+
+    This->imagedatastart = This->imagedata + (height-1) * bytesperrow;
+    This->stride = -bytesperrow;
+
+    return S_OK;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, rledata);
+    HeapFree(GetProcessHeap(), 0, This->imagedata);
+    This->imagedata = NULL;
+    if (SUCCEEDED(hr)) hr = E_FAIL;
+    return hr;
+}
+
 static HRESULT BmpFrameDecode_ReadUnsupported(BmpFrameDecode* This)
 {
     return E_FAIL;
@@ -514,6 +620,11 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
                 This->pixelformat = &GUID_WICPixelFormatUndefined;
                 FIXME("unsupported bit depth %i for uncompressed RGB\n", This->bih.bV5BitCount);
             }
+            break;
+        case BI_RLE8:
+            This->bitsperpixel = 32;
+            This->read_data_func = BmpFrameDecode_ReadRLE8;
+            This->pixelformat = &GUID_WICPixelFormat32bppBGR;
             break;
         default:
             This->bitsperpixel = 0;
