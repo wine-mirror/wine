@@ -1080,4 +1080,9 @@ ok(Math.floor(Math.SQRT1_2*100) === 70, "Math.SQRT1_2 = " + Math.SQRT1_2);
 Math.SQRT1_2 = "test";
 ok(Math.floor(Math.SQRT1_2*100) === 70, "modified Math.SQRT1_2 = " + Math.SQRT1_2);
 
+var bool = new Boolean();
+ok(bool.toString() === "false", "bool.toString() = " + bool.toString());
+var bool = new Boolean("false");
+ok(bool.toString() === "true", "bool.toString() = " + bool.toString());
+
 reportSuccess();

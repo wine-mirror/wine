@@ -36,11 +36,35 @@ static const WCHAR propertyIsEnumerableW[] =
     {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
 
+/* ECMA-262 3rd Edition    15.6.4.2 */
 static HRESULT Bool_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR trueW[] = {'t','r','u','e',0};
+    static const WCHAR falseW[] = {'f','a','l','s','e',0};
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_BOOLEAN)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    if(retv) {
+        BoolInstance *bool = (BoolInstance*)dispex;
+        BSTR val;
+
+        if(bool->val) val = SysAllocString(trueW);
+        else val = SysAllocString(falseW);
+
+        if(!val)
+            return E_OUTOFMEMORY;
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = val;
+    }
+
+    return S_OK;
 }
 
 static HRESULT Bool_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
