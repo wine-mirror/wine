@@ -24,57 +24,42 @@ use output qw($output);
 
 sub _refresh($);
 
-sub new($) {
-    my $proto = shift;
+sub new($)
+{
+    my ($proto) = @_;
     my $class = ref($proto) || $proto;
     my $self  = {};
-    bless ($self, $class);
+    bless $self, $class;
 
     return $self;
 }
 
-########################################################################
-# set_find_align_callback
 #
-sub set_find_align_callback($$) {
-    my $self = shift;
+# Callback setters
+#
 
-    my $find_align = \${$self->{FIND_ALIGN}};
-
-    $$find_align = shift;
+sub set_find_align_callback($$)
+{
+    my ($self, $find_align) = @_;
+    $self->{FIND_ALIGN} = $find_align;
 }
 
-########################################################################
-# set_find_kind_callback
-#
-sub set_find_kind_callback($$) {
-    my $self = shift;
-
-    my $find_kind = \${$self->{FIND_KIND}};
-
-    $$find_kind = shift;
+sub set_find_kind_callback($$)
+{
+    my ($self, $find_kind) = @_;
+    $self->{FIND_KIND} = $find_kind;
 }
 
-########################################################################
-# set_find_size_callback
-#
-sub set_find_size_callback($$) {
-    my $self = shift;
-
-    my $find_size = \${$self->{FIND_SIZE}};
-
-    $$find_size = shift;
+sub set_find_size_callback($$)
+{
+    my ($self, $find_size) = @_;
+    $self->{FIND_SIZE} = $find_size;
 }
 
-########################################################################
-# set_find_count_callback
-#
-sub set_find_count_callback($$) {
-    my $self = shift;
-
-    my $find_count = \${$self->{FIND_COUNT}};
-
-    $$find_count = shift;
+sub set_find_count_callback($$)
+{
+    my ($self, $find_count) = @_;
+    $self->{FIND_COUNT} = $find_count;
 }
 
 
@@ -84,79 +69,60 @@ sub set_find_count_callback($$) {
 
 sub kind($;$)
 {
-    my $self = shift;
-    my $kind = \${$self->{KIND}};
-    my $dirty = \${$self->{DIRTY}};
-
-    local $_ = shift;
-
-    if(defined($_)) { $$kind = $_; $$dirty = 1; }
-
-    if (!defined($$kind)) {
-	$self->_refresh();
+    my ($self, $kind) = @_;
+    if (defined $kind)
+    {
+        $self->{KIND} = $kind;
+	$self->{DIRTY} = 1;
     }
-
-    return $$kind;
+    $self->_refresh() if (!defined $self->{KIND});
+    return $self->{KIND};
 }
 
 sub _name($;$)
 {
-    my $self = shift;
-    my $_name = \${$self->{_NAME}};
-    my $dirty = \${$self->{DIRTY}};
-
-    local $_ = shift;
-
-    if(defined($_)) { $$_name = $_; $$dirty = 1; }
-
-    return $$_name;
+    my ($self, $_name) = @_;
+    if (defined $_name)
+    {
+        $self->{_NAME} = $_name;
+	$self->{DIRTY} = 1;
+    }
+    return $self->{_NAME};
 }
 
 sub name($;$)
 {
-    my $self = shift;
-    my $name = \${$self->{NAME}};
-    my $dirty = \${$self->{DIRTY}};
-
-    local $_ = shift;
-
-    if(defined($_)) { $$name = $_; $$dirty = 1; }
-
-    if($$name) {
-	return $$name;
-    } else {
-	my $kind = \${$self->{KIND}};
-	my $_name = \${$self->{_NAME}};
-
-	return "$$kind $$_name";
+    my ($self, $name) = @_;
+    if (defined $name)
+    {
+        $self->{NAME} = $name;
+	$self->{DIRTY} = 1;
     }
+    return $self->{NAME} if ($self->{NAME});
+    return "$self->{KIND} $self->{_NAME}";
 }
 
 sub pack($;$)
 {
-    my $self = shift;
-    my $pack = \${$self->{PACK}};
-    my $dirty = \${$self->{DIRTY}};
-    
-    local $_ = shift;
-
-    if(defined($_)) { $$pack = $_; $$dirty = 1; }
-
-    return $$pack;
+    my ($self, $pack) = @_;
+    if (defined $pack)
+    {
+        $self->{PACK} = $pack;
+	$self->{DIRTY} = 1;
+    }
+    return $self->{PACK};
 }
 
-sub align($) {
-    my $self = shift;
-
-    my $align = \${$self->{ALIGN}};
-
+sub align($)
+{
+    my ($self) = @_;
     $self->_refresh();
-
-    return $$align;
+    return $self->{ALIGN};
 }
 
-sub fields($) {
-    my $self = shift;
+sub fields($)
+{
+    my ($self) = @_;
 
     my $count = $self->field_count;
 
@@ -168,107 +134,73 @@ sub fields($) {
     return @fields;
 }
 
-sub field_base_sizes($) {
-    my $self = shift;
-    my $field_base_sizes = \${$self->{FIELD_BASE_SIZES}};
-
+sub field_base_sizes($)
+{
+    my ($self) = @_;
     $self->_refresh();
-
-    return $$field_base_sizes;
+    return $self->{FIELD_BASE_SIZES};
 }
 
-sub field_aligns($) {
-    my $self = shift;
-    my $field_aligns = \${$self->{FIELD_ALIGNS}};
-
+sub field_aligns($)
+{
+    my ($self) = @_;
     $self->_refresh();
-
-    return $$field_aligns;
+    return $self->{FIELD_ALIGNS};
 }
 
-sub field_count($) {
-    my $self = shift;
-    my $field_type_names = \${$self->{FIELD_TYPE_NAMES}};
-
-    my @field_type_names = @{$$field_type_names}; 
-    my $count = scalar(@field_type_names);
-
-    return $count;
+sub field_count($)
+{
+    my ($self) = @_;
+    return scalar @{$self->{FIELD_TYPE_NAMES}};
 }
 
 sub field_names($;$)
 {
-    my $self = shift;
-    my $field_names = \${$self->{FIELD_NAMES}};
-    my $dirty = \${$self->{DIRTY}};
-
-    local $_ = shift;
-
-    if(defined($_)) { $$field_names = $_; $$dirty = 1; }
-
-    return $$field_names;
+    my ($self, $field_names) = @_;
+    if (defined $field_names)
+    {
+        $self->{FIELD_NAMES} = $field_names;
+	$self->{DIRTY} = 1;
+    }
+    return $self->{FIELD_NAMES};
 }
 
-sub field_offsets($) {
-    my $self = shift;
-    my $field_offsets = \${$self->{FIELD_OFFSETS}};
-
+sub field_offsets($)
+{
+    my ($self) = @_;
     $self->_refresh();
-
-    return $$field_offsets;
+    return $self->{FIELD_OFFSETS};
 }
 
-sub field_sizes($) {
-    my $self = shift;
-    my $field_sizes = \${$self->{FIELD_SIZES}};
-
+sub field_sizes($)
+{
+    my ($self) = @_;
     $self->_refresh();
-
-    return $$field_sizes;
+    return $self->{FIELD_SIZES};
 }
 
 sub field_type_names($;$)
 {
-    my $self = shift;
-    my $field_type_names = \${$self->{FIELD_TYPE_NAMES}};
-    my $dirty = \${$self->{DIRTY}};
-
-    local $_ = shift;
-
-    if(defined($_)) { $$field_type_names = $_; $$dirty = 1; }
-
-    return $$field_type_names;
+    my ($self, $field_type_names) = @_;
+    if (defined $field_type_names)
+    {
+        $self->{FIELD_TYPE_NAMES} = $field_type_names;
+	$self->{DIRTY} = 1;
+    }
+    return $self->{FIELD_TYPE_NAMES};
 }
 
-sub size($) {
-    my $self = shift;
-
-    my $size = \${$self->{SIZE}};
-
+sub size($)
+{
+    my ($self) = @_;
     $self->_refresh();
-
-    return $$size;
+    return $self->{SIZE};
 }
 
-sub _refresh($) {
-    my $self = shift;
-
-    my $dirty = \${$self->{DIRTY}};
-
-    return if !$$dirty;
-
-    my $find_align = \${$self->{FIND_ALIGN}};
-    my $find_kind = \${$self->{FIND_KIND}};
-    my $find_size = \${$self->{FIND_SIZE}};
-    my $find_count = \${$self->{FIND_COUNT}};
-
-    my $align = \${$self->{ALIGN}};
-    my $kind = \${$self->{KIND}};
-    my $size = \${$self->{SIZE}};
-    my $field_aligns = \${$self->{FIELD_ALIGNS}};
-    my $field_base_sizes = \${$self->{FIELD_BASE_SIZES}};
-    my $field_offsets = \${$self->{FIELD_OFFSETS}};
-    my $field_sizes = \${$self->{FIELD_SIZES}};
+sub _refresh($)
+{
+    my ($self) = @_;
+    return if (!$self->{DIRTY});
 
     my $pack = $self->pack;
     $pack = 8 if !defined($pack);
@@ -280,7 +212,8 @@ sub _refresh($) {
     my $bitfield_bits = 0;
 
     my $n = 0;
-    foreach my $field ($self->fields) {
+    foreach my $field ($self->fields())
+    {
 	my $type_name = $field->type_name;
 
         my $bits;
@@ -295,17 +228,18 @@ sub _refresh($) {
         {
             $declspec_align=$1;
         }
-        my $base_size = &$$find_size($type_name);
+        my $base_size = $self->{FIND_SIZE}($type_name);
         my $type_size=$base_size;
         if (defined $count)
         {
-            $count=&$$find_count($count) if ($count !~ /^\d+$/);
+            $count=$self->{FIND_COUNT}($count) if ($count !~ /^\d+$/);
             if (!defined $count)
             {
                 $type_size=undef;
             }
             else
             {
+	      print STDERR "$type_name -> type_size=undef, count=$count\n" if (!defined $type_size);
                 $type_size *= int($count);
             }
         }
@@ -328,35 +262,35 @@ sub _refresh($) {
             }
         }
 
-        $$align = &$$find_align($type_name);
-        $$align=$declspec_align if (defined $declspec_align);
+        $self->{ALIGN} = $self->{FIND_ALIGN}($type_name);
+        $self->{ALIGN} = $declspec_align if (defined $declspec_align);
 
-        if (defined $$align)
+        if (defined $self->{ALIGN})
         {
-            $$align = $pack if $$align > $pack;
-            $max_field_align = $$align if $$align > $max_field_align;
+            $self->{ALIGN} = $pack if ($self->{ALIGN} > $pack);
+            $max_field_align = $self->{ALIGN} if ($self->{ALIGN}) > $max_field_align;
 
-            if ($offset % $$align != 0) {
-                $offset = (int($offset / $$align) + 1) * $$align;
+            if ($offset % $self->{ALIGN} != 0) {
+                $offset = (int($offset / $self->{ALIGN}) + 1) * $self->{ALIGN};
             }
         }
 
-        if ($$kind !~ /^(?:struct|union)$/)
+        if ($self->{KIND} !~ /^(?:struct|union)$/)
         {
-            $$kind = &$$find_kind($type_name) || "";
+            $self->{KIND} = $self->{FIND_KIND}($type_name) || "";
         }
 
         if (!$type_size)
         {
-            $$align = undef;
-            $$size = undef;
+            $self->{ALIGN} = undef;
+            $self->{SIZE} = undef;
             return;
         }
 
-        $$$field_aligns[$n] = $$align;
-        $$$field_base_sizes[$n] = $base_size;
-        $$$field_offsets[$n] = $offset;
-        $$$field_sizes[$n] = $type_size;
+        $self->{FIELD_ALIGNS}->[$n] = $self->{ALIGN};
+        $self->{FIELD_BASE_SIZES}->[$n] = $base_size;
+        $self->{FIELD_OFFSETS}->[$n] = $offset;
+        $self->{FIELD_SIZES}->[$n] = $type_size;
         $offset += $type_size;
 
         if ($bits)
@@ -367,94 +301,66 @@ sub _refresh($) {
 	$n++;
     }
 
-    $$align = $pack;
-    $$align = $max_field_align if $max_field_align < $pack;
+    $self->{ALIGN} = $pack;
+    $self->{ALIGN} = $max_field_align if ($max_field_align < $pack);
 
-    $$size = $offset;
-    if ($$kind =~ /^(?:struct|union)$/) {
-	if ($$size % $$align != 0) {
-	    $$size = (int($$size / $$align) + 1) * $$align;
+    $self->{SIZE} = $offset;
+    if ($self->{KIND} =~ /^(?:struct|union)$/) {
+	if ($self->{SIZE} % $self->{ALIGN} != 0) {
+	    $self->{SIZE} = (int($self->{SIZE} / $self->{ALIGN}) + 1) * $self->{ALIGN};
 	}
     }
 
-    $$dirty = 0;
+    $self->{DIRTY} = 0;
 }
 
 package c_type_field;
 
-sub new($$$) {
-    my $proto = shift;
+sub new($$$)
+{
+    my ($proto, $type, $number) = @_;
     my $class = ref($proto) || $proto;
-    my $self  = {};
-    bless ($self, $class);
-
-    my $type = \${$self->{TYPE}};
-    my $number = \${$self->{NUMBER}};
-
-    $$type = shift;
-    $$number = shift;
-
+    my $self  = {TYPE=> $type,
+		 NUMBER => $number
+		};
+    bless $self, $class;
     return $self;
 }
 
-sub align($) {
-    my $self = shift;
-    my $type = \${$self->{TYPE}};
-    my $number = \${$self->{NUMBER}};
-
-    my $field_aligns = $$type->field_aligns;
-
-    return $$field_aligns[$$number];
+sub align($)
+{
+    my ($self) = @_;
+    return $self->{TYPE}->field_aligns()->[$self->{NUMBER}];
 }
 
-sub base_size($) {
-    my $self = shift;
-    my $type = \${$self->{TYPE}};
-    my $number = \${$self->{NUMBER}};
-
-    my $field_base_sizes = $$type->field_base_sizes;
-
-    return $$field_base_sizes[$$number];
+sub base_size($)
+{
+    my ($self) = @_;
+    return $self->{TYPE}->field_base_sizes()->[$self->{NUMBER}];
 }
 
-sub name($) {
-    my $self = shift;
-    my $type = \${$self->{TYPE}};
-    my $number = \${$self->{NUMBER}};
-
-    my $field_names = $$type->field_names;
-
-    return $$field_names[$$number];
+sub name($)
+{
+    my ($self) = @_;
+    return $self->{TYPE}->field_names()->[$self->{NUMBER}];
 }
 
-sub offset($) {
-    my $self = shift;
-    my $type = \${$self->{TYPE}};
-    my $number = \${$self->{NUMBER}};
-
-    my $field_offsets = $$type->field_offsets;
-
-    return $$field_offsets[$$number];
+sub offset($)
+{
+    my ($self) = @_;
+    return $self->{TYPE}->field_offsets()->[$self->{NUMBER}];
 }
 
-sub size($) {
-    my $self = shift;
-    my $type = \${$self->{TYPE}};
-    my $number = \${$self->{NUMBER}};
-
-    my $field_sizes = $$type->field_sizes;
-
-    return $$field_sizes[$$number];
+sub size($)
+{
+    my ($self) = @_;
+    return $self->{TYPE}->field_sizes()->[$self->{NUMBER}];
 }
 
-sub type_name($) {
-    my $self = shift;
-    my $type = \${$self->{TYPE}};
-    my $number = \${$self->{NUMBER}};
-
-    my $field_type_names = $$type->field_type_names;
-
-    return $$field_type_names[$$number];
+sub type_name($)
+{
+    my ($self) = @_;
+    return $self->{TYPE}->field_type_names()->[$self->{NUMBER}];
 }
 
 1;
