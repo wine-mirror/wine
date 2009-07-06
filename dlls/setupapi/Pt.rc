@@ -2,7 +2,8 @@
  * Portuguese resources for SETUPAPI
  *
  * Copyright 2003 Marcelo Duarte
- * Copyright 2004 Am�rico Jos� Melo
+ * Copyright 2004 Américo José Melo
+ * Copyright 2009 Ricardo Filipe
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,18 @@
  */
 
 #include "setupapi_private.h"
+
+#pragma code_page(65001)
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+STRINGTABLE DISCARDABLE
+{
+        IDS_PROMPTDISK   "O ficheiro '%s' em %s é necessário"
+        IDS_UNKNOWN      "Desconhecido"
+        IDS_COPYFROM     "Copiar ficheiros de:"
+        IDS_INFO         "Insira o caminho onde se encontram os ficheiros, depois carregue em OK."
+}
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
@@ -49,4 +62,18 @@ BEGIN
 	LTEXT "Destino:", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", DESTSTRORD, 7, 41, 194, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "", PROGRESSORD, "setupx_progress", 7, 63, 194, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+END
+
+IDPROMPTFORDISK DIALOG MOVEABLE DISCARDABLE 0, 0, 250, 120
+STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+CAPTION "Ficheiros Necessários"
+FONT 8, "MS Shell Dlg"
+BEGIN
+	LTEXT "Insira o disco de instalação do fabricante, depois\nverifique se a drive correcta está seleccionada", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Copiar ficheiros do fabricante de:", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
+	PUSHBUTTON "OK", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Cancelar", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	PUSHBUTTON "Procurar...", IDC_RUNDLG_BROWSE, 195, 100, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
