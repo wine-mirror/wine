@@ -5215,7 +5215,7 @@ static const struct message WmSetStyleButtonSeq[] =
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
-    { WM_ERASEBKGND, sent|defwinproc },
+    { WM_ERASEBKGND, sent|defwinproc|optional }, /* Win9x doesn't send it */
     { WM_CTLCOLORBTN, sent|parent },
     { 0 }
 };
@@ -5225,7 +5225,7 @@ static const struct message WmSetStyleStaticSeq[] =
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
-    { WM_ERASEBKGND, sent|defwinproc },
+    { WM_ERASEBKGND, sent|defwinproc|optional }, /* Win9x doesn't send it */
     { WM_CTLCOLORSTATIC, sent|parent },
     { 0 }
 };
@@ -5235,7 +5235,7 @@ static const struct message WmSetStyleUserSeq[] =
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
-    { WM_ERASEBKGND, sent|defwinproc },
+    { WM_ERASEBKGND, sent|defwinproc|optional }, /* Win9x doesn't send it */
     { WM_CTLCOLORBTN, sent|parent },
     { WM_COMMAND, sent|wparam|parent, MAKEWPARAM(ID_BUTTON, BN_PAINT) },
     { 0 }
@@ -5246,9 +5246,9 @@ static const struct message WmSetStyleOwnerdrawSeq[] =
     { WM_APP, sent|wparam|lparam, 0, 0 },
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
-    { WM_ERASEBKGND, sent|defwinproc },
+    { WM_ERASEBKGND, sent|defwinproc|optional }, /* Win9x doesn't send it */
     { WM_CTLCOLORBTN, sent|parent },
-    { WM_CTLCOLORBTN, sent|parent },
+    { WM_CTLCOLORBTN, sent|parent|optional }, /* Win9x doesn't send it */
     { WM_DRAWITEM, sent|wparam|lparam|parent, ID_BUTTON, 0x000010e4 },
     { 0 }
 };
