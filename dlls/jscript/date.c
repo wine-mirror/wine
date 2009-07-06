@@ -455,9 +455,7 @@ static SYSTEMTIME create_systemtime(DOUBLE time)
     return st;
 }
 
-/* ECMA-262 3rd Edition    15.9.1.2 */
-static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+static inline HRESULT date_to_string(DOUBLE time, BOOL show_offset, int offset, VARIANT *retv)
 {
     static const WCHAR NaNW[] = { 'N','a','N',0 };
     static const WCHAR formatW[] = { '%','s',' ','%','s',' ','%','d',' ',
@@ -466,6 +464,9 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     static const WCHAR formatUTCW[] = { '%','s',' ','%','s',' ','%','d',' ',
         '%','0','2','d',':','%','0','2','d',':','%','0','2','d',' ',
         'U','T','C',' ','%','d','%','s',0 };
+    static const WCHAR formatNoOffsetW[] = { '%','s',' ','%','s',' ',
+        '%','d',' ','%','0','2','d',':','%','0','2','d',':',
+        '%','0','2','d',' ','%','d','%','s',0 };
     static const WCHAR ADW[] = { 0 };
     static const WCHAR BCW[] = { ' ','B','.','C','.',0 };
 
@@ -481,23 +482,12 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 
     BOOL formatAD = TRUE;
     BSTR week, month;
-    DateInstance *date;
     BSTR date_str;
-    DOUBLE time;
-    int len, size, year, day, offset;
+    int len, size, year, day;
     DWORD lcid_en, week_id, month_id;
     WCHAR sign = '-';
 
-    TRACE("\n");
-
-    if(!is_class(dispex, JSCLASS_DATE)) {
-        FIXME("throw TypeError\n");
-        return E_FAIL;
-    }
-
-    date = (DateInstance*)dispex;
-
-    if(isnan(date->time)) {
+    if(isnan(time)) {
         if(retv) {
             V_VT(retv) = VT_BSTR;
             V_BSTR(retv) = SysAllocString(NaNW);
@@ -506,8 +496,6 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
         }
         return S_OK;
     }
-
-    time = local_time(date->time, date);
 
     if(retv) {
         len = 21;
@@ -554,10 +542,8 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
         } while(day);
         day = date_from_time(time);
 
-        offset = date->bias +
-            daylight_saving_ta(time, date);
-
-        if(offset == 0) len -= 5;
+        if(!show_offset) len -= 9;
+        else if(offset == 0) len -= 5;
         else if(offset < 0) {
             sign = '+';
             offset = -offset;
@@ -570,15 +556,19 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
             return E_OUTOFMEMORY;
         }
 
-        if(offset)
+        if(!show_offset)
+            sprintfW(date_str, formatNoOffsetW, week, month, day,
+                    (int)hour_from_time(time), (int)min_from_time(time),
+                    (int)sec_from_time(time), year, formatAD?ADW:BCW);
+        else if(offset)
             sprintfW(date_str, formatW, week, month, day,
                     (int)hour_from_time(time), (int)min_from_time(time),
                     (int)sec_from_time(time), sign, offset/60, offset%60,
                     year, formatAD?ADW:BCW);
         else
             sprintfW(date_str, formatUTCW, week, month, day,
-            (int)hour_from_time(time), (int)min_from_time(time),
-            (int)sec_from_time(time), year, formatAD?ADW:BCW);
+                    (int)hour_from_time(time), (int)min_from_time(time),
+                    (int)sec_from_time(time), year, formatAD?ADW:BCW);
 
         SysFreeString(week);
         SysFreeString(month);
@@ -587,6 +577,29 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
         V_BSTR(retv) = date_str;
     }
     return S_OK;
+}
+
+/* ECMA-262 3rd Edition    15.9.1.2 */
+static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DateInstance *date;
+    DOUBLE time;
+    int offset;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    date = (DateInstance*)dispex;
+    time = local_time(date->time, date);
+    offset = date->bias +
+        daylight_saving_ta(time, date);
+
+    return date_to_string(time, TRUE, offset, retv);
 }
 
 /* ECMA-262 3rd Edition    15.9.1.5 */
@@ -2651,6 +2664,18 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
         V_VT(retv) = VT_DISPATCH;
         V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(date);
         return S_OK;
+
+    case INVOKE_FUNC: {
+        FILETIME system_time, local_time;
+        LONGLONG lltime;
+
+        GetSystemTimeAsFileTime(&system_time);
+        FileTimeToLocalFileTime(&system_time, &local_time);
+        lltime = ((LONGLONG)local_time.dwHighDateTime<<32)
+            + local_time.dwLowDateTime;
+
+        return date_to_string(lltime/10000-TIME_EPOCH, FALSE, 0, retv);
+    }
 
     default:
         FIXME("unimplemented flags %x\n", flags);
