@@ -49,6 +49,9 @@ static void test_decode_24bpp(void)
 {
     IWICBitmapDecoder *decoder, *decoder2;
     IWICBitmapFrameDecode *framedecode;
+    IWICMetadataQueryReader *queryreader;
+    IWICColorContext *colorcontext;
+    IWICBitmapSource *thumbnail;
     HRESULT hr;
     HGLOBAL hbmpdata;
     char *bmpdata;
@@ -88,6 +91,18 @@ static void test_decode_24bpp(void)
             ok(SUCCEEDED(hr), "GetContainerFormat failed, hr=%x\n", hr);
             ok(IsEqualGUID(&guidresult, &GUID_ContainerFormatBmp), "unexpected container format\n");
 
+            hr = IWICBitmapDecoder_GetMetadataQueryReader(decoder, &queryreader);
+            ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "expected WINCODEC_ERR_UNSUPPORTEDOPERATION, got %x\n", hr);
+
+            hr = IWICBitmapDecoder_GetColorContexts(decoder, 1, &colorcontext, &count);
+            ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "expected WINCODEC_ERR_UNSUPPORTEDOPERATION, got %x\n", hr);
+
+            hr = IWICBitmapDecoder_GetThumbnail(decoder, &thumbnail);
+            ok(hr == WINCODEC_ERR_CODECNOTHUMBNAIL, "expected WINCODEC_ERR_CODECNOTHUMBNAIL, got %x\n", hr);
+
+            hr = IWICBitmapDecoder_GetPreview(decoder, &thumbnail);
+            ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "expected WINCODEC_ERR_UNSUPPORTEDOPERATION, got %x\n", hr);
+
             hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
             ok(SUCCEEDED(hr), "GetFrameCount failed, hr=%x\n", hr);
             ok(count == 1, "unexpected count %u\n", count);
@@ -115,6 +130,15 @@ static void test_decode_24bpp(void)
                 hr = IWICBitmapFrameDecode_GetPixelFormat(framedecode, &guidresult);
                 ok(SUCCEEDED(hr), "GetPixelFormat failed, hr=%x\n", hr);
                 ok(IsEqualGUID(&guidresult, &GUID_WICPixelFormat24bppBGR), "unexpected pixel format\n");
+
+                hr = IWICBitmapFrameDecode_GetMetadataQueryReader(framedecode, &queryreader);
+                ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "expected WINCODEC_ERR_UNSUPPORTEDOPERATION, got %x\n", hr);
+
+                hr = IWICBitmapFrameDecode_GetColorContexts(framedecode, 1, &colorcontext, &count);
+                ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "expected WINCODEC_ERR_UNSUPPORTEDOPERATION, got %x\n", hr);
+
+                hr = IWICBitmapFrameDecode_GetThumbnail(framedecode, &thumbnail);
+                ok(hr == WINCODEC_ERR_CODECNOTHUMBNAIL, "expected WINCODEC_ERR_CODECNOTHUMBNAIL, got %x\n", hr);
 
                 hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
                     &IID_IWICImagingFactory, (void**)&factory);

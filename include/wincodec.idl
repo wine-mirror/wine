@@ -96,6 +96,7 @@ typedef UINT32 WICColor;
 cpp_quote("#define WINCODEC_ERR_WRONGSTATE 0x88982f04")
 cpp_quote("#define WINCODEC_ERR_CODECNOTHUMBNAIL 0x88982f44")
 cpp_quote("#define WINCODEC_ERR_PALETTEUNAVAILABLE 0x88982f45")
+cpp_quote("#define WINCODEC_ERR_UNSUPPORTEDOPERATION 0x88982f81")
 
 interface IWICBitmap;
 interface IWICComponentInfo;

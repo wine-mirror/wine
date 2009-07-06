@@ -311,22 +311,22 @@ static HRESULT WINAPI BmpFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI BmpFrameDecode_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
     IWICMetadataQueryReader **ppIMetadataQueryReader)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIMetadataQueryReader);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIMetadataQueryReader);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static HRESULT WINAPI BmpFrameDecode_GetColorContexts(IWICBitmapFrameDecode *iface,
     UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cCount, ppIColorContexts, pcActualCount);
-    return E_NOTIMPL;
+    TRACE("(%p,%u,%p,%p)\n", iface, cCount, ppIColorContexts, pcActualCount);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static HRESULT WINAPI BmpFrameDecode_GetThumbnail(IWICBitmapFrameDecode *iface,
     IWICBitmapSource **ppIThumbnail)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIThumbnail);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIThumbnail);
+    return WINCODEC_ERR_CODECNOTHUMBNAIL;
 }
 
 static HRESULT BmpFrameDecode_ReadUncompressed(BmpFrameDecode* This)
@@ -637,29 +637,29 @@ static HRESULT WINAPI BmpDecoder_CopyPalette(IWICBitmapDecoder *iface,
 static HRESULT WINAPI BmpDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface,
     IWICMetadataQueryReader **ppIMetadataQueryReader)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIMetadataQueryReader);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIMetadataQueryReader);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static HRESULT WINAPI BmpDecoder_GetPreview(IWICBitmapDecoder *iface,
     IWICBitmapSource **ppIBitmapSource)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIBitmapSource);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIBitmapSource);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static HRESULT WINAPI BmpDecoder_GetColorContexts(IWICBitmapDecoder *iface,
     UINT cCount, IWICColorContext **ppIColorContexts, UINT *pcActualCount)
 {
-    FIXME("(%p,%u,%p,%p): stub\n", iface, cCount, ppIColorContexts, pcActualCount);
-    return E_NOTIMPL;
+    TRACE("(%p,%u,%p,%p)\n", iface, cCount, ppIColorContexts, pcActualCount);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
 static HRESULT WINAPI BmpDecoder_GetThumbnail(IWICBitmapDecoder *iface,
     IWICBitmapSource **ppIThumbnail)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIThumbnail);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIThumbnail);
+    return WINCODEC_ERR_CODECNOTHUMBNAIL;
 }
 
 static HRESULT WINAPI BmpDecoder_GetFrameCount(IWICBitmapDecoder *iface,
