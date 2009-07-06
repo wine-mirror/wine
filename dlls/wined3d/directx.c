@@ -674,8 +674,6 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     /* Current Windows drivers have versions like 6.14.... (some older have an earlier version). */
     gl_info->driver_version_hipart = MAKEDWORD_VERSION(6, 14);
 
-    TRACE_(d3d_caps)("found GL_RENDERER (%s)->(0x%04x)\n", debugstr_a(gl_info->gl_renderer), gl_info->gl_card);
-
     /*
      * Initialize openGL extension related variables
      *  with Default values
