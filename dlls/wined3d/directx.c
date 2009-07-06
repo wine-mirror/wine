@@ -459,7 +459,421 @@ static DWORD ver_for_ext(GL_SupportedExt ext)
     return 0;
 }
 
-static void fixup_extensions(WineD3D_GL_Info *gl_info, const char *gl_renderer);
+static BOOL match_ati_r300_to_500(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    if (gl_info->gl_vendor != VENDOR_ATI) return FALSE;
+    if (gl_info->gl_card == CARD_ATI_RADEON_9500) return TRUE;
+    if (gl_info->gl_card == CARD_ATI_RADEON_X700) return TRUE;
+    if (gl_info->gl_card == CARD_ATI_RADEON_X1600) return TRUE;
+    return FALSE;
+}
+
+static BOOL match_geforce5(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    if (gl_info->gl_vendor == VENDOR_NVIDIA)
+    {
+        if (gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5800 || gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5600)
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static BOOL match_apple(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
+     * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
+     * detect the Apple OpenGL implementation to apply some extension fixups afterwards.
+     *
+     * Detecting this isn't really easy. The vendor string doesn't mention Apple. Compile-time checks
+     * aren't sufficient either because a Linux binary may display on a macos X server via remote X11.
+     * So try to detect the GL implementation by looking at certain Apple extensions. Some extensions
+     * like client storage might be supported on other implementations too, but GL_APPLE_flush_render
+     * is specific to the Mac OS X window management, and GL_APPLE_ycbcr_422 is QuickTime specific. So
+     * the chance that other implementations support them is rather small since Win32 QuickTime uses
+     * DirectDraw, not OpenGL. */
+    if (gl_info->supported[APPLE_FENCE]
+            && gl_info->supported[APPLE_CLIENT_STORAGE]
+            && gl_info->supported[APPLE_FLUSH_RENDER]
+            && gl_info->supported[APPLE_YCBCR_422])
+    {
+        TRACE_(d3d_caps)("GL_APPLE_fence, GL_APPLE_client_storage, GL_APPLE_flush_render and GL_ycbcr_422 are supported.\n");
+        TRACE_(d3d_caps)("Activating MacOS fixups.\n");
+        return TRUE;
+    }
+    else
+    {
+        TRACE_(d3d_caps)("Apple extensions are not supported.\n");
+        TRACE_(d3d_caps)("Not activating MacOS fixups.\n");
+        return FALSE;
+    }
+}
+
+/* Context activation is done by the caller. */
+static void test_pbo_functionality(WineD3D_GL_Info *gl_info)
+{
+    /* Some OpenGL implementations, namely Apple's Geforce 8 driver, advertises PBOs,
+     * but glTexSubImage from a PBO fails miserably, with the first line repeated over
+     * all the texture. This function detects this bug by its symptom and disables PBOs
+     * if the test fails.
+     *
+     * The test uploads a 4x4 texture via the PBO in the "native" format GL_BGRA,
+     * GL_UNSIGNED_INT_8_8_8_8_REV. This format triggers the bug, and it is what we use
+     * for D3DFMT_A8R8G8B8. Then the texture is read back without any PBO and the data
+     * read back is compared to the original. If they are equal PBOs are assumed to work,
+     * otherwise the PBO extension is disabled. */
+    GLuint texture, pbo;
+    static const unsigned int pattern[] =
+    {
+        0x00000000, 0x000000ff, 0x0000ff00, 0x40ff0000,
+        0x80ffffff, 0x40ffff00, 0x00ff00ff, 0x0000ffff,
+        0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x000000ff,
+        0x80ff00ff, 0x0000ffff, 0x00ff00ff, 0x40ff00ff
+    };
+    unsigned int check[sizeof(pattern) / sizeof(pattern[0])];
+
+    /* No PBO -> No point in testing them. */
+    if (!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]) return;
+
+    ENTER_GL();
+
+    while (glGetError());
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
+    checkGLcall("Specifying the PBO test texture\n");
+
+    GL_EXTCALL(glGenBuffersARB(1, &pbo));
+    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pbo));
+    GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, sizeof(pattern), pattern, GL_STREAM_DRAW_ARB));
+    checkGLcall("Specifying the PBO test pbo\n");
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+    checkGLcall("Loading the PBO test texture\n");
+
+    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+    glFinish(); /* just to be sure */
+
+    memset(check, 0, sizeof(check));
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, check);
+    checkGLcall("Reading back the PBO test texture\n");
+
+    glDeleteTextures(1, &texture);
+    GL_EXTCALL(glDeleteBuffersARB(1, &pbo));
+    checkGLcall("PBO test cleanup\n");
+
+    LEAVE_GL();
+
+    if (memcmp(check, pattern, sizeof(check)))
+    {
+        WARN_(d3d_caps)("PBO test failed, read back data doesn't match original.\n");
+        WARN_(d3d_caps)("Disabling PBOs. This may result in slower performance.\n");
+        gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] = FALSE;
+    }
+    else
+    {
+        TRACE_(d3d_caps)("PBO test successful.\n");
+    }
+}
+
+static BOOL match_apple_intel(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    return gl_info->gl_vendor == VENDOR_INTEL && match_apple(gl_info, gl_renderer);
+}
+
+static BOOL match_apple_nonr500ati(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    if (!match_apple(gl_info, gl_renderer)) return FALSE;
+    if (gl_info->gl_vendor != VENDOR_ATI) return FALSE;
+    if (gl_info->gl_card == CARD_ATI_RADEON_X1600) return FALSE;
+    return TRUE;
+}
+
+static BOOL match_fglrx(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    if (gl_info->gl_vendor != VENDOR_ATI) return FALSE;
+    if (match_apple(gl_info, gl_renderer)) return FALSE;
+    if (strstr(gl_renderer, "DRI")) return FALSE; /* Filter out Mesa DRI drivers. */
+    return TRUE;
+}
+
+static BOOL match_dx10_capable(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    /* DX9 cards support 40 single float varyings in hardware, most drivers report 32. ATI misreports
+     * 44 varyings. So assume that if we have more than 44 varyings we have a dx10 card.
+     * This detection is for the gl_ClipPos varying quirk. If a d3d9 card really supports more than 44
+     * varyings and we subtract one in dx9 shaders its not going to hurt us because the dx9 limit is
+     * hardcoded
+     *
+     * dx10 cards usually have 64 varyings */
+    return gl_info->max_glsl_varyings > 44;
+}
+
+static void quirk_arb_constants(WineD3D_GL_Info *gl_info)
+{
+    TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->vs_arb_constantsF);
+    gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
+    TRACE_(d3d_caps)("Using ARB ps constant limit(=%u) for GLSL.\n", gl_info->ps_arb_constantsF);
+    gl_info->ps_glsl_constantsF = gl_info->ps_arb_constantsF;
+}
+
+static void quirk_apple_glsl_constants(WineD3D_GL_Info *gl_info)
+{
+    quirk_arb_constants(gl_info);
+    /* MacOS needs uniforms for relative addressing offsets. This can accumulate to quite a few uniforms.
+     * Beyond that the general uniform isn't optimal, so reserve a number of uniforms. 12 vec4's should
+     * allow 48 different offsets or other helper immediate values. */
+    TRACE_(d3d_caps)("Reserving 12 GLSL constants for compiler private use.\n");
+    gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 12);
+}
+
+/* fglrx crashes with a very bad kernel panic if GL_POINT_SPRITE_ARB is set to GL_COORD_REPLACE_ARB
+ * on more than one texture unit. This means that the d3d9 visual point size test will cause a
+ * kernel panic on any machine running fglrx 9.3(latest that supports r300 to r500 cards). This
+ * quirk only enables point sprites on the first texture unit. This keeps point sprites working in
+ * most games, but avoids the crash
+ *
+ * A more sophisticated way would be to find all units that need texture coordinates and enable
+ * point sprites for one if only one is found, and software emulate point sprites in drawStridedSlow
+ * if more than one unit needs texture coordinates(This requires software ffp and vertex shaders though)
+ *
+ * Note that disabling the extension entirely does not gain predictability because there is no point
+ * sprite capability flag in d3d, so the potential rendering bugs are the same if we disable the extension. */
+static void quirk_one_point_sprite(WineD3D_GL_Info *gl_info)
+{
+    if (gl_info->supported[ARB_POINT_SPRITE])
+    {
+        TRACE("Limiting point sprites to one texture unit.\n");
+        gl_info->max_point_sprite_units = 1;
+    }
+}
+
+static void quirk_ati_dx9(WineD3D_GL_Info *gl_info)
+{
+    quirk_arb_constants(gl_info);
+
+    /* MacOS advertises GL_ARB_texture_non_power_of_two on ATI r500 and earlier cards, although
+     * these cards only support GL_ARB_texture_rectangle(D3DPTEXTURECAPS_NONPOW2CONDITIONAL).
+     * If real NP2 textures are used, the driver falls back to software. We could just remove the
+     * extension and use GL_ARB_texture_rectangle instead, but texture_rectangle is inconventient
+     * due to the non-normalized texture coordinates. Thus set an internal extension flag,
+     * GL_WINE_normalized_texrect, which signals the code that it can use non power of two textures
+     * as per GL_ARB_texture_non_power_of_two, but has to stick to the texture_rectangle limits.
+     *
+     * fglrx doesn't advertise GL_ARB_texture_non_power_of_two, but it advertises opengl 2.0 which
+     * has this extension promoted to core. The extension loading code sets this extension supported
+     * due to that, so this code works on fglrx as well. */
+    TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing.\n");
+    gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
+    gl_info->supported[WINE_NORMALIZED_TEXRECT] = TRUE;
+
+    /* fglrx has the same structural issues as the one described in quirk_apple_glsl_constants, although
+     * it is generally more efficient. Reserve just 8 constants. */
+    TRACE_(d3d_caps)("Reserving 8 GLSL constants for compiler private use.\n");
+    gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 8);
+}
+
+static void quirk_no_np2(WineD3D_GL_Info *gl_info)
+{
+    /*  The nVidia GeForceFX series reports OpenGL 2.0 capabilities with the latest drivers versions, but
+     *  doesn't explicitly advertise the ARB_tex_npot extension in the GL extension string.
+     *  This usually means that ARB_tex_npot is supported in hardware as long as the application is staying
+     *  within the limits enforced by the ARB_texture_rectangle extension. This however is not true for the
+     *  FX series, which instantly falls back to a slower software path as soon as ARB_tex_npot is used.
+     *  We therefore completely remove ARB_tex_npot from the list of supported extensions.
+     *
+     *  Note that wine_normalized_texrect can't be used in this case because internally it uses ARB_tex_npot,
+     *  triggering the software fallback. There is not much we can do here apart from disabling the
+     *  software-emulated extension and reenable ARB_tex_rect (which was previously disabled
+     *  in IWineD3DImpl_FillGLCaps).
+     *  This fixup removes performance problems on both the FX 5900 and FX 5700 (e.g. for framebuffer
+     *  post-processing effects in the game "Max Payne 2").
+     *  The behaviour can be verified through a simple test app attached in bugreport #14724. */
+    TRACE("GL_ARB_texture_non_power_of_two advertised through OpenGL 2.0 on NV FX card, removing.\n");
+    gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
+    gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
+}
+
+static void quirk_texcoord_w(WineD3D_GL_Info *gl_info)
+{
+    /* The Intel GPUs on MacOS set the .w register of texcoords to 0.0 by default, which causes problems
+     * with fixed function fragment processing. Ideally this flag should be detected with a test shader
+     * and OpenGL feedback mode, but some GL implementations (MacOS ATI at least, probably all MacOS ones)
+     * do not like vertex shaders in feedback mode and return an error, even though it should be valid
+     * according to the spec.
+     *
+     * We don't want to enable this on all cards, as it adds an extra instruction per texcoord used. This
+     * makes the shader slower and eats instruction slots which should be available to the d3d app.
+     *
+     * ATI Radeon HD 2xxx cards on MacOS have the issue. Instead of checking for the buggy cards, blacklist
+     * all radeon cards on Macs and whitelist the good ones. That way we're prepared for the future. If
+     * this workaround is activated on cards that do not need it, it won't break things, just affect
+     * performance negatively. */
+    TRACE("Enabling vertex texture coord fixes in vertex shaders.\n");
+    gl_info->quirks |= WINED3D_QUIRK_SET_TEXCOORD_W;
+}
+
+static void quirk_clip_varying(WineD3D_GL_Info *gl_info)
+{
+    gl_info->quirks |= WINED3D_QUIRK_GLSL_CLIP_VARYING;
+}
+
+struct driver_quirk
+{
+    BOOL (*match)(const WineD3D_GL_Info *gl_info, const char *gl_renderer);
+    void (*apply)(WineD3D_GL_Info *gl_info);
+    const char *description;
+};
+
+struct driver_quirk quirk_table[] =
+{
+    {
+        match_ati_r300_to_500,
+        quirk_ati_dx9,
+        "ATI GLSL constant and normalized texrect quirk"
+    },
+    /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
+     * used it falls back to software. While the compiler can detect if the shader uses all declared
+     * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
+     * using relative addressing falls back to software.
+     *
+     * ARB vp gives the correct amount of uniforms, so use it instead of GLSL. */
+    {
+        match_apple,
+        quirk_apple_glsl_constants,
+        "Apple GLSL uniform override"
+    },
+    {
+        match_geforce5,
+        quirk_no_np2,
+        "Geforce 5 NP2 disable"
+    },
+    {
+        match_apple_intel,
+        quirk_texcoord_w,
+        "Init texcoord .w for Apple Intel GPU driver"
+    },
+    {
+        match_apple_nonr500ati,
+        quirk_texcoord_w,
+        "Init texcoord .w for Apple ATI >= r600 GPU driver"
+    },
+    {
+        match_fglrx,
+        quirk_one_point_sprite,
+        "Fglrx point sprite crash workaround"
+    },
+    {
+        match_dx10_capable,
+        quirk_clip_varying,
+        "Reserved varying for gl_ClipPos"
+    }
+};
+
+/* Certain applications (Steam) complain if we report an outdated driver version. In general,
+ * reporting a driver version is moot because we are not the Windows driver, and we have different
+ * bugs, features, etc.
+ *
+ * If a card is not found in this table, the GL driver version is reported. */
+struct driver_version_information
+{
+    WORD vendor;                    /* reported PCI card vendor ID  */
+    WORD card;                      /* reported PCI card device ID  */
+    const char *description;        /* Description of the card e.g. NVIDIA RIVA TNT */
+    WORD hipart_hi, hipart_lo;      /* driver hiword to report      */
+    WORD lopart_hi, lopart_lo;      /* driver loword to report      */
+};
+
+static const struct driver_version_information driver_version_table[] =
+{
+    /* Nvidia drivers. Geforce6 and newer cards are supported by the current driver (180.x)
+     * GeforceFX support is up to 173.x, - driver uses numbering x.y.11.7341 for 173.41 where x is the windows revision (6=2000/xp, 7=vista), y is unknown
+     * Geforce2MX/3/4 up to 96.x - driver uses numbering 9.6.8.9 for 96.89
+     * TNT/Geforce1/2 up to 71.x - driver uses numbering 7.1.8.6 for 71.86
+     *
+     * All version numbers used below are from the Linux nvidia drivers. */
+    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT,           "NVIDIA RIVA TNT",                  7,  1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT2,          "NVIDIA RIVA TNT2/TNT2 Pro",        7,  1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE,            "NVIDIA GeForce 256",               7,  1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2_MX,        "NVIDIA GeForce2 MX/MX 400",        9,  6,  4,  3      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2,           "NVIDIA GeForce2 GTS/GeForce2 Pro", 7,  1,  8,  6      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE3,           "NVIDIA GeForce3",                  9,  6,  4,  3      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_MX,        "NVIDIA GeForce4 MX 460",           9,  6,  4,  3      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_TI4200,    "NVIDIA GeForce4 Ti 4200",          9,  6,  4,  3      },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     "NVIDIA GeForce FX 5200",           7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     "NVIDIA GeForce FX 5600",           7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     "NVIDIA GeForce FX 5800",           7,  15, 11, 7341   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       "NVIDIA GeForce 6200",              7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     "NVIDIA GeForce 6600 GT",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       "NVIDIA GeForce 6800",              7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       "NVIDIA GeForce Go 7300",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       "NVIDIA GeForce Go 7400",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     "NVIDIA GeForce 9600 GT",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     "NVIDIA GeForce 9800 GT",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           7,  15, 11, 8044   },
+    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           7,  15, 11, 8044   },
+
+    /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode. */
+    {VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         "ATI Mobility Radeon HD 2300",      6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        6,  14, 10, 6764    },
+    {VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        6,  14, 10, 6764    },
+
+    /* TODO: Add information about legacy ATI hardware, Intel and other cards. */
+};
+
+/* Context activation is done by the caller. */
+static void fixup_extensions(WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    unsigned int i;
+
+    for (i = 0; i < (sizeof(quirk_table) / sizeof(*quirk_table)); ++i)
+    {
+        if (!quirk_table[i].match(gl_info, gl_renderer)) continue;
+        TRACE_(d3d_caps)("Applying driver quirk \"%s\".\n", quirk_table[i].description);
+        quirk_table[i].apply(gl_info);
+    }
+
+    /* Find out if PBOs work as they are supposed to. */
+    test_pbo_functionality(gl_info);
+
+    /* Fixup the driver version */
+    for (i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); ++i)
+    {
+        if (gl_info->gl_vendor == driver_version_table[i].vendor
+                && gl_info->gl_card == driver_version_table[i].card)
+        {
+            TRACE_(d3d_caps)("Found card 0x%04x, 0x%04x in driver version DB.\n",
+                    gl_info->gl_vendor, gl_info->gl_card);
+
+            gl_info->driver_version = MAKEDWORD_VERSION(driver_version_table[i].lopart_hi,
+                    driver_version_table[i].lopart_lo);
+            gl_info->driver_version_hipart = MAKEDWORD_VERSION(driver_version_table[i].hipart_hi,
+                    driver_version_table[i].hipart_lo);
+            strcpy(gl_info->driver_description, driver_version_table[i].description);
+            break;
+        }
+    }
+}
 
 /* Context activation is done by the caller. */
 static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
@@ -3957,411 +4371,6 @@ ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
     IWineD3DVolume_GetParent(pVolume, &volumeParent);
     IUnknown_Release(volumeParent);
     return IUnknown_Release(volumeParent);
-}
-
-static BOOL match_apple(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
-{
-    /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
-     * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
-     * detect the Apple OpenGL implementation to apply some extension fixups afterwards.
-     *
-     * Detecting this isn't really easy. The vendor string doesn't mention Apple. Compile-time checks
-     * aren't sufficient either because a Linux binary may display on a macos X server via remote X11.
-     * So try to detect the GL implementation by looking at certain Apple extensions. Some extensions
-     * like client storage might be supported on other implementations too, but GL_APPLE_flush_render
-     * is specific to the Mac OS X window management, and GL_APPLE_ycbcr_422 is QuickTime specific. So
-     * the chance that other implementations support them is rather small since Win32 QuickTime uses
-     * DirectDraw, not OpenGL.
-     */
-    if(gl_info->supported[APPLE_FENCE] &&
-       gl_info->supported[APPLE_CLIENT_STORAGE] &&
-       gl_info->supported[APPLE_FLUSH_RENDER] &&
-       gl_info->supported[APPLE_YCBCR_422]) {
-        TRACE_(d3d_caps)("GL_APPLE_fence, GL_APPLE_client_storage, GL_APPLE_flush_render and GL_ycbcr_422 are supported\n");
-        TRACE_(d3d_caps)("Activating MacOS fixups\n");
-        return TRUE;
-    } else {
-        TRACE_(d3d_caps)("Apple extensions are not supported\n");
-        TRACE_(d3d_caps)("Not activating MacOS fixups\n");
-        return FALSE;
-    }
-}
-
-/* Context activation is done by the caller. */
-static void test_pbo_functionality(WineD3D_GL_Info *gl_info) {
-    /* Some OpenGL implementations, namely Apple's Geforce 8 driver, advertises PBOs,
-     * but glTexSubImage from a PBO fails miserably, with the first line repeated over
-     * all the texture. This function detects this bug by its symptom and disables PBOs
-     * if the test fails.
-     *
-     * The test uploads a 4x4 texture via the PBO in the "native" format GL_BGRA,
-     * GL_UNSIGNED_INT_8_8_8_8_REV. This format triggers the bug, and it is what we use
-     * for D3DFMT_A8R8G8B8. Then the texture is read back without any PBO and the data
-     * read back is compared to the original. If they are equal PBOs are assumed to work,
-     * otherwise the PBO extension is disabled.
-     */
-    GLuint texture, pbo;
-    static const unsigned int pattern[] = {
-        0x00000000, 0x000000ff, 0x0000ff00, 0x40ff0000,
-        0x80ffffff, 0x40ffff00, 0x00ff00ff, 0x0000ffff,
-        0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x000000ff,
-        0x80ff00ff, 0x0000ffff, 0x00ff00ff, 0x40ff00ff
-    };
-    unsigned int check[sizeof(pattern) / sizeof(pattern[0])];
-
-    if(!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]) {
-        /* No PBO -> No point in testing them */
-        return;
-    }
-
-    ENTER_GL();
-
-    while(glGetError());
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
-    checkGLcall("Specifying the PBO test texture\n");
-
-    GL_EXTCALL(glGenBuffersARB(1, &pbo));
-    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pbo));
-    GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, sizeof(pattern), pattern, GL_STREAM_DRAW_ARB));
-    checkGLcall("Specifying the PBO test pbo\n");
-
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
-    checkGLcall("Loading the PBO test texture\n");
-
-    GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-    glFinish(); /* just to be sure */
-
-    memset(check, 0, sizeof(check));
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, check);
-    checkGLcall("Reading back the PBO test texture\n");
-
-    glDeleteTextures(1, &texture);
-    GL_EXTCALL(glDeleteBuffersARB(1, &pbo));
-    checkGLcall("PBO test cleanup\n");
-
-    LEAVE_GL();
-
-    if(memcmp(check, pattern, sizeof(check)) != 0) {
-        WARN_(d3d_caps)("PBO test failed, read back data doesn't match original\n");
-        WARN_(d3d_caps)("Disabling PBOs. This may result in slower performance\n");
-        gl_info->supported[ARB_PIXEL_BUFFER_OBJECT] = FALSE;
-    } else {
-        TRACE_(d3d_caps)("PBO test successful\n");
-    }
-}
-
-/* Certain applications(Steam) complain if we report an outdated driver version. In general,
- * reporting a driver version is moot because we are not the Windows driver, and we have different
- * bugs, features, etc.
- *
- * If a card is not found in this table, the gl driver version is reported
- */
-struct driver_version_information {
-    WORD vendor;                        /* reported PCI card vendor ID  */
-    WORD card;                          /* reported PCI card device ID  */
-    const char *description;                  /* Description of the card e.g. NVIDIA RIVA TNT */
-    WORD hipart_hi, hipart_lo;          /* driver hiword to report      */
-    WORD lopart_hi, lopart_lo;          /* driver loword to report      */
-};
-
-static const struct driver_version_information driver_version_table[] = {
-    /* Nvidia drivers. Geforce6 and newer cards are supported by the current driver (180.x)
-     * GeforceFX support is up to 173.x, - driver uses numbering x.y.11.7341 for 173.41 where x is the windows revision (6=2000/xp, 7=vista), y is unknown
-     * Geforce2MX/3/4 up to 96.x - driver uses numbering 9.6.8.9 for 96.89
-     * TNT/Geforce1/2 up to 71.x - driver uses numbering 7.1.8.6 for 71.86
-     *
-     * All version numbers used below are from the Linux nvidia drivers.
-     */
-    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT,           "NVIDIA RIVA TNT",                  7,  1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_RIVA_TNT2,          "NVIDIA RIVA TNT2/TNT2 Pro",        7,  1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE,            "NVIDIA GeForce 256",               7,  1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2_MX,        "NVIDIA GeForce2 MX/MX 400",        9,  6,  4,  3      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE2,           "NVIDIA GeForce2 GTS/GeForce2 Pro", 7,  1,  8,  6      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE3,           "NVIDIA GeForce3",                  9,  6,  4,  3      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_MX,        "NVIDIA GeForce4 MX 460",           9,  6,  4,  3      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE4_TI4200,    "NVIDIA GeForce4 Ti 4200",          9,  6,  4,  3      },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5200,     "NVIDIA GeForce FX 5200",           7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5600,     "NVIDIA GeForce FX 5600",           7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCEFX_5800,     "NVIDIA GeForce FX 5800",           7,  15, 11, 7341   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6200,       "NVIDIA GeForce 6200",              7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6600GT,     "NVIDIA GeForce 6600 GT",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_6800,       "NVIDIA GeForce 6800",              7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7300,       "NVIDIA GeForce Go 7300",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7400,       "NVIDIA GeForce Go 7400",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7600,       "NVIDIA GeForce 7600 GT",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_7800GT,     "NVIDIA GeForce 7800 GT",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8300GS,     "NVIDIA GeForce 8300 GS",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600GT,     "NVIDIA GeForce 8600 GT",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8600MGT,    "NVIDIA GeForce 8600M GT",          7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_8800GTS,    "NVIDIA GeForce 8800 GTS",          7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9200,       "NVIDIA GeForce 9200",              7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9400GT,     "NVIDIA GeForce 9400 GT",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9500GT,     "NVIDIA GeForce 9500 GT",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9600GT,     "NVIDIA GeForce 9600 GT",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_9800GT,     "NVIDIA GeForce 9800 GT",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX260,     "NVIDIA GeForce GTX 260",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX275,     "NVIDIA GeForce GTX 275",           7,  15, 11, 8044   },
-    {VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX280,     "NVIDIA GeForce GTX 280",           7,  15, 11, 8044   },
-
-    /* ATI cards. The driver versions are somewhat similar, but not quite the same. Let's hardcode */
-    {VENDOR_ATI,        CARD_ATI_RADEON_9500,           "ATI Radeon 9500",                  6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_X700,           "ATI Radeon X700 SE",               6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_X1600,          "ATI Radeon X1600 Series",          6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD2300,         "ATI Mobility Radeon HD 2300",      6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4350,         "ATI Radeon HD 4350",               6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4700,         "ATI Radeon HD 4700 Series",        6,  14, 10, 6764    },
-    {VENDOR_ATI,        CARD_ATI_RADEON_HD4800,         "ATI Radeon HD 4800 Series",        6,  14, 10, 6764    },
-
-    /* TODO: Add information about legacy ATI hardware, Intel and other cards */
-};
-
-static BOOL match_ati_r300_to_500(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
-{
-    if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
-    if(gl_info->gl_card == CARD_ATI_RADEON_9500) return TRUE;
-    if(gl_info->gl_card == CARD_ATI_RADEON_X700) return TRUE;
-    if(gl_info->gl_card == CARD_ATI_RADEON_X1600) return TRUE;
-    return FALSE;
-}
-
-static BOOL match_geforce5(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
-{
-    if(gl_info->gl_vendor == VENDOR_NVIDIA) {
-        if(gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5800 || gl_info->gl_card == CARD_NVIDIA_GEFORCEFX_5600) {
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-
-static BOOL match_apple_intel(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
-{
-    return gl_info->gl_vendor == VENDOR_INTEL && match_apple(gl_info, gl_renderer);
-}
-
-static BOOL match_apple_nonr500ati(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
-{
-    if(!match_apple(gl_info, gl_renderer)) return FALSE;
-    if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
-    if(gl_info->gl_card == CARD_ATI_RADEON_X1600) return FALSE;
-    return TRUE;
-}
-
-static BOOL match_fglrx(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
-{
-    if(gl_info->gl_vendor != VENDOR_ATI) return FALSE;
-    if(match_apple(gl_info, gl_renderer)) return FALSE;
-    if (strstr(gl_renderer, "DRI")) return FALSE; /* Filter out Mesa DRI drivers */
-    return TRUE;
-}
-
-static BOOL match_dx10_capable(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
-{
-    /* DX9 cards support 40 single float varyings in hardware, most drivers report 32. ATI misreports
-     * 44 varyings. So assume that if we have more than 44 varyings we have a dx10 card.
-     * This detection is for the gl_ClipPos varying quirk. If a d3d9 card really supports more than 44
-     * varyings and we subtract one in dx9 shaders its not going to hurt us because the dx9 limit is
-     * hardcoded
-     *
-     * dx10 cards usually have 64 varyings
-     */
-    return gl_info->max_glsl_varyings > 44;
-}
-
-static void quirk_arb_constants(WineD3D_GL_Info *gl_info) {
-    TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL\n", gl_info->vs_arb_constantsF);
-    gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
-    TRACE_(d3d_caps)("Using ARB ps constant limit(=%u) for GLSL\n", gl_info->ps_arb_constantsF);
-    gl_info->ps_glsl_constantsF = gl_info->ps_arb_constantsF;
-}
-
-static void quirk_apple_glsl_constants(WineD3D_GL_Info *gl_info) {
-    quirk_arb_constants(gl_info);
-    /* MacOS needs uniforms for relative addressing offsets. This can accumulate to quite a few uniforms.
-     * Beyond that the general uniform isn't optimal, so reserve a number of uniforms. 12 vec4's should
-     * allow 48 different offsets or other helper immediate values
-     */
-    TRACE_(d3d_caps)("Reserving 12 GLSL constants for compiler private use\n");
-    gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 12);
-}
-
-/* fglrx crashes with a very bad kernel panic if GL_POINT_SPRITE_ARB is set to GL_COORD_REPLACE_ARB
- * on more than one texture unit. This means that the d3d9 visual point size test will cause a
- * kernel panic on any machine running fglrx 9.3(latest that supports r300 to r500 cards). This
- * quirk only enables point sprites on the first texture unit. This keeps point sprites working in
- * most games, but avoids the crash
- *
- * A more sophisticated way would be to find all units that need texture coordinates and enable
- * point sprites for one if only one is found, and software emulate point sprites in drawStridedSlow
- * if more than one unit needs texture coordinates(This requires software ffp and vertex shaders though)
- *
- * Note that disabling the extension entirely does not gain predictability because there is no point
- * sprite capability flag in d3d, so the potential rendering bugs are the same if we disable the extension.
- */
-static void quirk_one_point_sprite(WineD3D_GL_Info *gl_info) {
-    if(gl_info->supported[ARB_POINT_SPRITE]) {
-        TRACE("Limiting point sprites to one texture unit\n");
-        gl_info->max_point_sprite_units = 1;
-    }
-}
-
-static void quirk_ati_dx9(WineD3D_GL_Info *gl_info) {
-    quirk_arb_constants(gl_info);
-
-    /* MacOS advertises GL_ARB_texture_non_power_of_two on ATI r500 and earlier cards, although
-     * these cards only support GL_ARB_texture_rectangle(D3DPTEXTURECAPS_NONPOW2CONDITIONAL).
-     * If real NP2 textures are used, the driver falls back to software. We could just remove the
-     * extension and use GL_ARB_texture_rectangle instead, but texture_rectangle is inconventient
-     * due to the non-normalized texture coordinates. Thus set an internal extension flag,
-     * GL_WINE_normalized_texrect, which signals the code that it can use non power of two textures
-     * as per GL_ARB_texture_non_power_of_two, but has to stick to the texture_rectangle limits.
-     *
-     * fglrx doesn't advertise GL_ARB_texture_non_power_of_two, but it advertises opengl 2.0 which
-     * has this extension promoted to core. The extension loading code sets this extension supported
-     * due to that, so this code works on fglrx as well.
-     */
-    TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing\n");
-    gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
-    gl_info->supported[WINE_NORMALIZED_TEXRECT] = TRUE;
-
-    /* fglrx has the same structural issues as the one described in quirk_apple_glsl_constants, although
-     * it is generally more efficient. Reserve just 8 constants
-     */
-    TRACE_(d3d_caps)("Reserving 8 GLSL constants for compiler private use\n");
-    gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 8);
-}
-
-static void quirk_no_np2(WineD3D_GL_Info *gl_info) {
-    /*  The nVidia GeForceFX series reports OpenGL 2.0 capabilities with the latest drivers versions, but
-     *  doesn't explicitly advertise the ARB_tex_npot extension in the GL extension string.
-     *  This usually means that ARB_tex_npot is supported in hardware as long as the application is staying
-     *  within the limits enforced by the ARB_texture_rectangle extension. This however is not true for the
-     *  FX series, which instantly falls back to a slower software path as soon as ARB_tex_npot is used.
-     *  We therefore completely remove ARB_tex_npot from the list of supported extensions.
-     *
-     *  Note that wine_normalized_texrect can't be used in this case because internally it uses ARB_tex_npot,
-     *  triggering the software fallback. There is not much we can do here apart from disabling the
-     *  software-emulated extension and reenable ARB_tex_rect (which was previously disabled
-     *  in IWineD3DImpl_FillGLCaps).
-     *  This fixup removes performance problems on both the FX 5900 and FX 5700 (e.g. for framebuffer
-     *  post-processing effects in the game "Max Payne 2").
-     *  The behaviour can be verified through a simple test app attached in bugreport #14724.
-     */
-    TRACE("GL_ARB_texture_non_power_of_two advertised through OpenGL 2.0 on NV FX card, removing\n");
-    gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
-    gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
-}
-
-static void quirk_texcoord_w(WineD3D_GL_Info *gl_info) {
-    /* The Intel GPUs on MacOS set the .w register of texcoords to 0.0 by default, which causes problems
-     * with fixed function fragment processing. Ideally this flag should be detected with a test shader
-     * and OpenGL feedback mode, but some GL implementations (MacOS ATI at least, probably all MacOS ones)
-     * do not like vertex shaders in feedback mode and return an error, even though it should be valid
-     * according to the spec.
-     *
-     * We don't want to enable this on all cards, as it adds an extra instruction per texcoord used. This
-     * makes the shader slower and eats instruction slots which should be available to the d3d app.
-     *
-     * ATI Radeon HD 2xxx cards on MacOS have the issue. Instead of checking for the buggy cards, blacklist
-     * all radeon cards on Macs and whitelist the good ones. That way we're prepared for the future. If
-     * this workaround is activated on cards that do not need it, it won't break things, just affect
-     * performance negatively.
-     */
-    TRACE("Enabling vertex texture coord fixes in vertex shaders\n");
-    gl_info->quirks |= WINED3D_QUIRK_SET_TEXCOORD_W;
-}
-
-static void quirk_clip_varying(WineD3D_GL_Info *gl_info) {
-    gl_info->quirks |= WINED3D_QUIRK_GLSL_CLIP_VARYING;
-}
-
-struct driver_quirk
-{
-    BOOL (*match)(const WineD3D_GL_Info *gl_info, const char *gl_renderer);
-    void (*apply)(WineD3D_GL_Info *gl_info);
-    const char *description;
-};
-
-struct driver_quirk quirk_table[] = {
-    {
-        match_ati_r300_to_500,
-        quirk_ati_dx9,
-        "ATI GLSL constant and normalized texrect quirk"
-    },
-    /* MacOS advertises more GLSL vertex shader uniforms than supported by the hardware, and if more are
-     * used it falls back to software. While the compiler can detect if the shader uses all declared
-     * uniforms, the optimization fails if the shader uses relative addressing. So any GLSL shader
-     * using relative addressing falls back to software.
-     *
-     * ARB vp gives the correct amount of uniforms, so use it instead of GLSL
-     */
-    {
-        match_apple,
-        quirk_apple_glsl_constants,
-        "Apple GLSL uniform override"
-    },
-    {
-        match_geforce5,
-        quirk_no_np2,
-        "Geforce 5 NP2 disable"
-    },
-    {
-        match_apple_intel,
-        quirk_texcoord_w,
-        "Init texcoord .w for Apple Intel GPU driver"
-    },
-    {
-        match_apple_nonr500ati,
-        quirk_texcoord_w,
-        "Init texcoord .w for Apple ATI >= r600 GPU driver"
-    },
-    {
-        match_fglrx,
-        quirk_one_point_sprite,
-        "Fglrx point sprite crash workaround"
-    },
-    {
-        match_dx10_capable,
-        quirk_clip_varying,
-        "Reserved varying for gl_ClipPos"
-    }
-};
-
-/* Context activation is done by the caller. */
-static void fixup_extensions(WineD3D_GL_Info *gl_info, const char *gl_renderer)
-{
-    unsigned int i;
-
-    for(i = 0; i < (sizeof(quirk_table) / sizeof(*quirk_table)); i++) {
-        if (!quirk_table[i].match(gl_info, gl_renderer)) continue;
-        TRACE_(d3d_caps)("Applying driver quirk \"%s\"\n", quirk_table[i].description);
-        quirk_table[i].apply(gl_info);
-    }
-
-    /* Find out if PBOs work as they are supposed to */
-    test_pbo_functionality(gl_info);
-
-    /* Fixup the driver version */
-    for(i = 0; i < (sizeof(driver_version_table) / sizeof(driver_version_table[0])); i++) {
-        if(gl_info->gl_vendor == driver_version_table[i].vendor &&
-           gl_info->gl_card   == driver_version_table[i].card) {
-            TRACE_(d3d_caps)("Found card 0x%04x, 0x%04x in driver version DB\n", gl_info->gl_vendor, gl_info->gl_card);
-
-            gl_info->driver_version        = MAKEDWORD_VERSION(driver_version_table[i].lopart_hi,
-                                                               driver_version_table[i].lopart_lo);
-            gl_info->driver_version_hipart = MAKEDWORD_VERSION(driver_version_table[i].hipart_hi,
-                                                               driver_version_table[i].hipart_lo);
-            strcpy(gl_info->driver_description, driver_version_table[i].description);
-            break;
-        }
-    }
 }
 
 static void WINE_GLAPI invalid_func(const void *data)
