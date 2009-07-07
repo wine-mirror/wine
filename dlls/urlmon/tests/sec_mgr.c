@@ -282,6 +282,47 @@ static void test_polices(void)
     IInternetZoneManager_Release(zonemgr);
 }
 
+static void test_CoInternetCreateZoneManager(void)
+{
+    IInternetZoneManager *zonemgr = NULL;
+    IUnknown *punk = NULL;
+    HRESULT hr;
+
+    hr = CoInternetCreateZoneManager(NULL, &zonemgr, 0);
+    ok(hr == S_OK, "CoInternetCreateZoneManager result: 0x%x\n", hr);
+    if (FAILED(hr))
+        return;
+
+    hr = IInternetZoneManager_QueryInterface(zonemgr, &IID_IUnknown, (void **) &punk);
+    ok(SUCCEEDED(hr), "got 0x%x with %p (expected Success)n", hr, punk);
+    if (punk)
+        IUnknown_Release(punk);
+
+    hr = IInternetZoneManager_QueryInterface(zonemgr, &IID_IInternetZoneManager, (void **) &punk);
+    ok(SUCCEEDED(hr), "got 0x%x with %p (expected Success)n", hr, punk);
+    if (punk)
+        IUnknown_Release(punk);
+
+
+    hr = IInternetZoneManager_QueryInterface(zonemgr, &IID_IInternetZoneManagerEx, (void **) &punk);
+    if (SUCCEEDED(hr)) {
+        IUnknown_Release(punk);
+
+        hr = IInternetZoneManager_QueryInterface(zonemgr, &IID_IInternetZoneManagerEx2, (void **) &punk);
+        if (punk)
+            IUnknown_Release(punk);
+        else
+            win_skip("InternetZoneManagerEx2 not supported\n");
+
+    }
+    else
+        win_skip("InternetZoneManagerEx not supported\n");
+
+    hr = IInternetZoneManager_Release(zonemgr);
+    ok(hr == S_OK, "got 0x%x (expected S_OK)\n", hr);
+
+}
+
 static void test_CreateZoneEnumerator(void)
 {
     IInternetZoneManager *zonemgr = NULL;
@@ -500,6 +541,7 @@ START_TEST(sec_mgr)
 
     test_SecurityManager();
     test_polices();
+    test_CoInternetCreateZoneManager();
     test_CreateZoneEnumerator();
     test_GetZoneActionPolicy();
     test_GetZoneAt();
