@@ -19,6 +19,8 @@
 
 #include "shresdef.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
 MENU_001 MENU DISCARDABLE
