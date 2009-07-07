@@ -35,15 +35,23 @@ static const WCHAR default_valueW[] = {'[','o','b','j','e','c','t',' ','O','b','
 static HRESULT Object_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = SysAllocString(default_valueW);
+        if(!V_BSTR(retv))
+            return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
 }
 
 static HRESULT Object_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return Object_toString(dispex, lcid, flags, dp, retv, ei, sp);
 }
 
 static HRESULT Object_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
