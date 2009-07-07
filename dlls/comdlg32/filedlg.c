@@ -1019,6 +1019,8 @@ static LRESULT FILEDLG95_OnWMSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
     if( !(fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)) return FALSE;
     /* get the new dialog rectangle */
     GetWindowRect( hwnd, &rc);
+    TRACE("Size from %d,%d to %d,%d\n", fodInfos->sizedlg.cx, fodInfos->sizedlg.cy,
+            rc.right -rc.left, rc.bottom -rc.top);
     /* not initialized yet */
     if( (fodInfos->sizedlg.cx == 0 && fodInfos->sizedlg.cy == 0) ||
         ((fodInfos->sizedlg.cx == rc.right -rc.left) && /* no change */
@@ -1039,6 +1041,7 @@ static LRESULT FILEDLG95_OnWMSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* change position and sizes of the controls */
     for( ctrl = GetWindow( hwnd, GW_CHILD); ctrl ; ctrl = GetWindow( ctrl, GW_HWNDNEXT))
     {
+        int ctrlid = GetDlgCtrlID( ctrl);
         GetWindowRect( ctrl, &rc);
         MapWindowPoints( NULL, hwnd, (LPPOINT) &rc, 2);
         if( ctrl == fodInfos->DlgInfos.hwndGrip)
@@ -1047,28 +1050,68 @@ static LRESULT FILEDLG95_OnWMSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
                     0, 0,
                     SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
         }
-        else if( GetDlgCtrlID( ctrl) == IDC_SHELLSTATIC)
-        {
-            DeferWindowPos( hdwp, ctrl, NULL, 0, 0,
-                    rc.right - rc.left + chgx,
-                    rc.bottom - rc.top + chgy,
-                    SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
-        }
         else if( rc.top > rcview.bottom)
         {
             /* if it was below the shell view
              * move to bottom */
-            DeferWindowPos( hdwp, ctrl, NULL, rc.left, rc.top + chgy,
-                    rc.right - rc.left, rc.bottom - rc.top,
-                    SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
+            switch( ctrlid)
+            {
+                /* file name box and file types combo change also width */
+                case edt1:
+                case cmb1:
+                    DeferWindowPos( hdwp, ctrl, NULL, rc.left, rc.top + chgy,
+                            rc.right - rc.left + chgx, rc.bottom - rc.top,
+                            SWP_NOACTIVATE | SWP_NOZORDER);
+                    break;
+                    /* then these buttons must move out of the way */
+                case IDOK:
+                case IDCANCEL:
+                case pshHelp:
+                    DeferWindowPos( hdwp, ctrl, NULL, rc.left + chgx, rc.top + chgy,
+                            0, 0,
+                            SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
+                    break;
+                default:
+                DeferWindowPos( hdwp, ctrl, NULL, rc.left, rc.top + chgy,
+                        0, 0,
+                        SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
+            }
         }
         else if( rc.left > rcview.right)
         {
             /* if it was to the right of the shell view
              * move to right */
             DeferWindowPos( hdwp, ctrl, NULL, rc.left + chgx, rc.top,
-                    rc.right - rc.left, rc.bottom - rc.top,
+                    0, 0,
                     SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
+        }
+        else
+            /* special cases */
+        {
+            switch( ctrlid)
+            {
+#if 0 /* this is Win2k, Win XP. Vista and Higher don't move/size these controls */
+                case IDC_LOOKIN:
+                    DeferWindowPos( hdwp, ctrl, NULL, 0, 0,
+                            rc.right - rc.left + chgx, rc.bottom - rc.top,
+                            SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
+                    break;
+                case IDC_TOOLBARSTATIC:
+                case IDC_TOOLBAR:
+                    DeferWindowPos( hdwp, ctrl, NULL, rc.left + chgx, rc.top,
+                            0, 0,
+                            SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
+                    break;
+#endif
+                /* not resized in windows. Since wine uses this invisible control
+                 * to size the browser view it needs to be resized */
+                case IDC_SHELLSTATIC:
+                    DeferWindowPos( hdwp, ctrl, NULL, 0, 0,
+                            rc.right - rc.left + chgx,
+                            rc.bottom - rc.top + chgy,
+                            SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
+                    break;
+            }
         }
     }
     if(fodInfos->DlgInfos.hwndCustomDlg &&

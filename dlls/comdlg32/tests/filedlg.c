@@ -278,16 +278,17 @@ struct {
     int resize_timer1;     /* change in first WM_TIMER handler */
     int resize_check;      /* expected change (in second  WM_TIMER handler) */
     BOOL todo;             /* mark that test todo_wine */
+    BOOL testcontrols;     /* test resizing and moving of the controls */
 } resize_testcases[] = {
-    { 0                , 10, 10, 10, 30,FALSE},   /* 0 */
-    { 0                ,-10,-10,-10,-30,FALSE},
-    { OFN_ENABLESIZING ,  0,  0,  0,  0,FALSE},
-    { OFN_ENABLESIZING ,  0,  0,-10,  0,FALSE},
-    { OFN_ENABLESIZING ,  0,  0, 10, 10,FALSE},
-    { OFN_ENABLESIZING ,  0,-10,  0, 10, TRUE},   /* 5 */
-    { OFN_ENABLESIZING ,  0, 10,  0, 10,FALSE},
-    { OFN_ENABLESIZING ,-10,  0,  0, 10, TRUE},
-    { OFN_ENABLESIZING , 10,  0,  0, 10,FALSE},
+    { 0                , 10, 10, 10, 30,FALSE,FALSE},   /* 0 */
+    { 0                ,-10,-10,-10,-30,FALSE,FALSE},
+    { OFN_ENABLESIZING ,  0,  0,  0,  0,FALSE,FALSE},
+    { OFN_ENABLESIZING ,  0,  0,-10,  0,FALSE,FALSE},
+    { OFN_ENABLESIZING ,  0,  0, 10, 10,FALSE, TRUE},
+    { OFN_ENABLESIZING ,  0,-10,  0, 10, TRUE,FALSE},   /* 5 */
+    { OFN_ENABLESIZING ,  0, 10,  0, 10,FALSE,FALSE},
+    { OFN_ENABLESIZING ,-10,  0,  0, 10, TRUE,FALSE},
+    { OFN_ENABLESIZING , 10,  0,  0, 10,FALSE,FALSE},
     /* mark the end */
     { 0xffffffff }
 };
@@ -299,6 +300,12 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
     static int gotSWP_bottom, gotShowWindow;
     HWND parent = GetParent( dlg);
     int resize;
+#define MAXNRCTRLS 30
+    static RECT ctrlrcs[MAXNRCTRLS];
+    static int ctrlids[MAXNRCTRLS];
+    static HWND ctrls[MAXNRCTRLS];
+    static int nrctrls;
+
     switch( msg)
     {
         case WM_INITDIALOG:
@@ -343,6 +350,20 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
         case WM_TIMER:
         {
             if( count == 0){
+                /* store the control rectangles */
+                if( resize_testcases[index].testcontrols) {
+                    HWND ctrl;
+                    int i;
+                    for( i = 0, ctrl = GetWindow( parent, GW_CHILD);
+                            i < MAXNRCTRLS && ctrl;
+                            i++, ctrl = GetWindow( ctrl, GW_HWNDNEXT)) {
+                        ctrlids[i] = GetDlgCtrlID( ctrl);
+                        GetWindowRect( ctrl, &ctrlrcs[i]);
+                        MapWindowPoints( NULL, parent, (LPPOINT) &ctrlrcs[i], 2);
+                        ctrls[i] = ctrl;
+                    }
+                    nrctrls = i;
+                }
                 if( (resize  = resize_testcases[index].resize_timer1)){
                     GetWindowRect( parent, &rc);
                     MoveWindow( parent, rc.left,rc.top, rc.right - rc.left + resize,
@@ -367,6 +388,101 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
                     ok( resize == rc.bottom - rc.top - initrc.bottom + initrc.top,
                         "testid %d size-y change %d expected %d\n", index,
                         rc.bottom - rc.top - initrc.bottom + initrc.top, resize);
+                }
+                if( resize_testcases[index].testcontrols) {
+                    int i;
+                    RECT rc;
+                    for( i = 0; i < nrctrls; i++) {
+                        GetWindowRect( ctrls[i], &rc);
+                        MapWindowPoints( NULL, parent, (LPPOINT) &rc, 2);
+                        switch( ctrlids[i]){
+
+/* test if RECT R1, moved and sized result in R2 */
+#define TESTRECTS( R1, R2, Mx, My, Sx, Sy) \
+         ((R1).left + (Mx) ==(R2).left \
+        &&(R1).top + (My) ==(R2).top \
+        &&(R1).right + (Mx) + (Sx) == (R2).right \
+        &&(R1).bottom + (My) + (Sy) ==(R2).bottom)
+
+                            /* sized horizontal and moved vertical */
+                            case cmb1:
+                            case edt1:
+                                ok( TESTRECTS( ctrlrcs[i], rc, 0, 10, 10, 0) ||
+                                    broken(TESTRECTS( ctrlrcs[i], rc, 0, 10, 0, 0)),/*win98*/
+                                    "control id %03x should have sized horizontally and moved vertically, before %d,%d-%d,%d after  %d,%d-%d,%d\n",
+                                    ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
+                                    ctrlrcs[i].right, ctrlrcs[i].bottom,
+                                    rc.left, rc.top, rc.right, rc.bottom);
+                                break;
+                            /* sized horizontal and vertical */
+                            case lst2:
+                                ok( TESTRECTS( ctrlrcs[i], rc, 0, 0, 10, 10),
+                                    "control id %03x should have sized horizontally and vertically, before %d,%d-%d,%d after  %d,%d-%d,%d\n",
+                                    ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
+                                    ctrlrcs[i].right, ctrlrcs[i].bottom,
+                                    rc.left, rc.top, rc.right, rc.bottom);
+                                break;
+                            /* moved horizontal and vertical */
+                            case IDCANCEL:
+                            case pshHelp:
+                                ok( TESTRECTS( ctrlrcs[i], rc, 10, 10, 0, 0) ||
+                                    broken(TESTRECTS( ctrlrcs[i], rc, 0, 10, 0, 0)),/*win98*/
+                                    "control id %03x should have moved horizontally and vertically, before %d,%d-%d,%d after  %d,%d-%d,%d\n",
+                                    ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
+                                    ctrlrcs[i].right, ctrlrcs[i].bottom,
+                                    rc.left, rc.top, rc.right, rc.bottom);
+                                break;
+                            /* moved vertically */
+                            case chx1:
+                            case stc2:
+                            case stc3:
+                                ok( TESTRECTS( ctrlrcs[i], rc, 0, 10, 0, 0),
+                                    "control id %03x should have moved vertically, before %d,%d-%d,%d after  %d,%d-%d,%d\n",
+                                    ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
+                                    ctrlrcs[i].right, ctrlrcs[i].bottom,
+                                    rc.left, rc.top, rc.right, rc.bottom);
+                                break;
+                            /* resized horizontal */
+                            case cmb2: /* aka IDC_LOOKIN */
+                                ok( TESTRECTS( ctrlrcs[i], rc, 0, 0, 10, 0)||
+                                        TESTRECTS( ctrlrcs[i], rc, 0, 0, 0, 0), /* Vista and higher */
+                                    "control id %03x should have resized horizontally, before %d,%d-%d,%d after  %d,%d-%d,%d\n",
+                                    ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
+                                    ctrlrcs[i].right, ctrlrcs[i].bottom,
+                                    rc.left, rc.top, rc.right, rc.bottom);
+                                break;
+                            /* non moving non sizing controls */
+                            case stc4:
+                                ok( TESTRECTS( rc, ctrlrcs[i], 0, 0, 0, 0),
+                                    "control id %03x was moved/resized, before %d,%d-%d,%d after  %d,%d-%d,%d\n",
+                                    ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
+                                    ctrlrcs[i].right, ctrlrcs[i].bottom,
+                                    rc.left, rc.top, rc.right, rc.bottom);
+                                break;
+                            /* todo_wine: non moving non sizing controls */
+                            case lst1:
+todo_wine
+                                ok( TESTRECTS( rc, ctrlrcs[i], 0, 0, 0, 0),
+                                    "control id %03x was moved/resized, before %d,%d-%d,%d after  %d,%d-%d,%d\n",
+                                    ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
+                                    ctrlrcs[i].right, ctrlrcs[i].bottom,
+                                    rc.left, rc.top, rc.right, rc.bottom);
+                                break;
+                            /* don't test: id is not unique */
+                            case IDOK:
+                            case stc1:
+                            case 0:
+                            case  -1:
+                                break;
+                            default:
+                                trace("untested control id %03x before %d,%d-%d,%d after  %d,%d-%d,%d\n",
+                                    ctrlids[i], ctrlrcs[i].left, ctrlrcs[i].top,
+                                    ctrlrcs[i].right, ctrlrcs[i].bottom,
+                                    rc.left, rc.top, rc.right, rc.bottom);
+#undef TESTRECTS
+#undef MAXNRCTRLS
+                        }
+                    }
                 }
                 KillTimer( dlg, 0);
                 PostMessage( parent, WM_COMMAND, IDCANCEL, 0);
@@ -410,7 +526,7 @@ static void test_resize(void)
     for( i = 0; resize_testcases[i].flags != 0xffffffff; i++) {
         ofn.lCustData = i;
         ofn.Flags = resize_testcases[i].flags |
-            OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE ;
+            OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATE | OFN_SHOWHELP ;
         ret = GetOpenFileName(&ofn);
         ok(!ret, "GetOpenFileName returned %#x\n", ret);
         ret = CommDlgExtendedError();
@@ -526,7 +642,8 @@ static void test_ok(void)
         ret = CommDlgExtendedError();
         ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
     }
-    ok( DeleteFileA( tmpfilename), "Failed to delete temporary file\n");
+    ret =  DeleteFileA( tmpfilename);
+    ok( ret, "Failed to delete temporary file %s err %d\n", tmpfilename, GetLastError());
 }
 
 START_TEST(filedlg)
