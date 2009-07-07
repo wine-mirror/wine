@@ -2,7 +2,7 @@
  * French resources for SETUPAPI
  *
  * Copyright 2001 Andreas Mohr
- * Copyright 2003 Vincent Béron
+ * Copyright 2003 Vincent BÃ©ron
  * Copyright 2009 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
@@ -22,13 +22,16 @@
 
 #include "setupapi_private.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 {
-        IDS_PROMPTDISK   "Le fichier « %s » sur %s est requis"
+        IDS_PROMPTDISK   "Le fichier Â«Â %sÂ Â» sur %s est requis"
         IDS_UNKNOWN      "Inconnu"
-        IDS_COPYFROM     "Copier les fichiers depuis :"
+        IDS_COPYFROM     "Copier les fichiers depuisÂ :"
         IDS_INFO         "Saisissez le chemin du fichier, puis cliquez sur OK."
 }
 
@@ -38,9 +41,9 @@ CAPTION "Copie de fichiers..."
 FONT 8, "MS Shell Dlg"
 BEGIN
 	PUSHBUTTON "Annuler", IDCANCEL, 79, 84, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-	LTEXT "Source :", -1, 7, 7, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "SourceÂ :", -1, 7, 7, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", SOURCESTRORD, 7, 18, 194, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
-	LTEXT "Destination :", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "DestinationÂ :", -1, 7, 30, 77, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", DESTSTRORD, 7, 41, 194, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "", PROGRESSORD, "setupx_progress", 7, 63, 194, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
@@ -50,9 +53,9 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Fichiers requis"
 FONT 8, "MS Shell Dlg"
 BEGIN
-	LTEXT "Veuillez insérer le disque d'installation du fabriquant et\nassurez vous que le lecteur correct est sélectionné ci-dessous", IDC_FILENEEDED, 10, 10, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Veuillez insÃ©rer le disque d'installation du fabricant et\nassurez vous que le lecteur correct est sÃ©lectionnÃ© ci-dessous", IDC_FILENEEDED, 10, 10, 175, 25, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "", IDC_INFO, 10, 50, 175, 22, WS_CHILD | WS_VISIBLE | WS_GROUP
-	LTEXT "Copier les fichiers du fabriquan depuis :", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Copier les fichiers du fabricant depuisÂ :", IDC_COPYFROM, 10, 90, 175, 11, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "", IDC_PATH, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 10, 100, 175, 14
 	PUSHBUTTON "OK", IDOK, 195, 10, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 	PUSHBUTTON "Annuler", IDCANCEL, 195, 30, 50, 14, WS_CHILD | WS_VISIBLE | WS_TABSTOP
