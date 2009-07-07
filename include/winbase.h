@@ -1726,6 +1726,9 @@ WINBASEAPI VOID        WINAPI GetSystemTimeAsFileTime(LPFILETIME);
 WINBASEAPI UINT        WINAPI GetSystemWindowsDirectoryA(LPSTR,UINT);
 WINBASEAPI UINT        WINAPI GetSystemWindowsDirectoryW(LPWSTR,UINT);
 #define                       GetSystemWindowsDirectory WINELIB_NAME_AW(GetSystemWindowsDirectory)
+WINBASEAPI UINT        WINAPI GetSystemWow64DirectoryA(LPSTR,UINT);
+WINBASEAPI UINT        WINAPI GetSystemWow64DirectoryW(LPWSTR,UINT);
+#define                       GetSystemWow64Directory WINELIB_NAME_AW(GetSystemWow64Directory)
 WINBASEAPI DWORD       WINAPI GetTapeParameters(HANDLE,DWORD,LPDWORD,LPVOID);
 WINBASEAPI DWORD       WINAPI GetTapePosition(HANDLE,DWORD,LPDWORD,LPDWORD,LPDWORD);
 WINBASEAPI DWORD       WINAPI GetTapeStatus(HANDLE);

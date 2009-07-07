@@ -71,6 +71,7 @@ extern HANDLE dos_handles[DOS_TABLE_SIZE];
 
 extern const WCHAR *DIR_Windows;
 extern const WCHAR *DIR_System;
+extern const WCHAR *DIR_SysWow64;
 
 extern VOID SYSLEVEL_CheckNotLevel( INT level );
 

@@ -76,11 +76,13 @@ static UINT process_error_mode;
 static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
 static DWORD process_dword;
+static BOOL is_wow64;
 
 HMODULE kernel32_handle = 0;
 
 const WCHAR *DIR_Windows = NULL;
 const WCHAR *DIR_System = NULL;
+const WCHAR *DIR_SysWow64 = NULL;
 
 /* Process flags */
 #define PDB32_DEBUGGED      0x0001  /* Process is being debugged */
@@ -822,6 +824,7 @@ static void init_windows_dirs(void)
     static const WCHAR winsysdirW[] = {'w','i','n','s','y','s','d','i','r',0};
     static const WCHAR default_windirW[] = {'C',':','\\','w','i','n','d','o','w','s',0};
     static const WCHAR default_sysdirW[] = {'\\','s','y','s','t','e','m','3','2',0};
+    static const WCHAR default_syswow64W[] = {'\\','s','y','s','w','o','w','6','4',0};
 
     DWORD len;
     WCHAR *buffer;
@@ -847,6 +850,17 @@ static void init_windows_dirs(void)
         memcpy( buffer, DIR_Windows, len * sizeof(WCHAR) );
         memcpy( buffer + len, default_sysdirW, sizeof(default_sysdirW) );
         DIR_System = buffer;
+    }
+
+#ifndef _WIN64  /* SysWow64 is always defined on 64-bit */
+    if (is_wow64)
+#endif
+    {
+        len = strlenW( DIR_Windows );
+        buffer = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) + sizeof(default_syswow64W) );
+        memcpy( buffer, DIR_Windows, len * sizeof(WCHAR) );
+        memcpy( buffer + len, default_syswow64W, sizeof(default_syswow64W) );
+        DIR_SysWow64 = buffer;
     }
 
     if (!CreateDirectoryW( DIR_Windows, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
@@ -1010,6 +1024,7 @@ void CDECL __wine_kernel_init(void)
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
     kernel32_handle = GetModuleHandleW(kernel32W);
+    IsWow64Process( GetCurrentProcess(), &is_wow64 );
 
     LOCALE_Init();
 
