@@ -71,6 +71,7 @@ extern void virtual_init_threading(void);
 
 /* server support */
 extern timeout_t server_start_time;
+extern unsigned int server_cpus;
 extern int is_wow64;
 extern void server_init_process(void);
 extern NTSTATUS server_init_process_done(void);

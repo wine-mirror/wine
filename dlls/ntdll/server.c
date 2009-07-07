@@ -94,7 +94,7 @@ static const enum cpu_type client_cpu = CPU_SPARC;
 #error Unsupported CPU
 #endif
 
-static unsigned int server_cpus;
+unsigned int server_cpus = 0;
 int is_wow64 = FALSE;
 
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
