@@ -2492,7 +2492,7 @@ static inline HRESULT date_parse(BSTR input, VARIANT *retv) {
 static HRESULT DateConstr_parse(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    VARIANT prim;
+    BSTR parse_str;
     HRESULT hres;
 
     TRACE("\n");
@@ -2503,16 +2503,14 @@ static HRESULT DateConstr_parse(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
         return S_OK;
     }
 
-    hres = to_primitive(dispex->ctx, get_arg(dp,0), ei, &prim);
+    hres = to_string(dispex->ctx, get_arg(dp,0), ei, &parse_str);
     if(FAILED(hres))
         return hres;
-    if(V_VT(&prim) != VT_BSTR) {
-        if(retv)
-            num_set_nan(retv);
-        return S_OK;
-    }
 
-    return date_parse(V_BSTR(&prim), retv);
+    hres = date_parse(parse_str, retv);
+
+    SysFreeString(parse_str);
+    return hres;
 }
 
 static HRESULT DateConstr_UTC(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
