@@ -1025,7 +1025,7 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
     LONG len;
     DWORD i;
     VARIANT name, index;
-    IDispatch *disp;
+    IDispatch *disp, *disp2;
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IHTMLElementCollection, (void**)&col);
@@ -1041,9 +1041,9 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
         len = exlen;
 
     V_VT(&index) = VT_EMPTY;
-    V_VT(&name) = VT_I4;
 
     for(i=0; i<len; i++) {
+        V_VT(&name) = VT_I4;
         V_I4(&name) = i;
         disp = (void*)0xdeadbeef;
         hres = IHTMLElementCollection_item(col, name, index, &disp);
@@ -1053,15 +1053,29 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
             continue;
 
         _test_elem_type(line, (IUnknown*)disp, elem_types[i]);
+
+        if(!i) {
+            V_VT(&name) = VT_UINT;
+            V_I4(&name) = 0;
+            disp2 = (void*)0xdeadbeef;
+            hres = IHTMLElementCollection_item(col, name, index, &disp2);
+            ok_(__FILE__,line) (hres == S_OK, "item(%d) failed: %08x\n", i, hres);
+            ok_(__FILE__,line) (iface_cmp((IUnknown*)disp, (IUnknown*)disp2), "disp != disp2\n");
+            if(disp2)
+                IDispatch_Release(disp2);
+        }
+
         IDispatch_Release(disp);
     }
 
+    V_VT(&name) = VT_I4;
     V_I4(&name) = len;
     disp = (void*)0xdeadbeef;
     hres = IHTMLElementCollection_item(col, name, index, &disp);
     ok_(__FILE__,line) (hres == S_OK, "item failed: %08x\n", hres);
     ok_(__FILE__,line) (disp == NULL, "disp != NULL\n");
 
+    V_VT(&name) = VT_I4;
     V_I4(&name) = -1;
     disp = (void*)0xdeadbeef;
     hres = IHTMLElementCollection_item(col, name, index, &disp);
