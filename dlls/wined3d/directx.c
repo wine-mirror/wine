@@ -2224,6 +2224,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
 static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, DWORD Flags,
                                                    WINED3DADAPTER_IDENTIFIER* pIdentifier) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    size_t len;
 
     TRACE_(d3d_caps)("(%p}->(Adapter: %d, Flags: %x, pId=%p)\n", This, Adapter, Flags, pIdentifier);
 
@@ -2233,39 +2234,65 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
 
     /* Return the information requested */
     TRACE_(d3d_caps)("device/Vendor Name and Version detection using FillGLCaps\n");
-    strcpy(pIdentifier->Driver, This->adapters[Adapter].driver);
-    if(This->adapters[Adapter].gl_info.driver_description)
-        strcpy(pIdentifier->Description, This->adapters[Adapter].gl_info.driver_description);
-    else /* Copy default description "Direct3D HAL" */
-        strcpy(pIdentifier->Description, This->adapters[Adapter].description);
 
-    /* Note dx8 doesn't supply a DeviceName */
-    if (NULL != pIdentifier->DeviceName) strcpy(pIdentifier->DeviceName, "\\\\.\\DISPLAY1"); /* FIXME: May depend on desktop? */
-    pIdentifier->DriverVersion->u.HighPart = This->adapters[Adapter].gl_info.driver_version_hipart;
-    pIdentifier->DriverVersion->u.LowPart = This->adapters[Adapter].gl_info.driver_version;
-    *(pIdentifier->VendorId) = This->adapters[Adapter].gl_info.gl_vendor;
-    *(pIdentifier->DeviceId) = This->adapters[Adapter].gl_info.gl_card;
-    *(pIdentifier->SubSysId) = 0;
-    *(pIdentifier->Revision) = 0;
-    *pIdentifier->DeviceIdentifier = IID_D3DDEVICE_D3DUID;
+    if (pIdentifier->driver_size)
+    {
+        len = min(strlen(This->adapters[Adapter].driver), pIdentifier->driver_size - 1);
+        memcpy(pIdentifier->driver, This->adapters[Adapter].driver, len);
+        pIdentifier->driver[len] = '\0';
+    }
+
+    if (pIdentifier->description_size)
+    {
+        const char *description;
+
+        if (This->adapters[Adapter].gl_info.driver_description)
+            description = This->adapters[Adapter].gl_info.driver_description;
+        else
+            description = This->adapters[Adapter].description;
+
+        len = min(strlen(description), pIdentifier->description_size - 1);
+        memcpy(pIdentifier->description, description, len);
+        pIdentifier->description[len] = '\0';
+    }
+
+    /* Note that d3d8 doesn't supply a device name. */
+    if (pIdentifier->device_name_size)
+    {
+        static const char *device_name = "\\\\.\\DISPLAY1"; /* FIXME: May depend on desktop? */
+
+        len = strlen(device_name);
+        if (len >= pIdentifier->device_name_size)
+        {
+            ERR("Device name size too small.\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        memcpy(pIdentifier->device_name, device_name, len);
+        pIdentifier->device_name[len] = '\0';
+    }
+
+    pIdentifier->driver_version.u.HighPart = This->adapters[Adapter].gl_info.driver_version_hipart;
+    pIdentifier->driver_version.u.LowPart = This->adapters[Adapter].gl_info.driver_version;
+    pIdentifier->vendor_id = This->adapters[Adapter].gl_info.gl_vendor;
+    pIdentifier->device_id = This->adapters[Adapter].gl_info.gl_card;
+    pIdentifier->subsystem_id = 0;
+    pIdentifier->revision = 0;
+    memcpy(&pIdentifier->device_identifier, &IID_D3DDEVICE_D3DUID, sizeof(pIdentifier->device_identifier));
 
     if(wined3d_settings.pci_device_id != PCI_DEVICE_NONE)
     {
         TRACE_(d3d_caps)("Overriding pci device id with: %x\n", wined3d_settings.pci_device_id);
-        *(pIdentifier->DeviceId) = wined3d_settings.pci_device_id;
+        pIdentifier->device_id = wined3d_settings.pci_device_id;
     }
 
     if(wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE)
     {
         TRACE_(d3d_caps)("Overriding pci vendor id with: %x\n", wined3d_settings.pci_vendor_id);
-        *(pIdentifier->VendorId) = wined3d_settings.pci_vendor_id;
+        pIdentifier->vendor_id = wined3d_settings.pci_vendor_id;
     }
 
-    if (Flags & WINED3DENUM_NO_WHQL_LEVEL) {
-        *(pIdentifier->WHQLLevel) = 0;
-    } else {
-        *(pIdentifier->WHQLLevel) = 1;
-    }
+    pIdentifier->whql_level = (Flags & WINED3DENUM_NO_WHQL_LEVEL) ? 0 : 1;
 
     return WINED3D_OK;
 }

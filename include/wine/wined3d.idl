@@ -1691,16 +1691,19 @@ typedef struct _WINED3DTRIPATCH_INFO
 
 typedef struct _WINED3DADAPTER_IDENTIFIER
 {
-    char *Driver;
-    char *Description;
-    char *DeviceName;
-    LARGE_INTEGER *DriverVersion;
-    DWORD *VendorId;
-    DWORD *DeviceId;
-    DWORD *SubSysId;
-    DWORD *Revision;
-    GUID *DeviceIdentifier;
-    DWORD *WHQLLevel;
+    char *driver;
+    UINT driver_size;
+    char *description;
+    UINT description_size;
+    char *device_name;
+    UINT device_name_size;
+    LARGE_INTEGER driver_version;
+    DWORD vendor_id;
+    DWORD device_id;
+    DWORD subsystem_id;
+    DWORD revision;
+    GUID device_identifier;
+    DWORD whql_level;
 } WINED3DADAPTER_IDENTIFIER;
 
 typedef struct _WINED3DPRESENT_PARAMETERS

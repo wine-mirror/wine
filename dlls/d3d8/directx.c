@@ -103,30 +103,34 @@ static UINT WINAPI IDirect3D8Impl_GetAdapterCount (LPDIRECT3D8 iface) {
     return hr;
 }
 
-static HRESULT  WINAPI  IDirect3D8Impl_GetAdapterIdentifier       (LPDIRECT3D8 iface,
-                                                            UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER8* pIdentifier) {
+static HRESULT WINAPI IDirect3D8Impl_GetAdapterIdentifier(LPDIRECT3D8 iface,
+        UINT Adapter, DWORD Flags, D3DADAPTER_IDENTIFIER8 *pIdentifier)
+{
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
     WINED3DADAPTER_IDENTIFIER adapter_id;
     HRESULT hr;
 
     TRACE("(%p)->(%d,%08x, %p\n", This, Adapter, Flags, pIdentifier);
-    EnterCriticalSection(&d3d8_cs);
-    /* dx8 and dx9 have different structures to be filled in, with incompatible 
-       layouts so pass in pointers to the places to be filled via an internal 
-       structure                                                                */
-    adapter_id.Driver           = pIdentifier->Driver;
-    adapter_id.Description      = pIdentifier->Description;
-    adapter_id.DeviceName       = NULL; /* d3d9 only */
-    adapter_id.DriverVersion    = &pIdentifier->DriverVersion;
-    adapter_id.VendorId         = &pIdentifier->VendorId;
-    adapter_id.DeviceId         = &pIdentifier->DeviceId;
-    adapter_id.SubSysId         = &pIdentifier->SubSysId;
-    adapter_id.Revision         = &pIdentifier->Revision;
-    adapter_id.DeviceIdentifier = &pIdentifier->DeviceIdentifier;
-    adapter_id.WHQLLevel        = &pIdentifier->WHQLLevel;
 
+    adapter_id.driver = pIdentifier->Driver;
+    adapter_id.driver_size = sizeof(pIdentifier->Driver);
+    adapter_id.description = pIdentifier->Description;
+    adapter_id.description_size = sizeof(pIdentifier->Description);
+    adapter_id.device_name = NULL; /* d3d9 only */
+    adapter_id.device_name_size = 0; /* d3d9 only */
+
+    EnterCriticalSection(&d3d8_cs);
     hr = IWineD3D_GetAdapterIdentifier(This->WineD3D, Adapter, Flags, &adapter_id);
     LeaveCriticalSection(&d3d8_cs);
+
+    pIdentifier->DriverVersion = adapter_id.driver_version;
+    pIdentifier->VendorId = adapter_id.vendor_id;
+    pIdentifier->DeviceId = adapter_id.device_id;
+    pIdentifier->SubSysId = adapter_id.subsystem_id;
+    pIdentifier->Revision = adapter_id.revision;
+    memcpy(&pIdentifier->DeviceIdentifier, &adapter_id.device_identifier, sizeof(pIdentifier->DeviceIdentifier));
+    pIdentifier->WHQLLevel = adapter_id.whql_level;
+
     return hr;
 }
 
