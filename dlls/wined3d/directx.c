@@ -869,7 +869,7 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info, const char *gl_renderer)
                     driver_version_table[i].lopart_lo);
             gl_info->driver_version_hipart = MAKEDWORD_VERSION(driver_version_table[i].hipart_hi,
                     driver_version_table[i].hipart_lo);
-            strcpy(gl_info->driver_description, driver_version_table[i].description);
+            gl_info->driver_description = driver_version_table[i].description;
             break;
         }
     }

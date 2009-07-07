@@ -3954,7 +3954,7 @@ typedef struct _WineD3D_GL_Info {
   UINT   vidmem;
   DWORD  driver_version;
   DWORD  driver_version_hipart;
-  CHAR   driver_description[255];
+  const char *driver_description;
   /**
    * CAPS Constants
    */
