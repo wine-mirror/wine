@@ -737,8 +737,40 @@ WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHT
  */
 BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int send, int receive )
 {
-    FIXME("%p, %d, %d, %d, %d\n", handle, resolve, connect, send, receive);
-    return TRUE;
+    BOOL ret = TRUE;
+    request_t *request;
+
+    TRACE("%p, %d, %d, %d, %d\n", handle, resolve, connect, send, receive);
+
+    if (resolve < -1 || connect < -1 || send < -1 || receive < -1)
+    {
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    FIXME("resolve and connect timeout not supported\n");
+
+    if (!(request = (request_t *)grab_object( handle )))
+    {
+        set_last_error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    if (request->hdr.type != WINHTTP_HANDLE_TYPE_REQUEST)
+    {
+        release_object( &request->hdr );
+        set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
+        return FALSE;
+    }
+
+    if (send < 0) send = 0;
+    if (netconn_set_timeout( &request->netconn, TRUE, send )) ret = FALSE;
+
+    if (receive < 0) receive = 0;
+    if (netconn_set_timeout( &request->netconn, FALSE, receive )) ret = FALSE;
+
+    release_object( &request->hdr );
+    return ret;
 }
 
 static const WCHAR wkday[7][4] =

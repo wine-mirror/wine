@@ -214,6 +214,7 @@ BOOL netconn_recv( netconn_t *, void *, size_t, int, int * );
 BOOL netconn_resolve( WCHAR *, INTERNET_PORT, struct sockaddr_in * );
 BOOL netconn_secure_connect( netconn_t * );
 BOOL netconn_send( netconn_t *, const void *, size_t, int, int * );
+DWORD netconn_set_timeout( netconn_t *, BOOL, int );
 const void *netconn_get_certificate( netconn_t * );
 
 BOOL set_cookies( request_t *, const WCHAR * );
