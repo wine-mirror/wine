@@ -4,7 +4,7 @@
  *
  * Copyright 1999 Gustavo Junior Alves <alves@correionet.com.br>
  * Copyright 2003 Marcelo Duarte
- * Copyright 2004 AmÈrico JosÈ Melo
+ * Copyright 2004 Am√©rico Jos√© Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,8 @@
 
 #include "progman.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 /* Menu */
@@ -40,27 +42,27 @@ MAIN_MENU MENU
    MENUITEM SEPARATOR
    MENUITEM "Sai&r do Windows...",             PM_EXIT
  }
- POPUP "&OpÁıes" {
+ POPUP "&Op√ß√µes" {
    MENUITEM "&Auto organizar",  PM_AUTO_ARRANGE
-   MENUITEM "&Minimizar na execuÁ„o",    PM_MIN_ON_RUN
-   MENUITEM "&Salvar alteraÁıes ao sair", PM_SAVE_SETTINGS
+   MENUITEM "&Minimizar na execu√ß√£o",    PM_MIN_ON_RUN
+   MENUITEM "&Salvar altera√ß√µes ao sair", PM_SAVE_SETTINGS
  }
  POPUP "&Janelas" {
    MENUITEM "&Cascata\tShift+F5",       PM_OVERLAP
    MENUITEM "&Lado a lado \tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "&Organizar Ìcones",       PM_ARRANGE
+   MENUITEM "&Organizar √≠cones",       PM_ARRANGE
  }
  
 POPUP "Aj&uda" {
-   MENUITEM "&Conte˙do",         PM_CONTENTS
+   MENUITEM "&Conte√∫do",         PM_CONTENTS
    MENUITEM "&Pesquisa...",           PM_SEARCH
    MENUITEM SEPARATOR
    MENUITEM "&Ajuda da ajuda",     PM_HELPONHELP
    MENUITEM "&Tutorial",         PM_TUTORIAL
    MENUITEM SEPARATOR
 
-   POPUP "&InformaÁıes..." {
-     MENUITEM "&LicenÁa",        PM_LICENSE
+   POPUP "&Informa√ß√µes..." {
+     MENUITEM "&Licen√ßa",        PM_LICENSE
      MENUITEM "&SEM GARANTIA",    PM_NO_WARRANTY
      MENUITEM "&Sobre o WINE",     PM_ABOUT_WINE
    }
@@ -84,27 +86,27 @@ MAIN_MENU MENU
    MENUITEM SEPARATOR
    MENUITEM "Sai&r do Windows...",             PM_EXIT
  }
- POPUP "&OpÁıes" {
+ POPUP "&Op√ß√µes" {
    MENUITEM "&Auto organizar",  PM_AUTO_ARRANGE
-   MENUITEM "&Minimizar na execuÁ„o",    PM_MIN_ON_RUN
-   MENUITEM "&Gravar alteraÁıes ao sair", PM_SAVE_SETTINGS
+   MENUITEM "&Minimizar na execu√ß√£o",    PM_MIN_ON_RUN
+   MENUITEM "&Gravar altera√ß√µes ao sair", PM_SAVE_SETTINGS
  }
  POPUP "&Janelas" {
    MENUITEM "&Cascata\tShift+F5",       PM_OVERLAP
    MENUITEM "&Lado a lado \tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "&Organizar Ìcones",       PM_ARRANGE
+   MENUITEM "&Organizar √≠cones",       PM_ARRANGE
  }
  
 POPUP "Aj&uda" {
-   MENUITEM "&Conte˙do",         PM_CONTENTS
+   MENUITEM "&Conte√∫do",         PM_CONTENTS
    MENUITEM "&Pesquisa...",           PM_SEARCH
    MENUITEM SEPARATOR
    MENUITEM "&Ajuda da ajuda",     PM_HELPONHELP
    MENUITEM "&Tutorial",         PM_TUTORIAL
    MENUITEM SEPARATOR
 
-   POPUP "&InformaÁıes..." {
-     MENUITEM "&LicenÁa",        PM_LICENSE
+   POPUP "&Informa√ß√µes..." {
+     MENUITEM "&Licen√ßa",        PM_LICENSE
      MENUITEM "&SEM GARANTIA",    PM_NO_WARRANTY
      MENUITEM "&Acerca do WINE",     PM_ABOUT_WINE
    }
@@ -178,7 +180,7 @@ DIALOG_GROUP DIALOG 0, 0, 230, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Atributos do grupo de programas"
 {
-LTEXT     "&DescriÁ„o:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+LTEXT     "&Descri√ß√£o:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
 EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
 LTEXT     "&Grupo de arquivo:",        PM_FILE_TXT,          05, 38,  50, 10
 EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
@@ -193,7 +195,7 @@ DIALOG_GROUP DIALOG 0, 0, 230, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Atributos do grupo de programas"
 {
-LTEXT     "&DescriÁ„o:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+LTEXT     "&Descri√ß√£o:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
 EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
 LTEXT     "&Grupo de ficheiro:",        PM_FILE_TXT,          05, 38,  50, 10
 EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
@@ -211,7 +213,7 @@ DIALOG_PROGRAM DIALOG 0, 0, 250, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Atributos de programa"
 {
-LTEXT         "&DescriÁ„o:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+LTEXT         "&Descri√ß√£o:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
 EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
 LTEXT         "&Linha de comando:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
 EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
@@ -225,7 +227,7 @@ LTEXT         "Executar &minimizado",       -1,             95, 75,  75, 10
 DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Cancelar",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "P&rocurar...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Alt&erar Ìcone...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Alt&erar √≠cone...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Aj&uda",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
 }
 
@@ -236,11 +238,11 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Alterar Ìcone"
+CAPTION "Alterar √≠cone"
 {
 LTEXT     "&Nome do arquivo:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
-LTEXT     "Õcone &atual:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+LTEXT     "√çcone &atual:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
 COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
 DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
@@ -253,11 +255,11 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Alterar Ìcone"
+CAPTION "Alterar √≠cone"
 {
 LTEXT     "&Nome do ficheiro:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
-LTEXT     "Õcone &actual:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+LTEXT     "√çcone &actual:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
 COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
 DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
@@ -295,51 +297,75 @@ STRINGTABLE DISCARDABLE
 IDS_PROGRAM_MANAGER,		"Gerenciador de programas"
 IDS_ERROR,			"ERRO"
 IDS_WARNING,			"AVISO"
-IDS_INFO,			"InformaÁ„o"
+IDS_INFO,			"Informa√ß√£o"
 IDS_DELETE,			"Excluir"
 IDS_DELETE_GROUP_s,		"Excluir grupo '%s' ?"
 IDS_DELETE_PROGRAM_s,		"Excluir programa '%s' ?"
-IDS_NOT_IMPLEMENTED,		"N„o implementado"
+IDS_NOT_IMPLEMENTED,		"N√£o implementado"
 IDS_FILE_READ_ERROR_s,		"Erro lendo '%s'."
 IDS_FILE_WRITE_ERROR_s,		"Erro escrevendo '%s'."
-IDS_GRPFILE_READ_ERROR_s,	"O arquivo de grupo '%s' n„o pode ser aberto.\nDever· ser tentado outras vezes?"
-IDS_OUT_OF_MEMORY,		"Sem memÛria."
-IDS_WINHELP_ERROR,		"Ajuda n„o disponÌvel."
+IDS_GRPFILE_READ_ERROR_s,	"O arquivo de grupo '%s' n√£o pode ser aberto.\nDever√° ser tentado outras vezes?"
+IDS_OUT_OF_MEMORY,		"Sem mem√≥ria."
+IDS_WINHELP_ERROR,		"Ajuda n√£o dispon√≠vel."
 IDS_UNKNOWN_FEATURE_s,		"Recurso desconhecido em %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Arquivo '%s' existe. N„o sobreescrevendo."
+IDS_FILE_NOT_OVERWRITTEN_s,	"Arquivo '%s' existe. N√£o sobreescrevendo."
 IDS_SAVE_GROUP_AS_s,		"Salvar grupo como '%s' para prevenir a sobreescrita dos arquivos originais."
 IDS_NO_HOT_KEY,			"Nenhuma"
 IDS_ALL_FILES,			"Todos os arquivos (*.*)"
 IDS_PROGRAMS,			"Programas"
 IDS_LIBRARIES_DLL,		"Bibliotecas (*.dll)"
-IDS_SYMBOL_FILES,		"Arquivos de Ìcones"
-IDS_SYMBOLS_ICO,		"Õcones (*.ico)"
+IDS_SYMBOL_FILES,		"Arquivos de √≠cones"
+IDS_SYMBOLS_ICO,		"√çcones (*.ico)"
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE DISCARDABLE
 {
-IDS_PROGRAM_MANAGER,		"GerÍnciador de programas"
+IDS_PROGRAM_MANAGER,		"Ger√™nciador de programas"
 IDS_ERROR,			"ERRO"
 IDS_WARNING,			"AVISO"
-IDS_INFO,			"InformaÁ„o"
+IDS_INFO,			"Informa√ß√£o"
 IDS_DELETE,			"Excluir"
 IDS_DELETE_GROUP_s,		"Excluir grupo '%s' ?"
 IDS_DELETE_PROGRAM_s,		"Excluir programa '%s' ?"
-IDS_NOT_IMPLEMENTED,		"N„o implementado"
+IDS_NOT_IMPLEMENTED,		"N√£o implementado"
 IDS_FILE_READ_ERROR_s,		"Erro ao ler '%s'."
 IDS_FILE_WRITE_ERROR_s,		"Erro ao escrever '%s'."
-IDS_GRPFILE_READ_ERROR_s,	"O ficheiro de grupo '%s' n„o pode ser aberto.\nDever· tentar outras vezes?"
-IDS_OUT_OF_MEMORY,		"Sem memÛria."
-IDS_WINHELP_ERROR,		"Ajuda n„o disponÌvel."
+IDS_GRPFILE_READ_ERROR_s,	"O ficheiro de grupo '%s' n√£o pode ser aberto.\nDever√° tentar outras vezes?"
+IDS_OUT_OF_MEMORY,		"Sem mem√≥ria."
+IDS_WINHELP_ERROR,		"Ajuda n√£o dispon√≠vel."
 IDS_UNKNOWN_FEATURE_s,		"Recurso desconhecido em %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Ficheiro '%s' existe. N„o sobreescrever."
+IDS_FILE_NOT_OVERWRITTEN_s,	"Ficheiro '%s' existe. N√£o sobreescrever."
 IDS_SAVE_GROUP_AS_s,		"Gravar grupo como '%s' para prevenir a sobreescrita dos ficheiros originais."
 IDS_NO_HOT_KEY,			"Nenhuma"
 IDS_ALL_FILES,			"Todos os ficheiros (*.*)"
 IDS_PROGRAMS,			"Programas"
 IDS_LIBRARIES_DLL,		"Bibliotecas (*.dll)"
-IDS_SYMBOL_FILES,		"Ficheiros de Ìcones"
-IDS_SYMBOLS_ICO,		"Õcones (*.ico)"
+IDS_SYMBOL_FILES,		"Ficheiros de √≠cones"
+IDS_SYMBOLS_ICO,		"√çcones (*.ico)"
+}
+
+STRINGTABLE DISCARDABLE LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+{
+IDS_LICENSE_CAPTION,            "Licen√ßa do Wine"
+IDS_LICENSE,
+"O Wine √© software livre; voc√™ pode redistribu√≠-lo e/ou \
+modific√°-lo sob os termos da GNU Lesser General Public \
+License tal como publicado pela Free Software Foundation; seja a \
+vers√£o 2.1 da Licen√ßa, ou (por sua escolha) outra vers√£o mais recente.\n\n\
+O Wine √© distribu√≠do na esperan√ßa que seja √∫til, \
+mas SEM QUALQUER GARANTIA; nem sequer a garantia impl√≠cita de \
+MERCANTIBILIDADE ou FEITO PARA UM PROP√ìSITO ESPEC√çFICO.  veja a GNU \
+Lesser General Public License para mais detalhes.\n\n\
+Dever√° ter recebido uma c√≥pia da GNU Lesser General Public \
+License com o Wine; se n√£o, escreva √† Free Software \
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA."
+
+IDS_WARRANTY_CAPTION, "SEM GARANTIA"
+IDS_WARRANTY,
+"O Wine √© distribu√≠do na esperan√ßa que seja √∫til, \
+mas SEM QUALQUER GARANTIA; nem sequer a garantia impl√≠cita de \
+MERCANTIBILIDADE ou FEITO PARA UM PROP√ìSITO ESPEC√çFICO.  veja a GNU \
+Lesser General Public License para mais detalhes."
 }
