@@ -3378,6 +3378,7 @@ typedef enum _GL_Cards {
   CARD_INTEL_I915G                = 0x2582,
   CARD_INTEL_I915GM               = 0x2592,
   CARD_INTEL_I945GM               = 0x27a2, /* Same as GMA 950?? */
+  CARD_INTEL_X3100                = 0x2a02, /* found in macs. Same as GMA 965? */
 } GL_Cards;
 
 #define WINE_DEFAULT_VIDMEM 64*1024*1024
