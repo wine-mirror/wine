@@ -2308,11 +2308,25 @@ static void test_SetWinMetaFileBits(void)
   HeapFree(GetProcessHeap(), 0, buffer);
 }
 
-static void getwinmetafilebits(UINT mode, int scale)
+/* This is somewhat different to MulDiv, but appears to be how native behaves */
+static INT muldiv(INT m1, INT m2, INT d)
+{
+    LONGLONG ret;
+
+    ret = ((LONGLONG)m1 * m2 + d/2) / d; /* Always add d/2 even if ret will be -ve */
+
+    if((LONGLONG)m1 * m2 * 2 == (2 * ret - 1) * d) /* If the answer is exactly n.5 round towards zero */
+    {
+        if(ret > 0) ret--;
+        else ret++;
+    }
+    return ret;
+}
+
+static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
 {
     HENHMETAFILE emf;
     HDC display_dc, emf_dc;
-    RECT rc;
     ENHMETAHEADER *enh_header;
     UINT size, emf_size, i;
     WORD check = 0;
@@ -2322,17 +2336,19 @@ static void getwinmetafilebits(UINT mode, int scale)
     INT horz_res, vert_res, horz_size, vert_size;
 
     display_dc = GetDC(NULL);
+    ok(display_dc != NULL, "display_dc is NULL\n");
 
     horz_res = GetDeviceCaps(display_dc, HORZRES);
     vert_res = GetDeviceCaps(display_dc, VERTRES);
     horz_size = GetDeviceCaps(display_dc, HORZSIZE);
     vert_size = GetDeviceCaps(display_dc, VERTSIZE);
 
-    SetRect(&rc, 1000, 2000, 3000, 6000);
-    emf_dc = CreateEnhMetaFileA(display_dc, NULL, &rc, NULL);
+    emf_dc = CreateEnhMetaFileA(display_dc, NULL, rc, NULL);
+    ok(emf_dc != NULL, "emf_dc is NULL\n");
     for(i = 0; i < 3000; i++) /* This is enough to take emf_size > 0xffff */
         Rectangle(emf_dc, 0, 0, 1000, 20);
     emf = CloseEnhMetaFile(emf_dc);
+    ok(emf != NULL, "emf is NULL\n");
 
     emf_size = GetEnhMetaFileBits(emf, 0, NULL);
     enh_header = HeapAlloc(GetProcessHeap(), 0, emf_size);
@@ -2342,6 +2358,8 @@ static void getwinmetafilebits(UINT mode, int scale)
        have different resolutions */
     enh_header->szlDevice.cx *= scale;
     emf = SetEnhMetaFileBits(emf_size, (BYTE*)enh_header);
+    ok(emf != NULL, "emf is NULL\n");
+    ok(EqualRect((RECT*)&enh_header->rclFrame, rc), "Frame rectangles differ\n");
 
     size = GetWinMetaFileBits(emf, 0, NULL, mode, display_dc);
     ok(size, "GetWinMetaFileBits returns 0\n");
@@ -2403,28 +2421,28 @@ static void getwinmetafilebits(UINT mode, int scale)
             case MM_TEXT:
             case MM_ISOTROPIC:
             case MM_ANISOTROPIC:
-                pt.y = MulDiv(rc.top, vert_res, vert_size * 100);
-                pt.x = MulDiv(rc.left, horz_res, horz_size * 100);
+                pt.y = muldiv(rc->top, vert_res, vert_size * 100);
+                pt.x = muldiv(rc->left, horz_res, horz_size * 100);
                 break;
             case MM_LOMETRIC:
-                pt.y = MulDiv(-rc.top, 1, 10) + 1;
-                pt.x = MulDiv(rc.left, 1, 10);
+                pt.y = muldiv(-rc->top, 1, 10) + 1;
+                pt.x = muldiv( rc->left, 1, 10);
                 break;
             case MM_HIMETRIC:
-                pt.y = -rc.top + 1;
-                pt.x = rc.left;
+                pt.y = -rc->top + 1;
+                pt.x = (rc->left >= 0) ? rc->left : rc->left + 1; /* strange but true */
                 break;
             case MM_LOENGLISH:
-                pt.y = MulDiv(-rc.top, 10, 254) + 1;
-                pt.x = MulDiv( rc.left, 10, 254);
+                pt.y = muldiv(-rc->top, 10, 254) + 1;
+                pt.x = muldiv( rc->left, 10, 254);
                 break;
             case MM_HIENGLISH:
-                pt.y = MulDiv(-rc.top, 100, 254) + 1;
-                pt.x = MulDiv( rc.left, 100, 254);
+                pt.y = muldiv(-rc->top, 100, 254) + 1;
+                pt.x = muldiv( rc->left, 100, 254);
                 break;
             case MM_TWIPS:
-                pt.y = MulDiv(-rc.top, 72 * 20, 2540) + 1;
-                pt.x = MulDiv( rc.left, 72 * 20, 2540);
+                pt.y = muldiv(-rc->top, 72 * 20, 2540) + 1;
+                pt.x = muldiv( rc->left, 72 * 20, 2540);
                 break;
             default:
                 pt.x = pt.y = 0;
@@ -2437,8 +2455,9 @@ static void getwinmetafilebits(UINT mode, int scale)
         if(rec_num == mfcomment_chunks + 2)
         {
             ok(rec->rdFunction == META_SETWINDOWEXT, "got %04x\n", rec->rdFunction);
-            ok((short)rec->rdParm[0] == MulDiv(rc.bottom - rc.top, vert_res, vert_size * 100), "got %d\n", (short)rec->rdParm[0]);
-            ok((short)rec->rdParm[1] == MulDiv(rc.right - rc.left, horz_res, horz_size * 100), "got %d\n", (short)rec->rdParm[1]);
+            ok((short)rec->rdParm[0] == muldiv(rc->bottom - rc->top, vert_res, vert_size * 100), "got %d\n", (short)rec->rdParm[0]);
+            ok((short)rec->rdParm[1] == muldiv(rc->right - rc->left, horz_res, horz_size * 100), "got %d\n", (short)rec->rdParm[1]);
+
         }
 
         rec_num++;
@@ -2455,11 +2474,31 @@ static void getwinmetafilebits(UINT mode, int scale)
 static void test_GetWinMetaFileBits(void)
 {
     UINT mode;
+    RECT frames[] =
+    {
+        { 1000,  2000, 3000, 6000},
+        {-1000,  2000, 3000, 6000},
+        { 1000, -2000, 3000, 6000},
+        { 1005,  2005, 3000, 6000},
+        {-1005, -2005, 3000, 6000},
+        {-1005, -2010, 3000, 6000},
+        {-1005,  2010, 3000, 6000},
+        {    0,     0,    1,    1},
+        {   -1,    -1,    1,    1},
+        {    0,     0,    0,    0}
+    };
 
     for(mode = MM_MIN; mode <= MM_MAX; mode++)
     {
-        getwinmetafilebits(mode, 1);
-        getwinmetafilebits(mode, 2);
+        RECT *rc;
+        trace("mode %d\n", mode);
+
+        for(rc = frames; rc->right - rc->left > 0; rc++)
+        {
+            trace("frame %d,%d - %d,%d\n", rc->left, rc->top, rc->right, rc->bottom);
+            getwinmetafilebits(mode, 1, rc);
+            getwinmetafilebits(mode, 2, rc);
+        }
     }
 }
 
