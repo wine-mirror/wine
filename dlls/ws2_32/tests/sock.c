@@ -2620,8 +2620,10 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, NULL, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on NULL buffer "
-        "returned %d + errno %d\n", bret, WSAGetLastError());
+    ok(bret == FALSE &&
+        (WSAGetLastError() == WSAEINVAL ||
+         broken(WSAGetLastError() == WSAEFAULT)), /* NT4 */
+        "AcceptEx on NULL buffer returned %d + errno %d\n", bret, WSAGetLastError());
 
     bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
