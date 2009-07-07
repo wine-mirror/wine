@@ -607,7 +607,7 @@ static int AlertFileDoesNotExist(LPCWSTR szFileName)
    LoadStringW(Globals.hInstance, STRING_ERROR, szResource, ARRAY_SIZE(szResource));
 
    nResult = MessageBoxW(Globals.hMainWnd, szMessage, szResource,
-                         MB_ICONEXCLAMATION | MB_YESNO);
+                         MB_ICONEXCLAMATION | MB_YESNOCANCEL);
 
    return(nResult);
 }
@@ -706,6 +706,10 @@ static void HandleCommandLine(LPWSTR cmdline)
                 break;
 
             case IDNO:
+                break;
+
+            case IDCANCEL:
+                DestroyWindow(Globals.hMainWnd);
                 break;
             }
         }
