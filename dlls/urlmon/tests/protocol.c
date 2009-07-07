@@ -1801,8 +1801,9 @@ static const IClassFactoryVtbl MimeFilterCFVtbl = {
 
 static IClassFactory mimefilter_cf = { &MimeFilterCFVtbl };
 
-#define TEST_BINDING   1
-#define TEST_FILTER    2
+#define TEST_BINDING     0x01
+#define TEST_FILTER      0x02
+#define TEST_FIRST_HTTP  0x04
 
 static void init_test(int prot, DWORD flags)
 {
@@ -1818,6 +1819,9 @@ static void init_test(int prot, DWORD flags)
     ResetEvent(event_complete2);
     async_protocol = binding_protocol = filtered_protocol = NULL;
     filtered_sink = NULL;
+    http_is_first = (flags & TEST_FIRST_HTTP) != 0;
+    first_data_notif = TRUE;
+    state = 0;
 }
 
 static void test_priority(IInternetProtocol *protocol)
@@ -2143,13 +2147,10 @@ static void test_file_protocol(void) {
     test_file_protocol_fail();
 }
 
-static BOOL http_protocol_start(LPCWSTR url, BOOL is_first)
+static BOOL http_protocol_start(LPCWSTR url)
 {
     static BOOL got_user_agent = FALSE;
     HRESULT hres;
-
-    first_data_notif = TRUE;
-    state = 0;
 
     SET_EXPECT(GetBindInfo);
     if (!(bindf & BINDF_FROMURLMON))
@@ -2235,17 +2236,17 @@ static void test_http_info(IInternetProtocol *protocol)
 
 /* is_first refers to whether this is the first call to this function
  * _for this url_ */
-static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
+static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags)
 {
     IInternetProtocolInfo *protocol_info;
     IClassFactory *factory;
     IUnknown *unk;
     HRESULT hres;
 
+    init_test(prot, flags);
     http_url = url;
-    http_is_first = is_first;
 
-    hres = CoGetClassObject(is_https ? &CLSID_HttpSProtocol : &CLSID_HttpProtocol,
+    hres = CoGetClassObject(prot == HTTPS_TEST ? &CLSID_HttpSProtocol : &CLSID_HttpProtocol,
             CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
     if(FAILED(hres))
@@ -2277,7 +2278,7 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
         SET_EXPECT(ReportProgress_CONNECTING);
         SET_EXPECT(ReportProgress_SENDINGREQUEST);
         SET_EXPECT(ReportProgress_PROXYDETECTING);
-        if(! is_https)
+        if(prot == HTTP_TEST)
             SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
         else
             SET_EXPECT(QueryService_HttpSecurity);
@@ -2289,7 +2290,7 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
             SET_EXPECT(Switch);
         }
 
-        if(!http_protocol_start(url, is_first))
+        if(!http_protocol_start(url))
             return;
 
         SET_EXPECT(ReportResult);
@@ -2304,7 +2305,7 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
             CHECK_CALLED(Switch);
         else
             CHECK_CALLED(ReportData);
-        if (is_https)
+        if(prot == HTTPS_TEST)
             CLEAR_CALLED(QueryService_HttpSecurity);
 
         while(1) {
@@ -2332,7 +2333,7 @@ static void test_http_protocol_url(LPCWSTR url, BOOL is_https, BOOL is_first)
         }
         ok(hres == S_FALSE, "Read failed: %08x\n", hres);
         CHECK_CALLED(ReportResult);
-        if (is_https)
+        if(prot == HTTPS_TEST)
             CLEAR_CALLED(ReportProgress_SENDINGREQUEST);
 
         test_protocol_terminate(async_protocol);
@@ -2354,24 +2355,23 @@ static void test_http_protocol(void)
          'p','o','s','t','t','e','s','t','.','p','h','p',0};
 
     trace("Testing http protocol (not from urlmon)...\n");
-    tested_protocol = HTTP_TEST;
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
-    test_http_protocol_url(winehq_url, FALSE, TRUE);
+    test_http_protocol_url(winehq_url, HTTP_TEST, TEST_FIRST_HTTP);
 
     trace("Testing http protocol (from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON;
-    test_http_protocol_url(winehq_url, FALSE, FALSE);
+    test_http_protocol_url(winehq_url, HTTP_TEST, 0);
 
     trace("Testing http protocol (to file)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NEEDFILE;
-    test_http_protocol_url(winehq_url, FALSE, FALSE);
+    test_http_protocol_url(winehq_url, HTTP_TEST, 0);
 
     trace("Testing http protocol (post data)...\n");
     http_post_test = TRUE;
     /* Without this flag we get a ReportProgress_CACHEFILENAMEAVAILABLE
      * notification with BINDVERB_POST */
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
-    test_http_protocol_url(posttest_url, FALSE, TRUE);
+    test_http_protocol_url(posttest_url, HTTP_TEST, TEST_FIRST_HTTP);
     http_post_test = FALSE;
 }
 
@@ -2382,9 +2382,8 @@ static void test_https_protocol(void)
          '.','c','o','m','/','t','e','s','t','.','h','t','m','l',0};
 
     trace("Testing https protocol (from urlmon)...\n");
-    init_test(HTTPS_TEST, 0);
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
-    test_http_protocol_url(codeweavers_url, TRUE, TRUE);
+    test_http_protocol_url(codeweavers_url, HTTPS_TEST, TEST_FIRST_HTTP);
 }
 
 
