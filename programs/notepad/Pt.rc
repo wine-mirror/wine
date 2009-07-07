@@ -5,7 +5,7 @@
  * Copyright 1999 Marcel Baur <alves@correionet.com.br>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  * Copyright 2003 Marcelo Duarte
- * Copyright 2004 AmÈrico JosÈ Melo
+ * Copyright 2004 Am√©rico Jos√© Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,8 @@
 
 #include "notepad_res.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 MAIN_MENU MENU
@@ -35,7 +37,7 @@ MAIN_MENU MENU
   MENUITEM "Salvar &como...",	CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir...\tCtrl+P",		CMD_PRINT
-  MENUITEM "C&onfigurar p·gina...",	CMD_PAGE_SETUP
+  MENUITEM "C&onfigurar p√°gina...",	CMD_PAGE_SETUP
   MENUITEM "Configurar i&mpressora...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
   MENUITEM "Sai&r",		CMD_EXIT
@@ -51,15 +53,15 @@ POPUP "&Editar" {
   MENUITEM "Selecionar &tudo",	CMD_SELECT_ALL
   MENUITEM "&Data/Hora\tF5",	CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Quebrar autom·tica de linha",	CMD_WRAP
+  MENUITEM "&Quebrar autom√°tica de linha",	CMD_WRAP
   MENUITEM "&Fonte...",          CMD_FONT
  }
 POPUP "&Pesquisa" {
   MENUITEM "&Localizar...",	CMD_SEARCH
-  MENUITEM "Localizar &prÛxima\tF3",	CMD_SEARCH_NEXT
+  MENUITEM "Localizar &pr√≥xima\tF3",	CMD_SEARCH_NEXT
  }
 POPUP "&Ajuda" {
-  MENUITEM "&Conte˙do",		CMD_HELP_CONTENTS
+  MENUITEM "&Conte√∫do",		CMD_HELP_CONTENTS
   MENUITEM "&Procurar...",	CMD_HELP_SEARCH
   MENUITEM "&Ajuda na ajuda",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
@@ -78,7 +80,7 @@ MAIN_MENU MENU
   MENUITEM "Gravar &como...",	CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir",		CMD_PRINT
-  MENUITEM "C&onfigurar p·gina...",	CMD_PAGE_SETUP
+  MENUITEM "C&onfigurar p√°gina...",	CMD_PAGE_SETUP
   MENUITEM "Configurar i&mpressora...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
   MENUITEM "Sai&r",		CMD_EXIT
@@ -94,19 +96,20 @@ POPUP "&Editar" {
   MENUITEM "Seleccionar &tudo",	CMD_SELECT_ALL
   MENUITEM "&Data/Hora\tF5",	CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Quebrar autom·tica de linha",	CMD_WRAP
+  MENUITEM "&Quebrar autom√°tica de linha",	CMD_WRAP
   MENUITEM "&Tipo de Letra...",          CMD_FONT
  }
 POPUP "&Pesquisa" {
   MENUITEM "&Localizar...",	CMD_SEARCH
-  MENUITEM "Localizar &prÛxima\tF3",	CMD_SEARCH_NEXT
+  MENUITEM "Localizar &pr√≥xima\tF3",	CMD_SEARCH_NEXT
+  MENUITEM "&Substituir...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Ajuda" {
-  MENUITEM "&Conte˙do",		CMD_HELP_CONTENTS
+  MENUITEM "&Conte√∫do",		CMD_HELP_CONTENTS
   MENUITEM "&Procurar...",	CMD_HELP_SEARCH
   MENUITEM "&Ajuda na ajuda",	CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&About Notepad...", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&Acerca do Notepad...", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -118,11 +121,11 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
-CAPTION "Configurar p·gina"
+CAPTION "Configurar p√°gina"
 {
-LTEXT    "&CabeÁalho (mm):",  0x140,  10, 07, 40, 15
+LTEXT    "&Cabe√ßalho (mm):",  0x140,  10, 07, 40, 15
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
-LTEXT    "&RodapÈ:",  0x142,   10, 24, 40, 15
+LTEXT    "&Rodap√©:",  0x142,   10, 24, 40, 15
 EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
 GROUPBOX "&Margens:",      0x144,     10, 43,160, 45
@@ -140,35 +143,42 @@ PUSHBUTTON    "Cancelar",     IDCANCEL,               180, 21, 40, 15, WS_TABSTO
 PUSHBUTTON    "&Ajuda",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
 }
 
+IDD_OFN_TEMPLATE  DIALOG  DISCARDABLE 50,50,300,15
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Codifica√ß√£o:", -1, 5,0, 50,12
+  COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
+END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE DISCARDABLE
 {
 STRING_PAGESETUP_HEADERVALUE,	"&f"
-STRING_PAGESETUP_FOOTERVALUE,	"P·gina &p"
+STRING_PAGESETUP_FOOTERVALUE,	"P√°gina &p"
 
 STRING_NOTEPAD,					"Notepad"
 STRING_ERROR,					"ERRO"
 STRING_WARNING,					"AVISO"
-STRING_INFO,					"InformaÁ„o"
+STRING_INFO,					"Informa√ß√£o"
 
 STRING_UNTITLED,				"(sem nome)"
 
 STRING_ALL_FILES,				"Todos os arquivos (*.*)"
 STRING_TEXT_FILES_TXT,			"Arquivos texto (*.txt)"
 
-STRING_TOOLARGE,				"Arquivo '%s' È muito longo para o notepad.\n \
+STRING_TOOLARGE,				"Arquivo '%s' √© muito longo para o notepad.\n \
 Por favor use um editor diferente."
-STRING_NOTEXT,					"VocÍ n„o digitou nenhum texto. \
+STRING_NOTEXT,					"Voc√™ n√£o digitou nenhum texto. \
 \nPor favor digite alguma coisa e tente novamente"
-STRING_DOESNOTEXIST,				"Arquivo '%s'\nn„o existe\n\n \
-VocÍ deseja criar um novo arquivo?"
+STRING_DOESNOTEXIST,				"Arquivo '%s'\nn√£o existe\n\n \
+Voc√™ deseja criar um novo arquivo?"
 STRING_NOTSAVED,				"Arquivo '%s'\nfoi modificado\n\n \
-Gostaria de salvar as alteraÁ’es?"
-STRING_NOTFOUND,					"'%s' n„o pode ser encontrado."
-STRING_OUT_OF_MEMORY,			"N„o h· memÛria suficiente para completar essa \
-tarefa.\nFeche uma ou mais aplicaÁıes para aumentar a quantidade de memÛria livre."
+Gostaria de salvar as altera√ß√ïes?"
+STRING_NOTFOUND,					"'%s' n√£o pode ser encontrado."
+STRING_OUT_OF_MEMORY,			"N√£o h√° mem√≥ria suficiente para completar essa \
+tarefa.\nFeche uma ou mais aplica√ß√µes para aumentar a quantidade de mem√≥ria livre."
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -176,27 +186,37 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 STRINGTABLE DISCARDABLE
 {
  STRING_PAGESETUP_HEADERVALUE,	"&f"
- STRING_PAGESETUP_FOOTERVALUE,	"P·gina &p"
+ STRING_PAGESETUP_FOOTERVALUE,	"P√°gina &p"
 
  STRING_NOTEPAD,		"Notepad"
  STRING_ERROR,			"ERRO"
  STRING_WARNING,		"AVISO"
- STRING_INFO,			"InformaÁ„o"
+ STRING_INFO,			"Informa√ß√£o"
 
  STRING_UNTITLED,		"(sem nome)"
 
  STRING_ALL_FILES,		"Todos os arquivos (*.*)"
  STRING_TEXT_FILES_TXT,		"Ficheiros de texto (*.txt)"
 
- STRING_TOOLARGE,		"Ficheiros '%s' È muito longo para o notepad.\n \
+ STRING_TOOLARGE,		"Ficheiros '%s' √© muito longo para o notepad.\n \
  Por favor use um editor diferente."
- STRING_NOTEXT,			"N„o digitou nenhum texto. \
+ STRING_NOTEXT,			"N√£o digitou nenhum texto. \
 \nPor favor digite alguma coisa e tente novamente"
- STRING_DOESNOTEXIST,		"Ficheiro '%s'\nn„o existe\n\n \
+ STRING_DOESNOTEXIST,		"Ficheiro '%s'\nn√£o existe\n\n \
 Deseja criar um novo ficheiro?"
  STRING_NOTSAVED,		"Ficheiro '%s'\nfoi modificado\n\n \
-Gostaria de gravar as alteraÁ’es?"
- STRING_NOTFOUND,		"'%s' n„o pode ser encontrado."
- STRING_OUT_OF_MEMORY,		"N„o h· memÛria suficiente para completar esta \
-tarefa.\nFeche uma ou mais aplicaÁıes para aumentar a quantidade de memÛria livre."
+Gostaria de gravar as altera√ß√ïes?"
+ STRING_NOTFOUND,		"'%s' n√£o pode ser encontrado."
+ STRING_OUT_OF_MEMORY,		"N√£o h√° mem√≥ria suficiente para completar esta \
+tarefa.\nFeche uma ou mais aplica√ß√µes para aumentar a quantidade de mem√≥ria livre."
+
+STRING_UNICODE_LE,     "Unicode (UTF-16)"
+STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+Este ficheiro cont√©m caracteres Unicode que ser√£o perdidos se\n\
+guardar este ficheiro na codifica√ß√£o %s. \n\
+Para manter estes caracteres, carregue em Cancelar, e depois seleccione\n\
+uma das op√ß√µes Unicode na lista de Codifica√ß√µes. \n\
+Continuar?"
 }
