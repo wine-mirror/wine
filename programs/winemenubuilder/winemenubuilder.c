@@ -786,18 +786,15 @@ static char *extract_icon( LPCWSTR path, int index, const char *destFilename, BO
 
     /* Try to treat the source file as an exe */
     if (destFilename)
-        xpm_path=HeapAlloc(GetProcessHeap(),0,strlen(iconsdir)+1+strlen(destFilename)+1+3);
+        xpm_path=heap_printf("%s/%s.png",iconsdir,destFilename);
     else
-        xpm_path=HeapAlloc(GetProcessHeap(), 0, strlen(iconsdir)+1+4+1+strlen(ico_name)+1+12+1+3);
+        xpm_path=heap_printf("%s/%04x_%s.%d.png",iconsdir,crc,ico_name,index);
     if (xpm_path == NULL)
     {
         WINE_ERR("could not extract icon %s, out of memory\n", wine_dbgstr_a(ico_name));
         return NULL;
     }
-    if (destFilename)
-        sprintf(xpm_path,"%s/%s.png",iconsdir,destFilename);
-    else
-        sprintf(xpm_path,"%s/%04x_%s.%d.png",iconsdir,crc,ico_name,index);
+
     if (ExtractFromEXEDLL( path, index, xpm_path ))
         goto end;
 
