@@ -611,7 +611,7 @@ static DWORD typeFromMibType(DWORD mib_type)
 
 static ULONG addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
 {
-    ULONG ret, i;
+    ULONG ret, i, j;
     MIB_IPADDRTABLE *at;
 
     *num_addrs = 0;
@@ -625,9 +625,9 @@ static ULONG addressesFromIndex(DWORD index, DWORD **addrs, ULONG *num_addrs)
         HeapFree(GetProcessHeap(), 0, at);
         return ERROR_OUTOFMEMORY;
     }
-    for (i = 0; i < at->dwNumEntries; i++)
+    for (i = 0, j = 0; i < at->dwNumEntries; i++)
     {
-        if (at->table[i].dwIndex == index) (*addrs)[i] = at->table[i].dwAddr;
+        if (at->table[i].dwIndex == index) (*addrs)[j++] = at->table[i].dwAddr;
     }
     HeapFree(GetProcessHeap(), 0, at);
     return ERROR_SUCCESS;
