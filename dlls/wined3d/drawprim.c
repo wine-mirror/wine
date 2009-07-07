@@ -254,10 +254,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
                 unsigned char i;
                 float color[4];
 
-                color[0] = D3DCOLOR_B_R(diffuseColor) / 255.0;
-                color[1] = D3DCOLOR_B_G(diffuseColor) / 255.0;
-                color[2] = D3DCOLOR_B_B(diffuseColor) / 255.0;
-                color[3] = D3DCOLOR_B_A(diffuseColor) / 255.0;
+                color[0] = D3DCOLOR_B_R(diffuseColor) / 255.0f;
+                color[1] = D3DCOLOR_B_G(diffuseColor) / 255.0f;
+                color[2] = D3DCOLOR_B_B(diffuseColor) / 255.0f;
+                color[3] = D3DCOLOR_B_A(diffuseColor) / 255.0f;
 
                 for (i = 0; i < num_untracked_materials; ++i)
                 {
@@ -715,7 +715,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
 
 static void normalize_normal(float *n) {
     float length = n[0] * n[0] + n[1] * n[1] + n[2] * n[2];
-    if(length == 0.0) return;
+    if (length == 0.0f) return;
     length = sqrt(length);
     n[0] = n[0] / length;
     n[1] = n[1] / length;
@@ -747,7 +747,7 @@ static void normalize_normal(float *n) {
 HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
                             struct WineD3DRectPatch *patch) {
     unsigned int i, j, num_quads, out_vertex_size, buffer_size, d3d_out_vertex_size;
-    float max_x = 0.0, max_y = 0.0, max_z = 0.0, neg_z = 0.0;
+    float max_x = 0.0f, max_y = 0.0f, max_z = 0.0f, neg_z = 0.0f;
     struct wined3d_stream_info stream_info;
     struct wined3d_stream_info_element *e;
     const BYTE *data;
@@ -817,8 +817,8 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     checkGLcall("glMatrixMode(GL_PROJECTION)");
     glLoadIdentity();
     checkGLcall("glLoadIndentity()");
-    glScalef(1 / (max_x) , 1 / (max_y), max_z == 0 ? 1 : 1 / ( 2 * max_z));
-    glTranslatef(0, 0, 0.5);
+    glScalef(1.0f / (max_x), 1.0f / (max_y), max_z == 0.0f ? 1.0f : 1.0f / (2.0f * max_z));
+    glTranslatef(0.0f, 0.0f, 0.5f);
     checkGLcall("glScalef");
     glViewport(-max_x, -max_y, 2 * (max_x), 2 * (max_y));
     checkGLcall("glViewport");
@@ -830,11 +830,11 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)");
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_FILLMODE));
     if(patch->has_normals) {
-        static const GLfloat black[] = {0, 0, 0, 0};
-        static const GLfloat red[]   = {1, 0, 0, 0};
-        static const GLfloat green[] = {0, 1, 0, 0};
-        static const GLfloat blue[]  = {0, 0, 1, 0};
-        static const GLfloat white[] = {1, 1, 1, 1};
+        static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+        static const GLfloat red[]   = {1.0f, 0.0f, 0.0f, 0.0f};
+        static const GLfloat green[] = {0.0f, 1.0f, 0.0f, 0.0f};
+        static const GLfloat blue[]  = {0.0f, 0.0f, 1.0f, 0.0f};
+        static const GLfloat white[] = {1.0f, 1.0f, 1.0f, 1.0f};
         glEnable(GL_LIGHTING);
         checkGLcall("glEnable(GL_LIGHTING)");
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
@@ -915,18 +915,18 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     feedbuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buffer_size * sizeof(float) * 8);
 
     glMap2f(GL_MAP2_VERTEX_3,
-            0, 1, vtxStride / sizeof(float), info->Width,
-            0, 1, info->Stride * vtxStride / sizeof(float), info->Height,
+            0.0f, 1.0f, vtxStride / sizeof(float), info->Width,
+            0.0f, 1.0f, info->Stride * vtxStride / sizeof(float), info->Height,
             (const GLfloat *)data);
     checkGLcall("glMap2f");
     if(patch->has_texcoords) {
         glMap2f(GL_MAP2_TEXTURE_COORD_4,
-                0, 1, vtxStride / sizeof(float), info->Width,
-                0, 1, info->Stride * vtxStride / sizeof(float), info->Height,
+                0.0f, 1.0f, vtxStride / sizeof(float), info->Width,
+                0.0f, 1.0f, info->Stride * vtxStride / sizeof(float), info->Height,
                 (const GLfloat *)data);
         checkGLcall("glMap2f");
     }
-    glMapGrid2f(ceilf(patch->numSegs[0]), 0.0, 1.0, ceilf(patch->numSegs[1]), 0.0, 1.0);
+    glMapGrid2f(ceilf(patch->numSegs[0]), 0.0f, 1.0f, ceilf(patch->numSegs[1]), 0.0f, 1.0f);
     checkGLcall("glMapGrid2f");
 
     glFeedbackBuffer(buffer_size * 2, feedback_type, feedbuffer);
@@ -968,7 +968,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
          */
         patch->mem[i + 0] =  feedbuffer[j + out_vertex_size * 2 + 2]; /* x, triangle 2 */
         patch->mem[i + 1] =  feedbuffer[j + out_vertex_size * 2 + 3]; /* y, triangle 2 */
-        patch->mem[i + 2] = (feedbuffer[j + out_vertex_size * 2 + 4] - 0.5) * 4 * max_z; /* z, triangle 3 */
+        patch->mem[i + 2] = (feedbuffer[j + out_vertex_size * 2 + 4] - 0.5f) * 4.0f * max_z; /* z, triangle 3 */
         if(patch->has_normals) {
             patch->mem[i + 3] = feedbuffer[j + out_vertex_size * 2 + 5];
             patch->mem[i + 4] = feedbuffer[j + out_vertex_size * 2 + 6];
@@ -978,7 +978,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
 
         patch->mem[i + 0] =  feedbuffer[j + out_vertex_size * 1 + 2]; /* x, triangle 2 */
         patch->mem[i + 1] =  feedbuffer[j + out_vertex_size * 1 + 3]; /* y, triangle 2 */
-        patch->mem[i + 2] = (feedbuffer[j + out_vertex_size * 1 + 4] - 0.5) * 4 * max_z; /* z, triangle 2 */
+        patch->mem[i + 2] = (feedbuffer[j + out_vertex_size * 1 + 4] - 0.5f) * 4.0f * max_z; /* z, triangle 2 */
         if(patch->has_normals) {
             patch->mem[i + 3] = feedbuffer[j + out_vertex_size * 1 + 5];
             patch->mem[i + 4] = feedbuffer[j + out_vertex_size * 1 + 6];
@@ -988,7 +988,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
 
         patch->mem[i + 0] =  feedbuffer[j + out_vertex_size * 0 + 2]; /* x, triangle 1 */
         patch->mem[i + 1] =  feedbuffer[j + out_vertex_size * 0 + 3]; /* y, triangle 1 */
-        patch->mem[i + 2] = (feedbuffer[j + out_vertex_size * 0 + 4] - 0.5) * 4 * max_z; /* z, triangle 1 */
+        patch->mem[i + 2] = (feedbuffer[j + out_vertex_size * 0 + 4] - 0.5f) * 4.0f * max_z; /* z, triangle 1 */
         if(patch->has_normals) {
             patch->mem[i + 3] = feedbuffer[j + out_vertex_size * 0 + 5];
             patch->mem[i + 4] = feedbuffer[j + out_vertex_size * 0 + 6];
@@ -999,9 +999,9 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
 
     if(patch->has_normals) {
         /* Now do the same with reverse light directions */
-        static const GLfloat x[] = {-1,  0,  0, 0};
-        static const GLfloat y[] = { 0, -1,  0, 0};
-        static const GLfloat z[] = { 0,  0, -1, 0};
+        static const GLfloat x[] = {-1.0f,  0.0f,  0.0f, 0.0f};
+        static const GLfloat y[] = { 0.0f, -1.0f,  0.0f, 0.0f};
+        static const GLfloat z[] = { 0.0f,  0.0f, -1.0f, 0.0f};
         glLightfv(GL_LIGHT0, GL_POSITION, x);
         glLightfv(GL_LIGHT1, GL_POSITION, y);
         glLightfv(GL_LIGHT2, GL_POSITION, z);
@@ -1024,29 +1024,29 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
                 ERR("Unexpected polygon: %f corners\n", feedbuffer[j + 1]);
                 continue;
             }
-            if(patch->mem[i + 3] == 0.0)
+            if(patch->mem[i + 3] == 0.0f)
                 patch->mem[i + 3] = -feedbuffer[j + out_vertex_size * 2 + 5];
-            if(patch->mem[i + 4] == 0.0)
+            if(patch->mem[i + 4] == 0.0f)
                 patch->mem[i + 4] = -feedbuffer[j + out_vertex_size * 2 + 6];
-            if(patch->mem[i + 5] == 0.0)
+            if(patch->mem[i + 5] == 0.0f)
                 patch->mem[i + 5] = -feedbuffer[j + out_vertex_size * 2 + 7];
             normalize_normal(patch->mem + i + 3);
             i += d3d_out_vertex_size;
 
-            if(patch->mem[i + 3] == 0.0)
+            if(patch->mem[i + 3] == 0.0f)
                 patch->mem[i + 3] = -feedbuffer[j + out_vertex_size * 1 + 5];
-            if(patch->mem[i + 4] == 0.0)
+            if(patch->mem[i + 4] == 0.0f)
                 patch->mem[i + 4] = -feedbuffer[j + out_vertex_size * 1 + 6];
-            if(patch->mem[i + 5] == 0.0)
+            if(patch->mem[i + 5] == 0.0f)
                 patch->mem[i + 5] = -feedbuffer[j + out_vertex_size * 1 + 7];
             normalize_normal(patch->mem + i + 3);
             i += d3d_out_vertex_size;
 
-            if(patch->mem[i + 3] == 0.0)
+            if(patch->mem[i + 3] == 0.0f)
                 patch->mem[i + 3] = -feedbuffer[j + out_vertex_size * 0 + 5];
-            if(patch->mem[i + 4] == 0.0)
+            if(patch->mem[i + 4] == 0.0f)
                 patch->mem[i + 4] = -feedbuffer[j + out_vertex_size * 0 + 6];
-            if(patch->mem[i + 5] == 0.0)
+            if(patch->mem[i + 5] == 0.0f)
                 patch->mem[i + 5] = -feedbuffer[j + out_vertex_size * 0 + 7];
             normalize_normal(patch->mem + i + 3);
             i += d3d_out_vertex_size;

@@ -764,7 +764,7 @@ static BOOL init_format_texture_info(WineD3D_GL_Info *gl_info)
         desc->glType = gl_formats_template[i].glType;
         desc->color_fixup = COLOR_FIXUP_IDENTITY;
         desc->Flags |= gl_formats_template[i].Flags;
-        desc->heightscale = 1.0;
+        desc->heightscale = 1.0f;
     }
 
     return TRUE;
@@ -869,7 +869,7 @@ static void apply_format_fixups(WineD3D_GL_Info *gl_info)
     }
 
     idx = getFmtIdx(WINED3DFMT_YV12);
-    gl_info->gl_formats[idx].heightscale = 1.5;
+    gl_info->gl_formats[idx].heightscale = 1.5f;
     gl_info->gl_formats[idx].color_fixup = create_yuv_fixup_desc(YUV_FIXUP_YV12);
 
     if (GL_SUPPORT(EXT_VERTEX_ARRAY_BGRA))

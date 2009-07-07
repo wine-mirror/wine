@@ -197,16 +197,16 @@ static inline float float_16_to_32(const unsigned short *in) {
     const unsigned short s = ((*in) & 0x8000);
     const unsigned short e = ((*in) & 0x7C00) >> 10;
     const unsigned short m = (*in) & 0x3FF;
-    const float sgn = (s ? -1.0 : 1.0);
+    const float sgn = (s ? -1.0f : 1.0f);
 
     if(e == 0) {
-        if(m == 0) return sgn * 0.0; /* +0.0 or -0.0 */
-        else return sgn * pow(2, -14.0) * ( (float) m / 1024.0);
+        if(m == 0) return sgn * 0.0f; /* +0.0 or -0.0 */
+        else return sgn * pow(2, -14.0f) * ((float)m / 1024.0f);
     } else if(e < 31) {
-        return sgn * pow(2, (float) e-15.0) * (1.0 + ((float) m / 1024.0));
+        return sgn * pow(2, (float)e - 15.0f) * (1.0f + ((float)m / 1024.0f));
     } else {
-        if(m == 0) return sgn / 0.0; /* +INF / -INF */
-        else return 0.0 / 0.0; /* NAN */
+        if(m == 0) return sgn / 0.0f; /* +INF / -INF */
+        else return 0.0f / 0.0f; /* NAN */
     }
 }
 
@@ -227,8 +227,8 @@ static inline float float_24_to_32(DWORD in)
     }
     else
     {
-        if (m == 0) return sgn / 0.0; /* +INF / -INF */
-        else return 0.0 / 0.0; /* NAN */
+        if (m == 0) return sgn / 0.0f; /* +INF / -INF */
+        else return 0.0f / 0.0f; /* NAN */
     }
 }
 
@@ -2765,11 +2765,11 @@ void pixelshader_update_samplers(struct shader_reg_maps *reg_maps, IWineD3DBaseT
 void find_ps_compile_args(IWineD3DPixelShaderImpl *shader, IWineD3DStateBlockImpl *stateblock, struct ps_compile_args *args);
 
 /* sRGB correction constants */
-static const float srgb_cmp = 0.0031308;
-static const float srgb_mul_low = 12.92;
-static const float srgb_pow = 0.41666;
-static const float srgb_mul_high = 1.055;
-static const float srgb_sub_high = 0.055;
+static const float srgb_cmp = 0.0031308f;
+static const float srgb_mul_low = 12.92f;
+static const float srgb_pow = 0.41666f;
+static const float srgb_mul_high = 1.055f;
+static const float srgb_sub_high = 0.055f;
 
 /*****************************************************************************
  * IWineD3DPalette implementation structure

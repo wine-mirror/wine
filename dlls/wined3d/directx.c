@@ -1436,7 +1436,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     }
     else
     {
-        gl_info->max_shininess = 128.0;
+        gl_info->max_shininess = 128.0f;
     }
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
     {
@@ -3965,14 +3965,14 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     pCaps->MaxTextureRepeat = 32768;
     pCaps->MaxTextureAspectRatio = GL_LIMITS(texture_size);
-    pCaps->MaxVertexW = 1.0;
+    pCaps->MaxVertexW = 1.0f;
 
-    pCaps->GuardBandLeft = 0;
-    pCaps->GuardBandTop = 0;
-    pCaps->GuardBandRight = 0;
-    pCaps->GuardBandBottom = 0;
+    pCaps->GuardBandLeft = 0.0f;
+    pCaps->GuardBandTop = 0.0f;
+    pCaps->GuardBandRight = 0.0f;
+    pCaps->GuardBandBottom = 0.0f;
 
-    pCaps->ExtentsAdjust = 0;
+    pCaps->ExtentsAdjust = 0.0f;
 
     pCaps->StencilCaps =  WINED3DSTENCILCAPS_DECRSAT |
                           WINED3DSTENCILCAPS_INCRSAT |
@@ -4058,7 +4058,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     if(ps_selected_mode == SHADER_NONE) {
         TRACE_(d3d_caps)("Pixel shader disabled in config, reporting version 0.0\n");
         pCaps->PixelShaderVersion           = WINED3DPS_VERSION(0,0);
-        pCaps->PixelShader1xMaxValue        = 0.0;
+        pCaps->PixelShader1xMaxValue        = 0.0f;
     } else {
         pCaps->PixelShaderVersion           = shader_caps.PixelShaderVersion;
         pCaps->PixelShader1xMaxValue        = shader_caps.PixelShader1xMaxValue;
@@ -4281,7 +4281,7 @@ static HRESULT WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter,
     } else {
         object->surface_alignment = D3D8_PITCH_ALIGNMENT;
     }
-    object->posFixup[0] = 1.0; /* This is needed to get the x coord unmodified through a MAD */
+    object->posFixup[0] = 1.0f; /* This is needed to get the x coord unmodified through a MAD. */
 
     /* Set the state up as invalid until the device is fully created */
     object->state   = WINED3DERR_DRIVERINTERNALERROR;
@@ -4403,9 +4403,9 @@ static void WINE_GLAPI position_float4(const void *data)
 {
     const GLfloat *pos = data;
 
-    if (pos[3] != 0.0 && pos[3] != 1.0)
+    if (pos[3] != 0.0f && pos[3] != 1.0f)
     {
-        float w = 1.0 / pos[3];
+        float w = 1.0f / pos[3];
 
         glVertex4f(pos[0] * w, pos[1] * w, pos[2] * w, w);
     }

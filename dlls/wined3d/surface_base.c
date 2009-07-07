@@ -41,26 +41,26 @@ static inline unsigned short float_32_to_16(const float *in)
     unsigned short ret;
 
     /* Deal with special numbers */
-    if(*in == 0.0) return 0x0000;
+    if (*in == 0.0f) return 0x0000;
     if(isnan(*in)) return 0x7C01;
-    if(isinf(*in)) return (*in < 0.0 ? 0xFC00 : 0x7c00);
+    if (isinf(*in)) return (*in < 0.0f ? 0xFC00 : 0x7c00);
 
     if(tmp < pow(2, 10)) {
         do
         {
-            tmp = tmp * 2.0;
+            tmp = tmp * 2.0f;
             exp--;
         }while(tmp < pow(2, 10));
     } else if(tmp >= pow(2, 11)) {
         do
         {
-            tmp /= 2.0;
+            tmp /= 2.0f;
             exp++;
         }while(tmp >= pow(2, 11));
     }
 
     mantissa = (unsigned int) tmp;
-    if(tmp - mantissa >= 0.5) mantissa++; /* round to nearest, away from zero */
+    if(tmp - mantissa >= 0.5f) mantissa++; /* round to nearest, away from zero */
 
     exp += 10;  /* Normalize the mantissa */
     exp += 15;  /* Exponent is encoded with excess 15 */
@@ -78,7 +78,7 @@ static inline unsigned short float_32_to_16(const float *in)
         ret = (exp << 10) | (mantissa & 0x3ff);
     }
 
-    ret |= ((*in < 0.0 ? 1 : 0) << 15); /* Add the sign */
+    ret |= ((*in < 0.0f ? 1 : 0) << 15); /* Add the sign */
     return ret;
 }
 

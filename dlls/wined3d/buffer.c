@@ -506,9 +506,9 @@ static inline void fixup_d3dcolor(DWORD *dst_color)
 static inline void fixup_transformed_pos(float *p)
 {
     /* rhw conversion like in position_float4(). */
-    if (p[3] != 1.0 && p[3] != 0.0)
+    if (p[3] != 1.0f && p[3] != 0.0f)
     {
-        float w = 1.0 / p[3];
+        float w = 1.0f / p[3];
         p[0] *= w;
         p[1] *= w;
         p[2] *= w;

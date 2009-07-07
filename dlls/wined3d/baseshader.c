@@ -504,14 +504,14 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             if (shader_version.major == 1 && shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
             {
                 float *value = (float *) lconst->value;
-                if(value[0] < -1.0) value[0] = -1.0;
-                else if(value[0] >  1.0) value[0] =  1.0;
-                if(value[1] < -1.0) value[1] = -1.0;
-                else if(value[1] >  1.0) value[1] =  1.0;
-                if(value[2] < -1.0) value[2] = -1.0;
-                else if(value[2] >  1.0) value[2] =  1.0;
-                if(value[3] < -1.0) value[3] = -1.0;
-                else if(value[3] >  1.0) value[3] =  1.0;
+                if (value[0] < -1.0f) value[0] = -1.0f;
+                else if (value[0] > 1.0f) value[0] = 1.0f;
+                if (value[1] < -1.0f) value[1] = -1.0f;
+                else if (value[1] > 1.0f) value[1] = 1.0f;
+                if (value[2] < -1.0f) value[2] = -1.0f;
+                else if (value[2] > 1.0f) value[2] = 1.0f;
+                if (value[3] < -1.0f) value[3] = -1.0f;
+                else if (value[3] > 1.0f) value[3] = 1.0f;
             }
 
             list_add_head(&This->baseShader.constantsF, &lconst->entry);
@@ -1342,7 +1342,7 @@ static void shader_none_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *
     /* Set the shader caps to 0 for the none shader backend */
     pCaps->VertexShaderVersion  = 0;
     pCaps->PixelShaderVersion    = 0;
-    pCaps->PixelShader1xMaxValue = 0.0;
+    pCaps->PixelShader1xMaxValue = 0.0f;
 }
 #undef GLINFO_LOCATION
 static BOOL shader_none_color_fixup_supported(struct color_fixup_desc fixup)

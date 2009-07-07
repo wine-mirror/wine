@@ -223,7 +223,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         TRACE("Clearing the color buffer with cyan color\n");
 
         IWineD3DDevice_Clear((IWineD3DDevice*)This->wineD3DDevice, 0, NULL,
-                              WINED3DCLEAR_TARGET, 0xff00ffff, 1.0, 0);
+                WINED3DCLEAR_TARGET, 0xff00ffff, 1.0f, 0);
     }
 
     if(((IWineD3DSurfaceImpl *) This->frontBuffer)->Flags   & SFLAG_INSYSMEM ||

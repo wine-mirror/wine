@@ -864,10 +864,10 @@ static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
      * shader(it is free). This might potentially reduce precision. However, if the hardware does
      * support proper floats it shouldn't, and if it doesn't we can't get anything better anyway
      */
-    mat[0][0] = (mat[0][0] + 1.0) * 0.5;
-    mat[1][0] = (mat[1][0] + 1.0) * 0.5;
-    mat[0][1] = (mat[0][1] + 1.0) * 0.5;
-    mat[1][1] = (mat[1][1] + 1.0) * 0.5;
+    mat[0][0] = (mat[0][0] + 1.0f) * 0.5f;
+    mat[1][0] = (mat[1][0] + 1.0f) * 0.5f;
+    mat[0][1] = (mat[0][1] + 1.0f) * 0.5f;
+    mat[1][1] = (mat[1][1] + 1.0f) * 0.5f;
     GL_EXTCALL(glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), (float *) mat));
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), mat)");
 }

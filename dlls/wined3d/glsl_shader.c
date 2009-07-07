@@ -357,10 +357,10 @@ static inline void apply_clamped_constant(const WineD3D_GL_Info *gl_info, GLint 
 
     if (location == -1) return;
 
-    clamped_constant[0] = data[0] < -1.0f ? -1.0f : data[0] > 1.0 ? 1.0 : data[0];
-    clamped_constant[1] = data[1] < -1.0f ? -1.0f : data[1] > 1.0 ? 1.0 : data[1];
-    clamped_constant[2] = data[2] < -1.0f ? -1.0f : data[2] > 1.0 ? 1.0 : data[2];
-    clamped_constant[3] = data[3] < -1.0f ? -1.0f : data[3] > 1.0 ? 1.0 : data[3];
+    clamped_constant[0] = data[0] < -1.0f ? -1.0f : data[0] > 1.0f ? 1.0f : data[0];
+    clamped_constant[1] = data[1] < -1.0f ? -1.0f : data[1] > 1.0f ? 1.0f : data[1];
+    clamped_constant[2] = data[2] < -1.0f ? -1.0f : data[2] > 1.0f ? 1.0f : data[2];
+    clamped_constant[3] = data[3] < -1.0f ? -1.0f : data[3] > 1.0f ? 1.0f : data[3];
 
     GL_EXTCALL(glUniform4fvARB(location, 1, clamped_constant));
 }
@@ -691,12 +691,12 @@ static void shader_glsl_load_constants(
         if(((IWineD3DPixelShaderImpl *) pshader)->vpos_uniform) {
             float correction_params[4];
             if(deviceImpl->render_offscreen) {
-                correction_params[0] = 0.0;
-                correction_params[1] = 1.0;
+                correction_params[0] = 0.0f;
+                correction_params[1] = 1.0f;
             } else {
                 /* position is window relative, not viewport relative */
                 correction_params[0] = ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
-                correction_params[1] = -1.0;
+                correction_params[1] = -1.0f;
             }
             GL_EXTCALL(glUniform4fvARB(prog->ycorrection_location, 1, correction_params));
         }
@@ -907,8 +907,8 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
                  */
                 FIXME("Cannot find a free uniform for vpos correction params\n");
                 shader_addline(buffer, "const vec4 ycorrection = vec4(%f, %f, 0.0, 0.0);\n",
-                               device->render_offscreen ? 0.0 : ((IWineD3DSurfaceImpl *) device->render_targets[0])->currentDesc.Height,
-                               device->render_offscreen ? 1.0 : -1.0);
+                        device->render_offscreen ? 0.0f : ((IWineD3DSurfaceImpl *)device->render_targets[0])->currentDesc.Height,
+                        device->render_offscreen ? 1.0f : -1.0f);
             }
             shader_addline(buffer, "vec4 vpos;\n");
         }

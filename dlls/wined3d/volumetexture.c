@@ -162,10 +162,10 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
     }
 
     /* Is NP2 support for volumes needed? */
-    texture->baseTexture.pow2Matrix[0] = 1.0;
-    texture->baseTexture.pow2Matrix[5] = 1.0;
-    texture->baseTexture.pow2Matrix[10] = 1.0;
-    texture->baseTexture.pow2Matrix[15] = 1.0;
+    texture->baseTexture.pow2Matrix[0] = 1.0f;
+    texture->baseTexture.pow2Matrix[5] = 1.0f;
+    texture->baseTexture.pow2Matrix[10] = 1.0f;
+    texture->baseTexture.pow2Matrix[15] = 1.0f;
 
     /* Generate all the surfaces. */
     tmp_w = width;

@@ -1001,7 +1001,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
     TRACE("Setting up the screen\n");
     /* Clear the screen */
-    glClearColor(1.0, 0.0, 0.0, 0.0);
+    glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
     checkGLcall("glClearColor");
     glClearIndex(0);
     glClearDepth(1);
@@ -1356,7 +1356,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
     if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
         glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
                   GL_TEXTURE_LOD_BIAS_EXT,
-                  0.0);
+                  0.0f);
         checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
     }
 

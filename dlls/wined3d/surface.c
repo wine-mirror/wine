@@ -114,7 +114,7 @@ UINT surface_calculate_size(const struct GlPixelFormatDesc *format_desc, UINT al
         size = height * (((width * format_desc->byte_count) + alignment - 1) & ~(alignment - 1));
     }
 
-    if (format_desc->heightscale != 0.0) size *= format_desc->heightscale;
+    if (format_desc->heightscale != 0.0f) size *= format_desc->heightscale;
 
     return size;
 }
@@ -502,7 +502,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
 static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data) {
     const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
 
-    if (format_desc->heightscale != 1.0 && format_desc->heightscale != 0.0) height *= format_desc->heightscale;
+    if (format_desc->heightscale != 1.0f && format_desc->heightscale != 0.0f) height *= format_desc->heightscale;
 
     if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
@@ -572,7 +572,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
     BOOL enable_client_storage = FALSE;
     const BYTE *mem = NULL;
 
-    if (format_desc->heightscale != 1.0 && format_desc->heightscale != 0.0) height *= format_desc->heightscale;
+    if (format_desc->heightscale != 1.0f && format_desc->heightscale != 0.0f) height *= format_desc->heightscale;
 
     TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n",
             This, This->glDescription.target, This->glDescription.level, debug_d3dformat(format_desc->format),
@@ -1428,7 +1428,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     checkGLcall("glIntegerv");
     glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
     checkGLcall("glIntegerv");
-    glPixelZoom(1.0, -1.0);
+    glPixelZoom(1.0f, -1.0f);
     checkGLcall("glPixelZoom");
 
     /* If not fullscreen, we need to skip a number of bytes to find the next row of data */
@@ -1478,7 +1478,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
         checkGLcall("glBindBufferARB");
     }
 
-    glPixelZoom(1.0,1.0);
+    glPixelZoom(1.0f, 1.0f);
     checkGLcall("glPixelZoom");
 
     glRasterPos3iv(&prev_rasterpos[0]);
@@ -2401,7 +2401,7 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
                     float red = (*Source++);
                     Dest[0] = green;
                     Dest[1] = red;
-                    Dest[2] = 1.0;
+                    Dest[2] = 1.0f;
                     Dest += 3;
                 }
             }
@@ -3080,19 +3080,24 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     xrel = (float) (srect->x2 - srect->x1) / (float) (drect->x2 - drect->x1);
     yrel = (float) (srect->y2 - srect->y1) / (float) (drect->y2 - drect->y1);
 
-    if( (xrel - 1.0 < -eps) || (xrel - 1.0 > eps)) {
+    if ((xrel - 1.0f < -eps) || (xrel - 1.0f > eps))
+    {
         FIXME("Doing a pixel by pixel copy from the framebuffer to a texture, expect major performance issues\n");
 
         if(Filter != WINED3DTEXF_NONE && Filter != WINED3DTEXF_POINT) {
             ERR("Texture filtering not supported in direct blit\n");
         }
-    } else if((Filter != WINED3DTEXF_NONE && Filter != WINED3DTEXF_POINT) && ((yrel - 1.0 < -eps) || (yrel - 1.0 > eps))) {
+    }
+    else if ((Filter != WINED3DTEXF_NONE && Filter != WINED3DTEXF_POINT)
+            && ((yrel - 1.0f < -eps) || (yrel - 1.0f > eps)))
+    {
         ERR("Texture filtering not supported in direct blit\n");
     }
 
-    if(upsidedown &&
-       !((xrel - 1.0 < -eps) || (xrel - 1.0 > eps)) &&
-       !((yrel - 1.0 < -eps) || (yrel - 1.0 > eps))) {
+    if (upsidedown
+            && !((xrel - 1.0f < -eps) || (xrel - 1.0f > eps))
+            && !((yrel - 1.0f < -eps) || (yrel - 1.0f > eps)))
+    {
         /* Upside down copy without stretching is nice, one glCopyTexSubImage call will do */
 
         glCopyTexSubImage2D(This->glDescription.target,
@@ -3109,7 +3114,8 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
          * However, stretching in x direction can be avoided if not necessary
          */
         for(row = drect->y1; row < drect->y2; row++) {
-            if( (xrel - 1.0 < -eps) || (xrel - 1.0 > eps)) {
+            if ((xrel - 1.0f < -eps) || (xrel - 1.0f > eps))
+            {
                 /* Well, that stuff works, but it's very slow.
                  * find a better way instead
                  */
@@ -3340,15 +3346,15 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
         glBegin(GL_QUADS);
             /* top left */
-            glTexCoord2f(0.0, (float) fbheight / (float) Src->pow2Height);
+            glTexCoord2f(0.0f, (float)fbheight / (float)Src->pow2Height);
             glVertex2i(0, 0);
 
             /* bottom left */
-            glTexCoord2f(0.0, 0.0);
+            glTexCoord2f(0.0f, 0.0f);
             glVertex2i(0, fbheight);
 
             /* bottom right */
-            glTexCoord2f((float) fbwidth / (float) Src->pow2Width, 0.0);
+            glTexCoord2f((float)fbwidth / (float)Src->pow2Width, 0.0f);
             glVertex2i(fbwidth, Src->currentDesc.Height);
 
             /* top right */
@@ -3792,9 +3798,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
              * Which means that the colorkey is one of the palette entries. In other cases pixels that
              * should be masked away have alpha set to 0. */
             if(primary_render_target_is_p8(myDevice))
-                glAlphaFunc(GL_NOTEQUAL, (float)Src->SrcBltCKey.dwColorSpaceLowValue / 256.0);
+                glAlphaFunc(GL_NOTEQUAL, (float)Src->SrcBltCKey.dwColorSpaceLowValue / 256.0f);
             else
-                glAlphaFunc(GL_NOTEQUAL, 0.0);
+                glAlphaFunc(GL_NOTEQUAL, 0.0f);
             checkGLcall("glAlphaFunc\n");
         } else {
             glDisable(GL_ALPHA_TEST);
@@ -3805,24 +3811,19 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
          */
         glBegin(GL_QUADS);
 
-        glColor3d(1.0f, 1.0f, 1.0f);
+        glColor3f(1.0f, 1.0f, 1.0f);
         glTexCoord2f(glTexCoord[0], glTexCoord[2]);
-        glVertex3f(rect.x1,
-                    rect.y1,
-                    0.0);
+        glVertex3f(rect.x1, rect.y1, 0.0f);
 
         glTexCoord2f(glTexCoord[0], glTexCoord[3]);
-        glVertex3f(rect.x1, rect.y2, 0.0);
+        glVertex3f(rect.x1, rect.y2, 0.0f);
 
         glTexCoord2f(glTexCoord[1], glTexCoord[3]);
-        glVertex3f(rect.x2,
-                    rect.y2,
-                    0.0);
+        glVertex3f(rect.x2, rect.y2, 0.0f);
 
         glTexCoord2f(glTexCoord[1], glTexCoord[2]);
-        glVertex3f(rect.x2,
-                    rect.y1,
-                    0.0);
+        glVertex3f(rect.x2, rect.y1, 0.0f);
+
         glEnd();
         checkGLcall("glEnd");
 
@@ -3920,11 +3921,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             }
 
             TRACE("(%p) executing Render Target override, color = %x\n", This, color);
-            IWineD3DDeviceImpl_ClearSurface(myDevice, This,
-                                            1, /* Number of rectangles */
-                                            &rect, WINED3DCLEAR_TARGET, color,
-                                            0.0 /* Z */,
-                                            0 /* Stencil */);
+            IWineD3DDeviceImpl_ClearSurface(myDevice, This, 1 /* Number of rectangles */,
+                    &rect, WINED3DCLEAR_TARGET, color, 0.0f /* Z */, 0 /* Stencil */);
             return WINED3D_OK;
         }
     }
@@ -3957,7 +3955,7 @@ static HRESULT IWineD3DSurfaceImpl_BltZ(IWineD3DSurfaceImpl *This, const RECT *D
                 depth = (float) DDBltFx->u5.dwFillDepth / (float) 0xffffffff;
                 break;
             default:
-                depth = 0.0;
+                depth = 0.0f;
                 ERR("Unexpected format for depth fill: %s\n", debug_d3dformat(This->resource.format_desc->format));
         }
 

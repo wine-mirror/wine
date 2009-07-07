@@ -300,20 +300,20 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, con
             dirty_consts[i] = 0;
 
             j = 4 * i;
-            if(constants[j + 0] > 1.0) lcl_const[0] = 1.0;
-            else if(constants[j + 0] < -1.0) lcl_const[0] = -1.0;
+            if (constants[j + 0] > 1.0f) lcl_const[0] = 1.0f;
+            else if (constants[j + 0] < -1.0f) lcl_const[0] = -1.0f;
             else lcl_const[0] = constants[j + 0];
 
-            if(constants[j + 1] > 1.0) lcl_const[1] = 1.0;
-            else if(constants[j + 1] < -1.0) lcl_const[1] = -1.0;
+            if (constants[j + 1] > 1.0f) lcl_const[1] = 1.0f;
+            else if (constants[j + 1] < -1.0f) lcl_const[1] = -1.0f;
             else lcl_const[1] = constants[j + 1];
 
-            if(constants[j + 2] > 1.0) lcl_const[2] = 1.0;
-            else if(constants[j + 2] < -1.0) lcl_const[2] = -1.0;
+            if (constants[j + 2] > 1.0f) lcl_const[2] = 1.0f;
+            else if (constants[j + 2] < -1.0f) lcl_const[2] = -1.0f;
             else lcl_const[2] = constants[j + 2];
 
-            if(constants[j + 3] > 1.0) lcl_const[3] = 1.0;
-            else if(constants[j + 3] < -1.0) lcl_const[3] = -1.0;
+            if (constants[j + 3] > 1.0f) lcl_const[3] = 1.0f;
+            else if (constants[j + 3] < -1.0f) lcl_const[3] = -1.0f;
             else lcl_const[3] = constants[j + 3];
 
             GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, lcl_const));
@@ -459,10 +459,10 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         * ycorrection.w: 0.0
         */
         float val[4];
-        val[0] = deviceImpl->render_offscreen ? 0.0 : ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
-        val[1] = deviceImpl->render_offscreen ? 1.0 : -1.0;
-        val[2] = 1.0;
-        val[3] = 0.0;
+        val[0] = deviceImpl->render_offscreen ? 0.0f : ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
+        val[1] = deviceImpl->render_offscreen ? 1.0f : -1.0f;
+        val[2] = 1.0f;
+        val[3] = 0.0f;
         GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->ycorrection, val));
         checkGLcall("y correction loading\n");
     }
@@ -477,7 +477,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
             val[0] = stateBlock->pixelShaderConstantI[4 * i];
             val[1] = stateBlock->pixelShaderConstantI[4 * i + 1];
             val[2] = stateBlock->pixelShaderConstantI[4 * i + 2];
-            val[3] = -1.0;
+            val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
         }
@@ -509,7 +509,7 @@ static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
             val[0] = stateBlock->vertexShaderConstantI[4 * i];
             val[1] = stateBlock->vertexShaderConstantI[4 * i + 1];
             val[2] = stateBlock->vertexShaderConstantI[4 * i + 2];
-            val[3] = -1.0;
+            val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, gl_shader->int_consts[i], val));
         }
@@ -4492,7 +4492,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
             TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
         }
-        pCaps->PixelShader1xMaxValue = 8.0;
+        pCaps->PixelShader1xMaxValue = 8.0f;
         pCaps->MaxPixelShaderConst = GL_LIMITS(pshader_constantsF);
     }
 
@@ -5182,11 +5182,11 @@ static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateb
 
     if(stateblock->renderState[WINED3DRS_SPECULARENABLE]) {
         /* The specular color has no alpha */
-        col[0] = 1.0; col[1] = 1.0;
-        col[2] = 1.0; col[3] = 0.0;
+        col[0] = 1.0f; col[1] = 1.0f;
+        col[2] = 1.0f; col[3] = 0.0f;
     } else {
-        col[0] = 0.0; col[1] = 0.0;
-        col[2] = 0.0; col[3] = 0.0;
+        col[0] = 0.0f; col[1] = 0.0f;
+        col[2] = 0.0f; col[3] = 0.0f;
     }
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col)");
@@ -5255,8 +5255,8 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
 
     param[0] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVLSCALE]);
     param[1] = *((float *) &stateblock->textureState[stage][WINED3DTSS_BUMPENVLOFFSET]);
-    param[2] = 0.0;
-    param[3] = 0.0;
+    param[2] = 0.0f;
+    param[3] = 0.0f;
 
     GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_LUMINANCE(stage), param));
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_LUMINANCE(stage), param)");
@@ -6196,7 +6196,7 @@ static BOOL gen_yv12_read(SHADER_BUFFER *buffer, GLenum textype, char *luminance
      * go from 0 to d3d_height, whereas the opengl texture height is 1.5 * d3d_height
      */
     shader_addline(buffer, "PARAM yv12_coef = {%f, %f, %f, %f};\n",
-                   2.0 / 3.0, 1.0 / 6.0, (2.0 / 3.0) + (1.0 / 6.0), 1.0 / 3.0);
+            2.0f / 3.0f, 1.0f / 6.0f, (2.0f / 3.0f) + (1.0f / 6.0f), 1.0f / 3.0f);
 
     shader_addline(buffer, "MOV texcrd, fragment.texcoord[0];\n");
     /* the chroma planes have only half the width */

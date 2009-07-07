@@ -38,23 +38,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /* Define the default light parameters as specified by MSDN */
 const WINED3DLIGHT WINED3D_default_light = {
 
-    WINED3DLIGHT_DIRECTIONAL, /* Type */
-    { 1.0, 1.0, 1.0, 0.0 },   /* Diffuse r,g,b,a */
-    { 0.0, 0.0, 0.0, 0.0 },   /* Specular r,g,b,a */
-    { 0.0, 0.0, 0.0, 0.0 },   /* Ambient r,g,b,a, */
-    { 0.0, 0.0, 0.0 },        /* Position x,y,z */
-    { 0.0, 0.0, 1.0 },        /* Direction x,y,z */
-    0.0,                      /* Range */
-    0.0,                      /* Falloff */
-    0.0, 0.0, 0.0,            /* Attenuation 0,1,2 */
-    0.0,                      /* Theta */
-    0.0                       /* Phi */
+    WINED3DLIGHT_DIRECTIONAL,   /* Type */
+    { 1.0f, 1.0f, 1.0f, 0.0f }, /* Diffuse r,g,b,a */
+    { 0.0f, 0.0f, 0.0f, 0.0f }, /* Specular r,g,b,a */
+    { 0.0f, 0.0f, 0.0f, 0.0f }, /* Ambient r,g,b,a, */
+    { 0.0f, 0.0f, 0.0f },       /* Position x,y,z */
+    { 0.0f, 0.0f, 1.0f },       /* Direction x,y,z */
+    0.0f,                       /* Range */
+    0.0f,                       /* Falloff */
+    0.0f, 0.0f, 0.0f,           /* Attenuation 0,1,2 */
+    0.0f,                       /* Theta */
+    0.0f                        /* Phi */
 };
 
 /**********************************************************
  * Global variable / Constants follow
  **********************************************************/
-const float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};  /* When needed for comparisons */
+const float identity[] =
+{
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f,
+};  /* When needed for comparisons */
 
 /* Note that except for WINED3DPT_POINTLIST and WINED3DPT_LINELIST these
  * actually have the same values in GL and D3D. */
@@ -2223,7 +2229,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     /* Clear the screen */
     IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL,
                           WINED3DCLEAR_TARGET | pPresentationParameters->EnableAutoDepthStencil ? WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL : 0,
-                          0x00, 1.0, 0);
+                          0x00, 1.0f, 0);
 
     This->d3d_initialized = TRUE;
 
@@ -2798,7 +2804,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
             /* Incorrect attenuation values can cause the gl driver to crash. Happens with Need for speed
              * most wanted
              */
-            if(pLight->Attenuation0 < 0.0 || pLight->Attenuation1 < 0.0 || pLight->Attenuation2 < 0.0) {
+            if (pLight->Attenuation0 < 0.0f || pLight->Attenuation1 < 0.0f || pLight->Attenuation2 < 0.0f)
+            {
                 WARN("Attenuation is negative, returning WINED3DERR_INVALIDCALL\n");
                 return WINED3DERR_INVALIDCALL;
             }
@@ -2860,7 +2867,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
         object->lightPosn[0] = -pLight->Direction.x;
         object->lightPosn[1] = -pLight->Direction.y;
         object->lightPosn[2] = -pLight->Direction.z;
-        object->lightPosn[3] = 0.0;
+        object->lightPosn[3] = 0.0f;
         object->exponent     = 0.0f;
         object->cutoff       = 180.0f;
         break;
@@ -2870,13 +2877,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
         object->lightPosn[0] = pLight->Position.x;
         object->lightPosn[1] = pLight->Position.y;
         object->lightPosn[2] = pLight->Position.z;
-        object->lightPosn[3] = 1.0;
+        object->lightPosn[3] = 1.0f;
 
         /* Direction */
         object->lightDirn[0] = pLight->Direction.x;
         object->lightDirn[1] = pLight->Direction.y;
         object->lightDirn[2] = pLight->Direction.z;
-        object->lightDirn[3] = 1.0;
+        object->lightDirn[3] = 1.0f;
 
         /*
          * opengl-ish and d3d-ish spot lights use too different models for the
@@ -2891,14 +2898,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
              * will always be 1.0 for both of them, and we don't have to care for the
              * rest of the rather complex calculation
              */
-            object->exponent = 0;
+            object->exponent = 0.0f;
         } else {
             rho = pLight->Theta + (pLight->Phi - pLight->Theta)/(2*pLight->Falloff);
-            if (rho < 0.0001) rho = 0.0001f;
-            object->exponent = -0.3/log(cos(rho/2));
+            if (rho < 0.0001f) rho = 0.0001f;
+            object->exponent = -0.3f/logf(cosf(rho/2));
         }
-        if (object->exponent > 128.0) {
-            object->exponent = 128.0;
+        if (object->exponent > 128.0f)
+        {
+            object->exponent = 128.0f;
         }
         object->cutoff = pLight->Phi*90/M_PI;
 
@@ -4164,10 +4172,10 @@ static HRESULT process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIn
             TRACE("In: ( %06.2f %06.2f %06.2f )\n", p[0], p[1], p[2]);
 
             /* Multiplication with world, view and projection matrix */
-            x =   (p[0] * mat.u.s._11) + (p[1] * mat.u.s._21) + (p[2] * mat.u.s._31) + (1.0 * mat.u.s._41);
-            y =   (p[0] * mat.u.s._12) + (p[1] * mat.u.s._22) + (p[2] * mat.u.s._32) + (1.0 * mat.u.s._42);
-            z =   (p[0] * mat.u.s._13) + (p[1] * mat.u.s._23) + (p[2] * mat.u.s._33) + (1.0 * mat.u.s._43);
-            rhw = (p[0] * mat.u.s._14) + (p[1] * mat.u.s._24) + (p[2] * mat.u.s._34) + (1.0 * mat.u.s._44);
+            x =   (p[0] * mat.u.s._11) + (p[1] * mat.u.s._21) + (p[2] * mat.u.s._31) + (1.0f * mat.u.s._41);
+            y =   (p[0] * mat.u.s._12) + (p[1] * mat.u.s._22) + (p[2] * mat.u.s._32) + (1.0f * mat.u.s._42);
+            z =   (p[0] * mat.u.s._13) + (p[1] * mat.u.s._23) + (p[2] * mat.u.s._33) + (1.0f * mat.u.s._43);
+            rhw = (p[0] * mat.u.s._14) + (p[1] * mat.u.s._24) + (p[2] * mat.u.s._34) + (1.0f * mat.u.s._44);
 
             TRACE("x=%f y=%f z=%f rhw=%f\n", x, y, z, rhw);
 
@@ -6257,10 +6265,10 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
 
         WARN("Converting to WINED3DCOLOR, this might give incorrect results\n");
 
-        c = ((DWORD)(color[2] * 255.0));
-        c |= ((DWORD)(color[1] * 255.0)) << 8;
-        c |= ((DWORD)(color[0] * 255.0)) << 16;
-        c |= ((DWORD)(color[3] * 255.0)) << 24;
+        c = ((DWORD)(color[2] * 255.0f));
+        c |= ((DWORD)(color[1] * 255.0f)) << 8;
+        c |= ((DWORD)(color[0] * 255.0f)) << 16;
+        c |= ((DWORD)(color[3] * 255.0f)) << 24;
 
         /* Just forward this to the DirectDraw blitting engine */
         memset(&BltFx, 0, sizeof(BltFx));

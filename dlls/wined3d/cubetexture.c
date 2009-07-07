@@ -210,10 +210,10 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
     if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) || (edge_length == pow2_edge_length))
     {
         /* Precalculated scaling for 'faked' non power of two texture coords. */
-        texture->baseTexture.pow2Matrix[0] = 1.0;
-        texture->baseTexture.pow2Matrix[5] = 1.0;
-        texture->baseTexture.pow2Matrix[10] = 1.0;
-        texture->baseTexture.pow2Matrix[15] = 1.0;
+        texture->baseTexture.pow2Matrix[0] = 1.0f;
+        texture->baseTexture.pow2Matrix[5] = 1.0f;
+        texture->baseTexture.pow2Matrix[10] = 1.0f;
+        texture->baseTexture.pow2Matrix[15] = 1.0f;
     }
     else
     {
@@ -221,7 +221,7 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
         texture->baseTexture.pow2Matrix[0] = ((float)edge_length) / ((float)pow2_edge_length);
         texture->baseTexture.pow2Matrix[5] = ((float)edge_length) / ((float)pow2_edge_length);
         texture->baseTexture.pow2Matrix[10] = ((float)edge_length) / ((float)pow2_edge_length);
-        texture->baseTexture.pow2Matrix[15] = 1.0;
+        texture->baseTexture.pow2Matrix[15] = 1.0f;
         texture->baseTexture.pow2Matrix_identity = FALSE;
     }
 
