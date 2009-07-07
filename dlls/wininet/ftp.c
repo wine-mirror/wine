@@ -72,7 +72,7 @@ typedef struct _WININETFTPSESSIONW WININETFTPSESSIONW;
 
 typedef struct
 {
-    WININETHANDLEHEADER hdr;
+    object_header_t hdr;
     WININETFTPSESSIONW *lpFtpSession;
     BOOL session_deleted;
     int nDataSocket;
@@ -80,7 +80,7 @@ typedef struct
 
 typedef struct _WININETFTPSESSIONW
 {
-    WININETHANDLEHEADER hdr;
+    object_header_t hdr;
     WININETAPPINFOW *lpAppInfo;
     int sndSocket;
     int lstnSocket;
@@ -103,7 +103,7 @@ typedef struct
 
 typedef struct
 {
-    WININETHANDLEHEADER hdr;
+    object_header_t hdr;
     WININETFTPSESSIONW *lpFtpSession;
     DWORD index;
     DWORD size;
@@ -172,7 +172,7 @@ static const CHAR szMonths[] = "JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC";
 static const WCHAR szNoAccount[] = {'n','o','a','c','c','o','u','n','t','\0'};
 
 static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
-	INTERNET_STATUS_CALLBACK lpfnStatusCB, LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext);
+	INTERNET_STATUS_CALLBACK lpfnStatusCB, object_header_t *hdr, DWORD_PTR dwContext);
 static BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType);
 static BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket);
 static BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile);
@@ -1084,7 +1084,7 @@ lend:
  * the 'transfer complete' message (this is a bit of a hack though :-/ )
  *
  */
-static void FTPFILE_Destroy(WININETHANDLEHEADER *hdr)
+static void FTPFILE_Destroy(object_header_t *hdr)
 {
     LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
     LPWININETFTPSESSIONW lpwfs = lpwh->lpFtpSession;
@@ -1106,7 +1106,7 @@ static void FTPFILE_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwh);
 }
 
-static DWORD FTPFILE_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
+static DWORD FTPFILE_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     switch(option) {
     case INTERNET_OPTION_HANDLE_TYPE:
@@ -1123,7 +1123,7 @@ static DWORD FTPFILE_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
     return INET_QueryOption(option, buffer, size, unicode);
 }
 
-static DWORD FTPFILE_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size, DWORD *read)
+static DWORD FTPFILE_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DWORD *read)
 {
     WININETFTPFILE *file = (WININETFTPFILE*)hdr;
     int res;
@@ -1138,19 +1138,19 @@ static DWORD FTPFILE_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size
     return res>=0 ? ERROR_SUCCESS : INTERNET_ERROR_BASE; /* FIXME*/
 }
 
-static DWORD FTPFILE_ReadFileExA(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSA *buffers,
+static DWORD FTPFILE_ReadFileExA(object_header_t *hdr, INTERNET_BUFFERSA *buffers,
     DWORD flags, DWORD_PTR context)
 {
     return FTPFILE_ReadFile(hdr, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength);
 }
 
-static DWORD FTPFILE_ReadFileExW(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSW *buffers,
+static DWORD FTPFILE_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffers,
     DWORD flags, DWORD_PTR context)
 {
     return FTPFILE_ReadFile(hdr, buffers->lpvBuffer, buffers->dwBufferLength, &buffers->dwBufferLength);
 }
 
-static BOOL FTPFILE_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWORD size, DWORD *written)
+static BOOL FTPFILE_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)
 {
     LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
     int res;
@@ -1190,7 +1190,7 @@ static void FTPFILE_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
     FTP_ReceiveRequestData(file, FALSE);
 }
 
-static DWORD FTPFILE_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
+static DWORD FTPFILE_QueryDataAvailable(object_header_t *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
 {
     LPWININETFTPFILE file = (LPWININETFTPFILE) hdr;
     int retval, unread = 0;
@@ -1230,7 +1230,7 @@ static DWORD FTPFILE_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *availab
 }
 
 
-static const HANDLEHEADERVtbl FTPFILEVtbl = {
+static const object_vtbl_t FTPFILEVtbl = {
     FTPFILE_Destroy,
     NULL,
     FTPFILE_QueryOption,
@@ -2234,7 +2234,7 @@ lend:
  *
  * Deallocate session handle
  */
-static void FTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
+static void FTPSESSION_Destroy(object_header_t *hdr)
 {
     LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
 
@@ -2247,7 +2247,7 @@ static void FTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwfs);
 }
 
-static void FTPSESSION_CloseConnection(WININETHANDLEHEADER *hdr)
+static void FTPSESSION_CloseConnection(object_header_t *hdr)
 {
     LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
 
@@ -2272,7 +2272,7 @@ static void FTPSESSION_CloseConnection(WININETHANDLEHEADER *hdr)
                       INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
-static DWORD FTPSESSION_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
+static DWORD FTPSESSION_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     switch(option) {
     case INTERNET_OPTION_HANDLE_TYPE:
@@ -2289,7 +2289,7 @@ static DWORD FTPSESSION_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void
     return INET_QueryOption(option, buffer, size, unicode);
 }
 
-static const HANDLEHEADERVtbl FTPSESSIONVtbl = {
+static const object_vtbl_t FTPSESSIONVtbl = {
     FTPSESSION_Destroy,
     FTPSESSION_CloseConnection,
     FTPSESSION_QueryOption,
@@ -2548,7 +2548,7 @@ lend:
  *
  */
 static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
-	INTERNET_STATUS_CALLBACK lpfnStatusCB, LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext)
+	INTERNET_STATUS_CALLBACK lpfnStatusCB, object_header_t *hdr, DWORD_PTR dwContext)
 {
     	DWORD len;
 	CHAR *buf;
@@ -2603,7 +2603,7 @@ static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
  *
  */
 static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
-	INTERNET_STATUS_CALLBACK lpfnStatusCB, LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext)
+	INTERNET_STATUS_CALLBACK lpfnStatusCB, object_header_t *hdr, DWORD_PTR dwContext)
 {
     BOOL ret;
     LPSTR lpszParamA = lpszParam?WININET_strdup_WtoA(lpszParam):NULL;
@@ -3285,7 +3285,7 @@ recv_end:
  *
  * Deallocate session handle
  */
-static void FTPFINDNEXT_Destroy(WININETHANDLEHEADER *hdr)
+static void FTPFINDNEXT_Destroy(object_header_t *hdr)
 {
     LPWININETFTPFINDNEXTW lpwfn = (LPWININETFTPFINDNEXTW) hdr;
     DWORD i;
@@ -3343,7 +3343,7 @@ static void FTPFINDNEXT_AsyncFindNextFileProc(WORKREQUEST *workRequest)
     FTPFINDNEXT_FindNextFileProc((WININETFTPFINDNEXTW*)workRequest->hdr, req->lpFindFileData);
 }
 
-static DWORD FTPFINDNEXT_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
+static DWORD FTPFINDNEXT_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     switch(option) {
     case INTERNET_OPTION_HANDLE_TYPE:
@@ -3360,7 +3360,7 @@ static DWORD FTPFINDNEXT_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, voi
     return INET_QueryOption(option, buffer, size, unicode);
 }
 
-static DWORD FTPFINDNEXT_FindNextFileW(WININETHANDLEHEADER *hdr, void *data)
+static DWORD FTPFINDNEXT_FindNextFileW(object_header_t *hdr, void *data)
 {
     WININETFTPFINDNEXTW *find = (WININETFTPFINDNEXTW*)hdr;
 
@@ -3382,7 +3382,7 @@ static DWORD FTPFINDNEXT_FindNextFileW(WININETHANDLEHEADER *hdr, void *data)
     return FTPFINDNEXT_FindNextFileProc(find, data);
 }
 
-static const HANDLEHEADERVtbl FTPFINDNEXTVtbl = {
+static const object_vtbl_t FTPFINDNEXTVtbl = {
     FTPFINDNEXT_Destroy,
     NULL,
     FTPFINDNEXT_QueryOption,

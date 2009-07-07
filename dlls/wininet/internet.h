@@ -112,25 +112,25 @@ typedef enum
 #define INET_OPENURL 0x0001
 #define INET_CALLBACKW 0x0002
 
-typedef struct _WININETHANDLEHEADER WININETHANDLEHEADER, *LPWININETHANDLEHEADER;
+typedef struct _object_header_t object_header_t;
 
 typedef struct {
-    void (*Destroy)(WININETHANDLEHEADER*);
-    void (*CloseConnection)(WININETHANDLEHEADER*);
-    DWORD (*QueryOption)(WININETHANDLEHEADER*,DWORD,void*,DWORD*,BOOL);
-    DWORD (*SetOption)(WININETHANDLEHEADER*,DWORD,void*,DWORD);
-    DWORD (*ReadFile)(WININETHANDLEHEADER*,void*,DWORD,DWORD*);
-    DWORD (*ReadFileExA)(WININETHANDLEHEADER*,INTERNET_BUFFERSA*,DWORD,DWORD_PTR);
-    DWORD (*ReadFileExW)(WININETHANDLEHEADER*,INTERNET_BUFFERSW*,DWORD,DWORD_PTR);
-    BOOL (*WriteFile)(WININETHANDLEHEADER*,const void*,DWORD,DWORD*);
-    DWORD (*QueryDataAvailable)(WININETHANDLEHEADER*,DWORD*,DWORD,DWORD_PTR);
-    DWORD (*FindNextFileW)(WININETHANDLEHEADER*,void*);
-} HANDLEHEADERVtbl;
+    void (*Destroy)(object_header_t*);
+    void (*CloseConnection)(object_header_t*);
+    DWORD (*QueryOption)(object_header_t*,DWORD,void*,DWORD*,BOOL);
+    DWORD (*SetOption)(object_header_t*,DWORD,void*,DWORD);
+    DWORD (*ReadFile)(object_header_t*,void*,DWORD,DWORD*);
+    DWORD (*ReadFileExA)(object_header_t*,INTERNET_BUFFERSA*,DWORD,DWORD_PTR);
+    DWORD (*ReadFileExW)(object_header_t*,INTERNET_BUFFERSW*,DWORD,DWORD_PTR);
+    BOOL (*WriteFile)(object_header_t*,const void*,DWORD,DWORD*);
+    DWORD (*QueryDataAvailable)(object_header_t*,DWORD*,DWORD,DWORD_PTR);
+    DWORD (*FindNextFileW)(object_header_t*,void*);
+} object_vtbl_t;
 
-struct _WININETHANDLEHEADER
+struct _object_header_t
 {
     WH_TYPE htype;
-    const HANDLEHEADERVtbl *vtbl;
+    const object_vtbl_t *vtbl;
     HINTERNET hInternet;
     DWORD  dwFlags;
     DWORD_PTR dwContext;
@@ -145,7 +145,7 @@ struct _WININETHANDLEHEADER
 
 typedef struct
 {
-    WININETHANDLEHEADER hdr;
+    object_header_t hdr;
     LPWSTR  lpszAgent;
     LPWSTR  lpszProxy;
     LPWSTR  lpszProxyBypass;
@@ -157,7 +157,7 @@ typedef struct
 
 typedef struct
 {
-    WININETHANDLEHEADER hdr;
+    object_header_t hdr;
     WININETAPPINFOW *lpAppInfo;
     LPWSTR  lpszHostName; /* the final destination of the request */
     LPWSTR  lpszServerName; /* the name of the server we directly connect to */
@@ -187,7 +187,7 @@ typedef struct gzip_stream_t gzip_stream_t;
 
 typedef struct
 {
-    WININETHANDLEHEADER hdr;
+    object_header_t hdr;
     WININETHTTPSESSIONW *lpHttpSession;
     LPWSTR lpszPath;
     LPWSTR lpszVerb;
@@ -336,7 +336,7 @@ struct WORKREQ_INTERNETREADFILEEXW
 typedef struct WORKREQ
 {
     void (*asyncproc)(struct WORKREQ*);
-    WININETHANDLEHEADER *hdr;
+    object_header_t *hdr;
 
     union {
         struct WORKREQ_FTPPUTFILEW              FtpPutFileW;
@@ -360,10 +360,10 @@ typedef struct WORKREQ
 
 } WORKREQUEST, *LPWORKREQUEST;
 
-HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info );
-LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet );
-LPWININETHANDLEHEADER WININET_AddRef( LPWININETHANDLEHEADER info );
-BOOL WININET_Release( LPWININETHANDLEHEADER info );
+HINTERNET WININET_AllocHandle( object_header_t *info );
+object_header_t *WININET_GetObject( HINTERNET hinternet );
+object_header_t *WININET_AddRef( object_header_t *info );
+BOOL WININET_Release( object_header_t *info );
 BOOL WININET_FreeHandle( HINTERNET hinternet );
 
 DWORD INET_QueryOption(DWORD,void*,DWORD*,BOOL);
@@ -397,11 +397,11 @@ INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD_PTR dwContext);
 
-VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext,
+VOID SendAsyncCallback(object_header_t *hdr, DWORD_PTR dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                        DWORD dwStatusInfoLength);
 
-VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD_PTR dwContext,
+VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
                            DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                            DWORD dwStatusInfoLength);
 

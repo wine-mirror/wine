@@ -1482,7 +1482,7 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
  * Deallocate request handle
  *
  */
-static void HTTPREQ_Destroy(WININETHANDLEHEADER *hdr)
+static void HTTPREQ_Destroy(object_header_t *hdr)
 {
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
     DWORD i;
@@ -1539,7 +1539,7 @@ static void HTTPREQ_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwhr);
 }
 
-static void HTTPREQ_CloseConnection(WININETHANDLEHEADER *hdr)
+static void HTTPREQ_CloseConnection(object_header_t *hdr)
 {
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
 
@@ -1579,7 +1579,7 @@ static BOOL HTTP_GetRequestURL(WININETHTTPREQW *req, LPWSTR buf)
     return TRUE;
 }
 
-static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
+static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
 
@@ -1778,7 +1778,7 @@ static DWORD HTTPREQ_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
     return INET_QueryOption(option, buffer, size, unicode);
 }
 
-static DWORD HTTPREQ_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD size)
+static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer, DWORD size)
 {
     WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
 
@@ -2130,7 +2130,7 @@ done:
 }
 
 
-static DWORD HTTPREQ_ReadFile(WININETHANDLEHEADER *hdr, void *buffer, DWORD size, DWORD *read)
+static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DWORD *read)
 {
     WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
     return HTTPREQ_Read(req, buffer, size, read, TRUE);
@@ -2156,7 +2156,7 @@ static void HTTPREQ_AsyncReadFileExAProc(WORKREQUEST *workRequest)
                           sizeof(INTERNET_ASYNC_RESULT));
 }
 
-static DWORD HTTPREQ_ReadFileExA(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSA *buffers,
+static DWORD HTTPREQ_ReadFileExA(object_header_t *hdr, INTERNET_BUFFERSA *buffers,
         DWORD flags, DWORD_PTR context)
 {
 
@@ -2229,7 +2229,7 @@ static void HTTPREQ_AsyncReadFileExWProc(WORKREQUEST *workRequest)
                           sizeof(INTERNET_ASYNC_RESULT));
 }
 
-static DWORD HTTPREQ_ReadFileExW(WININETHANDLEHEADER *hdr, INTERNET_BUFFERSW *buffers,
+static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffers,
         DWORD flags, DWORD_PTR context)
 {
 
@@ -2282,7 +2282,7 @@ done:
     return res;
 }
 
-static BOOL HTTPREQ_WriteFile(WININETHANDLEHEADER *hdr, const void *buffer, DWORD size, DWORD *written)
+static BOOL HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)
 {
     BOOL ret;
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW)hdr;
@@ -2304,7 +2304,7 @@ static void HTTPREQ_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
     HTTP_ReceiveRequestData(req, FALSE);
 }
 
-static DWORD HTTPREQ_QueryDataAvailable(WININETHANDLEHEADER *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
+static DWORD HTTPREQ_QueryDataAvailable(object_header_t *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
 {
     WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
 
@@ -2351,7 +2351,7 @@ done:
     return ERROR_SUCCESS;
 }
 
-static const HANDLEHEADERVtbl HTTPREQVtbl = {
+static const object_vtbl_t HTTPREQVtbl = {
     HTTPREQ_Destroy,
     HTTPREQ_CloseConnection,
     HTTPREQ_QueryOption,
@@ -3924,7 +3924,7 @@ lend:
  * Deallocate session handle
  *
  */
-static void HTTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
+static void HTTPSESSION_Destroy(object_header_t *hdr)
 {
     LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) hdr;
 
@@ -3939,7 +3939,7 @@ static void HTTPSESSION_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwhs);
 }
 
-static DWORD HTTPSESSION_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
+static DWORD HTTPSESSION_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     switch(option) {
     case INTERNET_OPTION_HANDLE_TYPE:
@@ -3956,7 +3956,7 @@ static DWORD HTTPSESSION_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, voi
     return INET_QueryOption(option, buffer, size, unicode);
 }
 
-static DWORD HTTPSESSION_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD size)
+static DWORD HTTPSESSION_SetOption(object_header_t *hdr, DWORD option, void *buffer, DWORD size)
 {
     WININETHTTPSESSIONW *ses = (WININETHTTPSESSIONW*)hdr;
 
@@ -3979,7 +3979,7 @@ static DWORD HTTPSESSION_SetOption(WININETHANDLEHEADER *hdr, DWORD option, void 
     return ERROR_INTERNET_INVALID_OPTION;
 }
 
-static const HANDLEHEADERVtbl HTTPSESSIONVtbl = {
+static const object_vtbl_t HTTPSESSIONVtbl = {
     HTTPSESSION_Destroy,
     NULL,
     HTTPSESSION_QueryOption,

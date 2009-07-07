@@ -101,13 +101,13 @@ static CRITICAL_SECTION_DEBUG WININET_cs_debug =
 };
 static CRITICAL_SECTION WININET_cs = { &WININET_cs_debug, -1, 0, 0, 0, 0 };
 
-static LPWININETHANDLEHEADER *WININET_Handles;
+static object_header_t **WININET_Handles;
 static UINT WININET_dwNextHandle;
 static UINT WININET_dwMaxHandles;
 
-HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info )
+HINTERNET WININET_AllocHandle( object_header_t *info )
 {
-    LPWININETHANDLEHEADER *p;
+    object_header_t **p;
     UINT handle = 0, num;
 
     list_init( &info->children );
@@ -149,16 +149,16 @@ end:
     return info->hInternet = (HINTERNET) (handle+1);
 }
 
-LPWININETHANDLEHEADER WININET_AddRef( LPWININETHANDLEHEADER info )
+object_header_t *WININET_AddRef( object_header_t *info )
 {
     ULONG refs = InterlockedIncrement(&info->refs);
     TRACE("%p -> refcount = %d\n", info, refs );
     return info;
 }
 
-LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet )
+object_header_t *WININET_GetObject( HINTERNET hinternet )
 {
-    LPWININETHANDLEHEADER info = NULL;
+    object_header_t *info = NULL;
     UINT handle = (UINT) hinternet;
 
     EnterCriticalSection( &WININET_cs );
@@ -174,7 +174,7 @@ LPWININETHANDLEHEADER WININET_GetObject( HINTERNET hinternet )
     return info;
 }
 
-BOOL WININET_Release( LPWININETHANDLEHEADER info )
+BOOL WININET_Release( object_header_t *info )
 {
     ULONG refs = InterlockedDecrement(&info->refs);
     TRACE( "object %p refcount = %d\n", info, refs );
@@ -205,7 +205,7 @@ BOOL WININET_FreeHandle( HINTERNET hinternet )
 {
     BOOL ret = FALSE;
     UINT handle = (UINT) hinternet;
-    LPWININETHANDLEHEADER info = NULL, child, next;
+    object_header_t *info = NULL, *child, *next;
 
     EnterCriticalSection( &WININET_cs );
 
@@ -229,7 +229,7 @@ BOOL WININET_FreeHandle( HINTERNET hinternet )
     if( info )
     {
         /* Free all children as native does */
-        LIST_FOR_EACH_ENTRY_SAFE( child, next, &info->children, WININETHANDLEHEADER, entry )
+        LIST_FOR_EACH_ENTRY_SAFE( child, next, &info->children, object_header_t, entry )
         {
             TRACE( "freeing child handle %d for parent handle %d\n",
                    (UINT)child->hInternet, handle+1);
@@ -487,7 +487,7 @@ static void dump_INTERNET_FLAGS(DWORD dwFlags)
  * Close internet handle
  *
  */
-static VOID APPINFO_Destroy(WININETHANDLEHEADER *hdr)
+static VOID APPINFO_Destroy(object_header_t *hdr)
 {
     LPWININETAPPINFOW lpwai = (LPWININETAPPINFOW) hdr;
 
@@ -501,7 +501,7 @@ static VOID APPINFO_Destroy(WININETHANDLEHEADER *hdr)
     HeapFree(GetProcessHeap(), 0, lpwai);
 }
 
-static DWORD APPINFO_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
+static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     LPWININETAPPINFOW ai = (LPWININETAPPINFOW)hdr;
 
@@ -613,7 +613,7 @@ static DWORD APPINFO_QueryOption(WININETHANDLEHEADER *hdr, DWORD option, void *b
     return INET_QueryOption(option, buffer, size, unicode);
 }
 
-static const HANDLEHEADERVtbl APPINFOVtbl = {
+static const object_vtbl_t APPINFOVtbl = {
     APPINFO_Destroy,
     NULL,
     APPINFO_QueryOption,
@@ -1093,7 +1093,7 @@ BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
  */
 BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
 {
-    WININETHANDLEHEADER *hdr;
+    object_header_t *hdr;
     DWORD res;
 
     TRACE("\n");
@@ -1131,7 +1131,7 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
  */
 BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 {
-    LPWININETHANDLEHEADER lpwh;
+    object_header_t *lpwh;
     
     TRACE("%p\n",hInternet);
 
@@ -1795,7 +1795,7 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
 /* #################################################### */
 
 static INTERNET_STATUS_CALLBACK set_status_callback(
-    LPWININETHANDLEHEADER lpwh, INTERNET_STATUS_CALLBACK callback, BOOL unicode)
+    object_header_t *lpwh, INTERNET_STATUS_CALLBACK callback, BOOL unicode)
 {
     INTERNET_STATUS_CALLBACK ret;
 
@@ -1823,7 +1823,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackA(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
     INTERNET_STATUS_CALLBACK retVal;
-    LPWININETHANDLEHEADER lpwh;
+    object_header_t *lpwh;
 
     TRACE("%p\n", hInternet);
 
@@ -1851,7 +1851,7 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
 	HINTERNET hInternet ,INTERNET_STATUS_CALLBACK lpfnIntCB)
 {
     INTERNET_STATUS_CALLBACK retVal;
-    LPWININETHANDLEHEADER lpwh;
+    object_header_t *lpwh;
 
     TRACE("%p\n", hInternet);
 
@@ -1887,7 +1887,7 @@ DWORD WINAPI InternetSetFilePointer(HINTERNET hFile, LONG lDistanceToMove,
 BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
 	DWORD dwNumOfBytesToWrite, LPDWORD lpdwNumOfBytesWritten)
 {
-    LPWININETHANDLEHEADER lpwh;
+    object_header_t *lpwh;
     BOOL retval = FALSE;
 
     TRACE("(%p %p %d %p)\n", hFile, lpBuffer, dwNumOfBytesToWrite, lpdwNumOfBytesWritten);
@@ -1926,7 +1926,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer,
 BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
         DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead)
 {
-    LPWININETHANDLEHEADER hdr;
+    object_header_t *hdr;
     DWORD res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 
     TRACE("%p %p %d %p\n", hFile, lpBuffer, dwNumOfBytesToRead, pdwNumOfBytesRead);
@@ -1980,7 +1980,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
 BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOut,
 	DWORD dwFlags, DWORD_PTR dwContext)
 {
-    LPWININETHANDLEHEADER hdr;
+    object_header_t *hdr;
     DWORD res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 
     TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffersOut, dwFlags, dwContext);
@@ -2012,7 +2012,7 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
 BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
 	DWORD dwFlags, DWORD_PTR dwContext)
 {
-    LPWININETHANDLEHEADER hdr;
+    object_header_t *hdr;
     DWORD res = ERROR_INTERNET_INCORRECT_HANDLE_TYPE;
 
     TRACE("(%p %p 0x%x 0x%lx)\n", hFile, lpBuffer, dwFlags, dwContext);
@@ -2186,7 +2186,7 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
 BOOL WINAPI InternetQueryOptionW(HINTERNET hInternet, DWORD dwOption,
                                  LPVOID lpBuffer, LPDWORD lpdwBufferLength)
 {
-    LPWININETHANDLEHEADER hdr;
+    object_header_t *hdr;
     DWORD res = ERROR_INVALID_HANDLE;
 
     TRACE("%p %d %p %p\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
@@ -2219,7 +2219,7 @@ BOOL WINAPI InternetQueryOptionW(HINTERNET hInternet, DWORD dwOption,
 BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
                                  LPVOID lpBuffer, LPDWORD lpdwBufferLength)
 {
-    LPWININETHANDLEHEADER hdr;
+    object_header_t *hdr;
     DWORD res = ERROR_INVALID_HANDLE;
 
     TRACE("%p %d %p %p\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
@@ -2253,12 +2253,12 @@ BOOL WINAPI InternetQueryOptionA(HINTERNET hInternet, DWORD dwOption,
 BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
                            LPVOID lpBuffer, DWORD dwBufferLength)
 {
-    LPWININETHANDLEHEADER lpwhh;
+    object_header_t *lpwhh;
     BOOL ret = TRUE;
 
     TRACE("(%p %d %p %d)\n", hInternet, dwOption, lpBuffer, dwBufferLength);
 
-    lpwhh = (LPWININETHANDLEHEADER) WININET_GetObject( hInternet );
+    lpwhh = (object_header_t*) WININET_GetObject( hInternet );
     if(lpwhh && lpwhh->vtbl->SetOption) {
         DWORD res;
 
@@ -2433,7 +2433,7 @@ BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
     {
     case INTERNET_OPTION_CALLBACK:
         {
-        LPWININETHANDLEHEADER lpwh;
+        object_header_t *lpwh;
 
         if (!(lpwh = WININET_GetObject(hInternet)))
         {
@@ -3267,7 +3267,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
                                 LPDWORD lpdwNumberOfBytesAvailble,
                                 DWORD dwFlags, DWORD_PTR dwContext)
 {
-    WININETHANDLEHEADER *hdr;
+    object_header_t *hdr;
     DWORD res;
 
     TRACE("(%p %p %x %lx)\n", hFile, lpdwNumberOfBytesAvailble, dwFlags, dwContext);
