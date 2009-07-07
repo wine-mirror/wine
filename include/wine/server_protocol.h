@@ -693,6 +693,8 @@ struct get_process_info_reply
     timeout_t    end_time;
     int          exit_code;
     int          priority;
+    cpu_type_t   cpu;
+    char __pad_60[4];
 };
 
 
@@ -5310,6 +5312,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 386
+#define SERVER_PROTOCOL_VERSION 387
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

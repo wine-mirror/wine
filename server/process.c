@@ -1068,6 +1068,7 @@ DECL_HANDLER(get_process_info)
         reply->peb              = process->peb;
         reply->start_time       = process->start_time;
         reply->end_time         = process->end_time;
+        reply->cpu              = process->cpu;
         release_object( process );
     }
 }

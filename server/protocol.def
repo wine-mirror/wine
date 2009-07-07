@@ -660,6 +660,7 @@ typedef union
     timeout_t    end_time;         /* process end time */
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
+    cpu_type_t   cpu;              /* CPU that this process is running on */
 @END
 
 
