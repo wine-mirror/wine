@@ -582,6 +582,10 @@ static HRESULT init_constructors(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
+    hres = create_object_constr(ctx, &ctx->object_constr);
+    if(FAILED(hres))
+        return hres;
+
     hres = create_array_constr(ctx, &ctx->array_constr);
     if(FAILED(hres))
         return hres;
@@ -595,10 +599,6 @@ static HRESULT init_constructors(script_ctx_t *ctx)
         return hres;
 
     hres = create_number_constr(ctx, &ctx->number_constr);
-    if(FAILED(hres))
-        return hres;
-
-    hres = create_object_constr(ctx, &ctx->object_constr);
     if(FAILED(hres))
         return hres;
 

@@ -40,7 +40,6 @@ static const WCHAR sortW[] = {'s','o','r','t',0};
 static const WCHAR spliceW[] = {'s','p','l','i','c','e',0};
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR toLocaleStringW[] = {'t','o','L','o','c','a','l','e','S','t','r','i','n','g',0};
-static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 static const WCHAR unshiftW[] = {'u','n','s','h','i','f','t',0};
 static const WCHAR hasOwnPropertyW[] = {'h','a','s','O','w','n','P','r','o','p','e','r','t','y',0};
 static const WCHAR propertyIsEnumerableW[] =
@@ -638,13 +637,6 @@ static HRESULT Array_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, D
     return E_NOTIMPL;
 }
 
-static HRESULT Array_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
 static HRESULT Array_unshift(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -732,7 +724,6 @@ static const builtin_prop_t Array_props[] = {
     {toLocaleStringW,        Array_toLocaleString,       PROPF_METHOD},
     {toStringW,              Array_toString,             PROPF_METHOD},
     {unshiftW,               Array_unshift,              PROPF_METHOD},
-    {valueOfW,               Array_valueOf,              PROPF_METHOD}
 };
 
 static const builtin_info_t Array_info = {
@@ -809,7 +800,7 @@ static HRESULT alloc_array(script_ctx_t *ctx, BOOL use_constr, ArrayInstance **r
     if(use_constr)
         hres = init_dispex_from_constr(&array->dispex, ctx, &Array_info, ctx->array_constr);
     else
-        hres = init_dispex(&array->dispex, ctx, &Array_info, NULL);
+        hres = init_dispex_from_constr(&array->dispex, ctx, &Array_info, ctx->object_constr);
 
     if(FAILED(hres)) {
         heap_free(array);
