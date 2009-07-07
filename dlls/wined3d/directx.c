@@ -1546,13 +1546,13 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
                     vidmem = 1024;
                 }
                 /* Geforce 200 - midend high */
-                if (strstr(gl_renderer, "GTX 275"))
+                else if (strstr(gl_renderer, "GTX 275"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_GTX275;
                     vidmem = 896;
                 }
                 /* Geforce 200 - midend */
-                if (strstr(gl_renderer, "GTX 260"))
+                else if (strstr(gl_renderer, "GTX 260"))
                 {
                     gl_info->gl_card = CARD_NVIDIA_GEFORCE_GTX260;
                     vidmem = 1024;
