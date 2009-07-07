@@ -302,8 +302,16 @@ static HRESULT Function_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags
 static HRESULT Function_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    WARN("should be inherited from Object\n");
+
+    if(retv) {
+        IDispatchEx_AddRef(_IDispatchEx_(dispex));
+
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(dispex);
+    }
+
+    return S_OK;
 }
 
 static HRESULT Function_apply(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
