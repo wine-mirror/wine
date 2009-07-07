@@ -49,8 +49,16 @@ static HRESULT Object_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, 
 static HRESULT Object_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(retv) {
+        IDispatchEx_AddRef(_IDispatchEx_(dispex));
+
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(dispex);
+    }
+
+    return S_OK;
 }
 
 static HRESULT Object_hasOwnProperty(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

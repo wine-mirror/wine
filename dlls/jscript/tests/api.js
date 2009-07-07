@@ -439,6 +439,9 @@ ok(arr.sort() === arr, "arr.sort() !== arr");
 for(var i=0; i < arr.length; i++)
     ok(arr[i] === tmp[i], "arr[" + i + "] = " + arr[i] + " expected " + tmp[i]);
 
+ok(arr.valueOf === Object.prototype.valueOf, "arr.valueOf !== Object.prototype.valueOf");
+ok(arr === arr.valueOf(), "arr !== arr.valueOf");
+
 var num = new Number(6);
 arr = [0,1,2];
 tmp = arr.concat(3, [4,5], num);
