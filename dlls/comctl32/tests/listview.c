@@ -3753,6 +3753,31 @@ todo_wine {
     DestroyWindow(hwnd);
 }
 
+static void test_getcolumnwidth(void)
+{
+    HWND hwnd;
+    DWORD ret;
+    DWORD_PTR style;
+    LVCOLUMNA col;
+
+    /* default column width */
+    hwnd = create_custom_listview_control(0);
+    ret = SendMessage(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
+    expect(0, ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    SetWindowLong(hwnd, GWL_STYLE, style | LVS_LIST);
+    ret = SendMessage(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
+    todo_wine expect(8, ret);
+    style = GetWindowLong(hwnd, GWL_STYLE) & ~LVS_LIST;
+    SetWindowLong(hwnd, GWL_STYLE, style | LVS_REPORT);
+    col.mask = 0;
+    ret = SendMessage(hwnd, LVM_INSERTCOLUMNA, 0, (LPARAM)&col);
+    expect(0, ret);
+    ret = SendMessage(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
+    expect(10, ret);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -3807,6 +3832,7 @@ START_TEST(listview)
     test_notifyformat();
     test_indentation();
     test_getitemspacing();
+    test_getcolumnwidth();
 
     if (!load_v6_module(&ctx_cookie))
     {
