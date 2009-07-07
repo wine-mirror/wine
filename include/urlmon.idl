@@ -1210,20 +1210,26 @@ interface IInternetZoneManager : IUnknown
         URLTEMPLATE_CUSTOM         = 0x00000,
         URLTEMPLATE_PREDEFINED_MIN = 0x10000,
         URLTEMPLATE_LOW            = 0x10000,
+        URLTEMPLATE_MEDLOW         = 0x10500,
         URLTEMPLATE_MEDIUM         = 0x11000,
+        URLTEMPLATE_MEDHIGH        = 0x11500,
         URLTEMPLATE_HIGH           = 0x12000,
         URLTEMPLATE_PREDEFINED_MAX = 0x20000,
     } URLTEMPLATE ;
 
     typedef enum {
-        ZAFLAGS_CUSTOM_EDIT            = 0x00000001,
-        ZAFLAGS_ADD_SITES              = 0x00000002,
-        ZAFLAGS_REQUIRE_VERIFICATION   = 0x00000004,
-        ZAFLAGS_INCLUDE_PROXY_OVERRIDE = 0x00000008,
-        ZAFLAGS_INCLUDE_INTRANET_SITES = 0x00000010,
-        ZAFLAGS_NO_UI                  = 0x00000020,
-        ZAFLAGS_SUPPORTS_VERIFICATION  = 0x00000040,
-        ZAFLAGS_UNC_AS_INTRANET        = 0x00000080,
+        ZAFLAGS_CUSTOM_EDIT              = 0x00000001,
+        ZAFLAGS_ADD_SITES                = 0x00000002,
+        ZAFLAGS_REQUIRE_VERIFICATION     = 0x00000004,
+        ZAFLAGS_INCLUDE_PROXY_OVERRIDE   = 0x00000008,
+        ZAFLAGS_INCLUDE_INTRANET_SITES   = 0x00000010,
+        ZAFLAGS_NO_UI                    = 0x00000020,
+        ZAFLAGS_SUPPORTS_VERIFICATION    = 0x00000040,
+        ZAFLAGS_UNC_AS_INTRANET          = 0x00000080,
+        ZAFLAGS_DETECT_INTRANET          = 0x00000100,
+        ZAFLAGS_USE_LOCKED_ZONES         = 0x00010000,
+        ZAFLAGS_VERIFY_TEMPLATE_SETTINGS = 0x00020000,
+        ZAFLAGS_NO_CACHE                 = 0x00040000,
     } ZAFLAGS ;
 
     enum {
@@ -1315,6 +1321,72 @@ interface IInternetZoneManager : IUnknown
         [in] DWORD dwZone,
         [in] DWORD dwReserved);
 }
+
+/*****************************************************************************
+ * IInternetZoneManagerEx interface
+ */
+[
+    local,
+    object,
+    uuid(A4C23339-8E06-431E-9BF4-7E711C085648),
+    pointer_default(unique)
+]
+interface IInternetZoneManagerEx : IInternetZoneManager
+{
+    HRESULT GetZoneActionPolicyEx(
+        [in]  DWORD dwZone,
+        [in]  DWORD dwAction,
+        [out] BYTE* pPolicy,
+        [in]  DWORD cbPolicy,
+        [in]  URLZONEREG urlZoneReg,
+        [in]  DWORD dwFlags);
+
+    HRESULT SetZoneActionPolicyEx(
+        [in] DWORD dwZone,
+        [in] DWORD dwAction,
+        [in] BYTE* pPolicy,
+        [in] DWORD cbPolicy,
+        [in] URLZONEREG urlZoneReg,
+        [in] DWORD dwFlags);
+
+}
+
+/*****************************************************************************
+ * IInternetZoneManagerEx2 interface
+ */
+
+cpp_quote("#define SECURITY_IE_STATE_GREEN 0")
+cpp_quote("#define SECURITY_IE_STATE_RED   1")
+
+[
+    local,
+    object,
+    uuid(EDC17559-DD5D-4846-8EEF-8BECBA5A4ABF),
+    pointer_default(unique)
+]
+interface IInternetZoneManagerEx2 : IInternetZoneManagerEx
+{
+    HRESULT GetZoneAttributesEx(
+        [in]              DWORD dwZone,
+        [in, out, unique] ZONEATTRIBUTES* pZoneAttributes,
+        [in]              DWORD dwFlags);
+
+    HRESULT GetZoneSecurityState(
+        [in]      DWORD dwZoneIndex,
+        [in]      BOOL fRespectPolicy,
+        [in, out] LPDWORD pdwState,
+        [in, out] BOOL *pfPolicyEncountered);
+
+    HRESULT GetIESecurityState(
+        [in]      BOOL fRespectPolicy,
+        [in, out] LPDWORD pdwState,
+        [in, out] BOOL *pfPolicyEncountered,
+        [in]      BOOL fNoCache);
+
+    HRESULT FixInsecureSettings(void);
+
+}
+
 
 typedef struct _tagSOFTDISTINFO
 {
