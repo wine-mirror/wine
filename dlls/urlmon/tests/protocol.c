@@ -853,6 +853,8 @@ static IInternetProtocolSink mime_protocol_sink = { &mime_protocol_sink_vtbl };
 
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
+    static const IID IID_undocumented = {0x58DFC7D0,0x5381,0x43E5,{0x9D,0x72,0x4C,0xDD,0xE4,0xCB,0x0F,0x1A}};
+
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocolSink, riid))
@@ -861,6 +863,10 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &service_provider;
     if(IsEqualGUID(&IID_IUriContainer, riid))
         return E_NOINTERFACE; /* TODO */
+
+    /* NOTE: IE8 queries for undocumented {58DFC7D0-5381-43E5-9D72-4CDDE4CB0F1A} interface. */
+    if(IsEqualGUID(&IID_undocumented, riid))
+        return E_NOINTERFACE;
 
     if(*ppv)
         return S_OK;
