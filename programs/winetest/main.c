@@ -284,13 +284,13 @@ static const char* get_test_source_file(const char* test, const char* subtest)
     return buffer;
 }
 
-static void* extract_rcdata (LPTSTR name, int type, DWORD* size)
+static void* extract_rcdata (LPCTSTR name, LPCTSTR type, DWORD* size)
 {
     HRSRC rsrc;
     HGLOBAL hdl;
     LPVOID addr;
     
-    if (!(rsrc = FindResource (NULL, name, MAKEINTRESOURCE(type))) ||
+    if (!(rsrc = FindResource (NULL, name, type)) ||
         !(*size = SizeofResource (0, rsrc)) ||
         !(hdl = LoadResource (0, rsrc)) ||
         !(addr = LockResource (hdl)))
@@ -308,7 +308,7 @@ extract_test (struct wine_test *test, const char *dir, LPTSTR res_name)
     HANDLE hfile;
     DWORD written;
 
-    code = extract_rcdata (res_name, TESTRES, &size);
+    code = extract_rcdata (res_name, "TESTRES", &size);
     if (!code) report (R_FATAL, "Can't find test resource %s: %d",
                        res_name, GetLastError ());
     test->name = heap_strdup( res_name );
@@ -682,7 +682,7 @@ run_tests (char *logname, char *outdir)
     xprintf ("Archive: -\n");  /* no longer used */
     xprintf ("Tag: %s\n", tag);
     xprintf ("Build info:\n");
-    strres = extract_rcdata (MAKEINTRESOURCE(BUILD_INFO), STRINGRES, &strsize);
+    strres = extract_rcdata ("BUILD_INFO", "STRINGRES", &strsize);
     while (strres) {
         eol = memchr (strres, '\n', strsize);
         if (!eol) {
@@ -701,8 +701,7 @@ run_tests (char *logname, char *outdir)
     xprintf ("Dll info:\n" );
 
     report (R_STATUS, "Counting tests");
-    if (!EnumResourceNames (NULL, MAKEINTRESOURCE(TESTRES),
-                            EnumTestFileProc, (LPARAM)&nr_of_files))
+    if (!EnumResourceNames (NULL, "TESTRES", EnumTestFileProc, (LPARAM)&nr_of_files))
         report (R_FATAL, "Can't enumerate test files: %d",
                 GetLastError ());
     wine_tests = heap_alloc (nr_of_files * sizeof wine_tests[0]);
@@ -717,8 +716,7 @@ run_tests (char *logname, char *outdir)
     report (R_PROGRESS, 0, nr_of_files);
     nr_of_files = 0;
     nr_of_tests = 0;
-    if (!EnumResourceNames (NULL, MAKEINTRESOURCE(TESTRES),
-                            extract_test_proc, (LPARAM)tempdir))
+    if (!EnumResourceNames (NULL, "TESTRES", extract_test_proc, (LPARAM)tempdir))
         report (R_FATAL, "Can't enumerate test files: %d",
                 GetLastError ());
 
@@ -801,7 +799,7 @@ static void extract_only (const char *target_dir)
 
     nr_of_files = 0;
     report (R_STATUS, "Counting tests");
-    if (!EnumResourceNames (NULL, MAKEINTRESOURCE(TESTRES), EnumTestFileProc, (LPARAM)&nr_of_files))
+    if (!EnumResourceNames (NULL, "TESTRES", EnumTestFileProc, (LPARAM)&nr_of_files))
         report (R_FATAL, "Can't enumerate test files: %d", GetLastError ());
 
     wine_tests = heap_alloc (nr_of_files * sizeof wine_tests[0] );
@@ -809,7 +807,7 @@ static void extract_only (const char *target_dir)
     report (R_STATUS, "Extracting tests");
     report (R_PROGRESS, 0, nr_of_files);
     nr_of_files = 0;
-    if (!EnumResourceNames (NULL, MAKEINTRESOURCE(TESTRES), extract_only_proc, (LPARAM)target_dir))
+    if (!EnumResourceNames (NULL, "TESTRES", extract_only_proc, (LPARAM)target_dir))
         report (R_FATAL, "Can't enumerate test files: %d", GetLastError ());
 
     report (R_DELTA, 0, "Extracting: Done");

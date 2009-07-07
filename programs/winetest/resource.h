@@ -43,12 +43,3 @@
 #define IDC_ABOUT 4001
 
 #define IDS_BUILD_ID 1
-
-/* Resource types */
-
-#define TESTRES   1000
-#define STRINGRES 1001
-
-/* String resources */
-
-#define BUILD_INFO 10001
