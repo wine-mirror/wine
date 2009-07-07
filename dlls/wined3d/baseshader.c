@@ -762,7 +762,7 @@ static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semanti
     else
     {
         /* Pixel shaders 3.0 don't have usage semantics */
-        if (shader_is_pshader_version(shader_version->type) && shader_version->major < 3)
+        if (shader_version->major < 3 && shader_version->type == WINED3D_SHADER_TYPE_PIXEL)
             return;
         else
             TRACE("_");
@@ -844,7 +844,7 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
             break;
 
         case WINED3DSPR_TEXTURE: /* vs: case WINED3DSPR_ADDR */
-            TRACE("%c", shader_is_pshader_version(shader_version->type) ? 't' : 'a');
+            TRACE("%c", shader_version->type == WINED3D_SHADER_TYPE_PIXEL ? 't' : 'a');
             break;
 
         case WINED3DSPR_RASTOUT:
