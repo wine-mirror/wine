@@ -3,7 +3,8 @@
  * Portuguese Language Support
  *
  * Copyright 2003 Marcelo Duarte
- * Copyright 2006-2007 AmÈrico JosÈ Melo
+ * Copyright 2006-2007 Am√©rico Jos√© Melo
+ * Copyright 2009 Ricardo Filipe
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,12 +23,14 @@
 
 #include "wineconsole_res.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE
 BEGIN
 IDS_EDIT,		"&Editar"
-IDS_DEFAULT,		"&Definir padrıes"
+IDS_DEFAULT,		"&Definir padr√µes"
 IDS_PROPERTIES,		"&Propriedades"
 IDS_MARK,		"&Marcar"
 IDS_COPY,		"&Copiar"
@@ -36,11 +39,11 @@ IDS_SELECTALL,		"&Selecionar tudo"
 IDS_SCROLL,		"&Rolar"
 IDS_SEARCH,		"&Pesquisar"
 IDS_FNT_DISPLAY,	"Cada caracter tem %ld pixels de largura por %ld pixels de altura"
-IDS_FNT_PREVIEW_1,	"Este È um teste"
+IDS_FNT_PREVIEW_1,	"Este √© um teste"
 IDS_FNT_PREVIEW_2,	""
-IDS_DLG_TIT_DEFAULT,    "Setup - configuraÁıes padrıes"
-IDS_DLG_TIT_CURRENT,    "Setup - configuraÁıes atuais"
-IDS_DLG_TIT_ERROR,	"Erro de configuraÁ„o"
+IDS_DLG_TIT_DEFAULT,    "Setup - configura√ß√µes padr√µes"
+IDS_DLG_TIT_CURRENT,    "Setup - configura√ß√µes atuais"
+IDS_DLG_TIT_ERROR,	"Erro de configura√ß√£o"
 IDS_DLG_ERR_SBWINSIZE,	"Tamanho do buffer de tela deve ser maior ou igual ao da janela"
 END
 
@@ -49,7 +52,7 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 STRINGTABLE
 BEGIN
 IDS_EDIT,		"&Editar"
-IDS_DEFAULT,		"&Definir predefiniÁıes"
+IDS_DEFAULT,		"&Definir predefini√ß√µes"
 IDS_PROPERTIES,		"&Propriedades"
 IDS_MARK,		"&Marcar"
 IDS_COPY,		"&Copiar"
@@ -58,36 +61,49 @@ IDS_SELECTALL,		"&Seleccionar tudo"
 IDS_SCROLL,		"&Rolar"
 IDS_SEARCH,		"&Pesquisar"
 IDS_FNT_DISPLAY,	"Cada caracter tem %ld pixels de largura por %ld pixels de altura"
-IDS_FNT_PREVIEW_1,	"Este È um teste"
+IDS_FNT_PREVIEW_1,	"Este √© um teste"
 IDS_FNT_PREVIEW_2,	""
-IDS_DLG_TIT_DEFAULT,    "ConfiguraÁ„o - configuraÁıes predefinidas"
-IDS_DLG_TIT_CURRENT,    "ConfiguraÁ„o - configuraÁıes actuais"
-IDS_DLG_TIT_ERROR,	"Erro de configuraÁ„o"
-IDS_DLG_ERR_SBWINSIZE,	"O tamanho do 'buffer' do ecr„ deve ser maior ou igual ao da janela"
-END
+IDS_DLG_TIT_DEFAULT,    "Configura√ß√£o - configura√ß√µes predefinidas"
+IDS_DLG_TIT_CURRENT,    "Configura√ß√£o - configura√ß√µes actuais"
+IDS_DLG_TIT_ERROR,	"Erro de configura√ß√£o"
+IDS_DLG_ERR_SBWINSIZE,	"O tamanho do 'buffer' do ecr√£ deve ser maior ou igual ao da janela"
 
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: Imposs√≠vel extrair o id do evento\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: Estrutura inv√°lida\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: Op√ß√£o de linha de comandos desconhecida\n"
+IDS_CMD_ABOUT              "Arranca um programa numa consola do Wine\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: O arranque do programa %s falhou.\n"\
+                           "O comando √© inv√°lido.\n"
+
+IDS_USAGE_HEADER           "\nUso:\n  wineconsole [op√ß√µes] <comando>\n\nOp√ß√µes:\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Se escolher user vai abrir uma nova janela, curses vai\n"\
+                           "                            tentar configurar o terminal actual como uma consola Wine\n"
+IDS_USAGE_COMMAND          "  <comando>                 O programa Wine a lan√ßar na consola\n"
+IDS_USAGE_FOOTER           "\nExemplo:\n  wineconsole cmd\nArranca a linha de comandos do Wine numa consola Wine\n\n"
+
+END
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION " OpÁıes "
+CAPTION " Op√ß√µes "
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "Cursor", -1, 10, 11, 60, 44, BS_GROUPBOX
 	AUTORADIOBUTTON "&Pequeno", IDC_OPT_CURSOR_SMALL, 14, 23, 44, 10, WS_TABSTOP
-	AUTORADIOBUTTON "&MÈdio", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&M√©dio", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
 	AUTORADIOBUTTON "&Grande", IDC_OPT_CURSOR_LARGE, 14, 43, 44, 10, WS_TABSTOP
 
 	GROUPBOX "Controle", -1, 75, 11, 125, 44, BS_GROUPBOX
 	LTEXT "Popup menu", -1, 79, 23, 40, 10
 	AUTOCHECKBOX "&Controle", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
-	AUTOCHECKBOX "&RotaÁ„o", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
-	LTEXT "EdiÁ„o r·pida", -1, 79, 43, 50, 10
+	AUTOCHECKBOX "&Rota√ß√£o", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
+	LTEXT "Edi√ß√£o r√°pida", -1, 79, 43, 50, 10
 	AUTOCHECKBOX "&Habilitado", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
 
-	GROUPBOX "HistÛrico de comandos", -1, 10, 57, 190, 35, BS_GROUPBOX
-	LTEXT "&N˙mero de comandos rechamados :", -1, 14, 67, 78, 18
+	GROUPBOX "Hist√≥rico de comandos", -1, 10, 57, 190, 35, BS_GROUPBOX
+	LTEXT "&N√∫mero de comandos rechamados :", -1, 14, 67, 78, 18
 	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 	AUTOCHECKBOX "&Remover duplicados", IDC_OPT_HIST_NODOUBLE, 130, 67, 50, 18, WS_TABSTOP|BS_MULTILINE
@@ -97,23 +113,23 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION " OpÁıes "
+CAPTION " Op√ß√µes "
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "Cursor", -1, 10, 11, 60, 44, BS_GROUPBOX
 	AUTORADIOBUTTON "&Pequeno", IDC_OPT_CURSOR_SMALL, 14, 23, 44, 10, WS_TABSTOP
-	AUTORADIOBUTTON "&MÈdio", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
+	AUTORADIOBUTTON "&M√©dio", IDC_OPT_CURSOR_MEDIUM, 14, 33, 44, 10, WS_TABSTOP
 	AUTORADIOBUTTON "&Grande", IDC_OPT_CURSOR_LARGE, 14, 43, 44, 10, WS_TABSTOP
 
 	GROUPBOX "Controlo", -1, 75, 11, 125, 44, BS_GROUPBOX
 	LTEXT "Popup Menu", -1, 79, 23, 40, 10
 	AUTOCHECKBOX "&Controlo", IDC_OPT_CONF_CTRL, 129, 23, 60, 10, WS_TABSTOP
-	AUTOCHECKBOX "&RotaÁ„o", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
-	LTEXT "EdiÁ„o r·pida", -1, 79, 43, 50, 10
+	AUTOCHECKBOX "&Rota√ß√£o", IDC_OPT_CONF_SHIFT, 129, 33, 60, 10, WS_TABSTOP
+	LTEXT "Edi√ß√£o r√°pida", -1, 79, 43, 50, 10
 	AUTOCHECKBOX "&Activado", IDC_OPT_QUICK_EDIT, 129, 43, 60, 10, WS_TABSTOP
 
-	GROUPBOX "HistÛrico de comandos", -1, 10, 57, 190, 35, BS_GROUPBOX
-	LTEXT "&N˙mero de comandos rechamados :", -1, 14, 67, 78, 18
+	GROUPBOX "Hist√≥rico de comandos", -1, 10, 57, 190, 35, BS_GROUPBOX
+	LTEXT "&N√∫mero de comandos rechamados :", -1, 14, 67, 78, 18
 	EDITTEXT IDC_OPT_HIST_SIZE, 92, 69, 31, 12, WS_TABSTOP|WS_BORDER|ES_NUMBER
 	CONTROL "", IDC_OPT_HIST_SIZE_UD, "msctls_updown32", UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_AUTOBUDDY|UDS_ARROWKEYS|UDS_NOTHOUSANDS, 0, 0, 0, 0
 	AUTOCHECKBOX "&Remover duplicados", IDC_OPT_HIST_NODOUBLE, 130, 67, 50, 18, WS_TABSTOP|BS_MULTILINE
@@ -161,7 +177,7 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 IDD_CONFIG DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION " ConfiguraÁ„o "
+CAPTION " Configura√ß√£o "
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "Buffer zone", -1, 10, 11, 100, 42, BS_GROUPBOX
@@ -183,7 +199,7 @@ FONT 8, "MS Shell Dlg"
 	GROUPBOX "Finalizar programa", -1, 115, 11, 80, 42, BS_GROUPBOX
 	AUTOCHECKBOX "&Fechar o console", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
 
-	GROUPBOX "EdiÁ„o", -1, 115, 55, 80, 42
+	GROUPBOX "Edi√ß√£o", -1, 115, 55, 80, 42
 	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 75, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
 }
 
@@ -191,7 +207,7 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 IDD_CONFIG DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION " ConfiguraÁ„o "
+CAPTION " Configura√ß√£o "
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "Zona do 'buffer'", -1, 10, 11, 100, 42, BS_GROUPBOX
@@ -213,7 +229,7 @@ FONT 8, "MS Shell Dlg"
 	GROUPBOX "Finalizar programa", -1, 115, 11, 80, 42, BS_GROUPBOX
 	AUTOCHECKBOX "&Fechar consola", IDC_CNF_CLOSE_EXIT, 119, 25, 75, 20, WS_TABSTOP
 
-	GROUPBOX "EdiÁ„o", -1, 115, 55, 80, 42
+	GROUPBOX "Edi√ß√£o", -1, 115, 55, 80, 42
 	COMBOBOX IDC_CNF_EDITION_MODE, 119, 69, 75, 20, CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP
 }
 
@@ -222,12 +238,12 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 IDD_SAVE_SETTINGS DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 140, 60
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "Par‚metros do console"
+CAPTION "Par√¢metros do console"
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "", -1, 10, 10, 120, 31, BS_GROUPBOX
-	AUTORADIOBUTTON "Manter configuraÁıes nas sessıes seguintes", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
-	AUTORADIOBUTTON "Modificar somente sess„o atual", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Manter configura√ß√µes nas sess√µes seguintes", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Modificar somente sess√£o atual", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
 
 	PUSHBUTTON "OK", IDOK, 20, 45, 35, 12
 	PUSHBUTTON "Cancelar", IDCANCEL, 65, 45, 35, 12
@@ -237,12 +253,12 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 IDD_SAVE_SETTINGS DIALOG LOADONCALL MOVEABLE DISCARDABLE 20, 20, 140, 60
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
-CAPTION "Par‚metros da consola"
+CAPTION "Par√¢metros da consola"
 FONT 8, "MS Shell Dlg"
 {
 	GROUPBOX "", -1, 10, 10, 120, 31, BS_GROUPBOX
-	AUTORADIOBUTTON "Manter configuraÁıes nas sessıes seguintes", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
-	AUTORADIOBUTTON "Modificar apenas a sess„o actual", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Manter configura√ß√µes nas sess√µes seguintes", IDC_SAV_SAVE, 14, 15, 110, 10, WS_TABSTOP
+	AUTORADIOBUTTON "Modificar apenas a sess√£o actual", IDC_SAV_SESSION, 14, 27, 110, 10, WS_TABSTOP
 
 	PUSHBUTTON "OK", IDOK, 20, 45, 35, 12
 	PUSHBUTTON "Cancelar", IDCANCEL, 65, 45, 35, 12
