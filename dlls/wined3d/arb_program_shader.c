@@ -449,7 +449,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->luminanceconst[i].const_num, scale));
         }
     }
-    checkGLcall("Load bumpmap consts\n");
+    checkGLcall("Load bumpmap consts");
 
     if(gl_shader->ycorrection != WINED3D_CONST_NUM_UNUSED)
     {
@@ -464,7 +464,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         val[2] = 1.0f;
         val[3] = 0.0f;
         GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->ycorrection, val));
-        checkGLcall("y correction loading\n");
+        checkGLcall("y correction loading");
     }
 
     if(gl_shader->num_int_consts == 0) return;
@@ -482,7 +482,7 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
         }
     }
-    checkGLcall("Load ps int consts\n");
+    checkGLcall("Load ps int consts");
 }
 
 /* GL locking is done by the caller. */
@@ -514,7 +514,7 @@ static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, gl_shader->int_consts[i], val));
         }
     }
-    checkGLcall("Load vs int consts\n");
+    checkGLcall("Load vs int consts");
 }
 
 /**
@@ -6054,7 +6054,7 @@ static void arbfp_blit_free(IWineD3DDevice *iface) {
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->uyvy_2d_shader));
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->yv12_rect_shader));
     GL_EXTCALL(glDeleteProgramsARB(1, &priv->yv12_2d_shader));
-    checkGLcall("Delete yuv programs\n");
+    checkGLcall("Delete yuv programs");
     LEAVE_GL();
 }
 

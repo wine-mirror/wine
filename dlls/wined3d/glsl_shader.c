@@ -3668,7 +3668,7 @@ static void hardcode_local_constants(IWineD3DBaseShaderImpl *shader, const WineD
         tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
         GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, value));
     }
-    checkGLcall("Hardcoding local constants\n");
+    checkGLcall("Hardcoding local constants");
 }
 
 /* GL locking is done by the caller */

@@ -3182,7 +3182,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
     if(noBackBufferBackup) {
         glGenTextures(1, &backup);
-        checkGLcall("glGenTextures\n");
+        checkGLcall("glGenTextures");
         glBindTexture(GL_TEXTURE_2D, backup);
         checkGLcall("glBindTexture(Src->glDescription.target, Src->glDescription.textureName)");
         texture_target = GL_TEXTURE_2D;
@@ -3801,7 +3801,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
                 glAlphaFunc(GL_NOTEQUAL, (float)Src->SrcBltCKey.dwColorSpaceLowValue / 256.0f);
             else
                 glAlphaFunc(GL_NOTEQUAL, 0.0f);
-            checkGLcall("glAlphaFunc\n");
+            checkGLcall("glAlphaFunc");
         } else {
             glDisable(GL_ALPHA_TEST);
             checkGLcall("glDisable GL_ALPHA_TEST");

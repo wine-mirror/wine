@@ -348,7 +348,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
     ENTER_GL();
 
     GL_EXTCALL(glGetQueryObjectuivARB(query_data->queryId, GL_QUERY_RESULT_AVAILABLE_ARB, &available));
-    checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT_AVAILABLE)\n");
+    checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT_AVAILABLE)");
     TRACE("(%p) : available %d.\n", This, available);
 
     if (available)
@@ -356,7 +356,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_GetData(IWineD3DQuery* iface, 
         if (data)
         {
             GL_EXTCALL(glGetQueryObjectuivARB(query_data->queryId, GL_QUERY_RESULT_ARB, &samples));
-            checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT)\n");
+            checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT)");
             TRACE("(%p) : Returning %d samples.\n", This, samples);
             *data = samples;
         }

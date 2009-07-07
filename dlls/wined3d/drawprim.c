@@ -853,21 +853,21 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
         glLightfv(GL_LIGHT0, GL_AMBIENT, black);
         glLightfv(GL_LIGHT0, GL_POSITION, red);
         glEnable(GL_LIGHT0);
-        checkGLcall("Setting up light 1\n");
+        checkGLcall("Setting up light 1");
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(1));
         glLightfv(GL_LIGHT1, GL_DIFFUSE, green);
         glLightfv(GL_LIGHT1, GL_SPECULAR, black);
         glLightfv(GL_LIGHT1, GL_AMBIENT, black);
         glLightfv(GL_LIGHT1, GL_POSITION, green);
         glEnable(GL_LIGHT1);
-        checkGLcall("Setting up light 2\n");
+        checkGLcall("Setting up light 2");
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(2));
         glLightfv(GL_LIGHT2, GL_DIFFUSE, blue);
         glLightfv(GL_LIGHT2, GL_SPECULAR, black);
         glLightfv(GL_LIGHT2, GL_AMBIENT, black);
         glLightfv(GL_LIGHT2, GL_POSITION, blue);
         glEnable(GL_LIGHT2);
-        checkGLcall("Setting up light 3\n");
+        checkGLcall("Setting up light 3");
 
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_MATERIAL);
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORVERTEX));
@@ -875,7 +875,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
         glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
         glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
         glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, white);
-        checkGLcall("Setting up materials\n");
+        checkGLcall("Setting up materials");
     }
 
     /* Enable the needed maps.
@@ -934,7 +934,7 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
     glRenderMode(GL_FEEDBACK);
 
     glEvalMesh2(GL_FILL, 0, ceilf(patch->numSegs[0]), 0, ceilf(patch->numSegs[1]));
-    checkGLcall("glEvalMesh2\n");
+    checkGLcall("glEvalMesh2");
 
     i = glRenderMode(GL_RENDER);
     if(i == -1) {
@@ -1005,12 +1005,12 @@ HRESULT tesselate_rectpatch(IWineD3DDeviceImpl *This,
         glLightfv(GL_LIGHT0, GL_POSITION, x);
         glLightfv(GL_LIGHT1, GL_POSITION, y);
         glLightfv(GL_LIGHT2, GL_POSITION, z);
-        checkGLcall("Setting up reverse light directions\n");
+        checkGLcall("Setting up reverse light directions");
 
         glRenderMode(GL_FEEDBACK);
         checkGLcall("glRenderMode(GL_FEEDBACK)");
         glEvalMesh2(GL_FILL, 0, ceilf(patch->numSegs[0]), 0, ceilf(patch->numSegs[1]));
-        checkGLcall("glEvalMesh2\n");
+        checkGLcall("glEvalMesh2");
         i = glRenderMode(GL_RENDER);
         checkGLcall("glRenderMode(GL_RENDER)");
 

@@ -443,7 +443,7 @@ static inline BOOL test_arb_vs_offset_limit(const WineD3D_GL_Info *gl_info)
 
     GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, 0));
     GL_EXTCALL(glDeleteProgramsARB(1, &prog));
-    checkGLcall("ARB vp offset limit test cleanup\n");
+    checkGLcall("ARB vp offset limit test cleanup");
 
     return ret;
 }
@@ -544,26 +544,26 @@ static void test_pbo_functionality(WineD3D_GL_Info *gl_info)
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
-    checkGLcall("Specifying the PBO test texture\n");
+    checkGLcall("Specifying the PBO test texture");
 
     GL_EXTCALL(glGenBuffersARB(1, &pbo));
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pbo));
     GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, sizeof(pattern), pattern, GL_STREAM_DRAW_ARB));
-    checkGLcall("Specifying the PBO test pbo\n");
+    checkGLcall("Specifying the PBO test pbo");
 
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 4, 4, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
-    checkGLcall("Loading the PBO test texture\n");
+    checkGLcall("Loading the PBO test texture");
 
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
     glFinish(); /* just to be sure */
 
     memset(check, 0, sizeof(check));
     glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, check);
-    checkGLcall("Reading back the PBO test texture\n");
+    checkGLcall("Reading back the PBO test texture");
 
     glDeleteTextures(1, &texture);
     GL_EXTCALL(glDeleteBuffersARB(1, &pbo));
-    checkGLcall("PBO test cleanup\n");
+    checkGLcall("PBO test cleanup");
 
     LEAVE_GL();
 
@@ -1471,7 +1471,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
     {
         gl_info->max_point_sprite_units = 0;
     }
-    checkGLcall("extension detection\n");
+    checkGLcall("extension detection");
 
     /* In some cases the number of texture stages can be larger than the number
      * of samplers. The GF4 for example can use only 2 samplers (no fragment

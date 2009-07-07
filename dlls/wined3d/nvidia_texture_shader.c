@@ -448,8 +448,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
                   stage, is_alpha, debug_d3dtop(op), op, arg1, arg2, arg3, texture_idx);
     }
 
-    checkGLcall("set_tex_op_nvrc()\n");
-
+    checkGLcall("set_tex_op_nvrc()");
 }
 
 
