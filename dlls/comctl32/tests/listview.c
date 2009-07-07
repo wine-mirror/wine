@@ -240,6 +240,12 @@ static const struct message editbox_create_pos[] = {
     { 0 }
 };
 
+static const struct message scroll_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_BEGINSCROLL },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ENDSCROLL },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -290,6 +296,15 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
           case LVN_ENDLABELEDIT:
               /* always accept new item text */
               return TRUE;
+          case LVN_BEGINSCROLL:
+          case LVN_ENDSCROLL:
+              {
+              NMLVSCROLL *pScroll = (NMLVSCROLL*)lParam;
+
+              trace("LVN_%sSCROLL: (%d,%d)\n", pScroll->hdr.code == LVN_BEGINSCROLL ?
+                                               "BEGIN" : "END", pScroll->dx, pScroll->dy);
+              }
+              break;
           }
           break;
       }
@@ -3778,6 +3793,45 @@ static void test_getcolumnwidth(void)
     DestroyWindow(hwnd);
 }
 
+static void test_scrollnotify(void)
+{
+    HWND hwnd;
+    DWORD ret;
+
+    hwnd = create_listview_control(0);
+
+    insert_column(hwnd, 0);
+    insert_column(hwnd, 1);
+    insert_item(hwnd, 0);
+
+    /* make it scrollable - resize */
+    ret = SendMessage(hwnd, LVM_SETCOLUMNWIDTH, 0, MAKELPARAM(100, 0));
+    expect(TRUE, ret);
+    ret = SendMessage(hwnd, LVM_SETCOLUMNWIDTH, 1, MAKELPARAM(100, 0));
+    expect(TRUE, ret);
+
+    /* try with dummy call */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessage(hwnd, LVM_SCROLL, 0, 0);
+    expect(TRUE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, scroll_parent_seq,
+                "scroll notify 1", TRUE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessage(hwnd, LVM_SCROLL, 1, 0);
+    expect(TRUE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, scroll_parent_seq,
+                "scroll notify 2", TRUE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessage(hwnd, LVM_SCROLL, 1, 1);
+    expect(TRUE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, scroll_parent_seq,
+                "scroll notify 3", TRUE);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     HMODULE hComctl32;
@@ -3844,6 +3898,7 @@ START_TEST(listview)
     test_get_set_view();
     test_canceleditlabel();
     test_mapidindex();
+    test_scrollnotify();
 
     unload_v6_module(ctx_cookie);
 
