@@ -3,7 +3,8 @@
  * French language support
  *
  * Copyright 2000 Mike McCormack
- * Copyright 2003 Vincent BÈron
+ * Copyright 2003 Vincent B√©ron
+ * Copyright 2009 Fr√©d√©ric Delanoy
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,25 +23,28 @@
 
 #include "serialui.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
-IDD_SERIALUICONFIG DIALOG DISCARDABLE 0, 0, 160, 159
+IDD_SERIALUICONFIG DIALOG DISCARDABLE 0, 0, 180, 150
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE
-CAPTION "PropriÈtÈs pour "
+CAPTION "Propri√©t√©s pour "
 FONT 8, "MS Shell Dlg"
 BEGIN
-  LTEXT         "Vitesse de connexion", -1,5,20,55,10
-  COMBOBOX      IDC_BAUD, 60, 20, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "ParitÈ", -1,5,40,55,10
-  COMBOBOX      IDC_PARITY, 60, 40, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "ContrÙle de flux", -1,5,60,55,10
-  COMBOBOX      IDC_FLOW, 60, 60, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "Bits de donnÈes", -1,5,80,55,10
-  COMBOBOX      IDC_DATA, 60, 80, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "Bits de stop", -1,5,100,55,10
-  COMBOBOX      IDC_STOP, 60, 100, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  DEFPUSHBUTTON "OK",     IDOK,30,138,50,14
-  PUSHBUTTON    "Annuler", IDCANCEL,85,138,50,14
+  LTEXT         "Vitesse de transmission (bauds)", -1,5,19,70,18
+  COMBOBOX      IDC_BAUD, 80, 20, 90, 15, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  LTEXT         "Parit√©", -1,5,42,55,10
+  COMBOBOX      IDC_PARITY, 80, 40, 90, 15, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  LTEXT         "Contr√¥le de flux", -1,5,62,55,10
+  COMBOBOX      IDC_FLOW, 80, 60, 90, 15, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  LTEXT         "Bits de donn√©es", -1,5,82,55,10
+  COMBOBOX      IDC_DATA, 80, 80, 90, 15, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  LTEXT         "Bits d'arr√™t", -1,5,102,55,10
+  COMBOBOX      IDC_STOP, 80, 100, 90, 15, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
+  DEFPUSHBUTTON "OK",     IDOK,30,125,50,14
+  PUSHBUTTON    "Annuler", IDCANCEL,93,125,50,14
   /* these two buttons are for testing Get/SetDefaultCommConfig */
   /* PUSHBUTTON    "GetDefault", ID_GETDEFAULT,30,115,50,14 */
   /* PUSHBUTTON    "SetDefault", ID_SETDEFAULT,85,115,50,14 */
