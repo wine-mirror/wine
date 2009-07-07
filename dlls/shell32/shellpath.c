@@ -812,6 +812,7 @@ typedef enum _CSIDL_Type {
     CSIDL_Type_NonExistent,
     CSIDL_Type_WindowsPath,
     CSIDL_Type_SystemPath,
+    CSIDL_Type_SystemX86Path,
 } CSIDL_Type;
 
 typedef struct
@@ -1029,7 +1030,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         NULL
     },
     { /* 0x29 - CSIDL_SYSTEMX86 */
-        CSIDL_Type_NonExistent,
+        CSIDL_Type_SystemX86Path,
         NULL,
         NULL
     },
@@ -1773,6 +1774,17 @@ HRESULT WINAPI SHGetFolderPathAndSubDirW(
             break;
         case CSIDL_Type_SystemPath:
             GetSystemDirectoryW(szTemp, MAX_PATH);
+            if (CSIDL_Data[folder].szDefaultPath &&
+             !IS_INTRESOURCE(CSIDL_Data[folder].szDefaultPath) &&
+             *CSIDL_Data[folder].szDefaultPath)
+            {
+                PathAddBackslashW(szTemp);
+                strcatW(szTemp, CSIDL_Data[folder].szDefaultPath);
+            }
+            hr = S_OK;
+            break;
+        case CSIDL_Type_SystemX86Path:
+            if (!GetSystemWow64DirectoryW(szTemp, MAX_PATH)) GetSystemDirectoryW(szTemp, MAX_PATH);
             if (CSIDL_Data[folder].szDefaultPath &&
              !IS_INTRESOURCE(CSIDL_Data[folder].szDefaultPath) &&
              *CSIDL_Data[folder].szDefaultPath)
