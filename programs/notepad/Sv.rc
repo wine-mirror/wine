@@ -134,9 +134,9 @@ STRING_UNICODE_LE,     "Unicode (UTF-16)"
 STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
 
 STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-Denna fil innehåller Unicode-tecken vilka kommer att gå \n\
-förlorade om du sparar filen under kodningen %s. \n\
-Klicka Avbryt och välj sedan ett av Unicode-alternativen \n\
-i teckenkodningslistan för att behålla dessa tecken. \n\
+Denna fil innehåller Unicode-tecken vilka kommer att gå\n\
+förlorade om du sparar filen under kodningen %s.\n\
+Klicka Avbryt och välj sedan ett av Unicode-alternativen\n\
+i teckenkodningslistan för att behålla dessa tecken.\n\
 Vill du fortsätta?"
 }

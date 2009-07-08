@@ -215,8 +215,8 @@ STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
 
 STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
 Este ficheiro contém caracteres Unicode que serão perdidos se\n\
-guardar este ficheiro na codificação %s. \n\
+guardar este ficheiro na codificação %s.\n\
 Para manter estes caracteres, carregue em Cancelar, e depois seleccione\n\
-uma das opções Unicode na lista de Codificações. \n\
+uma das opções Unicode na lista de Codificações.\n\
 Continuar?"
 }
