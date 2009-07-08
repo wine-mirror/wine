@@ -104,7 +104,7 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "Trier par ta&ille",           ID_VIEW_SORT_SIZE
         MENUITEM "Trier par dat&e",             ID_VIEW_SORT_DATE
         MENUITEM SEPARATOR
-        MENUITEM "Trier &par ...",              ID_VIEW_FILTER
+        MENUITEM "Trier &par...",               ID_VIEW_FILTER
     }
 
     POPUP "&Options"  {
