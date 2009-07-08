@@ -2747,7 +2747,7 @@ typedef struct IWineD3DPixelShaderImpl {
     struct wined3d_shader_signature_element input_signature[MAX_REG_INPUT];
     DWORD                 input_reg_map[MAX_REG_INPUT];
     BOOL                  input_reg_used[MAX_REG_INPUT];
-    int                         declared_in_count;
+    unsigned int declared_in_count;
 
     /* The GL shader */
     void                        *backend_priv;

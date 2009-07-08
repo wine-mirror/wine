@@ -769,9 +769,9 @@ static void shader_glsl_update_float_pixel_constants(IWineD3DDevice *iface, UINT
     }
 }
 
-static int vec4_varyings(DWORD shader_major, const WineD3D_GL_Info *gl_info)
+static unsigned int vec4_varyings(DWORD shader_major, const WineD3D_GL_Info *gl_info)
 {
-    int ret = GL_LIMITS(glsl_varyings) / 4;
+    unsigned int ret = GL_LIMITS(glsl_varyings) / 4;
     /* 4.0 shaders do not write clip coords because d3d10 does not support user clipplanes */
     if(shader_major > 3) return ret;
 
@@ -1186,7 +1186,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             if (This->baseShader.reg_maps.shader_version.major >= 3)
             {
                 DWORD idx = ((IWineD3DPixelShaderImpl *)This)->input_reg_map[reg->idx];
-                DWORD in_count = vec4_varyings(This->baseShader.reg_maps.shader_version.major, gl_info);
+                unsigned int in_count = vec4_varyings(This->baseShader.reg_maps.shader_version.major, gl_info);
 
                 if (reg->rel_addr)
                 {
@@ -3351,7 +3351,7 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
     UINT semantic_idx_in, semantic_idx_out;
     DWORD *set;
     DWORD in_idx;
-    DWORD in_count = vec4_varyings(3, gl_info);
+    unsigned int in_count = vec4_varyings(3, gl_info);
     char reg_mask[6], reg_mask_out[6];
     char destination[50];
     WORD input_map, output_map;
