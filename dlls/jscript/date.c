@@ -2634,7 +2634,7 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
         case 1: {
             VARIANT prim, num;
 
-            hres = to_primitive(dispex->ctx, get_arg(dp,0), ei, &prim);
+            hres = to_primitive(dispex->ctx, get_arg(dp,0), ei, &prim, NO_HINT);
             if(FAILED(hres))
                 return hres;
 

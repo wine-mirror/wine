@@ -1931,11 +1931,11 @@ static HRESULT add_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexcept_
     VARIANT r, l;
     HRESULT hres;
 
-    hres = to_primitive(ctx->parser->script, lval, ei, &l);
+    hres = to_primitive(ctx->parser->script, lval, ei, &l, NO_HINT);
     if(FAILED(hres))
         return hres;
 
-    hres = to_primitive(ctx->parser->script, rval, ei, &r);
+    hres = to_primitive(ctx->parser->script, rval, ei, &r, NO_HINT);
     if(FAILED(hres)) {
         VariantClear(&l);
         return hres;
@@ -2518,7 +2518,7 @@ static HRESULT equal_values(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexc
         VARIANT v;
         HRESULT hres;
 
-        hres = to_primitive(ctx->parser->script, rval, ei, &v);
+        hres = to_primitive(ctx->parser->script, rval, ei, &v, NO_HINT);
         if(FAILED(hres))
             return hres;
 
@@ -2533,7 +2533,7 @@ static HRESULT equal_values(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, jsexc
         VARIANT v;
         HRESULT hres;
 
-        hres = to_primitive(ctx->parser->script, lval, ei, &v);
+        hres = to_primitive(ctx->parser->script, lval, ei, &v, NO_HINT);
         if(FAILED(hres))
             return hres;
 
@@ -2638,11 +2638,11 @@ static HRESULT less_eval(exec_ctx_t *ctx, VARIANT *lval, VARIANT *rval, BOOL gre
     VARIANT l, r, ln, rn;
     HRESULT hres;
 
-    hres = to_primitive(ctx->parser->script, lval, ei, &l);
+    hres = to_primitive(ctx->parser->script, lval, ei, &l, NO_HINT);
     if(FAILED(hres))
         return hres;
 
-    hres = to_primitive(ctx->parser->script, rval, ei, &r);
+    hres = to_primitive(ctx->parser->script, rval, ei, &r, NO_HINT);
     if(FAILED(hres)) {
         VariantClear(&l);
         return hres;

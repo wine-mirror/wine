@@ -175,7 +175,7 @@ jsheap_t *jsheap_mark(jsheap_t *heap)
 }
 
 /* ECMA-262 3rd Edition    9.1 */
-HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
+HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret, hint_t hint)
 {
     switch(V_VT(v)) {
     case VT_EMPTY:
@@ -189,8 +189,61 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
         V_VT(ret) = VT_BSTR;
         V_BSTR(ret) = SysAllocString(V_BSTR(v));
         break;
-    case VT_DISPATCH:
-        return disp_propget(V_DISPATCH(v), DISPID_VALUE, ctx->lcid, ret, ei, NULL /*FIXME*/);
+    case VT_DISPATCH: {
+        DispatchEx *jsdisp;
+        DISPID id;
+        DISPPARAMS dp = {NULL, NULL, 0, 0};
+        HRESULT hres;
+
+        static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
+        static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
+
+        jsdisp = iface_to_jsdisp((IUnknown*)V_DISPATCH(v));
+        if(!jsdisp)
+            return disp_propget(V_DISPATCH(v), DISPID_VALUE, ctx->lcid, ret, ei, NULL /*FIXME*/);
+
+        if(hint == NO_HINT)
+            hint = is_class(jsdisp, JSCLASS_DATE) ? HINT_STRING : HINT_NUMBER;
+
+        /* Native implementation doesn't throw TypeErrors, returns strange values */
+
+        hres = jsdisp_get_id(jsdisp, hint == HINT_STRING ? toStringW : valueOfW, 0, &id);
+        if(SUCCEEDED(hres)) {
+            hres = jsdisp_call(jsdisp, id, ctx->lcid, DISPATCH_METHOD, &dp, ret, ei, NULL /*FIXME*/);
+            if(FAILED(hres)) {
+                FIXME("throw TypeError\n");
+                jsdisp_release(jsdisp);
+                return hres;
+            }
+            else if(V_VT(ret) != VT_DISPATCH) {
+                jsdisp_release(jsdisp);
+                return S_OK;
+            }
+            else
+                IDispatch_Release(V_DISPATCH(ret));
+        }
+
+        hres = jsdisp_get_id(jsdisp, hint == HINT_STRING ? valueOfW : toStringW, 0, &id);
+        if(SUCCEEDED(hres)) {
+            hres = jsdisp_call(jsdisp, id, ctx->lcid, DISPATCH_METHOD, &dp, ret, ei, NULL /*FIXME*/);
+            if(FAILED(hres)) {
+                FIXME("throw TypeError\n");
+                jsdisp_release(jsdisp);
+                return hres;
+            }
+            else if(V_VT(ret) != VT_DISPATCH) {
+                jsdisp_release(jsdisp);
+                return S_OK;
+            }
+            else
+                IDispatch_Release(V_DISPATCH(ret));
+        }
+
+        jsdisp_release(jsdisp);
+
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
     default:
         FIXME("Unimplemented for vt %d\n", V_VT(v));
         return E_NOTIMPL;
@@ -356,7 +409,7 @@ HRESULT to_number(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret)
         VARIANT prim;
         HRESULT hres;
 
-        hres = to_primitive(ctx, v, ei, &prim);
+        hres = to_primitive(ctx, v, ei, &prim, HINT_NUMBER);
         if(FAILED(hres))
             return hres;
 
@@ -489,7 +542,7 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
         VARIANT prim;
         HRESULT hres;
 
-        hres = to_primitive(ctx, v, ei, &prim);
+        hres = to_primitive(ctx, v, ei, &prim, HINT_STRING);
         if(FAILED(hres))
             return hres;
 

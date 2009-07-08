@@ -828,7 +828,7 @@ HRESULT jsdisp_call_value(DispatchEx *disp, LCID lcid, WORD flags, DISPPARAMS *d
     return disp->builtin_info->value_prop.invoke(disp, lcid, flags, dp, retv, ei, caller);
 }
 
-static HRESULT jsdisp_call(DispatchEx *disp, DISPID id, LCID lcid, WORD flags, DISPPARAMS *dp, VARIANT *retv,
+HRESULT jsdisp_call(DispatchEx *disp, DISPID id, LCID lcid, WORD flags, DISPPARAMS *dp, VARIANT *retv,
         jsexcept_t *ei, IServiceProvider *caller)
 {
     dispex_prop_t *prop;

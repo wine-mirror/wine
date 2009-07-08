@@ -1026,6 +1026,8 @@ date.setUTCMonth(22, 37);
 ok(date.getTime() === 60987050010, "date.getTime() = " + date.getTime());
 date.setUTCFullYear(83, 21, 321);
 ok(date.getTime() === -59464984149990, "date.getTime() = " + date.getTime());
+ok(Math.abs(date) === 59464984149990, "Math.abs(date) = " + Math.abs(date));
+ok(getVT(date+1) === "VT_BSTR", "getVT(date+1) = " + getVT(date+1));
 
 ok(isNaN(Date.parse()), "Date.parse() is not NaN");
 ok(isNaN(Date.parse("")), "Date.parse(\"\") is not NaN");

@@ -123,6 +123,7 @@ DispatchEx *iface_to_jsdisp(IUnknown*);
 
 HRESULT disp_call(IDispatch*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_call_value(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+HRESULT jsdisp_call(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propget(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT disp_propput(IDispatch*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
 HRESULT jsdisp_propget(DispatchEx*,DISPID,LCID,VARIANT*,jsexcept_t*,IServiceProvider*);
@@ -145,7 +146,13 @@ HRESULT create_string(script_ctx_t*,const WCHAR*,DWORD,DispatchEx**);
 HRESULT create_bool(script_ctx_t*,VARIANT_BOOL,DispatchEx**);
 HRESULT create_number(script_ctx_t*,VARIANT*,DispatchEx**);
 
-HRESULT to_primitive(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*);
+typedef enum {
+    NO_HINT,
+    HINT_STRING,
+    HINT_NUMBER
+} hint_t;
+
+HRESULT to_primitive(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*, hint_t);
 HRESULT to_boolean(VARIANT*,VARIANT_BOOL*);
 HRESULT to_number(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*);
 HRESULT to_integer(script_ctx_t*,VARIANT*,jsexcept_t*,VARIANT*);

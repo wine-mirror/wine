@@ -882,4 +882,16 @@ function testEmbededFunctions() {
 
 testEmbededFunctions();
 
+date = new Date();
+date.toString = function() { return "toString"; }
+ok(""+date === "toString", "''+date = " + date);
+date.toString = function() { return this; }
+ok(""+date === ""+date.valueOf(), "''+date = " + date);
+
+str = new String("test");
+str.valueOf = function() { return "valueOf"; }
+ok(""+str === "valueOf", "''+str = " + str);
+str.valueOf = function() { return new Date(); }
+ok(""+str === "test", "''+str = " + str);
+
 reportSuccess();
