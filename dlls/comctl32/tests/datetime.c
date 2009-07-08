@@ -423,10 +423,13 @@ static void test_dtm_set_range_swap_min_max(HWND hWndDateTime)
     r = SendMessage(hWndDateTime, DTM_GETRANGE, 0, (LPARAM)getSt);
     ok(r == (GDTR_MIN | GDTR_MAX), "Expected %x, not %x(GDTR_MIN) or %x(GDTR_MAX), got %lx\n", (GDTR_MIN | GDTR_MAX), GDTR_MIN, GDTR_MAX, r);
     todo_wine {
-        expect_systime(&st[0], &getSt[0]);
-    }
-    todo_wine {
-        expect_systime(&st[1], &getSt[1]);
+        ok(compare_systime(&st[0], &getSt[0]) == 1 ||
+           broken(compare_systime(&st[0], &getSt[1]) == 1), /* comctl32 version  <= 5.80 */
+           "ST1 != ST2\n");
+
+        ok(compare_systime(&st[1], &getSt[1]) == 1 ||
+           broken(compare_systime(&st[1], &getSt[0]) == 1), /* comctl32 version  <= 5.80 */
+           "ST1 != ST2\n");
     }
 
     fill_systime_struct(&st[0], 1980, 1, 3, 23, 14, 34, 37, 465);
@@ -439,7 +442,9 @@ static void test_dtm_set_range_swap_min_max(HWND hWndDateTime)
     and doing DTM_SETSYSTEMTIME */
     expect_systime_date(&st[0], &getSt[0]);
     todo_wine {
-        expect_systime_time(&origSt, &getSt[0]);
+        ok(compare_systime_time(&origSt, &getSt[0]) == 1 ||
+           broken(compare_systime_time(&st[0], &getSt[0]) == 1), /* comctl32 version  <= 5.80 */
+           "ST1.time != ST2.time\n");
     }
 
     /* set st[0] to value higher than minimum */
@@ -455,10 +460,13 @@ static void test_dtm_set_range_swap_min_max(HWND hWndDateTime)
     r = SendMessage(hWndDateTime, DTM_GETRANGE, 0, (LPARAM)getSt);
     ok(r == (GDTR_MIN | GDTR_MAX), "Expected %x, not %x(GDTR_MIN) or %x(GDTR_MAX), got %lx\n", (GDTR_MIN | GDTR_MAX), GDTR_MIN, GDTR_MAX, r);
     todo_wine {
-        expect_systime(&st[0], &getSt[1]);
-    }
-    todo_wine {
-        expect_systime(&st[1], &getSt[0]);
+        ok(compare_systime(&st[0], &getSt[1]) == 1 ||
+           broken(compare_systime(&st[0], &getSt[0]) == 1), /* comctl32 version  <= 5.80 */
+           "ST1 != ST2\n");
+
+        ok(compare_systime(&st[1], &getSt[0]) == 1 ||
+           broken(compare_systime(&st[1], &getSt[1]) == 1), /* comctl32 version <= 5.80 */
+           "ST1 != ST2\n");
     }
 
     /* set st[0] to value higher than st[1] */
