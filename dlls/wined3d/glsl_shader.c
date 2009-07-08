@@ -3866,7 +3866,7 @@ static GLhandleARB find_glsl_pshader(IWineD3DPixelShaderImpl *shader, const stru
         }
     }
 
-    TRACE("No matching GL shader found, compiling a new shader\n");
+    TRACE("No matching GL shader found for shader %p, compiling a new shader.\n", shader);
     if(shader_data->shader_array_size == shader_data->num_gl_shaders) {
         if (shader_data->num_gl_shaders)
         {
@@ -3934,7 +3934,7 @@ static GLhandleARB find_glsl_vshader(IWineD3DVertexShaderImpl *shader, const str
         }
     }
 
-    TRACE("No matching GL shader found, compiling a new shader\n");
+    TRACE("No matching GL shader found for shader %p, compiling a new shader.\n", shader);
 
     if(shader_data->shader_array_size == shader_data->num_gl_shaders) {
         if (shader_data->num_gl_shaders)
