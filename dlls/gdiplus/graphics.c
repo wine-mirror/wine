@@ -3400,7 +3400,7 @@ GpStatus WINGDIPAPI GdipComment(GpGraphics *graphics, UINT sizeData, GDIPCONST B
     return NotImplemented;
 }
 
-GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsState state)
+GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsContainer state)
 {
     GpStatus sts;
     GraphicsContainerItem *container, *container2;
@@ -3419,6 +3419,10 @@ GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsState state)
     if(&container->entry == &graphics->containers)
         return Ok;
 
+    sts = restore_container(graphics, container);
+    if(sts != Ok)
+        return sts;
+
     /* remove all of the containers on top of the found container */
     LIST_FOR_EACH_ENTRY_SAFE(container, container2, &graphics->containers, GraphicsContainerItem, entry){
         if(container->contid == state)
@@ -3428,10 +3432,9 @@ GpStatus WINGDIPAPI GdipEndContainer(GpGraphics *graphics, GraphicsState state)
     }
 
     list_remove(&container->entry);
-    sts = restore_container(graphics, container);
     delete_container(container);
 
-    return sts;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipScaleWorldTransform(GpGraphics *graphics, REAL sx,
