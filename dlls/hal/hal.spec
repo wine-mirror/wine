@@ -70,7 +70,7 @@
 @ stub KdComPortInUse
 @ stub KeAcquireSpinLock
 @ stub KeFlushWriteBuffer
-@ stub KeGetCurrentIrql
+@ stdcall KeGetCurrentIrql()
 @ stub KeLowerIrql
 @ stub KeQueryPerformanceCounter
 @ stub KeRaiseIrql

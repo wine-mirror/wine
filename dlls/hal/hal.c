@@ -126,3 +126,9 @@ ULONG WINAPI HalGetBusData(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG Slo
     /* Claim that there is no such bus */
     return 0;
 }
+
+KIRQL WINAPI KeGetCurrentIrql(VOID)
+{
+    FIXME( " stub!\n");
+    return 0;
+}
