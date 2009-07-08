@@ -590,17 +590,21 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
         TRACE("failed to get address of %s (%s)\n", debugstr_w(hostnameW), gai_strerror(ret));
         return FALSE;
     }
-    if (*sa_len < sizeof(struct sockaddr_in))
+    if (*sa_len < res->ai_addrlen)
     {
         WARN("address too small\n");
         freeaddrinfo( res );
         return FALSE;
     }
-    *sa_len = sizeof(struct sockaddr_in);
-    memset( sa, 0, sizeof(struct sockaddr_in) );
-    memcpy( &((struct sockaddr_in *)sa)->sin_addr, &((struct sockaddr_in *)res->ai_addr)->sin_addr, sizeof(struct in_addr) );
-    ((struct sockaddr_in *)sa)->sin_family = res->ai_family;
-    ((struct sockaddr_in *)sa)->sin_port = htons( port );
+    *sa_len = res->ai_addrlen;
+    memcpy( sa, res->ai_addr, res->ai_addrlen );
+    /* Copy port */
+    switch (res->ai_family)
+    {
+    case AF_INET:
+        ((struct sockaddr_in *)sa)->sin_port = htons( port );
+        break;
+    }
 
     freeaddrinfo( res );
 #else
