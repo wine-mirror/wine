@@ -716,6 +716,7 @@ static BOOL open_connection( request_t *request )
     char address[32];
     WCHAR *addressW;
     INTERNET_PORT port;
+    socklen_t slen;
 
     if (netconn_connected( &request->netconn )) return TRUE;
 
@@ -724,7 +725,8 @@ static BOOL open_connection( request_t *request )
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, connect->servername, strlenW(connect->servername) + 1 );
 
-    if (!netconn_resolve( connect->servername, port, &connect->sockaddr )) return FALSE;
+    slen = sizeof(connect->sockaddr);
+    if (!netconn_resolve( connect->servername, port, (struct sockaddr *)&connect->sockaddr, &slen )) return FALSE;
     inet_ntop( connect->sockaddr.sin_family, &connect->sockaddr.sin_addr, address, sizeof(address) );
     addressW = strdupAW( address );
 

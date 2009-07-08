@@ -566,7 +566,7 @@ DWORD netconn_set_timeout( netconn_t *netconn, BOOL send, int value )
     return ERROR_SUCCESS;
 }
 
-BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr_in *sa )
+BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa, socklen_t *sa_len )
 {
     char *hostname;
 #ifdef HAVE_GETADDRINFO
@@ -574,6 +574,7 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr_in *
     int ret;
 #else
     struct hostent *he;
+    struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 #endif
 
     if (!(hostname = strdupWA( hostnameW ))) return FALSE;
@@ -589,10 +590,17 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr_in *
         TRACE("failed to get address of %s (%s)\n", debugstr_w(hostnameW), gai_strerror(ret));
         return FALSE;
     }
+    if (*sa_len < sizeof(struct sockaddr_in))
+    {
+        WARN("address too small\n");
+        freeaddrinfo( res );
+        return FALSE;
+    }
+    *sa_len = sizeof(struct sockaddr_in);
     memset( sa, 0, sizeof(struct sockaddr_in) );
-    memcpy( &sa->sin_addr, &((struct sockaddr_in *)res->ai_addr)->sin_addr, sizeof(struct in_addr) );
-    sa->sin_family = res->ai_family;
-    sa->sin_port = htons( port );
+    memcpy( &((struct sockaddr_in *)sa)->sin_addr, &((struct sockaddr_in *)res->ai_addr)->sin_addr, sizeof(struct in_addr) );
+    ((struct sockaddr_in *)sa)->sin_family = res->ai_family;
+    ((struct sockaddr_in *)sa)->sin_port = htons( port );
 
     freeaddrinfo( res );
 #else
@@ -606,10 +614,17 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr_in *
         LeaveCriticalSection( &cs_gethostbyname );
         return FALSE;
     }
+    if (*sa_len < sizeof(struct sockaddr_in))
+    {
+        WARN("address too small\n");
+        LeaveCriticalSection( &cs_gethostbyname );
+        return FALSE;
+    }
+    *sa_len = sizeof(struct sockaddr_in);
     memset( sa, 0, sizeof(struct sockaddr_in) );
-    memcpy( &sa->sin_addr, he->h_addr, he->h_length );
-    sa->sin_family = he->h_addrtype;
-    sa->sin_port = htons( port );
+    memcpy( &sin->sin_addr, he->h_addr, he->h_length );
+    sin->sin_family = he->h_addrtype;
+    sin->sin_port = htons( port );
 
     LeaveCriticalSection( &cs_gethostbyname );
 #endif
