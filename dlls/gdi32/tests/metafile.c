@@ -2331,7 +2331,7 @@ static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
     UINT size, emf_size, i;
     WORD check = 0;
     DWORD rec_num = 0;
-    METAHEADER *mh;
+    METAHEADER *mh = NULL;
     METARECORD *rec;
     INT horz_res, vert_res, horz_size, vert_size;
 
@@ -2363,6 +2363,7 @@ static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
 
     size = GetWinMetaFileBits(emf, 0, NULL, mode, display_dc);
     ok(size, "GetWinMetaFileBits returns 0\n");
+    if(!size) goto end;
     mh = HeapAlloc(GetProcessHeap(), 0, size);
     GetWinMetaFileBits(emf, size, (BYTE*)mh, mode, display_dc);
 
@@ -2464,6 +2465,7 @@ static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
         rec = (METARECORD*)((WORD*)rec + rec->rdSize);
     }
 
+end:
     HeapFree(GetProcessHeap(), 0, mh);
     HeapFree(GetProcessHeap(), 0, enh_header);
     DeleteEnhMetaFile(emf);
