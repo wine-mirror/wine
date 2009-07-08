@@ -64,7 +64,24 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
         HeapFree(GetProcessHeap(), 0, This->backBuffer);
     }
 
-    for(i = 0; i < This->num_contexts; i++) {
+    for (i = 0; i < This->num_contexts; ++i)
+    {
+        if (This->context[i] == This->wineD3DDevice->activeContext)
+        {
+            IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)This->wineD3DDevice->swapchains[0];
+
+            /* Avoid destroying the currently active context for non-implicit swapchains. */
+            if (This != swapchain)
+            {
+                TRACE("Would destroy currently active context %p on a non-implicit swapchain.\n", This->context[i]);
+
+                if (swapchain->backBuffer)
+                    ActivateContext(This->wineD3DDevice, swapchain->backBuffer[0], CTXUSAGE_RESOURCELOAD);
+                else
+                    ActivateContext(This->wineD3DDevice, swapchain->frontBuffer, CTXUSAGE_RESOURCELOAD);
+            }
+        }
+
         DestroyContext(This->wineD3DDevice, This->context[i]);
     }
     /* Restore the screen resolution if we rendered in fullscreen
