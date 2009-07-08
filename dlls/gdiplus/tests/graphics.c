@@ -137,8 +137,7 @@ static void test_save_restore(void)
     stat = GdipRestoreGraphics(graphics1, state_a);
     expect(Ok, stat);
     GdipGetInterpolationMode(graphics1, &mode);
-    todo_wine
-        expect(InterpolationModeBilinear, mode);
+    expect(InterpolationModeBilinear, mode);
     GdipDeleteGraphics(graphics1);
 
     log_state(state_a, &state_log);
@@ -154,12 +153,10 @@ static void test_save_restore(void)
     expect(Ok, stat);
     GdipRestoreGraphics(graphics1, state_b);
     GdipGetInterpolationMode(graphics1, &mode);
-    todo_wine
-        expect(InterpolationModeBicubic, mode);
+    expect(InterpolationModeBicubic, mode);
     GdipRestoreGraphics(graphics1, state_a);
     GdipGetInterpolationMode(graphics1, &mode);
-    todo_wine
-        expect(InterpolationModeBilinear, mode);
+    expect(InterpolationModeBilinear, mode);
     GdipDeleteGraphics(graphics1);
 
     log_state(state_a, &state_log);
@@ -176,16 +173,13 @@ static void test_save_restore(void)
     GdipSetInterpolationMode(graphics1, InterpolationModeHighQualityBilinear);
     GdipRestoreGraphics(graphics1, state_b);
     GdipGetInterpolationMode(graphics1, &mode);
-    todo_wine
-        expect(InterpolationModeBicubic, mode);
+    expect(InterpolationModeBicubic, mode);
     GdipRestoreGraphics(graphics1, state_c);
     GdipGetInterpolationMode(graphics1, &mode);
-    todo_wine
-        expect(InterpolationModeBicubic, mode);
+    expect(InterpolationModeBicubic, mode);
     GdipRestoreGraphics(graphics1, state_a);
     GdipGetInterpolationMode(graphics1, &mode);
-    todo_wine
-        expect(InterpolationModeBilinear, mode);
+    expect(InterpolationModeBilinear, mode);
     GdipDeleteGraphics(graphics1);
 
     log_state(state_a, &state_log);
@@ -204,12 +198,10 @@ static void test_save_restore(void)
     GdipSetInterpolationMode(graphics2, InterpolationModeNearestNeighbor);
     GdipRestoreGraphics(graphics1, state_a);
     GdipGetInterpolationMode(graphics1, &mode);
-    todo_wine
-        expect(InterpolationModeBilinear, mode);
+    expect(InterpolationModeBilinear, mode);
     GdipRestoreGraphics(graphics2, state_b);
     GdipGetInterpolationMode(graphics2, &mode);
-    todo_wine
-        expect(InterpolationModeBicubic, mode);
+    expect(InterpolationModeBicubic, mode);
     GdipDeleteGraphics(graphics1);
     GdipDeleteGraphics(graphics2);
 

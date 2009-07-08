@@ -3322,15 +3322,7 @@ GpStatus WINGDIPAPI GdipResetWorldTransform(GpGraphics *graphics)
 
 GpStatus WINGDIPAPI GdipRestoreGraphics(GpGraphics *graphics, GraphicsState state)
 {
-    static int calls;
-
-    if(!graphics)
-        return InvalidParameter;
-
-    if(!(calls++))
-        FIXME("graphics state not implemented\n");
-
-    return Ok;
+    return GdipEndContainer(graphics, state);
 }
 
 GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics *graphics, REAL angle,
@@ -3349,16 +3341,7 @@ GpStatus WINGDIPAPI GdipRotateWorldTransform(GpGraphics *graphics, REAL angle,
 
 GpStatus WINGDIPAPI GdipSaveGraphics(GpGraphics *graphics, GraphicsState *state)
 {
-    static int calls;
-
-    if(!graphics || !state)
-        return InvalidParameter;
-
-    if(!(calls++))
-        FIXME("graphics state not implemented\n");
-
-    *state = 0xdeadbeef;
-    return Ok;
+    return GdipBeginContainer2(graphics, state);
 }
 
 GpStatus WINGDIPAPI GdipBeginContainer2(GpGraphics *graphics,
