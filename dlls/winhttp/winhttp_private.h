@@ -110,7 +110,7 @@ typedef struct
     LPWSTR password;
     INTERNET_PORT hostport;
     INTERNET_PORT serverport;
-    struct sockaddr_in sockaddr;
+    struct sockaddr_storage sockaddr;
 } connect_t;
 
 typedef struct

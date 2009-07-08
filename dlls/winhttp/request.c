@@ -713,6 +713,7 @@ BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, 
 static BOOL open_connection( request_t *request )
 {
     connect_t *connect;
+    const void *addr;
     char address[32];
     WCHAR *addressW;
     INTERNET_PORT port;
@@ -727,16 +728,25 @@ static BOOL open_connection( request_t *request )
 
     slen = sizeof(connect->sockaddr);
     if (!netconn_resolve( connect->servername, port, (struct sockaddr *)&connect->sockaddr, &slen )) return FALSE;
-    inet_ntop( connect->sockaddr.sin_family, &connect->sockaddr.sin_addr, address, sizeof(address) );
+    switch (connect->sockaddr.ss_family)
+    {
+    case AF_INET:
+        addr = &((struct sockaddr_in *)&connect->sockaddr)->sin_addr;
+        break;
+    default:
+        WARN("unsupported address family %d\n", connect->sockaddr.ss_family);
+        return FALSE;
+    }
+    inet_ntop( connect->sockaddr.ss_family, addr, address, sizeof(address) );
     addressW = strdupAW( address );
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, addressW, strlenW(addressW) + 1 );
 
-    TRACE("connecting to %s:%u\n", address, ntohs(connect->sockaddr.sin_port));
+    TRACE("connecting to %s:%u\n", address, port);
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, addressW, 0 );
 
-    if (!netconn_create( &request->netconn, connect->sockaddr.sin_family, SOCK_STREAM, 0 ))
+    if (!netconn_create( &request->netconn, connect->sockaddr.ss_family, SOCK_STREAM, 0 ))
     {
         heap_free( addressW );
         return FALSE;
