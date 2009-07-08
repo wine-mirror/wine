@@ -710,11 +710,15 @@ BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, 
     return ret;
 }
 
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 46
+#endif
+
 static BOOL open_connection( request_t *request )
 {
     connect_t *connect;
     const void *addr;
-    char address[32];
+    char address[INET6_ADDRSTRLEN];
     WCHAR *addressW;
     INTERNET_PORT port;
     socklen_t slen;
@@ -732,6 +736,9 @@ static BOOL open_connection( request_t *request )
     {
     case AF_INET:
         addr = &((struct sockaddr_in *)&connect->sockaddr)->sin_addr;
+        break;
+    case AF_INET6:
+        addr = &((struct sockaddr_in6 *)&connect->sockaddr)->sin6_addr;
         break;
     default:
         WARN("unsupported address family %d\n", connect->sockaddr.ss_family);
