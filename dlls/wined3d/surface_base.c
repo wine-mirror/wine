@@ -724,6 +724,25 @@ static void convert_r5g6b5_x8r8g8b8(const BYTE *src, BYTE *dst,
     }
 }
 
+static void convert_a8r8g8b8_x8r8g8b8(const BYTE *src, BYTE *dst,
+        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+{
+    unsigned int x, y;
+
+    TRACE("Converting %ux%u pixels, pitches %u %u\n", w, h, pitch_in, pitch_out);
+
+    for (y = 0; y < h; ++y)
+    {
+        const DWORD *src_line = (const DWORD *)(src + y * pitch_in);
+        DWORD *dst_line = (DWORD *)(dst + y * pitch_out);
+
+        for (x = 0; x < w; ++x)
+        {
+            dst_line[x] = 0xff000000 | (src_line[x] & 0xffffff);
+        }
+    }
+}
+
 struct d3dfmt_convertor_desc {
     WINED3DFORMAT from, to;
     void (*convert)(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h);
@@ -733,6 +752,7 @@ static const struct d3dfmt_convertor_desc convertors[] =
 {
     {WINED3DFMT_R32_FLOAT,  WINED3DFMT_R16_FLOAT,   convert_r32_float_r16_float},
     {WINED3DFMT_R5G6B5,     WINED3DFMT_X8R8G8B8,    convert_r5g6b5_x8r8g8b8},
+    {WINED3DFMT_A8R8G8B8,   WINED3DFMT_X8R8G8B8,    convert_a8r8g8b8_x8r8g8b8},
 };
 
 static inline const struct d3dfmt_convertor_desc *find_convertor(WINED3DFORMAT from, WINED3DFORMAT to)
