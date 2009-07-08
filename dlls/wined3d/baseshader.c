@@ -159,9 +159,8 @@ int shader_vaddline(SHADER_BUFFER* buffer, const char *format, va_list args)
 
     rc = vsnprintf(base, SHADER_PGMSIZE - 1 - buffer->bsize, format, args);
 
-    if (rc < 0 ||                                   /* C89 */ 
-        rc > SHADER_PGMSIZE - 1 - buffer->bsize) {  /* C99 */
-
+    if (rc < 0 /* C89 */ || (unsigned int)rc > SHADER_PGMSIZE - 1 - buffer->bsize /* C99 */)
+    {
         ERR("The buffer allocated for the shader program string "
             "is too small at %d bytes.\n", SHADER_PGMSIZE);
         buffer->bsize = SHADER_PGMSIZE - 1;
