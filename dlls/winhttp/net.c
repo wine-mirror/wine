@@ -581,15 +581,25 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
 
 #ifdef HAVE_GETADDRINFO
     memset( &hints, 0, sizeof(struct addrinfo) );
+    /* Prefer IPv4 to IPv6 addresses, since some web servers do not listen on
+     * their IPv6 addresses even though they have IPv6 addresses in the DNS.
+     */
     hints.ai_family = AF_INET;
 
     ret = getaddrinfo( hostname, NULL, &hints, &res );
-    heap_free( hostname );
     if (ret != 0)
     {
-        TRACE("failed to get address of %s (%s)\n", debugstr_w(hostnameW), gai_strerror(ret));
-        return FALSE;
+        TRACE("failed to get IPv4 address of %s (%s), retrying with IPv6\n", debugstr_w(hostnameW), gai_strerror(ret));
+        hints.ai_family = AF_INET6;
+        ret = getaddrinfo( hostname, NULL, &hints, &res );
+        if (ret != 0)
+        {
+            TRACE("failed to get address of %s (%s)\n", debugstr_w(hostnameW), gai_strerror(ret));
+            heap_free( hostname );
+            return FALSE;
+        }
     }
+    heap_free( hostname );
     if (*sa_len < res->ai_addrlen)
     {
         WARN("address too small\n");
@@ -604,9 +614,13 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
     case AF_INET:
         ((struct sockaddr_in *)sa)->sin_port = htons( port );
         break;
+    case AF_INET6:
+        ((struct sockaddr_in6 *)sa)->sin6_port = htons( port );
+        break;
     }
 
     freeaddrinfo( res );
+    return TRUE;
 #else
     EnterCriticalSection( &cs_gethostbyname );
 
@@ -631,8 +645,8 @@ BOOL netconn_resolve( WCHAR *hostnameW, INTERNET_PORT port, struct sockaddr *sa,
     sin->sin_port = htons( port );
 
     LeaveCriticalSection( &cs_gethostbyname );
-#endif
     return TRUE;
+#endif
 }
 
 const void *netconn_get_certificate( netconn_t *conn )
