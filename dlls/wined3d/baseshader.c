@@ -304,10 +304,14 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
             {
                 if (shader_type != WINED3D_SHADER_TYPE_PIXEL)
                 {
-                    if (reg->idx <= ((IWineD3DVertexShaderImpl *)This)->min_rel_offset)
+                    if (reg->idx < ((IWineD3DVertexShaderImpl *)This)->min_rel_offset)
+                    {
                         ((IWineD3DVertexShaderImpl *)This)->min_rel_offset = reg->idx;
-                    else if (reg->idx >= ((IWineD3DVertexShaderImpl *)This)->max_rel_offset)
+                    }
+                    if (reg->idx > ((IWineD3DVertexShaderImpl *)This)->max_rel_offset)
+                    {
                         ((IWineD3DVertexShaderImpl *)This)->max_rel_offset = reg->idx;
+                    }
                 }
                 reg_maps->usesrelconstF = TRUE;
             }
