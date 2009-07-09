@@ -2458,9 +2458,9 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     }
 
     SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_CONNECTING_TO_SERVER,
-        &socketAddr, sizeof(struct sockaddr_in));
+        &socketAddr, sock_namelen);
 
-    if (connect(nsocket, (struct sockaddr *)&socketAddr, sizeof(socketAddr)) < 0)
+    if (connect(nsocket, (struct sockaddr *)&socketAddr, sock_namelen) < 0)
     {
 	ERR("Unable to connect (%s)\n", strerror(errno));
 	INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
@@ -2471,7 +2471,7 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
         TRACE("Connected to server\n");
 	lpwfs->sndSocket = nsocket;
         SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_CONNECTED_TO_SERVER,
-            &socketAddr, sizeof(struct sockaddr_in));
+            &socketAddr, sock_namelen);
 
 	sock_namelen = sizeof(lpwfs->socketAddress);
 	getsockname(nsocket, (struct sockaddr *) &lpwfs->socketAddress, &sock_namelen);
