@@ -1,4 +1,0 @@
-'L button move', 'No title bar' & 'Always on top' don't work unless Wine is in
-desktop mode
-
-This is a problem in Wine, not in Clock
