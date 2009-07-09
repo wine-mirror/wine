@@ -294,12 +294,12 @@ static void test_CoInternetCreateZoneManager(void)
         return;
 
     hr = IInternetZoneManager_QueryInterface(zonemgr, &IID_IUnknown, (void **) &punk);
-    ok(SUCCEEDED(hr), "got 0x%x with %p (expected Success)n", hr, punk);
+    ok(SUCCEEDED(hr), "got 0x%x with %p (expected Success)\n", hr, punk);
     if (punk)
         IUnknown_Release(punk);
 
     hr = IInternetZoneManager_QueryInterface(zonemgr, &IID_IInternetZoneManager, (void **) &punk);
-    ok(SUCCEEDED(hr), "got 0x%x with %p (expected Success)n", hr, punk);
+    ok(SUCCEEDED(hr), "got 0x%x with %p (expected Success)\n", hr, punk);
     if (punk)
         IUnknown_Release(punk);
 
