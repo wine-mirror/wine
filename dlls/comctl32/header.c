@@ -1210,7 +1210,7 @@ HEADER_SetOrderArray(HEADER_INFO *infoPtr, INT size, const INT *order)
         lpItem = &infoPtr->items[*order++];
 	lpItem->iOrder=i;
       }
-    infoPtr->bRectsValid=0;
+    HEADER_SetItemBounds(infoPtr);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return TRUE;
 }

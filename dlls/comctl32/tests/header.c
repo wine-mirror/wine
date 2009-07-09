@@ -1175,7 +1175,7 @@ static void test_hdm_index_messages(HWND hParent)
     rect.left = 0;
     retVal = SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM) &rect);
     expect(TRUE, retVal);
-    todo_wine ok(rect.left != 0, "Expected updated rectangle\n");
+    ok(rect.left != 0, "Expected updated rectangle\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
