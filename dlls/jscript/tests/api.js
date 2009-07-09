@@ -269,6 +269,19 @@ ok(tmp === "TEST", "''.toUpperCase() = " + tmp);
 tmp = "tEsT".toUpperCase(3);
 ok(tmp === "TEST", "''.toUpperCase(3) = " + tmp);
 
+tmp = "".anchor();
+ok(tmp === "<A NAME=\"undefined\"></A>", "''.anchor() = " + tmp);
+tmp = "".anchor(3);
+ok(tmp === "<A NAME=\"3\"></A>", "''.anchor(3) = " + tmp);
+tmp = "".anchor("red");
+ok(tmp === "<A NAME=\"red\"></A>", "''.anchor('red') = " + tmp);
+tmp = "test".anchor();
+ok(tmp === "<A NAME=\"undefined\">test</A>", "'test'.anchor() = " + tmp);
+tmp = "test".anchor(3);
+ok(tmp === "<A NAME=\"3\">test</A>", "'test'.anchor(3) = " + tmp);
+tmp = "test".anchor("green");
+ok(tmp === "<A NAME=\"green\">test</A>", "'test'.anchor('green') = " + tmp);
+
 tmp = "".big();
 ok(tmp === "<BIG></BIG>", "''.big() = " + tmp);
 tmp = "".big(3);

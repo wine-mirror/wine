@@ -201,8 +201,10 @@ static HRESULT do_attribute_tag_format(DispatchEx *dispex, LCID lcid, WORD flags
 static HRESULT String_anchor(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR fontW[] = {'A',0};
+    static const WCHAR colorW[] = {'N','A','M','E',0};
+
+    return do_attribute_tag_format(dispex, lcid, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
 static HRESULT String_big(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
