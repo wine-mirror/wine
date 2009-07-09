@@ -22,13 +22,15 @@
 
 #include "notepad_res.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 MAIN_MENU MENU
 {
  POPUP "&Datei" {
   MENUITEM "&Neu\tStrg+N",           CMD_NEW
-  MENUITEM "Ö&ffnen...\tStrg+O",        CMD_OPEN
+  MENUITEM "Ã–&ffnen...\tStrg+O",        CMD_OPEN
   MENUITEM "&Speichern\tStrg+S",        CMD_SAVE
   MENUITEM "Speichern &unter...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
@@ -39,12 +41,12 @@ MAIN_MENU MENU
   MENUITEM "&Beenden",          CMD_EXIT
  }
 POPUP "&Bearbeiten" {
-  MENUITEM "&Rückgängig\tStrg+Z",       CMD_UNDO
+  MENUITEM "&RÃ¼ckgÃ¤ngig\tStrg+Z",       CMD_UNDO
   MENUITEM SEPARATOR
   MENUITEM "&Ausschneiden\tStrg+X",     CMD_CUT
   MENUITEM "&Kopieren\tStrg+C",         CMD_COPY
-  MENUITEM "&Einfügen\tStrg+V",         CMD_PASTE
-  MENUITEM "&Löschen\tEntf",    CMD_DELETE
+  MENUITEM "&EinfÃ¼gen\tStrg+V",         CMD_PASTE
+  MENUITEM "&LÃ¶schen\tEntf",    CMD_DELETE
   MENUITEM SEPARATOR
   MENUITEM "Alles &markieren\tStrg+A",  CMD_SELECT_ALL
   MENUITEM "&Uhrzeit/Datum\tF5",        CMD_TIME_DATE
@@ -62,7 +64,7 @@ POPUP "&Hilfe" {
   MENUITEM "&Suchen...",        CMD_HELP_SEARCH
   MENUITEM "&Hilfe benutzen",   CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "Ü&ber Notepad", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "Ãœ&ber Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -75,10 +77,10 @@ CAPTION "Seite einrichten"
 {
 LTEXT    "&Kopfzeile:",  0x140,   10, 07, 40, 15
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
-LTEXT    "&Fußzeile:",  0x142,   10, 24, 40, 15
+LTEXT    "&FuÃŸzeile:",  0x142,   10, 24, 40, 15
 EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
-GROUPBOX "Ränder (Millimeter)",  0x144,  10, 43,160, 45
+GROUPBOX "RÃ¤nder (Millimeter)",  0x144,  10, 43,160, 45
 LTEXT    "&Links:",        0x145,   20, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_LEFTVALUE,     50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "&Oben:",         0x148,    20, 73, 30, 10, WS_CHILD
@@ -116,27 +118,27 @@ STRING_UNTITLED,                                "(unbenannt)"
 STRING_ALL_FILES,                               "Alle Dateien (*.*)"
 STRING_TEXT_FILES_TXT,                  "Textdateien (*.txt)"
 
-STRING_TOOLARGE,                                "Die Datei '%s' ist zu groß für den Editor\n \
+STRING_TOOLARGE,                                "Die Datei '%s' ist zu groÃŸ fÃ¼r den Editor\n \
 Benutzen Sie bitte einen anderen Editor, um diese Datei zu bearbeiten."
 STRING_NOTEXT,                                  "Sie haben keinen Text eingegeben, der \
-gespeichert\n werden könnte. Geben Sie Text ein, und versuchen Sie es \
+gespeichert\n werden kÃ¶nnte. Geben Sie Text ein, und versuchen Sie es \
 \nerneut."
 STRING_DOESNOTEXIST,                            "Die Datei '%s'\nexistiert nicht.\n\n \
-Möchten Sie eine neue Datei erstellen ?"
-STRING_NOTSAVED,                                "Datei %s\n wurde geändert.\n\n \
-Möchten Sie die Änderungen speichern ?"
+MÃ¶chten Sie eine neue Datei erstellen ?"
+STRING_NOTSAVED,                                "Datei %s\n wurde geÃ¤ndert.\n\n \
+MÃ¶chten Sie die Ã„nderungen speichern ?"
 STRING_NOTFOUND,                                        "'%s' kann nicht gefunden werden."
-STRING_OUT_OF_MEMORY,                   "Nicht genügend Arbeitsspeicher, \
-um diese Funktion\nabzuschließen. Beenden Sie eine oder mehrere \
-\nAnwendungen, um den verfügbaren Arbeitsspeicher zu\nerhöhen."
+STRING_OUT_OF_MEMORY,                   "Nicht genÃ¼gend Arbeitsspeicher, \
+um diese Funktion\nabzuschlieÃŸen. Beenden Sie eine oder mehrere \
+\nAnwendungen, um den verfÃ¼gbaren Arbeitsspeicher zu\nerhÃ¶hen."
 
 STRING_UNICODE_LE,     "Unicode (UTF-16)"
 STRING_UNICODE_BE,     "Unicode (UTF-16 Big-Endian)"
 
 STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
-Diese Datei enthält Unicode-Zeichen, die verloren gehen, wenn\n\
+Diese Datei enthÃ¤lt Unicode-Zeichen, die verloren gehen, wenn\n\
 Sie die Datei mit %s-Zeichenkodierung speichern.\n\
-Um die Zeichen beizubehalten, klicken Sie Abbrechen und wählen\n\
+Um die Zeichen beizubehalten, klicken Sie Abbrechen und wÃ¤hlen\n\
 Sie eine der Unicode-Optionen in der Liste.\n\
-Möchten Sie fortfahren?"
+MÃ¶chten Sie fortfahren?"
 }
