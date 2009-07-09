@@ -166,6 +166,7 @@ typedef struct
     INTERNET_PORT nHostPort; /* the final destination port of the request */
     INTERNET_PORT nServerPort; /* the port of the server we directly connect to */
     struct sockaddr_in socketAddress;
+    socklen_t sa_len;
 } WININETHTTPSESSIONW, *LPWININETHTTPSESSIONW;
 
 #define HDR_ISREQUEST		0x0001

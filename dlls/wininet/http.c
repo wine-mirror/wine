@@ -1452,16 +1452,15 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
 {
     char szaddr[32];
     LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
-    socklen_t sa_len;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RESOLVING_NAME,
                           lpwhs->lpszServerName,
                           strlenW(lpwhs->lpszServerName)+1);
 
-    sa_len = sizeof(lpwhs->socketAddress);
+    lpwhs->sa_len = sizeof(lpwhs->socketAddress);
     if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,
-                    (struct sockaddr *)&lpwhs->socketAddress, &sa_len))
+                    (struct sockaddr *)&lpwhs->socketAddress, &lpwhs->sa_len))
     {
         INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
         return FALSE;
@@ -4144,7 +4143,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     }
 
     if (!NETCON_connect(&lpwhr->netConnection, (struct sockaddr *)&lpwhs->socketAddress,
-                      sizeof(lpwhs->socketAddress)))
+                      lpwhs->sa_len))
        goto lend;
 
     if (lpwhr->hdr.dwFlags & INTERNET_FLAG_SECURE)
