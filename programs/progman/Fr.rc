@@ -4,7 +4,7 @@
  * Copyright 1996 Ulrich Schmid
  * French Fr.rc by Pablo Saratxaga
  * Copyright 2002 Sylvain Petreolle
- * Copyright 2006 Jonathan Ernst
+ * Copyright 2006 JonathanÂ Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,9 @@
 
 #include "progman.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 /* Menu */
@@ -31,25 +34,25 @@ MAIN_MENU MENU
 {
  POPUP "&Fichier" {
    MENUITEM "&Nouveau...",              PM_NEW
-   MENUITEM "O&uvrir\tEntrée",             PM_OPEN
-   MENUITEM "&Déplacer...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "O&uvrir\tEntrÃ©e",             PM_OPEN
+   MENUITEM "&DÃ©placer...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Copier...\tF8",             PM_COPY,      GRAYED
    MENUITEM "&Supprimer\tSuppr",           PM_DELETE
-   MENUITEM "&Propriétés...\tAlt+Entrée",       PM_ATTRIBUTES
+   MENUITEM "&PropriÃ©tÃ©s...\tAlt+EntrÃ©e",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
-   MENUITEM "E&xécuter...",          PM_EXECUTE
+   MENUITEM "E&xÃ©cuter...",          PM_EXECUTE
    MENUITEM SEPARATOR
    MENUITEM "&Quitter Windows...",             PM_EXIT
  }
  POPUP "&Options" {
-   MENUITEM "Réorg&anisation automatique",  PM_AUTO_ARRANGE
-   MENUITEM "&Réduire à l'utilisation",    PM_MIN_ON_RUN
+   MENUITEM "RÃ©org&anisation automatique",  PM_AUTO_ARRANGE
+   MENUITEM "&RÃ©duire Ã  l'utilisation",    PM_MIN_ON_RUN
    MENUITEM "&Enregistrer la configuration en quittant", PM_SAVE_SETTINGS
  }
- POPUP "F&enêtres" {
+ POPUP "F&enÃªtres" {
    MENUITEM "&Cascade\tMaj+F5",       PM_OVERLAP
-   MENUITEM "&Mosaïque\tMaj+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "&Réorganiser les icônes",       PM_ARRANGE
+   MENUITEM "&MosaÃ¯que\tMaj+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "&RÃ©organiser les icÃ´nes",       PM_ARRANGE
  }
  
  POPUP "Aid&e" {
@@ -63,7 +66,7 @@ MAIN_MENU MENU
    POPUP "&Info..." {
      MENUITEM "&Licence",        PM_LICENSE
      MENUITEM "AUCUNE &GARANTIE",    PM_NO_WARRANTY
-     MENUITEM "À &propos de Wine",     PM_ABOUT_WINE
+     MENUITEM "Ã€ &propos de Wine",     PM_ABOUT_WINE
    }
  }
 }
@@ -87,13 +90,13 @@ PUSHBUTTON    "Aid&e",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 
 DIALOG_MOVE DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Déplacer un programme"
+CAPTION "DÃ©placer un programme"
 {
-LTEXT         "Déplacer le programme :",    -1,            5,  5,  90, 15
+LTEXT         "DÃ©placer le programmeÂ :",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "À partir du groupe :", -1,            5, 13,  90, 15
+LTEXT         "Ã€ partir du groupeÂ :", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&Vers le groupe :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&Vers le groupeÂ :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
@@ -106,11 +109,11 @@ DIALOG_COPY DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Copier un programme"
 {
-LTEXT         "Copier le programme :",    -1,            5,  5,  90, 15
+LTEXT         "Copier le programmeÂ :",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "À partir du groupe :", -1,            5, 13,  90, 15
+LTEXT         "Ã€ partir du groupeÂ :", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&Vers le groupe :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&Vers le groupeÂ :",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
@@ -121,38 +124,38 @@ PUSHBUTTON    "Aid&e",            PM_HELP,           185, 45,  60, 15, WS_TABSTO
 
 DIALOG_GROUP DIALOG 0, 0, 230, 65
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Propriétés de groupe"
+CAPTION "PropriÃ©tÃ©s de groupe"
 {
-LTEXT     "&Nom :", PM_DESCRIPTION_TXT,   05, 18,  50, 10
-EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
-LTEXT     "&Fichier du groupe :",        PM_FILE_TXT,          05, 38,  50, 10
-EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
-DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Annuler",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Aid&e",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+LTEXT     "&Nom :", PM_DESCRIPTION_TXT,   05, 20,  59, 10
+EDITTEXT                            PM_DESCRIPTION,       70, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Fichier du groupeÂ :",        PM_FILE_TXT,          05, 40,  63, 10
+EDITTEXT                            PM_FILE,              70, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                165,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Annuler",        IDCANCEL,            165, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aid&e",          PM_HELP,             165, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Program attributes' */
 
 DIALOG_PROGRAM DIALOG 0, 0, 250, 105
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Propriétés de programme"
+CAPTION "PropriÃ©tÃ©s de programme"
 {
-LTEXT         "&Nom :",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+LTEXT         "&NomÂ :",  PM_DESCRIPTION_TXT,   05, 11,  60, 10
 EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
-LTEXT         "&Ligne de commande :", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+LTEXT         "&Ligne de commandeÂ :", PM_COMMAND_LINE_TXT,  05, 26,  74, 10
 EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
-LTEXT         "Répertoire de tra&vail :",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+LTEXT         "RÃ©pertoire de tra&vailÂ :",    PM_DIRECTORY_TXT,     05, 42,  74, 10
 EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
-LTEXT         "&Touche de raccourci :",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+LTEXT         "&Touche de raccourciÂ :",      PM_HOT_KEY_TXT,       05, 56,  74, 10
 EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
-ICON          "",                          PM_ICON,              20, 70
+ICON          "",                          PM_ICON,              20, 72
 CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
-LTEXT         "Réduire à l'&utilisation",       -1,             95, 75,  75, 10
+LTEXT         "RÃ©duire Ã  l'&utilisation",       -1,             95, 75,  75, 10
 DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Pa&rcourir...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Changer l'icône...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Changer l'icÃ´ne...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Aid&e",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
 }
 
@@ -160,12 +163,12 @@ PUSHBUTTON    "Aid&e",                 PM_HELP,             185, 85,  60, 15, WS
 
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Changer l'icône"
+CAPTION "Changer l'icÃ´ne"
 {
-LTEXT     "&Nom du fichier :",    PM_ICON_FILE_TXT,    5, 15,  40, 10
-EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
-LTEXT     "Icône a&ctuelle :", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
-COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
+LTEXT     "&Nom du fichierÂ :",    PM_ICON_FILE_TXT,    5, 7,  56, 10
+EDITTEXT                         PM_ICON_FILE,       5, 16, 124, 14, WS_TABSTOP
+LTEXT     "IcÃ´ne a&ctuelleÂ :", PM_SYMBOL_LIST_TXT,  5, 33, 125, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 43, 125, 50,
    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
 DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
@@ -177,12 +180,12 @@ PUSHBUTTON    "Aid&e",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 
 DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Exécuter un programme"
+CAPTION "ExÃ©cuter un programme"
 {
-LTEXT     "&Ligne de commande :", -1,   05, 15, 120, 10
+LTEXT     "&Ligne de commandeÂ :", -1,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
 CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
-LTEXT         "Réduire à l'&utilisation",   -1,   20, 45, 120, 10
+LTEXT         "RÃ©duire Ã  l'&utilisation",   -1,   18, 46, 106, 10
 DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Annuler",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Pa&rcourir...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
@@ -193,54 +196,54 @@ PUSHBUTTON    "Aid&e",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 
 STRINGTABLE DISCARDABLE
 {
-IDS_PROGRAM_MANAGER,		"Gestionaire de programmes"
+IDS_PROGRAM_MANAGER,		"Gestionnaire de programmes"
 IDS_ERROR,			"ERREUR"
 IDS_WARNING,			"ATTENTION"
 IDS_INFO,			"Information"
 IDS_DELETE,			"Supprimer"
-IDS_DELETE_GROUP_s,		"Voulez-vous supprimer le groupe « %s » ?"
-IDS_DELETE_PROGRAM_s,		"Voulez-vous supprimer le programme « %s » ?"
-IDS_NOT_IMPLEMENTED,		"Non implementé"
-IDS_FILE_READ_ERROR_s,		"Impossible d'ouvrir « %s »."
-IDS_FILE_WRITE_ERROR_s,		"Impossible d'enregistrer « %s »."
+IDS_DELETE_GROUP_s,		"Voulez-vous supprimer le groupe Â«Â %sÂ Â»Â ?"
+IDS_DELETE_PROGRAM_s,		"Voulez-vous supprimer le programme Â«Â %sÂ Â»Â ?"
+IDS_NOT_IMPLEMENTED,		"Non implÃ©mentÃ©"
+IDS_FILE_READ_ERROR_s,		"Impossible d'ouvrir Â«Â %sÂ Â»."
+IDS_FILE_WRITE_ERROR_s,		"Impossible d'enregistrer Â«Â %sÂ Â»."
 IDS_GRPFILE_READ_ERROR_s,	"\
-Impossible d'ouvrir le groupe « %s ».\n\
+Impossible d'ouvrir le groupe Â«Â %sÂ Â».\n\
 Voulez-vous que le Gestionnaire de programmes essaie\n\
-de l'ouvrir dans les prochaines sessions ?"
-IDS_OUT_OF_MEMORY,		"Mémoire insuffisante."
+de l'ouvrir dans les prochaines sessionsÂ ?"
+IDS_OUT_OF_MEMORY,		"MÃ©moire insuffisante."
 IDS_WINHELP_ERROR,		"Impossible d'afficher l'aide."
-IDS_UNKNOWN_FEATURE_s,		"Caractéristique inconnue dans %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Le fichier « %s » existe. Non écrasé."
-IDS_SAVE_GROUP_AS_s,		"Groupe enregistré sous « %s » pour éviter l'écrasement du fichier original."
+IDS_UNKNOWN_FEATURE_s,		"CaractÃ©ristique inconnue dans %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"Le fichier Â«Â %sÂ Â» existe. Non Ã©crasÃ©."
+IDS_SAVE_GROUP_AS_s,		"Groupe enregistrÃ© sous Â«Â %sÂ Â» pour Ã©viter l'Ã©crasement du fichier original."
 IDS_NO_HOT_KEY,			"Aucun"
 IDS_ALL_FILES,			"Tous fichiers (*.*)"
 IDS_PROGRAMS,			"Programmes"
-IDS_LIBRARIES_DLL,		"Bibliothèques (*.dll)"
-IDS_SYMBOL_FILES,		"Icônes"
-IDS_SYMBOLS_ICO,		"Icônes (*.ico)"
+IDS_LIBRARIES_DLL,		"BibliothÃ¨ques (*.dll)"
+IDS_SYMBOL_FILES,		"IcÃ´nes"
+IDS_SYMBOLS_ICO,		"IcÃ´nes (*.ico)"
 }
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 {
 IDS_LICENSE_CAPTION,            "LICENCE"
 IDS_LICENSE,
-"Ce programme est un logiciel libre ; vous pouvez le redistribuer et/ou \
-le modifier suivant les termes de la Licence Générale Publique Limitée GNU \
-telle que publiée par la Free Software Foundation ; soit la version 2.1 \
-de la License, soit (à votre gré) toute version ultérieure.\n\
-Ce programme est distribué dans l'espoir qu'il sera utile, mais \
-SANS AUCUNE GARANTIE : sans même la garantie implicite de \
-COMMERCIALISABILITÉ ou d'ADÉQUATION À UN OBJECTIF PARTICULIER. Consultez \
-la Licence Générale Publique Limitée pour plus de détails.\n\
-Vous devriez avoir reçu une copie de la Licence Générale Publique Limitée \
-GNU avec ce programme ; si ce n'est pas le cas, écrivez à la : \
+"Ce programme est un logiciel libreÂ ; vous pouvez le redistribuer et/ou \
+le modifier suivant les termes de la Licence GÃ©nÃ©rale Publique LimitÃ©e GNU \
+telle que publiÃ©e par la Free Software FoundationÂ ; soit la version 2.1 \
+de la Licence, soit (Ã  votre grÃ©) toute version ultÃ©rieure.\n\
+Ce programme est distribuÃ© dans l'espoir qu'il sera utile, mais \
+SANS AUCUNE GARANTIEÂ : sans mÃªme la garantie implicite de \
+COMMERCIALISABILITÃ‰ ou d'ADÃ‰QUATION Ã€ UN OBJECTIF PARTICULIER. Consultez \
+la Licence GÃ©nÃ©rale Publique LimitÃ©e pour plus de dÃ©tails.\n\
+Vous devriez avoir reÃ§u une copie de la Licence GÃ©nÃ©rale Publique LimitÃ©e \
+GNU avec ce programmeÂ ; si ce n'est pas le cas, Ã©crivez Ã  laÂ : \
 Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, \
 MA 02110-1301, USA."
 
 IDS_WARRANTY_CAPTION, "AUCUNE GARANTIE"
 IDS_WARRANTY,
-"Ce programme est distribué dans l'espoir qu'il sera utile, mais \
-SANS AUCUNE GARANTIE : sans même la garantie implicite de \
-COMMERCIALISABILITÉ ou d'ADÉQUATION À UN OBJECTIF PARTICULIER. Consultez \
-la Licence Générale Publique Limitée pour plus de détails."
+"Ce programme est distribuÃ© dans l'espoir qu'il sera utile, mais \
+SANS AUCUNE GARANTIEÂ : sans mÃªme la garantie implicite de \
+COMMERCIALISABILITÃ‰ ou d'ADÃ‰QUATION Ã€ UN OBJECTIF PARTICULIER. Consultez \
+la Licence GÃ©nÃ©rale Publique LimitÃ©e pour plus de dÃ©tails."
 }
