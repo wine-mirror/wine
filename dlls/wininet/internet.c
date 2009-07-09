@@ -2749,16 +2749,16 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
 
   if (dwFlags & FLAG_ICC_FORCE_CONNECTION)
   {
-      struct sockaddr_in sin;
-      socklen_t sa_len = sizeof(sin);
+      struct sockaddr_storage saddr;
+      socklen_t sa_len = sizeof(saddr);
       int fd;
 
-      if (!GetAddress(hostW, port, (struct sockaddr *)&sin, &sa_len))
+      if (!GetAddress(hostW, port, (struct sockaddr *)&saddr, &sa_len))
           goto End;
-      fd = socket(sin.sin_family, SOCK_STREAM, 0);
+      fd = socket(saddr.ss_family, SOCK_STREAM, 0);
       if (fd != -1)
       {
-          if (connect(fd, (struct sockaddr *)&sin, sa_len) == 0)
+          if (connect(fd, (struct sockaddr *)&saddr, sa_len) == 0)
               rc = TRUE;
           close(fd);
       }
