@@ -22,6 +22,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
@@ -33,6 +35,6 @@ BEGIN
     PUSHBUTTON      "Programm beenden",IDOK,51,49,71,15
     LTEXT           "Ein Abmelden oder Herunterfahren wird simuliert, aber dieses Programm reagiert nicht.",
                     IDC_STATIC,7,7,172,19
-    LTEXT           "Wenn Sie das Programm beenden, können Sie ungespeicherte Daten verlieren.",
+    LTEXT           "Wenn Sie das Programm beenden, kÃ¶nnen Sie ungespeicherte Daten verlieren.",
                     IDC_STATIC,7,28,172,19
 END
