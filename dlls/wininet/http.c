@@ -1452,6 +1452,7 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
 {
     char szaddr[32];
     LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
+    const void *addr;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_RESOLVING_NAME,
@@ -1466,8 +1467,17 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
         return FALSE;
     }
 
-    inet_ntop(lpwhs->socketAddress.sin_family, &lpwhs->socketAddress.sin_addr,
-              szaddr, sizeof(szaddr));
+    switch (lpwhs->socketAddress.ss_family)
+    {
+    case AF_INET:
+        addr = &((struct sockaddr_in *)&lpwhs->socketAddress)->sin_addr;
+        break;
+    default:
+        WARN("unsupported family %d\n", lpwhs->socketAddress.ss_family);
+        INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
+        return FALSE;
+    }
+    inet_ntop(lpwhs->socketAddress.ss_family, addr, szaddr, sizeof(szaddr));
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_NAME_RESOLVED,
                           szaddr, strlen(szaddr)+1);
@@ -4108,6 +4118,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     LPWININETHTTPSESSIONW lpwhs;
     LPWININETAPPINFOW hIC = NULL;
     char szaddr[32];
+    const void *addr;
 
     TRACE("-->\n");
 
@@ -4128,14 +4139,23 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     lpwhs = lpwhr->lpHttpSession;
 
     hIC = lpwhs->lpAppInfo;
-    inet_ntop(lpwhs->socketAddress.sin_family, &lpwhs->socketAddress.sin_addr,
-              szaddr, sizeof(szaddr));
+    switch (lpwhs->socketAddress.ss_family)
+    {
+    case AF_INET:
+        addr = &((struct sockaddr_in *)&lpwhs->socketAddress)->sin_addr;
+        break;
+    default:
+        WARN("unsupported family %d\n", lpwhs->socketAddress.ss_family);
+        INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
+        return FALSE;
+    }
+    inet_ntop(lpwhs->socketAddress.ss_family, addr, szaddr, sizeof(szaddr));
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_CONNECTING_TO_SERVER,
                           szaddr,
                           strlen(szaddr)+1);
 
-    if (!NETCON_create(&lpwhr->netConnection, lpwhs->socketAddress.sin_family,
+    if (!NETCON_create(&lpwhr->netConnection, lpwhs->socketAddress.ss_family,
                          SOCK_STREAM, 0))
     {
         WARN("Socket creation failed: %u\n", INTERNET_GetLastError());
