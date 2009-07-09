@@ -796,11 +796,7 @@ sub parse_c_file($$$$)
 		    
 		    next;
 		}
-	    } elsif ($declaration =~ s/^(?:DEFINE_SHLGUID)\s*\(.*?\)//s) {
-		$self->_update_c_position($&, \$declaration_line, \$declaration_column);
 	    } elsif ($declaration =~ s/^(?:DECL_WINELIB_TYPE_AW|DECLARE_HANDLE(?:16)?|TYPE_MARSHAL)\(\s*(\w+)\s*\)\s*//s) {
-		$self->_update_c_position($&, \$declaration_line, \$declaration_column);
-	    } elsif ($declaration =~ s/^ICOM_DEFINE\(\s*(\w+)\s*,\s*(\w+)\s*\)\s*//s) {
 		$self->_update_c_position($&, \$declaration_line, \$declaration_column);
 	    }
 	} else {
