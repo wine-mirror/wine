@@ -21,6 +21,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 /*
@@ -33,7 +35,7 @@ VIEW MENU
 BEGIN
     POPUP "&Datei"
     BEGIN
-	MENUITEM "&÷ffnen",			IDM_OPEN
+	MENUITEM "&√ñffnen",			IDM_OPEN
         MENUITEM "&Beenden",                    IDM_EXIT
     END
     POPUP "&Verschieben"
@@ -68,5 +70,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DESCRIPTION         "Regul‰rer Metafile Betrachter"
+    IDS_DESCRIPTION         "Regul√§rer Metafile Betrachter"
 END
