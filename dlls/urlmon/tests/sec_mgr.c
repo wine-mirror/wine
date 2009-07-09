@@ -21,6 +21,9 @@
 #define CONST_VTABLE
 #define NONAMELESSUNION
 
+/* needed for IInternetZoneManagerEx2 */
+#define _WIN32_IE 0x0700
+
 #include <wine/test.h>
 #include <stdarg.h>
 #include <stddef.h>
