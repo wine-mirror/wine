@@ -3,8 +3,8 @@
  * French Language Support
  *
  * Copyright (c) 1999 Eric Williams.
- * Copyright (c) 2003 Vincent Béron.
- * Copyright (c) 2006 Jonathan Ernst.
+ * Copyright (c) 2003 Vincent BÃ©ron.
+ * Copyright (c) 2006 JonathanÂ Ernst.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,9 @@
  */
 
 #include "cmdlgtst.h"
+
+/* UTF-8 */
+#pragma code_page(65001)
 
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
@@ -47,7 +50,7 @@ CmdlgtstMenu MENU
   MENUITEM "Mise en pa&ge", CM_U_PAGESETUP
  }
 
- POPUP "&Drapeaux"
+ POPUP "&Indicateurs"
  {
   MENUITEM "&Fichier", CM_F_FILE
   MENUITEM SEPARATOR
@@ -63,14 +66,14 @@ CmdlgtstMenu MENU
  POPUP "&Aide"
  {
   MENUITEM "&Usage", CM_H_USAGE
-  MENUITEM "À &propos", CM_H_ABOUT
+  MENUITEM "Ã€ &propos", CM_H_ABOUT
  }
 
 }
 
 Color_Flags_Dialog DIALOG 11, 20, 207, 107
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Drapeaux de la boîte de dialogue de choix de la couleur"
+CAPTION "Indicateurs de la boÃ®te de dialogue de choix de la couleur"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -87,7 +90,7 @@ FONT 8, "MS Shell Dlg"
 
 Font_Flags_Dialog DIALOG 9, 20, 207, 313
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Drapeaux de la boîte de dialogue de choix de la police"
+CAPTION "Indicateurs de la boÃ®te de dialogue de choix de la police"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -121,7 +124,7 @@ FONT 8, "MS Shell Dlg"
 
 Find_Flags_Dialog DIALOG 8, 24, 207, 306
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Drapeaux de la fenêtre de recherche/remplacement"
+CAPTION "Indicateurs de la fenÃªtre de recherche/remplacement"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -149,12 +152,12 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 168, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 180, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 24, 228, 11, 13
- CONTROL "Indique les drapeaux qui sont fournis par le système et qui doivent être effacés par l'utilisateur.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
+ CONTROL "Signale les indicateurs qui sont dÃ©finis par le systÃ¨me et doivent Ãªtre explicitement effacÃ©s par l'utilisateur.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
 }
 
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Drapeaux de la boîte de dialogue d'impression"
+CAPTION "Indicateurs de la boÃ®te de dialogue d'impression"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 180, 6, 50, 14
@@ -214,7 +217,7 @@ FONT 8, "MS Shell Dlg"
 
 File_Flags_Dialog DIALOG 6, 15, 207, 227
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Drapeaux de la boîte de dialogue d'ouverture et d'enregistrement de fichier"
+CAPTION "Indicateurs de la boÃ®te de dialogue d'ouverture et d'enregistrement de fichier"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -241,12 +244,12 @@ FONT 8, "MS Shell Dlg"
 
 AboutDialog DIALOG 6, 15, 194, 119
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "À propos"
+CAPTION "Ã€ propos"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
- LTEXT "Test des boîtes de dialogue standard, version 1.20", -1, 13, 36, 168, 12
- LTEXT "(c) 1999-2000, Eric Williams. Droits tels qu'accordés par la licence de Wine. N'accumulez pas du code tout seul... partagez-le !", -1, 18, 60, 157, 24
+ LTEXT "Test des boÃ®tes de dialogue standard, version 1.20", -1, 13, 36, 168, 12
+ LTEXT "(c) 1999-2000, Eric Williams. Droits tels qu'accordÃ©s par la licence de Wine. N'accumulez pas du code tout seul... partagez-leÂ !", -1, 18, 60, 157, 24
  ICON "AboutIcon", -1, 84, 12, 18, 20
 }
 
@@ -256,43 +259,43 @@ CAPTION "Usage"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 70, 276, 50, 14
- LTEXT "Test des boîtes de dialogue standard, version 1.20", -1, 13, 48, 168, 12
+ LTEXT "Test des boÃ®tes de dialogue standard, version 1.20", -1, 13, 48, 168, 12
  LTEXT "Cet outil teste COMMDLG pour Wine.", -1, 12, 72, 168, 12
- LTEXT "Drapeaux spécifiés dans le menu Drapeaux.", -1, 12, 96, 168, 12
- LTEXT "La boîte de dialogue de choix de la couleur change la couleur de l'arrière-plan.", -1, 12, 114, 168, 18
- LTEXT "La boîte de dialogue de choix de la police change toutes les polices, et la couleur de la police si CF_EFFECTS est sélectionné.", -1, 12, 144, 168, 24
- LTEXT "Le nom complet et le titre de la dernière opération réussie d'ouverture ou d'enregistrement se trouvent dans le coin en haut à gauche.", -1, 12, 180, 168, 24
- LTEXT "(c) 1999-2000, Eric Williams. Droits tels qu'accordés par la licence de Wine. N'accumulez pas du code tout seul... partagez-le !", -1, 12, 228, 168, 36
+ LTEXT "Indicateurs spÃ©cifiÃ©s dans le menu Indicateurs.", -1, 12, 96, 168, 12
+ LTEXT "La boÃ®te de dialogue de choix de la couleur permet de modifier la couleur de l'arriÃ¨re-plan.", -1, 12, 114, 168, 18
+ LTEXT "La boÃ®te de dialogue de choix de la police permet de sÃ©lectionner toutes les polices, et couleurs de police si CF_EFFECTS est sÃ©lectionnÃ©.", -1, 12, 144, 168, 24
+ LTEXT "Le nom complet et le titre de la derniÃ¨re opÃ©ration rÃ©ussie d'ouverture ou d'enregistrement se trouvent dans le coin en haut Ã  gauche.", -1, 12, 180, 168, 24
+ LTEXT "(c) 1999-2000, Eric Williams. Droits tels qu'accordÃ©s par la licence de Wine. N'accumulez pas du code tout seul... partagez-leÂ !", -1, 12, 228, 168, 36
  ICON "AboutIcon", -1, 86, 12, 18, 20
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 216, 168, 2
 }
 
 PAGESETUPDLGORD_CSTM DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Boîte de dialogue de test TFT"
+CAPTION "BoÃ®te de dialogue de test TFT"
 FONT 8, "MS Shell Dlg"
 BEGIN
   CONTROL "", rct1, "Static", SS_WHITERECT, 80, 8, 80, 80
   CONTROL "", rct2, "Static", SS_GRAYRECT, 160, 12, 4, 80
   CONTROL "", rct3, "Static", SS_GRAYRECT,  84, 88, 80, 4
   GROUPBOX "Papier", grp2, 8, 96, 224, 56, BS_GROUPBOX
-  LTEXT "&Taille :", stc2, 16, 112, 36, 8
+  LTEXT "&TailleÂ :", stc2, 16, 112, 36, 8
   COMBOBOX cmb2, 64, 110, 80, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   COMBOBOX cmb1, 150, 110, 80, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
-  LTEXT "Ba&c :", stc3, 16, 132, 36, 8
+  LTEXT "Ba&cÂ :", stc3, 16, 132, 36, 8
   COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   GROUPBOX "Orientation", grp1, 8, 156, 64, 56, BS_GROUPBOX
   AUTORADIOBUTTON "&Portrait", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
   AUTORADIOBUTTON "Pa&ysage", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
   GROUPBOX "Bordures", grp4, 80, 156, 152, 56, BS_GROUPBOX
-  LTEXT "&Gauche :", stc15, 88, 172, 21, 8
-  EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "&Droite :", stc16, 159, 172, 27, 8
-  EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "&Haut :", stc17, 88, 192, 21, 8
-  EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-  LTEXT "&Bas :", stc18, 159, 192, 23, 8
-  EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&GaucheÂ :", stc15, 88, 172, 29, 8
+  EDITTEXT edt4, 119, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&DroiteÂ :", stc16, 163, 172, 27, 8
+  EDITTEXT edt6, 190, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&HautÂ :", stc17, 88, 192, 21, 8
+  EDITTEXT edt5, 119, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
+  LTEXT "&BasÂ :", stc18, 163, 192, 23, 8
+  EDITTEXT edt7, 190, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
   DEFPUSHBUTTON "OK", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
   PUSHBUTTON "Annuler", IDCANCEL, 126, 220, 50, 14
   PUSHBUTTON "&Imprimante...", psh3, 184, 220, 48, 14
