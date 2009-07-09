@@ -20,9 +20,11 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE {
      IDS_APPNAME, "Wine Anwendungsentferner"
-     IDS_UNINSTALLFAILED, "Die Ausführung des Entfernungsbefehls '%s' ist fehlgeschlagen, wahrscheinlich durch eine fehlende, ausführbare Datei.\r\nMöchten Sie, dass der Anwendungseintrag aus der Registry entfernt wird?"
+     IDS_UNINSTALLFAILED, "Die AusfÃ¼hrung des Entfernungsbefehls '%s' ist fehlgeschlagen, wahrscheinlich durch eine fehlende, ausfÃ¼hrbare Datei.\r\nMÃ¶chten Sie, dass der Anwendungseintrag aus der Registry entfernt wird?"
 }
