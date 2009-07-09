@@ -18,6 +18,7 @@
 ;
 
 LanguageNames=(KOR=0x412:winerr)
+CodePages=(KOR=949:0)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS

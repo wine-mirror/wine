@@ -17,6 +17,7 @@
 ;
 
 LanguageNames=(FRA=0x0c:winerr)
+CodePages=(FRA=1252:0)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS

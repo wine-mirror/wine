@@ -17,6 +17,7 @@
 ;
 
 LanguageNames=(PLK=0x0015:winerr)
+CodePages=(PLK=1250:0)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS

@@ -17,6 +17,7 @@
 ;
 
 LanguageNames=(NLD=0x0013:winerr)
+CodePages=(NLD=1252:0)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS

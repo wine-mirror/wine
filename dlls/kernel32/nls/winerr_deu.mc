@@ -17,6 +17,7 @@
 ;
 
 LanguageNames=(DEU=0x0007:winerr)
+CodePages=(DEU=1252:0)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS

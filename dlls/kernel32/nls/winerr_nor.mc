@@ -18,6 +18,7 @@
 ;
 
 LanguageNames=(NOR=0x414:winerr)
+CodePages=(NOR=1252:0)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS
