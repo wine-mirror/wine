@@ -3676,7 +3676,6 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShaderImpl *This, struct
 {
     const struct shader_reg_maps *reg_maps = &This->baseShader.reg_maps;
     CONST DWORD *function = This->baseShader.function;
-    const char *fragcolor;
     const WineD3D_GL_Info *gl_info = &((IWineD3DDeviceImpl *)This->baseShader.device)->adapter->gl_info;
     struct shader_glsl_ctx_priv priv_ctx;
 
@@ -3718,16 +3717,15 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShaderImpl *This, struct
         shader_addline(buffer, "gl_FragData[0] = R0;\n");
     }
 
-    fragcolor = "gl_FragData[0]";
     if(args->srgb_correction) {
-        shader_addline(buffer, "tmp0.xyz = pow(%s.xyz, vec3(%f, %f, %f)) * vec3(%f, %f, %f) - vec3(%f, %f, %f);\n",
-                        fragcolor, srgb_pow, srgb_pow, srgb_pow, srgb_mul_high, srgb_mul_high, srgb_mul_high,
+        shader_addline(buffer, "tmp0.xyz = pow(gl_FragData[0].xyz, vec3(%f, %f, %f)) * vec3(%f, %f, %f) - vec3(%f, %f, %f);\n",
+                        srgb_pow, srgb_pow, srgb_pow, srgb_mul_high, srgb_mul_high, srgb_mul_high,
                         srgb_sub_high, srgb_sub_high, srgb_sub_high);
-        shader_addline(buffer, "tmp1.xyz = %s.xyz * srgb_mul_low.xyz;\n", fragcolor);
-        shader_addline(buffer, "%s.x = %s.x < srgb_comparison.x ? tmp1.x : tmp0.x;\n", fragcolor, fragcolor);
-        shader_addline(buffer, "%s.y = %s.y < srgb_comparison.y ? tmp1.y : tmp0.y;\n", fragcolor, fragcolor);
-        shader_addline(buffer, "%s.z = %s.z < srgb_comparison.z ? tmp1.z : tmp0.z;\n", fragcolor, fragcolor);
-        shader_addline(buffer, "%s = clamp(%s, 0.0, 1.0);\n", fragcolor, fragcolor);
+        shader_addline(buffer, "tmp1.xyz = gl_FragData[0].xyz * srgb_mul_low.xyz;\n");
+        shader_addline(buffer, "gl_FragData[0].x = gl_FragData[0].x < srgb_comparison.x ? tmp1.x : tmp0.x;\n");
+        shader_addline(buffer, "gl_FragData[0].y = gl_FragData[0].y < srgb_comparison.y ? tmp1.y : tmp0.y;\n");
+        shader_addline(buffer, "gl_FragData[0].z = gl_FragData[0].z < srgb_comparison.z ? tmp1.z : tmp0.z;\n");
+        shader_addline(buffer, "gl_FragData[0] = clamp(gl_FragData[0], 0.0, 1.0);\n");
     }
     /* Pixel shader < 3.0 do not replace the fog stage.
      * This implements linear fog computation and blending.
@@ -3743,19 +3741,19 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShaderImpl *This, struct
                 shader_addline(buffer, "float fogstart = -1.0 / (gl_Fog.end - gl_Fog.start);\n");
                 shader_addline(buffer, "float fogend = gl_Fog.end * -fogstart;\n");
                 shader_addline(buffer, "float Fog = clamp(gl_FogFragCoord * fogstart + fogend, 0.0, 1.0);\n");
-                shader_addline(buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
+                shader_addline(buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, Fog);\n");
                 break;
             case FOG_EXP:
                 /* Fog = e^(-gl_Fog.density * gl_FogFragCoord) */
                 shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_FogFragCoord);\n");
                 shader_addline(buffer, "Fog = clamp(Fog, 0.0, 1.0);\n");
-                shader_addline(buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
+                shader_addline(buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, Fog);\n");
                 break;
             case FOG_EXP2:
                 /* Fog = e^(-(gl_Fog.density * gl_FogFragCoord)^2) */
                 shader_addline(buffer, "float Fog = exp(-gl_Fog.density * gl_Fog.density * gl_FogFragCoord * gl_FogFragCoord);\n");
                 shader_addline(buffer, "Fog = clamp(Fog, 0.0, 1.0);\n");
-                shader_addline(buffer, "%s.xyz = mix(gl_Fog.color.xyz, %s.xyz, Fog);\n", fragcolor, fragcolor);
+                shader_addline(buffer, "gl_FragData[0].xyz = mix(gl_Fog.color.xyz, gl_FragData[0].xyz, Fog);\n");
                 break;
         }
     }
