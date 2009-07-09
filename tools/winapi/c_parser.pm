@@ -1710,126 +1710,120 @@ sub parse_c_variable($$$$$$$)
 	}
     }
 
-    my $finished = 0;
+    return 0 if(/^$/);
 
-    if($finished) {
-	# Nothing
-    } elsif(/^$/) {
-	return 0;
-    } elsif (s/^(enum\s+|interface\s+|struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
-	my $kind = $1;
-	my $_name = $2;
-	$self->_update_c_position($&, \$line, \$column);
-
-	if(defined($_name)) {
-	    $type = "$kind $_name { }";
-	} else {
-	    $type = "$kind { }";
-	}
-
-	$finished = 1;
-    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s+DECLSPEC_ALIGN\(.*?\)|\s*(?:const\s*|volatile\s*)?\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
-	$type = "$sign$1";
-	$name = $2;
-
-	if (defined($3)) {
-	    my $bits = $4;
-	    local $_ = $3;
-	    if (/^\[/) {
-		$type .= $_;
-	    } elsif (/^:/) {
-		$type .= ":$bits";
-	    } elsif (/^\{/) {
-		# Nothing
-	    }
-	}
-
-	$type = $self->_format_c_type($type);
-
-	$finished = 1;
-    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*)\s*:\s*(\d+)$//s) {
-	$type = "$sign$1:$2";
-	$name = "";
-	$type = $self->_format_c_type($type);
-
-	$finished = 1;
-    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*\s*\(\s*(?:$CALL_CONVENTION)?(?:\s*\*)*)\s*(\w+)\s*(\)\s*\(.*?\))$//s) {
-	$type = $self->_format_c_type("$sign$1$3");
-	$name = $2;
-
-	$finished = 1;
-    } elsif($self->_parse_c('DEFINE_GUID', \$_, \$line, \$column, \$match)) { # Windows specific
-	$type = $match;
-	$finished = 1;
-    } else {
-	$self->_parse_c_warning($_, $line, $column, "variable", "'$_'");
-	$finished = 1;
-    }
-
-    if($finished) {
-	# Nothing
-    } elsif($self->_parse_c('SEQ_DEFINEBUF', \$_, \$line, \$column, \$match)) { # Linux specific
-	$type = $match;
-	$finished = 1;
-    } elsif($self->_parse_c('DEFINE_REGS_ENTRYPOINT_\w+|DPQ_DECL_\w+|HANDLER_DEF|IX86_ONLY', # Wine specific
-			    \$_, \$line, \$column, \$match))
+  finished: while (1)
     {
-	$type = $match;
-	$finished = 1;
-    } elsif($self->_parse_c('(?:struct\s+)?ICOM_VTABLE\s*\(\w+\)', \$_, \$line, \$column, \$match)) {
-	$type = $match;
-	$finished = 1;
-    } elsif(s/^(enum|interface|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*//s) {
-	my $kind = $1;
-	my $_name = $2;
-	$self->_update_c_position($&, \$line, \$column);
+        if (s/^(enum\s+|interface\s+|struct\s+|union\s+)((?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)?\s*\{\s*//s) {
+            my $kind = $1;
+            my $_name = $2;
+            $self->_update_c_position($&, \$line, \$column);
 
-	if(defined($_name)) {
-	    $type = "struct $_name { }";
-	} else {
-	    $type = "struct { }";
-	}
-    } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+)\s*(?:\*\s*)*//s) {
-	$type = $&;
-	$type =~ s/\s//g;
-    } else {
-	return 0;
-    }
+            if(defined($_name)) {
+                $type = "$kind $_name { }";
+            } else {
+                $type = "$kind { }";
+            }
 
-    # $output->write("*** $type: '$_'\n");
+            last finished;
+        } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s+DECLSPEC_ALIGN\(.*?\)|\s*(?:const\s*|volatile\s*)?\*)*)\s*(\w+)\s*(\[.*?\]$|:\s*(\d+)$|\{)?//s) {
+            $type = "$sign$1";
+            $name = $2;
 
-    # $self->_parse_c_warning($_, $line, $column, "variable2", "");
+            if (defined($3)) {
+                my $bits = $4;
+                local $_ = $3;
+                if (/^\[/) {
+                    $type .= $_;
+                } elsif (/^:/) {
+                    $type .= ":$bits";
+                } elsif (/^\{/) {
+                    # Nothing
+                }
+            }
 
-    if($finished) {
-	# Nothing
-    } elsif(s/^WINAPI\s*//) {
-	$self->_update_c_position($&, \$line, \$column);
-    }
+            $type = $self->_format_c_type($type);
 
-    if($finished) {
-	# Nothing
-    } elsif(s/^(\((?:$CALL_CONVENTION)?\s*\*?\s*(?:$CALL_CONVENTION)?\w+\s*(?:\[[^\]]*\]\s*)*\))\s*\(//) {
-	$self->_update_c_position($&, \$line, \$column);
+            last finished;
+        } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*)\s*:\s*(\d+)$//s) {
+            $type = "$sign$1:$2";
+            $name = "";
+            $type = $self->_format_c_type($type);
 
-	$name = $1;
-	$name =~ s/\s//g;
+            last finished;
+        } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+\b(?:\s*\*)*\s*\(\s*(?:$CALL_CONVENTION)?(?:\s*\*)*)\s*(\w+)\s*(\)\s*\(.*?\))$//s) {
+            $type = $self->_format_c_type("$sign$1$3");
+            $name = $2;
 
-	$self->_parse_c_until_one_of("\\)", \$_, \$line, \$column);
-	if(s/^\)//) { $column++; }
-	$self->_parse_c_until_one_of("\\S", \$_, \$line, \$column);
+            last finished;
+        } elsif($self->_parse_c('DEFINE_GUID', \$_, \$line, \$column, \$match)) { # Windows specific
+            $type = $match;
+            last finished;
+        } else {
+            $self->_parse_c_warning($_, $line, $column, "variable", "'$_'");
+            last finished;
+        }
 
-        if(!s/^(?:=\s*|,\s*|$)//) {
-	    return 0;
-	}
-    } elsif(s/^(?:\*\s*)*(?:const\s+|volatile\s+)?(\w+)\s*(?:\[[^\]]*\]\s*)*\s*(?:=\s*|,\s*|$)//) {
-	$self->_update_c_position($&, \$line, \$column);
+        if($self->_parse_c('SEQ_DEFINEBUF', \$_, \$line, \$column, \$match)) { # Linux specific
+            $type = $match;
+            last finished;
+        } elsif($self->_parse_c('DEFINE_REGS_ENTRYPOINT_\w+|DPQ_DECL_\w+|HANDLER_DEF|IX86_ONLY', # Wine specific
+                                \$_, \$line, \$column, \$match))
+        {
+            $type = $match;
+            last finished;
+        } elsif($self->_parse_c('(?:struct\s+)?ICOM_VTABLE\s*\(\w+\)', \$_, \$line, \$column, \$match)) {
+            $type = $match;
+            last finished;
+        } elsif(s/^(enum|interface|struct|union)(?:\s+(\w+))?\s*\{.*?\}\s*//s) {
+            my $kind = $1;
+            my $_name = $2;
+            $self->_update_c_position($&, \$line, \$column);
 
-	$name = $1;
-	$name =~ s/\s//g;
-    } elsif(/^$/) {
-	$name = "";
-    } else {
-	return 0;
+            if(defined($_name)) {
+                $type = "struct $_name { }";
+            } else {
+                $type = "struct { }";
+            }
+        } elsif(s/^((?:enum\s+|interface\s+|struct\s+|union\s+)?\w+)\s*(?:\*\s*)*//s) {
+            $type = $&;
+            $type =~ s/\s//g;
+        } else {
+            return 0;
+        }
+
+        # $output->write("*** $type: '$_'\n");
+
+        # $self->_parse_c_warning($_, $line, $column, "variable2", "");
+
+        if(s/^WINAPI\s*//) {
+            $self->_update_c_position($&, \$line, \$column);
+        }
+
+        if(s/^(\((?:$CALL_CONVENTION)?\s*\*?\s*(?:$CALL_CONVENTION)?\w+\s*(?:\[[^\]]*\]\s*)*\))\s*\(//) {
+            $self->_update_c_position($&, \$line, \$column);
+
+            $name = $1;
+            $name =~ s/\s//g;
+
+            $self->_parse_c_until_one_of("\\)", \$_, \$line, \$column);
+            if(s/^\)//) { $column++; }
+            $self->_parse_c_until_one_of("\\S", \$_, \$line, \$column);
+
+            if(!s/^(?:=\s*|,\s*|$)//) {
+                return 0;
+            }
+        } elsif(s/^(?:\*\s*)*(?:const\s+|volatile\s+)?(\w+)\s*(?:\[[^\]]*\]\s*)*\s*(?:=\s*|,\s*|$)//) {
+            $self->_update_c_position($&, \$line, \$column);
+
+            $name = $1;
+            $name =~ s/\s//g;
+        } elsif(/^$/) {
+            $name = "";
+        } else {
+            return 0;
+        }
+        last finished;
     }
 
     # $output->write("$type: $name: '$_'\n");
