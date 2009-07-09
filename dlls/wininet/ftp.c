@@ -2807,7 +2807,7 @@ lend:
 static BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs)
 {
     BOOL bSuccess = FALSE;
-    socklen_t namelen = sizeof(struct sockaddr_in);
+    socklen_t namelen = sizeof(lpwfs->lstnSocketAddress);
 
     TRACE("\n");
 
@@ -2824,7 +2824,7 @@ static BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs)
     /* and get the system to assign us a port */
     lpwfs->lstnSocketAddress.sin_port = htons(0);
 
-    if (bind(lpwfs->lstnSocket,(struct sockaddr *) &lpwfs->lstnSocketAddress, sizeof(struct sockaddr_in)) == -1)
+    if (bind(lpwfs->lstnSocket,(struct sockaddr *) &lpwfs->lstnSocketAddress, sizeof(lpwfs->lstnSocketAddress)) == -1)
     {
         TRACE("Unable to bind socket\n");
         goto lend;
