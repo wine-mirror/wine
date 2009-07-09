@@ -7,8 +7,6 @@ APPMODE   = -mconsole
 IMPORTS   = uuid comctl32 version user32 gdi32 advapi32 wsock32 kernel32
 DELAYIMPORTS = ole32
 
-EXTRARCFLAGS = -DBUILD_SHA1=\"`GIT_DIR=$(TOPSRCDIR)/.git git rev-parse HEAD 2>/dev/null`\"
-
 C_SRCS = \
 	gui.c \
 	main.c \
@@ -23,7 +21,7 @@ SVG_SRCS = winetest.svg
 ALL_TEST_DIRS = @ALL_TEST_DIRS@
 
 TESTBINS   = $(ALL_TEST_DIRS:%/tests=%_test.exe)
-TESTRCS    = $(TESTBINS:.exe=.rc)
+TESTRCS    = build.rc $(TESTBINS:.exe=.rc)
 EXTRA_OBJS = $(TESTRCS:.rc=.res)
 
 @MAKE_PROG_RULES@
@@ -32,6 +30,9 @@ EXTRA_OBJS = $(TESTRCS:.rc=.res)
 
 clean::
 	$(RM) winetest-dist.exe $(TESTBINS) $(TESTRCS)
+
+build.rc: dummy
+	build="STRINGTABLE { 1 \"`GIT_DIR=$(TOPSRCDIR)/.git git rev-parse HEAD 2>/dev/null`\" }" && (echo $$build | cmp -s - $@) || echo $$build >$@ || ($(RM) $@ && exit 1)
 
 # Rules for building distributable executable
 

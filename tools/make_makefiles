@@ -76,6 +76,7 @@ my @ignores = (
     "include/stamp-h",
     "programs/winetest/*_test.exe",
     "programs/winetest/*_test.rc",
+    "programs/winetest/build.rc",
 );
 
 # Source files and their resulting target to ignore
