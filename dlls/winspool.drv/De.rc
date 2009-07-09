@@ -20,6 +20,8 @@
 
 #include "wspool.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 FILENAME_DIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE 6, 18, 245, 47
@@ -35,7 +37,7 @@ END
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_CAPTION "Lokaler Anschluﬂ"
-    IDS_FILE_EXISTS "Die Ausgabedatei existiert schon.  Dr¸cken Sie OK zum ‹berschreiben."
+    IDS_CAPTION "Lokaler Anschlu√ü"
+    IDS_FILE_EXISTS "Die Ausgabedatei existiert schon.  Dr√ºcken Sie OK zum √úberschreiben."
     IDS_CANNOT_OPEN "Die Ausgabedatei konnte nicht erzeugt werden."
 }
