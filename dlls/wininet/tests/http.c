@@ -1788,7 +1788,12 @@ static void test_proxy_indirect(int port)
 
     sz = sizeof buffer;
     r = HttpQueryInfo(hr, HTTP_QUERY_PROXY_AUTHENTICATE, buffer, &sz, NULL);
-    ok(r, "HttpQueryInfo failed\n");
+    ok(r || GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "HttpQueryInfo failed: %d\n", GetLastError());
+    if (!r)
+    {
+        skip("missing proxy header, not testing remaining proxy headers\n");
+        goto out;
+    }
     ok(!strcmp(buffer, "Basic realm=\"placebo\""), "proxy auth info wrong\n");
 
     sz = sizeof buffer;
@@ -1821,6 +1826,7 @@ static void test_proxy_indirect(int port)
     ok(GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "HttpQueryInfo should fail\n");
     ok(r == FALSE, "HttpQueryInfo failed\n");
 
+out:
     InternetCloseHandle(hr);
     InternetCloseHandle(hc);
     InternetCloseHandle(hi);
