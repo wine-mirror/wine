@@ -83,6 +83,7 @@ struct constant_heap
 
 /* GLSL shader private data */
 struct shader_glsl_priv {
+    struct SHADER_BUFFER shader_buffer;
     struct wine_rb_tree program_lookup;
     struct glsl_shader_prog_link *glsl_program;
     struct constant_heap vconst_heap;
@@ -3504,8 +3505,8 @@ static void handle_ps3_input(SHADER_BUFFER *buffer, const WineD3D_GL_Info *gl_in
 }
 
 /* GL locking is done by the caller */
-static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexshader,
-        IWineD3DPixelShader *pixelshader, const WineD3D_GL_Info *gl_info)
+static GLhandleARB generate_param_reorder_function(struct SHADER_BUFFER *buffer,
+        IWineD3DVertexShader *vertexshader, IWineD3DPixelShader *pixelshader, const WineD3D_GL_Info *gl_info)
 {
     GLhandleARB ret = 0;
     IWineD3DVertexShaderImpl *vs = (IWineD3DVertexShaderImpl *) vertexshader;
@@ -3514,15 +3515,14 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
     DWORD vs_major = vs->baseShader.reg_maps.shader_version.major;
     DWORD ps_major = ps ? ps->baseShader.reg_maps.shader_version.major : 0;
     unsigned int i;
-    SHADER_BUFFER buffer;
     const char *semantic_name;
     UINT semantic_idx;
     char reg_mask[6];
     const struct wined3d_shader_signature_element *output_signature;
 
-    shader_buffer_init(&buffer);
+    shader_buffer_clear(buffer);
 
-    shader_addline(&buffer, "#version 120\n");
+    shader_addline(buffer, "#version 120\n");
 
     if(vs_major < 3 && ps_major < 3) {
         /* That one is easy: The vertex shader writes to the builtin varyings, the pixel shader reads from them.
@@ -3532,16 +3532,16 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         if (((GLINFO_LOCATION).quirks & WINED3D_QUIRK_SET_TEXCOORD_W)
                 && ps_major == 0 && vs_major > 0 && !device->frag_pipe->ffp_proj_control)
         {
-            shader_addline(&buffer, "void order_ps_input() {\n");
+            shader_addline(buffer, "void order_ps_input() {\n");
             for(i = 0; i < min(8, MAX_REG_TEXCRD); i++) {
                 if(vs->baseShader.reg_maps.texcoord_mask[i] != 0 &&
                    vs->baseShader.reg_maps.texcoord_mask[i] != WINED3DSP_WRITEMASK_ALL) {
-                    shader_addline(&buffer, "gl_TexCoord[%u].w = 1.0;\n", i);
+                    shader_addline(buffer, "gl_TexCoord[%u].w = 1.0;\n", i);
                 }
             }
-            shader_addline(&buffer, "}\n");
+            shader_addline(buffer, "}\n");
         } else {
-            shader_addline(&buffer, "void order_ps_input() { /* do nothing */ }\n");
+            shader_addline(buffer, "void order_ps_input() { /* do nothing */ }\n");
         }
     } else if(ps_major < 3 && vs_major >= 3) {
         WORD map = vs->baseShader.reg_maps.output_registers;
@@ -3549,7 +3549,7 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         /* The vertex shader writes to its own varyings, the pixel shader needs them in the builtin ones */
         output_signature = vs->output_signature;
 
-        shader_addline(&buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
+        shader_addline(buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
         for (i = 0; map; map >>= 1, ++i)
         {
             DWORD write_mask;
@@ -3564,13 +3564,13 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
             if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_COLOR))
             {
                 if (semantic_idx == 0)
-                    shader_addline(&buffer, "gl_FrontColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+                    shader_addline(buffer, "gl_FrontColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
                 else if (semantic_idx == 1)
-                    shader_addline(&buffer, "gl_FrontSecondaryColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+                    shader_addline(buffer, "gl_FrontSecondaryColor%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
             {
-                shader_addline(&buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+                shader_addline(buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_TEXCOORD))
             {
@@ -3579,22 +3579,22 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
                     if (!((GLINFO_LOCATION).quirks & WINED3D_QUIRK_SET_TEXCOORD_W) || ps_major > 0)
                         write_mask |= WINED3DSP_WRITEMASK_3;
 
-                    shader_addline(&buffer, "gl_TexCoord[%u]%s = OUT[%u]%s;\n",
+                    shader_addline(buffer, "gl_TexCoord[%u]%s = OUT[%u]%s;\n",
                             semantic_idx, reg_mask, i, reg_mask);
                     if (!(write_mask & WINED3DSP_WRITEMASK_3))
-                        shader_addline(&buffer, "gl_TexCoord[%u].w = 1.0;\n", semantic_idx);
+                        shader_addline(buffer, "gl_TexCoord[%u].w = 1.0;\n", semantic_idx);
                 }
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
             {
-                shader_addline(&buffer, "gl_PointSize = OUT[%u].x;\n", i);
+                shader_addline(buffer, "gl_PointSize = OUT[%u].x;\n", i);
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_FOG))
             {
-                shader_addline(&buffer, "gl_FogFragCoord = OUT[%u].%c;\n", i, reg_mask[1]);
+                shader_addline(buffer, "gl_FogFragCoord = OUT[%u].%c;\n", i, reg_mask[1]);
             }
         }
-        shader_addline(&buffer, "}\n");
+        shader_addline(buffer, "}\n");
 
     } else if(ps_major >= 3 && vs_major >= 3) {
         WORD map = vs->baseShader.reg_maps.output_registers;
@@ -3602,8 +3602,8 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
         output_signature = vs->output_signature;
 
         /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
-        shader_addline(&buffer, "varying vec4 IN[%u];\n", vec4_varyings(3, gl_info));
-        shader_addline(&buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
+        shader_addline(buffer, "varying vec4 IN[%u];\n", vec4_varyings(3, gl_info));
+        shader_addline(buffer, "void order_ps_input(in vec4 OUT[%u]) {\n", MAX_REG_OUTPUT);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
         for (i = 0; map; map >>= 1, ++i)
@@ -3615,41 +3615,40 @@ static GLhandleARB generate_param_reorder_function(IWineD3DVertexShader *vertexs
 
             if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_POSITION))
             {
-                shader_addline(&buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
+                shader_addline(buffer, "gl_Position%s = OUT[%u]%s;\n", reg_mask, i, reg_mask);
             }
             else if (shader_match_semantic(semantic_name, WINED3DDECLUSAGE_PSIZE))
             {
-                shader_addline(&buffer, "gl_PointSize = OUT[%u].x;\n", i);
+                shader_addline(buffer, "gl_PointSize = OUT[%u].x;\n", i);
             }
         }
 
         /* Then, fix the pixel shader input */
-        handle_ps3_input(&buffer, gl_info, ps->input_reg_map, ps->input_signature,
+        handle_ps3_input(buffer, gl_info, ps->input_reg_map, ps->input_signature,
                 &ps->baseShader.reg_maps, output_signature, &vs->baseShader.reg_maps);
 
-        shader_addline(&buffer, "}\n");
+        shader_addline(buffer, "}\n");
     } else if(ps_major >= 3 && vs_major < 3) {
-        shader_addline(&buffer, "varying vec4 IN[%u];\n", vec4_varyings(3, gl_info));
-        shader_addline(&buffer, "void order_ps_input() {\n");
+        shader_addline(buffer, "varying vec4 IN[%u];\n", vec4_varyings(3, gl_info));
+        shader_addline(buffer, "void order_ps_input() {\n");
         /* The vertex shader wrote to the builtin varyings. There is no need to figure out position and
          * point size, but we depend on the optimizers kindness to find out that the pixel shader doesn't
          * read gl_TexCoord and gl_ColorX, otherwise we'll run out of varyings
          */
-        handle_ps3_input(&buffer, gl_info, ps->input_reg_map, ps->input_signature,
+        handle_ps3_input(buffer, gl_info, ps->input_reg_map, ps->input_signature,
                 &ps->baseShader.reg_maps, NULL, NULL);
-        shader_addline(&buffer, "}\n");
+        shader_addline(buffer, "}\n");
     } else {
         ERR("Unexpected vertex and pixel shader version condition: vs: %d, ps: %d\n", vs_major, ps_major);
     }
 
     ret = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
     checkGLcall("glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB)");
-    GL_EXTCALL(glShaderSourceARB(ret, 1, (const char**)&buffer.buffer, NULL));
-    checkGLcall("glShaderSourceARB(ret, 1, &buffer.buffer, NULL)");
+    GL_EXTCALL(glShaderSourceARB(ret, 1, (const char**)&buffer->buffer, NULL));
+    checkGLcall("glShaderSourceARB(ret, 1, &buffer->buffer, NULL)");
     GL_EXTCALL(glCompileShaderARB(ret));
     checkGLcall("glCompileShaderARB(ret)");
 
-    shader_buffer_free(&buffer);
     return ret;
 }
 
@@ -3839,15 +3838,14 @@ static GLuint shader_glsl_generate_vshader(IWineD3DVertexShaderImpl *This,
     return shader_obj;
 }
 
-static GLhandleARB find_glsl_pshader(IWineD3DPixelShaderImpl *shader, const struct ps_compile_args *args,
-                                     const struct ps_np2fixup_info **np2fixup_info)
+static GLhandleARB find_glsl_pshader(struct SHADER_BUFFER *buffer, IWineD3DPixelShaderImpl *shader,
+        const struct ps_compile_args *args, const struct ps_np2fixup_info **np2fixup_info)
 {
     UINT i;
     DWORD new_size;
     struct glsl_ps_compiled_shader *new_array;
     struct glsl_pshader_private    *shader_data;
     struct ps_np2fixup_info        *np2fixup = NULL;
-    SHADER_BUFFER buffer;
     GLhandleARB ret;
 
     if(!shader->backend_priv) {
@@ -3894,9 +3892,8 @@ static GLhandleARB find_glsl_pshader(IWineD3DPixelShaderImpl *shader, const stru
     pixelshader_update_samplers(&shader->baseShader.reg_maps,
             ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
 
-    shader_buffer_init(&buffer);
-    ret = shader_glsl_generate_pshader(shader, &buffer, args, np2fixup);
-    shader_buffer_free(&buffer);
+    shader_buffer_clear(buffer);
+    ret = shader_glsl_generate_pshader(shader, buffer, args, np2fixup);
     shader_data->gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
     *np2fixup_info = np2fixup;
 
@@ -3909,13 +3906,13 @@ static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const str
     return stored->fog_src == new->fog_src;
 }
 
-static GLhandleARB find_glsl_vshader(IWineD3DVertexShaderImpl *shader, const struct vs_compile_args *args)
+static GLhandleARB find_glsl_vshader(struct SHADER_BUFFER *buffer, IWineD3DVertexShaderImpl *shader,
+        const struct vs_compile_args *args)
 {
     UINT i;
     DWORD new_size;
     struct glsl_vs_compiled_shader *new_array;
     DWORD use_map = ((IWineD3DDeviceImpl *)shader->baseShader.device)->strided_streams.use_map;
-    SHADER_BUFFER buffer;
     struct glsl_vshader_private *shader_data;
     GLhandleARB ret;
 
@@ -3957,9 +3954,8 @@ static GLhandleARB find_glsl_vshader(IWineD3DVertexShaderImpl *shader, const str
 
     shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
 
-    shader_buffer_init(&buffer);
-    ret = shader_glsl_generate_vshader(shader, &buffer, args);
-    shader_buffer_free(&buffer);
+    shader_buffer_clear(buffer);
+    ret = shader_glsl_generate_vshader(shader, buffer, args);
     shader_data->gl_shaders[shader_data->num_gl_shaders++].prgId = ret;
 
     return ret;
@@ -4020,11 +4016,12 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     /* Attach GLSL vshader */
     if (vshader)
     {
-        GLhandleARB vshader_id = find_glsl_vshader((IWineD3DVertexShaderImpl *)vshader, &vs_compile_args);
+        GLhandleARB vshader_id = find_glsl_vshader(&priv->shader_buffer, (IWineD3DVertexShaderImpl *)vshader,
+                &vs_compile_args);
         WORD map = ((IWineD3DBaseShaderImpl *)vshader)->baseShader.reg_maps.input_registers;
         char tmp_name[10];
 
-        reorder_shader_id = generate_param_reorder_function(vshader, pshader, gl_info);
+        reorder_shader_id = generate_param_reorder_function(&priv->shader_buffer, vshader, pshader, gl_info);
         TRACE("Attaching GLSL shader object %u to program %u\n", reorder_shader_id, programId);
         GL_EXTCALL(glAttachObjectARB(programId, reorder_shader_id));
         checkGLcall("glAttachObjectARB");
@@ -4061,8 +4058,8 @@ static void set_glsl_shader_program(IWineD3DDevice *iface, BOOL use_ps, BOOL use
     /* Attach GLSL pshader */
     if (pshader)
     {
-        GLhandleARB pshader_id = find_glsl_pshader((IWineD3DPixelShaderImpl *)pshader, &ps_compile_args,
-                                                   &entry->np2Fixup_info);
+        GLhandleARB pshader_id = find_glsl_pshader(&priv->shader_buffer, (IWineD3DPixelShaderImpl *)pshader,
+                &ps_compile_args, &entry->np2Fixup_info);
         TRACE("Attaching GLSL shader object %u to program %u\n", pshader_id, programId);
         GL_EXTCALL(glAttachObjectARB(programId, pshader_id));
         checkGLcall("glAttachObjectARB");
@@ -4459,45 +4456,45 @@ static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
     SIZE_T stack_size = wined3d_log2i(max(GL_LIMITS(vshader_constantsF), GL_LIMITS(pshader_constantsF))) + 1;
 
+    shader_buffer_init(&priv->shader_buffer);
+
     priv->stack = HeapAlloc(GetProcessHeap(), 0, stack_size * sizeof(*priv->stack));
     if (!priv->stack)
     {
         ERR("Failed to allocate memory.\n");
-        HeapFree(GetProcessHeap(), 0, priv);
-        return E_OUTOFMEMORY;
+        goto fail;
     }
 
     if (!constant_heap_init(&priv->vconst_heap, GL_LIMITS(vshader_constantsF)))
     {
         ERR("Failed to initialize vertex shader constant heap\n");
-        HeapFree(GetProcessHeap(), 0, priv->stack);
-        HeapFree(GetProcessHeap(), 0, priv);
-        return E_OUTOFMEMORY;
+        goto fail;
     }
 
     if (!constant_heap_init(&priv->pconst_heap, GL_LIMITS(pshader_constantsF)))
     {
         ERR("Failed to initialize pixel shader constant heap\n");
-        constant_heap_free(&priv->vconst_heap);
-        HeapFree(GetProcessHeap(), 0, priv->stack);
-        HeapFree(GetProcessHeap(), 0, priv);
-        return E_OUTOFMEMORY;
+        goto fail;
     }
 
     if (wine_rb_init(&priv->program_lookup, &wined3d_glsl_program_rb_functions) == -1)
     {
         ERR("Failed to initialize rbtree.\n");
-        constant_heap_free(&priv->pconst_heap);
-        constant_heap_free(&priv->vconst_heap);
-        HeapFree(GetProcessHeap(), 0, priv->stack);
-        HeapFree(GetProcessHeap(), 0, priv);
-        return E_OUTOFMEMORY;
+        goto fail;
     }
 
     priv->next_constant_version = 1;
 
     This->shader_priv = priv;
     return WINED3D_OK;
+
+fail:
+    constant_heap_free(&priv->pconst_heap);
+    constant_heap_free(&priv->vconst_heap);
+    HeapFree(GetProcessHeap(), 0, priv->stack);
+    shader_buffer_free(&priv->shader_buffer);
+    HeapFree(GetProcessHeap(), 0, priv);
+    return E_OUTOFMEMORY;
 }
 
 /* Context activation is done by the caller. */

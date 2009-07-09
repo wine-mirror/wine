@@ -138,13 +138,18 @@ const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token
     }
 }
 
-void shader_buffer_init(struct SHADER_BUFFER *buffer)
+void shader_buffer_clear(struct SHADER_BUFFER *buffer)
 {
-    buffer->buffer = HeapAlloc(GetProcessHeap(), 0, SHADER_PGMSIZE);
     buffer->buffer[0] = '\0';
     buffer->bsize = 0;
     buffer->lineNo = 0;
     buffer->newline = TRUE;
+}
+
+void shader_buffer_init(struct SHADER_BUFFER *buffer)
+{
+    buffer->buffer = HeapAlloc(GetProcessHeap(), 0, SHADER_PGMSIZE);
+    shader_buffer_clear(buffer);
 }
 
 void shader_buffer_free(struct SHADER_BUFFER *buffer)

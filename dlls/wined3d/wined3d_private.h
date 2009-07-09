@@ -2601,6 +2601,7 @@ typedef struct IWineD3DBaseShaderImpl {
     IWineD3DBaseShaderClass         baseShader;
 } IWineD3DBaseShaderImpl;
 
+void shader_buffer_clear(struct SHADER_BUFFER *buffer);
 void shader_buffer_init(struct SHADER_BUFFER *buffer);
 void shader_buffer_free(struct SHADER_BUFFER *buffer);
 void shader_cleanup(IWineD3DBaseShader *iface);
