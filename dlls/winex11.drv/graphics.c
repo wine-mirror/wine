@@ -1072,7 +1072,7 @@ X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
         /* to avoid a BadMatch error */
         if (!pixmap) pixmap = XCreatePixmap( gdi_display, root_window,
                                              1, 1, physDev->depth );
-        XCopyArea( gdi_display, physDev->drawable, pixmap, BITMAP_colorGC,
+        XCopyArea( gdi_display, physDev->drawable, pixmap, get_bitmap_gc(physDev->depth),
                    physDev->dc_rect.left + pt.x, physDev->dc_rect.top + pt.y, 1, 1, 0, 0 );
         image = XGetImage( gdi_display, pixmap, 0, 0, 1, 1, AllPlanes, ZPixmap );
     }

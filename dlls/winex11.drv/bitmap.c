@@ -36,6 +36,17 @@ X_PHYSBITMAP BITMAP_stock_phys_bitmap = { 0 };  /* phys bitmap for the default s
 
 static XContext bitmap_context;  /* X context to associate a phys bitmap to a handle */
 
+GC get_bitmap_gc(int depth)
+{
+    switch(depth)
+    {
+        case 1:
+            return BITMAP_monoGC;
+        default:
+            return BITMAP_colorGC;
+    }
+}
+
 /***********************************************************************
  *           X11DRV_BITMAP_Init
  */
@@ -157,11 +168,12 @@ BOOL CDECL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, LPVOID
     }
     else  /* else clear the bitmap */
     {
+        GC gc = get_bitmap_gc(physBitmap->pixmap_depth);
         wine_tsx11_lock();
-        XSetFunction( gdi_display, BITMAP_GC(physBitmap), GXclear );
-        XFillRectangle( gdi_display, physBitmap->pixmap, BITMAP_GC(physBitmap), 0, 0,
+        XSetFunction( gdi_display, gc, GXclear );
+        XFillRectangle( gdi_display, physBitmap->pixmap, gc, 0, 0,
                         bitmap.bmWidth, bitmap.bmHeight );
-        XSetFunction( gdi_display, BITMAP_GC(physBitmap), GXcopy );
+        XSetFunction( gdi_display, gc, GXcopy );
         wine_tsx11_unlock();
     }
     return TRUE;
@@ -405,7 +417,7 @@ LONG CDECL X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
       FIXME("Unhandled bits:%d\n", bitmap.bmBitsPixel);
 
     }
-    XPutImage( gdi_display, physBitmap->pixmap, BITMAP_GC(physBitmap),
+    XPutImage( gdi_display, physBitmap->pixmap, get_bitmap_gc(physBitmap->pixmap_depth),
                image, 0, 0, 0, 0, bitmap.bmWidth, height );
     HeapFree( GetProcessHeap(), 0, image->data );
     image->data = NULL;

@@ -3984,7 +3984,7 @@ INT CDECL X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT start
   descr.lines     = tmpheight >= 0 ? lines : -lines;
   descr.depth     = physBitmap->pixmap_depth;
   descr.drawable  = physBitmap->pixmap;
-  descr.gc        = BITMAP_GC(physBitmap);
+  descr.gc        = get_bitmap_gc(physBitmap->pixmap_depth);
   descr.xSrc      = 0;
   descr.ySrc      = 0;
   descr.xDest     = 0;
@@ -4138,7 +4138,7 @@ INT CDECL X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT start
   descr.lines     = lines;
   descr.depth     = physBitmap->pixmap_depth;
   descr.drawable  = physBitmap->pixmap;
-  descr.gc        = BITMAP_GC(physBitmap);
+  descr.gc        = get_bitmap_gc(physBitmap->pixmap_depth);
   descr.width     = dib.dsBm.bmWidth;
   descr.height    = dib.dsBm.bmHeight;
   descr.xDest     = 0;
@@ -4353,7 +4353,7 @@ static void X11DRV_DIB_DoUpdateDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB)
     GetObjectW( physBitmap->hbitmap, sizeof(bitmap), &bitmap );
     X11DRV_DIB_DoCopyDIBSection(physBitmap, toDIB,
                                 physBitmap->colorMap, physBitmap->nColorMap,
-                                physBitmap->pixmap, BITMAP_GC(physBitmap),
+                                physBitmap->pixmap, get_bitmap_gc(physBitmap->pixmap_depth),
                                 0, 0, 0, 0, bitmap.bmWidth, bitmap.bmHeight);
 }
 

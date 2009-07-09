@@ -103,13 +103,14 @@ static const COLORREF WHITE = RGB(0xff, 0xff, 0xff);
 /***********************************************************************
  *           BRUSH_DitherColor
  */
-static Pixmap BRUSH_DitherColor( COLORREF color )
+static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
 {
     /* X image for building dithered pixmap */
     static XImage *ditherImage = NULL;
     static COLORREF prevColor = 0xffffffff;
     unsigned int x, y;
     Pixmap pixmap;
+    GC gc = get_bitmap_gc(depth);
 
     if (!ditherImage)
     {
@@ -144,7 +145,7 @@ static Pixmap BRUSH_DitherColor( COLORREF color )
     }
 
     pixmap = XCreatePixmap( gdi_display, root_window, MATRIX_SIZE, MATRIX_SIZE, screen_depth );
-    XPutImage( gdi_display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
+    XPutImage( gdi_display, pixmap, gc, ditherImage, 0, 0,
     	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
     wine_tsx11_unlock();
 
@@ -185,7 +186,7 @@ static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
     if ((physDev->depth > 1) && (screen_depth <= 8) && !X11DRV_IsSolidColor( color ))
     {
 	  /* Dithered brush */
-	physDev->brush.pixmap = BRUSH_DitherColor( color );
+	physDev->brush.pixmap = BRUSH_DitherColor( color, physDev->depth );
 	physDev->brush.fillStyle = FillTiled;
 	physDev->brush.pixel = 0;
     }
@@ -222,7 +223,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
                                                bitmap.bmWidth, bitmap.bmHeight, 1);
         /* FIXME: should probably convert to monochrome instead */
         XCopyPlane( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
-                    BITMAP_monoGC, 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0, 1 );
+                    get_bitmap_gc(1), 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0, 1 );
     }
     else
     {
@@ -230,7 +231,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
                                                bitmap.bmWidth, bitmap.bmHeight,
                                                physBitmap->pixmap_depth );
         XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
-                   BITMAP_GC(physBitmap), 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0 );
+                   get_bitmap_gc(physBitmap->pixmap_depth), 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0 );
     }
     wine_tsx11_unlock();
 

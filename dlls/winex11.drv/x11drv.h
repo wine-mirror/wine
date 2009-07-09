@@ -144,11 +144,10 @@ typedef struct
 } X11DRV_PDEVICE;
 
 
-  /* GCs used for B&W and color bitmap operations */
-extern GC BITMAP_monoGC, BITMAP_colorGC;
 extern X_PHYSBITMAP BITMAP_stock_phys_bitmap;  /* phys bitmap for the default stock bitmap */
 
-#define BITMAP_GC(physBitmap) (((physBitmap)->pixmap_depth == 1) ? BITMAP_monoGC : BITMAP_colorGC)
+/* Retrieve the GC used for bitmap operations */
+extern GC get_bitmap_gc(int depth);
 
 /* Wine driver X11 functions */
 
