@@ -4,8 +4,8 @@
  *
  * Copyright 2000 Joshua Thielen
  * Copyright 2003 Marcelo Duarte
- * Copyright 2003 Vincent Béron
- * Copyright 2006 Jonathan Ernst
+ * Copyright 2003 Vincent BÃ©ron
+ * Copyright 2006 JonathanÂ Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,10 +24,13 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE {
-     IDS_APPNAME, "Démineur Wine"
+     IDS_APPNAME, "DÃ©mineur de Wine"
      IDS_NOBODY,  "Anonyme"
      IDS_ABOUT,   "Copyright 2000 Joshua Thielen"
 }
@@ -37,29 +40,29 @@ MENU_WINEMINE MENU DISCARDABLE
     POPUP "&Options" {
         MENUITEM "&Nouveau\tF2",           IDM_NEW
         MENUITEM SEPARATOR
-        MENUITEM "Points d'interro&gation", IDM_MARKQ
+        MENUITEM "&Marquage des cases suspectes", IDM_MARKQ
         MENUITEM SEPARATOR
-        MENUITEM "&Débutant",      IDM_BEGINNER
-        MENUITEM "&Avancé",      IDM_ADVANCED
+        MENUITEM "&DÃ©butant",      IDM_BEGINNER
+        MENUITEM "&AvancÃ©",      IDM_ADVANCED
         MENUITEM "&Expert",        IDM_EXPERT
-        MENUITEM "&Personnalisé...",        IDM_CUSTOM
+        MENUITEM "&PersonnalisÃ©...",        IDM_CUSTOM
         MENUITEM SEPARATOR
         MENUITEM "&Quitter\tAlt+X",          IDM_EXIT
     }
     POPUP "&Info" {
-        MENUITEM "&Temps les plus rapides",    IDM_TIMES
-        MENUITEM "À &propos",         IDM_ABOUT
+        MENUITEM "Meilleurs &temps",    IDM_TIMES
+        MENUITEM "Ã€ &propos",         IDM_ABOUT
     }
 }
 
 DLG_TIMES DIALOG DISCARDABLE 0, 0, 160, 80
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Temps les plus rapides"
+CAPTION "Meilleurs temps"
 {
-    GROUPBOX        "Temps les plus rapides", -1,  10,  10, 140,  45
-    LTEXT           "Débutant",      -1,  20,  20,  40,   8
-    LTEXT           "Avancé",        -1,  20,  30,  40,   8
+    GROUPBOX        "Meilleurs temps", -1,  10,  10, 140,  45
+    LTEXT           "DÃ©butant",      -1,  20,  20,  40,   8
+    LTEXT           "AvancÃ©",        -1,  20,  30,  40,   8
     LTEXT           "Expert",        -1,  20,  40,  40,   8
     LTEXT           "999",          IDC_TIME1,  70,  20,  15,   8
     LTEXT           "999",          IDC_TIME2,  70,  30,  15,   8
@@ -73,9 +76,9 @@ CAPTION "Temps les plus rapides"
 DLG_CONGRATS DIALOG DISCARDABLE  0, 0, 160, 60
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Félicitations !"
+CAPTION "FÃ©licitationsÂ !"
 {
-    LTEXT           "Veuillez saisir votre nom", -1,  10,  10, 150,  10
+    LTEXT           "Veuillez saisir votre nom :", -1,  25,  10, 150,  10
     EDITTEXT                              IDC_EDITNAME,  25,  20, 110,  12
     DEFPUSHBUTTON   "OK",                         IDOK,  60,  40,  40,  15
 }
@@ -83,14 +86,14 @@ CAPTION "Félicitations !"
 DLG_CUSTOM DIALOG DISCARDABLE  0, 0, 100, 100
 STYLE  DS_MODALFRAME | DS_3DLOOK |
     WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_POPUP
-CAPTION "Grille personnalisée"
+CAPTION "Grille personnalisÃ©e"
 {
-    LTEXT           "Rangées",  -1,   5,   5,  30,  10
+    LTEXT           "Lignes",  -1,   5,   5,  30,  10
     LTEXT           "Colonnes", -1,   5,  35,  30,  10
     LTEXT           "Mines",    -1,   5,  65,  30,  10
-    EDITTEXT               IDC_EDITROWS,   5,  15,  20,  12, ES_NUMBER
-    EDITTEXT               IDC_EDITCOLS,   5,  45,  20,  12, ES_NUMBER
-    EDITTEXT              IDC_EDITMINES,   5,  75,  20,  12, ES_NUMBER
-    DEFPUSHBUTTON   "OK",          IDOK,      40,  30,  50,  15
-    PUSHBUTTON      "Annuler", IDCANCEL,  40,  50,  50,  15
+    EDITTEXT               IDC_EDITROWS,   5,  15,  30,  12, ES_NUMBER
+    EDITTEXT               IDC_EDITCOLS,   5,  45,  30,  12, ES_NUMBER
+    EDITTEXT              IDC_EDITMINES,   5,  75,  30,  12, ES_NUMBER
+    DEFPUSHBUTTON   "OK",          IDOK,      44,  30,  50,  15
+    PUSHBUTTON      "Annuler", IDCANCEL,  44,  50,  50,  15
 }
