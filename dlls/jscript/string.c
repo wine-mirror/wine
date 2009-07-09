@@ -486,8 +486,10 @@ static HRESULT String_lastIndexOf(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 static HRESULT String_link(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR fontW[] = {'A',0};
+    static const WCHAR colorW[] = {'H','R','E','F',0};
+
+    return do_attribute_tag_format(dispex, lcid, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
 /* ECMA-262 3rd Edition    15.5.4.10 */

@@ -356,6 +356,19 @@ ok(tmp === "<I>test</I>", "'test'.italics() = " + tmp);
 tmp = "test".italics(3);
 ok(tmp === "<I>test</I>", "'test'.italics(3) = " + tmp);
 
+tmp = "".link();
+ok(tmp === "<A HREF=\"undefined\"></A>", "''.link() = " + tmp);
+tmp = "".link(3);
+ok(tmp === "<A HREF=\"3\"></A>", "''.link(3) = " + tmp);
+tmp = "".link("red");
+ok(tmp === "<A HREF=\"red\"></A>", "''.link('red') = " + tmp);
+tmp = "test".link();
+ok(tmp === "<A HREF=\"undefined\">test</A>", "'test'.link() = " + tmp);
+tmp = "test".link(3);
+ok(tmp === "<A HREF=\"3\">test</A>", "'test'.link(3) = " + tmp);
+tmp = "test".link("green");
+ok(tmp === "<A HREF=\"green\">test</A>", "'test'.link('green') = " + tmp);
+
 tmp = "".small();
 ok(tmp === "<SMALL></SMALL>", "''.small() = " + tmp);
 tmp = "".small(3);
