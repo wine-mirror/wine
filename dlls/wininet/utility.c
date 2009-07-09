@@ -187,17 +187,21 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
         TRACE("failed to get address of %s (%s)\n", debugstr_w(lpszServerName), gai_strerror(ret));
         return FALSE;
     }
-    if (*sa_len < sizeof(struct sockaddr_in))
+    if (*sa_len < res->ai_addrlen)
     {
         WARN("address too small\n");
         freeaddrinfo( res );
         return FALSE;
     }
-    *sa_len = sizeof(struct sockaddr_in);
-    memset( psa, 0, sizeof(struct sockaddr_in) );
-    memcpy( &((struct sockaddr_in *)psa)->sin_addr, &((struct sockaddr_in *)res->ai_addr)->sin_addr, sizeof(struct in_addr) );
-    ((struct sockaddr_in *)psa)->sin_family = res->ai_family;
-    ((struct sockaddr_in *)psa)->sin_port = htons(nServerPort);
+    *sa_len = res->ai_addrlen;
+    memcpy( psa, res->ai_addr, res->ai_addrlen );
+    /* Copy port */
+    switch (res->ai_family)
+    {
+    case AF_INET:
+        ((struct sockaddr_in *)psa)->sin_port = htons(nServerPort);
+        break;
+    }
 
     freeaddrinfo( res );
 #else
