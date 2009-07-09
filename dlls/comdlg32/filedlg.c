@@ -1117,9 +1117,6 @@ static LRESULT FILEDLG95_OnWMSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
     if(fodInfos->DlgInfos.hwndCustomDlg &&
         (fodInfos->ofnInfos->Flags & (OFN_ENABLETEMPLATE | OFN_ENABLETEMPLATEHANDLE)))
     {
-        GetClientRect(hwnd, &rc);
-        DeferWindowPos( hdwp,fodInfos->DlgInfos.hwndCustomDlg, NULL,
-            0, 0, rc.right, rc.bottom, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
         for( ctrl = GetWindow( fodInfos->DlgInfos.hwndCustomDlg, GW_CHILD);
                 ctrl ; ctrl = GetWindow( ctrl, GW_HWNDNEXT))
         {
@@ -1142,6 +1139,11 @@ static LRESULT FILEDLG95_OnWMSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
                         SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
             }
         }
+        /* size the custom dialog at the end: some applications do some
+         * control re-arranging at this point */
+        GetClientRect(hwnd, &rc);
+        DeferWindowPos( hdwp,fodInfos->DlgInfos.hwndCustomDlg, NULL,
+            0, 0, rc.right, rc.bottom, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
     }
     EndDeferWindowPos( hdwp);
     /* should not be needed */
