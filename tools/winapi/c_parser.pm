@@ -1569,60 +1569,49 @@ sub parse_c_typedef($$$$)
     my $line = $$refline;
     my $column = $$refcolumn;
 
-    my $type;
-
     if (!$self->_parse_c("typedef", \$_, \$line, \$column)) {
 	return 0;
     }
 
-    my $finished = 0;
-    
-    if ($finished) {
-	# Nothing
-    } elsif ($self->parse_c_enum(\$_, \$line, \$column)) {
-	$finished = 1;
-    } 
-
-    my $kind;
-    my $_name;
-    my @field_type_names;
-    my @field_names;
-    my @names;
-    if ($finished) {
-	# Nothing
-    } elsif ($self->parse_c_struct_union(\$_, \$line, \$column,
-					 \$kind, \$_name, \@field_type_names, \@field_names, \@names))
+    my ($kind, $name, @field_type_names, @field_names, @names);
+    my ($linkage, $type_name);
+    if ($self->parse_c_enum(\$_, \$line, \$column))
+{
+        # Nothing to do
+    }
+    elsif ($self->parse_c_struct_union(\$_, \$line, \$column,
+					 \$kind, \$name, \@field_type_names, \@field_names, \@names))
     {
 	my $base_name;
-        foreach my $name (@names)
+        foreach my $_name (@names)
         {
-            if ($name =~ /^\w+$/)
+            if ($_name =~ /^\w+$/)
             {
-                $base_name = $name;
+                $base_name = $_name;
                 last;
             }
         }
-        $base_name="$kind $_name" if (!defined $base_name and defined $_name);
+        $base_name="$kind $name" if (!defined $base_name and defined $name);
         $base_name=$kind if (!defined $base_name);
-	foreach my $name (@names) {
-	    if ($name =~ /^\w+$/) {
+	foreach my $_name (@names) {
+	    if ($_name =~ /^\w+$/) {
 		my $type = $self->{CREATE_TYPE}();
 		
 		$type->kind($kind);
-		$type->_name($_name);
-		$type->name($name);
+		$type->_name($name);
+		$type->name($_name);
 		$type->field_type_names([@field_type_names]);
 		$type->field_names([@field_names]);
 
 		$self->{FOUND_TYPE}($type);
-	    } elsif ($name =~ /^(\*+)\s*(?:RESTRICTED_POINTER\s+)?(\w+)$/) {
+	    } elsif ($_name =~ /^(\*+)\s*(?:RESTRICTED_POINTER\s+)?(\w+)$/) {
 		my $type_name = "$base_name $1";
-		$name = $2;
+		$_name = $2;
 
 		my $type = $self->{CREATE_TYPE}();
 
 		$type->kind("");
-		$type->name($name);
+		$type->name($_name);
 		$type->field_type_names([$type_name]);
 		$type->field_names([""]);
 
@@ -1631,16 +1620,9 @@ sub parse_c_typedef($$$$)
 		$self->_parse_c_error($_, $line, $column, "typedef 2");
 	    }
 	}
-	
-	$finished = 1;
     }
-
-    my $linkage;
-    my $type_name;
-    my $name;
-    if ($finished) {
-	# Nothing
-    } elsif ($self->parse_c_variable(\$_, \$line, \$column, \$linkage, \$type_name, \$name)) {
+    elsif ($self->parse_c_variable(\$_, \$line, \$column, \$linkage, \$type_name, \$name))
+    {
 	$type_name =~ s/\s+/ /g;
 	
 	if(defined($type_name) && defined($name)) {
