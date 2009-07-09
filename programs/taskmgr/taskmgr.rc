@@ -21,6 +21,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /*
@@ -63,7 +65,7 @@ BEGIN
             VALUE "FileDescription", "Task Manager by Brian Palmer\0"
             VALUE "FileVersion", "1.0.0.1\0"
             VALUE "InternalName", "taskmgr\0"
-            VALUE "LegalCopyright", "Copyright © Brian Palmer 2000\0"
+            VALUE "LegalCopyright", "Copyright Â© Brian Palmer 2000\0"
             VALUE "OriginalFilename", "taskmgr.exe\0"
             VALUE "ProductName", "Task Manager by Brian Palmer\0"
             VALUE "ProductVersion", "1.0.0.1\0"
