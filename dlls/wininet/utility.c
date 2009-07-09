@@ -178,14 +178,23 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
 
 #ifdef HAVE_GETADDRINFO
     memset( &hints, 0, sizeof(struct addrinfo) );
+    /* Prefer IPv4 to IPv6 addresses, since some servers do not listen on
+     * their IPv6 addresses even though they have IPv6 addresses in the DNS.
+     */
     hints.ai_family = AF_INET;
 
     ret = getaddrinfo( name, NULL, &hints, &res );
     HeapFree( GetProcessHeap(), 0, name );
     if (ret != 0)
     {
-        TRACE("failed to get address of %s (%s)\n", debugstr_w(lpszServerName), gai_strerror(ret));
-        return FALSE;
+        TRACE("failed to get IPv4 address of %s (%s), retrying with IPv6\n", debugstr_w(lpszServerName), gai_strerror(ret));
+        hints.ai_family = AF_INET6;
+        ret = getaddrinfo( name, NULL, &hints, &res );
+        if (ret != 0)
+        {
+            TRACE("failed to get address of %s (%s)\n", debugstr_w(lpszServerName), gai_strerror(ret));
+            return FALSE;
+        }
     }
     if (*sa_len < res->ai_addrlen)
     {
@@ -200,6 +209,9 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     {
     case AF_INET:
         ((struct sockaddr_in *)psa)->sin_port = htons(nServerPort);
+        break;
+    case AF_INET6:
+        ((struct sockaddr_in6 *)psa)->sin6_port = htons(nServerPort);
         break;
     }
 
