@@ -114,12 +114,22 @@ STRING_TOOLARGE,                                "%s 파일이 너무 커서 메모장으로�
 다른 편집기를 사용하십시오."
 STRING_NOTEXT,                                  "입력한 내용이 없습니다.\
 \n내용을 입력한 후 재시도하십시오"
-STRING_DOESNOTEXIST,                            "%s\n파일이 없습니다.\n\n \
+STRING_DOESNOTEXIST,                            "%s\ 파일이 없습니다.\n\n \
 파일을 새로 만드시겠습니까?"
-STRING_NOTSAVED,                                "%s\n파일 내용이 변경되었습니다.\n\n \
+STRING_NOTSAVED,                                "%s\ 파일 내용이 변경되었습니다.\n\n \
 변경 내용을 저장하시겠습니까?"
 STRING_NOTFOUND,                                "%s 문자열을 찾을 수 없습니다."
 STRING_OUT_OF_MEMORY,                           "이 작업을 완료하는 데 필요한 메모리가 부족합니다.\
-\n사용 가능한 메모리의 양을 확보하기 위해 하나 이상의 응용 프로그램을 닫아 주십시오.\n"
+\n사용 가능한 메모리의 양을 확보하기 위해 하나 이상의 응용 프로그램을 닫아 주십시오."
 
+
+STRING_UNICODE_LE,     "유니코드 (UTF-16)"
+STRING_UNICODE_BE,     "유니코드  (UTF-16 빅-엔디언)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+유니코드 문자를 포함하고 있는 이 파일은 만약 당신이 %s 인코딩으로 \n\
+파일을 저장하면 문자의 손실이 있을 것입니다.\n\
+이 문자를 보존하려면  취소를 클릭하고, 인코딩 드롭다운목록의 유니코드 \n\
+옵션 중의 하나를  선택하십시오t.\n\
+계속하시겠습니까?"
 }
