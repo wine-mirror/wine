@@ -218,6 +218,28 @@ static void put_string( const struct string_id *str )
     }
 }
 
+static void dump_res_data( const struct resource *res )
+{
+    unsigned int i = 0;
+    unsigned int size = (res->data_size + 3) & ~3;
+
+    if (!size) return;
+
+    file_pos = res->data;
+    file_end = (const unsigned char *)res->data + size;
+
+    output( "\t.long " );
+    while (size > 4)
+    {
+        if ((i++ % 16) == 15) output( "0x%08x\n\t.long ", get_dword() );
+        else output( "0x%08x,", get_dword() );
+        size -= 4;
+    }
+    output( "0x%08x\n", get_dword() );
+    size -= 4;
+    assert( file_pos == file_end );
+}
+
 /* check the file header */
 /* all values must be zero except header size */
 static int check_header(void)
@@ -515,7 +537,7 @@ void output_resources( DLLSPEC *spec )
     {
         output( "\n\t.align %d\n", get_alignment(get_ptr_size()) );
         output( ".L__wine_spec_res_%d:\n", i );
-        dump_bytes( res->data, (res->data_size + 3) & ~3 );
+        dump_res_data( res );
     }
     output( ".L__wine_spec_resources_end:\n" );
     output( "\t.byte 0\n" );
