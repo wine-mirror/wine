@@ -21,6 +21,7 @@ RC_SRCS = \
 	Ro.rc \
 	Ru.rc \
 	Si.rc \
+	Sv.rc \
 	Zh.rc \
 	appwiz.rc
 
