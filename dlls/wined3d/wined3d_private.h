@@ -2395,7 +2395,7 @@ struct wined3d_buffer
 
 extern const IWineD3DBufferVtbl wined3d_buffer_vtbl;
 const BYTE *buffer_get_memory(IWineD3DBuffer *iface, UINT offset, GLuint *buffer_object);
-const BYTE *buffer_get_sysmem(struct wined3d_buffer *This);
+BYTE *buffer_get_sysmem(struct wined3d_buffer *This);
 
 /* IWineD3DRendertargetView */
 struct wined3d_rendertarget_view

@@ -1335,13 +1335,13 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             switch (reg->immconst_type)
             {
                 case WINED3D_IMMCONST_FLOAT:
-                    sprintf(register_name, "%.8e", *(float *)reg->immconst_data);
+                    sprintf(register_name, "%.8e", *(const float *)reg->immconst_data);
                     break;
 
                 case WINED3D_IMMCONST_FLOAT4:
                     sprintf(register_name, "vec4(%.8e, %.8e, %.8e, %.8e)",
-                            *(float *)&reg->immconst_data[0], *(float *)&reg->immconst_data[1],
-                            *(float *)&reg->immconst_data[2], *(float *)&reg->immconst_data[3]);
+                            *(const float *)&reg->immconst_data[0], *(const float *)&reg->immconst_data[1],
+                            *(const float *)&reg->immconst_data[2], *(const float *)&reg->immconst_data[3]);
                     break;
 
                 default:

@@ -750,7 +750,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
     }
     reg_maps->loop_depth = max_loop_depth;
 
-    This->baseShader.functionLength = ((char *)pToken - (char *)byte_code);
+    This->baseShader.functionLength = ((const char *)pToken - (const char *)byte_code);
 
     return WINED3D_OK;
 }
@@ -925,13 +925,13 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
         switch (reg->immconst_type)
         {
             case WINED3D_IMMCONST_FLOAT:
-                TRACE("%.8e", *(float *)reg->immconst_data);
+                TRACE("%.8e", *(const float *)reg->immconst_data);
                 break;
 
             case WINED3D_IMMCONST_FLOAT4:
                 TRACE("%.8e, %.8e, %.8e, %.8e",
-                        *(float *)&reg->immconst_data[0], *(float *)&reg->immconst_data[1],
-                        *(float *)&reg->immconst_data[2], *(float *)&reg->immconst_data[3]);
+                        *(const float *)&reg->immconst_data[0], *(const float *)&reg->immconst_data[1],
+                        *(const float *)&reg->immconst_data[2], *(const float *)&reg->immconst_data[3]);
                 break;
 
             default:

@@ -577,7 +577,7 @@ static ULONG STDMETHODCALLTYPE buffer_AddRef(IWineD3DBuffer *iface)
 }
 
 /* Context activation is done by the caller. */
-const BYTE *buffer_get_sysmem(struct wined3d_buffer *This)
+BYTE *buffer_get_sysmem(struct wined3d_buffer *This)
 {
     /* AllocatedMemory exists if the buffer is double buffered or has no buffer object at all */
     if(This->resource.allocatedMemory) return This->resource.allocatedMemory;
