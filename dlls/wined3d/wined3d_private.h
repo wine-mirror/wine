@@ -505,12 +505,14 @@ typedef enum COMPARISON_TYPE
 #define MAX_LABELS 16
 
 #define SHADER_PGMSIZE 65535
-typedef struct SHADER_BUFFER {
-    char* buffer;
+
+struct wined3d_shader_buffer
+{
+    char *buffer;
     unsigned int bsize;
     unsigned int lineNo;
     BOOL newline;
-} SHADER_BUFFER;
+};
 
 enum WINED3D_SHADER_INSTRUCTION_HANDLER
 {
@@ -659,7 +661,7 @@ struct wined3d_shader_context
 {
     IWineD3DBaseShader *shader;
     const struct shader_reg_maps *reg_maps;
-    SHADER_BUFFER *buffer;
+    struct wined3d_shader_buffer *buffer;
     void *backend_data;
 };
 
@@ -2548,12 +2550,9 @@ typedef struct SHADER_PARSE_STATE {
 #define PRINTF_ATTR(fmt,args)
 #endif
 
-/* Base Shader utility functions. 
- * (may move callers into the same file in the future) */
-extern int shader_addline(
-    SHADER_BUFFER* buffer,
-    const char* fmt, ...) PRINTF_ATTR(2,3);
-int shader_vaddline(SHADER_BUFFER *buffer, const char *fmt, va_list args);
+/* Base Shader utility functions. */
+int shader_addline(struct wined3d_shader_buffer *buffer, const char *fmt, ...) PRINTF_ATTR(2,3);
+int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *fmt, va_list args);
 
 /* Vertex shader utility functions */
 extern BOOL vshader_get_input(
@@ -2601,15 +2600,15 @@ typedef struct IWineD3DBaseShaderImpl {
     IWineD3DBaseShaderClass         baseShader;
 } IWineD3DBaseShaderImpl;
 
-void shader_buffer_clear(struct SHADER_BUFFER *buffer);
-void shader_buffer_init(struct SHADER_BUFFER *buffer);
-void shader_buffer_free(struct SHADER_BUFFER *buffer);
+void shader_buffer_clear(struct wined3d_shader_buffer *buffer);
+void shader_buffer_init(struct wined3d_shader_buffer *buffer);
+void shader_buffer_free(struct wined3d_shader_buffer *buffer);
 void shader_cleanup(IWineD3DBaseShader *iface);
 void shader_dump_src_param(const struct wined3d_shader_src_param *param,
         const struct wined3d_shader_version *shader_version);
 void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
         const struct wined3d_shader_version *shader_version);
-void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
+void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffer *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction, void *backend_ctx);
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
         struct shader_reg_maps *reg_maps, struct wined3d_shader_attribute *attributes,

@@ -138,7 +138,7 @@ const struct wined3d_shader_frontend *shader_select_frontend(DWORD version_token
     }
 }
 
-void shader_buffer_clear(struct SHADER_BUFFER *buffer)
+void shader_buffer_clear(struct wined3d_shader_buffer *buffer)
 {
     buffer->buffer[0] = '\0';
     buffer->bsize = 0;
@@ -146,18 +146,18 @@ void shader_buffer_clear(struct SHADER_BUFFER *buffer)
     buffer->newline = TRUE;
 }
 
-void shader_buffer_init(struct SHADER_BUFFER *buffer)
+void shader_buffer_init(struct wined3d_shader_buffer *buffer)
 {
     buffer->buffer = HeapAlloc(GetProcessHeap(), 0, SHADER_PGMSIZE);
     shader_buffer_clear(buffer);
 }
 
-void shader_buffer_free(struct SHADER_BUFFER *buffer)
+void shader_buffer_free(struct wined3d_shader_buffer *buffer)
 {
     HeapFree(GetProcessHeap(), 0, buffer->buffer);
 }
 
-int shader_vaddline(SHADER_BUFFER* buffer, const char *format, va_list args)
+int shader_vaddline(struct wined3d_shader_buffer *buffer, const char *format, va_list args)
 {
     char* base = buffer->buffer + buffer->bsize;
     int rc;
@@ -187,7 +187,7 @@ int shader_vaddline(SHADER_BUFFER* buffer, const char *format, va_list args)
     return 0;
 }
 
-int shader_addline(SHADER_BUFFER* buffer, const char *format, ...)
+int shader_addline(struct wined3d_shader_buffer *buffer, const char *format, ...)
 {
     int ret;
     va_list args;
@@ -1034,7 +1034,7 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 
 /* Shared code in order to generate the bulk of the shader string.
  * NOTE: A description of how to parse tokens can be found on msdn */
-void shader_generate_main(IWineD3DBaseShader *iface, SHADER_BUFFER *buffer,
+void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffer *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction, void *backend_ctx)
 {
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
