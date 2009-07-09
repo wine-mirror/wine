@@ -632,9 +632,12 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                     reg_maps->texcoord_mask[dst_param.reg.idx] |= dst_param.write_mask;
                 }
 
-                if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL
-                        && dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
+                if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
                 {
+                    IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)This;
+
+                    if(dst_param.reg.type == WINED3DSPR_COLOROUT && dst_param.reg.idx == 0)
+                    {
                     /* Many 2.0 and 3.0 pixel shaders end with a MOV from a temp register to
                      * COLOROUT 0. If we know this in advance, the ARB shader backend can skip
                      * the mov and perform the sRGB write correction from the source register.
@@ -642,13 +645,20 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                      * However, if the mov is only partial, we can't do this, and if the write
                      * comes from an instruction other than MOV it is hard to do as well. If
                      * COLOROUT 0 is overwritten partially later, the marker is dropped again. */
-                    IWineD3DPixelShaderImpl *ps = (IWineD3DPixelShaderImpl *)This;
 
-                    ps->color0_mov = FALSE;
-                    if (ins.handler_idx == WINED3DSIH_MOV)
+                        ps->color0_mov = FALSE;
+                        if (ins.handler_idx == WINED3DSIH_MOV)
+                        {
+                            /* Used later when the source register is read. */
+                            color0_mov = TRUE;
+                        }
+                    }
+                    /* Also drop the MOV marker if the source register is overwritten prior to the shader
+                     * end
+                     */
+                    else if(dst_param.reg.type == WINED3DSPR_TEMP && dst_param.reg.idx == ps->color0_reg)
                     {
-                        /* Used later when the source register is read. */
-                        color0_mov = TRUE;
+                        ps->color0_mov = FALSE;
                     }
                 }
 
