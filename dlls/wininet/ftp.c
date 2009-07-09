@@ -2450,6 +2450,12 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_NAME_RESOLVED,
         (LPWSTR) lpszServerName, strlenW(lpszServerName));
 
+    if (socketAddr.sin_family != AF_INET)
+    {
+        WARN("unsupported address family %d\n", socketAddr.sin_family);
+        INTERNET_SetLastError(ERROR_INTERNET_CANNOT_CONNECT);
+        goto lerror;
+    }
     nsocket = socket(AF_INET,SOCK_STREAM,0);
     if (nsocket == -1)
     {
