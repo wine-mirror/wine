@@ -21,46 +21,48 @@
 
 #include "wcmd.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "Hilfe für ATTRIB\n"
+  WCMD_ATTRIB, "Hilfe fÃ¼r ATTRIB\n"
   WCMD_CALL,
 "CALL <Batchdateiname> wird in einer Batchdatei genutzt, um Befehle aus\n\
-einer anderen Batchdatei auszuführen. Wenn die Batchdatei exisiert, kehrt\n\
-die Kontrolle zu der Datei zurück, die sie gerufen hat. Der CALL Befehl kann\n\
-Parameter zu der rufenden Prozedure übertragen.\n\
+einer anderen Batchdatei auszufÃ¼hren. Wenn die Batchdatei exisiert, kehrt\n\
+die Kontrolle zu der Datei zurÃ¼ck, die sie gerufen hat. Der CALL Befehl kann\n\
+Parameter zu der rufenden Prozedure Ã¼bertragen.\n\
 \n\
-Änderungen für das aktuelle Verzeichnis, Umgebungsvariablen usw. werden in\n\
+Ã„nderungen fÃ¼r das aktuelle Verzeichnis, Umgebungsvariablen usw. werden in\n\
 der gerufenen Prozedur gemacht, die sie von der aufgerufenen geerbt hat.\n"
 
-  WCMD_CD,     "Hilfe für CD\n"
-  WCMD_CHDIR,  "Hilfe für CHDIR\n"
+  WCMD_CD,     "Hilfe fÃ¼r CD\n"
+  WCMD_CHDIR,  "Hilfe fÃ¼r CHDIR\n"
 
-  WCMD_CLS,    "CLS löscht den Inhalt der Konsole\n"
+  WCMD_CLS,    "CLS lÃ¶scht den Inhalt der Konsole\n"
 
-  WCMD_COPY,   "Hilfe für COPY\n"
-  WCMD_CTTY,   "Hilfe für CTTY\n"
-  WCMD_DATE,   "Hilfe für DATE\n"
-  WCMD_DEL,    "Hilfe für DEL\n"
-  WCMD_DIR,    "Hilfe für DIR\n"
+  WCMD_COPY,   "Hilfe fÃ¼r COPY\n"
+  WCMD_CTTY,   "Hilfe fÃ¼r CTTY\n"
+  WCMD_DATE,   "Hilfe fÃ¼r DATE\n"
+  WCMD_DEL,    "Hilfe fÃ¼r DEL\n"
+  WCMD_DIR,    "Hilfe fÃ¼r DIR\n"
 
   WCMD_ECHO,
-"ECHO <Zeichenkette> zeigt die <Zeichenkette> auf dem aktuellen Terminalgerät.\n\
+"ECHO <Zeichenkette> zeigt die <Zeichenkette> auf dem aktuellen TerminalgerÃ¤t.\n\
 \n\
 ECHO ON bewirkt, dass alle nachfolgenden Befehle in einer Batchdatei zuerst\n\
-auf dem Terminalgerät angezeigt und danach ausgeführt werden.\n\
+auf dem TerminalgerÃ¤t angezeigt und danach ausgefÃ¼hrt werden.\n\
 \n\
-ECHO OFF kehrt den Effekt des vorherigen ECHO ON (ECHO ist standardmässig\n\
+ECHO OFF kehrt den Effekt des vorherigen ECHO ON (ECHO ist standardmÃ¤ssig\n\
 auf OFF) um. Um den ECHO OFF Befehl nicht anzeigen zu lassen, kann vor dessen\n\
 ein @ Zeichen gesetzt werden.\n"
 
-  WCMD_ERASE,  "Hilfe für ERASE\n"
+  WCMD_ERASE,  "Hilfe fÃ¼r ERASE\n"
 
   WCMD_FOR,
-"Der FOR Befehl wird genutzt, um einen Befehl für eine Menge von Dateien\n\
-einzeln auszuführen.\n\
+"Der FOR Befehl wird genutzt, um einen Befehl fÃ¼r eine Menge von Dateien\n\
+einzeln auszufÃ¼hren.\n\
 \n\
 Syntax: FOR %Variable IN (set) DO Befehl\n\
 \n\
@@ -68,7 +70,7 @@ Die Anforderung das % Zeichen zu verdoppeln, sobald FOR in einer Batchdatei\n\
 benutzt wird, existiert im CMD nicht.\n"
 
   WCMD_GOTO,
-"Der GOTO Befehl transferiert die Ausführung zu einer anderen Stelle in einer\n\
+"Der GOTO Befehl transferiert die AusfÃ¼hrung zu einer anderen Stelle in einer\n\
 Batchdatei.\n\
 \n\
 Die Bezeichnung, die das Ziel eines GOTO's ist, kann bis zu 255 Zeichen lang\n\
@@ -76,21 +78,21 @@ sein, darf aber keine Leerzeichen enthakten (dies ist der Unterschied zu\n\
 anderen Betriebssystemen). Wenn zwei oder mehr identische Bezeichnungen in\n\
 einer Batchdatei existieren, dann wird immer zu der ersten Bezeichnung\n\
 gesprungen. Versucht GOTO zu einer nicht vorhanden Bezeichnung zu springen,\n\
-beendet sich die Ausführung der Batchdatei.\n\
+beendet sich die AusfÃ¼hrung der Batchdatei.\n\
 \n\
 GOTO hat keine Auswirkungen, wenn es interaktiv genutzt wird.\n"
 
-  WCMD_HELP,   "Hilfe für HELP\n"
+  WCMD_HELP,   "Hilfe fÃ¼r HELP\n"
 
   WCMD_IF,
-"IF wird benutzt, um einen Befehl bedingt auszuführen.\n\
+"IF wird benutzt, um einen Befehl bedingt auszufÃ¼hren.\n\
 \n\
 Syntax:	IF [NOT] EXIST Dateiname Befehl\n\
 	IF [NOT] Zeichenkette1==Zeichenkette2 Befehl\n\
 	IF [NOT] ERRORLEVEL Nummer Befehl\n\
 \n\
-In der zweiten Form des Befehls, müssen die beiden Zeichenketten in doppelten\n\
-Anführungszeichen stehen. Der Vergleich achtet nicht auf die Groß- und\n\
+In der zweiten Form des Befehls, mÃ¼ssen die beiden Zeichenketten in doppelten\n\
+AnfÃ¼hrungszeichen stehen. Der Vergleich achtet nicht auf die GroÃŸ- und\n\
 Kleinschreibung.\n"
 
   WCMD_LABEL,  
@@ -98,12 +100,12 @@ Kleinschreibung.\n"
 \n\
 Syntax: LABEL [Laufwerk:]\n\
 \n\
-Der Befehl wartet auf die Eingabe einer neuen Bezeichnung für das angegebene\n\
-Laufwerk. Sie können sich auch die Laufwerksbezeicnung mit dem VOL - Befehl\n\
+Der Befehl wartet auf die Eingabe einer neuen Bezeichnung fÃ¼r das angegebene\n\
+Laufwerk. Sie kÃ¶nnen sich auch die Laufwerksbezeicnung mit dem VOL - Befehl\n\
 anzeigen lassen.\n"
 
-  WCMD_MD,     "Hilfe für MD\n"
-  WCMD_MKDIR,  "Hilfe für MKDIR\n"
+  WCMD_MD,     "Hilfe fÃ¼r MD\n"
+  WCMD_MKDIR,  "Hilfe fÃ¼r MKDIR\n"
   WCMD_MOVE,
 "MOVE verschiebt eine Datei oder ein Verzeichnis zu einem neuen Punkt im\n\
 Dateisystem.\n\
@@ -111,25 +113,25 @@ Dateisystem.\n\
 Ist das zu verschiebende Objekt ein Verzeichnis, dann werden alle Dateien und\n\
 Unterverzeichnisse unterhalb des Objektes genauso verschoben.\n\
 \n\
-MOVE schlägt fehl, wenn die alte und die neue Position auf verschiedenen DOS\n\
+MOVE schlÃ¤gt fehl, wenn die alte und die neue Position auf verschiedenen DOS\n\
 Laufwerken sind.\n"
 
   WCMD_PATH,
-"PATH ändert oder zeigt den CMD Suchpfad an.\n\
+"PATH Ã¤ndert oder zeigt den CMD Suchpfad an.\n\
 \n\
 Nach der Eingabe von PATH, wird die aktuelle PATH Einstellung angezeigt\n\
 (nach dem Start wird der Wert aus der wine.conf Datei genommen). Um die\n\
-Einstellungen zu ändern, muss nach dem PATH Befehl der neue Wert angegeben\n\
+Einstellungen zu Ã¤ndern, muss nach dem PATH Befehl der neue Wert angegeben\n\
 werden\n\
 \n\
-Es ist auch möglich den PATH mit Hilfe der PATH Umgebungsvariable zu\n\
+Es ist auch mÃ¶glich den PATH mit Hilfe der PATH Umgebungsvariable zu\n\
 modifizieren. Zum Beispiel:\n\
 		PATH %PATH%;c:\\temp\n"
 
   WCMD_PAUSE,
-"PAUSE lässt eine Meldung auf dem Bildschirm erscheinen\n\
-'Drücken Sie die Eingabetaste um fortzufahren' und wartet darauf, dass der\n\
-Benutzer die Eingabetaste/Enter-Taste drückt. Es wird hauptsächlich in\n\
+"PAUSE lÃ¤sst eine Meldung auf dem Bildschirm erscheinen\n\
+'DrÃ¼cken Sie die Eingabetaste um fortzufahren' und wartet darauf, dass der\n\
+Benutzer die Eingabetaste/Enter-Taste drÃ¼ckt. Es wird hauptsÃ¤chlich in\n\
 Batchdateien genutzt, um dem Beutzer zu erlauben, die Ausgabe eines vorherigen\n\
 Befehls zu lesen, bevor es durch Scrollen vom Bildschirm verschwindet.\n"
 
@@ -148,41 +150,41 @@ $l    < Zeichen           $n    akutelles Laufwerk  $p    aktueller Pfad\n\
 $q    Gleichheitszeichen  $t    aktuelle Zeit       $v    cmd Version\n\
 \n\
 Hinweis: Die Eingabe des PROMPT Befehls ohne eine Prompt-Zeichenkette, setzt\n\
-den Prompt zu den Standardwert zurück, was das aktuelle Verzeichnis (inklusive\n\
-dem aktuellen Laufwerksbuchstaben) gefolgt von einen Größerzeichen (>)\n\
+den Prompt zu den Standardwert zurÃ¼ck, was das aktuelle Verzeichnis (inklusive\n\
+dem aktuellen Laufwerksbuchstaben) gefolgt von einen GrÃ¶ÃŸerzeichen (>)\n\
 (genau wie der PROMPT $p$g Befehl).\n\
 \n\
-Der Prompt kann auch geändert werden durch das Ändern der PROMPT\n\
+Der Prompt kann auch geÃ¤ndert werden durch das Ã„ndern der PROMPT\n\
 Umgebungsvariable, so hat der Befehl 'SET PROMPT=text' die gleiche Auswirkung\n\
 wie 'PROMPT text'.\n"
 
   WCMD_REM,
 "Beginnt eine Befehlszeile mit REM (gefolgt von einem Leerzeichen), wird\n\
-keine Aktion ausgeführt und kann deshalb auch als Kommentar in einer\n\
+keine Aktion ausgefÃ¼hrt und kann deshalb auch als Kommentar in einer\n\
 Batchdatei genutzt werden.\n"
 
-  WCMD_REN,    "Hilfe für REN\n"
-  WCMD_RENAME, "Hilfe für RENAME\n"
-  WCMD_RD,     "Hilfe für RD\n"
-  WCMD_RMDIR,  "Hilfe für RMDIR\n"
+  WCMD_REN,    "Hilfe fÃ¼r REN\n"
+  WCMD_RENAME, "Hilfe fÃ¼r RENAME\n"
+  WCMD_RD,     "Hilfe fÃ¼r RD\n"
+  WCMD_RMDIR,  "Hilfe fÃ¼r RMDIR\n"
 
   WCMD_SET,
-"SET ändert oder zeigt die CMD Umgebungsvariablen an.\n\
+"SET Ã¤ndert oder zeigt die CMD Umgebungsvariablen an.\n\
 \n\
 SET ohne Parameter zeigt alle aktuellen Umgebungsvariablen an.\n\
 \n\
-Um eine Umgebungsvariable zu erschaffen oder zu ändern, ist der Syntax nötig:\n\
+Um eine Umgebungsvariable zu erschaffen oder zu Ã¤ndern, ist der Syntax nÃ¶tig:\n\
 \n\
       SET <Variable>=<Wert>\n\
 \n\
-Wobei <Variable> und <Wert> Zeichenkette sind. Es müssen keine Leerzeichen vor\n\
-dem Gleichheitszeichen sein, noch muss der Variablenname in Anführungszeichen\n\
+Wobei <Variable> und <Wert> Zeichenkette sind. Es mÃ¼ssen keine Leerzeichen vor\n\
+dem Gleichheitszeichen sein, noch muss der Variablenname in AnfÃ¼hrungszeichen\n\
 eingeschlossen sein.\n\
 \n\
 In Wine werden die Umgebungsvariablen des darunterliegenden Betriebssystems\n\
-mit in die Win32 Umgebung eingebunden, deshalb gibt es gewöhnlich mehr Werte\n\
-als es sie in einer ursprünglichen Win32 Realisierung gäbe. Anmerkung: Es ist\n\
-nicht möglich die Umgebungsvariablen des Betriebssystems vom CMD aus zu\n\
+mit in die Win32 Umgebung eingebunden, deshalb gibt es gewÃ¶hnlich mehr Werte\n\
+als es sie in einer ursprÃ¼nglichen Win32 Realisierung gÃ¤be. Anmerkung: Es ist\n\
+nicht mÃ¶glich die Umgebungsvariablen des Betriebssystems vom CMD aus zu\n\
 beeinflussen.\n"
 
   WCMD_SHIFT,
@@ -190,24 +192,24 @@ beeinflussen.\n"
 Liste zu entfernen, so das der Parameter 2 zu Parameter 1 wird und so weiter.\n\
 Es hat keine Auswirkungen, wenn es von der Befehlszeile gerufen wird.\n"
 
-  WCMD_TIME,   "Hilfe für TIME\n"
+  WCMD_TIME,   "Hilfe fÃ¼r TIME\n"
 
   WCMD_TITLE,
-"Setzt den Fenstertitel für das CMD - Fenster.\n\
+"Setzt den Fenstertitel fÃ¼r das CMD - Fenster.\n\
 \n\
 Syntax: TITLE [Zeichenkette]\n"
 
   WCMD_TYPE,
-"TYPE <Datei> kopiert <Datei> zu dem Konsolengerät (oder dorthin, wohin\n\
-dies umgeleitet wurde). Es wird keine Überprüfung vorgenommen, ob die\n\
+"TYPE <Datei> kopiert <Datei> zu dem KonsolengerÃ¤t (oder dorthin, wohin\n\
+dies umgeleitet wurde). Es wird keine ÃœberprÃ¼fung vorgenommen, ob die\n\
 Datei lesbarer Text ist.\n"
 
   WCMD_VERIFY,
-"VERIFY wird benutzt, um das Verify Flag zu setzen, zu löschen oder zu\n\
-testen. Gültige Eingaben sind:\n\
+"VERIFY wird benutzt, um das Verify Flag zu setzen, zu lÃ¶schen oder zu\n\
+testen. GÃ¼ltige Eingaben sind:\n\
 \n\
 VERIFY ON	Setzt das Flag\n\
-VERIFY OFF	Löscht das Flag\n\
+VERIFY OFF	LÃ¶scht das Flag\n\
 VERIFY		Zeigt an, ob ON oder OFF verwendet wird.\n\
 \n\
 Das Verify Flag hat keine Funktion in Wine.\n"
@@ -215,7 +217,7 @@ Das Verify Flag hat keine Funktion in Wine.\n"
   WCMD_VER,
 "VER zeigt die aktuelle Version von CMD an.\n"
 
-  WCMD_VOL,    "Hilfe für VOL\n"
+  WCMD_VOL,    "Hilfe fÃ¼r VOL\n"
 
   WCMD_PUSHD,  "PUSHD <Verzeichnisname> speichert das aktuelle\n\
 Verzeichnis auf einem Stack und wecheselt das Arbeitsverzeichnis\n\
@@ -228,18 +230,18 @@ mit PUSHD gespeicherten.\n"
 
   WCMD_EXIT,
 "EXIT beendet die aktuelle Befehlssitzung und kehrt zum\n\
-Betriebssystem oder der Shell zurück, von der CMD gestart wurde.\n"
+Betriebssystem oder der Shell zurÃ¼ck, von der CMD gestart wurde.\n"
 
 
   WCMD_ALLHELP, "CMD eingebauten Befehle sind:\n\
-ATTRIB\t\tZeigt an oder ändert die DOS Dateieigenschaften\n\
+ATTRIB\t\tZeigt an oder Ã¤ndert die DOS Dateieigenschaften\n\
 CALL\t\tRuft eine Batch-Datei innerhalb einer anderen auf\n\
 CD (CHDIR)\tWechselt in das Verzeichnis\n\
-CLS\t\tLöscht den Inhalt der Konsole\n\
+CLS\t\tLÃ¶scht den Inhalt der Konsole\n\
 COPY\t\tKopiert eine Datei\n\
-CTTY\t\tÄndert das Eingabe/Ausgabe - Gerät\n\
-DATE\t\tZeigt an oder ändert das Systemdatum\n\
-DEL (ERASE)\tLöscht eine oder mehrere Dateien\n\
+CTTY\t\tÃ„ndert das Eingabe/Ausgabe - GerÃ¤t\n\
+DATE\t\tZeigt an oder Ã¤ndert das Systemdatum\n\
+DEL (ERASE)\tLÃ¶scht eine oder mehrere Dateien\n\
 DIR\t\tListet den Inhalt eines Verzeichnisses\n\
 ECHO\t\tKopiert den Text direkt zur Konsolenausgabe\n\
 HELP\t\tZeigt detalierte Informationen zu einen Thema\n\
@@ -247,50 +249,50 @@ MD (MKDIR)\tErzeugt ein Unterverzeichnis\n\
 MORE\t\tZeigt die Ausgabe seitenweise an\n\
 MOVE\t\tBewegt eine oder mehrere Dateien oder einen Verzeichnisbaum\n\
 PATH\t\tSetzt oder zeigt den Suchpfad an\n\
-PROMPT\t\tÄndert den Befehlszeilenprompt\n\
+PROMPT\t\tÃ„ndert den Befehlszeilenprompt\n\
 REN (RENAME)\tBenennt eine Datei um\n\
-RD (RMDIR)\tLöscht ein Unterverzeichnis\n\
+RD (RMDIR)\tLÃ¶scht ein Unterverzeichnis\n\
 SET\t\tSetzt oder zeigt die Umgebungsvariablen an\n\
 TIME\t\tSetzt oder zeigt die aktuelle Systemzeit an\n\
-TITLE\t\tSetzt den Fenstertitel für die CMD - Sitzung\n\
+TITLE\t\tSetzt den Fenstertitel fÃ¼r die CMD - Sitzung\n\
 TYPE\t\tGibt den Inhalt einer Textdatei aus\n\
 VER\t\tZeigt die aktuelle Version von CMD an\n\
 VOL\t\tZeigt die Bezeichnung eines Laufwerkes an\n\
 EXIT\t\tBeendet den CMD\n\n\
-Geben Sie HELP <Befehl> ein, damit Sie weitere Informationen für einen der\n\
+Geben Sie HELP <Befehl> ein, damit Sie weitere Informationen fÃ¼r einen der\n\
 obigen Befehle erhalten.\n"
 
   WCMD_CONFIRM, "Sind sie sicher"
   WCMD_YES, "J"
   WCMD_NO, "N"
-  WCMD_NOASSOC, "Verknüpfung für Dateiendung %s fehlt\n"
-  WCMD_NOFTYPE, "Kein Befehl zum Öffnen für Dateityp '%s'\n"
-  WCMD_OVERWRITE, "%s überschreiben"
+  WCMD_NOASSOC, "VerknÃ¼pfung fÃ¼r Dateiendung %s fehlt\n"
+  WCMD_NOFTYPE, "Kein Befehl zum Ã–ffnen fÃ¼r Dateityp '%s'\n"
+  WCMD_OVERWRITE, "%s Ã¼berschreiben"
   WCMD_MORESTR, "Mehr..."
-  WCMD_TRUNCATEDLINE, "Die Zeile bei der Batchverarbeitung ist möglicherweise abgeschnitten. Benutze:\n"
+  WCMD_TRUNCATEDLINE, "Die Zeile bei der Batchverarbeitung ist mÃ¶glicherweise abgeschnitten. Benutze:\n"
   WCMD_NYI, "Noch nicht implementiert\n\n"
   WCMD_NOARG, "Argument fehlt\n"
   WCMD_SYNTAXERR, "Syntaxfehler\n"
   WCMD_FILENOTFOUND, "%s : Datei nicht gefunden\n"
-  WCMD_NOCMDHELP, "Hilfe für %s ist nicht verfügbar\n"
+  WCMD_NOCMDHELP, "Hilfe fÃ¼r %s ist nicht verfÃ¼gbar\n"
   WCMD_NOTARGET, "Das Sprungziel von GOTO wurde nicht gefunden\n"
   WCMD_CURRENTDATE, "Aktuelles Datum ist %s\n"
   WCMD_CURRENTTIME, "Aktuelle Zeit ist %s\n"
   WCMD_NEWDATE, "Geben Sie das neue Datum ein: "
   WCMD_NEWTIME, "Geben Sie die neue Zeit ein: "
   WCMD_MISSINGENV, "Die Umgebungsvariable %s ist nicht definiert\n"
-  WCMD_READFAIL, "'%s' konnte nicht geöffnet werden\n"
+  WCMD_READFAIL, "'%s' konnte nicht geÃ¶ffnet werden\n"
   WCMD_CALLINSCRIPT, "Cannot call batch label outside of a batch script\n"
   WCMD_ALL, "A"
-  WCMD_DELPROMPT, "%s, löschen"
+  WCMD_DELPROMPT, "%s, lÃ¶schen"
   WCMD_ECHOPROMPT, "Echo ist %s\n"
   WCMD_VERIFYPROMPT, "Verify ist %s\n"
-  WCMD_VERIFYERR, "Verify muß ON oder OFF sein\n";
+  WCMD_VERIFYERR, "Verify muÃŸ ON oder OFF sein\n";
   WCMD_ARGERR, "Parameterfehler\n"
   WCMD_VOLUMEDETAIL, "Volume in Laufwerk %c ist %s\nVolumeseriennummer ist %04x-%04x\n\n"
-  WCMD_VOLUMEPROMPT, "Volumebezeichnung (11 Zeichen, EINGABETASTE für keine)?"
+  WCMD_VOLUMEPROMPT, "Volumebezeichnung (11 Zeichen, EINGABETASTE fÃ¼r keine)?"
   WCMD_NOPATH, "PATH nicht gefunden\n"
-  WCMD_ANYKEY,"Drücken Sie die Eingabetaste um fortzufahren: "
+  WCMD_ANYKEY,"DrÃ¼cken Sie die Eingabetaste um fortzufahren: "
   WCMD_CONSTITLE,"Wine Befehlsprozessor"
   WCMD_VERSION,"CMD Version %s\n\n"
   WCMD_MOREPROMPT, "Mehr? "
