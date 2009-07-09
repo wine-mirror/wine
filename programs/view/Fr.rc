@@ -4,7 +4,7 @@
  *
  * Copyright 1998 Douglas Ridgway
  * Copyright 2003 Marcelo Duarte
- * Copyright 2003 Vincent Béron
+ * Copyright 2003 Vincent BÃ©ron
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,9 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 /*
@@ -38,9 +41,9 @@ BEGIN
 	MENUITEM "&Ouvrir",			IDM_OPEN
         MENUITEM "&Quitter",                       IDM_EXIT
     END
-    POPUP "&Déplacement"
+    POPUP "&DÃ©placement"
     BEGIN
-      MENUITEM "&Mettre à l'échelle",              IDM_SET_EXT_TO_WIN
+      MENUITEM "&Mettre Ã  l'Ã©chelle",              IDM_SET_EXT_TO_WIN
       MENUITEM SEPARATOR
       MENUITEM "&Gauche",				IDM_LEFT
       MENUITEM "&Droite",			IDM_RIGHT
@@ -70,5 +73,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DESCRIPTION         "Visionneuse de fichiers Metafile réguliers"
+    IDS_DESCRIPTION         "Visionneuse de fichiers Metafile rÃ©guliers"
 END
