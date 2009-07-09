@@ -21,6 +21,8 @@
 
 #include "cmdlgtst.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 CmdlgtstMenu MENU
@@ -32,7 +34,7 @@ CmdlgtstMenu MENU
 
  POPUP "&Commdlg"
  {
-  MENUITEM "&Öffnen", CM_U_OPEN
+  MENUITEM "&Ã–ffnen", CM_U_OPEN
   MENUITEM "&Speichern", CM_U_SAVE
   MENUITEM SEPARATOR
   MENUITEM "&Farbe", CM_U_COLOR
@@ -61,7 +63,7 @@ CmdlgtstMenu MENU
  POPUP "&Hilfe"
  {
   MENUITEM "&Gebrauch", CM_H_USAGE
-  MENUITEM "Ü&ber", CM_H_ABOUT
+  MENUITEM "Ãœ&ber", CM_H_ABOUT
  }
 
 }
@@ -147,7 +149,7 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 168, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 180, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 24, 228, 11, 13
- CONTROL "Markierte Flags sind durch das System gesetzt worden und müssen von dem Benutzer entfernt werden", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
+ CONTROL "Markierte Flags sind durch das System gesetzt worden und mÃ¼ssen von dem Benutzer entfernt werden", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
 }
 
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
@@ -212,7 +214,7 @@ FONT 8, "MS Shell Dlg"
 
 File_Flags_Dialog DIALOG 6, 15, 207, 227
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Öffne Datei/Sichere Datei Flags"
+CAPTION "Ã–ffne Datei/Sichere Datei Flags"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
@@ -239,7 +241,7 @@ FONT 8, "MS Shell Dlg"
 
 AboutDialog DIALOG 6, 15, 194, 119
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Über"
+CAPTION "Ãœber"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
@@ -255,11 +257,11 @@ FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 70, 276, 50, 14
  LTEXT "Common Dialog Test Jig Exerciser, Version 1.20", -1, 13, 48, 168, 12
- LTEXT "Dieses Tool testet COMMDLG für Wine.", -1, 12, 72, 168, 12
- LTEXT "Die Flags können im Flags - Menü gefunden werden.", -1, 12, 96, 168, 24
- LTEXT "Farbdialog ändert die Hintergrundfarbe.", -1, 12, 120, 168, 12
- LTEXT "Schriftdialog ändert alle Schriften und die Schriftfarbe, wenn CF_EFFECTS ausgewählt ist.", -1, 12, 144, 168, 24
- LTEXT "Die linke, obere Ecke weist auf den vollständen Verzeichnisnamen und die Bezeichnung des letzten erfolgreichen Öffnens oder Sicherns hin.", -1, 12, 180, 168, 24
+ LTEXT "Dieses Tool testet COMMDLG fÃ¼r Wine.", -1, 12, 72, 168, 12
+ LTEXT "Die Flags kÃ¶nnen im Flags - MenÃ¼ gefunden werden.", -1, 12, 96, 168, 24
+ LTEXT "Farbdialog Ã¤ndert die Hintergrundfarbe.", -1, 12, 120, 168, 12
+ LTEXT "Schriftdialog Ã¤ndert alle Schriften und die Schriftfarbe, wenn CF_EFFECTS ausgewÃ¤hlt ist.", -1, 12, 144, 168, 24
+ LTEXT "Die linke, obere Ecke weist auf den vollstÃ¤nden Verzeichnisnamen und die Bezeichnung des letzten erfolgreichen Ã–ffnens oder Sicherns hin.", -1, 12, 180, 168, 24
  LTEXT "(c) 1999-2000, Eric Williams.  Rights are as granted under the WINE license.  Don't hoard code... share it!", -1, 12, 228, 168, 36
  ICON "AboutIcon", -1, 86, 12, 18, 20
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 216, 168, 2
@@ -274,7 +276,7 @@ BEGIN
   CONTROL "", rct2, "Static", SS_GRAYRECT, 160, 12, 4, 80
   CONTROL "", rct3, "Static", SS_GRAYRECT,  84, 88, 80, 4
   GROUPBOX "Papier", grp2, 8, 96, 224, 56, BS_GROUPBOX
-  LTEXT "&Größe:", stc2, 16, 112, 36, 8
+  LTEXT "&GrÃ¶ÃŸe:", stc2, 16, 112, 36, 8
   COMBOBOX cmb2, 64, 110, 80, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   COMBOBOX cmb1, 150, 110, 80, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   LTEXT "&Zufuhr", stc3, 16, 132, 36, 8
@@ -282,7 +284,7 @@ BEGIN
   GROUPBOX "Format", grp1, 8, 156, 64, 56, BS_GROUPBOX
   AUTORADIOBUTTON "&Hochformat", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
   AUTORADIOBUTTON "&Querformat", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
-  GROUPBOX "Ränder", grp4, 80, 156, 152, 56, BS_GROUPBOX
+  GROUPBOX "RÃ¤nder", grp4, 80, 156, 152, 56, BS_GROUPBOX
   LTEXT "&Links:", stc15, 88, 172, 21, 8
   EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
   LTEXT "&Rechts:", stc16, 159, 172, 27, 8
