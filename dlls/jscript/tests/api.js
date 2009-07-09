@@ -318,6 +318,22 @@ ok(tmp === "<FONT COLOR=\"3\">test</FONT>", "'test'.fontcolor(3) = " + tmp);
 tmp = "test".fontcolor("green");
 ok(tmp === "<FONT COLOR=\"green\">test</FONT>", "'test'.fontcolor('green') = " + tmp);
 
+tmp = "".fontsize();
+ok(tmp === "<FONT SIZE=\"undefined\"></FONT>", "''.fontsize() = " + tmp);
+tmp = "".fontsize(3);
+ok(tmp === "<FONT SIZE=\"3\"></FONT>", "''.fontsize(3) = " + tmp);
+tmp = "".fontsize("red");
+ok(tmp === "<FONT SIZE=\"red\"></FONT>", "''.fontsize('red') = " + tmp);
+tmp = "test".fontsize();
+ok(tmp === "<FONT SIZE=\"undefined\">test</FONT>", "'test'.fontsize() = " + tmp);
+tmp = "test".fontsize(3);
+ok(tmp === "<FONT SIZE=\"3\">test</FONT>", "'test'.fontsize(3) = " + tmp);
+tmp = "test".fontsize("green");
+ok(tmp === "<FONT SIZE=\"green\">test</FONT>", "'test'.fontsize('green') = " + tmp);
+
+tmp = ("".fontcolor()).fontsize();
+ok(tmp === "<FONT SIZE=\"undefined\"><FONT COLOR=\"undefined\"></FONT></FONT>", "(''.fontcolor()).fontsize() = " + tmp);
+
 tmp = "".italics();
 ok(tmp === "<I></I>", "''.italics() = " + tmp);
 tmp = "".italics(3);

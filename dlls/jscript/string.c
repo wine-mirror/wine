@@ -393,8 +393,10 @@ static HRESULT String_fontcolor(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 static HRESULT String_fontsize(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR fontW[] = {'F','O','N','T',0};
+    static const WCHAR colorW[] = {'S','I','Z','E',0};
+
+    return do_attribute_tag_format(dispex, lcid, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
 static HRESULT String_indexOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
