@@ -22,19 +22,21 @@
 
 #include "progman.h"
 
+#pragma code_page(65001)
+
 /* Menu */
 
 MAIN_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 {
  POPUP "&Datei" {
    MENUITEM "&Neu...",              PM_NEW
-   MENUITEM "Ö&ffnen\tEingabetaste",             PM_OPEN
+   MENUITEM "Ã–&ffnen\tEingabetaste",             PM_OPEN
    MENUITEM "&Verschieben...\tF7",             PM_MOVE,      GRAYED
    MENUITEM "&Kopieren...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&Löschen\tEntf",           PM_DELETE
+   MENUITEM "&LÃ¶schen\tEntf",           PM_DELETE
    MENUITEM "&Eigenschaften...\tAlt+Eingabetaste",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
-   MENUITEM "&Ausführen...",          PM_EXECUTE
+   MENUITEM "&AusfÃ¼hren...",          PM_EXECUTE
    MENUITEM SEPARATOR
    MENUITEM "&Programm-Manager beenden...",             PM_EXIT
  }
@@ -44,7 +46,7 @@ MAIN_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
    MENUITEM "&Einstellungen beim Beenden speichern", PM_SAVE_SETTINGS
  }
  POPUP "&Fenster" {
-   MENUITEM "Über&lappend\tUmschalt+F5",       PM_OVERLAP
+   MENUITEM "Ãœber&lappend\tUmschalt+F5",       PM_OVERLAP
    MENUITEM "&Nebeneinander\tUmschalt+F4",  PM_SIDE_BY_SIDE
    MENUITEM "&Symbole anordnen",       PM_ARRANGE
  }
@@ -60,7 +62,7 @@ POPUP "&Hilfe" {
    POPUP "&Info..." {
      MENUITEM "&Lizenz",        PM_LICENSE
      MENUITEM "&KEINE GARANTIE",    PM_NO_WARRANTY
-     MENUITEM "Ü&ber WINE",     PM_ABOUT_WINE
+     MENUITEM "Ãœ&ber WINE",     PM_ABOUT_WINE
    }
  }
 }
@@ -163,7 +165,7 @@ PUSHBUTTON    "&Hilfe",                 PM_HELP,             185, 85,  60, 15, W
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Symbol auswählen"
+CAPTION "Symbol auswÃ¤hlen"
 {
 LTEXT     "Datei&name:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 12, WS_TABSTOP
@@ -181,7 +183,7 @@ PUSHBUTTON    "&Hilfe",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Programm ausführen"
+CAPTION "Programm ausfÃ¼hren"
 {
 LTEXT     "&Befehlszeile:", -1,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 12, WS_TABSTOP
@@ -201,18 +203,18 @@ IDS_PROGRAM_MANAGER,		"Programm-Manager"
 IDS_ERROR,			"FEHLER"
 IDS_WARNING,			"ACHTUNG"
 IDS_INFO,			"Information"
-IDS_DELETE,			"Löschen"
-IDS_DELETE_GROUP_s,		"Lösche Programmgruppe „%s“?"
-IDS_DELETE_PROGRAM_s,		"Lösche Programm „%s“?"
+IDS_DELETE,			"LÃ¶schen"
+IDS_DELETE_GROUP_s,		"LÃ¶sche Programmgruppe â€ž%sâ€œ?"
+IDS_DELETE_PROGRAM_s,		"LÃ¶sche Programm â€ž%sâ€œ?"
 IDS_NOT_IMPLEMENTED,		"Nicht implementiert"
-IDS_FILE_READ_ERROR_s,		"Fehler beim Lesen von „%s“."
-IDS_FILE_WRITE_ERROR_s,		"Fehler beim Schreiben von „%s“."
-IDS_GRPFILE_READ_ERROR_s,	"Die Programmgruppendatei „%s“ kann nicht geöffnet werden.\n\Soll weiterhin versucht werden, diese Datei zu laden?"
+IDS_FILE_READ_ERROR_s,		"Fehler beim Lesen von â€ž%sâ€œ."
+IDS_FILE_WRITE_ERROR_s,		"Fehler beim Schreiben von â€ž%sâ€œ."
+IDS_GRPFILE_READ_ERROR_s,	"Die Programmgruppendatei â€ž%sâ€œ kann nicht geÃ¶ffnet werden.\n\Soll weiterhin versucht werden, diese Datei zu laden?"
 IDS_OUT_OF_MEMORY,		"Zu wenig Hauptspeicher."
-IDS_WINHELP_ERROR,		"Keine Hilfe verfügbar."
+IDS_WINHELP_ERROR,		"Keine Hilfe verfÃ¼gbar."
 IDS_UNKNOWN_FEATURE_s,		"Unbekannte Eigenschaft in %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Datei „%s“ existiert. Sie wird nicht überschrieben."
-IDS_SAVE_GROUP_AS_s,		"Die Programmgruppe wird als „%s“ gesichert, um das Überschreiben der Originaldatei zu verhindern."
+IDS_FILE_NOT_OVERWRITTEN_s,	"Datei â€ž%sâ€œ existiert. Sie wird nicht Ã¼berschrieben."
+IDS_SAVE_GROUP_AS_s,		"Die Programmgruppe wird als â€ž%sâ€œ gesichert, um das Ãœberschreiben der Originaldatei zu verhindern."
 IDS_NO_HOT_KEY,			"Keine"
 IDS_ALL_FILES,			"Alle Dateien (*.*)"
 IDS_PROGRAMS,			"Programme"
@@ -225,15 +227,15 @@ STRINGTABLE DISCARDABLE LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 {
 IDS_LICENSE_CAPTION,            "LIZENZ"
 IDS_LICENSE,
-"Diese Bibliothek ist freie Software; Sie dürfen sie unter den \
+"Diese Bibliothek ist freie Software; Sie dÃ¼rfen sie unter den \
 Bedingungen der GNU Lesser General Public License, wie von der \
-Free Software Foundation veröffentlicht, weiterverteilen und/oder \
-modifizieren; entweder gemäß Version 2.1 der Lizenz oder (nach \
-Ihrer Option) jeder späteren Version.\n\
-Diese Bibliothek wird in der Hoffnung weiterverbreitet, daß sie \
-nützlich sein wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne \
+Free Software Foundation verÃ¶ffentlicht, weiterverteilen und/oder \
+modifizieren; entweder gemÃ¤ÃŸ Version 2.1 der Lizenz oder (nach \
+Ihrer Option) jeder spÃ¤teren Version.\n\
+Diese Bibliothek wird in der Hoffnung weiterverbreitet, daÃŸ sie \
+nÃ¼tzlich sein wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne \
 die implizierte Garantie der MARKTREIFE oder der VERWENDBARKEIT \
-FÜR EINEN BESTIMMTEN ZWECK. Mehr Details finden Sie in der \
+FÃœR EINEN BESTIMMTEN ZWECK. Mehr Details finden Sie in der \
 GNU Lesser General Public License.\n\
 Sie sollten eine Kopie der GNU Lesser General Public License zusammen \
 mit dieser Bibliothek erhalten haben; falls nicht, schreiben Sie an \
@@ -242,8 +244,8 @@ Boston, MA 02110, USA."
 
 IDS_WARRANTY_CAPTION, "KEINE GARANTIE"
 IDS_WARRANTY,
-"Diese Bibliothek wird in der Hoffnung weiterverbreitet, daß sie nützlich \
+"Diese Bibliothek wird in der Hoffnung weiterverbreitet, daÃŸ sie nÃ¼tzlich \
 sein wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne die implizierte Garantie \
-der MARKTREIFE oder der VERWENDBARKEIT FÜR EINEN BESTIMMTEN ZWECK. Mehr Details \
+der MARKTREIFE oder der VERWENDBARKEIT FÃœR EINEN BESTIMMTEN ZWECK. Mehr Details \
 finden Sie in der GNU Lesser General Public License."
 }
