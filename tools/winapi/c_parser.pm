@@ -971,7 +971,7 @@ sub parse_c_file($$$$)
 		$declaration_line = $line;
 		$declaration_column = $column;
 	    } elsif($column == 1 && !$extern_c) {
-		$self->_parse_c_error("", $line, $column, "file", "inner } ends on column 1");
+		$self->_parse_c_warning("", $line, $column, "file", "inner } ends on column 1");
 	    }
 	} elsif(s/^;//) {
 	    $declaration .= $&;
