@@ -22,11 +22,13 @@
 
 #include "resources.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 {
-STRING_USAGE,                                   "Startet ein Programm, oder öffnet ein Dokument in dem Programm, dass normalerweise für die Dateien mit dieser Dateiendung benutzt wird..\n\
+STRING_USAGE,                                   "Startet ein Programm, oder Ã¶ffnet ein Dokument in dem Programm, dass normalerweise fÃ¼r die Dateien mit dieser Dateiendung benutzt wird..\n\
 Gebrauch:\n\
 start [Optionen] Programm_Dateiname [...]\n\
 start [Optionen] Dokument_Dateiname\n\
@@ -40,9 +42,9 @@ Optionen:\n\
 /L           Zeige die Endbenutzerlizenz an.\n\
 \n\
 start.exe Version 0.2 Copyright (C) 2003, Dan Kegel\n\
-Start kommt ABSOLUT OHNE GARANTIE; für detaillierte Informationen, starte es mit der /L Option.\n\
+Start kommt ABSOLUT OHNE GARANTIE; fÃ¼r detaillierte Informationen, starte es mit der /L Option.\n\
 Dies ist freie Software, und du bist willkommen, es unter bestimmten\n\
-Bedingungen weiter zu verbreiten; führe 'start /L' für mehr Details aus.\n\
+Bedingungen weiter zu verbreiten; fÃ¼hre 'start /L' fÃ¼r mehr Details aus.\n\
 "
 
 STRING_LICENSE, "start.exe version 0.2 Copyright (C) 2003, Dan Kegel\n\
@@ -60,10 +62,10 @@ You should have received a copy of the GNU Lesser Public License\n\
 along with this program; if not, write to the Free Software\n\
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.\n\
 \n\
-Schau in die Datei COPYING.LIB für Lizenzinformationen.\n\
+Schau in die Datei COPYING.LIB fÃ¼r Lizenzinformationen.\n\
 "
 
-STRING_EXECFAIL "Es konnte keine Anwendung gestartet werden, oder es ist keine Anwendung mit der angegebenen Datei verknüpft.\nShellExecuteEx gescheitert"
+STRING_EXECFAIL "Es konnte keine Anwendung gestartet werden, oder es ist keine Anwendung mit der angegebenen Datei verknÃ¼pft.\nShellExecuteEx gescheitert"
 
 STRING_UNIXFAIL "Der angegebene Unix Dateiname konnte nicht in einen DOS Dateinamen umgewandelt werden."
 }
