@@ -1719,6 +1719,20 @@ done_unlock:
     return retv;
 }
 
+/* Set the x/y scaling and x/y offsets in the transformation matrix of the source picture */
+static void set_xrender_transformation(Picture src_pict, float xscale, float yscale, int xoffset, int yoffset)
+{
+#ifdef HAVE_XRENDERSETPICTURETRANSFORM
+    XTransform xform = {{
+        { XDoubleToFixed(xscale), XDoubleToFixed(0), XDoubleToFixed(xoffset) },
+        { XDoubleToFixed(0), XDoubleToFixed(yscale), XDoubleToFixed(yoffset) },
+        { XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1) }
+    }};
+
+    pXRenderSetPictureTransform(gdi_display, src_pict, &xform);
+#endif
+}
+
 /******************************************************************************
  * AlphaBlend         (x11drv.@)
  */
@@ -1925,6 +1939,119 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
     return TRUE;
 }
 
+BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
+                                      Pixmap pixmap, GC gc,
+                                      INT xSrc, INT ySrc,
+                                      INT widthSrc, INT heightSrc,
+                                      INT xDst, INT yDst,
+                                      INT widthDst, INT heightDst,
+                                      RECT *visRectSrc, RECT *visRectDst )
+{
+    BOOL stretch = (widthSrc != widthDst) || (heightSrc != heightDst);
+    int width = visRectDst->right - visRectDst->left;
+    int height = visRectDst->bottom - visRectDst->top;
+    WineXRenderFormat *src_format = get_xrender_format_from_pdevice(physDevSrc);
+    WineXRenderFormat *dst_format = get_xrender_format_from_pdevice(physDevDst);
+    Picture src_pict=0, dst_pict=0, mask_pict=0;
+
+    /* Further down a transformation matrix is used for stretching and mirroring the source data.
+     * xscale/yscale contain the scaling factors for the width and height. In case of mirroring
+     * we also need a x- and y-offset because without the pixels will be in the wrong quadrant of the x-y plane.
+     */
+    double xscale = widthSrc/(double)widthDst;
+    double yscale = heightSrc/(double)heightDst;
+    int xoffset = (xscale<0) ? width : 0;
+    int yoffset = (yscale<0) ? height : 0;
+
+    XRenderPictureAttributes pa;
+    pa.subwindow_mode = IncludeInferiors;
+    pa.repeat = RepeatNone;
+
+    TRACE("src depth=%d widthSrc=%d heightSrc=%d xSrc=%d ySrc=%d\n", physDevSrc->depth, widthSrc, heightSrc, xSrc, ySrc);
+    TRACE("dst depth=%d widthDst=%d heightDst=%d xDst=%d yDst=%d\n", physDevDst->depth, widthDst, heightDst, xDst, yDst);
+
+    if(!X11DRV_XRender_Installed)
+    {
+        TRACE("Not using XRender since it is not available or disabled\n");
+        return FALSE;
+    }
+
+    /* XRender can't handle palettes, so abort */
+    if(X11DRV_PALETTE_XPixelToPalette)
+        return FALSE;
+
+    /* XRender is of no use in this case */
+    if((physDevDst->depth == 1) && (physDevSrc->depth > 1))
+        return FALSE;
+
+    /* Just use traditional X copy when the depths match and we don't need stretching */
+    if((physDevSrc->depth == physDevDst->depth) && !stretch)
+    {
+        TRACE("Source and destination depth match and no stretching needed falling back to XCopyArea\n");
+        wine_tsx11_lock();
+        XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc,
+                    physDevSrc->dc_rect.left + visRectSrc->left,
+                    physDevSrc->dc_rect.top + visRectSrc->top,
+                    width, height, 0, 0);
+        wine_tsx11_unlock();
+        return TRUE;
+    }
+
+    /* mono -> color */
+    if(physDevSrc->depth == 1)
+    {
+        XRenderColor col;
+        get_xrender_color(dst_format, physDevDst->textPixel, &col);
+
+        /* We use the source drawable as a mask */
+        wine_tsx11_lock();
+        mask_pict = pXRenderCreatePicture(gdi_display, physDevSrc->drawable, src_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
+        set_xrender_transformation(mask_pict, xscale, yscale, xoffset, yoffset);
+
+        /* Use backgroundPixel as the foreground color */
+        src_pict = get_tile_pict(dst_format, physDevDst->backgroundPixel);
+
+        /* Create a destination picture and fill it with textPixel color as the background color */
+        dst_pict = pXRenderCreatePicture(gdi_display, pixmap, dst_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
+        pXRenderFillRectangle(gdi_display, PictOpSrc, dst_pict, &col, 0, 0, width, height);
+
+        /* Notice that the source coordinates have to be relative to the transformated source picture */
+        pXRenderComposite(gdi_display, PictOpSrc, src_pict, mask_pict, dst_pict,
+                          (physDevSrc->dc_rect.left + visRectSrc->left)/xscale,
+                          (physDevSrc->dc_rect.top + visRectSrc->top)/yscale,
+                          0, 0, 0, 0,
+                          width, height);
+
+        if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
+        if(mask_pict) pXRenderFreePicture(gdi_display, mask_pict);
+        wine_tsx11_unlock();
+    }
+    else /* color -> color but with different depths */
+    {
+        wine_tsx11_lock();
+        src_pict = pXRenderCreatePicture(gdi_display,
+                                          physDevSrc->drawable, src_format->pict_format,
+                                          CPSubwindowMode|CPRepeat, &pa);
+        set_xrender_transformation(src_pict, xscale, yscale, xoffset, yoffset);
+
+        dst_pict = pXRenderCreatePicture(gdi_display,
+                                          pixmap, dst_format->pict_format,
+                                          CPSubwindowMode|CPRepeat, &pa);
+
+        /* Notice that the source coordinates have to be relative to the transformated source picture */
+        pXRenderComposite(gdi_display, PictOpSrc, src_pict, mask_pict, dst_pict,
+                          (physDevSrc->dc_rect.left + visRectSrc->left)/xscale,
+                          (physDevSrc->dc_rect.top + visRectSrc->top)/yscale,
+                          0, 0, 0, 0,
+                          width, height);
+
+        if(src_pict) pXRenderFreePicture(gdi_display, src_pict);
+        if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
+        wine_tsx11_unlock();
+    }
+    return TRUE;
+}
+
 #else /* SONAME_LIBXRENDER */
 
 void X11DRV_XRender_Init(void)
@@ -1974,4 +2101,14 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
   return FALSE;
 }
 
+BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
+                                      Pixmap pixmap, GC gc,
+                                      INT xSrc, INT ySrc,
+                                      INT widthSrc, INT heightSrc,
+                                      INT xDst, INT yDst,
+                                      INT widthDst, INT heightDst,
+                                      RECT *visRectSrc, RECT *visRectDst)
+{
+    return FALSE;
+}
 #endif /* SONAME_LIBXRENDER */

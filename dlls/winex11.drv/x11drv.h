@@ -268,6 +268,13 @@ extern void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE*);
 extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				      const RECT *lprect, LPCWSTR wstr,
 				      UINT count, const INT *lpDx);
+BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
+                                      Pixmap pixmap, GC gc,
+                                      INT xSrc, INT ySrc,
+                                      INT widthSrc, INT heightSrc,
+                                      INT xDst, INT yDst,
+                                      INT widthDst, INT heightDst,
+                                      RECT *visRectSrc, RECT *visRectDst);
 extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 
 extern Drawable get_glxdrawable(X11DRV_PDEVICE *physDev);
