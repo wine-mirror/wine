@@ -170,7 +170,7 @@ BEGIN
 
         END
         MENUITEM "Définir l'&affinité...",            ID_PROCESS_PAGE_SETAFFINITY
-	MENUITEM "Modifier les &canaux de déboguage...",	ID_PROCESS_PAGE_DEBUGCHANNELS
+	MENUITEM "Modifier les &canaux de débogage...",	ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
 
@@ -273,7 +273,7 @@ END
 
 IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Canaux de déboguage"
+CAPTION "Canaux de débogage"
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
@@ -491,7 +491,7 @@ BEGIN
                             "Place le processus dans la classe de priorité INFÉRIEURE À LA NORMALE"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "Place le processus dans la classe de priorité BASSE"
     ID_PROCESS_PAGE_DEBUGCHANNELS
-                            "Contrôle les canaux de déboguage"
+                            "Contrôle les canaux de débogage"
 END
 
 STRINGTABLE DISCARDABLE
@@ -571,7 +571,7 @@ BEGIN
     IDS_APPLICATION_RUNNING            "En cours d'exécution"
     IDS_APPLICATION_TASK               "Tâche"
     IDS_APPLICATION_STATUS             "Statut"
-    IDS_DEBUG_CHANNEL                  "Canaux de déboguage"
+    IDS_DEBUG_CHANNEL                  "Canaux de débogage"
     IDS_DEBUG_CHANNEL_FIXME            "Fixme"
     IDS_DEBUG_CHANNEL_ERR              "Err"
     IDS_DEBUG_CHANNEL_WARN             "Warn"
