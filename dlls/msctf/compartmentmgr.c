@@ -530,17 +530,15 @@ static HRESULT WINAPI Compartment_SetValue(ITfCompartment *iface,
 static HRESULT WINAPI Compartment_GetValue(ITfCompartment *iface,
     VARIANT *pvarValue)
 {
-    HRESULT hr = S_OK;
     Compartment *This = (Compartment *)iface;
     TRACE("(%p) %p\n",This, pvarValue);
 
     if (!pvarValue)
         return E_INVALIDARG;
 
-    pvarValue->n1.n2.vt = VT_EMPTY;
-    if (!This->variant.n1.n2.vt == VT_EMPTY)
-        hr = VariantCopy(pvarValue,&This->variant);
-    return hr;
+    VariantInit(pvarValue);
+    if (V_VT(&This->variant) == VT_EMPTY) return S_FALSE;
+    return VariantCopy(pvarValue,&This->variant);
 }
 
 static const ITfCompartmentVtbl ITfCompartment_Vtbl ={
