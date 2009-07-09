@@ -191,6 +191,10 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
 {
     HRESULT hr;
     BmpFrameDecode *This = (BmpFrameDecode*)iface;
+    int count;
+    WICColor *wiccolors=NULL;
+    RGBTRIPLE *bgrcolors=NULL;
+
     TRACE("(%p,%p)\n", iface, pIPalette);
 
     if (This->bih.bV5Size == sizeof(BITMAPCOREHEADER))
@@ -199,30 +203,30 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
         if (bch->bcBitCount <= 8)
         {
             /* 2**n colors in BGR format after the header */
-            int count = 1 << bch->bcBitCount;
-            WICColor *wiccolors;
             ULONG tablesize, bytesread;
-            RGBTRIPLE *bgrcolors;
             LARGE_INTEGER offset;
             int i;
 
+            count = 1 << bch->bcBitCount;
             wiccolors = HeapAlloc(GetProcessHeap(), 0, sizeof(WICColor) * count);
             tablesize = sizeof(RGBTRIPLE) * count;
             bgrcolors = HeapAlloc(GetProcessHeap(), 0, tablesize);
             if (!wiccolors || !bgrcolors)
             {
-                HeapFree(GetProcessHeap(), 0, wiccolors);
-                HeapFree(GetProcessHeap(), 0, bgrcolors);
-                return E_OUTOFMEMORY;
+                hr = E_OUTOFMEMORY;
+                goto end;
             }
 
             offset.QuadPart = sizeof(BITMAPFILEHEADER)+sizeof(BITMAPCOREHEADER);
             hr = IStream_Seek(This->stream, offset, STREAM_SEEK_SET, NULL);
-            if (FAILED(hr)) return hr;
+            if (FAILED(hr)) goto end;
 
             hr = IStream_Read(This->stream, bgrcolors, tablesize, &bytesread);
-            if (FAILED(hr)) return hr;
-            if (bytesread != tablesize) return E_FAIL;
+            if (FAILED(hr)) goto end;
+            if (bytesread != tablesize) {
+                hr = E_FAIL;
+                goto end;
+            }
 
             for (i=0; i<count; i++)
             {
@@ -231,12 +235,6 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
                                (bgrcolors[i].rgbtGreen<<8)|
                                bgrcolors[i].rgbtBlue;
             }
-
-            hr = IWICPalette_InitializeCustom(pIPalette, wiccolors, count);
-
-            HeapFree(GetProcessHeap(), 0, wiccolors);
-            HeapFree(GetProcessHeap(), 0, bgrcolors);
-            return hr;
         }
         else
         {
@@ -247,8 +245,6 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     {
         if (This->bih.bV5BitCount <= 8)
         {
-            int count;
-            WICColor *wiccolors;
             ULONG tablesize, bytesread;
             LARGE_INTEGER offset;
             int i;
@@ -264,26 +260,31 @@ static HRESULT WINAPI BmpFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
 
             offset.QuadPart = sizeof(BITMAPFILEHEADER) + This->bih.bV5Size;
             hr = IStream_Seek(This->stream, offset, STREAM_SEEK_SET, NULL);
-            if (FAILED(hr)) return hr;
+            if (FAILED(hr)) goto end;
 
             hr = IStream_Read(This->stream, wiccolors, tablesize, &bytesread);
-            if (FAILED(hr)) return hr;
-            if (bytesread != tablesize) return E_FAIL;
+            if (FAILED(hr)) goto end;
+            if (bytesread != tablesize) {
+                hr = E_FAIL;
+                goto end;
+            }
 
             /* convert from BGR to BGRA by setting alpha to 100% */
             for (i=0; i<count; i++)
                 wiccolors[i] |= 0xff000000;
-
-            hr = IWICPalette_InitializeCustom(pIPalette, wiccolors, count);
-
-            HeapFree(GetProcessHeap(), 0, wiccolors);
-            return hr;
         }
         else
         {
             return WINCODEC_ERR_PALETTEUNAVAILABLE;
         }
     }
+
+    hr = IWICPalette_InitializeCustom(pIPalette, wiccolors, count);
+
+end:
+    HeapFree(GetProcessHeap(), 0, wiccolors);
+    HeapFree(GetProcessHeap(), 0, bgrcolors);
+    return hr;
 }
 
 static HRESULT WINAPI BmpFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
