@@ -87,7 +87,7 @@ BEGIN
 	  MENUITEM "E&xplorer",		FCIDM_SHVIEW_EXPLORE
 	  MENUITEM "&Ouvrir",		FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
-	  MENUITEM "C&ouper",		FCIDM_SHVIEW_CUT
+	  MENUITEM "Cou&per",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Copier",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
 	  MENUITEM "Créer un &lien",	FCIDM_SHVIEW_CREATELINK
@@ -148,7 +148,7 @@ FONT 8, "MS Shell Dlg"
 	WS_BORDER | WS_TABSTOP,
 	12, 38, 194, 105
  EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "&Créer un nouveau dossier", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "&Nouveau dossier", IDD_MAKENEWFOLDER, 12, 174, 70, 14, WS_GROUP | WS_TABSTOP
  DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Annuler", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
 }
@@ -216,7 +216,7 @@ STRINGTABLE
 	IDS_DESKTOP		"Bureau"
 	IDS_MYCOMPUTER		"Poste de travail"
 	IDS_RECYCLEBIN_FOLDER_NAME      "Corbeille"
-	IDS_CONTROLPANEL	"Control Panel"
+	IDS_CONTROLPANEL	"Panneau de configuration"
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Grandes icônes"
@@ -226,19 +226,19 @@ STRINGTABLE
 	IDS_SELECT		"Sélectionner"
 	IDS_OPEN		"Ouvrir"
 
-	IDS_CREATEFOLDER_DENIED "Impossible de créer le nouveau dossier : permission refusée."
-	IDS_CREATEFOLDER_CAPTION "Erreur lors de la création du nouveau dossier"
-	IDS_DELETEITEM_CAPTION "Confirmer la suppression du fichier"
-	IDS_DELETEFOLDER_CAPTION "Confirmer la suppression du dossier"
-	IDS_DELETEITEM_TEXT "Êtes-vous sûr de vouloir supprimer '%1'?"
+	IDS_CREATEFOLDER_DENIED "Impossible de créer le dossier : permission refusée."
+	IDS_CREATEFOLDER_CAPTION "Erreur lors de la création du dossier"
+	IDS_DELETEITEM_CAPTION "Confirmez la suppression du fichier"
+	IDS_DELETEFOLDER_CAPTION "Confirmez la suppression du dossier"
+	IDS_DELETEITEM_TEXT "Êtes-vous sûr de vouloir supprimer « %1 » ?"
 	IDS_DELETEMULTIPLE_TEXT "Êtes-vous sûr de vouloir supprimer ces %1 éléments ?"
-	IDS_DELETESELECTED_TEXT "Êtes-vous sûr de vouloir supprimer le(les) élément(s) séléectionné(s) ?"
+	IDS_DELETESELECTED_TEXT "Êtes-vous sûr de vouloir supprimer le(s) élément(s) sélectionné(s) ?"
 	IDS_TRASHITEM_TEXT "Êtes-vous sûr de vouloir mettre « %1 » dans la corbeille ?"
 	IDS_TRASHFOLDER_TEXT "Êtes-vous sûr de vouloir mettre « %1 » et tout ce qu'il contient dans la corbeille ?"
 	IDS_TRASHMULTIPLE_TEXT "Êtes-vous sûr de vouloir mettre ces %1 éléments dans la corbeille ?"
-	IDS_CANTTRASH_TEXT "L'élément « %1 » ne peut pas être mis dans la corbeille. Souhaitez-vous le supprimer à la place ?"
+	IDS_CANTTRASH_TEXT "L'élément « %1 » ne peut être mis dans la corbeille. Souhaitez-vous plutôt le supprimer ?"
 	IDS_OVERWRITEFILE_TEXT "Ce dossier contient déjà un fichier nommé « %1 ».\n\nVoulez-vous le remplacer ?"
-	IDS_OVERWRITEFILE_CAPTION "Confirmer l'écrasement du fichier"
+	IDS_OVERWRITEFILE_CAPTION "Confirmez l'écrasement du fichier"
 	IDS_OVERWRITEFOLDER_TEXT "Ce dossier contient déjà un dossier nommé « %1 ».\n\n"\
 	    "Si des fichiers dans le dossier de destination ont le même nom que ceux dans le dossier\n"\
 	    "sélectionné, ils seront écrasés. Voulez-vous quand même déplacer ou copier\n"\
@@ -248,7 +248,7 @@ STRINGTABLE
        IDS_RESTART_TITLE       "Redémarrer"
        IDS_RESTART_PROMPT      "Voulez-vous simuler le redémarrage de Windows ?"
        IDS_SHUTDOWN_TITLE      "Arrêter"
-       IDS_SHUTDOWN_PROMPT     "Voulez-vous fermer la session Wine ?"
+       IDS_SHUTDOWN_PROMPT     "Voulez-vous clôturer la session Wine ?"
 
         /* Run File dialog */
         IDS_RUNDLG_ERROR           "Impossible d'afficher la boîte de dialogue « Exécuter » (erreur interne)"
@@ -267,7 +267,7 @@ STRINGTABLE
  IDS_MYMUSIC                 "Ma musique"
  IDS_MYVIDEO                 "Mes vidéos"
  IDS_DESKTOPDIRECTORY        "Bureau"
- IDS_NETHOOD                 "Voisinage Réseau"
+ IDS_NETHOOD                 "Voisinage réseau"
  IDS_TEMPLATES               "Modèles"
  IDS_APPDATA                 "Application Data"
  IDS_PRINTHOOD               "Voisinage d'impression"
@@ -301,7 +301,7 @@ IDS_LICENSE,
 "Wine est un logiciel libre ; vous pouvez le redistribuer et/ou \
 le modifier suivant les termes de la Licence Générale Publique Limitée GNU \
 telle que publiée par la Free Software Foundation ; soit la version 2.1 \
-de la License, soit (à votre gré) toute version ultérieure.\n\n\
+de la Licence, soit (à votre gré) toute version ultérieure.\n\n\
 Wine est distribué dans l’espoir qu'il sera utile, mais \
 SANS AUCUNE GARANTIE : sans même la garantie implicite de \
 COMMERCIALISABILITÉ ou d’ADÉQUATION À UN OBJECTIF PARTICULIER. Consultez \
