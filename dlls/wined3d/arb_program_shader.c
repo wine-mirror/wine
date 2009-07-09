@@ -4006,7 +4006,12 @@ static struct arb_ps_compiled_shader *find_arb_pshader(IWineD3DPixelShaderImpl *
     pixelshader_update_samplers(&shader->baseShader.reg_maps,
             ((IWineD3DDeviceImpl *)shader->baseShader.device)->stateBlock->textures);
 
-    shader_buffer_init(&buffer);
+    if (!shader_buffer_init(&buffer))
+    {
+        ERR("Failed to initialize shader buffer.\n");
+        return 0;
+    }
+
     ret = shader_arb_generate_pshader(shader, &buffer, args,
                                       &shader_data->gl_shaders[shader_data->num_gl_shaders]);
     shader_buffer_free(&buffer);
@@ -4076,7 +4081,12 @@ static struct arb_vs_compiled_shader *find_arb_vshader(IWineD3DVertexShaderImpl 
 
     shader_data->gl_shaders[shader_data->num_gl_shaders].args = *args;
 
-    shader_buffer_init(&buffer);
+    if (!shader_buffer_init(&buffer))
+    {
+        ERR("Failed to initialize shader buffer.\n");
+        return 0;
+    }
+
     ret = shader_arb_generate_vshader(shader, &buffer, args,
             &shader_data->gl_shaders[shader_data->num_gl_shaders]);
     shader_buffer_free(&buffer);
@@ -5541,7 +5551,11 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     }
 
     /* Shader header */
-    shader_buffer_init(&buffer);
+    if (!shader_buffer_init(&buffer))
+    {
+        ERR("Failed to initialize shader buffer.\n");
+        return 0;
+    }
 
     shader_addline(&buffer, "!!ARBfp1.0\n");
 
@@ -6304,7 +6318,11 @@ static GLuint gen_yuv_shader(IWineD3DDeviceImpl *device, enum yuv_fixup yuv_fixu
     struct arbfp_blit_priv *priv = device->blit_priv;
 
     /* Shader header */
-    shader_buffer_init(&buffer);
+    if (!shader_buffer_init(&buffer))
+    {
+        ERR("Failed to initialize shader buffer.\n");
+        return 0;
+    }
 
     ENTER_GL();
     GL_EXTCALL(glGenProgramsARB(1, &shader));

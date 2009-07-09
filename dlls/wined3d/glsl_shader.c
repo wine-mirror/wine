@@ -4456,7 +4456,11 @@ static HRESULT shader_glsl_alloc(IWineD3DDevice *iface) {
     struct shader_glsl_priv *priv = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct shader_glsl_priv));
     SIZE_T stack_size = wined3d_log2i(max(GL_LIMITS(vshader_constantsF), GL_LIMITS(pshader_constantsF))) + 1;
 
-    shader_buffer_init(&priv->shader_buffer);
+    if (!shader_buffer_init(&priv->shader_buffer))
+    {
+        ERR("Failed to initialize shader buffer.\n");
+        goto fail;
+    }
 
     priv->stack = HeapAlloc(GetProcessHeap(), 0, stack_size * sizeof(*priv->stack));
     if (!priv->stack)

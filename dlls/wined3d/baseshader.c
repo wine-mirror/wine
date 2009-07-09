@@ -146,10 +146,17 @@ void shader_buffer_clear(struct wined3d_shader_buffer *buffer)
     buffer->newline = TRUE;
 }
 
-void shader_buffer_init(struct wined3d_shader_buffer *buffer)
+BOOL shader_buffer_init(struct wined3d_shader_buffer *buffer)
 {
     buffer->buffer = HeapAlloc(GetProcessHeap(), 0, SHADER_PGMSIZE);
+    if (!buffer->buffer)
+    {
+        ERR("Failed to allocate shader buffer memory.\n");
+        return FALSE;
+    }
+
     shader_buffer_clear(buffer);
+    return TRUE;
 }
 
 void shader_buffer_free(struct wined3d_shader_buffer *buffer)
