@@ -305,6 +305,19 @@ ok(tmp === "<TT>test</TT>", "'test'.fixed() = " + tmp);
 tmp = "test".fixed(3);
 ok(tmp === "<TT>test</TT>", "'test'.fixed(3) = " + tmp);
 
+tmp = "".fontcolor();
+ok(tmp === "<FONT COLOR=\"undefined\"></FONT>", "''.fontcolor() = " + tmp);
+tmp = "".fontcolor(3);
+ok(tmp === "<FONT COLOR=\"3\"></FONT>", "''.fontcolor(3) = " + tmp);
+tmp = "".fontcolor("red");
+ok(tmp === "<FONT COLOR=\"red\"></FONT>", "''.fontcolor('red') = " + tmp);
+tmp = "test".fontcolor();
+ok(tmp === "<FONT COLOR=\"undefined\">test</FONT>", "'test'.fontcolor() = " + tmp);
+tmp = "test".fontcolor(3);
+ok(tmp === "<FONT COLOR=\"3\">test</FONT>", "'test'.fontcolor(3) = " + tmp);
+tmp = "test".fontcolor("green");
+ok(tmp === "<FONT COLOR=\"green\">test</FONT>", "'test'.fontcolor('green') = " + tmp);
+
 tmp = "".italics();
 ok(tmp === "<I></I>", "''.italics() = " + tmp);
 tmp = "".italics(3);

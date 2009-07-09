@@ -150,6 +150,54 @@ static HRESULT do_attributeless_tag_format(DispatchEx *dispex, LCID lcid, WORD f
     return S_OK;
 }
 
+static HRESULT do_attribute_tag_format(DispatchEx *dispex, LCID lcid, WORD flags,
+        DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp,
+        const WCHAR *tagname, const WCHAR *attr)
+{
+    static const WCHAR tagfmtW[]
+        = {'<','%','s',' ','%','s','=','\"','%','s','\"','>','%','s','<','/','%','s','>',0};
+    static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
+
+    StringInstance *string;
+    BSTR ret, attr_value;
+    HRESULT hres;
+
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        WARN("this is not a string object\n");
+        return E_NOTIMPL;
+    }
+
+    string = (StringInstance*) dispex;
+
+    if(arg_cnt(dp)) {
+        hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &attr_value);
+        if(FAILED(hres))
+            return hres;
+    }
+    else {
+        attr_value = SysAllocString(undefinedW);
+        if(!attr_value)
+            return E_OUTOFMEMORY;
+    }
+
+    if(retv) {
+        ret = SysAllocStringLen(NULL, string->length + 2*strlenW(tagname)
+                + strlenW(attr) + SysStringLen(attr_value) + 9);
+        if(!ret) {
+            SysFreeString(attr_value);
+            return E_OUTOFMEMORY;
+        }
+
+        sprintfW(ret, tagfmtW, tagname, attr, attr_value, string->str, tagname);
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }
+
+    SysFreeString(attr_value);
+    return S_OK;
+}
+
 static HRESULT String_anchor(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -336,8 +384,10 @@ static HRESULT String_fixed(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 static HRESULT String_fontcolor(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR fontW[] = {'F','O','N','T',0};
+    static const WCHAR colorW[] = {'C','O','L','O','R',0};
+
+    return do_attribute_tag_format(dispex, lcid, flags, dp, retv, ei, sp, fontW, colorW);
 }
 
 static HRESULT String_fontsize(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
