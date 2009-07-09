@@ -121,7 +121,6 @@ static const struct message deleteItem_getItemCount_seq[] = {
 };
 
 static const struct message orderArray_seq[] = {
-    { HDM_GETITEMCOUNT, sent },
     { HDM_SETORDERARRAY, sent|wparam, 2 },
     { HDM_GETORDERARRAY, sent|wparam, 2 },
     { 0 }
@@ -1108,6 +1107,7 @@ static void test_hdm_index_messages(HWND hParent)
     static char thirdHeaderItem[] = "Type";
     static char fourthHeaderItem[] = "Date Modified";
     static char *items[] = {firstHeaderItem, secondHeaderItem, thirdHeaderItem, fourthHeaderItem};
+    RECT rect;
     HDITEM hdItem;
     hdItem.mask = HDI_TEXT | HDI_WIDTH | HDI_FORMAT;
     hdItem.fmt = HDF_LEFT;
@@ -1135,17 +1135,17 @@ static void test_hdm_index_messages(HWND hParent)
 
     retVal = SendMessage(hChild, HDM_DELETEITEM, 3, (LPARAM) &hdItem);
     ok(retVal == TRUE, "Deleting item 3 should return TRUE, got %d\n", retVal);
-    retVal = SendMessage(hChild, HDM_GETITEMCOUNT, 0, (LPARAM) &hdItem);
+    retVal = SendMessage(hChild, HDM_GETITEMCOUNT, 0, 0);
     ok(retVal == 3, "Getting item count should return 3, got %d\n", retVal);
 
     retVal = SendMessage(hChild, HDM_DELETEITEM, 3, (LPARAM) &hdItem);
     ok(retVal == FALSE, "Deleting already-deleted item should return FALSE, got %d\n", retVal);
-    retVal = SendMessage(hChild, HDM_GETITEMCOUNT, 0, (LPARAM) &hdItem);
+    retVal = SendMessage(hChild, HDM_GETITEMCOUNT, 0, 0);
     ok(retVal == 3, "Getting item count should return 3, got %d\n", retVal);
 
     retVal = SendMessage(hChild, HDM_DELETEITEM, 2, (LPARAM) &hdItem);
     ok(retVal == TRUE, "Deleting item 2 should return TRUE, got %d\n", retVal);
-    retVal = SendMessage(hChild, HDM_GETITEMCOUNT, 0, (LPARAM) &hdItem);
+    retVal = SendMessage(hChild, HDM_GETITEMCOUNT, 0, 0);
     ok(retVal == 2, "Getting item count should return 2, got %d\n", retVal);
 
     ok_sequence(sequences, HEADER_SEQ_INDEX, deleteItem_getItemCount_seq,
@@ -1166,9 +1166,19 @@ static void test_hdm_index_messages(HWND hParent)
     expect(0, strcmpResult);
     expect(80, hdItem.cxy);
 
+    iSize = SendMessage(hChild, HDM_GETITEMCOUNT, 0, 0);
+
+    /* item should be updated just after accepting new array */
+    ShowWindow(hChild, SW_HIDE);
+    retVal = SendMessage(hChild, HDM_SETORDERARRAY, iSize, (LPARAM) lpiarray);
+    expect(TRUE, retVal);
+    rect.left = 0;
+    retVal = SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM) &rect);
+    expect(TRUE, retVal);
+    todo_wine ok(rect.left != 0, "Expected updated rectangle\n");
+
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    iSize = SendMessage(hChild, HDM_GETITEMCOUNT, 0, (LPARAM) &hdItem);
     retVal = SendMessage(hChild, HDM_SETORDERARRAY, iSize, (LPARAM) lpiarray);
     ok(retVal == TRUE, "Setting header items order should return TRUE, got %d\n", retVal);
 
