@@ -4409,6 +4409,12 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     wsa->first_iovec = 0;
     for (i = 0; i < dwBufferCount; i++)
     {
+        /* check buffer first to trigger write watches */
+        if (IsBadWritePtr( lpBuffers[i].buf, lpBuffers[i].len ))
+        {
+            err = WSAEFAULT;
+            goto error;
+        }
         wsa->iovec[i].iov_base = lpBuffers[i].buf;
         wsa->iovec[i].iov_len  = lpBuffers[i].len;
     }
