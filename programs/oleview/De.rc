@@ -21,6 +21,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 IDM_MENU MENU
@@ -31,7 +33,7 @@ IDM_MENU MENU
         MENUITEM "&TypeLib anzeigen...",    IDM_TYPELIB
         MENUITEM SEPARATOR
         MENUITEM "&Systemkonfiguration...",    IDM_SYSCONF
-        MENUITEM "&Registry-Editor ausführen",    IDM_REGEDIT
+        MENUITEM "&Registry-Editor ausfÃ¼hren",    IDM_REGEDIT
         MENUITEM SEPARATOR
         MENUITEM "&Beenden",    IDM_EXIT
     }
@@ -69,7 +71,7 @@ IDM_MENU MENU
     }
     POPUP "&Hilfe"
     {
-        MENUITEM "Ü&ber OleView",    IDM_ABOUT
+        MENUITEM "Ãœ&ber OleView",    IDM_ABOUT
     }
 }
 
@@ -97,23 +99,23 @@ STRINGTABLE
     IDS_ABOUT              "OleView - OLE/COM Objektbetrachter"
     IDS_ABOUTVER           "Version 1.0"
     IDS_TYPELIBTITLE       "ITypeLib-Betrachter"
-    IDS_OPEN               "Öffnen"
+    IDS_OPEN               "Ã–ffnen"
     IDS_OPEN_TYPELIB_FILTER "TypeLib Files (*.tlb;*.olb;*.dll;*.ocx;*.exe)\0*.tlb;*.olb;*.dll;*.ocx;*.exe\0All Files (*.*)\0*.*\0\0"
 
     IDM_BIND,              "An Datei via Datei-Moniker binden"
-    IDM_TYPELIB,           "TypeLib-Datei öffnen und Inhalt betrachten"
-    IDM_SYSCONF,           "Maschinenweite Distributed-COM-Einstellungen ändern"
-    IDM_REGEDIT,           "Wine-Registry-Editor ausführen"
-    IDM_EXIT,              "Anwendung beenden. Frag ob Änderungen zu speichern sind"
-    IDM_CREATEINST,        "Eine Instanz des ausgewählten Objekts erstellen"
-    IDM_CREATEINSTON,      "Eine Instanz des ausgewählten Objekts auf einer bestimmten Maschine erstellen"
-    IDM_RELEASEINST,       "Ausgewählte Objekt-Instanz freigeben"
-    IDM_COPYCLSID,         "GUID des ausgewählten Objekts in die Zwischenablage kopieren"
-    IDM_VIEW,              "Betrachter für ausgewähltes Element anzeigen"
-    IDM_FLAG_INSERV,       "CLSCTX_INPROC_SERVER für Aufruf von CoGetClassObject benutzen"
-    IDM_FLAG_INHANDL,      "CLSCTX_INPROC_HANDLER für Aufruf von CoGetClassObject benutzen"
-    IDM_FLAG_LOCSERV,      "CLSCTX_LOCAL_SERVER für Aufruf von CoGetClassObject benutzen"
-    IDM_FLAG_REMSERV,      "CLSCTX_REMOTE_SERVER für Aufruf von CoGetClassObject benutzen"
+    IDM_TYPELIB,           "TypeLib-Datei Ã¶ffnen und Inhalt betrachten"
+    IDM_SYSCONF,           "Maschinenweite Distributed-COM-Einstellungen Ã¤ndern"
+    IDM_REGEDIT,           "Wine-Registry-Editor ausfÃ¼hren"
+    IDM_EXIT,              "Anwendung beenden. Frag ob Ã„nderungen zu speichern sind"
+    IDM_CREATEINST,        "Eine Instanz des ausgewÃ¤hlten Objekts erstellen"
+    IDM_CREATEINSTON,      "Eine Instanz des ausgewÃ¤hlten Objekts auf einer bestimmten Maschine erstellen"
+    IDM_RELEASEINST,       "AusgewÃ¤hlte Objekt-Instanz freigeben"
+    IDM_COPYCLSID,         "GUID des ausgewÃ¤hlten Objekts in die Zwischenablage kopieren"
+    IDM_VIEW,              "Betrachter fÃ¼r ausgewÃ¤hltes Element anzeigen"
+    IDM_FLAG_INSERV,       "CLSCTX_INPROC_SERVER fÃ¼r Aufruf von CoGetClassObject benutzen"
+    IDM_FLAG_INHANDL,      "CLSCTX_INPROC_HANDLER fÃ¼r Aufruf von CoGetClassObject benutzen"
+    IDM_FLAG_LOCSERV,      "CLSCTX_LOCAL_SERVER fÃ¼r Aufruf von CoGetClassObject benutzen"
+    IDM_FLAG_REMSERV,      "CLSCTX_REMOTE_SERVER fÃ¼r Aufruf von CoGetClassObject benutzen"
     IDM_EXPERT,            "Zwischen einfachem und Experten-Modus umschalten"
     IDM_HIDDEN,            "Anzeige von nicht als sichtbar angedachten Komponenten-Kategorien umschalten"
     IDM_TOOLBAR,           "Symbolleiste zeigen oder verstecken"
@@ -168,7 +170,7 @@ FONT 8, "MS Shell Dlg"
     LTEXT   "Systemeinstellungen", -1, 5, 6, 160, 8
     CHECKBOX    "&Distributed COM aktivieren", IDC_ENABLEDCOM, 5, 20, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
     CHECKBOX    "&Remote-Verbindungen aktivieren (nur Win95)", IDC_ENABLEREMOTE, 5, 35, 160, 10, WS_TABSTOP | WS_GROUP | BS_AUTOCHECKBOX
-    LTEXT   "Diese Einstellungen ändern nur Registry-Werte.\nSie haben keinen Einfluss auf die Wine-Performance.", -1, 5, 50, 160, 40
+    LTEXT   "Diese Einstellungen Ã¤ndern nur Registry-Werte.\nSie haben keinen Einfluss auf die Wine-Performance.", -1, 5, 50, 160, 40
     DEFPUSHBUTTON   "&OK", IDOK, 70, 80, 45, 14
     PUSHBUTTON  "&Abbrechen", IDCANCEL, 120, 80, 45, 14
 }
