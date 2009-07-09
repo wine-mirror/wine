@@ -21,6 +21,8 @@
 
 #include "clock_res.h"
 
+#pragma code_page(65001)
+
 MAIN_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 {
  POPUP "&Einstellungen" {
@@ -39,7 +41,7 @@ MAIN_MENU MENU LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
  POPUP "Inf&o" {
   MENUITEM "&Lizenz...", IDM_LICENSE
   MENUITEM "&KEINE GARANTIE...", IDM_NOWARRANTY
-  MENUITEM "&‹ber Uhr...", IDM_ABOUT
+  MENUITEM "&√úber Uhr...", IDM_ABOUT
  }
 }
 
@@ -52,15 +54,15 @@ STRINGTABLE DISCARDABLE LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 {
 IDS_LICENSE_CAPTION,            "LIZENZ"
 IDS_LICENSE,
-"Diese Bibliothek ist freie Software; Sie d¸rfen sie unter den \
+"Diese Bibliothek ist freie Software; Sie d√ºrfen sie unter den \
 Bedingungen der GNU Lesser General Public License, wie von der \
-Free Software Foundation verˆffentlicht, weiterverteilen und/oder \
-modifizieren; entweder gem‰ﬂ Version 2.1 der Lizenz oder (nach \
-Ihrer Option) jeder sp‰teren Version.\n\
-Diese Bibliothek wird in der Hoffnung weiterverbreitet, daﬂ sie \
-n¸tzlich sein wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne \
+Free Software Foundation ver√∂ffentlicht, weiterverteilen und/oder \
+modifizieren; entweder gem√§√ü Version 2.1 der Lizenz oder (nach \
+Ihrer Option) jeder sp√§teren Version.\n\
+Diese Bibliothek wird in der Hoffnung weiterverbreitet, da√ü sie \
+n√ºtzlich sein wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne \
 die implizierte Garantie der MARKTREIFE oder der VERWENDBARKEIT \
-F‹R EINEN BESTIMMTEN ZWECK. Mehr Details finden Sie in der \
+F√úR EINEN BESTIMMTEN ZWECK. Mehr Details finden Sie in der \
 GNU Lesser General Public License.\n\
 Sie sollten eine Kopie der GNU Lesser General Public License zusammen \
 mit dieser Bibliothek erhalten haben; falls nicht, schreiben Sie an \
@@ -69,8 +71,8 @@ Boston, MA 02110, USA."
 
 IDS_WARRANTY_CAPTION, "KEINE GARANTIE"
 IDS_WARRANTY,
-"Diese Bibliothek wird in der Hoffnung weiterverbreitet, daﬂ sie n¸tzlich \
+"Diese Bibliothek wird in der Hoffnung weiterverbreitet, da√ü sie n√ºtzlich \
 sein wird, jedoch OHNE IRGENDEINE GARANTIE, auch ohne die implizierte Garantie \
-der MARKTREIFE oder der VERWENDBARKEIT F‹R EINEN BESTIMMTEN ZWECK. Mehr Details \
+der MARKTREIFE oder der VERWENDBARKEIT F√úR EINEN BESTIMMTEN ZWECK. Mehr Details \
 finden Sie in der GNU Lesser General Public License."
 }
