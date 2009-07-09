@@ -156,7 +156,7 @@ static const char *VIRTUAL_GetProtStr( BYTE prot )
 {
     static char buffer[6];
     buffer[0] = (prot & VPROT_COMMITTED) ? 'c' : '-';
-    buffer[1] = (prot & VPROT_GUARD) ? 'g' : '-';
+    buffer[1] = (prot & VPROT_GUARD) ? 'g' : ((prot & VPROT_WRITEWATCH) ? 'H' : '-');
     buffer[2] = (prot & VPROT_READ) ? 'r' : '-';
     buffer[3] = (prot & VPROT_WRITECOPY) ? 'W' : ((prot & VPROT_WRITE) ? 'w' : '-');
     buffer[4] = (prot & VPROT_EXEC) ? 'x' : '-';
