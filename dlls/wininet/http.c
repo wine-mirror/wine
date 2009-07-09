@@ -1448,9 +1448,13 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     return TRUE;
 }
 
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 46
+#endif
+
 static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
 {
-    char szaddr[32];
+    char szaddr[INET6_ADDRSTRLEN];
     LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
     const void *addr;
 
@@ -1471,6 +1475,9 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
     {
     case AF_INET:
         addr = &((struct sockaddr_in *)&lpwhs->socketAddress)->sin_addr;
+        break;
+    case AF_INET6:
+        addr = &((struct sockaddr_in6 *)&lpwhs->socketAddress)->sin6_addr;
         break;
     default:
         WARN("unsupported family %d\n", lpwhs->socketAddress.ss_family);
@@ -4117,7 +4124,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     BOOL bSuccess = FALSE;
     LPWININETHTTPSESSIONW lpwhs;
     LPWININETAPPINFOW hIC = NULL;
-    char szaddr[32];
+    char szaddr[INET6_ADDRSTRLEN];
     const void *addr;
 
     TRACE("-->\n");
@@ -4143,6 +4150,9 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     {
     case AF_INET:
         addr = &((struct sockaddr_in *)&lpwhs->socketAddress)->sin_addr;
+        break;
+    case AF_INET6:
+        addr = &((struct sockaddr_in6 *)&lpwhs->socketAddress)->sin6_addr;
         break;
     default:
         WARN("unsupported family %d\n", lpwhs->socketAddress.ss_family);
