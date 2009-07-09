@@ -2439,7 +2439,9 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     SendAsyncCallback(&hIC->hdr, dwContext, INTERNET_STATUS_RESOLVING_NAME,
         (LPWSTR) lpszServerName, strlenW(lpszServerName));
 
-    if (!GetAddress(lpszServerName, nServerPort, &socketAddr))
+    sock_namelen = sizeof(socketAddr);
+    if (!GetAddress(lpszServerName, nServerPort,
+        (struct sockaddr *)&socketAddr, &sock_namelen))
     {
 	INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
         goto lerror;

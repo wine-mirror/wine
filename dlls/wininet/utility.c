@@ -145,7 +145,7 @@ time_t ConvertTimeString(LPCWSTR asctime)
 
 
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
-	struct sockaddr_in *psa)
+	struct sockaddr *psa, socklen_t *sa_len)
 {
     WCHAR *found;
     char *name;
@@ -155,6 +155,7 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
     int ret;
 #else
     struct hostent *phe;
+    struct sockaddr_in *sin = (struct sockaddr_in *)psa;
 #endif
 
     TRACE("%s\n", debugstr_w(lpszServerName));
@@ -186,10 +187,17 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
         TRACE("failed to get address of %s (%s)\n", debugstr_w(lpszServerName), gai_strerror(ret));
         return FALSE;
     }
+    if (*sa_len < sizeof(struct sockaddr_in))
+    {
+        WARN("address too small\n");
+        freeaddrinfo( res );
+        return FALSE;
+    }
+    *sa_len = sizeof(struct sockaddr_in);
     memset( psa, 0, sizeof(struct sockaddr_in) );
-    memcpy( &psa->sin_addr, &((struct sockaddr_in *)res->ai_addr)->sin_addr, sizeof(struct in_addr) );
-    psa->sin_family = res->ai_family;
-    psa->sin_port = htons(nServerPort);
+    memcpy( &((struct sockaddr_in *)psa)->sin_addr, &((struct sockaddr_in *)res->ai_addr)->sin_addr, sizeof(struct in_addr) );
+    ((struct sockaddr_in *)psa)->sin_family = res->ai_family;
+    ((struct sockaddr_in *)psa)->sin_port = htons(nServerPort);
 
     freeaddrinfo( res );
 #else
@@ -203,10 +211,17 @@ BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
         LeaveCriticalSection( &cs_gethostbyname );
         return FALSE;
     }
-    memset(psa,0,sizeof(struct sockaddr_in));
-    memcpy((char *)&psa->sin_addr, phe->h_addr, phe->h_length);
-    psa->sin_family = phe->h_addrtype;
-    psa->sin_port = htons(nServerPort);
+    if (*sa_len < sizeof(struct sockaddr_in))
+    {
+        WARN("address too small\n");
+        LeaveCriticalSection( &cs_gethostbyname );
+        return FALSE;
+    }
+    *sa_len = sizeof(struct sockaddr_in);
+    memset(sin,0,sizeof(struct sockaddr_in));
+    memcpy((char *)&sin->sin_addr, phe->h_addr, phe->h_length);
+    sin->sin_family = phe->h_addrtype;
+    sin->sin_port = htons(nServerPort);
 
     LeaveCriticalSection( &cs_gethostbyname );
 #endif

@@ -381,7 +381,7 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	DWORD dwInternalFlags);
 
 BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
-	struct sockaddr_in *psa);
+	struct sockaddr *psa, socklen_t *sa_len);
 
 void INTERNET_SetLastError(DWORD dwError);
 DWORD INTERNET_GetLastError(void);
