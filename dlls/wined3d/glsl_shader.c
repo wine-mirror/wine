@@ -502,9 +502,29 @@ static void shader_glsl_load_constantsB(IWineD3DBaseShaderImpl *This, const Wine
     GLint tmp_loc;
     unsigned int i;
     char tmp_name[8];
-    char is_pshader = shader_is_pshader_version(This->baseShader.reg_maps.shader_version.type);
-    const char* prefix = is_pshader? "PB":"VB";
+    const char *prefix;
     struct list* ptr;
+
+    switch (This->baseShader.reg_maps.shader_version.type)
+    {
+        case WINED3D_SHADER_TYPE_VERTEX:
+            prefix = "VB";
+            break;
+
+        case WINED3D_SHADER_TYPE_GEOMETRY:
+            prefix = "GB";
+            break;
+
+        case WINED3D_SHADER_TYPE_PIXEL:
+            prefix = "PB";
+            break;
+
+        default:
+            FIXME("Unknown shader type %#x.\n",
+                    This->baseShader.reg_maps.shader_version.type);
+            prefix = "UB";
+            break;
+    }
 
     /* TODO: Benchmark and see if it would be beneficial to store the
      * locations of the constants to avoid looking up each time */
