@@ -1029,7 +1029,8 @@ static void IFaceRefCount(void)
     todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
 
     /* IDirect3DTexture interface (unlike the others) alters the original IDirectDrawSurface ref count */
-    IDirectDrawSurface_QueryInterface(surf, &IID_IDirect3DTexture, (void **) &tex);
+    ret = IDirectDrawSurface_QueryInterface(surf, &IID_IDirect3DTexture, (void **) &tex);
+    if (ret == E_NOINTERFACE) return;  /* win64 */
     ref = getRefcount((IUnknown *) tex);
     todo_wine ok(ref == 2, "Refcount is %u, expected 2\n", ref);
     ref = getRefcount((IUnknown *) surf);

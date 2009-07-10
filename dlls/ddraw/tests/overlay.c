@@ -200,7 +200,8 @@ static void yv12_test(void)
 
     ok(desc.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS | DDSD_PITCH),
        "Unexpected desc.dwFlags 0x%08x\n", desc.dwFlags);
-    ok(desc.ddsCaps.dwCaps == (DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM),
+    ok(desc.ddsCaps.dwCaps == (DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM) ||
+       desc.ddsCaps.dwCaps == (DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM | DDSCAPS_HWCODEC),
        "Unexpected desc.ddsCaps.dwCaps 0x%08x\n", desc.ddsCaps.dwCaps);
     ok(desc.dwWidth == 256 && desc.dwHeight == 256, "Expected size 64x64, got %ux%u\n",
        desc.dwWidth, desc.dwHeight);

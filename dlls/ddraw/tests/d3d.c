@@ -951,6 +951,7 @@ static BOOL D3D1_createObjects(void)
     ok(hr==DD_OK, "SetCooperativeLevel returned: %x\n", hr);
 
     hr = IDirectDraw_QueryInterface(DirectDraw1, &IID_IDirect3D, (void**) &Direct3D1);
+    if (hr == E_NOINTERFACE) return FALSE;
     ok(hr==DD_OK, "QueryInterface returned: %x\n", hr);
     if (!Direct3D1) {
         return FALSE;
