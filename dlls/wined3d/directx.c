@@ -612,6 +612,33 @@ static BOOL match_dx10_capable(const WineD3D_GL_Info *gl_info, const char *gl_re
     return gl_info->max_glsl_varyings > 44;
 }
 
+/* A GL context is provided by the caller */
+static BOOL match_allows_spec_alpha(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+{
+    GLenum error;
+    DWORD data[16];
+
+    if(!GL_SUPPORT(EXT_SECONDARY_COLOR)) return FALSE;
+
+    ENTER_GL();
+    while(glGetError());
+    GL_EXTCALL(glSecondaryColorPointerEXT)(4, GL_UNSIGNED_BYTE, 4, data);
+    error = glGetError();
+    LEAVE_GL();
+
+    if(error == GL_NO_ERROR)
+    {
+        TRACE("GL Implementation accepts 4 component specular color pointers\n");
+        return TRUE;
+    }
+    else
+    {
+        TRACE("GL implementation does not accept 4 component specular colors, error %s\n",
+              debug_glerror(error));
+        return FALSE;
+    }
+}
+
 static void quirk_arb_constants(WineD3D_GL_Info *gl_info)
 {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->vs_arb_constantsF);
@@ -721,6 +748,11 @@ static void quirk_clip_varying(WineD3D_GL_Info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_GLSL_CLIP_VARYING;
 }
 
+static void quirk_allows_specular_alpha(WineD3D_GL_Info *gl_info)
+{
+    gl_info->quirks |= WINED3D_QUIRK_ALLOWS_SPECULAR_ALPHA;
+}
+
 struct driver_quirk
 {
     BOOL (*match)(const WineD3D_GL_Info *gl_info, const char *gl_renderer);
@@ -770,6 +802,21 @@ struct driver_quirk quirk_table[] =
         match_dx10_capable,
         quirk_clip_varying,
         "Reserved varying for gl_ClipPos"
+    },
+    {
+        /* GL_EXT_secondary_color does not allow 4 component secondary colors, but most
+         * GL implementations accept it. The Mac GL is the only implementation known to
+         * reject it.
+         *
+         * If we can pass 4 component specular colors, do it, because (a) we don't have
+         * to screw around with the data, and (b) the D3D fixed function vertex pipeline
+         * passes specular alpha to the pixel shader if any is used. Otherwise the
+         * specular alpha is used to pass the fog coordinate, which we pass to opengl
+         * via GL_EXT_fog_coord.
+         */
+        match_allows_spec_alpha,
+        quirk_allows_specular_alpha,
+        "Allow specular alpha quirk"
     }
 };
 

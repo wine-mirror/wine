@@ -4199,15 +4199,45 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, const struct wine
         VTRACE(("glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, %d, %p)\n", e->stride, e->data));
 
         if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
+            GLenum type = e->format_desc->gl_vtx_type;
+            GLint format = e->format_desc->gl_vtx_format;
+
             if (curVBO != e->buffer_object)
             {
                 GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, e->buffer_object));
                 checkGLcall("glBindBufferARB");
                 curVBO = e->buffer_object;
             }
-            GL_EXTCALL(glSecondaryColorPointerEXT)(e->format_desc->gl_vtx_format, e->format_desc->gl_vtx_type,
-                    e->stride, e->data + stateblock->loadBaseVertexIndex * e->stride + offset[e->stream_idx]);
-            checkGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, ...)");
+
+            if(format != 4 || (GLINFO_LOCATION.quirks & WINED3D_QUIRK_ALLOWS_SPECULAR_ALPHA))
+            {
+                /* Usually specular colors only allow 3 components, since they have no alpha. In D3D, the specular alpha
+                 * contains the fog coordinate, which is passed to GL with GL_EXT_fog_coord. However, the fixed function
+                 * vertex pipeline can pass the specular alpha through, and pixel shaders can read it. So it GL accepts
+                 * 4 component secondary colors use it
+                 */
+                GL_EXTCALL(glSecondaryColorPointerEXT)(format, type,
+                        e->stride, e->data + stateblock->loadBaseVertexIndex * e->stride + offset[e->stream_idx]);
+                checkGLcall("glSecondaryColorPointerEXT(format, type, ...)");
+            }
+            else
+            {
+                switch(type)
+                {
+                    case GL_UNSIGNED_BYTE:
+                        GL_EXTCALL(glSecondaryColorPointerEXT)(3, GL_UNSIGNED_BYTE,
+                                e->stride, e->data + stateblock->loadBaseVertexIndex * e->stride + offset[e->stream_idx]);
+                        checkGLcall("glSecondaryColorPointerEXT(3, GL_UNSIGNED_BYTE, ...)");
+                        break;
+
+                    default:
+                        FIXME("Add 4 component specular color pointers for type %x\n", type);
+                        /* Make sure that the right color component is dropped */
+                        GL_EXTCALL(glSecondaryColorPointerEXT)(3, type,
+                                e->stride, e->data + stateblock->loadBaseVertexIndex * e->stride + offset[e->stream_idx]);
+                        checkGLcall("glSecondaryColorPointerEXT(3, type, ...)");
+                }
+            }
             glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
             checkGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
         } else {
