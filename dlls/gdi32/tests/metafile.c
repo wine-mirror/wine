@@ -2308,19 +2308,14 @@ static void test_SetWinMetaFileBits(void)
   HeapFree(GetProcessHeap(), 0, buffer);
 }
 
-/* This is somewhat different to MulDiv, but appears to be how native behaves */
-static INT muldiv(INT m1, INT m2, INT d)
+static BOOL near_match(int x, int y)
 {
-    LONGLONG ret;
+    int epsilon = min(abs(x), abs(y));
 
-    ret = ((LONGLONG)m1 * m2 + d/2) / d; /* Always add d/2 even if ret will be -ve */
+    epsilon = max(epsilon/100, 2);
 
-    if((LONGLONG)m1 * m2 * 2 == (2 * ret - 1) * d) /* If the answer is exactly n.5 round towards zero */
-    {
-        if(ret > 0) ret--;
-        else ret++;
-    }
-    return ret;
+    if(x < y - epsilon || x > y + epsilon) return FALSE;
+    return TRUE;
 }
 
 static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
@@ -2422,43 +2417,42 @@ static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
             case MM_TEXT:
             case MM_ISOTROPIC:
             case MM_ANISOTROPIC:
-                pt.y = muldiv(rc->top, vert_res, vert_size * 100);
-                pt.x = muldiv(rc->left, horz_res, horz_size * 100);
+                pt.y = MulDiv(rc->top, vert_res, vert_size * 100) + 1;
+                pt.x = MulDiv(rc->left, horz_res, horz_size * 100);
                 break;
             case MM_LOMETRIC:
-                pt.y = muldiv(-rc->top, 1, 10) + 1;
-                pt.x = muldiv( rc->left, 1, 10);
+                pt.y = MulDiv(-rc->top, 1, 10) + 1;
+                pt.x = MulDiv( rc->left, 1, 10);
                 break;
             case MM_HIMETRIC:
                 pt.y = -rc->top + 1;
                 pt.x = (rc->left >= 0) ? rc->left : rc->left + 1; /* strange but true */
                 break;
             case MM_LOENGLISH:
-                pt.y = muldiv(-rc->top, 10, 254) + 1;
-                pt.x = muldiv( rc->left, 10, 254);
+                pt.y = MulDiv(-rc->top, 10, 254) + 1;
+                pt.x = MulDiv( rc->left, 10, 254);
                 break;
             case MM_HIENGLISH:
-                pt.y = muldiv(-rc->top, 100, 254) + 1;
-                pt.x = muldiv( rc->left, 100, 254);
+                pt.y = MulDiv(-rc->top, 100, 254) + 1;
+                pt.x = MulDiv( rc->left, 100, 254);
                 break;
             case MM_TWIPS:
-                pt.y = muldiv(-rc->top, 72 * 20, 2540) + 1;
-                pt.x = muldiv( rc->left, 72 * 20, 2540);
+                pt.y = MulDiv(-rc->top, 72 * 20, 2540) + 1;
+                pt.x = MulDiv( rc->left, 72 * 20, 2540);
                 break;
             default:
                 pt.x = pt.y = 0;
             }
-            ok((short)rec->rdParm[0] == pt.y ||
-               broken(mode >= MM_LOMETRIC && mode <= MM_TWIPS && (short)rec->rdParm[0] == pt.y - 1), /* win9x, winme */
-                      "got %d expect %d\n", (short)rec->rdParm[0], pt.y);
-            ok((short)rec->rdParm[1] == pt.x, "got %d expect %d\n", (short)rec->rdParm[1], pt.x);
+            ok(near_match((short)rec->rdParm[0], pt.y), "got %d expect %d\n", (short)rec->rdParm[0], pt.y);
+            ok(near_match((short)rec->rdParm[1], pt.x), "got %d expect %d\n", (short)rec->rdParm[1], pt.x);
         }
         if(rec_num == mfcomment_chunks + 2)
         {
             ok(rec->rdFunction == META_SETWINDOWEXT, "got %04x\n", rec->rdFunction);
-            ok((short)rec->rdParm[0] == muldiv(rc->bottom - rc->top, vert_res, vert_size * 100), "got %d\n", (short)rec->rdParm[0]);
-            ok((short)rec->rdParm[1] == muldiv(rc->right - rc->left, horz_res, horz_size * 100), "got %d\n", (short)rec->rdParm[1]);
-
+            ok(near_match((short)rec->rdParm[0], MulDiv(rc->bottom - rc->top, vert_res, vert_size * 100)),
+               "got %d\n", (short)rec->rdParm[0]);
+            ok(near_match((short)rec->rdParm[1], MulDiv(rc->right - rc->left, horz_res, horz_size * 100)),
+               "got %d\n", (short)rec->rdParm[1]);
         }
 
         rec_num++;
