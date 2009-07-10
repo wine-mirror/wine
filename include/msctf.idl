@@ -974,3 +974,24 @@ interface IEnumTfContexts : IUnknown
     HRESULT Skip(
         [in] ULONG ulCount);
 };
+
+[
+  object,
+  uuid(aa80e808-2021-11d2-93e0-0060b067b86e),
+  pointer_default(unique)
+]
+interface IEnumTfDocumentMgrs : IUnknown
+{
+    HRESULT Clone(
+        [out] IEnumTfDocumentMgrs **ppEnum);
+
+    HRESULT Next(
+        [in] ULONG ulCount,
+        [out, size_is(ulCount), length_is(*pcFetched)] ITfDocumentMgr **rgDocumentMgr,
+        [out] ULONG *pcFetched);
+
+    HRESULT Reset();
+
+    HRESULT Skip(
+        [in] ULONG ulCount);
+};
