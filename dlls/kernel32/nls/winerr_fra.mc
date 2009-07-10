@@ -17,12 +17,12 @@
 ;
 
 LanguageNames=(FRA=0x0c:winerr)
-CodePages=(FRA=1252:0)
+CodePages=(FRA=65001:0)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS
 Language=FRA
-Succès
+SuccÃ¨s
 .
 MessageId=1
 SymbolicName=ERROR_INVALID_FUNCTION
@@ -47,7 +47,7 @@ Trop de fichiers ouverts
 MessageId=5
 SymbolicName=ERROR_ACCESS_DENIED
 Language=FRA
-Accès refusé
+AccÃ¨s refusÃ©
 .
 MessageId=6
 SymbolicName=ERROR_INVALID_HANDLE
@@ -57,12 +57,12 @@ Attache invalide
 MessageId=7
 SymbolicName=ERROR_ARENA_TRASHED
 Language=FRA
-Mémoire invalidée
+MÃ©moire invalidÃ©e
 .
 MessageId=8
 SymbolicName=ERROR_NOT_ENOUGH_MEMORY
 Language=FRA
-Pas assez de mémoire
+Pas assez de mÃ©moire
 .
 MessageId=9
 SymbolicName=ERROR_INVALID_BLOCK
@@ -82,17 +82,17 @@ Format incorrect
 MessageId=12
 SymbolicName=ERROR_INVALID_ACCESS
 Language=FRA
-Accès invalide
+AccÃ¨s invalide
 .
 MessageId=13
 SymbolicName=ERROR_INVALID_DATA
 Language=FRA
-Données invalides
+DonnÃ©es invalides
 .
 MessageId=14
 SymbolicName=ERROR_OUTOFMEMORY
 Language=FRA
-Mémoire insuffisante
+MÃ©moire insuffisante
 .
 MessageId=15
 SymbolicName=ERROR_INVALID_DRIVE
@@ -102,12 +102,12 @@ Lecteur invalide
 MessageId=16
 SymbolicName=ERROR_CURRENT_DIRECTORY
 Language=FRA
-Impossible de supprimer le répertoire courant
+Impossible de supprimer le rÃ©pertoire courant
 .
 MessageId=17
 SymbolicName=ERROR_NOT_SAME_DEVICE
 Language=FRA
-Périphérique différent
+PÃ©riphÃ©rique diffÃ©rent
 .
 MessageId=18
 SymbolicName=ERROR_NO_MORE_FILES
@@ -117,17 +117,17 @@ Plus de fichiers
 MessageId=19
 SymbolicName=ERROR_WRITE_PROTECT
 Language=FRA
-Protégé contre l'écriture
+ProtÃ©gÃ© contre l'Ã©criture
 .
 MessageId=20
 SymbolicName=ERROR_BAD_UNIT
 Language=FRA
-Unité incorrecte
+UnitÃ© incorrecte
 .
 MessageId=21
 SymbolicName=ERROR_NOT_READY
 Language=FRA
-Non prêt
+Non prÃªt
 .
 MessageId=22
 SymbolicName=ERROR_BAD_COMMAND
@@ -167,7 +167,7 @@ Plus de papier
 MessageId=29
 SymbolicName=ERROR_WRITE_FAULT
 Language=FRA
-Erreur d'écriture
+Erreur d'Ã©criture
 .
 MessageId=30
 SymbolicName=ERROR_READ_FAULT
@@ -177,7 +177,7 @@ Erreur de lecture
 MessageId=31
 SymbolicName=ERROR_GEN_FAILURE
 Language=FRA
-Erreur générale
+Erreur gÃ©nÃ©rale
 .
 MessageId=32
 SymbolicName=ERROR_SHARING_VIOLATION
@@ -197,7 +197,7 @@ Mauvais disque
 MessageId=36
 SymbolicName=ERROR_SHARING_BUFFER_EXCEEDED
 Language=FRA
-Tampon de partage dépassé
+Tampon de partage dÃ©passÃ©
 .
 MessageId=38
 SymbolicName=ERROR_HANDLE_EOF
@@ -212,32 +212,32 @@ Disque plein
 MessageId=50
 SymbolicName=ERROR_NOT_SUPPORTED
 Language=FRA
-Requête non supportée
+RequÃªte non supportÃ©e
 .
 MessageId=51
 SymbolicName=ERROR_REM_NOT_LIST
 Language=FRA
-La machine distante n'écoute pas
+La machine distante n'Ã©coute pas
 .
 MessageId=52
 SymbolicName=ERROR_DUP_NAME
 Language=FRA
-Nom réseau dupliqué
+Nom rÃ©seau dupliquÃ©
 .
 MessageId=53
 SymbolicName=ERROR_BAD_NETPATH
 Language=FRA
-Chemin réseau incorrect
+Chemin rÃ©seau incorrect
 .
 MessageId=54
 SymbolicName=ERROR_NETWORK_BUSY
 Language=FRA
-Réseau occupé
+RÃ©seau occupÃ©
 .
 MessageId=55
 SymbolicName=ERROR_DEV_NOT_EXIST
 Language=FRA
-Le périphérique n'existe pas
+Le pÃ©riphÃ©rique n'existe pas
 .
 MessageId=56
 SymbolicName=ERROR_TOO_MANY_CMDS
@@ -247,17 +247,17 @@ Trop de commandes
 MessageId=57
 SymbolicName=ERROR_ADAP_HDW_ERR
 Language=FRA
-Erreur matérielle de l'adaptateur
+Erreur matÃ©rielle de l'adaptateur
 .
 MessageId=58
 SymbolicName=ERROR_BAD_NET_RESP
 Language=FRA
-Réponse du réseau incorrecte
+RÃ©ponse du rÃ©seau incorrecte
 .
 MessageId=59
 SymbolicName=ERROR_UNEXP_NET_ERR
 Language=FRA
-Erreur réseau inattendue
+Erreur rÃ©seau inattendue
 .
 MessageId=60
 SymbolicName=ERROR_BAD_REM_ADAP
@@ -277,37 +277,37 @@ Pas d'espace de spool
 MessageId=63
 SymbolicName=ERROR_PRINT_CANCELLED
 Language=FRA
-Impression annulée
+Impression annulÃ©e
 .
 MessageId=64
 SymbolicName=ERROR_NETNAME_DELETED
 Language=FRA
-Nom réseau supprimé
+Nom rÃ©seau supprimÃ©
 .
 MessageId=65
 SymbolicName=ERROR_NETWORK_ACCESS_DENIED
 Language=FRA
-Accès réseau refusé
+AccÃ¨s rÃ©seau refusÃ©
 .
 MessageId=66
 SymbolicName=ERROR_BAD_DEV_TYPE
 Language=FRA
-Type de périphérique incorrect
+Type de pÃ©riphÃ©rique incorrect
 .
 MessageId=67
 SymbolicName=ERROR_BAD_NET_NAME
 Language=FRA
-Nom réseau incorrect
+Nom rÃ©seau incorrect
 .
 MessageId=68
 SymbolicName=ERROR_TOO_MANY_NAMES
 Language=FRA
-Trop de noms réseau
+Trop de noms rÃ©seau
 .
 MessageId=69
 SymbolicName=ERROR_TOO_MANY_SESS
 Language=FRA
-Trop de sessions réseau
+Trop de sessions rÃ©seau
 .
 MessageId=70
 SymbolicName=ERROR_SHARING_PAUSED
@@ -317,7 +317,7 @@ Partage en pause
 MessageId=71
 SymbolicName=ERROR_REQ_NOT_ACCEP
 Language=FRA
-Requête non acceptée
+RequÃªte non acceptÃ©e
 .
 MessageId=72
 SymbolicName=ERROR_REDIR_PAUSED
@@ -332,7 +332,7 @@ Le fichier existe
 MessageId=82
 SymbolicName=ERROR_CANNOT_MAKE
 Language=FRA
-Impossible de créer
+Impossible de crÃ©er
 .
 MessageId=83
 SymbolicName=ERROR_FAIL_I24
@@ -342,12 +342,12 @@ Erreur Int24
 MessageId=84
 SymbolicName=ERROR_OUT_OF_STRUCTURES
 Language=FRA
-À cours de structures
+Ã€ cours de structures
 .
 MessageId=85
 SymbolicName=ERROR_ALREADY_ASSIGNED
 Language=FRA
-Déjà assigné
+DÃ©jÃ  assignÃ©
 .
 MessageId=86
 SymbolicName=ERROR_INVALID_PASSWORD
@@ -357,12 +357,12 @@ Mot de passe non valide
 MessageId=87
 SymbolicName=ERROR_INVALID_PARAMETER
 Language=FRA
-Paramètre non valide
+ParamÃ¨tre non valide
 .
 MessageId=88
 SymbolicName=ERROR_NET_WRITE_FAULT
 Language=FRA
-Erreur d'écriture réseau
+Erreur d'Ã©criture rÃ©seau
 .
 MessageId=89
 SymbolicName=ERROR_NO_PROC_SLOTS
@@ -372,22 +372,22 @@ Plus d'emplacement pour processus
 MessageId=100
 SymbolicName=ERROR_TOO_MANY_SEMAPHORES
 Language=FRA
-Trop de sémaphores
+Trop de sÃ©maphores
 .
 MessageId=101
 SymbolicName=ERROR_EXCL_SEM_ALREADY_OWNED
 Language=FRA
-Sémaphore exclusif déjà acquis
+SÃ©maphore exclusif dÃ©jÃ  acquis
 .
 MessageId=102
 SymbolicName=ERROR_SEM_IS_SET
 Language=FRA
-Le sémaphore est actif
+Le sÃ©maphore est actif
 .
 MessageId=103
 SymbolicName=ERROR_TOO_MANY_SEM_REQUESTS
 Language=FRA
-Trop de requêtes de sémaphores
+Trop de requÃªtes de sÃ©maphores
 .
 MessageId=104
 SymbolicName=ERROR_INVALID_AT_INTERRUPT_TIME
@@ -397,22 +397,22 @@ Non valide au moment de l'interruption
 MessageId=105
 SymbolicName=ERROR_SEM_OWNER_DIED
 Language=FRA
-L'acquéreur du sémaphore est mort
+L'acquÃ©reur du sÃ©maphore est mort
 .
 MessageId=106
 SymbolicName=ERROR_SEM_USER_LIMIT
 Language=FRA
-Limite utilisateur pour le sémaphore
+Limite utilisateur pour le sÃ©maphore
 .
 MessageId=107
 SymbolicName=ERROR_DISK_CHANGE
 Language=FRA
-Insérez le disque pour le lecteur %1
+InsÃ©rez le disque pour le lecteur %1
 .
 MessageId=108
 SymbolicName=ERROR_DRIVE_LOCKED
 Language=FRA
-Lecteur verrouillé
+Lecteur verrouillÃ©
 .
 MessageId=109
 SymbolicName=ERROR_BROKEN_PIPE
@@ -422,12 +422,12 @@ Tube interrompu
 MessageId=110
 SymbolicName=ERROR_OPEN_FAILED
 Language=FRA
-Échec lors de l'ouverture
+Ã‰chec lors de l'ouverture
 .
 MessageId=111
 SymbolicName=ERROR_BUFFER_OVERFLOW
 Language=FRA
-Dépassement de tampon
+DÃ©passement de tampon
 .
 MessageId=112
 SymbolicName=ERROR_DISK_FULL
@@ -452,7 +452,7 @@ IOCTL non valide
 MessageId=118
 SymbolicName=ERROR_INVALID_VERIFY_SWITCH
 Language=FRA
-Bascule de vérification non valide
+Bascule de vÃ©rification non valide
 .
 MessageId=119
 SymbolicName=ERROR_BAD_DRIVER_LEVEL
@@ -462,12 +462,12 @@ Niveau de pilote incorrect
 MessageId=120
 SymbolicName=ERROR_CALL_NOT_IMPLEMENTED
 Language=FRA
-Appel non implémenté
+Appel non implÃ©mentÃ©
 .
 MessageId=121
 SymbolicName=ERROR_SEM_TIMEOUT
 Language=FRA
-Dépassement du délai du sémaphore
+DÃ©passement du dÃ©lai du sÃ©maphore
 .
 MessageId=122
 SymbolicName=ERROR_INSUFFICIENT_BUFFER
@@ -487,7 +487,7 @@ Niveau non valide
 MessageId=125
 SymbolicName=ERROR_NO_VOLUME_LABEL
 Language=FRA
-Pas d'étiquette de volume
+Pas d'Ã©tiquette de volume
 .
 MessageId=126
 SymbolicName=ERROR_MOD_NOT_FOUND
@@ -497,7 +497,7 @@ Module introuvable
 MessageId=127
 SymbolicName=ERROR_PROC_NOT_FOUND
 Language=FRA
-Procédure introuvable
+ProcÃ©dure introuvable
 .
 MessageId=128
 SymbolicName=ERROR_WAIT_NO_CHILDREN
@@ -572,7 +572,7 @@ Attempt to SUBST to a JOINed drive
 MessageId=142
 SymbolicName=ERROR_BUSY_DRIVE
 Language=FRA
-Le lecteur est occupé
+Le lecteur est occupÃ©
 .
 MessageId=143
 SymbolicName=ERROR_SAME_DRIVE
@@ -587,7 +587,7 @@ Not toplevel directory
 MessageId=145
 SymbolicName=ERROR_DIR_NOT_EMPTY
 Language=FRA
-Le répertoire n'est pas vide
+Le rÃ©pertoire n'est pas vide
 .
 MessageId=146
 SymbolicName=ERROR_IS_SUBST_PATH
@@ -3607,7 +3607,7 @@ Already awaiting printer handle
 MessageId=1905
 SymbolicName=ERROR_PRINTER_DELETED
 Language=FRA
-Imprimante supprimée
+Imprimante supprimÃ©e
 .
 MessageId=1906
 SymbolicName=ERROR_INVALID_PRINTER_STATE
