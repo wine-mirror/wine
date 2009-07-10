@@ -43,6 +43,7 @@ extern HRESULT CompartmentMgr_Destructor(ITfCompartmentMgr *This);
 
 extern HRESULT Context_Initialize(ITfContext *cxt, ITfDocumentMgr *manager);
 extern HRESULT Context_Uninitialize(ITfContext *cxt);
+extern void    ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *tm, ITfDocumentMgr *mgr);
 extern HRESULT TF_SELECTION_to_TS_SELECTION_ACP(const TF_SELECTION *tf, TS_SELECTION_ACP *tsAcp);
 
 /* cookie function */

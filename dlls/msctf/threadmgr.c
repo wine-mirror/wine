@@ -65,6 +65,12 @@ typedef struct tagPreservedKey
     TfClientId      tid;
 } PreservedKey;
 
+typedef struct tagDocumentMgrs
+{
+    struct list     entry;
+    ITfDocumentMgr  *docmgr;
+} DocumentMgrEntry;
+
 typedef struct tagACLMulti {
     const ITfThreadMgrVtbl *ThreadMgrVtbl;
     const ITfSourceVtbl *SourceVtbl;
@@ -90,6 +96,7 @@ typedef struct tagACLMulti {
     CLSID forgroundTextService;
 
     struct list CurrentPreservedKeys;
+    struct list CreatedDocumentMgrs;
 
     /* kept as separate lists to reduce unnecessary iterations */
     struct list     ActiveLanguageProfileNotifySink;
@@ -184,6 +191,14 @@ static void ThreadMgr_Destructor(ThreadMgr *This)
         list_remove(cursor);
         HeapFree(GetProcessHeap(),0,key->description);
         HeapFree(GetProcessHeap(),0,key);
+    }
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &This->CreatedDocumentMgrs)
+    {
+        DocumentMgrEntry *mgr = LIST_ENTRY(cursor,DocumentMgrEntry,entry);
+        list_remove(cursor);
+        FIXME("Left Over ITfDocumentMgr.  Should we do something with it?\n");
+        HeapFree(GetProcessHeap(),0,mgr);
     }
 
     CompartmentMgr_Destructor(This->CompartmentMgr);
@@ -303,8 +318,25 @@ static HRESULT WINAPI ThreadMgr_CreateDocumentMgr( ITfThreadMgr* iface, ITfDocum
 **ppdim)
 {
     ThreadMgr *This = (ThreadMgr *)iface;
+    DocumentMgrEntry *mgrentry;
+    HRESULT hr;
+
     TRACE("(%p)\n",iface);
-    return DocumentMgr_Constructor((ITfThreadMgrEventSink*)&This->ThreadMgrEventSinkVtbl, ppdim);
+    mgrentry = HeapAlloc(GetProcessHeap(),0,sizeof(DocumentMgrEntry));
+    if (mgrentry == NULL)
+        return E_OUTOFMEMORY;
+
+    hr = DocumentMgr_Constructor((ITfThreadMgrEventSink*)&This->ThreadMgrEventSinkVtbl, ppdim);
+
+    if (SUCCEEDED(hr))
+    {
+        mgrentry->docmgr = *ppdim;
+        list_add_head(&This->CreatedDocumentMgrs,&mgrentry->entry);
+    }
+    else
+        HeapFree(GetProcessHeap(),0,mgrentry);
+
+    return hr;
 }
 
 static HRESULT WINAPI ThreadMgr_EnumDocumentMgrs( ITfThreadMgr* iface, IEnumTfDocumentMgrs
@@ -1083,6 +1115,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     CompartmentMgr_Constructor((IUnknown*)This, &IID_IUnknown, (IUnknown**)&This->CompartmentMgr);
 
     list_init(&This->CurrentPreservedKeys);
+    list_init(&This->CreatedDocumentMgrs);
 
     list_init(&This->ActiveLanguageProfileNotifySink);
     list_init(&This->DisplayAttributeNotifySink);
@@ -1094,4 +1127,21 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)This;
     return S_OK;
+}
+
+void ThreadMgr_OnDocumentMgrDestruction(ITfThreadMgr *tm, ITfDocumentMgr *mgr)
+{
+    ThreadMgr *This = (ThreadMgr *)tm;
+    struct list *cursor;
+    LIST_FOR_EACH(cursor, &This->CreatedDocumentMgrs)
+    {
+        DocumentMgrEntry *mgrentry = LIST_ENTRY(cursor,DocumentMgrEntry,entry);
+        if (mgrentry->docmgr == mgr)
+        {
+            list_remove(cursor);
+            HeapFree(GetProcessHeap(),0,mgrentry);
+            return;
+        }
+    }
+    FIXME("ITfDocumenMgr %p not found in this thread\n",mgr);
 }
