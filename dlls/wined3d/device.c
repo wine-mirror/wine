@@ -5746,7 +5746,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     WINED3DPOOL       srcPool, destPool;
     int offset    = 0;
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
-    glDescriptor *glDescription = NULL;
+    glDescriptor *glDescription;
     const struct GlPixelFormatDesc *src_format_desc, *dst_format_desc;
     GLenum dummy;
     int sampler;
@@ -5807,7 +5807,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     surface_internal_preload(pDestinationSurface, SRGB_RGB);
     IWineD3DSurface_BindTexture(pDestinationSurface, FALSE);
 
-    IWineD3DSurface_GetGlDesc(pDestinationSurface, &glDescription);
+    glDescription = &((IWineD3DSurfaceImpl *)pDestinationSurface)->glDescription;
 
     src_format_desc = ((IWineD3DSurfaceImpl *)pSrcSurface)->resource.format_desc;
     dst_format_desc = ((IWineD3DSurfaceImpl *)pDestinationSurface)->resource.format_desc;

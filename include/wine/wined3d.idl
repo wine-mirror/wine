@@ -2532,9 +2532,6 @@ interface IWineD3DSurface : IWineD3DResource
     HRESULT SetContainer(
         [in] IWineD3DBase *container
     );
-    void GetGlDesc(
-        [out] glDescriptor **desc
-    );
     const void *GetData(
     );
     HRESULT SetFormat(
