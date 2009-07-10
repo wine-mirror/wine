@@ -486,18 +486,23 @@ static int codeview_add_type(unsigned int typeno, struct symt* dt)
     if ((typeno >> 24) != 0)
         FIXME("No module index while inserting type-id assumption is wrong %x\n",
               typeno);
-    while (typeno - FIRST_DEFINABLE_TYPE >= cv_current_module->num_defined_types)
+    if (typeno - FIRST_DEFINABLE_TYPE >= cv_current_module->num_defined_types)
     {
-        cv_current_module->num_defined_types += 0x100;
         if (cv_current_module->defined_types)
+        {
+            cv_current_module->num_defined_types = max( cv_current_module->num_defined_types * 2,
+                                                        typeno - FIRST_DEFINABLE_TYPE + 1 );
             cv_current_module->defined_types = HeapReAlloc(GetProcessHeap(),
                             HEAP_ZERO_MEMORY, cv_current_module->defined_types,
                             cv_current_module->num_defined_types * sizeof(struct symt*));
+        }
         else
+        {
+            cv_current_module->num_defined_types = max( 256, typeno - FIRST_DEFINABLE_TYPE + 1 );
             cv_current_module->defined_types = HeapAlloc(GetProcessHeap(),
                             HEAP_ZERO_MEMORY,
                             cv_current_module->num_defined_types * sizeof(struct symt*));
-
+        }
         if (cv_current_module->defined_types == NULL) return FALSE;
     }
     if (cv_current_module->defined_types[typeno - FIRST_DEFINABLE_TYPE])

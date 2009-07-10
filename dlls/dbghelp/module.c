@@ -168,6 +168,7 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     module->type              = type;
     module->is_virtual        = virtual ? TRUE : FALSE;
     module->sortlist_valid    = FALSE;
+    module->sorttab_size      = 0;
     module->addr_sorttab      = NULL;
     module->num_sorttab       = 0;
     module->num_symbols       = 0;
@@ -1037,6 +1038,7 @@ DWORD64 WINAPI SymGetModuleBase64(HANDLE hProcess, DWORD64 dwAddr)
 void module_reset_debug_info(struct module* module)
 {
     module->sortlist_valid = TRUE;
+    module->sorttab_size = 0;
     module->addr_sorttab = NULL;
     module->num_sorttab = module->num_symbols = 0;
     hash_table_destroy(&module->ht_symbols);

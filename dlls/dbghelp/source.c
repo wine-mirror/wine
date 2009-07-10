@@ -76,13 +76,18 @@ unsigned source_new(struct module* module, const char* base, const char* name)
         int len = strlen(full) + 1;
         if (module->sources_used + len + 1 > module->sources_alloc)
         {
-            /* Alloc by block of 256 bytes */
-            module->sources_alloc = (module->sources_used + len + 1 + 255) & ~255;
             if (!module->sources)
+            {
+                module->sources_alloc = (module->sources_used + len + 1 + 255) & ~255;
                 module->sources = HeapAlloc(GetProcessHeap(), 0, module->sources_alloc);
+            }
             else
+            {
+                module->sources_alloc = max( module->sources_alloc * 2,
+                                             (module->sources_used + len + 1 + 255) & ~255 );
                 module->sources = HeapReAlloc(GetProcessHeap(), 0, module->sources,
                                               module->sources_alloc);
+            }
         }
         ret = module->sources_used;
         memcpy(module->sources + module->sources_used, full, len);

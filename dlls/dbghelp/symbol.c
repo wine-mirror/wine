@@ -70,13 +70,22 @@ int symt_cmp_addr(const void* p1, const void* p2)
 static BOOL symt_grow_sorttab(struct module* module, unsigned sz)
 {
     struct symt_ht**    new;
+    unsigned int size;
 
+    if (sz <= module->sorttab_size) return TRUE;
     if (module->addr_sorttab)
+    {
+        size = module->sorttab_size * 2;
         new = HeapReAlloc(GetProcessHeap(), 0, module->addr_sorttab,
-                          sz * sizeof(struct symt_ht*));
+                          size * sizeof(struct symt_ht*));
+    }
     else
-        new = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(struct symt_ht*));
+    {
+        size = 64;
+        new = HeapAlloc(GetProcessHeap(), 0, size * sizeof(struct symt_ht*));
+    }
     if (!new) return FALSE;
+    module->sorttab_size = size;
     module->addr_sorttab = new;
     return TRUE;
 }

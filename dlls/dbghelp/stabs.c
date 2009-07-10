@@ -180,14 +180,18 @@ static int stabs_new_include(const char* file, unsigned long val)
 {
     if (num_include_def == num_alloc_include_def)
     {
-        num_alloc_include_def += 256;
         if (!include_defs)
-            include_defs = HeapAlloc(GetProcessHeap(), 0, 
+        {
+            num_alloc_include_def = 256;
+            include_defs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                      sizeof(include_defs[0]) * num_alloc_include_def);
+        }
         else
-            include_defs = HeapReAlloc(GetProcessHeap(), 0, include_defs,
+        {
+            num_alloc_include_def *= 2;
+            include_defs = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, include_defs,
                                        sizeof(include_defs[0]) * num_alloc_include_def);
-        memset(include_defs + num_include_def, 0, sizeof(include_defs[0]) * 256);
+        }
     }
     include_defs[num_include_def].name = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(file) + 1), file);
     include_defs[num_include_def].value = val;
@@ -262,13 +266,13 @@ static struct symt** stabs_find_ref(long filenr, long subnr)
     {
         if (cu_nrofentries <= subnr)
 	{
+            cu_nrofentries = max( cu_nrofentries * 2, subnr + 1 );
             if (!cu_vector)
-                cu_vector = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                                      sizeof(cu_vector[0]) * (subnr+1));
+                cu_vector = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                      sizeof(cu_vector[0]) * cu_nrofentries);
             else
-                cu_vector = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                                        cu_vector, sizeof(cu_vector[0]) * (subnr+1));
-            cu_nrofentries = subnr + 1;
+                cu_vector = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        cu_vector, sizeof(cu_vector[0]) * cu_nrofentries);
 	}
         ret = &cu_vector[subnr];
     }
@@ -281,13 +285,13 @@ static struct symt** stabs_find_ref(long filenr, long subnr)
 
         if (idef->nrofentries <= subnr)
 	{
+            idef->nrofentries = max( idef->nrofentries * 2, subnr + 1 );
             if (!idef->vector)
-                idef->vector = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                                         sizeof(idef->vector[0]) * (subnr+1));
+                idef->vector = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                         sizeof(idef->vector[0]) * idef->nrofentries);
             else
-                idef->vector = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                                           idef->vector, sizeof(idef->vector[0]) * (subnr+1));
-            idef->nrofentries = subnr + 1;
+                idef->vector = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                           idef->vector, sizeof(idef->vector[0]) * idef->nrofentries);
 	}
         ret = &idef->vector[subnr];
     }
@@ -1154,13 +1158,18 @@ static inline void pending_make_room(struct pending_list* pending)
 {
     if (pending->num == pending->allocated)
     {
-        pending->allocated += 8;
         if (!pending->objs)
+        {
+            pending->allocated = 8;
             pending->objs = HeapAlloc(GetProcessHeap(), 0,
                                      pending->allocated * sizeof(pending->objs[0]));
-        else    
+        }
+        else
+        {
+            pending->allocated *= 2;
             pending->objs = HeapReAlloc(GetProcessHeap(), 0, pending->objs,
                                        pending->allocated * sizeof(pending->objs[0]));
+        }
     }
 }
 
@@ -1311,7 +1320,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             unsigned    len = strlen(ptr);
             if (strlen(stabbuff) + len > stabbufflen)
             {
-                stabbufflen += 65536;
+                stabbufflen *= 2;
                 stabbuff = HeapReAlloc(GetProcessHeap(), 0, stabbuff, stabbufflen);
             }
             strncat(stabbuff, ptr, len - 1);

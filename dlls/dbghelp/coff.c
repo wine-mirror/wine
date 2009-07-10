@@ -108,12 +108,18 @@ static int coff_add_file(struct CoffFileSet* coff_files, struct module* module,
 
     if (coff_files->nfiles + 1 >= coff_files->nfiles_alloc)
     {
-	coff_files->nfiles_alloc += 10;
-        coff_files->files = (coff_files->files) ?
-            HeapReAlloc(GetProcessHeap(), 0, coff_files->files,
-                        coff_files->nfiles_alloc * sizeof(struct CoffFile)) :
-            HeapAlloc(GetProcessHeap(), 0,
-                      coff_files->nfiles_alloc * sizeof(struct CoffFile));
+        if (coff_files->files)
+        {
+            coff_files->nfiles_alloc *= 2;
+            coff_files->files = HeapReAlloc(GetProcessHeap(), 0, coff_files->files,
+                                            coff_files->nfiles_alloc * sizeof(struct CoffFile));
+        }
+        else
+        {
+            coff_files->nfiles_alloc = 16;
+            coff_files->files = HeapAlloc(GetProcessHeap(), 0,
+                                          coff_files->nfiles_alloc * sizeof(struct CoffFile));
+        }
     }
     file = coff_files->files + coff_files->nfiles;
     file->startaddr = 0xffffffff;
@@ -132,7 +138,7 @@ static void coff_add_symbol(struct CoffFile* coff_file, struct symt* sym)
 {
     if (coff_file->neps + 1 >= coff_file->neps_alloc)
     {
-        coff_file->neps_alloc += 10;
+        coff_file->neps_alloc *= 2;
         coff_file->entries = (coff_file->entries) ?
             HeapReAlloc(GetProcessHeap(), 0, coff_file->entries,
                         coff_file->neps_alloc * sizeof(struct symt*)) :
