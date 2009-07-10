@@ -4492,7 +4492,7 @@ static void shader_arb_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *g
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(3,0);
             TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (NV_FRAGMENT_PROGRAM2)\n");
         }
-        else if(GL_LIMITS(vshader_constantsF) >= 32)
+        else if(GL_LIMITS(pshader_constantsF) >= 32)
         {
             /* Shader Model 2.0 requires at least 32 pixel shader constants */
             pCaps->PixelShaderVersion    = WINED3DPS_VERSION(2,0);
