@@ -155,7 +155,7 @@ void set_codepage(int cp)
 {
 	codepage = cp;
 	codepage_def = find_codepage(codepage);
-	if(!codepage_def)
+	if(!codepage_def && codepage != CP_UTF8)
 		xyyerror("Codepage %d not found; cannot process\n", codepage);
 }
 
@@ -200,8 +200,10 @@ try_again:
 			xyyerror(err_fatalread);
 		else if(!cptr)
 			return 0;
-		assert(codepage_def != NULL);
-		n = wine_cp_mbstowcs(codepage_def, 0, xlatebuffer, strlen(xlatebuffer)+1, inputbuffer, INPUTBUFFER_SIZE);
+                if (codepage_def)
+                    n = wine_cp_mbstowcs(codepage_def, 0, xlatebuffer, strlen(xlatebuffer)+1, inputbuffer, INPUTBUFFER_SIZE);
+                else
+                    n = wine_utf8_mbstowcs(0, xlatebuffer, strlen(xlatebuffer)+1, inputbuffer, INPUTBUFFER_SIZE);
 		if(n < 0)
 			internal_error(__FILE__, __LINE__, "Could not translate to unicode (%d)\n", n);
 		if(n <= 1)
