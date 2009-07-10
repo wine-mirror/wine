@@ -1142,6 +1142,39 @@ static void test_EnumContexts(ITfDocumentMgr *dm, ITfContext *search)
         ok(!found,"Found an ITfContext we should should not have\n");
 }
 
+static void test_EnumDocumentMgr(ITfThreadMgr *tm, ITfDocumentMgr *search, ITfDocumentMgr *absent)
+{
+    HRESULT hr;
+    IEnumTfDocumentMgrs* pEnum;
+    BOOL found = FALSE;
+    BOOL notfound = TRUE;
+
+    hr = ITfThreadMgr_EnumDocumentMgrs(tm,&pEnum);
+    ok(SUCCEEDED(hr),"EnumDocumentMgrs failed\n");
+    if (SUCCEEDED(hr))
+    {
+        ULONG fetched;
+        ITfDocumentMgr *dm;
+        while (IEnumTfDocumentMgrs_Next(pEnum, 1, &dm, &fetched) == S_OK)
+        {
+            if (!search)
+                found = TRUE;
+            else if (search == dm)
+                found = TRUE;
+            if (absent && dm == absent)
+                notfound = FALSE;
+            ITfDocumentMgr_Release(dm);
+        }
+        IEnumTfDocumentMgrs_Release(pEnum);
+    }
+    if (search)
+        ok(found,"Did not find proper ITfDocumentMgr\n");
+    else
+        ok(!found,"Found an ITfDocumentMgr we should should not have\n");
+    if (absent)
+        ok(notfound,"Found an ITfDocumentMgr we believe should be absent\n");
+}
+
 static inline int check_context_refcount(ITfContext *iface)
 {
     IUnknown_AddRef(iface);
@@ -1174,8 +1207,20 @@ static void test_startSession(void)
     hr = ITfThreadMgr_Deactivate(g_tm);
     ok(SUCCEEDED(hr),"Failed to Deactivate\n");
 
+    test_EnumDocumentMgr(g_tm,NULL,NULL);
+
     hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&g_dm);
     ok(SUCCEEDED(hr),"CreateDocumentMgr failed\n");
+
+    test_EnumDocumentMgr(g_tm,g_dm,NULL);
+
+    hr = ITfThreadMgr_CreateDocumentMgr(g_tm,&dmtest);
+    ok(SUCCEEDED(hr),"CreateDocumentMgr failed\n");
+
+    test_EnumDocumentMgr(g_tm,dmtest,NULL);
+
+    ITfDocumentMgr_Release(dmtest);
+    test_EnumDocumentMgr(g_tm,g_dm,dmtest);
 
     hr = ITfThreadMgr_GetFocus(g_tm,&dmtest);
     ok(SUCCEEDED(hr),"GetFocus Failed\n");
