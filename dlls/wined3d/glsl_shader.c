@@ -891,11 +891,12 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
             extra_constants_needed++;
         }
 
-        if(ps_args->srgb_correction) {
-            shader_addline(buffer, "const vec4 srgb_mul_low = vec4(%f, %f, %f, %f);\n",
-                            srgb_mul_low, srgb_mul_low, srgb_mul_low, srgb_mul_low);
-            shader_addline(buffer, "const vec4 srgb_comparison = vec4(%f, %f, %f, %f);\n",
-                            srgb_cmp, srgb_cmp, srgb_cmp, srgb_cmp);
+        if (ps_args->srgb_correction)
+        {
+            shader_addline(buffer, "const vec4 srgb_const0 = vec4(%.8e, %.8e, %.8e, %.8e);\n",
+                    srgb_pow, srgb_mul_high, srgb_sub_high, srgb_mul_low);
+            shader_addline(buffer, "const vec4 srgb_const1 = vec4(%.8e, 0.0, 0.0, 0.0);\n",
+                    srgb_cmp);
         }
         if(reg_maps->vpos || reg_maps->usesdsy) {
             if(This->baseShader.limits.constant_float + extra_constants_needed + 1 < GL_LIMITS(pshader_constantsF)) {
@@ -3717,14 +3718,13 @@ static GLuint shader_glsl_generate_pshader(IWineD3DPixelShaderImpl *This, struct
         shader_addline(buffer, "gl_FragData[0] = R0;\n");
     }
 
-    if(args->srgb_correction) {
-        shader_addline(buffer, "tmp0.xyz = pow(gl_FragData[0].xyz, vec3(%f, %f, %f)) * vec3(%f, %f, %f) - vec3(%f, %f, %f);\n",
-                        srgb_pow, srgb_pow, srgb_pow, srgb_mul_high, srgb_mul_high, srgb_mul_high,
-                        srgb_sub_high, srgb_sub_high, srgb_sub_high);
-        shader_addline(buffer, "tmp1.xyz = gl_FragData[0].xyz * srgb_mul_low.xyz;\n");
-        shader_addline(buffer, "gl_FragData[0].x = gl_FragData[0].x < srgb_comparison.x ? tmp1.x : tmp0.x;\n");
-        shader_addline(buffer, "gl_FragData[0].y = gl_FragData[0].y < srgb_comparison.y ? tmp1.y : tmp0.y;\n");
-        shader_addline(buffer, "gl_FragData[0].z = gl_FragData[0].z < srgb_comparison.z ? tmp1.z : tmp0.z;\n");
+    if (args->srgb_correction)
+    {
+        shader_addline(buffer, "tmp0.xyz = pow(gl_FragData[0].xyz, vec3(srgb_const0.x));\n");
+        shader_addline(buffer, "tmp0.xyz = tmp0.xyz * vec3(srgb_const0.y) - vec3(srgb_const0.z);\n");
+        shader_addline(buffer, "tmp1.xyz = gl_FragData[0].xyz * vec3(srgb_const0.w);\n");
+        shader_addline(buffer, "bvec3 srgb_compare = lessThan(gl_FragData[0].xyz, vec3(srgb_const1.x));\n");
+        shader_addline(buffer, "gl_FragData[0].xyz = mix(tmp0.xyz, tmp1.xyz, vec3(srgb_compare));\n");
         shader_addline(buffer, "gl_FragData[0] = clamp(gl_FragData[0], 0.0, 1.0);\n");
     }
     /* Pixel shader < 3.0 do not replace the fog stage.
