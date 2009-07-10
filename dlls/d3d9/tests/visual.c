@@ -3004,7 +3004,7 @@ static void g16r16_texture_test(IDirect3DDevice9 *device)
     IDirect3DTexture9 *texture = NULL;
     D3DLOCKED_RECT lr;
     DWORD *data;
-    DWORD color, red, green, blue;
+    DWORD color;
     float quad[] = {
        -1.0,      -1.0,       0.1,     0.0,    0.0,
        -1.0,       1.0,       0.1,     0.0,    1.0,
@@ -3058,11 +3058,8 @@ static void g16r16_texture_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
     color = getPixelColor(device, 240, 320);
-    red   = (color & 0x00ff0000) >> 16;
-    green = (color & 0x0000ff00) >>  8;
-    blue  = (color & 0x000000ff) >>  0;
-    ok(blue == 0xff && red >= 0xef && red <= 0xf1 && green >= 0x0e && green <= 0x10,
-       "D3DFMT_G16R16 with value 0x00ffff00 has color %08x, expected 0x00F00FFF\n", color);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xf0, 0x0f, 0xff), 1),
+       "D3DFMT_G16R16 with value 0x00ffff00 has color %08x, expected 0x00f00fff\n", color);
 
 out:
     if(texture) IDirect3DTexture9_Release(texture);
@@ -4163,7 +4160,7 @@ static void x8l8v8u8_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
     color = getPixelColor(device, 578, 430);
-    ok(color == 0x008262ca || color == 0x008363ca || color == 0x008362ca,
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x82, 0x62, 0xca), 1),
        "D3DFMT_X8L8V8U8 = 0x112131ca returns color %08x, expected 0x008262ca\n", color);
 
     hr = IDirect3DDevice9_SetPixelShader(device, shader2);
@@ -4435,19 +4432,19 @@ static void test_constant_clamp_vs(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned %08x\n", hr);
 
     color = getPixelColor(device, 160, 360);
-    ok(color == 0x00bfbf80 || color == 0x00bfbf7f || color == 0x00bfbf81,
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xbf, 0xbf, 0x80), 1),
        "quad 1 has color %08x, expected 0x00bfbf80\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color == 0x00bfbf80 || color == 0x00bfbf7f || color == 0x00bfbf81,
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xbf, 0xbf, 0x80), 1),
        "quad 2 has color %08x, expected 0x00bfbf80\n", color);
     if(shader_20) {
         color = getPixelColor(device, 160, 120);
-        ok(color == 0x00bfbf80 || color == 0x00bfbf7f || color == 0x00bfbf81,
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xbf, 0xbf, 0x80), 1),
            "quad 3 has color %08x, expected 0x00bfbf80\n", color);
     }
     if(shader_20_2) {
         color = getPixelColor(device, 480, 120);
-        ok(color == 0x00bfbf80 || color == 0x00bfbf7f || color == 0x00bfbf81,
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xbf, 0xbf, 0x80), 1),
            "quad 4 has color %08x, expected 0x00bfbf80\n", color);
     }
 
@@ -4578,17 +4575,17 @@ static void constant_clamp_ps_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %08x\n", hr);
 
     color = getPixelColor(device, 160, 360);
-    ok(color == 0x00808000 || color == 0x007f7f00 || color == 0x00818100,
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x00), 1),
        "quad 1 has color %08x, expected 0x00808000\n", color);
     color = getPixelColor(device, 480, 360);
-    ok(color == 0x00808000 || color == 0x007f7f00 || color == 0x00818100,
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x00), 1),
        "quad 2 has color %08x, expected 0x00808000\n", color);
     color = getPixelColor(device, 480, 120);
-    ok(color == 0x00808000 || color == 0x007f7f00 || color == 0x00818100,
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x00), 1),
        "quad 3 has color %08x, expected 0x00808000\n", color);
     if(shader_20) {
         color = getPixelColor(device, 160, 120);
-        ok(color == 0x00bfbf80 || color == 0x00bfbf7f || color == 0x00bfbf81,
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xbf, 0xbf, 0x80), 1),
            "quad 4 has color %08x, expected 0x00bfbf80\n", color);
     }
 
@@ -4680,7 +4677,8 @@ static void dp2add_ps_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
         color = getPixelColor(device, 360, 240);
-        ok(color == 0x007f7f7f || color == 0x00808080, "dp2add pixel has color %08x, expected ~0x007f7f7f\n", color);
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x7f, 0x7f, 0x7f), 1),
+                "dp2add pixel has color %08x, expected ~0x007f7f7f\n", color);
 
         IDirect3DPixelShader9_Release(shader_dp2add);
     } else {
@@ -4706,7 +4704,8 @@ static void dp2add_ps_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
         color = getPixelColor(device, 360, 240);
-        ok(color == 0x007f7f7f || color == 0x00808080, "dp2add pixel has color %08x, expected ~0x007f7f7f\n", color);
+        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x7f, 0x7f, 0x7f), 1),
+                "dp2add pixel has color %08x, expected ~0x007f7f7f\n", color);
 
         IDirect3DPixelShader9_Release(shader_dp2add_sat);
     } else {
