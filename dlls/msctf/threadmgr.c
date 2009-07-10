@@ -107,6 +107,16 @@ typedef struct tagACLMulti {
     struct list     ThreadMgrEventSink;
 } ThreadMgr;
 
+typedef struct tagEnumTfDocumentMgr {
+    const IEnumTfDocumentMgrsVtbl *Vtbl;
+    LONG refCount;
+
+    struct list *index;
+    struct list *head;
+} EnumTfDocumentMgr;
+
+static HRESULT EnumTfDocumentMgr_Constructor(struct list* head, IEnumTfDocumentMgrs **ppOut);
+
 static inline ThreadMgr *impl_from_ITfSourceVtbl(ITfSource *iface)
 {
     return (ThreadMgr *)((char *)iface - FIELD_OFFSET(ThreadMgr,SourceVtbl));
@@ -343,8 +353,12 @@ static HRESULT WINAPI ThreadMgr_EnumDocumentMgrs( ITfThreadMgr* iface, IEnumTfDo
 **ppEnum)
 {
     ThreadMgr *This = (ThreadMgr *)iface;
-    FIXME("STUB:(%p)\n",This);
-    return E_NOTIMPL;
+    TRACE("(%p) %p\n",This,ppEnum);
+
+    if (!ppEnum)
+        return E_INVALIDARG;
+
+    return EnumTfDocumentMgr_Constructor(&This->CreatedDocumentMgrs, ppEnum);
 }
 
 static HRESULT WINAPI ThreadMgr_GetFocus( ITfThreadMgr* iface, ITfDocumentMgr
@@ -1126,6 +1140,150 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
 
     TRACE("returning %p\n", This);
     *ppOut = (IUnknown *)This;
+    return S_OK;
+}
+
+/**************************************************
+ * IEnumTfDocumentMgrs implementaion
+ **************************************************/
+static void EnumTfDocumentMgr_Destructor(EnumTfDocumentMgr *This)
+{
+    TRACE("destroying %p\n", This);
+    HeapFree(GetProcessHeap(),0,This);
+}
+
+static HRESULT WINAPI EnumTfDocumentMgr_QueryInterface(IEnumTfDocumentMgrs *iface, REFIID iid, LPVOID *ppvOut)
+{
+    EnumTfDocumentMgr *This = (EnumTfDocumentMgr *)iface;
+    *ppvOut = NULL;
+
+    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IEnumTfDocumentMgrs))
+    {
+        *ppvOut = This;
+    }
+
+    if (*ppvOut)
+    {
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("unsupported interface: %s\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI EnumTfDocumentMgr_AddRef(IEnumTfDocumentMgrs *iface)
+{
+    EnumTfDocumentMgr *This = (EnumTfDocumentMgr*)iface;
+    return InterlockedIncrement(&This->refCount);
+}
+
+static ULONG WINAPI EnumTfDocumentMgr_Release(IEnumTfDocumentMgrs *iface)
+{
+    EnumTfDocumentMgr *This = (EnumTfDocumentMgr *)iface;
+    ULONG ret;
+
+    ret = InterlockedDecrement(&This->refCount);
+    if (ret == 0)
+        EnumTfDocumentMgr_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI EnumTfDocumentMgr_Next(IEnumTfDocumentMgrs *iface,
+    ULONG ulCount, ITfDocumentMgr **rgDocumentMgr, ULONG *pcFetched)
+{
+    EnumTfDocumentMgr *This = (EnumTfDocumentMgr *)iface;
+    ULONG fetched = 0;
+
+    TRACE("(%p)\n",This);
+
+    if (rgDocumentMgr == NULL) return E_POINTER;
+
+    while (fetched < ulCount)
+    {
+        DocumentMgrEntry *mgrentry;
+        if (This->index == NULL)
+            break;
+
+        mgrentry = LIST_ENTRY(This->index,DocumentMgrEntry,entry);
+        if (mgrentry == NULL)
+            break;
+
+        *rgDocumentMgr = mgrentry->docmgr;
+        ITfDocumentMgr_AddRef(*rgDocumentMgr);
+
+        This->index = list_next(This->head, This->index);
+        ++fetched;
+        ++rgDocumentMgr;
+    }
+
+    if (pcFetched) *pcFetched = fetched;
+    return fetched == ulCount ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI EnumTfDocumentMgr_Skip( IEnumTfDocumentMgrs* iface, ULONG celt)
+{
+    INT i;
+    EnumTfDocumentMgr *This = (EnumTfDocumentMgr *)iface;
+    TRACE("(%p)\n",This);
+    for(i = 0; i < celt && This->index != NULL; i++)
+        This->index = list_next(This->head, This->index);
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumTfDocumentMgr_Reset( IEnumTfDocumentMgrs* iface)
+{
+    EnumTfDocumentMgr *This = (EnumTfDocumentMgr *)iface;
+    TRACE("(%p)\n",This);
+    This->index = list_head(This->head);
+    return S_OK;
+}
+
+static HRESULT WINAPI EnumTfDocumentMgr_Clone( IEnumTfDocumentMgrs *iface,
+    IEnumTfDocumentMgrs **ppenum)
+{
+    EnumTfDocumentMgr *This = (EnumTfDocumentMgr *)iface;
+    HRESULT res;
+
+    TRACE("(%p)\n",This);
+
+    if (ppenum == NULL) return E_POINTER;
+
+    res = EnumTfDocumentMgr_Constructor(This->head, ppenum);
+    if (SUCCEEDED(res))
+    {
+        EnumTfDocumentMgr *new_This = (EnumTfDocumentMgr *)*ppenum;
+        new_This->index = This->index;
+    }
+    return res;
+}
+
+static const IEnumTfDocumentMgrsVtbl IEnumTfDocumentMgrs_Vtbl ={
+    EnumTfDocumentMgr_QueryInterface,
+    EnumTfDocumentMgr_AddRef,
+    EnumTfDocumentMgr_Release,
+
+    EnumTfDocumentMgr_Clone,
+    EnumTfDocumentMgr_Next,
+    EnumTfDocumentMgr_Reset,
+    EnumTfDocumentMgr_Skip
+};
+
+static HRESULT EnumTfDocumentMgr_Constructor(struct list* head, IEnumTfDocumentMgrs **ppOut)
+{
+    EnumTfDocumentMgr *This;
+
+    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(EnumTfDocumentMgr));
+    if (This == NULL)
+        return E_OUTOFMEMORY;
+
+    This->Vtbl= &IEnumTfDocumentMgrs_Vtbl;
+    This->refCount = 1;
+    This->head = head;
+    This->index = list_head(This->head);
+
+    TRACE("returning %p\n", This);
+    *ppOut = (IEnumTfDocumentMgrs*)This;
     return S_OK;
 }
 
