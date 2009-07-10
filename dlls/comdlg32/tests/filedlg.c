@@ -273,8 +273,8 @@ static void test_create_view_template(void)
 /* test cases for resizing of the file dialog */
 struct {
     DWORD flags;
-    int resize_init;       /* change in CDN_INITDONE handler */
-    int resize_folderchg;  /* change in CDN_FOLDERCHANGE handler */
+    int resize_folderchange;       /* change in CDN_FOLDERCHANGE handler */
+    int resize_selchange;  /* change in CDN_SELCHANGE handler */
     int resize_timer1;     /* change in first WM_TIMER handler */
     int resize_check;      /* expected change (in second  WM_TIMER handler) */
     BOOL todo;             /* mark that test todo_wine */
@@ -285,10 +285,11 @@ struct {
     { OFN_ENABLESIZING ,  0,  0,  0,  0,FALSE,FALSE},
     { OFN_ENABLESIZING ,  0,  0,-10,  0,FALSE,FALSE},
     { OFN_ENABLESIZING ,  0,  0, 10, 10,FALSE, TRUE},
-    { OFN_ENABLESIZING ,  0,-10,  0, 10, TRUE,FALSE},   /* 5 */
+    { OFN_ENABLESIZING ,  0,-10,  0,  0,FALSE,FALSE},   /* 5 */
     { OFN_ENABLESIZING ,  0, 10,  0, 10,FALSE,FALSE},
-    { OFN_ENABLESIZING ,-10,  0,  0, 10, TRUE,FALSE},
+    { OFN_ENABLESIZING ,-10,  0,  0, 10,FALSE,FALSE},
     { OFN_ENABLESIZING , 10,  0,  0, 10,FALSE,FALSE},
+    { OFN_ENABLESIZING ,  0,  0, 10, 20,FALSE,FALSE},
     /* mark the end */
     { 0xffffffff }
 };
@@ -331,14 +332,14 @@ static LONG_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
         }
         case WM_NOTIFY:
         {
-            if(( (LPNMHDR)lParam)->code == CDN_INITDONE){
+            if(( (LPNMHDR)lParam)->code == CDN_FOLDERCHANGE){
                 GetWindowRect( parent, &initrc);
-                if( (resize  = resize_testcases[index].resize_init)){
+                if( (resize  = resize_testcases[index].resize_folderchange)){
                     MoveWindow( parent, initrc.left,initrc.top, initrc.right - initrc.left + resize,
                             initrc.bottom - initrc.top + resize, TRUE);
                 }
-            } else if(( (LPNMHDR)lParam)->code == CDN_FOLDERCHANGE){
-                if( (resize  = resize_testcases[index].resize_folderchg)){
+            } else if(( (LPNMHDR)lParam)->code == CDN_SELCHANGE){
+                if( (resize  = resize_testcases[index].resize_selchange)){
                     GetWindowRect( parent, &rc);
                     MoveWindow( parent, rc.left,rc.top, rc.right - rc.left + resize,
                             rc.bottom - rc.top + resize, TRUE);
@@ -619,7 +620,7 @@ static void test_ok(void)
     int i;
     DWORD ret;
 
-    if (!GetTempFileNameA(".", "tmp", 0, tmpfilename)) {
+    if (!GetTempFileNameA(".", "txt", 0, tmpfilename)) {
         skip("Failed to create a temporary file name\n");
         return;
     }

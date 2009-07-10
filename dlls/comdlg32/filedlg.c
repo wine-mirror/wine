@@ -172,6 +172,7 @@ typedef struct tagFD32_PRIVATE
 
 const char FileOpenDlgInfosStr[] = "FileOpenDlgInfos"; /* windows property description string */
 static const char LookInInfosStr[] = "LookInInfos"; /* LOOKIN combo box property */
+static SIZE MemDialogSize = { 0, 0}; /* keep size of the (resizable) dialog */
 
 /***********************************************************************
  * Prototypes
@@ -1197,13 +1198,14 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
          if( fodInfos->DlgInfos.hwndCustomDlg)
              ShowWindow( fodInfos->DlgInfos.hwndCustomDlg, SW_SHOW);
 
-         if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
+         if(fodInfos->ofnInfos->Flags & OFN_EXPLORER) {
              SendCustomDlgNotificationMessage(hwnd,CDN_INITDONE);
+             SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
+         }
 
          if (fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)
          {
              GetWindowRect( hwnd, &rc);
-             /* FIXME: should remember sizes of last invocation */
              fodInfos->sizedlg.cx = rc.right - rc.left;
              fodInfos->sizedlg.cy = rc.bottom - rc.top;
              fodInfos->initial_size.x = fodInfos->sizedlg.cx;
@@ -1212,13 +1214,16 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
              SetWindowPos( fodInfos->DlgInfos.hwndGrip, NULL,
                      rc.right - gripx, rc.bottom - gripy,
                      0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
+             /* resize the dialog to the previous invocation */
+             if( MemDialogSize.cx && MemDialogSize.cy)
+                 SetWindowPos( hwnd, NULL,
+                         0, 0, MemDialogSize.cx, MemDialogSize.cy,
+                         SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
          }
 
          if(fodInfos->ofnInfos->Flags & OFN_EXPLORER)
-         {
-             SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
              SendCustomDlgNotificationMessage(hwnd,CDN_SELCHANGE);
-         }
+
          return 0;
        }
     case WM_SIZE:
@@ -1242,9 +1247,13 @@ INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM l
       return FILEDLG95_OnWMGetIShellBrowser(hwnd);
 
     case WM_DESTROY:
-      RemovePropA(hwnd, FileOpenDlgInfosStr);
-      return FALSE;
-
+      {
+          FileOpenDlgInfos * fodInfos = GetPropA(hwnd,FileOpenDlgInfosStr);
+          if (fodInfos && fodInfos->ofnInfos->Flags & OFN_ENABLESIZING)
+              MemDialogSize = fodInfos->sizedlg;
+          RemovePropA(hwnd, FileOpenDlgInfosStr);
+          return FALSE;
+      }
     case WM_NOTIFY:
     {
 	LPNMHDR lpnmh = (LPNMHDR)lParam;
