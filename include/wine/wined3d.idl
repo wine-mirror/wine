@@ -1886,13 +1886,6 @@ typedef struct _WINED3DBUFFER_DESC
     UINT Size;
 } WINED3DBUFFER_DESC;
 
-typedef struct glDescriptor
-{
-    UINT textureName, srgbTextureName;
-    int level;
-    int /*GLenum*/ target;
-} glDescriptor;
-
 typedef struct WineDirect3DStridedData
 {
     WINED3DFORMAT format;   /* Format of the data */

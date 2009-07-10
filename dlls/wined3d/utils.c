@@ -2029,7 +2029,8 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
     /* No oversized texture? This is easy */
     if(!(This->Flags & SFLAG_OVERSIZE)) {
         /* Which rect from the texture do I need? */
-        if(This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB) {
+        if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
+        {
             glTexCoord[0] = (float) Rect->left;
             glTexCoord[2] = (float) Rect->top;
             glTexCoord[1] = (float) Rect->right;

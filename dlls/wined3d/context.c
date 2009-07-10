@@ -130,7 +130,7 @@ static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD
         GLenum target, bind_target;
         GLint old_binding;
 
-        target = surface_impl->glDescription.target;
+        target = surface_impl->texture_target;
         if (target == GL_TEXTURE_2D)
         {
             bind_target = GL_TEXTURE_2D;
@@ -145,7 +145,7 @@ static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD
 
         surface_internal_preload(surface, SRGB_RGB);
 
-        glBindTexture(bind_target, surface_impl->glDescription.textureName);
+        glBindTexture(bind_target, surface_impl->texture_name);
         if (update_minfilter) glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         if (update_magfilter) glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glBindTexture(bind_target, old_binding);
@@ -188,16 +188,16 @@ void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_targe
             if (format_flags & WINED3DFMT_FLAG_DEPTH)
             {
                 GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_DEPTH_ATTACHMENT_EXT,
-                        depth_stencil_impl->glDescription.target, depth_stencil_impl->glDescription.textureName,
-                        depth_stencil_impl->glDescription.level));
+                        depth_stencil_impl->texture_target, depth_stencil_impl->texture_name,
+                        depth_stencil_impl->texture_level));
                 checkGLcall("glFramebufferTexture2DEXT()");
             }
 
             if (format_flags & WINED3DFMT_FLAG_STENCIL)
             {
                 GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_STENCIL_ATTACHMENT_EXT,
-                        depth_stencil_impl->glDescription.target, depth_stencil_impl->glDescription.textureName,
-                        depth_stencil_impl->glDescription.level));
+                        depth_stencil_impl->texture_target, depth_stencil_impl->texture_name,
+                        depth_stencil_impl->texture_level));
                 checkGLcall("glFramebufferTexture2DEXT()");
             }
         }
@@ -235,8 +235,8 @@ void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWO
     {
         context_apply_attachment_filter_states((IWineD3DDevice *)This, surface, TRUE);
 
-        GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, surface_impl->glDescription.target,
-                surface_impl->glDescription.textureName, surface_impl->glDescription.level));
+        GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, surface_impl->texture_target,
+                surface_impl->texture_name, surface_impl->texture_level));
         checkGLcall("glFramebufferTexture2DEXT()");
     } else {
         GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, GL_TEXTURE_2D, 0, 0));
@@ -1636,7 +1636,8 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
         /* Do that before switching the context:
          * Read the back buffer of the old drawable into the destination texture
          */
-        if(((IWineD3DSurfaceImpl *)This->lastActiveRenderTarget)->glDescription.srgbTextureName) {
+        if (((IWineD3DSurfaceImpl *)This->lastActiveRenderTarget)->texture_name_srgb)
+        {
             surface_internal_preload(This->lastActiveRenderTarget, SRGB_BOTH);
         } else {
             surface_internal_preload(This->lastActiveRenderTarget, SRGB_RGB);

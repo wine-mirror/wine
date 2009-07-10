@@ -1924,13 +1924,15 @@ struct IWineD3DSurfaceImpl
 
     /* PBO */
     GLuint                    pbo;
+    GLuint texture_name;
+    GLuint texture_name_srgb;
+    GLint texture_level;
+    GLenum texture_target;
 
     RECT                      lockedRect;
     RECT                      dirtyRect;
     int                       lockCount;
 #define MAXLOCKCOUNT          50 /* After this amount of locks do not free the sysmem copy */
-
-    glDescriptor              glDescription;
 
     /* For GetDC */
     wineD3DSurface_DIB        dib;

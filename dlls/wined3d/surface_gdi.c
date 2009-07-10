@@ -183,7 +183,8 @@ IWineGDISurfaceImpl_UnlockRect(IWineD3DSurface *iface)
             char buffer[4096];
             ++gen;
             if ((gen % 10) == 0) {
-                snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm", This, This->glDescription.target, This->glDescription.level, gen);
+                snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm",
+                        This, This->texture_target, This->texture_level, gen);
                 IWineD3DSurfaceImpl_SaveSnapshot(iface, buffer);
             }
             /*

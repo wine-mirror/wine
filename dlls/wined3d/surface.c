@@ -54,11 +54,11 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
 
     ENTER_GL();
 
-    if (This->glDescription.textureName)
+    if (This->texture_name)
     {
         /* Release the OpenGL texture. */
-        TRACE("Deleting texture %u.\n", This->glDescription.textureName);
-        glDeleteTextures(1, &This->glDescription.textureName);
+        TRACE("Deleting texture %u.\n", This->texture_name);
+        glDeleteTextures(1, &This->texture_name);
     }
 
     if (This->Flags & SFLAG_PBO)
@@ -173,7 +173,7 @@ HRESULT surface_init(IWineD3DSurfaceImpl *surface, WINED3DSURFTYPE surface_type,
     surface->currentDesc.Height = height;
     surface->currentDesc.MultiSampleType = multisample_type;
     surface->currentDesc.MultiSampleQuality = multisample_quality;
-    surface->glDescription.level = level;
+    surface->texture_level = level;
     list_init(&surface->overlays);
 
     /* Flags */
@@ -254,12 +254,12 @@ void surface_set_texture_name(IWineD3DSurface *iface, GLuint new_name, BOOL srgb
 
     if(srgb)
     {
-        name = &This->glDescription.srgbTextureName;
+        name = &This->texture_name_srgb;
         flag = SFLAG_INSRGBTEX;
     }
     else
     {
-        name = &This->glDescription.textureName;
+        name = &This->texture_name;
         flag = SFLAG_INTEXTURE;
     }
 
@@ -284,18 +284,18 @@ void surface_set_texture_target(IWineD3DSurface *iface, GLenum target)
 
     TRACE("(%p) : setting target %#x\n", This, target);
 
-    if (This->glDescription.target != target)
+    if (This->texture_target != target)
     {
         if (target == GL_TEXTURE_RECTANGLE_ARB)
         {
             This->Flags &= ~SFLAG_NORMCOORD;
         }
-        else if (This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB)
+        else if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
         {
             This->Flags |= SFLAG_NORMCOORD;
         }
     }
-    This->glDescription.target = target;
+    This->texture_target = target;
     surface_force_reload(iface);
 }
 
@@ -360,22 +360,22 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
     if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p.\n",
-                This, This->glDescription.level, format_desc->glFormat, format_desc->glType,
+                This, This->texture_level, format_desc->glFormat, format_desc->glType,
                 This->resource.allocatedMemory);
 
         if (This->Flags & SFLAG_PBO)
         {
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
             checkGLcall("glBindBufferARB");
-            GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target, This->glDescription.level, NULL));
+            GL_EXTCALL(glGetCompressedTexImageARB(This->texture_target, This->texture_level, NULL));
             checkGLcall("glGetCompressedTexImageARB()");
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
             checkGLcall("glBindBufferARB");
         }
         else
         {
-            GL_EXTCALL(glGetCompressedTexImageARB(This->glDescription.target,
-                    This->glDescription.level, This->resource.allocatedMemory));
+            GL_EXTCALL(glGetCompressedTexImageARB(This->texture_target,
+                    This->texture_level, This->resource.allocatedMemory));
             checkGLcall("glGetCompressedTexImageARB()");
         }
 
@@ -404,22 +404,20 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
             mem = This->resource.allocatedMemory;
         }
 
-        TRACE("(%p) : Calling glGetTexImage level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
-                format, type, mem);
+        TRACE("(%p) : Calling glGetTexImage level %d, format %#x, type %#x, data %p\n",
+                This, This->texture_level, format, type, mem);
 
         if(This->Flags & SFLAG_PBO) {
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
             checkGLcall("glBindBufferARB");
 
-            glGetTexImage(This->glDescription.target, This->glDescription.level, format,
-                          type, NULL);
+            glGetTexImage(This->texture_target, This->texture_level, format, type, NULL);
             checkGLcall("glGetTexImage()");
 
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
             checkGLcall("glBindBufferARB");
         } else {
-            glGetTexImage(This->glDescription.target, This->glDescription.level, format,
-                          type, mem);
+            glGetTexImage(This->texture_target, This->texture_level, format, type, mem);
             checkGLcall("glGetTexImage()");
         }
         LEAVE_GL();
@@ -523,7 +521,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
 
             TRACE("(%p) pbo: %#x, data: %p.\n", This, This->pbo, data);
 
-            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level,
+            GL_EXTCALL(glCompressedTexImage2DARB(This->texture_target, This->texture_level,
                     internal, width, height, 0 /* border */, This->resource.size, NULL));
             checkGLcall("glCompressedTexImage2DARB");
 
@@ -532,7 +530,7 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
         }
         else
         {
-            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level,
+            GL_EXTCALL(glCompressedTexImage2DARB(This->texture_target, This->texture_level,
                     internal, width, height, 0 /* border */, This->resource.size, data));
             checkGLcall("glCompressedTexSubImage2D");
         }
@@ -549,14 +547,14 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsi
             checkGLcall("glBindBufferARB");
             TRACE("(%p) pbo: %#x, data: %p\n", This, This->pbo, data);
 
-            glTexSubImage2D(This->glDescription.target, This->glDescription.level, 0, 0, width, height, format, type, NULL);
+            glTexSubImage2D(This->texture_target, This->texture_level, 0, 0, width, height, format, type, NULL);
             checkGLcall("glTexSubImage2D");
 
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
             checkGLcall("glBindBufferARB");
         }
         else {
-            glTexSubImage2D(This->glDescription.target, This->glDescription.level, 0, 0, width, height, format, type, data);
+            glTexSubImage2D(This->texture_target, This->texture_level, 0, 0, width, height, format, type, data);
             checkGLcall("glTexSubImage2D");
         }
 
@@ -575,7 +573,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
     if (format_desc->heightscale != 1.0f && format_desc->heightscale != 0.0f) height *= format_desc->heightscale;
 
     TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n",
-            This, This->glDescription.target, This->glDescription.level, debug_d3dformat(format_desc->format),
+            This, This->texture_target, This->texture_level, debug_d3dformat(format_desc->format),
             internal, width, height, format, type);
 
     if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
@@ -591,8 +589,8 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
             This->Flags |= SFLAG_CLIENT;
             mem = (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
             ENTER_GL();
-            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, internal,
-                       width, height, 0 /* border */, This->resource.size, mem));
+            GL_EXTCALL(glCompressedTexImage2DARB(This->texture_target, This->texture_level, internal,
+                    width, height, 0 /* border */, This->resource.size, mem));
             LEAVE_GL();
         }
 
@@ -623,7 +621,7 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
             mem = (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
         }
     }
-    glTexImage2D(This->glDescription.target, This->glDescription.level, internal, width, height, 0, format, type, mem);
+    glTexImage2D(This->texture_target, This->texture_level, internal, width, height, 0, format, type, mem);
     checkGLcall("glTexImage2D");
 
     if(enable_client_storage) {
@@ -808,7 +806,7 @@ void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb)
             GLclampf tmp;
             tmp = 0.9f;
             ENTER_GL();
-            glPrioritizeTextures(1, &This->glDescription.textureName, &tmp);
+            glPrioritizeTextures(1, &This->texture_name, &tmp);
             LEAVE_GL();
         }
     }
@@ -899,10 +897,10 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **) &texture);
     if(!texture) {
         ENTER_GL();
-        glDeleteTextures(1, &This->glDescription.textureName);
-        This->glDescription.textureName = 0;
-        glDeleteTextures(1, &This->glDescription.srgbTextureName);
-        This->glDescription.srgbTextureName = 0;
+        glDeleteTextures(1, &This->texture_name);
+        This->texture_name = 0;
+        glDeleteTextures(1, &This->texture_name_srgb);
+        This->texture_name_srgb = 0;
         LEAVE_GL();
     } else {
         IWineD3DBaseTexture_Release(texture);
@@ -1217,18 +1215,15 @@ static void read_from_framebuffer_texture(IWineD3DSurfaceImpl *This, BOOL srgb)
      * this code from getting called in such cases or perhaps
      * we can use FBOs */
 
-    glCopyTexSubImage2D(This->glDescription.target,
-                        This->glDescription.level,
-                        0, 0, 0, 0,
-                        This->currentDesc.Width,
-                        This->currentDesc.Height);
+    glCopyTexSubImage2D(This->texture_target, This->texture_level,
+            0, 0, 0, 0, This->currentDesc.Width, This->currentDesc.Height);
     checkGLcall("glCopyTexSubImage2D");
 
     glReadBuffer(prevRead);
     checkGLcall("glReadBuffer");
 
     LEAVE_GL();
-    TRACE("Updated target %d\n", This->glDescription.target);
+    TRACE("Updated target %d\n", This->texture_target);
 }
 
 static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
@@ -2483,7 +2478,7 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
     {
         TRACE("Using GL_EXT_PALETTED_TEXTURE for 8-bit paletted texture support\n");
         ENTER_GL();
-        GL_EXTCALL(glColorTableEXT(This->glDescription.target,GL_RGBA,256,GL_RGBA,GL_UNSIGNED_BYTE, table));
+        GL_EXTCALL(glColorTableEXT(This->texture_target, GL_RGBA, 256, GL_RGBA, GL_UNSIGNED_BYTE, table));
         LEAVE_GL();
     }
     else
@@ -2532,7 +2527,7 @@ static void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES conve
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0));
 
         /* Rebind the texture because it isn't bound anymore */
-        glBindTexture(This->glDescription.target, This->glDescription.textureName);
+        glBindTexture(This->texture_target, This->texture_name);
 
         LEAVE_GL();
     }
@@ -2608,7 +2603,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, BO
         char buffer[4096];
         ++gen;
         if ((gen % 10) == 0) {
-            snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm", This, This->glDescription.target, This->glDescription.level, gen);
+            snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm",
+                    This, This->texture_target, This->texture_level, gen);
             IWineD3DSurfaceImpl_SaveSnapshot(iface, buffer);
         }
         /*
@@ -2647,30 +2643,31 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL 
         GLuint *name;
         TRACE("(%p) : Binding surface\n", This);
 
-        name = srgb ? &This->glDescription.srgbTextureName : &This->glDescription.textureName;
+        name = srgb ? &This->texture_name_srgb : &This->texture_name;
         if(!device->isInDraw) {
             ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         }
 
         ENTER_GL();
 
-        if (!This->glDescription.level) {
+        if (!This->texture_level)
+        {
             if (!*name) {
                 glGenTextures(1, name);
                 checkGLcall("glGenTextures");
                 TRACE("Surface %p given name %d\n", This, *name);
 
-                glBindTexture(This->glDescription.target, *name);
+                glBindTexture(This->texture_target, *name);
                 checkGLcall("glBindTexture");
-                glTexParameteri(This->glDescription.target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(This->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
-                glTexParameteri(This->glDescription.target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                glTexParameteri(This->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                 checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)");
-                glTexParameteri(This->glDescription.target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+                glTexParameteri(This->texture_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
                 checkGLcall("glTexParameteri(dimension, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)");
-                glTexParameteri(This->glDescription.target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(This->texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
                 checkGLcall("glTexParameteri(dimension, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
-                glTexParameteri(This->glDescription.target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(This->texture_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
                 checkGLcall("glTexParameteri(dimension, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
             }
             /* This is where we should be reducing the amount of GLMemoryUsed */
@@ -2679,7 +2676,7 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL 
             ERR("Mipmap surface has a glTexture bound to it!\n");
         }
 
-        glBindTexture(This->glDescription.target, *name);
+        glBindTexture(This->texture_target, *name);
         checkGLcall("glBindTexture");
 
         LEAVE_GL();
@@ -2762,12 +2759,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, c
     }
     allocatedMemory = HeapAlloc(GetProcessHeap(), 0, width  * height * 4);
     ENTER_GL();
-    FIXME("Saving texture level %d width %d height %d\n", This->glDescription.level, width, height);
-    glGetTexImage(GL_TEXTURE_2D,
-                This->glDescription.level,
-                GL_RGBA,
-                GL_UNSIGNED_INT_8_8_8_8_REV,
-                allocatedMemory);
+    FIXME("Saving texture level %d width %d height %d\n", This->texture_level, width, height);
+    glGetTexImage(GL_TEXTURE_2D, This->texture_level, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, allocatedMemory);
     checkGLcall("glTexImage2D");
     if (tmpTexture) {
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -2969,9 +2962,15 @@ void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back) {
 
     /* Flip the opengl texture */
     {
-        glDescriptor tmp_desc = back->glDescription;
-        back->glDescription = front->glDescription;
-        front->glDescription = tmp_desc;
+        GLuint tmp;
+
+        tmp = back->texture_name;
+        back->texture_name = front->texture_name;
+        front->texture_name = tmp;
+
+        tmp = back->texture_name_srgb;
+        back->texture_name_srgb = front->texture_name_srgb;
+        front->texture_name_srgb = tmp;
     }
 
     {
@@ -3058,7 +3057,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     ENTER_GL();
 
     /* Bind the target texture */
-    glBindTexture(This->glDescription.target, This->glDescription.textureName);
+    glBindTexture(This->texture_target, This->texture_name);
     checkGLcall("glBindTexture");
     if(!swapchain) {
         TRACE("Reading from an offscreen target\n");
@@ -3093,11 +3092,10 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     {
         /* Upside down copy without stretching is nice, one glCopyTexSubImage call will do */
 
-        glCopyTexSubImage2D(This->glDescription.target,
-                            This->glDescription.level,
-                            drect->x1, drect->y1, /* xoffset, yoffset */
-                            srect->x1, Src->currentDesc.Height - srect->y2,
-                            drect->x2 - drect->x1, drect->y2 - drect->y1);
+        glCopyTexSubImage2D(This->texture_target, This->texture_level,
+                drect->x1 /*xoffset */, drect->y1 /* y offset */,
+                srect->x1, Src->currentDesc.Height - srect->y2,
+                drect->x2 - drect->x1, drect->y2 - drect->y1);
     } else {
         UINT yoffset = Src->currentDesc.Height - srect->y1 + drect->y1 - 1;
         /* I have to process this row by row to swap the image,
@@ -3115,18 +3113,14 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
                 UINT col;
 
                 for(col = drect->x1; col < drect->x2; col++) {
-                    glCopyTexSubImage2D(This->glDescription.target,
-                                        This->glDescription.level,
-                                        drect->x1 + col, row, /* xoffset, yoffset */
-                                        srect->x1 + col * xrel, yoffset - (int) (row * yrel),
-                                        1, 1);
+                    glCopyTexSubImage2D(This->texture_target, This->texture_level,
+                            drect->x1 + col /* x offset */, row /* y offset */,
+                            srect->x1 + col * xrel, yoffset - (int) (row * yrel), 1, 1);
                 }
             } else {
-                glCopyTexSubImage2D(This->glDescription.target,
-                                    This->glDescription.level,
-                                    drect->x1, row, /* xoffset, yoffset */
-                                    srect->x1, yoffset - (int) (row * yrel),
-                                    drect->x2-drect->x1, 1);
+                glCopyTexSubImage2D(This->texture_target, This->texture_level,
+                        drect->x1 /* x offset */, row /* y offset */,
+                        srect->x1, yoffset - (int) (row * yrel), drect->x2-drect->x1, 1);
             }
         }
     }
@@ -3156,7 +3150,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     surface_internal_preload((IWineD3DSurface *) This, SRGB_RGB);
 
     noBackBufferBackup = !swapchain && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
-    if(!noBackBufferBackup && Src->glDescription.textureName == 0) {
+    if (!noBackBufferBackup && !Src->texture_name)
+    {
         /* Get it a description */
         surface_internal_preload(SrcSurface, SRGB_RGB);
     }
@@ -3177,15 +3172,15 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
         glGenTextures(1, &backup);
         checkGLcall("glGenTextures");
         glBindTexture(GL_TEXTURE_2D, backup);
-        checkGLcall("glBindTexture(Src->glDescription.target, Src->glDescription.textureName)");
+        checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
         texture_target = GL_TEXTURE_2D;
     } else {
         /* Backup the back buffer and copy the source buffer into a texture to draw an upside down stretched quad. If
          * we are reading from the back buffer, the backup can be used as source texture
          */
-        texture_target = Src->glDescription.target;
-        glBindTexture(texture_target, Src->glDescription.textureName);
-        checkGLcall("glBindTexture(texture_target, Src->glDescription.textureName)");
+        texture_target = Src->texture_target;
+        glBindTexture(texture_target, Src->texture_name);
+        checkGLcall("glBindTexture(texture_target, Src->texture_name)");
         glEnable(texture_target);
         checkGLcall("glEnable(texture_target)");
 
@@ -3219,7 +3214,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     checkGLcall("glTexParameteri");
 
     if(!swapchain || (IWineD3DSurface *) Src == swapchain->backBuffer[0]) {
-        src = backup ? backup : Src->glDescription.textureName;
+        src = backup ? backup : Src->texture_name;
     } else {
         glReadBuffer(GL_FRONT);
         checkGLcall("glReadBuffer(GL_FRONT)");
@@ -3301,14 +3296,15 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     glEnd();
     checkGLcall("glEnd and previous");
 
-    if(texture_target != This->glDescription.target) {
+    if (texture_target != This->texture_target)
+    {
         glDisable(texture_target);
-        glEnable(This->glDescription.target);
-        texture_target = This->glDescription.target;
+        glEnable(This->texture_target);
+        texture_target = This->texture_target;
     }
 
     /* Now read the stretched and upside down image into the destination texture */
-    glBindTexture(texture_target, This->glDescription.textureName);
+    glBindTexture(texture_target, This->texture_name);
     checkGLcall("glBindTexture");
     glCopyTexSubImage2D(texture_target,
                         0,
@@ -3328,13 +3324,14 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
             glBindTexture(GL_TEXTURE_2D, backup);
             checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
         } else {
-            if(texture_target != Src->glDescription.target) {
+            if (texture_target != Src->texture_target)
+            {
                 glDisable(texture_target);
-                glEnable(Src->glDescription.target);
-                texture_target = Src->glDescription.target;
+                glEnable(Src->texture_target);
+                texture_target = Src->texture_target;
             }
-            glBindTexture(Src->glDescription.target, Src->glDescription.textureName);
-            checkGLcall("glBindTexture(Src->glDescription.target, Src->glDescription.textureName)");
+            glBindTexture(Src->texture_target, Src->texture_name);
+            checkGLcall("glBindTexture(Src->texture_target, Src->texture_name)");
         }
 
         glBegin(GL_QUADS);
@@ -3362,7 +3359,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     checkGLcall("glDisable(texture_target)");
 
     /* Cleanup */
-    if(src != Src->glDescription.textureName && src != backup) {
+    if (src != Src->texture_name && src != backup)
+    {
         glDeleteTextures(1, &src);
         checkGLcall("glDeleteTextures(1, &src)");
     }
@@ -3762,23 +3760,21 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         }
 
         myDevice->blitter->set_shader((IWineD3DDevice *) myDevice, Src->resource.format_desc,
-                Src->glDescription.target, Src->pow2Width, Src->pow2Height);
+                Src->texture_target, Src->pow2Width, Src->pow2Height);
 
         ENTER_GL();
 
         /* Bind the texture */
-        glBindTexture(Src->glDescription.target, Src->glDescription.textureName);
+        glBindTexture(Src->texture_target, Src->texture_name);
         checkGLcall("glBindTexture");
 
         /* Filtering for StretchRect */
-        glTexParameteri(Src->glDescription.target, GL_TEXTURE_MAG_FILTER,
-                        magLookup[Filter - WINED3DTEXF_NONE]);
+        glTexParameteri(Src->texture_target, GL_TEXTURE_MAG_FILTER, magLookup[Filter - WINED3DTEXF_NONE]);
         checkGLcall("glTexParameteri");
-        glTexParameteri(Src->glDescription.target, GL_TEXTURE_MIN_FILTER,
-                        minMipLookup[Filter].mip[WINED3DTEXF_NONE]);
+        glTexParameteri(Src->texture_target, GL_TEXTURE_MIN_FILTER, minMipLookup[Filter].mip[WINED3DTEXF_NONE]);
         checkGLcall("glTexParameteri");
-        glTexParameteri(Src->glDescription.target, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(Src->glDescription.target, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(Src->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(Src->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP);
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         checkGLcall("glTexEnvi");
 
@@ -3825,8 +3821,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             checkGLcall("glDisable(GL_ALPHA_TEST)");
         }
 
-        glBindTexture(Src->glDescription.target, 0);
-        checkGLcall("glBindTexture(Src->glDescription.target, 0)");
+        glBindTexture(Src->texture_target, 0);
+        checkGLcall("glBindTexture(Src->texture_target, 0)");
 
         /* Restore the color key parameters */
         Src->CKeyFlags = oldCKeyFlags;
@@ -4136,8 +4132,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *) iface;
     unsigned int pow2Width, pow2Height;
 
-    This->glDescription.textureName      = 0;
-    This->glDescription.target           = GL_TEXTURE_2D;
+    This->texture_name = 0;
+    This->texture_target = GL_TEXTURE_2D;
 
     /* Non-power2 support */
     if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) || GL_SUPPORT(WINE_NORMALIZED_TEXRECT)) {
@@ -4195,7 +4191,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
                 && (wined3d_settings.rendertargetlock_mode == RTL_READTEX
                 || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX)))
         {
-            This->glDescription.target = GL_TEXTURE_RECTANGLE_ARB;
+            This->texture_target = GL_TEXTURE_RECTANGLE_ARB;
             This->pow2Width  = This->currentDesc.Width;
             This->pow2Height = This->currentDesc.Height;
             This->Flags &= ~(SFLAG_NONPOW2 | SFLAG_NORMCOORD);
@@ -4409,7 +4405,8 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
              * directly on the FBO texture. That's because we need to flip. */
             GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-            if (This->glDescription.target == GL_TEXTURE_RECTANGLE_ARB) {
+            if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
+            {
                 glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
                 bind_target = GL_TEXTURE_RECTANGLE_ARB;
             } else {
@@ -4417,14 +4414,8 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
                 bind_target = GL_TEXTURE_2D;
             }
             glBindTexture(bind_target, device->depth_blt_texture);
-            glCopyTexImage2D(bind_target,
-                    This->glDescription.level,
-                    This->resource.format_desc->glInternal,
-                    0,
-                    0,
-                    This->currentDesc.Width,
-                    This->currentDesc.Height,
-                    0);
+            glCopyTexImage2D(bind_target, This->texture_level, This->resource.format_desc->glInternal,
+                    0, 0, This->currentDesc.Width, This->currentDesc.Height, 0);
             glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(bind_target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
@@ -4473,7 +4464,8 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
 
             GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
             checkGLcall("glBindFramebuffer()");
-            surface_depth_blt(This, This->glDescription.textureName, This->currentDesc.Width, This->currentDesc.Height, This->glDescription.target);
+            surface_depth_blt(This, This->texture_name, This->currentDesc.Width,
+                    This->currentDesc.Height, This->texture_target);
             checkGLcall("depth_blt");
 
             if (device->activeContext->current_fbo) {
@@ -4582,7 +4574,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
         rect.bottom = This->currentDesc.Height;
     }
 
-    switch(This->glDescription.target)
+    switch (This->texture_target)
     {
         case GL_TEXTURE_2D:
             bind_target = GL_TEXTURE_2D;
@@ -4667,7 +4659,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
             break;
 
         default:
-            ERR("Unexpected texture target %#x\n", This->glDescription.target);
+            ERR("Unexpected texture target %#x\n", This->texture_target);
             return;
     }
 
@@ -4676,8 +4668,8 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
 
     glEnable(bind_target);
     checkGLcall("glEnable(bind_target)");
-    glBindTexture(bind_target, This->glDescription.textureName);
-    checkGLcall("bind_target, This->glDescription.textureName)");
+    glBindTexture(bind_target, This->texture_name);
+    checkGLcall("bind_target, This->texture_name)");
     glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     checkGLcall("glTexParameteri");
     glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
