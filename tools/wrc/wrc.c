@@ -132,6 +132,7 @@ int extensions = 1;
 /*
  * Language setting for resources (-l option)
  */
+static language_t *defaultlanguage;
 language_t *currentlanguage = NULL;
 
 /*
@@ -289,6 +290,9 @@ static int load_file( const char *input_name, const char *output_name )
         input_name = temp_name;
     }
 
+    /* Reset the language */
+    currentlanguage = dup_language( defaultlanguage );
+
     /* Go from .rc to .res */
     chat("Starting parse\n");
 
@@ -302,6 +306,7 @@ static int load_file( const char *input_name, const char *output_name )
         unlink( temp_name );
         temp_name = NULL;
     }
+    free( currentlanguage );
     return ret;
 }
 
@@ -429,7 +434,7 @@ int main(int argc,char *argv[])
 				lan = strtol(optarg, NULL, 0);
 				if (get_language_codepage(PRIMARYLANGID(lan), SUBLANGID(lan)) == -1)
 					error("Language %04x is not supported\n", lan);
-				currentlanguage = new_language(PRIMARYLANGID(lan), SUBLANGID(lan));
+				defaultlanguage = new_language(PRIMARYLANGID(lan), SUBLANGID(lan));
 			}
 			break;
 		case 'f':
@@ -492,8 +497,8 @@ int main(int argc,char *argv[])
                        (debuglevel & DEBUGLEVEL_PPMSG) != 0 );
 
 	/* Check if the user set a language, else set default */
-	if(!currentlanguage)
-		currentlanguage = new_language(0, 0);
+	if(!defaultlanguage)
+		defaultlanguage = new_language(0, 0);
 
 	atexit(cleanup_files);
 
