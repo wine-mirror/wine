@@ -3282,10 +3282,15 @@ static void test_WM_SETTEXT(void)
   const char * TestItem7 = "TestSomeText\r\n\r\r\n\rTestSomeText";
   const char * TestItem7_after = "TestSomeText\r\n \r\nTestSomeText";
 
+  const char rtftextA[] = "{\\rtf sometext}";
+  const char urtftextA[] = "{\\urtf sometext}";
+  const WCHAR rtftextW[] = {'{','\\','r','t','f',' ','s','o','m','e','t','e','x','t','}',0};
+  const WCHAR urtftextW[] = {'{','\\','u','r','t','f',' ','s','o','m','e','t','e','x','t','}',0};
+  const WCHAR sometextW[] = {'s','o','m','e','t','e','x','t',0};
+
   char buf[1024] = {0};
+  WCHAR bufW[1024] = {0};
   LRESULT result;
-  EDITSTREAM es;
-  char * p;
 
   /* This test attempts to show that WM_SETTEXT on a riched20 control causes
      any solitary \r to be converted to \r\n on return. Properly paired
@@ -3302,7 +3307,7 @@ static void test_WM_SETTEXT(void)
 	result, lstrlen(buf)); \
   result = strcmp(b, buf); \
   ok(result == 0, \
-        "WM_SETTEXT round trip: strcmp = %ld\n", result);
+        "WM_SETTEXT round trip: strcmp = %ld, text=\"%s\"\n", result, buf);
 
   TEST_SETTEXT(TestItem1, TestItem1)
   TEST_SETTEXT(TestItem2, TestItem2_after)
@@ -3313,20 +3318,39 @@ static void test_WM_SETTEXT(void)
   TEST_SETTEXT(TestItem6, TestItem6_after)
   TEST_SETTEXT(TestItem7, TestItem7_after)
 
-  /* The following test demonstrates that WM_SETTEXT supports RTF strings */
-  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) TestItem1);
-  p = buf;
-  es.dwCookie = (DWORD_PTR)&p;
-  es.dwError = 0;
-  es.pfnCallback = test_WM_SETTEXT_esCallback;
-  memset(buf, 0, sizeof(buf));
-  SendMessage(hwndRichEdit, EM_STREAMOUT,
-              (WPARAM)(SF_RTF), (LPARAM)&es);
-  trace("EM_STREAMOUT produced:\n%s\n", buf);
-  TEST_SETTEXT(buf, TestItem1)
-
-#undef TEST_SETTEXT
+  /* The following tests demonstrate that WM_SETTEXT supports RTF strings */
+  TEST_SETTEXT(rtftextA, "sometext") /* interpreted as ascii rtf */
+  TEST_SETTEXT(urtftextA, "sometext") /* interpreted as ascii rtf */
+  TEST_SETTEXT(rtftextW, "{") /* interpreted as ascii text */
+  TEST_SETTEXT(urtftextW, "{") /* interpreted as ascii text */
   DestroyWindow(hwndRichEdit);
+#undef TEST_SETTEXT
+
+#define TEST_SETTEXTW(a, b) \
+  result = SendMessageW(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) a); \
+  ok (result == 1, "WM_SETTEXT returned %ld instead of 1\n", result); \
+  result = SendMessageW(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) bufW); \
+  ok (result == lstrlenW(bufW), \
+	"WM_GETTEXT returned %ld instead of expected %u\n", \
+	result, lstrlenW(bufW)); \
+  result = lstrcmpW(b, bufW); \
+  ok(result == 0, "WM_SETTEXT round trip: strcmp = %ld\n", result);
+
+  if (is_win9x)
+  {
+      skip("Cannot perform unicode tests\n");
+      return;
+  }
+hwndRichEdit = CreateWindowW(RICHEDIT_CLASS20W, NULL,
+                             ES_MULTILINE|WS_POPUP|WS_HSCROLL|WS_VSCROLL|WS_VISIBLE,
+                               0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+  ok(hwndRichEdit != NULL, "class: RichEdit20W, error: %d\n", (int) GetLastError());
+  TEST_SETTEXTW(rtftextA, sometextW) /* interpreted as ascii rtf */
+  TEST_SETTEXTW(urtftextA, sometextW) /* interpreted as ascii rtf */
+  TEST_SETTEXTW(rtftextW, rtftextW) /* interpreted as ascii text */
+  TEST_SETTEXTW(urtftextW, urtftextW) /* interpreted as ascii text */
+  DestroyWindow(hwndRichEdit);
+#undef TEST_SETTEXTW
 }
 
 static void test_EM_STREAMOUT(void)
