@@ -543,9 +543,6 @@ static unsigned be_i386_is_func_call(const void* insn, ADDRESS64* callee)
         }
         return TRUE;
 
-    case 0xCD:
-        WINE_FIXME("Unsupported yet call insn (0x%02x) at %p\n", ch, insn);
-        /* fall through */
     default:
         return FALSE;
     }
