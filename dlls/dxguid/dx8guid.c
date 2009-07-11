@@ -31,4 +31,3 @@
 #include "initguid.h"
 
 #include "d3d8.h"
-#include "d3dx8.h"
