@@ -23,7 +23,7 @@
 @ stub D3DXComputeIMTFromSignal
 @ stub D3DXComputeIMTFromTexture
 @ stub D3DXComputeNormalMap
-@ stdcall D3DXComputeNormals(ptr ptr) d3dx8.D3DXComputeNormals
+@ stub D3DXComputeNormals
 @ stub D3DXComputeTangent
 @ stub D3DXComputeTangentFrame
 @ stub D3DXComputeTangentFrameEx
@@ -83,7 +83,7 @@
 @ stub D3DXCreatePRTEngine
 @ stub D3DXCreateRenderToEnvMap
 @ stub D3DXCreateRenderToSurface
-@ stdcall D3DXCreateSPMesh(ptr ptr ptr ptr ptr) d3dx8.D3DXCreateSPMesh
+@ stub D3DXCreateSPMesh
 @ stub D3DXCreateSkinInfo
 @ stub D3DXCreateSkinInfoFromBlendedMesh
 @ stub D3DXCreateSkinInfoFVF
@@ -146,7 +146,7 @@
 @ stub D3DXGatherFragmentsFromResourceA
 @ stub D3DXGatherFragmentsFromResourceW
 @ stub D3DXGenerateOutputDecl
-@ stdcall D3DXGeneratePMesh(ptr ptr ptr ptr long long ptr) d3dx8.D3DXGeneratePMesh
+@ stub D3DXGeneratePMesh
 @ stub D3DXGetDeclLength
 @ stdcall D3DXGetDeclVertexSize(ptr long)
 @ stdcall D3DXGetDriverLevel(ptr)
@@ -165,8 +165,8 @@
 @ stdcall D3DXGetShaderSize(ptr)
 @ stdcall D3DXGetShaderVersion(ptr)
 @ stdcall D3DXGetVertexShaderProfile(ptr)
-@ stdcall D3DXIntersect(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXIntersect
-@ stdcall D3DXIntersectSubset(ptr long ptr ptr ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXIntersectSubset
+@ stub D3DXIntersect
+@ stub D3DXIntersectSubset
 @ stdcall D3DXIntersectTri(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub D3DXLoadMeshFromXA
 @ stub D3DXLoadMeshFromXInMemory
@@ -252,7 +252,7 @@
 @ stdcall D3DXQuaternionRotationYawPitchRoll(ptr long long long)
 @ stdcall D3DXQuaternionSlerp(ptr ptr ptr long)
 @ stdcall D3DXQuaternionSquad(ptr ptr ptr ptr ptr long)
-@ stdcall D3DXQuaternionSquadSetup(ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXQuaternionSquadSetup
+@ stub D3DXQuaternionSquadSetup
 @ stdcall D3DXQuaternionToAxisAngle(ptr ptr ptr)
 @ stub D3DXRectPatchSize
 @ stub D3DXSaveMeshHierarchyToFileA
@@ -290,17 +290,17 @@
 @ stub D3DXSHRotate
 @ stub D3DXSHRotateZ
 @ stub D3DXSHScale
-@ stdcall D3DXSimplifyMesh(ptr ptr ptr ptr long long ptr) d3dx8.D3DXSimplifyMesh
+@ stub D3DXSimplifyMesh
 @ stdcall D3DXSphereBoundProbe(ptr long ptr ptr)
-@ stdcall D3DXSplitMesh(ptr ptr long long ptr ptr ptr ptr ptr) d3dx8.D3DXSplitMesh
-@ stdcall D3DXTessellateNPatches(ptr ptr long long ptr ptr) d3dx8.D3DXTessellateNPatches
+@ stub D3DXSplitMesh
+@ stub D3DXTessellateNPatches
 @ stub D3DXTessellateRectPatch
 @ stub D3DXTessellateTriPatch
 @ stub D3DXTriPatchSize
 @ stub D3DXUVAtlasCreate
 @ stub D3DXUVAtlasPack
 @ stub D3DXUVAtlasPartition
-@ stdcall D3DXValidMesh(ptr ptr ptr) d3dx8.D3DXValidMesh
+@ stub D3DXValidMesh
 @ stub D3DXValidPatchMesh
 @ stdcall D3DXVec2BaryCentric(ptr ptr ptr ptr long long)
 @ stdcall D3DXVec2CatmullRom(ptr ptr ptr ptr ptr long)
