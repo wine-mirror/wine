@@ -3,7 +3,7 @@
 @ stub D3DXAssembleShaderFromFileW
 @ stub D3DXAssembleShaderFromResourceA
 @ stub D3DXAssembleShaderFromResourceW
-@ stdcall D3DXBoxBoundProbe(ptr ptr ptr ptr) d3dx8.D3DXBoxBoundProbe
+@ stdcall D3DXBoxBoundProbe(ptr ptr ptr ptr)
 @ stub D3DXCheckCubeTextureRequirements
 @ stub D3DXCheckTextureRequirements
 @ stdcall D3DXCheckVersion(long long)
@@ -291,7 +291,7 @@
 @ stub D3DXSHRotateZ
 @ stub D3DXSHScale
 @ stdcall D3DXSimplifyMesh(ptr ptr ptr ptr long long ptr) d3dx8.D3DXSimplifyMesh
-@ stdcall D3DXSphereBoundProbe(ptr long ptr ptr) d3dx8.D3DXSphereBoundProbe
+@ stdcall D3DXSphereBoundProbe(ptr long ptr ptr)
 @ stdcall D3DXSplitMesh(ptr ptr long long ptr ptr ptr ptr ptr) d3dx8.D3DXSplitMesh
 @ stdcall D3DXTessellateNPatches(ptr ptr long long ptr ptr) d3dx8.D3DXTessellateNPatches
 @ stub D3DXTessellateRectPatch
