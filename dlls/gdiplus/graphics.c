@@ -2634,13 +2634,16 @@ GpStatus WINGDIPAPI GdipFillPolygon(GpGraphics *graphics, GpBrush *brush,
 
     save_state = SaveDC(graphics->hdc);
     EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, brush->gdibrush);
-    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
     SetPolyFillMode(graphics->hdc, (fillMode == FillModeAlternate ? ALTERNATE
                                                                   : WINDING));
 
     transform_and_round_points(graphics, pti, ptf, count);
+
+    BeginPath(graphics->hdc);
     Polygon(graphics->hdc, pti, count);
+    EndPath(graphics->hdc);
+
+    brush_fill_path(graphics, brush);
 
     RestoreDC(graphics->hdc, save_state);
 
