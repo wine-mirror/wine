@@ -3194,7 +3194,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     /* If we detect ascii rtf at the start of the string,
      * we know it isn't unicode. */
     bRtf = (lParam && (!strncmp((char *)lParam, "{\\rtf", 5) ||
-                         !strncmp((char *)lParam, "{\\urtf}", 6)));
+                         !strncmp((char *)lParam, "{\\urtf", 6)));
     bUnicode = !bRtf && pStruct->codepage == 1200;
 
     TRACE("EM_SETTEXTEX - %s, flags %d, cp %d\n",
@@ -3463,7 +3463,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (lParam)
     {
       TRACE("WM_SETTEXT lParam==%lx\n",lParam);
-      if (!unicode && !strncmp((char *)lParam, "{\\rtf", 5))
+      if (!strncmp((char *)lParam, "{\\rtf", 5) ||
+          !strncmp((char *)lParam, "{\\urtf", 6))
       {
         /* Undocumented: WM_SETTEXT supports RTF text */
         ME_StreamInRTFString(editor, 0, (char *)lParam);
