@@ -409,6 +409,7 @@ GpStatus WINGDIPAPI GdipGetLineBlendCount(GpLineGradient*,INT*);
 GpStatus WINGDIPAPI GdipSetLineColors(GpLineGradient*,ARGB,ARGB);
 GpStatus WINGDIPAPI GdipSetLineGammaCorrection(GpLineGradient*,BOOL);
 GpStatus WINGDIPAPI GdipSetLineSigmaBlend(GpLineGradient*,REAL,REAL);
+GpStatus WINGDIPAPI GdipSetLineLinearBlend(GpLineGradient*,REAL,REAL);
 GpStatus WINGDIPAPI GdipSetLineWrapMode(GpLineGradient*,GpWrapMode);
 
 /* Matrix */
