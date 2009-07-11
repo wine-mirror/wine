@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2002 Raphael Junqueira
+ * Copyright (C) 2008 David Adam
  * Copyright (C) 2008 Tony Wasserka
  *
  * This library is free software; you can redistribute it and/or
@@ -63,6 +64,18 @@ typedef struct ID3DXFontImpl
     HFONT hfont;
 } ID3DXFontImpl;
 
+/* ID3DXMatrixStack */
+typedef struct ID3DXMatrixStackImpl
+{
+  /* IUnknown fields */
+  const ID3DXMatrixStackVtbl *lpVtbl;
+  LONG                   ref;
+
+  /* ID3DXMatrixStack fields */
+  unsigned int current;
+  unsigned int stack_size;
+  D3DXMATRIX *stack;
+} ID3DXMatrixStackImpl;
 
 /*ID3DXSprite */
 typedef struct _SPRITE {

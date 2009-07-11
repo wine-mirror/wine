@@ -9,8 +9,8 @@
 @ stdcall D3DXCheckVersion(long long)
 @ stub D3DXCheckVolumeTextureRequirements
 @ stub D3DXCleanMesh
-@ stdcall D3DXColorAdjustContrast(ptr ptr long) d3dx8.D3DXColorAdjustContrast
-@ stdcall D3DXColorAdjustSaturation(ptr ptr long) d3dx8.D3DXColorAdjustSaturation
+@ stdcall D3DXColorAdjustContrast(ptr ptr long)
+@ stdcall D3DXColorAdjustSaturation(ptr ptr long)
 @ stub D3DXCompileShader
 @ stub D3DXCompileShaderFromFileA
 @ stub D3DXCompileShaderFromFileW
@@ -70,7 +70,7 @@
 @ stub D3DXCreateFragmentLinkerEx
 @ stub D3DXCreateKeyframedAnimationSet
 @ stub D3DXCreateLine
-@ stdcall D3DXCreateMatrixStack(long ptr) d3dx8.D3DXCreateMatrixStack
+@ stdcall D3DXCreateMatrixStack(long ptr)
 @ stub D3DXCreateMesh
 @ stub D3DXCreateMeshFVF
 @ stub D3DXCreateNPatchMesh
@@ -138,7 +138,7 @@
 @ stub D3DXFrameFind
 @ stub D3DXFrameNumNamedMatrices
 @ stub D3DXFrameRegisterNamedMatrices
-@ stdcall D3DXFresnelTerm(long long) d3dx8.D3DXFresnelTerm
+@ stdcall D3DXFresnelTerm(long long)
 @ stub D3DXFVFFromDeclarator
 @ stub D3DXGatherFragments
 @ stub D3DXGatherFragmentsFromFileA
@@ -196,64 +196,64 @@
 @ stub D3DXLoadVolumeFromResourceA
 @ stub D3DXLoadVolumeFromResourceW
 @ stub D3DXLoadVolumeFromVolume
-@ stdcall D3DXMatrixAffineTransformation(ptr long ptr ptr ptr) d3dx8.D3DXMatrixAffineTransformation
+@ stdcall D3DXMatrixAffineTransformation(ptr long ptr ptr ptr)
 @ stdcall D3DXMatrixAffineTransformation2D(ptr long ptr long ptr)
 @ stdcall D3DXMatrixDecompose(ptr ptr ptr ptr)
-@ stdcall D3DXMatrixDeterminant(ptr) d3dx8.D3DXMatrixfDeterminant
-@ stdcall D3DXMatrixInverse(ptr ptr ptr) d3dx8.D3DXMatrixInverse
-@ stdcall D3DXMatrixLookAtLH(ptr ptr ptr ptr) d3dx8.D3DXMatrixLookAtLH
-@ stdcall D3DXMatrixLookAtRH(ptr ptr ptr ptr) d3dx8.D3DXMatrixLookAtRH
-@ stdcall D3DXMatrixMultiply(ptr ptr ptr) d3dx8.D3DXMatrixMultiply
-@ stdcall D3DXMatrixMultiplyTranspose(ptr ptr ptr) d3dx8.D3DXMatrixMultiplyTranspose
-@ stdcall D3DXMatrixOrthoLH(ptr long long long long) d3dx8.D3DXMatrixOrthoLH
-@ stdcall D3DXMatrixOrthoOffCenterLH(ptr long long long long long long) d3dx8.D3DXMatrixOrthoOffCenterLH
-@ stdcall D3DXMatrixOrthoOffCenterRH(ptr long long long long long long) d3dx8.D3DXMatrixOrthoOffCenterRH
-@ stdcall D3DXMatrixOrthoRH(ptr long long long long) d3dx8.D3DXMatrixOrthoRH
-@ stdcall D3DXMatrixPerspectiveFovLH(ptr long long long long) d3dx8.D3DXMatrixPerspectiveFovLH
-@ stdcall D3DXMatrixPerspectiveFovRH(ptr long long long long) d3dx8.D3DXMatrixPerspectiveFovRH
-@ stdcall D3DXMatrixPerspectiveLH(ptr long long long long) d3dx8.D3DXMatrixPerspectiveLH
-@ stdcall D3DXMatrixPerspectiveOffCenterLH(ptr long long long long long long) d3dx8.D3DXMatrixPerspectiveOffCenterLH
-@ stdcall D3DXMatrixPerspectiveOffCenterRH(ptr long long long long long long) d3dx8.D3DXMatrixPerspectiveOffCenterRH
-@ stdcall D3DXMatrixPerspectiveRH(ptr long long long long) d3dx8.D3DXMatrixPerspectiveRH
-@ stdcall D3DXMatrixReflect(ptr ptr) d3dx8.D3DXMatrixReflect
-@ stdcall D3DXMatrixRotationAxis(ptr ptr long) d3dx8.D3DXMatrixRotationAxis
-@ stdcall D3DXMatrixRotationQuaternion(ptr ptr) d3dx8.D3DXMatrixRotationQuaternion
-@ stdcall D3DXMatrixRotationX(ptr long) d3dx8.D3DXMatrixRotationX
-@ stdcall D3DXMatrixRotationY(ptr long) d3dx8.D3DXMatrixRotationY
-@ stdcall D3DXMatrixRotationYawPitchRoll(ptr long long long) d3dx8.D3DXMatrixRotationYawPitchRoll
-@ stdcall D3DXMatrixRotationZ(ptr long) d3dx8.D3DXMatrixRotationZ
-@ stdcall D3DXMatrixScaling(ptr long long long) d3dx8.D3DXMatrixScaling
-@ stdcall D3DXMatrixShadow(ptr ptr ptr) d3dx8.D3DXMatrixShadow
-@ stdcall D3DXMatrixTransformation(ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXMatrixTransformation
+@ stdcall D3DXMatrixDeterminant(ptr)
+@ stdcall D3DXMatrixInverse(ptr ptr ptr)
+@ stdcall D3DXMatrixLookAtLH(ptr ptr ptr ptr)
+@ stdcall D3DXMatrixLookAtRH(ptr ptr ptr ptr)
+@ stdcall D3DXMatrixMultiply(ptr ptr ptr)
+@ stdcall D3DXMatrixMultiplyTranspose(ptr ptr ptr)
+@ stdcall D3DXMatrixOrthoLH(ptr long long long long)
+@ stdcall D3DXMatrixOrthoOffCenterLH(ptr long long long long long long)
+@ stdcall D3DXMatrixOrthoOffCenterRH(ptr long long long long long long)
+@ stdcall D3DXMatrixOrthoRH(ptr long long long long)
+@ stdcall D3DXMatrixPerspectiveFovLH(ptr long long long long)
+@ stdcall D3DXMatrixPerspectiveFovRH(ptr long long long long)
+@ stdcall D3DXMatrixPerspectiveLH(ptr long long long long)
+@ stdcall D3DXMatrixPerspectiveOffCenterLH(ptr long long long long long long)
+@ stdcall D3DXMatrixPerspectiveOffCenterRH(ptr long long long long long long)
+@ stdcall D3DXMatrixPerspectiveRH(ptr long long long long)
+@ stdcall D3DXMatrixReflect(ptr ptr)
+@ stdcall D3DXMatrixRotationAxis(ptr ptr long)
+@ stdcall D3DXMatrixRotationQuaternion(ptr ptr)
+@ stdcall D3DXMatrixRotationX(ptr long)
+@ stdcall D3DXMatrixRotationY(ptr long)
+@ stdcall D3DXMatrixRotationYawPitchRoll(ptr long long long)
+@ stdcall D3DXMatrixRotationZ(ptr long)
+@ stdcall D3DXMatrixScaling(ptr long long long)
+@ stdcall D3DXMatrixShadow(ptr ptr ptr)
+@ stdcall D3DXMatrixTransformation(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DXMatrixTransformation2D(ptr ptr long ptr ptr long ptr)
-@ stdcall D3DXMatrixTranslation(ptr long long long) d3dx8.D3DXMatrixTranslation
-@ stdcall D3DXMatrixTranspose(ptr ptr) d3dx8.D3DXMatrixTranspose
+@ stdcall D3DXMatrixTranslation(ptr long long long)
+@ stdcall D3DXMatrixTranspose(ptr ptr)
 @ stub D3DXOptimizeFaces
 @ stub D3DXOptimizeVertices
-@ stdcall D3DXPlaneFromPointNormal(ptr ptr ptr) d3dx8.D3DXPlaneFromPointNormal
-@ stdcall D3DXPlaneFromPoints(ptr ptr ptr ptr) d3dx8.D3DXPlaneFromPoints
-@ stdcall D3DXPlaneIntersectLine(ptr ptr ptr ptr) d3dx8.D3DXPlaneIntersectLine
-@ stdcall D3DXPlaneNormalize(ptr ptr) d3dx8.D3DXPlaneNormalize
-@ stdcall D3DXPlaneTransform(ptr ptr ptr) d3dx8.D3DXPlaneTransform
+@ stdcall D3DXPlaneFromPointNormal(ptr ptr ptr)
+@ stdcall D3DXPlaneFromPoints(ptr ptr ptr ptr)
+@ stdcall D3DXPlaneIntersectLine(ptr ptr ptr ptr)
+@ stdcall D3DXPlaneNormalize(ptr ptr)
+@ stdcall D3DXPlaneTransform(ptr ptr ptr)
 @ stdcall D3DXPlaneTransformArray(ptr long ptr long ptr long)
 @ stub D3DXPreprocessShader
 @ stub D3DXPreprocessShaderFromFileA
 @ stub D3DXPreprocessShaderFromFileW
 @ stub D3DXPreprocessShaderFromResourceA
 @ stub D3DXPreprocessShaderFromResourceW
-@ stdcall D3DXQuaternionBaryCentric(ptr ptr ptr ptr long long) d3dx8.D3DXQuaternionBaryCentric
-@ stdcall D3DXQuaternionExp(ptr ptr) d3dx8.D3DXQuaternionExp
-@ stdcall D3DXQuaternionInverse(ptr ptr) d3dx8.D3DXQuaternionInverse
-@ stdcall D3DXQuaternionLn(ptr ptr) d3dx8.D3DXQuaternionLn
-@ stdcall D3DXQuaternionMultiply(ptr ptr ptr) d3dx8.D3DXQuaternionMultiply
-@ stdcall D3DXQuaternionNormalize(ptr ptr) d3dx8.D3DXQuaternionNormalize
-@ stdcall D3DXQuaternionRotationAxis(ptr ptr long) d3dx8.D3DXQuaternionRotationAxis
-@ stdcall D3DXQuaternionRotationMatrix(ptr ptr) d3dx8.D3DXQuaternionRotationMatrix
-@ stdcall D3DXQuaternionRotationYawPitchRoll(ptr long long long) d3dx8.D3DXQuaternionRotationYawPitchRoll
-@ stdcall D3DXQuaternionSlerp(ptr ptr ptr long) d3dx8.D3DXQuaternionSlerp
-@ stdcall D3DXQuaternionSquad(ptr ptr ptr ptr ptr long) d3dx8.D3DXQuaternionSquad
+@ stdcall D3DXQuaternionBaryCentric(ptr ptr ptr ptr long long)
+@ stdcall D3DXQuaternionExp(ptr ptr)
+@ stdcall D3DXQuaternionInverse(ptr ptr)
+@ stdcall D3DXQuaternionLn(ptr ptr)
+@ stdcall D3DXQuaternionMultiply(ptr ptr ptr)
+@ stdcall D3DXQuaternionNormalize(ptr ptr)
+@ stdcall D3DXQuaternionRotationAxis(ptr ptr long)
+@ stdcall D3DXQuaternionRotationMatrix(ptr ptr)
+@ stdcall D3DXQuaternionRotationYawPitchRoll(ptr long long long)
+@ stdcall D3DXQuaternionSlerp(ptr ptr ptr long)
+@ stdcall D3DXQuaternionSquad(ptr ptr ptr ptr ptr long)
 @ stdcall D3DXQuaternionSquadSetup(ptr ptr ptr ptr ptr ptr ptr) d3dx8.D3DXQuaternionSquadSetup
-@ stdcall D3DXQuaternionToAxisAngle(ptr ptr ptr) d3dx8.D3DXQuaternionToAxisAngle
+@ stdcall D3DXQuaternionToAxisAngle(ptr ptr ptr)
 @ stub D3DXRectPatchSize
 @ stub D3DXSaveMeshHierarchyToFileA
 @ stub D3DXSaveMeshHierarchyToFileW
@@ -302,35 +302,35 @@
 @ stub D3DXUVAtlasPartition
 @ stdcall D3DXValidMesh(ptr ptr ptr) d3dx8.D3DXValidMesh
 @ stub D3DXValidPatchMesh
-@ stdcall D3DXVec2BaryCentric(ptr ptr ptr ptr long long) d3dx8.D3DXVec2BaryCentric
-@ stdcall D3DXVec2CatmullRom(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec2CatmullRom
-@ stdcall D3DXVec2Hermite(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec2Hermite
-@ stdcall D3DXVec2Normalize(ptr ptr) d3dx8.D3DXVec2Normalize
-@ stdcall D3DXVec2Transform(ptr ptr ptr) d3dx8.D3DXVec2Transform
+@ stdcall D3DXVec2BaryCentric(ptr ptr ptr ptr long long)
+@ stdcall D3DXVec2CatmullRom(ptr ptr ptr ptr ptr long)
+@ stdcall D3DXVec2Hermite(ptr ptr ptr ptr ptr long)
+@ stdcall D3DXVec2Normalize(ptr ptr)
+@ stdcall D3DXVec2Transform(ptr ptr ptr)
 @ stdcall D3DXVec2TransformArray(ptr long ptr long ptr long)
-@ stdcall D3DXVec2TransformCoord(ptr ptr ptr) d3dx8.D3DXVec2TransformCoord
+@ stdcall D3DXVec2TransformCoord(ptr ptr ptr)
 @ stdcall D3DXVec2TransformCoordArray(ptr long ptr long ptr long)
-@ stdcall D3DXVec2TransformNormal(ptr ptr ptr) d3dx8.D3DXVec2TransformNormal
+@ stdcall D3DXVec2TransformNormal(ptr ptr ptr)
 @ stdcall D3DXVec2TransformNormalArray(ptr long ptr long ptr long)
-@ stdcall D3DXVec3BaryCentric(ptr ptr ptr ptr long long) d3dx8.D3DXVec3BaryCentric
-@ stdcall D3DXVec3CatmullRom(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec3CatmullRom
-@ stdcall D3DXVec3Hermite(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec3Hermite
-@ stdcall D3DXVec3Normalize(ptr ptr) d3dx8.D3DXVec3Normalize
-@ stdcall D3DXVec3Project(ptr ptr ptr ptr ptr ptr) d3dx8.D3DXVec3Project
+@ stdcall D3DXVec3BaryCentric(ptr ptr ptr ptr long long)
+@ stdcall D3DXVec3CatmullRom(ptr ptr ptr ptr ptr long)
+@ stdcall D3DXVec3Hermite(ptr ptr ptr ptr ptr long)
+@ stdcall D3DXVec3Normalize(ptr ptr)
+@ stdcall D3DXVec3Project(ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DXVec3ProjectArray(ptr long ptr long ptr ptr ptr ptr long)
-@ stdcall D3DXVec3Transform(ptr ptr ptr) d3dx8.D3DXVec3Transform
+@ stdcall D3DXVec3Transform(ptr ptr ptr)
 @ stdcall D3DXVec3TransformArray(ptr long ptr long ptr long)
-@ stdcall D3DXVec3TransformCoord(ptr ptr ptr) d3dx8.D3DXVec3TransformCoord
+@ stdcall D3DXVec3TransformCoord(ptr ptr ptr)
 @ stdcall D3DXVec3TransformCoordArray(ptr long ptr long ptr long)
-@ stdcall D3DXVec3TransformNormal(ptr ptr ptr) d3dx8.D3DXVec3TransformNormal
+@ stdcall D3DXVec3TransformNormal(ptr ptr ptr)
 @ stdcall D3DXVec3TransformNormalArray(ptr long ptr long ptr long)
-@ stdcall D3DXVec3Unproject(ptr ptr ptr ptr ptr ptr) d3dx8.D3DXVec3Unproject
+@ stdcall D3DXVec3Unproject(ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DXVec3UnprojectArray(ptr long ptr long ptr ptr ptr ptr long)
-@ stdcall D3DXVec4BaryCentric(ptr ptr ptr ptr long long) d3dx8.D3DXVec4BaryCentric
-@ stdcall D3DXVec4CatmullRom(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec4CatmullRom
-@ stdcall D3DXVec4Cross(ptr ptr ptr ptr) d3dx8.D3DXVec4Cross
-@ stdcall D3DXVec4Hermite(ptr ptr ptr ptr ptr long) d3dx8.D3DXVec4Hermite
-@ stdcall D3DXVec4Normalize(ptr ptr) d3dx8.D3DXVec4Normalize
-@ stdcall D3DXVec4Transform(ptr ptr ptr) d3dx8.D3DXVec4Transform
+@ stdcall D3DXVec4BaryCentric(ptr ptr ptr ptr long long)
+@ stdcall D3DXVec4CatmullRom(ptr ptr ptr ptr ptr long)
+@ stdcall D3DXVec4Cross(ptr ptr ptr ptr)
+@ stdcall D3DXVec4Hermite(ptr ptr ptr ptr ptr long)
+@ stdcall D3DXVec4Normalize(ptr ptr)
+@ stdcall D3DXVec4Transform(ptr ptr ptr)
 @ stdcall D3DXVec4TransformArray(ptr long ptr long ptr long)
 @ stub D3DXWeldVertices
