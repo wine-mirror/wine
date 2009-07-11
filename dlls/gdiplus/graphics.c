@@ -2512,12 +2512,14 @@ GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics *graphics, GpBrush *brush, REAL x
 
     save_state = SaveDC(graphics->hdc);
     EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, brush->gdibrush);
-    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
 
     transform_and_round_points(graphics, pti, ptf, 2);
 
+    BeginPath(graphics->hdc);
     Ellipse(graphics->hdc, pti[0].x, pti[0].y, pti[1].x, pti[1].y);
+    EndPath(graphics->hdc);
+
+    brush_fill_path(graphics, brush);
 
     RestoreDC(graphics->hdc, save_state);
 
