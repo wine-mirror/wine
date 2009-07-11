@@ -2786,12 +2786,14 @@ GpStatus WINGDIPAPI GdipFillRectangleI(GpGraphics *graphics, GpBrush *brush,
 
     save_state = SaveDC(graphics->hdc);
     EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, brush->gdibrush);
-    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
 
     transform_and_round_points(graphics, pti, ptf, 4);
 
+    BeginPath(graphics->hdc);
     Polygon(graphics->hdc, pti, 4);
+    EndPath(graphics->hdc);
+
+    brush_fill_path(graphics, brush);
 
     RestoreDC(graphics->hdc, save_state);
 
