@@ -2586,10 +2586,12 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
 
     save_state = SaveDC(graphics->hdc);
     EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, brush->gdibrush);
-    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
 
+    BeginPath(graphics->hdc);
     draw_pie(graphics, x, y, width, height, startAngle, sweepAngle);
+    EndPath(graphics->hdc);
+
+    brush_fill_path(graphics, brush);
 
     RestoreDC(graphics->hdc, save_state);
 
