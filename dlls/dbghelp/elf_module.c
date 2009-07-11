@@ -237,7 +237,7 @@ static void elf_end_find(struct elf_file_map* fmap)
  *
  * Get the size of an ELF section
  */
-static inline unsigned elf_get_map_size(struct elf_section_map* esm)
+static inline unsigned elf_get_map_size(const struct elf_section_map* esm)
 {
     if (esm->sidx < 0 || esm->sidx >= esm->fmap->elfhdr.e_shnum)
         return 0;
@@ -473,7 +473,7 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
  */
 static const Elf32_Sym* elf_lookup_symtab(const struct module* module,        
                                           const struct hash_table* ht_symtab,
-                                          const char* name, struct symt* compiland)
+                                          const char* name, const struct symt* compiland)
 {
     struct symtab_elt*          weak_result = NULL; /* without compiland name */
     struct symtab_elt*          result = NULL;
@@ -490,7 +490,7 @@ static const Elf32_Sym* elf_lookup_symtab(const struct module* module,
     if (compiland)
     {
         compiland_name = source_get(module,
-                                    ((struct symt_compiland*)compiland)->source);
+                                    ((const struct symt_compiland*)compiland)->source);
         compiland_basename = strrchr(compiland_name, '/');
         if (!compiland_basename++) compiland_basename = compiland_name;
     }
@@ -542,7 +542,7 @@ static const Elf32_Sym* elf_lookup_symtab(const struct module* module,
  * - get any relevant information (address & size) from the bits we got from the
  *   stabs debugging information
  */
-static void elf_finish_stabs_info(struct module* module, struct hash_table* symtab)
+static void elf_finish_stabs_info(struct module* module, const struct hash_table* symtab)
 {
     struct hash_table_iter      hti;
     void*                       ptr;
@@ -623,7 +623,7 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
  *
  * creating the thunk objects for a wine native DLL
  */
-static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symtab,
+static int elf_new_wine_thunks(struct module* module, const struct hash_table* ht_symtab,
                                const struct elf_thunk_area* thunks)
 {
     int		                j;
@@ -716,7 +716,7 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
  *
  * Creates a set of public symbols from an ELF symtab
  */
-static int elf_new_public_symbols(struct module* module, struct hash_table* symtab)
+static int elf_new_public_symbols(struct module* module, const struct hash_table* symtab)
 {
     struct hash_table_iter      hti;
     struct symtab_elt*          ste;
@@ -830,7 +830,7 @@ found:
  * Parses a .gnu_debuglink section and loads the debug info from
  * the external file specified there.
  */
-static BOOL elf_debuglink_parse(struct elf_file_map* fmap, struct module* module,
+static BOOL elf_debuglink_parse(struct elf_file_map* fmap, const struct module* module,
                                 const BYTE* debuglink)
 {
     /* The content of a debug link section is:
