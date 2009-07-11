@@ -182,7 +182,9 @@ static IDirect3DDevice9 *init_d3d9(void)
     ok(hr == D3D_OK, "Failed to get adapter identifier description\n");
     trace("Driver string: \"%s\"\n", identifier.Driver);
     trace("Description string: \"%s\"\n", identifier.Description);
+    ok(identifier.Description[0] != '\0', "Empty driver description\n");
     trace("Device name string: \"%s\"\n", identifier.DeviceName);
+    ok(identifier.DeviceName[0]  != '\0', "Empty device name\n");
     trace("Driver version %d.%d.%d.%d\n",
           HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
           HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
