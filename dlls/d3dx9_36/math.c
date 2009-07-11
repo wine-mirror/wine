@@ -87,7 +87,7 @@ D3DXMATRIX* WINAPI D3DXMatrixAffineTransformation2D(
 /*************************************************************************
  * D3DXMatrixDecompose
  */
-HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutrotation, D3DXVECTOR3 *pouttranslation, D3DXMATRIX *pm)
+HRESULT WINAPI D3DXMatrixDecompose(D3DXVECTOR3 *poutscale, D3DXQUATERNION *poutrotation, D3DXVECTOR3 *pouttranslation, CONST D3DXMATRIX *pm)
 {
     D3DXMATRIX normalized;
     D3DXVECTOR3 vec;
