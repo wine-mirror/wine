@@ -2855,6 +2855,7 @@ GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     INT save_state;
     GpStatus status;
     HRGN hrgn;
+    RECT rc;
 
     TRACE("(%p, %p, %p)\n", graphics, brush, region);
 
@@ -2870,9 +2871,17 @@ GpStatus WINGDIPAPI GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
 
     save_state = SaveDC(graphics->hdc);
     EndPath(graphics->hdc);
-    SelectObject(graphics->hdc, GetStockObject(NULL_PEN));
 
-    FillRgn(graphics->hdc, hrgn, brush->gdibrush);
+    ExtSelectClipRgn(graphics->hdc, hrgn, RGN_AND);
+
+    if (GetClipBox(graphics->hdc, &rc) != NULLREGION)
+    {
+        BeginPath(graphics->hdc);
+        Rectangle(graphics->hdc, rc.left, rc.top, rc.right, rc.bottom);
+        EndPath(graphics->hdc);
+
+        brush_fill_path(graphics, brush);
+    }
 
     RestoreDC(graphics->hdc, save_state);
 
