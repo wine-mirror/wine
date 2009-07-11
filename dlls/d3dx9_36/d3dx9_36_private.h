@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2002 Raphael Junqueira
  * Copyright (C) 2008 Tony Wasserka
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +32,20 @@
 /* for internal use */
 HRESULT map_view_of_file(LPCWSTR filename, LPVOID *buffer, DWORD *length);
 HRESULT load_resource_into_memory(HMODULE module, HRSRC resinfo, LPVOID *buffer, DWORD *length);
+
+extern const ID3DXBufferVtbl D3DXBuffer_Vtbl;
+
+/* ID3DXBUFFER */
+typedef struct ID3DXBufferImpl
+{
+    /* IUnknown fields */
+    const ID3DXBufferVtbl *lpVtbl;
+    LONG           ref;
+
+    /* ID3DXBuffer fields */
+    DWORD         *buffer;
+    DWORD          bufferSize;
+} ID3DXBufferImpl;
 
 
 /* ID3DXFont */

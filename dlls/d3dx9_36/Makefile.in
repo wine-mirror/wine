@@ -7,6 +7,7 @@ IMPORTLIB = d3dx9
 IMPORTS   = d3d9 d3dx8 gdi32 user32 kernel32
 
 C_SRCS = \
+	core.c \
 	d3dx9_36_main.c \
 	font.c \
 	math.c \

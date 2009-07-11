@@ -32,7 +32,7 @@
 @ stub D3DXConvertMeshSubsetToStrips
 @ stub D3DXCreateAnimationController
 @ stub D3DXCreateBox
-@ stdcall D3DXCreateBuffer(long ptr) d3dx8.D3DXCreateBuffer
+@ stdcall D3DXCreateBuffer(long ptr)
 @ stub D3DXCreateCompressedAnimationSet
 @ stub D3DXCreateCubeTexture
 @ stub D3DXCreateCubeTextureFromFileA
