@@ -952,7 +952,7 @@ static void test_hdm_sethotdivider(HWND hParent)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     todo_wine
     {
-        retVal = SendMessage(hChild, HDM_SETHOTDIVIDER, TRUE, 0X00050005);
+        retVal = SendMessage(hChild, HDM_SETHOTDIVIDER, TRUE, MAKELPARAM(5, 5));
         expect(0, retVal);
     }
     retVal = SendMessage(hChild, HDM_SETHOTDIVIDER, FALSE, 100);
