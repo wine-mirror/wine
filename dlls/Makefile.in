@@ -116,7 +116,6 @@ IMPORT_LIBS = \
 	d3d9/libd3d9.$(IMPLIBEXT) \
 	d3dim/libd3dim.$(IMPLIBEXT) \
 	d3drm/libd3drm.$(IMPLIBEXT) \
-	d3dx8/libd3dx8.$(IMPLIBEXT) \
 	d3dx9_36/libd3dx9.$(IMPLIBEXT) \
 	d3dxof/libd3dxof.$(IMPLIBEXT) \
 	dbghelp/libdbghelp.$(IMPLIBEXT) \
@@ -263,7 +262,6 @@ CROSS_IMPLIBS = \
 	d3d9/libd3d9.a \
 	d3dim/libd3dim.a \
 	d3drm/libd3drm.a \
-	d3dx8/libd3dx8.a \
 	d3dx9_36/libd3dx9.a \
 	d3dxof/libd3dxof.a \
 	dbghelp/libdbghelp.a \
@@ -467,9 +465,6 @@ d3dim/libd3dim.def d3dim/libd3dim.a: d3dim/d3dim.spec $(WINEBUILD)
 
 d3drm/libd3drm.def d3drm/libd3drm.a: d3drm/d3drm.spec $(WINEBUILD)
 	@cd d3drm && $(MAKE) `basename $@`
-
-d3dx8/libd3dx8.def d3dx8/libd3dx8.a: d3dx8/d3dx8.spec $(WINEBUILD)
-	@cd d3dx8 && $(MAKE) `basename $@`
 
 d3dx9_36/libd3dx9.def d3dx9_36/libd3dx9.a: d3dx9_36/d3dx9_36.spec $(WINEBUILD)
 	@cd d3dx9_36 && $(MAKE) `basename $@`

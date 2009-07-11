@@ -2078,8 +2078,6 @@ WINE_CONFIG_MAKEFILE([dlls/d3d9/tests/Makefile],[dlls/Maketest.rules],[dlls],[AL
 WINE_CONFIG_MAKEFILE([dlls/d3dim/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/d3drm/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/d3drm/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
-WINE_CONFIG_MAKEFILE([dlls/d3dx8/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
-WINE_CONFIG_MAKEFILE([dlls/d3dx8/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
 WINE_CONFIG_MAKEFILE([dlls/d3dx9_24/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/d3dx9_25/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/d3dx9_26/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
