@@ -161,19 +161,15 @@ static HRESULT ObjectConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DIS
     return S_OK;
 }
 
-HRESULT create_object_constr(script_ctx_t *ctx, DispatchEx **ret)
+HRESULT create_object_constr(script_ctx_t *ctx, DispatchEx *object_prototype, DispatchEx **ret)
 {
-    DispatchEx *object;
-    HRESULT hres;
+    return create_builtin_function(ctx, ObjectConstr_value, NULL, PROPF_CONSTR,
+            object_prototype, ret);
+}
 
-    hres = create_dispex(ctx, &Object_info, NULL, &object);
-    if(FAILED(hres))
-        return hres;
-
-    hres = create_builtin_function(ctx, ObjectConstr_value, NULL, PROPF_CONSTR, object, ret);
-
-    jsdisp_release(object);
-    return hres;
+HRESULT create_object_prototype(script_ctx_t *ctx, DispatchEx **ret)
+{
+    return create_dispex(ctx, &Object_info, NULL, ret);
 }
 
 HRESULT create_object(script_ctx_t *ctx, DispatchEx *constr, DispatchEx **ret)

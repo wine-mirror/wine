@@ -574,15 +574,15 @@ static const builtin_info_t JSGlobal_info = {
     NULL
 };
 
-static HRESULT init_constructors(script_ctx_t *ctx)
+static HRESULT init_constructors(script_ctx_t *ctx, DispatchEx *object_prototype)
 {
     HRESULT hres;
 
-    hres = init_function_constr(ctx);
+    hres = init_function_constr(ctx, object_prototype);
     if(FAILED(hres))
         return hres;
 
-    hres = create_object_constr(ctx, &ctx->object_constr);
+    hres = create_object_constr(ctx, object_prototype, &ctx->object_constr);
     if(FAILED(hres))
         return hres;
 
@@ -615,14 +615,19 @@ static HRESULT init_constructors(script_ctx_t *ctx)
 
 HRESULT init_global(script_ctx_t *ctx)
 {
-    DispatchEx *math;
+    DispatchEx *math, *object_prototype;
     VARIANT var;
     HRESULT hres;
 
     if(ctx->global)
         return S_OK;
 
-    hres = init_constructors(ctx);
+    hres = create_object_prototype(ctx, &object_prototype);
+    if(FAILED(hres))
+        return hres;
+
+    hres = init_constructors(ctx, object_prototype);
+    jsdisp_release(object_prototype);
     if(FAILED(hres))
         return hres;
 

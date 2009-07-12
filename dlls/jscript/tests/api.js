@@ -972,16 +972,18 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
 var func = function  (a) {
         var a = 1;
         if(a) return;
-    }.toString();
+    };
 ok(func.toString() === "function  (a) {\n        var a = 1;\n        if(a) return;\n    }",
    "func.toString() = " + func.toString());
 ok("" + func === "function  (a) {\n        var a = 1;\n        if(a) return;\n    }",
    "'' + func.toString() = " + func);
 
+ok(func.valueOf === Object.prototype.valueOf, "func.valueOf !== Object.prototype.valueOf");
+ok(func === func.valueOf(), "func !== func.valueOf()");
+
 function testFuncToString(x,y) {
     return x+y;
 }
-
 ok(testFuncToString.toString() === "function testFuncToString(x,y) {\n    return x+y;\n}",
    "testFuncToString.toString() = " + testFuncToString.toString());
 ok("" + testFuncToString === "function testFuncToString(x,y) {\n    return x+y;\n}",

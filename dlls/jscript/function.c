@@ -41,7 +41,6 @@ static const WCHAR prototypeW[] = {'p','r','o','t','o','t', 'y', 'p','e',0};
 static const WCHAR lengthW[] = {'l','e','n','g','t','h',0};
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR toLocaleStringW[] = {'t','o','L','o','c','a','l','e','S','t','r','i','n','g',0};
-static const WCHAR valueOfW[] = {'v','a','l','u','e','O','f',0};
 static const WCHAR applyW[] = {'a','p','p','l','y',0};
 static const WCHAR callW[] = {'c','a','l','l',0};
 static const WCHAR hasOwnPropertyW[] = {'h','a','s','O','w','n','P','r','o','p','e','r','t','y',0};
@@ -299,21 +298,6 @@ static HRESULT Function_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags
     return E_NOTIMPL;
 }
 
-static HRESULT Function_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
-{
-    WARN("should be inherited from Object\n");
-
-    if(retv) {
-        IDispatchEx_AddRef(_IDispatchEx_(dispex));
-
-        V_VT(retv) = VT_DISPATCH;
-        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(dispex);
-    }
-
-    return S_OK;
-}
-
 static HRESULT Function_apply(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -416,8 +400,7 @@ static const builtin_prop_t Function_props[] = {
     {lengthW,                Function_length,                0},
     {propertyIsEnumerableW,  Function_propertyIsEnumerable,  PROPF_METHOD},
     {toLocaleStringW,        Function_toLocaleString,        PROPF_METHOD},
-    {toStringW,              Function_toString,              PROPF_METHOD},
-    {valueOfW,               Function_valueOf,               PROPF_METHOD}
+    {toStringW,              Function_toString,              PROPF_METHOD}
 };
 
 static const builtin_info_t Function_info = {
@@ -465,23 +448,20 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
     function->flags = flags;
     function->length = flags & PROPF_ARGMASK;
 
-    if(prototype) {
-        jsexcept_t jsexcept;
-        VARIANT var;
-
-        V_VT(&var) = VT_DISPATCH;
-        V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(prototype);
-        memset(&jsexcept, 0, sizeof(jsexcept));
-
-        hres = jsdisp_propput_name(&function->dispex, prototypeW, ctx->lcid, &var, &jsexcept, NULL/*FIXME*/);
-        if(FAILED(hres)) {
-            IDispatchEx_Release(_IDispatchEx_(&function->dispex));
-            return hres;
-        }
-    }
-
     *ret = function;
     return S_OK;
+}
+
+static HRESULT set_prototype(script_ctx_t *ctx, DispatchEx *dispex, DispatchEx *prototype)
+{
+    jsexcept_t jsexcept;
+    VARIANT var;
+
+    V_VT(&var) = VT_DISPATCH;
+    V_DISPATCH(&var) = (IDispatch*)_IDispatchEx_(prototype);
+    memset(&jsexcept, 0, sizeof(jsexcept));
+
+    return jsdisp_propput_name(dispex, prototypeW, ctx->lcid, &var, &jsexcept, NULL/*FIXME*/);
 }
 
 HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc,
@@ -490,9 +470,15 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc,
     FunctionInstance *function;
     HRESULT hres;
 
-    hres = create_function(ctx, builtin_info, flags, FALSE, prototype, &function);
+    hres = create_function(ctx, builtin_info, flags, FALSE, NULL, &function);
     if(FAILED(hres))
         return hres;
+
+    hres = set_prototype(ctx, &function->dispex, prototype);
+    if(FAILED(hres)) {
+        jsdisp_release(&function->dispex);
+        return hres;
+    }
 
     function->value_proc = value_proc;
 
@@ -513,7 +499,12 @@ HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, sourc
     if(FAILED(hres))
         return hres;
 
-    hres = create_function(ctx->script, NULL, PROPF_CONSTR, FALSE, prototype, &function);
+    hres = create_function(ctx->script, NULL, PROPF_CONSTR, FALSE, NULL, &function);
+    if(SUCCEEDED(hres)) {
+        hres = set_prototype(ctx->script, &function->dispex, prototype);
+        if(FAILED(hres))
+            jsdisp_release(&function->dispex);
+    }
     jsdisp_release(prototype);
     if(FAILED(hres))
         return hres;
@@ -540,23 +531,28 @@ HRESULT create_source_function(parser_ctx_t *ctx, parameter_t *parameters, sourc
     return S_OK;
 }
 
-HRESULT init_function_constr(script_ctx_t *ctx)
+HRESULT init_function_constr(script_ctx_t *ctx, DispatchEx *object_prototype)
 {
     FunctionInstance *prot, *constr;
     HRESULT hres;
 
-    hres = create_function(ctx, NULL, PROPF_CONSTR, TRUE, NULL, &prot);
+    hres = create_function(ctx, NULL, PROPF_CONSTR, TRUE, object_prototype, &prot);
     if(FAILED(hres))
         return hres;
 
     prot->value_proc = FunctionProt_value;
 
     hres = create_function(ctx, NULL, PROPF_CONSTR, TRUE, &prot->dispex, &constr);
+    if(SUCCEEDED(hres)) {
+        constr->value_proc = FunctionConstr_value;
+        hres = set_prototype(ctx, &constr->dispex, &prot->dispex);
+        if(FAILED(hres))
+            jsdisp_release(&constr->dispex);
+    }
     jsdisp_release(&prot->dispex);
     if(FAILED(hres))
         return hres;
 
-    constr->value_proc = FunctionConstr_value;
     ctx->function_constr = &constr->dispex;
-    return hres;
+    return S_OK;
 }
