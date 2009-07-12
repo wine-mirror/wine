@@ -68,17 +68,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
-typedef struct _WININETFTPSESSIONW WININETFTPSESSIONW;
+typedef struct _ftp_session_t ftp_session_t;
 
 typedef struct
 {
     object_header_t hdr;
-    WININETFTPSESSIONW *lpFtpSession;
+    ftp_session_t *lpFtpSession;
     BOOL session_deleted;
     int nDataSocket;
 } WININETFTPFILE, *LPWININETFTPFILE;
 
-typedef struct _WININETFTPSESSIONW
+struct _ftp_session_t
 {
     object_header_t hdr;
     appinfo_t *lpAppInfo;
@@ -90,7 +90,7 @@ typedef struct _WININETFTPSESSIONW
     struct sockaddr_in lstnSocketAddress;
     LPWSTR  lpszPassword;
     LPWSTR  lpszUserName;
-} *LPWININETFTPSESSIONW;
+};
 
 typedef struct
 {
@@ -104,7 +104,7 @@ typedef struct
 typedef struct
 {
     object_header_t hdr;
-    WININETFTPSESSIONW *lpFtpSession;
+    ftp_session_t *lpFtpSession;
     DWORD index;
     DWORD size;
     LPFILEPROPERTIESW lpafp;
@@ -173,40 +173,40 @@ static const WCHAR szNoAccount[] = {'n','o','a','c','c','o','u','n','t','\0'};
 
 static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
 	INTERNET_STATUS_CALLBACK lpfnStatusCB, object_header_t *hdr, DWORD_PTR dwContext);
-static BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType);
-static BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket);
-static BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile);
-static INT FTP_ReceiveResponse(LPWININETFTPSESSIONW lpwfs, DWORD_PTR dwContext);
-static BOOL FTP_SendRetrieve(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType);
-static BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile);
-static BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs);
-static BOOL FTP_ConnectToHost(LPWININETFTPSESSIONW lpwfs);
-static BOOL FTP_SendPassword(LPWININETFTPSESSIONW lpwfs);
-static BOOL FTP_SendAccount(LPWININETFTPSESSIONW lpwfs);
-static BOOL FTP_SendType(LPWININETFTPSESSIONW lpwfs, DWORD dwType);
-static BOOL FTP_SendPort(LPWININETFTPSESSIONW lpwfs);
-static BOOL FTP_DoPassive(LPWININETFTPSESSIONW lpwfs);
-static BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONW lpwfs);
+static BOOL FTP_SendStore(ftp_session_t*, LPCWSTR lpszRemoteFile, DWORD dwType);
+static BOOL FTP_GetDataSocket(ftp_session_t*, LPINT nDataSocket);
+static BOOL FTP_SendData(ftp_session_t*, INT nDataSocket, HANDLE hFile);
+static INT FTP_ReceiveResponse(ftp_session_t*, DWORD_PTR dwContext);
+static BOOL FTP_SendRetrieve(ftp_session_t*, LPCWSTR lpszRemoteFile, DWORD dwType);
+static BOOL FTP_RetrieveFileData(ftp_session_t*, INT nDataSocket, HANDLE hFile);
+static BOOL FTP_InitListenSocket(ftp_session_t*);
+static BOOL FTP_ConnectToHost(ftp_session_t*);
+static BOOL FTP_SendPassword(ftp_session_t*);
+static BOOL FTP_SendAccount(ftp_session_t*);
+static BOOL FTP_SendType(ftp_session_t*, DWORD dwType);
+static BOOL FTP_SendPort(ftp_session_t*);
+static BOOL FTP_DoPassive(ftp_session_t*);
+static BOOL FTP_SendPortOrPasv(ftp_session_t*);
 static BOOL FTP_ParsePermission(LPCSTR lpszPermission, LPFILEPROPERTIESW lpfp);
 static BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERTIESW fileprop);
-static BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
+static BOOL FTP_ParseDirectory(ftp_session_t*, INT nSocket, LPCWSTR lpszSearchFile,
         LPFILEPROPERTIESW *lpafp, LPDWORD dwfp);
-static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
+static HINTERNET FTP_ReceiveFileList(ftp_session_t*, INT nSocket, LPCWSTR lpszSearchFile,
         LPWIN32_FIND_DATAW lpFindFileData, DWORD_PTR dwContext);
 static DWORD FTP_SetResponseError(DWORD dwResponse);
 static BOOL FTP_ConvertFileProp(LPFILEPROPERTIESW lpafp, LPWIN32_FIND_DATAW lpFindFileData);
-static BOOL FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
+static BOOL FTP_FtpPutFileW(ftp_session_t*, LPCWSTR lpszLocalFile,
         LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD_PTR dwContext);
-static BOOL FTP_FtpSetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
-static BOOL FTP_FtpCreateDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
-static HINTERNET FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
+static BOOL FTP_FtpSetCurrentDirectoryW(ftp_session_t*, LPCWSTR lpszDirectory);
+static BOOL FTP_FtpCreateDirectoryW(ftp_session_t*, LPCWSTR lpszDirectory);
+static HINTERNET FTP_FtpFindFirstFileW(ftp_session_t*,
         LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD_PTR dwContext);
-static BOOL FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszCurrentDirectory,
+static BOOL FTP_FtpGetCurrentDirectoryW(ftp_session_t*, LPWSTR lpszCurrentDirectory,
         LPDWORD lpdwCurrentDirectory);
-static BOOL FTP_FtpRenameFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszSrc, LPCWSTR lpszDest);
-static BOOL FTP_FtpRemoveDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory);
-static BOOL FTP_FtpDeleteFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName);
-static BOOL FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
+static BOOL FTP_FtpRenameFileW(ftp_session_t*, LPCWSTR lpszSrc, LPCWSTR lpszDest);
+static BOOL FTP_FtpRemoveDirectoryW(ftp_session_t*, LPCWSTR lpszDirectory);
+static BOOL FTP_FtpDeleteFileW(ftp_session_t*, LPCWSTR lpszFileName);
+static BOOL FTP_FtpGetFileW(ftp_session_t*, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
         BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
         DWORD_PTR dwContext);
 
@@ -240,7 +240,7 @@ BOOL WINAPI FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
 static void AsyncFtpPutFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPPUTFILEW const *req = &workRequest->u.FtpPutFileW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwfs);
 
@@ -264,7 +264,7 @@ static void AsyncFtpPutFileProc(WORKREQUEST *workRequest)
 BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
     LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
@@ -274,7 +274,7 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
         return FALSE;
     }
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -336,7 +336,7 @@ lend:
  *    FALSE on failure
  *
  */
-static BOOL FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
+static BOOL FTP_FtpPutFileW(ftp_session_t *lpwfs, LPCWSTR lpszLocalFile,
     LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD_PTR dwContext)
 {
     HANDLE hFile;
@@ -423,7 +423,7 @@ BOOL WINAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 static void AsyncFtpSetCurrentDirectoryProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPSETCURRENTDIRECTORYW const *req = &workRequest->u.FtpSetCurrentDirectoryW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwfs);
 
@@ -443,7 +443,7 @@ static void AsyncFtpSetCurrentDirectoryProc(WORKREQUEST *workRequest)
  */
 BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
 {
-    LPWININETFTPSESSIONW lpwfs = NULL;
+    ftp_session_t *lpwfs = NULL;
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
@@ -453,7 +453,7 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
         goto lend;
     }
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
     if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -504,7 +504,7 @@ lend:
  *    FALSE on failure
  *
  */
-static BOOL FTP_FtpSetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory)
+static BOOL FTP_FtpSetCurrentDirectoryW(ftp_session_t *lpwfs, LPCWSTR lpszDirectory)
 {
     INT nResCode;
     appinfo_t *hIC = NULL;
@@ -569,7 +569,7 @@ BOOL WINAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 static void AsyncFtpCreateDirectoryProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPCREATEDIRECTORYW const *req = &workRequest->u.FtpCreateDirectoryW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE(" %p\n", lpwfs);
 
@@ -589,11 +589,11 @@ static void AsyncFtpCreateDirectoryProc(WORKREQUEST *workRequest)
  */
 BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -652,7 +652,7 @@ lend:
  *    FALSE on failure
  *
  */
-static BOOL FTP_FtpCreateDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory)
+static BOOL FTP_FtpCreateDirectoryW(ftp_session_t *lpwfs, LPCWSTR lpszDirectory)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -723,7 +723,7 @@ HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
 static void AsyncFtpFindFirstFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPFINDFIRSTFILEW const *req = &workRequest->u.FtpFindFirstFileW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwfs);
 
@@ -745,11 +745,11 @@ static void AsyncFtpFindFirstFileProc(WORKREQUEST *workRequest)
 HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
     LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     appinfo_t *hIC = NULL;
     HINTERNET r = NULL;
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
     if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -802,7 +802,7 @@ lend:
  *    NULL on failure
  *
  */
-static HINTERNET FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
+static HINTERNET FTP_FtpFindFirstFileW(ftp_session_t *lpwfs,
     LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD_PTR dwContext)
 {
     INT nResCode;
@@ -918,7 +918,7 @@ BOOL WINAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDire
 static void AsyncFtpGetCurrentDirectoryProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPGETCURRENTDIRECTORYW const *req = &workRequest->u.FtpGetCurrentDirectoryW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwfs);
 
@@ -938,13 +938,13 @@ static void AsyncFtpGetCurrentDirectoryProc(WORKREQUEST *workRequest)
 BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDirectory,
     LPDWORD lpdwCurrentDirectory)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
     TRACE("%p %p %p\n", hFtpSession, lpszCurrentDirectory, lpdwCurrentDirectory);
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
     if (NULL == lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1013,7 +1013,7 @@ lend:
  *    FALSE on failure
  *
  */
-static BOOL FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszCurrentDirectory,
+static BOOL FTP_FtpGetCurrentDirectoryW(ftp_session_t *lpwfs, LPWSTR lpszCurrentDirectory,
 	LPDWORD lpdwCurrentDirectory)
 {
     INT nResCode;
@@ -1087,7 +1087,7 @@ lend:
 static void FTPFILE_Destroy(object_header_t *hdr)
 {
     LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
-    LPWININETFTPSESSIONW lpwfs = lpwh->lpFtpSession;
+    ftp_session_t *lpwfs = lpwh->lpFtpSession;
     INT nResCode;
 
     TRACE("\n");
@@ -1253,7 +1253,7 @@ static const object_vtbl_t FTPFILEVtbl = {
  *    NULL on failure
  *
  */
-HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
+HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
 	LPCWSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
 	DWORD_PTR dwContext)
 {
@@ -1365,7 +1365,7 @@ HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
 static void AsyncFtpOpenFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPOPENFILEW const *req = &workRequest->u.FtpOpenFileW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwfs);
 
@@ -1388,14 +1388,14 @@ HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
     LPCWSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
     DWORD_PTR dwContext)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     appinfo_t *hIC = NULL;
     HINTERNET r = NULL;
 
     TRACE("(%p,%s,0x%08x,0x%08x,0x%08lx)\n", hFtpSession,
         debugstr_w(lpszFileName), fdwAccess, dwFlags, dwContext);
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1482,7 +1482,7 @@ BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszN
 static void AsyncFtpGetFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPGETFILEW const *req = &workRequest->u.FtpGetFileW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwfs);
 
@@ -1508,7 +1508,7 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
     BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
     DWORD_PTR dwContext)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
@@ -1518,7 +1518,7 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
         return FALSE;
     }
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hInternet );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hInternet );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1584,7 +1584,7 @@ lend:
  *    FALSE on failure
  *
  */
-static BOOL FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
+static BOOL FTP_FtpGetFileW(ftp_session_t *lpwfs, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
 	BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
 	DWORD_PTR dwContext)
 {
@@ -1685,7 +1685,7 @@ BOOL WINAPI FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName)
 static void AsyncFtpDeleteFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPDELETEFILEW const *req = &workRequest->u.FtpDeleteFileW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwfs);
 
@@ -1705,11 +1705,11 @@ static void AsyncFtpDeleteFileProc(WORKREQUEST *workRequest)
  */
 BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1768,7 +1768,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOL FTP_FtpDeleteFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName)
+BOOL FTP_FtpDeleteFileW(ftp_session_t *lpwfs, LPCWSTR lpszFileName)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -1830,7 +1830,7 @@ BOOL WINAPI FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory)
 static void AsyncFtpRemoveDirectoryProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPREMOVEDIRECTORYW const *req = &workRequest->u.FtpRemoveDirectoryW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwfs);
 
@@ -1850,11 +1850,11 @@ static void AsyncFtpRemoveDirectoryProc(WORKREQUEST *workRequest)
  */
 BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -1913,7 +1913,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOL FTP_FtpRemoveDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory)
+BOOL FTP_FtpRemoveDirectoryW(ftp_session_t *lpwfs, LPCWSTR lpszDirectory)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -1979,7 +1979,7 @@ BOOL WINAPI FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDes
 static void AsyncFtpRenameFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPRENAMEFILEW const *req = &workRequest->u.FtpRenameFileW;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwfs);
 
@@ -2000,11 +2000,11 @@ static void AsyncFtpRenameFileProc(WORKREQUEST *workRequest)
  */
 BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszDest)
 {
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     appinfo_t *hIC = NULL;
     BOOL r = FALSE;
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hFtpSession );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -2064,8 +2064,7 @@ lend:
  *    FALSE on failure
  *
  */
-BOOL FTP_FtpRenameFileW( LPWININETFTPSESSIONW lpwfs,
-                         LPCWSTR lpszSrc, LPCWSTR lpszDest)
+BOOL FTP_FtpRenameFileW(ftp_session_t *lpwfs, LPCWSTR lpszSrc, LPCWSTR lpszDest)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2151,7 +2150,7 @@ BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
                          LPCWSTR lpszCommand, DWORD_PTR dwContext, HINTERNET* phFtpCommand )
 {
     BOOL r = FALSE;
-    LPWININETFTPSESSIONW lpwfs;
+    ftp_session_t *lpwfs;
     LPSTR cmd = NULL;
     DWORD len, nBytesSent= 0;
     INT nResCode, nRC = 0;
@@ -2171,7 +2170,7 @@ BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
         return FALSE;
     }
 
-    lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hConnect );
+    lpwfs = (ftp_session_t*) WININET_GetObject( hConnect );
     if (!lpwfs)
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -2236,7 +2235,7 @@ lend:
  */
 static void FTPSESSION_Destroy(object_header_t *hdr)
 {
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) hdr;
 
     TRACE("\n");
 
@@ -2249,7 +2248,7 @@ static void FTPSESSION_Destroy(object_header_t *hdr)
 
 static void FTPSESSION_CloseConnection(object_header_t *hdr)
 {
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
+    ftp_session_t *lpwfs = (ftp_session_t*) hdr;
 
     TRACE("\n");
 
@@ -2339,7 +2338,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     INT nsocket = -1;
     UINT sock_namelen;
     BOOL bSuccess = FALSE;
-    LPWININETFTPSESSIONW lpwfs = NULL;
+    ftp_session_t *lpwfs = NULL;
     HINTERNET handle = NULL;
 
     TRACE("%p  Server(%s) Port(%d) User(%s) Paswd(%s)\n",
@@ -2354,7 +2353,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         goto lerror;
     }
     
-    lpwfs = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETFTPSESSIONW));
+    lpwfs = HeapAlloc(GetProcessHeap(), 0, sizeof(ftp_session_t));
     if (NULL == lpwfs)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
@@ -2512,7 +2511,7 @@ lerror:
  *   NULL on failure
  *
  */
-static BOOL FTP_ConnectToHost(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_ConnectToHost(ftp_session_t *lpwfs)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2630,7 +2629,7 @@ static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
  *   0 on failure
  *
  */
-INT FTP_ReceiveResponse(LPWININETFTPSESSIONW lpwfs, DWORD_PTR dwContext)
+INT FTP_ReceiveResponse(ftp_session_t *lpwfs, DWORD_PTR dwContext)
 {
     LPSTR lpszResponse = INTERNET_GetResponseBuffer();
     DWORD nRecv;
@@ -2693,7 +2692,7 @@ lerror:
  *   NULL on failure
  *
  */
-static BOOL FTP_SendPassword(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_SendPassword(ftp_session_t *lpwfs)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2733,7 +2732,7 @@ lend:
  *   FALSE on failure
  *
  */
-static BOOL FTP_SendAccount(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_SendAccount(ftp_session_t *lpwfs)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2763,7 +2762,7 @@ lend:
  *   FALSE on failure
  *
  */
-static BOOL FTP_SendStore(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType)
+static BOOL FTP_SendStore(ftp_session_t *lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2810,7 +2809,7 @@ lend:
  *   FALSE on failure
  *
  */
-static BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_InitListenSocket(ftp_session_t *lpwfs)
 {
     BOOL bSuccess = FALSE;
     socklen_t namelen = sizeof(lpwfs->lstnSocketAddress);
@@ -2869,7 +2868,7 @@ lend:
  * (i.e. it sends it always),
  * so we probably don't want to do that either.
  */
-static BOOL FTP_SendType(LPWININETFTPSESSIONW lpwfs, DWORD dwType)
+static BOOL FTP_SendType(ftp_session_t *lpwfs, DWORD dwType)
 {
     INT nResCode;
     WCHAR type[] = { 'I','\0' };
@@ -2907,7 +2906,7 @@ lend:
  *   FALSE on failure
  *
  */
-static BOOL FTP_GetFileSize(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD *dwSize)
+static BOOL FTP_GetFileSize(ftp_session_t *lpwfs, LPCWSTR lpszRemoteFile, DWORD *dwSize)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -2951,7 +2950,7 @@ lend:
  *   FALSE on failure
  *
  */
-static BOOL FTP_SendPort(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_SendPort(ftp_session_t *lpwfs)
 {
     static const WCHAR szIPFormat[] = {'%','d',',','%','d',',','%','d',',','%','d',',','%','d',',','%','d','\0'};
     INT nResCode;
@@ -2995,7 +2994,7 @@ lend:
  *   FALSE on failure
  *
  */
-static BOOL FTP_DoPassive(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_DoPassive(ftp_session_t *lpwfs)
 {
     INT nResCode;
     BOOL bSuccess = FALSE;
@@ -3067,7 +3066,7 @@ lend:
 }
 
 
-static BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONW lpwfs)
+static BOOL FTP_SendPortOrPasv(ftp_session_t *lpwfs)
 {
     if (lpwfs->hdr.dwFlags & INTERNET_FLAG_PASSIVE)
     {
@@ -3096,7 +3095,7 @@ static BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONW lpwfs)
  *   FALSE on failure
  *
  */
-static BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket)
+static BOOL FTP_GetDataSocket(ftp_session_t *lpwfs, LPINT nDataSocket)
 {
     struct sockaddr_in saddr;
     socklen_t addrlen = sizeof(struct sockaddr);
@@ -3126,7 +3125,7 @@ static BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket)
  *   FALSE on failure
  *
  */
-static BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile)
+static BOOL FTP_SendData(ftp_session_t *lpwfs, INT nDataSocket, HANDLE hFile)
 {
     BY_HANDLE_FILE_INFORMATION fi;
     DWORD nBytesRead = 0;
@@ -3207,7 +3206,7 @@ static BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFi
  *   0 on failure
  *
  */
-static BOOL FTP_SendRetrieve(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType)
+static BOOL FTP_SendRetrieve(ftp_session_t *lpwfs, LPCWSTR lpszRemoteFile, DWORD dwType)
 {
     INT nResCode;
     BOOL ret;
@@ -3253,7 +3252,7 @@ lend:
  *   FALSE on failure
  *
  */
-static BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile)
+static BOOL FTP_RetrieveFileData(ftp_session_t *lpwfs, INT nDataSocket, HANDLE hFile)
 {
     DWORD nBytesWritten;
     INT nRC = 0;
@@ -3413,7 +3412,7 @@ static const object_vtbl_t FTPFINDNEXTVtbl = {
  *   NULL on failure
  *
  */
-static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
+static HINTERNET FTP_ReceiveFileList(ftp_session_t *lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
 	LPWIN32_FIND_DATAW lpFindFileData, DWORD_PTR dwContext)
 {
     DWORD dwSize = 0;
@@ -3664,7 +3663,7 @@ static BOOL FTP_ParseNextFile(INT nSocket, LPCWSTR lpszSearchFile, LPFILEPROPERT
  *   TRUE on success
  *   FALSE on failure
  */
-static BOOL FTP_ParseDirectory(LPWININETFTPSESSIONW lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
+static BOOL FTP_ParseDirectory(ftp_session_t *lpwfs, INT nSocket, LPCWSTR lpszSearchFile,
     LPFILEPROPERTIESW *lpafp, LPDWORD dwfp)
 {
     BOOL bSuccess = TRUE;
