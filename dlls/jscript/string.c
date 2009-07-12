@@ -177,43 +177,63 @@ static HRESULT do_attribute_tag_format(DispatchEx *dispex, LCID lcid, WORD flags
         = {'<','%','s',' ','%','s','=','\"','%','s','\"','>','%','s','<','/','%','s','>',0};
     static const WCHAR undefinedW[] = {'u','n','d','e','f','i','n','e','d',0};
 
-    StringInstance *string;
-    BSTR ret, attr_value;
+    const WCHAR *str;
+    DWORD length;
+    BSTR attr_value, val_str = NULL;
     HRESULT hres;
 
     if(!is_class(dispex, JSCLASS_STRING)) {
-        WARN("this is not a string object\n");
-        return E_NOTIMPL;
-    }
+        VARIANT this;
 
-    string = (StringInstance*) dispex;
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
+    }
 
     if(arg_cnt(dp)) {
         hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &attr_value);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
             return hres;
+        }
     }
     else {
         attr_value = SysAllocString(undefinedW);
-        if(!attr_value)
+        if(!attr_value) {
+            SysFreeString(val_str);
             return E_OUTOFMEMORY;
+        }
     }
 
     if(retv) {
-        ret = SysAllocStringLen(NULL, string->length + 2*strlenW(tagname)
+        BSTR ret = SysAllocStringLen(NULL, length + 2*strlenW(tagname)
                 + strlenW(attr) + SysStringLen(attr_value) + 9);
         if(!ret) {
             SysFreeString(attr_value);
+            SysFreeString(val_str);
             return E_OUTOFMEMORY;
         }
 
-        sprintfW(ret, tagfmtW, tagname, attr, attr_value, string->str, tagname);
+        sprintfW(ret, tagfmtW, tagname, attr, attr_value, str, tagname);
 
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = ret;
     }
 
     SysFreeString(attr_value);
+    SysFreeString(val_str);
     return S_OK;
 }
 
