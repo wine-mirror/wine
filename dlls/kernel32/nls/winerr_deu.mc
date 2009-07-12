@@ -17,7 +17,7 @@
 ;
 
 LanguageNames=(DEU=0x0007:winerr)
-CodePages=(DEU=1252:0)
+CodePages=(DEU=65001:0)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS
@@ -27,7 +27,7 @@ Erfolg
 MessageId=1
 SymbolicName=ERROR_INVALID_FUNCTION
 Language=DEU
-Ungültige Funktion
+UngÃ¼ltige Funktion
 .
 MessageId=2
 SymbolicName=ERROR_FILE_NOT_FOUND
@@ -52,42 +52,42 @@ Zugriff verweigert
 MessageId=6
 SymbolicName=ERROR_INVALID_HANDLE
 Language=DEU
-Ungültiges Handle
+UngÃ¼ltiges Handle
 .
 MessageId=7
 SymbolicName=ERROR_ARENA_TRASHED
 Language=DEU
-Speicherstrukturen beschädigt
+Speicherstrukturen beschÃ¤digt
 .
 MessageId=8
 SymbolicName=ERROR_NOT_ENOUGH_MEMORY
 Language=DEU
-Nicht genügend Arbeitsspeicher
+Nicht genÃ¼gend Arbeitsspeicher
 .
 MessageId=9
 SymbolicName=ERROR_INVALID_BLOCK
 Language=DEU
-Ungültiger Block
+UngÃ¼ltiger Block
 .
 MessageId=10
 SymbolicName=ERROR_BAD_ENVIRONMENT
 Language=DEU
-Ungültige Umgebung
+UngÃ¼ltige Umgebung
 .
 MessageId=11
 SymbolicName=ERROR_BAD_FORMAT
 Language=DEU
-Ungültiges Format
+UngÃ¼ltiges Format
 .
 MessageId=12
 SymbolicName=ERROR_INVALID_ACCESS
 Language=DEU
-Ungültiger Zugriff
+UngÃ¼ltiger Zugriff
 .
 MessageId=13
 SymbolicName=ERROR_INVALID_DATA
 Language=DEU
-Ungültige Daten
+UngÃ¼ltige Daten
 .
 MessageId=14
 SymbolicName=ERROR_OUTOFMEMORY
@@ -97,17 +97,17 @@ Kein Arbeitsspeicher mehr
 MessageId=15
 SymbolicName=ERROR_INVALID_DRIVE
 Language=DEU
-Ungültiges Laufwerk
+UngÃ¼ltiges Laufwerk
 .
 MessageId=16
 SymbolicName=ERROR_CURRENT_DIRECTORY
 Language=DEU
-Kann Arbeitsverzeichnis nicht löschen
+Kann Arbeitsverzeichnis nicht lÃ¶schen
 .
 MessageId=17
 SymbolicName=ERROR_NOT_SAME_DEVICE
 Language=DEU
-Nicht das gleiche Gerät
+Nicht das gleiche GerÃ¤t
 .
 MessageId=18
 SymbolicName=ERROR_NO_MORE_FILES
@@ -117,12 +117,12 @@ Keine weiteren Dateien
 MessageId=19
 SymbolicName=ERROR_WRITE_PROTECT
 Language=DEU
-Schreibgeschützt
+SchreibgeschÃ¼tzt
 .
 MessageId=20
 SymbolicName=ERROR_BAD_UNIT
 Language=DEU
-Ungültige Einheit
+UngÃ¼ltige Einheit
 .
 MessageId=21
 SymbolicName=ERROR_NOT_READY
@@ -142,7 +142,7 @@ CRC-Fehler
 MessageId=24
 SymbolicName=ERROR_BAD_LENGTH
 Language=DEU
-Fehlerhafte Länge
+Fehlerhafte LÃ¤nge
 .
 MessageId=25
 SymbolicName=ERROR_SEEK
@@ -152,7 +152,7 @@ Such-Fehler
 MessageId=26
 SymbolicName=ERROR_NOT_DOS_DISK
 Language=DEU
-Kein DOS-Datenträger
+Kein DOS-DatentrÃ¤ger
 .
 MessageId=27
 SymbolicName=ERROR_SECTOR_NOT_FOUND
@@ -192,7 +192,7 @@ Lock-Verletzung
 MessageId=34
 SymbolicName=ERROR_WRONG_DISK
 Language=DEU
-Falscher Datenträger
+Falscher DatentrÃ¤ger
 .
 MessageId=36
 SymbolicName=ERROR_SHARING_BUFFER_EXCEEDED
@@ -207,12 +207,12 @@ Ende der Datei
 MessageId=39
 SymbolicName=ERROR_HANDLE_DISK_FULL
 Language=DEU
-Datenträger voll
+DatentrÃ¤ger voll
 .
 MessageId=50
 SymbolicName=ERROR_NOT_SUPPORTED
 Language=DEU
-Anfrage nicht unterstützt
+Anfrage nicht unterstÃ¼tzt
 .
 MessageId=51
 SymbolicName=ERROR_REM_NOT_LIST
@@ -232,12 +232,12 @@ Fehlerhafter Netzpfad
 MessageId=54
 SymbolicName=ERROR_NETWORK_BUSY
 Language=DEU
-Netzwerk beschäftigt
+Netzwerk beschÃ¤ftigt
 .
 MessageId=55
 SymbolicName=ERROR_DEV_NOT_EXIST
 Language=DEU
-Gerät existiert nicht
+GerÃ¤t existiert nicht
 .
 MessageId=56
 SymbolicName=ERROR_TOO_MANY_CMDS
@@ -282,7 +282,7 @@ Druck abgebrochen
 MessageId=64
 SymbolicName=ERROR_NETNAME_DELETED
 Language=DEU
-Netzwerkname gelöscht
+Netzwerkname gelÃ¶scht
 .
 MessageId=65
 SymbolicName=ERROR_NETWORK_ACCESS_DENIED
@@ -292,7 +292,7 @@ Netzwerkzugriff verweigert
 MessageId=66
 SymbolicName=ERROR_BAD_DEV_TYPE
 Language=DEU
-Fehlerhafter Gerätetyp
+Fehlerhafter GerÃ¤tetyp
 .
 MessageId=67
 SymbolicName=ERROR_BAD_NET_NAME
@@ -352,12 +352,12 @@ Bereits zugewiesen
 MessageId=86
 SymbolicName=ERROR_INVALID_PASSWORD
 Language=DEU
-Ungültiges Passwort
+UngÃ¼ltiges Passwort
 .
 MessageId=87
 SymbolicName=ERROR_INVALID_PARAMETER
 Language=DEU
-Ungültiger Parameter
+UngÃ¼ltiger Parameter
 .
 MessageId=88
 SymbolicName=ERROR_NET_WRITE_FAULT
@@ -392,7 +392,7 @@ Zu viele Semaphoren-Anfragen
 MessageId=104
 SymbolicName=ERROR_INVALID_AT_INTERRUPT_TIME
 Language=DEU
-Ungültig zu Interrupt-Zeitpunkt
+UngÃ¼ltig zu Interrupt-Zeitpunkt
 .
 MessageId=105
 SymbolicName=ERROR_SEM_OWNER_DIED
@@ -407,7 +407,7 @@ Semaphoren-Benutzer-Limit
 MessageId=107
 SymbolicName=ERROR_DISK_CHANGE
 Language=DEU
-Datenträger in Laufwerk %1 einlegen
+DatentrÃ¤ger in Laufwerk %1 einlegen
 .
 MessageId=108
 SymbolicName=ERROR_DRIVE_LOCKED
@@ -422,17 +422,17 @@ Gebrochene Pipe
 MessageId=110
 SymbolicName=ERROR_OPEN_FAILED
 Language=DEU
-Öffnen fehlgeschlagen
+Ã–ffnen fehlgeschlagen
 .
 MessageId=111
 SymbolicName=ERROR_BUFFER_OVERFLOW
 Language=DEU
-Pufferüberlauf
+PufferÃ¼berlauf
 .
 MessageId=112
 SymbolicName=ERROR_DISK_FULL
 Language=DEU
-Datenträger voll
+DatentrÃ¤ger voll
 .
 MessageId=113
 SymbolicName=ERROR_NO_MORE_SEARCH_HANDLES
@@ -442,17 +442,17 @@ Keine weiteren Such-Handles
 MessageId=114
 SymbolicName=ERROR_INVALID_TARGET_HANDLE
 Language=DEU
-Ungültiges Ziel-Handle
+UngÃ¼ltiges Ziel-Handle
 .
 MessageId=117
 SymbolicName=ERROR_INVALID_CATEGORY
 Language=DEU
-Ungültiges IOCTL
+UngÃ¼ltiges IOCTL
 .
 MessageId=118
 SymbolicName=ERROR_INVALID_VERIFY_SWITCH
 Language=DEU
-Ungültiger Überprüfungsschalter
+UngÃ¼ltiger ÃœberprÃ¼fungsschalter
 .
 MessageId=119
 SymbolicName=ERROR_BAD_DRIVER_LEVEL
@@ -477,12 +477,12 @@ Nicht ausreichender Puffer
 MessageId=123
 SymbolicName=ERROR_INVALID_NAME
 Language=DEU
-Ungültiger Name
+UngÃ¼ltiger Name
 .
 MessageId=124
 SymbolicName=ERROR_INVALID_LEVEL
 Language=DEU
-Ungültige Ebene
+UngÃ¼ltige Ebene
 .
 MessageId=125
 SymbolicName=ERROR_NO_VOLUME_LABEL
@@ -512,7 +512,7 @@ Kind-Prozess ist nicht abgeschlossen
 MessageId=130
 SymbolicName=ERROR_DIRECT_ACCESS_HANDLE
 Language=DEU
-Ungültige Benutzung eines Handles für Direktzugriff
+UngÃ¼ltige Benutzung eines Handles fÃ¼r Direktzugriff
 .
 MessageId=131
 SymbolicName=ERROR_NEGATIVE_SEEK
@@ -572,7 +572,7 @@ Versuch auf ein geJOINtes Laufwerk zu SUBSTen
 MessageId=142
 SymbolicName=ERROR_BUSY_DRIVE
 Language=DEU
-Laufwerk ist beschäftigt
+Laufwerk ist beschÃ¤ftigt
 .
 MessageId=143
 SymbolicName=ERROR_SAME_DRIVE
@@ -602,7 +602,7 @@ Pfad wird als JOIN benutzt
 MessageId=148
 SymbolicName=ERROR_PATH_BUSY
 Language=DEU
-Pfad ist beschäftigt
+Pfad ist beschÃ¤ftigt
 .
 MessageId=149
 SymbolicName=ERROR_IS_SUBST_TARGET
@@ -617,17 +617,17 @@ System-Trace nicht spezifiziert oder erlaubt
 MessageId=151
 SymbolicName=ERROR_INVALID_EVENT_COUNT
 Language=DEU
-Event-Anzahl für DosMuxSemWait nicht korrekt
+Event-Anzahl fÃ¼r DosMuxSemWait nicht korrekt
 .
 MessageId=152
 SymbolicName=ERROR_TOO_MANY_MUXWAITERS
 Language=DEU
-Zu viele Warter für DosMuxSemWait
+Zu viele Warter fÃ¼r DosMuxSemWait
 .
 MessageId=153
 SymbolicName=ERROR_INVALID_LIST_FORMAT
 Language=DEU
-DosSemMuxWait-Liste ungültig
+DosSemMuxWait-Liste ungÃ¼ltig
 .
 MessageId=154
 SymbolicName=ERROR_LABEL_TOO_LONG
@@ -662,17 +662,17 @@ Fehlerhafte Thread-ID-Adresse
 MessageId=160
 SymbolicName=ERROR_BAD_ARGUMENTS
 Language=DEU
-Fehlerhafte Argumente für DosExecPgm
+Fehlerhafte Argumente fÃ¼r DosExecPgm
 .
 MessageId=161
 SymbolicName=ERROR_BAD_PATHNAME
 Language=DEU
-Pfad is ungültig
+Pfad is ungÃ¼ltig
 .
 MessageId=162
 SymbolicName=ERROR_SIGNAL_PENDING
 Language=DEU
-Signal anhängig
+Signal anhÃ¤ngig
 .
 MessageId=164
 SymbolicName=ERROR_MAX_THRDS_REACHED
@@ -697,17 +697,17 @@ Abbruch-Verletzung
 MessageId=174
 SymbolicName=ERROR_ATOMIC_LOCKS_NOT_SUPPORTED
 Language=DEU
-Atomare Sperren nicht unterstützt
+Atomare Sperren nicht unterstÃ¼tzt
 .
 MessageId=180
 SymbolicName=ERROR_INVALID_SEGMENT_NUMBER
 Language=DEU
-Ungültige Segmentnummer
+UngÃ¼ltige Segmentnummer
 .
 MessageId=182
 SymbolicName=ERROR_INVALID_ORDINAL
 Language=DEU
-Ungültiges Ordinal für %1
+UngÃ¼ltiges Ordinal fÃ¼r %1
 .
 MessageId=183
 SymbolicName=ERROR_ALREADY_EXISTS
@@ -717,7 +717,7 @@ Datei existiert bereits
 MessageId=186
 SymbolicName=ERROR_INVALID_FLAG_NUMBER
 Language=DEU
-Ungültige Flag-Nummer
+UngÃ¼ltige Flag-Nummer
 .
 MessageId=187
 SymbolicName=ERROR_SEM_NOT_FOUND
@@ -727,47 +727,47 @@ Semaphoren-Name nicht gefunden
 MessageId=188
 SymbolicName=ERROR_INVALID_STARTING_CODESEG
 Language=DEU
-Ungültiges anfängliches Code-Segment für %1
+UngÃ¼ltiges anfÃ¤ngliches Code-Segment fÃ¼r %1
 .
 MessageId=189
 SymbolicName=ERROR_INVALID_STACKSEG
 Language=DEU
-Ungültiges anfängliches Stack-Segment für %1
+UngÃ¼ltiges anfÃ¤ngliches Stack-Segment fÃ¼r %1
 .
 MessageId=190
 SymbolicName=ERROR_INVALID_MODULETYPE
 Language=DEU
-Ungültiger Modul-Typ für %1
+UngÃ¼ltiger Modul-Typ fÃ¼r %1
 .
 MessageId=191
 SymbolicName=ERROR_INVALID_EXE_SIGNATURE
 Language=DEU
-Ungültige EXE-Signatur für %1
+UngÃ¼ltige EXE-Signatur fÃ¼r %1
 .
 MessageId=192
 SymbolicName=ERROR_EXE_MARKED_INVALID
 Language=DEU
-EXE %1 ist als ungültig markiert
+EXE %1 ist als ungÃ¼ltig markiert
 .
 MessageId=193
 SymbolicName=ERROR_BAD_EXE_FORMAT
 Language=DEU
-Fehlerhaftes EXE-Format für %1
+Fehlerhaftes EXE-Format fÃ¼r %1
 .
 MessageId=194
 SymbolicName=ERROR_ITERATED_DATA_EXCEEDS_64k
 Language=DEU
-Iterierte Daten übersteigen 64k in %1
+Iterierte Daten Ã¼bersteigen 64k in %1
 .
 MessageId=195
 SymbolicName=ERROR_INVALID_MINALLOCSIZE
 Language=DEU
-Ungültige MinAllocSize in %1
+UngÃ¼ltige MinAllocSize in %1
 .
 MessageId=196
 SymbolicName=ERROR_DYNLINK_FROM_INVALID_RING
 Language=DEU
-Dynlink von ungültigem Ring
+Dynlink von ungÃ¼ltigem Ring
 .
 MessageId=197
 SymbolicName=ERROR_IOPL_NOT_ENABLED
@@ -777,12 +777,12 @@ IOPL nicht aktiviert
 MessageId=198
 SymbolicName=ERROR_INVALID_SEGDPL
 Language=DEU
-Ungültiges SEGDPL in %1
+UngÃ¼ltiges SEGDPL in %1
 .
 MessageId=199
 SymbolicName=ERROR_AUTODATASEG_EXCEEDS_64k
 Language=DEU
-Automatisches Daten-Segment übertrifft 64k
+Automatisches Daten-Segment Ã¼bertrifft 64k
 .
 MessageId=200
 SymbolicName=ERROR_RING2SEG_MUST_BE_MOVABLE
@@ -792,7 +792,7 @@ Ring-2-Segment muss bewegbar sein
 MessageId=201
 SymbolicName=ERROR_RELOC_CHAIN_XEEDS_SEGLIM
 Language=DEU
-Relokationskette übertrifft Segmentlimit in %1
+Relokationskette Ã¼bertrifft Segmentlimit in %1
 .
 MessageId=202
 SymbolicName=ERROR_INFLOOP_IN_RELOC_CHAIN
@@ -827,7 +827,7 @@ Fehler in Benutzung von Dateinamen-Wildcards
 MessageId=209
 SymbolicName=ERROR_INVALID_SIGNAL_NUMBER
 Language=DEU
-Ungültige Signalnummer
+UngÃ¼ltige Signalnummer
 .
 MessageId=210
 SymbolicName=ERROR_THREAD_1_INACTIVE
@@ -852,7 +852,7 @@ Schachteln von LoadModule-Aufrufen nicht erlaubt
 MessageId=216
 SymbolicName=ERROR_EXE_MACHINE_TYPE_MISMATCH
 Language=DEU
-Maschinen-Typ nicht übereinstimmend
+Maschinen-Typ nicht Ã¼bereinstimmend
 .
 MessageId=230
 SymbolicName=ERROR_BAD_PIPE
@@ -862,7 +862,7 @@ Fehlerhafte Pipe
 MessageId=231
 SymbolicName=ERROR_PIPE_BUSY
 Language=DEU
-Pipe beschäftigt
+Pipe beschÃ¤ftigt
 .
 MessageId=232
 SymbolicName=ERROR_NO_DATA
@@ -877,7 +877,7 @@ Pipe nicht verbunden
 MessageId=234
 SymbolicName=ERROR_MORE_DATA
 Language=DEU
-Mehr Daten verfügbar
+Mehr Daten verfÃ¼gbar
 .
 MessageId=240
 SymbolicName=ERROR_VC_DISCONNECTED
@@ -887,7 +887,7 @@ Sitzung abgebrochen
 MessageId=254
 SymbolicName=ERROR_INVALID_EA_NAME
 Language=DEU
-Ungültiger Name für erweitertes Attribut
+UngÃ¼ltiger Name fÃ¼r erweitertes Attribut
 .
 MessageId=255
 SymbolicName=ERROR_EA_LIST_INCONSISTENT
@@ -907,7 +907,7 @@ Kann Copy-API nicht benutzen
 MessageId=267
 SymbolicName=ERROR_DIRECTORY
 Language=DEU
-Verzeichnisname ist ungültig
+Verzeichnisname ist ungÃ¼ltig
 .
 MessageId=275
 SymbolicName=ERROR_EAS_DIDNT_FIT
@@ -917,7 +917,7 @@ Erweiterte Attribute passten nicht
 MessageId=276
 SymbolicName=ERROR_EA_FILE_CORRUPT
 Language=DEU
-Datei für erweiterte Attribute beschädigt
+Datei fÃ¼r erweiterte Attribute beschÃ¤digt
 .
 MessageId=277
 SymbolicName=ERROR_EA_TABLE_FULL
@@ -927,12 +927,12 @@ Tabelle der erweiterten Attribute voll
 MessageId=278
 SymbolicName=ERROR_INVALID_EA_HANDLE
 Language=DEU
-Ungültiges Handle für erweitertes Attribut
+UngÃ¼ltiges Handle fÃ¼r erweitertes Attribut
 .
 MessageId=282
 SymbolicName=ERROR_EAS_NOT_SUPPORTED
 Language=DEU
-Erweiterte Attribute nicht unterstützt
+Erweiterte Attribute nicht unterstÃ¼tzt
 .
 MessageId=288
 SymbolicName=ERROR_NOT_OWNER
@@ -967,12 +967,12 @@ Meldung 0x%1 nicht in Datei %2 gefunden
 MessageId=487
 SymbolicName=ERROR_INVALID_ADDRESS
 Language=DEU
-Ungültige Adresse
+UngÃ¼ltige Adresse
 .
 MessageId=534
 SymbolicName=ERROR_ARITHMETIC_OVERFLOW
 Language=DEU
-Arithmetischer Überlauf
+Arithmetischer Ãœberlauf
 .
 MessageId=535
 SymbolicName=ERROR_PIPE_CONNECTED
@@ -997,12 +997,12 @@ E/A-Operation abgebrochen
 MessageId=996
 SymbolicName=ERROR_IO_INCOMPLETE
 Language=DEU
-Überlappende E/A unvollständig
+Ãœberlappende E/A unvollstÃ¤ndig
 .
 MessageId=997
 SymbolicName=ERROR_IO_PENDING
 Language=DEU
-Überlappende E/A anhängig
+Ãœberlappende E/A anhÃ¤ngig
 .
 MessageId=998
 SymbolicName=ERROR_NOACCESS
@@ -1017,12 +1017,12 @@ Swap-Fehler
 MessageId=1001
 SymbolicName=ERROR_STACK_OVERFLOW
 Language=DEU
-Stacküberlauf
+StackÃ¼berlauf
 .
 MessageId=1002
 SymbolicName=ERROR_INVALID_MESSAGE
 Language=DEU
-Ungültige Nachricht
+UngÃ¼ltige Nachricht
 .
 MessageId=1003
 SymbolicName=ERROR_CAN_NOT_COMPLETE
@@ -1032,7 +1032,7 @@ Kann nicht abschliessen
 MessageId=1004
 SymbolicName=ERROR_INVALID_FLAGS
 Language=DEU
-Ungültige Flags
+UngÃ¼ltige Flags
 .
 MessageId=1005
 SymbolicName=ERROR_UNRECOGNIZED_VOLUME
@@ -1042,12 +1042,12 @@ Unerkanntes Volume
 MessageId=1006
 SymbolicName=ERROR_FILE_INVALID
 Language=DEU
-Datei ungültig
+Datei ungÃ¼ltig
 .
 MessageId=1007
 SymbolicName=ERROR_FULLSCREEN_MODE
 Language=DEU
-Kann nicht in Vollbild ausführen
+Kann nicht in Vollbild ausfÃ¼hren
 .
 MessageId=1008
 SymbolicName=ERROR_NO_TOKEN
@@ -1057,12 +1057,12 @@ Nicht existierendes Token
 MessageId=1009
 SymbolicName=ERROR_BADDB
 Language=DEU
-Registry beschädigt
+Registry beschÃ¤digt
 .
 MessageId=1010
 SymbolicName=ERROR_BADKEY
 Language=DEU
-Ungültiger Schlüssel
+UngÃ¼ltiger SchlÃ¼ssel
 .
 MessageId=1011
 SymbolicName=ERROR_CANTOPEN
@@ -1072,12 +1072,12 @@ ERROR_CANTOPEN
 MessageId=1012
 SymbolicName=ERROR_CANTREAD
 Language=DEU
-Kann Registry-Schlüssel nicht lesen
+Kann Registry-SchlÃ¼ssel nicht lesen
 .
 MessageId=1013
 SymbolicName=ERROR_CANTWRITE
 Language=DEU
-Kann Registry-Schlüssel nicht schreiben
+Kann Registry-SchlÃ¼ssel nicht schreiben
 .
 MessageId=1014
 SymbolicName=ERROR_REGISTRY_RECOVERED
@@ -1087,7 +1087,7 @@ Registry wurde wiederhergestellt
 MessageId=1015
 SymbolicName=ERROR_REGISTRY_CORRUPT
 Language=DEU
-Registry ist beschädigt
+Registry ist beschÃ¤digt
 .
 MessageId=1016
 SymbolicName=ERROR_REGISTRY_IO_FAILED
@@ -1102,37 +1102,37 @@ Keine Registry-Datei
 MessageId=1018
 SymbolicName=ERROR_KEY_DELETED
 Language=DEU
-Schlüssel gelöscht
+SchlÃ¼ssel gelÃ¶scht
 .
 MessageId=1019
 SymbolicName=ERROR_NO_LOG_SPACE
 Language=DEU
-Kein Speicher für Registry-Protokoll
+Kein Speicher fÃ¼r Registry-Protokoll
 .
 MessageId=1020
 SymbolicName=ERROR_KEY_HAS_CHILDREN
 Language=DEU
-Registry-Schlüssel hat Unterschlüssel
+Registry-SchlÃ¼ssel hat UnterschlÃ¼ssel
 .
 MessageId=1021
 SymbolicName=ERROR_CHILD_MUST_BE_VOLATILE
 Language=DEU
-Unterschlüssel muss flüchtig sein
+UnterschlÃ¼ssel muss flÃ¼chtig sein
 .
 MessageId=1022
 SymbolicName=ERROR_NOTIFY_ENUM_DIR
 Language=DEU
-Anfrage für Änderungsbenachrichtigung im Gange
+Anfrage fÃ¼r Ã„nderungsbenachrichtigung im Gange
 .
 MessageId=1051
 SymbolicName=ERROR_DEPENDENT_SERVICES_RUNNING
 Language=DEU
-Abhängige Dienste laufen
+AbhÃ¤ngige Dienste laufen
 .
 MessageId=1052
 SymbolicName=ERROR_INVALID_SERVICE_CONTROL
 Language=DEU
-Ungültige Dienststeuerung
+UngÃ¼ltige Dienststeuerung
 .
 MessageId=1053
 SymbolicName=ERROR_SERVICE_REQUEST_TIMEOUT
@@ -1152,12 +1152,12 @@ Dienst-Datenbank gesperrt
 MessageId=1056
 SymbolicName=ERROR_SERVICE_ALREADY_RUNNING
 Language=DEU
-Dienst läuft bereits
+Dienst lÃ¤uft bereits
 .
 MessageId=1057
 SymbolicName=ERROR_INVALID_SERVICE_ACCOUNT
 Language=DEU
-Ungültiges Dienste-Konto
+UngÃ¼ltiges Dienste-Konto
 .
 MessageId=1058
 SymbolicName=ERROR_SERVICE_DISABLED
@@ -1167,7 +1167,7 @@ Dienst ist deaktiviert
 MessageId=1059
 SymbolicName=ERROR_CIRCULAR_DEPENDENCY
 Language=DEU
-Zirkuläre Abhängigkeit
+ZirkulÃ¤re AbhÃ¤ngigkeit
 .
 MessageId=1060
 SymbolicName=ERROR_SERVICE_DOES_NOT_EXIST
@@ -1212,7 +1212,7 @@ Prozess fehlgeschlagen
 MessageId=1068
 SymbolicName=ERROR_SERVICE_DEPENDENCY_FAIL
 Language=DEU
-Dienst-Abhängigkeit fehlgeschlagen
+Dienst-AbhÃ¤ngigkeit fehlgeschlagen
 .
 MessageId=1069
 SymbolicName=ERROR_SERVICE_LOGON_FAILED
@@ -1227,12 +1227,12 @@ Dienst bei Start aufgehangen
 MessageId=1071
 SymbolicName=ERROR_INVALID_SERVICE_LOCK
 Language=DEU
-Ungültige Dienst-Sperre
+UngÃ¼ltige Dienst-Sperre
 .
 MessageId=1072
 SymbolicName=ERROR_SERVICE_MARKED_FOR_DELETE
 Language=DEU
-Dienst für Löschen markiert
+Dienst fÃ¼r LÃ¶schen markiert
 .
 MessageId=1073
 SymbolicName=ERROR_SERVICE_EXISTS
@@ -1247,7 +1247,7 @@ System benutzt letzte als funktionierend bekannte Konfiguration
 MessageId=1075
 SymbolicName=ERROR_SERVICE_DEPENDENCY_DELETED
 Language=DEU
-Dienst-Abhängigkeit gelöscht
+Dienst-AbhÃ¤ngigkeit gelÃ¶scht
 .
 MessageId=1076
 SymbolicName=ERROR_BOOT_ALREADY_ACCEPTED
@@ -1322,12 +1322,12 @@ Partitionsfehler
 MessageId=1106
 SymbolicName=ERROR_INVALID_BLOCK_LENGTH
 Language=DEU
-Ungültige Blocklänge
+UngÃ¼ltige BlocklÃ¤nge
 .
 MessageId=1107
 SymbolicName=ERROR_DEVICE_NOT_PARTITIONED
 Language=DEU
-Gerät nicht partitioniert
+GerÃ¤t nicht partitioniert
 .
 MessageId=1108
 SymbolicName=ERROR_UNABLE_TO_LOCK_MEDIA
@@ -1357,7 +1357,7 @@ Kein Medium im Laufwerk
 MessageId=1113
 SymbolicName=ERROR_NO_UNICODE_TRANSLATION
 Language=DEU
-Keine Unicode-Übersetzung
+Keine Unicode-Ãœbersetzung
 .
 MessageId=1114
 SymbolicName=ERROR_DLL_INIT_FAILED
@@ -1377,27 +1377,27 @@ Kein Herunterfahren im Gange
 MessageId=1117
 SymbolicName=ERROR_IO_DEVICE
 Language=DEU
-E/A Gerätefehler
+E/A GerÃ¤tefehler
 .
 MessageId=1118
 SymbolicName=ERROR_SERIAL_NO_DEVICE
 Language=DEU
-Keine seriellen Geräte gefunden
+Keine seriellen GerÃ¤te gefunden
 .
 MessageId=1119
 SymbolicName=ERROR_IRQ_BUSY
 Language=DEU
-Geteilter IRQ beschäftigt
+Geteilter IRQ beschÃ¤ftigt
 .
 MessageId=1120
 SymbolicName=ERROR_MORE_WRITES
 Language=DEU
-Serielle E/A vollständig
+Serielle E/A vollstÃ¤ndig
 .
 MessageId=1121
 SymbolicName=ERROR_COUNTER_TIMEOUT
 Language=DEU
-Timeout von seriellem E/A Zähler
+Timeout von seriellem E/A ZÃ¤hler
 .
 MessageId=1122
 SymbolicName=ERROR_FLOPPY_ID_MARK_NOT_FOUND
@@ -1447,12 +1447,12 @@ Nicht genug Serverspeicher
 MessageId=1131
 SymbolicName=ERROR_POSSIBLE_DEADLOCK
 Language=DEU
-Mögliche Verklemmung
+MÃ¶gliche Verklemmung
 .
 MessageId=1132
 SymbolicName=ERROR_MAPPED_ALIGNMENT
 Language=DEU
-Ungültige Ausrichtung
+UngÃ¼ltige Ausrichtung
 .
 MessageId=1140
 SymbolicName=ERROR_SET_POWER_STATE_VETOED
@@ -1467,12 +1467,12 @@ Setzen des Energie-Zustands fehlgeschlagen
 MessageId=1142
 SymbolicName=ERROR_TOO_MANY_LINKS
 Language=DEU
-Zu viele Verknüpfungen
+Zu viele VerknÃ¼pfungen
 .
 MessageId=1150
 SymbolicName=ERROR_OLD_WIN_VERSION
 Language=DEU
-Neuerer Windows-Version benötigt
+Neuerer Windows-Version benÃ¶tigt
 .
 MessageId=1151
 SymbolicName=ERROR_APP_WRONG_OS
@@ -1492,12 +1492,12 @@ Real-Mode-Anwendung
 MessageId=1154
 SymbolicName=ERROR_INVALID_DLL
 Language=DEU
-Ungültige DLL
+UngÃ¼ltige DLL
 .
 MessageId=1155
 SymbolicName=ERROR_NO_ASSOCIATION
 Language=DEU
-Keine verknüpfte Anwendung
+Keine verknÃ¼pfte Anwendung
 .
 MessageId=1156
 SymbolicName=ERROR_DDE_FAIL
@@ -1627,17 +1627,17 @@ ERROR_JOURNAL_ENTRY_DELETED
 MessageId=1200
 SymbolicName=ERROR_BAD_DEVICE
 Language=DEU
-Ungültiger Gerätename
+UngÃ¼ltiger GerÃ¤tename
 .
 MessageId=1201
 SymbolicName=ERROR_CONNECTION_UNAVAIL
 Language=DEU
-Verbindung nicht verfügbar
+Verbindung nicht verfÃ¼gbar
 .
 MessageId=1202
 SymbolicName=ERROR_DEVICE_ALREADY_REMEMBERED
 Language=DEU
-Gerät wird bereits errinnert
+GerÃ¤t wird bereits errinnert
 .
 MessageId=1203
 SymbolicName=ERROR_NO_NET_OR_BAD_PATH
@@ -1647,17 +1647,17 @@ Kein Netzwerk oder falscher Pfad
 MessageId=1204
 SymbolicName=ERROR_BAD_PROVIDER
 Language=DEU
-Ungültiger Name für Netzwerk-Provider
+UngÃ¼ltiger Name fÃ¼r Netzwerk-Provider
 .
 MessageId=1205
 SymbolicName=ERROR_CANNOT_OPEN_PROFILE
 Language=DEU
-Kann Netzwerkverbindungsprofil nicht öffnen
+Kann Netzwerkverbindungsprofil nicht Ã¶ffnen
 .
 MessageId=1206
 SymbolicName=ERROR_BAD_PROFILE
 Language=DEU
-Beschädigtes Netzwerkverbindungsprofil
+BeschÃ¤digtes Netzwerkverbindungsprofil
 .
 MessageId=1207
 SymbolicName=ERROR_NOT_CONTAINER
@@ -1672,52 +1672,52 @@ Erweiterter Fehler
 MessageId=1209
 SymbolicName=ERROR_INVALID_GROUPNAME
 Language=DEU
-Ungültiger Gruppenname
+UngÃ¼ltiger Gruppenname
 .
 MessageId=1210
 SymbolicName=ERROR_INVALID_COMPUTERNAME
 Language=DEU
-Ungültiger Computername
+UngÃ¼ltiger Computername
 .
 MessageId=1211
 SymbolicName=ERROR_INVALID_EVENTNAME
 Language=DEU
-Ungültiger Ereignisname
+UngÃ¼ltiger Ereignisname
 .
 MessageId=1212
 SymbolicName=ERROR_INVALID_DOMAINNAME
 Language=DEU
-Ungültiger Domain-Name
+UngÃ¼ltiger Domain-Name
 .
 MessageId=1213
 SymbolicName=ERROR_INVALID_SERVICENAME
 Language=DEU
-Ungültiger Dienstname
+UngÃ¼ltiger Dienstname
 .
 MessageId=1214
 SymbolicName=ERROR_INVALID_NETNAME
 Language=DEU
-Ungültiger Netzwerkname
+UngÃ¼ltiger Netzwerkname
 .
 MessageId=1215
 SymbolicName=ERROR_INVALID_SHARENAME
 Language=DEU
-Ungültiger Freigabenname
+UngÃ¼ltiger Freigabenname
 .
 MessageId=1216
 SymbolicName=ERROR_INVALID_PASSWORDNAME
 Language=DEU
-Ungültiges Passwort
+UngÃ¼ltiges Passwort
 .
 MessageId=1217
 SymbolicName=ERROR_INVALID_MESSAGENAME
 Language=DEU
-Ungültiger Nachrichtenname
+UngÃ¼ltiger Nachrichtenname
 .
 MessageId=1218
 SymbolicName=ERROR_INVALID_MESSAGEDEST
 Language=DEU
-Ungültiges Nachrichtenziel
+UngÃ¼ltiges Nachrichtenziel
 .
 MessageId=1219
 SymbolicName=ERROR_SESSION_CREDENTIAL_CONFLICT
@@ -1727,12 +1727,12 @@ Konflikt in Sitzungs-Berechtigung
 MessageId=1220
 SymbolicName=ERROR_REMOTE_SESSION_LIMIT_EXCEEDED
 Language=DEU
-Situngslimit des Remoterechners überschritten
+Situngslimit des Remoterechners Ã¼berschritten
 .
 MessageId=1221
 SymbolicName=ERROR_DUP_DOMAINNAME
 Language=DEU
-Doppelter Domänen- oder Arbeitsgruppenname
+Doppelter DomÃ¤nen- oder Arbeitsgruppenname
 .
 MessageId=1222
 SymbolicName=ERROR_NO_NETWORK
@@ -1772,7 +1772,7 @@ Adresse nicht mit Transport-Endpunkt assoziiert
 MessageId=1229
 SymbolicName=ERROR_CONNECTION_INVALID
 Language=DEU
-Ungültige Verbindung
+UngÃ¼ltige Verbindung
 .
 MessageId=1230
 SymbolicName=ERROR_CONNECTION_ACTIVE
@@ -1832,7 +1832,7 @@ Login-Arbeitsplatz-Begrenzung
 MessageId=1241
 SymbolicName=ERROR_INCORRECT_ADDRESS
 Language=DEU
-Ungültige Netzwerkadresse
+UngÃ¼ltige Netzwerkadresse
 .
 MessageId=1242
 SymbolicName=ERROR_ALREADY_REGISTERED
@@ -1867,7 +1867,7 @@ Bereits initialisiert
 MessageId=1248
 SymbolicName=ERROR_NO_MORE_DEVICES
 Language=DEU
-Keine weiteren lokalen Geräte
+Keine weiteren lokalen GerÃ¤te
 .
 MessageId=1249
 SymbolicName=ERROR_NO_SUCH_SITE
@@ -1912,17 +1912,17 @@ Einige Sicherheits-IDs nicht abgebildet
 MessageId=1302
 SymbolicName=ERROR_NO_QUOTAS_FOR_ACCOUNT
 Language=DEU
-Keine Quota für Account
+Keine Quota fÃ¼r Account
 .
 MessageId=1303
 SymbolicName=ERROR_LOCAL_USER_SESSION_KEY
 Language=DEU
-Sitzungsschlüssel für lokalen Benutzer
+SitzungsschlÃ¼ssel fÃ¼r lokalen Benutzer
 .
 MessageId=1304
 SymbolicName=ERROR_NULL_LM_PASSWORD
 Language=DEU
-Passwort zu komplex für LM
+Passwort zu komplex fÃ¼r LM
 .
 MessageId=1305
 SymbolicName=ERROR_UNKNOWN_REVISION
@@ -1937,12 +1937,12 @@ Inkompatible Revisions-Levels
 MessageId=1307
 SymbolicName=ERROR_INVALID_OWNER
 Language=DEU
-Ungültiger Besitzer
+UngÃ¼ltiger Besitzer
 .
 MessageId=1308
 SymbolicName=ERROR_INVALID_PRIMARY_GROUP
 Language=DEU
-Ungültige primäre Gruppe
+UngÃ¼ltige primÃ¤re Gruppe
 .
 MessageId=1309
 SymbolicName=ERROR_NO_IMPERSONATION_TOKEN
@@ -1957,7 +1957,7 @@ Kann obligatorische Gruppe nicht deaktivieren
 MessageId=1311
 SymbolicName=ERROR_NO_LOGON_SERVERS
 Language=DEU
-Keine Logon-Server verfügbar
+Keine Logon-Server verfÃ¼gbar
 .
 MessageId=1312
 SymbolicName=ERROR_NO_SUCH_LOGON_SESSION
@@ -1977,7 +1977,7 @@ Privileg nicht besessen
 MessageId=1315
 SymbolicName=ERROR_INVALID_ACCOUNT_NAME
 Language=DEU
-Ungültiger Account-Name
+UngÃ¼ltiger Account-Name
 .
 MessageId=1316
 SymbolicName=ERROR_USER_EXISTS
@@ -2012,7 +2012,7 @@ Benutzer nicht in Gruppe
 MessageId=1322
 SymbolicName=ERROR_LAST_ADMIN
 Language=DEU
-Kann letzten Admin-User nicht löschen
+Kann letzten Admin-User nicht lÃ¶schen
 .
 MessageId=1323
 SymbolicName=ERROR_WRONG_PASSWORD
@@ -2027,7 +2027,7 @@ Falsch formatiertes Passwort
 MessageId=1325
 SymbolicName=ERROR_PASSWORD_RESTRICTION
 Language=DEU
-Passwort-Beschränkung
+Passwort-BeschrÃ¤nkung
 .
 MessageId=1326
 SymbolicName=ERROR_LOGON_FAILURE
@@ -2037,17 +2037,17 @@ Logon-Fehler
 MessageId=1327
 SymbolicName=ERROR_ACCOUNT_RESTRICTION
 Language=DEU
-Account-Beschränkung
+Account-BeschrÃ¤nkung
 .
 MessageId=1328
 SymbolicName=ERROR_INVALID_LOGON_HOURS
 Language=DEU
-Ungültige Logon-Zeiten
+UngÃ¼ltige Logon-Zeiten
 .
 MessageId=1329
 SymbolicName=ERROR_INVALID_WORKSTATION
 Language=DEU
-Ungültiger Arbeitsplatz
+UngÃ¼ltiger Arbeitsplatz
 .
 MessageId=1330
 SymbolicName=ERROR_PASSWORD_EXPIRED
@@ -2072,27 +2072,27 @@ Zu viele LUIDs angefragt
 MessageId=1334
 SymbolicName=ERROR_LUIDS_EXHAUSTED
 Language=DEU
-LUIDs ausgeschöpft
+LUIDs ausgeschÃ¶pft
 .
 MessageId=1335
 SymbolicName=ERROR_INVALID_SUB_AUTHORITY
 Language=DEU
-Ungültige Subauthorität
+UngÃ¼ltige SubauthoritÃ¤t
 .
 MessageId=1336
 SymbolicName=ERROR_INVALID_ACL
 Language=DEU
-Ungültige ACL
+UngÃ¼ltige ACL
 .
 MessageId=1337
 SymbolicName=ERROR_INVALID_SID
 Language=DEU
-Ungültige SID
+UngÃ¼ltige SID
 .
 MessageId=1338
 SymbolicName=ERROR_INVALID_SECURITY_DESCR
 Language=DEU
-Ungültiger Sicherheits-Deskriptor
+UngÃ¼ltiger Sicherheits-Deskriptor
 .
 MessageId=1340
 SymbolicName=ERROR_BAD_INHERITANCE_ACL
@@ -2112,17 +2112,17 @@ Server nicht deaktiviert
 MessageId=1343
 SymbolicName=ERROR_INVALID_ID_AUTHORITY
 Language=DEU
-Ungültige ID-Authorität
+UngÃ¼ltige ID-AuthoritÃ¤t
 .
 MessageId=1344
 SymbolicName=ERROR_ALLOTTED_SPACE_EXCEEDED
 Language=DEU
-Zugewiesener Speicher überschritten
+Zugewiesener Speicher Ã¼berschritten
 .
 MessageId=1345
 SymbolicName=ERROR_INVALID_GROUP_ATTRIBUTES
 Language=DEU
-Ungültige Gruppen-Attribute
+UngÃ¼ltige Gruppen-Attribute
 .
 MessageId=1346
 SymbolicName=ERROR_BAD_IMPERSONATION_LEVEL
@@ -2132,7 +2132,7 @@ Fehlerhaftes Impersonation-Level
 MessageId=1347
 SymbolicName=ERROR_CANT_OPEN_ANONYMOUS
 Language=DEU
-Kann anonymes Sicherheits-Token nicht öffnen
+Kann anonymes Sicherheits-Token nicht Ã¶ffnen
 .
 MessageId=1348
 SymbolicName=ERROR_BAD_VALIDATION_CLASS
@@ -2152,42 +2152,42 @@ Keine Sicherheit auf Objekt
 MessageId=1351
 SymbolicName=ERROR_CANT_ACCESS_DOMAIN_INFO
 Language=DEU
-Kann auf Domänen-Information nicht zugreifen
+Kann auf DomÃ¤nen-Information nicht zugreifen
 .
 MessageId=1352
 SymbolicName=ERROR_INVALID_SERVER_STATE
 Language=DEU
-Ungültiger Server-Status
+UngÃ¼ltiger Server-Status
 .
 MessageId=1353
 SymbolicName=ERROR_INVALID_DOMAIN_STATE
 Language=DEU
-Ungültiger Domänen-Status
+UngÃ¼ltiger DomÃ¤nen-Status
 .
 MessageId=1354
 SymbolicName=ERROR_INVALID_DOMAIN_ROLE
 Language=DEU
-Ungültige Domänen-Rolle
+UngÃ¼ltige DomÃ¤nen-Rolle
 .
 MessageId=1355
 SymbolicName=ERROR_NO_SUCH_DOMAIN
 Language=DEU
-Keine solche Domäne
+Keine solche DomÃ¤ne
 .
 MessageId=1356
 SymbolicName=ERROR_DOMAIN_EXISTS
 Language=DEU
-Domäne existiert bereits
+DomÃ¤ne existiert bereits
 .
 MessageId=1357
 SymbolicName=ERROR_DOMAIN_LIMIT_EXCEEDED
 Language=DEU
-Domänen-Limit überschritten
+DomÃ¤nen-Limit Ã¼berschritten
 .
 MessageId=1358
 SymbolicName=ERROR_INTERNAL_DB_CORRUPTION
 Language=DEU
-Interne Datenbank beschädigt
+Interne Datenbank beschÃ¤digt
 .
 MessageId=1359
 SymbolicName=ERROR_INTERNAL_ERROR
@@ -2232,7 +2232,7 @@ Kollision von Logon-Sitzungs-ID
 MessageId=1367
 SymbolicName=ERROR_INVALID_LOGON_TYPE
 Language=DEU
-Ungültiger Logon-Typ
+UngÃ¼ltiger Logon-Typ
 .
 MessageId=1368
 SymbolicName=ERROR_CANNOT_IMPERSONATE
@@ -2242,7 +2242,7 @@ Kann nicht Impersonaten
 MessageId=1369
 SymbolicName=ERROR_RXACT_INVALID_STATE
 Language=DEU
-Ungültiger Transaktions-Status
+UngÃ¼ltiger Transaktions-Status
 .
 MessageId=1370
 SymbolicName=ERROR_RXACT_COMMIT_FAILURE
@@ -2267,7 +2267,7 @@ Benutzer ist eingebaut
 MessageId=1374
 SymbolicName=ERROR_MEMBERS_PRIMARY_GROUP
 Language=DEU
-Gruppe ist primär für Benutzer
+Gruppe ist primÃ¤r fÃ¼r Benutzer
 .
 MessageId=1375
 SymbolicName=ERROR_TOKEN_ALREADY_IN_USE
@@ -2327,7 +2327,7 @@ Logon-Typ nicht zugestanden
 MessageId=1386
 SymbolicName=ERROR_NT_CROSS_ENCRYPTION_REQUIRED
 Language=DEU
-Querverschlüsseltes NT-Passwort erforderlich
+QuerverschlÃ¼sseltes NT-Passwort erforderlich
 .
 MessageId=1387
 SymbolicName=ERROR_NO_SUCH_MEMBER
@@ -2337,7 +2337,7 @@ Kein solches Mitglied
 MessageId=1388
 SymbolicName=ERROR_INVALID_MEMBER
 Language=DEU
-Ungültiges Mitglied
+UngÃ¼ltiges Mitglied
 .
 MessageId=1389
 SymbolicName=ERROR_TOO_MANY_SIDS
@@ -2347,7 +2347,7 @@ Zu viele SIDs
 MessageId=1390
 SymbolicName=ERROR_LM_CROSS_ENCRYPTION_REQUIRED
 Language=DEU
-Querverschlüsseltes LM-Passwort erforderlich
+QuerverschlÃ¼sseltes LM-Passwort erforderlich
 .
 MessageId=1391
 SymbolicName=ERROR_NO_INHERITANCE
@@ -2357,22 +2357,22 @@ Keine vererbbaren Komponenten
 MessageId=1392
 SymbolicName=ERROR_FILE_CORRUPT
 Language=DEU
-Datei oder Verzeichnis beschädigt
+Datei oder Verzeichnis beschÃ¤digt
 .
 MessageId=1393
 SymbolicName=ERROR_DISK_CORRUPT
 Language=DEU
-Datenträger beschädigt
+DatentrÃ¤ger beschÃ¤digt
 .
 MessageId=1394
 SymbolicName=ERROR_NO_USER_SESSION_KEY
 Language=DEU
-Kein Beutzer-Sitzungs-Schlüssel
+Kein Beutzer-Sitzungs-SchlÃ¼ssel
 .
 MessageId=1395
 SymbolicName=ERROR_LICENSE_QUOTA_EXCEEDED
 Language=DEU
-Lizenz-Quota überschritten
+Lizenz-Quota Ã¼berschritten
 .
 MessageId=1396
 SymbolicName=ERROR_WRONG_TARGET_NAME
@@ -2392,32 +2392,32 @@ ERROR_TIME_SKEW
 MessageId=1400
 SymbolicName=ERROR_INVALID_WINDOW_HANDLE
 Language=DEU
-Ungültiges Fenster-Handle
+UngÃ¼ltiges Fenster-Handle
 .
 MessageId=1401
 SymbolicName=ERROR_INVALID_MENU_HANDLE
 Language=DEU
-Ungültiges Menü-Handle
+UngÃ¼ltiges MenÃ¼-Handle
 .
 MessageId=1402
 SymbolicName=ERROR_INVALID_CURSOR_HANDLE
 Language=DEU
-Ungültiges Cursor-Handle
+UngÃ¼ltiges Cursor-Handle
 .
 MessageId=1403
 SymbolicName=ERROR_INVALID_ACCEL_HANDLE
 Language=DEU
-Ungültiges Accelerator-Tabellen-Handle
+UngÃ¼ltiges Accelerator-Tabellen-Handle
 .
 MessageId=1404
 SymbolicName=ERROR_INVALID_HOOK_HANDLE
 Language=DEU
-Ungültiges Hook-Handle
+UngÃ¼ltiges Hook-Handle
 .
 MessageId=1405
 SymbolicName=ERROR_INVALID_DWP_HANDLE
 Language=DEU
-Ungültiges DWP-Handle
+UngÃ¼ltiges DWP-Handle
 .
 MessageId=1406
 SymbolicName=ERROR_TLW_WITH_WSCHILD
@@ -2432,7 +2432,7 @@ Kann Fenster-Klasse nicht finden
 MessageId=1408
 SymbolicName=ERROR_WINDOW_OF_OTHER_THREAD
 Language=DEU
-Fenster gehört anderem Thread
+Fenster gehÃ¶rt anderem Thread
 .
 MessageId=1409
 SymbolicName=ERROR_HOTKEY_ALREADY_REGISTERED
@@ -2457,12 +2457,12 @@ Klasse hat offene Fenster
 MessageId=1413
 SymbolicName=ERROR_INVALID_INDEX
 Language=DEU
-Ungültiger Index
+UngÃ¼ltiger Index
 .
 MessageId=1414
 SymbolicName=ERROR_INVALID_ICON_HANDLE
 Language=DEU
-Ungültiges Icon-Handle
+UngÃ¼ltiges Icon-Handle
 .
 MessageId=1415
 SymbolicName=ERROR_PRIVATE_DIALOG_INDEX
@@ -2502,7 +2502,7 @@ Steuerelement-ID nicht gefunden
 MessageId=1422
 SymbolicName=ERROR_INVALID_COMBOBOX_MESSAGE
 Language=DEU
-Ungültige Combobox-Nachricht
+UngÃ¼ltige Combobox-Nachricht
 .
 MessageId=1423
 SymbolicName=ERROR_WINDOW_NOT_COMBOBOX
@@ -2512,7 +2512,7 @@ Kein Combobox-Fenster
 MessageId=1424
 SymbolicName=ERROR_INVALID_EDIT_HEIGHT
 Language=DEU
-Ungültige Edit-Höhe
+UngÃ¼ltige Edit-HÃ¶he
 .
 MessageId=1425
 SymbolicName=ERROR_DC_NOT_FOUND
@@ -2522,12 +2522,12 @@ DC nicht gefunden
 MessageId=1426
 SymbolicName=ERROR_INVALID_HOOK_FILTER
 Language=DEU
-Ungültiger Hook-Filter
+UngÃ¼ltiger Hook-Filter
 .
 MessageId=1427
 SymbolicName=ERROR_INVALID_FILTER_PROC
 Language=DEU
-Ungültige Filter-Prozedur
+UngÃ¼ltige Filter-Prozedur
 .
 MessageId=1428
 SymbolicName=ERROR_HOOK_NEEDS_HMOD
@@ -2552,12 +2552,12 @@ Hook-Prozedur nicht installiert
 MessageId=1432
 SymbolicName=ERROR_INVALID_LB_MESSAGE
 Language=DEU
-Ungültige Listbox-Nachricht
+UngÃ¼ltige Listbox-Nachricht
 .
 MessageId=1433
 SymbolicName=ERROR_SETCOUNT_ON_BAD_LB
 Language=DEU
-Ungültige LB_SETCOUNT gesendet
+UngÃ¼ltige LB_SETCOUNT gesendet
 .
 MessageId=1434
 SymbolicName=ERROR_LB_WITHOUT_TABSTOPS
@@ -2567,27 +2567,27 @@ Keine Tabstops in dieser Listbox
 MessageId=1435
 SymbolicName=ERROR_DESTROY_OBJECT_OF_OTHER_THREAD
 Language=DEU
-Kann nicht Objekt zerstören dass anderem Thread gehört
+Kann nicht Objekt zerstÃ¶ren dass anderem Thread gehÃ¶rt
 .
 MessageId=1436
 SymbolicName=ERROR_CHILD_WINDOW_MENU
 Language=DEU
-Menüs in Kindfenstern nicht erlaubt
+MenÃ¼s in Kindfenstern nicht erlaubt
 .
 MessageId=1437
 SymbolicName=ERROR_NO_SYSTEM_MENU
 Language=DEU
-Fenster hat kein System-Menü
+Fenster hat kein System-MenÃ¼
 .
 MessageId=1438
 SymbolicName=ERROR_INVALID_MSGBOX_STYLE
 Language=DEU
-Ungültiger Stil für Meldungsfenster
+UngÃ¼ltiger Stil fÃ¼r Meldungsfenster
 .
 MessageId=1439
 SymbolicName=ERROR_INVALID_SPI_VALUE
 Language=DEU
-Ungültiger SPI-Parameter
+UngÃ¼ltiger SPI-Parameter
 .
 MessageId=1440
 SymbolicName=ERROR_SCREEN_ALREADY_LOCKED
@@ -2607,12 +2607,12 @@ Kein Kindfenster
 MessageId=1443
 SymbolicName=ERROR_INVALID_GW_COMMAND
 Language=DEU
-Ungültiger GW-Befehl
+UngÃ¼ltiger GW-Befehl
 .
 MessageId=1444
 SymbolicName=ERROR_INVALID_THREAD_ID
 Language=DEU
-Ungültige Thread-ID
+UngÃ¼ltige Thread-ID
 .
 MessageId=1445
 SymbolicName=ERROR_NON_MDICHILD_WINDOW
@@ -2622,7 +2622,7 @@ Kein MDI-Kindfenster
 MessageId=1446
 SymbolicName=ERROR_POPUP_ALREADY_ACTIVE
 Language=DEU
-Popup-Menü bereits aktiv
+Popup-MenÃ¼ bereits aktiv
 .
 MessageId=1447
 SymbolicName=ERROR_NO_SCROLLBARS
@@ -2632,12 +2632,12 @@ Kein Bildlaufleisten
 MessageId=1448
 SymbolicName=ERROR_INVALID_SCROLLBAR_RANGE
 Language=DEU
-Ungültiger Bereich für Bildlaufleiste
+UngÃ¼ltiger Bereich fÃ¼r Bildlaufleiste
 .
 MessageId=1449
 SymbolicName=ERROR_INVALID_SHOWWIN_COMMAND
 Language=DEU
-Ungültiger ShowWin-Befehl
+UngÃ¼ltiger ShowWin-Befehl
 .
 MessageId=1450
 SymbolicName=ERROR_NO_SYSTEM_RESOURCES
@@ -2657,22 +2657,22 @@ Keine paged Systemressourcen
 MessageId=1453
 SymbolicName=ERROR_WORKING_SET_QUOTA
 Language=DEU
-Keine Quota für Working Set
+Keine Quota fÃ¼r Working Set
 .
 MessageId=1454
 SymbolicName=ERROR_PAGEFILE_QUOTA
 Language=DEU
-Keine Quota für Pagefile
+Keine Quota fÃ¼r Pagefile
 .
 MessageId=1455
 SymbolicName=ERROR_COMMITMENT_LIMIT
 Language=DEU
-Commitment-Grenze überschritten
+Commitment-Grenze Ã¼berschritten
 .
 MessageId=1456
 SymbolicName=ERROR_MENU_ITEM_NOT_FOUND
 Language=DEU
-Menü-Eintrag nicht gefunden
+MenÃ¼-Eintrag nicht gefunden
 .
 MessageId=1457
 SymbolicName=ERROR_INVALID_KEYBOARD_HANDLE
@@ -2702,7 +2702,7 @@ ERROR_INVALID_MONITOR_HANDLE
 MessageId=1500
 SymbolicName=ERROR_EVENTLOG_FILE_CORRUPT
 Language=DEU
-Ereignisprotokolldatei beschädigt
+Ereignisprotokolldatei beschÃ¤digt
 .
 MessageId=1501
 SymbolicName=ERROR_EVENTLOG_CANT_START
@@ -2717,7 +2717,7 @@ Ereignisprotokolldatei voll
 MessageId=1503
 SymbolicName=ERROR_EVENTLOG_FILE_CHANGED
 Language=DEU
-Ereignisprotokolldatei verändert
+Ereignisprotokolldatei verÃ¤ndert
 .
 MessageId=1601
 SymbolicName=ERROR_INSTALL_SERVICE_FAILURE
@@ -2927,7 +2927,7 @@ ERROR_SUCCESS_REBOOT_INITIATED
 MessageId=1700
 SymbolicName=RPC_S_INVALID_STRING_BINDING
 Language=DEU
-Ungültige String-Bindung
+UngÃ¼ltige String-Bindung
 .
 MessageId=1701
 SymbolicName=RPC_S_WRONG_KIND_OF_BINDING
@@ -2937,32 +2937,32 @@ Falsche Bindungsart
 MessageId=1702
 SymbolicName=RPC_S_INVALID_BINDING
 Language=DEU
-Ungültige Bindung
+UngÃ¼ltige Bindung
 .
 MessageId=1703
 SymbolicName=RPC_S_PROTSEQ_NOT_SUPPORTED
 Language=DEU
-RPC-Protokollsequenz nicht unterstützt
+RPC-Protokollsequenz nicht unterstÃ¼tzt
 .
 MessageId=1704
 SymbolicName=RPC_S_INVALID_RPC_PROTSEQ
 Language=DEU
-Ungültige RPC-Protokollsequenz
+UngÃ¼ltige RPC-Protokollsequenz
 .
 MessageId=1705
 SymbolicName=RPC_S_INVALID_STRING_UUID
 Language=DEU
-Ungültige String-UUID
+UngÃ¼ltige String-UUID
 .
 MessageId=1706
 SymbolicName=RPC_S_INVALID_ENDPOINT_FORMAT
 Language=DEU
-Ungültiges Endpunkt-Format
+UngÃ¼ltiges Endpunkt-Format
 .
 MessageId=1707
 SymbolicName=RPC_S_INVALID_NET_ADDR
 Language=DEU
-Ungültige Netzwerkadresse
+UngÃ¼ltige Netzwerkadresse
 .
 MessageId=1708
 SymbolicName=RPC_S_NO_ENDPOINT_FOUND
@@ -2972,7 +2972,7 @@ Kein Endpunkt gefunden
 MessageId=1709
 SymbolicName=RPC_S_INVALID_TIMEOUT
 Language=DEU
-Ungültiger Timeout-Wert
+UngÃ¼ltiger Timeout-Wert
 .
 MessageId=1710
 SymbolicName=RPC_S_OBJECT_NOT_FOUND
@@ -3037,17 +3037,17 @@ Keine Ressourcen mehr
 MessageId=1722
 SymbolicName=RPC_S_SERVER_UNAVAILABLE
 Language=DEU
-RPC-Server nicht verfügbar
+RPC-Server nicht verfÃ¼gbar
 .
 MessageId=1723
 SymbolicName=RPC_S_SERVER_TOO_BUSY
 Language=DEU
-RPC-Server zu beschäftigt
+RPC-Server zu beschÃ¤ftigt
 .
 MessageId=1724
 SymbolicName=RPC_S_INVALID_NETWORK_OPTIONS
 Language=DEU
-Ungültige Netzwerk-Optionen
+UngÃ¼ltige Netzwerk-Optionen
 .
 MessageId=1725
 SymbolicName=RPC_S_NO_CALL_ACTIVE
@@ -3062,7 +3062,7 @@ RPC-Aufruf fehlgeschlagen
 MessageId=1727
 SymbolicName=RPC_S_CALL_FAILED_DNE
 Language=DEU
-RPC-Aufruf fehlgeschlagen und nicht ausgeführt
+RPC-Aufruf fehlgeschlagen und nicht ausgefÃ¼hrt
 .
 MessageId=1728
 SymbolicName=RPC_S_PROTOCOL_ERROR
@@ -3072,22 +3072,22 @@ RPC-Protokoll-Fehler
 MessageId=1730
 SymbolicName=RPC_S_UNSUPPORTED_TRANS_SYN
 Language=DEU
-Nicht unterstützte Transfer-Syntax
+Nicht unterstÃ¼tzte Transfer-Syntax
 .
 MessageId=1732
 SymbolicName=RPC_S_UNSUPPORTED_TYPE
 Language=DEU
-Nicht unterstützter Typ
+Nicht unterstÃ¼tzter Typ
 .
 MessageId=1733
 SymbolicName=RPC_S_INVALID_TAG
 Language=DEU
-Ungültiges Tag
+UngÃ¼ltiges Tag
 .
 MessageId=1734
 SymbolicName=RPC_S_INVALID_BOUND
 Language=DEU
-Ungültige Array-Grenzen
+UngÃ¼ltige Array-Grenzen
 .
 MessageId=1735
 SymbolicName=RPC_S_NO_ENTRY_NAME
@@ -3097,12 +3097,12 @@ Kein Eintrags-Name
 MessageId=1736
 SymbolicName=RPC_S_INVALID_NAME_SYNTAX
 Language=DEU
-Ungültige Namens-Syntax
+UngÃ¼ltige Namens-Syntax
 .
 MessageId=1737
 SymbolicName=RPC_S_UNSUPPORTED_NAME_SYNTAX
 Language=DEU
-Nicht unterstützte Namens-Syntax
+Nicht unterstÃ¼tzte Namens-Syntax
 .
 MessageId=1739
 SymbolicName=RPC_S_UUID_NO_ADDRESS
@@ -3122,7 +3122,7 @@ Unbekannter Authentifizierungs-Typ
 MessageId=1742
 SymbolicName=RPC_S_MAX_CALLS_TOO_SMALL
 Language=DEU
-Höchstanzahl an Aufrufen zu niedrig
+HÃ¶chstanzahl an Aufrufen zu niedrig
 .
 MessageId=1743
 SymbolicName=RPC_S_STRING_TOO_LONG
@@ -3157,7 +3157,7 @@ Unbekanntes Authentifizierungs-Level
 MessageId=1749
 SymbolicName=RPC_S_INVALID_AUTH_IDENTITY
 Language=DEU
-Ungültige Authentifizierungs-Identität
+UngÃ¼ltige Authentifizierungs-IdentitÃ¤t
 .
 MessageId=1750
 SymbolicName=RPC_S_UNKNOWN_AUTHZ_SERVICE
@@ -3167,12 +3167,12 @@ Unbekannter Authorisierungs-Dienst
 MessageId=1751
 SymbolicName=EPT_S_INVALID_ENTRY
 Language=DEU
-Ungültiger Eintrag
+UngÃ¼ltiger Eintrag
 .
 MessageId=1752
 SymbolicName=EPT_S_CANT_PERFORM_OP
 Language=DEU
-Kann Operation nicht ausführen
+Kann Operation nicht ausfÃ¼hren
 .
 MessageId=1753
 SymbolicName=EPT_S_NOT_REGISTERED
@@ -3187,12 +3187,12 @@ Nichts zu exportieren
 MessageId=1755
 SymbolicName=RPC_S_INCOMPLETE_NAME
 Language=DEU
-Unvollständiger Name
+UnvollstÃ¤ndiger Name
 .
 MessageId=1756
 SymbolicName=RPC_S_INVALID_VERS_OPTION
 Language=DEU
-Ungültige Versions-Option
+UngÃ¼ltige Versions-Option
 .
 MessageId=1757
 SymbolicName=RPC_S_NO_MORE_MEMBERS
@@ -3222,22 +3222,22 @@ Eintrag nicht gefunden
 MessageId=1762
 SymbolicName=RPC_S_NAME_SERVICE_UNAVAILABLE
 Language=DEU
-Namens-Dienst nicht verfügbar
+Namens-Dienst nicht verfÃ¼gbar
 .
 MessageId=1763
 SymbolicName=RPC_S_INVALID_NAF_ID
 Language=DEU
-Ungültige Netzwerkadressfamilie
+UngÃ¼ltige Netzwerkadressfamilie
 .
 MessageId=1764
 SymbolicName=RPC_S_CANNOT_SUPPORT
 Language=DEU
-Operation nicht unterstützt
+Operation nicht unterstÃ¼tzt
 .
 MessageId=1765
 SymbolicName=RPC_S_NO_CONTEXT_AVAILABLE
 Language=DEU
-Kein Sicherheits-Kontext verfügbar
+Kein Sicherheits-Kontext verfÃ¼gbar
 .
 MessageId=1766
 SymbolicName=RPC_S_INTERNAL_ERROR
@@ -3257,32 +3257,32 @@ Adressfehler
 MessageId=1769
 SymbolicName=RPC_S_FP_DIV_ZERO
 Language=DEU
-Fließkomma Division durch Null
+FlieÃŸkomma Division durch Null
 .
 MessageId=1770
 SymbolicName=RPC_S_FP_UNDERFLOW
 Language=DEU
-Fließkomma-Unterlauf
+FlieÃŸkomma-Unterlauf
 .
 MessageId=1771
 SymbolicName=RPC_S_FP_OVERFLOW
 Language=DEU
-Fließkomma-Überlauf
+FlieÃŸkomma-Ãœberlauf
 .
 MessageId=1772
 SymbolicName=RPC_X_NO_MORE_ENTRIES
 Language=DEU
-Keine weiteren Einträge
+Keine weiteren EintrÃ¤ge
 .
 MessageId=1773
 SymbolicName=RPC_X_SS_CHAR_TRANS_OPEN_FAIL
 Language=DEU
-Öffnen der Zeichenübersetzungstabelle fehlgeschlagen
+Ã–ffnen der ZeichenÃ¼bersetzungstabelle fehlgeschlagen
 .
 MessageId=1774
 SymbolicName=RPC_X_SS_CHAR_TRANS_SHORT_FILE
 Language=DEU
-Zeichenübersetzungstabellendatei zu klein
+ZeichenÃ¼bersetzungstabellendatei zu klein
 .
 MessageId=1775
 SymbolicName=RPC_X_SS_IN_NULL_CONTEXT
@@ -3292,12 +3292,12 @@ Kontext-Handle ist Null
 MessageId=1777
 SymbolicName=RPC_X_SS_CONTEXT_DAMAGED
 Language=DEU
-Kontext-Handle beschädigt
+Kontext-Handle beschÃ¤digt
 .
 MessageId=1778
 SymbolicName=RPC_X_SS_HANDLES_MISMATCH
 Language=DEU
-Bindungs-Handle stimmen nicht überein
+Bindungs-Handle stimmen nicht Ã¼berein
 .
 MessageId=1779
 SymbolicName=RPC_X_SS_CANNOT_GET_CALL_HANDLE
@@ -3312,7 +3312,7 @@ Referenz-Zeiger ist Null
 MessageId=1781
 SymbolicName=RPC_X_DEUM_VALUE_OUT_OF_RANGE
 Language=DEU
-Aufzählungswert ausserhalb des Bereichs
+AufzÃ¤hlungswert ausserhalb des Bereichs
 .
 MessageId=1782
 SymbolicName=RPC_X_BYTE_COUNT_TOO_SMALL
@@ -3327,7 +3327,7 @@ Fehlerhafte Stub-Daten
 MessageId=1784
 SymbolicName=ERROR_INVALID_USER_BUFFER
 Language=DEU
-Ungültiger Benutzerpuffer
+UngÃ¼ltiger Benutzerpuffer
 .
 MessageId=1785
 SymbolicName=ERROR_UNRECOGNIZED_MEDIA
@@ -3347,7 +3347,7 @@ Kein Vertrauens-SAM-Account
 MessageId=1788
 SymbolicName=ERROR_TRUSTED_DOMAIN_FAILURE
 Language=DEU
-Vertrauens-Domänen-Fehler
+Vertrauens-DomÃ¤nen-Fehler
 .
 MessageId=1789
 SymbolicName=ERROR_TRUSTED_RELATIONSHIP_FAILURE
@@ -3402,17 +3402,17 @@ Unbekannter Druckerprozessor
 MessageId=1799
 SymbolicName=ERROR_INVALID_SEPARATOR_FILE
 Language=DEU
-Ungültige Trenner-Datei
+UngÃ¼ltige Trenner-Datei
 .
 MessageId=1800
 SymbolicName=ERROR_INVALID_PRIORITY
 Language=DEU
-Ungültige Priorität
+UngÃ¼ltige PrioritÃ¤t
 .
 MessageId=1801
 SymbolicName=ERROR_INVALID_PRINTER_NAME
 Language=DEU
-Ungültiger Druckername
+UngÃ¼ltiger Druckername
 .
 MessageId=1802
 SymbolicName=ERROR_PRINTER_ALREADY_EXISTS
@@ -3422,17 +3422,17 @@ Drucker existiert bereits
 MessageId=1803
 SymbolicName=ERROR_INVALID_PRINTER_COMMAND
 Language=DEU
-Ungültiger Druckerbefehl
+UngÃ¼ltiger Druckerbefehl
 .
 MessageId=1804
 SymbolicName=ERROR_INVALID_DATATYPE
 Language=DEU
-Ungültiger Datentyp
+UngÃ¼ltiger Datentyp
 .
 MessageId=1805
 SymbolicName=ERROR_INVALID_ENVIRONMENT
 Language=DEU
-Ungültige Umgebung
+UngÃ¼ltige Umgebung
 .
 MessageId=1806
 SymbolicName=RPC_S_NO_MORE_BINDINGS
@@ -3442,7 +3442,7 @@ Keine weiteren Bindungen
 MessageId=1807
 SymbolicName=ERROR_NOLOGON_INTERDOMAIN_TRUST_ACCOUNT
 Language=DEU
-Kann nicht mit Interdomänen-Vertrauens-Account einloggen
+Kann nicht mit InterdomÃ¤nen-Vertrauens-Account einloggen
 .
 MessageId=1808
 SymbolicName=ERROR_NOLOGON_WORKSTATION_TRUST_ACCOUNT
@@ -3457,7 +3457,7 @@ Kann nicht mit Server-Vertrauens-Account einloggen
 MessageId=1810
 SymbolicName=ERROR_DOMAIN_TRUST_INCONSISTENT
 Language=DEU
-Domänen-Vertrauens-Information inkonsistent
+DomÃ¤nen-Vertrauens-Information inkonsistent
 .
 MessageId=1811
 SymbolicName=ERROR_SERVER_HAS_OPEN_HANDLES
@@ -3487,7 +3487,7 @@ Ressourcensprache nicht gefunden
 MessageId=1816
 SymbolicName=ERROR_NOT_ENOUGH_QUOTA
 Language=DEU
-Nicht genügend Quota
+Nicht genÃ¼gend Quota
 .
 MessageId=1817
 SymbolicName=RPC_S_NO_INTERFACES
@@ -3502,7 +3502,7 @@ RPC-Aufruf abgebrochen
 MessageId=1819
 SymbolicName=RPC_S_BINDING_INCOMPLETE
 Language=DEU
-Bindung unvollständig
+Bindung unvollstÃ¤ndig
 .
 MessageId=1820
 SymbolicName=RPC_S_COMM_FAILURE
@@ -3512,7 +3512,7 @@ RPC Comm-Fehler
 MessageId=1821
 SymbolicName=RPC_S_UNSUPPORTED_AUTHN_LEVEL
 Language=DEU
-Nicht unterstütztes Authorisierungs-Level
+Nicht unterstÃ¼tztes Authorisierungs-Level
 .
 MessageId=1822
 SymbolicName=RPC_S_NO_PRINC_NAME
@@ -3542,7 +3542,7 @@ Thread nicht abgebrochen
 MessageId=1827
 SymbolicName=RPC_X_INVALID_ES_ACTION
 Language=DEU
-Ungültige Handle-Operation
+UngÃ¼ltige Handle-Operation
 .
 MessageId=1828
 SymbolicName=RPC_X_WRONG_ES_VERSION
@@ -3557,7 +3557,7 @@ Fehlerhafte Stub-Version
 MessageId=1830
 SymbolicName=RPC_X_INVALID_PIPE_OBJECT
 Language=DEU
-Ungültiges Pipe-Objekt
+UngÃ¼ltiges Pipe-Objekt
 .
 MessageId=1831
 SymbolicName=RPC_X_WRONG_PIPE_ORDER
@@ -3582,22 +3582,22 @@ Kann Endpunkt-Abbildungs-Datenbank nicht erstellen
 MessageId=1900
 SymbolicName=RPC_S_INVALID_OBJECT
 Language=DEU
-Ungültiges Objekt
+UngÃ¼ltiges Objekt
 .
 MessageId=1901
 SymbolicName=ERROR_INVALID_TIME
 Language=DEU
-Ungültige Zeit
+UngÃ¼ltige Zeit
 .
 MessageId=1902
 SymbolicName=ERROR_INVALID_FORM_NAME
 Language=DEU
-Ungültiger Formularname
+UngÃ¼ltiger Formularname
 .
 MessageId=1903
 SymbolicName=ERROR_INVALID_FORM_SIZE
 Language=DEU
-Ungültige Formular-Grösse
+UngÃ¼ltige Formular-GrÃ¶sse
 .
 MessageId=1904
 SymbolicName=ERROR_ALREADY_WAITING
@@ -3607,22 +3607,22 @@ Warte bereits auf Drucker-Handle
 MessageId=1905
 SymbolicName=ERROR_PRINTER_DELETED
 Language=DEU
-Drucker gelöscht
+Drucker gelÃ¶scht
 .
 MessageId=1906
 SymbolicName=ERROR_INVALID_PRINTER_STATE
 Language=DEU
-Ungültiger Druckerzustand
+UngÃ¼ltiger Druckerzustand
 .
 MessageId=1907
 SymbolicName=ERROR_PASSWORD_MUST_CHANGE
 Language=DEU
-Benutzer muss Passwort ändern
+Benutzer muss Passwort Ã¤ndern
 .
 MessageId=1908
 SymbolicName=ERROR_DOMAIN_CONTROLLER_NOT_FOUND
 Language=DEU
-Domänen-Controllor nicht gefunden
+DomÃ¤nen-Controllor nicht gefunden
 .
 MessageId=1909
 SymbolicName=ERROR_ACCOUNT_LOCKED_OUT
@@ -3632,12 +3632,12 @@ Account ausgeschlossen
 MessageId=1910
 SymbolicName=OR_INVALID_OXID
 Language=DEU
-Ungültiges Pixel-Format
+UngÃ¼ltiges Pixel-Format
 .
 MessageId=1911
 SymbolicName=OR_INVALID_OID
 Language=DEU
-Ungültiger Treiber
+UngÃ¼ltiger Treiber
 .
 MessageId=1912
 SymbolicName=OR_INVALID_SET
