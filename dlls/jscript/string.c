@@ -127,26 +127,45 @@ static HRESULT do_attributeless_tag_format(DispatchEx *dispex, LCID lcid, WORD f
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp, const WCHAR *tagname)
 {
     static const WCHAR tagfmt[] = {'<','%','s','>','%','s','<','/','%','s','>',0};
-    StringInstance *string;
-    BSTR ret;
+    const WCHAR *str;
+    DWORD length;
+    BSTR val_str = NULL;
+    HRESULT hres;
 
     if(!is_class(dispex, JSCLASS_STRING)) {
-        WARN("this is not a string object\n");
-        return E_NOTIMPL;
+        VARIANT this;
+
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
     }
 
-    string = (StringInstance*)dispex;
-
     if(retv) {
-        ret = SysAllocStringLen(NULL, string->length + 2*strlenW(tagname) + 5);
-        if(!ret)
+        BSTR ret = SysAllocStringLen(NULL, length + 2*strlenW(tagname) + 5);
+        if(!ret) {
+            SysFreeString(val_str);
             return E_OUTOFMEMORY;
+        }
 
-        sprintfW(ret, tagfmt, tagname, string->str, tagname);
+        sprintfW(ret, tagfmt, tagname, str, tagname);
 
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = ret;
     }
+
+    SysFreeString(val_str);
     return S_OK;
 }
 
