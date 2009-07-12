@@ -481,20 +481,30 @@ static HRESULT String_indexOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 {
     DWORD length, pos = 0;
     const WCHAR *str;
-    BSTR search_str;
+    BSTR search_str, val_str = NULL;
     INT ret = -1;
     HRESULT hres;
 
     TRACE("\n");
 
-    if(is_class(dispex, JSCLASS_STRING)) {
-        StringInstance *string = (StringInstance*)dispex;
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        VARIANT this;
 
-        str = string->str;
-        length = string->length;
-    }else {
-        FIXME("not String this\n");
-        return E_NOTIMPL;
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
     }
 
     if(!arg_cnt(dp)) {
@@ -502,12 +512,15 @@ static HRESULT String_indexOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
             V_VT(retv) = VT_I4;
             V_I4(retv) = -1;
         }
+        SysFreeString(val_str);
         return S_OK;
     }
 
     hres = to_string(dispex->ctx, get_arg(dp,0), ei, &search_str);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        SysFreeString(val_str);
         return hres;
+    }
 
     if(arg_cnt(dp) >= 2) {
         VARIANT ival;
@@ -534,6 +547,7 @@ static HRESULT String_indexOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     }
 
     SysFreeString(search_str);
+    SysFreeString(val_str);
     if(FAILED(hres))
         return hres;
 
