@@ -167,7 +167,7 @@ typedef struct
     INTERNET_PORT nServerPort; /* the port of the server we directly connect to */
     struct sockaddr_storage socketAddress;
     socklen_t sa_len;
-} WININETHTTPSESSIONW, *LPWININETHTTPSESSIONW;
+} http_session_t;
 
 #define HDR_ISREQUEST		0x0001
 #define HDR_COMMADELIMITED	0x0002
@@ -189,7 +189,7 @@ typedef struct gzip_stream_t gzip_stream_t;
 typedef struct
 {
     object_header_t hdr;
-    WININETHTTPSESSIONW *lpHttpSession;
+    http_session_t *lpHttpSession;
     LPWSTR lpszPath;
     LPWSTR lpszVerb;
     LPWSTR lpszRawHeaders;
@@ -393,7 +393,7 @@ LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
 BOOLAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
 	DWORD dwContentLength, BOOL bEndRequest);
-INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
+INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *session,
 	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD_PTR dwContext);

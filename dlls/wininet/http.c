@@ -1018,7 +1018,7 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD_PTR dwContext)
 {
-    LPWININETHTTPSESSIONW lpwhs;
+    http_session_t *lpwhs;
     HINTERNET handle = NULL;
 
     TRACE("(%p, %s, %s, %s, %s, %p, %08x, %08lx)\n", hHttpSession,
@@ -1032,7 +1032,7 @@ HINTERNET WINAPI HttpOpenRequestW(HINTERNET hHttpSession,
             TRACE("\taccept type: %s\n",debugstr_w(lpszAcceptTypes[i]));
     }    
 
-    lpwhs = (LPWININETHTTPSESSIONW) WININET_GetObject( hHttpSession );
+    lpwhs = (http_session_t*) WININET_GetObject( hHttpSession );
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -1388,7 +1388,7 @@ static WCHAR *HTTP_BuildProxyRequestUrl(WININETHTTPREQW *req)
         static const WCHAR slash[] = { '/',0 };
         static const WCHAR format[] = { 'h','t','t','p',':','/','/','%','s',':','%','d',0 };
         static const WCHAR formatSSL[] = { 'h','t','t','p','s',':','/','/','%','s',':','%','d',0 };
-        WININETHTTPSESSIONW *session = req->lpHttpSession;
+        http_session_t *session = req->lpHttpSession;
 
         size = 16; /* "https://" + sizeof(port#) + ":/\0" */
         size += strlenW( session->lpszHostName ) + strlenW( req->lpszPath );
@@ -1410,7 +1410,7 @@ static WCHAR *HTTP_BuildProxyRequestUrl(WININETHTTPREQW *req)
  *           HTTP_DealWithProxy
  */
 static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
-    LPWININETHTTPSESSIONW lpwhs, LPWININETHTTPREQW lpwhr)
+    http_session_t *lpwhs, LPWININETHTTPREQW lpwhr)
 {
     WCHAR buf[MAXHOSTNAME];
     WCHAR proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
@@ -1455,7 +1455,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
 static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
 {
     char szaddr[INET6_ADDRSTRLEN];
-    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
+    http_session_t *lpwhs = lpwhr->lpHttpSession;
     const void *addr;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
@@ -1604,7 +1604,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
     switch(option) {
     case INTERNET_OPTION_SECURITY_FLAGS:
     {
-        LPWININETHTTPSESSIONW lpwhs;
+        http_session_t *lpwhs;
         lpwhs = req->lpHttpSession;
 
         if (*size < sizeof(ULONG))
@@ -2392,7 +2392,7 @@ static const object_vtbl_t HTTPREQVtbl = {
  *    NULL 	 on failure
  *
  */
-HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
+HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
 	LPCWSTR lpszVerb, LPCWSTR lpszObjectName, LPCWSTR lpszVersion,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD_PTR dwContext)
@@ -3134,7 +3134,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
 {
     BOOL ret = FALSE;
     LPWININETHTTPREQW lpwhr;
-    LPWININETHTTPSESSIONW lpwhs;
+    http_session_t *lpwhs;
     LPWININETAPPINFOW hIC;
 
     TRACE("(%p, %p, %p, %08x, %08lx)\n", hRequest, lpBuffersIn,
@@ -3222,7 +3222,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength)
 {
     LPWININETHTTPREQW lpwhr;
-    LPWININETHTTPSESSIONW lpwhs = NULL;
+    http_session_t *lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
     BOOL r;
 
@@ -3332,7 +3332,7 @@ static LPWSTR HTTP_GetRedirectURL(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
 {
     static WCHAR szHttp[] = {'h','t','t','p',0};
     static WCHAR szHttps[] = {'h','t','t','p','s',0};
-    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
+    http_session_t *lpwhs = lpwhr->lpHttpSession;
     URL_COMPONENTSW urlComponents;
     DWORD url_length = 0;
     LPWSTR orig_url;
@@ -3392,7 +3392,7 @@ static LPWSTR HTTP_GetRedirectURL(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
  */
 static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
 {
-    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
+    http_session_t *lpwhs = lpwhr->lpHttpSession;
     LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
     BOOL using_proxy = hIC->lpszProxy && hIC->lpszProxy[0];
     WCHAR path[INTERNET_MAX_URL_LENGTH];
@@ -3575,7 +3575,7 @@ static BOOL HTTP_SecureProxyConnect(LPWININETHTTPREQW lpwhr)
     BOOL ret;
     static const WCHAR szConnect[] = {'C','O','N','N','E','C','T',0};
     static const WCHAR szFormat[] = {'%','s',':','%','d',0};
-    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
+    http_session_t *lpwhs = lpwhr->lpHttpSession;
 
     TRACE("\n");
 
@@ -3944,7 +3944,7 @@ lend:
  */
 static void HTTPSESSION_Destroy(object_header_t *hdr)
 {
-    LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) hdr;
+    http_session_t *lpwhs = (http_session_t*) hdr;
 
     TRACE("%p\n", lpwhs);
 
@@ -3976,7 +3976,7 @@ static DWORD HTTPSESSION_QueryOption(object_header_t *hdr, DWORD option, void *b
 
 static DWORD HTTPSESSION_SetOption(object_header_t *hdr, DWORD option, void *buffer, DWORD size)
 {
-    WININETHTTPSESSIONW *ses = (WININETHTTPSESSIONW*)hdr;
+    http_session_t *ses = (http_session_t*)hdr;
 
     switch(option) {
     case INTERNET_OPTION_USERNAME:
@@ -4025,7 +4025,7 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags)
 {
-    LPWININETHTTPSESSIONW lpwhs = NULL;
+    http_session_t *lpwhs = NULL;
     HINTERNET handle = NULL;
 
     TRACE("-->\n");
@@ -4038,7 +4038,7 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 
     assert( hIC->hdr.htype == WH_HINIT );
 
-    lpwhs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETHTTPSESSIONW));
+    lpwhs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(http_session_t));
     if (NULL == lpwhs)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
@@ -4122,7 +4122,7 @@ lerror:
 static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
 {
     BOOL bSuccess = FALSE;
-    LPWININETHTTPSESSIONW lpwhs;
+    http_session_t *lpwhs;
     LPWININETAPPINFOW hIC = NULL;
     char szaddr[INET6_ADDRSTRLEN];
     const void *addr;
