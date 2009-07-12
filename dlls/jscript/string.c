@@ -585,12 +585,13 @@ static HRESULT String_link(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
 static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    StringInstance *This = (StringInstance*)dispex;
+    const WCHAR *str;
     match_result_t *match_result;
     DispatchEx *regexp;
     DispatchEx *array;
     VARIANT var, *arg_var;
-    DWORD match_cnt, i;
+    DWORD length, match_cnt, i;
+    BSTR val_str;
     HRESULT hres = S_OK;
 
     TRACE("\n");
@@ -623,22 +624,50 @@ static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     }
     }
 
-    hres = regexp_match(regexp, This->str, This->length, FALSE, &match_result, &match_cnt);
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        VARIANT this;
+
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres)) {
+            jsdisp_release(regexp);
+            return hres;
+        }
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
+    }
+
+    hres = regexp_match(regexp, str, length, FALSE, &match_result, &match_cnt);
     jsdisp_release(regexp);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        SysFreeString(val_str);
         return hres;
+    }
 
     if(!match_cnt) {
         TRACE("no match\n");
 
         if(retv)
             V_VT(retv) = VT_NULL;
+
+        SysFreeString(val_str);
         return S_OK;
     }
 
     hres = create_array(dispex->ctx, match_cnt, &array);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        SysFreeString(val_str);
         return hres;
+    }
 
     V_VT(&var) = VT_BSTR;
 
@@ -654,6 +683,8 @@ static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
         if(FAILED(hres))
             break;
     }
+
+    SysFreeString(val_str);
 
     if(SUCCEEDED(hres) && retv) {
         V_VT(retv) = VT_DISPATCH;
