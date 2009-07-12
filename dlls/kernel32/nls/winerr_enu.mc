@@ -786,7 +786,7 @@ Auto data segment exceeds 64k
 MessageId=200
 SymbolicName=ERROR_RING2SEG_MUST_BE_MOVABLE
 Language=ENU
-Ring 2 segment must be moveable
+Ring 2 segment must be movable
 .
 MessageId=201
 SymbolicName=ERROR_RELOC_CHAIN_XEEDS_SEGLIM
@@ -1356,7 +1356,7 @@ No media in drive
 MessageId=1113
 SymbolicName=ERROR_NO_UNICODE_TRANSLATION
 Language=ENU
-No unicode translation
+No Unicode translation
 .
 MessageId=1114
 SymbolicName=ERROR_DLL_INIT_FAILED
@@ -1756,7 +1756,7 @@ Connection refused
 MessageId=1226
 SymbolicName=ERROR_GRACEFUL_DISCONNECT
 Language=ENU
-Conection gracefully closed
+Connection gracefully closed
 .
 MessageId=1227
 SymbolicName=ERROR_ADDRESS_ALREADY_ASSOCIATED
@@ -2226,7 +2226,7 @@ Bad logon session state
 MessageId=1366
 SymbolicName=ERROR_LOGON_SESSION_COLLISION
 Language=ENU
-Logon sesion ID collision
+Logon session ID collision
 .
 MessageId=1367
 SymbolicName=ERROR_INVALID_LOGON_TYPE
@@ -3256,17 +3256,17 @@ Address error
 MessageId=1769
 SymbolicName=RPC_S_FP_DIV_ZERO
 Language=ENU
-Floating divide-by-zero
+Floating-point divide-by-zero
 .
 MessageId=1770
 SymbolicName=RPC_S_FP_UNDERFLOW
 Language=ENU
-Floating underflow
+Floating-point underflow
 .
 MessageId=1771
 SymbolicName=RPC_S_FP_OVERFLOW
 Language=ENU
-Floating overlow
+Floating-point overflow
 .
 MessageId=1772
 SymbolicName=RPC_X_NO_MORE_ENTRIES
