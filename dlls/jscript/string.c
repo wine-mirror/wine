@@ -1241,6 +1241,7 @@ static HRESULT String_substring(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR *str;
+    BSTR val_str = NULL;
     INT start=0, end;
     DWORD length;
     VARIANT v;
@@ -1248,20 +1249,32 @@ static HRESULT String_substring(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 
     TRACE("\n");
 
-    if(is_class(dispex, JSCLASS_STRING)) {
-        StringInstance *string = (StringInstance*)dispex;
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        VARIANT this;
 
-        length = string->length;
-        str = string->str;
-    }else {
-        FIXME("not string this not supported\n");
-        return E_NOTIMPL;
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
     }
 
     if(arg_cnt(dp) >= 1) {
         hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-1, ei, &v);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
             return hres;
+        }
 
         if(V_VT(&v) == VT_I4) {
             start = V_I4(&v);
@@ -1276,8 +1289,10 @@ static HRESULT String_substring(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 
     if(arg_cnt(dp) >= 2) {
         hres = to_integer(dispex->ctx, dp->rgvarg + dp->cArgs-2, ei, &v);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
             return hres;
+        }
 
         if(V_VT(&v) == VT_I4) {
             end = V_I4(&v);
@@ -1301,9 +1316,12 @@ static HRESULT String_substring(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
     if(retv) {
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = SysAllocStringLen(str+start, end-start);
-        if(!V_BSTR(retv))
+        if(!V_BSTR(retv)) {
+            SysFreeString(val_str);
             return E_OUTOFMEMORY;
+        }
     }
+    SysFreeString(val_str);
     return S_OK;
 }
 
