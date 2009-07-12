@@ -64,7 +64,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
 {
     http_request_t *lpwhr;
     http_session_t *lpwhs = NULL;
-    LPWININETAPPINFOW hIC = NULL;
+    appinfo_t *hIC = NULL;
     LPWSTR p;
 
     lpwhr = (http_request_t*) WININET_GetObject( hRequest );
@@ -205,7 +205,7 @@ static BOOL WININET_SetProxyAuthorization( HINTERNET hRequest,
 {
     http_request_t *lpwhr;
     http_session_t *lpwhs;
-    LPWININETAPPINFOW hIC;
+    appinfo_t *hIC;
     LPWSTR p;
 
     lpwhr = (http_request_t*) WININET_GetObject( hRequest );

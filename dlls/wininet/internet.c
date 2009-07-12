@@ -348,7 +348,7 @@ BOOL WINAPI DetectAutoProxyUrl(LPSTR lpszAutoProxyUrl,
  * The proxy may be specified in the form 'http=proxy.my.org'
  * Presumably that means there can be ftp=ftpproxy.my.org too.
  */
-static BOOL INTERNET_ConfigureProxy( LPWININETAPPINFOW lpwai )
+static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
 {
     HKEY key;
     DWORD type, len, enabled = 0;
@@ -489,7 +489,7 @@ static void dump_INTERNET_FLAGS(DWORD dwFlags)
  */
 static VOID APPINFO_Destroy(object_header_t *hdr)
 {
-    LPWININETAPPINFOW lpwai = (LPWININETAPPINFOW) hdr;
+    appinfo_t *lpwai = (appinfo_t*)hdr;
 
     TRACE("%p\n",lpwai);
 
@@ -503,7 +503,7 @@ static VOID APPINFO_Destroy(object_header_t *hdr)
 
 static DWORD APPINFO_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
-    LPWININETAPPINFOW ai = (LPWININETAPPINFOW)hdr;
+    appinfo_t *ai = (appinfo_t*)hdr;
 
     switch(option) {
     case INTERNET_OPTION_HANDLE_TYPE:
@@ -639,7 +639,7 @@ static const object_vtbl_t APPINFOVtbl = {
 HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     LPCWSTR lpszProxy, LPCWSTR lpszProxyBypass, DWORD dwFlags)
 {
-    LPWININETAPPINFOW lpwai = NULL;
+    appinfo_t *lpwai = NULL;
     HINTERNET handle = NULL;
 
     if (TRACE_ON(wininet)) {
@@ -670,7 +670,7 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
-    lpwai = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETAPPINFOW));
+    lpwai = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(appinfo_t));
     if (NULL == lpwai)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
@@ -962,7 +962,7 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
     LPCWSTR lpszUserName, LPCWSTR lpszPassword,
     DWORD dwService, DWORD dwFlags, DWORD_PTR dwContext)
 {
-    LPWININETAPPINFOW hIC;
+    appinfo_t *hIC;
     HINTERNET rc = NULL;
 
     TRACE("(%p, %s, %i, %s, %s, %i, %i, %lx)\n", hInternet, debugstr_w(lpszServerName),
@@ -977,7 +977,7 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
-    hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
+    hIC = (appinfo_t*)WININET_GetObject( hInternet );
     if ( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
     {
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
@@ -2066,7 +2066,6 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_CONNECTED_STATE:
-
         if (warn) {
             FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
             warn = FALSE;
@@ -2080,10 +2079,10 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_PROXY: {
-        WININETAPPINFOW ai;
+        appinfo_t ai;
 
         TRACE("Getting global proxy info\n");
-        memset(&ai, 0, sizeof(WININETAPPINFOW));
+        memset(&ai, 0, sizeof(appinfo_t));
         INTERNET_ConfigureProxy(&ai);
 
         return APPINFO_QueryOption(&ai.hdr, INTERNET_OPTION_PROXY, buffer, size, unicode); /* FIXME */
@@ -2830,7 +2829,7 @@ BOOL WINAPI InternetCheckConnectionA(LPCSTR lpszUrl, DWORD dwFlags, DWORD dwRese
  * RETURNS
  *   handle of connection or NULL on failure
  */
-static HINTERNET INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUrl,
+static HINTERNET INTERNET_InternetOpenUrlW(appinfo_t *hIC, LPCWSTR lpszUrl,
     LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
     URL_COMPONENTSW urlComponents;
@@ -2942,7 +2941,7 @@ static HINTERNET INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
 static void AsyncInternetOpenUrlProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_INTERNETOPENURLW const *req = &workRequest->u.InternetOpenUrlW;
-    LPWININETAPPINFOW hIC = (LPWININETAPPINFOW) workRequest->hdr;
+    appinfo_t *hIC = (appinfo_t*) workRequest->hdr;
 
     TRACE("%p\n", hIC);
 
@@ -2956,7 +2955,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
     HINTERNET ret = NULL;
-    LPWININETAPPINFOW hIC = NULL;
+    appinfo_t *hIC = NULL;
 
     if (TRACE_ON(wininet)) {
 	TRACE("(%p, %s, %s, %08x, %08x, %08lx)\n", hInternet, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
@@ -2971,7 +2970,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
         goto lend;
     }
 
-    hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
+    hIC = (appinfo_t*)WININET_GetObject( hInternet );
     if (NULL == hIC ||  hIC->hdr.htype != WH_HINIT) {
 	INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
  	goto lend;

@@ -1409,8 +1409,7 @@ static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
 /***********************************************************************
  *           HTTP_DealWithProxy
  */
-static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
-    http_session_t *lpwhs, http_request_t *lpwhr)
+static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *lpwhs, http_request_t *lpwhr)
 {
     WCHAR buf[MAXHOSTNAME];
     WCHAR proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
@@ -2396,7 +2395,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
 	LPCWSTR lpszReferrer , LPCWSTR *lpszAcceptTypes,
 	DWORD dwFlags, DWORD_PTR dwContext)
 {
-    LPWININETAPPINFOW hIC = NULL;
+    appinfo_t *hIC = NULL;
     http_request_t *lpwhr;
     LPWSTR lpszHostName = NULL;
     HINTERNET handle = NULL;
@@ -3134,7 +3133,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
     BOOL ret = FALSE;
     http_request_t *lpwhr;
     http_session_t *lpwhs;
-    LPWININETAPPINFOW hIC;
+    appinfo_t *hIC;
 
     TRACE("(%p, %p, %p, %08x, %08lx)\n", hRequest, lpBuffersIn,
             lpBuffersOut, dwFlags, dwContext);
@@ -3222,7 +3221,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
 {
     http_request_t *lpwhr;
     http_session_t *lpwhs = NULL;
-    LPWININETAPPINFOW hIC = NULL;
+    appinfo_t *hIC = NULL;
     BOOL r;
 
     TRACE("%p, %s, %i, %p, %i)\n", hHttpRequest,
@@ -3392,7 +3391,7 @@ static LPWSTR HTTP_GetRedirectURL(http_request_t *lpwhr, LPCWSTR lpszUrl)
 static BOOL HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
 {
     http_session_t *lpwhs = lpwhr->lpHttpSession;
-    LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
+    appinfo_t *hIC = lpwhs->lpAppInfo;
     BOOL using_proxy = hIC->lpszProxy && hIC->lpszProxy[0];
     WCHAR path[INTERNET_MAX_URL_LENGTH];
     int index;
@@ -4019,7 +4018,7 @@ static const object_vtbl_t HTTPSESSIONVtbl = {
  *   NULL on failure
  *
  */
-HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
+HINTERNET HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags)
@@ -4122,7 +4121,7 @@ static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
 {
     BOOL bSuccess = FALSE;
     http_session_t *lpwhs;
-    LPWININETAPPINFOW hIC = NULL;
+    appinfo_t *hIC = NULL;
     char szaddr[INET6_ADDRSTRLEN];
     const void *addr;
 

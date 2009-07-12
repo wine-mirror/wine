@@ -152,13 +152,13 @@ typedef struct
     LPWSTR  lpszProxyUsername;
     LPWSTR  lpszProxyPassword;
     DWORD   dwAccessType;
-} WININETAPPINFOW, *LPWININETAPPINFOW;
+} appinfo_t;
 
 
 typedef struct
 {
     object_header_t hdr;
-    WININETAPPINFOW *lpAppInfo;
+    appinfo_t *lpAppInfo;
     LPWSTR  lpszHostName; /* the final destination of the request */
     LPWSTR  lpszServerName; /* the name of the server we directly connect to */
     LPWSTR  lpszUserName;
@@ -371,12 +371,12 @@ DWORD INET_QueryOption(DWORD,void*,DWORD*,BOOL);
 
 time_t ConvertTimeString(LPCWSTR asctime);
 
-HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
+HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags);
 
-HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
+HINTERNET HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
 	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
 	LPCWSTR lpszPassword, DWORD dwFlags, DWORD_PTR dwContext,
 	DWORD dwInternalFlags);
