@@ -1085,26 +1085,38 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     match_result_t *match_result = NULL;
-    DWORD match_cnt, i, match_len = 0;
-    StringInstance *string;
-    const WCHAR *ptr, *ptr2;
+    DWORD length, match_cnt, i, match_len = 0;
+    const WCHAR *str, *ptr, *ptr2;
     VARIANT *arg, var;
     DispatchEx *array;
-    BSTR match_str = NULL;
+    BSTR val_str = NULL, match_str = NULL;
     HRESULT hres;
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_STRING)) {
-        FIXME("not String this\n");
-        return E_NOTIMPL;
-    }
-
-    string = (StringInstance*)dispex;
-
     if(arg_cnt(dp) != 1) {
         FIXME("unsupported args\n");
         return E_NOTIMPL;
+    }
+
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        VARIANT this;
+
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
     }
 
     arg = get_arg(dp, 0);
@@ -1115,10 +1127,12 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
         regexp = iface_to_jsdisp((IUnknown*)V_DISPATCH(arg));
         if(regexp) {
             if(is_class(regexp, JSCLASS_REGEXP)) {
-                hres = regexp_match(regexp, string->str, string->length, TRUE, &match_result, &match_cnt);
+                hres = regexp_match(regexp, str, length, TRUE, &match_result, &match_cnt);
                 jsdisp_release(regexp);
-                if(FAILED(hres))
+                if(FAILED(hres)) {
+                    SysFreeString(val_str);
                     return hres;
+                }
                 break;
             }
             jsdisp_release(regexp);
@@ -1126,8 +1140,10 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     }
     default:
         hres = to_string(dispex->ctx, arg, ei, &match_str);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
             return hres;
+        }
 
         match_len = SysStringLen(match_str);
         if(!match_len) {
@@ -1139,7 +1155,7 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     hres = create_array(dispex->ctx, 0, &array);
 
     if(SUCCEEDED(hres)) {
-        ptr = string->str;
+        ptr = str;
         for(i=0;; i++) {
             if(match_result) {
                 if(i == match_cnt)
@@ -1177,7 +1193,7 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     }
 
     if(SUCCEEDED(hres) && (match_str || match_result)) {
-        DWORD len = (string->str+string->length) - ptr;
+        DWORD len = (str+length) - ptr;
 
         if(len || match_str) {
             V_VT(&var) = VT_BSTR;
@@ -1193,6 +1209,7 @@ static HRESULT String_split(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     }
 
     SysFreeString(match_str);
+    SysFreeString(val_str);
     heap_free(match_result);
 
     if(SUCCEEDED(hres) && retv) {
