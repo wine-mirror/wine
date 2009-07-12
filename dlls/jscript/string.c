@@ -340,30 +340,44 @@ static HRESULT String_charCodeAt(DispatchEx *dispex, LCID lcid, WORD flags, DISP
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
     const WCHAR *str;
+    BSTR val_str = NULL;
     DWORD length, idx = 0;
     HRESULT hres;
 
     TRACE("\n");
 
-    if(dispex->builtin_info->class == JSCLASS_STRING) {
-        StringInstance *string = (StringInstance*)dispex;
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        VARIANT this;
 
-        str = string->str;
-        length = string->length;
-    }else {
-        FIXME("not string this not supported\n");
-        return E_NOTIMPL;
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
     }
 
     if(arg_cnt(dp) > 0) {
         VARIANT v;
 
         hres = to_integer(dispex->ctx, get_arg(dp, 0), ei, &v);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
             return hres;
+        }
 
         if(V_VT(&v) != VT_I4 || V_I4(&v) < 0 || V_I4(&v) >= length) {
             if(retv) num_set_nan(&v);
+            SysFreeString(val_str);
             return S_OK;
         }
 
@@ -374,6 +388,8 @@ static HRESULT String_charCodeAt(DispatchEx *dispex, LCID lcid, WORD flags, DISP
         V_VT(retv) = VT_I4;
         V_I4(retv) = str[idx];
     }
+
+    SysFreeString(val_str);
     return S_OK;
 }
 
