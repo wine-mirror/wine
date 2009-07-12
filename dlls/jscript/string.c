@@ -596,9 +596,12 @@ static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 
     TRACE("\n");
 
-    if(arg_cnt(dp) != 1) {
-        FIXME("unsupported args\n");
-        return E_NOTIMPL;
+    if(!arg_cnt(dp)) {
+        if(retv) {
+            V_VT(retv) = VT_NULL;
+        }
+
+        return S_OK;
     }
 
     arg_var = get_arg(dp, 0);
