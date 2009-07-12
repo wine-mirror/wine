@@ -76,7 +76,7 @@ typedef struct
     ftp_session_t *lpFtpSession;
     BOOL session_deleted;
     int nDataSocket;
-} WININETFTPFILE, *LPWININETFTPFILE;
+} ftp_file_t;
 
 struct _ftp_session_t
 {
@@ -85,7 +85,7 @@ struct _ftp_session_t
     int sndSocket;
     int lstnSocket;
     int pasvSocket; /* data socket connected by us in case of passive FTP */
-    LPWININETFTPFILE download_in_progress;
+    ftp_file_t *download_in_progress;
     struct sockaddr_in socketAddress;
     struct sockaddr_in lstnSocketAddress;
     LPWSTR  lpszPassword;
@@ -1086,7 +1086,7 @@ lend:
  */
 static void FTPFILE_Destroy(object_header_t *hdr)
 {
-    LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
+    ftp_file_t *lpwh = (ftp_file_t*) hdr;
     ftp_session_t *lpwfs = lpwh->lpFtpSession;
     INT nResCode;
 
@@ -1125,7 +1125,7 @@ static DWORD FTPFILE_QueryOption(object_header_t *hdr, DWORD option, void *buffe
 
 static DWORD FTPFILE_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DWORD *read)
 {
-    WININETFTPFILE *file = (WININETFTPFILE*)hdr;
+    ftp_file_t *file = (ftp_file_t*)hdr;
     int res;
 
     if (file->nDataSocket == -1)
@@ -1152,7 +1152,7 @@ static DWORD FTPFILE_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffer
 
 static BOOL FTPFILE_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)
 {
-    LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
+    ftp_file_t *lpwh = (ftp_file_t*) hdr;
     int res;
 
     res = send(lpwh->nDataSocket, buffer, size, 0);
@@ -1161,7 +1161,7 @@ static BOOL FTPFILE_WriteFile(object_header_t *hdr, const void *buffer, DWORD si
     return res >= 0;
 }
 
-static void FTP_ReceiveRequestData(WININETFTPFILE *file, BOOL first_notif)
+static void FTP_ReceiveRequestData(ftp_file_t *file, BOOL first_notif)
 {
     INTERNET_ASYNC_RESULT iar;
     BYTE buffer[4096];
@@ -1185,14 +1185,14 @@ static void FTP_ReceiveRequestData(WININETFTPFILE *file, BOOL first_notif)
 
 static void FTPFILE_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
 {
-    WININETFTPFILE *file = (WININETFTPFILE*)workRequest->hdr;
+    ftp_file_t *file = (ftp_file_t*)workRequest->hdr;
 
     FTP_ReceiveRequestData(file, FALSE);
 }
 
 static DWORD FTPFILE_QueryDataAvailable(object_header_t *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
 {
-    LPWININETFTPFILE file = (LPWININETFTPFILE) hdr;
+    ftp_file_t *file = (ftp_file_t*) hdr;
     int retval, unread = 0;
 
     TRACE("(%p %p %x %lx)\n", file, available, flags, ctx);
@@ -1259,7 +1259,7 @@ HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
 {
     INT nDataSocket;
     BOOL bSuccess = FALSE;
-    LPWININETFTPFILE lpwh = NULL;
+    ftp_file_t *lpwh = NULL;
     appinfo_t *hIC = NULL;
     HINTERNET handle = NULL;
 
@@ -1282,7 +1282,7 @@ HINTERNET FTP_FtpOpenFileW(ftp_session_t *lpwfs,
     /* Get data socket to server */
     if (bSuccess && FTP_GetDataSocket(lpwfs, &nDataSocket))
     {
-        lpwh = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETFTPFILE));
+        lpwh = HeapAlloc(GetProcessHeap(), 0, sizeof(ftp_file_t));
         lpwh->hdr.htype = WH_HFILE;
         lpwh->hdr.vtbl = &FTPFILEVtbl;
         lpwh->hdr.dwFlags = dwFlags;
