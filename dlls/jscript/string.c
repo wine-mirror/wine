@@ -1388,33 +1388,46 @@ static HRESULT String_toLowerCase(DispatchEx *dispex, LCID lcid, WORD flags, DIS
 static HRESULT String_toUpperCase(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    StringInstance *string;
     const WCHAR* str;
     DWORD length;
-    BSTR bstr;
+    BSTR val_str = NULL;
+    HRESULT hres;
 
     TRACE("\n");
 
-    if(is_class(dispex, JSCLASS_STRING)) {
-        string = (StringInstance*)dispex;
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        VARIANT this;
 
-        length = string->length;
-        str = string->str;
-    }else {
-        FIXME("not string this not supported\n");
-        return E_NOTIMPL;
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
     }
 
     if(retv) {
-        bstr = SysAllocStringLen(str, length);
-        if (!bstr)
-            return E_OUTOFMEMORY;
+        if(!val_str) {
+            val_str = SysAllocStringLen(str, length);
+            if(!val_str)
+                return E_OUTOFMEMORY;
+        }
 
-        struprW(bstr);
+        struprW(val_str);
 
         V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = bstr;
+        V_BSTR(retv) = val_str;
     }
+    else SysFreeString(val_str);
     return S_OK;
 }
 
