@@ -271,26 +271,42 @@ static HRESULT String_bold(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
 static HRESULT String_charAt(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    StringInstance *strobj;
-    BSTR str;
+    const WCHAR *str;
+    DWORD length;
+    BSTR ret, val_str = NULL;
     INT pos = 0;
     HRESULT hres;
 
     TRACE("\n");
 
-    if(dispex->builtin_info->class != JSCLASS_STRING) {
-        FIXME("not string this not supported\n");
-        return E_NOTIMPL;
-    }
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        VARIANT this;
 
-    strobj = (StringInstance*)dispex;
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
+    }
 
     if(arg_cnt(dp)) {
         VARIANT num;
 
         hres = to_integer(dispex->ctx, get_arg(dp, 0), ei, &num);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
             return hres;
+        }
 
         if(V_VT(&num) == VT_I4) {
             pos = V_I4(&num);
@@ -300,18 +316,22 @@ static HRESULT String_charAt(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
         }
     }
 
-    if(!retv)
+    if(!retv) {
+        SysFreeString(val_str);
         return S_OK;
+    }
 
-    if(0 <= pos && pos < strobj->length)
-        str = SysAllocStringLen(strobj->str+pos, 1);
+    if(0 <= pos && pos < length)
+        ret = SysAllocStringLen(str+pos, 1);
     else
-        str = SysAllocStringLen(NULL, 0);
-    if(!str)
+        ret = SysAllocStringLen(NULL, 0);
+    SysFreeString(val_str);
+    if(!ret) {
         return E_OUTOFMEMORY;
+    }
 
     V_VT(retv) = VT_BSTR;
-    V_BSTR(retv) = str;
+    V_BSTR(retv) = ret;
     return S_OK;
 }
 
