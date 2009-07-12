@@ -794,11 +794,11 @@ static HRESULT rep_call(DispatchEx *func, const WCHAR *str, match_result_t *matc
 static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
+    const WCHAR *str;
     DWORD parens_cnt = 0, parens_size=0, rep_len=0, length;
-    BSTR rep_str = NULL, match_str = NULL, ret_str;
+    BSTR rep_str = NULL, match_str = NULL, ret_str, val_str = NULL;
     DispatchEx *rep_func = NULL, *regexp = NULL;
     match_result_t *parens = NULL, match;
-    const WCHAR *str;
     strbuf_t ret = {NULL,0,0};
     BOOL gcheck = FALSE;
     VARIANT *arg_var;
@@ -806,23 +806,36 @@ static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 
     TRACE("\n");
 
-    if(is_class(dispex, JSCLASS_STRING)) {
-        StringInstance *string = (StringInstance*)dispex;
-        str = string->str;
-        length = string->length;
-    }else {
-        FIXME("not String this\n");
-        return E_NOTIMPL;
+    if(!is_class(dispex, JSCLASS_STRING)) {
+        VARIANT this;
+
+        V_VT(&this) = VT_DISPATCH;
+        V_DISPATCH(&this) = (IDispatch*)_IDispatchEx_(dispex);
+
+        hres = to_string(dispex->ctx, &this, ei, &val_str);
+        if(FAILED(hres))
+            return hres;
+
+        str = val_str;
+        length = SysStringLen(val_str);
+    }
+    else {
+        StringInstance *this = (StringInstance*)dispex;
+
+        str = this->str;
+        length = this->length;
     }
 
     if(!arg_cnt(dp)) {
         if(retv) {
-            ret_str = SysAllocString(str);
-            if(!ret_str)
-                return E_OUTOFMEMORY;
+            if(!val_str) {
+                val_str = SysAllocStringLen(str, length);
+                if(!val_str)
+                    return E_OUTOFMEMORY;
+            }
 
             V_VT(retv) = VT_BSTR;
-            V_BSTR(retv) = ret_str;
+            V_BSTR(retv) = val_str;
         }
         return S_OK;
     }
@@ -842,8 +855,10 @@ static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 
     default:
         hres = to_string(dispex->ctx, arg_var, ei, &match_str);
-        if(FAILED(hres))
+        if(FAILED(hres)) {
+            SysFreeString(val_str);
             return hres;
+        }
     }
 
     if(arg_cnt(dp) >= 2) {
@@ -936,6 +951,7 @@ static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
         jsdisp_release(rep_func);
     if(regexp)
         jsdisp_release(regexp);
+    SysFreeString(val_str);
     SysFreeString(rep_str);
     SysFreeString(match_str);
     heap_free(parens);
