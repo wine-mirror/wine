@@ -819,10 +819,8 @@ static void test_hdm_getitemrect(HWND hParent)
     expect(80, rect.left);
     expect(0, rect.top);
     expect(160, rect.right);
-    todo_wine
-    {
-      expect(g_customheight, rect.bottom);
-    }
+    expect(g_customheight, rect.bottom);
+
     retVal = SendMessage(hChild, HDM_GETITEMRECT, 0, (LPARAM) &rect);
 
     ok(retVal == TRUE, "Getting item rect should TRUE, got %d\n", retVal);
@@ -831,10 +829,8 @@ static void test_hdm_getitemrect(HWND hParent)
     expect(0, rect.top);
 
     expect(80, rect.right);
-    todo_wine
-    {
-      expect(g_customheight, rect.bottom);
-    }
+    expect(g_customheight, rect.bottom);
+
     retVal = SendMessage(hChild, HDM_GETITEMRECT, 10, (LPARAM) &rect);
     ok(retVal == 0, "Getting rect of nonexistent item should return 0, got %d\n", retVal);
 
@@ -906,20 +902,14 @@ static void test_hdm_hittest(HWND hParent)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     retVal = SendMessage(hChild, HDM_HITTEST, 0, (LPARAM) &hdHitTestInfo);
-    todo_wine
-    {
-      expect(0, retVal);
-      expect(0, hdHitTestInfo.iItem);
-    }
+    expect(0, retVal);
+    expect(0, hdHitTestInfo.iItem);
 
     pt.x = secondItemRightBoundary - 1;
     pt.y = bottomBoundary - 1;
     hdHitTestInfo.pt = pt;
     retVal = SendMessage(hChild, HDM_HITTEST, 1, (LPARAM) &hdHitTestInfo);
-    todo_wine
-    {
-      expect(1, retVal);
-    }
+    expect(1, retVal);
     expect(1, hdHitTestInfo.iItem);
 
     pt.x = secondItemRightBoundary;
@@ -950,11 +940,9 @@ static void test_hdm_sethotdivider(HWND hParent)
                                     "adder header control to parent", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    todo_wine
-    {
-        retVal = SendMessage(hChild, HDM_SETHOTDIVIDER, TRUE, MAKELPARAM(5, 5));
-        expect(0, retVal);
-    }
+    retVal = SendMessage(hChild, HDM_SETHOTDIVIDER, TRUE, MAKELPARAM(5, 5));
+    expect(0, retVal);
+
     retVal = SendMessage(hChild, HDM_SETHOTDIVIDER, FALSE, 100);
     expect(100, retVal);
     retVal = SendMessage(hChild, HDM_SETHOTDIVIDER, FALSE, 1);

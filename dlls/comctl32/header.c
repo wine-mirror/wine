@@ -247,8 +247,7 @@ HEADER_SetItemBounds (HEADER_INFO *infoPtr)
 static LRESULT
 HEADER_Size (HEADER_INFO *infoPtr)
 {
-    infoPtr->bRectsValid = FALSE;
-
+    HEADER_SetItemBounds(infoPtr);
     return 0;
 }
 
