@@ -62,12 +62,12 @@ struct WININET_ErrorDlgParams
  */
 static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
 {
-    LPWININETHTTPREQW lpwhr;
+    http_request_t *lpwhr;
     http_session_t *lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
     LPWSTR p;
 
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
+    lpwhr = (http_request_t*) WININET_GetObject( hRequest );
     if (NULL == lpwhr)
 	return FALSE;
 
@@ -203,12 +203,12 @@ static BOOL WININET_GetSetPassword( HWND hdlg, LPCWSTR szServer,
 static BOOL WININET_SetProxyAuthorization( HINTERNET hRequest,
                                          LPWSTR username, LPWSTR password )
 {
-    LPWININETHTTPREQW lpwhr;
+    http_request_t *lpwhr;
     http_session_t *lpwhs;
     LPWININETAPPINFOW hIC;
     LPWSTR p;
 
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
+    lpwhr = (http_request_t*) WININET_GetObject( hRequest );
     if( !lpwhr )
 	return FALSE;
         

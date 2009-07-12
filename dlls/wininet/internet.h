@@ -215,7 +215,7 @@ typedef struct
 
     BOOL decoding;
     gzip_stream_t *gzip_stream;
-} WININETHTTPREQW, *LPWININETHTTPREQW;
+} http_request_t;
 
 
 
@@ -390,7 +390,7 @@ BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest);
 LPSTR INTERNET_GetResponseBuffer(void);
 LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen);
 
-BOOLAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
+BOOLAPI HTTP_HttpSendRequestW(http_request_t *req, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
 	DWORD dwContentLength, BOOL bEndRequest);
 INTERNETAPI HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *session,

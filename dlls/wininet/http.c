@@ -176,23 +176,23 @@ struct gzip_stream_t {
     BOOL end_of_data;
 };
 
-static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr);
-static BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear);
-static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
+static BOOL HTTP_OpenConnection(http_request_t *req);
+static BOOL HTTP_GetResponseHeaders(http_request_t *req, BOOL clear);
+static BOOL HTTP_ProcessHeader(http_request_t *req, LPCWSTR field, LPCWSTR value, DWORD dwModifier);
 static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer);
-static BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr);
-static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField, INT index, BOOL Request);
-static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index);
+static BOOL HTTP_InsertCustomHeader(http_request_t *req, LPHTTPHEADERW lpHdr);
+static INT HTTP_GetCustomHeaderIndex(http_request_t *req, LPCWSTR lpszField, INT index, BOOL Request);
+static BOOL HTTP_DeleteCustomHeader(http_request_t *req, DWORD index);
 static LPWSTR HTTP_build_req( LPCWSTR *list, int len );
-static BOOL HTTP_HttpQueryInfoW(LPWININETHTTPREQW, DWORD, LPVOID, LPDWORD, LPDWORD);
-static LPWSTR HTTP_GetRedirectURL(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl);
-static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl);
+static BOOL HTTP_HttpQueryInfoW(http_request_t*, DWORD, LPVOID, LPDWORD, LPDWORD);
+static LPWSTR HTTP_GetRedirectURL(http_request_t *req, LPCWSTR lpszUrl);
+static BOOL HTTP_HandleRedirect(http_request_t *req, LPCWSTR lpszUrl);
 static UINT HTTP_DecodeBase64(LPCWSTR base64, LPSTR bin);
-static BOOL HTTP_VerifyValidHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field);
-static void HTTP_DrainContent(WININETHTTPREQW *req);
-static BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr);
+static BOOL HTTP_VerifyValidHeader(http_request_t *req, LPCWSTR field);
+static void HTTP_DrainContent(http_request_t *req);
+static BOOL HTTP_FinishedReading(http_request_t *req);
 
-static LPHTTPHEADERW HTTP_GetHeader(LPWININETHTTPREQW req, LPCWSTR head)
+static LPHTTPHEADERW HTTP_GetHeader(http_request_t *req, LPCWSTR head)
 {
     int HeaderIndex = 0;
     HeaderIndex = HTTP_GetCustomHeaderIndex(req, head, 0, TRUE);
@@ -214,7 +214,7 @@ static void wininet_zfree(voidpf opaque, voidpf address)
     HeapFree(GetProcessHeap(), 0, address);
 }
 
-static void init_gzip_stream(WININETHTTPREQW *req)
+static void init_gzip_stream(http_request_t *req)
 {
     gzip_stream_t *gzip_stream;
     int zres;
@@ -243,7 +243,7 @@ static void init_gzip_stream(WININETHTTPREQW *req)
 
 #else
 
-static void init_gzip_stream(WININETHTTPREQW *req)
+static void init_gzip_stream(http_request_t *req)
 {
     ERR("gzip stream not supported, missing zlib.\n");
 }
@@ -251,7 +251,7 @@ static void init_gzip_stream(WININETHTTPREQW *req)
 #endif
 
 /* set the request content length based on the headers */
-static DWORD set_content_length( LPWININETHTTPREQW lpwhr )
+static DWORD set_content_length( http_request_t *lpwhr )
 {
     static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
     WCHAR encoding[20];
@@ -356,7 +356,7 @@ static void HTTP_FreeTokens(LPWSTR * token_array)
 static void AsyncHttpSendRequestProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_HTTPSENDREQUESTW const *req = &workRequest->u.HttpSendRequestW;
-    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) workRequest->hdr;
+    http_request_t *lpwhr = (http_request_t*) workRequest->hdr;
 
     TRACE("%p\n", lpwhr);
 
@@ -367,7 +367,7 @@ static void AsyncHttpSendRequestProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszHeader);
 }
 
-static void HTTP_FixURL( LPWININETHTTPREQW lpwhr)
+static void HTTP_FixURL(http_request_t *lpwhr)
 {
     static const WCHAR szSlash[] = { '/',0 };
     static const WCHAR szHttp[] = { 'h','t','t','p',':','/','/', 0 };
@@ -403,7 +403,7 @@ static void HTTP_FixURL( LPWININETHTTPREQW lpwhr)
     }
 }
 
-static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR verb, LPCWSTR path, LPCWSTR version )
+static LPWSTR HTTP_BuildHeaderRequestString( http_request_t *lpwhr, LPCWSTR verb, LPCWSTR path, LPCWSTR version )
 {
     LPWSTR requestString;
     DWORD len, n;
@@ -462,7 +462,7 @@ static LPWSTR HTTP_BuildHeaderRequestString( LPWININETHTTPREQW lpwhr, LPCWSTR ve
     return requestString;
 }
 
-static void HTTP_ProcessCookies( LPWININETHTTPREQW lpwhr )
+static void HTTP_ProcessCookies( http_request_t *lpwhr )
 {
     int HeaderIndex;
     int numCookies = 0;
@@ -498,7 +498,7 @@ static inline BOOL is_basic_auth_value( LPCWSTR pszAuthValue )
         ((pszAuthValue[ARRAYSIZE(szBasic)] == ' ') || !pszAuthValue[ARRAYSIZE(szBasic)]);
 }
 
-static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
+static BOOL HTTP_DoAuthorization( http_request_t *lpwhr, LPCWSTR pszAuthValue,
                                   struct HttpAuthInfo **ppAuthInfo,
                                   LPWSTR domain_and_username, LPWSTR password )
 {
@@ -713,7 +713,7 @@ static BOOL HTTP_DoAuthorization( LPWININETHTTPREQW lpwhr, LPCWSTR pszAuthValue,
 /***********************************************************************
  *           HTTP_HttpAddRequestHeadersW (internal)
  */
-static BOOL HTTP_HttpAddRequestHeadersW(LPWININETHTTPREQW lpwhr,
+static BOOL HTTP_HttpAddRequestHeadersW(http_request_t *lpwhr,
 	LPCWSTR lpszHeader, DWORD dwHeaderLength, DWORD dwModifier)
 {
     LPWSTR lpszStart;
@@ -800,14 +800,14 @@ BOOL WINAPI HttpAddRequestHeadersW(HINTERNET hHttpRequest,
 	LPCWSTR lpszHeader, DWORD dwHeaderLength, DWORD dwModifier)
 {
     BOOL bSuccess = FALSE;
-    LPWININETHTTPREQW lpwhr;
+    http_request_t *lpwhr;
 
     TRACE("%p, %s, %i, %i\n", hHttpRequest, debugstr_wn(lpszHeader, dwHeaderLength), dwHeaderLength, dwModifier);
 
     if (!lpszHeader) 
       return TRUE;
 
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hHttpRequest );
+    lpwhr = (http_request_t*) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -877,7 +877,7 @@ BOOL WINAPI HttpEndRequestA(HINTERNET hRequest,
     return HttpEndRequestW(hRequest, NULL, dwFlags, dwContext);
 }
 
-static BOOL HTTP_HttpEndRequestW(LPWININETHTTPREQW lpwhr, DWORD dwFlags, DWORD_PTR dwContext)
+static BOOL HTTP_HttpEndRequestW(http_request_t *lpwhr, DWORD dwFlags, DWORD_PTR dwContext)
 {
     BOOL rc = FALSE;
     INT responseLen;
@@ -938,7 +938,7 @@ static BOOL HTTP_HttpEndRequestW(LPWININETHTTPREQW lpwhr, DWORD dwFlags, DWORD_P
 static void AsyncHttpEndRequestProc(WORKREQUEST *work)
 {
     struct WORKREQ_HTTPENDREQUESTW const *req = &work->u.HttpEndRequestW;
-    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW)work->hdr;
+    http_request_t *lpwhr = (http_request_t*)work->hdr;
 
     TRACE("%p\n", lpwhr);
 
@@ -959,7 +959,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
         LPINTERNET_BUFFERSW lpBuffersOut, DWORD dwFlags, DWORD_PTR dwContext)
 {
     BOOL rc = FALSE;
-    LPWININETHTTPREQW lpwhr;
+    http_request_t *lpwhr;
 
     TRACE("-->\n");
 
@@ -969,7 +969,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
         return FALSE;
     }
 
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
+    lpwhr = (http_request_t*) WININET_GetObject( hRequest );
 
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
@@ -1329,7 +1329,7 @@ static UINT HTTP_DecodeBase64( LPCWSTR base64, LPSTR bin )
  *
  *   Insert or delete the authorization field in the request header.
  */
-static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr, struct HttpAuthInfo *pAuthInfo, LPCWSTR header )
+static BOOL HTTP_InsertAuthorization( http_request_t *lpwhr, struct HttpAuthInfo *pAuthInfo, LPCWSTR header )
 {
     if (pAuthInfo)
     {
@@ -1372,7 +1372,7 @@ static BOOL HTTP_InsertAuthorization( LPWININETHTTPREQW lpwhr, struct HttpAuthIn
     return TRUE;
 }
 
-static WCHAR *HTTP_BuildProxyRequestUrl(WININETHTTPREQW *req)
+static WCHAR *HTTP_BuildProxyRequestUrl(http_request_t *req)
 {
     WCHAR new_location[INTERNET_MAX_URL_LENGTH], *url;
     DWORD size;
@@ -1410,7 +1410,7 @@ static WCHAR *HTTP_BuildProxyRequestUrl(WININETHTTPREQW *req)
  *           HTTP_DealWithProxy
  */
 static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
-    http_session_t *lpwhs, LPWININETHTTPREQW lpwhr)
+    http_session_t *lpwhs, http_request_t *lpwhr)
 {
     WCHAR buf[MAXHOSTNAME];
     WCHAR proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
@@ -1452,7 +1452,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
 #define INET6_ADDRSTRLEN 46
 #endif
 
-static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
+static BOOL HTTP_ResolveName(http_request_t *lpwhr)
 {
     char szaddr[INET6_ADDRSTRLEN];
     http_session_t *lpwhs = lpwhr->lpHttpSession;
@@ -1502,7 +1502,7 @@ static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
  */
 static void HTTPREQ_Destroy(object_header_t *hdr)
 {
-    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
+    http_request_t *lpwhr = (http_request_t*) hdr;
     DWORD i;
 
     TRACE("\n");
@@ -1559,7 +1559,7 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 
 static void HTTPREQ_CloseConnection(object_header_t *hdr)
 {
-    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
+    http_request_t *lpwhr = (http_request_t*) hdr;
 
     TRACE("%p\n",lpwhr);
 
@@ -1583,7 +1583,7 @@ static void HTTPREQ_CloseConnection(object_header_t *hdr)
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
-static BOOL HTTP_GetRequestURL(WININETHTTPREQW *req, LPWSTR buf)
+static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
 {
     LPHTTPHEADERW host_header;
 
@@ -1599,7 +1599,7 @@ static BOOL HTTP_GetRequestURL(WININETHTTPREQW *req, LPWSTR buf)
 
 static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
-    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    http_request_t *req = (http_request_t*)hdr;
 
     switch(option) {
     case INTERNET_OPTION_SECURITY_FLAGS:
@@ -1798,7 +1798,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
 
 static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer, DWORD size)
 {
-    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    http_request_t *req = (http_request_t*)hdr;
 
     switch(option) {
     case INTERNET_OPTION_SEND_TIMEOUT:
@@ -1831,7 +1831,7 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
 }
 
 /* read some more data into the read buffer (the read section must be held) */
-static BOOL read_more_data( WININETHTTPREQW *req, int maxlen )
+static BOOL read_more_data( http_request_t *req, int maxlen )
 {
     int len;
 
@@ -1854,13 +1854,13 @@ static BOOL read_more_data( WININETHTTPREQW *req, int maxlen )
 }
 
 /* remove some amount of data from the read buffer (the read section must be held) */
-static void remove_data( WININETHTTPREQW *req, int count )
+static void remove_data( http_request_t *req, int count )
 {
     if (!(req->read_size -= count)) req->read_pos = 0;
     else req->read_pos += count;
 }
 
-static BOOL read_line( WININETHTTPREQW *req, LPSTR buffer, DWORD *len )
+static BOOL read_line( http_request_t *req, LPSTR buffer, DWORD *len )
 {
     int count, bytes_read, pos = 0;
 
@@ -1903,7 +1903,7 @@ static BOOL read_line( WININETHTTPREQW *req, LPSTR buffer, DWORD *len )
 }
 
 /* discard data contents until we reach end of line (the read section must be held) */
-static BOOL discard_eol( WININETHTTPREQW *req )
+static BOOL discard_eol( http_request_t *req )
 {
     do
     {
@@ -1920,7 +1920,7 @@ static BOOL discard_eol( WININETHTTPREQW *req )
 }
 
 /* read the size of the next chunk (the read section must be held) */
-static BOOL start_next_chunk( WININETHTTPREQW *req )
+static BOOL start_next_chunk( http_request_t *req )
 {
     DWORD chunk_size = 0;
 
@@ -1960,7 +1960,7 @@ static BOOL start_next_chunk( WININETHTTPREQW *req )
 }
 
 /* check if we have reached the end of the data to read (the read section must be held) */
-static BOOL end_of_read_data( WININETHTTPREQW *req )
+static BOOL end_of_read_data( http_request_t *req )
 {
     if (req->gzip_stream) return req->gzip_stream->end_of_data && !req->gzip_stream->buf_size;
     if (req->read_chunked) return (req->dwContentLength == 0);
@@ -1969,7 +1969,7 @@ static BOOL end_of_read_data( WININETHTTPREQW *req )
 }
 
 /* fetch some more data into the read buffer (the read section must be held) */
-static BOOL refill_buffer( WININETHTTPREQW *req )
+static BOOL refill_buffer( http_request_t *req )
 {
     int len = sizeof(req->read_buf);
 
@@ -1986,7 +1986,7 @@ static BOOL refill_buffer( WININETHTTPREQW *req )
     return TRUE;
 }
 
-static DWORD read_gzip_data(WININETHTTPREQW *req, BYTE *buf, int size, BOOL sync, int *read_ret)
+static DWORD read_gzip_data(http_request_t *req, BYTE *buf, int size, BOOL sync, int *read_ret)
 {
     DWORD ret = ERROR_SUCCESS;
     int read = 0;
@@ -2024,7 +2024,7 @@ static DWORD read_gzip_data(WININETHTTPREQW *req, BYTE *buf, int size, BOOL sync
     return ret;
 }
 
-static void refill_gzip_buffer(WININETHTTPREQW *req)
+static void refill_gzip_buffer(http_request_t *req)
 {
     DWORD res;
     int len;
@@ -2045,7 +2045,7 @@ static void refill_gzip_buffer(WININETHTTPREQW *req)
 }
 
 /* return the size of data available to be read immediately (the read section must be held) */
-static DWORD get_avail_data( WININETHTTPREQW *req )
+static DWORD get_avail_data( http_request_t *req )
 {
     if (req->gzip_stream) {
         refill_gzip_buffer(req);
@@ -2056,7 +2056,7 @@ static DWORD get_avail_data( WININETHTTPREQW *req )
     return min( req->read_size, req->dwContentLength - req->dwContentRead );
 }
 
-static void HTTP_ReceiveRequestData(WININETHTTPREQW *req, BOOL first_notif)
+static void HTTP_ReceiveRequestData(http_request_t *req, BOOL first_notif)
 {
     INTERNET_ASYNC_RESULT iar;
 
@@ -2077,7 +2077,7 @@ static void HTTP_ReceiveRequestData(WININETHTTPREQW *req, BOOL first_notif)
 }
 
 /* read data from the http connection (the read section must be held) */
-static DWORD HTTPREQ_Read(WININETHTTPREQW *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
+static DWORD HTTPREQ_Read(http_request_t *req, void *buffer, DWORD size, DWORD *read, BOOL sync)
 {
     BOOL finished_reading = FALSE;
     int len, bytes_read = 0;
@@ -2150,14 +2150,14 @@ done:
 
 static DWORD HTTPREQ_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DWORD *read)
 {
-    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    http_request_t *req = (http_request_t*)hdr;
     return HTTPREQ_Read(req, buffer, size, read, TRUE);
 }
 
 static void HTTPREQ_AsyncReadFileExAProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_INTERNETREADFILEEXA const *data = &workRequest->u.InternetReadFileExA;
-    WININETHTTPREQW *req = (WININETHTTPREQW*)workRequest->hdr;
+    http_request_t *req = (http_request_t*)workRequest->hdr;
     INTERNET_ASYNC_RESULT iar;
     DWORD res;
 
@@ -2177,8 +2177,7 @@ static void HTTPREQ_AsyncReadFileExAProc(WORKREQUEST *workRequest)
 static DWORD HTTPREQ_ReadFileExA(object_header_t *hdr, INTERNET_BUFFERSA *buffers,
         DWORD flags, DWORD_PTR context)
 {
-
-    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    http_request_t *req = (http_request_t*)hdr;
     DWORD res;
 
     if (flags & ~(IRF_ASYNC|IRF_NO_WAIT))
@@ -2230,7 +2229,7 @@ done:
 static void HTTPREQ_AsyncReadFileExWProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_INTERNETREADFILEEXW const *data = &workRequest->u.InternetReadFileExW;
-    WININETHTTPREQW *req = (WININETHTTPREQW*)workRequest->hdr;
+    http_request_t *req = (http_request_t*)workRequest->hdr;
     INTERNET_ASYNC_RESULT iar;
     DWORD res;
 
@@ -2251,7 +2250,7 @@ static DWORD HTTPREQ_ReadFileExW(object_header_t *hdr, INTERNET_BUFFERSW *buffer
         DWORD flags, DWORD_PTR context)
 {
 
-    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    http_request_t *req = (http_request_t*)hdr;
     DWORD res;
 
     if (flags & ~(IRF_ASYNC|IRF_NO_WAIT))
@@ -2303,7 +2302,7 @@ done:
 static BOOL HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD size, DWORD *written)
 {
     BOOL ret;
-    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW)hdr;
+    http_request_t *lpwhr = (http_request_t*)hdr;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext, INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
 
@@ -2317,14 +2316,14 @@ static BOOL HTTPREQ_WriteFile(object_header_t *hdr, const void *buffer, DWORD si
 
 static void HTTPREQ_AsyncQueryDataAvailableProc(WORKREQUEST *workRequest)
 {
-    WININETHTTPREQW *req = (WININETHTTPREQW*)workRequest->hdr;
+    http_request_t *req = (http_request_t*)workRequest->hdr;
 
     HTTP_ReceiveRequestData(req, FALSE);
 }
 
 static DWORD HTTPREQ_QueryDataAvailable(object_header_t *hdr, DWORD *available, DWORD flags, DWORD_PTR ctx)
 {
-    WININETHTTPREQW *req = (WININETHTTPREQW*)hdr;
+    http_request_t *req = (http_request_t*)hdr;
 
     TRACE("(%p %p %x %lx)\n", req, available, flags, ctx);
 
@@ -2398,7 +2397,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
 	DWORD dwFlags, DWORD_PTR dwContext)
 {
     LPWININETAPPINFOW hIC = NULL;
-    LPWININETHTTPREQW lpwhr;
+    http_request_t *lpwhr;
     LPWSTR lpszHostName = NULL;
     HINTERNET handle = NULL;
     static const WCHAR szHostForm[] = {'%','s',':','%','u',0};
@@ -2409,7 +2408,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
     assert( lpwhs->hdr.htype == WH_HHTTPSESSION );
     hIC = lpwhs->lpAppInfo;
 
-    lpwhr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETHTTPREQW));
+    lpwhr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(http_request_t));
     if (NULL == lpwhr)
     {
         INTERNET_SetLastError(ERROR_OUTOFMEMORY);
@@ -2535,7 +2534,7 @@ lend:
 
 /* read any content returned by the server so that the connection can be
  * reused */
-static void HTTP_DrainContent(WININETHTTPREQW *req)
+static void HTTP_DrainContent(http_request_t *req)
 {
     DWORD bytes_read;
 
@@ -2634,7 +2633,7 @@ static const LPCWSTR header_lookup[] = {
 /***********************************************************************
  *           HTTP_HttpQueryInfoW (internal)
  */
-static BOOL HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
+static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
 	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
     LPHTTPHEADERW lphttpHdr = NULL;
@@ -2862,7 +2861,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
     BOOL bSuccess = FALSE;
-    LPWININETHTTPREQW lpwhr;
+    http_request_t *lpwhr;
 
     if (TRACE_ON(wininet)) {
 #define FE(x) { x, #x }
@@ -2974,7 +2973,7 @@ BOOL WINAPI HttpQueryInfoW(HINTERNET hHttpRequest, DWORD dwInfoLevel,
 	TRACE("\n");
     }
     
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hHttpRequest );
+    lpwhr = (http_request_t*) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -3133,14 +3132,14 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
                    DWORD dwFlags, DWORD_PTR dwContext)
 {
     BOOL ret = FALSE;
-    LPWININETHTTPREQW lpwhr;
+    http_request_t *lpwhr;
     http_session_t *lpwhs;
     LPWININETAPPINFOW hIC;
 
     TRACE("(%p, %p, %p, %08x, %08lx)\n", hRequest, lpBuffersIn,
             lpBuffersOut, dwFlags, dwContext);
 
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
+    lpwhr = (http_request_t*) WININET_GetObject( hRequest );
 
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
@@ -3221,7 +3220,7 @@ lend:
 BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional ,DWORD dwOptionalLength)
 {
-    LPWININETHTTPREQW lpwhr;
+    http_request_t *lpwhr;
     http_session_t *lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
     BOOL r;
@@ -3229,7 +3228,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
     TRACE("%p, %s, %i, %p, %i)\n", hHttpRequest,
             debugstr_wn(lpszHeaders, dwHeaderLength), dwHeaderLength, lpOptional, dwOptionalLength);
 
-    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hHttpRequest );
+    lpwhr = (http_request_t*) WININET_GetObject( hHttpRequest );
     if (NULL == lpwhr || lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -3328,7 +3327,7 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 /***********************************************************************
  *           HTTP_GetRedirectURL (internal)
  */
-static LPWSTR HTTP_GetRedirectURL(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
+static LPWSTR HTTP_GetRedirectURL(http_request_t *lpwhr, LPCWSTR lpszUrl)
 {
     static WCHAR szHttp[] = {'h','t','t','p',0};
     static WCHAR szHttps[] = {'h','t','t','p','s',0};
@@ -3390,7 +3389,7 @@ static LPWSTR HTTP_GetRedirectURL(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
 /***********************************************************************
  *           HTTP_HandleRedirect (internal)
  */
-static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
+static BOOL HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
 {
     http_session_t *lpwhs = lpwhr->lpHttpSession;
     LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
@@ -3564,7 +3563,7 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
     return str;
 }
 
-static BOOL HTTP_SecureProxyConnect(LPWININETHTTPREQW lpwhr)
+static BOOL HTTP_SecureProxyConnect(http_request_t *lpwhr)
 {
     LPWSTR lpszPath;
     LPWSTR requestString;
@@ -3606,7 +3605,7 @@ static BOOL HTTP_SecureProxyConnect(LPWININETHTTPREQW lpwhr)
     return TRUE;
 }
 
-static void HTTP_InsertCookies(LPWININETHTTPREQW lpwhr)
+static void HTTP_InsertCookies(http_request_t *lpwhr)
 {
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
     LPWSTR lpszCookies, lpszUrl = NULL;
@@ -3646,7 +3645,7 @@ static void HTTP_InsertCookies(LPWININETHTTPREQW lpwhr)
  *    FALSE on failure
  *
  */
-BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
+BOOL WINAPI HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
 	DWORD dwContentLength, BOOL bEndRequest)
 {
@@ -4119,7 +4118,7 @@ lerror:
  *   TRUE  on success
  *   FALSE on failure
  */
-static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
+static BOOL HTTP_OpenConnection(http_request_t *lpwhr)
 {
     BOOL bSuccess = FALSE;
     http_session_t *lpwhs;
@@ -4214,7 +4213,7 @@ lend:
  *
  * clear out any old response headers
  */
-static void HTTP_clear_response_headers( LPWININETHTTPREQW lpwhr )
+static void HTTP_clear_response_headers( http_request_t *lpwhr )
 {
     DWORD i;
 
@@ -4241,7 +4240,7 @@ static void HTTP_clear_response_headers( LPWININETHTTPREQW lpwhr )
  *   TRUE  on success
  *   FALSE on error
  */
-static INT HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr, BOOL clear)
+static INT HTTP_GetResponseHeaders(http_request_t *lpwhr, BOOL clear)
 {
     INT cbreaks = 0;
     WCHAR buffer[MAX_REPLY_LEN];
@@ -4483,7 +4482,7 @@ static LPWSTR * HTTP_InterpretHttpHeader(LPCWSTR buffer)
 
 #define COALESCEFLAGS (HTTP_ADDHDR_FLAG_COALESCE|HTTP_ADDHDR_FLAG_COALESCE_WITH_COMMA|HTTP_ADDHDR_FLAG_COALESCE_WITH_SEMICOLON)
 
-static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier)
+static BOOL HTTP_ProcessHeader(http_request_t *lpwhr, LPCWSTR field, LPCWSTR value, DWORD dwModifier)
 {
     LPHTTPHEADERW lphttpHdr = NULL;
     BOOL bSuccess = FALSE;
@@ -4605,7 +4604,7 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
  * Called when all content from server has been read by client.
  *
  */
-static BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
+static BOOL HTTP_FinishedReading(http_request_t *lpwhr)
 {
     WCHAR szVersion[10];
     WCHAR szConnectionResponse[20];
@@ -4647,7 +4646,7 @@ static BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
  * Return index of custom header from header array
  *
  */
-static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField,
+static INT HTTP_GetCustomHeaderIndex(http_request_t *lpwhr, LPCWSTR lpszField,
                                      int requested_index, BOOL request_only)
 {
     DWORD index;
@@ -4684,7 +4683,7 @@ static INT HTTP_GetCustomHeaderIndex(LPWININETHTTPREQW lpwhr, LPCWSTR lpszField,
  * Insert header into array
  *
  */
-static BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr)
+static BOOL HTTP_InsertCustomHeader(http_request_t *lpwhr, LPHTTPHEADERW lpHdr)
 {
     INT count;
     LPHTTPHEADERW lph = NULL;
@@ -4722,7 +4721,7 @@ static BOOL HTTP_InsertCustomHeader(LPWININETHTTPREQW lpwhr, LPHTTPHEADERW lpHdr
  * Delete header from array
  *  If this function is called, the indexs may change.
  */
-static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index)
+static BOOL HTTP_DeleteCustomHeader(http_request_t *lpwhr, DWORD index)
 {
     if( lpwhr->nCustHeaders <= 0 )
         return FALSE;
@@ -4747,7 +4746,7 @@ static BOOL HTTP_DeleteCustomHeader(LPWININETHTTPREQW lpwhr, DWORD index)
  * Verify the given header is not invalid for the given http request
  *
  */
-static BOOL HTTP_VerifyValidHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field)
+static BOOL HTTP_VerifyValidHeader(http_request_t *lpwhr, LPCWSTR field)
 {
     /* Accept-Encoding is stripped from HTTP/1.0 requests. It is invalid */
     if (!strcmpW(lpwhr->lpszVersion, g_szHttp1_0) && !strcmpiW(field, szAccept_Encoding))
