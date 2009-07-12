@@ -83,8 +83,9 @@ struct IDsDriverBufferImpl
     IDsDriverImpl* drv;
 
     CRITICAL_SECTION pcm_crst;
-    LPVOID mmap_buffer;
+    BYTE *mmap_buffer;
     DWORD mmap_buflen_bytes;
+    BOOL mmap;
 
     snd_pcm_t *pcm;
     snd_pcm_hw_params_t *hw_params;
@@ -102,25 +103,44 @@ struct IDsDriverBufferImpl
 static snd_pcm_uframes_t CommitAll(IDsDriverBufferImpl *This)
 {
     const snd_pcm_channel_area_t *areas;
-    snd_pcm_uframes_t used;
+    snd_pcm_sframes_t used;
     const snd_pcm_uframes_t commitahead = This->mmap_commitahead;
 
     used = This->mmap_buflen_frames - snd_pcm_avail_update(This->pcm);
-    TRACE("%p needs to commit to %lu, used: %lu\n", This, commitahead, used);
+    if (used < 0) used = 0;
+    TRACE("%p needs to commit to %lu, used: %ld\n", This, commitahead, used);
     if (used < commitahead)
     {
         snd_pcm_uframes_t done, putin = commitahead - used;
-        snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
-        done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+        if (This->mmap)
+        {
+            snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
+            done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+        }
+        else
+        {
+            if (putin + This->mmap_pos > This->mmap_buflen_frames)
+                putin = This->mmap_buflen_frames - This->mmap_pos;
+            done = putin;
+            snd_pcm_writei(This->pcm, This->mmap_buffer + snd_pcm_frames_to_bytes(This->pcm, This->mmap_pos), putin);
+        }
         This->mmap_pos += done;
         used += done;
         putin = commitahead - used;
 
         if (This->mmap_pos == This->mmap_buflen_frames && (snd_pcm_sframes_t)putin > 0)
         {
-            snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
-            done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
-            This->mmap_pos += done;
+            if (This->mmap)
+            {
+                snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
+                done = snd_pcm_mmap_commit(This->pcm, This->mmap_pos, putin);
+                This->mmap_pos += done;
+            }
+            else
+            {
+                snd_pcm_writei(This->pcm, This->mmap_buffer, putin);
+                This->mmap_pos = done = putin;
+            }
             used += done;
         }
     }
@@ -176,6 +196,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
     const snd_pcm_channel_area_t *areas;
     snd_pcm_hw_params_t *hw_params = pdbi->hw_params;
     snd_pcm_sw_params_t *sw_params = pdbi->sw_params;
+    void *buf;
 
     mmap_mode = snd_pcm_type(pcm);
 
@@ -218,15 +239,27 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
         ERR("No buffer is available: %s.\n", snd_strerror(avail));
         return DSERR_GENERIC;
     }
-    err = snd_pcm_mmap_begin(pcm, &areas, &ofs, &avail);
-    if ( err < 0 )
+
+    if (!pdbi->mmap)
     {
-        ERR("Can't map sound device for direct access: %s\n", snd_strerror(err));
-        return DSERR_GENERIC;
+        buf = pdbi->mmap_buffer = HeapAlloc(GetProcessHeap(), 0, pdbi->mmap_buflen_bytes);
+        if (!buf)
+            return DSERR_OUTOFMEMORY;
+
+        snd_pcm_format_set_silence(format, buf, pdbi->mmap_buflen_frames);
     }
-    snd_pcm_format_set_silence(format, areas->addr, pdbi->mmap_buflen_frames);
-    pdbi->mmap_pos = ofs + snd_pcm_mmap_commit(pcm, ofs, 0);
-    pdbi->mmap_buffer = areas->addr;
+    else
+    {
+        err = snd_pcm_mmap_begin(pcm, &areas, &ofs, &avail);
+        if ( err < 0 )
+        {
+            ERR("Can't map sound device for direct access: %s/%d\n", snd_strerror(err), err);
+            return DSERR_GENERIC;
+        }
+        snd_pcm_format_set_silence(format, areas->addr, pdbi->mmap_buflen_frames);
+        pdbi->mmap_pos = ofs + snd_pcm_mmap_commit(pcm, ofs, 0);
+        pdbi->mmap_buffer = areas->addr;
+    }
 
     TRACE("created mmap buffer of %ld frames (%d bytes) at %p\n",
         frames, pdbi->mmap_buflen_bytes, pdbi->mmap_buffer);
@@ -274,6 +307,8 @@ static ULONG WINAPI IDsDriverBufferImpl_Release(PIDSDRIVERBUFFER iface)
     This->pcm = NULL;
     HeapFree(GetProcessHeap(), 0, This->sw_params);
     HeapFree(GetProcessHeap(), 0, This->hw_params);
+    if (!This->mmap)
+        HeapFree(GetProcessHeap(), 0, This->mmap_buffer);
     HeapFree(GetProcessHeap(), 0, This);
     return 0;
 }
@@ -305,7 +340,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Lock(PIDSDRIVERBUFFER iface,
     if (ppvAudio2) *ppvAudio2 = NULL;
     if (pdwLen2) *pdwLen2 = 0;
 
-    *ppvAudio1 = (LPBYTE)This->mmap_buffer + dwWritePosition;
+    *ppvAudio1 = This->mmap_buffer + dwWritePosition;
     *pdwLen1 = dwWriteLen;
 
     if (dwWritePosition+dwWriteLen > This->mmap_buflen_bytes)
@@ -327,7 +362,8 @@ static HRESULT WINAPI IDsDriverBufferImpl_Lock(PIDSDRIVERBUFFER iface,
         const snd_pcm_channel_area_t *areas;
         snd_pcm_uframes_t writelen = snd_pcm_bytes_to_frames(This->pcm, dwWriteLen), putin = writelen;
         TRACE("Hit mmap_pos, locking data!\n");
-        snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
+        if (This->mmap)
+            snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &putin);
     }
     else
         WARN("mmap_pos (%lu) != writepos (%lu) not locking data!\n", This->mmap_pos, writepos);
@@ -356,14 +392,40 @@ static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
         const snd_pcm_channel_area_t *areas;
         snd_pcm_uframes_t writelen = snd_pcm_bytes_to_frames(This->pcm, dwLen1);
         TRACE("Committing data\n");
-        This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, writelen);
+        if (This->mmap)
+            This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, writelen);
+        else
+        {
+            int ret;
+            ret = snd_pcm_writei(This->pcm, pvAudio1, writelen);
+            if (ret == -EPIPE)
+            {
+                WARN("Underrun occured\n");
+                snd_pcm_prepare(This->pcm);
+                ret = snd_pcm_writei(This->pcm, pvAudio1, writelen);
+                snd_pcm_start(This->pcm);
+            }
+            if (ret < 0)
+                WARN("Committing data: %d / %s (%p %ld)\n", ret, snd_strerror(ret), pvAudio1, writelen);
+            This->mmap_pos += writelen;
+        }
+
         if (This->mmap_pos == This->mmap_buflen_frames)
             This->mmap_pos = 0;
         if (!This->mmap_pos && dwLen2)
         {
             writelen = snd_pcm_bytes_to_frames(This->pcm, dwLen2);
-            snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &writelen);
-            This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, writelen);
+            if (This->mmap)
+            {
+                snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &writelen);
+                This->mmap_pos += snd_pcm_mmap_commit(This->pcm, This->mmap_pos, writelen);
+            }
+            else
+            {
+                int ret;
+                ret = snd_pcm_writei(This->pcm, pvAudio2, writelen);
+                This->mmap_pos = writelen;
+            }
             assert(This->mmap_pos < This->mmap_buflen_frames);
         }
     }
@@ -442,12 +504,29 @@ static HRESULT SetFormat(IDsDriverBufferImpl *This, LPWAVEFORMATEX pwfx)
     snd_pcm_hw_params_set_buffer_time_near(pcm, hw_params, &buffer_time, NULL);
     buffer_time = 10000;
     snd_pcm_hw_params_set_period_time_near(pcm, hw_params, &buffer_time, NULL);
+
+    err = snd_pcm_hw_params_get_period_size(hw_params, &psize, NULL);
+    buffer_time = 16;
+    snd_pcm_hw_params_set_periods_near(pcm, hw_params, &buffer_time, NULL);
+
+    if (!This->mmap)
+    {
+        HeapFree(GetProcessHeap(), 0, This->mmap_buffer);
+        This->mmap_buffer = NULL;
+    }
+
+    err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_MMAP_INTERLEAVED);
+    if (err >= 0)
+        This->mmap = 1;
+    else
+    {
+        This->mmap = 0;
+        err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+    }
+
     err = snd_pcm_hw_params(pcm, hw_params);
     err = snd_pcm_sw_params(pcm, This->sw_params);
     snd_pcm_prepare(pcm);
-
-    err = snd_pcm_hw_params_get_period_size(hw_params, &psize, NULL);
-    TRACE("Period size is: %lu\n", psize);
 
     /* ALSA needs at least 3 buffers to work successfully */
     This->mmap_commitahead = 3 * psize;
@@ -553,9 +632,13 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 
         if (used < 0)
         {
-            This->mmap_pos += -used;
-            snd_pcm_forward(This->pcm, -used);
-            This->mmap_pos %= This->mmap_buflen_frames;
+            WARN("Underrun: %ld / %ld\n", used, snd_pcm_avail_update(This->pcm));
+            if (This->mmap)
+            {
+                snd_pcm_forward(This->pcm, -used);
+                This->mmap_pos += -used;
+                This->mmap_pos %= This->mmap_buflen_frames;
+            }
             used = 0;
         }
 
@@ -609,10 +692,19 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
     snd_pcm_drop(This->pcm);
     snd_pcm_prepare(This->pcm);
     avail = snd_pcm_avail_update(This->pcm);
-    snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &avail);
     snd_pcm_hw_params_get_format(This->hw_params, &format);
-    snd_pcm_format_set_silence(format, areas->addr, This->mmap_buflen_frames);
-    snd_pcm_mmap_commit(This->pcm, This->mmap_pos, 0);
+    if (This->mmap)
+    {
+        snd_pcm_mmap_begin(This->pcm, &areas, &This->mmap_pos, &avail);
+        snd_pcm_format_set_silence(format, areas->addr, This->mmap_buflen_frames);
+        snd_pcm_mmap_commit(This->pcm, This->mmap_pos, 0);
+    }
+    else
+    {
+        snd_pcm_format_set_silence(format, This->mmap_buffer, This->mmap_buflen_frames);
+        snd_pcm_writei(This->pcm, This->mmap_buffer, This->mmap_buflen_frames);
+        This->mmap_pos = 0;
+    }
 
     /* **** */
     LeaveCriticalSection(&This->pcm_crst);
@@ -710,6 +802,8 @@ static HRESULT WINAPI IDsDriverImpl_Open(PIDSDRIVER iface)
     err = snd_pcm_hw_params_any(pcm, hw_params);
     if (err < 0) goto err;
     err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_MMAP_INTERLEAVED);
+    if (err < 0)
+        err = snd_pcm_hw_params_set_access (pcm, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
     if (err < 0) goto err;
 
     TRACE("Success\n");
@@ -832,13 +926,6 @@ DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     IDsDriverImpl** idrv = (IDsDriverImpl**)drv;
 
     TRACE("driver created\n");
-
-    /* the HAL isn't much better than the HEL if we can't do mmap() */
-    if (!(WOutDev[wDevID].outcaps.dwSupport & WAVECAPS_DIRECTSOUND))
-    {
-        WARN("MMAP not supported for this device, falling back to waveout, should be harmless\n");
-        return MMSYSERR_NOTSUPPORTED;
-    }
 
     *idrv = HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverImpl));
     if (!*idrv)
