@@ -299,6 +299,7 @@ static void test_GetVolumeInformationA(void)
     DWORD vol_name_size=MAX_PATH+1, vol_serial_num=-1, max_comp_len=0, fs_flags=0, fs_name_len=MAX_PATH+1;
     char vol_name_buf[MAX_PATH+1], fs_name_buf[MAX_PATH+1];
     char windowsdir[MAX_PATH+10];
+    char currentdir[MAX_PATH+1];
 
     if (!pGetVolumeInformationA) {
         win_skip("GetVolumeInformationA not found\n");
@@ -327,6 +328,29 @@ static void test_GetVolumeInformationA(void)
             NULL, NULL, fs_name_buf, fs_name_len);
     ok(!ret && GetLastError() == ERROR_INVALID_NAME,
         "GetVolumeInformationA w/o '\\' did not fail, last error %u\n", GetLastError());
+
+    result = GetCurrentDirectory(MAX_PATH, currentdir);
+    ok(result, "GetCurrentDirectory: error %d\n", GetLastError());
+
+    /* check for error on no trailing \ when current dir is root dir */
+    ret = SetCurrentDirectory(Root_Dir1);
+    ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
+    ret = pGetVolumeInformationA(Root_Dir0, vol_name_buf, vol_name_size, NULL,
+            NULL, NULL, fs_name_buf, fs_name_len);
+    todo_wine
+    ok(ret, "GetVolumeInformationA failed, last error %u\n", GetLastError());
+
+    /* check for error on no trailing \ when current dir is windows dir */
+    ret = SetCurrentDirectory(windowsdir);
+    ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
+    ret = pGetVolumeInformationA(Root_Dir0, vol_name_buf, vol_name_size, NULL,
+            NULL, NULL, fs_name_buf, fs_name_len);
+    ok(!ret && GetLastError() == ERROR_INVALID_NAME,
+        "GetVolumeInformationA did not fail, last error %u\n", GetLastError());
+
+    /* reset current directory */
+    ret = SetCurrentDirectory(currentdir);
+    ok(ret, "SetCurrentDirectory: error %d\n", GetLastError());
 
     /* try null root directory to return "root of the current directory"  */
     ret = pGetVolumeInformationA(NULL, vol_name_buf, vol_name_size, NULL,
