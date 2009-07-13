@@ -501,6 +501,9 @@ arr.length = 3;
 ok(arr.length === 3, "arr.length = " + arr.length);
 ok(arr.toString() === "1,,", "arr.toString() = " + arr.toString());
 
+arr = Array("a","b","c");
+ok(arr.toString() === "a,b,c", "arr.toString() = " + arr.toString());
+
 ok(arr.valueOf === Object.prototype.valueOf, "arr.valueOf !== Object.prototype.valueOf");
 ok(arr === arr.valueOf(), "arr !== arr.valueOf");
 
