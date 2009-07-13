@@ -87,6 +87,7 @@ static const WCHAR setMonthW[] = {'s','e','t','M','o','n','t','h',0};
 static const WCHAR setUTCMonthW[] = {'s','e','t','U','T','C','M','o','n','t','h',0};
 static const WCHAR setFullYearW[] = {'s','e','t','F','u','l','l','Y','e','a','r',0};
 static const WCHAR setUTCFullYearW[] = {'s','e','t','U','T','C','F','u','l','l','Y','e','a','r',0};
+static const WCHAR getYearW[] = {'g','e','t','Y','e','a','r',0};
 
 static const WCHAR UTCW[] = {'U','T','C',0};
 static const WCHAR parseW[] = {'p','a','r','s','e',0};
@@ -2134,6 +2135,37 @@ static HRESULT Date_setUTCFullYear(DispatchEx *dispex, LCID lcid, WORD flags, DI
     return S_OK;
 }
 
+/* ECMA-262 3rd Edition    B2.4 */
+static HRESULT Date_getYear(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
+{
+    DateInstance *date;
+    DOUBLE t, year;
+
+    TRACE("\n");
+
+    if(!is_class(dispex, JSCLASS_DATE)) {
+        FIXME("throw TypeError\n");
+        return E_FAIL;
+    }
+
+    date = (DateInstance*)dispex;
+    t = local_time(date->time, date);
+
+
+    if(isnan(t)) {
+        if(retv)
+            num_set_nan(retv);
+        return S_OK;
+    }
+
+    year = year_from_time(t);
+    if(retv)
+        num_set_val(retv, (1900<=year && year<2000)?year-1900:year);
+
+    return S_OK;
+}
+
 static HRESULT Date_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
 {
@@ -2160,6 +2192,7 @@ static const builtin_prop_t Date_props[] = {
     {getUTCMinutesW,         Date_getUTCMinutes,         PROPF_METHOD},
     {getUTCMonthW,           Date_getUTCMonth,           PROPF_METHOD},
     {getUTCSecondsW,         Date_getUTCSeconds,         PROPF_METHOD},
+    {getYearW,               Date_getYear,               PROPF_METHOD},
     {hasOwnPropertyW,        Date_hasOwnProperty,        PROPF_METHOD},
     {isPrototypeOfW,         Date_isPrototypeOf,         PROPF_METHOD},
     {propertyIsEnumerableW,  Date_propertyIsEnumerable,  PROPF_METHOD},
