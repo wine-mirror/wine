@@ -66,6 +66,7 @@ static const WCHAR hasOwnPropertyW[] = {'h','a','s','O','w','n','P','r','o','p',
 static const WCHAR propertyIsEnumerableW[] =
     {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
+static const WCHAR fromCharCodeW[] = {'f','r','o','m','C','h','a','r','C','o','d','e',0};
 
 static HRESULT String_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
@@ -1557,6 +1558,37 @@ static const builtin_info_t String_info = {
     NULL
 };
 
+/* ECMA-262 3rd Edition    15.5.3.2 */
+static HRESULT StringConstr_fromCharCode(DispatchEx *dispex, LCID lcid, WORD flags,
+        DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    DWORD i, code;
+    BSTR ret;
+    HRESULT hres;
+
+    ret = SysAllocStringLen(NULL, arg_cnt(dp));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    for(i=0; i<arg_cnt(dp); i++) {
+        hres = to_uint32(dispex->ctx, get_arg(dp, i), ei, &code);
+        if(FAILED(hres)) {
+            SysFreeString(ret);
+            return hres;
+        }
+
+        ret[i] = code;
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = ret;
+    }
+    else SysFreeString(ret);
+
+    return S_OK;
+}
+
 static HRESULT StringConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -1636,6 +1668,19 @@ static HRESULT string_alloc(script_ctx_t *ctx, BOOL use_constr, StringInstance *
     return S_OK;
 }
 
+static const builtin_prop_t StringConstr_props[] = {
+    {fromCharCodeW,    StringConstr_fromCharCode,    PROPF_METHOD},
+};
+
+static const builtin_info_t StringConstr_info = {
+    JSCLASS_FUNCTION,
+    {NULL, Function_value, 0},
+    sizeof(StringConstr_props)/sizeof(*StringConstr_props),
+    StringConstr_props,
+    NULL,
+    NULL
+};
+
 HRESULT create_string_constr(script_ctx_t *ctx, DispatchEx **ret)
 {
     StringInstance *string;
@@ -1645,7 +1690,7 @@ HRESULT create_string_constr(script_ctx_t *ctx, DispatchEx **ret)
     if(FAILED(hres))
         return hres;
 
-    hres = create_builtin_function(ctx, StringConstr_value, NULL, PROPF_CONSTR, &string->dispex, ret);
+    hres = create_builtin_function(ctx, StringConstr_value, &StringConstr_info, PROPF_CONSTR, &string->dispex, ret);
 
     jsdisp_release(&string->dispex);
     return hres;

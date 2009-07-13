@@ -405,6 +405,13 @@ ok(tmp === "<SUP>test</SUP>", "'test'.sup() = " + tmp);
 tmp = "test".sup(3);
 ok(tmp === "<SUP>test</SUP>", "'test'.sup(3) = " + tmp);
 
+ok(String.fromCharCode() === "", "String.fromCharCode() = " + String.fromCharCode());
+ok(String.fromCharCode(65,"66",67) === "ABC", "String.fromCharCode(65,'66',67) = " + String.fromCharCode(65,"66",67));
+ok(String.fromCharCode(1024*64+65, -1024*64+65) === "AA",
+        "String.fromCharCode(1024*64+65, -1024*64+65) = " + String.fromCharCode(1024*64+65, -1024*64+65));
+ok(String.fromCharCode(65, NaN, undefined).length === 3,
+        "String.fromCharCode(65, NaN, undefined).length = " + String.fromCharCode(65, NaN, undefined).length);
+
 var arr = new Array();
 ok(typeof(arr) === "object", "arr () is not object");
 ok((arr.length === 0), "arr.length is not 0");
