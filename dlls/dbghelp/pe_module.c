@@ -134,7 +134,7 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
  */
 static BOOL pe_load_msc_debug_info(const struct process* pcs, 
                                    struct module* module,
-                                   void* mapping, IMAGE_NT_HEADERS* nth)
+                                   void* mapping, const IMAGE_NT_HEADERS* nth)
 {
     BOOL                        ret = FALSE;
     const IMAGE_DATA_DIRECTORY* dir;
@@ -182,7 +182,7 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs,
  */
 static BOOL pe_load_export_debug_info(const struct process* pcs, 
                                       struct module* module, 
-                                      void* mapping, IMAGE_NT_HEADERS* nth)
+                                      void* mapping, const IMAGE_NT_HEADERS* nth)
 {
     unsigned int 		        i;
     const IMAGE_EXPORT_DIRECTORY* 	exports;

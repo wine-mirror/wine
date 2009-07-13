@@ -428,7 +428,7 @@ static void writeat(struct dump_context* dc, RVA rva, const void* data, unsigned
  * writes a new chunk of data to the minidump, increasing the current
  * rva in dc
  */
-static void append(struct dump_context* dc, void* data, unsigned size)
+static void append(struct dump_context* dc, const void* data, unsigned size)
 {
     writeat(dc, dc->rva, data, size);
     dc->rva += size;
