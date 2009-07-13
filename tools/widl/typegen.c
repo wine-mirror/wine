@@ -2208,11 +2208,12 @@ static void write_struct_members(FILE *file, const type_t *type,
     if (fields) LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
     {
         type_t *ft = field->type;
+        unsigned int align = 0;
+        unsigned int size = type_memsize(ft, &align);
+        if (salign < align) salign = align;
+
         if (!is_conformant_array(ft) || type_array_is_decl_as_ptr(ft))
         {
-            unsigned int align = 0;
-            unsigned int size = type_memsize(ft, &align);
-            if (salign < align) salign = align;
             if ((align - 1) & offset)
             {
                 unsigned char fc = 0;
