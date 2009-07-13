@@ -1536,11 +1536,19 @@ HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, 
     hres = args_to_param(ctx, expr->argument_list, ei, &dp);
     if(SUCCEEDED(hres)) {
         switch(exprval.type) {
+        case EXPRVAL_VARIANT:
+            if(V_VT(&exprval.u.var) != VT_DISPATCH) {
+                FIXME("throw TypeError\n");
+                hres = E_NOTIMPL;
+                break;
+            }
+
+            hres = disp_call(V_DISPATCH(&exprval.u.var), DISPID_VALUE, ctx->parser->script->lcid,
+                    DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
+            break;
         case EXPRVAL_IDREF:
-            hres = disp_call(exprval.u.idref.disp, exprval.u.idref.id, ctx->parser->script->lcid, DISPATCH_METHOD,
-                    &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
-            if(flags & EXPR_NOVAL)
-                V_VT(&var) = VT_EMPTY;
+            hres = disp_call(exprval.u.idref.disp, exprval.u.idref.id, ctx->parser->script->lcid,
+                    DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);
             break;
         default:
             FIXME("unimplemented type %d\n", exprval.type);
@@ -1554,9 +1562,13 @@ HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, 
     if(FAILED(hres))
         return hres;
 
-    TRACE("= %s\n", debugstr_variant(&var));
     ret->type = EXPRVAL_VARIANT;
-    ret->u.var = var;
+    if(flags & EXPR_NOVAL) {
+        V_VT(&ret->u.var) = VT_EMPTY;
+    }else {
+        TRACE("= %s\n", debugstr_variant(&var));
+        ret->u.var = var;
+    }
     return S_OK;
 }
 

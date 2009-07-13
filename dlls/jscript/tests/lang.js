@@ -894,4 +894,6 @@ ok(""+str === "valueOf", "''+str = " + str);
 str.valueOf = function() { return new Date(); }
 ok(""+str === "test", "''+str = " + str);
 
+ok((function (){return 1;})() === 1, "(function (){return 1;})() = " + (function (){return 1;})());
+
 reportSuccess();
