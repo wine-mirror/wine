@@ -1910,18 +1910,10 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
         HeapFree( GetProcessHeap(), 0, rgndata );
     }
 
-#ifdef HAVE_XRENDERSETPICTURETRANSFORM
-    if(!repeat_src && (widthDst != widthSrc || heightDst != heightSrc)) {
-        double xscale = widthSrc/(double)widthDst;
-        double yscale = heightSrc/(double)heightDst;
-        XTransform xform = {{
-            { XDoubleToFixed(xscale), XDoubleToFixed(0), XDoubleToFixed(0) },
-            { XDoubleToFixed(0), XDoubleToFixed(yscale), XDoubleToFixed(0) },
-            { XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1) }
-        }};
-        pXRenderSetPictureTransform(gdi_display, src_pict, &xform);
-    }
-#endif
+    /* Make sure we ALWAYS set the transformation matrix even if we don't need to scale. The reason is
+     * that later on we want to reuse pictures (it can bring a lot of extra performance) and each time
+     * a different transformation matrix might have been used. */
+    set_xrender_transformation(src_pict, widthSrc/(double)widthDst, heightSrc/(double)heightDst, 0, 0);
     pXRenderComposite(gdi_display, PictOpOver, src_pict, 0, dst_pict,
                       0, 0, 0, 0,
                       xDst + devDst->dc_rect.left, yDst + devDst->dc_rect.top, widthDst, heightDst);
