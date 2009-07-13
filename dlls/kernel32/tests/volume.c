@@ -322,15 +322,20 @@ static void test_GetVolumeInformationA(void)
     ret = pGetVolumeNameForVolumeMountPointA(Root_Dir1, volume, MAX_PATH);
     ok(ret == TRUE, "GetVolumeNameForVolumeMountPointA failed\n");
 
-    /*  ****  now start the tests       ****  */
-    /* check for error on no trailing \   */
-    ret = pGetVolumeInformationA(Root_Dir0, vol_name_buf, vol_name_size, NULL,
-            NULL, NULL, fs_name_buf, fs_name_len);
-    ok(!ret && GetLastError() == ERROR_INVALID_NAME,
-        "GetVolumeInformationA w/o '\\' did not fail, last error %u\n", GetLastError());
-
     result = GetCurrentDirectory(MAX_PATH, currentdir);
     ok(result, "GetCurrentDirectory: error %d\n", GetLastError());
+
+    /*  ****  now start the tests       ****  */
+    /* check for error on no trailing \   */
+    if (result > 3)
+    {
+        ret = pGetVolumeInformationA(Root_Dir0, vol_name_buf, vol_name_size, NULL,
+                NULL, NULL, fs_name_buf, fs_name_len);
+        ok(!ret && GetLastError() == ERROR_INVALID_NAME,
+            "GetVolumeInformationA w/o '\\' did not fail, last error %u\n", GetLastError());
+    }
+    else
+        skip("Running on a root directory\n");
 
     /* check for error on no trailing \ when current dir is root dir */
     ret = SetCurrentDirectory(Root_Dir1);
