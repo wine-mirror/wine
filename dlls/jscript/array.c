@@ -421,8 +421,81 @@ static HRESULT Array_shift(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
 static HRESULT Array_slice(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    DispatchEx *arr;
+    VARIANT v;
+    DOUBLE range;
+    DWORD length, start, end, idx;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    if(is_class(dispex, JSCLASS_ARRAY)) {
+        length = ((ArrayInstance*)dispex)->length;
+    }else {
+        FIXME("not Array this\n");
+        return E_NOTIMPL;
+    }
+
+    if(arg_cnt(dp)) {
+        hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&v) == VT_I4)
+            range = V_I4(&v);
+        else
+            range = floor(V_R8(&v));
+
+        if(-range>length || isnan(range)) start = 0;
+        else if(range < 0) start = range+length;
+        else if(range <= length) start = range;
+        else start = length;
+    }
+    else start = 0;
+
+    if(arg_cnt(dp)>1) {
+        hres = to_number(dispex->ctx, get_arg(dp, 1), ei, &v);
+        if(FAILED(hres))
+            return hres;
+
+        if(V_VT(&v) == VT_I4)
+            range = V_I4(&v);
+        else
+            range = floor(V_R8(&v));
+
+        if(-range>length) end = 0;
+        else if(range < 0) end = range+length;
+        else if(range <= length) end = range;
+        else end = length;
+    }
+    else end = length;
+
+    hres = create_array(dispex->ctx, (end>start)?end-start:0, &arr);
+    if(FAILED(hres))
+        return hres;
+
+    for(idx=start; idx<end; idx++) {
+        hres = jsdisp_propget_idx(dispex, idx, lcid, &v, ei, sp);
+        if(hres == DISP_E_UNKNOWNNAME)
+            continue;
+
+        if(SUCCEEDED(hres))
+            hres = jsdisp_propput_idx(arr, idx-start, lcid, &v, ei, sp);
+
+        if(FAILED(hres)) {
+            jsdisp_release(arr);
+            return hres;
+        }
+    }
+
+    if(retv) {
+        V_VT(retv) = VT_DISPATCH;
+        V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(arr);
+    }
+    else
+        jsdisp_release(arr);
+
+    return S_OK;
 }
 
 static HRESULT sort_cmp(script_ctx_t *ctx, DispatchEx *cmp_func, VARIANT *v1, VARIANT *v2, jsexcept_t *ei,

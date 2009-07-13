@@ -524,6 +524,23 @@ tmp = arr.concat([2]);
 ok(tmp.length === 3, "tmp.length = " + tmp.length);
 ok(tmp[1] === undefined, "tmp[1] = " + tmp[1]);
 
+arr = [1,false,'a',null,undefined,'a'];
+ok(arr.slice(0,6).toString() === "1,false,a,,,a", "arr.slice(0,6).toString() = " + arr.slice(0,6));
+ok(arr.slice(0,6).length === 6, "arr.slice(0,6).length = " + arr.slice(0,6).length);
+ok(arr.slice().toString() === "1,false,a,,,a", "arr.slice().toString() = " + arr.slice());
+ok(arr.slice("abc").toString() === "1,false,a,,,a", "arr.slice(\"abc\").toString() = " + arr.slice("abc"));
+ok(arr.slice(3,8).toString() === ",,a", "arr.slice(3,8).toString() = " + arr.slice(3,8));
+ok(arr.slice(3,8).length === 3, "arr.slice(3,8).length = " + arr.slice(3,8).length);
+ok(arr.slice(1).toString() === "false,a,,,a", "arr.slice(1).toString() = " + arr.slice(1));
+ok(arr.slice(-2).toString() === ",a", "arr.slice(-2).toString() = " + arr.slice(-2));
+ok(arr.slice(3,1).toString() === "", "arr.slice(3,1).toString() = " + arr.slice(3,1));
+tmp = arr.slice(0,6);
+for(var i=0; i < arr.length; i++)
+    ok(arr[i] === tmp[i], "arr[" + i + "] = " + arr[i] + " expected " + tmp[i]);
+arr[12] = 2;
+ok(arr.slice(5).toString() === "a,,,,,,,2", "arr.slice(5).toString() = " + arr.slice(5).toString());
+ok(arr.slice(5).length === 8, "arr.slice(5).length = " + arr.slice(5).length);
+
 var num = new Number(2);
 ok(num.toString() === "2", "num(2).toString !== 2");
 var num = new Number();
