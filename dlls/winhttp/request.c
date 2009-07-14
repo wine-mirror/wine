@@ -1158,13 +1158,12 @@ static BOOL handle_redirect( request_t *request )
         hostname[len] = 0;
 
         port = uc.nPort ? uc.nPort : (uc.nScheme == INTERNET_SCHEME_HTTPS ? 443 : 80);
-        if (strcmpiW( connect->servername, hostname ) || connect->serverport != port)
+        if (strcmpiW( connect->hostname, hostname ) || connect->serverport != port)
         {
             heap_free( connect->hostname );
             connect->hostname = hostname;
-            heap_free( connect->servername );
-            connect->servername = strdupW( connect->hostname );
-            connect->serverport = connect->hostport = port;
+            connect->hostport = port;
+            if (!(ret = set_server_for_hostname( connect, hostname, port ))) goto end;
 
             netconn_close( &request->netconn );
             if (!(ret = netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE ))) goto end;

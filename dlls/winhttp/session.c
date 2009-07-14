@@ -316,7 +316,6 @@ static BOOL should_bypass_proxy(session_t *session, LPCWSTR server)
     return ret;
 }
 
-static
 BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT port )
 {
     session_t *session = connect->session;

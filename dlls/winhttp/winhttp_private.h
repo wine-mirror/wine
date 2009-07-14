@@ -221,6 +221,7 @@ BOOL set_cookies( request_t *, const WCHAR * );
 BOOL add_cookie_headers( request_t * );
 BOOL add_request_headers( request_t *, LPCWSTR, DWORD, DWORD );
 void delete_domain( domain_t * );
+BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT port );
 
 static inline void *heap_alloc( SIZE_T size )
 {
