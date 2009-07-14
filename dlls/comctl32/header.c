@@ -1224,10 +1224,12 @@ HEADER_GetUnicodeFormat (const HEADER_INFO *infoPtr)
 static LRESULT
 HEADER_HitTest (const HEADER_INFO *infoPtr, LPHDHITTESTINFO phti)
 {
+    UINT outside = HHT_NOWHERE | HHT_ABOVE | HHT_BELOW | HHT_TOLEFT | HHT_TORIGHT;
+
     HEADER_InternalHitTest (infoPtr, &phti->pt, &phti->flags, &phti->iItem);
 
-    if (phti->flags == HHT_NOWHERE)
-        return -1;
+    if (phti->flags & outside)
+	return phti->iItem = -1;
     else
         return phti->iItem;
 }

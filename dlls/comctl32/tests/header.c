@@ -904,6 +904,7 @@ static void test_hdm_hittest(HWND hParent)
     retVal = SendMessage(hChild, HDM_HITTEST, 0, (LPARAM) &hdHitTestInfo);
     expect(0, retVal);
     expect(0, hdHitTestInfo.iItem);
+    expect(HHT_ONDIVIDER, hdHitTestInfo.flags);
 
     pt.x = secondItemRightBoundary - 1;
     pt.y = bottomBoundary - 1;
@@ -911,15 +912,15 @@ static void test_hdm_hittest(HWND hParent)
     retVal = SendMessage(hChild, HDM_HITTEST, 1, (LPARAM) &hdHitTestInfo);
     expect(1, retVal);
     expect(1, hdHitTestInfo.iItem);
+    expect(HHT_ONDIVIDER, hdHitTestInfo.flags);
 
     pt.x = secondItemRightBoundary;
     pt.y = bottomBoundary + 1;
     hdHitTestInfo.pt = pt;
-    todo_wine
-    {
-     retVal = SendMessage(hChild, HDM_HITTEST, 0, (LPARAM) &hdHitTestInfo);
-     expect(-1, retVal);
-    }
+    retVal = SendMessage(hChild, HDM_HITTEST, 0, (LPARAM) &hdHitTestInfo);
+    expect(-1, retVal);
+    expect(-1, hdHitTestInfo.iItem);
+    expect(HHT_BELOW, hdHitTestInfo.flags);
 
     ok_sequence(sequences, HEADER_SEQ_INDEX, hittest_seq, "hittest sequence testing", FALSE);
 
