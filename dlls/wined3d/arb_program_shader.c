@@ -1555,8 +1555,6 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_DP3: instruction = "DP3"; break;
         case WINED3DSIH_DP4: instruction = "DP4"; break;
         case WINED3DSIH_DST: instruction = "DST"; break;
-        case WINED3DSIH_EXP: instruction = "EX2"; break;
-        case WINED3DSIH_EXPP: instruction = "EXP"; break;
         case WINED3DSIH_FRC: instruction = "FRC"; break;
         case WINED3DSIH_LIT: instruction = "LIT"; break;
         case WINED3DSIH_LRP: instruction = "LRP"; break;
@@ -2255,7 +2253,7 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void shader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
+static void shader_hw_scalar_op(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     const char *instruction;
@@ -2265,8 +2263,10 @@ static void shader_hw_rsq_rcp(const struct wined3d_shader_instruction *ins)
 
     switch(ins->handler_idx)
     {
-        case WINED3DSIH_RSQ: instruction = "RSQ"; break;
-        case WINED3DSIH_RCP: instruction = "RCP"; break;
+        case WINED3DSIH_RSQ:  instruction = "RSQ"; break;
+        case WINED3DSIH_RCP:  instruction = "RCP"; break;
+        case WINED3DSIH_EXP:  instruction = "EX2"; break;
+        case WINED3DSIH_EXPP: instruction = "EXP"; break;
         default: instruction = "";
             FIXME("Unhandled opcode %#x\n", ins->handler_idx);
             break;
@@ -4580,8 +4580,8 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_ENDIF         */ shader_hw_endif,
     /* WINED3DSIH_ENDLOOP       */ shader_hw_endloop,
     /* WINED3DSIH_ENDREP        */ shader_hw_endrep,
-    /* WINED3DSIH_EXP           */ shader_hw_map2gl,
-    /* WINED3DSIH_EXPP          */ shader_hw_map2gl,
+    /* WINED3DSIH_EXP           */ shader_hw_scalar_op,
+    /* WINED3DSIH_EXPP          */ shader_hw_scalar_op,
     /* WINED3DSIH_FRC           */ shader_hw_map2gl,
     /* WINED3DSIH_IF            */ NULL /* Hardcoded into the shader */,
     /* WINED3DSIH_IFC           */ shader_hw_ifc,
@@ -4606,10 +4606,10 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_NRM           */ shader_hw_nrm,
     /* WINED3DSIH_PHASE         */ NULL,
     /* WINED3DSIH_POW           */ shader_hw_log_pow,
-    /* WINED3DSIH_RCP           */ shader_hw_rsq_rcp,
+    /* WINED3DSIH_RCP           */ shader_hw_scalar_op,
     /* WINED3DSIH_REP           */ shader_hw_rep,
     /* WINED3DSIH_RET           */ shader_hw_ret,
-    /* WINED3DSIH_RSQ           */ shader_hw_rsq_rcp,
+    /* WINED3DSIH_RSQ           */ shader_hw_scalar_op,
     /* WINED3DSIH_SETP          */ NULL,
     /* WINED3DSIH_SGE           */ shader_hw_map2gl,
     /* WINED3DSIH_SGN           */ shader_hw_sgn,
