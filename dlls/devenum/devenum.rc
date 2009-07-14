@@ -170,3 +170,12 @@ LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 	9  "Numatytasis WaveOut įrenginys"
 	10 "Numatytasis MidiOut įrenginys"
 }
+
+STRINGTABLE DISCARDABLE
+LANGUAGE LANG_JAPANESE, SUBLANG_DEFAULT
+{
+	7  "デフォルト DirectSound"
+	8  "DirectSound: %s"
+	9  "デフォルト WaveOut デバイス"
+	10 "デフォルト MidiOut デバイス"
+}
