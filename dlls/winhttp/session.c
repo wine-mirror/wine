@@ -669,17 +669,100 @@ struct winhttp_settings_header
     DWORD flags;   /* one of WINHTTP_PROXY_TYPE_* */
 };
 
+static inline void copy_char_to_wchar_sz(const BYTE *src, DWORD len, WCHAR *dst)
+{
+    const BYTE *begin;
+
+    for (begin = src; src - begin < len; src++, dst++)
+        *dst = *src;
+    *dst = 0;
+}
+
 /***********************************************************************
  *          WinHttpGetDefaultProxyConfiguration (winhttp.@)
  */
 BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
 {
-    FIXME("%p\n", info);
+    LONG l;
+    HKEY key;
+    BOOL direct = TRUE;
 
-    info->dwAccessType    = WINHTTP_ACCESS_TYPE_NO_PROXY;
-    info->lpszProxy       = NULL;
-    info->lpszProxyBypass = NULL;
+    TRACE("%p\n", info);
 
+    l = RegOpenKeyExW( HKEY_LOCAL_MACHINE, Connections, 0, KEY_READ, &key );
+    if (!l)
+    {
+        DWORD type, size = 0;
+
+        l = RegQueryValueExW( key, WinHttpSettings, NULL, &type, NULL, &size );
+        if (!l && type == REG_BINARY &&
+            size >= sizeof(struct winhttp_settings_header) + 2 * sizeof(DWORD))
+        {
+            BYTE *buf = heap_alloc( size );
+
+            if (buf)
+            {
+                struct winhttp_settings_header *hdr =
+                    (struct winhttp_settings_header *)buf;
+                DWORD *len = (DWORD *)(hdr + 1);
+
+                l = RegQueryValueExW( key, WinHttpSettings, NULL, NULL, buf,
+                    &size );
+                if (!l && hdr->magic == WINHTTPSETTINGS_MAGIC &&
+                    hdr->unknown == 0)
+                {
+                    if (hdr->flags & WINHTTP_PROXY_TYPE_PROXY)
+                    {
+                       BOOL sane = FALSE;
+
+                        /* Sanity-check length of proxy string */
+                        if ((BYTE *)len - buf + *len <= size)
+                        {
+                            sane = TRUE;
+                            info->lpszProxy = GlobalAlloc( 0,
+                                (*len + 1) * sizeof(WCHAR) );
+                            if (info->lpszProxy)
+                                copy_char_to_wchar_sz( (BYTE *)(len + 1),
+                                    *len, (LPWSTR)info->lpszProxy );
+                            len = (DWORD *)((BYTE *)(len + 1) + *len);
+                        }
+                        if (sane)
+                        {
+                            /* Sanity-check length of proxy bypass string */
+                            if ((BYTE *)len - buf + *len <= size)
+                            {
+                                info->lpszProxyBypass = GlobalAlloc( 0,
+                                    (*len + 1) * sizeof(WCHAR) );
+                                if (info->lpszProxyBypass)
+                                    copy_char_to_wchar_sz( (BYTE *)(len + 1),
+                                        *len, (LPWSTR)info->lpszProxyBypass );
+                            }
+                            else
+                            {
+                                sane = FALSE;
+                                GlobalFree( (LPWSTR)info->lpszProxy );
+                                info->lpszProxy = NULL;
+                            }
+                        }
+                        if (sane)
+                        {
+                            direct = FALSE;
+                            info->dwAccessType =
+                                WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                        }
+                    }
+                }
+                heap_free( buf );
+            }
+        }
+        RegCloseKey( key );
+    }
+    if (direct)
+    {
+        info->dwAccessType    = WINHTTP_ACCESS_TYPE_NO_PROXY;
+        info->lpszProxy       = NULL;
+        info->lpszProxyBypass = NULL;
+    }
     return TRUE;
 }
 
