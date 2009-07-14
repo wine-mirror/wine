@@ -60,6 +60,7 @@ struct d3d10_effect_shader_variable
 
 struct d3d10_effect_local_buffer
 {
+    char *name;
     DWORD data_size;
     DWORD variable_count;
 };

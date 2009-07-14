@@ -195,6 +195,24 @@ static HRESULT parse_fx10_technique_index(struct d3d10_effect_technique *t, cons
     return hr;
 }
 
+static char *copy_name(const char *ptr)
+{
+    size_t name_len;
+    char *name;
+
+    name_len = strlen(ptr) + 1;
+    name = HeapAlloc(GetProcessHeap(), 0, name_len);
+    if (!name)
+    {
+        ERR("Failed to allocate name memory.\n");
+        return NULL;
+    }
+
+    memcpy(name, ptr, name_len);
+
+    return name;
+}
+
 static HRESULT shader_chunk_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
     struct d3d10_effect_shader_variable *s = ctx;
@@ -411,13 +429,21 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     return hr;
 }
 
-static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, const char **ptr)
+static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, const char **ptr, const char *data)
 {
     unsigned int i;
     DWORD offset;
 
     read_dword(ptr, &offset);
     TRACE("Local buffer name at offset %#x.\n", offset);
+
+    l->name = copy_name(data + offset);
+    if (!l->name)
+    {
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Local buffer name: %s.\n", l->name);
 
     read_dword(ptr, &l->data_size);
     TRACE("Local buffer data size: %#x.\n", l->data_size);
@@ -461,7 +487,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
     {
         struct d3d10_effect_local_buffer *l = &e->local_buffers[i];
 
-        hr = parse_fx10_local_buffer(l, &ptr);
+        hr = parse_fx10_local_buffer(l, &ptr, data);
         if (FAILED(hr)) return hr;
     }
 
@@ -651,6 +677,13 @@ static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
     }
 }
 
+static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_local_buffer *l)
+{
+    TRACE("local buffer %p.\n", l);
+
+    HeapFree(GetProcessHeap(), 0, l->name);
+}
+
 /* IUnknown methods */
 
 static HRESULT STDMETHODCALLTYPE d3d10_effect_QueryInterface(ID3D10Effect *iface, REFIID riid, void **object)
@@ -690,16 +723,26 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
 
     if (!refcount)
     {
+        unsigned int i;
+
         if (This->techniques)
         {
-            unsigned int i;
             for (i = 0; i < This->technique_count; ++i)
             {
                 d3d10_effect_technique_destroy(&This->techniques[i]);
             }
             HeapFree(GetProcessHeap(), 0, This->techniques);
         }
-        HeapFree(GetProcessHeap(), 0, This->local_buffers);
+
+        if (This->local_buffers)
+        {
+            for (i = 0; i < This->local_buffer_count; ++i)
+            {
+                d3d10_effect_local_buffer_destroy(&This->local_buffers[i]);
+            }
+            HeapFree(GetProcessHeap(), 0, This->local_buffers);
+        }
+
         ID3D10Device_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
     }
