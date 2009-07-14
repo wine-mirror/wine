@@ -69,6 +69,23 @@ typedef enum WICBitmapPaletteType {
     WICBITMAPPALETTETYPE_FORCE_DWORD = CODEC_FORCE_DWORD
 } WICBitmapPaletteType;
 
+typedef enum WICComponentType {
+    WICDecoder = 0x00000001,
+    WICEncoder = 0x00000002,
+    WICPixelFormatConverter = 0x00000004,
+    WICMetadataReader = 0x00000008,
+    WICMetadataWriter = 0x00000010,
+    WICPixelFormat = 0x00000020,
+    WICCOMPONENTTYPE_FORCE_DWORD = CODEC_FORCE_DWORD
+} WICComponentType;
+
+typedef enum WICComponentSigning {
+    WICComponentSigned = 0x00000001,
+    WICComponentUnsigned = 0x00000002,
+    WICComponentSafe = 0x00000004,
+    WICComponentDisabled = 0x80000000
+} WICComponentSigning;
+
 typedef GUID WICPixelFormatGUID;
 typedef REFGUID REFWICPixelFormatGUID;
 
@@ -91,15 +108,23 @@ typedef struct WICRect {
     INT Height;
 } WICRect;
 
+typedef struct WICBitmapPattern {
+    ULARGE_INTEGER Position;
+    ULONG Length;
+    BYTE *Pattern;
+    BYTE *Mask;
+    BOOL EndOfStream;
+} WICBitmapPattern;
+
 typedef UINT32 WICColor;
 
 cpp_quote("#define WINCODEC_ERR_WRONGSTATE 0x88982f04")
 cpp_quote("#define WINCODEC_ERR_CODECNOTHUMBNAIL 0x88982f44")
 cpp_quote("#define WINCODEC_ERR_PALETTEUNAVAILABLE 0x88982f45")
 cpp_quote("#define WINCODEC_ERR_UNSUPPORTEDOPERATION 0x88982f81")
+cpp_quote("#define WINCODEC_ERR_INSUFFICIENTBUFFER 0x88982f8c")
 
 interface IWICBitmap;
-interface IWICComponentInfo;
 interface IWICBitmapEncoder;
 interface IWICPalette;
 interface IWICFormatConverter;
@@ -112,7 +137,6 @@ interface IWICColorTransform;
 interface IWICFastMetadataEncoder;
 interface IWICMetadataQueryReader;
 interface IWICMetadataQueryWriter;
-interface IWICBitmapDecoderInfo;
 
 [
     object,
@@ -186,6 +210,45 @@ interface IWICPalette : IUnknown
 
 [
     object,
+    uuid(23bc3f0a-698b-4357-886b-f24d50671334)
+]
+interface IWICComponentInfo : IUnknown
+{
+    HRESULT GetComponentType(
+        [out] WICComponentType *pType);
+
+    HRESULT GetCLSID(
+        [out] CLSID *pclsid);
+
+    HRESULT GetSigningStatus(
+        [out] DWORD *pStatus);
+
+    HRESULT GetAuthor(
+        [in] UINT cchAuthor,
+        [in, out, unique, size_is(cchAuthor)] WCHAR *wzAuthor,
+        [out] UINT *pcchActual);
+
+    HRESULT GetVendorGUID(
+        [out] GUID *pguidVendor);
+
+    HRESULT GetVersion(
+        [in] UINT cchVersion,
+        [in, out, unique, size_is(cchVersion)] WCHAR *wzVersion,
+        [out] UINT *pcchActual);
+
+    HRESULT GetSpecVersion(
+        [in] UINT cchSpecVersion,
+        [in, out, unique, size_is(cchSpecVersion)] WCHAR *wzSpecVersion,
+        [out] UINT *pcchActual);
+
+    HRESULT GetFriendlyName(
+        [in] UINT cchFriendlyName,
+        [in, out, unique, size_is(cchFriendlyName)] WCHAR *wzFriendlyName,
+        [out] UINT *pcchActual);
+}
+
+[
+    object,
     uuid(3b16811b-6a43-4ec9-a813-3d930c13b940)
 ]
 interface IWICBitmapFrameDecode : IWICBitmapSource
@@ -200,6 +263,85 @@ interface IWICBitmapFrameDecode : IWICBitmapSource
 
     HRESULT GetThumbnail(
         [out] IWICBitmapSource **ppIThumbnail);
+}
+
+[
+    object,
+    uuid(e87a44c4-b76e-4c47-8b09-298eb12a2714)
+]
+interface IWICBitmapCodecInfo : IWICComponentInfo
+{
+    HRESULT GetContainerFormat(
+        [out] GUID *pguidContainerFormat);
+
+    HRESULT GetPixelFormats(
+        [in] UINT cFormats,
+        [in, out, unique, size_is(cFormats)] GUID *pguidPixelFormats,
+        [out] UINT *pcActual);
+
+    HRESULT GetColorManagementVersion(
+        [in] UINT cchColorManagementVersion,
+        [in, out, unique, size_is(cchColorManagementVersion)] WCHAR *wzColorManagementVersion,
+        [out] UINT *pcchActual);
+
+    HRESULT GetDeviceManufacturer(
+        [in] UINT cchDeviceManufacturer,
+        [in, out, unique, size_is(cchDeviceManufacturer)] WCHAR *wzDeviceManufacturer,
+        [out] UINT *pcchActual);
+
+    HRESULT GetDeviceModels(
+        [in] UINT cchDeviceModels,
+        [in, out, unique, size_is(cchDeviceModels)] WCHAR *wzDeviceModels,
+        [out] UINT *pcchActual);
+
+    HRESULT GetMimeTypes(
+        [in] UINT cchMimeTypes,
+        [in, out, unique, size_is(cchMimeTypes)] WCHAR *wzMimeTypes,
+        [out] UINT *pcchActual);
+
+    HRESULT GetFileExtensions(
+        [in] UINT cchFileExtensions,
+        [in, out, unique, size_is(cchFileExtensions)] WCHAR *wzFileExtensions,
+        [out] UINT *pcchActual);
+
+    HRESULT DoesSupportAnimation(
+        [out] BOOL *pfSupportAnimation);
+
+    HRESULT DoesSupportChromaKey(
+        [out] BOOL *pfSupportChromaKey);
+
+    HRESULT DoesSupportLossless(
+        [out] BOOL *pfSupportLossless);
+
+    HRESULT DoesSupportMultiframe(
+        [out] BOOL *pfSupportMultiframe);
+
+    HRESULT MatchesMimeType(
+        [in] LPCWSTR wzMimeType,
+        [out] BOOL *pfMatches);
+}
+
+interface IWICBitmapDecoder;
+
+[
+    object,
+    uuid(d8cd007f-d08f-4191-9bfc-236ea7f0e4b5)
+]
+interface IWICBitmapDecoderInfo : IWICBitmapCodecInfo
+{
+    [local]
+    HRESULT GetPatterns(
+        [in] UINT cbSizePatterns,
+        [in, out, unique] WICBitmapPattern *pPatterns,
+        [in, out, unique] UINT *pcPatterns,
+        [in, out, unique] UINT *pcbPatternsActual);
+
+    HRESULT MatchesPattern(
+        [in] IStream *pIStream,
+        [out] BOOL *pfMatches);
+
+    HRESULT CreateInstance(
+        [out] IWICBitmapDecoder **ppIBitmapDecoder);
 }
 
 [
