@@ -343,7 +343,7 @@ BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT 
                 if (*(colon + 1))
                     connect->serverport = atoiW( colon + 1 );
                 else
-                    connect->serverport = INTERNET_DEFAULT_HTTP_PORT;
+                    connect->serverport = INTERNET_DEFAULT_PORT;
             }
         }
         else
@@ -357,7 +357,7 @@ BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT 
                     ret = FALSE;
                     goto end;
                 }
-                connect->serverport = INTERNET_DEFAULT_HTTP_PORT;
+                connect->serverport = INTERNET_DEFAULT_PORT;
             }
         }
     }
