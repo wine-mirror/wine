@@ -168,13 +168,35 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     session->hdr.vtbl = &session_vtbl;
     session->hdr.flags = flags;
     session->hdr.refs = 1;
-    session->access = access;
     session->hdr.redirect_policy = WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP;
     list_init( &session->cookie_cache );
 
     if (agent && !(session->agent = strdupW( agent ))) goto end;
-    if (proxy && !(session->proxy_server = strdupW( proxy ))) goto end;
-    if (bypass && !(session->proxy_bypass = strdupW( bypass ))) goto end;
+    if (access == WINHTTP_ACCESS_TYPE_DEFAULT_PROXY)
+    {
+        WINHTTP_PROXY_INFO info;
+
+        WinHttpGetDefaultProxyConfiguration( &info );
+        session->access = info.dwAccessType;
+        if (info.lpszProxy && !(session->proxy_server = strdupW( info.lpszProxy )))
+        {
+            GlobalFree( (LPWSTR)info.lpszProxy );
+            GlobalFree( (LPWSTR)info.lpszProxyBypass );
+            goto end;
+        }
+        if (info.lpszProxyBypass && !(session->proxy_bypass = strdupW( info.lpszProxyBypass )))
+        {
+            GlobalFree( (LPWSTR)info.lpszProxy );
+            GlobalFree( (LPWSTR)info.lpszProxyBypass );
+            goto end;
+        }
+    }
+    else if (access == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
+    {
+        session->access = access;
+        if (proxy && !(session->proxy_server = strdupW( proxy ))) goto end;
+        if (bypass && !(session->proxy_bypass = strdupW( bypass ))) goto end;
+    }
 
     if (!(handle = alloc_handle( &session->hdr ))) goto end;
     session->hdr.handle = handle;
