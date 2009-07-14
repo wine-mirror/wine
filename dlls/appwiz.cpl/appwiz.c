@@ -489,8 +489,9 @@ static void InstallProgram(HWND hWnd)
  * Name       : UninstallProgram
  * Description: Executes the specified program's installer.
  * Parameters : id      - the internal ID of the installer to remove
+ * Parameters : button  - ID of button pressed (Modify or Remove)
  */
-static void UninstallProgram(int id)
+static void UninstallProgram(int id, DWORD button)
 {
     APPINFO *iter;
     STARTUPINFOW si;
@@ -513,8 +514,9 @@ static void UninstallProgram(int id)
             memset(&si, 0, sizeof(STARTUPINFOW));
             si.cb = sizeof(STARTUPINFOW);
             si.wShowWindow = SW_NORMAL;
-            res = CreateProcessW(NULL, iter->path, NULL, NULL, FALSE, 0, NULL,
-                NULL, &si, &info);
+
+            res = CreateProcessW(NULL, (button == IDC_MODIFY) ? iter->path_modify : iter->path,
+                NULL, NULL, FALSE, 0, NULL, NULL, &si, &info);
 
             if (res)
             {
@@ -856,6 +858,7 @@ static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
                     break;
 
                 case IDC_ADDREMOVE:
+                case IDC_MODIFY:
                     selitem = SendDlgItemMessageW(hWnd, IDL_PROGRAMS,
                         LVM_GETNEXTITEM, -1, LVNI_FOCUSED|LVNI_SELECTED);
 
@@ -866,7 +869,7 @@ static BOOL CALLBACK MainDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
 
                         if (SendDlgItemMessageW(hWnd, IDL_PROGRAMS, LVM_GETITEMW,
                           0, (LPARAM) &lvItem))
-                            UninstallProgram(lvItem.lParam);
+                            UninstallProgram(lvItem.lParam, LOWORD(wParam));
                     }
 
                     hImageList = ResetApplicationList(FALSE, hWnd, hImageList);
