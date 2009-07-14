@@ -3,7 +3,7 @@
  *  German Language Support
  *
  *  Copyright 2005 Henning Gerhardt
- *  Copyright 2009 AndrÈ Hentschel
+ *  Copyright 2009 Andr√© Hentschel
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 /*
@@ -33,7 +35,7 @@ IDR_TASKMANAGER MENU DISCARDABLE
 BEGIN
     POPUP "&Datei"
     BEGIN
-        MENUITEM "&Neuer Task (Ausf¸hren...)",          ID_FILE_NEW
+        MENUITEM "&Neuer Task (Ausf√ºhren...)",          ID_FILE_NEW
         MENUITEM SEPARATOR
         MENUITEM "Task-Manager &Beenden",          ID_FILE_EXIT
     END
@@ -61,10 +63,10 @@ BEGIN
 
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Groﬂe Symbole",                ID_VIEW_LARGE
+        MENUITEM "&Gro√üe Symbole",                ID_VIEW_LARGE
         MENUITEM "&Kleine Symbole",                ID_VIEW_SMALL
         MENUITEM "&Details",                    ID_VIEW_DETAILS, CHECKED
-        MENUITEM "&Spalten ausw‰hlen...",          ID_VIEW_SELECTCOLUMNS
+        MENUITEM "&Spalten ausw√§hlen...",          ID_VIEW_SELECTCOLUMNS
         POPUP "&CPU Verlauf"
         BEGIN
             MENUITEM "&Ein Graph, Alle CPUs",        ID_VIEW_CPUHISTORY_ONEGRAPHALL
@@ -76,7 +78,7 @@ BEGIN
     END
     POPUP "&Fenster"
     BEGIN
-        MENUITEM "&‹bereinander",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "&√úbereinander",          ID_WINDOWS_TILEHORIZONTALLY
         MENUITEM "&Nebeneinander",            ID_WINDOWS_TILEVERTICALLY
         MENUITEM "&Minimieren",                   ID_WINDOWS_MINIMIZE
         MENUITEM "Ma&ximieren",                   ID_WINDOWS_MAXIMIZE
@@ -87,13 +89,13 @@ BEGIN
     BEGIN
         MENUITEM "Task-Manager &Hilfethemen",   ID_HELP_TOPICS
         MENUITEM SEPARATOR
-        MENUITEM "&‹ber Task-Manager",         ID_HELP_ABOUT
+        MENUITEM "&√úber Task-Manager",         ID_HELP_ABOUT
     END
 END
 
 IDR_WINDOWSMENU MENU DISCARDABLE
 BEGIN
-    MENUITEM "&‹bereinander",          ID_WINDOWS_TILEHORIZONTALLY
+    MENUITEM "&√úbereinander",          ID_WINDOWS_TILEHORIZONTALLY
     MENUITEM "&Nebeneinander",            ID_WINDOWS_TILEVERTICALLY
     MENUITEM "&Minimieren",                   ID_WINDOWS_MINIMIZE
     MENUITEM "Ma&ximieren",                   ID_WINDOWS_MAXIMIZE
@@ -105,9 +107,9 @@ IDR_APPLICATION_PAGE_CONTEXT1 MENU DISCARDABLE
 BEGIN
     POPUP "DUMMY"
     BEGIN
-        MENUITEM "&Neuen Task (Ausf¸hren...)",          ID_FILE_NEW
+        MENUITEM "&Neuen Task (Ausf√ºhren...)",          ID_FILE_NEW
         MENUITEM SEPARATOR
-        MENUITEM "&Groﬂe Symbole",                ID_VIEW_LARGE
+        MENUITEM "&Gro√üe Symbole",                ID_VIEW_LARGE
         MENUITEM "&Kleine Symbole",                ID_VIEW_SMALL
         MENUITEM "&Details",                    ID_VIEW_DETAILS, CHECKED
     END
@@ -120,7 +122,7 @@ BEGIN
         MENUITEM "&Wechseln zu",                  ID_APPLICATION_PAGE_SWITCHTO
         MENUITEM "&In den Vordergrund holen",             ID_WINDOWS_BRINGTOFRONT
         MENUITEM SEPARATOR
-        MENUITEM "&‹bereinander",          ID_WINDOWS_TILEHORIZONTALLY
+        MENUITEM "&√úbereinander",          ID_WINDOWS_TILEHORIZONTALLY
         MENUITEM "&Nebeneinander",            ID_WINDOWS_TILEVERTICALLY
         MENUITEM "&Minimieren",                   ID_WINDOWS_MINIMIZE
         MENUITEM "Ma&ximieren",                   ID_WINDOWS_MAXIMIZE
@@ -136,7 +138,7 @@ BEGIN
     POPUP "DUMMY"
     BEGIN
         MENUITEM "&Wiederherstellen",               ID_RESTORE
-        MENUITEM "&Schlieﬂen",                      ID_FILE_EXIT
+        MENUITEM "&Schlie√üen",                      ID_FILE_EXIT
         MENUITEM SEPARATOR
         MENUITEM "&Immer im Vordergrund",           ID_OPTIONS_ALWAYSONTOP
     END
@@ -151,17 +153,17 @@ BEGIN
 
         MENUITEM "&Debuggen",                      ID_PROCESS_PAGE_DEBUG
         MENUITEM SEPARATOR
-        POPUP "Setze &Priorit‰t"
+        POPUP "Setze &Priorit√§t"
         BEGIN
             MENUITEM "&Echtzeit",                   ID_PROCESS_PAGE_SETPRIORITY_REALTIME
             MENUITEM "&Hoch",                       ID_PROCESS_PAGE_SETPRIORITY_HIGH
-            MENUITEM "&Hˆher als Normal",                ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
+            MENUITEM "&H√∂her als Normal",                ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL
             MENUITEM "&Normal",                     ID_PROCESS_PAGE_SETPRIORITY_NORMAL
             MENUITEM "N&iedriger als Normal",                ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
             MENUITEM "Nie&drig",                        ID_PROCESS_PAGE_SETPRIORITY_LOW
         END
-        MENUITEM "Setze Affinit‰t...",            ID_PROCESS_PAGE_SETAFFINITY
-	      MENUITEM "Editiere Debug&kan‰le...",	ID_PROCESS_PAGE_DEBUGCHANNELS
+        MENUITEM "Setze Affinit√§t...",            ID_PROCESS_PAGE_SETAFFINITY
+            MENUITEM "Editiere Debug&kan√§le...",  ID_PROCESS_PAGE_DEBUGCHANNELS
     END
 END
 
@@ -264,23 +266,23 @@ END
 
 IDD_DEBUG_CHANNELS_DIALOG DIALOG DISCARDABLE  0, 0, 247, 210
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Debugkan‰le"
+CAPTION "Debugkan√§le"
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL         "List2",IDC_DEBUG_CHANNELS_LIST,"SysListView32",LVS_REPORT |
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP |
 		    LVS_SORTASCENDING,7,7,233,177
-    PUSHBUTTON      "Schlieﬂen",IDOK,171,189,69,14
+    PUSHBUTTON      "Schlie√üen",IDOK,171,189,69,14
 END
 
 IDD_AFFINITY_DIALOG DIALOG DISCARDABLE  0, 0, 231, 154
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Prozessoraffinit‰t"
+CAPTION "Prozessoraffinit√§t"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,120,133,50,14
     PUSHBUTTON      "Abbrechen",IDCANCEL,174,133,50,14
-    LTEXT           "Die Prozessoraffinit‰tseinstellung kontrolliert, auf welchen CPUs der Prozess die Erlaubnis hat, ausgef¸hrt werden zu kˆnnen.",
+    LTEXT           "Die Prozessoraffinit√§tseinstellung kontrolliert, auf welchen CPUs der Prozess die Erlaubnis hat, ausgef√ºhrt werden zu k√∂nnen.",
                     IDC_STATIC,5,5,220,16
     CONTROL         "CPU 0",IDC_CPU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     11,28,37,10
@@ -350,12 +352,12 @@ END
 
 IDD_COLUMNS_DIALOG DIALOG DISCARDABLE  0, 0, 245, 199
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Spalten ausw‰hlen"
+CAPTION "Spalten ausw√§hlen"
 FONT 8, "MS Shell Dlg"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,84,178,50,14
     PUSHBUTTON      "Abbrechen",IDCANCEL,138,178,50,14
-    LTEXT           "W‰hlen Sie die Spalten aus, die auf der Prozess-Seite des Task-Managers erscheinen sollen",
+    LTEXT           "W√§hlen Sie die Spalten aus, die auf der Prozess-Seite des Task-Managers erscheinen sollen",
                     IDC_STATIC,7,7,181,17
     CONTROL         "&Name",IDC_IMAGENAME,"Button",BS_AUTOCHECKBOX |
                     WS_DISABLED | WS_TABSTOP,7,28,56,10
@@ -367,7 +369,7 @@ BEGIN
                     WS_TABSTOP,7,61,48,10
     CONTROL         "S&peicherauslastung",IDC_MEMORYUSAGE,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,72,95,10
-    CONTROL         "&Ver‰nd. der Speicherauslastung",IDC_MEMORYUSAGEDELTA,"Button",
+    CONTROL         "&Ver√§nd. der Speicherauslastung",IDC_MEMORYUSAGEDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,83,115,10
     CONTROL         "&Maximale Speicherauslastung",IDC_PEAKMEMORYUSAGE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,94,115,10
@@ -383,15 +385,15 @@ BEGIN
                     WS_TABSTOP,7,149,50,10
     CONTROL         "Benutzer&name",IDC_USERNAME,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,7,160,80,10
-    CONTROL         "Ver‰n&d. der Seitenfehler",IDC_PAGEFAULTSDELTA,"Button",
+    CONTROL         "Ver√§n&d. der Seitenfehler",IDC_PAGEFAULTSDELTA,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,28,72,10
-    CONTROL         "&Grˆﬂe des virt. Speichers",IDC_VIRTUALMEMORYSIZE,"Button",
+    CONTROL         "&Gr√∂√üe des virt. Speichers",IDC_VIRTUALMEMORYSIZE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,39,105,10
     CONTROL         "Aus&gelagerter Pool",IDC_PAGEDPOOL,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,132,50,90,10
     CONTROL         "Nich&tausgelagerter Pool",IDC_NONPAGEDPOOL,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,61,105,10
-    CONTROL         "Basisp&riorit‰t",IDC_BASEPRIORITY,"Button",
+    CONTROL         "Basisp&riorit√§t",IDC_BASEPRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,132,72,55,10
     CONTROL         "&Handle-Anzahl",IDC_HANDLECOUNT,"Button",BS_AUTOCHECKBOX |
                     WS_TABSTOP,132,83,59,10
@@ -424,12 +426,12 @@ STRINGTABLE DISCARDABLE
 BEGIN
     ID_FILE_NEW                   "Startet ein neues Programm"
     ID_OPTIONS_ALWAYSONTOP        "Der Task-Manager bleibt immer mit seinen gesamten Fenstern im Vordergrund, bis er minimiert wird"
-    ID_OPTIONS_MINIMIZEONUSE      "Der Task-Manager minimiert sich, wenn eine 'Wechseln zu' Operation ausgef¸hrt wird"
+    ID_OPTIONS_MINIMIZEONUSE      "Der Task-Manager minimiert sich, wenn eine 'Wechseln zu' Operation ausgef√ºhrt wird"
     ID_OPTIONS_HIDEWHENMINIMIZED  "Versteckt den Task-Manager, wenn er minimiert ist"
-    ID_VIEW_REFRESH               "Zwingt den Task Manager zu einer Aktualisierung, unabh‰nig von der Aktualisierungsgeschwindigkeit"
-    ID_VIEW_LARGE                 "Zeigt Tasks mit groﬂen Symbolen an"
+    ID_VIEW_REFRESH               "Zwingt den Task Manager zu einer Aktualisierung, unabh√§nig von der Aktualisierungsgeschwindigkeit"
+    ID_VIEW_LARGE                 "Zeigt Tasks mit gro√üen Symbolen an"
     ID_VIEW_SMALL                 "Zeigt Tasks mit kleinen Symbolen an"
-    ID_VIEW_DETAILS               "Zeigt detailierte Informationen ¸ber jeden einzelnen Task an"
+    ID_VIEW_DETAILS               "Zeigt detailierte Informationen √ºber jeden einzelnen Task an"
     ID_VIEW_UPDATESPEED_HIGH      "Aktualisiert die Anzeige zweimal pro Sekunde"
     ID_VIEW_UPDATESPEED_NORMAL    "Aktualisiert die Anzeige alle 2 Sekunden"
     ID_VIEW_UPDATESPEED_LOW       "Aktualisiert die Anzeige alle 4 Sekunden"
@@ -438,7 +440,7 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_VIEW_UPDATESPEED_PAUSED        "Nicht automatisch aktualisieren"
-    ID_WINDOWS_TILEHORIZONTALLY       "Stellt die Fenster ¸bereinander auf dem Desktop dar"
+    ID_WINDOWS_TILEHORIZONTALLY       "Stellt die Fenster √ºbereinander auf dem Desktop dar"
     ID_WINDOWS_TILEVERTICALLY         "Stellt die Fenster nebeneinander auf dem Desktop dar"
     ID_WINDOWS_MINIMIZE               "Minimiert die Fenster"
     ID_WINDOWS_MAXIMIZE               "Maximiert die Fenster"
@@ -457,29 +459,29 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    ID_ENDTASK                              "Weist die ausgew‰hlten Tasks an, sich zu beenden"
-    ID_GOTOPROCESS                          "Wechselt den Fokus zu dem Prozess des ausgew‰hlten Tasks"
+    ID_ENDTASK                              "Weist die ausgew√§hlten Tasks an, sich zu beenden"
+    ID_GOTOPROCESS                          "Wechselt den Fokus zu dem Prozess des ausgew√§hlten Tasks"
     ID_RESTORE                              "Stellt den Task-Manager von seiner versteckten Status wieder her"
     ID_PROCESS_PAGE_ENDPROCESS              "Entfernt den Prozess vom System"
     ID_PROCESS_PAGE_ENDPROCESSTREE          "Entfernt den Prozess und alle seine Kindprozesse vom System"
     ID_PROCESS_PAGE_DEBUG                   "Heftet den Debugger an diesen Prozess an"
-    ID_PROCESS_PAGE_SETAFFINITY             "Kontrolliert, auf welchen Prozessoren ein Prozess ausgef¸hrt werden darf"
-    ID_PROCESS_PAGE_SETPRIORITY_REALTIME    "Setzt den Prozess in die ECHTZEIT-Priorit‰tsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_HIGH        "Setzt den Prozess in die HOCH-Priorit‰tsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL "Setzt den Prozess in die H÷HER ALS NORMAL-Priorit‰tsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "Setzt den Prozess in die NORMAL-Priorit‰tsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "Setzt den Prozess in die NIEDRIGER ALS NORMAL-Priorit‰tsklasse"
-    ID_PROCESS_PAGE_SETPRIORITY_LOW         "Setzt den Prozess in die NIEDRIG-Priorit‰tsklasse"
-    ID_PROCESS_PAGE_DEBUGCHANNELS           "Stellt Debug-Kan‰le ein"
+    ID_PROCESS_PAGE_SETAFFINITY             "Kontrolliert, auf welchen Prozessoren ein Prozess ausgef√ºhrt werden darf"
+    ID_PROCESS_PAGE_SETPRIORITY_REALTIME    "Setzt den Prozess in die ECHTZEIT-Priorit√§tsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_HIGH        "Setzt den Prozess in die HOCH-Priorit√§tsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_ABOVENORMAL "Setzt den Prozess in die H√ñHER ALS NORMAL-Priorit√§tsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_NORMAL      "Setzt den Prozess in die NORMAL-Priorit√§tsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL "Setzt den Prozess in die NIEDRIGER ALS NORMAL-Priorit√§tsklasse"
+    ID_PROCESS_PAGE_SETPRIORITY_LOW         "Setzt den Prozess in die NIEDRIG-Priorit√§tsklasse"
+    ID_PROCESS_PAGE_DEBUGCHANNELS           "Stellt Debug-Kan√§le ein"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_VIEW_LARGE                     "&Groﬂe Symbole"
+    IDS_VIEW_LARGE                     "&Gro√üe Symbole"
     IDS_VIEW_SMALL                     "&Kleine Symbole"
     IDS_VIEW_DETAILS                   "&Details"
     IDS_WINDOWS                        "&Windows"
-    IDS_VIEW_SELECTCOLUMNS             "&Spalten ausw‰hlen..."
+    IDS_VIEW_SELECTCOLUMNS             "&Spalten ausw√§hlen..."
     IDS_OPTIONS_SHOW16BITTASKS         "&16-bit-Tasks anzeigen"
     IDS_VIEW_CPUHISTORY                "&CPU Verlauf"
     IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "&Ein Graph, Alle CPUs"
@@ -500,7 +502,7 @@ BEGIN
     IDS_CPUUSAGE          "CPU-Auslastung"
     IDS_CPUTIME           "CPU-Zeit"
     IDS_MEMORYUSAGE       "Speicherauslastung"
-    IDS_MEMORYUSAGEDELTA  "Ver‰nd. der Speicherauslastung"
+    IDS_MEMORYUSAGEDELTA  "Ver√§nd. der Speicherauslastung"
     IDS_PEAKMEMORYUSAGE   "Maximale Speicherauslastung"
     IDS_PAGEFAULTS        "Seitenfehler"
     IDS_USEROBJECTS       "Benutzer-Objekte"
@@ -508,11 +510,11 @@ BEGIN
     IDS_IOREADBYTES       "E/A-Bytes (Lesen)"
     IDS_SESSIONID         "Sitzungs-ID"
     IDS_USERNAME          "Benutzername"
-    IDS_PAGEFAULTSDELTA   "Ver‰nd. der Seiten"
-    IDS_VIRTUALMEMORYSIZE "Grˆﬂe des virt. Speichers"
+    IDS_PAGEFAULTSDELTA   "Ver√§nd. der Seiten"
+    IDS_VIRTUALMEMORYSIZE "Gr√∂√üe des virt. Speichers"
     IDS_PAGEDPOOL         "Ausgelagerter Pool"
     IDS_NONPAGEDPOOL      "Nichtausgelagerter Pool"
-    IDS_BASEPRIORITY      "Basispriorit‰t"
+    IDS_BASEPRIORITY      "Basispriorit√§t"
     IDS_HANDLECOUNT       "Handle-Anzahl"
     IDS_THREADCOUNT       "Thread-Anzahl"
     IDS_GDIOBJECTS        "GDI-Objekte"
@@ -525,32 +527,32 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_WARNING_TITLE               "Task Manager Warnung"
-    IDS_PRIORITY_CHANGE_MESSAGE     "WARNUNG: ƒnderung der Priorit‰tsklasse dieses Prozesses\n\
-                                     kann zu unerw¸nschten Ergebnissen und Systeminstabilit‰t\n\
-                                     f¸hren. Sind Sie sicher, dass Sie sie ‰ndern mˆchten?"
-    IDS_PRIORITY_UNABLE2CHANGE      "Die Priorit‰t kann nicht ge‰ndert werden "
-    IDS_TERMINATE_MESSAGE           "WARNUNG: Beenden des Prozesses kann zu unerw¸nschten\n\
-                                     Ergebnissen und Systeminstabilit‰t, sowie Datenverlust\n\
-                                     f¸hren. Dem Prozess wird es nicht mˆglich sein ge‰nderte\n\
+    IDS_PRIORITY_CHANGE_MESSAGE     "WARNUNG: √Ñnderung der Priorit√§tsklasse dieses Prozesses\n\
+                                     kann zu unerw√ºnschten Ergebnissen und Systeminstabilit√§t\n\
+                                     f√ºhren. Sind Sie sicher, dass Sie sie √§ndern m√∂chten?"
+    IDS_PRIORITY_UNABLE2CHANGE      "Die Priorit√§t kann nicht ge√§ndert werden "
+    IDS_TERMINATE_MESSAGE           "WARNUNG: Beenden des Prozesses kann zu unerw√ºnschten\n\
+                                     Ergebnissen und Systeminstabilit√§t, sowie Datenverlust\n\
+                                     f√ºhren. Dem Prozess wird es nicht m√∂glich sein ge√§nderte\n\
                                      Daten oder seinen Zustand zu speichern.\n\
-                                     Sind Sie sicher, dass Sie inh beenden mˆchten?"
+                                     Sind Sie sicher, dass Sie inh beenden m√∂chten?"
     IDS_TERMINATE_UNABLE2TERMINATE  "Der Prozess konnte nicht beendet werden"
     IDS_DEBUG_MESSAGE               "WARNUNG: Den Prozess zu debuggen kann zu Datenverlust\n\
-                                     f¸hren. Sind Sie sicher, dass Sie ihn debuggen mˆchten?"
+                                     f√ºhren. Sind Sie sicher, dass Sie ihn debuggen m√∂chten?"
     IDS_DEBUG_UNABLE2DEBUG          "Konnte den Prozess nicht debuggen"
     IDS_AFFINITY_ERROR_MESSAGE      "Der Prozess muss mindestens mit einem Prozessor affin sein"
-    IDS_AFFINITY_ERROR_TITLE        "Option nicht mˆglich"
-    IDS_AFFINITY_UNABLE2ACCESS      "Die Prozessoraffinit‰t konnte nicht ge‰ndert werden"
+    IDS_AFFINITY_ERROR_TITLE        "Option nicht m√∂glich"
+    IDS_AFFINITY_UNABLE2ACCESS      "Die Prozessoraffinit√§t konnte nicht ge√§ndert werden"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_SYSTEM_IDLE_PROCESS            "Leerlauf Prozess"
     IDS_APPLICATION_NOT_RESPONDING     "Anwortet nicht"
-    IDS_APPLICATION_RUNNING            "l‰uft"
+    IDS_APPLICATION_RUNNING            "l√§uft"
     IDS_APPLICATION_TASK               "Task"
     IDS_APPLICATION_STATUS             "Status"
-    IDS_DEBUG_CHANNEL                  "Debug Kan‰le"
+    IDS_DEBUG_CHANNEL                  "Debug Kan√§le"
     IDS_DEBUG_CHANNEL_FIXME            "Fixme"
     IDS_DEBUG_CHANNEL_ERR              "Err"
     IDS_DEBUG_CHANNEL_WARN             "Warn"
