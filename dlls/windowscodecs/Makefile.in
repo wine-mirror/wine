@@ -10,6 +10,7 @@ C_SRCS = \
 	bmpdecode.c \
 	clsfactory.c \
 	imgfactory.c \
+	info.c \
 	main.c \
 	palette.c \
 	regsvr.c

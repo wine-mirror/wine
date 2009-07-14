@@ -115,8 +115,8 @@ static HRESULT WINAPI ImagingFactory_CreateDecoderFromFileHandle(
 static HRESULT WINAPI ImagingFactory_CreateComponentInfo(IWICImagingFactory *iface,
     REFCLSID clsidComponent, IWICComponentInfo **ppIInfo)
 {
-    FIXME("(%p,%s,%p): stub\n", iface, debugstr_guid(clsidComponent), ppIInfo);
-    return E_NOTIMPL;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(clsidComponent), ppIInfo);
+    return CreateComponentInfo(clsidComponent, ppIInfo);
 }
 
 static HRESULT WINAPI ImagingFactory_CreateDecoder(IWICImagingFactory *iface,

@@ -28,4 +28,6 @@ extern HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
     UINT srcwidth, UINT srcheight, INT srcstride,
     const WICRect *rc, UINT dststride, UINT dstbuffersize, BYTE *dstbuffer);
 
+extern HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo);
+
 #endif /* WINCODECS_PRIVATE_H */
