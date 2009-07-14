@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = winhttp.dll
 IMPORTLIB = winhttp
 IMPORTS   = shlwapi kernel32
-DELAYIMPORTS = crypt32
+DELAYIMPORTS = crypt32 advapi32
 EXTRALIBS = @SOCKETLIBS@
 
 C_SRCS = \

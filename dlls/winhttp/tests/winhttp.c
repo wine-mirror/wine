@@ -902,7 +902,6 @@ static void test_set_default_proxy_config(void)
 
     SetLastError(0xdeadbeef);
     ret = WinHttpSetDefaultProxyConfiguration(NULL);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
         "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
@@ -911,7 +910,6 @@ static void test_set_default_proxy_config(void)
     info.lpszProxy = info.lpszProxyBypass = NULL;
     SetLastError(0xdeadbeef);
     ret = WinHttpSetDefaultProxyConfiguration(&info);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
         "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
@@ -920,13 +918,11 @@ static void test_set_default_proxy_config(void)
     info.lpszProxy = info.lpszProxyBypass = NULL;
     SetLastError(0xdeadbeef);
     ret = WinHttpSetDefaultProxyConfiguration(&info);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
         "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     info.lpszProxyBypass = normalString;
     SetLastError(0xdeadbeef);
     ret = WinHttpSetDefaultProxyConfiguration(&info);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
         "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
@@ -934,7 +930,6 @@ static void test_set_default_proxy_config(void)
     info.lpszProxy = wideString;
     SetLastError(0xdeadbeef);
     ret = WinHttpSetDefaultProxyConfiguration(&info);
-    todo_wine
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
         "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 

@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winhttp.h"
 #include "wincrypt.h"
+#include "winreg.h"
 
 #include "winhttp_private.h"
 
@@ -648,6 +649,26 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
     return FALSE;
 }
 
+static const WCHAR Connections[] = {
+    'S','o','f','t','w','a','r','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\',
+    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
+    'C','o','n','n','e','c','t','i','o','n','s',0 };
+static const WCHAR WinHttpSettings[] = {
+    'W','i','n','H','t','t','p','S','e','t','t','i','n','g','s',0 };
+static const DWORD WINHTTPSETTINGS_MAGIC = 0x18;
+static const DWORD WINHTTP_PROXY_TYPE_DIRECT = 1;
+static const DWORD WINHTTP_PROXY_TYPE_PROXY = 2;
+
+struct winhttp_settings_header
+{
+    DWORD magic;
+    DWORD unknown; /* always zero? */
+    DWORD flags;   /* one of WINHTTP_PROXY_TYPE_* */
+};
+
 /***********************************************************************
  *          WinHttpGetDefaultProxyConfiguration (winhttp.@)
  */
@@ -703,8 +724,106 @@ BOOL WINAPI WinHttpGetProxyForUrl( HINTERNET hsession, LPCWSTR url, WINHTTP_AUTO
  */
 BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
 {
-    FIXME("%p\n", info);
-    return TRUE;
+    LONG l;
+    HKEY key;
+    BOOL ret = FALSE;
+    const WCHAR *src;
+
+    TRACE("%p\n", info);
+
+    if (!info)
+    {
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    switch (info->dwAccessType)
+    {
+    case WINHTTP_ACCESS_TYPE_NO_PROXY:
+        break;
+    case WINHTTP_ACCESS_TYPE_NAMED_PROXY:
+        if (!info->lpszProxy)
+        {
+            set_last_error( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        /* Only ASCII characters are allowed */
+        for (src = info->lpszProxy; *src; src++)
+            if (*src > 0x7f)
+            {
+                set_last_error( ERROR_INVALID_PARAMETER );
+                return FALSE;
+            }
+        if (info->lpszProxyBypass)
+        {
+            for (src = info->lpszProxyBypass; *src; src++)
+                if (*src > 0x7f)
+                {
+                    set_last_error( ERROR_INVALID_PARAMETER );
+                    return FALSE;
+                }
+        }
+        break;
+    default:
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    l = RegCreateKeyExW( HKEY_LOCAL_MACHINE, Connections, 0, NULL, 0,
+        KEY_WRITE, NULL, &key, NULL );
+    if (!l)
+    {
+        DWORD size = sizeof(struct winhttp_settings_header) + 2 * sizeof(DWORD);
+        BYTE *buf;
+
+        if (info->dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
+        {
+            size += strlenW( info->lpszProxy );
+            if (info->lpszProxyBypass)
+                size += strlenW( info->lpszProxyBypass );
+        }
+        buf = heap_alloc( size );
+        if (buf)
+        {
+            struct winhttp_settings_header *hdr =
+                (struct winhttp_settings_header *)buf;
+            DWORD *len = (DWORD *)(hdr + 1);
+
+            hdr->magic = WINHTTPSETTINGS_MAGIC;
+            hdr->unknown = 0;
+            if (info->dwAccessType == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
+            {
+                BYTE *dst;
+
+                hdr->flags = WINHTTP_PROXY_TYPE_PROXY;
+                *len++ = strlenW( info->lpszProxy );
+                for (dst = (BYTE *)len, src = info->lpszProxy; *src;
+                    src++, dst++)
+                    *dst = *src;
+                len = (DWORD *)dst;
+                if (info->lpszProxyBypass)
+                {
+                    *len++ = strlenW( info->lpszProxyBypass );
+                    for (dst = (BYTE *)len, src = info->lpszProxyBypass; *src;
+                        src++, dst++)
+                        *dst = *src;
+                }
+                else
+                    *len++ = 0;
+            }
+            else
+            {
+                hdr->flags = WINHTTP_PROXY_TYPE_DIRECT;
+                *len++ = 0;
+                *len++ = 0;
+            }
+            l = RegSetValueExW( key, WinHttpSettings, 0, REG_BINARY, buf, size );
+            if (!l)
+                ret = TRUE;
+            heap_free( buf );
+        }
+        RegCloseKey( key );
+    }
+    return ret;
 }
 
 /***********************************************************************
