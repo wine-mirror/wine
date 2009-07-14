@@ -316,6 +316,65 @@ static BOOL should_bypass_proxy(session_t *session, LPCWSTR server)
     return ret;
 }
 
+static
+BOOL set_server_for_hostname( connect_t *connect, LPCWSTR server, INTERNET_PORT port )
+{
+    session_t *session = connect->session;
+    BOOL ret = TRUE;
+
+    if (session->proxy_server && !should_bypass_proxy(session, server))
+    {
+        LPCWSTR colon;
+
+        if ((colon = strchrW( session->proxy_server, ':' )))
+        {
+            if (!connect->servername || strncmpiW( connect->servername,
+                session->proxy_server, colon - session->proxy_server - 1 ))
+            {
+                heap_free( connect->servername );
+                if (!(connect->servername = heap_alloc(
+                    (colon - session->proxy_server + 1) * sizeof(WCHAR) )))
+                {
+                    ret = FALSE;
+                    goto end;
+                }
+                memcpy( connect->servername, session->proxy_server,
+                    (colon - session->proxy_server) * sizeof(WCHAR) );
+                connect->servername[colon - session->proxy_server] = 0;
+                if (*(colon + 1))
+                    connect->serverport = atoiW( colon + 1 );
+                else
+                    connect->serverport = INTERNET_DEFAULT_HTTP_PORT;
+            }
+        }
+        else
+        {
+            if (!connect->servername || strcmpiW( connect->servername,
+                session->proxy_server ))
+            {
+                heap_free( connect->servername );
+                if (!(connect->servername = strdupW( session->proxy_server )))
+                {
+                    ret = FALSE;
+                    goto end;
+                }
+                connect->serverport = INTERNET_DEFAULT_HTTP_PORT;
+            }
+        }
+    }
+    else if (server)
+    {
+        if (!(connect->servername = strdupW( server )))
+        {
+            ret = FALSE;
+            goto end;
+        }
+        connect->serverport = port;
+    }
+end:
+    return ret;
+}
+
 /***********************************************************************
  *          WinHttpConnect (winhttp.@)
  */
@@ -363,36 +422,8 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     if (server && !(connect->hostname = strdupW( server ))) goto end;
     connect->hostport = port;
 
-    if (session->proxy_server && !should_bypass_proxy(session, server))
-    {
-        LPCWSTR colon;
-
-        if ((colon = strchrW( session->proxy_server, ':' )))
-        {
-            if (!(connect->servername = heap_alloc(
-                (colon - session->proxy_server + 1) * sizeof(WCHAR) )))
-                goto end;
-            memcpy( connect->servername, session->proxy_server,
-                (colon - session->proxy_server) * sizeof(WCHAR) );
-            connect->servername[colon - session->proxy_server] = 0;
-            if (*(colon + 1))
-                connect->serverport = atoiW( colon + 1 );
-            else
-                connect->serverport = INTERNET_DEFAULT_HTTP_PORT;
-        }
-        else
-        {
-            if (!(connect->servername = strdupW( session->proxy_server )))
-                goto end;
-            connect->serverport = INTERNET_DEFAULT_HTTP_PORT;
-        }
-    }
-    else if (server)
-    {
-        if (!(connect->servername = strdupW( server )))
-            goto end;
-        connect->serverport = port;
-    }
+    if (!set_server_for_hostname( connect, server, port ))
+        goto end;
 
     if (!(hconnect = alloc_handle( &connect->hdr ))) goto end;
     connect->hdr.handle = hconnect;
