@@ -358,6 +358,14 @@ static void test_d3d_ifaces(void)
     ok(ref == 1, "IDirectDraw reference count is %ld\n", ref);
 
     hr = IDirectDraw_QueryInterface(DDraw1, &IID_IDirect3D, (void **) &D3D1);
+    if (hr == E_NOINTERFACE)  /* win64 */
+    {
+        IDirectDraw4_Release(DDraw4);
+        IDirectDraw2_Release(DDraw2);
+        IDirectDraw_Release(DDraw1);
+        skip( "no IDirect3D support\n" );
+        return;
+    }
     ok(hr == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", hr);
     ref = getRefcount( (IUnknown *) DDraw4);
     ok(ref == 1, "IDirectDraw4 reference count is %ld\n", ref);
