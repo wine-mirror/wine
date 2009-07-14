@@ -40,10 +40,10 @@ BEGIN
     LTEXT           PACKAGE_STRING,IDC_STATIC,119,17,120,8
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
-    LTEXT           "Diese Bibliothek ist freie Software; Sie dürfen sie unter den Bedingungen der GNU Lesser General Public License, wie von der Free Software Foundation veröffentlicht, weiterverteilen und/oder modifizieren; entweder gemäß Version 2.1 der Lizenz oder (nach Ihrer Option) jeder späteren Version.",
+    LTEXT           "Diese Bibliothek ist freie Software; Sie dÃ¼rfen sie unter den Bedingungen der GNU Lesser General Public License, wie von der Free Software Foundation verÃ¶ffentlicht, weiterverteilen und/oder modifizieren; entweder gemÃ¤ÃŸ Version 2.1 der Lizenz oder (nach Ihrer Option) jeder spÃ¤teren Version.",
                     IDC_STATIC,119,44,124,72
     GROUPBOX        " Windows-Registrierungs-Informationen ", IDC_STATIC, 15, 120, 230, 55
-    LTEXT           "&Eigentümer:", IDC_STATIC, 22, 136, 40, 20
+    LTEXT           "&EigentÃ¼mer:", IDC_STATIC, 22, 136, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 136, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
     LTEXT           "&Organisation:", IDC_STATIC, 22, 150, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 150, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
@@ -54,11 +54,11 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Anwendungseinstellungen ",IDC_STATIC, 8,4,244,250
-    LTEXT           "Wine kann für jede Anwendung eine unterschiedliche Windows-Version nachahmen. Dieser Reiter ist mit den Bibliothek- und Grafik-Reiter verknüpft, damit entweder systemweite oder anwendungsabhängige Einstellungen in diesen Reitern vorgenommen werden können.",
+    LTEXT           "Wine kann fÃ¼r jede Anwendung eine unterschiedliche Windows-Version nachahmen. Dieser Reiter ist mit den Bibliothek- und Grafik-Reiter verknÃ¼pft, damit entweder systemweite oder anwendungsabhÃ¤ngige Einstellungen in diesen Reitern vorgenommen werden kÃ¶nnen.",
                     IDC_STATIC,15,15,227,43
     CONTROL         "Anwendungen",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,58,230,152
-    PUSHBUTTON	    "Anw. &hinzufügen",IDC_APP_ADDAPP, 90,214,75,14
+    PUSHBUTTON      "Anw. &hinzufÃ¼gen",IDC_APP_ADDAPP, 90,214,75,14
     PUSHBUTTON	    "Anw. &entfernen",IDC_APP_REMOVEAPP, 170,214,75,14
     LTEXT           "&Windows Version:",IDC_STATIC,17,236,58,8
     COMBOBOX        IDC_WINVER,83,234,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
@@ -69,22 +69,22 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX    " Fenstereinstellungen ",IDC_STATIC,8,4,244,84
-    CONTROL     "DirectX-Anwendungen können Maus einfangen",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "DirectX-Anwendungen kÃ¶nnen Maus einfangen",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Erlaube dem Fenstermanager die Fenster zu &dekorieren",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Erlaube dem Fenstermanager die Fenster zu kontrollieren.",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
     CONTROL     "Emuliere einen virtuellen Bildschirm",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
-    LTEXT       "Desktop-Größe:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
+    LTEXT       "Desktop-GrÃ¶ÃŸe:",IDC_DESKTOP_SIZE,15,70,44,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,109,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,64,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,117,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
-    LTEXT       "Unterstützung für Vertex Shader: ",IDC_STATIC,15,110,80,32
+    LTEXT       "UnterstÃ¼tzung fÃ¼r Vertex Shader: ",IDC_STATIC,15,110,80,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "Pixel Shader aktivieren (wenn von Hardware unterstützt)", IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+    CONTROL     "Pixel Shader aktivieren (wenn von Hardware unterstÃ¼tzt)", IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
     
-    GROUPBOX    " Bildschi&rmauflösung ",IDC_STATIC,8,151,244,93
+    GROUPBOX    " Bildschi&rmauflÃ¶sung ",IDC_STATIC,8,151,244,93
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
@@ -95,13 +95,13 @@ IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " DLL Überschreibung ",IDC_STATIC,8,4,244,240
-    LTEXT           "DLLs (Dynamic Link Libraries) können einzeln eingestellt werden, entweder Builtin (gestellt durch Wine) oder Native (von Windows oder durch die Anwendung gestellt)."
+    GROUPBOX        " DLL Ãœberschreibung ",IDC_STATIC,8,4,244,240
+    LTEXT           "DLLs (Dynamic Link Libraries) kÃ¶nnen einzeln eingestellt werden, entweder Builtin (gestellt durch Wine) oder Native (von Windows oder durch die Anwendung gestellt)."
                     ,  IDC_STATIC,15,17,228,32
-    LTEXT           "Neue Überschreibung für:",IDC_STATIC,16,58,100,8
+    LTEXT           "Neue Ãœberschreibung fÃ¼r:",IDC_STATIC,16,58,100,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
-    PUSHBUTTON      "&Hinzufügen ",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
-    LTEXT           "Bestehende Überschreibungen:",IDC_STATIC,16,86,100,8
+    PUSHBUTTON      "&HinzufÃ¼gen ",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
+    LTEXT           "Bestehende Ãœberschreibungen:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "&Bearbeiten",IDC_DLLS_EDITDLL,164,96,82,14
     PUSHBUTTON      "&Entfernen",IDC_DLLS_REMOVEDLL,164,114,82,14 
@@ -109,7 +109,7 @@ END
 
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 110, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Bearbeite Überschreibung"
+CAPTION "Bearbeite Ãœberschreibung"
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Ladereihenfolge ",IDC_STATIC,8,4,94,66
@@ -130,7 +130,7 @@ BEGIN
     LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
-    PUSHBUTTON      "&Hinzufügen",IDC_BUTTON_ADD,15,98,41,14
+    PUSHBUTTON      "&HinzufÃ¼gen",IDC_BUTTON_ADD,15,98,41,14
     PUSHBUTTON      "&Entfernen",IDC_BUTTON_REMOVE,60,98,37,14
     PUSHBUTTON      "&Automatisch", IDC_BUTTON_AUTODETECT,197,98,49,14
 
@@ -145,7 +145,7 @@ BEGIN
     LTEXT           "Bezeichnung und Seriennummer",IDC_LABELSERIAL_STATIC,15,155,125,10
 
     PUSHBUTTON      "&Zeige Erweitert",IDC_BUTTON_SHOW_HIDE_ADVANCED,178,136,68,13
-    CONTROL         "Automatisch &vom Gerät:",IDC_RADIO_AUTODETECT,"Button",
+    CONTROL         "Automatisch &vom GerÃ¤t:",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,93,10
     EDITTEXT        IDC_EDIT_DEVICE,27,176,169,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Durch&suchen",IDC_BUTTON_BROWSE_DEVICE,201,176,45,13
@@ -165,8 +165,8 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Treiberauswahl ",IDC_STATIC,8,4,244,195
-    LTEXT           "Wählen Sie einen Sound-Treiber durch ankreuzen des gewünschten Treibers. Ist kein Treiber ausgewählt, wird der Sound deaktiviert. Die Auswahl mehrerer Treiber ist nicht empfohlen. Ein Treiber kann durch Rechtsklicken konfiguriert werden.",IDC_STATIC,15,15,227,35
-    CONTROL         "Geräte",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
+    LTEXT           "WÃ¤hlen Sie einen Sound-Treiber durch ankreuzen des gewÃ¼nschten Treibers. Ist kein Treiber ausgewÃ¤hlt, wird der Sound deaktiviert. Die Auswahl mehrerer Treiber ist nicht empfohlen. Ein Treiber kann durch Rechtsklicken konfiguriert werden.",IDC_STATIC,15,15,227,35
+    CONTROL         "GerÃ¤te",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
     PUSHBUTTON      "&Test Sound",IDC_AUDIO_TEST,170,50,59,14
     PUSHBUTTON      "Einstellungen",IDC_AUDIO_CONTROL_PANEL,170,70,59,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60    
@@ -189,22 +189,22 @@ BEGIN
    PUSHBUTTON      "Motiv installieren...",IDC_THEME_INSTALL,152,23,93,14
    LTEXT           "Farbe:",IDC_THEME_COLORTEXT,15,40,112,8
    COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-   LTEXT           "Größe:",IDC_THEME_SIZETEXT,135,40,110,8
+   LTEXT           "GrÃ¶ÃŸe:",IDC_THEME_SIZETEXT,135,40,110,8
    COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Element:",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
     LTEXT           "Farbe:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "Größe:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    LTEXT           "GrÃ¶ÃŸe:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
     PUSHBUTTON      "Schrift",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
    GROUPBOX        " Shell-Ordner ",IDC_STATIC,8,114,244,100
    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-   CONTROL         "Verknüpfe:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+   CONTROL         "VerknÃ¼pfe:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
    EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-   PUSHBUTTON      "Wählen",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+   PUSHBUTTON      "WÃ¤hlen",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
@@ -212,26 +212,26 @@ BEGIN
     IDS_TAB_APPLICATIONS    "Anwendungen"
     IDS_TAB_DLLS            "Bibliotheken"
     IDS_TAB_DRIVES          "Laufwerke"
-    IDS_CHOOSE_PATH         "Bitte wählen Sie das Ziel-Unix-Verzeichnis."
+    IDS_CHOOSE_PATH         "Bitte wÃ¤hlen Sie das Ziel-Unix-Verzeichnis."
     IDS_HIDE_ADVANCED       "Verstecke Erweitert"
     IDS_SHOW_ADVANCED       "Zeige Erweitert"
     IDS_NOTHEME             "(Kein Motiv)"
     IDS_TAB_GRAPHICS        "Grafik"
     IDS_TAB_DESKTOP_INTEGRATION "Desktop-Integration"
     IDS_TAB_AUDIO           "Audio"
-    IDS_TAB_ABOUT           "Über"
+    IDS_TAB_ABOUT           "Ãœber"
     IDS_WINECFG_TITLE       "Wine-Konfiguration"
-    IDS_WINECFG_TITLE_APP   "Wine-Konfiguration für %s"
+    IDS_WINECFG_TITLE_APP   "Wine-Konfiguration fÃ¼r %s"
     IDS_THEMEFILE           "Motiv-Dateien"
-    IDS_THEMEFILE_SELECT    "Motiv-Datei auswählen"
-    IDS_AUDIO_MISSING       "Zur Zeit ist kein Audio Treiber in der Registry eingetragen.\n\nEin bevorzugter Treiber wurde für Sie ausgewählt.\nSie können diesen Treiber nutzen oder einen anderen verfügbaren Treiber auswählen.\n\nSie müssen auf Anwenden klicken, damit die Änderung übernommen wird."
+    IDS_THEMEFILE_SELECT    "Motiv-Datei auswÃ¤hlen"
+    IDS_AUDIO_MISSING       "Zur Zeit ist kein Audio Treiber in der Registry eingetragen.\n\nEin bevorzugter Treiber wurde fÃ¼r Sie ausgewÃ¤hlt.\nSie kÃ¶nnen diesen Treiber nutzen oder einen anderen verfÃ¼gbaren Treiber auswÃ¤hlen.\n\nSie mÃ¼ssen auf Anwenden klicken, damit die Ã„nderung Ã¼bernommen wird."
     IDS_SHELL_FOLDER        "Shell-Ordner"
-    IDS_LINKS_TO            "Verknüpft mit"
+    IDS_LINKS_TO            "VerknÃ¼pft mit"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DLL_WARNING         "Das Ändern der Ladereihenfolge dieser Bibliothek wird nicht empfohlen.\nSind Sie sich sicher, dass Sie dies möchten?"
+    IDS_DLL_WARNING         "Das Ã„ndern der Ladereihenfolge dieser Bibliothek wird nicht empfohlen.\nSind Sie sich sicher, dass Sie dies mÃ¶chten?"
     IDS_DLL_WARNING_CAPTION "Achtung: Systembibliothek"
     IDS_DLL_NATIVE          "Native (Windows)"
     IDS_DLL_BUILTIN         "Builtin (Wine)"
@@ -241,7 +241,7 @@ BEGIN
     IDS_DEFAULT_SETTINGS    "Standardeinstellungen"
     IDS_EXECUTABLE_FILTER   "Wine-Programme (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
     IDS_USE_GLOBAL_SETTINGS "Globale Einstellung benutzen"
-    IDS_SELECT_EXECUTABLE   "Ausführbares Programm auswählen"
+    IDS_SELECT_EXECUTABLE   "AusfÃ¼hrbares Programm auswÃ¤hlen"
 END 
 
 STRINGTABLE DISCARDABLE
@@ -257,12 +257,12 @@ BEGIN
     IDS_DRIVE_REMOTE            "Netzwerkfreigabe"
     IDS_DRIVE_REMOVABLE         "Diskette"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "Sie können keine weiteren Laufwerke mehr hinzufügen.\n\nJedes Laufwerk muss einen Buchstaben besitzen, von A bis Z, deshalb können Sie nicht mehr als 26 haben."
+    IDS_DRIVE_LETTERS_EXCEEDED  "Sie kÃ¶nnen keine weiteren Laufwerke mehr hinzufÃ¼gen.\n\nJedes Laufwerk muss einen Buchstaben besitzen, von A bis Z, deshalb kÃ¶nnen Sie nicht mehr als 26 haben."
     IDS_SYSTEM_DRIVE_LABEL      "Systemlaufwerk"
-    IDS_CONFIRM_DELETE_C        "Sind Sie sich sicher, dass Sie Laufwerk C entfernen möchten?\n\nDie meisten Windows-Anwendungen erwarten, dass ein Laufwerk C existiert und funktionieren ohne nicht richtig. Wenn Sie fortfahren, vergessen Sie nicht, Laufwerk C neu zu erstellen!"
+    IDS_CONFIRM_DELETE_C        "Sind Sie sich sicher, dass Sie Laufwerk C entfernen mÃ¶chten?\n\nDie meisten Windows-Anwendungen erwarten, dass ein Laufwerk C existiert und funktionieren ohne nicht richtig. Wenn Sie fortfahren, vergessen Sie nicht, Laufwerk C neu zu erstellen!"
     IDS_COL_DRIVELETTER         "Buchst."
     IDS_COL_DRIVEMAPPING        "Zuordnung"
-    IDS_NO_DRIVE_C              "Sie haben kein Laufwerk C. Das ist nicht so gut.\n\nVergessen Sie nicht, im Laufwerke-Reiter „Hinzufügen“ zu klicken um eins zu erstellen!\n"
+    IDS_NO_DRIVE_C              "Sie haben kein Laufwerk C. Das ist nicht so gut.\n\nVergessen Sie nicht, im Laufwerke-Reiter â€žHinzufÃ¼genâ€œ zu klicken um eins zu erstellen!\n"
 END
 
 STRINGTABLE DISCARDABLE
@@ -278,15 +278,15 @@ BEGIN
     IDS_DRIVER_NAS              "NAS-Treiber"
     IDS_DRIVER_AUDIOIO          "Audio-IO-Treiber (Solaris)"
     IDS_DRIVER_COREAUDIO        "CoreAudio-Treiber"
-    IDS_OPEN_DRIVER_ERROR       "Konnte %s nicht öffnen!"
+    IDS_OPEN_DRIVER_ERROR       "Konnte %s nicht Ã¶ffnen!"
     IDS_SOUNDDRIVERS            "Sound_Treiber"
-    IDS_DEVICES_WAVEOUT         "Wave-Ausgabe-Geräte"
-    IDS_DEVICES_WAVEIN          "Wave-Eingabe-Geräte"
-    IDS_DEVICES_MIDIOUT         "MIDI-Ausgabe-Geräte"
-    IDS_DEVICES_MIDIIN          "MIDI-Ausgabe-Geräte"
-    IDS_DEVICES_AUX             "Aux-Geräte"
-    IDS_DEVICES_MIXER           "Mixer-Geräte"
-    IDS_UNAVAILABLE_DRIVER      "In der Registry wurde ein Treiber gefunden, der nicht verfügbar ist!\n\nSoll „%s“ aus der Registry entfernt werden?"
+    IDS_DEVICES_WAVEOUT         "Wave-Ausgabe-GerÃ¤te"
+    IDS_DEVICES_WAVEIN          "Wave-Eingabe-GerÃ¤te"
+    IDS_DEVICES_MIDIOUT         "MIDI-Ausgabe-GerÃ¤te"
+    IDS_DEVICES_MIDIIN          "MIDI-Ausgabe-GerÃ¤te"
+    IDS_DEVICES_AUX             "Aux-GerÃ¤te"
+    IDS_DEVICES_MIXER           "Mixer-GerÃ¤te"
+    IDS_UNAVAILABLE_DRIVER      "In der Registry wurde ein Treiber gefunden, der nicht verfÃ¼gbar ist!\n\nSoll â€ž%sâ€œ aus der Registry entfernt werden?"
     IDS_WARNING                 "Warnung"
 END
 
@@ -295,8 +295,8 @@ BEGIN
     IDC_SYSPARAMS_BUTTON            "Steuerelementhintergrund"
     IDC_SYSPARAMS_BUTTON_TEXT       "Steuerelementtext"
     IDC_SYSPARAMS_DESKTOP           "Desktop"
-    IDC_SYSPARAMS_MENU              "Menühintergrund"
-    IDC_SYSPARAMS_MENU_TEXT         "Menütext"
+    IDC_SYSPARAMS_MENU              "MenÃ¼hintergrund"
+    IDC_SYSPARAMS_MENU_TEXT         "MenÃ¼text"
     IDC_SYSPARAMS_SCROLLBAR         "Bildlaufleiste"
     IDC_SYSPARAMS_SELECTION         "Auswahlhintergrund"
     IDC_SYSPARAMS_SELECTION_TEXT    "Auswahltext"
@@ -319,9 +319,9 @@ BEGIN
     IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Dunkler Steuerelementschatten"
     IDC_SYSPARAMS_BUTTON_LIGHT      "Steuerelementerhellung"
     IDC_SYSPARAMS_BUTTON_ALTERNATE  "Alternativer Steuerelementhintergrund"
-    IDC_SYSPARAMS_HOT_TRACKING      "Heiß verfolgtes Element"
+    IDC_SYSPARAMS_HOT_TRACKING      "HeiÃŸ verfolgtes Element"
     IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Gradient der aktiven Titelleiste"
     IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Gradient der inaktiven Titelleiste"
-    IDC_SYSPARAMS_MENU_HILIGHT      "Menühervorhebung"
-    IDC_SYSPARAMS_MENUBAR           "Menütitelleiste"
+    IDC_SYSPARAMS_MENU_HILIGHT      "MenÃ¼hervorhebung"
+    IDC_SYSPARAMS_MENUBAR           "MenÃ¼titelleiste"
 END
