@@ -768,7 +768,7 @@ static BOOL open_connection( request_t *request )
     if (netconn_connected( &request->netconn )) return TRUE;
 
     connect = request->connect;
-    port = connect->hostport ? connect->hostport : (request->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
+    port = connect->serverport ? connect->serverport : (request->hdr.flags & WINHTTP_FLAG_SECURE ? 443 : 80);
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, connect->servername, strlenW(connect->servername) + 1 );
 
