@@ -494,6 +494,13 @@ ok(arr.sort() === arr, "arr.sort() !== arr");
 for(var i=0; i < arr.length; i++)
     ok(arr[i] === tmp[i], "arr[" + i + "] = " + arr[i] + " expected " + tmp[i]);
 
+arr = ["1", "2", "3"];
+arr.length = 1;
+ok(arr.length === 1, "arr.length = " + arr.length);
+arr.length = 3;
+ok(arr.length === 3, "arr.length = " + arr.length);
+ok(arr.toString() === "1,,", "arr.toString() = " + arr.toString());
+
 ok(arr.valueOf === Object.prototype.valueOf, "arr.valueOf !== Object.prototype.valueOf");
 ok(arr === arr.valueOf(), "arr !== arr.valueOf");
 

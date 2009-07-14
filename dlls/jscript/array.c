@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
+
 #include "jscript.h"
 
 #include "wine/debug.h"
@@ -60,6 +62,32 @@ static HRESULT Array_length(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
         V_VT(retv) = VT_I4;
         V_I4(retv) = This->length;
         break;
+    case DISPATCH_PROPERTYPUT: {
+        VARIANT num;
+        DOUBLE len = -1;
+        DWORD i;
+        HRESULT hres;
+
+        hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &num);
+        if(V_VT(&num) == VT_I4)
+            len = V_I4(&num);
+        else
+            len = floor(V_R8(&num));
+
+        if(len!=(DWORD)len) {
+            FIXME("Throw RangeError\n");
+            return E_FAIL;
+        }
+
+        for(i=len; i<This->length; i++) {
+            hres = jsdisp_delete_idx(dispex, i);
+            if(FAILED(hres))
+                return hres;
+        }
+
+        This->length = len;
+        break;
+    }
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;

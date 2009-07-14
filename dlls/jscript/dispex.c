@@ -1010,3 +1010,19 @@ HRESULT disp_propget(IDispatch *disp, DISPID id, LCID lcid, VARIANT *val, jsexce
 
     return hres;
 }
+
+HRESULT jsdisp_delete_idx(DispatchEx *obj, DWORD idx)
+{
+    static const WCHAR formatW[] = {'%','d',0};
+    WCHAR buf[12];
+    dispex_prop_t *prop;
+    HRESULT hres;
+
+    sprintfW(buf, formatW, idx);
+
+    hres = find_prop_name(obj, buf, &prop);
+    if(FAILED(hres) || !prop)
+        return hres;
+
+    return delete_prop(prop);
+}
