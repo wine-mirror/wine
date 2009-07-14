@@ -124,43 +124,6 @@ static HRESULT parse_dxbc(const char *data, SIZE_T data_size,
     return hr;
 }
 
-static HRESULT parse_fx10_pass_index(struct d3d10_effect_pass *p, const char **ptr)
-{
-    unsigned int i;
-
-    read_dword(ptr, &p->start);
-    TRACE("Pass starts at offset %#x\n", p->start);
-
-    read_dword(ptr, &p->variable_count);
-    TRACE("Pass has %u variables\n", p->variable_count);
-
-    skip_dword_unknown(ptr, 1);
-
-    p->variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, p->variable_count * sizeof(*p->variables));
-    if (!p->variables)
-    {
-        ERR("Failed to allocate variables memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < p->variable_count; ++i)
-    {
-        struct d3d10_effect_variable *v = &p->variables[i];
-
-        v->pass = p;
-
-        read_dword(ptr, &v->type);
-        TRACE("Variable %u is of type %#x\n", i, v->type);
-
-        skip_dword_unknown(ptr, 2);
-
-        read_dword(ptr, &v->idx_offset);
-        TRACE("Variable %u idx is at offset %#x\n", i, v->idx_offset);
-    }
-
-    return S_OK;
-}
-
 static char *copy_name(const char *ptr)
 {
     size_t name_len;
@@ -333,32 +296,51 @@ static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char *
     return hr;
 }
 
-static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char *data)
+static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, const char *data)
 {
     HRESULT hr = S_OK;
-    const char *ptr;
-    size_t name_len;
     unsigned int i;
+    DWORD offset;
 
-    ptr = data + p->start;
+    read_dword(ptr, &offset);
+    TRACE("Pass name at offset %#x.\n", offset);
 
-    name_len = strlen(ptr) + 1;
-    p->name = HeapAlloc(GetProcessHeap(), 0, name_len);
+    p->name = copy_name(data + offset);
     if (!p->name)
     {
-        ERR("Failed to allocate name memory\n");
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Pass name: %s.\n", p->name);
+
+    read_dword(ptr, &p->variable_count);
+    TRACE("Pass has %u variables.\n", p->variable_count);
+
+    skip_dword_unknown(ptr, 1);
+
+    p->variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, p->variable_count * sizeof(*p->variables));
+    if (!p->variables)
+    {
+        ERR("Failed to allocate variables memory.\n");
         return E_OUTOFMEMORY;
     }
 
-    memcpy(p->name, ptr, name_len);
-    ptr += name_len;
-
-    TRACE("pass name: %s\n", p->name);
-
     for (i = 0; i < p->variable_count; ++i)
     {
-        hr = parse_fx10_variable(&p->variables[i], data);
-        if (FAILED(hr)) break;
+        struct d3d10_effect_variable *v = &p->variables[i];
+
+        v->pass = p;
+
+        read_dword(ptr, &v->type);
+        TRACE("Variable %u is of type %#x.\n", i, v->type);
+
+        skip_dword_unknown(ptr, 2);
+
+        read_dword(ptr, &v->idx_offset);
+        TRACE("Variable %u idx is at offset %#x.\n", i, v->idx_offset);
+
+        hr = parse_fx10_variable(v, data);
+        if (FAILED(hr)) return hr;
     }
 
     return hr;
@@ -400,10 +382,7 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
         p->vtbl = &d3d10_effect_pass_vtbl;
         p->technique = t;
 
-        hr = parse_fx10_pass_index(p, ptr);
-        if (FAILED(hr)) return hr;
-
-        hr = parse_fx10_pass(p, data);
+        hr = parse_fx10_pass(p, ptr, data);
         if (FAILED(hr)) return hr;
     }
 
