@@ -3,6 +3,7 @@
  * German Language Support
  *
  * Copyright 2004 Henning Gerhardt
+ * Copyright 2009 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,26 +28,26 @@ LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
-  WCMD_ATTRIB, "Hilfe für ATTRIB\n"
+  WCMD_ATTRIB, "ATTRIB zeigt oder ändert die DOS Dateieigenschaften.\n"
   WCMD_CALL,
 "CALL <Batchdateiname> wird in einer Batchdatei genutzt, um Befehle aus\n\
 einer anderen Batchdatei auszuführen. Wenn die Batchdatei exisiert, kehrt\n\
-die Kontrolle zu der Datei zurück, die sie gerufen hat. Der CALL Befehl kann\n\
-Parameter zu der rufenden Prozedure übertragen.\n\
+die Kontrolle zu der Datei zurück, die sie aufgerufen hat. Der CALL Befehl kann\n\
+Parameter zu der rufenden Prozedure übergeben.\n\
 \n\
 Änderungen für das aktuelle Verzeichnis, Umgebungsvariablen usw. werden in\n\
 der gerufenen Prozedur gemacht, die sie von der aufgerufenen geerbt hat.\n"
 
-  WCMD_CD,     "Hilfe für CD\n"
-  WCMD_CHDIR,  "Hilfe für CHDIR\n"
+  WCMD_CD,     "CD ist die Kurzform von CHDIR.\n"
+  WCMD_CHDIR,  "CHDIR Wechselt in ein Verzeichnis.\n"
 
-  WCMD_CLS,    "CLS löscht den Inhalt der Konsole\n"
+  WCMD_CLS,    "CLS löscht den Bildschirminhalt der Konsole.\n"
 
-  WCMD_COPY,   "Hilfe für COPY\n"
-  WCMD_CTTY,   "Hilfe für CTTY\n"
-  WCMD_DATE,   "Hilfe für DATE\n"
-  WCMD_DEL,    "Hilfe für DEL\n"
-  WCMD_DIR,    "Hilfe für DIR\n"
+  WCMD_COPY,   "COPY Kopiert eine Datei.\n"
+  WCMD_CTTY,   "CTTY Ändert das Eingabe/Ausgabe - Gerät.\n"
+  WCMD_DATE,   "DATE zeigt oder ändert das Systemdatum.\n"
+  WCMD_DEL,    "DEL löscht eine oder mehrere Dateien\n"
+  WCMD_DIR,    "DIR listet den Inhalt eines Verzeichnisses.\n"
 
   WCMD_ECHO,
 "ECHO <Zeichenkette> zeigt die <Zeichenkette> auf dem aktuellen Terminalgerät.\n\
@@ -58,7 +59,7 @@ ECHO OFF kehrt den Effekt des vorherigen ECHO ON (ECHO ist standardmässig\n\
 auf OFF) um. Um den ECHO OFF Befehl nicht anzeigen zu lassen, kann vor dessen\n\
 ein @ Zeichen gesetzt werden.\n"
 
-  WCMD_ERASE,  "Hilfe für ERASE\n"
+  WCMD_ERASE,  "ERASE löscht die angegebenen Dateien.\n"
 
   WCMD_FOR,
 "Der FOR Befehl wird genutzt, um einen Befehl für eine Menge von Dateien\n\
@@ -67,14 +68,14 @@ einzeln auszuführen.\n\
 Syntax: FOR %Variable IN (set) DO Befehl\n\
 \n\
 Die Anforderung das % Zeichen zu verdoppeln, sobald FOR in einer Batchdatei\n\
-benutzt wird, existiert im CMD nicht.\n"
+benutzt wird, existiert in CMD nicht.\n"
 
   WCMD_GOTO,
 "Der GOTO Befehl transferiert die Ausführung zu einer anderen Stelle in einer\n\
 Batchdatei.\n\
 \n\
 Die Bezeichnung, die das Ziel eines GOTO's ist, kann bis zu 255 Zeichen lang\n\
-sein, darf aber keine Leerzeichen enthakten (dies ist der Unterschied zu\n\
+sein, darf aber keine Leerzeichen enthalten (dies ist der Unterschied zu\n\
 anderen Betriebssystemen). Wenn zwei oder mehr identische Bezeichnungen in\n\
 einer Batchdatei existieren, dann wird immer zu der ersten Bezeichnung\n\
 gesprungen. Versucht GOTO zu einer nicht vorhanden Bezeichnung zu springen,\n\
@@ -82,7 +83,7 @@ beendet sich die Ausführung der Batchdatei.\n\
 \n\
 GOTO hat keine Auswirkungen, wenn es interaktiv genutzt wird.\n"
 
-  WCMD_HELP,   "Hilfe für HELP\n"
+  WCMD_HELP,   "HELP zeigt die Hilfe an\n"
 
   WCMD_IF,
 "IF wird benutzt, um einen Befehl bedingt auszuführen.\n\
@@ -104,8 +105,8 @@ Der Befehl wartet auf die Eingabe einer neuen Bezeichnung für das angegebene\n\
 Laufwerk. Sie können sich auch die Laufwerksbezeicnung mit dem VOL - Befehl\n\
 anzeigen lassen.\n"
 
-  WCMD_MD,     "Hilfe für MD\n"
-  WCMD_MKDIR,  "Hilfe für MKDIR\n"
+  WCMD_MD,     "MD ist die Kurzform von MKDIR\n"
+  WCMD_MKDIR,  "MKDIR erstellt ein Verzeichnis\n"
   WCMD_MOVE,
 "MOVE verschiebt eine Datei oder ein Verzeichnis zu einem neuen Punkt im\n\
 Dateisystem.\n\
@@ -163,10 +164,10 @@ wie 'PROMPT text'.\n"
 keine Aktion ausgeführt und kann deshalb auch als Kommentar in einer\n\
 Batchdatei genutzt werden.\n"
 
-  WCMD_REN,    "Hilfe für REN\n"
-  WCMD_RENAME, "Hilfe für RENAME\n"
-  WCMD_RD,     "Hilfe für RD\n"
-  WCMD_RMDIR,  "Hilfe für RMDIR\n"
+  WCMD_REN,    "REN ist die Kurzform von RENAME.\n"
+  WCMD_RENAME, "RENAME benennt die angegebenen Dateien um.\n"
+  WCMD_RD,     "RD ist die Kurzform von RMDIR.\n"
+  WCMD_RMDIR,  "RMDIR löscht das angegebene Verzeichnis.\n"
 
   WCMD_SET,
 "SET ändert oder zeigt die CMD Umgebungsvariablen an.\n\
@@ -178,8 +179,7 @@ Um eine Umgebungsvariable zu erschaffen oder zu ändern, ist der Syntax nötig:\
       SET <Variable>=<Wert>\n\
 \n\
 Wobei <Variable> und <Wert> Zeichenkette sind. Es dürfen keine Leerzeichen vor\n\
-dem Gleichheitszeichen sein, noch darf der Variablenname in Leerzeichen\n\
-enthalten.\n\
+dem Gleichheitszeichen sein, noch darf der Variablenname Leerzeichen enthalten.\n\
 \n\
 In Wine werden die Umgebungsvariablen des darunterliegenden Betriebssystems\n\
 mit in die Win32 Umgebung eingebunden, deshalb gibt es gewöhnlich mehr Werte\n\
@@ -190,9 +190,9 @@ beeinflussen.\n"
   WCMD_SHIFT,
 "SHIFT wird in einer Batchdatei genutzt, um einen Parameter vom Anfang der\n\
 Liste zu entfernen, so das der Parameter 2 zu Parameter 1 wird und so weiter.\n\
-Es hat keine Auswirkungen, wenn es von der Befehlszeile gerufen wird.\n"
+Es hat keine Auswirkungen, wenn es von der Befehlszeile aus aufgerufen wird.\n"
 
-  WCMD_TIME,   "Hilfe für TIME\n"
+  WCMD_TIME,   "TIME Setzt oder zeigt die aktuelle Systemzeit an.\n"
 
   WCMD_TITLE,
 "Setzt den Fenstertitel für das CMD - Fenster.\n\
@@ -202,7 +202,7 @@ Syntax: TITLE [Zeichenkette]\n"
   WCMD_TYPE,
 "TYPE <Datei> kopiert <Datei> zu dem Konsolengerät (oder dorthin, wohin\n\
 dies umgeleitet wurde). Es wird keine Überprüfung vorgenommen, ob die\n\
-Datei lesbarer Text ist.\n"
+Datei lesbaren Text enthält.\n"
 
   WCMD_VERIFY,
 "VERIFY wird benutzt, um das Verify Flag zu setzen, zu löschen oder zu\n\
@@ -217,7 +217,7 @@ Das Verify Flag hat keine Funktion in Wine.\n"
   WCMD_VER,
 "VER zeigt die aktuelle Version von CMD an.\n"
 
-  WCMD_VOL,    "Hilfe für VOL\n"
+  WCMD_VOL,    "VOL zeigt die Volumeseriennummer an\n"
 
   WCMD_PUSHD,  "PUSHD <Verzeichnisname> speichert das aktuelle\n\
 Verzeichnis auf einem Stack und wecheselt das Arbeitsverzeichnis\n\
@@ -226,7 +226,7 @@ zu dem angegebenen.\n"
   WCMD_POPD,   "POPD wechselt das Arbeitsverzeichnis zu dem zuletzt\n\
 mit PUSHD gespeicherten.\n"
 
-  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+  WCMD_MORE,   "MORE gibt Dateien und Pipes seitenweise aus.\n"
 
   WCMD_EXIT,
 "EXIT beendet die aktuelle Befehlssitzung und kehrt zum\n\
@@ -234,13 +234,13 @@ Betriebssystem oder der Shell zurück, von der CMD gestart wurde.\n"
 
 
   WCMD_ALLHELP, "CMD eingebauten Befehle sind:\n\
-ATTRIB\t\tZeigt an oder ändert die DOS Dateieigenschaften\n\
+ATTRIB\t\tZeigt oder ändert die DOS Dateieigenschaften\n\
 CALL\t\tRuft eine Batch-Datei innerhalb einer anderen auf\n\
-CD (CHDIR)\tWechselt in das Verzeichnis\n\
+CD (CHDIR)\tWechselt in ein Verzeichnis\n\
 CLS\t\tLöscht den Inhalt der Konsole\n\
 COPY\t\tKopiert eine Datei\n\
 CTTY\t\tÄndert das Eingabe/Ausgabe - Gerät\n\
-DATE\t\tZeigt an oder ändert das Systemdatum\n\
+DATE\t\tZeigt oder ändert das Systemdatum\n\
 DEL (ERASE)\tLöscht eine oder mehrere Dateien\n\
 DIR\t\tListet den Inhalt eines Verzeichnisses\n\
 ECHO\t\tKopiert den Text direkt zur Konsolenausgabe\n\
@@ -282,7 +282,7 @@ obigen Befehle erhalten.\n"
   WCMD_NEWTIME, "Geben Sie die neue Zeit ein: "
   WCMD_MISSINGENV, "Die Umgebungsvariable %s ist nicht definiert\n"
   WCMD_READFAIL, "'%s' konnte nicht geöffnet werden\n"
-  WCMD_CALLINSCRIPT, "Cannot call batch label outside of a batch script\n"
+  WCMD_CALLINSCRIPT, "Kann kein Batch-Label außerhalb eines Batch-Scripts aufrufen\n"
   WCMD_ALL, "A"
   WCMD_DELPROMPT, "%s, löschen"
   WCMD_ECHOPROMPT, "Echo ist %s\n"
@@ -296,5 +296,5 @@ obigen Befehle erhalten.\n"
   WCMD_CONSTITLE,"Wine Befehlsprozessor"
   WCMD_VERSION,"CMD Version %s\n\n"
   WCMD_MOREPROMPT, "Mehr? "
-  WCMD_LINETOOLONG, "The input line is too long.\n"
+  WCMD_LINETOOLONG, "Die Eingabezeile ist zu lang.\n"
 }
