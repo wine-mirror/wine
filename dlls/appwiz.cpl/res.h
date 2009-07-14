@@ -33,6 +33,7 @@
 #define IDL_PROGRAMS        1011
 #define IDC_ADDREMOVE       1012
 #define IDC_SUPPORT_INFO    1013
+#define IDC_MODIFY          1014
 
 #define IDC_INFO_PUBLISHER  1100
 #define IDC_INFO_VERSION    1101
@@ -58,3 +59,5 @@
 #define IDS_COLUMN_PUBLISHER   7
 #define IDS_COLUMN_VERSION     8
 #define IDS_INSTALL_FILTER     9
+#define IDS_REMOVE             10
+#define IDS_MODIFY_REMOVE      11

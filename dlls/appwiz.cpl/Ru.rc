@@ -35,6 +35,9 @@ STRINGTABLE
    IDS_COLUMN_NAME, "Название"
    IDS_COLUMN_PUBLISHER, "Издатель"
    IDS_COLUMN_VERSION, "Версия"
+
+   IDS_REMOVE, "&Удалить..."
+   IDS_MODIFY_REMOVE, "&Modify/Remove..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 235
@@ -48,8 +51,9 @@ CONTROL "Чтобы установить программу с CD-ROM, дискеты или жёсткого диска, нажмит
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
  CONTROL "&Перечисленные программы можно удалить или переустановить автоматически. Чтобы удалить программу или изменить состав установленных компонентов, выберите нужный пункт списка и нажмите кнопку Установить/Удалить.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 55, 270, 32
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
- CONTROL "Установить/&Удалить...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 216, 198, 94, 14
- CONTROL "&Сведения о поддержке...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 116, 198, 94, 14
+ CONTROL "&Сведения о поддержке...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 74, 198, 94, 14
+ CONTROL "&Modify...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "&Удалить...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
 

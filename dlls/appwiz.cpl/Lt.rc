@@ -39,6 +39,9 @@ STRINGTABLE
    IDS_COLUMN_PUBLISHER, "Leidėjas"
    IDS_COLUMN_VERSION, "Versija"
    IDS_INSTALL_FILTER, "Diegimo programos\0*instal*.exe;*setup*.exe;*.msi\0Programos (*.exe)\0*.exe\0Visi failai (*.*)\0*.*\0\0"
+
+   IDS_REMOVE, "Pa&šalinti..."
+   IDS_MODIFY_REMOVE, "&Modify/Remove..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -52,8 +55,9 @@ FONT 8, "MS Shell Dlg"
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
  CONTROL "Ši programinė įranga gali būti automatiškai pašalinta. Norėdami pašalinti programą ar modifikuoti jos įdiegtus komponentus pažymėkite ją sąraše ir spauskite 'Įdiegti/Pašalinti'.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
- CONTROL "Įdiegti/Pa&šalinti...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 198, 64, 14
- CONTROL "&Priežiūros informacija...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 156, 198, 84, 14
+ CONTROL "&Priežiūros informacija...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 84, 198, 84, 14
+ CONTROL "&Modify...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "Pa&šalinti...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
 

@@ -39,6 +39,9 @@ STRINGTABLE
    IDS_COLUMN_PUBLISHER, "Emitent"
    IDS_COLUMN_VERSION, "Versiune"
    IDS_INSTALL_FILTER, "Programe de instalare\0*instal*.exe;*setup*.exe;*.msi\0Programe (*.exe)\0*.exe\0Toate fișierele (*.*)\0*.*\0\0"
+
+   IDS_REMOVE, "&Sterge..."
+   IDS_MODIFY_REMOVE, "&Modify/Remove..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -52,8 +55,9 @@ FONT 8, "MS Shell Dlg"
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
  CONTROL "Urmatoarele programe pot fi îndepărtate automat. Pentru a îndepărta un program sau pentru ai modifica componentele instalate, alegeți programul din listă și apăsați pe „Adaugă/&șterge”.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
- CONTROL "Adaugă/&șterge...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 236, 198, 74, 14
- CONTROL "Informații a&sistență...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 156, 198, 74, 14
+ CONTROL "Informații a&sistență...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 94, 198, 74, 14
+ CONTROL "&Modify...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "&Sterge...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
 
