@@ -2539,17 +2539,26 @@ static void test_GetAddrInfoW(void)
     pFreeAddrInfoW(result);
 }
 
+static int CALLBACK AlwaysDeferConditionFunc(LPWSABUF lpCallerId, LPWSABUF lpCallerData, LPQOS pQos,
+                                             LPQOS lpGQOS, LPWSABUF lpCalleeId, LPWSABUF lpCalleeData,
+                                             GROUP FAR * g, DWORD_PTR dwCallbackData)
+{
+    return CF_DEFER;
+}
+
 static void test_AcceptEx(void)
 {
     SOCKET listener = INVALID_SOCKET;
     SOCKET acceptor = INVALID_SOCKET;
     SOCKET connector = INVALID_SOCKET;
+    SOCKET connector2 = INVALID_SOCKET;
     struct sockaddr_in bindAddress;
     int socklen;
     GUID acceptExGuid = WSAID_ACCEPTEX;
-    BOOL WINAPI (*pAcceptEx)(SOCKET listener, SOCKET acceptor, PVOID dest, DWORD dest_len,
-        DWORD local_addr_len, DWORD rem_addr_len, LPDWORD received,
-        LPOVERLAPPED overlapped);
+    LPFN_ACCEPTEX pAcceptEx = NULL;
+    fd_set fds_accept, fds_send;
+    struct timeval timeout = {0,10}; /* wait for 10 milliseconds */
+    int got, conn1, i;
     DWORD bytesReturned;
     char buffer[1024];
     OVERLAPPED overlapped;
@@ -2717,6 +2726,116 @@ static void test_AcceptEx(void)
     closesocket(acceptor);
     acceptor = INVALID_SOCKET;
 
+    /* Test CF_DEFER & AcceptEx interaction */
+
+    acceptor = socket(AF_INET, SOCK_STREAM, 0);
+    if (acceptor == INVALID_SOCKET) {
+        skip("could not create acceptor socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+    connector = socket(AF_INET, SOCK_STREAM, 0);
+    if (connector == INVALID_SOCKET) {
+        skip("could not create connector socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+    connector2 = socket(AF_INET, SOCK_STREAM, 0);
+    if (connector == INVALID_SOCKET) {
+        skip("could not create connector socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    if (set_blocking(connector, FALSE)) {
+        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    if (set_blocking(connector2, FALSE)) {
+        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
+        goto end;
+    }
+
+    /* Connect socket #1 */
+    iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    ok(iret == 0 ||
+        (iret == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK), "connecting to accepting socket failed, error %d\n", WSAGetLastError());
+
+    FD_ZERO ( &fds_accept );
+    FD_ZERO ( &fds_send );
+
+    FD_SET ( listener, &fds_accept );
+    FD_SET ( connector, &fds_send );
+
+    buffer[0] = '0';
+    got = 0;
+    conn1 = 0;
+
+    for (i = 0; i < 4000; ++i)
+    {
+        wsa_ok ( ( select ( 0, &fds_accept, &fds_send, NULL, &timeout ) ), SOCKET_ERROR !=,
+            "select_server (%x): select() failed: %d\n" );
+
+        /* check for incoming requests */
+        if ( FD_ISSET ( listener, &fds_accept ) ) {
+            got++;
+            if (got == 1) {
+                SOCKET tmp = WSAAccept(listener, NULL, NULL, (LPCONDITIONPROC) AlwaysDeferConditionFunc, 0);
+                ok(tmp == INVALID_SOCKET && WSAGetLastError() == WSATRY_AGAIN, "Failed to defer connection\n");
+                bret = pAcceptEx(listener, acceptor, buffer, 0,
+                                    sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+                                    &bytesReturned, &overlapped);
+                ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
+            }
+            else if (got == 2) {
+                /* this should be socket #2 */
+                SOCKET tmp = accept(listener, NULL, NULL);
+                ok(tmp != INVALID_SOCKET, "accept failed %d\n", WSAGetLastError());
+                closesocket(tmp);
+            }
+            else {
+                ok(FALSE, "Got more than 2 connections?\n");
+            }
+        }
+        if ( conn1 && FD_ISSET ( connector2, &fds_send ) ) {
+            /* Send data on second socket, and stop */
+            send(connector2, "2", 1, 0);
+            FD_CLR ( connector2, &fds_send );
+
+            break;
+        }
+        if ( FD_ISSET ( connector, &fds_send ) ) {
+            /* Once #1 is connected, allow #2 to connect */
+            conn1 = 1;
+
+            send(connector, "1", 1, 0);
+            FD_CLR ( connector, &fds_send );
+
+            iret = connect(connector2, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+            ok(iret == 0 ||
+                (iret == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK), "connecting to accepting socket failed, error %d\n", WSAGetLastError());
+            FD_SET ( connector2, &fds_send );
+        }
+    }
+
+    ok (got == 2, "Did not get both connections\n");
+
+    dwret = WaitForSingleObject(overlapped.hEvent, 0);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
+
+    bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
+    ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
+    ok(bytesReturned == 0, "bytesReturned isn't supposed to be %d\n", bytesReturned);
+
+    set_blocking(acceptor, TRUE);
+    iret = recv( acceptor, buffer, 2, 0);
+    ok(iret == 1, "Failed to get data, %d\n", iret);
+
+    ok(buffer[0] == '1', "The wrong first client was accepted by acceptex: %c != 1\n", buffer[0]);
+
+    closesocket(connector);
+    connector = INVALID_SOCKET;
+    closesocket(acceptor);
+    acceptor = INVALID_SOCKET;
+
     /* Disconnect during receive? */
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
@@ -2756,6 +2875,8 @@ end:
         closesocket(acceptor);
     if (connector != INVALID_SOCKET)
         closesocket(connector);
+    if (connector2 != INVALID_SOCKET)
+        closesocket(connector2);
 }
 
 /**************** Main program  ***************/
