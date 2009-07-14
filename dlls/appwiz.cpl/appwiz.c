@@ -56,6 +56,7 @@ typedef struct APPINFO {
 
     LPWSTR title;
     LPWSTR path;
+    LPWSTR path_modify;
 
     LPWSTR icon;
     int iconIdx;
@@ -85,6 +86,8 @@ static const WCHAR ContactW[] = {'C','o','n','t','a','c','t',0};
 static const WCHAR HelpLinkW[] = {'H','e','l','p','L','i','n','k',0};
 static const WCHAR HelpTelephoneW[] = {'H','e','l','p','T','e','l','e','p','h',
     'o','n','e',0};
+static const WCHAR ModifyPathW[] = {'M','o','d','i','f','y','P','a','t','h',0};
+static const WCHAR NoModifyW[] = {'N','o','M','o','d','i','f','y',0};
 static const WCHAR ReadmeW[] = {'R','e','a','d','m','e',0};
 static const WCHAR URLUpdateInfoW[] = {'U','R','L','U','p','d','a','t','e','I',
     'n','f','o',0};
@@ -129,6 +132,7 @@ static void FreeAppInfo(APPINFO *info)
 
         HeapFree(GetProcessHeap(), 0, info->title);
         HeapFree(GetProcessHeap(), 0, info->path);
+        HeapFree(GetProcessHeap(), 0, info->path_modify);
         HeapFree(GetProcessHeap(), 0, info->icon);
         HeapFree(GetProcessHeap(), 0, info->publisher);
         HeapFree(GetProcessHeap(), 0, info->version);
@@ -149,6 +153,7 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
     HKEY hkeyUninst, hkeyApp;
     int i, id = 0;
     DWORD sizeOfSubKeyName, displen, uninstlen;
+    DWORD dwNoModify, dwType;
     WCHAR subKeyName[256];
     WCHAR key_app[MAX_STRING_LEN];
     WCHAR *p;
@@ -271,6 +276,34 @@ static BOOL ReadApplicationsFromRegistry(HKEY root)
 
                 RegQueryValueExW(hkeyApp, DisplayVersionW, 0, 0, (LPBYTE)iter->version,
                     &displen);
+            }
+
+            /* Check if NoModify is set */
+            dwType = REG_DWORD;
+            dwNoModify = 0;
+            displen = sizeof(DWORD);
+
+            if (RegQueryValueExW(hkeyApp, NoModifyW, NULL, &dwType, (LPBYTE)&dwNoModify, &displen)
+                != ERROR_SUCCESS)
+            {
+                dwNoModify = 0;
+            }
+
+            /* Some installers incorrectly create a REG_SZ instead of a REG_DWORD - check for
+               ASCII 49, which equals 1 */
+            if (dwType == REG_SZ)
+                dwNoModify = (dwNoModify == 49) ? 1 : 0;
+
+            /* Fetch the modify path */
+            if ((dwNoModify == 0) && (RegQueryValueExW(hkeyApp, ModifyPathW, 0, 0, NULL, &displen)
+                == ERROR_SUCCESS))
+            {
+                iter->path_modify = HeapAlloc(GetProcessHeap(), 0, displen);
+
+                if (!iter->path_modify)
+                    goto err;
+
+                RegQueryValueExW(hkeyApp, ModifyPathW, 0, 0, (LPBYTE)iter->path_modify, &displen);
             }
 
             /* registry key */
