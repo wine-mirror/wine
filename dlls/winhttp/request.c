@@ -1,5 +1,8 @@
 /*
+ * Copyright 2004 Mike McCormack for CodeWeavers
+ * Copyright 2006 Rob Shearman for CodeWeavers
  * Copyright 2008 Hans Leidekker for CodeWeavers
+ * Copyright 2009 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -752,6 +755,123 @@ BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, 
     return ret;
 }
 
+static LPWSTR concatenate_string_list( LPCWSTR *list, int len )
+{
+    LPCWSTR *t;
+    LPWSTR str;
+
+    for( t = list; *t ; t++  )
+        len += strlenW( *t );
+    len++;
+
+    str = heap_alloc( len * sizeof(WCHAR) );
+    *str = 0;
+
+    for( t = list; *t ; t++ )
+        strcatW( str, *t );
+
+    return str;
+}
+
+static LPWSTR build_header_request_string( request_t *request, LPCWSTR verb,
+    LPCWSTR path, LPCWSTR version )
+{
+    static const WCHAR crlf[] = {'\r','\n',0};
+    static const WCHAR space[] = { ' ',0 };
+    static const WCHAR colon[] = { ':',' ',0 };
+    static const WCHAR twocrlf[] = {'\r','\n','\r','\n', 0};
+    LPWSTR requestString;
+    DWORD len, n;
+    LPCWSTR *req;
+    UINT i;
+    LPWSTR p;
+
+    /* allocate space for an array of all the string pointers to be added */
+    len = (request->num_headers) * 4 + 10;
+    req = heap_alloc( len * sizeof(LPCWSTR) );
+
+    /* add the verb, path and HTTP version string */
+    n = 0;
+    req[n++] = verb;
+    req[n++] = space;
+    req[n++] = path;
+    req[n++] = space;
+    req[n++] = version;
+
+    /* Append custom request headers */
+    for (i = 0; i < request->num_headers; i++)
+    {
+        if (request->headers[i].is_request)
+        {
+            req[n++] = crlf;
+            req[n++] = request->headers[i].field;
+            req[n++] = colon;
+            req[n++] = request->headers[i].value;
+
+            TRACE("Adding custom header %s (%s)\n",
+                   debugstr_w(request->headers[i].field),
+                   debugstr_w(request->headers[i].value));
+        }
+    }
+
+    if( n >= len )
+        ERR("oops. buffer overrun\n");
+
+    req[n] = NULL;
+    requestString = concatenate_string_list( req, 4 );
+    heap_free( req );
+
+    /*
+     * Set (header) termination string for request
+     * Make sure there's exactly two new lines at the end of the request
+     */
+    p = &requestString[strlenW(requestString)-1];
+    while ( (*p == '\n') || (*p == '\r') )
+       p--;
+    strcpyW( p+1, twocrlf );
+
+    return requestString;
+}
+
+static BOOL read_reply( request_t *request );
+
+static BOOL secure_proxy_connect( request_t *request )
+{
+    static const WCHAR verbConnect[] = {'C','O','N','N','E','C','T',0};
+    static const WCHAR fmt[] = {'%','s',':','%','d',0};
+    static const WCHAR http1_1[] = {'H','T','T','P','/','1','.','1',0};
+    BOOL ret = FALSE;
+    LPWSTR path;
+    connect_t *connect = request->connect;
+
+    path = heap_alloc( (strlenW( connect->hostname ) + 13) * sizeof(WCHAR) );
+    if (path)
+    {
+        LPWSTR requestString;
+
+        sprintfW( path, fmt, connect->hostname, connect->hostport );
+        requestString = build_header_request_string( request, verbConnect,
+            path, http1_1 );
+        heap_free( path );
+        if (requestString)
+        {
+            LPSTR req_ascii = strdupWA( requestString );
+
+            heap_free( requestString );
+            if (req_ascii)
+            {
+                int len = strlen( req_ascii ), bytes_sent;
+
+                ret = netconn_send( &request->netconn, req_ascii, len, 0, &bytes_sent );
+                heap_free( req_ascii );
+                if (ret)
+                    ret = read_reply( request );
+            }
+        }
+    }
+    return ret;
+}
+
 #ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN 46
 #endif
@@ -806,11 +926,23 @@ static BOOL open_connection( request_t *request )
         heap_free( addressW );
         return FALSE;
     }
-    if (request->hdr.flags & WINHTTP_FLAG_SECURE && !netconn_secure_connect( &request->netconn ))
+    if (request->hdr.flags & WINHTTP_FLAG_SECURE)
     {
-        netconn_close( &request->netconn );
-        heap_free( addressW );
-        return FALSE;
+        if (connect->session->proxy_server &&
+            strcmpiW( connect->hostname, connect->servername ))
+        {
+            if (!secure_proxy_connect( request ))
+            {
+                heap_free( addressW );
+                return FALSE;
+            }
+        }
+        if (!netconn_secure_connect( &request->netconn ))
+        {
+            netconn_close( &request->netconn );
+            heap_free( addressW );
+            return FALSE;
+        }
     }
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, addressW, strlenW(addressW) + 1 );
