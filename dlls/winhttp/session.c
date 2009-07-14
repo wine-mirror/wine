@@ -232,6 +232,90 @@ static const object_vtbl_t connect_vtbl =
     NULL
 };
 
+static BOOL domain_matches(LPCWSTR server, LPCWSTR domain)
+{
+    static const WCHAR localW[] = { '<','l','o','c','a','l','>',0 };
+    BOOL ret = FALSE;
+
+    if (!strcmpiW( domain, localW ) && !strchrW( server, '.' ))
+        ret = TRUE;
+    else if (*domain == '*')
+    {
+        if (domain[1] == '.')
+        {
+            LPCWSTR dot;
+
+            /* For a hostname to match a wildcard, the last domain must match
+             * the wildcard exactly.  E.g. if the wildcard is *.a.b, and the
+             * hostname is www.foo.a.b, it matches, but a.b does not.
+             */
+            dot = strchrW( server, '.' );
+            if (dot)
+            {
+                int len = strlenW( dot + 1 );
+
+                if (len > strlenW( domain + 2 ))
+                {
+                    LPCWSTR ptr;
+
+                    /* The server's domain is longer than the wildcard, so it
+                     * could be a subdomain.  Compare the last portion of the
+                     * server's domain.
+                     */
+                    ptr = dot + len + 1 - strlenW( domain + 2 );
+                    if (!strcmpiW( ptr, domain + 2 ))
+                    {
+                        /* This is only a match if the preceding character is
+                         * a '.', i.e. that it is a matching domain.  E.g.
+                         * if domain is '*.b.c' and server is 'www.ab.c' they
+                         * do not match.
+                         */
+                        ret = *(ptr - 1) == '.';
+                    }
+                }
+                else
+                    ret = !strcmpiW( dot + 1, domain + 2 );
+            }
+        }
+    }
+    else
+        ret = !strcmpiW( server, domain );
+    return ret;
+}
+
+/* Matches INTERNET_MAX_USER_NAME_LENGTH in wininet.h, also RFC 1035 */
+#define MAX_HOST_NAME_LENGTH 256
+
+static BOOL should_bypass_proxy(session_t *session, LPCWSTR server)
+{
+    LPCWSTR ptr;
+    BOOL ret = FALSE;
+
+    ptr = session->proxy_bypass;
+    do {
+        LPCWSTR tmp = ptr;
+
+        ptr = strchrW( ptr, ';' );
+        if (!ptr)
+            ptr = strchrW( tmp, ' ' );
+        if (ptr)
+        {
+            if (ptr - tmp < MAX_HOST_NAME_LENGTH)
+            {
+                WCHAR domain[MAX_HOST_NAME_LENGTH];
+
+                memcpy( domain, tmp, (ptr - tmp) * sizeof(WCHAR) );
+                domain[ptr - tmp] = 0;
+                ret = domain_matches( server, domain );
+            }
+            ptr += 1;
+        }
+        else if (*tmp)
+            ret = domain_matches( server, tmp );
+    } while (ptr && !ret);
+    return ret;
+}
+
 /***********************************************************************
  *          WinHttpConnect (winhttp.@)
  */
@@ -279,8 +363,36 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, LPCWSTR server, INTERNET_PO
     if (server && !(connect->hostname = strdupW( server ))) goto end;
     connect->hostport = port;
 
-    if (server && !(connect->servername = strdupW( server ))) goto end;
-    connect->serverport = port;
+    if (session->proxy_server && !should_bypass_proxy(session, server))
+    {
+        LPCWSTR colon;
+
+        if ((colon = strchrW( session->proxy_server, ':' )))
+        {
+            if (!(connect->servername = heap_alloc(
+                (colon - session->proxy_server + 1) * sizeof(WCHAR) )))
+                goto end;
+            memcpy( connect->servername, session->proxy_server,
+                (colon - session->proxy_server) * sizeof(WCHAR) );
+            connect->servername[colon - session->proxy_server] = 0;
+            if (*(colon + 1))
+                connect->serverport = atoiW( colon + 1 );
+            else
+                connect->serverport = INTERNET_DEFAULT_HTTP_PORT;
+        }
+        else
+        {
+            if (!(connect->servername = strdupW( session->proxy_server )))
+                goto end;
+            connect->serverport = INTERNET_DEFAULT_HTTP_PORT;
+        }
+    }
+    else if (server)
+    {
+        if (!(connect->servername = strdupW( server )))
+            goto end;
+        connect->serverport = port;
+    }
 
     if (!(hconnect = alloc_handle( &connect->hdr ))) goto end;
     connect->hdr.handle = hconnect;
