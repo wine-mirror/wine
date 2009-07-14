@@ -21,6 +21,7 @@
 #include "wine/debug.h"
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -686,6 +687,7 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
     LONG l;
     HKEY key;
     BOOL direct = TRUE;
+    char *envproxy;
 
     TRACE("%p\n", info);
 
@@ -749,6 +751,9 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
                             direct = FALSE;
                             info->dwAccessType =
                                 WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                            TRACE("http proxy (from registry) = %s, bypass = %s\n",
+                                debugstr_w(info->lpszProxy),
+                                debugstr_w(info->lpszProxyBypass));
                         }
                     }
                 }
@@ -756,6 +761,23 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
             }
         }
         RegCloseKey( key );
+    }
+    else if ((envproxy = getenv( "http_proxy" )))
+    {
+        WCHAR *envproxyW;
+        int len;
+
+        len = MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, NULL, 0 );
+        if ((envproxyW = GlobalAlloc( 0, len * sizeof(WCHAR))))
+        {
+            MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, envproxyW, len );
+            direct = FALSE;
+            info->dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+            info->lpszProxy = envproxyW;
+            info->lpszProxyBypass = NULL;
+            TRACE("http proxy (from environment) = %s\n",
+                debugstr_w(info->lpszProxy));
+        }
     }
     if (direct)
     {
