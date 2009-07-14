@@ -73,6 +73,9 @@ typedef struct APPINFO {
 static struct APPINFO *AppInfo = NULL;
 static HINSTANCE hInst;
 
+static WCHAR btnRemove[MAX_STRING_LEN];
+static WCHAR btnModifyRemove[MAX_STRING_LEN];
+
 static const WCHAR openW[] = {'o','p','e','n',0};
 
 /* names of registry keys */
@@ -401,10 +404,42 @@ static inline void EmptyList(void)
  */
 static void UpdateButtons(HWND hWnd)
 {
-    BOOL sel = SendMessageW(GetDlgItem(hWnd, IDL_PROGRAMS), LVM_GETSELECTEDCOUNT, 0, 0) != 0;
+    APPINFO *iter;
+    LVITEMW lvItem;
+    DWORD selitem = SendDlgItemMessageW(hWnd, IDL_PROGRAMS, LVM_GETNEXTITEM, -1,
+       LVNI_FOCUSED | LVNI_SELECTED);
+    BOOL enable_modify = FALSE;
 
-    EnableWindow(GetDlgItem(hWnd, IDC_ADDREMOVE), sel);
-    EnableWindow(GetDlgItem(hWnd, IDC_SUPPORT_INFO), sel);
+    if (selitem != -1)
+    {
+        lvItem.iItem = selitem;
+        lvItem.mask = LVIF_PARAM;
+
+        if (SendDlgItemMessageW(hWnd, IDL_PROGRAMS, LVM_GETITEMW, 0, (LPARAM) &lvItem))
+        {
+            for (iter = AppInfo; iter; iter = iter->next)
+            {
+                if (iter->id == lvItem.lParam)
+                {
+                    /* Decide whether to display Modify/Remove as one button or two */
+                    enable_modify = (iter->path_modify != NULL);
+
+                    /* Update title as appropriate */
+                    if (iter->path_modify == NULL)
+                        SetWindowTextW(GetDlgItem(hWnd, IDC_ADDREMOVE), btnModifyRemove);
+                    else
+                        SetWindowTextW(GetDlgItem(hWnd, IDC_ADDREMOVE), btnRemove);
+
+                    break;
+                }
+            }
+        }
+    }
+
+    /* Enable/disable other buttons if necessary */
+    EnableWindow(GetDlgItem(hWnd, IDC_ADDREMOVE), (selitem != -1));
+    EnableWindow(GetDlgItem(hWnd, IDC_SUPPORT_INFO), (selitem != -1));
+    EnableWindow(GetDlgItem(hWnd, IDC_MODIFY), enable_modify);
 }
 
 /******************************************************************************
@@ -875,6 +910,8 @@ static void StartApplet(HWND hWnd)
     /* Load the strings we will use */
     LoadStringW(hInst, IDS_TAB1_TITLE, tab_title, sizeof(tab_title) / sizeof(tab_title[0]));
     LoadStringW(hInst, IDS_CPL_TITLE, app_title, sizeof(app_title) / sizeof(app_title[0]));
+    LoadStringW(hInst, IDS_REMOVE, btnRemove, sizeof(btnRemove) / sizeof(btnRemove[0]));
+    LoadStringW(hInst, IDS_MODIFY_REMOVE, btnModifyRemove, sizeof(btnModifyRemove) / sizeof(btnModifyRemove[0]));
 
     /* Fill out the PROPSHEETPAGE */
     psp.dwSize = sizeof (PROPSHEETPAGEW);
