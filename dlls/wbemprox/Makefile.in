@@ -3,10 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wbemprox.dll
-IMPORTS   = kernel32
+IMPORTS   = ole32 advapi32 kernel32
 
 C_SRCS = \
 	main.c \
+	regsvr.c \
 	wbemlocator.c
 
 @MAKE_DLL_RULES@
