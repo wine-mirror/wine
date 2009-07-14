@@ -489,4 +489,5 @@ BEGIN
     ID_PROCESS_PAGE_SETPRIORITY_BELOWNORMAL
                             "プロセスの優先クラスを 通常以下 に設定します。"
     ID_PROCESS_PAGE_SETPRIORITY_LOW "プロセスの優先クラスを 低 に設定します。"
+    ID_PROCESS_PAGE_DEBUGCHANNELS "デバッグのチャンネルをコントロールします。"
 END
