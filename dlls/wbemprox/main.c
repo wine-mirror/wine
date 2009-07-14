@@ -21,8 +21,96 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
+#include "objbase.h"
+#include "wbemcli.h"
+
+#include "wbemprox_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wbemprox);
+
+typedef HRESULT (*fnCreateInstance)( IUnknown *pUnkOuter, LPVOID *ppObj );
+
+typedef struct
+{
+    const struct IClassFactoryVtbl *vtbl;
+    fnCreateInstance pfnCreateInstance;
+} wbemprox_cf;
+
+static inline wbemprox_cf *impl_from_IClassFactory( IClassFactory *iface )
+{
+    return (wbemprox_cf *)((char *)iface - FIELD_OFFSET( wbemprox_cf, vtbl ));
+}
+
+static HRESULT WINAPI wbemprox_cf_QueryInterface( IClassFactory *iface, REFIID riid, LPVOID *ppobj )
+{
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        IClassFactory_AddRef( iface );
+        *ppobj = iface;
+        return S_OK;
+    }
+    FIXME("interface %s not implemented\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI wbemprox_cf_AddRef( IClassFactory *iface )
+{
+    return 2;
+}
+
+static ULONG WINAPI wbemprox_cf_Release( IClassFactory *iface )
+{
+    return 1;
+}
+
+static HRESULT WINAPI wbemprox_cf_CreateInstance( IClassFactory *iface, LPUNKNOWN pOuter,
+                                                  REFIID riid, LPVOID *ppobj )
+{
+    wbemprox_cf *This = impl_from_IClassFactory( iface );
+    HRESULT r;
+    IUnknown *punk;
+
+    TRACE("%p %s %p\n", pOuter, debugstr_guid(riid), ppobj);
+
+    *ppobj = NULL;
+
+    if (pOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    r = This->pfnCreateInstance( pOuter, (LPVOID *)&punk );
+    if (FAILED(r))
+        return r;
+
+    r = IUnknown_QueryInterface( punk, riid, ppobj );
+    if (FAILED(r))
+        return r;
+
+    IUnknown_Release( punk );
+    return r;
+}
+
+static HRESULT WINAPI wbemprox_cf_LockServer( IClassFactory *iface, BOOL dolock )
+{
+    FIXME("(%p)->(%d)\n", iface, dolock);
+    return S_OK;
+}
+
+static const struct IClassFactoryVtbl wbemprox_cf_vtbl =
+{
+    wbemprox_cf_QueryInterface,
+    wbemprox_cf_AddRef,
+    wbemprox_cf_Release,
+    wbemprox_cf_CreateInstance,
+    wbemprox_cf_LockServer
+};
+
+static wbemprox_cf wbem_locator_cf = { &wbemprox_cf_vtbl, WbemLocator_create };
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -39,4 +127,24 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
+{
+    IClassFactory *cf = NULL;
+
+    TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
+
+    if (IsEqualGUID( rclsid, &CLSID_WbemLocator ))
+    {
+       cf = (IClassFactory *)&wbem_locator_cf.vtbl;
+    }
+    if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
+    return IClassFactory_QueryInterface( cf, iid, ppv );
+}
+
+HRESULT WINAPI DllCanUnloadNow( void )
+{
+    FIXME("\n");
+    return S_FALSE;
 }
