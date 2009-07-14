@@ -411,19 +411,58 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     return hr;
 }
 
+static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, const char **ptr)
+{
+    unsigned int i;
+    DWORD offset;
+
+    read_dword(ptr, &offset);
+    TRACE("Local buffer name at offset %#x.\n", offset);
+
+    read_dword(ptr, &l->data_size);
+    TRACE("Local buffer data size: %#x.\n", l->data_size);
+
+    skip_dword_unknown(ptr, 1);
+
+    read_dword(ptr, &l->variable_count);
+    TRACE("Local buffer variable count: %#x.\n", l->variable_count);
+
+    skip_dword_unknown(ptr, 2);
+
+    for (i = 0; i < l->variable_count; ++i)
+    {
+        skip_dword_unknown(ptr, 7);
+    }
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD data_size)
 {
     const char *ptr = data + e->index_offset;
-    HRESULT hr = S_OK;
     unsigned int i;
+    HRESULT hr;
 
-    skip_dword_unknown(&ptr, 6);
+    e->local_buffers = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->local_buffer_count * sizeof(*e->local_buffers));
+    if (!e->local_buffers)
+    {
+        ERR("Failed to allocate local buffer memory.\n");
+        return E_OUTOFMEMORY;
+    }
 
     e->techniques = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, e->technique_count * sizeof(*e->techniques));
     if (!e->techniques)
     {
         ERR("Failed to allocate techniques memory\n");
         return E_OUTOFMEMORY;
+    }
+
+    for (i = 0; i < e->local_buffer_count; ++i)
+    {
+        struct d3d10_effect_local_buffer *l = &e->local_buffers[i];
+
+        hr = parse_fx10_local_buffer(l, &ptr);
+        if (FAILED(hr)) return hr;
     }
 
     for (i = 0; i < e->technique_count; ++i)
@@ -434,13 +473,13 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         t->effect = e;
 
         hr = parse_fx10_technique_index(t, &ptr);
-        if (FAILED(hr)) break;
+        if (FAILED(hr)) return hr;
 
         hr = parse_fx10_technique(t, data);
-        if (FAILED(hr)) break;
+        if (FAILED(hr)) return hr;
     }
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_size)
@@ -452,8 +491,8 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, DWORD data_s
     read_dword(&ptr, &e->version);
     TRACE("Target: %#x\n", e->version);
 
-    read_dword(&ptr, &e->localbuffers_count);
-    TRACE("Localbuffers count: %u\n", e->localbuffers_count);
+    read_dword(&ptr, &e->local_buffer_count);
+    TRACE("Local buffer count: %u.\n", e->local_buffer_count);
 
     /* Number of variables in local buffers? */
     read_dword(&ptr, &unknown);
@@ -660,6 +699,7 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             }
             HeapFree(GetProcessHeap(), 0, This->techniques);
         }
+        HeapFree(GetProcessHeap(), 0, This->local_buffers);
         ID3D10Device_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
     }

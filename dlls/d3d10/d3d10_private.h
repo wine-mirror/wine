@@ -58,6 +58,12 @@ struct d3d10_effect_shader_variable
     } shader;
 };
 
+struct d3d10_effect_local_buffer
+{
+    DWORD data_size;
+    DWORD variable_count;
+};
+
 /* ID3D10EffectPass */
 struct d3d10_effect_pass
 {
@@ -91,7 +97,7 @@ struct d3d10_effect
 
     ID3D10Device *device;
     DWORD version;
-    DWORD localbuffers_count;
+    DWORD local_buffer_count;
     DWORD localobjects_count;
     DWORD sharedbuffers_count;
     DWORD sharedobjects_count;
@@ -101,6 +107,8 @@ struct d3d10_effect
     DWORD blendstate_count;
     DWORD rasterizerstate_count;
     DWORD samplerstate_count;
+
+    struct d3d10_effect_local_buffer *local_buffers;
     struct d3d10_effect_technique *techniques;
 };
 
