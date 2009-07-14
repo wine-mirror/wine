@@ -4846,7 +4846,7 @@ TOOLBAR_SetRows (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPRECT lprc)
         if (seps) FIXME("Separators unhandled\n");
 
         /* Round up so more per line, i.e., less rows */
-        idealWrap = (infoPtr->nNumButtons - hidden + (rows-1)) / rows;
+        idealWrap = (infoPtr->nNumButtons - hidden + (rows-1)) / (rows ? rows : 1);
 
         /* Calculate ideal wrap point if we are allowed to grow, but cannot
            achieve the requested number of rows. */
