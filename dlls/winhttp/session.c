@@ -703,8 +703,7 @@ BOOL WINAPI WinHttpGetProxyForUrl( HINTERNET hsession, LPCWSTR url, WINHTTP_AUTO
  */
 BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
 {
-    FIXME("%p [%u, %s, %s]\n", info, info->dwAccessType, debugstr_w(info->lpszProxy),
-          debugstr_w(info->lpszProxyBypass));
+    FIXME("%p\n", info);
     return TRUE;
 }
 

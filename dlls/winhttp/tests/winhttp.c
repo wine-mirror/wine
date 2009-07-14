@@ -24,6 +24,7 @@
 #include <winbase.h>
 #include <winhttp.h>
 #include <wincrypt.h>
+#include <winreg.h>
 
 #include "wine/test.h"
 
@@ -817,6 +818,134 @@ static void test_request_parameter_defaults(void)
     WinHttpCloseHandle(ses);
 }
 
+static const WCHAR Connections[] = {
+    'S','o','f','t','w','a','r','e','\\',
+    'M','i','c','r','o','s','o','f','t','\\',
+    'W','i','n','d','o','w','s','\\',
+    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+    'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
+    'C','o','n','n','e','c','t','i','o','n','s',0 };
+static const WCHAR WinHttpSettings[] = {
+    'W','i','n','H','t','t','p','S','e','t','t','i','n','g','s',0 };
+
+static DWORD get_default_proxy_reg_value( BYTE *buf, DWORD len, DWORD *type )
+{
+    LONG l;
+    HKEY key;
+    DWORD ret = 0;
+
+    l = RegOpenKeyExW( HKEY_LOCAL_MACHINE, Connections, 0, KEY_READ, &key );
+    if (!l)
+    {
+        DWORD size = 0;
+
+        l = RegQueryValueExW( key, WinHttpSettings, NULL, type, NULL, &size );
+        if (!l)
+        {
+            if (size <= len)
+                l = RegQueryValueExW( key, WinHttpSettings, NULL, type, buf,
+                    &size );
+            if (!l)
+                ret = size;
+        }
+        RegCloseKey( key );
+    }
+    return ret;
+}
+
+static void set_default_proxy_reg_value( BYTE *buf, DWORD len, DWORD type )
+{
+    LONG l;
+    HKEY key;
+
+    l = RegCreateKeyExW( HKEY_LOCAL_MACHINE, Connections, 0, NULL, 0,
+        KEY_WRITE, NULL, &key, NULL );
+    if (!l)
+    {
+        RegSetValueExW( key, WinHttpSettings, 0, type, buf, len );
+        RegCloseKey( key );
+    }
+}
+
+static void test_set_default_proxy_config(void)
+{
+    static const WCHAR wideString[] = { 0x226f, 0x575b, 0 };
+    static const WCHAR normalString[] = { 'f','o','o',0 };
+    DWORD type, len;
+    BYTE *saved_proxy_settings = NULL;
+    WINHTTP_PROXY_INFO info;
+    BOOL ret;
+
+    /* FIXME: it would be simpler to read the current settings using
+     * WinHttpGetDefaultProxyConfiguration and save them using
+     * WinHttpSetDefaultProxyConfiguration, but they appear to have a bug.
+     *
+     * If a proxy is configured in the registry, e.g. via 'proxcfg -p "foo"',
+     * the access type reported by WinHttpGetDefaultProxyConfiguration is 1,
+     * WINHTTP_ACCESS_TYPE_NO_PROXY, whereas it should be
+     * WINHTTP_ACCESS_TYPE_NAMED_PROXY.
+     * If WinHttpSetDefaultProxyConfiguration is called with dwAccessType = 1,
+     * the lpszProxy and lpszProxyBypass values are ignored.
+     * Thus, if a proxy is set with proxycfg, then calling
+     * WinHttpGetDefaultProxyConfiguration followed by
+     * WinHttpSetDefaultProxyConfiguration results in the proxy settings
+     * getting deleted from the registry.
+     *
+     * Instead I read the current registry value and restore it directly.
+     */
+    len = get_default_proxy_reg_value( NULL, 0, &type );
+    if (len)
+    {
+        saved_proxy_settings = HeapAlloc( GetProcessHeap(), 0, len );
+        len = get_default_proxy_reg_value( saved_proxy_settings, len, &type );
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetDefaultProxyConfiguration(NULL);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* test with invalid access type */
+    info.dwAccessType = 0xdeadbeef;
+    info.lpszProxy = info.lpszProxyBypass = NULL;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetDefaultProxyConfiguration(&info);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* at a minimum, the proxy server must be set */
+    info.dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+    info.lpszProxy = info.lpszProxyBypass = NULL;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetDefaultProxyConfiguration(&info);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    info.lpszProxyBypass = normalString;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetDefaultProxyConfiguration(&info);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* the proxy server can't have wide characters */
+    info.lpszProxy = wideString;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetDefaultProxyConfiguration(&info);
+    todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    info.lpszProxy = normalString;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpSetDefaultProxyConfiguration(&info);
+    ok(ret, "WinHttpSetDefaultProxyConfiguration failed: %d\n", GetLastError());
+
+    set_default_proxy_reg_value( saved_proxy_settings, len, type );
+}
+
 START_TEST (winhttp)
 {
     test_OpenRequest();
@@ -827,4 +956,5 @@ START_TEST (winhttp)
     test_secure_connection();
     test_request_parameter_defaults();
     test_QueryOption();
+    test_set_default_proxy_config();
 }
