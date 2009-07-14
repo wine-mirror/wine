@@ -84,7 +84,6 @@ struct d3d10_effect_technique
 
     struct d3d10_effect *effect;
     char *name;
-    DWORD start;
     DWORD pass_count;
     struct d3d10_effect_pass *passes;
 };

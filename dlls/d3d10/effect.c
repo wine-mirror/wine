@@ -161,40 +161,6 @@ static HRESULT parse_fx10_pass_index(struct d3d10_effect_pass *p, const char **p
     return S_OK;
 }
 
-static HRESULT parse_fx10_technique_index(struct d3d10_effect_technique *t, const char **ptr)
-{
-    HRESULT hr = S_OK;
-    unsigned int i;
-
-    read_dword(ptr, &t->start);
-    TRACE("Technique starts at offset %#x\n", t->start);
-
-    read_dword(ptr, &t->pass_count);
-    TRACE("Technique has %u passes\n", t->pass_count);
-
-    skip_dword_unknown(ptr, 1);
-
-    t->passes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->pass_count * sizeof(*t->passes));
-    if (!t->passes)
-    {
-        ERR("Failed to allocate passes memory\n");
-        return E_OUTOFMEMORY;
-    }
-
-    for (i = 0; i < t->pass_count; ++i)
-    {
-        struct d3d10_effect_pass *p = &t->passes[i];
-
-        p->vtbl = &d3d10_effect_pass_vtbl;
-        p->technique = t;
-
-        hr = parse_fx10_pass_index(p, ptr);
-        if (FAILED(hr)) break;
-    }
-
-    return hr;
-}
-
 static char *copy_name(const char *ptr)
 {
     size_t name_len;
@@ -398,35 +364,50 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char *data)
     return hr;
 }
 
-static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char *data)
+static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char **ptr, const char *data)
 {
-    HRESULT hr = S_OK;
-    const char *ptr;
-    size_t name_len;
     unsigned int i;
+    DWORD offset;
 
-    ptr = data + t->start;
+    read_dword(ptr, &offset);
+    TRACE("Technique name at offset %#x.\n", offset);
 
-    name_len = strlen(ptr) + 1;
-    t->name = HeapAlloc(GetProcessHeap(), 0, name_len);
+    t->name = copy_name(data + offset);
     if (!t->name)
     {
-        ERR("Failed to allocate name memory\n");
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Technique name: %s.\n", t->name);
+
+    read_dword(ptr, &t->pass_count);
+    TRACE("Technique has %u passes\n", t->pass_count);
+
+    skip_dword_unknown(ptr, 1);
+
+    t->passes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, t->pass_count * sizeof(*t->passes));
+    if (!t->passes)
+    {
+        ERR("Failed to allocate passes memory\n");
         return E_OUTOFMEMORY;
     }
 
-    memcpy(t->name, ptr, name_len);
-    ptr += name_len;
-
-    TRACE("technique name: %s\n", t->name);
-
     for (i = 0; i < t->pass_count; ++i)
     {
-        hr = parse_fx10_pass(&t->passes[i], data);
-        if (FAILED(hr)) break;
+        struct d3d10_effect_pass *p = &t->passes[i];
+        HRESULT hr;
+
+        p->vtbl = &d3d10_effect_pass_vtbl;
+        p->technique = t;
+
+        hr = parse_fx10_pass_index(p, ptr);
+        if (FAILED(hr)) return hr;
+
+        hr = parse_fx10_pass(p, data);
+        if (FAILED(hr)) return hr;
     }
 
-    return hr;
+    return S_OK;
 }
 
 static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, const char **ptr, const char *data)
@@ -498,10 +479,7 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, DWORD d
         t->vtbl = &d3d10_effect_technique_vtbl;
         t->effect = e;
 
-        hr = parse_fx10_technique_index(t, &ptr);
-        if (FAILED(hr)) return hr;
-
-        hr = parse_fx10_technique(t, data);
+        hr = parse_fx10_technique(t, &ptr, data);
         if (FAILED(hr)) return hr;
     }
 
