@@ -28041,6 +28041,14 @@ dlls/wmi/Makefile: dlls/wmi/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/wmi/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/wmiutils/Makefile"
+test "x$enable_wmiutils" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	wmiutils"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/wmiutils/Makefile: dlls/wmiutils/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/wmiutils/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/wnaspi32/Makefile"
 test "x$enable_wnaspi32" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	wnaspi32"
@@ -29791,6 +29799,7 @@ do
     "dlls/wldap32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wldap32/Makefile" ;;
     "dlls/wldap32/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wldap32/tests/Makefile" ;;
     "dlls/wmi/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wmi/Makefile" ;;
+    "dlls/wmiutils/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wmiutils/Makefile" ;;
     "dlls/wnaspi32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wnaspi32/Makefile" ;;
     "dlls/wow32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/wow32/Makefile" ;;
     "dlls/ws2_32/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/ws2_32/Makefile" ;;
