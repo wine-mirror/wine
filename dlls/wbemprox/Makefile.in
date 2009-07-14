@@ -6,7 +6,8 @@ MODULE    = wbemprox.dll
 IMPORTS   = kernel32
 
 C_SRCS = \
-	main.c
+	main.c \
+	wbemlocator.c
 
 @MAKE_DLL_RULES@
 
