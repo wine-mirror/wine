@@ -3,10 +3,11 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wmiutils.dll
-IMPORTS   = kernel32
+IMPORTS   = oleaut32 kernel32
 
 C_SRCS = \
-	main.c
+	main.c \
+	statuscode.c
 
 @MAKE_DLL_RULES@
 
