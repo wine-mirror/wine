@@ -19,11 +19,13 @@
 
 #include "shresdef.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 MENU_001 MENU DISCARDABLE
 BEGIN
-	MENUITEM "&Große Symbole",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "&GroÃŸe Symbole",	FCIDM_SHVIEW_BIGICON
 	MENUITEM "&Kleine Symbole",	FCIDM_SHVIEW_SMALLICON
 	MENUITEM "&Liste",		FCIDM_SHVIEW_LISTVIEW
 	MENUITEM "&Details",		FCIDM_SHVIEW_REPORTVIEW
@@ -38,7 +40,7 @@ BEGIN
 	BEGIN
 	  POPUP "&Ansicht"
 	  BEGIN
-	    MENUITEM "&Große Symbole",	FCIDM_SHVIEW_BIGICON
+            MENUITEM "&GroÃŸe Symbole",  FCIDM_SHVIEW_BIGICON
 	    MENUITEM "&Kleine Symbole",	FCIDM_SHVIEW_SMALLICON
 	    MENUITEM "&Liste",		FCIDM_SHVIEW_LISTVIEW
 	    MENUITEM "&Details",	FCIDM_SHVIEW_REPORTVIEW
@@ -48,7 +50,7 @@ BEGIN
 	  BEGIN
 	    MENUITEM "Nach &Name",	0x30	/* column 0 */
 	    MENUITEM "Nach &Typ",	0x32	/* column 2 */
-	    MENUITEM "Nach &Größe",	0x31	/* ... */
+            MENUITEM "Nach &GrÃ¶ÃŸe",     0x31    /* ... */
 	    MENUITEM "Nach &Datum",	0x33
 	    MENUITEM SEPARATOR
 	    MENUITEM "&Automatisch anordnen",	FCIDM_SHVIEW_AUTOARRANGE
@@ -57,13 +59,13 @@ BEGIN
 	  MENUITEM SEPARATOR
 	  MENUITEM "Aktualisieren",		FCIDM_SHVIEW_REFRESH
 	  MENUITEM SEPARATOR
-	  MENUITEM "Einfügen",		FCIDM_SHVIEW_INSERT
-	  MENUITEM "Einfügen als Verknüpfung",	FCIDM_SHVIEW_INSERTLINK
+          MENUITEM "EinfÃ¼gen",                  FCIDM_SHVIEW_INSERT
+          MENUITEM "EinfÃ¼gen als VerknÃ¼pfung",  FCIDM_SHVIEW_INSERTLINK
 	  MENUITEM SEPARATOR
 	  POPUP "Neu"
 	  BEGIN
 	    MENUITEM "Neues Ver&zeichnis",	FCIDM_SHVIEW_NEWFOLDER
-	    MENUITEM "Neue Ver&knüpfung",	FCIDM_SHVIEW_NEWLINK
+            MENUITEM "Neue Ver&knÃ¼pfung",       FCIDM_SHVIEW_NEWLINK
 	    MENUITEM SEPARATOR
 	  END
 	  MENUITEM SEPARATOR
@@ -78,15 +80,15 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
 	BEGIN
-	  MENUITEM "Aus&wählen"		FCIDM_SHVIEW_OPEN
+          MENUITEM "Aus&wÃ¤hlen"         FCIDM_SHVIEW_OPEN
 	  MENUITEM "E&rkunden",		FCIDM_SHVIEW_EXPLORE
-	  MENUITEM "&Öffnen"		FCIDM_SHVIEW_OPEN
+          MENUITEM "&Ã–ffnen"            FCIDM_SHVIEW_OPEN
 	  MENUITEM SEPARATOR
 	  MENUITEM "&Ausschneiden",		FCIDM_SHVIEW_CUT
 	  MENUITEM "&Kopieren",		FCIDM_SHVIEW_COPY
 	  MENUITEM SEPARATOR
-	  MENUITEM "&Verknüpfung erzeugen",	FCIDM_SHVIEW_CREATELINK
-	  MENUITEM "&Löschen",		FCIDM_SHVIEW_DELETE
+          MENUITEM "&VerknÃ¼pfung erzeugen",     FCIDM_SHVIEW_CREATELINK
+          MENUITEM "&LÃ¶schen",                  FCIDM_SHVIEW_DELETE
 	  MENUITEM "&Umbenennen",		FCIDM_SHVIEW_RENAME
 	  MENUITEM SEPARATOR
 	  MENUITEM "&Eigenschaften",	FCIDM_SHVIEW_PROPERTIES
@@ -103,7 +105,7 @@ BEGIN
 
     POPUP "&View"
     BEGIN
-        MENUITEM "&Große Symbole", FCIDM_SHVIEW_BIGICON
+        MENUITEM "&GroÃŸe Symbole", FCIDM_SHVIEW_BIGICON
         MENUITEM "&Kleine Symbole", FCIDM_SHVIEW_SMALLICON
         MENUITEM "&Liste", FCIDM_SHVIEW_LISTVIEW
         MENUITEM "&Details", FCIDM_SHVIEW_REPORTVIEW
@@ -117,7 +119,7 @@ END
 
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Verzeichnis auswählen"
+CAPTION "Verzeichnis auswÃ¤hlen"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
@@ -132,7 +134,7 @@ FONT 8, "MS Shell Dlg"
 
 SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Verzeichnis auswählen"
+CAPTION "Verzeichnis auswÃ¤hlen"
 FONT 8, "MS Shell Dlg"
 {
  LTEXT "", IDD_TITLE, 10, 8, 198, 24
@@ -163,7 +165,7 @@ FONT 8, "MS Shell Dlg"
 
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Informationen über %s"
+CAPTION "Informationen Ã¼ber %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 50, 12, WS_TABSTOP
@@ -173,7 +175,7 @@ FONT 10, "MS Shell Dlg"
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 137, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 137, 10
  LTEXT "Wine Version %s", IDC_ABOUT_STATIC_TEXT3, 40, 34, 170, 10
- LTEXT "Wine wurde für Sie gekeltert von:", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
+ LTEXT "Wine wurde fÃ¼r Sie gekeltert von:", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -182,8 +184,8 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Geben sie den Namen eines Programmes, eines Ordners, eines Dokumentes oder einer Internet-Ressource ein, die geöffnet werden soll", 12289, 36, 11, 182, 18
- LTEXT "Ö&ffnen:", 12305, 7, 39, 24, 10
+ LTEXT "Geben sie den Namen eines Programmes, eines Ordners, eines Dokumentes oder einer Internet-Ressource ein, die geÃ¶ffnet werden soll", 12289, 36, 11, 182, 18
+ LTEXT "Ã–&ffnen:", 12305, 7, 39, 24, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "Abbrechen", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
@@ -194,18 +196,18 @@ STRINGTABLE
 {
         /* columns in the shellview */
 	IDS_SHV_COLUMN1		"Datei"
-	IDS_SHV_COLUMN2		"Größe"
+	IDS_SHV_COLUMN2		"GrÃ¶ÃŸe"
 	IDS_SHV_COLUMN3		"Typ"
-	IDS_SHV_COLUMN4		"Geändert"
+	IDS_SHV_COLUMN4		"GeÃ¤ndert"
 	IDS_SHV_COLUMN5		"Attribute"
-	IDS_SHV_COLUMN6		"Gesamtgröße"
+	IDS_SHV_COLUMN6		"GesamtgrÃ¶ÃŸe"
 	IDS_SHV_COLUMN7		"Freier Speicher"
 	IDS_SHV_COLUMN8		"Name"
 	IDS_SHV_COLUMN9		"Kommentar"
 	IDS_SHV_COLUMN10	"Besitzer"
 	IDS_SHV_COLUMN11	"Gruppe"
 	IDS_SHV_COLUMN_DELFROM	"Ursprung"
-	IDS_SHV_COLUMN_DELDATE	"Gelöscht am"
+	IDS_SHV_COLUMN_DELDATE	"GelÃ¶scht am"
 
         /* special folders */
 	IDS_DESKTOP		"Desktop"
@@ -214,50 +216,50 @@ STRINGTABLE
 	IDS_CONTROLPANEL	"Control Panel"
 
         /* context menus */
-	IDS_VIEW_LARGE		"&Große Symbole"
+	IDS_VIEW_LARGE		"&GroÃŸe Symbole"
 	IDS_VIEW_SMALL		"&Kleine Symbole"
 	IDS_VIEW_LIST		"&Liste"
 	IDS_VIEW_DETAILS	"&Details"
-	IDS_SELECT		"Auswählen"
-	IDS_OPEN		"Öffnen"
+	IDS_SELECT		"AuswÃ¤hlen"
+	IDS_OPEN		"Ã–ffnen"
 
 	IDS_CREATEFOLDER_DENIED "Es konnte kein neues Verzeichnis erstellt werden: Zugriff verweigert."
 	IDS_CREATEFOLDER_CAPTION "Es trat ein Fehler beim Erstellen eines neuen Verzeichnisses auf"
-	IDS_DELETEITEM_CAPTION "Bestätigung: Objekt löschen"
-	IDS_DELETEFOLDER_CAPTION "Bestätigung: Verzeichnis löschen"
-	IDS_DELETEITEM_TEXT "Sind Sie sich sicher, dass Sie '%1' löschen möchten?"
-	IDS_DELETEMULTIPLE_TEXT "Sind Sie sich sicher, dass Sie diese %1 Objekte löschen möchten?"
-	IDS_DELETESELECTED_TEXT "Sind Sie sich sicher, dass Sie die ausgewählten Objekte löschen möchten?"
-	IDS_TRASHITEM_TEXT "Sind Sie sich sicher, dass Sie '%1' in den Papierkorb verschieben möchten?"
-	IDS_TRASHFOLDER_TEXT "Sind Sie sich sicher, dass Sie '%1' und seinen Inhalt in den Papierkorb verschieben möchten?"
-	IDS_TRASHMULTIPLE_TEXT "Sind Sie sich sicher, dass Sie diese %1 Dateien in den Papierkorb verschieben möchten?"
-	IDS_CANTTRASH_TEXT "Das Objekt '%1' kann nicht in den Papierkorb verschoben werden.\n\n Möchten Sie es stattdessen löschen?"
-	IDS_OVERWRITEFILE_TEXT "Der Ordner enthält bereits eine Datei namens '%1'.\n\n Wollen Sie die Datei ersetzen?"
-	IDS_OVERWRITEFILE_CAPTION "Bestätigung: Datei überschreiben"
+	IDS_DELETEITEM_CAPTION "BestÃ¤tigung: Objekt lÃ¶schen"
+	IDS_DELETEFOLDER_CAPTION "BestÃ¤tigung: Verzeichnis lÃ¶schen"
+	IDS_DELETEITEM_TEXT "Sind Sie sich sicher, dass Sie '%1' lÃ¶schen mÃ¶chten?"
+	IDS_DELETEMULTIPLE_TEXT "Sind Sie sich sicher, dass Sie diese %1 Objekte lÃ¶schen mÃ¶chten?"
+	IDS_DELETESELECTED_TEXT "Sind Sie sich sicher, dass Sie die ausgewÃ¤hlten Objekte lÃ¶schen mÃ¶chten?"
+	IDS_TRASHITEM_TEXT "Sind Sie sich sicher, dass Sie '%1' in den Papierkorb verschieben mÃ¶chten?"
+	IDS_TRASHFOLDER_TEXT "Sind Sie sich sicher, dass Sie '%1' und seinen Inhalt in den Papierkorb verschieben mÃ¶chten?"
+	IDS_TRASHMULTIPLE_TEXT "Sind Sie sich sicher, dass Sie diese %1 Dateien in den Papierkorb verschieben mÃ¶chten?"
+	IDS_CANTTRASH_TEXT "Das Objekt '%1' kann nicht in den Papierkorb verschoben werden.\n\n MÃ¶chten Sie es stattdessen lÃ¶schen?"
+	IDS_OVERWRITEFILE_TEXT "Der Ordner enthÃ¤lt bereits eine Datei namens '%1'.\n\n Wollen Sie die Datei ersetzen?"
+	IDS_OVERWRITEFILE_CAPTION "BestÃ¤tigung: Datei Ã¼berschreiben"
 	IDS_OVERWRITEFOLDER_TEXT "Im Verzeichnis befindet sich bereits ein Ordner namens '%1'.\n\n"\
-	"Wenn die Dateien im Zielordner die gleichen Namen haben, wie die im ausgewählten Ordner, werden sie ersetzt.\n\n\
-	Möchten sie trotzdem fortfahren?"
+	"Wenn die Dateien im Zielordner die gleichen Namen haben, wie die im ausgewÃ¤hlten Ordner, werden sie ersetzt.\n\n\
+	MÃ¶chten sie trotzdem fortfahren?"
 
         /* message box strings */
         IDS_RESTART_TITLE       "Neustarten"
-        IDS_RESTART_PROMPT      "Möchten Sie, dass ein simulierter Windows Neustart durchgeführt wird?"
+        IDS_RESTART_PROMPT      "MÃ¶chten Sie, dass ein simulierter Windows Neustart durchgefÃ¼hrt wird?"
         IDS_SHUTDOWN_TITLE      "Beenden"
-        IDS_SHUTDOWN_PROMPT     "Möchten Sie die aktuelle Wine Sitzung beenden?"
+        IDS_SHUTDOWN_PROMPT     "MÃ¶chten Sie die aktuelle Wine Sitzung beenden?"
 
         /* Run File dialog */
-        IDS_RUNDLG_ERROR           "Konnte Ausführen-Dialog nicht anzeigen (interner Fehler)"
+        IDS_RUNDLG_ERROR           "Konnte AusfÃ¼hren-Dialog nicht anzeigen (interner Fehler)"
         IDS_RUNDLG_BROWSE_ERROR    "Konnte Durchsuchen-Dialog nicht anzeigen (interner Fehler)"
         IDS_RUNDLG_BROWSE_CAPTION  "Durchsuchen"
         IDS_RUNDLG_BROWSE_FILTER   "Programme\0*.exe\0Alle Dateien\0*.*\0\0"
 
         /* shell folder path default values */
-	IDS_PROGRAMS		"Startmenü\\Programme"
+	IDS_PROGRAMS		"StartmenÃ¼\\Programme"
 	IDS_PERSONAL		"Eigene Dateien"
 	IDS_FAVORITES		"Favoriten"
-	IDS_STARTUP		"Startmenü\\Programme\\Autostart"
+	IDS_STARTUP		"StartmenÃ¼\\Programme\\Autostart"
 	IDS_RECENT		"Recent"
 	IDS_SENDTO		"SendTo"
-	IDS_STARTMENU		"Startmenü"
+	IDS_STARTMENU		"StartmenÃ¼"
 	IDS_MYMUSIC		"Eigene Musik"
 	IDS_MYVIDEO		"Eigene Videos"
 	IDS_DESKTOPDIRECTORY	"Desktop"
@@ -273,7 +275,7 @@ STRINGTABLE
 	IDS_MYPICTURES		"Eigene Bilder"
 	IDS_PROGRAM_FILES_COMMON "Programme\\Gemeinsame Dateien"
 	IDS_COMMON_DOCUMENTS	"Dokumente"
-	IDS_ADMINTOOLS		"Startmenü\\Programme\\Verwaltung"
+	IDS_ADMINTOOLS		"StartmenÃ¼\\Programme\\Verwaltung"
 	IDS_COMMON_MUSIC	"Dokumente\\Eigene Musik"
 	IDS_COMMON_PICTURES	"Dokumente\\Eigene Bilder"
 	IDS_COMMON_VIDEO	"Dokumente\\Eigene Videos"
@@ -284,23 +286,23 @@ STRINGTABLE
 	IDS_CPANEL_TITLE	"Wine Control Panel"
 	IDS_CPANEL_NAME		"Name"
 	IDS_CPANEL_DESCRIPTION	"Description"
-	IDS_SHLEXEC_NOASSOC	"Es ist kein Programm mit diesem Dateityp verknüpft."
+	IDS_SHLEXEC_NOASSOC	"Es ist kein Programm mit diesem Dateityp verknÃ¼pft."
 }
 
 STRINGTABLE
 {
 IDS_LICENSE_CAPTION,            "Wine License"
 IDS_LICENSE,
-"Wine ist freie Software; Sie dürfen sie unter den Bedingungen \
+"Wine ist freie Software; Sie dÃ¼rfen sie unter den Bedingungen \
 der GNU Lesser General Public License, welche von der \
-Free Software Foundation veröffentlicht wurde; weiter verteilen \
-und/oder modifizieren gemäß Version 2.1 der Lizenz, oder \
-(nach ihren Ermessen) jeder späteren Version.\n\n\
-Wine wird mit der Hoffnung verteilt das es sich als nützlich erweist. \
+Free Software Foundation verÃ¶ffentlicht wurde; weiter verteilen \
+und/oder modifizieren gemÃ¤ÃŸ Version 2.1 der Lizenz, oder \
+(nach ihren Ermessen) jeder spÃ¤teren Version.\n\n\
+Wine wird mit der Hoffnung verteilt das es sich als nÃ¼tzlich erweist. \
 Wine kommt aber OHNE JEGLICHE GARANTIE daher; sogar ohne einer \
-angedeuteten Garantie der MARKTGÄNGIGKEIT oder der EIGNUNG FÜR EINEN \
+angedeuteten Garantie der MARKTGÃ„NGIGKEIT oder der EIGNUNG FÃœR EINEN \
 BESTIMMTEN NUTZEN. Sehen Sie sich die GNU Lesser General Public License \
-an für mehr Details.\n\n\
+an fÃ¼r mehr Details.\n\n\
 Sie sollten mit dieser Bibliothek auch eine Kopie der \
 GNU Lesser General Public License erhalten haben; wenn nicht schreiben \
 Sie der Free Software Foundation, \
