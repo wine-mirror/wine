@@ -619,6 +619,24 @@ static HRESULT BmpFrameDecode_ReadUnsupported(BmpFrameDecode* This)
     return E_FAIL;
 }
 
+struct bitfields_format {
+    WORD bitcount; /* 0 for end of list */
+    DWORD redmask;
+    DWORD greenmask;
+    DWORD bluemask;
+    DWORD alphamask;
+    const WICPixelFormatGUID *pixelformat;
+    ReadDataFunc read_data_func;
+};
+
+static const struct bitfields_format bitfields_formats[] = {
+    {16,0x7c00,0x3e0,0x1f,0,&GUID_WICPixelFormat16bppBGR555,BmpFrameDecode_ReadUncompressed},
+    {16,0xf800,0x7e0,0x1f,0,&GUID_WICPixelFormat16bppBGR565,BmpFrameDecode_ReadUncompressed},
+    {32,0xff0000,0xff00,0xff,0,&GUID_WICPixelFormat32bppBGR,BmpFrameDecode_ReadUncompressed},
+    {32,0xff0000,0xff00,0xff,0xff000000,&GUID_WICPixelFormat32bppBGRA,BmpFrameDecode_ReadUncompressed},
+    {0}
+};
+
 static const IWICBitmapFrameDecodeVtbl BmpFrameDecode_Vtbl = {
     BmpFrameDecode_QueryInterface,
     BmpFrameDecode_AddRef,
@@ -676,6 +694,17 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
     hr = IStream_Read(stream, &This->bih.bV5Width, bytestoread, &bytesread);
     if (FAILED(hr)) return hr;
     if (bytestoread != bytesread) return E_FAIL;
+
+    /* if this is a BITMAPINFOHEADER with BI_BITFIELDS compression, we need to
+        read the extra fields */
+    if (This->bih.bV5Size == sizeof(BITMAPINFOHEADER) &&
+        This->bih.bV5Compression == BI_BITFIELDS)
+    {
+        hr = IStream_Read(stream, &This->bih.bV5RedMask, 12, &bytesread);
+        if (FAILED(hr)) return hr;
+        if (bytesread != 12) return E_FAIL;
+        This->bih.bV5AlphaMask = 0;
+    }
 
     /* decide what kind of bitmap this is and how/if we can read it */
     if (This->bih.bV5Size == sizeof(BITMAPCOREHEADER))
@@ -753,6 +782,41 @@ static HRESULT BmpDecoder_ReadHeaders(BmpDecoder* This, IStream *stream)
             This->read_data_func = BmpFrameDecode_ReadRLE4;
             This->pixelformat = &GUID_WICPixelFormat32bppBGR;
             break;
+        case BI_BITFIELDS:
+        {
+            const struct bitfields_format *format;
+            if (This->bih.bV5Size == sizeof(BITMAPCOREHEADER2))
+            {
+                /* BCH2 doesn't support bitfields; this is Huffman 1D compression */
+                This->bitsperpixel = 0;
+                This->read_data_func = BmpFrameDecode_ReadUnsupported;
+                This->pixelformat = &GUID_WICPixelFormatUndefined;
+                FIXME("Huffman 1D compression is unsupported\n");
+                break;
+            }
+            This->bitsperpixel = This->bih.bV5BitCount;
+            for (format = bitfields_formats; format->bitcount; format++)
+            {
+                if ((format->bitcount == This->bih.bV5BitCount) &&
+                    (format->redmask == This->bih.bV5RedMask) &&
+                    (format->greenmask == This->bih.bV5GreenMask) &&
+                    (format->bluemask == This->bih.bV5BlueMask) &&
+                    (format->alphamask == This->bih.bV5AlphaMask))
+                {
+                    This->read_data_func = format->read_data_func;
+                    This->pixelformat = format->pixelformat;
+                    break;
+                }
+            }
+            if (!format->bitcount)
+            {
+                This->read_data_func = BmpFrameDecode_ReadUncompressed;
+                This->pixelformat = &GUID_WICPixelFormatUndefined;
+                FIXME("unsupported bitfields type depth=%i red=%x green=%x blue=%x alpha=%x\n",
+                    This->bih.bV5BitCount, This->bih.bV5RedMask, This->bih.bV5GreenMask, This->bih.bV5BlueMask, This->bih.bV5AlphaMask);
+            }
+            break;
+        }
         default:
             This->bitsperpixel = 0;
             This->read_data_func = BmpFrameDecode_ReadUnsupported;
