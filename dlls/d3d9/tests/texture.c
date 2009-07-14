@@ -197,6 +197,21 @@ static void test_mipmap_gen(IDirect3DDevice9 *device)
                                         D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &texture, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed(%08x)\n", hr);
 
+    if (SUCCEEDED(hr))
+    {
+        D3DTEXTUREFILTERTYPE fltt;
+        fltt = IDirect3DTexture9_GetAutoGenFilterType(texture);
+        ok(D3DTEXF_LINEAR == fltt /* || broken(D3DTEXF_POINT == fltt)*/,
+           "GetAutoGenFilterType returned default %d\n", fltt);
+        hr = IDirect3DTexture9_SetAutoGenFilterType(texture, D3DTEXF_NONE);
+        todo_wine ok(hr == D3DERR_INVALIDCALL, "SetAutoGenFilterType D3DTEXF_NONE returned %08x\n", hr);
+        hr = IDirect3DTexture9_SetAutoGenFilterType(texture, D3DTEXF_ANISOTROPIC);
+        ok(hr == D3D_OK, "SetAutoGenFilterType D3DTEXF_ANISOTROPIC returned %08x\n", hr);
+        fltt = IDirect3DTexture9_GetAutoGenFilterType(texture);
+        ok(D3DTEXF_ANISOTROPIC == fltt, "GetAutoGenFilterType returned %d\n", fltt);
+        hr = IDirect3DTexture9_SetAutoGenFilterType(texture, D3DTEXF_LINEAR);
+        ok(hr == D3D_OK, "SetAutoGenFilterType D3DTEXF_LINEAR returned %08x\n", hr);
+    }
     levels = IDirect3DTexture9_GetLevelCount(texture);
     ok(levels == 1, "Got %d levels, expected 1\n", levels);
 
