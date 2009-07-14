@@ -474,6 +474,47 @@ BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD
     return ret;
 }
 
+static WCHAR *build_request_path( request_t *request )
+{
+    WCHAR *ret;
+
+    if (strcmpiW( request->connect->hostname, request->connect->servername ))
+    {
+        static const WCHAR http[] = { 'h','t','t','p',0 };
+        static const WCHAR https[] = { 'h','t','t','p','s',0 };
+        static const WCHAR fmt[] = { '%','s',':','/','/','%','s',0 };
+        LPCWSTR scheme = request->netconn.secure ? https : http;
+        int len;
+
+        len = strlenW( scheme ) + strlenW( request->connect->hostname );
+        /* 3 characters for '://', 1 for NUL. */
+        len += 4;
+        if (request->connect->hostport)
+        {
+            /* 1 for ':' between host and port, up to 5 for port */
+            len += 6;
+        }
+        if (request->path)
+            len += strlenW( request->path );
+        if ((ret = heap_alloc( len * sizeof(WCHAR) )))
+        {
+            sprintfW( ret, fmt, scheme, request->connect->hostname );
+            if (request->connect->hostport)
+            {
+                static const WCHAR colonFmt[] = { ':','%','d',0 };
+
+                sprintfW( ret + strlenW( ret ), colonFmt,
+                    request->connect->hostport );
+            }
+            if (request->path)
+                strcatW( ret, request->path );
+        }
+    }
+    else
+        ret = request->path;
+    return ret;
+}
+
 static WCHAR *build_request_string( request_t *request )
 {
     static const WCHAR space[]   = {' ',0};
@@ -481,7 +522,7 @@ static WCHAR *build_request_string( request_t *request )
     static const WCHAR colon[]   = {':',' ',0};
     static const WCHAR twocrlf[] = {'\r','\n','\r','\n',0};
 
-    WCHAR *ret;
+    WCHAR *path, *ret;
     const WCHAR **headers, **p;
     unsigned int len, i = 0, j;
 
@@ -489,9 +530,10 @@ static WCHAR *build_request_string( request_t *request )
     len = request->num_headers * 4 + 7;
     if (!(headers = heap_alloc( len * sizeof(LPCWSTR) ))) return NULL;
 
+    path = build_request_path( request );
     headers[i++] = request->verb;
     headers[i++] = space;
-    headers[i++] = request->path;
+    headers[i++] = path;
     headers[i++] = space;
     headers[i++] = request->version;
 
@@ -516,13 +558,13 @@ static WCHAR *build_request_string( request_t *request )
     len++;
 
     if (!(ret = heap_alloc( len * sizeof(WCHAR) )))
-    {
-        heap_free( headers );
-        return NULL;
-    }
+        goto out;
     *ret = 0;
     for (p = headers; *p; p++) strcatW( ret, *p );
 
+out:
+    if (path != request->path)
+        heap_free( path );
     heap_free( headers );
     return ret;
 }
