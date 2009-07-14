@@ -266,18 +266,23 @@ static BOOL add_module(struct dump_context* dc, const WCHAR* name,
         dc->modules = HeapReAlloc(GetProcessHeap(), 0, dc->modules,
                                   dc->alloc_modules * sizeof(*dc->modules));
     }
-    if (!dc->modules) return FALSE;
+    if (!dc->modules)
+    {
+        dc->alloc_modules = dc->num_modules = 0;
+        return FALSE;
+    }
     if (is_elf ||
         !GetModuleFileNameExW(dc->hProcess, (HMODULE)base,
-                              dc->modules[dc->num_modules - 1].name,
-                              sizeof(dc->modules[dc->num_modules - 1].name) / sizeof(WCHAR)))
-        lstrcpynW(dc->modules[dc->num_modules - 1].name, name,
-                  sizeof(dc->modules[dc->num_modules - 1].name) / sizeof(WCHAR));
-    dc->modules[dc->num_modules - 1].base = base;
-    dc->modules[dc->num_modules - 1].size = size;
-    dc->modules[dc->num_modules - 1].timestamp = timestamp;
-    dc->modules[dc->num_modules - 1].checksum = checksum;
-    dc->modules[dc->num_modules - 1].is_elf = is_elf;
+                              dc->modules[dc->num_modules].name,
+                              sizeof(dc->modules[dc->num_modules].name) / sizeof(WCHAR)))
+        lstrcpynW(dc->modules[dc->num_modules].name, name,
+                  sizeof(dc->modules[dc->num_modules].name) / sizeof(WCHAR));
+    dc->modules[dc->num_modules].base = base;
+    dc->modules[dc->num_modules].size = size;
+    dc->modules[dc->num_modules].timestamp = timestamp;
+    dc->modules[dc->num_modules].checksum = checksum;
+    dc->modules[dc->num_modules].is_elf = is_elf;
+    dc->num_modules++;
 
     return TRUE;
 }
@@ -402,9 +407,10 @@ static void add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, 
     }
     if (dc->mem)
     {
-        dc->mem[dc->num_mem - 1].base = base;
-        dc->mem[dc->num_mem - 1].size = size;
-        dc->mem[dc->num_mem - 1].rva  = rva;
+        dc->mem[dc->num_mem].base = base;
+        dc->mem[dc->num_mem].size = size;
+        dc->mem[dc->num_mem].rva  = rva;
+        dc->num_mem++;
     }
     else dc->num_mem = dc->alloc_mem = 0;
 }
