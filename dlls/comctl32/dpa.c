@@ -802,7 +802,8 @@ INT WINAPI DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
         INT l, r, x, n;
         LPVOID *lpPtr;
 
-        l = (nStart == -1) ? 0 : nStart;
+        /* for binary search ignore start index */
+        l = 0;
         r = hdpa->nItemCount - 1;
         lpPtr = hdpa->ptrs;
         while (r >= l) {

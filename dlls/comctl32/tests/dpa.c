@@ -289,9 +289,9 @@ static void test_dpa(void)
         ok(j == DPA_ERR, "j=%d\n", j);
         /* ... but for a binary search it's ignored */
         j = pDPA_Search(dpa, (PVOID)(INT_PTR)i, i+1, CB_CmpLT, 0xdeadbeef, DPAS_SORTED);
-        todo_wine ok(j+1 == i, "j=%d i=%d\n", j, i);
+        ok(j+1 == i, "j=%d i=%d\n", j, i);
     }
-    
+
     /* Try to get the index of a nonexistent item */
     i = pDPA_GetPtrIndex(dpa, (PVOID)7);
     ok(i == DPA_ERR, "i=%d\n", i);
