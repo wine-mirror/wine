@@ -213,7 +213,12 @@ static void WineD3D_ReleaseFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
         ERR_(d3d_caps)("Failed to disable fake GL context.\n");
     }
 
-    pwglDeleteContext(ctx->gl_ctx);
+    if (!pwglDeleteContext(ctx->gl_ctx))
+    {
+        DWORD err = GetLastError();
+        ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx->gl_ctx, err);
+    }
+
     ReleaseDC(ctx->wnd, ctx->dc);
     DestroyWindow(ctx->wnd);
 }

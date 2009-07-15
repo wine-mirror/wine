@@ -944,7 +944,15 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
 
     ctx = pwglCreateContext(hdc);
-    if(This->numContexts) pwglShareLists(This->contexts[0]->glCtx, ctx);
+    if (This->numContexts)
+    {
+        if (!pwglShareLists(This->contexts[0]->glCtx, ctx))
+        {
+            DWORD err = GetLastError();
+            ERR("wglShareLists(%p, %p) failed, last error %#x.\n",
+                    This->contexts[0]->glCtx, ctx, err);
+        }
+    }
 
     if(!ctx) {
         ERR("Failed to create a WGL context\n");
@@ -957,7 +965,11 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     ret = AddContextToArray(This, win_handle, hdc, ctx, pbuffer);
     if(!ret) {
         ERR("Failed to add the newly created context to the context list\n");
-        pwglDeleteContext(ctx);
+        if (!pwglDeleteContext(ctx))
+        {
+            DWORD err = GetLastError();
+            ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, err);
+        }
         if(create_pbuffer) {
             GL_EXTCALL(wglReleasePbufferDCARB(pbuffer, hdc));
             GL_EXTCALL(wglDestroyPbufferARB(pbuffer));
