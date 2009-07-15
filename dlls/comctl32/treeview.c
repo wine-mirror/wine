@@ -1367,6 +1367,8 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
 
     TREEVIEW_VerifyTree(infoPtr);
 
+    if (!infoPtr->bRedraw) return (LRESULT)newItem;
+
     if (parentItem == infoPtr->root ||
         (ISVISIBLE(parentItem) && parentItem->state & TVIS_EXPANDED))
     {
@@ -1564,6 +1566,7 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM wineItem)
 
     TREEVIEW_VerifyTree(infoPtr);
 
+    if (!infoPtr->bRedraw) return TRUE;
 
     if (visible)
     {
@@ -1586,12 +1589,15 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM wineItem)
 static LRESULT
 TREEVIEW_SetRedraw(TREEVIEW_INFO* infoPtr, WPARAM wParam)
 {
-  if(wParam)
-    infoPtr->bRedraw = TRUE;
-  else
-    infoPtr->bRedraw = FALSE;
+    infoPtr->bRedraw = wParam ? TRUE : FALSE;
 
-  return 0;
+    if (infoPtr->bRedraw)
+    {
+        TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);
+        TREEVIEW_UpdateScrollBars(infoPtr);
+        TREEVIEW_Invalidate(infoPtr, NULL);
+    }
+    return 0;
 }
 
 static LRESULT
