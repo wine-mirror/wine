@@ -96,6 +96,7 @@ static const WCHAR propertyIsEnumerableW[] =
     {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
 static const WCHAR execW[] = {'e','x','e','c',0};
+static const WCHAR testW[] = {'t','e','s','t',0};
 
 static const WCHAR emptyW[] = {0};
 
@@ -3505,6 +3506,13 @@ static HRESULT RegExp_exec(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     return E_NOTIMPL;
 }
 
+static HRESULT RegExp_test(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
+        VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
 static HRESULT RegExp_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
@@ -3532,6 +3540,7 @@ static const builtin_prop_t RegExp_props[] = {
     {multilineW,             RegExp_multiline,             0},
     {propertyIsEnumerableW,  RegExp_propertyIsEnumerable,  PROPF_METHOD},
     {sourceW,                RegExp_source,                0},
+    {testW,                  RegExp_test,                  PROPF_METHOD},
     {toLocaleStringW,        RegExp_toLocaleString,        PROPF_METHOD},
     {toStringW,              RegExp_toString,              PROPF_METHOD}
 };
