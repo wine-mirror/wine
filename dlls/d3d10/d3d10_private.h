@@ -31,17 +31,17 @@
 /* TRACE helper functions */
 const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type);
 
-enum d3d10_effect_variable_type
+enum d3d10_effect_object_type
 {
-    D3D10_EVT_VERTEXSHADER = 6,
-    D3D10_EVT_PIXELSHADER = 7,
-    D3D10_EVT_GEOMETRYSHADER = 8,
+    D3D10_EOT_VERTEXSHADER = 6,
+    D3D10_EOT_PIXELSHADER = 7,
+    D3D10_EOT_GEOMETRYSHADER = 8,
 };
 
-struct d3d10_effect_variable
+struct d3d10_effect_object
 {
     struct d3d10_effect_pass *pass;
-    enum d3d10_effect_variable_type type;
+    enum d3d10_effect_object_type type;
     DWORD idx_offset;
     void *data;
 };
@@ -73,8 +73,8 @@ struct d3d10_effect_pass
     struct d3d10_effect_technique *technique;
     char *name;
     DWORD start;
-    DWORD variable_count;
-    struct d3d10_effect_variable *variables;
+    DWORD object_count;
+    struct d3d10_effect_object *objects;
 };
 
 /* ID3D10EffectTechnique */
