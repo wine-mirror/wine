@@ -20,6 +20,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 IDD_DIALOG1 DIALOG DISCARDABLE 0, 0, 186, 46
