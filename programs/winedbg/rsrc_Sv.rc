@@ -56,5 +56,3 @@ BEGIN
     IDS_INVALID_PARAMS   "Interna fel - ogiltiga parametrar mottogs"
     IDS_UNIDENTIFIED     "(oidentifierad)"
 END
-
-#pragma code_page(default)
