@@ -283,7 +283,7 @@ static BOOL domain_matches(LPCWSTR server, LPCWSTR domain)
     return ret;
 }
 
-/* Matches INTERNET_MAX_USER_NAME_LENGTH in wininet.h, also RFC 1035 */
+/* Matches INTERNET_MAX_HOST_NAME_LENGTH in wininet.h, also RFC 1035 */
 #define MAX_HOST_NAME_LENGTH 256
 
 static BOOL should_bypass_proxy(session_t *session, LPCWSTR server)
