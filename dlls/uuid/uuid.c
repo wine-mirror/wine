@@ -76,6 +76,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "isguids.h"
 #include "objsafe.h"
 #include "perhist.h"
+#include "netcon.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 
