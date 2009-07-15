@@ -920,7 +920,7 @@ static BOOL open_connection( request_t *request )
         heap_free( addressW );
         return FALSE;
     }
-    if (!netconn_connect( &request->netconn, (struct sockaddr *)&connect->sockaddr, sizeof(struct sockaddr_in) ))
+    if (!netconn_connect( &request->netconn, (struct sockaddr *)&connect->sockaddr, slen ))
     {
         netconn_close( &request->netconn );
         heap_free( addressW );
