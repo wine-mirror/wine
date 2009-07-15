@@ -1603,15 +1603,13 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
     char src0_param[256];
 
     if(ins->handler_idx == WINED3DSIH_MOVA) {
-        struct wined3d_shader_src_param tmp_src = ins->src[0];
         char write_mask[6];
 
         if(ctx->target_version >= NV2) {
             shader_hw_map2gl(ins);
             return;
         }
-        tmp_src.swizzle = (tmp_src.swizzle & 0x3) * 0x55;
-        shader_arb_get_src_param(ins, &tmp_src, 0, src0_param);
+        shader_arb_get_src_param(ins, &ins->src[0], 0, src0_param);
         shader_arb_get_write_mask(ins, &ins->dst[0], write_mask);
 
         /* This implements the mova formula used in GLSL. The first two instructions
