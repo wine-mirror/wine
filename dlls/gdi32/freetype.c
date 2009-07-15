@@ -1663,7 +1663,7 @@ static BOOL init_system_links(void)
             if(psub)
             {
                 TRACE("%s: SystemLink entry for substituted font, ignoring\n", debugstr_w(value));
-                continue;
+                goto next;
             }
             font_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*font_link));
             font_link->font_name = strdupW(value);
@@ -1712,6 +1712,7 @@ static BOOL init_system_links(void)
                 }
             }
             list_add_tail(&system_links, &font_link->entry);
+        next:
             val_len = max_val + 1;
             data_len = max_data;
         }
