@@ -33,6 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
 static const struct ID3D10EffectTechniqueVtbl d3d10_effect_technique_vtbl;
 static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl;
+static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl;
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -455,6 +456,8 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
         struct d3d10_effect_variable *v = &l->variables[i];
         HRESULT hr;
 
+        v->vtbl = &d3d10_effect_variable_vtbl;
+
         hr = parse_fx10_variable(v, ptr, data);
         if (FAILED(hr)) return hr;
     }
@@ -822,7 +825,27 @@ static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableB
 
 static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_GetVariableByName(ID3D10Effect *iface, LPCSTR name)
 {
-    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+    struct d3d10_effect *This = (struct d3d10_effect *)iface;
+    unsigned int i;
+
+    TRACE("iface %p, name \"%s\"\n", iface, name);
+
+    for (i = 0; i < This->local_buffer_count; ++i)
+    {
+        struct d3d10_effect_local_buffer *l = &This->local_buffers[i];
+        unsigned int j;
+
+        for (j = 0; j < l->variable_count; ++j)
+        {
+            struct d3d10_effect_variable *v = &l->variables[j];
+
+            if (!strcmp(v->name, name))
+            {
+                TRACE("Returning variable %p.\n", v);
+                return (ID3D10EffectVariable *)v;
+            }
+        }
+    }
 
     return NULL;
 }
@@ -1127,4 +1150,233 @@ static const struct ID3D10EffectPassVtbl d3d10_effect_pass_vtbl =
     d3d10_effect_pass_GetAnnotationByName,
     d3d10_effect_pass_Apply,
     d3d10_effect_pass_ComputeStateBlockMask,
+};
+
+/* ID3D10EffectVariable methods */
+
+static BOOL STDMETHODCALLTYPE d3d10_effect_variable_IsValid(ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return FALSE;
+}
+
+static struct ID3D10EffectType * STDMETHODCALLTYPE d3d10_effect_variable_GetType(ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetDesc(ID3D10EffectVariable *iface,
+        D3D10_EFFECT_VARIABLE_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+
+    return E_NOTIMPL;
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetAnnotationByIndex(
+        ID3D10EffectVariable *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetAnnotationByName(
+        ID3D10EffectVariable *iface, LPCSTR name)
+{
+    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+
+    return NULL;
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberByIndex(
+        ID3D10EffectVariable *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberByName(
+        ID3D10EffectVariable *iface, LPCSTR name)
+{
+    FIXME("iface %p, name \"%s\" stub!\n", iface, name);
+
+    return NULL;
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetMemberBySemantic(
+        ID3D10EffectVariable *iface, LPCSTR semantic)
+{
+    FIXME("iface %p, semantic \"%s\" stub!\n", iface, semantic);
+
+    return NULL;
+}
+
+static struct ID3D10EffectVariable * STDMETHODCALLTYPE d3d10_effect_variable_GetElement(
+        ID3D10EffectVariable *iface, UINT index)
+{
+    FIXME("iface %p, index %u stub!\n", iface, index);
+
+    return NULL;
+}
+
+static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_variable_GetParentConstantBuffer(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectScalarVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsScalar(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectVectorVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsVector(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectMatrixVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsMatrix(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectStringVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsString(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectShaderResourceVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsShaderResource(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectRenderTargetViewVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsRenderTargetView(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectDepthStencilViewVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsDepthStencilView(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectConstantBuffer * STDMETHODCALLTYPE d3d10_effect_variable_AsConstantBuffer(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectShaderVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsShader(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectBlendVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsBlend(ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectDepthStencilVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsDepthStencil(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectRasterizerVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsRasterizer(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static struct ID3D10EffectSamplerVariable * STDMETHODCALLTYPE d3d10_effect_variable_AsSampler(
+        ID3D10EffectVariable *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return NULL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_SetRawValue(ID3D10EffectVariable *iface,
+        void *data, UINT offset, UINT count)
+{
+    FIXME("iface %p, data %p, offset %u, count %u stub!\n", iface, data, offset, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_effect_variable_GetRawValue(ID3D10EffectVariable *iface,
+        void *data, UINT offset, UINT count)
+{
+    FIXME("iface %p, data %p, offset %u, count %u stub!\n", iface, data, offset, count);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID3D10EffectVariableVtbl d3d10_effect_variable_vtbl =
+{
+    /* ID3D10EffectVariable methods */
+    d3d10_effect_variable_IsValid,
+    d3d10_effect_variable_GetType,
+    d3d10_effect_variable_GetDesc,
+    d3d10_effect_variable_GetAnnotationByIndex,
+    d3d10_effect_variable_GetAnnotationByName,
+    d3d10_effect_variable_GetMemberByIndex,
+    d3d10_effect_variable_GetMemberByName,
+    d3d10_effect_variable_GetMemberBySemantic,
+    d3d10_effect_variable_GetElement,
+    d3d10_effect_variable_GetParentConstantBuffer,
+    d3d10_effect_variable_AsScalar,
+    d3d10_effect_variable_AsVector,
+    d3d10_effect_variable_AsMatrix,
+    d3d10_effect_variable_AsString,
+    d3d10_effect_variable_AsShaderResource,
+    d3d10_effect_variable_AsRenderTargetView,
+    d3d10_effect_variable_AsDepthStencilView,
+    d3d10_effect_variable_AsConstantBuffer,
+    d3d10_effect_variable_AsShader,
+    d3d10_effect_variable_AsBlend,
+    d3d10_effect_variable_AsDepthStencil,
+    d3d10_effect_variable_AsRasterizer,
+    d3d10_effect_variable_AsSampler,
+    d3d10_effect_variable_SetRawValue,
+    d3d10_effect_variable_GetRawValue,
 };

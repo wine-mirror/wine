@@ -58,8 +58,11 @@ struct d3d10_effect_shader_variable
     } shader;
 };
 
+/* ID3D10EffectVariable */
 struct d3d10_effect_variable
 {
+    const struct ID3D10EffectVariableVtbl *vtbl;
+
     char *name;
     DWORD buffer_offset;
 };
