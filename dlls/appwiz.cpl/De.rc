@@ -40,7 +40,7 @@ STRINGTABLE
    IDS_INSTALL_FILTER, "Setup-Programme\0*instal*.exe;*setup*.exe;*.msi\0Programme (*.exe)\0*.exe\0Alle Dateien (*.*)\0*.*\0\0"
 
    IDS_REMOVE, "&Entfernen..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove..."
+   IDS_MODIFY_REMOVE, "Än&dern/Entfernen..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -55,7 +55,7 @@ FONT 8, "MS Shell Dlg"
  CONTROL "Folgende Programme können automatisch entfernt werden. Um ein Programm zu entfernen oder um installierte Komponenten zu ändern, wählen Sie es aus der Liste aus und klicken Sie auf Ändern/Entfernen.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
  CONTROL "&Informationen...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 104, 198, 64, 14
- CONTROL "&Modify...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "Än&dern...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
  CONTROL "&Entfernen...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
 
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
