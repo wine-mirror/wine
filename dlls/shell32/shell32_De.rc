@@ -97,13 +97,13 @@ END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&File"
+    POPUP "&Datei"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "E&xit", IDM_CPANEL_EXIT
+        MENUITEM "&Beenden", IDM_CPANEL_EXIT
     END
 
-    POPUP "&View"
+    POPUP "&Ansicht"
     BEGIN
         MENUITEM "&Große Symbole", FCIDM_SHVIEW_BIGICON
         MENUITEM "&Kleine Symbole", FCIDM_SHVIEW_SMALLICON
@@ -111,9 +111,9 @@ BEGIN
         MENUITEM "&Details", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Help"
+    POPUP "&Hilfe"
     BEGIN
-        MENUITEM "&About Control Panel...", IDM_CPANEL_ABOUT
+        MENUITEM "&Über Systemsteuerung...", IDM_CPANEL_ABOUT
     END
 END
 
@@ -213,7 +213,7 @@ STRINGTABLE
 	IDS_DESKTOP		"Desktop"
 	IDS_MYCOMPUTER		"Arbeitsplatz"
 	IDS_RECYCLEBIN_FOLDER_NAME      "Papierkorb"
-	IDS_CONTROLPANEL	"Control Panel"
+	IDS_CONTROLPANEL	"Systemsteuerung"
 
         /* context menus */
 	IDS_VIEW_LARGE		"&Große Symbole"
@@ -283,15 +283,15 @@ STRINGTABLE
 
 	IDS_NEWFOLDER		"Neuer Ordner"
 
-	IDS_CPANEL_TITLE	"Wine Control Panel"
+	IDS_CPANEL_TITLE	"Wine Systemsteuerung"
 	IDS_CPANEL_NAME		"Name"
-	IDS_CPANEL_DESCRIPTION	"Description"
+	IDS_CPANEL_DESCRIPTION	"Beschreibung"
 	IDS_SHLEXEC_NOASSOC	"Es ist kein Programm mit diesem Dateityp verknüpft."
 }
 
 STRINGTABLE
 {
-IDS_LICENSE_CAPTION,            "Wine License"
+IDS_LICENSE_CAPTION,            "Wine Lizenz"
 IDS_LICENSE,
 "Wine ist freie Software; Sie dürfen sie unter den Bedingungen \
 der GNU Lesser General Public License, welche von der \
