@@ -179,6 +179,8 @@ HRESULT create_exec_ctx(IDispatch *this_obj, DispatchEx *var_disp, scope_chain_t
     if(!ctx)
         return E_OUTOFMEMORY;
 
+    ctx->ref = 1;
+
     IDispatch_AddRef(this_obj);
     ctx->this_obj = this_obj;
 

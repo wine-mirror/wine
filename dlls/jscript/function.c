@@ -197,9 +197,10 @@ static HRESULT invoke_constructor(FunctionInstance *function, LCID lcid, DISPPAR
         return hres;
 
     hres = invoke_source(function, (IDispatch*)_IDispatchEx_(this_obj), lcid, dp, retv, ei, caller);
-    jsdisp_release(this_obj);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        jsdisp_release(this_obj);
         return hres;
+    }
 
     V_VT(retv) = VT_DISPATCH;
     V_DISPATCH(retv) = (IDispatch*)_IDispatchEx_(this_obj);
