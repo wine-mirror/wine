@@ -566,12 +566,50 @@ ok(tmp === 0, "(new Number()).valueOf = " + tmp);
 tmp = Number.prototype.valueOf();
 ok(tmp === 0, "Number.prototype.valueOf = " + tmp);
 
-num = new Number(NaN);
-ok(num.toString() === "NaN", "num.toString() = " + num.toString());
-num = new Number(-Infinity);
-ok(num.toString() === "-Infinity", "num.toString() = " + num.toString());
-num = new Number(Infinity);
-ok(num.toString() === "Infinity", "num.toString() = " + num.toString());
+function equals(val, base) {
+    var i;
+    var num = 0;
+    var str = val.toString(base);
+
+    for(i=0; i<str.length; i++) {
+        if(str.substring(i, i+1) == '(') break;
+        if(str.substring(i, i+1) == '.') break;
+        num = num*base + parseInt(str.substring(i, i+1));
+    }
+
+    if(str.substring(i, i+1) == '.') {
+        var mult = base;
+        for(i++; i<str.length; i++) {
+            if(str.substring(i, i+1) == '(') break;
+            num += parseInt(str.substring(i, i+1))/mult;
+            mult *= base;
+        }
+    }
+
+    if(str.substring(i, i+1) == '(') {
+        exp = parseInt(str.substring(i+2));
+        num *= Math.pow(base, exp);
+    }
+
+    ok(num>val-val/1000 && num<val+val/1000, "equals: num = " + num);
+}
+
+ok((10).toString(11) === "a", "(10).toString(11) = " + (10).toString(11));
+ok((213213433).toString(17) === "8e2ddcb", "(213213433).toString(17) = " + (213213433).toString(17));
+ok((-3254343).toString(33) === "-2oicf", "(-3254343).toString(33) = " + (-3254343).toString(33));
+ok((NaN).toString(12) === "NaN", "(NaN).toString(11) = " + (NaN).toString(11));
+ok((Infinity).toString(13) === "Infinity", "(Infinity).toString(11) = " + (Infinity).toString(11));
+for(i=2; i<10; i++) {
+    equals(1.123, i);
+    equals(2305843009200000000, i);
+    equals(5.123, i);
+    equals(1/(1024*1024*1024*1024*1024*1024*1.9), i);
+    equals(1024*1024*1024*1024*1024*1024*1.9999, i);
+    equals(0.0000000000000000001, i);
+    equals(0.6, i);
+    equals(4.65661287308e-10, i);
+    ok((0).toString(i) === "0", "(0).toString("+i+") = " + (0).toString(i));
+}
 
 tmp = Math.min(1);
 ok(tmp === 1, "Math.min(1) = " + tmp);
