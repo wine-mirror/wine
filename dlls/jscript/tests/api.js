@@ -60,6 +60,22 @@ ok(tmp === "abc", "encodeURI('abc') = " + tmp);
 
 tmp = "" + new Object();
 ok(tmp === "[object Object]", "'' + new Object() = " + tmp);
+(tmp = new Array).f = Object.prototype.toString;
+ok(tmp.f() === "[object Array]", "tmp.f() = " + tmp.f());
+(tmp = new Boolean).f = Object.prototype.toString;
+ok(tmp.f() === "[object Boolean]", "tmp.f() = " + tmp.f());
+(tmp = new Date).f = Object.prototype.toString;
+ok(tmp.f() === "[object Date]", "tmp.f() = " + tmp.f());
+(tmp = function() {}).f = Object.prototype.toString;
+ok(tmp.f() === "[object Function]", "tmp.f() = " + tmp.f());
+Math.f = Object.prototype.toString;
+ok(Math.f() === "[object Math]", "tmp.f() = " + tmp.f());
+(tmp = new Number).f = Object.prototype.toString;
+ok(tmp.f() === "[object Number]", "tmp.f() = " + tmp.f());
+(tmp = new RegExp("")).f = Object.prototype.toString;
+ok(tmp.f() === "[object RegExp]", "tmp.f() = " + tmp.f());
+(tmp = new String).f = Object.prototype.toString;
+ok(tmp.f() === "[object String]", "tmp.f() = " + tmp.f());
 
 ok("".length === 0, "\"\".length = " + "".length);
 ok(getVT("".length) == "VT_I4", "\"\".length = " + "".length);

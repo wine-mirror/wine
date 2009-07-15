@@ -35,13 +35,37 @@ static const WCHAR default_valueW[] = {'[','o','b','j','e','c','t',' ','O','b','
 static HRESULT Object_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
+    static const WCHAR formatW[] = {'[','o','b','j','e','c','t',' ','%','s',']',0};
+
+    static const WCHAR arrayW[] = {'A','r','r','a','y',0};
+    static const WCHAR booleanW[] = {'B','o','o','l','e','a','n',0};
+    static const WCHAR dateW[] = {'D','a','t','e',0};
+    static const WCHAR errorW[] = {'E','r','r','o','r',0};
+    static const WCHAR functionW[] = {'F','u','n','c','t','i','o','n',0};
+    static const WCHAR mathW[] = {'M','a','t','h',0};
+    static const WCHAR numberW[] = {'N','u','m','b','e','r',0};
+    static const WCHAR objectW[] = {'O','b','j','e','c','t',0};
+    static const WCHAR regexpW[] = {'R','e','g','E','x','p',0};
+    static const WCHAR stringW[] = {'S','t','r','i','n','g',0};
+    /* Keep in sync with jsclass_t enum */
+    static const WCHAR *names[] = {NULL, arrayW, booleanW, dateW, errorW,
+        functionW, NULL, mathW, numberW, objectW, regexpW, stringW};
+
     TRACE("\n");
+
+    if(names[dispex->builtin_info->class] == NULL) {
+        ERR("dispex->builtin_info->class = %d\n",
+                dispex->builtin_info->class);
+        return E_FAIL;
+    }
 
     if(retv) {
         V_VT(retv) = VT_BSTR;
-        V_BSTR(retv) = SysAllocString(default_valueW);
+        V_BSTR(retv) = SysAllocStringLen(NULL, 9+strlenW(names[dispex->builtin_info->class]));
         if(!V_BSTR(retv))
             return E_OUTOFMEMORY;
+
+        sprintfW(V_BSTR(retv), formatW, names[dispex->builtin_info->class]);
     }
 
     return S_OK;
