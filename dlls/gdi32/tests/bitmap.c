@@ -2252,6 +2252,84 @@ static void test_get16dibits(void)
     ReleaseDC(NULL, screen_dc);
 }
 
+static void check_BitBlt_pixel(HDC hdcDst, HDC hdcSrc, UINT32 *dstBuffer, UINT32 *srcBuffer,
+                               DWORD dwRop, UINT32 expected, int line)
+{
+    *srcBuffer = 0xFEDCBA98;
+    *dstBuffer = 0x89ABCDEF;
+    Rectangle(hdcSrc, 0, 0, 1, 1);  /* A null operation to ensure dibs are coerced to X11 */
+    BitBlt(hdcDst, 0, 0, 1, 1, hdcSrc, 0, 0, dwRop);
+    ok(expected == *dstBuffer,
+        "BitBlt with dwRop %06X. Expected 0x%08X, got 0x%08X from line %d\n",
+        dwRop, expected, *dstBuffer, line);
+}
+
+static void test_BitBlt(void)
+{
+    HBITMAP bmpDst, bmpSrc;
+    HBITMAP oldDst, oldSrc;
+    HDC hdcScreen, hdcDst, hdcSrc;
+    UINT32 *dstBuffer, *srcBuffer;
+    HBRUSH hBrush, hOldBrush;
+    BITMAPINFO bitmapInfo;
+
+    memset(&bitmapInfo, 0, sizeof(BITMAPINFO));
+    bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bitmapInfo.bmiHeader.biWidth = 1;
+    bitmapInfo.bmiHeader.biHeight = 1;
+    bitmapInfo.bmiHeader.biPlanes = 1;
+    bitmapInfo.bmiHeader.biBitCount = 32;
+    bitmapInfo.bmiHeader.biCompression = BI_RGB;
+    bitmapInfo.bmiHeader.biSizeImage = sizeof(UINT32);
+
+    hdcScreen = CreateCompatibleDC(0);
+    hdcDst = CreateCompatibleDC(hdcScreen);
+    hdcSrc = CreateCompatibleDC(hdcDst);
+
+    /* Setup the destination dib section */
+    bmpDst = CreateDIBSection(hdcScreen, &bitmapInfo, DIB_RGB_COLORS, (void**)&dstBuffer,
+        NULL, 0);
+    oldDst = SelectObject(hdcDst, bmpDst);
+
+    hBrush = CreateSolidBrush(0x012345678);
+    hOldBrush = SelectObject(hdcDst, hBrush);
+
+    /* Setup the source dib section */
+    bmpSrc = CreateDIBSection(hdcScreen, &bitmapInfo, DIB_RGB_COLORS, (void**)&srcBuffer,
+        NULL, 0);
+    oldSrc = SelectObject(hdcSrc, bmpSrc);
+
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, SRCCOPY, 0xFEDCBA98, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, SRCPAINT, 0xFFFFFFFF, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, SRCAND, 0x88888888, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, SRCINVERT, 0x77777777, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, SRCERASE, 0x76543210, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, NOTSRCCOPY, 0x01234567, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, NOTSRCERASE, 0x00000000, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, MERGECOPY, 0x00581210, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, MERGEPAINT, 0x89ABCDEF, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, PATCOPY, 0x00785634, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, PATPAINT, 0x89FBDFFF, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, PATINVERT, 0x89D39BDB, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, DSTINVERT, 0x76543210, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, BLACKNESS, 0x00000000, __LINE__);
+    check_BitBlt_pixel(hdcDst, hdcSrc, dstBuffer, srcBuffer, WHITENESS, 0xFFFFFFFF, __LINE__);
+
+    /* Tidy up */
+    SelectObject(hdcSrc, oldSrc);
+    DeleteObject(bmpSrc);
+    DeleteDC(hdcSrc);
+
+    SelectObject(hdcDst, hOldBrush);
+    DeleteObject(hBrush);
+    SelectObject(hdcDst, oldDst);
+    DeleteObject(bmpDst);
+    DeleteDC(hdcDst);
+
+
+    DeleteDC(hdcScreen);
+}
+
 static void test_GdiAlphaBlend(void)
 {
     /* test out-of-bound parameters for GdiAlphaBlend */
@@ -2393,6 +2471,7 @@ START_TEST(bitmap)
     test_GetDIBits_BI_BITFIELDS();
     test_select_object();
     test_CreateBitmap();
+    test_BitBlt();
     test_GdiAlphaBlend();
     test_bitmapinfoheadersize();
     test_get16dibits();
