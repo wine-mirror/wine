@@ -248,43 +248,51 @@ static HRESULT parse_shader(struct d3d10_effect_object *o, const char *data)
     return parse_dxbc(ptr, dxbc_size, shader_chunk_handler, s);
 }
 
-static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char *data)
+static HRESULT parse_fx10_object(struct d3d10_effect_object *o, const char **ptr, const char *data)
 {
-    const char *ptr;
+    const char *data_ptr;
     DWORD offset;
     HRESULT hr;
 
-    ptr = data + o->idx_offset;
-    read_dword(&ptr, &offset);
+    read_dword(ptr, &o->type);
+    TRACE("Effect object is of type %#x.\n", o->type);
 
-    TRACE("Effect object of type %#x starts at offset %#x.\n", o->type, offset);
+    skip_dword_unknown(ptr, 2);
+
+    read_dword(ptr, &offset);
+    TRACE("Effect object idx is at offset %#x.\n", offset);
+
+    data_ptr = data + offset;
+    read_dword(&data_ptr, &offset);
+
+    TRACE("Effect object starts at offset %#x.\n", offset);
 
     /* FIXME: This probably isn't completely correct. */
     if (offset == 1)
     {
         WARN("Skipping effect object.\n");
-        ptr = NULL;
+        data_ptr = NULL;
     }
     else
     {
-        ptr = data + offset;
+        data_ptr = data + offset;
     }
 
     switch (o->type)
     {
         case D3D10_EOT_VERTEXSHADER:
             TRACE("Vertex shader\n");
-            hr = parse_shader(o, ptr);
+            hr = parse_shader(o, data_ptr);
             break;
 
         case D3D10_EOT_PIXELSHADER:
             TRACE("Pixel shader\n");
-            hr = parse_shader(o, ptr);
+            hr = parse_shader(o, data_ptr);
             break;
 
         case D3D10_EOT_GEOMETRYSHADER:
             TRACE("Geometry shader\n");
-            hr = parse_shader(o, ptr);
+            hr = parse_shader(o, data_ptr);
             break;
 
         default:
@@ -331,15 +339,7 @@ static HRESULT parse_fx10_pass(struct d3d10_effect_pass *p, const char **ptr, co
 
         o->pass = p;
 
-        read_dword(ptr, &o->type);
-        TRACE("Effect object %u is of type %#x.\n", i, o->type);
-
-        skip_dword_unknown(ptr, 2);
-
-        read_dword(ptr, &o->idx_offset);
-        TRACE("Effect object %u idx is at offset %#x.\n", i, o->idx_offset);
-
-        hr = parse_fx10_object(o, data);
+        hr = parse_fx10_object(o, ptr, data);
         if (FAILED(hr)) return hr;
     }
 
