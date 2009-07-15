@@ -1373,23 +1373,10 @@ D3DXQUATERNION* WINAPI D3DXQuaternionSquad(D3DXQUATERNION *pout, CONST D3DXQUATE
 
 void WINAPI D3DXQuaternionToAxisAngle(CONST D3DXQUATERNION *pq, D3DXVECTOR3 *paxis, FLOAT *pangle)
 {
-    FLOAT norm;
-
-    *pangle = 0.0f;
-    norm = D3DXQuaternionLength(pq);
-    if ( norm )
-    {
-     paxis->x = pq->x / norm;
-     paxis->y = pq->y / norm;
-     paxis->z = pq->z / norm;
-     if ( fabs( pq->w ) <= 1.0f ) *pangle = 2.0f * acos(pq->w);
-    }
-    else
-    {
-     paxis->x = 1.0f;
-     paxis->y = 0.0f;
-     paxis->z = 0.0f;
-    }
+    paxis->x = pq->x;
+    paxis->y = pq->y;
+    paxis->z = pq->z;
+    *pangle = 2.0f * acos(pq->w);
 }
 
 /*_________________D3DXVec2_____________________*/

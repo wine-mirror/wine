@@ -938,20 +938,19 @@ static void D3DXQuaternionTest(void)
 
 /*_______________D3DXQuaternionToAxisAngle__________________*/
     Nq.x = 1.0f/22.0f; Nq.y = 2.0f/22.0f; Nq.z = 4.0f/22.0f; Nq.w = 10.0f/22.0f;
-    expectedvec.x = 1.0f/11.0f; expectedvec.y = 2.0f/11.0f; expectedvec.z = 4.0f/11.0f;
+    expectedvec.x = 1.0f/22.0f; expectedvec.y = 2.0f/22.0f; expectedvec.z = 4.0f/22.0f;
     expected = 2.197869f;
     D3DXQuaternionToAxisAngle(&Nq,&axis,&angle);
     expect_vec3(expectedvec,axis);
     ok(fabs( angle - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
     /* Test if |w|>1.0f */
-    expectedvec.x = 1.0f/11.0f; expectedvec.y = 2.0f/11.0f; expectedvec.z = 4.0f/11.0f;
+    expectedvec.x = 1.0f; expectedvec.y = 2.0f; expectedvec.z = 4.0f;
     expected = 0.0f;
     D3DXQuaternionToAxisAngle(&q,&axis,&angle);
     expect_vec3(expectedvec,axis);
-    ok(fabs( angle - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
     /* Test the null quaternion */
-    expectedvec.x = 1.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
-    expected = 0.0f;
+    expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
+    expected = 3.141593f;
     D3DXQuaternionToAxisAngle(&nul,&axis,&angle);
     expect_vec3(expectedvec,axis);
     ok(fabs( angle - expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
