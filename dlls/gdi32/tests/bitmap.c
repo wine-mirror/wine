@@ -2544,6 +2544,177 @@ static void test_StretchBlt(void)
     DeleteDC(hdcScreen);
 }
 
+static void check_StretchDIBits_pixel(HDC hdcDst, UINT32 *dstBuffer, UINT32 *srcBuffer,
+                                      DWORD dwRop, UINT32 expected, int line)
+{
+    const UINT32 buffer[2] = { 0xFEDCBA98, 0 };
+    BITMAPINFO bitmapInfo;
+
+    memset(&bitmapInfo, 0, sizeof(BITMAPINFO));
+    bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bitmapInfo.bmiHeader.biWidth = 2;
+    bitmapInfo.bmiHeader.biHeight = 1;
+    bitmapInfo.bmiHeader.biPlanes = 1;
+    bitmapInfo.bmiHeader.biBitCount = 32;
+    bitmapInfo.bmiHeader.biCompression = BI_RGB;
+    bitmapInfo.bmiHeader.biSizeImage = sizeof(buffer);
+
+    *dstBuffer = 0x89ABCDEF;
+
+    StretchDIBits(hdcDst, 0, 0, 2, 1, 0, 0, 1, 1, &buffer, &bitmapInfo, DIB_RGB_COLORS, dwRop);
+    ok(expected == *dstBuffer,
+        "StretchDIBits with dwRop %06X. Expected 0x%08X, got 0x%08X from line %d\n",
+        dwRop, expected, *dstBuffer, line);
+}
+
+static void check_StretchDIBits_stretch(HDC hdcDst, UINT32 *dstBuffer, UINT32 *srcBuffer,
+                                        int nXOriginDest, int nYOriginDest, int nWidthDest, int nHeightDest,
+                                        int nXOriginSrc, int nYOriginSrc, int nWidthSrc, int nHeightSrc,
+                                        UINT32 expected[4], UINT32 legacy_expected[4], int line)
+{
+    BITMAPINFO bitmapInfo;
+
+    memset(&bitmapInfo, 0, sizeof(BITMAPINFO));
+    bitmapInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bitmapInfo.bmiHeader.biWidth = 2;
+    bitmapInfo.bmiHeader.biHeight = -2;
+    bitmapInfo.bmiHeader.biPlanes = 1;
+    bitmapInfo.bmiHeader.biBitCount = 32;
+    bitmapInfo.bmiHeader.biCompression = BI_RGB;
+
+    memset(dstBuffer, 0, 16);
+    StretchDIBits(hdcDst, nXOriginDest, nYOriginDest, nWidthDest, nHeightDest,
+                  nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
+                  srcBuffer, &bitmapInfo, DIB_RGB_COLORS, SRCCOPY);
+    ok(memcmp(dstBuffer, expected, 16) == 0 ||                              /* Win2k/XP */
+        broken(compare_buffers_no_alpha(dstBuffer, legacy_expected, 4)) ||  /* Win9X/ME */
+        broken(nWidthSrc < 0 || nHeightSrc < 0),                            /* Win9X/ME */
+        "StretchDIBits expected { %08X, %08X, %08X, %08X } got { %08X, %08X, %08X, %08X } "
+        "stretching { %d, %d, %d, %d } to { %d, %d, %d, %d } from line %d\n",
+        expected[0], expected[1], expected[2], expected[3],
+        dstBuffer[0], dstBuffer[1], dstBuffer[2], dstBuffer[3],
+        nXOriginSrc, nYOriginSrc, nWidthSrc, nHeightSrc,
+        nXOriginDest, nYOriginDest, nWidthDest, nHeightDest, line);
+}
+
+static void test_StretchDIBits(void)
+{
+    HBITMAP bmpDst;
+    HBITMAP oldDst;
+    HDC hdcScreen, hdcDst;
+    UINT32 *dstBuffer, srcBuffer[4];
+    HBRUSH hBrush, hOldBrush;
+    BITMAPINFO biDst;
+    UINT32 expected[4], legacy_expected[4];
+
+    memset(&biDst, 0, sizeof(BITMAPINFO));
+    biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    biDst.bmiHeader.biWidth = 2;
+    biDst.bmiHeader.biHeight = -2;
+    biDst.bmiHeader.biPlanes = 1;
+    biDst.bmiHeader.biBitCount = 32;
+    biDst.bmiHeader.biCompression = BI_RGB;
+
+    hdcScreen = CreateCompatibleDC(0);
+    hdcDst = CreateCompatibleDC(hdcScreen);
+
+    /* Pixel Tests */
+    bmpDst = CreateDIBSection(hdcScreen, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer,
+        NULL, 0);
+    oldDst = SelectObject(hdcDst, bmpDst);
+
+    hBrush = CreateSolidBrush(0x012345678);
+    hOldBrush = SelectObject(hdcDst, hBrush);
+
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, SRCCOPY, 0xFEDCBA98, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, SRCPAINT, 0xFFFFFFFF, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, SRCAND, 0x88888888, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, SRCINVERT, 0x77777777, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, SRCERASE, 0x76543210, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, NOTSRCCOPY, 0x01234567, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, NOTSRCERASE, 0x00000000, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, MERGECOPY, 0x00581210, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, MERGEPAINT, 0x89ABCDEF, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, PATCOPY, 0x00785634, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, PATPAINT, 0x89FBDFFF, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, PATINVERT, 0x89D39BDB, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, DSTINVERT, 0x76543210, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, BLACKNESS, 0x00000000, __LINE__);
+    check_StretchDIBits_pixel(hdcDst, dstBuffer, srcBuffer, WHITENESS, 0xFFFFFFFF, __LINE__);
+
+    SelectObject(hdcDst, hOldBrush);
+    DeleteObject(hBrush);
+
+    /* Top-down destination tests */
+    srcBuffer[0] = 0xCAFED00D, srcBuffer[1] = 0xFEEDFACE;
+    srcBuffer[2] = 0xFEDCBA98, srcBuffer[3] = 0x76543210;
+
+    expected[0] = 0xCAFED00D, expected[1] = 0xFEEDFACE;
+    expected[2] = 0xFEDCBA98, expected[3] = 0x76543210;
+    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                0, 0, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+
+    expected[0] = 0xCAFED00D, expected[1] = 0x00000000;
+    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    legacy_expected[0] = 0xFEDCBA98, legacy_expected[1] = 0x00000000;
+    legacy_expected[2] = 0x00000000, legacy_expected[3] = 0x00000000;
+    todo_wine check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                0, 0, 1, 1, 0, 0, 1, 1, expected, legacy_expected, __LINE__);
+
+    expected[0] = 0xFEDCBA98, expected[1] = 0xFEDCBA98;
+    expected[2] = 0xFEDCBA98, expected[3] = 0xFEDCBA98;
+    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                0, 0, 2, 2, 0, 0, 1, 1, expected, expected, __LINE__);
+
+    expected[0] = 0x42441000, expected[1] = 0x00000000;
+    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    legacy_expected[0] = 0x00543210, legacy_expected[1] = 0x00000000;
+    legacy_expected[2] = 0x00000000, legacy_expected[3] = 0x00000000;
+    todo_wine check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                0, 0, 1, 1, 0, 0, 2, 2, expected, legacy_expected, __LINE__);
+
+    expected[0] = 0x00000000, expected[1] = 0x00000000;
+    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                0, 0, 2, 2, 1, 1, -2, -2, expected, expected, __LINE__);
+
+    expected[0] = 0x00000000, expected[1] = 0x00000000;
+    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                0, 0, 2, 2, 1, 1, -2, -2, expected, expected, __LINE__);
+
+    expected[0] = 0x00000000, expected[1] = 0x00000000;
+    expected[2] = 0x00000000, expected[3] = 0x00000000;
+    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                1, 1, -2, -2, 1, 1, -2, -2, expected, expected, __LINE__);
+
+    expected[0] = 0x00000000, expected[1] = 0x00000000;
+    expected[2] = 0x00000000, expected[3] = 0xCAFED00D;
+    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                1, 1, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+
+    SelectObject(hdcDst, oldDst);
+    DeleteObject(bmpDst);
+
+    /* Bottom up destination tests */
+    biDst.bmiHeader.biHeight = 2;
+    bmpDst = CreateDIBSection(hdcScreen, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer,
+        NULL, 0);
+    oldDst = SelectObject(hdcDst, bmpDst);
+
+    expected[0] = 0xFEDCBA98, expected[1] = 0x76543210;
+    expected[2] = 0xCAFED00D, expected[3] = 0xFEEDFACE;
+    check_StretchDIBits_stretch(hdcDst, dstBuffer, srcBuffer,
+                                0, 0, 2, 2, 0, 0, 2, 2, expected, expected, __LINE__);
+
+    /* Tidy up */
+    SelectObject(hdcDst, oldDst);
+    DeleteObject(bmpDst);
+    DeleteDC(hdcDst);
+
+    DeleteDC(hdcScreen);
+}
+
 static void test_GdiAlphaBlend(void)
 {
     /* test out-of-bound parameters for GdiAlphaBlend */
@@ -2691,6 +2862,7 @@ START_TEST(bitmap)
     test_CreateBitmap();
     test_BitBlt();
     test_StretchBlt();
+    test_StretchDIBits();
     test_GdiAlphaBlend();
     test_bitmapinfoheadersize();
     test_get16dibits();
