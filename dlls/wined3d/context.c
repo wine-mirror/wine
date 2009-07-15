@@ -791,11 +791,11 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
  *
  *****************************************************************************/
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win_handle, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms) {
-    HDC oldDrawable, hdc;
     HPBUFFERARB pbuffer = NULL;
-    HGLRC ctx = NULL, oldCtx;
     WineD3DContext *ret = NULL;
     unsigned int s;
+    HGLRC ctx;
+    HDC hdc;
 
     TRACE("(%p): Creating a %s context for render target %p\n", This, create_pbuffer ? "offscreen" : "onscreen", target);
 
@@ -984,12 +984,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     list_init(&ret->fbo_list);
 
     /* Set up the context defaults */
-    oldCtx  = pwglGetCurrentContext();
-    oldDrawable = pwglGetCurrentDC();
-    if(oldCtx && oldDrawable) {
-        /* See comment in ActivateContext context switching */
-        This->frag_pipe->enable_extension((IWineD3DDevice *) This, FALSE);
-    }
     if(pwglMakeCurrent(hdc, ctx) == FALSE) {
         ERR("Cannot activate context to set up defaults\n");
         goto out;
@@ -1074,17 +1068,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
     LEAVE_GL();
 
-    /* Never keep GL_FRAGMENT_SHADER_ATI enabled on a context that we switch away from,
-     * but enable it for the first context we create, and reenable it on the old context
-     */
-    if(oldDrawable && oldCtx) {
-        if (!pwglMakeCurrent(oldDrawable, oldCtx))
-        {
-            ERR("Failed to make previous GL context %p current.\n", oldCtx);
-        }
-    } else {
-        context_set_last_device(This);
-    }
+    context_set_last_device(This);
     This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
 
     return ret;
