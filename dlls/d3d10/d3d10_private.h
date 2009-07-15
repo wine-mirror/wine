@@ -58,11 +58,18 @@ struct d3d10_effect_shader_variable
     } shader;
 };
 
+struct d3d10_effect_variable
+{
+    char *name;
+    DWORD buffer_offset;
+};
+
 struct d3d10_effect_local_buffer
 {
     char *name;
     DWORD data_size;
     DWORD variable_count;
+    struct d3d10_effect_variable *variables;
 };
 
 /* ID3D10EffectPass */

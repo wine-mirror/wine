@@ -389,6 +389,34 @@ static HRESULT parse_fx10_technique(struct d3d10_effect_technique *t, const char
     return S_OK;
 }
 
+static HRESULT parse_fx10_variable(struct d3d10_effect_variable *v, const char **ptr, const char *data)
+{
+    DWORD offset;
+
+    read_dword(ptr, &offset);
+    TRACE("Variable name at offset %#x.\n", offset);
+
+    v->name = copy_name(data + offset);
+    if (!v->name)
+    {
+        ERR("Failed to copy name.\n");
+        return E_OUTOFMEMORY;
+    }
+    TRACE("Variable name: %s.\n", v->name);
+
+    read_dword(ptr, &offset);
+    TRACE("Variable type info at offset %#x.\n", offset);
+
+    skip_dword_unknown(ptr, 1);
+
+    read_dword(ptr, &v->buffer_offset);
+    TRACE("Variable offset in buffer: %#x.\n", v->buffer_offset);
+
+    skip_dword_unknown(ptr, 3);
+
+    return S_OK;
+}
+
 static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, const char **ptr, const char *data)
 {
     unsigned int i;
@@ -415,9 +443,20 @@ static HRESULT parse_fx10_local_buffer(struct d3d10_effect_local_buffer *l, cons
 
     skip_dword_unknown(ptr, 2);
 
+    l->variables = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, l->variable_count * sizeof(*l->variables));
+    if (!l->variables)
+    {
+        ERR("Failed to allocate variables memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
     for (i = 0; i < l->variable_count; ++i)
     {
-        skip_dword_unknown(ptr, 7);
+        struct d3d10_effect_variable *v = &l->variables[i];
+        HRESULT hr;
+
+        hr = parse_fx10_variable(v, ptr, data);
+        if (FAILED(hr)) return hr;
     }
 
     return S_OK;
@@ -634,11 +673,27 @@ static void d3d10_effect_technique_destroy(struct d3d10_effect_technique *t)
     }
 }
 
+static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
+{
+    TRACE("variable %p.\n", v);
+
+    HeapFree(GetProcessHeap(), 0, v->name);
+}
+
 static void d3d10_effect_local_buffer_destroy(struct d3d10_effect_local_buffer *l)
 {
     TRACE("local buffer %p.\n", l);
 
     HeapFree(GetProcessHeap(), 0, l->name);
+    if (l->variables)
+    {
+        unsigned int i;
+        for (i = 0; i < l->variable_count; ++i)
+        {
+            d3d10_effect_variable_destroy(&l->variables[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, l->variables);
+    }
 }
 
 /* IUnknown methods */
