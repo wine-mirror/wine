@@ -19,6 +19,8 @@
 
 #include "msvidc32_private.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_ROMANIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
