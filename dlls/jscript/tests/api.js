@@ -566,6 +566,13 @@ ok(tmp === 0, "(new Number()).valueOf = " + tmp);
 tmp = Number.prototype.valueOf();
 ok(tmp === 0, "Number.prototype.valueOf = " + tmp);
 
+num = new Number(NaN);
+ok(num.toString() === "NaN", "num.toString() = " + num.toString());
+num = new Number(-Infinity);
+ok(num.toString() === "-Infinity", "num.toString() = " + num.toString());
+num = new Number(Infinity);
+ok(num.toString() === "Infinity", "num.toString() = " + num.toString());
+
 tmp = Math.min(1);
 ok(tmp === 1, "Math.min(1) = " + tmp);
 

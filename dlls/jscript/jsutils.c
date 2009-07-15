@@ -512,6 +512,8 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
     const WCHAR nullW[] = {'n','u','l','l',0};
     const WCHAR trueW[] = {'t','r','u','e',0};
     const WCHAR falseW[] = {'f','a','l','s','e',0};
+    const WCHAR NaNW[] = {'N','a','N',0};
+    const WCHAR InfinityW[] = {'-','I','n','f','i','n','i','t','y',0};
 
     switch(V_VT(v)) {
     case VT_EMPTY:
@@ -524,16 +526,23 @@ HRESULT to_string(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, BSTR *str)
         *str = int_to_bstr(V_I4(v));
         break;
     case VT_R8: {
-        VARIANT strv;
-        HRESULT hres;
+        if(isnan(V_R8(v)))
+            *str = SysAllocString(NaNW);
+        else if(isinf(V_R8(v)))
+            *str = SysAllocString(V_R8(v)<0 ? InfinityW : InfinityW+1);
+        else {
+            VARIANT strv;
+            HRESULT hres;
 
-        V_VT(&strv) = VT_EMPTY;
-        hres = VariantChangeTypeEx(&strv, v, MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT), 0, VT_BSTR);
-        if(FAILED(hres))
-            return hres;
+            V_VT(&strv) = VT_EMPTY;
+            hres = VariantChangeTypeEx(&strv, v, MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT), 0, VT_BSTR);
+            if(FAILED(hres))
+                return hres;
 
-        *str = V_BSTR(&strv);
-        return S_OK;
+            *str = V_BSTR(&strv);
+            return S_OK;
+        }
+        break;
     }
     case VT_BSTR:
         *str = SysAllocString(V_BSTR(v));
