@@ -41,7 +41,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "&Anfänger",      IDM_BEGINNER
         MENUITEM "&Fortgeschrittene",      IDM_ADVANCED
         MENUITEM "&Experten",        IDM_EXPERT
-        MENUITEM "Benutzer&definiert",        IDM_CUSTOM
+        MENUITEM "Benutzer&definiert...", IDM_CUSTOM
         MENUITEM SEPARATOR
         MENUITEM "&Beenden\tAlt+X",   IDM_EXIT
     }
