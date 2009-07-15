@@ -883,17 +883,19 @@ extern int num_lock;
 /* Checking of API calls */
 /* --------------------- */
 #ifndef WINE_NO_DEBUG_MSGS
-#define checkGLcall(A)                                          \
-do {                                                            \
-    GLint err = glGetError();                                   \
-    if (err == GL_NO_ERROR) {                                   \
-       TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);    \
-                                                                \
-    } else do {                                                 \
-        FIXME(">>>>>>>>>>>>>>>>> %s (%#x) from %s @ %s / %d\n", \
-            debug_glerror(err), err, A, __FILE__, __LINE__);    \
-       err = glGetError();                                      \
-    } while (err != GL_NO_ERROR);                               \
+#define checkGLcall(A)                                              \
+do {                                                                \
+    GLint err;                                                      \
+    if(!__WINE_IS_DEBUG_ON(_FIXME, __wine_dbch___default)) break;   \
+    err = glGetError();                                             \
+    if (err == GL_NO_ERROR) {                                       \
+       TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);        \
+                                                                    \
+    } else do {                                                     \
+        FIXME(">>>>>>>>>>>>>>>>> %s (%#x) from %s @ %s / %d\n",     \
+            debug_glerror(err), err, A, __FILE__, __LINE__);        \
+       err = glGetError();                                          \
+    } while (err != GL_NO_ERROR);                                   \
 } while(0)
 #else
 #define checkGLcall(A) do {} while(0)
