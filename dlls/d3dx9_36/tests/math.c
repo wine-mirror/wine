@@ -593,11 +593,6 @@ static void D3DXPlaneTest(void)
     expectedplane.a = 0.085914f; expectedplane.b = -0.704492f; expectedplane.c = 0.704492f; expectedplane.d = -0.790406f;
     D3DXPlaneFromPoints(&gotplane,&vec1,&vec2,&vec3);
     expect_plane(expectedplane, gotplane);
-    /* Test if 2 vectors are parallels */
-    vec3.x = 1.0f; vec3.y = 1.0f; vec3.z = 2.0f;
-    expectedplane.a = 0.0f; expectedplane.b = 0.0f; expectedplane.c = 0.0f; expectedplane.d = 0.0f;
-    D3DXPlaneFromPoints(&gotplane,&vec1,&vec2,&vec3);
-    expect_plane(expectedplane, gotplane);
 
 /*_______________D3DXPlaneIntersectLine___________*/
     vec1.x = 9.0f; vec1.y = 6.0f; vec1.z = 3.0f;
