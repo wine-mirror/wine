@@ -32,7 +32,7 @@ STRINGTABLE
    IDS_CPL_DESC, "Leidžia įdiegti naują programinę įrangą, ar pašalinti jau įdiegtą iš jūsų kompiuterio."
    IDS_TAB1_TITLE, "Programos"
 
-   IDS_UNINSTALL_FAILED, "Nepavyko įvykdyti programos pašalinimo komandos '%s'. Ar norite pašalinti programos šalinimo įrašą iš registro?"
+   IDS_UNINSTALL_FAILED, "Nepavyko įvykdyti programos pašalinimo komandos „%s“. Ar norite pašalinti programos šalinimo įrašą iš registro?"
    IDS_NOT_SPECIFIED, "Nenurodyta"
 
    IDS_COLUMN_NAME, "Vardas"
@@ -41,7 +41,7 @@ STRINGTABLE
    IDS_INSTALL_FILTER, "Diegimo programos\0*instal*.exe;*setup*.exe;*.msi\0Programos (*.exe)\0*.exe\0Visi failai (*.*)\0*.*\0\0"
 
    IDS_REMOVE, "Pa&šalinti..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove..."
+   IDS_MODIFY_REMOVE, "Pa&keisti/pašalinti..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -49,14 +49,14 @@ STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMEN
 CAPTION "Įdiegti/Pašalinti"
 FONT 8, "MS Shell Dlg"
 {
- CONTROL "Norėdami įdiegti naują programą iš diskelio, kompaktinio disko ar standžiojo disko spauskite 'Įdiegti'.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "Norėdami įdiegti naują programą iš diskelio, kompaktinio disko ar standžiojo disko spauskite „Įdiegti“.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
  CONTROL "Į&diegti...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
- CONTROL "Ši programinė įranga gali būti automatiškai pašalinta. Norėdami pašalinti programą ar modifikuoti jos įdiegtus komponentus pažymėkite ją sąraše ir spauskite 'Įdiegti/Pašalinti'.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
+ CONTROL "Ši programinė įranga gali būti automatiškai pašalinta. Norėdami pašalinti programą ar modifikuoti jos įdiegtus komponentus pažymėkite ją sąraše ir spauskite „Pakeisti/pašalinti“.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
  CONTROL "&Priežiūros informacija...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 84, 198, 84, 14
- CONTROL "&Modify...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "Pa&keisti...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
  CONTROL "Pa&šalinti...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
@@ -67,7 +67,7 @@ CAPTION "Priežiūros informacija"
 FONT 8, "MS Shell Dlg"
 {
  CONTROL "Gerai", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
- CONTROL "Ši informacija gali būti panaudota programos '%s' techninei priežiūrai gauti:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
+ CONTROL "Ši informacija gali būti panaudota programos „%s“ techninei priežiūrai gauti:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
  CONTROL "Leidėjas:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
  CONTROL "Versija:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
  CONTROL "Kontaktas:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
