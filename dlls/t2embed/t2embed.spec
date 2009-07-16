@@ -7,7 +7,7 @@
 @ stub TTGetEmbeddingType
 @ stub TTIsEmbeddingEnabled
 @ stub TTIsEmbeddingEnabledForFacename
-@ stub TTLoadEmbeddedFont
+@ stdcall TTLoadEmbeddedFont(ptr long ptr long ptr ptr ptr wstr str ptr)
 @ stub TTRunValidationTests
 @ stub _TTCharToUnicode@24
 @ stub _TTDeleteEmbeddedFont@12

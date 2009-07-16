@@ -415,6 +415,7 @@ SRCDIR_INCLUDES = \
 	sspi.h \
 	storage.h \
 	svrapi.h \
+	t2embapi.h \
 	tapi.h \
 	tchar.h \
 	textserv.h \

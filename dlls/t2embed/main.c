@@ -24,6 +24,10 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "t2embapi.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(t2embed);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -40,4 +44,18 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+LONG WINAPI TTLoadEmbeddedFont(HANDLE *phFontReference, ULONG ulFlags,
+                               ULONG *pulPrivStatus, ULONG ulPrivs,
+                               ULONG *pulStatus, READEMBEDPROC lpfnReadFromStream,
+                               LPVOID lpvReadStream, LPWSTR szWinFamilyName,
+                               LPSTR szMacFamilyName, TTLOADINFO *pTTLoadInfo)
+{
+    FIXME("(%p 0x%08x %p 0x%08x %p %p %p %s %s %p) stub\n", phFontReference,
+          ulFlags, pulPrivStatus, ulPrivs, pulStatus, lpfnReadFromStream,
+          lpvReadStream, debugstr_w(szWinFamilyName), szMacFamilyName,
+          pTTLoadInfo);
+
+    return E_API_NOTIMPL;
 }
