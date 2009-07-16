@@ -1074,7 +1074,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 {
     LPWSTR szVerb = NULL, szObjectName = NULL;
     LPWSTR szVersion = NULL, szReferrer = NULL, *szAcceptTypes = NULL;
-    INT len, acceptTypesCount;
+    INT acceptTypesCount;
     HINTERNET rc = FALSE;
     LPCSTR *types;
 
@@ -1085,38 +1085,30 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
 
     if (lpszVerb)
     {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszVerb, -1, NULL, 0 );
-        szVerb = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        szVerb = heap_strdupAtoW(lpszVerb);
         if ( !szVerb )
             goto end;
-        MultiByteToWideChar(CP_ACP, 0, lpszVerb, -1, szVerb, len);
     }
 
     if (lpszObjectName)
     {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszObjectName, -1, NULL, 0 );
-        szObjectName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR) );
+        szObjectName = heap_strdupAtoW(lpszObjectName);
         if ( !szObjectName )
             goto end;
-        MultiByteToWideChar(CP_ACP, 0, lpszObjectName, -1, szObjectName, len );
     }
 
     if (lpszVersion)
     {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszVersion, -1, NULL, 0 );
-        szVersion = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        szVersion = heap_strdupAtoW(lpszVersion);
         if ( !szVersion )
             goto end;
-        MultiByteToWideChar(CP_ACP, 0, lpszVersion, -1, szVersion, len );
     }
 
     if (lpszReferrer)
     {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszReferrer, -1, NULL, 0 );
-        szReferrer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        szReferrer = heap_strdupAtoW(lpszReferrer);
         if ( !szReferrer )
             goto end;
-        MultiByteToWideChar(CP_ACP, 0, lpszReferrer, -1, szReferrer, len );
     }
 
     if (lpszAcceptTypes)
@@ -1151,13 +1143,7 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
             __TRY
             {
                 if (*types && **types)
-                {
-                    len = MultiByteToWideChar(CP_ACP, 0, *types, -1, NULL, 0 );
-                    szAcceptTypes[acceptTypesCount] = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-
-                    MultiByteToWideChar(CP_ACP, 0, *types, -1, szAcceptTypes[acceptTypesCount], len);
-                    acceptTypesCount++;
-                }
+                    szAcceptTypes[acceptTypesCount++] = heap_strdupAtoW(*types);
             }
             __EXCEPT_PAGE_FAULT
             {
