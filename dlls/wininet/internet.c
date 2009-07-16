@@ -2982,12 +2982,9 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 
 	workRequest.asyncproc = AsyncInternetOpenUrlProc;
 	workRequest.hdr = WININET_AddRef( &hIC->hdr );
-	req = &workRequest.u.InternetOpenUrlW;
-	req->lpszUrl = WININET_strdupW(lpszUrl);
-	if (lpszHeaders)
-	    req->lpszHeaders = WININET_strdupW(lpszHeaders);
-	else
-	    req->lpszHeaders = 0;
+        req = &workRequest.u.InternetOpenUrlW;
+        req->lpszUrl = heap_strdupW(lpszUrl);
+        req->lpszHeaders = heap_strdupW(lpszHeaders);
 	req->dwHeadersLength = dwHeadersLength;
 	req->dwFlags = dwFlags;
 	req->dwContext = dwContext;

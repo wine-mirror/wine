@@ -307,8 +307,8 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
 
         workRequest.asyncproc = AsyncFtpPutFileProc;
         workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
-        req->lpszLocalFile = WININET_strdupW(lpszLocalFile);
-        req->lpszNewRemoteFile = WININET_strdupW(lpszNewRemoteFile);
+        req->lpszLocalFile = heap_strdupW(lpszLocalFile);
+        req->lpszNewRemoteFile = heap_strdupW(lpszNewRemoteFile);
 	req->dwFlags = dwFlags;
 	req->dwContext = dwContext;
 
@@ -477,7 +477,7 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
         workRequest.asyncproc = AsyncFtpSetCurrentDirectoryProc;
         workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpSetCurrentDirectoryW;
-        req->lpszDirectory = WININET_strdupW(lpszDirectory);
+        req->lpszDirectory = heap_strdupW(lpszDirectory);
 
 	r = INTERNET_AsyncCall(&workRequest);
     }
@@ -627,7 +627,7 @@ BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
         workRequest.asyncproc = AsyncFtpCreateDirectoryProc;
         workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpCreateDirectoryW;
-        req->lpszDirectory = WININET_strdupW(lpszDirectory);
+        req->lpszDirectory = heap_strdupW(lpszDirectory);
 
 	r = INTERNET_AsyncCall(&workRequest);
     }
@@ -771,7 +771,7 @@ HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
         workRequest.asyncproc = AsyncFtpFindFirstFileProc;
         workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpFindFirstFileW;
-        req->lpszSearchFile = (lpszSearchFile == NULL) ? NULL : WININET_strdupW(lpszSearchFile);
+        req->lpszSearchFile = (lpszSearchFile == NULL) ? NULL : heap_strdupW(lpszSearchFile);
 	req->lpFindFileData = lpFindFileData;
 	req->dwFlags = dwFlags;
 	req->dwContext= dwContext;
@@ -1431,7 +1431,7 @@ HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
         workRequest.asyncproc = AsyncFtpOpenFileProc;
         workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpOpenFileW;
-	req->lpszFilename = WININET_strdupW(lpszFileName);
+	req->lpszFilename = heap_strdupW(lpszFileName);
 	req->dwAccess = fdwAccess;
 	req->dwFlags = dwFlags;
 	req->dwContext = dwContext;
@@ -1552,8 +1552,8 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
         workRequest.asyncproc = AsyncFtpGetFileProc;
         workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpGetFileW;
-        req->lpszRemoteFile = WININET_strdupW(lpszRemoteFile);
-        req->lpszNewFile = WININET_strdupW(lpszNewFile);
+        req->lpszRemoteFile = heap_strdupW(lpszRemoteFile);
+        req->lpszNewFile = heap_strdupW(lpszNewFile);
 	req->dwLocalFlagsAttribute = dwLocalFlagsAttribute;
 	req->fFailIfExists = fFailIfExists;
 	req->dwFlags = dwInternetFlags;
@@ -1743,7 +1743,7 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
         workRequest.asyncproc = AsyncFtpDeleteFileProc;
         workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpDeleteFileW;
-        req->lpszFilename = WININET_strdupW(lpszFileName);
+        req->lpszFilename = heap_strdupW(lpszFileName);
 
 	r = INTERNET_AsyncCall(&workRequest);
     }
@@ -1888,7 +1888,7 @@ BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
         workRequest.asyncproc = AsyncFtpRemoveDirectoryProc;
         workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpRemoveDirectoryW;
-        req->lpszDirectory = WININET_strdupW(lpszDirectory);
+        req->lpszDirectory = heap_strdupW(lpszDirectory);
 
 	r = INTERNET_AsyncCall(&workRequest);
     }
@@ -2038,8 +2038,8 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
         workRequest.asyncproc = AsyncFtpRenameFileProc;
         workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpRenameFileW;
-        req->lpszSrcFile = WININET_strdupW(lpszSrc);
-        req->lpszDestFile = WININET_strdupW(lpszDest);
+        req->lpszSrcFile = heap_strdupW(lpszSrc);
+        req->lpszDestFile = heap_strdupW(lpszDest);
 
 	r = INTERNET_AsyncCall(&workRequest);
     }
@@ -2398,7 +2398,7 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         WCHAR szPassword[MAX_PATH];
         DWORD len = sizeof(szPassword);
 
-        lpwfs->lpszUserName = WININET_strdupW(szDefaultUsername);
+        lpwfs->lpszUserName = heap_strdupW(szDefaultUsername);
 
         RegOpenKeyW(HKEY_CURRENT_USER, szKey, &key);
         if (RegQueryValueExW(key, szValue, NULL, NULL, (LPBYTE)szPassword, &len)) {
@@ -2411,15 +2411,11 @@ HINTERNET FTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
         RegCloseKey(key);
 
         TRACE("Password used for anonymous ftp : (%s)\n", debugstr_w(szPassword));
-        lpwfs->lpszPassword = WININET_strdupW(szPassword);
+        lpwfs->lpszPassword = heap_strdupW(szPassword);
     }
     else {
-        lpwfs->lpszUserName = WININET_strdupW(lpszUserName);
-
-        if (lpszPassword)
-            lpwfs->lpszPassword = WININET_strdupW(lpszPassword);
-        else
-            lpwfs->lpszPassword = WININET_strdupW(szEmpty);
+        lpwfs->lpszUserName = heap_strdupW(lpszUserName);
+        lpwfs->lpszPassword = heap_strdupW(lpszPassword ? lpszPassword : szEmpty);
     }
     
     /* Don't send a handle created callback if this handle was created with InternetOpenUrl */

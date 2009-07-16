@@ -55,10 +55,19 @@ typedef struct
     void *ssl_s;
 } WININET_NETCONNECTION;
 
-static inline LPWSTR WININET_strdupW( LPCWSTR str )
+static inline LPWSTR heap_strdupW(LPCWSTR str)
 {
-    LPWSTR ret = HeapAlloc( GetProcessHeap(), 0, (strlenW(str) + 1)*sizeof(WCHAR) );
-    if (ret) strcpyW( ret, str );
+    LPWSTR ret = NULL;
+
+    if(str) {
+        DWORD size;
+
+        size = (strlenW(str)+1)*sizeof(WCHAR);
+        ret = HeapAlloc(GetProcessHeap(), 0, size);
+        if(ret)
+            memcpy(ret, str, size);
+    }
+
     return ret;
 }
 

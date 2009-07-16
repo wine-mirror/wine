@@ -374,7 +374,7 @@ static void HTTP_FixURL(http_request_t *lpwhr)
 
     /* If we don't have a path we set it to root */
     if (NULL == lpwhr->lpszPath)
-        lpwhr->lpszPath = WININET_strdupW(szSlash);
+        lpwhr->lpszPath = heap_strdupW(szSlash);
     else /* remove \r and \n*/
     {
         int nLen = strlenW(lpwhr->lpszPath);
@@ -528,7 +528,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *lpwhr, LPCWSTR pszAuthValue,
         if (is_basic_auth_value(pszAuthValue))
         {
             static const WCHAR szBasic[] = {'B','a','s','i','c',0};
-            pAuthInfo->scheme = WININET_strdupW(szBasic);
+            pAuthInfo->scheme = heap_strdupW(szBasic);
             if (!pAuthInfo->scheme)
             {
                 HeapFree(GetProcessHeap(), 0, pAuthInfo);
@@ -540,7 +540,7 @@ static BOOL HTTP_DoAuthorization( http_request_t *lpwhr, LPCWSTR pszAuthValue,
             PVOID pAuthData;
             SEC_WINNT_AUTH_IDENTITY_W nt_auth_identity;
 
-            pAuthInfo->scheme = WININET_strdupW(pszAuthValue);
+            pAuthInfo->scheme = heap_strdupW(pszAuthValue);
             if (!pAuthInfo->scheme)
             {
                 HeapFree(GetProcessHeap(), 0, pAuthInfo);
@@ -911,7 +911,7 @@ static BOOL HTTP_HttpEndRequestW(http_request_t *lpwhr, DWORD dwFlags, DWORD_PTR
             {
                 /* redirects are always GETs */
                 HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
-                lpwhr->lpszVerb = WININET_strdupW(szGET);
+                lpwhr->lpszVerb = heap_strdupW(szGET);
                 HTTP_DrainContent(lpwhr);
                 if ((new_url = HTTP_GetRedirectURL( lpwhr, szNewLocation )))
                 {
@@ -1440,7 +1440,7 @@ static BOOL HTTP_DealWithProxy(appinfo_t *hIC, http_session_t *lpwhs, http_reque
         UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
 
     HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
-    lpwhs->lpszServerName = WININET_strdupW(UrlComponents.lpszHostName);
+    lpwhs->lpszServerName = heap_strdupW(UrlComponents.lpszHostName);
     lpwhs->nServerPort = UrlComponents.nPort;
 
     TRACE("proxy server=%s port=%d\n", debugstr_w(lpwhs->lpszServerName), lpwhs->nServerPort);
@@ -1812,12 +1812,12 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
 
     case INTERNET_OPTION_USERNAME:
         HeapFree(GetProcessHeap(), 0, req->lpHttpSession->lpszUserName);
-        if (!(req->lpHttpSession->lpszUserName = WININET_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        if (!(req->lpHttpSession->lpszUserName = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
 
     case INTERNET_OPTION_PASSWORD:
         HeapFree(GetProcessHeap(), 0, req->lpHttpSession->lpszPassword);
-        if (!(req->lpHttpSession->lpszPassword = WININET_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        if (!(req->lpHttpSession->lpszPassword = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
     case INTERNET_OPTION_HTTP_DECODING:
         if(size != sizeof(BOOL))
@@ -2467,7 +2467,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
     }else {
         static const WCHAR slashW[] = {'/',0};
 
-        lpwhr->lpszPath = WININET_strdupW(slashW);
+        lpwhr->lpszPath = heap_strdupW(slashW);
     }
 
     if (lpszReferrer && *lpszReferrer)
@@ -2486,12 +2486,8 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(http_session_t *lpwhs,
         }
     }
 
-    lpwhr->lpszVerb = WININET_strdupW(lpszVerb && *lpszVerb ? lpszVerb : szGET);
-
-    if (lpszVersion)
-        lpwhr->lpszVersion = WININET_strdupW(lpszVersion);
-    else
-        lpwhr->lpszVersion = WININET_strdupW(g_szHttp1_1);
+    lpwhr->lpszVerb = heap_strdupW(lpszVerb && *lpszVerb ? lpszVerb : szGET);
+    lpwhr->lpszVersion = heap_strdupW(lpszVersion ? lpszVersion : g_szHttp1_1);
 
     if (lpwhs->nHostPort != INTERNET_INVALID_PORT_NUMBER &&
         lpwhs->nHostPort != INTERNET_DEFAULT_HTTP_PORT &&
@@ -3161,11 +3157,8 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
         req = &workRequest.u.HttpSendRequestW;
         if (lpBuffersIn)
         {
-            if (lpBuffersIn->lpcszHeader)
-                /* FIXME: this should use dwHeadersLength or may not be necessary at all */
-                req->lpszHeader = WININET_strdupW(lpBuffersIn->lpcszHeader);
-            else
-                req->lpszHeader = NULL;
+            /* FIXME: this should use dwHeadersLength or may not be necessary at all */
+            req->lpszHeader = heap_strdupW(lpBuffersIn->lpcszHeader);
             req->dwHeaderLength = lpBuffersIn->dwHeadersLength;
             req->lpOptional = lpBuffersIn->lpvBuffer;
             req->dwOptionalLength = lpBuffersIn->dwBufferLength;
@@ -3480,21 +3473,21 @@ static BOOL HTTP_HandleRedirect(http_request_t *lpwhr, LPCWSTR lpszUrl)
             sprintfW(lpwhs->lpszHostName, fmt, hostName, urlComponents.nPort);
         }
         else
-            lpwhs->lpszHostName = WININET_strdupW(hostName);
+            lpwhs->lpszHostName = heap_strdupW(hostName);
 
         HTTP_ProcessHeader(lpwhr, hostW, lpwhs->lpszHostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
         lpwhs->lpszUserName = NULL;
         if (userName[0])
-            lpwhs->lpszUserName = WININET_strdupW(userName);
+            lpwhs->lpszUserName = heap_strdupW(userName);
 
         if (!using_proxy)
         {
             if (strcmpiW(lpwhs->lpszServerName, hostName) || lpwhs->nServerPort != urlComponents.nPort)
             {
                 HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
-                lpwhs->lpszServerName = WININET_strdupW(hostName);
+                lpwhs->lpszServerName = heap_strdupW(hostName);
                 lpwhs->nServerPort = urlComponents.nPort;
 
                 NETCON_close(&lpwhr->netConnection);
@@ -3665,7 +3658,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
 
     /* if the verb is NULL default to GET */
     if (!lpwhr->lpszVerb)
-        lpwhr->lpszVerb = WININET_strdupW(szGET);
+        lpwhr->lpszVerb = heap_strdupW(szGET);
 
     if (dwContentLength || strcmpW(lpwhr->lpszVerb, szGET))
     {
@@ -3813,7 +3806,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
                 {
                     /* redirects are always GETs */
                     HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
-                    lpwhr->lpszVerb = WININET_strdupW(szGET);
+                    lpwhr->lpszVerb = heap_strdupW(szGET);
 
                     HTTP_DrainContent(lpwhr);
                     if ((new_url = HTTP_GetRedirectURL( lpwhr, szNewLocation )))
@@ -3885,7 +3878,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(http_request_t *lpwhr, LPCWSTR lpszHeaders,
 
         b = CreateUrlCacheEntryW(url, lpwhr->dwContentLength > 0 ? lpwhr->dwContentLength : 0, NULL, cacheFileName, 0);
         if(b) {
-            lpwhr->lpszCacheFile = WININET_strdupW(cacheFileName);
+            lpwhr->lpszCacheFile = heap_strdupW(cacheFileName);
             lpwhr->hCacheFile = CreateFileW(lpwhr->lpszCacheFile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
                       NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
             if(lpwhr->hCacheFile == INVALID_HANDLE_VALUE) {
@@ -3980,13 +3973,13 @@ static DWORD HTTPSESSION_SetOption(object_header_t *hdr, DWORD option, void *buf
     case INTERNET_OPTION_USERNAME:
     {
         HeapFree(GetProcessHeap(), 0, ses->lpszUserName);
-        if (!(ses->lpszUserName = WININET_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        if (!(ses->lpszUserName = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
     }
     case INTERNET_OPTION_PASSWORD:
     {
         HeapFree(GetProcessHeap(), 0, ses->lpszPassword);
-        if (!(ses->lpszPassword = WININET_strdupW(buffer))) return ERROR_OUTOFMEMORY;
+        if (!(ses->lpszPassword = heap_strdupW(buffer))) return ERROR_OUTOFMEMORY;
         return ERROR_SUCCESS;
     }
     default: break;
@@ -4075,13 +4068,13 @@ HINTERNET HTTP_Connect(appinfo_t *hIC, LPCWSTR lpszServerName,
     }
     if (lpszServerName && lpszServerName[0])
     {
-        lpwhs->lpszServerName = WININET_strdupW(lpszServerName);
-        lpwhs->lpszHostName = WININET_strdupW(lpszServerName);
+        lpwhs->lpszServerName = heap_strdupW(lpszServerName);
+        lpwhs->lpszHostName = heap_strdupW(lpszServerName);
     }
     if (lpszUserName && lpszUserName[0])
-        lpwhs->lpszUserName = WININET_strdupW(lpszUserName);
+        lpwhs->lpszUserName = heap_strdupW(lpszUserName);
     if (lpszPassword && lpszPassword[0])
-        lpwhs->lpszPassword = WININET_strdupW(lpszPassword);
+        lpwhs->lpszPassword = heap_strdupW(lpszPassword);
     lpwhs->nServerPort = nServerPort;
     lpwhs->nHostPort = nServerPort;
 
@@ -4306,8 +4299,8 @@ static INT HTTP_GetResponseHeaders(http_request_t *lpwhr, BOOL clear)
     HeapFree(GetProcessHeap(),0,lpwhr->lpszVersion);
     HeapFree(GetProcessHeap(),0,lpwhr->lpszStatusText);
 
-    lpwhr->lpszVersion= WININET_strdupW(buffer);
-    lpwhr->lpszStatusText = WININET_strdupW(status_text);
+    lpwhr->lpszVersion = heap_strdupW(buffer);
+    lpwhr->lpszStatusText = heap_strdupW(status_text);
 
     /* Restore the spaces */
     *(status_code-1) = ' ';
@@ -4698,8 +4691,8 @@ static BOOL HTTP_InsertCustomHeader(http_request_t *lpwhr, LPHTTPHEADERW lpHdr)
     if (NULL != lph)
     {
 	lpwhr->pCustHeaders = lph;
-        lpwhr->pCustHeaders[count-1].lpszField = WININET_strdupW(lpHdr->lpszField);
-        lpwhr->pCustHeaders[count-1].lpszValue = WININET_strdupW(lpHdr->lpszValue);
+        lpwhr->pCustHeaders[count-1].lpszField = heap_strdupW(lpHdr->lpszField);
+        lpwhr->pCustHeaders[count-1].lpszValue = heap_strdupW(lpHdr->lpszValue);
         lpwhr->pCustHeaders[count-1].wFlags = lpHdr->wFlags;
         lpwhr->pCustHeaders[count-1].wCount= lpHdr->wCount;
 	lpwhr->nCustHeaders++;
