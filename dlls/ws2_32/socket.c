@@ -4933,12 +4933,13 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
 
     TRACE( "(%p, %d, %p, %p, %p)\n", sockaddr, len, info, string, lenstr );
 
-    if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
+    if (!sockaddr) return SOCKET_ERROR;
     if (!string || !lenstr) return SOCKET_ERROR;
 
     switch(sockaddr->sa_family)
     {
     case WS_AF_INET:
+        if (len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
         sprintf( buffer, "%u.%u.%u.%u:%u",
                (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 24 & 0xff),
                (unsigned int)(ntohl( ((SOCKADDR_IN *)sockaddr)->sin_addr.WS_s_addr ) >> 16 & 0xff),
@@ -4954,6 +4955,7 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
     {
         struct WS_sockaddr_in6 *sockaddr6 = (LPSOCKADDR_IN6) sockaddr;
 
+        if (len < sizeof(SOCKADDR_IN6)) return SOCKET_ERROR;
         if (!WS_inet_ntop(WS_AF_INET6, &sockaddr6->sin6_addr, buffer, sizeof(buffer)))
         {
             WSASetLastError(WSAEINVAL);
