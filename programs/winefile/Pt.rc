@@ -385,7 +385,7 @@ STRINGTABLE
 }
 
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
@@ -394,28 +394,11 @@ STRINGTABLE
  IDS_ROOT_FS                "root fs"
  IDS_UNIXFS                 "unixfs"
  IDS_DESKTOP                "Área de trabalho"
- IDS_SHELL                  "Shell"
- IDS_TITLEFMT               "%s - %s"
- IDS_NO_IMPL                "Ainda não implementado"
- IDS_WINE_FILE              "Wine File"
-}
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
-
-STRINGTABLE
-{
- IDS_WINEFILE               "Winefile"
- IDS_ERROR                  "Erro"
- IDS_ROOT_FS                "root fs"
- IDS_UNIXFS                 "unixfs"
- IDS_DESKTOP                "Ecrã"
- IDS_SHELL                  "Linha de Comandos"
+ IDS_SHELL                  "Linha de comandos"
  IDS_TITLEFMT               "%s - %s"
  IDS_NO_IMPL                "Ainda não implementado"
  IDS_WINE_FILE              "Ficheiro Wine"
 }
-
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 STRINGTABLE
 {
