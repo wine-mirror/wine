@@ -21,23 +21,26 @@
 
 #include "res.h"
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+#pragma code_page(65001)
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 
 STRINGTABLE
 {
    IDS_CPL_TITLE, "Adicionar/Remover Programas"
-   IDS_CPL_DESC, "Permite a instalaÁ„o de novo software, ou a remoÁ„o de software existente no seu computador."
-   IDS_TAB1_TITLE, "AplicaÁıes"
+   IDS_CPL_DESC, "Permite a instala√ß√£o de novo software, ou a remo√ß√£o de software existente no seu computador."
+   IDS_TAB1_TITLE, "Aplica√ß√µes"
 
-   IDS_UNINSTALL_FAILED, "N„o foi possÌvel executar o desinstalador, '%s'. Deseja remover do registo a entrada de desinstalaÁ„o para este programa?"
-   IDS_NOT_SPECIFIED, "N„o especificado"
+   IDS_UNINSTALL_FAILED, "N√£o foi poss√≠vel executar o desinstalador, '%s'. Deseja remover do registo a entrada de desinstala√ß√£o para este programa?"
+   IDS_NOT_SPECIFIED, "N√£o especificado"
 
    IDS_COLUMN_NAME, "Nome"
    IDS_COLUMN_PUBLISHER, "Editor"
-   IDS_COLUMN_VERSION, "Vers„o"
+   IDS_COLUMN_VERSION, "Vers√£o"
+   IDS_INSTALL_FILTER, "Programas de Instala√ß√£o\0*instal*.exe;*setup*.exe;*.msi\0Programas (*.exe)\0*.exe\0Todos os ficheiros (*.*)\0*.*\0\0"
 
    IDS_REMOVE, "&Remover..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove..."
+   IDS_MODIFY_REMOVE, "&Modificar/Remover..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -45,33 +48,33 @@ STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMEN
 CAPTION "Instalar/Desinstalar"
 FONT 8, "MS Shell Dlg"
 {
- CONTROL "Para instalar um programa novo a partir de uma disquete, CD-ROM ou do seu disco rÌgido clique em Instalar.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
+ CONTROL "Para instalar um programa novo a partir de uma disquete, CD-ROM ou do seu disco r√≠gido clique em Instalar.", 1000, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 7, 270, 20
  CONTROL "&Instalar...", IDC_INSTALL, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 246, 26, 64, 14
  CONTROL "", -1, "STATIC", SS_LEFT | SS_SUNKEN | WS_CHILD | WS_VISIBLE, 7, 46, 303, 1
  CONTROL 2, 1001, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
  CONTROL "O software seguinte pode ser automaticamente removido. Para remover um programa ou modificar os seus componentes instalados seleccione-o da lista e clique em Adicionar/Remover.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
- CONTROL "&InformaÁ„o de Suporte...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 104, 198, 64, 14
- CONTROL "&Modify...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "&Informa√ß√£o de Suporte...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 104, 198, 64, 14
+ CONTROL "&Modificar...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
  CONTROL "&Remover...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
 
 IDD_INFO DIALOG 0, 0, 256, 138
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "InformaÁ„o de Suporte"
+CAPTION "Informa√ß√£o de Suporte"
 FONT 8, "MS Shell Dlg"
 {
  CONTROL "OK", IDOK, "BUTTON", BS_DEFPUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 103, 116, 50, 14
- CONTROL "A informaÁ„o seguinte pode ser usada para obter suporte tÈcnico para %s:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
+ CONTROL "A informa√ß√£o seguinte pode ser usada para obter suporte t√©cnico para %s:", IDC_INFO_LABEL, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 12, 9, 228, 19
  CONTROL "Editor:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 30, 60, 8
- CONTROL "Vers„o:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
+ CONTROL "Vers√£o:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 40, 60, 8
  CONTROL "Contacto:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 50, 60, 8
- CONTROL "InformaÁ„o de Suporte:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
+ CONTROL "Informa√ß√£o de Suporte:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 60, 64, 8
  CONTROL "Telefone de Suporte:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 70, 68, 8
  CONTROL "Readme:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 80, 60, 8
- CONTROL "Updates Producto:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
- CONTROL "Coment·rios:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
+ CONTROL "Actualiza√ß√µes de Produto:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 90, 60, 8
+ CONTROL "Coment√°rios:", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 16, 100, 60, 8
  CONTROL "", IDC_INFO_PUBLISHER, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 30, 136, 8
  CONTROL "", IDC_INFO_VERSION, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 40, 136, 8
  CONTROL "", IDC_INFO_CONTACT, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 104, 50, 136, 8
