@@ -386,15 +386,17 @@ resource_file
 			$1 = rsc;
 
 		/* Final statements before were done */
-                head = get_resource_head($1);
-                if (resource_top)  /* append to existing resources */
+                if ((head = get_resource_head($1)) != NULL)
                 {
-                    resource_t *tail = resource_top;
-                    while (tail->next) tail = tail->next;
-                    tail->next = head;
-                    head->prev = tail;
+                    if (resource_top)  /* append to existing resources */
+                    {
+                        resource_t *tail = resource_top;
+                        while (tail->next) tail = tail->next;
+                        tail->next = head;
+                        head->prev = tail;
+                    }
+                    else resource_top = head;
                 }
-                else resource_top = head;
                 sttres = NULL;
 		}
 	;
