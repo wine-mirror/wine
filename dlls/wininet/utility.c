@@ -324,7 +324,7 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
             break;
         case INTERNET_STATUS_RESOLVING_NAME:
         case INTERNET_STATUS_REDIRECT:
-            lpvNewInfo = WININET_strdup_WtoA(lpvStatusInfo);
+            lpvNewInfo = heap_strdupWtoA(lpvStatusInfo);
             break;
         }
     }

@@ -87,12 +87,17 @@ static inline WCHAR *heap_strdupAtoW(const char *str)
     return ret;
 }
 
-static inline LPSTR WININET_strdup_WtoA( LPCWSTR str )
+static inline char *heap_strdupWtoA(LPCWSTR str)
 {
-    int len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
-    LPSTR ret = HeapAlloc( GetProcessHeap(), 0, len );
-    if (ret)
-        WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL);
+    char *ret = NULL;
+
+    if(str) {
+        DWORD size = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+        ret = HeapAlloc(GetProcessHeap(), 0, size);
+        if(ret)
+            WideCharToMultiByte(CP_ACP, 0, str, -1, ret, size, NULL, NULL);
+    }
+
     return ret;
 }
 

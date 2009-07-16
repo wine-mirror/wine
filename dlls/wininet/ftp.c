@@ -2609,7 +2609,7 @@ static BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCWSTR lpszParam,
 	INTERNET_STATUS_CALLBACK lpfnStatusCB, object_header_t *hdr, DWORD_PTR dwContext)
 {
     BOOL ret;
-    LPSTR lpszParamA = lpszParam?WININET_strdup_WtoA(lpszParam):NULL;
+    LPSTR lpszParamA = heap_strdupWtoA(lpszParam);
     ret = FTP_SendCommandA(nSocket, ftpCmd, lpszParamA, lpfnStatusCB, hdr, dwContext);
     HeapFree(GetProcessHeap(), 0, lpszParamA);
     return ret;
