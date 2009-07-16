@@ -251,7 +251,7 @@
  654 stdcall @(long long) shell32_654 # ReadCabinetState@8
 
  660 stdcall -noname FileIconInit(long)
- 680 stdcall -noname IsUserAnAdmin()
+ 680 stdcall IsUserAnAdmin()
 
  704 stdcall -noname GUIDFromStringW(wstr ptr)
 
