@@ -1255,6 +1255,7 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
 
     newItem->parent = parentItem;
     newItem->iIntegral = 1;
+    newItem->visibleOrder = -1;
 
     if (!TREEVIEW_DoSetItemT(infoPtr, newItem, tvItem, isW))
         return 0;
@@ -1394,8 +1395,6 @@ TREEVIEW_InsertItemT(TREEVIEW_INFO *infoPtr, const TVINSERTSTRUCTW *ptdi, BOOL i
     }
     else
     {
-       newItem->visibleOrder = -1;
-
        /* refresh treeview if newItem is the first item inserted under parentItem */
        if (ISVISIBLE(parentItem) && newItem->prevSibling == newItem->nextSibling)
        {
@@ -1594,6 +1593,7 @@ TREEVIEW_SetRedraw(TREEVIEW_INFO* infoPtr, WPARAM wParam)
     if (infoPtr->bRedraw)
     {
         TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);
+        TREEVIEW_RecalculateVisibleOrder(infoPtr, NULL);
         TREEVIEW_UpdateScrollBars(infoPtr);
         TREEVIEW_Invalidate(infoPtr, NULL);
     }
