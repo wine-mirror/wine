@@ -2932,6 +2932,63 @@ static void test_menu_cancelmode(void)
     DestroyWindow( hwnd);
 }
 
+/* show menu trees have a maximum depth */
+static void test_menu_maxdepth(void)
+{
+#define NR_MENUS 100
+    HMENU hmenus[ NR_MENUS];
+    int i;
+    DWORD ret;
+
+    for( i = 0; i < NR_MENUS; i++) {
+        hmenus[i] = CreatePopupMenu();
+        if( !hmenus[i]) break;
+    }
+    ok( i == NR_MENUS, "could not create more then %d menu's\n", i);
+    for( i = 1; i < NR_MENUS; i++) {
+        ret = AppendMenuA( hmenus[i], MF_POPUP, (UINT_PTR)hmenus[i-1],"test");
+        if( !ret) break;
+    }
+    trace("Maximum depth is %d\n", i);
+todo_wine
+    ok( i < NR_MENUS ||
+           broken( i == NR_MENUS), /* win98, NT */
+           "no ( or very large) limit on menu depth!\n");
+
+    for( i = 0; i < NR_MENUS; i++)
+        DestroyMenu( hmenus[i]);
+}
+
+/* bug #12171 */
+static void test_menu_circref(void)
+{
+    HMENU menu1, menu2;
+    DWORD ret;
+
+    menu1 = CreatePopupMenu();
+    menu2 = CreatePopupMenu();
+    ok( menu1 && menu2, "error creating menus.\n");
+    ret = AppendMenuA( menu1, MF_POPUP, (UINT_PTR)menu2, "winetest");
+    ok( ret, "AppendMenu failed, error is %d\n", GetLastError());
+    ret = AppendMenuA( menu1, MF_STRING | MF_HILITE, 123, "winetest");
+    ok( ret, "AppendMenu failed, error is %d\n", GetLastError());
+    /* app chooses an id that happens to clash with its own hmenu */
+    ret = AppendMenuA( menu2, MF_STRING, (UINT_PTR)menu2, "winetest");
+    ok( ret, "AppendMenu failed, error is %d\n", GetLastError());
+    /* now attempt to change the string of the first item of menu1 */
+    ret = ModifyMenuA( menu1, (UINT_PTR)menu2, MF_POPUP, (UINT_PTR)menu2, "menu 2");
+todo_wine
+    ok( !ret ||
+            broken( 0), /* win98, NT */
+            "ModifyMenu should have failed.\n");
+    if( !ret) { /* will probably stack fault if the ModifyMenu succeeded */
+        ret = GetMenuState( menu1, 123, 0);
+        ok( ret == MF_HILITE, "GetMenuState returned %x\n",ret);
+    }
+    DestroyMenu( menu2);
+    DestroyMenu( menu1);
+}
+
 START_TEST(menu)
 {
     init_function_pointers();
@@ -2970,4 +3027,6 @@ START_TEST(menu)
     test_menu_hilitemenuitem();
     test_menu_trackpopupmenu();
     test_menu_cancelmode();
+    test_menu_maxdepth();
+    test_menu_circref();
 }
