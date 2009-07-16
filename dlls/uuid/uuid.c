@@ -77,6 +77,10 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "objsafe.h"
 #include "perhist.h"
 #include "netcon.h"
+#include "netfw.h"
+#include "msctf.h"
+#include "sensevts.h"
+#include "ocmm.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 

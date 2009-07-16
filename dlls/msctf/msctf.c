@@ -33,7 +33,6 @@
 #include "shlwapi.h"
 #include "shlguid.h"
 #include "comcat.h"
-#include "initguid.h"
 #include "msctf.h"
 
 #include "msctf_internal.h"
