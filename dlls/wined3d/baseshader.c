@@ -956,14 +956,27 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
     }
     else if (reg->type != WINED3DSPR_RASTOUT && reg->type != WINED3DSPR_MISCTYPE)
     {
-        if (reg->rel_addr)
+        if (reg->array_idx != ~0U)
         {
-            TRACE("[");
-            shader_dump_src_param(reg->rel_addr, shader_version);
-            TRACE(" + ");
+            TRACE("%u[%u", offset, reg->array_idx);
+            if (reg->rel_addr)
+            {
+                TRACE(" + ");
+                shader_dump_src_param(reg->rel_addr, shader_version);
+            }
+            TRACE("]");
         }
-        TRACE("%u", offset);
-        if (reg->rel_addr) TRACE("]");
+        else
+        {
+            if (reg->rel_addr)
+            {
+                TRACE("[");
+                shader_dump_src_param(reg->rel_addr, shader_version);
+                TRACE(" + ");
+            }
+            TRACE("%u", offset);
+            if (reg->rel_addr) TRACE("]");
+        }
     }
 }
 

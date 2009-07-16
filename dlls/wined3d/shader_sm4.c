@@ -28,6 +28,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define WINED3D_SM4_OPCODE_MASK                 0xff
 
+#define WINED3D_SM4_REGISTER_ORDER_SHIFT        20
+#define WINED3D_SM4_REGISTER_ORDER_MASK         (0x3 << WINED3D_SM4_REGISTER_ORDER_SHIFT)
+
 #define WINED3D_SM4_REGISTER_TYPE_SHIFT         12
 #define WINED3D_SM4_REGISTER_TYPE_MASK          (0xf << WINED3D_SM4_REGISTER_TYPE_SHIFT)
 
@@ -265,6 +268,7 @@ static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wine
     struct wined3d_sm4_data *priv = data;
     DWORD token = *(*ptr)++;
     enum wined3d_sm4_register_type register_type;
+    DWORD order;
 
     register_type = (token & WINED3D_SM4_REGISTER_TYPE_MASK) >> WINED3D_SM4_REGISTER_TYPE_SHIFT;
     if (register_type >= sizeof(register_type_table) / sizeof(*register_type_table))
@@ -276,6 +280,16 @@ static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wine
     {
         src_param->reg.type = register_type_table[register_type];
     }
+
+    order = (token & WINED3D_SM4_REGISTER_ORDER_MASK) >> WINED3D_SM4_REGISTER_ORDER_SHIFT;
+
+    if (order < 1) src_param->reg.idx = ~0U;
+    else src_param->reg.idx = *(*ptr)++;
+
+    if (order < 2) src_param->reg.array_idx = ~0U;
+    else src_param->reg.array_idx = *(*ptr)++;
+
+    if (order > 2) FIXME("Unhandled order %u.\n", order);
 
     if (register_type == WINED3D_SM4_RT_IMMCONST)
     {
@@ -304,7 +318,6 @@ static void shader_sm4_read_src_param(void *data, const DWORD **ptr, struct wine
     }
     else
     {
-        src_param->reg.idx = *(*ptr)++;
         src_param->swizzle = (token & WINED3D_SM4_SWIZZLE_MASK) >> WINED3D_SM4_SWIZZLE_SHIFT;
     }
 
@@ -319,8 +332,8 @@ static void shader_sm4_read_dst_param(void *data, const DWORD **ptr, struct wine
 {
     struct wined3d_sm4_data *priv = data;
     DWORD token = *(*ptr)++;
-    UINT register_idx = *(*ptr)++;
     enum wined3d_sm4_register_type register_type;
+    DWORD order;
 
     register_type = (token & WINED3D_SM4_REGISTER_TYPE_MASK) >> WINED3D_SM4_REGISTER_TYPE_SHIFT;
     if (register_type >= sizeof(register_type_table) / sizeof(*register_type_table))
@@ -333,7 +346,16 @@ static void shader_sm4_read_dst_param(void *data, const DWORD **ptr, struct wine
         dst_param->reg.type = register_type_table[register_type];
     }
 
-    dst_param->reg.idx = register_idx;
+    order = (token & WINED3D_SM4_REGISTER_ORDER_MASK) >> WINED3D_SM4_REGISTER_ORDER_SHIFT;
+
+    if (order < 1) dst_param->reg.idx = ~0U;
+    else dst_param->reg.idx = *(*ptr)++;
+
+    if (order < 2) dst_param->reg.array_idx = ~0U;
+    else dst_param->reg.array_idx = *(*ptr)++;
+
+    if (order > 2) FIXME("Unhandled order %u.\n", order);
+
     dst_param->write_mask = (token & WINED3D_SM4_WRITEMASK_MASK) >> WINED3D_SM4_WRITEMASK_SHIFT;
     dst_param->modifiers = 0;
     dst_param->shift = 0;
