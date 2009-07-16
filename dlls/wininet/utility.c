@@ -306,7 +306,7 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
         case INTERNET_STATUS_NAME_RESOLVED:
         case INTERNET_STATUS_CONNECTING_TO_SERVER:
         case INTERNET_STATUS_CONNECTED_TO_SERVER:
-            lpvNewInfo = WININET_strdup_AtoW(lpvStatusInfo);
+            lpvNewInfo = heap_strdupAtoW(lpvStatusInfo);
             break;
         case INTERNET_STATUS_RESOLVING_NAME:
         case INTERNET_STATUS_REDIRECT:
