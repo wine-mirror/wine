@@ -3324,3 +3324,12 @@ HRESULT WINAPI RegisterApplicationRestart(PCWSTR pwzCommandLine, DWORD dwFlags)
 
     return S_OK;
 }
+
+/**********************************************************************
+ *           WTSGetActiveConsoleSessionId     (KERNEL32.@)
+ */
+DWORD WINAPI WTSGetActiveConsoleSessionId(void)
+{
+    FIXME("stub\n");
+    return 0;
+}

@@ -1133,7 +1133,7 @@
 @ stdcall VirtualQuery(ptr ptr long)
 @ stdcall VirtualQueryEx(long ptr ptr long)
 @ stdcall VirtualUnlock(ptr long)
-# @ stub WTSGetActiveConsoleSessionId
+@ stdcall WTSGetActiveConsoleSessionId()
 @ stdcall WaitCommEvent(long ptr ptr)
 @ stdcall WaitForDebugEvent(ptr long)
 @ stdcall WaitForMultipleObjects(long ptr long long)
