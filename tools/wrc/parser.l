@@ -573,7 +573,7 @@ L\"			{
 			}
 {ws}+			want_id = wanted_id;	/* Eat whitespace */
 
-<INITIAL>.		return yytext[0];
+<INITIAL>[ -~]		return yytext[0];
 
 <*>.|\n			{
 				/* Catch all rule to find any unmatched text */
@@ -582,8 +582,8 @@ L\"			{
 					line_number++;
 					char_number = 1;
 				}
-				parser_warning("Unmatched text '%c' (0x%02x) YY_START=%d\n",
-					isprint(*yytext & 0xff) ? *yytext : '.', *yytext, YY_START);
+				parser_error("Unmatched text '%c' (0x%02x) YY_START=%d",
+                                             isprint((unsigned char)*yytext) ? *yytext : '.', *yytext, YY_START);
 			}
 
 <<EOF>>			current_codepage = -1; yyterminate();
