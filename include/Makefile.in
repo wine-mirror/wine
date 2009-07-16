@@ -346,6 +346,7 @@ SRCDIR_INCLUDES = \
 	npapi.h \
 	nspapi.h \
 	ntddcdrm.h \
+	ntddndis.h \
 	ntddscsi.h \
 	ntddstor.h \
 	ntdsapi.h \
