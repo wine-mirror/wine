@@ -3842,23 +3842,29 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_CREATE:
   {
-    SCROLLINFO si;
+    INT max;
 
     ME_SetDefaultFormatRect(editor);
 
-    si.cbSize = sizeof(si);
-    si.fMask = SIF_PAGE | SIF_RANGE;
+    max = (editor->styleFlags & ES_DISABLENOSCROLL) ? 1 : 0;
+    if (~editor->styleFlags & ES_DISABLENOSCROLL || editor->styleFlags & WS_VSCROLL)
+      ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, 0, max, TRUE);
+
+    if (~editor->styleFlags & ES_DISABLENOSCROLL || editor->styleFlags & WS_HSCROLL)
+      ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, 0, max, TRUE);
+
     if (editor->styleFlags & ES_DISABLENOSCROLL)
-      si.fMask |= SIF_DISABLENOSCROLL;
-    si.nMax = (si.fMask & SIF_DISABLENOSCROLL) ? 1 : 0;
-    si.nMin = 0;
-    si.nPage = 0;
-    if (editor->hWnd) {
-      SetScrollInfo(editor->hWnd, SB_VERT, &si, TRUE);
-      SetScrollInfo(editor->hWnd, SB_HORZ, &si, TRUE);
-    } else {
-      ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, si.nMin, si.nMax, TRUE);
-      ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, si.nMin, si.nMax, TRUE);
+    {
+      if (editor->styleFlags & WS_VSCROLL)
+      {
+        ITextHost_TxEnableScrollBar(editor->texthost, SB_VERT, ESB_DISABLE_BOTH);
+        ITextHost_TxShowScrollBar(editor->texthost, SB_VERT, TRUE);
+      }
+      if (editor->styleFlags & WS_HSCROLL)
+      {
+        ITextHost_TxEnableScrollBar(editor->texthost, SB_HORZ, ESB_DISABLE_BOTH);
+        ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, TRUE);
+      }
     }
 
     ME_CommitUndo(editor);
