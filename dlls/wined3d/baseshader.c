@@ -928,6 +928,10 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
             TRACE("l");
             break;
 
+        case WINED3DSPR_CONSTBUFFER:
+            TRACE("cb");
+            break;
+
         default:
             TRACE("unhandled_rtype(%#x)", reg->type);
             break;

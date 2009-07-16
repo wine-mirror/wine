@@ -58,10 +58,11 @@ enum wined3d_sm4_opcode
 
 enum wined3d_sm4_register_type
 {
-    WINED3D_SM4_RT_TEMP     = 0x0,
-    WINED3D_SM4_RT_INPUT    = 0x1,
-    WINED3D_SM4_RT_OUTPUT   = 0x2,
-    WINED3D_SM4_RT_IMMCONST = 0x4,
+    WINED3D_SM4_RT_TEMP         = 0x0,
+    WINED3D_SM4_RT_INPUT        = 0x1,
+    WINED3D_SM4_RT_OUTPUT       = 0x2,
+    WINED3D_SM4_RT_IMMCONST     = 0x4,
+    WINED3D_SM4_RT_CONSTBUFFER  = 0x8,
 };
 
 enum wined3d_sm4_immconst_type
@@ -104,11 +105,15 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
 
 static const WINED3DSHADER_PARAM_REGISTER_TYPE register_type_table[] =
 {
-    /* WINED3D_SM4_RT_TEMP */       WINED3DSPR_TEMP,
-    /* WINED3D_SM4_RT_INPUT */      WINED3DSPR_INPUT,
-    /* WINED3D_SM4_RT_OUTPUT */     WINED3DSPR_OUTPUT,
-    /* UNKNOWN */                   0,
-    /* WINED3D_SM4_RT_IMMCONST */   WINED3DSPR_IMMCONST,
+    /* WINED3D_SM4_RT_TEMP */           WINED3DSPR_TEMP,
+    /* WINED3D_SM4_RT_INPUT */          WINED3DSPR_INPUT,
+    /* WINED3D_SM4_RT_OUTPUT */         WINED3DSPR_OUTPUT,
+    /* UNKNOWN */                       0,
+    /* WINED3D_SM4_RT_IMMCONST */       WINED3DSPR_IMMCONST,
+    /* UNKNOWN */                       0,
+    /* UNKNOWN */                       0,
+    /* UNKNOWN */                       0,
+    /* WINED3D_SM4_RT_CONSTBUFFER */    WINED3DSPR_CONSTBUFFER,
 };
 
 static const struct sysval_map sysval_map[] =
