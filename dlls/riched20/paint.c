@@ -1061,22 +1061,28 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
   if (editor->hWnd)
   {
     LONG winStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
-    bScrollBarIsVisible = (winStyle & WS_HSCROLL) != 0;
-    bScrollBarWillBeVisible = (editor->nTotalWidth > editor->sizeWindow.cx
-                               && (editor->styleFlags & WS_HSCROLL))
-                              || (editor->styleFlags & ES_DISABLENOSCROLL);
-    if (bScrollBarIsVisible != bScrollBarWillBeVisible)
-      ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ,
-                                bScrollBarWillBeVisible);
+    if (editor->styleFlags & WS_HSCROLL)
+    {
+      bScrollBarIsVisible = (winStyle & WS_HSCROLL) != 0;
+      bScrollBarWillBeVisible = (editor->nTotalWidth > editor->sizeWindow.cx
+                                 && (editor->styleFlags & WS_HSCROLL))
+                                || (editor->styleFlags & ES_DISABLENOSCROLL);
+      if (bScrollBarIsVisible != bScrollBarWillBeVisible)
+        ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ,
+                                  bScrollBarWillBeVisible);
+    }
 
-    bScrollBarIsVisible = (winStyle & WS_VSCROLL) != 0;
-    bScrollBarWillBeVisible = (editor->nTotalLength > editor->sizeWindow.cy
-                               && (editor->styleFlags & WS_VSCROLL)
-                               && (editor->styleFlags & ES_MULTILINE))
-                              || (editor->styleFlags & ES_DISABLENOSCROLL);
-    if (bScrollBarIsVisible != bScrollBarWillBeVisible)
-      ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
-                                bScrollBarWillBeVisible);
+    if (editor->styleFlags & WS_VSCROLL)
+    {
+      bScrollBarIsVisible = (winStyle & WS_VSCROLL) != 0;
+      bScrollBarWillBeVisible = (editor->nTotalLength > editor->sizeWindow.cy
+                                 && (editor->styleFlags & WS_VSCROLL)
+                                 && (editor->styleFlags & ES_MULTILINE))
+                                || (editor->styleFlags & ES_DISABLENOSCROLL);
+      if (bScrollBarIsVisible != bScrollBarWillBeVisible)
+        ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
+                                  bScrollBarWillBeVisible);
+    }
   }
   ME_UpdateScrollBar(editor);
 }
@@ -1136,6 +1142,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 
   si.cbSize = sizeof(si);
   si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
+  si.nMin = 0;
   if (editor->styleFlags & ES_DISABLENOSCROLL)
     si.fMask |= SIF_DISABLENOSCROLL;
 
@@ -1150,20 +1157,19 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     return;
   }
 
-  si.nMin = 0;
   si.nMax = editor->nTotalWidth;
   si.nPos = editor->horz_si.nPos;
   si.nPage = editor->sizeWindow.cx;
 
-  if (si.nMin != editor->horz_si.nMin ||
-      si.nMax != editor->horz_si.nMax ||
+  if (si.nMax != editor->horz_si.nMax ||
       si.nPage != editor->horz_si.nPage)
   {
     TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
-    editor->horz_si.nMin = si.nMin;
     editor->horz_si.nMax = si.nMax;
     editor->horz_si.nPage = si.nPage;
-    if (bScrollBarWillBeVisible || bScrollBarWasVisible) {
+    if ((bScrollBarWillBeVisible || bScrollBarWasVisible) &&
+        editor->styleFlags & WS_HSCROLL)
+    {
       if (editor->hWnd) {
         SetScrollInfo(editor->hWnd, SB_HORZ, &si, TRUE);
       } else {
@@ -1175,14 +1181,17 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     }
   }
 
-  if (si.fMask & SIF_DISABLENOSCROLL) {
-    bScrollBarWillBeVisible = TRUE;
-  } else if (!(editor->styleFlags & WS_HSCROLL)) {
-    bScrollBarWillBeVisible = FALSE;
-  }
+  if (editor->styleFlags & WS_HSCROLL)
+  {
+    if (si.fMask & SIF_DISABLENOSCROLL) {
+      bScrollBarWillBeVisible = TRUE;
+    } else if (!(editor->styleFlags & WS_HSCROLL)) {
+      bScrollBarWillBeVisible = FALSE;
+    }
 
-  if (bScrollBarWasVisible != bScrollBarWillBeVisible)
-    ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, bScrollBarWillBeVisible);
+    if (bScrollBarWasVisible != bScrollBarWillBeVisible)
+      ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, bScrollBarWillBeVisible);
+  }
 
   /* Update vertical scrollbar */
   bScrollBarWasVisible = editor->vert_si.nMax > editor->vert_si.nPage;
@@ -1201,15 +1210,15 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
   si.nPos = editor->vert_si.nPos;
   si.nPage = editor->sizeWindow.cy;
 
-  if (si.nMin != editor->vert_si.nMin ||
-      si.nMax != editor->vert_si.nMax ||
+  if (si.nMax != editor->vert_si.nMax ||
       si.nPage != editor->vert_si.nPage)
   {
     TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
-    editor->vert_si.nMin = si.nMin;
     editor->vert_si.nMax = si.nMax;
     editor->vert_si.nPage = si.nPage;
-    if (bScrollBarWillBeVisible || bScrollBarWasVisible) {
+    if ((bScrollBarWillBeVisible || bScrollBarWasVisible) &&
+        editor->styleFlags & WS_VSCROLL)
+    {
       if (editor->hWnd) {
         SetScrollInfo(editor->hWnd, SB_VERT, &si, TRUE);
       } else {
@@ -1221,15 +1230,18 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     }
   }
 
-  if (si.fMask & SIF_DISABLENOSCROLL) {
-    bScrollBarWillBeVisible = TRUE;
-  } else if (!(editor->styleFlags & WS_VSCROLL)) {
-    bScrollBarWillBeVisible = FALSE;
-  }
+  if (editor->styleFlags & WS_VSCROLL)
+  {
+    if (si.fMask & SIF_DISABLENOSCROLL) {
+      bScrollBarWillBeVisible = TRUE;
+    } else if (!(editor->styleFlags & WS_VSCROLL)) {
+      bScrollBarWillBeVisible = FALSE;
+    }
 
-  if (bScrollBarWasVisible != bScrollBarWillBeVisible)
-    ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
-                              bScrollBarWillBeVisible);
+    if (bScrollBarWasVisible != bScrollBarWillBeVisible)
+      ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
+                                bScrollBarWillBeVisible);
+  }
 }
 
 void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor)
