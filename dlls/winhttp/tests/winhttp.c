@@ -905,10 +905,14 @@ static void test_set_default_proxy_config(void)
         len = get_default_proxy_reg_value( saved_proxy_settings, len, &type );
     }
 
-    SetLastError(0xdeadbeef);
-    ret = WinHttpSetDefaultProxyConfiguration(NULL);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
-        "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    if (0)
+    {
+        /* Crashes on Vista and higher */
+        SetLastError(0xdeadbeef);
+        ret = WinHttpSetDefaultProxyConfiguration(NULL);
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+            "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    }
 
     /* test with invalid access type */
     info.dwAccessType = 0xdeadbeef;
