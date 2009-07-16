@@ -50,6 +50,7 @@ enum wined3d_sm4_opcode
 {
     WINED3D_SM4_OP_ADD      = 0x00,
     WINED3D_SM4_OP_DP3      = 0x10,
+    WINED3D_SM4_OP_DP4      = 0x11,
     WINED3D_SM4_OP_EXP      = 0x19,
     WINED3D_SM4_OP_MOV      = 0x36,
     WINED3D_SM4_OP_MUL      = 0x38,
@@ -99,6 +100,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
 {
     {WINED3D_SM4_OP_ADD,    WINED3DSIH_ADD,         1,  2},
     {WINED3D_SM4_OP_DP3,    WINED3DSIH_DP3,         1,  2},
+    {WINED3D_SM4_OP_DP4,    WINED3DSIH_DP4,         1,  2},
     {WINED3D_SM4_OP_EXP,    WINED3DSIH_EXP,         1,  1},
     {WINED3D_SM4_OP_MOV,    WINED3DSIH_MOV,         1,  1},
     {WINED3D_SM4_OP_MUL,    WINED3DSIH_MUL,         1,  2},
