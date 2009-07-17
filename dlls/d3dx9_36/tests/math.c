@@ -762,10 +762,6 @@ static void D3DXQuaternionTest(void)
     expectedquat.x = 1.0f/11.0f; expectedquat.y = 2.0f/11.0f; expectedquat.z = 4.0f/11.0f; expectedquat.w = 10.0f/11.0f;
     D3DXQuaternionNormalize(&gotquat,&q);
     expect_vec4(expectedquat,gotquat);
-    /* Test the nul quaternion */
-    expectedquat.x = 0.0f; expectedquat.y = 0.0f; expectedquat.z = 0.0f; expectedquat.w = 0.0f;
-    D3DXQuaternionNormalize(&gotquat,&nul);
-    expect_vec4(expectedquat,gotquat);
 
 /*_______________D3DXQuaternionRotationAxis___________________*/
     axis.x = 2.0f; axis.y = 7.0; axis.z = 13.0f;

@@ -1241,21 +1241,14 @@ D3DXQUATERNION* WINAPI D3DXQuaternionNormalize(D3DXQUATERNION *pout, CONST D3DXQ
     FLOAT norm;
 
     norm = D3DXQuaternionLength(pq);
-    if ( !norm )
-    {
-     out.x = 0.0f;
-     out.y = 0.0f;
-     out.z = 0.0f;
-     out.w = 0.0f;
-    }
-    else
-    {
-     out.x = pq->x / norm;
-     out.y = pq->y / norm;
-     out.z = pq->z / norm;
-     out.w = pq->w / norm;
-    }
+
+    out.x = pq->x / norm;
+    out.y = pq->y / norm;
+    out.z = pq->z / norm;
+    out.w = pq->w / norm;
+
     *pout=out;
+
     return pout;
 }
 
