@@ -1345,7 +1345,8 @@ static void ME_RTFReadHook(RTF_Info *info)
       {
         case rtfBeginGroup:
           if (info->stackTop < maxStack) {
-            info->stack[info->stackTop].fmt = info->style->fmt;
+            info->stack[info->stackTop].style = info->style;
+            ME_AddRefStyle(info->style);
             info->stack[info->stackTop].codePage = info->codePage;
             info->stack[info->stackTop].unicodeLength = info->unicodeLength;
           }
@@ -1354,7 +1355,6 @@ static void ME_RTFReadHook(RTF_Info *info)
           break;
         case rtfEndGroup:
         {
-          ME_Style *s;
           RTFFlushOutputBuffer(info);
           info->stackTop--;
           if (info->stackTop<=0) {
@@ -1362,15 +1362,12 @@ static void ME_RTFReadHook(RTF_Info *info)
             return;
           }
           assert(info->stackTop >= 0);
-          if (info->styleChanged)
-          {
-            /* FIXME too slow ? how come ? */
-            s = ME_ApplyStyle(info->style, &info->stack[info->stackTop].fmt);
-            ME_ReleaseStyle(info->style);
-            info->style = s;
-            info->codePage = info->stack[info->stackTop].codePage;
-            info->unicodeLength = info->stack[info->stackTop].unicodeLength;
-          }
+
+          ME_ReleaseStyle(info->style);
+          info->style = info->stack[info->stackTop].style;
+          ME_AddRefStyle(info->style);
+          info->codePage = info->stack[info->stackTop].codePage;
+          info->unicodeLength = info->stack[info->stackTop].unicodeLength;
           break;
         }
       }

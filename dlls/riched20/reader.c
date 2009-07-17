@@ -442,7 +442,11 @@ static void RTFUngetToken(RTF_Info *info)
 	 * increment the value to compensate for it being decremented
 	 * twice due to the RTFUngetToken. */
 	if(RTFCheckCM (info, rtfGroup, rtfEndGroup))
+	{
+		info->stack[info->stackTop].style = info->style;
+		ME_AddRefStyle(info->style);
 		info->stackTop++;
+	}
 }
 
 
