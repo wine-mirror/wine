@@ -950,7 +950,7 @@ static void D3DXQuaternionTest(void)
 
 static void D3DXVector2Test(void)
 {
-    D3DXVECTOR2 expectedvec, gotvec, nul, nulproj, u, v, w, x;
+    D3DXVECTOR2 expectedvec, gotvec, nul, u, v, w, x;
     LPD3DXVECTOR2 funcpointer;
     D3DXVECTOR4 expectedtrans, gottrans;
     D3DXMATRIX mat;
@@ -1104,11 +1104,6 @@ static void D3DXVector2Test(void)
 /*_______________D3DXVec2TransformCoord_______________________*/
     expectedvec.x = 0.6f; expectedvec.y = 11.0f/15.0f;
     D3DXVec2TransformCoord(&gotvec,&u,&mat);
-    expect_vec(expectedvec,gotvec);
-    /* Test the nul projected vector */
-    nulproj.x = -2.0f; nulproj.y = -1.0f;
-    expectedvec.x = 0.0f; expectedvec.y = 0.0f;
-    D3DXVec2TransformCoord(&gotvec,&nulproj,&mat);
     expect_vec(expectedvec,gotvec);
 
  /*_______________D3DXVec2TransformNormal______________________*/
