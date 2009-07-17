@@ -866,7 +866,6 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_MultMatrixLocal(ID3DXMatrixStack *ifa
 
     TRACE("iface %p\n", iface);
 
-    if (!pm) return D3DERR_INVALIDCALL;
     D3DXMatrixMultiply(&This->stack[This->current], pm, &This->stack[This->current]);
 
     return D3D_OK;
