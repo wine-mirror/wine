@@ -6050,9 +6050,9 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
 
         ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
-        context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->activeContext->dst_fbo);
-        context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, surface);
-        context_attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, NULL, FALSE);
+        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, &This->activeContext->dst_fbo);
+        context_attach_surface_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, 0, surface);
+        context_attach_depth_stencil_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, NULL, FALSE);
     }
 
     if (rect) {
@@ -6081,7 +6081,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     checkGLcall("glClear");
 
     if (This->activeContext->current_fbo) {
-        context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
+        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
     } else {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
         checkGLcall("glBindFramebuffer()");
@@ -6474,11 +6474,11 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     } else {
         TRACE("Source surface %p is offscreen\n", src_surface);
         ENTER_GL();
-        context_bind_fbo(iface, GL_READ_FRAMEBUFFER_EXT, &This->activeContext->src_fbo);
-        context_attach_surface_fbo(This, GL_READ_FRAMEBUFFER_EXT, 0, src_surface);
+        context_bind_fbo(This->activeContext, GL_READ_FRAMEBUFFER_EXT, &This->activeContext->src_fbo);
+        context_attach_surface_fbo(This->activeContext, GL_READ_FRAMEBUFFER_EXT, 0, src_surface);
         glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
         checkGLcall("glReadBuffer()");
-        context_attach_depth_stencil_fbo(This, GL_READ_FRAMEBUFFER_EXT, NULL, FALSE);
+        context_attach_depth_stencil_fbo(This->activeContext, GL_READ_FRAMEBUFFER_EXT, NULL, FALSE);
     }
     LEAVE_GL();
 
@@ -6514,11 +6514,11 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         TRACE("Destination surface %p is offscreen\n", dst_surface);
 
         ENTER_GL();
-        context_bind_fbo(iface, GL_DRAW_FRAMEBUFFER_EXT, &This->activeContext->dst_fbo);
-        context_attach_surface_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, 0, dst_surface);
+        context_bind_fbo(This->activeContext, GL_DRAW_FRAMEBUFFER_EXT, &This->activeContext->dst_fbo);
+        context_attach_surface_fbo(This->activeContext, GL_DRAW_FRAMEBUFFER_EXT, 0, dst_surface);
         glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
         checkGLcall("glDrawBuffer()");
-        context_attach_depth_stencil_fbo(This, GL_DRAW_FRAMEBUFFER_EXT, NULL, FALSE);
+        context_attach_depth_stencil_fbo(This->activeContext, GL_DRAW_FRAMEBUFFER_EXT, NULL, FALSE);
     }
     glDisable(GL_SCISSOR_TEST);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
@@ -6536,7 +6536,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     IWineD3DSurface_ModifyLocation(dst_surface, SFLAG_INDRAWABLE, TRUE);
 
     if (This->activeContext->current_fbo) {
-        context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
+        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
     } else {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
         checkGLcall("glBindFramebuffer()");

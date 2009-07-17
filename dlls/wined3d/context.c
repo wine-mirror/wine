@@ -44,9 +44,9 @@ void context_set_last_device(IWineD3DDeviceImpl *device)
 /* FBO helper functions */
 
 /* GL locking is done by the caller */
-void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo)
+void context_bind_fbo(struct WineD3DContext *context, GLenum target, GLuint *fbo)
 {
-    const struct wined3d_gl_info *gl_info = ((IWineD3DDeviceImpl *)iface)->activeContext->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (!*fbo)
     {
@@ -60,9 +60,8 @@ void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo)
 }
 
 /* GL locking is done by the caller */
-static void context_clean_fbo_attachments(IWineD3DDeviceImpl *This)
+static void context_clean_fbo_attachments(const struct wined3d_gl_info *gl_info)
 {
-    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
     unsigned int i;
 
     for (i = 0; i < GL_LIMITS(buffers); ++i)
@@ -78,14 +77,14 @@ static void context_clean_fbo_attachments(IWineD3DDeviceImpl *This)
 }
 
 /* GL locking is done by the caller */
-static void context_destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
+static void context_destroy_fbo(struct WineD3DContext *context, const GLuint *fbo)
 {
-    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, *fbo));
     checkGLcall("glBindFramebuffer()");
 
-    context_clean_fbo_attachments(This);
+    context_clean_fbo_attachments(gl_info);
 
     GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
     checkGLcall("glBindFramebuffer()");
@@ -94,10 +93,10 @@ static void context_destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
 }
 
 /* GL locking is done by the caller */
-static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD3DSurface *surface, BOOL force_preload)
+static void context_apply_attachment_filter_states(IWineD3DSurface *surface, BOOL force_preload)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
+    IWineD3DDeviceImpl *device = surface_impl->resource.wineD3DDevice;
     IWineD3DBaseTextureImpl *texture_impl;
     BOOL update_minfilter = FALSE;
     BOOL update_magfilter = FALSE;
@@ -122,7 +121,7 @@ static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD
         if (texture_impl->baseTexture.bindCount)
         {
             WARN("Render targets should not be bound to a sampler\n");
-            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(texture_impl->baseTexture.sampler));
+            IWineD3DDeviceImpl_MarkStateDirty(device, STATE_SAMPLER(texture_impl->baseTexture.sampler));
         }
 
         IWineD3DBaseTexture_Release((IWineD3DBaseTexture *)texture_impl);
@@ -158,10 +157,11 @@ static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD
 }
 
 /* GL locking is done by the caller */
-void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer)
+void context_attach_depth_stencil_fbo(struct WineD3DContext *context,
+        GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer)
 {
     IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
-    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Attach depth stencil %p\n", depth_stencil);
 
@@ -187,7 +187,7 @@ void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_targe
         }
         else
         {
-            context_apply_attachment_filter_states((IWineD3DDevice *)This, depth_stencil, TRUE);
+            context_apply_attachment_filter_states(depth_stencil, TRUE);
 
             if (format_flags & WINED3DFMT_FLAG_DEPTH)
             {
@@ -229,16 +229,17 @@ void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_targe
 }
 
 /* GL locking is done by the caller */
-void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface)
+void context_attach_surface_fbo(const struct WineD3DContext *context,
+        GLenum fbo_target, DWORD idx, IWineD3DSurface *surface)
 {
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
-    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Attach surface %p to %u\n", surface, idx);
 
     if (surface)
     {
-        context_apply_attachment_filter_states((IWineD3DDevice *)This, surface, TRUE);
+        context_apply_attachment_filter_states(surface, TRUE);
 
         GL_EXTCALL(glFramebufferTexture2DEXT(fbo_target, GL_COLOR_ATTACHMENT0_EXT + idx, surface_impl->texture_target,
                 surface_impl->texture_name, surface_impl->texture_level));
@@ -250,10 +251,9 @@ void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWO
 }
 
 /* GL locking is done by the caller */
-static void context_check_fbo_status(IWineD3DDevice *iface)
+static void context_check_fbo_status(struct WineD3DContext *context)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum status;
 
     status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
@@ -268,7 +268,7 @@ static void context_check_fbo_status(IWineD3DDevice *iface)
         /* Dump the FBO attachments */
         for (i = 0; i < GL_LIMITS(buffers); ++i)
         {
-            attachment = (IWineD3DSurfaceImpl *)This->activeContext->current_fbo->render_targets[i];
+            attachment = (IWineD3DSurfaceImpl *)context->current_fbo->render_targets[i];
             if (attachment)
             {
                 FIXME("\tColor attachment %d: (%p) %s %ux%u\n",
@@ -276,7 +276,7 @@ static void context_check_fbo_status(IWineD3DDevice *iface)
                         attachment->pow2Width, attachment->pow2Height);
             }
         }
-        attachment = (IWineD3DSurfaceImpl *)This->activeContext->current_fbo->depth_stencil;
+        attachment = (IWineD3DSurfaceImpl *)context->current_fbo->depth_stencil;
         if (attachment)
         {
             FIXME("\tDepth attachment: (%p) %s %ux%u\n",
@@ -286,16 +286,16 @@ static void context_check_fbo_status(IWineD3DDevice *iface)
     }
 }
 
-static struct fbo_entry *context_create_fbo_entry(IWineD3DDevice *iface)
+static struct fbo_entry *context_create_fbo_entry(struct WineD3DContext *context)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
 
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
     entry->render_targets = HeapAlloc(GetProcessHeap(), 0, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
-    memcpy(entry->render_targets, This->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
-    entry->depth_stencil = This->stencilBufferTarget;
+    memcpy(entry->render_targets, device->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
+    entry->depth_stencil = device->stencilBufferTarget;
     entry->attached = FALSE;
     entry->id = 0;
 
@@ -303,27 +303,27 @@ static struct fbo_entry *context_create_fbo_entry(IWineD3DDevice *iface)
 }
 
 /* GL locking is done by the caller */
-static void context_reuse_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *entry)
+static void context_reuse_fbo_entry(struct WineD3DContext *context, struct fbo_entry *entry)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, entry->id));
     checkGLcall("glBindFramebuffer()");
-    context_clean_fbo_attachments(This);
+    context_clean_fbo_attachments(gl_info);
 
-    memcpy(entry->render_targets, This->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
-    entry->depth_stencil = This->stencilBufferTarget;
+    memcpy(entry->render_targets, device->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
+    entry->depth_stencil = device->stencilBufferTarget;
     entry->attached = FALSE;
 }
 
 /* GL locking is done by the caller */
-static void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, WineD3DContext *context, struct fbo_entry *entry)
+static void context_destroy_fbo_entry(struct WineD3DContext *context, struct fbo_entry *entry)
 {
     if (entry->id)
     {
         TRACE("Destroy FBO %d\n", entry->id);
-        context_destroy_fbo(This, &entry->id);
+        context_destroy_fbo(context, &entry->id);
     }
     --context->fbo_entry_count;
     list_remove(&entry->entry);
@@ -333,16 +333,16 @@ static void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, WineD3DContext *
 
 
 /* GL locking is done by the caller */
-static struct fbo_entry *context_find_fbo_entry(IWineD3DDevice *iface, WineD3DContext *context)
+static struct fbo_entry *context_find_fbo_entry(struct WineD3DContext *context)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
 
     LIST_FOR_EACH_ENTRY(entry, &context->fbo_list, struct fbo_entry, entry)
     {
-        if (!memcmp(entry->render_targets, This->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets))
-                && entry->depth_stencil == This->stencilBufferTarget)
+        if (!memcmp(entry->render_targets, device->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets))
+                && entry->depth_stencil == device->stencilBufferTarget)
         {
             list_remove(&entry->entry);
             list_add_head(&context->fbo_list, &entry->entry);
@@ -352,14 +352,14 @@ static struct fbo_entry *context_find_fbo_entry(IWineD3DDevice *iface, WineD3DCo
 
     if (context->fbo_entry_count < WINED3D_MAX_FBO_ENTRIES)
     {
-        entry = context_create_fbo_entry(iface);
+        entry = context_create_fbo_entry(context);
         list_add_head(&context->fbo_list, &entry->entry);
         ++context->fbo_entry_count;
     }
     else
     {
         entry = LIST_ENTRY(list_tail(&context->fbo_list), struct fbo_entry, entry);
-        context_reuse_fbo_entry(iface, entry);
+        context_reuse_fbo_entry(context, entry);
         list_remove(&entry->entry);
         list_add_head(&context->fbo_list, &entry->entry);
     }
@@ -368,69 +368,69 @@ static struct fbo_entry *context_find_fbo_entry(IWineD3DDevice *iface, WineD3DCo
 }
 
 /* GL locking is done by the caller */
-static void context_apply_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *entry)
+static void context_apply_fbo_entry(struct WineD3DContext *context, struct fbo_entry *entry)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i;
 
-    context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &entry->id);
+    context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &entry->id);
 
     if (!entry->attached)
     {
         /* Apply render targets */
         for (i = 0; i < GL_LIMITS(buffers); ++i)
         {
-            IWineD3DSurface *render_target = This->render_targets[i];
-            context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, i, render_target);
+            IWineD3DSurface *render_target = device->render_targets[i];
+            context_attach_surface_fbo(context, GL_FRAMEBUFFER_EXT, i, render_target);
         }
 
         /* Apply depth targets */
-        if (This->stencilBufferTarget) {
-            unsigned int w = ((IWineD3DSurfaceImpl *)This->render_targets[0])->pow2Width;
-            unsigned int h = ((IWineD3DSurfaceImpl *)This->render_targets[0])->pow2Height;
+        if (device->stencilBufferTarget)
+        {
+            unsigned int w = ((IWineD3DSurfaceImpl *)device->render_targets[0])->pow2Width;
+            unsigned int h = ((IWineD3DSurfaceImpl *)device->render_targets[0])->pow2Height;
 
-            surface_set_compatible_renderbuffer(This->stencilBufferTarget, w, h);
+            surface_set_compatible_renderbuffer(device->stencilBufferTarget, w, h);
         }
-        context_attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, This->stencilBufferTarget, TRUE);
+        context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER_EXT, device->stencilBufferTarget, TRUE);
 
         entry->attached = TRUE;
     } else {
         for (i = 0; i < GL_LIMITS(buffers); ++i)
         {
-            if (This->render_targets[i])
-                context_apply_attachment_filter_states(iface, This->render_targets[i], FALSE);
+            if (device->render_targets[i])
+                context_apply_attachment_filter_states(device->render_targets[i], FALSE);
         }
-        if (This->stencilBufferTarget)
-            context_apply_attachment_filter_states(iface, This->stencilBufferTarget, FALSE);
+        if (device->stencilBufferTarget)
+            context_apply_attachment_filter_states(device->stencilBufferTarget, FALSE);
     }
 
     for (i = 0; i < GL_LIMITS(buffers); ++i)
     {
-        if (This->render_targets[i])
-            This->draw_buffers[i] = GL_COLOR_ATTACHMENT0_EXT + i;
+        if (device->render_targets[i])
+            device->draw_buffers[i] = GL_COLOR_ATTACHMENT0_EXT + i;
         else
-            This->draw_buffers[i] = GL_NONE;
+            device->draw_buffers[i] = GL_NONE;
     }
 }
 
 /* GL locking is done by the caller */
-static void context_apply_fbo_state(IWineD3DDevice *iface)
+static void context_apply_fbo_state(struct WineD3DContext *context)
 {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    WineD3DContext *context = This->activeContext;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    if (This->render_offscreen)
+    if (device->render_offscreen)
     {
-        context->current_fbo = context_find_fbo_entry(iface, context);
-        context_apply_fbo_entry(iface, context->current_fbo);
+        context->current_fbo = context_find_fbo_entry(context);
+        context_apply_fbo_entry(context, context->current_fbo);
     } else {
         context->current_fbo = NULL;
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
     }
 
-    context_check_fbo_status(iface);
+    context_check_fbo_status(context);
 }
 
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type)
@@ -510,13 +510,13 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                     {
                         if (entry->render_targets[j] == (IWineD3DSurface *)resource)
                         {
-                            context_destroy_fbo_entry(This, context, entry);
+                            context_destroy_fbo_entry(context, entry);
                             destroyed = TRUE;
                         }
                     }
 
                     if (!destroyed && entry->depth_stencil == (IWineD3DSurface *)resource)
-                        context_destroy_fbo_entry(This, context, entry);
+                        context_destroy_fbo_entry(context, entry);
                 }
 
                 LEAVE_GL();
@@ -1191,19 +1191,19 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
 
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry) {
         if (!has_glctx) entry->id = 0;
-        context_destroy_fbo_entry(This, context, entry);
+        context_destroy_fbo_entry(context, entry);
     }
     if (has_glctx)
     {
         if (context->src_fbo)
         {
             TRACE("Destroy src FBO %d\n", context->src_fbo);
-            context_destroy_fbo(This, &context->src_fbo);
+            context_destroy_fbo(context, &context->src_fbo);
         }
         if (context->dst_fbo)
         {
             TRACE("Destroy dst FBO %d\n", context->dst_fbo);
-            context_destroy_fbo(This, &context->dst_fbo);
+            context_destroy_fbo(context, &context->dst_fbo);
         }
         if (context->dummy_arbfp_prog)
         {
@@ -1780,7 +1780,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         case CTXUSAGE_DRAWPRIM:
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
                 ENTER_GL();
-                context_apply_fbo_state((IWineD3DDevice *)This);
+                context_apply_fbo_state(context);
                 LEAVE_GL();
             }
             if (context->draw_buffer_dirty) {
@@ -1794,9 +1794,9 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                 if (This->render_offscreen) {
                     FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
                     ENTER_GL();
-                    context_bind_fbo((IWineD3DDevice *)This, GL_FRAMEBUFFER_EXT, &context->dst_fbo);
-                    context_attach_surface_fbo(This, GL_FRAMEBUFFER_EXT, 0, target);
-                    context_attach_depth_stencil_fbo(This, GL_FRAMEBUFFER_EXT, NULL, FALSE);
+                    context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &context->dst_fbo);
+                    context_attach_surface_fbo(context, GL_FRAMEBUFFER_EXT, 0, target);
+                    context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER_EXT, NULL, FALSE);
                     LEAVE_GL();
                 } else {
                     ENTER_GL();

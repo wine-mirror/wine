@@ -1262,9 +1262,11 @@ WineD3DContext *getActiveContext(void);
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms);
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type);
-void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo);
-void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
-void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface);
+void context_bind_fbo(struct WineD3DContext *context, GLenum target, GLuint *fbo);
+void context_attach_depth_stencil_fbo(struct WineD3DContext *context,
+        GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
+void context_attach_surface_fbo(const struct WineD3DContext *context,
+        GLenum fbo_target, DWORD idx, IWineD3DSurface *surface);
 void context_set_last_device(IWineD3DDeviceImpl *device);
 
 void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain);

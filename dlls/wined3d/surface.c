@@ -4439,17 +4439,17 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
                 device->depth_blt_rb_h = This->currentDesc.Height;
             }
 
-            context_bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->activeContext->dst_fbo);
+            context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, &device->activeContext->dst_fbo);
             GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, device->depth_blt_rb));
             checkGLcall("glFramebufferRenderbufferEXT");
-            context_attach_depth_stencil_fbo(device, GL_FRAMEBUFFER_EXT, iface, FALSE);
+            context_attach_depth_stencil_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, iface, FALSE);
 
             /* Do the actual blit */
             surface_depth_blt(This, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height, bind_target);
             checkGLcall("depth_blt");
 
             if (device->activeContext->current_fbo) {
-                context_bind_fbo((IWineD3DDevice *)device, GL_FRAMEBUFFER_EXT, &device->activeContext->current_fbo->id);
+                context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, &device->activeContext->current_fbo->id);
             } else {
                 GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
                 checkGLcall("glBindFramebuffer()");
