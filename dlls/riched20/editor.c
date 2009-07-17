@@ -422,7 +422,10 @@ void ME_RTFCharAttrHook(RTF_Info *info)
       else if (info->rtfParam != rtfNoParam)
       {
         RTFColor *c = RTFGetColor(info, info->rtfParam);
-        fmt.crTextColor = (c->rtfCBlue<<16)|(c->rtfCGreen<<8)|(c->rtfCRed);
+        if (c && c->rtfCBlue >= 0)
+          fmt.crTextColor = (c->rtfCBlue<<16)|(c->rtfCGreen<<8)|(c->rtfCRed);
+        else
+          fmt.dwEffects = CFE_AUTOBACKCOLOR;
       }
       break;
     case rtfForeColor:
@@ -433,10 +436,11 @@ void ME_RTFCharAttrHook(RTF_Info *info)
       else if (info->rtfParam != rtfNoParam)
       {
         RTFColor *c = RTFGetColor(info, info->rtfParam);
-        if (c)
+        if (c && c->rtfCBlue >= 0)
           fmt.crTextColor = (c->rtfCBlue<<16)|(c->rtfCGreen<<8)|(c->rtfCRed);
-        else
-          fmt.crTextColor = 0;
+        else {
+          fmt.dwEffects = CFE_AUTOCOLOR;
+        }
       }
       break;
     case rtfFontNum:

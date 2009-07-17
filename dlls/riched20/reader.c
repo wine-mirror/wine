@@ -990,18 +990,21 @@ static void ReadColorTbl(RTF_Info *info)
 			break;
 		}
 		cp->rtfCNum = cnum++;
-		cp->rtfCRed = cp->rtfCGreen = cp->rtfCBlue = -1;
 		cp->rtfNextColor = info->colorList;
 		info->colorList = cp;
-		while (RTFCheckCM (info, rtfControl, rtfColorName))
-		{
-			switch (info->rtfMinor)
-			{
-			case rtfRed:	cp->rtfCRed = info->rtfParam; break;
-			case rtfGreen:	cp->rtfCGreen = info->rtfParam; break;
-			case rtfBlue:	cp->rtfCBlue = info->rtfParam; break;
-			}
-			RTFGetToken (info);
+		if (!RTFCheckCM (info, rtfControl, rtfColorName))
+			cp->rtfCRed = cp->rtfCGreen = cp->rtfCBlue = -1;
+		else {
+			cp->rtfCRed = cp->rtfCGreen = cp->rtfCBlue = 0;
+			do {
+				switch (info->rtfMinor)
+				{
+				case rtfRed:	cp->rtfCRed = info->rtfParam & 0xFF; break;
+				case rtfGreen:	cp->rtfCGreen = info->rtfParam & 0xFF; break;
+				case rtfBlue:	cp->rtfCBlue = info->rtfParam & 0xFF; break;
+				}
+				RTFGetToken (info);
+			} while (RTFCheckCM (info, rtfControl, rtfColorName));
 		}
 		if (info->rtfClass == rtfEOF)
 			break;
