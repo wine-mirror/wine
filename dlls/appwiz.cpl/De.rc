@@ -28,7 +28,7 @@ LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 STRINGTABLE
 {
    IDS_CPL_TITLE, "Software"
-   IDS_CPL_DESC, "Erlaubt ihnen neue Software hinzuzufügen, oder vorhandene zu entfernen."
+   IDS_CPL_DESC, "Erlaubt ihnen neue Software hinzuzufügen oder zu entfernen."
    IDS_TAB1_TITLE, "Anwendungen"
 
    IDS_UNINSTALL_FAILED, "Der Uninstaller konnte nicht gestartet werden, '%s'. Möchten Sie den Uninstall-Eintrag für dieses Programm aus der Registrierung entfernen?"
