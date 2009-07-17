@@ -37,6 +37,7 @@ RC_SRCS = \
 	rsrc_Ko.rc \
 	rsrc_Lt.rc \
 	rsrc_Nl.rc \
+	rsrc_Pt.rc \
 	rsrc_Ru.rc \
 	rsrc_Sv.rc
 
