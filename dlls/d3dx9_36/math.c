@@ -1725,20 +1725,12 @@ D3DXVECTOR4* WINAPI D3DXVec4Normalize(D3DXVECTOR4 *pout, CONST D3DXVECTOR4 *pv)
     FLOAT norm;
 
     norm = D3DXVec4Length(pv);
-    if ( !norm )
-    {
-     out.x = 0.0f;
-     out.y = 0.0f;
-     out.z = 0.0f;
-     out.w = 0.0f;
-    }
-    else
-    {
-     out.x = pv->x / norm;
-     out.y = pv->y / norm;
-     out.z = pv->z / norm;
-     out.w = pv->w / norm;
-    }
+
+    out.x = pv->x / norm;
+    out.y = pv->y / norm;
+    out.z = pv->z / norm;
+    out.w = pv->w / norm;
+
     *pout = out;
     return pout;
 }

@@ -1419,10 +1419,6 @@ static void D3DXVector4Test(void)
     expectedvec.x = 1.0f/11.0f; expectedvec.y = 2.0f/11.0f; expectedvec.z = 4.0f/11.0f; expectedvec.w = 10.0f/11.0f;
     D3DXVec4Normalize(&gotvec,&u);
     expect_vec4(expectedvec,gotvec);
-    /* Test the nul vector */
-    expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f; expectedvec.w = 0.0f;
-    D3DXVec4Normalize(&gotvec,&nul);
-    expect_vec4(expectedvec,gotvec);
 
 /*_______________D3DXVec4Scale____________________________*/
     expectedvec.x = -6.5f; expectedvec.y = -13.0f; expectedvec.z = -26.0f; expectedvec.w = -65.0f;
