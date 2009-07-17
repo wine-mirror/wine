@@ -1519,9 +1519,6 @@ static void test_matrix_stack(void)
     ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
     ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
 
-    hr = ID3DXMatrixStack_MultMatrix(stack, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
-
     hr = ID3DXMatrixStack_MultMatrixLocal(stack, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
 
