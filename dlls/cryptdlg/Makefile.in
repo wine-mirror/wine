@@ -15,6 +15,7 @@ RC_SRCS = \
 	cryptdlg_Ko.rc \
 	cryptdlg_Lt.rc \
 	cryptdlg_Nl.rc \
+	cryptdlg_Pt.rc \
 	cryptdlg_Ro.rc
 
 @MAKE_DLL_RULES@
