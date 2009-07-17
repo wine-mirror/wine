@@ -64,6 +64,30 @@ void context_bind_fbo(struct WineD3DContext *context, GLenum target, GLuint *fbo
         f = *fbo;
     }
 
+    switch (target)
+    {
+        case GL_READ_FRAMEBUFFER_EXT:
+            if (context->fbo_read_binding == f) return;
+            context->fbo_read_binding = f;
+            break;
+
+        case GL_DRAW_FRAMEBUFFER_EXT:
+            if (context->fbo_draw_binding == f) return;
+            context->fbo_draw_binding = f;
+            break;
+
+        case GL_FRAMEBUFFER_EXT:
+            if (context->fbo_read_binding == f
+                    && context->fbo_draw_binding == f) return;
+            context->fbo_read_binding = f;
+            context->fbo_draw_binding = f;
+            break;
+
+        default:
+            FIXME("Unhandled target %#x.\n", target);
+            break;
+    }
+
     GL_EXTCALL(glBindFramebufferEXT(target, f));
     checkGLcall("glBindFramebuffer()");
 }
