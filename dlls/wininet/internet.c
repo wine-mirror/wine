@@ -693,30 +693,12 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
 	goto lend;
     }
 
-    if (NULL != lpszAgent)
-    {
-        lpwai->lpszAgent = HeapAlloc( GetProcessHeap(),0,
-                                      (strlenW(lpszAgent)+1)*sizeof(WCHAR));
-        if (lpwai->lpszAgent)
-            lstrcpyW( lpwai->lpszAgent, lpszAgent );
-    }
+    lpwai->lpszAgent = heap_strdupW(lpszAgent);
     if(dwAccessType == INTERNET_OPEN_TYPE_PRECONFIG)
         INTERNET_ConfigureProxy( lpwai );
-    else if (NULL != lpszProxy)
-    {
-        lpwai->lpszProxy = HeapAlloc( GetProcessHeap(), 0,
-                                      (strlenW(lpszProxy)+1)*sizeof(WCHAR));
-        if (lpwai->lpszProxy)
-            lstrcpyW( lpwai->lpszProxy, lpszProxy );
-    }
-
-    if (NULL != lpszProxyBypass)
-    {
-        lpwai->lpszProxyBypass = HeapAlloc( GetProcessHeap(), 0,
-                                     (strlenW(lpszProxyBypass)+1)*sizeof(WCHAR));
-        if (lpwai->lpszProxyBypass)
-            lstrcpyW( lpwai->lpszProxyBypass, lpszProxyBypass );
-    }
+    else
+        lpwai->lpszProxy = heap_strdupW(lpszProxy);
+    lpwai->lpszProxyBypass = heap_strdupW(lpszProxyBypass);
 
 lend:
     if( lpwai )
@@ -741,33 +723,15 @@ lend:
 HINTERNET WINAPI InternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType,
     LPCSTR lpszProxy, LPCSTR lpszProxyBypass, DWORD dwFlags)
 {
-    HINTERNET rc = NULL;
-    INT len;
-    WCHAR *szAgent = NULL, *szProxy = NULL, *szBypass = NULL;
+    WCHAR *szAgent, *szProxy, *szBypass;
+    HINTERNET rc;
 
     TRACE("(%s, 0x%08x, %s, %s, 0x%08x)\n", debugstr_a(lpszAgent),
        dwAccessType, debugstr_a(lpszProxy), debugstr_a(lpszProxyBypass), dwFlags);
 
-    if( lpszAgent )
-    {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszAgent, -1, NULL, 0);
-        szAgent = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpszAgent, -1, szAgent, len);
-    }
-
-    if( lpszProxy )
-    {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszProxy, -1, NULL, 0);
-        szProxy = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpszProxy, -1, szProxy, len);
-    }
-
-    if( lpszProxyBypass )
-    {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszProxyBypass, -1, NULL, 0);
-        szBypass = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpszProxyBypass, -1, szBypass, len);
-    }
+    szAgent = heap_strdupAtoW(lpszAgent);
+    szProxy = heap_strdupAtoW(lpszProxy);
+    szBypass = heap_strdupAtoW(lpszProxyBypass);
 
     rc = InternetOpenW(szAgent, dwAccessType, szProxy, szBypass, dwFlags);
 
@@ -1025,30 +989,13 @@ HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
     DWORD dwService, DWORD dwFlags, DWORD_PTR dwContext)
 {
     HINTERNET rc = NULL;
-    INT len = 0;
-    LPWSTR szServerName = NULL;
-    LPWSTR szUserName = NULL;
-    LPWSTR szPassword = NULL;
+    LPWSTR szServerName;
+    LPWSTR szUserName;
+    LPWSTR szPassword;
 
-    if (lpszServerName)
-    {
-	len = MultiByteToWideChar(CP_ACP, 0, lpszServerName, -1, NULL, 0);
-        szServerName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpszServerName, -1, szServerName, len);
-    }
-    if (lpszUserName)
-    {
-	len = MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, NULL, 0);
-        szUserName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, szUserName, len);
-    }
-    if (lpszPassword)
-    {
-	len = MultiByteToWideChar(CP_ACP, 0, lpszPassword, -1, NULL, 0);
-        szPassword = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpszPassword, -1, szPassword, len);
-    }
-
+    szServerName = heap_strdupAtoW(lpszServerName);
+    szUserName = heap_strdupAtoW(lpszUserName);
+    szPassword = heap_strdupAtoW(lpszPassword);
 
     rc = InternetConnectW(hInternet, szServerName, nServerPort,
         szUserName, szPassword, dwService, dwFlags, dwContext);
@@ -2590,16 +2537,12 @@ BOOL WINAPI InternetTimeToSystemTimeA( LPCSTR string, SYSTEMTIME* time, DWORD re
 {
     BOOL ret = FALSE;
     WCHAR *stringW;
-    int len;
 
     TRACE( "%s %p 0x%08x\n", debugstr_a(string), time, reserved );
 
-    len = MultiByteToWideChar( CP_ACP, 0, string, -1, NULL, 0 );
-    stringW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-
+    stringW = heap_strdupAtoW(string);
     if (stringW)
     {
-        MultiByteToWideChar( CP_ACP, 0, string, -1, stringW, len );
         ret = InternetTimeToSystemTimeW( stringW, time, reserved );
         HeapFree( GetProcessHeap(), 0, stringW );
     }
@@ -2806,17 +2749,18 @@ End:
  */
 BOOL WINAPI InternetCheckConnectionA(LPCSTR lpszUrl, DWORD dwFlags, DWORD dwReserved)
 {
-    WCHAR *szUrl;
-    INT len;
+    WCHAR *url = NULL;
     BOOL rc;
 
-    len = MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, NULL, 0);
-    if (!(szUrl = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR))))
-        return FALSE;
-    MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, szUrl, len);
-    rc = InternetCheckConnectionW(szUrl, dwFlags, dwReserved);
-    HeapFree(GetProcessHeap(), 0, szUrl);
-    
+    if(lpszUrl) {
+        url = heap_strdupAtoW(lpszUrl);
+        if(!url)
+            return FALSE;
+    }
+
+    rc = InternetCheckConnectionW(url, dwFlags, dwReserved);
+
+    HeapFree(GetProcessHeap(), 0, url);
     return rc;
 }
 
@@ -3018,20 +2962,16 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD_PTR dwContext)
 {
     HINTERNET rc = NULL;
-
-    INT lenUrl;
-    INT lenHeaders = 0;
+    DWORD lenHeaders = 0;
     LPWSTR szUrl = NULL;
     LPWSTR szHeaders = NULL;
 
     TRACE("\n");
 
     if(lpszUrl) {
-        lenUrl = MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, NULL, 0 );
-        szUrl = HeapAlloc(GetProcessHeap(), 0, lenUrl*sizeof(WCHAR));
+        szUrl = heap_strdupAtoW(lpszUrl);
         if(!szUrl)
             return NULL;
-        MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, szUrl, lenUrl);
     }
 
     if(lpszHeaders) {
