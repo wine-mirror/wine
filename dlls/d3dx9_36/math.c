@@ -1182,23 +1182,17 @@ D3DXQUATERNION* WINAPI D3DXQuaternionExp(D3DXQUATERNION *pout, CONST D3DXQUATERN
 
 D3DXQUATERNION* WINAPI D3DXQuaternionInverse(D3DXQUATERNION *pout, CONST D3DXQUATERNION *pq)
 {
+    D3DXQUATERNION out;
     FLOAT norm;
 
     norm = D3DXQuaternionLengthSq(pq);
-    if ( !norm )
-    {
-     pout->x = 0.0f;
-     pout->y = 0.0f;
-     pout->z = 0.0f;
-     pout->w = 0.0f;
-    }
-    else
-    {
-     pout->x = -pq->x / norm;
-     pout->y = -pq->y / norm;
-     pout->z = -pq->z / norm;
-     pout->w = pq->w / norm;
-    }
+
+    out.x = -pq->x / norm;
+    out.y = -pq->y / norm;
+    out.z = -pq->z / norm;
+    out.w = pq->w / norm;
+
+    *pout =out;
     return pout;
 }
 
