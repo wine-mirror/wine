@@ -1575,13 +1575,9 @@ static void test_WSAAddressToStringW(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_1, sizeof(addr6_1));
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-  todo_wine
-  {
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-
     ok( !lstrcmpW( address6, expect6_1 ), "Wrong string returned\n" );
     ok( len == sizeof(expect6_1)/sizeof(WCHAR), "Got %d\n", len);
-  }
 
     /* Test a longer IPv6 address */
     len = sizeof(address6)/sizeof(WCHAR);
@@ -1592,13 +1588,10 @@ static void test_WSAAddressToStringW(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_2, sizeof(addr6_2));
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
-  todo_wine
-  {
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address6, expect6_2 ), "Wrong string returned\n" );
     ok( len == sizeof(expect6_2)/sizeof(WCHAR), "Got %d\n", len);
-  }
 
     /* Test IPv6 address and port number */
     len = sizeof(address6)/sizeof(WCHAR);
@@ -1609,10 +1602,9 @@ static void test_WSAAddressToStringW(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
   todo_wine
   {
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-
     ok( !lstrcmpW( address6, expect6_3 ), "Wrong string returned\n" );
     ok( len == sizeof(expect6_3)/sizeof(WCHAR), "Got %d\n", len);
   }
@@ -1626,9 +1618,9 @@ static void test_WSAAddressToStringW(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
   todo_wine
   {
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
     ok( !lstrcmpW( address6, expect6_3_2 ), "Wrong string returned\n" );
     ok( len == sizeof(expect6_3_2)/sizeof(WCHAR), "Got %d\n", len);
   }
@@ -1642,10 +1634,9 @@ static void test_WSAAddressToStringW(void)
     memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
   todo_wine
   {
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-
     ok( !lstrcmpW( address6, expect6_3_3 ), "Wrong string returned\n" );
     ok( len == sizeof(expect6_3_3)/sizeof(WCHAR), "Got %d\n", len);
   }
