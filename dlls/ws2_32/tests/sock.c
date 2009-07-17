@@ -1474,6 +1474,7 @@ end:
 
 static void test_WSAAddressToStringW(void)
 {
+    SOCKET v6 = INVALID_SOCKET;
     INT ret;
     DWORD len;
     int GLE;
@@ -1485,6 +1486,19 @@ static void test_WSAAddressToStringW(void)
     WCHAR expect3[] = { '0','.','0','.','0','.','0', ':', '6', '5', '5', '3', '5', 0 };
     WCHAR expect4[] = { '2','5','5','.','2','5','5','.','2','5','5','.','2','5','5', ':',
                         '6', '5', '5', '3', '5', 0 };
+
+    SOCKADDR_IN6 sockaddr6;
+    WCHAR address6[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
+
+    CHAR addr6_1[] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01};
+    CHAR addr6_2[] = {0x20,0xab,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01};
+    CHAR addr6_3[] = {0x20,0xab,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x01};
+
+    WCHAR expect6_1[] = {':',':','1',0};
+    WCHAR expect6_2[] = {'2','0','a','b',':',':','1',0};
+    WCHAR expect6_3[] = {'[','2','0','a','b',':',':','2','0','0','1',']',':','3','3','2','7','4',0};
+    WCHAR expect6_3_2[] = {'[','2','0','a','b',':',':','2','0','0','1','%','4','6','6','0',']',':','3','3','2','7','4',0};
+    WCHAR expect6_3_3[] = {'2','0','a','b',':',':','2','0','0','1','%','6','5','5','3','4',0};
 
     len = 0;
 
@@ -1542,7 +1556,103 @@ static void test_WSAAddressToStringW(void)
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address, expect4 ), "Expected different address string\n" );
-    ok( len == sizeof( expect4 )/sizeof( WCHAR ), "Got size %d\n", len);
+    ok( len == sizeof( expect4 )/sizeof( WCHAR ), "Got %d\n", len);
+
+    /*check to see it IPv6 is available */
+    v6 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+    if (v6 == INVALID_SOCKET) {
+        skip("Could not create IPv6 socket (LastError: %d; %d expected if IPv6 not available).\n",
+            WSAGetLastError(), WSAEAFNOSUPPORT);
+        goto end;
+    }
+
+    /* Test a short IPv6 address */
+    len = sizeof(address6)/sizeof(WCHAR);
+
+    sockaddr6.sin6_family = AF_INET6;
+    sockaddr6.sin6_port = 0x0000;
+    sockaddr6.sin6_scope_id = 0;
+    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_1, sizeof(addr6_1));
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+  todo_wine
+  {
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    ok( !lstrcmpW( address6, expect6_1 ), "Wrong string returned\n" );
+    ok( len == sizeof(expect6_1)/sizeof(WCHAR), "Got %d\n", len);
+  }
+
+    /* Test a longer IPv6 address */
+    len = sizeof(address6)/sizeof(WCHAR);
+
+    sockaddr6.sin6_family = AF_INET6;
+    sockaddr6.sin6_port = 0x0000;
+    sockaddr6.sin6_scope_id = 0;
+    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_2, sizeof(addr6_2));
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+  todo_wine
+  {
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    ok( !lstrcmpW( address6, expect6_2 ), "Wrong string returned\n" );
+    ok( len == sizeof(expect6_2)/sizeof(WCHAR), "Got %d\n", len);
+  }
+
+    /* Test IPv6 address and port number */
+    len = sizeof(address6)/sizeof(WCHAR);
+
+    sockaddr6.sin6_family = AF_INET6;
+    sockaddr6.sin6_port = 0xfa81;
+    sockaddr6.sin6_scope_id = 0;
+    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+  todo_wine
+  {
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    ok( !lstrcmpW( address6, expect6_3 ), "Wrong string returned\n" );
+    ok( len == sizeof(expect6_3)/sizeof(WCHAR), "Got %d\n", len);
+  }
+
+    /* Test IPv6 address, port number and scope_id */
+    len = sizeof(address6)/sizeof(WCHAR);
+
+    sockaddr6.sin6_family = AF_INET6;
+    sockaddr6.sin6_port = 0xfa81;
+    sockaddr6.sin6_scope_id = 0x1234;
+    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+  todo_wine
+  {
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
+    ok( !lstrcmpW( address6, expect6_3_2 ), "Wrong string returned\n" );
+    ok( len == sizeof(expect6_3_2)/sizeof(WCHAR), "Got %d\n", len);
+  }
+
+    /* Test IPv6 address and scope_id */
+    len = sizeof(address6)/sizeof(WCHAR);
+
+    sockaddr6.sin6_family = AF_INET6;
+    sockaddr6.sin6_port = 0x0000;
+    sockaddr6.sin6_scope_id = 0xfffe;
+    memcpy (sockaddr6.sin6_addr.s6_addr, addr6_3, sizeof(addr6_3));
+
+    ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
+  todo_wine
+  {
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
+
+    ok( !lstrcmpW( address6, expect6_3_3 ), "Wrong string returned\n" );
+    ok( len == sizeof(expect6_3_3)/sizeof(WCHAR), "Got %d\n", len);
+  }
+
+end:
+    if (v6 != INVALID_SOCKET)
+        closesocket(v6);
 }
 
 static void test_WSAStringToAddressA(void)
