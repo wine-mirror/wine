@@ -127,7 +127,7 @@ static void texture_cleanup(IWineD3DTextureImpl *This, D3DCB_DESTROYSURFACEFN su
 HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT levels,
         IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent)
 {
-    const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, gl_info);
     UINT pow2_width, pow2_height;
     UINT tmp_w, tmp_h;

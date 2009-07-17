@@ -500,7 +500,7 @@ static inline int getFmtIdx(WINED3DFORMAT fmt) {
     return -1;
 }
 
-static BOOL init_format_base_info(WineD3D_GL_Info *gl_info)
+static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
 {
     UINT format_count = sizeof(formats) / sizeof(*formats);
     UINT i;
@@ -529,7 +529,7 @@ static BOOL init_format_base_info(WineD3D_GL_Info *gl_info)
     return TRUE;
 }
 
-static BOOL init_format_compression_info(WineD3D_GL_Info *gl_info)
+static BOOL init_format_compression_info(struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
 
@@ -558,7 +558,7 @@ static BOOL init_format_compression_info(WineD3D_GL_Info *gl_info)
 #define GLINFO_LOCATION (*gl_info)
 
 /* Context activation is done by the caller. */
-static void check_fbo_compat(const WineD3D_GL_Info *gl_info, struct GlPixelFormatDesc *format_desc)
+static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct GlPixelFormatDesc *format_desc)
 {
     /* Check if the default internal format is supported as a frame buffer
      * target, otherwise fall back to the render target internal.
@@ -682,7 +682,7 @@ static void check_fbo_compat(const WineD3D_GL_Info *gl_info, struct GlPixelForma
 }
 
 /* Context activation is done by the caller. */
-static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
+static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
     GLuint fbo;
@@ -738,7 +738,7 @@ static void init_format_fbo_compat_info(WineD3D_GL_Info *gl_info)
     }
 }
 
-static BOOL init_format_texture_info(WineD3D_GL_Info *gl_info)
+static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
 
@@ -770,7 +770,7 @@ static BOOL init_format_texture_info(WineD3D_GL_Info *gl_info)
     return TRUE;
 }
 
-static void apply_format_fixups(WineD3D_GL_Info *gl_info)
+static void apply_format_fixups(struct wined3d_gl_info *gl_info)
 {
     int idx;
 
@@ -890,7 +890,7 @@ static void apply_format_fixups(WineD3D_GL_Info *gl_info)
     }
 }
 
-static BOOL init_format_vertex_info(WineD3D_GL_Info *gl_info)
+static BOOL init_format_vertex_info(struct wined3d_gl_info *gl_info)
 {
     unsigned int i;
 
@@ -918,7 +918,7 @@ static BOOL init_format_vertex_info(WineD3D_GL_Info *gl_info)
     return TRUE;
 }
 
-BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
+BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info)
 {
     if (!init_format_base_info(gl_info)) return FALSE;
 
@@ -932,7 +932,7 @@ BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info)
 }
 
 /* Context activation is done by the caller. */
-BOOL initPixelFormats(WineD3D_GL_Info *gl_info)
+BOOL initPixelFormats(struct wined3d_gl_info *gl_info)
 {
     if (!init_format_base_info(gl_info)) return FALSE;
 
@@ -954,7 +954,7 @@ fail:
 
 #define GLINFO_LOCATION This->adapter->gl_info
 
-const struct GlPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const WineD3D_GL_Info *gl_info)
+const struct GlPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const struct wined3d_gl_info *gl_info)
 {
     int idx = getFmtIdx(fmt);
 

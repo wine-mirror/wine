@@ -3949,67 +3949,68 @@ typedef BOOL (WINAPI * WINED3D_PFNWGLSETPIXELFORMATWINE) (HDC hdc, int iPixelFor
  ****************************************************/
 
 #define USE_GL_FUNC(type, pfn, ext, replace) type pfn;
-typedef struct _WineD3D_GL_Info {
-  GL_Vendors gl_vendor;
-  GL_Cards   gl_card;
-  UINT   vidmem;
-  DWORD  driver_version;
-  DWORD  driver_version_hipart;
-  const char *driver_description;
-  /**
-   * CAPS Constants
-   */
-  UINT   max_buffers;
-  UINT   max_lights;
-  UINT   max_textures;
-  UINT   max_texture_stages;
-  UINT   max_fragment_samplers;
-  UINT   max_vertex_samplers;
-  UINT   max_combined_samplers;
-  UINT   max_sampler_stages;
-  UINT   max_clipplanes;
-  UINT   max_texture_size;
-  UINT   max_texture3d_size;
-  float  max_pointsize, max_pointsizemin;
-  UINT   max_point_sprite_units;
-  UINT   max_blends;
-  UINT   max_anisotropy;
-  UINT   max_glsl_varyings;
-  float  max_shininess;
 
-  unsigned max_vshader_constantsF;
-  unsigned max_pshader_constantsF;
+struct wined3d_gl_info
+{
+    GL_Vendors gl_vendor;
+    GL_Cards gl_card;
+    UINT vidmem;
+    DWORD driver_version;
+    DWORD driver_version_hipart;
+    const char *driver_description;
 
-  unsigned vs_arb_constantsF;
-  unsigned vs_arb_max_instructions;
-  unsigned vs_arb_max_temps;
-  unsigned ps_arb_constantsF;
-  unsigned ps_arb_max_local_constants;
-  unsigned ps_arb_max_instructions;
-  unsigned ps_arb_max_temps;
-  unsigned vs_glsl_constantsF;
-  unsigned ps_glsl_constantsF;
+    UINT max_buffers;
+    UINT max_lights;
+    UINT max_textures;
+    UINT max_texture_stages;
+    UINT max_fragment_samplers;
+    UINT max_vertex_samplers;
+    UINT max_combined_samplers;
+    UINT max_sampler_stages;
+    UINT max_clipplanes;
+    UINT max_texture_size;
+    UINT max_texture3d_size;
+    float max_pointsize, max_pointsizemin;
+    UINT max_point_sprite_units;
+    UINT max_blends;
+    UINT max_anisotropy;
+    UINT max_glsl_varyings;
+    float max_shininess;
 
-  GL_PSVersion ps_arb_version;
-  GL_PSVersion ps_nv_version;
+    unsigned int max_vshader_constantsF;
+    unsigned int max_pshader_constantsF;
 
-  GL_VSVersion vs_arb_version;
-  GL_VSVersion vs_nv_version;
-  GL_VSVersion vs_ati_version;
+    unsigned int vs_arb_constantsF;
+    unsigned int vs_arb_max_instructions;
+    unsigned int vs_arb_max_temps;
+    unsigned int ps_arb_constantsF;
+    unsigned int ps_arb_max_local_constants;
+    unsigned int ps_arb_max_instructions;
+    unsigned int ps_arb_max_temps;
+    unsigned int vs_glsl_constantsF;
+    unsigned int ps_glsl_constantsF;
 
-  DWORD reserved_glsl_constants;
+    GL_PSVersion ps_arb_version;
+    GL_PSVersion ps_nv_version;
 
-  DWORD quirks;
+    GL_VSVersion vs_arb_version;
+    GL_VSVersion vs_nv_version;
+    GL_VSVersion vs_ati_version;
 
-  BOOL supported[WINED3D_GL_EXT_COUNT];
+    DWORD reserved_glsl_constants;
 
-  /** OpenGL EXT and ARB functions ptr */
-  GL_EXT_FUNCS_GEN
-  /** OpenGL WGL functions ptr */
-  WGL_EXT_FUNCS_GEN
+    DWORD quirks;
 
-  struct GlPixelFormatDesc *gl_formats;
-} WineD3D_GL_Info;
+    BOOL supported[WINED3D_GL_EXT_COUNT];
+
+    /* GL function pointers */
+    GL_EXT_FUNCS_GEN
+    /* WGL function pointers */
+    WGL_EXT_FUNCS_GEN
+
+    struct GlPixelFormatDesc *gl_formats;
+};
+
 #undef USE_GL_FUNC
 
 #endif /* __WINE_WINED3D_GL */

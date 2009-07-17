@@ -822,7 +822,7 @@ typedef struct {
     HRESULT (*shader_alloc_private)(IWineD3DDevice *iface);
     void (*shader_free_private)(IWineD3DDevice *iface);
     BOOL (*shader_dirtifyable_constants)(IWineD3DDevice *iface);
-    void (*shader_get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *caps);
+    void (*shader_get_caps)(WINED3DDEVTYPE devtype, const struct wined3d_gl_info *gl_info, struct shader_caps *caps);
     BOOL (*shader_color_fixup_supported)(struct color_fixup_desc fixup);
     void (*shader_add_instruction_modifiers)(const struct wined3d_shader_instruction *ins);
 } shader_backend_t;
@@ -1146,7 +1146,7 @@ struct fragment_caps {
 
 struct fragment_pipeline {
     void (*enable_extension)(IWineD3DDevice *iface, BOOL enable);
-    void (*get_caps)(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *caps);
+    void (*get_caps)(WINED3DDEVTYPE devtype, const struct wined3d_gl_info *gl_info, struct fragment_caps *caps);
     HRESULT (*alloc_private)(IWineD3DDevice *iface);
     void (*free_private)(IWineD3DDevice *iface);
     BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
@@ -1164,7 +1164,7 @@ extern const struct fragment_pipeline nvrc_fragment_pipeline;
 
 /* "Base" state table */
 HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
-        const WineD3D_GL_Info *gl_info, const struct StateEntryTemplate *vertex,
+        const struct wined3d_gl_info *gl_info, const struct StateEntryTemplate *vertex,
         const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc);
 
 /* Shaders for color conversions in blits */
@@ -1322,7 +1322,7 @@ struct WineD3DAdapter
     UINT                    num;
     BOOL                    opengl;
     POINT                   monitorPoint;
-    WineD3D_GL_Info         gl_info;
+    struct wined3d_gl_info  gl_info;
     const char              *driver;
     const char              *description;
     WCHAR                   DeviceName[CCHDEVICENAME]; /* DeviceName for use with e.g. ChangeDisplaySettings */
@@ -1333,10 +1333,10 @@ struct WineD3DAdapter
     unsigned int            UsedTextureRam;
 };
 
-extern BOOL initPixelFormats(WineD3D_GL_Info *gl_info);
-BOOL initPixelFormatsNoGL(WineD3D_GL_Info *gl_info);
+extern BOOL initPixelFormats(struct wined3d_gl_info *gl_info);
+BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info);
 extern long WineD3DAdapterChangeGLRam(IWineD3DDeviceImpl *D3DDevice, long glram);
-extern void add_gl_compat_wrappers(WineD3D_GL_Info *gl_info);
+extern void add_gl_compat_wrappers(struct wined3d_gl_info *gl_info);
 
 /*****************************************************************************
  * High order patch management
@@ -2851,7 +2851,7 @@ struct GlPixelFormatDesc
     struct color_fixup_desc color_fixup;
 };
 
-const struct GlPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const WineD3D_GL_Info *gl_info);
+const struct GlPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const struct wined3d_gl_info *gl_info);
 
 static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
 {

@@ -140,7 +140,7 @@ static void cubetexture_cleanup(IWineD3DCubeTextureImpl *This, D3DCB_DESTROYSURF
 HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UINT levels,
         IWineD3DDeviceImpl *device, DWORD usage, WINED3DFORMAT format, WINED3DPOOL pool, IUnknown *parent)
 {
-    const WineD3D_GL_Info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(format, gl_info);
     UINT pow2_edge_length;
     unsigned int i, j;

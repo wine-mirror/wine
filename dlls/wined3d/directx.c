@@ -352,7 +352,8 @@ static ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
 /* Set the shader type for this device, depending on the given capabilities,
  * the device type, and the user preferences in wined3d_settings */
 
-static void select_shader_mode(const WineD3D_GL_Info *gl_info, WINED3DDEVTYPE DeviceType, int *ps_selected, int *vs_selected)
+static void select_shader_mode(const struct wined3d_gl_info *gl_info,
+        WINED3DDEVTYPE DeviceType, int *ps_selected, int *vs_selected)
 {
     if (wined3d_settings.vs_mode == VS_NONE) {
         *vs_selected = SHADER_NONE;
@@ -384,11 +385,8 @@ static void select_shader_mode(const WineD3D_GL_Info *gl_info, WINED3DDEVTYPE De
 }
 
 /** Select the number of report maximum shader constants based on the selected shader modes */
-static void select_shader_max_constants(
-    int ps_selected_mode,
-    int vs_selected_mode,
-    WineD3D_GL_Info *gl_info) {
-
+static void select_shader_max_constants(int ps_selected_mode, int vs_selected_mode, struct wined3d_gl_info *gl_info)
+{
     switch (vs_selected_mode) {
         case SHADER_GLSL:
             gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF;
@@ -419,7 +417,7 @@ static void select_shader_max_constants(
  **********************************************************/
 
 /* GL locking is done by the caller */
-static inline BOOL test_arb_vs_offset_limit(const WineD3D_GL_Info *gl_info)
+static inline BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_info)
 {
     GLuint prog;
     BOOL ret = FALSE;
@@ -464,7 +462,7 @@ static DWORD ver_for_ext(GL_SupportedExt ext)
     return 0;
 }
 
-static BOOL match_ati_r300_to_500(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+static BOOL match_ati_r300_to_500(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
     if (gl_info->gl_vendor != VENDOR_ATI) return FALSE;
     if (gl_info->gl_card == CARD_ATI_RADEON_9500) return TRUE;
@@ -473,7 +471,7 @@ static BOOL match_ati_r300_to_500(const WineD3D_GL_Info *gl_info, const char *gl
     return FALSE;
 }
 
-static BOOL match_geforce5(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+static BOOL match_geforce5(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
     if (gl_info->gl_vendor == VENDOR_NVIDIA)
     {
@@ -485,7 +483,7 @@ static BOOL match_geforce5(const WineD3D_GL_Info *gl_info, const char *gl_render
     return FALSE;
 }
 
-static BOOL match_apple(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+static BOOL match_apple(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
     /* MacOS has various specialities in the extensions it advertises. Some have to be loaded from
      * the opengl 1.2+ core, while other extensions are advertised, but software emulated. So try to
@@ -516,7 +514,7 @@ static BOOL match_apple(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
 }
 
 /* Context activation is done by the caller. */
-static void test_pbo_functionality(WineD3D_GL_Info *gl_info)
+static void test_pbo_functionality(struct wined3d_gl_info *gl_info)
 {
     /* Some OpenGL implementations, namely Apple's Geforce 8 driver, advertises PBOs,
      * but glTexSubImage from a PBO fails miserably, with the first line repeated over
@@ -584,12 +582,12 @@ static void test_pbo_functionality(WineD3D_GL_Info *gl_info)
     }
 }
 
-static BOOL match_apple_intel(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+static BOOL match_apple_intel(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
     return gl_info->gl_vendor == VENDOR_INTEL && match_apple(gl_info, gl_renderer);
 }
 
-static BOOL match_apple_nonr500ati(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+static BOOL match_apple_nonr500ati(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
     if (!match_apple(gl_info, gl_renderer)) return FALSE;
     if (gl_info->gl_vendor != VENDOR_ATI) return FALSE;
@@ -597,7 +595,7 @@ static BOOL match_apple_nonr500ati(const WineD3D_GL_Info *gl_info, const char *g
     return TRUE;
 }
 
-static BOOL match_fglrx(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+static BOOL match_fglrx(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
     if (gl_info->gl_vendor != VENDOR_ATI) return FALSE;
     if (match_apple(gl_info, gl_renderer)) return FALSE;
@@ -605,7 +603,7 @@ static BOOL match_fglrx(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
     return TRUE;
 }
 
-static BOOL match_dx10_capable(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
     /* DX9 cards support 40 single float varyings in hardware, most drivers report 32. ATI misreports
      * 44 varyings. So assume that if we have more than 44 varyings we have a dx10 card.
@@ -618,7 +616,7 @@ static BOOL match_dx10_capable(const WineD3D_GL_Info *gl_info, const char *gl_re
 }
 
 /* A GL context is provided by the caller */
-static BOOL match_allows_spec_alpha(const WineD3D_GL_Info *gl_info, const char *gl_renderer)
+static BOOL match_allows_spec_alpha(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
     GLenum error;
     DWORD data[16];
@@ -644,7 +642,7 @@ static BOOL match_allows_spec_alpha(const WineD3D_GL_Info *gl_info, const char *
     }
 }
 
-static void quirk_arb_constants(WineD3D_GL_Info *gl_info)
+static void quirk_arb_constants(struct wined3d_gl_info *gl_info)
 {
     TRACE_(d3d_caps)("Using ARB vs constant limit(=%u) for GLSL.\n", gl_info->vs_arb_constantsF);
     gl_info->vs_glsl_constantsF = gl_info->vs_arb_constantsF;
@@ -652,7 +650,7 @@ static void quirk_arb_constants(WineD3D_GL_Info *gl_info)
     gl_info->ps_glsl_constantsF = gl_info->ps_arb_constantsF;
 }
 
-static void quirk_apple_glsl_constants(WineD3D_GL_Info *gl_info)
+static void quirk_apple_glsl_constants(struct wined3d_gl_info *gl_info)
 {
     quirk_arb_constants(gl_info);
     /* MacOS needs uniforms for relative addressing offsets. This can accumulate to quite a few uniforms.
@@ -674,7 +672,7 @@ static void quirk_apple_glsl_constants(WineD3D_GL_Info *gl_info)
  *
  * Note that disabling the extension entirely does not gain predictability because there is no point
  * sprite capability flag in d3d, so the potential rendering bugs are the same if we disable the extension. */
-static void quirk_one_point_sprite(WineD3D_GL_Info *gl_info)
+static void quirk_one_point_sprite(struct wined3d_gl_info *gl_info)
 {
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
@@ -683,7 +681,7 @@ static void quirk_one_point_sprite(WineD3D_GL_Info *gl_info)
     }
 }
 
-static void quirk_ati_dx9(WineD3D_GL_Info *gl_info)
+static void quirk_ati_dx9(struct wined3d_gl_info *gl_info)
 {
     quirk_arb_constants(gl_info);
 
@@ -708,7 +706,7 @@ static void quirk_ati_dx9(WineD3D_GL_Info *gl_info)
     gl_info->reserved_glsl_constants = max(gl_info->reserved_glsl_constants, 8);
 }
 
-static void quirk_no_np2(WineD3D_GL_Info *gl_info)
+static void quirk_no_np2(struct wined3d_gl_info *gl_info)
 {
     /*  The nVidia GeForceFX series reports OpenGL 2.0 capabilities with the latest drivers versions, but
      *  doesn't explicitly advertise the ARB_tex_npot extension in the GL extension string.
@@ -729,7 +727,7 @@ static void quirk_no_np2(WineD3D_GL_Info *gl_info)
     gl_info->supported[ARB_TEXTURE_RECTANGLE] = TRUE;
 }
 
-static void quirk_texcoord_w(WineD3D_GL_Info *gl_info)
+static void quirk_texcoord_w(struct wined3d_gl_info *gl_info)
 {
     /* The Intel GPUs on MacOS set the .w register of texcoords to 0.0 by default, which causes problems
      * with fixed function fragment processing. Ideally this flag should be detected with a test shader
@@ -748,20 +746,20 @@ static void quirk_texcoord_w(WineD3D_GL_Info *gl_info)
     gl_info->quirks |= WINED3D_QUIRK_SET_TEXCOORD_W;
 }
 
-static void quirk_clip_varying(WineD3D_GL_Info *gl_info)
+static void quirk_clip_varying(struct wined3d_gl_info *gl_info)
 {
     gl_info->quirks |= WINED3D_QUIRK_GLSL_CLIP_VARYING;
 }
 
-static void quirk_allows_specular_alpha(WineD3D_GL_Info *gl_info)
+static void quirk_allows_specular_alpha(struct wined3d_gl_info *gl_info)
 {
     gl_info->quirks |= WINED3D_QUIRK_ALLOWS_SPECULAR_ALPHA;
 }
 
 struct driver_quirk
 {
-    BOOL (*match)(const WineD3D_GL_Info *gl_info, const char *gl_renderer);
-    void (*apply)(WineD3D_GL_Info *gl_info);
+    BOOL (*match)(const struct wined3d_gl_info *gl_info, const char *gl_renderer);
+    void (*apply)(struct wined3d_gl_info *gl_info);
     const char *description;
 };
 
@@ -894,7 +892,7 @@ static const struct driver_version_information driver_version_table[] =
 };
 
 /* Context activation is done by the caller. */
-static void fixup_extensions(WineD3D_GL_Info *gl_info, const char *gl_renderer)
+static void fixup_extensions(struct wined3d_gl_info *gl_info, const char *gl_renderer)
 {
     unsigned int i;
 
@@ -928,7 +926,8 @@ static void fixup_extensions(WineD3D_GL_Info *gl_info, const char *gl_renderer)
 }
 
 /* Context activation is done by the caller. */
-static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info) {
+static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
+{
     const char *GL_Extensions    = NULL;
     const char *WGL_Extensions   = NULL;
     const char *gl_string        = NULL;
@@ -2354,7 +2353,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
     return WINED3D_OK;
 }
 
-static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_GL_Info *gl_info,
+static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const struct wined3d_gl_info *gl_info,
         const WineD3D_PixelFormat *cfg, const struct GlPixelFormatDesc *format_desc)
 {
     short redSize, greenSize, blueSize, alphaSize, colorBits;
@@ -2403,7 +2402,7 @@ static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithRenderFmt(const WineD3D_GL_I
     return FALSE;
 }
 
-static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const WineD3D_GL_Info *gl_info,
+static BOOL IWineD3DImpl_IsPixelFormatCompatibleWithDepthFmt(const struct wined3d_gl_info *gl_info,
         const WineD3D_PixelFormat *cfg, const struct GlPixelFormatDesc *format_desc)
 {
     short depthSize, stencilSize;
@@ -2782,7 +2781,7 @@ static BOOL CheckRenderTargetCapability(struct WineD3DAdapter *adapter,
 
 static BOOL CheckSrgbReadCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
 {
-    const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
     /* Check for supported sRGB formats (Texture loading and framebuffer) */
     if(!GL_SUPPORT(EXT_TEXTURE_SRGB)) {
@@ -2862,7 +2861,7 @@ static BOOL CheckWrapAndMipCapability(struct WineD3DAdapter *adapter, const stru
 static BOOL CheckTextureCapability(struct WineD3DAdapter *adapter,
         WINED3DDEVTYPE DeviceType, const struct GlPixelFormatDesc *format_desc)
 {
-    const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     const shader_backend_t *shader_backend;
     const struct fragment_pipeline *fp;
 
@@ -3142,7 +3141,7 @@ static BOOL CheckSurfaceCapability(struct WineD3DAdapter *adapter, const struct 
 
 static BOOL CheckVertexTextureCapability(struct WineD3DAdapter *adapter, const struct GlPixelFormatDesc *format_desc)
 {
-    const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
     if (!GL_LIMITS(vertex_samplers)) {
         TRACE_(d3d_caps)("[FAILED]\n");
@@ -3171,7 +3170,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         WINED3DSURFTYPE SurfaceType) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     struct WineD3DAdapter *adapter = &This->adapters[Adapter];
-    const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     const struct GlPixelFormatDesc *format_desc = getFormatDescEntry(CheckFormat, gl_info);
     const struct GlPixelFormatDesc *adapter_format_desc = getFormatDescEntry(AdapterFormat, gl_info);
     DWORD UsageCaps = 0;
@@ -3708,7 +3707,7 @@ static const shader_backend_t *select_shader_backend(struct WineD3DAdapter *adap
 static const struct fragment_pipeline *select_fragment_implementation(struct WineD3DAdapter *adapter,
         WINED3DDEVTYPE DeviceType)
 {
-    const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     int vs_selected_mode;
     int ps_selected_mode;
 
@@ -3728,7 +3727,7 @@ static const struct fragment_pipeline *select_fragment_implementation(struct Win
 
 static const struct blit_shader *select_blit_implementation(struct WineD3DAdapter *adapter, WINED3DDEVTYPE DeviceType)
 {
-    const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     int vs_selected_mode;
     int ps_selected_mode;
 
@@ -3747,7 +3746,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     IWineD3DImpl    *This = (IWineD3DImpl *)iface;
     struct WineD3DAdapter *adapter = &This->adapters[Adapter];
-    const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
     int vs_selected_mode;
     int ps_selected_mode;
     struct shader_caps shader_caps;
@@ -4524,7 +4523,7 @@ static void WINE_GLAPI warn_no_specular_func(const void *data)
     WARN("GL_EXT_secondary_color not supported\n");
 }
 
-static void fillGLAttribFuncs(const WineD3D_GL_Info *gl_info)
+static void fillGLAttribFuncs(const struct wined3d_gl_info *gl_info)
 {
     position_funcs[WINED3D_FFP_EMIT_FLOAT1]      = invalid_func;
     position_funcs[WINED3D_FFP_EMIT_FLOAT2]      = invalid_func;
@@ -4695,7 +4694,7 @@ BOOL InitAdapters(IWineD3DImpl *This)
     /* For now only one default adapter */
     {
         struct WineD3DAdapter *adapter = &This->adapters[0];
-        const WineD3D_GL_Info *gl_info = &adapter->gl_info;
+        const struct wined3d_gl_info *gl_info = &adapter->gl_info;
         struct wined3d_fake_gl_ctx fake_gl_ctx = {0};
         int iPixelFormat;
         int res;

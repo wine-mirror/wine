@@ -343,7 +343,8 @@ static void wine_glFogCoorddvEXT(const GLdouble *f) {
 /* End GL_EXT_fog_coord emulation */
 
 #define GLINFO_LOCATION (*gl_info)
-void add_gl_compat_wrappers(WineD3D_GL_Info *gl_info) {
+void add_gl_compat_wrappers(struct wined3d_gl_info *gl_info)
+{
     if(!GL_SUPPORT(ARB_MULTITEXTURE)) {
         TRACE("Applying GL_ARB_multitexture emulation hooks\n");
         gl_info->glActiveTextureARB         = wine_glActiveTextureARB;

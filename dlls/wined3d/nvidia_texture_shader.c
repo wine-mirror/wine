@@ -610,7 +610,8 @@ static void nvts_enable(IWineD3DDevice *iface, BOOL enable) {
     LEAVE_GL();
 }
 
-static void nvrc_fragment_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *pCaps)
+static void nvrc_fragment_get_caps(WINED3DDEVTYPE devtype,
+        const struct wined3d_gl_info *gl_info, struct fragment_caps *pCaps)
 {
     pCaps->TextureOpCaps =  WINED3DTEXOPCAPS_ADD                        |
                             WINED3DTEXOPCAPS_ADDSIGNED                  |

@@ -1379,7 +1379,8 @@ static void shader_none_free(IWineD3DDevice *iface) {}
 static BOOL shader_none_dirty_const(IWineD3DDevice *iface) {return FALSE;}
 
 #define GLINFO_LOCATION      (*gl_info)
-static void shader_none_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct shader_caps *pCaps)
+static void shader_none_get_caps(WINED3DDEVTYPE devtype,
+        const struct wined3d_gl_info *gl_info, struct shader_caps *pCaps)
 {
     /* Set the shader caps to 0 for the none shader backend */
     pCaps->VertexShaderVersion  = 0;

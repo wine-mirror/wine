@@ -192,8 +192,9 @@ static const char *debug_mask(GLuint mask) {
 }
 #define GLINFO_LOCATION (*gl_info)
 
-static void wrap_op1(const WineD3D_GL_Info *gl_info, GLuint op, GLuint dst, GLuint dstMask, GLuint dstMod,
-                     GLuint arg1, GLuint arg1Rep, GLuint arg1Mod) {
+static void wrap_op1(const struct wined3d_gl_info *gl_info, GLuint op, GLuint dst, GLuint dstMask, GLuint dstMod,
+        GLuint arg1, GLuint arg1Rep, GLuint arg1Mod)
+{
     if(dstMask == GL_ALPHA) {
         TRACE("glAlphaFragmentOp1ATI(%s, %s, %s, %s, %s, %s)\n", debug_op(op), debug_register(dst), debug_dstmod(dstMod),
               debug_register(arg1), debug_rep(arg1Rep), debug_argmod(arg1Mod));
@@ -206,9 +207,9 @@ static void wrap_op1(const WineD3D_GL_Info *gl_info, GLuint op, GLuint dst, GLui
     }
 }
 
-static void wrap_op2(const WineD3D_GL_Info *gl_info, GLuint op, GLuint dst, GLuint dstMask, GLuint dstMod,
-                     GLuint arg1, GLuint arg1Rep, GLuint arg1Mod,
-                     GLuint arg2, GLuint arg2Rep, GLuint arg2Mod) {
+static void wrap_op2(const struct wined3d_gl_info *gl_info, GLuint op, GLuint dst, GLuint dstMask, GLuint dstMod,
+        GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod)
+{
     if(dstMask == GL_ALPHA) {
         TRACE("glAlphaFragmentOp2ATI(%s, %s, %s, %s, %s, %s, %s, %s, %s)\n", debug_op(op), debug_register(dst), debug_dstmod(dstMod),
               debug_register(arg1), debug_rep(arg1Rep), debug_argmod(arg1Mod),
@@ -223,10 +224,10 @@ static void wrap_op2(const WineD3D_GL_Info *gl_info, GLuint op, GLuint dst, GLui
     }
 }
 
-static void wrap_op3(const WineD3D_GL_Info *gl_info, GLuint op, GLuint dst, GLuint dstMask, GLuint dstMod,
-                     GLuint arg1, GLuint arg1Rep, GLuint arg1Mod,
-                     GLuint arg2, GLuint arg2Rep, GLuint arg2Mod,
-                     GLuint arg3, GLuint arg3Rep, GLuint arg3Mod) {
+static void wrap_op3(const struct wined3d_gl_info *gl_info, GLuint op, GLuint dst, GLuint dstMask, GLuint dstMod,
+        GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod,
+        GLuint arg3, GLuint arg3Rep, GLuint arg3Mod)
+{
     if(dstMask == GL_ALPHA) {
         /* Leave some free space to fit "GL_NONE, " in to align most alpha and color op lines */
         TRACE("glAlphaFragmentOp3ATI(%s, %s,          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)\n", debug_op(op), debug_register(dst), debug_dstmod(dstMod),
@@ -250,7 +251,7 @@ static void wrap_op3(const WineD3D_GL_Info *gl_info, GLuint op, GLuint dst, GLui
     }
 }
 
-static GLuint register_for_arg(DWORD arg, const WineD3D_GL_Info *gl_info,
+static GLuint register_for_arg(DWORD arg, const struct wined3d_gl_info *gl_info,
         unsigned int stage, GLuint *mod, GLuint *rep, GLuint tmparg)
 {
     GLenum ret;
@@ -378,7 +379,7 @@ static GLuint find_tmpreg(const struct texture_stage_op op[MAX_TEXTURES])
     }
 }
 
-static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], const WineD3D_GL_Info *gl_info)
+static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], const struct wined3d_gl_info *gl_info)
 {
     GLuint ret = GL_EXTCALL(glGenFragmentShadersATI(1));
     unsigned int stage;
@@ -1051,7 +1052,7 @@ static void atifs_enable(IWineD3DDevice *iface, BOOL enable) {
     LEAVE_GL();
 }
 
-static void atifs_get_caps(WINED3DDEVTYPE devtype, const WineD3D_GL_Info *gl_info, struct fragment_caps *caps)
+static void atifs_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
     caps->TextureOpCaps =  WINED3DTEXOPCAPS_DISABLE                     |
                            WINED3DTEXOPCAPS_SELECTARG1                  |
