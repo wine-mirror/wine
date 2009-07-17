@@ -1189,7 +1189,9 @@ enum fogsource {
 #define WINED3D_MAX_FBO_ENTRIES 64
 
 /* The new context manager that should deal with onscreen and offscreen rendering */
-struct WineD3DContext {
+struct WineD3DContext
+{
+    const struct wined3d_gl_info *gl_info;
     /* State dirtification
      * dirtyArray is an array that contains markers for dirty states. numDirtyEntries states are dirty, their numbers are in indices
      * 0...numDirtyEntries - 1. isStateDirty is a redundant copy of the dirtyArray. Technically only one of them would be needed,

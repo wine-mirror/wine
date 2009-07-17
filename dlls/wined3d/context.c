@@ -27,7 +27,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-#define GLINFO_LOCATION This->adapter->gl_info
+#define GLINFO_LOCATION (*gl_info)
 
 /* The last used device.
  *
@@ -46,7 +46,7 @@ void context_set_last_device(IWineD3DDeviceImpl *device)
 /* GL locking is done by the caller */
 void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo)
 {
-    const IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct wined3d_gl_info *gl_info = ((IWineD3DDeviceImpl *)iface)->activeContext->gl_info;
 
     if (!*fbo)
     {
@@ -62,6 +62,7 @@ void context_bind_fbo(IWineD3DDevice *iface, GLenum target, GLuint *fbo)
 /* GL locking is done by the caller */
 static void context_clean_fbo_attachments(IWineD3DDeviceImpl *This)
 {
+    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
     unsigned int i;
 
     for (i = 0; i < GL_LIMITS(buffers); ++i)
@@ -79,6 +80,8 @@ static void context_clean_fbo_attachments(IWineD3DDeviceImpl *This)
 /* GL locking is done by the caller */
 static void context_destroy_fbo(IWineD3DDeviceImpl *This, const GLuint *fbo)
 {
+    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
+
     GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, *fbo));
     checkGLcall("glBindFramebuffer()");
 
@@ -158,6 +161,7 @@ static void context_apply_attachment_filter_states(IWineD3DDevice *iface, IWineD
 void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer)
 {
     IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
+    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
 
     TRACE("Attach depth stencil %p\n", depth_stencil);
 
@@ -228,6 +232,7 @@ void context_attach_depth_stencil_fbo(IWineD3DDeviceImpl *This, GLenum fbo_targe
 void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWORD idx, IWineD3DSurface *surface)
 {
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
+    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
 
     TRACE("Attach surface %p to %u\n", surface, idx);
 
@@ -248,6 +253,7 @@ void context_attach_surface_fbo(IWineD3DDeviceImpl *This, GLenum fbo_target, DWO
 static void context_check_fbo_status(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
     GLenum status;
 
     status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
@@ -283,6 +289,7 @@ static void context_check_fbo_status(IWineD3DDevice *iface)
 static struct fbo_entry *context_create_fbo_entry(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
     struct fbo_entry *entry;
 
     entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
@@ -299,6 +306,7 @@ static struct fbo_entry *context_create_fbo_entry(IWineD3DDevice *iface)
 static void context_reuse_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *entry)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
 
     GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, entry->id));
     checkGLcall("glBindFramebuffer()");
@@ -328,6 +336,7 @@ static void context_destroy_fbo_entry(IWineD3DDeviceImpl *This, WineD3DContext *
 static struct fbo_entry *context_find_fbo_entry(IWineD3DDevice *iface, WineD3DContext *context)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
 
     LIST_FOR_EACH_ENTRY(entry, &context->fbo_list, struct fbo_entry, entry)
@@ -362,6 +371,7 @@ static struct fbo_entry *context_find_fbo_entry(IWineD3DDevice *iface, WineD3DCo
 static void context_apply_fbo_entry(IWineD3DDevice *iface, struct fbo_entry *entry)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
     unsigned int i;
 
     context_bind_fbo(iface, GL_FRAMEBUFFER_EXT, &entry->id);
@@ -409,6 +419,7 @@ static void context_apply_fbo_state(IWineD3DDevice *iface)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3DContext *context = This->activeContext;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (This->render_offscreen)
     {
@@ -485,6 +496,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
             for (i = 0; i < This->numContexts; ++i)
             {
                 WineD3DContext *context = This->contexts[i];
+                const struct wined3d_gl_info *gl_info = context->gl_info;
                 struct fbo_entry *entry, *entry2;
 
                 ENTER_GL();
@@ -791,6 +803,7 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
  *
  *****************************************************************************/
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win_handle, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms) {
+    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
     HPBUFFERARB pbuffer = NULL;
     WineD3DContext *ret = NULL;
     unsigned int s;
@@ -976,6 +989,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         }
         goto out;
     }
+    ret->gl_info = &This->adapter->gl_info;
     ret->surface = (IWineD3DSurface *) target;
     ret->isPBuffer = create_pbuffer;
     ret->tid = GetCurrentThreadId();
@@ -1161,6 +1175,7 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *con
  *
  *****************************************************************************/
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry, *entry2;
     BOOL has_glctx;
 
@@ -1255,6 +1270,7 @@ static inline void set_blit_dimension(UINT width, UINT height) {
 static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *context, UINT width, UINT height) {
     int i, sampler;
     const struct StateEntry *StateTable = This->StateTable;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("Setting up context %p for blitting\n", context);
     if(context->last_was_blit) {
@@ -1651,6 +1667,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
 /* Context activation is done by the caller. */
 static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target, BOOL blit)
 {
+    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
     IWineD3DSwapChain *swapchain;
 
     if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain)))
@@ -1711,6 +1728,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     BYTE                          shift;
     WineD3DContext                *context;
     const struct StateEntry       *StateTable = This->StateTable;
+    const struct wined3d_gl_info *gl_info;
 
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
     if(This->lastActiveRenderTarget != target || tid != This->lastThread) {
@@ -1722,6 +1740,8 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         /* Stick to the old context */
         context = This->activeContext;
     }
+
+    gl_info = context->gl_info;
 
     /* Activate the opengl context */
     if(last_device != This || context != This->activeContext) {
