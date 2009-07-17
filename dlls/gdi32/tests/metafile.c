@@ -2357,7 +2357,9 @@ static void getwinmetafilebits(UINT mode, int scale, RECT *rc)
     ok(EqualRect((RECT*)&enh_header->rclFrame, rc), "Frame rectangles differ\n");
 
     size = GetWinMetaFileBits(emf, 0, NULL, mode, display_dc);
-    ok(size, "GetWinMetaFileBits returns 0\n");
+    ok(size ||
+       broken(size == 0), /* some versions of winxp fail for some reason */
+       "GetWinMetaFileBits returns 0\n");
     if(!size) goto end;
     mh = HeapAlloc(GetProcessHeap(), 0, size);
     GetWinMetaFileBits(emf, size, (BYTE*)mh, mode, display_dc);
