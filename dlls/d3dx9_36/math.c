@@ -933,7 +933,6 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_RotateAxis(ID3DXMatrixStack *iface, C
 
     TRACE("iface %p\n", iface);
 
-    if (!pv) return D3DERR_INVALIDCALL;
     D3DXMatrixRotationAxis(&temp, pv, angle);
     D3DXMatrixMultiply(&This->stack[This->current], &This->stack[This->current], &temp);
 
