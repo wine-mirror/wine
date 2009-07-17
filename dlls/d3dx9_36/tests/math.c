@@ -1115,7 +1115,7 @@ static void D3DXVector2Test(void)
 static void D3DXVector3Test(void)
 {
     D3DVIEWPORT9 viewport;
-    D3DXVECTOR3 expectedvec, gotvec, nul, nulproj, u, v, w, x;
+    D3DXVECTOR3 expectedvec, gotvec, nul, u, v, w, x;
     LPD3DXVECTOR3 funcpointer;
     D3DXVECTOR4 expectedtrans, gottrans;
     D3DXMATRIX mat, projection, view, world;
@@ -1289,11 +1289,6 @@ static void D3DXVector3Test(void)
 /*_______________D3DXVec3TransformCoord_______________________*/
     expectedvec.x = 70.0f/124.0f; expectedvec.y = 88.0f/124.0f; expectedvec.z = 106.0f/124.0f;
     D3DXVec3TransformCoord(&gotvec,&u,&mat);
-    expect_vec3(expectedvec,gotvec);
-    /* Test the nul projected vector */
-    nulproj.x = 1.0f; nulproj.y = -1.0f, nulproj.z = -1.0f;
-    expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
-    D3DXVec3TransformCoord(&gotvec,&nulproj,&mat);
     expect_vec3(expectedvec,gotvec);
 
 /*_______________D3DXVec3TransformNormal______________________*/

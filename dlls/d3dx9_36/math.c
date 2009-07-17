@@ -1598,20 +1598,12 @@ D3DXVECTOR3* WINAPI D3DXVec3TransformCoord(D3DXVECTOR3 *pout, CONST D3DXVECTOR3 
 
     norm = pm->u.m[0][3] * pv->x + pm->u.m[1][3] * pv->y + pm->u.m[2][3] *pv->z + pm->u.m[3][3];
 
-    if ( norm )
-    {
-     CONST D3DXVECTOR3 v = *pv;
-     out.x = (pm->u.m[0][0] * v.x + pm->u.m[1][0] * v.y + pm->u.m[2][0] * v.z + pm->u.m[3][0]) / norm;
-     out.y = (pm->u.m[0][1] * v.x + pm->u.m[1][1] * v.y + pm->u.m[2][1] * v.z + pm->u.m[3][1]) / norm;
-     out.z = (pm->u.m[0][2] * v.x + pm->u.m[1][2] * v.y + pm->u.m[2][2] * v.z + pm->u.m[3][2]) / norm;
-    }
-    else
-    {
-     out.x = 0.0f;
-     out.y = 0.0f;
-     out.z = 0.0f;
-    }
+    out.x = (pm->u.m[0][0] * pv->x + pm->u.m[1][0] * pv->y + pm->u.m[2][0] * pv->z + pm->u.m[3][0]) / norm;
+    out.y = (pm->u.m[0][1] * pv->x + pm->u.m[1][1] * pv->y + pm->u.m[2][1] * pv->z + pm->u.m[3][1]) / norm;
+    out.z = (pm->u.m[0][2] * pv->x + pm->u.m[1][2] * pv->y + pm->u.m[2][2] * pv->z + pm->u.m[3][2]) / norm;
+
     *pout = out;
+
     return pout;
 }
 
