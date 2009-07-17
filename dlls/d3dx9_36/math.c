@@ -844,7 +844,6 @@ static HRESULT WINAPI ID3DXMatrixStackImpl_LoadMatrix(ID3DXMatrixStack *iface, C
 
     TRACE("iface %p\n", iface);
 
-    if (!pm) return D3DERR_INVALIDCALL;
     This->stack[This->current] = *pm;
 
     return D3D_OK;

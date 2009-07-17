@@ -1483,9 +1483,6 @@ static void test_matrix_stack(void)
     hr = ID3DXMatrixStack_Push(stack);
     ok(SUCCEEDED(hr), "Push failed, hr %#x\n", hr);
 
-    hr = ID3DXMatrixStack_LoadMatrix(stack, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "LoadMatrix returned %#x, expected D3DERR_INVALIDCALL\n", hr);
-
     hr = ID3DXMatrixStack_LoadMatrix(stack, &mat1);
     ok(SUCCEEDED(hr), "LoadMatrix failed, hr %#x\n", hr);
     expect_mat(&mat1, ID3DXMatrixStack_GetTop(stack));
