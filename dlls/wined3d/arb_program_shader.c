@@ -4359,8 +4359,6 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)baseShader->baseShader.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
 
-    ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
-
     if (shader_is_pshader_version(baseShader->baseShader.reg_maps.shader_version.type))
     {
         IWineD3DPixelShaderImpl *This = (IWineD3DPixelShaderImpl *) iface;
@@ -4369,6 +4367,9 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
 
         if(!shader_data) return; /* This can happen if a shader was never compiled */
         ENTER_GL();
+
+        if(shader_data->num_gl_shaders) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
         for(i = 0; i < shader_data->num_gl_shaders; i++) {
             GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
             checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId))");
@@ -4384,6 +4385,9 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
 
         if(!shader_data) return; /* This can happen if a shader was never compiled */
         ENTER_GL();
+
+        if(shader_data->num_gl_shaders) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+
         for(i = 0; i < shader_data->num_gl_shaders; i++) {
             GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
             checkGLcall("GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId))");
