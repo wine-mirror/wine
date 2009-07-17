@@ -3730,3 +3730,8 @@ SymbolicName=RPC_S_GRP_ELT_NOT_REMOVED
 Language=FRA
 RPC_S_GRP_ELT_NOT_REMOVED
 .
+MessageId=2221
+SymbolicName=NERR_UserNotFound
+Language=FRA
+Nom d'utilisateur introuvable
+.
