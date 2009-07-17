@@ -1242,11 +1242,21 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor)
   assert(pRow);
   assert(pPara);
 
-  x = pRun->pt.x + ME_PointFromChar(editor, pRun, pCursor->nOffset);
-  if (x > editor->horz_si.nPos + editor->sizeWindow.cx)
-    x = x + 1 - editor->sizeWindow.cx;
-  else if (x > editor->horz_si.nPos)
+  if (editor->styleFlags & ES_AUTOHSCROLL)
+  {
+    x = pRun->pt.x + ME_PointFromChar(editor, pRun, pCursor->nOffset);
+    if (x > editor->horz_si.nPos + editor->sizeWindow.cx)
+      x = x + 1 - editor->sizeWindow.cx;
+    else if (x > editor->horz_si.nPos)
+      x = editor->horz_si.nPos;
+
+    if (~editor->styleFlags & ES_AUTOVSCROLL)
+      ME_HScrollAbs(editor, x);
+  } else {
+    if (~editor->styleFlags & ES_AUTOVSCROLL)
+      return;
     x = editor->horz_si.nPos;
+  }
 
   y = pPara->member.para.pt.y + pRow->member.row.pt.y;
   yheight = pRow->member.row.nHeight;
