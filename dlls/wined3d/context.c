@@ -47,15 +47,24 @@ void context_set_last_device(IWineD3DDeviceImpl *device)
 void context_bind_fbo(struct WineD3DContext *context, GLenum target, GLuint *fbo)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    GLuint f;
 
-    if (!*fbo)
+    if (!fbo)
     {
-        GL_EXTCALL(glGenFramebuffersEXT(1, fbo));
-        checkGLcall("glGenFramebuffersEXT()");
-        TRACE("Created FBO %d\n", *fbo);
+        f = 0;
+    }
+    else
+    {
+        if (!*fbo)
+        {
+            GL_EXTCALL(glGenFramebuffersEXT(1, fbo));
+            checkGLcall("glGenFramebuffersEXT()");
+            TRACE("Created FBO %u.\n", *fbo);
+        }
+        f = *fbo;
     }
 
-    GL_EXTCALL(glBindFramebufferEXT(target, *fbo));
+    GL_EXTCALL(glBindFramebufferEXT(target, f));
     checkGLcall("glBindFramebuffer()");
 }
 
@@ -77,17 +86,14 @@ static void context_clean_fbo_attachments(const struct wined3d_gl_info *gl_info)
 }
 
 /* GL locking is done by the caller */
-static void context_destroy_fbo(struct WineD3DContext *context, const GLuint *fbo)
+static void context_destroy_fbo(struct WineD3DContext *context, GLuint *fbo)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, *fbo));
-    checkGLcall("glBindFramebuffer()");
-
+    context_bind_fbo(context, GL_FRAMEBUFFER_EXT, fbo);
     context_clean_fbo_attachments(gl_info);
+    context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
 
-    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-    checkGLcall("glBindFramebuffer()");
     GL_EXTCALL(glDeleteFramebuffersEXT(1, fbo));
     checkGLcall("glDeleteFramebuffers()");
 }
@@ -308,8 +314,7 @@ static void context_reuse_fbo_entry(struct WineD3DContext *context, struct fbo_e
     IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, entry->id));
-    checkGLcall("glBindFramebuffer()");
+    context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &entry->id);
     context_clean_fbo_attachments(gl_info);
 
     memcpy(entry->render_targets, device->render_targets, GL_LIMITS(buffers) * sizeof(*entry->render_targets));
@@ -419,7 +424,6 @@ static void context_apply_fbo_entry(struct WineD3DContext *context, struct fbo_e
 static void context_apply_fbo_state(struct WineD3DContext *context)
 {
     IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (device->render_offscreen)
     {
@@ -427,7 +431,7 @@ static void context_apply_fbo_state(struct WineD3DContext *context)
         context_apply_fbo_entry(context, context->current_fbo);
     } else {
         context->current_fbo = NULL;
-        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+        context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
     }
 
     context_check_fbo_status(context);
@@ -1800,8 +1804,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                     LEAVE_GL();
                 } else {
                     ENTER_GL();
-                    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-                    checkGLcall("glFramebufferRenderbufferEXT");
+                    context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
                     LEAVE_GL();
                 }
                 context->draw_buffer_dirty = TRUE;

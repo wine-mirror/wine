@@ -6041,7 +6041,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
 
         ActivateContext(This, surface, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
-        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, NULL);
         buffer = surface_get_gl_buffer(surface, swapchain);
         glDrawBuffer(buffer);
         checkGLcall("glDrawBuffer()");
@@ -6083,8 +6083,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     if (This->activeContext->current_fbo) {
         context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
     } else {
-        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-        checkGLcall("glBindFramebuffer()");
+        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, NULL);
     }
 
     if (swapchain && surface == ((IWineD3DSwapChainImpl *)swapchain)->frontBuffer
@@ -6468,7 +6467,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         }
 
         ENTER_GL();
-        GL_EXTCALL(glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0));
+        context_bind_fbo(This->activeContext, GL_READ_FRAMEBUFFER_EXT, NULL);
         glReadBuffer(buffer);
         checkGLcall("glReadBuffer()");
     } else {
@@ -6507,7 +6506,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
         }
 
         ENTER_GL();
-        GL_EXTCALL(glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0));
+        context_bind_fbo(This->activeContext, GL_DRAW_FRAMEBUFFER_EXT, NULL);
         glDrawBuffer(buffer);
         checkGLcall("glDrawBuffer()");
     } else {
@@ -6538,8 +6537,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     if (This->activeContext->current_fbo) {
         context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
     } else {
-        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-        checkGLcall("glBindFramebuffer()");
+        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, NULL);
     }
 
     /* If we switched from GL_BACK to GL_FRONT above, we need to switch back here */

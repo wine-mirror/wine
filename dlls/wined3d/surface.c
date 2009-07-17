@@ -4404,7 +4404,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
 
             /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
              * directly on the FBO texture. That's because we need to flip. */
-            GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+            context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, NULL);
             if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
             {
                 glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
@@ -4451,8 +4451,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
             if (device->activeContext->current_fbo) {
                 context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, &device->activeContext->current_fbo->id);
             } else {
-                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-                checkGLcall("glBindFramebuffer()");
+                context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, NULL);
             }
 
             LEAVE_GL();
@@ -4465,15 +4464,13 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
 
             ENTER_GL();
 
-            GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
-            checkGLcall("glBindFramebuffer()");
+            context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, NULL);
             surface_depth_blt(This, This->texture_name, This->currentDesc.Width,
                     This->currentDesc.Height, This->texture_target);
             checkGLcall("depth_blt");
 
             if (device->activeContext->current_fbo) {
-                GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, device->activeContext->current_fbo->id));
-                checkGLcall("glBindFramebuffer()");
+                context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, &device->activeContext->current_fbo->id);
             }
 
             LEAVE_GL();
