@@ -592,7 +592,7 @@ static HRESULT String_match(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     DispatchEx *array;
     VARIANT var, *arg_var;
     DWORD length, match_cnt, i;
-    BSTR val_str;
+    BSTR val_str = NULL;
     HRESULT hres = S_OK;
 
     TRACE("\n");
