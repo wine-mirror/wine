@@ -396,8 +396,13 @@ static char *make_string(WCHAR *uc, int len, int codepage)
                 else
                     mlen = wine_utf8_wcstombs(0, uc, unistrlen(uc)+1, NULL, 0);
 		cc = tmp = xmalloc(mlen);
-		if((i = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, tmp, mlen, NULL, NULL)) < 0)
-			internal_error(__FILE__, __LINE__, "Buffer overflow? code %d\n", i);
+                if (cpdef) {
+                    if((i = wine_cp_wcstombs(cpdef, 0, uc, unistrlen(uc)+1, tmp, mlen, NULL, NULL)) < 0)
+                        internal_error(__FILE__, __LINE__, "Buffer overflow? code %d\n", i);
+                } else {
+                    if((i = wine_utf8_wcstombs(0, uc, unistrlen(uc)+1, tmp, mlen)) < 0)
+                        internal_error(__FILE__, __LINE__, "Buffer overflow? code %d\n", i);
+                }
 		*cptr++ = ' ';
 		*cptr++ = '"';
 		for(i = b = 0; i < len; i++, cc++)
