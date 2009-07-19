@@ -95,17 +95,8 @@ static cookie *COOKIE_addCookie(cookie_domain *domain, LPCWSTR name, LPCWSTR dat
     newCookie->lpCookieName = NULL;
     newCookie->lpCookieData = NULL;
     newCookie->expiry = expiry;
-
-    if (name)
-    {
-	newCookie->lpCookieName = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1)*sizeof(WCHAR));
-        lstrcpyW(newCookie->lpCookieName, name);
-    }
-    if (data)
-    {
-	newCookie->lpCookieData = HeapAlloc(GetProcessHeap(), 0, (strlenW(data) + 1)*sizeof(WCHAR));
-        lstrcpyW(newCookie->lpCookieData, data);
-    }
+    newCookie->lpCookieName = heap_strdupW(name);
+    newCookie->lpCookieData = heap_strdupW(data);
 
     TRACE("added cookie %p (data is %s)\n", newCookie, debugstr_w(data) );
 
@@ -160,17 +151,8 @@ static cookie_domain *COOKIE_addDomain(LPCWSTR domain, LPCWSTR path)
     list_init(&newDomain->cookie_list);
     newDomain->lpCookieDomain = NULL;
     newDomain->lpCookiePath = NULL;
-
-    if (domain)
-    {
-	newDomain->lpCookieDomain = HeapAlloc(GetProcessHeap(), 0, (strlenW(domain) + 1)*sizeof(WCHAR));
-        strcpyW(newDomain->lpCookieDomain, domain);
-    }
-    if (path)
-    {
-	newDomain->lpCookiePath = HeapAlloc(GetProcessHeap(), 0, (strlenW(path) + 1)*sizeof(WCHAR));
-        lstrcpyW(newDomain->lpCookiePath, path);
-    }
+    newDomain->lpCookieDomain = heap_strdupW(domain);
+    newDomain->lpCookiePath = heap_strdupW(path);
 
     list_add_tail(&domain_list, &newDomain->entry);
 
@@ -398,27 +380,16 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     LPSTR lpCookieData, LPDWORD lpdwSize)
 {
     DWORD len;
-    LPWSTR szCookieData = NULL, szUrl = NULL, szCookieName = NULL;
+    LPWSTR szCookieData = NULL, url, name;
     BOOL r;
 
     TRACE("(%s,%s,%p)\n", debugstr_a(lpszUrl), debugstr_a(lpszCookieName),
         lpCookieData);
 
-    if( lpszUrl )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, lpszUrl, -1, NULL, 0 );
-        szUrl = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, lpszUrl, -1, szUrl, len );
-    }
+    url = heap_strdupAtoW(lpszUrl);
+    name = heap_strdupAtoW(lpszCookieName);
 
-    if( lpszCookieName )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, lpszCookieName, -1, NULL, 0 );
-        szCookieName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, lpszCookieName, -1, szCookieName, len );
-    }
-
-    r = InternetGetCookieW( szUrl, szCookieName, NULL, &len );
+    r = InternetGetCookieW( url, name, NULL, &len );
     if( r )
     {
         szCookieData = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
@@ -428,7 +399,7 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
         }
         else
         {
-            r = InternetGetCookieW( szUrl, szCookieName, szCookieData, &len );
+            r = InternetGetCookieW( url, name, szCookieData, &len );
 
             *lpdwSize = WideCharToMultiByte( CP_ACP, 0, szCookieData, len,
                                     lpCookieData, *lpdwSize, NULL, NULL );
@@ -436,8 +407,8 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     }
 
     HeapFree( GetProcessHeap(), 0, szCookieData );
-    HeapFree( GetProcessHeap(), 0, szCookieName );
-    HeapFree( GetProcessHeap(), 0, szUrl );
+    HeapFree( GetProcessHeap(), 0, name );
+    HeapFree( GetProcessHeap(), 0, url );
 
     return r;
 }
@@ -452,14 +423,13 @@ static BOOL set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWST
     FILETIME expiry;
     BOOL expired = FALSE;
 
-    value = data = HeapAlloc(GetProcessHeap(), 0, (strlenW(cookie_data) + 1) * sizeof(WCHAR));
-    if (data == NULL)
+    value = data = heap_strdupW(cookie_data);
+    if (!data)
     {
         ERR("could not allocate %zu bytes for the cookie data buffer\n", (strlenW(cookie_data) + 1) * sizeof(WCHAR));
         return FALSE;
     }
 
-    strcpyW(data,cookie_data);
     memset(&expiry,0,sizeof(expiry));
 
     /* lots of information can be parsed out of the cookie value */
@@ -605,21 +575,19 @@ BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 
     if (!lpszCookieName)
     {
-        unsigned int len;
         WCHAR *cookie, *data;
 
-        len = strlenW(lpCookieData);
-        if (!(cookie = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR))))
+        cookie = heap_strdupW(lpCookieData);
+        if (!cookie)
         {
             SetLastError(ERROR_OUTOFMEMORY);
             return FALSE;
         }
-        strcpyW(cookie, lpCookieData);
 
         /* some apps (or is it us??) try to add a cookie with no cookie name, but
          * the cookie data in the form of name[=data].
          */
-        if (!(data = strchrW(cookie, '='))) data = cookie + len;
+        if (!(data = strchrW(cookie, '='))) data = cookie + strlenW(cookie);
         else *data++ = 0;
 
         ret = set_cookie(hostName, path, cookie, data);
@@ -644,39 +612,21 @@ BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 BOOL WINAPI InternetSetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     LPCSTR lpCookieData)
 {
-    DWORD len;
-    LPWSTR szCookieData = NULL, szUrl = NULL, szCookieName = NULL;
+    LPWSTR data, url, name;
     BOOL r;
 
     TRACE("(%s,%s,%s)\n", debugstr_a(lpszUrl),
         debugstr_a(lpszCookieName), debugstr_a(lpCookieData));
 
-    if( lpszUrl )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, lpszUrl, -1, NULL, 0 );
-        szUrl = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, lpszUrl, -1, szUrl, len );
-    }
+    url = heap_strdupAtoW(lpszUrl);
+    name = heap_strdupAtoW(lpszCookieName);
+    data = heap_strdupAtoW(lpCookieData);
 
-    if( lpszCookieName )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, lpszCookieName, -1, NULL, 0 );
-        szCookieName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, lpszCookieName, -1, szCookieName, len );
-    }
+    r = InternetSetCookieW( url, name, data );
 
-    if( lpCookieData )
-    {
-        len = MultiByteToWideChar( CP_ACP, 0, lpCookieData, -1, NULL, 0 );
-        szCookieData = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_ACP, 0, lpCookieData, -1, szCookieData, len );
-    }
-
-    r = InternetSetCookieW( szUrl, szCookieName, szCookieData );
-
-    HeapFree( GetProcessHeap(), 0, szCookieData );
-    HeapFree( GetProcessHeap(), 0, szCookieName );
-    HeapFree( GetProcessHeap(), 0, szUrl );
+    HeapFree( GetProcessHeap(), 0, data );
+    HeapFree( GetProcessHeap(), 0, name );
+    HeapFree( GetProcessHeap(), 0, url );
 
     return r;
 }
