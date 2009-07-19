@@ -927,6 +927,13 @@ DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 
     TRACE("driver created\n");
 
+    /* the HAL isn't much better than the HEL if we can't do mmap() */
+    if (!(WOutDev[wDevID].outcaps.dwSupport & WAVECAPS_DIRECTSOUND))
+    {
+        WARN("MMAP not supported for this device, falling back to waveout, should be harmless\n");
+        return MMSYSERR_NOTSUPPORTED;
+    }
+
     *idrv = HeapAlloc(GetProcessHeap(),0,sizeof(IDsDriverImpl));
     if (!*idrv)
         return MMSYSERR_NOMEM;
