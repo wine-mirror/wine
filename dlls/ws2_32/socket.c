@@ -5007,7 +5007,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
                                 LPDWORD lenstr )
 {
     INT   ret;
-    DWORD size, sizew;
+    DWORD size;
     WCHAR buffer[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
     CHAR bufAddr[54];
 
@@ -5018,8 +5018,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
 
     if (ret) return ret;
 
-    sizew = sizeof( buffer );
-    MultiByteToWideChar( CP_ACP, 0, bufAddr, size, buffer, sizew );
+    MultiByteToWideChar( CP_ACP, 0, bufAddr, size, buffer, sizeof( buffer )/sizeof(WCHAR));
 
     if (*lenstr <  size)
     {
