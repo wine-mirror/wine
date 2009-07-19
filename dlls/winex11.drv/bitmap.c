@@ -31,20 +31,17 @@
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
   /* GCs used for B&W and color bitmap operations */
-GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
+static GC bitmap_gc[32];
 X_PHYSBITMAP BITMAP_stock_phys_bitmap = { 0 };  /* phys bitmap for the default stock bitmap */
 
 static XContext bitmap_context;  /* X context to associate a phys bitmap to a handle */
 
 GC get_bitmap_gc(int depth)
 {
-    switch(depth)
-    {
-        case 1:
-            return BITMAP_monoGC;
-        default:
-            return BITMAP_colorGC;
-    }
+    if(depth < 1 || depth > 32)
+        return 0;
+
+    return bitmap_gc[depth-1];
 }
 
 /***********************************************************************
@@ -52,28 +49,38 @@ GC get_bitmap_gc(int depth)
  */
 void X11DRV_BITMAP_Init(void)
 {
+    int depth_count, index, i;
+    int *depth_list;
     Pixmap tmpPixmap;
-
-      /* Create the necessary GCs */
 
     wine_tsx11_lock();
     bitmap_context = XUniqueContext();
     BITMAP_stock_phys_bitmap.pixmap_depth = 1;
     BITMAP_stock_phys_bitmap.pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 );
-    BITMAP_monoGC = XCreateGC( gdi_display, BITMAP_stock_phys_bitmap.pixmap, 0, NULL );
-    XSetGraphicsExposures( gdi_display, BITMAP_monoGC, False );
-    XSetSubwindowMode( gdi_display, BITMAP_monoGC, IncludeInferiors );
+    bitmap_gc[0] = XCreateGC( gdi_display, BITMAP_stock_phys_bitmap.pixmap, 0, NULL );
+    XSetGraphicsExposures( gdi_display, bitmap_gc[0], False );
+    XSetSubwindowMode( gdi_display, bitmap_gc[0], IncludeInferiors );
 
-    if (screen_depth != 1)
+    /* Create a GC for all available depths. GCs at depths other than 1-bit/screen_depth are for use
+     * in combination with XRender which allows us to create dibsections at more depths.
+     */
+    depth_list = XListDepths(gdi_display, DefaultScreen(gdi_display), &depth_count);
+    for (i = 0; i < depth_count; i++)
     {
-        if ((tmpPixmap = XCreatePixmap( gdi_display, root_window, 1, 1, screen_depth )))
+        index = depth_list[i] - 1;
+        if (bitmap_gc[index]) continue;
+        if ((tmpPixmap = XCreatePixmap( gdi_display, root_window, 1, 1, depth_list[i])))
         {
-            BITMAP_colorGC = XCreateGC( gdi_display, tmpPixmap, 0, NULL );
-            XSetGraphicsExposures( gdi_display, BITMAP_colorGC, False );
-            XSetSubwindowMode( gdi_display, BITMAP_colorGC, IncludeInferiors );
+            if ((bitmap_gc[index] = XCreateGC( gdi_display, tmpPixmap, 0, NULL )))
+            {
+                XSetGraphicsExposures( gdi_display, bitmap_gc[index], False );
+                XSetSubwindowMode( gdi_display, bitmap_gc[index], IncludeInferiors );
+            }
             XFreePixmap( gdi_display, tmpPixmap );
         }
     }
+    XFree( depth_list );
+
     wine_tsx11_unlock();
 }
 
