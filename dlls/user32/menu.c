@@ -2164,8 +2164,7 @@ static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
      * Note: XP treats only bitmap handles 1 - 6 as "magic" ones
      * regardless of their id.
      */
-    while (pos > 0 && (menu->items[pos - 1].fType & MFT_BITMAP) &&
-           (INT_PTR)menu->items[pos - 1].hbmpItem >= (INT_PTR)HBMMENU_SYSTEM &&
+    while (pos > 0 && (INT_PTR)menu->items[pos - 1].hbmpItem >= (INT_PTR)HBMMENU_SYSTEM &&
            (INT_PTR)menu->items[pos - 1].hbmpItem <= (INT_PTR)HBMMENU_MBAR_CLOSE_D)
         pos--;
 

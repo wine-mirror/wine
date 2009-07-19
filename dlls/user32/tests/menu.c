@@ -2451,6 +2451,48 @@ static HMENU create_menu_from_data(const struct menu_data *item, INT item_count)
     return hmenu;
 }
 
+/* use InsertMenuItem: does not set the MFT_BITMAP flag,
+ * and does not accept non-magic bitmaps with invalid
+ * bitmap handles */
+static HMENU create_menuitem_from_data(const struct menu_data *item, INT item_count)
+{
+    HMENU hmenu;
+    INT i;
+    BOOL ret;
+    MENUITEMINFO mii = { sizeof( MENUITEMINFO)};
+
+    hmenu = CreateMenu();
+    assert(hmenu != 0);
+
+    for (i = 0; i < item_count; i++)
+    {
+        SetLastError(0xdeadbeef);
+
+        mii.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STATE;
+        mii.fType = 0;
+        if(  item[i].type & MFT_BITMAP)
+        {
+            mii.fMask |= MIIM_BITMAP;
+            mii.hbmpItem =  (HBITMAP)item[i].str;
+        }
+        else if(  item[i].type & MFT_SEPARATOR)
+            mii.fType = MFT_SEPARATOR;
+        else
+        {
+            mii.fMask |= MIIM_STRING;
+            mii.dwTypeData =  (LPSTR)item[i].str;
+            mii.cch = strlen(  item[i].str);
+        }
+        mii.fState = 0;
+        if(  item[i].type & MF_HELP) mii.fType |= MF_HELP;
+        mii.wID = item[i].id;
+        ret = InsertMenuItem( hmenu, -1, TRUE, &mii);
+        ok(ret, "%d: InsertMenuItem(%04x, %04x, %p) error %u\n",
+           i, item[i].type, item[i].id, item[i].str, GetLastError());
+    }
+    return hmenu;
+}
+
 static void compare_menu_data(HMENU hmenu, const struct menu_data *item, INT item_count)
 {
     INT count, i;
@@ -2479,14 +2521,12 @@ static void compare_menu_data(HMENU hmenu, const struct menu_data *item, INT ite
            "%u: expected fType %04x, got %04x\n", i, item[i].type, mii.fType);
         ok(mii.wID == item[i].id,
            "%u: expected wID %04x, got %04x\n", i, item[i].id, mii.wID);
-        if (item[i].type & (MF_BITMAP | MF_SEPARATOR))
-        {
+        if (mii.hbmpItem || !item[i].str)
             /* For some reason Windows sets high word to not 0 for
              * not "magic" ids.
              */
             ok(LOWORD(mii.hbmpItem) == LOWORD(item[i].str),
                "%u: expected hbmpItem %p, got %p\n", i, item[i].str, mii.hbmpItem);
-        }
         else
         {
             ok(mii.cch == strlen(item[i].str),
@@ -2499,6 +2539,7 @@ static void compare_menu_data(HMENU hmenu, const struct menu_data *item, INT ite
 
 static void test_InsertMenu(void)
 {
+    HBITMAP hbm = CreateBitmap(1,1,1,1,NULL);
     /* Note: XP treats only bitmap handles 1 - 6 as "magic" ones
      * regardless of their id.
      */
@@ -2514,16 +2555,28 @@ static void test_InsertMenu(void)
         { MF_STRING|MF_HELP, 2, "Help" },
         { MF_BITMAP|MF_HELP, SC_CLOSE, MAKEINTRESOURCE(1) }
     };
-    static const struct menu_data in2[] =
+    static const struct menu_data out1a[] =
     {
         { MF_STRING, 1, "File" },
-        { MF_BITMAP|MF_HELP, SC_CLOSE, MAKEINTRESOURCE(100) },
+        { MF_STRING|MF_HELP, 2, "Help" },
+        { MF_HELP, SC_CLOSE, MAKEINTRESOURCE(1) }
+    };
+    const struct menu_data in2[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_BITMAP|MF_HELP, SC_CLOSE, (char*)hbm },
         { MF_STRING|MF_HELP, 2, "Help" }
     };
-    static const struct menu_data out2[] =
+    const struct menu_data out2[] =
     {
         { MF_STRING, 1, "File" },
-        { MF_BITMAP|MF_HELP, SC_CLOSE, MAKEINTRESOURCE(100) },
+        { MF_BITMAP|MF_HELP, SC_CLOSE, (char*)hbm },
+        { MF_STRING|MF_HELP, 2, "Help" }
+    };
+    const struct menu_data out2a[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_HELP, SC_CLOSE, (char*)hbm },
         { MF_STRING|MF_HELP, 2, "Help" }
     };
     static const struct menu_data in3[] =
@@ -2550,9 +2603,16 @@ static void test_InsertMenu(void)
         { MF_STRING|MF_HELP, 2, "Help" },
         { MF_BITMAP|MF_HELP, 1, MAKEINTRESOURCE(1) }
     };
+    static const struct menu_data out4a[] =
+    {
+        { MF_STRING, 1, "File" },
+        { MF_STRING|MF_HELP, 2, "Help" },
+        { MF_HELP, 1, MAKEINTRESOURCE(1) }
+    };
     HMENU hmenu;
 
 #define create_menu(a) create_menu_from_data((a), sizeof(a)/sizeof((a)[0]))
+#define create_menuitem(a) create_menuitem_from_data((a), sizeof(a)/sizeof((a)[0]))
 #define compare_menu(h, a) compare_menu_data((h), (a), sizeof(a)/sizeof((a)[0]))
 
     hmenu = create_menu(in1);
@@ -2571,7 +2631,25 @@ static void test_InsertMenu(void)
     compare_menu(hmenu, out4);
     DestroyMenu(hmenu);
 
+    /* now using InsertMenuItemInfo */
+    hmenu = create_menuitem(in1);
+    compare_menu(hmenu, out1a);
+    DestroyMenu(hmenu);
+
+    hmenu = create_menuitem(in2);
+    compare_menu(hmenu, out2a);
+    DestroyMenu(hmenu);
+
+    hmenu = create_menuitem(in3);
+    compare_menu(hmenu, out3);
+    DestroyMenu(hmenu);
+
+    hmenu = create_menuitem(in4);
+    compare_menu(hmenu, out4a);
+    DestroyMenu(hmenu);
+
 #undef create_menu
+#undef create_menuitem
 #undef compare_menu
 }
 
