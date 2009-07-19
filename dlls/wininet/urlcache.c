@@ -465,7 +465,6 @@ static void URLCacheContainer_CloseIndex(URLCACHECONTAINER * pContainer)
 static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, LPWSTR mutex_name)
 {
     URLCACHECONTAINER * pContainer = HeapAlloc(GetProcessHeap(), 0, sizeof(URLCACHECONTAINER));
-    int path_len = strlenW(path);
     int cache_prefix_len = strlenW(cache_prefix);
 
     if (!pContainer)
@@ -476,14 +475,12 @@ static BOOL URLCacheContainers_AddContainer(LPCWSTR cache_prefix, LPCWSTR path, 
     pContainer->hMapping = NULL;
     pContainer->file_size = 0;
 
-    pContainer->path = HeapAlloc(GetProcessHeap(), 0, (path_len + 1) * sizeof(WCHAR));
+    pContainer->path = heap_strdupW(path);
     if (!pContainer->path)
     {
         HeapFree(GetProcessHeap(), 0, pContainer);
         return FALSE;
     }
-
-    memcpy(pContainer->path, path, (path_len + 1) * sizeof(WCHAR));
 
     pContainer->cache_prefix = HeapAlloc(GetProcessHeap(), 0, (cache_prefix_len + 1) * sizeof(WCHAR));
     if (!pContainer->cache_prefix)
@@ -593,6 +590,9 @@ static DWORD URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, URLCACHECONTAIN
 
     TRACE("searching for prefix for URL: %s\n", debugstr_w(lpwszUrl));
 
+    if(!lpwszUrl)
+        return ERROR_INVALID_PARAMETER;
+
     LIST_FOR_EACH_ENTRY(pContainer, &UrlContainers, URLCACHECONTAINER, entry)
     {
         int prefix_len = strlenW(pContainer->cache_prefix);
@@ -609,17 +609,15 @@ static DWORD URLCacheContainers_FindContainerW(LPCWSTR lpwszUrl, URLCACHECONTAIN
 
 static DWORD URLCacheContainers_FindContainerA(LPCSTR lpszUrl, URLCACHECONTAINER ** ppContainer)
 {
+    LPWSTR url = NULL;
     DWORD ret;
-    LPWSTR lpwszUrl;
-    int url_len = MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, NULL, 0);
-    if (url_len && (lpwszUrl = HeapAlloc(GetProcessHeap(), 0, url_len * sizeof(WCHAR))))
-    {
-        MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, lpwszUrl, url_len);
-        ret = URLCacheContainers_FindContainerW(lpwszUrl, ppContainer);
-        HeapFree(GetProcessHeap(), 0, lpwszUrl);
-        return ret;
-    }
-    return GetLastError();
+
+    if (lpszUrl && !(url = heap_strdupAtoW(lpszUrl)))
+        return ERROR_OUTOFMEMORY;
+
+    ret = URLCacheContainers_FindContainerW(url, ppContainer);
+    HeapFree(GetProcessHeap(), 0, url);
+    return ret;
 }
 
 static BOOL URLCacheContainers_Enum(LPCWSTR lpwszSearchPattern, DWORD dwIndex, URLCACHECONTAINER ** ppContainer)
@@ -1241,17 +1239,15 @@ static BOOL URLCache_FindHash(LPCURLCACHE_HEADER pHeader, LPCSTR lpszUrl, struct
 static BOOL URLCache_FindHashW(LPCURLCACHE_HEADER pHeader, LPCWSTR lpszUrl, struct _HASH_ENTRY ** ppHashEntry)
 {
     LPSTR urlA;
-    int url_len;
     BOOL ret;
 
-    url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
-    urlA = HeapAlloc(GetProcessHeap(), 0, url_len * sizeof(CHAR));
+    urlA = heap_strdupWtoA(lpszUrl);
     if (!urlA)
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
-    WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, urlA, url_len, NULL, NULL);
+
     ret = URLCache_FindHash(pHeader, urlA, ppHashEntry);
     HeapFree(GetProcessHeap(), 0, urlA);
     return ret;
@@ -2143,21 +2139,16 @@ BOOL WINAPI CreateUrlCacheEntryA(
     IN DWORD dwReserved
 )
 {
-    DWORD len;
     WCHAR *url_name;
     WCHAR *file_extension;
     WCHAR file_name[MAX_PATH];
     BOOL bSuccess = FALSE;
     DWORD dwError = 0;
 
-    if ((len = MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, NULL, 0)) != 0 &&
-        (url_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0)
+    if (lpszUrlName && (url_name = heap_strdupAtoW(lpszUrlName)))
     {
-	MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, url_name, len);
-	if ((len = MultiByteToWideChar(CP_ACP, 0, lpszFileExtension, -1, NULL, 0)) != 0 &&
-	    (file_extension = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))) != 0)
+	if (lpszFileExtension && (file_extension = heap_strdupAtoW(lpszFileExtension)))
 	{
-            MultiByteToWideChar(CP_ACP, 0, lpszFileExtension, -1, file_extension, len);
 	    if (CreateUrlCacheEntryW(url_name, dwExpectedFileSize, file_extension, file_name, dwReserved))
 	    {
 		if (WideCharToMultiByte(CP_ACP, 0, file_name, -1, lpszFileName, MAX_PATH, NULL, NULL) < MAX_PATH)
@@ -2444,25 +2435,17 @@ static BOOL CommitUrlCacheEntryInternal(
     if (!(pHeader = URLCacheContainer_LockIndex(pContainer)))
         return FALSE;
 
-    len = WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, NULL, 0, NULL, NULL);
-    lpszUrlNameA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
+    lpszUrlNameA = heap_strdupWtoA(lpszUrlName);
     if (!lpszUrlNameA)
     {
         error = GetLastError();
         goto cleanup;
     }
-    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, lpszUrlNameA, len, NULL, NULL);
 
-    if (lpszFileExtension)
+    if (lpszFileExtension && !(lpszFileExtensionA = heap_strdupWtoA(lpszFileExtension)))
     {
-        len = WideCharToMultiByte(CP_ACP, 0, lpszFileExtension, -1, NULL, 0, NULL, NULL);
-        lpszFileExtensionA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
-        if (!lpszFileExtensionA)
-        {
-            error = GetLastError();
-            goto cleanup;
-        }
-        WideCharToMultiByte(CP_ACP, 0, lpszFileExtension, -1, lpszFileExtensionA, len, NULL, NULL);
+        error = GetLastError();
+        goto cleanup;
     }
 
     if (URLCache_FindHash(pHeader, lpszUrlNameA, &pHashEntry))
@@ -2619,7 +2602,6 @@ BOOL WINAPI CommitUrlCacheEntryA(
     IN LPCSTR lpszOriginalUrl
     )
 {
-    DWORD len;
     WCHAR *url_name = NULL;
     WCHAR *local_file_name = NULL;
     WCHAR *original_url = NULL;
@@ -2635,35 +2617,27 @@ BOOL WINAPI CommitUrlCacheEntryA(
         debugstr_a(lpszFileExtension),
         debugstr_a(lpszOriginalUrl));
 
-    len = MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, NULL, 0);
-    url_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    url_name = heap_strdupAtoW(lpszUrlName);
     if (!url_name)
         goto cleanup;
-    MultiByteToWideChar(CP_ACP, 0, lpszUrlName, -1, url_name, len);
 
     if (lpszLocalFileName)
     {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, NULL, 0);
-        local_file_name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        local_file_name = heap_strdupAtoW(lpszLocalFileName);
         if (!local_file_name)
             goto cleanup;
-        MultiByteToWideChar(CP_ACP, 0, lpszLocalFileName, -1, local_file_name, len);
     }
     if (lpszFileExtension)
     {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszFileExtension, -1, NULL, 0);
-        file_extension = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        file_extension = heap_strdupAtoW(lpszFileExtension);
         if (!file_extension)
             goto cleanup;
-        MultiByteToWideChar(CP_ACP, 0, lpszFileExtension, -1, file_extension, len);
     }
     if (lpszOriginalUrl)
     {
-        len = MultiByteToWideChar(CP_ACP, 0, lpszOriginalUrl, -1, NULL, 0);
-        original_url = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        original_url = heap_strdupAtoW(lpszOriginalUrl);
         if (!original_url)
             goto cleanup;
-        MultiByteToWideChar(CP_ACP, 0, lpszOriginalUrl, -1, original_url, len);
     }
 
     bSuccess = CommitUrlCacheEntryInternal(url_name, local_file_name, ExpireTime, LastModifiedTime,
@@ -2709,12 +2683,8 @@ BOOL WINAPI CommitUrlCacheEntryW(
         debugstr_w(lpszFileExtension),
         debugstr_w(lpszOriginalUrl));
 
-    if (!lpHeaderInfo ||
-	((len = WideCharToMultiByte(CP_ACP, 0, lpHeaderInfo, -1, NULL, 0, NULL, NULL)) != 0 &&
-         (header_info = HeapAlloc(GetProcessHeap(), 0, sizeof(CHAR) * len)) != 0))
+    if (!lpHeaderInfo || (header_info = heap_strdupWtoA(lpHeaderInfo)))
     {
-	if (header_info)
-            WideCharToMultiByte(CP_ACP, 0, lpHeaderInfo, -1, header_info, len, NULL, NULL);
 	if (CommitUrlCacheEntryInternal(lpszUrlName, lpszLocalFileName, ExpireTime, LastModifiedTime,
 				CacheEntryType, (LPBYTE)header_info, len, lpszFileExtension, lpszOriginalUrl))
 	{
@@ -2937,19 +2907,16 @@ BOOL WINAPI DeleteUrlCacheEntryW(LPCWSTR lpszUrlName)
     struct _HASH_ENTRY * pHashEntry;
     CACHEFILE_ENTRY * pEntry;
     LPSTR urlA;
-    int url_len;
     DWORD error;
 
     TRACE("(%s)\n", debugstr_w(lpszUrlName));
 
-    url_len = WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, NULL, 0, NULL, NULL);
-    urlA = HeapAlloc(GetProcessHeap(), 0, url_len * sizeof(CHAR));
+    urlA = heap_strdupWtoA(lpszUrlName);
     if (!urlA)
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
-    WideCharToMultiByte(CP_ACP, 0, lpszUrlName, -1, urlA, url_len, NULL, NULL);
 
     error = URLCacheContainers_FindContainerW(lpszUrlName, &pContainer);
     if (error != ERROR_SUCCESS)
@@ -3130,14 +3097,12 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryA(LPCSTR lpszUrlSearchPattern,
     pEntryHandle->dwMagic = URLCACHE_FIND_ENTRY_HANDLE_MAGIC;
     if (lpszUrlSearchPattern)
     {
-        int len = MultiByteToWideChar(CP_ACP, 0, lpszUrlSearchPattern, -1, NULL, 0);
-        pEntryHandle->lpszUrlSearchPattern = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        pEntryHandle->lpszUrlSearchPattern = heap_strdupAtoW(lpszUrlSearchPattern);
         if (!pEntryHandle->lpszUrlSearchPattern)
         {
             HeapFree(GetProcessHeap(), 0, pEntryHandle);
             return NULL;
         }
-        MultiByteToWideChar(CP_ACP, 0, lpszUrlSearchPattern, -1, pEntryHandle->lpszUrlSearchPattern, len);
     }
     else
         pEntryHandle->lpszUrlSearchPattern = NULL;
@@ -3171,14 +3136,12 @@ INTERNETAPI HANDLE WINAPI FindFirstUrlCacheEntryW(LPCWSTR lpszUrlSearchPattern,
     pEntryHandle->dwMagic = URLCACHE_FIND_ENTRY_HANDLE_MAGIC;
     if (lpszUrlSearchPattern)
     {
-        int len = strlenW(lpszUrlSearchPattern);
-        pEntryHandle->lpszUrlSearchPattern = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+        pEntryHandle->lpszUrlSearchPattern = heap_strdupW(lpszUrlSearchPattern);
         if (!pEntryHandle->lpszUrlSearchPattern)
         {
             HeapFree(GetProcessHeap(), 0, pEntryHandle);
             return NULL;
         }
-        memcpy(pEntryHandle->lpszUrlSearchPattern, lpszUrlSearchPattern, (len + 1) * sizeof(WCHAR));
     }
     else
         pEntryHandle->lpszUrlSearchPattern = NULL;
