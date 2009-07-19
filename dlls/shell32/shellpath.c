@@ -764,6 +764,7 @@ static const WCHAR Common_Administrative_ToolsW[] = {'C','o','m','m','o','n',' '
 static const WCHAR Common_AppDataW[] = {'C','o','m','m','o','n',' ','A','p','p','D','a','t','a','\0'};
 static const WCHAR Common_DesktopW[] = {'C','o','m','m','o','n',' ','D','e','s','k','t','o','p','\0'};
 static const WCHAR Common_DocumentsW[] = {'C','o','m','m','o','n',' ','D','o','c','u','m','e','n','t','s','\0'};
+static const WCHAR Common_FavoritesW[] = {'C','o','m','m','o','n',' ','F','a','v','o','r','i','t','e','s','\0'};
 static const WCHAR CommonFilesDirW[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r','\0'};
 static const WCHAR CommonMusicW[] = {'C','o','m','m','o','n','M','u','s','i','c','\0'};
 static const WCHAR CommonPicturesW[] = {'C','o','m','m','o','n','P','i','c','t','u','r','e','s','\0'};
@@ -981,7 +982,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x1f - CSIDL_COMMON_FAVORITES */
         CSIDL_Type_AllUsers,
-        FavoritesW,
+        Common_FavoritesW,
         MAKEINTRESOURCEW(IDS_FAVORITES)
     },
     { /* 0x20 - CSIDL_INTERNET_CACHE */
@@ -2041,6 +2042,10 @@ static HRESULT _SHRegisterCommonShellFolders(void)
      CSIDL_COMMON_APPDATA,
      CSIDL_COMMON_TEMPLATES,
      CSIDL_COMMON_DOCUMENTS,
+     CSIDL_COMMON_ADMINTOOLS,
+     CSIDL_COMMON_MUSIC,
+     CSIDL_COMMON_PICTURES,
+     CSIDL_COMMON_VIDEO,
     };
     HRESULT hr;
 
