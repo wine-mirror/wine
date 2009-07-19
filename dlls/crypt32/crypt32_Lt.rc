@@ -53,7 +53,7 @@ STRINGTABLE DISCARDABLE
     IDS_UNSTRUCTURED_ADDRESS              "Nestruktūrinis adresas"
     IDS_SMIME_CAPABILITIES                "SMIME gebėjimai"
     IDS_PREFER_SIGNED_DATA                "Teikti pirmenybę pasirašytiems duomenims"
-    IDS_CPS                               "SVN" /* Sertifikavimo Veiklos Nuostatos */
+    IDS_CPS                               "Sertifikavimo Veiklos Nuostatos (CPS)"
     IDS_USER_NOTICE                       "Naudotojo pastaba"
     IDS_OCSP                              "Būsenos paliudijimo tinklu protokolas (OCSP)"
     IDS_CA_ISSUER                         "Liudijimo įstaigos steigėjai"
@@ -177,7 +177,7 @@ STRINGTABLE DISCARDABLE
     IDS_LOCALIZEDNAME_CA                  "Tarpinės liudijimų įstaigos"
     IDS_LOCALIZEDNAME_ADDRESSBOOK         "Kiti žmonės"
     IDS_LOCALIZEDNAME_TRUSTEDPUBLISHER    "Patikimi publikuotojai"
-    IDS_LOCALIZEDNAME_DISALLOWED          "Atmesti"
+    IDS_LOCALIZEDNAME_DISALLOWED          "Nepatikimi liudijimai"
 }
 
 STRINGTABLE DISCARDABLE

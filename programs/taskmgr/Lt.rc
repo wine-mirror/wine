@@ -431,7 +431,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     ID_FILE_NEW                  "Paleidžia naują programą"
     ID_OPTIONS_ALWAYSONTOP       "Užduočių tvarkytuvės langas lieka priekyje visų kitų langų, nebent suskleidžiamas"
-    ID_OPTIONS_MINIMIZEONUSE     "Užduočių tvarkytuvė yra suskleidžiama, kai įvykdoma operacija 'perjungti į'"
+    ID_OPTIONS_MINIMIZEONUSE     "Užduočių tvarkytuvė yra suskleidžiama, kai įvykdoma operacija „perjungti į“"
     ID_OPTIONS_HIDEWHENMINIMIZED "Slepia užduočių tvarkytuvę, kai langas suskleidžiamas"
     ID_VIEW_REFRESH              "Priverčia užduočių tvarkytuvę atnaujinti ekraną dabar, nepaisant atnaujinimo greičio nuostatos"
     ID_VIEW_LARGE                "Rodo užduotis didelėmis piktogramomis"

@@ -42,7 +42,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "P&radedantis",      IDM_BEGINNER
         MENUITEM "&Pažengęs",         IDM_ADVANCED
         MENUITEM "Ek&spertas",        IDM_EXPERT
-        MENUITEM "Pasirin&ktas",      IDM_CUSTOM
+        MENUITEM "Pasirin&ktas...",   IDM_CUSTOM
         MENUITEM SEPARATOR
         MENUITEM "Iš&eiti\tAlt+X",    IDM_EXIT
     }

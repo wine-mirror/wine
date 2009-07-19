@@ -27,7 +27,7 @@ LANGUAGE LANG_LITHUANIAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 {
-        IDS_PROMPTDISK   "Reikalingas failas '%s' esantis %s"
+        IDS_PROMPTDISK   "Reikalingas failas „%s“ esantis %s"
         IDS_UNKNOWN      "Nežinomas"
         IDS_COPYFROM     "Kopijuoti failus iš:"
         IDS_INFO         "Įveskite kelią iki failo, o tada spauskite Gerai."

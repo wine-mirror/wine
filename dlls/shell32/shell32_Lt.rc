@@ -227,16 +227,16 @@ STRINGTABLE
 	IDS_CREATEFOLDER_CAPTION "Klaida kuriant naują aplanką"
 	IDS_DELETEITEM_CAPTION "Patvirtinti failo šalinimą"
 	IDS_DELETEFOLDER_CAPTION "Patvirtinti aplanko šalinimą"
-	IDS_DELETEITEM_TEXT "Ar tikrai norite pašalinti '%1'?"
+	IDS_DELETEITEM_TEXT "Ar tikrai norite pašalinti „%1“?"
 	IDS_DELETEMULTIPLE_TEXT "Ar tikrai norite pašalinti šiuos %1 elementus?"
 	IDS_DELETESELECTED_TEXT "Ar tikrai norite pašalinti išrinktus elementus?"
-	IDS_TRASHITEM_TEXT "Ar tikrai norite perkelti '%1' į šiukšlinę?"
-	IDS_TRASHFOLDER_TEXT "Ar tikrai norite perkelti '%1' ir jo turinį į šiukšlinę?"
+	IDS_TRASHITEM_TEXT "Ar tikrai norite perkelti „%1“ į šiukšlinę?"
+	IDS_TRASHFOLDER_TEXT "Ar tikrai norite perkelti „%1“ ir jo turinį į šiukšlinę?"
 	IDS_TRASHMULTIPLE_TEXT "Ar tikrai norite perkelti šiuos %1 elementus į šiukšlinę?"
-	IDS_CANTTRASH_TEXT "Šis elementas '%1' negali būti perkeltas į šiukšlinę. Ar norite jį pašalinti vietoj šiukšlinės?"
-	IDS_OVERWRITEFILE_TEXT "Šis aplankas jau turi failą vardu '%1'.\n\nAr norite jį pakeisti?"
+	IDS_CANTTRASH_TEXT "Šis elementas „%1“ negali būti perkeltas į šiukšlinę. Ar norite jį pašalinti vietoj šiukšlinės?"
+	IDS_OVERWRITEFILE_TEXT "Šis aplankas jau turi failą vardu „%1“.\n\nAr norite jį pakeisti?"
 	IDS_OVERWRITEFILE_CAPTION "Patvirtinti failo perrašymą"
-	IDS_OVERWRITEFOLDER_TEXT "Šis aplankas jau turi aplanką vardu '%1'.\n\n"\
+	IDS_OVERWRITEFOLDER_TEXT "Šis aplankas jau turi aplanką vardu „%1“.\n\n"\
 	    "Jei failai paskirties aplanke yra pavadinti tais pačiais vardais kaip ir failai\n"\
 	    "išrinktame aplanke, tai jie bus pakeisti. Ar vis dar norite perkelti ar kopijuoti\n"\
 	    "šį aplanką?"

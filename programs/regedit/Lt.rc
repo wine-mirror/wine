@@ -291,16 +291,16 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_ERROR               "Klaida"
-    IDS_BAD_KEY             "Nepavyko perskaityti rakto '%s'"
-    IDS_BAD_VALUE           "Nepavyko perskaityti reikšmės '%s'"
+    IDS_BAD_KEY             "Nepavyko perskaityti rakto „%s“"
+    IDS_BAD_VALUE           "Nepavyko perskaityti reikšmės „%s“"
     IDS_UNSUPPORTED_TYPE    "Šio tipo raktų redaguoti negalima (%u)"
     IDS_TOO_BIG_VALUE       "Reikšmė per didelė (%u)"
     IDS_DELETE_BOX_TITLE    "Reikšmės šalinimo patvirtinimas"
-    IDS_DELETE_BOX_TEXT     "Ar tikrai norite pašalinti reikšmę '%s'?"
+    IDS_DELETE_BOX_TEXT     "Ar tikrai norite pašalinti reikšmę „%s“?"
     IDS_DELETE_BOX_TEXT_MULTIPLE "Ar tikrai norite pašalinti šias reikšmes?"
     IDS_NEWKEY              "Naujas raktas #%d"
     IDS_NEWVALUE            "Nauja reikšmė #%d"
-    IDS_NOTFOUND            "Ieškoma eilutė '%s' nerasta"
+    IDS_NOTFOUND            "Ieškoma eilutė „%s“ nerasta"
 END
 
 STRINGTABLE DISCARDABLE
@@ -313,7 +313,7 @@ END
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_REGISTRY_ROOT_NAME           "Kompiuteris"
-    IDS_REGISTRY_DEFAULT_VALUE       "(Numatytoji)"
+    IDS_REGISTRY_DEFAULT_VALUE       "(numatytoji)"
     IDS_REGISTRY_VALUE_NOT_SET       "(reikšmė nenustatyta)"
     IDS_REGISTRY_VALUE_CANT_DISPLAY  "(negalima parodyti reikšmės)"
     IDS_REGISTRY_UNKNOWN_TYPE        "(nežinomas %d)"

@@ -52,7 +52,7 @@ END
 
 STRINGTABLE DISCARDABLE
 {
-  IDS_RESULTOBJDESC     "Įterpia naują objektą '%s' į jūsų dokumentą"
+  IDS_RESULTOBJDESC     "Įterpia naują objektą „%s“ į jūsų dokumentą"
   IDS_RESULTFILEOBJDESC "Įterpia failo turinį kaip objektą į jūsų dokumentą, kad galėtumėte jį aktyvuoti naudodami programą, kuri jį sukūrė."
   IDS_BROWSE            "Parinkti"
   IDS_NOTOLEMOD         "Panašu, kad failas nėra galiojantis OLE modulis. Nepavyko užregistruoti OLE valdiklio."
