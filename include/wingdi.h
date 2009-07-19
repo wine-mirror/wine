@@ -1775,14 +1775,14 @@ typedef struct tagEXTLOGPEN
 
   /* Device-independent bitmaps */
 
-typedef struct {
+typedef struct tagRGBQUAD {
   BYTE rgbBlue;
   BYTE rgbGreen;
   BYTE rgbRed;
   BYTE rgbReserved;
 } RGBQUAD, *LPRGBQUAD;
 
-typedef struct {
+typedef struct tagRGBTRIPLE {
   BYTE rgbtBlue;
   BYTE rgbtGreen;
   BYTE rgbtRed;
