@@ -20,12 +20,15 @@
 
 #include "reg.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "Использвование программы:\n\nREG [ ADD | DELETE | QUERY ]\nREG <команда> /?\n"
-    STRING_ADD_USAGE, "REG ADD <ключ> [/v <параметр> | /ve] [/t <тип>] [/s <разделитеь>] [/d данные] [/f]\n"
-    STRING_DELETE_USAGE, "REG DELETE <ключ> [/v <параметр> | /ve | /va] [/f]\n"
-    STRING_QUERY_USAGE, "REG QUERY <ключ> [/v <параметр> | /ve] [/s]\n"
+    STRING_USAGE, "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ РїСЂРѕРіСЂР°РјРјС‹:\n\nREG [ ADD | DELETE | QUERY ]\nREG <РєРѕРјР°РЅРґР°> /?\n"
+    STRING_ADD_USAGE, "REG ADD <РєР»СЋС‡> [/v <РїР°СЂР°РјРµС‚СЂ> | /ve] [/t <С‚РёРї>] [/s <СЂР°Р·РґРµР»РёС‚РµР»СЊ>] [/d РґР°РЅРЅС‹Рµ] [/f]\n"
+    STRING_DELETE_USAGE, "REG DELETE <РєР»СЋС‡> [/v <РїР°СЂР°РјРµС‚СЂ> | /ve | /va] [/f]\n"
+    STRING_QUERY_USAGE, "REG QUERY <РєР»СЋС‡> [/v <РїР°СЂР°РјРµС‚СЂ> | /ve] [/s]\n"
 }
