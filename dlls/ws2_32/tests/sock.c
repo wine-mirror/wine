@@ -2862,8 +2862,7 @@ static void test_AcceptEx(void)
 
     /* Connect socket #1 */
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    ok(iret == 0 ||
-        (iret == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK), "connecting to accepting socket failed, error %d\n", WSAGetLastError());
+    ok(iret == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
 
     FD_ZERO ( &fds_accept );
     FD_ZERO ( &fds_send );
@@ -2877,15 +2876,17 @@ static void test_AcceptEx(void)
 
     for (i = 0; i < 4000; ++i)
     {
-        wsa_ok ( ( select ( 0, &fds_accept, &fds_send, NULL, &timeout ) ), SOCKET_ERROR !=,
-            "select_server (%x): select() failed: %d\n" );
+        fd_set fds_openaccept = fds_accept, fds_opensend = fds_send;
+
+        wsa_ok ( ( select ( 0, &fds_openaccept, &fds_opensend, NULL, &timeout ) ), SOCKET_ERROR !=,
+            "acceptex test(%d): could not select on socket, errno %d\n" );
 
         /* check for incoming requests */
-        if ( FD_ISSET ( listener, &fds_accept ) ) {
+        if ( FD_ISSET ( listener, &fds_openaccept ) ) {
             got++;
             if (got == 1) {
                 SOCKET tmp = WSAAccept(listener, NULL, NULL, (LPCONDITIONPROC) AlwaysDeferConditionFunc, 0);
-                ok(tmp == INVALID_SOCKET && WSAGetLastError() == WSATRY_AGAIN, "Failed to defer connection\n");
+                ok(tmp == INVALID_SOCKET && WSAGetLastError() == WSATRY_AGAIN, "Failed to defer connection, %d\n", WSAGetLastError());
                 bret = pAcceptEx(listener, acceptor, buffer, 0,
                                     sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
                                     &bytesReturned, &overlapped);
@@ -2901,14 +2902,14 @@ static void test_AcceptEx(void)
                 ok(FALSE, "Got more than 2 connections?\n");
             }
         }
-        if ( conn1 && FD_ISSET ( connector2, &fds_send ) ) {
+        if ( conn1 && FD_ISSET ( connector2, &fds_opensend ) ) {
             /* Send data on second socket, and stop */
             send(connector2, "2", 1, 0);
             FD_CLR ( connector2, &fds_send );
 
             break;
         }
-        if ( FD_ISSET ( connector, &fds_send ) ) {
+        if ( FD_ISSET ( connector, &fds_opensend ) ) {
             /* Once #1 is connected, allow #2 to connect */
             conn1 = 1;
 
@@ -2916,13 +2917,13 @@ static void test_AcceptEx(void)
             FD_CLR ( connector, &fds_send );
 
             iret = connect(connector2, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-            ok(iret == 0 ||
-                (iret == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK), "connecting to accepting socket failed, error %d\n", WSAGetLastError());
+            ok(iret == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
             FD_SET ( connector2, &fds_send );
         }
     }
 
-    ok (got == 2, "Did not get both connections\n");
+    ok (got == 2 || broken(got == 1) /* NT4 */,
+            "Did not get both connections, got %d\n", got);
 
     dwret = WaitForSingleObject(overlapped.hEvent, 0);
     ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
@@ -2933,7 +2934,7 @@ static void test_AcceptEx(void)
 
     set_blocking(acceptor, TRUE);
     iret = recv( acceptor, buffer, 2, 0);
-    ok(iret == 1, "Failed to get data, %d\n", iret);
+    ok(iret == 1, "Failed to get data, %d, errno: %d\n", iret, WSAGetLastError());
 
     ok(buffer[0] == '1', "The wrong first client was accepted by acceptex: %c != 1\n", buffer[0]);
 
@@ -2941,6 +2942,10 @@ static void test_AcceptEx(void)
     connector = INVALID_SOCKET;
     closesocket(acceptor);
     acceptor = INVALID_SOCKET;
+
+    /* clean up in case of failures */
+    while ((acceptor = accept(listener, NULL, NULL)) != INVALID_SOCKET)
+        closesocket(acceptor);
 
     /* Disconnect during receive? */
 
