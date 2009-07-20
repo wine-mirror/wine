@@ -46,10 +46,8 @@ static HRESULT Bool_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_BOOLEAN)) {
-        FIXME("throw TypeError\n");
-        return E_FAIL;
-    }
+    if(!is_class(dispex, JSCLASS_BOOLEAN))
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_BOOL, NULL);
 
     if(retv) {
         BoolInstance *bool = (BoolInstance*)dispex;
@@ -81,10 +79,8 @@ static HRESULT Bool_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 {
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_BOOLEAN)) {
-        FIXME("throw TypeError\n");
-        return E_FAIL;
-    }
+    if(!is_class(dispex, JSCLASS_BOOLEAN))
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_BOOL, NULL);
 
     if(retv) {
         BoolInstance *bool = (BoolInstance*)dispex;
