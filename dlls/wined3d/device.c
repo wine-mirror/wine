@@ -6080,12 +6080,6 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
     glClear(GL_COLOR_BUFFER_BIT);
     checkGLcall("glClear");
 
-    if (This->activeContext->current_fbo) {
-        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
-    } else {
-        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, NULL);
-    }
-
     if (swapchain && surface == ((IWineD3DSwapChainImpl *)swapchain)->frontBuffer
             && ((IWineD3DSwapChainImpl *)swapchain)->backBuffer) {
         glDrawBuffer(GL_BACK);
@@ -6533,12 +6527,6 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     }
 
     IWineD3DSurface_ModifyLocation(dst_surface, SFLAG_INDRAWABLE, TRUE);
-
-    if (This->activeContext->current_fbo) {
-        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, &This->activeContext->current_fbo->id);
-    } else {
-        context_bind_fbo(This->activeContext, GL_FRAMEBUFFER_EXT, NULL);
-    }
 
     /* If we switched from GL_BACK to GL_FRONT above, we need to switch back here */
     if (dst_swapchain && dst_surface == ((IWineD3DSwapChainImpl *)dst_swapchain)->frontBuffer
