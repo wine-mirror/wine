@@ -66,14 +66,20 @@ struct disk_device
     char                 *unix_mount;  /* unix mount point path */
 };
 
+struct volume
+{
+    struct list           entry;       /* entry in volumes list */
+    struct disk_device   *device;      /* disk device */
+    char                 *udi;         /* unique identifier for dynamic volumes */
+    struct mount_point   *mount;       /* Volume{xxx} mount point */
+};
+
 struct dos_drive
 {
     struct list           entry;       /* entry in drives list */
-    struct disk_device   *device;      /* disk device */
-    char                 *udi;         /* unique identifier for dynamic drives */
+    struct volume        *volume;      /* volume for this drive */
     int                   drive;       /* drive letter (0 = A: etc.) */
     struct mount_point   *dosdev;      /* DosDevices mount point */
-    struct mount_point   *volume;      /* Volume{xxx} mount point */
 };
 
 static struct list drives_list = LIST_INIT(drives_list);
@@ -269,6 +275,41 @@ static void delete_disk_device( struct disk_device *device )
     IoDeleteDevice( device->dev_obj );
 }
 
+/* create a disk volume */
+static NTSTATUS create_volume( const char *udi, enum device_type type, struct volume **volume_ret )
+{
+    struct volume *volume;
+    NTSTATUS status;
+
+    if (!(volume = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*volume) )))
+        return STATUS_NO_MEMORY;
+
+    if (udi && !(volume->udi = strdupA( udi )))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, volume );
+        return STATUS_NO_MEMORY;
+    }
+    if (!(status = create_disk_device( type, &volume->device )))
+    {
+        *volume_ret = volume;
+    }
+    else
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, volume->udi );
+        RtlFreeHeap( GetProcessHeap(), 0, volume );
+    }
+    return status;
+}
+
+/* delete a volume and the corresponding disk device */
+static void delete_volume( struct volume *volume )
+{
+    if (volume->mount) delete_mount_point( volume->mount );
+    delete_disk_device( volume->device );
+    RtlFreeHeap( GetProcessHeap(), 0, volume->udi );
+    RtlFreeHeap( GetProcessHeap(), 0, volume );
+}
+
 /* create the disk device for a given volume */
 static NTSTATUS create_dos_device( const char *udi, enum device_type type, struct dos_drive **drive_ret )
 {
@@ -278,25 +319,14 @@ static NTSTATUS create_dos_device( const char *udi, enum device_type type, struc
     if (!(drive = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*drive) ))) return STATUS_NO_MEMORY;
     drive->drive  = -1;
     drive->dosdev = NULL;
-    drive->volume = NULL;
-    drive->udi    = strdupA( udi );
 
-    if (udi && !drive->udi)
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, drive );
-        return STATUS_NO_MEMORY;
-    }
-
-    if (!(status = create_disk_device( type, &drive->device )))
+    if (!(status = create_volume( udi, type, &drive->volume )))
     {
         list_add_tail( &drives_list, &drive->entry );
         *drive_ret = drive;
     }
-    else
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, drive->udi );
-        RtlFreeHeap( GetProcessHeap(), 0, drive );
-    }
+    else RtlFreeHeap( GetProcessHeap(), 0, drive );
+
     return status;
 }
 
@@ -305,9 +335,7 @@ static void delete_dos_device( struct dos_drive *drive )
 {
     list_remove( &drive->entry );
     if (drive->dosdev) delete_mount_point( drive->dosdev );
-    if (drive->volume) delete_mount_point( drive->volume );
-    delete_disk_device( drive->device );
-    RtlFreeHeap( GetProcessHeap(), 0, drive->udi );
+    delete_volume( drive->volume );
     RtlFreeHeap( GetProcessHeap(), 0, drive );
 }
 
@@ -316,11 +344,12 @@ static void set_drive_letter( struct dos_drive *drive, int letter )
 {
     void *id = NULL;
     unsigned int id_len = 0;
-    struct disk_device *device = drive->device;
+    struct volume *volume = drive->volume;
+    struct disk_device *device = volume->device;
 
     if (drive->drive == letter) return;
     if (drive->dosdev) delete_mount_point( drive->dosdev );
-    if (drive->volume) delete_mount_point( drive->volume );
+    if (volume->mount) delete_mount_point( volume->mount );
     drive->drive = letter;
     if (letter == -1) return;
     if (device->unix_mount)
@@ -329,7 +358,7 @@ static void set_drive_letter( struct dos_drive *drive, int letter )
         id_len = strlen( device->unix_mount ) + 1;
     }
     drive->dosdev = add_dosdev_mount_point( device->dev_obj, &device->name, letter, id, id_len );
-    drive->volume = add_volume_mount_point( device->dev_obj, &device->name, letter, id, id_len );
+    volume->mount = add_volume_mount_point( device->dev_obj, &device->name, letter, id, id_len );
 }
 
 static inline int is_valid_device( struct stat *st )
@@ -420,7 +449,8 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
 {
     char *path, *p;
     BOOL modified = FALSE;
-    struct disk_device *device = drive->device;
+    struct volume *volume = drive->volume;
+    struct disk_device *device = volume->device;
 
     if (!(path = get_dosdevices_path( &p ))) return FALSE;
     p[0] = 'a' + drive->drive;
@@ -438,7 +468,7 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
         RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
         device->unix_mount = strdupA( mount_point );
         if (drive->dosdev) set_mount_point_id( drive->dosdev, mount_point, strlen(mount_point) + 1 );
-        if (drive->volume) set_mount_point_id( drive->volume, mount_point, strlen(mount_point) + 1 );
+        if (volume->mount) set_mount_point_id( volume->mount, mount_point, strlen(mount_point) + 1 );
     }
     else
     {
@@ -446,7 +476,7 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
         RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
         device->unix_mount = NULL;
         if (drive->dosdev) set_mount_point_id( drive->dosdev, NULL, 0 );
-        if (drive->volume) set_mount_point_id( drive->volume, NULL, 0 );
+        if (volume->mount) set_mount_point_id( volume->mount, NULL, 0 );
     }
 
     HeapFree( GetProcessHeap(), 0, path );
@@ -496,8 +526,8 @@ static void create_drive_devices(void)
 
         if (!create_dos_device( NULL, drive_type, &drive ))
         {
-            drive->device->unix_mount = link;
-            drive->device->unix_device = device;
+            drive->volume->device->unix_mount = link;
+            drive->volume->device->unix_device = device;
             set_drive_letter( drive, i );
         }
         else
@@ -533,9 +563,9 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
 
     LIST_FOR_EACH_ENTRY_SAFE( drive, next, &drives_list, struct dos_drive, entry )
     {
-        if (udi && drive->udi && !strcmp( udi, drive->udi ))
+        if (udi && drive->volume->udi && !strcmp( udi, drive->volume->udi ))
         {
-            if (type == drive->device->type) goto found;
+            if (type == drive->volume->device->type) goto found;
             delete_dos_device( drive );
             continue;
         }
@@ -545,8 +575,8 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
     if (create_dos_device( udi, type, &drive )) return STATUS_NO_MEMORY;
 
 found:
-    RtlFreeHeap( GetProcessHeap(), 0, drive->device->unix_device );
-    drive->device->unix_device = strdupA( device );
+    RtlFreeHeap( GetProcessHeap(), 0, drive->volume->device->unix_device );
+    drive->volume->device->unix_device = strdupA( device );
     set_drive_letter( drive, letter );
     set_unix_mount_point( drive, mount_point );
 
@@ -590,8 +620,8 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
         if (letter != -1 && drive->drive != letter) continue;
         if (udi)
         {
-            if (!drive->udi) continue;
-            if (strcmp( udi, drive->udi )) continue;
+            if (!drive->volume->udi) continue;
+            if (strcmp( udi, drive->volume->udi )) continue;
         }
 
         if (drive->drive != -1)
@@ -625,7 +655,7 @@ NTSTATUS query_dos_device( int letter, enum device_type *type,
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
         if (drive->drive != letter) continue;
-        disk_device = drive->device;
+        disk_device = drive->volume->device;
         if (type) *type = disk_device->type;
         if (device) *device = disk_device->unix_device;
         if (mount_point) *mount_point = disk_device->unix_mount;
