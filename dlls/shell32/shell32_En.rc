@@ -274,9 +274,9 @@ STRINGTABLE
 	IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
 	IDS_COMMON_DOCUMENTS        "Documents"
 	IDS_ADMINTOOLS              "Start Menu\\Programs\\Administrative Tools"
-	IDS_COMMON_MUSIC            "Documents\\My Music"
-	IDS_COMMON_PICTURES         "Documents\\My Pictures"
-	IDS_COMMON_VIDEO            "Documents\\My Videos"
+	IDS_COMMON_MUSIC            "Music"
+	IDS_COMMON_PICTURES         "Pictures"
+	IDS_COMMON_VIDEO            "Videos"
 	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
 	IDS_NEWFOLDER		"New Folder"
