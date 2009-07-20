@@ -1302,5 +1302,7 @@ exception_test(function() {Array(-3);}, "RangeError");
 exception_test(function() {arr.toString = Boolean.prototype.toString; arr.toString();}, "TypeError");
 exception_test(function() {date.setTime();}, "TypeError");
 exception_test(function() {arr.test();}, "TypeError");
+exception_test(function() {arr.toString = Number.prototype.toString; arr.toString();}, "TypeError");
+exception_test(function() {(new Number(3)).toString(1);}, "TypeError");
 
 reportSuccess();

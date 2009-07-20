@@ -54,10 +54,8 @@ static HRESULT Number_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_NUMBER)) {
-        FIXME("throw TypeError\n");
-        return E_FAIL;
-    }
+    if(!is_class(dispex, JSCLASS_NUMBER))
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_NUM, NULL);
 
     number = (NumberInstance*)dispex;
 
@@ -66,10 +64,8 @@ static HRESULT Number_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPA
         if(FAILED(hres))
             return hres;
 
-        if(radix<2 || radix>36) {
-            FIXME("throw TypeError\n");
-            return E_FAIL;
-        }
+        if(radix<2 || radix>36)
+            return throw_type_error(dispex->ctx, ei, IDS_INVALID_CALL_ARG, NULL);
     }
 
     if(V_VT(&number->num) == VT_I4)
@@ -208,10 +204,8 @@ static HRESULT Number_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 {
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_NUMBER)) {
-        FIXME("throw TypeError\n");
-        return E_FAIL;
-    }
+    if(!is_class(dispex, JSCLASS_NUMBER))
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_NUM, NULL);
 
     if(retv) {
         NumberInstance *number = (NumberInstance*)dispex;

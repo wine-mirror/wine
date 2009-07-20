@@ -22,9 +22,11 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 {
+    IDS_INVALID_CALL_ARG    "Invalid procedure call or argument"
     IDS_NO_PROPERTY         "Object doesn't support this property or method"
     IDS_ARG_NOT_OPT         "Argument not optional"
     IDS_NOT_DATE            "'[object]' is not a date object"
+    IDS_NOT_NUM             "Number expected"
     IDS_NOT_BOOL            "Boolean object expected"
     IDS_INVALID_LENGTH      "Array length must be a finite positive integer"
 }
