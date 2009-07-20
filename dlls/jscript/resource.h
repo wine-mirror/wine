@@ -18,6 +18,7 @@
 
 #include <windef.h>
 
+#define IDS_ARG_NOT_OPT                     0x01c1
 #define IDS_NOT_DATE                        0x138E
 #define IDS_NOT_BOOL                        0x1392
 #define IDS_INVALID_LENGTH                  0x13A5
