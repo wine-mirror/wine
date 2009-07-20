@@ -15,6 +15,10 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#include "config.h"
+#include "wine/port.h"
+
+#include <math.h>
 
 #include "jscript.h"
 
@@ -213,7 +217,7 @@ static HRESULT alloc_error(script_ctx_t *ctx, BOOL error_prototype,
 }
 
 static HRESULT create_error(script_ctx_t *ctx, DispatchEx *constr,
-        const WCHAR *msg, DispatchEx **ret)
+        const UINT *number, const WCHAR *msg, DispatchEx **ret)
 {
     ErrorInstance *err;
     HRESULT hres;
@@ -222,9 +226,16 @@ static HRESULT create_error(script_ctx_t *ctx, DispatchEx *constr,
     if(FAILED(hres))
         return hres;
 
+    if(number) {
+        V_VT(&err->number) = VT_I4;
+        V_I4(&err->number) = *number;
+    }
+
     V_VT(&err->message) = VT_BSTR;
     if(msg) V_BSTR(&err->message) = SysAllocString(msg);
     else V_BSTR(&err->message) = SysAllocStringLen(NULL, 0);
+
+    VariantCopy(&err->description, &err->message);
 
     if(!V_BSTR(&err->message)) {
         heap_free(err);
@@ -238,11 +249,28 @@ static HRESULT create_error(script_ctx_t *ctx, DispatchEx *constr,
 static HRESULT error_constr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, DispatchEx *constr) {
     DispatchEx *err;
+    VARIANT numv;
+    UINT num;
     BSTR msg = NULL;
     HRESULT hres;
 
+    V_VT(&numv) = VT_NULL;
+
     if(arg_cnt(dp)) {
-        hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &msg);
+        hres = to_number(dispex->ctx, get_arg(dp, 0), ei, &numv);
+        if(FAILED(hres) || (V_VT(&numv)==VT_R8 && isnan(V_R8(&numv))))
+            hres = to_string(dispex->ctx, get_arg(dp, 0), ei, &msg);
+        else if(V_VT(&numv) == VT_I4)
+            num = V_I4(&numv);
+        else
+            num = V_R8(&numv);
+
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(arg_cnt(dp)>1 && !msg) {
+        hres = to_string(dispex->ctx, get_arg(dp, 1), ei, &msg);
         if(FAILED(hres))
             return hres;
     }
@@ -250,7 +278,11 @@ static HRESULT error_constr(DispatchEx *dispex, WORD flags, DISPPARAMS *dp,
     switch(flags) {
     case INVOKE_FUNC:
     case DISPATCH_CONSTRUCT:
-        hres = create_error(dispex->ctx, constr, msg, &err);
+        if(V_VT(&numv) == VT_NULL)
+            hres = create_error(dispex->ctx, constr, NULL, msg, &err);
+        else
+            hres = create_error(dispex->ctx, constr, &num, msg, &err);
+
         if(FAILED(hres))
             return hres;
 
@@ -394,7 +426,8 @@ static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCH
         memcpy(pos, str, len*sizeof(WCHAR));
     }
 
-    hres = create_error(ctx, constr, buf, &err);
+    id |= 0x800A0000;
+    hres = create_error(ctx, constr, &id, buf, &err);
     if(FAILED(hres))
         return hres;
 
@@ -404,7 +437,7 @@ static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCH
     V_VT(&ei->var) = VT_DISPATCH;
     V_DISPATCH(&ei->var) = (IDispatch*)_IDispatchEx_(err);
 
-    return 0x800A0000+id;
+    return id;
 }
 
 HRESULT throw_eval_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)

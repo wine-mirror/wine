@@ -1287,22 +1287,31 @@ ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
 err = new Error("message");
 ok(err.message === "message", "err.message !== 'message'");
 ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
+err = new Error(123);
+ok(err.number === 123, "err.number = " + err.number);
+err = new Error(0, "message");
+ok(err.number === 0, "err.number = " + err.number);
+ok(err.message === "message", "err.message = " + err.message);
+ok(err.description === "message", "err.description = " + err.description);
 
-function exception_test(func, type) {
+function exception_test(func, type, number) {
     ret = "";
+    num = "";
     try {
         func();
     } catch(e) {
         ret = e.name;
+        num = e.number;
     }
     ok(ret === type, "Exception test, ret = " + ret + ", expected " + type +". Executed function: " + func.toString());
+    ok(num === number, "Exception test, num = " + num + ", expected " + number + ". Executed function: " + func.toString());
 }
-exception_test(function() {arr.toString = Date.prototype.toString; arr.toString();}, "TypeError");
-exception_test(function() {Array(-3);}, "RangeError");
-exception_test(function() {arr.toString = Boolean.prototype.toString; arr.toString();}, "TypeError");
-exception_test(function() {date.setTime();}, "TypeError");
-exception_test(function() {arr.test();}, "TypeError");
-exception_test(function() {arr.toString = Number.prototype.toString; arr.toString();}, "TypeError");
-exception_test(function() {(new Number(3)).toString(1);}, "TypeError");
+exception_test(function() {arr.toString = Date.prototype.toString; arr.toString();}, "TypeError", -2146823282);
+exception_test(function() {Array(-3);}, "RangeError", -2146823259);
+exception_test(function() {arr.toString = Boolean.prototype.toString; arr.toString();}, "TypeError", -2146823278);
+exception_test(function() {date.setTime();}, "TypeError", -2146827839);
+exception_test(function() {arr.test();}, "TypeError", -2146827850);
+exception_test(function() {arr.toString = Number.prototype.toString; arr.toString();}, "TypeError", -2146823287);
+exception_test(function() {(new Number(3)).toString(1);}, "TypeError", -2146828283);
 
 reportSuccess();
