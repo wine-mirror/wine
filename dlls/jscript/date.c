@@ -590,10 +590,8 @@ static HRESULT Date_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_DATE)) {
-        FIXME("throw TypeError\n");
-        return E_FAIL;
-    }
+    if(!is_class(dispex, JSCLASS_DATE))
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_DATE, NULL);
 
     date = (DateInstance*)dispex;
     time = local_time(date->time, date);

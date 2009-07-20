@@ -28,6 +28,8 @@
 #include "dispex.h"
 #include "activscp.h"
 
+#include "resource.h"
+
 #include "wine/unicode.h"
 #include "wine/list.h"
 
@@ -57,6 +59,8 @@ void jsheap_free(jsheap_t*);
 jsheap_t *jsheap_mark(jsheap_t*);
 
 typedef struct DispatchEx DispatchEx;
+
+extern HINSTANCE jscript_hinstance;
 
 #define PROPF_ARGMASK 0x00ff
 #define PROPF_METHOD  0x0100
@@ -138,6 +142,13 @@ HRESULT jsdisp_delete_idx(DispatchEx*,DWORD);
 HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const builtin_info_t*,DWORD,
         DispatchEx*,DispatchEx**);
 HRESULT Function_value(DispatchEx*,LCID,WORD,DISPPARAMS*,VARIANT*,jsexcept_t*,IServiceProvider*);
+
+HRESULT throw_eval_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
+HRESULT throw_range_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
+HRESULT throw_reference_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
+HRESULT throw_syntax_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
+HRESULT throw_type_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
+HRESULT throw_uri_error(script_ctx_t*,jsexcept_t*,UINT,const WCHAR*);
 
 
 HRESULT create_object(script_ctx_t*,DispatchEx*,DispatchEx**);

@@ -1288,4 +1288,15 @@ err = new Error("message");
 ok(err.message === "message", "err.message !== 'message'");
 ok(err.toString() === "[object Error]", "err.toString() = " + err.toString());
 
+function exception_test(func, type) {
+    ret = "";
+    try {
+        func();
+    } catch(e) {
+        ret = e.name;
+    }
+    ok(ret === type, "Exception test, ret = " + ret + ", expected " + type +". Executed function: " + func.toString());
+}
+exception_test(function() {arr.toString = Date.prototype.toString; arr.toString();}, "TypeError");
+
 reportSuccess();

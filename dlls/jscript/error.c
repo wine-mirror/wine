@@ -330,3 +330,63 @@ HRESULT init_error_constr(script_ctx_t *ctx)
 
     return S_OK;
 }
+
+static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str, DispatchEx *constr)
+{
+    WCHAR buf[1024], *pos = NULL;
+    DispatchEx *err;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    LoadStringW(jscript_hinstance, id,  buf, sizeof(buf)/sizeof(WCHAR));
+
+    if(str) pos = strchrW(buf, '|');
+    if(pos) {
+        int len = strlenW(str);
+        memmove(pos+len, pos+1, strlenW(pos+1)*sizeof(WCHAR));
+        memcpy(pos, str, len*sizeof(WCHAR));
+    }
+
+    hres = create_error(ctx, constr, buf, &err);
+    if(FAILED(hres))
+        return hres;
+
+    if(!ei)
+        return id;
+
+    V_VT(&ei->var) = VT_DISPATCH;
+    V_DISPATCH(&ei->var) = (IDispatch*)_IDispatchEx_(err);
+
+    return 0x800A0000+id;
+}
+
+HRESULT throw_eval_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+{
+    return throw_error(ctx, ei, id, str, ctx->eval_error_constr);
+}
+
+HRESULT throw_range_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+{
+    return throw_error(ctx, ei, id, str, ctx->range_error_constr);
+}
+
+HRESULT throw_reference_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+{
+    return throw_error(ctx, ei, id, str, ctx->reference_error_constr);
+}
+
+HRESULT throw_syntax_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+{
+    return throw_error(ctx, ei, id, str, ctx->syntax_error_constr);
+}
+
+HRESULT throw_type_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+{
+    return throw_error(ctx, ei, id, str, ctx->type_error_constr);
+}
+
+HRESULT throw_uri_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCHAR *str)
+{
+    return throw_error(ctx, ei, id, str, ctx->uri_error_constr);
+}
