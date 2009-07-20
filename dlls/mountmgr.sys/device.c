@@ -55,20 +55,25 @@ static const WCHAR drive_types[][8] =
 static const WCHAR drives_keyW[] = {'S','o','f','t','w','a','r','e','\\',
                                     'W','i','n','e','\\','D','r','i','v','e','s',0};
 
-struct dos_drive
+struct disk_device
 {
-    struct list           entry;       /* entry in drives list */
-    char                 *udi;         /* unique identifier for dynamic drives */
-    int                   drive;       /* drive letter (0 = A: etc.) */
     enum device_type      type;        /* drive type */
-    DEVICE_OBJECT        *device;      /* disk device allocated for this drive */
+    DEVICE_OBJECT        *dev_obj;     /* disk device allocated for this volume */
     UNICODE_STRING        name;        /* device name */
     UNICODE_STRING        symlink;     /* device symlink if any */
     STORAGE_DEVICE_NUMBER devnum;      /* device number info */
-    struct mount_point   *dosdev;      /* DosDevices mount point */
-    struct mount_point   *volume;      /* Volume{xxx} mount point */
     char                 *unix_device; /* unix device path */
     char                 *unix_mount;  /* unix mount point path */
+};
+
+struct dos_drive
+{
+    struct list           entry;       /* entry in drives list */
+    struct disk_device   *device;      /* disk device */
+    char                 *udi;         /* unique identifier for dynamic drives */
+    int                   drive;       /* drive letter (0 = A: etc.) */
+    struct mount_point   *dosdev;      /* DosDevices mount point */
+    struct mount_point   *volume;      /* Volume{xxx} mount point */
 };
 
 static struct list drives_list = LIST_INIT(drives_list);
@@ -142,8 +147,8 @@ static void send_notify( int drive, int code )
                                       WM_DEVICECHANGE, code, (LPARAM)&info );
 }
 
-/* create the disk device for a given drive */
-static NTSTATUS create_disk_device( const char *udi, enum device_type type, struct dos_drive **drive_ret )
+/* create the disk device for a given volume */
+static NTSTATUS create_disk_device( enum device_type type, struct disk_device **device_ret )
 {
     static const WCHAR harddiskvolW[] = {'\\','D','e','v','i','c','e',
                                          '\\','H','a','r','d','d','i','s','k','V','o','l','u','m','e','%','u',0};
@@ -158,7 +163,7 @@ static NTSTATUS create_disk_device( const char *udi, enum device_type type, stru
     const WCHAR *format = NULL;
     UNICODE_STRING name;
     DEVICE_OBJECT *dev_obj;
-    struct dos_drive *drive;
+    struct disk_device *device;
 
     switch(type)
     {
@@ -188,43 +193,31 @@ static NTSTATUS create_disk_device( const char *udi, enum device_type type, stru
     {
         sprintfW( name.Buffer, format, i );
         name.Length = strlenW(name.Buffer) * sizeof(WCHAR);
-        status = IoCreateDevice( harddisk_driver, sizeof(*drive), &name, 0, 0, FALSE, &dev_obj );
+        status = IoCreateDevice( harddisk_driver, sizeof(*device), &name, 0, 0, FALSE, &dev_obj );
         if (status != STATUS_OBJECT_NAME_COLLISION) break;
     }
     if (!status)
     {
-        drive = dev_obj->DeviceExtension;
-        drive->drive  = -1;
-        drive->device = dev_obj;
-        drive->name   = name;
-        drive->type   = type;
-        drive->dosdev = NULL;
-        drive->volume = NULL;
-        drive->unix_device = NULL;
-        drive->unix_mount  = NULL;
-        drive->symlink.Buffer = NULL;
-        if (udi)
-        {
-            if (!(drive->udi = HeapAlloc( GetProcessHeap(), 0, strlen(udi)+1 )))
-            {
-                RtlFreeUnicodeString( &name );
-                IoDeleteDevice( drive->device );
-                return STATUS_NO_MEMORY;
-            }
-            strcpy( drive->udi, udi );
-        }
+        device = dev_obj->DeviceExtension;
+        device->dev_obj        = dev_obj;
+        device->name           = name;
+        device->type           = type;
+        device->unix_device    = NULL;
+        device->unix_mount     = NULL;
+        device->symlink.Buffer = NULL;
+
         switch (type)
         {
         case DEVICE_FLOPPY:
         case DEVICE_RAMDISK:
-            drive->devnum.DeviceType = FILE_DEVICE_DISK;
-            drive->devnum.DeviceNumber = i;
-            drive->devnum.PartitionNumber = ~0u;
+            device->devnum.DeviceType = FILE_DEVICE_DISK;
+            device->devnum.DeviceNumber = i;
+            device->devnum.PartitionNumber = ~0u;
             break;
         case DEVICE_CDROM:
-            drive->devnum.DeviceType = FILE_DEVICE_CD_ROM;
-            drive->devnum.DeviceNumber = i;
-            drive->devnum.PartitionNumber = ~0u;
+            device->devnum.DeviceType = FILE_DEVICE_CD_ROM;
+            device->devnum.DeviceNumber = i;
+            device->devnum.PartitionNumber = ~0u;
             break;
         case DEVICE_UNKNOWN:
         case DEVICE_HARDDISK:
@@ -237,21 +230,20 @@ static NTSTATUS create_disk_device( const char *udi, enum device_type type, stru
                 {
                     sprintfW( symlink.Buffer, physdriveW, i );
                     symlink.Length = strlenW(symlink.Buffer) * sizeof(WCHAR);
-                    if (!IoCreateSymbolicLink( &symlink, &name )) drive->symlink = symlink;
+                    if (!IoCreateSymbolicLink( &symlink, &name )) device->symlink = symlink;
                 }
-                drive->devnum.DeviceType = FILE_DEVICE_DISK;
-                drive->devnum.DeviceNumber = i;
-                drive->devnum.PartitionNumber = 0;
+                device->devnum.DeviceType = FILE_DEVICE_DISK;
+                device->devnum.DeviceNumber = i;
+                device->devnum.PartitionNumber = 0;
             }
             break;
         case DEVICE_HARDDISK_VOL:
-            drive->devnum.DeviceType = FILE_DEVICE_DISK;
-            drive->devnum.DeviceNumber = 0;
-            drive->devnum.PartitionNumber = i;
+            device->devnum.DeviceType = FILE_DEVICE_DISK;
+            device->devnum.DeviceNumber = 0;
+            device->devnum.PartitionNumber = i;
             break;
         }
-        list_add_tail( &drives_list, &drive->entry );
-        *drive_ret = drive;
+        *device_ret = device;
         TRACE( "created device %s\n", debugstr_w(name.Buffer) );
     }
     else
@@ -263,22 +255,60 @@ static NTSTATUS create_disk_device( const char *udi, enum device_type type, stru
 }
 
 /* delete the disk device for a given drive */
-static void delete_disk_device( struct dos_drive *drive )
+static void delete_disk_device( struct disk_device *device )
 {
-    TRACE( "deleting device %s\n", debugstr_w(drive->name.Buffer) );
+    TRACE( "deleting device %s\n", debugstr_w(device->name.Buffer) );
+    if (device->symlink.Buffer)
+    {
+        IoDeleteSymbolicLink( &device->symlink );
+        RtlFreeUnicodeString( &device->symlink );
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, device->unix_device );
+    RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
+    RtlFreeUnicodeString( &device->name );
+    IoDeleteDevice( device->dev_obj );
+}
+
+/* create the disk device for a given volume */
+static NTSTATUS create_dos_device( const char *udi, enum device_type type, struct dos_drive **drive_ret )
+{
+    struct dos_drive *drive;
+    NTSTATUS status;
+
+    if (!(drive = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*drive) ))) return STATUS_NO_MEMORY;
+    drive->drive  = -1;
+    drive->dosdev = NULL;
+    drive->volume = NULL;
+    drive->udi    = strdupA( udi );
+
+    if (udi && !drive->udi)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, drive );
+        return STATUS_NO_MEMORY;
+    }
+
+    if (!(status = create_disk_device( type, &drive->device )))
+    {
+        list_add_tail( &drives_list, &drive->entry );
+        *drive_ret = drive;
+    }
+    else
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, drive->udi );
+        RtlFreeHeap( GetProcessHeap(), 0, drive );
+    }
+    return status;
+}
+
+/* delete the disk device for a given drive */
+static void delete_dos_device( struct dos_drive *drive )
+{
     list_remove( &drive->entry );
     if (drive->dosdev) delete_mount_point( drive->dosdev );
     if (drive->volume) delete_mount_point( drive->volume );
-    if (drive->symlink.Buffer)
-    {
-        IoDeleteSymbolicLink( &drive->symlink );
-        RtlFreeUnicodeString( &drive->symlink );
-    }
-    RtlFreeHeap( GetProcessHeap(), 0, drive->unix_device );
-    RtlFreeHeap( GetProcessHeap(), 0, drive->unix_mount );
+    delete_disk_device( drive->device );
     RtlFreeHeap( GetProcessHeap(), 0, drive->udi );
-    RtlFreeUnicodeString( &drive->name );
-    IoDeleteDevice( drive->device );
+    RtlFreeHeap( GetProcessHeap(), 0, drive );
 }
 
 /* set or change the drive letter for an existing drive */
@@ -286,19 +316,20 @@ static void set_drive_letter( struct dos_drive *drive, int letter )
 {
     void *id = NULL;
     unsigned int id_len = 0;
+    struct disk_device *device = drive->device;
 
     if (drive->drive == letter) return;
     if (drive->dosdev) delete_mount_point( drive->dosdev );
     if (drive->volume) delete_mount_point( drive->volume );
     drive->drive = letter;
     if (letter == -1) return;
-    if (drive->unix_mount)
+    if (device->unix_mount)
     {
-        id = drive->unix_mount;
-        id_len = strlen( drive->unix_mount ) + 1;
+        id = device->unix_mount;
+        id_len = strlen( device->unix_mount ) + 1;
     }
-    drive->dosdev = add_dosdev_mount_point( drive->device, &drive->name, letter, id, id_len );
-    drive->volume = add_volume_mount_point( drive->device, &drive->name, letter, id, id_len );
+    drive->dosdev = add_dosdev_mount_point( device->dev_obj, &device->name, letter, id, id_len );
+    drive->volume = add_volume_mount_point( device->dev_obj, &device->name, letter, id, id_len );
 }
 
 static inline int is_valid_device( struct stat *st )
@@ -389,6 +420,7 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
 {
     char *path, *p;
     BOOL modified = FALSE;
+    struct disk_device *device = drive->device;
 
     if (!(path = get_dosdevices_path( &p ))) return FALSE;
     p[0] = 'a' + drive->drive;
@@ -397,22 +429,22 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
     if (mount_point && mount_point[0])
     {
         /* try to avoid unlinking if already set correctly */
-        if (!drive->unix_mount || strcmp( drive->unix_mount, mount_point ))
+        if (!device->unix_mount || strcmp( device->unix_mount, mount_point ))
         {
             unlink( path );
             symlink( mount_point, path );
             modified = TRUE;
         }
-        RtlFreeHeap( GetProcessHeap(), 0, drive->unix_mount );
-        drive->unix_mount = strdupA( mount_point );
+        RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
+        device->unix_mount = strdupA( mount_point );
         if (drive->dosdev) set_mount_point_id( drive->dosdev, mount_point, strlen(mount_point) + 1 );
         if (drive->volume) set_mount_point_id( drive->volume, mount_point, strlen(mount_point) + 1 );
     }
     else
     {
         if (unlink( path ) != -1) modified = TRUE;
-        RtlFreeHeap( GetProcessHeap(), 0, drive->unix_mount );
-        drive->unix_mount = NULL;
+        RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
+        device->unix_mount = NULL;
         if (drive->dosdev) set_mount_point_id( drive->dosdev, NULL, 0 );
         if (drive->volume) set_mount_point_id( drive->volume, NULL, 0 );
     }
@@ -462,10 +494,10 @@ static void create_drive_devices(void)
             }
         }
 
-        if (!create_disk_device( NULL, drive_type, &drive ))
+        if (!create_dos_device( NULL, drive_type, &drive ))
         {
-            drive->unix_mount = link;
-            drive->unix_device = device;
+            drive->device->unix_mount = link;
+            drive->device->unix_device = device;
             set_drive_letter( drive, i );
         }
         else
@@ -503,18 +535,18 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
     {
         if (udi && drive->udi && !strcmp( udi, drive->udi ))
         {
-            if (type == drive->type) goto found;
-            delete_disk_device( drive );
+            if (type == drive->device->type) goto found;
+            delete_dos_device( drive );
             continue;
         }
-        if (drive->drive == letter) delete_disk_device( drive );
+        if (drive->drive == letter) delete_dos_device( drive );
     }
 
-    if (create_disk_device( udi, type, &drive )) return STATUS_NO_MEMORY;
+    if (create_dos_device( udi, type, &drive )) return STATUS_NO_MEMORY;
 
 found:
-    RtlFreeHeap( GetProcessHeap(), 0, drive->unix_device );
-    drive->unix_device = strdupA( device );
+    RtlFreeHeap( GetProcessHeap(), 0, drive->device->unix_device );
+    drive->device->unix_device = strdupA( device );
     set_drive_letter( drive, letter );
     set_unix_mount_point( drive, mount_point );
 
@@ -577,7 +609,7 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
 
             if (modified && udi) send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
         }
-        delete_disk_device( drive );
+        delete_dos_device( drive );
         return STATUS_SUCCESS;
     }
     return STATUS_NO_SUCH_DEVICE;
@@ -588,13 +620,15 @@ NTSTATUS query_dos_device( int letter, enum device_type *type,
                            const char **device, const char **mount_point )
 {
     struct dos_drive *drive;
+    struct disk_device *disk_device;
 
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
         if (drive->drive != letter) continue;
-        if (type) *type = drive->type;
-        if (device) *device = drive->unix_device;
-        if (mount_point) *mount_point = drive->unix_mount;
+        disk_device = drive->device;
+        if (type) *type = disk_device->type;
+        if (device) *device = disk_device->unix_device;
+        if (mount_point) *mount_point = disk_device->unix_mount;
         return STATUS_SUCCESS;
     }
     return STATUS_NO_SUCH_DEVICE;
@@ -604,7 +638,7 @@ NTSTATUS query_dos_device( int letter, enum device_type *type,
 static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = irp->Tail.Overlay.s.u.CurrentStackLocation;
-    struct dos_drive *drive = device->DeviceExtension;
+    struct disk_device *dev = device->DeviceExtension;
 
     TRACE( "ioctl %x insize %u outsize %u\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
@@ -619,7 +653,7 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         DWORD len = min( sizeof(info), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
 
         info.Cylinders.QuadPart = 10000;
-        info.MediaType = (drive->devnum.DeviceType == FILE_DEVICE_DISK) ? FixedMedia : RemovableMedia;
+        info.MediaType = (dev->devnum.DeviceType == FILE_DEVICE_DISK) ? FixedMedia : RemovableMedia;
         info.TracksPerCylinder = 255;
         info.SectorsPerTrack = 63;
         info.BytesPerSector = 512;
@@ -630,9 +664,9 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
     }
     case IOCTL_STORAGE_GET_DEVICE_NUMBER:
     {
-        DWORD len = min( sizeof(drive->devnum), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+        DWORD len = min( sizeof(dev->devnum), irpsp->Parameters.DeviceIoControl.OutputBufferLength );
 
-        memcpy( irp->MdlAddress->StartVa, &drive->devnum, len );
+        memcpy( irp->MdlAddress->StartVa, &dev->devnum, len );
         irp->IoStatus.Information = len;
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
@@ -651,13 +685,13 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
 /* driver entry point for the harddisk driver */
 NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
-    struct dos_drive *drive;
+    struct disk_device *device;
 
     harddisk_driver = driver;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = harddisk_ioctl;
 
     /* create a harddisk0 device that isn't assigned to any drive */
-    create_disk_device( "harddisk0 placeholder", DEVICE_HARDDISK, &drive );
+    create_disk_device( DEVICE_HARDDISK, &device );
 
     create_drive_devices();
 
