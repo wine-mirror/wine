@@ -772,6 +772,11 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
             extraPmts = extraPmtsBuf;
     }
 
+    /* Now check if there had been a numerical value in the extra params */
+    if ((*extraPmts == '@') && (sp == -1)) {
+        sp = atoiW(extraPmts + 1);
+    }
+
     TRACE("cmd %s, extra %s, sp %d\n", debugstr_w(buffer), debugstr_w(extraPmts), sp);
 
     Control_LoadApplet(hWnd, buffer, panel);
