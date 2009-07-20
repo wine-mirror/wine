@@ -61,7 +61,7 @@ void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int
 }
 
 static struct mount_point *add_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                            const WCHAR *link, const void *id, unsigned int id_len )
+                                            const WCHAR *link )
 {
     struct mount_point *mount;
     WCHAR *str;
@@ -83,7 +83,6 @@ static struct mount_point *add_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
     list_add_tail( &mount_points_list, &mount->entry );
 
     IoCreateSymbolicLink( &mount->link, device_name );
-    set_mount_point_id( mount, id, id_len );
 
     TRACE( "created %s id %s for %s\n", debugstr_w(mount->link.Buffer),
            debugstr_a(mount->id), debugstr_w(mount->name.Buffer) );
@@ -91,19 +90,18 @@ static struct mount_point *add_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
 }
 
 /* create the DosDevices mount point symlink for a new device */
-struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                            int drive, const void *id, unsigned int id_len )
+struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name, int drive )
 {
     static const WCHAR driveW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','%','c',':',0};
     WCHAR link[sizeof(driveW)];
 
     sprintfW( link, driveW, 'A' + drive );
-    return add_mount_point( device, device_name, link, id, id_len );
+    return add_mount_point( device, device_name, link );
 }
 
 /* create the Volume mount point symlink for a new device */
 struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                            const GUID *guid, const void *id, unsigned int id_len )
+                                            const GUID *guid )
 {
     static const WCHAR volumeW[] = {'\\','?','?','\\','V','o','l','u','m','e','{',
                                     '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
@@ -114,7 +112,7 @@ struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
     sprintfW( link, volumeW, guid->Data1, guid->Data2, guid->Data3,
               guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
               guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
-    return add_mount_point( device, device_name, link, id, id_len );
+    return add_mount_point( device, device_name, link );
 }
 
 /* delete the mount point symlinks when a device goes away */

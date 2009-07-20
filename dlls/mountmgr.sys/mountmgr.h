@@ -63,8 +63,8 @@ extern NTSTATUS WINAPI harddisk_driver_entry( DRIVER_OBJECT *driver, UNICODE_STR
 struct mount_point;
 
 extern struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                                   int drive, const void *id, unsigned int id_len );
+                                                   int drive );
 extern struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                                   const GUID *guid, const void *id, unsigned int id_len );
+                                                   const GUID *guid );
 extern void delete_mount_point( struct mount_point *mount );
 extern void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len );

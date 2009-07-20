@@ -360,14 +360,15 @@ static void set_drive_letter( struct dos_drive *drive, int letter )
     if (drive->dosdev) delete_mount_point( drive->dosdev );
     if (volume->mount) delete_mount_point( volume->mount );
     drive->drive = letter;
-    if (letter == -1) return;
+    drive->dosdev = add_dosdev_mount_point( device->dev_obj, &device->name, letter );
+    volume->mount = add_volume_mount_point( device->dev_obj, &device->name, &volume->guid );
     if (device->unix_mount)
     {
         id = device->unix_mount;
         id_len = strlen( device->unix_mount ) + 1;
     }
-    drive->dosdev = add_dosdev_mount_point( device->dev_obj, &device->name, letter, id, id_len );
-    volume->mount = add_volume_mount_point( device->dev_obj, &device->name, &volume->guid, id, id_len );
+    if (drive->dosdev) set_mount_point_id( drive->dosdev, id, id_len );
+    if (volume->mount) set_mount_point_id( volume->mount, id, id_len );
 }
 
 static inline int is_valid_device( struct stat *st )
