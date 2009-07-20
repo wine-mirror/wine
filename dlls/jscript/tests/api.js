@@ -1298,5 +1298,6 @@ function exception_test(func, type) {
     ok(ret === type, "Exception test, ret = " + ret + ", expected " + type +". Executed function: " + func.toString());
 }
 exception_test(function() {arr.toString = Date.prototype.toString; arr.toString();}, "TypeError");
+exception_test(function() {Array(-3);}, "RangeError");
 
 reportSuccess();

@@ -19,3 +19,4 @@
 #include <windef.h>
 
 #define IDS_NOT_DATE                        0x138E
+#define IDS_INVALID_LENGTH                  0x13A5

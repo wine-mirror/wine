@@ -23,4 +23,5 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE DISCARDABLE
 {
     IDS_NOT_DATE            "'[object]' is not a date object"
+    IDS_INVALID_LENGTH      "Array length must be a finite positive integer"
 }
