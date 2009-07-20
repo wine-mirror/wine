@@ -2972,6 +2972,25 @@ static void test_AcceptEx(void)
     ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
     ok(bytesReturned == 0, "bytesReturned isn't supposed to be %d\n", bytesReturned);
 
+    acceptor = socket(AF_INET, SOCK_STREAM, 0);
+    if (acceptor == INVALID_SOCKET) {
+        skip("could not create acceptor socket, error %d\n", WSAGetLastError());
+        goto end;
+    }
+    bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
+        sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+        &bytesReturned, &overlapped);
+    ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
+
+    closesocket(listener);
+    listener = INVALID_SOCKET;
+
+    dwret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
+
+    bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
+    ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %d\n", GetLastError());
+
 end:
     if (overlapped.hEvent)
         WSACloseEvent(overlapped.hEvent);
