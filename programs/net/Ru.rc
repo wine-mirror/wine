@@ -21,26 +21,29 @@
 
 #include "resources.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 STRINGTABLE
 {
-    STRING_USAGE, "Использование:\n\nNET [ HELP | START | STOP | USE ]\n"
-    STRING_START_USAGE, "Укажите запускаемую службу.\n"
-    STRING_STOP_USAGE, "Укажите останавливаемую службу.\n"
-    STRING_STOP_DEP, "Остановка зависимой службы: %s\n"
-    STRING_CANT_STOP, "Невозможно остановить службу %s\n"
-    STRING_NO_SCM, "Невозможно получить доступ к диспетчеру служб.\n"
-    STRING_NO_SVCHANDLE, "Невозможно получить доступ к службе.\n"
-    STRING_START_SVC, "Запуск службы %s.\n"
-    STRING_START_SVC_SUCCESS, "Служба %s успешно запущена.\n"
-    STRING_START_SVC_FAIL, "Ошибка при запуске службы %s.\n"
-    STRING_STOP_SVC, "Остановка службы %s.\n"
-    STRING_STOP_SVC_SUCCESS, "Служба %s успешно остановлена.\n"
-    STRING_STOP_SVC_FAIL, "Ошибка при остановке службы %s.\n"
-    STRING_HELP_USAGE, "Использование:\n\nNET HELP команда\n    -или-\nNET команда /HELP\n\n"\
-                       "   Доступные команды:\n   NET HELP    NET START    NET STOP    NET USE\n"
-    STRING_NO_ENTRIES, "Список пуст.\n"
-    STRING_USE_HEADER, "\nСтатус  Локальный  Удалённый\n---------------------------------------------------------------\n"
-    STRING_USE_ENTRY,  "%s      %S         %S      Открытых ресурсов: %lu\n"
+    STRING_USAGE, "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ:\n\nNET [ HELP | START | STOP | USE ]\n"
+    STRING_START_USAGE, "РЈРєР°Р¶РёС‚Рµ Р·Р°РїСѓСЃРєР°РµРјСѓСЋ СЃР»СѓР¶Р±Сѓ.\n"
+    STRING_STOP_USAGE, "РЈРєР°Р¶РёС‚Рµ РѕСЃС‚Р°РЅР°РІР»РёРІР°РµРјСѓСЋ СЃР»СѓР¶Р±Сѓ.\n"
+    STRING_STOP_DEP, "РћСЃС‚Р°РЅРѕРІРєР° Р·Р°РІРёСЃРёРјРѕР№ СЃР»СѓР¶Р±С‹: %s\n"
+    STRING_CANT_STOP, "РќРµРІРѕР·РјРѕР¶РЅРѕ РѕСЃС‚Р°РЅРѕРІРёС‚СЊ СЃР»СѓР¶Р±Сѓ %s\n"
+    STRING_NO_SCM, "РќРµРІРѕР·РјРѕР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ РґРѕСЃС‚СѓРї Рє РґРёСЃРїРµС‚С‡РµСЂСѓ СЃР»СѓР¶Р±.\n"
+    STRING_NO_SVCHANDLE, "РќРµРІРѕР·РјРѕР¶РЅРѕ РїРѕР»СѓС‡РёС‚СЊ РґРѕСЃС‚СѓРї Рє СЃР»СѓР¶Р±Рµ.\n"
+    STRING_START_SVC, "Р—Р°РїСѓСЃРє СЃР»СѓР¶Р±С‹ %s.\n"
+    STRING_START_SVC_SUCCESS, "РЎР»СѓР¶Р±Р° %s СѓСЃРїРµС€РЅРѕ Р·Р°РїСѓС‰РµРЅР°.\n"
+    STRING_START_SVC_FAIL, "РћС€РёР±РєР° РїСЂРё Р·Р°РїСѓСЃРєРµ СЃР»СѓР¶Р±С‹ %s.\n"
+    STRING_STOP_SVC, "РћСЃС‚Р°РЅРѕРІРєР° СЃР»СѓР¶Р±С‹ %s.\n"
+    STRING_STOP_SVC_SUCCESS, "РЎР»СѓР¶Р±Р° %s СѓСЃРїРµС€РЅРѕ РѕСЃС‚Р°РЅРѕРІР»РµРЅР°.\n"
+    STRING_STOP_SVC_FAIL, "РћС€РёР±РєР° РїСЂРё РѕСЃС‚Р°РЅРѕРІРєРµ СЃР»СѓР¶Р±С‹ %s.\n"
+    STRING_HELP_USAGE, "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ:\n\nNET HELP РєРѕРјР°РЅРґР°\n    -РёР»Рё-\nNET РєРѕРјР°РЅРґР° /HELP\n\n"\
+                       "   Р”РѕСЃС‚СѓРїРЅС‹Рµ РєРѕРјР°РЅРґС‹:\n   NET HELP    NET START    NET STOP    NET USE\n"
+    STRING_NO_ENTRIES, "РЎРїРёСЃРѕРє РїСѓСЃС‚.\n"
+    STRING_USE_HEADER, "\nРЎС‚Р°С‚СѓСЃ  Р›РѕРєР°Р»СЊРЅС‹Р№  РЈРґР°Р»С‘РЅРЅС‹Р№\n---------------------------------------------------------------\n"
+    STRING_USE_ENTRY,  "%s      %S         %S      РћС‚РєСЂС‹С‚С‹С… СЂРµСЃСѓСЂСЃРѕРІ: %lu\n"
 }
