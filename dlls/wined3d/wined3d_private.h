@@ -1536,7 +1536,6 @@ struct IWineD3DDeviceImpl
 
     /* Caches to avoid unneeded context changes */
     IWineD3DSurface        *lastActiveRenderTarget;
-    IWineD3DSwapChain      *lastActiveSwapChain;
 
     /* palettes texture management */
     UINT                    NumberOfPalettes;
