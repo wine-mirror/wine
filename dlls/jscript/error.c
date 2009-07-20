@@ -39,8 +39,19 @@ static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','
 static HRESULT Error_message(DispatchEx *dispex, LCID lcid, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ErrorInstance *This = (ErrorInstance*)dispex;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        return VariantCopy(retv, &This->message);
+    case DISPATCH_PROPERTYPUT:
+        return VariantCopy(&This->message, get_arg(dp, 0));
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
 }
 
 static HRESULT Error_toString(DispatchEx *dispex, LCID lcid, WORD flags,
