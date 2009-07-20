@@ -20,46 +20,49 @@
 
 #include "notepad_res.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 MAIN_MENU MENU
 {
- POPUP "&Файл" {
-  MENUITEM "Созд&ать\tCtrl+N",           CMD_NEW
-  MENUITEM "&Открыть...\tCtrl+O",             CMD_OPEN
-  MENUITEM "&Сохранить\tCtrl+S",             CMD_SAVE
-  MENUITEM "Сохранить &как...",       CMD_SAVE_AS
+ POPUP "&Р¤Р°Р№Р»" {
+  MENUITEM "РЎРѕР·Рґ&Р°С‚СЊ\tCtrl+N",           CMD_NEW
+  MENUITEM "&РћС‚РєСЂС‹С‚СЊ...\tCtrl+O",             CMD_OPEN
+  MENUITEM "&РЎРѕС…СЂР°РЅРёС‚СЊ\tCtrl+S",             CMD_SAVE
+  MENUITEM "РЎРѕС…СЂР°РЅРёС‚СЊ &РєР°Рє...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Печатать...\tCtrl+P",      CMD_PRINT
-  MENUITEM "Пара&метры страницы...",    CMD_PAGE_SETUP
-  MENUITEM "&Настройка принтера...", CMD_PRINTER_SETUP
+  MENUITEM "&РџРµС‡Р°С‚Р°С‚СЊ...\tCtrl+P",      CMD_PRINT
+  MENUITEM "РџР°СЂР°&РјРµС‚СЂС‹ СЃС‚СЂР°РЅРёС†С‹...",    CMD_PAGE_SETUP
+  MENUITEM "&РќР°СЃС‚СЂРѕР№РєР° РїСЂРёРЅС‚РµСЂР°...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "В&ыход",             CMD_EXIT
+  MENUITEM "Р’&С‹С…РѕРґ",             CMD_EXIT
  }
-POPUP "&Правка" {
-  MENUITEM "&Отменить\tCtrl+Z",     CMD_UNDO
+POPUP "&РџСЂР°РІРєР°" {
+  MENUITEM "&РћС‚РјРµРЅРёС‚СЊ\tCtrl+Z",     CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "&Вырезать\tCtrl+X",      CMD_CUT
-  MENUITEM "&Копировать\tCtrl+C",     CMD_COPY
-  MENUITEM "Вст&авить\tCtrl+V",    CMD_PASTE
-  MENUITEM "&Удалить\tDel",      CMD_DELETE
+  MENUITEM "&Р’С‹СЂРµР·Р°С‚СЊ\tCtrl+X",      CMD_CUT
+  MENUITEM "&РљРѕРїРёСЂРѕРІР°С‚СЊ\tCtrl+C",     CMD_COPY
+  MENUITEM "Р’СЃС‚&Р°РІРёС‚СЊ\tCtrl+V",    CMD_PASTE
+  MENUITEM "&РЈРґР°Р»РёС‚СЊ\tDel",      CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Выделить в&се",       CMD_SELECT_ALL
-  MENUITEM "Врем&я и дата\tF5",    CMD_TIME_DATE
+  MENUITEM "Р’С‹РґРµР»РёС‚СЊ РІ&СЃРµ",       CMD_SELECT_ALL
+  MENUITEM "Р’СЂРµРј&СЏ Рё РґР°С‚Р°\tF5",    CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Перенос по словам",  CMD_WRAP
-  MENUITEM "&Шрифт...",           CMD_FONT
+  MENUITEM "&РџРµСЂРµРЅРѕСЃ РїРѕ СЃР»РѕРІР°Рј",  CMD_WRAP
+  MENUITEM "&РЁСЂРёС„С‚...",           CMD_FONT
  }
-POPUP "П&оиск" {
-  MENUITEM "&Найти...",           CMD_SEARCH
-  MENUITEM "Найти &далее\tF3",  CMD_SEARCH_NEXT
+POPUP "Рџ&РѕРёСЃРє" {
+  MENUITEM "&РќР°Р№С‚Рё...",           CMD_SEARCH
+  MENUITEM "РќР°Р№С‚Рё &РґР°Р»РµРµ\tF3",  CMD_SEARCH_NEXT
  }
-POPUP "&Справка" {
-  MENUITEM "&Содержание",         CMD_HELP_CONTENTS
-  MENUITEM "&Поиск...",        CMD_HELP_SEARCH
-  MENUITEM "&Использование справки",     CMD_HELP_ON_HELP
+POPUP "&РЎРїСЂР°РІРєР°" {
+  MENUITEM "&РЎРѕРґРµСЂР¶Р°РЅРёРµ",         CMD_HELP_CONTENTS
+  MENUITEM "&РџРѕРёСЃРє...",        CMD_HELP_SEARCH
+  MENUITEM "&РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ СЃРїСЂР°РІРєРё",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  MENUITEM "&О Notepad", CMD_HELP_ABOUT_NOTEPAD
+  MENUITEM "&Рћ Notepad", CMD_HELP_ABOUT_NOTEPAD
  }
 }
 
@@ -68,53 +71,69 @@ POPUP "&Справка" {
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
-CAPTION "Параметры страницы"
+CAPTION "РџР°СЂР°РјРµС‚СЂС‹ СЃС‚СЂР°РЅРёС†С‹"
 {
-LTEXT    "В&ерхний колонтитул:",  0x140,   10, 07, 40, 15
+LTEXT    "Р’&РµСЂС…РЅРёР№ РєРѕР»РѕРЅС‚РёС‚СѓР»:",  0x140,   10, 07, 40, 15
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
-LTEXT    "Н&ижний колонтитул:",  0x142,   10, 24, 40, 15
+LTEXT    "Рќ&РёР¶РЅРёР№ РєРѕР»РѕРЅС‚РёС‚СѓР»:",  0x142,   10, 24, 40, 15
 EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
-GROUPBOX "Поля (мм):",      0x144,     10, 43,160, 45
-LTEXT    "&Левое:",        0x145,   20, 55, 30, 10, WS_CHILD
+GROUPBOX "РџРѕР»СЏ (РјРј):",      0x144,     10, 43,160, 45
+LTEXT    "&Р›РµРІРѕРµ:",        0x145,   20, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_LEFTVALUE,     50, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "&Верхнее:",         0x148,    20, 73, 30, 10, WS_CHILD
+LTEXT    "&Р’РµСЂС…РЅРµРµ:",         0x148,    20, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_TOPVALUE,      50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "&Правое:",       0x14B, 100, 55, 30, 10, WS_CHILD
+LTEXT    "&РџСЂР°РІРѕРµ:",       0x14B, 100, 55, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_RIGHTVALUE,   130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "&Нижнее:",      0x14E,100, 73, 30, 10, WS_CHILD
+LTEXT    "&РќРёР¶РЅРµРµ:",      0x14E,100, 73, 30, 10, WS_CHILD
 EDITTEXT IDC_PAGESETUP_BOTTOMVALUE,  130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 
 DEFPUSHBUTTON "OK",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
-PUSHBUTTON    "Отмена",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
-PUSHBUTTON    "&Справка",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
+PUSHBUTTON    "РћС‚РјРµРЅР°",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "&РЎРїСЂР°РІРєР°",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
 }
+
+IDD_OFN_TEMPLATE  DIALOG  DISCARDABLE 50,50,300,15
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "РљРѕРґРёСЂРѕРІРєР°:", -1, 5,0, 50,12
+  COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
+END
 
 STRINGTABLE DISCARDABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&f"
-STRING_PAGESETUP_FOOTERVALUE,   "Страница &p"
+STRING_PAGESETUP_FOOTERVALUE,   "РЎС‚СЂР°РЅРёС†Р° &p"
 
-STRING_NOTEPAD,                                 "Блокнот"
-STRING_ERROR,                                   "ОШИБКА"
-STRING_WARNING,                                 "ВНИМАНИЕ"
-STRING_INFO,                                    "Информация"
+STRING_NOTEPAD,                                 "Р‘Р»РѕРєРЅРѕС‚"
+STRING_ERROR,                                   "РћРЁРР‘РљРђ"
+STRING_WARNING,                                 "Р’РќРРњРђРќРР•"
+STRING_INFO,                                    "РРЅС„РѕСЂРјР°С†РёСЏ"
 
-STRING_UNTITLED,                                "(без заголовка)"
+STRING_UNTITLED,                                "(Р±РµР· Р·Р°РіРѕР»РѕРІРєР°)"
 
-STRING_ALL_FILES,                               "Все файлы (*.*)"
-STRING_TEXT_FILES_TXT,                  "Текстовые файлы (*.txt)"
+STRING_ALL_FILES,                               "Р’СЃРµ С„Р°Р№Р»С‹ (*.*)"
+STRING_TEXT_FILES_TXT,                  "РўРµРєСЃС‚РѕРІС‹Рµ С„Р°Р№Р»С‹ (*.txt)"
 
-STRING_TOOLARGE,                                "Файл '%s' слишком большой для блокнота.\n \
-Используйте другой редактор."
-STRING_NOTEXT,                                  "Вы не ввели никакого текста. \
-\nВведите что-нибудь и попробуйте еще."
-STRING_DOESNOTEXIST,                            "Файл '%s'\nне существует\n\n \
-Хотите создать новый файл?"
-STRING_NOTSAVED,                                "Файл '%s'\nбыл изменен\n\n \
-Хотите сохранить изменения?"
-STRING_NOTFOUND,                                        "'%s' не найден."
-STRING_OUT_OF_MEMORY,                   "Недостаточно памяти для завершения этой операции \
-\nЗакройте одно или несколько приложений и повторите попытку."
+STRING_TOOLARGE,                                "Р¤Р°Р№Р» '%s' СЃР»РёС€РєРѕРј Р±РѕР»СЊС€РѕР№ РґР»СЏ Р±Р»РѕРєРЅРѕС‚Р°.\n \
+РСЃРїРѕР»СЊР·СѓР№С‚Рµ РґСЂСѓРіРѕР№ СЂРµРґР°РєС‚РѕСЂ."
+STRING_NOTEXT,                                  "Р’С‹ РЅРµ РІРІРµР»Рё РЅРёРєР°РєРѕРіРѕ С‚РµРєСЃС‚Р°. \
+\nР’РІРµРґРёС‚Рµ С‡С‚Рѕ-РЅРёР±СѓРґСЊ Рё РїРѕРїСЂРѕР±СѓР№С‚Рµ РµС‰Рµ."
+STRING_DOESNOTEXIST,                            "Р¤Р°Р№Р» '%s'\nРЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚\n\n \
+РҐРѕС‚РёС‚Рµ СЃРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№ С„Р°Р№Р»?"
+STRING_NOTSAVED,                                "Р¤Р°Р№Р» '%s'\nР±С‹Р» РёР·РјРµРЅРµРЅ\n\n \
+РҐРѕС‚РёС‚Рµ СЃРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ?"
+STRING_NOTFOUND,                                        "'%s' РЅРµ РЅР°Р№РґРµРЅ."
+STRING_OUT_OF_MEMORY,                   "РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ РїР°РјСЏС‚Рё РґР»СЏ Р·Р°РІРµСЂС€РµРЅРёСЏ СЌС‚РѕР№ РѕРїРµСЂР°С†РёРё \
+\nР—Р°РєСЂРѕР№С‚Рµ РѕРґРЅРѕ РёР»Рё РЅРµСЃРєРѕР»СЊРєРѕ РїСЂРёР»РѕР¶РµРЅРёР№ Рё РїРѕРІС‚РѕСЂРёС‚Рµ РїРѕРїС‹С‚РєСѓ."
 
+STRING_UNICODE_LE,     "Р®РЅРёРєРѕРґ (UTF-16)"
+STRING_UNICODE_BE,     "Р®РЅРёРєРѕРґ (UTF-16 big-endian)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+Р­С‚РѕС‚ С„Р°Р№Р» СЃРѕРґРµСЂР¶РёС‚ С‚РµРєСЃС‚ РІ С„РѕСЂРјР°С‚Рµ Р®РЅРёРєРѕРґ, РєРѕС‚РѕСЂС‹Р№ Р±СѓРґРµС‚ РїРѕС‚РµСЂСЏРЅ, РµСЃР»Рё РІС‹ СЃРѕС…СЂР°РЅРёС‚Рµ СЌС‚РѕС‚ С„Р°Р№Р» РєР°Рє С„Р°Р№Р» РІ РєРѕРґРёСЂРѕРІРєРµ %s.\n\
+Р§С‚РѕР±С‹ СЃРѕС…СЂР°РЅРёС‚СЊ РґР°РЅРЅС‹Рµ РІ С„РѕСЂРјР°С‚Рµ Р®РЅРёРєРѕРґ, РЅР°Р¶РјРёС‚Рµ РєРЅРѕРїРєСѓ \"РћС‚РјРµРЅР°\" Рё РІС‹Р±РµСЂРёС‚Рµ\n\
+РѕРґРёРЅ РёР· РІР°СЂРёР°РЅС‚РѕРІ СЃРѕС…СЂР°РЅРµРЅРёСЏ РІ С„РѕСЂРјР°С‚Рµ Р®РЅРёРєРѕРґ.\n\
+РџСЂРѕРґРѕР»Р¶РёС‚СЊ?"
 }
