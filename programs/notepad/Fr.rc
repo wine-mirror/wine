@@ -124,9 +124,9 @@ STRING_TOOLARGE,                                "Le fichier « %s » est trop gr
 Veuillez utiliser un autre éditeur."
 STRING_NOTEXT,                                  "Vous n'avez pas entré de texte. \
 Veuillez taper quelque chose et recommencer"
-STRING_DOESNOTEXIST,                            "Le fichier « %s »\nn'existe pas.\n\n\
+STRING_DOESNOTEXIST,                            "Le fichier « %s » n'existe pas.\n\n\
 Voulez-vous créer un nouveau fichier ?"
-STRING_NOTSAVED,                                "Le fichier « %s »\na été modifié\n\n \
+STRING_NOTSAVED,                                "Le fichier « %s » a été modifié\n\n\
 Voulez-vous enregistrer vos modifications ?"
 STRING_NOTFOUND,                                "« %s » non trouvé."
 STRING_OUT_OF_MEMORY,                           "Pas assez de mémoire pour terminer cette \
