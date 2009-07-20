@@ -1539,11 +1539,8 @@ HRESULT call_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD flags, 
     if(SUCCEEDED(hres)) {
         switch(exprval.type) {
         case EXPRVAL_VARIANT:
-            if(V_VT(&exprval.u.var) != VT_DISPATCH) {
-                FIXME("throw TypeError\n");
-                hres = E_NOTIMPL;
-                break;
-            }
+            if(V_VT(&exprval.u.var) != VT_DISPATCH)
+                return throw_type_error(ctx->var_disp->ctx, ei, IDS_NO_PROPERTY, NULL);
 
             hres = disp_call(V_DISPATCH(&exprval.u.var), DISPID_VALUE, ctx->parser->script->lcid,
                     DISPATCH_METHOD, &dp, flags & EXPR_NOVAL ? NULL : &var, ei, NULL/*FIXME*/);

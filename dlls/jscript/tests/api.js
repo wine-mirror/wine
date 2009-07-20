@@ -1300,5 +1300,7 @@ function exception_test(func, type) {
 exception_test(function() {arr.toString = Date.prototype.toString; arr.toString();}, "TypeError");
 exception_test(function() {Array(-3);}, "RangeError");
 exception_test(function() {arr.toString = Boolean.prototype.toString; arr.toString();}, "TypeError");
+exception_test(function() {date.setTime();}, "TypeError");
+exception_test(function() {arr.test();}, "TypeError");
 
 reportSuccess();
