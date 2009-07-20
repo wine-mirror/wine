@@ -42,15 +42,37 @@ static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','
 static HRESULT Error_number(DispatchEx *dispex, LCID lcid, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ErrorInstance *This = (ErrorInstance*)dispex;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        return VariantCopy(retv, &This->number);
+    case DISPATCH_PROPERTYPUT:
+        return VariantCopy(&This->number, get_arg(dp, 0));
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
 }
 
 static HRESULT Error_description(DispatchEx *dispex, LCID lcid, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    ErrorInstance *This = (ErrorInstance*)dispex;
+
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET:
+        return VariantCopy(retv, &This->description);
+    case DISPATCH_PROPERTYPUT:
+        return VariantCopy(&This->description, get_arg(dp, 0));
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
 }
 
 /* ECMA-262 3rd Edition    15.11.4.3 */
@@ -123,6 +145,8 @@ static void Error_destructor(DispatchEx *dispex)
 {
     ErrorInstance *This = (ErrorInstance*)dispex;
 
+    VariantClear(&This->number);
+    VariantClear(&This->description);
     VariantClear(&This->message);
     heap_free(This);
 }
