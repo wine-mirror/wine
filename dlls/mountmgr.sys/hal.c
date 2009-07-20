@@ -28,6 +28,7 @@
 #include <sys/time.h>
 
 #include "mountmgr.h"
+#include "winnls.h"
 #include "excpt.h"
 
 #include "wine/library.h"
@@ -105,6 +106,33 @@ static LONG WINAPI assert_fault(EXCEPTION_POINTERS *eptr)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+static GUID *parse_uuid( GUID *guid, const char *str )
+{
+    /* standard uuid format */
+    if (strlen(str) == 36)
+    {
+        UNICODE_STRING strW;
+        WCHAR buffer[39];
+
+        if (MultiByteToWideChar( CP_UNIXCP, 0, str, 36, buffer + 1, 36 ))
+        {
+            buffer[0] = '{';
+            buffer[37] = '}';
+            buffer[38] = 0;
+            RtlInitUnicodeString( &strW, buffer );
+            if (!RtlGUIDFromString( &strW, guid )) return guid;
+        }
+    }
+
+    /* check for xxxx-xxxx format (FAT serial number) */
+    if (strlen(str) == 9 && str[4] == '-')
+    {
+        memset( guid, 0, sizeof(*guid) );
+        if (sscanf( str, "%hx-%hx", &guid->Data2, &guid->Data3 ) == 2) return guid;
+    }
+    return NULL;
+}
+
 /* HAL callback for new device */
 static void new_device( LibHalContext *ctx, const char *udi )
 {
@@ -113,6 +141,8 @@ static void new_device( LibHalContext *ctx, const char *udi )
     char *mount_point = NULL;
     char *device = NULL;
     char *type = NULL;
+    char *uuid_str = NULL;
+    GUID guid, *guid_ptr = NULL;
     enum device_type drive_type;
 
     p_dbus_error_init( &error );
@@ -129,6 +159,11 @@ static void new_device( LibHalContext *ctx, const char *udi )
     if (!p_libhal_device_get_property_bool( ctx, parent, "storage.removable", &error ))
         goto done;
 
+    if (!(uuid_str = p_libhal_device_get_property_string( ctx, udi, "volume.uuid", &error )))
+        p_dbus_error_free( &error );  /* ignore error */
+    else
+        guid_ptr = parse_uuid( &guid, uuid_str );
+
     if (!(type = p_libhal_device_get_property_string( ctx, parent, "storage.drive_type", &error )))
         p_dbus_error_free( &error );  /* ignore error */
 
@@ -136,7 +171,7 @@ static void new_device( LibHalContext *ctx, const char *udi )
     else if (type && !strcmp( type, "floppy" )) drive_type = DEVICE_FLOPPY;
     else drive_type = DEVICE_UNKNOWN;
 
-    add_dos_device( -1, udi, device, mount_point, drive_type, NULL );
+    add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr );
 
     /* add property watch for mount point */
     p_libhal_device_add_property_watch( ctx, udi, &error );
@@ -145,6 +180,7 @@ done:
     if (type) p_libhal_free_string( type );
     if (parent) p_libhal_free_string( parent );
     if (device) p_libhal_free_string( device );
+    if (uuid_str) p_libhal_free_string( uuid_str );
     if (mount_point) p_libhal_free_string( mount_point );
     p_dbus_error_free( &error );
 }
