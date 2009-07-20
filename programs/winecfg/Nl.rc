@@ -5,6 +5,7 @@
  * Copyright 2004 Rein Klazes
  * Copyright 2005-2006 Paul Vriens
  * Copyright 2007 Maarten Lankhorst
+ * Copyright 2009 Vincent Beers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,7 +57,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Toepassingsinstellingen ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine geeft de mogelijkheid om per toepassing de Windowsversie in te stellen. Deze tab is gekoppeld aan de Libraries en Graphics tabs om zowel systeemwijde als applicatie specifieke instellingen in deze tabs mogelijk te maken.",
+    LTEXT           "Wine geeft de mogelijkheid om per toepassing de Windowsversie in te stellen. Deze tab is gekoppeld aan de Libraries en Graphics tabs om zowel systeemwijde als applicatiespecifieke instellingen in deze tabs mogelijk te maken.",
                     IDC_STATIC,15,20,227,40
     CONTROL         "Toepassingen",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,60,230,140
@@ -70,7 +71,7 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX    " Venster-instellingen ",IDC_STATIC,8,4,244,84
+    GROUPBOX    " Vensterinstellingen ",IDC_STATIC,8,4,244,84
     CONTROL     "Een DirectX programma kan de muis in een venster vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
     CONTROL     "Laat de window manager de vensters &decoreren",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     CONTROL     "Laat de window manager de vensters beheren",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
@@ -86,11 +87,11 @@ BEGIN
     COMBOBOX    IDC_D3D_VSHADER_MODE,120,108,125,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL     "Pixel Shader toestaan (indien ondersteund door de hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    GROUPBOX    " Scherm &Resolutie ",IDC_STATIC,8,151,244,93
+    GROUPBOX    " Scherm&resolutie ",IDC_STATIC,8,151,244,93
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
-    LTEXT       "Dit is een tekst voorbeeld in Tahoma met puntgrootte 10",IDC_RES_FONT_PREVIEW,15,181,230,55
+    LTEXT       "Dit is een tekstvoorbeeld in Tahoma met puntgrootte 10",IDC_RES_FONT_PREVIEW,15,181,230,55
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -114,14 +115,14 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Edit Override"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Laad volgorde ",IDC_STATIC,8,4,94,66
+    GROUPBOX        " Laadvolgorde ",IDC_STATIC,8,4,94,66
     CONTROL         "&Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,75,10
     CONTROL         "&Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,75,10
     CONTROL         "Bui&ltin dan Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,75,10
     CONTROL         "Nati&ve dan Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
     CONTROL         "&Uitzetten",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
-    PUSHBUTTON      "Afbreken",IDCANCEL,57,74,45,14,WS_GROUP
+    PUSHBUTTON      "Annuleren",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -129,7 +130,7 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Stations ",IDC_STATIC,8,4,244,240
-    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
+    LTEXT           "Kon niet verbinden met de mount manager, de schijfconfiguratie kan niet worden bewerkt.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
     PUSHBUTTON      "&Toevoegen",IDC_BUTTON_ADD,15,98,54,14
@@ -146,7 +147,7 @@ BEGIN
 
     LTEXT           "Naam en serienummer",IDC_LABELSERIAL_STATIC,15,155,131,10
 
-    PUSHBUTTON      "Toon &Uitgebreid",IDC_BUTTON_SHOW_HIDE_ADVANCED,183,136,65,13
+    PUSHBUTTON      "&Geavanceerd...",IDC_BUTTON_SHOW_HIDE_ADVANCED,183,136,65,13
     CONTROL         "Automatisch detecteren van apparaat:",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,150,10
     EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
@@ -156,29 +157,29 @@ BEGIN
 
     LTEXT           "&Naam:",IDC_STATIC_LABEL,33,208,60,12
     EDITTEXT        IDC_EDIT_LABEL,94,205,78,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "S&erie nummer:",IDC_STATIC_SERIAL,33,225,60,12
+    LTEXT           "S&erienummer:",IDC_STATIC_SERIAL,33,225,60,12
     EDITTEXT        IDC_EDIT_SERIAL,94,221,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "Toon \".\" files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+    CONTROL         "Toon \".\" bestanden",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Stuurprogramma selectie ",IDC_STATIC,8,4,244,195
-    LTEXT           "Selecteer een geluids-stuurprogramma door het aanvinken van het gewenste stuurprogramma. Zet het geluid uit door geen stuurprogramma te selecteren. Het selecteren van meerdere stuurprogramma's wordt niet aanbevolen. Configureer een stuurprogramma d.m.v. een rechter muisklik hierop.",IDC_STATIC,15,20,227,45
+    GROUPBOX        " Stuurprogrammaselectie ",IDC_STATIC,8,4,244,195
+    LTEXT           "Selecteer een geluidsstuurprogramma door het gewenste stuurprogramma aan te vinken. Zet het geluid uit door geen stuurprogramma te selecteren. Het selecteren van meerdere stuurprogramma's wordt niet aanbevolen. Rechtsklik op een stuurprogramma om het te configureren.",IDC_STATIC,15,20,227,45
     CONTROL         "Apparaten",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,65,140,125
     PUSHBUTTON      "Geluidstest",IDC_AUDIO_TEST,165,65,79,14
     PUSHBUTTON	    "Configuratiescherm",IDC_AUDIO_CONTROL_PANEL,165,85,79,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
     LTEXT	    "Hardwareversnelling: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Monsterfrequentie:",IDC_STATIC,15,232,70,8
+    LTEXT           "Samplefrequentie:",IDC_STATIC,15,232,70,8
     COMBOBOX        IDC_DSOUND_RATES,90,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Bits per monster:",IDC_STATIC,157,232,60,8
+    LTEXT           "Bits per sample:",IDC_STATIC,157,232,60,8
     COMBOBOX        IDC_DSOUND_BITS,220,230,30,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Stuurprogramma emulatie",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+    CONTROL         "Stuurprogramma-emulatie",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
@@ -202,7 +203,7 @@ BEGIN
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
     PUSHBUTTON      "Font",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
     GROUPBOX        " Shell Folder ",IDC_STATIC,8,114,244,100 /* FIXME */
-    CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
+    CONTROL         "Lijstweergave",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
     CONTROL         "Verwijs naar:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,60,13
     EDITTEXT         IDC_EDIT_SFPATH,75,195,125,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
@@ -226,7 +227,7 @@ BEGIN
     IDS_WINECFG_TITLE_APP   "Wine configuratie voor %s"
     IDS_THEMEFILE           "Thema-bestanden"
     IDS_THEMEFILE_SELECT    "Thema-bestanden kiezen"
-    IDS_AUDIO_MISSING       "Op dit moment is er geen stuurprogramma voor geluid gespecificeerd in de registry.\n\nEen aanbevolen stuurbestand is voor u geselecteerd.\nU kunt dit stuurbestand gebruiken of (indien beschikbaar) een ander selecteren.\n\nKlik op 'Toepassen' om deze selectie te activeren."
+    IDS_AUDIO_MISSING       "Op dit moment is er geen stuurprogramma voor geluid gespecificeerd in het register.\n\nEen aanbevolen stuurprogramma is voor u geselecteerd.\nU kunt dit stuurprogramma gebruiken of (indien beschikbaar) een ander selecteren.\n\nKlik op Toepassen om deze selectie te activeren."
     IDS_SHELL_FOLDER        "Persoonlijke map"
     IDS_LINKS_TO            "Verwijst naar"
 END
@@ -235,12 +236,12 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_DLL_WARNING         "Veranderen van de laadvolgorde van deze bibliotheek wordt niet aanbevolen\n. Weet u zeker dat u dit wilt doen?"
     IDS_DLL_WARNING_CAPTION "Waarschuwing: systeembibliotheek"
-    IDS_DLL_NATIVE          "Native (Windows)"
-    IDS_DLL_BUILTIN         "Builtin (Wine)"
-    IDS_DLL_NATIVE_BUILTIN  "Native dan builtin"
-    IDS_DLL_BUILTIN_NATIVE  "Builtin dan native"
-    IDS_DLL_DISABLED        "Uitgeschakeld"
-    IDS_DEFAULT_SETTINGS    "Standaard instellingen"
+    IDS_DLL_NATIVE          "native"
+    IDS_DLL_BUILTIN         "builtin"
+    IDS_DLL_NATIVE_BUILTIN  "native, builtin"
+    IDS_DLL_BUILTIN_NATIVE  "builtin, native"
+    IDS_DLL_DISABLED        "uitgeschakeld"
+    IDS_DEFAULT_SETTINGS    "Standaardinstellingen"
     IDS_EXECUTABLE_FILTER   "Wine toepassingen (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
     IDS_USE_GLOBAL_SETTINGS "Gebruike globale instellingen"
     IDS_SELECT_EXECUTABLE   "Selecteer een uitvoerbaar bestand"
@@ -282,13 +283,13 @@ BEGIN
     IDS_DRIVER_COREAUDIO        "CoreAudio Stuurprogramma"
     IDS_OPEN_DRIVER_ERROR       "%s kon niet worden geopend!"
     IDS_SOUNDDRIVERS            "Stuurprogramma's voor geluid"
-    IDS_DEVICES_WAVEOUT         "Wave Out apparaten"
-    IDS_DEVICES_WAVEIN          "Wave In apparaten"
-    IDS_DEVICES_MIDIOUT         "MIDI Out apparaten"
-    IDS_DEVICES_MIDIIN          "MIDI In apparaten"
-    IDS_DEVICES_AUX             "Aux apparaten"
-    IDS_DEVICES_MIXER           "Mixer apparaten"
-    IDS_UNAVAILABLE_DRIVER      "Stuurprogramma in de registry is niet beschikbaar!\n\nVerwijder \"%s\" uit de registry?"
+    IDS_DEVICES_WAVEOUT         "Wave Out Apparaten"
+    IDS_DEVICES_WAVEIN          "Wave In Apparaten"
+    IDS_DEVICES_MIDIOUT         "MIDI Out Apparaten"
+    IDS_DEVICES_MIDIIN          "MIDI In Apparaten"
+    IDS_DEVICES_AUX             "Aux Apparaten"
+    IDS_DEVICES_MIXER           "Mixer Apparaten"
+    IDS_UNAVAILABLE_DRIVER      "Stuurprogramma in het register is niet beschikbaar!\n\nVerwijder \"%s\" uit het register?"
     IDS_WARNING                 "Waarschuwing"
 END
 
@@ -304,24 +305,24 @@ BEGIN
     IDC_SYSPARAMS_SELECTION_TEXT    "Selectie Tekst"
     IDC_SYSPARAMS_TOOLTIP           "ToolTip Achtergrond"
     IDC_SYSPARAMS_TOOLTIP_TEXT      "ToolTip Tekst"
-    IDC_SYSPARAMS_WINDOW            "Window Achtergrond"
-    IDC_SYSPARAMS_WINDOW_TEXT       "Window Tekst"
-    IDC_SYSPARAMS_ACTIVE_TITLE      "Actieve Titel Balk"
-    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Actieve Titel Tekst"
-    IDC_SYSPARAMS_INACTIVE_TITLE    "Inactieve Titel Balk"
-    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inactieve Title Tekst"
-    IDC_SYSPARAMS_MSGBOX_TEXT       "Melding Window Tekst"
+    IDC_SYSPARAMS_WINDOW            "Venster Achtergrond"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Venster Tekst"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Actieve Titelbalk"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Actieve Titeltekst"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Inactieve Titelbalk"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Inactieve Titeltekst"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "Meldingsvenster Tekst"
     IDC_SYSPARAMS_APPWORKSPACE      "Applicatie Werkruimte"
-    IDC_SYSPARAMS_WINDOW_FRAME      "Window Raamwerk"
+    IDC_SYSPARAMS_WINDOW_FRAME      "Vensterraamwerk"
     IDC_SYSPARAMS_ACTIVE_BORDER     "Actieve Rand"
     IDC_SYSPARAMS_INACTIVE_BORDER   "Inactieve Rand"
-    IDC_SYSPARAMS_BUTTON_SHADOW     "Knoppen Schaduw"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Knopschaduw"
     IDC_SYSPARAMS_GRAY_TEXT         "Grijze Tekst"
     IDC_SYSPARAMS_BUTTON_HILIGHT    "Knoppen Gemarkeerd"
     IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Knoppen Donkere Schaduw"
     IDC_SYSPARAMS_BUTTON_LIGHT      "Knoppen Licht"
     IDC_SYSPARAMS_BUTTON_ALTERNATE  "Knoppen Alternatieve Achtergrond"
-    IDC_SYSPARAMS_HOT_TRACKING      "'Hot-Tracked' Onderdeel"
+    IDC_SYSPARAMS_HOT_TRACKING      "Hot-Tracked Onderdeel"
     IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Actieve Titelbalk Verloop"
     IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Inactieve Titelbalk Verloop"
     IDC_SYSPARAMS_MENU_HILIGHT      "Menu Gemarkeerd"
