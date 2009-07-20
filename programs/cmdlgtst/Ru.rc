@@ -20,59 +20,62 @@
 
 #include "cmdlgtst.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 CmdlgtstMenu MENU
 {
- POPUP "&Файл"
+ POPUP "&Р¤Р°Р№Р»"
  {
-  MENUITEM "В&ыход", CM_U_EXIT
+  MENUITEM "Р’&С‹С…РѕРґ", CM_U_EXIT
  }
 
- POPUP "&Диалоги сommdlg"
+ POPUP "&Р”РёР°Р»РѕРіРё СЃommdlg"
  {
-  MENUITEM "&Открыть", CM_U_OPEN
-  MENUITEM "&Сохранить", CM_U_SAVE
+  MENUITEM "&РћС‚РєСЂС‹С‚СЊ", CM_U_OPEN
+  MENUITEM "&РЎРѕС…СЂР°РЅРёС‚СЊ", CM_U_SAVE
   MENUITEM SEPARATOR
-  MENUITEM "&Цвет", CM_U_COLOR
-  MENUITEM "&Шрифт", CM_U_FONT
+  MENUITEM "&Р¦РІРµС‚", CM_U_COLOR
+  MENUITEM "&РЁСЂРёС„С‚", CM_U_FONT
   MENUITEM SEPARATOR
-  MENUITEM "Найти &текст", CM_U_FIND
-  MENUITEM "&Заменить текст", CM_U_REPLACE
+  MENUITEM "РќР°Р№С‚Рё &С‚РµРєСЃС‚", CM_U_FIND
+  MENUITEM "&Р—Р°РјРµРЅРёС‚СЊ С‚РµРєСЃС‚", CM_U_REPLACE
   MENUITEM SEPARATOR
-  MENUITEM "&Печатать", CM_U_PRINT
-  MENUITEM "Параметры &страницы", CM_U_PAGESETUP
+  MENUITEM "&РџРµС‡Р°С‚Р°С‚СЊ", CM_U_PRINT
+  MENUITEM "РџР°СЂР°РјРµС‚СЂС‹ &СЃС‚СЂР°РЅРёС†С‹", CM_U_PAGESETUP
  }
 
- POPUP "Ф&лаги диалогов"
+ POPUP "Р¤&Р»Р°РіРё РґРёР°Р»РѕРіРѕРІ"
  {
-  MENUITEM "&Файл", CM_F_FILE
+  MENUITEM "&Р¤Р°Р№Р»", CM_F_FILE
   MENUITEM SEPARATOR
-  MENUITEM "&Цвет", CM_F_COLOR
-  MENUITEM "&Шрифт", CM_F_FONT
+  MENUITEM "&Р¦РІРµС‚", CM_F_COLOR
+  MENUITEM "&РЁСЂРёС„С‚", CM_F_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Найти/заменить", CM_F_FINDREPLACE
+  MENUITEM "&РќР°Р№С‚Рё/Р·Р°РјРµРЅРёС‚СЊ", CM_F_FINDREPLACE
   MENUITEM SEPARATOR
-  MENUITEM "&Печатать", CM_F_PRINT
-  MENUITEM "Параметры &страницы", CM_F_PAGESETUP
+  MENUITEM "&РџРµС‡Р°С‚Р°С‚СЊ", CM_F_PRINT
+  MENUITEM "РџР°СЂР°РјРµС‚СЂС‹ &СЃС‚СЂР°РЅРёС†С‹", CM_F_PAGESETUP
  }
 
- POPUP "&Справка"
+ POPUP "&РЎРїСЂР°РІРєР°"
  {
-  MENUITEM "&Использование", CM_H_USAGE
-  MENUITEM "&О программе", CM_H_ABOUT
+  MENUITEM "&РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ", CM_H_USAGE
+  MENUITEM "&Рћ РїСЂРѕРіСЂР°РјРјРµ", CM_H_ABOUT
  }
 
 }
 
 Color_Flags_Dialog DIALOG 11, 20, 207, 107
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Флаги диалога выбора цвета"
+CAPTION "Р¤Р»Р°РіРё РґРёР°Р»РѕРіР° РІС‹Р±РѕСЂР° С†РІРµС‚Р°"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
- PUSHBUTTON "Отмена", IDCANCEL, 148, 24, 50, 14, WS_GROUP | WS_TABSTOP
- PUSHBUTTON "Справка", CM_R_HELP, 148, 42, 50, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 148, 24, 50, 14, WS_GROUP | WS_TABSTOP
+ PUSHBUTTON "РЎРїСЂР°РІРєР°", CM_R_HELP, 148, 42, 50, 14, WS_GROUP | WS_TABSTOP
  CHECKBOX "CC_ENABLEHOOK", I_CC_ENABLEHOOK, 12, 12, 122, 10, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "CC_ENABLETEMPLATE", I_CC_ENABLETEMPLATE, 12, 24, 122, 10, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "CC_ENABLETEMPLATEHANDLE", I_CC_ENABLETEMPLATEHANDLE, 12, 36, 122, 10, BS_AUTOCHECKBOX | WS_TABSTOP
@@ -84,12 +87,12 @@ FONT 8, "MS Shell Dlg"
 
 Font_Flags_Dialog DIALOG 9, 20, 207, 313
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Флаги диалога выбора шрифта"
+CAPTION "Р¤Р»Р°РіРё РґРёР°Р»РѕРіР° РІС‹Р±РѕСЂР° С€СЂРёС„С‚Р°"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
- PUSHBUTTON "Отмена", IDCANCEL, 148, 24, 50, 14
- PUSHBUTTON "Справка", CM_R_HELP, 148, 42, 50, 14
+ PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 148, 24, 50, 14
+ PUSHBUTTON "РЎРїСЂР°РІРєР°", CM_R_HELP, 148, 42, 50, 14
  CHECKBOX "CF_APPLY", I_CF_APPLY, 12, 12, 120, 10, BS_AUTOCHECKBOX  | WS_TABSTOP
  CHECKBOX "CF_ANSIONLY", I_CF_ANSIONLY, 12, 24, 120, 10, BS_AUTOCHECKBOX  | WS_TABSTOP
  CHECKBOX "CF_BOTH", I_CF_BOTH, 12, 36, 120, 10, BS_AUTOCHECKBOX  | WS_TABSTOP
@@ -118,12 +121,12 @@ FONT 8, "MS Shell Dlg"
 
 Find_Flags_Dialog DIALOG 8, 24, 207, 306
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION
-CAPTION "Флаги диалогов найти/заменить"
+CAPTION "Р¤Р»Р°РіРё РґРёР°Р»РѕРіРѕРІ РЅР°Р№С‚Рё/Р·Р°РјРµРЅРёС‚СЊ"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
- PUSHBUTTON "Отмена", IDCANCEL, 148, 24, 50, 14
- PUSHBUTTON "Справка", IDHELP, 148, 42, 50, 14
+ PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 148, 24, 50, 14
+ PUSHBUTTON "РЎРїСЂР°РІРєР°", IDHELP, 148, 42, 50, 14
  CHECKBOX "FR_DIALOGTERM", I_FR_DIALOGTERM, 24, 12, 120, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "FR_DOWN", I_FR_DOWN, 24, 24, 120, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "FR_ENABLEHOOK", I_FR_ENABLEHOOK, 24, 36, 120, 12, BS_AUTOCHECKBOX | WS_TABSTOP
@@ -146,17 +149,17 @@ FONT 8, "MS Shell Dlg"
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 168, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 180, 11, 13
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 24, 228, 11, 13
- CONTROL "Так отмечены флаги, которые установлены системой и обязаны быть сброшены пользователем.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
+ CONTROL "РўР°Рє РѕС‚РјРµС‡РµРЅС‹ С„Р»Р°РіРё, РєРѕС‚РѕСЂС‹Рµ СѓСЃС‚Р°РЅРѕРІР»РµРЅС‹ СЃРёСЃС‚РµРјРѕР№ Рё РѕР±СЏР·Р°РЅС‹ Р±С‹С‚СЊ СЃР±СЂРѕС€РµРЅС‹ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј.", -1, "static", SS_LEFT | WS_CHILD | WS_VISIBLE, 48, 228, 98, 36
 }
 
 Print_Flags_Dialog DIALOG 4, 17, 239, 287
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Флаги диалогов печать/настройка печати"
+CAPTION "Р¤Р»Р°РіРё РґРёР°Р»РѕРіРѕРІ РїРµС‡Р°С‚СЊ/РЅР°СЃС‚СЂРѕР№РєР° РїРµС‡Р°С‚Рё"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 180, 6, 50, 14
- PUSHBUTTON "Отмена", IDCANCEL, 180, 24, 50, 14
- PUSHBUTTON "Справка", CM_R_HELP, 180, 42, 50, 14
+ PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 180, 24, 50, 14
+ PUSHBUTTON "РЎРїСЂР°РІРєР°", CM_R_HELP, 180, 42, 50, 14
  CHECKBOX "PD_ALLPAGES", I_PD_ALLPAGES, 12, 12, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "PD_COLLATE", I_PD_COLLATE, 12, 24, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "PD_DISABLEPRINTTOFILE", I_PD_DISABLEPRINTTOFILE, 12, 36, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
@@ -187,7 +190,7 @@ CAPTION " "
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 180, 6, 50, 14
- PUSHBUTTON "Отмена", IDCANCEL, 180, 24, 50, 14
+ PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 180, 24, 50, 14
  CHECKBOX "PSD_DEFAULTMINMARGINS",       I_PSD_DEFAULTMINMARGINS,       12, 12, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "PSD_DISABLEMARGINS",          I_PSD_DISABLEMARGINS,          12, 24, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "PSD_DISABLEORIENTATION",      I_PSD_DISABLEORIENTATION,      12, 36, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
@@ -211,12 +214,12 @@ FONT 8, "MS Shell Dlg"
 
 File_Flags_Dialog DIALOG 6, 15, 207, 227
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Флаги диалогов открыть/сохранить файл"
+CAPTION "Р¤Р»Р°РіРё РґРёР°Р»РѕРіРѕРІ РѕС‚РєСЂС‹С‚СЊ/СЃРѕС…СЂР°РЅРёС‚СЊ С„Р°Р№Р»"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 148, 6, 50, 14
- PUSHBUTTON "Отмена", IDCANCEL, 148, 24, 50, 14
- PUSHBUTTON "Справка", CM_R_HELP, 148, 42, 50, 14
+ PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 148, 24, 50, 14
+ PUSHBUTTON "РЎРїСЂР°РІРєР°", CM_R_HELP, 148, 42, 50, 14
  CHECKBOX "OFN_ALLOWMULTISELECT", I_OFN_ALLOWMULTISELECT, 12, 12, 132, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "OFN_CREATEPROMPT", I_OFN_CREATEPROMPT, 12, 24, 132, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "OFN_ENABLEHOOK", I_OFN_ENABLEHOOK, 12, 36, 132, 12, BS_AUTOCHECKBOX | WS_TABSTOP
@@ -238,59 +241,59 @@ FONT 8, "MS Shell Dlg"
 
 AboutDialog DIALOG 6, 15, 194, 119
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "О программе"
+CAPTION "Рћ РїСЂРѕРіСЂР°РјРјРµ"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
  LTEXT "Common Dialog Test Jig Exerciser, version 1.20", -1, 13, 36, 168, 12
- LTEXT "(c) 1999-2000, Eric Williams. Распространяется по лицензии WINE.  Не складируйте код...распространяйте его!", -1, 18, 60, 157, 24
+ LTEXT "(c) 1999-2000, Eric Williams. Р Р°СЃРїСЂРѕСЃС‚СЂР°РЅСЏРµС‚СЃСЏ РїРѕ Р»РёС†РµРЅР·РёРё WINE.  РќРµ СЃРєР»Р°РґРёСЂСѓР№С‚Рµ РєРѕРґ...СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏР№С‚Рµ РµРіРѕ!", -1, 18, 60, 157, 24
  ICON "AboutIcon", -1, 84, 12, 18, 20
 }
 
 UsageDialog DIALOG 183, 22, 190, 300
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Использование"
+CAPTION "РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ"
 FONT 8, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 70, 276, 50, 14
  LTEXT "Common Dialog Test Jig Exerciser, version 1.20", -1, 13, 48, 168, 12
- LTEXT "Эта утила тестирует COMMDLG для Wine.", -1, 12, 72, 168, 12
- LTEXT "Флаги задаются в меню 'Флаги диалогов'.", -1, 12, 96, 168, 12
- LTEXT "Диалог выбора цвета меняет цвет фона.", -1, 12, 120, 168, 12
- LTEXT "Диалог выбора шрифта меняет все шрифты и цвета шрифтов, если флаг CF_EFFECTS установлен.", -1, 12, 144, 168, 24
- LTEXT "Верхний левый угол рабочей области приложения показывает полное имя файла и заголовок последнего успешного завершения диалогов открытия или сохранения файла.", -1, 12, 180, 168, 24
- LTEXT "(c) 1999-2000, Eric Williams.  Распространяется по лицензии WINE.  Не складируйте код...распространяйте его!", -1, 12, 228, 168, 36
+ LTEXT "Р­С‚Р° СѓС‚РёР»Р° С‚РµСЃС‚РёСЂСѓРµС‚ COMMDLG РґР»СЏ Wine.", -1, 12, 72, 168, 12
+ LTEXT "Р¤Р»Р°РіРё Р·Р°РґР°СЋС‚СЃСЏ РІ РјРµРЅСЋ 'Р¤Р»Р°РіРё РґРёР°Р»РѕРіРѕРІ'.", -1, 12, 96, 168, 12
+ LTEXT "Р”РёР°Р»РѕРі РІС‹Р±РѕСЂР° С†РІРµС‚Р° РјРµРЅСЏРµС‚ С†РІРµС‚ С„РѕРЅР°.", -1, 12, 120, 168, 12
+ LTEXT "Р”РёР°Р»РѕРі РІС‹Р±РѕСЂР° С€СЂРёС„С‚Р° РјРµРЅСЏРµС‚ РІСЃРµ С€СЂРёС„С‚С‹ Рё С†РІРµС‚Р° С€СЂРёС„С‚РѕРІ, РµСЃР»Рё С„Р»Р°Рі CF_EFFECTS СѓСЃС‚Р°РЅРѕРІР»РµРЅ.", -1, 12, 144, 168, 24
+ LTEXT "Р’РµСЂС…РЅРёР№ Р»РµРІС‹Р№ СѓРіРѕР» СЂР°Р±РѕС‡РµР№ РѕР±Р»Р°СЃС‚Рё РїСЂРёР»РѕР¶РµРЅРёСЏ РїРѕРєР°Р·С‹РІР°РµС‚ РїРѕР»РЅРѕРµ РёРјСЏ С„Р°Р№Р»Р° Рё Р·Р°РіРѕР»РѕРІРѕРє РїРѕСЃР»РµРґРЅРµРіРѕ СѓСЃРїРµС€РЅРѕРіРѕ Р·Р°РІРµСЂС€РµРЅРёСЏ РґРёР°Р»РѕРіРѕРІ РѕС‚РєСЂС‹С‚РёСЏ РёР»Рё СЃРѕС…СЂР°РЅРµРЅРёСЏ С„Р°Р№Р»Р°.", -1, 12, 180, 168, 24
+ LTEXT "(c) 1999-2000, Eric Williams.  Р Р°СЃРїСЂРѕСЃС‚СЂР°РЅСЏРµС‚СЃСЏ РїРѕ Р»РёС†РµРЅР·РёРё WINE.  РќРµ СЃРєР»Р°РґРёСЂСѓР№С‚Рµ РєРѕРґ...СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏР№С‚Рµ РµРіРѕ!", -1, 12, 228, 168, 36
  ICON "AboutIcon", -1, 86, 12, 18, 20
  CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 216, 168, 2
 }
 
 PAGESETUPDLGORD_CSTM DIALOG LOADONCALL MOVEABLE DISCARDABLE 32, 32, 240, 240
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "уПВУФЧЕООЩК ДЙБМПЗ"
+CAPTION "РЎРѕР±СЃС‚РІРµРЅРЅС‹Р№ РґРёР°Р»РѕРі"
 FONT 8, "MS Shell Dlg"
 BEGIN
   CONTROL "", rct1, "Static", SS_WHITERECT, 80, 8, 80, 80
   CONTROL "", rct2, "Static", SS_GRAYRECT, 160, 12, 4, 80
   CONTROL "", rct3, "Static", SS_GRAYRECT,  84, 88, 80, 4
-  GROUPBOX "Бумага и принтер", grp2, 8, 96, 224, 56, BS_GROUPBOX
-  LTEXT "&Бумага:", stc2, 16, 112, 36, 8
+  GROUPBOX "Р‘СѓРјР°РіР° Рё РїСЂРёРЅС‚РµСЂ", grp2, 8, 96, 224, 56, BS_GROUPBOX
+  LTEXT "&Р‘СѓРјР°РіР°:", stc2, 16, 112, 36, 8
   COMBOBOX cmb2, 64, 110, 80, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
   COMBOBOX cmb1, 150, 110, 80, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
-  LTEXT "Подача:", stc3, 16, 132, 36, 8
+  LTEXT "РџРѕРґР°С‡Р°:", stc3, 16, 132, 36, 8
 COMBOBOX cmb3, 64, 130, 160, 160, CBS_SIMPLE|CBS_DROPDOWN|CBS_SORT|WS_GROUP|WS_TABSTOP|WS_VSCROLL
-GROUPBOX "Ориентация", grp1, 8, 156, 64, 56, BS_GROUPBOX
-AUTORADIOBUTTON "К&нижная", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
-AUTORADIOBUTTON "Аль&бомная", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
-GROUPBOX "Поля", grp4, 80, 156, 152, 56, BS_GROUPBOX
-LTEXT "&Слева:", stc15, 88, 172, 21, 8
+GROUPBOX "РћСЂРёРµРЅС‚Р°С†РёСЏ", grp1, 8, 156, 64, 56, BS_GROUPBOX
+AUTORADIOBUTTON "Рљ&РЅРёР¶РЅР°СЏ", rad1, 16, 170, 52, 12, BS_AUTORADIOBUTTON
+AUTORADIOBUTTON "РђР»СЊ&Р±РѕРјРЅР°СЏ", rad2, 16, 190, 52, 12, BS_AUTORADIOBUTTON
+GROUPBOX "РџРѕР»СЏ", grp4, 80, 156, 152, 56, BS_GROUPBOX
+LTEXT "&РЎР»РµРІР°:", stc15, 88, 172, 21, 8
 EDITTEXT edt4, 111, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-LTEXT "Све&рху:", stc16, 159, 172, 27, 8
+LTEXT "РЎРІРµ&СЂС…Сѓ:", stc16, 159, 172, 27, 8
 EDITTEXT edt6, 187, 170, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-LTEXT "С&права:", stc17, 88, 192, 21, 8
+LTEXT "РЎ&РїСЂР°РІР°:", stc17, 88, 192, 21, 8
 EDITTEXT edt5, 111, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
-LTEXT "Сни&зу:", stc18, 159, 192, 23, 8
+LTEXT "РЎРЅРё&Р·Сѓ:", stc18, 159, 192, 23, 8
 EDITTEXT edt7, 187, 190, 39, 12, WS_TABSTOP|WS_GROUP|WS_BORDER
 DEFPUSHBUTTON "OK", IDOK, 71, 220, 50, 14, BS_PUSHBUTTON
-PUSHBUTTON "Отмена", IDCANCEL, 126, 220, 50, 14
-PUSHBUTTON "&Принтер...", psh3, 184, 220, 48, 14
+PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 126, 220, 50, 14
+PUSHBUTTON "&РџСЂРёРЅС‚РµСЂ...", psh3, 184, 220, 48, 14
 END
