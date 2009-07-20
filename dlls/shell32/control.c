@@ -59,6 +59,7 @@ CPlApplet*	Control_UnloadApplet(CPlApplet* applet)
     if (applet->proc) applet->proc(applet->hWnd, CPL_EXIT, 0L, 0L);
     FreeLibrary(applet->hModule);
     next = applet->next;
+    HeapFree(GetProcessHeap(), 0, applet->cmd);
     HeapFree(GetProcessHeap(), 0, applet);
     return next;
 }
@@ -94,6 +95,13 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 
     applet = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, applet,
 			 sizeof(*applet) + (applet->count - 1) * sizeof(NEWCPLINFOW));
+
+    if (!(applet->cmd = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmd)+1) * sizeof(WCHAR)))) {
+        WARN("Cannot allocate memory for applet path");
+        goto theError;
+    }
+
+    lstrcpyW(applet->cmd, cmd);
 
     for (i = 0; i < applet->count; i++) {
        ZeroMemory(&newinfo, sizeof(newinfo));
@@ -426,6 +434,20 @@ static CPlItem* Control_GetCPlItem_From_ListView(CPanel *panel)
     return NULL;
 }
 
+static void Control_StartApplet(HWND hWnd, CPlItem *item)
+{
+    WCHAR verbOpen[] = {'c','p','l','o','p','e','n',0};
+    WCHAR format[] = {'@','%','d',0};
+    WCHAR param[MAX_PATH];
+
+    /* execute the applet if item is valid */
+    if (item)
+    {
+        wsprintfW(param, format, item->id);
+        ShellExecuteW(hWnd, verbOpen, item->applet->cmd, param, NULL, SW_SHOW);
+    }
+}
+
 static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
 					WPARAM lParam1, LPARAM lParam2)
 {
@@ -484,13 +506,7 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
                  if ((LOWORD(lParam1) >= IDM_CPANEL_APPLET_BASE) &&
                      (LOWORD(lParam1) <= IDM_CPANEL_APPLET_BASE + panel->total_subprogs))
                  {
-                     CPlItem *item = Control_GetCPlItem_From_MenuID(hWnd, LOWORD(lParam1));
-
-                     /* execute the applet if item is valid */
-                     if (item)
-                         item->applet->proc(item->applet->hWnd, CPL_DBLCLK, item->id,
-                             item->applet->info[item->id].lData);
-
+                     Control_StartApplet(hWnd, Control_GetCPlItem_From_MenuID(hWnd, LOWORD(lParam1)));
                      return 0;
                  }
 
@@ -511,13 +527,7 @@ static LRESULT WINAPI	Control_WndProc(HWND hWnd, UINT wMsg,
                       case NM_RETURN:
                       case NM_DBLCLK:
                       {
-                          CPlItem *item = Control_GetCPlItem_From_ListView(panel);
-
-                          /* execute the applet if item is valid */
-                          if (item)
-                              item->applet->proc(item->applet->hWnd, CPL_DBLCLK,
-                                  item->id, item->applet->info[item->id].lData);
-
+                          Control_StartApplet(hWnd, Control_GetCPlItem_From_ListView(panel));
                           return 0;
                       }
                       case LVN_ITEMCHANGED:
