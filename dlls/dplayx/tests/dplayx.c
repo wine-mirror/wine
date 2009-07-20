@@ -6132,6 +6132,138 @@ static void test_remote_data_replication(void)
 
 }
 
+/* Host migration */
+
+static void test_host_migration(void)
+{
+
+    LPDIRECTPLAY4 pDP[2];
+    DPSESSIONDESC2 dpsd;
+    DPID dpid[2], idFrom, idTo;
+    HRESULT hr;
+    UINT i;
+    DWORD dwCount;
+
+    DWORD dwDataSize = 1024;
+    LPDPMSG_DESTROYPLAYERORGROUP lpData = HeapAlloc( GetProcessHeap(),
+                                                     HEAP_ZERO_MEMORY,
+                                                     dwDataSize );
+
+
+    for (i=0; i<2; i++)
+    {
+        CoCreateInstance( &CLSID_DirectPlay, NULL, CLSCTX_ALL,
+                          &IID_IDirectPlay4A, (LPVOID*) &pDP[i] );
+        init_TCPIP_provider( pDP[i], "127.0.0.1", 0 );
+    }
+    ZeroMemory( &dpsd, sizeof(DPSESSIONDESC2) );
+    dpsd.dwSize = sizeof(DPSESSIONDESC2);
+    dpsd.guidApplication = appGuid;
+    dpsd.dwMaxPlayers = 10;
+    dpsd.dwFlags = DPSESSION_MIGRATEHOST;
+
+    /* Host */
+    hr = IDirectPlayX_Open( pDP[0], &dpsd, DPOPEN_CREATE );
+    todo_wine checkHR( DP_OK, hr );
+
+    if ( hr != DP_OK )
+    {
+        todo_wine win_skip( "dplay not implemented enough for this test yet\n" );
+        return;
+    }
+
+    hr = IDirectPlayX_CreatePlayer( pDP[0], &dpid[0], NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+    /* Peer */
+    hr = IDirectPlayX_EnumSessions( pDP[1], &dpsd, 0, EnumSessions_cb_join,
+                                    pDP[1], 0 );
+    checkHR( DP_OK, hr );
+
+    hr = IDirectPlayX_CreatePlayer( pDP[1], &dpid[1], NULL, NULL, NULL, 0, 0 );
+    checkHR( DP_OK, hr );
+
+
+    /* Host: One message in queue */
+    IDirectPlayX_GetMessageCount( pDP[0], dpid[0], &dwCount );
+    check( 1, dwCount );
+    dwDataSize = 1024;
+    hr = IDirectPlayX_Receive( pDP[0], &idFrom, &idTo, DPRECEIVE_PEEK,
+                               lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    checkConv( DPSYS_CREATEPLAYERORGROUP, lpData->dwType, dpMsgType2str );
+
+    /* Peer: No messages */
+    IDirectPlayX_GetMessageCount( pDP[1], dpid[1], &dwCount );
+    check( 0, dwCount );
+    hr = IDirectPlayX_Receive( pDP[1], &idFrom, &idTo, DPRECEIVE_PEEK,
+                               lpData, &dwDataSize );
+    checkHR( DPERR_NOMESSAGES, hr );
+
+
+    /* Closing host */
+    IDirectPlayX_Close( pDP[0] );
+
+
+    /* Host: Queue is cleaned */
+    IDirectPlayX_GetMessageCount( pDP[0], dpid[0], &dwCount );
+    check( 0, dwCount );
+    hr = IDirectPlayX_Receive( pDP[0], &idFrom, &idTo, DPRECEIVE_PEEK,
+                               lpData, &dwDataSize );
+    checkHR( DPERR_NOMESSAGES, hr );
+
+    /* Peer: gets message of player destruction */
+    IDirectPlayX_GetMessageCount( pDP[1], dpid[1], &dwCount );
+    check( 2, dwCount );
+    dwDataSize = 1024;
+    hr = IDirectPlayX_Receive( pDP[1], &idFrom, &idTo, DPRECEIVE_PEEK,
+                               lpData, &dwDataSize );
+    checkHR( DP_OK, hr );
+    checkConv( DPSYS_DESTROYPLAYERORGROUP, lpData->dwType, dpMsgType2str );
+
+
+    /* Message analysis */
+    for (i=0; i<2; i++)
+    {
+        hr = IDirectPlayX_Receive( pDP[1], &idFrom, &idTo, 0,
+                                   lpData, &dwDataSize );
+        checkHR( DP_OK, hr );
+        check( DPID_SYSMSG, idFrom );
+        check( dpid[1], idTo ); /* Peer player id */
+        switch(i)
+        {
+        case 0:
+            checkConv( DPSYS_DESTROYPLAYERORGROUP, lpData->dwType,
+                       dpMsgType2str );
+            check( DPPLAYERTYPE_PLAYER, lpData->dwPlayerType );
+            check( dpid[0],             lpData->dpId ); /* Host player id */
+            checkLP( NULL,              lpData->lpLocalData );
+            check( 0,                   lpData->dwLocalDataSize );
+            checkLP( NULL,              lpData->lpRemoteData );
+            check( 0,                   lpData->dwRemoteDataSize );
+            checkLP( NULL,              lpData->dpnName.lpszShortNameA );
+            check( 0,                   lpData->dpIdParent );
+            checkFlags( 0,              lpData->dwFlags,
+                        FLAGS_DPPLAYER | FLAGS_DPGROUP );
+            break;
+        case 1:
+            checkConv( DPSYS_HOST, lpData->dwType, dpMsgType2str );
+            break;
+        default:
+            break;
+        }
+        dwDataSize = 1024;
+    }
+    hr = IDirectPlayX_Receive( pDP[1], &idFrom, &idTo, 0, lpData, &dwDataSize );
+    checkHR( DPERR_NOMESSAGES, hr );
+
+
+    HeapFree( GetProcessHeap(), 0, lpData );
+    IDirectPlayX_Release( pDP[0] );
+    IDirectPlayX_Release( pDP[1] );
+
+}
+
 
 START_TEST(dplayx)
 {
@@ -6183,6 +6315,7 @@ START_TEST(dplayx)
     test_GetMessageQueue();
 
     test_remote_data_replication();
+    test_host_migration();
 
     CoUninitialize();
 }
