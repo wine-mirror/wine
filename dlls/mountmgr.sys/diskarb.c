@@ -69,7 +69,7 @@ static void appeared_callback( DADiskRef disk, void *context )
 
     TRACE( "got mount notification for '%s' on '%s'\n", device, mount_point );
 
-    add_dos_device( -1, device, device, mount_point, type );
+    add_dos_device( -1, device, device, mount_point, type, NULL );
 done:
     CFRelease( dict );
 }

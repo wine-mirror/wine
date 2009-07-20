@@ -136,7 +136,7 @@ static void new_device( LibHalContext *ctx, const char *udi )
     else if (type && !strcmp( type, "floppy" )) drive_type = DEVICE_FLOPPY;
     else drive_type = DEVICE_UNKNOWN;
 
-    add_dos_device( -1, udi, device, mount_point, drive_type );
+    add_dos_device( -1, udi, device, mount_point, drive_type, NULL );
 
     /* add property watch for mount point */
     p_libhal_device_add_property_watch( ctx, udi, &error );

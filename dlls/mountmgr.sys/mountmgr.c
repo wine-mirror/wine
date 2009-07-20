@@ -103,20 +103,17 @@ struct mount_point *add_dosdev_mount_point( DEVICE_OBJECT *device, UNICODE_STRIN
 
 /* create the Volume mount point symlink for a new device */
 struct mount_point *add_volume_mount_point( DEVICE_OBJECT *device, UNICODE_STRING *device_name,
-                                            int drive, const void *id, unsigned int id_len )
+                                            const GUID *guid, const void *id, unsigned int id_len )
 {
     static const WCHAR volumeW[] = {'\\','?','?','\\','V','o','l','u','m','e','{',
                                     '%','0','8','x','-','%','0','4','x','-','%','0','4','x','-',
                                     '%','0','2','x','%','0','2','x','-','%','0','2','x','%','0','2','x',
                                     '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','}',0};
     WCHAR link[sizeof(volumeW)];
-    GUID guid;
 
-    memset( &guid, 0, sizeof(guid) );  /* FIXME */
-    guid.Data4[7] = 'A' + drive;
-    sprintfW( link, volumeW, guid.Data1, guid.Data2, guid.Data3,
-              guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
-              guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+    sprintfW( link, volumeW, guid->Data1, guid->Data2, guid->Data3,
+              guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+              guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
     return add_mount_point( device, device_name, link, id, id_len );
 }
 
@@ -266,7 +263,7 @@ static NTSTATUS define_unix_drive( const void *in_buff, SIZE_T insize )
         case DRIVE_RAMDISK:   type = DEVICE_RAMDISK; break;
         case DRIVE_FIXED:     type = DEVICE_HARDDISK_VOL; break;
         }
-        return add_dos_device( letter - 'a', NULL, device, mount_point, type );
+        return add_dos_device( letter - 'a', NULL, device, mount_point, type, NULL );
     }
     else
     {

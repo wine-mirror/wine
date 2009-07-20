@@ -71,6 +71,7 @@ struct volume
     struct list           entry;       /* entry in volumes list */
     struct disk_device   *device;      /* disk device */
     char                 *udi;         /* unique identifier for dynamic volumes */
+    GUID                  guid;        /* volume uuid */
     struct mount_point   *mount;       /* Volume{xxx} mount point */
 };
 
@@ -107,6 +108,14 @@ static char *strdupA( const char *str )
     if (!str) return NULL;
     if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(str) + 1 ))) strcpy( ret, str );
     return ret;
+}
+
+static const GUID *get_default_uuid( int letter )
+{
+    static GUID guid;
+
+    guid.Data4[7] = 'A' + letter;
+    return &guid;
 }
 
 /* read a Unix symlink; returned buffer must be freed by caller */
@@ -358,7 +367,7 @@ static void set_drive_letter( struct dos_drive *drive, int letter )
         id_len = strlen( device->unix_mount ) + 1;
     }
     drive->dosdev = add_dosdev_mount_point( device->dev_obj, &device->name, letter, id, id_len );
-    volume->mount = add_volume_mount_point( device->dev_obj, &device->name, letter, id, id_len );
+    volume->mount = add_volume_mount_point( device->dev_obj, &device->name, &volume->guid, id, id_len );
 }
 
 static inline int is_valid_device( struct stat *st )
@@ -528,6 +537,7 @@ static void create_drive_devices(void)
         {
             drive->volume->device->unix_mount = link;
             drive->volume->device->unix_device = device;
+            drive->volume->guid = *get_default_uuid( i );
             set_drive_letter( drive, i );
         }
         else
@@ -542,7 +552,7 @@ static void create_drive_devices(void)
 
 /* create a new dos drive */
 NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
-                         const char *mount_point, enum device_type type )
+                         const char *mount_point, enum device_type type, const GUID *guid )
 {
     struct dos_drive *drive, *next;
 
@@ -575,6 +585,8 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
     if (create_dos_device( udi, type, &drive )) return STATUS_NO_MEMORY;
 
 found:
+    if (!guid) guid = get_default_uuid( letter );
+    drive->volume->guid = *guid;
     RtlFreeHeap( GetProcessHeap(), 0, drive->volume->device->unix_device );
     drive->volume->device->unix_device = strdupA( device );
     set_drive_letter( drive, letter );
