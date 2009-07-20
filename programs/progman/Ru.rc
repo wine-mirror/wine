@@ -21,45 +21,50 @@
 
 #include "progman.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+
 /* Menu */
 
-MAIN_MENU MENU LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+MAIN_MENU MENU
 {
- POPUP "&Файл" {
-   MENUITEM "&Создать",              PM_NEW
-   MENUITEM "О&ткрыть...\tEnter",             PM_OPEN
-   MENUITEM "&Переместить...\tF7",             PM_MOVE,      GRAYED
-   MENUITEM "&Копировать...\tF8",             PM_COPY,      GRAYED
-   MENUITEM "&Удалить\tEntf",           PM_DELETE
-   MENUITEM "&Атрибуты...\tAlt+Enter",       PM_ATTRIBUTES
+ POPUP "&Р¤Р°Р№Р»" {
+   MENUITEM "&РЎРѕР·РґР°С‚СЊ",              PM_NEW
+   MENUITEM "Рћ&С‚РєСЂС‹С‚СЊ...\tEnter",             PM_OPEN
+   MENUITEM "&РџРµСЂРµРјРµСЃС‚РёС‚СЊ...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "&РљРѕРїРёСЂРѕРІР°С‚СЊ...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "&РЈРґР°Р»РёС‚СЊ\tEntf",           PM_DELETE
+   MENUITEM "&РђС‚СЂРёР±СѓС‚С‹...\tAlt+Enter",       PM_ATTRIBUTES
    MENUITEM SEPARATOR
-   MENUITEM "&Запустить...",          PM_EXECUTE
+   MENUITEM "&Р—Р°РїСѓСЃС‚РёС‚СЊ...",          PM_EXECUTE
    MENUITEM SEPARATOR
-   MENUITEM "Вы&ход из Wine...",             PM_EXIT
+   MENUITEM "Р’С‹&С…РѕРґ РёР· Wine...",             PM_EXIT
  }
- POPUP "&Параметры" {
-   MENUITEM "&Автоупорядочение",  PM_AUTO_ARRANGE
-   MENUITEM "&Свернуть при запуске",    PM_MIN_ON_RUN
-   MENUITEM "&Сохранять настройки при выходе", PM_SAVE_SETTINGS
+ POPUP "&РџР°СЂР°РјРµС‚СЂС‹" {
+   MENUITEM "&РђРІС‚РѕСѓРїРѕСЂСЏРґРѕС‡РµРЅРёРµ",  PM_AUTO_ARRANGE
+   MENUITEM "&РЎРІРµСЂРЅСѓС‚СЊ РїСЂРё Р·Р°РїСѓСЃРєРµ",    PM_MIN_ON_RUN
+   MENUITEM "&РЎРѕС…СЂР°РЅСЏС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё РїСЂРё РІС‹С…РѕРґРµ", PM_SAVE_SETTINGS
  }
- POPUP "&Окна" {
-   MENUITEM "&Каскад\tShift+F5",       PM_OVERLAP
-   MENUITEM "&Мозаика\tShift+F4",  PM_SIDE_BY_SIDE
-   MENUITEM "&Упорядочить при выходе",       PM_ARRANGE
+ POPUP "&РћРєРЅР°" {
+   MENUITEM "&РљР°СЃРєР°Рґ\tShift+F5",       PM_OVERLAP
+   MENUITEM "&РњРѕР·Р°РёРєР°\tShift+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "&РЈРїРѕСЂСЏРґРѕС‡РёС‚СЊ РїСЂРё РІС‹С…РѕРґРµ",       PM_ARRANGE
  }
  
-POPUP "&Справка" {
-   MENUITEM "&Содержание",         PM_CONTENTS
-   MENUITEM "&Поиск...",           PM_SEARCH
+POPUP "&РЎРїСЂР°РІРєР°" {
+   MENUITEM "&РЎРѕРґРµСЂР¶Р°РЅРёРµ",         PM_CONTENTS
+   MENUITEM "&РџРѕРёСЃРє...",           PM_SEARCH
    MENUITEM SEPARATOR
-   MENUITEM "&Использование справки",     PM_HELPONHELP
-   MENUITEM "&Руководство",         PM_TUTORIAL
+   MENUITEM "&РСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ СЃРїСЂР°РІРєРё",     PM_HELPONHELP
+   MENUITEM "&Р СѓРєРѕРІРѕРґСЃС‚РІРѕ",         PM_TUTORIAL
    MENUITEM SEPARATOR
 
-   POPUP "&Сведения..." {
-     MENUITEM "&Лицензия",        PM_LICENSE
-     MENUITEM "&БЕЗ ГАРАНТИЙ",    PM_NO_WARRANTY
-     MENUITEM "&О Wine",     PM_ABOUT_WINE
+   POPUP "&РЎРІРµРґРµРЅРёСЏ..." {
+     MENUITEM "&Р›РёС†РµРЅР·РёСЏ",        PM_LICENSE
+     MENUITEM "&Р‘Р•Р— Р“РђР РђРќРўРР™",    PM_NO_WARRANTY
+     MENUITEM "&Рћ Wine",     PM_ABOUT_WINE
    }
  }
 }
@@ -67,157 +72,150 @@ POPUP "&Справка" {
 /* Dialog `New' */
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Создать программный объект"
+CAPTION "РЎРѕР·РґР°С‚СЊ РїСЂРѕРіСЂР°РјРјРЅС‹Р№ РѕР±СЉРµРєС‚"
 {
 RADIOBUTTON   "",                 PM_NEW_GROUP,    10, 15,  10, 15
-LTEXT         "&Группу программ",   -1,    20, 18,  80, 15
+LTEXT         "&Р“СЂСѓРїРїСѓ РїСЂРѕРіСЂР°РјРј",   -1,    20, 18,  80, 15
 RADIOBUTTON   "",                 PM_NEW_PROGRAM,  10, 35,  10, 15
-LTEXT         "&Программный элемент", -1,  20, 38,  80, 15
+LTEXT         "&РџСЂРѕРіСЂР°РјРјРЅС‹Р№ СЌР»РµРјРµРЅС‚", -1,  20, 38,  80, 15
 DEFPUSHBUTTON "OK",          IDOK,           105,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Отмена",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Справка",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "РћС‚РјРµРЅР°",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РЎРїСЂР°РІРєР°",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Move' */
 
 DIALOG_MOVE DIALOG 0, 0, 250, 65
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Переместить программу"
+CAPTION "РџРµСЂРµРјРµСЃС‚РёС‚СЊ РїСЂРѕРіСЂР°РјРјСѓ"
 {
-LTEXT         "Переместить программу:",    -1,            5,  5,  90, 15
+LTEXT         "РџРµСЂРµРјРµСЃС‚РёС‚СЊ РїСЂРѕРіСЂР°РјРјСѓ:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "Из группы:", -1,            5, 13,  90, 15
+LTEXT         "РР· РіСЂСѓРїРїС‹:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&В группу:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&Р’ РіСЂСѓРїРїСѓ:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Отмена",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Справка",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "РћС‚РјРµРЅР°",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РЎРїСЂР°РІРєР°",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Copy' */
 
 DIALOG_COPY DIALOG 0, 0, 250, 65
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Копировать программу"
+CAPTION "РљРѕРїРёСЂРѕРІР°С‚СЊ РїСЂРѕРіСЂР°РјРјСѓ"
 {
-LTEXT         "Копировать программу:",    -1,            5,  5,  90, 15
+LTEXT         "РљРѕРїРёСЂРѕРІР°С‚СЊ РїСЂРѕРіСЂР°РјРјСѓ:",    -1,            5,  5,  90, 15
 LTEXT         "",                     PM_PROGRAM,         95,  5,  90, 15
-LTEXT         "Из группы:", -1,            5, 13,  90, 15
+LTEXT         "РР· РіСЂСѓРїРїС‹:", -1,            5, 13,  90, 15
 LTEXT         "",                     PM_FROM_GROUP,      95, 13,  90, 15
-LTEXT         "&В группу:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
+LTEXT         "&Р’ РіСЂСѓРїРїСѓ:",   PM_TO_GROUP_TXT,     5, 28, 140, 15
 COMBOBOX                              PM_TO_GROUP,         5, 38, 140, 50, WS_TABSTOP | CBS_DROPDOWNLIST
 DEFPUSHBUTTON "OK",              IDOK,              185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Отмена",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Справка",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "РћС‚РјРµРЅР°",          IDCANCEL,          185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РЎРїСЂР°РІРєР°",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Group attributes' */
 
 DIALOG_GROUP DIALOG 0, 0, 230, 65
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Атрибуты программной группы"
+CAPTION "РђС‚СЂРёР±СѓС‚С‹ РїСЂРѕРіСЂР°РјРјРЅРѕР№ РіСЂСѓРїРїС‹"
 {
-LTEXT     "&Описание:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+LTEXT     "&РћРїРёСЃР°РЅРёРµ:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
 EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
-LTEXT     "&Файл группы:",        PM_FILE_TXT,          05, 38,  50, 10
+LTEXT     "&Р¤Р°Р№Р» РіСЂСѓРїРїС‹:",        PM_FILE_TXT,          05, 38,  50, 10
 EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
 DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Отмена",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Справка",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "РћС‚РјРµРЅР°",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РЎРїСЂР°РІРєР°",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Program attributes' */
 
 DIALOG_PROGRAM DIALOG 0, 0, 250, 105
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Атрибуты программы"
+CAPTION "РђС‚СЂРёР±СѓС‚С‹ РїСЂРѕРіСЂР°РјРјС‹"
 {
-LTEXT         "&Описание:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
+LTEXT         "&РћРїРёСЃР°РЅРёРµ:",  PM_DESCRIPTION_TXT,   05, 10,  60, 10
 EDITTEXT                                   PM_DESCRIPTION,       80, 10,  90, 15, WS_TABSTOP
-LTEXT         "&Командная строка:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
+LTEXT         "&РљРѕРјР°РЅРґРЅР°СЏ СЃС‚СЂРѕРєР°:", PM_COMMAND_LINE_TXT,  05, 25,  60, 10
 EDITTEXT                                   PM_COMMAND_LINE,      80, 25,  90, 15, WS_TABSTOP
-LTEXT         "&Рабочая папка:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
+LTEXT         "&Р Р°Р±РѕС‡Р°СЏ РїР°РїРєР°:",    PM_DIRECTORY_TXT,     05, 40,  60, 10
 EDITTEXT                                   PM_DIRECTORY,         80, 40,  90, 15, WS_TABSTOP
-LTEXT         "&Комбинация клавиш:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
+LTEXT         "&РљРѕРјР±РёРЅР°С†РёСЏ РєР»Р°РІРёС€:",      PM_HOT_KEY_TXT,       05, 55,  60, 10
 EDITTEXT                                   PM_HOT_KEY,           80, 55,  90, 15, WS_TABSTOP
 ICON          "",                          PM_ICON,              20, 70
 CHECKBOX      "",                          PM_SYMBOL,            80, 75,  10, 10, WS_TABSTOP
-LTEXT         "В виде &значка",       -1,             95, 75,  75, 10
+LTEXT         "Р’ РІРёРґРµ &Р·РЅР°С‡РєР°",       -1,             95, 75,  75, 10
 DEFPUSHBUTTON "OK",                   IDOK,                185,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Отмена",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Обзор...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Другой значок...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Справка",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
+PUSHBUTTON    "РћС‚РјРµРЅР°",               IDCANCEL,            185, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РћР±Р·РѕСЂ...",               PM_BROWSE,           185, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Р”СЂСѓРіРѕР№ Р·РЅР°С‡РѕРє...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РЎРїСЂР°РІРєР°",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Symbol' */
 
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Выбрать значок"
+CAPTION "Р’С‹Р±СЂР°С‚СЊ Р·РЅР°С‡РѕРє"
 {
-LTEXT     "&Имя файла:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+LTEXT     "&РРјСЏ С„Р°Р№Р»Р°:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
 EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
-LTEXT     "&Текущий значок:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+LTEXT     "&РўРµРєСѓС‰РёР№ Р·РЅР°С‡РѕРє:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
 COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
    CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
 DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Отмена",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Обзор...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Справка",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "РћС‚РјРµРЅР°",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РћР±Р·РѕСЂ...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РЎРїСЂР°РІРєР°",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Dialog `Execute' */
 
 DIALOG_EXECUTE DIALOG 0, 0, 200, 85
-LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Запустить программу"
+CAPTION "Р—Р°РїСѓСЃС‚РёС‚СЊ РїСЂРѕРіСЂР°РјРјСѓ"
 {
-LTEXT     "&Командная строка:", -1,   05, 15, 120, 10
+LTEXT     "&РљРѕРјР°РЅРґРЅР°СЏ СЃС‚СЂРѕРєР°:", -1,   05, 15, 120, 10
 EDITTEXT                               PM_COMMAND, 05, 25, 120, 15, WS_TABSTOP
 CHECKBOX      "",                      PM_SYMBOL,  05, 45,  10, 10, WS_TABSTOP
-LTEXT         "В виде &значка",   -1,   20, 45, 120, 10
+LTEXT         "Р’ РІРёРґРµ &Р·РЅР°С‡РєР°",   -1,   20, 45, 120, 10
 DEFPUSHBUTTON "OK",               IDOK,      135,  5,  60, 15, WS_TABSTOP
-PUSHBUTTON    "Отмена",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Обзор...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
-PUSHBUTTON    "&Справка",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
+PUSHBUTTON    "РћС‚РјРµРЅР°",           IDCANCEL,  135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РћР±Р·РѕСЂ...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&РЎРїСЂР°РІРєР°",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 }
 
 /* Strings */
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE
 {
-IDS_PROGRAM_MANAGER,		"Диспетчер программ"
-IDS_ERROR,			"ОШИБКА"
-IDS_WARNING,			"ВНИМАНИЕ"
-IDS_INFO,			"Сведения"
-IDS_DELETE,			"Удалить"
-IDS_DELETE_GROUP_s,		"Удалить группу `%s' ?"
-IDS_DELETE_PROGRAM_s,		"Удалить программу `%s' ?"
-IDS_NOT_IMPLEMENTED,		"Ещё не реализовано"
-IDS_FILE_READ_ERROR_s,		"Ошибка чтения `%s'."
-IDS_FILE_WRITE_ERROR_s,		"Ошибка записи `%s'."
+IDS_PROGRAM_MANAGER,		"Р”РёСЃРїРµС‚С‡РµСЂ РїСЂРѕРіСЂР°РјРј"
+IDS_ERROR,			"РћРЁРР‘РљРђ"
+IDS_WARNING,			"Р’РќРРњРђРќРР•"
+IDS_INFO,			"РЎРІРµРґРµРЅРёСЏ"
+IDS_DELETE,			"РЈРґР°Р»РёС‚СЊ"
+IDS_DELETE_GROUP_s,		"РЈРґР°Р»РёС‚СЊ РіСЂСѓРїРїСѓ `%s' ?"
+IDS_DELETE_PROGRAM_s,		"РЈРґР°Р»РёС‚СЊ РїСЂРѕРіСЂР°РјРјСѓ `%s' ?"
+IDS_NOT_IMPLEMENTED,		"Р•С‰С‘ РЅРµ СЂРµР°Р»РёР·РѕРІР°РЅРѕ"
+IDS_FILE_READ_ERROR_s,		"РћС€РёР±РєР° С‡С‚РµРЅРёСЏ `%s'."
+IDS_FILE_WRITE_ERROR_s,		"РћС€РёР±РєР° Р·Р°РїРёСЃРё `%s'."
 IDS_GRPFILE_READ_ERROR_s,	"\
-Файл группы `%s' не может быть открыт.\n\
-Надо ли в следующий раз пытаться это сделать?"
-IDS_OUT_OF_MEMORY,		"Мало памяти."
-IDS_WINHELP_ERROR,		"Справка не доступна."
-IDS_UNKNOWN_FEATURE_s,		"Неизвестное свойство в %s"
-IDS_FILE_NOT_OVERWRITTEN_s,	"Файл `%s' существует. Он не был перезаписан."
-IDS_SAVE_GROUP_AS_s,		"Группа сохраняется под именем `%s' во избежание перезаписи оригинала."
-IDS_NO_HOT_KEY,			"Нет"
-IDS_ALL_FILES,			"Все файлы (*.*)"
-IDS_PROGRAMS,			"Программы"
-IDS_LIBRARIES_DLL,		"Библиотеки (*.dll)"
-IDS_SYMBOL_FILES,		"Файлы значков"
-IDS_SYMBOLS_ICO,		"Значки (*.ico)"
+Р¤Р°Р№Р» РіСЂСѓРїРїС‹ `%s' РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕС‚РєСЂС‹С‚.\n\
+РќР°РґРѕ Р»Рё РІ СЃР»РµРґСѓСЋС‰РёР№ СЂР°Р· РїС‹С‚Р°С‚СЊСЃСЏ СЌС‚Рѕ СЃРґРµР»Р°С‚СЊ?"
+IDS_OUT_OF_MEMORY,		"РњР°Р»Рѕ РїР°РјСЏС‚Рё."
+IDS_WINHELP_ERROR,		"РЎРїСЂР°РІРєР° РЅРµ РґРѕСЃС‚СѓРїРЅР°."
+IDS_UNKNOWN_FEATURE_s,		"РќРµРёР·РІРµСЃС‚РЅРѕРµ СЃРІРѕР№СЃС‚РІРѕ РІ %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"Р¤Р°Р№Р» `%s' СЃСѓС‰РµСЃС‚РІСѓРµС‚. РћРЅ РЅРµ Р±С‹Р» РїРµСЂРµР·Р°РїРёСЃР°РЅ."
+IDS_SAVE_GROUP_AS_s,		"Р“СЂСѓРїРїР° СЃРѕС…СЂР°РЅСЏРµС‚СЃСЏ РїРѕРґ РёРјРµРЅРµРј `%s' РІРѕ РёР·Р±РµР¶Р°РЅРёРµ РїРµСЂРµР·Р°РїРёСЃРё РѕСЂРёРіРёРЅР°Р»Р°."
+IDS_NO_HOT_KEY,			"РќРµС‚"
+IDS_ALL_FILES,			"Р’СЃРµ С„Р°Р№Р»С‹ (*.*)"
+IDS_PROGRAMS,			"РџСЂРѕРіСЂР°РјРјС‹"
+IDS_LIBRARIES_DLL,		"Р‘РёР±Р»РёРѕС‚РµРєРё (*.dll)"
+IDS_SYMBOL_FILES,		"Р¤Р°Р№Р»С‹ Р·РЅР°С‡РєРѕРІ"
+IDS_SYMBOLS_ICO,		"Р—РЅР°С‡РєРё (*.ico)"
 }
