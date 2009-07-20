@@ -20,29 +20,34 @@
 
 #include "clock_res.h"
 
-MAIN_MENU MENU LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+/* UTF-8 */
+#pragma code_page(65001)
+
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+
+MAIN_MENU MENU
 {
- POPUP "&Свойства" {
-  MENUITEM "&Аналовые", IDM_ANALOG
-  MENUITEM "&Цифровые", IDM_DIGITAL
+ POPUP "&РЎРІРѕР№СЃС‚РІР°" {
+  MENUITEM "&РђРЅР°Р»РѕРІС‹Рµ", IDM_ANALOG
+  MENUITEM "&Р¦РёС„СЂРѕРІС‹Рµ", IDM_DIGITAL
   MENUITEM SEPARATOR
-  MENUITEM "&Шрифт...", IDM_FONT
+  MENUITEM "&РЁСЂРёС„С‚...", IDM_FONT
   MENUITEM SEPARATOR
-  MENUITEM "&Без заголовка", IDM_NOTITLE
+  MENUITEM "&Р‘РµР· Р·Р°РіРѕР»РѕРІРєР°", IDM_NOTITLE
   MENUITEM SEPARATOR
-  MENUITEM "&Секунды", IDM_SECONDS
-  MENUITEM "&Дата", IDM_DATE
+  MENUITEM "&РЎРµРєСѓРЅРґС‹", IDM_SECONDS
+  MENUITEM "&Р”Р°С‚Р°", IDM_DATE
   MENUITEM SEPARATOR
-  MENUITEM "&Поверх всех", IDM_ONTOP
+  MENUITEM "&РџРѕРІРµСЂС… РІСЃРµС…", IDM_ONTOP
  }
- POPUP "&Сведения" {
-  MENUITEM "&Лицензия...", IDM_LICENSE
-  MENUITEM "&БЕЗ ГАРАНТИЙ...", IDM_NOWARRANTY
-  MENUITEM "&О программе...", IDM_ABOUT
+ POPUP "&РЎРІРµРґРµРЅРёСЏ" {
+  MENUITEM "&Р›РёС†РµРЅР·РёСЏ...", IDM_LICENSE
+  MENUITEM "&Р‘Р•Р— Р“РђР РђРќРўРР™...", IDM_NOWARRANTY
+  MENUITEM "&Рћ РїСЂРѕРіСЂР°РјРјРµ...", IDM_ABOUT
  }
 }
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE
 {
-IDS_CLOCK, "Часы"
+IDS_CLOCK, "Р§Р°СЃС‹"
 }
