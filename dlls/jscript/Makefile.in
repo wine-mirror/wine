@@ -13,6 +13,7 @@ C_SRCS = \
 	date.c \
 	dispex.c \
 	engine.c \
+	error.c \
 	function.c \
 	global.c \
 	jscript.c \

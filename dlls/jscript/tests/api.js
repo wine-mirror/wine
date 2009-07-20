@@ -1244,4 +1244,31 @@ ok(bool.toString() === "true", "bool.toString() = " + bool.toString());
 ok(bool.valueOf() === Boolean(1), "bool.valueOf() = " + bool.valueOf());
 ok(bool.toLocaleString() === bool.toString(), "bool.toLocaleString() = " + bool.toLocaleString());
 
+ok(Error.prototype !== TypeError.prototype, "Error.prototype === TypeError.prototype");
+ok(RangeError.prototype !== TypeError.prototype, "RangeError.prototype === TypeError.prototype");
+ok(Error.prototype.toLocaleString === Object.prototype.toLocaleString,
+        "Error.prototype.toLocaleString !== Object.prototype.toLocaleString");
+err = new Error();
+ok(err.valueOf === Object.prototype.valueOf, "err.valueOf !== Object.prototype.valueOf");
+ok(Error.prototype.name === "Error", "Error.prototype.name = " + Error.prototype.name);
+ok(err.name === "Error", "err.name = " + err.name);
+err = new EvalError();
+ok(EvalError.prototype.name === "EvalError", "EvalError.prototype.name = " + EvalError.prototype.name);
+ok(err.name === "EvalError", "err.name = " + err.name);
+err = new RangeError();
+ok(RangeError.prototype.name === "RangeError", "RangeError.prototype.name = " + RangeError.prototype.name);
+ok(err.name === "RangeError", "err.name = " + err.name);
+err = new ReferenceError();
+ok(ReferenceError.prototype.name === "ReferenceError", "ReferenceError.prototype.name = " + ReferenceError.prototype.name);
+ok(err.name === "ReferenceError", "err.name = " + err.name);
+err = new SyntaxError();
+ok(SyntaxError.prototype.name === "SyntaxError", "SyntaxError.prototype.name = " + SyntaxError.prototype.name);
+ok(err.name === "SyntaxError", "err.name = " + err.name);
+err = new TypeError();
+ok(TypeError.prototype.name === "TypeError", "TypeError.prototype.name = " + TypeError.prototype.name);
+ok(err.name === "TypeError", "err.name = " + err.name);
+err = new URIError();
+ok(URIError.prototype.name === "URIError", "URIError.prototype.name = " + URIError.prototype.name);
+ok(err.name === "URIError", "err.name = " + err.name);
+
 reportSuccess();
