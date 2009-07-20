@@ -25,15 +25,33 @@ WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 typedef struct {
     DispatchEx dispex;
 
+    VARIANT number;
+    VARIANT description;
     VARIANT message;
 } ErrorInstance;
 
+static const WCHAR descriptionW[] = {'d','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR messageW[] = {'m','e','s','s','a','g','e',0};
+static const WCHAR numberW[] = {'n','u','m','b','e','r',0};
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR hasOwnPropertyW[] = {'h','a','s','O','w','n','P','r','o','p','e','r','t','y',0};
 static const WCHAR propertyIsEnumerableW[] =
     {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
+
+static HRESULT Error_number(DispatchEx *dispex, LCID lcid, WORD flags,
+        DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT Error_description(DispatchEx *dispex, LCID lcid, WORD flags,
+        DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
 
 /* ECMA-262 3rd Edition    15.11.4.3 */
 static HRESULT Error_message(DispatchEx *dispex, LCID lcid, WORD flags,
@@ -110,9 +128,11 @@ static void Error_destructor(DispatchEx *dispex)
 }
 
 static const builtin_prop_t Error_props[] = {
+    {descriptionW,              Error_description,                  0},
     {hasOwnPropertyW,           Error_hasOwnProperty,               PROPF_METHOD},
     {isPrototypeOfW,            Error_isPrototypeOf,                PROPF_METHOD},
     {messageW,                  Error_message,                      0},
+    {numberW,                   Error_number,                       0},
     {propertyIsEnumerableW,     Error_propertyIsEnumerable,         PROPF_METHOD},
     {toStringW,                 Error_toString,                     PROPF_METHOD}
 };
@@ -127,9 +147,11 @@ static const builtin_info_t Error_info = {
 };
 
 static const builtin_prop_t ErrorInst_props[] = {
+    {descriptionW,              Error_description,                  0},
     {hasOwnPropertyW,           Error_hasOwnProperty,               PROPF_METHOD},
     {isPrototypeOfW,            Error_isPrototypeOf,                PROPF_METHOD},
     {messageW,                  Error_message,                      0},
+    {numberW,                   Error_number,                       0},
     {propertyIsEnumerableW,     Error_propertyIsEnumerable,         PROPF_METHOD}
 };
 
