@@ -54,11 +54,22 @@ static HRESULT Error_message(DispatchEx *dispex, LCID lcid, WORD flags,
     }
 }
 
+/* ECMA-262 3rd Edition    15.11.4.4 */
 static HRESULT Error_toString(DispatchEx *dispex, LCID lcid, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    static const WCHAR str[] = {'[','o','b','j','e','c','t',' ','E','r','r','o','r',']',0};
+
+    TRACE("\n");
+
+    if(retv) {
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = SysAllocString(str);
+        if(!V_BSTR(retv))
+            return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
 }
 
 static HRESULT Error_hasOwnProperty(DispatchEx *dispex, LCID lcid, WORD flags,
