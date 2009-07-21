@@ -1535,9 +1535,6 @@ struct IWineD3DDeviceImpl
     IWineD3DSurface        *auto_depth_stencil_buffer;
     IWineD3DSurface        *stencilBufferTarget;
 
-    /* Caches to avoid unneeded context changes */
-    IWineD3DSurface        *lastActiveRenderTarget;
-
     /* palettes texture management */
     UINT                    NumberOfPalettes;
     PALETTEENTRY            **palettes;

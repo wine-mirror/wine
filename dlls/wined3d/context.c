@@ -503,10 +503,8 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                         /* Implicit render target destroyed, that means the
                          * device is being destroyed whatever we set here, it
                          * shouldn't matter. */
-                        TRACE("Device is being destroyed, setting lastActiveRenderTarget to 0xdeadbabe.\n");
-
-                        This->lastActiveRenderTarget = (IWineD3DSurface *) 0xdeadbabe;
-                        This->activeContext->current_rt = This->lastActiveRenderTarget;
+                        TRACE("Device is being destroyed, setting current_rt to 0xdeadbabe.\n");
+                        This->activeContext->current_rt = (IWineD3DSurface *)0xdeadbabe;
                     }
                 }
                 else
@@ -514,8 +512,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                     WARN("Render target set, but swapchain does not exist!\n");
 
                     /* May happen during ddraw uninitialization. */
-                    This->lastActiveRenderTarget = (IWineD3DSurface *)0xdeadcafe;
-                    This->activeContext->current_rt = This->lastActiveRenderTarget;
+                    This->activeContext->current_rt = (IWineD3DSurface *)0xdeadcafe;
                 }
             }
             else if (This->d3d_initialized)
@@ -1764,13 +1761,13 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
 
-    if (!target) target = This->lastActiveRenderTarget;
+    if (!target) target = This->activeContext->current_rt;
 
-    if(This->lastActiveRenderTarget != target || tid != This->lastThread) {
+    if (This->activeContext->current_rt != target || tid != This->lastThread)
+    {
         context = FindContext(This, target, tid);
         context->draw_buffer_dirty = TRUE;
         context->current_rt = target;
-        This->lastActiveRenderTarget = target;
         This->lastThread = tid;
     } else {
         /* Stick to the old context */
