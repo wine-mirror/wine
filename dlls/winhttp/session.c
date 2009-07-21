@@ -851,7 +851,7 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
 {
     LONG l;
     HKEY key;
-    BOOL direct = TRUE;
+    BOOL got_from_reg = FALSE, direct = TRUE;
     char *envproxy;
 
     TRACE("%p\n", info);
@@ -913,6 +913,7 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
                         }
                         if (sane)
                         {
+                            got_from_reg = TRUE;
                             direct = FALSE;
                             info->dwAccessType =
                                 WINHTTP_ACCESS_TYPE_NAMED_PROXY;
@@ -927,7 +928,7 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
         }
         RegCloseKey( key );
     }
-    else if ((envproxy = getenv( "http_proxy" )))
+    if (!got_from_reg && (envproxy = getenv( "http_proxy" )))
     {
         char *colon, *http_proxy;
 
