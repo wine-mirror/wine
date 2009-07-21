@@ -119,6 +119,15 @@ static inline void patch_code_segment( NE_MODULE *pModule )
 
 
 /***********************************************************************
+ *           contains_path
+ */
+static inline int contains_path( LPCSTR name )
+{
+    return ((*name && (name[1] == ':')) || strchr(name, '/') || strchr(name, '\\'));
+}
+
+
+/***********************************************************************
  *              NE_strcasecmp
  *
  * locale-independent case conversion for module lookups
@@ -1674,6 +1683,8 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
     int arglen;
     HINSTANCE16 ret;
     char buffer[MAX_PATH];
+    LOADPARAMS16 params;
+    WORD showCmd[2];
 
     if (*lpCmdLine == '"') /* has to be only one and only at beginning ! */
     {
@@ -1722,23 +1733,29 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 
     TRACE("name: '%s', cmdline: '%.*s'\n", name, cmdline[0], &cmdline[1]);
 
+    showCmd[0] = 2;
+    showCmd[1] = nCmdShow;
+
+    params.hEnvironment = 0;
+    params.cmdLine = MapLS( cmdline );
+    params.showCmd = MapLS( showCmd );
+    params.reserved = 0;
+
     if (SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, NULL ))
     {
-        LOADPARAMS16 params;
-        WORD showCmd[2];
-        showCmd[0] = 2;
-        showCmd[1] = nCmdShow;
-
-        params.hEnvironment = 0;
-        params.cmdLine = MapLS( cmdline );
-        params.showCmd = MapLS( showCmd );
-        params.reserved = 0;
-
         ret = LoadModule16( buffer, &params );
-        UnMapLS( params.cmdLine );
-        UnMapLS( params.showCmd );
     }
-    else ret = GetLastError();
+    else if (!contains_path( name ))  /* try 16-bit builtin */
+    {
+        lstrcpynA( buffer, name, sizeof(buffer) );
+        if (strlen( buffer ) < sizeof(buffer) - 4 && !strchr( buffer, '.' )) strcat( buffer, ".exe" );
+        ret = LoadModule16( buffer, &params );
+        if (ret == ERROR_FILE_NOT_FOUND) ret = 21;  /* it might be a 32-bit builtin too */
+    }
+    else ret = ERROR_FILE_NOT_FOUND;
+
+    UnMapLS( params.cmdLine );
+    UnMapLS( params.showCmd );
 
     HeapFree( GetProcessHeap(), 0, cmdline );
     if (name != lpCmdLine) HeapFree( GetProcessHeap(), 0, name );
