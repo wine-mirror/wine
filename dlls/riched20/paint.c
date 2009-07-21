@@ -1263,7 +1263,10 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_Cursor *pCursor)
       x = editor->horz_si.nPos;
 
     if (~editor->styleFlags & ES_AUTOVSCROLL)
+    {
       ME_HScrollAbs(editor, x);
+      return;
+    }
   } else {
     if (~editor->styleFlags & ES_AUTOVSCROLL)
       return;
