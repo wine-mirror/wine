@@ -887,6 +887,105 @@ static void test_decode_rle4(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
+static void test_componentinfo(void)
+{
+    IWICImagingFactory *factory;
+    IWICComponentInfo *info;
+    IWICBitmapDecoderInfo *decoderinfo;
+    IWICBitmapDecoder *decoder;
+    HRESULT hr;
+    WICBitmapPattern *patterns;
+    UINT pattern_count, pattern_size;
+    WICComponentType type;
+    GUID guidresult;
+    HGLOBAL hbmpdata;
+    char *bmpdata;
+    IStream *bmpstream;
+    BOOL boolresult;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void**)&factory);
+    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICImagingFactory_CreateComponentInfo(factory, &CLSID_WICBmpDecoder, &info);
+        ok(SUCCEEDED(hr), "CreateComponentInfo failed, hr=%x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICComponentInfo_GetComponentType(info, &type);
+            ok(SUCCEEDED(hr), "GetComponentType failed, hr=%x\n", hr);
+            ok(type == WICDecoder, "got %i, expected WICDecoder\n", type);
+
+            hr = IWICComponentInfo_QueryInterface(info, &IID_IWICBitmapDecoderInfo, (void**)&decoderinfo);
+            ok(SUCCEEDED(hr), "QueryInterface failed, hr=%x\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                pattern_count = 0;
+                pattern_size = 0;
+                hr = IWICBitmapDecoderInfo_GetPatterns(decoderinfo, 0, NULL, &pattern_count, &pattern_size);
+                ok(SUCCEEDED(hr), "GetPatterns failed, hr=%x\n", hr);
+                ok(pattern_count != 0, "pattern count is 0\n");
+                ok(pattern_size > pattern_count * sizeof(WICBitmapPattern), "size=%i, count=%i\n", pattern_size, pattern_count);
+
+                patterns = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pattern_size);
+                hr = IWICBitmapDecoderInfo_GetPatterns(decoderinfo, pattern_size, patterns, &pattern_count, &pattern_size);
+                ok(SUCCEEDED(hr), "GetPatterns failed, hr=%x\n", hr);
+                ok(pattern_count != 0, "pattern count is 0\n");
+                ok(pattern_size > pattern_count * sizeof(WICBitmapPattern), "size=%i, count=%i\n", pattern_size, pattern_count);
+                ok(patterns[0].Length != 0, "pattern length is 0\n");
+                ok(patterns[0].Pattern != NULL, "pattern is NULL\n");
+                ok(patterns[0].Mask != NULL, "mask is NULL\n");
+
+                pattern_size -= 1;
+                hr = IWICBitmapDecoderInfo_GetPatterns(decoderinfo, pattern_size, patterns, &pattern_count, &pattern_size);
+                ok(hr == WINCODEC_ERR_INSUFFICIENTBUFFER, "GetPatterns returned %x, expected WINCODEC_ERR_INSUFFICIENTBUFFER\n", hr);
+
+                HeapFree(GetProcessHeap(), 0, patterns);
+
+                hr = IWICBitmapDecoderInfo_CreateInstance(decoderinfo, &decoder);
+                ok(SUCCEEDED(hr), "CreateInstance failed, hr=%x\n", hr);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IWICBitmapDecoder_GetContainerFormat(decoder, &guidresult);
+                    ok(SUCCEEDED(hr), "GetContainerFormat failed, hr=%x\n", hr);
+                    ok(IsEqualGUID(&guidresult, &GUID_ContainerFormatBmp), "unexpected container format\n");
+
+                    IWICBitmapDecoder_Release(decoder);
+                }
+
+                hbmpdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(testbmp_rle4));
+                ok(hbmpdata != 0, "GlobalAlloc failed\n");
+                if (hbmpdata)
+                {
+                    bmpdata = GlobalLock(hbmpdata);
+                    memcpy(bmpdata, testbmp_rle4, sizeof(testbmp_rle4));
+                    GlobalUnlock(hbmpdata);
+
+                    hr = CreateStreamOnHGlobal(hbmpdata, FALSE, &bmpstream);
+                    ok(SUCCEEDED(hr), "CreateStreamOnHGlobal failed, hr=%x\n", hr);
+                    if (SUCCEEDED(hr))
+                    {
+                        boolresult = 0;
+                        hr = IWICBitmapDecoderInfo_MatchesPattern(decoderinfo, bmpstream, &boolresult);
+                        ok(SUCCEEDED(hr), "MatchesPattern failed, hr=%x\n", hr);
+                        ok(boolresult, "pattern not matched\n");
+
+                        IStream_Release(bmpstream);
+                    }
+
+                    GlobalFree(hbmpdata);
+                }
+
+                IWICBitmapDecoderInfo_Release(decoderinfo);
+            }
+
+            IWICComponentInfo_Release(info);
+        }
+
+        IWICImagingFactory_Release(factory);
+    }
+}
+
 START_TEST(bmpformat)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -896,6 +995,7 @@ START_TEST(bmpformat)
     test_decode_4bpp();
     test_decode_rle8();
     test_decode_rle4();
+    test_componentinfo();
 
     CoUninitialize();
 }
