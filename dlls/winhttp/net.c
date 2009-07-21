@@ -519,9 +519,16 @@ BOOL netconn_get_next_line( netconn_t *conn, char *buffer, DWORD *buflen )
     pfd.events = POLLIN;
     while (recvd < *buflen)
     {
-        if (poll( &pfd, 1, DEFAULT_RECEIVE_TIMEOUT * 1000 ) > 0)
+        int timeout, res;
+        struct timeval tv;
+        socklen_t len = sizeof(tv);
+
+        if ((res = getsockopt( conn->socket, SOL_SOCKET, SO_RCVTIMEO, (void*)&tv, &len ) != -1))
+            timeout = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+        else
+            timeout = -1;
+        if (poll( &pfd, 1, timeout ) > 0)
         {
-            int res;
             if ((res = recv( conn->socket, &buffer[recvd], 1, 0 )) <= 0)
             {
                 if (res == -1) set_last_error( sock_get_error( errno ) );
