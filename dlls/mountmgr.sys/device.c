@@ -84,6 +84,7 @@ struct dos_drive
 };
 
 static struct list drives_list = LIST_INIT(drives_list);
+static struct list volumes_list = LIST_INIT(volumes_list);
 
 static DRIVER_OBJECT *harddisk_driver;
 
@@ -300,6 +301,7 @@ static NTSTATUS create_volume( const char *udi, enum device_type type, struct vo
     }
     if (!(status = create_disk_device( type, &volume->device )))
     {
+        list_add_tail( &volumes_list, &volume->entry );
         *volume_ret = volume;
     }
     else
@@ -313,6 +315,7 @@ static NTSTATUS create_volume( const char *udi, enum device_type type, struct vo
 /* delete a volume and the corresponding disk device */
 static void delete_volume( struct volume *volume )
 {
+    list_remove( &volume->entry );
     if (volume->mount) delete_mount_point( volume->mount );
     delete_disk_device( volume->device );
     RtlFreeHeap( GetProcessHeap(), 0, volume->udi );
@@ -346,6 +349,60 @@ static void delete_dos_device( struct dos_drive *drive )
     if (drive->dosdev) delete_mount_point( drive->dosdev );
     delete_volume( drive->volume );
     RtlFreeHeap( GetProcessHeap(), 0, drive );
+}
+
+/* change the information for an existing volume */
+static NTSTATUS set_volume_info( struct volume *volume, const char *device, const char *mount_point,
+                                 enum device_type type, const GUID *guid )
+{
+    struct disk_device *disk_device = volume->device;
+    NTSTATUS status;
+
+    if (type != disk_device->type)
+    {
+        if ((status = create_disk_device( type, &disk_device ))) return status;
+        if (volume->mount)
+        {
+            delete_mount_point( volume->mount );
+            volume->mount = NULL;
+        }
+        delete_disk_device( volume->device );
+        volume->device = disk_device;
+    }
+    else
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, disk_device->unix_device );
+        RtlFreeHeap( GetProcessHeap(), 0, disk_device->unix_mount );
+    }
+    disk_device->unix_device = strdupA( device );
+    disk_device->unix_mount = strdupA( mount_point );
+
+    if (memcmp( &volume->guid, guid, sizeof(volume->guid) ))
+    {
+        volume->guid = *guid;
+        if (volume->mount)
+        {
+            delete_mount_point( volume->mount );
+            volume->mount = NULL;
+        }
+    }
+
+    if (!volume->mount)
+        volume->mount = add_volume_mount_point( disk_device->dev_obj, &disk_device->name, &volume->guid );
+
+    if (volume->mount)
+    {
+        void *id = NULL;
+        unsigned int id_len = 0;
+
+        if (disk_device->unix_mount)
+        {
+            id = disk_device->unix_mount;
+            id_len = strlen( disk_device->unix_mount ) + 1;
+        }
+        set_mount_point_id( volume->mount, id, id_len );
+    }
+    return STATUS_SUCCESS;
 }
 
 /* set or change the drive letter for an existing drive */
@@ -550,6 +607,40 @@ static void create_drive_devices(void)
     RegCloseKey( drives_key );
     RtlFreeHeap( GetProcessHeap(), 0, path );
 }
+
+/* create a new disk volume */
+NTSTATUS add_volume( const char *udi, const char *device, const char *mount_point,
+                     enum device_type type, const GUID *guid )
+{
+    struct volume *volume;
+    NTSTATUS status;
+
+    TRACE( "adding %s device %s mount %s type %u uuid %s\n", debugstr_a(udi),
+           debugstr_a(device), debugstr_a(mount_point), type, debugstr_guid(guid) );
+
+    LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
+        if (volume->udi && !strcmp( udi, volume->udi )) goto found;
+
+    if ((status = create_volume( udi, type, &volume ))) return status;
+
+found:
+    return set_volume_info( volume, device, mount_point, type, guid );
+}
+
+/* create a new disk volume */
+NTSTATUS remove_volume( const char *udi )
+{
+    struct volume *volume;
+
+    LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
+    {
+        if (!volume->udi || strcmp( udi, volume->udi )) continue;
+        delete_volume( volume );
+        return STATUS_SUCCESS;
+    }
+    return STATUS_NO_SUCH_DEVICE;
+}
+
 
 /* create a new dos drive */
 NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
