@@ -58,9 +58,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
-#define DEFAULT_SEND_TIMEOUT        30
-#define DEFAULT_RECEIVE_TIMEOUT     30
-
 #ifndef HAVE_GETADDRINFO
 
 /* critical section to protect non-reentrant gethostbyname() */
