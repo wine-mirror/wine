@@ -156,9 +156,6 @@ static void new_device( LibHalContext *ctx, const char *udi )
     if (!(parent = p_libhal_device_get_property_string( ctx, udi, "info.parent", &error )))
         goto done;
 
-    if (!p_libhal_device_get_property_bool( ctx, parent, "storage.removable", &error ))
-        goto done;
-
     if (!(uuid_str = p_libhal_device_get_property_string( ctx, udi, "volume.uuid", &error )))
         p_dbus_error_free( &error );  /* ignore error */
     else
@@ -171,10 +168,13 @@ static void new_device( LibHalContext *ctx, const char *udi )
     else if (type && !strcmp( type, "floppy" )) drive_type = DEVICE_FLOPPY;
     else drive_type = DEVICE_UNKNOWN;
 
-    add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr );
-
-    /* add property watch for mount point */
-    p_libhal_device_add_property_watch( ctx, udi, &error );
+    if (p_libhal_device_get_property_bool( ctx, parent, "storage.removable", &error ))
+    {
+        add_dos_device( -1, udi, device, mount_point, drive_type, guid_ptr );
+        /* add property watch for mount point */
+        p_libhal_device_add_property_watch( ctx, udi, &error );
+    }
+    else if (guid_ptr) add_volume( udi, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr );
 
 done:
     if (type) p_libhal_free_string( type );
@@ -198,6 +198,7 @@ static void removed_device( LibHalContext *ctx, const char *udi )
         p_libhal_device_remove_property_watch( ctx, udi, &error );
         p_dbus_error_free( &error );
     }
+    else remove_volume( udi );
 }
 
 /* HAL callback for property changes */

@@ -47,10 +47,6 @@ static void appeared_callback( DADiskRef disk, void *context )
 
     if (!dict) return;
 
-    /* ignore non-removable devices */
-    if (!(ref = CFDictionaryGetValue( dict, CFSTR("DAMediaRemovable") )) ||
-        !CFBooleanGetValue( ref )) goto done;
-
     if ((ref = CFDictionaryGetValue( dict, CFSTR("DAVolumeUUID") )))
     {
         CFUUIDBytes bytes = CFUUIDGetUUIDBytes( ref );
@@ -78,7 +74,11 @@ static void appeared_callback( DADiskRef disk, void *context )
     TRACE( "got mount notification for '%s' on '%s' uuid %s\n",
            device, mount_point, wine_dbgstr_guid(guid_ptr) );
 
-    add_dos_device( -1, device, device, mount_point, type, guid_ptr );
+    if ((ref = CFDictionaryGetValue( dict, CFSTR("DAMediaRemovable") )) && CFBooleanGetValue( ref ))
+        add_dos_device( -1, device, device, mount_point, type, guid_ptr );
+    else
+        if (guid_ptr) add_volume( device, device, mount_point, DEVICE_HARDDISK_VOL, guid_ptr );
+
 done:
     CFRelease( dict );
 }
@@ -96,10 +96,6 @@ static void disappeared_callback( DADiskRef disk, void *context )
 
     if (!dict) return;
 
-    /* ignore non-removable devices */
-    if (!(ref = CFDictionaryGetValue( dict, CFSTR("DAMediaRemovable") )) ||
-        !CFBooleanGetValue( ref )) goto done;
-
     /* get device name */
     if (!(ref = CFDictionaryGetValue( dict, CFSTR("DAMediaBSDName") ))) goto done;
     strcpy( device, "/dev/r" );
@@ -107,7 +103,11 @@ static void disappeared_callback( DADiskRef disk, void *context )
 
     TRACE( "got unmount notification for '%s'\n", device );
 
-    remove_dos_device( -1, device );
+    if ((ref = CFDictionaryGetValue( dict, CFSTR("DAMediaRemovable") )) && CFBooleanGetValue( ref ))
+        remove_dos_device( -1, device );
+    else
+        remove_volume( device );
+
 done:
     CFRelease( dict );
 }
