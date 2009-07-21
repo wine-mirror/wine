@@ -470,7 +470,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
     {
         case WINED3DRTYPE_SURFACE:
         {
-            if ((IWineD3DSurface *)resource == This->lastActiveRenderTarget)
+            if (This->activeContext && (IWineD3DSurface *)resource == This->activeContext->current_rt)
             {
                 IWineD3DSwapChainImpl *swapchain;
 
@@ -506,6 +506,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                         TRACE("Device is being destroyed, setting lastActiveRenderTarget to 0xdeadbabe.\n");
 
                         This->lastActiveRenderTarget = (IWineD3DSurface *) 0xdeadbabe;
+                        This->activeContext->current_rt = This->lastActiveRenderTarget;
                     }
                 }
                 else
@@ -514,6 +515,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
 
                     /* May happen during ddraw uninitialization. */
                     This->lastActiveRenderTarget = (IWineD3DSurface *)0xdeadcafe;
+                    This->activeContext->current_rt = This->lastActiveRenderTarget;
                 }
             }
             else if (This->d3d_initialized)
@@ -1019,6 +1021,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
     ret->gl_info = &This->adapter->gl_info;
     ret->surface = (IWineD3DSurface *) target;
+    ret->current_rt = (IWineD3DSurface *)target;
     ret->isPBuffer = create_pbuffer;
     ret->tid = GetCurrentThreadId();
     if(This->shader_backend->shader_dirtifyable_constants((IWineD3DDevice *) This)) {
@@ -1515,22 +1518,8 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
     WineD3DContext *context = This->activeContext;
     BOOL oldRenderOffscreen = This->render_offscreen;
-    const struct GlPixelFormatDesc *old = ((IWineD3DSurfaceImpl *)This->lastActiveRenderTarget)->resource.format_desc;
-    const struct GlPixelFormatDesc *new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
     const struct StateEntry *StateTable = This->StateTable;
-
-    /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
-     * the alpha blend state changes with different render target formats
-     */
-    if (old->format != new->format)
-    {
-        /* Disable blending when the alpha mask has changed and when a format doesn't support blending */
-        if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
-                || !(new->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
-        {
-            Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
-        }
-    }
+    const struct GlPixelFormatDesc *old, *new;
 
     if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
         TRACE("Rendering onscreen\n");
@@ -1635,6 +1624,20 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
             Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
             Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
             Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
+        }
+    }
+
+    /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
+     * the alpha blend state changes with different render target formats. */
+    old = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.format_desc;
+    new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
+    if (old->format != new->format)
+    {
+        /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
+        if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
+                || !(new->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+        {
+            Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
         }
     }
 
@@ -1765,6 +1768,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     if(This->lastActiveRenderTarget != target || tid != This->lastThread) {
         context = FindContext(This, target, tid);
         context->draw_buffer_dirty = TRUE;
+        context->current_rt = target;
         This->lastActiveRenderTarget = target;
         This->lastThread = tid;
     } else {
