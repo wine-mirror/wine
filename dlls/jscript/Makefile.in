@@ -8,6 +8,7 @@ IMPORTS   = oleaut32 user32 advapi32 kernel32
 RC_SRCS = \
 	jscript_En.rc \
 	jscript_Fr.rc \
+	jscript_Lt.rc \
 	rsrc.rc
 
 C_SRCS = \
