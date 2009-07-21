@@ -33,6 +33,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
+#define DEFAULT_SEND_TIMEOUT        30000
+#define DEFAULT_RECEIVE_TIMEOUT     30000
+
 void set_last_error( DWORD error )
 {
     /* FIXME */
@@ -633,6 +636,8 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     list_add_head( &connect->hdr.children, &request->hdr.entry );
 
     if (!netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE )) goto end;
+    request->send_timeout = DEFAULT_SEND_TIMEOUT;
+    request->recv_timeout = DEFAULT_RECEIVE_TIMEOUT;
 
     if (!verb || !verb[0]) verb = getW;
     if (!(request->verb = strdupW( verb ))) goto end;
@@ -1178,10 +1183,16 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
     }
 
     if (send < 0) send = 0;
-    if (netconn_set_timeout( &request->netconn, TRUE, send )) ret = FALSE;
+    request->send_timeout = send;
 
     if (receive < 0) receive = 0;
-    if (netconn_set_timeout( &request->netconn, FALSE, receive )) ret = FALSE;
+    request->recv_timeout = receive;
+
+    if (netconn_connected( &request->netconn ))
+    {
+        if (netconn_set_timeout( &request->netconn, TRUE, send )) ret = FALSE;
+        if (netconn_set_timeout( &request->netconn, FALSE, receive )) ret = FALSE;
+    }
 
     release_object( &request->hdr );
     return ret;

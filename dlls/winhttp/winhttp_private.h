@@ -139,6 +139,8 @@ typedef struct
     LPWSTR version;
     LPWSTR raw_headers;
     netconn_t netconn;
+    int send_timeout;
+    int recv_timeout;
     LPWSTR status_text;
     DWORD content_length; /* total number of bytes to be read (per chunk) */
     DWORD content_read;   /* bytes read so far */
