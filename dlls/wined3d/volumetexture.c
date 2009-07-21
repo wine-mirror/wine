@@ -41,7 +41,7 @@ static void volumetexture_internal_preload(IWineD3DBaseTexture *iface, enum WINE
 
     if (!device->isInDraw)
     {
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
     }
     else if (GL_SUPPORT(EXT_TEXTURE_SRGB) && This->baseTexture.bindCount > 0)
     {

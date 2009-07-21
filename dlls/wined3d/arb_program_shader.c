@@ -4368,7 +4368,7 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
         if(!shader_data) return; /* This can happen if a shader was never compiled */
         ENTER_GL();
 
-        if(shader_data->num_gl_shaders) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        if(shader_data->num_gl_shaders) ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
 
         for(i = 0; i < shader_data->num_gl_shaders; i++) {
             GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));
@@ -4386,7 +4386,7 @@ static void shader_arb_destroy(IWineD3DBaseShader *iface) {
         if(!shader_data) return; /* This can happen if a shader was never compiled */
         ENTER_GL();
 
-        if(shader_data->num_gl_shaders) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        if(shader_data->num_gl_shaders) ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
 
         for(i = 0; i < shader_data->num_gl_shaders; i++) {
             GL_EXTCALL(glDeleteProgramsARB(1, &shader_data->gl_shaders[i].prgId));

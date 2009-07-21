@@ -518,7 +518,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
             }
             else if (This->d3d_initialized)
             {
-                ActivateContext(This, This->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+                ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
             }
 
             for (i = 0; i < This->numContexts; ++i)
@@ -1759,6 +1759,9 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     const struct wined3d_gl_info *gl_info;
 
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
+
+    if (!target) target = This->lastActiveRenderTarget;
+
     if(This->lastActiveRenderTarget != target || tid != This->lastThread) {
         context = FindContext(This, target, tid);
         context->draw_buffer_dirty = TRUE;

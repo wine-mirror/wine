@@ -49,7 +49,7 @@ static void surface_cleanup(IWineD3DSurfaceImpl *This)
      * target, Uninit3D() will activate a context before doing anything. */
     if (device->render_targets && device->render_targets[0])
     {
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
     }
 
     ENTER_GL();
@@ -784,7 +784,7 @@ void surface_internal_preload(IWineD3DSurface *iface, enum WINED3DSRGB srgb)
         TRACE("(%p) : About to load surface\n", This);
 
         if(!device->isInDraw) {
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
         }
 
         if (This->resource.format_desc->format == WINED3DFMT_P8
@@ -870,7 +870,7 @@ static void WINAPI IWineD3DSurfaceImpl_UnLoad(IWineD3DSurface *iface) {
     IWineD3DSurface_ModifyLocation(iface, SFLAG_INSRGBTEX, FALSE);
     This->Flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
 
-    ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+    ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
 
     /* Destroy PBOs, but load them into real sysmem before */
     if(This->Flags & SFLAG_PBO) {
@@ -1247,7 +1247,7 @@ static void surface_prepare_system_memory(IWineD3DSurfaceImpl *This) {
         GLenum error;
         IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
 
         GL_EXTCALL(glGenBuffersARB(1, &This->pbo));
@@ -1343,7 +1343,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
 lock_end:
     if(This->Flags & SFLAG_PBO) {
-        ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ActivateContext(myDevice, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
         checkGLcall("glBindBufferARB");
@@ -1503,7 +1503,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
     if (This->Flags & SFLAG_PBO) {
         TRACE("Freeing PBO memory\n");
-        ActivateContext(myDevice, myDevice->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ActivateContext(myDevice, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
         GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
@@ -2645,7 +2645,7 @@ static void WINAPI IWineD3DSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL 
 
         name = srgb ? &This->texture_name_srgb : &This->texture_name;
         if(!device->isInDraw) {
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
         }
 
         ENTER_GL();
@@ -4097,7 +4097,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
             IWineD3DSurface_ModifyLocation(iface, SFLAG_INDRAWABLE, FALSE);
 
             /* Re-upload the palette */
-            ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
             d3dfmt_p8_upload_palette(iface, convert);
         } else {
             if(!(This->Flags & SFLAG_INSYSMEM)) {
@@ -4788,7 +4788,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
 
         /* Download the surface to system memory */
         if(This->Flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) {
-            if(!device->isInDraw) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            if (!device->isInDraw) ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
             surface_bind_and_dirtify(This, !(This->Flags & SFLAG_INTEXTURE));
 
             surface_download_data(This);
@@ -4820,7 +4820,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
              * but it isn't set (yet) in all cases it is getting called. */
             if((convert != NO_CONVERSION) && (This->Flags & SFLAG_PBO)) {
                 TRACE("Removing the pbo attached to surface %p\n", This);
-                if (!device->isInDraw) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+                if (!device->isInDraw) ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
                 surface_remove_pbo(This);
             }
 
@@ -4872,7 +4872,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadLocation(IWineD3DSurface *iface, D
                 }
             }
 
-            if(!device->isInDraw) ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+            if (!device->isInDraw) ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
             surface_bind_and_dirtify(This, srgb);
 
             if(This->CKeyFlags & WINEDDSD_CKSRCBLT) {

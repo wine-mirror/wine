@@ -63,7 +63,7 @@ void basetexture_unload(IWineD3DBaseTexture *iface)
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
     if(This->baseTexture.textureName) {
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         glDeleteTextures(1, &This->baseTexture.textureName);
         This->baseTexture.textureName = 0;
@@ -71,7 +71,7 @@ void basetexture_unload(IWineD3DBaseTexture *iface)
     }
 
     if(This->baseTexture.srgbTextureName) {
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
         ENTER_GL();
         glDeleteTextures(1, &This->baseTexture.srgbTextureName);
         This->baseTexture.srgbTextureName = 0;
@@ -135,7 +135,7 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DT
        * Or should we delay the applying until the texture is used for drawing? For now, apply
        * immediately.
        */
-      ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+      ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
       ENTER_GL();
       glBindTexture(textureDimensions, This->baseTexture.textureName);
       checkGLcall("glBindTexture");

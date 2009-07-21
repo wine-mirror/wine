@@ -63,7 +63,7 @@ static void texture_internal_preload(IWineD3DBaseTexture *iface, enum WINED3DSRG
     {
         /* ActivateContext sets isInDraw to TRUE when loading a pbuffer into a texture,
          * thus no danger of recursive calls. */
-        ActivateContext(device, device->lastActiveRenderTarget, CTXUSAGE_RESOURCELOAD);
+        ActivateContext(device, NULL, CTXUSAGE_RESOURCELOAD);
     }
 
     if (This->resource.format_desc->format == WINED3DFMT_P8
