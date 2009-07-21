@@ -291,6 +291,7 @@ static BOOL should_bypass_proxy(session_t *session, LPCWSTR server)
     LPCWSTR ptr;
     BOOL ret = FALSE;
 
+    if (!session->proxy_bypass) return FALSE;
     ptr = session->proxy_bypass;
     do {
         LPCWSTR tmp = ptr;
