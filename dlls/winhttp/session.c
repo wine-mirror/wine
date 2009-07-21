@@ -929,19 +929,44 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
     }
     else if ((envproxy = getenv( "http_proxy" )))
     {
-        WCHAR *envproxyW;
-        int len;
+        char *colon, *http_proxy;
 
-        len = MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, NULL, 0 );
-        if ((envproxyW = GlobalAlloc( 0, len * sizeof(WCHAR))))
+        if ((colon = strchr( envproxy, ':' )))
         {
-            MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, envproxyW, len );
-            direct = FALSE;
-            info->dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-            info->lpszProxy = envproxyW;
-            info->lpszProxyBypass = NULL;
-            TRACE("http proxy (from environment) = %s\n",
-                debugstr_w(info->lpszProxy));
+            if (*(colon + 1) == '/' && *(colon + 2) == '/')
+            {
+                static const char http[] = "http://";
+
+                /* It's a scheme, check that it's http */
+                if (!strncmp( envproxy, http, strlen( http ) ))
+                    http_proxy = envproxy + strlen( http );
+                else
+                {
+                    WARN("unsupported scheme in $http_proxy: %s\n", envproxy);
+                    http_proxy = NULL;
+                }
+            }
+            else
+                http_proxy = envproxy;
+        }
+        else
+            http_proxy = envproxy;
+        if (http_proxy)
+        {
+            WCHAR *http_proxyW;
+            int len;
+
+            len = MultiByteToWideChar( CP_UNIXCP, 0, http_proxy, -1, NULL, 0 );
+            if ((http_proxyW = GlobalAlloc( 0, len * sizeof(WCHAR))))
+            {
+                MultiByteToWideChar( CP_UNIXCP, 0, http_proxy, -1, http_proxyW, len );
+                direct = FALSE;
+                info->dwAccessType = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                info->lpszProxy = http_proxyW;
+                info->lpszProxyBypass = NULL;
+                TRACE("http proxy (from environment) = %s\n",
+                    debugstr_w(info->lpszProxy));
+            }
         }
     }
     if (direct)
