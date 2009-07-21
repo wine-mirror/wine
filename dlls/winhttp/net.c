@@ -100,8 +100,6 @@ MAKE_FUNCPTR( SSL_write );
 MAKE_FUNCPTR( SSL_read );
 MAKE_FUNCPTR( SSL_get_verify_result );
 MAKE_FUNCPTR( SSL_get_peer_certificate );
-MAKE_FUNCPTR( SSL_CTX_get_timeout );
-MAKE_FUNCPTR( SSL_CTX_set_timeout );
 MAKE_FUNCPTR( SSL_CTX_set_default_verify_paths );
 
 MAKE_FUNCPTR( BIO_new_fp );
@@ -218,8 +216,6 @@ BOOL netconn_init( netconn_t *conn, BOOL secure )
     LOAD_FUNCPTR( SSL_read );
     LOAD_FUNCPTR( SSL_get_verify_result );
     LOAD_FUNCPTR( SSL_get_peer_certificate );
-    LOAD_FUNCPTR( SSL_CTX_get_timeout );
-    LOAD_FUNCPTR( SSL_CTX_set_timeout );
     LOAD_FUNCPTR( SSL_CTX_set_default_verify_paths );
 #undef LOAD_FUNCPTR
 
@@ -482,11 +478,6 @@ BOOL netconn_get_next_line( netconn_t *conn, char *buffer, DWORD *buflen )
     if (conn->secure)
     {
 #ifdef SONAME_LIBSSL
-        long timeout;
-
-        timeout = pSSL_CTX_get_timeout( ctx );
-        pSSL_CTX_set_timeout( ctx, DEFAULT_RECEIVE_TIMEOUT );
-
         while (recvd < *buflen)
         {
             int dummy;
@@ -502,7 +493,6 @@ BOOL netconn_get_next_line( netconn_t *conn, char *buffer, DWORD *buflen )
             }
             if (buffer[recvd] != '\r') recvd++;
         }
-        pSSL_CTX_set_timeout( ctx, timeout );
         if (ret)
         {
             buffer[recvd++] = 0;
