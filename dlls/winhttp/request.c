@@ -920,6 +920,8 @@ static BOOL open_connection( request_t *request )
         heap_free( addressW );
         return FALSE;
     }
+    netconn_set_timeout( &request->netconn, TRUE, request->send_timeout );
+    netconn_set_timeout( &request->netconn, FALSE, request->recv_timeout );
     if (!netconn_connect( &request->netconn, (struct sockaddr *)&connect->sockaddr, slen ))
     {
         netconn_close( &request->netconn );
