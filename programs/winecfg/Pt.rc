@@ -260,7 +260,7 @@ BEGIN
     PUSHBUTTON      "Auto&detectar...",IDC_BUTTON_AUTODETECT,190,98,56,14
 
     /* editing drive details */
-    LTEXT           "&Localização:",IDC_STATIC,15,123,20,9
+    LTEXT           "&Localização:",IDC_STATIC_PATH,15,123,20,9
     EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Procurar...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
 
