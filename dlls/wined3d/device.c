@@ -2165,7 +2165,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
     }
     IWineD3DSurface_AddRef(This->render_targets[0]);
     This->activeContext = swapchain->context[0];
-    This->lastThread = GetCurrentThreadId();
 
     /* Depth Stencil support */
     This->stencilBufferTarget = This->auto_depth_stencil_buffer;

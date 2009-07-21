@@ -1551,7 +1551,8 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
         switch(wined3d_settings.offscreen_rendering_mode) {
             case ORM_FBO:
                 /* FBOs do not need a different context. Stay with whatever context is active at the moment */
-                if(This->activeContext && tid == This->lastThread) {
+                if (This->activeContext && This->activeContext->tid == tid)
+                {
                     context = This->activeContext;
                 } else {
                     /* This may happen if the app jumps straight into offscreen rendering
@@ -1600,7 +1601,8 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
 
             case ORM_BACKBUFFER:
                 /* Stay with the currently active context for back buffer rendering */
-                if(This->activeContext && tid == This->lastThread) {
+                if (This->activeContext && This->activeContext->tid == tid)
+                {
                     context = This->activeContext;
                 } else {
                     /* This may happen if the app jumps straight into offscreen rendering
@@ -1763,12 +1765,11 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
     if (!target) target = This->activeContext->current_rt;
 
-    if (This->activeContext->current_rt != target || tid != This->lastThread)
+    if (This->activeContext->current_rt != target || This->activeContext->tid != tid)
     {
         context = FindContext(This, target, tid);
         context->draw_buffer_dirty = TRUE;
         context->current_rt = target;
-        This->lastThread = tid;
     } else {
         /* Stick to the old context */
         context = This->activeContext;
