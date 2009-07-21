@@ -1667,7 +1667,8 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
      *    After that, the outer ActivateContext(which calls PreLoad) can activate the new
      *    target for the new thread
      */
-    if (readTexture && This->lastActiveRenderTarget != target) {
+    if (readTexture && context->current_rt != target)
+    {
         BOOL oldInDraw = This->isInDraw;
 
         /* PreLoad requires a context to load the texture, thus it will call ActivateContext.
@@ -1679,15 +1680,15 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
         /* Do that before switching the context:
          * Read the back buffer of the old drawable into the destination texture
          */
-        if (((IWineD3DSurfaceImpl *)This->lastActiveRenderTarget)->texture_name_srgb)
+        if (((IWineD3DSurfaceImpl *)context->current_rt)->texture_name_srgb)
         {
-            surface_internal_preload(This->lastActiveRenderTarget, SRGB_BOTH);
+            surface_internal_preload(context->current_rt, SRGB_BOTH);
         } else {
-            surface_internal_preload(This->lastActiveRenderTarget, SRGB_RGB);
+            surface_internal_preload(context->current_rt, SRGB_RGB);
         }
 
         /* Assume that the drawable will be modified by some other things now */
-        IWineD3DSurface_ModifyLocation(This->lastActiveRenderTarget, SFLAG_INDRAWABLE, FALSE);
+        IWineD3DSurface_ModifyLocation(context->current_rt, SFLAG_INDRAWABLE, FALSE);
 
         This->isInDraw = oldInDraw;
     }
