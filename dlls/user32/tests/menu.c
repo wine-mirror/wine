@@ -3057,7 +3057,7 @@ static void test_menu_circref(void)
     ret = ModifyMenuA( menu1, (UINT_PTR)menu2, MF_POPUP, (UINT_PTR)menu2, "menu 2");
 todo_wine
     ok( !ret ||
-            broken( 0), /* win98, NT */
+            broken( ret), /* win98, NT */
             "ModifyMenu should have failed.\n");
     if( !ret) { /* will probably stack fault if the ModifyMenu succeeded */
         ret = GetMenuState( menu1, 123, 0);
