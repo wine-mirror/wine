@@ -276,9 +276,9 @@ STRINGTABLE
 	IDS_PROGRAM_FILES_COMMON "Programme\\Gemeinsame Dateien"
 	IDS_COMMON_DOCUMENTS	"Dokumente"
 	IDS_ADMINTOOLS		"Startmenü\\Programme\\Verwaltung"
-	IDS_COMMON_MUSIC	"Dokumente\\Eigene Musik"
-	IDS_COMMON_PICTURES	"Dokumente\\Eigene Bilder"
-	IDS_COMMON_VIDEO	"Dokumente\\Eigene Videos"
+	IDS_COMMON_MUSIC	"Musik"
+	IDS_COMMON_PICTURES	"Bilder"
+	IDS_COMMON_VIDEO	"Videos"
 	IDS_CDBURN_AREA		"Lokale Einstellungen\\Anwendungsdaten\\Microsoft\\CD Burning"
 
 	IDS_NEWFOLDER		"Neuer Ordner"
