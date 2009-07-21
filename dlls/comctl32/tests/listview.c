@@ -205,6 +205,29 @@ static const struct message ownderdata_select_focus_parent_seq[] = {
     { 0 }
 };
 
+static const struct message ownerdata_select_all_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message select_all_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
 static const struct message textcallback_set_again_parent_seq[] = {
     { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGING },
     { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED  },
@@ -1916,6 +1939,20 @@ static void test_multiselect(void)
     }
     item_count = (int)SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
     expect(items,item_count);
+
+    /* select all, check notifications */
+    ListView_SetItemState(hwnd, -1, 0, LVIS_SELECTED);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    r = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, r);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, select_all_parent_seq,
+                "select all notification", FALSE);
+
     /* deselect all items */
     ListView_SetItemState(hwnd, -1, 0, LVIS_SELECTED);
     SendMessage(hwnd, LVM_SETSELECTIONMARK, 0, -1);
@@ -2385,7 +2422,7 @@ static void test_ownerdata(void)
     /* check notifications after focused/selected changed */
     hwnd = create_listview_control(LVS_OWNERDATA);
     ok(hwnd != NULL, "failed to create a listview window\n");
-    res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 20, 0);
     ok(res != 0, "Expected LVM_SETITEMCOUNT to succeed\n");
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -2409,6 +2446,23 @@ static void test_ownerdata(void)
 
     ok_sequence(sequences, PARENT_SEQ_INDEX, ownderdata_select_focus_parent_seq,
                 "ownerdata focus notification", TRUE);
+
+    /* select all, check notifications */
+    item.stateMask = LVIS_SELECTED;
+    item.state     = 0;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, res);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, res);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_select_all_parent_seq,
+                "ownerdata select all notification", TRUE);
+
     DestroyWindow(hwnd);
 
     /* check notifications on LVM_GETITEM */
