@@ -192,8 +192,8 @@ IDR_BROWSE_CONTEXT_MENU MENU
         MENUITEM SEPARATOR
         MENUITEM "Adicionar aos &Favoritos...",     IDM_ADDFAVORITES
         MENUITEM SEPARATOR
-        MENUITEM "I&niciar",                     IDM_DYNSRCPLAY
-        MENUITEM "&Parar",                     IDM_DYNSRCSTOP
+        MENUITEM "I&niciar",                     IDM_IMGARTPLAY
+        MENUITEM "&Parar",                       IDM_IMGARTSTOP
         MENUITEM "&Recomeçar",                   IDM_IMGARTREWIND
         MENUITEM SEPARATOR
         MENUITEM SEPARATOR
