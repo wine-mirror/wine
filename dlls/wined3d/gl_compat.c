@@ -147,7 +147,7 @@ static void WINE_GLAPI wine_glGetDoublev(GLenum pname, GLdouble* params) {
 static void (WINE_GLAPI *old_fogcoord_glEnable) (GLenum cap) = NULL;
 static void WINE_GLAPI wine_glEnable(GLenum cap) {
     if(cap == GL_FOG) {
-        WineD3DContext *ctx = getActiveContext();
+        struct WineD3DContext *ctx = context_get_current();
         ctx->fog_enabled = 1;
         if(ctx->gl_fog_source != GL_FRAGMENT_DEPTH_EXT) return;
     }
@@ -157,7 +157,7 @@ static void WINE_GLAPI wine_glEnable(GLenum cap) {
 static void (WINE_GLAPI *old_fogcoord_glDisable) (GLenum cap) = NULL;
 static void WINE_GLAPI wine_glDisable(GLenum cap) {
     if(cap == GL_FOG) {
-        WineD3DContext *ctx = getActiveContext();
+        struct WineD3DContext *ctx = context_get_current();
         ctx->fog_enabled = 0;
         if(ctx->gl_fog_source != GL_FRAGMENT_DEPTH_EXT) return;
     }
@@ -166,8 +166,9 @@ static void WINE_GLAPI wine_glDisable(GLenum cap) {
 
 static void (WINE_GLAPI *old_fogcoord_glFogi) (GLenum pname, GLint param) = NULL;
 static void WINE_GLAPI wine_glFogi(GLenum pname, GLint param) {
+    struct WineD3DContext *ctx = context_get_current();
+
     if(pname == GL_FOG_COORDINATE_SOURCE_EXT) {
-        WineD3DContext *ctx = getActiveContext();
         ctx->gl_fog_source = param;
         if(param == GL_FRAGMENT_DEPTH_EXT) {
             if(ctx->fog_enabled) old_fogcoord_glEnable(GL_FOG);
@@ -177,9 +178,9 @@ static void WINE_GLAPI wine_glFogi(GLenum pname, GLint param) {
         }
     } else {
         if(pname == GL_FOG_START) {
-            getActiveContext()->fogstart = param;
+            ctx->fogstart = param;
         } else if(pname == GL_FOG_END) {
-            getActiveContext()->fogend = param;
+            ctx->fogend = param;
         }
         old_fogcoord_glFogi(pname, param);
     }
@@ -187,8 +188,8 @@ static void WINE_GLAPI wine_glFogi(GLenum pname, GLint param) {
 
 static void (WINE_GLAPI *old_fogcoord_glFogiv) (GLenum pname, const GLint *param) = NULL;
 static void WINE_GLAPI wine_glFogiv(GLenum pname, const GLint *param) {
+    struct WineD3DContext *ctx = context_get_current();
     if(pname == GL_FOG_COORDINATE_SOURCE_EXT) {
-        WineD3DContext *ctx = getActiveContext();
         ctx->gl_fog_source = *param;
         if(*param == GL_FRAGMENT_DEPTH_EXT) {
             if(ctx->fog_enabled) old_fogcoord_glEnable(GL_FOG);
@@ -198,9 +199,9 @@ static void WINE_GLAPI wine_glFogiv(GLenum pname, const GLint *param) {
         }
     } else {
         if(pname == GL_FOG_START) {
-            getActiveContext()->fogstart = *param;
+            ctx->fogstart = *param;
         } else if(pname == GL_FOG_END) {
-            getActiveContext()->fogend = *param;
+            ctx->fogend = *param;
         }
         old_fogcoord_glFogiv(pname, param);
     }
@@ -208,8 +209,8 @@ static void WINE_GLAPI wine_glFogiv(GLenum pname, const GLint *param) {
 
 static void (WINE_GLAPI *old_fogcoord_glFogf) (GLenum pname, GLfloat param) = NULL;
 static void WINE_GLAPI wine_glFogf(GLenum pname, GLfloat param) {
+    struct WineD3DContext *ctx = context_get_current();
     if(pname == GL_FOG_COORDINATE_SOURCE_EXT) {
-        WineD3DContext *ctx = getActiveContext();
         ctx->gl_fog_source = (GLint) param;
         if(param == GL_FRAGMENT_DEPTH_EXT) {
             if(ctx->fog_enabled) old_fogcoord_glEnable(GL_FOG);
@@ -219,9 +220,9 @@ static void WINE_GLAPI wine_glFogf(GLenum pname, GLfloat param) {
         }
     } else {
         if(pname == GL_FOG_START) {
-            getActiveContext()->fogstart = param;
+            ctx->fogstart = param;
         } else if(pname == GL_FOG_END) {
-            getActiveContext()->fogend = param;
+            ctx->fogend = param;
         }
         old_fogcoord_glFogf(pname, param);
     }
@@ -229,8 +230,8 @@ static void WINE_GLAPI wine_glFogf(GLenum pname, GLfloat param) {
 
 static void (WINE_GLAPI *old_fogcoord_glFogfv) (GLenum pname, const GLfloat *param) = NULL;
 static void WINE_GLAPI wine_glFogfv(GLenum pname, const GLfloat *param) {
+    struct WineD3DContext *ctx = context_get_current();
     if(pname == GL_FOG_COORDINATE_SOURCE_EXT) {
-        WineD3DContext *ctx = getActiveContext();
         ctx->gl_fog_source = (GLint) *param;
         if(*param == GL_FRAGMENT_DEPTH_EXT) {
             if(ctx->fog_enabled) old_fogcoord_glEnable(GL_FOG);
@@ -240,15 +241,14 @@ static void WINE_GLAPI wine_glFogfv(GLenum pname, const GLfloat *param) {
         }
     } else {
         if(pname == GL_FOG_COLOR) {
-            WineD3DContext *ctx = getActiveContext();
             ctx->fogcolor[0] = param[0];
             ctx->fogcolor[1] = param[1];
             ctx->fogcolor[2] = param[2];
             ctx->fogcolor[3] = param[3];
         } else if(pname == GL_FOG_START) {
-            getActiveContext()->fogstart = *param;
+            ctx->fogstart = *param;
         } else if(pname == GL_FOG_END) {
-            getActiveContext()->fogend = *param;
+            ctx->fogend = *param;
         }
         old_fogcoord_glFogfv(pname, param);
     }
@@ -269,7 +269,7 @@ static void (WINE_GLAPI *old_fogcoord_glFogCoordfvEXT) (const GLfloat *f) = NULL
 static void (WINE_GLAPI *old_fogcoord_glFogCoorddvEXT) (const GLdouble *f) = NULL;
 
 static void WINE_GLAPI wine_glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
-    WineD3DContext *ctx = getActiveContext();
+    struct WineD3DContext *ctx = context_get_current();
     if(ctx->gl_fog_source == GL_FOG_COORDINATE_EXT && ctx->fog_enabled) {
         GLfloat c[4] = {ctx->color[0], ctx->color[1], ctx->color[2], ctx->color[3]};
         GLfloat i;
@@ -299,7 +299,7 @@ static void WINE_GLAPI wine_glVertex3fv(const GLfloat *pos) {
 }
 
 static void wine_glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
-    WineD3DContext *ctx = getActiveContext();
+    struct WineD3DContext *ctx = context_get_current();
     ctx->color[0] = r;
     ctx->color[1] = g;
     ctx->color[2] = b;
@@ -327,7 +327,7 @@ static void wine_glColor4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a) {
  * precision function
  */
 static void wine_glFogCoordfEXT(GLfloat f) {
-    WineD3DContext *ctx = getActiveContext();
+    struct WineD3DContext *ctx = context_get_current();
     ctx->fog_coord_value = f;
 }
 static void wine_glFogCoorddEXT(GLdouble f) {

@@ -1986,7 +1986,3 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
             FIXME("Unexpected context usage requested\n");
     }
 }
-
-WineD3DContext *getActiveContext(void) {
-    return last_device->activeContext;
-}
