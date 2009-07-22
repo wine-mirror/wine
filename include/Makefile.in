@@ -149,6 +149,7 @@ SRCDIR_INCLUDES = \
 	d3dx9shader.h \
 	d3dx9tex.h \
 	dbccmd.idl \
+	dbcses.idl \
 	dbghelp.h \
 	dbinit.idl \
 	dbprop.idl \
