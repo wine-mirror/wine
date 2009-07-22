@@ -497,7 +497,7 @@ BEGIN
     IDS_VIEW_SMALL                     "S&må ikoner"
     IDS_VIEW_DETAILS                   "&Detaljer"
     IDS_WINDOWS                        "&Vinduer"
-    IDS_VIEW_SELECTCOLUMNS             "Velg &kolonner ..."
+    IDS_VIEW_SELECTCOLUMNS             "Velg &kolonner..."
     IDS_OPTIONS_SHOW16BITTASKS         "Vi&s 16 bit-jobber"
     IDS_VIEW_CPUHISTORY                "&Prosessorhistorikk"
     IDS_VIEW_CPUHISTORY_ONEGRAPHALL    "Én graf, alle pr&osessorer"
