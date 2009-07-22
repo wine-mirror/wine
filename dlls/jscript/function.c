@@ -272,10 +272,8 @@ static HRESULT Function_toString(DispatchEx *dispex, LCID lcid, WORD flags, DISP
 
     TRACE("\n");
 
-    if(!is_class(dispex, JSCLASS_FUNCTION)) {
-        FIXME("throw TypeError\n");
-        return E_FAIL;
-    }
+    if(!is_class(dispex, JSCLASS_FUNCTION))
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
 
     function = (FunctionInstance*)dispex;
 
