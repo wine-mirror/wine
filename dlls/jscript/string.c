@@ -1485,6 +1485,8 @@ static HRESULT String_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     TRACE("\n");
 
     switch(flags) {
+    case INVOKE_FUNC:
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
     case DISPATCH_PROPERTYGET: {
         BSTR str = SysAllocString(This->str);
         if(!str)

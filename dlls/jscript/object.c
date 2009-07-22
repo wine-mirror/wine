@@ -120,6 +120,8 @@ static HRESULT Object_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     TRACE("\n");
 
     switch(flags) {
+    case INVOKE_FUNC:
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
     case DISPATCH_PROPERTYGET:
         V_VT(retv) = VT_BSTR;
         V_BSTR(retv) = SysAllocString(default_valueW);

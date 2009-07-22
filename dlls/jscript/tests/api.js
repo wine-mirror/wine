@@ -1315,5 +1315,7 @@ exception_test(function() {arr.toString = Number.prototype.toString; arr.toStrin
 exception_test(function() {(new Number(3)).toString(1);}, "TypeError", -2146828283);
 exception_test(function() {not_existing_variable.something();}, "TypeError", -2146823279);
 exception_test(function() {arr.toString = Function.prototype.toString; arr.toString();}, "TypeError", -2146823286);
+exception_test(function() {date();}, "TypeError", -2146823286);
+exception_test(function() {arr();}, "TypeError", -2146823286);
 
 reportSuccess();

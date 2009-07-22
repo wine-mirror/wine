@@ -770,6 +770,8 @@ static HRESULT Array_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS
     TRACE("\n");
 
     switch(flags) {
+    case INVOKE_FUNC:
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
     case INVOKE_PROPERTYGET:
         return array_join(dispex, lcid, ((ArrayInstance*)dispex)->length, default_separatorW, retv, ei, sp);
     default:

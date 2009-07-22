@@ -141,8 +141,17 @@ static HRESULT Error_isPrototypeOf(DispatchEx *dispex, LCID lcid, WORD flags,
 static HRESULT Error_value(DispatchEx *dispex, LCID lcid, WORD flags,
         DISPPARAMS *dp, VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    switch(flags) {
+    case INVOKE_FUNC:
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static void Error_destructor(DispatchEx *dispex)

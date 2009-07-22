@@ -241,6 +241,8 @@ static HRESULT Number_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
     NumberInstance *number = (NumberInstance*)dispex;
 
     switch(flags) {
+    case INVOKE_FUNC:
+        return throw_type_error(dispex->ctx, ei, IDS_NOT_FUNC, NULL);
     case DISPATCH_PROPERTYGET:
         *retv = number->num;
         break;
