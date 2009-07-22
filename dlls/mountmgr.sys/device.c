@@ -427,24 +427,14 @@ static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive,
 /* set or change the drive letter for an existing drive */
 static void set_drive_letter( struct dos_drive *drive, int letter )
 {
-    void *id = NULL;
-    unsigned int id_len = 0;
     struct volume *volume = drive->volume;
-    struct disk_device *device = volume->device;
 
     if (drive->drive == letter) return;
     if (drive->mount) delete_mount_point( drive->mount );
     if (volume->mount) delete_mount_point( volume->mount );
     drive->drive = letter;
-    drive->mount = add_dosdev_mount_point( device->dev_obj, &device->name, letter );
-    volume->mount = add_volume_mount_point( device->dev_obj, &device->name, &volume->guid );
-    if (device->unix_mount)
-    {
-        id = device->unix_mount;
-        id_len = strlen( device->unix_mount ) + 1;
-    }
-    if (drive->mount) set_mount_point_id( drive->mount, id, id_len );
-    if (volume->mount) set_mount_point_id( volume->mount, id, id_len );
+    drive->mount = NULL;
+    volume->mount = NULL;
 }
 
 static inline int is_valid_device( struct stat *st )
@@ -529,34 +519,6 @@ static int add_drive( const char *device, enum device_type type )
 done:
     HeapFree( GetProcessHeap(), 0, path );
     return drive;
-}
-
-static void set_unix_mount_point( struct dos_drive *drive, const char *mount_point )
-{
-    char *path, *p;
-    struct volume *volume = drive->volume;
-    struct disk_device *device = volume->device;
-
-    if (!(path = get_dosdevices_path( &p ))) return;
-    p[0] = 'a' + drive->drive;
-    p[2] = 0;
-    update_symlink( path, mount_point, device->unix_mount );
-
-    RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
-    device->unix_mount = strdupA( mount_point );
-
-    if (mount_point && mount_point[0])
-    {
-        if (drive->mount) set_mount_point_id( drive->mount, mount_point, strlen(mount_point) + 1 );
-        if (volume->mount) set_mount_point_id( volume->mount, mount_point, strlen(mount_point) + 1 );
-    }
-    else
-    {
-        if (drive->mount) set_mount_point_id( drive->mount, NULL, 0 );
-        if (volume->mount) set_mount_point_id( volume->mount, NULL, 0 );
-    }
-
-    HeapFree( GetProcessHeap(), 0, path );
 }
 
 /* create devices for mapped drives */
@@ -653,18 +615,23 @@ NTSTATUS remove_volume( const char *udi )
 NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
                          const char *mount_point, enum device_type type, const GUID *guid )
 {
+    char *path, *p;
+    NTSTATUS status = STATUS_SUCCESS;
     struct dos_drive *drive, *next;
+
+    if (!(path = get_dosdevices_path( &p ))) return STATUS_NO_MEMORY;
 
     if (letter == -1)  /* auto-assign a letter */
     {
         letter = add_drive( device, type );
-        if (letter == -1) return STATUS_OBJECT_NAME_COLLISION;
+        if (letter == -1)
+        {
+            status = STATUS_OBJECT_NAME_COLLISION;
+            goto done;
+        }
     }
     else  /* simply reset the device symlink */
     {
-        char *path, *p;
-
-        if (!(path = get_dosdevices_path( &p ))) return STATUS_NO_MEMORY;
         *p = 'a' + letter;
         update_symlink( path, device, NULL );
     }
@@ -680,15 +647,15 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
         if (drive->drive == letter) delete_dos_device( drive );
     }
 
-    if (create_dos_device( udi, type, &drive )) return STATUS_NO_MEMORY;
+    if ((status = create_dos_device( udi, type, &drive ))) goto done;
 
 found:
     if (!guid) guid = get_default_uuid( letter );
-    drive->volume->guid = *guid;
-    RtlFreeHeap( GetProcessHeap(), 0, drive->volume->device->unix_device );
-    drive->volume->device->unix_device = strdupA( device );
+    p[0] = 'a' + drive->drive;
+    p[2] = 0;
+    update_symlink( path, mount_point, drive->volume->device->unix_mount );
     set_drive_letter( drive, letter );
-    set_unix_mount_point( drive, mount_point );
+    set_volume_info( drive->volume, drive, device, mount_point, type, guid );
 
     if (drive->drive != -1)
     {
@@ -716,7 +683,9 @@ found:
 
         if (udi) send_notify( drive->drive, DBT_DEVICEARRIVAL );
     }
-    return STATUS_SUCCESS;
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, path );
+    return status;
 }
 
 /* remove an existing dos drive, by letter or udi */
