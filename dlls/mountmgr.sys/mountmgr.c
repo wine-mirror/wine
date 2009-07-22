@@ -276,7 +276,7 @@ static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
 {
     const struct mountmgr_unix_drive *input = in_buff;
     struct mountmgr_unix_drive *output = out_buff;
-    const char *device, *mount_point;
+    char *device, *mount_point;
     int letter = tolowerW( input->letter );
     NTSTATUS status;
     DWORD size, type = DEVICE_UNKNOWN;
@@ -314,7 +314,8 @@ static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
             output->type = type;
             iosb->Information = FIELD_OFFSET( struct mountmgr_unix_drive, type ) + sizeof(output->type);
         }
-        return STATUS_MORE_ENTRIES;
+        status = STATUS_MORE_ENTRIES;
+        goto done;
     }
     output->size = size;
     output->letter = letter;
@@ -341,7 +342,10 @@ static NTSTATUS query_unix_drive( const void *in_buff, SIZE_T insize,
            letter, debugstr_a(device), debugstr_a(mount_point), type );
 
     iosb->Information = ptr - (char *)output;
-    return STATUS_SUCCESS;
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, device );
+    RtlFreeHeap( GetProcessHeap(), 0, mount_point );
+    return status;
 }
 
 /* handler for ioctls on the mount manager device */
