@@ -20,6 +20,9 @@
 
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 /*
@@ -30,19 +33,19 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 VIEW MENU
 BEGIN
-    POPUP "&Файл"
+    POPUP "&Р¤Р°Р№Р»"
     BEGIN
-	MENUITEM "&Открыть",			IDM_OPEN
-        MENUITEM "В&ыход",                       IDM_EXIT
+	MENUITEM "&РћС‚РєСЂС‹С‚СЊ",			IDM_OPEN
+        MENUITEM "Р’&С‹С…РѕРґ",                       IDM_EXIT
     END
-    POPUP "&Положение"
+    POPUP "&РџРѕР»РѕР¶РµРЅРёРµ"
     BEGIN
-      MENUITEM "&Расширить по окну",              IDM_SET_EXT_TO_WIN
+      MENUITEM "&Р Р°СЃС€РёСЂРёС‚СЊ РїРѕ РѕРєРЅСѓ",              IDM_SET_EXT_TO_WIN
       MENUITEM SEPARATOR
-      MENUITEM "В&лево",				IDM_LEFT
-      MENUITEM "В&право",			IDM_RIGHT
-      MENUITEM "В&верх",				IDM_UP
-      MENUITEM "В&низ",				IDM_DOWN
+      MENUITEM "Р’&Р»РµРІРѕ",				IDM_LEFT
+      MENUITEM "Р’&РїСЂР°РІРѕ",			IDM_RIGHT
+      MENUITEM "Р’&РІРµСЂС…",				IDM_UP
+      MENUITEM "Р’&РЅРёР·",				IDM_DOWN
     END
 END
 
@@ -67,5 +70,5 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DESCRIPTION         "Просмоторщик обычных метафайлов"
+    IDS_DESCRIPTION         "РџСЂРѕСЃРјРѕС‚РѕСЂС‰РёРє РѕР±С‹С‡РЅС‹С… РјРµС‚Р°С„Р°Р№Р»РѕРІ"
 END
