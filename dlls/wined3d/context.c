@@ -1603,10 +1603,10 @@ static WineD3DContext *findThreadContextForSwapChain(IWineD3DSwapChain *swapchai
 static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, DWORD tid) {
     IWineD3DSwapChain *swapchain = NULL;
     BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
-    WineD3DContext *context = This->activeContext;
     BOOL oldRenderOffscreen = This->render_offscreen;
     const struct StateEntry *StateTable = This->StateTable;
     const struct GlPixelFormatDesc *old, *new;
+    struct WineD3DContext *context;
 
     if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
         TRACE("Rendering onscreen\n");
@@ -1625,95 +1625,76 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
             }
         }
         IWineD3DSwapChain_Release(swapchain);
-
-        if(oldRenderOffscreen) {
-            Context_MarkStateDirty(context, WINED3DTS_PROJECTION, StateTable);
-            Context_MarkStateDirty(context, STATE_VDECL, StateTable);
-            Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
-            Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
-            Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
-        }
-
-    } else {
+    }
+    else
+    {
         TRACE("Rendering offscreen\n");
         This->render_offscreen = TRUE;
 
-        switch(wined3d_settings.offscreen_rendering_mode) {
-            case ORM_FBO:
-                /* FBOs do not need a different context. Stay with whatever context is active at the moment */
-                if (This->activeContext && This->activeContext->tid == tid)
-                {
-                    context = This->activeContext;
-                } else {
-                    /* This may happen if the app jumps straight into offscreen rendering
-                     * Start using the context of the primary swapchain. tid == 0 is no problem
-                     * for findThreadContextForSwapChain.
-                     *
-                     * Can also happen on thread switches - in that case findThreadContextForSwapChain
-                     * is perfect to call.
-                     */
-                    context = findThreadContextForSwapChain(This->swapchains[0], tid);
-                }
-                break;
-
-            case ORM_PBUFFER:
+retry:
+        if (wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER)
+        {
+            IWineD3DSurfaceImpl *targetimpl = (IWineD3DSurfaceImpl *)target;
+            if (!This->pbufferContext
+                    || This->pbufferWidth < targetimpl->currentDesc.Width
+                    || This->pbufferHeight < targetimpl->currentDesc.Height)
             {
-                IWineD3DSurfaceImpl *targetimpl = (IWineD3DSurfaceImpl *) target;
-                if(This->pbufferContext == NULL ||
-                   This->pbufferWidth < targetimpl->currentDesc.Width ||
-                   This->pbufferHeight < targetimpl->currentDesc.Height) {
-                    if(This->pbufferContext) {
-                        DestroyContext(This, This->pbufferContext);
-                    }
+                if (This->pbufferContext) DestroyContext(This, This->pbufferContext);
 
-                    /* The display is irrelevant here, the window is 0. But CreateContext needs a valid X connection.
-                     * Create the context on the same server as the primary swapchain. The primary swapchain is exists at this point.
-                     */
-                    This->pbufferContext = CreateContext(This, targetimpl,
-                            ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0]->win_handle,
-                            TRUE /* pbuffer */, &((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms);
-                    This->pbufferWidth = targetimpl->currentDesc.Width;
-                    This->pbufferHeight = targetimpl->currentDesc.Height;
-                   }
-
-                   if(This->pbufferContext) {
-                       if(This->pbufferContext->tid != 0 && This->pbufferContext->tid != tid) {
-                           FIXME("The PBuffr context is only supported for one thread for now!\n");
-                       }
-                       This->pbufferContext->tid = tid;
-                       context = This->pbufferContext;
-                       break;
-                   } else {
-                       ERR("Failed to create a buffer context and drawable, falling back to back buffer offscreen rendering\n");
-                       wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
-                   }
+                /* The display is irrelevant here, the window is 0. But
+                 * CreateContext needs a valid X connection. Create the context
+                 * on the same server as the primary swapchain. The primary
+                 * swapchain is exists at this point. */
+                This->pbufferContext = CreateContext(This, targetimpl,
+                        ((IWineD3DSwapChainImpl *)This->swapchains[0])->context[0]->win_handle,
+                        TRUE /* pbuffer */, &((IWineD3DSwapChainImpl *)This->swapchains[0])->presentParms);
+                This->pbufferWidth = targetimpl->currentDesc.Width;
+                This->pbufferHeight = targetimpl->currentDesc.Height;
             }
 
-            case ORM_BACKBUFFER:
-                /* Stay with the currently active context for back buffer rendering */
-                if (This->activeContext && This->activeContext->tid == tid)
+            if (This->pbufferContext)
+            {
+                if (This->pbufferContext->tid && This->pbufferContext->tid != tid)
                 {
-                    context = This->activeContext;
-                } else {
-                    /* This may happen if the app jumps straight into offscreen rendering
-                     * Start using the context of the primary swapchain. tid == 0 is no problem
-                     * for findThreadContextForSwapChain.
-                     *
-                     * Can also happen on thread switches - in that case findThreadContextForSwapChain
-                     * is perfect to call.
-                     */
-                    context = findThreadContextForSwapChain(This->swapchains[0], tid);
+                    FIXME("The PBuffer context is only supported for one thread for now!\n");
                 }
-                break;
+                This->pbufferContext->tid = tid;
+                context = This->pbufferContext;
+            }
+            else
+            {
+                ERR("Failed to create a buffer context and drawable, falling back to back buffer offscreen rendering.\n");
+                wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
+                goto retry;
+            }
         }
+        else
+        {
+            /* Stay with the currently active context. */
+            if (This->activeContext && This->activeContext->tid == tid)
+            {
+                context = This->activeContext;
+            }
+            else
+            {
+                /* This may happen if the app jumps straight into offscreen rendering
+                 * Start using the context of the primary swapchain. tid == 0 is no problem
+                 * for findThreadContextForSwapChain.
+                 *
+                 * Can also happen on thread switches - in that case findThreadContextForSwapChain
+                 * is perfect to call. */
+                context = findThreadContextForSwapChain(This->swapchains[0], tid);
+            }
+        }
+    }
 
-        if(!oldRenderOffscreen) {
-            Context_MarkStateDirty(context, WINED3DTS_PROJECTION, StateTable);
-            Context_MarkStateDirty(context, STATE_VDECL, StateTable);
-            Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
-            Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
-            Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
-        }
+    if (This->render_offscreen != oldRenderOffscreen)
+    {
+        Context_MarkStateDirty(context, WINED3DTS_PROJECTION, StateTable);
+        Context_MarkStateDirty(context, STATE_VDECL, StateTable);
+        Context_MarkStateDirty(context, STATE_VIEWPORT, StateTable);
+        Context_MarkStateDirty(context, STATE_SCISSORRECT, StateTable);
+        Context_MarkStateDirty(context, STATE_FRONTFACE, StateTable);
     }
 
     /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
