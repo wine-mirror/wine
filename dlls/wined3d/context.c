@@ -1603,16 +1603,30 @@ static WineD3DContext *findThreadContextForSwapChain(IWineD3DSwapChain *swapchai
 static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, DWORD tid) {
     IWineD3DSwapChain *swapchain = NULL;
     BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
+    struct WineD3DContext *current_context = context_get_current();
     BOOL oldRenderOffscreen = This->render_offscreen;
     const struct StateEntry *StateTable = This->StateTable;
     const struct GlPixelFormatDesc *old, *new;
     struct WineD3DContext *context;
 
-    if (!target) target = This->activeContext->current_rt;
-
-    if (This->activeContext->current_rt == target && This->activeContext->tid == tid)
+    if (!target)
     {
-        return This->activeContext;
+        if (current_context
+                && ((IWineD3DSurfaceImpl *)current_context->surface)->resource.wineD3DDevice == This)
+        {
+            target = current_context->current_rt;
+        }
+        else
+        {
+            IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *)This->swapchains[0];
+            if (swapchain->backBuffer) target = swapchain->backBuffer[0];
+            else target = swapchain->frontBuffer;
+        }
+    }
+
+    if (current_context && current_context->current_rt == target)
+    {
+        return current_context;
     }
 
     if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
@@ -1678,9 +1692,10 @@ retry:
         else
         {
             /* Stay with the currently active context. */
-            if (This->activeContext && This->activeContext->tid == tid)
+            if (current_context
+                    && ((IWineD3DSurfaceImpl *)current_context->surface)->resource.wineD3DDevice == This)
             {
-                context = This->activeContext;
+                context = current_context;
             }
             else
             {
@@ -1835,6 +1850,7 @@ static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target,
  *
  *****************************************************************************/
 void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextUsage usage) {
+    struct WineD3DContext *current_context = context_get_current();
     DWORD                         tid = GetCurrentThreadId();
     DWORD                         i, dirtyState, idx;
     BYTE                          shift;
@@ -1849,23 +1865,26 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     gl_info = context->gl_info;
 
     /* Activate the opengl context */
-    if(last_device != This || context != This->activeContext) {
+    if (context != current_context)
+    {
         if (!context_set_current(context)) ERR("Failed to activate the new context.\n");
         else This->frag_pipe->enable_extension((IWineD3DDevice *)This, !context->last_was_blit);
 
-        if(This->activeContext->vshader_const_dirty) {
-            memset(This->activeContext->vshader_const_dirty, 1,
-                   sizeof(*This->activeContext->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
+        if (context->vshader_const_dirty)
+        {
+            memset(context->vshader_const_dirty, 1,
+                    sizeof(*context->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));
             This->highest_dirty_vs_const = GL_LIMITS(vshader_constantsF);
         }
-        if(This->activeContext->pshader_const_dirty) {
-            memset(This->activeContext->pshader_const_dirty, 1,
-                   sizeof(*This->activeContext->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
+        if (context->pshader_const_dirty)
+        {
+            memset(context->pshader_const_dirty, 1,
+                   sizeof(*context->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
             This->highest_dirty_ps_const = GL_LIMITS(pshader_constantsF);
         }
-        This->activeContext = context;
-        context_set_last_device(This);
     }
+    This->activeContext = context;
+    context_set_last_device(This);
 
     switch (usage) {
         case CTXUSAGE_CLEAR:
