@@ -942,7 +942,8 @@ static void test_set_default_proxy_config(void)
     info.lpszProxy = wideString;
     SetLastError(0xdeadbeef);
     ret = WinHttpSetDefaultProxyConfiguration(&info);
-    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+    ok((!ret && GetLastError() == ERROR_INVALID_PARAMETER) ||
+        broken(ret), /* Earlier winhttp versions on W2K/XP */
         "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     info.lpszProxy = normalString;
