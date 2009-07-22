@@ -233,7 +233,7 @@ BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors )
             register int x, y;
             XImage *image;
             wine_tsx11_lock();
-            pixmap = XCreatePixmap( gdi_display, root_window, 8, 8, screen_depth );
+            pixmap = XCreatePixmap( gdi_display, root_window, 8, 8, physDev->depth );
             image = XGetImage( gdi_display, physDev->brush.pixmap, 0, 0, 8, 8,
                                AllPlanes, ZPixmap );
             for (y = 0; y < 8; y++)
