@@ -433,7 +433,7 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */
-static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, exprval_t *ret)
+static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, jsexcept_t *ei, exprval_t *ret)
 {
     scope_chain_t *scope;
     named_item_t *item;
@@ -518,8 +518,7 @@ static HRESULT identifier_eval(exec_ctx_t *ctx, BSTR identifier, DWORD flags, ex
         return S_OK;
     }
 
-    WARN("Could not find identifier %s\n", debugstr_w(identifier));
-    return E_FAIL;
+    return throw_type_error(ctx->var_disp->ctx, ei, IDS_UNDEFINED, identifier);
 }
 
 /* ECMA-262 3rd Edition    12.1 */
@@ -855,7 +854,7 @@ HRESULT forin_statement_eval(exec_ctx_t *ctx, statement_t *_stat, return_type_t 
         TRACE("iter %s\n", debugstr_w(str));
 
         if(stat->variable)
-            hres = identifier_eval(ctx, identifier, 0, &exprval);
+            hres = identifier_eval(ctx, identifier, 0, NULL, &exprval);
         else
             hres = expr_eval(ctx, stat->expr, EXPR_NEWREF, &rt->ei, &exprval);
         if(SUCCEEDED(hres)) {
@@ -1596,7 +1595,7 @@ HRESULT identifier_expression_eval(exec_ctx_t *ctx, expression_t *_expr, DWORD f
     if(!identifier)
         return E_OUTOFMEMORY;
 
-    hres = identifier_eval(ctx, identifier, flags, ret);
+    hres = identifier_eval(ctx, identifier, flags, ei, ret);
 
     SysFreeString(identifier);
     return hres;

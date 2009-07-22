@@ -415,16 +415,16 @@ static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCH
     DispatchEx *err;
     HRESULT hres;
 
-    TRACE("\n");
-
     LoadStringW(jscript_hinstance, id,  buf, sizeof(buf)/sizeof(WCHAR));
 
     if(str) pos = strchrW(buf, '|');
     if(pos) {
         int len = strlenW(str);
-        memmove(pos+len, pos+1, strlenW(pos+1)*sizeof(WCHAR));
+        memmove(pos+len, pos+1, (strlenW(pos+1)+1)*sizeof(WCHAR));
         memcpy(pos, str, len*sizeof(WCHAR));
     }
+
+    WARN("%s\n", debugstr_w(buf));
 
     id |= 0x800A0000;
     hres = create_error(ctx, constr, &id, buf, &err);
