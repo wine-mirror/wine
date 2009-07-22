@@ -80,7 +80,7 @@ struct dos_drive
     struct list           entry;       /* entry in drives list */
     struct volume        *volume;      /* volume for this drive */
     int                   drive;       /* drive letter (0 = A: etc.) */
-    struct mount_point   *dosdev;      /* DosDevices mount point */
+    struct mount_point   *mount;       /* DosDevices mount point */
 };
 
 static struct list drives_list = LIST_INIT(drives_list);
@@ -329,8 +329,8 @@ static NTSTATUS create_dos_device( const char *udi, enum device_type type, struc
     NTSTATUS status;
 
     if (!(drive = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*drive) ))) return STATUS_NO_MEMORY;
-    drive->drive  = -1;
-    drive->dosdev = NULL;
+    drive->drive = -1;
+    drive->mount = NULL;
 
     if (!(status = create_volume( udi, type, &drive->volume )))
     {
@@ -346,7 +346,7 @@ static NTSTATUS create_dos_device( const char *udi, enum device_type type, struc
 static void delete_dos_device( struct dos_drive *drive )
 {
     list_remove( &drive->entry );
-    if (drive->dosdev) delete_mount_point( drive->dosdev );
+    if (drive->mount) delete_mount_point( drive->mount );
     delete_volume( drive->volume );
     RtlFreeHeap( GetProcessHeap(), 0, drive );
 }
@@ -414,17 +414,17 @@ static void set_drive_letter( struct dos_drive *drive, int letter )
     struct disk_device *device = volume->device;
 
     if (drive->drive == letter) return;
-    if (drive->dosdev) delete_mount_point( drive->dosdev );
+    if (drive->mount) delete_mount_point( drive->mount );
     if (volume->mount) delete_mount_point( volume->mount );
     drive->drive = letter;
-    drive->dosdev = add_dosdev_mount_point( device->dev_obj, &device->name, letter );
+    drive->mount = add_dosdev_mount_point( device->dev_obj, &device->name, letter );
     volume->mount = add_volume_mount_point( device->dev_obj, &device->name, &volume->guid );
     if (device->unix_mount)
     {
         id = device->unix_mount;
         id_len = strlen( device->unix_mount ) + 1;
     }
-    if (drive->dosdev) set_mount_point_id( drive->dosdev, id, id_len );
+    if (drive->mount) set_mount_point_id( drive->mount, id, id_len );
     if (volume->mount) set_mount_point_id( volume->mount, id, id_len );
 }
 
@@ -534,7 +534,7 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
         }
         RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
         device->unix_mount = strdupA( mount_point );
-        if (drive->dosdev) set_mount_point_id( drive->dosdev, mount_point, strlen(mount_point) + 1 );
+        if (drive->mount) set_mount_point_id( drive->mount, mount_point, strlen(mount_point) + 1 );
         if (volume->mount) set_mount_point_id( volume->mount, mount_point, strlen(mount_point) + 1 );
     }
     else
@@ -542,7 +542,7 @@ static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_poi
         if (unlink( path ) != -1) modified = TRUE;
         RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
         device->unix_mount = NULL;
-        if (drive->dosdev) set_mount_point_id( drive->dosdev, NULL, 0 );
+        if (drive->mount) set_mount_point_id( drive->mount, NULL, 0 );
         if (volume->mount) set_mount_point_id( volume->mount, NULL, 0 );
     }
 
