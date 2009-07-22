@@ -783,7 +783,7 @@ static	void	Control_DoLaunch(CPanel* panel, HWND hWnd, LPCWSTR wszCmd)
     }
 
     /* Now check if there had been a numerical value in the extra params */
-    if ((*extraPmts == '@') && (sp == -1)) {
+    if ((extraPmts) && (*extraPmts == '@') && (sp == -1)) {
         sp = atoiW(extraPmts + 1);
     }
 
