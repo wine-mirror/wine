@@ -29,3 +29,4 @@ typedef ULONG DBBYTEOFFSET;
 #include "dbcses.idl"
 #include "dbprop.idl"
 #include "dbinit.idl"
+#include "opnrst.idl"

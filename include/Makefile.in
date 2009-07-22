@@ -364,6 +364,7 @@ SRCDIR_INCLUDES = \
 	oleauto.h \
 	olectl.h \
 	oledlg.h \
+	opnrst.idl \
 	pdh.h \
 	pdhmsg.h \
 	pktdef.h \
