@@ -3587,6 +3587,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     POINT *point = (POINT *)lParam;
     point->x = editor->horz_si.nPos;
     point->y = editor->vert_si.nPos;
+    /* 16-bit scaled value is returned as stored in scrollinfo */
+    if (editor->horz_si.nMax > 0xffff)
+      point->x = MulDiv(point->x, 0xffff, editor->horz_si.nMax);
+    if (editor->vert_si.nMax > 0xffff)
+      point->y = MulDiv(point->y, 0xffff, editor->vert_si.nMax);
     return 1;
   }
   case EM_GETTEXTRANGE:
@@ -4012,15 +4017,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       case SB_THUMBTRACK:
       case SB_THUMBPOSITION:
       {
-        SCROLLINFO sbi;
-        sbi.cbSize = sizeof(sbi);
-        sbi.fMask = SIF_TRACKPOS;
-        /* Try to get 32-bit track position value. */
-        if (!GetScrollInfo(editor->hWnd, SB_HORZ, &sbi))
-          /* GetScrollInfo failed, settle for 16-bit value in wParam. */
-          sbi.nTrackPos = HIWORD(wParam);
-
-        ME_HScrollAbs(editor, sbi.nTrackPos);
+        int pos = HIWORD(wParam);
+        if (editor->horz_si.nMax > 0xffff)
+          pos = MulDiv(pos, editor->horz_si.nMax, 0xffff);
+        ME_HScrollAbs(editor, pos);
         break;
       }
     }
@@ -4064,15 +4064,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       case SB_THUMBTRACK:
       case SB_THUMBPOSITION:
       {
-        SCROLLINFO sbi;
-        sbi.cbSize = sizeof(sbi);
-        sbi.fMask = SIF_TRACKPOS;
-        /* Try to get 32-bit track position value. */
-        if (!GetScrollInfo(editor->hWnd, SB_VERT, &sbi))
-          /* GetScrollInfo failed, settle for 16-bit value in wParam. */
-          sbi.nTrackPos = HIWORD(wParam);
-
-        ME_VScrollAbs(editor, sbi.nTrackPos);
+        int pos = HIWORD(wParam);
+        if (editor->vert_si.nMax > 0xffff)
+          pos = MulDiv(pos, editor->vert_si.nMax, 0xffff);
+        ME_VScrollAbs(editor, pos);
         break;
       }
     }

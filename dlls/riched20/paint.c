@@ -1036,17 +1036,21 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
   if (editor->horz_si.nPos != x) {
     x = min(x, editor->horz_si.nMax);
     x = max(x, editor->horz_si.nMin);
-    ITextHost_TxSetScrollPos(editor->texthost, SB_HORZ, x, TRUE);
     scrollX = editor->horz_si.nPos - x;
     editor->horz_si.nPos = x;
+    if (editor->horz_si.nMax > 0xFFFF) /* scale to 16-bit value */
+      x = MulDiv(x, 0xFFFF, editor->horz_si.nMax);
+    ITextHost_TxSetScrollPos(editor->texthost, SB_HORZ, x, TRUE);
   }
 
   if (editor->vert_si.nPos != y) {
     y = min(y, editor->vert_si.nMax - (int)editor->vert_si.nPage);
     y = max(y, editor->vert_si.nMin);
-    ITextHost_TxSetScrollPos(editor->texthost, SB_VERT, y, TRUE);
     scrollY = editor->vert_si.nPos - y;
     editor->vert_si.nPos = y;
+    if (editor->vert_si.nMax > 0xFFFF) /* scale to 16-bit value */
+      y = MulDiv(y, 0xFFFF, editor->vert_si.nMax);
+    ITextHost_TxSetScrollPos(editor->texthost, SB_VERT, y, TRUE);
   }
 
   if (abs(scrollX) > editor->sizeWindow.cx ||
@@ -1170,6 +1174,12 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     if ((bScrollBarWillBeVisible || bScrollBarWasVisible) &&
         editor->styleFlags & WS_HSCROLL)
     {
+      if (si.nMax > 0xFFFF)
+      {
+        /* Native scales the scrollbar info to 16-bit external values. */
+        si.nPos = MulDiv(si.nPos, 0xFFFF, si.nMax);
+        si.nMax = 0xFFFF;
+      }
       if (editor->hWnd) {
         SetScrollInfo(editor->hWnd, SB_HORZ, &si, TRUE);
       } else {
@@ -1219,6 +1229,12 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     if ((bScrollBarWillBeVisible || bScrollBarWasVisible) &&
         editor->styleFlags & WS_VSCROLL)
     {
+      if (si.nMax > 0xFFFF)
+      {
+        /* Native scales the scrollbar info to 16-bit external values. */
+        si.nPos = MulDiv(si.nPos, 0xFFFF, si.nMax);
+        si.nMax = 0xFFFF;
+      }
       if (editor->hWnd) {
         SetScrollInfo(editor->hWnd, SB_VERT, &si, TRUE);
       } else {
