@@ -886,16 +886,16 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
                     if (hdr->flags & WINHTTP_PROXY_TYPE_PROXY)
                     {
                        BOOL sane = FALSE;
+                       LPWSTR proxy = NULL;
+                       LPWSTR proxy_bypass = NULL;
 
                         /* Sanity-check length of proxy string */
                         if ((BYTE *)len - buf + *len <= size)
                         {
                             sane = TRUE;
-                            info->lpszProxy = GlobalAlloc( 0,
-                                (*len + 1) * sizeof(WCHAR) );
-                            if (info->lpszProxy)
-                                copy_char_to_wchar_sz( (BYTE *)(len + 1),
-                                    *len, (LPWSTR)info->lpszProxy );
+                            proxy = GlobalAlloc( 0, (*len + 1) * sizeof(WCHAR) );
+                            if (proxy)
+                                copy_char_to_wchar_sz( (BYTE *)(len + 1), *len, proxy );
                             len = (DWORD *)((BYTE *)(len + 1) + *len);
                         }
                         if (sane)
@@ -903,19 +903,19 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
                             /* Sanity-check length of proxy bypass string */
                             if ((BYTE *)len - buf + *len <= size)
                             {
-                                info->lpszProxyBypass = GlobalAlloc( 0,
-                                    (*len + 1) * sizeof(WCHAR) );
-                                if (info->lpszProxyBypass)
-                                    copy_char_to_wchar_sz( (BYTE *)(len + 1),
-                                        *len, (LPWSTR)info->lpszProxyBypass );
+                                proxy_bypass = GlobalAlloc( 0, (*len + 1) * sizeof(WCHAR) );
+                                if (proxy_bypass)
+                                    copy_char_to_wchar_sz( (BYTE *)(len + 1), *len, proxy_bypass );
                             }
                             else
                             {
                                 sane = FALSE;
-                                GlobalFree( (LPWSTR)info->lpszProxy );
-                                info->lpszProxy = NULL;
+                                GlobalFree( proxy );
+                                proxy = NULL;
                             }
                         }
+                        info->lpszProxy = proxy;
+                        info->lpszProxyBypass = proxy_bypass;
                         if (sane)
                         {
                             got_from_reg = TRUE;
