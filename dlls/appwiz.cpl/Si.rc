@@ -40,7 +40,7 @@ STRINGTABLE
    IDS_INSTALL_FILTER, "Instalacijski programi\0*instal*.exe;*setup*.exe;*.msi\0Programi (*.exe)\0*.exe\0Vse datoteke (*.*)\0*.*\0\0"
 
    IDS_REMOVE, "&Odstrani ..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove..."
+   IDS_MODIFY_REMOVE, "&Modify/Remove ..."
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
@@ -55,7 +55,7 @@ FONT 8, "MS Shell Dlg"
         CONTROL "Naslednji programi omogočajo samodejno odstranitev. Za odstranitev programa oz. spremembo nameščenih komponent izberite program s seznama in kliknite 'Dodaj/Odstrani'.", 1002, "STATIC", SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 40, 57, 270, 30
  CONTROL "", IDL_PROGRAMS, "SysListView32", LVS_REPORT | LVS_SINGLESEL | LVS_SORTASCENDING | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 7, 90, 303, 100
  CONTROL "&Informacije ...", IDC_SUPPORT_INFO, "button", BS_PUSHBUTTON | BS_CENTER | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 104, 198, 64, 14
- CONTROL "&Modify...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
+ CONTROL "&Modify ...", IDC_MODIFY, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 172, 198, 68, 14
  CONTROL "&Odstrani ...", IDC_ADDREMOVE, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 244, 198, 68, 14
  CONTROL 3, 1003, "STATIC", SS_ICON | WS_CHILD | WS_VISIBLE, 7, 57, 21, 20
 }
