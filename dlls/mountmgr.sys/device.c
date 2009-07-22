@@ -361,8 +361,8 @@ static NTSTATUS create_volume( const char *udi, enum device_type type, struct vo
 }
 
 /* create the disk device for a given volume */
-static NTSTATUS create_dos_device( const char *udi, int letter, enum device_type type,
-                                   struct dos_drive **drive_ret )
+static NTSTATUS create_dos_device( struct volume *volume, const char *udi, int letter,
+                                   enum device_type type, struct dos_drive **drive_ret )
 {
     struct dos_drive *drive;
     NTSTATUS status;
@@ -371,7 +371,15 @@ static NTSTATUS create_dos_device( const char *udi, int letter, enum device_type
     drive->drive = letter;
     drive->mount = NULL;
 
-    if (!(status = create_volume( udi, type, &drive->volume )))
+    if (volume)
+    {
+        if (udi) set_volume_udi( volume, udi );
+        drive->volume = volume;
+        status = STATUS_SUCCESS;
+    }
+    else status = create_volume( udi, type, &drive->volume );
+
+    if (status == STATUS_SUCCESS)
     {
         grab_volume( drive->volume );
         list_add_tail( &drives_list, &drive->entry );
@@ -389,6 +397,31 @@ static void delete_dos_device( struct dos_drive *drive )
     if (drive->mount) delete_mount_point( drive->mount );
     release_volume( drive->volume );
     RtlFreeHeap( GetProcessHeap(), 0, drive );
+}
+
+/* find a volume that matches the parameters */
+static struct volume *find_matching_volume( const char *udi, const char *device,
+                                            const char *mount_point, enum device_type type )
+{
+    struct volume *volume;
+    struct disk_device *disk_device;
+
+    LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
+    {
+        /* when we have a udi we only match drives added manually */
+        if (udi && volume->udi) continue;
+        /* and when we don't have a udi we only match dynamic drives */
+        if (!udi && !volume->udi) continue;
+
+        disk_device = volume->device;
+        if (disk_device->type != type) continue;
+        if (device && disk_device->unix_device && strcmp( device, disk_device->unix_device )) continue;
+        if (mount_point && disk_device->unix_mount && strcmp( mount_point, disk_device->unix_mount )) continue;
+        TRACE( "found matching volume %s for device %s mount %s type %u\n",
+               debugstr_guid(&volume->guid), debugstr_a(device), debugstr_a(mount_point), type );
+        return volume;
+    }
+    return NULL;
 }
 
 /* change the information for an existing volume */
@@ -424,7 +457,7 @@ static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive,
     disk_device->unix_device = strdupA( device );
     disk_device->unix_mount = strdupA( mount_point );
 
-    if (memcmp( &volume->guid, guid, sizeof(volume->guid) ))
+    if (guid && memcmp( &volume->guid, guid, sizeof(volume->guid) ))
     {
         volume->guid = *guid;
         if (volume->mount)
@@ -450,17 +483,23 @@ static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive,
     return STATUS_SUCCESS;
 }
 
-/* set or change the drive letter for an existing drive */
-static void set_drive_letter( struct dos_drive *drive, int letter )
+/* change the drive letter or volume for an existing drive */
+static void set_drive_info( struct dos_drive *drive, int letter, struct volume *volume )
 {
-    struct volume *volume = drive->volume;
-
-    if (drive->drive == letter) return;
-    if (drive->mount) delete_mount_point( drive->mount );
-    if (volume->mount) delete_mount_point( volume->mount );
-    drive->drive = letter;
-    drive->mount = NULL;
-    volume->mount = NULL;
+    if (drive->drive != letter)
+    {
+        if (drive->mount) delete_mount_point( drive->mount );
+        drive->mount = NULL;
+        drive->drive = letter;
+    }
+    if (drive->volume != volume)
+    {
+        if (drive->mount) delete_mount_point( drive->mount );
+        drive->mount = NULL;
+        grab_volume( volume );
+        release_volume( drive->volume );
+        drive->volume = volume;
+    }
 }
 
 static inline int is_valid_device( struct stat *st )
@@ -552,6 +591,7 @@ static void create_drive_devices(void)
 {
     char *path, *p, *link, *device;
     struct dos_drive *drive;
+    struct volume *volume;
     unsigned int i;
     HKEY drives_key;
     enum device_type drive_type;
@@ -588,9 +628,12 @@ static void create_drive_devices(void)
             }
         }
 
-        if (!create_dos_device( NULL, i, drive_type, &drive ))
+        volume = find_matching_volume( NULL, device, link, drive_type );
+        if (!create_dos_device( volume, NULL, i, drive_type, &drive ))
         {
-            set_volume_info( drive->volume, drive, device, link, drive_type, get_default_uuid(i) );
+            /* don't reset uuid if we used an existing volume */
+            const GUID *guid = volume ? NULL : get_default_uuid(i);
+            set_volume_info( drive->volume, drive, device, link, drive_type, guid );
         }
         else
         {
@@ -615,7 +658,12 @@ NTSTATUS add_volume( const char *udi, const char *device, const char *mount_poin
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
         if (volume->udi && !strcmp( udi, volume->udi )) goto found;
 
-    if ((status = create_volume( udi, type, &volume ))) return status;
+    /* udi not found, search for a non-dynamic volume */
+    if ((volume = find_matching_volume( udi, device, mount_point, type )))
+    {
+        set_volume_udi( volume, udi );
+    }
+    else if ((status = create_volume( udi, type, &volume ))) return status;
 
 found:
     return set_volume_info( volume, NULL, device, mount_point, type, guid );
@@ -644,6 +692,7 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
     HKEY hkey;
     NTSTATUS status = STATUS_SUCCESS;
     struct dos_drive *drive, *next;
+    struct volume *volume = find_matching_volume( udi, device, mount_point, type );
 
     if (!(path = get_dosdevices_path( &p ))) return STATUS_NO_MEMORY;
 
@@ -664,25 +713,28 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
     }
     else  /* simply reset the device symlink */
     {
-        *p = 'a' + letter;
         LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
+            if (drive->drive == letter) break;
+
+        *p = 'a' + letter;
+        if (&drive->entry == &drives_list) update_symlink( path, device, NULL );
+        else
         {
-            if (drive->drive != letter) continue;
             update_symlink( path, device, drive->volume->device->unix_device );
-            goto found;
+            delete_dos_device( drive );
         }
-        update_symlink( path, device, NULL );
     }
 
-    if ((status = create_dos_device( udi, letter, type, &drive ))) goto done;
+    if ((status = create_dos_device( volume, udi, letter, type, &drive ))) goto done;
 
 found:
-    if (!guid) guid = get_default_uuid( letter );
+    if (!guid && !volume) guid = get_default_uuid( letter );
+    if (!volume) volume = drive->volume;
+    set_drive_info( drive, letter, volume );
     p[0] = 'a' + drive->drive;
     p[2] = 0;
-    update_symlink( path, mount_point, drive->volume->device->unix_mount );
-    set_drive_letter( drive, letter );
-    set_volume_info( drive->volume, drive, device, mount_point, type, guid );
+    update_symlink( path, mount_point, volume->device->unix_mount );
+    set_volume_info( volume, drive, device, mount_point, type, guid );
 
     TRACE( "added device %c: udi %s for %s on %s type %u\n",
            'a' + drive->drive, wine_dbgstr_a(udi), wine_dbgstr_a(device),
