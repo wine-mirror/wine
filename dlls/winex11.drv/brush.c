@@ -114,7 +114,7 @@ static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
 
     if (!ditherImage)
     {
-        ditherImage = X11DRV_DIB_CreateXImage( MATRIX_SIZE, MATRIX_SIZE, screen_depth );
+        ditherImage = X11DRV_DIB_CreateXImage( MATRIX_SIZE, MATRIX_SIZE, depth );
         if (!ditherImage) 
         {
             ERR("Could not create dither image\n");
@@ -144,7 +144,7 @@ static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
 	prevColor = color;
     }
 
-    pixmap = XCreatePixmap( gdi_display, root_window, MATRIX_SIZE, MATRIX_SIZE, screen_depth );
+    pixmap = XCreatePixmap( gdi_display, root_window, MATRIX_SIZE, MATRIX_SIZE, depth );
     XPutImage( gdi_display, pixmap, gc, ditherImage, 0, 0,
     	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
     wine_tsx11_unlock();
