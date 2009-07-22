@@ -111,6 +111,7 @@ my %private_idl_headers = (
     "axextend.idl" => 1,
     "dbccmd.idl" => 1,
     "dbcses.idl" => 1,
+    "dbdsad.idl" => 1,
     "dbinit.idl" => 1,
     "dbprop.idl" => 1,
     "dbs.idl" => 1,

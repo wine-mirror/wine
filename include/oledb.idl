@@ -22,6 +22,7 @@ import "ocidl.idl";
 import "propidl.idl";
 
 typedef ULONG DBBYTEOFFSET;
+typedef ULONG DBCOUNTITEM;
 
 #include "dbs.idl"
 
@@ -29,4 +30,5 @@ typedef ULONG DBBYTEOFFSET;
 #include "dbcses.idl"
 #include "dbprop.idl"
 #include "dbinit.idl"
+#include "dbdsad.idl"
 #include "opnrst.idl"
