@@ -630,22 +630,23 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
             status = STATUS_OBJECT_NAME_COLLISION;
             goto done;
         }
+
+        LIST_FOR_EACH_ENTRY_SAFE( drive, next, &drives_list, struct dos_drive, entry )
+        {
+            if (drive->volume->udi && !strcmp( udi, drive->volume->udi )) goto found;
+            if (drive->drive == letter) delete_dos_device( drive );
+        }
     }
     else  /* simply reset the device symlink */
     {
         *p = 'a' + letter;
-        update_symlink( path, device, NULL );
-    }
-
-    LIST_FOR_EACH_ENTRY_SAFE( drive, next, &drives_list, struct dos_drive, entry )
-    {
-        if (udi && drive->volume->udi && !strcmp( udi, drive->volume->udi ))
+        LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
         {
-            if (type == drive->volume->device->type) goto found;
-            delete_dos_device( drive );
-            continue;
+            if (drive->drive != letter) continue;
+            update_symlink( path, device, drive->volume->device->unix_device );
+            goto found;
         }
-        if (drive->drive == letter) delete_dos_device( drive );
+        update_symlink( path, device, NULL );
     }
 
     if ((status = create_dos_device( udi, letter, type, &drive ))) goto done;
