@@ -2777,7 +2777,19 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, buffer, 0,
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on already pending socket returned %d + errno %d\n", bret, WSAGetLastError());
+    ok((bret == FALSE && WSAGetLastError() == WSAEINVAL) || broken(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING) /* NT4 */,
+       "AcceptEx on already pending socket returned %d + errno %d\n", bret, WSAGetLastError());
+    if (bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING) {
+        /* We need to cancel this call, otherwise things fail */
+        bret = CancelIo((HANDLE) listener);
+        ok(bret, "Failed to cancel failed test. Bailing...\n");
+        if (!bret) return;
+
+        bret = pAcceptEx(listener, acceptor, buffer, 0,
+            sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+            &bytesReturned, &overlapped);
+        ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
+    }
 
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
     ok(iret == 0, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
