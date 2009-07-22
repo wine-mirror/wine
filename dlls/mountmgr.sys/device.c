@@ -71,6 +71,7 @@ struct volume
     struct list           entry;       /* entry in volumes list */
     struct disk_device   *device;      /* disk device */
     char                 *udi;         /* unique identifier for dynamic volumes */
+    unsigned int          ref;         /* ref count */
     GUID                  guid;        /* volume uuid */
     struct mount_point   *mount;       /* Volume{xxx} mount point */
 };
@@ -299,6 +300,46 @@ static void delete_disk_device( struct disk_device *device )
     IoDeleteDevice( device->dev_obj );
 }
 
+/* grab another reference to a volume */
+static unsigned int grab_volume( struct volume *volume )
+{
+    return ++volume->ref;
+}
+
+/* release a volume and delete the corresponding disk device when refcount is 0 */
+static unsigned int release_volume( struct volume *volume )
+{
+    unsigned int ret = --volume->ref;
+
+    TRACE( "%s udi %s count now %u\n", debugstr_guid(&volume->guid), debugstr_a(volume->udi), ret );
+    if (!ret)
+    {
+        assert( !volume->udi );
+        list_remove( &volume->entry );
+        if (volume->mount) delete_mount_point( volume->mount );
+        delete_disk_device( volume->device );
+        RtlFreeHeap( GetProcessHeap(), 0, volume );
+    }
+    return ret;
+}
+
+/* set the volume udi */
+static void set_volume_udi( struct volume *volume, const char *udi )
+{
+    if (udi)
+    {
+        assert( !volume->udi );
+        /* having a udi means the HAL side holds an extra reference */
+        if ((volume->udi = strdupA( udi ))) grab_volume( volume );
+    }
+    else if (volume->udi)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, volume->udi );
+        volume->udi = NULL;
+        release_volume( volume );
+    }
+}
+
 /* create a disk volume */
 static NTSTATUS create_volume( const char *udi, enum device_type type, struct volume **volume_ret )
 {
@@ -308,32 +349,15 @@ static NTSTATUS create_volume( const char *udi, enum device_type type, struct vo
     if (!(volume = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*volume) )))
         return STATUS_NO_MEMORY;
 
-    if (udi && !(volume->udi = strdupA( udi )))
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, volume );
-        return STATUS_NO_MEMORY;
-    }
     if (!(status = create_disk_device( type, &volume->device )))
     {
+        if (udi) set_volume_udi( volume, udi );
         list_add_tail( &volumes_list, &volume->entry );
         *volume_ret = volume;
     }
-    else
-    {
-        RtlFreeHeap( GetProcessHeap(), 0, volume->udi );
-        RtlFreeHeap( GetProcessHeap(), 0, volume );
-    }
-    return status;
-}
+    else RtlFreeHeap( GetProcessHeap(), 0, volume );
 
-/* delete a volume and the corresponding disk device */
-static void delete_volume( struct volume *volume )
-{
-    list_remove( &volume->entry );
-    if (volume->mount) delete_mount_point( volume->mount );
-    delete_disk_device( volume->device );
-    RtlFreeHeap( GetProcessHeap(), 0, volume->udi );
-    RtlFreeHeap( GetProcessHeap(), 0, volume );
+    return status;
 }
 
 /* create the disk device for a given volume */
@@ -349,6 +373,7 @@ static NTSTATUS create_dos_device( const char *udi, int letter, enum device_type
 
     if (!(status = create_volume( udi, type, &drive->volume )))
     {
+        grab_volume( drive->volume );
         list_add_tail( &drives_list, &drive->entry );
         *drive_ret = drive;
     }
@@ -362,7 +387,7 @@ static void delete_dos_device( struct dos_drive *drive )
 {
     list_remove( &drive->entry );
     if (drive->mount) delete_mount_point( drive->mount );
-    delete_volume( drive->volume );
+    release_volume( drive->volume );
     RtlFreeHeap( GetProcessHeap(), 0, drive );
 }
 
@@ -604,7 +629,7 @@ NTSTATUS remove_volume( const char *udi )
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
     {
         if (!volume->udi || strcmp( udi, volume->udi )) continue;
-        delete_volume( volume );
+        set_volume_udi( volume, NULL );
         return STATUS_SUCCESS;
     }
     return STATUS_NO_SUCH_DEVICE;
@@ -699,6 +724,7 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
         {
             if (!drive->volume->udi) continue;
             if (strcmp( udi, drive->volume->udi )) continue;
+            set_volume_udi( drive->volume, NULL );
         }
         else if (drive->drive != letter) continue;
 
