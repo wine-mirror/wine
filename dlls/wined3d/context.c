@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
  * change the opengl context. This flag allows to keep track which device is active
  */
 static IWineD3DDeviceImpl *last_device;
+static DWORD wined3d_context_tls_idx;
 
 void context_set_last_device(IWineD3DDeviceImpl *device)
 {
@@ -557,6 +558,53 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
     }
 }
 
+DWORD context_get_tls_idx(void)
+{
+    return wined3d_context_tls_idx;
+}
+
+void context_set_tls_idx(DWORD idx)
+{
+    wined3d_context_tls_idx = idx;
+}
+
+struct WineD3DContext *context_get_current(void)
+{
+    return TlsGetValue(wined3d_context_tls_idx);
+}
+
+BOOL context_set_current(struct WineD3DContext *ctx)
+{
+    struct WineD3DContext *old = context_get_current();
+
+    if (old == ctx)
+    {
+        TRACE("Already using D3D context %p.\n", ctx);
+        return TRUE;
+    }
+
+    if (ctx)
+    {
+        TRACE("Switching to D3D context %p, GL context %p, device context %p.\n", ctx, ctx->glCtx, ctx->hdc);
+        if (!pwglMakeCurrent(ctx->hdc, ctx->glCtx))
+        {
+            ERR("Failed to make GL context %p current on device context %p.\n", ctx->glCtx, ctx->hdc);
+            return FALSE;
+        }
+    }
+    else
+    {
+        TRACE("Clearing current D3D context.\n");
+        if (!pwglMakeCurrent(NULL, NULL))
+        {
+            ERR("Failed to clear current GL context.\n");
+            return FALSE;
+        }
+    }
+
+    return TlsSetValue(wined3d_context_tls_idx, ctx);
+}
+
 /*****************************************************************************
  * Context_MarkStateDirty
  *
@@ -1038,7 +1086,8 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     list_init(&ret->fbo_list);
 
     /* Set up the context defaults */
-    if(pwglMakeCurrent(hdc, ctx) == FALSE) {
+    if (!context_set_current(ret))
+    {
         ERR("Cannot activate context to set up defaults\n");
         goto out;
     }
@@ -1247,10 +1296,9 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
         TRACE("Destroying the active context.\n");
     }
 
-    /* Cleanup the GL context */
-    if (!pwglMakeCurrent(NULL, NULL))
+    if (!context_set_current(NULL))
     {
-        ERR("Failed to disable GL context.\n");
+        ERR("Failed to clear current D3D context.\n");
     }
 
     if(context->isPBuffer) {
@@ -1779,24 +1827,9 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
     /* Activate the opengl context */
     if(last_device != This || context != This->activeContext) {
-        BOOL ret;
+        if (!context_set_current(context)) ERR("Failed to activate the new context.\n");
+        else This->frag_pipe->enable_extension((IWineD3DDevice *)This, !context->last_was_blit);
 
-        /* Prevent an unneeded context switch as those are expensive */
-        if(context->glCtx && (context->glCtx == pwglGetCurrentContext())) {
-            TRACE("Already using gl context %p\n", context->glCtx);
-        }
-        else {
-            TRACE("Switching gl ctx to %p, hdc=%p ctx=%p\n", context, context->hdc, context->glCtx);
-
-            ret = pwglMakeCurrent(context->hdc, context->glCtx);
-            if(ret == FALSE) {
-                ERR("Failed to activate the new context\n");
-            } else if(!context->last_was_blit) {
-                This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
-            } else {
-                This->frag_pipe->enable_extension((IWineD3DDevice *) This, FALSE);
-            }
-        }
         if(This->activeContext->vshader_const_dirty) {
             memset(This->activeContext->vshader_const_dirty, 1,
                    sizeof(*This->activeContext->vshader_const_dirty) * GL_LIMITS(vshader_constantsF));

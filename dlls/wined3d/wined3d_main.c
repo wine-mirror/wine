@@ -97,6 +97,7 @@ static void CDECL wined3d_do_nothing(void)
 
 static BOOL wined3d_init(HINSTANCE hInstDLL)
 {
+    DWORD wined3d_context_tls_idx;
     HMODULE mod;
     char buffer[MAX_PATH+10];
     DWORD size = sizeof(buffer);
@@ -104,6 +105,15 @@ static BOOL wined3d_init(HINSTANCE hInstDLL)
     HKEY appkey = 0;
     DWORD len, tmpvalue;
     WNDCLASSA wc;
+
+    wined3d_context_tls_idx = TlsAlloc();
+    if (wined3d_context_tls_idx == TLS_OUT_OF_INDEXES)
+    {
+        DWORD err = GetLastError();
+        ERR("Failed to allocate context TLS index, err %#x.\n", err);
+        return FALSE;
+    }
+    context_set_tls_idx(wined3d_context_tls_idx);
 
     /* We need our own window class for a fake window which we use to retrieve GL capabilities */
     /* We might need CS_OWNDC in the future if we notice strange things on Windows.
@@ -122,6 +132,11 @@ static BOOL wined3d_init(HINSTANCE hInstDLL)
     if (!RegisterClassA(&wc))
     {
         ERR("Failed to register window class 'WineD3D_OpenGL'!\n");
+        if (!TlsFree(wined3d_context_tls_idx))
+        {
+            DWORD err = GetLastError();
+            ERR("Failed to free context TLS index, err %#x.\n", err);
+        }
         return FALSE;
     }
 
@@ -322,6 +337,14 @@ static BOOL wined3d_init(HINSTANCE hInstDLL)
 
 static BOOL wined3d_destroy(HINSTANCE hInstDLL)
 {
+    DWORD wined3d_context_tls_idx = context_get_tls_idx();
+
+    if (!TlsFree(wined3d_context_tls_idx))
+    {
+        DWORD err = GetLastError();
+        ERR("Failed to free context TLS index, err %#x.\n", err);
+    }
+
     HeapFree(GetProcessHeap(), 0, wined3d_settings.logo);
     UnregisterClassA(WINED3D_OPENGL_WINDOW_CLASS_NAME, hInstDLL);
 
@@ -340,6 +363,15 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 
         case DLL_PROCESS_DETACH:
             return wined3d_destroy(hInstDLL);
+
+        case DLL_THREAD_DETACH:
+        {
+            if (!context_set_current(NULL))
+            {
+                ERR("Failed to clear current context.\n");
+            }
+            return TRUE;
+        }
 
         default:
             return TRUE;
