@@ -558,6 +558,59 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
     }
 }
 
+static void context_destroy_gl_resources(struct WineD3DContext *context)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct fbo_entry *entry, *entry2;
+    BOOL has_glctx;
+
+    has_glctx = pwglMakeCurrent(context->hdc, context->glCtx);
+    if (!has_glctx) WARN("Failed to activate context. Window already destroyed?\n");
+
+    ENTER_GL();
+
+    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry) {
+        if (!has_glctx) entry->id = 0;
+        context_destroy_fbo_entry(context, entry);
+    }
+    if (has_glctx)
+    {
+        if (context->src_fbo)
+        {
+            TRACE("Destroy src FBO %d\n", context->src_fbo);
+            context_destroy_fbo(context, &context->src_fbo);
+        }
+        if (context->dst_fbo)
+        {
+            TRACE("Destroy dst FBO %d\n", context->dst_fbo);
+            context_destroy_fbo(context, &context->dst_fbo);
+        }
+        if (context->dummy_arbfp_prog)
+        {
+            GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
+        }
+    }
+
+    LEAVE_GL();
+
+    if (!pwglMakeCurrent(NULL, NULL))
+    {
+        ERR("Failed to disable GL context.\n");
+    }
+
+    if (context->isPBuffer)
+    {
+        GL_EXTCALL(wglReleasePbufferDCARB(context->pbuffer, context->hdc));
+        GL_EXTCALL(wglDestroyPbufferARB(context->pbuffer));
+    }
+    else
+    {
+        ReleaseDC(context->win_handle, context->hdc);
+    }
+
+    pwglDeleteContext(context->glCtx);
+}
+
 DWORD context_get_tls_idx(void)
 {
     return wined3d_context_tls_idx;
@@ -583,6 +636,20 @@ BOOL context_set_current(struct WineD3DContext *ctx)
         return TRUE;
     }
 
+    if (old)
+    {
+        if (old->destroyed)
+        {
+            TRACE("Switching away from destroyed context %p.\n", old);
+            context_destroy_gl_resources(old);
+            HeapFree(GetProcessHeap(), 0, old);
+        }
+        else
+        {
+            old->current = 0;
+        }
+    }
+
     if (ctx)
     {
         TRACE("Switching to D3D context %p, GL context %p, device context %p.\n", ctx, ctx->glCtx, ctx->hdc);
@@ -591,6 +658,7 @@ BOOL context_set_current(struct WineD3DContext *ctx)
             ERR("Failed to make GL context %p current on device context %p.\n", ctx->glCtx, ctx->hdc);
             return FALSE;
         }
+        ctx->current = 1;
     }
     else
     {
@@ -1205,7 +1273,6 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *con
     {
         if (This->contexts[i] == context)
         {
-            HeapFree(GetProcessHeap(), 0, context);
             found = TRUE;
             break;
         }
@@ -1251,65 +1318,40 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *con
  *  context: Context to destroy
  *
  *****************************************************************************/
-void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context) {
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct fbo_entry *entry, *entry2;
-    BOOL has_glctx;
+void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context)
+{
+    BOOL destroy;
 
     TRACE("Destroying ctx %p\n", context);
 
-    /* The correct GL context needs to be active to cleanup the GL resources below */
-    has_glctx = pwglMakeCurrent(context->hdc, context->glCtx);
-    context_set_last_device(NULL);
-
-    if (!has_glctx) WARN("Failed to activate context. Window already destroyed?\n");
-
-    ENTER_GL();
-
-    LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry) {
-        if (!has_glctx) entry->id = 0;
-        context_destroy_fbo_entry(context, entry);
-    }
-    if (has_glctx)
+    if (context->tid == GetCurrentThreadId() || !context->current)
     {
-        if (context->src_fbo)
+        context_destroy_gl_resources(context);
+        destroy = TRUE;
+
+        context_set_last_device(NULL);
+
+        if (This->activeContext == context)
         {
-            TRACE("Destroy src FBO %d\n", context->src_fbo);
-            context_destroy_fbo(context, &context->src_fbo);
+            This->activeContext = NULL;
+            TRACE("Destroying the active context.\n");
         }
-        if (context->dst_fbo)
+
+        if (!context_set_current(NULL))
         {
-            TRACE("Destroy dst FBO %d\n", context->dst_fbo);
-            context_destroy_fbo(context, &context->dst_fbo);
-        }
-        if (context->dummy_arbfp_prog)
-        {
-            GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
+            ERR("Failed to clear current D3D context.\n");
         }
     }
-
-    LEAVE_GL();
-
-    if (This->activeContext == context)
+    else
     {
-        This->activeContext = NULL;
-        TRACE("Destroying the active context.\n");
+        context->destroyed = 1;
+        destroy = FALSE;
     }
-
-    if (!context_set_current(NULL))
-    {
-        ERR("Failed to clear current D3D context.\n");
-    }
-
-    if(context->isPBuffer) {
-        GL_EXTCALL(wglReleasePbufferDCARB(context->pbuffer, context->hdc));
-        GL_EXTCALL(wglDestroyPbufferARB(context->pbuffer));
-    } else ReleaseDC(context->win_handle, context->hdc);
-    pwglDeleteContext(context->glCtx);
 
     HeapFree(GetProcessHeap(), 0, context->vshader_const_dirty);
     HeapFree(GetProcessHeap(), 0, context->pshader_const_dirty);
     RemoveContextFromArray(This, context);
+    if (destroy) HeapFree(GetProcessHeap(), 0, context);
 }
 
 /* GL locking is done by the caller */
