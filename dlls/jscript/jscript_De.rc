@@ -24,11 +24,14 @@ LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 {
+    IDS_TO_PRIMITIVE        "Fehler beim umwandeln des Objektes in einen Grundtyp"
     IDS_INVALID_CALL_ARG    "Ungültiger Funktionsaufruf oder Argument"
     IDS_NO_PROPERTY         "Das Objekt unterstützt diese Eigenschaft oder Methode nicht"
     IDS_ARG_NOT_OPT         "Argument nicht optional"
+    IDS_NOT_FUNC            "Funktion erwarted"
     IDS_NOT_DATE            "'[Objekt]' ist kein Datums-Objekt"
     IDS_NOT_NUM             "Nummer erwartet"
+    IDS_UNDEFINED           "'|' nicht definiert"
     IDS_NOT_BOOL            "Boolisches Objekt erwartet"
     IDS_INVALID_LENGTH      "Array-Größe muss eine endliche, positive Ganzzahl sein"
 }
