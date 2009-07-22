@@ -352,9 +352,11 @@ static void delete_dos_device( struct dos_drive *drive )
 }
 
 /* change the information for an existing volume */
-static NTSTATUS set_volume_info( struct volume *volume, const char *device, const char *mount_point,
-                                 enum device_type type, const GUID *guid )
+static NTSTATUS set_volume_info( struct volume *volume, struct dos_drive *drive, const char *device,
+                                 const char *mount_point, enum device_type type, const GUID *guid )
 {
+    void *id = NULL;
+    unsigned int id_len = 0;
     struct disk_device *disk_device = volume->device;
     NTSTATUS status;
 
@@ -365,6 +367,11 @@ static NTSTATUS set_volume_info( struct volume *volume, const char *device, cons
         {
             delete_mount_point( volume->mount );
             volume->mount = NULL;
+        }
+        if (drive && drive->mount)
+        {
+            delete_mount_point( drive->mount );
+            drive->mount = NULL;
         }
         delete_disk_device( volume->device );
         volume->device = disk_device;
@@ -389,19 +396,17 @@ static NTSTATUS set_volume_info( struct volume *volume, const char *device, cons
 
     if (!volume->mount)
         volume->mount = add_volume_mount_point( disk_device->dev_obj, &disk_device->name, &volume->guid );
+    if (drive && !drive->mount)
+        drive->mount = add_dosdev_mount_point( disk_device->dev_obj, &disk_device->name, drive->drive );
 
-    if (volume->mount)
+    if (disk_device->unix_mount)
     {
-        void *id = NULL;
-        unsigned int id_len = 0;
-
-        if (disk_device->unix_mount)
-        {
-            id = disk_device->unix_mount;
-            id_len = strlen( disk_device->unix_mount ) + 1;
-        }
-        set_mount_point_id( volume->mount, id, id_len );
+        id = disk_device->unix_mount;
+        id_len = strlen( disk_device->unix_mount ) + 1;
     }
+    if (volume->mount) set_mount_point_id( volume->mount, id, id_len );
+    if (drive && drive->mount) set_mount_point_id( drive->mount, id, id_len );
+
     return STATUS_SUCCESS;
 }
 
@@ -593,10 +598,8 @@ static void create_drive_devices(void)
 
         if (!create_dos_device( NULL, drive_type, &drive ))
         {
-            drive->volume->device->unix_mount = link;
-            drive->volume->device->unix_device = device;
-            drive->volume->guid = *get_default_uuid( i );
-            set_drive_letter( drive, i );
+            drive->drive = i;
+            set_volume_info( drive->volume, drive, device, link, drive_type, get_default_uuid(i) );
         }
         else
         {
@@ -624,7 +627,7 @@ NTSTATUS add_volume( const char *udi, const char *device, const char *mount_poin
     if ((status = create_volume( udi, type, &volume ))) return status;
 
 found:
-    return set_volume_info( volume, device, mount_point, type, guid );
+    return set_volume_info( volume, NULL, device, mount_point, type, guid );
 }
 
 /* create a new disk volume */
