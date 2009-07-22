@@ -31,4 +31,5 @@ typedef ULONG DBCOUNTITEM;
 #include "dbprop.idl"
 #include "dbinit.idl"
 #include "dbdsad.idl"
+#include "sesprp.idl"
 #include "opnrst.idl"

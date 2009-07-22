@@ -401,6 +401,7 @@ SRCDIR_INCLUDES = \
 	secext.h \
 	security.h \
 	sensapi.h \
+	sesprp.idl \
 	setupapi.h \
 	sfc.h \
 	shdispid.h \
