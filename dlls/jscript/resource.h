@@ -18,6 +18,7 @@
 
 #include <windef.h>
 
+#define IDS_TO_PRIMITIVE                    0x0001
 #define IDS_INVALID_CALL_ARG                0x0005
 #define IDS_NO_PROPERTY                     0x01B6
 #define IDS_ARG_NOT_OPT                     0x01c1

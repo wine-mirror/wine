@@ -211,7 +211,7 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
         if(SUCCEEDED(hres)) {
             hres = jsdisp_call(jsdisp, id, ctx->lcid, DISPATCH_METHOD, &dp, ret, ei, NULL /*FIXME*/);
             if(FAILED(hres)) {
-                FIXME("throw TypeError\n");
+                WARN("call error - forwarding exception\n");
                 jsdisp_release(jsdisp);
                 return hres;
             }
@@ -227,7 +227,7 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
         if(SUCCEEDED(hres)) {
             hres = jsdisp_call(jsdisp, id, ctx->lcid, DISPATCH_METHOD, &dp, ret, ei, NULL /*FIXME*/);
             if(FAILED(hres)) {
-                FIXME("throw TypeError\n");
+                WARN("call error - forwarding exception\n");
                 jsdisp_release(jsdisp);
                 return hres;
             }
@@ -241,8 +241,8 @@ HRESULT to_primitive(script_ctx_t *ctx, VARIANT *v, jsexcept_t *ei, VARIANT *ret
 
         jsdisp_release(jsdisp);
 
-        FIXME("throw TypeError\n");
-        return E_FAIL;
+        WARN("failed\n");
+        return throw_type_error(ctx, ei, IDS_TO_PRIMITIVE, NULL);
     }
     default:
         FIXME("Unimplemented for vt %d\n", V_VT(v));
