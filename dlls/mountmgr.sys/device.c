@@ -337,13 +337,14 @@ static void delete_volume( struct volume *volume )
 }
 
 /* create the disk device for a given volume */
-static NTSTATUS create_dos_device( const char *udi, enum device_type type, struct dos_drive **drive_ret )
+static NTSTATUS create_dos_device( const char *udi, int letter, enum device_type type,
+                                   struct dos_drive **drive_ret )
 {
     struct dos_drive *drive;
     NTSTATUS status;
 
     if (!(drive = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*drive) ))) return STATUS_NO_MEMORY;
-    drive->drive = -1;
+    drive->drive = letter;
     drive->mount = NULL;
 
     if (!(status = create_volume( udi, type, &drive->volume )))
@@ -562,9 +563,8 @@ static void create_drive_devices(void)
             }
         }
 
-        if (!create_dos_device( NULL, drive_type, &drive ))
+        if (!create_dos_device( NULL, i, drive_type, &drive ))
         {
-            drive->drive = i;
             set_volume_info( drive->volume, drive, device, link, drive_type, get_default_uuid(i) );
         }
         else
@@ -616,6 +616,7 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
                          const char *mount_point, enum device_type type, const GUID *guid )
 {
     char *path, *p;
+    HKEY hkey;
     NTSTATUS status = STATUS_SUCCESS;
     struct dos_drive *drive, *next;
 
@@ -647,7 +648,7 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
         if (drive->drive == letter) delete_dos_device( drive );
     }
 
-    if ((status = create_dos_device( udi, type, &drive ))) goto done;
+    if ((status = create_dos_device( udi, letter, type, &drive ))) goto done;
 
 found:
     if (!guid) guid = get_default_uuid( letter );
@@ -657,32 +658,28 @@ found:
     set_drive_letter( drive, letter );
     set_volume_info( drive->volume, drive, device, mount_point, type, guid );
 
-    if (drive->drive != -1)
+    TRACE( "added device %c: udi %s for %s on %s type %u\n",
+           'a' + drive->drive, wine_dbgstr_a(udi), wine_dbgstr_a(device),
+           wine_dbgstr_a(mount_point), type );
+
+    /* hack: force the drive type in the registry */
+    if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
     {
-        HKEY hkey;
+        const WCHAR *type_name = drive_types[type];
+        WCHAR name[3] = {'a',':',0};
 
-        TRACE( "added device %c: udi %s for %s on %s type %u\n",
-                    'a' + drive->drive, wine_dbgstr_a(udi), wine_dbgstr_a(device),
-                    wine_dbgstr_a(mount_point), type );
-
-        /* hack: force the drive type in the registry */
-        if (!RegCreateKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
-        {
-            const WCHAR *type_name = drive_types[type];
-            WCHAR name[3] = {'a',':',0};
-
-            name[0] += drive->drive;
-            if (!type_name[0] && type == DEVICE_HARDDISK) type_name = drive_types[DEVICE_FLOPPY];
-            if (type_name[0])
-                RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)type_name,
-                                (strlenW(type_name) + 1) * sizeof(WCHAR) );
-            else
-                RegDeleteValueW( hkey, name );
-            RegCloseKey( hkey );
-        }
-
-        if (udi) send_notify( drive->drive, DBT_DEVICEARRIVAL );
+        name[0] += drive->drive;
+        if (!type_name[0] && type == DEVICE_HARDDISK) type_name = drive_types[DEVICE_FLOPPY];
+        if (type_name[0])
+            RegSetValueExW( hkey, name, 0, REG_SZ, (const BYTE *)type_name,
+                            (strlenW(type_name) + 1) * sizeof(WCHAR) );
+        else
+            RegDeleteValueW( hkey, name );
+        RegCloseKey( hkey );
     }
+
+    if (udi) send_notify( drive->drive, DBT_DEVICEARRIVAL );
+
 done:
     RtlFreeHeap( GetProcessHeap(), 0, path );
     return status;
