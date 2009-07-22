@@ -1351,18 +1351,18 @@ static void test_CoGetContextToken(void)
     refs = IUnknown_AddRef((IUnknown *)token);
     ok(refs == 1, "Expected 1, got %u\n", refs);
 
-    refs = IUnknown_Release((IUnknown *)token);
-    ok(refs == 0, "Expected 0, got %u\n", refs);
-
     hr = pCoGetObjectContext(&IID_IObjContext, (void **)&ctx);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
     todo_wine ok(ctx == (IObjContext *)token, "Expected interface pointers to be the same\n");
 
     refs = IUnknown_AddRef((IUnknown *)ctx);
-    ok(refs == 2, "Expected 1, got %u\n", refs);
+    todo_wine ok(refs == 3, "Expected 3, got %u\n", refs);
 
     refs = IUnknown_Release((IUnknown *)ctx);
-    ok(refs == 1, "Expected 0, got %u\n", refs);
+    todo_wine ok(refs == 2, "Expected 2, got %u\n", refs);
+
+    refs = IUnknown_Release((IUnknown *)token);
+    todo_wine ok(refs == 1, "Expected 1, got %u\n", refs);
 
     /* CoGetContextToken does not add a reference */
     token = 0;
@@ -1376,6 +1376,9 @@ static void test_CoGetContextToken(void)
 
     refs = IUnknown_Release((IUnknown *)ctx);
     ok(refs == 1, "Expected 0, got %u\n", refs);
+
+    refs = IUnknown_Release((IUnknown *)ctx);
+    ok(refs == 0, "Expected 0, got %u\n", refs);
 
     CoUninitialize();
 }
