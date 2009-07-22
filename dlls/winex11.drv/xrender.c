@@ -1733,6 +1733,41 @@ static void set_xrender_transformation(Picture src_pict, float xscale, float ysc
 #endif
 }
 
+/* Helper function for (stretched) blitting using xrender */
+static void xrender_blit(Picture src_pict, Picture mask_pict, Picture dst_pict, int x_src, int y_src, float xscale, float yscale, int width, int height)
+{
+    /* Further down a transformation matrix is used for stretching and mirroring the source data.
+     * xscale/yscale contain the scaling factors for the width and height. In case of mirroring
+     * we also need a x- and y-offset because without the pixels will be in the wrong quadrant of the x-y plane.
+     */
+    int x_offset = (xscale<0) ? width : 0;
+    int y_offset = (yscale<0) ? height : 0;
+
+    /* When we need to scale we perform scaling and source_x / source_y translation using a transformation matrix.
+     * This is needed because XRender is inaccurate in combination with scaled source coordinates passed to XRenderComposite.
+     * In all other cases we do use XRenderComposite for translation as it is faster than using a transformation matrix. */
+    if(xscale != 1.0 || yscale != 1.0)
+    {
+        /* When we are using a mask, 'src_pict' contains a 1x1 picture for tiling, the actual source data is in mask_pict */
+        if(mask_pict)
+            set_xrender_transformation(mask_pict, xscale, yscale, x_offset, y_offset);
+        else
+            set_xrender_transformation(src_pict, xscale, yscale, x_src + x_offset, y_src + y_offset);
+
+        pXRenderComposite(gdi_display, PictOpSrc, src_pict, mask_pict, dst_pict, 0, 0, 0, 0, 0, 0, width, height);
+    }
+    else
+    {
+        /* When we are using a mask, 'src_pict' contains a 1x1 picture for tiling, the actual source data is in mask_pict */
+        if(mask_pict)
+            set_xrender_transformation(mask_pict, 1, 1, 0, 0);
+        else
+            set_xrender_transformation(src_pict, 1, 1, 0, 0);
+
+        pXRenderComposite(gdi_display, PictOpSrc, src_pict, mask_pict, dst_pict, x_src, y_src, 0, 0, 0, 0, width, height);
+    }
+}
+
 /******************************************************************************
  * AlphaBlend         (x11drv.@)
  */
@@ -1933,34 +1968,28 @@ BOOL CDECL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT wid
 
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                       Pixmap pixmap, GC gc,
-                                      INT xSrc, INT ySrc,
                                       INT widthSrc, INT heightSrc,
-                                      INT xDst, INT yDst,
                                       INT widthDst, INT heightDst,
                                       RECT *visRectSrc, RECT *visRectDst )
 {
     BOOL stretch = (widthSrc != widthDst) || (heightSrc != heightDst);
     int width = visRectDst->right - visRectDst->left;
     int height = visRectDst->bottom - visRectDst->top;
+    int x_src = physDevSrc->dc_rect.left + visRectSrc->left;
+    int y_src = physDevSrc->dc_rect.top + visRectSrc->top;
     WineXRenderFormat *src_format = get_xrender_format_from_pdevice(physDevSrc);
     WineXRenderFormat *dst_format = get_xrender_format_from_pdevice(physDevDst);
     Picture src_pict=0, dst_pict=0, mask_pict=0;
 
-    /* Further down a transformation matrix is used for stretching and mirroring the source data.
-     * xscale/yscale contain the scaling factors for the width and height. In case of mirroring
-     * we also need a x- and y-offset because without the pixels will be in the wrong quadrant of the x-y plane.
-     */
     double xscale = widthSrc/(double)widthDst;
     double yscale = heightSrc/(double)heightDst;
-    int xoffset = (xscale<0) ? width : 0;
-    int yoffset = (yscale<0) ? height : 0;
 
     XRenderPictureAttributes pa;
     pa.subwindow_mode = IncludeInferiors;
     pa.repeat = RepeatNone;
 
-    TRACE("src depth=%d widthSrc=%d heightSrc=%d xSrc=%d ySrc=%d\n", physDevSrc->depth, widthSrc, heightSrc, xSrc, ySrc);
-    TRACE("dst depth=%d widthDst=%d heightDst=%d xDst=%d yDst=%d\n", physDevDst->depth, widthDst, heightDst, xDst, yDst);
+    TRACE("src depth=%d widthSrc=%d heightSrc=%d xSrc=%d ySrc=%d\n", physDevSrc->depth, widthSrc, heightSrc, x_src, y_src);
+    TRACE("dst depth=%d widthDst=%d heightDst=%d\n", physDevDst->depth, widthDst, heightDst);
 
     if(!X11DRV_XRender_Installed)
     {
@@ -1981,10 +2010,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
     {
         TRACE("Source and destination depth match and no stretching needed falling back to XCopyArea\n");
         wine_tsx11_lock();
-        XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc,
-                    physDevSrc->dc_rect.left + visRectSrc->left,
-                    physDevSrc->dc_rect.top + visRectSrc->top,
-                    width, height, 0, 0);
+        XCopyArea( gdi_display, physDevSrc->drawable, pixmap, gc, x_src, y_src, width, height, 0, 0);
         wine_tsx11_unlock();
         return TRUE;
     }
@@ -1998,7 +2024,6 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         /* We use the source drawable as a mask */
         wine_tsx11_lock();
         mask_pict = pXRenderCreatePicture(gdi_display, physDevSrc->drawable, src_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
-        set_xrender_transformation(mask_pict, xscale, yscale, xoffset, yoffset);
 
         /* Use backgroundPixel as the foreground color */
         src_pict = get_tile_pict(dst_format, physDevDst->backgroundPixel);
@@ -2007,12 +2032,7 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         dst_pict = pXRenderCreatePicture(gdi_display, pixmap, dst_format->pict_format, CPSubwindowMode|CPRepeat, &pa);
         pXRenderFillRectangle(gdi_display, PictOpSrc, dst_pict, &col, 0, 0, width, height);
 
-        /* Notice that the source coordinates have to be relative to the transformated source picture */
-        pXRenderComposite(gdi_display, PictOpSrc, src_pict, mask_pict, dst_pict,
-                          (physDevSrc->dc_rect.left + visRectSrc->left)/xscale,
-                          (physDevSrc->dc_rect.top + visRectSrc->top)/yscale,
-                          0, 0, 0, 0,
-                          width, height);
+        xrender_blit(src_pict, mask_pict, dst_pict, x_src, y_src, xscale, yscale, width, height);
 
         if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);
         if(mask_pict) pXRenderFreePicture(gdi_display, mask_pict);
@@ -2024,18 +2044,12 @@ BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE
         src_pict = pXRenderCreatePicture(gdi_display,
                                           physDevSrc->drawable, src_format->pict_format,
                                           CPSubwindowMode|CPRepeat, &pa);
-        set_xrender_transformation(src_pict, xscale, yscale, xoffset, yoffset);
 
         dst_pict = pXRenderCreatePicture(gdi_display,
                                           pixmap, dst_format->pict_format,
                                           CPSubwindowMode|CPRepeat, &pa);
 
-        /* Notice that the source coordinates have to be relative to the transformated source picture */
-        pXRenderComposite(gdi_display, PictOpSrc, src_pict, mask_pict, dst_pict,
-                          (physDevSrc->dc_rect.left + visRectSrc->left)/xscale,
-                          (physDevSrc->dc_rect.top + visRectSrc->top)/yscale,
-                          0, 0, 0, 0,
-                          width, height);
+        xrender_blit(src_pict, 0, dst_pict, x_src, y_src, xscale, yscale, width, height);
 
         if(src_pict) pXRenderFreePicture(gdi_display, src_pict);
         if(dst_pict) pXRenderFreePicture(gdi_display, dst_pict);

@@ -269,9 +269,7 @@ extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UIN
 				      UINT count, const INT *lpDx);
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                       Pixmap pixmap, GC gc,
-                                      INT xSrc, INT ySrc,
                                       INT widthSrc, INT heightSrc,
-                                      INT xDst, INT yDst,
                                       INT widthDst, INT heightDst,
                                       RECT *visRectSrc, RECT *visRectDst);
 extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);

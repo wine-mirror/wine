@@ -1438,8 +1438,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         wine_tsx11_unlock();
 
         if(!X11DRV_XRender_GetSrcAreaStretch( physDevSrc, physDevDst, pixmaps[SRC], tmpGC,
-                                              xSrc, ySrc, widthSrc, heightSrc,
-                                              xDst, yDst, widthDst, heightDst,
+                                              widthSrc, heightSrc, widthDst, heightDst,
                                               &visRectSrc, &visRectDst))
         {
             if (fStretch)
