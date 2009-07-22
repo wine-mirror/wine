@@ -148,6 +148,20 @@ static char *read_symlink( const char *path )
     }
 }
 
+/* update a symlink if it changed; return TRUE if updated */
+static void update_symlink( const char *path, const char *dest, const char *orig_dest )
+{
+    if (dest && dest[0])
+    {
+        if (!orig_dest || strcmp( orig_dest, dest ))
+        {
+            unlink( path );
+            symlink( dest, path );
+        }
+    }
+    else unlink( path );
+}
+
 /* send notification about a change to a given drive */
 static void send_notify( int drive, int code )
 {
@@ -517,42 +531,32 @@ done:
     return drive;
 }
 
-static BOOL set_unix_mount_point( struct dos_drive *drive, const char *mount_point )
+static void set_unix_mount_point( struct dos_drive *drive, const char *mount_point )
 {
     char *path, *p;
-    BOOL modified = FALSE;
     struct volume *volume = drive->volume;
     struct disk_device *device = volume->device;
 
-    if (!(path = get_dosdevices_path( &p ))) return FALSE;
+    if (!(path = get_dosdevices_path( &p ))) return;
     p[0] = 'a' + drive->drive;
     p[2] = 0;
+    update_symlink( path, mount_point, device->unix_mount );
+
+    RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
+    device->unix_mount = strdupA( mount_point );
 
     if (mount_point && mount_point[0])
     {
-        /* try to avoid unlinking if already set correctly */
-        if (!device->unix_mount || strcmp( device->unix_mount, mount_point ))
-        {
-            unlink( path );
-            symlink( mount_point, path );
-            modified = TRUE;
-        }
-        RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
-        device->unix_mount = strdupA( mount_point );
         if (drive->mount) set_mount_point_id( drive->mount, mount_point, strlen(mount_point) + 1 );
         if (volume->mount) set_mount_point_id( volume->mount, mount_point, strlen(mount_point) + 1 );
     }
     else
     {
-        if (unlink( path ) != -1) modified = TRUE;
-        RtlFreeHeap( GetProcessHeap(), 0, device->unix_mount );
-        device->unix_mount = NULL;
         if (drive->mount) set_mount_point_id( drive->mount, NULL, 0 );
         if (volume->mount) set_mount_point_id( volume->mount, NULL, 0 );
     }
 
     HeapFree( GetProcessHeap(), 0, path );
-    return modified;
 }
 
 /* create devices for mapped drives */
@@ -662,8 +666,7 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
 
         if (!(path = get_dosdevices_path( &p ))) return STATUS_NO_MEMORY;
         *p = 'a' + letter;
-        unlink( path );
-        if (device) symlink( device, path );
+        update_symlink( path, device, NULL );
     }
 
     LIST_FOR_EACH_ENTRY_SAFE( drive, next, &drives_list, struct dos_drive, entry )
@@ -721,31 +724,37 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
 {
     HKEY hkey;
     struct dos_drive *drive;
+    char *path, *p;
 
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
-        if (letter != -1 && drive->drive != letter) continue;
         if (udi)
         {
             if (!drive->volume->udi) continue;
             if (strcmp( udi, drive->volume->udi )) continue;
         }
+        else if (drive->drive != letter) continue;
 
-        if (drive->drive != -1)
+        if ((path = get_dosdevices_path( &p )))
         {
-            BOOL modified = set_unix_mount_point( drive, NULL );
-
-            /* clear the registry key too */
-            if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
-            {
-                WCHAR name[3] = {'a',':',0};
-                name[0] += drive->drive;
-                RegDeleteValueW( hkey, name );
-                RegCloseKey( hkey );
-            }
-
-            if (modified && udi) send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
+            p[0] = 'a' + drive->drive;
+            p[2] = 0;
+            unlink( path );
+            RtlFreeHeap( GetProcessHeap(), 0, path );
         }
+
+        /* clear the registry key too */
+        if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, drives_keyW, &hkey ))
+        {
+            WCHAR name[3] = {'a',':',0};
+            name[0] += drive->drive;
+            RegDeleteValueW( hkey, name );
+            RegCloseKey( hkey );
+        }
+
+        if (udi && drive->volume->device->unix_mount)
+            send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
+
         delete_dos_device( drive );
         return STATUS_SUCCESS;
     }
