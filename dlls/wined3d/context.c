@@ -1608,6 +1608,13 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     const struct GlPixelFormatDesc *old, *new;
     struct WineD3DContext *context;
 
+    if (!target) target = This->activeContext->current_rt;
+
+    if (This->activeContext->current_rt == target && This->activeContext->tid == tid)
+    {
+        return This->activeContext;
+    }
+
     if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain))) {
         TRACE("Rendering onscreen\n");
 
@@ -1763,6 +1770,9 @@ retry:
         This->isInDraw = oldInDraw;
     }
 
+    context->draw_buffer_dirty = TRUE;
+    context->current_rt = target;
+
     return context;
 }
 
@@ -1834,17 +1844,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
 
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
 
-    if (!target) target = This->activeContext->current_rt;
-
-    if (This->activeContext->current_rt != target || This->activeContext->tid != tid)
-    {
-        context = FindContext(This, target, tid);
-        context->draw_buffer_dirty = TRUE;
-        context->current_rt = target;
-    } else {
-        /* Stick to the old context */
-        context = This->activeContext;
-    }
+    context = FindContext(This, target, tid);
 
     gl_info = context->gl_info;
 
