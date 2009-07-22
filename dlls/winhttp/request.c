@@ -765,6 +765,7 @@ static LPWSTR concatenate_string_list( LPCWSTR *list, int len )
     len++;
 
     str = heap_alloc( len * sizeof(WCHAR) );
+    if (!str) return NULL;
     *str = 0;
 
     for( t = list; *t ; t++ )
@@ -789,6 +790,7 @@ static LPWSTR build_header_request_string( request_t *request, LPCWSTR verb,
     /* allocate space for an array of all the string pointers to be added */
     len = (request->num_headers) * 4 + 10;
     req = heap_alloc( len * sizeof(LPCWSTR) );
+    if (!req) return NULL;
 
     /* add the verb, path and HTTP version string */
     n = 0;
@@ -820,6 +822,7 @@ static LPWSTR build_header_request_string( request_t *request, LPCWSTR verb,
     req[n] = NULL;
     requestString = concatenate_string_list( req, 4 );
     heap_free( req );
+    if (!requestString) return NULL;
 
     /*
      * Set (header) termination string for request
