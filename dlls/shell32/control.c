@@ -97,7 +97,7 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 			 sizeof(*applet) + (applet->count - 1) * sizeof(NEWCPLINFOW));
 
     if (!(applet->cmd = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmd)+1) * sizeof(WCHAR)))) {
-        WARN("Cannot allocate memory for applet path");
+        WARN("Cannot allocate memory for applet path\n");
         goto theError;
     }
 
