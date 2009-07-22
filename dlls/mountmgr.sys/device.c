@@ -89,6 +89,15 @@ static struct list volumes_list = LIST_INIT(volumes_list);
 
 static DRIVER_OBJECT *harddisk_driver;
 
+static CRITICAL_SECTION device_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &device_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": device_section") }
+};
+static CRITICAL_SECTION device_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 static char *get_dosdevices_path( char **drive )
 {
     const char *config_dir = wine_get_config_dir();
@@ -650,37 +659,41 @@ NTSTATUS add_volume( const char *udi, const char *device, const char *mount_poin
                      enum device_type type, const GUID *guid )
 {
     struct volume *volume;
-    NTSTATUS status;
+    NTSTATUS status = STATUS_SUCCESS;
 
     TRACE( "adding %s device %s mount %s type %u uuid %s\n", debugstr_a(udi),
            debugstr_a(device), debugstr_a(mount_point), type, debugstr_guid(guid) );
 
+    EnterCriticalSection( &device_section );
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
         if (volume->udi && !strcmp( udi, volume->udi )) goto found;
 
     /* udi not found, search for a non-dynamic volume */
-    if ((volume = find_matching_volume( udi, device, mount_point, type )))
-    {
-        set_volume_udi( volume, udi );
-    }
-    else if ((status = create_volume( udi, type, &volume ))) return status;
+    if ((volume = find_matching_volume( udi, device, mount_point, type ))) set_volume_udi( volume, udi );
+    else status = create_volume( udi, type, &volume );
 
 found:
-    return set_volume_info( volume, NULL, device, mount_point, type, guid );
+    if (!status) status = set_volume_info( volume, NULL, device, mount_point, type, guid );
+    LeaveCriticalSection( &device_section );
+    return status;
 }
 
 /* create a new disk volume */
 NTSTATUS remove_volume( const char *udi )
 {
+    NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     struct volume *volume;
 
+    EnterCriticalSection( &device_section );
     LIST_FOR_EACH_ENTRY( volume, &volumes_list, struct volume, entry )
     {
         if (!volume->udi || strcmp( udi, volume->udi )) continue;
         set_volume_udi( volume, NULL );
-        return STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
+        break;
     }
-    return STATUS_NO_SUCH_DEVICE;
+    LeaveCriticalSection( &device_section );
+    return status;
 }
 
 
@@ -692,9 +705,13 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
     HKEY hkey;
     NTSTATUS status = STATUS_SUCCESS;
     struct dos_drive *drive, *next;
-    struct volume *volume = find_matching_volume( udi, device, mount_point, type );
+    struct volume *volume;
+    int notify = -1;
 
     if (!(path = get_dosdevices_path( &p ))) return STATUS_NO_MEMORY;
+
+    EnterCriticalSection( &device_section );
+    volume = find_matching_volume( udi, device, mount_point, type );
 
     if (letter == -1)  /* auto-assign a letter */
     {
@@ -756,20 +773,25 @@ found:
         RegCloseKey( hkey );
     }
 
-    if (udi) send_notify( drive->drive, DBT_DEVICEARRIVAL );
+    if (udi) notify = drive->drive;
 
 done:
+    LeaveCriticalSection( &device_section );
     RtlFreeHeap( GetProcessHeap(), 0, path );
+    if (notify != -1) send_notify( notify, DBT_DEVICEARRIVAL );
     return status;
 }
 
 /* remove an existing dos drive, by letter or udi */
 NTSTATUS remove_dos_device( int letter, const char *udi )
 {
+    NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     HKEY hkey;
     struct dos_drive *drive;
     char *path, *p;
+    int notify = -1;
 
+    EnterCriticalSection( &device_section );
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
         if (udi)
@@ -797,21 +819,25 @@ NTSTATUS remove_dos_device( int letter, const char *udi )
             RegCloseKey( hkey );
         }
 
-        if (udi && drive->volume->device->unix_mount)
-            send_notify( drive->drive, DBT_DEVICEREMOVECOMPLETE );
+        if (udi && drive->volume->device->unix_mount) notify = drive->drive;
 
         delete_dos_device( drive );
-        return STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
+        break;
     }
-    return STATUS_NO_SUCH_DEVICE;
+    LeaveCriticalSection( &device_section );
+    if (notify != -1) send_notify( notify, DBT_DEVICEREMOVECOMPLETE );
+    return status;
 }
 
 /* query information about an existing dos drive, by letter or udi */
 NTSTATUS query_dos_device( int letter, enum device_type *type, char **device, char **mount_point )
 {
+    NTSTATUS status = STATUS_NO_SUCH_DEVICE;
     struct dos_drive *drive;
     struct disk_device *disk_device;
 
+    EnterCriticalSection( &device_section );
     LIST_FOR_EACH_ENTRY( drive, &drives_list, struct dos_drive, entry )
     {
         if (drive->drive != letter) continue;
@@ -819,9 +845,11 @@ NTSTATUS query_dos_device( int letter, enum device_type *type, char **device, ch
         if (type) *type = disk_device->type;
         if (device) *device = strdupA( disk_device->unix_device );
         if (mount_point) *mount_point = strdupA( disk_device->unix_mount );
-        return STATUS_SUCCESS;
+        status = STATUS_SUCCESS;
+        break;
     }
-    return STATUS_NO_SUCH_DEVICE;
+    LeaveCriticalSection( &device_section );
+    return status;
 }
 
 /* handler for ioctls on the harddisk device */
@@ -834,6 +862,8 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
            irpsp->Parameters.DeviceIoControl.IoControlCode,
            irpsp->Parameters.DeviceIoControl.InputBufferLength,
            irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+
+    EnterCriticalSection( &device_section );
 
     switch(irpsp->Parameters.DeviceIoControl.IoControlCode)
     {
@@ -869,6 +899,8 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
         break;
     }
+
+    LeaveCriticalSection( &device_section );
     return irp->IoStatus.u.Status;
 }
 
