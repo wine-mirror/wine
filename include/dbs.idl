@@ -99,3 +99,13 @@ typedef struct tagDBPROPINFOSET {
     ULONG cPropertyInfos;
     GUID guidPropertySet;
 } DBPROPINFOSET;
+
+typedef DWORD DBBINDURLFLAG;
+typedef DWORD DBBINDURLSTATUS;
+
+typedef struct tagDBIMPLICITSESSION
+{
+    IUnknown *pUnkOuter;
+    IID *piid;
+    IUnknown *pSession;
+} DBIMPLICITSESSION;

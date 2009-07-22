@@ -106,6 +106,7 @@ SRCDIR_INCLUDES = \
 	basetsd.h \
 	basetyps.h \
 	bcrypt.h \
+	binres.idl \
 	bitsmsg.h \
 	cderr.h \
 	cfgmgr32.h \

@@ -20,6 +20,7 @@ import "wtypes.idl";
 import "oaidl.idl";
 import "ocidl.idl";
 import "propidl.idl";
+import "urlmon.idl";
 
 typedef ULONG DBBYTEOFFSET;
 typedef ULONG DBCOUNTITEM;
@@ -33,3 +34,4 @@ typedef ULONG DBCOUNTITEM;
 #include "dbdsad.idl"
 #include "sesprp.idl"
 #include "opnrst.idl"
+#include "binres.idl"
