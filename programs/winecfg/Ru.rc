@@ -24,13 +24,16 @@
 #include "config.h"   /* Needed for the PACKAGE_STRING definition */
 #include "resource.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
                                                                                 
 IDR_WINECFG MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "Configure", IDC_AUDIO_CONFIGURE
+        MENUITEM "РќР°СЃС‚СЂРѕРёС‚СЊ", IDC_AUDIO_CONFIGURE
     END
 END
 
@@ -42,14 +45,14 @@ BEGIN
     CONTROL         IDB_WINE,IDC_STATIC,"Static",SS_BITMAP ,15,17,157,111
     LTEXT           "http://www.winehq.org/",IDC_STATIC,119,31,106,8
 /*
-    LTEXT           "Эта библиотека является свободным программным обеспечением; вы можете распространять её и/или модифицировать согласно условиям лицензии GNU Lesser General Public License, опубликованной Free Software Foundation; версии 2.1 лицензии или (на ваше усмотрение) любой более поздней.",
+    LTEXT           "Р­С‚Р° Р±РёР±Р»РёРѕС‚РµРєР° СЏРІР»СЏРµС‚СЃСЏ СЃРІРѕР±РѕРґРЅС‹Рј РїСЂРѕРіСЂР°РјРјРЅС‹Рј РѕР±РµСЃРїРµС‡РµРЅРёРµРј; РІС‹ РјРѕР¶РµС‚Рµ СЂР°СЃРїСЂРѕСЃС‚СЂР°РЅСЏС‚СЊ РµС‘ Рё/РёР»Рё РјРѕРґРёС„РёС†РёСЂРѕРІР°С‚СЊ СЃРѕРіР»Р°СЃРЅРѕ СѓСЃР»РѕРІРёСЏРј Р»РёС†РµРЅР·РёРё GNU Lesser General Public License, РѕРїСѓР±Р»РёРєРѕРІР°РЅРЅРѕР№ Free Software Foundation; РІРµСЂСЃРёРё 2.1 Р»РёС†РµРЅР·РёРё РёР»Рё (РЅР° РІР°С€Рµ СѓСЃРјРѕС‚СЂРµРЅРёРµ) Р»СЋР±РѕР№ Р±РѕР»РµРµ РїРѕР·РґРЅРµР№.",
 */
     LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.",
                     IDC_STATIC,119,44,124,72
-    GROUPBOX        " Регистрационная информация Windows ", IDC_STATIC, 15, 110, 230, 55
-    LTEXT           "Имя:", IDC_STATIC, 22, 126, 40, 20
+    GROUPBOX        " Р РµРіРёСЃС‚СЂР°С†РёРѕРЅРЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ Windows ", IDC_STATIC, 15, 110, 230, 55
+    LTEXT           "РРјСЏ:", IDC_STATIC, 22, 126, 40, 20
     EDITTEXT        IDC_ABT_OWNER, 75, 126, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Организация:", IDC_STATIC, 22, 140, 50, 20
+    LTEXT           "РћСЂРіР°РЅРёР·Р°С†РёСЏ:", IDC_STATIC, 22, 140, 50, 20
     EDITTEXT        IDC_ABT_ORG, 75, 140, 160, 13, ES_AUTOHSCROLL | WS_TABSTOP
 END
 
@@ -57,14 +60,14 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Настройка приложений ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine может имитировать любую версию Windows для каждого приложения. Эта вкладка связана с вкладками Библиотеки и Графика, что позволяет изменение настроек в этих вкладках как для определённого приложения, так и глобально.",
+    GROUPBOX        " РќР°СЃС‚СЂРѕР№РєР° РїСЂРёР»РѕР¶РµРЅРёР№ ",IDC_STATIC, 8,4,244,240
+    LTEXT           "Wine РјРѕР¶РµС‚ РёРјРёС‚РёСЂРѕРІР°С‚СЊ Р»СЋР±СѓСЋ РІРµСЂСЃРёСЋ Windows РґР»СЏ РєР°Р¶РґРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ. Р­С‚Р° РІРєР»Р°РґРєР° СЃРІСЏР·Р°РЅР° СЃ РІРєР»Р°РґРєР°РјРё Р‘РёР±Р»РёРѕС‚РµРєРё Рё Р“СЂР°С„РёРєР°, С‡С‚Рѕ РїРѕР·РІРѕР»СЏРµС‚ РёР·РјРµРЅРµРЅРёРµ РЅР°СЃС‚СЂРѕРµРє РІ СЌС‚РёС… РІРєР»Р°РґРєР°С… РєР°Рє РґР»СЏ РѕРїСЂРµРґРµР»С‘РЅРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ, С‚Р°Рє Рё РіР»РѕР±Р°Р»СЊРЅРѕ.",
                     IDC_STATIC,15,20,227,60
-    CONTROL         "Приложения",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
+    CONTROL         "РџСЂРёР»РѕР¶РµРЅРёСЏ",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,65,230,134
-    PUSHBUTTON	    "&Добавить приложение...",IDC_APP_ADDAPP, 68,204,94,14
-    PUSHBUTTON	    "&Удалить приложение",IDC_APP_REMOVEAPP, 164,204,78,14
-    LTEXT           "&Версия Windows:",IDC_STATIC,17,226,58,8
+    PUSHBUTTON	    "&Р”РѕР±Р°РІРёС‚СЊ РїСЂРёР»РѕР¶РµРЅРёРµ...",IDC_APP_ADDAPP, 68,204,94,14
+    PUSHBUTTON	    "&РЈРґР°Р»РёС‚СЊ РїСЂРёР»РѕР¶РµРЅРёРµ",IDC_APP_REMOVEAPP, 164,204,78,14
+    LTEXT           "&Р’РµСЂСЃРёСЏ Windows:",IDC_STATIC,17,226,58,8
     COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
 
@@ -72,23 +75,23 @@ IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX    " Настройки окна ",IDC_STATIC,8,4,244,84
-    CONTROL     "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
-    CONTROL     "Разрешить менеджеру окон &декорировать окна",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
-    CONTROL     "Разрешить менеджеру окон управлять окнами Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
-    CONTROL     "Эмулировать виртуальный рабочий стол",IDC_ENABLE_DESKTOP,"Button",
+    GROUPBOX    " РќР°СЃС‚СЂРѕР№РєРё РѕРєРЅР° ",IDC_STATIC,8,4,244,84
+    CONTROL     "Р Р°Р·СЂРµС€РёС‚СЊ РїСЂРёР»РѕР¶РµРЅРёСЋ DirectX СѓРґРµСЂР¶РёРІР°С‚СЊ РјС‹С€СЊ РІ СЃРІРѕС‘Рј РѕРєРЅРµ",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,20,230,8
+    CONTROL     "Р Р°Р·СЂРµС€РёС‚СЊ РјРµРЅРµРґР¶РµСЂСѓ РѕРєРѕРЅ &РґРµРєРѕСЂРёСЂРѕРІР°С‚СЊ РѕРєРЅР°",IDC_ENABLE_DECORATED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
+    CONTROL     "Р Р°Р·СЂРµС€РёС‚СЊ РјРµРЅРµРґР¶РµСЂСѓ РѕРєРѕРЅ СѓРїСЂР°РІР»СЏС‚СЊ РѕРєРЅР°РјРё Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,44,230,8
+    CONTROL     "Р­РјСѓР»РёСЂРѕРІР°С‚СЊ РІРёСЂС‚СѓР°Р»СЊРЅС‹Р№ СЂР°Р±РѕС‡РёР№ СЃС‚РѕР»",IDC_ENABLE_DESKTOP,"Button",
                 BS_AUTOCHECKBOX | WS_TABSTOP,15,56,230,8
-    LTEXT       "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,70,84,8,WS_DISABLED
+    LTEXT       "Р Р°Р·РјРµСЂ СЂР°Р±РѕС‡РµРіРѕ СЃС‚РѕР»Р°:",IDC_DESKTOP_SIZE,15,70,84,8,WS_DISABLED
     LTEXT       "X",IDC_DESKTOP_BY,149,70,8,8,WS_DISABLED
     EDITTEXT    IDC_DESKTOP_WIDTH,104,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT    IDC_DESKTOP_HEIGHT,157,68,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 
     GROUPBOX    " Direct3D ",IDC_STATIC,8,95,244,49
-    LTEXT       "Вершинные шейдеры: ",IDC_STATIC,15,110,80,32
+    LTEXT       "Р’РµСЂС€РёРЅРЅС‹Рµ С€РµР№РґРµСЂС‹: ",IDC_STATIC,15,110,80,32
     COMBOBOX    IDC_D3D_VSHADER_MODE,100,108,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL     "Включить Pixel Shader (если поддерживается оборудованием)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
+    CONTROL     "Р’РєР»СЋС‡РёС‚СЊ Pixel Shader (РµСЃР»Рё РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РѕР±РѕСЂСѓРґРѕРІР°РЅРёРµРј)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,126,230,10
 
-    GROUPBOX    " Разрешение экрана ",IDC_STATIC,8,151,244,93
+    GROUPBOX    " Р Р°Р·СЂРµС€РµРЅРёРµ СЌРєСЂР°РЅР° ",IDC_STATIC,8,151,244,93
     CONTROL     "", IDC_RES_TRACKBAR, "msctls_trackbar32",WS_TABSTOP,12,161,187,15
     EDITTEXT    IDC_RES_DPIEDIT,204,161,23,13,ES_NUMBER|WS_TABSTOP
     LTEXT       "dpi",IDC_STATIC,235,163,10,8
@@ -99,233 +102,233 @@ IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Замещения DLL ",IDC_STATIC,8,4,244,240
-    LTEXT           "Здесь указывается, какую динамически подключаемую библиотеку (DLL) использовать: встроенную в Wine или стороннюю (из Windows)."
+    GROUPBOX        " Р—Р°РјРµС‰РµРЅРёСЏ DLL ",IDC_STATIC,8,4,244,240
+    LTEXT           "Р—РґРµСЃСЊ СѓРєР°Р·С‹РІР°РµС‚СЃСЏ, РєР°РєСѓСЋ РґРёРЅР°РјРёС‡РµСЃРєРё РїРѕРґРєР»СЋС‡Р°РµРјСѓСЋ Р±РёР±Р»РёРѕС‚РµРєСѓ (DLL) РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ: РІСЃС‚СЂРѕРµРЅРЅСѓСЋ РІ Wine РёР»Рё СЃС‚РѕСЂРѕРЅРЅСЋСЋ (РёР· Windows)."
                     ,IDC_STATIC,16,16,220,32
-    LTEXT           "Новое замещение для библиотеки:",IDC_STATIC,16,58,160,8
+    LTEXT           "РќРѕРІРѕРµ Р·Р°РјРµС‰РµРЅРёРµ РґР»СЏ Р±РёР±Р»РёРѕС‚РµРєРё:",IDC_STATIC,16,58,160,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
-    PUSHBUTTON      "&Добавить",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON 
-    LTEXT           "Существующие замещения:",IDC_STATIC,16,86,100,8
+    PUSHBUTTON      "&Р”РѕР±Р°РІРёС‚СЊ",IDC_DLLS_ADDDLL, 164,68,82,13,BS_DEFPUSHBUTTON
+    LTEXT           "РЎСѓС‰РµСЃС‚РІСѓСЋС‰РёРµ Р·Р°РјРµС‰РµРЅРёСЏ:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,140,WS_BORDER | WS_TABSTOP | WS_VSCROLL
-    PUSHBUTTON      "&Редактировать",IDC_DLLS_EDITDLL,164,96,82,14
-    PUSHBUTTON      "&Удалить",IDC_DLLS_REMOVEDLL,164,114,82,14 
+    PUSHBUTTON      "&Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ",IDC_DLLS_EDITDLL,164,96,82,14
+    PUSHBUTTON      "&РЈРґР°Р»РёС‚СЊ",IDC_DLLS_REMOVEDLL,164,114,82,14
 END
 
 IDD_LOADORDER DIALOG DISCARDABLE 80, 90, 150, 92
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
-CAPTION "Редактировать замещение"
+CAPTION "Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ Р·Р°РјРµС‰РµРЅРёРµ"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Порядок загрузки ",IDC_STATIC,8,4,135,66
-    CONTROL         "&Встроенная (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,105,10
-    CONTROL         "С&торонняя (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,105,10
-    CONTROL         "В&строенная, затем сторонняя",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,115,10
-    CONTROL         "Ст&оронняя, затем встроенная",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,115,10
-    CONTROL         "&Блокировать",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,105,10
+    GROUPBOX        " РџРѕСЂСЏРґРѕРє Р·Р°РіСЂСѓР·РєРё ",IDC_STATIC,8,4,135,66
+    CONTROL         "&Р’СЃС‚СЂРѕРµРЅРЅР°СЏ (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,105,10
+    CONTROL         "РЎ&С‚РѕСЂРѕРЅРЅСЏСЏ (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,105,10
+    CONTROL         "Р’&СЃС‚СЂРѕРµРЅРЅР°СЏ, Р·Р°С‚РµРј СЃС‚РѕСЂРѕРЅРЅСЏСЏ",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,115,10
+    CONTROL         "РЎС‚&РѕСЂРѕРЅРЅСЏСЏ, Р·Р°С‚РµРј РІСЃС‚СЂРѕРµРЅРЅР°СЏ",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,115,10
+    CONTROL         "&Р‘Р»РѕРєРёСЂРѕРІР°С‚СЊ",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,105,10
     DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
-    PUSHBUTTON      "Отмена",IDCANCEL,57,74,45,14,WS_GROUP
+    PUSHBUTTON      "РћС‚РјРµРЅР°",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Настройка дисков ",IDC_STATIC,8,4,244,240
-    LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
+    GROUPBOX        " РќР°СЃС‚СЂРѕР№РєР° РґРёСЃРєРѕРІ ",IDC_STATIC,8,4,244,240
+    LTEXT           "РќРµРІРѕР·РјРѕР¶РЅРѕ СЃРѕРµРґРёРЅРёС‚СЊСЃСЏ СЃ mount manager! РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ РґРёСЃРєРѕРІ РЅРµ Р±СѓРґРµС‚ СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊСЃСЏ.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,220,76
     CONTROL         "Listview",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
-    PUSHBUTTON      "&Добавить...",IDC_BUTTON_ADD,15,98,45,14
-    PUSHBUTTON      "&Удалить",IDC_BUTTON_REMOVE,66,98,47,14
-    PUSHBUTTON      "&Автоопределение...",IDC_BUTTON_AUTODETECT,165,98,80,14
+    PUSHBUTTON      "&Р”РѕР±Р°РІРёС‚СЊ...",IDC_BUTTON_ADD,15,98,45,14
+    PUSHBUTTON      "&РЈРґР°Р»РёС‚СЊ",IDC_BUTTON_REMOVE,66,98,47,14
+    PUSHBUTTON      "&РђРІС‚РѕРѕРїСЂРµРґРµР»РµРЅРёРµ...",IDC_BUTTON_AUTODETECT,165,98,80,14
 
     /* editing drive details */
-    LTEXT           "&Путь:",IDC_STATIC_PATH,15,123,20,9
+    LTEXT           "&РџСѓС‚СЊ:",IDC_STATIC_PATH,15,123,20,9
     EDITTEXT        IDC_EDIT_PATH,41,120,160,13,ES_AUTOHSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Обзор...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
+    PUSHBUTTON      "&РћР±Р·РѕСЂ...",IDC_BUTTON_BROWSE_PATH,206,120,40,13
     
-    LTEXT           "&Тип:",IDC_STATIC_TYPE,15,138,21,10
+    LTEXT           "&РўРёРї:",IDC_STATIC_TYPE,15,138,21,10
     COMBOBOX        IDC_COMBO_TYPE,41,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     
-    LTEXT           "Метка и серийный номер",IDC_LABELSERIAL_STATIC,15,155,95,10
+    LTEXT           "РњРµС‚РєР° Рё СЃРµСЂРёР№РЅС‹Р№ РЅРѕРјРµСЂ",IDC_LABELSERIAL_STATIC,15,155,95,10
     
-    PUSHBUTTON      "Дополнительно...",IDC_BUTTON_SHOW_HIDE_ADVANCED,150,136,96,13
-    CONTROL         "Автоопределить &c устройства:",IDC_RADIO_AUTODETECT,"Button",
+    PUSHBUTTON      "Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ...",IDC_BUTTON_SHOW_HIDE_ADVANCED,150,136,96,13
+    CONTROL         "РђРІС‚РѕРѕРїСЂРµРґРµР»РёС‚СЊ &c СѓСЃС‚СЂРѕР№СЃС‚РІР°:",IDC_RADIO_AUTODETECT,"Button",
                     BS_AUTORADIOBUTTON,15,166,150,10
     EDITTEXT        IDC_EDIT_DEVICE,27,176,174,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Об&зор...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
-    CONTROL         "&Назначить вручную:",IDC_RADIO_ASSIGN,"Button",
+    PUSHBUTTON      "РћР±&Р·РѕСЂ...",IDC_BUTTON_BROWSE_DEVICE,206,176,40,13
+    CONTROL         "&РќР°Р·РЅР°С‡РёС‚СЊ РІСЂСѓС‡РЅСѓСЋ:",IDC_RADIO_ASSIGN,"Button",
                     BS_AUTORADIOBUTTON,15,195,100,10
 
-    LTEXT           "&Метка:",IDC_STATIC_LABEL,33,208,29,12
+    LTEXT           "&РњРµС‚РєР°:",IDC_STATIC_LABEL,33,208,29,12
     EDITTEXT        IDC_EDIT_LABEL,103,205,118,13,ES_AUTOHSCROLL | WS_TABSTOP
-    LTEXT           "Серийный номер:",IDC_STATIC_SERIAL,33,225,80,12
+    LTEXT           "РЎРµСЂРёР№РЅС‹Р№ РЅРѕРјРµСЂ:",IDC_STATIC_SERIAL,33,225,80,12
     EDITTEXT        IDC_EDIT_SERIAL,103,221,118,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "Показывать файлы, начинающиеся с точки",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
+    CONTROL         "РџРѕРєР°Р·С‹РІР°С‚СЊ С„Р°Р№Р»С‹, РЅР°С‡РёРЅР°СЋС‰РёРµСЃСЏ СЃ С‚РѕС‡РєРё",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,260,230,8
 END
 
 IDD_AUDIOCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Выбор драйвера ",IDC_STATIC,8,4,244,195
-    LTEXT	    "Звуковой драйвер: ",IDC_STATIC,15,20,227,30
+    GROUPBOX        " Р’С‹Р±РѕСЂ РґСЂР°Р№РІРµСЂР° ",IDC_STATIC,8,4,244,195
+    LTEXT	    "Р—РІСѓРєРѕРІРѕР№ РґСЂР°Р№РІРµСЂ: ",IDC_STATIC,15,20,227,30
     CONTROL         "Devices",IDC_AUDIO_TREE,"SysTreeView32",WS_BORDER | WS_TABSTOP,15,50,140,140
-    PUSHBUTTON      "&Проверить звук",IDC_AUDIO_TEST,170,50,59,14
-    PUSHBUTTON	    "Панель управления",IDC_AUDIO_CONTROL_PANEL,170,70,80,14
+    PUSHBUTTON      "&РџСЂРѕРІРµСЂРёС‚СЊ Р·РІСѓРє",IDC_AUDIO_TEST,170,50,59,14
+    PUSHBUTTON	    "РџР°РЅРµР»СЊ СѓРїСЂР°РІР»РµРЅРёСЏ",IDC_AUDIO_CONTROL_PANEL,170,70,80,14
     GROUPBOX        " DirectSound ",IDC_STATIC,8,205,244,60
-    LTEXT	    "Аппаратное ускорение: ",IDC_STATIC,15,215,90,10
+    LTEXT	    "РђРїРїР°СЂР°С‚РЅРѕРµ СѓСЃРєРѕСЂРµРЅРёРµ: ",IDC_STATIC,15,215,90,10
     COMBOBOX	    IDC_DSOUND_HW_ACCEL,100,213,145,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Частота (герц):",IDC_STATIC,15,232,70,8
+    LTEXT           "Р§Р°СЃС‚РѕС‚Р° (РіРµСЂС†):",IDC_STATIC,15,232,70,8
     COMBOBOX        IDC_DSOUND_RATES,100,230,42,76,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Кодирование (бит):",IDC_STATIC,144,232,80,8
+    LTEXT           "РљРѕРґРёСЂРѕРІР°РЅРёРµ (Р±РёС‚):",IDC_STATIC,144,232,80,8
     COMBOBOX        IDC_DSOUND_BITS,216,230,30,52,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Эмуляция драйвера",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
+    CONTROL         "Р­РјСѓР»СЏС†РёСЏ РґСЂР°Р№РІРµСЂР°",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,250,230,10
 END
 
 IDD_DESKTOP_INTEGRATION DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        " Внешний вид ",IDC_STATIC,8,4,244,106
-    LTEXT           "Тема:",IDC_STATIC,15,16,130,8
+    GROUPBOX        " Р’РЅРµС€РЅРёР№ РІРёРґ ",IDC_STATIC,8,4,244,106
+    LTEXT           "РўРµРјР°:",IDC_STATIC,15,16,130,8
     COMBOBOX        IDC_THEME_THEMECOMBO,15,24,130,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Установить тему...",IDC_THEME_INSTALL,152,23,93,14
-    LTEXT           "Цвет:",IDC_THEME_COLORTEXT,15,40,112,8
+    PUSHBUTTON      "РЈСЃС‚Р°РЅРѕРІРёС‚СЊ С‚РµРјСѓ...",IDC_THEME_INSTALL,152,23,93,14
+    LTEXT           "Р¦РІРµС‚:",IDC_THEME_COLORTEXT,15,40,112,8
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Размер:",IDC_THEME_SIZETEXT,135,40,110,8
+    LTEXT           "Р Р°Р·РјРµСЂ:",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Элемент:",IDC_STATIC,15,64,112,8
+    LTEXT           "Р­Р»РµРјРµРЅС‚:",IDC_STATIC,15,64,112,8
     COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
-    LTEXT           "Цвет:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    LTEXT           "Р¦РІРµС‚:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
     PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
-    LTEXT           "Размер:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    LTEXT           "Р Р°Р·РјРµСЂ:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
     EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
     CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
-    PUSHBUTTON      "Шрифт",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
-    GROUPBOX        " Стандартные папки ",IDC_STATIC,8,114,244,100
+    PUSHBUTTON      "РЁСЂРёС„С‚",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
+    GROUPBOX        " РЎС‚Р°РЅРґР°СЂС‚РЅС‹Рµ РїР°РїРєРё ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
-    CONTROL         "Направить в:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
+    CONTROL         "РќР°РїСЂР°РІРёС‚СЊ РІ:",IDC_LINK_SFPATH,"Button",BS_AUTOCHECKBOX|WS_TABSTOP|WS_DISABLED,15,195,50,13
     EDITTEXT         IDC_EDIT_SFPATH,65,195,145,13,ES_AUTOHSCROLL|WS_TABSTOP|WS_DISABLED
-    PUSHBUTTON      "Обзор",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
+    PUSHBUTTON      "РћР±Р·РѕСЂ",IDC_BROWSE_SFPATH,215,195,30,13,WS_DISABLED
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_TAB_APPLICATIONS    "Приложения"
-    IDS_TAB_DLLS            "Библиотеки"
-    IDS_TAB_DRIVES          "Диски"
-    IDS_CHOOSE_PATH         "Выберите целевой каталог в системе:"
-    IDS_HIDE_ADVANCED       "Скрыть дополнительные"
-    IDS_SHOW_ADVANCED       "Показать дополнительные"
-    IDS_NOTHEME             "(без темы)"
-    IDS_TAB_GRAPHICS        "Графика"
-    IDS_TAB_DESKTOP_INTEGRATION "Вид и интеграция"
-    IDS_TAB_AUDIO           "Аудио"
-    IDS_TAB_ABOUT           "О программе"
-    IDS_WINECFG_TITLE       "Настройка Wine"
-    IDS_WINECFG_TITLE_APP   "Настройка Wine для %s"
-    IDS_THEMEFILE           "Файлы тем"
-    IDS_THEMEFILE_SELECT    "Выберите файл с темой"
-    IDS_AUDIO_MISSING       "Конфигурация звукового драйвера не найдена.\n\nВыбран драйвер по умолчанию. При необходимости можно выбрать другой драйвер из списка доступных.\n\nДля сохранения изменений нажмите кнопку Применить."
-    IDS_SHELL_FOLDER        "Стандартные папки"
-    IDS_LINKS_TO            "Связано с"
+    IDS_TAB_APPLICATIONS    "РџСЂРёР»РѕР¶РµРЅРёСЏ"
+    IDS_TAB_DLLS            "Р‘РёР±Р»РёРѕС‚РµРєРё"
+    IDS_TAB_DRIVES          "Р”РёСЃРєРё"
+    IDS_CHOOSE_PATH         "Р’С‹Р±РµСЂРёС‚Рµ С†РµР»РµРІРѕР№ РєР°С‚Р°Р»РѕРі РІ СЃРёСЃС‚РµРјРµ:"
+    IDS_HIDE_ADVANCED       "РЎРєСЂС‹С‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ"
+    IDS_SHOW_ADVANCED       "РџРѕРєР°Р·Р°С‚СЊ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ"
+    IDS_NOTHEME             "(Р±РµР· С‚РµРјС‹)"
+    IDS_TAB_GRAPHICS        "Р“СЂР°С„РёРєР°"
+    IDS_TAB_DESKTOP_INTEGRATION "Р’РёРґ Рё РёРЅС‚РµРіСЂР°С†РёСЏ"
+    IDS_TAB_AUDIO           "РђСѓРґРёРѕ"
+    IDS_TAB_ABOUT           "Рћ РїСЂРѕРіСЂР°РјРјРµ"
+    IDS_WINECFG_TITLE       "РќР°СЃС‚СЂРѕР№РєР° Wine"
+    IDS_WINECFG_TITLE_APP   "РќР°СЃС‚СЂРѕР№РєР° Wine РґР»СЏ %s"
+    IDS_THEMEFILE           "Р¤Р°Р№Р»С‹ С‚РµРј"
+    IDS_THEMEFILE_SELECT    "Р’С‹Р±РµСЂРёС‚Рµ С„Р°Р№Р» СЃ С‚РµРјРѕР№"
+    IDS_AUDIO_MISSING       "РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ Р·РІСѓРєРѕРІРѕРіРѕ РґСЂР°Р№РІРµСЂР° РЅРµ РЅР°Р№РґРµРЅР°.\n\nР’С‹Р±СЂР°РЅ РґСЂР°Р№РІРµСЂ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ. РџСЂРё РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РјРѕР¶РЅРѕ РІС‹Р±СЂР°С‚СЊ РґСЂСѓРіРѕР№ РґСЂР°Р№РІРµСЂ РёР· СЃРїРёСЃРєР° РґРѕСЃС‚СѓРїРЅС‹С….\n\nР”Р»СЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ РёР·РјРµРЅРµРЅРёР№ РЅР°Р¶РјРёС‚Рµ РєРЅРѕРїРєСѓ РџСЂРёРјРµРЅРёС‚СЊ."
+    IDS_SHELL_FOLDER        "РЎС‚Р°РЅРґР°СЂС‚РЅС‹Рµ РїР°РїРєРё"
+    IDS_LINKS_TO            "РЎРІСЏР·Р°РЅРѕ СЃ"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DLL_WARNING             "Изменение порядка загрузки этой библиотеки не рекомендуется.\nВы действительно хотите изменить порядок?"
-    IDS_DLL_WARNING_CAPTION     "Внимание: системная библиотека"
-    IDS_DLL_NATIVE              "сторонняя"
-    IDS_DLL_BUILTIN             "встроенная"
-    IDS_DLL_NATIVE_BUILTIN      "сторонняя, встроенная"
-    IDS_DLL_BUILTIN_NATIVE      "встроенная, сторонняя"
-    IDS_DLL_DISABLED            "отключена"
-    IDS_DEFAULT_SETTINGS        "Установки по умолчанию"
-    IDS_EXECUTABLE_FILTER       "Программы Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
-    IDS_USE_GLOBAL_SETTINGS     "Использовать по умолчанию"
-    IDS_SELECT_EXECUTABLE       "Выберите исполняемый файл"
+    IDS_DLL_WARNING             "РР·РјРµРЅРµРЅРёРµ РїРѕСЂСЏРґРєР° Р·Р°РіСЂСѓР·РєРё СЌС‚РѕР№ Р±РёР±Р»РёРѕС‚РµРєРё РЅРµ СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ.\nР’С‹ РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ С…РѕС‚РёС‚Рµ РёР·РјРµРЅРёС‚СЊ РїРѕСЂСЏРґРѕРє?"
+    IDS_DLL_WARNING_CAPTION     "Р’РЅРёРјР°РЅРёРµ: СЃРёСЃС‚РµРјРЅР°СЏ Р±РёР±Р»РёРѕС‚РµРєР°"
+    IDS_DLL_NATIVE              "СЃС‚РѕСЂРѕРЅРЅСЏСЏ"
+    IDS_DLL_BUILTIN             "РІСЃС‚СЂРѕРµРЅРЅР°СЏ"
+    IDS_DLL_NATIVE_BUILTIN      "СЃС‚РѕСЂРѕРЅРЅСЏСЏ, РІСЃС‚СЂРѕРµРЅРЅР°СЏ"
+    IDS_DLL_BUILTIN_NATIVE      "РІСЃС‚СЂРѕРµРЅРЅР°СЏ, СЃС‚РѕСЂРѕРЅРЅСЏСЏ"
+    IDS_DLL_DISABLED            "РѕС‚РєР»СЋС‡РµРЅР°"
+    IDS_DEFAULT_SETTINGS        "РЈСЃС‚Р°РЅРѕРІРєРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ"
+    IDS_EXECUTABLE_FILTER       "РџСЂРѕРіСЂР°РјРјС‹ Wine (*.exe,*.exe.so)\0*.exe;*.exe.so\0"
+    IDS_USE_GLOBAL_SETTINGS     "РСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ"
+    IDS_SELECT_EXECUTABLE       "Р’С‹Р±РµСЂРёС‚Рµ РёСЃРїРѕР»РЅСЏРµРјС‹Р№ С„Р°Р№Р»"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_SHADER_MODE_HARDWARE    "Включены"
-    IDS_SHADER_MODE_NONE        "Выключены"
+    IDS_SHADER_MODE_HARDWARE    "Р’РєР»СЋС‡РµРЅС‹"
+    IDS_SHADER_MODE_NONE        "Р’С‹РєР»СЋС‡РµРЅС‹"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_DRIVE_UNKNOWN           "Автоопределение"
-    IDS_DRIVE_FIXED             "Жёсткий диск"
-    IDS_DRIVE_REMOTE            "Сетевой диск"
-    IDS_DRIVE_REMOVABLE         "Дисковод"
+    IDS_DRIVE_UNKNOWN           "РђРІС‚РѕРѕРїСЂРµРґРµР»РµРЅРёРµ"
+    IDS_DRIVE_FIXED             "Р–С‘СЃС‚РєРёР№ РґРёСЃРє"
+    IDS_DRIVE_REMOTE            "РЎРµС‚РµРІРѕР№ РґРёСЃРє"
+    IDS_DRIVE_REMOVABLE         "Р”РёСЃРєРѕРІРѕРґ"
     IDS_DRIVE_CDROM             "CD-ROM"
-    IDS_DRIVE_LETTERS_EXCEEDED  "Невозможно создать новый диск.\n\nУ каждого диска должна быть буква - от A до Z, и у Вас уже 26 дисков."
-    IDS_SYSTEM_DRIVE_LABEL      "Системный диск"
-    IDS_CONFIRM_DELETE_C        "Действительно удалить диск C?\n\nБольшинство Windows-программ перестанут работать без диска C. Если Вы всё же решили удалить диск, не забудьте создать новый!"
-    IDS_COL_DRIVELETTER         "Диск"
-    IDS_COL_DRIVEMAPPING        "Путь"
-    IDS_NO_DRIVE_C              "Вы не назначили диск C.\n\nНе забудьте его создать!\n"
+    IDS_DRIVE_LETTERS_EXCEEDED  "РќРµРІРѕР·РјРѕР¶РЅРѕ СЃРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№ РґРёСЃРє.\n\nРЈ РєР°Р¶РґРѕРіРѕ РґРёСЃРєР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ Р±СѓРєРІР° - РѕС‚ A РґРѕ Z, Рё Сѓ Р’Р°СЃ СѓР¶Рµ 26 РґРёСЃРєРѕРІ."
+    IDS_SYSTEM_DRIVE_LABEL      "РЎРёСЃС‚РµРјРЅС‹Р№ РґРёСЃРє"
+    IDS_CONFIRM_DELETE_C        "Р”РµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ СѓРґР°Р»РёС‚СЊ РґРёСЃРє C?\n\nР‘РѕР»СЊС€РёРЅСЃС‚РІРѕ Windows-РїСЂРѕРіСЂР°РјРј РїРµСЂРµСЃС‚Р°РЅСѓС‚ СЂР°Р±РѕС‚Р°С‚СЊ Р±РµР· РґРёСЃРєР° C. Р•СЃР»Рё Р’С‹ РІСЃС‘ Р¶Рµ СЂРµС€РёР»Рё СѓРґР°Р»РёС‚СЊ РґРёСЃРє, РЅРµ Р·Р°Р±СѓРґСЊС‚Рµ СЃРѕР·РґР°С‚СЊ РЅРѕРІС‹Р№!"
+    IDS_COL_DRIVELETTER         "Р”РёСЃРє"
+    IDS_COL_DRIVEMAPPING        "РџСѓС‚СЊ"
+    IDS_NO_DRIVE_C              "Р’С‹ РЅРµ РЅР°Р·РЅР°С‡РёР»Рё РґРёСЃРє C.\n\nРќРµ Р·Р°Р±СѓРґСЊС‚Рµ РµРіРѕ СЃРѕР·РґР°С‚СЊ!\n"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDS_ACCEL_FULL              "Полное"
-    IDS_ACCEL_STANDARD          "Стандартное"
-    IDS_ACCEL_BASIC             "Минимальное"
-    IDS_ACCEL_EMULATION         "Эмуляция"
-    IDS_DRIVER_ALSA             "ALSA драйвер"
-    IDS_DRIVER_ESOUND           "EsounD драйвер"
-    IDS_DRIVER_OSS              "OSS драйвер"
-    IDS_DRIVER_JACK             "JACK драйвер"
-    IDS_DRIVER_NAS              "NAS драйвер"
-    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) драйвер"
-    IDS_DRIVER_COREAUDIO        "CoreAudio драйвер"
-    IDS_OPEN_DRIVER_ERROR       "Невозможно открыть %s!"
-    IDS_SOUNDDRIVERS            "Аудио драйвера"
-    IDS_DEVICES_WAVEOUT         "Устройство вывода звука"
-    IDS_DEVICES_WAVEIN          "Устройство ввода звука"
-    IDS_DEVICES_MIDIOUT         "Устройство вывода MIDI"
-    IDS_DEVICES_MIDIIN          "Устройство ввода MIDI"
-    IDS_DEVICES_AUX             "Дополнительное устройство"
-    IDS_DEVICES_MIXER           "Устройство микширования"
-    IDS_UNAVAILABLE_DRIVER      "Драйвер, указанный в реестре, не найден!\n\nУдалить \"%s\" из реестра?"
-    IDS_WARNING                 "Внимание"
+    IDS_ACCEL_FULL              "РџРѕР»РЅРѕРµ"
+    IDS_ACCEL_STANDARD          "РЎС‚Р°РЅРґР°СЂС‚РЅРѕРµ"
+    IDS_ACCEL_BASIC             "РњРёРЅРёРјР°Р»СЊРЅРѕРµ"
+    IDS_ACCEL_EMULATION         "Р­РјСѓР»СЏС†РёСЏ"
+    IDS_DRIVER_ALSA             "ALSA РґСЂР°Р№РІРµСЂ"
+    IDS_DRIVER_ESOUND           "EsounD РґСЂР°Р№РІРµСЂ"
+    IDS_DRIVER_OSS              "OSS РґСЂР°Р№РІРµСЂ"
+    IDS_DRIVER_JACK             "JACK РґСЂР°Р№РІРµСЂ"
+    IDS_DRIVER_NAS              "NAS РґСЂР°Р№РІРµСЂ"
+    IDS_DRIVER_AUDIOIO          "Audio IO (Solaris) РґСЂР°Р№РІРµСЂ"
+    IDS_DRIVER_COREAUDIO        "CoreAudio РґСЂР°Р№РІРµСЂ"
+    IDS_OPEN_DRIVER_ERROR       "РќРµРІРѕР·РјРѕР¶РЅРѕ РѕС‚РєСЂС‹С‚СЊ %s!"
+    IDS_SOUNDDRIVERS            "РђСѓРґРёРѕ РґСЂР°Р№РІРµСЂР°"
+    IDS_DEVICES_WAVEOUT         "РЈСЃС‚СЂРѕР№СЃС‚РІРѕ РІС‹РІРѕРґР° Р·РІСѓРєР°"
+    IDS_DEVICES_WAVEIN          "РЈСЃС‚СЂРѕР№СЃС‚РІРѕ РІРІРѕРґР° Р·РІСѓРєР°"
+    IDS_DEVICES_MIDIOUT         "РЈСЃС‚СЂРѕР№СЃС‚РІРѕ РІС‹РІРѕРґР° MIDI"
+    IDS_DEVICES_MIDIIN          "РЈСЃС‚СЂРѕР№СЃС‚РІРѕ РІРІРѕРґР° MIDI"
+    IDS_DEVICES_AUX             "Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕРµ СѓСЃС‚СЂРѕР№СЃС‚РІРѕ"
+    IDS_DEVICES_MIXER           "РЈСЃС‚СЂРѕР№СЃС‚РІРѕ РјРёРєС€РёСЂРѕРІР°РЅРёСЏ"
+    IDS_UNAVAILABLE_DRIVER      "Р”СЂР°Р№РІРµСЂ, СѓРєР°Р·Р°РЅРЅС‹Р№ РІ СЂРµРµСЃС‚СЂРµ, РЅРµ РЅР°Р№РґРµРЅ!\n\nРЈРґР°Р»РёС‚СЊ \"%s\" РёР· СЂРµРµСЃС‚СЂР°?"
+    IDS_WARNING                 "Р’РЅРёРјР°РЅРёРµ"
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
-    IDC_SYSPARAMS_BUTTON            "Элементы управления - фон"
-    IDC_SYSPARAMS_BUTTON_TEXT       "Элементы управления - текст"
-    IDC_SYSPARAMS_DESKTOP           "Стол"
-    IDC_SYSPARAMS_MENU              "Меню - фон"
-    IDC_SYSPARAMS_MENU_TEXT         "Меню - текст"
-    IDC_SYSPARAMS_SCROLLBAR         "Полоса прокрутки"
-    IDC_SYSPARAMS_SELECTION         "Выделение - фон"
-    IDC_SYSPARAMS_SELECTION_TEXT    "Выделение - текст"
-    IDC_SYSPARAMS_TOOLTIP           "Подсказка - фон"
-    IDC_SYSPARAMS_TOOLTIP_TEXT      "Подсказка - текст"
-    IDC_SYSPARAMS_WINDOW            "Содержимое окна - фон"
-    IDC_SYSPARAMS_WINDOW_TEXT       "Содержимое окна - текст"
-    IDC_SYSPARAMS_ACTIVE_TITLE      "Активное окно"
-    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Активное окно - текст"
-    IDC_SYSPARAMS_INACTIVE_TITLE    "Пассивное окно"
-    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Пассивное окно - текст"
-    IDC_SYSPARAMS_MSGBOX_TEXT       "Окно сообщения - текст"
-    IDC_SYSPARAMS_APPWORKSPACE      "Содержимое окна MDI - фон"
-    IDC_SYSPARAMS_WINDOW_FRAME      "Окно - рамка"
-    IDC_SYSPARAMS_ACTIVE_BORDER     "Активное окно - рамка"
-    IDC_SYSPARAMS_INACTIVE_BORDER   "Пассивное окно - рамка"
-    IDC_SYSPARAMS_BUTTON_SHADOW     "Элементы управления - тень"
-    IDC_SYSPARAMS_GRAY_TEXT         "Недоступный элемент"
-    IDC_SYSPARAMS_BUTTON_HILIGHT    "Элементы управления - светлая рамка"
-    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Элементы управления - темная тень"
-    IDC_SYSPARAMS_BUTTON_LIGHT      "Элементы управления - свет"
-    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Элементы управления - фон 2"
-    IDC_SYSPARAMS_HOT_TRACKING      "Ссылка, Подсветка"
-    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Градиент активного окна"
-    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Градиент пассивного окна"
-    IDC_SYSPARAMS_MENU_HILIGHT      "Плоское меню - подсветка"
-    IDC_SYSPARAMS_MENUBAR           "Плоское меню - фон"
+    IDC_SYSPARAMS_BUTTON            "Р­Р»РµРјРµРЅС‚С‹ СѓРїСЂР°РІР»РµРЅРёСЏ - С„РѕРЅ"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Р­Р»РµРјРµРЅС‚С‹ СѓРїСЂР°РІР»РµРЅРёСЏ - С‚РµРєСЃС‚"
+    IDC_SYSPARAMS_DESKTOP           "РЎС‚РѕР»"
+    IDC_SYSPARAMS_MENU              "РњРµРЅСЋ - С„РѕРЅ"
+    IDC_SYSPARAMS_MENU_TEXT         "РњРµРЅСЋ - С‚РµРєСЃС‚"
+    IDC_SYSPARAMS_SCROLLBAR         "РџРѕР»РѕСЃР° РїСЂРѕРєСЂСѓС‚РєРё"
+    IDC_SYSPARAMS_SELECTION         "Р’С‹РґРµР»РµРЅРёРµ - С„РѕРЅ"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Р’С‹РґРµР»РµРЅРёРµ - С‚РµРєСЃС‚"
+    IDC_SYSPARAMS_TOOLTIP           "РџРѕРґСЃРєР°Р·РєР° - С„РѕРЅ"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "РџРѕРґСЃРєР°Р·РєР° - С‚РµРєСЃС‚"
+    IDC_SYSPARAMS_WINDOW            "РЎРѕРґРµСЂР¶РёРјРѕРµ РѕРєРЅР° - С„РѕРЅ"
+    IDC_SYSPARAMS_WINDOW_TEXT       "РЎРѕРґРµСЂР¶РёРјРѕРµ РѕРєРЅР° - С‚РµРєСЃС‚"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "РђРєС‚РёРІРЅРѕРµ РѕРєРЅРѕ"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "РђРєС‚РёРІРЅРѕРµ РѕРєРЅРѕ - С‚РµРєСЃС‚"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "РџР°СЃСЃРёРІРЅРѕРµ РѕРєРЅРѕ"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "РџР°СЃСЃРёРІРЅРѕРµ РѕРєРЅРѕ - С‚РµРєСЃС‚"
+    IDC_SYSPARAMS_MSGBOX_TEXT       "РћРєРЅРѕ СЃРѕРѕР±С‰РµРЅРёСЏ - С‚РµРєСЃС‚"
+    IDC_SYSPARAMS_APPWORKSPACE      "РЎРѕРґРµСЂР¶РёРјРѕРµ РѕРєРЅР° MDI - С„РѕРЅ"
+    IDC_SYSPARAMS_WINDOW_FRAME      "РћРєРЅРѕ - СЂР°РјРєР°"
+    IDC_SYSPARAMS_ACTIVE_BORDER     "РђРєС‚РёРІРЅРѕРµ РѕРєРЅРѕ - СЂР°РјРєР°"
+    IDC_SYSPARAMS_INACTIVE_BORDER   "РџР°СЃСЃРёРІРЅРѕРµ РѕРєРЅРѕ - СЂР°РјРєР°"
+    IDC_SYSPARAMS_BUTTON_SHADOW     "Р­Р»РµРјРµРЅС‚С‹ СѓРїСЂР°РІР»РµРЅРёСЏ - С‚РµРЅСЊ"
+    IDC_SYSPARAMS_GRAY_TEXT         "РќРµРґРѕСЃС‚СѓРїРЅС‹Р№ СЌР»РµРјРµРЅС‚"
+    IDC_SYSPARAMS_BUTTON_HILIGHT    "Р­Р»РµРјРµРЅС‚С‹ СѓРїСЂР°РІР»РµРЅРёСЏ - СЃРІРµС‚Р»Р°СЏ СЂР°РјРєР°"
+    IDC_SYSPARAMS_BUTTON_DARK_SHADOW "Р­Р»РµРјРµРЅС‚С‹ СѓРїСЂР°РІР»РµРЅРёСЏ - С‚РµРјРЅР°СЏ С‚РµРЅСЊ"
+    IDC_SYSPARAMS_BUTTON_LIGHT      "Р­Р»РµРјРµРЅС‚С‹ СѓРїСЂР°РІР»РµРЅРёСЏ - СЃРІРµС‚"
+    IDC_SYSPARAMS_BUTTON_ALTERNATE  "Р­Р»РµРјРµРЅС‚С‹ СѓРїСЂР°РІР»РµРЅРёСЏ - С„РѕРЅ 2"
+    IDC_SYSPARAMS_HOT_TRACKING      "РЎСЃС‹Р»РєР°, РџРѕРґСЃРІРµС‚РєР°"
+    IDC_SYSPARAMS_ACTIVE_TITLE_GRADIENT "Р“СЂР°РґРёРµРЅС‚ Р°РєС‚РёРІРЅРѕРіРѕ РѕРєРЅР°"
+    IDC_SYSPARAMS_INACTIVE_TITLE_GRADIENT "Р“СЂР°РґРёРµРЅС‚ РїР°СЃСЃРёРІРЅРѕРіРѕ РѕРєРЅР°"
+    IDC_SYSPARAMS_MENU_HILIGHT      "РџР»РѕСЃРєРѕРµ РјРµРЅСЋ - РїРѕРґСЃРІРµС‚РєР°"
+    IDC_SYSPARAMS_MENUBAR           "РџР»РѕСЃРєРѕРµ РјРµРЅСЋ - С„РѕРЅ"
 END
