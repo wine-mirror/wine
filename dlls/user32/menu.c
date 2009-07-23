@@ -4755,27 +4755,44 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 }
 
 /**********************************************************************
+ *		MENU_NormalizeMenuItemInfoStruct
+ *
+ * Helper for SetMenuItemInfo and InsertMenuItemInfo:
+ * check, copy and extend the MENUITEMINFO struct from the version that the application
+ * supplied to the version used by wine source. */
+static BOOL MENU_NormalizeMenuItemInfoStruct( const MENUITEMINFOW *pmii_in,
+                                              MENUITEMINFOW *pmii_out )
+{
+    /* do we recognize the size? */
+    if( pmii_in->cbSize != sizeof( MENUITEMINFOW) &&
+            pmii_in->cbSize != sizeof( MENUITEMINFOW) - sizeof( pmii_in->hbmpItem)) {
+        SetLastError( ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    /* copy the fields that we have */
+    memcpy( pmii_out, pmii_in, pmii_in->cbSize);
+    /* if the hbmpItem member is missing then extend */
+    if( pmii_in->cbSize != sizeof( MENUITEMINFOW)) {
+        pmii_out->cbSize = sizeof( MENUITEMINFOW);
+        pmii_out->hbmpItem = NULL;
+    }
+    return TRUE;
+}
+
+/**********************************************************************
  *		SetMenuItemInfoA    (USER32.@)
  */
 BOOL WINAPI SetMenuItemInfoA(HMENU hmenu, UINT item, BOOL bypos,
                                  const MENUITEMINFOA *lpmii)
 {
-    MENUITEMINFOA mii;
+    MENUITEMINFOW mii;
 
     TRACE("hmenu %p, item %u, by pos %d, info %p\n", hmenu, item, bypos, lpmii);
 
-    if( lpmii->cbSize != sizeof( mii) &&
-            lpmii->cbSize != sizeof( mii) - sizeof ( mii.hbmpItem)) {
-        SetLastError( ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    memcpy( &mii, lpmii, lpmii->cbSize);
-    if( lpmii->cbSize != sizeof( mii)) {
-        mii.cbSize = sizeof( mii);
-        mii.hbmpItem = NULL;
-    }
+    if (!MENU_NormalizeMenuItemInfoStruct( (MENUITEMINFOW *)lpmii, &mii )) return FALSE;
+
     return SetMenuItemInfo_common(MENU_FindItem(&hmenu, &item, bypos? MF_BYPOSITION : 0),
-				    (const MENUITEMINFOW *)&mii, FALSE);
+                                  &mii, FALSE);
 }
 
 /**********************************************************************
@@ -4788,16 +4805,7 @@ BOOL WINAPI SetMenuItemInfoW(HMENU hmenu, UINT item, BOOL bypos,
 
     TRACE("hmenu %p, item %u, by pos %d, info %p\n", hmenu, item, bypos, lpmii);
 
-    if( lpmii->cbSize != sizeof( mii) &&
-            lpmii->cbSize != sizeof( mii) - sizeof ( mii.hbmpItem)) {
-        SetLastError( ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    memcpy( &mii, lpmii, lpmii->cbSize);
-    if( lpmii->cbSize != sizeof( mii)) {
-        mii.cbSize = sizeof( mii);
-        mii.hbmpItem = NULL;
-    }
+    if (!MENU_NormalizeMenuItemInfoStruct( lpmii, &mii )) return FALSE;
     return SetMenuItemInfo_common(MENU_FindItem(&hmenu,
                 &item, bypos? MF_BYPOSITION : 0), &mii, TRUE);
 }
@@ -4900,23 +4908,14 @@ BOOL WINAPI InsertMenuItemA(HMENU hMenu, UINT uItem, BOOL bypos,
                                 const MENUITEMINFOA *lpmii)
 {
     MENUITEM *item;
-    MENUITEMINFOA mii;
+    MENUITEMINFOW mii;
 
     TRACE("hmenu %p, item %04x, by pos %d, info %p\n", hMenu, uItem, bypos, lpmii);
 
-    if( lpmii->cbSize != sizeof( mii) &&
-            lpmii->cbSize != sizeof( mii) - sizeof ( mii.hbmpItem)) {
-        SetLastError( ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    memcpy( &mii, lpmii, lpmii->cbSize);
-    if( lpmii->cbSize != sizeof( mii)) {
-        mii.cbSize = sizeof( mii);
-        mii.hbmpItem = NULL;
-    }
+    if (!MENU_NormalizeMenuItemInfoStruct( (MENUITEMINFOW *)lpmii, &mii )) return FALSE;
 
     item = MENU_InsertItem(hMenu, uItem, bypos ? MF_BYPOSITION : 0 );
-    return SetMenuItemInfo_common(item, (const MENUITEMINFOW *)&mii, FALSE);
+    return SetMenuItemInfo_common(item, &mii, FALSE);
 }
 
 
@@ -4931,16 +4930,7 @@ BOOL WINAPI InsertMenuItemW(HMENU hMenu, UINT uItem, BOOL bypos,
 
     TRACE("hmenu %p, item %04x, by pos %d, info %p\n", hMenu, uItem, bypos, lpmii);
 
-    if( lpmii->cbSize != sizeof( mii) &&
-            lpmii->cbSize != sizeof( mii) - sizeof ( mii.hbmpItem)) {
-        SetLastError( ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    memcpy( &mii, lpmii, lpmii->cbSize);
-    if( lpmii->cbSize != sizeof( mii)) {
-        mii.cbSize = sizeof( mii);
-        mii.hbmpItem = NULL;
-    }
+    if (!MENU_NormalizeMenuItemInfoStruct( lpmii, &mii )) return FALSE;
 
     item = MENU_InsertItem(hMenu, uItem, bypos ? MF_BYPOSITION : 0 );
     return SetMenuItemInfo_common(item, &mii, TRUE);
