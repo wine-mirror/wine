@@ -8108,6 +8108,9 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
 	if ((lvItem.state & lvItem.stateMask & LVIS_SELECTED) && (infoPtr->dwStyle & LVS_SINGLESEL))
 	    return FALSE;
 
+	/* focus all isn't allowed */
+	if (lvItem.state & lvItem.stateMask & LVIS_FOCUSED) return FALSE;
+
     	/* apply to all items */
     	for (lvItem.iItem = 0; lvItem.iItem < infoPtr->nItemCount; lvItem.iItem++)
 	    if (!LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE)) bResult = FALSE;

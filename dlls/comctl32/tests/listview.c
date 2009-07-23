@@ -2547,10 +2547,10 @@ static void test_ownerdata(void)
     item.state     = LVIS_FOCUSED;
     g_dump_itemchanged = TRUE;
     res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
-    todo_wine expect(FALSE, res);
+    expect(FALSE, res);
     g_dump_itemchanged = FALSE;
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
-                "ownerdata focus all notification", TRUE);
+                "ownerdata focus all notification", FALSE);
     /* focus single item, remove all */
     item.stateMask = LVIS_FOCUSED;
     item.state     = LVIS_FOCUSED;
