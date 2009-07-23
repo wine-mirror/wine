@@ -1963,6 +1963,10 @@ static void test_multiselect(void)
     item_count = (int)SendMessage(hwnd, LVM_GETITEMCOUNT, 0, 0);
     expect(items,item_count);
 
+    /* try with NULL pointer */
+    r = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)NULL);
+    expect(FALSE, r);
+
     /* select all, check notifications */
     ListView_SetItemState(hwnd, -1, 0, LVIS_SELECTED);
 

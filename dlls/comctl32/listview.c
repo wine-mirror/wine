@@ -10653,6 +10653,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return LISTVIEW_SetItemPosition(infoPtr, (INT)wParam, *((POINT*)lParam));
 
   case LVM_SETITEMSTATE:
+    if (lParam == 0) return FALSE;
     return LISTVIEW_SetItemState(infoPtr, (INT)wParam, (LPLVITEMW)lParam);
 
   case LVM_SETITEMTEXTA:
