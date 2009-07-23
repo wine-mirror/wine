@@ -1169,7 +1169,8 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
         return FALSE;
     }
 
-    FIXME("resolve timeout not supported\n");
+    if (resolve > 0)
+        FIXME("resolve timeout (%d) not supported\n", resolve);
 
     if (!(request = (request_t *)grab_object( handle )))
     {
