@@ -33,6 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winhttp);
 
+#define DEFAULT_CONNECT_TIMEOUT     60000
 #define DEFAULT_SEND_TIMEOUT        30000
 #define DEFAULT_RECEIVE_TIMEOUT     30000
 
@@ -636,6 +637,7 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, LPCWSTR verb, LPCWSTR o
     list_add_head( &connect->hdr.children, &request->hdr.entry );
 
     if (!netconn_init( &request->netconn, request->hdr.flags & WINHTTP_FLAG_SECURE )) goto end;
+    request->connect_timeout = DEFAULT_CONNECT_TIMEOUT;
     request->send_timeout = DEFAULT_SEND_TIMEOUT;
     request->recv_timeout = DEFAULT_RECEIVE_TIMEOUT;
 
@@ -1167,7 +1169,7 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
         return FALSE;
     }
 
-    FIXME("resolve and connect timeout not supported\n");
+    FIXME("resolve timeout not supported\n");
 
     if (!(request = (request_t *)grab_object( handle )))
     {
@@ -1181,6 +1183,8 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
         set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
         return FALSE;
     }
+
+    request->connect_timeout = connect;
 
     if (send < 0) send = 0;
     request->send_timeout = send;

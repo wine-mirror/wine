@@ -925,7 +925,7 @@ static BOOL open_connection( request_t *request )
     }
     netconn_set_timeout( &request->netconn, TRUE, request->send_timeout );
     netconn_set_timeout( &request->netconn, FALSE, request->recv_timeout );
-    if (!netconn_connect( &request->netconn, (struct sockaddr *)&connect->sockaddr, slen ))
+    if (!netconn_connect( &request->netconn, (struct sockaddr *)&connect->sockaddr, slen, request->connect_timeout ))
     {
         netconn_close( &request->netconn );
         heap_free( addressW );

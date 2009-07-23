@@ -139,6 +139,7 @@ typedef struct
     LPWSTR version;
     LPWSTR raw_headers;
     netconn_t netconn;
+    int connect_timeout;
     int send_timeout;
     int recv_timeout;
     LPWSTR status_text;
@@ -206,7 +207,7 @@ void send_callback( object_header_t *, DWORD, LPVOID, DWORD );
 void close_connection( request_t * );
 
 BOOL netconn_close( netconn_t * );
-BOOL netconn_connect( netconn_t *, const struct sockaddr *, unsigned int );
+BOOL netconn_connect( netconn_t *, const struct sockaddr *, unsigned int, int );
 BOOL netconn_connected( netconn_t * );
 BOOL netconn_create( netconn_t *, int, int, int );
 BOOL netconn_get_next_line( netconn_t *, char *, DWORD * );

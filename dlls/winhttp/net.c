@@ -287,15 +287,44 @@ BOOL netconn_close( netconn_t *conn )
     return TRUE;
 }
 
-BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned int addr_len )
+BOOL netconn_connect( netconn_t *conn, const struct sockaddr *sockaddr, unsigned int addr_len, int timeout )
 {
-    if (connect( conn->socket, sockaddr, addr_len ) == -1)
+    BOOL ret = FALSE;
+    int res = 0, state;
+
+    if (timeout > 0)
     {
-        WARN("unable to connect to host (%s)\n", strerror(errno));
-        set_last_error( sock_get_error( errno ) );
-        return FALSE;
+        state = 1;
+        ioctlsocket( conn->socket, FIONBIO, &state );
     }
-    return TRUE;
+    if (connect( conn->socket, sockaddr, addr_len ) < 0)
+    {
+        res = sock_get_error( errno );
+        if (res == WSAEWOULDBLOCK || res == WSAEINPROGRESS)
+        {
+            struct pollfd pfd;
+
+            pfd.fd = conn->socket;
+            pfd.events = POLLOUT;
+            if (poll( &pfd, 1, timeout ) > 0)
+                ret = TRUE;
+            else
+                res = sock_get_error( errno );
+        }
+    }
+    else
+        ret = TRUE;
+    if (timeout > 0)
+    {
+        state = 0;
+        ioctlsocket( conn->socket, FIONBIO, &state );
+    }
+    if (!ret)
+    {
+        WARN("unable to connect to host (%d)\n", res);
+        set_last_error( res );
+    }
+    return ret;
 }
 
 BOOL netconn_secure_connect( netconn_t *conn )
