@@ -5937,8 +5937,8 @@ static BOOL is_mip_level_subset(IDirectDrawSurfaceImpl *dest,
 static void copy_mipmap_chain(IDirect3DDeviceImpl *device,
                               IDirectDrawSurfaceImpl *dest,
                               IDirectDrawSurfaceImpl *src,
-                              POINT *DestPoint,
-                              RECT *SrcRect)
+                              const POINT *DestPoint,
+                              const RECT *SrcRect)
 {
     IDirectDrawSurfaceImpl *src_level, *dest_level;
     IDirectDrawSurface7 *temp;
