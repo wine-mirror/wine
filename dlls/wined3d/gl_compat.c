@@ -298,7 +298,7 @@ static void WINE_GLAPI wine_glVertex3fv(const GLfloat *pos) {
     wine_glVertex4f(pos[0], pos[1], pos[2], 1.0f);
 }
 
-static void wine_glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
+static void WINE_GLAPI wine_glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
     struct WineD3DContext *ctx = context_get_current();
     ctx->color[0] = r;
     ctx->color[1] = g;
@@ -307,36 +307,36 @@ static void wine_glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
     old_fogcoord_glColor4f(r, g, b, a);
 }
 
-static void wine_glColor4fv(const GLfloat *c) {
+static void WINE_GLAPI wine_glColor4fv(const GLfloat *c) {
     wine_glColor4f(c[0], c[1], c[2], c[3]);
 }
 
-static void wine_glColor3f(GLfloat r, GLfloat g, GLfloat b) {
+static void WINE_GLAPI wine_glColor3f(GLfloat r, GLfloat g, GLfloat b) {
     wine_glColor4f(r, g, b, 1.0f);
 }
 
-static void wine_glColor3fv(const GLfloat *c) {
+static void WINE_GLAPI wine_glColor3fv(const GLfloat *c) {
     wine_glColor4f(c[0], c[1], c[2], 1.0f);
 }
 
-static void wine_glColor4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a) {
+static void WINE_GLAPI wine_glColor4ub(GLubyte r, GLubyte g, GLubyte b, GLubyte a) {
     wine_glColor4f(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 }
 
 /* In D3D the fog coord is a UBYTE, so there's no problem with using the single
  * precision function
  */
-static void wine_glFogCoordfEXT(GLfloat f) {
+static void WINE_GLAPI wine_glFogCoordfEXT(GLfloat f) {
     struct WineD3DContext *ctx = context_get_current();
     ctx->fog_coord_value = f;
 }
-static void wine_glFogCoorddEXT(GLdouble f) {
+static void WINE_GLAPI wine_glFogCoorddEXT(GLdouble f) {
     wine_glFogCoordfEXT(f);
 }
-static void wine_glFogCoordfvEXT(const GLfloat *f) {
+static void WINE_GLAPI wine_glFogCoordfvEXT(const GLfloat *f) {
     wine_glFogCoordfEXT(*f);
 }
-static void wine_glFogCoorddvEXT(const GLdouble *f) {
+static void WINE_GLAPI wine_glFogCoorddvEXT(const GLdouble *f) {
     wine_glFogCoordfEXT(*f);
 }
 
