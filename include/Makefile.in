@@ -121,6 +121,7 @@ SRCDIR_INCLUDES = \
 	corerror.h \
 	corhdr.h \
 	cpl.h \
+	crtrow.idl \
 	cryptdlg.h \
 	cryptuiapi.h \
 	custcntl.h \

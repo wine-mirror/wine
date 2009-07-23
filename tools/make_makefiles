@@ -110,6 +110,7 @@ my %private_idl_headers = (
     "axcore.idl" => 1,
     "axextend.idl" => 1,
     "binres.idl" => 1,
+    "crtrow.idl" => 1,
     "dbccmd.idl" => 1,
     "dbcses.idl" => 1,
     "dbdsad.idl" => 1,
