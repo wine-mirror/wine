@@ -1990,7 +1990,6 @@ static void test_multiselect(void)
     r = SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
     expect(3, r);
     r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
-todo_wine
     expect(-1, r);
 
     style = GetWindowLongPtrA(hwnd, GWL_STYLE);
@@ -2022,7 +2021,6 @@ todo_wine
     r = SendMessage(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
     expect(1, r);
     r = SendMessage(hwnd, LVM_GETSELECTIONMARK, 0, 0);
-todo_wine
     expect(-1, r);
 
     /* try to select all on LVS_SINGLESEL */
