@@ -467,59 +467,13 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     UINT i;
 
+    if (!This->d3d_initialized) return;
+
     switch(type)
     {
         case WINED3DRTYPE_SURFACE:
         {
-            if (This->activeContext && (IWineD3DSurface *)resource == This->activeContext->current_rt)
-            {
-                IWineD3DSwapChainImpl *swapchain;
-
-                TRACE("Last active render target destroyed.\n");
-
-                /* Find a replacement surface for the currently active back
-                 * buffer. The context manager does not do NULL checks, so
-                 * switch to a valid target as long as the currently set
-                 * surface is still valid. Use the surface of the implicit
-                 * swpchain. If that is the same as the destroyed surface the
-                 * device is destroyed and the lastActiveRenderTarget member
-                 * shouldn't matter. */
-                swapchain = This->swapchains ? (IWineD3DSwapChainImpl *)This->swapchains[0] : NULL;
-                if (swapchain)
-                {
-                    if (swapchain->backBuffer && swapchain->backBuffer[0] != (IWineD3DSurface *)resource)
-                    {
-                        TRACE("Activating primary back buffer.\n");
-                        ActivateContext(This, swapchain->backBuffer[0], CTXUSAGE_RESOURCELOAD);
-                    }
-                    else if (!swapchain->backBuffer && swapchain->frontBuffer != (IWineD3DSurface *)resource)
-                    {
-                        /* Single buffering environment */
-                        TRACE("Activating primary front buffer.\n");
-
-                        ActivateContext(This, swapchain->frontBuffer, CTXUSAGE_RESOURCELOAD);
-                    }
-                    else
-                    {
-                        /* Implicit render target destroyed, that means the
-                         * device is being destroyed whatever we set here, it
-                         * shouldn't matter. */
-                        TRACE("Device is being destroyed, setting current_rt to 0xdeadbabe.\n");
-                        This->activeContext->current_rt = (IWineD3DSurface *)0xdeadbabe;
-                    }
-                }
-                else
-                {
-                    WARN("Render target set, but swapchain does not exist!\n");
-
-                    /* May happen during ddraw uninitialization. */
-                    This->activeContext->current_rt = (IWineD3DSurface *)0xdeadcafe;
-                }
-            }
-            else if (This->d3d_initialized)
-            {
-                ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
-            }
+            ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
 
             for (i = 0; i < This->numContexts; ++i)
             {
