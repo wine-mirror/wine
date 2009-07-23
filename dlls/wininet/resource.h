@@ -21,6 +21,7 @@
 #include <windef.h>
 #include <winuser.h>
 
+#define IDD_AUTHDLG      0x399
 #define IDD_PROXYDLG     0x400
 
 #define IDC_PROXY        0x401
@@ -28,5 +29,6 @@
 #define IDC_USERNAME     0x403
 #define IDC_PASSWORD     0x404
 #define IDC_SAVEPASSWORD 0x405
+#define IDC_SERVER       0x406
 
 #define IDS_LANCONNECTION 0x500
