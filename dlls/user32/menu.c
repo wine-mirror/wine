@@ -185,6 +185,8 @@ static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 
 DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFONT hFont);
 
+static BOOL SetMenuItemInfo_common( MENUITEM *, const MENUITEMINFOW *, BOOL);
+
 /*********************************************************************
  * menu class descriptor
  */
@@ -2048,92 +2050,6 @@ static void MENU_MoveSelection( HWND hwndOwner, HMENU hmenu, INT offset )
 
 
 /**********************************************************************
- *         MENU_SetItemData
- *
- * Set an item's flags, id and text ptr. Called by InsertMenu() and
- * ModifyMenu().
- */
-static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT_PTR id,
-                                LPCWSTR str )
-{
-    debug_print_menuitem("MENU_SetItemData from: ", item, "");
-    TRACE("flags=%x str=%p\n", flags, str);
-
-    if (IS_STRING_ITEM(flags))
-    {
-        LPWSTR prevText = item->text;
-        if (!str)
-        {
-            flags |= MF_SEPARATOR;
-            item->text = NULL;
-        }
-        else
-        {
-            LPWSTR text;
-            /* Item beginning with a backspace is a help item */
-            if (*str == '\b')
-            {
-                flags |= MF_HELP;
-                str++;
-            }
-            if (!(text = HeapAlloc( GetProcessHeap(), 0, (strlenW(str)+1) * sizeof(WCHAR) )))
-                return FALSE;
-            strcpyW( text, str );
-            item->text = text;
-        }
-        item->hbmpItem = NULL;
-        HeapFree( GetProcessHeap(), 0, prevText );
-    }
-    else if(( flags & MFT_BITMAP)) {
-        item->hbmpItem = HBITMAP_32(LOWORD(str));
-        /* setting bitmap clears text */
-        HeapFree( GetProcessHeap(), 0, item->text );
-        item->text = NULL;
-    }
-
-    if (flags & MF_SEPARATOR) flags |= MF_GRAYED | MF_DISABLED;
-
-    if (flags & MF_OWNERDRAW)
-        item->dwItemData = (DWORD_PTR)str;
-    else
-        item->dwItemData = 0;
-
-    if ((item->fType & MF_POPUP) && (flags & MF_POPUP) && (item->hSubMenu != (HMENU)id) )
-	DestroyMenu( item->hSubMenu );   /* ModifyMenu() spec */
-
-    if (flags & MF_POPUP)
-    {
-	POPUPMENU *menu = MENU_GetMenu((HMENU)id);
-        if (menu) menu->wFlags |= MF_POPUP;
-	else
-        {
-            item->wID = 0;
-            item->hSubMenu = 0;
-            item->fType = 0;
-            item->fState = 0;
-	    return FALSE;
-        }
-    }
-
-    item->wID = id;
-    if (flags & MF_POPUP) item->hSubMenu = (HMENU)id;
-
-    if ((item->fType & MF_POPUP) && !(flags & MF_POPUP) )
-      flags |= MF_POPUP; /* keep popup */
-
-    item->fType = flags & TYPE_MASK;
-    /* MFS_DEFAULT is not accepted. MF_HILITE is not listed as a valid flag
-       for ModifyMenu, but Windows accepts it */
-    item->fState = flags & MENUITEMINFO_STATE_MASK & ~MFS_DEFAULT;
-
-    /* Don't call SetRectEmpty here! */
-
-    debug_print_menuitem("MENU_SetItemData to  : ", item, "");
-    return TRUE;
-}
-
-
-/**********************************************************************
  *         MENU_InsertItem
  *
  * Insert (allocate) a new item into a menu.
@@ -3826,6 +3742,49 @@ UINT WINAPI GetMenuItemID( HMENU hMenu, INT nPos )
 }
 
 
+/**********************************************************************
+ *         MENU_mnu2mnuii
+ *
+ * Uses flags, id and text ptr, passed by InsertMenu() and
+ * ModifyMenu() to setup a MenuItemInfo structure.
+ */
+static void MENU_mnu2mnuii( UINT flags, UINT_PTR id, LPCWSTR str,
+        LPMENUITEMINFOW pmii)
+{
+    ZeroMemory( pmii, sizeof( MENUITEMINFOW));
+    pmii->cbSize = sizeof( MENUITEMINFOW);
+    pmii->fMask = MIIM_STATE | MIIM_ID | MIIM_FTYPE;
+    /* setting bitmap clears text and vice versa */
+    if( IS_STRING_ITEM(flags)) {
+        pmii->fMask |= MIIM_STRING | MIIM_BITMAP;
+        if( !str)
+            flags |= MF_SEPARATOR;
+        /* Item beginning with a backspace is a help item */
+        /* FIXME: wrong place, this is only true in win16 */
+        else if( *str == '\b') {
+            flags |= MF_HELP;
+            str++;
+        }
+        pmii->dwTypeData = (LPWSTR)str;
+    } else if( flags & MFT_BITMAP){
+        pmii->fMask |= MIIM_BITMAP | MIIM_STRING;
+        pmii->hbmpItem = HBITMAP_32(LOWORD(str));
+    }
+    if( flags & MF_OWNERDRAW){
+        pmii->fMask |= MIIM_DATA;
+        pmii->dwItemData = (ULONG_PTR) str;
+    }
+    if( flags & MF_POPUP) {
+        pmii->fMask |= MIIM_SUBMENU;
+        pmii->hSubMenu = (HMENU)id;
+    }
+    if( flags & MF_SEPARATOR) flags |= MF_GRAYED | MF_DISABLED;
+    pmii->fState = flags & MENUITEMINFO_STATE_MASK & ~MFS_DEFAULT;
+    pmii->fType = flags & MENUITEMINFO_TYPE_MASK;
+    pmii->wID = (UINT)id;
+}
+
+
 /*******************************************************************
  *         InsertMenuW    (USER32.@)
  */
@@ -3833,6 +3792,7 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
                          UINT_PTR id, LPCWSTR str )
 {
     MENUITEM *item;
+    MENUITEMINFOW mii;
 
     if (IS_STRING_ITEM(flags) && str)
         TRACE("hMenu %p, pos %d, flags %08x, id %04lx, str %s\n",
@@ -3841,8 +3801,8 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
                hMenu, pos, flags, id, str );
 
     if (!(item = MENU_InsertItem( hMenu, pos, flags ))) return FALSE;
-
-    if (!(MENU_SetItemData( item, flags, id, str )))
+    MENU_mnu2mnuii( flags, id, str, &mii);
+    if (!(SetMenuItemInfo_common( item, &mii, TRUE)))
     {
         RemoveMenu( hMenu, pos, flags );
         return FALSE;
@@ -3954,6 +3914,7 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
                          UINT_PTR id, LPCWSTR str )
 {
     MENUITEM *item;
+    MENUITEMINFOW mii;
 
     if (IS_STRING_ITEM(flags))
         TRACE("%p %d %04x %04lx %s\n", hMenu, pos, flags, id, debugstr_w(str) );
@@ -3962,7 +3923,8 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
 
     if (!(item = MENU_FindItem( &hMenu, &pos, flags ))) return FALSE;
     MENU_GetMenu(hMenu)->Height = 0; /* force size recalculate */
-    return MENU_SetItemData( item, flags, id, str );
+    MENU_mnu2mnuii( flags, id, str, &mii);
+    return SetMenuItemInfo_common( item, &mii, TRUE);
 }
 
 
