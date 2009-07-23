@@ -242,7 +242,7 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
     http_request_t *lpwhr;
     http_session_t *lpwhs;
     BOOL ret = FALSE;
-    LPWSTR p;
+    LPWSTR p, q;
 
     lpwhr = (http_request_t*) WININET_GetObject( hRequest );
     if( !lpwhr )
@@ -259,8 +259,8 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
     if( !p )
         goto done;
 
-    p = heap_strdupW(password);
-    if( !p )
+    q = heap_strdupW(password);
+    if( !q )
     {
         HeapFree(GetProcessHeap(), 0, username);
         goto done;
@@ -274,7 +274,7 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
         hIC->lpszProxyUsername = p;
 
         HeapFree(GetProcessHeap(), 0, hIC->lpszProxyPassword);
-        hIC->lpszProxyPassword = p;
+        hIC->lpszProxyPassword = q;
     }
     else
     {
@@ -282,7 +282,7 @@ static BOOL WININET_SetAuthorization( HINTERNET hRequest, LPWSTR username,
         lpwhs->lpszUserName = p;
 
         HeapFree(GetProcessHeap(), 0, lpwhs->lpszPassword);
-        lpwhs->lpszPassword = p;
+        lpwhs->lpszPassword = q;
     }
 
     ret = TRUE;
