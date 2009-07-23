@@ -231,12 +231,14 @@ static BOOL WININET_SetProxyAuthorization( HINTERNET hRequest,
     if( !p )
         goto done;
 
+    HeapFree(GetProcessHeap(), 0, hIC->lpszProxyUsername);
     hIC->lpszProxyUsername = p;
 
     p = heap_strdupW(password);
     if( !p )
         goto done;
 
+    HeapFree(GetProcessHeap(), 0, hIC->lpszProxyPassword);
     hIC->lpszProxyPassword = p;
 
     ret = TRUE;
