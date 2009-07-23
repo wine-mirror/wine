@@ -1794,7 +1794,8 @@ static void context_apply_draw_buffer(struct WineD3DContext *context, BOOL blit)
  *  usage: Prepares the context for blitting, drawing or other actions
  *
  *****************************************************************************/
-void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextUsage usage) {
+struct WineD3DContext *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage)
+{
     struct WineD3DContext *current_context = context_get_current();
     DWORD                         tid = GetCurrentThreadId();
     DWORD                         i, dirtyState, idx;
@@ -1929,4 +1930,6 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         default:
             FIXME("Unexpected context usage requested\n");
     }
+
+    return context;
 }

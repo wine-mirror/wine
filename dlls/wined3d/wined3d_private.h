@@ -1262,7 +1262,7 @@ typedef enum ContextUsage {
     CTXUSAGE_CLEAR              = 4,    /* Drawable and states are set up for clearing */
 } ContextUsage;
 
-void ActivateContext(IWineD3DDeviceImpl *device, IWineD3DSurface *target, ContextUsage usage);
+struct WineD3DContext *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage);
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms);
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type);
