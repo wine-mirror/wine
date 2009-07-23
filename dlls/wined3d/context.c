@@ -1609,6 +1609,8 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     const struct GlPixelFormatDesc *old, *new;
     struct WineD3DContext *context;
 
+    if (current_context && current_context->destroyed) current_context = NULL;
+
     if (!target)
     {
         if (current_context
