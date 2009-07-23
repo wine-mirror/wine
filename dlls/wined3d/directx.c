@@ -284,7 +284,6 @@ static BOOL WineD3D_CreateFakeGLContext(struct wined3d_fake_gl_ctx *ctx)
         ERR_(d3d_caps)("Failed to make fake GL context current.\n");
         goto fail;
     }
-    context_set_last_device(NULL);
 
     return TRUE;
 

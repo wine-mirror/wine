@@ -1271,7 +1271,6 @@ void context_attach_depth_stencil_fbo(struct WineD3DContext *context,
         GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
 void context_attach_surface_fbo(const struct WineD3DContext *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurface *surface);
-void context_set_last_device(IWineD3DDeviceImpl *device);
 struct WineD3DContext *context_get_current(void);
 DWORD context_get_tls_idx(void);
 BOOL context_set_current(struct WineD3DContext *ctx);

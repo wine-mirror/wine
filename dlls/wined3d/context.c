@@ -29,18 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION (*gl_info)
 
-/* The last used device.
- *
- * If the application creates multiple devices and switches between them, ActivateContext has to
- * change the opengl context. This flag allows to keep track which device is active
- */
-static IWineD3DDeviceImpl *last_device;
 static DWORD wined3d_context_tls_idx;
-
-void context_set_last_device(IWineD3DDeviceImpl *device)
-{
-    last_device = device;
-}
 
 /* FBO helper functions */
 
@@ -1193,7 +1182,6 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     }
     LEAVE_GL();
 
-    context_set_last_device(This);
     This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
 
     return ret;
@@ -1282,8 +1270,6 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context)
     {
         context_destroy_gl_resources(context);
         destroy = TRUE;
-
-        context_set_last_device(NULL);
 
         if (This->activeContext == context)
         {
@@ -1840,7 +1826,6 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         }
     }
     This->activeContext = context;
-    context_set_last_device(This);
 
     switch (usage) {
         case CTXUSAGE_CLEAR:
