@@ -79,6 +79,8 @@ static const WCHAR testparentclassW[] =
 HWND hwndparent, hwndparentW;
 /* prevents edit box creation, LVN_BEGINLABELEDIT return value */
 BOOL blockEdit;
+/* dumps LVN_ITEMCHANGED message data */
+static BOOL g_dump_itemchanged;
 /* format reported to control:
    -1 falls to defproc, anything else returned */
 INT  notifyFormat;
@@ -205,7 +207,20 @@ static const struct message ownderdata_select_focus_parent_seq[] = {
     { 0 }
 };
 
-static const struct message ownerdata_select_all_parent_seq[] = {
+static const struct message ownerdata_setstate_all_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_defocus_all_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_GETDISPINFOA },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_deselect_all_parent_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ODCACHEHINT },
     { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
     { 0 }
 };
@@ -326,6 +341,14 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
 
               trace("LVN_%sSCROLL: (%d,%d)\n", pScroll->hdr.code == LVN_BEGINSCROLL ?
                                                "BEGIN" : "END", pScroll->dx, pScroll->dy);
+              }
+              break;
+          case LVN_ITEMCHANGED:
+              if (g_dump_itemchanged)
+              {
+                  NMLISTVIEW *nmlv = (NMLISTVIEW*)lParam;
+                  trace("LVN_ITEMCHANGED: item=%d,new=%x,old=%x,changed=%x\n",
+                         nmlv->iItem, nmlv->uNewState, nmlv->uOldState, nmlv->uChanged);
               }
               break;
           }
@@ -2457,11 +2480,107 @@ static void test_ownerdata(void)
 
     item.stateMask = LVIS_SELECTED;
     item.state     = LVIS_SELECTED;
+
+    g_dump_itemchanged = TRUE;
     res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
     expect(TRUE, res);
+    g_dump_itemchanged = FALSE;
 
-    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_select_all_parent_seq,
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_setstate_all_parent_seq,
                 "ownerdata select all notification", TRUE);
+
+    /* select all again, note that all items are selected already */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    g_dump_itemchanged = TRUE;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, res);
+    g_dump_itemchanged = FALSE;
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_setstate_all_parent_seq,
+                "ownerdata select all notification", TRUE);
+    /* deselect all */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    item.stateMask = LVIS_SELECTED;
+    item.state     = 0;
+    g_dump_itemchanged = TRUE;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, res);
+    g_dump_itemchanged = FALSE;
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_deselect_all_parent_seq,
+                "ownerdata deselect all notification", TRUE);
+
+    /* select one, then deselect all */
+    item.stateMask = LVIS_SELECTED;
+    item.state     = LVIS_SELECTED;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, res);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    item.stateMask = LVIS_SELECTED;
+    item.state     = 0;
+    g_dump_itemchanged = TRUE;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, res);
+    g_dump_itemchanged = FALSE;
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_deselect_all_parent_seq,
+                "ownerdata select all notification", TRUE);
+
+    /* remove focused, try to focus all */
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, res);
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = 0;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, res);
+    item.stateMask = LVIS_FOCUSED;
+    res = SendMessageA(hwnd, LVM_GETITEMSTATE, 0, LVIS_FOCUSED);
+    expect(0, res);
+    /* setting all to focused returns failure value */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    g_dump_itemchanged = TRUE;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    todo_wine expect(FALSE, res);
+    g_dump_itemchanged = FALSE;
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "ownerdata focus all notification", TRUE);
+    /* focus single item, remove all */
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    res = SendMessage(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, res);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = 0;
+    g_dump_itemchanged = TRUE;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, res);
+    g_dump_itemchanged = FALSE;
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_defocus_all_parent_seq,
+                "ownerdata remove focus all notification", TRUE);
+    /* set all cut */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    item.stateMask = LVIS_CUT;
+    item.state     = LVIS_CUT;
+    g_dump_itemchanged = TRUE;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, res);
+    g_dump_itemchanged = FALSE;
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_setstate_all_parent_seq,
+                "ownerdata cut all notification", TRUE);
+    /* all marked cut, try again */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    item.stateMask = LVIS_CUT;
+    item.state     = LVIS_CUT;
+    g_dump_itemchanged = TRUE;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, -1, (LPARAM)&item);
+    expect(TRUE, res);
+    g_dump_itemchanged = FALSE;
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_setstate_all_parent_seq,
+                "ownerdata cut all notification #2", TRUE);
 
     DestroyWindow(hwnd);
 
