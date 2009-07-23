@@ -1734,16 +1734,19 @@ retry:
 }
 
 /* Context activation is done by the caller. */
-static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target, BOOL blit)
+static void context_apply_draw_buffer(struct WineD3DContext *context, BOOL blit)
 {
-    const struct wined3d_gl_info *gl_info = This->activeContext->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    IWineD3DSurface *rt = context->current_rt;
     IWineD3DSwapChain *swapchain;
+    IWineD3DDeviceImpl *device;
 
-    if (SUCCEEDED(IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **)&swapchain)))
+    device = ((IWineD3DSurfaceImpl *)rt)->resource.wineD3DDevice;
+    if (SUCCEEDED(IWineD3DSurface_GetContainer(rt, &IID_IWineD3DSwapChain, (void **)&swapchain)))
     {
         IWineD3DSwapChain_Release((IUnknown *)swapchain);
         ENTER_GL();
-        glDrawBuffer(surface_get_gl_buffer(target, swapchain));
+        glDrawBuffer(surface_get_gl_buffer(rt, swapchain));
         checkGLcall("glDrawBuffers()");
         LEAVE_GL();
     }
@@ -1756,12 +1759,12 @@ static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target,
             {
                 if (GL_SUPPORT(ARB_DRAW_BUFFERS))
                 {
-                    GL_EXTCALL(glDrawBuffersARB(GL_LIMITS(buffers), This->draw_buffers));
+                    GL_EXTCALL(glDrawBuffersARB(GL_LIMITS(buffers), device->draw_buffers));
                     checkGLcall("glDrawBuffers()");
                 }
                 else
                 {
-                    glDrawBuffer(This->draw_buffers[0]);
+                    glDrawBuffer(device->draw_buffers[0]);
                     checkGLcall("glDrawBuffer()");
                 }
             } else {
@@ -1771,7 +1774,7 @@ static void apply_draw_buffer(IWineD3DDeviceImpl *This, IWineD3DSurface *target,
         }
         else
         {
-            glDrawBuffer(This->offscreenBuffer);
+            glDrawBuffer(device->offscreenBuffer);
             checkGLcall("glDrawBuffer()");
         }
         LEAVE_GL();
@@ -1836,7 +1839,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                 LEAVE_GL();
             }
             if (context->draw_buffer_dirty) {
-                apply_draw_buffer(This, target, FALSE);
+                context_apply_draw_buffer(context, FALSE);
                 context->draw_buffer_dirty = FALSE;
             }
             break;
@@ -1858,7 +1861,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                 context->draw_buffer_dirty = TRUE;
             }
             if (context->draw_buffer_dirty) {
-                apply_draw_buffer(This, target, TRUE);
+                context_apply_draw_buffer(context, TRUE);
                 if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
                     context->draw_buffer_dirty = FALSE;
                 }
