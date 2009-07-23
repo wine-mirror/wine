@@ -65,19 +65,20 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     http_request_t *lpwhr;
     http_session_t *lpwhs = NULL;
     appinfo_t *hIC = NULL;
+    BOOL ret = FALSE;
     LPWSTR p;
 
     lpwhr = (http_request_t*) WININET_GetObject( hRequest );
     if (NULL == lpwhr)
-	return FALSE;
+        goto done;
 
     lpwhs = lpwhr->lpHttpSession;
     if (NULL == lpwhs)
-	return FALSE;
+        goto done;
 
     hIC = lpwhs->lpAppInfo;
     if (NULL == hIC)
-	return FALSE;
+        goto done;
 
     lstrcpynW(szBuf, hIC->lpszProxy, sz);
 
@@ -86,7 +87,11 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     if (p)
         *p = 0;
 
-    return TRUE;
+    ret = TRUE;
+
+done:
+    WININET_Release( &lpwhr->hdr );
+    return ret;
 }
 
 /***********************************************************************
@@ -206,32 +211,39 @@ static BOOL WININET_SetProxyAuthorization( HINTERNET hRequest,
     http_request_t *lpwhr;
     http_session_t *lpwhs;
     appinfo_t *hIC;
+    BOOL ret = FALSE;
     LPWSTR p;
 
     lpwhr = (http_request_t*) WININET_GetObject( hRequest );
     if( !lpwhr )
-	return FALSE;
-        
+        return FALSE;
+
     lpwhs = lpwhr->lpHttpSession;
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
+        goto done;
     }
 
     hIC = lpwhs->lpAppInfo;
 
     p = heap_strdupW(username);
     if( !p )
-        return FALSE;
+        goto done;
+
     hIC->lpszProxyUsername = p;
 
     p = heap_strdupW(password);
     if( !p )
-        return FALSE;
+        goto done;
+
     hIC->lpszProxyPassword = p;
 
-    return TRUE;
+    ret = TRUE;
+
+done:
+    WININET_Release( &lpwhr->hdr );
+    return ret;
 }
 
 /***********************************************************************
