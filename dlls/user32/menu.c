@@ -4666,6 +4666,9 @@ static inline void set_menu_item_text( MENUITEM *menu, LPCWSTR text, BOOL unicod
 
 /**********************************************************************
  *		SetMenuItemInfo_common
+ *
+ * Note: does not support the MIIM_TYPE flag. Use the MIIM_FTYPE,
+ * MIIM_BITMAP and MIIM_STRING flags instead.
  */
 
 static BOOL SetMenuItemInfo_common(MENUITEM * menu,
@@ -4676,30 +4679,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
     debug_print_menuitem("SetMenuItemInfo_common from: ", menu, "");
 
-    if (lpmii->fMask & MIIM_TYPE ) {
-        if( lpmii->fMask & ( MIIM_STRING | MIIM_FTYPE | MIIM_BITMAP)) {
-            WARN("invalid combination of fMask bits used\n");
-            /* this does not happen on Win9x/ME */
-            SetLastError( ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-
-        /* Remove the old type bits and replace them with the new ones */
-        menu->fType &= ~MENUITEMINFO_TYPE_MASK;
-        menu->fType |= lpmii->fType & MENUITEMINFO_TYPE_MASK;
-
-        if (IS_STRING_ITEM(menu->fType)) {
-	    HeapFree(GetProcessHeap(), 0, menu->text);
-            set_menu_item_text( menu, lpmii->dwTypeData, unicode );
-        } else if( (menu->fType) & MFT_BITMAP)
-                menu->hbmpItem = HBITMAP_32(LOWORD(lpmii->dwTypeData));
-    }
-
     if (lpmii->fMask & MIIM_FTYPE ) {
-        if(( lpmii->fType & MFT_BITMAP)) {
-            SetLastError( ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
         menu->fType &= ~MENUITEMINFO_TYPE_MASK;
         menu->fType |= lpmii->fType & MENUITEMINFO_TYPE_MASK;
     }
@@ -4710,11 +4690,9 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
     }
 
     if (lpmii->fMask & MIIM_STATE)
-    {
          /* Other menu items having MFS_DEFAULT are not converted
            to normal items */
          menu->fState = lpmii->fState & MENUITEMINFO_STATE_MASK;
-    }
 
     if (lpmii->fMask & MIIM_ID)
 	menu->wID = lpmii->wID;
@@ -4775,6 +4753,25 @@ static BOOL MENU_NormalizeMenuItemInfoStruct( const MENUITEMINFOW *pmii_in,
     if( pmii_in->cbSize != sizeof( MENUITEMINFOW)) {
         pmii_out->cbSize = sizeof( MENUITEMINFOW);
         pmii_out->hbmpItem = NULL;
+    }
+    /* test for invalid bit combinations */
+    if( (pmii_out->fMask & MIIM_TYPE &&
+         pmii_out->fMask & (MIIM_STRING | MIIM_FTYPE | MIIM_BITMAP)) ||
+        (pmii_out->fMask & MIIM_FTYPE && pmii_out->fType & MFT_BITMAP)) {
+        WARN("invalid combination of fMask bits used\n");
+        /* this does not happen on Win9x/ME */
+        SetLastError( ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    /* convert old style (MIIM_TYPE) to the new */
+    if( pmii_out->fMask & MIIM_TYPE){
+        pmii_out->fMask |= MIIM_FTYPE;
+        if( IS_STRING_ITEM(pmii_out->fType)){
+            pmii_out->fMask |= MIIM_STRING;
+        } else if( (pmii_out->fType) & MFT_BITMAP){
+            pmii_out->fMask |= MIIM_BITMAP;
+            pmii_out->hbmpItem = HBITMAP_32(LOWORD(pmii_out->dwTypeData));
+        }
     }
     return TRUE;
 }
