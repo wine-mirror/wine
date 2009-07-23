@@ -4942,9 +4942,10 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
         }
     }
 
+    ActivateContext(This, (IWineD3DSurface *)target, CTXUSAGE_CLEAR);
+
     target->get_drawable_size(target, &drawable_width, &drawable_height);
 
-    ActivateContext(This, (IWineD3DSurface *) target, CTXUSAGE_CLEAR);
     ENTER_GL();
 
     /* Only set the values up once, as they are not changing */
