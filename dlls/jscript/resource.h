@@ -28,6 +28,7 @@
 #define IDS_NOT_FUNC                        0x138A
 #define IDS_NOT_DATE                        0x138E
 #define IDS_NOT_NUM                         0x1389
+#define IDS_ILLEGAL_ASSIGN                  0x1390
 #define IDS_UNDEFINED                       0x1391
 #define IDS_NOT_BOOL                        0x1392
 #define IDS_INVALID_LENGTH                  0x13A5

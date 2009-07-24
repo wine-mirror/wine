@@ -232,10 +232,8 @@ static HRESULT disp_get_id(IDispatch *disp, BSTR name, DWORD flags, DISPID *id)
 /* ECMA-262 3rd Edition    8.7.2 */
 static HRESULT put_value(script_ctx_t *ctx, exprval_t *ref, VARIANT *v, jsexcept_t *ei)
 {
-    if(ref->type != EXPRVAL_IDREF) {
-        FIXME("throw ReferemceError\n");
-        return E_FAIL;
-    }
+    if(ref->type != EXPRVAL_IDREF)
+        return throw_reference_error(ctx, ei, IDS_ILLEGAL_ASSIGN, NULL);
 
     return disp_propput(ref->u.idref.disp, ref->u.idref.id, ctx->lcid, v, ei, NULL/*FIXME*/);
 }
