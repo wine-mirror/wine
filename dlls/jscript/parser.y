@@ -202,7 +202,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %type <statement> Finally
 %type <statement_list> StatementList StatementList_opt
 %type <parameter_list> FormalParameterList FormalParameterList_opt
-%type <expr> Expression Expression_opt
+%type <expr> Expression Expression_opt Expression_err
 %type <expr> ExpressionNoIn ExpressionNoIn_opt
 %type <expr> FunctionExpression
 %type <expr> AssignmentExpression AssignmentExpressionNoIn
@@ -381,16 +381,16 @@ ExpressionStatement
 
 /* ECMA-262 3rd Edition    12.5 */
 IfStatement
-        : kIF left_bracket Expression right_bracket Statement kELSE Statement
+        : kIF left_bracket Expression_err right_bracket Statement kELSE Statement
                                 { $$ = new_if_statement(ctx, $3, $5, $7); }
-        | kIF left_bracket Expression right_bracket Statement %prec LOWER_THAN_ELSE
+        | kIF left_bracket Expression_err right_bracket Statement %prec LOWER_THAN_ELSE
                                 { $$ = new_if_statement(ctx, $3, $5, NULL); }
 
 /* ECMA-262 3rd Edition    12.6 */
 IterationStatement
-        : kDO Statement kWHILE left_bracket Expression right_bracket semicolon_opt
+        : kDO Statement kWHILE left_bracket Expression_err right_bracket semicolon_opt
                                 { $$ = new_while_statement(ctx, TRUE, $5, $2); }
-        | kWHILE left_bracket Expression right_bracket Statement
+        | kWHILE left_bracket Expression_err right_bracket Statement
                                 { $$ = new_while_statement(ctx, FALSE, $3, $5); }
         | kFOR left_bracket ExpressionNoIn_opt
                                 { if(!explicit_error(ctx, $3, ';')) YYABORT; }
@@ -404,9 +404,9 @@ IterationStatement
                                 { if(!explicit_error(ctx, $7, ';')) YYABORT; }
         semicolon Expression_opt right_bracket Statement
                                 { $$ = new_for_statement(ctx, $4, NULL, $7, $10, $12); }
-        | kFOR left_bracket LeftHandSideExpression kIN Expression right_bracket Statement
+        | kFOR left_bracket LeftHandSideExpression kIN Expression_err right_bracket Statement
                                 { $$ = new_forin_statement(ctx, NULL, $3, $5, $7); }
-        | kFOR left_bracket kVAR VariableDeclarationNoIn kIN Expression right_bracket Statement
+        | kFOR left_bracket kVAR VariableDeclarationNoIn kIN Expression_err right_bracket Statement
                                 { $$ = new_forin_statement(ctx, $4, NULL, $6, $8); }
 
 /* ECMA-262 3rd Edition    12.7 */
@@ -492,6 +492,10 @@ Finally
 Expression_opt
         : /* empty */           { $$ = NULL; }
         | Expression            { $$ = $1; }
+
+Expression_err
+        : Expression            { $$ = $1; }
+        | error                 { set_error(ctx, IDS_SYNTAX_ERROR); YYABORT; }
 
 /* ECMA-262 3rd Edition    11.14 */
 Expression
