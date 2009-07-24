@@ -4948,19 +4948,19 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
 
         if (vp->X != 0 || vp->Y != 0 ||
                 vp->Width < depth_stencil->currentDesc.Width || vp->Height < depth_stencil->currentDesc.Height) {
-            surface_load_ds_location(This->stencilBufferTarget, location);
+            surface_load_ds_location(This->stencilBufferTarget, context, location);
         }
         else if (This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE] && (
                 This->stateBlock->scissorRect.left > 0 || This->stateBlock->scissorRect.top > 0 ||
                 This->stateBlock->scissorRect.right < depth_stencil->currentDesc.Width ||
                 This->stateBlock->scissorRect.bottom < depth_stencil->currentDesc.Height)) {
-            surface_load_ds_location(This->stencilBufferTarget, location);
+            surface_load_ds_location(This->stencilBufferTarget, context, location);
         }
         else if (Count > 0 && pRects && (
                 pRects[0].x1 > 0 || pRects[0].y1 > 0 ||
                 pRects[0].x2 < depth_stencil->currentDesc.Width ||
                 pRects[0].y2 < depth_stencil->currentDesc.Height)) {
-            surface_load_ds_location(This->stencilBufferTarget, location);
+            surface_load_ds_location(This->stencilBufferTarget, context, location);
         }
     }
 
@@ -6591,8 +6591,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
                     || ((IWineD3DSurfaceImpl *)This->stencilBufferTarget)->Flags & SFLAG_DISCARD) {
                 surface_modify_ds_location(This->stencilBufferTarget, SFLAG_DS_DISCARDED);
             } else {
-                ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
-                surface_load_ds_location(This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
+                struct WineD3DContext *context = ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
+                surface_load_ds_location(This->stencilBufferTarget, context, SFLAG_DS_OFFSCREEN);
                 surface_modify_ds_location(This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
             }
         }

@@ -2533,7 +2533,7 @@ void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
 void surface_add_dirty_rect(IWineD3DSurface *iface, const RECT *dirty_rect);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);
-void surface_load_ds_location(IWineD3DSurface *iface, DWORD location);
+void surface_load_ds_location(IWineD3DSurface *iface, struct WineD3DContext *context, DWORD location);
 void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location);
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
 void surface_set_texture_name(IWineD3DSurface *iface, GLuint name, BOOL srgb_name);

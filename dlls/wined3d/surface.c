@@ -4370,7 +4370,8 @@ void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location) {
 }
 
 /* Context activation is done by the caller. */
-void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
+void surface_load_ds_location(IWineD3DSurface *iface, struct WineD3DContext *context, DWORD location)
+{
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
@@ -4404,7 +4405,7 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
 
             /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
              * directly on the FBO texture. That's because we need to flip. */
-            context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, NULL);
+            context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
             if (This->texture_target == GL_TEXTURE_RECTANGLE_ARB)
             {
                 glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_binding);
@@ -4439,20 +4440,17 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
                 device->depth_blt_rb_h = This->currentDesc.Height;
             }
 
-            context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, &device->activeContext->dst_fbo);
+            context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &context->dst_fbo);
             GL_EXTCALL(glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, device->depth_blt_rb));
             checkGLcall("glFramebufferRenderbufferEXT");
-            context_attach_depth_stencil_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, iface, FALSE);
+            context_attach_depth_stencil_fbo(context, GL_FRAMEBUFFER_EXT, iface, FALSE);
 
             /* Do the actual blit */
             surface_depth_blt(This, device->depth_blt_texture, This->currentDesc.Width, This->currentDesc.Height, bind_target);
             checkGLcall("depth_blt");
 
-            if (device->activeContext->current_fbo) {
-                context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, &device->activeContext->current_fbo->id);
-            } else {
-                context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, NULL);
-            }
+            if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &context->current_fbo->id);
+            else context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
 
             LEAVE_GL();
         } else {
@@ -4464,14 +4462,12 @@ void surface_load_ds_location(IWineD3DSurface *iface, DWORD location) {
 
             ENTER_GL();
 
-            context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, NULL);
+            context_bind_fbo(context, GL_FRAMEBUFFER_EXT, NULL);
             surface_depth_blt(This, This->texture_name, This->currentDesc.Width,
                     This->currentDesc.Height, This->texture_target);
             checkGLcall("depth_blt");
 
-            if (device->activeContext->current_fbo) {
-                context_bind_fbo(device->activeContext, GL_FRAMEBUFFER_EXT, &device->activeContext->current_fbo->id);
-            }
+            if (context->current_fbo) context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &context->current_fbo->id);
 
             LEAVE_GL();
         } else {

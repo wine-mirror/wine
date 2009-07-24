@@ -558,6 +558,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl          *target;
+    struct WineD3DContext *context;
     unsigned int i;
 
     if (!index_count) return;
@@ -579,7 +580,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
 
-    ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
+    context = ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
 
     if (This->stencilBufferTarget) {
         /* Note that this depends on the ActivateContext call above to set
@@ -590,7 +591,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
         DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE]
                 || This->stateBlock->renderState[WINED3DRS_ZENABLE])
-            surface_load_ds_location(This->stencilBufferTarget, location);
+            surface_load_ds_location(This->stencilBufferTarget, context, location);
         if (This->stateBlock->renderState[WINED3DRS_ZWRITEENABLE])
             surface_modify_ds_location(This->stencilBufferTarget, location);
     }
