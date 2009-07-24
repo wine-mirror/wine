@@ -692,11 +692,20 @@ static unsigned short crc16(const char* string)
     return crc;
 }
 
+static char *strdupA( const char *str )
+{
+    char *ret;
+
+    if (!str) return NULL;
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 ))) strcpy( ret, str );
+    return ret;
+}
+
 static char* heap_printf(const char *format, ...)
 {
     va_list args;
     int size = 4096;
-    char *buffer;
+    char *buffer, *ret;
     int n;
 
     va_start(args, format);
@@ -715,7 +724,9 @@ static char* heap_printf(const char *format, ...)
         HeapFree(GetProcessHeap(), 0, buffer);
     }
     va_end(args);
-    return buffer;
+    ret = HeapReAlloc(GetProcessHeap(), 0, buffer, strlen(buffer) + 1 );
+    if (!ret) ret = buffer;
+    return ret;
 }
 
 static BOOL create_directories(char *directory)
@@ -1429,8 +1440,8 @@ static BOOL add_mimes(const char *xdg_data_dir, struct list *mime_types)
                     if (mime_type_entry)
                     {
                         *pos = 0;
-                        mime_type_entry->mimeType = heap_printf("%s", line);
-                        mime_type_entry->glob = heap_printf("%s", pos + 1);
+                        mime_type_entry->mimeType = strdupA(line);
+                        mime_type_entry->glob = strdupA(pos + 1);
                         if (mime_type_entry->mimeType && mime_type_entry->glob)
                             list_add_tail(mime_types, &mime_type_entry->entry);
                         else
@@ -1480,7 +1491,7 @@ static BOOL build_native_mime_types(const char *xdg_data_home, struct list **mim
     if (xdg_data_dirs == NULL)
         xdg_data_dirs = heap_printf("/usr/local/share/:/usr/share/");
     else
-        xdg_data_dirs = heap_printf("%s", xdg_data_dirs);
+        xdg_data_dirs = strdupA(xdg_data_dirs);
 
     if (xdg_data_dirs)
     {
@@ -1543,7 +1554,7 @@ static BOOL match_glob(struct list *native_mime_types, const char *extension,
 
     if (*match != NULL)
     {
-        *match = heap_printf("%s", *match);
+        *match = strdupA(*match);
         if (*match == NULL)
             return FALSE;
     }
@@ -2664,7 +2675,7 @@ static BOOL init_xdg(void)
     {
         create_directories(xdg_config_dir);
         if (getenv("XDG_DATA_HOME"))
-            xdg_data_dir = heap_printf("%s", getenv("XDG_DATA_HOME"));
+            xdg_data_dir = strdupA(getenv("XDG_DATA_HOME"));
         else
             xdg_data_dir = heap_printf("%s/.local/share", getenv("HOME"));
         if (xdg_data_dir)
