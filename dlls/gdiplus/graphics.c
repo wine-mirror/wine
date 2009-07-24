@@ -2233,7 +2233,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     WCHAR* stringdup;
     REAL angle, ang_cos, ang_sin, rel_width, rel_height;
     INT sum = 0, height = 0, offsety = 0, fit, fitcpy, save_state, i, j, lret, nwidth,
-        nheight;
+        nheight, lineend;
     SIZE size;
     POINT drawbase;
     UINT drawflags;
@@ -2384,7 +2384,7 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 
         /* Line break code (may look strange, but it imitates windows). */
         if(lret < fit)
-            fit = lret;    /* this is not an off-by-one error */
+            lineend = fit = lret;    /* this is not an off-by-one error */
         else if(fit < (length - sum)){
             if(*(stringdup + sum + fit) == ' ')
                 while(*(stringdup + sum + fit) == ' ')
@@ -2401,8 +2401,14 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
                         break;
                     }
                 }
+            lineend = fit;
+            while(*(stringdup + sum + lineend - 1) == ' ' ||
+                  *(stringdup + sum + lineend - 1) == '\t')
+                lineend--;
         }
-        DrawTextW(graphics->hdc, stringdup + sum, min(length - sum, fit),
+        else
+            lineend = fit;
+        DrawTextW(graphics->hdc, stringdup + sum, min(length - sum, lineend),
                   &drawcoord, drawflags);
 
         sum += fit + (lret < fitcpy ? 1 : 0);
@@ -3207,7 +3213,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     HFONT oldfont;
     WCHAR* stringdup;
     INT sum = 0, height = 0, fit, fitcpy, max_width = 0, i, j, lret, nwidth,
-        nheight;
+        nheight, lineend;
     SIZE size;
 
     TRACE("(%p, %s, %i, %p, %s, %p, %p, %p, %p)\n", graphics,
@@ -3260,7 +3266,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
 
         /* Line break code (may look strange, but it imitates windows). */
         if(lret < fit)
-            fit = lret;    /* this is not an off-by-one error */
+            lineend = fit = lret;    /* this is not an off-by-one error */
         else if(fit < (length - sum)){
             if(*(stringdup + sum + fit) == ' ')
                 while(*(stringdup + sum + fit) == ' ')
@@ -3277,9 +3283,15 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
                         break;
                     }
                 }
+            lineend = fit;
+            while(*(stringdup + sum + lineend - 1) == ' ' ||
+                  *(stringdup + sum + lineend - 1) == '\t')
+                lineend--;
         }
+        else
+            lineend = fit;
 
-        GetTextExtentExPointW(graphics->hdc, stringdup + sum, fit,
+        GetTextExtentExPointW(graphics->hdc, stringdup + sum, lineend,
                               nwidth, &j, NULL, &size);
 
         sum += fit + (lret < fitcpy ? 1 : 0);
