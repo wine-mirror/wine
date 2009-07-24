@@ -106,6 +106,17 @@ then
     std_sleep
 fi
 
+# Ask the user if they want to build and install Wine:
+echo
+echo "We need to install Wine as the root user. Do you want us to build Wine,"
+echo "'su root' and install Wine?  Enter 'no' to build Wine without installing:"
+conf_yesno_answer "(yes/no) "
+ROOTINSTALL="$ANSWER"
+
+if [ "$ROOTINSTALL" = "yes" ]
+then sucommand="make install"
+fi
+
 # run the configure script, if necessary
 
 if [ -f Makefile ]
@@ -124,19 +135,7 @@ else
     fi
 fi
 
-# now do the compilation and install, we need to always do this because we
-# don't want the 'make install' command we might run to run 'make' as root
-
-# ask the user if they want to build and install wine
-echo
-echo "We need to install wine as root user, do you want us to build wine,"
-echo "'su root' and install Wine?  Enter 'no' to continue without installing"
-conf_yesno_answer "(yes/no) "
-ROOTINSTALL="$ANSWER"
-
-if [ "$ROOTINSTALL" = "yes" ]
-then sucommand="make install"
-fi
+# Now do the compilation and (optionally) installation
 
 echo
 echo "Compiling Wine. Grab a lunch or two, rent a video, or whatever,"
