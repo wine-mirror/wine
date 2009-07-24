@@ -2328,10 +2328,10 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
     pt[1].X = 1.0;
     pt[1].Y = 0.0;
     GdipTransformMatrixPoints(graphics->worldtrans, pt, 2);
-    angle = gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
+    angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
     ang_cos = cos(angle);
     ang_sin = sin(angle);
-    lfw.lfEscapement = lfw.lfOrientation = -roundr((angle / M_PI) * 1800.0);
+    lfw.lfEscapement = lfw.lfOrientation = roundr((angle / M_PI) * 1800.0);
 
     gdifont = CreateFontIndirectW(&lfw);
     DeleteObject(SelectObject(graphics->hdc, CreateFontIndirectW(&lfw)));
