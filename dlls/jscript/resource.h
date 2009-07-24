@@ -24,6 +24,7 @@
 #define IDS_ARG_NOT_OPT                     0x01c1
 #define IDS_SYNTAX_ERROR                    0x03EA
 #define IDS_LBRACKET                        0x03ED
+#define IDS_RBRACKET                        0x03EE
 #define IDS_NOT_FUNC                        0x138A
 #define IDS_NOT_DATE                        0x138E
 #define IDS_NOT_NUM                         0x1389

@@ -267,7 +267,7 @@ SourceElements
 
 /* ECMA-262 3rd Edition    13 */
 FunctionExpression
-        : KFunction Identifier_opt left_bracket FormalParameterList_opt ')' '{' FunctionBody '}'
+        : KFunction Identifier_opt left_bracket FormalParameterList_opt right_bracket '{' FunctionBody '}'
                                 { $$ = new_function_expression(ctx, $2, $4, $7, $1, $8-$1+1); }
 
 KFunction
@@ -380,24 +380,24 @@ ExpressionStatement
 
 /* ECMA-262 3rd Edition    12.5 */
 IfStatement
-        : kIF left_bracket Expression ')' Statement kELSE Statement
+        : kIF left_bracket Expression right_bracket Statement kELSE Statement
                                 { $$ = new_if_statement(ctx, $3, $5, $7); }
-        | kIF left_bracket Expression ')' Statement %prec LOWER_THAN_ELSE
+        | kIF left_bracket Expression right_bracket Statement %prec LOWER_THAN_ELSE
                                 { $$ = new_if_statement(ctx, $3, $5, NULL); }
 
 /* ECMA-262 3rd Edition    12.6 */
 IterationStatement
-        : kDO Statement kWHILE left_bracket Expression ')' semicolon_opt
+        : kDO Statement kWHILE left_bracket Expression right_bracket semicolon_opt
                                 { $$ = new_while_statement(ctx, TRUE, $5, $2); }
-        | kWHILE left_bracket Expression ')' Statement
+        | kWHILE left_bracket Expression right_bracket Statement
                                 { $$ = new_while_statement(ctx, FALSE, $3, $5); }
-        | kFOR left_bracket ExpressionNoIn_opt ';' Expression_opt ';' Expression_opt ')' Statement
+        | kFOR left_bracket ExpressionNoIn_opt ';' Expression_opt ';' Expression_opt right_bracket Statement
                                 { $$ = new_for_statement(ctx, NULL, $3, $5, $7, $9); }
-        | kFOR left_bracket kVAR VariableDeclarationListNoIn ';' Expression_opt ';' Expression_opt ')' Statement
+        | kFOR left_bracket kVAR VariableDeclarationListNoIn ';' Expression_opt ';' Expression_opt right_bracket Statement
                                 { $$ = new_for_statement(ctx, $4, NULL, $6, $8, $10); }
-        | kFOR left_bracket LeftHandSideExpression kIN Expression ')' Statement
+        | kFOR left_bracket LeftHandSideExpression kIN Expression right_bracket Statement
                                 { $$ = new_forin_statement(ctx, NULL, $3, $5, $7); }
-        | kFOR left_bracket kVAR VariableDeclarationNoIn kIN Expression ')' Statement
+        | kFOR left_bracket kVAR VariableDeclarationNoIn kIN Expression right_bracket Statement
                                 { $$ = new_forin_statement(ctx, $4, NULL, $6, $8); }
 
 /* ECMA-262 3rd Edition    12.7 */
@@ -417,7 +417,7 @@ ReturnStatement
 
 /* ECMA-262 3rd Edition    12.10 */
 WithStatement
-        : kWITH left_bracket Expression ')' Statement
+        : kWITH left_bracket Expression right_bracket Statement
                                 { $$ = new_with_statement(ctx, $3, $5); }
 
 /* ECMA-262 3rd Edition    12.12 */
@@ -427,7 +427,7 @@ LabelledStatement
 
 /* ECMA-262 3rd Edition    12.11 */
 SwitchStatement
-        : kSWITCH left_bracket Expression ')' CaseBlock
+        : kSWITCH left_bracket Expression right_bracket CaseBlock
                                 { $$ = new_switch_statement(ctx, $3, $5); }
 
 /* ECMA-262 3rd Edition    12.11 */
@@ -472,7 +472,7 @@ TryStatement
 
 /* ECMA-262 3rd Edition    12.14 */
 Catch
-        : kCATCH left_bracket tIdentifier ')' Block
+        : kCATCH left_bracket tIdentifier right_bracket Block
                                 { $$ = new_catch_block(ctx, $3, $5); }
 
 /* ECMA-262 3rd Edition    12.14 */
@@ -801,6 +801,10 @@ semicolon_opt
 left_bracket
         : '('
         | error                 { set_error(ctx, IDS_LBRACKET); YYABORT; }
+
+right_bracket
+        : ')'
+        | error                 { set_error(ctx, IDS_RBRACKET); YYABORT; }
 
 %%
 

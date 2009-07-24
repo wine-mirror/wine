@@ -1325,5 +1325,8 @@ exception_test(function() {eval("while");}, "SyntaxError", -2146827283);
 exception_test(function() {eval("for");}, "SyntaxError", -2146827283);
 exception_test(function() {eval("with");}, "SyntaxError", -2146827283);
 exception_test(function() {eval("switch");}, "SyntaxError", -2146827283);
+exception_test(function() {eval("if(false");}, "SyntaxError", -2146827282);
+exception_test(function() {eval("for(i=0; i<10; i++");}, "SyntaxError", -2146827282);
+exception_test(function() {eval("while(true");}, "SyntaxError", -2146827282);
 
 reportSuccess();
