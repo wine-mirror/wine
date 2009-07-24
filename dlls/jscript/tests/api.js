@@ -1317,5 +1317,6 @@ exception_test(function() {not_existing_variable.something();}, "TypeError", -21
 exception_test(function() {arr.toString = Function.prototype.toString; arr.toString();}, "TypeError", -2146823286);
 exception_test(function() {date();}, "TypeError", -2146823286);
 exception_test(function() {arr();}, "TypeError", -2146823286);
+exception_test(function() {eval("for(i=0;) {}");}, "SyntaxError", -2146827286);
 
 reportSuccess();

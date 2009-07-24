@@ -1568,7 +1568,7 @@ HRESULT script_parse(script_ctx_t *ctx, const WCHAR *code, const WCHAR *delimite
         return E_OUTOFMEMORY;
 
     parser_ctx->ref = 1;
-    parser_ctx->hres = E_FAIL;
+    parser_ctx->hres = JSCRIPT_ERROR|IDS_SYNTAX_ERROR;
     parser_ctx->is_html = delimiter && !strcmpiW(delimiter, html_tagW);
 
     parser_ctx->begin = parser_ctx->ptr = code;

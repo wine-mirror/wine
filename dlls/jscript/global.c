@@ -330,7 +330,7 @@ static HRESULT JSGlobal_eval(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARA
     hres = script_parse(dispex->ctx, V_BSTR(arg), NULL, &parser_ctx);
     if(FAILED(hres)) {
         WARN("parse (%s) failed: %08x\n", debugstr_w(V_BSTR(arg)), hres);
-        return hres;
+        return throw_syntax_error(dispex->ctx, ei, hres, NULL);
     }
 
     hres = exec_source(dispex->ctx->exec_ctx, parser_ctx, parser_ctx->source, ei, retv);

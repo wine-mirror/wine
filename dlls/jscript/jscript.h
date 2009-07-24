@@ -33,6 +33,8 @@
 #include "wine/unicode.h"
 #include "wine/list.h"
 
+#define JSCRIPT_ERROR 0x800A0000
+
 typedef struct _script_ctx_t script_ctx_t;
 typedef struct _exec_ctx_t exec_ctx_t;
 typedef struct _dispex_prop_t dispex_prop_t;

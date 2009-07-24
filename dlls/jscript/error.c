@@ -424,7 +424,8 @@ static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCH
     DispatchEx *err;
     HRESULT hres;
 
-    LoadStringW(jscript_hinstance, id,  buf, sizeof(buf)/sizeof(WCHAR));
+    buf[0] = '\0';
+    LoadStringW(jscript_hinstance, id&0xFFFF,  buf, sizeof(buf)/sizeof(WCHAR));
 
     if(str) pos = strchrW(buf, '|');
     if(pos) {
@@ -435,7 +436,7 @@ static HRESULT throw_error(script_ctx_t *ctx, jsexcept_t *ei, UINT id, const WCH
 
     WARN("%s\n", debugstr_w(buf));
 
-    id |= 0x800A0000;
+    id |= JSCRIPT_ERROR;
     hres = create_error(ctx, constr, &id, buf, &err);
     if(FAILED(hres))
         return hres;
