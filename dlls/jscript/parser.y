@@ -25,6 +25,7 @@
 #define YYPARSE_PARAM ctx
 
 static int parser_error(const char*);
+static void set_error(parser_ctx_t*,UINT);
 static BOOL allow_auto_semicolon(parser_ctx_t*);
 static void program_parsed(parser_ctx_t*,source_elements_t*);
 static source_elements_t *function_body_parsed(parser_ctx_t*,source_elements_t*);
@@ -266,7 +267,7 @@ SourceElements
 
 /* ECMA-262 3rd Edition    13 */
 FunctionExpression
-        : KFunction Identifier_opt '(' FormalParameterList_opt ')' '{' FunctionBody '}'
+        : KFunction Identifier_opt left_bracket FormalParameterList_opt ')' '{' FunctionBody '}'
                                 { $$ = new_function_expression(ctx, $2, $4, $7, $1, $8-$1+1); }
 
 KFunction
@@ -379,24 +380,24 @@ ExpressionStatement
 
 /* ECMA-262 3rd Edition    12.5 */
 IfStatement
-        : kIF '(' Expression ')' Statement kELSE Statement
+        : kIF left_bracket Expression ')' Statement kELSE Statement
                                 { $$ = new_if_statement(ctx, $3, $5, $7); }
-        | kIF '(' Expression ')' Statement %prec LOWER_THAN_ELSE
+        | kIF left_bracket Expression ')' Statement %prec LOWER_THAN_ELSE
                                 { $$ = new_if_statement(ctx, $3, $5, NULL); }
 
 /* ECMA-262 3rd Edition    12.6 */
 IterationStatement
-        : kDO Statement kWHILE '(' Expression ')' semicolon_opt
+        : kDO Statement kWHILE left_bracket Expression ')' semicolon_opt
                                 { $$ = new_while_statement(ctx, TRUE, $5, $2); }
-        | kWHILE '(' Expression ')' Statement
+        | kWHILE left_bracket Expression ')' Statement
                                 { $$ = new_while_statement(ctx, FALSE, $3, $5); }
-        | kFOR '(' ExpressionNoIn_opt ';' Expression_opt ';' Expression_opt ')' Statement
+        | kFOR left_bracket ExpressionNoIn_opt ';' Expression_opt ';' Expression_opt ')' Statement
                                 { $$ = new_for_statement(ctx, NULL, $3, $5, $7, $9); }
-        | kFOR '(' kVAR VariableDeclarationListNoIn ';' Expression_opt ';' Expression_opt ')' Statement
+        | kFOR left_bracket kVAR VariableDeclarationListNoIn ';' Expression_opt ';' Expression_opt ')' Statement
                                 { $$ = new_for_statement(ctx, $4, NULL, $6, $8, $10); }
-        | kFOR '(' LeftHandSideExpression kIN Expression ')' Statement
+        | kFOR left_bracket LeftHandSideExpression kIN Expression ')' Statement
                                 { $$ = new_forin_statement(ctx, NULL, $3, $5, $7); }
-        | kFOR '(' kVAR VariableDeclarationNoIn kIN Expression ')' Statement
+        | kFOR left_bracket kVAR VariableDeclarationNoIn kIN Expression ')' Statement
                                 { $$ = new_forin_statement(ctx, $4, NULL, $6, $8); }
 
 /* ECMA-262 3rd Edition    12.7 */
@@ -416,7 +417,7 @@ ReturnStatement
 
 /* ECMA-262 3rd Edition    12.10 */
 WithStatement
-        : kWITH '(' Expression ')' Statement
+        : kWITH left_bracket Expression ')' Statement
                                 { $$ = new_with_statement(ctx, $3, $5); }
 
 /* ECMA-262 3rd Edition    12.12 */
@@ -426,8 +427,8 @@ LabelledStatement
 
 /* ECMA-262 3rd Edition    12.11 */
 SwitchStatement
-        : kSWITCH '(' Expression ')' CaseBlock
-                                 { $$ = new_switch_statement(ctx, $3, $5); }
+        : kSWITCH left_bracket Expression ')' CaseBlock
+                                { $$ = new_switch_statement(ctx, $3, $5); }
 
 /* ECMA-262 3rd Edition    12.11 */
 CaseBlock
@@ -471,8 +472,8 @@ TryStatement
 
 /* ECMA-262 3rd Edition    12.14 */
 Catch
-        : kCATCH '(' tIdentifier ')' Block
-                                 { $$ = new_catch_block(ctx, $3, $5); }
+        : kCATCH left_bracket tIdentifier ')' Block
+                                { $$ = new_catch_block(ctx, $3, $5); }
 
 /* ECMA-262 3rd Edition    12.14 */
 Finally
@@ -493,6 +494,7 @@ Expression
 ExpressionNoIn_opt
         : /* empty */           { $$ = NULL; }
         | ExpressionNoIn        { $$ = $1; }
+        | error                 {  set_error(ctx, IDS_SYNTAX_ERROR); YYABORT; }
 
 /* ECMA-262 3rd Edition    11.14 */
 ExpressionNoIn
@@ -795,6 +797,10 @@ BooleanLiteral
 semicolon_opt
         : ';'
         | error                 { if(!allow_auto_semicolon(ctx)) {YYABORT;} }
+
+left_bracket
+        : '('
+        | error                 { set_error(ctx, IDS_LBRACKET); YYABORT; }
 
 %%
 
@@ -1433,6 +1439,12 @@ static int parser_error(const char *str)
 {
     return 0;
 }
+
+static void set_error(parser_ctx_t *ctx, UINT error)
+{
+    ctx->hres = JSCRIPT_ERROR|error;
+}
+
 
 static expression_t *new_identifier_expression(parser_ctx_t *ctx, const WCHAR *identifier)
 {

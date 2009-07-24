@@ -1318,5 +1318,12 @@ exception_test(function() {arr.toString = Function.prototype.toString; arr.toStr
 exception_test(function() {date();}, "TypeError", -2146823286);
 exception_test(function() {arr();}, "TypeError", -2146823286);
 exception_test(function() {eval("for(i=0;) {}");}, "SyntaxError", -2146827286);
+exception_test(function() {eval("function {};");}, "SyntaxError", -2146827283);
+exception_test(function() {eval("if");}, "SyntaxError", -2146827283);
+exception_test(function() {eval("do i=0; while");}, "SyntaxError", -2146827283);
+exception_test(function() {eval("while");}, "SyntaxError", -2146827283);
+exception_test(function() {eval("for");}, "SyntaxError", -2146827283);
+exception_test(function() {eval("with");}, "SyntaxError", -2146827283);
+exception_test(function() {eval("switch");}, "SyntaxError", -2146827283);
 
 reportSuccess();
