@@ -147,6 +147,11 @@ typedef struct
 #define MENU_TOP_MARGIN 3
 #define MENU_BOTTOM_MARGIN 2
 
+/* maximum allowed depth of any branch in the menu tree.
+ * This value is slightly larger than in windows (25) to
+ * stay on the safe side. */
+#define MAXMENUDEPTH 30
+
   /* (other menu->FocusedItem values give the position of the focused item) */
 #define NO_SELECTED_ITEM  0xffff
 
@@ -4627,6 +4632,30 @@ static inline void set_menu_item_text( MENUITEM *menu, LPCWSTR text, BOOL unicod
 
 
 /**********************************************************************
+ *		MENU_depth
+ *
+ * detect if there are loops in the menu tree (or the depth is too large)
+ */
+static int MENU_depth( POPUPMENU *pmenu, int depth)
+{
+    int i;
+    MENUITEM *item;
+
+    depth++;
+    if( depth > MAXMENUDEPTH) return depth;
+    item = pmenu->items;
+    for( i = 0; i < pmenu->nItems && depth <= MAXMENUDEPTH; i++, item++){
+        POPUPMENU *psubmenu =  MENU_GetMenu( item->hSubMenu);
+        if( psubmenu){
+            int bdepth = MENU_depth( psubmenu, depth);
+            if( bdepth > depth) depth = bdepth;
+        }
+    }
+    return depth;
+}
+
+
+/**********************************************************************
  *		SetMenuItemInfo_common
  *
  * Note: does not support the MIIM_TYPE flag. Use the MIIM_FTYPE,
@@ -4664,10 +4693,14 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 	if (menu->hSubMenu) {
 	    POPUPMENU *subMenu = MENU_GetMenu(menu->hSubMenu);
 	    if (subMenu) {
+                if( MENU_depth( subMenu, 0) > MAXMENUDEPTH) {
+                    ERR( "Loop detected in menu hierarchy or maximum menu depth exceeded!\n");
+                    menu->hSubMenu = 0;
+                    return FALSE;
+                }
 		subMenu->wFlags |= MF_POPUP;
 		menu->fType |= MF_POPUP;
-	    }
-	    else {
+	    } else {
                 SetLastError( ERROR_INVALID_PARAMETER);
                 return FALSE;
             }

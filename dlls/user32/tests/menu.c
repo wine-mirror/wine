@@ -3018,6 +3018,7 @@ static void test_menu_maxdepth(void)
     int i;
     DWORD ret;
 
+    SetLastError(12345678);
     for( i = 0; i < NR_MENUS; i++) {
         hmenus[i] = CreatePopupMenu();
         if( !hmenus[i]) break;
@@ -3028,7 +3029,7 @@ static void test_menu_maxdepth(void)
         if( !ret) break;
     }
     trace("Maximum depth is %d\n", i);
-todo_wine
+    ok( GetLastError() == 12345678, "unexpected error %d\n",  GetLastError());
     ok( i < NR_MENUS ||
            broken( i == NR_MENUS), /* win98, NT */
            "no ( or very large) limit on menu depth!\n");
@@ -3055,7 +3056,6 @@ static void test_menu_circref(void)
     ok( ret, "AppendMenu failed, error is %d\n", GetLastError());
     /* now attempt to change the string of the first item of menu1 */
     ret = ModifyMenuA( menu1, (UINT_PTR)menu2, MF_POPUP, (UINT_PTR)menu2, "menu 2");
-todo_wine
     ok( !ret ||
             broken( ret), /* win98, NT */
             "ModifyMenu should have failed.\n");
