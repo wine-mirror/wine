@@ -223,8 +223,15 @@ struct GpCachedBitmap{
     GpImage *image;
 };
 
+struct color_key{
+    BOOL enabled;
+    ARGB low;
+    ARGB high;
+};
+
 struct GpImageAttributes{
     WrapMode wrap;
+    struct color_key colorkeys[ColorAdjustTypeCount];
 };
 
 struct GpFont{
