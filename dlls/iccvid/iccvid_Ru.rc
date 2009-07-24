@@ -18,10 +18,13 @@
 
 #include "iccvid_private.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_NAME "Видео кодер-декодер Cinepak"
-    IDS_DESCRIPTION "Видео кодер-декодер Cinepak"
+    IDS_NAME "Р’РёРґРµРѕ РєРѕРґРµСЂ-РґРµРєРѕРґРµСЂ Cinepak"
+    IDS_DESCRIPTION "Р’РёРґРµРѕ РєРѕРґРµСЂ-РґРµРєРѕРґРµСЂ Cinepak"
 }
