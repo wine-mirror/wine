@@ -2406,25 +2406,11 @@ int WINAPI WS_ioctlsocket(SOCKET s, LONG cmd, WS_u_long *argp)
             SetLastError(WSAEINVAL);
             return SOCKET_ERROR;
         }
-        fd = get_sock_fd( s, 0, NULL );
-        if (fd != -1)
-        {
-            int ret;
-            if (*argp)
-            {
-                _enable_event(SOCKET2HANDLE(s), 0, FD_WINE_NONBLOCKING, 0);
-                ret = fcntl( fd, F_SETFL, O_NONBLOCK );
-            }
-            else
-            {
-                _enable_event(SOCKET2HANDLE(s), 0, 0, FD_WINE_NONBLOCKING);
-                ret = fcntl( fd, F_SETFL, 0 );
-            }
-            release_sock_fd( s, fd );
-            if (!ret) return 0;
-            SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
-        }
-        return SOCKET_ERROR;
+        if (*argp)
+            _enable_event(SOCKET2HANDLE(s), 0, FD_WINE_NONBLOCKING, 0);
+        else
+            _enable_event(SOCKET2HANDLE(s), 0, 0, FD_WINE_NONBLOCKING);
+        return 0;
 
     case WS_SIOCATMARK:
         newcmd=SIOCATMARK;
