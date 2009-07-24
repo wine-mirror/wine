@@ -1191,18 +1191,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     /* allocated the 'extended' data based on the type of query requested */
     switch(Type){
     case WINED3DQUERYTYPE_OCCLUSION:
-        object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryOcclusionData));
-        ((WineQueryOcclusionData *)(object->extendedData))->ctx = This->activeContext;
+        object->extendedData = HeapAlloc(GetProcessHeap(), 0, sizeof(struct wined3d_occlusion_query));
+        ((struct wined3d_occlusion_query *)object->extendedData)->context = NULL;
+        break;
 
-        if(GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
-            TRACE("(%p) Allocating data for an occlusion query\n", This);
-
-            ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
-            ENTER_GL();
-            GL_EXTCALL(glGenQueriesARB(1, &((WineQueryOcclusionData *)(object->extendedData))->queryId));
-            LEAVE_GL();
-            break;
-        }
     case WINED3DQUERYTYPE_EVENT:
         object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryEventData));
         ((WineQueryEventData *)(object->extendedData))->ctx = This->activeContext;

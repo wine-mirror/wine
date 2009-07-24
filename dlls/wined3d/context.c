@@ -451,6 +451,63 @@ static void context_apply_fbo_state(struct WineD3DContext *context)
     context_check_fbo_status(context);
 }
 
+/* Context activation is done by the caller. */
+void context_alloc_occlusion_query(struct WineD3DContext *context, struct wined3d_occlusion_query *query)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (context->free_occlusion_query_count)
+    {
+        query->id = context->free_occlusion_queries[--context->free_occlusion_query_count];
+    }
+    else
+    {
+        if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
+        {
+            ENTER_GL();
+            GL_EXTCALL(glGenQueriesARB(1, &query->id));
+            checkGLcall("glGenQueriesARB");
+            LEAVE_GL();
+
+            TRACE("Allocated occlusion query %u in context %p.\n", query->id, context);
+        }
+        else
+        {
+            WARN("Occlusion queries not supported, not allocating query id.\n");
+            query->id = 0;
+        }
+    }
+
+    query->context = context;
+    list_add_head(&context->occlusion_queries, &query->entry);
+}
+
+void context_free_occlusion_query(struct wined3d_occlusion_query *query)
+{
+    struct WineD3DContext *context = query->context;
+
+    list_remove(&query->entry);
+    query->context = NULL;
+
+    if (context->free_occlusion_query_count >= context->free_occlusion_query_size - 1)
+    {
+        UINT new_size = context->free_occlusion_query_size << 1;
+        GLuint *new_data = HeapReAlloc(GetProcessHeap(), 0, context->free_occlusion_queries,
+                new_size * sizeof(*context->free_occlusion_queries));
+
+        if (!new_data)
+        {
+            ERR("Failed to grow free list, leaking query %u in context %p.\n", query->id, context);
+            return;
+        }
+
+        context->free_occlusion_query_size = new_size;
+        context->free_occlusion_queries = new_data;
+    }
+
+    context->free_occlusion_queries[context->free_occlusion_query_count++] = query->id;
+}
+
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -504,6 +561,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
 static void context_destroy_gl_resources(struct WineD3DContext *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_occlusion_query *occlusion_query;
     struct fbo_entry *entry, *entry2;
     BOOL has_glctx;
 
@@ -511,6 +569,12 @@ static void context_destroy_gl_resources(struct WineD3DContext *context)
     if (!has_glctx) WARN("Failed to activate context. Window already destroyed?\n");
 
     ENTER_GL();
+
+    LIST_FOR_EACH_ENTRY(occlusion_query, &context->occlusion_queries, struct wined3d_occlusion_query, entry)
+    {
+        if (has_glctx && GL_SUPPORT(ARB_OCCLUSION_QUERY)) GL_EXTCALL(glDeleteQueriesARB(1, &occlusion_query->id));
+        occlusion_query->context = NULL;
+    }
 
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry) {
         if (!has_glctx) entry->id = 0;
@@ -532,9 +596,15 @@ static void context_destroy_gl_resources(struct WineD3DContext *context)
         {
             GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
         }
+
+        GL_EXTCALL(glDeleteQueriesARB(context->free_occlusion_query_count, context->free_occlusion_queries));
+
+        checkGLcall("context cleanup");
     }
 
     LEAVE_GL();
+
+    HeapFree(GetProcessHeap(), 0, context->free_occlusion_queries);
 
     if (!pwglMakeCurrent(NULL, NULL))
     {
@@ -1092,6 +1162,13 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
                 sizeof(*ret->pshader_const_dirty) * GL_LIMITS(pshader_constantsF));
     }
 
+    ret->free_occlusion_query_size = 4;
+    ret->free_occlusion_queries = HeapAlloc(GetProcessHeap(), 0,
+            ret->free_occlusion_query_size * sizeof(*ret->free_occlusion_queries));
+    if (!ret->free_occlusion_queries) goto out;
+
+    list_init(&ret->occlusion_queries);
+
     TRACE("Successfully created new context %p\n", ret);
 
     list_init(&ret->fbo_list);
@@ -1187,6 +1264,13 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
     return ret;
 
 out:
+    if (ret)
+    {
+        HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
+        HeapFree(GetProcessHeap(), 0, ret->pshader_const_dirty);
+        HeapFree(GetProcessHeap(), 0, ret->vshader_const_dirty);
+        HeapFree(GetProcessHeap(), 0, ret);
+    }
     return NULL;
 }
 

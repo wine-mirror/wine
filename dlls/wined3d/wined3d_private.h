@@ -1188,6 +1188,13 @@ enum fogsource {
 
 #define WINED3D_MAX_FBO_ENTRIES 64
 
+struct wined3d_occlusion_query
+{
+    struct list entry;
+    GLuint id;
+    struct WineD3DContext *context;
+};
+
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext
 {
@@ -1248,6 +1255,12 @@ struct WineD3DContext
     GLuint                  fbo_read_binding;
     GLuint                  fbo_draw_binding;
 
+    /* Queries */
+    GLuint *free_occlusion_queries;
+    UINT free_occlusion_query_size;
+    UINT free_occlusion_query_count;
+    struct list occlusion_queries;
+
     /* Extension emulation */
     GLint                   gl_fog_source;
     GLfloat                 fog_coord_value;
@@ -1265,12 +1278,14 @@ typedef enum ContextUsage {
 struct WineD3DContext *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage);
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms);
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
+void context_alloc_occlusion_query(struct WineD3DContext *context, struct wined3d_occlusion_query *query);
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type);
 void context_bind_fbo(struct WineD3DContext *context, GLenum target, GLuint *fbo);
 void context_attach_depth_stencil_fbo(struct WineD3DContext *context,
         GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
 void context_attach_surface_fbo(const struct WineD3DContext *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurface *surface);
+void context_free_occlusion_query(struct wined3d_occlusion_query *query);
 struct WineD3DContext *context_get_current(void);
 DWORD context_get_tls_idx(void);
 BOOL context_set_current(struct WineD3DContext *ctx);
@@ -2350,11 +2365,6 @@ extern const IWineD3DQueryVtbl IWineD3DEventQuery_Vtbl;
 extern const IWineD3DQueryVtbl IWineD3DOcclusionQuery_Vtbl;
 
 /* Datastructures for IWineD3DQueryImpl.extendedData */
-typedef struct  WineQueryOcclusionData {
-    GLuint  queryId;
-    WineD3DContext *ctx;
-} WineQueryOcclusionData;
-
 typedef struct  WineQueryEventData {
     GLuint  fenceId;
     WineD3DContext *ctx;
