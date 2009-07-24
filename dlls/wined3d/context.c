@@ -1164,7 +1164,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
         /* If we still don't have a pixel format, something is very wrong as ChoosePixelFormat barely fails */
         if(!iPixelFormat) {
             ERR("Can't find a suitable iPixelFormat\n");
-            return FALSE;
+            return NULL;
         }
 
         DescribePixelFormat(hdc, iPixelFormat, sizeof(pfd), &pfd);
@@ -1183,7 +1183,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
                 if(!res) {
                     ERR("wglSetPixelFormatWINE failed on HDC=%p for iPixelFormat=%d\n", hdc, iPixelFormat);
-                    return FALSE;
+                    return NULL;
                 }
             } else if(oldPixelFormat) {
                 /* OpenGL doesn't allow pixel format adjustments. Print an error and continue using the old format.
@@ -1191,7 +1191,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
                 ERR("HDC=%p is already set to iPixelFormat=%d and OpenGL doesn't allow changes!\n", hdc, oldPixelFormat);
             } else {
                 ERR("SetPixelFormat failed on HDC=%p for iPixelFormat=%d\n", hdc, iPixelFormat);
-                return FALSE;
+                return NULL;
             }
         }
     }
