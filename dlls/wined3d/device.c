@@ -1196,19 +1196,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
         break;
 
     case WINED3DQUERYTYPE_EVENT:
-        object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryEventData));
-        ((WineQueryEventData *)(object->extendedData))->ctx = This->activeContext;
-
-        ActivateContext(This, NULL, CTXUSAGE_RESOURCELOAD);
-        ENTER_GL();
-        if(GL_SUPPORT(APPLE_FENCE)) {
-            GL_EXTCALL(glGenFencesAPPLE(1, &((WineQueryEventData *)(object->extendedData))->fenceId));
-            checkGLcall("glGenFencesAPPLE");
-        } else if(GL_SUPPORT(NV_FENCE)) {
-            GL_EXTCALL(glGenFencesNV(1, &((WineQueryEventData *)(object->extendedData))->fenceId));
-            checkGLcall("glGenFencesNV");
-        }
-        LEAVE_GL();
+        object->extendedData = HeapAlloc(GetProcessHeap(), 0, sizeof(struct wined3d_event_query));
+        ((struct wined3d_event_query *)object->extendedData)->context = NULL;
         break;
 
     case WINED3DQUERYTYPE_VCACHE:

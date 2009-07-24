@@ -1195,6 +1195,13 @@ struct wined3d_occlusion_query
     struct WineD3DContext *context;
 };
 
+struct wined3d_event_query
+{
+    struct list entry;
+    GLuint id;
+    struct WineD3DContext *context;
+};
+
 /* The new context manager that should deal with onscreen and offscreen rendering */
 struct WineD3DContext
 {
@@ -1261,6 +1268,11 @@ struct WineD3DContext
     UINT free_occlusion_query_count;
     struct list occlusion_queries;
 
+    GLuint *free_event_queries;
+    UINT free_event_query_size;
+    UINT free_event_query_count;
+    struct list event_queries;
+
     /* Extension emulation */
     GLint                   gl_fog_source;
     GLfloat                 fog_coord_value;
@@ -1278,6 +1290,7 @@ typedef enum ContextUsage {
 struct WineD3DContext *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage);
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms);
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
+void context_alloc_event_query(struct WineD3DContext *context, struct wined3d_event_query *query);
 void context_alloc_occlusion_query(struct WineD3DContext *context, struct wined3d_occlusion_query *query);
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type);
 void context_bind_fbo(struct WineD3DContext *context, GLenum target, GLuint *fbo);
@@ -1285,6 +1298,7 @@ void context_attach_depth_stencil_fbo(struct WineD3DContext *context,
         GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
 void context_attach_surface_fbo(const struct WineD3DContext *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurface *surface);
+void context_free_event_query(struct wined3d_event_query *query);
 void context_free_occlusion_query(struct wined3d_occlusion_query *query);
 struct WineD3DContext *context_get_current(void);
 DWORD context_get_tls_idx(void);
@@ -2363,12 +2377,6 @@ typedef struct IWineD3DQueryImpl
 extern const IWineD3DQueryVtbl IWineD3DQuery_Vtbl;
 extern const IWineD3DQueryVtbl IWineD3DEventQuery_Vtbl;
 extern const IWineD3DQueryVtbl IWineD3DOcclusionQuery_Vtbl;
-
-/* Datastructures for IWineD3DQueryImpl.extendedData */
-typedef struct  WineQueryEventData {
-    GLuint  fenceId;
-    WineD3DContext *ctx;
-} WineQueryEventData;
 
 /* IWineD3DBuffer */
 

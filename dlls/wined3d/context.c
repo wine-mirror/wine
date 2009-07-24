@@ -2,6 +2,7 @@
  * Context and render target management in wined3d
  *
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
+ * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -508,6 +509,72 @@ void context_free_occlusion_query(struct wined3d_occlusion_query *query)
     context->free_occlusion_queries[context->free_occlusion_query_count++] = query->id;
 }
 
+/* Context activation is done by the caller. */
+void context_alloc_event_query(struct WineD3DContext *context, struct wined3d_event_query *query)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (context->free_event_query_count)
+    {
+        query->id = context->free_event_queries[--context->free_event_query_count];
+    }
+    else
+    {
+        if (GL_SUPPORT(APPLE_FENCE))
+        {
+            ENTER_GL();
+            GL_EXTCALL(glGenFencesAPPLE(1, &query->id));
+            checkGLcall("glGenFencesAPPLE");
+            LEAVE_GL();
+
+            TRACE("Allocated event query %u in context %p.\n", query->id, context);
+        }
+        else if(GL_SUPPORT(NV_FENCE))
+        {
+            ENTER_GL();
+            GL_EXTCALL(glGenFencesNV(1, &query->id));
+            checkGLcall("glGenFencesNV");
+            LEAVE_GL();
+
+            TRACE("Allocated event query %u in context %p.\n", query->id, context);
+        }
+        else
+        {
+            WARN("Event queries not supported, not allocating query id.\n");
+            query->id = 0;
+        }
+    }
+
+    query->context = context;
+    list_add_head(&context->event_queries, &query->entry);
+}
+
+void context_free_event_query(struct wined3d_event_query *query)
+{
+    struct WineD3DContext *context = query->context;
+
+    list_remove(&query->entry);
+    query->context = NULL;
+
+    if (context->free_event_query_count >= context->free_event_query_size - 1)
+    {
+        UINT new_size = context->free_event_query_size << 1;
+        GLuint *new_data = HeapReAlloc(GetProcessHeap(), 0, context->free_event_queries,
+                new_size * sizeof(*context->free_event_queries));
+
+        if (!new_data)
+        {
+            ERR("Failed to grow free list, leaking query %u in context %p.\n", query->id, context);
+            return;
+        }
+
+        context->free_event_query_size = new_size;
+        context->free_event_queries = new_data;
+    }
+
+    context->free_event_queries[context->free_event_query_count++] = query->id;
+}
+
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -562,6 +629,7 @@ static void context_destroy_gl_resources(struct WineD3DContext *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_occlusion_query *occlusion_query;
+    struct wined3d_event_query *event_query;
     struct fbo_entry *entry, *entry2;
     BOOL has_glctx;
 
@@ -574,6 +642,16 @@ static void context_destroy_gl_resources(struct WineD3DContext *context)
     {
         if (has_glctx && GL_SUPPORT(ARB_OCCLUSION_QUERY)) GL_EXTCALL(glDeleteQueriesARB(1, &occlusion_query->id));
         occlusion_query->context = NULL;
+    }
+
+    LIST_FOR_EACH_ENTRY(event_query, &context->event_queries, struct wined3d_event_query, entry)
+    {
+        if (has_glctx)
+        {
+            if (GL_SUPPORT(APPLE_FENCE)) GL_EXTCALL(glDeleteFencesAPPLE(1, &event_query->id));
+            else if (GL_SUPPORT(NV_FENCE)) GL_EXTCALL(glDeleteFencesNV(1, &event_query->id));
+        }
+        event_query->context = NULL;
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry) {
@@ -599,12 +677,18 @@ static void context_destroy_gl_resources(struct WineD3DContext *context)
 
         GL_EXTCALL(glDeleteQueriesARB(context->free_occlusion_query_count, context->free_occlusion_queries));
 
+        if (GL_SUPPORT(APPLE_FENCE))
+            GL_EXTCALL(glDeleteFencesAPPLE(context->free_event_query_count, context->free_event_queries));
+        else if (GL_SUPPORT(NV_FENCE))
+            GL_EXTCALL(glDeleteFencesNV(context->free_event_query_count, context->free_event_queries));
+
         checkGLcall("context cleanup");
     }
 
     LEAVE_GL();
 
     HeapFree(GetProcessHeap(), 0, context->free_occlusion_queries);
+    HeapFree(GetProcessHeap(), 0, context->free_event_queries);
 
     if (!pwglMakeCurrent(NULL, NULL))
     {
@@ -1169,6 +1253,13 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 
     list_init(&ret->occlusion_queries);
 
+    ret->free_event_query_size = 4;
+    ret->free_event_queries = HeapAlloc(GetProcessHeap(), 0,
+            ret->free_event_query_size * sizeof(*ret->free_event_queries));
+    if (!ret->free_event_queries) goto out;
+
+    list_init(&ret->event_queries);
+
     TRACE("Successfully created new context %p\n", ret);
 
     list_init(&ret->fbo_list);
@@ -1266,6 +1357,7 @@ WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *tar
 out:
     if (ret)
     {
+        HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
         HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
         HeapFree(GetProcessHeap(), 0, ret->pshader_const_dirty);
         HeapFree(GetProcessHeap(), 0, ret->vshader_const_dirty);
