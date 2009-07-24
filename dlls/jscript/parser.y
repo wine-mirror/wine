@@ -26,6 +26,7 @@
 
 static int parser_error(const char*);
 static void set_error(parser_ctx_t*,UINT);
+static BOOL explicit_error(parser_ctx_t*,void*,WCHAR);
 static BOOL allow_auto_semicolon(parser_ctx_t*);
 static void program_parsed(parser_ctx_t*,source_elements_t*);
 static source_elements_t *function_body_parsed(parser_ctx_t*,source_elements_t*);
@@ -391,10 +392,18 @@ IterationStatement
                                 { $$ = new_while_statement(ctx, TRUE, $5, $2); }
         | kWHILE left_bracket Expression right_bracket Statement
                                 { $$ = new_while_statement(ctx, FALSE, $3, $5); }
-        | kFOR left_bracket ExpressionNoIn_opt ';' Expression_opt ';' Expression_opt right_bracket Statement
-                                { $$ = new_for_statement(ctx, NULL, $3, $5, $7, $9); }
-        | kFOR left_bracket kVAR VariableDeclarationListNoIn ';' Expression_opt ';' Expression_opt right_bracket Statement
-                                { $$ = new_for_statement(ctx, $4, NULL, $6, $8, $10); }
+        | kFOR left_bracket ExpressionNoIn_opt
+                                { if(!explicit_error(ctx, $3, ';')) YYABORT; }
+        semicolon  Expression_opt
+                                { if(!explicit_error(ctx, $6, ';')) YYABORT; }
+        semicolon Expression_opt right_bracket Statement
+                                { $$ = new_for_statement(ctx, NULL, $3, $6, $9, $11); }
+        | kFOR left_bracket kVAR VariableDeclarationListNoIn
+                                { if(!explicit_error(ctx, $4, ';')) YYABORT; }
+        semicolon Expression_opt
+                                { if(!explicit_error(ctx, $7, ';')) YYABORT; }
+        semicolon Expression_opt right_bracket Statement
+                                { $$ = new_for_statement(ctx, $4, NULL, $7, $10, $12); }
         | kFOR left_bracket LeftHandSideExpression kIN Expression right_bracket Statement
                                 { $$ = new_forin_statement(ctx, NULL, $3, $5, $7); }
         | kFOR left_bracket kVAR VariableDeclarationNoIn kIN Expression right_bracket Statement
@@ -494,7 +503,6 @@ Expression
 ExpressionNoIn_opt
         : /* empty */           { $$ = NULL; }
         | ExpressionNoIn        { $$ = $1; }
-        | error                 {  set_error(ctx, IDS_SYNTAX_ERROR); YYABORT; }
 
 /* ECMA-262 3rd Edition    11.14 */
 ExpressionNoIn
@@ -805,6 +813,10 @@ left_bracket
 right_bracket
         : ')'
         | error                 { set_error(ctx, IDS_RBRACKET); YYABORT; }
+
+semicolon
+        : ';'
+        | error                 { set_error(ctx, IDS_SEMICOLON); YYABORT; }
 
 %%
 
@@ -1447,6 +1459,14 @@ static int parser_error(const char *str)
 static void set_error(parser_ctx_t *ctx, UINT error)
 {
     ctx->hres = JSCRIPT_ERROR|error;
+}
+
+static BOOL explicit_error(parser_ctx_t *ctx, void *obj, WCHAR next)
+{
+    if(obj || *(ctx->ptr-1)==next) return TRUE;
+
+    set_error(ctx, IDS_SYNTAX_ERROR);
+    return FALSE;
 }
 
 

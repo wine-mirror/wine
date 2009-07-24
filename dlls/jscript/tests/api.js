@@ -1329,5 +1329,7 @@ exception_test(function() {eval("if(false");}, "SyntaxError", -2146827282);
 exception_test(function() {eval("for(i=0; i<10; i++");}, "SyntaxError", -2146827282);
 exception_test(function() {eval("while(true");}, "SyntaxError", -2146827282);
 exception_test(function() {test = function() {}}, "ReferenceError", -2146823280);
+exception_test(function() {eval("for(i=0")}, "SyntaxError", -2146827284);
+exception_test(function() {eval("for(i=0;i<10")}, "SyntaxError", -2146827284);
 
 reportSuccess();
