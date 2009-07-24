@@ -4532,7 +4532,7 @@ static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, W
                    stateblock->viewport.Width, stateblock->viewport.Height);
     } else {
         target = (IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0];
-        target->get_drawable_size(target, &width, &height);
+        target->get_drawable_size(context, &width, &height);
 
         glViewport(stateblock->viewport.X,
                    (height - (stateblock->viewport.Y + stateblock->viewport.Height)),
@@ -4674,7 +4674,7 @@ static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     UINT width;
     IWineD3DSurfaceImpl *target = (IWineD3DSurfaceImpl *) stateblock->wineD3DDevice->render_targets[0];
 
-    target->get_drawable_size(target, &width, &height);
+    target->get_drawable_size(context, &width, &height);
     /* Warning: glScissor uses window coordinates, not viewport coordinates, so our viewport correction does not apply
      * Warning2: Even in windowed mode the coords are relative to the window, not the screen
      */

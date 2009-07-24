@@ -4888,6 +4888,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
     UINT drawable_width, drawable_height;
     IWineD3DSurfaceImpl *depth_stencil = (IWineD3DSurfaceImpl *) This->stencilBufferTarget;
     IWineD3DSwapChainImpl *swapchain = NULL;
+    struct WineD3DContext *context;
 
     /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
      * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
@@ -4923,9 +4924,9 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
         }
     }
 
-    ActivateContext(This, (IWineD3DSurface *)target, CTXUSAGE_CLEAR);
+    context = ActivateContext(This, (IWineD3DSurface *)target, CTXUSAGE_CLEAR);
 
-    target->get_drawable_size(target, &drawable_width, &drawable_height);
+    target->get_drawable_size(context, &drawable_width, &drawable_height);
 
     ENTER_GL();
 
@@ -7695,28 +7696,29 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
     }
 }
 
-void get_drawable_size_pbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *height) {
-    IWineD3DDeviceImpl *dev = This->resource.wineD3DDevice;
-    /* The drawable size of a pbuffer render target is the current pbuffer size
-     */
-    *width = dev->pbufferWidth;
-    *height = dev->pbufferHeight;
+void get_drawable_size_pbuffer(struct WineD3DContext *context, UINT *width, UINT *height)
+{
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.wineD3DDevice;
+    /* The drawable size of a pbuffer render target is the current pbuffer size. */
+    *width = device->pbufferWidth;
+    *height = device->pbufferHeight;
 }
 
-void get_drawable_size_fbo(IWineD3DSurfaceImpl *This, UINT *width, UINT *height) {
-    /* The drawable size of a fbo target is the opengl texture size, which is the power of two size
-     */
-    *width = This->pow2Width;
-    *height = This->pow2Height;
+void get_drawable_size_fbo(struct WineD3DContext *context, UINT *width, UINT *height)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)context->current_rt;
+    /* The drawable size of a fbo target is the opengl texture size, which is the power of two size. */
+    *width = surface->pow2Width;
+    *height = surface->pow2Height;
 }
 
-void get_drawable_size_backbuffer(IWineD3DSurfaceImpl *This, UINT *width, UINT *height) {
-    IWineD3DDeviceImpl *dev = This->resource.wineD3DDevice;
+void get_drawable_size_backbuffer(struct WineD3DContext *context, UINT *width, UINT *height)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)context->surface;
     /* The drawable size of a backbuffer / aux buffer offscreen target is the size of the
      * current context's drawable, which is the size of the back buffer of the swapchain
      * the active context belongs to. The back buffer of the swapchain is stored as the
-     * surface the context belongs to.
-     */
-    *width = ((IWineD3DSurfaceImpl *) dev->activeContext->surface)->currentDesc.Width;
-    *height = ((IWineD3DSurfaceImpl *) dev->activeContext->surface)->currentDesc.Height;
+     * surface the context belongs to. */
+    *width = surface->currentDesc.Width;
+    *height = surface->currentDesc.Height;
 }

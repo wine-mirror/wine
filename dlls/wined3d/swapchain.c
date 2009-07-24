@@ -402,10 +402,11 @@ WineD3DContext *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *
     return ctx;
 }
 
-void get_drawable_size_swapchain(IWineD3DSurfaceImpl *This, UINT *width, UINT *height) {
+void get_drawable_size_swapchain(struct WineD3DContext *context, UINT *width, UINT *height)
+{
+    IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)context->surface;
     /* The drawable size of an onscreen drawable is the surface size.
-     * (Actually: The window size, but the surface is created in window size)
-     */
-    *width = This->currentDesc.Width;
-    *height = This->currentDesc.Height;
+     * (Actually: The window size, but the surface is created in window size) */
+    *width = surface->currentDesc.Width;
+    *height = surface->currentDesc.Height;
 }
