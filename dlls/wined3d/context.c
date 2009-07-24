@@ -1447,12 +1447,6 @@ void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context)
         context_destroy_gl_resources(context);
         destroy = TRUE;
 
-        if (This->activeContext == context)
-        {
-            This->activeContext = NULL;
-            TRACE("Destroying the active context.\n");
-        }
-
         if (!context_set_current(NULL))
         {
             ERR("Failed to clear current D3D context.\n");
@@ -2005,7 +1999,6 @@ struct WineD3DContext *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface
             This->highest_dirty_ps_const = GL_LIMITS(pshader_constantsF);
         }
     }
-    This->activeContext = context;
 
     switch (usage) {
         case CTXUSAGE_CLEAR:

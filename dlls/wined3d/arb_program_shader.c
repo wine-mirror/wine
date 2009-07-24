@@ -534,17 +534,15 @@ static void shader_arb_load_constants(
    
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device; 
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
-    const struct wined3d_gl_info *gl_info = &deviceImpl->adapter->gl_info;
+    const struct WineD3DContext *context = context_get_current();
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
 
         /* Load DirectX 9 float constants for vertex shader */
-        deviceImpl->highest_dirty_vs_const = shader_arb_load_constantsF(
-                vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                deviceImpl->highest_dirty_vs_const,
-                stateBlock->vertexShaderConstantF,
-                deviceImpl->activeContext->vshader_const_dirty);
+        deviceImpl->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
+                deviceImpl->highest_dirty_vs_const, stateBlock->vertexShaderConstantF, context->vshader_const_dirty);
 
         shader_arb_vs_local_constants(deviceImpl);
     }
@@ -553,11 +551,8 @@ static void shader_arb_load_constants(
         IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
 
         /* Load DirectX 9 float constants for pixel shader */
-        deviceImpl->highest_dirty_ps_const = shader_arb_load_constantsF(
-                pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
-                deviceImpl->highest_dirty_ps_const,
-                stateBlock->pixelShaderConstantF,
-                deviceImpl->activeContext->pshader_const_dirty);
+        deviceImpl->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
+                deviceImpl->highest_dirty_ps_const, stateBlock->pixelShaderConstantF, context->pshader_const_dirty);
         shader_arb_ps_local_constants(deviceImpl);
     }
 }
@@ -565,22 +560,26 @@ static void shader_arb_load_constants(
 static void shader_arb_update_float_vertex_constants(IWineD3DDevice *iface, UINT start, UINT count)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct WineD3DContext *context = context_get_current();
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
-    memset(This->activeContext->vshader_const_dirty + start, 1,
-            sizeof(*This->activeContext->vshader_const_dirty) * count);
+    if (!context || ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice != This) return;
+
+    memset(context->vshader_const_dirty + start, 1, sizeof(*context->vshader_const_dirty) * count);
     This->highest_dirty_vs_const = max(This->highest_dirty_vs_const, start + count);
 }
 
 static void shader_arb_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct WineD3DContext *context = context_get_current();
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
-    memset(This->activeContext->pshader_const_dirty + start, 1,
-            sizeof(*This->activeContext->pshader_const_dirty) * count);
+    if (!context || ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice != This) return;
+
+    memset(context->pshader_const_dirty + start, 1, sizeof(*context->pshader_const_dirty) * count);
     This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, start + count);
 }
 
@@ -4216,7 +4215,8 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = This->shader_priv;
-    const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+    struct WineD3DContext *context = context_get_current();
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     int i;
 
     /* Deal with pixel shaders first so the vertex shader arg function has the input signature ready */
@@ -4251,7 +4251,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
             This->highest_dirty_ps_const = max(This->highest_dirty_ps_const, 8);
             for(i = 0; i < 8; i++)
             {
-                This->activeContext->pshader_const_dirty[i] = 1;
+                context->pshader_const_dirty[i] = 1;
             }
             /* Also takes care of loading local constants */
             shader_arb_load_constants(iface, TRUE, FALSE);
@@ -5172,7 +5172,7 @@ static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *statebloc
         if (use_ps(stateblock)) return;
 
         device = stateblock->wineD3DDevice;
-        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
+        context->pshader_const_dirty[ARB_FFP_CONST_TFACTOR] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_TFACTOR + 1);
     }
 
@@ -5193,7 +5193,7 @@ static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateb
         if (use_ps(stateblock)) return;
 
         device = stateblock->wineD3DDevice;
-        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
+        context->pshader_const_dirty[ARB_FFP_CONST_SPECULAR_ENABLE] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_SPECULAR_ENABLE + 1);
     }
 
@@ -5231,7 +5231,7 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, W
             return;
         }
     } else if(device->shader_backend == &arb_program_shader_backend) {
-        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_BUMPMAT(stage)] = 1;
+        context->pshader_const_dirty[ARB_FFP_CONST_BUMPMAT(stage)] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_BUMPMAT(stage) + 1);
     }
 
@@ -5266,7 +5266,7 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
             return;
         }
     } else if(device->shader_backend == &arb_program_shader_backend) {
-        device->activeContext->pshader_const_dirty[ARB_FFP_CONST_LUMINANCE(stage)] = 1;
+        context->pshader_const_dirty[ARB_FFP_CONST_LUMINANCE(stage)] = 1;
         device->highest_dirty_ps_const = max(device->highest_dirty_ps_const, ARB_FFP_CONST_LUMINANCE(stage) + 1);
     }
 

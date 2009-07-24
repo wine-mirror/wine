@@ -73,6 +73,7 @@ static void drawStridedFast(IWineD3DDevice *iface, GLenum primitive_type,
 static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_info *si, UINT NumVertexes,
         GLenum glPrimType, const void *idxData, UINT idxSize, UINT minIndex, UINT startIdx)
 {
+    struct WineD3DContext *context = context_get_current();
     unsigned int               textureNo    = 0;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
@@ -122,7 +123,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
     element = &si->elements[WINED3D_FFP_DIFFUSE];
     if (element->data) diffuse = element->data + streamOffset[element->stream_idx];
     else glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    num_untracked_materials = This->activeContext->num_untracked_materials;
+    num_untracked_materials = context->num_untracked_materials;
     if (num_untracked_materials && element->format_desc->format != WINED3DFMT_A8R8G8B8)
         FIXME("Implement diffuse color tracking from %s\n", debug_d3dformat(element->format_desc->format));
 
@@ -261,7 +262,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_i
 
                 for (i = 0; i < num_untracked_materials; ++i)
                 {
-                    glMaterialfv(GL_FRONT_AND_BACK, This->activeContext->untracked_materials[i], color);
+                    glMaterialfv(GL_FRONT_AND_BACK, context->untracked_materials[i], color);
                 }
             }
         }
@@ -608,7 +609,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
 
         if (!use_vs(This->stateBlock))
         {
-            if (!This->strided_streams.position_transformed && This->activeContext->num_untracked_materials
+            if (!This->strided_streams.position_transformed && context->num_untracked_materials
                     && This->stateBlock->renderState[WINED3DRS_LIGHTING])
             {
                 static BOOL warned;
@@ -620,7 +621,8 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
                 }
                 emulation = TRUE;
             }
-            else if(This->activeContext->fog_coord && This->stateBlock->renderState[WINED3DRS_FOGENABLE]) {
+            else if (context->fog_coord && This->stateBlock->renderState[WINED3DRS_FOGENABLE])
+            {
                 /* Either write a pipeline replacement shader or convert the specular alpha from unsigned byte
                  * to a float in the vertex buffer
                  */
