@@ -1018,11 +1018,10 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
     static const WCHAR prnW[] = {'P','R','N',0};
     static const WCHAR comW[] = {'C','O','M',0};
     static const WCHAR lptW[] = {'L','P','T',0};
-    static const WCHAR rootW[] = {'A',':','\\',0};
     static const WCHAR com0W[] = {'\\','?','?','\\','C','O','M','0',0};
     static const WCHAR com1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','C','O','M','1',0,0};
     static const WCHAR lpt1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','L','P','T','1',0,0};
-    static const WCHAR driveW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','A',':',0};
+    static const WCHAR dosdevW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
 
     UNICODE_STRING nt_name;
     ANSI_STRING unix_name;
@@ -1046,15 +1045,21 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
             memcpy( name, devname + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
             name[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
         }
-        else if (devname[0] && devname[1] == ':' && !devname[2])
+        else
         {
-            /* FIXME: should do this for all devices, not just drives */
             NTSTATUS status;
-            WCHAR buffer[sizeof(driveW)/sizeof(WCHAR)];
+            WCHAR *buffer;
 
-            memcpy( buffer, driveW, sizeof(driveW) );
-            buffer[12] = devname[0];
-            if ((status = read_nt_symlink( buffer, target, bufsize )))
+            if (!(buffer = HeapAlloc( GetProcessHeap(), 0, sizeof(dosdevW) + strlenW(devname)*sizeof(WCHAR) )))
+            {
+                SetLastError( ERROR_OUTOFMEMORY );
+                return 0;
+            }
+            memcpy( buffer, dosdevW, sizeof(dosdevW) );
+            strcatW( buffer, devname );
+            status = read_nt_symlink( buffer, target, bufsize );
+            HeapFree( GetProcessHeap(), 0, buffer );
+            if (status)
             {
                 SetLastError( RtlNtStatusToDosError(status) );
                 return 0;
@@ -1062,11 +1067,8 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
             ret = strlenW( target ) + 1;
             goto done;
         }
-        else
-        {
-            SetLastError( ERROR_BAD_PATHNAME );
-            return 0;
-        }
+
+        /* FIXME: should read NT symlink for all devices */
 
         if (!(path = get_dos_device_path( name ))) return 0;
         link = read_symlink( path );
@@ -1125,6 +1127,8 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
     }
     else  /* return a list of all devices */
     {
+        OBJECT_ATTRIBUTES attr;
+        HANDLE handle;
         WCHAR *p = target;
         int i;
 
@@ -1133,6 +1137,8 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
             SetLastError( ERROR_INSUFFICIENT_BUFFER );
             return 0;
         }
+
+        /* FIXME: these should be NT symlinks too */
 
         memcpy( p, auxW, sizeof(auxW) );
         p += sizeof(auxW) / sizeof(WCHAR);
@@ -1180,30 +1186,36 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
             }
         }
 
-        strcpyW( nt_buffer + 4, rootW );
-        RtlInitUnicodeString( &nt_name, nt_buffer );
-
-        /* FIXME: should simply enumerate the DosDevices directory instead */
-        for (i = 0; i < 26; i++)
+        RtlInitUnicodeString( &nt_name, dosdevW );
+        nt_name.Length -= sizeof(WCHAR);  /* without trailing slash */
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.ObjectName = &nt_name;
+        attr.Attributes = OBJ_CASE_INSENSITIVE;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        status = NtOpenDirectoryObject( &handle, FILE_LIST_DIRECTORY, &attr );
+        if (!status)
         {
-            WCHAR buffer[sizeof(driveW)/sizeof(WCHAR)], dummy[8];
-            NTSTATUS status;
+            char data[1024];
+            DIRECTORY_BASIC_INFORMATION *info = (DIRECTORY_BASIC_INFORMATION *)data;
+            ULONG ctx = 0, len;
 
-            memcpy( buffer, driveW, sizeof(driveW) );
-            buffer[12] = 'A' + i;
-            status = read_nt_symlink( buffer, dummy, sizeof(dummy)/sizeof(WCHAR) );
-            if (status == STATUS_SUCCESS || status == STATUS_BUFFER_TOO_SMALL)
+            while (!NtQueryDirectoryObject( handle, info, sizeof(data), 1, 0, &ctx, &len ))
             {
-                if (p + 3 >= target + bufsize)
+                if (p + info->ObjectName.Length/sizeof(WCHAR) + 1 >= target + bufsize)
                 {
                     SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                    NtClose( handle );
                     return 0;
                 }
-                *p++ = 'A' + i;
-                *p++ = ':';
+                memcpy( p, info->ObjectName.Buffer, info->ObjectName.Length );
+                p += info->ObjectName.Length/sizeof(WCHAR);
                 *p++ = 0;
             }
+            NtClose( handle );
         }
+
         *p++ = 0;  /* terminating null */
         return p - target;
     }
