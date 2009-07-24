@@ -20,10 +20,13 @@
 
 #include "localspl_private.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_LOCALPORT "Локальный порт"
-    IDS_LOCALMONITOR "Локальный монитор"
+    IDS_LOCALPORT "Р›РѕРєР°Р»СЊРЅС‹Р№ РїРѕСЂС‚"
+    IDS_LOCALMONITOR "Р›РѕРєР°Р»СЊРЅС‹Р№ РјРѕРЅРёС‚РѕСЂ"
 }
