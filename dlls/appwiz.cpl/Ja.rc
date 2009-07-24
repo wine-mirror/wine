@@ -38,9 +38,10 @@ STRINGTABLE
    IDS_COLUMN_NAME, "名前"
    IDS_COLUMN_PUBLISHER, "発行元"
    IDS_COLUMN_VERSION, "バージョン"
+   IDS_INSTALL_FILTER, "インストールプログラム\0*instal*.exe;*setup*.exe;*.msi\0プログラム(*.exe)\0*.exe\0すべてのファイル (*.*)\0*.*\0\0"
 
-   IDS_REMOVE, "&Remove..."
-   IDS_MODIFY_REMOVE, "&Modify/Remove..."
+   IDS_REMOVE, "削除(&R)…"
+   IDS_MODIFY_REMOVE, "変更/削除(&M)…"
 }
 
 IDD_MAIN DIALOG 0, 0, 320, 220
