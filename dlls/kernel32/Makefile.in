@@ -91,7 +91,8 @@ MC_SRCS = \
 	nls/winerr_lth.mc \
 	nls/winerr_nld.mc \
 	nls/winerr_nor.mc \
-	nls/winerr_plk.mc
+	nls/winerr_plk.mc \
+	nls/winerr_ptg.mc
 
 EXTRA_OBJS   = relay16asm.o
 EXTRASUBDIRS = nls
