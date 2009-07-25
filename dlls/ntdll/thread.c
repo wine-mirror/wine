@@ -794,7 +794,7 @@ static inline unsigned int get_server_context_flags( DWORD flags )
 {
     unsigned int ret = 0;
 
-    flags &= ~0x3f;  /* mask CPU id flags */
+    flags &= 0x3f;  /* mask CPU id flags */
     if (flags & CONTEXT_CONTROL) ret |= SERVER_CTX_CONTROL;
     if (flags & CONTEXT_INTEGER) ret |= SERVER_CTX_INTEGER;
 #ifdef CONTEXT_SEGMENTS
