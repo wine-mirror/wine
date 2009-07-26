@@ -416,10 +416,10 @@ NTSTATUS WINAPI NtSetInformationProcess(
             switch (*(ULONG *)ProcessInformation & (MEM_EXECUTE_OPTION_ENABLE|MEM_EXECUTE_OPTION_DISABLE))
             {
             case MEM_EXECUTE_OPTION_ENABLE:
-                enable = FALSE;
+                enable = TRUE;
                 break;
             case MEM_EXECUTE_OPTION_DISABLE:
-                enable = TRUE;
+                enable = FALSE;
                 break;
             default:
                 return STATUS_INVALID_PARAMETER;
