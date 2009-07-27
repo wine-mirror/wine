@@ -112,7 +112,7 @@ typedef struct {
     DWORD	dwContextHelpID;
     DWORD	dwMenuData;	/* application defined value */
     HMENU       hSysMenuOwner;  /* Handle to the dummy sys menu holder */
-    SIZE        maxBmpSize;     /* Maximum size of the bitmap items */
+    WORD        textOffset;     /* Offset of text when items have both bitmaps and text */
 } POPUPMENU, *LPPOPUPMENU;
 
 /* internal flags for menu tracking */
@@ -1071,8 +1071,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
             /* Keep the size of the bitmap in callback mode to be able
              * to draw it correctly */
             lpitem->bmpsize = size;
-            lppop->maxBmpSize.cx = max( lppop->maxBmpSize.cx, size.cx);
-            lppop->maxBmpSize.cy = max( lppop->maxBmpSize.cy, size.cy);
+            lppop->textOffset = max( lppop->textOffset, size.cx);
             lpitem->rect.right += size.cx + 2;
             itemheight = size.cy + 2;
         }
@@ -1166,6 +1165,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     MENUITEM *lpitem;
     HDC hdc;
     UINT start, i;
+    int textandbmp = FALSE;
     int orgX, orgY, maxX, maxTab, maxTabWidth, maxHeight;
 
     lppop->Width = lppop->Height = 0;
@@ -1177,8 +1177,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     start = 0;
     maxX = 2 + 1;
 
-    lppop->maxBmpSize.cx = 0;
-    lppop->maxBmpSize.cy = 0;
+    lppop->textOffset = 0;
 
     while (start < lppop->nItems)
     {
@@ -1203,6 +1202,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
 		maxTab = max( maxTab, lpitem->xTab );
 		maxTabWidth = max(maxTabWidth,lpitem->rect.right-lpitem->xTab);
 	    }
+            if( lpitem->text && lpitem->hbmpItem) textandbmp = TRUE;
 	}
 
 	  /* Finish the column (set all items to the largest width found) */
@@ -1218,6 +1218,12 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     }
 
     lppop->Width  = maxX;
+    /* if none of the items have both text and bitmap then
+     * the text and bitmaps are all aligned on the left. If there is at
+     * least one item with both text and bitmap then bitmaps are
+     * on the left and texts left aligned with the right hand side
+     * of the bitmaps */
+    if( !textandbmp) lppop->textOffset = 0;
 
     /* space for 3d border */
     lppop->Height += MENU_BOTTOM_MARGIN;
@@ -1264,8 +1270,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
     maxY = lprect->top+1;
     start = 0;
     helpPos = ~0U;
-    lppop->maxBmpSize.cx = 0;
-    lppop->maxBmpSize.cy = 0;
+    lppop->textOffset = 0;
     while (start < lppop->nItems)
     {
 	lpitem = &lppop->items[start];
@@ -1658,7 +1663,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 			DT_LEFT | DT_VCENTER | DT_SINGLELINE;
 
         if( !(menu->dwStyle & MNS_CHECKORBMP))
-            rect.left += menu->maxBmpSize.cx;
+            rect.left += menu->textOffset;
 
 	if ( lpitem->fState & MFS_DEFAULT )
 	{
@@ -1760,6 +1765,7 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 
             if( (menu = MENU_GetMenu( hmenu )))
             {
+                TRACE("hmenu %p Style %08x\n", hmenu, menu->dwStyle);
                 /* draw menu items */
                 if( menu->nItems)
                 {

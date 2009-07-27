@@ -536,7 +536,7 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
         mi.cbSize = sizeof(mi);
         mi.fMask = MIM_STYLE;
         pGetMenuInfo( hmenu, &mi);
-        mi.dwStyle |= mnuopt == 1 ? MNS_NOCHECK : MNS_CHECKORBMP;
+        if( mnuopt) mi.dwStyle |= mnuopt == 1 ? MNS_NOCHECK : MNS_CHECKORBMP;
         ret = pSetMenuInfo( hmenu, &mi);
         ok( ret, "SetMenuInfo failed with error %d\n", GetLastError());
     }
@@ -3067,6 +3067,109 @@ static void test_menu_circref(void)
     DestroyMenu( menu1);
 }
 
+/* test how the menu texts are aligned when the menu items have
+ * different combinations of text and bitmaps (bug #13350) */
+static void test_menualign(void)
+{
+    BYTE bmfill[300];
+    HMENU menu;
+    HBITMAP hbm1, hbm2, hbm3;
+    MENUITEMINFO mii = { sizeof(MENUITEMINFO)};
+    DWORD ret;
+    HWND hwnd;
+    MENUINFO mi = { sizeof( MENUINFO)};
+
+    if( !winetest_interactive) {
+        skip( "interactive alignment tests.\n");
+        return;
+    }
+    hwnd = CreateWindowEx(0,
+            "STATIC",
+            "Menu text alignment Test\nPlease make a selection.",
+            WS_OVERLAPPEDWINDOW,
+            100, 100,
+            300, 300,
+            NULL, NULL, 0, NULL);
+    ShowWindow( hwnd, SW_SHOW);
+    /* create bitmaps */
+    memset( bmfill, 0xcc, sizeof( bmfill));
+    hbm1 = CreateBitmap( 10,10,1,1,bmfill);
+    hbm2 = CreateBitmap( 20,20,1,1,bmfill);
+    hbm3 = CreateBitmap( 50,6,1,1,bmfill);
+    ok( hbm1 && hbm2 && hbm3, "Creating bitmaps failed\n");
+    menu = CreatePopupMenu();
+    ok( menu != NULL, "CreatePopupMenu() failed\n");
+    if( pGetMenuInfo) {
+        mi.fMask = MIM_STYLE;
+        ret = pGetMenuInfo( menu, &mi);
+        ok( menu != NULL, "GetMenuInfo() failed\n");
+        ok( 0 == mi.dwStyle, "menuinfo style is %x\n", mi.dwStyle);
+    }
+    /* test 1 */
+    mii.fMask = MIIM_BITMAP | MIIM_STRING | MIIM_ID;
+    mii.wID = 1;
+    mii.hbmpItem = hbm1;
+    mii.dwTypeData = (LPSTR) " OK: menu texts are correctly left-aligned.";
+    ret = InsertMenuItem( menu, -1, TRUE, &mii);
+    ok( ret, "InsertMenuItem() failed\n");
+    mii.fMask = MIIM_BITMAP | MIIM_STRING | MIIM_ID ;
+    mii.wID = 2;
+    mii.hbmpItem = hbm2;
+    mii.dwTypeData = (LPSTR) " FAIL: menu texts are NOT left-aligned.";
+    ret = InsertMenuItem( menu, -1, TRUE, &mii);
+    ok( ret, "InsertMenuItem() failed\n");
+    ret = TrackPopupMenu( menu, TPM_RETURNCMD, 110, 200, 0, hwnd, NULL);
+    ok( ret != 2, "User indicated that menu text alignment test 1 failed %d\n", ret);
+    /* test 2*/
+    mii.fMask = MIIM_BITMAP | MIIM_STRING | MIIM_ID;
+    mii.wID = 3;
+    mii.hbmpItem = hbm3;
+    mii.dwTypeData = NULL;
+    ret = InsertMenuItem( menu, 0, TRUE, &mii);
+    ok( ret, "InsertMenuItem() failed\n");
+    mii.fMask = MIIM_BITMAP | MIIM_STRING | MIIM_ID;
+    mii.wID = 1;
+    mii.hbmpItem = hbm1;
+    /* make the text a bit longer, to keep it readable */
+    /* this bug is on winXP and reproduced on wine */
+    mii.dwTypeData = (LPSTR) " OK: menu texts are to the right of the bitmaps........";
+    ret = SetMenuItemInfo( menu, 1, TRUE, &mii);
+    ok( ret, "SetMenuItemInfo() failed\n");
+    mii.wID = 2;
+    mii.hbmpItem = hbm2;
+    mii.dwTypeData = (LPSTR) " FAIL: menu texts are below the first bitmap.  ";
+    ret = SetMenuItemInfo( menu, 2, TRUE, &mii);
+    ok( ret, "SetMenuItemInfo() failed\n");
+    ret = TrackPopupMenu( menu, TPM_RETURNCMD, 110, 200, 0, hwnd, NULL);
+    ok( ret != 2, "User indicated that menu text alignment test 2 failed %d\n", ret);
+    /* test 3 */
+    mii.fMask = MIIM_TYPE | MIIM_ID;
+    mii.wID = 3;
+    mii.fType = MFT_BITMAP;
+    mii.dwTypeData = (LPSTR) hbm3;
+    ret = SetMenuItemInfo( menu, 0, TRUE, &mii);
+    ok( ret, "SetMenuItemInfo() failed\n");
+    mii.fMask = MIIM_BITMAP | MIIM_STRING | MIIM_ID;
+    mii.wID = 1;
+    mii.hbmpItem = NULL;
+    mii.dwTypeData = (LPSTR) " OK: menu texts are below the bitmap.";
+    ret = SetMenuItemInfo( menu, 1, TRUE, &mii);
+    ok( ret, "SetMenuItemInfo() failed\n");
+    mii.wID = 2;
+    mii.hbmpItem = NULL;
+    mii.dwTypeData = (LPSTR) " FAIL: menu texts are NOT below the bitmap.";
+    ret = SetMenuItemInfo( menu, 2, TRUE, &mii);
+    ok( ret, "SetMenuItemInfo() failed\n");
+    ret = TrackPopupMenu( menu, TPM_RETURNCMD, 110, 200, 0, hwnd, NULL);
+    ok( ret != 2, "User indicated that menu text alignment test 3 failed %d\n", ret);
+    /* cleanup */
+    DeleteObject( hbm1);
+    DeleteObject( hbm2);
+    DeleteObject( hbm3);
+    DestroyMenu( menu);
+    DestroyWindow( hwnd);
+}
+
 START_TEST(menu)
 {
     init_function_pointers();
@@ -3082,6 +3185,7 @@ START_TEST(menu)
         test_CheckMenuRadioItem();
         test_menu_resource_layout();
         test_InsertMenu();
+        test_menualign();
     }
 
     register_menu_check_class();
