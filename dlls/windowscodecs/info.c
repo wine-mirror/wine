@@ -337,8 +337,12 @@ static HRESULT WINAPI BitmapDecoderInfo_MatchesPattern(IWICBitmapDecoderInfo *if
 static HRESULT WINAPI BitmapDecoderInfo_CreateInstance(IWICBitmapDecoderInfo *iface,
     IWICBitmapDecoder **ppIBitmapDecoder)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIBitmapDecoder);
-    return E_NOTIMPL;
+    BitmapDecoderInfo *This = (BitmapDecoderInfo*)iface;
+
+    TRACE("(%p,%p)\n", iface, ppIBitmapDecoder);
+
+    return CoCreateInstance(&This->clsid, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICBitmapDecoder, (void**)ppIBitmapDecoder);
 }
 
 static const IWICBitmapDecoderInfoVtbl BitmapDecoderInfo_Vtbl = {
