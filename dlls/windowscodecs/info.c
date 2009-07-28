@@ -95,8 +95,9 @@ static ULONG WINAPI BitmapDecoderInfo_Release(IWICBitmapDecoderInfo *iface)
 static HRESULT WINAPI BitmapDecoderInfo_GetComponentType(IWICBitmapDecoderInfo *iface,
     WICComponentType *pType)
 {
-    FIXME("(%p,%p): stub\n", iface, pType);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, pType);
+    *pType = WICDecoder;
+    return S_OK;
 }
 
 static HRESULT WINAPI BitmapDecoderInfo_GetCLSID(IWICBitmapDecoderInfo *iface, CLSID *pclsid)
