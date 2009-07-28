@@ -1429,11 +1429,8 @@ static void test_WSAAddressToStringA(void)
 
     ret = WSAAddressToStringA( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
     ok( !ret, "WSAAddressToStringA() failed unexpectedly: %d\n", WSAGetLastError() );
-  todo_wine
-  {
     ok( !strcmp( address6, expect6_3 ), "Expected: %s, got: %s\n", expect6_3, address6 );
     ok( len == sizeof(expect6_3), "Got size %d\n", len);
-  }
 
     /* Test IPv6 address, port number and scope_id */
     len = sizeof(address6);
@@ -1603,11 +1600,8 @@ static void test_WSAAddressToStringW(void)
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr6, sizeof(sockaddr6), NULL, address6, &len );
     ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
-  todo_wine
-  {
     ok( !lstrcmpW( address6, expect6_3 ), "Wrong string returned\n" );
     ok( len == sizeof(expect6_3)/sizeof(WCHAR), "Got %d\n", len);
-  }
 
     /* Test IPv6 address, port number and scope_id */
     len = sizeof(address6)/sizeof(WCHAR);

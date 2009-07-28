@@ -4958,12 +4958,17 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
     {
         struct WS_sockaddr_in6 *sockaddr6 = (LPSOCKADDR_IN6) sockaddr;
 
+        buffer[0] = 0;
         if (len < sizeof(SOCKADDR_IN6)) return SOCKET_ERROR;
-        if (!WS_inet_ntop(WS_AF_INET6, &sockaddr6->sin6_addr, buffer, sizeof(buffer)))
+        if ((sockaddr6->sin6_port))
+            strcpy(buffer, "[");
+        if (!WS_inet_ntop(WS_AF_INET6, &sockaddr6->sin6_addr, buffer+strlen(buffer), sizeof(buffer)))
         {
             WSASetLastError(WSAEINVAL);
             return SOCKET_ERROR;
         }
+        if ((sockaddr6->sin6_port))
+            sprintf(buffer+strlen(buffer), "]:%u", ntohs(sockaddr6->sin6_port));
         break;
     }
 
