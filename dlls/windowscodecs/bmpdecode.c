@@ -860,8 +860,20 @@ static HRESULT WINAPI BmpDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
 static HRESULT WINAPI BmpDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
     IWICBitmapDecoderInfo **ppIDecoderInfo)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIDecoderInfo);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IWICComponentInfo *compinfo;
+
+    TRACE("(%p,%p)\n", iface, ppIDecoderInfo);
+
+    hr = CreateComponentInfo(&CLSID_WICBmpDecoder, &compinfo);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICComponentInfo_QueryInterface(compinfo, &IID_IWICBitmapDecoderInfo,
+        (void**)ppIDecoderInfo);
+
+    IWICComponentInfo_Release(compinfo);
+
+    return hr;
 }
 
 static HRESULT WINAPI BmpDecoder_CopyPalette(IWICBitmapDecoder *iface,
