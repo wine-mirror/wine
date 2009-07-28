@@ -4967,6 +4967,8 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
             WSASetLastError(WSAEINVAL);
             return SOCKET_ERROR;
         }
+        if ((sockaddr6->sin6_scope_id))
+            sprintf(buffer+strlen(buffer), "%%%u", sockaddr6->sin6_scope_id);
         if ((sockaddr6->sin6_port))
             sprintf(buffer+strlen(buffer), "]:%u", ntohs(sockaddr6->sin6_port));
         break;
