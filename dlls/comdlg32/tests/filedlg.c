@@ -29,6 +29,29 @@
 
 /* ##### */
 
+static void toolbarcheck( HWND hDlg)
+{
+    /* test toolbar properties */
+    /* bug #10532 */
+    int maxtextrows;
+    HWND ctrl;
+    DWORD ret;
+    char classname[20];
+
+    for( ctrl = GetWindow( hDlg, GW_CHILD);
+            ctrl ; ctrl = GetWindow( ctrl, GW_HWNDNEXT)) {
+        GetClassName( ctrl, classname, 10);
+        classname[7] = '\0';
+        if( !strcmp( classname, "Toolbar")) break;
+    }
+    ok( ctrl != NULL, "could not get the toolbar control\n");
+    ret = SendMessage( ctrl, TB_ADDSTRING, 0, (LPARAM)"winetestwinetest\0\0");
+    ok( ret == 0, "addstring returned %d (expected 0)\n", ret);
+    maxtextrows = SendMessage( ctrl, TB_GETTEXTROWS, 0, 0);
+    ok( maxtextrows == 0, "Get(Max)TextRows returned %d (expected 0)\n", maxtextrows);
+}
+
+
 static UINT_PTR CALLBACK OFNHookProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     LPNMHDR nmh;
@@ -49,6 +72,7 @@ static UINT_PTR CALLBACK OFNHookProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM
             ok(ret > 0, "CMD_GETFOLDERIDLIST not implemented\n");
             if (ret > 5)
                 ok(buf[0] == 0x66 && buf[1] == 0x66, "CMD_GETFOLDERIDLIST: The buffer was touched on failure\n");
+            toolbarcheck( GetParent(hDlg));
         }
     }
 
