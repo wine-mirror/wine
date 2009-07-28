@@ -18,24 +18,25 @@
 
 #include "psdlg.h"
 
-/* Russian strings in cp1251 */
+/* UTF-8 */
+#pragma code_page(65001)
 
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 PAPER DIALOG LOADONCALL MOVEABLE DISCARDABLE 5, 43, 227, 215
 STYLE  WS_POPUP | WS_CAPTION | WS_CLIPSIBLINGS | WS_VISIBLE
-CAPTION "Бумага"
+CAPTION "Р‘СѓРјР°РіР°"
 FONT 8, "MS Shell Dlg"
 {
- LTEXT "&Размер бумаги:", -1, 10, 6, 200, 8
+ LTEXT "&Р Р°Р·РјРµСЂ Р±СѓРјР°РіРё:", -1, 10, 6, 200, 8
  LISTBOX IDD_PAPERS, 10, 15, 200, 45, LBS_STANDARD | LBS_HASSTRINGS |
 	 WS_TABSTOP
- GROUPBOX "Ориентация", -1, 10, 80, 200, 50
- CONTROL "&Книжная", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
+ GROUPBOX "РћСЂРёРµРЅС‚Р°С†РёСЏ", -1, 10, 80, 200, 50
+ CONTROL "&РљРЅРёР¶РЅР°СЏ", IDD_ORIENT_PORTRAIT, "Button", BS_AUTORADIOBUTTON |
 	WS_TABSTOP, 20, 90, 180, 10
- CONTROL "&Альбомная", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
+ CONTROL "&РђР»СЊР±РѕРјРЅР°СЏ", IDD_ORIENT_LANDSCAPE, "Button", BS_AUTORADIOBUTTON,
 	 20, 110, 180, 10
- LTEXT "2-х сторонняя печать:", IDD_DUPLEX_NAME, 10, 140, 200, 8
+ LTEXT "2-С… СЃС‚РѕСЂРѕРЅРЅСЏСЏ РїРµС‡Р°С‚СЊ:", IDD_DUPLEX_NAME, 10, 140, 200, 8
  COMBOBOX IDD_DUPLEX, 10, 151, 200, 20, CBS_DROPDOWNLIST | CBS_HASSTRINGS |
         WS_TABSTOP
 }
