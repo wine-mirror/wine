@@ -20,25 +20,28 @@
 
 #include "serialui.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 IDD_SERIALUICONFIG DIALOG DISCARDABLE 0, 0, 160, 159
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE
-CAPTION "Настройки для "
+CAPTION "РќР°СЃС‚СЂРѕР№РєРё РґР»СЏ "
 FONT 8, "MS Shell Dlg"
 BEGIN
-  LTEXT         "Наибольшая скорость", -1,5,20,55,10
+  LTEXT         "РќР°РёР±РѕР»СЊС€Р°СЏ СЃРєРѕСЂРѕСЃС‚СЊ", -1,5,20,55,10
   COMBOBOX      IDC_BAUD, 60, 20, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "Чётность", -1,5,40,55,10
+  LTEXT         "Р§С‘С‚РЅРѕСЃС‚СЊ", -1,5,40,55,10
   COMBOBOX      IDC_PARITY, 60, 40, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "Управление потоком", -1,5,60,55,10
+  LTEXT         "РЈРїСЂР°РІР»РµРЅРёРµ РїРѕС‚РѕРєРѕРј", -1,5,60,55,10
   COMBOBOX      IDC_FLOW, 60, 60, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "Биты данных", -1,5,80,55,10
+  LTEXT         "Р‘РёС‚С‹ РґР°РЅРЅС‹С…", -1,5,80,55,10
   COMBOBOX      IDC_DATA, 60, 80, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
-  LTEXT         "Стоп-биты", -1,5,100,55,10
+  LTEXT         "РЎС‚РѕРї-Р±РёС‚С‹", -1,5,100,55,10
   COMBOBOX      IDC_STOP, 60, 100, 90, 36, CBS_DROPDOWNLIST|CBS_AUTOHSCROLL|WS_BORDER | WS_VSCROLL | WS_TABSTOP
   DEFPUSHBUTTON "OK",     IDOK,30,138,50,14
-  PUSHBUTTON    "Отмена", IDCANCEL,85,138,50,14
+  PUSHBUTTON    "РћС‚РјРµРЅР°", IDCANCEL,85,138,50,14
   /* these two buttons are for testing Get/SetDefaultCommConfig */
   /* PUSHBUTTON    "GetDefault", ID_GETDEFAULT,30,115,50,14 */
   /* PUSHBUTTON    "SetDefault", ID_SETDEFAULT,85,115,50,14 */
