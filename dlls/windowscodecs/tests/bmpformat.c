@@ -986,6 +986,54 @@ static void test_componentinfo(void)
     }
 }
 
+static void test_createfromstream(void)
+{
+    IWICBitmapDecoder *decoder;
+    IWICImagingFactory *factory;
+    HRESULT hr;
+    HGLOBAL hbmpdata;
+    char *bmpdata;
+    IStream *bmpstream;
+    GUID guidresult;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICImagingFactory, (void**)&factory);
+    ok(SUCCEEDED(hr), "CoCreateInstance failed, hr=%x\n", hr);
+    if (!SUCCEEDED(hr)) return;
+
+    hbmpdata = GlobalAlloc(GMEM_MOVEABLE, sizeof(testbmp_1bpp));
+    ok(hbmpdata != 0, "GlobalAlloc failed\n");
+    if (hbmpdata)
+    {
+        bmpdata = GlobalLock(hbmpdata);
+        memcpy(bmpdata, testbmp_1bpp, sizeof(testbmp_1bpp));
+        GlobalUnlock(hbmpdata);
+
+        hr = CreateStreamOnHGlobal(hbmpdata, FALSE, &bmpstream);
+        ok(SUCCEEDED(hr), "CreateStreamOnHGlobal failed, hr=%x\n", hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICImagingFactory_CreateDecoderFromStream(factory, bmpstream,
+                NULL, WICDecodeMetadataCacheOnDemand, &decoder);
+            ok(SUCCEEDED(hr), "CreateDecoderFromStream failed, hr=%x\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                hr = IWICBitmapDecoder_GetContainerFormat(decoder, &guidresult);
+                ok(SUCCEEDED(hr), "GetContainerFormat failed, hr=%x\n", hr);
+                ok(IsEqualGUID(&guidresult, &GUID_ContainerFormatBmp), "unexpected container format\n");
+
+                IWICBitmapDecoder_Release(decoder);
+            }
+
+            IStream_Release(bmpstream);
+        }
+
+        GlobalFree(hbmpdata);
+    }
+
+    IWICImagingFactory_Release(factory);
+}
+
 START_TEST(bmpformat)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -996,6 +1044,7 @@ START_TEST(bmpformat)
     test_decode_rle8();
     test_decode_rle4();
     test_componentinfo();
+    test_createfromstream();
 
     CoUninitialize();
 }
