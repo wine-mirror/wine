@@ -19,14 +19,17 @@
 
 #include "shresdef.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 MENU_001 MENU DISCARDABLE
 BEGIN
-    MENUITEM "&Большие значки",	FCIDM_SHVIEW_BIGICON
-    MENUITEM "&Мелкие значки",	FCIDM_SHVIEW_SMALLICON
-    MENUITEM "&Список",		FCIDM_SHVIEW_LISTVIEW
-    MENUITEM "&Подробно",	FCIDM_SHVIEW_REPORTVIEW
+    MENUITEM "&Р‘РѕР»СЊС€РёРµ Р·РЅР°С‡РєРё",	FCIDM_SHVIEW_BIGICON
+    MENUITEM "&РњРµР»РєРёРµ Р·РЅР°С‡РєРё",	FCIDM_SHVIEW_SMALLICON
+    MENUITEM "&РЎРїРёСЃРѕРє",		FCIDM_SHVIEW_LISTVIEW
+    MENUITEM "&РџРѕРґСЂРѕР±РЅРѕ",	FCIDM_SHVIEW_REPORTVIEW
 END
 
 /*
@@ -36,38 +39,38 @@ MENU_002 MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        POPUP "&Просмотр"
+        POPUP "&РџСЂРѕСЃРјРѕС‚СЂ"
         BEGIN
-            MENUITEM "&Большие значки",	FCIDM_SHVIEW_BIGICON
-            MENUITEM "&Мелкие значки",	FCIDM_SHVIEW_SMALLICON
-            MENUITEM "&Список",		FCIDM_SHVIEW_LISTVIEW
-            MENUITEM "&Подробно",	FCIDM_SHVIEW_REPORTVIEW
+            MENUITEM "&Р‘РѕР»СЊС€РёРµ Р·РЅР°С‡РєРё",	FCIDM_SHVIEW_BIGICON
+            MENUITEM "&РњРµР»РєРёРµ Р·РЅР°С‡РєРё",	FCIDM_SHVIEW_SMALLICON
+            MENUITEM "&РЎРїРёСЃРѕРє",		FCIDM_SHVIEW_LISTVIEW
+            MENUITEM "&РџРѕРґСЂРѕР±РЅРѕ",	FCIDM_SHVIEW_REPORTVIEW
         END
         MENUITEM SEPARATOR
-        POPUP "Упорядочить &значки"
+        POPUP "РЈРїРѕСЂСЏРґРѕС‡РёС‚СЊ &Р·РЅР°С‡РєРё"
         BEGIN
-            MENUITEM "По &имени",	0x30	/* column 0 */
-            MENUITEM "По &типу",	0x32	/* column 2 */
-            MENUITEM "По &размеру",	0x31	/* ... */
-            MENUITEM "По &дате",	0x33
+            MENUITEM "РџРѕ &РёРјРµРЅРё",	0x30	/* column 0 */
+            MENUITEM "РџРѕ &С‚РёРїСѓ",	0x32	/* column 2 */
+            MENUITEM "РџРѕ &СЂР°Р·РјРµСЂСѓ",	0x31	/* ... */
+            MENUITEM "РџРѕ &РґР°С‚Рµ",	0x33
             MENUITEM SEPARATOR
-            MENUITEM "&Автоматически",	FCIDM_SHVIEW_AUTOARRANGE
+            MENUITEM "&РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё",	FCIDM_SHVIEW_AUTOARRANGE
         END
-        MENUITEM "В&ыровнять значки",	FCIDM_SHVIEW_SNAPTOGRID
+        MENUITEM "Р’&С‹СЂРѕРІРЅСЏС‚СЊ Р·РЅР°С‡РєРё",	FCIDM_SHVIEW_SNAPTOGRID
         MENUITEM SEPARATOR
-        MENUITEM "О&бновить",		FCIDM_SHVIEW_REFRESH
+        MENUITEM "Рћ&Р±РЅРѕРІРёС‚СЊ",		FCIDM_SHVIEW_REFRESH
         MENUITEM SEPARATOR
-        MENUITEM "&Вставить",		FCIDM_SHVIEW_INSERT
-        MENUITEM "Вставить &ярлык",	FCIDM_SHVIEW_INSERTLINK
+        MENUITEM "&Р’СЃС‚Р°РІРёС‚СЊ",		FCIDM_SHVIEW_INSERT
+        MENUITEM "Р’СЃС‚Р°РІРёС‚СЊ &СЏСЂР»С‹Рє",	FCIDM_SHVIEW_INSERTLINK
         MENUITEM SEPARATOR
-        POPUP "Создать"
+        POPUP "РЎРѕР·РґР°С‚СЊ"
         BEGIN
-            MENUITEM "&Папка",		FCIDM_SHVIEW_NEWFOLDER
-            MENUITEM "&Ярлык",		FCIDM_SHVIEW_NEWLINK
+            MENUITEM "&РџР°РїРєР°",		FCIDM_SHVIEW_NEWFOLDER
+            MENUITEM "&РЇСЂР»С‹Рє",		FCIDM_SHVIEW_NEWLINK
             MENUITEM SEPARATOR
         END
         MENUITEM SEPARATOR
-        MENUITEM "Сво&йства",		FCIDM_SHVIEW_PROPERTIES
+        MENUITEM "РЎРІРѕ&Р№СЃС‚РІР°",		FCIDM_SHVIEW_PROPERTIES
     END
 END
 
@@ -78,50 +81,50 @@ MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
     POPUP ""
     BEGIN
-        MENUITEM "&Выбрать"		FCIDM_SHVIEW_OPEN
-        MENUITEM "&Проводник",		FCIDM_SHVIEW_EXPLORE
-        MENUITEM "&Открыть",		FCIDM_SHVIEW_OPEN
+        MENUITEM "&Р’С‹Р±СЂР°С‚СЊ"		FCIDM_SHVIEW_OPEN
+        MENUITEM "&РџСЂРѕРІРѕРґРЅРёРє",		FCIDM_SHVIEW_EXPLORE
+        MENUITEM "&РћС‚РєСЂС‹С‚СЊ",		FCIDM_SHVIEW_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "&Вырезать",		FCIDM_SHVIEW_CUT
-        MENUITEM "&Копировать",		FCIDM_SHVIEW_COPY
+        MENUITEM "&Р’С‹СЂРµР·Р°С‚СЊ",		FCIDM_SHVIEW_CUT
+        MENUITEM "&РљРѕРїРёСЂРѕРІР°С‚СЊ",		FCIDM_SHVIEW_COPY
         MENUITEM SEPARATOR
-        MENUITEM "Создать &ярлык",	FCIDM_SHVIEW_CREATELINK
-        MENUITEM "&Удалить",		FCIDM_SHVIEW_DELETE
-        MENUITEM "Переи&меновать",	FCIDM_SHVIEW_RENAME
+        MENUITEM "РЎРѕР·РґР°С‚СЊ &СЏСЂР»С‹Рє",	FCIDM_SHVIEW_CREATELINK
+        MENUITEM "&РЈРґР°Р»РёС‚СЊ",		FCIDM_SHVIEW_DELETE
+        MENUITEM "РџРµСЂРµРё&РјРµРЅРѕРІР°С‚СЊ",	FCIDM_SHVIEW_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "Сво&йства",		FCIDM_SHVIEW_PROPERTIES
+        MENUITEM "РЎРІРѕ&Р№СЃС‚РІР°",		FCIDM_SHVIEW_PROPERTIES
     END
 END
 
 MENU_CPANEL MENU
 BEGIN
-    POPUP "&Файл"
+    POPUP "&Р¤Р°Р№Р»"
     BEGIN
         MENUITEM SEPARATOR
-        MENUITEM "В&ыход", IDM_CPANEL_EXIT
+        MENUITEM "Р’&С‹С…РѕРґ", IDM_CPANEL_EXIT
     END
 
-    POPUP "&Вид"
+    POPUP "&Р’РёРґ"
     BEGIN
-        MENUITEM "&Большие значки", FCIDM_SHVIEW_BIGICON
-        MENUITEM "&Мелкие значки", FCIDM_SHVIEW_SMALLICON
-        MENUITEM "&Список", FCIDM_SHVIEW_LISTVIEW
-        MENUITEM "&Подробно", FCIDM_SHVIEW_REPORTVIEW
+        MENUITEM "&Р‘РѕР»СЊС€РёРµ Р·РЅР°С‡РєРё", FCIDM_SHVIEW_BIGICON
+        MENUITEM "&РњРµР»РєРёРµ Р·РЅР°С‡РєРё", FCIDM_SHVIEW_SMALLICON
+        MENUITEM "&РЎРїРёСЃРѕРє", FCIDM_SHVIEW_LISTVIEW
+        MENUITEM "&РџРѕРґСЂРѕР±РЅРѕ", FCIDM_SHVIEW_REPORTVIEW
     END
 
-    POPUP "&Справка"
+    POPUP "&РЎРїСЂР°РІРєР°"
     BEGIN
-        MENUITEM "&О Панели Управления...", IDM_CPANEL_ABOUT
+        MENUITEM "&Рћ РџР°РЅРµР»Рё РЈРїСЂР°РІР»РµРЅРёСЏ...", IDM_CPANEL_ABOUT
     END
 END
 
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Обзор"
+CAPTION "РћР±Р·РѕСЂ"
 FONT 8, "MS Shell Dlg"
 {
-    DEFPUSHBUTTON "Да", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "Отмена", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
+    DEFPUSHBUTTON "Р”Р°", 1, 80, 176, 50, 12, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "РћС‚РјРµРЅР°", 2, 134, 176, 50, 12, WS_GROUP | WS_TABSTOP
     LTEXT "", IDD_TITLE, 4, 4, 180, 12
     LTEXT "", IDD_STATUS, 4, 25, 180, 12
     CONTROL "", IDD_TREEVIEW, "SysTreeView32",
@@ -132,48 +135,48 @@ FONT 8, "MS Shell Dlg"
 
 SHNEWBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 218, 196
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | WS_SIZEBOX | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
-CAPTION "Обзор"
+CAPTION "РћР±Р·РѕСЂ"
 FONT 8, "MS Shell Dlg"
 {
     LTEXT "", IDD_TITLE, 10, 8, 198, 24
     LTEXT "", IDD_STATUS, 10, 25, 198, 12
-    LTEXT "Папка:", IDD_FOLDER, 10, 156, 40, 12
+    LTEXT "РџР°РїРєР°:", IDD_FOLDER, 10, 156, 40, 12
     CONTROL "", IDD_TREEVIEW, "SysTreeView32",
                 TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT |
                 WS_BORDER | WS_TABSTOP,
                 12, 38, 194, 105
     EDITTEXT IDD_FOLDERTEXT, 46, 150, 160, 14, WS_BORDER | WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "Создать &новую папку", IDD_MAKENEWFOLDER, 12, 174, 77, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "РЎРѕР·РґР°С‚СЊ &РЅРѕРІСѓСЋ РїР°РїРєСѓ", IDD_MAKENEWFOLDER, 12, 174, 77, 14, WS_GROUP | WS_TABSTOP
     DEFPUSHBUTTON "OK", IDOK, 102, 174, 50, 14, BS_DEFPUSHBUTTON | WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "Отмена", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 156, 174, 50, 14, WS_GROUP | WS_TABSTOP
 }
 
 SHELL_YESTOALL_MSGBOX DIALOG 200, 100, 280, 90
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Сообщение"
+CAPTION "РЎРѕРѕР±С‰РµРЅРёРµ"
 FONT 8, "MS Shell Dlg"
 {
-    DEFPUSHBUTTON "&Да", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "Да для &всех", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "&Нет", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
-    PUSHBUTTON "&Отмена", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    DEFPUSHBUTTON "&Р”Р°", IDYES, 34, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Р”Р° РґР»СЏ &РІСЃРµС…", IDD_YESTOALL, 92, 69, 65, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&РќРµС‚", IDNO, 162, 69, 53, 14, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "&РћС‚РјРµРЅР°", IDCANCEL, 220, 69, 53, 14, WS_GROUP | WS_TABSTOP
     ICON "", IDD_ICON, 10, 10, 16, 16
     LTEXT "", IDD_MESSAGE, 40, 10, 238, 52, 0
 }
 
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 220, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "О %s"
+CAPTION "Рћ %s"
 FONT 10, "MS Shell Dlg"
 {
  DEFPUSHBUTTON "OK", IDOK, 153, 133, 60, 12, WS_TABSTOP
- PUSHBUTTON "&Лицензия Wine...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
+ PUSHBUTTON "&Р›РёС†РµРЅР·РёСЏ Wine...", IDC_ABOUT_LICENSE, 153, 113, 60, 12, WS_TABSTOP
  LISTBOX IDC_ABOUT_LISTBOX, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
  ICON "", stc1, 10, 10, 30, 30
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 40, 10, 137, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 40, 22, 137, 10
- LTEXT "Версия Wine %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
- LTEXT "Разработчики Wine:", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
+ LTEXT "Р’РµСЂСЃРёСЏ Wine %s", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
+ LTEXT "Р Р°Р·СЂР°Р±РѕС‚С‡РёРєРё Wine:", IDC_ABOUT_WINE_TEXT, 8, 55, 137, 10
 }
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
@@ -182,101 +185,101 @@ CAPTION ""
 FONT 8, "MS Shell Dlg"
 {
  ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
- LTEXT "Введите имя программы, папки, документа или ресурс Интернета, и Wine откроет их.", 12289, 36, 11, 182, 18
- LTEXT "&Открыть:", 12305, 4, 39, 30, 10
+ LTEXT "Р’РІРµРґРёС‚Рµ РёРјСЏ РїСЂРѕРіСЂР°РјРјС‹, РїР°РїРєРё, РґРѕРєСѓРјРµРЅС‚Р° РёР»Рё СЂРµСЃСѓСЂСЃ РРЅС‚РµСЂРЅРµС‚Р°, Рё Wine РѕС‚РєСЂРѕРµС‚ РёС….", 12289, 36, 11, 182, 18
+ LTEXT "&РћС‚РєСЂС‹С‚СЊ:", 12305, 4, 39, 30, 10
  CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
  DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "Отмена", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
- PUSHBUTTON "Об&зор...", 12288, 170, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "РћР±&Р·РѕСЂ...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
 
 STRINGTABLE
 {
     /* columns in the shellview */
-    IDS_SHV_COLUMN1		"Имя"
-    IDS_SHV_COLUMN2		"Размер"
-    IDS_SHV_COLUMN3		"Тип"
-    IDS_SHV_COLUMN4		"Изменён"
-    IDS_SHV_COLUMN5		"Атрибуты"
-    IDS_SHV_COLUMN6		"Полный объём"
-    IDS_SHV_COLUMN7		"Свободно"
-    IDS_SHV_COLUMN8		"Имя"
-    IDS_SHV_COLUMN9		"Комментарий"
-    IDS_SHV_COLUMN10		"Владелец"
-    IDS_SHV_COLUMN11		"Группа"
-    IDS_SHV_COLUMN_DELFROM	"Исходное местонаходение"
-    IDS_SHV_COLUMN_DELDATE	"Время удаления"
+    IDS_SHV_COLUMN1		"РРјСЏ"
+    IDS_SHV_COLUMN2		"Р Р°Р·РјРµСЂ"
+    IDS_SHV_COLUMN3		"РўРёРї"
+    IDS_SHV_COLUMN4		"РР·РјРµРЅС‘РЅ"
+    IDS_SHV_COLUMN5		"РђС‚СЂРёР±СѓС‚С‹"
+    IDS_SHV_COLUMN6		"РџРѕР»РЅС‹Р№ РѕР±СЉС‘Рј"
+    IDS_SHV_COLUMN7		"РЎРІРѕР±РѕРґРЅРѕ"
+    IDS_SHV_COLUMN8		"РРјСЏ"
+    IDS_SHV_COLUMN9		"РљРѕРјРјРµРЅС‚Р°СЂРёР№"
+    IDS_SHV_COLUMN10		"Р’Р»Р°РґРµР»РµС†"
+    IDS_SHV_COLUMN11		"Р“СЂСѓРїРїР°"
+    IDS_SHV_COLUMN_DELFROM	"РСЃС…РѕРґРЅРѕРµ РјРµСЃС‚РѕРЅР°С…РѕРґРµРЅРёРµ"
+    IDS_SHV_COLUMN_DELDATE	"Р’СЂРµРјСЏ СѓРґР°Р»РµРЅРёСЏ"
 
     /* special folders */
-    IDS_DESKTOP			"Рабочий стол"
-    IDS_MYCOMPUTER		"Мой компьютер"
-    IDS_RECYCLEBIN_FOLDER_NAME  "Корзина"
-    IDS_CONTROLPANEL		"Панель Управления"
+    IDS_DESKTOP			"Р Р°Р±РѕС‡РёР№ СЃС‚РѕР»"
+    IDS_MYCOMPUTER		"РњРѕР№ РєРѕРјРїСЊСЋС‚РµСЂ"
+    IDS_RECYCLEBIN_FOLDER_NAME  "РљРѕСЂР·РёРЅР°"
+    IDS_CONTROLPANEL		"РџР°РЅРµР»СЊ РЈРїСЂР°РІР»РµРЅРёСЏ"
 
     /* context menus */
-    IDS_VIEW_LARGE		"&Большие значки"
-    IDS_VIEW_SMALL		"&Мелкие значки"
-    IDS_VIEW_LIST		"&Список"
-    IDS_VIEW_DETAILS		"&Подробно"
-    IDS_SELECT			"&Выбрать"
-    IDS_OPEN			"&Открыть"
+    IDS_VIEW_LARGE		"&Р‘РѕР»СЊС€РёРµ Р·РЅР°С‡РєРё"
+    IDS_VIEW_SMALL		"&РњРµР»РєРёРµ Р·РЅР°С‡РєРё"
+    IDS_VIEW_LIST		"&РЎРїРёСЃРѕРє"
+    IDS_VIEW_DETAILS		"&РџРѕРґСЂРѕР±РЅРѕ"
+    IDS_SELECT			"&Р’С‹Р±СЂР°С‚СЊ"
+    IDS_OPEN			"&РћС‚РєСЂС‹С‚СЊ"
 
-    IDS_CREATEFOLDER_DENIED	"Невозможно создать папку - нет полномочий."
-    IDS_CREATEFOLDER_CAPTION	"Ошибка во время создания папки"
-    IDS_DELETEITEM_CAPTION	"Подтверждение удаления файла"
-    IDS_DELETEFOLDER_CAPTION	"Подтверждение удаления папки"
-    IDS_DELETEITEM_TEXT		"Удалить '%1'?"
-    IDS_DELETEMULTIPLE_TEXT	"Удалить эти обьекты (%1)?"
-    IDS_DELETESELECTED_TEXT     "Удалить выбранные обьекты?"
-    IDS_TRASHITEM_TEXT          "Переместить '%1' в корзину?"
-    IDS_TRASHFOLDER_TEXT        "Переместить папку '%1' и все ее содержимое корзину?"
-    IDS_TRASHMULTIPLE_TEXT      "Переместить обьекты %1 в корзину?"
-    IDS_CANTTRASH_TEXT          "Обьект '%1' не может быть послан в корзину. Вы хотите его удаить?"
-    IDS_OVERWRITEFILE_TEXT      "Папка уже содержит файл '%1'.\n\nВы хотите заменить его?"
-    IDS_OVERWRITEFILE_CAPTION	"Подтверждение замены файла"
-    IDS_OVERWRITEFOLDER_TEXT "Эта папка уже содержит папку '%1'.\n\n"\
-	    "Если файлы в конечной папке имеют те же имена, что и файлы в выбранной\n"\
-	    "папке, они будут заменены. Вы всё ещё хотите переместить или скопировать\n"\
-	    "папку?"
+    IDS_CREATEFOLDER_DENIED	"РќРµРІРѕР·РјРѕР¶РЅРѕ СЃРѕР·РґР°С‚СЊ РїР°РїРєСѓ - РЅРµС‚ РїРѕР»РЅРѕРјРѕС‡РёР№."
+    IDS_CREATEFOLDER_CAPTION	"РћС€РёР±РєР° РІРѕ РІСЂРµРјСЏ СЃРѕР·РґР°РЅРёСЏ РїР°РїРєРё"
+    IDS_DELETEITEM_CAPTION	"РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»Р°"
+    IDS_DELETEFOLDER_CAPTION	"РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ СѓРґР°Р»РµРЅРёСЏ РїР°РїРєРё"
+    IDS_DELETEITEM_TEXT		"РЈРґР°Р»РёС‚СЊ '%1'?"
+    IDS_DELETEMULTIPLE_TEXT	"РЈРґР°Р»РёС‚СЊ СЌС‚Рё РѕР±СЊРµРєС‚С‹ (%1)?"
+    IDS_DELETESELECTED_TEXT     "РЈРґР°Р»РёС‚СЊ РІС‹Р±СЂР°РЅРЅС‹Рµ РѕР±СЊРµРєС‚С‹?"
+    IDS_TRASHITEM_TEXT          "РџРµСЂРµРјРµСЃС‚РёС‚СЊ '%1' РІ РєРѕСЂР·РёРЅСѓ?"
+    IDS_TRASHFOLDER_TEXT        "РџРµСЂРµРјРµСЃС‚РёС‚СЊ РїР°РїРєСѓ '%1' Рё РІСЃРµ РµРµ СЃРѕРґРµСЂР¶РёРјРѕРµ РєРѕСЂР·РёРЅСѓ?"
+    IDS_TRASHMULTIPLE_TEXT      "РџРµСЂРµРјРµСЃС‚РёС‚СЊ РѕР±СЊРµРєС‚С‹ %1 РІ РєРѕСЂР·РёРЅСѓ?"
+    IDS_CANTTRASH_TEXT          "РћР±СЊРµРєС‚ '%1' РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РїРѕСЃР»Р°РЅ РІ РєРѕСЂР·РёРЅСѓ. Р’С‹ С…РѕС‚РёС‚Рµ РµРіРѕ СѓРґР°РёС‚СЊ?"
+    IDS_OVERWRITEFILE_TEXT      "РџР°РїРєР° СѓР¶Рµ СЃРѕРґРµСЂР¶РёС‚ С„Р°Р№Р» '%1'.\n\nР’С‹ С…РѕС‚РёС‚Рµ Р·Р°РјРµРЅРёС‚СЊ РµРіРѕ?"
+    IDS_OVERWRITEFILE_CAPTION	"РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ Р·Р°РјРµРЅС‹ С„Р°Р№Р»Р°"
+    IDS_OVERWRITEFOLDER_TEXT "Р­С‚Р° РїР°РїРєР° СѓР¶Рµ СЃРѕРґРµСЂР¶РёС‚ РїР°РїРєСѓ '%1'.\n\n"\
+	    "Р•СЃР»Рё С„Р°Р№Р»С‹ РІ РєРѕРЅРµС‡РЅРѕР№ РїР°РїРєРµ РёРјРµСЋС‚ С‚Рµ Р¶Рµ РёРјРµРЅР°, С‡С‚Рѕ Рё С„Р°Р№Р»С‹ РІ РІС‹Р±СЂР°РЅРЅРѕР№\n"\
+	    "РїР°РїРєРµ, РѕРЅРё Р±СѓРґСѓС‚ Р·Р°РјРµРЅРµРЅС‹. Р’С‹ РІСЃС‘ РµС‰С‘ С…РѕС‚РёС‚Рµ РїРµСЂРµРјРµСЃС‚РёС‚СЊ РёР»Рё СЃРєРѕРїРёСЂРѕРІР°С‚СЊ\n"\
+	    "РїР°РїРєСѓ?"
 
     /* message box strings */
-    IDS_RESTART_TITLE		"Перезагрузить"
-    IDS_RESTART_PROMPT		"Вы хотите симулировать перезапуск Windows?"
-    IDS_SHUTDOWN_TITLE		"Выключить питание"
-    IDS_SHUTDOWN_PROMPT		"Закончить работу с Wine?"
+    IDS_RESTART_TITLE		"РџРµСЂРµР·Р°РіСЂСѓР·РёС‚СЊ"
+    IDS_RESTART_PROMPT		"Р’С‹ С…РѕС‚РёС‚Рµ СЃРёРјСѓР»РёСЂРѕРІР°С‚СЊ РїРµСЂРµР·Р°РїСѓСЃРє Windows?"
+    IDS_SHUTDOWN_TITLE		"Р’С‹РєР»СЋС‡РёС‚СЊ РїРёС‚Р°РЅРёРµ"
+    IDS_SHUTDOWN_PROMPT		"Р—Р°РєРѕРЅС‡РёС‚СЊ СЂР°Р±РѕС‚Сѓ СЃ Wine?"
 
     /* shell folder path default values */
-    IDS_PROGRAMS                "Главное меню\\Программы"
-    IDS_PERSONAL                "Мои документы"
-    IDS_FAVORITES               "Избранное"
-    IDS_STARTUP                 "Главное меню\\Программы\\Автозагрузка"
-    IDS_RECENT                  "Недавнее"
-    IDS_SENDTO                  "Отправить"
-    IDS_STARTMENU               "Главное меню"
-    IDS_MYMUSIC                 "Моя музыка"
-    IDS_MYVIDEO                 "Мои фильмы"
-    IDS_DESKTOPDIRECTORY        "Рабочий стол"
-    IDS_NETHOOD                 "Сетевое окружение"
-    IDS_TEMPLATES               "Шаблоны"
+    IDS_PROGRAMS                "Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ\\РџСЂРѕРіСЂР°РјРјС‹"
+    IDS_PERSONAL                "РњРѕРё РґРѕРєСѓРјРµРЅС‚С‹"
+    IDS_FAVORITES               "РР·Р±СЂР°РЅРЅРѕРµ"
+    IDS_STARTUP                 "Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ\\РџСЂРѕРіСЂР°РјРјС‹\\РђРІС‚РѕР·Р°РіСЂСѓР·РєР°"
+    IDS_RECENT                  "РќРµРґР°РІРЅРµРµ"
+    IDS_SENDTO                  "РћС‚РїСЂР°РІРёС‚СЊ"
+    IDS_STARTMENU               "Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ"
+    IDS_MYMUSIC                 "РњРѕСЏ РјСѓР·С‹РєР°"
+    IDS_MYVIDEO                 "РњРѕРё С„РёР»СЊРјС‹"
+    IDS_DESKTOPDIRECTORY        "Р Р°Р±РѕС‡РёР№ СЃС‚РѕР»"
+    IDS_NETHOOD                 "РЎРµС‚РµРІРѕРµ РѕРєСЂСѓР¶РµРЅРёРµ"
+    IDS_TEMPLATES               "РЁР°Р±Р»РѕРЅС‹"
     IDS_APPDATA                 "Application Data"
-    IDS_PRINTHOOD               "Принтеры"
+    IDS_PRINTHOOD               "РџСЂРёРЅС‚РµСЂС‹"
     IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
     IDS_INTERNET_CACHE          "Local Settings\\Temporary Internet Files"
     IDS_COOKIES                 "Cookies"
     IDS_HISTORY                 "Local Settings\\History"
     IDS_PROGRAM_FILES           "Program Files"
-    IDS_MYPICTURES              "Мои рисунки"
+    IDS_MYPICTURES              "РњРѕРё СЂРёСЃСѓРЅРєРё"
     IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
-    IDS_COMMON_DOCUMENTS        "Общие документы"
-    IDS_ADMINTOOLS              "Главное меню\\Программы\\Administrative Tools"
-    IDS_COMMON_MUSIC            "Общие документы\\Моя музыка"
-    IDS_COMMON_PICTURES         "Общие документы\\Мои рисунки"
-    IDS_COMMON_VIDEO            "Общие документы\\Мои фильмы"
+    IDS_COMMON_DOCUMENTS        "РћР±С‰РёРµ РґРѕРєСѓРјРµРЅС‚С‹"
+    IDS_ADMINTOOLS              "Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ\\РџСЂРѕРіСЂР°РјРјС‹\\Administrative Tools"
+    IDS_COMMON_MUSIC            "РћР±С‰РёРµ РґРѕРєСѓРјРµРЅС‚С‹\\РњРѕСЏ РјСѓР·С‹РєР°"
+    IDS_COMMON_PICTURES         "РћР±С‰РёРµ РґРѕРєСѓРјРµРЅС‚С‹\\РњРѕРё СЂРёСЃСѓРЅРєРё"
+    IDS_COMMON_VIDEO            "РћР±С‰РёРµ РґРѕРєСѓРјРµРЅС‚С‹\\РњРѕРё С„РёР»СЊРјС‹"
     IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
-    IDS_NEWFOLDER		"Новая папка"
+    IDS_NEWFOLDER		"РќРѕРІР°СЏ РїР°РїРєР°"
 
-    IDS_CPANEL_TITLE            "Панель Управления Wine"
-    IDS_CPANEL_NAME             "Имя"
-    IDS_CPANEL_DESCRIPTION      "Описание"
+    IDS_CPANEL_TITLE            "РџР°РЅРµР»СЊ РЈРїСЂР°РІР»РµРЅРёСЏ Wine"
+    IDS_CPANEL_NAME             "РРјСЏ"
+    IDS_CPANEL_DESCRIPTION      "РћРїРёСЃР°РЅРёРµ"
 }
