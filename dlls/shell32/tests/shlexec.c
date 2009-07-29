@@ -587,7 +587,79 @@ static int _okChildInt(const char* file, int line, const char* key, int expected
 #define okChildPath(key, expected) _okChildPath(__FILE__, __LINE__, (key), (expected))
 #define okChildInt(key, expected)    _okChildInt(__FILE__, __LINE__, (key), (expected))
 
+/***
+ *
+ * GetLongPathNameA equivalent that supports Win95 and WinNT
+ *
+ ***/
 
+static DWORD get_long_path_name(const char* shortpath, char* longpath, DWORD longlen)
+{
+    char tmplongpath[MAX_PATH];
+    const char* p;
+    DWORD sp = 0, lp = 0;
+    DWORD tmplen;
+    WIN32_FIND_DATAA wfd;
+    HANDLE goit;
+
+    if (!shortpath || !shortpath[0])
+        return 0;
+
+    if (shortpath[1] == ':')
+    {
+        tmplongpath[0] = shortpath[0];
+        tmplongpath[1] = ':';
+        lp = sp = 2;
+    }
+
+    while (shortpath[sp])
+    {
+        /* check for path delimiters and reproduce them */
+        if (shortpath[sp] == '\\' || shortpath[sp] == '/')
+        {
+            if (!lp || tmplongpath[lp-1] != '\\')
+            {
+                /* strip double "\\" */
+                tmplongpath[lp++] = '\\';
+            }
+            tmplongpath[lp] = 0; /* terminate string */
+            sp++;
+            continue;
+        }
+
+        p = shortpath + sp;
+        if (sp == 0 && p[0] == '.' && (p[1] == '/' || p[1] == '\\'))
+        {
+            tmplongpath[lp++] = *p++;
+            tmplongpath[lp++] = *p++;
+        }
+        for (; *p && *p != '/' && *p != '\\'; p++);
+        tmplen = p - (shortpath + sp);
+        lstrcpyn(tmplongpath + lp, shortpath + sp, tmplen + 1);
+        /* Check if the file exists and use the existing file name */
+        goit = FindFirstFileA(tmplongpath, &wfd);
+        if (goit == INVALID_HANDLE_VALUE)
+            return 0;
+        FindClose(goit);
+        strcpy(tmplongpath + lp, wfd.cFileName);
+        lp += strlen(tmplongpath + lp);
+        sp += tmplen;
+    }
+    tmplen = strlen(shortpath) - 1;
+    if ((shortpath[tmplen] == '/' || shortpath[tmplen] == '\\') &&
+        (tmplongpath[lp - 1] != '/' && tmplongpath[lp - 1] != '\\'))
+        tmplongpath[lp++] = shortpath[tmplen];
+    tmplongpath[lp] = 0;
+
+    tmplen = strlen(tmplongpath) + 1;
+    if (tmplen <= longlen)
+    {
+        strcpy(longpath, tmplongpath);
+        tmplen--; /* length without 0 */
+    }
+
+    return tmplen;
+}
 
 /***
  *
@@ -986,7 +1058,8 @@ static void test_lnks(void)
        GetLastError());
     okChildInt("argcA", 5);
     okChildString("argvA3", "Open");
-    sprintf(filename, "%s\\test file.shlexec", tmpdir);
+    sprintf(params, "%s\\test file.shlexec", tmpdir);
+    get_long_path_name(params, filename, sizeof(filename));
     okChildPath("argvA4", filename);
 
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
