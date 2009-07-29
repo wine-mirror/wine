@@ -29,5 +29,6 @@ extern HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
     const WICRect *rc, UINT dststride, UINT dstbuffersize, BYTE *dstbuffer);
 
 extern HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo);
+extern HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnknown **ppIEnumUnknown);
 
 #endif /* WINCODECS_PRIVATE_H */

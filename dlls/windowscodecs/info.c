@@ -32,6 +32,7 @@
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
@@ -528,6 +529,266 @@ HRESULT CreateComponentInfo(REFCLSID clsid, IWICComponentInfo **ppIInfo)
         hr = E_FAIL;
 
     RegCloseKey(clsidkey);
+
+    return hr;
+}
+
+typedef struct {
+    const IEnumUnknownVtbl *IEnumUnknown_Vtbl;
+    LONG ref;
+    struct list objects;
+    struct list *cursor;
+} ComponentEnum;
+
+typedef struct {
+    struct list entry;
+    IUnknown *unk;
+} ComponentEnumItem;
+
+static const IEnumUnknownVtbl ComponentEnumVtbl;
+
+static HRESULT WINAPI ComponentEnum_QueryInterface(IEnumUnknown *iface, REFIID iid,
+    void **ppv)
+{
+    ComponentEnum *This = (ComponentEnum*)iface;
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IEnumUnknown, iid))
+    {
+        *ppv = This;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI ComponentEnum_AddRef(IEnumUnknown *iface)
+{
+    ComponentEnum *This = (ComponentEnum*)iface;
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI ComponentEnum_Release(IEnumUnknown *iface)
+{
+    ComponentEnum *This = (ComponentEnum*)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+    ComponentEnumItem *cursor, *cursor2;
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        LIST_FOR_EACH_ENTRY_SAFE(cursor, cursor2, &This->objects, ComponentEnumItem, entry)
+        {
+            IUnknown_Release(cursor->unk);
+            list_remove(&cursor->entry);
+            HeapFree(GetProcessHeap(), 0, cursor);
+        }
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI ComponentEnum_Next(IEnumUnknown *iface, ULONG celt,
+    IUnknown **rgelt, ULONG *pceltFetched)
+{
+    ComponentEnum *This = (ComponentEnum*)iface;
+    int num_fetched=0;
+    ComponentEnumItem *item;
+
+    TRACE("(%p,%u,%p,%p)\n", iface, celt, rgelt, pceltFetched);
+
+    while (num_fetched<celt)
+    {
+        if (!This->cursor)
+        {
+            *pceltFetched = num_fetched;
+            return S_FALSE;
+        }
+        item = LIST_ENTRY(This->cursor, ComponentEnumItem, entry);
+        IUnknown_AddRef(item->unk);
+        rgelt[num_fetched] = item->unk;
+        num_fetched++;
+        This->cursor = list_next(&This->objects, This->cursor);
+    }
+    *pceltFetched = num_fetched;
+    return S_OK;
+}
+
+static HRESULT WINAPI ComponentEnum_Skip(IEnumUnknown *iface, ULONG celt)
+{
+    ComponentEnum *This = (ComponentEnum*)iface;
+    int i;
+
+    TRACE("(%p,%u)\n", iface, celt);
+
+    for (i=0; i<celt; i++)
+    {
+        if (!This->cursor)
+            return S_FALSE;
+        This->cursor = list_next(&This->objects, This->cursor);
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI ComponentEnum_Reset(IEnumUnknown *iface)
+{
+    ComponentEnum *This = (ComponentEnum*)iface;
+
+    TRACE("(%p)\n", iface);
+
+    This->cursor = list_head(&This->objects);
+    return S_OK;
+}
+
+static HRESULT WINAPI ComponentEnum_Clone(IEnumUnknown *iface, IEnumUnknown **ppenum)
+{
+    ComponentEnum *This = (ComponentEnum*)iface;
+    ComponentEnum *new_enum;
+    ComponentEnumItem *old_item, *new_item;
+    HRESULT ret=S_OK;
+
+    new_enum = HeapAlloc(GetProcessHeap(), 0, sizeof(ComponentEnum));
+    if (!new_enum)
+    {
+        *ppenum = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    new_enum->IEnumUnknown_Vtbl = &ComponentEnumVtbl;
+    new_enum->ref = 1;
+    new_enum->cursor = NULL;
+
+    list_init(&new_enum->objects);
+    LIST_FOR_EACH_ENTRY(old_item, &This->objects, ComponentEnumItem, entry)
+    {
+        new_item = HeapAlloc(GetProcessHeap(), 0, sizeof(ComponentEnumItem));
+        if (!new_item)
+        {
+            ret = E_OUTOFMEMORY;
+            break;
+        }
+        new_item->unk = old_item->unk;
+        list_add_tail(&new_enum->objects, &new_item->entry);
+        IUnknown_AddRef(new_item->unk);
+        if (&old_item->entry == This->cursor) new_enum->cursor = &new_item->entry;
+    }
+
+    if (FAILED(ret))
+    {
+        IUnknown_Release((IUnknown*)new_enum);
+        *ppenum = NULL;
+    }
+    else
+        *ppenum = (IEnumUnknown*)new_enum;
+
+    return ret;
+}
+
+static const IEnumUnknownVtbl ComponentEnumVtbl = {
+    ComponentEnum_QueryInterface,
+    ComponentEnum_AddRef,
+    ComponentEnum_Release,
+    ComponentEnum_Next,
+    ComponentEnum_Skip,
+    ComponentEnum_Reset,
+    ComponentEnum_Clone
+};
+
+HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnknown **ppIEnumUnknown)
+{
+    ComponentEnum *This;
+    ComponentEnumItem *item;
+    const struct category *category;
+    HKEY clsidkey, catidkey, instancekey;
+    WCHAR guidstring[39];
+    LONG res;
+    int i;
+    HRESULT hr=S_OK;
+    CLSID clsid;
+
+    if (options) FIXME("ignoring flags %x\n", options);
+
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0, KEY_READ, &clsidkey);
+    if (res != ERROR_SUCCESS)
+        return HRESULT_FROM_WIN32(res);
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(ComponentEnum));
+    if (!This)
+    {
+        RegCloseKey(clsidkey);
+        return E_OUTOFMEMORY;
+    }
+
+    This->IEnumUnknown_Vtbl = &ComponentEnumVtbl;
+    This->ref = 1;
+    list_init(&This->objects);
+
+    for (category=categories; category->type && hr == S_OK; category++)
+    {
+        if ((category->type & componentTypes) == 0) continue;
+        StringFromGUID2(category->catid, guidstring, 39);
+        res = RegOpenKeyExW(clsidkey, guidstring, 0, KEY_READ, &catidkey);
+        if (res == ERROR_SUCCESS)
+        {
+            res = RegOpenKeyExW(catidkey, instance_keyname, 0, KEY_READ, &instancekey);
+            if (res == ERROR_SUCCESS)
+            {
+                i=0;
+                for (;;i++)
+                {
+                    DWORD guidstring_size = 39;
+                    res = RegEnumKeyExW(instancekey, i, guidstring, &guidstring_size, NULL, NULL, NULL, NULL);
+                    if (res != ERROR_SUCCESS) break;
+
+                    item = HeapAlloc(GetProcessHeap(), 0, sizeof(ComponentEnumItem));
+                    if (!item) { hr = E_OUTOFMEMORY; break; }
+
+                    hr = CLSIDFromString(guidstring, &clsid);
+                    if (SUCCEEDED(hr))
+                    {
+                        hr = CreateComponentInfo(&clsid, (IWICComponentInfo**)&item->unk);
+                        if (SUCCEEDED(hr))
+                            list_add_tail(&This->objects, &item->entry);
+                    }
+
+                    if (!SUCCEEDED(hr))
+                    {
+                        HeapFree(GetProcessHeap(), 0, item);
+                        hr = S_OK;
+                    }
+                }
+                RegCloseKey(instancekey);
+            }
+            RegCloseKey(catidkey);
+        }
+        if (res != ERROR_SUCCESS && res != ERROR_NO_MORE_ITEMS)
+            hr = HRESULT_FROM_WIN32(res);
+    }
+    RegCloseKey(clsidkey);
+
+    if (SUCCEEDED(hr))
+    {
+        IEnumUnknown_Reset((IEnumUnknown*)This);
+        *ppIEnumUnknown = (IEnumUnknown*)This;
+    }
+    else
+    {
+        *ppIEnumUnknown = NULL;
+        IUnknown_Release((IUnknown*)This);
+    }
 
     return hr;
 }

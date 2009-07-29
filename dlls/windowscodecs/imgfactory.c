@@ -246,8 +246,8 @@ static HRESULT WINAPI ImagingFactory_CreateBitmapFromHICON(IWICImagingFactory *i
 static HRESULT WINAPI ImagingFactory_CreateComponentEnumerator(IWICImagingFactory *iface,
     DWORD componentTypes, DWORD options, IEnumUnknown **ppIEnumUnknown)
 {
-    FIXME("(%p,%u,%u,%p): stub\n", iface, componentTypes, options, ppIEnumUnknown);
-    return E_NOTIMPL;
+    TRACE("(%p,%u,%u,%p)\n", iface, componentTypes, options, ppIEnumUnknown);
+    return CreateComponentEnumerator(componentTypes, options, ppIEnumUnknown);
 }
 
 static HRESULT WINAPI ImagingFactory_CreateFastMetadataEncoderFromDecoder(
