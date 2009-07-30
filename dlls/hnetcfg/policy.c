@@ -149,8 +149,8 @@ static HRESULT WINAPI fw_policy_get_CurrentProfile(
 {
     fw_policy *This = impl_from_INetFwPolicy( iface );
 
-    FIXME("%p, %p\n", This, profile);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", This, profile);
+    return NetFwProfile_create( NULL, (void **)profile );
 }
 
 static HRESULT WINAPI fw_policy_GetProfileByType(
