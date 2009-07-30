@@ -6,7 +6,8 @@ MODULE    = hnetcfg.dll
 IMPORTS   = kernel32
 
 C_SRCS = \
-	hnetcfg.c
+	hnetcfg.c \
+	manager.c
 
 @MAKE_DLL_RULES@
 
