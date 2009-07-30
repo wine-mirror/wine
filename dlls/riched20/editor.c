@@ -1863,6 +1863,8 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
 {
     int nStart, nCount; /* in chars */
 
+    if (!ex->cb || !pText) return 0;
+
     if (ex->flags & ~(GT_SELECTION | GT_USECRLF))
       FIXME("GETTEXTEX flags 0x%08x not supported\n", ex->flags & ~(GT_SELECTION | GT_USECRLF));
 
