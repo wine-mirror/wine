@@ -150,23 +150,3 @@ HRESULT WINAPI DllCanUnloadNow( void )
     FIXME("\n");
     return S_FALSE;
 }
-
-/******************************************************************
- *      DllRegisterServer (HNETCFG.@)
- *
- *
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return S_OK;
-}
-
-/******************************************************************
- *      DllUnregisterServer (HNETCFG.@)
- *
- *
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return S_OK;
-}

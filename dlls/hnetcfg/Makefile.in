@@ -3,14 +3,15 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = hnetcfg.dll
-IMPORTS   = kernel32
+IMPORTS   = ole32 advapi32 kernel32
 
 C_SRCS = \
 	apps.c \
 	hnetcfg.c \
 	manager.c \
 	policy.c \
-	profile.c
+	profile.c \
+	regsvr.c
 
 @MAKE_DLL_RULES@
 
