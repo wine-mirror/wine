@@ -175,7 +175,7 @@ FONT 10, "MS Shell Dlg"
  LTEXT "", IDC_ABOUT_STATIC_TEXT1, 42, 10, 170, 10
  LTEXT "", IDC_ABOUT_STATIC_TEXT2, 42, 22, 170, 10
  LTEXT "%s 실행중", IDC_ABOUT_STATIC_TEXT3, 42, 34, 170, 10
- LTEXT "Wine was brought to you by:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
+ LTEXT "Wine 에 도움주신 분:", IDC_ABOUT_WINE_TEXT, 8, 54, 204, 10
 }
 
 
@@ -279,9 +279,9 @@ IDS_MYPICTURES              "내 그림"
 IDS_PROGRAM_FILES_COMMON    "Program Files\\Common Files"
 IDS_COMMON_DOCUMENTS        "문서"
 IDS_ADMINTOOLS              "시작메뉴\\프로그램\\관리 도구"
-IDS_COMMON_MUSIC            "문서\\내 음악"
-IDS_COMMON_PICTURES         "문서\\내 그림"
-IDS_COMMON_VIDEO            "문서\\내 비디오"
+IDS_COMMON_MUSIC            "내 음악"
+IDS_COMMON_PICTURES         "내 그림"
+IDS_COMMON_VIDEO            "내 비디오"
 IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 
 IDS_NEWFOLDER		"새 폴더"
