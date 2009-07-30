@@ -17,3 +17,4 @@
  */
 
 HRESULT NetFwMgr_create(IUnknown *, LPVOID *);
+HRESULT NetFwPolicy_create(IUnknown *, LPVOID *);

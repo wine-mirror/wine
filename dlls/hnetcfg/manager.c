@@ -150,8 +150,8 @@ static HRESULT WINAPI fw_manager_get_LocalPolicy(
 {
     fw_manager *This = impl_from_INetFwMgr( iface );
 
-    FIXME("%p, %p\n", This, localPolicy);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", This, localPolicy);
+    return NetFwPolicy_create( NULL, (void **)localPolicy );
 }
 
 static HRESULT WINAPI fw_manager_get_CurrentProfileType(

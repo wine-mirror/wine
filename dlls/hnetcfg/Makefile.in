@@ -7,7 +7,8 @@ IMPORTS   = kernel32
 
 C_SRCS = \
 	hnetcfg.c \
-	manager.c
+	manager.c \
+	policy.c
 
 @MAKE_DLL_RULES@
 
