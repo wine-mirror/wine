@@ -6,6 +6,7 @@ MODULE    = hnetcfg.dll
 IMPORTS   = kernel32
 
 C_SRCS = \
+	apps.c \
 	hnetcfg.c \
 	manager.c \
 	policy.c \

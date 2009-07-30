@@ -281,8 +281,8 @@ static HRESULT WINAPI fw_profile_get_AuthorizedApplications(
 {
     fw_profile *This = impl_from_INetFwProfile( iface );
 
-    FIXME("%p, %p\n", This, apps);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", This, apps);
+    return NetFwAuthorizedApplications_create( NULL, (void **)apps );
 }
 
 static const struct INetFwProfileVtbl fw_profile_vtbl =
