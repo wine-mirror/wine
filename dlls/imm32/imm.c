@@ -2792,3 +2792,12 @@ BOOL WINAPI ImmProcessKey(HWND hwnd, HKL hKL, UINT vKey, LPARAM lKeyData, DWORD 
     data->lastVK = VK_PROCESSKEY;
     return FALSE;
 }
+
+/***********************************************************************
+*		ImmDisableTextFrameService(IMM32.@)
+*/
+BOOL WINAPI ImmDisableTextFrameService(DWORD idThread)
+{
+    FIXME("Stub\n");
+    return FALSE;
+}
