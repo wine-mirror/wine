@@ -70,7 +70,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
 
     lpwhr = (http_request_t*) WININET_GetObject( hRequest );
     if (NULL == lpwhr)
-        goto done;
+        return FALSE;
 
     lpwhs = lpwhr->lpHttpSession;
     if (NULL == lpwhs)
@@ -107,7 +107,7 @@ static BOOL WININET_GetServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
 
     lpwhr = (http_request_t*) WININET_GetObject( hRequest );
     if (NULL == lpwhr)
-        goto done;
+        return FALSE;
 
     lpwhs = lpwhr->lpHttpSession;
     if (NULL == lpwhs)
