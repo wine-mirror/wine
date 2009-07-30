@@ -3544,36 +3544,12 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_GETTEXT:
   {
     GETTEXTEX ex;
-    LRESULT rc;
-    LPSTR bufferA = NULL;
-    LPWSTR bufferW = NULL;
-
-    if (unicode)
-        bufferW = heap_alloc((wParam + 2) * sizeof(WCHAR));
-    else
-        bufferA = heap_alloc(wParam + 2);
-
-    ex.cb = (wParam + 2) * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
+    ex.cb = wParam * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
     ex.flags = GT_USECRLF;
     ex.codepage = unicode ? 1200 : CP_ACP;
     ex.lpDefaultChar = NULL;
     ex.lpUsedDefChar = NULL;
-
-    rc = ME_GetTextEx(editor, &ex, unicode ? (LPARAM)bufferW : (LPARAM)bufferA);
-
-    if (unicode)
-    {
-        memcpy((LPWSTR)lParam, bufferW, wParam * sizeof(WCHAR));
-        if (strlenW(bufferW) >= wParam) rc = 0;
-    }
-    else
-    {
-        memcpy((LPSTR)lParam, bufferA, wParam);
-        if (strlen(bufferA) >= wParam) rc = 0;
-    }
-    heap_free(bufferA);
-    heap_free(bufferW);
-    return rc;
+    return ME_GetTextEx(editor, &ex, lParam);
   }
   case EM_GETTEXTEX:
     return ME_GetTextEx(editor, (GETTEXTEX*)wParam, lParam);
