@@ -469,7 +469,7 @@
 @ stub GdipRecordMetafile
 @ stdcall GdipRecordMetafileFileName(wstr long long ptr long wstr ptr)
 @ stdcall GdipRecordMetafileFileNameI(wstr long long ptr long wstr ptr)
-@ stub GdipRecordMetafileI
+@ stdcall GdipRecordMetafileI(long long ptr long wstr ptr)
 @ stub GdipRecordMetafileStream
 @ stub GdipRecordMetafileStreamI
 @ stdcall GdipReleaseDC(ptr ptr)

@@ -4097,3 +4097,13 @@ GpStatus WINGDIPAPI GdipIsVisibleRegionPointI(GpRegion *region, INT x, INT y, Gp
     FIXME("(%p %d %d %p %p): stub\n", region, x, y, graphics, result);
     return NotImplemented;
 }
+
+/*****************************************************************************
+ * GdipRecordMetafileI [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipRecordMetafileI(HDC hdc, EmfType type, GDIPCONST GpRect *frameRect,
+                                        MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
+{
+    FIXME("(%p %d %p %d %p %p): stub\n", hdc, type, frameRect, frameUnit, desc, metafile);
+    return NotImplemented;
+}
