@@ -49,11 +49,18 @@ static BOOL need_mova_const(IWineD3DBaseShader *shader, const struct wined3d_gl_
     return !GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION);
 }
 
+/* Returns TRUE if result.clip from GL_NV_vertex_program2 should be used and FALSE otherwise */
+static inline BOOL use_nv_clip(const struct wined3d_gl_info *gl_info)
+{
+    return GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION);
+}
+
 static BOOL need_helper_const(const struct wined3d_gl_info *gl_info)
 {
     if (!GL_SUPPORT(NV_VERTEX_PROGRAM) /* Need to init colors. */
-            || gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT /* Load the immval offset. */
-            || gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) /* Have to init texcoords. */
+        || gl_info->quirks & WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT /* Load the immval offset. */
+        || gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W /* Have to init texcoords. */
+        || (!use_nv_clip(gl_info)) /* Init the clip texcoord */)
     {
         return TRUE;
     }
@@ -74,12 +81,6 @@ static unsigned int reserved_vs_const(IWineD3DBaseShader *shader, const struct w
 static inline BOOL ffp_clip_emul(IWineD3DStateBlockImpl *stateblock)
 {
     return stateblock->lowest_disabled_stage < 7;
-}
-
-/* Returns TRUE if result.clip from GL_NV_vertex_program2 should be used and FALSE otherwise */
-static inline BOOL use_nv_clip(const struct wined3d_gl_info *gl_info)
-{
-    return GL_SUPPORT(NV_VERTEX_PROGRAM2_OPTION);
 }
 
 /* Internally used shader constants. Applications can use constants 0 to GL_LIMITS(vshader_constantsF) - 1,
