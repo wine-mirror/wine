@@ -21,6 +21,8 @@
 
 #include "resource.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
 IDD_ENDTASK DIALOG DISCARDABLE  0, 0, 186, 71
