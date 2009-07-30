@@ -21,6 +21,8 @@
 
 #include "xcopy.h"
 
+#pragma code_page(65001)
+
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
