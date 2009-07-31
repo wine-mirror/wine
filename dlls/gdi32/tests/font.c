@@ -2172,7 +2172,7 @@ static void get_seg4(cmap_format_4 *cmap, USHORT seg_num, cmap_format_4_seg *seg
     seg->id_range_offset = GET_BE_WORD(cmap->end_count[3 * segs + 1 + seg_num]);
 }
 
-static BOOL get_first_last_from_cmap4(void *ptr, DWORD *first, DWORD *last)
+static BOOL get_first_last_from_cmap4(void *ptr, DWORD *first, DWORD *last, DWORD limit)
 {
     int i;
     cmap_format_4 *cmap = (cmap_format_4*)ptr;
@@ -2197,7 +2197,15 @@ static BOOL get_first_last_from_cmap4(void *ptr, DWORD *first, DWORD *last)
                     + code - seg.start_count
                     + i - seg_count;
 
-                index = GET_BE_WORD(glyph_ids[index]);
+                /* some fonts have broken last segment */
+                if ((char *)(glyph_ids + index + sizeof(*glyph_ids)) < (char *)ptr + limit)
+                    index = GET_BE_WORD(glyph_ids[index]);
+                else
+                {
+                    trace("segment %04x/%04x index %04x points to nowhere\n",
+                          seg.start_count, seg.end_count, index);
+                    index = 0;
+                }
                 if(index) index += seg.id_delta;
             }
             if(*first == 0x10000)
@@ -2270,7 +2278,7 @@ static BOOL get_first_last_from_cmap(HDC hdc, DWORD *first, DWORD *last, cmap_ty
         r = get_first_last_from_cmap0(cmap, first, last);
         break;
     case 4:
-        r = get_first_last_from_cmap4(cmap, first, last);
+        r = get_first_last_from_cmap4(cmap, first, last, size);
         break;
     default:
         trace("unhandled cmap format %d\n", format);
