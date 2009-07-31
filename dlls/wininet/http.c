@@ -218,7 +218,7 @@ static void wininet_zfree(voidpf opaque, voidpf address)
 static void init_gzip_stream(http_request_t *req)
 {
     gzip_stream_t *gzip_stream;
-    int zres;
+    int index, zres;
 
     gzip_stream = HeapAlloc(GetProcessHeap(), 0, sizeof(gzip_stream_t));
     gzip_stream->zstream.zalloc = wininet_zalloc;
@@ -240,6 +240,10 @@ static void init_gzip_stream(http_request_t *req)
     }
 
     req->gzip_stream = gzip_stream;
+
+    index = HTTP_GetCustomHeaderIndex(req, szContent_Length, 0, FALSE);
+    if(index != -1)
+        HTTP_DeleteCustomHeader(req, index);
 }
 
 #else
@@ -2635,17 +2639,6 @@ static BOOL HTTP_HttpQueryInfoW(http_request_t *lpwhr, DWORD dwInfoLevel,
         if (!lpBuffer) return FALSE;
         index = HTTP_GetCustomHeaderIndex(lpwhr, lpBuffer, requested_index, request_only);
         break;
-
-    case HTTP_QUERY_CONTENT_LENGTH:
-        if(lpwhr->gzip_stream) {
-            INTERNET_SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
-            return FALSE;
-        }
-
-        index = HTTP_GetCustomHeaderIndex(lpwhr, header_lookup[level],
-                                          requested_index,request_only);
-        break;
-
     case HTTP_QUERY_RAW_HEADERS_CRLF:
         {
             LPWSTR headers;
