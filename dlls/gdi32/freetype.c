@@ -5585,7 +5585,19 @@ UINT WineEngGetOutlineTextMetrics(GdiFont *font, UINT cbSize,
         TM.tmAveCharWidth = 1; 
     }
     TM.tmMaxCharWidth = (pFT_MulFix(ft_face->bbox.xMax - ft_face->bbox.xMin, x_scale) + 32) >> 6;
-    TM.tmWeight = (font->fake_bold || (ft_face->style_flags & FT_STYLE_FLAG_BOLD)) ? FW_BOLD : FW_REGULAR;
+    TM.tmWeight = FW_REGULAR;
+    if (font->fake_bold)
+        TM.tmWeight = FW_BOLD;
+    else
+    {
+        if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)
+        {
+            if (pOS2->usWeightClass > FW_MEDIUM)
+                TM.tmWeight = pOS2->usWeightClass;
+        }
+        else if (pOS2->usWeightClass <= FW_MEDIUM)
+            TM.tmWeight = pOS2->usWeightClass;
+    }
     TM.tmOverhang = 0;
     TM.tmDigitizedAspectX = 300;
     TM.tmDigitizedAspectY = 300;
