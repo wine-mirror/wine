@@ -2602,6 +2602,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
                      ES_AUTOHSCROLL|ES_DISABLENOSCROLL);
   ed->pBuffer = ME_MakeText();
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
+  ed->nAvailWidth = 0; /* wrap to client area */
   ME_MakeFirstParagraph(ed);
   /* The four cursors are for:
    * 0 - The position where the caret is shown
@@ -2634,7 +2635,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
-  ed->nAvailWidth = 0; /* wrap to client area */
   ed->bHideSelection = FALSE;
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
