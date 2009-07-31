@@ -1274,6 +1274,30 @@ done:
 
 #elif defined HAVE_GETDIRENTRIES
 
+#if _DARWIN_FEATURE_64_BIT_INODE
+
+/* Darwin doesn't provide a version of getdirentries with support for 64-bit
+ * inodes.  When 64-bit inodes are enabled, the getdirentries symbol is mapped
+ * to _getdirentries_is_not_available_when_64_bit_inodes_are_in_effect so that
+ * we get link errors if we try to use it.  We still need getdirentries, but we
+ * don't need it to support 64-bit inodes.  So, we use the legacy getdirentries
+ * with 32-bit inodes.  We have to be careful to use a corresponding dirent
+ * structure, too.
+ */
+int darwin_legacy_getdirentries(int, char *, int, long *) __asm("_getdirentries");
+#define getdirentries darwin_legacy_getdirentries
+
+struct darwin_legacy_dirent {
+    __uint32_t d_ino;
+    __uint16_t d_reclen;
+    __uint8_t  d_type;
+    __uint8_t  d_namlen;
+    char d_name[__DARWIN_MAXNAMLEN + 1];
+};
+#define dirent darwin_legacy_dirent
+
+#endif
+
 /***********************************************************************
  *           wine_getdirentries
  *
@@ -1438,6 +1462,12 @@ done:
     if (data != local_buffer) RtlFreeHeap( GetProcessHeap(), 0, data );
     return res;
 }
+
+#if _DARWIN_FEATURE_64_BIT_INODE
+#undef getdirentries
+#undef dirent
+#endif
+
 #endif  /* HAVE_GETDIRENTRIES */
 
 
