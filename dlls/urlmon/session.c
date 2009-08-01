@@ -532,6 +532,19 @@ static void ensure_useragent(void)
     RegCloseKey(hkey);
 }
 
+LPWSTR get_useragent(void)
+{
+    LPWSTR ret;
+
+    ensure_useragent();
+
+    EnterCriticalSection(&session_cs);
+    ret = heap_strdupW(user_agent);
+    LeaveCriticalSection(&session_cs);
+
+    return ret;
+}
+
 HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength,
                                      DWORD* pdwBufferLength, DWORD dwReserved)
 {

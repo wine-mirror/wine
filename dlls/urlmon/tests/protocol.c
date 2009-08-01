@@ -2155,7 +2155,8 @@ static BOOL http_protocol_start(LPCWSTR url)
     SET_EXPECT(GetBindInfo);
     if (!(bindf & BINDF_FROMURLMON))
         SET_EXPECT(ReportProgress_DIRECTBIND);
-    SET_EXPECT(GetBindString_USER_AGENT);
+    if(!got_user_agent)
+        SET_EXPECT(GetBindString_USER_AGENT);
     SET_EXPECT(GetBindString_ACCEPT_MIMES);
     SET_EXPECT(QueryService_HttpNegotiate);
     SET_EXPECT(BeginningTransaction);
@@ -2175,11 +2176,6 @@ static BOOL http_protocol_start(LPCWSTR url)
     {
         CHECK_CALLED(GetBindString_USER_AGENT);
         got_user_agent = TRUE;
-    }
-    else todo_wine
-    {
-        /* user agent only retrieved once, even with different URLs */
-        CHECK_NOT_CALLED(GetBindString_USER_AGENT);
     }
     CHECK_CALLED(GetBindString_ACCEPT_MIMES);
     CHECK_CALLED(QueryService_HttpNegotiate);
@@ -2432,7 +2428,6 @@ static void test_ftp_protocol(void)
     test_http_info(async_protocol);
 
     SET_EXPECT(GetBindInfo);
-    SET_EXPECT(GetBindString_USER_AGENT);
     SET_EXPECT(ReportProgress_FINDINGRESOURCE);
     SET_EXPECT(ReportProgress_CONNECTING);
     SET_EXPECT(ReportProgress_SENDINGREQUEST);
@@ -2441,7 +2436,6 @@ static void test_ftp_protocol(void)
     hres = IInternetProtocol_Start(async_protocol, ftp_urlW, &protocol_sink, &bind_info, 0, 0);
     ok(hres == S_OK, "Start failed: %08x\n", hres);
     CHECK_CALLED(GetBindInfo);
-    todo_wine CHECK_NOT_CALLED(GetBindString_USER_AGENT);
 
     SET_EXPECT(ReportResult);
 

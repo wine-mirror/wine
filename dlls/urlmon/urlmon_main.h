@@ -63,6 +63,8 @@ HRESULT get_protocol_handler(LPCWSTR,CLSID*,BOOL*,IClassFactory**);
 IInternetProtocol *get_mime_filter(LPCWSTR);
 BOOL is_registered_protocol(LPCWSTR);
 void register_urlmon_namespace(IClassFactory*,REFIID,LPCWSTR,BOOL);
+HINTERNET get_internet_session(IInternetBindInfo*);
+LPWSTR get_useragent(void);
 void free_session(void);
 
 HRESULT bind_to_storage(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
@@ -83,7 +85,6 @@ typedef struct {
     DWORD bindf;
     BINDINFO bind_info;
 
-    HINTERNET internet;
     HINTERNET request;
     HINTERNET connection;
     DWORD flags;
@@ -97,7 +98,7 @@ typedef struct {
 } Protocol;
 
 struct ProtocolVtbl {
-    HRESULT (*open_request)(Protocol*,LPCWSTR,DWORD,IInternetBindInfo*);
+    HRESULT (*open_request)(Protocol*,LPCWSTR,DWORD,HINTERNET,IInternetBindInfo*);
     HRESULT (*start_downloading)(Protocol*);
     void (*close_connection)(Protocol*);
 };

@@ -121,6 +121,22 @@ static void detach_thread(void)
     heap_free(data);
 }
 
+static void process_detach(void)
+{
+    HINTERNET internet_session;
+
+    internet_session = get_internet_session(NULL);
+    if(internet_session)
+        InternetCloseHandle(internet_session);
+
+    if (hCabinet)
+        FreeLibrary(hCabinet);
+
+    init_session(FALSE);
+    free_session();
+    free_tls_list();
+}
+
 /***********************************************************************
  *		DllMain (URLMON.init)
  */
@@ -132,17 +148,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     case DLL_PROCESS_ATTACH:
         URLMON_hInstance = hinstDLL;
         init_session(TRUE);
-	break;
+        break;
 
     case DLL_PROCESS_DETACH:
-        if (hCabinet)
-            FreeLibrary(hCabinet);
-        hCabinet = NULL;
-        init_session(FALSE);
-        free_session();
-        free_tls_list();
-        URLMON_hInstance = 0;
-	break;
+        process_detach();
+        break;
 
     case DLL_THREAD_DETACH:
         detach_thread();
