@@ -2627,6 +2627,28 @@ static void test_style2(IHTMLStyle2 *style2)
     SysFreeString(str);
 }
 
+static void test_style3(IHTMLStyle3 *style3)
+{
+    BSTR str;
+    HRESULT hres;
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle3_get_wordWrap(style3, &str);
+    ok(hres == S_OK, "get_wordWrap failed: %08x\n", hres);
+    ok(!str, "str != NULL\n");
+
+    str = a2bstr("break-word");
+    hres = IHTMLStyle3_put_wordWrap(style3, str);
+    ok(hres == S_OK, "put_wordWrap failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle3_get_wordWrap(style3, &str);
+    ok(hres == S_OK, "get_wordWrap failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "break-word"), "get_wordWrap returned %s\n", dbgstr_w(str));
+    SysFreeString(str);
+}
+
 static void test_style4(IHTMLStyle4 *style4)
 {
     HRESULT hres;
@@ -2655,6 +2677,7 @@ static void test_style4(IHTMLStyle4 *style4)
 static void test_default_style(IHTMLStyle *style)
 {
     IHTMLStyle2 *style2;
+    IHTMLStyle3 *style3;
     IHTMLStyle4 *style4;
     VARIANT_BOOL b;
     VARIANT v;
@@ -3635,6 +3658,13 @@ static void test_default_style(IHTMLStyle *style)
     if(SUCCEEDED(hres)) {
         test_style2(style2);
         IHTMLStyle2_Release(style2);
+    }
+
+    hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle3, (void**)&style3);
+    ok(hres == S_OK, "Could not get IHTMLStyle3 iface: %08x\n", hres);
+    if(SUCCEEDED(hres)) {
+        test_style3(style3);
+        IHTMLStyle3_Release(style3);
     }
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle4, (void**)&style4);
