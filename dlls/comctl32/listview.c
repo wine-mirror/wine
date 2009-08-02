@@ -6258,6 +6258,7 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
     BOOL doLabel = TRUE, oversizedBox = FALSE;
     POINT Position, Origin;
     LVITEMW lvItem;
+    LONG mode;
 
     TRACE("(hwnd=%p, nItem=%d, lprc=%p)\n", infoPtr->hwndSelf, nItem, lprc);
 
@@ -6294,6 +6295,8 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
 
     if (infoPtr->uView == LV_VIEW_DETAILS && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) && lprc->left == LVIR_SELECTBOUNDS)
 	lprc->left = LVIR_BOUNDS;
+
+    mode = lprc->left;
     switch(lprc->left)
     {
     case LVIR_ICON:
@@ -6318,7 +6321,13 @@ static BOOL LISTVIEW_GetItemRect(const LISTVIEW_INFO *infoPtr, INT nItem, LPRECT
     }
 
     if (infoPtr->uView == LV_VIEW_DETAILS)
-        OffsetRect(lprc, Origin.x, Position.y + Origin.y);
+    {
+	if (mode != LVIR_BOUNDS)
+	    OffsetRect(lprc, Origin.x + LISTVIEW_GetColumnInfo(infoPtr, 0)->rcHeader.left,
+	                     Position.y + Origin.y);
+	else
+	    OffsetRect(lprc, Origin.x, Position.y + Origin.y);
+    }
     else
         OffsetRect(lprc, Position.x + Origin.x, Position.y + Origin.y);
 
