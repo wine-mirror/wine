@@ -3633,6 +3633,7 @@ static LRESULT
 TOOLBAR_HideButton (TOOLBAR_INFO *infoPtr, INT Id, BOOL fHide)
 {
     TBUTTON_INFO *btnPtr;
+    BYTE oldState;
     INT nIndex;
 
     TRACE("\n");
@@ -3642,15 +3643,17 @@ TOOLBAR_HideButton (TOOLBAR_INFO *infoPtr, INT Id, BOOL fHide)
 	return FALSE;
 
     btnPtr = &infoPtr->buttons[nIndex];
+    oldState = btnPtr->fsState;
 
     if (fHide)
 	btnPtr->fsState |= TBSTATE_HIDDEN;
     else
 	btnPtr->fsState &= ~TBSTATE_HIDDEN;
 
-    TOOLBAR_LayoutToolbar (infoPtr);
-
-    InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
+    if (oldState != btnPtr->fsState) {
+        TOOLBAR_LayoutToolbar (infoPtr);
+        InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
+    }
 
     return TRUE;
 }
