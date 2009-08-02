@@ -715,9 +715,12 @@ static void quirk_ati_dx9(struct wined3d_gl_info *gl_info)
      * fglrx doesn't advertise GL_ARB_texture_non_power_of_two, but it advertises opengl 2.0 which
      * has this extension promoted to core. The extension loading code sets this extension supported
      * due to that, so this code works on fglrx as well. */
-    TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing.\n");
-    gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
-    gl_info->supported[WINE_NORMALIZED_TEXRECT] = TRUE;
+    if(gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
+    {
+        TRACE("GL_ARB_texture_non_power_of_two advertised on R500 or earlier card, removing.\n");
+        gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] = FALSE;
+        gl_info->supported[WINE_NORMALIZED_TEXRECT] = TRUE;
+    }
 
     /* fglrx has the same structural issues as the one described in quirk_apple_glsl_constants, although
      * it is generally more efficient. Reserve just 8 constants. */
