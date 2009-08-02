@@ -35,7 +35,7 @@
 const char *TEST_CALLBACK_TEXT = "callback_text";
 
 #define NUM_MSG_SEQUENCES   1
-#define LISTVIEW_SEQ_INDEX  0
+#define TREEVIEW_SEQ_INDEX  0
 
 static struct msg_sequence *MsgSequences[NUM_MSG_SEQUENCES];
 
@@ -608,61 +608,61 @@ static void TestGetSet(void)
     /* TVM_GETBKCOLOR and TVM_SETBKCOLOR */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetBkColor();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetBkColorSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetBkColorSeq,
         "TestGetSetBkColor", FALSE);
 
     /* TVM_GETIMAGELIST and TVM_SETIMAGELIST */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetImageList();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetImageListSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetImageListSeq,
         "TestGetImageList", FALSE);
 
     /* TVM_SETINDENT and TVM_GETINDENT */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetIndent();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetIndentSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetIndentSeq,
         "TestGetSetIndent", FALSE);
 
     /* TVM_GETINSERTMARKCOLOR and TVM_GETINSERTMARKCOLOR */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetInsertMarkColor();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetInsertMarkColorSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetInsertMarkColorSeq,
         "TestGetSetInsertMarkColor", FALSE);
 
     /* TVM_GETITEM and TVM_SETITEM */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetItem();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetItemSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetItemSeq,
         "TestGetSetItem", FALSE);
 
     /* TVM_GETITEMHEIGHT and TVM_SETITEMHEIGHT */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetItemHeight();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetItemHeightSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetItemHeightSeq,
         "TestGetSetItemHeight", FALSE);
 
     /* TVM_GETSCROLLTIME and TVM_SETSCROLLTIME */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetScrollTime();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetScrollTimeSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetScrollTimeSeq,
         "TestGetSetScrollTime", FALSE);
 
     /* TVM_GETTEXTCOLOR and TVM_SETTEXTCOLOR */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetTextColor();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetTextColorSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetTextColorSeq,
         "TestGetSetTextColor", FALSE);
 
     /* TVM_GETTOOLTIPS and TVM_SETTOOLTIPS */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetToolTips();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetToolTipsSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetToolTipsSeq,
         "TestGetSetToolTips", TRUE);
 
     /* TVM_GETUNICODEFORMAT and TVM_SETUNICODEFORMAT */
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     TestGetSetUnicodeFormat();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, TestGetSetUnicodeFormatSeq,
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, TestGetSetUnicodeFormatSeq,
         "TestGetSetUnicodeFormat", FALSE);
 }
 
@@ -679,7 +679,7 @@ static LRESULT WINAPI TreeviewWndProc(HWND hwnd, UINT message, WPARAM wParam, LP
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    add_message(MsgSequences, LISTVIEW_SEQ_INDEX, &msg);
+    add_message(MsgSequences, TREEVIEW_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
     ret = CallWindowProcA(lpOldProc, hwnd, message, wParam, lParam);
@@ -865,23 +865,23 @@ START_TEST(treeview)
 
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     FillRoot();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, FillRootSeq, "FillRoot", FALSE);
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, FillRootSeq, "FillRoot", FALSE);
 
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoTest1();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, DoTest1Seq, "DoTest1", FALSE);
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoTest1Seq, "DoTest1", FALSE);
 
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoTest2();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, DoTest2Seq, "DoTest2", FALSE);
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoTest2Seq, "DoTest2", FALSE);
 
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoTest3();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, DoTest3Seq, "DoTest3", FALSE);
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoTest3Seq, "DoTest3", FALSE);
 
     flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoFocusTest();
-    ok_sequence(MsgSequences, LISTVIEW_SEQ_INDEX, DoFocusTestSeq, "DoFocusTest", TRUE);
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoFocusTestSeq, "DoFocusTest", TRUE);
 
     /* Sequences tested inside due to number */
     TestGetSet();
