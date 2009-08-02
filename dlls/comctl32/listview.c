@@ -319,7 +319,7 @@ typedef struct tagLISTVIEW_INFO
  */
 /* How many we debug buffer to allocate */
 #define DEBUG_BUFFERS 20
-/* The size of a single debug bbuffer */
+/* The size of a single debug buffer */
 #define DEBUG_BUFFER_SIZE 256
 
 /* Internal interface to LISTVIEW_HScroll and LISTVIEW_VScroll */
@@ -2202,7 +2202,12 @@ static void LISTVIEW_GetItemMetrics(const LISTVIEW_INFO *infoPtr, const LVITEMW 
 	Label.right = Box.right;
 	if (infoPtr->uView == LV_VIEW_DETAILS)
 	{
-	    if (lpLVItem->iSubItem == 0) Label = lpColumnInfo->rcHeader;
+	    if (lpLVItem->iSubItem == 0)
+	    {
+		/* we need a zero based rect here */
+		Label = lpColumnInfo->rcHeader;
+		OffsetRect(&Label, -Label.left, 0);
+	    }
 	}
 
 	if (lpLVItem->iSubItem || ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && infoPtr->uView == LV_VIEW_DETAILS))
@@ -2267,7 +2272,8 @@ calc_label:
 	{
 	    Label.left = Icon.right;
 	    Label.top = Box.top;
-	    Label.right = lpColumnInfo->rcHeader.right;
+	    Label.right = lpLVItem->iSubItem ? lpColumnInfo->rcHeader.right :
+			  lpColumnInfo->rcHeader.right - lpColumnInfo->rcHeader.left;
 	    Label.bottom = Label.top + infoPtr->nItemHeight;
 	}
 	else /* LV_VIEW_SMALLICON or LV_VIEW_LIST */
