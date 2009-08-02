@@ -2109,11 +2109,9 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 
 BOOL X11DRV_XRender_GetSrcAreaStretch(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                       Pixmap pixmap, GC gc,
-                                      INT xSrc, INT ySrc,
                                       INT widthSrc, INT heightSrc,
-                                      INT xDst, INT yDst,
                                       INT widthDst, INT heightDst,
-                                      RECT *visRectSrc, RECT *visRectDst)
+                                      RECT *visRectSrc, RECT *visRectDst )
 {
     return FALSE;
 }
