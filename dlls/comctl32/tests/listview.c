@@ -267,14 +267,18 @@ static const struct message getitemposition_seq2[] = {
 
 static const struct message editbox_create_pos[] = {
     /* sequence sent after LVN_BEGINLABELEDIT */
+    /* next two are 4.7x specific */
     { WM_WINDOWPOSCHANGING, sent },
+    { WM_WINDOWPOSCHANGED, sent|optional },
+
+    { WM_WINDOWPOSCHANGING, sent|optional },
     { WM_NCCALCSIZE, sent },
     { WM_WINDOWPOSCHANGED, sent },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc },
-    /* the rest is todo */
-    { WM_WINDOWPOSCHANGING, sent },
-    { WM_WINDOWPOSCHANGED, sent },
+    /* the rest is todo, skipped in 4.7x */
+    { WM_WINDOWPOSCHANGING, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|optional },
     { 0 }
 };
 
@@ -3440,7 +3444,7 @@ static void test_editbox(void)
     ok(IsWindow(hwndedit), "Expected Edit window to be created\n");
     /* testing only sizing messages */
     ok_sequence(sequences, EDITBOX_SEQ_INDEX, editbox_create_pos,
-                "edit box create - sizing", TRUE);
+                "edit box create - sizing", FALSE);
 
     DestroyWindow(hwnd);
 }
