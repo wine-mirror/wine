@@ -143,7 +143,6 @@ interface IWICFormatConverter;
 interface IWICBitmapScaler;
 interface IWICBitmapClipper;
 interface IWICBitmapFlipRotator;
-interface IWICStream;
 interface IWICColorContext;
 interface IWICColorTransform;
 interface IWICFastMetadataEncoder;
@@ -399,6 +398,29 @@ interface IWICBitmapDecoder : IUnknown
     HRESULT GetFrame(
         [in] UINT index,
         [out] IWICBitmapFrameDecode **ppIBitmapFrame);
+}
+
+[
+    object,
+    uuid(135ff860-22b7-4ddf-b0f6-218f4f299a43)
+]
+interface IWICStream : IStream
+{
+    HRESULT InitializeFromIStream(
+        [in] IStream *pIStream);
+
+    HRESULT InitializeFromFilename(
+        [in] LPCWSTR wzFileName,
+        [in] DWORD dwAccessMode);
+
+    HRESULT InitializeFromMemory(
+        [in, size_is(cbBufferSize)] BYTE *pbBuffer,
+        [in] DWORD cbBufferSize);
+
+    HRESULT InitializeFromIStreamRegion(
+        [in] IStream *pIStream,
+        [in] ULARGE_INTEGER ulOffset,
+        [in] ULARGE_INTEGER ulMaxSize);
 }
 
 cpp_quote("DEFINE_GUID(CLSID_WICImagingFactory, 0xcacaf262,0x9370,0x4615,0xa1,0x3b,0x9f,0x55,0x39,0xda,0x4c,0x0a);")
