@@ -102,26 +102,26 @@ static void test_DialogCancel(void)
     ofn.lpstrInitialDir = szInitialDir;
 
     PrintDlgA(NULL);
-    ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
-       CDERR_INITIALIZATION, CommDlgExtendedError());
+    ok(CDERR_INITIALIZATION == CommDlgExtendedError(),
+       "expected CDERR_INITIALIZATION, got %d\n", CommDlgExtendedError());
 
     result = GetOpenFileNameA(&ofn);
-    ok(0 == result, "expected %d, got %d\n", 0, result);
-    ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
+    ok(0 == result, "expected 0, got %d\n", result);
+    ok(0 == CommDlgExtendedError(), "expected 0, got %d\n",
        CommDlgExtendedError());
 
     PrintDlgA(NULL);
-    ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
-              CDERR_INITIALIZATION, CommDlgExtendedError());
+    ok(CDERR_INITIALIZATION == CommDlgExtendedError(),
+       "expected CDERR_INITIALIZATION, got %d\n", CommDlgExtendedError());
 
     result = GetSaveFileNameA(&ofn);
-    ok(0 == result, "expected %d, got %d\n", 0, result);
-    ok(0 == CommDlgExtendedError(), "expected %d, got %d\n", 0,
+    ok(0 == result, "expected 0, got %d\n", result);
+    ok(0 == CommDlgExtendedError(), "expected 0, got %d\n",
        CommDlgExtendedError());
 
     PrintDlgA(NULL);
-    ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
-              CDERR_INITIALIZATION, CommDlgExtendedError());
+    ok(CDERR_INITIALIZATION == CommDlgExtendedError(),
+       "expected CDERR_INITIALIZATION, got %d\n", CommDlgExtendedError());
 
     /* Before passing the ofn to Unicode functions, remove the ANSI strings */
     ofn.lpstrFilter = NULL;
@@ -129,8 +129,8 @@ static void test_DialogCancel(void)
     ofn.lpstrDefExt = NULL;
 
     PrintDlgA(NULL);
-    ok(CDERR_INITIALIZATION == CommDlgExtendedError(), "expected %d, got %d\n",
-              CDERR_INITIALIZATION, CommDlgExtendedError());
+    ok(CDERR_INITIALIZATION == CommDlgExtendedError(),
+       "expected CDERR_INITIALIZATION, got %d\n", CommDlgExtendedError());
 
     SetLastError(0xdeadbeef);
     result = GetOpenFileNameW((LPOPENFILENAMEW) &ofn);
@@ -138,11 +138,10 @@ static void test_DialogCancel(void)
         win_skip("GetOpenFileNameW is not implemented\n");
     else
     {
-        ok(0 == result, "expected %d, got %d\n", 0, result);
+        ok(0 == result, "expected 0, got %d\n", result);
         ok(0 == CommDlgExtendedError() ||
-           CDERR_INITIALIZATION == CommDlgExtendedError(), /* win9x */
-           "expected %d or %d, got %d\n", 0, CDERR_INITIALIZATION,
-           CommDlgExtendedError());
+           broken(CDERR_INITIALIZATION == CommDlgExtendedError()), /* win9x */
+           "expected 0, got %d\n", CommDlgExtendedError());
     }
 
     SetLastError(0xdeadbeef);
@@ -151,11 +150,10 @@ static void test_DialogCancel(void)
         win_skip("GetSaveFileNameW is not implemented\n");
     else
     {
-        ok(0 == result, "expected %d, got %d\n", 0, result);
+        ok(0 == result, "expected 0, got %d\n", result);
         ok(0 == CommDlgExtendedError() ||
-           CDERR_INITIALIZATION == CommDlgExtendedError(), /* win9x */
-           "expected %d or %d, got %d\n", 0, CDERR_INITIALIZATION,
-           CommDlgExtendedError());
+           broken(CDERR_INITIALIZATION == CommDlgExtendedError()), /* win9x */
+           "expected 0, got %d\n", CommDlgExtendedError());
     }
 }
 
@@ -206,7 +204,9 @@ static UINT_PTR CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wPa
 
             hr = IShellView2_GetCurrentInfo(shell_view2, &folder_settings);
             ok(SUCCEEDED(hr), "GetCurrentInfo returned %#x\n", hr);
-            ok(folder_settings.ViewMode == FVM_LIST, "view mode is %d, expected %d\n", folder_settings.ViewMode, FVM_LIST);
+            ok(folder_settings.ViewMode == FVM_LIST,
+               "view mode is %d, expected FVM_LIST\n",
+               folder_settings.ViewMode);
 
             hr = IShellView2_DestroyViewWindow(shell_view2);
             ok(SUCCEEDED(hr), "DestroyViewWindow returned %#x\n", hr);
@@ -225,7 +225,8 @@ static UINT_PTR CALLBACK create_view_window2_hook(HWND dlg, UINT msg, WPARAM wPa
             ok(SUCCEEDED(hr), "GetCurrentInfo returned %#x\n", hr);
             ok(folder_settings.ViewMode == FVM_DETAILS ||
                broken(folder_settings.ViewMode == FVM_LIST), /* Win9x */
-               "view mode is %d, expected %d\n", folder_settings.ViewMode, FVM_DETAILS);
+               "view mode is %d, expected FVM_DETAILS\n",
+               folder_settings.ViewMode);
 
 cleanup:
             if (shell_view2) IShellView2_Release(shell_view2);
