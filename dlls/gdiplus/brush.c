@@ -261,6 +261,17 @@ GpStatus WINGDIPAPI GdipCreateLineBrush(GDIPCONST GpPointF* startpoint,
     (*line)->rect.Width  = fabs(startpoint->X - endpoint->X);
     (*line)->rect.Height = fabs(startpoint->Y - endpoint->Y);
 
+    if ((*line)->rect.Width == 0)
+    {
+        (*line)->rect.X -= (*line)->rect.Height / 2.0f;
+        (*line)->rect.Width = (*line)->rect.Height;
+    }
+    else if ((*line)->rect.Height == 0)
+    {
+        (*line)->rect.Y -= (*line)->rect.Width / 2.0f;
+        (*line)->rect.Height = (*line)->rect.Width;
+    }
+
     (*line)->blendcount = 1;
     (*line)->blendfac = GdipAlloc(sizeof(REAL));
     (*line)->blendpos = GdipAlloc(sizeof(REAL));

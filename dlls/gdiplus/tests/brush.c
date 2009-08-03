@@ -310,9 +310,9 @@ static void test_gradientgetrect(void)
     memset(&rectf, 0, sizeof(GpRectF));
     status = GdipGetLineRect(brush, &rectf);
     expect(Ok, status);
-    todo_wine expectf(-5.0, rectf.X);
+    expectf(-5.0, rectf.X);
     expectf(0.0, rectf.Y);
-    todo_wine expectf(10.0, rectf.Width);
+    expectf(10.0, rectf.Width);
     expectf(10.0, rectf.Height);
     status = GdipDeleteBrush((GpBrush*)brush);
     /* horizontal gradient */
@@ -324,9 +324,9 @@ static void test_gradientgetrect(void)
     status = GdipGetLineRect(brush, &rectf);
     expect(Ok, status);
     expectf(0.0, rectf.X);
-    todo_wine expectf(-5.0, rectf.Y);
+    expectf(-5.0, rectf.Y);
     expectf(10.0, rectf.Width);
-    todo_wine expectf(10.0, rectf.Height);
+    expectf(10.0, rectf.Height);
     status = GdipDeleteBrush((GpBrush*)brush);
     /* slope = -1 */
     pt1.X = pt1.Y = 0.0;
