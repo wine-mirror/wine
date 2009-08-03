@@ -45,6 +45,9 @@ dlls/libd3dx9.def
 dlls/libwinspool.def
 dlls/libxinput.def
 dlls/mmsystem.dll16
+dlls/msdaps/msdaps.h
+dlls/msdaps/msdaps_i.c
+dlls/msdaps/msdaps_p.c
 dlls/mshtml.tlb/mshtml_tlb.tlb
 dlls/mshtml/nsiface.h
 dlls/msi/cond.tab.c

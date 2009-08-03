@@ -26329,6 +26329,14 @@ dlls/msctf/tests/Makefile: dlls/msctf/tests/Makefile.in dlls/Maketest.rules"
 ac_config_files="$ac_config_files dlls/msctf/tests/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/msdaps/Makefile"
+test "x$enable_msdaps" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	msdaps"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msdaps/Makefile: dlls/msdaps/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/msdaps/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/msdmo/Makefile"
 test "x$enable_msdmo" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	msdmo"
@@ -29593,6 +29601,7 @@ do
     "dlls/mscoree/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mscoree/Makefile" ;;
     "dlls/msctf/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msctf/Makefile" ;;
     "dlls/msctf/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msctf/tests/Makefile" ;;
+    "dlls/msdaps/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msdaps/Makefile" ;;
     "dlls/msdmo/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msdmo/Makefile" ;;
     "dlls/msftedit/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msftedit/Makefile" ;;
     "dlls/msg711.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msg711.acm/Makefile" ;;

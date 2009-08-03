@@ -1,0 +1,22 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = msdaps.dll
+IMPORTS   = oleaut32 rpcrt4 kernel32 ntdll
+EXTRADEFS = -DREGISTER_PROXY_DLL -DPROXY_CLSID_IS="{ 0x06210e88, 0x01f5, 0x11d1, { 0xb5, 0x12, 0x00, 0x80, 0xc7, 0x81, 0xc3, 0x84 } }"
+
+EXTRA_OBJS = dlldata.o
+
+C_SRCS = \
+	usrmarshal.c
+
+IDL_I_SRCS = \
+	msdaps.idl
+
+IDL_P_SRCS = \
+	msdaps.idl
+
+@MAKE_DLL_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend
