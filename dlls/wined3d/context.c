@@ -594,6 +594,8 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
                 const struct wined3d_gl_info *gl_info = context->gl_info;
                 struct fbo_entry *entry, *entry2;
 
+                if (context->current_rt == (IWineD3DSurface *)resource) context->current_rt = NULL;
+
                 ENTER_GL();
 
                 LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry)
@@ -1716,7 +1718,6 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     struct WineD3DContext *current_context = context_get_current();
     BOOL oldRenderOffscreen = This->render_offscreen;
     const struct StateEntry *StateTable = This->StateTable;
-    const struct GlPixelFormatDesc *old, *new;
     struct WineD3DContext *context;
 
     if (current_context && current_context->destroyed) current_context = NULL;
@@ -1724,6 +1725,7 @@ static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurf
     if (!target)
     {
         if (current_context
+                && current_context->current_rt
                 && ((IWineD3DSurfaceImpl *)current_context->surface)->resource.wineD3DDevice == This)
         {
             target = current_context->current_rt;
@@ -1833,15 +1835,23 @@ retry:
 
     /* To compensate the lack of format switching with some offscreen rendering methods and on onscreen buffers
      * the alpha blend state changes with different render target formats. */
-    old = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.format_desc;
-    new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
-    if (old->format != new->format)
+    if (!context->current_rt)
     {
-        /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
-        if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
-                || !(new->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+        Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+    }
+    else
+    {
+        const struct GlPixelFormatDesc *old = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.format_desc;
+        const struct GlPixelFormatDesc *new = ((IWineD3DSurfaceImpl *)target)->resource.format_desc;
+
+        if (old->format != new->format)
         {
-            Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+            /* Disable blending when the alpha mask has changed and when a format doesn't support blending. */
+            if ((old->alpha_mask && !new->alpha_mask) || (!old->alpha_mask && new->alpha_mask)
+                    || !(new->Flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
+            {
+                Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
+            }
         }
     }
 
@@ -1871,7 +1881,7 @@ retry:
      *    After that, the outer ActivateContext(which calls PreLoad) can activate the new
      *    target for the new thread
      */
-    if (readTexture && context->current_rt != target)
+    if (readTexture && context->current_rt && context->current_rt != target)
     {
         BOOL oldInDraw = This->isInDraw;
 
