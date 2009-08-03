@@ -52,7 +52,6 @@
  *   -- Support CustomDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs).
  *   -- LVA_SNAPTOGRID not implemented
  *   -- LISTVIEW_ApproximateViewRect partially implemented
- *   -- LISTVIEW_[GS]etColumnOrderArray stubs
  *   -- LISTVIEW_SetColumnWidth ignores header images & bitmap
  *   -- LISTVIEW_SetIconSpacing is incomplete
  *   -- LISTVIEW_StyleChanged doesn't handle some changes too well
@@ -7556,16 +7555,16 @@ static BOOL LISTVIEW_SetColumnT(const LISTVIEW_INFO *infoPtr, INT nColumn,
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL LISTVIEW_SetColumnOrderArray(const LISTVIEW_INFO *infoPtr, INT iCount, const INT *lpiArray)
+static BOOL LISTVIEW_SetColumnOrderArray(LISTVIEW_INFO *infoPtr, INT iCount, const INT *lpiArray)
 {
-  FIXME("iCount %d lpiArray %p\n", iCount, lpiArray);
+    TRACE("iCount %d lpiArray %p\n", iCount, lpiArray);
 
-  if (!lpiArray)
-    return FALSE;
+    if (!lpiArray || !IsWindow(infoPtr->hwndHeader)) return FALSE;
 
-  return TRUE;
+    infoPtr->colRectsDirty = TRUE;
+
+    return SendMessageW(infoPtr->hwndHeader, HDM_SETORDERARRAY, iCount, (LPARAM)lpiArray);
 }
-
 
 /***
  * DESCRIPTION:
@@ -9541,9 +9540,10 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
             return (infoPtr->dwLvExStyle & LVS_EX_HEADERDRAGDROP) == 0;
 
         case HDN_ENDDRAG:
-            FIXME("Changing column order not implemented\n");
+            infoPtr->colRectsDirty = TRUE;
+            LISTVIEW_InvalidateList(infoPtr);
             notify_forward_header(infoPtr, lpnmh);
-            return TRUE;
+            return FALSE;
 
         case HDN_ITEMCHANGINGW:
         case HDN_ITEMCHANGINGA:

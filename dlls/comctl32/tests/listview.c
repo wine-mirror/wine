@@ -3159,7 +3159,7 @@ static void test_getitemrect(void)
     r = SendMessage(hwnd, LVM_GETITEMPOSITION, 0, (LPARAM)&pt);
     expect(TRUE, r);
     /* 1 indexed column width + padding */
-    todo_wine expect(102, pt.x);
+    expect(102, pt.x);
     /* rect is at zero too */
     rect.left = LVIR_BOUNDS;
     rect.right = rect.top = rect.bottom = -1;
@@ -3174,7 +3174,7 @@ static void test_getitemrect(void)
     r = SendMessage(hwnd, LVM_GETITEMRECT, 0, (LPARAM)&rect);
     expect(TRUE, r);
     /* column width + padding */
-    todo_wine expect(102, rect.left);
+    expect(102, rect.left);
 
     /* back to initial order */
     order[0] = 0; order[1] = 1;
