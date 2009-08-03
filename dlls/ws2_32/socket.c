@@ -170,10 +170,27 @@ union generic_unix_sockaddr
 static inline const char *debugstr_sockaddr( const struct WS_sockaddr *a )
 {
     if (!a) return "(nil)";
-    return wine_dbg_sprintf("{ family %d, address %s, port %d }",
-                            ((const struct sockaddr_in *)a)->sin_family,
-                            inet_ntoa(((const struct sockaddr_in *)a)->sin_addr),
-                            ntohs(((const struct sockaddr_in *)a)->sin_port));
+    switch (a->sa_family)
+    {
+    case WS_AF_INET:
+        return wine_dbg_sprintf("{ family AF_INET, address %s, port %d }",
+                                inet_ntoa(((const struct sockaddr_in *)a)->sin_addr),
+                                ntohs(((const struct sockaddr_in *)a)->sin_port));
+    case WS_AF_INET6:
+    {
+        char buf[46];
+        const char *p;
+        struct WS_sockaddr_in6 *sin = (struct WS_sockaddr_in6 *)a;
+
+        p = WS_inet_ntop( WS_AF_INET6, &sin->sin6_addr, buf, sizeof(buf) );
+        if (!p)
+            p = "(unknown IPv6 address)";
+        return wine_dbg_sprintf("{ family AF_INET6, address %s, port %d }",
+                                p, ntohs(sin->sin6_port));
+    }
+    default:
+        return wine_dbg_sprintf("{ family %d }", a->sa_family);
+    }
 }
 
 /* HANDLE<->SOCKET conversion (SOCKET is UINT_PTR). */
