@@ -657,7 +657,8 @@ GpStatus WINGDIPAPI GdipGetRegionBounds(GpRegion *region, GpGraphics *graphics, 
     if(!region || !graphics || !rect)
         return InvalidParameter;
 
-    status = GdipGetRegionHRgn(region, graphics, &hrgn);
+    /* Contrary to MSDN, native ignores the graphics transform. */
+    status = GdipGetRegionHRgn(region, NULL, &hrgn);
     if(status != Ok)
         return status;
 

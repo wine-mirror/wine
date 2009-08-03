@@ -1176,6 +1176,29 @@ static void test_getbounds(void)
     ok(rectf.Width  == 100.0, "Expected width = 0.0, got %.2f\n", rectf.Width);
     ok(rectf.Height == 100.0, "Expected height = 0.0, got %.2f\n", rectf.Height);
 
+    /* the world and page transforms are ignored */
+    GdipScaleWorldTransform(graphics, 2.0, 2.0, MatrixOrderPrepend);
+    GdipSetPageUnit(graphics, UnitInch);
+    GdipSetPageScale(graphics, 2.0);
+    status = GdipGetRegionBounds(region, graphics, &rectf);
+    ok(status == Ok, "status %08x\n", status);
+    ok(rectf.X == 10.0, "Expected X = 0.0, got %.2f\n", rectf.X);
+    ok(rectf.Y == 0.0, "Expected Y = 0.0, got %.2f\n", rectf.Y);
+    ok(rectf.Width  == 100.0, "Expected width = 0.0, got %.2f\n", rectf.Width);
+
+    rectf.X = 10.0; rectf.Y = 0.0;
+    rectf.Width = rectf.Height = 100.0;
+    status = GdipCombineRegionRect(region, &rectf, CombineModeReplace);
+    ok(status == Ok, "status %08x\n", status);
+    rectf.X = rectf.Y = 0.0;
+    rectf.Height = rectf.Width = 0.0;
+    status = GdipGetRegionBounds(region, graphics, &rectf);
+    ok(status == Ok, "status %08x\n", status);
+    ok(rectf.X == 10.0, "Expected X = 0.0, got %.2f\n", rectf.X);
+    ok(rectf.Y == 0.0, "Expected Y = 0.0, got %.2f\n", rectf.Y);
+    ok(rectf.Width  == 100.0, "Expected width = 0.0, got %.2f\n", rectf.Width);
+    ok(rectf.Height == 100.0, "Expected height = 0.0, got %.2f\n", rectf.Height);
+
     status = GdipDeleteRegion(region);
     ok(status == Ok, "status %08x\n", status);
     status = GdipDeleteGraphics(graphics);

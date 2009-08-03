@@ -459,7 +459,7 @@ static void test_BeginContainer2(void)
     status = GdipEndContainer(graphics, cont2);
 
     GdipGetClipBounds(graphics, &clip);
-    todo_wine ok(fabs(defClip[0] - clip.X) < 0.0001 &&
+    ok(fabs(defClip[0] - clip.X) < 0.0001 &&
             fabs(defClip[1] - clip.Y) < 0.0001 &&
             fabs(defClip[2] - clip.Width) < 0.0001 &&
             fabs(defClip[3] - clip.Height) < 0.0001,
