@@ -1077,14 +1077,18 @@ static BOOL show_window( HWND hwnd, INT cmd )
         /* should happen only in CreateWindowEx() */
 	int wParam = SIZE_RESTORED;
         RECT client = wndPtr->rectClient;
+        LPARAM lparam = MAKELONG( client.right - client.left, client.bottom - client.top );
 
 	wndPtr->flags &= ~WIN_NEED_SIZE;
 	if (wndPtr->dwStyle & WS_MAXIMIZE) wParam = SIZE_MAXIMIZED;
-	else if (wndPtr->dwStyle & WS_MINIMIZE) wParam = SIZE_MINIMIZED;
+        else if (wndPtr->dwStyle & WS_MINIMIZE)
+        {
+            wParam = SIZE_MINIMIZED;
+            lparam = 0;
+        }
         WIN_ReleasePtr( wndPtr );
 
-        SendMessageW( hwnd, WM_SIZE, wParam,
-                      MAKELONG( client.right - client.left, client.bottom - client.top ));
+        SendMessageW( hwnd, WM_SIZE, wParam, lparam );
         SendMessageW( hwnd, WM_MOVE, 0, MAKELONG( client.left, client.top ));
     }
     else WIN_ReleasePtr( wndPtr );
