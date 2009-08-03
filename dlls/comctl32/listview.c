@@ -4907,19 +4907,29 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     RECT rcOld, rcCol;
     POINT ptOrigin;
     INT nCol;
-   
+    HDITEMW hdi;
+
     if (nColumn < 0 || DPA_GetPtrCount(infoPtr->hdpaColumns) < 1) return;
     lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, min(nColumn, DPA_GetPtrCount(infoPtr->hdpaColumns) - 1));
     rcCol = lpColumnInfo->rcHeader;
     if (nColumn >= DPA_GetPtrCount(infoPtr->hdpaColumns))
 	rcCol.left = rcCol.right;
-    
+
     /* adjust the other columns */
-    for (nCol = nColumn; nCol < DPA_GetPtrCount(infoPtr->hdpaColumns); nCol++)
+    hdi.mask = HDI_ORDER;
+    if (SendMessageW(infoPtr->hwndHeader, HDM_GETITEMW, nColumn, (LPARAM)&hdi))
     {
-	lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nCol);
-	lpColumnInfo->rcHeader.left  += dx;
-	lpColumnInfo->rcHeader.right += dx;
+	INT nOrder = hdi.iOrder;
+	for (nCol = 0; nCol < DPA_GetPtrCount(infoPtr->hdpaColumns); nCol++)
+	{
+	    hdi.mask = HDI_ORDER;
+	    SendMessageW(infoPtr->hwndHeader, HDM_GETITEMW, nCol, (LPARAM)&hdi);
+	    if (hdi.iOrder >= nOrder) {
+		lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, nCol);
+		lpColumnInfo->rcHeader.left  += dx;
+		lpColumnInfo->rcHeader.right += dx;
+	    }
+	}
     }
 
     /* do not update screen if not in report mode */
@@ -9526,6 +9536,7 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 	case HDN_ITEMCHANGEDA:
 	{
 	    COLUMN_INFO *lpColumnInfo;
+	    HDITEMW hdi;
 	    INT dx, cxy;
 	    
             notify_forward_header(infoPtr, lpnmh);
@@ -9534,8 +9545,6 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 
 	    if (!lpnmh->pitem || !(lpnmh->pitem->mask & HDI_WIDTH))
 	    {
-    		HDITEMW hdi;
-    
 		hdi.mask = HDI_WIDTH;
 		if (!SendMessageW(infoPtr->hwndHeader, HDM_GETITEMW, lpnmh->iItem, (LPARAM)&hdi)) return 0;
 		cxy = hdi.cxy;
@@ -9549,8 +9558,17 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 	    if (dx != 0)
 	    {
 		lpColumnInfo->rcHeader.right += dx;
-		if (lpnmh->iItem + 1 < DPA_GetPtrCount(infoPtr->hdpaColumns))
-		    LISTVIEW_ScrollColumns(infoPtr, lpnmh->iItem + 1, dx);
+
+		hdi.mask = HDI_ORDER;
+		SendMessageW(infoPtr->hwndHeader, HDM_GETITEMW, lpnmh->iItem, (LPARAM)&hdi);
+
+		/* not the rightmost one */
+		if (hdi.iOrder + 1 < DPA_GetPtrCount(infoPtr->hdpaColumns))
+		{
+		    INT nIndex = SendMessageW(infoPtr->hwndHeader, HDM_ORDERTOINDEX,
+					      hdi.iOrder + 1, 0);
+		    LISTVIEW_ScrollColumns(infoPtr, nIndex, dx);
+		}
 		else
 		{
 		    /* only needs to update the scrolls */
@@ -9579,7 +9597,7 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 		    }
 
 		    /* when shrinking the last column clear the now unused field */
-		    if (lpnmh->iItem == DPA_GetPtrCount(infoPtr->hdpaColumns) - 1)
+		    if (hdi.iOrder == DPA_GetPtrCount(infoPtr->hdpaColumns) - 1)
 		    {
 		        RECT right;
 
