@@ -534,7 +534,7 @@ static void shader_arb_load_constants(
    
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device; 
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
-    const struct WineD3DContext *context = context_get_current();
+    const struct wined3d_context *context = context_get_current();
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (useVertexShader) {
@@ -560,7 +560,7 @@ static void shader_arb_load_constants(
 static void shader_arb_update_float_vertex_constants(IWineD3DDevice *iface, UINT start, UINT count)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct WineD3DContext *context = context_get_current();
+    struct wined3d_context *context = context_get_current();
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
@@ -573,7 +573,7 @@ static void shader_arb_update_float_vertex_constants(IWineD3DDevice *iface, UINT
 static void shader_arb_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    struct WineD3DContext *context = context_get_current();
+    struct wined3d_context *context = context_get_current();
 
     /* We don't want shader constant dirtification to be an O(contexts), so just dirtify the active
      * context. On a context switch the old context will be fully dirtified */
@@ -4215,7 +4215,7 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
 static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     struct shader_arb_priv *priv = This->shader_priv;
-    struct WineD3DContext *context = context_get_current();
+    struct wined3d_context *context = context_get_current();
     const struct wined3d_gl_info *gl_info = context->gl_info;
     int i;
 
@@ -5161,7 +5161,8 @@ static void arbfp_get_caps(WINED3DDEVTYPE devtype, const struct wined3d_gl_info 
 #undef GLINFO_LOCATION
 
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
-static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     float col[4];
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
 
@@ -5182,7 +5183,8 @@ static void state_texfactor_arbfp(DWORD state, IWineD3DStateBlockImpl *statebloc
 
 }
 
-static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     float col[4];
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
 
@@ -5209,7 +5211,8 @@ static void state_arb_specularenable(DWORD state, IWineD3DStateBlockImpl *stateb
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_SPECULAR_ENABLE, col)");
 }
 
-static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     float mat[2][2];
@@ -5244,7 +5247,8 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_BUMPMAT(stage), &mat[0][0])");
 }
 
-static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     float param[4];
@@ -5751,7 +5755,8 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, IWi
     return ret;
 }
 
-static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     struct shader_arb_priv *priv = device->fragment_priv;
     BOOL use_pshader = use_ps(stateblock);
@@ -5848,7 +5853,8 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
  * is that changing the fog start and fog end(which links to FOGENABLE in vertex) results in the
  * fragment_prog_arbfp function being called because FOGENABLE is dirty, which calls this function here
  */
-static void state_arbfp_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void state_arbfp_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     enum fogsource new_source;
 
     TRACE("state %#x, stateblock %p, context %p\n", state, stateblock, context);
@@ -5878,7 +5884,8 @@ static void state_arbfp_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     }
 }
 
-static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     if(!isStateDirty(context, STATE_PIXELSHADER)) {
         fragment_prog_arbfp(state, stateblock, context);
     }

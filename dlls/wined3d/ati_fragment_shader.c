@@ -796,7 +796,8 @@ static GLuint gen_ati_shader(const struct texture_stage_op op[MAX_TEXTURES], con
 #undef GLINFO_LOCATION
 
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
-static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     IWineD3DDeviceImpl          *This = stateblock->wineD3DDevice;
     const struct atifs_ffp_desc *desc;
     struct ffp_frag_settings     settings;
@@ -842,7 +843,8 @@ static void set_tex_op_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
     GL_EXTCALL(glBindFragmentShaderATI(desc->shader));
 }
 
-static void state_texfactor_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void state_texfactor_atifs(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     float col[4];
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
 
@@ -850,7 +852,8 @@ static void state_texfactor_atifs(DWORD state, IWineD3DStateBlockImpl *statebloc
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_TFACTOR, col)");
 }
 
-static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / (WINED3D_HIGHEST_TEXTURE_STATE + 1);
     float mat[2][2];
 
@@ -873,13 +876,15 @@ static void set_bumpmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     checkGLcall("glSetFragmentShaderConstantATI(ATI_FFP_CONST_BUMPMAT(stage), mat)");
 }
 
-static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void textransform(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     if(!isStateDirty(context, STATE_PIXELSHADER)) {
         set_tex_op_atifs(state, stateblock, context);
     }
 }
 
-static void atifs_apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+static void atifs_apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL use_vshader = use_vs(stateblock);
 

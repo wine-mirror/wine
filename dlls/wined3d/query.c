@@ -457,7 +457,7 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_Issue(IWineD3DQuery* iface,  DWORD
     if (dwIssueFlags & WINED3DISSUE_END)
     {
         struct wined3d_event_query *query = This->extendedData;
-        struct WineD3DContext *context;
+        struct wined3d_context *context;
 
         if (query->context)
         {
@@ -514,7 +514,7 @@ static HRESULT  WINAPI IWineD3DOcclusionQueryImpl_Issue(IWineD3DQuery* iface,  D
     if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
     {
         struct wined3d_occlusion_query *query = This->extendedData;
-        struct WineD3DContext *context;
+        struct wined3d_context *context;
 
         /* This is allowed according to msdn and our tests. Reset the query and restart */
         if (dwIssueFlags & WINED3DISSUE_BEGIN)

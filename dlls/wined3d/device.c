@@ -4888,7 +4888,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
     UINT drawable_width, drawable_height;
     IWineD3DSurfaceImpl *depth_stencil = (IWineD3DSurfaceImpl *) This->stencilBufferTarget;
     IWineD3DSwapChainImpl *swapchain = NULL;
-    struct WineD3DContext *context;
+    struct wined3d_context *context;
 
     /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
      * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
@@ -6011,7 +6011,7 @@ static void color_fill_fbo(IWineD3DDevice *iface, IWineD3DSurface *surface,
         const WINED3DRECT *rect, const float color[4])
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    struct WineD3DContext *context;
+    struct wined3d_context *context;
     IWineD3DSwapChain *swapchain;
 
     swapchain = get_swapchain(surface);
@@ -6390,7 +6390,7 @@ void stretch_rect_fbo(IWineD3DDevice *iface, IWineD3DSurface *src_surface, WINED
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     GLbitfield mask = GL_COLOR_BUFFER_BIT; /* TODO: Support blitting depth/stencil surfaces */
     IWineD3DSwapChain *src_swapchain, *dst_swapchain;
-    struct WineD3DContext *context;
+    struct wined3d_context *context;
     GLenum gl_filter;
     POINT offset = {0, 0};
 
@@ -6593,7 +6593,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
                     || ((IWineD3DSurfaceImpl *)This->stencilBufferTarget)->Flags & SFLAG_DISCARD) {
                 surface_modify_ds_location(This->stencilBufferTarget, SFLAG_DS_DISCARDED);
             } else {
-                struct WineD3DContext *context = ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
+                struct wined3d_context *context = ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
                 surface_load_ds_location(This->stencilBufferTarget, context, SFLAG_DS_OFFSCREEN);
                 surface_modify_ds_location(This->stencilBufferTarget, SFLAG_DS_OFFSCREEN);
             }
@@ -7679,10 +7679,10 @@ const DWORD SavedVertexStates_S[NUM_SAVEDVERTEXSTATES_S] = {
 
 void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
     DWORD rep = This->StateTable[state].representative;
+    struct wined3d_context *context;
     DWORD idx;
     BYTE shift;
     UINT i;
-    WineD3DContext *context;
 
     if(!rep) return;
     for(i = 0; i < This->numContexts; i++) {
@@ -7696,7 +7696,7 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
     }
 }
 
-void get_drawable_size_pbuffer(struct WineD3DContext *context, UINT *width, UINT *height)
+void get_drawable_size_pbuffer(struct wined3d_context *context, UINT *width, UINT *height)
 {
     IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->current_rt)->resource.wineD3DDevice;
     /* The drawable size of a pbuffer render target is the current pbuffer size. */
@@ -7704,7 +7704,7 @@ void get_drawable_size_pbuffer(struct WineD3DContext *context, UINT *width, UINT
     *height = device->pbufferHeight;
 }
 
-void get_drawable_size_fbo(struct WineD3DContext *context, UINT *width, UINT *height)
+void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *height)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)context->current_rt;
     /* The drawable size of a fbo target is the opengl texture size, which is the power of two size. */
@@ -7712,7 +7712,7 @@ void get_drawable_size_fbo(struct WineD3DContext *context, UINT *width, UINT *he
     *height = surface->pow2Height;
 }
 
-void get_drawable_size_backbuffer(struct WineD3DContext *context, UINT *width, UINT *height)
+void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, UINT *height)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)context->surface;
     /* The drawable size of a backbuffer / aux buffer offscreen target is the size of the

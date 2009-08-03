@@ -35,7 +35,7 @@ static DWORD wined3d_context_tls_idx;
 /* FBO helper functions */
 
 /* GL locking is done by the caller */
-void context_bind_fbo(struct WineD3DContext *context, GLenum target, GLuint *fbo)
+void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLuint f;
@@ -101,7 +101,7 @@ static void context_clean_fbo_attachments(const struct wined3d_gl_info *gl_info)
 }
 
 /* GL locking is done by the caller */
-static void context_destroy_fbo(struct WineD3DContext *context, GLuint *fbo)
+static void context_destroy_fbo(struct wined3d_context *context, GLuint *fbo)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -178,7 +178,7 @@ static void context_apply_attachment_filter_states(IWineD3DSurface *surface, BOO
 }
 
 /* GL locking is done by the caller */
-void context_attach_depth_stencil_fbo(struct WineD3DContext *context,
+void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer)
 {
     IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
@@ -250,7 +250,7 @@ void context_attach_depth_stencil_fbo(struct WineD3DContext *context,
 }
 
 /* GL locking is done by the caller */
-void context_attach_surface_fbo(const struct WineD3DContext *context,
+void context_attach_surface_fbo(const struct wined3d_context *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurface *surface)
 {
     const IWineD3DSurfaceImpl *surface_impl = (IWineD3DSurfaceImpl *)surface;
@@ -272,7 +272,7 @@ void context_attach_surface_fbo(const struct WineD3DContext *context,
 }
 
 /* GL locking is done by the caller */
-static void context_check_fbo_status(struct WineD3DContext *context)
+static void context_check_fbo_status(struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum status;
@@ -307,7 +307,7 @@ static void context_check_fbo_status(struct WineD3DContext *context)
     }
 }
 
-static struct fbo_entry *context_create_fbo_entry(struct WineD3DContext *context)
+static struct fbo_entry *context_create_fbo_entry(struct wined3d_context *context)
 {
     IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -324,7 +324,7 @@ static struct fbo_entry *context_create_fbo_entry(struct WineD3DContext *context
 }
 
 /* GL locking is done by the caller */
-static void context_reuse_fbo_entry(struct WineD3DContext *context, struct fbo_entry *entry)
+static void context_reuse_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
 {
     IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -338,7 +338,7 @@ static void context_reuse_fbo_entry(struct WineD3DContext *context, struct fbo_e
 }
 
 /* GL locking is done by the caller */
-static void context_destroy_fbo_entry(struct WineD3DContext *context, struct fbo_entry *entry)
+static void context_destroy_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
 {
     if (entry->id)
     {
@@ -353,7 +353,7 @@ static void context_destroy_fbo_entry(struct WineD3DContext *context, struct fbo
 
 
 /* GL locking is done by the caller */
-static struct fbo_entry *context_find_fbo_entry(struct WineD3DContext *context)
+static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context)
 {
     IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -388,7 +388,7 @@ static struct fbo_entry *context_find_fbo_entry(struct WineD3DContext *context)
 }
 
 /* GL locking is done by the caller */
-static void context_apply_fbo_entry(struct WineD3DContext *context, struct fbo_entry *entry)
+static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
 {
     IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -436,7 +436,7 @@ static void context_apply_fbo_entry(struct WineD3DContext *context, struct fbo_e
 }
 
 /* GL locking is done by the caller */
-static void context_apply_fbo_state(struct WineD3DContext *context)
+static void context_apply_fbo_state(struct wined3d_context *context)
 {
     IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
 
@@ -453,7 +453,7 @@ static void context_apply_fbo_state(struct WineD3DContext *context)
 }
 
 /* Context activation is done by the caller. */
-void context_alloc_occlusion_query(struct WineD3DContext *context, struct wined3d_occlusion_query *query)
+void context_alloc_occlusion_query(struct wined3d_context *context, struct wined3d_occlusion_query *query)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -485,7 +485,7 @@ void context_alloc_occlusion_query(struct WineD3DContext *context, struct wined3
 
 void context_free_occlusion_query(struct wined3d_occlusion_query *query)
 {
-    struct WineD3DContext *context = query->context;
+    struct wined3d_context *context = query->context;
 
     list_remove(&query->entry);
     query->context = NULL;
@@ -510,7 +510,7 @@ void context_free_occlusion_query(struct wined3d_occlusion_query *query)
 }
 
 /* Context activation is done by the caller. */
-void context_alloc_event_query(struct WineD3DContext *context, struct wined3d_event_query *query)
+void context_alloc_event_query(struct wined3d_context *context, struct wined3d_event_query *query)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -551,7 +551,7 @@ void context_alloc_event_query(struct WineD3DContext *context, struct wined3d_ev
 
 void context_free_event_query(struct wined3d_event_query *query)
 {
-    struct WineD3DContext *context = query->context;
+    struct wined3d_context *context = query->context;
 
     list_remove(&query->entry);
     query->context = NULL;
@@ -590,7 +590,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
 
             for (i = 0; i < This->numContexts; ++i)
             {
-                WineD3DContext *context = This->contexts[i];
+                struct wined3d_context *context = This->contexts[i];
                 const struct wined3d_gl_info *gl_info = context->gl_info;
                 struct fbo_entry *entry, *entry2;
 
@@ -627,7 +627,7 @@ void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource
     }
 }
 
-static void context_destroy_gl_resources(struct WineD3DContext *context)
+static void context_destroy_gl_resources(struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_occlusion_query *occlusion_query;
@@ -720,14 +720,14 @@ void context_set_tls_idx(DWORD idx)
     wined3d_context_tls_idx = idx;
 }
 
-struct WineD3DContext *context_get_current(void)
+struct wined3d_context *context_get_current(void)
 {
     return TlsGetValue(wined3d_context_tls_idx);
 }
 
-BOOL context_set_current(struct WineD3DContext *ctx)
+BOOL context_set_current(struct wined3d_context *ctx)
 {
-    struct WineD3DContext *old = context_get_current();
+    struct wined3d_context *old = context_get_current();
 
     if (old == ctx)
     {
@@ -785,7 +785,8 @@ BOOL context_set_current(struct WineD3DContext *ctx)
  *  StateTable: Pointer to the state table in use(for state grouping)
  *
  *****************************************************************************/
-static void Context_MarkStateDirty(WineD3DContext *context, DWORD state, const struct StateEntry *StateTable) {
+static void Context_MarkStateDirty(struct wined3d_context *context, DWORD state, const struct StateEntry *StateTable)
+{
     DWORD rep = StateTable[state].representative;
     DWORD idx;
     BYTE shift;
@@ -814,8 +815,10 @@ static void Context_MarkStateDirty(WineD3DContext *context, DWORD state, const s
  *  pbuffer: optional pbuffer used with this context
  *
  *****************************************************************************/
-static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, HWND win_handle, HDC hdc, HGLRC glCtx, HPBUFFERARB pbuffer) {
-    WineD3DContext **oldArray = This->contexts;
+static struct wined3d_context *AddContextToArray(IWineD3DDeviceImpl *This,
+        HWND win_handle, HDC hdc, HGLRC glCtx, HPBUFFERARB pbuffer)
+{
+    struct wined3d_context **oldArray = This->contexts;
     DWORD state;
 
     This->contexts = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->contexts) * (This->numContexts + 1));
@@ -828,7 +831,7 @@ static WineD3DContext *AddContextToArray(IWineD3DDeviceImpl *This, HWND win_hand
         memcpy(This->contexts, oldArray, sizeof(*This->contexts) * This->numContexts);
     }
 
-    This->contexts[This->numContexts] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineD3DContext));
+    This->contexts[This->numContexts] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**This->contexts));
     if(This->contexts[This->numContexts] == NULL) {
         ERR("Unable to allocate a new context\n");
         HeapFree(GetProcessHeap(), 0, This->contexts);
@@ -1044,10 +1047,12 @@ static int WineD3D_ChoosePixelFormat(IWineD3DDeviceImpl *This, HDC hdc,
  *  pPresentParameters: contains the pixelformats to use for onscreen rendering
  *
  *****************************************************************************/
-WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win_handle, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms) {
+struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target,
+        HWND win_handle, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms)
+{
     const struct wined3d_gl_info *gl_info = &This->adapter->gl_info;
+    struct wined3d_context *ret = NULL;
     HPBUFFERARB pbuffer = NULL;
-    WineD3DContext *ret = NULL;
     unsigned int s;
     HGLRC ctx;
     HDC hdc;
@@ -1382,8 +1387,9 @@ out:
  *  context: Context to remove
  *
  *****************************************************************************/
-static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *context) {
-    WineD3DContext **new_array;
+static void RemoveContextFromArray(IWineD3DDeviceImpl *This, struct wined3d_context *context)
+{
+    struct wined3d_context **new_array;
     BOOL found = FALSE;
     UINT i;
 
@@ -1438,7 +1444,7 @@ static void RemoveContextFromArray(IWineD3DDeviceImpl *This, WineD3DContext *con
  *  context: Context to destroy
  *
  *****************************************************************************/
-void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context)
+void DestroyContext(IWineD3DDeviceImpl *This, struct wined3d_context *context)
 {
     BOOL destroy;
 
@@ -1497,7 +1503,8 @@ static inline void set_blit_dimension(UINT width, UINT height) {
  *
  *****************************************************************************/
 /* Context activation is done by the caller. */
-static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *context, UINT width, UINT height) {
+static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *context, UINT width, UINT height)
+{
     int i, sampler;
     const struct StateEntry *StateTable = This->StateTable;
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -1686,7 +1693,8 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
  * If none can be found the swapchain is requested to create a new context
  *
  *****************************************************************************/
-static WineD3DContext *findThreadContextForSwapChain(IWineD3DSwapChain *swapchain, DWORD tid) {
+static struct wined3d_context *findThreadContextForSwapChain(IWineD3DSwapChain *swapchain, DWORD tid)
+{
     unsigned int i;
 
     for(i = 0; i < ((IWineD3DSwapChainImpl *) swapchain)->num_contexts; i++) {
@@ -1712,13 +1720,14 @@ static WineD3DContext *findThreadContextForSwapChain(IWineD3DSwapChain *swapchai
  * Returns: The needed context
  *
  *****************************************************************************/
-static inline WineD3DContext *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, DWORD tid) {
+static inline struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, DWORD tid)
+{
     IWineD3DSwapChain *swapchain = NULL;
     BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
-    struct WineD3DContext *current_context = context_get_current();
+    struct wined3d_context *current_context = context_get_current();
     BOOL oldRenderOffscreen = This->render_offscreen;
     const struct StateEntry *StateTable = This->StateTable;
-    struct WineD3DContext *context;
+    struct wined3d_context *context;
 
     if (current_context && current_context->destroyed) current_context = NULL;
 
@@ -1914,7 +1923,7 @@ retry:
 }
 
 /* Context activation is done by the caller. */
-static void context_apply_draw_buffer(struct WineD3DContext *context, BOOL blit)
+static void context_apply_draw_buffer(struct wined3d_context *context, BOOL blit)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     IWineD3DSurface *rt = context->current_rt;
@@ -1974,15 +1983,15 @@ static void context_apply_draw_buffer(struct WineD3DContext *context, BOOL blit)
  *  usage: Prepares the context for blitting, drawing or other actions
  *
  *****************************************************************************/
-struct WineD3DContext *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage)
+struct wined3d_context *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage)
 {
-    struct WineD3DContext *current_context = context_get_current();
+    struct wined3d_context *current_context = context_get_current();
     DWORD                         tid = GetCurrentThreadId();
     DWORD                         i, dirtyState, idx;
     BYTE                          shift;
-    WineD3DContext                *context;
     const struct StateEntry       *StateTable = This->StateTable;
     const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
 
     TRACE("(%p): Selecting context for render target %p, thread %d\n", This, target, tid);
 

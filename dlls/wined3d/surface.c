@@ -3140,7 +3140,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     float left, right, top, bottom; /* Texture coordinates */
     UINT fbwidth = Src->currentDesc.Width;
     UINT fbheight = Src->currentDesc.Height;
-    struct WineD3DContext *context;
+    struct wined3d_context *context;
     GLenum drawBuffer = GL_BACK;
     GLenum texture_target;
     BOOL noBackBufferBackup;
@@ -4374,7 +4374,7 @@ void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location) {
 }
 
 /* Context activation is done by the caller. */
-void surface_load_ds_location(IWineD3DSurface *iface, struct WineD3DContext *context, DWORD location)
+void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *context, DWORD location)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;

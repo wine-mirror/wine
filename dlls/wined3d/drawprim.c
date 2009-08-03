@@ -73,7 +73,7 @@ static void drawStridedFast(IWineD3DDevice *iface, GLenum primitive_type,
 static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_info *si, UINT NumVertexes,
         GLenum glPrimType, const void *idxData, UINT idxSize, UINT minIndex, UINT startIdx)
 {
-    struct WineD3DContext *context = context_get_current();
+    struct wined3d_context *context = context_get_current();
     unsigned int               textureNo    = 0;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
@@ -559,7 +559,7 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl          *target;
-    struct WineD3DContext *context;
+    struct wined3d_context *context;
     unsigned int i;
 
     if (!index_count) return;

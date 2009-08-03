@@ -372,10 +372,11 @@ const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
     IWineD3DBaseSwapChainImpl_GetGammaRamp
 };
 
-WineD3DContext *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *iface) {
-    WineD3DContext *ctx;
+struct wined3d_context *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *iface)
+{
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *) iface;
-    WineD3DContext **newArray;
+    struct wined3d_context **newArray;
+    struct wined3d_context *ctx;
 
     TRACE("Creating a new context for swapchain %p, thread %d\n", This, GetCurrentThreadId());
 
@@ -402,7 +403,7 @@ WineD3DContext *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *
     return ctx;
 }
 
-void get_drawable_size_swapchain(struct WineD3DContext *context, UINT *width, UINT *height)
+void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, UINT *height)
 {
     IWineD3DSurfaceImpl *surface = (IWineD3DSurfaceImpl *)context->current_rt;
     /* The drawable size of an onscreen drawable is the surface size.

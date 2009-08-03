@@ -2394,7 +2394,8 @@ void add_ffp_frag_shader(struct wine_rb_tree *shaders, struct ffp_frag_desc *des
  */
 #define GLINFO_LOCATION stateblock->wineD3DDevice->adapter->gl_info
 /* GL locking is done by the caller (state handler) */
-void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     if(stateblock->textures[stage]) {
         switch (IWineD3DBaseTexture_GetTextureDimensions(stateblock->textures[stage])) {
             case GL_TEXTURE_2D:
@@ -2468,7 +2469,8 @@ void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock
 }
 
 /* GL locking is done by the caller (state handler) */
-void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
+{
     DWORD sampler = state - STATE_SAMPLER(0);
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[sampler];
 

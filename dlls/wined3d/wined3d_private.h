@@ -1070,8 +1070,6 @@ extern glMultiTexCoordFunc multi_texcoord_funcs[WINED3D_FFP_EMIT_COUNT];
     (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
 
 /* Routines and structures related to state management */
-typedef struct WineD3DContext WineD3DContext;
-typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *ctx);
 
 #define STATE_RENDER(a) (a)
 #define STATE_IS_RENDER(a) ((a) >= STATE_RENDER(1) && (a) <= STATE_RENDER(WINEHIGHEST_RENDER_STATE))
@@ -1123,63 +1121,6 @@ typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 
 #define STATE_HIGHEST (STATE_FRONTFACE)
 
-struct StateEntry
-{
-    DWORD               representative;
-    APPLYSTATEFUNC      apply;
-};
-
-struct StateEntryTemplate
-{
-    DWORD               state;
-    struct StateEntry   content;
-    GL_SupportedExt     extension;
-};
-
-struct fragment_caps {
-    DWORD               PrimitiveMiscCaps;
-
-    DWORD               TextureOpCaps;
-    DWORD               MaxTextureBlendStages;
-    DWORD               MaxSimultaneousTextures;
-};
-
-struct fragment_pipeline {
-    void (*enable_extension)(IWineD3DDevice *iface, BOOL enable);
-    void (*get_caps)(WINED3DDEVTYPE devtype, const struct wined3d_gl_info *gl_info, struct fragment_caps *caps);
-    HRESULT (*alloc_private)(IWineD3DDevice *iface);
-    void (*free_private)(IWineD3DDevice *iface);
-    BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
-    const struct StateEntryTemplate *states;
-    BOOL ffp_proj_control;
-};
-
-extern const struct StateEntryTemplate misc_state_template[];
-extern const struct StateEntryTemplate ffp_vertexstate_template[];
-extern const struct fragment_pipeline ffp_fragment_pipeline;
-extern const struct fragment_pipeline atifs_fragment_pipeline;
-extern const struct fragment_pipeline arbfp_fragment_pipeline;
-extern const struct fragment_pipeline nvts_fragment_pipeline;
-extern const struct fragment_pipeline nvrc_fragment_pipeline;
-
-/* "Base" state table */
-HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
-        const struct wined3d_gl_info *gl_info, const struct StateEntryTemplate *vertex,
-        const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc);
-
-/* Shaders for color conversions in blits */
-struct blit_shader {
-    HRESULT (*alloc_private)(IWineD3DDevice *iface);
-    void (*free_private)(IWineD3DDevice *iface);
-    HRESULT (*set_shader)(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
-            GLenum textype, UINT width, UINT height);
-    void (*unset_shader)(IWineD3DDevice *iface);
-    BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
-};
-
-extern const struct blit_shader ffp_blit;
-extern const struct blit_shader arbfp_blit;
-
 enum fogsource {
     FOGSOURCE_FFP,
     FOGSOURCE_VS,
@@ -1192,18 +1133,17 @@ struct wined3d_occlusion_query
 {
     struct list entry;
     GLuint id;
-    struct WineD3DContext *context;
+    struct wined3d_context *context;
 };
 
 struct wined3d_event_query
 {
     struct list entry;
     GLuint id;
-    struct WineD3DContext *context;
+    struct wined3d_context *context;
 };
 
-/* The new context manager that should deal with onscreen and offscreen rendering */
-struct WineD3DContext
+struct wined3d_context
 {
     const struct wined3d_gl_info *gl_info;
     /* State dirtification
@@ -1280,6 +1220,67 @@ struct WineD3DContext
     GLuint                  dummy_arbfp_prog;
 };
 
+typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *ctx);
+
+struct StateEntry
+{
+    DWORD representative;
+    APPLYSTATEFUNC apply;
+};
+
+struct StateEntryTemplate
+{
+    DWORD state;
+    struct StateEntry content;
+    GL_SupportedExt extension;
+};
+
+struct fragment_caps
+{
+    DWORD PrimitiveMiscCaps;
+    DWORD TextureOpCaps;
+    DWORD MaxTextureBlendStages;
+    DWORD MaxSimultaneousTextures;
+};
+
+struct fragment_pipeline
+{
+    void (*enable_extension)(IWineD3DDevice *iface, BOOL enable);
+    void (*get_caps)(WINED3DDEVTYPE devtype, const struct wined3d_gl_info *gl_info, struct fragment_caps *caps);
+    HRESULT (*alloc_private)(IWineD3DDevice *iface);
+    void (*free_private)(IWineD3DDevice *iface);
+    BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
+    const struct StateEntryTemplate *states;
+    BOOL ffp_proj_control;
+};
+
+extern const struct StateEntryTemplate misc_state_template[];
+extern const struct StateEntryTemplate ffp_vertexstate_template[];
+extern const struct fragment_pipeline ffp_fragment_pipeline;
+extern const struct fragment_pipeline atifs_fragment_pipeline;
+extern const struct fragment_pipeline arbfp_fragment_pipeline;
+extern const struct fragment_pipeline nvts_fragment_pipeline;
+extern const struct fragment_pipeline nvrc_fragment_pipeline;
+
+/* "Base" state table */
+HRESULT compile_state_table(struct StateEntry *StateTable, APPLYSTATEFUNC **dev_multistate_funcs,
+        const struct wined3d_gl_info *gl_info, const struct StateEntryTemplate *vertex,
+        const struct fragment_pipeline *fragment, const struct StateEntryTemplate *misc);
+
+/* Shaders for color conversions in blits */
+struct blit_shader
+{
+    HRESULT (*alloc_private)(IWineD3DDevice *iface);
+    void (*free_private)(IWineD3DDevice *iface);
+    HRESULT (*set_shader)(IWineD3DDevice *iface, const struct GlPixelFormatDesc *format_desc,
+            GLenum textype, UINT width, UINT height);
+    void (*unset_shader)(IWineD3DDevice *iface);
+    BOOL (*color_fixup_supported)(struct color_fixup_desc fixup);
+};
+
+extern const struct blit_shader ffp_blit;
+extern const struct blit_shader arbfp_blit;
+
 typedef enum ContextUsage {
     CTXUSAGE_RESOURCELOAD       = 1,    /* Only loads textures: No State is applied */
     CTXUSAGE_DRAWPRIM           = 2,    /* OpenGL states are set up for blitting DirectDraw surfaces */
@@ -1287,22 +1288,23 @@ typedef enum ContextUsage {
     CTXUSAGE_CLEAR              = 4,    /* Drawable and states are set up for clearing */
 } ContextUsage;
 
-struct WineD3DContext *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage);
-WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win, BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms);
-void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
-void context_alloc_event_query(struct WineD3DContext *context, struct wined3d_event_query *query);
-void context_alloc_occlusion_query(struct WineD3DContext *context, struct wined3d_occlusion_query *query);
+struct wined3d_context *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, enum ContextUsage usage);
+struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, HWND win,
+        BOOL create_pbuffer, const WINED3DPRESENT_PARAMETERS *pPresentParms);
+void DestroyContext(IWineD3DDeviceImpl *This, struct wined3d_context *context);
+void context_alloc_event_query(struct wined3d_context *context, struct wined3d_event_query *query);
+void context_alloc_occlusion_query(struct wined3d_context *context, struct wined3d_occlusion_query *query);
 void context_resource_released(IWineD3DDevice *iface, IWineD3DResource *resource, WINED3DRESOURCETYPE type);
-void context_bind_fbo(struct WineD3DContext *context, GLenum target, GLuint *fbo);
-void context_attach_depth_stencil_fbo(struct WineD3DContext *context,
+void context_bind_fbo(struct wined3d_context *context, GLenum target, GLuint *fbo);
+void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, IWineD3DSurface *depth_stencil, BOOL use_render_buffer);
-void context_attach_surface_fbo(const struct WineD3DContext *context,
+void context_attach_surface_fbo(const struct wined3d_context *context,
         GLenum fbo_target, DWORD idx, IWineD3DSurface *surface);
 void context_free_event_query(struct wined3d_event_query *query);
 void context_free_occlusion_query(struct wined3d_occlusion_query *query);
-struct WineD3DContext *context_get_current(void);
+struct wined3d_context *context_get_current(void);
 DWORD context_get_tls_idx(void);
-BOOL context_set_current(struct WineD3DContext *ctx);
+BOOL context_set_current(struct wined3d_context *ctx);
 void context_set_tls_idx(DWORD idx);
 
 void delete_opengl_contexts(IWineD3DDevice *iface, IWineD3DSwapChain *swapchain);
@@ -1615,9 +1617,9 @@ struct IWineD3DDeviceImpl
     const WineDirect3DVertexStridedData *up_strided;
 
     /* Context management */
-    WineD3DContext          **contexts;                  /* Dynamic array containing pointers to context structures */
+    struct wined3d_context **contexts;
     UINT                    numContexts;
-    WineD3DContext          *pbufferContext;             /* The context that has a pbuffer as drawable */
+    struct wined3d_context *pbufferContext;              /* The context that has a pbuffer as drawable */
     DWORD                   pbufferWidth, pbufferHeight; /* Size of the buffer drawable */
 
     /* High level patch management */
@@ -1640,7 +1642,8 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
                                         float Z, DWORD Stencil);
 void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This);
 void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state);
-static inline BOOL isStateDirty(WineD3DContext *context, DWORD state) {
+static inline BOOL isStateDirty(struct wined3d_context *context, DWORD state)
+{
     DWORD idx = state >> 5;
     BYTE shift = state & 0x1f;
     return context->isStateDirty[idx] & (1 << shift);
@@ -1956,7 +1959,7 @@ struct IWineD3DSurfaceImpl
     UINT                      pow2Height;
 
     /* A method to retrieve the drawable size. Not in the Vtable to make it changeable */
-    void (*get_drawable_size)(struct WineD3DContext *context, UINT *width, UINT *height);
+    void (*get_drawable_size)(struct wined3d_context *context, UINT *width, UINT *height);
 
     /* Oversized texture */
     RECT                      glRect;
@@ -2050,10 +2053,10 @@ HRESULT WINAPI IWineD3DBaseSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED3DL
 void WINAPI IWineD3DBaseSurfaceImpl_BindTexture(IWineD3DSurface *iface, BOOL srgb);
 const void *WINAPI IWineD3DBaseSurfaceImpl_GetData(IWineD3DSurface *iface);
 
-void get_drawable_size_swapchain(struct WineD3DContext *context, UINT *width, UINT *height);
-void get_drawable_size_backbuffer(struct WineD3DContext *context, UINT *width, UINT *height);
-void get_drawable_size_pbuffer(struct WineD3DContext *context, UINT *width, UINT *height);
-void get_drawable_size_fbo(struct WineD3DContext *context, UINT *width, UINT *height);
+void get_drawable_size_swapchain(struct wined3d_context *context, UINT *width, UINT *height);
+void get_drawable_size_backbuffer(struct wined3d_context *context, UINT *width, UINT *height);
+void get_drawable_size_pbuffer(struct wined3d_context *context, UINT *width, UINT *height);
+void get_drawable_size_fbo(struct wined3d_context *context, UINT *width, UINT *height);
 
 void flip_surface(IWineD3DSurfaceImpl *front, IWineD3DSurfaceImpl *back);
 
@@ -2463,7 +2466,7 @@ typedef struct IWineD3DSwapChainImpl
     long prev_time, frames;   /* Performance tracking */
     unsigned int vSyncCounter;
 
-    WineD3DContext        **context; /* Later a array for multithreading */
+    struct wined3d_context **context;
     unsigned int            num_contexts;
 
     HWND                    win_handle;
@@ -2486,7 +2489,7 @@ HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetPresentParameters(IWineD3DSwapChain 
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_SetGammaRamp(IWineD3DSwapChain *iface, DWORD Flags, CONST WINED3DGAMMARAMP *pRamp);
 HRESULT WINAPI IWineD3DBaseSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *iface, WINED3DGAMMARAMP *pRamp);
 
-WineD3DContext *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *iface);
+struct wined3d_context *IWineD3DSwapChainImpl_CreateContextForThread(IWineD3DSwapChain *iface);
 
 /*****************************************************************************
  * Utility function prototypes 
@@ -2521,18 +2524,18 @@ GLenum CompareFunc(DWORD func);
 BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3);
 void   set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3, INT texture_idx, DWORD dst);
 void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords, BOOL transformed, DWORD coordtype, BOOL ffp_can_disable_proj);
-void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
-void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
-void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
-void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
-void state_fogcolor(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
-void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
-void state_fogstartend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
-void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context);
+void texture_activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context);
+void sampler_texdim(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context);
+void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context);
+void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context);
+void state_fogcolor(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context);
+void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context);
+void state_fogstartend(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context);
+void state_fog_fragpart(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context);
 
 void surface_add_dirty_rect(IWineD3DSurface *iface, const RECT *dirty_rect);
 GLenum surface_get_gl_buffer(IWineD3DSurface *iface, IWineD3DSwapChain *swapchain);
-void surface_load_ds_location(IWineD3DSurface *iface, struct WineD3DContext *context, DWORD location);
+void surface_load_ds_location(IWineD3DSurface *iface, struct wined3d_context *context, DWORD location);
 void surface_modify_ds_location(IWineD3DSurface *iface, DWORD location);
 void surface_set_compatible_renderbuffer(IWineD3DSurface *iface, unsigned int width, unsigned int height);
 void surface_set_texture_name(IWineD3DSurface *iface, GLuint name, BOOL srgb_name);
