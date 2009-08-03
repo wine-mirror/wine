@@ -2315,8 +2315,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
         /* On the sizing pass, type->ptrdesc may be zero, but it's ok as
            nothing is written to file yet.  On the actual writing pass,
            this will have been updated.  */
-        unsigned int absoff = type_get_real_type(type)->ptrdesc ?
-            type_get_real_type(type)->ptrdesc : *tfsoff;
+        unsigned int absoff = type->ptrdesc ? type->ptrdesc : *tfsoff;
         int reloff = absoff - *tfsoff;
         assert( reloff >= 0 );
         print_file(file, 2, "NdrFcShort(0x%hx),\t/* Offset= %d (%u) */\n",
@@ -2342,7 +2341,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
     {
         const var_t *f;
 
-        type_get_real_type(type)->ptrdesc = *tfsoff;
+        type->ptrdesc = *tfsoff;
         if (fields) LIST_FOR_EACH_ENTRY(f, fields, const var_t, entry)
         {
             type_t *ft = f->type;
@@ -2367,8 +2366,8 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
                 write_nonsimple_pointer(file, f->attrs, ft, FALSE, offset, tfsoff);
             }
         }
-        if (type_get_real_type(type)->ptrdesc == *tfsoff)
-            type_get_real_type(type)->ptrdesc = 0;
+        if (type->ptrdesc == *tfsoff)
+            type->ptrdesc = 0;
     }
 
     current_structure = save_current_structure;
