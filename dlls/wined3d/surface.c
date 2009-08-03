@@ -500,66 +500,48 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
 static void surface_upload_data(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *data) {
     const struct GlPixelFormatDesc *format_desc = This->resource.format_desc;
 
+    TRACE("This %p, internal %#x, width %d, height %d, format %#x, type %#x, data %p.\n",
+            This, internal, width, height, format, type, data);
+    TRACE("target %#x, level %u, resource size %u.\n",
+            This->texture_target, This->texture_level, This->resource.size);
+
     if (format_desc->heightscale != 1.0f && format_desc->heightscale != 0.0f) height *= format_desc->heightscale;
+
+    ENTER_GL();
+
+    if (This->Flags & SFLAG_PBO)
+    {
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
+        checkGLcall("glBindBufferARB");
+
+        TRACE("(%p) pbo: %#x, data: %p.\n", This, This->pbo, data);
+        data = NULL;
+    }
 
     if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
     {
-        /* glCompressedTexSubImage2D() for uploading and glTexImage2D() for
-         * allocating does not work well on some drivers (r200 dri, MacOS ATI
-         * driver). glCompressedTexImage2D() does not accept NULL pointers. So
-         * for compressed textures surface_allocate_surface() does nothing,
-         * and this function uses glCompressedTexImage2D() instead of
-         * glCompressedTexSubImage2D(). */
-        TRACE("(%p) : Calling glCompressedTexImage2DARB w %u, h %u, data %p.\n", This, width, height, data);
+        TRACE("Calling glCompressedTexSubImage2DARB.\n");
 
-        ENTER_GL();
-
-        if (This->Flags & SFLAG_PBO)
-        {
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
-            checkGLcall("glBindBufferARB");
-
-            TRACE("(%p) pbo: %#x, data: %p.\n", This, This->pbo, data);
-
-            GL_EXTCALL(glCompressedTexImage2DARB(This->texture_target, This->texture_level,
-                    internal, width, height, 0 /* border */, This->resource.size, NULL));
-            checkGLcall("glCompressedTexImage2DARB");
-
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-            checkGLcall("glBindBufferARB");
-        }
-        else
-        {
-            GL_EXTCALL(glCompressedTexImage2DARB(This->texture_target, This->texture_level,
-                    internal, width, height, 0 /* border */, This->resource.size, data));
-            checkGLcall("glCompressedTexSubImage2D");
-        }
-
-        LEAVE_GL();
+        GL_EXTCALL(glCompressedTexSubImage2DARB(This->texture_target, This->texture_level,
+                0, 0, width, height, internal, This->resource.size, data));
+        checkGLcall("glCompressedTexSubImage2DARB");
     }
     else
     {
-        TRACE("(%p) : Calling glTexSubImage2D w %d,  h %d, data, %p\n", This, width, height, data);
-        ENTER_GL();
+        TRACE("Calling glTexSubImage2D.\n");
 
-        if(This->Flags & SFLAG_PBO) {
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
-            checkGLcall("glBindBufferARB");
-            TRACE("(%p) pbo: %#x, data: %p\n", This, This->pbo, data);
-
-            glTexSubImage2D(This->texture_target, This->texture_level, 0, 0, width, height, format, type, NULL);
-            checkGLcall("glTexSubImage2D");
-
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-            checkGLcall("glBindBufferARB");
-        }
-        else {
-            glTexSubImage2D(This->texture_target, This->texture_level, 0, 0, width, height, format, type, data);
-            checkGLcall("glTexSubImage2D");
-        }
-
-        LEAVE_GL();
+        glTexSubImage2D(This->texture_target, This->texture_level,
+                0, 0, width, height, format, type, data);
+        checkGLcall("glTexSubImage2D");
     }
+
+    if (This->Flags & SFLAG_PBO)
+    {
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB");
+    }
+
+    LEAVE_GL();
 }
 
 /* This call just allocates the texture, the caller is responsible for binding
@@ -575,27 +557,6 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
     TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n",
             This, This->texture_target, This->texture_level, debug_d3dformat(format_desc->format),
             internal, width, height, format, type);
-
-    if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED)
-    {
-        /* glCompressedTexImage2D does not accept NULL pointers, so we cannot allocate a compressed texture without uploading data */
-        TRACE("Not allocating compressed surfaces, surface_upload_data will specify them\n");
-
-        /* We have to point GL to the client storage memory here, because upload_data might use a PBO. This means a double upload
-         * once, unfortunately
-         */
-        if(GL_SUPPORT(APPLE_CLIENT_STORAGE)) {
-            /* Neither NONPOW2, DIBSECTION nor OVERSIZE flags can be set on compressed textures */
-            This->Flags |= SFLAG_CLIENT;
-            mem = (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
-            ENTER_GL();
-            GL_EXTCALL(glCompressedTexImage2DARB(This->texture_target, This->texture_level, internal,
-                    width, height, 0 /* border */, This->resource.size, mem));
-            LEAVE_GL();
-        }
-
-        return;
-    }
 
     ENTER_GL();
 
@@ -621,8 +582,18 @@ static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal,
             mem = (BYTE *)(((ULONG_PTR) This->resource.heapMemory + (RESOURCE_ALIGNMENT - 1)) & ~(RESOURCE_ALIGNMENT - 1));
         }
     }
-    glTexImage2D(This->texture_target, This->texture_level, internal, width, height, 0, format, type, mem);
-    checkGLcall("glTexImage2D");
+
+    if (format_desc->Flags & WINED3DFMT_FLAG_COMPRESSED && mem)
+    {
+        GL_EXTCALL(glCompressedTexImage2DARB(This->texture_target, This->texture_level,
+                internal, width, height, 0, This->resource.size, mem));
+    }
+    else
+    {
+        glTexImage2D(This->texture_target, This->texture_level,
+                internal, width, height, 0, format, type, mem);
+        checkGLcall("glTexImage2D");
+    }
 
     if(enable_client_storage) {
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
