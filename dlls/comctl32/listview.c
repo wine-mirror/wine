@@ -290,6 +290,7 @@ typedef struct tagLISTVIEW_INFO
   HDPA hdpaPosX;		/* maintains the (X, Y) coordinates of the */
   HDPA hdpaPosY;		/* items in LVS_ICON, and LVS_SMALLICON modes */
   HDPA hdpaColumns;		/* array of COLUMN_INFO pointers */
+  BOOL colRectsDirty;		/* trigger column rectangles requery from header */
   POINT currIconPos;		/* this is the position next icon will be placed */
   PFNLVCOMPARE pfnCompare;
   LPARAM lParamSort;
@@ -1483,6 +1484,21 @@ static inline COLUMN_INFO * LISTVIEW_GetColumnInfo(const LISTVIEW_INFO *infoPtr,
 
     if (nSubItem == 0 && DPA_GetPtrCount(infoPtr->hdpaColumns) == 0) return &mainItem;
     assert (nSubItem >= 0 && nSubItem < DPA_GetPtrCount(infoPtr->hdpaColumns));
+
+    /* update cached column rectangles */
+    if (infoPtr->colRectsDirty)
+    {
+        COLUMN_INFO *info;
+        LISTVIEW_INFO *Ptr = (LISTVIEW_INFO*)infoPtr;
+        INT i;
+
+        for (i = 0; i < DPA_GetPtrCount(infoPtr->hdpaColumns); i++) {
+            info = DPA_GetPtr(infoPtr->hdpaColumns, i);
+            SendMessageW(infoPtr->hwndHeader, HDM_GETITEMRECT, i, (LPARAM)&info->rcHeader);
+        }
+        Ptr->colRectsDirty = FALSE;
+    }
+
     return DPA_GetPtr(infoPtr->hdpaColumns, nSubItem);
 }
 
@@ -8643,6 +8659,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->xTrackLine = -1;  /* no track line */
   infoPtr->itemEdit.fEnabled = FALSE;
   infoPtr->iVersion = COMCTL32_VERSION;
+  infoPtr->colRectsDirty = FALSE;
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
