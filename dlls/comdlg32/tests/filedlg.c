@@ -48,7 +48,8 @@ static void toolbarcheck( HWND hDlg)
     ret = SendMessage( ctrl, TB_ADDSTRING, 0, (LPARAM)"winetestwinetest\0\0");
     ok( ret == 0, "addstring returned %d (expected 0)\n", ret);
     maxtextrows = SendMessage( ctrl, TB_GETTEXTROWS, 0, 0);
-    ok( maxtextrows == 0, "Get(Max)TextRows returned %d (expected 0)\n", maxtextrows);
+    ok( maxtextrows == 0 || broken(maxtextrows == 1),  /* Win2k and below */
+        "Get(Max)TextRows returned %d (expected 0)\n", maxtextrows);
 }
 
 
