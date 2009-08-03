@@ -1402,7 +1402,7 @@ static BOOL iterator_visibleitems(ITERATOR *i, const LISTVIEW_INFO *infoPtr, HDC
     while(iterator_next(i))
     {
 	LISTVIEW_GetItemOrigin(infoPtr, i->nItem, &Position);
-	rcItem.left = Position.x + Origin.x;
+	rcItem.left = (infoPtr->uView == LV_VIEW_DETAILS) ? Origin.x : Position.x + Origin.x;
 	rcItem.top = Position.y + Origin.y;
 	rcItem.right = rcItem.left + infoPtr->nItemWidth;
 	rcItem.bottom = rcItem.top + infoPtr->nItemHeight;
@@ -4376,7 +4376,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, ITERATOR *i, HDC hdc,
 	    {
 		rcItem.top = 0;
 	        rcItem.bottom = infoPtr->nItemHeight;
-		OffsetRect(&rcItem, Position.x, Position.y);
+		OffsetRect(&rcItem, Origin.x, Position.y);
 		if (!RectVisible(hdc, &rcItem)) continue;
 	    }
 
