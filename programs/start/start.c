@@ -214,6 +214,12 @@ int wmain (int argc, WCHAR *argv[])
 			/* Skip slash */
 			ci++;
 			switch(argv[i][ci]) {
+			case 'b':
+			case 'B':
+				break; /* FIXME: should stop new window from being created */
+			case 'i':
+			case 'I':
+				break; /* FIXME: should ignore any changes to current environment */
 			case 'l':
 			case 'L':
 				license();
