@@ -2698,7 +2698,7 @@ static BOOL CheckDepthStencilCapability(struct WineD3DAdapter *adapter,
     int it=0;
 
     /* Only allow depth/stencil formats */
-    if (!(ds_format_desc->Flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))) return FALSE;
+    if (!(ds_format_desc->depth_size || ds_format_desc->stencil_size)) return FALSE;
 
     /* Walk through all WGL pixel formats to find a match */
     for (it = 0; it < adapter->nCfgs; ++it)
