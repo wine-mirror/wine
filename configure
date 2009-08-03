@@ -826,6 +826,7 @@ with_freetype
 with_gphoto
 with_glu
 with_gnutls
+with_libgsm
 with_hal
 with_jack
 with_jpeg
@@ -1516,6 +1517,7 @@ Optional Packages:
   --without-gphoto        do not use gphoto (Digital Camera support)
   --without-glu           do not use the GLU library
   --without-gnutls        do not use GnuTLS (schannel support)
+  --without-libgsm        do not use libgsm (GSM 06.10 codec support)
   --without-hal           do not use HAL (dynamic device support)
   --without-jack          do not use the Jack sound support
   --without-jpeg          do not use JPEG
@@ -2138,6 +2140,12 @@ fi
 # Check whether --with-gnutls was given.
 if test "${with_gnutls+set}" = set; then
   withval=$with_gnutls;
+fi
+
+
+# Check whether --with-libgsm was given.
+if test "${with_libgsm+set}" = set; then
+  withval=$with_libgsm; if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; fi
 fi
 
 
@@ -5741,6 +5749,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -5764,6 +5773,7 @@ for ac_header in \
 	fontconfig/fontconfig.h \
 	getopt.h \
 	grp.h \
+	gsm.h \
 	ieeefp.h \
 	inet/mib2.h \
 	io.h \
@@ -16644,6 +16654,104 @@ esac
 fi
 
 
+if test "$ac_cv_header_gsm_h" = "yes"
+then
+    { $as_echo "$as_me:$LINENO: checking for -lgsm" >&5
+$as_echo_n "checking for -lgsm... " >&6; }
+if test "${ac_cv_lib_soname_gsm+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lgsm  $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gsm_create ();
+int
+main ()
+{
+return gsm_create ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then
+  case "$LIBEXT" in
+    dll) ;;
+    dylib) ac_cv_lib_soname_gsm=`otool -L conftest$ac_exeext | grep "libgsm\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libgsm\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_gsm=`$ac_cv_path_LDD conftest$ac_exeext | grep "libgsm\\.$LIBEXT" | sed -e "s/^.*\(libgsm\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'` ;;
+  esac
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -rf conftest.dSYM
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if test "x$ac_cv_lib_soname_gsm" = "x"; then
+  { $as_echo "$as_me:$LINENO: result: not found" >&5
+$as_echo "not found" >&6; }
+
+else
+  { $as_echo "$as_me:$LINENO: result: $ac_cv_lib_soname_gsm" >&5
+$as_echo "$ac_cv_lib_soname_gsm" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBGSM "$ac_cv_lib_soname_gsm"
+_ACEOF
+
+
+fi
+
+fi
+if test "x$ac_cv_lib_soname_gsm" = "x"; then
+  case "x$with_libgsm" in
+  x)   wine_warnings="$wine_warnings|libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported." ;;
+  xno) ;;
+  *)   { { $as_echo "$as_me:$LINENO: error: libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.
+This is an error since --with-libgsm was requested." >&5
+$as_echo "$as_me: error: libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.
+This is an error since --with-libgsm was requested." >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+fi
+
+
 if test "$ac_cv_header_jpeglib_h" = "yes"
 then
     { $as_echo "$as_me:$LINENO: checking for -ljpeg" >&5
@@ -26361,6 +26469,14 @@ dlls/msg711.acm/Makefile: dlls/msg711.acm/Makefile.in dlls/Makedll.rules"
 ac_config_files="$ac_config_files dlls/msg711.acm/Makefile"
 
 ALL_MAKEFILES="$ALL_MAKEFILES \\
+	dlls/msgsm32.acm/Makefile"
+test "x$enable_msgsm32_acm" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
+	msgsm32.acm"
+ALL_MAKEFILE_DEPENDS="$ALL_MAKEFILE_DEPENDS
+dlls/msgsm32.acm/Makefile: dlls/msgsm32.acm/Makefile.in dlls/Makedll.rules"
+ac_config_files="$ac_config_files dlls/msgsm32.acm/Makefile"
+
+ALL_MAKEFILES="$ALL_MAKEFILES \\
 	dlls/mshtml.tlb/Makefile"
 test "x$enable_mshtml_tlb" != xno && ALL_DLL_DIRS="$ALL_DLL_DIRS \\
 	mshtml.tlb"
@@ -29605,6 +29721,7 @@ do
     "dlls/msdmo/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msdmo/Makefile" ;;
     "dlls/msftedit/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msftedit/Makefile" ;;
     "dlls/msg711.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msg711.acm/Makefile" ;;
+    "dlls/msgsm32.acm/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/msgsm32.acm/Makefile" ;;
     "dlls/mshtml.tlb/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mshtml.tlb/Makefile" ;;
     "dlls/mshtml/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mshtml/Makefile" ;;
     "dlls/mshtml/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/mshtml/tests/Makefile" ;;

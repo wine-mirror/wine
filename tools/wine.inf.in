@@ -2481,6 +2481,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,mapi32.dll
 11,,msadp32.acm
 11,,msg711.acm
+11,,msgsm32.acm
 11,,mshtml.dll
 11,,msi.dll
 11,,msiexec.exe
@@ -2543,6 +2544,7 @@ system.ini, drivers32,,"msacm.imaadpcm=imaadp32.acm"
 system.ini, drivers32,,"msacm.msadpcm=msadp32.acm"
 system.ini, drivers32,,"msacm.msg711=msg711.acm"
 system.ini, drivers32,,"msacm.winemp3=winemp3.acm"
+system.ini, drivers32,,"msacm.msgsm610=msgsm32.acm"
 system.ini, drivers32,,"vidc.mrle=msrle32.dll"
 system.ini, drivers32,,"vidc.msvc=msvidc32.dll"
 system.ini, drivers32,,"vidc.cvid=iccvid.dll"

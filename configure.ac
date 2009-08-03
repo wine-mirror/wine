@@ -40,6 +40,8 @@ AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Dig
 AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU library]),
             [if test "x$withval" = "xno"; then ac_cv_header_GL_glu_h=no; fi])
 AC_ARG_WITH(gnutls,    AS_HELP_STRING([--without-gnutls],[do not use GnuTLS (schannel support)]))
+AC_ARG_WITH(libgsm,    AS_HELP_STRING([--without-libgsm],[do not use libgsm (GSM 06.10 codec support)]),
+            [if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; fi])
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
 AC_ARG_WITH(jack,      AS_HELP_STRING([--without-jack],[do not use the Jack sound support]),
             [if test "x$withval" = "xno"; then ac_cv_header_jack_jack_h=no; fi])
@@ -286,6 +288,7 @@ AC_CHECK_HEADERS(\
 	fontconfig/fontconfig.h \
 	getopt.h \
 	grp.h \
+	gsm.h \
 	ieeefp.h \
 	inet/mib2.h \
 	io.h \
@@ -1338,6 +1341,14 @@ fi
 WINE_WARNING_WITH(openssl,[test "x$ac_cv_lib_soname_ssl" = "x" -o "x$ac_cv_lib_soname_crypto" = "x"],
                  [OpenSSL ${notice_platform}development files not found, SSL won't be supported.])
 
+dnl **** Check for gsm codec ****
+if test "$ac_cv_header_gsm_h" = "yes"
+then
+    WINE_CHECK_SONAME(gsm,gsm_create)
+fi
+WINE_WARNING_WITH(libgsm,[test "x$ac_cv_lib_soname_gsm" = "x"],
+                 [libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.])
+
 dnl **** Check for libjpeg ****
 if test "$ac_cv_header_jpeglib_h" = "yes"
 then
@@ -2226,6 +2237,7 @@ WINE_CONFIG_MAKEFILE([dlls/msdaps/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL
 WINE_CONFIG_MAKEFILE([dlls/msdmo/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/msftedit/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/msg711.acm/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
+WINE_CONFIG_MAKEFILE([dlls/msgsm32.acm/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/mshtml.tlb/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/mshtml/Makefile],[dlls/Makedll.rules],[dlls],[ALL_DLL_DIRS])
 WINE_CONFIG_MAKEFILE([dlls/mshtml/tests/Makefile],[dlls/Maketest.rules],[dlls],[ALL_TEST_DIRS],[enable_tests])
