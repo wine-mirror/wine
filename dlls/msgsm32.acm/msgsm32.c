@@ -98,11 +98,6 @@ static LRESULT GSM_drvFree(void)
 
 #else
 
-static LRESULT GSM_drvLoad(void)
-{
-    return 1;
-}
-
 static LRESULT GSM_drvFree(void)
 {
     return 1;
@@ -362,6 +357,214 @@ static	LRESULT	GSM_FormatSuggest(PACMDRVFORMATSUGGEST adfs)
     return MMSYSERR_NOERROR;
 }
 
+#ifdef SONAME_LIBGSM
+/***********************************************************************
+ *           GSM_StreamOpen
+ *
+ */
+static	LRESULT	GSM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
+{
+    int used = 1;
+    gsm r;
+    if (!GSM_FormatValidate(adsi->pwfxSrc) || !GSM_FormatValidate(adsi->pwfxDst))
+        return MMSYSERR_NOTSUPPORTED;
+
+    if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec)
+        return MMSYSERR_NOTSUPPORTED;
+
+    if (!GSM_drvLoad()) return MMSYSERR_NOTSUPPORTED;
+
+    r = pgsm_create();
+    if (!r)
+        return MMSYSERR_NOMEM;
+    if (pgsm_option(r, GSM_OPT_WAV49, &used) < 0)
+    {
+        FIXME("Your libgsm library is doesn't support GSM_OPT_WAV49\n");
+        FIXME("Please recompile libgsm with WAV49 support\n");
+        pgsm_destroy(r);
+        return MMSYSERR_NOTSUPPORTED;
+    }
+    adsi->dwDriver = (DWORD_PTR)r;
+    return MMSYSERR_NOERROR;
+}
+
+/***********************************************************************
+ *           GSM_StreamClose
+ *
+ */
+static	LRESULT	GSM_StreamClose(PACMDRVSTREAMINSTANCE adsi)
+{
+    pgsm_destroy((gsm)adsi->dwDriver);
+    return MMSYSERR_NOERROR;
+}
+
+/***********************************************************************
+ *           GSM_StreamSize
+ *
+ */
+static	LRESULT GSM_StreamSize(const ACMDRVSTREAMINSTANCE *adsi, PACMDRVSTREAMSIZE adss)
+{
+    switch (adss->fdwSize)
+    {
+    case ACM_STREAMSIZEF_DESTINATION:
+	/* cbDstLength => cbSrcLength */
+	if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_GSM610)
+        {
+	    adss->cbSrcLength = adss->cbDstLength / 65 * 640;
+	}
+        else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_GSM610 &&
+                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
+        {
+	    adss->cbSrcLength = adss->cbDstLength / 640 * 65;
+	}
+        else
+        {
+	    return MMSYSERR_NOTSUPPORTED;
+	}
+	return MMSYSERR_NOERROR;
+    case ACM_STREAMSIZEF_SOURCE:
+	/* cbSrcLength => cbDstLength */
+	if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
+             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_GSM610)
+        {
+	    adss->cbDstLength = (adss->cbSrcLength + 639) / 640 * 65;
+	}
+        else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_GSM610 &&
+                 adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
+        {
+	    adss->cbDstLength = adss->cbSrcLength / 65 * 640;
+	}
+        else
+        {
+	    return MMSYSERR_NOTSUPPORTED;
+	}
+	return MMSYSERR_NOERROR;
+    default:
+	WARN("Unsupported query %08x\n", adss->fdwSize);
+	return MMSYSERR_NOTSUPPORTED;
+    }
+}
+
+/***********************************************************************
+ *           GSM_StreamConvert
+ *
+ */
+static LRESULT GSM_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER adsh)
+{
+    gsm r = (gsm)adsi->dwDriver;
+    DWORD nsrc = 0;
+    DWORD ndst = 0;
+    BYTE *src = adsh->pbSrc;
+    BYTE *dst = adsh->pbDst;
+    int odd = 0;
+
+    if (adsh->fdwConvert &
+	~(ACM_STREAMCONVERTF_BLOCKALIGN|
+	  ACM_STREAMCONVERTF_END|
+	  ACM_STREAMCONVERTF_START))
+    {
+	FIXME("Unsupported fdwConvert (%08x), ignoring it\n", adsh->fdwConvert);
+    }
+
+    /* Reset the index to 0, just to be sure */
+    pgsm_option(r, GSM_OPT_FRAME_INDEX, &odd);
+
+    /* The native ms codec writes 65 bytes, and this requires 2 libgsm calls.
+     * First 32 bytes are written, or 33 bytes read
+     * Second 33 bytes are written, or 32 bytes read
+     */
+
+    /* Decode */
+    if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_GSM610)
+    {
+        if (adsh->cbSrcLength / 65 * 640 > adsh->cbDstLength)
+        {
+             return ACMERR_NOTPOSSIBLE;
+        }
+
+        while (nsrc + 65 <= adsh->cbSrcLength)
+        {
+            /* Decode data */
+            if (pgsm_decode(r, src + nsrc, (gsm_signal*)(dst + ndst)) < 0)
+                FIXME("Couldn't decode data\n");
+            ndst += 320;
+            nsrc += 33;
+
+            if (pgsm_decode(r, src + nsrc, (gsm_signal*)(dst + ndst)) < 0)
+                FIXME("Couldn't decode data\n");
+            ndst += 320;
+            nsrc += 32;
+        }
+    }
+    else
+    {
+        /* Testing a little seems to reveal that despite being able to fit
+         * inside the buffer if ACM_STREAMCONVERTF_BLOCKALIGN is set
+         * it still rounds up
+         */
+        if ((adsh->cbSrcLength + 639) / 640 * 65 > adsh->cbDstLength)
+        {
+            return ACMERR_NOTPOSSIBLE;
+        }
+
+        /* The packing algorythm writes 32 bytes, then 33 bytes,
+         * and it seems to pad to align to 65 bytes always
+         * adding extra data where necessary
+         */
+        while (nsrc + 640 <= adsh->cbSrcLength)
+        {
+            /* Encode data */
+            pgsm_encode(r, (gsm_signal*)(src+nsrc), dst+ndst);
+            nsrc += 320;
+            ndst += 32;
+            pgsm_encode(r, (gsm_signal*)(src+nsrc), dst+ndst);
+            nsrc += 320;
+            ndst += 33;
+        }
+
+        /* If ACM_STREAMCONVERTF_BLOCKALIGN isn't set pad with zeros */
+        if (!(adsh->fdwConvert & ACM_STREAMCONVERTF_BLOCKALIGN) &&
+            nsrc < adsh->cbSrcLength)
+        {
+            char emptiness[320];
+            int todo = adsh->cbSrcLength - nsrc;
+
+            if (todo > 320)
+            {
+                pgsm_encode(r, (gsm_signal*)(src+nsrc), dst+ndst);
+                ndst += 32;
+                todo -= 320;
+                nsrc += 320;
+
+                memcpy(emptiness, src+nsrc, todo);
+                memset(emptiness + todo, 0, 320 - todo);
+                pgsm_encode(r, (gsm_signal*)emptiness, dst+ndst);
+                ndst += 33;
+            }
+            else
+            {
+                memcpy(emptiness, src+nsrc, todo);
+                memset(emptiness + todo, 0, 320 - todo);
+                pgsm_encode(r, (gsm_signal*)emptiness, dst+ndst);
+                ndst += 32;
+
+                memset(emptiness, 0, todo);
+                pgsm_encode(r, (gsm_signal*)emptiness, dst+ndst);
+                ndst += 33;
+            }
+            nsrc = adsh->cbSrcLength;
+        }
+    }
+
+    adsh->cbSrcLengthUsed = nsrc;
+    adsh->cbDstLengthUsed = ndst;
+    TRACE("%d(%d) -> %d(%d)\n", nsrc, adsh->cbSrcLength, ndst, adsh->cbDstLength);
+    return MMSYSERR_NOERROR;
+}
+
+#endif
+
 /**************************************************************************
  * 			GSM_DriverProc			[exported]
  */
@@ -373,7 +576,7 @@ LRESULT CALLBACK GSM_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 
     switch (wMsg)
     {
-    case DRV_LOAD:		return GSM_drvLoad();
+    case DRV_LOAD:		return 1;
     case DRV_FREE:		return GSM_drvFree();
     case DRV_OPEN:		return 1;
     case DRV_CLOSE:		return 1;
@@ -400,11 +603,25 @@ LRESULT CALLBACK GSM_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case ACMDM_FORMAT_SUGGEST:
 	return GSM_FormatSuggest((PACMDRVFORMATSUGGEST)dwParam1);
 
+#ifdef SONAME_LIBGSM
     case ACMDM_STREAM_OPEN:
+	return GSM_StreamOpen((PACMDRVSTREAMINSTANCE)dwParam1);
+
+    case ACMDM_STREAM_CLOSE:
+	return GSM_StreamClose((PACMDRVSTREAMINSTANCE)dwParam1);
+
+    case ACMDM_STREAM_SIZE:
+	return GSM_StreamSize((PACMDRVSTREAMINSTANCE)dwParam1, (PACMDRVSTREAMSIZE)dwParam2);
+
+    case ACMDM_STREAM_CONVERT:
+	return GSM_StreamConvert((PACMDRVSTREAMINSTANCE)dwParam1, (PACMDRVSTREAMHEADER)dwParam2);
+#else
+    case ACMDM_STREAM_OPEN: ERR("libgsm support not compiled in!\n");
     case ACMDM_STREAM_CLOSE:
     case ACMDM_STREAM_SIZE:
     case ACMDM_STREAM_CONVERT:
         return MMSYSERR_NOTSUPPORTED;
+#endif
 
     case ACMDM_HARDWARE_WAVE_CAPS_INPUT:
     case ACMDM_HARDWARE_WAVE_CAPS_OUTPUT:
