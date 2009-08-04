@@ -3014,7 +3014,6 @@ static void test_default_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_get_margin(style, &str);
     ok(hres == S_OK, "get_margin failed: %08x\n", hres);
-    todo_wine
     ok(!strcmp_wa(str, "1px"), "margin = %s\n", dbgstr_w(str));
 
     hres = IHTMLStyle_put_margin(style, NULL);
