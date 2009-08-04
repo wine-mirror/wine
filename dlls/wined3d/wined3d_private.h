@@ -176,9 +176,9 @@ struct min_lookup
     GLenum mip[WINED3DTEXF_LINEAR + 1];
 };
 
-struct min_lookup minMipLookup[WINED3DTEXF_ANISOTROPIC + 1];
+const struct min_lookup minMipLookup[WINED3DTEXF_ANISOTROPIC + 1];
 const struct min_lookup minMipLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1];
-GLenum magLookup[WINED3DTEXF_ANISOTROPIC + 1];
+const GLenum magLookup[WINED3DTEXF_ANISOTROPIC + 1];
 const GLenum magLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1];
 
 extern const struct filter_lookup filter_lookup_nofilter;

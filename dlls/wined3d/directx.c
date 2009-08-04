@@ -168,19 +168,34 @@ const int maxLookup[MAX_LOOKUPS] =
 
 DWORD *stateLookup[MAX_LOOKUPS];
 
-struct min_lookup minMipLookup[WINED3DTEXF_ANISOTROPIC + 1];
-const struct min_lookup minMipLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1] =
+const struct min_lookup minMipLookup[] =
 {
-    {{GL_NEAREST, GL_NEAREST, GL_NEAREST}},
-    {{GL_NEAREST, GL_NEAREST, GL_NEAREST}},
-    {{GL_NEAREST, GL_NEAREST, GL_NEAREST}},
-    {{GL_NEAREST, GL_NEAREST, GL_NEAREST}},
+    /* NONE         POINT                       LINEAR */
+    {{GL_LINEAR,    GL_LINEAR,                  GL_LINEAR}},                /* NONE */
+    {{GL_NEAREST,   GL_NEAREST_MIPMAP_NEAREST,  GL_NEAREST_MIPMAP_LINEAR}}, /* POINT*/
+    {{GL_LINEAR,    GL_LINEAR_MIPMAP_NEAREST,   GL_LINEAR_MIPMAP_LINEAR}},  /* LINEAR */
+    {{GL_LINEAR,    GL_LINEAR_MIPMAP_NEAREST,   GL_LINEAR_MIPMAP_LINEAR}},  /* ANISOTROPIC */
 };
 
-GLenum magLookup[WINED3DTEXF_ANISOTROPIC + 1];
-const GLenum magLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1] =
+const struct min_lookup minMipLookup_noFilter[] =
 {
-    GL_NEAREST, GL_NEAREST, GL_NEAREST, GL_NEAREST
+    /* NONE         POINT                       LINEAR */
+    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* NONE */
+    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* POINT */
+    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* LINEAR */
+    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* ANISOTROPIC */
+};
+
+const GLenum magLookup[] =
+{
+    /* NONE     POINT       LINEAR      ANISOTROPIC */
+    GL_NEAREST, GL_NEAREST, GL_LINEAR,  GL_LINEAR,
+};
+
+const GLenum magLookup_noFilter[] =
+{
+    /* NONE     POINT       LINEAR      ANISOTROPIC */
+    GL_NEAREST, GL_NEAREST, GL_NEAREST, GL_NEAREST,
 };
 
 /* drawStridedSlow attributes */
@@ -1990,26 +2005,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
              gl_info->supported[ARB_TEXTURE_MIRRORED_REPEAT] ? GL_MIRRORED_REPEAT_ARB : GL_REPEAT;
     stateLookup[WINELOOKUP_WARPPARAM][WINED3DTADDRESS_MIRRORONCE - minLookup[WINELOOKUP_WARPPARAM]] =
              gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] ? GL_MIRROR_CLAMP_TO_EDGE_ATI : GL_REPEAT;
-
-    magLookup[WINED3DTEXF_NONE        - WINED3DTEXF_NONE]  = GL_NEAREST;
-    magLookup[WINED3DTEXF_POINT       - WINED3DTEXF_NONE] = GL_NEAREST;
-    magLookup[WINED3DTEXF_LINEAR      - WINED3DTEXF_NONE] = GL_LINEAR;
-    magLookup[WINED3DTEXF_ANISOTROPIC - WINED3DTEXF_NONE] = GL_LINEAR;
-
-    minMipLookup[WINED3DTEXF_NONE].mip[WINED3DTEXF_NONE]     = GL_LINEAR;
-    minMipLookup[WINED3DTEXF_NONE].mip[WINED3DTEXF_POINT]    = GL_LINEAR;
-    minMipLookup[WINED3DTEXF_NONE].mip[WINED3DTEXF_LINEAR]   = GL_LINEAR;
-    minMipLookup[WINED3DTEXF_POINT].mip[WINED3DTEXF_NONE]    = GL_NEAREST;
-    minMipLookup[WINED3DTEXF_POINT].mip[WINED3DTEXF_POINT]   = GL_NEAREST_MIPMAP_NEAREST;
-    minMipLookup[WINED3DTEXF_POINT].mip[WINED3DTEXF_LINEAR]  = GL_NEAREST_MIPMAP_LINEAR;
-    minMipLookup[WINED3DTEXF_LINEAR].mip[WINED3DTEXF_NONE]   = GL_LINEAR;
-    minMipLookup[WINED3DTEXF_LINEAR].mip[WINED3DTEXF_POINT]  = GL_LINEAR_MIPMAP_NEAREST;
-    minMipLookup[WINED3DTEXF_LINEAR].mip[WINED3DTEXF_LINEAR] = GL_LINEAR_MIPMAP_LINEAR;
-    minMipLookup[WINED3DTEXF_ANISOTROPIC].mip[WINED3DTEXF_NONE] = GL_LINEAR;
-    minMipLookup[WINED3DTEXF_ANISOTROPIC].mip[WINED3DTEXF_POINT] = GL_LINEAR_MIPMAP_NEAREST;
-    minMipLookup[WINED3DTEXF_ANISOTROPIC].mip[WINED3DTEXF_LINEAR] = GL_LINEAR_MIPMAP_LINEAR;
-
-/* TODO: config lookups */
 
     /* Make sure there's an active HDC else the WGL extensions will fail */
     hdc = pwglGetCurrentDC();
