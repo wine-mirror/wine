@@ -165,6 +165,7 @@ static void *schan_free_handle(ULONG_PTR handle_idx, enum schan_handle_type type
     void *object;
 
     if (handle_idx == SCHAN_INVALID_HANDLE) return NULL;
+    if (handle_idx >= schan_handle_count) return NULL;
     handle = &schan_handle_table[handle_idx];
     if (handle->type != type)
     {
@@ -185,6 +186,7 @@ static void *schan_get_object(ULONG_PTR handle_idx, enum schan_handle_type type)
     struct schan_handle *handle;
 
     if (handle_idx == SCHAN_INVALID_HANDLE) return NULL;
+    if (handle_idx >= schan_handle_count) return NULL;
     handle = &schan_handle_table[handle_idx];
     if (handle->type != type)
     {
