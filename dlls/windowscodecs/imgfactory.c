@@ -98,9 +98,75 @@ static HRESULT WINAPI ImagingFactory_CreateDecoderFromStream(
     IWICImagingFactory *iface, IStream *pIStream, const GUID *pguidVendor,
     WICDecodeOptions metadataOptions, IWICBitmapDecoder **ppIDecoder)
 {
-    FIXME("(%p,%p,%s,%u,%p): stub\n", iface, pIStream, debugstr_guid(pguidVendor),
+    static int fixme=0;
+    IEnumUnknown *enumdecoders;
+    IUnknown *unkdecoderinfo;
+    IWICBitmapDecoderInfo *decoderinfo;
+    IWICBitmapDecoder *decoder=NULL;
+    HRESULT res=S_OK;
+    ULONG num_fetched;
+    BOOL matches;
+
+    TRACE("(%p,%p,%s,%u,%p)\n", iface, pIStream, debugstr_guid(pguidVendor),
         metadataOptions, ppIDecoder);
-    return E_NOTIMPL;
+
+    if (pguidVendor && !fixme++)
+        FIXME("ignoring vendor GUID\n");
+
+    res = CreateComponentEnumerator(WICDecoder, WICComponentEnumerateDefault, &enumdecoders);
+    if (FAILED(res)) return res;
+
+    while (!decoder)
+    {
+        res = IEnumUnknown_Next(enumdecoders, 1, &unkdecoderinfo, &num_fetched);
+
+        if (res == S_OK)
+        {
+            res = IUnknown_QueryInterface(unkdecoderinfo, &IID_IWICBitmapDecoderInfo, (void**)&decoderinfo);
+
+            if (SUCCEEDED(res))
+            {
+                res = IWICBitmapDecoderInfo_MatchesPattern(decoderinfo, pIStream, &matches);
+
+                if (SUCCEEDED(res) && matches)
+                {
+                    res = IWICBitmapDecoderInfo_CreateInstance(decoderinfo, &decoder);
+
+                    /* FIXME: should use QueryCapability to choose a decoder */
+
+                    if (SUCCEEDED(res))
+                    {
+                        res = IWICBitmapDecoder_Initialize(decoder, pIStream, metadataOptions);
+
+                        if (FAILED(res))
+                        {
+                            IWICBitmapDecoder_Release(decoder);
+                            decoder = NULL;
+                        }
+                    }
+                }
+
+                IWICBitmapDecoderInfo_Release(decoderinfo);
+            }
+
+            IUnknown_Release(unkdecoderinfo);
+        }
+        else
+            break;
+    }
+
+    IEnumUnknown_Release(enumdecoders);
+
+    if (decoder)
+    {
+        *ppIDecoder = decoder;
+        return S_OK;
+    }
+    else
+    {
+        *ppIDecoder = NULL;
+        return WINCODEC_ERR_COMPONENTNOTFOUND;
+    }
 }
 
 static HRESULT WINAPI ImagingFactory_CreateDecoderFromFileHandle(
