@@ -264,7 +264,9 @@ NTSTATUS WINAPI LsaEnumerateTrustedDomainsEx(
 NTSTATUS WINAPI LsaFreeMemory(IN PVOID Buffer)
 {
     TRACE("(%p)\n", Buffer);
-    return HeapFree(GetProcessHeap(), 0, Buffer);
+
+    HeapFree(GetProcessHeap(), 0, Buffer);
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
