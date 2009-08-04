@@ -86,6 +86,14 @@ typedef enum WICComponentSigning {
     WICComponentDisabled = 0x80000000
 } WICComponentSigning;
 
+typedef enum WICComponentEnumerateOptions {
+    WICComponentEnumerateDefault = 0x00000000,
+    WICComponentEnumerateRefresh = 0x00000001,
+    WICComponentEnumerateBuiltInOnly = 0x20000000,
+    WICComponentEnumerateUnsigned = 0x40000000,
+    WICComponentEnumerateDisabled = 0x80000000
+} WICComponentEnumerateOptions;
+
 typedef GUID WICPixelFormatGUID;
 typedef REFGUID REFWICPixelFormatGUID;
 
@@ -121,6 +129,7 @@ typedef UINT32 WICColor;
 cpp_quote("#define WINCODEC_ERR_WRONGSTATE 0x88982f04")
 cpp_quote("#define WINCODEC_ERR_CODECNOTHUMBNAIL 0x88982f44")
 cpp_quote("#define WINCODEC_ERR_PALETTEUNAVAILABLE 0x88982f45")
+cpp_quote("#define WINCODEC_ERR_COMPONENTNOTFOUND 0x88982f50")
 cpp_quote("#define WINCODEC_ERR_UNSUPPORTEDOPERATION 0x88982f81")
 cpp_quote("#define WINCODEC_ERR_INSUFFICIENTBUFFER 0x88982f8c")
 
