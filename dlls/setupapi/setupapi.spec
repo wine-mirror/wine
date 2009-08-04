@@ -38,7 +38,7 @@
 @ stub CM_Dup_Range_List
 @ stub CM_Enable_DevNode
 @ stub CM_Enable_DevNode_Ex
-@ stub CM_Enumerate_Classes
+@ stdcall CM_Enumerate_Classes(long ptr long)
 @ stub CM_Enumerate_Classes_Ex
 @ stub CM_Enumerate_EnumeratorsA
 @ stub CM_Enumerate_EnumeratorsW
@@ -75,8 +75,8 @@
 @ stdcall CM_Get_Device_IDW(ptr ptr long long)
 @ stub CM_Get_Device_ID_ExA
 @ stub CM_Get_Device_ID_ExW
-@ stdcall CM_Get_Device_ID_ListA(ptr ptr long long)
-@ stub CM_Get_Device_ID_ListW
+@ stdcall CM_Get_Device_ID_ListA(str ptr long long)
+@ stdcall CM_Get_Device_ID_ListW(wstr ptr long long)
 @ stub CM_Get_Device_ID_List_ExA
 @ stub CM_Get_Device_ID_List_ExW
 @ stub CM_Get_Device_ID_List_SizeA

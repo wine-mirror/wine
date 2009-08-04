@@ -100,12 +100,24 @@ CONFIGRET WINAPI CM_Disconnect_Machine(HMACHINE handle)
 /***********************************************************************
  *             CM_Get_Device_ID_ListA  (SETUPAPI.@)
  */
-
 CONFIGRET WINAPI CM_Get_Device_ID_ListA(
     PCSTR pszFilter, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
 {
-    FIXME("%p %p %d %d\n", pszFilter, Buffer, BufferLen, ulFlags );
-    memset(Buffer,0,2);
+    FIXME("%s %p %d 0x%08x\n", debugstr_a(pszFilter), Buffer, BufferLen, ulFlags);
+
+    if (BufferLen >= 2) Buffer[0] = Buffer[1] = 0;
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *             CM_Get_Device_ID_ListW  (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_ID_ListW(
+    PCWSTR pszFilter, PWCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
+{
+    FIXME("%s %p %d 0x%08x\n", debugstr_w(pszFilter), Buffer, BufferLen, ulFlags);
+
+    if (BufferLen >= 2) Buffer[0] = Buffer[1] = 0;
     return CR_SUCCESS;
 }
 
@@ -304,4 +316,13 @@ CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExW(PULONG len, LPGUID class,
 {
     FIXME("%p %p %s 0x%08x %p: stub\n", len, class, debugstr_w(id), flags, machine);
     return CR_FAILURE;
+}
+
+/***********************************************************************
+ *      CM_Enumerate_Classes (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Enumerate_Classes(ULONG index, LPGUID class, ULONG flags)
+{
+    FIXME("%u %p 0x%08x: stub\n", index, class, flags);
+    return CR_NO_SUCH_VALUE;
 }
