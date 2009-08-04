@@ -413,10 +413,16 @@ static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, D
             case 'i':
                 lstrcpyW(extra, type_notnull);
             case 'I':
-                if (len == 2)
+                if (len <= 2)
                     type = type_int;
-                else
+                else if (len == 4)
                     type = type_long;
+                else
+                {
+                    WARN("invalid int width %u\n", len);
+                    msi_free(columns);
+                    return NULL;
+                }
                 break;
             case 'v':
                 lstrcpyW(extra, type_notnull);

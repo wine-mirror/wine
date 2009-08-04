@@ -6050,6 +6050,66 @@ static void test_propcase(void)
     RemoveDirectory("msitest");
 }
 
+static void test_int_widths( void )
+{
+    static const char int0[] = "int0\ni0\nint0\tint0\n1";
+    static const char int1[] = "int1\ni1\nint1\tint1\n1";
+    static const char int2[] = "int2\ni2\nint2\tint2\n1";
+    static const char int3[] = "int3\ni3\nint3\tint3\n1";
+    static const char int4[] = "int4\ni4\nint4\tint4\n1";
+    static const char int5[] = "int5\ni5\nint5\tint5\n1";
+    static const char int8[] = "int8\ni8\nint8\tint8\n1";
+
+    static const struct
+    {
+        const char  *data;
+        unsigned int size;
+        UINT         ret;
+    }
+    tests[] =
+    {
+        { int0, sizeof(int0) - 1, ERROR_SUCCESS },
+        { int1, sizeof(int1) - 1, ERROR_SUCCESS },
+        { int2, sizeof(int2) - 1, ERROR_SUCCESS },
+        { int3, sizeof(int3) - 1, ERROR_FUNCTION_FAILED },
+        { int4, sizeof(int4) - 1, ERROR_SUCCESS },
+        { int5, sizeof(int5) - 1, ERROR_FUNCTION_FAILED },
+        { int8, sizeof(int8) - 1, ERROR_FUNCTION_FAILED }
+    };
+
+    char tmpdir[MAX_PATH], msitable[MAX_PATH], msidb[MAX_PATH];
+    MSIHANDLE db;
+    UINT r, i;
+
+    GetTempPathA(MAX_PATH, tmpdir);
+    CreateDirectoryA(tmpdir, NULL);
+
+    strcpy(msitable, tmpdir);
+    strcat(msitable, "\\msitable.idt");
+
+    strcpy(msidb, tmpdir);
+    strcat(msidb, "\\msitest.msi");
+
+    r = MsiOpenDatabaseA(msidb, MSIDBOPEN_CREATE, &db);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        write_file(msitable, tests[i].data, tests[i].size);
+
+        r = MsiDatabaseImportA(db, tmpdir, "msitable.idt");
+        ok(r == tests[i].ret, " %u expected %u, got %u\n", i, tests[i].ret, r);
+
+        r = MsiDatabaseCommit(db);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        DeleteFileA(msitable);
+    }
+
+    MsiCloseHandle(db);
+    DeleteFileA(msidb);
+    RemoveDirectoryA(tmpdir);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -6129,6 +6189,7 @@ START_TEST(install)
     test_sourcedirprop();
     test_adminimage();
     test_propcase();
+    test_int_widths();
 
     DeleteFileA(log_file);
 
