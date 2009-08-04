@@ -310,9 +310,10 @@ static void delete_disk_device( struct disk_device *device )
 }
 
 /* grab another reference to a volume */
-static unsigned int grab_volume( struct volume *volume )
+static struct volume *grab_volume( struct volume *volume )
 {
-    return ++volume->ref;
+    volume->ref++;
+    return volume;
 }
 
 /* release a volume and delete the corresponding disk device when refcount is 0 */
@@ -320,9 +321,9 @@ static unsigned int release_volume( struct volume *volume )
 {
     unsigned int ret = --volume->ref;
 
-    TRACE( "%s udi %s count now %u\n", debugstr_guid(&volume->guid), debugstr_a(volume->udi), ret );
     if (!ret)
     {
+        TRACE( "%s udi %s\n", debugstr_guid(&volume->guid), debugstr_a(volume->udi) );
         assert( !volume->udi );
         list_remove( &volume->entry );
         if (volume->mount) delete_mount_point( volume->mount );
@@ -362,7 +363,7 @@ static NTSTATUS create_volume( const char *udi, enum device_type type, struct vo
     {
         if (udi) set_volume_udi( volume, udi );
         list_add_tail( &volumes_list, &volume->entry );
-        *volume_ret = volume;
+        *volume_ret = grab_volume( volume );
     }
     else RtlFreeHeap( GetProcessHeap(), 0, volume );
 
@@ -383,14 +384,13 @@ static NTSTATUS create_dos_device( struct volume *volume, const char *udi, int l
     if (volume)
     {
         if (udi) set_volume_udi( volume, udi );
-        drive->volume = volume;
+        drive->volume = grab_volume( volume );
         status = STATUS_SUCCESS;
     }
     else status = create_volume( udi, type, &drive->volume );
 
     if (status == STATUS_SUCCESS)
     {
-        grab_volume( drive->volume );
         list_add_tail( &drives_list, &drive->entry );
         *drive_ret = drive;
     }
@@ -428,7 +428,7 @@ static struct volume *find_matching_volume( const char *udi, const char *device,
         if (mount_point && disk_device->unix_mount && strcmp( mount_point, disk_device->unix_mount )) continue;
         TRACE( "found matching volume %s for device %s mount %s type %u\n",
                debugstr_guid(&volume->guid), debugstr_a(device), debugstr_a(mount_point), type );
-        return volume;
+        return grab_volume( volume );
     }
     return NULL;
 }
@@ -649,6 +649,7 @@ static void create_drive_devices(void)
             RtlFreeHeap( GetProcessHeap(), 0, link );
             RtlFreeHeap( GetProcessHeap(), 0, device );
         }
+        if (volume) release_volume( volume );
     }
     RegCloseKey( drives_key );
     RtlFreeHeap( GetProcessHeap(), 0, path );
@@ -674,6 +675,7 @@ NTSTATUS add_volume( const char *udi, const char *device, const char *mount_poin
 
 found:
     if (!status) status = set_volume_info( volume, NULL, device, mount_point, type, guid );
+    if (volume) release_volume( volume );
     LeaveCriticalSection( &device_section );
     return status;
 }
@@ -746,7 +748,7 @@ NTSTATUS add_dos_device( int letter, const char *udi, const char *device,
 
 found:
     if (!guid && !volume) guid = get_default_uuid( letter );
-    if (!volume) volume = drive->volume;
+    if (!volume) volume = grab_volume( drive->volume );
     set_drive_info( drive, letter, volume );
     p[0] = 'a' + drive->drive;
     p[2] = 0;
@@ -776,6 +778,7 @@ found:
     if (udi) notify = drive->drive;
 
 done:
+    if (volume) release_volume( volume );
     LeaveCriticalSection( &device_section );
     RtlFreeHeap( GetProcessHeap(), 0, path );
     if (notify != -1) send_notify( notify, DBT_DEVICEARRIVAL );
