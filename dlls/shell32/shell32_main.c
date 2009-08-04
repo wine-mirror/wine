@@ -621,7 +621,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                 ret = FALSE;
             }
         }
-        if (ret)
+        if (ret && (flags & SHGFI_SYSICONINDEX))
         {
             if (flags & SHGFI_SMALLICON)
                 ret = (DWORD_PTR) ShellSmallIconList;
@@ -661,6 +661,11 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 
 /*************************************************************************
  * SHGetFileInfoA            [SHELL32.@]
+ *
+ * Note:
+ *    MSVBVM60.__vbaNew2 expects this function to return a value in range
+ *    1 .. 0x7fff when the function succeeds and flags does not contain
+ *    SHGFI_EXETYPE or SHGFI_SYSICONINDEX (see bug 7701)
  */
 DWORD_PTR WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
                                 SHFILEINFOA *psfi, UINT sizeofpsfi,
