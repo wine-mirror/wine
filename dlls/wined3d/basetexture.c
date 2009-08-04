@@ -331,6 +331,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
     DWORD state, *states;
     GLint textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
     BOOL cond_np2 = IWineD3DBaseTexture_IsCondNP2(iface);
+    DWORD aniso;
 
     TRACE("iface %p, textureStates %p, samplerStates %p\n", iface, textureStates, samplerStates);
 
@@ -380,11 +381,6 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
             glValue = This->baseTexture.magLookup[state - WINED3DTEXF_NONE];
             TRACE("ValueMAG=%d setting MAGFILTER to %x\n", state, glValue);
             glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
-            /* We need to reset the Anisotropic filtering state when we change the mag filter to WINED3DTEXF_ANISOTROPIC (this seems a bit weird, check the documentation to see how it should be switched off. */
-            if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && WINED3DTEXF_ANISOTROPIC == state &&
-                !cond_np2) {
-                glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, samplerStates[WINED3DSAMP_MAXANISOTROPY]);
-            }
             states[WINED3DTEXSTA_MAGFILTER] = state;
         }
     }
@@ -428,13 +424,29 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         }
     }
 
-    if(samplerStates[WINED3DSAMP_MAXANISOTROPY] != states[WINED3DTEXSTA_MAXANISOTROPY]) {
-        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC) && !cond_np2) {
-            glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, samplerStates[WINED3DSAMP_MAXANISOTROPY]);
-            checkGLcall("glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT ...");
-        } else {
-            WARN("Unsupported in local OpenGL implementation: glTexParameteri GL_TEXTURE_MAX_ANISOTROPY_EXT\n");
+    if ((states[WINED3DSAMP_MAGFILTER] != WINED3DTEXF_ANISOTROPIC
+            && states[WINED3DSAMP_MINFILTER] != WINED3DTEXF_ANISOTROPIC
+            && states[WINED3DSAMP_MIPFILTER] != WINED3DTEXF_ANISOTROPIC)
+            || cond_np2)
+    {
+        aniso = 1;
+    }
+    else
+    {
+        aniso = samplerStates[WINED3DSAMP_MAXANISOTROPY];
+    }
+
+    if (states[WINED3DTEXSTA_MAXANISOTROPY] != aniso)
+    {
+        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC))
+        {
+            glTexParameteri(textureDimensions, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+            checkGLcall("glTexParameteri(GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso)");
         }
-        states[WINED3DTEXSTA_MAXANISOTROPY] = samplerStates[WINED3DSAMP_MAXANISOTROPY];
+        else
+        {
+            WARN("Anisotropic filtering not supported.\n");
+        }
+        states[WINED3DTEXSTA_MAXANISOTROPY] = aniso;
     }
 }
