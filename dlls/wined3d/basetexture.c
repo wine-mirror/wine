@@ -381,8 +381,8 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
             glValue = This->baseTexture.magLookup[state - WINED3DTEXF_NONE];
             TRACE("ValueMAG=%d setting MAGFILTER to %x\n", state, glValue);
             glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
-            states[WINED3DTEXSTA_MAGFILTER] = state;
         }
+        states[WINED3DTEXSTA_MAGFILTER] = state;
     }
 
     if((samplerStates[WINED3DSAMP_MINFILTER]     != states[WINED3DTEXSTA_MINFILTER] ||
