@@ -356,6 +356,9 @@ while (my $line = <TYPES>) {
 }
 # This is to override the 'void' -> '*' bogus conversion
 $pseudo_to_opengl{"void"} = "void";
+$pseudo_to_opengl{"sync"} = "GLvoid*";
+$pseudo_to_opengl{"Int64"} = "INT64";
+$pseudo_to_opengl{"UInt64"} = "UINT64";
 $pseudo_to_opengl{"Int64EXT"} = "INT64";
 $pseudo_to_opengl{"UInt64EXT"} = "UINT64";
 
