@@ -127,11 +127,17 @@ static inline UINT bytes_per_column( MSIDATABASE *db, const MSICOLUMNINFO *col )
 {
     if( MSITYPE_IS_BINARY(col->type) )
         return 2;
+
     if( col->type & MSITYPE_STRING )
         return db->bytes_per_strref;
-    if( (col->type & 0xff) > 4 )
+
+    if( (col->type & 0xff) <= 2)
+        return 2;
+
+    if( (col->type & 0xff) != 4 )
         ERR("Invalid column size!\n");
-    return col->type & 0xff;
+
+    return 4;
 }
 
 static int utf2mime(int x)
