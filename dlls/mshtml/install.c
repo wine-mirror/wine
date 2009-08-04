@@ -141,7 +141,7 @@ static BOOL install_cab(LPCWSTR file_name)
 
     TRACE("(%s)\n", debugstr_w(file_name));
 
-    GetWindowsDirectoryA(install_dir, sizeof(install_dir));
+    GetSystemDirectoryA(install_dir, sizeof(install_dir));
     strcat(install_dir, "\\gecko\\");
     res = CreateDirectoryA(install_dir, NULL);
     if(!res && GetLastError() != ERROR_ALREADY_EXISTS) {
