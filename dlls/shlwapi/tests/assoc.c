@@ -252,11 +252,11 @@ static void test_assoc_create(void)
     ok(hr == E_INVALIDARG, "Unexpected result : %08x\n", hr);
 
     hr = pAssocCreate(CLSID_QueryAssociations, &IID_NULL, (LPVOID*)&pqa);
-    ok(hr == CLASS_E_CLASSNOTAVAILABLE || hr == E_NOTIMPL /* win98 */
+    ok(hr == CLASS_E_CLASSNOTAVAILABLE || hr == E_NOTIMPL || hr == E_NOINTERFACE
         , "Unexpected result : %08x\n", hr);
 
     hr = pAssocCreate(IID_NULL, &IID_IQueryAssociations, (LPVOID*)&pqa);
-    ok(hr == CLASS_E_CLASSNOTAVAILABLE || hr == E_NOTIMPL /* win98 */
+    ok(hr == CLASS_E_CLASSNOTAVAILABLE || hr == E_NOTIMPL || hr == E_INVALIDARG
         , "Unexpected result : %08x\n", hr);
 
     hr = pAssocCreate(CLSID_QueryAssociations, &IID_IQueryAssociations, (LPVOID*)&pqa);
