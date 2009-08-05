@@ -1333,5 +1333,6 @@ exception_test(function() {eval("for(i=0")}, "SyntaxError", -2146827284);
 exception_test(function() {eval("for(i=0;i<10")}, "SyntaxError", -2146827284);
 exception_test(function() {eval("while(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("if(")}, "SyntaxError", -2146827286);
+exception_test(function() {eval("'unterminated")}, "SyntaxError", -2146827273);
 
 reportSuccess();

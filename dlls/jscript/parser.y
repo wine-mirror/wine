@@ -1577,7 +1577,8 @@ static void program_parsed(parser_ctx_t *ctx, source_elements_t *source)
     pop_func(ctx);
 
     ctx->source = source;
-    ctx->hres = S_OK;
+    if(!ctx->lexer_error)
+        ctx->hres = S_OK;
 }
 
 void parser_release(parser_ctx_t *ctx)
