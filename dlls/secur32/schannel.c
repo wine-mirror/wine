@@ -48,6 +48,7 @@ MAKE_FUNCPTR(gnutls_alert_get);
 MAKE_FUNCPTR(gnutls_alert_get_name);
 MAKE_FUNCPTR(gnutls_certificate_allocate_credentials);
 MAKE_FUNCPTR(gnutls_certificate_free_credentials);
+MAKE_FUNCPTR(gnutls_certificate_get_peers);
 MAKE_FUNCPTR(gnutls_cipher_get);
 MAKE_FUNCPTR(gnutls_credentials_set);
 MAKE_FUNCPTR(gnutls_deinit);
@@ -873,6 +874,27 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
             stream_sizes->cbBlockSize = block_size;
             return SEC_E_OK;
         }
+        case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
+        {
+            unsigned int list_size;
+            const gnutls_datum_t *datum = pgnutls_certificate_get_peers(
+                    ctx->session, &list_size);
+
+            datum = pgnutls_certificate_get_peers(ctx->session, &list_size);
+            if (datum)
+            {
+                PCCERT_CONTEXT *cert = buffer;
+
+                *cert = CertCreateCertificateContext(X509_ASN_ENCODING,
+                        datum->data, datum->size);
+                if (!*cert)
+                    return GetLastError();
+                else
+                    return SEC_E_OK;
+            }
+            else
+                return SEC_E_INTERNAL_ERROR;
+        }
 
         default:
             FIXME("Unhandled attribute %#x\n", attribute);
@@ -889,6 +911,8 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
     switch(attribute)
     {
         case SECPKG_ATTR_STREAM_SIZES:
+            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
+        case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
 
         default:
@@ -1222,6 +1246,7 @@ void SECUR32_initSchannelSP(void)
     LOAD_FUNCPTR(gnutls_alert_get_name)
     LOAD_FUNCPTR(gnutls_certificate_allocate_credentials)
     LOAD_FUNCPTR(gnutls_certificate_free_credentials)
+    LOAD_FUNCPTR(gnutls_certificate_get_peers)
     LOAD_FUNCPTR(gnutls_cipher_get)
     LOAD_FUNCPTR(gnutls_credentials_set)
     LOAD_FUNCPTR(gnutls_deinit)
