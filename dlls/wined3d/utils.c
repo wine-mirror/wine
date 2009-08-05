@@ -273,23 +273,23 @@ static const GlPixelFormatDescTemplate gl_formats_template[] = {
     /* Float */
     {WINED3DFMT_R16_FLOAT,          GL_RGB16F_ARB,                    GL_RGB16F_ARB,                          0,
             GL_RED,                 GL_HALF_FLOAT_ARB,
-            WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET,
+            WINED3DFMT_FLAG_RENDERTARGET,
             ARB_TEXTURE_FLOAT},
     {WINED3DFMT_R16_FLOAT,          GL_R16F,                          GL_R16F,                                0,
             GL_RED,                 GL_HALF_FLOAT_ARB,
-            WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET,
+            WINED3DFMT_FLAG_RENDERTARGET,
             ARB_TEXTURE_RG},
     {WINED3DFMT_R16G16_FLOAT,       GL_RGB16F_ARB,                    GL_RGB16F_ARB,                          0,
             GL_RGB,                 GL_HALF_FLOAT_ARB,
-            WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET,
+            WINED3DFMT_FLAG_RENDERTARGET,
             ARB_TEXTURE_FLOAT},
     {WINED3DFMT_R16G16_FLOAT,       GL_RG16F,                         GL_RG16F,                               0,
             GL_RG,                  GL_HALF_FLOAT_ARB,
-            WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET,
+            WINED3DFMT_FLAG_RENDERTARGET,
             ARB_TEXTURE_RG},
     {WINED3DFMT_R16G16B16A16_FLOAT, GL_RGBA16F_ARB,                   GL_RGBA16F_ARB,                         0,
             GL_RGBA,                GL_HALF_FLOAT_ARB,
-            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING | WINED3DFMT_FLAG_RENDERTARGET,
+            WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_RENDERTARGET,
             ARB_TEXTURE_FLOAT},
     /* Palettized formats */
     {WINED3DFMT_P8,                 GL_RGBA,                          GL_RGBA,                                0,
@@ -770,6 +770,176 @@ static BOOL init_format_texture_info(struct wined3d_gl_info *gl_info)
     return TRUE;
 }
 
+static BOOL color_match(DWORD c1, DWORD c2, BYTE max_diff)
+{
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    c1 >>= 8; c2 >>= 8;
+    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    return TRUE;
+}
+
+/* A context is provided by the caller */
+static BOOL check_filter(const struct wined3d_gl_info *gl_info, GLenum internal)
+{
+    GLuint tex, fbo, buffer;
+    const DWORD data[] = {0x00000000, 0xffffffff};
+    DWORD readback[16 * 1];
+    BOOL ret = FALSE;
+
+    /* Render a filtered texture and see what happens. This is intended to detect the lack of
+     * float16 filtering on ATI X1000 class cards. The drivers disable filtering instead of
+     * falling back to software. If this changes in the future this code will get fooled and
+     * apps might hit the software path due to incorrectly advertised caps.
+     *
+     * Its unlikely that this changes however. GL Games like Mass Effect depend on the filter
+     * disable fallback, if Apple or ATI ever change the driver behavior they will break more
+     * than Wine. The Linux binary <= r500 driver is not maintained any more anyway
+     */
+
+    ENTER_GL();
+    while(glGetError());
+
+    glGenTextures(1, &buffer);
+    glBindTexture(GL_TEXTURE_2D, buffer);
+    memset(readback, 0x7e, sizeof(readback));
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 16, 1, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, readback);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, internal, 2, 1, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glEnable(GL_TEXTURE_2D);
+
+    GL_EXTCALL(glGenFramebuffersEXT(1, &fbo));
+    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo));
+    GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, buffer, 0));
+    glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+
+    glViewport(0, 0, 16, 1);
+    glDisable(GL_LIGHTING);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glClearColor(0, 1, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glBegin(GL_TRIANGLE_STRIP);
+    glTexCoord2f(0.0, 0.0);
+    glVertex2f(-1.0f, -1.0f);
+    glTexCoord2f(1.0, 0.0);
+    glVertex2f(1.0f, -1.0f);
+    glTexCoord2f(0.0, 1.0);
+    glVertex2f(-1.0f, 1.0f);
+    glTexCoord2f(1.0, 1.0);
+    glVertex2f(1.0f, 1.0f);
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, buffer);
+    memset(readback, 0x7f, sizeof(readback));
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
+    if(color_match(readback[6], 0xffffffff, 5) || color_match(readback[6], 0x00000000, 5) ||
+       color_match(readback[9], 0xffffffff, 5) || color_match(readback[9], 0x00000000, 5))
+    {
+        TRACE("Read back colors 0x%08x and 0x%08x close to unfiltered color, asuming no filtering\n",
+              readback[6], readback[9]);
+        ret = FALSE;
+    }
+    else
+    {
+        TRACE("Read back colors are 0x%08x and 0x%08x, assuming texture is filtered\n",
+              readback[6], readback[9]);
+        ret = TRUE;
+    }
+
+    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+    GL_EXTCALL(glDeleteFramebuffersEXT(1, &fbo));
+    glDeleteTextures(1, &tex);
+    glDeleteTextures(1, &buffer);
+
+    if(glGetError())
+    {
+        FIXME("Error during filtering test for format %x, returning no filtering\n", internal);
+        ret = FALSE;
+    }
+    LEAVE_GL();
+    return ret;
+}
+
+static void init_format_filter_info(struct wined3d_gl_info *gl_info)
+{
+    unsigned int fmt_idx, i;
+    WINED3DFORMAT fmts16[] = {
+        WINED3DFMT_R16_FLOAT,
+        WINED3DFMT_R16G16_FLOAT,
+        WINED3DFMT_R16G16B16A16_FLOAT,
+    };
+    BOOL filtered;
+    struct GlPixelFormatDesc *desc;
+
+    if(wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+    {
+        WARN("No FBO support, or no FBO ORM, guessing filter info from GL caps\n");
+        if(gl_info->gl_vendor == VENDOR_NVIDIA && GL_SUPPORT(ARB_TEXTURE_FLOAT))
+        {
+            TRACE("Nvidia card with texture_float support: Assuming float16 blending\n");
+            filtered = TRUE;
+        }
+        else if(GL_LIMITS(glsl_varyings > 44))
+        {
+            TRACE("More than 44 GLSL varyings - assuming d3d10 card with float16 blending\n");
+            filtered = TRUE;
+        }
+        else
+        {
+            TRACE("Assuming no float16 blending\n");
+            filtered = FALSE;
+        }
+
+        if(filtered)
+        {
+            for(i = 0; i < (sizeof(fmts16) / sizeof(*fmts16)); i++)
+            {
+                fmt_idx = getFmtIdx(fmts16[i]);
+                gl_info->gl_formats[fmt_idx].Flags |= WINED3DFMT_FLAG_FILTERING;
+            }
+        }
+        return;
+    }
+
+    for(i = 0; i < (sizeof(fmts16) / sizeof(*fmts16)); i++)
+    {
+        fmt_idx = getFmtIdx(fmts16[i]);
+        desc = &gl_info->gl_formats[fmt_idx];
+        if(!desc->glInternal) continue; /* Not supported by GL */
+
+        filtered = check_filter(gl_info, gl_info->gl_formats[fmt_idx].glInternal);
+        if(filtered)
+        {
+            TRACE("Format %s supports filtering\n", debug_d3dformat(fmts16[i]));
+            desc->Flags |= WINED3DFMT_FLAG_FILTERING;
+        }
+        else
+        {
+            TRACE("Format %s does not support filtering\n", debug_d3dformat(fmts16[i]));
+        }
+    }
+}
+
 static void apply_format_fixups(struct wined3d_gl_info *gl_info)
 {
     int idx;
@@ -942,6 +1112,7 @@ BOOL initPixelFormats(struct wined3d_gl_info *gl_info)
 
     apply_format_fixups(gl_info);
     init_format_fbo_compat_info(gl_info);
+    init_format_filter_info(gl_info);
 
     return TRUE;
 
