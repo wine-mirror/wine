@@ -192,17 +192,6 @@ HRESULT cubetexture_init(IWineD3DCubeTextureImpl *texture, UINT edge_length, UIN
         return hr;
     }
 
-    if (texture->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
-    {
-        texture->baseTexture.minMipLookup = minMipLookup;
-        texture->baseTexture.magLookup = magLookup;
-    }
-    else
-    {
-        texture->baseTexture.minMipLookup = minMipLookup_noFilter;
-        texture->baseTexture.magLookup = magLookup_noFilter;
-    }
-
     /* Find the nearest pow2 match. */
     pow2_edge_length = 1;
     while (pow2_edge_length < edge_length) pow2_edge_length <<= 1;

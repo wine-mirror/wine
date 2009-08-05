@@ -150,17 +150,6 @@ HRESULT volumetexture_init(IWineD3DVolumeTextureImpl *texture, UINT width, UINT 
         return hr;
     }
 
-    if (texture->resource.format_desc->Flags & WINED3DFMT_FLAG_FILTERING)
-    {
-        texture->baseTexture.minMipLookup = minMipLookup;
-        texture->baseTexture.magLookup = magLookup;
-    }
-    else
-    {
-        texture->baseTexture.minMipLookup = minMipLookup_noFilter;
-        texture->baseTexture.magLookup = magLookup_noFilter;
-    }
-
     /* Is NP2 support for volumes needed? */
     texture->baseTexture.pow2Matrix[0] = 1.0f;
     texture->baseTexture.pow2Matrix[5] = 1.0f;
