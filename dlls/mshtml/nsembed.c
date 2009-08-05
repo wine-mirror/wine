@@ -879,8 +879,8 @@ void close_gecko(void)
     if(nsmem)
         nsIMemory_Release(nsmem);
 
-    if(hXPCOM)
-        FreeLibrary(hXPCOM);
+    /* Gecko doesn't really support being unloaded */
+    /* if (hXPCOM) FreeLibrary(hXPCOM); */
 }
 
 /**********************************************************
