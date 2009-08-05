@@ -176,10 +176,10 @@ struct min_lookup
     GLenum mip[WINED3DTEXF_LINEAR + 1];
 };
 
-const struct min_lookup minMipLookup[WINED3DTEXF_ANISOTROPIC + 1];
-const struct min_lookup minMipLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1];
-const GLenum magLookup[WINED3DTEXF_ANISOTROPIC + 1];
-const GLenum magLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1];
+const struct min_lookup minMipLookup[WINED3DTEXF_LINEAR + 1];
+const struct min_lookup minMipLookup_noFilter[WINED3DTEXF_LINEAR + 1];
+const GLenum magLookup[WINED3DTEXF_LINEAR + 1];
+const GLenum magLookup_noFilter[WINED3DTEXF_LINEAR + 1];
 
 static inline GLenum wined3d_gl_mag_filter(const GLenum mag_lookup[], WINED3DTEXTUREFILTERTYPE mag_filter)
 {

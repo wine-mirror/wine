@@ -388,12 +388,12 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         if (state > WINED3DTEXF_ANISOTROPIC) {
             FIXME("Unrecognized or unsupported MAGFILTER* value %d\n", state);
         }
-        else
-        {
-            glValue = wined3d_gl_mag_filter(This->baseTexture.magLookup, state);
-            TRACE("ValueMAG=%d setting MAGFILTER to %x\n", state, glValue);
-            glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
-        }
+
+        glValue = wined3d_gl_mag_filter(This->baseTexture.magLookup,
+                min(max(state, WINED3DTEXF_POINT), WINED3DTEXF_LINEAR));
+        TRACE("ValueMAG=%d setting MAGFILTER to %x\n", state, glValue);
+        glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
+
         states[WINED3DTEXSTA_MAGFILTER] = state;
     }
 
@@ -406,8 +406,8 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         states[WINED3DTEXSTA_MINFILTER] = samplerStates[WINED3DSAMP_MINFILTER];
         states[WINED3DTEXSTA_MAXMIPLEVEL] = samplerStates[WINED3DSAMP_MAXMIPLEVEL];
 
-        if (states[WINED3DTEXSTA_MINFILTER] > WINED3DTEXF_ANISOTROPIC ||
-            states[WINED3DTEXSTA_MIPFILTER] > WINED3DTEXF_LINEAR)
+        if (states[WINED3DTEXSTA_MINFILTER] > WINED3DTEXF_ANISOTROPIC
+                || states[WINED3DTEXSTA_MIPFILTER] > WINED3DTEXF_ANISOTROPIC)
         {
 
             FIXME("Unrecognized or unsupported D3DSAMP_MINFILTER value %d D3DSAMP_MIPFILTER value %d\n",
@@ -415,8 +415,8 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
                   states[WINED3DTEXSTA_MIPFILTER]);
         }
         glValue = wined3d_gl_min_mip_filter(This->baseTexture.minMipLookup,
-                min(max(samplerStates[WINED3DSAMP_MINFILTER],WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC),
-                min(max(samplerStates[WINED3DSAMP_MIPFILTER],WINED3DTEXF_NONE), WINED3DTEXF_LINEAR));
+                min(max(samplerStates[WINED3DSAMP_MINFILTER], WINED3DTEXF_NONE), WINED3DTEXF_LINEAR),
+                min(max(samplerStates[WINED3DSAMP_MIPFILTER], WINED3DTEXF_NONE), WINED3DTEXF_LINEAR));
 
         TRACE("ValueMIN=%d, ValueMIP=%d, setting MINFILTER to %x\n",
               samplerStates[WINED3DSAMP_MINFILTER],

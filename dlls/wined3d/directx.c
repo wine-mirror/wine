@@ -174,7 +174,6 @@ const struct min_lookup minMipLookup[] =
     {{GL_LINEAR,    GL_LINEAR,                  GL_LINEAR}},                /* NONE */
     {{GL_NEAREST,   GL_NEAREST_MIPMAP_NEAREST,  GL_NEAREST_MIPMAP_LINEAR}}, /* POINT*/
     {{GL_LINEAR,    GL_LINEAR_MIPMAP_NEAREST,   GL_LINEAR_MIPMAP_LINEAR}},  /* LINEAR */
-    {{GL_LINEAR,    GL_LINEAR_MIPMAP_NEAREST,   GL_LINEAR_MIPMAP_LINEAR}},  /* ANISOTROPIC */
 };
 
 const struct min_lookup minMipLookup_noFilter[] =
@@ -183,19 +182,18 @@ const struct min_lookup minMipLookup_noFilter[] =
     {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* NONE */
     {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* POINT */
     {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* LINEAR */
-    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* ANISOTROPIC */
 };
 
 const GLenum magLookup[] =
 {
-    /* NONE     POINT       LINEAR      ANISOTROPIC */
-    GL_NEAREST, GL_NEAREST, GL_LINEAR,  GL_LINEAR,
+    /* NONE     POINT       LINEAR */
+    GL_NEAREST, GL_NEAREST, GL_LINEAR,
 };
 
 const GLenum magLookup_noFilter[] =
 {
-    /* NONE     POINT       LINEAR      ANISOTROPIC */
-    GL_NEAREST, GL_NEAREST, GL_NEAREST, GL_NEAREST,
+    /* NONE     POINT       LINEAR */
+    GL_NEAREST, GL_NEAREST, GL_NEAREST,
 };
 
 /* drawStridedSlow attributes */
