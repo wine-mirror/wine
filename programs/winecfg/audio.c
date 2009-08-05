@@ -56,13 +56,14 @@ typedef DWORD (WINAPI * MessagePtr)(UINT, UINT, DWORD, DWORD, DWORD);
 static struct DSOUNDACCEL
 {
   UINT displayID;
+  UINT visible;
   const char* settingStr;
-} const DSound_HW_Accels[] = {
-  {IDS_ACCEL_FULL,      "Full"},
-  {IDS_ACCEL_STANDARD,  "Standard"},
-  {IDS_ACCEL_BASIC,     "Basic"},
-  {IDS_ACCEL_EMULATION, "Emulation"},
-  {0, 0}
+} DSound_HW_Accels[] = {
+  {IDS_ACCEL_FULL,      1, "Full"},
+  {IDS_ACCEL_STANDARD,  0, "Standard"},
+  {IDS_ACCEL_BASIC,     0, "Basic"},
+  {IDS_ACCEL_EMULATION, 1, "Emulation"},
+  {0, 0, 0}
 };
 
 static const char* DSound_Rates[] = {
@@ -606,7 +607,7 @@ static void selectDriver(HWND hDlg, const char * driver)
 
 static void initAudioDlg (HWND hDlg)
 {
-    int i;
+    int i, j, found;
     char* buf = NULL;
 
     WINE_TRACE("\n");
@@ -637,20 +638,31 @@ static void initAudioDlg (HWND hDlg)
     initAudioDeviceTree(hDlg);
 
     SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_RESETCONTENT, 0, 0);
+    buf = get_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", "Full");
+
+    j = found = 0;
     for (i = 0; 0 != DSound_HW_Accels[i].displayID; ++i) {
       WCHAR accelStr[64];
-      LoadStringW (GetModuleHandle (NULL), DSound_HW_Accels[i].displayID, accelStr,
-          sizeof(accelStr)/sizeof(accelStr[0]));
-      SendDlgItemMessageW (hDlg, IDC_DSOUND_HW_ACCEL, CB_ADDSTRING, 0, (LPARAM)accelStr);
-    }
-    buf = get_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", "Full");
-    for (i = 0; NULL != DSound_HW_Accels[i].settingStr; ++i) {
-      if (strcmp(buf, DSound_HW_Accels[i].settingStr) == 0) {
-	SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_SETCURSEL, i, 0);
-	break ;
+      int match;
+
+      match = (strcmp(buf, DSound_HW_Accels[i].settingStr) == 0);
+      if (match)
+      {
+        DSound_HW_Accels[i].visible = 1;
+        found = 1;
+      }
+
+      if (DSound_HW_Accels[i].visible)
+      {
+        LoadStringW (GetModuleHandle (NULL), DSound_HW_Accels[i].displayID,
+                     accelStr, sizeof(accelStr)/sizeof(accelStr[0]));
+        SendDlgItemMessageW (hDlg, IDC_DSOUND_HW_ACCEL, CB_ADDSTRING, 0, (LPARAM)accelStr);
+        if (match)
+          SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_SETCURSEL, j, 0);
+        j++;
       }
     }
-    if (NULL == DSound_HW_Accels[i].settingStr) {
+    if (!found) {
       WINE_ERR("Invalid Direct Sound HW Accel read from registry (%s)\n", buf);
     }
     HeapFree(GetProcessHeap(), 0, buf);
@@ -700,10 +712,23 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           case IDC_DSOUND_HW_ACCEL:
 	    if (HIWORD(wParam) == CBN_SELCHANGE) {
 	      int selected_dsound_accel;
+              int i, j = 0;
+
 	      SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 	      selected_dsound_accel = SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_GETCURSEL, 0, 0);
-	      set_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", 
-	         DSound_HW_Accels[selected_dsound_accel].settingStr);
+              for (i = 0; DSound_HW_Accels[i].settingStr; ++i)
+              {
+                if (DSound_HW_Accels[i].visible)
+                {
+                  if (j == selected_dsound_accel)
+                  {
+                    set_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration",
+                      DSound_HW_Accels[i].settingStr);
+                    break;
+                  }
+                  j++;
+                }
+              }
 	    }
 	    break;
           case IDC_DSOUND_RATES:
