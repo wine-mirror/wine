@@ -176,12 +176,11 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DT
 
 WINED3DTEXTUREFILTERTYPE basetexture_get_autogen_filter_type(IWineD3DBaseTexture *iface)
 {
-  IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-  FIXME("(%p) : stub\n", This);
-  if (!(This->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP)) {
-     return WINED3DTEXF_NONE;
-  }
-  return This->baseTexture.filterType;
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+
+    FIXME("(%p) : stub\n", This);
+
+    return This->baseTexture.filterType;
 }
 
 void basetexture_generate_mipmaps(IWineD3DBaseTexture *iface)
