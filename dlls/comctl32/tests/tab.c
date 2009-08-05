@@ -89,13 +89,14 @@ static const struct message create_parent_wnd_seq[] = {
 
 static const struct message add_tab_to_parent[] = {
     { TCM_INSERTITEMA, sent },
-    { TCM_INSERTITEMA, sent },
+    { TCM_INSERTITEMA, sent|optional },
     { WM_NOTIFYFORMAT, sent|defwinproc },
     { WM_QUERYUISTATE, sent|wparam|lparam|defwinproc|optional, 0, 0 },
     { WM_PARENTNOTIFY, sent|defwinproc },
     { TCM_INSERTITEMA, sent },
     { TCM_INSERTITEMA, sent },
     { TCM_INSERTITEMA, sent },
+    { TCM_INSERTITEMA, sent|optional },
     { 0 }
 };
 
@@ -236,12 +237,15 @@ static const struct message insert_focus_seq[] = {
     { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_INSERTITEM, sent|wparam, 1 },
+    { WM_NOTIFYFORMAT, sent|defwinproc|optional },
+    { WM_QUERYUISTATE, sent|defwinproc|optional },
+    { WM_PARENTNOTIFY, sent|defwinproc|optional },
     { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_INSERTITEM, sent|wparam, 2 },
-    { WM_NOTIFYFORMAT, sent|defwinproc, },
+    { WM_NOTIFYFORMAT, sent|defwinproc|optional },
     { WM_QUERYUISTATE, sent|defwinproc|optional, },
-    { WM_PARENTNOTIFY, sent|defwinproc, },
+    { WM_PARENTNOTIFY, sent|defwinproc|optional },
     { TCM_GETITEMCOUNT, sent|wparam|lparam, 0, 0 },
     { TCM_GETCURFOCUS, sent|wparam|lparam, 0, 0 },
     { TCM_SETCURFOCUS, sent|wparam|lparam, -1, 0 },
@@ -505,7 +509,7 @@ static void test_tab(INT nMinTabWidth)
     SIZE size;
     HDC hdc;
     HFONT hOldFont;
-    INT i, dpi;
+    INT i, dpi, exp;
 
     hwTab = create_tabcontrol(TCS_FIXEDWIDTH, TCIF_TEXT|TCIF_IMAGE);
     SendMessage(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
@@ -585,8 +589,11 @@ static void test_tab(INT nMinTabWidth)
     SendMessage(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
 
     trace ("  non fixed width, with text...\n");
-    CheckSize(hwTab, max(size.cx +TAB_PADDING_X*2, (nMinTabWidth < 0) ? DEFAULT_MIN_TAB_WIDTH : nMinTabWidth), -1,
-              "no icon, default width");
+    exp = max(size.cx +TAB_PADDING_X*2, (nMinTabWidth < 0) ? DEFAULT_MIN_TAB_WIDTH : nMinTabWidth);
+    SendMessage( hwTab, TCM_GETITEMRECT, 0, (LPARAM)&rTab );
+    ok( rTab.right  - rTab.left == exp || broken(rTab.right  - rTab.left == DEFAULT_MIN_TAB_WIDTH),
+        "no icon, default width: Expected width [%d] got [%d]\n", exp, rTab.right - rTab.left );
+
     for (i=0; i<8; i++)
     {
         INT nTabWidth = (nMinTabWidth < 0) ? TabWidthPadded(i, 2) : nMinTabWidth;
@@ -610,7 +617,11 @@ static void test_tab(INT nMinTabWidth)
     SendMessage(hwTab, TCM_SETMINTABWIDTH, 0, nMinTabWidth);
 
     trace ("  non fixed width, no text...\n");
-    CheckSize(hwTab, (nMinTabWidth < 0) ? DEFAULT_MIN_TAB_WIDTH : nMinTabWidth, -1, "no icon, default width");
+    exp = (nMinTabWidth < 0) ? DEFAULT_MIN_TAB_WIDTH : nMinTabWidth;
+    SendMessage( hwTab, TCM_GETITEMRECT, 0, (LPARAM)&rTab );
+    ok( rTab.right  - rTab.left == exp || broken(rTab.right  - rTab.left == DEFAULT_MIN_TAB_WIDTH),
+        "no icon, default width: Expected width [%d] got [%d]\n", exp, rTab.right - rTab.left );
+
     for (i=0; i<8; i++)
     {
         INT nTabWidth = (nMinTabWidth < 0) ? TabWidthPadded(i, 2) : nMinTabWidth;
@@ -960,7 +971,7 @@ static void test_insert_focus(HWND parent_wnd)
     r = SendMessage(hTab, TCM_GETCURFOCUS, 0, 0);
     expect(2, r);
 
-    ok_sequence(sequences, TAB_SEQ_INDEX, insert_focus_seq, "insert_focus test sequence", TRUE);
+    ok_sequence(sequences, TAB_SEQ_INDEX, insert_focus_seq, "insert_focus test sequence", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_sequence, "insert_focus parent test sequence", FALSE);
 
     DestroyWindow(hTab);
