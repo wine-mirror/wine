@@ -1716,6 +1716,12 @@ static NTSTATUS find_actctx_dll( LPCWSTR libname, LPWSTR *fullname )
         /* restart with larger buffer */
     }
 
+    if (!info->lpAssemblyManifestPath || !info->lpAssemblyDirectoryName)
+    {
+        status = STATUS_SXS_KEY_NOT_FOUND;
+        goto done;
+    }
+
     if ((p = strrchrW( info->lpAssemblyManifestPath, '\\' )))
     {
         DWORD dirlen = info->ulAssemblyDirectoryNameLength / sizeof(WCHAR);
