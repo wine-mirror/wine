@@ -20,6 +20,7 @@
 #include "wine/port.h"
 
 #include <math.h>
+#include <limits.h>
 
 #include "jscript.h"
 #include "engine.h"
@@ -27,6 +28,8 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
+
+#define LONGLONG_MAX (((LONGLONG)0x7fffffff<<32)|0xffffffff)
 
 static const WCHAR NaNW[] = {'N','a','N',0};
 static const WCHAR InfinityW[] = {'I','n','f','i','n','i','t','y',0};
@@ -474,8 +477,103 @@ static HRESULT JSGlobal_parseInt(DispatchEx *dispex, LCID lcid, WORD flags, DISP
 static HRESULT JSGlobal_parseFloat(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    LONGLONG d = 0, hlp;
+    int exp = 0, length;
+    VARIANT *arg;
+    WCHAR *str;
+    BSTR val_str = NULL;
+    BOOL ret_nan = TRUE, positive = TRUE;
+    HRESULT hres;
+
+    if(!arg_cnt(dp)) {
+        if(retv)
+            num_set_nan(retv);
+        return S_OK;
+    }
+
+    arg = get_arg(dp, 0);
+    hres = to_string(dispex->ctx, arg, ei, &val_str);
+    if(FAILED(hres))
+        return hres;
+
+    str = val_str;
+    length = SysStringLen(val_str);
+
+    while(isspaceW(*str)) str++;
+
+    if(*str == '+')
+        str++;
+    else if(*str == '-') {
+        positive = FALSE;
+        str++;
+    }
+
+    if(isdigitW(*str))
+        ret_nan = FALSE;
+
+    while(isdigitW(*str)) {
+        hlp = d*10 + *(str++) - '0';
+        if(d>LONGLONG_MAX/10 || hlp<0) {
+            exp++;
+            break;
+        }
+        else
+            d = hlp;
+    }
+    while(isdigitW(*str)) {
+        exp++;
+        str++;
+    }
+
+    if(*str == '.') str++;
+
+    if(isdigitW(*str))
+        ret_nan = FALSE;
+
+    while(isdigitW(*str)) {
+        hlp = d*10 + *(str++) - '0';
+        if(d>LONGLONG_MAX/10 || hlp<0)
+            break;
+
+        d = hlp;
+        exp--;
+    }
+    while(isdigitW(*str))
+        str++;
+
+    if(*str && !ret_nan && (*str=='e' || *str=='E')) {
+        int sign = 1, e = 0;
+
+        str++;
+        if(*str == '+')
+            str++;
+        else if(*str == '-') {
+            sign = -1;
+            str++;
+        }
+
+        while(isdigitW(*str)) {
+            if(e>INT_MAX/10 || (e = e*10 + *str++ - '0')<0)
+                e = INT_MAX;
+        }
+        e *= sign;
+
+        if(exp<0 && e<0 && exp+e>0) exp = INT_MIN;
+        else if(exp>0 && e>0 && exp+e<0) exp = INT_MAX;
+        else exp += e;
+    }
+
+    SysFreeString(val_str);
+
+    if(ret_nan) {
+        if(retv)
+            num_set_nan(retv);
+        return S_OK;
+    }
+
+    V_VT(retv) = VT_R8;
+    V_R8(retv) = (double)(positive?d:-d)*pow(10, exp);
+    return S_OK;
 }
 
 static HRESULT JSGlobal_unescape(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

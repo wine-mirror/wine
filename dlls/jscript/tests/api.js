@@ -627,6 +627,16 @@ for(i=2; i<10; i++) {
     ok((0).toString(i) === "0", "(0).toString("+i+") = " + (0).toString(i));
 }
 
+ok(parseFloat('123') === 123, "parseFloat('123') = " + parseFloat('123'));
+ok(parseFloat('-13.7') === -13.7, "parseFloat('-13.7') = " + parseFloat('-13.7'));
+ok(parseFloat('-0.01e-2') === -0.01e-2, "parseFloat('-0.01e-2') = " + parseFloat('-0.01e-2'));
+ok(parseFloat('-12e+5') === -12e+5, "parseFloat('-12e+5') = " + parseFloat('-12e+5'));
+ok(parseFloat('1E5 not parsed') === 1E5, "parseFloat('1E5 not parsed') = " + parseFloat('1E5 not parsed'));
+ok(isNaN(parseFloat('not a number')), "parseFloat('not a number') is not NaN");
+ok(parseFloat('+13.2e-3') === 13.2e-3, "parseFloat('+13.2e-3') = " + parseFloat('+13.2e-3'));
+ok(parseFloat('.12') === 0.12, "parseFloat('.12') = " + parseFloat('.12'));
+ok(parseFloat('1e') === 1, "parseFloat('1e') = " + parseFloat('1e'));
+
 tmp = Math.min(1);
 ok(tmp === 1, "Math.min(1) = " + tmp);
 
