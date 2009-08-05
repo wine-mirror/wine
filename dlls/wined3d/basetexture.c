@@ -377,8 +377,10 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
         state = samplerStates[WINED3DSAMP_MAGFILTER];
         if (state > WINED3DTEXF_ANISOTROPIC) {
             FIXME("Unrecognized or unsupported MAGFILTER* value %d\n", state);
-        } else {
-            glValue = This->baseTexture.magLookup[state - WINED3DTEXF_NONE];
+        }
+        else
+        {
+            glValue = wined3d_gl_mag_filter(This->baseTexture.magLookup, state);
             TRACE("ValueMAG=%d setting MAGFILTER to %x\n", state, glValue);
             glTexParameteri(textureDimensions, GL_TEXTURE_MAG_FILTER, glValue);
         }
@@ -402,9 +404,9 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
                   states[WINED3DTEXSTA_MINFILTER],
                   states[WINED3DTEXSTA_MIPFILTER]);
         }
-        glValue = This->baseTexture.minMipLookup
-                [min(max(samplerStates[WINED3DSAMP_MINFILTER],WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC)]
-                .mip[min(max(samplerStates[WINED3DSAMP_MIPFILTER],WINED3DTEXF_NONE), WINED3DTEXF_LINEAR)];
+        glValue = wined3d_gl_min_mip_filter(This->baseTexture.minMipLookup,
+                min(max(samplerStates[WINED3DSAMP_MINFILTER],WINED3DTEXF_NONE), WINED3DTEXF_ANISOTROPIC),
+                min(max(samplerStates[WINED3DSAMP_MIPFILTER],WINED3DTEXF_NONE), WINED3DTEXF_LINEAR));
 
         TRACE("ValueMIN=%d, ValueMIP=%d, setting MINFILTER to %x\n",
               samplerStates[WINED3DSAMP_MINFILTER],

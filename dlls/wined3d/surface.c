@@ -3182,10 +3182,10 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
     /* No issue with overriding these - the sampler is dirty due to blit usage */
     glTexParameteri(texture_target, GL_TEXTURE_MAG_FILTER,
-                    magLookup[Filter - WINED3DTEXF_NONE]);
+            wined3d_gl_mag_filter(magLookup, Filter));
     checkGLcall("glTexParameteri");
     glTexParameteri(texture_target, GL_TEXTURE_MIN_FILTER,
-                    minMipLookup[Filter].mip[WINED3DTEXF_NONE]);
+            wined3d_gl_min_mip_filter(minMipLookup, Filter, WINED3DTEXF_NONE));
     checkGLcall("glTexParameteri");
 
     if(!swapchain || (IWineD3DSurface *) Src == swapchain->backBuffer[0]) {
@@ -3744,9 +3744,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         checkGLcall("glBindTexture");
 
         /* Filtering for StretchRect */
-        glTexParameteri(Src->texture_target, GL_TEXTURE_MAG_FILTER, magLookup[Filter - WINED3DTEXF_NONE]);
+        glTexParameteri(Src->texture_target, GL_TEXTURE_MAG_FILTER,
+                wined3d_gl_mag_filter(magLookup, Filter));
         checkGLcall("glTexParameteri");
-        glTexParameteri(Src->texture_target, GL_TEXTURE_MIN_FILTER, minMipLookup[Filter].mip[WINED3DTEXF_NONE]);
+        glTexParameteri(Src->texture_target, GL_TEXTURE_MIN_FILTER,
+                wined3d_gl_min_mip_filter(minMipLookup, Filter, WINED3DTEXF_NONE));
         checkGLcall("glTexParameteri");
         glTexParameteri(Src->texture_target, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(Src->texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP);

@@ -181,6 +181,17 @@ const struct min_lookup minMipLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1];
 const GLenum magLookup[WINED3DTEXF_ANISOTROPIC + 1];
 const GLenum magLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1];
 
+static inline GLenum wined3d_gl_mag_filter(const GLenum mag_lookup[], WINED3DTEXTUREFILTERTYPE mag_filter)
+{
+    return mag_lookup[mag_filter];
+}
+
+static inline GLenum wined3d_gl_min_mip_filter(const struct min_lookup min_mip_lookup[],
+        WINED3DTEXTUREFILTERTYPE min_filter, WINED3DTEXTUREFILTERTYPE mip_filter)
+{
+    return min_mip_lookup[min_filter].mip[mip_filter];
+}
+
 /* float_16_to_32() and float_32_to_16() (see implementation in
  * surface_base.c) convert 16 bit floats in the FLOAT16 data type
  * to standard C floats and vice versa. They do not depend on the encoding
