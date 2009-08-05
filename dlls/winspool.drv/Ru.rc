@@ -20,22 +20,25 @@
 
 #include "wspool.h"
 
+/* UTF-8 */
+#pragma code_page(65001)
+
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 FILENAME_DIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE 6, 18, 245, 47
 STYLE DS_CONTEXTHELP | DS_MODALFRAME | DS_SETFONT | DS_SETFOREGROUND | WS_POPUPWINDOW | WS_VISIBLE | WS_CAPTION
-CAPTION "Печать в файл"
+CAPTION "РџРµС‡Р°С‚СЊ РІ С„Р°Р№Р»"
 FONT 8, "MS Shell Dlg"
 BEGIN
-    LTEXT "&Имя файла:", -1, 7, 13, 194, 13, WS_VISIBLE
+    LTEXT "&РРјСЏ С„Р°Р№Р»Р°:", -1, 7, 13, 194, 13, WS_VISIBLE
     EDITTEXT EDITBOX, 6, 28, 174, 12, WS_VISIBLE | ES_AUTOHSCROLL
     DEFPUSHBUTTON "OK", IDOK, 199, 10, 40, 14, WS_VISIBLE
-    PUSHBUTTON "Отмена", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
+    PUSHBUTTON "РћС‚РјРµРЅР°", IDCANCEL, 199, 27, 40, 14, WS_VISIBLE
 END
 
 STRINGTABLE DISCARDABLE
 {
-    IDS_CAPTION "Локальный порт"
-    IDS_FILE_EXISTS "Такой файл уже существует.  Нажмите OK для его замены."
-    IDS_CANNOT_OPEN "Невозможно создать выходной файл."
+    IDS_CAPTION "Р›РѕРєР°Р»СЊРЅС‹Р№ РїРѕСЂС‚"
+    IDS_FILE_EXISTS "РўР°РєРѕР№ С„Р°Р№Р» СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚.  РќР°Р¶РјРёС‚Рµ OK РґР»СЏ РµРіРѕ Р·Р°РјРµРЅС‹."
+    IDS_CANNOT_OPEN "РќРµРІРѕР·РјРѕР¶РЅРѕ СЃРѕР·РґР°С‚СЊ РІС‹С…РѕРґРЅРѕР№ С„Р°Р№Р»."
 }
