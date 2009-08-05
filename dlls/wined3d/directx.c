@@ -3644,18 +3644,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
         return WINED3DERR_NOTAVAILABLE;
     }
 
-    /* This format is nothing special and it is supported perfectly.
-     * However, ati and nvidia driver on windows do not mark this format as
-     * supported (tested with the dxCapsViewer) and pretending to
-     * support this format uncovers a bug in Battlefield 1942 (fonts are missing)
-     * So do the same as Windows drivers and pretend not to support it on dx8 and 9
-     * Enable it on dx7. It will need additional checking on dx10 when we support it.
-     */
-    if(This->dxVersion > 7 && CheckFormat == WINED3DFMT_R8G8B8) {
-        TRACE_(d3d_caps)("[FAILED]\n");
-        return WINED3DERR_NOTAVAILABLE;
-    }
-
     /* When the UsageCaps exactly matches Usage return WINED3D_OK except for the situation in which
      * WINED3DUSAGE_AUTOGENMIPMAP isn't around, then WINED3DOK_NOAUTOGEN is returned if all the other
      * usage flags match. */
