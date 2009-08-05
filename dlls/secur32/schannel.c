@@ -288,6 +288,21 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryCredentialsAttributesW(
 static SECURITY_STATUS schan_CheckCreds(const SCHANNEL_CRED *schanCred)
 {
     SECURITY_STATUS st;
+    DWORD i;
+
+    TRACE("dwVersion = %d\n", schanCred->dwVersion);
+    TRACE("cCreds = %d\n", schanCred->cCreds);
+    TRACE("hRootStore = %p\n", schanCred->hRootStore);
+    TRACE("cMappers = %d\n", schanCred->cMappers);
+    TRACE("cSupportedAlgs = %d:\n", schanCred->cSupportedAlgs);
+    for (i = 0; i < schanCred->cSupportedAlgs; i++)
+        TRACE("%08x\n", schanCred->palgSupportedAlgs[i]);
+    TRACE("grbitEnabledProtocols = %08x\n", schanCred->grbitEnabledProtocols);
+    TRACE("dwMinimumCipherStrength = %d\n", schanCred->dwMinimumCipherStrength);
+    TRACE("dwMaximumCipherStrength = %d\n", schanCred->dwMaximumCipherStrength);
+    TRACE("dwSessionLifespan = %d\n", schanCred->dwSessionLifespan);
+    TRACE("dwFlags = %08x\n", schanCred->dwFlags);
+    TRACE("dwCredFormat = %d\n", schanCred->dwCredFormat);
 
     switch (schanCred->dwVersion)
     {
