@@ -85,7 +85,6 @@
  * Extended Styles
  *   -- LVS_EX_BORDERSELECT
  *   -- LVS_EX_FLATSB
- *   -- LVS_EX_HEADERDRAGDROP
  *   -- LVS_EX_INFOTIP
  *   -- LVS_EX_LABELTIP
  *   -- LVS_EX_MULTIWORKAREAS
@@ -5774,9 +5773,9 @@ static INT LISTVIEW_GetColumnWidth(const LISTVIEW_INFO *infoPtr, INT nColumn)
 	nColumnWidth = infoPtr->nItemWidth;
 	break;
     case LV_VIEW_DETAILS:
-	/* We are not using LISTVIEW_GetHeaderRect as this data is updated only after a HDM_ITEMCHANGED.
+	/* We are not using LISTVIEW_GetHeaderRect as this data is updated only after a HDN_ITEMCHANGED.
 	 * There is an application that subclasses the listview, calls LVM_GETCOLUMNWIDTH in the
-	 * HDM_ITEMCHANGED handler and goes into infinite recursion if it receives old data.
+	 * HDN_ITEMCHANGED handler and goes into infinite recursion if it receives old data.
 	 *
 	 * TODO: should we do the same in LVM_GETCOLUMN?
 	 */
