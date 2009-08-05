@@ -238,6 +238,8 @@ static void FillRoot(void)
     static CHAR root[]  = "Root",
                 child[] = "Child";
 
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+
     Clear();
     AddItem('A');
     ins.hParent = TVI_ROOT;
@@ -262,6 +264,7 @@ static void FillRoot(void)
     hChild = TreeView_InsertItem(hTree, &ins);
     assert(hChild);
     AddItem('.');
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, FillRootSeq, "FillRoot", FALSE);
 
     ok(!strcmp(sequence, "AB."), "Item creation\n");
 }
@@ -331,6 +334,9 @@ static void TestCallback(void)
 static void DoTest1(void)
 {
     BOOL r;
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+
     r = TreeView_SelectItem(hTree, NULL);
     Clear();
     AddItem('1');
@@ -345,11 +351,15 @@ static void DoTest1(void)
     r = TreeView_SelectItem(hTree, hRoot);
     AddItem('.');
     ok(!strcmp(sequence, "1(nR)nR23(Rn)Rn45(nR)nR."), "root-none select test\n");
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoTest1Seq, "DoTest1", FALSE);
 }
 
 static void DoTest2(void)
 {
     BOOL r;
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
+
     r = TreeView_SelectItem(hTree, NULL);
     Clear();
     AddItem('1');
@@ -364,6 +374,7 @@ static void DoTest2(void)
     r = TreeView_SelectItem(hTree, hRoot);
     AddItem('.');
     ok(!strcmp(sequence, "1(nR)nR23(RC)RC45(CR)CR."), "root-child select test\n");
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoTest2Seq, "DoTest2", FALSE);
 }
 
 static void DoTest3(void)
@@ -374,6 +385,8 @@ static void DoTest3(void)
 
     int nBufferSize = 80;
     CHAR szBuffer[80] = "Blah";
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
 
     /* add an item without TVIF_TEXT mask and pszText == NULL */
     ins.hParent = hRoot;
@@ -393,6 +406,7 @@ static void DoTest3(void)
     SendMessageA( hTree, TVM_GETITEM, 0, (LPARAM)&tvi );
     ok(!strcmp(szBuffer, ""), "szBuffer=\"%s\", expected \"\"\n", szBuffer);
     ok(SendMessageA(hTree, TVM_DELETEITEM, 0, (LPARAM)hChild), "DeleteItem failed\n");
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoTest3Seq, "DoTest3", FALSE);
 }
 
 static void DoFocusTest(void)
@@ -401,6 +415,8 @@ static void DoFocusTest(void)
     static CHAR child1[]  = "Edit",
                 child2[]  = "A really long string";
     HTREEITEM hChild1, hChild2;
+
+    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
 
     /* This test verifies that when a label is being edited, scrolling
      * the treeview does not cause the label to lose focus. To test
@@ -425,6 +441,7 @@ static void DoFocusTest(void)
     hEdit = TreeView_EditLabel(hTree, hChild);
     ScrollWindowEx(hTree, -10, 0, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN);
     ok(GetFocus() == hEdit, "Edit control should have focus\n");
+    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoFocusTestSeq, "DoFocusTest", TRUE);
 }
 
 static void TestGetSetBkColor(void)
@@ -863,32 +880,14 @@ START_TEST(treeview)
     if ( !ok(hMainWnd != NULL, "Failed to create parent window. Tests aborted.\n") )
         return;
 
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     FillRoot();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, FillRootSeq, "FillRoot", FALSE);
-
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoTest1();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoTest1Seq, "DoTest1", FALSE);
-
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoTest2();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoTest2Seq, "DoTest2", FALSE);
-
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoTest3();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoTest3Seq, "DoTest3", FALSE);
-
-    flush_sequences(MsgSequences, NUM_MSG_SEQUENCES);
     DoFocusTest();
-    ok_sequence(MsgSequences, TREEVIEW_SEQ_INDEX, DoFocusTestSeq, "DoFocusTest", TRUE);
-
-    /* Sequences tested inside due to number */
     TestGetSet();
-
     /* Clears all the previous items */
     TestCallback();
-
     /* Clears all the previous items */
     TestExpandInvisible();
 
