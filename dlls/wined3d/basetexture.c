@@ -415,7 +415,7 @@ void basetexture_apply_state_changes(IWineD3DBaseTexture *iface,
                   states[WINED3DTEXSTA_MIPFILTER]);
         }
         glValue = wined3d_gl_min_mip_filter(This->baseTexture.minMipLookup,
-                min(max(samplerStates[WINED3DSAMP_MINFILTER], WINED3DTEXF_NONE), WINED3DTEXF_LINEAR),
+                min(max(samplerStates[WINED3DSAMP_MINFILTER], WINED3DTEXF_POINT), WINED3DTEXF_LINEAR),
                 min(max(samplerStates[WINED3DSAMP_MIPFILTER], WINED3DTEXF_NONE), WINED3DTEXF_LINEAR));
 
         TRACE("ValueMIN=%d, ValueMIP=%d, setting MINFILTER to %x\n",

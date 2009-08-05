@@ -132,7 +132,8 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         if (This->presentParms.Windowed) {
             MapWindowPoints(NULL, This->win_handle, (LPPOINT)&destRect, 2);
         }
-        IWineD3DSurface_Blt(This->backBuffer[0], &destRect, (IWineD3DSurface *) &cursor, NULL, WINEDDBLT_KEYSRC, NULL, WINED3DTEXF_NONE);
+        IWineD3DSurface_Blt(This->backBuffer[0], &destRect, (IWineD3DSurface *)&cursor,
+                NULL, WINEDDBLT_KEYSRC, NULL, WINED3DTEXF_POINT);
     }
     if(This->wineD3DDevice->logo_surface) {
         /* Blit the logo into the upper left corner of the drawable */

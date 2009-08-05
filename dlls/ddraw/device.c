@@ -2639,7 +2639,7 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
     {
         case D3DRENDERSTATE_TEXTUREMAG:
         {
-            WINED3DTEXTUREFILTERTYPE tex_mag = WINED3DTEXF_NONE;
+            WINED3DTEXTUREFILTERTYPE tex_mag = WINED3DTEXF_POINT;
 
             switch ((D3DTEXTUREFILTER) Value)
             {
@@ -2663,7 +2663,7 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
 
         case D3DRENDERSTATE_TEXTUREMIN:
         {
-            WINED3DTEXTUREFILTERTYPE tex_min = WINED3DTEXF_NONE;
+            WINED3DTEXTUREFILTERTYPE tex_min = WINED3DTEXF_POINT;
             WINED3DTEXTUREFILTERTYPE tex_mip = WINED3DTEXF_NONE;
 
             switch ((D3DTEXTUREFILTER) Value)
@@ -2675,11 +2675,11 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
                     tex_min = WINED3DTEXF_LINEAR;
                     break;
                 case D3DFILTER_MIPNEAREST:
-                    tex_min = WINED3DTEXF_NONE;
+                    tex_min = WINED3DTEXF_POINT;
                     tex_mip = WINED3DTEXF_POINT;
                     break;
                 case D3DFILTER_MIPLINEAR:
-                    tex_min = WINED3DTEXF_NONE;
+                    tex_min = WINED3DTEXF_POINT;
                     tex_mip = WINED3DTEXF_LINEAR;
                     break;
                 case D3DFILTER_LINEARMIPNEAREST:

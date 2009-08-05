@@ -6198,7 +6198,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
         BltFx.dwSize = sizeof(BltFx);
         BltFx.u5.dwFillColor = argb_to_fmt(color, surface->resource.format_desc->format);
         return IWineD3DSurface_Blt(pSurface, (const RECT *)pRect, NULL, NULL,
-                WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
+                WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
     }
 }
 
@@ -6245,7 +6245,7 @@ static void WINAPI IWineD3DDeviceImpl_ClearRendertargetView(IWineD3DDevice *ifac
         memset(&BltFx, 0, sizeof(BltFx));
         BltFx.dwSize = sizeof(BltFx);
         BltFx.u5.dwFillColor = argb_to_fmt(c, ((IWineD3DSurfaceImpl *)surface)->resource.format_desc->format);
-        hr = IWineD3DSurface_Blt(surface, NULL, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_NONE);
+        hr = IWineD3DSurface_Blt(surface, NULL, NULL, NULL, WINEDDBLT_COLORFILL, &BltFx, WINED3DTEXF_POINT);
         if (FAILED(hr))
         {
             ERR("Blt failed, hr %#x\n", hr);
