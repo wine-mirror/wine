@@ -304,7 +304,12 @@ static HRESULT equal2_values(VARIANT *lval, VARIANT *rval, BOOL *ret)
         *ret = V_R8(lval) == V_R8(rval);
         break;
     case VT_BSTR:
-        *ret = !strcmpW(V_BSTR(lval), V_BSTR(rval));
+        if(!V_BSTR(lval))
+            *ret = SysStringLen(V_BSTR(rval))?FALSE:TRUE;
+        else if(!V_BSTR(rval))
+            *ret = SysStringLen(V_BSTR(lval))?FALSE:TRUE;
+        else
+            *ret = !strcmpW(V_BSTR(lval), V_BSTR(rval));
         break;
     case VT_DISPATCH:
         return disp_cmp(V_DISPATCH(lval), V_DISPATCH(rval), ret);

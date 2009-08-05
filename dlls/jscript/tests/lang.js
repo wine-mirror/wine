@@ -896,4 +896,6 @@ ok(""+str === "test", "''+str = " + str);
 
 ok((function (){return 1;})() === 1, "(function (){return 1;})() = " + (function (){return 1;})());
 
+ok(createNullBSTR() === '', "createNullBSTR() !== ''");
+
 reportSuccess();
