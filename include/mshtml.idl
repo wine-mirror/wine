@@ -92,6 +92,26 @@ typedef enum _SELECTION_TYPE {
     SELECTION_TYPE_Max = 2147483647
 } SELECTION_TYPE;
 
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051049b-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDOMConstructor : IDispatch
+{
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    HRESULT constructor([retval, out] IDispatch* * p);
+
+    HRESULT LookupGetter([in] BSTR propname, [retval, out] VARIANT* ppDispHandler);
+
+    HRESULT LookupSetter([in] BSTR propname, [retval, out] VARIANT* ppDispHandler);
+
+    HRESULT DefineGetter([in] BSTR propname, [in] VARIANT* pdispHandler);
+
+    HRESULT DefineSetter([in] BSTR propname, [in] VARIANT* pdispHandler);
+}
+
 interface IHTMLDocument2;
 interface IHTMLStyleSheetsCollection;
 interface IHTMLFrameBase;
@@ -5377,6 +5397,41 @@ interface IHTMLStyleSheetRule : IDispatch
     HRESULT readOnly([retval, out] VARIANT_BOOL *p);
 }
 
+[
+    hidden,
+    uuid(3050f50e-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLStyleSheetRule
+{
+properties:
+methods:
+    [propput, id(DISPID_IHTMLSTYLESHEETRULE_SELECTORTEXT)]
+    void selectorText(BSTR v);
+
+    [propget, id(DISPID_IHTMLSTYLESHEETRULE_SELECTORTEXT)]
+    BSTR selectorText();
+
+    [propget, id(DISPID_IHTMLSTYLESHEETRULE_STYLE), nonbrowsable]
+    IHTMLRuleStyle* style();
+
+    [propget, id(DISPID_IHTMLSTYLESHEETRULE_READONLY)]
+    VARIANT_BOOL readOnly();
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch* constructor();
+}
+
+[
+    noncreatable,
+    uuid(3050f3ce-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLStyleSheetRule
+{
+    [default]           dispinterface DispHTMLStyleSheetRule;
+                        interface IHTMLStyleSheetRule;
+                        interface IHTMLDOMConstructor;
+}
+
 /*****************************************************************************
  *    IHTMLStyleSheetRulesCollection interface
  */
@@ -5398,6 +5453,35 @@ interface IHTMLStyleSheetRulesCollection : IDispatch
 }
 
 [
+    hidden,
+    uuid(3050f52f-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLStyleSheetRulesCollection
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLSTYLESHEETRULESCOLLECTION_LENGTH)]
+    long length();
+
+    [id(DISPID_IHTMLSTYLESHEETRULESCOLLECTION_ITEM)]
+    IHTMLStyleSheetRule* item([in] long index);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch* constructor();
+}
+
+[
+    noncreatable,
+    uuid(3050f3cd-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLStyleSheetRulesCollection
+{
+    [default]           dispinterface DispHTMLStyleSheetRulesCollection;
+                        interface IHTMLStyleSheetRulesCollection;
+                        interface IHTMLDOMConstructor;
+}
+
+[
     odl,
     oleautomation,
     dual,
@@ -5411,6 +5495,34 @@ interface IHTMLStyleSheetPage : IDispatch
     [propget, id(DISPID_IHTMLSTYLESHEETPAGE_PSEUDOCLASS)]
     HRESULT pseudoClass([retval, out] BSTR *p);
 }
+
+[
+    hidden,
+    uuid(3050f540-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLStyleSheetPage
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLSTYLESHEETPAGE_SELECTOR)]
+    BSTR selector();
+
+    [propget, id(DISPID_IHTMLSTYLESHEETPAGE_PSEUDOCLASS)]
+    BSTR pseudoClass();
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch* constructor();
+}
+[
+    noncreatable,
+    uuid(3050f7ef-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLStyleSheetPage
+{
+    [default]           dispinterface DispHTMLStyleSheetPage;
+                        interface IHTMLStyleSheetPage;
+                        interface IHTMLDOMConstructor;
+};
 
 [
     odl,
@@ -5427,6 +5539,35 @@ interface IHTMLStyleSheetPagesCollection : IDispatch
     HRESULT item(
         [in] LONG index,
         [retval, out] IHTMLStyleSheetPage **ppHTMLStyleSheetPage);
+}
+
+[
+    hidden,
+    uuid(3050f543-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispHTMLStyleSheetPagesCollection
+{
+properties:
+methods:
+    [propget, id(DISPID_IHTMLSTYLESHEETPAGESCOLLECTION_LENGTH)]
+    long length();
+
+    [id(DISPID_IHTMLSTYLESHEETPAGESCOLLECTION_ITEM)]
+    IHTMLStyleSheetPage* item([in] long index);
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch* constructor();
+}
+
+[
+    noncreatable,
+    uuid(3050f7f1-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLStyleSheetPagesCollection
+{
+    [default]           dispinterface DispHTMLStyleSheetPagesCollection;
+                        interface IHTMLStyleSheetPagesCollection;
+                        interface IHTMLDOMConstructor;
 }
 
 /*****************************************************************************
@@ -9616,6 +9757,21 @@ interface IHTMLOptionElement : IDispatch
     HRESULT form([retval, out] IHTMLFormElement **p);
 }
 
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f820-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLOptionElement3 : IDispatch
+{
+    [propput, id(DISPID_IHTMLOPTIONELEMENT3_LABEL), displaybind, bindable]
+    HRESULT label([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOPTIONELEMENT3_LABEL), displaybind, bindable]
+    HRESULT label([retval, out] BSTR * p);
+}
+
 /*****************************************************************************
  *    IHTMLOptionElementFactory interface
  */
@@ -10525,6 +10681,27 @@ methods:
 
     [propget, id(DISPID_IHTMLOPTIONELEMENT3_LABEL), displaybind, bindable]
     BSTR label();
+}
+
+[
+    noncreatable,
+    uuid(3050f24d-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass HTMLOptionElement
+{
+    [default]           dispinterface DispHTMLOptionElement;
+    [source, default]   dispinterface HTMLElementEvents;
+    [source]            dispinterface HTMLElementEvents2;
+                        interface IHTMLElement;
+                        interface IHTMLElement2;
+                        interface IHTMLElement3;
+                        interface IHTMLElement4;
+                        interface IHTMLUniqueName;
+                        interface IHTMLDOMNode;
+                        interface IHTMLDOMNode2;
+                        interface IHTMLDatabinding;
+                        interface IHTMLOptionElement;
+                        interface IHTMLOptionElement3;
 }
 
 /*****************************************************************************
