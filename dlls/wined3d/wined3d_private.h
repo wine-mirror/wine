@@ -181,9 +181,6 @@ const struct min_lookup minMipLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1];
 const GLenum magLookup[WINED3DTEXF_ANISOTROPIC + 1];
 const GLenum magLookup_noFilter[WINED3DTEXF_ANISOTROPIC + 1];
 
-extern const struct filter_lookup filter_lookup_nofilter;
-extern struct filter_lookup filter_lookup;
-
 /* float_16_to_32() and float_32_to_16() (see implementation in
  * surface_base.c) convert 16 bit floats in the FLOAT16 data type
  * to standard C floats and vice versa. They do not depend on the encoding
@@ -1474,12 +1471,6 @@ extern const IWineD3DVtbl IWineD3D_Vtbl;
 
 BOOL InitAdapters(IWineD3DImpl *This);
 
-/* TODO: setup some flags in the registry to enable, disable pbuffer support
-(since it will break quite a few things until contexts are managed properly!) */
-extern BOOL pbuffer_support;
-/* allocate one pbuffer per surface */
-extern BOOL pbuffer_per_surface;
-
 /* A helper function that dumps a resource list */
 void dumpResources(struct list *list);
 
@@ -1794,10 +1785,6 @@ HRESULT basetexture_set_autogen_filter_type(IWineD3DBaseTexture *iface, WINED3DT
 BOOL basetexture_set_dirty(IWineD3DBaseTexture *iface, BOOL dirty);
 DWORD basetexture_set_lod(IWineD3DBaseTexture *iface, DWORD new_lod);
 void basetexture_unload(IWineD3DBaseTexture *iface);
-static inline void basetexture_setsrgbcache(IWineD3DBaseTexture *iface, BOOL srgb) {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    This->baseTexture.is_srgb = srgb;
-}
 
 /*****************************************************************************
  * IWineD3DTexture implementation structure (extends IWineD3DBaseTextureImpl)
