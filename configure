@@ -2145,7 +2145,7 @@ fi
 
 # Check whether --with-libgsm was given.
 if test "${with_libgsm+set}" = set; then
-  withval=$with_libgsm; if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; fi
+  withval=$with_libgsm; if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi
 fi
 
 
@@ -5750,6 +5750,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -5774,6 +5775,7 @@ for ac_header in \
 	getopt.h \
 	grp.h \
 	gsm.h \
+	gsm/gsm.h \
 	ieeefp.h \
 	inet/mib2.h \
 	io.h \
@@ -16654,7 +16656,7 @@ esac
 fi
 
 
-if test "$ac_cv_header_gsm_h" = "yes"
+if test "$ac_cv_header_gsm_h" = "yes" -o "$ac_cv_header_gsm_gsm_h" = "yes"
 then
     { $as_echo "$as_me:$LINENO: checking for -lgsm" >&5
 $as_echo_n "checking for -lgsm... " >&6; }

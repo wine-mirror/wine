@@ -27,7 +27,9 @@
 #include <stdarg.h>
 #include <string.h>
 
-#ifdef HAVE_GSM_H
+#ifdef HAVE_GSM_GSM_H
+#include <gsm/gsm.h>
+#elif defined(HAVE_GSM_H)
 #include <gsm.h>
 #endif
 
