@@ -172,7 +172,6 @@
 #define IDC_AUDIO_TEST                  1301
 #define IDC_AUDIO_CONTROL_PANEL         1302
 #define IDC_DSOUND_HW_ACCEL             1303
-#define IDC_DSOUND_DRV_EMUL             1304
 #define IDC_AUDIO_TREE			1305
 #define IDR_WINECFG			1306
 #define IDB_CHECKBOX                    1307

@@ -678,12 +678,6 @@ static void initAudioDlg (HWND hDlg)
 	break ;
       }
     }
-
-    buf = get_reg_key(config_key, keypath("DirectSound"), "EmulDriver", "N");
-    if (IS_OPTION_TRUE(*buf))
-      CheckDlgButton(hDlg, IDC_DSOUND_DRV_EMUL, BST_CHECKED);
-    else
-      CheckDlgButton(hDlg, IDC_DSOUND_DRV_EMUL, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
 }
 
@@ -726,15 +720,6 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	      SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 	      selected_dsound_bits = SendDlgItemMessage(hDlg, IDC_DSOUND_BITS, CB_GETCURSEL, 0, 0);
 	      set_reg_key(config_key, keypath("DirectSound"), "DefaultBitsPerSample", DSound_Bits[selected_dsound_bits]);
-	    }
-	    break;
-          case IDC_DSOUND_DRV_EMUL:
-	    if (HIWORD(wParam) == BN_CLICKED) {
-	      SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
-	      if (IsDlgButtonChecked(hDlg, IDC_DSOUND_DRV_EMUL) == BST_CHECKED)
-		set_reg_key(config_key, keypath("DirectSound"), "EmulDriver", "Y");
-	      else
-		set_reg_key(config_key, keypath("DirectSound"), "EmulDriver", "N");
 	    }
 	    break;
 	}
