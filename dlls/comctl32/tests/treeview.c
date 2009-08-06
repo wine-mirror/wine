@@ -858,6 +858,28 @@ static void test_expandinvisible(void)
     DestroyWindow(hTree);
 }
 
+static void test_itemedit(void)
+{
+    DWORD r;
+    HWND edit;
+
+    hTree = create_treeview_control();
+    fill_tree(hTree);
+
+    /* trigger edit */
+    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, (LPARAM)hRoot);
+    ok(IsWindow(edit), "Expected valid handle\n");
+    /* item shouldn't be selected automatically after TVM_EDITLABEL */
+    r = SendMessage(hTree, TVM_GETITEMSTATE, (WPARAM)hRoot, TVIS_SELECTED);
+    todo_wine expect(0, r);
+
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
+    expect(0, r);
+    todo_wine ok(!IsWindow(edit), "Expected edit control to be destroyed\n");
+
+    DestroyWindow(hTree);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -905,6 +927,7 @@ START_TEST(treeview)
     test_getset();
     test_callback();
     test_expandinvisible();
+    test_itemedit();
 
     PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
     while(GetMessageA(&msg,0,0,0)) {
