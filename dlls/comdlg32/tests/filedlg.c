@@ -664,11 +664,209 @@ static void test_ok(void)
     ok( ret, "Failed to delete temporary file %s err %d\n", tmpfilename, GetLastError());
 }
 
+/* test arranging with a custom template */
+typedef struct {
+    int x, y;  /* left, top coordinates */
+    int cx, cy; /* width and height */
+} posz;
+static struct {
+   int nrcontrols;    /* 0: no controls, 1: just the stc32 control 2: with button */
+   posz poszDlg;
+   posz poszStc32;
+   posz poszBtn;
+   DWORD ofnflags;
+} arrange_tests[] = {
+    /* do not change the first two cases: used to get the uncustomized sizes */
+    { 0, {0},{0},{0},0 },
+    { 0, {0},{0},{0}, OFN_SHOWHELP},
+    /* two tests with just a subdialog, no controls */
+    { 0, {0, 0, 316, 76},{0},{0},0 },
+    { 0, {0, 0, 100, 76},{0},{0}, OFN_SHOWHELP},
+    /* now with a control with id stc32 */
+    { 1, {0, 0, 316, 76} ,{0, 0, 204, 76,},{0},0 }, /* bug #17748*/
+    { 1, {0, 0, 316, 76} ,{0, 0, 204, 76,},{0}, OFN_SHOWHELP}, /* bug #17748*/
+    /* tests with size of the stc32 control higher or wider then the standard dialog */
+    { 1, {0, 0, 316, 170} ,{0, 0, 204, 170,},{0},0 },
+    { 1, {0, 0, 316, 165} ,{0, 0, 411, 165,},{0}, OFN_SHOWHELP },
+    /* move the stc32 control around */
+    { 1, {0, 0, 300, 100} ,{73, 17, 50, 50,},{0},0 },
+    /* add control */
+    { 2, {0, 0, 280, 100} ,{0, 0, 50, 50,},{300,20,30,30},0 },
+    /* enable resizing should make the dialog bigger */
+    { 0, {0},{0},{0}, OFN_SHOWHELP|OFN_ENABLESIZING},
+    /* mark the end */
+    { -1 }
+};
+
+static LONG_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    static int index, fixhelp;
+    static posz posz0[2];
+    static RECT clrcParent, clrcChild, rcStc32;
+    static HWND hwndStc32;
+    HWND dlgParent;
+
+    dlgParent = GetParent( dlgChild);
+    if (msg == WM_INITDIALOG) {
+        index = ((OPENFILENAME*)lParam)->lCustData;
+        /* get the positions before rearrangement */
+        GetClientRect( dlgParent, &clrcParent);
+        GetClientRect( dlgChild, &clrcChild);
+        hwndStc32 = GetDlgItem( dlgChild, stc32);
+        if( hwndStc32)  GetWindowRect( hwndStc32, &rcStc32);
+    }
+    if (msg == WM_NOTIFY && ((LPNMHDR)lParam)->code == CDN_FOLDERCHANGE) {
+        RECT wrcParent;
+
+        GetWindowRect( dlgParent, &wrcParent);
+        /* the fist two "tests" just save the dialogs position, with and without
+         * help button */
+        if( index == 0) {
+            posz0[0].x = wrcParent.left;
+            posz0[0].y = wrcParent.top;
+            posz0[0].cx = wrcParent.right - wrcParent.left;
+            posz0[0].cy = wrcParent.bottom - wrcParent.top;
+        } else if( index == 1) {
+            posz0[1].x = wrcParent.left;
+            posz0[1].y = wrcParent.top;
+            posz0[1].cx = wrcParent.right - wrcParent.left;
+            posz0[1].cy = wrcParent.bottom - wrcParent.top;
+            fixhelp = posz0[1].cy - posz0[0].cy;
+        } else {
+            /* the real tests */
+            int withhelp;
+            int expectx, expecty;
+
+            withhelp = (arrange_tests[index].ofnflags & OFN_SHOWHELP) != 0;
+            GetWindowRect( dlgParent, &wrcParent);
+            if( !hwndStc32) {
+                /* case with no custom subitem with stc32:
+                 * default to all custom controls below the standard */
+                expecty = posz0[withhelp].cy + clrcChild.bottom;
+                expectx =  posz0[withhelp].cx;
+            } else {
+                /* special case: there is a control with id stc32 */
+                /* expected height */
+                expecty = posz0[withhelp].cy;
+                if( rcStc32.bottom - rcStc32.top > clrcParent.bottom) {
+                    expecty +=  clrcChild.bottom -  clrcParent.bottom;
+                    if( !withhelp) expecty += fixhelp;
+                }
+                else
+                    expecty +=  clrcChild.bottom - ( rcStc32.bottom - rcStc32.top) ;
+                /* expected width */
+                expectx = posz0[withhelp].cx;
+                if( rcStc32.right - rcStc32.left > clrcParent.right) {
+                    expectx +=  clrcChild.right -  clrcParent.right;
+                }
+                else
+                    expectx +=  clrcChild.right - ( rcStc32.right - rcStc32.left) ;
+            }
+            if( !(arrange_tests[index].ofnflags & OFN_ENABLESIZING)) {
+                ok( wrcParent.bottom - wrcParent.top == expecty,
+                        "Wrong height of dialog %d, expected %d\n",
+                        wrcParent.bottom - wrcParent.top, expecty);
+                ok( wrcParent.right - wrcParent.left == expectx,
+                        "Wrong width of dialog %d, expected %d\n",
+                        wrcParent.right - wrcParent.left, expectx);
+            } else todo_wine {
+                ok( wrcParent.bottom - wrcParent.top > expecty,
+                        "Wrong height of dialog %d, expected more than %d\n",
+                        wrcParent.bottom - wrcParent.top, expecty);
+                ok( wrcParent.right - wrcParent.left > expectx,
+                        "Wrong width of dialog %d, expected more than %d\n",
+                        wrcParent.right - wrcParent.left, expectx);
+            }
+
+        }
+        PostMessage( dlgParent, WM_COMMAND, IDCANCEL, 0);
+    }
+    return 0;
+}
+
+static void test_arrange(void)
+{
+    OPENFILENAMEA ofn = {0};
+    char filename[1024] = {0};
+    DWORD ret;
+    HRSRC hRes;
+    HANDLE hDlgTmpl;
+    LPBYTE pv;
+    DLGTEMPLATE *template;
+    DLGITEMTEMPLATE *itemtemplateStc32, *itemtemplateBtn;
+    int i;
+
+    /* load subdialog template into memory */
+    hRes = FindResource( GetModuleHandle(NULL), "template_stc32", (LPSTR)RT_DIALOG);
+    hDlgTmpl = LoadResource( GetModuleHandle(NULL), hRes );
+    /* get pointers to the structures for the dialog and the controls */
+    pv = LockResource( hDlgTmpl );
+    template = (DLGTEMPLATE*)pv;
+    if( template->x != 11111) {
+        win_skip("could not find the dialog template\n");
+        return;
+    }
+    /* skip dialog template, menu, class and title */
+    pv +=  sizeof(DLGTEMPLATE);
+    pv += 3 * sizeof(WORD);
+    /* skip font info */
+    while( *(WORD*)pv)
+        pv += sizeof(WORD);
+    pv += sizeof(WORD);
+    /* align on 32 bit boundaries */
+    pv = (LPBYTE)(((UINT_PTR)pv + 3 ) & ~3);
+    itemtemplateStc32 = (DLGITEMTEMPLATE*)pv;
+    if( itemtemplateStc32->x != 22222) {
+        win_skip("could not find the first item template\n");
+        return;
+    }
+    /* skip itemtemplate, class, title and creation data */
+    pv += sizeof(DLGITEMTEMPLATE);
+    pv +=  4 * sizeof(WORD);
+    /* align on 32 bit boundaries */
+    pv = (LPBYTE)(((UINT_PTR)pv + 3 ) & ~3);
+    itemtemplateBtn = (DLGITEMTEMPLATE*)pv;
+    if( itemtemplateBtn->x != 12345) {
+        win_skip("could not find the second item template\n");
+        return;
+    }
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = 1024;
+    ofn.lpfnHook = (LPOFNHOOKPROC)template_hook_arrange;
+    ofn.hInstance = hDlgTmpl;
+    ofn.lpstrFilter="text\0*.txt\0All\0*\0\0";
+    for( i = 0; arrange_tests[i].nrcontrols != -1; i++) {
+        ofn.lCustData = i;
+        ofn.Flags = OFN_ENABLEHOOK | OFN_EXPLORER| OFN_ENABLETEMPLATEHANDLE | OFN_HIDEREADONLY |
+            arrange_tests[i].ofnflags;
+        template->cdit = arrange_tests[i].nrcontrols;
+        template->x = arrange_tests[i].poszDlg.x;
+        template->y = arrange_tests[i].poszDlg.y;
+        template->cx = arrange_tests[i].poszDlg.cx;
+        template->cy = arrange_tests[i].poszDlg.cy;
+        itemtemplateStc32->x = arrange_tests[i].poszStc32.x;
+        itemtemplateStc32->y = arrange_tests[i].poszStc32.y;
+        itemtemplateStc32->cx = arrange_tests[i].poszStc32.cx;
+        itemtemplateStc32->cy = arrange_tests[i].poszStc32.cy;
+        itemtemplateBtn->x = arrange_tests[i].poszBtn.x;
+        itemtemplateBtn->y = arrange_tests[i].poszBtn.y;
+        itemtemplateBtn->cx = arrange_tests[i].poszBtn.cx;
+        itemtemplateBtn->cy = arrange_tests[i].poszBtn.cy;
+        ret = GetOpenFileNameA(&ofn);
+        ok(!ret, "GetOpenFileNameA returned %#x\n", ret);
+        ret = CommDlgExtendedError();
+        ok(!ret, "CommDlgExtendedError returned %#x\n", ret);
+    }
+}
+
 START_TEST(filedlg)
 {
     test_DialogCancel();
     test_create_view_window2();
     test_create_view_template();
+    test_arrange();
     test_resize();
     test_ok();
 }

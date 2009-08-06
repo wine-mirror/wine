@@ -277,6 +277,9 @@ static BOOL GetFileName95(FileOpenDlgInfos *fodInfos)
         fodInfos->sizedlg.cx = fodInfos->sizedlg.cy = 0;
         fodInfos->initial_size.x = fodInfos->initial_size.y = 0;
     }
+    else
+        ((LPDLGTEMPLATEW)template)->style &= ~WS_SIZEBOX;
+
 
     /* old style hook messages */
     if (IsHooked(fodInfos))
@@ -554,13 +557,14 @@ static BOOL COMDLG32_GetDisplayNameOf(LPCITEMIDLIST pidl, LPWSTR pwszPath) {
 /***********************************************************************
  *      ArrangeCtrlPositions [internal]
  *
- * NOTE: Do not change anything here without a lot of testing.
+ * NOTE: Make sure to add testcases for any changes made here.
  */
 static void ArrangeCtrlPositions(HWND hwndChildDlg, HWND hwndParentDlg, BOOL hide_help)
 {
     HWND hwndChild, hwndStc32;
     RECT rectParent, rectChild, rectStc32;
-    INT help_fixup = 0, child_height_fixup = 0, child_width_fixup = 0;
+    INT help_fixup = 0;
+    int chgx, chgy;
 
     /* Take into account if open as read only checkbox and help button
      * are hidden
@@ -623,24 +627,16 @@ static void ArrangeCtrlPositions(HWND hwndChildDlg, HWND hwndParentDlg, BOOL hid
             /* move only if stc32 exist */
             if (hwndStc32 && rectChild.left > rectStc32.right)
             {
-                LONG old_left = rectChild.left;
-
                 /* move to the right of visible controls of the parent dialog */
                 rectChild.left += rectParent.right;
                 rectChild.left -= rectStc32.right;
-
-                child_width_fixup = rectChild.left - old_left;
             }
             /* move even if stc32 doesn't exist */
             if (rectChild.top >= rectStc32.bottom)
             {
-                LONG old_top = rectChild.top;
-
                 /* move below visible controls of the parent dialog */
                 rectChild.top += rectParent.bottom;
                 rectChild.top -= rectStc32.bottom - rectStc32.top;
-
-                child_height_fixup = rectChild.top - old_top;
             }
 
             SetWindowPos(hwndChild, 0, rectChild.left, rectChild.top,
@@ -675,50 +671,36 @@ static void ArrangeCtrlPositions(HWND hwndChildDlg, HWND hwndParentDlg, BOOL hid
     /* here we have to use original parent size */
     GetClientRect(hwndParentDlg, &rectParent);
     GetClientRect(hwndChildDlg, &rectChild);
+    TRACE( "parent %s child %s stc32 %s\n", wine_dbgstr_rect( &rectParent),
+            wine_dbgstr_rect( &rectChild), wine_dbgstr_rect( &rectStc32));
 
     if (hwndStc32)
     {
-        rectChild.right += child_width_fixup;
-        rectChild.bottom += child_height_fixup;
-
-        if (rectParent.right > rectChild.right)
-        {
-            rectParent.right += rectChild.right;
-            rectParent.right -= rectStc32.right - rectStc32.left;
-        }
+        /* width */
+        if (rectParent.right > rectStc32.right - rectStc32.left)
+            chgx = rectChild.right - ( rectStc32.right - rectStc32.left);
         else
-        {
-            rectParent.right = rectChild.right;
-        }
-
-        if (rectParent.bottom > rectChild.bottom)
-        {
-            rectParent.bottom += rectChild.bottom;
-            rectParent.bottom -= rectStc32.bottom - rectStc32.top;
-        }
+            chgx = rectChild.right - rectParent.right;
+        /* height */
+        if (rectParent.bottom > rectStc32.bottom - rectStc32.top)
+            chgy = rectChild.bottom - ( rectStc32.bottom - rectStc32.top) - help_fixup;
         else
-        {
-            /* child dialog is higher, unconditionally set new dialog
-             * height to its size (help_fixup will be subtracted below)
+            /* Unconditionally set new dialog
+             * height to that of the child
              */
-            rectParent.bottom = rectChild.bottom + help_fixup;
-        }
+            chgy = rectChild.bottom - rectParent.bottom;
     }
     else
     {
-        rectParent.bottom += rectChild.bottom;
+        chgx = 0;
+        chgy = rectChild.bottom - help_fixup;
     }
-
-    /* finally use fixed parent size */
-    rectParent.bottom -= help_fixup;
-
     /* set the size of the parent dialog */
-    AdjustWindowRectEx(&rectParent, GetWindowLongW(hwndParentDlg, GWL_STYLE),
-                       FALSE, GetWindowLongW(hwndParentDlg, GWL_EXSTYLE));
+    GetWindowRect(hwndParentDlg, &rectParent);
     SetWindowPos(hwndParentDlg, 0,
                  0, 0,
-                 rectParent.right - rectParent.left,
-                 rectParent.bottom - rectParent.top,
+                 rectParent.right - rectParent.left + chgx,
+                 rectParent.bottom - rectParent.top + chgy,
                  SWP_NOMOVE | SWP_NOZORDER);
 }
 
