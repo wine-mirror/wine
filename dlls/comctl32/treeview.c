@@ -3637,6 +3637,9 @@ TREEVIEW_Command(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    ReleaseDC(infoPtr->hwnd, hdc);
 	    break;
 	}
+    case EN_KILLFOCUS:
+        TREEVIEW_EndEditLabelNow(infoPtr, FALSE);
+        break;
 
     default:
 	return SendMessageW(infoPtr->hwndNotify, WM_COMMAND, wParam, lParam);
@@ -3757,8 +3760,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
     WCHAR *newText = tmpText;
     int iLength = 0;
 
-    if (!infoPtr->hwndEdit)
-	return FALSE;
+    if (!IsWindow(infoPtr->hwndEdit)) return FALSE;
 
     tvdi.hdr.hwndFrom = hwnd;
     tvdi.hdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);

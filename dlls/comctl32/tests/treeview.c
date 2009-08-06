@@ -875,7 +875,7 @@ static void test_itemedit(void)
 
     r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
     expect(0, r);
-    todo_wine ok(!IsWindow(edit), "Expected edit control to be destroyed\n");
+    ok(!IsWindow(edit), "Expected edit control to be destroyed\n");
 
     DestroyWindow(hTree);
 }
