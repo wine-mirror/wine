@@ -2653,61 +2653,86 @@ static BOOL lookup_computer_account_name(PSID Sid, PDWORD cbSid, LPWSTR Referenc
     return ret;
 }
 
-/******************************************************************************
- * LookupAccountNameW [ADVAPI32.@]
- */
-BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSID Sid,
-                                LPDWORD cbSid, LPWSTR ReferencedDomainName,
-                                LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )
+static void split_domain_account( const LSA_UNICODE_STRING *str, LSA_UNICODE_STRING *account,
+                                  LSA_UNICODE_STRING *domain )
 {
-    BOOL ret;
-    PSID pSid;
-    unsigned int i;
-    DWORD nameLen;
-    LPWSTR userName = NULL;
-    LPCWSTR domainName;
-    LPCWSTR lpAccountNamePtr;
-    LPCWSTR lpDomainNamePtr = NULL;
+    WCHAR *p = str->Buffer + str->Length / sizeof(WCHAR) - 1;
 
-    FIXME("%s %s %p %p %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpAccountName),
-          Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse);
+    while (p > str->Buffer && *p != '\\') p--;
 
-    if (!ADVAPI_IsLocalComputer(lpSystemName))
+    if (*p == '\\')
     {
-        SetLastError(RPC_S_SERVER_UNAVAILABLE);
-        return FALSE;
-    }
+        domain->Buffer = str->Buffer;
+        domain->Length = (p - str->Buffer) * sizeof(WCHAR);
 
-    if (!lpAccountName || !strcmpW(lpAccountName, Blank))
-    {
-        lpAccountName = BUILTIN;
-    }
-
-    /* Check well known SIDs first */
-    if ((lpAccountNamePtr = strrchrW(lpAccountName,'\\')))
-    {
-        lpAccountNamePtr++;
-        lpDomainNamePtr = lpAccountName;
+        account->Buffer = p + 1;
+        account->Length = str->Length - ((p - str->Buffer + 1) * sizeof(WCHAR));
     }
     else
-        lpAccountNamePtr = lpAccountName;
+    {
+        domain->Buffer = NULL;
+        domain->Length = 0;
 
-    for (i = 0; i < (sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0])); i++)
+        account->Buffer = str->Buffer;
+        account->Length = str->Length;
+    }
+}
+
+static BOOL match_domain( ULONG idx, LSA_UNICODE_STRING *domain )
+{
+    ULONG len = strlenW( ACCOUNT_SIDS[idx].domain );
+
+    if (len == domain->Length / sizeof(WCHAR) && !strncmpiW( domain->Buffer, ACCOUNT_SIDS[idx].domain, len ))
+        return TRUE;
+
+    return FALSE;
+}
+
+static BOOL match_account( ULONG idx, LSA_UNICODE_STRING *account )
+{
+    ULONG len = strlenW( ACCOUNT_SIDS[idx].account );
+
+    if (len == account->Length / sizeof(WCHAR) && !strncmpiW( account->Buffer, ACCOUNT_SIDS[idx].account, len ))
+        return TRUE;
+
+    if (ACCOUNT_SIDS[idx].alias)
+    {
+        len = strlenW( ACCOUNT_SIDS[idx].alias );
+        if (len == account->Length / sizeof(WCHAR) && !strncmpiW( account->Buffer, ACCOUNT_SIDS[idx].alias, len ))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+/*
+ * Helper function for LookupAccountNameW
+ */
+BOOL lookup_local_wellknown_name( LSA_UNICODE_STRING *account_and_domain,
+                                  PSID Sid, LPDWORD cbSid,
+                                  LPWSTR ReferencedDomainName,
+                                  LPDWORD cchReferencedDomainName,
+                                  PSID_NAME_USE peUse, BOOL *handled )
+{
+    PSID pSid;
+    LSA_UNICODE_STRING account, domain;
+    BOOL ret = TRUE;
+    ULONG i;
+
+    *handled = FALSE;
+    split_domain_account( account_and_domain, &account, &domain );
+
+    for (i = 0; i < sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0]); i++)
     {
         /* check domain first */
-        if (lpDomainNamePtr && (strncmpiW(lpDomainNamePtr, ACCOUNT_SIDS[i].domain, strlenW(ACCOUNT_SIDS[i].domain)) || lpDomainNamePtr[strlenW(ACCOUNT_SIDS[i].domain)]!='\\'))
-            continue;
+        if (domain.Buffer && !match_domain( i, &domain )) continue;
 
-        if (!strcmpiW(lpAccountNamePtr, ACCOUNT_SIDS[i].account) ||
-            (ACCOUNT_SIDS[i].alias && !strcmpiW(lpAccountNamePtr, ACCOUNT_SIDS[i].alias)))
+        if (match_account( i, &account ))
         {
-            DWORD sidLen = SECURITY_MAX_SID_SIZE;
+            DWORD len, sidLen = SECURITY_MAX_SID_SIZE;
 
-            pSid = HeapAlloc(GetProcessHeap(), 0, sidLen);
+            if (!(pSid = HeapAlloc( GetProcessHeap(), 0, sidLen ))) return FALSE;
 
-            ret = CreateWellKnownSid(ACCOUNT_SIDS[i].type, NULL, pSid, &sidLen);
-
-            if (ret)
+            if ((ret = CreateWellKnownSid( ACCOUNT_SIDS[i].type, NULL, pSid, &sidLen )))
             {
                 if (*cbSid < sidLen)
                 {
@@ -2718,47 +2743,57 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
                 {
                     CopySid(*cbSid, Sid, pSid);
                 }
-
                 *cbSid = sidLen;
             }
 
-            domainName = ACCOUNT_SIDS[i].domain;
-            nameLen = strlenW(domainName);
-
-            if (*cchReferencedDomainName <= nameLen || !ret)
+            len = strlenW( ACCOUNT_SIDS[i].domain );
+            if (*cchReferencedDomainName <= len || !ret)
             {
                 SetLastError(ERROR_INSUFFICIENT_BUFFER);
-                nameLen += 1;
+                len++;
                 ret = FALSE;
             }
             else if (ReferencedDomainName)
             {
-                strcpyW(ReferencedDomainName, domainName);
+                strcpyW( ReferencedDomainName, ACCOUNT_SIDS[i].domain );
             }
 
-            *cchReferencedDomainName = nameLen;
-
+            *cchReferencedDomainName = len;
             if (ret)
-            {
                 *peUse = ACCOUNT_SIDS[i].name_use;
-            }
 
             HeapFree(GetProcessHeap(), 0, pSid);
-
+            *handled = TRUE;
             return ret;
         }
     }
+    return ret;
+}
+
+BOOL lookup_local_user_name( LSA_UNICODE_STRING *account_and_domain,
+                             PSID Sid, LPDWORD cbSid,
+                             LPWSTR ReferencedDomainName,
+                             LPDWORD cchReferencedDomainName,
+                             PSID_NAME_USE peUse, BOOL *handled )
+{
+    DWORD nameLen;
+    LPWSTR userName = NULL;
+    LSA_UNICODE_STRING account, domain;
+    BOOL ret = TRUE;
+
+    *handled = FALSE;
+    split_domain_account( account_and_domain, &account, &domain );
 
     /* Let the current Unix user id masquerade as first Windows user account */
 
     nameLen = UNLEN + 1;
+    if (!(userName = HeapAlloc( GetProcessHeap(), 0, nameLen * sizeof(WCHAR) ))) return FALSE;
 
-    userName = HeapAlloc(GetProcessHeap(), 0, nameLen*sizeof(WCHAR));
-
-    if (lpDomainNamePtr)
+    if (domain.Buffer)
     {
         /* check to make sure this account is on this computer */
-        if (GetComputerNameW(userName, &nameLen) && strcmpW(lpDomainNamePtr, userName))
+        if (GetComputerNameW( userName, &nameLen ) &&
+            (domain.Length / sizeof(WCHAR) != nameLen || strncmpW( domain.Buffer, userName, nameLen )))
         {
             SetLastError(ERROR_NONE_MAPPED);
             ret = FALSE;
@@ -2766,25 +2801,67 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
         nameLen = UNLEN + 1;
     }
 
-    if (GetUserNameW(userName, &nameLen) && !strcmpW(lpAccountNamePtr, userName))
-        ret = lookup_user_account_name(Sid, cbSid, ReferencedDomainName,
-                                       cchReferencedDomainName, peUse);
+    if (GetUserNameW( userName, &nameLen ) &&
+        account.Length / sizeof(WCHAR) == nameLen - 1 && !strncmpW( account.Buffer, userName, nameLen - 1 ))
+    {
+            ret = lookup_user_account_name( Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse );
+            *handled = TRUE;
+    }
     else
     {
         nameLen = UNLEN + 1;
-        if (GetComputerNameW(userName, &nameLen) && !strcmpW(lpAccountNamePtr, userName))
-            ret = lookup_computer_account_name(Sid, cbSid, ReferencedDomainName,
-                                               cchReferencedDomainName, peUse);
-        else
+        if (GetComputerNameW( userName, &nameLen ) &&
+            account.Length / sizeof(WCHAR) == nameLen && !strncmpW( account.Buffer, userName , nameLen ))
         {
-            SetLastError(ERROR_NONE_MAPPED);
-            ret = FALSE;
+            ret = lookup_computer_account_name( Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse );
+            *handled = TRUE;
         }
     }
 
     HeapFree(GetProcessHeap(), 0, userName);
-
     return ret;
+}
+
+/******************************************************************************
+ * LookupAccountNameW [ADVAPI32.@]
+ */
+BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSID Sid,
+                                LPDWORD cbSid, LPWSTR ReferencedDomainName,
+                                LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )
+{
+    BOOL ret, handled;
+    LSA_UNICODE_STRING account;
+
+    FIXME("%s %s %p %p %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpAccountName),
+          Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse);
+
+    if (!ADVAPI_IsLocalComputer( lpSystemName ))
+    {
+        SetLastError( RPC_S_SERVER_UNAVAILABLE );
+        return FALSE;
+    }
+
+    if (!lpAccountName || !strcmpW( lpAccountName, Blank ))
+    {
+        lpAccountName = BUILTIN;
+    }
+
+    RtlInitUnicodeString( &account, lpAccountName );
+
+    /* Check well known SIDs first */
+    ret = lookup_local_wellknown_name( &account, Sid, cbSid, ReferencedDomainName,
+                                       cchReferencedDomainName, peUse, &handled );
+    if (handled)
+        return ret;
+
+    /* Check user names */
+    ret = lookup_local_user_name( &account, Sid, cbSid, ReferencedDomainName,
+                                  cchReferencedDomainName, peUse, &handled);
+    if (handled)
+        return ret;
+
+    SetLastError( ERROR_NONE_MAPPED );
+    return FALSE;
 }
 
 /******************************************************************************
