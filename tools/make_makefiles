@@ -301,7 +301,7 @@ sub assign_sources_to_makefiles()
         elsif ($basename =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $basename; }
         elsif ($basename =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $basename; }
         elsif ($basename =~ /\.rc$/) { push @{${$make}{"=RC_SRCS"}}, $basename; }
-        elsif ($basename =~ /\.rc$/) { push @{${$make}{"=RC_SRCS"}}, $basename; }
+        elsif ($basename =~ /\.mc$/) { push @{${$make}{"=MC_SRCS"}}, $basename; }
         elsif ($basename =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $basename; }
     }
 }
