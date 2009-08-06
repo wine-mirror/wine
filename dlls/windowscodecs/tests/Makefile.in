@@ -3,10 +3,11 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = windowscodecs.dll
-IMPORTS   = kernel32 ole32
+IMPORTS   = kernel32 ole32 windowscodecs
 
 CTESTS = \
        bmpformat.c \
+       converter.c \
        palette.c
 
 @MAKE_TEST_RULES@
