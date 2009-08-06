@@ -3651,8 +3651,11 @@ TREEVIEW_Command(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    break;
 	}
     case EN_KILLFOCUS:
-        TREEVIEW_EndEditLabelNow(infoPtr, FALSE);
-        break;
+	/* apparently we should respect passed handle value */
+	if (infoPtr->hwndEdit != (HWND)lParam) return FALSE;
+
+	TREEVIEW_EndEditLabelNow(infoPtr, FALSE);
+	break;
 
     default:
 	return SendMessageW(infoPtr->hwndNotify, WM_COMMAND, wParam, lParam);

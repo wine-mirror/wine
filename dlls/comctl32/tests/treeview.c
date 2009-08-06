@@ -879,9 +879,25 @@ static void test_itemedit(void)
     /* item shouldn't be selected automatically after TVM_EDITLABEL */
     r = SendMessage(hTree, TVM_GETITEMSTATE, (WPARAM)hRoot, TVIS_SELECTED);
     expect(0, r);
+    /* try to cancel with wrong edit handle */
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)NULL);
+    expect(0, r);
+    ok(IsWindow(edit), "Expected edit control to be valid\n");
     r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
     expect(0, r);
     ok(!IsWindow(edit), "Expected edit control to be destroyed\n");
+    /* try to cancel without creating edit */
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)NULL);
+    expect(0, r);
+
+    /* try to cancel with wrong (not null) handle */
+    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, (LPARAM)hRoot);
+    ok(IsWindow(edit), "Expected valid handle\n");
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)hTree);
+    expect(0, r);
+    ok(IsWindow(edit), "Expected edit control to be valid\n");
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
+    expect(0, r);
 
     /* remove selection after starting edit */
     r = TreeView_SelectItem(hTree, hRoot);
