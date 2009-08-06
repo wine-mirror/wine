@@ -171,7 +171,7 @@ DWORD *stateLookup[MAX_LOOKUPS];
 const struct min_lookup minMipLookup[] =
 {
     /* NONE         POINT                       LINEAR */
-    {{GL_LINEAR,    GL_LINEAR,                  GL_LINEAR}},                /* NONE */
+    {{GL_NEAREST,   GL_NEAREST,                 GL_NEAREST}},               /* NONE */
     {{GL_NEAREST,   GL_NEAREST_MIPMAP_NEAREST,  GL_NEAREST_MIPMAP_LINEAR}}, /* POINT*/
     {{GL_LINEAR,    GL_LINEAR_MIPMAP_NEAREST,   GL_LINEAR_MIPMAP_LINEAR}},  /* LINEAR */
 };
