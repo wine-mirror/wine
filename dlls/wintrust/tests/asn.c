@@ -878,7 +878,6 @@ static void test_decodeSpOpusInfo(void)
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      emptySequence, sizeof(emptySequence), CRYPT_DECODE_ALLOC_FLAG, NULL,
      &info, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -890,7 +889,6 @@ static void test_decodeSpOpusInfo(void)
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      spOpusInfoWithProgramName, sizeof(spOpusInfoWithProgramName),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -903,7 +901,6 @@ static void test_decodeSpOpusInfo(void)
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      spOpusInfoWithMoreInfo, sizeof(spOpusInfoWithMoreInfo),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
@@ -922,7 +919,6 @@ static void test_decodeSpOpusInfo(void)
     ret = pCryptDecodeObjectEx(X509_ASN_ENCODING, SPC_SP_OPUS_INFO_STRUCT,
      spOpusInfoWithPublisherInfo, sizeof(spOpusInfoWithPublisherInfo),
      CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
-    todo_wine
     ok(ret, "CryptDecodeObjectEx failed: %08x\n", GetLastError());
     if (ret)
     {
