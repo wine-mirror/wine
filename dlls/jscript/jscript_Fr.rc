@@ -35,6 +35,7 @@ STRINGTABLE DISCARDABLE
     IDS_SEMICOLON           "« ; » attendu"
     IDS_LBRACKET            "« ( » attendu"
     IDS_RBRACKET            "« ) » attendu"
+    IDS_UNTERMINATED_STR    "Constante chaîne de caractères non clôturée"
     IDS_NOT_FUNC            "Fonction attendue"
     IDS_NOT_DATE            "« [objet] » n'est pas un objet de type date"
     IDS_NOT_NUM             "Nombre attendu"
