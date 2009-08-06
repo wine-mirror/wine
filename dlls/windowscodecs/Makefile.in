@@ -10,6 +10,7 @@ C_SRCS = \
 	bmpdecode.c \
 	bmpencode.c \
 	clsfactory.c \
+	converter.c \
 	imgfactory.c \
 	info.c \
 	main.c \

@@ -570,6 +570,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"windowscodecs.dll",
 	"Apartment"
     },
+    {   &CLSID_WICDefaultFormatConverter,
+	"WIC Default Format Converter",
+	NULL,
+	"windowscodecs.dll",
+	"Apartment"
+    },
     { NULL }			/* list terminator */
 };
 

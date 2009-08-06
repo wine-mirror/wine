@@ -45,6 +45,7 @@ static classinfo wic_classes[] = {
     {&CLSID_WICImagingFactory, ImagingFactory_CreateInstance},
     {&CLSID_WICBmpDecoder, BmpDecoder_CreateInstance},
     {&CLSID_WICBmpEncoder, BmpEncoder_CreateInstance},
+    {&CLSID_WICDefaultFormatConverter, FormatConverter_CreateInstance},
     {0}};
 
 typedef struct {
