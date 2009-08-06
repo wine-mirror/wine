@@ -15,6 +15,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+cpp_quote("#ifdef _WIN64")
+cpp_quote("#include <pshpack8.h>")
+cpp_quote("#else")
+cpp_quote("#include <pshpack2.h>")
+cpp_quote("#endif")
+cpp_quote("")
 
 import "wtypes.idl";
 import "oaidl.idl";
@@ -36,3 +42,6 @@ typedef ULONG DBCOUNTITEM;
 #include "opnrst.idl"
 #include "binres.idl"
 #include "crtrow.idl"
+
+cpp_quote("#include <poppack.h>")
+cpp_quote("")
