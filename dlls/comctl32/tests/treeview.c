@@ -769,6 +769,7 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
                 }
                 return 0;
               }
+            case TVN_ENDLABELEDIT: return TRUE;
             }
         }
         return 0;
@@ -862,20 +863,48 @@ static void test_itemedit(void)
 {
     DWORD r;
     HWND edit;
+    TVITEMA item;
+    CHAR buff[2];
 
     hTree = create_treeview_control();
     fill_tree(hTree);
+
+    /* try with null item */
+    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, (LPARAM)NULL);
+    ok(!IsWindow(edit), "Expected valid handle\n");
 
     /* trigger edit */
     edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, (LPARAM)hRoot);
     ok(IsWindow(edit), "Expected valid handle\n");
     /* item shouldn't be selected automatically after TVM_EDITLABEL */
     r = SendMessage(hTree, TVM_GETITEMSTATE, (WPARAM)hRoot, TVIS_SELECTED);
-    todo_wine expect(0, r);
-
+    expect(0, r);
     r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
     expect(0, r);
     ok(!IsWindow(edit), "Expected edit control to be destroyed\n");
+
+    /* remove selection after starting edit */
+    r = TreeView_SelectItem(hTree, hRoot);
+    expect(TRUE, r);
+    edit = (HWND)SendMessage(hTree, TVM_EDITLABEL, 0, (LPARAM)hRoot);
+    ok(IsWindow(edit), "Expected valid handle\n");
+    r = TreeView_SelectItem(hTree, NULL);
+    expect(TRUE, r);
+    /* alter text */
+    strncpy(buff, "x", sizeof(buff)/sizeof(CHAR));
+    r = SendMessage(edit, WM_SETTEXT, 0, (LPARAM)buff);
+    expect(TRUE, r);
+    r = SendMessage(hTree, WM_COMMAND, MAKEWPARAM(0, EN_KILLFOCUS), (LPARAM)edit);
+    expect(0, r);
+    ok(!IsWindow(edit), "Expected edit control to be destroyed\n");
+    /* check that text is saved */
+    item.mask = TVIF_TEXT;
+    item.hItem = hRoot;
+    item.pszText = buff;
+    item.cchTextMax = sizeof(buff)/sizeof(CHAR);
+    r = SendMessage(hTree, TVM_GETITEM, 0, (LPARAM)&item);
+    expect(TRUE, r);
+    ok(!strcmp("x", buff), "Expected item text to change\n");
 
     DestroyWindow(hTree);
 }
