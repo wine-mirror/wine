@@ -530,33 +530,28 @@ static inline void shader_arb_vs_local_constants(IWineD3DDeviceImpl* deviceImpl)
  * worry about the Integers or Booleans
  */
 /* GL locking is done by the caller (state handler) */
-static void shader_arb_load_constants(
-    IWineD3DDevice* device,
-    char usePixelShader,
-    char useVertexShader) {
-   
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device; 
-    IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
-    const struct wined3d_context *context = context_get_current();
+static void shader_arb_load_constants(const struct wined3d_context *context, char usePixelShader, char useVertexShader)
+{
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
+    IWineD3DStateBlockImpl* stateBlock = device->stateBlock;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
 
         /* Load DirectX 9 float constants for vertex shader */
-        deviceImpl->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                deviceImpl->highest_dirty_vs_const, stateBlock->vertexShaderConstantF, context->vshader_const_dirty);
-
-        shader_arb_vs_local_constants(deviceImpl);
+        device->highest_dirty_vs_const = shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
+                device->highest_dirty_vs_const, stateBlock->vertexShaderConstantF, context->vshader_const_dirty);
+        shader_arb_vs_local_constants(device);
     }
 
     if (usePixelShader) {
         IWineD3DBaseShaderImpl* pshader = (IWineD3DBaseShaderImpl*) stateBlock->pixelShader;
 
         /* Load DirectX 9 float constants for pixel shader */
-        deviceImpl->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
-                deviceImpl->highest_dirty_ps_const, stateBlock->pixelShaderConstantF, context->pshader_const_dirty);
-        shader_arb_ps_local_constants(deviceImpl);
+        device->highest_dirty_ps_const = shader_arb_load_constantsF(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
+                device->highest_dirty_ps_const, stateBlock->pixelShaderConstantF, context->pshader_const_dirty);
+        shader_arb_ps_local_constants(device);
     }
 }
 
@@ -4257,7 +4252,7 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
                 context->pshader_const_dirty[i] = 1;
             }
             /* Also takes care of loading local constants */
-            shader_arb_load_constants(iface, TRUE, FALSE);
+            shader_arb_load_constants(context, TRUE, FALSE);
         }
         else
         {

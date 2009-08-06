@@ -3361,7 +3361,7 @@ static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, stru
        return;
     }
 
-    device->shader_backend->shader_load_constants((IWineD3DDevice *)device, use_ps(stateblock), use_vs(stateblock));
+    device->shader_backend->shader_load_constants(context, use_ps(stateblock), use_vs(stateblock));
 }
 
 static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)

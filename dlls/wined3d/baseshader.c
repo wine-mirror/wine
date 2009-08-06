@@ -1371,7 +1371,7 @@ static void shader_none_select_depth_blt(IWineD3DDevice *iface, enum tex_types t
 static void shader_none_deselect_depth_blt(IWineD3DDevice *iface) {}
 static void shader_none_update_float_vertex_constants(IWineD3DDevice *iface, UINT start, UINT count) {}
 static void shader_none_update_float_pixel_constants(IWineD3DDevice *iface, UINT start, UINT count) {}
-static void shader_none_load_constants(IWineD3DDevice *iface, char usePS, char useVS) {}
+static void shader_none_load_constants(const struct wined3d_context *context, char usePS, char useVS) {}
 static void shader_none_load_np2fixup_constants(IWineD3DDevice *iface, char usePS, char useVS) {}
 static void shader_none_destroy(IWineD3DBaseShader *iface) {}
 static HRESULT shader_none_alloc(IWineD3DDevice *iface) {return WINED3D_OK;}

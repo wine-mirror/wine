@@ -627,13 +627,13 @@ static void shader_glsl_load_np2fixup_constants(
  * Loads the app-supplied constants into the currently set GLSL program.
  */
 /* GL locking is done by the caller (state handler) */
-static void shader_glsl_load_constants(IWineD3DDevice *device, char usePixelShader, char useVertexShader)
+static void shader_glsl_load_constants(const struct wined3d_context *context,
+        char usePixelShader, char useVertexShader)
 {
-    const struct wined3d_context *context = context_get_current();
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device;
-    struct shader_glsl_priv *priv = deviceImpl->shader_priv;
-    IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
+    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    IWineD3DStateBlockImpl* stateBlock = device->stateBlock;
+    struct shader_glsl_priv *priv = device->shader_priv;
 
     GLhandleARB programId;
     struct glsl_shader_prog_link *prog = priv->glsl_program;
@@ -663,7 +663,7 @@ static void shader_glsl_load_constants(IWineD3DDevice *device, char usePixelShad
                 stateBlock->changed.vertexShaderConstantsB & vshader->baseShader.reg_maps.boolean_constants);
 
         /* Upload the position fixup params */
-        GL_EXTCALL(glUniform4fvARB(prog->posFixup_location, 1, &deviceImpl->posFixup[0]));
+        GL_EXTCALL(glUniform4fvARB(prog->posFixup_location, 1, &device->posFixup[0]));
         checkGLcall("glUniform4fvARB");
     }
 
@@ -718,7 +718,7 @@ static void shader_glsl_load_constants(IWineD3DDevice *device, char usePixelShad
                 correction_params[1] = 1.0f;
             } else {
                 /* position is window relative, not viewport relative */
-                correction_params[0] = ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
+                correction_params[0] = ((IWineD3DSurfaceImpl *)context->current_rt)->currentDesc.Height;
                 correction_params[1] = -1.0f;
             }
             GL_EXTCALL(glUniform4fvARB(prog->ycorrection_location, 1, correction_params));
