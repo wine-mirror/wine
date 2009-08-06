@@ -374,6 +374,7 @@ BEGIN
     ID_EDIT_NEW_STRINGVALUE "Adiciona um novo valor texto."
     ID_EDIT_NEW_BINARYVALUE "Adiciona um novo valor binário."
     ID_EDIT_NEW_DWORDVALUE  "Adiciona um novo valor DWORD."
+    ID_EDIT_NEW_MULTI_STRINGVALUE "Adiciona um novo valor multi string"
     ID_REGISTRY_IMPORTREGISTRYFILE "Importa um ficheiro de texto para o registo."
     ID_REGISTRY_EXPORTREGISTRYFILE
                             "Exporta todo ou parte do registo para um ficheiro de texto."
@@ -419,6 +420,7 @@ BEGIN
     ID_EDIT_COPYKEYNAME     "Copia o nome da chave seleccionada para a Área de transferência."
     ID_EDIT_FIND            "Localiza um texto numa chave, valor ou dado."
     ID_EDIT_FINDNEXT        "Localiza a próxima ocorrência do texto indicado na pesquisa anterior."
+    ID_EDIT_EXPORT          "Exporta o ramo seleccionado do registo para um ficheiro de texto"
 END
 
 
