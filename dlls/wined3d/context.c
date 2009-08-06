@@ -438,9 +438,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, struct fbo_
 /* GL locking is done by the caller */
 static void context_apply_fbo_state(struct wined3d_context *context)
 {
-    IWineD3DDeviceImpl *device = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
-
-    if (device->render_offscreen)
+    if (context->render_offscreen)
     {
         context->current_fbo = context_find_fbo_entry(context);
         context_apply_fbo_entry(context, context->current_fbo);
@@ -1723,11 +1721,10 @@ static struct wined3d_context *findThreadContextForSwapChain(IWineD3DSwapChain *
 static inline struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, DWORD tid)
 {
     IWineD3DSwapChain *swapchain = NULL;
-    BOOL readTexture = wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_offscreen;
     struct wined3d_context *current_context = context_get_current();
-    BOOL oldRenderOffscreen = This->render_offscreen;
     const struct StateEntry *StateTable = This->StateTable;
     struct wined3d_context *context;
+    BOOL old_render_offscreen;
 
     if (current_context && current_context->destroyed) current_context = NULL;
 
@@ -1757,7 +1754,8 @@ static inline struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWin
 
         context = findThreadContextForSwapChain(swapchain, tid);
 
-        This->render_offscreen = FALSE;
+        old_render_offscreen = context->render_offscreen;
+        context->render_offscreen = FALSE;
         /* The context != This->activeContext will catch a NOP context change. This can occur
          * if we are switching back to swapchain rendering in case of FBO or Back Buffer offscreen
          * rendering. No context change is needed in that case
@@ -1773,7 +1771,6 @@ static inline struct wined3d_context *FindContext(IWineD3DDeviceImpl *This, IWin
     else
     {
         TRACE("Rendering offscreen\n");
-        This->render_offscreen = TRUE;
 
 retry:
         if (wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER)
@@ -1831,9 +1828,12 @@ retry:
                 context = findThreadContextForSwapChain(This->swapchains[0], tid);
             }
         }
+
+        old_render_offscreen = context->render_offscreen;
+        context->render_offscreen = TRUE;
     }
 
-    if (This->render_offscreen != oldRenderOffscreen)
+    if (context->render_offscreen != old_render_offscreen)
     {
         Context_MarkStateDirty(context, WINED3DTS_PROJECTION, StateTable);
         Context_MarkStateDirty(context, STATE_VDECL, StateTable);
@@ -1890,7 +1890,8 @@ retry:
      *    After that, the outer ActivateContext(which calls PreLoad) can activate the new
      *    target for the new thread
      */
-    if (readTexture && context->current_rt && context->current_rt != target)
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO && old_render_offscreen
+            && context->current_rt && context->current_rt != target)
     {
         BOOL oldInDraw = This->isInDraw;
 
@@ -2035,7 +2036,8 @@ struct wined3d_context *ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurfac
 
         case CTXUSAGE_BLIT:
             if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-                if (This->render_offscreen) {
+                if (context->render_offscreen)
+                {
                     FIXME("Activating for CTXUSAGE_BLIT for an offscreen target with ORM_FBO. This should be avoided.\n");
                     ENTER_GL();
                     context_bind_fbo(context, GL_FRAMEBUFFER_EXT, &context->dst_fbo);

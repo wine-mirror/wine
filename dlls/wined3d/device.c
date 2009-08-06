@@ -4939,7 +4939,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
     }
 
     if (Flags & WINED3DCLEAR_ZBUFFER) {
-        DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+        DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         glDepthMask(GL_TRUE);
         glClearDepth(Z);
         checkGLcall("glClearDepth");
@@ -4985,7 +4985,8 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
         if(This->stateBlock->renderState[WINED3DRS_SCISSORTESTENABLE]) {
             IntersectRect(&vp_rect, &vp_rect, &This->stateBlock->scissorRect);
         }
-        if(This->render_offscreen) {
+        if (context->render_offscreen)
+        {
             glScissor(vp_rect.left, vp_rect.top,
                         vp_rect.right - vp_rect.left, vp_rect.bottom - vp_rect.top);
         } else {
@@ -5017,7 +5018,8 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
                 continue;
             }
 
-            if(This->render_offscreen) {
+            if (context->render_offscreen)
+            {
                 glScissor(curRect.x1, curRect.y1,
                           curRect.x2 - curRect.x1, curRect.y2 - curRect.y1);
             } else {
@@ -5049,7 +5051,7 @@ HRESULT IWineD3DDeviceImpl_ClearSurface(IWineD3DDeviceImpl *This,  IWineD3DSurfa
     }
     if (Flags & WINED3DCLEAR_ZBUFFER) {
         /* Note that WINED3DCLEAR_ZBUFFER implies a depth stencil exists on the device */
-        DWORD location = This->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
+        DWORD location = context->render_offscreen ? SFLAG_DS_OFFSCREEN : SFLAG_DS_ONSCREEN;
         surface_modify_ds_location(This->stencilBufferTarget, location);
     }
 

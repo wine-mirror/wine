@@ -3591,9 +3591,7 @@ static void clipplane(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wi
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glLoadIdentity();
-        if(stateblock->wineD3DDevice->render_offscreen) {
-            glScalef(1.0f, -1.0f, 1.0f);
-        }
+        if (context->render_offscreen) glScalef(1.0f, -1.0f, 1.0f);
     }
 
     TRACE("Clipplane [%f,%f,%f,%f]\n",
@@ -3808,7 +3806,8 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
              * problem either.
              */
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-            if(stateblock->wineD3DDevice->render_offscreen) {
+            if (context->render_offscreen)
+            {
                 glOrtho(X, X + width, -Y, -Y - height, -minZ, -maxZ);
             } else {
                 glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
@@ -3822,7 +3821,8 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
              * replacement shader.
              */
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, 1.0, -1.0);
-            if(stateblock->wineD3DDevice->render_offscreen) {
+            if (context->render_offscreen)
+            {
                 glOrtho(X, X + width, -Y, -Y - height, 0.0, -1.0);
             } else {
                 glOrtho(X, X + width, Y + height, Y, 0.0, -1.0);
@@ -3835,7 +3835,8 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
         checkGLcall("glTranslatef(0.5f, 0.5f, 0.0f)");
         /* D3D texture coordinates are flipped compared to OpenGL ones, so
          * render everything upside down when rendering offscreen. */
-        if (stateblock->wineD3DDevice->render_offscreen) {
+        if (context->render_offscreen)
+        {
             glScalef(1.0f, -1.0f, 1.0f);
             checkGLcall("glScalef");
         }
@@ -3877,7 +3878,8 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
          * glScalef(1.0, flip, 2.0);
          */
 
-        if (stateblock->wineD3DDevice->render_offscreen) {
+        if (context->render_offscreen)
+        {
             /* D3D texture coordinates are flipped compared to OpenGL ones, so
              * render everything upside down when rendering offscreen. */
             glTranslatef(1.0f / stateblock->viewport.Width, 1.0f / stateblock->viewport.Height, -1.0f);
@@ -4489,7 +4491,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, s
          * TODO: Move to the viewport state
          */
         if (useVertexShaderFunction) {
-            device->posFixup[1] = device->render_offscreen ? -1.0f : 1.0f;
+            device->posFixup[1] = context->render_offscreen ? -1.0f : 1.0f;
             device->posFixup[3] = -device->posFixup[1] / stateblock->viewport.Height;
         }
     }
@@ -4616,7 +4618,8 @@ static void viewport_miscpart(DWORD state, IWineD3DStateBlockImpl *stateblock, s
     checkGLcall("glDepthRange");
     /* Note: GL requires lower left, DirectX supplies upper left. This is reversed when using offscreen rendering
      */
-    if(stateblock->wineD3DDevice->render_offscreen) {
+    if (context->render_offscreen)
+    {
         glViewport(stateblock->viewport.X,
                    stateblock->viewport.Y,
                    stateblock->viewport.Width, stateblock->viewport.Height);
@@ -4774,7 +4777,8 @@ static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
     TRACE("(%p) Setting new Scissor Rect to %d:%d-%d:%d\n", stateblock->wineD3DDevice, pRect->left, pRect->bottom - height,
           pRect->right - pRect->left, pRect->bottom - pRect->top);
 
-    if (stateblock->wineD3DDevice->render_offscreen) {
+    if (context->render_offscreen)
+    {
         glScissor(pRect->left, pRect->top, pRect->right - pRect->left, pRect->bottom - pRect->top);
     } else {
         glScissor(pRect->left, height - pRect->bottom, pRect->right - pRect->left, pRect->bottom - pRect->top);
@@ -4794,7 +4798,8 @@ static void indexbuffer(DWORD state, IWineD3DStateBlockImpl *stateblock, struct 
 
 static void frontface(DWORD state, IWineD3DStateBlockImpl *stateblock, struct wined3d_context *context)
 {
-    if(stateblock->wineD3DDevice->render_offscreen) {
+    if (context->render_offscreen)
+    {
         glFrontFace(GL_CCW);
         checkGLcall("glFrontFace(GL_CCW)");
     } else {

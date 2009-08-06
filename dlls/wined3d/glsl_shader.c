@@ -627,15 +627,13 @@ static void shader_glsl_load_np2fixup_constants(
  * Loads the app-supplied constants into the currently set GLSL program.
  */
 /* GL locking is done by the caller (state handler) */
-static void shader_glsl_load_constants(
-    IWineD3DDevice* device,
-    char usePixelShader,
-    char useVertexShader) {
-   
+static void shader_glsl_load_constants(IWineD3DDevice *device, char usePixelShader, char useVertexShader)
+{
+    const struct wined3d_context *context = context_get_current();
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) device;
     struct shader_glsl_priv *priv = deviceImpl->shader_priv;
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
-    const struct wined3d_gl_info *gl_info = &deviceImpl->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
 
     GLhandleARB programId;
     struct glsl_shader_prog_link *prog = priv->glsl_program;
@@ -713,7 +711,9 @@ static void shader_glsl_load_constants(
 
         if(((IWineD3DPixelShaderImpl *) pshader)->vpos_uniform) {
             float correction_params[4];
-            if(deviceImpl->render_offscreen) {
+
+            if (context->render_offscreen)
+            {
                 correction_params[0] = 0.0f;
                 correction_params[1] = 1.0f;
             } else {
@@ -808,6 +808,7 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
         struct wined3d_shader_buffer *buffer, const struct wined3d_gl_info *gl_info,
         struct shader_glsl_ctx_priv *ctx_priv)
 {
+    const struct wined3d_context *context = context_get_current();
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *) This->baseShader.device;
     const struct ps_compile_args *ps_args = ctx_priv->cur_ps_args;
@@ -931,8 +932,8 @@ static void shader_generate_glsl_declarations(IWineD3DBaseShader *iface, const s
                  */
                 FIXME("Cannot find a free uniform for vpos correction params\n");
                 shader_addline(buffer, "const vec4 ycorrection = vec4(%f, %f, 0.0, 0.0);\n",
-                        device->render_offscreen ? 0.0f : ((IWineD3DSurfaceImpl *)device->render_targets[0])->currentDesc.Height,
-                        device->render_offscreen ? 1.0f : -1.0f);
+                        context->render_offscreen ? 0.0f : ((IWineD3DSurfaceImpl *)device->render_targets[0])->currentDesc.Height,
+                        context->render_offscreen ? 1.0f : -1.0f);
             }
             shader_addline(buffer, "vec4 vpos;\n");
         }

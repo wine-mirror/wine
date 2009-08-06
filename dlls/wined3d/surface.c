@@ -4529,7 +4529,9 @@ static inline void cube_coords_float(const RECT *r, UINT w, UINT h, struct float
     f->b = ((r->bottom * 2.0f) / h) - 1.0f;
 }
 
-static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in) {
+static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT *rect_in)
+{
+    const struct wined3d_context *context;
     struct coords coords[4];
     RECT rect;
     IWineD3DSwapChain *swapchain;
@@ -4636,7 +4638,8 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
             return;
     }
 
-    ActivateContext(device, (IWineD3DSurface*)This, CTXUSAGE_BLIT);
+    context = ActivateContext(device, (IWineD3DSurface*)This, CTXUSAGE_BLIT);
+
     ENTER_GL();
 
     glEnable(bind_target);
@@ -4648,7 +4651,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     checkGLcall("glTexParameteri");
 
-    if (device->render_offscreen)
+    if (context->render_offscreen)
     {
         LONG tmp = rect.top;
         rect.top = rect.bottom;

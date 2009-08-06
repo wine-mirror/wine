@@ -1169,6 +1169,7 @@ struct wined3d_context
     DWORD                   tid;    /* Thread ID which owns this context at the moment */
 
     /* Stores some information about the context state for optimization */
+    WORD render_offscreen : 1;
     WORD draw_buffer_dirty : 1;
     WORD last_was_rhw : 1;              /* true iff last draw_primitive was in xyzrhw mode */
     WORD last_was_pshader : 1;
@@ -1183,7 +1184,6 @@ struct wined3d_context
     WORD num_untracked_materials : 2;   /* Max value 2 */
     WORD current : 1;
     WORD destroyed : 1;
-    WORD padding : 1;
     BYTE texShaderBumpMap;              /* MAX_TEXTURES, 8 */
     BYTE lastWasPow2Texture;            /* MAX_TEXTURES, 8 */
     DWORD                   numbered_array_mask;
@@ -1535,7 +1535,6 @@ struct IWineD3DDeviceImpl
     WORD vertexBlendUsed : 1;           /* To avoid needless setting of the blend matrices */
     WORD isRecordingState : 1;
     WORD isInDraw : 1;
-    WORD render_offscreen : 1;
     WORD bCursorVisible : 1;
     WORD haveHardwareCursor : 1;
     WORD d3d_initialized : 1;
@@ -1543,7 +1542,7 @@ struct IWineD3DDeviceImpl
     WORD softwareVertexProcessing : 1;  /* process vertex shaders using software or hardware */
     WORD useDrawStridedSlow : 1;
     WORD instancedDraw : 1;
-    WORD padding : 3;
+    WORD padding : 4;
 
     BYTE fixed_function_usage_map;      /* MAX_TEXTURES, 8 */
 

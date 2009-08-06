@@ -428,8 +428,9 @@ static void shader_arb_load_np2fixup_constants(
 /* GL locking is done by the caller. */
 static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
 {
+    const struct wined3d_context *context = context_get_current();
     IWineD3DStateBlockImpl* stateBlock = deviceImpl->stateBlock;
-    const struct wined3d_gl_info *gl_info = &deviceImpl->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned char i;
     struct shader_arb_priv *priv = deviceImpl->shader_priv;
     const struct arb_ps_compiled_shader *gl_shader = priv->compiled_fprog;
@@ -463,8 +464,9 @@ static inline void shader_arb_ps_local_constants(IWineD3DDeviceImpl* deviceImpl)
         * ycorrection.w: 0.0
         */
         float val[4];
-        val[0] = deviceImpl->render_offscreen ? 0.0f : ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
-        val[1] = deviceImpl->render_offscreen ? 1.0f : -1.0f;
+        val[0] = context->render_offscreen ? 0.0f
+                : ((IWineD3DSurfaceImpl *) deviceImpl->render_targets[0])->currentDesc.Height;
+        val[1] = context->render_offscreen ? 1.0f : -1.0f;
         val[2] = 1.0f;
         val[3] = 0.0f;
         GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->ycorrection, val));
