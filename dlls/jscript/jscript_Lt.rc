@@ -33,6 +33,7 @@ STRINGTABLE DISCARDABLE
     IDS_SEMICOLON           "Tikėtasi „;“"
     IDS_LBRACKET            "Tikėtasi „(“"
     IDS_RBRACKET            "Tikėtasi „)“"
+    IDS_UNTERMINATED_STR    "Nebaigta eilutės konstanta"
     IDS_NOT_FUNC            "Tikėtasi funkcijos"
     IDS_NOT_DATE            "„[objektas]“ nėra datos objektas"
     IDS_NOT_NUM             "Tikėtasi skaičiaus"
