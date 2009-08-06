@@ -284,7 +284,7 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl *This, con
         GLuint target_type, unsigned int max_constants, const float *constants, char *dirty_consts)
 {
     local_constant* lconst;
-    DWORD i, j;
+    DWORD i = 0, j;
     unsigned int ret;
 
     if (TRACE_ON(d3d_shader)) {
@@ -299,7 +299,10 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl *This, con
     if (target_type == GL_FRAGMENT_PROGRAM_ARB && This->baseShader.reg_maps.shader_version.major == 1)
     {
         float lcl_const[4];
-        for(i = 0; i < max_constants; i++) {
+        /* ps 1.x supports only 8 constants, clamp only those. When switching between 1.x and higher
+         * shaders, the first 8 constants are marked dirty for reload
+         */
+        for(; i < min(8, max_constants); i++) {
             if(!dirty_consts[i]) continue;
             dirty_consts[i] = 0;
 
@@ -322,31 +325,39 @@ static unsigned int shader_arb_load_constantsF(IWineD3DBaseShaderImpl *This, con
 
             GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, lcl_const));
         }
-    } else {
-        if(GL_SUPPORT(EXT_GPU_PROGRAM_PARAMETERS)) {
-            /* TODO: Benchmark if we're better of with finding the dirty constants ourselves,
-             * or just reloading *all* constants at once
-             *
-            GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, 0, max_constants, constants));
-             */
-            for(i = 0; i < max_constants; i++) {
-                if(!dirty_consts[i]) continue;
 
-                /* Find the next block of dirty constants */
+        /* If further constants are dirty, reload them without clamping.
+         *
+         * The alternative is not to touch them, but then we cannot reset the dirty constant count
+         * to zero. That's bad for apps that only use PS 1.x shaders, because in that case the code
+         * above would always re-check the first 8 constants since max_constant remains at the init
+         * value
+         */
+    }
+
+    if(GL_SUPPORT(EXT_GPU_PROGRAM_PARAMETERS)) {
+        /* TODO: Benchmark if we're better of with finding the dirty constants ourselves,
+         * or just reloading *all* constants at once
+         *
+        GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, i, max_constants, constants + (i * 4)));
+         */
+        for(; i < max_constants; i++) {
+            if(!dirty_consts[i]) continue;
+
+            /* Find the next block of dirty constants */
+            dirty_consts[i] = 0;
+            j = i;
+            for(i++; (i < max_constants) && dirty_consts[i]; i++) {
                 dirty_consts[i] = 0;
-                j = i;
-                for(i++; (i < max_constants) && dirty_consts[i]; i++) {
-                    dirty_consts[i] = 0;
-                }
-
-                GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, j, i - j, constants + (j * 4)));
             }
-        } else {
-            for(i = 0; i < max_constants; i++) {
-                if(dirty_consts[i]) {
-                    dirty_consts[i] = 0;
-                    GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
-                }
+
+            GL_EXTCALL(glProgramEnvParameters4fvEXT(target_type, j, i - j, constants + (j * 4)));
+        }
+    } else {
+        for(; i < max_constants; i++) {
+            if(dirty_consts[i]) {
+                dirty_consts[i] = 0;
+                GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
             }
         }
     }
