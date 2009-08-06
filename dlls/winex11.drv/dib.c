@@ -62,31 +62,32 @@ static int ximageDepthTable[32];
 /* This structure holds the arguments for DIB_SetImageBits() */
 typedef struct
 {
-    X11DRV_PDEVICE *physDev;
-    LPCVOID         bits;
-    XImage         *image;
-    PALETTEENTRY   *palentry;
-    int             lines;
-    DWORD           infoWidth;
-    WORD            depth;
-    WORD            infoBpp;
-    WORD            compression;
-    RGBQUAD        *colorMap;
-    int             nColorMap;
-    Drawable        drawable;
-    GC              gc;
-    int             xSrc;
-    int             ySrc;
-    int             xDest;
-    int             yDest;
-    int             width;
-    int             height;
-    DWORD           rMask;
-    DWORD           gMask;
-    DWORD           bMask;
-    BOOL            useShm;
-    int             dibpitch;
-    DWORD           sizeImage;  
+    X11DRV_PDEVICE         *physDev;
+    LPCVOID                 bits;
+    XImage                 *image;
+    PALETTEENTRY           *palentry;
+    int                     lines;
+    DWORD                   infoWidth;
+    WORD                    depth;
+    WORD                    infoBpp;
+    WORD                    compression;
+    RGBQUAD                *colorMap;
+    int                     nColorMap;
+    Drawable                drawable;
+    GC                      gc;
+    int                     xSrc;
+    int                     ySrc;
+    int                     xDest;
+    int                     yDest;
+    int                     width;
+    int                     height;
+    DWORD                   rMask;
+    DWORD                   gMask;
+    DWORD                   bMask;
+    enum x11drv_shm_mode    shm_mode;
+    int                     dibpitch;
+    DWORD                   sizeImage;
+    X_PHYSBITMAP           *physBitmap;
 } X11DRV_DIB_IMAGEBITS_DESCR;
 
 
@@ -3532,6 +3533,7 @@ static void X11DRV_DIB_SetImageBits_GetSubImage(
 static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 {
     int lines = descr->lines >= 0 ? descr->lines : -descr->lines;
+    void *old_data = NULL;
     XImage *bmpImage;
 
     wine_tsx11_lock();
@@ -3555,6 +3557,22 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     TRACE("Bmp: depth=%d/%d r=%lx g=%lx b=%lx\n",
           bmpImage->depth,bmpImage->bits_per_pixel,
           bmpImage->red_mask,bmpImage->green_mask,bmpImage->blue_mask);
+
+#ifdef HAVE_LIBXXSHM
+    if (descr->shm_mode == X11DRV_SHM_PIXMAP
+            && descr->xSrc == 0 && descr->ySrc == 0
+            && descr->xDest == 0 && descr->yDest == 0)
+    {
+        TRACE("Using the shared pixmap data.\n");
+
+        wine_tsx11_lock();
+        XSync( gdi_display, False );
+        wine_tsx11_unlock();
+
+        old_data = descr->image->data;
+        descr->image->data = descr->physBitmap->shminfo.shmaddr;
+    }
+#endif
 
       /* Transfer the pixels */
     __TRY
@@ -3635,7 +3653,13 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
     if (lines)
     {
 #ifdef HAVE_LIBXXSHM
-        if (descr->image && descr->useShm)
+        if (descr->shm_mode == X11DRV_SHM_PIXMAP
+                && descr->xSrc == 0 && descr->ySrc == 0
+                && descr->xDest == 0 && descr->yDest == 0)
+        {
+            XSync( gdi_display, False );
+        }
+        else if (descr->shm_mode == X11DRV_SHM_IMAGE && descr->image)
         {
             XShmPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
                           descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
@@ -3644,10 +3668,15 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         }
         else
 #endif
+        {
             XPutImage( gdi_display, descr->drawable, descr->gc, bmpImage,
                        descr->xSrc, descr->ySrc, descr->xDest, descr->yDest,
                        descr->width, descr->height );
+        }
     }
+
+    if (old_data) descr->image->data = old_data;
+
     if (!descr->image) X11DRV_DIB_DestroyXImage( bmpImage );
     wine_tsx11_unlock();
     return lines;
@@ -3661,6 +3690,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 {
     int lines = descr->lines >= 0 ? descr->lines : -descr->lines;
+    void *old_data = NULL;
     XImage *bmpImage;
 
     wine_tsx11_lock();
@@ -3682,8 +3712,20 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 
     /* We must not call XShmGetImage() with a bitmap which is bigger than the available area.
        If we do, XShmGetImage() will fail (X exception), as it checks for this internally. */
-    if((descr->image && descr->useShm) && (bmpImage->width <= (descr->width - descr->xSrc))
-      && (bmpImage->height <= (descr->height - descr->ySrc)))
+    if (descr->shm_mode == X11DRV_SHM_PIXMAP && descr->image
+            && descr->xSrc == 0 && descr->ySrc == 0
+            && descr->xDest == 0 && descr->yDest == 0
+            && bmpImage->width <= (descr->width - descr->xSrc)
+            && bmpImage->height <= (descr->height - descr->ySrc))
+    {
+        XSync( gdi_display, False );
+        old_data = bmpImage->data;
+        bmpImage->data = descr->physBitmap->shminfo.shmaddr;
+        TRACE("Using shared pixmap data.\n");
+    }
+    else if (descr->shm_mode == X11DRV_SHM_IMAGE && descr->image
+            && bmpImage->width <= (descr->width - descr->xSrc)
+            && bmpImage->height <= (descr->height - descr->ySrc))
     {
         int saveRed, saveGreen, saveBlue;
 
@@ -3786,6 +3828,7 @@ static int X11DRV_DIB_GetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
         break;
     }
 
+    if (old_data) bmpImage->data = old_data;
     if (!descr->image) X11DRV_DIB_DestroyXImage( bmpImage );
     return lines;
 }
@@ -3888,23 +3931,24 @@ INT CDECL X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDes
                break;
     }
 
-    descr.physDev   = physDev;
-    descr.bits      = bits;
-    descr.image     = NULL;
-    descr.palentry  = NULL;
-    descr.lines     = top_down ? -lines : lines;
-    descr.infoWidth = width;
-    descr.depth     = physDev->depth;
-    descr.drawable  = physDev->drawable;
-    descr.gc        = physDev->gc;
-    descr.xSrc      = xSrc;
-    descr.ySrc      = ySrc;
-    descr.xDest     = physDev->dc_rect.left + pt.x;
-    descr.yDest     = physDev->dc_rect.top + pt.y;
-    descr.width     = cx;
-    descr.height    = cy;
-    descr.useShm    = FALSE;
-    descr.dibpitch  = ((width * descr.infoBpp + 31) &~31) / 8;
+    descr.physDev    = physDev;
+    descr.bits       = bits;
+    descr.image      = NULL;
+    descr.palentry   = NULL;
+    descr.lines      = top_down ? -lines : lines;
+    descr.infoWidth  = width;
+    descr.depth      = physDev->depth;
+    descr.drawable   = physDev->drawable;
+    descr.gc         = physDev->gc;
+    descr.xSrc       = xSrc;
+    descr.ySrc       = ySrc;
+    descr.xDest      = physDev->dc_rect.left + pt.x;
+    descr.yDest      = physDev->dc_rect.top + pt.y;
+    descr.width      = cx;
+    descr.height     = cy;
+    descr.shm_mode   = X11DRV_SHM_NONE;
+    descr.dibpitch   = ((width * descr.infoBpp + 31) &~31) / 8;
+    descr.physBitmap = NULL;
 
     result = X11DRV_DIB_SetImageBits( &descr );
 
@@ -3977,22 +4021,23 @@ INT CDECL X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT start
        default: break;
   }
 
-  descr.bits      = bits;
-  descr.image     = NULL;
-  descr.palentry  = NULL;
-  descr.infoWidth = width;
-  descr.lines     = tmpheight >= 0 ? lines : -lines;
-  descr.depth     = physBitmap->pixmap_depth;
-  descr.drawable  = physBitmap->pixmap;
-  descr.gc        = get_bitmap_gc(physBitmap->pixmap_depth);
-  descr.xSrc      = 0;
-  descr.ySrc      = 0;
-  descr.xDest     = 0;
-  descr.yDest     = height - startscan - lines;
-  descr.width     = ds.dsBm.bmWidth;
-  descr.height    = lines;
-  descr.useShm    = FALSE;
-  descr.dibpitch  = ((descr.infoWidth * descr.infoBpp + 31) &~31) / 8;
+  descr.bits       = bits;
+  descr.image      = NULL;
+  descr.palentry   = NULL;
+  descr.infoWidth  = width;
+  descr.lines      = tmpheight >= 0 ? lines : -lines;
+  descr.depth      = physBitmap->pixmap_depth;
+  descr.drawable   = physBitmap->pixmap;
+  descr.gc         = get_bitmap_gc(physBitmap->pixmap_depth);
+  descr.xSrc       = 0;
+  descr.ySrc       = 0;
+  descr.xDest      = 0;
+  descr.yDest      = height - startscan - lines;
+  descr.width      = ds.dsBm.bmWidth;
+  descr.height     = lines;
+  descr.shm_mode   = X11DRV_SHM_NONE;
+  descr.dibpitch   = ((descr.infoWidth * descr.infoBpp + 31) &~31) / 8;
+  descr.physBitmap = NULL;
   X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod );
   result = X11DRV_DIB_SetImageBits( &descr );
 
@@ -4130,21 +4175,22 @@ INT CDECL X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT start
           break;
   }
 
-  descr.physDev   = physDev;
-  descr.palentry  = palette;
-  descr.bits      = bits;
-  descr.image     = physBitmap->image;
-  descr.infoWidth = width;
-  descr.lines     = lines;
-  descr.depth     = physBitmap->pixmap_depth;
-  descr.drawable  = physBitmap->pixmap;
-  descr.gc        = get_bitmap_gc(physBitmap->pixmap_depth);
-  descr.width     = dib.dsBm.bmWidth;
-  descr.height    = dib.dsBm.bmHeight;
-  descr.xDest     = 0;
-  descr.yDest     = 0;
-  descr.xSrc      = 0;
-  descr.sizeImage = core_header ? 0 : info->bmiHeader.biSizeImage;
+  descr.physDev    = physDev;
+  descr.palentry   = palette;
+  descr.bits       = bits;
+  descr.image      = physBitmap->image;
+  descr.infoWidth  = width;
+  descr.lines      = lines;
+  descr.depth      = physBitmap->pixmap_depth;
+  descr.drawable   = physBitmap->pixmap;
+  descr.gc         = get_bitmap_gc(physBitmap->pixmap_depth);
+  descr.width      = dib.dsBm.bmWidth;
+  descr.height     = dib.dsBm.bmHeight;
+  descr.xDest      = 0;
+  descr.yDest      = 0;
+  descr.xSrc       = 0;
+  descr.sizeImage  = core_header ? 0 : info->bmiHeader.biSizeImage;
+  descr.physBitmap = physBitmap;
 
   if (descr.lines > 0)
   {
@@ -4154,11 +4200,7 @@ INT CDECL X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT start
   {
      descr.ySrc = startscan;
   }
-#ifdef HAVE_LIBXXSHM
-  descr.useShm = (obj_size == sizeof(DIBSECTION)) && (physBitmap->shminfo.shmid != -1);
-#else
-  descr.useShm = FALSE;
-#endif
+  descr.shm_mode = physBitmap->shm_mode;
   descr.dibpitch = (obj_size == sizeof(DIBSECTION)) ? dib.dsBm.bmWidthBytes
 		       : (((descr.infoWidth * descr.infoBpp + 31) &~31) / 8);
 
@@ -4205,17 +4247,18 @@ static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
 
   if (!GetObjectW( physBitmap->hbitmap, sizeof(dibSection), &dibSection )) return;
 
-  descr.physDev   = NULL;
-  descr.palentry  = NULL;
-  descr.infoWidth = dibSection.dsBmih.biWidth;
-  descr.infoBpp   = dibSection.dsBmih.biBitCount;
-  descr.lines     = dibSection.dsBmih.biHeight;
-  descr.image     = physBitmap->image;
-  descr.colorMap  = colorMap;
-  descr.nColorMap = nColorMap;
-  descr.bits      = dibSection.dsBm.bmBits;
-  descr.depth     = physBitmap->pixmap_depth;
+  descr.physDev     = NULL;
+  descr.palentry    = NULL;
+  descr.infoWidth   = dibSection.dsBmih.biWidth;
+  descr.infoBpp     = dibSection.dsBmih.biBitCount;
+  descr.lines       = dibSection.dsBmih.biHeight;
+  descr.image       = physBitmap->image;
+  descr.colorMap    = colorMap;
+  descr.nColorMap   = nColorMap;
+  descr.bits        = dibSection.dsBm.bmBits;
+  descr.depth       = physBitmap->pixmap_depth;
   descr.compression = dibSection.dsBmih.biCompression;
+  descr.physBitmap  = physBitmap;
 
   if(descr.infoBpp == 1)
       descr.colorMap = (void*)identity;
@@ -4253,10 +4296,12 @@ static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
   descr.height    = height;
   descr.sizeImage = 0;
 
+  descr.shm_mode = physBitmap->shm_mode;
 #ifdef HAVE_LIBXXSHM
-  descr.useShm = (physBitmap->shminfo.shmid != -1);
-#else
-  descr.useShm = FALSE;
+  if (physBitmap->shm_mode == X11DRV_SHM_PIXMAP && physBitmap->pixmap != dest)
+  {
+    descr.shm_mode = X11DRV_SHM_IMAGE;
+  }
 #endif
   descr.dibpitch = dibSection.dsBm.bmWidthBytes;
 
@@ -4645,7 +4690,7 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
                                   IPC_CREAT|0700);
         if( shminfo->shmid != -1 )
         {
-            shminfo->shmaddr = image->data = shmat(shminfo->shmid, 0, 0);
+            shminfo->shmaddr = shmat( shminfo->shmid, 0, 0 );
             if( shminfo->shmaddr != (char*)-1 )
             {
                 BOOL ok;
@@ -4683,6 +4728,10 @@ HBITMAP CDECL X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
 {
     X_PHYSBITMAP *physBitmap;
     DIBSECTION dib;
+#ifdef HAVE_LIBXXSHM
+    int major, minor;
+    Bool pixmaps;
+#endif
 
     if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return 0;
     physBitmap->status = DIB_Status_None;
@@ -4700,16 +4749,49 @@ HBITMAP CDECL X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
     /* create pixmap and X image */
     wine_tsx11_lock();
     physBitmap->pixmap_depth = (dib.dsBm.bmBitsPixel == 1) ? 1 : screen_depth;
-    physBitmap->pixmap = XCreatePixmap( gdi_display, root_window, dib.dsBm.bmWidth,
-                                        dib.dsBm.bmHeight, physBitmap->pixmap_depth );
 #ifdef HAVE_LIBXXSHM
     physBitmap->shminfo.shmid = -1;
-    if (!XShmQueryExtension(gdi_display) ||
-        !(physBitmap->image = X11DRV_XShmCreateImage( dib.dsBm.bmWidth, dib.dsBm.bmHeight,
-                                                      physBitmap->pixmap_depth, &physBitmap->shminfo )) )
+
+    if (XShmQueryVersion( gdi_display, &major, &minor, &pixmaps )
+            && (physBitmap->image = X11DRV_XShmCreateImage( dib.dsBm.bmWidth, dib.dsBm.bmHeight,
+                                                            physBitmap->pixmap_depth, &physBitmap->shminfo )))
+    {
+        if (pixmaps)
+        {
+            physBitmap->shm_mode = X11DRV_SHM_PIXMAP;
+            physBitmap->image->data = HeapAlloc( GetProcessHeap(), 0,
+                    dib.dsBm.bmHeight * physBitmap->image->bytes_per_line );
+        }
+        else
+        {
+            physBitmap->shm_mode = X11DRV_SHM_IMAGE;
+            physBitmap->image->data = physBitmap->shminfo.shmaddr;
+        }
+    }
+    else
 #endif
+    {
+        physBitmap->shm_mode = X11DRV_SHM_NONE;
         physBitmap->image = X11DRV_DIB_CreateXImage( dib.dsBm.bmWidth, dib.dsBm.bmHeight,
                                                      physBitmap->pixmap_depth );
+    }
+
+#ifdef HAVE_LIBXXSHM
+    if (physBitmap->shm_mode == X11DRV_SHM_PIXMAP)
+    {
+        TRACE("Creating shared pixmap for bmp %p.\n", physBitmap->hbitmap);
+        physBitmap->pixmap = XShmCreatePixmap( gdi_display, root_window,
+                                               physBitmap->shminfo.shmaddr, &physBitmap->shminfo,
+                                               dib.dsBm.bmWidth, dib.dsBm.bmHeight,
+                                               physBitmap->pixmap_depth );
+    }
+    else
+#endif
+    {
+        physBitmap->pixmap = XCreatePixmap( gdi_display, root_window, dib.dsBm.bmWidth,
+                                            dib.dsBm.bmHeight, physBitmap->pixmap_depth );
+    }
+
     wine_tsx11_unlock();
     if (!physBitmap->pixmap || !physBitmap->image) return 0;
 
@@ -4760,9 +4842,11 @@ void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib)
       if (physBitmap->shminfo.shmid != -1)
       {
           XShmDetach( gdi_display, &(physBitmap->shminfo) );
-          XDestroyImage( physBitmap->image );
+          if (physBitmap->shm_mode == X11DRV_SHM_PIXMAP) X11DRV_DIB_DestroyXImage( physBitmap->image );
+          else XDestroyImage( physBitmap->image );
           shmdt( physBitmap->shminfo.shmaddr );
           physBitmap->shminfo.shmid = -1;
+          physBitmap->shm_mode = X11DRV_SHM_NONE;
       }
       else
 #endif
