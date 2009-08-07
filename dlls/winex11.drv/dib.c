@@ -4300,7 +4300,7 @@ static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
 #ifdef HAVE_LIBXXSHM
   if (physBitmap->shm_mode == X11DRV_SHM_PIXMAP && physBitmap->pixmap != dest)
   {
-    descr.shm_mode = X11DRV_SHM_IMAGE;
+    descr.shm_mode = X11DRV_SHM_NONE;
   }
 #endif
   descr.dibpitch = dibSection.dsBm.bmWidthBytes;
