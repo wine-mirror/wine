@@ -705,7 +705,11 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         ReleaseDC(context->win_handle, context->hdc);
     }
 
-    pwglDeleteContext(context->glCtx);
+    if (!pwglDeleteContext(context->glCtx))
+    {
+        DWORD err = GetLastError();
+        ERR("wglDeleteContext(%p) failed, last error %#x.\n", context->glCtx, err);
+    }
 }
 
 DWORD context_get_tls_idx(void)
