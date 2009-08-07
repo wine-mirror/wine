@@ -413,8 +413,12 @@ DWORD WINAPI SetThreadIdealProcessor(
     DWORD dwIdealProcessor)  /* [in] Specifies the new preferred processor */
 {
     FIXME("(%p): stub\n",hThread);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return -1L;
+    if (dwIdealProcessor > MAXIMUM_PROCESSORS)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return ~0u;
+    }
+    return 0;
 }
 
 
