@@ -299,19 +299,88 @@ NTSTATUS WINAPI LsaLookupNames(
     return STATUS_NONE_MAPPED;
 }
 
+static BOOL lookup_name( LSA_UNICODE_STRING *name, SID *sid, DWORD *sid_size, WCHAR *domain,
+                         DWORD *domain_size, SID_NAME_USE *use, BOOL *handled )
+{
+    BOOL ret;
+
+    ret = lookup_local_wellknown_name( name, sid, sid_size, domain, domain_size, use, handled );
+    if (!*handled)
+        ret = lookup_local_user_name( name, sid, sid_size, domain, domain_size, use, handled );
+
+    return ret;
+}
+
 /******************************************************************************
  * LsaLookupNames2 [ADVAPI32.@]
  *
  */
-NTSTATUS WINAPI LsaLookupNames2(
-    LSA_HANDLE policy,
-    ULONG flags,
-    ULONG count,
-    PLSA_UNICODE_STRING names,
-    PLSA_REFERENCED_DOMAIN_LIST *domains,
-    PLSA_TRANSLATED_SID2 *sids)
+NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
+                                 PLSA_UNICODE_STRING names, PLSA_REFERENCED_DOMAIN_LIST *domains,
+                                 PLSA_TRANSLATED_SID2 *sids )
 {
-    FIXME("(%p,0x%08x,0x%08x,%p,%p,%p) stub\n", policy, flags, count, names, domains, sids);
+    ULONG i, sid_size_total = 0, domain_size_total = 0, size, num_domains;
+    ULONG sid_size, domain_size, mapped;
+    BOOL ret, handled = FALSE;
+    SID_NAME_USE use;
+    SID *sid;
+
+    TRACE("(%p,0x%08x,0x%08x,%p,%p,%p)\n", policy, flags, count, names, domains, sids);
+
+    mapped = num_domains = 0;
+    for (i = 0; i < count; i++)
+    {
+        handled = FALSE;
+        sid_size = domain_size = 0;
+        ret = lookup_name( &names[i], NULL, &sid_size, NULL, &domain_size, &use, &handled );
+        if (handled)
+        {
+            sid_size_total += sid_size;
+            if (domain_size)
+            {
+                FIXME("domain not handled\n");
+                domain_size_total += domain_size;
+                num_domains++;
+            }
+            mapped++;
+        }
+    }
+    TRACE("mapped %u out of %u\n", mapped, count);
+
+    size = sizeof(LSA_TRANSLATED_SID2) * count + sid_size_total;
+    if (!(*sids = HeapAlloc( GetProcessHeap(), 0, size) )) return STATUS_NO_MEMORY;
+
+    sid = (SID *)*sids + sizeof(LSA_TRANSLATED_SID2) * mapped;
+
+    if (!(*domains = HeapAlloc( GetProcessHeap(), 0, sizeof(LSA_REFERENCED_DOMAIN_LIST) )))
+    {
+        HeapFree( GetProcessHeap(), 0, *sids );
+        return STATUS_NO_MEMORY;
+    }
+    (*domains)->Entries = 0;
+    (*domains)->Domains = NULL;
+
+    for (i = 0; i < count; i++)
+    {
+        (*sids)[i].Use = SidTypeUnknown;
+        (*sids)[i].DomainIndex = -1;
+        (*sids)[i].Flags = 0;
+
+        handled = FALSE;
+        sid_size = sid_size_total;
+        ret = lookup_name( &names[i], sid, &sid_size, NULL, &domain_size, &use, &handled );
+        if (handled)
+        {
+            (*sids)[i].Sid = sid;
+            (*sids)[i].Use = use;
+
+            sid += sid_size;
+            sid_size_total -= sid_size;
+        }
+    }
+
+    if (mapped == count) return STATUS_SUCCESS;
+    if (mapped > 0 && mapped < count) return STATUS_SOME_NOT_MAPPED;
     return STATUS_NONE_MAPPED;
 }
 
