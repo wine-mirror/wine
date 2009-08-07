@@ -97,6 +97,8 @@
     _pD3D8Caps->PixelShaderVersion                = _pWineCaps->PixelShaderVersion; \
     _pD3D8Caps->MaxPixelShaderValue               = _pWineCaps->PixelShader1xMaxValue;
 
+void fixup_caps(WINED3DCAPS *pWineCaps);
+
 /* Direct3D8 Interfaces: */
 typedef struct IDirect3DBaseTexture8Impl IDirect3DBaseTexture8Impl;
 typedef struct IDirect3DVolumeTexture8Impl IDirect3DVolumeTexture8Impl;

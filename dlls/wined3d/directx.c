@@ -4050,9 +4050,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         pCaps->StencilCaps |= WINED3DSTENCILCAPS_DECR  |
                               WINED3DSTENCILCAPS_INCR;
     }
-    if ( This->dxVersion > 8 &&
-        ( GL_SUPPORT(EXT_STENCIL_TWO_SIDE) ||
-            GL_SUPPORT(ATI_SEPARATE_STENCIL) ) ) {
+    if (GL_SUPPORT(EXT_STENCIL_TWO_SIDE) || GL_SUPPORT(ATI_SEPARATE_STENCIL)) {
         pCaps->StencilCaps |= WINED3DSTENCILCAPS_TWOSIDED;
     }
 
