@@ -357,7 +357,7 @@ static inline void record_lights(IWineD3DStateBlockImpl *This, IWineD3DStateBloc
         LIST_FOR_EACH(e, &This->lightMap[i]) {
             BOOL updated = FALSE;
             PLIGHTINFOEL *src = LIST_ENTRY(e, PLIGHTINFOEL, entry), *realLight;
-            if(!src->changed || !src->enabledChanged) continue;
+            if (!src->changed && !src->enabledChanged) continue;
 
             /* Look up the light in the destination */
             LIST_FOR_EACH(f, &targetStateBlock->lightMap[i]) {
