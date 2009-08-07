@@ -1493,7 +1493,8 @@ static void ME_ArrowCtrlEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
 
 BOOL ME_IsSelection(ME_TextEditor *editor)
 {
-  return memcmp(&editor->pCursors[0], &editor->pCursors[1], sizeof(ME_Cursor))!=0;
+  return editor->pCursors[0].pRun != editor->pCursors[1].pRun ||
+         editor->pCursors[0].nOffset != editor->pCursors[1].nOffset;
 }
 
 static int ME_GetSelCursor(ME_TextEditor *editor, int dir)
