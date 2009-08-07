@@ -953,7 +953,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     { /* 0x19 - CSIDL_COMMON_DESKTOPDIRECTORY */
         CSIDL_Type_AllUsers,
         Common_DesktopW,
-        MAKEINTRESOURCEW(IDS_DESKTOP)
+        MAKEINTRESOURCEW(IDS_DESKTOPDIRECTORY)
     },
     { /* 0x1a - CSIDL_APPDATA */
         CSIDL_Type_User,
