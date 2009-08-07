@@ -50,6 +50,7 @@ MAKE_FUNCPTR(gnutls_certificate_allocate_credentials);
 MAKE_FUNCPTR(gnutls_certificate_free_credentials);
 MAKE_FUNCPTR(gnutls_certificate_get_peers);
 MAKE_FUNCPTR(gnutls_cipher_get);
+MAKE_FUNCPTR(gnutls_cipher_get_key_size);
 MAKE_FUNCPTR(gnutls_credentials_set);
 MAKE_FUNCPTR(gnutls_deinit);
 MAKE_FUNCPTR(gnutls_global_deinit);
@@ -58,9 +59,11 @@ MAKE_FUNCPTR(gnutls_global_set_log_function);
 MAKE_FUNCPTR(gnutls_global_set_log_level);
 MAKE_FUNCPTR(gnutls_handshake);
 MAKE_FUNCPTR(gnutls_init);
+MAKE_FUNCPTR(gnutls_kx_get);
 MAKE_FUNCPTR(gnutls_mac_get);
 MAKE_FUNCPTR(gnutls_mac_get_key_size);
 MAKE_FUNCPTR(gnutls_perror);
+MAKE_FUNCPTR(gnutls_protocol_get_version);
 MAKE_FUNCPTR(gnutls_set_default_priority);
 MAKE_FUNCPTR(gnutls_record_recv);
 MAKE_FUNCPTR(gnutls_record_send);
@@ -858,6 +861,69 @@ static unsigned int schannel_get_cipher_block_size(gnutls_cipher_algorithm_t cip
     return 1;
 }
 
+static DWORD schannel_get_protocol(gnutls_protocol_t proto)
+{
+    /* FIXME: currently schannel only implements client connections, but
+     * there's no reason it couldn't be used for servers as well.  The
+     * context doesn't tell us which it is, so assume client for now.
+     */
+    switch (proto)
+    {
+    case GNUTLS_SSL3: return SP_PROT_SSL3_CLIENT;
+    case GNUTLS_TLS1_0: return SP_PROT_TLS1_CLIENT;
+    default:
+        FIXME("unknown protocol %d\n", proto);
+        return 0;
+    }
+}
+
+static ALG_ID schannel_get_cipher_algid(gnutls_cipher_algorithm_t cipher)
+{
+    switch (cipher)
+    {
+    case GNUTLS_CIPHER_UNKNOWN:
+    case GNUTLS_CIPHER_NULL: return 0;
+    case GNUTLS_CIPHER_DES_CBC:
+    case GNUTLS_CIPHER_3DES_CBC: return CALG_DES;
+    case GNUTLS_CIPHER_AES_128_CBC:
+    case GNUTLS_CIPHER_AES_256_CBC: return CALG_AES;
+    case GNUTLS_CIPHER_RC2_40_CBC: return CALG_RC2;
+    default:
+        FIXME("unknown algorithm %d\n", cipher);
+        return 0;
+    }
+}
+
+static ALG_ID schannel_get_mac_algid(gnutls_mac_algorithm_t mac)
+{
+    switch (mac)
+    {
+    case GNUTLS_MAC_UNKNOWN:
+    case GNUTLS_MAC_NULL: return 0;
+    case GNUTLS_MAC_MD5: return CALG_MD5;
+    case GNUTLS_MAC_SHA1:
+    case GNUTLS_MAC_SHA256:
+    case GNUTLS_MAC_SHA384:
+    case GNUTLS_MAC_SHA512: return CALG_SHA;
+    default:
+        FIXME("unknown algorithm %d\n", mac);
+        return 0;
+    }
+}
+
+static ALG_ID schannel_get_kx_algid(gnutls_kx_algorithm_t kx)
+{
+    switch (kx)
+    {
+        case GNUTLS_KX_RSA: return CALG_RSA_KEYX;
+        case GNUTLS_KX_DHE_DSS:
+        case GNUTLS_KX_DHE_RSA: return CALG_DH_EPHEM;
+    default:
+        FIXME("unknown algorithm %d\n", kx);
+        return 0;
+    }
+}
+
 static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         PCtxtHandle context_handle, ULONG attribute, PVOID buffer)
 {
@@ -910,6 +976,24 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
             else
                 return SEC_E_INTERNAL_ERROR;
         }
+        case SECPKG_ATTR_CONNECTION_INFO:
+        {
+            SecPkgContext_ConnectionInfo *info = buffer;
+            gnutls_protocol_t proto = pgnutls_protocol_get_version(ctx->session);
+            gnutls_cipher_algorithm_t alg = pgnutls_cipher_get(ctx->session);
+            gnutls_mac_algorithm_t mac = pgnutls_mac_get(ctx->session);
+            gnutls_kx_algorithm_t kx = pgnutls_kx_get(ctx->session);
+
+            info->dwProtocol = schannel_get_protocol(proto);
+            info->aiCipher = schannel_get_cipher_algid(alg);
+            info->dwCipherStrength = pgnutls_cipher_get_key_size(alg);
+            info->aiHash = schannel_get_mac_algid(mac);
+            info->dwHashStrength = pgnutls_mac_get_key_size(mac);
+            info->aiExch = schannel_get_kx_algid(kx);
+            /* FIXME: info->dwExchStrength? */
+            info->dwExchStrength = 0;
+            return SEC_E_OK;
+        }
 
         default:
             FIXME("Unhandled attribute %#x\n", attribute);
@@ -928,6 +1012,8 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesA(
         case SECPKG_ATTR_STREAM_SIZES:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
         case SECPKG_ATTR_REMOTE_CERT_CONTEXT:
+            return schan_QueryContextAttributesW(context_handle, attribute, buffer);
+        case SECPKG_ATTR_CONNECTION_INFO:
             return schan_QueryContextAttributesW(context_handle, attribute, buffer);
 
         default:
@@ -1263,6 +1349,7 @@ void SECUR32_initSchannelSP(void)
     LOAD_FUNCPTR(gnutls_certificate_free_credentials)
     LOAD_FUNCPTR(gnutls_certificate_get_peers)
     LOAD_FUNCPTR(gnutls_cipher_get)
+    LOAD_FUNCPTR(gnutls_cipher_get_key_size)
     LOAD_FUNCPTR(gnutls_credentials_set)
     LOAD_FUNCPTR(gnutls_deinit)
     LOAD_FUNCPTR(gnutls_global_deinit)
@@ -1271,9 +1358,11 @@ void SECUR32_initSchannelSP(void)
     LOAD_FUNCPTR(gnutls_global_set_log_level)
     LOAD_FUNCPTR(gnutls_handshake)
     LOAD_FUNCPTR(gnutls_init)
+    LOAD_FUNCPTR(gnutls_kx_get)
     LOAD_FUNCPTR(gnutls_mac_get)
     LOAD_FUNCPTR(gnutls_mac_get_key_size)
     LOAD_FUNCPTR(gnutls_perror)
+    LOAD_FUNCPTR(gnutls_protocol_get_version)
     LOAD_FUNCPTR(gnutls_set_default_priority)
     LOAD_FUNCPTR(gnutls_record_recv);
     LOAD_FUNCPTR(gnutls_record_send);
