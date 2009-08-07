@@ -3518,7 +3518,7 @@ void apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, struct w
     }
 
     if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
-        device->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, use_pshader, use_vshader);
+        device->shader_backend->shader_select(context, use_pshader, use_vshader);
 
         if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader)) {
             shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
@@ -4587,7 +4587,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, s
      * application
      */
     if (!isStateDirty(context, STATE_PIXELSHADER)) {
-        device->shader_backend->shader_select((IWineD3DDevice *)device, usePixelShaderFunction, useVertexShaderFunction);
+        device->shader_backend->shader_select(context, usePixelShaderFunction, useVertexShaderFunction);
 
         if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (useVertexShaderFunction || usePixelShaderFunction)) {
             shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);

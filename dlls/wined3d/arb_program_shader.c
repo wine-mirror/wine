@@ -4210,10 +4210,10 @@ static inline void find_arb_vs_compile_args(IWineD3DVertexShaderImpl *shader, IW
 }
 
 /* GL locking is done by the caller */
-static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+static void shader_arb_select(const struct wined3d_context *context, BOOL usePS, BOOL useVS)
+{
+    IWineD3DDeviceImpl *This = ((IWineD3DSurfaceImpl *)context->surface)->resource.wineD3DDevice;
     struct shader_arb_priv *priv = This->shader_priv;
-    struct wined3d_context *context = context_get_current();
     const struct wined3d_gl_info *gl_info = context->gl_info;
     int i;
 
@@ -4260,7 +4260,8 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         }
 
         /* Force constant reloading for the NP2 fixup (see comment in shader_glsl_select for more info) */
-        if (compiled->np2fixup_info.super.active) shader_arb_load_np2fixup_constants(iface, usePS, useVS);
+        if (compiled->np2fixup_info.super.active)
+            shader_arb_load_np2fixup_constants((IWineD3DDevice *)This, usePS, useVS);
     } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && !priv->use_arbfp_fixed_func) {
         /* Disable only if we're not using arbfp fixed function fragment processing. If this is used,
         * keep GL_FRAGMENT_PROGRAM_ARB enabled, and the fixed function pipeline will bind the fixed function
@@ -5774,7 +5775,7 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
             state_texfactor_arbfp(STATE_RENDER(WINED3DRS_TEXTUREFACTOR), stateblock, context);
             state_arb_specularenable(STATE_RENDER(WINED3DRS_SPECULARENABLE), stateblock, context);
         } else if(use_pshader && !isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
-            device->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, use_pshader, use_vshader);
+            device->shader_backend->shader_select(context, use_pshader, use_vshader);
         }
         return;
     }
@@ -5834,7 +5835,7 @@ static void fragment_prog_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock,
      * shader handler
      */
     if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
-        device->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, use_pshader, use_vshader);
+        device->shader_backend->shader_select(context, use_pshader, use_vshader);
 
         if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vshader || use_pshader)) {
             device->StateTable[STATE_VERTEXSHADERCONSTANT].apply(STATE_VERTEXSHADERCONSTANT, stateblock, context);

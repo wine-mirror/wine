@@ -901,7 +901,7 @@ static void atifs_apply_pixelshader(DWORD state, IWineD3DStateBlockImpl *statebl
      * simpler.
      */
     if(!isStateDirty(context, device->StateTable[STATE_VSHADER].representative)) {
-        device->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, FALSE, use_vshader);
+        device->shader_backend->shader_select(context, FALSE, use_vshader);
 
         if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && use_vshader) {
             device->StateTable[STATE_VERTEXSHADERCONSTANT].apply(STATE_VERTEXSHADERCONSTANT, stateblock, context);

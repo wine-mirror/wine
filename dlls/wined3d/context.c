@@ -1528,7 +1528,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
 
     /* Disable shaders */
     ENTER_GL();
-    This->shader_backend->shader_select((IWineD3DDevice *)This, FALSE, FALSE);
+    This->shader_backend->shader_select(context, FALSE, FALSE);
     LEAVE_GL();
 
     Context_MarkStateDirty(context, STATE_VSHADER, StateTable);
