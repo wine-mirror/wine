@@ -901,6 +901,35 @@ static void test_GetDlgItemText(void)
        "string retrieved using GetDlgItemText should have been NULL terminated\n");
 }
 
+static INT_PTR CALLBACK DestroyDlgWinProc (HWND hDlg, UINT uiMsg,
+        WPARAM wParam, LPARAM lParam)
+{
+    if (uiMsg == WM_INITDIALOG)
+    {
+        DestroyWindow(hDlg);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static INT_PTR CALLBACK DestroyOnCloseDlgWinProc (HWND hDlg, UINT uiMsg,
+        WPARAM wParam, LPARAM lParam)
+{
+    switch (uiMsg)
+    {
+    case WM_INITDIALOG:
+        PostMessage(hDlg, WM_CLOSE, 0, 0);
+        return TRUE;
+    case WM_CLOSE:
+        DestroyWindow(hDlg);
+        return TRUE;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void test_DialogBoxParamA(void)
 {
     int ret;
@@ -912,6 +941,19 @@ static void test_DialogBoxParamA(void)
     ok(ERROR_INVALID_WINDOW_HANDLE == GetLastError() ||
        broken(GetLastError() == 0xdeadbeef),
        "got %d, expected ERROR_INVALID_WINDOW_HANDLE\n",GetLastError());
+
+    /* Test a dialog which destroys itself on WM_INITDIALOG. */
+    SetLastError(0xdeadbeef);
+    ret = DialogBoxParamA(GetModuleHandle(NULL), "IDD_DIALOG", 0, DestroyDlgWinProc, 0);
+    ok(-1 == ret, "DialogBoxParamA returned %d, expected -1\n", ret);
+    ok(ERROR_INVALID_WINDOW_HANDLE == GetLastError() ||
+       broken(GetLastError() == 0xdeadbeef),
+       "got %d, expected ERROR_INVALID_WINDOW_HANDLE\n",GetLastError());
+
+    /* Test a dialog which destroys itself on WM_CLOSE. */
+    ret = DialogBoxParamA(GetModuleHandle(NULL), "IDD_DIALOG", 0, DestroyOnCloseDlgWinProc, 0);
+    todo_wine ok(0 == ret, "DialogBoxParamA returned %d, expected 0\n", ret);
+
     SetLastError(0xdeadbeef);
     ret = DialogBoxParamA(GetModuleHandle(NULL), "RESOURCE_INVALID" , 0, 0, 0);
     ok(-1 == ret, "DialogBoxParamA returned %d, expected -1\n", ret);
