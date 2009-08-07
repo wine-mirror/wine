@@ -2481,6 +2481,33 @@ static BOOL crypt_export_private_key(CRYPTKEY *pCryptKey, BOOL force,
     return TRUE;
 }
 
+static BOOL crypt_export_plaintext_key(CRYPTKEY *pCryptKey, BYTE *pbData,
+    DWORD *pdwDataLen)
+{
+    BLOBHEADER *pBlobHeader = (BLOBHEADER*)pbData;
+    DWORD *pKeyLen = (DWORD*)(pBlobHeader+1);
+    BYTE *pbKey = (BYTE*)(pKeyLen+1);
+    DWORD dwDataLen;
+
+    dwDataLen = sizeof(BLOBHEADER) + sizeof(DWORD) + pCryptKey->dwKeyLen;
+    if (pbData) {
+        if (*pdwDataLen < dwDataLen) {
+            SetLastError(ERROR_MORE_DATA);
+            *pdwDataLen = dwDataLen;
+            return FALSE;
+        }
+
+        pBlobHeader->bType = PLAINTEXTKEYBLOB;
+        pBlobHeader->bVersion = CUR_BLOB_VERSION;
+        pBlobHeader->reserved = 0;
+        pBlobHeader->aiKeyAlg = pCryptKey->aiAlgid;
+
+        *pKeyLen = pCryptKey->dwKeyLen;
+        memcpy(pbKey, &pCryptKey->abKeyValue, pCryptKey->dwKeyLen);
+    }
+    *pdwDataLen = dwDataLen;
+    return TRUE;
+}
 /******************************************************************************
  * crypt_export_key [Internal]
  *
@@ -2535,6 +2562,9 @@ static BOOL crypt_export_key(CRYPTKEY *pCryptKey, HCRYPTKEY hPubKey,
 
         case PRIVATEKEYBLOB:
             return crypt_export_private_key(pCryptKey, force, pbData, pdwDataLen);
+
+        case PLAINTEXTKEYBLOB:
+            return crypt_export_plaintext_key(pCryptKey, pbData, pdwDataLen);
             
         default:
             SetLastError(NTE_BAD_TYPE); /* FIXME: error code? */
