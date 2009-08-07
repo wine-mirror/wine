@@ -2834,6 +2834,53 @@ static BOOL import_symmetric_key(HCRYPTPROV hProv, CONST BYTE *pbData,
 }
 
 /******************************************************************************
+ * import_plaintext_key [Internal]
+ *
+ * Import a plaintext key into a key container.
+ *
+ * PARAMS
+ *  hProv     [I] Key container into which the symmetric key is to be imported.
+ *  pbData    [I] Pointer to a buffer which holds the plaintext key BLOB.
+ *  dwDataLen [I] Length of data in buffer at pbData.
+ *  dwFlags   [I] One of:
+ *                CRYPT_EXPORTABLE: the imported key is marked exportable
+ *  phKey     [O] Handle to the imported key.
+ *
+ *
+ * NOTES
+ *  Assumes the caller has already checked the BLOBHEADER at pbData to ensure
+ *  it's a PLAINTEXTKEYBLOB.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
+ */
+static BOOL import_plaintext_key(HCRYPTPROV hProv, CONST BYTE *pbData,
+                                 DWORD dwDataLen, DWORD dwFlags,
+                                 HCRYPTKEY *phKey)
+{
+    CRYPTKEY *pCryptKey;
+    CONST BLOBHEADER *pBlobHeader = (CONST BLOBHEADER*)pbData;
+    CONST DWORD *pKeyLen = (CONST DWORD *)(pBlobHeader + 1);
+    CONST BYTE *pbKeyStream = (CONST BYTE*)(pKeyLen + 1);
+
+    if (dwDataLen < sizeof(BLOBHEADER)+sizeof(DWORD)+*pKeyLen)
+    {
+        SetLastError(NTE_BAD_DATA); /* FIXME: error code */
+        return FALSE;
+    }
+
+    *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, *pKeyLen<<19, &pCryptKey);
+    if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
+        return FALSE;
+    memcpy(pCryptKey->abKeyValue, pbKeyStream, *pKeyLen);
+    setup_key(pCryptKey);
+    if (dwFlags & CRYPT_EXPORTABLE)
+        pCryptKey->dwPermissions |= CRYPT_EXPORT;
+    return TRUE;
+}
+
+/******************************************************************************
  * import_key [Internal]
  *
  * Import a BLOB'ed key into a key container, optionally storing the key's
@@ -2892,6 +2939,10 @@ static BOOL import_key(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDataLen,
         case SIMPLEBLOB:
             return import_symmetric_key(hProv, pbData, dwDataLen, hPubKey,
                                         dwFlags, phKey);
+
+        case PLAINTEXTKEYBLOB:
+            return import_plaintext_key(hProv, pbData, dwDataLen, dwFlags,
+                                        phKey);
 
         default:
             SetLastError(NTE_BAD_TYPE); /* FIXME: error code? */
