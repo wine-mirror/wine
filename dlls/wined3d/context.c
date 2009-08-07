@@ -1862,59 +1862,44 @@ retry:
                 Context_MarkStateDirty(context, STATE_RENDER(WINED3DRS_ALPHABLENDENABLE), StateTable);
             }
         }
-    }
 
-    /* When switching away from an offscreen render target, and we're not using FBOs,
-     * we have to read the drawable into the texture. This is done via PreLoad(and
-     * SFLAG_INDRAWABLE set on the surface). There are some things that need care though.
-     * PreLoad needs a GL context, and FindContext is called before the context is activated.
-     * It also has to be called with the old rendertarget active, otherwise a wrong drawable
-     * is read. This leads to these possible situations:
-     *
-     * 0) lastActiveRenderTarget == target && oldTid == newTid:
-     *    Nothing to do, we don't even reach this code in this case...
-     *
-     * 1) lastActiveRenderTarget != target && oldTid == newTid:
-     *    The currently active context is OK for readback. Call PreLoad, and it
-     *    performs the read
-     *
-     * 2) lastActiveRenderTarget == target && oldTid != newTid:
-     *    Nothing to do - the drawable is unchanged
-     *
-     * 3) lastActiveRenderTarget != target && oldTid != newTid:
-     *    This is tricky. We have to get a context with the old drawable from somewhere
-     *    before we can switch to the new context. In this case, PreLoad calls
-     *    ActivateContext(lastActiveRenderTarget) from the new(current) thread. This
-     *    is case (2) then. The old drawable is activated for the new thread, and the
-     *    readback can be done. The recursed ActivateContext does *not* call PreLoad again.
-     *    After that, the outer ActivateContext(which calls PreLoad) can activate the new
-     *    target for the new thread
-     */
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO && old_render_offscreen
-            && context->current_rt && context->current_rt != target)
-    {
-        BOOL oldInDraw = This->isInDraw;
-
-        /* PreLoad requires a context to load the texture, thus it will call ActivateContext.
-         * Set the isInDraw to true to signal PreLoad that it has a context. Will be tricky
-         * when using offscreen rendering with multithreading
-         */
-        This->isInDraw = TRUE;
-
-        /* Do that before switching the context:
-         * Read the back buffer of the old drawable into the destination texture
-         */
-        if (((IWineD3DSurfaceImpl *)context->current_rt)->texture_name_srgb)
+        /* When switching away from an offscreen render target, and we're not
+         * using FBOs, we have to read the drawable into the texture. This is
+         * done via PreLoad (and SFLAG_INDRAWABLE set on the surface). There
+         * are some things that need care though. PreLoad needs a GL context,
+         * and FindContext is called before the context is activated. It also
+         * has to be called with the old rendertarget active, otherwise a
+         * wrong drawable is read. */
+        if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+                && old_render_offscreen && context->current_rt != target)
         {
-            surface_internal_preload(context->current_rt, SRGB_BOTH);
-        } else {
-            surface_internal_preload(context->current_rt, SRGB_RGB);
+            BOOL oldInDraw = This->isInDraw;
+
+            /* surface_internal_preload() requires a context to load the
+             * texture, so it will call ActivateContext. Set isInDraw to true
+             * to signal surface_internal_preload() that it has a context. */
+
+            /* FIXME: This is just broken. There's no guarantee whatsoever
+             * that the currently active context, if any, is appropriate for
+             * reading back the render target. We should probably call
+             * context_set_current(context) here and then rely on
+             * ActivateContext() doing the right thing. */
+            This->isInDraw = TRUE;
+
+            /* Read the back buffer of the old drawable into the destination texture. */
+            if (((IWineD3DSurfaceImpl *)context->current_rt)->texture_name_srgb)
+            {
+                surface_internal_preload(context->current_rt, SRGB_BOTH);
+            }
+            else
+            {
+                surface_internal_preload(context->current_rt, SRGB_RGB);
+            }
+
+            IWineD3DSurface_ModifyLocation(context->current_rt, SFLAG_INDRAWABLE, FALSE);
+
+            This->isInDraw = oldInDraw;
         }
-
-        /* Assume that the drawable will be modified by some other things now */
-        IWineD3DSurface_ModifyLocation(context->current_rt, SFLAG_INDRAWABLE, FALSE);
-
-        This->isInDraw = oldInDraw;
     }
 
     context->draw_buffer_dirty = TRUE;
