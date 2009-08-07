@@ -152,8 +152,16 @@ static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site)
                  SWP_NOZORDER | SWP_SHOWWINDOW);
 
     if(This->client) {
+        IOleContainer *container;
+
         IOleClientSite_ShowObject(This->client);
-        IOleClientSite_GetContainer(This->client, &This->container);
+
+        hres = IOleClientSite_GetContainer(This->client, &container);
+        if(SUCCEEDED(hres)) {
+            if(This->container)
+                IOleContainer_Release(This->container);
+            This->container = container;
+        }
     }
 
     if(This->doc_host.frame)
