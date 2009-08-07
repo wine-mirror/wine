@@ -70,10 +70,10 @@ static void drawStridedFast(IWineD3DDevice *iface, GLenum primitive_type,
  */
 
 /* GL locking is done by the caller */
-static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_stream_info *si, UINT NumVertexes,
-        GLenum glPrimType, const void *idxData, UINT idxSize, UINT minIndex, UINT startIdx)
+static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context *context,
+        const struct wined3d_stream_info *si, UINT NumVertexes, GLenum glPrimType,
+        const void *idxData, UINT idxSize, UINT minIndex, UINT startIdx)
 {
-    struct wined3d_context *context = context_get_current();
     unsigned int               textureNo    = 0;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
@@ -656,7 +656,8 @@ void drawPrimitive(IWineD3DDevice *iface, UINT index_count, UINT numberOfVertice
                 }
                 drawStridedSlowVs(iface, stream_info, index_count, glPrimType, idxData, idxSize, minIndex, StartIdx);
             } else {
-                drawStridedSlow(iface, stream_info, index_count, glPrimType, idxData, idxSize, minIndex, StartIdx);
+                drawStridedSlow(iface, context, stream_info, index_count,
+                        glPrimType, idxData, idxSize, minIndex, StartIdx);
             }
         } else if(This->instancedDraw) {
             /* Instancing emulation with mixing immediate mode and arrays */
