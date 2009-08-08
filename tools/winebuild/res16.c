@@ -184,6 +184,7 @@ void load_res16_file( const char *name, DLLSPEC *spec )
     file_pos  = base;
     file_end  = file_pos + st.st_size;
     while (file_pos < file_end) load_next_resource( spec );
+    close (fd);
 }
 
 /* compare two strings/ids */
