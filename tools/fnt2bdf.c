@@ -216,7 +216,10 @@ static int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
     }
 
     ic = dump_bdf_hdr(fp, cpe_font_struct, file_buffer);
-    if (ic) return (ic);
+    if (ic) {
+      fclose(fp);
+      return (ic);
+    }
 
     /* NOW, convert all chars to UNIX (lton) notation... */
 
@@ -544,7 +547,7 @@ int main(int argc, char **argv)
 
   parse_options( argc, argv);
 
-  if( (fd = open( g_lpstrInputFile, O_RDONLY | O_BINARY)) )
+  if( (fd = open( g_lpstrInputFile, O_RDONLY | O_BINARY)) != -1 )
   {
     int    i;
     struct stat file_stat;
