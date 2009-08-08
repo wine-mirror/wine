@@ -54,6 +54,7 @@ static NTSTATUS (WINAPI *pNtWriteFile)(HANDLE hFile, HANDLE hEvent,
                                        PIO_STATUS_BLOCK io_status,
                                        const void* buffer, ULONG length,
                                        PLARGE_INTEGER offset, PULONG key);
+static NTSTATUS (WINAPI *pNtCancelIoFileEx)(HANDLE hFile, PIO_STATUS_BLOCK iosb, PIO_STATUS_BLOCK io_status);
 static NTSTATUS (WINAPI *pNtClose)( PHANDLE );
 
 static NTSTATUS (WINAPI *pNtCreateIoCompletion)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, ULONG);
@@ -354,6 +355,33 @@ static void read_file_test(void)
     SleepEx( 1, TRUE ); /* alertable sleep */
     ok( apc_count == 1, "apc was not called\n" );
     CloseHandle( read );
+
+    if (pNtCancelIoFileEx)
+    {
+        IO_STATUS_BLOCK iosb2;
+        /* test param order for NtCancelIoFileEx */
+        if (!create_pipe( &read, &write, FILE_FLAG_OVERLAPPED, 4096 )) return;
+        apc_count = 0;
+        U(iosb).Status = 0xdeadbabe;
+        iosb.Information = 0xdeadbeef;
+        status = pNtReadFile( read, event, apc, &apc_count, &iosb, buffer, 2, NULL, NULL );
+        ok( status == STATUS_PENDING, "wrong status %x\n", status );
+        ok( !is_signaled( event ), "event is signaled\n" );
+        ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
+        ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+        ok( !apc_count, "apc was called\n" );
+        status = pNtCancelIoFileEx( read, &iosb, &iosb2 );
+        ok(status == STATUS_SUCCESS, "Failed to cancel I/O\n");
+        Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
+        ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
+        ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
+        ok( is_signaled( event ), "event is signaled\n" );
+        ok( !apc_count, "apc was called\n" );
+        SleepEx( 1, TRUE ); /* alertable sleep */
+        ok( apc_count == 1, "apc was not called\n" );
+        CloseHandle( read );
+        CloseHandle( write );
+    }
 
     /* now try a real file */
     if (!(handle = create_temp_file( FILE_FLAG_OVERLAPPED ))) return;
@@ -712,6 +740,7 @@ START_TEST(file)
     pNtDeleteFile           = (void *)GetProcAddress(hntdll, "NtDeleteFile");
     pNtReadFile             = (void *)GetProcAddress(hntdll, "NtReadFile");
     pNtWriteFile            = (void *)GetProcAddress(hntdll, "NtWriteFile");
+    pNtCancelIoFileEx       = (void *)GetProcAddress(hntdll, "NtCancelIoFileEx");
     pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
     pNtCreateIoCompletion   = (void *)GetProcAddress(hntdll, "NtCreateIoCompletion");
     pNtOpenIoCompletion     = (void *)GetProcAddress(hntdll, "NtOpenIoCompletion");
