@@ -2990,10 +2990,18 @@ static void test_AcceptEx(void)
     acceptor = INVALID_SOCKET;
 
     dwret = WaitForSingleObject(overlapped.hEvent, 1000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
+    ok(dwret == WAIT_OBJECT_0 || broken(dwret == WAIT_TIMEOUT) /* NT4/2000 */,
+       "Waiting for accept event failed with %d + errno %d\n", dwret, GetLastError());
 
-    bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
-    ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %d\n", GetLastError());
+    if (dwret != WAIT_TIMEOUT) {
+        bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
+        ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %d\n", GetLastError());
+    }
+    else {
+        bret = CancelIo((HANDLE) listener);
+        ok(bret, "Failed to cancel failed test. Bailing...\n");
+        if (!bret) return;
+    }
 
     acceptor = socket(AF_INET, SOCK_STREAM, 0);
     if (acceptor == INVALID_SOCKET) {
