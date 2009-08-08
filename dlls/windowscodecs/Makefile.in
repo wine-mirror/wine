@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = windowscodecs.dll
 IMPORTLIB = windowscodecs
 IMPORTS   = uuid ole32 advapi32 kernel32
+EXTRAINCL = @PNGINCL@
 
 C_SRCS = \
 	bmpdecode.c \
@@ -18,6 +19,7 @@ C_SRCS = \
 	jpegformat.c \
 	main.c \
 	palette.c \
+	pngformat.c \
 	propertybag.c \
 	regsvr.c \
 	stream.c \
