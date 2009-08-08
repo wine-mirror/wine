@@ -1330,7 +1330,7 @@ NTSTATUS WINAPI NtPowerInformation(
 		}
 		case SystemExecutionState: {
 			PULONG ExecutionState = lpOutputBuffer;
-			FIXME("semi-stub: SystemExecutionState\n");
+			WARN("semi-stub: SystemExecutionState\n"); /* Needed for .NET Framework, but using a FIXME is really noisy. */
 			if (lpInputBuffer != NULL)
 				return STATUS_INVALID_PARAMETER;
 			/* FIXME: The actual state should be the value set by SetThreadExecutionState which is not currently implemented. */
