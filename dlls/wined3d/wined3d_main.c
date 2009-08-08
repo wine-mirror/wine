@@ -252,16 +252,6 @@ static BOOL wined3d_init(HINSTANCE hInstDLL)
                 TRACE("Using glReadPixels for render target reading and textures for writing\n");
                 wined3d_settings.rendertargetlock_mode = RTL_READTEX;
             }
-            else if (!strcmp(buffer,"texdraw"))
-            {
-                TRACE("Using textures for render target reading and glDrawPixels for writing\n");
-                wined3d_settings.rendertargetlock_mode = RTL_TEXDRAW;
-            }
-            else if (!strcmp(buffer,"textex"))
-            {
-                TRACE("Reading render targets via textures and writing via textures\n");
-                wined3d_settings.rendertargetlock_mode = RTL_TEXTEX;
-            }
         }
         if ( !get_config_key_dword( hkey, appkey, "VideoPciDeviceID", &tmpvalue) )
         {

@@ -1515,13 +1515,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
         switch(wined3d_settings.rendertargetlock_mode) {
             case RTL_READTEX:
-            case RTL_TEXTEX:
                 IWineD3DSurface_LoadLocation(iface, SFLAG_INTEXTURE, NULL /* partial texture loading not supported yet */);
                 /* drop through */
 
             case RTL_AUTO:
             case RTL_READDRAW:
-            case RTL_TEXDRAW:
                 IWineD3DSurface_LoadLocation(iface, SFLAG_INDRAWABLE, fullsurface ? NULL : &This->dirtyRect);
                 break;
         }
@@ -4058,7 +4056,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_RealizePalette(IWineD3DSurface *iface)
         CONVERT_TYPES convert;
 
         /* Check if we are using a RTL mode which uses texturing for uploads */
-        BOOL use_texture = (wined3d_settings.rendertargetlock_mode == RTL_READTEX || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX);
+        BOOL use_texture = (wined3d_settings.rendertargetlock_mode == RTL_READTEX);
 
         /* Check if we have hardware palette conversion if we have convert is set to NO_CONVERSION */
         d3dfmt_get_conv(This, TRUE, use_texture, &format, &internal, &type, &convert, &bpp, FALSE);
@@ -4165,8 +4163,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_PrivateSetup(IWineD3DSurface *iface) {
         */
         if(This->Flags & SFLAG_NONPOW2 && GL_SUPPORT(ARB_TEXTURE_RECTANGLE)
                 && !((This->resource.format_desc->format == WINED3DFMT_P8) && GL_SUPPORT(EXT_PALETTED_TEXTURE)
-                && (wined3d_settings.rendertargetlock_mode == RTL_READTEX
-                || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX)))
+                && (wined3d_settings.rendertargetlock_mode == RTL_READTEX)))
         {
             This->texture_target = GL_TEXTURE_RECTANGLE_ARB;
             This->pow2Width  = This->currentDesc.Width;

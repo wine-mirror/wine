@@ -199,7 +199,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
 
     /* Precalculated scaling for 'faked' non power of two texture coords.
      * Second also don't use ARB_TEXTURE_RECTANGLE in case the surface format is P8 and EXT_PALETTED_TEXTURE
-     * is used in combination with texture uploads (RTL_READTEX/RTL_TEXTEX). The reason is that EXT_PALETTED_TEXTURE
+     * is used in combination with texture uploads (RTL_READTEX). The reason is that EXT_PALETTED_TEXTURE
      * doesn't work in combination with ARB_TEXTURE_RECTANGLE. */
     if (GL_SUPPORT(WINE_NORMALIZED_TEXRECT) && (width != pow2_width || height != pow2_height))
     {
@@ -213,8 +213,7 @@ HRESULT texture_init(IWineD3DTextureImpl *texture, UINT width, UINT height, UINT
     }
     else if (GL_SUPPORT(ARB_TEXTURE_RECTANGLE) && (width != pow2_width || height != pow2_height)
             && !((format_desc->format == WINED3DFMT_P8) && GL_SUPPORT(EXT_PALETTED_TEXTURE)
-            && (wined3d_settings.rendertargetlock_mode == RTL_READTEX
-            || wined3d_settings.rendertargetlock_mode == RTL_TEXTEX)))
+            && (wined3d_settings.rendertargetlock_mode == RTL_READTEX)))
     {
         if ((width != 1) || (height != 1)) texture->baseTexture.pow2Matrix_identity = FALSE;
 
