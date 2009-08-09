@@ -23,7 +23,10 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "ole2.h"
+#include "wininet.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 
@@ -195,8 +198,41 @@ static HRESULT WINAPI HTMLLocation_put_pathname(IHTMLLocation *iface, BSTR v)
 static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
 {
     HTMLLocation *This = HTMLLOCATION_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    WCHAR buf[INTERNET_MAX_PATH_LENGTH];
+    URL_COMPONENTSW url = {sizeof(url)};
+    DWORD size = 0;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!This->doc || !This->doc->url) {
+        FIXME("No current URL\n");
+        return E_NOTIMPL;
+    }
+
+    hres = CoInternetParseUrl(This->doc->url, PARSE_PATH_FROM_URL, 0, buf, sizeof(buf), &size, 0);
+    if(SUCCEEDED(hres)) {
+        *p = SysAllocString(buf);
+        if(!*p)
+            return E_OUTOFMEMORY;
+        return S_OK;
+    }
+
+    url.dwUrlPathLength = 1;
+    if(!InternetCrackUrlW(This->doc->url, 0, 0, &url)) {
+        FIXME("InternetCrackUrl failed\n");
+        return E_FAIL;
+    }
+
+    if(!url.dwUrlPathLength) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    *p = SysAllocStringLen(url.lpszUrlPath, url.dwUrlPathLength);
+    if(!*p)
+        return E_OUTOFMEMORY;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLLocation_put_search(IHTMLLocation *iface, BSTR v)

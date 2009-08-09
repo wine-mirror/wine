@@ -2383,6 +2383,7 @@ static void test_location(IHTMLDocument2 *doc)
 {
     IHTMLLocation *location, *location2;
     IHTMLWindow2 *window;
+    BSTR str;
     ULONG ref;
     HRESULT hres;
 
@@ -2405,6 +2406,10 @@ static void test_location(IHTMLDocument2 *doc)
 
     test_ifaces((IUnknown*)location, location_iids);
     test_disp2((IUnknown*)location, &DIID_DispHTMLLocation, &IID_IHTMLLocation);
+
+    hres = IHTMLLocation_get_pathname(location, &str);
+    ok(hres == S_OK, "get_pathname failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "blank"), "unexpected pathname %s\n", dbgstr_w(str));
 
     ref = IHTMLLocation_Release(location);
     ok(!ref, "location chould be destroyed here\n");
