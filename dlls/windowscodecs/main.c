@@ -76,7 +76,7 @@ HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
         const BYTE *src;
         BYTE *dst;
 
-        src = srcbuffer + (row_offset / 8);
+        src = srcbuffer + (row_offset / 8) + srcstride * rc->Y;
         dst = dstbuffer;
         for (row=0; row < rc->Height; row++)
         {
