@@ -2072,6 +2072,8 @@ enum message_type
 /* Cancel all async op on a fd */
 @REQ(cancel_async)
     obj_handle_t handle;        /* handle to comm port, socket or file */
+    client_ptr_t iosb;          /* I/O status block (NULL=all) */
+    int          only_thread;   /* cancel matching this thread */
 @END
 
 

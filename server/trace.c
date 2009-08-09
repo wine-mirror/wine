@@ -2568,6 +2568,8 @@ static void dump_register_async_request( const struct register_async_request *re
 static void dump_cancel_async_request( const struct cancel_async_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+    dump_uint64( ", iosb=", &req->iosb );
+    fprintf( stderr, ", only_thread=%d", req->only_thread );
 }
 
 static void dump_ioctl_request( const struct ioctl_request *req )
@@ -4583,12 +4585,12 @@ static const struct
     { "IO_TIMEOUT",                  STATUS_IO_TIMEOUT },
     { "KEY_DELETED",                 STATUS_KEY_DELETED },
     { "MAPPED_FILE_SIZE_ZERO",       STATUS_MAPPED_FILE_SIZE_ZERO },
-    { "MEDIA_WRITE_PROTECTED",       STATUS_MEDIA_WRITE_PROTECTED },
     { "MUTANT_NOT_OWNED",            STATUS_MUTANT_NOT_OWNED },
     { "NAME_TOO_LONG",               STATUS_NAME_TOO_LONG },
     { "NOTIFY_ENUM_DIR",             STATUS_NOTIFY_ENUM_DIR },
     { "NOT_ALL_ASSIGNED",            STATUS_NOT_ALL_ASSIGNED },
     { "NOT_A_DIRECTORY",             STATUS_NOT_A_DIRECTORY },
+    { "NOT_FOUND",                   STATUS_NOT_FOUND },
     { "NOT_IMPLEMENTED",             STATUS_NOT_IMPLEMENTED },
     { "NOT_REGISTRY_FILE",           STATUS_NOT_REGISTRY_FILE },
     { "NOT_SUPPORTED",               STATUS_NOT_SUPPORTED },

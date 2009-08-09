@@ -288,6 +288,28 @@ int async_waiting( struct async_queue *queue )
     return async->status == STATUS_PENDING;
 }
 
+int async_wake_up_by( struct async_queue *queue, struct process *process,
+                      struct thread *thread, client_ptr_t iosb, unsigned int status )
+{
+    struct list *ptr, *next;
+    int woken = 0;
+
+    if (!queue || (!process && !thread && !iosb)) return 0;
+
+    LIST_FOR_EACH_SAFE( ptr, next, &queue->queue )
+    {
+        struct async *async = LIST_ENTRY( ptr, struct async, queue_entry );
+        if ( (!process || async->thread->process == process) &&
+             (!thread || async->thread == thread) &&
+             (!iosb || async->data.iosb == iosb) )
+        {
+            async_terminate( async, status );
+            woken++;
+        }
+    }
+    return woken;
+}
+
 /* wake up async operations on the queue */
 void async_wake_up( struct async_queue *queue, unsigned int status )
 {

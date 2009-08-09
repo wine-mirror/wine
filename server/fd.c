@@ -1856,11 +1856,15 @@ void default_fd_reselect_async( struct fd *fd, struct async_queue *queue )
 }
 
 /* default cancel_async() fd routine */
-void default_fd_cancel_async( struct fd *fd )
+void default_fd_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb )
 {
-    async_wake_up( fd->read_q, STATUS_CANCELLED );
-    async_wake_up( fd->write_q, STATUS_CANCELLED );
-    async_wake_up( fd->wait_q, STATUS_CANCELLED );
+    int n = 0;
+
+    n += async_wake_up_by( fd->read_q, process, thread, iosb, STATUS_CANCELLED );
+    n += async_wake_up_by( fd->write_q, process, thread, iosb, STATUS_CANCELLED );
+    n += async_wake_up_by( fd->wait_q, process, thread, iosb, STATUS_CANCELLED );
+    if (!n && iosb)
+        set_error( STATUS_NOT_FOUND );
 }
 
 /* default flush() routine */
@@ -2064,10 +2068,11 @@ DECL_HANDLER(register_async)
 DECL_HANDLER(cancel_async)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+    struct thread *thread = req->only_thread ? current : NULL;
 
     if (fd)
     {
-        if (get_unix_fd( fd ) != -1) fd->fd_ops->cancel_async( fd );
+        if (get_unix_fd( fd ) != -1) fd->fd_ops->cancel_async( fd, current->process, thread, req->iosb );
         release_object( fd );
     }
 }

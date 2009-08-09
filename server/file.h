@@ -46,7 +46,7 @@ struct fd_ops
     /* selected events for async i/o need an update */
     void (*reselect_async)( struct fd *, struct async_queue *queue );
     /* cancel an async operation */
-    void (*cancel_async)(struct fd *);
+    void (*cancel_async)(struct fd *, struct process *process, struct thread *thread, client_ptr_t iosb);
 };
 
 /* file descriptor functions */
@@ -83,7 +83,7 @@ extern obj_handle_t default_fd_ioctl( struct fd *fd, ioctl_code_t code, const as
                                       int blocking, const void *data, data_size_t size );
 extern void default_fd_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 extern void default_fd_reselect_async( struct fd *fd, struct async_queue *queue );
-extern void default_fd_cancel_async( struct fd *fd );
+extern void default_fd_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb );
 extern void no_flush( struct fd *fd, struct event **event );
 extern void main_loop(void);
 extern void remove_process_locks( struct process *process );
@@ -143,6 +143,8 @@ extern void async_set_result( struct object *obj, unsigned int status,
                               unsigned int total, client_ptr_t apc );
 extern int async_waiting( struct async_queue *queue );
 extern void async_terminate( struct async *async, unsigned int status );
+extern int async_wake_up_by( struct async_queue *queue, struct process *process,
+                             struct thread *thread, client_ptr_t iosb, unsigned int status );
 extern void async_wake_up( struct async_queue *queue, unsigned int status );
 extern struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key );
 extern void fd_copy_completion( struct fd *src, struct fd *dst );

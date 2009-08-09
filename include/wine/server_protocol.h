@@ -2859,6 +2859,9 @@ struct cancel_async_request
 {
     struct request_header __header;
     obj_handle_t handle;
+    client_ptr_t iosb;
+    int          only_thread;
+    char __pad_28[4];
 };
 struct cancel_async_reply
 {
@@ -5312,6 +5315,6 @@ union generic_reply
     struct set_window_layered_info_reply set_window_layered_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 387
+#define SERVER_PROTOCOL_VERSION 388
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
