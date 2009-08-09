@@ -36,6 +36,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+static WCHAR const pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
+
 typedef struct {
     const IWICBitmapDecoderInfoVtbl *lpIWICBitmapDecoderInfoVtbl;
     LONG ref;
@@ -593,6 +595,26 @@ static HRESULT WINAPI FormatConverterInfo_CreateInstance(IWICFormatConverterInfo
         &IID_IWICFormatConverter, (void**)ppIFormatConverter);
 }
 
+static BOOL ConverterSupportsFormat(IWICFormatConverterInfo *iface, const WCHAR *formatguid)
+{
+    LONG res;
+    FormatConverterInfo *This = (FormatConverterInfo*)iface;
+    HKEY formats_key, guid_key;
+
+    /* Avoid testing using IWICFormatConverter_GetPixelFormats because that
+        would be O(n). A registry test should do better. */
+
+    res = RegOpenKeyExW(This->classkey, pixelformats_keyname, 0, KEY_READ, &formats_key);
+    if (res != ERROR_SUCCESS) return FALSE;
+
+    res = RegOpenKeyExW(formats_key, formatguid, 0, KEY_READ, &guid_key);
+    if (res == ERROR_SUCCESS) RegCloseKey(guid_key);
+
+    RegCloseKey(formats_key);
+
+    return (res == ERROR_SUCCESS);
+}
+
 static const IWICFormatConverterInfoVtbl FormatConverterInfo_Vtbl = {
     FormatConverterInfo_QueryInterface,
     FormatConverterInfo_AddRef,
@@ -957,4 +979,92 @@ HRESULT CreateComponentEnumerator(DWORD componentTypes, DWORD options, IEnumUnkn
     }
 
     return hr;
+}
+
+HRESULT WINAPI WICConvertBitmapSource(REFWICPixelFormatGUID dstFormat, IWICBitmapSource *pISrc, IWICBitmapSource **ppIDst)
+{
+    HRESULT res;
+    IEnumUnknown *enumconverters;
+    IUnknown *unkconverterinfo;
+    IWICFormatConverterInfo *converterinfo=NULL;
+    IWICFormatConverter *converter=NULL;
+    GUID srcFormat;
+    WCHAR srcformatstr[39], dstformatstr[39];
+    BOOL canconvert;
+    ULONG num_fetched;
+
+    res = IWICBitmapSource_GetPixelFormat(pISrc, &srcFormat);
+    if (FAILED(res)) return res;
+
+    if (IsEqualGUID(&srcFormat, dstFormat))
+    {
+        IWICBitmapSource_AddRef(pISrc);
+        *ppIDst = pISrc;
+        return S_OK;
+    }
+
+    StringFromGUID2(&srcFormat, srcformatstr, 39);
+    StringFromGUID2(dstFormat, dstformatstr, 39);
+
+    res = CreateComponentEnumerator(WICPixelFormatConverter, 0, &enumconverters);
+    if (FAILED(res)) return res;
+
+    while (!converter)
+    {
+        res = IEnumUnknown_Next(enumconverters, 1, &unkconverterinfo, &num_fetched);
+
+        if (res == S_OK)
+        {
+            res = IUnknown_QueryInterface(unkconverterinfo, &IID_IWICFormatConverterInfo, (void**)&converterinfo);
+
+            if (SUCCEEDED(res))
+            {
+                canconvert = ConverterSupportsFormat(converterinfo, srcformatstr);
+
+                if (canconvert)
+                    canconvert = ConverterSupportsFormat(converterinfo, dstformatstr);
+
+                if (canconvert)
+                {
+                    res = IWICFormatConverterInfo_CreateInstance(converterinfo, &converter);
+
+                    if (SUCCEEDED(res))
+                        res = IWICFormatConverter_CanConvert(converter, &srcFormat, dstFormat, &canconvert);
+
+                    if (SUCCEEDED(res) && canconvert)
+                        res = IWICFormatConverter_Initialize(converter, pISrc, dstFormat, WICBitmapDitherTypeNone,
+                            NULL, 0.0, WICBitmapPaletteTypeCustom);
+
+                    if (FAILED(res) || !canconvert)
+                    {
+                        if (converter)
+                        {
+                            IWICFormatConverter_Release(converter);
+                            converter = NULL;
+                        }
+                        res = S_OK;
+                    }
+                }
+
+                IWICFormatConverterInfo_Release(converterinfo);
+            }
+
+            IUnknown_Release(unkconverterinfo);
+        }
+        else
+            break;
+    }
+
+    IEnumUnknown_Release(enumconverters);
+
+    if (converter)
+    {
+        *ppIDst = (IWICBitmapSource*)converter;
+        return S_OK;
+    }
+    else
+    {
+        *ppIDst = NULL;
+        return WINCODEC_ERR_COMPONENTNOTFOUND;
+    }
 }
