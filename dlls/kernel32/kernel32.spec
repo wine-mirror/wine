@@ -177,6 +177,7 @@
 @ stdcall CallNamedPipeW(wstr ptr long ptr long ptr long)
 @ stub CancelDeviceWakeupRequest
 @ stdcall CancelIo(long)
+@ stdcall CancelIoEx(long ptr)
 # @ stub CancelTimerQueueTimer
 @ stdcall CancelWaitableTimer(long)
 @ stdcall ChangeTimerQueueTimer(ptr ptr long long)

@@ -625,6 +625,32 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped,
 }
 
 /***********************************************************************
+ *             CancelIoEx                 (KERNEL32.@)
+ *
+ * Cancels pending I/O operations on a file given the overlapped used.
+ *
+ * PARAMS
+ *  handle        [I] File handle.
+ *  lpOverlapped  [I,OPT] pointer to overlapped (if null, cancel all)
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE, check GetLastError().
+ */
+BOOL WINAPI CancelIoEx(HANDLE handle, LPOVERLAPPED lpOverlapped)
+{
+    IO_STATUS_BLOCK    io_status;
+
+    NtCancelIoFileEx(handle, (PIO_STATUS_BLOCK) lpOverlapped, &io_status);
+    if (io_status.u.Status)
+    {
+        SetLastError( RtlNtStatusToDosError( io_status.u.Status ) );
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/***********************************************************************
  *             CancelIo                   (KERNEL32.@)
  *
  * Cancels pending I/O operations initiated by the current thread on a file.
