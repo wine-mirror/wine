@@ -22,6 +22,8 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include <windef.h>
 #include <winbase.h>
 #include <winsock2.h>
@@ -2234,7 +2236,10 @@ static void test_addr_to_print(void)
     PCSTR addr2_Str = "::fffe:cc98:bd74";
     u_char addr3_Num[16] = {0x20,0x30,0xa4,0xb1};
     PCSTR addr3_Str = "2030:a4b1::";
+    u_char addr4_Num[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0xcC,0x98,0xbd,0x74};
+    PCSTR addr4_Str = "::204.152.189.116";
 
+    /* Test IPv4 addresses */
     in.s_addr = addr0_Num;
 
     pdst = inet_ntoa(*((struct in_addr*)&in.s_addr));
@@ -2254,6 +2259,7 @@ static void test_addr_to_print(void)
         return;
     }
 
+    /* Second part of test */
     pdst = pInetNtop(AF_INET,(void*)&in.s_addr, dst, sizeof(dst));
     ok(pdst != NULL, "InetNtop failed %s\n", dst);
     ok(!strcmp(pdst, addr1_Str),"Address %s != %s\n", pdst, addr1_Str);
@@ -2262,6 +2268,38 @@ static void test_addr_to_print(void)
     pdst = pInetNtop(1, (void*)&in.s_addr, dst, sizeof(dst));
     ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
     ok(WSAGetLastError() == WSAEAFNOSUPPORT, "Should be WSAEAFNOSUPPORT\n");
+
+    /* Test Null destination */
+    pdst = NULL;
+    pdst = pInetNtop(AF_INET, (void*)&in.s_addr, NULL, sizeof(dst));
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
+       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+
+    /* Test zero length passed */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = pInetNtop(AF_INET, (void*)&in.s_addr, dst, 0);
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
+       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+
+    /* Test length one shorter than the address length */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = pInetNtop(AF_INET, (void*)&in.s_addr, dst, 6);
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
+       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+
+    /* Test longer length is ok */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = pInetNtop(AF_INET, (void*)&in.s_addr, dst, sizeof(dst)+1);
+    ok(pdst != NULL, "The pointer should  be returned (%p)\n", pdst);
+    ok(!strcmp(pdst, addr1_Str),"Address %s != %s\n", pdst, addr1_Str);
+
+    /* Test the IPv6 addresses */
 
     /* Test an zero prefixed IPV6 address */
     memcpy(in6.u.Byte, addr2_Num, sizeof(addr2_Num));
@@ -2274,6 +2312,44 @@ static void test_addr_to_print(void)
     pdst = pInetNtop(AF_INET6,(void*)&in6.s6_addr, dst6, sizeof(dst6));
     ok(pdst != NULL, "InetNtop failed %s\n", dst6);
     ok(!strcmp(pdst, addr3_Str),"Address %s != %s\n", pdst, addr3_Str);
+
+    /* Test the IPv6 address contains the IPv4 address in IPv4 notation */
+    memcpy(in6.s6_addr, addr4_Num, sizeof(addr4_Num));
+    pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, dst6, sizeof(dst6));
+    ok(pdst != NULL, "InetNtop failed %s\n", dst6);
+    ok(!strcmp(pdst, addr4_Str),"Address %s != %s\n", pdst, addr4_Str);
+
+    /* Test invalid parm conditions */
+    memcpy(in6.u.Byte, addr2_Num, sizeof(addr2_Num));
+
+    /* Test Null destination */
+    pdst = NULL;
+    pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, NULL, sizeof(dst6));
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
+       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+
+    /* Test zero length passed */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, dst6, 0);
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
+       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+
+    /* Test length one shorter than the address length */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, dst6, 16);
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER,
+       "Should be STATUS_INVALID_PARAMETER not 0x%x\n", WSAGetLastError());
+
+    /* Test longer length is ok */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = pInetNtop(AF_INET6, (void*)&in6.s6_addr, dst, 18);
+    ok(pdst != NULL, "The pointer should be returned (%p)\n", pdst);
 }
 
 static void test_ioctlsocket(void)

@@ -4709,22 +4709,41 @@ PCSTR WINAPI WS_inet_ntop( INT family, PVOID addr, PSTR buffer, SIZE_T len )
 #ifdef HAVE_INET_NTOP
     struct WS_in6_addr *in6;
     struct WS_in_addr  *in;
+    PCSTR pdst;
 
     TRACE("family %d, addr (%p), buffer (%p), len %ld\n", family, addr, buffer, len);
+    if (!buffer)
+    {
+        WSASetLastError( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
+
     switch (family)
     {
     case WS_AF_INET:
+    {
         in = addr;
-        return inet_ntop( AF_INET, &in->WS_s_addr, buffer, len );
-    case WS_AF_INET6:
-        in6 = addr;
-        return inet_ntop( AF_INET6, in6->WS_s6_addr, buffer, len );
+        pdst = inet_ntop( AF_INET, &in->WS_s_addr, buffer, len );
+        break;
     }
+    case WS_AF_INET6:
+    {
+        in6 = addr;
+        pdst = inet_ntop( AF_INET6, in6->WS_s6_addr, buffer, len );
+        break;
+    }
+    default:
+        WSASetLastError( WSAEAFNOSUPPORT );
+        return NULL;
+    }
+
+    if (!pdst) WSASetLastError( STATUS_INVALID_PARAMETER );
+    return pdst;
 #else
     FIXME( "not supported on this platform\n" );
-#endif
     WSASetLastError( WSAEAFNOSUPPORT );
     return NULL;
+#endif
 }
 
 /***********************************************************************
