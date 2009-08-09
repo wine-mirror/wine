@@ -109,6 +109,7 @@
 @ stub NtCallbackReturn
 # @ stub NtCancelDeviceWakeupRequest
 @ stdcall NtCancelIoFile(long ptr)
+@ stdcall NtCancelIoFileEx(long ptr ptr)
 @ stdcall NtCancelTimer(long ptr)
 @ stdcall NtClearEvent(long)
 @ stdcall NtClose(long)
@@ -959,6 +960,7 @@
 @ stub ZwCallbackReturn
 # @ stub ZwCancelDeviceWakeupRequest
 @ stdcall ZwCancelIoFile(long ptr) NtCancelIoFile
+@ stdcall ZwCancelIoFileEx(long ptr ptr) NtCancelIoFileEx
 @ stdcall ZwCancelTimer(long ptr) NtCancelTimer
 @ stdcall ZwClearEvent(long) NtClearEvent
 @ stdcall ZwClose(long) NtClose

@@ -376,7 +376,7 @@ static void read_file_test(void)
         ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
         ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
         ok( is_signaled( event ), "event is signaled\n" );
-        ok( !apc_count, "apc was called\n" );
+        todo_wine ok( !apc_count, "apc was called\n" );
         SleepEx( 1, TRUE ); /* alertable sleep */
         ok( apc_count == 1, "apc was not called\n" );
         CloseHandle( read );

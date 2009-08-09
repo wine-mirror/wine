@@ -2604,6 +2604,38 @@ NTSTATUS WINAPI NtDeleteFile( POBJECT_ATTRIBUTES ObjectAttributes )
 }
 
 /******************************************************************
+ *		NtCancelIoFileEx    (NTDLL.@)
+ *
+ *
+ */
+NTSTATUS WINAPI NtCancelIoFileEx( HANDLE hFile, PIO_STATUS_BLOCK iosb, PIO_STATUS_BLOCK io_status )
+{
+    LARGE_INTEGER timeout;
+
+    TRACE("%p %p %p\n", hFile, iosb, io_status );
+
+    SERVER_START_REQ( cancel_async )
+    {
+        req->handle      = wine_server_obj_handle( hFile );
+        req->iosb        = wine_server_client_ptr( iosb );
+        req->only_thread = FALSE;
+        io_status->u.Status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (io_status->u.Status)
+        return io_status->u.Status;
+
+    /* Let some APC be run, so that we can run the remaining APCs on hFile
+     * either the cancelation of the pending one, but also the execution
+     * of the queued APC, but not yet run. This is needed to ensure proper
+     * clean-up of allocated data.
+     */
+    timeout.u.LowPart = timeout.u.HighPart = 0;
+    NtDelayExecution( TRUE, &timeout );
+    return io_status->u.Status;
+}
+
+/******************************************************************
  *		NtCancelIoFile    (NTDLL.@)
  *
  *
@@ -2616,17 +2648,23 @@ NTSTATUS WINAPI NtCancelIoFile( HANDLE hFile, PIO_STATUS_BLOCK io_status )
 
     SERVER_START_REQ( cancel_async )
     {
-        req->handle = wine_server_obj_handle( hFile );
-        wine_server_call( req );
+        req->handle      = wine_server_obj_handle( hFile );
+        req->iosb        = 0;
+        req->only_thread = TRUE;
+        io_status->u.Status = wine_server_call( req );
     }
     SERVER_END_REQ;
+    if (io_status->u.Status)
+        return io_status->u.Status;
+
     /* Let some APC be run, so that we can run the remaining APCs on hFile
      * either the cancelation of the pending one, but also the execution
      * of the queued APC, but not yet run. This is needed to ensure proper
      * clean-up of allocated data.
      */
     timeout.u.LowPart = timeout.u.HighPart = 0;
-    return io_status->u.Status = NtDelayExecution( TRUE, &timeout );
+    NtDelayExecution( TRUE, &timeout );
+    return io_status->u.Status;
 }
 
 /******************************************************************************
