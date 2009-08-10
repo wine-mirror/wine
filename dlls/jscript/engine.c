@@ -407,8 +407,15 @@ HRESULT exec_source(exec_ctx_t *ctx, parser_ctx_t *parser, source_elements_t *so
 
     for(var = source->variables; var; var = var->next) {
         DISPID id = 0;
+        BSTR name;
 
-        hres = jsdisp_get_id(ctx->var_disp, var->identifier, fdexNameEnsure, &id);
+        name = SysAllocString(var->identifier);
+        if(!name)
+            return E_OUTOFMEMORY;
+
+        if(!lookup_global_members(parser->script, name, NULL))
+            hres = jsdisp_get_id(ctx->var_disp, var->identifier, fdexNameEnsure, &id);
+        SysFreeString(name);
         if(FAILED(hres))
             return hres;
     }

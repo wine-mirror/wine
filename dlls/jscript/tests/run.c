@@ -63,6 +63,7 @@ DEFINE_EXPECT(global_propput_d);
 DEFINE_EXPECT(global_propput_i);
 DEFINE_EXPECT(global_success_d);
 DEFINE_EXPECT(global_success_i);
+DEFINE_EXPECT(global_notexists_d);
 DEFINE_EXPECT(testobj_delete);
 DEFINE_EXPECT(GetItemInfo_testVal);
 
@@ -287,6 +288,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
     if(!strcmp_wa(bstrName, "createNullBSTR")) {
         *pid = DISPID_GLOBAL_NULL_BSTR;
         return S_OK;
+    }
+    if(!strcmp_wa(bstrName, "notExists")) {
+        CHECK_EXPECT(global_notexists_d);
+        ok(grfdex == fdexNameCaseSensitive, "grfdex = %x\n", grfdex);
+        return DISP_E_UNKNOWNNAME;
     }
 
     if(strict_dispid_check)
@@ -836,6 +842,16 @@ static void run_tests(void)
     parse_script_a("ok(typeof(test) === 'object', \"typeof(test) != 'object'\");");
 
     parse_script_a("function reportSuccess() {}; reportSuccess();");
+
+    SET_EXPECT(global_propget_d);
+    parse_script_a("var testPropGet");
+    CHECK_CALLED(global_propget_d);
+
+    SET_EXPECT(global_notexists_d);
+    parse_script_a("var notExists; notExists = 1;");
+    CHECK_CALLED(global_notexists_d);
+
+    parse_script_a("function f() { var testPropGet; }");
 
     run_from_res("lang.js");
     run_from_res("api.js");
