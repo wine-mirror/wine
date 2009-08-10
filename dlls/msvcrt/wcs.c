@@ -1070,9 +1070,6 @@ INT CDECL MSVCRT_wcscpy_s( MSVCRT_wchar_t* wcDest, MSVCRT_size_t numElement, con
         return MSVCRT_ERANGE;
     }
 
-    if(size > numElement)
-        size = numElement;
-
     memcpy( wcDest, wcSrc, size*sizeof(WCHAR) );
 
     return 0;
