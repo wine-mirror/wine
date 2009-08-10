@@ -736,6 +736,7 @@ static LONG_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wPa
             /* the real tests */
             int withhelp;
             int expectx, expecty;
+            DWORD style;
 
             withhelp = (arrange_tests[index].ofnflags & OFN_SHOWHELP) != 0;
             GetWindowRect( dlgParent, &wrcParent);
@@ -762,7 +763,9 @@ static LONG_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wPa
                 else
                     expectx +=  clrcChild.right - ( rcStc32.right - rcStc32.left) ;
             }
-            if( !(arrange_tests[index].ofnflags & OFN_ENABLESIZING)) {
+            style = GetWindowLong( dlgParent, GWL_STYLE);
+            if( !(style & WS_SIZEBOX)) {
+                /* without the OFN_ENABLESIZING flag */
                 ok( wrcParent.bottom - wrcParent.top == expecty,
                         "Wrong height of dialog %d, expected %d\n",
                         wrcParent.bottom - wrcParent.top, expecty);
@@ -770,6 +773,7 @@ static LONG_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wPa
                         "Wrong width of dialog %d, expected %d\n",
                         wrcParent.right - wrcParent.left, expectx);
             } else todo_wine {
+                /* with the OFN_ENABLESIZING flag */
                 ok( wrcParent.bottom - wrcParent.top > expecty,
                         "Wrong height of dialog %d, expected more than %d\n",
                         wrcParent.bottom - wrcParent.top, expecty);
