@@ -44,23 +44,23 @@ void ME_Remove(ME_DisplayItem *diWhere)
 
 static BOOL ME_DITypesEqual(ME_DIType type, ME_DIType nTypeOrClass)
 {
-  if (type==nTypeOrClass)
-    return TRUE;
-  if (nTypeOrClass==diRunOrParagraph && (type==diRun || type==diParagraph))
-    return TRUE;
-  if (nTypeOrClass==diRunOrStartRow && (type==diRun || type==diStartRow))
-    return TRUE;
-  if (nTypeOrClass==diParagraphOrEnd && (type==diTextEnd || type==diParagraph))
-    return TRUE;
-  if (nTypeOrClass==diStartRowOrParagraph && (type==diStartRow || type==diParagraph))
-    return TRUE;
-  if (nTypeOrClass==diStartRowOrParagraphOrEnd
-    && (type==diStartRow || type==diParagraph || type==diTextEnd))
-    return TRUE;
-  if (nTypeOrClass==diRunOrParagraphOrEnd
-    && (type==diRun || type==diParagraph || type==diTextEnd))
-    return TRUE;
-  return FALSE;
+  switch (nTypeOrClass)
+  {
+    case diRunOrParagraph:
+      return type == diRun || type == diParagraph;
+    case diRunOrStartRow:
+      return type == diRun || type == diStartRow;
+    case diParagraphOrEnd:
+      return type == diTextEnd || type == diParagraph;
+    case diStartRowOrParagraph:
+      return type == diStartRow || type == diParagraph;
+    case diStartRowOrParagraphOrEnd:
+      return type == diStartRow || type == diParagraph || type == diTextEnd;
+    case diRunOrParagraphOrEnd:
+      return type == diRun || type == diParagraph || type == diTextEnd;
+    default:
+      return type == nTypeOrClass;
+  }
 }
 
 ME_DisplayItem *ME_FindItemBack(ME_DisplayItem *di, ME_DIType nTypeOrClass)
