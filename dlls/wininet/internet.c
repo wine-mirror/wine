@@ -2027,12 +2027,15 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
 
     case INTERNET_OPTION_PROXY: {
         appinfo_t ai;
+        BOOL ret;
 
         TRACE("Getting global proxy info\n");
         memset(&ai, 0, sizeof(appinfo_t));
         INTERNET_ConfigureProxy(&ai);
 
-        return APPINFO_QueryOption(&ai.hdr, INTERNET_OPTION_PROXY, buffer, size, unicode); /* FIXME */
+        ret = APPINFO_QueryOption(&ai.hdr, INTERNET_OPTION_PROXY, buffer, size, unicode); /* FIXME */
+        APPINFO_Destroy(&ai.hdr);
+        return ret;
     }
 
     case INTERNET_OPTION_MAX_CONNS_PER_SERVER:
