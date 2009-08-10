@@ -243,8 +243,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 static BOOL ME_RegisterEditorClass(HINSTANCE);
 static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max);
 
-static const WCHAR RichEdit20W[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '2', '0', 'W', 0};
-static const WCHAR RichEdit50W[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '5', '0', 'W', 0};
 static const WCHAR REListBox20W[] = {'R','E','L','i','s','t','B','o','x','2','0','W', 0};
 static const WCHAR REComboBox20W[] = {'R','E','C','o','m','b','o','B','o','x','2','0','W', 0};
 static HCURSOR hLeft;
@@ -2751,9 +2749,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
       break;
 
     case DLL_PROCESS_DETACH:
-      UnregisterClassW(RichEdit20W, 0);
-      UnregisterClassW(RichEdit50W, 0);
-      UnregisterClassA("RichEdit20A", 0);
+      UnregisterClassW(RICHEDIT_CLASS20W, 0);
+      UnregisterClassW(MSFTEDIT_CLASS, 0);
+      UnregisterClassA(RICHEDIT_CLASS20A, 0);
       UnregisterClassA("RichEdit50A", 0);
       if (ME_ListBoxRegistered)
           UnregisterClassW(REListBox20W, 0);
@@ -4566,9 +4564,9 @@ static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
 
   if (is_version_nt())
   {
-    wcW.lpszClassName = RichEdit20W;
+    wcW.lpszClassName = RICHEDIT_CLASS20W;
     if (!RegisterClassW(&wcW)) return FALSE;
-    wcW.lpszClassName = RichEdit50W;
+    wcW.lpszClassName = MSFTEDIT_CLASS;
     if (!RegisterClassW(&wcW)) return FALSE;
   }
   else
@@ -4589,7 +4587,7 @@ static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
   wcA.hCursor = LoadCursorW(NULL, MAKEINTRESOURCEW(IDC_IBEAM));
   wcA.hbrBackground = GetStockObject(NULL_BRUSH);
   wcA.lpszMenuName = NULL;
-  wcA.lpszClassName = "RichEdit20A";
+  wcA.lpszClassName = RICHEDIT_CLASS20A;
   if (!RegisterClassA(&wcA)) return FALSE;
   wcA.lpszClassName = "RichEdit50A";
   if (!RegisterClassA(&wcA)) return FALSE;
