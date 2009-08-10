@@ -9,6 +9,7 @@
 /config.cache
 /config.log
 /config.status
+/configure.lineno
 /tags
 /wine
 Makefile

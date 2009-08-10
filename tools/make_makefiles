@@ -65,6 +65,7 @@ my @ignores = (
     "/config.cache",
     "/config.log",
     "/config.status",
+    "/configure.lineno",
     "/TAGS",
     "/tags",
     "Makefile",
