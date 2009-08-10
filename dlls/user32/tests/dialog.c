@@ -947,6 +947,7 @@ static void test_DialogBoxParamA(void)
     ret = DialogBoxParamA(GetModuleHandle(NULL), "IDD_DIALOG", 0, DestroyDlgWinProc, 0);
     ok(-1 == ret, "DialogBoxParamA returned %d, expected -1\n", ret);
     ok(ERROR_INVALID_WINDOW_HANDLE == GetLastError() ||
+       GetLastError() == ERROR_SUCCESS ||
        broken(GetLastError() == 0xdeadbeef),
        "got %d, expected ERROR_INVALID_WINDOW_HANDLE\n",GetLastError());
 
