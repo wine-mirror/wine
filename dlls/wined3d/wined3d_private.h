@@ -280,7 +280,6 @@ typedef struct wined3d_settings_s {
 /* vertex and pixel shader modes */
   int vs_mode;
   int ps_mode;
-  int vbo_mode;
 /* Ideally, we don't want the user to have to request GLSL.  If the hardware supports GLSL,
     we should use it.  However, until it's fully implemented, we'll leave it as a registry
     setting for developers. */
