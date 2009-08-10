@@ -344,10 +344,13 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
         HRESULT hresult, LPCWSTR szError)
 {
     BSCallback *This = STATUSCLB_THIS(iface);
+    HRESULT hres;
 
     TRACE("(%p)->(%08x %s)\n", This, hresult, debugstr_w(szError));
 
     /* NOTE: IE7 calls GetBindResult here */
+
+    hres = This->vtbl->stop_binding(This, hresult);
 
     if(This->binding) {
         IBinding_Release(This->binding);
@@ -355,8 +358,9 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
     }
 
     list_remove(&This->entry);
+    This->doc = NULL;
 
-    return This->vtbl->stop_binding(This, hresult);
+    return hres;
 }
 
 static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
