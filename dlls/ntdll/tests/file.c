@@ -390,8 +390,8 @@ static void read_file_test(void)
     iosb.Information = 0xdeadbeef;
     offset.QuadPart = 0;
     ResetEvent( event );
-    pNtWriteFile( handle, event, apc, &apc_count, &iosb, text, strlen(text), &offset, NULL );
-    ok( status == STATUS_PENDING, "wrong status %x\n", status );
+    status = pNtWriteFile( handle, event, apc, &apc_count, &iosb, text, strlen(text), &offset, NULL );
+    ok( status == STATUS_SUCCESS || status == STATUS_PENDING, "wrong status %x\n", status );
     ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %x\n", U(iosb).Status );
     ok( iosb.Information == strlen(text), "wrong info %lu\n", iosb.Information );
     ok( is_signaled( event ), "event is signaled\n" );
@@ -448,8 +448,9 @@ static void read_file_test(void)
     U(iosb).Status = 0xdeadbabe;
     iosb.Information = 0xdeadbeef;
     offset.QuadPart = 0;
-    pNtWriteFile( handle, event, apc, &apc_count, &iosb, text, strlen(text), &offset, NULL );
+    status = pNtWriteFile( handle, event, apc, &apc_count, &iosb, text, strlen(text), &offset, NULL );
     ok( status == STATUS_END_OF_FILE ||
+        status == STATUS_SUCCESS ||
         status == STATUS_PENDING,  /* vista */
         "wrong status %x\n", status );
     ok( U(iosb).Status == STATUS_SUCCESS, "wrong status %x\n", U(iosb).Status );
