@@ -100,6 +100,7 @@ static const struct {
     {"GL_EXT_packed_depth_stencil",         EXT_PACKED_DEPTH_STENCIL,       0                           },
     {"GL_EXT_paletted_texture",             EXT_PALETTED_TEXTURE,           0                           },
     {"GL_EXT_point_parameters",             EXT_POINT_PARAMETERS,           0                           },
+    {"GL_EXT_provoking_vertex",             EXT_PROVOKING_VERTEX,           0                           },
     {"GL_EXT_secondary_color",              EXT_SECONDARY_COLOR,            0                           },
     {"GL_EXT_stencil_two_side",             EXT_STENCIL_TWO_SIDE,           0                           },
     {"GL_EXT_stencil_wrap",                 EXT_STENCIL_WRAP,               0                           },

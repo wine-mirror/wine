@@ -1952,6 +1952,17 @@ typedef void (WINE_GLAPI * PGLFNGLCOLORTABLEEXTPROC) (GLenum target, GLenum inte
 #endif
 typedef void (WINE_GLAPI * PGLFNGLPOINTPARAMETERFEXTPROC) (GLenum pname, GLfloat param);
 typedef void (WINE_GLAPI * PGLFNGLPOINTPARAMETERFVEXTPROC) (GLenum pname, const GLfloat *params);
+
+/* GL_EXT_provoking_vertex */
+#ifndef GL_EXT_provoking_vertex
+#define GL_EXT_provoking_vertex 1
+#define GL_FIRST_VERTEX_CONVENTION_EXT                      0x8e4d
+#define GL_LAST_VERTEX_CONVENTION_EXT                       0x8e4e
+#define GL_PROVOKING_VERTEX_EXT                             0x8e4f
+#define GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTIONS_EXT    0x8e4c
+#endif
+typedef void (WINE_GLAPI * PGLFNGLPROVOKINGVERTEXEXTPROC)(GLenum mode);
+
 /* GL_EXT_texture3D */
 #ifndef GL_EXT_texture3D
 #define GL_EXT_texture3D 1
@@ -3458,6 +3469,7 @@ typedef enum _GL_SupportedExt {
   EXT_PALETTED_TEXTURE,
   EXT_PIXEL_BUFFER_OBJECT,
   EXT_POINT_PARAMETERS,
+  EXT_PROVOKING_VERTEX,
   EXT_SECONDARY_COLOR,
   EXT_STENCIL_TWO_SIDE,
   EXT_STENCIL_WRAP,
@@ -3634,6 +3646,8 @@ typedef enum _GL_SupportedExt {
     /* GL_EXT_point_parameters */ \
     USE_GL_FUNC(PGLFNGLPOINTPARAMETERFEXTPROC,                      glPointParameterfEXT,                       EXT_POINT_PARAMETERS,   NULL )\
     USE_GL_FUNC(PGLFNGLPOINTPARAMETERFVEXTPROC,                     glPointParameterfvEXT,                      EXT_POINT_PARAMETERS,   NULL )\
+    /* GL_EXT_provoking_vertex */ \
+    USE_GL_FUNC(PGLFNGLPROVOKINGVERTEXEXTPROC,                      glProvokingVertexEXT,                       EXT_PROVOKING_VERTEX,   NULL)\
     /* GL_EXT_secondary_color */ \
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3UBEXTPROC,                    glSecondaryColor3ubEXT,                     EXT_SECONDARY_COLOR,    NULL )\
     USE_GL_FUNC(PGLFNGLSECONDARYCOLOR3UBVEXTPROC,                   glSecondaryColor3ubvEXT,                    EXT_SECONDARY_COLOR,    NULL )\
