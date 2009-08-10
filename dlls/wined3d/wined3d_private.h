@@ -725,6 +725,13 @@ struct wined3d_shader_attribute
     UINT usage_idx;
 };
 
+struct wined3d_shader_loop_control
+{
+    unsigned int count;
+    unsigned int start;
+    int step;
+};
+
 struct wined3d_shader_frontend
 {
     void *(*shader_init)(const DWORD *ptr, const struct wined3d_shader_signature *output_signature);

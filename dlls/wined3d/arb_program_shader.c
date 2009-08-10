@@ -91,13 +91,6 @@ static inline BOOL ffp_clip_emul(IWineD3DStateBlockImpl *stateblock)
 
 /* ARB_program_shader private data */
 
-struct loop_control
-{
-    unsigned int count;
-    unsigned int start;
-    int step;
-};
-
 struct control_frame
 {
     struct                          list entry;
@@ -115,7 +108,7 @@ struct control_frame
         unsigned int                loop_no;
         unsigned int                ifc_no;
     };
-    struct loop_control             loop_control;
+    struct wined3d_shader_loop_control loop_control;
     BOOL                            had_else;
 };
 
@@ -4686,7 +4679,7 @@ static inline BOOL get_bool_const(const struct wined3d_shader_instruction *ins, 
 }
 
 static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
-        IWineD3DBaseShaderImpl *This, UINT idx, struct loop_control *loop_control)
+        IWineD3DBaseShaderImpl *This, UINT idx, struct wined3d_shader_loop_control *loop_control)
 {
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
 

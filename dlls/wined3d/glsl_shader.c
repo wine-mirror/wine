@@ -2485,22 +2485,33 @@ static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
         }
     }
 
-    if(control_values) {
-        if(control_values[2] > 0) {
-            shader_addline(ins->ctx->buffer, "for (aL%u = %d; aL%u < (%d * %d + %d); aL%u += %d) {\n",
-                    shader->baseShader.cur_loop_depth, control_values[1],
-                    shader->baseShader.cur_loop_depth, control_values[0], control_values[2], control_values[1],
-                    shader->baseShader.cur_loop_depth, control_values[2]);
-        } else if(control_values[2] == 0) {
-            shader_addline(ins->ctx->buffer, "for (aL%u = %d, tmpInt%u = 0; tmpInt%u < %d; tmpInt%u++) {\n",
-                    shader->baseShader.cur_loop_depth, control_values[1], shader->baseShader.cur_loop_depth,
-                    shader->baseShader.cur_loop_depth, control_values[0],
+    if (control_values)
+    {
+        struct wined3d_shader_loop_control loop_control;
+        loop_control.count = control_values[0];
+        loop_control.start = control_values[1];
+        loop_control.step = (int)control_values[2];
+
+        if (loop_control.step > 0)
+        {
+            shader_addline(ins->ctx->buffer, "for (aL%u = %u; aL%u < (%u * %d + %u); aL%u += %d) {\n",
+                    shader->baseShader.cur_loop_depth, loop_control.start,
+                    shader->baseShader.cur_loop_depth, loop_control.count, loop_control.step, loop_control.start,
+                    shader->baseShader.cur_loop_depth, loop_control.step);
+        }
+        else if (loop_control.step < 0)
+        {
+            shader_addline(ins->ctx->buffer, "for (aL%u = %u; aL%u > (%u * %d + %u); aL%u += %d) {\n",
+                    shader->baseShader.cur_loop_depth, loop_control.start,
+                    shader->baseShader.cur_loop_depth, loop_control.count, loop_control.step, loop_control.start,
+                    shader->baseShader.cur_loop_depth, loop_control.step);
+        }
+        else
+        {
+            shader_addline(ins->ctx->buffer, "for (aL%u = %u, tmpInt%u = 0; tmpInt%u < %u; tmpInt%u++) {\n",
+                    shader->baseShader.cur_loop_depth, loop_control.start, shader->baseShader.cur_loop_depth,
+                    shader->baseShader.cur_loop_depth, loop_control.count,
                     shader->baseShader.cur_loop_depth);
-        } else {
-            shader_addline(ins->ctx->buffer, "for (aL%u = %d; aL%u > (%d * %d + %d); aL%u += %d) {\n",
-                    shader->baseShader.cur_loop_depth, control_values[1],
-                    shader->baseShader.cur_loop_depth, control_values[0], control_values[2], control_values[1],
-                    shader->baseShader.cur_loop_depth, control_values[2]);
         }
     } else {
         shader_addline(ins->ctx->buffer,
