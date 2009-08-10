@@ -388,6 +388,8 @@ IRichEditOle_fnInsertObject(IRichEditOle *me, REOBJECT *reo)
     if (reo->polesite)  IOleClientSite_AddRef(reo->polesite);
 
     ME_InsertOLEFromCursor(This->editor, reo, 0);
+    ME_CommitUndo(This->editor);
+    ME_UpdateRepaint(This->editor);
     return S_OK;
 }
 

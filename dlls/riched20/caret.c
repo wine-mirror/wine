@@ -459,7 +459,7 @@ void ME_InsertOLEFromCursor(ME_TextEditor *editor, const REOBJECT* reo, int nCur
                                        MERF_GRAPHICS);
   di->member.run.ole_obj = ALLOC_OBJ(*reo);
   ME_CopyReObject(di->member.run.ole_obj, reo);
-  ME_SendSelChange(editor);
+  ME_ReleaseStyle(pStyle);
 }
 
 
