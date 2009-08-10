@@ -6586,8 +6586,15 @@ static void shademode_test(IDirect3DDevice9 *device)
             switch(shademode) {
                 case D3DSHADE_FLAT:
                     /* Should take the color of the first vertex of each triangle */
-                    todo_wine ok(color0 == 0x00ff0000, "FLAT shading has color0 %08x, expected 0x00ff0000 (todo)\n", color0);
-                    todo_wine ok(color1 == 0x0000ff00, "FLAT shading has color1 %08x, expected 0x0000ff00 (todo)\n", color1);
+                    if (0)
+                    {
+                        /* This test depends on EXT_provoking_vertex being
+                         * available. This extension is currently (20090810)
+                         * not common enough to let the test fail if it isn't
+                         * present. */
+                        ok(color0 == 0x00ff0000, "FLAT shading has color0 %08x, expected 0x00ff0000\n", color0);
+                        ok(color1 == 0x0000ff00, "FLAT shading has color1 %08x, expected 0x0000ff00\n", color1);
+                    }
                     shademode = D3DSHADE_GOURAUD;
                     break;
                 case D3DSHADE_GOURAUD:

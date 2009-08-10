@@ -1357,6 +1357,12 @@ struct wined3d_context *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceI
         glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
         checkGLcall("glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)");
     }
+
+    if (GL_SUPPORT(EXT_PROVOKING_VERTEX))
+    {
+        GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
+    }
+
     LEAVE_GL();
 
     This->frag_pipe->enable_extension((IWineD3DDevice *) This, TRUE);
