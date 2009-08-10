@@ -835,6 +835,8 @@ static void run_tests(void)
 
     parse_script_a("ok(typeof(test) === 'object', \"typeof(test) != 'object'\");");
 
+    parse_script_a("function reportSuccess() {}; reportSuccess();");
+
     run_from_res("lang.js");
     run_from_res("api.js");
     run_from_res("regexp.js");
