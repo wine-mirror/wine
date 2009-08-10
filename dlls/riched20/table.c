@@ -70,6 +70,7 @@ static ME_DisplayItem* ME_InsertEndParaFromCursor(ME_TextEditor *editor,
   }
 
   tp = ME_SplitParagraph(editor, cursor->pRun, pStyle, eol_str, paraFlags);
+  ME_ReleaseStyle(pStyle);
   cursor->pPara = tp;
   cursor->pRun = ME_FindItemFwd(tp, diRun);
   return tp;

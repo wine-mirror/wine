@@ -156,6 +156,7 @@ ME_Style *ME_MakeStyle(CHARFORMAT2W *style) {
   s->hFont = NULL;
   s->tm.tmAscent = -1;
   all_refs++;
+  TRACE_(richedit_style)("ME_MakeStyle %p, total refs=%d\n", s, all_refs);
   return s;
 }
 
@@ -449,6 +450,7 @@ void ME_AddRefStyle(ME_Style *s)
   assert(s->nRefs>0); /* style with 0 references isn't supposed to exist */
   s->nRefs++;
   all_refs++;
+  TRACE_(richedit_style)("ME_AddRefStyle %p, new refs=%d, total refs=%d\n", s, s->nRefs, all_refs);
 }
 
 void ME_ReleaseStyle(ME_Style *s)

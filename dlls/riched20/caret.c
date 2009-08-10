@@ -475,7 +475,7 @@ void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor)
 
   di = ME_InternalInsertTextFromCursor(editor, nCursor, &space, 1, pStyle,
                                        MERF_ENDROW);
-  ME_SendSelChange(editor);
+  ME_ReleaseStyle(pStyle);
 }
 
 

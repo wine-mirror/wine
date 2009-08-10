@@ -1355,15 +1355,13 @@ static void ME_RTFReadHook(RTF_Info *info)
         {
           RTFFlushOutputBuffer(info);
           info->stackTop--;
-          if (info->stackTop<=0) {
+          if (info->stackTop <= 0)
             info->rtfClass = rtfEOF;
+          if (info->stackTop < 0)
             return;
-          }
-          assert(info->stackTop >= 0);
 
           ME_ReleaseStyle(info->style);
           info->style = info->stack[info->stackTop].style;
-          ME_AddRefStyle(info->style);
           info->codePage = info->stack[info->stackTop].codePage;
           info->unicodeLength = info->stack[info->stackTop].unicodeLength;
           break;
@@ -1530,8 +1528,16 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       if (parser.lpRichEditOle)
         IRichEditOle_Release(parser.lpRichEditOle);
 
-      if (!inStream.editstream->dwError && parser.stackTop > 0)
-        inStream.editstream->dwError = HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+      if (parser.stackTop > 0)
+      {
+        while (--parser.stackTop >= 0)
+        {
+          ME_ReleaseStyle(parser.style);
+          parser.style = parser.stack[parser.stackTop].style;
+        }
+        if (!inStream.editstream->dwError)
+          inStream.editstream->dwError = HRESULT_FROM_WIN32(ERROR_HANDLE_EOF);
+      }
 
       /* Remove last line break, as mandated by tests. This is not affected by
          CR/LF counters, since RTF streaming presents only \para tokens, which
