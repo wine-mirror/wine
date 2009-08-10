@@ -1589,11 +1589,65 @@ static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
     return TRUE;
 }
 
+static BOOL HTTP_KeepAlive(http_request_t *lpwhr)
+{
+    WCHAR szVersion[10];
+    WCHAR szConnectionResponse[20];
+    DWORD dwBufferSize = sizeof(szVersion);
+    BOOL keepalive = FALSE;
+
+    /* as per RFC 2068, S8.1.2.1, if the client is HTTP/1.1 then assume that
+     * the connection is keep-alive by default */
+    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_VERSION, szVersion,
+                             &dwBufferSize, NULL) &&
+        !strcmpiW(szVersion, g_szHttp1_1))
+    {
+        keepalive = TRUE;
+    }
+
+    dwBufferSize = sizeof(szConnectionResponse);
+    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) ||
+        HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL))
+    {
+        keepalive = !strcmpiW(szConnectionResponse, szKeepAlive);
+    }
+
+    return keepalive;
+}
+
 static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     http_request_t *req = (http_request_t*)hdr;
 
     switch(option) {
+    case INTERNET_OPTION_DIAGNOSTIC_SOCKET_INFO:
+    {
+        http_session_t *lpwhs = req->lpHttpSession;
+        INTERNET_DIAGNOSTIC_SOCKET_INFO *info = buffer;
+
+        FIXME("INTERNET_DIAGNOSTIC_SOCKET_INFO stub\n");
+
+        if (*size < sizeof(INTERNET_DIAGNOSTIC_SOCKET_INFO))
+            return ERROR_INSUFFICIENT_BUFFER;
+        *size = sizeof(INTERNET_DIAGNOSTIC_SOCKET_INFO);
+        /* FIXME: can't get a SOCKET from our connection since we don't use
+         * winsock
+         */
+        info->Socket = 0;
+        /* FIXME: get source port from req->netConnection */
+        info->SourcePort = 0;
+        info->DestPort = lpwhs->nHostPort;
+        info->Flags = 0;
+        if (HTTP_KeepAlive(req))
+            info->Flags |= IDSI_FLAG_KEEP_ALIVE;
+        if (lpwhs->lpAppInfo->lpszProxy && lpwhs->lpAppInfo->lpszProxy[0] != 0)
+            info->Flags |= IDSI_FLAG_PROXY;
+        if (req->netConnection.useSSL)
+            info->Flags |= IDSI_FLAG_SECURE;
+
+        return ERROR_SUCCESS;
+    }
+
     case INTERNET_OPTION_SECURITY_FLAGS:
     {
         http_session_t *lpwhs;
@@ -4582,28 +4636,10 @@ static BOOL HTTP_ProcessHeader(http_request_t *lpwhr, LPCWSTR field, LPCWSTR val
  */
 static BOOL HTTP_FinishedReading(http_request_t *lpwhr)
 {
-    WCHAR szVersion[10];
-    WCHAR szConnectionResponse[20];
-    DWORD dwBufferSize = sizeof(szVersion);
-    BOOL keepalive = FALSE;
+    BOOL keepalive = HTTP_KeepAlive(lpwhr);
 
     TRACE("\n");
 
-    /* as per RFC 2068, S8.1.2.1, if the client is HTTP/1.1 then assume that
-     * the connection is keep-alive by default */
-    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_VERSION, szVersion,
-                             &dwBufferSize, NULL) &&
-        !strcmpiW(szVersion, g_szHttp1_1))
-    {
-        keepalive = TRUE;
-    }
-
-    dwBufferSize = sizeof(szConnectionResponse);
-    if (HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) ||
-        HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL))
-    {
-        keepalive = !strcmpiW(szConnectionResponse, szKeepAlive);
-    }
 
     if (!keepalive)
     {
