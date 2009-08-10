@@ -96,6 +96,7 @@ ME_DisplayItem* ME_InsertTableRowStartAtParagraph(ME_TextEditor *editor,
   editor->pCursors[0].nOffset = 0;
   editor->pCursors[1] = editor->pCursors[0];
   startRowPara = ME_InsertTableRowStartFromCursor(editor);
+  savedCursor.pPara = ME_GetParagraph(savedCursor.pRun);
   editor->pCursors[0] = savedCursor;
   editor->pCursors[1] = editor->pCursors[0];
 
