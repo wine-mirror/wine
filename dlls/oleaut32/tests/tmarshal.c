@@ -1299,7 +1299,6 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = vararg;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_WITH_LCID, &IID_NULL, 0x40c, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
-todo_wine
     ok_ole_success(hr, ITypeInfo_Invoke);
     VariantClear(&varresult);
 
@@ -1309,12 +1308,9 @@ todo_wine
     dispparams.rgvarg = NULL;
     dispparams.rgdispidNamedArgs = NULL;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_WITH_LCID, &IID_NULL, 0x40c, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
-todo_wine
-{
     ok_ole_success(hr, ITypeInfo_Invoke);
     ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
     ok(V_I4(&varresult) == 0x409, "got %x\n", V_I4(&varresult));
-}
     VariantClear(&varresult);
 
     /* test propget of INT value */
