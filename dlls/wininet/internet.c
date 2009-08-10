@@ -2080,23 +2080,44 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
 
     case INTERNET_OPTION_PER_CONNECTION_OPTION: {
         INTERNET_PER_CONN_OPTION_LISTW *con = buffer;
+        INTERNET_PER_CONN_OPTION_LISTA *conA = buffer;
         DWORD res = ERROR_SUCCESS, i;
+        appinfo_t ai;
+
+        TRACE("Getting global proxy info\n");
+        memset(&ai, 0, sizeof(appinfo_t));
+        INTERNET_ConfigureProxy(&ai);
 
         FIXME("INTERNET_OPTION_PER_CONNECTION_OPTION stub\n");
 
-        if (*size < sizeof(INTERNET_PER_CONN_OPTION_LISTW))
+        if (*size < sizeof(INTERNET_PER_CONN_OPTION_LISTW)) {
+            APPINFO_Destroy(&ai.hdr);
             return ERROR_INSUFFICIENT_BUFFER;
+        }
 
         for (i = 0; i < con->dwOptionCount; i++) {
             INTERNET_PER_CONN_OPTIONW *option = con->pOptions + i;
+            INTERNET_PER_CONN_OPTIONA *optionA = conA->pOptions + i;
 
             switch (option->dwOption) {
             case INTERNET_PER_CONN_FLAGS:
-                option->Value.dwValue = PROXY_TYPE_DIRECT;
+                option->Value.dwValue = ai.dwAccessType;
                 break;
 
             case INTERNET_PER_CONN_PROXY_SERVER:
+                if (unicode)
+                    option->Value.pszValue = heap_strdupW(ai.lpszProxy);
+                else
+                    optionA->Value.pszValue = heap_strdupWtoA(ai.lpszProxy);
+                break;
+
             case INTERNET_PER_CONN_PROXY_BYPASS:
+                if (unicode)
+                    option->Value.pszValue = heap_strdupW(ai.lpszProxyBypass);
+                else
+                    optionA->Value.pszValue = heap_strdupWtoA(ai.lpszProxyBypass);
+                break;
+
             case INTERNET_PER_CONN_AUTOCONFIG_URL:
             case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:
             case INTERNET_PER_CONN_AUTOCONFIG_SECONDARY_URL:
@@ -2113,6 +2134,7 @@ DWORD INET_QueryOption(DWORD option, void *buffer, DWORD *size, BOOL unicode)
                 break;
             }
         }
+        APPINFO_Destroy(&ai.hdr);
 
         return res;
     }
