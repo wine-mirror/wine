@@ -1290,9 +1290,6 @@ GpStatus WINGDIPAPI GdipSaveImageToFile(GpImage *image, GDIPCONST WCHAR* filenam
     if (!image || !filename|| !clsidEncoder)
         return InvalidParameter;
 
-    if (!(image->picture))
-        return InvalidParameter;
-
     stat = GdipCreateStreamOnFile(filename, GENERIC_WRITE, &stream);
     if (stat != Ok)
         return GenericError;
