@@ -973,7 +973,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     /* Declare uniforms for NP2 texcoord fixup:
      * This is NOT done inside the loop that declares the texture samplers since the NP2 fixup code
      * is currently only used for the GeforceFX series and when forcing the ARB_npot extension off.
-     * Modern cards just skip the code anyway, so put it inside a seperate loop. */
+     * Modern cards just skip the code anyway, so put it inside a separate loop. */
     if (pshader && ps_args->np2_fixup) {
 
         struct ps_np2fixup_info* const fixup = ctx_priv->cur_np2fixup_info;

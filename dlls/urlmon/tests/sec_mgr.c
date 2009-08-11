@@ -496,7 +496,7 @@ static void test_GetZoneAttributes(void)
     if (FAILED(hr))
         return;
 
-    /* native urlmon has Zone "0" upto Zone "4" since IE4 */
+    /* native urlmon has Zone "0" up to Zone "4" since IE4 */
     for (i = 0; i < 5; i++) {
         memset(buffer, -1, sizeof(buffer));
         hr = IInternetZoneManager_GetZoneAttributes(zonemgr, i, pZA);

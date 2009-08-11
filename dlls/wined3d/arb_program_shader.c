@@ -1245,8 +1245,8 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
 
     if (flags & TEX_DERIV)
     {
-        if(flags & TEX_PROJ) FIXME("Projected texture sampling with custom derivates\n");
-        if(flags & TEX_BIAS) FIXME("Biased texture sampling with custom derivates\n");
+        if(flags & TEX_PROJ) FIXME("Projected texture sampling with custom derivatives\n");
+        if(flags & TEX_BIAS) FIXME("Biased texture sampling with custom derivatives\n");
         shader_addline(buffer, "TXD%s %s, %s, %s, %s, texture[%u], %s;\n", mod, dst_str, coord_reg,
                        dsx, dsy,sampler_idx, tex_type);
     }

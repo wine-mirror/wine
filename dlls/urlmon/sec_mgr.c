@@ -689,7 +689,7 @@ static LPDWORD build_zonemap_from_reg(void)
     WCHAR name[32];
     HKEY hkey;
     LPDWORD data = NULL;
-    DWORD allocated = 6; /* space for the zonecount and Zone "0" upto Zone "4" */
+    DWORD allocated = 6; /* space for the zonecount and Zone "0" up to Zone "4" */
     DWORD used = 0;
     DWORD res;
     DWORD len;

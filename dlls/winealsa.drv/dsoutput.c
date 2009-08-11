@@ -400,7 +400,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Unlock(PIDSDRIVERBUFFER iface,
             ret = snd_pcm_writei(This->pcm, pvAudio1, writelen);
             if (ret == -EPIPE)
             {
-                WARN("Underrun occured\n");
+                WARN("Underrun occurred\n");
                 snd_pcm_prepare(This->pcm);
                 ret = snd_pcm_writei(This->pcm, pvAudio1, writelen);
                 snd_pcm_start(This->pcm);

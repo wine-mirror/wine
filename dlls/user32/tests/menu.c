@@ -3023,7 +3023,7 @@ static void test_menu_maxdepth(void)
         hmenus[i] = CreatePopupMenu();
         if( !hmenus[i]) break;
     }
-    ok( i == NR_MENUS, "could not create more then %d menu's\n", i);
+    ok( i == NR_MENUS, "could not create more than %d menu's\n", i);
     for( i = 1; i < NR_MENUS; i++) {
         ret = AppendMenuA( hmenus[i], MF_POPUP, (UINT_PTR)hmenus[i-1],"test");
         if( !ret) break;
