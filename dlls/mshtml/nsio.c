@@ -980,10 +980,15 @@ static nsresult NSAPI nsChannel_GetResponseStatus(nsIHttpChannel *iface, PRUint3
 
     TRACE("(%p)->(%p)\n", This, aResponseStatus);
 
+    if(This->response_status) {
+        *aResponseStatus = This->response_status;
+        return NS_OK;
+    }
+
     if(This->http_channel)
         return nsIHttpChannel_GetResponseStatus(This->http_channel, aResponseStatus);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    return NS_ERROR_UNEXPECTED;
 }
 
 static nsresult NSAPI nsChannel_GetResponseStatusText(nsIHttpChannel *iface,

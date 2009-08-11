@@ -377,6 +377,7 @@ typedef struct {
     nsIURI *original_uri;
     char *content_type;
     char *charset;
+    PRUint32 response_status;
 } nsChannel;
 
 typedef struct {

@@ -58,6 +58,7 @@ typedef struct {
     HRESULT (*stop_binding)(BSCallback*,HRESULT);
     HRESULT (*read_data)(BSCallback*,IStream*);
     HRESULT (*on_progress)(BSCallback*,ULONG,LPCWSTR);
+    HRESULT (*on_response)(BSCallback*,DWORD);
 } BSCallbackVtbl;
 
 struct BSCallback {
@@ -473,9 +474,11 @@ static HRESULT WINAPI HttpNegotiate_OnResponse(IHttpNegotiate2 *iface, DWORD dwR
         LPCWSTR szResponseHeaders, LPCWSTR szRequestHeaders, LPWSTR *pszAdditionalRequestHeaders)
 {
     BSCallback *This = HTTPNEG_THIS(iface);
-    FIXME("(%p)->(%d %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
+
+    TRACE("(%p)->(%d %s %s %p)\n", This, dwResponseCode, debugstr_w(szResponseHeaders),
           debugstr_w(szRequestHeaders), pszAdditionalRequestHeaders);
-    return E_NOTIMPL;
+
+    return This->vtbl->on_response(This, dwResponseCode);
 }
 
 static HRESULT WINAPI HttpNegotiate_GetRootSecurityId(IHttpNegotiate2 *iface,
@@ -798,6 +801,11 @@ static HRESULT BufferBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCWSTR
     return S_OK;
 }
 
+static HRESULT BufferBSC_on_response(BSCallback *bsc, DWORD response_code)
+{
+    return S_OK;
+}
+
 #undef BUFFERBSC_THIS
 
 static const BSCallbackVtbl BufferBSCVtbl = {
@@ -806,6 +814,7 @@ static const BSCallbackVtbl BufferBSCVtbl = {
     BufferBSC_stop_binding,
     BufferBSC_read_data,
     BufferBSC_on_progress,
+    BufferBSC_on_response
 };
 
 
@@ -886,6 +895,10 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                && (BYTE)This->nsstream->buf[0] == 0xff
                && (BYTE)This->nsstream->buf[1] == 0xfe)
                 This->nschannel->charset = heap_strdupA(UTF16_STR);
+
+            /* FIXME: it's needed for http connections from BindToObject. */
+            if(!This->nschannel->response_status)
+                This->nschannel->response_status = 200;
 
             nsres = nsIStreamListener_OnStartRequest(This->nslistener,
                     (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
@@ -1009,6 +1022,14 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
     return S_OK;
 }
 
+static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code)
+{
+    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+
+    This->nschannel->response_status = response_code;
+    return S_OK;
+}
+
 #undef NSCHANNELBSC_THIS
 
 static const BSCallbackVtbl nsChannelBSCVtbl = {
@@ -1017,6 +1038,7 @@ static const BSCallbackVtbl nsChannelBSCVtbl = {
     nsChannelBSC_stop_binding,
     nsChannelBSC_read_data,
     nsChannelBSC_on_progress,
+    nsChannelBSC_on_response
 };
 
 nsChannelBSC *create_channelbsc(IMoniker *mon)
