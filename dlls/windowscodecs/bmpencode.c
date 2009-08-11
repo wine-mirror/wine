@@ -61,6 +61,7 @@ typedef struct BmpFrameEncode {
     double xres, yres;
     UINT lineswritten;
     UINT stride;
+    BOOL committed;
 } BmpFrameEncode;
 
 static HRESULT WINAPI BmpFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
@@ -251,8 +252,57 @@ static HRESULT WINAPI BmpFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
 
 static HRESULT WINAPI BmpFrameEncode_Commit(IWICBitmapFrameEncode *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    BmpFrameEncode *This = (BmpFrameEncode*)iface;
+    BITMAPFILEHEADER bfh;
+    BITMAPV5HEADER bih;
+    UINT info_size;
+    LARGE_INTEGER pos;
+    ULONG byteswritten;
+    HRESULT hr;
+
+    TRACE("(%p)\n", iface);
+
+    if (!This->bits || This->committed || This->height != This->lineswritten)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    bfh.bfType = 0x4d42; /* "BM" */
+    bfh.bfReserved1 = 0;
+    bfh.bfReserved2 = 0;
+
+    bih.bV5Size = info_size = sizeof(BITMAPINFOHEADER);
+    bih.bV5Width = This->width;
+    bih.bV5Height = -This->height; /* top-down bitmap */
+    bih.bV5Planes = 1;
+    bih.bV5BitCount = This->format->bpp;
+    bih.bV5Compression = This->format->compression;
+    bih.bV5SizeImage = This->stride*This->height;
+    bih.bV5XPelsPerMeter = (This->xres-0.0127) / 0.0254;
+    bih.bV5YPelsPerMeter = (This->yres-0.0127) / 0.0254;
+    bih.bV5ClrUsed = 0;
+    bih.bV5ClrImportant = 0;
+
+    bfh.bfSize = sizeof(BITMAPFILEHEADER) + info_size + bih.bV5SizeImage;
+    bfh.bfOffBits = sizeof(BITMAPFILEHEADER) + info_size;
+
+    pos.QuadPart = 0;
+    hr = IStream_Seek(This->stream, pos, STREAM_SEEK_SET, NULL);\
+    if (FAILED(hr)) return hr;
+
+    hr = IStream_Write(This->stream, &bfh, sizeof(BITMAPFILEHEADER), &byteswritten);
+    if (FAILED(hr)) return hr;
+    if (byteswritten != sizeof(BITMAPFILEHEADER)) return E_FAIL;
+
+    hr = IStream_Write(This->stream, &bih, info_size, &byteswritten);
+    if (FAILED(hr)) return hr;
+    if (byteswritten != info_size) return E_FAIL;
+
+    hr = IStream_Write(This->stream, This->bits, bih.bV5SizeImage, &byteswritten);
+    if (FAILED(hr)) return hr;
+    if (byteswritten != bih.bV5SizeImage) return E_FAIL;
+
+    This->committed = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
@@ -423,6 +473,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     encode->xres = 0.0;
     encode->yres = 0.0;
     encode->lineswritten = 0;
+    encode->committed = FALSE;
 
     *ppIFrameEncode = (IWICBitmapFrameEncode*)encode;
     This->frame = (IWICBitmapFrameEncode*)encode;
