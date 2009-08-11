@@ -562,7 +562,7 @@ void nsAString_Finish(nsAString*);
 
 nsIInputStream *create_nsstream(const char*,PRInt32);
 nsICommandParams *create_nscommand_params(void);
-void nsnode_to_nsstring(nsIDOMNode*,nsAString*);
+HRESULT nsnode_to_nsstring(nsIDOMNode*,nsAString*);
 void get_editor_controller(NSContainer*);
 void init_nsevents(NSContainer*);
 void add_nsevent_listener(NSContainer*,LPCWSTR);

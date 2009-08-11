@@ -633,7 +633,7 @@ nsresult get_nsinterface(nsISupports *iface, REFIID riid, void **ppv)
     return nsres;
 }
 
-static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode *nsnode, nsAString *str)
+static HRESULT nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode *nsnode, nsAString *str)
 {
     nsIDOMNodeList *node_list = NULL;
     PRBool has_children = FALSE;
@@ -645,7 +645,7 @@ static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode 
     nsres = nsIDOMNode_GetNodeType(nsnode, &type);
     if(NS_FAILED(nsres)) {
         ERR("GetType failed: %08x\n", nsres);
-        return;
+        return E_FAIL;
     }
 
     switch(type) {
@@ -711,35 +711,37 @@ static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode 
         nsIContentSerializer_AppendElementEnd(serializer, nselem, str);
         nsIDOMElement_Release(nselem);
     }
+
+    return S_OK;
 }
 
-void nsnode_to_nsstring(nsIDOMNode *nsdoc, nsAString *str)
+HRESULT nsnode_to_nsstring(nsIDOMNode *nsnode, nsAString *str)
 {
     nsIContentSerializer *serializer;
-    nsIDOMNode *nsnode;
     nsresult nsres;
+    HRESULT hres;
 
     nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
             NS_HTMLSERIALIZER_CONTRACTID, NULL, &IID_nsIContentSerializer,
             (void**)&serializer);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIContentSerializer: %08x\n", nsres);
-        return;
+        return E_FAIL;
     }
 
     nsres = nsIContentSerializer_Init(serializer, 0, 100, NULL, FALSE, FALSE /* FIXME */);
     if(NS_FAILED(nsres))
         ERR("Init failed: %08x\n", nsres);
 
-    nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
-    nsnode_to_nsstring_rec(serializer, nsnode, str);
-    nsIDOMNode_Release(nsnode);
-
-    nsres = nsIContentSerializer_Flush(serializer, str);
-    if(NS_FAILED(nsres))
-        ERR("Flush failed: %08x\n", nsres);
+    hres = nsnode_to_nsstring_rec(serializer, nsnode, str);
+    if(SUCCEEDED(hres)) {
+        nsres = nsIContentSerializer_Flush(serializer, str);
+        if(NS_FAILED(nsres))
+            ERR("Flush failed: %08x\n", nsres);
+    }
 
     nsIContentSerializer_Release(serializer);
+    return hres;
 }
 
 void get_editor_controller(NSContainer *This)
