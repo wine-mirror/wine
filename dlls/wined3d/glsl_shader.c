@@ -905,7 +905,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
             shader_addline(buffer, "uniform mat2 bumpenvmat%d;\n", i);
 
-            if(reg_maps->luminanceparams) {
+            if (reg_maps->luminanceparams[i])
+            {
                 shader_addline(buffer, "uniform float luminancescale%d;\n", i);
                 shader_addline(buffer, "uniform float luminanceoffset%d;\n", i);
                 extra_constants_needed++;
