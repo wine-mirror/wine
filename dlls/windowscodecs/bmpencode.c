@@ -483,8 +483,13 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 
 static HRESULT WINAPI BmpEncoder_Commit(IWICBitmapEncoder *iface)
 {
-    FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    BmpEncoder *This = (BmpEncoder*)iface;
+    BmpFrameEncode *frame = (BmpFrameEncode*)This->frame;
+    TRACE("(%p)\n", iface);
+
+    if (!frame || !frame->committed) return WINCODEC_ERR_WRONGSTATE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpEncoder_GetMetadataQueryWriter(IWICBitmapEncoder *iface,
