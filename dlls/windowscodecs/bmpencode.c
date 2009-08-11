@@ -246,8 +246,65 @@ static HRESULT WINAPI BmpFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI BmpFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
     IWICBitmapSource *pIBitmapSource, WICRect *prc)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pIBitmapSource, prc);
-    return E_NOTIMPL;
+    BmpFrameEncode *This = (BmpFrameEncode*)iface;
+    HRESULT hr;
+    WICRect rc;
+    WICPixelFormatGUID guid;
+    TRACE("(%p,%p,%p)\n", iface, pIBitmapSource, prc);
+
+    if (!This->initialized || !This->width || !This->height)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    if (!This->format)
+    {
+        hr = IWICBitmapSource_GetPixelFormat(pIBitmapSource, &guid);
+        if (FAILED(hr)) return hr;
+        hr = BmpFrameEncode_SetPixelFormat(iface, &guid);
+        if (FAILED(hr)) return hr;
+    }
+
+    hr = IWICBitmapSource_GetPixelFormat(pIBitmapSource, &guid);
+    if (FAILED(hr)) return hr;
+    if (memcmp(&guid, This->format->guid, sizeof(GUID)) != 0)
+    {
+        /* should use WICConvertBitmapSource to convert, but that's unimplemented */
+        ERR("format %s unsupported\n", debugstr_guid(&guid));
+        return E_FAIL;
+    }
+
+    if (This->xres == 0.0 || This->yres == 0.0)
+    {
+        double xres, yres;
+        hr = IWICBitmapSource_GetResolution(pIBitmapSource, &xres, &yres);
+        if (FAILED(hr)) return hr;
+        hr = BmpFrameEncode_SetResolution(iface, xres, yres);
+        if (FAILED(hr)) return hr;
+    }
+
+    if (!prc)
+    {
+        UINT width, height;
+        hr = IWICBitmapSource_GetSize(pIBitmapSource, &width, &height);
+        if (FAILED(hr)) return hr;
+        rc.X = 0;
+        rc.Y = 0;
+        rc.Width = width;
+        rc.Height = height;
+        prc = &rc;
+    }
+
+    if (prc->Width != This->width) return E_INVALIDARG;
+
+    hr = BmpFrameEncode_AllocateBits(This);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICBitmapSource_CopyPixels(pIBitmapSource, prc, This->stride,
+        This->stride*(This->height-This->lineswritten),
+        This->bits + This->stride*This->lineswritten);
+
+    This->lineswritten += rc.Height;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpFrameEncode_Commit(IWICBitmapFrameEncode *iface)
