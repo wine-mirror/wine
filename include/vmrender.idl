@@ -213,7 +213,7 @@ interface IVMRMixerControl : IUnknown
 
 typedef struct tagVMRGUID
 {
-    GUID *pGUID, GUID;
+    struct _GUID *pGUID, GUID;
 } VMRGUID;
 
 #define VMRDEVICENAMELEN 32
