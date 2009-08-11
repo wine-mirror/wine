@@ -129,7 +129,7 @@ BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
         return FALSE;
     }
 
-    wsprintfW(buf, url_format, full_path, index[0] == '/' ? empty : slash, index);
+    wsprintfW(buf, url_format, full_path, (!index || index[0] == '/') ? empty : slash, index);
 
     /* FIXME: HACK */
     if((ptr = strchrW(buf, '#')))
