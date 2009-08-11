@@ -59,6 +59,8 @@ typedef struct BmpFrameEncode {
     BYTE *bits;
     const struct bmp_pixelformat *format;
     double xres, yres;
+    UINT lineswritten;
+    UINT stride;
 } BmpFrameEncode;
 
 static HRESULT WINAPI BmpFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
@@ -104,6 +106,7 @@ static ULONG WINAPI BmpFrameEncode_Release(IWICBitmapFrameEncode *iface)
     if (ref == 0)
     {
         if (This->stream) IStream_Release(This->stream);
+        HeapFree(GetProcessHeap(), 0, This->bits);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -195,11 +198,48 @@ static HRESULT WINAPI BmpFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
     return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 }
 
+static HRESULT BmpFrameEncode_AllocateBits(BmpFrameEncode *This)
+{
+    if (!This->bits)
+    {
+        if (!This->initialized || !This->width || !This->height || !This->format)
+            return WINCODEC_ERR_WRONGSTATE;
+
+        This->stride = (((This->width * This->format->bpp)+31)/32)*4;
+        This->bits = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->stride * This->height);
+        if (!This->bits) return E_OUTOFMEMORY;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI BmpFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
     UINT lineCount, UINT cbStride, UINT cbBufferSize, BYTE *pbPixels)
 {
-    FIXME("(%p,%u,%u,%u,%p): stub\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
-    return E_NOTIMPL;
+    BmpFrameEncode *This = (BmpFrameEncode*)iface;
+    HRESULT hr;
+    WICRect rc;
+    TRACE("(%p,%u,%u,%u,%p)\n", iface, lineCount, cbStride, cbBufferSize, pbPixels);
+
+    if (!This->initialized || !This->width || !This->height || !This->format)
+        return WINCODEC_ERR_WRONGSTATE;
+
+    hr = BmpFrameEncode_AllocateBits(This);
+    if (FAILED(hr)) return hr;
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = This->width;
+    rc.Height = lineCount;
+
+    hr = copy_pixels(This->format->bpp, pbPixels, This->width, lineCount, cbStride,
+        &rc, This->stride, This->stride*(This->height-This->lineswritten),
+        This->bits + This->stride*This->lineswritten);
+
+    if (SUCCEEDED(hr))
+        This->lineswritten += lineCount;
+
+    return hr;
 }
 
 static HRESULT WINAPI BmpFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
@@ -382,6 +422,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     encode->format = NULL;
     encode->xres = 0.0;
     encode->yres = 0.0;
+    encode->lineswritten = 0;
 
     *ppIFrameEncode = (IWICBitmapFrameEncode*)encode;
     This->frame = (IWICBitmapFrameEncode*)encode;
