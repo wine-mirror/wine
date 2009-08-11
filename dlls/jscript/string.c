@@ -802,7 +802,7 @@ static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
     DWORD parens_cnt = 0, parens_size=0, rep_len=0, length;
     BSTR rep_str = NULL, match_str = NULL, ret_str, val_str = NULL;
     DispatchEx *rep_func = NULL, *regexp = NULL;
-    match_result_t *parens = NULL, match;
+    match_result_t *parens = NULL, match, **parens_ptr = &parens;
     strbuf_t ret = {NULL,0,0};
     BOOL gcheck = FALSE;
     VARIANT *arg_var;
@@ -884,12 +884,9 @@ static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
             if(FAILED(hres))
                 break;
 
-            if(strchrW(rep_str, '$')) {
-                FIXME("unsupported $ in replace string\n");
-                hres = E_NOTIMPL;
-            }
-
             rep_len = SysStringLen(rep_str);
+            if(!strchrW(rep_str, '$'))
+                parens_ptr = NULL;
         }
     }
 
@@ -900,7 +897,7 @@ static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 
         while(1) {
             if(regexp) {
-                hres = regexp_match_next(regexp, gcheck, str, length, &cp, rep_func ? &parens : NULL,
+                hres = regexp_match_next(regexp, gcheck, str, length, &cp, parens_ptr,
                                          &parens_size, &parens_cnt, &match);
                 gcheck = TRUE;
 
@@ -932,6 +929,64 @@ static HRESULT String_replace(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
 
                 hres = strbuf_append(&ret, cstr, SysStringLen(cstr));
                 SysFreeString(cstr);
+                if(FAILED(hres))
+                    break;
+            }else if(rep_str && regexp) {
+                const WCHAR *ptr = rep_str, *ptr2;
+
+                while((ptr2 = strchrW(ptr, '$'))) {
+                    hres = strbuf_append(&ret, ptr, ptr2-ptr);
+                    if(FAILED(hres))
+                        break;
+
+                    switch(ptr2[1]) {
+                    case '$':
+                        hres = strbuf_append(&ret, ptr2, 1);
+                        ptr = ptr2+2;
+                        break;
+                    case '&':
+                        hres = strbuf_append(&ret, match.str, match.len);
+                        ptr = ptr2+2;
+                        break;
+                    case '`':
+                        hres = strbuf_append(&ret, str, match.str-str);
+                        ptr = ptr2+2;
+                        break;
+                    case '\'':
+                        hres = strbuf_append(&ret, ecp, (str+length)-ecp);
+                        ptr = ptr2+2;
+                        break;
+                    default: {
+                        DWORD idx;
+
+                        if(!isdigitW(ptr2[1])) {
+                            hres = strbuf_append(&ret, ptr2, 1);
+                            ptr = ptr2+1;
+                            break;
+                        }
+
+                        idx = ptr2[1] - '0';
+                        if(isdigitW(ptr[3]) && idx*10 + (ptr[2]-'0') <= parens_cnt) {
+                            idx = idx*10 + (ptr[2]-'0');
+                            ptr = ptr2+3;
+                        }else if(idx && idx <= parens_cnt) {
+                            ptr = ptr2+2;
+                        }else {
+                            hres = strbuf_append(&ret, ptr2, 1);
+                            ptr = ptr2+1;
+                            break;
+                        }
+
+                        hres = strbuf_append(&ret, parens[idx-1].str, parens[idx-1].len);
+                    }
+                    }
+
+                    if(FAILED(hres))
+                        break;
+                }
+
+                if(SUCCEEDED(hres))
+                    hres = strbuf_append(&ret, ptr, (rep_str+rep_len)-ptr);
                 if(FAILED(hres))
                     break;
             }else if(rep_str) {
