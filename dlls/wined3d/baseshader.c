@@ -262,7 +262,7 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
             break;
 
         case WINED3DSPR_TEMP:
-            reg_maps->temporary[reg->idx] = 1;
+            reg_maps->temporary |= 1 << reg->idx;
             break;
 
         case WINED3DSPR_INPUT:

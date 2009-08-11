@@ -1038,9 +1038,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare temporary variables */
-    for(i = 0; i < This->baseShader.limits.temporary; i++) {
-        if (reg_maps->temporary[i])
-            shader_addline(buffer, "vec4 R%u;\n", i);
+    for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
+    {
+        if (map & 1) shader_addline(buffer, "vec4 R%u;\n", i);
     }
 
     /* Declare attributes */

@@ -659,9 +659,9 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
         }
     }
 
-    for(i = 0; i < This->baseShader.limits.temporary; i++) {
-        if (reg_maps->temporary[i])
-            shader_addline(buffer, "TEMP R%u;\n", i);
+    for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
+    {
+        if (map & 1) shader_addline(buffer, "TEMP R%u;\n", i);
     }
 
     for (i = 0; i < This->baseShader.limits.address; i++) {
@@ -3215,21 +3215,21 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     BOOL dcl_tmp = args->super.srgb_correction, dcl_td = FALSE;
     BOOL want_nv_prog = FALSE;
     struct arb_pshader_private *shader_priv = This->backend_priv;
+    DWORD map;
 
     char srgbtmp[4][4];
     unsigned int i, found = 0;
 
-    for(i = 0; i < This->baseShader.limits.temporary; i++) {
+    for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
+    {
+        if (!(map & 1)
+                || (This->color0_mov && i == This->color0_reg)
+                || (reg_maps->shader_version.major < 2 && i == 0))
+            continue;
 
-        /* Don't overwrite the color source */
-        if(This->color0_mov && i == This->color0_reg) continue;
-        else if(reg_maps->shader_version.major < 2 && i == 0) continue;
-
-        if(reg_maps->temporary[i]) {
-            sprintf(srgbtmp[found], "R%u", i);
-            found++;
-            if(found == 4) break;
-        }
+        sprintf(srgbtmp[found], "R%u", i);
+        ++found;
+        if (found == 4) break;
     }
 
     switch(found) {
