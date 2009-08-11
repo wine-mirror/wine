@@ -5340,3 +5340,13 @@ DWORD WINAPI TreeResetNamedSecurityInfoW( LPWSTR pObjectName,
 
     return ERROR_SUCCESS;
 }
+
+/******************************************************************************
+ * SaferGetPolicyInformation   [ADVAPI32.@]
+ */
+BOOL WINAPI SaferGetPolicyInformation(DWORD scope, SAFER_POLICY_INFO_CLASS class, DWORD size,
+                                      PVOID buffer, PDWORD required, LPVOID lpReserved)
+{
+    FIXME("(%u %u %u %p %p %p) stub\n", scope, class, size, buffer, required, lpReserved);
+    return FALSE;
+}

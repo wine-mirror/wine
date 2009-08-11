@@ -542,7 +542,7 @@
 # @ stub SaferComputeTokenFromLevel
 @ stdcall SaferCreateLevel(long long long ptr ptr)
 # @ stub SaferGetLevelInformation
-# @ stub SaferGetPolicyInformation
+@ stdcall SaferGetPolicyInformation(long long long ptr ptr ptr)
 # @ stub SaferIdentifyLevel
 # @ stub SaferRecordEventLogEntry
 # @ stub SaferSetLevelInformation

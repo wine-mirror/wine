@@ -43,6 +43,16 @@ DECLARE_HANDLE(SAFER_LEVEL_HANDLE);
 
 WINADVAPI BOOL WINAPI SaferCreateLevel(DWORD,DWORD,DWORD,SAFER_LEVEL_HANDLE*,LPVOID);
 
+typedef enum _SAFER_POLICY_INFO_CLASS {
+    SaferPolicyLevelList = 1,
+    SaferPolicyEnableTransparentEnforcement,
+    SaferPolicyDefaultLevel,
+    SaferPolicyEvaluateUserScope,
+    SaferPolicyScopeFlags
+} SAFER_POLICY_INFO_CLASS;
+
+WINADVAPI BOOL WINAPI SaferGetPolicyInformation(DWORD,SAFER_POLICY_INFO_CLASS,DWORD,PVOID,PDWORD,LPVOID);
+
 #ifdef __cplusplus
 }
 #endif
