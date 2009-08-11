@@ -147,12 +147,54 @@ static void build_dll_path(void)
     }
 }
 
+/* check if the library is the correct architecture */
+/* only returns false for a valid library of the wrong arch */
+static int check_library_arch( int fd )
+{
+#ifdef __APPLE__
+    struct  /* Mach-O header */
+    {
+        unsigned int magic;
+        unsigned int cputype;
+    } header;
+
+    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
+    if (header.magic != 0xfeedface) return 1;
+    if (sizeof(void *) == sizeof(int)) return !(header.cputype >> 24);
+    else return (header.cputype >> 24) == 1; /* CPU_ARCH_ABI64 */
+#else
+    struct  /* ELF header */
+    {
+        unsigned char magic[4];
+        unsigned char class;
+        unsigned char data;
+        unsigned char version;
+    } header;
+
+    if (read( fd, &header, sizeof(header) ) != sizeof(header)) return 1;
+    if (memcmp( header.magic, "\177ELF", 4 )) return 1;
+    if (header.version != 1 /* EV_CURRENT */) return 1;
+#ifdef WORDS_BIGENDIAN
+    if (header.data != 2 /* ELFDATA2MSB */) return 1;
+#else
+    if (header.data != 1 /* ELFDATA2LSB */) return 1;
+#endif
+    if (sizeof(void *) == sizeof(int)) return header.class == 1; /* ELFCLASS32 */
+    else return header.class == 2; /* ELFCLASS64 */
+#endif
+}
+
 /* check if a given file can be opened */
 static inline int file_exists( const char *name )
 {
+    int ret = 0;
     int fd = open( name, O_RDONLY );
-    if (fd != -1) close( fd );
-    return (fd != -1);
+    if (fd != -1)
+    {
+        ret = check_library_arch( fd );
+        close( fd );
+    }
+    return ret;
 }
 
 static inline char *prepend( char *buffer, const char *str, size_t len )
