@@ -471,6 +471,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     if((phContext == NULL) && (pInput == NULL))
     {
         static char helper_protocol[] = "--helper-protocol=ntlmssp-client-1";
+        static CHAR credentials_argv[] = "--use-cached-creds";
         SEC_CHAR *client_argv[5];
         int pwlen = 0;
 
@@ -549,10 +550,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 }
                 username = ntlm_GetUsernameArg(ui->wkui1_username, -1);
 
-                FIXME("using ntlm_auth cached credentials not supported\n");
+                TRACE("using cached credentials\n");
 
                 client_argv[2] = username;
-                client_argv[3] = NULL;
+                client_argv[3] = credentials_argv;
                 client_argv[4] = NULL;
             }
         }
@@ -644,8 +645,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         if(fContextReq & ISC_REQ_DELEGATE)
             ctxt_attr |= ISC_RET_DELEGATE;
 
-        /* If no password is given, use an empty password instead. This is the
-         * SMB way to do "anonymous" authentication. */
+        /* If no password is given, try to use cached credentials. Fall back to an empty
+         * password if this failed. */
         if(!password && !ntlm_cred->password)
         {
             lstrcpynA(buffer, "OK", max_len-1);
@@ -654,17 +655,15 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                 cleanup_helper(helper);
                 goto isc_end;
             }
-            /* If the helper replied with "PW", give an empty password. */
+            /* If the helper replied with "PW", using cached credentials failed */
             if(!strncmp(buffer, "PW", 2))
             {
                 TRACE("Using cached credentials failed.\n");
-                lstrcpynA(buffer, "PW AA==", max_len-1);
+                ret = SEC_E_NO_CREDENTIALS;
+                goto isc_end;
             }
-            else
-            {
-                /* Just do a noop on the next run */
+            else /* Just do a noop on the next run */
                 lstrcpynA(buffer, "OK", max_len-1);
-            }
         }
         else
         {
