@@ -854,12 +854,12 @@ struct nsChannelBSC {
 
 static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 {
+    DWORD read;
     nsresult nsres;
     HRESULT hres;
 
     if(!This->nslistener) {
         BYTE buf[1024];
-        DWORD read;
 
         do {
             read = 0;
@@ -873,17 +873,20 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
         This->nsstream = create_nsprotocol_stream();
 
     do {
-        hres = IStream_Read(stream, This->nsstream->buf, sizeof(This->nsstream->buf),
-                &This->nsstream->buf_size);
-        if(!This->nsstream->buf_size)
+        read = 0;
+        hres = IStream_Read(stream, This->nsstream->buf+This->nsstream->buf_size,
+                sizeof(This->nsstream->buf)-This->nsstream->buf_size, &read);
+        if(!read)
             break;
 
-        if(!This->bsc.readed && This->nsstream->buf_size >= 2 && *(WORD*)This->nsstream->buf == 0xfeff) {
-            This->nschannel->charset = heap_alloc(sizeof(UTF16_STR));
-            memcpy(This->nschannel->charset, UTF16_STR, sizeof(UTF16_STR));
-        }
+        This->nsstream->buf_size += read;
 
         if(!This->bsc.readed) {
+            if(This->nsstream->buf_size >= 2
+               && (BYTE)This->nsstream->buf[0] == 0xff
+               && (BYTE)This->nsstream->buf[1] == 0xfe)
+                This->nschannel->charset = heap_strdupA(UTF16_STR);
+
             nsres = nsIStreamListener_OnStartRequest(This->nslistener,
                     (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
             if(NS_FAILED(nsres))
@@ -905,8 +908,10 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
         if(NS_FAILED(nsres))
             ERR("OnDataAvailable failed: %08x\n", nsres);
 
-        if(This->nsstream->buf_size)
-            FIXME("buffer is not empty!\n");
+        if(This->nsstream->buf_size == sizeof(This->nsstream->buf)) {
+            ERR("buffer is full\n");
+            break;
+        }
     }while(hres == S_OK);
 
     return S_OK;
