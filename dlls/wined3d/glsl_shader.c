@@ -814,6 +814,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i, extra_constants_needed = 0;
     const local_constant *lconst;
+    DWORD map;
 
     /* There are some minor differences between pixel and vertex shaders */
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
@@ -1009,9 +1010,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare texture coordinate temporaries and initialize them */
-    for (i = 0; i < This->baseShader.limits.texcoord; i++) {
-        if (reg_maps->texcoord[i]) 
-            shader_addline(buffer, "vec4 T%u = gl_TexCoord[%u];\n", i, i);
+    for (i = 0, map = reg_maps->texcoord; map; map >>= 1, ++i)
+    {
+        if (map & 1) shader_addline(buffer, "vec4 T%u = gl_TexCoord[%u];\n", i, i);
     }
 
     /* Declare input register varyings. Only pixel shader, vertex shaders have that declared in the
@@ -1045,13 +1046,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     /* Declare attributes */
     if (reg_maps->shader_version.type == WINED3D_SHADER_TYPE_VERTEX)
     {
-        WORD map = reg_maps->input_registers;
-
-        for (i = 0; map; map >>= 1, ++i)
+        for (i = 0, map = reg_maps->input_registers; map; map >>= 1, ++i)
         {
-            if (!(map & 1)) continue;
-
-            shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
+            if (map & 1) shader_addline(buffer, "attribute vec4 attrib%i;\n", i);
         }
     }
 

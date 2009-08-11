@@ -257,7 +257,7 @@ static void shader_record_register_usage(IWineD3DBaseShaderImpl *This, struct sh
     switch (reg->type)
     {
         case WINED3DSPR_TEXTURE: /* WINED3DSPR_ADDR */
-            if (shader_type == WINED3D_SHADER_TYPE_PIXEL) reg_maps->texcoord[reg->idx] = 1;
+            if (shader_type == WINED3D_SHADER_TYPE_PIXEL) reg_maps->texcoord |= 1 << reg->idx;
             else reg_maps->address[reg->idx] = 1;
             break;
 

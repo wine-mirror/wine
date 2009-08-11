@@ -615,6 +615,7 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
     char pshader = shader_is_pshader_version(reg_maps->shader_version.type);
     unsigned max_constantsF;
     const local_constant *lconst;
+    DWORD map;
 
     /* In pixel shaders, all private constants are program local, we don't need anything
      * from program.env. Thus we can advertise the full set of constants in pixel shaders.
@@ -668,10 +669,11 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
             shader_addline(buffer, "ADDRESS A%d;\n", i);
     }
 
-    if(pshader && reg_maps->shader_version.major == 1 && reg_maps->shader_version.minor <= 3) {
-        for(i = 0; i < This->baseShader.limits.texcoord; i++) {
-            if (reg_maps->texcoord[i] && pshader)
-                shader_addline(buffer,"TEMP T%u;\n", i);
+    if (pshader && reg_maps->shader_version.major == 1 && reg_maps->shader_version.minor <= 3)
+    {
+        for (i = 0, map = reg_maps->texcoord; map; map >>= 1, ++i)
+        {
+            if (map & 1) shader_addline(buffer, "TEMP T%u;\n", i);
         }
     }
 
@@ -3923,7 +3925,7 @@ static void find_clip_texcoord(IWineD3DPixelShaderImpl *ps)
     {
         for(i = GL_LIMITS(texture_stages); i > 0; i--)
         {
-            if(!ps->baseShader.reg_maps.texcoord[i - 1])
+            if (!(ps->baseShader.reg_maps.texcoord & (1 << (i - 1))))
             {
                 shader_priv->clipplane_emulation = i;
                 return;

@@ -628,7 +628,7 @@ struct wined3d_shader_version
 typedef struct shader_reg_maps
 {
     struct wined3d_shader_version shader_version;
-    char texcoord[MAX_REG_TEXCRD];          /* pixel < 3.0 */
+    BYTE texcoord;                          /* MAX_REG_TEXCRD, 8 */
     char temporary[MAX_REG_TEMP];           /* pixel, vertex */
     char address[MAX_REG_ADDR];             /* vertex */
     char labels[MAX_LABELS];                /* pixel, vertex */
