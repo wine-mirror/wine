@@ -978,23 +978,6 @@ static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
         }
     }
 
-    if(FAILED(result))
-        return S_OK;
-
-    if(This->bsc.doc && This->bsc.doc->bscallback == This && !This->bsc.doc->nscontainer) {
-        task_t *task = heap_alloc(sizeof(task_t));
-
-        task->doc = This->bsc.doc;
-        task->task_id = TASK_PARSECOMPLETE;
-        task->next = NULL;
-
-        /*
-         * This should be done in the worker thread that parses HTML,
-         * but we don't have such thread.
-         */
-        push_task(task);
-    }
-
     return S_OK;
 }
 
