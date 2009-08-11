@@ -35,6 +35,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+struct bmp_pixelformat {
+    const WICPixelFormatGUID *guid;
+    UINT bpp;
+    DWORD compression;
+    DWORD redmask;
+    DWORD greenmask;
+    DWORD bluemask;
+    DWORD alphamask;
+};
+
+static const struct bmp_pixelformat formats[] = {
+    {&GUID_WICPixelFormat24bppBGR, 24, BI_RGB},
+    {NULL}
+};
+
 typedef struct BmpFrameEncode {
     const IWICBitmapFrameEncodeVtbl *lpVtbl;
     LONG ref;
@@ -42,6 +57,7 @@ typedef struct BmpFrameEncode {
     BOOL initialized;
     UINT width, height;
     BYTE *bits;
+    const struct bmp_pixelformat *format;
 } BmpFrameEncode;
 
 static HRESULT WINAPI BmpFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
@@ -130,8 +146,24 @@ static HRESULT WINAPI BmpFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI BmpFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pPixelFormat));
-    return E_NOTIMPL;
+    BmpFrameEncode *This = (BmpFrameEncode*)iface;
+    int i;
+    TRACE("(%p,%s)\n", iface, debugstr_guid(pPixelFormat));
+
+    if (!This->initialized || This->bits) return WINCODEC_ERR_WRONGSTATE;
+
+    for (i=0; formats[i].guid; i++)
+    {
+        if (memcmp(formats[i].guid, pPixelFormat, sizeof(GUID)) == 0)
+            break;
+    }
+
+    if (!formats[i].guid) i = 0;
+
+    This->format = &formats[i];
+    memcpy(pPixelFormat, This->format->guid, sizeof(GUID));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpFrameEncode_SetColorContexts(IWICBitmapFrameEncode *iface,
@@ -339,6 +371,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     encode->width = 0;
     encode->height = 0;
     encode->bits = NULL;
+    encode->format = NULL;
 
     *ppIFrameEncode = (IWICBitmapFrameEncode*)encode;
     This->frame = (IWICBitmapFrameEncode*)encode;
