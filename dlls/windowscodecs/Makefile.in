@@ -8,6 +8,7 @@ IMPORTS   = uuid ole32 advapi32 kernel32
 
 C_SRCS = \
 	bmpdecode.c \
+	bmpencode.c \
 	clsfactory.c \
 	imgfactory.c \
 	info.c \
