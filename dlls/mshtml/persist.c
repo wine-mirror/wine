@@ -337,7 +337,7 @@ static HRESULT set_moniker(HTMLDocument *This, IMoniker *mon, IBindCtx *pibc, BO
     return S_OK;
 }
 
-static HRESULT get_doc_string(HTMLDocument *This, char **str, DWORD *len)
+static HRESULT get_doc_string(HTMLDocument *This, char **str)
 {
     nsIDOMNode *nsnode;
     LPCWSTR strw;
@@ -362,9 +362,7 @@ static HRESULT get_doc_string(HTMLDocument *This, char **str, DWORD *len)
     nsAString_GetData(&nsstr, &strw);
     TRACE("%s\n", debugstr_w(strw));
 
-    *len = WideCharToMultiByte(CP_ACP, 0, strw, -1, NULL, 0, NULL, NULL);
-    *str = heap_alloc(*len);
-    WideCharToMultiByte(CP_ACP, 0, strw, -1, *str, *len, NULL, NULL);
+    *str = heap_strdupWtoA(strw);
 
     nsAString_Finish(&nsstr);
 
@@ -583,7 +581,7 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *iface, LPCOLESTR pszFileNam
 {
     HTMLDocument *This = PERSISTFILE_THIS(iface);
     char *str;
-    DWORD len, written=0;
+    DWORD written=0;
     HANDLE file;
     HRESULT hres;
 
@@ -596,9 +594,9 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *iface, LPCOLESTR pszFileNam
         return E_FAIL;
     }
 
-    hres = get_doc_string(This, &str, &len);
+    hres = get_doc_string(This, &str);
     if(SUCCEEDED(hres))
-        WriteFile(file, str, len, &written, NULL);
+        WriteFile(file, str, strlen(str), &written, NULL);
 
     CloseHandle(file);
     return hres;
@@ -698,16 +696,16 @@ static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM
 {
     HTMLDocument *This = PERSTRINIT_THIS(iface);
     char *str;
-    DWORD len, written=0;
+    DWORD written=0;
     HRESULT hres;
 
     TRACE("(%p)->(%p %x)\n", This, pStm, fClearDirty);
 
-    hres = get_doc_string(This, &str, &len);
+    hres = get_doc_string(This, &str);
     if(FAILED(hres))
         return hres;
 
-    hres = IStream_Write(pStm, str, len, &written);
+    hres = IStream_Write(pStm, str, strlen(str), &written);
     if(FAILED(hres))
         FIXME("Write failed: %08x\n", hres);
 
