@@ -38,6 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct BmpEncoder {
     const IWICBitmapEncoderVtbl *lpVtbl;
     LONG ref;
+    IStream *stream;
 } BmpEncoder;
 
 static HRESULT WINAPI BmpEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
@@ -82,6 +83,7 @@ static ULONG WINAPI BmpEncoder_Release(IWICBitmapEncoder *iface)
 
     if (ref == 0)
     {
+        if (This->stream) IStream_Release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -91,8 +93,14 @@ static ULONG WINAPI BmpEncoder_Release(IWICBitmapEncoder *iface)
 static HRESULT WINAPI BmpEncoder_Initialize(IWICBitmapEncoder *iface,
     IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
 {
-    FIXME("(%p,%p,%u): stub\n", iface, pIStream, cacheOption);
-    return E_NOTIMPL;
+    BmpEncoder *This = (BmpEncoder*)iface;
+
+    TRACE("(%p,%p,%u)\n", iface, pIStream, cacheOption);
+
+    IStream_AddRef(pIStream);
+    This->stream = pIStream;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpEncoder_GetContainerFormat(IWICBitmapEncoder *iface,
@@ -186,6 +194,7 @@ HRESULT BmpEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->lpVtbl = &BmpEncoder_Vtbl;
     This->ref = 1;
+    This->stream = NULL;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
