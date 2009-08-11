@@ -724,6 +724,7 @@ static char* heap_printf(const char *format, ...)
         HeapFree(GetProcessHeap(), 0, buffer);
     }
     va_end(args);
+    if (!buffer) return NULL;
     ret = HeapReAlloc(GetProcessHeap(), 0, buffer, strlen(buffer) + 1 );
     if (!ret) ret = buffer;
     return ret;
