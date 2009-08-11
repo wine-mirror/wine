@@ -676,6 +676,9 @@ static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode 
         nsIDOMDocument_Release(nsdoc);
         break;
     }
+    case DOCUMENT_TYPE_NODE:
+        WARN("Ignoring DOCUMENT_TYPE_NODE\n");
+        break;
     case DOCUMENT_FRAGMENT_NODE:
         break;
     default:
