@@ -347,6 +347,14 @@ static HRESULT  WINAPI IWineD3DEventQueryImpl_GetData(IWineD3DQuery* iface, void
 
     if (!pData || !dwSize) return S_OK;
 
+    if (!query->context)
+    {
+        ERR("Query not started, returning TRUE.\n");
+        *data = TRUE;
+
+        return S_OK;
+    }
+
     if (query->context->tid != GetCurrentThreadId())
     {
         /* See comment in IWineD3DQuery::Issue, event query codeblock */
