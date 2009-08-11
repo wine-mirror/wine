@@ -557,13 +557,11 @@ static void SECUR32_initializeProviders(void)
     cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": cs");
     /* First load built-in providers */
     SECUR32_initSchannelSP();
-    /* Do not load Negotiate yet. This breaks for some user on the wine-users
-     * mailing list as of 2006-09-12. Without Negotiate, applications should
-     * fall back to NTLM and that should work.*/
-#if 0
-    SECUR32_initNegotiateSP();
-#endif
     SECUR32_initNTLMSP();
+    /* Load the Negotiate provider last so apps stumble over the working NTLM
+     * provider first. Attempting to fix bug #16905 while keeping the
+     * application reported on wine-users on 2006-09-12 working. */
+    SECUR32_initNegotiateSP();
     /* Now load providers from registry */
     apiRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, securityProvidersKeyW, 0,
      KEY_READ, &key);
