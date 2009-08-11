@@ -58,6 +58,7 @@ typedef struct BmpFrameEncode {
     UINT width, height;
     BYTE *bits;
     const struct bmp_pixelformat *format;
+    double xres, yres;
 } BmpFrameEncode;
 
 static HRESULT WINAPI BmpFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
@@ -139,8 +140,15 @@ static HRESULT WINAPI BmpFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI BmpFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
     double dpiX, double dpiY)
 {
-    FIXME("(%p,%0.2f,%0.2f): stub\n", iface, dpiX, dpiY);
-    return E_NOTIMPL;
+    BmpFrameEncode *This = (BmpFrameEncode*)iface;
+    TRACE("(%p,%0.2f,%0.2f)\n", iface, dpiX, dpiY);
+
+    if (!This->initialized || This->bits) return WINCODEC_ERR_WRONGSTATE;
+
+    This->xres = dpiX;
+    This->yres = dpiY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
@@ -372,6 +380,8 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     encode->height = 0;
     encode->bits = NULL;
     encode->format = NULL;
+    encode->xres = 0.0;
+    encode->yres = 0.0;
 
     *ppIFrameEncode = (IWICBitmapFrameEncode*)encode;
     This->frame = (IWICBitmapFrameEncode*)encode;
