@@ -39,6 +39,7 @@ typedef struct BmpFrameEncode {
     const IWICBitmapFrameEncodeVtbl *lpVtbl;
     LONG ref;
     IStream *stream;
+    BOOL initialized;
 } BmpFrameEncode;
 
 static HRESULT WINAPI BmpFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid,
@@ -93,8 +94,14 @@ static ULONG WINAPI BmpFrameEncode_Release(IWICBitmapFrameEncode *iface)
 static HRESULT WINAPI BmpFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
     IPropertyBag2 *pIEncoderOptions)
 {
-    FIXME("(%p,%p): stub\n", iface, pIEncoderOptions);
-    return E_NOTIMPL;
+    BmpFrameEncode *This = (BmpFrameEncode*)iface;
+    TRACE("(%p,%p)\n", iface, pIEncoderOptions);
+
+    if (This->initialized) return WINCODEC_ERR_WRONGSTATE;
+
+    This->initialized = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BmpFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
@@ -319,6 +326,7 @@ static HRESULT WINAPI BmpEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
     encode->ref = 2;
     IStream_AddRef(This->stream);
     encode->stream = This->stream;
+    encode->initialized = FALSE;
 
     *ppIFrameEncode = (IWICBitmapFrameEncode*)encode;
     This->frame = (IWICBitmapFrameEncode*)encode;
