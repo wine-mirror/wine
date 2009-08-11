@@ -642,12 +642,14 @@ static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, UL
 
     total_size = sizeof(IP_ADAPTER_ADDRESSES);
     total_size += IF_NAMESIZE;
+    total_size += IF_NAMESIZE * sizeof(WCHAR);
     total_size += sizeof(IP_ADAPTER_UNICAST_ADDRESS) * num_addrs;
     total_size += sizeof(struct sockaddr_in) * num_addrs;
 
     if (aa && *size >= total_size)
     {
-        char name[IF_NAMESIZE], *ptr = (char *)aa + sizeof(IP_ADAPTER_ADDRESSES);
+        char name[IF_NAMESIZE], *ptr = (char *)aa + sizeof(IP_ADAPTER_ADDRESSES), *src;
+        WCHAR *dst;
         DWORD buflen, type, status;
 
         memset(aa, 0, sizeof(IP_ADAPTER_ADDRESSES));
@@ -658,6 +660,11 @@ static ULONG adapterAddressesFromIndex(DWORD index, IP_ADAPTER_ADDRESSES *aa, UL
         memcpy(ptr, name, IF_NAMESIZE);
         aa->AdapterName = ptr;
         ptr += IF_NAMESIZE;
+        aa->FriendlyName = (WCHAR *)ptr;
+        for (src = name, dst = (WCHAR *)ptr; *src; src++, dst++)
+            *dst = *src;
+        *dst++ = 0;
+        ptr = (char *)dst;
 
         if (num_addrs)
         {
