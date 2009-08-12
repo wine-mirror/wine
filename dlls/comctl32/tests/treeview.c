@@ -94,6 +94,7 @@ static const struct message focus_seq[] = {
     { WM_PAINT, sent|defwinproc },
     { WM_IME_SETCONTEXT, sent|defwinproc|optional },
     { WM_COMMAND, sent|wparam|defwinproc, MAKEWPARAM(0, EN_SETFOCUS) },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
     { WM_CTLCOLOREDIT, sent|defwinproc|optional },
     { WM_CTLCOLOREDIT, sent|defwinproc|optional },
     { 0 }
