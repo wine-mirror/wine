@@ -1086,6 +1086,23 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, struct WS_sockaddr* ws
         }
         break;
 #endif
+#ifdef HAVE_IRDA
+    case AF_IRDA: {
+        const struct sockaddr_irda *uin = (const struct sockaddr_irda *)uaddr;
+        SOCKADDR_IRDA *win = (SOCKADDR_IRDA *)wsaddr;
+
+        if (*wsaddrlen < sizeof(SOCKADDR_IRDA))
+            return -1;
+        win->irdaAddressFamily = WS_AF_IRDA;
+        memcpy( win->irdaDeviceID, &uin->sir_addr, sizeof(win->irdaDeviceID) );
+        if (uin->sir_lsap_sel != LSAP_ANY)
+            sprintf( win->irdaServiceName, "LSAP-SEL%u", uin->sir_lsap_sel );
+        else
+            memcpy( win->irdaServiceName, uin->sir_name,
+                    sizeof(win->irdaServiceName) );
+        return 0;
+    }
+#endif
     case AF_INET6: {
         const struct sockaddr_in6* uin6 = (const struct sockaddr_in6*)uaddr;
         struct WS_sockaddr_in6_old* win6old = (struct WS_sockaddr_in6_old*)wsaddr;
