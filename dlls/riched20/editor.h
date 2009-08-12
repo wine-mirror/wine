@@ -155,6 +155,8 @@ void ME_GetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt);
 void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod);
 
 /* caret.c */
+void ME_SetCursorToStart(ME_TextEditor *editor, ME_Cursor *cursor);
+void ME_SetCursorToEnd(ME_TextEditor *editor, ME_Cursor *cursor);
 int ME_SetSelection(ME_TextEditor *editor, int from, int to);
 void ME_HideCaret(ME_TextEditor *ed);
 void ME_ShowCaret(ME_TextEditor *ed);

@@ -27,6 +27,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 static BOOL
 ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs);
 
+void ME_SetCursorToStart(ME_TextEditor *editor, ME_Cursor *cursor)
+{
+  cursor->pPara = editor->pBuffer->pFirst->member.para.next_para;
+  cursor->pRun = ME_FindItemFwd(cursor->pPara, diRun);
+  cursor->nOffset = 0;
+}
+
+void ME_SetCursorToEnd(ME_TextEditor *editor, ME_Cursor *cursor)
+{
+  cursor->pPara = editor->pBuffer->pLast->member.para.prev_para;
+  cursor->pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
+  cursor->nOffset = 0;
+}
+
+
 int ME_GetSelectionOfs(ME_TextEditor *editor, int *from, int *to)
 {
   *from = ME_GetCursorOfs(&editor->pCursors[0]);
@@ -58,9 +73,9 @@ int ME_GetSelection(ME_TextEditor *editor, ME_Cursor **from, ME_Cursor **to)
 
 int ME_GetTextLength(ME_TextEditor *editor)
 {
-  ME_DisplayItem *pLast = editor->pBuffer->pLast;
-  return ME_CharOfsFromRunOfs(editor, pLast->member.para.prev_para,
-                              ME_FindItemBack(pLast, diRun), 0);
+  ME_Cursor cursor;
+  ME_SetCursorToEnd(editor, &cursor);
+  return ME_GetCursorOfs(&cursor);
 }
 
 
@@ -111,12 +126,8 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
   /* select all */
   if (from == 0 && to == -1)
   {
-    editor->pCursors[1].pPara = editor->pBuffer->pFirst->member.para.next_para;
-    editor->pCursors[1].pRun = ME_FindItemFwd(editor->pCursors[1].pPara, diRun);
-    editor->pCursors[1].nOffset = 0;
-    editor->pCursors[0].pPara = editor->pBuffer->pLast->member.para.prev_para;
-    editor->pCursors[0].pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
-    editor->pCursors[0].nOffset = 0;
+    ME_SetCursorToStart(editor, &editor->pCursors[1]);
+    ME_SetCursorToEnd(editor, &editor->pCursors[0]);
     ME_InvalidateSelection(editor);
     ME_ClearTempStyle(editor);
     return len + 1;
@@ -164,9 +175,7 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
 
   if (selectionEnd)
   {
-    editor->pCursors[0].pPara = editor->pBuffer->pLast->member.para.prev_para;
-    editor->pCursors[0].pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
-    editor->pCursors[0].nOffset = 0;
+    ME_SetCursorToEnd(editor, &editor->pCursors[0]);
     editor->pCursors[1] = editor->pCursors[0];
     ME_InvalidateSelection(editor);
     ME_ClearTempStyle(editor);
@@ -812,12 +821,8 @@ ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
     case stDocument:
       /* Select everything with cursor anchored from the start of the text */
       editor->nSelectionType = stDocument;
-      editor->pCursors[1].pPara = editor->pBuffer->pFirst->member.para.next_para;
-      editor->pCursors[1].pRun = ME_FindItemFwd(editor->pCursors[1].pPara, diRun);
-      editor->pCursors[1].nOffset = 0;
-      editor->pCursors[0].pPara = editor->pBuffer->pLast->member.para.prev_para;
-      editor->pCursors[0].pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
-      editor->pCursors[0].nOffset = 0;
+      ME_SetCursorToStart(editor, &editor->pCursors[1]);
+      ME_SetCursorToEnd(editor, &editor->pCursors[0]);
       break;
     default: assert(0);
   }
@@ -1331,9 +1336,7 @@ static void ME_ArrowPageUp(ME_TextEditor *editor, ME_Cursor *pCursor)
 
   if (editor->vert_si.nPos < p->member.row.nHeight)
   {
-    pCursor->pPara = editor->pBuffer->pFirst->member.para.next_para;
-    pCursor->pRun = ME_FindItemFwd(pCursor->pPara, diRun);
-    pCursor->nOffset = 0;
+    ME_SetCursorToStart(editor, pCursor);
     editor->bCaretAtEnd = FALSE;
     /* Native clears seems to clear this x value on page up at the top
      * of the text, but not on page down at the end of the text.
@@ -1398,9 +1401,7 @@ static void ME_ArrowPageDown(ME_TextEditor *editor, ME_Cursor *pCursor)
 
   if (editor->vert_si.nPos >= y - editor->sizeWindow.cy)
   {
-    pCursor->pPara = editor->pBuffer->pLast->member.para.prev_para;
-    pCursor->pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
-    pCursor->nOffset = 0;
+    ME_SetCursorToEnd(editor, pCursor);
     editor->bCaretAtEnd = FALSE;
   } else {
     ME_DisplayItem *pRun = pCursor->pRun;
@@ -1469,9 +1470,7 @@ static void ME_ArrowHome(ME_TextEditor *editor, ME_Cursor *pCursor)
 
 static void ME_ArrowCtrlHome(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
-  pCursor->pPara = editor->pBuffer->pFirst->member.para.next_para;
-  pCursor->pRun = ME_FindItemFwd(pCursor->pPara, diRun);
-  pCursor->nOffset = 0;
+  ME_SetCursorToStart(editor, pCursor);
   editor->bCaretAtEnd = FALSE;
 }
 
@@ -1502,10 +1501,7 @@ static void ME_ArrowEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
 
 static void ME_ArrowCtrlEnd(ME_TextEditor *editor, ME_Cursor *pCursor)
 {
-  pCursor->pPara = editor->pBuffer->pLast->member.para.prev_para;
-  pCursor->pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
-  assert(pCursor->pRun->member.run.nFlags & MERF_ENDPARA);
-  pCursor->nOffset = 0;
+  ME_SetCursorToEnd(editor, pCursor);
   editor->bCaretAtEnd = FALSE;
 }
 

@@ -1882,7 +1882,7 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
     }
     else
     {
-      ME_CursorFromCharOfs(editor, 0, &start);
+      ME_SetCursorToStart(editor, &start);
       nChars = INT_MAX;
     }
     if (ex->codepage == 1200)
@@ -2623,9 +2623,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
    */
   ed->nCursors = 4;
   ed->pCursors = ALLOC_N_OBJ(ME_Cursor, ed->nCursors);
-  ed->pCursors[0].pPara = ed->pBuffer->pFirst->member.para.next_para;
-  ed->pCursors[0].pRun = ME_FindItemFwd(ed->pCursors[0].pPara, diRun);
-  ed->pCursors[0].nOffset = 0;
+  ME_SetCursorToStart(ed, &ed->pCursors[0]);
   ed->pCursors[1] = ed->pCursors[0];
   ed->pCursors[2] = ed->pCursors[0];
   ed->pCursors[3] = ed->pCursors[1];
@@ -2645,7 +2643,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nUndoMode = umAddToUndo;
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
-  ed->pLastSelStartPara = ed->pLastSelEndPara = ME_FindItemFwd(ed->pBuffer->pFirst, diParagraph);
+  ed->pLastSelStartPara = ed->pLastSelEndPara = ed->pCursors[0].pPara;
   ed->bHideSelection = FALSE;
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
