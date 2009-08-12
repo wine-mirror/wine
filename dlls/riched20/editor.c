@@ -1013,8 +1013,8 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
           info->editor->pCursors[1].pRun = run;
           info->editor->pCursors[1].pPara = ME_GetParagraph(run);
           info->editor->pCursors[1].nOffset = 0;
-          nOfs = ME_GetCursorOfs(info->editor, 1);
-          nChars = ME_GetCursorOfs(info->editor, 0) - nOfs;
+          nOfs = ME_GetCursorOfs(&info->editor->pCursors[1]);
+          nChars = ME_GetCursorOfs(&info->editor->pCursors[0]) - nOfs;
           ME_InternalDeleteText(info->editor, nOfs, nChars, TRUE);
         }
 
@@ -1516,8 +1516,8 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
           editor->pCursors[1].pPara = para;
           editor->pCursors[1].pRun = ME_FindItemFwd(para, diRun);
           editor->pCursors[1].nOffset = 0;
-          nOfs = ME_GetCursorOfs(editor, 1);
-          nChars = ME_GetCursorOfs(editor, 0) - nOfs;
+          nOfs = ME_GetCursorOfs(&editor->pCursors[1]);
+          nChars = ME_GetCursorOfs(&editor->pCursors[0]) - nOfs;
           ME_InternalDeleteText(editor, nOfs, nChars, TRUE);
           if (parser.tableDef)
             parser.tableDef->tableRowStart = NULL;
@@ -2352,7 +2352,7 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
       para = cursor.pPara;
       if (ME_IsSelection(editor) &&
           cursor.pRun->member.run.nCharOfs + cursor.nOffset == 0 &&
-          to == ME_GetCursorOfs(editor, 0) &&
+          to == ME_GetCursorOfs(&editor->pCursors[0]) &&
           para->member.para.prev_para->type == diParagraph)
       {
         para = para->member.para.prev_para;
@@ -3675,14 +3675,14 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_LINEFROMCHAR:
   {
     if (wParam == -1)
-      return ME_RowNumberFromCharOfs(editor, ME_GetCursorOfs(editor, 1));
+      return ME_RowNumberFromCharOfs(editor, ME_GetCursorOfs(&editor->pCursors[1]));
     else
       return ME_RowNumberFromCharOfs(editor, wParam);
   }
   case EM_EXLINEFROMCHAR:
   {
     if (lParam == -1)
-      return ME_RowNumberFromCharOfs(editor, ME_GetCursorOfs(editor,1));
+      return ME_RowNumberFromCharOfs(editor, ME_GetCursorOfs(&editor->pCursors[1]));
     else    
       return ME_RowNumberFromCharOfs(editor, lParam);
   }
@@ -4171,7 +4171,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return 0;
   case WM_IME_STARTCOMPOSITION:
   {
-    editor->imeStartIndex=ME_GetCursorOfs(editor,0);
+    editor->imeStartIndex=ME_GetCursorOfs(&editor->pCursors[0]);
     ME_DeleteSelection(editor);
     ME_CommitUndo(editor);
     ME_UpdateRepaint(editor);

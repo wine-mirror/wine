@@ -551,8 +551,8 @@ void ME_TabPressedInTable(ME_TextEditor *editor, BOOL bSelectedRow)
   ME_InvalidateSelection(editor);
   {
     int from, to;
-    from = ME_GetCursorOfs(editor, 0);
-    to = ME_GetCursorOfs(editor, 1);
+    from = ME_GetCursorOfs(&editor->pCursors[0]);
+    to = ME_GetCursorOfs(&editor->pCursors[1]);
     if (from <= to)
     {
       fromCursor = editor->pCursors[0];

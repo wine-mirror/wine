@@ -29,8 +29,8 @@ ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs);
 
 void ME_GetSelection(ME_TextEditor *editor, int *from, int *to)
 {
-  *from = ME_GetCursorOfs(editor, 0);
-  *to =   ME_GetCursorOfs(editor, 1);
+  *from = ME_GetCursorOfs(&editor->pCursors[0]);
+  *to =   ME_GetCursorOfs(&editor->pCursors[1]);
   
   if (*from > *to)
   {
@@ -426,8 +426,8 @@ BOOL ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars)
   assert(nCursor>=0 && nCursor<editor->nCursors);
   /* text operations set modified state */
   editor->nModifyStep = 1;
-  return ME_InternalDeleteText(editor, ME_GetCursorOfs(editor, nCursor), nChars,
-                               FALSE);
+  return ME_InternalDeleteText(editor, ME_GetCursorOfs(&editor->pCursors[nCursor]),
+                               nChars, FALSE);
 }
 
 static ME_DisplayItem *
@@ -807,11 +807,10 @@ ME_SelectByType(ME_TextEditor *editor, ME_SelectionType selectionType)
   editor->pCursors[3] = editor->pCursors[1];
 }
 
-int ME_GetCursorOfs(ME_TextEditor *editor, int nCursor)
+int ME_GetCursorOfs(const ME_Cursor *cursor)
 {
-  ME_Cursor *pCursor = &editor->pCursors[nCursor];
-  return pCursor->pPara->member.para.nCharOfs
-         + pCursor->pRun->member.run.nCharOfs + pCursor->nOffset;
+  return cursor->pPara->member.para.nCharOfs
+         + cursor->pRun->member.run.nCharOfs + cursor->nOffset;
 }
 
 /* Helper function for ME_FindPixelPos to find paragraph within tables */
@@ -1019,9 +1018,9 @@ static void ME_ExtendAnchorSelection(ME_TextEditor *editor)
   int curOfs, anchorStartOfs, anchorEndOfs;
   if (editor->nSelectionType == stPosition || editor->nSelectionType == stDocument)
       return;
-  curOfs = ME_GetCursorOfs(editor, 0);
-  anchorStartOfs = ME_GetCursorOfs(editor, 3);
-  anchorEndOfs = ME_GetCursorOfs(editor, 2);
+  curOfs = ME_GetCursorOfs(&editor->pCursors[0]);
+  anchorStartOfs = ME_GetCursorOfs(&editor->pCursors[3]);
+  anchorEndOfs = ME_GetCursorOfs(&editor->pCursors[2]);
 
   tmp_cursor = editor->pCursors[0];
   editor->pCursors[0] = editor->pCursors[2];
@@ -1499,8 +1498,9 @@ BOOL ME_IsSelection(ME_TextEditor *editor)
 
 static int ME_GetSelCursor(ME_TextEditor *editor, int dir)
 {
-  int cdir = ME_GetCursorOfs(editor, 0) - ME_GetCursorOfs(editor, 1);
-  
+  int cdir = ME_GetCursorOfs(&editor->pCursors[0])
+             - ME_GetCursorOfs(&editor->pCursors[1]);
+
   if (cdir*dir>0)
     return 0;
   else
