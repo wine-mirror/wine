@@ -152,7 +152,8 @@ extern HANDLE get_BaseNamedObjects_handle(void);
                        ".byte 0x68\n\t"  /* pushl $__regs_func */       \
                        ".long " __ASM_NAME("__regs_") #name "-.-11\n\t" \
                        ".byte 0x6a," #args "\n\t" /* pushl $args */     \
-                       "call " __ASM_NAME("__wine_call_from_32_regs"))
+                       "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t" \
+                       "ret $(4*" #args ")" ) /* fake ret to make copy protections happy */
 #endif
 
 #endif
