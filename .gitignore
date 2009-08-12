@@ -110,6 +110,7 @@ include/austream.h
 include/bits.h
 include/bits1_5.h
 include/comcat.h
+include/commoncontrols.h
 include/config.h
 include/control.h
 include/ctxtcall.h
