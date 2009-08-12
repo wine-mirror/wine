@@ -899,10 +899,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "void order_ps_input();\n");
         }
     } else {
-        for(i = 0; i < (sizeof(reg_maps->bumpmat) / sizeof(reg_maps->bumpmat[0])); i++) {
-            if(!reg_maps->bumpmat[i]) {
-                continue;
-            }
+        for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
+        {
+            if (!(map & 1)) continue;
 
             shader_addline(buffer, "uniform mat2 bumpenvmat%d;\n", i);
 

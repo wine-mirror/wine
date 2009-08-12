@@ -3360,8 +3360,9 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
     next_local = shader_generate_arb_declarations( (IWineD3DBaseShader*) This, reg_maps, buffer, &GLINFO_LOCATION,
             lconst_map, NULL, &priv_ctx);
 
-    for(i = 0; i < (sizeof(reg_maps->bumpmat) / sizeof(reg_maps->bumpmat[0])); i++) {
-        if(!reg_maps->bumpmat[i]) continue;
+    for (i = 0, map = reg_maps->bumpmat; map; map >>= 1, ++i)
+    {
+        if (!(map & 1)) continue;
 
         cur = compiled->numbumpenvmatconsts;
         compiled->bumpenvmatconst[cur].const_num = WINED3D_CONST_NUM_UNUSED;
@@ -5224,8 +5225,9 @@ static void set_bumpmat_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock, s
 
     if (use_ps(stateblock))
     {
-        if(stage != 0 &&
-           ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.bumpmat[stage]) {
+        if (stage != 0
+                && (((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.reg_maps.bumpmat & (1 << stage)))
+        {
             /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
              * anyway
              */

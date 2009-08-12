@@ -686,7 +686,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                     if (ins.handler_idx == WINED3DSIH_TEXBEM
                             || ins.handler_idx == WINED3DSIH_TEXBEML)
                     {
-                        reg_maps->bumpmat[sampler_code] = TRUE;
+                        reg_maps->bumpmat |= 1 << dst_param.reg.idx;
                         if (ins.handler_idx == WINED3DSIH_TEXBEML)
                         {
                             reg_maps->luminanceparams[sampler_code] = TRUE;
@@ -695,7 +695,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
                 }
                 else if (ins.handler_idx == WINED3DSIH_BEM)
                 {
-                    reg_maps->bumpmat[dst_param.reg.idx] = TRUE;
+                    reg_maps->bumpmat |= 1 << dst_param.reg.idx;
                 }
             }
 
