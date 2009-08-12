@@ -298,7 +298,10 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
   }
   case diUndoSetCharFormat:
   {
-    ME_SetCharFormat(editor, pUItem->nStart, pUItem->nLen, &pItem->member.ustyle->fmt);
+    ME_Cursor start, end;
+    ME_CursorFromCharOfs(editor, pUItem->nStart, &start);
+    ME_CursorFromCharOfs(editor, pUItem->nStart + pUItem->nLen, &end);
+    ME_SetCharFormat(editor, &start, &end, &pItem->member.ustyle->fmt);
     break;
   }
   case diUndoInsertRun:

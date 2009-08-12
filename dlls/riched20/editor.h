@@ -147,7 +147,7 @@ void ME_CursorFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_Cursor *pCurso
 void ME_RunOfsFromCharOfs(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem **ppPara, ME_DisplayItem **ppRun, int *pOfs);
 int ME_CharOfsFromRunOfs(ME_TextEditor *editor, const ME_DisplayItem *pPara, const ME_DisplayItem *pRun, int nOfs);
 void ME_SkipAndPropagateCharOffset(ME_DisplayItem *p, int shift);
-void ME_SetCharFormat(ME_TextEditor *editor, int nFrom, int nLen, CHARFORMAT2W *pFmt);
+void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, CHARFORMAT2W *pFmt);
 void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt);
 void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
                       const ME_Cursor *to, CHARFORMAT2W *pFmt);

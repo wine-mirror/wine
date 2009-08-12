@@ -726,15 +726,13 @@ void ME_CalcRunExtent(ME_Context *c, const ME_Paragraph *para, int startx, ME_Ru
 
 /******************************************************************************
  * ME_SetSelectionCharFormat
- * 
+ *
  * Applies a style change, either to a current selection, or to insert cursor
  * (ie. the style next typed characters will use).
- */     
+ */
 void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
 {
-  int nFrom, nTo;
-  ME_GetSelectionOfs(editor, &nFrom, &nTo);
-  if (nFrom == nTo)
+  if (!ME_IsSelection(editor))
   {
     ME_Style *s;
     if (!editor->pBuffer->pCharStyle)
@@ -742,57 +740,83 @@ void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
     s = ME_ApplyStyle(editor->pBuffer->pCharStyle, pFmt);
     ME_ReleaseStyle(editor->pBuffer->pCharStyle);
     editor->pBuffer->pCharStyle = s;
+  } else {
+    ME_Cursor *from, *to;
+    ME_GetSelection(editor, &from, &to);
+    ME_SetCharFormat(editor, from, to, pFmt);
   }
-  else
-    ME_SetCharFormat(editor, nFrom, nTo-nFrom, pFmt);
 }
 
 /******************************************************************************
  * ME_SetCharFormat
- * 
+ *
  * Applies a style change to the specified part of the text
- */     
-void ME_SetCharFormat(ME_TextEditor *editor, int nOfs, int nChars, CHARFORMAT2W *pFmt)
+ *
+ * The start and end cursors specify the part of the text.  These cursors will
+ * be updated to stay valid, but this function may invalidate other
+ * non-selection cursors. The end cursor may be NULL to specify all the text
+ * following the start cursor.
+ *
+ * If no text is selected, then nothing is done.
+ */
+void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, CHARFORMAT2W *pFmt)
 {
-  ME_Cursor tmp, tmp2;
   ME_DisplayItem *para;
+  ME_DisplayItem *run;
+  ME_DisplayItem *end_run = NULL;
 
-  ME_CursorFromCharOfs(editor, nOfs, &tmp);
-  if (tmp.nOffset)
-    tmp.pRun = ME_SplitRunSimple(editor, tmp.pRun, tmp.nOffset);
+  if (end && start->pRun == end->pRun && start->nOffset == end->nOffset)
+    return;
 
-  ME_CursorFromCharOfs(editor, nOfs+nChars, &tmp2);
-  if (tmp2.nOffset)
-    tmp2.pRun = ME_SplitRunSimple(editor, tmp2.pRun, tmp2.nOffset);
+  if (start->nOffset)
+  {
+    /* SplitRunSimple may or may not update the cursors, depending on whether they
+     * are selection cursors, but we need to make sure they are valid. */
+    ME_DisplayItem *split_run = start->pRun;
+    int split_offset = start->nOffset;
+    start->pRun = ME_SplitRunSimple(editor, split_run, split_offset);
+    start->nOffset = 0;
+    if (end && end->pRun == split_run)
+    {
+      end->pRun = start->pRun;
+      end->nOffset -= split_offset;
+    }
+  }
 
-  para = tmp.pPara;
+  if (end && end->nOffset)
+  {
+    end_run = end->pRun = ME_SplitRunSimple(editor, end->pRun, end->nOffset);
+    end->nOffset = 0;
+  }
+
+  run = start->pRun;
+  para = start->pPara;
   para->member.para.nFlags |= MEPF_REWRAP;
 
-  while(tmp.pRun != tmp2.pRun)
+  while(run != end_run)
   {
     ME_UndoItem *undo = NULL;
-    ME_Style *new_style = ME_ApplyStyle(tmp.pRun->member.run.style, pFmt);
+    ME_Style *new_style = ME_ApplyStyle(run->member.run.style, pFmt);
     /* ME_DumpStyle(new_style); */
     undo = ME_AddUndoItem(editor, diUndoSetCharFormat, NULL);
     if (undo) {
-      undo->nStart = tmp.pRun->member.run.nCharOfs+para->member.para.nCharOfs;
-      undo->nLen = tmp.pRun->member.run.strText->nLen;
-      undo->di.member.ustyle = tmp.pRun->member.run.style;
+      undo->nStart = run->member.run.nCharOfs+para->member.para.nCharOfs;
+      undo->nLen = run->member.run.strText->nLen;
+      undo->di.member.ustyle = run->member.run.style;
       /* we'd have to addref undo...ustyle and release tmp...style
          but they'd cancel each other out so we can do nothing instead */
     }
     else
-      ME_ReleaseStyle(tmp.pRun->member.run.style);
-    tmp.pRun->member.run.style = new_style;
-    tmp.pRun = ME_FindItemFwd(tmp.pRun, diRunOrParagraph);
-    if (tmp.pRun->type == diParagraph)
+      ME_ReleaseStyle(run->member.run.style);
+    run->member.run.style = new_style;
+    run = ME_FindItemFwd(run, diRunOrParagraph);
+    if (run && run->type == diParagraph)
     {
-      para = tmp.pRun;
-      tmp.pRun = ME_FindItemFwd(tmp.pRun, diRun);
-      if (tmp.pRun != tmp2.pRun)
+      para = run;
+      run = ME_FindItemFwd(run, diRun);
+      if (run != end_run)
         para->member.para.nFlags |= MEPF_REWRAP;
     }
-    assert(tmp.pRun);
   }
 }
 

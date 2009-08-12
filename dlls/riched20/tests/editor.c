@@ -743,7 +743,7 @@ static void test_EM_SETCHARFORMAT(void)
              (LPARAM) &cf2);
   ok(rc == 1, "EM_SETCHARFORMAT returned %d instead of 1\n", rc);
   rc = SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0);
-  todo_wine ok(rc == TRUE, "Should not be able to undo here.\n");
+  ok(rc == TRUE, "Should not be able to undo here.\n");
   SendMessage(hwndRichEdit, EM_EMPTYUNDOBUFFER, 0, 0);
 
   cf2.cbSize = sizeof(CHARFORMAT2);

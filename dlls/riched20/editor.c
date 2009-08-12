@@ -3319,7 +3319,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       if (editor->mode & TM_PLAINTEXT)
         ME_SetDefaultCharFormat(editor, p);
       else {
-        ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), p);
+        ME_Cursor start;
+        ME_SetCursorToStart(editor, &start);
+        ME_SetCharFormat(editor, &start, NULL, p);
         editor->nModifyStep = 1;
       }
     } else if (editor->mode & TM_PLAINTEXT) {
@@ -3449,6 +3451,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     CHARFORMAT2W fmt;
     HDC hDC;
     BOOL bRepaint = LOWORD(lParam);
+    ME_Cursor start;
 
     if (!wParam)
       wParam = (WPARAM)GetStockObject(SYSTEM_FONT); 
@@ -3456,7 +3459,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     hDC = ITextHost_TxGetDC(editor->texthost);
     ME_CharFormatFromLogFont(hDC, &lf, &fmt); 
     ITextHost_TxReleaseDC(editor->texthost, hDC);
-    ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), &fmt);
+    ME_SetCursorToStart(editor, &start);
+    ME_SetCharFormat(editor, &start, NULL, &fmt);
     ME_SetDefaultCharFormat(editor, &fmt);
 
     ME_CommitUndo(editor);
@@ -4859,7 +4863,7 @@ static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_m
         link.cbSize = sizeof(link);
         link.dwMask = CFM_LINK;
         link.dwEffects = 0;
-        ME_SetCharFormat(editor, beforeURL[0], beforeURL[1] - beforeURL[0], &link);
+        ME_SetCharFormat(editor, &from, &to, &link);
         modified = TRUE;
       }
     }
@@ -4878,7 +4882,7 @@ static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_m
         link.cbSize = sizeof(link);
         link.dwMask = CFM_LINK;
         link.dwEffects = CFE_LINK;
-        ME_SetCharFormat(editor, inURL[0], inURL[1] - inURL[0], &link);
+        ME_SetCharFormat(editor, &from, &to, &link);
         modified = TRUE;
       }
     }
