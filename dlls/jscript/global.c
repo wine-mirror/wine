@@ -778,7 +778,7 @@ static HRESULT init_constructors(script_ctx_t *ctx, DispatchEx *object_prototype
     if(FAILED(hres))
         return hres;
 
-    hres = create_string_constr(ctx, &ctx->string_constr);
+    hres = create_string_constr(ctx, object_prototype, &ctx->string_constr);
     if(FAILED(hres))
         return hres;
 

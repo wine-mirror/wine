@@ -1345,4 +1345,39 @@ exception_test(function() {eval("while(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("if(")}, "SyntaxError", -2146827286);
 exception_test(function() {eval("'unterminated")}, "SyntaxError", -2146827273);
 
+function testObjectInherit(obj, ts, tls, vo) {
+    ok(obj.hasOwnProperty === Object.prototype.hasOwnProperty,
+       "obj.hasOwnProperty !== Object.prototype.hasOwnProprty");
+    ok(obj.isPrototypeOf === Object.prototype.isPrototypeOf,
+       "obj.isPrototypeOf !== Object.prototype.isPrototypeOf");
+    ok(obj.propertyIsEnumerable === Object.prototype.propertyIsEnumerable,
+       "obj.propertyIsEnumerable !== Object.prototype.propertyIsEnumerable");
+
+    if(ts)
+        ok(obj.toString === Object.prototype.toString,
+           "obj.toString !== Object.prototype.toString");
+    else
+        ok(obj.toString != Object.prototype.toString,
+           "obj.toString == Object.prototype.toString");
+
+    if(tls)
+        ok(obj.toLocaleString === Object.prototype.toLocaleString,
+           "obj.toLocaleString !== Object.prototype.toLocaleString");
+    else
+        ok(obj.toLocaleString != Object.prototype.toLocaleString,
+           "obj.toLocaleString == Object.prototype.toLocaleString");
+
+    if(vo)
+        ok(obj.valueOf === Object.prototype.valueOf,
+           "obj.valueOf !== Object.prototype.valueOf");
+    else
+        ok(obj.valueOf != Object.prototype.valueOf,
+           "obj.valueOf == Object.prototype.valueOf");
+
+    ok(obj.test === "test", "obj.test = " + obj.test);
+}
+
+Object.prototype.test = "test";
+testObjectInherit(new String("test"), false, true, false);
+
 reportSuccess();
