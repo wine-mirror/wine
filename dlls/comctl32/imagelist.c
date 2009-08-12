@@ -6,6 +6,7 @@
  *  Copyright 2001, 2004 Michael Stefaniuc
  *  Copyright 2001 Charles Loep for CodeWeavers
  *  Copyright 2002 Dimitrie O. Paun
+ *  Copyright 2009 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2905,4 +2906,48 @@ UINT WINAPI
 ImageList_SetColorTable (HIMAGELIST himl, UINT uStartIndex, UINT cEntries, CONST RGBQUAD * prgb)
 {
     return SetDIBColorTable(himl->hdcImage, uStartIndex, cEntries, prgb);
+}
+
+/*************************************************************************
+ * ImageList_CoCreateInstance [COMCTL32.@]
+ *
+ * Creates a new imagelist instance and returns an interface pointer to it.
+ *
+ * PARAMS
+ *     rclsid      [I] A reference to the CLSID (CLSID_ImageList).
+ *     punkOuter   [I] Pointer to IUnknown interface for aggregation, if desired
+ *     riid        [I] Identifier of the requested interface.
+ *     ppv         [O] Returns the address of the pointer requested, or NULL.
+ *
+ * RETURNS
+ *     Success: S_OK.
+ *     Failure: Error value.
+ */
+HRESULT WINAPI
+ImageList_CoCreateInstance (REFCLSID rclsid, const IUnknown *punkOuter, REFIID riid, void **ppv)
+{
+    FIXME("STUB: %s %p %s %p\n", debugstr_guid(rclsid), punkOuter, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+/*************************************************************************
+ * HIMAGELIST_QueryInterface [COMCTL32.@]
+ *
+ * Returns a pointer to an IImageList or IImageList2 object for the given
+ * HIMAGELIST.
+ *
+ * PARAMS
+ *     himl        [I] Image list handle.
+ *     riid        [I] Identifier of the requested interface.
+ *     ppv         [O] Returns the address of the pointer requested, or NULL.
+ *
+ * RETURNS
+ *     Success: S_OK.
+ *     Failure: Error value.
+ */
+HRESULT WINAPI
+HIMAGELIST_QueryInterface (HIMAGELIST himl, REFIID riid, void **ppv)
+{
+    FIXME("STUB: %p %s %p\n", himl, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
 }
