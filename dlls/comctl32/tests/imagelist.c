@@ -4,6 +4,7 @@
  * Copyright 2004 Michael Stefaniuc
  * Copyright 2002 Mike McCormack for CodeWeavers
  * Copyright 2007 Dmitry Timoshkov
+ * Copyright 2009 Owen Rudge for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,8 +34,12 @@
 #include "winuser.h"
 #include "objbase.h"
 #include "commctrl.h" /* must be included after objbase.h to get ImageList_Write */
+#include "initguid.h"
+#include "commoncontrols.h"
+#include "shellapi.h"
 
 #include "wine/test.h"
+#include "v6util.h"
 
 #undef VISIBLE
 
@@ -981,8 +986,52 @@ static void test_imagelist_storage(void)
     iml_clear_stream_data();
 }
 
+static void test_shell_imagelist(void)
+{
+    BOOL (WINAPI *pSHGetImageList)(INT, REFIID, void**);
+    IImageList *iml = NULL;
+    HMODULE hShell32;
+    HRESULT hr;
+    int out = 0;
+    RECT rect;
+
+    /* Try to load function from shell32 */
+    hShell32 = LoadLibrary("shell32.dll");
+    pSHGetImageList = (void*)GetProcAddress(hShell32, (LPCSTR) 727);
+
+    if (!pSHGetImageList)
+    {
+        win_skip("SHGetImageList not available, skipping test\n");
+        return;
+    }
+
+    /* Get system image list */
+    hr = (pSHGetImageList)(SHIL_LARGE, &IID_IImageList, (void**)&iml);
+
+    todo_wine ok(SUCCEEDED(hr), "SHGetImageList failed, hr=%x\n", hr);
+
+    if (hr != S_OK)
+        return;
+
+    IImageList_GetImageCount(iml, &out);
+    todo_wine ok(out > 0, "IImageList_GetImageCount returned out <= 0");
+
+    /* right and bottom should be 32x32 for large icons, or 48x48 if larger
+       icons enabled in control panel */
+    IImageList_GetImageRect(iml, 0, &rect);
+    todo_wine ok((((rect.right == 32) && (rect.bottom == 32)) ||
+                  ((rect.right == 48) && (rect.bottom == 48))),
+                 "IImageList_GetImageRect returned r:%d,b:%d",
+                 rect.right, rect.bottom);
+
+    IImageList_Release(iml);
+    FreeLibrary(hShell32);
+}
+
 START_TEST(imagelist)
 {
+    ULONG_PTR ctx_cookie;
+
     HMODULE hComCtl32 = GetModuleHandle("comctl32.dll");
     pImageList_DrawIndirect = (void*)GetProcAddress(hComCtl32, "ImageList_DrawIndirect");
     pImageList_SetImageCount = (void*)GetProcAddress(hComCtl32, "ImageList_SetImageCount");
@@ -998,4 +1047,13 @@ START_TEST(imagelist)
     DoTest3();
     testMerge();
     test_imagelist_storage();
+
+    /* Now perform v6 tests */
+
+    if (!load_v6_module(&ctx_cookie))
+        return;
+
+    test_shell_imagelist();
+
+    unload_v6_module(ctx_cookie);
 }
