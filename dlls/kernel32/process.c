@@ -1512,7 +1512,7 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
                             LPCWSTR cur_dir, LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                             BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
                             LPPROCESS_INFORMATION info, LPCSTR unixdir,
-                            void *res_start, void *res_end, int exec_only )
+                            void *res_start, void *res_end, DWORD binary_type, int exec_only )
 {
     BOOL ret, success = FALSE;
     HANDLE process_info, hstdin, hstdout;
@@ -1523,6 +1523,13 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     int socketfd[2], stdin_fd = -1, stdout_fd = -1;
     pid_t pid;
     int err;
+
+    if (sizeof(void *) == sizeof(int) && !is_wow64 && (binary_type & BINARY_FLAG_64BIT))
+    {
+        ERR( "starting 64-bit process %s not supported on this platform\n", debugstr_w(filename) );
+        SetLastError( ERROR_BAD_EXE_FORMAT );
+        return FALSE;
+    }
 
     if (!env) RtlAcquirePebLock();
 
@@ -1716,7 +1723,8 @@ error:
 static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, LPCWSTR cur_dir,
                                 LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
                                 BOOL inherit, DWORD flags, LPSTARTUPINFOW startup,
-                                LPPROCESS_INFORMATION info, LPCSTR unixdir, int exec_only )
+                                LPPROCESS_INFORMATION info, LPCSTR unixdir,
+                                DWORD binary_type, int exec_only )
 {
     static const WCHAR argsW[] = {'%','s',' ','-','-','a','p','p','-','n','a','m','e',' ','"','%','s','"',' ','%','s',0};
 
@@ -1731,7 +1739,7 @@ static BOOL create_vdm_process( LPCWSTR filename, LPWSTR cmd_line, LPWSTR env, L
     }
     sprintfW( new_cmd_line, argsW, winevdmW, filename, cmd_line );
     ret = create_process( 0, winevdmW, new_cmd_line, env, cur_dir, psa, tsa, inherit,
-                          flags, startup, info, unixdir, NULL, NULL, exec_only );
+                          flags, startup, info, unixdir, NULL, NULL, binary_type, exec_only );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
     return ret;
 }
@@ -1963,7 +1971,8 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     {
         TRACE( "starting %s as Winelib app\n", debugstr_w(name) );
         retv = create_process( 0, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                               inherit, flags, startup_info, info, unixdir, NULL, NULL, FALSE );
+                               inherit, flags, startup_info, info, unixdir, NULL, NULL,
+                               BINARY_UNIX_LIB, FALSE );
         goto done;
     }
 
@@ -1978,19 +1987,21 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     case BINARY_PE:
         TRACE( "starting %s as Win32 binary (%p-%p)\n", debugstr_w(name), res_start, res_end );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                               inherit, flags, startup_info, info, unixdir, res_start, res_end, FALSE );
+                               inherit, flags, startup_info, info, unixdir,
+                               res_start, res_end, binary_type, FALSE );
         break;
     case BINARY_OS216:
     case BINARY_WIN16:
     case BINARY_DOS:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
         retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                                   inherit, flags, startup_info, info, unixdir, FALSE );
+                                   inherit, flags, startup_info, info, unixdir, binary_type, FALSE );
         break;
     case BINARY_UNIX_LIB:
         TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                               inherit, flags, startup_info, info, unixdir, NULL, NULL, FALSE );
+                               inherit, flags, startup_info, info, unixdir,
+                               NULL, NULL, binary_type, FALSE );
         break;
     case BINARY_UNKNOWN:
         /* check for .com or .bat extension */
@@ -2000,7 +2011,8 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
             {
                 TRACE( "starting %s as DOS binary\n", debugstr_w(name) );
                 retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
-                                           inherit, flags, startup_info, info, unixdir, FALSE );
+                                           inherit, flags, startup_info, info, unixdir,
+                                           binary_type, FALSE );
                 break;
             }
             if (!strcmpiW( p, batW ) || !strcmpiW( p, cmdW ) )
@@ -2066,12 +2078,12 @@ static void exec_process( LPCWSTR name )
     case BINARY_PE:
         TRACE( "starting %s as Win32 binary (%p-%p)\n", debugstr_w(name), res_start, res_end );
         create_process( hFile, name, GetCommandLineW(), NULL, NULL, NULL, NULL,
-                        FALSE, 0, &startup_info, &info, NULL, res_start, res_end, TRUE );
+                        FALSE, 0, &startup_info, &info, NULL, res_start, res_end, binary_type, TRUE );
         break;
     case BINARY_UNIX_LIB:
         TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
         create_process( hFile, name, GetCommandLineW(), NULL, NULL, NULL, NULL,
-                        FALSE, 0, &startup_info, &info, NULL, NULL, NULL, TRUE );
+                        FALSE, 0, &startup_info, &info, NULL, NULL, NULL, binary_type, TRUE );
         break;
     case BINARY_UNKNOWN:
         /* check for .com or .pif extension */
@@ -2083,7 +2095,7 @@ static void exec_process( LPCWSTR name )
     case BINARY_DOS:
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
         create_vdm_process( name, GetCommandLineW(), NULL, NULL, NULL, NULL,
-                            FALSE, 0, &startup_info, &info, NULL, TRUE );
+                            FALSE, 0, &startup_info, &info, NULL, binary_type, TRUE );
         break;
     default:
         break;
