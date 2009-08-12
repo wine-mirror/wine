@@ -77,6 +77,14 @@ ok(tmp.f() === "[object RegExp]", "tmp.f() = " + tmp.f());
 (tmp = new String).f = Object.prototype.toString;
 ok(tmp.f() === "[object String]", "tmp.f() = " + tmp.f());
 
+var obj = new Object();
+obj.toString = function (x) {
+    ok(arguments.length === 0, "arguments.length = " + arguments.length);
+    return "test";
+};
+ok((tmp = obj.toLocaleString()) === "test", "obj.toLocaleString() = " + tmp);
+ok((tmp = obj.toLocaleString(1)) === "test", "obj.toLocaleString(1) = " + tmp);
+
 ok("".length === 0, "\"\".length = " + "".length);
 ok(getVT("".length) == "VT_I4", "\"\".length = " + "".length);
 ok("abc".length === 3, "\"abc\".length = " + "abc".length);
