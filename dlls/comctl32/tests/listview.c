@@ -24,6 +24,7 @@
 #include <commctrl.h>
 
 #include "wine/test.h"
+#include "v6util.h"
 #include "msg.h"
 
 #define PARENT_SEQ_INDEX       0
@@ -38,40 +39,6 @@
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
 #define expect2(expected1, expected2, got1, got2) ok(expected1 == got1 && expected2 == got2, \
        "expected (%d,%d), got (%d,%d)\n", expected1, expected2, got1, got2)
-
-#ifdef __i386__
-#define ARCH "x86"
-#elif defined __x86_64__
-#define ARCH "amd64"
-#else
-#define ARCH "none"
-#endif
-
-static const CHAR manifest_name[] = "cc6.manifest";
-
-static const CHAR manifest[] =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
-    "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">\n"
-    "  <assemblyIdentity\n"
-    "      type=\"win32\"\n"
-    "      name=\"Wine.ComCtl32.Tests\"\n"
-    "      version=\"1.0.0.0\"\n"
-    "      processorArchitecture=\"" ARCH "\"\n"
-    "  />\n"
-    "<description>Wine comctl32 test suite</description>\n"
-    "<dependency>\n"
-    "  <dependentAssembly>\n"
-    "    <assemblyIdentity\n"
-    "        type=\"win32\"\n"
-    "        name=\"microsoft.windows.common-controls\"\n"
-    "        version=\"6.0.0.0\"\n"
-    "        processorArchitecture=\"" ARCH "\"\n"
-    "        publicKeyToken=\"6595b64144ccf1df\"\n"
-    "        language=\"*\"\n"
-    "    />\n"
-    "</dependentAssembly>\n"
-    "</dependency>\n"
-    "</assembly>\n";
 
 static const WCHAR testparentclassW[] =
     {'L','i','s','t','v','i','e','w',' ','t','e','s','t',' ','p','a','r','e','n','t','W', 0};
@@ -3680,104 +3647,6 @@ static BOOL is_below_comctl_5(void)
     return !ret;
 }
 
-static void unload_v6_module(ULONG_PTR cookie)
-{
-    HANDLE hKernel32;
-    BOOL (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
-
-    hKernel32 = GetModuleHandleA("kernel32.dll");
-    pDeactivateActCtx = (void*)GetProcAddress(hKernel32, "DeactivateActCtx");
-    if (!pDeactivateActCtx)
-    {
-        win_skip("Activation contexts unsupported\n");
-        return;
-    }
-
-    pDeactivateActCtx(0, cookie);
-
-    DeleteFileA(manifest_name);
-}
-
-static BOOL load_v6_module(ULONG_PTR *pcookie)
-{
-    HANDLE hKernel32;
-    HANDLE (WINAPI *pCreateActCtxA)(ACTCTXA*);
-    BOOL (WINAPI *pActivateActCtx)(HANDLE, ULONG_PTR*);
-
-    ACTCTXA ctx;
-    HANDLE hCtx;
-    BOOL ret;
-    HANDLE file;
-    DWORD written;
-    HWND hwnd;
-
-    hKernel32 = GetModuleHandleA("kernel32.dll");
-    pCreateActCtxA = (void*)GetProcAddress(hKernel32, "CreateActCtxA");
-    pActivateActCtx = (void*)GetProcAddress(hKernel32, "ActivateActCtx");
-    if (!(pCreateActCtxA && pActivateActCtx))
-    {
-        win_skip("Activation contexts unsupported. No version 6 tests possible.\n");
-        return FALSE;
-    }
-
-    /* create manifest */
-    file = CreateFileA( manifest_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL );
-    if (file != INVALID_HANDLE_VALUE)
-    {
-        ret = (WriteFile( file, manifest, sizeof(manifest)-1, &written, NULL ) &&
-               written == sizeof(manifest)-1);
-        CloseHandle( file );
-        if (!ret)
-        {
-            DeleteFileA( manifest_name );
-            skip("Failed to fill manifest file. Skipping comctl32 V6 tests.\n");
-            return FALSE;
-        }
-        else
-            trace("created %s\n", manifest_name);
-    }
-    else
-    {
-        skip("Failed to create manifest file. Skipping comctl32 V6 tests.\n");
-        return FALSE;
-    }
-
-    memset(&ctx, 0, sizeof(ctx));
-    ctx.cbSize = sizeof(ctx);
-    ctx.lpSource = manifest_name;
-
-    hCtx = pCreateActCtxA(&ctx);
-    ok(hCtx != 0, "Expected context handle\n");
-
-    ret = pActivateActCtx(hCtx, pcookie);
-    expect(TRUE, ret);
-
-    if (!ret)
-    {
-        win_skip("A problem during context activation occurred.\n");
-        DeleteFileA(manifest_name);
-    }
-
-    else
-    {
-        /* this is a XP SP3 failure workaround */
-        hwnd = CreateWindowExA(0, WC_LISTVIEW, "foo",
-                               WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT,
-                               0, 0, 100, 100,
-                               hwndparent, NULL, GetModuleHandleA(NULL), NULL);
-        if (!IsWindow(hwnd))
-        {
-            win_skip("FIXME: failed to create ListView window.\n");
-            unload_v6_module(*pcookie);
-            return FALSE;
-        }
-        else
-            DestroyWindow(hwnd);
-    }
-
-    return ret;
-}
-
 static void test_get_set_view(void)
 {
     HWND hwnd;
@@ -4065,6 +3934,7 @@ START_TEST(listview)
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
 
     ULONG_PTR ctx_cookie;
+    HWND hwnd;
 
     hComctl32 = GetModuleHandleA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
@@ -4120,6 +3990,20 @@ START_TEST(listview)
         DestroyWindow(hwndparent);
         return;
     }
+
+    /* this is a XP SP3 failure workaround */
+    hwnd = CreateWindowExA(0, WC_LISTVIEW, "foo",
+                           WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT,
+                           0, 0, 100, 100,
+                           hwndparent, NULL, GetModuleHandleA(NULL), NULL);
+    if (!IsWindow(hwnd))
+    {
+        win_skip("FIXME: failed to create ListView window.\n");
+        unload_v6_module(ctx_cookie);
+        return;
+    }
+    else
+        DestroyWindow(hwnd);
 
     /* comctl32 version 6 tests start here */
     test_get_set_view();
