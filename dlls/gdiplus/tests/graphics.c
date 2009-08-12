@@ -1660,6 +1660,249 @@ static void test_GdipDrawString(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_GdipGetVisibleClipBounds_screen(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    HDC hdc = GetDC(0);
+    GpRectF rectf, exp, clipr;
+    GpRect recti;
+
+    ok(hdc != NULL, "Expected HDC to be initialized\n");
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    /* no clipping rect */
+    exp.X = 0;
+    exp.Y = 0;
+    exp.Width = GetDeviceCaps(hdc, HORZRES);
+    exp.Height = GetDeviceCaps(hdc, VERTRES);
+
+    status = GdipGetVisibleClipBounds(graphics, &rectf);
+    expect(Ok, status);
+    ok(rectf.X == exp.X &&
+        rectf.Y == exp.Y &&
+        rectf.Width == exp.Width &&
+        rectf.Height == exp.Height,
+        "Expected clip bounds (%0.f, %0.f, %0.f, %0.f) to be the size of "
+        "the screen (%0.f, %0.f, %0.f, %0.f)\n",
+        rectf.X, rectf.Y, rectf.Width, rectf.Height,
+        exp.X, exp.Y, exp.Width, exp.Height);
+
+    /* clipping rect entirely within window */
+    exp.X = clipr.X = 10;
+    exp.Y = clipr.Y = 12;
+    exp.Width = clipr.Width = 14;
+    exp.Height = clipr.Height = 16;
+
+    status = GdipSetClipRect(graphics, clipr.X, clipr.Y, clipr.Width, clipr.Height, CombineModeReplace);
+    expect(Ok, status);
+
+    status = GdipGetVisibleClipBounds(graphics, &rectf);
+    expect(Ok, status);
+    ok(rectf.X == exp.X &&
+        rectf.Y == exp.Y &&
+        rectf.Width == exp.Width &&
+        rectf.Height == exp.Height,
+        "Expected clip bounds (%0.f, %0.f, %0.f, %0.f) to be the size of "
+        "the clipping rect (%0.f, %0.f, %0.f, %0.f)\n",
+        rectf.X, rectf.Y, rectf.Width, rectf.Height,
+        exp.X, exp.Y, exp.Width, exp.Height);
+
+    /* clipping rect partially outside of screen */
+    clipr.X = -10;
+    clipr.Y = -12;
+    clipr.Width = 20;
+    clipr.Height = 24;
+
+    status = GdipSetClipRect(graphics, clipr.X, clipr.Y, clipr.Width, clipr.Height, CombineModeReplace);
+    expect(Ok, status);
+
+    exp.X = 0;
+    exp.Y = 0;
+    exp.Width = 10;
+    exp.Height = 12;
+
+    status = GdipGetVisibleClipBounds(graphics, &rectf);
+    expect(Ok, status);
+    ok(rectf.X == exp.X &&
+        rectf.Y == exp.Y &&
+        rectf.Width == exp.Width &&
+        rectf.Height == exp.Height,
+        "Expected clip bounds (%0.f, %0.f, %0.f, %0.f) to be the size of "
+        "the visible clipping rect (%0.f, %0.f, %0.f, %0.f)\n",
+        rectf.X, rectf.Y, rectf.Width, rectf.Height,
+        exp.X, exp.Y, exp.Width, exp.Height);
+
+    status = GdipGetVisibleClipBoundsI(graphics, &recti);
+    expect(Ok, status);
+    ok(recti.X == exp.X &&
+        recti.Y == exp.Y &&
+        recti.Width == exp.Width &&
+        recti.Height == exp.Height,
+        "Expected clip bounds (%d, %d, %d, %d) to be the size of "
+        "the visible clipping rect (%0.f, %0.f, %0.f, %0.f)\n",
+        recti.X, recti.Y, recti.Width, recti.Height,
+        exp.X, exp.Y, exp.Width, exp.Height);
+
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(0, hdc);
+}
+
+static void test_GdipGetVisibleClipBounds_window(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    GpRectF rectf, window, exp, clipr;
+    GpRect recti;
+    HWND hwnd;
+    WNDCLASSA class;
+    HDC hdc;
+    PAINTSTRUCT ps;
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    RECT wnd_rect;
+
+    window.X = 0;
+    window.Y = 0;
+    window.Width = 200;
+    window.Height = 300;
+
+    class.lpszClassName = "ClipBoundsTestClass";
+    class.style = CS_HREDRAW | CS_VREDRAW;
+    class.lpfnWndProc = DefWindowProcA;
+    class.hInstance = hInstance;
+    class.hIcon = LoadIcon(0, IDI_APPLICATION);
+    class.hCursor = LoadCursor(NULL, IDC_ARROW);
+    class.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    class.lpszMenuName = 0;
+    class.cbClsExtra = 0;
+    class.cbWndExtra = 0;
+    RegisterClass(&class);
+
+    hwnd = CreateWindow(class.lpszClassName, "ClipboundsTest",
+        WS_OVERLAPPEDWINDOW, window.X, window.Y, window.Width, window.Height,
+        NULL, NULL, hInstance, NULL);
+
+    ok(hwnd != NULL, "Expected window to be created\n");
+
+    /* get client area size */
+    ok(GetClientRect(hwnd, &wnd_rect), "GetClientRect should have succeeded");
+    window.X = wnd_rect.left;
+    window.Y = wnd_rect.top;
+    window.Width = wnd_rect.right - wnd_rect.left;
+    window.Height = wnd_rect.bottom - wnd_rect.top;
+
+    hdc = BeginPaint(hwnd, &ps);
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    status = GdipGetVisibleClipBounds(graphics, &rectf);
+    expect(Ok, status);
+    ok(rectf.X == window.X &&
+        rectf.Y == window.Y &&
+        rectf.Width == window.Width &&
+        rectf.Height == window.Height,
+        "Expected clip bounds (%0.f, %0.f, %0.f, %0.f) to be the size of "
+        "the window (%0.f, %0.f, %0.f, %0.f)\n",
+        rectf.X, rectf.Y, rectf.Width, rectf.Height,
+        window.X, window.Y, window.Width, window.Height);
+
+    /* clipping rect entirely within window */
+    exp.X = clipr.X = 20;
+    exp.Y = clipr.Y = 8;
+    exp.Width = clipr.Width = 30;
+    exp.Height = clipr.Height = 20;
+
+    status = GdipSetClipRect(graphics, clipr.X, clipr.Y, clipr.Width, clipr.Height, CombineModeReplace);
+    expect(Ok, status);
+
+    status = GdipGetVisibleClipBounds(graphics, &rectf);
+    expect(Ok, status);
+    ok(rectf.X == exp.X &&
+        rectf.Y == exp.Y &&
+        rectf.Width == exp.Width &&
+        rectf.Height == exp.Height,
+        "Expected clip bounds (%0.f, %0.f, %0.f, %0.f) to be the size of "
+        "the clipping rect (%0.f, %0.f, %0.f, %0.f)\n",
+        rectf.X, rectf.Y, rectf.Width, rectf.Height,
+        exp.X, exp.Y, exp.Width, exp.Height);
+
+    /* clipping rect partially outside of window */
+    clipr.X = window.Width - 10;
+    clipr.Y = window.Height - 15;
+    clipr.Width = 20;
+    clipr.Height = 30;
+
+    status = GdipSetClipRect(graphics, clipr.X, clipr.Y, clipr.Width, clipr.Height, CombineModeReplace);
+    expect(Ok, status);
+
+    exp.X = window.Width - 10;
+    exp.Y = window.Height - 15;
+    exp.Width = 10;
+    exp.Height = 15;
+
+    status = GdipGetVisibleClipBounds(graphics, &rectf);
+    expect(Ok, status);
+    ok(rectf.X == exp.X &&
+        rectf.Y == exp.Y &&
+        rectf.Width == exp.Width &&
+        rectf.Height == exp.Height,
+        "Expected clip bounds (%0.f, %0.f, %0.f, %0.f) to be the size of "
+        "the visible clipping rect (%0.f, %0.f, %0.f, %0.f)\n",
+        rectf.X, rectf.Y, rectf.Width, rectf.Height,
+        exp.X, exp.Y, exp.Width, exp.Height);
+
+    status = GdipGetVisibleClipBoundsI(graphics, &recti);
+    expect(Ok, status);
+    ok(recti.X == exp.X &&
+        recti.Y == exp.Y &&
+        recti.Width == exp.Width &&
+        recti.Height == exp.Height,
+        "Expected clip bounds (%d, %d, %d, %d) to be the size of "
+        "the visible clipping rect (%0.f, %0.f, %0.f, %0.f)\n",
+        recti.X, recti.Y, recti.Width, recti.Height,
+        exp.X, exp.Y, exp.Width, exp.Height);
+
+    GdipDeleteGraphics(graphics);
+    EndPaint(hwnd, &ps);
+    DestroyWindow(hwnd);
+}
+
+static void test_GdipGetVisibleClipBounds(void)
+{
+    GpGraphics* graphics = NULL;
+    GpRectF rectf;
+    GpRect rect;
+    HDC hdc = GetDC(0);
+    GpStatus status;
+
+    status = GdipCreateFromHDC(hdc, &graphics);
+    expect(Ok, status);
+    ok(graphics != NULL, "Expected graphics to be initialized\n");
+
+    /* test null parameters */
+    status = GdipGetVisibleClipBounds(graphics, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipGetVisibleClipBounds(NULL, &rectf);
+    expect(InvalidParameter, status);
+
+    status = GdipGetVisibleClipBoundsI(graphics, NULL);
+    expect(InvalidParameter, status);
+
+    status = GdipGetVisibleClipBoundsI(NULL, &rect);
+    expect(InvalidParameter, status);
+
+    GdipDeleteGraphics(graphics);
+    ReleaseDC(0, hdc);
+
+    test_GdipGetVisibleClipBounds_screen();
+    test_GdipGetVisibleClipBounds_window();
+}
 
 START_TEST(graphics)
 {
@@ -1687,6 +1930,7 @@ START_TEST(graphics)
     test_GdipDrawLineI();
     test_GdipDrawLinesI();
     test_GdipDrawString();
+    test_GdipGetVisibleClipBounds();
     test_Get_Release_DC();
     test_BeginContainer2();
     test_transformpoints();
