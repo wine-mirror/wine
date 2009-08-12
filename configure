@@ -5708,9 +5708,10 @@ fi
 done
 
 
-for ac_header in linux/ipx.h
+for ac_header in linux/ipx.h linux/irda.h
 do :
-  ac_fn_c_check_header_compile "$LINENO" "linux/ipx.h" "ac_cv_header_linux_ipx_h" "#include <sys/types.h>
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#include <sys/types.h>
      #ifdef HAVE_ASM_TYPES_H
      # include <asm/types.h>
      #endif
@@ -5721,9 +5722,10 @@ do :
      # include <linux/types.h>
      #endif
 "
-if test "x$ac_cv_header_linux_ipx_h" = x""yes; then :
+eval as_val=\$$as_ac_Header
+   if test "x$as_val" = x""yes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_LINUX_IPX_H 1
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
 
 fi

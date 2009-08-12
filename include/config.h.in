@@ -396,6 +396,9 @@
 /* Define to 1 if you have the <linux/ipx.h> header file. */
 #undef HAVE_LINUX_IPX_H
 
+/* Define to 1 if you have the <linux/irda.h> header file. */
+#undef HAVE_LINUX_IRDA_H
+
 /* Define to 1 if you have the <linux/joystick.h> header file. */
 #undef HAVE_LINUX_JOYSTICK_H
 
