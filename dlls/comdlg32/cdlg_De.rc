@@ -113,7 +113,7 @@ FONT 8, "MS Shell Dlg"
  RADIOBUTTON "&Querformat", rad4, 50, 115, 40, 12
  ICON "LANDSCAP", 1097, 10, 95, 32, 32
  ICON "PORTRAIT", 1098, 10, 95, 32, 32
- GROUPBOX "Paper", 1074, 120, 85, 180, 50, BS_GROUPBOX
+ GROUPBOX "Papier", 1074, 120, 85, 180, 50, BS_GROUPBOX
  LTEXT "&Größe", 1089, 130, 95, 30, 9
  LTEXT "P&apierquelle", 1090, 130, 110, 30, 9
  COMBOBOX 1137, 155, 95, 92, 68, CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | WS_VSCROLL | WS_TABSTOP
@@ -277,7 +277,7 @@ FONT 8, "MS Shell Dlg"
     PUSHBUTTON		"&Hilfe",		 pshHelp,222,145,50,14
 }
 
-PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 288, 186
+PRINT32 DIALOG LOADONCALL MOVEABLE DISCARDABLE  32, 32, 295, 186
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU |
       DS_CONTEXTHELP | DS_3DLOOK
 CAPTION "Drucken"
@@ -287,24 +287,24 @@ FONT 8, "MS Shell Dlg"
     PUSHBUTTON      "Abbrechen",      IDCANCEL, 232,164, 48,14, WS_GROUP
     PUSHBUTTON      "&Hilfe",         pshHelp,  50, 161, 48,14, WS_GROUP
 
-    GROUPBOX        "Drucker",        grp4,   8,  4, 272,84, WS_GROUP
-    CONTROL         "In Da&tei drucken", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
+    GROUPBOX        "Drucker",        grp4,   8,  4, 279,84, WS_GROUP
+    CONTROL         "In Da&tei drucken", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,66,12
     PUSHBUTTON      "&Eigenschaften", psh2, 212, 17,  60,14, WS_GROUP
     LTEXT           "&Name:",         stc6,  16, 20,  36,8
     COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
     LTEXT           "Status:",        stc8,  16, 36,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy State",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "[keiner]",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Typ:",           stc7,  16, 48,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Type",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "[keiner]",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Ort:",           stc10, 16, 60,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Location", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "[keiner]", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Kommentar:",     stc9,  16, 72,  36,10, SS_NOPREFIX
-    LTEXT           "Dummy Remark",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "[keiner]",   stc13, 52, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
-    GROUPBOX        "Kopien",         grp2, 160, 92, 120,64, WS_GROUP
+    GROUPBOX        "Kopien",         grp2, 160, 92, 127,64, WS_GROUP
     LTEXT           "Anzahl &Kopien:",stc5,168,108,68,8
     ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
-    CONTROL         "C&ollate",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,36,12
+    CONTROL         "S&ortieren",     chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,240,130,42,12
     EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
 
     GROUPBOX        "Druck Bereich",  grp1,   8,92,  144,64, WS_GROUP
@@ -434,7 +434,7 @@ Bitte geben sie einen Wert zwischen %d und %d an."
     PD32_PRINTER_STATUS_WARMING_UP        "Aufwärmend; "
     PD32_PRINTER_STATUS_TONER_LOW         "Tonerstand niedrig; "
     PD32_PRINTER_STATUS_NO_TONER          "Kein Toner mehr; "
-    PD32_PRINTER_STATUS_PAGE_PUNT         "Page punt; "
+    PD32_PRINTER_STATUS_PAGE_PUNT         "Seitenausgabe; "
     PD32_PRINTER_STATUS_USER_INTERVENTION "Durch Benutzer unterbrochen; "
     PD32_PRINTER_STATUS_OUT_OF_MEMORY     "Kein Speicher mehr; "
     PD32_PRINTER_STATUS_DOOR_OPEN         "Druckergehäuse ist offen; "
