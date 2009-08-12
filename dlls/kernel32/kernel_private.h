@@ -92,6 +92,7 @@ extern LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs );
 #define BINARY_UNIX_LIB   0x06
 #define BINARY_TYPE_MASK  0x0f
 #define BINARY_FLAG_DLL   0x10
+#define BINARY_FLAG_64BIT 0x20
 
 /* module.c */
 extern WCHAR *MODULE_get_dll_load_path( LPCWSTR module );

@@ -233,15 +233,19 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
         struct
         {
             unsigned char magic[4];
-            unsigned char ignored[12];
+            unsigned char class;
+            unsigned char data;
+            unsigned char version;
+            unsigned char ignored[9];
             unsigned short type;
+            unsigned short machine;
         } elf;
         struct
         {
-            unsigned long magic;
-            unsigned long cputype;
-            unsigned long cpusubtype;
-            unsigned long filetype;
+            unsigned int magic;
+            unsigned int cputype;
+            unsigned int cpusubtype;
+            unsigned int filetype;
         } macho;
         IMAGE_DOS_HEADER mz;
     } header;
@@ -256,11 +260,12 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
 
     if (!memcmp( header.elf.magic, "\177ELF", 4 ))
     {
+        DWORD flags = (header.elf.class == 2) ? BINARY_FLAG_64BIT : 0;
         /* FIXME: we don't bother to check byte order, architecture, etc. */
         switch(header.elf.type)
         {
-        case 2: return BINARY_UNIX_EXE;
-        case 3: return BINARY_UNIX_LIB;
+        case 2: return flags | BINARY_UNIX_EXE;
+        case 3: return flags | BINARY_UNIX_LIB;
         }
         return BINARY_UNKNOWN;
     }
@@ -268,9 +273,11 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
     /* Mach-o File with Endian set to Big Endian or Little Endian */
     if (header.macho.magic == 0xfeedface || header.macho.magic == 0xcefaedfe)
     {
+        DWORD flags = (header.macho.cputype >> 24) == 1 ? BINARY_FLAG_64BIT : 0;
         switch(header.macho.filetype)
         {
-            case 0x8: /* MH_BUNDLE */ return BINARY_UNIX_LIB;
+        case 2: return flags | BINARY_UNIX_EXE;
+        case 8: return flags | BINARY_UNIX_LIB;
         }
         return BINARY_UNKNOWN;
     }
@@ -321,7 +328,7 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
                 case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
                     if (res_start) *res_start = NULL;
                     if (res_end) *res_end = NULL;
-                    return ret;
+                    return ret | BINARY_FLAG_64BIT;
                 }
             }
             return BINARY_DOS;
