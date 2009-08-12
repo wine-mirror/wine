@@ -45,23 +45,32 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
 
     IWineD3DSwapChain_SetGammaRamp(iface, 0, &This->orig_gamma);
 
-    /* release the ref to the front and back buffer parents */
-    if(This->frontBuffer) {
+    /* Release the swapchain's draw buffers. Make sure This->backBuffer[0] is
+     * the last buffer to be destroyed, FindContext() depends on that. */
+    if (This->frontBuffer)
+    {
         IWineD3DSurface_SetContainer(This->frontBuffer, 0);
-        if(D3DCB_DestroyRenderTarget(This->frontBuffer) > 0) {
-            FIXME("(%p) Something's still holding the front buffer\n",This);
+        if (D3DCB_DestroyRenderTarget(This->frontBuffer))
+        {
+            FIXME("(%p) Something's still holding the front buffer (%p).\n",
+                    This, This->frontBuffer);
         }
+        This->frontBuffer = NULL;
     }
 
-    if(This->backBuffer) {
-        UINT i;
-        for(i = 0; i < This->presentParms.BackBufferCount; i++) {
+    if (This->backBuffer)
+    {
+        UINT i = This->presentParms.BackBufferCount;
+
+        while (i--)
+        {
             IWineD3DSurface_SetContainer(This->backBuffer[i], 0);
-            if(D3DCB_DestroyRenderTarget(This->backBuffer[i]) > 0) {
-                FIXME("(%p) Something's still holding the back buffer\n",This);
-            }
+            if (D3DCB_DestroyRenderTarget(This->backBuffer[i]))
+                FIXME("(%p) Something's still holding back buffer %u (%p).\n",
+                        This, i, This->backBuffer[i]);
         }
         HeapFree(GetProcessHeap(), 0, This->backBuffer);
+        This->backBuffer = NULL;
     }
 
     for (i = 0; i < This->num_contexts; ++i)
