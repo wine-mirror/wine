@@ -4846,9 +4846,12 @@ static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_m
 
     if (beforeURL[0] < beforeURL[1])
     {
+      ME_Cursor from, to;
+      ME_CursorFromCharOfs(editor, beforeURL[0], &from);
+      ME_CursorFromCharOfs(editor, beforeURL[1], &to);
       /* CFE_LINK effect should be consistently unset */
       link.cbSize = sizeof(link);
-      ME_GetCharFormat(editor, beforeURL[0], beforeURL[1], &link);
+      ME_GetCharFormat(editor, &from, &to, &link);
       if (!(link.dwMask & CFM_LINK) || (link.dwEffects & CFE_LINK))
       {
         /* CFE_LINK must be unset from this range */
@@ -4862,9 +4865,12 @@ static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_m
     }
     if (inURL[0] < inURL[1])
     {
+      ME_Cursor from, to;
+      ME_CursorFromCharOfs(editor, inURL[0], &from);
+      ME_CursorFromCharOfs(editor, inURL[1], &to);
       /* CFE_LINK effect should be consistently set */
       link.cbSize = sizeof(link);
-      ME_GetCharFormat(editor, inURL[0], inURL[1], &link);
+      ME_GetCharFormat(editor, &from, &to, &link);
       if (!(link.dwMask & CFM_LINK) || !(link.dwEffects & CFE_LINK))
       {
         /* CFE_LINK must be set on this range */

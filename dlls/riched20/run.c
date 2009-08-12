@@ -842,20 +842,20 @@ void ME_GetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
 
 /******************************************************************************
  * ME_GetSelectionCharFormat
- * 
+ *
  * If selection exists, it returns all style elements that are set consistently
- * in the whole selection. If not, it just returns the current style.  
- */     
+ * in the whole selection. If not, it just returns the current style.
+ */
 void ME_GetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
 {
-  int nFrom, nTo;
-  ME_GetSelectionOfs(editor, &nFrom, &nTo);
-  if (nFrom == nTo && editor->pBuffer->pCharStyle)
+  ME_Cursor *from, *to;
+  if (!ME_IsSelection(editor) && editor->pBuffer->pCharStyle)
   {
     ME_CopyCharFormat(pFmt, &editor->pBuffer->pCharStyle->fmt);
     return;
   }
-  ME_GetCharFormat(editor, nFrom, nTo, pFmt);
+  ME_GetSelection(editor, &from, &to);
+  ME_GetCharFormat(editor, from, to, pFmt);
 }
 
 /******************************************************************************
@@ -864,16 +864,17 @@ void ME_GetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
  * Returns the style consisting of those attributes which are consistently set
  * in the whole character range.
  */
-void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *pFmt)
+void ME_GetCharFormat(ME_TextEditor *editor, const ME_Cursor *from,
+                      const ME_Cursor *to, CHARFORMAT2W *pFmt)
 {
   ME_DisplayItem *run, *run_end;
-  int nOffset, nOffset2;
   CHARFORMAT2W tmp;
 
-  ME_RunOfsFromCharOfs(editor, nFrom, NULL, &run, &nOffset);
-  if (nFrom == nTo) /* special case - if selection is empty, take previous char's formatting */
+  run = from->pRun;
+  /* special case - if selection is empty, take previous char's formatting */
+  if (from->pRun == to->pRun && from->nOffset == to->nOffset)
   {
-    if (!nOffset)
+    if (!from->nOffset)
     {
       ME_DisplayItem *tmp_run = ME_FindItemBack(run, diRunOrParagraph);
       if (tmp_run->type == diRun) {
@@ -884,10 +885,10 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
     ME_GetRunCharFormat(editor, run, pFmt);
     return;
   }
-  
-  if (nTo>nFrom) /* selection consists of chars from nFrom up to nTo-1 */
-    nTo--;
-  ME_RunOfsFromCharOfs(editor, nTo, NULL, &run_end, &nOffset2);
+
+  run_end = to->pRun;
+  if (!to->nOffset)
+    run_end = ME_FindItemBack(run_end, diRun);
 
   ME_GetRunCharFormat(editor, run, pFmt);
 
