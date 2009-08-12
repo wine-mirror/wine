@@ -1374,10 +1374,11 @@ function testObjectInherit(obj, ts, tls, vo) {
         ok(obj.valueOf != Object.prototype.valueOf,
            "obj.valueOf == Object.prototype.valueOf");
 
-    ok(obj.test === "test", "obj.test = " + obj.test);
+    ok(obj._test === "test", "obj.test = " + obj._test);
 }
 
-Object.prototype.test = "test";
+Object.prototype._test = "test";
 testObjectInherit(new String("test"), false, true, false);
+testObjectInherit(/test/g, false, true, true);
 
 reportSuccess();
