@@ -321,7 +321,7 @@ IRichEditOle_fnGetClipboardData(IRichEditOle *me, CHARRANGE *lpchrg,
     if(!lplpdataobj)
         return E_INVALIDARG;
     if(!lpchrg) {
-        ME_GetSelection(This->editor, &tmpchrg.cpMin, &tmpchrg.cpMax);
+        ME_GetSelectionOfs(This->editor, &tmpchrg.cpMin, &tmpchrg.cpMax);
         lpchrg = &tmpchrg;
     }
     return ME_GetDataObject(This->editor, lpchrg, lplpdataobj);

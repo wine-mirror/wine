@@ -27,16 +27,32 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 static BOOL
 ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs);
 
-void ME_GetSelection(ME_TextEditor *editor, int *from, int *to)
+int ME_GetSelectionOfs(ME_TextEditor *editor, int *from, int *to)
 {
   *from = ME_GetCursorOfs(&editor->pCursors[0]);
   *to =   ME_GetCursorOfs(&editor->pCursors[1]);
-  
+
   if (*from > *to)
   {
     int tmp = *from;
     *from = *to;
-    *to = tmp;    
+    *to = tmp;
+    return 1;
+  }
+  return 0;
+}
+
+int ME_GetSelection(ME_TextEditor *editor, ME_Cursor **from, ME_Cursor **to)
+{
+  if (ME_GetCursorOfs(&editor->pCursors[0]) < ME_GetCursorOfs(&editor->pCursors[1]))
+  {
+    *from = &editor->pCursors[0];
+    *to = &editor->pCursors[1];
+    return 0;
+  } else {
+    *from = &editor->pCursors[1];
+    *to = &editor->pCursors[0];
+    return 1;
   }
 }
 
@@ -119,7 +135,7 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
     if (from < 0)
     {
       int start, end;
-      ME_GetSelection(editor, &start, &end);
+      ME_GetSelectionOfs(editor, &start, &end);
       editor->pCursors[1] = editor->pCursors[0];
       ME_Repaint(editor);
       ME_ClearTempStyle(editor);
@@ -1496,22 +1512,11 @@ BOOL ME_IsSelection(ME_TextEditor *editor)
          editor->pCursors[0].nOffset != editor->pCursors[1].nOffset;
 }
 
-static int ME_GetSelCursor(ME_TextEditor *editor, int dir)
-{
-  int cdir = ME_GetCursorOfs(&editor->pCursors[0])
-             - ME_GetCursorOfs(&editor->pCursors[1]);
-
-  if (cdir*dir>0)
-    return 0;
-  else
-    return 1;
-}
-
 void ME_DeleteSelection(ME_TextEditor *editor)
 {
   int from, to;
-  ME_GetSelection(editor, &from, &to);
-  ME_DeleteTextAtCursor(editor, ME_GetSelCursor(editor,-1), to-from);
+  int nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
+  ME_DeleteTextAtCursor(editor, nStartCursor, to - from);
 }
 
 ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor)
@@ -1527,11 +1532,11 @@ void ME_SendSelChange(ME_TextEditor *editor)
     return;
 
   sc.nmhdr.code = EN_SELCHANGE;
-  ME_GetSelection(editor, &sc.chrg.cpMin, &sc.chrg.cpMax);
+  ME_GetSelectionOfs(editor, &sc.chrg.cpMin, &sc.chrg.cpMax);
   sc.seltyp = SEL_EMPTY;
   if (sc.chrg.cpMin != sc.chrg.cpMax)
     sc.seltyp |= SEL_TEXT;
-  if (sc.chrg.cpMin < sc.chrg.cpMax+1) /* wth were RICHEDIT authors thinking ? */
+  if (sc.chrg.cpMin < sc.chrg.cpMax+1) /* what were RICHEDIT authors thinking ? */
     sc.seltyp |= SEL_MULTICHAR;
   TRACE("cpMin=%d cpMax=%d seltyp=%d (%s %s)\n",
     sc.chrg.cpMin, sc.chrg.cpMax, sc.seltyp,

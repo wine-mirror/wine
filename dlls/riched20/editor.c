@@ -1385,7 +1385,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
 {
   RTF_Info parser;
   ME_Style *style;
-  int from, to, to2, nUndoMode;
+  int from, to, nUndoMode;
   int nEventMask = editor->nEventMask;
   ME_InStream inStream;
   BOOL invalidRTF = FALSE;
@@ -1393,7 +1393,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   TRACE("stream==%p editor==%p format==0x%X\n", stream, editor, format);
   editor->nEventMask = 0;
 
-  ME_GetSelection(editor, &from, &to);
+  ME_GetSelectionOfs(editor, &from, &to);
   if ((format & SFF_SELECTION) && (editor->mode & TM_RICHTEXT)) {
     style = ME_GetSelectionInsertStyle(editor);
 
@@ -1545,7 +1545,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
        */
       if (stripLastCR) {
         int newfrom, newto;
-        ME_GetSelection(editor, &newfrom, &newto);
+        ME_GetSelectionOfs(editor, &newfrom, &newto);
         if (newto > to + (editor->bEmulateVersion10 ? 1 : 0)) {
           WCHAR lastchar[3] = {'\0', '\0'};
           int linebreakSize = editor->bEmulateVersion10 ? 2 : 1;
@@ -1563,7 +1563,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       ME_StreamInText(editor, format, &inStream, style);
     else
       ERR("EM_STREAMIN without SF_TEXT or SF_RTF\n");
-    ME_GetSelection(editor, &to, &to2);
     /* put the cursor at the top */
     if (!(format & SFF_SELECTION))
       ME_SetSelection(editor, 0, 0);
@@ -1874,7 +1873,7 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
 
     if (ex->flags & GT_SELECTION)
     {
-      ME_GetSelection(editor, &nStart, &nCount);
+      ME_GetSelectionOfs(editor, &nStart, &nCount);
       nCount -= nStart;
     }
     else
@@ -2041,20 +2040,19 @@ static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
 {
   ME_DisplayItem *startPara, *endPara;
   ME_DisplayItem *prev_para;
-  int from, to;
+  ME_Cursor *from, *to;
 
   if (!editor->AutoURLDetect_bEnable) return;
 
   ME_GetSelection(editor, &from, &to);
 
   /* Find paragraph previous to the one that contains start cursor */
-  ME_RunOfsFromCharOfs(editor, from, &startPara, NULL, NULL);
+  startPara = from->pPara;
   prev_para = startPara->member.para.prev_para;
   if (prev_para->type == diParagraph) startPara = prev_para;
 
   /* Find paragraph that contains end cursor */
-  ME_RunOfsFromCharOfs(editor, to, &endPara, NULL, NULL);
-  endPara = endPara->member.para.next_para;
+  endPara = to->pPara->member.para.next_para;
 
   ME_UpdateLinkAttribute(editor,
                          startPara->member.para.nCharOfs,
@@ -2140,7 +2138,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
           return TRUE;
         }
 
-        ME_GetSelection(editor, &from, &to);
+        ME_GetSelectionOfs(editor, &from, &to);
         if (editor->nTextLimit > ME_GetTextLength(editor) - (to-from))
         {
           if (!editor->bEmulateVersion10) { /* v4.1 */
@@ -2264,7 +2262,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         CHARRANGE range;
         BOOL result;
 
-        ME_GetSelection(editor, &range.cpMin, &range.cpMax);
+        ME_GetSelectionOfs(editor, &range.cpMin, &range.cpMax);
         result = ME_Copy(editor, &range);
         if (result && nKey == 'X')
         {
@@ -2341,7 +2339,7 @@ static LRESULT ME_Char(ME_TextEditor *editor, WPARAM charCode,
     ME_DisplayItem *para = cursor.pPara;
     int from, to;
     BOOL ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
-    ME_GetSelection(editor, &from, &to);
+    ME_GetSelectionOfs(editor, &from, &to);
     if (wstr == '\t' &&
         /* v4.1 allows tabs to be inserted with ctrl key down */
         !(ctrl_is_down && !editor->bEmulateVersion10))
@@ -2537,7 +2535,8 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
       if (ME_IsSelection(editor))
       {
           int selStart, selEnd;
-          ME_GetSelection(editor, &selStart, &selEnd);
+
+          ME_GetSelectionOfs(editor, &selStart, &selEnd);
           if (selStart <= offset && selEnd >= offset) {
               ITextHost_TxSetCursor(editor->texthost,
                                     LoadCursorW(NULL, (WCHAR*)IDC_ARROW),
@@ -2566,7 +2565,7 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
   int seltype = 0;
   if(!editor->lpOleCallback || !editor->hWnd)
     return FALSE;
-  ME_GetSelection(editor, &selrange.cpMin, &selrange.cpMax);
+  ME_GetSelectionOfs(editor, &selrange.cpMin, &selrange.cpMax);
   if(selrange.cpMin == selrange.cpMax)
     seltype |= SEL_EMPTY;
   else
@@ -3006,7 +3005,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     UINT from, to;
     PUINT pfrom = wParam ? (PUINT)wParam : &from;
     PUINT pto = lParam ? (PUINT)lParam : &to;
-    ME_GetSelection(editor, (int *)pfrom, (int *)pto);
+    ME_GetSelectionOfs(editor, (int *)pfrom, (int *)pto);
     if ((*pfrom|*pto) & 0xFFFF0000)
       return -1;
     return MAKELONG(*pfrom,*pto);
@@ -3014,7 +3013,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_EXGETSEL:
   {
     CHARRANGE *pRange = (CHARRANGE *)lParam;
-    ME_GetSelection(editor, &pRange->cpMin, &pRange->cpMax);
+    ME_GetSelectionOfs(editor, &pRange->cpMin, &pRange->cpMax);
     TRACE("EM_EXGETSEL = (%d,%d)\n", pRange->cpMin, pRange->cpMax);
     return 0;
   }
@@ -3210,7 +3209,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
 
     bSelection = (pStruct->flags & ST_SELECTION) != 0;
     if (bSelection) {
-      ME_GetSelection(editor, &from, &to);
+      ME_GetSelectionOfs(editor, &from, &to);
       style = ME_GetSelectionInsertStyle(editor);
       ME_InternalDeleteText(editor, from, to - from, FALSE);
     } else {
@@ -3320,11 +3319,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     } else if (editor->mode & TM_PLAINTEXT) {
       return 0;
     } else {
-      int from, to;
-      ME_GetSelection(editor, &from, &to);
-      bRepaint = (from != to);
+      bRepaint = ME_IsSelection(editor);
       ME_SetSelectionCharFormat(editor, p);
-      if (from != to) editor->nModifyStep = 1;
+      if (bRepaint) editor->nModifyStep = 1;
     }
     ME_CommitUndo(editor);
     if (bRepaint)
@@ -3403,7 +3400,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_CLEAR:
   {
     int from, to;
-    ME_GetSelection(editor, &from, &to);
+    ME_GetSelectionOfs(editor, &from, &to);
     ME_InternalDeleteText(editor, from, to-from, FALSE);
     ME_CommitUndo(editor);
     ME_UpdateRepaint(editor);
@@ -3417,7 +3414,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     size_t len = wszText ? lstrlenW(wszText) : 0;
     TRACE("EM_REPLACESEL - %s\n", debugstr_w(wszText));
 
-    ME_GetSelection(editor, &from, &to);
+    ME_GetSelectionOfs(editor, &from, &to);
     style = ME_GetSelectionInsertStyle(editor);
     ME_InternalDeleteText(editor, from, to-from, FALSE);
     ME_InsertTextFromCursor(editor, 0, wszText, len, style);
@@ -3524,7 +3521,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_COPY:
   {
     CHARRANGE range;
-    ME_GetSelection(editor, &range.cpMin, &range.cpMax);
+    ME_GetSelectionOfs(editor, &range.cpMin, &range.cpMax);
 
     if (ME_Copy(editor, &range) && msg == WM_CUT)
     {
@@ -3560,7 +3557,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETSELTEXT:
   {
     int from, to;
-    ME_GetSelection(editor, &from, &to);
+    ME_GetSelectionOfs(editor, &from, &to);
     return ME_GetTextRange(editor, (WCHAR *)lParam, from,
                            to - from, unicode);
   }

@@ -167,7 +167,8 @@ void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor);
 BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, BOOL extend, BOOL ctrl);
 
 int ME_GetCursorOfs(const ME_Cursor *cursor);
-void ME_GetSelection(ME_TextEditor *editor, int *from, int *to);
+int ME_GetSelectionOfs(ME_TextEditor *editor, int *from, int *to);
+int ME_GetSelection(ME_TextEditor *editor, ME_Cursor **from, ME_Cursor **to);
 int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to);
 BOOL ME_IsSelection(ME_TextEditor *editor);
 void ME_DeleteSelection(ME_TextEditor *editor);

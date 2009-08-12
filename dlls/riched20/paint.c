@@ -413,7 +413,7 @@ static void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Pa
     return;
 
   start = ME_FindItemBack(rundi, diStartRow);
-  ME_GetSelection(c->editor, &nSelFrom, &nSelTo);
+  ME_GetSelectionOfs(c->editor, &nSelFrom, &nSelTo);
 
   /* Draw selected end-of-paragraph mark */
   if (run->nFlags & MERF_ENDPARA)
@@ -1308,7 +1308,7 @@ ME_InvalidateSelection(ME_TextEditor *editor)
   int nStart, nEnd;
   int len = ME_GetTextLength(editor);
 
-  ME_GetSelection(editor, &nStart, &nEnd);
+  ME_GetSelectionOfs(editor, &nStart, &nEnd);
   /* if both old and new selection are 0-char (= caret only), then
   there's no (inverted) area to be repainted, neither old nor new */
   if (nStart == nEnd && editor->nLastSelStart == editor->nLastSelEnd)
@@ -1341,7 +1341,7 @@ ME_InvalidateSelection(ME_TextEditor *editor)
 
   ME_InvalidateMarkedParagraphs(editor);
   /* remember the last invalidated position */
-  ME_GetSelection(editor, &editor->nLastSelStart, &editor->nLastSelEnd);
+  ME_GetSelectionOfs(editor, &editor->nLastSelStart, &editor->nLastSelEnd);
   ME_GetSelectionParas(editor, &editor->pLastSelStartPara, &editor->pLastSelEndPara);
   assert(editor->pLastSelStartPara->type == diParagraph);
   assert(editor->pLastSelEndPara->type == diParagraph);

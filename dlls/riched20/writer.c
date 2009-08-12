@@ -1001,7 +1001,7 @@ ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream)
   int nStart, nTo;
 
   if (dwFormat & SFF_SELECTION)
-    ME_GetSelection(editor, &nStart, &nTo);
+    ME_GetSelectionOfs(editor, &nStart, &nTo);
   else {
     nStart = 0;
     nTo = -1;

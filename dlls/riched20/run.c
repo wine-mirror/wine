@@ -733,7 +733,7 @@ void ME_CalcRunExtent(ME_Context *c, const ME_Paragraph *para, int startx, ME_Ru
 void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
 {
   int nFrom, nTo;
-  ME_GetSelection(editor, &nFrom, &nTo);
+  ME_GetSelectionOfs(editor, &nFrom, &nTo);
   if (nFrom == nTo)
   {
     ME_Style *s;
@@ -849,7 +849,7 @@ void ME_GetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
 void ME_GetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
 {
   int nFrom, nTo;
-  ME_GetSelection(editor, &nFrom, &nTo);
+  ME_GetSelectionOfs(editor, &nFrom, &nTo);
   if (nFrom == nTo && editor->pBuffer->pCharStyle)
   {
     ME_CopyCharFormat(pFmt, &editor->pBuffer->pCharStyle->fmt);
