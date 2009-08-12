@@ -770,7 +770,7 @@ static HRESULT init_constructors(script_ctx_t *ctx, DispatchEx *object_prototype
     if(FAILED(hres))
         return hres;
 
-    hres = create_number_constr(ctx, &ctx->number_constr);
+    hres = create_number_constr(ctx, object_prototype, &ctx->number_constr);
     if(FAILED(hres))
         return hres;
 

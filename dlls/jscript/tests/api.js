@@ -1380,5 +1380,6 @@ function testObjectInherit(obj, ts, tls, vo) {
 Object.prototype._test = "test";
 testObjectInherit(new String("test"), false, true, false);
 testObjectInherit(/test/g, false, true, true);
+testObjectInherit(new Number(1), false, false, false);
 
 reportSuccess();

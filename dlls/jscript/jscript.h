@@ -229,7 +229,7 @@ HRESULT create_array_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_bool_constr(script_ctx_t*,DispatchEx**);
 HRESULT create_date_constr(script_ctx_t*,DispatchEx**);
 HRESULT init_error_constr(script_ctx_t*);
-HRESULT create_number_constr(script_ctx_t*,DispatchEx**);
+HRESULT create_number_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_object_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_regexp_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_string_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
