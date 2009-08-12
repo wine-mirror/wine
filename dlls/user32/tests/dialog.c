@@ -932,12 +932,12 @@ static INT_PTR CALLBACK DestroyOnCloseDlgWinProc (HWND hDlg, UINT uiMsg,
 
 static void test_DialogBoxParamA(void)
 {
-    int ret;
+    INT_PTR ret;
     HWND hwnd_invalid = (HWND)0x4444;
 
     SetLastError(0xdeadbeef);
     ret = DialogBoxParamA(GetModuleHandle(NULL), "IDD_DIALOG" , hwnd_invalid, 0 , 0);
-    ok(0 == ret || broken(ret == -1), "DialogBoxParamA returned %d, expected 0\n", ret);
+    ok(0 == ret || broken(ret == -1), "DialogBoxParamA returned %ld, expected 0\n", ret);
     ok(ERROR_INVALID_WINDOW_HANDLE == GetLastError() ||
        broken(GetLastError() == 0xdeadbeef),
        "got %d, expected ERROR_INVALID_WINDOW_HANDLE\n",GetLastError());
@@ -945,7 +945,7 @@ static void test_DialogBoxParamA(void)
     /* Test a dialog which destroys itself on WM_INITDIALOG. */
     SetLastError(0xdeadbeef);
     ret = DialogBoxParamA(GetModuleHandle(NULL), "IDD_DIALOG", 0, DestroyDlgWinProc, 0);
-    ok(-1 == ret, "DialogBoxParamA returned %d, expected -1\n", ret);
+    ok(-1 == ret, "DialogBoxParamA returned %ld, expected -1\n", ret);
     ok(ERROR_INVALID_WINDOW_HANDLE == GetLastError() ||
        GetLastError() == ERROR_SUCCESS ||
        broken(GetLastError() == 0xdeadbeef),
@@ -953,14 +953,20 @@ static void test_DialogBoxParamA(void)
 
     /* Test a dialog which destroys itself on WM_CLOSE. */
     ret = DialogBoxParamA(GetModuleHandle(NULL), "IDD_DIALOG", 0, DestroyOnCloseDlgWinProc, 0);
-    todo_wine ok(0 == ret, "DialogBoxParamA returned %d, expected 0\n", ret);
+    ok(0 == ret, "DialogBoxParamA returned %ld, expected 0\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = DialogBoxParamA(GetModuleHandle(NULL), "RESOURCE_INVALID" , 0, 0, 0);
-    ok(-1 == ret, "DialogBoxParamA returned %d, expected -1\n", ret);
+    ok(-1 == ret, "DialogBoxParamA returned %ld, expected -1\n", ret);
     ok(ERROR_RESOURCE_NAME_NOT_FOUND == GetLastError() ||
        broken(GetLastError() == 0xdeadbeef),
        "got %d, expected ERROR_RESOURCE_NAME_NOT_FOUND\n",GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DefDlgProcA(0, WM_ERASEBKGND, 0, 0);
+    ok(ret == 0, "DefDlgProcA returned %ld, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_WINDOW_HANDLE,
+       "got %d, expected ERROR_INVALID_WINDOW_HANDLE\n", GetLastError());
 }
 
 static void test_DisabledDialogTest(void)
