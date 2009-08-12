@@ -3384,7 +3384,7 @@ static GLuint shader_arb_generate_pshader(IWineD3DPixelShaderImpl *This, struct 
                        i, compiled->bumpenvmatconst[cur].const_num);
         compiled->numbumpenvmatconsts = cur + 1;
 
-        if(!reg_maps->luminanceparams[i]) continue;
+        if (!(reg_maps->luminanceparams & (1 << i))) continue;
 
         compiled->luminanceconst[cur].const_num = next_local++;
         shader_addline(buffer, "PARAM luminance%d = program.local[%d];\n",
@@ -5262,8 +5262,9 @@ static void tex_bumpenvlum_arbfp(DWORD state, IWineD3DStateBlockImpl *stateblock
 
     if (use_ps(stateblock))
     {
-        if(stage != 0 &&
-           ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.reg_maps.luminanceparams[stage]) {
+        if (stage != 0
+                && (((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.reg_maps.luminanceparams & (1 << stage)))
+        {
             /* The pixel shader has to know the luminance offset. Do a constants update if it
              * isn't scheduled anyway
              */

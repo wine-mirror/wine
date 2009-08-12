@@ -643,7 +643,7 @@ typedef struct shader_reg_maps
 
     WINED3DSAMPLER_TEXTURE_TYPE sampler_type[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     BYTE bumpmat;                           /* MAX_TEXTURES, 8 */
-    BOOL luminanceparams[MAX_TEXTURES];
+    BYTE luminanceparams;                   /* MAX_TEXTURES, 8 */
 
     WORD usesnrm        : 1;
     WORD vpos           : 1;
