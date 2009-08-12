@@ -303,11 +303,20 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 static int get_image_params( struct mapping *mapping )
 {
     IMAGE_DOS_HEADER dos;
-    IMAGE_NT_HEADERS nt;
     IMAGE_SECTION_HEADER *sec = NULL;
+    struct
+    {
+        DWORD Signature;
+        IMAGE_FILE_HEADER FileHeader;
+        union
+        {
+            IMAGE_OPTIONAL_HEADER32 hdr32;
+            IMAGE_OPTIONAL_HEADER64 hdr64;
+        } opt;
+    } nt;
     struct fd *fd;
     off_t pos;
-    int unix_fd, size, toread;
+    int unix_fd, size;
 
     /* load the headers */
 
@@ -317,22 +326,34 @@ static int get_image_params( struct mapping *mapping )
     if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto error;
     pos = dos.e_lfanew;
 
-    if (pread( unix_fd, &nt.Signature, sizeof(nt.Signature), pos ) != sizeof(nt.Signature))
-        goto error;
-    pos += sizeof(nt.Signature);
-    if (nt.Signature != IMAGE_NT_SIGNATURE) goto error;
-    if (pread( unix_fd, &nt.FileHeader, sizeof(nt.FileHeader), pos ) != sizeof(nt.FileHeader))
-        goto error;
-    pos += sizeof(nt.FileHeader);
+    size = pread( unix_fd, &nt, sizeof(nt), pos );
+    if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) goto error;
     /* zero out Optional header in the case it's not present or partial */
-    memset(&nt.OptionalHeader, 0, sizeof(nt.OptionalHeader));
-    toread = min( sizeof(nt.OptionalHeader), nt.FileHeader.SizeOfOptionalHeader );
-    if (pread( unix_fd, &nt.OptionalHeader, toread, pos ) != toread) goto error;
-    pos += nt.FileHeader.SizeOfOptionalHeader;
+    if (size < sizeof(nt)) memset( (char *)&nt + size, 0, sizeof(nt) - size );
+    if (nt.Signature != IMAGE_NT_SIGNATURE) goto error;
+
+    switch (nt.opt.hdr32.Magic)
+    {
+    case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+        mapping->size        = ROUND_SIZE( nt.opt.hdr32.SizeOfImage );
+        mapping->base        = nt.opt.hdr32.ImageBase;
+        mapping->header_size = nt.opt.hdr32.SizeOfHeaders;
+        break;
+    case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+        mapping->size        = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
+        mapping->base        = nt.opt.hdr64.ImageBase;
+        mapping->header_size = nt.opt.hdr64.SizeOfHeaders;
+        break;
+    default:
+        goto error;
+    }
 
     /* load the section headers */
 
+    pos += sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader;
     size = sizeof(*sec) * nt.FileHeader.NumberOfSections;
+    if (pos + size > mapping->size) goto error;
+    if (pos + size > mapping->header_size) mapping->header_size = pos + size;
     if (!(sec = malloc( size ))) goto error;
     if (pread( unix_fd, sec, size, pos ) != size) goto error;
 
@@ -340,14 +361,7 @@ static int get_image_params( struct mapping *mapping )
 
     if (mapping->shared_file) list_add_head( &shared_list, &mapping->shared_entry );
 
-    mapping->size        = ROUND_SIZE( nt.OptionalHeader.SizeOfImage );
-    mapping->base        = nt.OptionalHeader.ImageBase;
-    mapping->header_size = max( pos + size, nt.OptionalHeader.SizeOfHeaders );
-    mapping->protect     = VPROT_IMAGE;
-
-    /* sanity check */
-    if (pos + size > mapping->size) goto error;
-
+    mapping->protect = VPROT_IMAGE;
     free( sec );
     release_object( fd );
     return 1;
