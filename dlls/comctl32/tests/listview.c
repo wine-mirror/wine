@@ -2834,7 +2834,7 @@ static void test_setredraw(void)
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
-                "redraw after WM_SETREDRAW (FALSE)", TRUE);
+                "redraw after WM_SETREDRAW (FALSE)", FALSE);
 
     ret = SendMessage(hwnd, LVM_SETBKCOLOR, 0, CLR_NONE);
     expect(TRUE, ret);
@@ -2842,7 +2842,7 @@ static void test_setredraw(void)
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
-                "redraw after WM_SETREDRAW (FALSE) with CLR_NONE bkgnd", TRUE);
+                "redraw after WM_SETREDRAW (FALSE) with CLR_NONE bkgnd", FALSE);
 
     /* message isn't forwarded to header */
     subclass_header(hwnd);
