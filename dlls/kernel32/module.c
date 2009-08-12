@@ -325,15 +325,16 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
              */
             if (len >= sizeof(ext_header.os2))
             {
+                DWORD flags = (ext_header.os2.ne_flags & NE_FFLAGS_LIBMODULE) ? BINARY_FLAG_DLL : 0;
                 switch ( ext_header.os2.ne_exetyp )
                 {
-                case 1:  return BINARY_OS216; /* OS/2 */
-                case 2:  return BINARY_WIN16; /* Windows */
-                case 3:  return BINARY_DOS; /* European MS-DOS 4.x */
-                case 4:  return BINARY_WIN16; /* Windows 386; FIXME: is this 32bit??? */
-                case 5:  return BINARY_DOS; /* BOSS, Borland Operating System Services */
+                case 1:  return flags | BINARY_OS216; /* OS/2 */
+                case 2:  return flags | BINARY_WIN16; /* Windows */
+                case 3:  return flags | BINARY_DOS; /* European MS-DOS 4.x */
+                case 4:  return flags | BINARY_WIN16; /* Windows 386; FIXME: is this 32bit??? */
+                case 5:  return flags | BINARY_DOS; /* BOSS, Borland Operating System Services */
                 /* other types, e.g. 0 is: "unknown" */
-                default: return MODULE_Decide_OS2_OldWin(hfile, &header.mz, &ext_header.os2);
+                default: return flags | MODULE_Decide_OS2_OldWin(hfile, &header.mz, &ext_header.os2);
                 }
             }
             /* Couldn't read header, so abort. */
