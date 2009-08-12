@@ -419,7 +419,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APP_TITLE           "Task-Manager"
     IDC_TASKMGR             "Task-Manager"
-    IDS_RUNDLG_CAPTION      "Create New Task"
+    IDS_RUNDLG_CAPTION      "Neuer Task"
 END
 
 STRINGTABLE DISCARDABLE
@@ -480,7 +480,7 @@ BEGIN
     IDS_VIEW_LARGE                     "&Große Symbole"
     IDS_VIEW_SMALL                     "&Kleine Symbole"
     IDS_VIEW_DETAILS                   "&Details"
-    IDS_WINDOWS                        "&Windows"
+    IDS_WINDOWS                        "&Fenster"
     IDS_VIEW_SELECTCOLUMNS             "&Spalten auswählen..."
     IDS_OPTIONS_SHOW16BITTASKS         "&16-bit-Tasks anzeigen"
     IDS_VIEW_CPUHISTORY                "&CPU Verlauf"
