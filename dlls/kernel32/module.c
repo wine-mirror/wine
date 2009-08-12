@@ -178,11 +178,10 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
  * FIXME: is reading the module imports the only way of discerning
  *        old Windows binaries from OS/2 ones ? At least it seems so...
  */
-static enum binary_type MODULE_Decide_OS2_OldWin(HANDLE hfile, const IMAGE_DOS_HEADER *mz,
-                                                 const IMAGE_OS2_HEADER *ne)
+static DWORD MODULE_Decide_OS2_OldWin(HANDLE hfile, const IMAGE_DOS_HEADER *mz, const IMAGE_OS2_HEADER *ne)
 {
     DWORD currpos = SetFilePointer( hfile, 0, NULL, SEEK_CUR);
-    enum binary_type ret = BINARY_OS216;
+    DWORD ret = BINARY_OS216;
     LPWORD modtab = NULL;
     LPSTR nametab = NULL;
     DWORD len;
@@ -227,7 +226,7 @@ good:
 /***********************************************************************
  *           MODULE_GetBinaryType
  */
-enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
+DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
 {
     union
     {
@@ -305,13 +304,14 @@ enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **re
         {
             if (len >= sizeof(ext_header.nt.FileHeader))
             {
+                DWORD ret = BINARY_PE;
+                if (ext_header.nt.FileHeader.Characteristics & IMAGE_FILE_DLL) ret |= BINARY_FLAG_DLL;
                 if (len < sizeof(ext_header.nt))  /* clear remaining part of header if missing */
                     memset( (char *)&ext_header.nt + len, 0, sizeof(ext_header.nt) - len );
                 if (res_start) *res_start = (void *)ext_header.nt.OptionalHeader.ImageBase;
                 if (res_end) *res_end = (void *)(ext_header.nt.OptionalHeader.ImageBase +
                                                  ext_header.nt.OptionalHeader.SizeOfImage);
-                if (ext_header.nt.FileHeader.Characteristics & IMAGE_FILE_DLL) return BINARY_PE_DLL;
-                return BINARY_PE_EXE;
+                return ret;
             }
             return BINARY_DOS;
         }
@@ -384,6 +384,7 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 {
     BOOL ret = FALSE;
     HANDLE hfile;
+    DWORD binary_type;
 
     TRACE("%s\n", debugstr_w(lpApplicationName) );
 
@@ -401,7 +402,8 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
 
     /* Check binary type
      */
-    switch(MODULE_GetBinaryType( hfile, NULL, NULL ))
+    binary_type = MODULE_GetBinaryType( hfile, NULL, NULL );
+    switch (binary_type & BINARY_TYPE_MASK)
     {
     case BINARY_UNKNOWN:
     {
@@ -424,8 +426,7 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType )
         }
         break;
     }
-    case BINARY_PE_EXE:
-    case BINARY_PE_DLL:
+    case BINARY_PE:
         *lpBinaryType = SCS_32BIT_BINARY;
         ret = TRUE;
         break;

@@ -1909,6 +1909,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
     WCHAR name[MAX_PATH];
     WCHAR *tidy_cmdline, *p, *envW = env;
     void *res_start, *res_end;
+    DWORD binary_type;
 
     /* Process the AppName and/or CmdLine to get module name and path */
 
@@ -1966,9 +1967,15 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
         goto done;
     }
 
-    switch( MODULE_GetBinaryType( hFile, &res_start, &res_end ))
+    binary_type = MODULE_GetBinaryType( hFile, &res_start, &res_end );
+    if (binary_type & BINARY_FLAG_DLL)
     {
-    case BINARY_PE_EXE:
+        TRACE( "not starting %s since it is a dll\n", debugstr_w(name) );
+        SetLastError( ERROR_BAD_EXE_FORMAT );
+    }
+    else switch (binary_type & BINARY_TYPE_MASK)
+    {
+    case BINARY_PE:
         TRACE( "starting %s as Win32 binary (%p-%p)\n", debugstr_w(name), res_start, res_end );
         retv = create_process( hFile, name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                inherit, flags, startup_info, info, unixdir, res_start, res_end, FALSE );
@@ -1979,10 +1986,6 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
         TRACE( "starting %s as Win16/DOS binary\n", debugstr_w(name) );
         retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                    inherit, flags, startup_info, info, unixdir, FALSE );
-        break;
-    case BINARY_PE_DLL:
-        TRACE( "not starting %s since it is a dll\n", debugstr_w(name) );
-        SetLastError( ERROR_BAD_EXE_FORMAT );
         break;
     case BINARY_UNIX_LIB:
         TRACE( "%s is a Unix library, starting as Winelib app\n", debugstr_w(name) );
@@ -2046,6 +2049,7 @@ static void exec_process( LPCWSTR name )
     void *res_start, *res_end;
     STARTUPINFOW startup_info;
     PROCESS_INFORMATION info;
+    DWORD binary_type;
 
     hFile = open_exe_file( name );
     if (!hFile || hFile == INVALID_HANDLE_VALUE) return;
@@ -2055,9 +2059,11 @@ static void exec_process( LPCWSTR name )
 
     /* Determine executable type */
 
-    switch( MODULE_GetBinaryType( hFile, &res_start, &res_end ))
+    binary_type = MODULE_GetBinaryType( hFile, &res_start, &res_end );
+    if (binary_type & BINARY_FLAG_DLL) return;
+    switch (binary_type & BINARY_TYPE_MASK)
     {
-    case BINARY_PE_EXE:
+    case BINARY_PE:
         TRACE( "starting %s as Win32 binary (%p-%p)\n", debugstr_w(name), res_start, res_end );
         create_process( hFile, name, GetCommandLineW(), NULL, NULL, NULL, NULL,
                         FALSE, 0, &startup_info, &info, NULL, res_start, res_end, TRUE );

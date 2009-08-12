@@ -83,21 +83,19 @@ extern DWORD __wine_emulate_instruction( EXCEPTION_RECORD *rec, CONTEXT86 *conte
 extern LONG CALLBACK INSTR_vectored_handler( EXCEPTION_POINTERS *ptrs );
 
 /* return values for MODULE_GetBinaryType */
-enum binary_type
-{
-    BINARY_UNKNOWN,
-    BINARY_PE_EXE,
-    BINARY_PE_DLL,
-    BINARY_WIN16,
-    BINARY_OS216,
-    BINARY_DOS,
-    BINARY_UNIX_EXE,
-    BINARY_UNIX_LIB
-};
+#define BINARY_UNKNOWN    0x00
+#define BINARY_PE         0x01
+#define BINARY_WIN16      0x02
+#define BINARY_OS216      0x03
+#define BINARY_DOS        0x04
+#define BINARY_UNIX_EXE   0x05
+#define BINARY_UNIX_LIB   0x06
+#define BINARY_TYPE_MASK  0x0f
+#define BINARY_FLAG_DLL   0x10
 
 /* module.c */
 extern WCHAR *MODULE_get_dll_load_path( LPCWSTR module );
-extern enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end );
+extern DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end );
 
 extern BOOL NLS_IsUnicodeOnlyLcid(LCID);
 
