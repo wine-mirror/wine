@@ -197,6 +197,16 @@ static inline const char *debugstr_sockaddr( const struct WS_sockaddr *a )
         return wine_dbg_sprintf("{ family AF_INET6, address %s, port %d }",
                                 p, ntohs(sin->sin6_port));
     }
+    case WS_AF_IRDA:
+    {
+        DWORD addr;
+
+        memcpy( &addr, ((const SOCKADDR_IRDA *)a)->irdaDeviceID, sizeof(addr) );
+        addr = ntohl( addr );
+        return wine_dbg_sprintf("{ family AF_IRDA, addr %08x, name %s }",
+                                addr,
+                                ((const SOCKADDR_IRDA *)a)->irdaServiceName);
+    }
     default:
         return wine_dbg_sprintf("{ family %d }", a->sa_family);
     }
