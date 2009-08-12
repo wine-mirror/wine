@@ -99,6 +99,7 @@ SRCDIR_INCLUDES = \
 	aclui.h \
 	adshlp.h \
 	advpub.h \
+	af_irda.h \
 	appmgmt.h \
 	audevcod.h \
 	aviriff.h \
