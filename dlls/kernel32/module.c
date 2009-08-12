@@ -282,7 +282,7 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
         union
         {
             IMAGE_OS2_HEADER os2;
-            IMAGE_NT_HEADERS nt;
+            IMAGE_NT_HEADERS32 nt;
         } ext_header;
 
         /* We do have a DOS image so we will now try to seek into
@@ -311,7 +311,18 @@ DWORD MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end )
                 if (res_start) *res_start = (void *)ext_header.nt.OptionalHeader.ImageBase;
                 if (res_end) *res_end = (void *)(ext_header.nt.OptionalHeader.ImageBase +
                                                  ext_header.nt.OptionalHeader.SizeOfImage);
-                return ret;
+                switch (ext_header.nt.OptionalHeader.Magic)
+                {
+                case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+                    if (res_start) *res_start = (void *)ext_header.nt.OptionalHeader.ImageBase;
+                    if (res_end) *res_end = (void *)(ext_header.nt.OptionalHeader.ImageBase +
+                                                     ext_header.nt.OptionalHeader.SizeOfImage);
+                    return ret;
+                case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+                    if (res_start) *res_start = NULL;
+                    if (res_end) *res_end = NULL;
+                    return ret;
+                }
             }
             return BINARY_DOS;
         }
