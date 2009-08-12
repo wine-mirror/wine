@@ -1916,18 +1916,16 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
 }
 
 static int ME_GetTextRange(ME_TextEditor *editor, WCHAR *strText,
-                           int nStart, int nLen, BOOL unicode)
+                           const ME_Cursor *start, int nLen, BOOL unicode)
 {
-    ME_Cursor start;
     if (!strText) return 0;
-    ME_CursorFromCharOfs(editor, nStart, &start);
     if (unicode) {
-      return ME_GetTextW(editor, strText, INT_MAX, &start, nLen, 0);
+      return ME_GetTextW(editor, strText, INT_MAX, start, nLen, 0);
     } else {
       int nChars;
       WCHAR *p = ALLOC_N_OBJ(WCHAR, nLen+1);
       if (!p) return 0;
-      nChars = ME_GetTextW(editor, p, nLen, &start, nLen, 0);
+      nChars = ME_GetTextW(editor, p, nLen, start, nLen, 0);
       WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)strText,
                           nLen+1, NULL, NULL);
       FREE_OBJ(p);
@@ -3566,10 +3564,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return ME_GetTextEx(editor, (GETTEXTEX*)wParam, lParam);
   case EM_GETSELTEXT:
   {
-    int from, to;
-    ME_GetSelectionOfs(editor, &from, &to);
+    int nFrom, nTo, nStartCur = ME_GetSelectionOfs(editor, &nFrom, &nTo);
+    ME_Cursor *from = &editor->pCursors[nStartCur];
     return ME_GetTextRange(editor, (WCHAR *)lParam, from,
-                           to - from, unicode);
+                           nTo - nFrom, unicode);
   }
   case EM_GETSCROLLPOS:
   {
@@ -3586,17 +3584,20 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETTEXTRANGE:
   {
     TEXTRANGEW *rng = (TEXTRANGEW *)lParam;
-    int start = rng->chrg.cpMin;
-    int end = rng->chrg.cpMax;
+    ME_Cursor start;
+    int nStart = rng->chrg.cpMin;
+    int nEnd = rng->chrg.cpMax;
     int textlength = ME_GetTextLength(editor);
-    TRACE("EM_GETTEXTRANGE min=%d max=%d unicode=%d emul1.0=%d length=%d\n",
-      rng->chrg.cpMin, rng->chrg.cpMax, unicode,
-      editor->bEmulateVersion10, ME_GetTextLength(editor));
-    if (start < 0) return 0;
-    if ((start == 0 && end == -1) || end > textlength)
-      end = textlength;
-    if (start >= end) return 0;
-    return ME_GetTextRange(editor, rng->lpstrText, start, end - start, unicode);
+
+    TRACE("EM_GETTEXTRANGE min=%d max=%d unicode=%d textlength=%d\n",
+          rng->chrg.cpMin, rng->chrg.cpMax, unicode, textlength);
+    if (nStart < 0) return 0;
+    if ((nStart == 0 && nEnd == -1) || nEnd > textlength)
+      nEnd = textlength;
+    if (nStart >= nEnd) return 0;
+
+    ME_CursorFromCharOfs(editor, nStart, &start);
+    return ME_GetTextRange(editor, rng->lpstrText, &start, nEnd - nStart, unicode);
   }
   case EM_GETLINE:
   {
