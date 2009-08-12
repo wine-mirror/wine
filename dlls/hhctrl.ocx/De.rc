@@ -37,7 +37,7 @@ STRINGTABLE
 BEGIN
     IDTB_EXPAND      "Anzeigen"
     IDTB_CONTRACT    "Verstecken"
-    IDTB_STOP        "Stop"
+    IDTB_STOP        "Stopp"
     IDTB_REFRESH     "Aktualisieren"
     IDTB_BACK        "Zurück"
     IDTB_HOME        "Startseite"
