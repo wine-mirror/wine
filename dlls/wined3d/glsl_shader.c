@@ -821,9 +821,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     char prefix = pshader ? 'P' : 'V';
 
     /* Prototype the subroutines */
-    for (i = 0; i < This->baseShader.limits.label; i++) {
-        if (reg_maps->labels[i])
-            shader_addline(buffer, "void subroutine%u();\n", i);
+    for (i = 0, map = reg_maps->labels; map; map >>= 1, ++i)
+    {
+        if (map & 1) shader_addline(buffer, "void subroutine%u();\n", i);
     }
 
     /* Declare the constants (aka uniforms) */

@@ -599,7 +599,7 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
             struct wined3d_shader_src_param src, rel_addr;
 
             fe->shader_read_src_param(fe_data, &pToken, &src, &rel_addr);
-            reg_maps->labels[src.reg.idx] = 1;
+            reg_maps->labels |= 1 << src.reg.idx;
         }
         /* Set texture, address, temporary registers */
         else

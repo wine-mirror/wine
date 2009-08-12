@@ -630,8 +630,8 @@ typedef struct shader_reg_maps
     struct wined3d_shader_version shader_version;
     BYTE texcoord;                          /* MAX_REG_TEXCRD, 8 */
     BYTE address;                           /* MAX_REG_ADDR, 1 */
+    WORD labels;                            /* MAX_LABELS, 16 */
     DWORD temporary;                        /* MAX_REG_TEMP, 32 */
-    char labels[MAX_LABELS];                /* pixel, vertex */
     DWORD *constf;                          /* pixel, vertex */
     DWORD texcoord_mask[MAX_REG_TEXCRD];    /* vertex < 3.0 */
     WORD input_registers;                   /* max(MAX_REG_INPUT, MAX_ATTRIBS), 16 */
