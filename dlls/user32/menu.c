@@ -4646,18 +4646,22 @@ static int MENU_depth( POPUPMENU *pmenu, int depth)
 {
     int i;
     MENUITEM *item;
+    int subdepth;
 
     depth++;
     if( depth > MAXMENUDEPTH) return depth;
     item = pmenu->items;
-    for( i = 0; i < pmenu->nItems && depth <= MAXMENUDEPTH; i++, item++){
-        POPUPMENU *psubmenu =  MENU_GetMenu( item->hSubMenu);
+    subdepth = depth;
+    for( i = 0; i < pmenu->nItems && subdepth <= MAXMENUDEPTH; i++, item++){
+        POPUPMENU *psubmenu =  item->hSubMenu ? MENU_GetMenu( item->hSubMenu) : NULL;
         if( psubmenu){
             int bdepth = MENU_depth( psubmenu, depth);
-            if( bdepth > depth) depth = bdepth;
+            if( bdepth > subdepth) subdepth = bdepth;
         }
+        if( subdepth > MAXMENUDEPTH)
+            TRACE("<- hmenu %p\n", item->hSubMenu);
     }
-    return depth;
+    return subdepth;
 }
 
 
