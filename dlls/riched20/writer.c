@@ -791,7 +791,7 @@ ME_StreamOutRTF(ME_TextEditor *editor, ME_OutStream *pStream, int nStart, int nC
 
   /* TODO: section formatting properties */
 
-  if (!ME_StreamOutRTFParaProps(editor, pStream, ME_GetParagraph(p)))
+  if (!ME_StreamOutRTFParaProps(editor, pStream, pPara))
     return FALSE;
 
   while(1)

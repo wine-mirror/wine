@@ -77,6 +77,8 @@ void ME_CharFormatFromLogFont(HDC hDC, const LOGFONTW *lf, CHARFORMAT2W *fmt); /
 /* list.c */
 void ME_InsertBefore(ME_DisplayItem *diWhere, ME_DisplayItem *diWhat);
 void ME_Remove(ME_DisplayItem *diWhere);
+BOOL ME_NextRun(ME_DisplayItem **para, ME_DisplayItem **run);
+BOOL ME_PrevRun(ME_DisplayItem **para, ME_DisplayItem **run);
 ME_DisplayItem *ME_FindItemBack(ME_DisplayItem *di, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_FindItemFwd(ME_DisplayItem *di, ME_DIType nTypeOrClass);
 ME_DisplayItem *ME_FindItemBackOrHere(ME_DisplayItem *di, ME_DIType nTypeOrClass);

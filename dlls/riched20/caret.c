@@ -305,8 +305,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
     {
       /* We aren't deleting anything in this run, so we will go back to the
        * last run we are deleting text in. */
-      c.pRun = ME_FindItemBack(c.pRun, diRun);
-      c.pPara = ME_GetParagraph(c.pRun);
+      ME_PrevRun(&c.pPara, &c.pRun);
       c.nOffset = c.pRun->member.run.strText->nLen;
     }
     run = &c.pRun->member.run;
@@ -581,7 +580,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
         /* ME_SplitParagraph increases style refcount */
         tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, eol_str, 0);
         p->pRun = ME_FindItemFwd(tp, diRun);
-        p->pPara = ME_GetParagraph(p->pRun);
+        p->pPara = tp;
         end_run = ME_FindItemBack(tp, diRun);
         ME_ReleaseStyle(end_run->member.run.style);
         end_run->member.run.style = tmp_style;
@@ -671,8 +670,9 @@ static BOOL
 ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
 {
   ME_DisplayItem *pRun = cursor->pRun, *pOtherRun;
+  ME_DisplayItem *pPara = cursor->pPara;
   int nOffset = cursor->nOffset;
-  
+
   if (nRelOfs == -1)
   {
     /* Backward movement */
@@ -700,14 +700,15 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
       {
         if (cursor->pRun == pRun && cursor->nOffset == 0)
         {
+          pPara = pOtherRun;
           /* Skip empty start of table row paragraph */
-          if (pOtherRun->member.para.prev_para->member.para.nFlags & MEPF_ROWSTART)
-            pOtherRun = pOtherRun->member.para.prev_para;
+          if (pPara->member.para.prev_para->member.para.nFlags & MEPF_ROWSTART)
+            pPara = pPara->member.para.prev_para;
           /* Paragraph breaks are treated as separate words */
-          if (pOtherRun->member.para.prev_para->type == diTextStart)
+          if (pPara->member.para.prev_para->type == diTextStart)
             return FALSE;
 
-          pRun = ME_FindItemBack(pOtherRun, diRun);
+          pRun = ME_FindItemBack(pPara, diRun);
         }
         break;
       }
@@ -739,8 +740,10 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
       {
         if (pOtherRun->member.para.nFlags & MEPF_ROWSTART)
             pOtherRun = pOtherRun->member.para.next_para;
-        if (cursor->pRun == pRun)
-          pRun = ME_FindItemFwd(pOtherRun, diRun);
+        if (cursor->pRun == pRun) {
+          pPara = pOtherRun;
+          pRun = ME_FindItemFwd(pPara, diRun);
+        }
         nOffset = 0;
         break;
       }
@@ -753,7 +756,7 @@ ME_MoveCursorWords(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
       }
     }
   }
-  cursor->pPara = ME_GetParagraph(pRun);
+  cursor->pPara = pPara;
   cursor->pRun = pRun;
   cursor->nOffset = nOffset;
   return TRUE;
@@ -1246,14 +1249,14 @@ static void
 ME_MoveCursorLines(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
 {
   ME_DisplayItem *pRun = pCursor->pRun;
-  ME_DisplayItem *pItem, *pOldPara, *pNewPara;
+  ME_DisplayItem *pOldPara = pCursor->pPara;
+  ME_DisplayItem *pItem, *pNewPara;
   int x = ME_GetXForArrow(editor, pCursor);
 
   if (editor->bCaretAtEnd && !pCursor->nOffset)
-    pRun = ME_FindItemBack(pRun, diRun);
-  if (!pRun)
-    return;
-  pOldPara = ME_GetParagraph(pRun);
+    if (!ME_PrevRun(&pOldPara, &pRun))
+      return;
+
   if (nRelOfs == -1)
   {
     /* start of this row */

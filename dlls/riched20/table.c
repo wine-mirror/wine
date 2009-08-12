@@ -370,14 +370,19 @@ void ME_ProtectPartialTableDeletion(ME_TextEditor *editor, int nOfs,int *nChars)
     {
       /* The deletion starts from before the row, so don't join it with
        * previous non-empty paragraphs. */
+      ME_DisplayItem *curPara;
       pRun = NULL;
-      if (nOfs > this_para->member.para.nCharOfs)
+      if (nOfs > this_para->member.para.nCharOfs) {
         pRun = ME_FindItemBack(end_para, diRun);
-      if (!pRun)
+        curPara = end_para->member.para.prev_para;
+      }
+      if (!pRun) {
         pRun = ME_FindItemFwd(end_para, diRun);
+        curPara = end_para;
+      }
       if (pRun)
       {
-        nCharsToBoundary = ME_GetParagraph(pRun)->member.para.nCharOfs
+        nCharsToBoundary = curPara->member.para.nCharOfs
                            + pRun->member.run.nCharOfs
                            - nOfs;
         if (nCharsToBoundary >= 0)

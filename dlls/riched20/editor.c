@@ -1765,8 +1765,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       nStart++;
       if (nStart == item->member.run.strText->nLen)
       {
-        item = ME_FindItemFwd(item, diRun);
-        para = ME_GetParagraph(item);
+        ME_NextRun(&para, &item);
         nStart = 0;
       }
     }
@@ -1786,12 +1785,13 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
            && para->member.para.nCharOfs + item->member.run.nCharOfs + nEnd - nLen >= nMin)
     {
       ME_DisplayItem *pCurItem = item;
+      ME_DisplayItem *pCurPara = para;
       int nCurEnd = nEnd;
       int nMatched = 0;
 
       if (nCurEnd == 0)
       {
-        pCurItem = ME_FindItemBack(pCurItem, diRun);
+        ME_PrevRun(&pCurPara, &pCurItem);
         nCurEnd = pCurItem->member.run.strText->nLen + nMatched;
       }
 
@@ -1826,7 +1826,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
               break;
           }
 
-          nStart = ME_GetParagraph(pCurItem)->member.para.nCharOfs
+          nStart = pCurPara->member.para.nCharOfs
                    + pCurItem->member.run.nCharOfs + nCurEnd - nMatched;
           if (chrgText)
           {
@@ -1838,7 +1838,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
         }
         if (nCurEnd - nMatched == 0)
         {
-          pCurItem = ME_FindItemBack(pCurItem, diRun);
+          ME_PrevRun(&pCurPara, &pCurItem);
           /* Don't care about pCurItem becoming NULL here; it's already taken
            * care of in the exterior loop condition */
           nCurEnd = pCurItem->member.run.strText->nLen + nMatched;
@@ -1852,8 +1852,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       nEnd--;
       if (nEnd < 0)
       {
-        item = ME_FindItemBack(item, diRun);
-        para = ME_GetParagraph(item);
+        ME_PrevRun(&para, &item);
         nEnd = item->member.run.strText->nLen;
       }
     }
@@ -4689,8 +4688,6 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_
   if (sel_max == -1) sel_max = ME_GetTextLength(editor);
   while (item && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart < sel_max)
   {
-    ME_DisplayItem * next_item;
-
     if (!(item->member.run.nFlags & MERF_ENDPARA)) {
       /* Find start of candidate */
       if (*candidate_min == -1) {
@@ -4738,17 +4735,15 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_
     }
 
     /* Reaching this point means no span was found, so get next span */
-    next_item = ME_FindItemFwd(item, diRun);
-    if (!next_item) {
+    if (!ME_NextRun(&para, &item)) {
       if (*candidate_min >= 0) {
         /* There are no further runs, so take end of text as end of candidate */
         *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
         if (lastAcceptedChar == ':') (*candidate_max)--;
         return TRUE;
       }
+      return FALSE;
     }
-    item = next_item;
-    para = ME_GetParagraph(item);
     nStart = 0;
   }
 
