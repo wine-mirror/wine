@@ -1004,9 +1004,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     }
 
     /* Declare address variables */
-    for (i = 0; i < This->baseShader.limits.address; i++) {
-        if (reg_maps->address[i])
-            shader_addline(buffer, "ivec4 A%d;\n", i);
+    for (i = 0, map = reg_maps->address; map; map >>= 1, ++i)
+    {
+        if (map & 1) shader_addline(buffer, "ivec4 A%u;\n", i);
     }
 
     /* Declare texture coordinate temporaries and initialize them */

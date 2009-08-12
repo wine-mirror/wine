@@ -664,9 +664,9 @@ static DWORD shader_generate_arb_declarations(IWineD3DBaseShader *iface, const s
         if (map & 1) shader_addline(buffer, "TEMP R%u;\n", i);
     }
 
-    for (i = 0; i < This->baseShader.limits.address; i++) {
-        if (reg_maps->address[i])
-            shader_addline(buffer, "ADDRESS A%d;\n", i);
+    for (i = 0, map = reg_maps->address; map; map >>= 1, ++i)
+    {
+        if (map & 1) shader_addline(buffer, "ADDRESS A%u;\n", i);
     }
 
     if (pshader && reg_maps->shader_version.major == 1 && reg_maps->shader_version.minor <= 3)
