@@ -319,6 +319,9 @@ static const int ws_af_map[][2] =
 #ifdef HAVE_IPX
     MAP_OPTION( AF_IPX ),
 #endif
+#ifdef AF_IRDA
+    MAP_OPTION( AF_IRDA ),
+#endif
     {FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO},
 };
 
