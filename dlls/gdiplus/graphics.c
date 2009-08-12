@@ -1040,6 +1040,28 @@ static GpStatus restore_container(GpGraphics* graphics,
     return Ok;
 }
 
+static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
+{
+    RECT wnd_rect;
+
+    if(graphics->hwnd) {
+        if(!GetClientRect(graphics->hwnd, &wnd_rect))
+            return GenericError;
+
+        rect->X = wnd_rect.left;
+        rect->Y = wnd_rect.top;
+        rect->Width = wnd_rect.right - wnd_rect.left;
+        rect->Height = wnd_rect.bottom - wnd_rect.top;
+    }else{
+        rect->X = 0;
+        rect->Y = 0;
+        rect->Width = GetDeviceCaps(graphics->hdc, HORZRES);
+        rect->Height = GetDeviceCaps(graphics->hdc, VERTRES);
+    }
+
+    return Ok;
+}
+
 GpStatus WINGDIPAPI GdipCreateFromHDC(HDC hdc, GpGraphics **graphics)
 {
     TRACE("(%p, %p)\n", hdc, graphics);
@@ -3120,7 +3142,7 @@ GpStatus WINGDIPAPI GdipGraphicsClear(GpGraphics *graphics, ARGB color)
 {
     GpSolidFill *brush;
     GpStatus stat;
-    RECT rect;
+    GpRectF wnd_rect;
 
     TRACE("(%p, %x)\n", graphics, color);
 
@@ -3133,18 +3155,13 @@ GpStatus WINGDIPAPI GdipGraphicsClear(GpGraphics *graphics, ARGB color)
     if((stat = GdipCreateSolidFill(color, &brush)) != Ok)
         return stat;
 
-    if(graphics->hwnd){
-        if(!GetWindowRect(graphics->hwnd, &rect)){
-            GdipDeleteBrush((GpBrush*)brush);
-            return GenericError;
-        }
-
-        GdipFillRectangle(graphics, (GpBrush*)brush, 0.0, 0.0, (REAL)(rect.right  - rect.left),
-                                                               (REAL)(rect.bottom - rect.top));
+    if((stat = get_graphics_bounds(graphics, &wnd_rect)) != Ok){
+        GdipDeleteBrush((GpBrush*)brush);
+        return stat;
     }
-    else
-        GdipFillRectangle(graphics, (GpBrush*)brush, 0.0, 0.0, (REAL)GetDeviceCaps(graphics->hdc, HORZRES),
-                                                               (REAL)GetDeviceCaps(graphics->hdc, VERTRES));
+
+    GdipFillRectangle(graphics, (GpBrush*)brush, wnd_rect.X, wnd_rect.Y,
+                                                 wnd_rect.Width, wnd_rect.Height);
 
     GdipDeleteBrush((GpBrush*)brush);
 
