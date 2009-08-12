@@ -1549,8 +1549,10 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
         if (newto > to + (editor->bEmulateVersion10 ? 1 : 0)) {
           WCHAR lastchar[3] = {'\0', '\0'};
           int linebreakSize = editor->bEmulateVersion10 ? 2 : 1;
+          ME_Cursor linebreakCursor;
 
-          ME_GetTextW(editor, lastchar, newto - linebreakSize, linebreakSize, 0);
+          ME_CursorFromCharOfs(editor, newto - linebreakSize, &linebreakCursor);
+          ME_GetTextW(editor, lastchar, 2, &linebreakCursor, linebreakSize, 0);
           if (lastchar[0] == '\r' && (lastchar[1] == '\n' || lastchar[1] == '\0')) {
             ME_InternalDeleteText(editor, newto - linebreakSize, linebreakSize, FALSE);
           }
@@ -1864,7 +1866,8 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
 
 static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
 {
-    int nStart, nCount; /* in chars */
+    int nChars;
+    ME_Cursor start;
 
     if (!ex->cb || !pText) return 0;
 
@@ -1873,18 +1876,20 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
 
     if (ex->flags & GT_SELECTION)
     {
-      ME_GetSelectionOfs(editor, &nStart, &nCount);
-      nCount -= nStart;
+      int from, to;
+      int nStartCur = ME_GetSelectionOfs(editor, &from, &to);
+      start = editor->pCursors[nStartCur];
+      nChars = to - from;
     }
     else
     {
-      nStart = 0;
-      nCount = 0x7fffffff;
+      ME_CursorFromCharOfs(editor, 0, &start);
+      nChars = INT_MAX;
     }
     if (ex->codepage == 1200)
     {
-      nCount = min(nCount, ex->cb / sizeof(WCHAR) - 1);
-      return ME_GetTextW(editor, (LPWSTR)pText, nStart, nCount, ex->flags & GT_USECRLF);
+      return ME_GetTextW(editor, (LPWSTR)pText, ex->cb / sizeof(WCHAR) - 1,
+                         &start, nChars, ex->flags & GT_USECRLF);
     }
     else
     {
@@ -1894,16 +1899,15 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
         occurs only in richedit 2.0 mode, in which line breaks have only one CR
        */
       int crlfmul = (ex->flags & GT_USECRLF) ? 2 : 1;
+      DWORD buflen;
       LPWSTR buffer;
-      DWORD buflen = ex->cb;
       LRESULT rc;
-      DWORD flags = 0;
 
-      nCount = min(nCount, ex->cb - 1);
-      buffer = heap_alloc((crlfmul*nCount + 1) * sizeof(WCHAR));
+      buflen = min(crlfmul * nChars, ex->cb - 1);
+      buffer = heap_alloc((buflen + 1) * sizeof(WCHAR));
 
-      buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
-      rc = WideCharToMultiByte(ex->codepage, flags, buffer, buflen+1,
+      nChars = ME_GetTextW(editor, buffer, buflen, &start, nChars, ex->flags & GT_USECRLF);
+      rc = WideCharToMultiByte(ex->codepage, 0, buffer, nChars + 1,
                                (LPSTR)pText, ex->cb, ex->lpDefaultChar, ex->lpUsedDefChar);
       if (rc) rc--; /* do not count 0 terminator */
 
@@ -1913,13 +1917,18 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
 }
 
 static int ME_GetTextRange(ME_TextEditor *editor, WCHAR *strText,
-                           int start, int nLen, BOOL unicode)
+                           int nStart, int nLen, BOOL unicode)
 {
+    ME_Cursor start;
+    if (!strText) return 0;
+    ME_CursorFromCharOfs(editor, nStart, &start);
     if (unicode) {
-      return ME_GetTextW(editor, strText, start, nLen, 0);
+      return ME_GetTextW(editor, strText, INT_MAX, &start, nLen, 0);
     } else {
+      int nChars;
       WCHAR *p = ALLOC_N_OBJ(WCHAR, nLen+1);
-      int nChars = ME_GetTextW(editor, p, start, nLen, 0);
+      if (!p) return 0;
+      nChars = ME_GetTextW(editor, p, nLen, &start, nLen, 0);
       WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)strText,
                           nLen+1, NULL, NULL);
       FREE_OBJ(p);
@@ -4473,81 +4482,71 @@ void ME_SendOldNotify(ME_TextEditor *editor, int nCode)
   ITextHost_TxNotify(editor->texthost, nCode, NULL);
 }
 
-int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to)
+/* Fill buffer with srcChars unicode characters from the start cursor.
+ *
+ * buffer: destination buffer
+ * buflen: length of buffer in characters excluding the NULL terminator.
+ * start: start of editor text to copy into buffer.
+ * srcChars: Number of characters to use from the editor text.
+ * bCRLF: if true, replaces all end of lines with \r\n pairs.
+ *
+ * returns the number of characters written excluding the NULL terminator.
+ *
+ * The written text is always NULL terminated.
+ */
+int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
+                const ME_Cursor *start, int srcChars, BOOL bCRLF)
 {
-  ME_DisplayItem *item = ME_FindItemFwd(editor->pBuffer->pFirst, diParagraph);
-  int i = 0;
-  
-  while(item && item->member.para.next_para->member.para.nCharOfs <= from)
-    item = item->member.para.next_para;
-  if (!item)
-    return 0;
-  while(item && item->member.para.next_para->member.para.nCharOfs <= to) {
-    item = item->member.para.next_para;
-    i++;
-  }
-  return i;
-}
-
-
-int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart,
-                int nChars, int bCRLF)
-{
-  ME_DisplayItem *pRun;
-  int nOffset, nWritten = 0;
-  WCHAR *pStart = buffer;
-
-  ME_RunOfsFromCharOfs(editor, nStart, NULL, &pRun, &nOffset);
+  ME_DisplayItem *pRun, *pNextRun;
+  const WCHAR *pStart = buffer;
+  const WCHAR cr_lf[] = {'\r', '\n', 0};
+  const WCHAR *str;
+  int nLen;
 
   /* bCRLF flag is only honored in 2.0 and up. 1.0 must always return text verbatim */
   if (editor->bEmulateVersion10) bCRLF = 0;
 
-  while (nChars && pRun)
+  pRun = start->pRun;
+  assert(pRun);
+  pNextRun = ME_FindItemFwd(pRun, diRun);
+
+  nLen = pRun->member.run.strText->nLen - start->nOffset;
+  str = pRun->member.run.strText->szData + start->nOffset;
+
+  /* No '\r' is appended to the last paragraph. */
+  while (srcChars && buflen && pNextRun)
   {
-    int nLen;
+    int nFlags = pRun->member.run.nFlags;
 
-    if (pRun->member.run.nFlags & MERF_ENDCELL &&
-        pRun->member.run.nFlags & MERF_ENDPARA)
+    if (bCRLF && nFlags & MERF_ENDPARA && ~nFlags & MERF_ENDCELL)
     {
-      *buffer = '\t';
-      nLen = 1;
-    } else if (pRun->member.run.nFlags & MERF_ENDPARA) {
-      if (!ME_FindItemFwd(pRun, diRun)) {
-        /* No '\r' is appended to the last paragraph. */
-        nLen = 0;
-      } else if (bCRLF && nChars == 1) {
-        nLen = 0;
-        nChars = 0;
-      } else {
-        WCHAR cr_lf[] = {'\r', '\n', 0};
-        WCHAR *szData;
-
-        if (bCRLF)
-        {
-          nLen = 2;
-          szData = cr_lf;
-        } else {
-          nLen = pRun->member.run.strText->nLen;
-          szData = pRun->member.run.strText->szData;
-        }
-        nLen = min(nChars, nLen - nOffset);
-        CopyMemory(buffer, szData + nOffset, sizeof(WCHAR) * nLen);
-      }
+      if (buflen == 1) break;
+      /* FIXME: native fails to reduce srcChars here for WM_GETTEXT or
+       *        EM_GETTEXTEX, however, this is done for copying text which
+       *        also uses this function. */
+      srcChars -= min(nLen, srcChars);
+      nLen = 2;
+      str = cr_lf;
     } else {
-      nLen = min(nChars, pRun->member.run.strText->nLen - nOffset);
-      CopyMemory(buffer, pRun->member.run.strText->szData + nOffset,
-                 sizeof(WCHAR) * nLen);
+      nLen = min(nLen, srcChars);
+      srcChars -= nLen;
     }
-    nChars -= nLen;
-    nWritten += nLen;
-    buffer += nLen;
-    nOffset = 0;
 
-    pRun = ME_FindItemFwd(pRun, diRun);
+    nLen = min(nLen, buflen);
+    buflen -= nLen;
+
+    CopyMemory(buffer, str, sizeof(WCHAR) * nLen);
+
+    buffer += nLen;
+
+    pRun = pNextRun;
+    pNextRun = ME_FindItemFwd(pRun, diRun);
+
+    nLen = pRun->member.run.strText->nLen;
+    str = pRun->member.run.strText->szData;
   }
   *buffer = 0;
-  TRACE("nWritten=%d, actual=%d\n", nWritten, buffer-pStart);
-  return nWritten;
+  return buffer - pStart;
 }
 
 static BOOL ME_RegisterEditorClass(HINSTANCE hInstance)
@@ -4790,7 +4789,9 @@ static BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
   LPWSTR bufferW = NULL;
   WCHAR bufW[32];
   unsigned int i;
+  ME_Cursor sel_start;
 
+  ME_CursorFromCharOfs(editor, sel_min, &sel_start);
   if (sel_max == -1) sel_max = ME_GetTextLength(editor);
   assert(sel_min <= sel_max);
   for (i = 0; i < sizeof(prefixes) / sizeof(struct prefix_s); i++)
@@ -4799,7 +4800,8 @@ static BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
     if (bufferW == NULL) {
       bufferW = heap_alloc((sel_max - sel_min + 1) * sizeof(WCHAR));
     }
-    ME_GetTextW(editor, bufferW, sel_min, min(sel_max - sel_min, lstrlenA(prefixes[i].text)), 0);
+    ME_GetTextW(editor, bufferW, sel_max - sel_min, &sel_start,
+                lstrlenA(prefixes[i].text), 0);
     MultiByteToWideChar(CP_ACP, 0, prefixes[i].text, -1, bufW, 32);
     if (!lstrcmpW(bufW, bufferW))
     {

@@ -328,16 +328,24 @@ static const IDataObjectVtbl VT_DataObjectImpl =
 
 static HGLOBAL get_unicode_text(ME_TextEditor *editor, const CHARRANGE *lpchrg)
 {
-    int pars, len;
+    int pars = 0;
+    int len;
     WCHAR *data;
     HANDLE ret;
+    ME_Cursor start;
+    ME_DisplayItem *para;
 
-    pars = ME_CountParagraphsBetween(editor, lpchrg->cpMin, lpchrg->cpMax);
+    ME_CursorFromCharOfs(editor, lpchrg->cpMin, &start);
+    /* count paragraphs in range */
+    para = start.pPara;
+    while((para = para->member.para.next_para) &&
+          para->member.para.nCharOfs <= lpchrg->cpMax)
+        pars++;
+
     len = lpchrg->cpMax-lpchrg->cpMin;
     ret = GlobalAlloc(GMEM_MOVEABLE, sizeof(WCHAR)*(len+pars+1));
     data = GlobalLock(ret);
-    len = ME_GetTextW(editor, data, lpchrg->cpMin, len, TRUE);
-    data[len] = 0;
+    len = ME_GetTextW(editor, data, len+pars, &start, len, TRUE);
     GlobalUnlock(ret);
     return ret;
 }

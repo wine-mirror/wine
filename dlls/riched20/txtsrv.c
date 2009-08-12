@@ -292,12 +292,14 @@ HRESULT WINAPI fnTextSrv_TxGetText(ITextServices *iface,
    length = ME_GetTextLength(This->editor);
    if (length)
    {
+      ME_Cursor start;
       BSTR bstr;
       bstr = SysAllocStringByteLen(NULL, length * sizeof(WCHAR));
       if (bstr == NULL)
          return E_OUTOFMEMORY;
 
-      ME_GetTextW(This->editor, bstr , 0, length, FALSE);
+      ME_CursorFromCharOfs(This->editor, 0, &start);
+      ME_GetTextW(This->editor, bstr, length, &start, INT_MAX, FALSE);
       *pbstrText = bstr;
    } else {
       *pbstrText = NULL;

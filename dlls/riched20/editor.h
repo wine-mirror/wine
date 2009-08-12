@@ -169,7 +169,6 @@ BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, BOOL extend, BOOL ctrl);
 int ME_GetCursorOfs(const ME_Cursor *cursor);
 int ME_GetSelectionOfs(ME_TextEditor *editor, int *from, int *to);
 int ME_GetSelection(ME_TextEditor *editor, ME_Cursor **from, ME_Cursor **to);
-int ME_CountParagraphsBetween(ME_TextEditor *editor, int from, int to);
 BOOL ME_IsSelection(ME_TextEditor *editor);
 void ME_DeleteSelection(ME_TextEditor *editor);
 void ME_SendSelChange(ME_TextEditor *editor);
@@ -242,7 +241,8 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10);
 LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
                          LPARAM lParam, BOOL unicode, HRESULT* phresult);
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode);
-int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, BOOL bCRLF);
+int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
+                const ME_Cursor *start, int srcChars, BOOL bCRLF);
 void ME_RTFCharAttrHook(struct _RTF_Info *info);
 void ME_RTFParAttrHook(struct _RTF_Info *info);
 void ME_RTFTblAttrHook(struct _RTF_Info *info);

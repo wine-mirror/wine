@@ -123,8 +123,8 @@ ME_DisplayItem* ME_InsertTableRowStartAtParagraph(ME_TextEditor *editor,
 ME_DisplayItem* ME_InsertTableCellFromCursor(ME_TextEditor *editor)
 {
   ME_DisplayItem *para;
-  WCHAR cr = '\r';
-  ME_String *eol_str = ME_MakeStringN(&cr, 1);
+  WCHAR tab = '\t';
+  ME_String *eol_str = ME_MakeStringN(&tab, 1);
   para = ME_InsertEndParaFromCursor(editor, 0, eol_str, MEPF_CELL);
   return para;
 }
