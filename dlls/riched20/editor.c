@@ -4766,51 +4766,38 @@ static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_
 /**
  * This proc evaluates the selection and returns TRUE if it can be considered an URL
  */
-static BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, int sel_min, int sel_max)
+static BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, const ME_Cursor *start, int nChars)
 {
+#define MAX_PREFIX_LEN 9
   struct prefix_s {
-    const char *text;
+    const WCHAR text[MAX_PREFIX_LEN];
     int length;
-  } prefixes[12] = {
-    /* Code below depends on these being in decreasing length order! */
-    {"prospero:", 10},
-    {"telnet:", 8},
-    {"gopher:", 8},
-    {"mailto:", 8},
-    {"https:", 7},
-    {"file:", 6},
-    {"news:", 6},
-    {"wais:", 6},
-    {"nntp:", 6},
-    {"http:", 5},
-    {"www.", 5},
-    {"ftp:", 5},
+  }prefixes[] = {
+    {{'p','r','o','s','p','e','r','o',':'}, 9},
+    {{'t','e','l','n','e','t',':'}, 7},
+    {{'g','o','p','h','e','r',':'}, 7},
+    {{'m','a','i','l','t','o',':'}, 7},
+    {{'h','t','t','p','s',':'}, 6},
+    {{'f','i','l','e',':'}, 5},
+    {{'n','e','w','s',':'}, 5},
+    {{'w','a','i','s',':'}, 5},
+    {{'n','n','t','p',':'}, 5},
+    {{'h','t','t','p',':'}, 5},
+    {{'w','w','w','.'}, 4},
+    {{'f','t','p',':'}, 4},
   };
-  LPWSTR bufferW = NULL;
-  WCHAR bufW[32];
+  WCHAR bufferW[MAX_PREFIX_LEN + 1];
   unsigned int i;
-  ME_Cursor sel_start;
 
-  ME_CursorFromCharOfs(editor, sel_min, &sel_start);
-  if (sel_max == -1) sel_max = ME_GetTextLength(editor);
-  assert(sel_min <= sel_max);
-  for (i = 0; i < sizeof(prefixes) / sizeof(struct prefix_s); i++)
+  ME_GetTextW(editor, bufferW, MAX_PREFIX_LEN, start, nChars, 0);
+  for (i = 0; i < sizeof(prefixes) / sizeof(*prefixes); i++)
   {
-    if (sel_max - sel_min < prefixes[i].length) continue;
-    if (bufferW == NULL) {
-      bufferW = heap_alloc((sel_max - sel_min + 1) * sizeof(WCHAR));
-    }
-    ME_GetTextW(editor, bufferW, sel_max - sel_min, &sel_start,
-                lstrlenA(prefixes[i].text), 0);
-    MultiByteToWideChar(CP_ACP, 0, prefixes[i].text, -1, bufW, 32);
-    if (!lstrcmpW(bufW, bufferW))
-    {
-      heap_free(bufferW);
+    if (nChars < prefixes[i].length) continue;
+    if (!memcmp(prefixes[i].text, bufferW, prefixes[i].length * sizeof(WCHAR)))
       return TRUE;
-    }
   }
-  heap_free(bufferW);
   return FALSE;
+#undef MAX_PREFIX_LEN
 }
 
 /**
@@ -4837,11 +4824,14 @@ static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_m
 
     if (ME_FindNextURLCandidate(editor, sel_min, sel_max, &cMin, &cMax))
     {
+      ME_Cursor candidateStart;
       /* Section before candidate is not an URL */
       beforeURL[0] = sel_min;
       beforeURL[1] = cMin;
 
-      if (ME_IsCandidateAnURL(editor, cMin, cMax))
+      ME_CursorFromCharOfs(editor, cMin, &candidateStart);
+      if (ME_IsCandidateAnURL(editor, &candidateStart,
+                              (cMax == -1 ? INT_MAX : cMax) - cMin))
       {
         inURL[0] = cMin; inURL[1] = cMax;
       }
