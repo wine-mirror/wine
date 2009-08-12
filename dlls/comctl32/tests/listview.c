@@ -288,6 +288,11 @@ static const struct message scroll_parent_seq[] = {
     { 0 }
 };
 
+static const struct message setredraw_seq[] = {
+    { WM_SETREDRAW, sent|id|wparam, FALSE, 0, LISTVIEW_ID },
+    { 0 }
+};
+
 struct subclass_info
 {
     WNDPROC oldproc;
@@ -2786,8 +2791,9 @@ static void test_setredraw(void)
     HWND hwnd;
     DWORD_PTR style;
     DWORD ret;
+    HDC hdc;
 
-    hwnd = create_listview_control(0);
+    hwnd = create_listview_control(LVS_OWNERDATA);
     ok(hwnd != NULL, "failed to create a listview window\n");
 
     /* Passing WM_SETREDRAW to DefWinProc removes WS_VISIBLE.
@@ -2803,6 +2809,48 @@ static void test_setredraw(void)
     expect(0, ret);
     style = GetWindowLongPtr(hwnd, GWL_STYLE);
     ok(style & WS_VISIBLE, "Expected WS_VISIBLE to be set\n");
+    ret = SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
+    expect(0, ret);
+
+    /* WM_ERASEBKGND */
+    hdc = GetWindowDC(hwndparent);
+    ret = SendMessage(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    expect(TRUE, ret);
+    ret = SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
+    expect(0, ret);
+    ret = SendMessage(hwnd, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    expect(TRUE, ret);
+    ret = SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
+    expect(0, ret);
+    ReleaseDC(hwndparent, hdc);
+
+    /* check notification messages to show that repainting is disabled */
+    ret = SendMessage(hwnd, LVM_SETITEMCOUNT, 1, 0);
+    expect(TRUE, ret);
+    ret = SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
+    expect(0, ret);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "redraw after WM_SETREDRAW (FALSE)", TRUE);
+
+    ret = SendMessage(hwnd, LVM_SETBKCOLOR, 0, CLR_NONE);
+    expect(TRUE, ret);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "redraw after WM_SETREDRAW (FALSE) with CLR_NONE bkgnd", TRUE);
+
+    /* message isn't forwarded to header */
+    subclass_header(hwnd);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
+    expect(0, ret);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, setredraw_seq,
+                "WM_SETREDRAW: not forwarded to header", FALSE);
 
     DestroyWindow(hwnd);
 }
