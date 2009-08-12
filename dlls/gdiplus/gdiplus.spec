@@ -400,7 +400,7 @@
 @ stub GdipGetTextureImage
 @ stdcall GdipGetTextureTransform(ptr ptr)
 @ stdcall GdipGetTextureWrapMode(ptr ptr)
-@ stub GdipGetVisibleClipBounds
+@ stdcall GdipGetVisibleClipBounds(ptr ptr)
 @ stdcall GdipGetVisibleClipBoundsI(ptr ptr)
 @ stdcall GdipGetWorldTransform(ptr ptr)
 @ stdcall GdipGraphicsClear(ptr long)

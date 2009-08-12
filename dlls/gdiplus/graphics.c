@@ -3124,6 +3124,64 @@ GpStatus WINGDIPAPI GdipGetTextRenderingHint(GpGraphics *graphics,
     return Ok;
 }
 
+GpStatus WINGDIPAPI GdipGetVisibleClipBounds(GpGraphics *graphics, GpRectF *rect)
+{
+    GpRegion *clip_rgn;
+    GpStatus stat;
+    GpRectF wnd_rect;
+
+    TRACE("(%p, %p)\n", graphics, rect);
+
+    if(!graphics || !rect)
+        return InvalidParameter;
+
+    if(graphics->busy)
+        return ObjectBusy;
+
+    /* get window bounds */
+    if((stat = get_graphics_bounds(graphics, &wnd_rect)) != Ok)
+        return stat;
+
+    /* intersect window and graphics clipping regions */
+    if((stat = GdipCreateRegion(&clip_rgn)) != Ok)
+        return stat;
+
+    if((stat = GdipCombineRegionRect(clip_rgn, &wnd_rect, CombineModeIntersect)) != Ok)
+        goto cleanup;
+
+    if((stat = GdipCombineRegionRegion(clip_rgn, graphics->clip, CombineModeIntersect)) != Ok)
+        goto cleanup;
+
+    /* get bounds of the region */
+    stat = GdipGetRegionBounds(clip_rgn, graphics, rect);
+
+cleanup:
+    GdipDeleteRegion(clip_rgn);
+
+    return stat;
+}
+
+GpStatus WINGDIPAPI GdipGetVisibleClipBoundsI(GpGraphics *graphics, GpRect *rect)
+{
+    GpRectF rectf;
+    GpStatus stat;
+
+    TRACE("(%p, %p)\n", graphics, rect);
+
+    if(!graphics || !rect)
+        return InvalidParameter;
+
+    if((stat = GdipGetVisibleClipBounds(graphics, &rectf)) == Ok)
+    {
+        rect->X = roundr(rectf.X);
+        rect->Y = roundr(rectf.Y);
+        rect->Width  = roundr(rectf.Width);
+        rect->Height = roundr(rectf.Height);
+    }
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipGetWorldTransform(GpGraphics *graphics, GpMatrix *matrix)
 {
     TRACE("(%p, %p)\n", graphics, matrix);
@@ -4082,15 +4140,6 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
                                             INT flags, GDIPCONST GpMatrix *matrix, RectF *boundingBox)
 {
     FIXME("(%p %p %d %p %p %d %p %p): stub\n", graphics, text, length, font, positions, flags, matrix, boundingBox);
-    return NotImplemented;
-}
-
-/*****************************************************************************
- * GdipGetVisibleClipBoundsI [GDIPLUS.@]
- */
-GpStatus WINGDIPAPI GdipGetVisibleClipBoundsI(GpGraphics *graphics, GpRect *rect)
-{
-    FIXME("(%p %p): stub\n", graphics, rect);
     return NotImplemented;
 }
 
