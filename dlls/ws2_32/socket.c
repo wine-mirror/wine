@@ -144,6 +144,7 @@
 #include "ws2spi.h"
 #include "wsipx.h"
 #include "mstcpip.h"
+#include "af_irda.h"
 #include "winnt.h"
 #include "iphlpapi.h"
 #include "wine/server.h"
@@ -951,6 +952,32 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
         memcpy(&uin->sin_addr,&win->sin_addr,4); /* 4 bytes = 32 address bits */
         break;
     }
+#ifdef HAVE_IRDA
+    case WS_AF_IRDA: {
+        struct sockaddr_irda *uin = (struct sockaddr_irda *)uaddr;
+        const SOCKADDR_IRDA *win = (const SOCKADDR_IRDA *)wsaddr;
+
+        if (wsaddrlen < sizeof(SOCKADDR_IRDA))
+            return 0;
+        uaddrlen = sizeof(struct sockaddr_irda);
+        memset( uaddr, 0, uaddrlen );
+        uin->sir_family = AF_IRDA;
+        if (!strncmp( win->irdaServiceName, "LSAP-SEL", strlen( "LSAP-SEL" ) ))
+        {
+            unsigned int lsap_sel;
+
+            sscanf( win->irdaServiceName, "LSAP-SEL%u", &lsap_sel );
+            uin->sir_lsap_sel = lsap_sel;
+        }
+        else
+        {
+            uin->sir_lsap_sel = LSAP_ANY;
+            memcpy( uin->sir_name, win->irdaServiceName, 25 );
+        }
+        memcpy( &uin->sir_addr, win->irdaDeviceID, sizeof(uin->sir_addr) );
+        break;
+    }
+#endif
     case WS_AF_UNSPEC: {
         /* Try to determine the needed space by the passed windows sockaddr space */
         switch (wsaddrlen) {
@@ -961,6 +988,11 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
 #ifdef HAVE_IPX
         case sizeof(struct WS_sockaddr_ipx):
             uaddrlen = sizeof(struct sockaddr_ipx);
+            break;
+#endif
+#ifdef HAVE_IRDA
+        case sizeof(SOCKADDR_IRDA):
+            uaddrlen = sizeof(struct sockaddr_irda);
             break;
 #endif
         case sizeof(struct WS_sockaddr_in6):
