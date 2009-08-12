@@ -167,6 +167,8 @@ static const struct message TestGetSetTextColorSeq[] = {
 
 static const struct message TestGetSetToolTipsSeq[] = {
     { WM_KILLFOCUS,    sent },
+    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_IME_NOTIFY, sent|optional },
     { TVM_SETTOOLTIPS, sent|wparam|lparam, 0, 0 },
     { TVM_GETTOOLTIPS, sent|wparam|lparam, 0, 0 },
     { 0 }
