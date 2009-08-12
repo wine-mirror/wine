@@ -110,6 +110,14 @@
 # define HAVE_IPX
 #endif
 
+#ifdef HAVE_LINUX_IRDA_H
+# ifdef HAVE_LINUX_TYPES_H
+#  include <linux/types.h>
+# endif
+# include <linux/irda.h>
+# define HAVE_IRDA
+#endif
+
 #ifdef HAVE_POLL_H
 #include <poll.h>
 #endif
@@ -852,11 +860,25 @@ static struct WS_protoent *check_buffer_pe(int size)
 
 /* ----------------------------------- i/o APIs */
 
+static inline BOOL supported_pf(int pf)
+{
+    switch (pf)
+    {
+    case WS_AF_INET:
+    case WS_AF_INET6:
+        return TRUE;
 #ifdef HAVE_IPX
-#define SUPPORTED_PF(pf) ((pf)==WS_AF_INET || (pf)== WS_AF_IPX || (pf) == WS_AF_INET6)
-#else
-#define SUPPORTED_PF(pf) ((pf)==WS_AF_INET || (pf) == WS_AF_INET6)
+    case WS_AF_IPX:
+        return TRUE;
 #endif
+#ifdef HAVE_IRDA
+    case WS_AF_IRDA:
+        return TRUE;
+#endif
+    default:
+        return FALSE;
+    }
+}
 
 
 /**********************************************************************/
@@ -1425,7 +1447,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
 
     if (fd != -1)
     {
-        if (!name || (name->sa_family && !SUPPORTED_PF(name->sa_family)))
+        if (!name || (name->sa_family && !supported_pf(name->sa_family)))
         {
             SetLastError(WSAEAFNOSUPPORT);
         }
