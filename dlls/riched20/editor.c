@@ -1015,7 +1015,8 @@ void ME_RTFSpecialCharHook(RTF_Info *info)
           info->editor->pCursors[1].nOffset = 0;
           nOfs = ME_GetCursorOfs(&info->editor->pCursors[1]);
           nChars = ME_GetCursorOfs(&info->editor->pCursors[0]) - nOfs;
-          ME_InternalDeleteText(info->editor, nOfs, nChars, TRUE);
+          ME_InternalDeleteText(info->editor, &info->editor->pCursors[1],
+                                nChars, TRUE);
         }
 
         para = ME_InsertTableRowEndFromCursor(info->editor);
@@ -1389,15 +1390,18 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   int nEventMask = editor->nEventMask;
   ME_InStream inStream;
   BOOL invalidRTF = FALSE;
+  ME_Cursor *selStart, *selEnd;
 
   TRACE("stream==%p editor==%p format==0x%X\n", stream, editor, format);
   editor->nEventMask = 0;
 
   ME_GetSelectionOfs(editor, &from, &to);
-  if ((format & SFF_SELECTION) && (editor->mode & TM_RICHTEXT)) {
+  if (format & SFF_SELECTION && editor->mode & TM_RICHTEXT)
+  {
+    ME_GetSelection(editor, &selStart, &selEnd);
     style = ME_GetSelectionInsertStyle(editor);
 
-    ME_InternalDeleteText(editor, from, to-from, FALSE);
+    ME_InternalDeleteText(editor, selStart, to - from, FALSE);
 
     /* Don't insert text at the end of the table row */
     if (!editor->bEmulateVersion10) { /* v4.1 */
@@ -1422,12 +1426,12 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
           ME_IsInTable(editor->pCursors[0].pRun))
         return 0;
     }
-  }
-  else {
+  } else {
     style = editor->pBuffer->pDefaultStyle;
     ME_AddRefStyle(style);
     ME_SetSelection(editor, 0, 0);
-    ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor), FALSE);
+    ME_InternalDeleteText(editor, &editor->pCursors[1],
+                          ME_GetTextLength(editor), FALSE);
     from = to = 0;
     ME_ClearTempStyle(editor);
     ME_SetDefaultParaFormat(editor->pCursors[0].pPara->member.para.pFmt);
@@ -1518,7 +1522,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
           editor->pCursors[1].nOffset = 0;
           nOfs = ME_GetCursorOfs(&editor->pCursors[1]);
           nChars = ME_GetCursorOfs(&editor->pCursors[0]) - nOfs;
-          ME_InternalDeleteText(editor, nOfs, nChars, TRUE);
+          ME_InternalDeleteText(editor, &editor->pCursors[1], nChars, TRUE);
           if (parser.tableDef)
             parser.tableDef->tableRowStart = NULL;
         }
@@ -1544,17 +1548,18 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
          are converted according to the standard rules: \r for 2.0, \r\n for 1.0
        */
       if (stripLastCR) {
-        int newfrom, newto;
-        ME_GetSelectionOfs(editor, &newfrom, &newto);
+        int newto;
+        ME_GetSelection(editor, &selStart, &selEnd);
+        newto = ME_GetCursorOfs(selEnd);
         if (newto > to + (editor->bEmulateVersion10 ? 1 : 0)) {
           WCHAR lastchar[3] = {'\0', '\0'};
           int linebreakSize = editor->bEmulateVersion10 ? 2 : 1;
-          ME_Cursor linebreakCursor;
+          ME_Cursor linebreakCursor = *selEnd;
 
-          ME_CursorFromCharOfs(editor, newto - linebreakSize, &linebreakCursor);
+          ME_MoveCursorChars(editor, &linebreakCursor, -linebreakSize);
           ME_GetTextW(editor, lastchar, 2, &linebreakCursor, linebreakSize, 0);
           if (lastchar[0] == '\r' && (lastchar[1] == '\n' || lastchar[1] == '\0')) {
-            ME_InternalDeleteText(editor, newto - linebreakSize, linebreakSize, FALSE);
+            ME_InternalDeleteText(editor, &linebreakCursor, linebreakSize, FALSE);
           }
         }
       }
@@ -2284,7 +2289,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
         result = ME_Copy(editor, selStart, nChars);
         if (result && nKey == 'X')
         {
-          ME_InternalDeleteText(editor, nOfs, nChars, FALSE);
+          ME_InternalDeleteText(editor, selStart, nChars, FALSE);
           ME_CommitUndo(editor);
           ME_UpdateRepaint(editor);
         }
@@ -3222,11 +3227,13 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
 
     bSelection = (pStruct->flags & ST_SELECTION) != 0;
     if (bSelection) {
-      ME_GetSelectionOfs(editor, &from, &to);
+      int nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
       style = ME_GetSelectionInsertStyle(editor);
-      ME_InternalDeleteText(editor, from, to - from, FALSE);
+      ME_InternalDeleteText(editor, &editor->pCursors[nStartCursor], to - from, FALSE);
     } else {
-      ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor), FALSE);
+      ME_Cursor start;
+      ME_SetCursorToStart(editor, &start);
+      ME_InternalDeleteText(editor, &start, ME_GetTextLength(editor), FALSE);
       style = editor->pBuffer->pDefaultStyle;
     }
 
@@ -3417,23 +3424,23 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_CLEAR:
   {
     int from, to;
-    ME_GetSelectionOfs(editor, &from, &to);
-    ME_InternalDeleteText(editor, from, to-from, FALSE);
+    int nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
+    ME_InternalDeleteText(editor, &editor->pCursors[nStartCursor], to-from, FALSE);
     ME_CommitUndo(editor);
     ME_UpdateRepaint(editor);
     return 0;
   }
   case EM_REPLACESEL:
   {
-    int from, to;
+    int from, to, nStartCursor;
     ME_Style *style;
     LPWSTR wszText = lParam ? ME_ToUnicode(unicode, (void *)lParam) : NULL;
     size_t len = wszText ? lstrlenW(wszText) : 0;
     TRACE("EM_REPLACESEL - %s\n", debugstr_w(wszText));
 
-    ME_GetSelectionOfs(editor, &from, &to);
+    nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
     style = ME_GetSelectionInsertStyle(editor);
-    ME_InternalDeleteText(editor, from, to-from, FALSE);
+    ME_InternalDeleteText(editor, &editor->pCursors[nStartCursor], to-from, FALSE);
     ME_InsertTextFromCursor(editor, 0, wszText, len, style);
     ME_ReleaseStyle(style);
     /* drop temporary style if line end */
@@ -3482,8 +3489,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_SETTEXT:
   {
-    ME_Cursor updateLinksStart;
-    ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor), FALSE);
+    ME_Cursor cursor;
+    ME_SetCursorToStart(editor, &cursor);
+    ME_InternalDeleteText(editor, &cursor, ME_GetTextLength(editor), FALSE);
     if (lParam)
     {
       TRACE("WM_SETTEXT lParam==%lx\n",lParam);
@@ -3517,8 +3525,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     else
       TRACE("WM_SETTEXT - NULL\n");
-    ME_SetCursorToStart(editor, &updateLinksStart);
-    ME_UpdateLinkAttribute(editor, &updateLinksStart, INT_MAX);
+    ME_SetCursorToStart(editor, &cursor);
+    ME_UpdateLinkAttribute(editor, &cursor, INT_MAX);
     ME_SetSelection(editor, 0, 0);
     editor->nModifyStep = 0;
     ME_CommitUndo(editor);
@@ -3541,14 +3549,13 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_CUT:
   case WM_COPY:
   {
-    int nOfs, nChars;
-    int nStartCur = ME_GetSelectionOfs(editor, &nOfs, &nChars);
+    int nFrom, nTo, nStartCur = ME_GetSelectionOfs(editor, &nFrom, &nTo);
+    int nChars = nTo - nFrom;
     ME_Cursor *selStart = &editor->pCursors[nStartCur];
 
-    nChars -= nOfs;
     if (ME_Copy(editor, selStart, nChars) && msg == WM_CUT)
     {
-      ME_InternalDeleteText(editor, nOfs, nChars, FALSE);
+      ME_InternalDeleteText(editor, selStart, nChars, FALSE);
       ME_CommitUndo(editor);
       ME_UpdateRepaint(editor);
     }

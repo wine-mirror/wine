@@ -312,9 +312,11 @@ HRESULT WINAPI fnTextSrv_TxSetText(ITextServices *iface,
                                    LPCWSTR pszText)
 {
    ICOM_THIS_MULTI(ITextServicesImpl, lpVtbl, iface);
+   ME_Cursor cursor;
 
-   ME_InternalDeleteText(This->editor, 0, ME_GetTextLength(This->editor),
-                         FALSE);
+   ME_SetCursorToStart(This->editor, &cursor);
+   ME_InternalDeleteText(This->editor, &cursor,
+                         ME_GetTextLength(This->editor), FALSE);
    ME_InsertTextFromCursor(This->editor, 0, pszText, -1,
                            This->editor->pBuffer->pDefaultStyle);
    ME_SetSelection(This->editor, 0, 0);

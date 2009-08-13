@@ -281,23 +281,22 @@ void ME_HideCaret(ME_TextEditor *ed)
   }
 }
 
-BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
-                           BOOL bForce)
+BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
+                           int nChars, BOOL bForce)
 {
-  ME_Cursor c;
+  ME_Cursor c = *start;
+  int nOfs = ME_GetCursorOfs(start);
   int shift = 0;
   int totalChars = nChars;
   ME_DisplayItem *start_para;
 
   /* Prevent deletion past last end of paragraph run. */
   nChars = min(nChars, ME_GetTextLength(editor) - nOfs);
-
-  ME_CursorFromCharOfs(editor, nOfs, &c);
   start_para = c.pPara;
 
   if (!bForce)
   {
-    ME_ProtectPartialTableDeletion(editor, nOfs, &nChars);
+    ME_ProtectPartialTableDeletion(editor, &c, &nChars);
     if (nChars == 0)
       return FALSE;
   }
@@ -444,11 +443,11 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, int nOfs, int nChars,
 }
 
 BOOL ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars)
-{  
+{
   assert(nCursor>=0 && nCursor<editor->nCursors);
   /* text operations set modified state */
   editor->nModifyStep = 1;
-  return ME_InternalDeleteText(editor, ME_GetCursorOfs(&editor->pCursors[nCursor]),
+  return ME_InternalDeleteText(editor, &editor->pCursors[nCursor],
                                nChars, FALSE);
 }
 

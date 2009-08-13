@@ -317,7 +317,9 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
   }
   case diUndoDeleteRun:
   {
-    ME_InternalDeleteText(editor, pUItem->nStart, pUItem->nLen, TRUE);
+    ME_Cursor tmp;
+    ME_CursorFromCharOfs(editor, pUItem->nStart, &tmp);
+    ME_InternalDeleteText(editor, &tmp, pUItem->nLen, TRUE);
     break;
   }
   case diUndoJoinParagraphs:
