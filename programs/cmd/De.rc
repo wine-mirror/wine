@@ -178,7 +178,7 @@ Um eine Umgebungsvariable zu erschaffen oder zu ändern, ist der Syntax nötig:\
 \n\
       SET <Variable>=<Wert>\n\
 \n\
-Wobei <Variable> und <Wert> Zeichenkette sind. Es dürfen keine Leerzeichen vor\n\
+Wobei <Variable> und <Wert> Zeichenketten sind. Es dürfen keine Leerzeichen vor\n\
 dem Gleichheitszeichen sein, noch darf der Variablenname Leerzeichen enthalten.\n\
 \n\
 In Wine werden die Umgebungsvariablen des darunterliegenden Betriebssystems\n\
