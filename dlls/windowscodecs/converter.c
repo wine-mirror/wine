@@ -157,8 +157,14 @@ static ULONG WINAPI FormatConverter_Release(IWICFormatConverter *iface)
 static HRESULT WINAPI FormatConverter_GetSize(IWICFormatConverter *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, puiWidth, puiHeight);
-    return E_NOTIMPL;
+    FormatConverter *This = (FormatConverter*)iface;
+
+    TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
+
+    if (This->source)
+        return IWICBitmapSource_GetSize(This->source, puiWidth, puiHeight);
+    else
+        return WINCODEC_ERR_NOTINITIALIZED;
 }
 
 static HRESULT WINAPI FormatConverter_GetPixelFormat(IWICFormatConverter *iface,
@@ -171,8 +177,14 @@ static HRESULT WINAPI FormatConverter_GetPixelFormat(IWICFormatConverter *iface,
 static HRESULT WINAPI FormatConverter_GetResolution(IWICFormatConverter *iface,
     double *pDpiX, double *pDpiY)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
-    return E_NOTIMPL;
+    FormatConverter *This = (FormatConverter*)iface;
+
+    TRACE("(%p,%p,%p): stub\n", iface, pDpiX, pDpiY);
+
+    if (This->source)
+        return IWICBitmapSource_GetResolution(This->source, pDpiX, pDpiY);
+    else
+        return WINCODEC_ERR_NOTINITIALIZED;
 }
 
 static HRESULT WINAPI FormatConverter_CopyPalette(IWICFormatConverter *iface,
