@@ -1061,7 +1061,7 @@ void WCMD_part_execute(CMD_LIST **cmdList, WCHAR *firstcmd, WCHAR *variable,
       /* FIXME: Only if previous call worked for && or failed for || */
       if ((*cmdList)->prevDelim == CMD_ONFAILURE ||
           (*cmdList)->prevDelim != CMD_ONSUCCESS) {
-        if (processThese) {
+        if (processThese && (*cmdList)->command) {
           WCMD_execute ((*cmdList)->command, (*cmdList)->redirects, variable,
                         value, cmdList);
         }
