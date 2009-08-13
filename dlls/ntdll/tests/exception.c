@@ -47,8 +47,18 @@ static PVOID     (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG first, PVECTORE
 static ULONG     (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID handler);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
 static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
+static NTSTATUS  (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+static NTSTATUS  (WINAPI *pNtSetInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG);
 
 #ifdef __i386__
+
+#ifndef __WINE_WINTRNL_H
+#define ProcessExecuteFlags 0x22
+#define MEM_EXECUTE_OPTION_DISABLE   0x01
+#define MEM_EXECUTE_OPTION_ENABLE    0x02
+#define MEM_EXECUTE_OPTION_PERMANENT 0x08
+#endif
+
 static int      my_argc;
 static char**   my_argv;
 static int      test_stage;
@@ -183,23 +193,30 @@ static int got_exception;
 static BOOL have_vectored_api;
 
 static void run_exception_test(void *handler, const void* context,
-                               const void *code, unsigned int code_size)
+                               const void *code, unsigned int code_size,
+                               DWORD access)
 {
     struct {
         EXCEPTION_REGISTRATION_RECORD frame;
         const void *context;
     } exc_frame;
     void (*func)(void) = code_mem;
+    DWORD oldaccess, oldaccess2;
 
     exc_frame.frame.Handler = handler;
     exc_frame.frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
     exc_frame.context = context;
 
     memcpy(code_mem, code, code_size);
+    if(access)
+        VirtualProtect(code_mem, code_size, access, &oldaccess);
 
     pNtCurrentTeb()->Tib.ExceptionList = &exc_frame.frame;
     func();
     pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
+
+    if(access)
+        VirtualProtect(code_mem, code_size, oldaccess, &oldaccess2);
 }
 
 static LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -397,7 +414,7 @@ static void test_prot_fault(void)
     {
         got_exception = 0;
         run_exception_test(handler, &exceptions[i], &exceptions[i].code,
-                           sizeof(exceptions[i].code));
+                           sizeof(exceptions[i].code), 0);
         if (!i && !got_exception)
         {
             trace( "No exception, assuming win9x, no point in testing further\n" );
@@ -586,7 +603,7 @@ static void test_exceptions(void)
     }
 
     /* test handling of debug registers */
-    run_exception_test(dreg_handler, NULL, &segfault_code, sizeof(segfault_code));
+    run_exception_test(dreg_handler, NULL, &segfault_code, sizeof(segfault_code), 0);
 
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     res = pNtGetContextThread(GetCurrentThread(), &ctx);
@@ -596,17 +613,17 @@ static void test_exceptions(void)
 
     /* test single stepping behavior */
     got_exception = 0;
-    run_exception_test(single_step_handler, NULL, &single_stepcode, sizeof(single_stepcode));
+    run_exception_test(single_step_handler, NULL, &single_stepcode, sizeof(single_stepcode), 0);
     ok(got_exception == 3, "expected 3 single step exceptions, got %d\n", got_exception);
 
     /* test alignment exceptions */
     got_exception = 0;
-    run_exception_test(align_check_handler, NULL, align_check_code, sizeof(align_check_code));
+    run_exception_test(align_check_handler, NULL, align_check_code, sizeof(align_check_code), 0);
     ok(got_exception == 0, "got %d alignment faults, expected 0\n", got_exception);
 
     /* test direction flag */
     got_exception = 0;
-    run_exception_test(direction_flag_handler, NULL, direction_flag_code, sizeof(direction_flag_code));
+    run_exception_test(direction_flag_handler, NULL, direction_flag_code, sizeof(direction_flag_code), 0);
     ok(got_exception == 1, "got %d exceptions, expected 1\n", got_exception);
 
     /* test single stepping over hardware breakpoint */
@@ -618,11 +635,11 @@ static void test_exceptions(void)
     ok( res == STATUS_SUCCESS, "NtSetContextThread faild with %x\n", res);
 
     got_exception = 0;
-    run_exception_test(bpx_handler, NULL, dummy_code, sizeof(dummy_code));
+    run_exception_test(bpx_handler, NULL, dummy_code, sizeof(dummy_code), 0);
     ok( got_exception == 4,"expected 4 exceptions, got %d\n", got_exception);
 
     /* test int3 handling */
-    run_exception_test(int3_handler, NULL, int3_code, sizeof(int3_code));
+    run_exception_test(int3_handler, NULL, int3_code, sizeof(int3_code), 0);
 }
 
 static void test_debugger(void)
@@ -828,7 +845,7 @@ static void test_simd_exceptions(void)
     /* test if CPU & OS can do sse */
     stage = 1;
     got_exception = 0;
-    run_exception_test(simd_fault_handler, &stage, sse_check, sizeof(sse_check));
+    run_exception_test(simd_fault_handler, &stage, sse_check, sizeof(sse_check), 0);
     if(got_exception) {
         skip("system doesn't support SSE\n");
         return;
@@ -838,7 +855,7 @@ static void test_simd_exceptions(void)
     stage = 2;
     got_exception = 0;
     run_exception_test(simd_fault_handler, &stage, simd_exception_test,
-                       sizeof(simd_exception_test));
+                       sizeof(simd_exception_test), 0);
     ok( got_exception == 1, "got exception: %i, should be 1\n", got_exception);
 }
 
@@ -904,18 +921,161 @@ static void test_fpu_exceptions(void)
     struct fpu_exception_info info;
 
     memset(&info, 0, sizeof(info));
-    run_exception_test(fpu_exception_handler, &info, fpu_exception_test_ie, sizeof(fpu_exception_test_ie));
+    run_exception_test(fpu_exception_handler, &info, fpu_exception_test_ie, sizeof(fpu_exception_test_ie), 0);
     ok(info.exception_code == EXCEPTION_FLT_STACK_CHECK,
             "Got exception code %#x, expected EXCEPTION_FLT_STACK_CHECK\n", info.exception_code);
     ok(info.exception_offset == 0x19, "Got exception offset %#x, expected 0x19\n", info.exception_offset);
     ok(info.eip_offset == 0x1b, "Got EIP offset %#x, expected 0x1b\n", info.eip_offset);
 
     memset(&info, 0, sizeof(info));
-    run_exception_test(fpu_exception_handler, &info, fpu_exception_test_de, sizeof(fpu_exception_test_de));
+    run_exception_test(fpu_exception_handler, &info, fpu_exception_test_de, sizeof(fpu_exception_test_de), 0);
     ok(info.exception_code == EXCEPTION_FLT_DIVIDE_BY_ZERO,
             "Got exception code %#x, expected EXCEPTION_FLT_DIVIDE_BY_ZERO\n", info.exception_code);
     ok(info.exception_offset == 0x17, "Got exception offset %#x, expected 0x17\n", info.exception_offset);
     ok(info.eip_offset == 0x19, "Got EIP offset %#x, expected 0x19\n", info.eip_offset);
+}
+
+struct dpe_exception_info {
+    BOOL exception_caught;
+    DWORD exception_info;
+};
+
+static DWORD dpe_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+        CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
+{
+    DWORD old_prot;
+    struct dpe_exception_info *info = *(struct dpe_exception_info **)(frame + 1);
+
+    ok(rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION,
+       "Exception code %08x\n", rec->ExceptionCode);
+    ok(rec->NumberParameters == 2,
+       "Parameter count: %d\n", rec->NumberParameters);
+    ok((LPVOID)rec->ExceptionInformation[1] == code_mem,
+       "Exception address: %p, expected %p\n",
+       (LPVOID)rec->ExceptionInformation[1], code_mem);
+
+    info->exception_info = rec->ExceptionInformation[0];
+    info->exception_caught = TRUE;
+
+    VirtualProtect(code_mem, 1, PAGE_EXECUTE_READWRITE, &old_prot);
+    return ExceptionContinueExecution;
+}
+
+static void test_dpe_exceptions(void)
+{
+    static char single_ret[] = {0xC3};
+    struct dpe_exception_info info;
+    NTSTATUS stat;
+    BOOL has_hw_support;
+    BOOL is_permanent = FALSE, can_test_without = TRUE, can_test_with = TRUE;
+    DWORD val;
+    ULONG len;
+
+    /* Query DEP with len to small */
+    stat = pNtQueryInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val - 1, &len);
+    if(stat == STATUS_INVALID_INFO_CLASS)
+    {
+        skip("This software platform does not support DEP\n");
+        return;
+    }
+    ok(stat == STATUS_INFO_LENGTH_MISMATCH, "buffer too small: %08x\n", stat);
+
+    /* Query DEP */
+    stat = pNtQueryInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val, &len);
+    ok(stat == STATUS_SUCCESS, "querying DEP: status %08x\n", stat);
+    if(stat == STATUS_SUCCESS)
+    {
+        ok(len == sizeof val, "returned length: %d\n", len);
+        if(val & MEM_EXECUTE_OPTION_PERMANENT)
+        {
+            skip("toggling DEP impossible - status locked\n");
+            is_permanent = TRUE;
+            if(val & MEM_EXECUTE_OPTION_DISABLE)
+                can_test_without = FALSE;
+            else
+                can_test_with = FALSE;
+        }
+    }
+
+    if(!is_permanent)
+    {
+        /* Enable DEP */
+        val = MEM_EXECUTE_OPTION_DISABLE;
+        stat = pNtSetInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val);
+        ok(stat == STATUS_SUCCESS, "enabling DEP: status %08x\n", stat);
+    }
+
+    if(can_test_with)
+    {
+        /* Try access to locked page with DEP on*/
+        info.exception_caught = FALSE;
+        run_exception_test(dpe_exception_handler, &info, single_ret, sizeof(single_ret), PAGE_NOACCESS);
+        ok(info.exception_caught == TRUE, "Execution of disabled memory suceeded\n");
+        ok(info.exception_info == EXCEPTION_READ_FAULT ||
+           info.exception_info == EXCEPTION_EXECUTE_FAULT,
+              "Access violation type: %08x\n", (unsigned)info.exception_info);
+        has_hw_support = info.exception_info == EXCEPTION_EXECUTE_FAULT;
+        trace("DEP hardware support: %s\n", has_hw_support?"Yes":"No");
+
+        /* Try execution of data with DEP on*/
+        info.exception_caught = FALSE;
+        run_exception_test(dpe_exception_handler, &info, single_ret, sizeof(single_ret), PAGE_READWRITE);
+        if(has_hw_support)
+        {
+            ok(info.exception_caught == TRUE, "Execution of data memory suceeded\n");
+            ok(info.exception_info == EXCEPTION_EXECUTE_FAULT,
+                  "Access violation type: %08x\n", (unsigned)info.exception_info);
+        }
+        else
+            ok(info.exception_caught == FALSE, "Execution trapped without hardware support\n");
+    }
+    else
+        skip("DEP is in AlwaysOff state\n");
+
+    if(!is_permanent)
+    {
+        /* Disable DEP */
+        val = MEM_EXECUTE_OPTION_ENABLE;
+        stat = pNtSetInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val);
+        ok(stat == STATUS_SUCCESS, "disabling DEP: status %08x\n", stat);
+    }
+
+    /* page is read without exec here */
+    if(can_test_without)
+    {
+        /* Try execution of data with DEP off */
+        info.exception_caught = FALSE;
+        run_exception_test(dpe_exception_handler, &info, single_ret, sizeof(single_ret), PAGE_READWRITE);
+        ok(info.exception_caught == FALSE, "Execution trapped with DEP turned off\n");
+
+        /* Try access to locked page with DEP off - error code is different than
+           with hardware DEP on */
+        info.exception_caught = FALSE;
+        run_exception_test(dpe_exception_handler, &info, single_ret, sizeof(single_ret), PAGE_NOACCESS);
+        ok(info.exception_caught == TRUE, "Execution of disabled memory suceeded\n");
+        ok(info.exception_info == EXCEPTION_READ_FAULT,
+              "Access violation type: %08x\n", (unsigned)info.exception_info);
+    }
+    else
+        skip("DEP is in AlwaysOn state\n");
+
+    if(!is_permanent)
+    {
+        /* Turn off DEP permanently */
+        val = MEM_EXECUTE_OPTION_ENABLE | MEM_EXECUTE_OPTION_PERMANENT;
+        stat = pNtSetInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val);
+        ok(stat == STATUS_SUCCESS, "disabling DEP permanently: status %08x\n", stat);
+    }
+
+    /* Try to turn off DEP */
+    val = MEM_EXECUTE_OPTION_ENABLE;
+    stat = pNtSetInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val);
+    ok(stat == STATUS_ACCESS_DENIED, "disabling DEP while permanent: status %08x\n", stat);
+
+    /* Try to turn on DEP */
+    val = MEM_EXECUTE_OPTION_DISABLE;
+    stat = pNtSetInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val);
+    ok(stat == STATUS_ACCESS_DENIED, "enabling DEP while permanent: status %08x\n", stat);
 }
 
 #elif defined(__x86_64__)
@@ -1215,6 +1375,10 @@ START_TEST(exception)
                                                                  "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll,
                                                                  "RtlRemoveVectoredExceptionHandler" );
+    pNtQueryInformationProcess         = (void*)GetProcAddress( hntdll,
+                                                                 "NtQueryInformationProcess" );
+    pNtSetInformationProcess           = (void*)GetProcAddress( hntdll,
+                                                                 "NtSetInformationProcess" );
 
 #ifdef __i386__
     if (!pNtCurrentTeb)
@@ -1271,6 +1435,7 @@ START_TEST(exception)
     test_debugger();
     test_simd_exceptions();
     test_fpu_exceptions();
+    test_dpe_exceptions();
 
 #elif defined(__x86_64__)
 
