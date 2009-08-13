@@ -24,9 +24,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-static BOOL
-ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs);
-
 void ME_SetCursorToStart(ME_TextEditor *editor, ME_Cursor *cursor)
 {
   cursor->pPara = editor->pBuffer->pFirst->member.para.next_para;
@@ -183,7 +180,8 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
   }
 
   ME_CursorFromCharOfs(editor, from, &editor->pCursors[1]);
-  ME_CursorFromCharOfs(editor, to, &editor->pCursors[0]);
+  editor->pCursors[0] = editor->pCursors[1];
+  ME_MoveCursorChars(editor, &editor->pCursors[0], to - from);
   /* Selection is not allowed in the middle of an end paragraph run. */
   if (editor->pCursors[1].pRun->member.run.nFlags & MERF_ENDPARA)
     editor->pCursors[1].nOffset = 0;
@@ -601,77 +599,85 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
   }
 }
 
-
-static BOOL
-ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *pCursor, int nRelOfs)
+/* Move the cursor nRelOfs characters (either forwards or backwards)
+ *
+ * returns the actual number of characters moved.
+ **/
+int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs)
 {
-  ME_DisplayItem *pRun = pCursor->pRun;
-
-  if (nRelOfs == -1)
+  cursor->nOffset += nRelOfs;
+  if (cursor->nOffset < 0)
   {
-    if (!pCursor->nOffset)
+    cursor->nOffset += cursor->pRun->member.run.nCharOfs;
+    if (cursor->nOffset >= 0)
     {
-      ME_DisplayItem *pPara = pCursor->pPara;
+      /* new offset in the same paragraph */
       do {
-        pRun = ME_FindItemBack(pRun, diRunOrParagraph);
-        assert(pRun);
-        switch (pRun->type)
-        {
-          case diRun:
-            break;
-          case diParagraph:
-            pPara = pRun;
-            if (pPara->member.para.prev_para->type == diTextStart)
-              return FALSE;
-            pRun = ME_FindItemBack(pPara, diRunOrParagraph);
-            pPara = pPara->member.para.prev_para;
-            /* every paragraph ought to have at least one run */
-            assert(pRun && pRun->type == diRun);
-            assert(pRun->member.run.nFlags & MERF_ENDPARA);
-            break;
-          default:
-            assert(pRun->type != diRun && pRun->type != diParagraph);
-            return FALSE;
-        }
-      } while (RUN_IS_HIDDEN(&pRun->member.run) ||
-               pRun->member.run.nFlags & MERF_HIDDEN);
-      pCursor->pPara = pPara;
-      pCursor->pRun = pRun;
-      if (pRun->member.run.nFlags & MERF_ENDPARA)
-        pCursor->nOffset = 0;
-      else
-        pCursor->nOffset = pRun->member.run.strText->nLen;
+        cursor->pRun = ME_FindItemBack(cursor->pRun, diRun);
+      } while (cursor->nOffset < cursor->pRun->member.run.nCharOfs);
+      cursor->nOffset -= cursor->pRun->member.run.nCharOfs;
+      return nRelOfs;
     }
 
-    if (pCursor->nOffset)
-      pCursor->nOffset = pCursor->nOffset + nRelOfs;
-    return TRUE;
-  }
-  else
-  {
-    if (!(pRun->member.run.nFlags & MERF_ENDPARA))
+    cursor->nOffset += cursor->pPara->member.para.nCharOfs;
+    if (cursor->nOffset <= 0)
     {
-      int new_ofs = pCursor->nOffset + nRelOfs;
-
-      if (new_ofs < pRun->member.run.strText->nLen)
-      {
-        pCursor->nOffset = new_ofs;
-        return TRUE;
-      }
+      /* moved to the start of the text */
+      nRelOfs -= cursor->nOffset;
+      ME_SetCursorToStart(editor, cursor);
+      return nRelOfs;
     }
+
+    /* new offset in a previous paragraph */
     do {
-      pRun = ME_FindItemFwd(pRun, diRun);
-    } while (pRun && (RUN_IS_HIDDEN(&pRun->member.run) ||
-                      pRun->member.run.nFlags & MERF_HIDDEN));
-    if (pRun)
-    {
-      pCursor->pPara = ME_GetParagraph(pRun);
-      pCursor->pRun = pRun;
-      pCursor->nOffset = 0;
-      return TRUE;
+      cursor->pPara = cursor->pPara->member.para.prev_para;
+    } while (cursor->nOffset < cursor->pPara->member.para.nCharOfs);
+    cursor->nOffset -= cursor->pPara->member.para.nCharOfs;
+
+    cursor->pRun = ME_FindItemBack(cursor->pPara->member.para.next_para, diRun);
+    while (cursor->nOffset < cursor->pRun->member.run.nCharOfs) {
+      cursor->pRun = ME_FindItemBack(cursor->pRun, diRun);
     }
-  }
-  return FALSE;
+    cursor->nOffset -= cursor->pRun->member.run.nCharOfs;
+  } else if (cursor->nOffset >= cursor->pRun->member.run.strText->nLen) {
+    ME_DisplayItem *next_para;
+    int new_offset;
+
+    new_offset = ME_GetCursorOfs(cursor);
+    next_para = cursor->pPara->member.para.next_para;
+    if (new_offset < next_para->member.para.nCharOfs)
+    {
+      /* new offset in the same paragraph */
+      do {
+        cursor->nOffset -= cursor->pRun->member.run.strText->nLen;
+        cursor->pRun = ME_FindItemFwd(cursor->pRun, diRun);
+      } while (cursor->nOffset >= cursor->pRun->member.run.strText->nLen);
+      return nRelOfs;
+    }
+
+    if (new_offset >= ME_GetTextLength(editor))
+    {
+      /* new offset at the end of the text */
+      ME_SetCursorToEnd(editor, cursor);
+      nRelOfs -= new_offset - ME_GetTextLength(editor);
+      return nRelOfs;
+    }
+
+    /* new offset in a following paragraph */
+    do {
+      cursor->pPara = next_para;
+      next_para = next_para->member.para.next_para;
+    } while (new_offset >= next_para->member.para.nCharOfs);
+
+    cursor->nOffset = new_offset - cursor->pPara->member.para.nCharOfs;
+    cursor->pRun = ME_FindItemFwd(cursor->pPara, diRun);
+    while (cursor->nOffset >= cursor->pRun->member.run.strText->nLen)
+    {
+      cursor->nOffset -= cursor->pRun->member.run.strText->nLen;
+      cursor->pRun = ME_FindItemFwd(cursor->pRun, diRun);
+    }
+  } /* else new offset is in the same run */
+  return nRelOfs;
 }
 
 

@@ -169,6 +169,7 @@ BOOL ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars);
 void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor, 
                              const WCHAR *str, int len, ME_Style *style);
 void ME_InsertEndRowFromCursor(ME_TextEditor *editor, int nCursor);
+int ME_MoveCursorChars(ME_TextEditor *editor, ME_Cursor *cursor, int nRelOfs);
 BOOL ME_ArrowKey(ME_TextEditor *ed, int nVKey, BOOL extend, BOOL ctrl);
 
 int ME_GetCursorOfs(const ME_Cursor *cursor);

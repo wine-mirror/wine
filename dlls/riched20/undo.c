@@ -300,7 +300,8 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
   {
     ME_Cursor start, end;
     ME_CursorFromCharOfs(editor, pUItem->nStart, &start);
-    ME_CursorFromCharOfs(editor, pUItem->nStart + pUItem->nLen, &end);
+    end = start;
+    ME_MoveCursorChars(editor, &end, pUItem->nLen);
     ME_SetCharFormat(editor, &start, &end, &pItem->member.ustyle->fmt);
     break;
   }
