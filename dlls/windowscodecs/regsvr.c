@@ -790,6 +790,7 @@ static struct regsvr_decoder const decoder_list[] = {
 
 static GUID const * const converter_formats[] = {
     &GUID_WICPixelFormat16bppBGR555,
+    &GUID_WICPixelFormat16bppBGR565,
     &GUID_WICPixelFormat32bppBGR,
     &GUID_WICPixelFormat32bppBGRA,
     NULL
