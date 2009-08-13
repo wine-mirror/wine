@@ -1640,10 +1640,8 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
 {
   const int nLen = lstrlenW(text);
   const int nTextLen = ME_GetTextLength(editor);
-  int nStart, nEnd;
   int nMin, nMax;
-  ME_DisplayItem *item;
-  ME_DisplayItem *para;
+  ME_Cursor cursor;
   WCHAR wLastChar = ' ';
 
   TRACE("flags==0x%08x, chrg->cpMin==%d, chrg->cpMax==%d text==%s\n",
@@ -1704,17 +1702,17 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     /* If possible, find the character before where the search starts */
     if ((flags & FR_WHOLEWORD) && nMin)
     {
-      ME_RunOfsFromCharOfs(editor, nMin - 1, NULL, &item, &nStart);
-      wLastChar = item->member.run.strText->szData[nStart];
+      ME_CursorFromCharOfs(editor, nMin - 1, &cursor);
+      wLastChar = cursor.pRun->member.run.strText->szData[cursor.nOffset];
+      ME_MoveCursorChars(editor, &cursor, 1);
+    } else {
+      ME_CursorFromCharOfs(editor, nMin, &cursor);
     }
 
-    ME_RunOfsFromCharOfs(editor, nMin, &para, &item, &nStart);
-
-    while (item
-           && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart + nLen <= nMax)
+    while (cursor.pRun && ME_GetCursorOfs(&cursor) + nLen <= nMax)
     {
-      ME_DisplayItem *pCurItem = item;
-      int nCurStart = nStart;
+      ME_DisplayItem *pCurItem = cursor.pRun;
+      int nCurStart = cursor.nOffset;
       int nMatched = 0;
     
       while (pCurItem && ME_CharCompare(pCurItem->member.run.strText->szData[nCurStart + nMatched], text[nMatched], (flags & FR_MATCHCASE)))
@@ -1747,14 +1745,14 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
               break;
           }
 
-          nStart += para->member.para.nCharOfs + item->member.run.nCharOfs;
+          cursor.nOffset += cursor.pPara->member.para.nCharOfs + cursor.pRun->member.run.nCharOfs;
           if (chrgText)
           {
-            chrgText->cpMin = nStart;
-            chrgText->cpMax = nStart + nLen;
+            chrgText->cpMin = cursor.nOffset;
+            chrgText->cpMax = cursor.nOffset + nLen;
           }
-          TRACE("found at %d-%d\n", nStart, nStart + nLen);
-          return nStart;
+          TRACE("found at %d-%d\n", cursor.nOffset, cursor.nOffset + nLen);
+          return cursor.nOffset;
         }
         if (nCurStart + nMatched == pCurItem->member.run.strText->nLen)
         {
@@ -1767,11 +1765,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       else
         wLastChar = ' ';
 
-      nStart++;
-      if (nStart == item->member.run.strText->nLen)
+      cursor.nOffset++;
+      if (cursor.nOffset == cursor.pRun->member.run.strText->nLen)
       {
-        ME_NextRun(&para, &item);
-        nStart = 0;
+        ME_NextRun(&cursor.pPara, &cursor.pRun);
+        cursor.nOffset = 0;
       }
     }
   }
@@ -1780,18 +1778,18 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
     /* If possible, find the character after where the search ends */
     if ((flags & FR_WHOLEWORD) && nMax < nTextLen - 1)
     {
-      ME_RunOfsFromCharOfs(editor, nMax + 1, NULL, &item, &nEnd);
-      wLastChar = item->member.run.strText->szData[nEnd];
+      ME_CursorFromCharOfs(editor, nMax + 1, &cursor);
+      wLastChar = cursor.pRun->member.run.strText->szData[cursor.nOffset];
+      ME_MoveCursorChars(editor, &cursor, -1);
+    } else {
+      ME_CursorFromCharOfs(editor, nMax, &cursor);
     }
 
-    ME_RunOfsFromCharOfs(editor, nMax, &para, &item, &nEnd);
-
-    while (item
-           && para->member.para.nCharOfs + item->member.run.nCharOfs + nEnd - nLen >= nMin)
+    while (cursor.pRun && ME_GetCursorOfs(&cursor) - nLen >= nMin)
     {
-      ME_DisplayItem *pCurItem = item;
-      ME_DisplayItem *pCurPara = para;
-      int nCurEnd = nEnd;
+      ME_DisplayItem *pCurItem = cursor.pRun;
+      ME_DisplayItem *pCurPara = cursor.pPara;
+      int nCurEnd = cursor.nOffset;
       int nMatched = 0;
 
       if (nCurEnd == 0)
@@ -1811,6 +1809,7 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
           ME_DisplayItem *pPrevItem = pCurItem;
           int nPrevEnd = nCurEnd;
           WCHAR wPrevChar;
+          int nStart;
 
           /* Check to see if previous character is a whitespace */
           if (flags & FR_WHOLEWORD)
@@ -1854,11 +1853,11 @@ ME_FindText(ME_TextEditor *editor, DWORD flags, const CHARRANGE *chrg, const WCH
       else
         wLastChar = ' ';
 
-      nEnd--;
-      if (nEnd < 0)
+      cursor.nOffset--;
+      if (cursor.nOffset < 0)
       {
-        ME_PrevRun(&para, &item);
-        nEnd = item->member.run.strText->nLen;
+        ME_PrevRun(&cursor.pPara, &cursor.pRun);
+        cursor.nOffset = cursor.pRun->member.run.strText->nLen;
       }
     }
   }
