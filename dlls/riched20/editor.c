@@ -2001,7 +2001,7 @@ static BOOL ME_Paste(ME_TextEditor *editor)
   return TRUE;
 }
 
-static BOOL ME_Copy(ME_TextEditor *editor, CHARRANGE *range)
+static BOOL ME_Copy(ME_TextEditor *editor, const ME_Cursor *start, int nChars)
 {
   LPDATAOBJECT dataObj = NULL;
   HRESULT hr = S_OK;
@@ -2010,9 +2010,14 @@ static BOOL ME_Copy(ME_TextEditor *editor, CHARRANGE *range)
     return FALSE; /* Copying or Cutting masked text isn't allowed */
 
   if(editor->lpOleCallback)
-    hr = IRichEditOleCallback_GetClipboardData(editor->lpOleCallback, range, RECO_COPY, &dataObj);
+  {
+    CHARRANGE range;
+    range.cpMin = ME_GetCursorOfs(start);
+    range.cpMax = range.cpMin + nChars;
+    hr = IRichEditOleCallback_GetClipboardData(editor->lpOleCallback, &range, RECO_COPY, &dataObj);
+  }
   if(FAILED(hr) || !dataObj)
-    hr = ME_GetDataObject(editor, range, &dataObj);
+    hr = ME_GetDataObject(editor, start, nChars, &dataObj);
   if(SUCCEEDED(hr)) {
     hr = OleSetClipboard(dataObj);
     IDataObject_Release(dataObj);
@@ -2270,14 +2275,16 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
     case 'X':
       if (ctrl_is_down)
       {
-        CHARRANGE range;
         BOOL result;
+        int nOfs, nChars;
+        int nStartCur = ME_GetSelectionOfs(editor, &nOfs, &nChars);
+        ME_Cursor *selStart = &editor->pCursors[nStartCur];
 
-        ME_GetSelectionOfs(editor, &range.cpMin, &range.cpMax);
-        result = ME_Copy(editor, &range);
+        nChars -= nOfs;
+        result = ME_Copy(editor, selStart, nChars);
         if (result && nKey == 'X')
         {
-          ME_InternalDeleteText(editor, range.cpMin, range.cpMax-range.cpMin, FALSE);
+          ME_InternalDeleteText(editor, nOfs, nChars, FALSE);
           ME_CommitUndo(editor);
           ME_UpdateRepaint(editor);
         }
@@ -3537,12 +3544,14 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_CUT:
   case WM_COPY:
   {
-    CHARRANGE range;
-    ME_GetSelectionOfs(editor, &range.cpMin, &range.cpMax);
+    int nOfs, nChars;
+    int nStartCur = ME_GetSelectionOfs(editor, &nOfs, &nChars);
+    ME_Cursor *selStart = &editor->pCursors[nStartCur];
 
-    if (ME_Copy(editor, &range) && msg == WM_CUT)
+    nChars -= nOfs;
+    if (ME_Copy(editor, selStart, nChars) && msg == WM_CUT)
     {
-      ME_InternalDeleteText(editor, range.cpMin, range.cpMax-range.cpMin, FALSE);
+      ME_InternalDeleteText(editor, nOfs, nChars, FALSE);
       ME_CommitUndo(editor);
       ME_UpdateRepaint(editor);
     }

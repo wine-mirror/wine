@@ -326,26 +326,23 @@ static const IDataObjectVtbl VT_DataObjectImpl =
     DataObjectImpl_EnumDAdvise
 };
 
-static HGLOBAL get_unicode_text(ME_TextEditor *editor, const CHARRANGE *lpchrg)
+static HGLOBAL get_unicode_text(ME_TextEditor *editor, const ME_Cursor *start, int nChars)
 {
     int pars = 0;
-    int len;
     WCHAR *data;
     HANDLE ret;
-    ME_Cursor start;
     ME_DisplayItem *para;
+    int nEnd = ME_GetCursorOfs(start) + nChars;
 
-    ME_CursorFromCharOfs(editor, lpchrg->cpMin, &start);
     /* count paragraphs in range */
-    para = start.pPara;
+    para = start->pPara;
     while((para = para->member.para.next_para) &&
-          para->member.para.nCharOfs <= lpchrg->cpMax)
+          para->member.para.nCharOfs <= nEnd)
         pars++;
 
-    len = lpchrg->cpMax-lpchrg->cpMin;
-    ret = GlobalAlloc(GMEM_MOVEABLE, sizeof(WCHAR)*(len+pars+1));
+    ret = GlobalAlloc(GMEM_MOVEABLE, sizeof(WCHAR) * (nChars + pars + 1));
     data = GlobalLock(ret);
-    len = ME_GetTextW(editor, data, len+pars, &start, len, TRUE);
+    ME_GetTextW(editor, data, nChars + pars, start, nChars, TRUE);
     GlobalUnlock(ret);
     return ret;
 }
@@ -392,10 +389,11 @@ static HGLOBAL get_rtf_text(ME_TextEditor *editor, const CHARRANGE *lpchrg)
     return gds.hData;
 }
 
-HRESULT ME_GetDataObject(ME_TextEditor *editor, const CHARRANGE *lpchrg, LPDATAOBJECT *lplpdataobj)
+HRESULT ME_GetDataObject(ME_TextEditor *editor, const ME_Cursor *start,
+                         int nChars, LPDATAOBJECT *lplpdataobj)
 {
     DataObjectImpl *obj;
-    TRACE("(%p,%d,%d)\n", editor, lpchrg->cpMin, lpchrg->cpMax);
+    TRACE("(%p,%d,%d)\n", editor, ME_GetCursorOfs(start), nChars);
 
     obj = heap_alloc(sizeof(DataObjectImpl));
     if(cfRTF == 0)
@@ -403,7 +401,7 @@ HRESULT ME_GetDataObject(ME_TextEditor *editor, const CHARRANGE *lpchrg, LPDATAO
 
     obj->lpVtbl = &VT_DataObjectImpl;
     obj->ref = 1;
-    obj->unicode = get_unicode_text(editor, lpchrg);
+    obj->unicode = get_unicode_text(editor, start, nChars);
     obj->rtf = NULL;
 
     obj->fmtetc_cnt = 1;
@@ -412,7 +410,10 @@ HRESULT ME_GetDataObject(ME_TextEditor *editor, const CHARRANGE *lpchrg, LPDATAO
     obj->fmtetc = GlobalAlloc(GMEM_ZEROINIT, obj->fmtetc_cnt*sizeof(FORMATETC));
     InitFormatEtc(obj->fmtetc[0], CF_UNICODETEXT, TYMED_HGLOBAL);
     if(editor->mode & TM_RICHTEXT) {
-        obj->rtf = get_rtf_text(editor, lpchrg);
+        CHARRANGE chrg;
+        chrg.cpMin = ME_GetCursorOfs(start);
+        chrg.cpMax = chrg.cpMin + nChars;
+        obj->rtf = get_rtf_text(editor, &chrg);
         InitFormatEtc(obj->fmtetc[1], cfRTF, TYMED_HGLOBAL);
     }
 

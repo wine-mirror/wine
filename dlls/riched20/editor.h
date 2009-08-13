@@ -335,4 +335,4 @@ LRESULT ME_StreamOutRange(ME_TextEditor *editor, DWORD dwFormat, int nStart, int
 LRESULT ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream);
 
 /* clipboard.c */
-HRESULT ME_GetDataObject(ME_TextEditor *editor, const CHARRANGE *lpchrg, LPDATAOBJECT *lplpdataobj);
+HRESULT ME_GetDataObject(ME_TextEditor *editor, const ME_Cursor *start, int nChars, LPDATAOBJECT *lplpdataobj);

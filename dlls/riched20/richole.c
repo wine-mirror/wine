@@ -315,16 +315,21 @@ IRichEditOle_fnGetClipboardData(IRichEditOle *me, CHARRANGE *lpchrg,
                DWORD reco, LPDATAOBJECT *lplpdataobj)
 {
     IRichEditOleImpl *This = impl_from_IRichEditOle(me);
-    CHARRANGE tmpchrg;
+    ME_Cursor start;
+    int nChars;
 
     TRACE("(%p,%p,%d)\n",This, lpchrg, reco);
     if(!lplpdataobj)
         return E_INVALIDARG;
     if(!lpchrg) {
-        ME_GetSelectionOfs(This->editor, &tmpchrg.cpMin, &tmpchrg.cpMax);
-        lpchrg = &tmpchrg;
+        int nFrom, nTo, nStartCur = ME_GetSelectionOfs(This->editor, &nFrom, &nTo);
+        start = This->editor->pCursors[nStartCur];
+        nChars = nTo - nFrom;
+    } else {
+        ME_CursorFromCharOfs(This->editor, lpchrg->cpMin, &start);
+        nChars = lpchrg->cpMax - lpchrg->cpMin;
     }
-    return ME_GetDataObject(This->editor, lpchrg, lplpdataobj);
+    return ME_GetDataObject(This->editor, &start, nChars, lplpdataobj);
 }
 
 static LONG WINAPI IRichEditOle_fnGetLinkCount(IRichEditOle *me)
