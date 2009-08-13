@@ -20,9 +20,13 @@
 #include <windows.h>
 #include <commctrl.h>
 
+#include "resources.h"
+
 #include "wine/test.h"
 
 static HWND parent;
+
+static LONG active_page = -1;
 
 static int CALLBACK sheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
 {
@@ -199,9 +203,140 @@ static void test_disableowner(void)
     DestroyWindow(parent);
 }
 
+static LRESULT CALLBACK nav_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch(msg){
+    case WM_NOTIFY:
+        {
+            LPNMHDR hdr = (LPNMHDR)lparam;
+            switch(hdr->code){
+            case PSN_SETACTIVE:
+                active_page = PropSheet_HwndToIndex(hdr->hwndFrom, hwnd);
+                break;
+            case PSN_KILLACTIVE:
+                /* prevent navigation away from the fourth page */
+                if(active_page == 3){
+                    SetWindowLongPtr(hwnd, DWLP_MSGRESULT, TRUE);
+                    return TRUE;
+                }
+            }
+            break;
+        }
+    }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+static void test_wiznavigation(void)
+{
+    HPROPSHEETPAGE hpsp[4];
+    PROPSHEETPAGEA psp[4];
+    PROPSHEETHEADERA psh;
+    HWND hdlg, control;
+    LONG_PTR controlID;
+    LRESULT defidres;
+    const INT nextID = 12324;
+    const INT backID = 12323;
+
+    /* create the property sheet pages */
+    memset(psp, 0, sizeof(PROPSHEETPAGEA) * 4);
+
+    psp[0].dwSize = sizeof(PROPSHEETPAGEA);
+    psp[0].hInstance = GetModuleHandleW(NULL);
+    U(psp[0]).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_INTRO);
+    psp[0].pfnDlgProc = nav_page_proc;
+    hpsp[0] = CreatePropertySheetPageA(&psp[0]);
+
+    psp[1].dwSize = sizeof(PROPSHEETPAGEA);
+    psp[1].hInstance = GetModuleHandleW(NULL);
+    U(psp[1]).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_EDIT);
+    psp[1].pfnDlgProc = nav_page_proc;
+    hpsp[1] = CreatePropertySheetPageA(&psp[1]);
+
+    psp[2].dwSize = sizeof(PROPSHEETPAGEA);
+    psp[2].hInstance = GetModuleHandleW(NULL);
+    U(psp[2]).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_RADIO);
+    psp[2].pfnDlgProc = nav_page_proc;
+    hpsp[2] = CreatePropertySheetPageA(&psp[2]);
+
+    psp[3].dwSize = sizeof(PROPSHEETPAGEA);
+    psp[3].hInstance = GetModuleHandleW(NULL);
+    U(psp[3]).pszTemplate = MAKEINTRESOURCE(IDD_PROP_PAGE_EXIT);
+    psp[3].pfnDlgProc = nav_page_proc;
+    hpsp[3] = CreatePropertySheetPageA(&psp[3]);
+
+    /* set up the property sheet dialog */
+    memset(&psh, 0, sizeof(psh));
+    psh.dwSize = sizeof(psh);
+    psh.dwFlags = PSH_MODELESS | PSH_WIZARD;
+    psh.pszCaption = "A Wizard";
+    psh.nPages = 4;
+    psh.hwndParent = GetDesktopWindow();
+    U3(psh).phpage = hpsp;
+    hdlg = (HWND)PropertySheetA(&psh);
+
+    ok(active_page == 0, "Active page should be 0. Is: %d\n", active_page);
+
+    control = GetFocus();
+    controlID = GetWindowLongPtr(control, GWLP_ID);
+    ok(controlID == nextID, "Focus should have been set to the Next button. Expected: %d, Found: %ld\n", nextID, controlID);
+
+    /* simulate pressing the Next button */
+    SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_NEXT, 0);
+    ok(active_page == 1, "Active page should be 1 after pressing Next. Is: %d\n", active_page);
+
+    control = GetFocus();
+    controlID = GetWindowLongPtr(control, GWLP_ID);
+    ok(controlID == IDC_PS_EDIT1, "Focus should be set to the first item on the second page. Expected: %d, Found: %ld\n", IDC_PS_EDIT1, controlID);
+
+    defidres = SendMessage(hdlg, DM_GETDEFID, 0, 0);
+    ok(defidres == MAKELRESULT(nextID, DC_HASDEFID), "Expected default button ID to be %d, is %d\n", nextID, LOWORD(defidres));
+
+    /* set the focus to the second edit box on this page */
+    SetFocus(GetNextDlgTabItem(hdlg, control, FALSE));
+
+    /* press next again */
+    SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_NEXT, 0);
+    ok(active_page == 2, "Active page should be 2 after pressing Next. Is: %d\n", active_page);
+
+    control = GetFocus();
+    controlID = GetWindowLongPtr(control, GWLP_ID);
+    ok(controlID == IDC_PS_RADIO1, "Focus should have been set to item on third page. Expected: %d, Found %ld\n", IDC_PS_RADIO1, controlID);
+
+    /* back button */
+    SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_BACK, 0);
+    ok(active_page == 1, "Active page should be 1 after pressing Back. Is: %d\n", active_page);
+
+    control = GetFocus();
+    controlID = GetWindowLongPtr(control, GWLP_ID);
+    ok(controlID == IDC_PS_EDIT1, "Focus should have been set to the first item on second page. Expected: %d, Found %ld\n", IDC_PS_EDIT1, controlID);
+
+    defidres = SendMessage(hdlg, DM_GETDEFID, 0, 0);
+    ok(defidres == MAKELRESULT(backID, DC_HASDEFID), "Expected default button ID to be %d, is %d\n", backID, LOWORD(defidres));
+
+    /* press next twice */
+    SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_NEXT, 0);
+    ok(active_page == 2, "Active page should be 2 after pressing Next. Is: %d\n", active_page);
+    SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_NEXT, 0);
+    ok(active_page == 3, "Active page should be 3 after pressing Next. Is: %d\n", active_page);
+
+    control = GetFocus();
+    controlID = GetWindowLongPtr(control, GWLP_ID);
+    ok(controlID == nextID, "Focus should have been set to the Next button. Expected: %d, Found: %ld\n", nextID, controlID);
+
+    /* try to navigate away, but shouldn't be able to */
+    SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_BACK, 0);
+    ok(active_page == 3, "Active page should still be 3 after pressing Back. Is: %d\n", active_page);
+
+    defidres = SendMessage(hdlg, DM_GETDEFID, 0, 0);
+    ok(defidres == MAKELRESULT(nextID, DC_HASDEFID), "Expected default button ID to be %d, is %d\n", nextID, LOWORD(defidres));
+
+    DestroyWindow(hdlg);
+}
+
 START_TEST(propsheet)
 {
     test_title();
     test_nopage();
     test_disableowner();
+    test_wiznavigation();
 }
