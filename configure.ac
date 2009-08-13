@@ -83,6 +83,7 @@ AC_ARG_WITH(xxf86vm,   AS_HELP_STRING([--without-xxf86vm],[do not use XFree vide
             [if test "x$withval" = "xno"; then ac_cv_header_X11_extensions_xf86vmode_h=no; fi])
 
 AC_ARG_WITH(wine-tools,AS_HELP_STRING([--with-wine-tools=DIR],[use Wine tools from directory DIR]))
+AC_ARG_WITH(wine64,    AS_HELP_STRING([--with-wine64=DIR],[use the 64-bit Wine in DIR for a Wow64 build]))
 
 AC_CANONICAL_HOST
 
@@ -105,7 +106,7 @@ AC_CHECK_TOOL(CPPBIN,cpp,cpp)
 
 case $host in
   *-darwin*)
-    if test "x$enable_win64" == "xyes"
+    if test "x$enable_win64" = "xyes"
     then
       CC="$CC -m64"
       CXX="$CXX -m64"
@@ -174,20 +175,41 @@ then
     enable_winevdm=${enable_winevdm:-no}
 fi
 
+dnl Some special cases for the wow64 build
+if test -n "$with_wine64"
+then
+    if test "x$enable_win64" = "xyes"
+    then
+        AC_MSG_ERROR([--enable-win64 and --with-wine64 are mutually exclusive.
+--enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree.])
+    fi
+    enable_fonts=${enable_fonts:-no}
+    enable_include=${enable_include:-no}
+    enable_server=${enable_server:-no}
+    enable_tools=${enable_tools:-no}
+    enable_wineboot=${enable_wineboot:-no}
+    enable_winedbg=${enable_winedbg:-no}
+    test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib32"
+fi
+
 AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
-  [if test -z "$with_wine_tools"; then
+  [wine_cv_toolsdir="$with_wine_tools"
+   if test -z "$with_wine_tools"; then
      if test "$cross_compiling" = "yes"; then
        AC_MSG_ERROR([you must use the --with-wine-tools option when cross-compiling.])
-     else
-       wine_cv_toolsdir="\$(TOPOBJDIR)"
+     elif test -n "$with_wine64"; then
+       wine_cv_toolsdir="$with_wine64"
      fi
-   elif test -d "$with_wine_tools/tools/winebuild"; then
-     case $with_wine_tools in
-       /*) wine_cv_toolsdir="$with_wine_tools" ;;
-       *)  wine_cv_toolsdir="\$(TOPOBJDIR)/$with_wine_tools" ;;
+   fi
+   if test -z "$wine_cv_toolsdir"; then
+     wine_cv_toolsdir="\$(TOPOBJDIR)"
+   elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
+     case "$wine_cv_toolsdir" in
+       /*) ;;
+       *)  wine_cv_toolsdir="\$(TOPOBJDIR)/$wine_cv_toolsdir" ;;
      esac
    else
-     AC_MSG_ERROR([could not find Wine tools in $with_wine_tools.])
+     AC_MSG_ERROR([could not find Wine tools in $wine_cv_toolsdir])
    fi])
 AC_SUBST(TOOLSDIR,$wine_cv_toolsdir)
 if test -n "$host_alias" -a "$host_alias" != "$build_alias"
