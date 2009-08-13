@@ -81,6 +81,19 @@ struct regsvr_decoder
 static HRESULT register_decoders(struct regsvr_decoder const *list);
 static HRESULT unregister_decoders(struct regsvr_decoder const *list);
 
+struct regsvr_converter
+{
+    CLSID const *clsid;         /* NULL for end of list */
+    LPCSTR author;
+    LPCSTR friendlyname;
+    LPCSTR version;
+    GUID const *vendor;
+    GUID const * const *formats;
+};
+
+static HRESULT register_converters(struct regsvr_converter const *list);
+static HRESULT unregister_converters(struct regsvr_converter const *list);
+
 /***********************************************************************
  *		static string constants
  */
@@ -116,6 +129,7 @@ static char const position_valuename[] = "Position";
 static char const pattern_valuename[] = "Pattern";
 static char const mask_valuename[] = "Mask";
 static char const endofstream_valuename[] = "EndOfStream";
+static WCHAR const pixelformats_keyname[] = {'P','i','x','e','l','F','o','r','m','a','t','s',0};
 
 /***********************************************************************
  *		static helper functions
@@ -459,6 +473,163 @@ error_return:
 }
 
 /***********************************************************************
+ *		register_converters
+ */
+static HRESULT register_converters(struct regsvr_converter const *list)
+{
+    LONG res = ERROR_SUCCESS;
+    HKEY coclass_key;
+    WCHAR buf[39];
+    HKEY converters_key;
+    HKEY instance_key;
+
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0, NULL, 0,
+			  KEY_READ | KEY_WRITE, NULL, &coclass_key, NULL);
+    if (res == ERROR_SUCCESS)  {
+        StringFromGUID2(&CATID_WICFormatConverters, buf, 39);
+        res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &converters_key, NULL);
+        if (res == ERROR_SUCCESS)
+        {
+            res = RegCreateKeyExW(converters_key, instance_keyname, 0, NULL, 0,
+		              KEY_READ | KEY_WRITE, NULL, &instance_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+        }
+        if (res != ERROR_SUCCESS)
+            RegCloseKey(coclass_key);
+    }
+    if (res != ERROR_SUCCESS) goto error_return;
+
+    for (; res == ERROR_SUCCESS && list->clsid; ++list) {
+	HKEY clsid_key;
+	HKEY instance_clsid_key;
+
+	StringFromGUID2(list->clsid, buf, 39);
+	res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &clsid_key, NULL);
+	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+
+	StringFromGUID2(list->clsid, buf, 39);
+	res = RegCreateKeyExW(instance_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &instance_clsid_key, NULL);
+	if (res == ERROR_SUCCESS) {
+	    res = RegSetValueExW(instance_clsid_key, clsid_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(buf), 78);
+	    RegCloseKey(instance_clsid_key);
+	}
+	if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+        if (list->author) {
+	    res = RegSetValueExA(clsid_key, author_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(list->author),
+				 strlen(list->author) + 1);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->friendlyname) {
+	    res = RegSetValueExA(clsid_key, friendlyname_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(list->friendlyname),
+				 strlen(list->friendlyname) + 1);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->vendor) {
+            StringFromGUID2(list->vendor, buf, 39);
+	    res = RegSetValueExW(clsid_key, vendor_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(buf), 78);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->version) {
+	    res = RegSetValueExA(clsid_key, version_valuename, 0, REG_SZ,
+				 (CONST BYTE*)(list->version),
+				 strlen(list->version) + 1);
+	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->formats) {
+            HKEY formats_key;
+            GUID const * const *format;
+
+            res = RegCreateKeyExW(clsid_key, pixelformats_keyname, 0, NULL, 0,
+                                  KEY_READ | KEY_WRITE, NULL, &formats_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+            for (format=list->formats; *format; ++format)
+            {
+                HKEY format_key;
+                StringFromGUID2(*format, buf, 39);
+                res = RegCreateKeyExW(formats_key, buf, 0, NULL, 0,
+                                      KEY_READ | KEY_WRITE, NULL, &format_key, NULL);
+                if (res != ERROR_SUCCESS) break;
+                RegCloseKey(format_key);
+            }
+            RegCloseKey(formats_key);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+    error_close_clsid_key:
+	RegCloseKey(clsid_key);
+    }
+
+error_close_coclass_key:
+    RegCloseKey(instance_key);
+    RegCloseKey(converters_key);
+    RegCloseKey(coclass_key);
+error_return:
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
+ *		unregister_converters
+ */
+static HRESULT unregister_converters(struct regsvr_converter const *list)
+{
+    LONG res = ERROR_SUCCESS;
+    HKEY coclass_key;
+    WCHAR buf[39];
+    HKEY converters_key;
+    HKEY instance_key;
+
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0,
+			KEY_READ | KEY_WRITE, &coclass_key);
+    if (res == ERROR_FILE_NOT_FOUND) return S_OK;
+
+    if (res == ERROR_SUCCESS)  {
+        StringFromGUID2(&CATID_WICFormatConverters, buf, 39);
+        res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+			      KEY_READ | KEY_WRITE, NULL, &converters_key, NULL);
+        if (res == ERROR_SUCCESS)
+        {
+            res = RegCreateKeyExW(converters_key, instance_keyname, 0, NULL, 0,
+		              KEY_READ | KEY_WRITE, NULL, &instance_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+        }
+        if (res != ERROR_SUCCESS)
+            RegCloseKey(coclass_key);
+    }
+    if (res != ERROR_SUCCESS) goto error_return;
+
+    for (; res == ERROR_SUCCESS && list->clsid; ++list) {
+	StringFromGUID2(list->clsid, buf, 39);
+
+	res = RegDeleteTreeW(coclass_key, buf);
+	if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+
+	res = RegDeleteTreeW(instance_key, buf);
+	if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+    }
+
+error_close_coclass_key:
+    RegCloseKey(instance_key);
+    RegCloseKey(converters_key);
+    RegCloseKey(coclass_key);
+error_return:
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+/***********************************************************************
  *		register_key_defvalueW
  */
 static LONG register_key_defvalueW(
@@ -617,6 +788,23 @@ static struct regsvr_decoder const decoder_list[] = {
     { NULL }			/* list terminator */
 };
 
+static GUID const * const converter_formats[] = {
+    &GUID_WICPixelFormat32bppBGR,
+    &GUID_WICPixelFormat32bppBGRA,
+    NULL
+};
+
+static struct regsvr_converter const converter_list[] = {
+    {   &CLSID_WICDefaultFormatConverter,
+	"The Wine Project",
+	"Default Pixel Format Converter",
+	"1.0.0.0",
+	&GUID_VendorMicrosoft,
+	converter_formats
+    },
+    { NULL }			/* list terminator */
+};
+
 HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
@@ -626,6 +814,8 @@ HRESULT WINAPI DllRegisterServer(void)
     hr = register_coclasses(coclass_list);
     if (SUCCEEDED(hr))
         register_decoders(decoder_list);
+    if (SUCCEEDED(hr))
+        register_converters(converter_list);
     return hr;
 }
 
@@ -638,5 +828,7 @@ HRESULT WINAPI DllUnregisterServer(void)
     hr = unregister_coclasses(coclass_list);
     if (SUCCEEDED(hr))
         unregister_decoders(decoder_list);
+    if (SUCCEEDED(hr))
+        unregister_converters(converter_list);
     return hr;
 }
