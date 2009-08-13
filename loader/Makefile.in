@@ -2,12 +2,12 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = wine
 
 C_SRCS = \
 	main.c \
 	preloader.c
 
+MAIN_BINARY    = @MAIN_BINARY@
 EXTRA_BINARIES = @EXTRA_BINARIES@
 
 PROGRAMS = \
@@ -48,7 +48,7 @@ $(EXTRA_BINARIES:%=__install__%): $(EXTRA_BINARIES) $(DESTDIR)$(bindir) dummy
 .PHONY: install-man-pages $(EXTRA_BINARIES:%=__install__%)
 
 install install-lib:: wine-installed $(DESTDIR)$(bindir) $(EXTRA_BINARIES:%=__install__%)
-	$(INSTALL_PROGRAM) wine-installed $(DESTDIR)$(bindir)/$(MODULE)
+	$(INSTALL_PROGRAM) wine-installed $(DESTDIR)$(bindir)/$(MAIN_BINARY)
 
 @WOW64_DISABLE@ install install-lib:: install-man-pages
 
@@ -58,7 +58,7 @@ install-man-pages: $(MANPAGES) $(INSTALLDIRS) dummy
 	$(INSTALL_DATA) wine.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 
 uninstall::
-	-cd $(DESTDIR)$(bindir) && $(RM) $(EXTRA_BINARIES) $(MODULE)
+	-cd $(DESTDIR)$(bindir) && $(RM) $(MAIN_BINARY) $(EXTRA_BINARIES)
 	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)

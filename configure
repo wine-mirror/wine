@@ -609,6 +609,7 @@ LDAPLIBS
 LIBPOLL
 LIBDL
 EXTRA_BINARIES
+MAIN_BINARY
 SOCKETLIBS
 CRTLIBS
 LDPATH
@@ -11717,6 +11718,10 @@ case $host_os in
 
     ;;
 esac
+
+MAIN_BINARY="wine"
+
+test -z "$with_wine64" || MAIN_BINARY="wine32"
 
 case $host_cpu in
   *i[3456789]86*)

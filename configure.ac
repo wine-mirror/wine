@@ -1595,6 +1595,9 @@ case $host_os in
     ;;
 esac
 
+AC_SUBST(MAIN_BINARY,"wine")
+test -z "$with_wine64" || MAIN_BINARY="wine32"
+
 case $host_cpu in
   *i[[3456789]]86*)
     case $host_os in
