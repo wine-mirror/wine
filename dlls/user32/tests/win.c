@@ -4863,8 +4863,6 @@ static LRESULT CALLBACK TestNCRedraw_WndProc(HWND hwnd, UINT msg, WPARAM wParam,
 {
     static UINT ncredrawflags;
     PAINTSTRUCT ps;
-    RECT rect;
-    BOOL updateRectValue;
 
     switch(msg)
     {
@@ -4872,7 +4870,6 @@ static LRESULT CALLBACK TestNCRedraw_WndProc(HWND hwnd, UINT msg, WPARAM wParam,
         ncredrawflags = *(UINT *) (((CREATESTRUCT *)lParam)->lpCreateParams);
         return 0;
     case WM_NCPAINT:
-        updateRectValue = GetUpdateRect(hwnd, &rect, FALSE);
         RedrawWindow(hwnd, NULL, NULL, ncredrawflags);
         break;
     case WM_PAINT:
