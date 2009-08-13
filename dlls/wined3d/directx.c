@@ -1187,14 +1187,11 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     gl_info->max_vertex_samplers = 0;
     gl_info->max_combined_samplers = gl_info->max_fragment_samplers + gl_info->max_vertex_samplers;
     gl_info->max_sampler_stages = 1;
-    gl_info->ps_arb_version = PS_VERSION_NOT_SUPPORTED;
     gl_info->ps_arb_max_temps = 0;
     gl_info->ps_arb_max_instructions = 0;
-    gl_info->vs_arb_version = VS_VERSION_NOT_SUPPORTED;
     gl_info->vs_arb_max_temps = 0;
     gl_info->vs_arb_max_instructions = 0;
     gl_info->vs_nv_version  = VS_VERSION_NOT_SUPPORTED;
-    gl_info->vs_ati_version = VS_VERSION_NOT_SUPPORTED;
     gl_info->vs_glsl_constantsF = 0;
     gl_info->ps_glsl_constantsF = 0;
     gl_info->vs_arb_constantsF = 0;
@@ -1433,7 +1430,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     }
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
     {
-        gl_info->ps_arb_version = PS_VERSION_11;
         GL_EXTCALL(glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
         gl_info->ps_arb_constantsF = gl_max;
         TRACE_(d3d_caps)("Max ARB_FRAGMENT_PROGRAM float constants: %d.\n", gl_info->ps_arb_constantsF);
@@ -1446,7 +1442,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     }
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
-        gl_info->vs_arb_version = VS_VERSION_11;
         GL_EXTCALL(glGetProgramivARB(GL_VERTEX_PROGRAM_ARB, GL_MAX_PROGRAM_ENV_PARAMETERS_ARB, &gl_max));
         gl_info->vs_arb_constantsF = gl_max;
         TRACE_(d3d_caps)("Max ARB_VERTEX_PROGRAM float constants: %d.\n", gl_info->vs_arb_constantsF);
@@ -1473,10 +1468,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
         glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &gl_max);
         gl_info->max_glsl_varyings = gl_max;
         TRACE_(d3d_caps)("Max GLSL varyings: %u (%u 4 component varyings).\n", gl_max, gl_max / 4);
-    }
-    if (gl_info->supported[EXT_VERTEX_SHADER])
-    {
-        gl_info->vs_ati_version = VS_VERSION_11;
     }
     if (gl_info->supported[NV_VERTEX_PROGRAM3])
     {

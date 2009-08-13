@@ -4004,12 +4004,9 @@ struct wined3d_gl_info
     unsigned int vs_glsl_constantsF;
     unsigned int ps_glsl_constantsF;
 
-    GL_PSVersion ps_arb_version;
     GL_PSVersion ps_nv_version;
 
-    GL_VSVersion vs_arb_version;
     GL_VSVersion vs_nv_version;
-    GL_VSVersion vs_ati_version;
 
     DWORD reserved_glsl_constants;
 
