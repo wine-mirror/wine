@@ -1545,6 +1545,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     }
     checkGLcall("extension detection");
 
+    LEAVE_GL();
+
     /* In some cases the number of texture stages can be larger than the number
      * of samplers. The GF4 for example can use only 2 samplers (no fragment
      * shaders), but 8 texture stages (register combiners). */
@@ -2052,7 +2054,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
             }
         }
     }
-    LEAVE_GL();
 
     fixup_extensions(gl_info, gl_renderer);
     add_gl_compat_wrappers(gl_info);
