@@ -940,7 +940,8 @@ typedef struct _DDPIXELFORMAT {
 #define DDSD_TEXTURESTAGE       0x00100000
 #define DDSD_FVF                0x00200000
 #define DDSD_SRCVBHANDLE        0x00400000
-#define	DDSD_ALL		0x007ff9ee
+#define DDSD_DEPTH              0x00800000
+#define DDSD_ALL                0x00fff9ee
 
 /* EnumSurfaces flags */
 #define DDENUMSURFACES_ALL          0x00000001
