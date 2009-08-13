@@ -329,7 +329,7 @@ BOOL ME_Redo(ME_TextEditor *editor);
 void ME_EmptyUndoStack(ME_TextEditor *editor);
 
 /* writer.c */
-LRESULT ME_StreamOutRange(ME_TextEditor *editor, DWORD dwFormat, int nStart, int nTo, EDITSTREAM *stream);
+LRESULT ME_StreamOutRange(ME_TextEditor *editor, DWORD dwFormat, const ME_Cursor *start, int nChars, EDITSTREAM *stream);
 LRESULT ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream);
 
 /* clipboard.c */

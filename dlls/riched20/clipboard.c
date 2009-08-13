@@ -375,7 +375,7 @@ static DWORD CALLBACK ME_AppendToHGLOBAL(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG
     return 0;
 }
 
-static HGLOBAL get_rtf_text(ME_TextEditor *editor, const CHARRANGE *lpchrg)
+static HGLOBAL get_rtf_text(ME_TextEditor *editor, const ME_Cursor *start, int nChars)
 {
     EDITSTREAM es;
     ME_GlobalDestStruct gds;
@@ -384,7 +384,7 @@ static HGLOBAL get_rtf_text(ME_TextEditor *editor, const CHARRANGE *lpchrg)
     gds.nLength = 0;
     es.dwCookie = (DWORD_PTR)&gds;
     es.pfnCallback = ME_AppendToHGLOBAL;
-    ME_StreamOutRange(editor, SF_RTF, lpchrg->cpMin, lpchrg->cpMax, &es);
+    ME_StreamOutRange(editor, SF_RTF, start, nChars, &es);
     GlobalReAlloc(gds.hData, gds.nLength+1, 0);
     return gds.hData;
 }
@@ -410,10 +410,7 @@ HRESULT ME_GetDataObject(ME_TextEditor *editor, const ME_Cursor *start,
     obj->fmtetc = GlobalAlloc(GMEM_ZEROINIT, obj->fmtetc_cnt*sizeof(FORMATETC));
     InitFormatEtc(obj->fmtetc[0], CF_UNICODETEXT, TYMED_HGLOBAL);
     if(editor->mode & TM_RICHTEXT) {
-        CHARRANGE chrg;
-        chrg.cpMin = ME_GetCursorOfs(start);
-        chrg.cpMax = chrg.cpMin + nChars;
-        obj->rtf = get_rtf_text(editor, &chrg);
+        obj->rtf = get_rtf_text(editor, start, nChars);
         InitFormatEtc(obj->fmtetc[1], cfRTF, TYMED_HGLOBAL);
     }
 
