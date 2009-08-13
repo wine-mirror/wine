@@ -182,8 +182,8 @@ static HRESULT WINAPI PngDecoder_GetThumbnail(IWICBitmapDecoder *iface,
 static HRESULT WINAPI PngDecoder_GetFrameCount(IWICBitmapDecoder *iface,
     UINT *pCount)
 {
-    FIXME("(%p,%p): stub\n", iface, pCount);
-    return E_NOTIMPL;
+    *pCount = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI PngDecoder_GetFrame(IWICBitmapDecoder *iface,
