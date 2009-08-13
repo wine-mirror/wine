@@ -1069,6 +1069,63 @@ static void test_MessageBoxFontTest(void)
     DestroyWindow(hDlg);
 }
 
+static void test_SaveRestoreFocus(void)
+{
+    HWND hDlg;
+    HRSRC hResource;
+    HANDLE hTemplate;
+    DLGTEMPLATE* pTemplate;
+    LONG_PTR foundId;
+    HWND foundHwnd;
+
+    /* create the dialog */
+    hResource = FindResourceA(g_hinst, "MULTI_EDIT_DIALOG", RT_DIALOG);
+    hTemplate = LoadResource(g_hinst, hResource);
+    pTemplate = LockResource(hTemplate);
+
+    hDlg = CreateDialogIndirectParamA(g_hinst, pTemplate, NULL, messageBoxFontDlgWinProc, 0);
+    ok (hDlg != 0, "Failed to create test dialog.\n");
+
+    foundId = GetWindowLongPtr(GetFocus(), GWLP_ID);
+    ok (foundId == 1000, "First edit box should have gained focus on dialog creation. Expected: %d, Found: %ld\n", 1000, foundId);
+
+    /* de- then reactivate the dialog */
+    SendMessage(hDlg, WM_ACTIVATE, MAKEWPARAM(WA_INACTIVE, 0), 0);
+    SendMessage(hDlg, WM_ACTIVATE, MAKEWPARAM(WA_ACTIVE, 0), 0);
+
+    foundId = GetWindowLongPtr(GetFocus(), GWLP_ID);
+    ok (foundId == 1000, "First edit box should have regained focus after dialog reactivation. Expected: %d, Found: %ld\n", 1000, foundId);
+
+    /* select the next tabbable item */
+    SetFocus(GetNextDlgTabItem(hDlg, GetFocus(), FALSE));
+
+    foundId = GetWindowLongPtr(GetFocus(), GWLP_ID);
+    ok (foundId == 1001, "Second edit box should have gained focus. Expected: %d, Found: %ld\n", 1001, foundId);
+
+    /* de- then reactivate the dialog */
+    SendMessage(hDlg, WM_ACTIVATE, MAKEWPARAM(WA_INACTIVE, 0), 0);
+    SendMessage(hDlg, WM_ACTIVATE, MAKEWPARAM(WA_ACTIVE, 0), 0);
+
+    foundId = GetWindowLongPtr(GetFocus(), GWLP_ID);
+    ok (foundId == 1001, "Second edit box should have gained focus after dialog reactivation. Expected: %d, Found: %ld\n", 1001, foundId);
+
+    /* disable the 2nd box */
+    EnableWindow(GetFocus(), FALSE);
+
+    foundHwnd = GetFocus();
+    ok (foundHwnd == NULL, "Second edit box should have lost focus after being disabled. Expected: %p, Found: %p\n", NULL, foundHwnd);
+
+    /* de- then reactivate the dialog */
+    SendMessage(hDlg, WM_ACTIVATE, MAKEWPARAM(WA_INACTIVE, 0), 0);
+    SendMessage(hDlg, WM_ACTIVATE, MAKEWPARAM(WA_ACTIVE, 0), 0);
+
+    foundHwnd = GetFocus();
+    ok (foundHwnd == NULL, "No controls should have gained focus after dialog reactivation. Expected: %p, Found: %p\n", NULL, foundHwnd);
+
+    /* clean up */
+    DestroyWindow(hDlg);
+}
+
 START_TEST(dialog)
 {
     g_hinst = GetModuleHandleA (0);
@@ -1083,4 +1140,5 @@ START_TEST(dialog)
     test_DialogBoxParamA();
     test_DisabledDialogTest();
     test_MessageBoxFontTest();
+    test_SaveRestoreFocus();
 }
