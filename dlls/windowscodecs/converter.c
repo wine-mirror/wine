@@ -39,6 +39,7 @@ enum pixelformat {
     format_1bppIndexed,
     format_16bppBGR555,
     format_16bppBGR565,
+    format_24bppBGR,
     format_32bppBGR,
     format_32bppBGRA
 };
@@ -226,6 +227,49 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
             return res;
         }
         return S_OK;
+    case format_24bppBGR:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const BYTE *srcpixel;
+            BYTE *dstrow;
+            BYTE *dstpixel;
+
+            srcstride = 3 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcpixel=srcrow;
+                    dstpixel=dstrow;
+                    for (x=0; x<prc->Width; x++) {
+                        *dstpixel++=*srcpixel++; /* blue */
+                        *dstpixel++=*srcpixel++; /* green */
+                        *dstpixel++=*srcpixel++; /* red */
+                        *dstpixel++=255; /* alpha */
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+
+            return res;
+        }
+        return S_OK;
     case format_32bppBGR:
         if (prc)
         {
@@ -269,6 +313,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL},
     {format_16bppBGR555, &GUID_WICPixelFormat16bppBGR555, NULL},
     {format_16bppBGR565, &GUID_WICPixelFormat16bppBGR565, NULL},
+    {format_24bppBGR, &GUID_WICPixelFormat24bppBGR, NULL},
     {format_32bppBGR, &GUID_WICPixelFormat32bppBGR, copypixels_to_32bppBGR},
     {format_32bppBGRA, &GUID_WICPixelFormat32bppBGRA, copypixels_to_32bppBGRA},
     {0}
