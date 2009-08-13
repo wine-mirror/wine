@@ -787,6 +787,8 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
   {
     end_run = end->pRun = ME_SplitRunSimple(editor, end->pRun, end->nOffset);
     end->nOffset = 0;
+  } else if (end) {
+    end_run = end->pRun;
   }
 
   run = start->pRun;
