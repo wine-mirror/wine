@@ -348,27 +348,6 @@ ME_DisplayItem *ME_MakeRun(ME_Style *s, ME_String *strData, int nFlags)
 }
 
 /******************************************************************************
- * ME_InsertRun
- * 
- * Inserts a run at a given character position (offset).
- */   
-ME_DisplayItem *ME_InsertRun(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem *pItem)
-{
-  ME_Cursor tmp;
-  ME_DisplayItem *pDI;
-
-  assert(pItem->type == diRun || pItem->type == diUndoInsertRun);
-
-  ME_CursorFromCharOfs(editor, nCharOfs, &tmp);
-  pDI = ME_InsertRunAtCursor(editor, &tmp, pItem->member.run.style,
-                             pItem->member.run.strText->szData,
-                             pItem->member.run.strText->nLen,
-                             pItem->member.run.nFlags);
-  
-  return pDI;
-}
-
-/******************************************************************************
  * ME_InsertRunAtCursor
  *
  * Inserts a new run with given style, flags and content at a given position,

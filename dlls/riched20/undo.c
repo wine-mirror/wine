@@ -307,7 +307,12 @@ static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
   }
   case diUndoInsertRun:
   {
-    ME_InsertRun(editor, pItem->member.run.nCharOfs, pItem);
+    ME_Cursor tmp;
+    ME_CursorFromCharOfs(editor, pItem->member.run.nCharOfs, &tmp);
+    ME_InsertRunAtCursor(editor, &tmp, pItem->member.run.style,
+                         pItem->member.run.strText->szData,
+                         pItem->member.run.strText->nLen,
+                         pItem->member.run.nFlags);
     break;
   }
   case diUndoDeleteRun:

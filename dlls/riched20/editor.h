@@ -126,8 +126,6 @@ int ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs);
 
 /* run.c */
 ME_DisplayItem *ME_MakeRun(ME_Style *s, ME_String *strData, int nFlags);
-/* note: ME_InsertRun inserts a copy of the specified run - so you need to destroy the original */
-ME_DisplayItem *ME_InsertRun(ME_TextEditor *editor, int nCharOfs, ME_DisplayItem *pItem);
 ME_DisplayItem *ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor,
                                      ME_Style *style, const WCHAR *str, int len, int flags);
 void ME_CheckCharOffsets(ME_TextEditor *editor);
