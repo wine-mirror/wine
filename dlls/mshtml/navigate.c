@@ -1110,6 +1110,12 @@ void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamLis
         nsISupports_AddRef(context);
         This->nscontext = context;
     }
+
+    if(channel->post_data_stream) {
+        parse_post_data(channel->post_data_stream, &This->bsc.headers, &This->bsc.post_data, &This->bsc.post_data_len);
+        TRACE("headers = %s post_data = %s\n", debugstr_w(This->bsc.headers),
+              debugstr_an(This->bsc.post_data, This->bsc.post_data_len));
+    }
 }
 
 void hlink_frame_navigate(HTMLDocument *doc, IHlinkFrame *hlink_frame,
