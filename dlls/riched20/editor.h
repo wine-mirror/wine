@@ -162,7 +162,7 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to);
 void ME_HideCaret(ME_TextEditor *ed);
 void ME_ShowCaret(ME_TextEditor *ed);
 void ME_MoveCaret(ME_TextEditor *ed);
-int ME_CharFromPos(ME_TextEditor *editor, int x, int y, BOOL *isExact);
+BOOL ME_CharFromPos(ME_TextEditor *editor, int x, int y, ME_Cursor *cursor, BOOL *isExact);
 void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum);
 void ME_MouseMove(ME_TextEditor *editor, int x, int y);
 BOOL ME_DeleteTextAtCursor(ME_TextEditor *editor, int nCursor, int nChars);

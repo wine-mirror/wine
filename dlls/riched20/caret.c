@@ -1004,30 +1004,32 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
 }
 
 
-/* Returns the character offset closest to the pixel position
+/* Sets the cursor to the position closest to the pixel position
  *
  * x & y are pixel positions in client coordinates.
  *
  * isExact will be set to TRUE if the run is directly under the pixel
  * position, FALSE if it not, unless isExact is set to NULL.
+ *
+ * return FALSE if outside client area and the cursor is not set,
+ * otherwise TRUE is returned.
  */
-int ME_CharFromPos(ME_TextEditor *editor, int x, int y, BOOL *isExact)
+BOOL ME_CharFromPos(ME_TextEditor *editor, int x, int y,
+                    ME_Cursor *cursor, BOOL *isExact)
 {
-  ME_Cursor cursor;
   RECT rc;
   BOOL bResult;
 
   ITextHost_TxGetClientRect(editor->texthost, &rc);
   if (x < 0 || y < 0 || x >= rc.right || y >= rc.bottom) {
     if (isExact) *isExact = FALSE;
-    return -1;
+    return FALSE;
   }
   x += editor->horz_si.nPos;
   y += editor->vert_si.nPos;
-  bResult = ME_FindPixelPos(editor, x, y, &cursor, NULL);
+  bResult = ME_FindPixelPos(editor, x, y, cursor, NULL);
   if (isExact) *isExact = bResult;
-  return cursor.pPara->member.para.nCharOfs
-         + cursor.pRun->member.run.nCharOfs + cursor.nOffset;
+  return TRUE;
 }
 
 

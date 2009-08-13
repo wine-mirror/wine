@@ -2476,9 +2476,9 @@ static int ME_CalculateClickCount(ME_TextEditor *editor, UINT msg, WPARAM wParam
 
 static BOOL ME_SetCursor(ME_TextEditor *editor)
 {
+  ME_Cursor cursor;
   POINT pt;
   BOOL isExact;
-  int offset;
   SCROLLBARINFO sbi;
   DWORD messagePos = GetMessagePos();
   pt.x = (short)LOWORD(messagePos);
@@ -2533,13 +2533,11 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
       ITextHost_TxSetCursor(editor->texthost, hLeft, FALSE);
       return TRUE;
   }
-  offset = ME_CharFromPos(editor, pt.x, pt.y, &isExact);
+  ME_CharFromPos(editor, pt.x, pt.y, &cursor, &isExact);
   if (isExact)
   {
-      ME_Cursor cursor;
       ME_Run *run;
 
-      ME_CursorFromCharOfs(editor, offset, &cursor);
       run = &cursor.pRun->member.run;
       if (run->style->fmt.dwMask & CFM_LINK &&
           run->style->fmt.dwEffects & CFE_LINK)
@@ -2553,6 +2551,7 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
       if (ME_IsSelection(editor))
       {
           int selStart, selEnd;
+          int offset = ME_GetCursorOfs(&cursor);
 
           ME_GetSelectionOfs(editor, &selStart, &selEnd);
           if (selStart <= offset && selEnd >= offset) {
@@ -2926,20 +2925,17 @@ get_msg_name(UINT msg)
 static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   int x,y;
-  ME_DisplayItem *para, *run;
   BOOL isExact;
-  int nCharOfs; /* The start of the clicked text. Absolute character offset */
+  ME_Cursor cursor; /* The start of the clicked text. */
 
   ENLINK info;
   x = (short)LOWORD(lParam);
   y = (short)HIWORD(lParam);
-  nCharOfs = ME_CharFromPos(editor, x, y, &isExact);
+  ME_CharFromPos(editor, x, y, &cursor, &isExact);
   if (!isExact) return;
 
-  ME_RunOfsFromCharOfs(editor, nCharOfs, &para, &run, NULL);
-
-  if ((run->member.run.style->fmt.dwMask & CFM_LINK)
-    && (run->member.run.style->fmt.dwEffects & CFE_LINK))
+  if (cursor.pRun->member.run.style->fmt.dwMask & CFM_LINK &&
+      cursor.pRun->member.run.style->fmt.dwEffects & CFE_LINK)
   { /* The clicked run has CFE_LINK set */
     info.nmhdr.hwndFrom = editor->hWnd;
     info.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
@@ -2947,8 +2943,9 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
     info.msg = msg;
     info.wParam = wParam;
     info.lParam = lParam;
-    info.chrg.cpMin = ME_CharOfsFromRunOfs(editor, para, run, 0);
-    info.chrg.cpMax = info.chrg.cpMin + run->member.run.strText->nLen;
+    cursor.nOffset = 0;
+    info.chrg.cpMin = ME_GetCursorOfs(&cursor);
+    info.chrg.cpMax = info.chrg.cpMin + cursor.pRun->member.run.strText->nLen;
     SendMessageW(GetParent(editor->hWnd), WM_NOTIFY,info.nmhdr.idFrom, (LPARAM)&info);
   }
 }
@@ -3824,7 +3821,14 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_SETZOOM:
     return ME_SetZoom(editor, wParam, lParam);
   case EM_CHARFROMPOS:
-    return ME_CharFromPos(editor, ((POINTL *)lParam)->x, ((POINTL *)lParam)->y, NULL);
+  {
+    ME_Cursor cursor;
+    if (ME_CharFromPos(editor, ((POINTL *)lParam)->x, ((POINTL *)lParam)->y,
+                       &cursor, NULL))
+      return ME_GetCursorOfs(&cursor);
+    else
+      return -1;
+  }
   case EM_POSFROMCHAR:
   {
     ME_DisplayItem *pPara, *pRun;
