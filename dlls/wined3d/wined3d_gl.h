@@ -3394,29 +3394,6 @@ typedef enum _GL_Cards {
 
 #define WINE_DEFAULT_VIDMEM 64*1024*1024
 
-typedef enum _GL_VSVersion {
-  VS_VERSION_NOT_SUPPORTED = 0x0,
-  VS_VERSION_10 = 0x10,
-  VS_VERSION_11 = 0x11,
-  VS_VERSION_20 = 0x20,
-  VS_VERSION_30 = 0x30,
-  /*Force 32-bits*/
-  VS_VERSION_FORCE_DWORD = 0x7FFFFFFF
-} GL_VSVersion;
-
-typedef enum _GL_PSVersion {
-  PS_VERSION_NOT_SUPPORTED = 0x0,
-  PS_VERSION_10 = 0x10,
-  PS_VERSION_11 = 0x11,
-  PS_VERSION_12 = 0x12,
-  PS_VERSION_13 = 0x13,
-  PS_VERSION_14 = 0x14,
-  PS_VERSION_20 = 0x20,
-  PS_VERSION_30 = 0x30,
-  /*Force 32-bits*/
-  PS_VERSION_FORCE_DWORD = 0x7FFFFFFF
-} GL_PSVersion;
-
 #define MAKEDWORD_VERSION(maj, min)  ((maj & 0x0000FFFF) << 16) | (min & 0x0000FFFF)
 
 /* OpenGL Supported Extensions (ARB and EXT) */
@@ -4003,10 +3980,6 @@ struct wined3d_gl_info
     unsigned int ps_arb_max_temps;
     unsigned int vs_glsl_constantsF;
     unsigned int ps_glsl_constantsF;
-
-    GL_PSVersion ps_nv_version;
-
-    GL_VSVersion vs_nv_version;
 
     DWORD reserved_glsl_constants;
 

@@ -4577,14 +4577,15 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype,
         const struct wined3d_gl_info *gl_info, struct shader_caps *pCaps)
 {
     /* Nvidia Geforce6/7 or Ati R4xx/R5xx cards with GLSL support, support VS 3.0 but older Nvidia/Ati
-     * models with GLSL support only support 2.0. In case of nvidia we can detect VS 2.0 support using
-     * vs_nv_version which is based on NV_vertex_program.
+     * models with GLSL support only support 2.0. In case of nvidia we can detect VS 2.0 support based
+     * on the version of NV_vertex_program.
      * For Ati cards there's no way using glsl (it abstracts the lowlevel info away) and also not
      * using ARB_vertex_program. It is safe to assume that when a card supports pixel shader 2.0 it
      * supports vertex shader 2.0 too and the way around. We can detect ps2.0 using the maximum number
      * of native instructions, so use that here. For more info see the pixel shader versioning code below.
      */
-    if((GLINFO_LOCATION.vs_nv_version == VS_VERSION_20) || (GLINFO_LOCATION.ps_arb_max_instructions <= 512))
+    if ((gl_info->supported[NV_VERTEX_PROGRAM2] && !gl_info->supported[NV_VERTEX_PROGRAM3])
+            || gl_info->ps_arb_max_instructions <= 512)
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
     else
         pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
@@ -4602,7 +4603,8 @@ static void shader_glsl_get_caps(WINED3DDEVTYPE devtype,
      * of instructions is 512 or less we have to do with ps2.0 hardware.
      * NOTE: ps3.0 hardware requires 512 or more instructions but ati and nvidia offer 'enough' (1024 vs 4096) on their most basic ps3.0 hardware.
      */
-    if((GLINFO_LOCATION.ps_nv_version == PS_VERSION_20) || (GLINFO_LOCATION.ps_arb_max_instructions <= 512))
+    if ((gl_info->supported[NV_FRAGMENT_PROGRAM] && !gl_info->supported[NV_FRAGMENT_PROGRAM2])
+            || (gl_info->ps_arb_max_instructions <= 512))
         pCaps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
     else
         pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);

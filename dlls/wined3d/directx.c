@@ -379,7 +379,7 @@ static void select_shader_mode(const struct wined3d_gl_info *gl_info,
         /* Geforce4 cards support GLSL but for vertex shaders only. Further its reported GLSL caps are
          * wrong. This combined with the fact that glsl won't offer more features or performance, use ARB
          * shaders only on this card. */
-        if(gl_info->vs_nv_version && gl_info->vs_nv_version < VS_VERSION_20)
+        if (gl_info->supported[NV_VERTEX_PROGRAM] && !gl_info->supported[NV_VERTEX_PROGRAM2])
             *vs_selected = SHADER_ARB;
         else
             *vs_selected = SHADER_GLSL;
@@ -1191,7 +1191,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     gl_info->ps_arb_max_instructions = 0;
     gl_info->vs_arb_max_temps = 0;
     gl_info->vs_arb_max_instructions = 0;
-    gl_info->vs_nv_version  = VS_VERSION_NOT_SUPPORTED;
     gl_info->vs_glsl_constantsF = 0;
     gl_info->ps_glsl_constantsF = 0;
     gl_info->vs_arb_constantsF = 0;
@@ -1469,30 +1468,6 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
         gl_info->max_glsl_varyings = gl_max;
         TRACE_(d3d_caps)("Max GLSL varyings: %u (%u 4 component varyings).\n", gl_max, gl_max / 4);
     }
-    if (gl_info->supported[NV_VERTEX_PROGRAM3])
-    {
-        gl_info->vs_nv_version = VS_VERSION_30;
-    }
-    else if (gl_info->supported[NV_VERTEX_PROGRAM2])
-    {
-        gl_info->vs_nv_version = VS_VERSION_20;
-    }
-    else if (gl_info->supported[NV_VERTEX_PROGRAM1_1])
-    {
-        gl_info->vs_nv_version = VS_VERSION_11;
-    }
-    else if (gl_info->supported[NV_VERTEX_PROGRAM])
-    {
-        gl_info->vs_nv_version = VS_VERSION_10;
-    }
-    if (gl_info->supported[NV_FRAGMENT_PROGRAM2])
-    {
-        gl_info->ps_nv_version = PS_VERSION_30;
-    }
-    else if (gl_info->supported[NV_FRAGMENT_PROGRAM])
-    {
-        gl_info->ps_nv_version = PS_VERSION_20;
-    }
     if (gl_info->supported[NV_LIGHT_MAX_EXPONENT])
     {
         glGetFloatv(GL_MAX_SHININESS_NV, &gl_info->max_shininess);
@@ -1601,7 +1576,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
             /* Both the GeforceFX, 6xxx and 7xxx series support D3D9. The last two types have more
              * shader capabilities, so we use the shader capabilities to distinguish between FX and 6xxx/7xxx.
              */
-            if(WINE_D3D9_CAPABLE(gl_info) && (gl_info->vs_nv_version == VS_VERSION_30)) {
+            if (WINE_D3D9_CAPABLE(gl_info) && gl_info->supported[NV_VERTEX_PROGRAM3])
+            {
                 /* Geforce 200 - highend */
                 if (strstr(gl_renderer, "GTX 280")
                         || strstr(gl_renderer, "GTX 285")
