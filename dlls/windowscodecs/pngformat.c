@@ -133,8 +133,8 @@ static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
 static HRESULT WINAPI PngDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
     GUID *pguidContainerFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pguidContainerFormat);
-    return E_NOTIMPL;
+    memcpy(pguidContainerFormat, &GUID_ContainerFormatPng, sizeof(GUID));
+    return S_OK;
 }
 
 static HRESULT WINAPI PngDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
