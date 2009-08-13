@@ -535,6 +535,7 @@ sub source_scan_project_file($$$)
     # some more settings
     my $path=dirname($filename);
     my $prj_target_cflags;
+    my $prj_target_defines;
     my $prj_target_ldflags;
     my $prj_target_libs;
     my $prj_name;
@@ -662,7 +663,7 @@ sub source_scan_project_file($$$)
                         # Use Multithreaded Run-Time Library
                     } elsif (/^D\s*\"(.*)\"/) {
                         # Preprocessor Definitions
-                        $prj_target_cflags.="-D".$1." ";
+                        $prj_target_defines.="-D".$1." ";
                     } elsif (/^I\s*\"(.*)\"/) {
                         # Additional Include Directories
                         $sfilet=$1;
@@ -841,6 +842,7 @@ sub source_scan_project_file($$$)
         push @{@$project_settings[$T_LIBRARIES]},$prj_target_libs;
         push @{@$project_settings[$T_CEXTRA]},$prj_target_cflags;
         push @{@$project_settings[$T_CXXEXTRA]},$prj_target_cflags;
+        push @{@$project_settings[$T_DEFINES]},$prj_target_defines;
         push @{@$project_settings[$T_LDFLAGS]},$prj_target_ldflags;
     } elsif ($filename =~ /.vcproj$/i) {
         # Import XML::LibXML, you need the libxml package (deb: libxml-libxml-perl, rpm: perl-libxml-perl)
@@ -923,7 +925,7 @@ sub source_scan_project_file($$$)
                     if ($vc_compiler_tool->getName eq "PreprocessorDefinitions") {
                         $configt=$vc_compiler_tool->getValue;
                         $configt=~s/;/ -D/g;
-                        $prj_target_cflags.="-D".$configt." ";
+                        $prj_target_defines.="-D".$configt." ";
                     }
                     if ($vc_compiler_tool->getName eq "AdditionalIncludeDirectories") {
                         $configt=$vc_compiler_tool->getValue;
@@ -948,6 +950,7 @@ sub source_scan_project_file($$$)
         push @{@$project_settings[$T_LIBRARIES]},$prj_target_libs;
         push @{@$project_settings[$T_CEXTRA]},$prj_target_cflags;
         push @{@$project_settings[$T_CXXEXTRA]},$prj_target_cflags;
+        push @{@$project_settings[$T_DEFINES]},$prj_target_defines;
     }
 
     my $target_count;
