@@ -88,8 +88,23 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
     }
 }
 
+static HRESULT copypixels_to_32bppBGR(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    switch (source_format)
+    {
+    case format_32bppBGR:
+    case format_32bppBGRA:
+        if (prc)
+            return IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+        return S_OK;
+    default:
+        return copypixels_to_32bppBGRA(This, prc, cbStride, cbBufferSize, pbBuffer, source_format);
+    }
+}
+
 static const struct pixelformatinfo supported_formats[] = {
-    {format_32bppBGR, &GUID_WICPixelFormat32bppBGR, NULL},
+    {format_32bppBGR, &GUID_WICPixelFormat32bppBGR, copypixels_to_32bppBGR},
     {format_32bppBGRA, &GUID_WICPixelFormat32bppBGRA, copypixels_to_32bppBGRA},
     {0}
 };
