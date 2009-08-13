@@ -241,7 +241,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 static BOOL ME_RegisterEditorClass(HINSTANCE);
-static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max);
+static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, ME_Cursor *start, int nChars);
 
 static const WCHAR REListBox20W[] = {'R','E','L','i','s','t','B','o','x','2','0','W', 0};
 static const WCHAR REComboBox20W[] = {'R','E','C','o','m','b','o','B','o','x','2','0','W', 0};
@@ -2047,6 +2047,8 @@ static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
   ME_DisplayItem *startPara, *endPara;
   ME_DisplayItem *prev_para;
   ME_Cursor *from, *to;
+  ME_Cursor start;
+  int nChars;
 
   if (!editor->AutoURLDetect_bEnable) return;
 
@@ -2060,9 +2062,12 @@ static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
   /* Find paragraph that contains end cursor */
   endPara = to->pPara->member.para.next_para;
 
-  ME_UpdateLinkAttribute(editor,
-                         startPara->member.para.nCharOfs,
-                         endPara->member.para.nCharOfs);
+  start.pPara = startPara;
+  start.pRun = ME_FindItemFwd(startPara, diRun);
+  start.nOffset = 0;
+  nChars = endPara->member.para.nCharOfs - startPara->member.para.nCharOfs;
+
+  ME_UpdateLinkAttribute(editor, &start, nChars);
 }
 
 static BOOL
@@ -3239,8 +3244,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       ME_ReleaseStyle(style);
       ME_UpdateSelectionLinkAttribute(editor);
     } else {
+      ME_Cursor cursor;
       len = 1;
-      ME_UpdateLinkAttribute(editor, 0, -1);
+      ME_SetCursorToStart(editor, &cursor);
+      ME_UpdateLinkAttribute(editor, &cursor, INT_MAX);
     }
     ME_CommitUndo(editor);
     if (!(pStruct->flags & ST_KEEPUNDO))
@@ -3471,6 +3478,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_SETTEXT:
   {
+    ME_Cursor updateLinksStart;
     ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor), FALSE);
     if (lParam)
     {
@@ -3505,7 +3513,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     else
       TRACE("WM_SETTEXT - NULL\n");
-    ME_UpdateLinkAttribute(editor, 0, -1);
+    ME_SetCursorToStart(editor, &updateLinksStart);
+    ME_UpdateLinkAttribute(editor, &updateLinksStart, INT_MAX);
     ME_SetSelection(editor, 0, 0);
     editor->nModifyStep = 0;
     ME_CommitUndo(editor);
@@ -4671,93 +4680,97 @@ static BOOL isurlspecial(WCHAR c)
  * or one of the following special characters: *|/\+%#@ and must consist entirely
  * of the characters allowed to start the URL, plus : (colon) which may occur
  * at most once, and not at either end.
- *
- * sel_max == -1 indicates scan to end of text.
  */
-static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor, int sel_min, int sel_max,
-        int * candidate_min, int * candidate_max)
+static BOOL ME_FindNextURLCandidate(ME_TextEditor *editor,
+                                    const ME_Cursor *start,
+                                    int nChars,
+                                    ME_Cursor *candidate_min,
+                                    ME_Cursor *candidate_max)
 {
-  ME_DisplayItem * item;
-  ME_DisplayItem * para;
-  int nStart;
+  ME_Cursor cursor = *start;
   BOOL foundColon = FALSE;
+  BOOL candidateStarted = FALSE;
   WCHAR lastAcceptedChar = '\0';
 
-  TRACE("sel_min = %d sel_max = %d\n", sel_min, sel_max);
-
-  *candidate_min = *candidate_max = -1;
-  ME_RunOfsFromCharOfs(editor, sel_min, &para, &item, &nStart);
-  TRACE("nStart = %d\n", nStart);
-  if (sel_max == -1) sel_max = ME_GetTextLength(editor);
-  while (item && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart < sel_max)
+  while (nChars > 0)
   {
-    if (!(item->member.run.nFlags & MERF_ENDPARA)) {
+    WCHAR *strStart = cursor.pRun->member.run.strText->szData;
+    WCHAR *str = strStart + cursor.nOffset;
+    int nLen = cursor.pRun->member.run.strText->nLen - cursor.nOffset;
+    nChars -= nLen;
+
+    if (~cursor.pRun->member.run.nFlags & MERF_ENDPARA)
+    {
       /* Find start of candidate */
-      if (*candidate_min == -1) {
-        while (nStart < item->member.run.strText->nLen &&
-                !(isalnumW(item->member.run.strText->szData[nStart]) ||
-                  isurlspecial(item->member.run.strText->szData[nStart]))) {
-          nStart++;
-        }
-        if (nStart < item->member.run.strText->nLen &&
-                (isalnumW(item->member.run.strText->szData[nStart]) ||
-                 isurlspecial(item->member.run.strText->szData[nStart]))) {
-          *candidate_min = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
-          lastAcceptedChar = item->member.run.strText->szData[nStart];
-          nStart++;
+      if (!candidateStarted)
+      {
+        while (nLen)
+        {
+          nLen--;
+          if (isalnumW(*str) || isurlspecial(*str))
+          {
+            cursor.nOffset = str - strStart;
+            *candidate_min = cursor;
+            candidateStarted = TRUE;
+            lastAcceptedChar = *str++;
+            break;
+          }
+          str++;
         }
       }
 
       /* Find end of candidate */
-      if (*candidate_min >= 0) {
-        while (nStart < item->member.run.strText->nLen &&
-                (isalnumW(item->member.run.strText->szData[nStart]) ||
-                 isurlspecial(item->member.run.strText->szData[nStart]) ||
-                 (!foundColon && item->member.run.strText->szData[nStart] == ':') )) {
-          if (item->member.run.strText->szData[nStart] == ':') foundColon = TRUE;
-          lastAcceptedChar = item->member.run.strText->szData[nStart];
-          nStart++;
-        }
-        if (nStart < item->member.run.strText->nLen &&
-                !(isalnumW(item->member.run.strText->szData[nStart]) ||
-                 isurlspecial(item->member.run.strText->szData[nStart]) )) {
-          *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
-          nStart++;
-          if (lastAcceptedChar == ':') (*candidate_max)--;
-          return TRUE;
+      if (candidateStarted) {
+        while (nLen)
+        {
+          nLen--;
+          if (*str == ':' && !foundColon) {
+            foundColon = TRUE;
+          } else if (!isalnumW(*str) && !isurlspecial(*str)) {
+            cursor.nOffset = str - strStart;
+            if (lastAcceptedChar == ':')
+              ME_MoveCursorChars(editor, &cursor, -1);
+            *candidate_max = cursor;
+            return TRUE;
+          }
+          lastAcceptedChar = *str++;
         }
       }
     } else {
       /* End of paragraph: skip it if before candidate span, or terminates
          current active span */
-      if (*candidate_min >= 0) {
-        *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs;
-        if (lastAcceptedChar == ':') (*candidate_max)--;
+      if (candidateStarted) {
+        if (lastAcceptedChar == ':')
+          ME_MoveCursorChars(editor, &cursor, -1);
+        *candidate_max = cursor;
         return TRUE;
       }
     }
 
     /* Reaching this point means no span was found, so get next span */
-    if (!ME_NextRun(&para, &item)) {
-      if (*candidate_min >= 0) {
+    if (!ME_NextRun(&cursor.pPara, &cursor.pRun)) {
+      if (candidateStarted) {
         /* There are no further runs, so take end of text as end of candidate */
-        *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
-        if (lastAcceptedChar == ':') (*candidate_max)--;
+        cursor.nOffset = str - strStart;
+        if (lastAcceptedChar == ':')
+          ME_MoveCursorChars(editor, &cursor, -1);
+        *candidate_max = cursor;
         return TRUE;
       }
+      *candidate_max = *candidate_min = cursor;
       return FALSE;
     }
-    nStart = 0;
+    cursor.nOffset = 0;
   }
 
-  if (item) {
-    if (*candidate_min >= 0) {
-      /* There are no further runs, so take end of text as end of candidate */
-      *candidate_max = para->member.para.nCharOfs + item->member.run.nCharOfs + nStart;
-      if (lastAcceptedChar == ':') (*candidate_max)--;
-      return TRUE;
-    }
+  if (candidateStarted) {
+    /* There are no further runs, so take end of text as end of candidate */
+    if (lastAcceptedChar == ':')
+      ME_MoveCursorChars(editor, &cursor, -1);
+    *candidate_max = cursor;
+    return TRUE;
   }
+  *candidate_max = *candidate_min = cursor;
   return FALSE;
 }
 
@@ -4804,59 +4817,48 @@ static BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, const ME_Cursor *start, i
  * their proper CFE_LINK attributes set or unset. If the CFE_LINK attribute is
  * not what it is supposed to be, this proc sets or unsets it as appropriate.
  *
+ * Since this function can cause runs to be split, do not depend on the value
+ * of the start cursor at the end of the function.
+ *
+ * nChars may be set to INT_MAX to update to the end of the text.
+ *
  * Returns TRUE if at least one section was modified.
  */
-static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_max)
+static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, ME_Cursor *start, int nChars)
 {
   BOOL modified = FALSE;
-  int cMin, cMax;
+  ME_Cursor startCur = *start;
 
   if (!editor->AutoURLDetect_bEnable) return FALSE;
 
-  if (sel_max == -1) sel_max = ME_GetTextLength(editor);
   do
   {
-    int beforeURL[2];
-    int inURL[2];
     CHARFORMAT2W link;
+    ME_Cursor candidateStart, candidateEnd;
 
-    if (ME_FindNextURLCandidate(editor, sel_min, sel_max, &cMin, &cMax))
+    if (ME_FindNextURLCandidate(editor, &startCur, nChars,
+                                &candidateStart, &candidateEnd))
     {
-      ME_Cursor candidateStart;
       /* Section before candidate is not an URL */
-      beforeURL[0] = sel_min;
-      beforeURL[1] = cMin;
+      int cMin = ME_GetCursorOfs(&candidateStart);
+      int cMax = ME_GetCursorOfs(&candidateEnd);
 
-      ME_CursorFromCharOfs(editor, cMin, &candidateStart);
-      if (ME_IsCandidateAnURL(editor, &candidateStart,
-                              (cMax == -1 ? INT_MAX : cMax) - cMin))
-      {
-        inURL[0] = cMin; inURL[1] = cMax;
-      }
-      else
-      {
-        beforeURL[1] = cMax;
-        inURL[0] = inURL[1] = -1;
-      }
-      sel_min = cMax;
+      if (!ME_IsCandidateAnURL(editor, &candidateStart, cMax - cMin))
+        candidateStart = candidateEnd;
+      nChars -= cMax - ME_GetCursorOfs(&startCur);
     }
     else
     {
       /* No more candidates until end of selection */
-      beforeURL[0] = sel_min;
-      beforeURL[1] = sel_max;
-      inURL[0] = inURL[1] = -1;
-      sel_min = sel_max;
+      nChars = 0;
     }
 
-    if (beforeURL[0] < beforeURL[1])
+    if (startCur.pRun != candidateStart.pRun ||
+        startCur.nOffset != candidateStart.nOffset)
     {
-      ME_Cursor from, to;
-      ME_CursorFromCharOfs(editor, beforeURL[0], &from);
-      ME_CursorFromCharOfs(editor, beforeURL[1], &to);
       /* CFE_LINK effect should be consistently unset */
       link.cbSize = sizeof(link);
-      ME_GetCharFormat(editor, &from, &to, &link);
+      ME_GetCharFormat(editor, &startCur, &candidateStart, &link);
       if (!(link.dwMask & CFM_LINK) || (link.dwEffects & CFE_LINK))
       {
         /* CFE_LINK must be unset from this range */
@@ -4864,18 +4866,24 @@ static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_m
         link.cbSize = sizeof(link);
         link.dwMask = CFM_LINK;
         link.dwEffects = 0;
-        ME_SetCharFormat(editor, &from, &to, &link);
+        ME_SetCharFormat(editor, &startCur, &candidateStart, &link);
+        /* Update candidateEnd since setting character formats may split
+         * runs, which can cause a cursor to be at an invalid offset within
+         * a split run. */
+        while (candidateEnd.nOffset >= candidateEnd.pRun->member.run.strText->nLen)
+        {
+          candidateEnd.nOffset -= candidateEnd.pRun->member.run.strText->nLen;
+          candidateEnd.pRun = ME_FindItemFwd(candidateEnd.pRun, diRun);
+        }
         modified = TRUE;
       }
     }
-    if (inURL[0] < inURL[1])
+    if (candidateStart.pRun != candidateEnd.pRun ||
+        candidateStart.nOffset != candidateEnd.nOffset)
     {
-      ME_Cursor from, to;
-      ME_CursorFromCharOfs(editor, inURL[0], &from);
-      ME_CursorFromCharOfs(editor, inURL[1], &to);
       /* CFE_LINK effect should be consistently set */
       link.cbSize = sizeof(link);
-      ME_GetCharFormat(editor, &from, &to, &link);
+      ME_GetCharFormat(editor, &candidateStart, &candidateEnd, &link);
       if (!(link.dwMask & CFM_LINK) || !(link.dwEffects & CFE_LINK))
       {
         /* CFE_LINK must be set on this range */
@@ -4883,10 +4891,11 @@ static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, int sel_min, int sel_m
         link.cbSize = sizeof(link);
         link.dwMask = CFM_LINK;
         link.dwEffects = CFE_LINK;
-        ME_SetCharFormat(editor, &from, &to, &link);
+        ME_SetCharFormat(editor, &candidateStart, &candidateEnd, &link);
         modified = TRUE;
       }
     }
-  } while (sel_min < sel_max);
+    startCur = candidateEnd;
+  } while (nChars > 0);
   return modified;
 }
