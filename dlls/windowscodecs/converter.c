@@ -170,8 +170,16 @@ static HRESULT WINAPI FormatConverter_GetSize(IWICFormatConverter *iface,
 static HRESULT WINAPI FormatConverter_GetPixelFormat(IWICFormatConverter *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pPixelFormat);
-    return E_NOTIMPL;
+    FormatConverter *This = (FormatConverter*)iface;
+
+    TRACE("(%p,%p): stub\n", iface, pPixelFormat);
+
+    if (This->source)
+        memcpy(pPixelFormat, This->dst_format->guid, sizeof(GUID));
+    else
+        return WINCODEC_ERR_NOTINITIALIZED;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI FormatConverter_GetResolution(IWICFormatConverter *iface,
