@@ -45,6 +45,19 @@ static void *libpng_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
 MAKE_FUNCPTR(png_create_read_struct);
 MAKE_FUNCPTR(png_create_info_struct);
+MAKE_FUNCPTR(png_destroy_read_struct);
+MAKE_FUNCPTR(png_error);
+MAKE_FUNCPTR(png_get_bit_depth);
+MAKE_FUNCPTR(png_get_color_type);
+MAKE_FUNCPTR(png_get_image_height);
+MAKE_FUNCPTR(png_get_image_width);
+MAKE_FUNCPTR(png_get_io_ptr);
+MAKE_FUNCPTR(png_set_bgr);
+MAKE_FUNCPTR(png_set_gray_to_rgb);
+MAKE_FUNCPTR(png_set_read_fn);
+MAKE_FUNCPTR(png_read_end);
+MAKE_FUNCPTR(png_read_image);
+MAKE_FUNCPTR(png_read_info);
 #undef MAKE_FUNCPTR
 
 static void *load_libpng(void)
@@ -58,6 +71,19 @@ static void *load_libpng(void)
     }
         LOAD_FUNCPTR(png_create_read_struct);
         LOAD_FUNCPTR(png_create_info_struct);
+        LOAD_FUNCPTR(png_destroy_read_struct);
+        LOAD_FUNCPTR(png_error);
+        LOAD_FUNCPTR(png_get_bit_depth);
+        LOAD_FUNCPTR(png_get_color_type);
+        LOAD_FUNCPTR(png_get_image_height);
+        LOAD_FUNCPTR(png_get_image_width);
+        LOAD_FUNCPTR(png_get_io_ptr);
+        LOAD_FUNCPTR(png_set_bgr);
+        LOAD_FUNCPTR(png_set_gray_to_rgb);
+        LOAD_FUNCPTR(png_set_read_fn);
+        LOAD_FUNCPTR(png_read_end);
+        LOAD_FUNCPTR(png_read_image);
+        LOAD_FUNCPTR(png_read_info);
 
 #undef LOAD_FUNCPTR
     }
@@ -67,6 +93,15 @@ static void *load_libpng(void)
 typedef struct {
     const IWICBitmapDecoderVtbl *lpVtbl;
     LONG ref;
+    png_structp png_ptr;
+    png_infop info_ptr;
+    png_infop end_info;
+    BOOL initialized;
+    int bpp;
+    int width, height;
+    UINT stride;
+    const WICPixelFormatGUID *format;
+    BYTE *image_bits;
 } PngDecoder;
 
 static HRESULT WINAPI PngDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
@@ -110,6 +145,9 @@ static ULONG WINAPI PngDecoder_Release(IWICBitmapDecoder *iface)
 
     if (ref == 0)
     {
+        if (This->png_ptr)
+            ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
+        HeapFree(GetProcessHeap(), 0, This->image_bits);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -123,11 +161,165 @@ static HRESULT WINAPI PngDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
     return E_NOTIMPL;
 }
 
+static void user_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+    IStream *stream = ppng_get_io_ptr(png_ptr);
+    HRESULT hr;
+    ULONG bytesread;
+
+    hr = IStream_Read(stream, data, length, &bytesread);
+    if (FAILED(hr) || bytesread != length)
+    {
+        ppng_error(png_ptr, "failed reading data");
+    }
+}
+
 static HRESULT WINAPI PngDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    FIXME("(%p,%p,%x): stub\n", iface, pIStream, cacheOptions);
-    return E_NOTIMPL;
+    PngDecoder *This = (PngDecoder*)iface;
+    LARGE_INTEGER seek;
+    HRESULT hr;
+    png_bytep *row_pointers=NULL;
+    UINT image_size;
+    UINT i;
+    int color_type, bit_depth;
+    TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
+
+    /* initialize libpng */
+    This->png_ptr = ppng_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!This->png_ptr) return E_FAIL;
+
+    This->info_ptr = ppng_create_info_struct(This->png_ptr);
+    if (!This->info_ptr)
+    {
+        ppng_destroy_read_struct(&This->png_ptr, (png_infopp)NULL, (png_infopp)NULL);
+        This->png_ptr = NULL;
+        return E_FAIL;
+    }
+
+    This->end_info = ppng_create_info_struct(This->png_ptr);
+    if (!This->info_ptr)
+    {
+        ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, (png_infopp)NULL);
+        This->png_ptr = NULL;
+        return E_FAIL;
+    }
+
+    /* set up setjmp/longjmp error handling */
+    if (setjmp(png_jmpbuf(This->png_ptr)))
+    {
+        ppng_destroy_read_struct(&This->png_ptr, &This->info_ptr, &This->end_info);
+        HeapFree(GetProcessHeap(), 0, row_pointers);
+        This->png_ptr = NULL;
+        return E_FAIL;
+    }
+
+    /* seek to the start of the stream */
+    seek.QuadPart = 0;
+    hr = IStream_Seek(pIStream, seek, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr)) return hr;
+
+    /* set up custom i/o handling */
+    ppng_set_read_fn(This->png_ptr, pIStream, user_read_data);
+
+    /* read the header */
+    ppng_read_info(This->png_ptr, This->info_ptr);
+
+    /* choose a pixel format */
+    color_type = ppng_get_color_type(This->png_ptr, This->info_ptr);
+    bit_depth = ppng_get_bit_depth(This->png_ptr, This->info_ptr);
+
+    switch (color_type)
+    {
+    case PNG_COLOR_TYPE_GRAY:
+        This->bpp = bit_depth;
+        switch (bit_depth)
+        {
+        case 1: This->format = &GUID_WICPixelFormatBlackWhite; break;
+        case 2: This->format = &GUID_WICPixelFormat2bppGray; break;
+        case 4: This->format = &GUID_WICPixelFormat4bppGray; break;
+        case 8: This->format = &GUID_WICPixelFormat8bppGray; break;
+        case 16: This->format = &GUID_WICPixelFormat16bppGray; break;
+        default:
+            ERR("invalid grayscale bit depth: %i\n", bit_depth);
+            return E_FAIL;
+        }
+        break;
+    case PNG_COLOR_TYPE_GRAY_ALPHA:
+        /* WIC does not support grayscale alpha formats so use RGBA */
+        ppng_set_gray_to_rgb(This->png_ptr);
+    case PNG_COLOR_TYPE_RGB_ALPHA:
+        This->bpp = bit_depth * 4;
+        switch (bit_depth)
+        {
+        case 8:
+            ppng_set_bgr(This->png_ptr);
+            This->format = &GUID_WICPixelFormat32bppBGRA;
+            break;
+        case 16: This->format = &GUID_WICPixelFormat64bppRGBA; break;
+        default:
+            ERR("invalid RGBA bit depth: %i\n", bit_depth);
+            return E_FAIL;
+        }
+        break;
+    case PNG_COLOR_TYPE_PALETTE:
+        This->bpp = bit_depth;
+        switch (bit_depth)
+        {
+        case 1: This->format = &GUID_WICPixelFormat1bppIndexed; break;
+        case 2: This->format = &GUID_WICPixelFormat2bppIndexed; break;
+        case 4: This->format = &GUID_WICPixelFormat4bppIndexed; break;
+        case 8: This->format = &GUID_WICPixelFormat8bppIndexed; break;
+        default:
+            ERR("invalid indexed color bit depth: %i\n", bit_depth);
+            return E_FAIL;
+        }
+        break;
+    case PNG_COLOR_TYPE_RGB:
+        This->bpp = bit_depth * 3;
+        switch (bit_depth)
+        {
+        case 8:
+            ppng_set_bgr(This->png_ptr);
+            This->format = &GUID_WICPixelFormat24bppBGR;
+            break;
+        case 16: This->format = &GUID_WICPixelFormat48bppRGB; break;
+        default:
+            ERR("invalid RGB color bit depth: %i\n", bit_depth);
+            return E_FAIL;
+        }
+        break;
+    default:
+        ERR("invalid color type %i\n", color_type);
+        return E_FAIL;
+    }
+
+    /* read the image data */
+    This->width = ppng_get_image_width(This->png_ptr, This->info_ptr);
+    This->height = ppng_get_image_height(This->png_ptr, This->info_ptr);
+    This->stride = This->width * This->bpp;
+    image_size = This->stride * This->height;
+
+    This->image_bits = HeapAlloc(GetProcessHeap(), 0, image_size);
+    if (!This->image_bits) return E_OUTOFMEMORY;
+
+    row_pointers = HeapAlloc(GetProcessHeap(), 0, sizeof(png_bytep)*This->height);
+    if (!row_pointers) return E_OUTOFMEMORY;
+
+    for (i=0; i<This->height; i++)
+        row_pointers[i] = This->image_bits + i * This->stride;
+
+    ppng_read_image(This->png_ptr, row_pointers);
+
+    HeapFree(GetProcessHeap(), 0, row_pointers);
+    row_pointers = NULL;
+
+    ppng_read_end(This->png_ptr, This->end_info);
+
+    This->initialized = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
@@ -232,6 +424,11 @@ HRESULT PngDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->lpVtbl = &PngDecoder_Vtbl;
     This->ref = 1;
+    This->png_ptr = NULL;
+    This->info_ptr = NULL;
+    This->end_info = NULL;
+    This->initialized = FALSE;
+    This->image_bits = NULL;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
