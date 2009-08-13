@@ -1008,7 +1008,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     {
         gl_info->gl_vendor = VENDOR_INTEL;
     }
-    else if (strstr(gl_string, "Mesa"))
+    else if (strstr(gl_string, "Mesa")
+            || strstr(gl_string, "Tungsten Graphics, Inc."))
     {
         gl_info->gl_vendor = VENDOR_MESA;
     }
