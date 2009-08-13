@@ -777,7 +777,7 @@ static struct regsvr_coclass const coclass_list[] = {
 /***********************************************************************
  *		decoder list
  */
-static const BYTE mask_all[] = {0xff,0xff,0xff,0xff,0xff,0xff};
+static const BYTE mask_all[] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
 
 static const BYTE bmp_magic[] = {0x42,0x4d};
 
@@ -838,6 +838,30 @@ static struct decoder_pattern const jpeg_patterns[] = {
     {0}
 };
 
+static const BYTE png_magic[] = {137,80,78,71,13,10,26,10};
+
+static GUID const * const png_formats[] = {
+    &GUID_WICPixelFormatBlackWhite,
+    &GUID_WICPixelFormat2bppGray,
+    &GUID_WICPixelFormat4bppGray,
+    &GUID_WICPixelFormat8bppGray,
+    &GUID_WICPixelFormat16bppGray,
+    &GUID_WICPixelFormat32bppBGRA,
+    &GUID_WICPixelFormat64bppRGBA,
+    &GUID_WICPixelFormat1bppIndexed,
+    &GUID_WICPixelFormat2bppIndexed,
+    &GUID_WICPixelFormat4bppIndexed,
+    &GUID_WICPixelFormat8bppIndexed,
+    &GUID_WICPixelFormat24bppBGR,
+    &GUID_WICPixelFormat48bppRGB,
+    NULL
+};
+
+static struct decoder_pattern const png_patterns[] = {
+    {8,0,png_magic,mask_all,0},
+    {0}
+};
+
 static struct regsvr_decoder const decoder_list[] = {
     {   &CLSID_WICBmpDecoder,
 	"The Wine Project",
@@ -878,6 +902,16 @@ static struct regsvr_decoder const decoder_list[] = {
 	".jpg;.jpeg;.jfif",
 	jpeg_formats,
 	jpeg_patterns
+    },
+    {   &CLSID_WICPngDecoder,
+	"The Wine Project",
+	"PNG Decoder",
+	"1.0.0.0",
+	&GUID_VendorMicrosoft,
+	"image/png",
+	".png",
+	png_formats,
+	png_patterns
     },
     { NULL }			/* list terminator */
 };
