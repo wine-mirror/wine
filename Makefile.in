@@ -75,8 +75,11 @@ wine: $(WINEWRAPPER)
 
 # Installation rules
 
-install install-dev:: $(DESTDIR)$(datadir)/aclocal dummy
-	$(INSTALL_DATA) $(SRCDIR)/aclocal.m4 $(DESTDIR)$(datadir)/aclocal/wine.m4
+install-aclocal: $(DESTDIR)$(datadir)/aclocal dummy
+
+.PHONY: install-aclocal
+
+@WOW64_DISABLE@ install install-dev:: install-aclocal
 
 uninstall::
 	$(RM) $(DESTDIR)$(datadir)/aclocal/wine.m4

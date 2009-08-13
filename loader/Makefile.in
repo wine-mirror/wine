@@ -45,10 +45,14 @@ wine-installed: main.o Makefile.in
 $(EXTRA_BINARIES:%=__install__%): $(EXTRA_BINARIES) $(DESTDIR)$(bindir) dummy
 	f=`expr $@ : '__install__\(.*\)'` && $(INSTALL_PROGRAM) $$f $(DESTDIR)$(bindir)/$$f
 
-.PHONY: $(EXTRA_BINARIES:%=__install__%)
+.PHONY: install-man-pages $(EXTRA_BINARIES:%=__install__%)
 
-install install-lib:: wine-installed $(EXTRA_BINARIES:%=__install__%) $(MANPAGES) $(INSTALLDIRS)
+install install-lib:: wine-installed $(DESTDIR)$(bindir) $(EXTRA_BINARIES:%=__install__%)
 	$(INSTALL_PROGRAM) wine-installed $(DESTDIR)$(bindir)/$(MODULE)
+
+@WOW64_DISABLE@ install install-lib:: install-man-pages
+
+install-man-pages: $(MANPAGES) $(INSTALLDIRS) dummy
 	$(INSTALL_DATA) wine.man $(DESTDIR)$(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) wine.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 	$(INSTALL_DATA) wine.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)

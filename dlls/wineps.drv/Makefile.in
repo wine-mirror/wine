@@ -98,8 +98,12 @@ EXTRASUBDIRS = data
 
 @MAKE_DLL_RULES@
 
-install install-lib:: $(DESTDIR)$(datadir)/wine
+install-ppd:: $(DESTDIR)$(datadir)/wine dummy
 	$(INSTALL_DATA) $(SRCDIR)/generic.ppd $(DESTDIR)$(datadir)/wine/generic.ppd
+
+.PHONY: install-ppd
+
+@WOW64_DISABLE@ install install-lib:: install-ppd
 
 uninstall::
 	$(RM) $(DESTDIR)$(datadir)/wine/generic.ppd

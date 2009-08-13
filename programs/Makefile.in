@@ -33,7 +33,7 @@ install-progs.so: $(INSTALLPROGS:%=%/__installprog__)
 
 install-progs: # nothing to do here
 
-install install-lib:: install-progs$(DLLEXT) $(INSTALLDIRS)
+@WOW64_DISABLE@ install install-lib:: install-progs$(DLLEXT) $(INSTALLDIRS)
 
 uninstall::
 	-cd $(DESTDIR)$(bindir) && $(RM) wineapploader $(INSTALLPROGS)
