@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 struct FormatConverter;
 
 enum pixelformat {
+    format_1bppIndexed,
     format_16bppBGR555,
     format_16bppBGR565,
     format_32bppBGR,
@@ -66,6 +67,69 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
 {
     switch (source_format)
     {
+    case format_1bppIndexed:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const BYTE *srcbyte;
+            BYTE *dstrow;
+            DWORD *dstpixel;
+            WICColor colors[2];
+            IWICPalette *palette;
+            UINT actualcolors;
+
+            res = PaletteImpl_Create(&palette);
+            if (FAILED(res)) return res;
+
+            res = IWICBitmapSource_CopyPalette(This->source, palette);
+            if (SUCCEEDED(res))
+                res = IWICPalette_GetColors(palette, 2, colors, &actualcolors);
+
+            IWICPalette_Release(palette);
+
+            if (FAILED(res)) return res;
+
+            srcstride = (prc->Width+7)/8;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = HeapAlloc(GetProcessHeap(), 0, srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcbyte=(const BYTE*)srcrow;
+                    dstpixel=(DWORD*)dstrow;
+                    for (x=0; x<prc->Width; x+=8) {
+                        BYTE srcval;
+                        srcval=*srcbyte++;
+                        *dstpixel++ = colors[srcval>>7&1];
+                        if (x+1 < prc->Width) *dstpixel++ = colors[srcval>>6&1];
+                        if (x+2 < prc->Width) *dstpixel++ = colors[srcval>>5&1];
+                        if (x+3 < prc->Width) *dstpixel++ = colors[srcval>>4&1];
+                        if (x+4 < prc->Width) *dstpixel++ = colors[srcval>>3&1];
+                        if (x+5 < prc->Width) *dstpixel++ = colors[srcval>>2&1];
+                        if (x+6 < prc->Width) *dstpixel++ = colors[srcval>>1&1];
+                        if (x+7 < prc->Width) *dstpixel++ = colors[srcval&1];
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            HeapFree(GetProcessHeap(), 0, srcdata);
+
+            return res;
+        }
+        return S_OK;
     case format_16bppBGR555:
         if (prc)
         {
@@ -202,6 +266,7 @@ static HRESULT copypixels_to_32bppBGR(struct FormatConverter *This, const WICRec
 }
 
 static const struct pixelformatinfo supported_formats[] = {
+    {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL},
     {format_16bppBGR555, &GUID_WICPixelFormat16bppBGR555, NULL},
     {format_16bppBGR565, &GUID_WICPixelFormat16bppBGR565, NULL},
     {format_32bppBGR, &GUID_WICPixelFormat32bppBGR, copypixels_to_32bppBGR},
