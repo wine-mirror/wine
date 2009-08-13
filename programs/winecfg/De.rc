@@ -284,7 +284,7 @@ BEGIN
     IDS_DEVICES_WAVEOUT         "Wave-Ausgabe-Geräte"
     IDS_DEVICES_WAVEIN          "Wave-Eingabe-Geräte"
     IDS_DEVICES_MIDIOUT         "MIDI-Ausgabe-Geräte"
-    IDS_DEVICES_MIDIIN          "MIDI-Ausgabe-Geräte"
+    IDS_DEVICES_MIDIIN          "MIDI-Eingabe-Geräte"
     IDS_DEVICES_AUX             "Aux-Geräte"
     IDS_DEVICES_MIXER           "Mixer-Geräte"
     IDS_UNAVAILABLE_DRIVER      "In der Registry wurde ein Treiber gefunden, der nicht verfügbar ist!\n\nSoll „%s“ aus der Registry entfernt werden?"
