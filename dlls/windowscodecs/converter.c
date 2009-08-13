@@ -33,10 +33,76 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+struct FormatConverter;
+
+enum pixelformat {
+    format_32bppBGR,
+    format_32bppBGRA
+};
+
+typedef HRESULT (*copyfunc)(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format);
+
+struct pixelformatinfo {
+    enum pixelformat format;
+    const WICPixelFormatGUID *guid;
+    copyfunc copy_function;
+};
+
 typedef struct FormatConverter {
     const IWICFormatConverterVtbl *lpVtbl;
     LONG ref;
+    IWICBitmapSource *source;
+    const struct pixelformatinfo *dst_format, *src_format;
+    WICBitmapDitherType dither;
+    double alpha_threshold;
+    WICBitmapPaletteType palette_type;
 } FormatConverter;
+
+static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    switch (source_format)
+    {
+    case format_32bppBGR:
+        if (prc)
+        {
+            HRESULT res;
+            UINT x, y;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+            if (FAILED(res)) return res;
+
+            /* set all alpha values to 255 */
+            for (y=0; y<prc->Height; y++)
+                for (x=0; x<prc->Width; x++)
+                    pbBuffer[cbStride*y+4*x+3] = 0xff;
+        }
+        return S_OK;
+    case format_32bppBGRA:
+        if (prc)
+            return IWICBitmapSource_CopyPixels(This->source, prc, cbStride, cbBufferSize, pbBuffer);
+        return S_OK;
+    default:
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    }
+}
+
+static const struct pixelformatinfo supported_formats[] = {
+    {format_32bppBGR, &GUID_WICPixelFormat32bppBGR, NULL},
+    {format_32bppBGRA, &GUID_WICPixelFormat32bppBGRA, copypixels_to_32bppBGRA},
+    {0}
+};
+
+static const struct pixelformatinfo *get_formatinfo(const WICPixelFormatGUID *format)
+{
+    UINT i;
+
+    for (i=0; supported_formats[i].guid; i++)
+        if (IsEqualGUID(supported_formats[i].guid, format)) return &supported_formats[i];
+
+    return NULL;
+}
 
 static HRESULT WINAPI FormatConverter_QueryInterface(IWICFormatConverter *iface, REFIID iid,
     void **ppv)
@@ -81,6 +147,7 @@ static ULONG WINAPI FormatConverter_Release(IWICFormatConverter *iface)
 
     if (ref == 0)
     {
+        if (This->source) IWICBitmapSource_Release(This->source);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -118,26 +185,81 @@ static HRESULT WINAPI FormatConverter_CopyPalette(IWICFormatConverter *iface,
 static HRESULT WINAPI FormatConverter_CopyPixels(IWICFormatConverter *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%p,%u,%u,%p): stub\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
-    return E_NOTIMPL;
+    FormatConverter *This = (FormatConverter*)iface;
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+
+    if (This->source)
+        return This->dst_format->copy_function(This, prc, cbStride, cbBufferSize,
+            pbBuffer, This->src_format->format);
+    else
+        return WINCODEC_ERR_NOTINITIALIZED;
 }
 
 static HRESULT WINAPI FormatConverter_Initialize(IWICFormatConverter *iface,
     IWICBitmapSource *pISource, REFWICPixelFormatGUID dstFormat, WICBitmapDitherType dither,
     IWICPalette *pIPalette, double alphaThresholdPercent, WICBitmapPaletteType paletteTranslate)
 {
-    FIXME("(%p,%p,%s,%u,%p,%0.1f,%u): stub\n", iface, pISource, debugstr_guid(dstFormat),
+    FormatConverter *This = (FormatConverter*)iface;
+    const struct pixelformatinfo *srcinfo, *dstinfo;
+    static INT fixme=0;
+    GUID srcFormat;
+    HRESULT res;
+
+    TRACE("(%p,%p,%s,%u,%p,%0.1f,%u)\n", iface, pISource, debugstr_guid(dstFormat),
         dither, pIPalette, alphaThresholdPercent, paletteTranslate);
-    return E_NOTIMPL;
+
+    if (pIPalette && !fixme++) FIXME("ignoring palette");
+
+    if (This->source) return WINCODEC_ERR_WRONGSTATE;
+
+    res = IWICBitmapSource_GetPixelFormat(pISource, &srcFormat);
+    if (FAILED(res)) return res;
+
+    srcinfo = get_formatinfo(&srcFormat);
+    if (!srcinfo) return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+
+    dstinfo = get_formatinfo(dstFormat);
+    if (!dstinfo) return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+
+    if (dstinfo->copy_function)
+    {
+        IWICBitmapSource_AddRef(pISource);
+        This->source = pISource;
+        This->src_format = srcinfo;
+        This->dst_format = dstinfo;
+        This->dither = dither;
+        This->alpha_threshold = alphaThresholdPercent;
+        This->palette_type = paletteTranslate;
+    }
+    else
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI FormatConverter_CanConvert(IWICFormatConverter *iface,
     REFWICPixelFormatGUID srcPixelFormat, REFWICPixelFormatGUID dstPixelFormat,
     BOOL *pfCanConvert)
 {
-    FIXME("(%p,%s,%s,%p): stub\n", iface, debugstr_guid(srcPixelFormat),
+    FormatConverter *This = (FormatConverter*)iface;
+    const struct pixelformatinfo *srcinfo, *dstinfo;
+
+    TRACE("(%p,%s,%s,%p)\n", iface, debugstr_guid(srcPixelFormat),
         debugstr_guid(dstPixelFormat), pfCanConvert);
-    return E_NOTIMPL;
+
+    srcinfo = get_formatinfo(srcPixelFormat);
+    if (!srcinfo) return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+
+    dstinfo = get_formatinfo(dstPixelFormat);
+    if (!dstinfo) return WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT;
+
+    if (dstinfo->copy_function &&
+        SUCCEEDED(dstinfo->copy_function(This, NULL, 0, 0, NULL, dstinfo->format)))
+        *pfCanConvert = TRUE;
+    else
+        *pfCanConvert = FALSE;
+
+    return S_OK;
 }
 
 static const IWICFormatConverterVtbl FormatConverter_Vtbl = {
@@ -169,6 +291,7 @@ HRESULT FormatConverter_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** p
 
     This->lpVtbl = &FormatConverter_Vtbl;
     This->ref = 1;
+    This->source = NULL;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
