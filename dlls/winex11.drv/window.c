@@ -1038,7 +1038,7 @@ static void set_wm_hints( Display *display, struct x11drv_win_data *data )
     if (data->wm_hints)
     {
         data->wm_hints->flags |= InputHint | StateHint | WindowGroupHint;
-        data->wm_hints->input = !(style & WS_DISABLED);
+        data->wm_hints->input = !use_take_focus && !(style & WS_DISABLED);
         data->wm_hints->initial_state = (style & WS_MINIMIZE) ? IconicState : NormalState;
         data->wm_hints->window_group = group_leader;
         XSetWMHints( display, data->whole_window, data->wm_hints );
