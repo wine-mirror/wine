@@ -652,7 +652,7 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
 
             PTS_ABORTIF(ptd, stabs_pts_read_type_def(ptd, NULL, &adt) == -1);
 
-            if (doadd)
+            if (doadd && adt)
             {
                 char    tmp[256];
                 DWORD64 size;
