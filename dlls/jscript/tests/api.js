@@ -1391,5 +1391,6 @@ testObjectInherit(/test/g, false, true, true);
 testObjectInherit(new Number(1), false, false, false);
 testObjectInherit(new Date(), false, false, false);
 testObjectInherit(new Boolean(true), false, true, false);
+testObjectInherit(new Array(), false, false, true);
 
 reportSuccess();

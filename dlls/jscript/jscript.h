@@ -226,7 +226,7 @@ HRESULT init_global(script_ctx_t*);
 HRESULT init_function_constr(script_ctx_t*,DispatchEx*);
 HRESULT create_object_prototype(script_ctx_t*,DispatchEx**);
 
-HRESULT create_array_constr(script_ctx_t*,DispatchEx**);
+HRESULT create_array_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_bool_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT create_date_constr(script_ctx_t*,DispatchEx*,DispatchEx**);
 HRESULT init_error_constr(script_ctx_t*);

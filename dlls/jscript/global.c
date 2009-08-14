@@ -754,7 +754,7 @@ static HRESULT init_constructors(script_ctx_t *ctx, DispatchEx *object_prototype
     if(FAILED(hres))
         return hres;
 
-    hres = create_array_constr(ctx, &ctx->array_constr);
+    hres = create_array_constr(ctx, object_prototype, &ctx->array_constr);
     if(FAILED(hres))
         return hres;
 
