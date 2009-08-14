@@ -758,7 +758,7 @@ static HRESULT init_constructors(script_ctx_t *ctx, DispatchEx *object_prototype
     if(FAILED(hres))
         return hres;
 
-    hres = create_bool_constr(ctx, &ctx->bool_constr);
+    hres = create_bool_constr(ctx, object_prototype, &ctx->bool_constr);
     if(FAILED(hres))
         return hres;
 
