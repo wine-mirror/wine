@@ -80,9 +80,6 @@ struct res_tree
     unsigned int     nb_types;             /* total number of types */
 };
 
-static unsigned char *file_out_pos;   /* current position in output resource file */
-static unsigned char *file_out_end;   /* end of output buffer */
-
 /* size of a resource directory with n entries */
 #define RESOURCE_DIR_SIZE        (4 * sizeof(unsigned int))
 #define RESOURCE_DIR_ENTRY_SIZE  (2 * sizeof(unsigned int))
@@ -150,25 +147,6 @@ static void get_string( struct string_id *str )
         str->id  = 0;
         if ((*p++ = wc)) while ((*p++ = get_word()));
     }
-}
-
-/* put a word into the resource file */
-static void put_word( unsigned short val )
-{
-    if (byte_swapped) val = (val << 8) | (val >> 8);
-    *(unsigned short *)file_out_pos = val;
-    file_out_pos += sizeof(unsigned short);
-    assert( file_out_pos <= file_out_end );
-}
-
-/* put a dword into the resource file */
-static void put_dword( unsigned int val )
-{
-    if (byte_swapped)
-        val = ((val << 24) | ((val << 8) & 0x00ff0000) | ((val >> 8) & 0x0000ff00) | (val >> 24));
-    *(unsigned int *)file_out_pos = val;
-    file_out_pos += sizeof(unsigned int);
-    assert( file_out_pos <= file_out_end );
 }
 
 /* put a string into the resource file */
@@ -516,26 +494,15 @@ static unsigned int get_resource_header_size( const struct resource *res )
 /* output the resources into a .o file */
 void output_res_o_file( DLLSPEC *spec )
 {
-    unsigned int i, total_size;
-    unsigned char *data;
+    unsigned int i;
     char *res_file = NULL;
     int fd, err;
 
     if (!spec->nb_resources) fatal_error( "--resources mode needs at least one resource file as input\n" );
     if (!output_file_name) fatal_error( "No output file name specified\n" );
 
-    total_size = 32;  /* header */
-
-    for (i = 0; i < spec->nb_resources; i++)
-    {
-        total_size += (get_resource_header_size( &spec->resources[i] ) + 3) & ~3;
-        total_size += (spec->resources[i].data_size + 3) & ~3;
-    }
-    data = xmalloc( total_size );
-
     byte_swapped = 0;
-    file_out_pos = data;
-    file_out_end = data + total_size;
+    init_output_buffer();
 
     put_dword( 0 );      /* ResSize */
     put_dword( 32 );     /* HeaderSize */
@@ -557,34 +524,30 @@ void output_res_o_file( DLLSPEC *spec )
         put_dword( (header_size + 3) & ~3 );
         put_string( &spec->resources[i].type );
         put_string( &spec->resources[i].name );
-        if ((unsigned long)file_out_pos & 2) put_word( 0 );
+        align_output( 4 );
         put_dword( 0 );
         put_word( spec->resources[i].mem_options );
         put_word( spec->resources[i].lang );
         put_dword( 0 );
         put_dword( 0 );
-        memcpy( file_out_pos, spec->resources[i].data, spec->resources[i].data_size );
-        file_out_pos += spec->resources[i].data_size;
-        while ((unsigned long)file_out_pos & 3) *file_out_pos++ = 0;
+        put_data( spec->resources[i].data, spec->resources[i].data_size );
+        align_output( 4 );
     }
-    assert( file_out_pos == file_out_end );
 
     /* if the output file name is a .res too, don't run the results through windres */
     if (strendswith( output_file_name, ".res"))
     {
-        if ((fd = open( output_file_name, O_WRONLY|O_CREAT|O_TRUNC, 0666 )) == -1)
-            fatal_error( "Cannot create %s\n", output_file_name );
+        flush_output_buffer();
+        return;
     }
-    else
-    {
-        res_file = get_temp_file_name( output_file_name, ".res" );
-        if ((fd = open( res_file, O_WRONLY|O_CREAT|O_TRUNC, 0600 )) == -1)
-            fatal_error( "Cannot create %s\n", res_file );
-    }
-    if (write( fd, data, total_size ) != total_size)
+
+    res_file = get_temp_file_name( output_file_name, ".res" );
+    if ((fd = open( res_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, 0600 )) == -1)
+        fatal_error( "Cannot create %s\n", res_file );
+    if (write( fd, output_buffer, output_buffer_pos ) != output_buffer_pos)
         fatal_error( "Error writing to %s\n", res_file );
     close( fd );
-    free( data );
+    free( output_buffer );
 
     if (res_file)
     {
