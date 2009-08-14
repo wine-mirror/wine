@@ -842,12 +842,66 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
         ret = SendMessage(hTab, TCM_GETITEM, 0, (LPARAM)NULL);
         expect(FALSE, ret);
 
+        /* passing invalid index should result in initialization to zero
+           for members mentioned in mask requested */
+
+        /* valid range here is [0,4] */
+        memset(&tcItem, 0xcc, sizeof(tcItem));
+        tcItem.mask = TCIF_PARAM;
+        ret = SendMessage(hTab, TCM_GETITEM, 5, (LPARAM)&tcItem);
+        expect(FALSE, ret);
+        ok(tcItem.lParam == 0, "Expected zero lParam, got %lu\n", tcItem.lParam);
+
+        memset(&tcItem, 0xcc, sizeof(tcItem));
+        tcItem.mask = TCIF_IMAGE;
+        ret = SendMessage(hTab, TCM_GETITEM, 5, (LPARAM)&tcItem);
+        expect(FALSE, ret);
+        expect(0, tcItem.iImage);
+
+        memset(&tcItem, 0xcc, sizeof(tcItem));
+        tcItem.mask = TCIF_TEXT;
+        tcItem.pszText = szText;
+        szText[0] = 'a';
+        ret = SendMessage(hTab, TCM_GETITEM, 5, (LPARAM)&tcItem);
+        expect(FALSE, ret);
+        expect('a', szText[0]);
+
+        memset(&tcItem, 0xcc, sizeof(tcItem));
+        tcItem.mask = TCIF_STATE;
+        tcItem.dwStateMask = 0;
+        tcItem.dwState = TCIS_BUTTONPRESSED;
+        ret = SendMessage(hTab, TCM_GETITEM, 5, (LPARAM)&tcItem);
+        expect(FALSE, ret);
+        ok(tcItem.dwState == 0, "Expected zero dwState, got %u\n", tcItem.dwState);
+
+        memset(&tcItem, 0xcc, sizeof(tcItem));
+        tcItem.mask = TCIF_STATE;
+        tcItem.dwStateMask = TCIS_BUTTONPRESSED;
+        tcItem.dwState = TCIS_BUTTONPRESSED;
+        ret = SendMessage(hTab, TCM_GETITEM, 5, (LPARAM)&tcItem);
+        expect(FALSE, ret);
+        ok(tcItem.dwState == 0, "Expected zero dwState\n");
+
+        /* check with negative index to be sure */
+        memset(&tcItem, 0xcc, sizeof(tcItem));
+        tcItem.mask = TCIF_PARAM;
+        ret = SendMessage(hTab, TCM_GETITEM, -1, (LPARAM)&tcItem);
+        expect(FALSE, ret);
+        ok(tcItem.lParam == 0, "Expected zero lParam, got %lu\n", tcItem.lParam);
+
+        memset(&tcItem, 0xcc, sizeof(tcItem));
+        tcItem.mask = TCIF_PARAM;
+        ret = SendMessage(hTab, TCM_GETITEM, -2, (LPARAM)&tcItem);
+        expect(FALSE, ret);
+        ok(tcItem.lParam == 0, "Expected zero lParam, got %lu\n", tcItem.lParam);
+
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
         tcItem.mask = TCIF_TEXT;
         tcItem.pszText = &szText[0];
         tcItem.cchTextMax = sizeof(szText);
 
+        strcpy(szText, "New Label");
         ok ( SendMessage(hTab, TCM_SETITEM, 0, (LPARAM) &tcItem), "Setting new item failed.\n");
         ok ( SendMessage(hTab, TCM_GETITEM, 0, (LPARAM) &tcItem), "Getting item failed.\n");
         expect_str("New Label", tcItem.pszText);
