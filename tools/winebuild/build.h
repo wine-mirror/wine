@@ -263,6 +263,19 @@ extern void add_16bit_exports( DLLSPEC *spec32, DLLSPEC *spec16 );
 extern int parse_spec_file( FILE *file, DLLSPEC *spec );
 extern int parse_def_file( FILE *file, DLLSPEC *spec );
 
+/* buffer management */
+
+extern int byte_swapped;
+extern const char *input_buffer_filename;
+extern const unsigned char *input_buffer;
+extern size_t input_buffer_pos;
+extern size_t input_buffer_size;
+
+extern void init_input_buffer( const char *file );
+extern unsigned char get_byte(void);
+extern unsigned short get_word(void);
+extern unsigned int get_dword(void);
+
 /* global variables */
 
 extern int current_line;

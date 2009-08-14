@@ -31,12 +31,6 @@
 # include <sys/types.h>
 #endif
 #include <fcntl.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
 
 #include "build.h"
 
@@ -85,11 +79,6 @@ struct res_tree
     struct res_type *types;                /* types array */
     unsigned int     nb_types;             /* total number of types */
 };
-
-static int byte_swapped;  /* whether the current resource file is byte-swapped */
-static const unsigned char *file_pos;   /* current position in resource file */
-static const unsigned char *file_end;   /* end of resource file */
-static const char *file_name;  /* current resource file name */
 
 static unsigned char *file_out_pos;   /* current position in output resource file */
 static unsigned char *file_out_end;   /* end of output buffer */
@@ -144,42 +133,22 @@ static struct res_type *add_type( struct res_tree *tree, const struct resource *
     return type;
 }
 
-/* get the next word from the current resource file */
-static unsigned short get_word(void)
-{
-    unsigned short ret = *(const unsigned short *)file_pos;
-    if (byte_swapped) ret = (ret << 8) | (ret >> 8);
-    file_pos += sizeof(unsigned short);
-    if (file_pos > file_end) fatal_error( "%s is a truncated file\n", file_name );
-    return ret;
-}
-
-/* get the next dword from the current resource file */
-static unsigned int get_dword(void)
-{
-    unsigned int ret = *(const unsigned int *)file_pos;
-    if (byte_swapped)
-        ret = ((ret << 24) | ((ret << 8) & 0x00ff0000) | ((ret >> 8) & 0x0000ff00) | (ret >> 24));
-    file_pos += sizeof(unsigned int);
-    if (file_pos > file_end) fatal_error( "%s is a truncated file\n", file_name );
-    return ret;
-}
-
 /* get a string from the current resource file */
 static void get_string( struct string_id *str )
 {
-    if (*(const WCHAR *)file_pos == 0xffff)
+    WCHAR wc = get_word();
+
+    if (wc == 0xffff)
     {
-        get_word();  /* skip the 0xffff */
         str->str = NULL;
         str->id = get_word();
     }
     else
     {
-        WCHAR *p = xmalloc( (strlenW((const WCHAR*)file_pos) + 1) * sizeof(WCHAR) );
+        WCHAR *p = xmalloc( (strlenW( (const WCHAR *)(input_buffer + input_buffer_pos) - 1) + 1) * sizeof(WCHAR) );
         str->str = p;
         str->id  = 0;
-        while ((*p++ = get_word()));
+        if ((*p++ = wc)) while ((*p++ = get_word()));
     }
 }
 
@@ -225,8 +194,9 @@ static void dump_res_data( const struct resource *res )
 
     if (!size) return;
 
-    file_pos = res->data;
-    file_end = (const unsigned char *)res->data + size;
+    input_buffer = res->data;
+    input_buffer_pos  = 0;
+    input_buffer_size = size;
 
     output( "\t.long " );
     while (size > 4)
@@ -237,7 +207,7 @@ static void dump_res_data( const struct resource *res )
     }
     output( "0x%08x\n", get_dword() );
     size -= 4;
-    assert( file_pos == file_end );
+    assert( input_buffer_pos == input_buffer_size );
 }
 
 /* check the file header */
@@ -268,50 +238,35 @@ static void load_next_resource( DLLSPEC *spec )
 
     res->data_size = get_dword();
     hdr_size = get_dword();
-    if (hdr_size & 3) fatal_error( "%s header size not aligned\n", file_name );
+    if (hdr_size & 3) fatal_error( "%s header size not aligned\n", input_buffer_filename );
 
-    res->data = file_pos - 2*sizeof(unsigned int) + hdr_size;
+    res->data = input_buffer + input_buffer_pos - 2*sizeof(unsigned int) + hdr_size;
     get_string( &res->type );
     get_string( &res->name );
-    if ((unsigned long)file_pos & 2) get_word();  /* align to dword boundary */
+    if (input_buffer_pos & 2) get_word();  /* align to dword boundary */
     get_dword();                        /* skip data version */
     res->mem_options = get_word();
     res->lang = get_word();
     get_dword();                        /* skip version */
     get_dword();                        /* skip characteristics */
 
-    file_pos = (const unsigned char *)res->data + ((res->data_size + 3) & ~3);
-    if (file_pos > file_end) fatal_error( "%s is a truncated file\n", file_name );
+    input_buffer_pos = ((const unsigned char *)res->data - input_buffer) + ((res->data_size + 3) & ~3);
+    input_buffer_pos = (input_buffer_pos + 3) & ~3;
+    if (input_buffer_pos > input_buffer_size)
+        fatal_error( "%s is a truncated file\n", input_buffer_filename );
 }
 
 /* load a Win32 .res file */
 int load_res32_file( const char *name, DLLSPEC *spec )
 {
-    int fd, ret;
-    void *base;
-    struct stat st;
+    int ret;
 
-    if ((fd = open( name, O_RDONLY | O_BINARY )) == -1) fatal_perror( "Cannot open %s", name );
-    if ((fstat( fd, &st ) == -1)) fatal_perror( "Cannot stat %s", name );
-    if (!st.st_size) fatal_error( "%s is an empty file\n", name );
-#ifdef	HAVE_MMAP
-    if ((base = mmap( NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0 )) == (void*)-1)
-#endif	/* HAVE_MMAP */
-    {
-        base = xmalloc( st.st_size );
-        if (read( fd, base, st.st_size ) != st.st_size)
-            fatal_error( "Cannot read %s\n", name );
-    }
+    init_input_buffer( name );
 
-    byte_swapped = 0;
-    file_name = name;
-    file_pos  = base;
-    file_end  = file_pos + st.st_size;
     if ((ret = check_header()))
     {
-        while (file_pos < file_end) load_next_resource( spec );
+        while (input_buffer_pos < input_buffer_size) load_next_resource( spec );
     }
-    close( fd );
     return ret;
 }
 

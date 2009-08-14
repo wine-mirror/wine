@@ -31,12 +31,6 @@
 # include <sys/types.h>
 #endif
 #include <fcntl.h>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
-#endif
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
 
 #include "build.h"
 
@@ -72,10 +66,6 @@ struct res_tree
     unsigned int     nb_types;             /* total number of types */
 };
 
-static const unsigned char *file_pos;   /* current position in resource file */
-static const unsigned char *file_end;   /* end of resource file */
-static const char *file_name;  /* current resource file name */
-
 
 static inline struct resource *add_resource( DLLSPEC *spec )
 {
@@ -94,56 +84,21 @@ static struct res_type *add_type( struct res_tree *tree, const struct resource *
     return type;
 }
 
-/* get the next byte from the current resource file */
-static unsigned char get_byte(void)
-{
-    unsigned char ret = *file_pos++;
-    if (file_pos > file_end) fatal_error( "%s is a truncated/corrupted file\n", file_name );
-    return ret;
-}
-
-/* get the next word from the current resource file */
-static unsigned short get_word(void)
-{
-    /* might not be aligned */
-#ifdef WORDS_BIGENDIAN
-    unsigned char high = get_byte();
-    unsigned char low = get_byte();
-#else
-    unsigned char low = get_byte();
-    unsigned char high = get_byte();
-#endif
-    return low | (high << 8);
-}
-
-/* get the next dword from the current resource file */
-static unsigned int get_dword(void)
-{
-#ifdef WORDS_BIGENDIAN
-    unsigned short high = get_word();
-    unsigned short low = get_word();
-#else
-    unsigned short low = get_word();
-    unsigned short high = get_word();
-#endif
-    return low | (high << 16);
-}
-
 /* get a string from the current resource file */
 static void get_string( struct string_id *str )
 {
-    if (*file_pos == 0xff)
+    unsigned char c = get_byte();
+
+    if (c == 0xff)
     {
-        get_byte();  /* skip the 0xff */
         str->str = NULL;
         str->id = get_word();
     }
     else
     {
-        char *p = xmalloc(strlen((const char *)file_pos) + 1);
-        str->str = p;
+        str->str = (char *)input_buffer + input_buffer_pos - 1;
         str->id = 0;
-        while ((*p++ = get_byte()));
+        while (get_byte()) /* nothing */;
     }
 }
 
@@ -156,35 +111,17 @@ static void load_next_resource( DLLSPEC *spec )
     get_string( &res->name );
     res->memopt    = get_word();
     res->data_size = get_dword();
-    res->data      = file_pos;
-    file_pos += res->data_size;
-    if (file_pos > file_end) fatal_error( "%s is a truncated/corrupted file\n", file_name );
+    res->data      = input_buffer + input_buffer_pos;
+    input_buffer_pos += res->data_size;
+    if (input_buffer_pos > input_buffer_size)
+        fatal_error( "%s is a truncated/corrupted file\n", input_buffer_filename );
 }
 
 /* load a Win16 .res file */
 void load_res16_file( const char *name, DLLSPEC *spec )
 {
-    int fd;
-    void *base;
-    struct stat st;
-
-    if ((fd = open( name, O_RDONLY | O_BINARY )) == -1) fatal_perror( "Cannot open %s", name );
-    if ((fstat( fd, &st ) == -1)) fatal_perror( "Cannot stat %s", name );
-    if (!st.st_size) fatal_error( "%s is an empty file\n", name );
-#ifdef	HAVE_MMAP
-    if ((base = mmap( NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0 )) == (void*)-1)
-#endif	/* HAVE_MMAP */
-    {
-        base = xmalloc( st.st_size );
-        if (read( fd, base, st.st_size ) != st.st_size)
-            fatal_error( "Cannot read %s\n", name );
-    }
-
-    file_name = name;
-    file_pos  = base;
-    file_end  = file_pos + st.st_size;
-    while (file_pos < file_end) load_next_resource( spec );
-    close (fd);
+    init_input_buffer( name );
+    while (input_buffer_pos < input_buffer_size) load_next_resource( spec );
 }
 
 /* compare two strings/ids */

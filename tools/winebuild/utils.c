@@ -30,6 +30,12 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
 
 #include "build.h"
 
@@ -368,6 +374,73 @@ char *get_temp_file_name( const char *prefix, const char *suffix )
     close( fd );
     tmp_files[nb_tmp_files++] = name;
     return name;
+}
+
+/*******************************************************************
+ *         buffer management
+ *
+ * Function for reading from/writing to a memory buffer.
+ */
+
+int byte_swapped = 0;
+const char *input_buffer_filename;
+const unsigned char *input_buffer;
+size_t input_buffer_pos;
+size_t input_buffer_size;
+
+void init_input_buffer( const char *file )
+{
+    int fd;
+    struct stat st;
+
+    if ((fd = open( file, O_RDONLY | O_BINARY )) == -1) fatal_perror( "Cannot open %s", file );
+    if ((fstat( fd, &st ) == -1)) fatal_perror( "Cannot stat %s", file );
+    if (!st.st_size) fatal_error( "%s is an empty file\n", file );
+#ifdef	HAVE_MMAP
+    if ((input_buffer = mmap( NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0 )) == (void*)-1)
+#endif
+    {
+        unsigned char *buffer = xmalloc( st.st_size );
+        if (read( fd, buffer, st.st_size ) != st.st_size) fatal_error( "Cannot read %s\n", file );
+        input_buffer = buffer;
+    }
+    close( fd );
+    input_buffer_filename = xstrdup( file );
+    input_buffer_size = st.st_size;
+    input_buffer_pos = 0;
+    byte_swapped = 0;
+}
+
+unsigned char get_byte(void)
+{
+    if (input_buffer_pos >= input_buffer_size)
+        fatal_error( "%s is a truncated file\n", input_buffer_filename );
+    return input_buffer[input_buffer_pos++];
+}
+
+unsigned short get_word(void)
+{
+    unsigned short ret;
+
+    if (input_buffer_pos + sizeof(ret) > input_buffer_size)
+        fatal_error( "%s is a truncated file\n", input_buffer_filename );
+    memcpy( &ret, input_buffer + input_buffer_pos, sizeof(ret) );
+    if (byte_swapped) ret = (ret << 8) | (ret >> 8);
+    input_buffer_pos += sizeof(ret);
+    return ret;
+}
+
+unsigned int get_dword(void)
+{
+    unsigned int ret;
+
+    if (input_buffer_pos + sizeof(ret) > input_buffer_size)
+        fatal_error( "%s is a truncated file\n", input_buffer_filename );
+    memcpy( &ret, input_buffer + input_buffer_pos, sizeof(ret) );
+    if (byte_swapped)
+        ret = ((ret << 24) | ((ret << 8) & 0x00ff0000) | ((ret >> 8) & 0x0000ff00) | (ret >> 24));
+    input_buffer_pos += sizeof(ret);
+    return ret;
 }
 
 /* output a standard header for generated files */
