@@ -762,7 +762,7 @@ static HRESULT init_constructors(script_ctx_t *ctx, DispatchEx *object_prototype
     if(FAILED(hres))
         return hres;
 
-    hres = create_date_constr(ctx, &ctx->date_constr);
+    hres = create_date_constr(ctx, object_prototype, &ctx->date_constr);
     if(FAILED(hres))
         return hres;
 

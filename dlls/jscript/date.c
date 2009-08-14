@@ -47,7 +47,6 @@ typedef struct {
 
 static const WCHAR toStringW[] = {'t','o','S','t','r','i','n','g',0};
 static const WCHAR toLocaleStringW[] = {'t','o','L','o','c','a','l','e','S','t','r','i','n','g',0};
-static const WCHAR hasOwnPropertyW[] = {'h','a','s','O','w','n','P','r','o','p','e','r','t','y',0};
 static const WCHAR propertyIsEnumerableW[] =
     {'p','r','o','p','e','r','t','y','I','s','E','n','u','m','e','r','a','b','l','e',0};
 static const WCHAR isPrototypeOfW[] = {'i','s','P','r','o','t','o','t','y','p','e','O','f',0};
@@ -650,27 +649,6 @@ static HRESULT Date_toLocaleString(DispatchEx *dispex, LCID lcid, WORD flags, DI
         V_BSTR(retv) = date_str;
     }
     return S_OK;
-}
-
-static HRESULT Date_hasOwnProperty(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Date_propertyIsEnumerable(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static HRESULT Date_isPrototypeOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
-        VARIANT *retv, jsexcept_t *ei, IServiceProvider *caller)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
 }
 
 static HRESULT Date_valueOf(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
@@ -2076,9 +2054,6 @@ static const builtin_prop_t Date_props[] = {
     {getUTCMonthW,           Date_getUTCMonth,           PROPF_METHOD},
     {getUTCSecondsW,         Date_getUTCSeconds,         PROPF_METHOD},
     {getYearW,               Date_getYear,               PROPF_METHOD},
-    {hasOwnPropertyW,        Date_hasOwnProperty,        PROPF_METHOD},
-    {isPrototypeOfW,         Date_isPrototypeOf,         PROPF_METHOD},
-    {propertyIsEnumerableW,  Date_propertyIsEnumerable,  PROPF_METHOD},
     {setDateW,               Date_setDate,               PROPF_METHOD},
     {setFullYearW,           Date_setFullYear,           PROPF_METHOD},
     {setHoursW,              Date_setHours,              PROPF_METHOD},
@@ -2113,7 +2088,7 @@ static const builtin_info_t Date_info = {
     NULL
 };
 
-static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, DispatchEx **ret)
+static HRESULT create_date(script_ctx_t *ctx, DispatchEx *object_prototype, DOUBLE time, DispatchEx **ret)
 {
     DateInstance *date;
     HRESULT hres;
@@ -2125,10 +2100,10 @@ static HRESULT create_date(script_ctx_t *ctx, BOOL use_constr, DOUBLE time, Disp
     if(!date)
         return E_OUTOFMEMORY;
 
-    if(use_constr)
-        hres = init_dispex_from_constr(&date->dispex, ctx, &Date_info, ctx->date_constr);
+    if(object_prototype)
+        hres = init_dispex(&date->dispex, ctx, &Date_info, object_prototype);
     else
-        hres = init_dispex(&date->dispex, ctx, &Date_info, NULL);
+        hres = init_dispex_from_constr(&date->dispex, ctx, &Date_info, ctx->date_constr);
     if(FAILED(hres)) {
         heap_free(date);
         return hres;
@@ -2540,7 +2515,7 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
             lltime = ((LONGLONG)time.dwHighDateTime<<32)
                 + time.dwLowDateTime;
 
-            hres = create_date(dispex->ctx, TRUE, lltime/10000-TIME_EPOCH, &date);
+            hres = create_date(dispex->ctx, NULL, lltime/10000-TIME_EPOCH, &date);
             if(FAILED(hres))
                 return hres;
             break;
@@ -2563,7 +2538,7 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
             if(FAILED(hres))
                 return hres;
 
-            hres = create_date(dispex->ctx, TRUE, time_clip(num_val(&num)), &date);
+            hres = create_date(dispex->ctx, NULL, time_clip(num_val(&num)), &date);
             if(FAILED(hres))
                 return hres;
             break;
@@ -2576,7 +2551,7 @@ static HRESULT DateConstr_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPP
 
             DateConstr_UTC(dispex, lcid, flags, dp, &ret_date, ei, sp);
 
-            hres = create_date(dispex->ctx, TRUE, num_val(&ret_date), &date);
+            hres = create_date(dispex->ctx, NULL, num_val(&ret_date), &date);
             if(FAILED(hres))
                 return hres;
 
@@ -2623,12 +2598,12 @@ static const builtin_info_t DateConstr_info = {
     NULL
 };
 
-HRESULT create_date_constr(script_ctx_t *ctx, DispatchEx **ret)
+HRESULT create_date_constr(script_ctx_t *ctx, DispatchEx *object_prototype, DispatchEx **ret)
 {
     DispatchEx *date;
     HRESULT hres;
 
-    hres = create_date(ctx, FALSE, 0.0, &date);
+    hres = create_date(ctx, object_prototype, 0.0, &date);
     if(FAILED(hres))
         return hres;
 
