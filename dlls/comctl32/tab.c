@@ -2810,6 +2810,8 @@ TAB_GetItemT (TAB_INFO *infoPtr, INT iItem, LPTCITEMW tabItem, BOOL bUnicode)
 
   TRACE("(%p,%d,%p,%s)\n", infoPtr, iItem, tabItem, bUnicode ? "true" : "false");
 
+  if (!tabItem) return FALSE;
+
   if (iItem < 0 || iItem >= infoPtr->uNumItem)
     return FALSE;
 

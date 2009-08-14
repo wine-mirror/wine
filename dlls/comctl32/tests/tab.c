@@ -835,7 +835,12 @@ static void test_getters_setters(HWND parent_wnd, INT nTabs)
     /* Testing GetSet Item */
     {
         TCITEM tcItem;
+        DWORD ret;
         char szText[32] = "New Label";
+
+        /* TCM_GETITEM with null dest pointer */
+        ret = SendMessage(hTab, TCM_GETITEM, 0, (LPARAM)NULL);
+        expect(FALSE, ret);
 
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
