@@ -80,6 +80,7 @@ char *spec_file_name = NULL;
 FILE *output_file = NULL;
 const char *output_file_name = NULL;
 static const char *output_file_source_name;
+static int fake_module;
 
 char *as_command = NULL;
 char *ld_command = NULL;
@@ -216,6 +217,7 @@ static const char usage_str[] =
 "       --external-symbols    Allow linking to external symbols\n"
 "   -f FLAGS                  Compiler flags (only -fPIC is supported)\n"
 "   -F, --filename=DLLFILE    Set the DLL filename (default: from input file name)\n"
+"       --fake-module         Create a fake binary module\n"
 "   -h, --help                Display this help message\n"
 "   -H, --heap=SIZE           Set the heap size for a Win16 dll\n"
 "   -i, --ignore=SYM[,SYM]    Ignore specified symbols when resolving imports\n"
@@ -255,6 +257,7 @@ enum long_options_values
     LONG_OPT_EXE,
     LONG_OPT_ASCMD,
     LONG_OPT_EXTERNAL_SYMS,
+    LONG_OPT_FAKE_MODULE,
     LONG_OPT_LARGE_ADDRESS_AWARE,
     LONG_OPT_LDCMD,
     LONG_OPT_NMCMD,
@@ -276,6 +279,7 @@ static const struct option long_options[] =
     { "exe",           0, 0, LONG_OPT_EXE },
     { "as-cmd",        1, 0, LONG_OPT_ASCMD },
     { "external-symbols", 0, 0, LONG_OPT_EXTERNAL_SYMS },
+    { "fake-module",   0, 0, LONG_OPT_FAKE_MODULE },
     { "large-address-aware", 0, 0, LONG_OPT_LARGE_ADDRESS_AWARE },
     { "ld-cmd",        1, 0, LONG_OPT_LDCMD },
     { "nm-cmd",        1, 0, LONG_OPT_NMCMD },
@@ -451,6 +455,9 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
         case LONG_OPT_ASCMD:
             as_command = xstrdup( optarg );
             break;
+        case LONG_OPT_FAKE_MODULE:
+            fake_module = 1;
+            break;
         case LONG_OPT_EXTERNAL_SYMS:
             link_ext_symbols = 1;
             break;
@@ -607,6 +614,12 @@ int main(int argc, char **argv)
         load_resources( argv, spec );
         load_import_libs( argv );
         if (spec_file_name && !parse_input_file( spec )) break;
+        if (fake_module)
+        {
+            if (spec->type == SPEC_WIN16) output_fake_module16( spec );
+            else output_fake_module( spec );
+            break;
+        }
         read_undef_symbols( spec, argv );
         switch (spec->type)
         {

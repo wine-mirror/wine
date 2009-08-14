@@ -476,6 +476,109 @@ void output_resources( DLLSPEC *spec )
     free_resource_tree( tree );
 }
 
+/* output a Unicode string in binary format */
+static void output_bin_string( const WCHAR *name )
+{
+    int i, len = strlenW(name);
+    put_word( len );
+    for (i = 0; i < len; i++) put_word( name[i] );
+}
+
+/* output a resource directory in binary format */
+static inline void output_bin_res_dir( unsigned int nb_names, unsigned int nb_ids )
+{
+    put_dword( 0 );        /* Characteristics */
+    put_dword( 0 );        /* TimeDateStamp */
+    put_word( 0 );         /* MajorVersion */
+    put_word( 0 );         /* MinorVersion */
+    put_word( nb_names );  /* NumberOfNamedEntries */
+    put_word( nb_ids );    /* NumberOfIdEntries */
+}
+
+/* output the resource definitions in binary format */
+void output_bin_resources( DLLSPEC *spec, unsigned int start_rva )
+{
+    int k, nb_id_types;
+    unsigned int i, n, data_offset;
+    struct res_tree *tree;
+    struct res_type *type;
+    struct res_name *name;
+    const struct resource *res;
+
+    if (!spec->nb_resources) return;
+
+    tree = build_resource_tree( spec, &data_offset );
+    init_output_buffer();
+
+    /* output the resource directories */
+
+    for (i = nb_id_types = 0, type = tree->types; i < tree->nb_types; i++, type++)
+        if (!type->type->str) nb_id_types++;
+
+    output_bin_res_dir( tree->nb_types - nb_id_types, nb_id_types );
+
+    /* dump the type directory */
+
+    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    {
+        put_dword( type->name_offset );
+        put_dword( type->dir_offset | 0x80000000 );
+    }
+
+    /* dump the names and languages directories */
+
+    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    {
+        output_bin_res_dir( type->nb_names - type->nb_id_names, type->nb_id_names );
+        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        {
+            put_dword( name->name_offset );
+            put_dword( name->dir_offset | 0x80000000 );
+        }
+
+        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+        {
+            output_bin_res_dir( 0, name->nb_languages );
+            for (k = 0, res = name->res; k < name->nb_languages; k++, res++)
+            {
+                put_dword( res->lang );
+                put_dword( res->data_offset );
+            }
+        }
+    }
+
+    /* dump the resource data entries */
+
+    for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
+    {
+        put_dword( data_offset + start_rva );
+        put_dword( (res->data_size + 3) & ~3 );
+        put_dword( 0 );
+        put_dword( 0 );
+        data_offset += (res->data_size + 3) & ~3;
+    }
+
+    /* dump the name strings */
+
+    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    {
+        if (type->type->str) output_bin_string( type->type->str );
+        for (n = 0, name = type->names; n < type->nb_names; n++, name++)
+            if (name->name->str) output_bin_string( name->name->str );
+    }
+
+    /* resource data */
+
+    align_output( 4 );
+    for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
+    {
+        put_data( res->data, res->data_size );
+        align_output( 4 );
+    }
+
+    free_resource_tree( tree );
+}
+
 static unsigned int get_resource_header_size( const struct resource *res )
 {
     unsigned int size  = 5 * sizeof(unsigned int) + 2 * sizeof(unsigned short);

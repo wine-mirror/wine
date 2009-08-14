@@ -247,10 +247,13 @@ extern void output_imports( DLLSPEC *spec );
 extern void output_exports( DLLSPEC *spec );
 extern int load_res32_file( const char *name, DLLSPEC *spec );
 extern void output_resources( DLLSPEC *spec );
+extern void output_bin_resources( DLLSPEC *spec, unsigned int start_rva );
+extern void output_fake_module( DLLSPEC *spec );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
 extern void output_res16_data( DLLSPEC *spec );
 extern void output_res16_directory( DLLSPEC *spec );
 extern void output_spec16_file( DLLSPEC *spec );
+extern void output_fake_module16( DLLSPEC *spec16 );
 extern void output_res_o_file( DLLSPEC *spec );
 
 extern void BuildRelays16(void);

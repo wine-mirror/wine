@@ -108,6 +108,11 @@ specification must be used instead).
 .BI \-f\  flags
 Ignored for compatibility with the C compiler.
 .TP
+.B \--fake-module
+Create a fake PE module for a dll or exe, instead of the normal
+assembly or object file. The PE module contains the resources for the
+module, but no executable code.
+.TP
 .BI \-F,\ --filename= filename
 Set the file name of the module. The default is to use the base name
 of the spec file (without any extension).

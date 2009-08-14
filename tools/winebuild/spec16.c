@@ -896,3 +896,13 @@ void output_spec16_file( DLLSPEC *spec16 )
     output_gnu_stack_note();
     free_dll_spec( spec32 );
 }
+
+/*******************************************************************
+ *         output_fake_module16
+ *
+ * Create a fake 16-bit binary module.
+ */
+void output_fake_module16( DLLSPEC *spec16 )
+{
+    warning( "not implemented yet\n" );
+}
