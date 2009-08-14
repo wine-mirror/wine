@@ -946,6 +946,24 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, const char *gl_ren
     }
 }
 
+static DWORD wined3d_parse_gl_version(const char *gl_version)
+{
+    const char *ptr = gl_version;
+    int major, minor;
+
+    major = atoi(ptr);
+    if (major <= 0) ERR_(d3d_caps)("Invalid opengl major version: %d.\n", major);
+
+    while (isdigit(*ptr)) ++ptr;
+    if (*ptr++ != '.') ERR_(d3d_caps)("Invalid opengl version string: %s.\n", debugstr_a(gl_version));
+
+    minor = atoi(ptr);
+
+    TRACE_(d3d_caps)("Found OpenGL version: %d.%d.\n", major, minor);
+
+    return MAKEDWORD_VERSION(major, minor);
+}
+
 static GL_Vendors wined3d_guess_vendor(const char *gl_vendor, const char *gl_renderer)
 {
     if (strstr(gl_vendor, "NVIDIA"))
@@ -1026,19 +1044,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
         HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
-
-    /* First, parse the generic opengl version. This is supposed not to be
-     * convoluted with driver specific information. */
-    gl_string_cursor = gl_string;
-
-    major = atoi(gl_string_cursor);
-    if (major <= 0) ERR_(d3d_caps)("Invalid opengl major version: %d.\n", major);
-    while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') ++gl_string_cursor;
-    if (*gl_string_cursor++ != '.') ERR_(d3d_caps)("Invalid opengl version string: %s.\n", debugstr_a(gl_string));
-
-    minor = atoi(gl_string_cursor);
-    TRACE_(d3d_caps)("Found OpenGL version: %d.%d.\n", major, minor);
-    gl_version = MAKEDWORD_VERSION(major, minor);
+    gl_version = wined3d_parse_gl_version(gl_string);
 
     /* Now parse the driver specific string which we'll report to the app. */
     switch (gl_info->gl_vendor)
