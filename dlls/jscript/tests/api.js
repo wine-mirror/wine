@@ -1394,5 +1394,6 @@ testObjectInherit(new Boolean(true), false, true, false);
 testObjectInherit(new Array(), false, false, true);
 testObjectInherit(new Error(), false, true, true);
 testObjectInherit(testObjectInherit, false, true, true);
+testObjectInherit(Math, true, true, true);
 
 reportSuccess();

@@ -602,5 +602,19 @@ static const builtin_info_t Math_info = {
 
 HRESULT create_math(script_ctx_t *ctx, DispatchEx **ret)
 {
-    return create_dispex(ctx, &Math_info, NULL, ret);
+    DispatchEx *math;
+    HRESULT hres;
+
+    math = heap_alloc_zero(sizeof(DispatchEx));
+    if(!math)
+        return E_OUTOFMEMORY;
+
+    hres = init_dispex_from_constr(math, ctx, &Math_info, ctx->object_constr);
+    if(FAILED(hres)) {
+        heap_free(math);
+        return hres;
+    }
+
+    *ret = math;
+    return S_OK;
 }
