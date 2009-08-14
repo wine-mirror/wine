@@ -946,6 +946,28 @@ static void fixup_extensions(struct wined3d_gl_info *gl_info, const char *gl_ren
     }
 }
 
+static GL_Vendors wined3d_guess_vendor(const char *gl_vendor, const char *gl_renderer)
+{
+    if (strstr(gl_vendor, "NVIDIA"))
+        return VENDOR_NVIDIA;
+
+    if (strstr(gl_vendor, "ATI"))
+        return VENDOR_ATI;
+
+    if (strstr(gl_vendor, "Intel(R)")
+            || strstr(gl_renderer, "Intel(R)")
+            || strstr(gl_vendor, "Intel Inc."))
+        return VENDOR_INTEL;
+
+    if (strstr(gl_vendor, "Mesa")
+            || strstr(gl_vendor, "Tungsten Graphics, Inc."))
+        return VENDOR_MESA;
+
+    FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Returning VENDOR_WINE.\n", debugstr_a(gl_vendor));
+
+    return VENDOR_WINE;
+}
+
 /* Context activation is done by the caller. */
 static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
 {
@@ -992,32 +1014,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
         HeapFree(GetProcessHeap(), 0, gl_renderer);
         return FALSE;
     }
-
-    /* Fill in the GL vendor */
-    if (strstr(gl_string, "NVIDIA"))
-    {
-        gl_info->gl_vendor = VENDOR_NVIDIA;
-    }
-    else if (strstr(gl_string, "ATI"))
-    {
-        gl_info->gl_vendor = VENDOR_ATI;
-    }
-    else if (strstr(gl_string, "Intel(R)")
-            || strstr(gl_renderer, "Intel(R)")
-            || strstr(gl_string, "Intel Inc."))
-    {
-        gl_info->gl_vendor = VENDOR_INTEL;
-    }
-    else if (strstr(gl_string, "Mesa")
-            || strstr(gl_string, "Tungsten Graphics, Inc."))
-    {
-        gl_info->gl_vendor = VENDOR_MESA;
-    }
-    else
-    {
-        FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Setting VENDOR_WINE.\n", debugstr_a(gl_string));
-        gl_info->gl_vendor = VENDOR_WINE;
-    }
+    gl_info->gl_vendor = wined3d_guess_vendor(gl_string, gl_renderer);
     TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), gl_info->gl_vendor);
 
     /* Parse the GL_VERSION field into major and minor information */
