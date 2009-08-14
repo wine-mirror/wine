@@ -675,7 +675,8 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
             GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
         }
 
-        GL_EXTCALL(glDeleteQueriesARB(context->free_occlusion_query_count, context->free_occlusion_queries));
+        if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
+            GL_EXTCALL(glDeleteQueriesARB(context->free_occlusion_query_count, context->free_occlusion_queries));
 
         if (GL_SUPPORT(APPLE_FENCE))
             GL_EXTCALL(glDeleteFencesAPPLE(context->free_event_query_count, context->free_event_queries));
