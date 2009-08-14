@@ -688,6 +688,18 @@ PCONFIGURATION_INFORMATION WINAPI IoGetConfigurationInformation(void)
 
 
 /***********************************************************************
+ *           IoQueryDeviceDescription    (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoQueryDeviceDescription(PINTERFACE_TYPE itype, PULONG bus, PCONFIGURATION_TYPE ctype,
+                                     PULONG cnum, PCONFIGURATION_TYPE ptype, PULONG pnum,
+                                     PIO_QUERY_DEVICE_ROUTINE callout, PVOID context)
+{
+    FIXME( "(%p %p %p %p %p %p %p %p)\n", itype, bus, ctype, cnum, ptype, pnum, callout, context);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/***********************************************************************
  *           IoRegisterDriverReinitialization    (NTOSKRNL.EXE.@)
  */
 void WINAPI IoRegisterDriverReinitialization( PDRIVER_OBJECT obj, PDRIVER_REINITIALIZE reinit, PVOID context )

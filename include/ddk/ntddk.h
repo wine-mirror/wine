@@ -61,8 +61,58 @@ typedef struct _CONFIGURATION_INFORMATION
     ULONG MediumChangerCount;
 } CONFIGURATION_INFORMATION, *PCONFIGURATION_INFORMATION;
 
-typedef VOID (WINAPI *PDRIVER_REINITIALIZE)(PDRIVER_OBJECT,PVOID,ULONG);
+typedef enum _CONFIGURATION_TYPE
+{
+    ArcSystem = 0,
+    CentralProcessor,
+    FloatingPointProcessor,
+    PrimaryIcache,
+    PrimaryDcache,
+    SecondaryIcache,
+    SecondaryDcache,
+    SecondaryCache,
+    EisaAdapter,
+    TcAdapter,
+    ScsiAdapter,
+    DtiAdapter,
+    MultiFunctionAdapter,
+    DiskController,
+    TapeController,
+    CdromController,
+    WormController,
+    SerialController,
+    NetworkController,
+    DisplayController,
+    ParallelController,
+    PointerController,
+    KeyboardController,
+    AudioController,
+    OtherController,
+    DiskPeripheral,
+    FloppyDiskPeripheral,
+    TapePeripheral,
+    ModemPeripheral,
+    MonitorPeripheral,
+    PrinterPeripheral,
+    PointerPeripheral,
+    KeyboardPeripheral,
+    TerminalPeripheral,
+    OtherPeripheral,
+    LinePeripheral,
+    NetworkPeripheral,
+    SystemMemory,
+    DockingInformation,
+    RealModeIrqRoutingTable,
+    RealModePCIEnumeration,
+    MaximunType
+} CONFIGURATION_TYPE, *PCONFIGURATION_TYPE;
 
+typedef VOID (WINAPI *PDRIVER_REINITIALIZE)(PDRIVER_OBJECT,PVOID,ULONG);
+typedef NTSTATUS (WINAPI *PIO_QUERY_DEVICE_ROUTINE)(PVOID,PUNICODE_STRING,INTERFACE_TYPE,ULONG,
+            PKEY_VALUE_FULL_INFORMATION*,CONFIGURATION_TYPE,ULONG,PKEY_VALUE_FULL_INFORMATION*);
+
+NTSTATUS  WINAPI IoQueryDeviceDescription(PINTERFACE_TYPE,PULONG,PCONFIGURATION_TYPE,PULONG,
+                                  PCONFIGURATION_TYPE,PULONG,PIO_QUERY_DEVICE_ROUTINE,PVOID);
 void      WINAPI IoRegisterDriverReinitialization(PDRIVER_OBJECT,PDRIVER_REINITIALIZE,PVOID);
 NTSTATUS  WINAPI IoRegisterShutdownNotification(PDEVICE_OBJECT);
 

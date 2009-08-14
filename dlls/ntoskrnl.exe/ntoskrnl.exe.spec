@@ -412,7 +412,7 @@
 @ stub IoOpenDeviceRegistryKey
 @ stub IoPageRead
 @ stub IoPnPDeliverServicePowerNotification
-@ stub IoQueryDeviceDescription
+@ stdcall IoQueryDeviceDescription(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub IoQueryFileDosDeviceName
 @ stub IoQueryFileInformation
 @ stub IoQueryVolumeInformation
