@@ -964,6 +964,105 @@ static DWORD wined3d_parse_gl_version(const char *gl_version)
     return MAKEDWORD_VERSION(major, minor);
 }
 
+static DWORD wined3d_guess_driver_version(const char *gl_version, GL_Vendors vendor)
+{
+    int major, minor;
+    const char *ptr;
+    DWORD ret;
+
+    /* Now parse the driver specific string which we'll report to the app. */
+    switch (vendor)
+    {
+        case VENDOR_NVIDIA:
+            ptr = strstr(gl_version, "NVIDIA");
+            if (!ptr) return 0;
+
+            ptr = strstr(ptr, " ");
+            if (!ptr) return 0;
+
+            while (isspace(*ptr)) ++ptr;
+            if (!*ptr) return 0;
+
+            major = atoi(ptr);
+            while (isdigit(*ptr)) ++ptr;
+
+            if (*ptr++ != '.') return 0;
+
+            minor = atoi(ptr);
+            minor = major * 100 + minor;
+            major = 10;
+            break;
+
+        case VENDOR_ATI:
+            major = minor = 0;
+
+            ptr = strchr(gl_version, '-');
+            if (!ptr) return 0;
+
+            ++ptr;
+
+            /* Check if version number is of the form x.y.z. */
+            if (strlen(ptr) < 5
+                    || !isdigit(ptr[0]) || ptr[1] != '.'
+                    || !isdigit(ptr[2]) || ptr[3] != '.'
+                    || !isdigit(ptr[4]))
+            {
+                return 0;
+            }
+
+            major = ptr[0] - '0';
+            minor = ((ptr[2] - '0') << 8) | (ptr[4] - '0');
+            break;
+
+        case VENDOR_INTEL:
+            /* Apple and Mesa version strings look differently, but both provide intel drivers. */
+            if (strstr(gl_version, "APPLE"))
+            {
+                /* [0-9]+.[0-9]+ APPLE-[0-9]+.[0.9]+.[0.9]+
+                 * We only need the first part, and use the APPLE as identification
+                 * "1.2 APPLE-1.4.56". */
+                ptr = gl_version;
+
+                major = atoi(ptr);
+                while (isdigit(*ptr)) ++ptr;
+
+                if (*ptr++ != '.') return 0;
+
+                minor = atoi(ptr);
+                break;
+            }
+            /* Fallthrough */
+
+        case VENDOR_MESA:
+            ptr = strstr(gl_version, "Mesa");
+            if (!ptr) return 0;
+
+            ptr = strstr(ptr, " ");
+            if (!ptr) return 0;
+
+            while (isspace(*ptr)) ++ptr;
+            if (!*ptr) return 0;
+
+            major = atoi(ptr);
+            while (isdigit(*ptr)) ++ptr;
+
+            if (*ptr++ != '.') return 0;
+
+            minor = atoi(ptr);
+            break;
+
+        default:
+            FIXME("Unhandled vendor %#x.\n", vendor);
+            return 0;
+    }
+
+    ret = MAKEDWORD_VERSION(major, minor);
+    TRACE_(d3d_caps)("Found driver version %s -> %d.%d -> 0x%08x.\n",
+            debugstr_a(gl_version), major, minor, ret);
+
+    return ret;
+}
+
 static GL_Vendors wined3d_guess_vendor(const char *gl_vendor, const char *gl_renderer)
 {
     if (strstr(gl_vendor, "NVIDIA"))
@@ -992,10 +1091,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     const char *GL_Extensions    = NULL;
     const char *WGL_Extensions   = NULL;
     const char *gl_string        = NULL;
-    const char *gl_string_cursor = NULL;
     GLint       gl_max;
     GLfloat     gl_floatv[2];
-    int         major = 1, minor = 0;
     unsigned    i;
     HDC         hdc;
     unsigned int vidmem=0;
@@ -1045,137 +1142,8 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
         return FALSE;
     }
     gl_version = wined3d_parse_gl_version(gl_string);
-
-    /* Now parse the driver specific string which we'll report to the app. */
-    switch (gl_info->gl_vendor)
-    {
-        case VENDOR_NVIDIA:
-            gl_string_cursor = strstr(gl_string, "NVIDIA");
-            if (!gl_string_cursor)
-            {
-                ERR_(d3d_caps)("Invalid nVidia version string: %s.\n", debugstr_a(gl_string));
-                break;
-            }
-
-            gl_string_cursor = strstr(gl_string_cursor, " ");
-            if (!gl_string_cursor)
-            {
-                ERR_(d3d_caps)("Invalid nVidia version string: %s.\n", debugstr_a(gl_string));
-                break;
-            }
-
-            while (*gl_string_cursor == ' ') ++gl_string_cursor;
-
-            if (!*gl_string_cursor)
-            {
-                ERR_(d3d_caps)("Invalid nVidia version string: %s.\n", debugstr_a(gl_string));
-                break;
-            }
-
-            major = atoi(gl_string_cursor);
-            while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') ++gl_string_cursor;
-
-            if (*gl_string_cursor++ != '.')
-            {
-                ERR_(d3d_caps)("Invalid nVidia version string: %s.\n", debugstr_a(gl_string));
-                break;
-            }
-
-            minor = atoi(gl_string_cursor);
-            minor = major * 100 + minor;
-            major = 10;
-            break;
-
-        case VENDOR_ATI:
-            major = minor = 0;
-            gl_string_cursor = strchr(gl_string, '-');
-            if (gl_string_cursor)
-            {
-                ++gl_string_cursor;
-
-                /* Check if version number is of the form x.y.z. */
-                if (*gl_string_cursor < '0' || *gl_string_cursor > '9'
-                        || gl_string_cursor[1] != '.'
-                        || gl_string_cursor[2] < '0' || gl_string_cursor[2] > '9'
-                        || gl_string_cursor[3] != '.'
-                        || gl_string_cursor[4] < '0' || gl_string_cursor[4] > '9')
-                    /* Mark version number as malformed. */
-                    gl_string_cursor = 0;
-            }
-
-            if (!gl_string_cursor)
-            {
-                WARN_(d3d_caps)("malformed GL_VERSION (%s).\n", debugstr_a(gl_string));
-            }
-            else
-            {
-                major = *gl_string_cursor - '0';
-                minor = (gl_string_cursor[2] - '0') * 256 + (gl_string_cursor[4] - '0');
-            }
-            break;
-
-        case VENDOR_INTEL:
-            /* Apple and Mesa version strings look differently, but both provide intel drivers. */
-            if (strstr(gl_string, "APPLE"))
-            {
-                /* [0-9]+.[0-9]+ APPLE-[0-9]+.[0.9]+.[0.9]+
-                 * We only need the first part, and use the APPLE as identification
-                 * "1.2 APPLE-1.4.56". */
-                gl_string_cursor = gl_string;
-                major = atoi(gl_string_cursor);
-                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') ++gl_string_cursor;
-
-                if (*gl_string_cursor++ != '.')
-                {
-                    ERR_(d3d_caps)("Invalid MacOS-Intel version string: %s.\n", debugstr_a(gl_string));
-                    break;
-                }
-
-                minor = atoi(gl_string_cursor);
-                break;
-            }
-            /* Fallthrough */
-
-        case VENDOR_MESA:
-            gl_string_cursor = strstr(gl_string, "Mesa");
-            gl_string_cursor = strstr(gl_string_cursor, " ");
-            while (*gl_string_cursor && ' ' == *gl_string_cursor) ++gl_string_cursor;
-            if (*gl_string_cursor)
-            {
-                char tmp[16];
-                int cursor = 0;
-
-                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0')
-                {
-                    tmp[cursor++] = *gl_string_cursor;
-                    ++gl_string_cursor;
-                }
-                tmp[cursor] = 0;
-                major = atoi(tmp);
-
-                if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s).\n", debugstr_a(gl_string));
-                ++gl_string_cursor;
-
-                cursor = 0;
-                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0')
-                {
-                    tmp[cursor++] = *gl_string_cursor;
-                    ++gl_string_cursor;
-                }
-                tmp[cursor] = 0;
-                minor = atoi(tmp);
-            }
-            break;
-
-        default:
-            major = 0;
-            minor = 9;
-            break;
-    }
-
-    gl_info->driver_version = MAKEDWORD_VERSION(major, minor);
-    TRACE_(d3d_caps)("found driver version (%s)->%i.%i->(0x%08x).\n",
-            debugstr_a(gl_string), major, minor, gl_info->driver_version);
+    gl_info->driver_version = wined3d_guess_driver_version(gl_string, gl_info->gl_vendor);
+    if (!gl_info->driver_version) FIXME_(d3d_caps)("Unrecognized GL_VERSION %s.\n", debugstr_a(gl_string));
     /* Current Windows drivers have versions like 6.14.... (some older have an earlier version). */
     gl_info->driver_version_hipart = MAKEDWORD_VERSION(6, 14);
 
