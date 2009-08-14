@@ -3427,8 +3427,24 @@ HRESULT regexp_match(DispatchEx *dispex, const WCHAR *str, DWORD len, BOOL gflag
 static HRESULT RegExp_source(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,
         VARIANT *retv, jsexcept_t *ei, IServiceProvider *sp)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    switch(flags) {
+    case DISPATCH_PROPERTYGET: {
+        RegExpInstance *This = (RegExpInstance*)dispex;
+
+        V_VT(retv) = VT_BSTR;
+        V_BSTR(retv) = SysAllocString(This->str);
+        if(!V_BSTR(retv))
+            return E_OUTOFMEMORY;
+        break;
+    }
+    default:
+        FIXME("Unimplemnted flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT RegExp_global(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAMS *dp,

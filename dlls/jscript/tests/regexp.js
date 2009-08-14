@@ -208,4 +208,12 @@ ok(r.length === 2, "r.length = " + r.length);
 ok(r[0] === "1", "r[0] = " + r[0]);
 ok(r[1] === "2", "r[1] = " + r[1]);
 
+var re;
+
+re = /abc[^d]/g;
+ok(re.source === "abc[^d]", "re.source = '" + re.source + "', expected 'abc[^d]'");
+
+re = /a\bc[^d]/g;
+ok(re.source === "a\\bc[^d]", "re.source = '" + re.source + "', expected 'a\\bc[^d]'");
+
 reportSuccess();
