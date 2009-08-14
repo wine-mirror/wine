@@ -247,25 +247,6 @@ static HRESULT WINAPI xmlnode_get_nodeName(
     return S_OK;
 }
 
-BSTR bstr_from_xmlChar( const xmlChar *buf )
-{
-    DWORD len;
-    LPWSTR str;
-    BSTR bstr;
-
-    if ( !buf )
-        return NULL;
-
-    len = MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) buf, -1, NULL, 0 );
-    str = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
-    if ( !str )
-        return NULL;
-    MultiByteToWideChar( CP_UTF8, 0, (LPCSTR) buf, -1, str, len );
-    bstr = SysAllocString( str );
-    HeapFree( GetProcessHeap(), 0, str );
-    return bstr;
-}
-
 static HRESULT WINAPI xmlnode_get_nodeValue(
     IXMLDOMNode *iface,
     VARIANT* value)
