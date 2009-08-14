@@ -41,7 +41,7 @@ wined3d_settings_t wined3d_settings =
     PS_HW,          /* Hardware by default */
     TRUE,           /* Use of GLSL enabled by default */
     ORM_FBO,        /* Use FBOs to do offscreen rendering */
-    RTL_AUTO,       /* Automatically determine best locking method */
+    RTL_READTEX,    /* Default render target locking method */
     PCI_VENDOR_NONE,/* PCI Vendor ID */
     PCI_DEVICE_NONE,/* PCI Device ID */
     0,              /* The default of memory is set in FillGLCaps */
