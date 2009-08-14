@@ -968,7 +968,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     ENTER_GL();
 
     gl_string = (const char *)glGetString(GL_RENDERER);
-    TRACE_(d3d_caps)("GL_RENDERER: %s.\n", gl_string);
+    TRACE_(d3d_caps)("GL_RENDERER: %s.\n", debugstr_a(gl_string));
     if (!gl_string)
     {
         ERR_(d3d_caps)("Received a NULL GL_RENDERER.\n");
@@ -985,7 +985,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     memcpy(gl_renderer, gl_string, len);
 
     gl_string = (const char *)glGetString(GL_VENDOR);
-    TRACE_(d3d_caps)("GL_VENDOR: %s.\n", gl_string);
+    TRACE_(d3d_caps)("GL_VENDOR: %s.\n", debugstr_a(gl_string));
     if (!gl_string)
     {
         ERR_(d3d_caps)("Received a NULL GL_VENDOR.\n");
@@ -1015,14 +1015,14 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
     }
     else
     {
-        FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Setting VENDOR_WINE.\n", gl_string);
+        FIXME_(d3d_caps)("Received unrecognized GL_VENDOR %s. Setting VENDOR_WINE.\n", debugstr_a(gl_string));
         gl_info->gl_vendor = VENDOR_WINE;
     }
     TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), gl_info->gl_vendor);
 
     /* Parse the GL_VERSION field into major and minor information */
     gl_string = (const char *)glGetString(GL_VERSION);
-    TRACE_(d3d_caps)("GL_VERSION: %s.\n", gl_string);
+    TRACE_(d3d_caps)("GL_VERSION: %s.\n", debugstr_a(gl_string));
     if (!gl_string)
     {
         ERR_(d3d_caps)("Received a NULL GL_VERSION.\n");
@@ -1243,7 +1243,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
 
         memcpy(current_ext, start, len);
         current_ext[len] = '\0';
-        TRACE_(d3d_caps)("- %s\n", current_ext);
+        TRACE_(d3d_caps)("- %s\n", debugstr_a(current_ext));
 
         for (i = 0; i < (sizeof(EXTENSION_MAP) / sizeof(*EXTENSION_MAP)); ++i)
         {
@@ -2005,7 +2005,7 @@ static BOOL IWineD3DImpl_FillGLCaps(struct wined3d_gl_info *gl_info)
 
                 memcpy(ThisExtn, Start, len);
                 ThisExtn[len] = '\0';
-                TRACE_(d3d_caps)("- %s\n", ThisExtn);
+                TRACE_(d3d_caps)("- %s\n", debugstr_a(ThisExtn));
 
                 if (!strcmp(ThisExtn, "WGL_ARB_pbuffer")) {
                     gl_info->supported[WGL_ARB_PBUFFER] = TRUE;
