@@ -655,15 +655,11 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
             if (doadd)
             {
                 char    tmp[256];
-                WCHAR*  name;
                 DWORD64 size;
 
-                symt_get_info(adt, TI_GET_SYMNAME, &name);
                 strcpy(tmp, "__inherited_class_");
-                WideCharToMultiByte(CP_ACP, 0, name, -1, 
-                                    tmp + strlen(tmp), sizeof(tmp) - strlen(tmp),
-                                    NULL, NULL);
-                HeapFree(GetProcessHeap(), 0, name);
+                strcat(tmp, symt_get_name(adt));
+
                 /* FIXME: TI_GET_LENGTH will not always work, especially when adt
                  * has just been seen as a forward definition and not the real stuff
                  * yet.
