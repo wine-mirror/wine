@@ -433,7 +433,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     }
 
     /* do any user specified configuration */
-    if (setup_dinput_options(&newDevice->generic) != DI_OK) goto failed;
+    if (setup_dinput_options(&newDevice->generic, NULL) != DI_OK) goto failed;
 
     /* Create copy of default data format */
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto failed;

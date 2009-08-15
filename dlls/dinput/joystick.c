@@ -448,7 +448,7 @@ DWORD joystick_map_pov(POINTL *p)
  * Setup the dinput options.
  */
 
-HRESULT setup_dinput_options(JoystickGenericImpl *This)
+HRESULT setup_dinput_options(JoystickGenericImpl *This, const BYTE *default_axis_map)
 {
     char buffer[MAX_PATH+16];
     HKEY hkey, appkey;
@@ -540,18 +540,40 @@ HRESULT setup_dinput_options(JoystickGenericImpl *This)
     }
     else
     {
-        /* No config - set default mapping. */
-        for (tokens = 0; tokens < This->device_axis_count; tokens++)
+        int i;
+
+        if (default_axis_map)
         {
-            if (tokens < 8)
-                This->axis_map[tokens] = axis++;
-            else if (tokens < 15)
+            /* Use default mapping from the driver */
+            for (i = 0; i < This->device_axis_count; i++)
             {
-                This->axis_map[tokens++] = 8 + pov;
-                This->axis_map[tokens  ] = 8 + pov++;
+                This->axis_map[i] = default_axis_map[i];
+                tokens = default_axis_map[i];
+                if (tokens >= 0 && tokens < 8)
+                    axis++;
+                else if (tokens < 15)
+                {
+                    i++;
+                    pov++;
+                    This->axis_map[i] = default_axis_map[i];
+                }
             }
-            else
-                This->axis_map[tokens] = -1;
+        }
+        else
+        {
+            /* No config - set default mapping. */
+            for (i = 0; i < This->device_axis_count; i++)
+            {
+                if (i < 8)
+                    This->axis_map[i] = axis++;
+                else if (i < 15)
+                {
+                    This->axis_map[i++] = 8 + pov;
+                    This->axis_map[i  ] = 8 + pov++;
+                }
+                else
+                    This->axis_map[i] = -1;
+            }
         }
     }
     This->devcaps.dwAxes = axis;

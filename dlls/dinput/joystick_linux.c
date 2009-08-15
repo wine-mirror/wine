@@ -310,7 +310,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->generic.deadzone = 0;
 
     /* do any user specified configuration */
-    hr = setup_dinput_options(&newDevice->generic);
+    hr = setup_dinput_options(&newDevice->generic, NULL);
     if (hr != DI_OK)
         goto FAILED1;
 
