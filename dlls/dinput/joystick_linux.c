@@ -79,6 +79,9 @@ struct JoyDev
 {
     char device[MAX_PATH];
     char name[MAX_PATH];
+
+    BYTE dev_axes_map[ABS_MAX + 1];
+    int  have_axes_map;
 };
 
 typedef struct JoystickImpl JoystickImpl;
@@ -132,6 +135,29 @@ static INT find_joystick_devices(void)
         if (ioctl(fd, JSIOCGNAME(sizeof(joydev.name)), joydev.name) < 0)
             WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", joydev.device, strerror(errno));
 #endif
+
+        if (ioctl(fd, JSIOCGAXMAP, joydev.dev_axes_map) < 0)
+        {
+            WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", joydev.device, strerror(errno));
+            joydev.have_axes_map = 0;
+        }
+        else
+        {
+            INT j;
+            joydev.have_axes_map = 1;
+
+            /* Remap to DI numbers */
+            for (j = 0; j < ABS_MAX; j++)
+                if (joydev.dev_axes_map[j] < 8)
+                    /* Axis match 1-to-1 */
+                    joydev.dev_axes_map[j] = j;
+                else if (joydev.dev_axes_map[j] == 16 ||
+                         joydev.dev_axes_map[j] == 17)
+                    /* POV axis */
+                    joydev.dev_axes_map[j] = 8;
+                else
+                    joydev.dev_axes_map[j] = -1;
+        }
 
         close(fd);
 
@@ -296,7 +322,8 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->generic.deadzone = 0;
 
     /* do any user specified configuration */
-    hr = setup_dinput_options(&newDevice->generic, NULL);
+    hr = setup_dinput_options(&newDevice->generic, newDevice->joydev->have_axes_map ?
+                              newDevice->joydev->dev_axes_map : NULL);
     if (hr != DI_OK)
         goto FAILED1;
 
