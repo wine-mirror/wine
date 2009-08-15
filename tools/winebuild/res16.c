@@ -47,6 +47,7 @@ struct resource
     struct string_id type;
     struct string_id name;
     const void      *data;
+    unsigned int     name_offset;
     unsigned int     data_size;
     unsigned int     memopt;
 };
@@ -55,7 +56,8 @@ struct resource
 struct res_type
 {
     const struct string_id  *type;         /* type name */
-    const struct resource   *res;          /* first resource of this type */
+    struct resource         *res;          /* first resource of this type */
+    unsigned int             name_offset;  /* name offset if string */
     unsigned int             nb_names;     /* total number of names */
 };
 
@@ -73,7 +75,7 @@ static inline struct resource *add_resource( DLLSPEC *spec )
     return &spec->resources[spec->nb_resources++];
 }
 
-static struct res_type *add_type( struct res_tree *tree, const struct resource *res )
+static struct res_type *add_type( struct res_tree *tree, struct resource *res )
 {
     struct res_type *type;
     tree->types = xrealloc( tree->types, (tree->nb_types + 1) * sizeof(*tree->types) );
@@ -151,12 +153,14 @@ static int cmp_res( const void *ptr1, const void *ptr2 )
 /* build the 2-level (type,name) resource tree */
 static struct res_tree *build_resource_tree( DLLSPEC *spec )
 {
-    unsigned int i;
+    unsigned int i, j, offset;
     struct res_tree *tree;
     struct res_type *type = NULL;
+    struct resource *res;
 
     qsort( spec->resources, spec->nb_resources, sizeof(*spec->resources), cmp_res );
 
+    offset = 2;  /* alignment */
     tree = xmalloc( sizeof(*tree) );
     tree->types = NULL;
     tree->nb_types = 0;
@@ -164,8 +168,33 @@ static struct res_tree *build_resource_tree( DLLSPEC *spec )
     for (i = 0; i < spec->nb_resources; i++)
     {
         if (!i || cmp_string( &spec->resources[i].type, &spec->resources[i-1].type ))  /* new type */
+        {
             type = add_type( tree, &spec->resources[i] );
+            offset += 8;
+        }
         type->nb_names++;
+        offset += 12;
+    }
+    offset += 2;  /* terminator */
+
+    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    {
+        if (type->type->str)
+        {
+            type->name_offset = offset;
+            offset += strlen(type->type->str) + 1;
+        }
+        else type->name_offset = type->type->id | 0x8000;
+
+        for (j = 0, res = type->res; j < type->nb_names; j++, res++)
+        {
+            if (res->name.str)
+            {
+                res->name_offset = offset;
+                offset += strlen(res->name.str) + 1;
+            }
+            else res->name_offset = res->name.id | 0x8000;
+        }
     }
     return tree;
 }
@@ -192,13 +221,10 @@ void output_res16_data( DLLSPEC *spec )
     const struct resource *res;
     unsigned int i;
 
-    if (!spec->nb_resources) return;
-
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
     {
         output( ".L__wine_spec_resource_%u:\n", i );
         dump_bytes( res->data, res->data_size );
-        output( ".L__wine_spec_resource_%u_end:\n", i );
     }
 }
 
@@ -219,29 +245,13 @@ void output_res16_directory( DLLSPEC *spec )
 
     for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
     {
-        if (type->type->str)
-            output( "\t%s .L__wine_spec_restype_%u-.L__wine_spec_ne_rsrctab\n",
-                     get_asm_short_keyword(), i );
-        else
-            output( "\t%s 0x%04x\n", get_asm_short_keyword(), type->type->id | 0x8000 );
-
-        output( "\t%s %u,0,0\n", get_asm_short_keyword(), type->nb_names );
+        output( "\t%s 0x%04x,%u,0,0\n", get_asm_short_keyword(), type->name_offset, type->nb_names );
 
         for (j = 0, res = type->res; j < type->nb_names; j++, res++)
         {
-            output( "\t%s .L__wine_spec_resource_%lu-.L__wine_spec_dos_header\n",
-                     get_asm_short_keyword(), (unsigned long)(res - spec->resources) );
-            output( "\t%s .L__wine_spec_resource_%lu_end-.L__wine_spec_resource_%lu\n",
-                     get_asm_short_keyword(), (unsigned long)(res - spec->resources),
-                     (unsigned long)(res - spec->resources) );
-            output( "\t%s 0x%04x\n", get_asm_short_keyword(), res->memopt );
-            if (res->name.str)
-                output( "\t%s .L__wine_spec_resname_%u_%u-.L__wine_spec_ne_rsrctab\n",
-                         get_asm_short_keyword(), i, j );
-            else
-                output( "\t%s 0x%04x\n", get_asm_short_keyword(), res->name.id | 0x8000 );
-
-            output( "\t%s 0,0\n", get_asm_short_keyword() );
+            output( "\t%s .L__wine_spec_resource_%lu-.L__wine_spec_dos_header,%u\n",
+                    get_asm_short_keyword(), (unsigned long)(res - spec->resources), res->data_size );
+            output( "\t%s 0x%04x,0x%04x,0,0\n", get_asm_short_keyword(), res->memopt, res->name_offset );
         }
     }
     output( "\t%s 0\n", get_asm_short_keyword() );  /* terminator */
@@ -250,19 +260,9 @@ void output_res16_directory( DLLSPEC *spec )
 
     for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
     {
-        if (type->type->str)
-        {
-            output( ".L__wine_spec_restype_%u:\n", i );
-            output_string( type->type->str );
-        }
+        if (type->type->str) output_string( type->type->str );
         for (j = 0, res = type->res; j < type->nb_names; j++, res++)
-        {
-            if (res->name.str)
-            {
-                output( ".L__wine_spec_resname_%u_%u:\n", i, j );
-                output_string( res->name.str );
-            }
-        }
+            if (res->name.str) output_string( res->name.str );
     }
     output( "\t.byte 0\n" );  /* names terminator */
 
