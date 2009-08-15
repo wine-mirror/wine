@@ -75,6 +75,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define JOYDEV_NEW "/dev/input/js"
 #define JOYDEV_OLD "/dev/js"
 
+struct JoyDev
+{
+    char device[MAX_PATH];
+    char name[MAX_PATH];
+};
+
 typedef struct JoystickImpl JoystickImpl;
 static const IDirectInputDevice8AVtbl JoystickAvt;
 static const IDirectInputDevice8WVtbl JoystickWvt;
@@ -82,7 +88,7 @@ struct JoystickImpl
 {
         struct JoystickGenericImpl generic;
 
-	char				dev[32];
+        struct JoyDev                  *joydev;
 
 	/* joystick private */
 	int				joyfd;
@@ -98,7 +104,7 @@ static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903
 
 #define MAX_JOYSTICKS 64
 static INT joystick_devices_count = -1;
-static LPSTR joystick_devices[MAX_JOYSTICKS];
+static struct JoyDev *joystick_devices;
 
 static void joy_polldev(JoystickGenericImpl *This);
 
@@ -111,23 +117,33 @@ static INT find_joystick_devices(void)
     joystick_devices_count = 0;
     for (i = 0; i < MAX_JOYSTICKS; i++)
     {
-        CHAR device_name[MAX_PATH], *str;
-        INT len;
         int fd;
+        struct JoyDev joydev, *new_joydevs;
 
-        len = sprintf(device_name, "%s%d", JOYDEV_NEW, i) + 1;
-        if ((fd = open(device_name, O_RDONLY)) < 0)
+        snprintf(joydev.device, sizeof(joydev.device), "%s%d", JOYDEV_NEW, i);
+        if ((fd = open(joydev.device, O_RDONLY)) < 0)
         {
-            len = sprintf(device_name, "%s%d", JOYDEV_OLD, i) + 1;
-            if ((fd = open(device_name, O_RDONLY)) < 0) continue;
+            snprintf(joydev.device, sizeof(joydev.device), "%s%d", JOYDEV_OLD, i);
+            if ((fd = open(joydev.device, O_RDONLY)) < 0) continue;
         }
+
+        strcpy(joydev.name, "Wine Joystick");
+#if defined(JSIOCGNAME)
+        if (ioctl(fd, JSIOCGNAME(sizeof(joydev.name)), joydev.name) < 0)
+            WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", joydev.device, strerror(errno));
+#endif
 
         close(fd);
 
-        if (!(str = HeapAlloc(GetProcessHeap(), 0, len))) break;
-        memcpy(str, device_name, len);
+        if (!joystick_devices_count)
+            new_joydevs = HeapAlloc(GetProcessHeap(), 0, sizeof(struct JoyDev));
+        else
+            new_joydevs = HeapReAlloc(GetProcessHeap(), 0, joystick_devices,
+                                      (joystick_devices_count + 1) * sizeof(struct JoyDev));
+        if (!new_joydevs) continue;
 
-        joystick_devices[joystick_devices_count++] = str;
+        joystick_devices = new_joydevs;
+        joystick_devices[joystick_devices_count++] = joydev;
     }
 
     return joystick_devices_count;
@@ -148,9 +164,9 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 	((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
 	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))) {
         /* check whether we have a joystick */
-        if ((fd = open(joystick_devices[id], O_RDONLY)) < 0)
+        if ((fd = open(joystick_devices[id].device, O_RDONLY)) < 0)
         {
-            WARN("open(%s, O_RDONLY) failed: %s\n", joystick_devices[id], strerror(errno));
+            WARN("open(%s, O_RDONLY) failed: %s\n", joystick_devices[id].name, strerror(errno));
             return FALSE;
         }
 
@@ -163,19 +179,13 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
             lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
         else
             lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
-        sprintf(lpddi->tszInstanceName, "Joystick %d", id);
-#if defined(JSIOCGNAME)
-        if (ioctl(fd,JSIOCGNAME(sizeof(lpddi->tszProductName)),lpddi->tszProductName) < 0) {
-            WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", joystick_devices[id], strerror(errno));
-            strcpy(lpddi->tszProductName, "Wine Joystick");
-        }
-#else
-        strcpy(lpddi->tszProductName, "Wine Joystick");
-#endif
+
+        strcpy(lpddi->tszInstanceName, joystick_devices[id].name);
+        strcpy(lpddi->tszProductName,  joystick_devices[id].name);
 
         lpddi->guidFFDriver = GUID_NULL;
         close(fd);
-        TRACE("Enumerating the linux Joystick device: %s (%s)\n", joystick_devices[id], lpddi->tszProductName);
+        TRACE("Enumerating the linux Joystick device: %s (%s)\n", joystick_devices[id].device, lpddi->tszProductName);
         return TRUE;
     }
 
@@ -185,8 +195,6 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
     int fd = -1;
-    char name[MAX_PATH];
-    char friendly[32];
 
     if (id >= find_joystick_devices()) return FALSE;
 
@@ -199,9 +207,9 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
 	((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
 	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))) {
         /* check whether we have a joystick */
-        if ((fd = open(joystick_devices[id], O_RDONLY)) < 0)
+        if ((fd = open(joystick_devices[id].device, O_RDONLY)) < 0)
         {
-            WARN("open(%s,O_RDONLY) failed: %s\n", joystick_devices[id], strerror(errno));
+            WARN("open(%s,O_RDONLY) failed: %s\n", joystick_devices[id].device, strerror(errno));
             return FALSE;
         }
 
@@ -214,20 +222,12 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
             lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
         else
             lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
-        sprintf(friendly, "Joystick %d", id);
-        MultiByteToWideChar(CP_ACP, 0, friendly, -1, lpddi->tszInstanceName, MAX_PATH);
-#if defined(JSIOCGNAME)
-        if (ioctl(fd,JSIOCGNAME(sizeof(name)),name) < 0) {
-            WARN("ioctl(%s, JSIOCGNAME) failed: %s\n", joystick_devices[id], strerror(errno));
-            strcpy(name, "Wine Joystick");
-        }
-#else
-        strcpy(name, "Wine Joystick");
-#endif
-        MultiByteToWideChar(CP_ACP, 0, name, -1, lpddi->tszProductName, MAX_PATH);
+
+        MultiByteToWideChar(CP_ACP, 0, joystick_devices[id].name, -1, lpddi->tszInstanceName, MAX_PATH);
+        MultiByteToWideChar(CP_ACP, 0, joystick_devices[id].name, -1, lpddi->tszProductName, MAX_PATH);
         lpddi->guidFFDriver = GUID_NULL;
         close(fd);
-        TRACE("Enumerating the linux Joystick device: %s (%s)\n", joystick_devices[id], name);
+        TRACE("Enumerating the linux Joystick device: %s (%s)\n", joystick_devices[id].device, joystick_devices[id].name);
         return TRUE;
     }
 
@@ -239,7 +239,6 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 {
     DWORD i;
     JoystickImpl* newDevice;
-    char name[MAX_PATH];
     HRESULT hr;
     LPDIDATAFORMAT df = NULL;
     int idx = 0;
@@ -253,10 +252,10 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         return DIERR_OUTOFMEMORY;
     }
 
-    if (!lstrcpynA(newDevice->dev, joystick_devices[index], sizeof(newDevice->dev)) ||
-        (newDevice->joyfd = open(newDevice->dev, O_RDONLY)) < 0)
+    newDevice->joydev = &joystick_devices[index];
+    if ((newDevice->joyfd = open(newDevice->joydev->device, O_RDONLY)) < 0)
     {
-        WARN("open(%s, O_RDONLY) failed: %s\n", newDevice->dev, strerror(errno));
+        WARN("open(%s, O_RDONLY) failed: %s\n", newDevice->joydev->device, strerror(errno));
         HeapFree(GetProcessHeap(), 0, newDevice);
         return DIERR_DEVICENOTREG;
     }
@@ -265,30 +264,17 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->generic.guidInstance.Data3 = index;
     newDevice->generic.guidProduct = DInput_Wine_Joystick_GUID;
     newDevice->generic.joy_polldev = joy_polldev;
-
-    /* get the device name */
-#if defined(JSIOCGNAME)
-    if (ioctl(newDevice->joyfd,JSIOCGNAME(MAX_PATH),name) < 0) {
-        WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", newDevice->dev, strerror(errno));
-        strcpy(name, "Wine Joystick");
-    }
-#else
-    strcpy(name, "Wine Joystick");
-#endif
-
-    /* copy the device name */
-    newDevice->generic.name = HeapAlloc(GetProcessHeap(),0,strlen(name) + 1);
-    strcpy(newDevice->generic.name, name);
+    newDevice->generic.name        = newDevice->joydev->name;
 
 #ifdef JSIOCGAXES
     if (ioctl(newDevice->joyfd, JSIOCGAXES, &newDevice->generic.device_axis_count) < 0) {
-        WARN("ioctl(%s,JSIOCGAXES) failed: %s, defauting to 2\n", newDevice->dev, strerror(errno));
+        WARN("ioctl(%s,JSIOCGAXES) failed: %s, defauting to 2\n", newDevice->joydev->device, strerror(errno));
         newDevice->generic.device_axis_count = 2;
     }
 #endif
 #ifdef JSIOCGBUTTONS
     if (ioctl(newDevice->joyfd, JSIOCGBUTTONS, &newDevice->generic.devcaps.dwButtons) < 0) {
-        WARN("ioctl(%s,JSIOCGBUTTONS) failed: %s, defauting to 2\n", newDevice->dev, strerror(errno));
+        WARN("ioctl(%s,JSIOCGBUTTONS) failed: %s, defauting to 2\n", newDevice->joydev->device, strerror(errno));
         newDevice->generic.devcaps.dwButtons = 2;
     }
 #endif
@@ -386,7 +372,6 @@ FAILED1:
     HeapFree(GetProcessHeap(), 0, df);
     release_DataFormat(&newDevice->generic.base.data_format);
     HeapFree(GetProcessHeap(),0,newDevice->generic.axis_map);
-    HeapFree(GetProcessHeap(),0,newDevice->generic.name);
     HeapFree(GetProcessHeap(),0,newDevice);
     *pdev = 0;
 
@@ -493,11 +478,11 @@ static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
     /* open the joystick device */
     if (This->joyfd==-1) {
-        TRACE("opening joystick device %s\n", This->dev);
+        TRACE("opening joystick device %s\n", This->joydev->device);
 
-        This->joyfd=open(This->dev,O_RDONLY);
+        This->joyfd = open(This->joydev->device, O_RDONLY);
         if (This->joyfd==-1) {
-            ERR("open(%s) failed: %s\n", This->dev, strerror(errno));
+            ERR("open(%s) failed: %s\n", This->joydev->device, strerror(errno));
             IDirectInputDevice2AImpl_Unacquire(iface);
             return DIERR_NOTFOUND;
         }
