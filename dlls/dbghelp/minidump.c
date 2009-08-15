@@ -260,7 +260,7 @@ static BOOL add_module(struct dump_context* dc, const WCHAR* name,
         dc->modules = HeapAlloc(GetProcessHeap(), 0,
                                 dc->alloc_modules * sizeof(*dc->modules));
     }
-    else
+    else if(dc->num_modules >= dc->alloc_modules)
     {
         dc->alloc_modules *= 2;
         dc->modules = HeapReAlloc(GetProcessHeap(), 0, dc->modules,
@@ -394,16 +394,16 @@ static void fetch_module_versioninfo(LPCWSTR filename, VS_FIXEDFILEINFO* ffi)
  */
 static void add_memory_block(struct dump_context* dc, ULONG64 base, ULONG size, ULONG rva)
 {
-    if (dc->mem)
+    if (!dc->mem)
+    {
+        dc->alloc_mem = 32;
+        dc->mem = HeapAlloc(GetProcessHeap(), 0, dc->alloc_mem * sizeof(*dc->mem));
+    }
+    else if (dc->num_mem >= dc->alloc_mem)
     {
         dc->alloc_mem *= 2;
         dc->mem = HeapReAlloc(GetProcessHeap(), 0, dc->mem,
                               dc->alloc_mem * sizeof(*dc->mem));
-    }
-    else
-    {
-        dc->alloc_mem = 32;
-        dc->mem = HeapAlloc(GetProcessHeap(), 0, dc->alloc_mem * sizeof(*dc->mem));
     }
     if (dc->mem)
     {
