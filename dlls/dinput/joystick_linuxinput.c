@@ -378,9 +378,6 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     JoystickImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
-    char buffer[MAX_PATH+16];
-    HKEY hkey, appkey;
-    LONG def_deadzone = 0;
 
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
     if (!newDevice) return NULL;
@@ -405,57 +402,73 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     InitializeCriticalSection(&newDevice->generic.base.crit);
     newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
 
-    /* get options */
-    get_app_key(&hkey, &appkey);
-
-    if (!get_config_key(hkey, appkey, "DefaultDeadZone", buffer, MAX_PATH))
+    /* Count number of available axes - supported Axis & POVs */
+    for (i = 0; i < WINE_JOYSTICK_MAX_AXES; i++)
     {
-        def_deadzone = atoi(buffer);
-        TRACE("setting default deadzone to: %d\n", def_deadzone);
+        if (test_bit(newDevice->joydev->absbits, i))
+        {
+            newDevice->generic.device_axis_count++;
+            newDevice->dev_axes_to_di[i] = idx;
+            newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[i].minimum;
+            newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[i].maximum;
+            idx++;
+        }
+        else
+            newDevice->dev_axes_to_di[i] = -1;
     }
-    if (appkey) RegCloseKey(appkey);
-    if (hkey) RegCloseKey(hkey);
+
+    for (i = 0; i < WINE_JOYSTICK_MAX_POVS; i++)
+    {
+        if (test_bit(newDevice->joydev->absbits, ABS_HAT0X + i * 2) &&
+            test_bit(newDevice->joydev->absbits, ABS_HAT0Y + i * 2))
+        {
+            newDevice->generic.device_axis_count += 2;
+            newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[ABS_HAT0X + i * 2].minimum;
+            newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = idx++;
+            newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[ABS_HAT0Y + i * 2].maximum;
+            newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = idx++;
+        }
+        else
+            newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = -1;
+    }
+
+    /* do any user specified configuration */
+    if (setup_dinput_options(&newDevice->generic) != DI_OK) goto failed;
 
     /* Create copy of default data format */
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto failed;
     memcpy(df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
     if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto failed;
 
-    /* Supported Axis & POVs should map 1-to-1 */
-    for (i = 0; i < WINE_JOYSTICK_MAX_AXES; i++)
+
+    /* Construct internal data format */
+
+    /* Supported Axis & POVs */
+    for (i = 0, idx = 0; i < newDevice->generic.device_axis_count; i++)
     {
-        if (!test_bit(newDevice->joydev->absbits, i)) {
-            newDevice->dev_axes_to_di[i] = -1;
-            continue;
+        int wine_obj = newDevice->generic.axis_map[i];
+
+        if (wine_obj < 0) continue;
+
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[wine_obj], df->dwObjSize);
+        if (wine_obj < 8)
+            df->rgodf[idx].dwType = DIDFT_MAKEINSTANCE(wine_obj) | DIDFT_ABSAXIS;
+        else
+        {
+            df->rgodf[idx].dwType = DIDFT_MAKEINSTANCE(wine_obj - 8) | DIDFT_POV;
+            i++; /* POV takes 2 axes */
         }
 
-        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i], df->dwObjSize);
-        newDevice->dev_axes_to_di[i] = idx;
-        newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[i].minimum;
-        newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[i].maximum;
-        newDevice->generic.props[idx].lMin    = 0;
-        newDevice->generic.props[idx].lMax    = 0xffff;
+        newDevice->generic.props[idx].lMin        = 0;
+        newDevice->generic.props[idx].lMax        = 0xffff;
         newDevice->generic.props[idx].lSaturation = 0;
-        newDevice->generic.props[idx].lDeadZone = def_deadzone;
+        newDevice->generic.props[idx].lDeadZone   = newDevice->generic.deadzone;
 
         /* Linux supports force-feedback on X & Y axes only */
         if (newDevice->joydev->has_ff && (i == 0 || i == 1))
             df->rgodf[idx].dwFlags |= DIDOI_FFACTUATOR;
 
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->generic.devcaps.dwAxes++) | DIDFT_ABSAXIS;
-    }
-
-    for (i = 0; i < WINE_JOYSTICK_MAX_POVS; i++)
-    {
-        if (!test_bit(newDevice->joydev->absbits, ABS_HAT0X + i * 2) ||
-            !test_bit(newDevice->joydev->absbits, ABS_HAT0Y + i * 2)) {
-            newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = -1;
-            continue;
-        }
-
-        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i + WINE_JOYSTICK_MAX_AXES], df->dwObjSize);
-        newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = i;
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->generic.devcaps.dwPOVs++) | DIDFT_POV;
+        idx++;
     }
 
     /* Buttons can be anywhere, so check all */
@@ -490,6 +503,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 failed:
     if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
     HeapFree(GetProcessHeap(), 0, df);
+    HeapFree(GetProcessHeap(), 0, newDevice->generic.axis_map);
     HeapFree(GetProcessHeap(), 0, newDevice);
     return NULL;
 }
@@ -752,25 +766,27 @@ static void joy_polldev(JoystickGenericImpl *iface)
 	case EV_ABS:
         {
             int axis = This->dev_axes_to_di[ie.code];
-            if (axis==-1) {
-                break;
-            }
-            inst_id = DIDFT_MAKEINSTANCE(axis) | (ie.code < ABS_HAT0X ? DIDFT_ABSAXIS : DIDFT_POV);
+
+            /* User axis remapping */
+            if (axis < 0) break;
+            axis = This->generic.axis_map[axis];
+            if (axis < 0) break;
+
+            inst_id = DIDFT_MAKEINSTANCE(axis) | (axis < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
             value = joystick_map_axis(&This->generic.props[id_to_object(This->generic.base.data_format.wine_df, inst_id)], ie.value);
 
-	    switch (ie.code) {
-            case ABS_X:         This->generic.js.lX  = value; break;
-            case ABS_Y:         This->generic.js.lY  = value; break;
-            case ABS_Z:         This->generic.js.lZ  = value; break;
-            case ABS_RX:        This->generic.js.lRx = value; break;
-            case ABS_RY:        This->generic.js.lRy = value; break;
-            case ABS_RZ:        This->generic.js.lRz = value; break;
-            case ABS_THROTTLE:  This->generic.js.rglSlider[0] = value; break;
-            case ABS_RUDDER:    This->generic.js.rglSlider[1] = value; break;
-            case ABS_HAT0X: case ABS_HAT0Y: case ABS_HAT1X: case ABS_HAT1Y:
-            case ABS_HAT2X: case ABS_HAT2Y: case ABS_HAT3X: case ABS_HAT3Y:
+	    switch (axis) {
+            case 0: This->generic.js.lX  = value; break;
+            case 1: This->generic.js.lY  = value; break;
+            case 2: This->generic.js.lZ  = value; break;
+            case 3: This->generic.js.lRx = value; break;
+            case 4: This->generic.js.lRy = value; break;
+            case 5: This->generic.js.lRz = value; break;
+            case 6: This->generic.js.rglSlider[0] = value; break;
+            case 7: This->generic.js.rglSlider[1] = value; break;
+            case 8: case 9: case 10: case 11:
             {
-                int idx = (ie.code - ABS_HAT0X) / 2;
+                int idx = axis - 8;
 
                 if (ie.code % 2)
                     This->povs[idx].y = ie.value;
