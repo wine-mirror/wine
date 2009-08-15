@@ -87,7 +87,6 @@ struct JoystickImpl
 
 	/* joystick private */
 	int				joyfd;
-	int				axes;
         POINTL                          povs[4];
 };
 
@@ -259,7 +258,7 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
         TRACE("setting default deadzone to: \"%s\" %d\n", buffer, device->generic.deadzone);
     }
 
-    device->generic.axis_map = HeapAlloc(GetProcessHeap(), 0, device->axes * sizeof(int));
+    device->generic.axis_map = HeapAlloc(GetProcessHeap(), 0, device->generic.device_axis_count * sizeof(int));
     if (!device->generic.axis_map) return DIERR_OUTOFMEMORY;
 
     if (!get_config_key( hkey, appkey, device->generic.name, buffer, MAX_PATH )) {
@@ -314,9 +313,10 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
                 tokens++;
             } while ((ptr = strtok(NULL, delim)) != NULL);
 
-            if (tokens != device->axes) {
-                ERR("not all joystick axes mapped: %d axes(%d,%d), %d arguments\n", device->axes, axis, pov,tokens);
-                while (tokens < device->axes) {
+            if (tokens != device->generic.device_axis_count) {
+                ERR("not all joystick axes mapped: %d axes(%d,%d), %d arguments\n",
+                    device->generic.device_axis_count, axis, pov,tokens);
+                while (tokens < device->generic.device_axis_count) {
                     device->generic.axis_map[tokens] = -1;
                     tokens++;
                 }
@@ -325,7 +325,7 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
     }
     else
     {
-        for (tokens = 0; tokens < device->axes; tokens++)
+        for (tokens = 0; tokens < device->generic.device_axis_count; tokens++)
         {
             if (tokens < 8)
                 device->generic.axis_map[tokens] = axis++;
@@ -397,9 +397,9 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     strcpy(newDevice->generic.name, name);
 
 #ifdef JSIOCGAXES
-    if (ioctl(newDevice->joyfd,JSIOCGAXES,&newDevice->axes) < 0) {
+    if (ioctl(newDevice->joyfd, JSIOCGAXES, &newDevice->generic.device_axis_count) < 0) {
         WARN("ioctl(%s,JSIOCGAXES) failed: %s, defauting to 2\n", newDevice->dev, strerror(errno));
-        newDevice->axes = 2;
+        newDevice->generic.device_axis_count = 2;
     }
 #endif
 #ifdef JSIOCGBUTTONS
@@ -437,7 +437,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     df->dwNumObjs = newDevice->generic.devcaps.dwAxes + newDevice->generic.devcaps.dwPOVs + newDevice->generic.devcaps.dwButtons;
     if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto FAILED;
 
-    for (i = 0; i < newDevice->axes; i++)
+    for (i = 0; i < newDevice->generic.device_axis_count; i++)
     {
         int wine_obj = newDevice->generic.axis_map[i];
 
@@ -486,7 +486,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 
     if (TRACE_ON(dinput)) {
         _dump_DIDATAFORMAT(newDevice->generic.base.data_format.wine_df);
-       for (i = 0; i < (newDevice->axes); i++)
+       for (i = 0; i < (newDevice->generic.device_axis_count); i++)
            TRACE("axis_map[%d] = %d\n", i, newDevice->generic.axis_map[i]);
         _dump_DIDEVCAPS(&newDevice->generic.devcaps);
     }

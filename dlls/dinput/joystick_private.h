@@ -45,7 +45,7 @@ typedef struct JoystickGenericImpl
     GUID        guidProduct;
     GUID        guidInstance;
     char        *name;
-
+    int         device_axis_count;      /* Total number of axes in the device */
     int        *axis_map;               /* User axes remapping */
     LONG        deadzone;               /* Default dead-zone */
 
