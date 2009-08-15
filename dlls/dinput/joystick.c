@@ -28,6 +28,7 @@
 
 #include "joystick_private.h"
 #include "wine/debug.h"
+#include "winreg.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
@@ -441,4 +442,123 @@ DWORD joystick_map_pov(POINTL *p)
         return p->y < 0 ? 31500 : !p->y ? 27000 : 22500;
     else
         return p->y < 0 ?     0 : !p->y ?    -1 : 18000;
+}
+
+/*
+ * Setup the dinput options.
+ */
+
+HRESULT setup_dinput_options(JoystickGenericImpl *This)
+{
+    char buffer[MAX_PATH+16];
+    HKEY hkey, appkey;
+    int tokens = 0;
+    int axis = 0;
+    int pov = 0;
+
+    get_app_key(&hkey, &appkey);
+
+    /* get options */
+
+    if (!get_config_key(hkey, appkey, "DefaultDeadZone", buffer, sizeof(buffer)))
+    {
+        This->deadzone = atoi(buffer);
+        TRACE("setting default deadzone to: \"%s\" %d\n", buffer, This->deadzone);
+    }
+
+    This->axis_map = HeapAlloc(GetProcessHeap(), 0, This->device_axis_count * sizeof(int));
+    if (!This->axis_map) return DIERR_OUTOFMEMORY;
+
+    if (!get_config_key(hkey, appkey, This->name, buffer, sizeof(buffer)))
+    {
+        static const char *axis_names[] = {"X", "Y", "Z", "Rx", "Ry", "Rz",
+                                           "Slider1", "Slider2",
+                                           "POV1", "POV2", "POV3", "POV4"};
+        const char *delim = ",";
+        char * ptr;
+        TRACE("\"%s\" = \"%s\"\n", This->name, buffer);
+
+        if ((ptr = strtok(buffer, delim)) != NULL)
+        {
+            do
+            {
+                int i;
+
+                for (i = 0; i < sizeof(axis_names) / sizeof(axis_names[0]); i++)
+                {
+                    if (!strcmp(ptr, axis_names[i]))
+                    {
+                        if (!strncmp(ptr, "POV", 3))
+                        {
+                            if (pov >= 4)
+                            {
+                                WARN("Only 4 POVs supported - ignoring extra\n");
+                                i = -1;
+                            }
+                            else
+                            {
+                                /* Pov takes two axes */
+                                This->axis_map[tokens++] = i;
+                                pov++;
+                            }
+                        }
+                        else
+                        {
+                            if (axis >= 8)
+                            {
+                                FIXME("Only 8 Axes supported - ignoring extra\n");
+                                i = -1;
+                            }
+                            else
+                                axis++;
+                        }
+                        break;
+                    }
+                }
+
+                if (i == sizeof(axis_names) / sizeof(axis_names[0]))
+                {
+                    ERR("invalid joystick axis type: \"%s\"\n", ptr);
+                    i = -1;
+                }
+
+                This->axis_map[tokens] = i;
+                tokens++;
+            } while ((ptr = strtok(NULL, delim)) != NULL);
+
+            if (tokens != This->device_axis_count)
+            {
+                ERR("not all joystick axes mapped: %d axes(%d,%d), %d arguments\n",
+                    This->device_axis_count, axis, pov, tokens);
+                while (tokens < This->device_axis_count)
+                {
+                    This->axis_map[tokens] = -1;
+                    tokens++;
+                }
+            }
+        }
+    }
+    else
+    {
+        /* No config - set default mapping. */
+        for (tokens = 0; tokens < This->device_axis_count; tokens++)
+        {
+            if (tokens < 8)
+                This->axis_map[tokens] = axis++;
+            else if (tokens < 15)
+            {
+                This->axis_map[tokens++] = 8 + pov;
+                This->axis_map[tokens  ] = 8 + pov++;
+            }
+            else
+                This->axis_map[tokens] = -1;
+        }
+    }
+    This->devcaps.dwAxes = axis;
+    This->devcaps.dwPOVs = pov;
+
+    if (appkey) RegCloseKey(appkey);
+    if (hkey)   RegCloseKey(hkey);
+
+    return DI_OK;
 }

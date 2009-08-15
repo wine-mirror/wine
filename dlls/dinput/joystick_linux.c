@@ -62,7 +62,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winreg.h"
 #include "dinput.h"
 
 #include "dinput_private.h"
@@ -235,121 +234,6 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
     return FALSE;
 }
 
-/*
- * Setup the dinput options.
- */
-
-static HRESULT setup_dinput_options(JoystickImpl * device)
-{
-    char buffer[MAX_PATH+16];
-    HKEY hkey, appkey;
-    int tokens = 0;
-    int axis = 0;
-    int pov = 0;
-
-    buffer[MAX_PATH]='\0';
-
-    get_app_key(&hkey, &appkey);
-
-    /* get options */
-
-    if (!get_config_key( hkey, appkey, "DefaultDeadZone", buffer, MAX_PATH )) {
-        device->generic.deadzone = atoi(buffer);
-        TRACE("setting default deadzone to: \"%s\" %d\n", buffer, device->generic.deadzone);
-    }
-
-    device->generic.axis_map = HeapAlloc(GetProcessHeap(), 0, device->generic.device_axis_count * sizeof(int));
-    if (!device->generic.axis_map) return DIERR_OUTOFMEMORY;
-
-    if (!get_config_key( hkey, appkey, device->generic.name, buffer, MAX_PATH )) {
-        static const char *axis_names[] = {"X", "Y", "Z", "Rx", "Ry", "Rz",
-                                           "Slider1", "Slider2",
-                                           "POV1", "POV2", "POV3", "POV4"};
-        const char *delim = ",";
-        char * ptr;
-        TRACE("\"%s\" = \"%s\"\n", device->generic.name, buffer);
-
-        if ((ptr = strtok(buffer, delim)) != NULL) {
-            do {
-                int i;
-
-                for (i = 0; i < sizeof(axis_names) / sizeof(axis_names[0]); i++)
-                    if (!strcmp(ptr, axis_names[i]))
-                    {
-                        if (!strncmp(ptr, "POV", 3))
-                        {
-                            if (pov >= 4)
-                            {
-                                WARN("Only 4 POVs supported - ignoring extra\n");
-                                i = -1;
-                            }
-                            else
-                            {
-                                /* Pov takes two axes */
-                                device->generic.axis_map[tokens++] = i;
-                                pov++;
-                            }
-                        }
-                        else
-                        {
-                            if (axis >= 8)
-                            {
-                                FIXME("Only 8 Axes supported - ignoring extra\n");
-                                i = -1;
-                            }
-                            else
-                                axis++;
-                        }
-                        break;
-                    }
-
-                if (i == sizeof(axis_names) / sizeof(axis_names[0]))
-                {
-                    ERR("invalid joystick axis type: \"%s\"\n", ptr);
-                    i = -1;
-                }
-
-                device->generic.axis_map[tokens] = i;
-                tokens++;
-            } while ((ptr = strtok(NULL, delim)) != NULL);
-
-            if (tokens != device->generic.device_axis_count) {
-                ERR("not all joystick axes mapped: %d axes(%d,%d), %d arguments\n",
-                    device->generic.device_axis_count, axis, pov,tokens);
-                while (tokens < device->generic.device_axis_count) {
-                    device->generic.axis_map[tokens] = -1;
-                    tokens++;
-                }
-            }
-        }
-    }
-    else
-    {
-        for (tokens = 0; tokens < device->generic.device_axis_count; tokens++)
-        {
-            if (tokens < 8)
-                device->generic.axis_map[tokens] = axis++;
-            else if (tokens < 16)
-            {
-                device->generic.axis_map[tokens++] = 8 + pov;
-                device->generic.axis_map[tokens  ] = 8 + pov++;
-            }
-            else
-                device->generic.axis_map[tokens] = -1;
-        }
-    }
-    device->generic.devcaps.dwAxes = axis;
-    device->generic.devcaps.dwPOVs = pov;
-
-    if (appkey)
-        RegCloseKey( appkey );
-
-    if (hkey)
-        RegCloseKey( hkey );
-
-    return DI_OK;
-}
-
 static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput,
     LPDIRECTINPUTDEVICEA* pdev, unsigned short index)
 {
@@ -426,7 +310,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->generic.deadzone = 0;
 
     /* do any user specified configuration */
-    hr = setup_dinput_options(newDevice);
+    hr = setup_dinput_options(&newDevice->generic);
     if (hr != DI_OK)
         goto FAILED1;
 

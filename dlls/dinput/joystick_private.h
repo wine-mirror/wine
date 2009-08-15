@@ -53,6 +53,7 @@ typedef struct JoystickGenericImpl
 } JoystickGenericImpl;
 
 LONG joystick_map_axis(ObjProps *props, int val);
+HRESULT setup_dinput_options(JoystickGenericImpl *This);
 
 DWORD joystick_map_pov(POINTL *p);
 
