@@ -425,9 +425,11 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
             test_bit(newDevice->joydev->absbits, ABS_HAT0Y + i * 2))
         {
             newDevice->generic.device_axis_count += 2;
-            newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[ABS_HAT0X + i * 2].minimum;
+            newDevice->generic.props[idx  ].lDevMin = newDevice->joydev->axes[ABS_HAT0X + i * 2].minimum;
+            newDevice->generic.props[idx  ].lDevMax = newDevice->joydev->axes[ABS_HAT0X + i * 2].maximum;
             newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = idx;
-            newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[ABS_HAT0Y + i * 2].maximum;
+            newDevice->generic.props[idx+1].lDevMin = newDevice->joydev->axes[ABS_HAT0Y + i * 2].minimum;
+            newDevice->generic.props[idx+1].lDevMax = newDevice->joydev->axes[ABS_HAT0Y + i * 2].maximum;
             newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = idx + 1;
 
             default_axis_map[idx] = default_axis_map[idx + 1] = WINE_JOYSTICK_MAX_AXES + i;
