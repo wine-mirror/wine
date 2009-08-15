@@ -378,6 +378,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     JoystickImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
+    BYTE default_axis_map[WINE_JOYSTICK_MAX_AXES + WINE_JOYSTICK_MAX_POVS*2];
 
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
     if (!newDevice) return NULL;
@@ -411,6 +412,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
             newDevice->dev_axes_to_di[i] = idx;
             newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[i].minimum;
             newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[i].maximum;
+            default_axis_map[idx] = i;
             idx++;
         }
         else
@@ -424,16 +426,19 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
         {
             newDevice->generic.device_axis_count += 2;
             newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[ABS_HAT0X + i * 2].minimum;
-            newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = idx++;
+            newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = idx;
             newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[ABS_HAT0Y + i * 2].maximum;
-            newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = idx++;
+            newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = idx + 1;
+
+            default_axis_map[idx] = default_axis_map[idx + 1] = WINE_JOYSTICK_MAX_AXES + i;
+            idx += 2;
         }
         else
             newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = -1;
     }
 
     /* do any user specified configuration */
-    if (setup_dinput_options(&newDevice->generic, NULL) != DI_OK) goto failed;
+    if (setup_dinput_options(&newDevice->generic, default_axis_map) != DI_OK) goto failed;
 
     /* Create copy of default data format */
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto failed;
