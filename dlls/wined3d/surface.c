@@ -369,7 +369,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, This->pbo));
             checkGLcall("glBindBufferARB");
             GL_EXTCALL(glGetCompressedTexImageARB(This->texture_target, This->texture_level, NULL));
-            checkGLcall("glGetCompressedTexImageARB()");
+            checkGLcall("glGetCompressedTexImageARB");
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
             checkGLcall("glBindBufferARB");
         }
@@ -377,7 +377,7 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         {
             GL_EXTCALL(glGetCompressedTexImageARB(This->texture_target,
                     This->texture_level, This->resource.allocatedMemory));
-            checkGLcall("glGetCompressedTexImageARB()");
+            checkGLcall("glGetCompressedTexImageARB");
         }
 
         LEAVE_GL();
@@ -413,13 +413,13 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
             checkGLcall("glBindBufferARB");
 
             glGetTexImage(This->texture_target, This->texture_level, format, type, NULL);
-            checkGLcall("glGetTexImage()");
+            checkGLcall("glGetTexImage");
 
             GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
             checkGLcall("glBindBufferARB");
         } else {
             glGetTexImage(This->texture_target, This->texture_level, format, type, mem);
-            checkGLcall("glGetTexImage()");
+            checkGLcall("glGetTexImage");
         }
         LEAVE_GL();
 
@@ -797,11 +797,11 @@ static void surface_remove_pbo(IWineD3DSurfaceImpl *This) {
 
     ENTER_GL();
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, This->pbo));
-    checkGLcall("glBindBuffer(GL_PIXEL_UNPACK_BUFFER, This->pbo)");
+    checkGLcall("glBindBufferARB(GL_PIXEL_UNPACK_BUFFER, This->pbo)");
     GL_EXTCALL(glGetBufferSubDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0, This->resource.size, This->resource.allocatedMemory));
-    checkGLcall("glGetBufferSubData");
+    checkGLcall("glGetBufferSubDataARB");
     GL_EXTCALL(glDeleteBuffersARB(1, &This->pbo));
-    checkGLcall("glDeleteBuffers");
+    checkGLcall("glDeleteBuffersARB");
     LEAVE_GL();
 
     This->pbo = 0;
@@ -1002,11 +1002,11 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
 
     /* Save old pixel store pack state */
     glGetIntegerv(GL_PACK_ROW_LENGTH, &rowLen);
-    checkGLcall("glIntegerv");
+    checkGLcall("glGetIntegerv");
     glGetIntegerv(GL_PACK_SKIP_PIXELS, &skipPix);
-    checkGLcall("glIntegerv");
+    checkGLcall("glGetIntegerv");
     glGetIntegerv(GL_PACK_SKIP_ROWS, &skipRow);
-    checkGLcall("glIntegerv");
+    checkGLcall("glGetIntegerv");
 
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
     glPixelStorei(GL_PACK_ROW_LENGTH, This->currentDesc.Width);
@@ -1385,9 +1385,9 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     }
 
     glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
-    checkGLcall("glIntegerv");
+    checkGLcall("glGetIntegerv");
     glGetIntegerv(GL_CURRENT_RASTER_POSITION, &prev_rasterpos[0]);
-    checkGLcall("glIntegerv");
+    checkGLcall("glGetIntegerv");
     glPixelZoom(1.0f, -1.0f);
     checkGLcall("glPixelZoom");
 
@@ -1396,7 +1396,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
     glPixelStorei(GL_UNPACK_ROW_LENGTH, This->currentDesc.Width);
 
     glRasterPos3i(This->lockedRect.left, This->lockedRect.top, 1);
-    checkGLcall("glRasterPos2f");
+    checkGLcall("glRasterPos3i");
 
     /* Some drivers(radeon dri, others?) don't like exceptions during
      * glDrawPixels. If the surface is a DIB section, it might be in GDIMode
@@ -1446,7 +1446,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This, GLenum fm
 
     /* Reset to previous pack row length */
     glPixelStorei(GL_UNPACK_ROW_LENGTH, skipBytes);
-    checkGLcall("glPixelStorei GL_UNPACK_ROW_LENGTH");
+    checkGLcall("glPixelStorei(GL_UNPACK_ROW_LENGTH)");
 
     if(!swapchain) {
         glDrawBuffer(myDevice->offscreenBuffer);
@@ -2730,7 +2730,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, c
     ENTER_GL();
     FIXME("Saving texture level %d width %d height %d\n", This->texture_level, width, height);
     glGetTexImage(GL_TEXTURE_2D, This->texture_level, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, allocatedMemory);
-    checkGLcall("glTexImage2D");
+    checkGLcall("glGetTexImage");
     if (tmpTexture) {
         glBindTexture(GL_TEXTURE_2D, 0);
         glDeleteTextures(1, &tmpTexture);
@@ -3756,7 +3756,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
         /* This is for color keying */
         if(Flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE)) {
             glEnable(GL_ALPHA_TEST);
-            checkGLcall("glEnable GL_ALPHA_TEST");
+            checkGLcall("glEnable(GL_ALPHA_TEST)");
 
             /* When the primary render target uses P8, the alpha component contains the palette index.
              * Which means that the colorkey is one of the palette entries. In other cases pixels that
@@ -3768,7 +3768,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, const 
             checkGLcall("glAlphaFunc");
         } else {
             glDisable(GL_ALPHA_TEST);
-            checkGLcall("glDisable GL_ALPHA_TEST");
+            checkGLcall("glDisable(GL_ALPHA_TEST)");
         }
 
         /* Draw a textured quad
@@ -4642,7 +4642,7 @@ static inline void surface_blt_to_drawable(IWineD3DSurfaceImpl *This, const RECT
     glEnable(bind_target);
     checkGLcall("glEnable(bind_target)");
     glBindTexture(bind_target, This->texture_name);
-    checkGLcall("bind_target, This->texture_name)");
+    checkGLcall("glBindTexture(bind_target, This->texture_name)");
     glTexParameteri(bind_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     checkGLcall("glTexParameteri");
     glTexParameteri(bind_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
