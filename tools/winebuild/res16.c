@@ -215,6 +215,13 @@ static void output_string( const char *str )
     output( " /* %s */\n", str );
 }
 
+/* output a string preceded by its length in binary format*/
+static void output_bin_string( const char *str )
+{
+    put_byte( strlen(str) );
+    while (*str) put_byte( *str++ );
+}
+
 /* output the resource data */
 void output_res16_data( DLLSPEC *spec )
 {
@@ -265,6 +272,63 @@ void output_res16_directory( DLLSPEC *spec )
             if (res->name.str) output_string( res->name.str );
     }
     output( "\t.byte 0\n" );  /* names terminator */
+
+    free_resource_tree( tree );
+}
+
+/* output the resource data in binary format */
+void output_bin_res16_data( DLLSPEC *spec )
+{
+    const struct resource *res;
+    unsigned int i;
+
+    for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
+        put_data( res->data, res->data_size );
+}
+
+/* output the resource definitions in binary format */
+void output_bin_res16_directory( DLLSPEC *spec, unsigned int data_offset )
+{
+    unsigned int i, j;
+    struct res_tree *tree;
+    const struct res_type *type;
+    const struct resource *res;
+
+    tree = build_resource_tree( spec );
+
+    put_word( 0 );  /* alignment */
+
+    /* type and name structures */
+
+    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    {
+        put_word( type->name_offset );
+        put_word( type->nb_names );
+        put_word( 0 );
+        put_word( 0 );
+
+        for (j = 0, res = type->res; j < type->nb_names; j++, res++)
+        {
+            put_word( data_offset );
+            put_word( res->data_size );
+            put_word( res->memopt );
+            put_word( res->name_offset );
+            put_word( 0 );
+            put_word( 0 );
+            data_offset += res->data_size;
+        }
+    }
+    put_word( 0 );  /* terminator */
+
+    /* name strings */
+
+    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    {
+        if (type->type->str) output_bin_string( type->type->str );
+        for (j = 0, res = type->res; j < type->nb_names; j++, res++)
+            if (res->name.str) output_bin_string( res->name.str );
+    }
+    put_byte( 0 );  /* names terminator */
 
     free_resource_tree( tree );
 }
