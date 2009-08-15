@@ -46,6 +46,9 @@ typedef struct JoystickGenericImpl
     GUID        guidInstance;
     char        *name;
 
+    int        *axis_map;               /* User axes remapping */
+    LONG        deadzone;               /* Default dead-zone */
+
     joy_polldev_handler *joy_polldev;
 } JoystickGenericImpl;
 

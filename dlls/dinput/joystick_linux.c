@@ -87,8 +87,6 @@ struct JoystickImpl
 
 	/* joystick private */
 	int				joyfd;
-	LONG				deadzone;
-	int				*axis_map;
 	int				axes;
         POINTL                          povs[4];
 };
@@ -257,12 +255,12 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
     /* get options */
 
     if (!get_config_key( hkey, appkey, "DefaultDeadZone", buffer, MAX_PATH )) {
-        device->deadzone = atoi(buffer);
-        TRACE("setting default deadzone to: \"%s\" %d\n", buffer, device->deadzone);
+        device->generic.deadzone = atoi(buffer);
+        TRACE("setting default deadzone to: \"%s\" %d\n", buffer, device->generic.deadzone);
     }
 
-    device->axis_map = HeapAlloc(GetProcessHeap(), 0, device->axes * sizeof(int));
-    if (!device->axis_map) return DIERR_OUTOFMEMORY;
+    device->generic.axis_map = HeapAlloc(GetProcessHeap(), 0, device->axes * sizeof(int));
+    if (!device->generic.axis_map) return DIERR_OUTOFMEMORY;
 
     if (!get_config_key( hkey, appkey, device->generic.name, buffer, MAX_PATH )) {
         static const char *axis_names[] = {"X", "Y", "Z", "Rx", "Ry", "Rz",
@@ -289,7 +287,7 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
                             else
                             {
                                 /* Pov takes two axes */
-                                device->axis_map[tokens++] = i;
+                                device->generic.axis_map[tokens++] = i;
                                 pov++;
                             }
                         }
@@ -312,14 +310,14 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
                     i = -1;
                 }
 
-                device->axis_map[tokens] = i;
+                device->generic.axis_map[tokens] = i;
                 tokens++;
             } while ((ptr = strtok(NULL, delim)) != NULL);
 
             if (tokens != device->axes) {
                 ERR("not all joystick axes mapped: %d axes(%d,%d), %d arguments\n", device->axes, axis, pov,tokens);
                 while (tokens < device->axes) {
-                    device->axis_map[tokens] = -1;
+                    device->generic.axis_map[tokens] = -1;
                     tokens++;
                 }
             }
@@ -330,14 +328,14 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
         for (tokens = 0; tokens < device->axes; tokens++)
         {
             if (tokens < 8)
-                device->axis_map[tokens] = axis++;
+                device->generic.axis_map[tokens] = axis++;
             else if (tokens < 16)
             {
-                device->axis_map[tokens++] = 8 + pov;
-                device->axis_map[tokens  ] = 8 + pov++;
+                device->generic.axis_map[tokens++] = 8 + pov;
+                device->generic.axis_map[tokens  ] = 8 + pov++;
             }
             else
-                device->axis_map[tokens] = -1;
+                device->generic.axis_map[tokens] = -1;
         }
     }
     device->generic.devcaps.dwAxes = axis;
@@ -425,7 +423,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->generic.base.crit");
 
     /* setup_dinput_options may change these */
-    newDevice->deadzone = 0;
+    newDevice->generic.deadzone = 0;
 
     /* do any user specified configuration */
     hr = setup_dinput_options(newDevice);
@@ -441,7 +439,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 
     for (i = 0; i < newDevice->axes; i++)
     {
-        int wine_obj = newDevice->axis_map[i];
+        int wine_obj = newDevice->generic.axis_map[i];
 
         if (wine_obj < 0) continue;
 
@@ -468,7 +466,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         newDevice->generic.props[i].lDevMax = +32767;
         newDevice->generic.props[i].lMin = 0;
         newDevice->generic.props[i].lMax = 0xffff;
-        newDevice->generic.props[i].lDeadZone = newDevice->deadzone;	/* % * 1000 */
+        newDevice->generic.props[i].lDeadZone = newDevice->generic.deadzone; /* % * 1000 */
         newDevice->generic.props[i].lSaturation = 0;
     }
 
@@ -489,7 +487,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     if (TRACE_ON(dinput)) {
         _dump_DIDATAFORMAT(newDevice->generic.base.data_format.wine_df);
        for (i = 0; i < (newDevice->axes); i++)
-           TRACE("axis_map[%d] = %d\n", i, newDevice->axis_map[i]);
+           TRACE("axis_map[%d] = %d\n", i, newDevice->generic.axis_map[i]);
         _dump_DIDEVCAPS(&newDevice->generic.devcaps);
     }
 
@@ -503,7 +501,7 @@ FAILED1:
     if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
     HeapFree(GetProcessHeap(), 0, df);
     release_DataFormat(&newDevice->generic.base.data_format);
-    HeapFree(GetProcessHeap(),0,newDevice->axis_map);
+    HeapFree(GetProcessHeap(),0,newDevice->generic.axis_map);
     HeapFree(GetProcessHeap(),0,newDevice->generic.name);
     HeapFree(GetProcessHeap(),0,newDevice);
     *pdev = 0;
@@ -684,7 +682,7 @@ static void joy_polldev(JoystickGenericImpl *This_in) {
         }
         else if (jse.type & JS_EVENT_AXIS)
         {
-            int number = This->axis_map[jse.number];	/* wine format object index */
+            int number = This->generic.axis_map[jse.number];	/* wine format object index */
 
             if (number < 0) return;
             inst_id = DIDFT_MAKEINSTANCE(number) | (number < 8 ? DIDFT_ABSAXIS : DIDFT_POV);
