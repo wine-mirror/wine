@@ -394,6 +394,15 @@ static void set_bool_pref(nsIPrefBranch *pref, const char *pref_name, BOOL val)
         ERR("Could not set pref %s\n", debugstr_a(pref_name));
 }
 
+static void set_int_pref(nsIPrefBranch *pref, const char *pref_name, int val)
+{
+    nsresult nsres;
+
+    nsres = nsIPrefBranch_SetIntPref(pref, pref_name, val);
+    if(NS_FAILED(nsres))
+        ERR("Could not set pref %s\n", debugstr_a(pref_name));
+}
+
 static void set_preferences(void)
 {
     nsIPrefBranch *pref;
@@ -410,6 +419,7 @@ static void set_preferences(void)
     set_proxy(pref);
     set_bool_pref(pref, "security.warn_entering_secure", FALSE);
     set_bool_pref(pref, "security.warn_submit_insecure", FALSE);
+    set_int_pref(pref, "layout.spellcheckDefault", 0);
 
     nsIPrefBranch_Release(pref);
 }
