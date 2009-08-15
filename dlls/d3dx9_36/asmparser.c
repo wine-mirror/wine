@@ -407,6 +407,46 @@ static BOOL check_reg_type(const struct shader_reg *reg,
 }
 
 /* Native assembler doesn't do separate checks for src and dst registers */
+static const struct allowed_reg_type vs_1_reg_allowed[] = {
+    { BWRITERSPR_TEMP,         12,  FALSE },
+    { BWRITERSPR_INPUT,        16,  FALSE },
+    { BWRITERSPR_CONST,       ~0U,   TRUE },
+    { BWRITERSPR_ADDR,          1,  FALSE },
+    { BWRITERSPR_RASTOUT,       3,  FALSE }, /* oPos, oFog and oPts */
+    { BWRITERSPR_ATTROUT,       2,  FALSE },
+    { BWRITERSPR_TEXCRDOUT,     8,  FALSE },
+    { ~0U, 0 } /* End tag */
+};
+
+/* struct instruction *asmparser_srcreg
+ *
+ * Records a source register in the instruction and does shader version
+ * specific checks and modifications on it
+ *
+ * Parameters:
+ *  This: Shader parser instance
+ *  instr: instruction to store the register in
+ *  num: Number of source register
+ *  src: Pointer to source the register structure. The caller can free
+ *  it afterwards
+ */
+static void asmparser_srcreg_vs_1(struct asm_parser *This,
+                                  struct instruction *instr, int num,
+                                  const struct shader_reg *src) {
+    struct shader_reg reg;
+
+    if(!check_reg_type(src, vs_1_reg_allowed)) {
+        asmparser_message(This, "Line %u: Source register %s not supported in VS 1\n",
+                          This->line_no,
+                          debug_print_srcreg(src, ST_VERTEX));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_legacy_srcmod(This, src->srcmod);
+    check_abs_srcmod(This, src->srcmod);
+    reg = map_oldvs_register(src);
+    memcpy(&instr->src[num], &reg, sizeof(reg));
+}
+
 static const struct allowed_reg_type vs_2_reg_allowed[] = {
     { BWRITERSPR_TEMP,      12,  FALSE },
     { BWRITERSPR_INPUT,     16,  FALSE },
@@ -562,6 +602,24 @@ static void asmparser_srcreg_ps_3(struct asm_parser *This,
     memcpy(&instr->src[num], src, sizeof(*src));
 }
 
+static void asmparser_dstreg_vs_1(struct asm_parser *This,
+                                  struct instruction *instr,
+                                  const struct shader_reg *dst) {
+    struct shader_reg reg;
+
+    if(!check_reg_type(dst, vs_1_reg_allowed)) {
+        asmparser_message(This, "Line %u: Destination register %s not supported in VS 1\n",
+                          This->line_no,
+                          debug_print_dstreg(dst, ST_VERTEX));
+        set_parse_status(This, PARSE_ERR);
+    }
+    check_ps_dstmod(This, instr->dstmod);
+    check_shift_dstmod(This, instr->shift);
+    reg = map_oldvs_register(dst);
+    memcpy(&instr->dst, &reg, sizeof(reg));
+    instr->has_dst = TRUE;
+}
+
 static void asmparser_dstreg_vs_2(struct asm_parser *This,
                                   struct instruction *instr,
                                   const struct shader_reg *dst) {
@@ -662,6 +720,26 @@ static void asmparser_coissue_unsupported(struct asm_parser *This) {
     asmparser_message(This, "Line %u: Coissue is only supported in pixel shaders versions <= 1.4\n", This->line_no);
     set_parse_status(This, PARSE_ERR);
 }
+
+static const struct asmparser_backend parser_vs_1 = {
+    asmparser_constF,
+    asmparser_constI,
+    asmparser_constB,
+
+    asmparser_dstreg_vs_1,
+    asmparser_srcreg_vs_1,
+
+    asmparser_predicate_unsupported,
+    asmparser_coissue_unsupported,
+
+    asmparser_dcl_output,
+    asmparser_dcl_input,
+    asmparser_dcl_sampler,
+
+    asmparser_end,
+
+    asmparser_instr,
+};
 
 static const struct asmparser_backend parser_vs_2 = {
     asmparser_constF,
@@ -792,6 +870,38 @@ static void gen_oldps_input(struct bwriter_shader *shader, DWORD texcoords) {
     };
     record_declaration(shader, BWRITERDECLUSAGE_COLOR, 0, FALSE, C0_VARYING, BWRITERSP_WRITEMASK_ALL);
     record_declaration(shader, BWRITERDECLUSAGE_COLOR, 1, FALSE, C1_VARYING, BWRITERSP_WRITEMASK_ALL);
+}
+
+void create_vs10_parser(struct asm_parser *ret) {
+    TRACE_(parsed_shader)("vs_1_0\n");
+
+    ret->shader = asm_alloc(sizeof(*ret->shader));
+    if(!ret->shader) {
+        ERR("Failed to allocate memory for the shader\n");
+        set_parse_status(ret, PARSE_ERR);
+        return;
+    }
+
+    ret->shader->type = ST_VERTEX;
+    ret->shader->version = BWRITERVS_VERSION(1, 0);
+    ret->funcs = &parser_vs_1;
+    gen_oldvs_output(ret->shader);
+}
+
+void create_vs11_parser(struct asm_parser *ret) {
+    TRACE_(parsed_shader)("vs_1_1\n");
+
+    ret->shader = asm_alloc(sizeof(*ret->shader));
+    if(!ret->shader) {
+        ERR("Failed to allocate memory for the shader\n");
+        set_parse_status(ret, PARSE_ERR);
+        return;
+    }
+
+    ret->shader->type = ST_VERTEX;
+    ret->shader->version = BWRITERVS_VERSION(1, 1);
+    ret->funcs = &parser_vs_1;
+    gen_oldvs_output(ret->shader);
 }
 
 void create_vs20_parser(struct asm_parser *ret) {

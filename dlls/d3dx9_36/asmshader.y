@@ -271,14 +271,12 @@ shader:               version_marker instructions
 version_marker:       VER_VS10
                         {
                             TRACE("Vertex shader 1.0\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_vs10_parser(&asm_ctx);
                         }
                     | VER_VS11
                         {
                             TRACE("Vertex shader 1.1\n");
-                            set_parse_status(&asm_ctx, PARSE_ERR);
-                            YYABORT;
+                            create_vs11_parser(&asm_ctx);
                         }
                     | VER_VS20
                         {

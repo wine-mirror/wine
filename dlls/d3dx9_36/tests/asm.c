@@ -1306,6 +1306,9 @@ static void failure_test(void) {
         /* shader 37: no a0 register in ps_3_0 */
         "ps_3_0\n"
         "add r0, v[ a0.x ], r1\n",
+        /* shader 38: only a0.x accepted in vs_1_1 */
+        "vs_1_1\n"
+        "mov r0, c0[ a0 ]\n",
     };
     HRESULT hr;
     unsigned int i;
@@ -1392,8 +1395,6 @@ static void assembleshader_test(void) {
     struct D3DXIncludeImpl include;
     HRESULT shader_vsh_res, incl_vsh_res;
 
-    todo_wine {
-
     /* pDefines test */
     shader = NULL;
     messages = NULL;
@@ -1420,6 +1421,8 @@ static void assembleshader_test(void) {
         ID3DXBuffer_Release(messages);
     }
     if(shader) ID3DXBuffer_Release(shader);
+
+    todo_wine {
 
     shader_vsh_res = create_file("shader.vsh", testshader, sizeof(testshader));
     if(SUCCEEDED(shader_vsh_res)) {
@@ -1484,6 +1487,8 @@ static void assembleshader_test(void) {
     }
     if(shader) ID3DXBuffer_Release(shader);
 
+    } /* end of todo_wine */
+
     /* D3DXAssembleShaderFromResource test */
     shader = NULL;
     messages = NULL;
@@ -1496,8 +1501,6 @@ static void assembleshader_test(void) {
         ID3DXBuffer_Release(messages);
     }
     if(shader) ID3DXBuffer_Release(shader);
-
-    } /* end of todo_wine */
 
     /* D3DXAssembleShaderFromResource with missing shader resource test */
     shader = NULL;
@@ -1521,9 +1524,9 @@ static void assembleshader_test(void) {
 
 START_TEST(asm)
 {
-    todo_wine preproc_test();
+    preproc_test();
     todo_wine ps_1_1_test();
-    todo_wine vs_1_1_test();
+    vs_1_1_test();
     todo_wine ps_1_3_test();
     todo_wine ps_1_4_test();
     vs_2_0_test();

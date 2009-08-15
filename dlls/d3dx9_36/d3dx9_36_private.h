@@ -178,6 +178,7 @@ struct instruction {
     unsigned int            num_srcs; /* For freeing the rel_regs */
     BOOL                    has_predicate;
     struct shader_reg       predicate;
+    BOOL                    coissue;
 };
 
 struct declaration {
@@ -311,6 +312,8 @@ struct asm_parser {
 
 extern struct asm_parser asm_ctx;
 
+void create_vs10_parser(struct asm_parser *ret);
+void create_vs11_parser(struct asm_parser *ret);
 void create_vs20_parser(struct asm_parser *ret);
 void create_vs2x_parser(struct asm_parser *ret);
 void create_vs30_parser(struct asm_parser *ret);
