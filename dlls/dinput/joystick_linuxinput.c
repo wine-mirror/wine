@@ -120,7 +120,7 @@ struct JoystickImpl
 	/* joystick private */
 	int				joyfd;
 
-	int                             axes[ABS_MAX];
+	int                             dev_axes_to_di[ABS_MAX];
         POINTL                          povs[4];
 
 	/* LUT for KEY_ to offset in rgbButtons */
@@ -425,12 +425,12 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     for (i = 0; i < WINE_JOYSTICK_MAX_AXES; i++)
     {
         if (!test_bit(newDevice->joydev->absbits, i)) {
-            newDevice->axes[i] = -1;
+            newDevice->dev_axes_to_di[i] = -1;
             continue;
         }
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i], df->dwObjSize);
-        newDevice->axes[i] = idx;
+        newDevice->dev_axes_to_di[i] = idx;
         newDevice->generic.props[idx].lDevMin = newDevice->joydev->axes[i].minimum;
         newDevice->generic.props[idx].lDevMax = newDevice->joydev->axes[i].maximum;
         newDevice->generic.props[idx].lMin    = 0;
@@ -449,12 +449,12 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     {
         if (!test_bit(newDevice->joydev->absbits, ABS_HAT0X + i * 2) ||
             !test_bit(newDevice->joydev->absbits, ABS_HAT0Y + i * 2)) {
-            newDevice->axes[ABS_HAT0X + i * 2] = newDevice->axes[ABS_HAT0Y + i * 2] = -1;
+            newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = -1;
             continue;
         }
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i + WINE_JOYSTICK_MAX_AXES], df->dwObjSize);
-        newDevice->axes[ABS_HAT0X + i * 2] = newDevice->axes[ABS_HAT0Y + i * 2] = i;
+        newDevice->dev_axes_to_di[ABS_HAT0X + i * 2] = newDevice->dev_axes_to_di[ABS_HAT0Y + i * 2] = i;
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->generic.devcaps.dwPOVs++) | DIDFT_POV;
     }
 
@@ -687,8 +687,8 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
  * values on the axes
  */
 #define CENTER_AXIS(a) \
-    (ji->axes[a] == -1 ? 0 : joystick_map_axis( &ji->generic.props[ji->axes[a]], \
-                                                ji->joydev->axes[a].value ))
+    (ji->dev_axes_to_di[a] == -1 ? 0 : joystick_map_axis( &ji->generic.props[ji->dev_axes_to_di[a]], \
+                                                          ji->joydev->axes[a].value ))
 static void fake_current_js_state(JoystickImpl *ji)
 {
     int i;
@@ -751,7 +751,7 @@ static void joy_polldev(JoystickGenericImpl *iface)
         }
 	case EV_ABS:
         {
-            int axis = This->axes[ie.code];
+            int axis = This->dev_axes_to_di[ie.code];
             if (axis==-1) {
                 break;
             }
