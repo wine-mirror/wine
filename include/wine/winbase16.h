@@ -250,8 +250,9 @@ typedef struct {
 /*
  * NE Header OPERATING SYSTEM
  */
-#define NE_OSFLAGS_UNKNOWN      0x01
-#define NE_OSFLAGS_WINDOWS      0x04
+#define NE_OSFLAGS_UNKNOWN      0x00
+#define NE_OSFLAGS_OS2          0x01
+#define NE_OSFLAGS_WINDOWS      0x02
 
 /*
  * NE Header ADDITIONAL FLAGS
