@@ -890,9 +890,9 @@ static BOOL ME_ReturnFoundPos(ME_TextEditor *editor, ME_DisplayItem *found,
     rx = 0;
   result->pRun = found;
   result->nOffset = ME_CharFromPointCursor(editor, rx, &found->member.run);
-  if (editor->pCursors[0].nOffset == found->member.run.strText->nLen && rx)
+  if (result->nOffset == found->member.run.strText->nLen && rx)
   {
-    result->pRun = ME_FindItemFwd(editor->pCursors[0].pRun, diRun);
+    result->pRun = ME_FindItemFwd(result->pRun, diRun);
     result->nOffset = 0;
   }
   result->pPara = ME_GetParagraph(result->pRun);
