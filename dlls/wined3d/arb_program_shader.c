@@ -2023,7 +2023,7 @@ static void pshader_hw_texm3x3vspec(const struct wined3d_shader_instruction *ins
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     char dst_str[50];
     char src0_name[50];
-    char dst_reg[8];
+    char dst_reg[50];
     BOOL is_color;
 
     /* Get the dst reg without writemask strings. We know this register is uninitialized, so we can use all
@@ -2066,7 +2066,7 @@ static void pshader_hw_texm3x3spec(const struct wined3d_shader_instruction *ins)
     char dst_str[50];
     char src0_name[50];
     char src1_name[50];
-    char dst_reg[8];
+    char dst_reg[50];
     BOOL is_color;
 
     shader_arb_get_src_param(ins, &ins->src[0], 0, src0_name);
