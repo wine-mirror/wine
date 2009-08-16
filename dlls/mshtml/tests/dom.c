@@ -2411,6 +2411,13 @@ static void test_location(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_pathname failed: %08x\n", hres);
     ok(!strcmp_wa(str, "blank"), "unexpected pathname %s\n", dbgstr_w(str));
 
+    hres = IHTMLLocation_get_href(location, NULL);
+    ok(hres == E_POINTER, "get_href passed: %08x\n", hres);
+
+    hres = IHTMLLocation_get_href(location, &str);
+    ok(hres == S_OK, "get_href failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "about:blank"), "unexpected href %s\n", dbgstr_w(str));
+
     ref = IHTMLLocation_Release(location);
     ok(!ref, "location chould be destroyed here\n");
 }
