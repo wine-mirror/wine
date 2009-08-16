@@ -2482,6 +2482,7 @@ static void test_SetEntriesInAcl(void)
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
     EXPLICIT_ACCESSW ExplicitAccess;
     static const WCHAR wszEveryone[] = {'E','v','e','r','y','o','n','e',0};
+    static const WCHAR wszCurrentUser[] = { 'C','U','R','R','E','N','T','_','U','S','E','R','\0'};
 
     if (!pSetEntriesInAclW)
     {
@@ -2574,6 +2575,13 @@ static void test_SetEntriesInAcl(void)
         ok(NewAcl != NULL, "returned acl was NULL\n");
         LocalFree(NewAcl);
     }
+
+    ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_USER;
+    ExplicitAccess.Trustee.ptstrName = (LPWSTR)wszCurrentUser;
+    res = pSetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
+    ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %u\n", res);
+    ok(NewAcl != NULL, "returned acl was NULL\n");
+    LocalFree(NewAcl);
 
     ExplicitAccess.grfAccessMode = REVOKE_ACCESS;
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
