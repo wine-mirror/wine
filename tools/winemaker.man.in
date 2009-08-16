@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEMAKER 1 "May 2009" "@PACKAGE_STRING@" "Wine Developers Manual"
+.TH WINEMAKER 1 "Aug 2009" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
 winemaker \- generate a build infrastructure for compiling Windows programs on Unix
 .SH SYNOPSIS
@@ -214,13 +214,12 @@ $ make
 In some cases you will have to edit the Makefile or sourcefiles by yourself.
 .PP
 Assuming that the windows executable/library is available, we could
-use a pedump-like tool to determine what kind of executable it is (graphical
+use winedump to determine what kind of executable it is (graphical
 or console), which libraries it is linked with, and which functions it
 exports (for libraries). We could then restore all these settings for the
-corresponding Winelib target. The problem is that we should have such a tool
-available under the Wine license first.
+corresponding Winelib target.
 .PP
-Furthermore it is not very good at finding the library containing the
+Furthermore winemaker is not very good at finding the library containing the
 executable: it must either be in the current directory or in the
 .IR LD_LIBRARY_PATH .
 .PP
