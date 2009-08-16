@@ -146,6 +146,8 @@
 #define IDS_COL_DRIVELETTER             8208
 #define IDS_COL_DRIVEMAPPING            8209
 #define IDS_NO_DRIVE_C                  8210
+#define IDD_DRIVECHOOSE                 8211
+#define IDC_DRIVESA2Z                   8212
 
 /* graphics */
 #define IDC_ENABLE_MANAGED              1100

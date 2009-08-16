@@ -291,6 +291,47 @@ static void on_options_click(HWND dialog)
     SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
 }
 
+static INT_PTR CALLBACK drivechoose_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    static int i, sel;
+    char c;
+    char drive[] = "X:";
+
+    switch(uMsg)
+    {
+    case WM_INITDIALOG:
+        {
+        ULONG mask = ~drive_available_mask(0); /* the mask is now which drives aren't available */
+        for( c = 'A'; c<= 'Z'; c++){
+            drive[0] = c;
+            if(!( mask & (1 << (c - 'A'))))
+                SendDlgItemMessageA( hwndDlg, IDC_DRIVESA2Z, CB_ADDSTRING, 0, (LPARAM) drive);
+        }
+        drive[0] = lParam;
+        SendDlgItemMessageA( hwndDlg, IDC_DRIVESA2Z, CB_SELECTSTRING, 0, (LPARAM) drive);
+        return TRUE;
+        }
+    case WM_COMMAND:
+        if(HIWORD(wParam) != BN_CLICKED) break;
+        switch (LOWORD(wParam))
+        {
+        case IDOK:
+            i = SendDlgItemMessageA( hwndDlg, IDC_DRIVESA2Z, CB_GETCURSEL, 0, 0);
+            if( i != CB_ERR){
+                SendDlgItemMessageA( hwndDlg, IDC_DRIVESA2Z, CB_GETLBTEXT, i, (LPARAM) drive);
+                sel = drive[0];
+            } else
+                sel = -1;
+            EndDialog(hwndDlg, sel);
+            return TRUE;
+        case IDCANCEL:
+            EndDialog(hwndDlg, -1);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static void on_add_click(HWND dialog)
 {
     /* we should allocate a drive letter automatically. We also need
@@ -313,7 +354,12 @@ static void on_add_click(HWND dialog)
         }
     }
 
-    WINE_TRACE("allocating drive letter %c\n", new);
+
+    new = DialogBoxParam(0, MAKEINTRESOURCE(IDD_DRIVECHOOSE), dialog, drivechoose_dlgproc, new);
+
+    if( new == -1) return;
+
+    WINE_TRACE("selected drive letter %c\n", new);
 
     if (new == 'C')
     {
