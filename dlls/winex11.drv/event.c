@@ -566,6 +566,14 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
                 return;
             }
         }
+        else if (hwnd == GetDesktopWindow())
+        {
+            hwnd = GetForegroundWindow();
+            if (!hwnd) hwnd = last_focus;
+            if (!hwnd) hwnd = GetDesktopWindow();
+            set_focus( event->display, hwnd, event_time );
+            return;
+        }
         /* try to find some other window to give the focus to */
         hwnd = GetFocus();
         if (hwnd) hwnd = GetAncestor( hwnd, GA_ROOT );
