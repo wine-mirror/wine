@@ -3769,7 +3769,7 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
     const WINED3DSAMPLER_TEXTURE_TYPE *vshader_sampler_type =
             ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.reg_maps.sampler_type;
     const WINED3DSAMPLER_TEXTURE_TYPE *pshader_sampler_type = NULL;
-    int start = GL_LIMITS(combined_samplers) - 1;
+    int start = min(MAX_COMBINED_SAMPLERS, GL_LIMITS(combined_samplers)) - 1;
     int i;
 
     if (ps) {
