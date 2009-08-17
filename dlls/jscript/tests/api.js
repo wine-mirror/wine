@@ -1459,4 +1459,48 @@ testFunctions(RegExp.prototype, [
         ["test", 1]
     ]);
 
+testFunctions(Date.prototype, [
+        ["getDate", 0],
+        ["getDay", 0],
+        ["getFullYear", 0],
+        ["getHours", 0],
+        ["getMilliseconds", 0],
+        ["getMinutes", 0],
+        ["getMonth", 0],
+        ["getSeconds", 0],
+        ["getTime", 0],
+        ["getTimezoneOffset", 0],
+        ["getUTCDate", 0],
+        ["getUTCDay", 0],
+        ["getUTCFullYear", 0],
+        ["getUTCHours", 0],
+        ["getUTCMilliseconds", 0],
+        ["getUTCMinutes", 0],
+        ["getUTCMonth", 0],
+        ["getUTCSeconds", 0],
+        ["setDate", 1],
+        ["setFullYear", 3],
+        ["setHours", 4],
+        ["setMilliseconds", 1],
+        ["setMinutes", 3],
+        ["setMonth", 2],
+        ["setSeconds", 2],
+        ["setTime", 1],
+        ["setUTCDate", 1],
+        ["setUTCFullYear", 3],
+        ["setUTCHours", 4],
+        ["setUTCMilliseconds", 1],
+        ["setUTCMinutes", 3],
+        ["setUTCMonth", 2],
+        ["setUTCSeconds", 2],
+        ["toDateString", 0],
+        ["toLocaleDateString", 0],
+        ["toLocaleString", 0],
+        ["toLocaleTimeString", 0],
+        ["toString", 0],
+        ["toTimeString", 0],
+        ["toUTCString", 0],
+        ["valueOf", 0]
+    ]);
+
 reportSuccess();
