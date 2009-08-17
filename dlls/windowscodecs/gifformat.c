@@ -102,8 +102,13 @@ static ULONG WINAPI GifFrameDecode_Release(IWICBitmapFrameDecode *iface)
 static HRESULT WINAPI GifFrameDecode_GetSize(IWICBitmapFrameDecode *iface,
     UINT *puiWidth, UINT *puiHeight)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, puiWidth, puiHeight);
-    return E_NOTIMPL;
+    GifFrameDecode *This = (GifFrameDecode*)iface;
+    TRACE("(%p,%p,%p)\n", iface, puiWidth, puiHeight);
+
+    *puiWidth = This->frame->ImageDesc.Width;
+    *puiHeight = This->frame->ImageDesc.Height;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI GifFrameDecode_GetPixelFormat(IWICBitmapFrameDecode *iface,
