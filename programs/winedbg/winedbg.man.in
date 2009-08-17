@@ -373,13 +373,13 @@ Lists the exception frames (starting from current stack frame)
 .PP
 It is possible to turn on and off Wine's debug messages as you are
 debugging using the \fBset\fR command. 
-.IP \fBset\ +\ warn\ win\fR
+.IP \fBset\ warn\ +\ win\fR
 Turns on warn on \fB'win'\fR channel
 .IP \fBset\ +\ win\fR
 Turns on warn/fixme/err/trace on \fB'win'\fR channel
 .IP \fBset\ -\ win\fR
 Turns off warn/fixme/err/trace on \fB'win'\fR channel
-.IP \fBset\ -\ fixme\fR
+.IP \fBset\ fixme\ -\ all\fR
 Turns off the 'fixme' class on all channels
 .PP
 .SS Gdb mode:
