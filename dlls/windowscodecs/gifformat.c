@@ -27,6 +27,8 @@
 #include "objbase.h"
 #include "wincodec.h"
 
+#include "ungif.h"
+
 #include "wincodecs_private.h"
 
 #include "wine/debug.h"
@@ -36,6 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 typedef struct {
     const IWICBitmapDecoderVtbl *lpVtbl;
     LONG ref;
+    BOOL initialized;
+    GifFileType *gif;
 } GifDecoder;
 
 static HRESULT WINAPI GifDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
@@ -79,6 +83,7 @@ static ULONG WINAPI GifDecoder_Release(IWICBitmapDecoder *iface)
 
     if (ref == 0)
     {
+        DGifCloseFile(This->gif);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -92,11 +97,54 @@ static HRESULT WINAPI GifDecoder_QueryCapability(IWICBitmapDecoder *iface, IStre
     return E_NOTIMPL;
 }
 
+static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
+    IStream *stream = gif->UserData;
+    ULONG bytesread;
+    HRESULT hr;
+
+    if (!stream)
+    {
+        ERR("attempting to read file after initialization\n");
+        return 0;
+    }
+
+    hr = IStream_Read(stream, data, len, &bytesread);
+    if (hr != S_OK) bytesread = 0;
+    return bytesread;
+}
+
 static HRESULT WINAPI GifDecoder_Initialize(IWICBitmapDecoder *iface, IStream *pIStream,
     WICDecodeOptions cacheOptions)
 {
-    FIXME("(%p,%p,%x): stub\n", iface, pIStream, cacheOptions);
-    return E_NOTIMPL;
+    GifDecoder *This = (GifDecoder*)iface;
+    LARGE_INTEGER seek;
+    int ret;
+
+    TRACE("(%p,%p,%x)\n", iface, pIStream, cacheOptions);
+
+    if (This->initialized || This->gif)
+    {
+        WARN("already initialized\n");
+        return WINCODEC_ERR_WRONGSTATE;
+    }
+
+    /* seek to start of stream */
+    seek.QuadPart = 0;
+    IStream_Seek(pIStream, seek, STREAM_SEEK_SET, NULL);
+
+    /* read all data from the stream */
+    This->gif = DGifOpen((void*)pIStream, _gif_inputfunc);
+    if (!This->gif) return E_FAIL;
+
+    ret = DGifSlurp(This->gif);
+    if (ret == GIF_ERROR) return E_FAIL;
+
+    /* make sure we don't use the stream after this method returns */
+    This->gif->UserData = NULL;
+
+    This->initialized = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI GifDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
@@ -195,6 +243,8 @@ HRESULT GifDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
     This->lpVtbl = &GifDecoder_Vtbl;
     This->ref = 1;
+    This->initialized = FALSE;
+    This->gif = NULL;
 
     ret = IUnknown_QueryInterface((IUnknown*)This, iid, ppv);
     IUnknown_Release((IUnknown*)This);
