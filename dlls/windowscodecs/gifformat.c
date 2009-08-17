@@ -129,8 +129,43 @@ static HRESULT WINAPI GifFrameDecode_GetResolution(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     IWICPalette *pIPalette)
 {
-    FIXME("(%p,%p): stub\n", iface, pIPalette);
-    return E_NOTIMPL;
+    GifFrameDecode *This = (GifFrameDecode*)iface;
+    WICColor colors[256];
+    ColorMapObject *cm = This->frame->ImageDesc.ColorMap;
+    int i, trans;
+    ExtensionBlock *eb;
+    TRACE("(%p,%p)\n", iface, pIPalette);
+
+    if (!cm) cm = This->parent->gif->SColorMap;
+
+    if (cm->ColorCount > 256)
+    {
+        ERR("GIF contains %i colors???\n", cm->ColorCount);
+        return E_FAIL;
+    }
+
+    for (i = 0; i < cm->ColorCount; i++) {
+        colors[i] = 0xff000000| /* alpha */
+                    cm->Colors[i].Red << 16|
+                    cm->Colors[i].Green << 8|
+                    cm->Colors[i].Blue;
+    }
+
+    /* look for the transparent color extension */
+    for (i = 0; i < This->frame->ExtensionBlockCount; ++i) {
+	eb = This->frame->ExtensionBlocks + i;
+	if (eb->Function == 0xF9 && eb->ByteCount == 4) {
+	    if ((eb->Bytes[0] & 1) == 1) {
+	        trans = (unsigned char)eb->Bytes[3];
+	        colors[trans] &= 0xffffff; /* set alpha to 0 */
+	        break;
+	    }
+	}
+    }
+
+    IWICPalette_InitializeCustom(pIPalette, colors, cm->ColorCount);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI GifFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
