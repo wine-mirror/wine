@@ -145,9 +145,9 @@ static void Object_destructor(DispatchEx *dispex)
 }
 
 static const builtin_prop_t Object_props[] = {
-    {hasOwnPropertyW,        Object_hasOwnProperty,        PROPF_METHOD},
-    {isPrototypeOfW,         Object_isPrototypeOf,         PROPF_METHOD},
-    {propertyIsEnumerableW,  Object_propertyIsEnumerable,  PROPF_METHOD},
+    {hasOwnPropertyW,        Object_hasOwnProperty,        PROPF_METHOD|1},
+    {isPrototypeOfW,         Object_isPrototypeOf,         PROPF_METHOD|1},
+    {propertyIsEnumerableW,  Object_propertyIsEnumerable,  PROPF_METHOD|1},
     {toLocaleStringW,        Object_toLocaleString,        PROPF_METHOD},
     {toStringW,              Object_toString,              PROPF_METHOD},
     {valueOfW,               Object_valueOf,               PROPF_METHOD}

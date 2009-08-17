@@ -1543,4 +1543,13 @@ testFunctions(Math, [
         ["tan", 1]
     ]);
 
+testFunctions(Object.prototype, [
+        ["hasOwnProperty", 1],
+        ["isPrototypeOf", 1],
+        ["propertyIsEnumerable", 1],
+        ["toLocaleString", 0],
+        ["toString", 0],
+        ["valueOf", 0]
+    ]);
+
 reportSuccess();
