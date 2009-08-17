@@ -369,8 +369,9 @@ Lists all w-threads in Wine session
 .IP \fBinfo\ exception\fR
 Lists the exception frames (starting from current stack frame)
 .PP
-It is possible to turn on and off Wine's debug messages as you are
-debugging using the \fBset\fR command. 
+Debug messages can be turned on and off as you are debugging using
+the \fBset\fR command, but only for channels initialized with the
+\fIWINEDEBUG\fR environment variable.
 .IP \fBset\ warn\ +\ win\fR
 Turns on warn on \fB'win'\fR channel
 .IP \fBset\ +\ win\fR
