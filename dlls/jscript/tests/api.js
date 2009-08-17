@@ -1453,4 +1453,10 @@ testFunctions(String.prototype, [
         ["toUpperCase", 0]
     ]);
 
+testFunctions(RegExp.prototype, [
+        ["toString", 0],
+        ["exec", 1],
+        ["test", 1]
+    ]);
+
 reportSuccess();

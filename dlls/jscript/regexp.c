@@ -3523,13 +3523,13 @@ static void RegExp_destructor(DispatchEx *dispex)
 }
 
 static const builtin_prop_t RegExp_props[] = {
-    {execW,                  RegExp_exec,                  PROPF_METHOD},
+    {execW,                  RegExp_exec,                  PROPF_METHOD|1},
     {globalW,                RegExp_global,                0},
     {ignoreCaseW,            RegExp_ignoreCase,            0},
     {lastIndexW,             RegExp_lastIndex,             0},
     {multilineW,             RegExp_multiline,             0},
     {sourceW,                RegExp_source,                0},
-    {testW,                  RegExp_test,                  PROPF_METHOD},
+    {testW,                  RegExp_test,                  PROPF_METHOD|1},
     {toStringW,              RegExp_toString,              PROPF_METHOD}
 };
 
