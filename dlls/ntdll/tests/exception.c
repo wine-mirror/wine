@@ -1053,7 +1053,11 @@ static void test_dpe_exceptions(void)
         info.exception_caught = FALSE;
         run_exception_test(dpe_exception_handler, &info, single_ret, sizeof(single_ret), PAGE_NOACCESS);
         ok(info.exception_caught == TRUE, "Execution of disabled memory suceeded\n");
-        ok(info.exception_info == EXCEPTION_READ_FAULT,
+        if(has_hw_support)
+            todo_wine ok(info.exception_info == EXCEPTION_READ_FAULT,
+              "Access violation type: %08x\n", (unsigned)info.exception_info);
+        else
+            ok(info.exception_info == EXCEPTION_READ_FAULT,
               "Access violation type: %08x\n", (unsigned)info.exception_info);
     }
     else
@@ -1070,12 +1074,12 @@ static void test_dpe_exceptions(void)
     /* Try to turn off DEP */
     val = MEM_EXECUTE_OPTION_ENABLE;
     stat = pNtSetInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val);
-    ok(stat == STATUS_ACCESS_DENIED, "disabling DEP while permanent: status %08x\n", stat);
+    todo_wine ok(stat == STATUS_ACCESS_DENIED, "disabling DEP while permanent: status %08x\n", stat);
 
     /* Try to turn on DEP */
     val = MEM_EXECUTE_OPTION_DISABLE;
     stat = pNtSetInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val);
-    ok(stat == STATUS_ACCESS_DENIED, "enabling DEP while permanent: status %08x\n", stat);
+    todo_wine ok(stat == STATUS_ACCESS_DENIED, "enabling DEP while permanent: status %08x\n", stat);
 }
 
 #elif defined(__x86_64__)
