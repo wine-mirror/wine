@@ -108,6 +108,7 @@ const char *string_of_type(unsigned char type)
     case RPC_FC_CARRAY: return "FC_CARRAY";
     case RPC_FC_CVARRAY: return "FC_CVARRAY";
     case RPC_FC_BOGUS_ARRAY: return "FC_BOGUS_ARRAY";
+    case RPC_FC_ALIGNM2: return "FC_ALIGNM2";
     case RPC_FC_ALIGNM4: return "FC_ALIGNM4";
     case RPC_FC_ALIGNM8: return "FC_ALIGNM8";
     case RPC_FC_POINTER: return "FC_POINTER";
@@ -1094,6 +1095,7 @@ static unsigned int field_memsize(const type_t *type, unsigned int *offset)
 static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align)
 {
     unsigned int size = 0;
+    unsigned int max_align;
     const var_t *v;
 
     if (!fields) return 0;
@@ -1102,11 +1104,15 @@ static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align
         unsigned int falign = 0;
         unsigned int fsize = type_memsize(v->type, &falign);
         if (*align < falign) *align = falign;
+        if (falign > packing) falign = packing;
         size = ROUND_SIZE(size, falign);
         size += fsize;
     }
 
-    size = ROUND_SIZE(size, *align);
+    max_align = *align;
+    if(max_align > packing) max_align = packing;
+    size = ROUND_SIZE(size, max_align);
+
     return size;
 }
 
@@ -1144,6 +1150,7 @@ int get_padding(const var_list_t *fields)
         type_t *ft = f->type;
         unsigned int align = 0;
         unsigned int size = type_memsize(ft, &align);
+        if (align > packing) align = packing;
         if (align > salign) salign = align;
         offset = ROUND_SIZE(offset, align);
         offset += size;
@@ -2210,6 +2217,7 @@ static void write_struct_members(FILE *file, const type_t *type,
         type_t *ft = field->type;
         unsigned int align = 0;
         unsigned int size = type_memsize(ft, &align);
+        if(align > packing) align = packing;
         if (salign < align) salign = align;
 
         if (!is_conformant_array(ft) || type_array_is_decl_as_ptr(ft))
@@ -2219,6 +2227,9 @@ static void write_struct_members(FILE *file, const type_t *type,
                 unsigned char fc = 0;
                 switch (align)
                 {
+                case 2:
+                    fc = RPC_FC_ALIGNM2;
+                    break;
                 case 4:
                     fc = RPC_FC_ALIGNM4;
                     break;
