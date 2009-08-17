@@ -1370,7 +1370,7 @@ if test "$ac_cv_header_gsm_h" = "yes" -o "$ac_cv_header_gsm_gsm_h" = "yes"
 then
     WINE_CHECK_SONAME(gsm,gsm_create)
 fi
-WINE_WARNING_WITH(libgsm,[test "x$ac_cv_lib_soname_gsm" = "x"],
+WINE_NOTICE_WITH(libgsm,[test "x$ac_cv_lib_soname_gsm" = "x"],
                  [libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.])
 
 dnl **** Check for libjpeg ****

@@ -10851,7 +10851,7 @@ fi
 fi
 if test "x$ac_cv_lib_soname_gsm" = "x"; then :
   case "x$with_libgsm" in
-  x)   wine_warnings="$wine_warnings|libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported." ;;
+  x)   wine_notices="$wine_notices|libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported." ;;
   xno) ;;
   *)   as_fn_error "libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.
 This is an error since --with-libgsm was requested." "$LINENO" 5 ;;
