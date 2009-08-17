@@ -147,6 +147,7 @@ static struct object *create_file_obj( struct fd *fd, unsigned int access, mode_
     if (!file) return NULL;
     file->access  = access;
     file->mode    = mode;
+    file->uid     = ~(uid_t)0;
     file->fd      = fd;
     grab_object( fd );
     set_fd_user( fd, &file_fd_ops, &file->obj );
@@ -206,7 +207,7 @@ static struct object *create_file( const char *nameptr, data_size_t len, unsigne
     if (!fd) goto done;
 
     if (S_ISDIR(mode))
-        obj = create_dir_obj( fd );
+        obj = create_dir_obj( fd, access, mode );
     else if (S_ISCHR(mode) && is_serial_fd( fd ))
         obj = create_serial( fd );
     else

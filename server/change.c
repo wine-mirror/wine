@@ -1108,7 +1108,7 @@ static int dir_add_to_existing_notify( struct dir *dir )
 
 #endif  /* USE_INOTIFY */
 
-struct object *create_dir_obj( struct fd *fd )
+struct object *create_dir_obj( struct fd *fd, unsigned int access, mode_t mode )
 {
     struct dir *dir;
 
@@ -1123,6 +1123,8 @@ struct object *create_dir_obj( struct fd *fd )
     dir->inode = NULL;
     grab_object( fd );
     dir->fd = fd;
+    dir->mode = mode;
+    dir->uid  = ~(uid_t)0;
     set_fd_user( fd, &dir_fd_ops, &dir->obj );
 
     dir_add_to_existing_notify( dir );

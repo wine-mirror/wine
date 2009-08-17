@@ -120,7 +120,7 @@ extern mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner
 
 extern void do_change_notify( int unix_fd );
 extern void sigio_callback(void);
-extern struct object *create_dir_obj( struct fd *fd );
+extern struct object *create_dir_obj( struct fd *fd, unsigned int access, mode_t mode );
 
 /* completion */
 
