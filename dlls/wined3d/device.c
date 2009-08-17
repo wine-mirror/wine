@@ -6567,10 +6567,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
         viewport.MaxZ   = 1.0f;
         viewport.MinZ   = 0.0f;
         IWineD3DDeviceImpl_SetViewport(iface, &viewport);
-        /* Make sure the viewport state is dirty, because the render_offscreen thing affects it.
-         * SetViewport may catch NOP viewport changes, which would occur when switching between equally sized targets
-         */
-        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VIEWPORT);
     }
     return WINED3D_OK;
 }
