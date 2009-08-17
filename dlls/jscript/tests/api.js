@@ -1396,4 +1396,18 @@ testObjectInherit(new Error(), false, true, true);
 testObjectInherit(testObjectInherit, false, true, true);
 testObjectInherit(Math, true, true, true);
 
+function testFunctions(obj, arr) {
+    var l;
+
+    for(var i=0; i<arr.length; i++) {
+        l = obj[arr[i][0]].length;
+        ok(l === arr[i][1], arr[i][0] + ".length = " + l);
+    }
+}
+
+testFunctions(Boolean.prototype, [
+        ["valueOf", 0],
+        ["toString", 0]
+    ]);
+
 reportSuccess();
