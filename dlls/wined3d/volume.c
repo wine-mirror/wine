@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     IWineD3DVolumeTexture *texture;
-    int active_sampler;
+    DWORD active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
      * Read the unit back instead of switching to 0, this avoids messing around with the state manager's
@@ -53,7 +53,8 @@ static void volume_bind_and_dirtify(IWineD3DVolume *iface) {
         active_sampler = 0;
     }
 
-    if (active_sampler != -1) {
+    if (active_sampler != WINED3D_UNMAPPED_STAGE)
+    {
         IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(active_sampler));
     }
 

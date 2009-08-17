@@ -2113,8 +2113,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface,
             This->texUnitMap[state] = state;
             This->rev_tex_unit_map[state] = state;
         } else {
-            This->texUnitMap[state] = -1;
-            This->rev_tex_unit_map[state] = -1;
+            This->texUnitMap[state] = WINED3D_UNMAPPED_STAGE;
+            This->rev_tex_unit_map[state] = WINED3D_UNMAPPED_STAGE;
         }
     }
 
@@ -3635,18 +3635,21 @@ static inline void markTextureStagesDirty(IWineD3DDeviceImpl *This, DWORD stage)
     }
 }
 
-static void device_map_stage(IWineD3DDeviceImpl *This, int stage, int unit) {
-    int i = This->rev_tex_unit_map[unit];
-    int j = This->texUnitMap[stage];
+static void device_map_stage(IWineD3DDeviceImpl *This, DWORD stage, DWORD unit)
+{
+    DWORD i = This->rev_tex_unit_map[unit];
+    DWORD j = This->texUnitMap[stage];
 
     This->texUnitMap[stage] = unit;
-    if (i != -1 && i != stage) {
-        This->texUnitMap[i] = -1;
+    if (i != WINED3D_UNMAPPED_STAGE && i != stage)
+    {
+        This->texUnitMap[i] = WINED3D_UNMAPPED_STAGE;
     }
 
     This->rev_tex_unit_map[unit] = stage;
-    if (j != -1 && j != unit) {
-        This->rev_tex_unit_map[j] = -1;
+    if (j != WINED3D_UNMAPPED_STAGE && j != unit)
+    {
+        This->rev_tex_unit_map[j] = WINED3D_UNMAPPED_STAGE;
     }
 }
 
@@ -3740,14 +3743,12 @@ static void device_map_psamplers(IWineD3DDeviceImpl *This) {
 }
 
 static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, const DWORD *pshader_sampler_tokens,
-        const DWORD *vshader_sampler_tokens, int unit)
+        const DWORD *vshader_sampler_tokens, DWORD unit)
 {
-    int current_mapping = This->rev_tex_unit_map[unit];
+    DWORD current_mapping = This->rev_tex_unit_map[unit];
 
-    if (current_mapping == -1) {
-        /* Not currently used */
-        return TRUE;
-    }
+    /* Not currently used */
+    if (current_mapping == WINED3D_UNMAPPED_STAGE) return TRUE;
 
     if (current_mapping < MAX_FRAGMENT_SAMPLERS) {
         /* Used by a fragment sampler */
@@ -3781,7 +3782,7 @@ static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
     }
 
     for (i = 0; i < MAX_VERTEX_SAMPLERS; ++i) {
-        int vsampler_idx = i + MAX_FRAGMENT_SAMPLERS;
+        DWORD vsampler_idx = i + MAX_FRAGMENT_SAMPLERS;
         if (vshader_sampler_type[i])
         {
             if (This->texUnitMap[vsampler_idx] != WINED3D_UNMAPPED_STAGE)
@@ -5731,7 +5732,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
     const struct GlPixelFormatDesc *src_format_desc, *dst_format_desc;
     GLenum dummy;
-    int sampler;
+    DWORD sampler;
     int bpp;
     CONVERT_TYPES convert = NO_CONVERSION;
 
@@ -5871,7 +5872,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
 
     IWineD3DSurface_ModifyLocation(pDestinationSurface, SFLAG_INTEXTURE, TRUE);
     sampler = This->rev_tex_unit_map[0];
-    if (sampler != -1) {
+    if (sampler != WINED3D_UNMAPPED_STAGE)
+    {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(sampler));
     }
 
@@ -6680,7 +6682,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
                 INT height = This->cursorHeight;
                 INT width = This->cursorWidth;
                 INT bpp = glDesc->byte_count;
-                INT i, sampler;
+                DWORD sampler;
+                INT i;
 
                 /* Reformat the texture memory (pitch and width can be
                  * different) */
@@ -6702,7 +6705,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* i
                 GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
                 checkGLcall("glActiveTextureARB");
                 sampler = This->rev_tex_unit_map[0];
-                if (sampler != -1) {
+                if (sampler != WINED3D_UNMAPPED_STAGE)
+                {
                     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(sampler));
                 }
                 /* Create a new cursor texture */

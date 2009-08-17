@@ -301,7 +301,7 @@ void surface_set_texture_target(IWineD3DSurface *iface, GLenum target)
 
 /* Context activation is done by the caller. */
 static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This, BOOL srgb) {
-    int active_sampler;
+    DWORD active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
      * Read the unit back instead of switching to 0, this avoids messing around with the state manager's
@@ -320,7 +320,8 @@ static void surface_bind_and_dirtify(IWineD3DSurfaceImpl *This, BOOL srgb) {
     LEAVE_GL();
     active_sampler = This->resource.wineD3DDevice->rev_tex_unit_map[active_texture - GL_TEXTURE0_ARB];
 
-    if (active_sampler != -1) {
+    if (active_sampler != WINED3D_UNMAPPED_STAGE)
+    {
         IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(active_sampler));
     }
     IWineD3DSurface_BindTexture((IWineD3DSurface *)This, srgb);

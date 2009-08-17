@@ -164,7 +164,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
     for (textureNo = 0; textureNo < texture_stages; ++textureNo)
     {
         int coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
-        int texture_idx = This->texUnitMap[textureNo];
+        DWORD texture_idx = This->texUnitMap[textureNo];
 
         if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0)
         {
@@ -174,7 +174,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
 
         if (!pixelShader && !This->stateBlock->textures[textureNo]) continue;
 
-        if (texture_idx == -1) continue;
+        if (texture_idx == WINED3D_UNMAPPED_STAGE) continue;
 
         if (coordIdx > 7)
         {
@@ -232,7 +232,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, const struct wined3d_context 
         {
             int coord_idx;
             const void *ptr;
-            int texture_idx;
+            DWORD texture_idx;
 
             if (!(tmp_tex_mask & 1)) continue;
 

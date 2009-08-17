@@ -1513,9 +1513,10 @@ static inline void set_blit_dimension(UINT width, UINT height) {
 /* Context activation is done by the caller. */
 static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context *context, UINT width, UINT height)
 {
-    int i, sampler;
+    int i;
     const struct StateEntry *StateTable = This->StateTable;
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    DWORD sampler;
 
     TRACE("Setting up context %p for blitting\n", context);
     if(context->last_was_blit) {
@@ -1578,7 +1579,8 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);");
 
-        if (sampler != -1) {
+        if (sampler != WINED3D_UNMAPPED_STAGE)
+        {
             if (sampler < MAX_TEXTURES) {
                 Context_MarkStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
             }
@@ -1617,7 +1619,8 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, struct wined3d_context
         checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
     }
 
-    if (sampler != -1) {
+    if (sampler != WINED3D_UNMAPPED_STAGE)
+    {
         if (sampler < MAX_TEXTURES) {
             Context_MarkStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + sampler), StateTable);
             Context_MarkStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP), StateTable);
