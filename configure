@@ -7674,7 +7674,7 @@ fi
 
 if test "$have_x" = "yes"
 then
-    XLIB="-lXext -lX11"
+    XLIB="-lX11"
     ac_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
@@ -7776,7 +7776,7 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBXEXT "$ac_cv_lib_soname_Xext"
 _ACEOF
 
-
+       XLIB="-lXext $XLIB"
 fi
 
         for ac_header in X11/Xlib.h \
@@ -7819,7 +7819,7 @@ if test "${ac_cv_lib_X11_XkbQueryExtension+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lX11 $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lX11 $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -7865,7 +7865,7 @@ if test "${ac_cv_lib_soname_Xcursor+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXcursor $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXcursor $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -7927,7 +7927,7 @@ if test "${ac_cv_lib_soname_Xi+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXi $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXi $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -7989,7 +7989,7 @@ if test "${ac_cv_lib_Xext_XShmQueryExtension+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXext $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXext $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8043,7 +8043,7 @@ if test "${ac_cv_lib_Xext_XShapeQueryExtension+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXext $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXext $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8097,7 +8097,7 @@ if test "${ac_cv_lib_soname_Xxf86vm+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXxf86vm $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXxf86vm $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8159,7 +8159,7 @@ if test "${ac_cv_lib_soname_Xrender+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXrender $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXrender $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8207,7 +8207,7 @@ if test "${ac_cv_lib_Xrender_XRenderSetPictureTransform+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXrender $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXrender $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8276,7 +8276,7 @@ if test "${ac_cv_lib_soname_Xrandr+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXrandr $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXrandr $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8353,7 +8353,7 @@ if test "${ac_cv_lib_soname_Xinerama+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXinerama $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXinerama $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8417,7 +8417,7 @@ if test "${ac_cv_lib_soname_Xcomposite+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXcomposite $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-lXcomposite $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8542,7 +8542,7 @@ if test "${ac_cv_lib_soname_GL+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lGL $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS $LIBS"
+LIBS="-lGL $X_LIBS $XLIB -lm $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8581,7 +8581,7 @@ if test "${ac_cv_lib_soname_GL+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lGL $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib $LIBS"
+LIBS="-lGL $X_LIBS $XLIB -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8655,7 +8655,7 @@ if test "${ac_cv_lib_soname_GLU+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lGLU $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS $LIBS"
+LIBS="-lGLU $OPENGL_LIBS $X_LIBS $X_PRE_LIBS $XLIB -lm $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8759,7 +8759,7 @@ if test "${ac_cv_lib_audio_AuCreateFlow+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-laudio -lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+LIBS="-laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -8830,9 +8830,9 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_Xau_XauGetBestAuthByAddr" >&5
 $as_echo "$ac_cv_lib_Xau_XauGetBestAuthByAddr" >&6; }
 if test "x$ac_cv_lib_Xau_XauGetBestAuthByAddr" = x""yes; then :
-  NASLIBS="-lXau -laudio -lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS"
+  NASLIBS="-lXau -laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS"
 else
-  NASLIBS="-laudio -lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS"
+  NASLIBS="-laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS"
 fi
 
 

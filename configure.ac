@@ -776,12 +776,12 @@ AC_PATH_XTRA
 
 if test "$have_x" = "yes"
 then
-    XLIB="-lXext -lX11"
+    XLIB="-lX11"
     ac_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
     WINE_CHECK_SONAME(X11,XCreateWindow,,,[$X_LIBS $X_EXTRA_LIBS])
-    WINE_CHECK_SONAME(Xext,XextCreateExtension,,,[$X_LIBS -lX11 $X_EXTRA_LIBS])
+    WINE_CHECK_SONAME(Xext,XextCreateExtension,[XLIB="-lXext $XLIB"],,[$X_LIBS -lX11 $X_EXTRA_LIBS])
 
     dnl *** All of the following tests require X11/Xlib.h
     AC_CHECK_HEADERS([X11/Xlib.h \
@@ -808,13 +808,13 @@ then
         then
               AC_CHECK_LIB(X11, XkbQueryExtension,
               AC_DEFINE(HAVE_XKB, 1, [Define if you have the XKB extension]),,
-              $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+              $X_LIBS $XLIB $X_EXTRA_LIBS)
         fi
 
         dnl *** Check for X cursor
         if test "$ac_cv_header_X11_Xcursor_Xcursor_h" = "yes"
         then
-            WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+            WINE_CHECK_SONAME(Xcursor,XcursorImageLoadCursor,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])
         fi
         WINE_NOTICE_WITH(xcursor,[test "x$ac_cv_lib_soname_Xcursor" = "x"],
                          [libxcursor ${notice_platform}development files not found, the Xcursor extension won't be supported.])
@@ -822,7 +822,7 @@ then
         dnl *** Check for X input extension
         if test "$ac_cv_header_X11_extensions_XInput_h" = "yes"
         then
-            WINE_CHECK_SONAME(Xi,XOpenDevice,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+            WINE_CHECK_SONAME(Xi,XOpenDevice,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])
         fi
         WINE_NOTICE_WITH(xinput,[test "x$ac_cv_lib_soname_Xi" = "x"],
                          [libxi ${notice_platform}development files not found, the Xinput extension won't be supported.])
@@ -832,7 +832,7 @@ then
         then
               AC_CHECK_LIB(Xext, XShmQueryExtension,
               AC_DEFINE(HAVE_LIBXXSHM, 1, [Define if you have the X Shm extension]),,
-              $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+              $X_LIBS $XLIB $X_EXTRA_LIBS)
         fi
         WINE_NOTICE_WITH(xshm,[test "$ac_cv_lib_Xext_XShmQueryExtension" != "yes"],
                          [XShm ${notice_platform}development files not found, X Shared Memory won't be supported.])
@@ -842,7 +842,7 @@ then
         then
               AC_CHECK_LIB(Xext,XShapeQueryExtension,
 	      AC_DEFINE(HAVE_LIBXSHAPE, 1, [Define if you have the X Shape extension]),,
-	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
+	      $X_LIBS $XLIB $X_EXTRA_LIBS)
         fi
         WINE_NOTICE_WITH(xshape,[test "$ac_cv_lib_Xext_XShapeQueryExtension" != "yes"],
                          [XShape ${notice_platform}development files not found, XShape won't be supported.])
@@ -850,7 +850,7 @@ then
         dnl *** Check for XFree86 VMODE extension
         if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes"
         then
-            WINE_CHECK_SONAME(Xxf86vm,XF86VidModeQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+            WINE_CHECK_SONAME(Xxf86vm,XF86VidModeQueryExtension,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])
         fi
         WINE_NOTICE_WITH(xxf86vm,[test "x$ac_cv_lib_soname_Xxf86vm" = "x"],
                          [libXxf86vm ${notice_platform}development files not found, XFree86 Vidmode won't be supported.])
@@ -862,7 +862,7 @@ then
               [AC_CHECK_LIB(Xrender,XRenderSetPictureTransform,
                 [AC_DEFINE(HAVE_XRENDERSETPICTURETRANSFORM, 1,
                  [Define if Xrender has the XRenderSetPictureTransform function])],,
-                [$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])],,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+                [$X_LIBS $XLIB $X_EXTRA_LIBS])],,[$X_LIBS $XLIB $X_EXTRA_LIBS])
 
         fi
         WINE_WARNING_WITH(xrender,[test "x$ac_cv_lib_soname_Xrender" = "x"],
@@ -873,7 +873,7 @@ then
         then
                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>]], [[static typeof(XRRSetScreenConfigAndRate) * func;]])],
-                  [WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
+                  [WINE_CHECK_SONAME(Xrandr,XRRQueryExtension,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])])
         fi
         WINE_NOTICE_WITH(xrandr,[test "x$ac_cv_lib_soname_Xrandr" = "x"],
                          [libxrandr ${notice_platform}development files not found, XRandr won't be supported.])
@@ -883,7 +883,7 @@ then
         then
                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <X11/Xlib.h>
 #include <X11/extensions/Xinerama.h>]], [[static typeof(XineramaQueryScreens) * func;]])],
-                  [WINE_CHECK_SONAME(Xinerama,XineramaQueryScreens,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
+                  [WINE_CHECK_SONAME(Xinerama,XineramaQueryScreens,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])])
         fi
         WINE_NOTICE_WITH(xinerama,[test "x$ac_cv_lib_soname_Xinerama" = "x"],
                          [libxinerama ${notice_platform}development files not found, multi-monitor setups won't be supported.])
@@ -891,7 +891,7 @@ then
         dnl *** Check for X Composite extension
         if test "$ac_cv_header_X11_extensions_Xcomposite_h" = "yes"
         then
-            WINE_CHECK_SONAME(Xcomposite,XCompositeRedirectWindow,,,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+            WINE_CHECK_SONAME(Xcomposite,XCompositeRedirectWindow,,,[$X_LIBS $XLIB $X_EXTRA_LIBS])
         fi
         WINE_NOTICE_WITH(xcomposite,[test "x$ac_cv_lib_soname_Xcomposite" = "x"],
                          [libxcomposite ${notice_platform}development files not found, Xcomposite won't be supported.])
@@ -936,11 +936,11 @@ This probably prevents linking to OpenGL. Try deleting the file and restarting c
 	                            else
 	                                opengl_msg="No OpenGL library found on this system."
 	                            fi],
-				    $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib)],
-			     $X_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS)
+				    $X_LIBS $XLIB -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib)],
+			     $X_LIBS $XLIB -lm $X_EXTRA_LIBS)
                  if test "$ac_cv_header_GL_glu_h" = "yes"
                  then
-                    WINE_CHECK_SONAME(GLU,gluLookAt,,,[$OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS])
+                    WINE_CHECK_SONAME(GLU,gluLookAt,,,[$OPENGL_LIBS $X_LIBS $X_PRE_LIBS $XLIB -lm $X_EXTRA_LIBS])
                  fi
                  WINE_NOTICE_WITH(glu,[test "x$ac_cv_lib_soname_GLU" = "x"],
                                  [libGLU ${notice_platform}development files not found, GLU won't be supported.])
@@ -966,11 +966,11 @@ OpenGL and Direct3D won't be supported.])
           AC_CHECK_LIB(audio,AuCreateFlow,
                        [AC_DEFINE(HAVE_NAS,1,[Define if you have NAS including devel headers])
                         AC_CHECK_LIB(Xau,XauGetBestAuthByAddr,
-                          [NASLIBS="-lXau -laudio -lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS"],
-                          [NASLIBS="-laudio -lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS"],
+                          [NASLIBS="-lXau -laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS"],
+                          [NASLIBS="-laudio -lXt $X_LIBS $XLIB $X_EXTRA_LIBS"],
                           [$X_LIBS])
                        ],,
-                       [-lXt $X_LIBS -lXext -lX11 $X_EXTRA_LIBS])])
+                       [-lXt $X_LIBS $XLIB $X_EXTRA_LIBS])])
 
     CPPFLAGS="$ac_save_CPPFLAGS"
 else
