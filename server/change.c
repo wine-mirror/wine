@@ -342,6 +342,7 @@ static int dir_set_sd( struct object *obj, const struct security_descriptor *sd,
 {
     struct dir *dir = (struct dir *)obj;
     const SID *owner;
+    struct stat st;
     mode_t mode;
     int unix_fd;
 
@@ -349,7 +350,7 @@ static int dir_set_sd( struct object *obj, const struct security_descriptor *sd,
 
     unix_fd = get_dir_unix_fd( dir );
 
-    if (unix_fd == -1) return 1;
+    if (unix_fd == -1 || fstat( unix_fd, &st ) == -1) return 1;
 
     if (set_info & OWNER_SECURITY_INFORMATION)
     {
@@ -372,18 +373,13 @@ static int dir_set_sd( struct object *obj, const struct security_descriptor *sd,
     if (set_info & DACL_SECURITY_INFORMATION)
     {
         /* keep the bits that we don't map to access rights in the ACL */
-        mode = dir->mode & (S_ISUID|S_ISGID|S_ISVTX|S_IRWXG);
+        mode = st.st_mode & (S_ISUID|S_ISGID|S_ISVTX|S_IRWXG);
         mode |= sd_to_mode( sd, owner );
 
-        if (dir->mode != mode)
+        if (st.st_mode != mode && fchmod( unix_fd, mode ) == -1)
         {
-            if (fchmod( unix_fd, mode ) == -1)
-            {
-                file_set_error();
-                return 0;
-            }
-
-            dir->mode = mode;
+            file_set_error();
+            return 0;
         }
     }
     return 1;
