@@ -1833,6 +1833,15 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
         rec->NumberParameters = 2;
         rec->ExceptionInformation[0] = (get_error_code(context) >> 1) & 0x09;
+        /* Send code 8 (EXCEPTION_EXECUTE_FAULT) only if data execution
+           prevention is enabled */
+        if (rec->ExceptionInformation[0] & 8)
+        {
+            ULONG flags;
+            NtQueryInformationProcess( GetCurrentProcess(), ProcessExecuteFlags,
+                                       &flags, sizeof(flags), NULL );
+            if (!(flags & MEM_EXECUTE_OPTION_DISABLE)) rec->ExceptionInformation[0] &= 1;
+        }
         rec->ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */

@@ -1053,11 +1053,7 @@ static void test_dpe_exceptions(void)
         info.exception_caught = FALSE;
         run_exception_test(dpe_exception_handler, &info, single_ret, sizeof(single_ret), PAGE_NOACCESS);
         ok(info.exception_caught == TRUE, "Execution of disabled memory suceeded\n");
-        if(has_hw_support)
-            todo_wine ok(info.exception_info == EXCEPTION_READ_FAULT,
-              "Access violation type: %08x\n", (unsigned)info.exception_info);
-        else
-            ok(info.exception_info == EXCEPTION_READ_FAULT,
+        ok(info.exception_info == EXCEPTION_READ_FAULT,
               "Access violation type: %08x\n", (unsigned)info.exception_info);
     }
     else
