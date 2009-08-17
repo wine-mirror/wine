@@ -234,11 +234,11 @@ static HRESULT Number_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPARAM
 }
 
 static const builtin_prop_t Number_props[] = {
-    {toExponentialW,         Number_toExponential,         PROPF_METHOD},
+    {toExponentialW,         Number_toExponential,         PROPF_METHOD|1},
     {toFixedW,               Number_toFixed,               PROPF_METHOD},
     {toLocaleStringW,        Number_toLocaleString,        PROPF_METHOD},
-    {toPrecisionW,           Number_toPrecision,           PROPF_METHOD},
-    {toStringW,              Number_toString,              PROPF_METHOD},
+    {toPrecisionW,           Number_toPrecision,           PROPF_METHOD|1},
+    {toStringW,              Number_toString,              PROPF_METHOD|1},
     {valueOfW,               Number_valueOf,               PROPF_METHOD}
 };
 

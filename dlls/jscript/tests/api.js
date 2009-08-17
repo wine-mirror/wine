@@ -1410,4 +1410,13 @@ testFunctions(Boolean.prototype, [
         ["toString", 0]
     ]);
 
+
+testFunctions(Number.prototype, [
+        ["valueOf", 0],
+        ["toString", 1],
+        ["toExponential", 1],
+        ["toLocaleString", 0],
+        ["toPrecision", 1]
+    ]);
+
 reportSuccess();
