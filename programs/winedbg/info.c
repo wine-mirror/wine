@@ -639,7 +639,7 @@ void info_win32_virtual(DWORD pid)
         }
     }
 
-    dbg_printf("Address  Size     State   Type    RWX\n");
+    dbg_printf("Address  End      State   Type    RWX\n");
 
     while (VirtualQueryEx(hProc, addr, &mbi, sizeof(mbi)) >= sizeof(mbi))
     {
