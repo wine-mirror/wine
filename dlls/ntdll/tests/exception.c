@@ -1070,12 +1070,12 @@ static void test_dpe_exceptions(void)
     /* Try to turn off DEP */
     val = MEM_EXECUTE_OPTION_ENABLE;
     stat = pNtSetInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val);
-    todo_wine ok(stat == STATUS_ACCESS_DENIED, "disabling DEP while permanent: status %08x\n", stat);
+    ok(stat == STATUS_ACCESS_DENIED, "disabling DEP while permanent: status %08x\n", stat);
 
     /* Try to turn on DEP */
     val = MEM_EXECUTE_OPTION_DISABLE;
     stat = pNtSetInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val);
-    todo_wine ok(stat == STATUS_ACCESS_DENIED, "enabling DEP while permanent: status %08x\n", stat);
+    ok(stat == STATUS_ACCESS_DENIED, "enabling DEP while permanent: status %08x\n", stat);
 }
 
 #elif defined(__x86_64__)

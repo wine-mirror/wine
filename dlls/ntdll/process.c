@@ -420,6 +420,8 @@ NTSTATUS WINAPI NtSetInformationProcess(
     case ProcessExecuteFlags:
         if (ProcessInformationLength != sizeof(ULONG))
             return STATUS_INVALID_PARAMETER;
+        else if (execute_flags & MEM_EXECUTE_OPTION_PERMANENT)
+            return STATUS_ACCESS_DENIED;
         else
         {
             BOOL enable;
