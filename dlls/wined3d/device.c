@@ -3762,7 +3762,7 @@ static BOOL device_unit_free_for_vs(IWineD3DDeviceImpl *This, const DWORD *pshad
     }
 
     /* Used by a vertex sampler */
-    return !vshader_sampler_tokens[current_mapping];
+    return !vshader_sampler_tokens[current_mapping - MAX_FRAGMENT_SAMPLERS];
 }
 
 static void device_map_vsamplers(IWineD3DDeviceImpl *This, BOOL ps) {
