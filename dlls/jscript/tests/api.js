@@ -1503,4 +1503,19 @@ testFunctions(Date.prototype, [
         ["valueOf", 0]
     ]);
 
+testFunctions(Array.prototype, [
+        ["concat", 1],
+        ["join", 1],
+        ["push", 1],
+        ["pop", 0],
+        ["reverse", 0],
+        ["shift", 0],
+        ["slice", 2],
+        ["sort", 1],
+        ["splice", 2],
+        ["toLocaleString", 0],
+        ["toString", 0],
+        ["unshift", 1]
+    ]);
+
 reportSuccess();

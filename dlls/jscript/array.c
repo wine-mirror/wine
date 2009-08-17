@@ -784,19 +784,19 @@ static void Array_on_put(DispatchEx *dispex, const WCHAR *name)
 }
 
 static const builtin_prop_t Array_props[] = {
-    {concatW,                Array_concat,               PROPF_METHOD},
-    {joinW,                  Array_join,                 PROPF_METHOD},
+    {concatW,                Array_concat,               PROPF_METHOD|1},
+    {joinW,                  Array_join,                 PROPF_METHOD|1},
     {lengthW,                Array_length,               0},
     {popW,                   Array_pop,                  PROPF_METHOD},
-    {pushW,                  Array_push,                 PROPF_METHOD},
+    {pushW,                  Array_push,                 PROPF_METHOD|1},
     {reverseW,               Array_reverse,              PROPF_METHOD},
     {shiftW,                 Array_shift,                PROPF_METHOD},
-    {sliceW,                 Array_slice,                PROPF_METHOD},
-    {sortW,                  Array_sort,                 PROPF_METHOD},
-    {spliceW,                Array_splice,               PROPF_METHOD},
+    {sliceW,                 Array_slice,                PROPF_METHOD|2},
+    {sortW,                  Array_sort,                 PROPF_METHOD|1},
+    {spliceW,                Array_splice,               PROPF_METHOD|2},
     {toLocaleStringW,        Array_toLocaleString,       PROPF_METHOD},
     {toStringW,              Array_toString,             PROPF_METHOD},
-    {unshiftW,               Array_unshift,              PROPF_METHOD},
+    {unshiftW,               Array_unshift,              PROPF_METHOD|1},
 };
 
 static const builtin_info_t Array_info = {
