@@ -769,6 +769,15 @@ HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3
     return WINED3D_OK;
 }
 
+unsigned int shader_find_free_input_register(const struct shader_reg_maps *reg_maps, unsigned int max)
+{
+    DWORD map = 1 << max;
+    map |= map - 1;
+    map &= reg_maps->shader_version.major < 3 ? ~reg_maps->texcoord : ~reg_maps->input_registers;
+
+    return wined3d_log2i(map);
+}
+
 static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semantic,
         const struct wined3d_shader_version *shader_version)
 {

@@ -2644,6 +2644,7 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
         const struct wined3d_shader_version *shader_version);
 void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
         const struct wined3d_shader_version *shader_version);
+unsigned int shader_find_free_input_register(const struct shader_reg_maps *reg_maps, unsigned int max);
 void shader_generate_main(IWineD3DBaseShader *iface, struct wined3d_shader_buffer *buffer,
         const shader_reg_maps *reg_maps, const DWORD *pFunction, void *backend_ctx);
 HRESULT shader_get_registers_used(IWineD3DBaseShader *iface, const struct wined3d_shader_frontend *fe,
