@@ -1410,13 +1410,47 @@ testFunctions(Boolean.prototype, [
         ["toString", 0]
     ]);
 
-
 testFunctions(Number.prototype, [
         ["valueOf", 0],
         ["toString", 1],
         ["toExponential", 1],
         ["toLocaleString", 0],
         ["toPrecision", 1]
+    ]);
+
+testFunctions(String.prototype, [
+        ["valueOf", 0],
+        ["toString", 0],
+        ["anchor", 1],
+        ["big", 0],
+        ["blink", 0],
+        ["bold", 0],
+        ["charAt", 1],
+        ["charCodeAt", 1],
+        ["concat", 1],
+        ["fixed", 0],
+        ["fontcolor", 1],
+        ["fontsize", 1],
+        ["indexOf", 2],
+        ["italics", 0],
+        ["lastIndexOf", 2],
+        ["link", 1],
+        ["localeCompare", 1],
+        ["match", 1],
+        ["replace", 1],
+        ["search", 0],
+        ["slice", 0],
+        ["small", 0],
+        ["split", 2],
+        ["strike", 0],
+        ["sub", 0],
+        ["substr", 2],
+        ["substring", 2],
+        ["sup", 0],
+        ["toLocaleLowerCase", 0],
+        ["toLocaleUpperCase", 0],
+        ["toLowerCase", 0],
+        ["toUpperCase", 0]
     ]);
 
 reportSuccess();
