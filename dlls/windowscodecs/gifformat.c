@@ -369,8 +369,8 @@ static HRESULT WINAPI GifDecoder_Initialize(IWICBitmapDecoder *iface, IStream *p
 static HRESULT WINAPI GifDecoder_GetContainerFormat(IWICBitmapDecoder *iface,
     GUID *pguidContainerFormat)
 {
-    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pguidContainerFormat));
-    return E_NOTIMPL;
+    memcpy(pguidContainerFormat, &GUID_ContainerFormatGif, sizeof(GUID));
+    return S_OK;
 }
 
 static HRESULT WINAPI GifDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
