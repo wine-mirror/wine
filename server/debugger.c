@@ -514,7 +514,7 @@ void generate_startup_debug_events( struct process *process, client_ptr_t entry 
 
     /* generate dll events (in loading order, i.e. reverse list order) */
     ptr = list_tail( &process->dlls );
-    while (ptr)
+    while (ptr != list_head( &process->dlls ))
     {
         struct process_dll *dll = LIST_ENTRY( ptr, struct process_dll, entry );
         generate_debug_event( first_thread, LOAD_DLL_DEBUG_EVENT, dll );

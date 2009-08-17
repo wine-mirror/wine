@@ -1241,6 +1241,7 @@ static  void    test_SuspendFlag(void)
 static  void    test_DebuggingFlag(void)
 {
     char                buffer[MAX_PATH];
+    void               *processbase = NULL;
     PROCESS_INFORMATION	info;
     STARTUPINFOA       startup, us;
     DEBUG_EVENT         de;
@@ -1261,7 +1262,15 @@ static  void    test_DebuggingFlag(void)
     {
         ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
         ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+        if (!dbg)
+        {
+            ok(de.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT,
+               "first event: %d\n", de.dwDebugEventCode);
+            processbase = de.u.CreateProcessInfo.lpBaseOfImage;
+        }
         if (de.dwDebugEventCode != EXCEPTION_DEBUG_EVENT) dbg++;
+        ok(de.dwDebugEventCode != LOAD_DLL_DEBUG_EVENT ||
+           de.u.LoadDll.lpBaseOfDll != processbase, "got LOAD_DLL for main module\n");
     } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
 
     ok(dbg, "I have seen a debug event\n");
