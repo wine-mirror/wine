@@ -208,9 +208,13 @@ disassemble_command:
 set_command:
       tSET lvalue_addr '=' expr_rvalue { memory_write_value(&$2, sizeof(int), &$4); }
     | tSET '+' tIDENTIFIER      { info_wine_dbg_channel(TRUE, NULL, $3); }
+    | tSET '+' tALL             { info_wine_dbg_channel(TRUE, NULL, "all"); }
     | tSET '-' tIDENTIFIER      { info_wine_dbg_channel(FALSE, NULL, $3); }
+    | tSET '-' tALL             { info_wine_dbg_channel(FALSE, NULL, "all"); }
     | tSET tIDENTIFIER '+' tIDENTIFIER { info_wine_dbg_channel(TRUE, $2, $4); }
+    | tSET tIDENTIFIER '+' tALL        { info_wine_dbg_channel(TRUE, $2, "all"); }
     | tSET tIDENTIFIER '-' tIDENTIFIER { info_wine_dbg_channel(FALSE, $2, $4); }
+    | tSET tIDENTIFIER '-' tALL        { info_wine_dbg_channel(FALSE, $2, "all"); }
     | tSET '!' tIDENTIFIER tIDENTIFIER  { dbg_set_option($3, $4); }
     | tSET '!' tIDENTIFIER      { dbg_set_option($3, NULL); }
     ;
