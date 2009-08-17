@@ -33,11 +33,11 @@ winedbg \- Wine's debugger
 .B winedbg
 is a debugger for Wine. It allows:
 .RS 4
+.nf
 + debugging native Win32 applications
-.nf
 + debugging Winelib applications.
-.nf
 + being a drop-in replacement for Dr Watson
+.fi
 .RE
 .PP
 
@@ -243,12 +243,10 @@ Lists 10 source lines from address \fBN\fR
 .PP
 You can specify the end target (to change the 10 lines value) using
 the ',' separator. For example:
-.nf
 .IP \fBlist\ 123,\ 234\fR
 lists source lines from line 123 up to line 234 in current file
-.nf
 .IP \fBlist\ foo.c:1,56\fR
-lists source lines from line 1 up to 56 in file foo.c 
+lists source lines from line 1 up to 56 in file foo.c
 .PP
 \fIDisplaying\fR
 .PP
