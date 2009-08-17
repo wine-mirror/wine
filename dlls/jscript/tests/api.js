@@ -1518,4 +1518,29 @@ testFunctions(Array.prototype, [
         ["unshift", 1]
     ]);
 
+testFunctions(Error.prototype, [
+        ["toString", 0]
+    ]);
+
+testFunctions(Math, [
+        ["abs", 1],
+        ["acos", 1],
+        ["asin", 1],
+        ["atan", 1],
+        ["atan2", 2],
+        ["ceil", 1],
+        ["cos", 1],
+        ["exp", 1],
+        ["floor", 1],
+        ["log", 1],
+        ["max", 2],
+        ["min", 2],
+        ["pow", 2],
+        ["random", 0],
+        ["round", 1],
+        ["sin", 1],
+        ["sqrt", 1],
+        ["tan", 1]
+    ]);
+
 reportSuccess();
