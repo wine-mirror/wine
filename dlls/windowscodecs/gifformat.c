@@ -168,11 +168,62 @@ static HRESULT WINAPI GifFrameDecode_CopyPalette(IWICBitmapFrameDecode *iface,
     return S_OK;
 }
 
+static HRESULT copy_interlaced_pixels(const BYTE *srcbuffer,
+    UINT srcwidth, UINT srcheight, INT srcstride, const WICRect *rc,
+    UINT dststride, UINT dstbuffersize, BYTE *dstbuffer)
+{
+    UINT row_offset; /* number of bytes into the source rows where the data starts */
+    const BYTE *src;
+    BYTE *dst;
+    UINT y;
+
+    if (rc->X < 0 || rc->Y < 0 || rc->X+rc->Width > srcwidth || rc->Y+rc->Height > srcheight)
+        return E_INVALIDARG;
+
+    if (dststride < rc->Width)
+        return E_INVALIDARG;
+
+    if ((dststride * rc->Height) > dstbuffersize)
+        return E_INVALIDARG;
+
+    row_offset = rc->X;
+
+    dst = dstbuffer;
+    for (y=rc->Y; y-rc->Y < rc->Height; y++)
+    {
+        if (y%8 == 0)
+            src = srcbuffer + srcstride * (y/8);
+        else if (y%4 == 0)
+            src = srcbuffer + srcstride * ((srcheight+7)/8 + y/8);
+        else if (y%2 == 0)
+            src = srcbuffer + srcstride * ((srcheight+3)/4 + y/4);
+        else /* y%2 == 1 */
+            src = srcbuffer + srcstride * ((srcheight+1)/2 + y/2);
+        src += row_offset;
+        memcpy(dst, src, rc->Width);
+        dst += dststride;
+    }
+    return S_OK;
+}
+
 static HRESULT WINAPI GifFrameDecode_CopyPixels(IWICBitmapFrameDecode *iface,
     const WICRect *prc, UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer)
 {
-    FIXME("(%p,%p,%u,%u,%p): stub\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
-    return E_NOTIMPL;
+    GifFrameDecode *This = (GifFrameDecode*)iface;
+    TRACE("(%p,%p,%u,%u,%p)\n", iface, prc, cbStride, cbBufferSize, pbBuffer);
+
+    if (This->frame->ImageDesc.Interlace)
+    {
+        return copy_interlaced_pixels(This->frame->RasterBits, This->frame->ImageDesc.Width,
+            This->frame->ImageDesc.Height, This->frame->ImageDesc.Width,
+            prc, cbStride, cbBufferSize, pbBuffer);
+    }
+    else
+    {
+        return copy_pixels(8, This->frame->RasterBits, This->frame->ImageDesc.Width,
+            This->frame->ImageDesc.Height, This->frame->ImageDesc.Width,
+            prc, cbStride, cbBufferSize, pbBuffer);
+    }
 }
 
 static HRESULT WINAPI GifFrameDecode_GetMetadataQueryReader(IWICBitmapFrameDecode *iface,
