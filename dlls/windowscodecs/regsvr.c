@@ -759,8 +759,9 @@ static struct regsvr_coclass const coclass_list[] = {
 /***********************************************************************
  *		decoder list
  */
+static const BYTE mask_all[] = {0xff,0xff,0xff,0xff,0xff,0xff};
+
 static const BYTE bmp_magic[] = {0x42,0x4d};
-static const BYTE mask_all[] = {0xff,0xff};
 
 static GUID const * const bmp_formats[] = {
     &GUID_WICPixelFormat1bppIndexed,
@@ -780,6 +781,20 @@ static struct decoder_pattern const bmp_patterns[] = {
     {0}
 };
 
+static const BYTE gif87a_magic[6] = "GIF87a";
+static const BYTE gif89a_magic[6] = "GIF89a";
+
+static GUID const * const gif_formats[] = {
+    &GUID_WICPixelFormat8bppIndexed,
+    NULL
+};
+
+static struct decoder_pattern const gif_patterns[] = {
+    {6,0,gif87a_magic,mask_all,0},
+    {6,0,gif89a_magic,mask_all,0},
+    {0}
+};
+
 static struct regsvr_decoder const decoder_list[] = {
     {   &CLSID_WICBmpDecoder,
 	"The Wine Project",
@@ -790,6 +805,16 @@ static struct regsvr_decoder const decoder_list[] = {
 	".bmp,.dib,.rle",
 	bmp_formats,
 	bmp_patterns
+    },
+    {   &CLSID_WICGifDecoder,
+	"The Wine Project",
+	"GIF Decoder",
+	"1.0.0.0",
+	&GUID_VendorMicrosoft,
+	"image/gif",
+	".gif",
+	gif_formats,
+	gif_patterns
     },
     { NULL }			/* list terminator */
 };
