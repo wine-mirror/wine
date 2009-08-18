@@ -2446,6 +2446,12 @@ static void test_navigator(IHTMLDocument2 *doc)
     SysFreeString(bstr);
 
     bstr = NULL;
+    hres = IOmNavigator_get_appName(navigator, &bstr);
+    ok(hres == S_OK, "get_appName failed: %08x\n", hres);
+    ok(!strcmp_wa(bstr, "Microsoft Internet Explorer"), "Unexpected appCodeName %s\n", dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    bstr = NULL;
     hres = IOmNavigator_get_platform(navigator, &bstr);
     ok(hres == S_OK, "get_platform failed: %08x\n", hres);
 #ifdef _WIN64
