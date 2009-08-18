@@ -256,8 +256,8 @@ static HRESULT WINAPI ImagingFactory_CreateBitmapFlipRotator(IWICImagingFactory 
 static HRESULT WINAPI ImagingFactory_CreateStream(IWICImagingFactory *iface,
     IWICStream **ppIWICStream)
 {
-    FIXME("(%p,%p): stub\n", iface, ppIWICStream);
-    return E_NOTIMPL;
+    TRACE("(%p,%p)\n", iface, ppIWICStream);
+    return StreamImpl_Create(ppIWICStream);
 }
 
 static HRESULT WINAPI ImagingFactory_CreateColorContext(IWICImagingFactory *iface,

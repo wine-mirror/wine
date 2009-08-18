@@ -26,6 +26,7 @@ extern HRESULT BmpEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void**
 extern HRESULT GifDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID riid, void** ppv);
 
 extern HRESULT PaletteImpl_Create(IWICPalette **palette);
+extern HRESULT StreamImpl_Create(IWICStream **stream);
 
 extern HRESULT copy_pixels(UINT bpp, const BYTE *srcbuffer,
     UINT srcwidth, UINT srcheight, INT srcstride,

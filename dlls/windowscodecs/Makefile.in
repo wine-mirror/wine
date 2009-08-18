@@ -18,6 +18,7 @@ C_SRCS = \
 	palette.c \
 	propertybag.c \
 	regsvr.c \
+	stream.c \
 	ungif.c
 
 @MAKE_DLL_RULES@
