@@ -463,8 +463,12 @@ static HRESULT WINAPI PngDecoder_Frame_GetSize(IWICBitmapFrameDecode *iface,
 static HRESULT WINAPI PngDecoder_Frame_GetPixelFormat(IWICBitmapFrameDecode *iface,
     WICPixelFormatGUID *pPixelFormat)
 {
-    FIXME("(%p,%p): stub\n", iface, pPixelFormat);
-    return E_NOTIMPL;
+    PngDecoder *This = impl_from_frame(iface);
+    TRACE("(%p,%p)\n", iface, pPixelFormat);
+
+    memcpy(pPixelFormat, This->format, sizeof(GUID));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI PngDecoder_Frame_GetResolution(IWICBitmapFrameDecode *iface,
