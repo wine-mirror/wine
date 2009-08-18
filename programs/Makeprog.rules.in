@@ -17,9 +17,9 @@ INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(mandir)/man$(p
 
 @MAKE_RULES@
 
-all: $(MODULE)$(DLLEXT)
+all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT)
 
-$(MODULE) $(MODULE).so: $(OBJS) Makefile.in
+$(MODULE) $(MODULE).so $(MODULE).fake: $(OBJS) Makefile.in
 	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
 
 # Rules for testing

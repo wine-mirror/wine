@@ -52,6 +52,7 @@ LINTFLAGS = @LINTFLAGS@
 FONTFORGE = @FONTFORGE@
 RSVG      = @RSVG@
 ICOTOOL   = @ICOTOOL@
+FAKEEXT   = $(DLLEXT:.so=.fake)
 INCLUDES     = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include $(EXTRAINCL)
 EXTRACFLAGS  = @EXTRACFLAGS@
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
@@ -108,7 +109,7 @@ dlldir          = @libdir@/wine
 prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5
-CLEAN_FILES     = *.o *.a *.so *.ln *.res *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej *.flc core
+CLEAN_FILES     = *.o *.a *.so *.ln *.res *.fake *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej *.flc core
 
 IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)

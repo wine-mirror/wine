@@ -9,7 +9,6 @@
 #
 
 DLLFLAGS    = @DLLFLAGS@
-DLLEXT      = @DLLEXT@
 MINGWAR     = @MINGWAR@
 DEFS        = -D__WINESRC__ $(EXTRADEFS)
 BASEMODULE  = $(MODULE:%.dll=%)
@@ -24,11 +23,11 @@ STATICIMPLIB  = $(IMPORTLIBFILE:.def=.def.a)
 DLL_LDPATH  = -L$(DLLDIR) $(DELAYIMPORTS:%=-L$(DLLDIR)/%) $(IMPORTS:%=-L$(DLLDIR)/%)
 INSTALLDIRS = $(DESTDIR)$(dlldir) $(DESTDIR)$(datadir)/wine
 
-all: $(MODULE)$(DLLEXT) $(SUBDIRS)
-
 @MAKE_RULES@
 
-$(MODULE) $(MODULE).so: $(MAINSPEC) $(ALL_OBJS) Makefile.in
+all: $(MODULE)$(DLLEXT) $(MODULE)$(FAKEEXT) $(SUBDIRS)
+
+$(MODULE) $(MODULE).so $(MODULE).fake: $(MAINSPEC) $(ALL_OBJS) Makefile.in
 	$(WINEGCC) -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(EXTRADLLFLAGS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
 
 # Rules for import libraries

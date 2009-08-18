@@ -58,6 +58,7 @@ my %dont_install =
 # Default patterns for top-level .gitignore
 my @ignores = (
     "*.[oa]",
+    "*.fake",
     "*.ok",
     "*.res",
     "*.so",
