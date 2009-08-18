@@ -129,6 +129,11 @@ void ok_sequence_(struct msg_sequence **seq, int sequence_index,
 
             if (expected->flags & id)
             {
+                if (expected->id != actual->id && expected->flags & optional)
+                {
+                    expected++;
+                    continue;
+                }
                 if (expected->id != actual->id && todo)
                 {
                     todo_wine
