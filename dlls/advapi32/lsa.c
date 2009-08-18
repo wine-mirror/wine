@@ -350,7 +350,7 @@ NTSTATUS WINAPI LsaLookupNames2( LSA_HANDLE policy, ULONG flags, ULONG count,
     size = sizeof(LSA_TRANSLATED_SID2) * count + sid_size_total;
     if (!(*sids = HeapAlloc( GetProcessHeap(), 0, size) )) return STATUS_NO_MEMORY;
 
-    sid = (SID *)*sids + sizeof(LSA_TRANSLATED_SID2) * mapped;
+    sid = (SID *)(*sids + count);
 
     if (!(*domains = HeapAlloc( GetProcessHeap(), 0, sizeof(LSA_REFERENCED_DOMAIN_LIST) )))
     {
