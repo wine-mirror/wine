@@ -203,7 +203,7 @@ static void test_disableowner(void)
     DestroyWindow(parent);
 }
 
-static LRESULT CALLBACK nav_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+static INT_PTR CALLBACK nav_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch(msg){
     case WM_NOTIFY:
@@ -212,7 +212,7 @@ static LRESULT CALLBACK nav_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
             switch(hdr->code){
             case PSN_SETACTIVE:
                 active_page = PropSheet_HwndToIndex(hdr->hwndFrom, hwnd);
-                break;
+                return TRUE;
             case PSN_KILLACTIVE:
                 /* prevent navigation away from the fourth page */
                 if(active_page == 3){
@@ -223,7 +223,7 @@ static LRESULT CALLBACK nav_page_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
             break;
         }
     }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
+    return FALSE;
 }
 
 static void test_wiznavigation(void)
@@ -234,6 +234,7 @@ static void test_wiznavigation(void)
     HWND hdlg, control;
     LONG_PTR controlID;
     LRESULT defidres;
+    BOOL hwndtoindex_supported = TRUE;
     const INT nextID = 12324;
     const INT backID = 12323;
 
@@ -282,7 +283,9 @@ static void test_wiznavigation(void)
 
     /* simulate pressing the Next button */
     SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_NEXT, 0);
-    ok(active_page == 1, "Active page should be 1 after pressing Next. Is: %d\n", active_page);
+    if (!active_page) hwndtoindex_supported = FALSE;
+    if (hwndtoindex_supported)
+        ok(active_page == 1, "Active page should be 1 after pressing Next. Is: %d\n", active_page);
 
     control = GetFocus();
     controlID = GetWindowLongPtr(control, GWLP_ID);
@@ -296,7 +299,8 @@ static void test_wiznavigation(void)
 
     /* press next again */
     SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_NEXT, 0);
-    ok(active_page == 2, "Active page should be 2 after pressing Next. Is: %d\n", active_page);
+    if (hwndtoindex_supported)
+        ok(active_page == 2, "Active page should be 2 after pressing Next. Is: %d\n", active_page);
 
     control = GetFocus();
     controlID = GetWindowLongPtr(control, GWLP_ID);
@@ -304,7 +308,8 @@ static void test_wiznavigation(void)
 
     /* back button */
     SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_BACK, 0);
-    ok(active_page == 1, "Active page should be 1 after pressing Back. Is: %d\n", active_page);
+    if (hwndtoindex_supported)
+        ok(active_page == 1, "Active page should be 1 after pressing Back. Is: %d\n", active_page);
 
     control = GetFocus();
     controlID = GetWindowLongPtr(control, GWLP_ID);
@@ -315,9 +320,13 @@ static void test_wiznavigation(void)
 
     /* press next twice */
     SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_NEXT, 0);
-    ok(active_page == 2, "Active page should be 2 after pressing Next. Is: %d\n", active_page);
+    if (hwndtoindex_supported)
+        ok(active_page == 2, "Active page should be 2 after pressing Next. Is: %d\n", active_page);
     SendMessage(hdlg, PSM_PRESSBUTTON, PSBTN_NEXT, 0);
-    ok(active_page == 3, "Active page should be 3 after pressing Next. Is: %d\n", active_page);
+    if (hwndtoindex_supported)
+        ok(active_page == 3, "Active page should be 3 after pressing Next. Is: %d\n", active_page);
+    else
+        active_page = 3;
 
     control = GetFocus();
     controlID = GetWindowLongPtr(control, GWLP_ID);
