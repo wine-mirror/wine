@@ -3052,7 +3052,7 @@ static WORD SLTG_ReadString(const char *ptr, BSTR *pBstr)
     bytelen = *(const WORD*)ptr;
     if(bytelen == 0xffff) return 2;
     len = MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, NULL, 0);
-    *pBstr = SysAllocStringLen(NULL, len - 1);
+    *pBstr = SysAllocStringLen(NULL, len);
     if (*pBstr)
         len = MultiByteToWideChar(CP_ACP, 0, ptr + 2, bytelen, *pBstr, len);
     return bytelen + 2;
