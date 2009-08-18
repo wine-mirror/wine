@@ -881,17 +881,17 @@ static void init_windows_dirs(void)
 /***********************************************************************
  *           start_wineboot
  *
- * Start the wineboot process if necessary. Return the event to wait on.
+ * Start the wineboot process if necessary. Return the handles to wait on.
  */
-static HANDLE start_wineboot(void)
+static void start_wineboot( HANDLE handles[2] )
 {
     static const WCHAR wineboot_eventW[] = {'_','_','w','i','n','e','b','o','o','t','_','e','v','e','n','t',0};
-    HANDLE event;
 
-    if (!(event = CreateEventW( NULL, TRUE, FALSE, wineboot_eventW )))
+    handles[1] = 0;
+    if (!(handles[0] = CreateEventW( NULL, TRUE, FALSE, wineboot_eventW )))
     {
         ERR( "failed to create wineboot event, expect trouble\n" );
-        return 0;
+        return;
     }
     if (GetLastError() != ERROR_ALREADY_EXISTS)  /* we created it */
     {
@@ -913,12 +913,15 @@ static HANDLE start_wineboot(void)
         {
             TRACE( "started wineboot pid %04x tid %04x\n", pi.dwProcessId, pi.dwThreadId );
             CloseHandle( pi.hThread );
-            CloseHandle( pi.hProcess );
-
+            handles[1] = pi.hProcess;
         }
-        else ERR( "failed to start wineboot, err %u\n", GetLastError() );
+        else
+        {
+            ERR( "failed to start wineboot, err %u\n", GetLastError() );
+            CloseHandle( handles[0] );
+            handles[0] = 0;
+        }
     }
-    return event;
 }
 
 
@@ -1016,7 +1019,7 @@ void CDECL __wine_kernel_init(void)
     WCHAR *p, main_exe_name[MAX_PATH+1];
     PEB *peb = NtCurrentTeb()->Peb;
     RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
-    HANDLE boot_event = 0;
+    HANDLE boot_events[2];
     BOOL got_environment = TRUE;
 
     /* Initialize everything */
@@ -1045,6 +1048,7 @@ void CDECL __wine_kernel_init(void)
 
     set_process_name( __wine_main_argc, __wine_main_argv );
     set_library_wargv( __wine_main_argv );
+    boot_events[0] = boot_events[1] = 0;
 
     if (peb->ProcessParameters->ImagePathName.Buffer)
     {
@@ -1060,7 +1064,7 @@ void CDECL __wine_kernel_init(void)
         }
         update_library_argv0( main_exe_name );
         if (!build_command_line( __wine_main_wargv )) goto error;
-        boot_event = start_wineboot();
+        start_wineboot( boot_events );
     }
 
     /* if there's no extension, append a dot to prevent LoadLibrary from appending .dll */
@@ -1073,10 +1077,14 @@ void CDECL __wine_kernel_init(void)
     RtlInitUnicodeString( &NtCurrentTeb()->Peb->ProcessParameters->DllPath,
                           MODULE_get_dll_load_path(main_exe_name) );
 
-    if (boot_event)
+    if (boot_events[0])
     {
-        if (WaitForSingleObject( boot_event, 30000 )) ERR( "boot event wait timed out\n" );
-        CloseHandle( boot_event );
+        DWORD count = 1;
+        if (boot_events[1]) count++;
+        if (WaitForMultipleObjects( count, boot_events, FALSE, 30000 ) == WAIT_TIMEOUT)
+            ERR( "boot event wait timed out\n" );
+        CloseHandle( boot_events[0] );
+        if (boot_events[1]) CloseHandle( boot_events[1] );
         /* if we didn't find environment section, try again now that wineboot has run */
         if (!got_environment)
         {
