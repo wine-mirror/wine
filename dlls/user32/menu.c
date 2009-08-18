@@ -3472,6 +3472,14 @@ static LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 	    EndPaint( hwnd, &ps );
             return 0;
 	}
+
+    case WM_PRINTCLIENT:
+	{
+	    MENU_DrawPopupMenu( hwnd, (HDC)wParam,
+                                (HMENU)GetWindowLongPtrW( hwnd, 0 ) );
+            return 0;
+        }
+
     case WM_ERASEBKGND:
         return 1;
 
