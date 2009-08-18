@@ -13,7 +13,7 @@ DLLFLAGS    = @DLLFLAGS@
 DEFS        = $(EXTRADEFS)
 ALL_LIBS    = $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(EXTRALIBS) -lwine $(LIBPORT) $(LDFLAGS) $(LIBS)
 RUNTESTFLAGS= -q -P wine -T $(TOPOBJDIR)
-INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(mandir)/man$(prog_manext)
+INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(dlldir) $(DESTDIR)$(fakedlldir) $(DESTDIR)$(mandir)/man$(prog_manext)
 
 @MAKE_RULES@
 
@@ -30,23 +30,21 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT)
 
 # Rules for installation
 
-.PHONY: install_prog install_prog.so uninstall_prog uninstall_prog.so
+.PHONY: install_prog install_prog.so install_prog.fake
 
 install_prog.so: $(MODULE).so $(DESTDIR)$(dlldir) dummy
 	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(MODULE).so
 
+install_prog.fake: $(MODULE).fake $(DESTDIR)$(fakedlldir) dummy
+	$(INSTALL_DATA) $(MODULE).fake $(DESTDIR)$(fakedlldir)/$(MODULE)
+
 install_prog: $(MODULE) $(DESTDIR)$(bindir) dummy
 	$(INSTALL_PROGRAM) $(MODULE) $(DESTDIR)$(bindir)/$(MODULE)
 
-uninstall_prog.so: dummy
-	$(RM) $(DESTDIR)$(dlldir)/$(MODULE).so
+install install-lib:: install_prog$(DLLEXT) install_prog$(FAKEEXT)
 
-uninstall_prog: dummy
-	$(RM) $(DESTDIR)$(bindir)/$(MODULE)
-
-install install-lib:: install_prog$(DLLEXT)
-
-uninstall:: uninstall_prog$(DLLEXT)
+uninstall::
+	$(RM) $(DESTDIR)$(bindir)/$(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)$(DLLEXT) $(DESTDIR)$(fakedlldir)/$(MODULE)
 
 clean::
 	$(RM) $(MODULE)

@@ -21,7 +21,7 @@ IMPLIB_OBJS = $(IMPLIB_SRCS:.c=.o)
 IMPORTLIBFILE = $(IMPORTLIB:%=lib%.@IMPLIBEXT@)
 STATICIMPLIB  = $(IMPORTLIBFILE:.def=.def.a)
 DLL_LDPATH  = -L$(DLLDIR) $(DELAYIMPORTS:%=-L$(DLLDIR)/%) $(IMPORTS:%=-L$(DLLDIR)/%)
-INSTALLDIRS = $(DESTDIR)$(dlldir) $(DESTDIR)$(datadir)/wine
+INSTALLDIRS = $(DESTDIR)$(dlldir) $(DESTDIR)$(fakedlldir) $(DESTDIR)$(datadir)/wine
 
 @MAKE_RULES@
 
@@ -89,13 +89,24 @@ install_static_implib_a:
 
 $(IMPLIB_SRCS:%=_install_static_implib_/%): install_static_implib_$(IMPLIBEXT)
 
-install install-lib:: $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir) dummy
-	$(INSTALL_PROGRAM) $(MODULE)$(DLLEXT) $(DESTDIR)$(dlldir)/$(MODULE)$(DLLEXT)
+.PHONY: install_dll install_dll.so install_dll.fake
+
+install_dll: $(MODULE) $(DESTDIR)$(dlldir) dummy
+	$(INSTALL_PROGRAM) $(MODULE) $(DESTDIR)$(dlldir)/$(MODULE)
+
+install_dll.so: $(MODULE).so $(DESTDIR)$(dlldir) dummy
+	$(INSTALL_PROGRAM) $(MODULE).so $(DESTDIR)$(dlldir)/$(MODULE).so
+
+install_dll.fake: $(MODULE).fake $(DESTDIR)$(fakedlldir) dummy
+	$(INSTALL_DATA) $(MODULE).fake $(DESTDIR)$(fakedlldir)/$(MODULE)
+
+install install-lib:: install_dll$(DLLEXT) install_dll$(FAKEEXT)
 
 install install-dev:: $(IMPORTLIB:%=_install_/%) $(IMPLIB_SRCS:%=_install_static_implib_/%) dummy
 
 uninstall::
 	-cd $(DESTDIR)$(dlldir) && $(RM) $(MODULE)$(DLLEXT) $(IMPORTLIBFILE) $(STATICIMPLIB)
+	$(RM) $(DESTDIR)$(fakedlldir)/$(MODULE)
 
 # Misc. rules
 

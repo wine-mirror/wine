@@ -106,6 +106,7 @@ mandir          = @mandir@
 sysconfdir      = @sysconfdir@
 includedir      = @includedir@/wine
 dlldir          = @libdir@/wine
+fakedlldir      = $(dlldir)/fakedlls
 prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5

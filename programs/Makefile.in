@@ -37,7 +37,7 @@ install-progs: # nothing to do here
 
 uninstall::
 	-cd $(DESTDIR)$(bindir) && $(RM) wineapploader $(INSTALLPROGS)
-	-rmdir $(DESTDIR)$(dlldir)
+	-rmdir $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
 
 # Rules for testing
 

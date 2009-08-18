@@ -849,7 +849,7 @@ install install-lib:: @WIN16_INSTALL@
 
 uninstall::
 	-cd $(DESTDIR)$(dlldir) && $(RM) $(WIN16_FILES)
-	-rmdir $(DESTDIR)$(dlldir)
+	-rmdir $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
 
 clean::
 	$(RM) $(IMPORT_SYMLINKS) $(WIN16_FILES)
