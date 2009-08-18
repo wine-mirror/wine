@@ -1370,7 +1370,7 @@ static const char * const VK_KeyNames[SPY_MAX_VKKEYSNUM + 1] =
     "VK_ICO_00",        /* 0xE4 */
     "VK_PROCESSKEY",    /* 0xE5 */
     NULL,               /* 0xE6 */
-    NULL,               /* 0xE7 */
+    "VK_PACKET",        /* 0xE7 */
     NULL,               /* 0xE8 */
     NULL,               /* 0xE9 */
     NULL,               /* 0xEA */

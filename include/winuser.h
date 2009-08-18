@@ -2822,6 +2822,8 @@ typedef struct tagCBTACTIVATESTRUCT
   /* keybd_event flags */
 #define KEYEVENTF_EXTENDEDKEY        0x0001
 #define KEYEVENTF_KEYUP              0x0002
+#define KEYEVENTF_UNICODE            0x0004
+#define KEYEVENTF_SCANCODE           0x0008
 
   /* mouse_event flags */
 #define MOUSEEVENTF_MOVE        0x0001
@@ -3813,7 +3815,8 @@ typedef struct tagCOMPAREITEMSTRUCT
 #define VK_PROCESSKEY       0xE5
 
 /*                          0xE6       OEM specific */
-/*                          0xE7-0xE8  Unassigned */
+#define VK_PACKET           0xE7
+/*                          0xE8       Unassigned */
 /*                          0xE9-0xF5  OEM specific */
 
 #define VK_ATTN             0xF6
