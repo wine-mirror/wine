@@ -1325,7 +1325,6 @@ static void test_CoGetContextToken(void)
     token = 0;
     hr = pCoGetContextToken(&token);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
-    IUnknown_Release((IUnknown *)token);
 
     SetEvent(info.stop);
     ok( !WaitForSingleObject(thread, 10000), "wait timed out\n" );
@@ -1349,7 +1348,7 @@ static void test_CoGetContextToken(void)
     ok(token, "Expected token != 0\n");
 
     refs = IUnknown_AddRef((IUnknown *)token);
-    ok(refs == 1, "Expected 1, got %u\n", refs);
+    todo_wine ok(refs == 1, "Expected 1, got %u\n", refs);
 
     hr = pCoGetObjectContext(&IID_IObjContext, (void **)&ctx);
     ok(hr == S_OK, "Expected S_OK, got 0x%08x\n", hr);
@@ -1362,7 +1361,7 @@ static void test_CoGetContextToken(void)
     todo_wine ok(refs == 2, "Expected 2, got %u\n", refs);
 
     refs = IUnknown_Release((IUnknown *)token);
-    todo_wine ok(refs == 1, "Expected 1, got %u\n", refs);
+    ok(refs == 1, "Expected 1, got %u\n", refs);
 
     /* CoGetContextToken does not add a reference */
     token = 0;
