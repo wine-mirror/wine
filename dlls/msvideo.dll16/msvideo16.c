@@ -702,6 +702,7 @@ static  LRESULT CALLBACK  IC_Callback3216(DWORD pfn16, HIC hic, HDRVR hdrv, UINT
 
 #define MAX_THUNKS      32
 
+#include "pshpack1.h"
 static struct msvideo_thunk
 {
     BYTE        popl_eax;        /* popl  %eax (return address) */
@@ -712,6 +713,7 @@ static struct msvideo_thunk
     DWORD       callback;
     HIC16       hIC16;           /* driver's handle */
 } *MSVIDEO_Thunks;
+#include "poppack.h"
 
 static CRITICAL_SECTION msvideo_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
