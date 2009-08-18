@@ -1904,6 +1904,30 @@ static void test_GdipGetVisibleClipBounds(void)
     test_GdipGetVisibleClipBounds_window();
 }
 
+static void test_fromMemoryBitmap(void)
+{
+    GpStatus status;
+    GpGraphics *graphics = NULL;
+    GpBitmap *bitmap = NULL;
+    BYTE bits[48] = {0};
+
+    status = GdipCreateBitmapFromScan0(4, 4, 12, PixelFormat24bppRGB, bits, &bitmap);
+    expect(Ok, status);
+
+    status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, status);
+
+    status = GdipGraphicsClear(graphics, 0xff686868);
+    expect(Ok, status);
+
+    GdipDeleteGraphics(graphics);
+
+    /* drawing writes to the memory provided */
+    todo_wine expect(0x68, bits[10]);
+
+    GdipDisposeImage((GpImage*)bitmap);
+}
+
 START_TEST(graphics)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -1938,6 +1962,7 @@ START_TEST(graphics)
     test_isempty();
     test_clear();
     test_textcontrast();
+    test_fromMemoryBitmap();
 
     GdiplusShutdown(gdiplusToken);
 }
