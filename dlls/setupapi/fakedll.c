@@ -18,7 +18,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
+#include <fcntl.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
@@ -30,6 +40,7 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "wine/unicode.h"
+#include "wine/library.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
@@ -297,14 +308,107 @@ static void create_directories( const WCHAR *name )
     HeapFree(GetProcessHeap(), 0, path);
 }
 
+static inline char *prepend( char *buffer, const char *str, size_t len )
+{
+    return memcpy( buffer - len, str, len );
+}
+
+/* try to load a pre-compiled fake dll */
+static void *load_fake_dll( const WCHAR *name, unsigned int *size, void *buf, unsigned int buf_size )
+{
+    const char *build_dir = wine_get_build_dir();
+    const char *path;
+    struct stat st;
+    char *file, *ptr, *buffer = NULL;
+    unsigned int i, pos, len, namelen, maxlen = 0;
+    WCHAR *p;
+    int fd;
+
+    if ((p = strrchrW( name, '\\' ))) name = p + 1;
+
+    i = 0;
+    if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + strlenW(name);
+    while ((path = wine_dll_enum_load_path( i++ ))) maxlen = max( maxlen, strlen(path) );
+    maxlen += sizeof("/fakedlls") + strlenW(name) + 2;
+
+    if (!(file = HeapAlloc( GetProcessHeap(), 0, maxlen ))) return NULL;
+
+    len = strlenW( name );
+    pos = maxlen - len - sizeof(".fake");
+    for (i = 0; i < len; i++)
+    {
+        /* we don't want to depend on the current codepage here */
+        char c = name[i];
+        if (name[i] > 127) goto done;
+        if (c >= 'A' && c <= 'Z') c += 'a' - 'A';
+        file[pos + i] = c;
+    }
+    file[--pos] = '/';
+
+    if (build_dir)
+    {
+        strcpy( file + pos + len + 1, ".fake" );
+
+        /* try as a dll */
+        ptr = file + pos;
+        namelen = len + 1;
+        if (namelen > 4 && !memcmp( ptr + namelen - 4, ".dll", 4 )) namelen -= 4;
+        ptr = prepend( ptr, ptr, namelen );
+        ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
+        ptr = prepend( ptr, build_dir, strlen(build_dir) );
+        if ((fd = open( ptr, O_RDONLY | O_BINARY )) != -1) goto found;
+
+        /* now as a program */
+        ptr = file + pos;
+        namelen = len + 1;
+        if (namelen > 4 && !memcmp( ptr + namelen - 4, ".exe", 4 )) namelen -= 4;
+        ptr = prepend( ptr, ptr, namelen );
+        ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
+        ptr = prepend( ptr, build_dir, strlen(build_dir) );
+        if ((fd = open( ptr, O_RDONLY | O_BINARY )) != -1) goto found;
+    }
+
+    file[pos + len + 1] = 0;
+    for (i = 0; (path = wine_dll_enum_load_path( i )); i++)
+    {
+        ptr = prepend( file + pos, "/fakedlls", sizeof("/fakedlls") - 1 );
+        ptr = prepend( ptr, path, strlen(path) );
+        if ((fd = open( ptr, O_RDONLY | O_BINARY )) != -1) goto found;
+    }
+
+found:
+    if (!fstat( fd, &st ))
+    {
+        *size = st.st_size;
+        if (st.st_size <= buf_size) buffer = buf;
+        else buffer = HeapAlloc( GetProcessHeap(), 0, st.st_size );
+        if (buffer)
+        {
+            if (read( fd, buffer, st.st_size ) != st.st_size)
+            {
+                if (buffer != buf) HeapFree( GetProcessHeap(), 0, buffer );
+                buffer = NULL;
+            }
+            else TRACE( "found %s %u bytes\n", ptr, *size);
+        }
+    }
+    close( fd );
+
+done:
+    HeapFree( GetProcessHeap(), 0, file );
+    return buffer;
+}
+
 /***********************************************************************
  *            create_fake_dll
  */
 BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
 {
     HANDLE h;
-    HMODULE module;
     BOOL ret;
+    unsigned int size = 0;
+    char *temp_buffer[4096];
+    void *buffer;
 
     /* check for empty name which means to only create the directory */
     if (name[strlenW(name) - 1] == '\\')
@@ -339,12 +443,23 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
         }
     }
 
-    module = LoadLibraryW( source );
+    if ((buffer = load_fake_dll( source, &size, temp_buffer, sizeof(temp_buffer) )))
+    {
+        DWORD written;
 
-    ret = build_fake_dll( h, module );
+        ret = (WriteFile( h, buffer, size, &written, NULL ) && written == size);
+        if (!ret) ERR( "failed to write to %s (error=%u)\n", debugstr_w(name), GetLastError() );
+        if (buffer != temp_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+    }
+    else
+    {
+        HMODULE module = LoadLibraryW( source );
+        WARN( "fake dll %s not found for %s\n", debugstr_w(source), debugstr_w(name) );
+        ret = build_fake_dll( h, module );
+        if (module) FreeLibrary( module );
+    }
 
     CloseHandle( h );
-    if (module) FreeLibrary( module );
     if (!ret) DeleteFileW( name );
     return ret;
 }
