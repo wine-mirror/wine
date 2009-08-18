@@ -813,14 +813,13 @@ static RPC_STATUS RPCRT4_SendWithAuth(RpcConnection *Connection, RpcPktHdr *Head
     if (Connection->AuthInfo && packet_has_auth_verifier(Header))
     {
       RpcAuthVerifier *auth_hdr = (RpcAuthVerifier *)&pkt[Header->common.frag_len - alen];
-      static LONG next_id;
 
       auth_hdr->auth_type = Connection->AuthInfo->AuthnSvc;
       auth_hdr->auth_level = Connection->AuthInfo->AuthnLevel;
       auth_hdr->auth_pad_length = auth_pad_len;
       auth_hdr->auth_reserved = 0;
       /* a unique number... */
-      auth_hdr->auth_context_id = InterlockedIncrement(&next_id);
+      auth_hdr->auth_context_id = Connection->auth_context_id;
 
       if (AuthLength)
         memcpy(auth_hdr + 1, Auth, AuthLength);

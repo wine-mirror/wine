@@ -2800,6 +2800,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
     LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint,
     LPCWSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcQualityOfService *QOS)
 {
+  static LONG next_id;
   const struct connection_ops *ops;
   RpcConnection* NewConnection;
 
@@ -2827,6 +2828,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   NewConnection->attr = 0;
   if (AuthInfo) RpcAuthInfo_AddRef(AuthInfo);
   NewConnection->AuthInfo = AuthInfo;
+  NewConnection->auth_context_id = InterlockedIncrement( &next_id );
   NewConnection->encryption_auth_len = 0;
   NewConnection->signature_auth_len = 0;
   if (QOS) RpcQualityOfService_AddRef(QOS);

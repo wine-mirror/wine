@@ -67,6 +67,7 @@ typedef struct _RpcConnection
   TimeStamp exp;
   ULONG attr;
   RpcAuthInfo *AuthInfo;
+  ULONG auth_context_id;
   ULONG encryption_auth_len;
   ULONG signature_auth_len;
   RpcQualityOfService *QOS;
