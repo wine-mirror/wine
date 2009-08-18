@@ -556,6 +556,7 @@ static void build(struct options* opts)
     const char *spec_o_name;
     const char *output_name, *spec_file, *lang;
     int generate_app_loader = 1;
+    int fake_module = 0;
     unsigned int j;
 
     /* NOTE: for the files array we'll use the following convention:
@@ -580,6 +581,8 @@ static void build(struct options* opts)
     /* generate app loader only for .exe */
     if (opts->shared || strendswith(output_file, ".so"))
 	generate_app_loader = 0;
+
+    if (strendswith(output_file, ".fake")) fake_module = 1;
 
     /* normalize the filename a bit: strip .so, ensure it has proper ext */
     if (strendswith(output_file, ".so")) 
@@ -802,8 +805,17 @@ static void build(struct options* opts)
         strarray_add(spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
     strarray_addall(spec_args, strarray_fromstring(DLLFLAGS, " "));
     strarray_add(spec_args, opts->shared ? "--dll" : "--exe");
-    strarray_add(spec_args, "-o");
-    strarray_add(spec_args, spec_o_name);
+    if (fake_module)
+    {
+        strarray_add(spec_args, "--fake-module");
+        strarray_add(spec_args, "-o");
+        strarray_add(spec_args, output_file);
+    }
+    else
+    {
+        strarray_add(spec_args, "-o");
+        strarray_add(spec_args, spec_o_name);
+    }
     if (spec_file)
     {
         strarray_add(spec_args, "-E");
@@ -850,6 +862,7 @@ static void build(struct options* opts)
 
     spawn(opts->prefix, spec_args, 0);
     strarray_free (spec_args);
+    if (fake_module) return;  /* nothing else to do */
 
     /* link everything together now */
     strarray_addall(link_args, get_translator(opts));
