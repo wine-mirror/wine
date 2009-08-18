@@ -27,13 +27,13 @@ interface ISessionProperties : IUnknown
     HRESULT GetProperties([in] ULONG cPropertyIDSets,
                           [in, size_is(cPropertyIDSets)] const DBPROPIDSET rgPropertyIDSets[],
                           [in, out] ULONG *pcPropertySets,
-                          [out, size_is(,*pcPropertySets)] const DBPROPSET **prgPropertySets);
+                          [out, size_is(,*pcPropertySets)] DBPROPSET **prgPropertySets);
 
     [call_as(GetProperties)]
     HRESULT RemoteGetProperties([in] ULONG cPropertyIDSets,
                                 [in, unique, size_is(cPropertyIDSets)] const DBPROPIDSET *rgPropertyIDSets,
                                 [in, out] ULONG *pcPropertySets,
-                                [out, size_is(,*pcPropertySets)] const DBPROPSET **prgPropertySets,
+                                [out, size_is(,*pcPropertySets)] DBPROPSET **prgPropertySets,
                                 [out] IErrorInfo **ppErrorInfoRem);
 
 

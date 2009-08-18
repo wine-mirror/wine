@@ -209,7 +209,7 @@ HRESULT __RPC_STUB IDBDataSourceAdmin_ModifyDataSource_Stub(IDBDataSourceAdmin* 
 
 HRESULT CALLBACK ISessionProperties_GetProperties_Proxy(ISessionProperties* This, ULONG cPropertyIDSets,
                                                         const DBPROPIDSET rgPropertyIDSets[], ULONG *pcPropertySets,
-                                                        const DBPROPSET **prgPropertySets)
+                                                        DBPROPSET **prgPropertySets)
 {
     FIXME("(%p, %d, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets,
           pcPropertySets, prgPropertySets);
@@ -218,7 +218,7 @@ HRESULT CALLBACK ISessionProperties_GetProperties_Proxy(ISessionProperties* This
 
 HRESULT __RPC_STUB ISessionProperties_GetProperties_Stub(ISessionProperties* This, ULONG cPropertyIDSets,
                                                          const DBPROPIDSET *rgPropertyIDSets, ULONG *pcPropertySets,
-                                                         const DBPROPSET **prgPropertySets, IErrorInfo **ppErrorInfoRem)
+                                                         DBPROPSET **prgPropertySets, IErrorInfo **ppErrorInfoRem)
 {
     FIXME("(%p, %d, %p, %p, %p, %p): stub\n", This, cPropertyIDSets, rgPropertyIDSets,
           pcPropertySets, prgPropertySets, ppErrorInfoRem);
