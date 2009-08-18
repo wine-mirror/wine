@@ -139,8 +139,19 @@ static HRESULT WINAPI OmNavigator_get_appCodeName(IOmNavigator *iface, BSTR *p)
 static HRESULT WINAPI OmNavigator_get_appName(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = OMNAVIGATOR_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    static const WCHAR app_nameW[] =
+        {'M','i','c','r','o','s','o','f','t',' ',
+         'I','n','t','e','r','n','e','t',' ',
+         'E','x','p','l','o','r','e','r',0};
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = SysAllocString(app_nameW);
+    if(!*p)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
