@@ -40,7 +40,7 @@ AC_ARG_WITH(gphoto,    AS_HELP_STRING([--without-gphoto],[do not use gphoto (Dig
 AC_ARG_WITH(glu,       AS_HELP_STRING([--without-glu],[do not use the GLU library]),
             [if test "x$withval" = "xno"; then ac_cv_header_GL_glu_h=no; fi])
 AC_ARG_WITH(gnutls,    AS_HELP_STRING([--without-gnutls],[do not use GnuTLS (schannel support)]))
-AC_ARG_WITH(libgsm,    AS_HELP_STRING([--without-libgsm],[do not use libgsm (GSM 06.10 codec support)]),
+AC_ARG_WITH(gsm,       AS_HELP_STRING([--without-gsm],[do not use libgsm (GSM 06.10 codec support)]),
             [if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi])
 AC_ARG_WITH(hal,       AS_HELP_STRING([--without-hal],[do not use HAL (dynamic device support)]))
 AC_ARG_WITH(jack,      AS_HELP_STRING([--without-jack],[do not use the Jack sound support]),
@@ -1370,7 +1370,7 @@ if test "$ac_cv_header_gsm_h" = "yes" -o "$ac_cv_header_gsm_gsm_h" = "yes"
 then
     WINE_CHECK_SONAME(gsm,gsm_create)
 fi
-WINE_NOTICE_WITH(libgsm,[test "x$ac_cv_lib_soname_gsm" = "x"],
+WINE_NOTICE_WITH(gsm,[test "x$ac_cv_lib_soname_gsm" = "x"],
                  [libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.])
 
 dnl **** Check for libjpeg ****

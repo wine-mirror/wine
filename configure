@@ -783,7 +783,7 @@ with_freetype
 with_gphoto
 with_glu
 with_gnutls
-with_libgsm
+with_gsm
 with_hal
 with_jack
 with_jpeg
@@ -1464,7 +1464,7 @@ Optional Packages:
   --without-gphoto        do not use gphoto (Digital Camera support)
   --without-glu           do not use the GLU library
   --without-gnutls        do not use GnuTLS (schannel support)
-  --without-libgsm        do not use libgsm (GSM 06.10 codec support)
+  --without-gsm           do not use libgsm (GSM 06.10 codec support)
   --without-hal           do not use HAL (dynamic device support)
   --without-jack          do not use the Jack sound support
   --without-jpeg          do not use JPEG
@@ -2569,9 +2569,9 @@ if test "${with_gnutls+set}" = set; then :
 fi
 
 
-# Check whether --with-libgsm was given.
-if test "${with_libgsm+set}" = set; then :
-  withval=$with_libgsm; if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi
+# Check whether --with-gsm was given.
+if test "${with_gsm+set}" = set; then :
+  withval=$with_gsm; if test "x$withval" = "xno"; then ac_cv_header_gsm_h=no; ac_cv_header_gsm_gsm_h=no; fi
 fi
 
 
@@ -10850,11 +10850,11 @@ _ACEOF
 fi
 fi
 if test "x$ac_cv_lib_soname_gsm" = "x"; then :
-  case "x$with_libgsm" in
+  case "x$with_gsm" in
   x)   wine_notices="$wine_notices|libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported." ;;
   xno) ;;
   *)   as_fn_error "libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.
-This is an error since --with-libgsm was requested." "$LINENO" 5 ;;
+This is an error since --with-gsm was requested." "$LINENO" 5 ;;
 esac
 fi
 
