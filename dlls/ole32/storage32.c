@@ -3586,9 +3586,13 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   } while (cbTotalRead.QuadPart < size.QuadPart);
   HeapFree(GetProcessHeap(),0,buffer);
 
+  size.u.HighPart = 0;
+  size.u.LowPart  = 0;
+
   if (FAILED(resRead) || FAILED(resWrite))
   {
     ERR("conversion failed: resRead = 0x%08x, resWrite = 0x%08x\n", resRead, resWrite);
+    BlockChainStream_SetSize(bbTempChain, size);
     BlockChainStream_Destroy(bbTempChain);
     return NULL;
   }
@@ -3597,8 +3601,6 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
    * Destroy the small block chain.
    */
   propertyIndex = (*ppsbChain)->ownerPropertyIndex;
-  size.u.HighPart = 0;
-  size.u.LowPart  = 0;
   SmallBlockChainStream_SetSize(*ppsbChain, size);
   SmallBlockChainStream_Destroy(*ppsbChain);
   *ppsbChain = 0;
