@@ -57,15 +57,6 @@ DEFINE_EXPECT(IsSystemMoniker);
 DEFINE_EXPECT(BindToStorage);
 DEFINE_EXPECT(GetDisplayName);
 
-static const char *debugstr_w(LPCWSTR str)
-{
-    static char buf[1024];
-    if(!str)
-        return "(null)";
-    WideCharToMultiByte(CP_ACP, 0, str, -1, buf, sizeof(buf), NULL, NULL);
-    return buf;
-}
-
 static const char *debugstr_guid(REFIID riid)
 {
     static char buf[50];
@@ -597,13 +588,13 @@ static void test_HlinkCreateExtensionServices(void)
     hres = IHttpNegotiate_BeginningTransaction(http_negotiate, (void*)0xdeadbeef, (void*)0xdeadbeef,
                                                0, &headers);
     ok(hres == S_OK, "BeginningTransaction failed: %08x\n", hres);
-    ok(!lstrcmpW(headers, headersexW), "unexpected headers \"%s\"\n", debugstr_w(headers));
+    ok(!lstrcmpW(headers, headersexW), "unexpected headers %s\n", wine_dbgstr_w(headers));
     CoTaskMemFree(headers);
 
     headers = (void*)0xdeadbeef;
     hres = IHttpNegotiate_OnResponse(http_negotiate, 200, (void*)0xdeadbeef, (void*)0xdeadbeef, &headers);
     ok(hres == S_OK, "OnResponse failed: %08x\n", hres);
-    ok(headers == NULL, "unexpected headers \"%s\"\n", debugstr_w(headers));
+    ok(headers == NULL, "unexpected headers %s\n", wine_dbgstr_w(headers));
 
     IHttpNegotiate_Release(http_negotiate);
     IAuthenticate_Release(authenticate);
@@ -635,7 +626,7 @@ static void test_HlinkParseDisplayName(void)
 
     hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
     ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
-    ok(!lstrcmpW(name, winehq_urlW), "wrong display name %s\n", debugstr_w(name));
+    ok(!lstrcmpW(name, winehq_urlW), "wrong display name %s\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
     hres = IMoniker_IsSystemMoniker(mon, &issys);
@@ -662,7 +653,7 @@ static void test_HlinkParseDisplayName(void)
 
     hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
     ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
-    ok(!lstrcmpW(name, invalid_urlW), "wrong display name %s\n", debugstr_w(name));
+    ok(!lstrcmpW(name, invalid_urlW), "wrong display name %s\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
     hres = IMoniker_IsSystemMoniker(mon, &issys);
