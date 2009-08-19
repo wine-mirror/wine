@@ -1788,7 +1788,7 @@ static void test_GdipGetVisibleClipBounds_window(void)
     ok(hwnd != NULL, "Expected window to be created\n");
 
     /* get client area size */
-    ok(GetClientRect(hwnd, &wnd_rect), "GetClientRect should have succeeded");
+    ok(GetClientRect(hwnd, &wnd_rect), "GetClientRect should have succeeded\n");
     window.X = wnd_rect.left;
     window.Y = wnd_rect.top;
     window.Width = wnd_rect.right - wnd_rect.left;
