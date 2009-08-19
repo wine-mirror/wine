@@ -2885,8 +2885,12 @@ const struct GlPixelFormatDesc *getFormatDescEntry(WINED3DFORMAT fmt, const stru
 
 static inline BOOL use_vs(IWineD3DStateBlockImpl *stateblock)
 {
+    /* Check stateblock->vertexDecl to allow this to be used from
+     * IWineD3DDeviceImpl_FindTexUnitMap(). This is safe because
+     * stateblock->vertexShader implies a vertex declaration instead of ddraw
+     * style strided data. */
     return (stateblock->vertexShader
-            && !stateblock->wineD3DDevice->strided_streams.position_transformed
+            && !((IWineD3DVertexDeclarationImpl *)stateblock->vertexDecl)->position_transformed
             && stateblock->wineD3DDevice->vs_selected_mode != SHADER_NONE);
 }
 
