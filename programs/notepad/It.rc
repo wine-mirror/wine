@@ -7,6 +7,7 @@
  *  Copyright 2003 Marcelo Duarte
  *  Copyright 2003-2004 Ivan Leo Puoti
  *  Copyright 2006 Antonio Codazzi
+ *  Copyright 2009 Luca Bennati
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +25,8 @@
  */
 
 #include "notepad_res.h"
+
+#pragma code_page(65001)
 
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
@@ -58,6 +61,7 @@ POPUP "&Modifica" {
 POPUP "&Trova" {
   MENUITEM "&Trova...\tCtrl+F",   CMD_SEARCH
   MENUITEM "&Trova successivo\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "&Sostituisci...\tCtrl+H", CMD_REPLACE
  }
 POPUP "&Aiuto" {
   MENUITEM "&Contenuti",         CMD_HELP_CONTENTS
@@ -77,7 +81,7 @@ CAPTION "Imposta pagina"
 {
 LTEXT    "&Note a inizio pagina:",  0x140,   10, 04, 40, 18
 EDITTEXT IDC_PAGESETUP_HEADERVALUE,   60, 05,110, 12, WS_BORDER | WS_TABSTOP
-LTEXT    "&Note a piË di pagina:",  0x142,   10, 23, 40, 18
+LTEXT    "&Note a pi√® di pagina:",  0x142,   10, 23, 40, 18
 EDITTEXT IDC_PAGESETUP_FOOTERVALUE,   60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
 GROUPBOX "&Margini:",      0x144,     10, 43,160, 45
@@ -95,6 +99,14 @@ PUSHBUTTON    "Cancella",     IDCANCEL,               180, 21, 40, 15, WS_TABSTO
 PUSHBUTTON    "&Aiuto",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
 }
 
+IDD_OFN_TEMPLATE  DIALOG  DISCARDABLE 50,50,300,15
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT "Codifica:", -1, 5,0, 50,12
+  COMBOBOX IDC_OFN_ENCCOMBO, 53,0, 156,48, WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST
+END
+
 STRINGTABLE DISCARDABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&f"
@@ -110,16 +122,26 @@ STRING_UNTITLED,                                "(senza nome)"
 STRING_ALL_FILES,                               "Tutti i file (*.*)"
 STRING_TEXT_FILES_TXT,                  "File di testo (*.txt)"
 
-STRING_TOOLARGE,                                "Il file '%s' Ë troppo grande per il blocco note.\n \
+STRING_TOOLARGE,                                "Il file '%s' √® troppo grande per il blocco note.\n \
 Per favore usare un altro editor."
-STRING_NOTEXT,                                  "Non Ë stato inserito alcun testo. \
+STRING_NOTEXT,                                  "Non √® stato inserito alcun testo. \
 \nPer favore digitare qualcosa e riprovare"
 STRING_DOESNOTEXIST,                            "Il file '%s'\nnon esiste\n\n \
 Creare un nuovo file ?"
-STRING_NOTSAVED,                                "Il file '%s'\ne' stato modificato\n\n \
+STRING_NOTSAVED,                                "Il file '%s'\n√® stato modificato\n\n \
 Salvare le modifiche ?"
-STRING_NOTFOUND,                                        "'%s' non Ë stato trovato."
+STRING_NOTFOUND,                                        "'%s' non √® stato trovato."
 STRING_OUT_OF_MEMORY,                   "Memoria insufficiente per completare questa operazione \
-\nChiudere una o pi˘ applicazioni per aumentare la quantita'\n di memoria libera."
+\nChiudere una o pi√π applicazioni per aumentare la quantit√†\n di memoria libera."
 
+
+STRING_UNICODE_LE,     "Unicode (UTF-16)"
+STRING_UNICODE_BE,     "Unicode (UTF-16 big-endian)"
+
+STRING_LOSS_OF_UNICODE_CHARACTERS,         "%s\n\
+Questo file contiene caratteri Unicode che verranno persi se\n\
+salvi questo file nella codifica %s.\n\
+Per mantenere questi caratteri, clicca Annulla e scegli\n\
+una delle opzioni Unicode nel menu a tendina Codifica.\n\
+Continuare?"
 }
