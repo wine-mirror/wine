@@ -54,6 +54,7 @@ typedef struct {
 
 typedef struct {
     void (*destroy)(BSCallback*);
+    HRESULT (*init_bindinfo)(BSCallback*);
     HRESULT (*start_binding)(BSCallback*);
     HRESULT (*stop_binding)(BSCallback*,HRESULT);
     HRESULT (*read_data)(BSCallback*,IStream*);
@@ -76,6 +77,7 @@ struct BSCallback {
     ULONG post_data_len;
     ULONG readed;
     DWORD bindf;
+    BOOL bindinfo_ready;
 
     IMoniker *mon;
     IBinding *binding;
@@ -371,6 +373,16 @@ static HRESULT WINAPI BindStatusCallback_GetBindInfo(IBindStatusCallback *iface,
     DWORD size;
 
     TRACE("(%p)->(%p %p)\n", This, grfBINDF, pbindinfo);
+
+    if(!This->bindinfo_ready) {
+        HRESULT hres;
+
+        hres = This->vtbl->init_bindinfo(This);
+        if(FAILED(hres))
+            return hres;
+
+        This->bindinfo_ready = TRUE;
+    }
 
     *grfBINDF = This->bindf;
 
@@ -751,6 +763,11 @@ static void BufferBSC_destroy(BSCallback *bsc)
     heap_free(This);
 }
 
+static HRESULT BufferBSC_init_bindinfo(BSCallback *bsc)
+{
+    return S_OK;
+}
+
 static HRESULT BufferBSC_start_binding(BSCallback *bsc)
 {
     return S_OK;
@@ -810,6 +827,7 @@ static HRESULT BufferBSC_on_response(BSCallback *bsc, DWORD response_code)
 
 static const BSCallbackVtbl BufferBSCVtbl = {
     BufferBSC_destroy,
+    BufferBSC_init_bindinfo,
     BufferBSC_start_binding,
     BufferBSC_stop_binding,
     BufferBSC_read_data,
@@ -979,6 +997,19 @@ static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
     return S_OK;
 }
 
+static HRESULT nsChannelBSC_init_bindinfo(BSCallback *bsc)
+{
+    nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
+
+    if(This->nschannel && This->nschannel->post_data_stream) {
+        parse_post_data(This->nschannel->post_data_stream, &This->bsc.headers, &This->bsc.post_data, &This->bsc.post_data_len);
+        TRACE("headers = %s post_data = %s\n", debugstr_w(This->bsc.headers),
+              debugstr_an(This->bsc.post_data, This->bsc.post_data_len));
+    }
+
+    return S_OK;
+}
+
 static HRESULT nsChannelBSC_stop_binding(BSCallback *bsc, HRESULT result)
 {
     nsChannelBSC *This = NSCHANNELBSC_THIS(bsc);
@@ -1034,6 +1065,7 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code)
 
 static const BSCallbackVtbl nsChannelBSCVtbl = {
     nsChannelBSC_destroy,
+    nsChannelBSC_init_bindinfo,
     nsChannelBSC_start_binding,
     nsChannelBSC_stop_binding,
     nsChannelBSC_read_data,
@@ -1109,12 +1141,6 @@ void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamLis
     if(context) {
         nsISupports_AddRef(context);
         This->nscontext = context;
-    }
-
-    if(channel->post_data_stream) {
-        parse_post_data(channel->post_data_stream, &This->bsc.headers, &This->bsc.post_data, &This->bsc.post_data_len);
-        TRACE("headers = %s post_data = %s\n", debugstr_w(This->bsc.headers),
-              debugstr_an(This->bsc.post_data, This->bsc.post_data_len));
     }
 }
 
