@@ -2849,6 +2849,28 @@ static void test_AcceptEx(void)
         ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
     }
 
+    iret = connect(acceptor,  (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    ok(iret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL,
+       "connecting to acceptex acceptor succeeded? return %d + errno %d\n", iret, WSAGetLastError());
+    if (!iret || (iret == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK)) {
+        /* We need to cancel this call, otherwise things fail */
+        closesocket(acceptor);
+        acceptor = socket(AF_INET, SOCK_STREAM, 0);
+        if (acceptor == INVALID_SOCKET) {
+            skip("could not create acceptor socket, error %d\n", WSAGetLastError());
+            goto end;
+        }
+
+        bret = CancelIo((HANDLE) listener);
+        ok(bret, "Failed to cancel failed test. Bailing...\n");
+        if (!bret) return;
+
+        bret = pAcceptEx(listener, acceptor, buffer, 0,
+            sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+            &bytesReturned, &overlapped);
+        ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
+    }
+
     iret = connect(connector, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
     ok(iret == 0, "connecting to accepting socket failed, error %d\n", WSAGetLastError());
 
