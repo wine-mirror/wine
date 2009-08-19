@@ -1324,7 +1324,7 @@ todo_wine
     dispparams.rgdispidNamedArgs = NULL;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_INT, &IID_NULL, 0x40c, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, ITypeInfo_Invoke);
-    todo_wine ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
+    ok(V_VT(&varresult) == VT_I4, "got %x\n", V_VT(&varresult));
     ok(V_I4(&varresult) == -13, "got %x\n", V_I4(&varresult));
     VariantClear(&varresult);
 
@@ -1335,7 +1335,7 @@ todo_wine
     dispparams.rgdispidNamedArgs = NULL;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_PROP_UINT, &IID_NULL, 0x40c, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, ITypeInfo_Invoke);
-    todo_wine ok(V_VT(&varresult) == VT_UI4, "got %x\n", V_VT(&varresult));
+    ok(V_VT(&varresult) == VT_UI4, "got %x\n", V_VT(&varresult));
     ok(V_UI4(&varresult) == 42, "got %x\n", V_UI4(&varresult));
     VariantClear(&varresult);
 

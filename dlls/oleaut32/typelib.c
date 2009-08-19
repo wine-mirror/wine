@@ -5874,6 +5874,12 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, const TYPEDESC *tdesc, 
         *vt |= VT_ARRAY;
         hr = typedescvt_to_variantvt(tinfo, tdesc->u.lptdesc, vt);
         break;
+    case VT_INT:
+        *vt |= VT_I4;
+        break;
+    case VT_UINT:
+        *vt |= VT_UI4;
+        break;
     default:
         *vt |= tdesc->vt;
         break;
