@@ -104,6 +104,7 @@ static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This);
 static ULONG BlockChainStream_GetCount(BlockChainStream* This);
 
 static ULARGE_INTEGER SmallBlockChainStream_GetSize(SmallBlockChainStream* This);
+static ULONG SmallBlockChainStream_GetHeadOfChain(SmallBlockChainStream* This);
 static BOOL StorageImpl_WriteDWordToBigBlock( StorageImpl* This,
     ULONG blockIndex, ULONG offset, DWORD value);
 static BOOL StorageImpl_ReadDWordFromBigBlock( StorageImpl*  This,
@@ -3625,6 +3626,86 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
                                              propertyIndex);
 
   return bigBlockChain;
+}
+
+/******************************************************************************
+ *              Storage32Impl_BigBlocksToSmallBlocks
+ *
+ * This method will convert a big block chain to a small block chain.
+ * The big block chain will be destroyed on success.
+ */
+SmallBlockChainStream* Storage32Impl_BigBlocksToSmallBlocks(
+                           StorageImpl* This,
+                           BlockChainStream** ppbbChain)
+{
+    ULARGE_INTEGER size, offset, cbTotalRead;
+    ULONG cbRead, cbWritten, propertyIndex, sbHeadOfChain = BLOCK_END_OF_CHAIN;
+    HRESULT resWrite = S_OK, resRead;
+    StgProperty chainProperty;
+    BYTE* buffer;
+    SmallBlockChainStream* sbTempChain;
+
+    TRACE("%p %p\n", This, ppbbChain);
+
+    sbTempChain = SmallBlockChainStream_Construct(This, &sbHeadOfChain,
+            PROPERTY_NULL);
+
+    if(!sbTempChain)
+        return NULL;
+
+    size = BlockChainStream_GetSize(*ppbbChain);
+    SmallBlockChainStream_SetSize(sbTempChain, size);
+
+    offset.u.HighPart = 0;
+    offset.u.LowPart = 0;
+    cbTotalRead.QuadPart = 0;
+    buffer = HeapAlloc(GetProcessHeap(), 0, This->bigBlockSize);
+    do
+    {
+        resRead = BlockChainStream_ReadAt(*ppbbChain, offset,
+                This->bigBlockSize, buffer, &cbRead);
+
+        if(FAILED(resRead))
+            break;
+
+        if(cbRead > 0)
+        {
+            cbTotalRead.QuadPart += cbRead;
+
+            resWrite = SmallBlockChainStream_WriteAt(sbTempChain, offset,
+                    cbRead, buffer, &cbWritten);
+
+            if(FAILED(resWrite))
+                break;
+
+            offset.u.LowPart += This->bigBlockSize;
+        }
+    }while(cbTotalRead.QuadPart < size.QuadPart);
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    size.u.HighPart = 0;
+    size.u.LowPart = 0;
+
+    if(FAILED(resRead) || FAILED(resWrite))
+    {
+        ERR("conversion failed: resRead = 0x%08x, resWrite = 0x%08x\n", resRead, resWrite);
+        SmallBlockChainStream_SetSize(sbTempChain, size);
+        SmallBlockChainStream_Destroy(sbTempChain);
+        return NULL;
+    }
+
+    /* destroy the original big block chain */
+    propertyIndex = (*ppbbChain)->ownerPropertyIndex;
+    BlockChainStream_SetSize(*ppbbChain, size);
+    BlockChainStream_Destroy(*ppbbChain);
+    *ppbbChain = NULL;
+
+    StorageImpl_ReadProperty(This, propertyIndex, &chainProperty);
+    chainProperty.startingBlock = sbHeadOfChain;
+    StorageImpl_WriteProperty(This, propertyIndex, &chainProperty);
+
+    SmallBlockChainStream_Destroy(sbTempChain);
+    return SmallBlockChainStream_Construct(This, NULL, propertyIndex);
 }
 
 static void StorageInternalImpl_Destroy( StorageBaseImpl *iface)
